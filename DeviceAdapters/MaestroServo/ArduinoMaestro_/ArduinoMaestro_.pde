@@ -25,14 +25,20 @@ void loop()
         break;
       case 0x84:
       {
+
         if (!waitForSerial(timeOut_))
           break;
         int servoNr = Serial.read();
+        
         unsigned int pos;
         if (serialReadInt(&pos)) {
-           pos = pos / 4;
-           if (pos >= minPos_ && pos <= maxPos_)
+           Serial.println((int)pos, DEC);
+           pos = round (pos / 4);
+           Serial.println((int)pos, DEC);
+           if (pos >= minPos_ && pos <= maxPos_) {
               myservo.writeMicroseconds(pos);
+           }              
+              
         }
         break;
       }
@@ -77,9 +83,10 @@ bool serialReadInt(unsigned int* value)
 {
    byte hByte, lByte;         
    if (waitForSerial(timeOut_)) {
-      hByte = Serial.read();
+      lByte = Serial.read();
       if (waitForSerial(timeOut_)) {
-          lByte = Serial.read();
+          hByte = Serial.read();
+          hByte = hByte >> 1;
           *value = word (hByte, lByte);
           return true;   
        }
