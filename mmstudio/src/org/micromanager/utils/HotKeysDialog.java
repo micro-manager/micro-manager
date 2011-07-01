@@ -1,9 +1,24 @@
+///////////////////////////////////////////////////////////////////////////////
+//FILE:          HotKeysDialog.java
+//PROJECT:       Micro-Manager
+//SUBSYSTEM:     mmstudio/utils
+//-----------------------------------------------------------------------------
+//
+// AUTHOR:       Nico Stuurman, Apr 11, 2011
+//
+// COPYRIGHT:    University of California, San Francisco, 2011
+//
+// LICENSE:      This file is distributed under the BSD license.
+//               License text is included with the source distribution.
+//
+//               This file is distributed in the hope that it will be useful,
+//               but WITHOUT ANY WARRANTY; without even the implied warranty
+//               of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+//
+//               IN NO EVENT SHALL THE COPYRIGHT OWNER OR
+//               CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+//               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 
-/*
- * HotKeys.java
- *
- * Created on Apr 11, 2011, 3:59:44 PM
- */
 
 package org.micromanager.utils;
 
@@ -112,12 +127,7 @@ public final class HotKeysDialog extends MMDialog {
          }
          if (col == 1) {
             // keep the keys unique
-            Iterator it = keys_.listIterator();
-            while (!found && it.hasNext()) {
-               if (value.equals(it.next()))
-                  found = true;
-            }
-            if (!found)
+            if (!keys_.contains((Integer)value) )
                keys_.set(row, (Integer) value);
          }
 
@@ -137,7 +147,6 @@ public final class HotKeysDialog extends MMDialog {
         prefs_ = root.node(root.absolutePath() + "/HotKeyFrame");
         setPrefsNode(prefs_);
         loadPosition(0, 0, 377, 378);
-        //org.micromanager.MMStudioMainFrame.getInstance().addMMBackgroundListener(this);
 
         readKeys();
 
@@ -158,11 +167,15 @@ public final class HotKeysDialog extends MMDialog {
 
         updateComboBox();
 
+        hotKeyTable_.setRowSelectionAllowed(false);
+        hotKeyTable_.setSelectionBackground(Color.white);
+
         hotKeyTable_.getColumnModel().getColumn(0).setCellEditor(new DefaultCellEditor(combo_));
         hotKeyTable_.getColumnModel().getColumn(1).setCellEditor(new HotKeyCol1Editor());
+
+        hotKeyTable_.getColumnModel().getColumn(0).setCellRenderer(new ActionCollRenderer());
         hotKeyTable_.getColumnModel().getColumn(1).setCellRenderer(new HotKeyCol1Renderer());
         
-
         keh_ = new KeyEvtHandler();
         hotKeyTable_.addKeyListener(keh_);
 
@@ -217,11 +230,29 @@ public final class HotKeysDialog extends MMDialog {
 
        DefaultComboBoxModel model = new DefaultComboBoxModel(possibleActionsAsString_);
        combo_.setModel(model);
+       combo_.setFont(ourFont_);
+    }
+
+    public class ActionCollRenderer extends DefaultTableCellRenderer {
+       @Override
+       public Component getTableCellRendererComponent(javax.swing.JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
+          Component res = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+          res.setBackground(Color.white);
+          res.setForeground(Color.black);
+          return res;
+       }
     }
 
     public class HotKeyCol1Renderer extends DefaultTableCellRenderer {
        public void SetValue(Object value) {
           setText(KeyEvent.getKeyText((Integer) value));
+       }
+       @Override
+       public Component getTableCellRendererComponent(javax.swing.JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
+          Component res = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+          res.setBackground(Color.white);
+          res.setForeground(Color.black);
+          return res;
        }
     }
 
@@ -238,21 +269,15 @@ public final class HotKeysDialog extends MMDialog {
 
        public void keyPressed(KeyEvent ke) {
           Integer value = ke.getKeyCode();
-          boolean found = false;
-          Iterator it = keys_.listIterator();
-          while (!found && it.hasNext()) {
-              if (value.equals(it.next()))
-                 found = true;
-          }
-          if (!found) {
+
+          if (!keys_.contains(value) || value == keys_.get(hotKeyTable_.getSelectedRow())) {
              lastTypedKey_ = value;
              if (label_ != null)
                label_.setText(KeyEvent.getKeyText(lastTypedKey_));
           }
        }
 
-       public void keyReleased(KeyEvent ke) {
-         //throw new UnsupportedOperationException("Not supported yet.");
+       public void keyReleased(KeyEvent ke) {      
        }
     }
 
@@ -273,8 +298,8 @@ public final class HotKeysDialog extends MMDialog {
            keyLabel.setFont(ourFont_);
            lastTypedKey_ = keys_.get(rowIndex);
            keh_.setLabel(keyLabel);
-           return keyLabel;
 
+           return keyLabel;
        }
 
        // This method is called when editing is completed.
