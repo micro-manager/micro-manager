@@ -480,7 +480,7 @@ int MaestroShutter::SetOpen(bool open)
 
 int MaestroShutter::GetOpen(bool& open)
 {
-   open_ = open;
+   open = open_;
    return DEVICE_OK;
 }
 
