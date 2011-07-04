@@ -154,6 +154,11 @@ public class CalibrationThread extends Thread {
 
          dx = dx*2;
          dy = dy*2;
+
+         // Safety limit: don't move over 1 millimeter:
+         if (Math.sqrt(dx * dx + dy * dy) > 1000)
+            break;
+         
          d.x = d.x*2;
          d.y = d.y*2;
 
