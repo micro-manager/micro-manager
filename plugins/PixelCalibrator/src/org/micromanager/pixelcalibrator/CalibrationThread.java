@@ -100,11 +100,15 @@ public class CalibrationThread extends Thread {
       return getSubImage(slideProc, x, y, width, height);
    }
 
-   ImageProcessor snapImageAt(double x, double y, boolean simulate) {
+   ImageProcessor snapImageAt(double x, double y, boolean simulate) throws InterruptedException {
       if (simulate) {
          return simulateAcquire(theSlide,(int) (x+(3*Math.random()-1.5)),(int) (y+(3*Math.random()-1.5)));
       } else {
          try {
+            Point2D.Double p0 = app_.getXYStagePosition();
+            if (p0.distance(x, y) > 1000) { // 1 millimeter
+               throw new InterruptedException("XY stage safety limit reached.");
+            }
             app_.setXYStagePosition(x, y);
             core_.waitForDevice(core_.getXYStageDevice());
             core_.snapImage();
@@ -114,8 +118,10 @@ public class CalibrationThread extends Thread {
                liveWin_ = MMStudioMainFrame.getLiveWin();
             liveWin_.setTitle("Calibrating...");
             return ImageUtils.makeProcessor(core_,pix);
+         } catch (InterruptedException e) {
+            throw e;
          } catch (Exception ex) {
-            ReportingUtils.logError(ex);
+            ReportingUtils.showError(ex);
             return null;
          }
 
@@ -154,10 +160,6 @@ public class CalibrationThread extends Thread {
 
          dx = dx*2;
          dy = dy*2;
-
-         // Safety limit: don't move over 1 millimeter:
-         if (Math.sqrt(dx * dx + dy * dy) > 1000)
-            break;
          
          d.x = d.x*2;
          d.y = d.y*2;
