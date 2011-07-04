@@ -145,15 +145,15 @@
 (defn snap-image [open-before close-after]
   (with-core-setting [getAutoShutter setAutoShutter false]
     (let [shutter (core getShutterDevice)]
-      (device-best-effort shutter
-        (when open-before
+      (when open-before
+        (device-best-effort shutter
           (core setShutterOpen true)
           (wait-for-device (core getShutterDevice))))
       (device-best-effort (core getCameraDevice)
         (core snapImage))
       (swap! state assoc :last-image-time (elapsed-time @state))
-      (device-best-effort shutter
-        (when close-after
+      (when close-after
+        (device-best-effort shutter
           (core setShutterOpen false))
           (wait-for-device (core getShutterDevice))))))
 
@@ -265,10 +265,14 @@
 ;; higher level
 
 (defn expose [event]
-  (do (condp = (:task event)
-    :snap (snap-image true (:close-shutter event))
-    :init-burst (init-burst (:burst-length event) (:trigger-sequence event))
-    nil)))
+  (let [shutter-states
+         (if (core getAutoShutter)
+           [true (:close-shutter event)]
+           [false false])]
+    (condp = (:task event)
+      :snap (apply snap-image shutter-states)
+      :init-burst (init-burst (:burst-length event) (:trigger-sequence event))
+      nil)))
 
 (defn collect-image [event out-queue]
   (let [image (condp = (:task event)
