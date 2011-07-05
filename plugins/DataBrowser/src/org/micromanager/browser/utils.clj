@@ -190,11 +190,25 @@
 (defn get-shape [components]
   (for [comp components]
     (condp instance? comp
-      java.awt.Window
+      Window
         [:window {:x (.getX comp) :y (.getY comp)
                   :w (.getWidth comp) :h (.getHeight comp)}]
-      javax.swing.JSplitPane
+      JSplitPane
         [:split-pane {:location (.getDividerLocation comp)}]
+      nil)))
+
+(defn watch-shape [components fun]
+  (doseq [comp components]
+    (condp instance? comp
+      Window
+        (.addComponentListener comp
+          (proxy [java.awt.event.ComponentAdapter] []
+            (componentMoved [_] (fun))
+            (componentResized [_] (fun))))
+      JSplitPane
+        (.addPropertyChangeListener comp JSplitPane/DIVIDER_LOCATION_PROPERTY
+          (proxy [java.beans.PropertyChangeListener] []
+            (propertyChange [_] (fun))))
       nil)))
 
 (defn set-shape [components shape-data]
@@ -218,14 +232,21 @@
   (write-value-to-prefs prefs name (get-shape components)))
 
 (defn restore-shape [prefs name components]
-  (set-shape components (read-value-from-prefs prefs name)))
-
+  (try
+    (set-shape components (read-value-from-prefs prefs name))
+    (catch Exception e)))
+    
 (defn persist-window-shape [prefs name ^java.awt.Window window]
-  (let [components (widget-seq window)]
+  (let [components (widget-seq window)
+        shape-persister (agent nil)]
     (restore-shape prefs name components)
-    (.addWindowListener window
-      (proxy [java.awt.event.WindowAdapter] []
-        (windowClosing [_] (save-shape prefs name components))))))
+    (watch-shape components
+      #(send-off shape-persister
+        (fn [old-shape]
+          (let [shape (get-shape components)]
+            (when (not= old-shape shape)
+              (write-value-to-prefs prefs name shape))
+            shape))))))
 
 ;; file choosers
 
