@@ -187,8 +187,8 @@
 
 ;; saving and restoring window shape in preferences
 
-(defn get-shape [^java.awt.Component window]
-  (for [comp (widget-seq window)]
+(defn get-shape [components]
+  (for [comp components]
     (condp instance? comp
       java.awt.Window
         [:window {:x (.getX comp) :y (.getY comp)
@@ -197,8 +197,8 @@
         [:split-pane {:location (.getDividerLocation comp)}]
       nil)))
 
-(defn set-shape [comp shape-data]
-  (loop [comps (widget-seq comp) shapes shape-data]
+(defn set-shape [components shape-data]
+  (loop [comps components shapes shape-data]
     (let [comp (first comps)
           shape (first shapes)]
       (try
@@ -214,17 +214,18 @@
     (when (next comps)
       (recur (next comps) (next shapes)))))
 
-(defn save-shape [prefs name component]
-  (write-value-to-prefs prefs name (get-shape component)))
+(defn save-shape [prefs name components]
+  (write-value-to-prefs prefs name (get-shape components)))
 
-(defn restore-shape [prefs name component]
-  (set-shape component (read-value-from-prefs prefs name)))
+(defn restore-shape [prefs name components]
+  (set-shape components (read-value-from-prefs prefs name)))
 
 (defn persist-window-shape [prefs name ^java.awt.Window window]
-  (restore-shape prefs name window)
-  (.addWindowListener window
-    (proxy [java.awt.event.WindowAdapter] []
-      (windowClosing [_] (save-shape prefs name window)))))
+  (let [components (widget-seq window)]
+    (restore-shape prefs name components)
+    (.addWindowListener window
+      (proxy [java.awt.event.WindowAdapter] []
+        (windowClosing [_] (save-shape prefs name components))))))
 
 ;; file choosers
 
