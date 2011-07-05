@@ -492,5 +492,9 @@ public interface ScriptInterface {
 
    public boolean displayImage(Object pix);
 
+   public boolean isLiveModeOn();
+
+   public void enableLiveMode(boolean b);
+
 
 }

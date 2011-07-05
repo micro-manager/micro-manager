@@ -2767,7 +2767,7 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
       return ret;
    }
 
-   boolean isLiveModeOn() {
+   public boolean isLiveModeOn() {
       if (core_.getNumberOfComponents() == 1) {
       return liveModeTimerTask_ != null && liveModeTimerTask_.isRunning();
       } else {
