@@ -26,18 +26,19 @@
 
 import ij.process.ImageProcessor;
 import ij.process.ImageStatistics;
+
 import java.awt.Rectangle;
 import java.text.ParseException;
 
 import mmcorej.CMMCore;
 import mmcorej.Configuration;
+
 import org.apache.commons.math.FunctionEvaluationException;
 import org.apache.commons.math.analysis.UnivariateRealFunction;
 import org.apache.commons.math.optimization.GoalType;
 import org.apache.commons.math.optimization.univariate.BrentOptimizer;
-import org.micromanager.MMStudioMainFrame;
-
 import org.micromanager.acquisition.AcquisitionData;
+import org.micromanager.api.ScriptInterface;
 import org.micromanager.utils.AutofocusBase;
 import org.micromanager.utils.ImageUtils;
 import org.micromanager.utils.MMException;
@@ -47,8 +48,7 @@ import org.micromanager.utils.ReportingUtils;
 
 public class OughtaFocus extends AutofocusBase implements org.micromanager.api.Autofocus {
 
-   private CMMCore core_;
-   private final MMStudioMainFrame gui_;
+   private ScriptInterface app_;
    private static final String AF_DEVICE_NAME = "OughtaFocus";
    private static final String SEARCH_RANGE = "SearchRange_um";
    private static final String TOLERANCE = "Tolerance_um";
@@ -72,8 +72,6 @@ public class OughtaFocus extends AutofocusBase implements org.micromanager.api.A
 
    public OughtaFocus() {
       super();
-      gui_ = MMStudioPlugin.getMMStudioMainFrameInstance();
-
       createProperty(SEARCH_RANGE, NumberUtils.doubleToDisplayString(searchRange));
       createProperty(TOLERANCE, NumberUtils.doubleToDisplayString(tolerance));
       createProperty(CROP_FACTOR, NumberUtils.doubleToDisplayString(cropFactor));
@@ -100,24 +98,6 @@ public class OughtaFocus extends AutofocusBase implements org.micromanager.api.A
       }
    }
 
-   public void setMMCore(CMMCore core) {
-      core_ = core;
-      String chanGroup = core_.getChannelGroup();
-      String curChan;
-      try {
-         curChan = core_.getCurrentConfig(chanGroup);
-         createProperty(CHANNEL, curChan,
-                 core_.getAvailableConfigs(core_.getChannelGroup()).toArray());
-      } catch (Exception ex) {
-         ReportingUtils.logError(ex);
-      }
-      
-      if (!settingsLoaded_) {
-         super.loadSettings();
-         settingsLoaded_ = true;
-      }
-   }
-
    public String getDeviceName() {
       return AF_DEVICE_NAME;
    }
@@ -125,7 +105,8 @@ public class OughtaFocus extends AutofocusBase implements org.micromanager.api.A
    public double fullFocus() throws MMException {
       applySettings();
       try {
-         Rectangle oldROI = gui_.getROI();
+         Rectangle oldROI = app_.getROI();
+         CMMCore core = app_.getMMCore();
          //ReportingUtils.logMessage("Original ROI: " + oldROI);
          int w = (int) (oldROI.width * cropFactor);
          int h = (int) (oldROI.height * cropFactor);
@@ -135,27 +116,33 @@ public class OughtaFocus extends AutofocusBase implements org.micromanager.api.A
          //ReportingUtils.logMessage("Setting ROI to: " + newROI);
          Configuration oldState = null;
          if (channel.length() > 0) {
-            String chanGroup = core_.getChannelGroup();
-            oldState = core_.getConfigGroupState(chanGroup);
-            core_.setConfig(chanGroup, channel);
+            String chanGroup = core.getChannelGroup();
+            oldState = core.getConfigGroupState(chanGroup);
+            core.setConfig(chanGroup, channel);
          }
-         gui_.setROI(newROI);
-         core_.waitForDevice(core_.getCameraDevice());
-         double oldExposure = core_.getExposure();
-         core_.setExposure(exposure);
+         
+         // avoid wasting time on setting roi if it is the same
+         if (cropFactor < 1.0) {
+            app_.setROI(newROI);
+            core.waitForDevice(core.getCameraDevice());
+         }
+         double oldExposure = core.getExposure();
+         core.setExposure(exposure);
 
          double z = runAutofocusAlgorithm();
 
-         gui_.setROI(oldROI);
-         core_.waitForDevice(core_.getCameraDevice());
-         if (oldState != null) {
-            core_.setSystemState(oldState);
+         if (cropFactor < 1.0) {
+            app_.setROI(oldROI);
+            core.waitForDevice(core.getCameraDevice());
          }
-         core_.setExposure(oldExposure);
+         if (oldState != null) {
+            core.setSystemState(oldState);
+         }
+         core.setExposure(oldExposure);
          setZPosition(z);
          return z;
       } catch (Exception ex) {
-         throw new MMException("autofocus failed");
+         throw new MMException(ex.getMessage());
       }
    }
 
@@ -168,7 +155,8 @@ public class OughtaFocus extends AutofocusBase implements org.micromanager.api.A
       BrentOptimizer brentOptimizer = new BrentOptimizer();
       brentOptimizer.setAbsoluteAccuracy(tolerance);
 
-      double z = core_.getPosition(core_.getFocusDevice());
+      CMMCore core = app_.getMMCore();
+      double z = core.getPosition(core.getFocusDevice());
       double zResult = brentOptimizer.optimize(scoreFun, GoalType.MAXIMIZE, z - searchRange / 2, z + searchRange / 2);
       ReportingUtils.logMessage("OughtaFocus Iterations: " + brentOptimizer.getIterationCount());
       return zResult;
@@ -177,9 +165,10 @@ public class OughtaFocus extends AutofocusBase implements org.micromanager.api.A
 
    private void setZPosition(double z) {
       try {
-         String focusDevice = core_.getFocusDevice();
-         core_.setPosition(focusDevice, z);
-         core_.waitForDevice(focusDevice);
+         CMMCore core = app_.getMMCore();
+         String focusDevice = core.getFocusDevice();
+         core.setPosition(focusDevice, z);
+         core.waitForDevice(focusDevice);
       } catch (Exception ex) {
          ReportingUtils.logError(ex);
       }
@@ -187,15 +176,15 @@ public class OughtaFocus extends AutofocusBase implements org.micromanager.api.A
 
    public double measureFocusScore(double z) {
       try {
-
+         CMMCore core = app_.getMMCore();
          setZPosition(z);
-         core_.waitForDevice(core_.getCameraDevice());
-         core_.snapImage();
-         Object img = core_.getImage();
+         core.waitForDevice(core.getCameraDevice());
+         core.snapImage();
+         Object img = core.getImage();
          if (show.contentEquals("Yes")) {
-            gui_.displayImage(img);
+            app_.displayImage(img);
          }
-         ImageProcessor proc = ImageUtils.makeProcessor(core_, img);
+         ImageProcessor proc = ImageUtils.makeProcessor(core, img);
          return computeScore(proc);
       } catch (Exception ex) {
          ReportingUtils.logError(ex);
@@ -228,10 +217,13 @@ public class OughtaFocus extends AutofocusBase implements org.micromanager.api.A
    }
 
    private double computeSharpness(ImageProcessor proc) {
-      ImageStatistics stats = proc.getStatistics();
+      // mean intensity for the original image
       double meanIntensity = proc.getStatistics().mean;
+      
+      // mean intensity of the edge map
       proc.findEdges();
       double meanEdge = proc.getStatistics().mean;
+      
       return meanEdge/meanIntensity;
    }
 
@@ -254,6 +246,26 @@ public class OughtaFocus extends AutofocusBase implements org.micromanager.api.A
          return computeSharpness(proc);
       } else {
          return 0;
+      }
+   }
+
+   @Override
+   public void setApp(ScriptInterface app) {
+      app_ = app;
+      CMMCore core = app_.getMMCore();
+      String chanGroup = core.getChannelGroup();
+      String curChan;
+      try {
+         curChan = core.getCurrentConfig(chanGroup);
+         createProperty(CHANNEL, curChan,
+                 core.getAvailableConfigs(core.getChannelGroup()).toArray());
+      } catch (Exception ex) {
+         ReportingUtils.logError(ex);
+      }
+      
+      if (!settingsLoaded_) {
+         super.loadSettings();
+         settingsLoaded_ = true;
       }
    }
 }

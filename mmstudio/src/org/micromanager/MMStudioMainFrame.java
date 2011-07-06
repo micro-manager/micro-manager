@@ -2210,10 +2210,14 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
       profileWin_.setVisible(true);
    }
 
-   public Rectangle getROI() throws Exception {
+   public Rectangle getROI() throws MMScriptException {
       // ROI values are give as x,y,w,h in individual one-member arrays (pointers in C++):
       int[][] a = new int[4][1];
-      core_.getROI(a[0], a[1], a[2], a[3]);
+      try {
+         core_.getROI(a[0], a[1], a[2], a[3]);
+      } catch (Exception e) {
+         throw new MMScriptException(e.getMessage());
+      }
       // Return as a single array with x,y,w,h:
       return new Rectangle(a[0][0], a[1][0], a[2][0], a[3][0]);
    }
@@ -2250,13 +2254,17 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
       lineProfileData_.setData(line.getPixels());
    }
 
-   public void setROI(Rectangle r) throws Exception {
+   public void setROI(Rectangle r) throws MMScriptException {
       boolean liveRunning = false;
       if (liveRunning_) {
          liveRunning = liveRunning_;
          enableLiveMode(false);
       }
-      core_.setROI(r.x, r.y, r.width, r.height);
+      try {
+         core_.setROI(r.x, r.y, r.width, r.height);
+      } catch (Exception e) {
+         throw new MMScriptException(e.getMessage());
+      }
       updateStaticInfo();
       if (liveRunning) {
          enableLiveMode(true);
@@ -4409,7 +4417,7 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
 
 
    private void loadPlugins() {
-      afMgr_ = new AutofocusManager(core_);
+      afMgr_ = new AutofocusManager(this);
 
       ArrayList<Class<?>> pluginClasses = new ArrayList<Class<?>>();
       ArrayList<Class<?>> autofocusClasses = new ArrayList<Class<?>>();

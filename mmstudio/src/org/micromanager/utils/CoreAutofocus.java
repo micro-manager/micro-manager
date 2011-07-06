@@ -6,6 +6,7 @@ import mmcorej.CMMCore;
 import mmcorej.StrVector;
 
 import org.micromanager.api.Autofocus;
+import org.micromanager.api.ScriptInterface;
 import org.micromanager.acquisition.AcquisitionData;
 
 public class CoreAutofocus implements Autofocus {
@@ -63,11 +64,6 @@ public class CoreAutofocus implements Autofocus {
          return 0.0;
       }
 
-   }
-
-   public void setMMCore(CMMCore core) {
-      core_ = core;
-      devName_ = core_.getAutoFocusDevice();
    }
 
    public String[] getPropertyNames(){
@@ -221,6 +217,12 @@ public class CoreAutofocus implements Autofocus {
 
    public AcquisitionData getFocusingSequence() throws MMException {
       throw new UnsupportedOperationException("Not supported yet.");
+   }
+
+   @Override
+   public void setApp(ScriptInterface app) {
+      core_ = app.getMMCore();
+      devName_ = core_.getAutoFocusDevice();      
    }
 
 }

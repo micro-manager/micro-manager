@@ -29,6 +29,7 @@ import mmcorej.DeviceType;
 import mmcorej.StrVector;
 
 import org.micromanager.api.Autofocus;
+import org.micromanager.api.ScriptInterface;
 
 /**
  * Manages different instances of autofocus devices, both Java plugin and MMCore based.
@@ -36,17 +37,17 @@ import org.micromanager.api.Autofocus;
  * the list of available focusing devices, as well as for selecting a default one.
  */
 public class AutofocusManager {
-   private CMMCore core_;
+   private ScriptInterface app_;
    private Vector<Autofocus> afs_;
    private Vector<String> afPluginClassNames_;
    private Autofocus currentAfDevice_;
    private AutofocusPropertyEditor afDlg_;
    
-   public AutofocusManager(CMMCore core) {
-      core_ = core;
+   public AutofocusManager(ScriptInterface app) {
       afs_ = new Vector<Autofocus>();
       afPluginClassNames_ = new Vector<String>();
       currentAfDevice_ = null;
+      app_ = app;
    }
    
    /**
@@ -94,14 +95,15 @@ public class AutofocusManager {
     */
    public void refresh() throws MMException {
       afs_.clear();
+      CMMCore core = app_.getMMCore();
 
       // first check core autofocus
-      StrVector afDevs = core_.getLoadedDevicesOfType(DeviceType.AutoFocusDevice);
+      StrVector afDevs = core.getLoadedDevicesOfType(DeviceType.AutoFocusDevice);
       for (int i=0; i<afDevs.size(); i++) {
          CoreAutofocus caf = new CoreAutofocus();
          try {
-            core_.setAutoFocusDevice(afDevs.get(i));
-            caf.setMMCore(core_);
+            core.setAutoFocusDevice(afDevs.get(i));
+            caf.setApp(app_);
             if (caf.getDeviceName().length() != 0) {
                afs_.add(caf);
                if (currentAfDevice_ == null)
@@ -132,7 +134,7 @@ public class AutofocusManager {
     				  afs_.add(jaf);
     				  if (currentAfDevice_ == null)
     					  currentAfDevice_ = jaf;
-    				  jaf.setMMCore(core_);
+    				  jaf.setApp(app_);
     			  }
     		  }
     	  }

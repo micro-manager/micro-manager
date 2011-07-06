@@ -33,6 +33,7 @@ import mmcorej.MMCoreJ;
 import mmcorej.StrVector;
 
 import org.micromanager.api.Autofocus;
+import org.micromanager.api.ScriptInterface;
 import org.micromanager.acquisition.AcquisitionData;
 import org.micromanager.utils.AutofocusManager;
 import org.micromanager.utils.AutofocusBase;
@@ -148,10 +149,6 @@ public class AutofocusDuo extends AutofocusBase implements Autofocus  {
       run("silent");
    }
 
-   public void setMMCore(CMMCore core) {
-      core_ = core;
-   }
-
    public PropertyItem[] getProperties() {
       // use default dialog
             
@@ -207,4 +204,9 @@ public class AutofocusDuo extends AutofocusBase implements Autofocus  {
    public String getDeviceName() {
       return AF_DEVICE_NAME;
    }
+   
+   public void setApp(ScriptInterface app) {
+      core_ = app.getMMCore();
+   }
+
 }   

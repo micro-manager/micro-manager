@@ -9,7 +9,8 @@ import org.micromanager.utils.PropertyItem;
 public interface Autofocus {
    public void applySettings();
    public void saveSettings();
-   public void setMMCore(CMMCore core);
+   //public void setMMCore(CMMCore core); // TODO: remove this one
+   public void setApp(ScriptInterface app);
    public double fullFocus() throws MMException;
    public double incrementalFocus() throws MMException;
    public int getNumberOfImages();

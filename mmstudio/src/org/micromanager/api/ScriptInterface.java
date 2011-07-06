@@ -25,6 +25,7 @@ package org.micromanager.api;
 import ij.gui.ImageWindow;
 import java.awt.Color;
 import java.awt.Component;
+import java.awt.Rectangle;
 import java.awt.geom.Point2D;
 import java.util.concurrent.Callable;
 
@@ -495,6 +496,9 @@ public interface ScriptInterface {
    public boolean isLiveModeOn();
 
    public void enableLiveMode(boolean b);
+   
+   public Rectangle getROI() throws MMScriptException;
 
+   public void setROI(Rectangle r) throws MMScriptException;
 
 }

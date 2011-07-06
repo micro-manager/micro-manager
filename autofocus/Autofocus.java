@@ -40,6 +40,7 @@ import mmcorej.MMCoreJ;
 import mmcorej.StrVector;
 
 import org.micromanager.acquisition.AcquisitionData;
+import org.micromanager.api.ScriptInterface;
 import org.micromanager.utils.AutofocusManager;
 import org.micromanager.utils.AutofocusBase;
 import org.micromanager.utils.MMException;
@@ -475,10 +476,6 @@ public class Autofocus extends AutofocusBase implements org.micromanager.api.Aut
       run("silent");
    }
 
-   public void setMMCore(CMMCore core) {
-      core_ = core;
-   }
-
    public PropertyItem[] getProperties() {
       // use default dialog
       // make sure we have the right list of channels
@@ -532,5 +529,10 @@ public class Autofocus extends AutofocusBase implements org.micromanager.api.Aut
 
    public String getDeviceName() {
       return AF_DEVICE_NAME;
+   }
+
+   @Override
+   public void setApp(ScriptInterface app) {
+      core_ = app.getMMCore();
    }
 }   

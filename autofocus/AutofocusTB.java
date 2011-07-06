@@ -15,6 +15,7 @@ import mmcorej.MMCoreJ;
 import mmcorej.StrVector;
 
 import org.micromanager.api.Autofocus;
+import org.micromanager.api.ScriptInterface;
 import org.micromanager.acquisition.AcquisitionData;
 import org.micromanager.utils.AutofocusManager;
 import org.micromanager.utils.AutofocusBase;
@@ -559,17 +560,6 @@ public class AutofocusTB extends AutofocusBase implements Autofocus {
       run("silent");
    }
 
-
-   /**
-    *  Sets the mMCore attribute of the Autofocus_ object
-    *
-    *@param  core  The new mMCore value
-    */
-   public void setMMCore(CMMCore core) {
-      core_ = core;
-   }
-
-
    /**
     *  Description of the Method
     */
@@ -656,6 +646,10 @@ public class AutofocusTB extends AutofocusBase implements Autofocus {
 
    public String getDeviceName() {
       return AF_DEVICE_NAME;
+   }
+
+   public void setApp(ScriptInterface app) {
+      core_ = app.getMMCore();
    }
 
 }
