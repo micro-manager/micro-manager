@@ -725,6 +725,9 @@ int SerialPort::GetAnswer(char* answer, unsigned bufLen, const char* term)
 
 int SerialPort::Write(const unsigned char* buf, unsigned long bufLen)
 {
+   if (!initialized_)
+      return ERR_OPEN_FAILED;
+
    int ret = DEVICE_OK;
    // send characters one by one to accomodate slow devices
    std::ostringstream logMsg;
@@ -754,6 +757,9 @@ int SerialPort::Write(const unsigned char* buf, unsigned long bufLen)
  
 int SerialPort::Read(unsigned char* buf, unsigned long bufLen, unsigned long& charsRead)
 {
+   if (!initialized_)
+      return ERR_OPEN_FAILED;
+
    int r = DEVICE_OK;
    if( 0 < bufLen)
    {
