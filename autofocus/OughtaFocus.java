@@ -45,6 +45,7 @@ import org.micromanager.utils.MMException;
 import org.micromanager.utils.MathFunctions;
 import org.micromanager.utils.NumberUtils;
 import org.micromanager.utils.ReportingUtils;
+import org.micromanager.utils.TextUtils;
 
 public class OughtaFocus extends AutofocusBase implements org.micromanager.api.Autofocus {
 
@@ -67,6 +68,10 @@ public class OughtaFocus extends AutofocusBase implements org.micromanager.api.A
    private double exposure = 100;
    private String show = "No";
    private String scoringMethod = "Edges";
+   
+   private int imageCount_;
+   private long startTimeMs_;
+   private double startZUm_;
 
    private boolean settingsLoaded_ = false;
 
@@ -78,6 +83,7 @@ public class OughtaFocus extends AutofocusBase implements org.micromanager.api.A
       createProperty(EXPOSURE, NumberUtils.doubleToDisplayString(exposure));
       createProperty(SHOW_IMAGES, show, showValues);
       createProperty(SCORING_METHOD, scoringMethod, scoringMethods);
+      imageCount_ = 0;
    }
 
    public void applySettings() {
@@ -103,6 +109,7 @@ public class OughtaFocus extends AutofocusBase implements org.micromanager.api.A
    }
 
    public double fullFocus() throws MMException {
+      startTimeMs_ = System.currentTimeMillis();
       applySettings();
       try {
          Rectangle oldROI = app_.getROI();
@@ -154,11 +161,17 @@ public class OughtaFocus extends AutofocusBase implements org.micromanager.api.A
       };
       BrentOptimizer brentOptimizer = new BrentOptimizer();
       brentOptimizer.setAbsoluteAccuracy(tolerance);
+      imageCount_ = 0;
 
       CMMCore core = app_.getMMCore();
       double z = core.getPosition(core.getFocusDevice());
+      startZUm_ = z;
+      getCurrentFocusScore();
       double zResult = brentOptimizer.optimize(scoreFun, GoalType.MAXIMIZE, z - searchRange / 2, z + searchRange / 2);
-      ReportingUtils.logMessage("OughtaFocus Iterations: " + brentOptimizer.getIterationCount());
+      ReportingUtils.logMessage("OughtaFocus Iterations: " + brentOptimizer.getIterationCount() +
+            ", z=" + TextUtils.FMT2.format(zResult) +
+            ", dz=" + TextUtils.FMT2.format(zResult - startZUm_) +
+            ", t=" + (System.currentTimeMillis() - startTimeMs_));
       return zResult;
       
    }
@@ -177,15 +190,25 @@ public class OughtaFocus extends AutofocusBase implements org.micromanager.api.A
    public double measureFocusScore(double z) {
       try {
          CMMCore core = app_.getMMCore();
+         long start = System.currentTimeMillis();
          setZPosition(z);
+         long tZ =  System.currentTimeMillis() - start;
          core.waitForDevice(core.getCameraDevice());
          core.snapImage();
          Object img = core.getImage();
          if (show.contentEquals("Yes")) {
             app_.displayImage(img);
          }
+         long tI = System.currentTimeMillis() - start - tZ;
          ImageProcessor proc = ImageUtils.makeProcessor(core, img);
-         return computeScore(proc);
+         double score = computeScore(proc);
+         long tC = System.currentTimeMillis() - start - tZ - tI;
+         ReportingUtils.logMessage("OughtaFocus: image=" + imageCount_++ +
+                                   ", t=" + (System.currentTimeMillis() - startTimeMs_) +
+                                   ", z=" + TextUtils.FMT2.format(z) + 
+                                   ", score=" + TextUtils.FMT2.format(score) +
+                                   ", Tz=" + tZ + ", Ti=" + tI + ", Tc=" + tC);
+         return score;
       } catch (Exception ex) {
          ReportingUtils.logError(ex);
          return 0;
@@ -197,7 +220,7 @@ public class OughtaFocus extends AutofocusBase implements org.micromanager.api.A
    }
 
    public int getNumberOfImages() {
-      throw new UnsupportedOperationException("Not supported yet.");
+      return imageCount_;
    }
 
    public AcquisitionData getFocusingSequence() throws MMException {
@@ -209,7 +232,25 @@ public class OughtaFocus extends AutofocusBase implements org.micromanager.api.A
    }
 
    public double getCurrentFocusScore() {
-      throw new UnsupportedOperationException("Not supported yet.");
+      CMMCore core = app_.getMMCore();
+      double z=0.0;
+      double score = 0.0;
+      try {
+         z = core.getPosition(core.getFocusDevice());
+         core.waitForDevice(core.getCameraDevice());
+         core.snapImage();
+         Object img = core.getImage();
+         if (show.contentEquals("Yes")) {
+            app_.displayImage(img);
+         }
+         ImageProcessor proc = ImageUtils.makeProcessor(core, img);
+         score = computeScore(proc);
+         ReportingUtils.logMessage("OughtaFocus: z=" + TextUtils.FMT2.format(z) + 
+                                   ", score=" + TextUtils.FMT2.format(score));
+      } catch (Exception e) {
+         ReportingUtils.logError(e);
+      }
+      return score;
    }
 
    public void focus(double coarseStep, int numCoarse, double fineStep, int numFine) throws MMException {
