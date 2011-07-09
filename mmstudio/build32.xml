@@ -6,8 +6,7 @@
 	<!-- Specify version in the installer name -->
 	<property name="InstallerName" value="MMSetup_"/>
 
-	<!-- Specify the system path to the ImageJ root directory -->
-	<property name="ImageJPath" value="/Program Files/ImageJ"/>
+	<!-- Specify the system paths -->
 	<property name="InstallRoot" value="../Install_Win32/micro-manager"/>
 	<property name="NativeRoot" value="../MMCoreJ_wrap"/>
 	<property name="ScriptsRoot" value="../scripts"/>
@@ -17,7 +16,6 @@
 	<property name="AdaptersRoot" value="../DeviceAdapters"/>
 
 	<!-- Do not modify from this point on -->
-	<property name="MMPluginDir" value="${ImageJPath}/plugins/Micro-Manager"/>
 	<property name="IJ" value="../../3rdpartypublic/classext/ij.jar"/>
 	<property name="beanshell" value="../../3rdpartypublic/classext/bsh-2.0b4.jar"/>
 	<property name="swingx" value="../../3rdpartypublic/classext/swingx-0.9.5.jar"/>
@@ -25,23 +23,13 @@
 	<property name="commons_math" value="../../3rdpartypublic/classext/commons-math-2.0.jar"/>
 	<property name="clojure" value="../../3rdpartypublic/classext/clojure.jar"/>
 	<property name="clojurecontrib" value="../../3rdpartypublic/classext/clojure-contrib.jar"/>
+	<property name="IJLauncher" value="../../3rdpartypublic/JavaLauncher/ImageJ.exe"/>
 	<property name="MMCoreJ" value="../bin_Win32/MMCoreJ.jar"/>
 	<property name="MMPluginDir-inst" value="${InstallRoot}/plugins/Micro-Manager"/>
 	<property name="BinRoot" value="../bin_Win32"/>
 
 	<path id="project.MMPlugins.path">
 		<pathelement location="${MMPluginDir}"/>
-	</path>
-
-	<path id="project.run.path">
-		<pathelement location="${MMPluginDir}/MMJ_.jar"/>
-		<pathelement location="${MMPluginDir}/MMCoreJ.jar"/>
-		<pathelement location="${MMPluginDir}/bsh-2.0b4.jar"/>
-		<pathelement location="${MMPluginDir}/swingx-0.9.5.jar"/>
-		<pathelement location="${MMPluginDir}/swing-layout-1.0.4.jar"/>
-		<pathelement location="${MMPluginDir}/commons-math-2.0.jar"/>
-		<pathelement location="${MMPluginDir}/clojure.jar"/>
-		<pathelement location="${IJ}"/>
 	</path>
 
 	<path id="project.class.path">
@@ -52,7 +40,6 @@
 		<pathelement location="${swing_layout}" />
 		<pathelement location="${commons_math}" />
 		<pathelement location="${clojure}" />
-		<pathelement location="${MMPluginDir}/MMJ_.jar"/>
 	</path>
 
 	<target name="compile" description="Compile MM Studio.">
@@ -81,16 +68,6 @@
 
 		<copy file="./bin/plugins_mmstudio.config" tofile="./build/plugins.config"  overwrite="true" verbose="true" />
 		<jar jarfile="MMJ_.jar" basedir="build" manifest="./src/MANIFEST.MF" />
-		<mkdir dir="${MMPluginDir}" />
-		<copy file="MMJ_.jar" todir="${MMPluginDir}" overwrite="true" />		
-		<copy file="${beanshell}" todir="${MMPluginDir}" />
-		<copy file="${swingx}" todir="${MMPluginDir}" overwrite="true" />
-		<copy file="${MMCoreJ}" todir="${MMPluginDir}" overwrite="true"  />
-		<copy file="${swing_layout}" todir="${MMPluginDir}" overwrite="true" />
-		<copy file="${commons_math}" todir="${MMPluginDir}" overwrite="true" />
-		<copy file="${clojure}" todir="${MMPluginDir}" overwrite="true" />
-		<copy file="${clojurecontrib}" todir="${MMPluginDir}" overwrite="true" />
-
 	</target>
 
 
@@ -122,7 +99,7 @@
 			</fileset>
 		</copy>
 
-		<copy file="${ImageJPath}/ImageJ.exe" todir="${InstallRoot}" />
+		<copy file="${IJLauncher}" todir="${InstallRoot}" />
 		<copy file="${IJ}" todir="${InstallRoot}" />
 		<copy file="MMJ_.jar" todir="${MMPluginDir-inst}" />
 		<copy file="MMJ_.jar" todir="${BinRoot}/plugins/Micro-Manager" />
