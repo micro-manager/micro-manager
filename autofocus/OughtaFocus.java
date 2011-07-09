@@ -72,6 +72,7 @@ public class OughtaFocus extends AutofocusBase implements org.micromanager.api.A
    private int imageCount_;
    private long startTimeMs_;
    private double startZUm_;
+   private boolean liveModeOn_;
 
    private boolean settingsLoaded_ = false;
 
@@ -114,6 +115,8 @@ public class OughtaFocus extends AutofocusBase implements org.micromanager.api.A
       try {
          Rectangle oldROI = app_.getROI();
          CMMCore core = app_.getMMCore();
+         liveModeOn_ = app_.isLiveModeOn();
+         
          //ReportingUtils.logMessage("Original ROI: " + oldROI);
          int w = (int) (oldROI.width * cropFactor);
          int h = (int) (oldROI.height * cropFactor);
@@ -193,11 +196,17 @@ public class OughtaFocus extends AutofocusBase implements org.micromanager.api.A
          long start = System.currentTimeMillis();
          setZPosition(z);
          long tZ =  System.currentTimeMillis() - start;
-         core.waitForDevice(core.getCameraDevice());
-         core.snapImage();
-         Object img = core.getImage();
-         if (show.contentEquals("Yes")) {
-            app_.displayImage(img);
+         
+         Object img = null;
+         if (liveModeOn_) {
+            img = core.getLastImage();
+         } else {
+            core.waitForDevice(core.getCameraDevice());
+            core.snapImage();
+            img = core.getImage();
+            if (show.contentEquals("Yes")) {
+               app_.displayImage(img);
+            }
          }
          long tI = System.currentTimeMillis() - start - tZ;
          ImageProcessor proc = ImageUtils.makeProcessor(core, img);
