@@ -41,10 +41,6 @@ pushd plugins\MultiCamera
 call ant -buildfile build.xml %cleantarget% compile build 
 popd
 
-pushd plugins\DataBrowser
-call build.bat
-popd
-
 rem pushd plugins\Bleach
 rem call ant -buildfile build.xml %cleantarget% compile build
 rem popd
@@ -52,5 +48,9 @@ rem popd
 rem pushd plugins\Tracker 
 rem call ant -buildfile build.xml %cleantarget% compile build 
 rem popd
+
+pushd plugins\DataBrowser
+call build.bat
+popd
 
 POPD

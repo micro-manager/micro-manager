@@ -4,24 +4,17 @@
 <project name="Autofocus" default="build">
 
 	<!-- Specify the system path to the ImageJ root directory -->
-   <property name="ImageJPath" value="/Program Files/ImageJ"/>
 	<property name="InstallRoot" value="../Install_Win32/micro-manager"/>
 
 	<!-- Do not modify from this point on -->
-	<property name="MMPluginDir" value="${ImageJPath}/plugins/Micro-Manager"/>
 	<property name="IJ" value="../../3rdpartypublic/classext/ij.jar"/>
 	<property name="beanshell" value="../../3rdpartypublic/classext/bsh-2.0b4.jar"/>
 	<property name="commonsmath" value="../../3rdpartypublic/classext/commons-math-2.0.jar"/>
           <property name="MMCoreJ" value="../bin_Win32/MMCoreJ.jar"/>
 	<property name="mmautofocus-inst" value="${InstallRoot}/mmautofocus"/>
-	<property name="mmautofocus" value="$(ImageJPath}/mmautofocus"/>
 	<property name="Runtime" value="../bin_Win32"/>
 
-	<path id="project.MMPlugins.path">
-		<pathelement location="${MMPluginDir}"/>
-	</path>
-
-		<path id="project.class.path">
+	<path id="project.class.path">
 		<pathelement location="${IJ}" />
 		<pathelement location="${beanshell}" />
 		<pathelement location="${MMCoreJ}" />
@@ -59,30 +52,21 @@
 
 		<jar jarfile="MMAutofocus.jar" basedir="build" />
 	
-		<mkdir dir="${mmautofocus}" />
-		<delete file="${MMPluginDir}/MMAutofocus.jar" />
-		<copy file="MMAutofocus.jar" todir="${mmautofocus}" />
 		<copy file="MMAutofocus.jar" todir="${Runtime}" />
 		<copy file="MMAutofocus.jar" todir="${mmautofocus-inst}/" />
 
 		<jar jarfile="MMAutofocusTB.jar" basedir="buildTB" />
 		
-		<delete file="${MMPluginDir}/MMAutofocusTB.jar" />
-		<copy file="MMAutofocusTB.jar" todir="${mmautofocus}" />
 		<copy file="MMAutofocusTB.jar" todir="${Runtime}" />
 		<copy file="MMAutofocusTB.jar" todir="${mmautofocus-inst}/" />
 	
 		<jar jarfile="MMAutofocusDuo.jar" basedir="buildDuo" />
 		
-		<delete file="${MMPluginDir}/MMAutofocusTB.jar" />
-		<copy file="MMAutofocusDuo.jar" todir="${mmautofocus}" />
 		<copy file="MMAutofocusDuo.jar" todir="${Runtime}" />
 		<copy file="MMAutofocusDuo.jar" todir="${mmautofocus-inst}/" />
 
 		<jar jarfile="MMOughtaFocus.jar" basedir="buildOughta" />
 		
-		<delete file="${MMPluginDir}/MMOughtaFocus.jar" />
-		<copy file="MMOughtaFocus.jar" todir="${mmautofocus}" />
 		<copy file="MMOughtaFocus.jar" todir="${Runtime}" />
 		<copy file="MMOughtaFocus.jar" todir="${mmautofocus-inst}/" />
 	</target>
