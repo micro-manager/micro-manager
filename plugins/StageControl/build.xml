@@ -1,0 +1,61 @@
+<!-- Ant makefile for the Micro-Manager StageControl plugin  -->
+<!-- This file assumes Micro-Manager project tree structure -->
+
+<project name="StageControl" default="build">
+
+	<!-- Specify the system path to the ImageJ root directory -->
+	<property name="InstallRoot" value="../../Install_AllPlatforms/micro-manager"/>
+
+	<!-- Do not modify from this point on -->
+	<property name="MMPluginDir" value="../../mmstudio"/>
+	<property name="MMCoreJ" value="../../bin_Win32/MMCoreJ.jar"/>
+	<property name="MMPluginsDir-inst" value="${InstallRoot}/mmplugins"/>
+	<property name="BinRoot" value="../../bin_Win32"/>
+   <property name="classext" value="../../../3rdpartypublic/classext"/>
+
+	<property name="IJ" value="${classext}/ij.jar"/>
+	<property name="beanshell" value="${classext}/bsh-2.0b4.jar"/>
+	<property name="swinglayout" value="${classext}/swing-layout-1.0.4.jar"/>
+	<property name="commonsmath" value="${classext}/commons-math-2.0.jar"/>
+	<property name="swingx" value="${classext}/swingx-0.9.5.jar"/>
+
+
+	<path id="project.MMPlugins.path">
+		<pathelement location="${MMPluginDir}"/>
+	</path>
+
+	<path id="project.class.path">
+		<pathelement location="${MMCoreJ}" />
+		<pathelement location="${MMPluginDir}/MMJ_.jar"/>
+
+		<pathelement location="${IJ}" />
+		<pathelement location="${beanshell}" />
+		<pathelement location="${swinglayout}" />
+		<pathelement location="${commonsmath}" />
+		<pathelement location="${swingx}" />
+
+	</path>
+
+	<target name="compile" description="Compile StageControl plugin.">
+		<mkdir dir="build" />
+		<javac srcdir="./src" destdir="./build" optimize="on" source="1.5" target="1.5" debug="on">
+			<classpath refid="project.class.path" />
+		</javac>
+		<copy file="./src/org/micromanager/stagecontrol/StageControlFrame.form" todir="./build/org/micromanager/stagecontrol/" />
+	   <copy todir="./build/org/micromanager/stagecontrol/icons">
+	       <fileset dir="./src/org/micromanager/stagecontrol/icons" includes="*.*" />
+	   </copy>
+
+	</target>
+
+	<target name="build" description="Build StageControl.jar">
+		<jar jarfile="StageControl.jar" basedir="build" />
+		<copy file="StageControl.jar" todir="${MMPluginsDir-inst}" />
+	</target>
+	
+	<target name="clean" description="Delete the StageControl build files.">
+		<delete dir="build" />
+		<delete file="StageControl.jar" />
+	</target>
+	
+</project>
