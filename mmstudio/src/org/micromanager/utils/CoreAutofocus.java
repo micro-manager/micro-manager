@@ -219,7 +219,6 @@ public class CoreAutofocus implements Autofocus {
       throw new UnsupportedOperationException("Not supported yet.");
    }
 
-   @Override
    public void setApp(ScriptInterface app) {
       core_ = app.getMMCore();
       devName_ = core_.getAutoFocusDevice();      

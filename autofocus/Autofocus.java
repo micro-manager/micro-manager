@@ -531,7 +531,6 @@ public class Autofocus extends AutofocusBase implements org.micromanager.api.Aut
       return AF_DEVICE_NAME;
    }
 
-   @Override
    public void setApp(ScriptInterface app) {
       core_ = app.getMMCore();
    }

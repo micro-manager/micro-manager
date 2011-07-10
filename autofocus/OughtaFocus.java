@@ -299,7 +299,6 @@ public class OughtaFocus extends AutofocusBase implements org.micromanager.api.A
       }
    }
 
-   @Override
    public void setApp(ScriptInterface app) {
       app_ = app;
       CMMCore core = app_.getMMCore();
