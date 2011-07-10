@@ -16,11 +16,11 @@
   (:import (java.util UUID)
            (java.util.prefs Preferences)
            (java.io File FilenameFilter)
-           (java.awt FileDialog)
+           (java.awt FileDialog Window)
            (java.awt.event ActionListener)
            (javax.swing AbstractAction BorderFactory JButton
                         JFileChooser KeyStroke SpringLayout
-                        SwingUtilities))
+                        SwingUtilities JSplitPane))
   (:require [clojure.contrib.string :as string]))
 
 ; clojure utils
@@ -180,7 +180,7 @@
             #(seq (.getComponents %))
             comp))
 
-(defn close-window [^java.awt.Window window]
+(defn close-window [^Window window]
   (let [listeners (.getWindowListeners window)]
     (dorun (map #(.windowClosing % nil) listeners))
     (.setVisible window false)))
