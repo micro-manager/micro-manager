@@ -184,7 +184,8 @@
     {:pix pix :tags (dissoc tags "StartTime-ms")}))
 
 (defn collect-snap-image []
-  {:pix (core getImage) :tags {"ElapsedTime-ms" (@state :last-image-time)}})
+  {:pix (core getImage)
+   :tags {"ElapsedTime-ms" (@state :last-image-time)}})
 
 (defn return-config []
   (dorun (map set-property
@@ -351,7 +352,7 @@
     (for [[axis pos] (:axes (MultiStagePosition-to-map (get-msp (:position event)))) :when pos]
       [axis #(apply set-stage-position axis pos)])
     (for [[d p v] (get-in event [:channel :properties])]
-      [d #(core setProperty d p v)])
+      [d #(set-property [d p v])])
     (when-lets [exposure (:exposure event)
                 camera (core getCameraDevice)]
       (list [camera #(device-best-effort camera (core setExposure exposure))]))))
