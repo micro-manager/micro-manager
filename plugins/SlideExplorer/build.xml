@@ -11,7 +11,7 @@
 	<property name="MMCoreJ" value="../../bin_Win32/MMCoreJ.jar"/>
 	<property name="MMPluginsDir-inst" value="${InstallRoot}/mmplugins"/>
 	<property name="BinRoot" value="../../bin_Win32"/>
-        <property name="classext" value="../../../3rdpartypublic/classext"/>
+    <property name="classext" value="../../../3rdpartypublic/classext"/>
 
         <property name="IJ" value="${classext}/ij.jar"/>
         <property name="beanshell" value="${classext}/bsh-2.0b4.jar"/>

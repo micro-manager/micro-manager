@@ -2195,6 +2195,7 @@ int Universal::PushImage()
    memcpy(pixBuffer, imgPtr, GetImageBufferSize());
 
    // process image
+   /*
    MM::ImageProcessor* ip = GetCoreCallback()->GetImageProcessor(this);
    if (ip)
    {
@@ -2202,6 +2203,7 @@ int Universal::PushImage()
       if (nRet != DEVICE_OK) 
          return LogMMError(nRet, __LINE__);
    }
+   */
 
    // create metadata
    char label[MM::MaxStrLength];

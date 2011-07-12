@@ -1823,16 +1823,17 @@ int CTIScamera::PushImage()
    imgPtr = pBuf[0];
 
    // process image
+   /* NOTE: this is now done automatically in MMCore
    MM::ImageProcessor* ip = GetCoreCallback()->GetImageProcessor(this);      
    if (ip)                                                                   
    {                                                                         
       int ret = ip->Process((unsigned char*) imgPtr, GetImageWidth(), GetImageHeight(), GetImageBytesPerPixel());
       if (ret != DEVICE_OK)
 	  {
-//		 acquiring = false;
          return ret;
 	  }
-   }                                                                         
+   } 
+   */
    // This method inserts new image in the circular buffer (residing in MMCore)
    int ret = GetCoreCallback()->InsertImage(this, (unsigned char*) imgPtr,      
                                            GetImageWidth(),                  

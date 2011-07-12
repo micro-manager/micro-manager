@@ -567,21 +567,8 @@ const unsigned char* CDemoCamera::GetImageBuffer()
 
    MMThreadGuard g(imgPixelsLock_);
    MM::MMTime readoutTime(readoutUs_);
-   while (readoutTime > (GetCurrentMMTime() - readoutStartTime_)) {}
-
-		
-	MM::ImageProcessor* ip = NULL;
-#ifdef PROCESSIMAGEINDEVICEADAPTER
-   ip = GetCoreCallback()->GetImageProcessor(this);
-#endif
+   while (readoutTime > (GetCurrentMMTime() - readoutStartTime_)) {}		
    unsigned char *pB = (unsigned char*)(img_.GetPixels());
-
-	if (ip)
-	{
-      // huh...
-		ip->Process(pB, GetImageWidth(), GetImageHeight(), GetImageBytesPerPixel());
-
-	}
    return pB;
 }
 

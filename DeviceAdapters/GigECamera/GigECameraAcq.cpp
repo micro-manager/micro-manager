@@ -34,6 +34,7 @@ void CGigECamera::SnapImageCallback( J_tIMAGE_INFO* imageInfo )
 
 		int nRet;
 		// process image
+      /* NOTE: this is now done automatically in MMCore
 		MM::ImageProcessor* ip = GetCoreCallback()->GetImageProcessor(this);
 		if( ip != NULL )
 		{
@@ -43,6 +44,7 @@ void CGigECamera::SnapImageCallback( J_tIMAGE_INFO* imageInfo )
 				LogMessage( (std::string) "process failure " );
 			}
 		}
+      */
 
 		// create metadata
 		Metadata md;
