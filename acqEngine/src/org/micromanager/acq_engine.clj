@@ -87,7 +87,9 @@
             (do (ReportingUtils/logError e#) false))))
 
 (defmacro device-best-effort [dev & body]
-  `(let [attempt# #(do (wait-for-device ~dev) ~@body)]
+  `(let [attempt# #(do (wait-for-device ~dev)
+                       (add-to-pending ~dev)
+                       ~@body)]
     (when-not
       (or 
         (successful? (attempt#)) ; first attempt
@@ -122,20 +124,17 @@
     ;(log (@state :last-positions) "," stage-dev)
     (when (not= z (get-in @state [:last-positions stage-dev]))
       (device-best-effort stage-dev (set-z-stage-position stage-dev z))
-      (swap! state assoc-in [:last-positions stage-dev] z)
-      (add-to-pending stage-dev)))
+      (swap! state assoc-in [:last-positions stage-dev] z)))
   ([stage-dev x y]
     ;(log (@state :last-positions) "," stage-dev)
     (when (and x y
                (not= [x y] (get-in @state [:last-positions stage-dev])))
       (device-best-effort stage-dev (core setXYPosition stage-dev x y))
-      (swap! state assoc-in [:last-positions stage-dev] [x y])
-      (add-to-pending stage-dev))))
+      (swap! state assoc-in [:last-positions stage-dev] [x y]))))
 
 (defn set-property
   ([prop] (let [[d p v] prop]
-            (device-best-effort d (core setProperty d p v))
-            (add-to-pending d))))
+            (device-best-effort d (core setProperty d p v)))))
 
 (defn run-autofocus []
   (.. gui getAutofocusManager getDevice fullFocus)
@@ -147,15 +146,13 @@
     (let [shutter (core getShutterDevice)]
       (when open-before
         (device-best-effort shutter
-          (core setShutterOpen true)
-          (wait-for-device (core getShutterDevice))))
-      (device-best-effort (core getCameraDevice)
-        (core snapImage))
+          (core setShutterOpen true)))
+      (wait-for-pending-devices)
+      (device-best-effort (core getCameraDevice) (core snapImage))
       (swap! state assoc :last-image-time (elapsed-time @state))
       (when close-after
         (device-best-effort shutter
-          (core setShutterOpen false))
-          (wait-for-device (core getShutterDevice))))))
+          (core setShutterOpen false))))))
 
 (defn arm-property-sequences [trigger-sequence]
   (doseq [[[d p] s] trigger-sequence]
