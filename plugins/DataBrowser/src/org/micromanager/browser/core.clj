@@ -147,7 +147,7 @@
 (defn create-browser-table-model [headings]
   (proxy [AbstractTableModel] []
     (getRowCount [] (count @current-data))
-    (getColumnCount [] (if-let [cols (first @current-data)] (count cols) (count headings)))
+    (getColumnCount [] (count headings))
     (getValueAt [row column] (when (pos? (count @current-data))
                                (nth (nth @current-data row) column)))
     (getColumnName [column] (nth headings column))))
