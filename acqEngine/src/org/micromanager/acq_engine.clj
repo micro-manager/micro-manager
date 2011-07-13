@@ -221,8 +221,10 @@
     (await-resume)
     (let [now (clock-ms)
           wake-time (if (> now (+ target-time 10)) now target-time)]
-      (state-assoc! :last-wake-time wake-time
-                    :reference-z-position (get-z-stage-position (core getFocusDevice))))))
+      (state-assoc! :last-wake-time wake-time)
+      (when-not (core isContinuousFocusEnabled)
+        (state-assoc! :reference-z-position 
+                      (get-z-stage-position (core getFocusDevice)))))))
 
 ;; image metadata
 
