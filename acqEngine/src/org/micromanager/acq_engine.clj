@@ -119,13 +119,13 @@
 
 (defn set-stage-position
   ([stage-dev z]
-    (log (@state :last-positions) "," stage-dev)
+    ;(log (@state :last-positions) "," stage-dev)
     (when (not= z (get-in @state [:last-positions stage-dev]))
       (device-best-effort stage-dev (set-z-stage-position stage-dev z))
       (swap! state assoc-in [:last-positions stage-dev] z)
       (add-to-pending stage-dev)))
   ([stage-dev x y]
-    (log (@state :last-positions) "," stage-dev)
+    ;(log (@state :last-positions) "," stage-dev)
     (when (and x y
                (not= [x y] (get-in @state [:last-positions stage-dev])))
       (device-best-effort stage-dev (core setXYPosition stage-dev x y))
