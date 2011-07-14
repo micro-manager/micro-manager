@@ -281,6 +281,8 @@
                 :collect-burst (collect-burst-image)
                 :finish-burst (let [img (collect-burst-image)]
                                 (stop-trigger)
+                                (when (core isSequenceRunning)
+                                  (core stopSequenceAcquisition))
                                 img))]
     (if (core isBufferOverflowed)
       (do (swap! state assoc :stop true)
