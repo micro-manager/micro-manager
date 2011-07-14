@@ -6,7 +6,6 @@ package org.micromanager.clojureeditor;
 
 import org.micromanager.api.MMPlugin;
 import org.micromanager.api.ScriptInterface;
-import clooj.core;
 
 public class ClojureEditorPlugin implements MMPlugin {
    public static String menuName = "Clojure editor";
@@ -20,8 +19,7 @@ public class ClojureEditorPlugin implements MMPlugin {
    }
 
    public void show() {
-      
-      core.main(new String[] {""});
+      clooj.core.show();
    }
 
    public void configurationChanged() {
