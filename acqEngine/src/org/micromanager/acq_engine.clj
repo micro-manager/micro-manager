@@ -58,7 +58,7 @@
    
 (def attached-runnables (atom (vec nil)))
 
-(def pending-devices (atom nil))
+(def pending-devices (atom #{}))
 
 (defn add-to-pending [dev]
   (swap! pending-devices conj dev))
@@ -103,12 +103,15 @@
 ;; hardware control
 
 (defn wait-for-device [dev]
-  (when (and dev (pos? (.length dev)))
-    (core waitForDevice dev)))
+  (when-not (empty? dev)
+    (try
+      (core waitForDevice dev)
+      (swap! pending-devices disj dev)
+      (catch Exception e (println "wait for device" dev "failed.")))))
 
 (defn wait-for-pending-devices []
-  (dorun (map wait-for-device @pending-devices))
-  (reset! pending-devices nil))
+  (log "pending devices: " @pending-devices)
+  (dorun (map wait-for-device @pending-devices)))
 
 (defn get-z-stage-position [stage]
   (if-not (empty? stage) (core getPosition stage) 0))
@@ -162,7 +165,7 @@
 
 (defn init-burst [length trigger-sequence]
   (when trigger-sequence
-    (println trigger-sequence)
+    (log trigger-sequence)
     (arm-property-sequences trigger-sequence))
   (core setAutoShutter (@state :init-auto-shutter))
   (swap! state assoc :burst-init-time (elapsed-time @state))
