@@ -73,7 +73,16 @@ DataBrowser.jar: \
 	java -cp DataBrowser/classes/:$(CLASSEXT)/clojure.jar:$(CLASSEXT)/clojure-contrib.jar:$(IJJARPATH):../MMCoreJ_wrap/MMCoreJ.jar:../mmstudio/MMJ_.jar:$(CLASSEXT)/bsh-2.0b4.jar:../acqEngine/MMAcqEngine.jar:DataBrowser/src -Djava.awt.headless=true -Dclojure.compile.path=DataBrowser/classes -server clojure.lang.Compile org.micromanager.browser.plugin
 	jar cvf DataBrowser.jar -C DataBrowser/classes/ .
 
-all: PixelCalibrator.jar RecallPlugin.jar StageControl.jar MultiCamera.jar Big.jar ImageFlipper.jar SlideExplorer.jar DataBrowser.jar
+
+ClojureEditor.jar:  \
+	$(srcdir)/ClojureEditor/src/org/micromanager/clojureeditor/*.java
+	test -d build || mkdir build
+	rm -rf build/*
+	$(JAVAC) -source 1.5 -target 1.5 -sourcepath $(srcdir):. -classpath $(srcdir)/ClojureEditor.jar:../../3rdpartypublic/classext/clooj-0.1.0.jar:$(IJJARPATH):$(BSHJARPATH):$(COMMONSMATHJARPATH):$(SWINGLAYOUTJARPATH):../bin/MMCoreJ.jar:../mmstudio/MMJ_.jar:. $(srcdir)/ClojureEditor/src/org/micromanager/clojureeditor/*.java -d build
+	## Work around bug in 'jar': jar cf MM_.jar -C bin/ bin/* does not work
+	cd build && jar cf ../ClojureEditor.jar * 
+
+all: PixelCalibrator.jar RecallPlugin.jar StageControl.jar MultiCamera.jar Big.jar ImageFlipper.jar SlideExplorer.jar DataBrowser.jar ClojureEditor.jar
 
 install: 
 	test -d $(IJPATH)/mmplugins || mkdir $(IJPATH)/mmplugins
@@ -85,6 +94,7 @@ install:
 	cp MultiCamera.jar $(IJPATH)/mmplugins
 	cp Big.jar $(IJPATH)/mmplugins
 	cp DataBrowser.jar $(IJPATH)/mmplugins
+	cp ClojureEditor.jar $(IJPATH)/mmplugins
 	## cp ImageFlipper.jar $(IJPATH)/mmplugins
 	
 clean:
