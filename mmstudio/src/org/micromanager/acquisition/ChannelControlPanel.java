@@ -404,6 +404,13 @@ public class ChannelControlPanel extends javax.swing.JPanel {
 				// don't let pixels lying outside 3 sigma influence the automatic contrast setting
             int totalPoints =  acq_.getHyperImage().getWidth() * acq_.getHyperImage().getHeight();
             int[] histogram = acq_.getChannelHistogram(channelIndex_);
+            
+            if (histogram == null) {
+               // TODO: temporary fix - N.A.
+               ReportingUtils.logError("Unexpected null histogram encountered for channelIndex = " + channelIndex_);
+               return;
+            }
+            
             HistogramUtils hu = new HistogramUtils(histogram, totalPoints, fractionToReject_);
 				int minAfterRejectingOutliers = hu.getMinAfterRejectingOutliers();
             int maxAfterRejectingOutliers = hu.getMaxAfterRejectingOutliers();
