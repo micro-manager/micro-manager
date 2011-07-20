@@ -35,22 +35,31 @@
    #define snprintf _snprintf 
 #endif
 
-
 // declarations for the ALC library
 #include "ALC_REV.h"
 
-#include "../../MMDevice/MMDevice.h"
+//#include "MMDevice.h"
 #include "AndorLaserCombiner.h"
 #include <string>
 #include <math.h>
-#include "../../MMDevice/ModuleInterface.h"
-#include "../../MMDevice/DeviceUtils.h"
-//#include "../Utilities/CodeUtility.h"
+#include "ModuleInterface.h"
+//#include "DeviceUtils.h"
 //#include "../../MMCore/CoreUtils.h"
 #include <sstream>
 #include <iostream>
 
 #include "boost/lexical_cast.hpp"
+
+#ifndef _isnan
+  #ifdef __GNUC__
+    #include <cmath>
+    using std::isnan;
+  #elif _MSC_VER  // MSVC
+    #include <float.h>
+    #define isnan _isnan
+  #endif
+#endif
+
 
 // Controller
 const char* g_ControllerName = "AndorLaserCombiner";
@@ -371,12 +380,12 @@ void AndorLaserCombiner::GenerateALCProperties()
 		buildname.str("");
 		pAct = new CPropertyActionEx(this, &AndorLaserCombiner::OnPowerSetpoint, il);
 		buildname << g_Keyword_PowerSetpoint << Wavelength(il);
-		CreateProperty(buildname.str().c_str(), "0", MM::Integer, false, pAct);
+		CreateProperty(buildname.str().c_str(), "0", MM::Float, false, pAct);
 
-		int fullScale = PowerFullScale(il);
+		float fullScale = 10.00;
 		// set the limits as interrogated from the laser controller.
-		LogMessage("Range for " + buildname.str()+"= [0," + boost::lexical_cast<std::string,int>(fullScale) + "]", true);
-		SetPropertyLimits(buildname.str().c_str(), 0, fullScale);  // milliWatts
+		LogMessage("Range for " + buildname.str()+"= [0," + boost::lexical_cast<std::string,float>(fullScale) + "]", true);
+		SetPropertyLimits(buildname.str().c_str(), 0, fullScale);   // Volts
 
 		buildname.str("");
 		buildname << "MaximumLaserPower" << Wavelength(il);
@@ -477,10 +486,10 @@ int AndorLaserCombiner::OnPowerReadback(MM::PropertyBase* pProp, MM::ActionType 
 int AndorLaserCombiner::OnPowerSetpoint(MM::PropertyBase* pProp, MM::ActionType eAct, long  il)
 {
 
-   long powerSetpoint;
+   double powerSetpoint;
    if (eAct == MM::BeforeGet)
    {
-		powerSetpoint = (long)PowerSetpoint(il);
+		powerSetpoint = (double)PowerSetpoint(il);
 		LogMessage("from equipment: PowerSetpoint" + boost::lexical_cast<std::string, long>(Wavelength(il)) + "  = " + boost::lexical_cast<std::string,double>(powerSetpoint), true);
       pProp->Set(powerSetpoint);
    }
@@ -488,7 +497,7 @@ int AndorLaserCombiner::OnPowerSetpoint(MM::PropertyBase* pProp, MM::ActionType 
    {
       pProp->Get(powerSetpoint);
 		LogMessage("to equipment: PowerSetpoint" + boost::lexical_cast<std::string, long>(Wavelength(il)) + "  = " + boost::lexical_cast<std::string,double>(powerSetpoint), true);
-		PowerSetpoint( il, (int)powerSetpoint);
+		PowerSetpoint( il, (double)powerSetpoint);
 		if( openRequest_)
 			SetOpen();
 
@@ -758,11 +767,11 @@ int AndorLaserCombiner::SetOpen(bool open)
 	{
 		if(open)
 		{
-         int fullScale = PowerFullScale(il);
+         double fullScale = 10.00; /* Volts instead of milliWatts, and  double instead of int */
          bool onn = ( 0 < PowerSetpoint(il))  && (0. < fullScale);
          double percentScale = 0.;
          if( onn)
-            percentScale = 100.*(double)PowerSetpoint(il)/(double)fullScale;
+            percentScale = 100.*PowerSetpoint(il)/fullScale;
 
          if( 100. < percentScale )
             percentScale = 100.;
@@ -839,7 +848,7 @@ float AndorLaserCombiner::PowerReadback(const int laserIndex_a)
 {
 	double val = 0.;
 	pImpl_->pALC_REVLaser_->GetCurrentPower(laserIndex_a, &val);
-	if( _isnan(val))
+	if( isnan(val))
 	{
 		LogMessage("invalid PowerReadback on # " + boost::lexical_cast<std::string,int>(laserIndex_a), false);
 		val = 0.;
@@ -848,13 +857,13 @@ float AndorLaserCombiner::PowerReadback(const int laserIndex_a)
 }
 
 
-int AndorLaserCombiner::PowerSetpoint(const int laserIndex_a)
+float AndorLaserCombiner::PowerSetpoint(const int laserIndex_a)
 {
 	return powerSetPoint_[laserIndex_a];
 
 }
 
-void  AndorLaserCombiner::PowerSetpoint(const int laserIndex_a, const int val_a)
+void  AndorLaserCombiner::PowerSetpoint(const int laserIndex_a, const float val_a)
 {
 	powerSetPoint_[laserIndex_a] = val_a;
 }
@@ -1045,7 +1054,7 @@ float PiezoStage::PiezoRange(void)
    if( NULL != pImpl_)
    {
 	   pImpl_->pALC_REVPiezo_->GetRange(&dtmp);
-	   if( _isnan(dtmp))
+	   if( isnan(dtmp))
 	   {
 		   LogMessage("invalid PiezoRange!",  false);
 		   dtmp = 0.;
@@ -1068,7 +1077,7 @@ float PiezoStage::PiezoPosition(void)
 if( NULL != pImpl_)
 {
 	pImpl_->pALC_REVPiezo_->GetPosition(&dtmp);
-	if( _isnan(dtmp))
+	if( isnan(dtmp))
 	{
 		LogMessage("invalid PiezoPosition!" , false);
 		dtmp = 0.;

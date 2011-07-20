@@ -23,9 +23,9 @@
 #ifndef _AndorLaserCombiner_H_
 #define _AndorLaserCombiner_H_
 
-#include "../../MMDevice/MMDevice.h"
-#include "../../MMDevice/DeviceBase.h"
-#include "../../MMDevice/DeviceUtils.h"
+#include "MMDevice.h"
+#include "DeviceBase.h"
+#include "DeviceUtils.h"
 #include <string>
 //#include <iostream>
 #include <vector>
@@ -151,8 +151,8 @@ public:
 	float PowerReadback(const int laserIndex_a);
 
 	// setpoint in milliwatts
-	int PowerSetpoint(const int laserIndex_a);
-	void PowerSetpoint( const int laserIndex_a, const int);
+	float PowerSetpoint(const int laserIndex_a);
+	void PowerSetpoint( const int laserIndex_a, const float);
 
 	unsigned char DIN(void);
 	void DOUT(const unsigned char);
@@ -178,7 +178,7 @@ private:
 	ALCImpl* pImpl_;
 	int nLasers_;
 	// 1 based array
-	int powerSetPoint_[MaxLasers+1];
+	float powerSetPoint_[MaxLasers+1];
 	bool openRequest_;
 	unsigned char DOUT_;
    bool multiPortUnitPresent_;
