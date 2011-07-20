@@ -160,6 +160,8 @@ public:
    int Stop();
    int GetLimits(double& min, double& max);
 
+   bool IsContinuousFocusDrive() const {return false;}
+
    // action interface
    // ----------------
    int OnStepSize (MM::PropertyBase* pProp, MM::ActionType eAct);

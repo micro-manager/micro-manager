@@ -205,6 +205,8 @@ public:
    int Home();
    int Stop();
 
+   bool IsContinuousFocusDrive() const {return false;}
+
    int OnAcceleration(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnSpeed(MM::PropertyBase* pProp, MM::ActionType eAct);
 

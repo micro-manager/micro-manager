@@ -64,6 +64,8 @@ public:
 
    int OnPiezoRange(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnPiezoPosition(MM::PropertyBase* pProp, MM::ActionType eAct);
+ 
+   bool IsContinuousFocusDrive() const {return false;}
 
 
       // Sequence functions

@@ -435,6 +435,8 @@ public:
    }
    int Move(double /*v*/) {return DEVICE_OK;}
 
+   bool IsContinuousFocusDrive() const {return false;}
+
    // action interface
    // ----------------
    int OnPosition(MM::PropertyBase* pProp, MM::ActionType eAct);

@@ -43,12 +43,13 @@ public:
   virtual int GetLimits(double& lower, double& upper);
   int getHandle(){ return MCLhandle_;}
 
+  bool IsContinuousFocusDrive() const {return false;}
+
+
   // Action interface
   int OnPositionUm(MM::PropertyBase* pProp, MM::ActionType eAct);
   int OnSettlingTimeZMs(MM::PropertyBase* pProp, MM::ActionType eAct);
   int OnSetOrigin(MM::PropertyBase* pProp, MM::ActionType eAct);
-
-
 
 
    // Sequence functions

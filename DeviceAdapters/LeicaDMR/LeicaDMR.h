@@ -191,6 +191,8 @@ public:
    }
    int Move(double speed);
 
+   bool IsContinuousFocusDrive() const {return false;}
+
    // action interface
    // ----------------
    int OnPosition(MM::PropertyBase* pProp, MM::ActionType eAct);

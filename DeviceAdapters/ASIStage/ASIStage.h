@@ -187,6 +187,8 @@ public:
   int Calibrate();
   int GetLimits(double& min, double& max);
 
+  bool IsContinuousFocusDrive() const {return false;}
+
    // action interface
    // ----------------
    int OnPort(MM::PropertyBase* pProp, MM::ActionType eAct);

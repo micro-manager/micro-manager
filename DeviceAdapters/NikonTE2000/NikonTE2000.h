@@ -213,6 +213,8 @@ public:
       return DEVICE_OK;
    }
 
+   bool IsContinuousFocusDrive() const {return false;}
+
    // action interface
    // ----------------
    int OnPosition(MM::PropertyBase* pProp, MM::ActionType eAct);
@@ -424,6 +426,8 @@ public:
       upper = upperLimit_;
       return DEVICE_OK;
    }
+
+   bool IsContinuousFocusDrive() const {return true;}
 
    // action interface
    // ----------------

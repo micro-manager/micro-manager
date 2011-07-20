@@ -326,6 +326,7 @@ public:
    void enableContinuousFocus(bool enable) throw (CMMError);
    bool isContinuousFocusEnabled() throw (CMMError);
    bool isContinuousFocusLocked() throw (CMMError);
+   bool isContinuousFocusDrive(const char* stageLabel) throw (CMMError);
    void fullFocus() throw (CMMError);
    void incrementalFocus() throw (CMMError);
    void setAutoFocusOffset(double offset) throw (CMMError);

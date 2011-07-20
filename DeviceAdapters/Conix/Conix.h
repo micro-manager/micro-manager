@@ -200,6 +200,8 @@ public:
 	double GetStepSizeZUm() {return stepSize_um_;}
 	int Move(double /*vz*/) {return DEVICE_OK;} // ok
 
+   bool IsContinuousFocusDrive() const {return false;}
+
 	// action interface
 	// ----------------
 	int OnPort(MM::PropertyBase* pProp, MM::ActionType eAct);

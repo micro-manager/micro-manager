@@ -34,7 +34,7 @@
 // Header version
 // If any of the class declarations changes, the interface version
 // must be incremented
-#define DEVICE_INTERFACE_VERSION 41
+#define DEVICE_INTERFACE_VERSION 42
 ///////////////////////////////////////////////////////////////////////////////
 
 #pragma once
@@ -528,6 +528,9 @@ namespace MM {
       virtual int StartStageSequence() const = 0;
       virtual int StopStageSequence() const = 0;
       virtual int LoadStageSequence(std::vector<double> positions) const = 0;
+      
+      // Check if a stage has continuous focusing capability (positions can be set while continuous focus runs).
+      virtual bool IsContinuousFocusDrive() const = 0;
    };
 
    /** 

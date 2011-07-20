@@ -783,6 +783,8 @@ public:
       return DEVICE_OK;
    }
 
+   bool IsContinuousFocusDrive() const {return false;}
+
    // action interface
    // ----------------
    int OnPosition(MM::PropertyBase* pProp, MM::ActionType eAct);
@@ -934,6 +936,8 @@ public:
   int GetPositionSteps(long& steps);
   int SetOrigin();
   int GetLimits(double& min, double& max);
+
+  bool IsContinuousFocusDrive() const {return true;}
 
    // action interface
    // ----------------

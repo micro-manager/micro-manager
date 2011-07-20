@@ -4883,6 +4883,17 @@ bool CMMCore::isContinuousFocusLocked() throw (CMMError)
 }
 
 /**
+ * Check if a stage has continuous focusing capability (positions can be set while continuous focus runs).
+ */
+bool CMMCore::isContinuousFocusDrive(const char* stageLabel) throw (CMMError)
+{
+   MMThreadGuard guard(deviceLock_);
+   MM::Stage* pStage = getSpecificDevice<MM::Stage>(stageLabel);
+   return pStage->IsContinuousFocusDrive();
+}
+
+
+/**
  * Performs focus acquisition and lock for the one-shot focusing device.
  */
 void CMMCore::fullFocus() throw (CMMError)
