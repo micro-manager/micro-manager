@@ -118,7 +118,8 @@
   
 (defn set-z-stage-position [stage pos]
   (when-not (empty? stage)
-    (when (core isContinuousFocusEnabled)
+    (when (and (core isContinuousFocusEnabled)
+               (not (core isContinuousFocusDrive stage)))
       (core enableContinuousFocus false))
       (core setPosition stage pos)))
 
