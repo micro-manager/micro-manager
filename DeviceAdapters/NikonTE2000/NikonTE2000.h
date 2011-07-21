@@ -225,7 +225,9 @@ public:
    int GetStageSequenceMaxLength(long& nrEvents) const  {nrEvents = 0; return DEVICE_OK;}
    int StartStageSequence() const {return DEVICE_OK;}
    int StopStageSequence() const {return DEVICE_OK;}
-   int LoadStageSequence(std::vector<double> positions) const {return DEVICE_OK;}
+   int ClearStageSequence() {return DEVICE_OK;}
+   int AddToStageSequence(double position) {return DEVICE_OK;}
+   int SendStageSequence() const {return DEVICE_OK;}
 
 private:
    int stepSize_nm_;
@@ -439,7 +441,9 @@ public:
    int GetStageSequenceMaxLength(long& nrEvents) const  {nrEvents = 0; return DEVICE_OK;}
    int StartStageSequence() const {return DEVICE_OK;}
    int StopStageSequence() const {return DEVICE_OK;}
-   int LoadStageSequence(std::vector<double> positions) const {return DEVICE_OK;}
+   int ClearStageSequence() {return DEVICE_OK;}
+   int AddToStageSequence(double position) {return DEVICE_OK;}
+   int SendStageSequence() const {return DEVICE_OK;}
 
 private:
    double stepSize_nm_;

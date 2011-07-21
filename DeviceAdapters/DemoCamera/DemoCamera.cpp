@@ -2811,6 +2811,10 @@ int DemoDA::GetSignal(double& volts)
    return DEVICE_OK;
 }
 
+int DemoDA::SendDASequence() const {return DEVICE_OK;}
+int DemoDA::ClearDASequence() {return DEVICE_OK;}
+int DemoDA::AddToDASequence(double voltage) {return DEVICE_OK;}
+
 ///////////////////////////////////////////////////////////////////////////////
 // CDemoAutoFocus implementation
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

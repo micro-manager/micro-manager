@@ -599,23 +599,32 @@ int DAZStage::StopStageSequence() const
    return DADevice_->StopDASequence();
 }
 
-int DAZStage::LoadStageSequence(std::vector<double> positions) const 
+int DAZStage::ClearStageSequence() 
 {
+   return DADevice_->ClearDASequence();
+}
 
-   std::vector<double> volts = positions;
-   for (int i=0; i < volts.size(); i++) 
-   {
-      volts[i] = ( (positions[i] + originPos_) / (maxStagePos_ - minStagePos_)) * 
+int DAZStage::AddToStageSequence(double position) 
+{
+   double voltage;
+
+      voltage = ( (position + originPos_) / (maxStagePos_ - minStagePos_)) * 
                      (maxStageVolt_ - minStageVolt_);
-      if (volts[i] > maxStageVolt_)
-         volts[i] = maxStageVolt_;
-      else if (volts[i]  < minStageVolt_)
-         volts[i] = minStageVolt_;
-   }
-
-   return DADevice_->LoadDASequence(volts);
+      if (voltage > maxStageVolt_)
+         voltage = maxStageVolt_;
+      else if (voltage < minStageVolt_)
+         voltage = minStageVolt_;
+   
+   return DADevice_->AddToDASequence(voltage);
 
 }
+
+int DAZStage::SendStageSequence() const
+{
+   return DADevice_->SendDASequence();
+}
+
+
 
 ///////////////////////////////////////
 // Action Interface

@@ -34,7 +34,7 @@
 // Header version
 // If any of the class declarations changes, the interface version
 // must be incremented
-#define DEVICE_INTERFACE_VERSION 42
+#define DEVICE_INTERFACE_VERSION 43
 ///////////////////////////////////////////////////////////////////////////////
 
 #pragma once
@@ -527,8 +527,14 @@ namespace MM {
       virtual int GetStageSequenceMaxLength(long& nrEvents) const = 0;
       virtual int StartStageSequence() const = 0;
       virtual int StopStageSequence() const = 0;
-      virtual int LoadStageSequence(std::vector<double> positions) const = 0;
-      
+      // Remove all values in the sequence
+      virtual int ClearStageSequence() = 0;
+      // Add one value to the sequence
+      virtual int AddToStageSequence(double position) = 0;
+      // Signal that we are done sending sequence values so that the adapter can send the whole sequence to the device
+      virtual int SendStageSequence() const = 0; 
+
+
       // Check if a stage has continuous focusing capability (positions can be set while continuous focus runs).
       virtual bool IsContinuousFocusDrive() const = 0;
    };
@@ -763,7 +769,7 @@ namespace MM {
       virtual int GetLimits(double& minVolts, double& maxVolts) = 0;
 
       // Sequence functions
-      // Sequences can be used for fast acquisitions, sycnchronized by TTLs rather than
+      // Sequences can be used for fast acquisitions, synchronized by TTLs rather than
       // computer commands. 
       // Sequences of voltagess can be uploaded to the stage.  The device will cycle through
       // the uploaded list of voltages (triggered by an external trigger - most often coming 
@@ -773,7 +779,9 @@ namespace MM {
       virtual int GetDASequenceMaxLength(long& nrEvents) const = 0;
       virtual int StartDASequence() const = 0;
       virtual int StopDASequence() const = 0;
-      virtual int LoadDASequence(std::vector<double> voltages) const = 0;
+      virtual int ClearDASequence() = 0;
+      virtual int AddToDASequence(double voltage) = 0;
+      virtual int SendDASequence() const = 0;
    };
 
    /**

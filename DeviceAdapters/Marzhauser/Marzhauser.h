@@ -171,7 +171,9 @@ public:
    int GetStageSequenceMaxLength(long& nrEvents) const  {nrEvents = 0; return DEVICE_OK;}
    int StartStageSequence() const {return DEVICE_OK;}
    int StopStageSequence() const {return DEVICE_OK;}
-   int LoadStageSequence(std::vector<double> positions) const {return DEVICE_OK;}
+   int ClearStageSequence() {return DEVICE_OK;}
+   int AddToStageSequence(double position) {return DEVICE_OK;}
+   int SendStageSequence() const {return DEVICE_OK;}
 
 private:
    int GetCommand(const std::string& cmd, std::string& response);
@@ -277,7 +279,9 @@ public:
    int GetDASequenceMaxLength(long& nrEvents) const  {nrEvents = 0; return DEVICE_OK;}
    int StartDASequence() const {return DEVICE_OK;}
    int StopDASequence() const {return DEVICE_OK;}
-   int LoadDASequence(std::vector<double> voltages) const {return DEVICE_OK;}
+   int ClearDASequence() {return DEVICE_OK;}
+   int AddToDASequence(double voltage) {return DEVICE_OK;}
+   int SendDASequence() const {return DEVICE_OK;}
 
 
 private:
@@ -323,7 +327,9 @@ public:
    int GetDASequenceMaxLength(long& nrEvents) const  {nrEvents = 0; return DEVICE_OK;}
    int StartDASequence() const {return DEVICE_OK;}
    int StopDASequence() const {return DEVICE_OK;}
-   int LoadDASequence(std::vector<double> voltages) const {return DEVICE_OK;}
+   int ClearDASequence() {return DEVICE_OK;}
+   int AddToDASequence(double voltage) {return DEVICE_OK;}
+   int SendDASequence() const {return DEVICE_OK;}
 
 private:
    int ADCPort_;
