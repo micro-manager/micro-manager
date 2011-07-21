@@ -329,12 +329,13 @@
 %}
 
 %typemap(javacode) CMMCore %{
-   private JSONObject metadataToMap(Metadata md) {
+    private JSONObject metadataToMap(Metadata md) {
       JSONObject tags = new JSONObject();
-      for (String key:md.getFrameKeys())
-         try {
-            tags.put(key,md.get(key));
-         } catch (Exception e) {} // Ignore	
+	  for (String key:md.GetKeys()) {
+	    try {
+			tags.put(key, md.GetSingleTag(key).GetValue());
+	    } catch (Exception e) {} 
+	  }
       return tags;
     }
 

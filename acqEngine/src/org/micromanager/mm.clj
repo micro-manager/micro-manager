@@ -150,9 +150,9 @@
     (flatten (map seq r))))
 
 (defn parse-core-metadata [^Metadata m]
-  (let [ks (seq (.. m getFrameKeys toArray))
-        fd (. m getFrameData)]
-    (zipmap ks (map #(.get fd %) ks))))
+  (into {}
+    (for [k (seq (.GetKeys m))]
+      [k (.. m (GetSingleTag k) GetValue)])))
 
 (defn reload-device [dev]
   (when (. gui getAutoreloadOption)

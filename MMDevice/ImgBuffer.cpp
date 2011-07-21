@@ -147,7 +147,6 @@ void ImgBuffer::SetMetadata(const Metadata& md)
    // issues accross the DLL boundary (on Windows)
    // TODO: this is inefficient and should be revised
     metadata_.Restore(md.Serialize().c_str());
-    metadata_.frameData = md.frameData;
 }
 
 

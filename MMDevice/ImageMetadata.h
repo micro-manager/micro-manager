@@ -91,6 +91,16 @@ public:
 
    const std::string& GetDevice() const {return deviceLabel_;}
    const std::string& GetName() const {return name_;}
+   const std::string GetQualifiedName() const
+   {
+      std::stringstream os;
+      if (deviceLabel_.compare("_") != 0)
+      {
+         os << deviceLabel_ << "-";
+      }
+      os << name_;
+      return os.str();
+   }
    const bool IsReadOnly() const  {return readOnly_;}
 
    void SetDevice(const char* device) {deviceLabel_ = device;}
@@ -298,12 +308,43 @@ public:
       MetadataTag* newTag = tag.Clone();
 
       // delete existing tag with the same key (if any)
-      TagIterator it = tags_.find(tag.GetName());
+      TagIterator it = tags_.find(tag.GetQualifiedName());
       if (it != tags_.end())
          delete it->second;
 
       // assing a new tag
-      tags_[tag.GetName()] = newTag;
+      tags_[tag.GetQualifiedName()] = newTag;
+   }
+
+   /*
+    * Convenience method to add a MetadataSingleTag
+    */
+   template <class anytype>
+   void PutTag(std::string key, std::string deviceLabel, anytype value)
+   {
+      std::stringstream os;
+      os << value;
+      MetadataSingleTag tag = MetadataSingleTag(key.c_str(), deviceLabel.c_str(), true);
+      tag.SetValue(os.str().c_str());
+      SetTag(tag);
+   }
+
+   /*
+    * Add a tag not associated with any device.
+    */
+   template <class anytype>
+   void PutImageTag(std::string key, anytype value)
+   {
+      PutTag(key, "_", value);
+   }
+
+   /*
+    * Deprecated name. Equivalent to PutImageTag.
+    */
+   template <class anytype>
+   void put(std::string key, anytype value)
+   {
+      PutImageTag(key, value);
    }
 
    Metadata& operator=(const Metadata& rhs)
@@ -314,8 +355,6 @@ public:
       {
          SetTag(*it->second);
       }
-
-      frameData = rhs.frameData;
 
       return *this;
    }
@@ -382,7 +421,7 @@ public:
             ms.SetValue(strVal.c_str());
 
             MetadataTag* newTag = ms.Clone();
-            tags_[ms.GetName()] = newTag;
+            tags_[ms.GetQualifiedName()] = newTag;
          }
          else if (id.compare("a") == 0)
          {
@@ -406,7 +445,7 @@ public:
             }
 
             MetadataTag* newTag = as.Clone();
-            tags_[as.GetName()] = newTag;
+            tags_[as.GetQualifiedName()] = newTag;
          }
          else
          {
@@ -432,98 +471,6 @@ public:
 
       return os.str();
    }
-
-
-   std::string get(std::string key)
-   {
-      return frameData[key];
-   }
-
-   template <class anytype>
-   void put(std::string key, anytype value)
-   {
-      std::stringstream os;
-      os << value;
-      frameData[key] = os.str();
-   }
-
-
-
-   bool has(std::string key)
-   {
-      return (frameData.end() != frameData.find(key));
-   }
-
-   std::vector<std::string> getFrameKeys()
-   {
-      std::pair<std::string,std::string> p;
-      std::vector<std::string> keys;
-      for( std::map<std::string,std::string>::iterator ii = frameData.begin(); ii !=frameData.end(); ++ii)
-      {
-         keys.push_back((*ii).first);
-      }
-      
-/*
-      BOOST_FOREACH(p,frameData)
-      {
-         keys.push_back(p.first);
-      }
-      */
-
-
-      return keys;
-
-   }
-
-   int getIntProperty(const char * key)
-   {
-      return atoi(frameData[key].c_str());
-   }
-
-   int getWidth()
-   {
-      return getIntProperty("Width");
-   }
-
-   int getHeight()
-   {
-      return getIntProperty("Height");
-   }
-
-   int getFrame()
-   {
-      return getIntProperty("Frame");
-   }
-
-   int getSlice()
-   {
-      return getIntProperty("Slice");
-   }
-
-   int getPositionIndex()
-   {
-      return getIntProperty("Position");
-   }
-
-   std::string getPositionName()
-   {
-      if (has("PositionName"))
-         return get("PositionName");
-      else
-         return "";
-   }
-
-   int getChannelIndex()
-   {
-      return getIntProperty("ChannelIndex");
-   }
-
-   std::string getChannel()
-   {
-      return frameData["Channel"];
-   }
-
-   std::map<std::string,std::string> frameData;
 
 private:
    MetadataTag* FindTag(const char* key) const
