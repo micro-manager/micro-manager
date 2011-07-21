@@ -151,7 +151,7 @@
 
 (defn parse-core-metadata [^Metadata m]
   (into {}
-    (for [k (seq (.GetKeys m))]
+    (for [k (.GetKeys m)]
       [k (.. m (GetSingleTag k) GetValue)])))
 
 (defn reload-device [dev]
