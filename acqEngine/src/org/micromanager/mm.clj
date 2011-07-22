@@ -253,10 +253,3 @@
     (doseq [item doubles]
       (.add v item))
     v))
-
-(defn test-z-sequence []
-  (let [cam (core getCameraDevice)
-        z (core getFocusDevice)]
-    (core setProperty cam "TriggerDevice" "D-DA")
-    (core loadStageSequence z (double-vector (range 10 190 20)))
-    (core startStageSequence z)))

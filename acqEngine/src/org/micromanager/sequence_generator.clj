@@ -54,7 +54,6 @@
     (apply == (map :exposure channels))
     (apply = (map :z-offset channels))))
 
-
 (defn select-triggerable-sequences [property-sequences]
   (into (sorted-map)
     (filter #(let [[[d p] _] %]
@@ -313,6 +312,14 @@
 
 
 ; Testing:
+
+
+(defn test-z-sequence []
+  (let [cam (core getCameraDevice)
+        z (core getFocusDevice)]
+    (core setProperty cam "TriggerDevice" "D-DA")
+    (core loadStageSequence z (org.micromanager.mm/double-vector (range 0 210 20)))
+    (core startStageSequence z)))
 
 (def my-channels
   [(struct channel "Cy3" 100 0 true 0)
