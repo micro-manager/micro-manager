@@ -137,12 +137,16 @@ public:
 
    // continous acquisition support
    int InsertImage(const MM::Device* caller, const ImgBuffer& imgBuf);
-   int InsertImage(const MM::Device* caller, const unsigned char* buf, unsigned width, unsigned height, unsigned byteDepth, const Metadata* pMd = 0, const bool doProcess = true);
    int InsertImage(const MM::Device* caller, const unsigned char* buf, unsigned width, unsigned height, unsigned byteDepth, const char* serializedMetadata, const bool doProcess = true);
+
+   /*Deprecated*/ int InsertImage(const MM::Device* caller, const unsigned char* buf, unsigned width, unsigned height, unsigned byteDepth, const Metadata* pMd = 0, const bool doProcess = true);
+
    int InsertMultiChannel(const MM::Device* caller, const unsigned char* buf, unsigned numChannels, unsigned width, unsigned height, unsigned byteDepth, Metadata* pMd = 0);
    void SetAcqStatus(const MM::Device* caller, int statusCode);
    void ClearImageBuffer(const MM::Device* caller);
    bool InitializeImageBuffer(unsigned channels, unsigned slices, unsigned int w, unsigned int h, unsigned int pixDepth);
+
+
 
    int OpenFrame(const MM::Device* caller);
    int CloseFrame(const MM::Device* caller);
