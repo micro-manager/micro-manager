@@ -35,6 +35,13 @@
 #include "boost/date_time/posix_time/posix_time.hpp"
 
 
+int CoreCallback::InsertImage(const MM::Device* caller, const unsigned char* buf, unsigned width, unsigned height, unsigned byteDepth, const char* serializedMetadata, const bool doProcess)
+{
+   Metadata md;
+   md.Restore(serializedMetadata);
+   return InsertImage(caller, buf, width, height, byteDepth, &md, doProcess);
+}
+
 
 int CoreCallback::InsertImage(const MM::Device* caller, const unsigned char* buf, unsigned width, unsigned height, unsigned byteDepth, const Metadata* pMd, bool doProcess)
 {

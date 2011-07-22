@@ -871,7 +871,8 @@ int CDemoCamera::InsertImage()
       // do not stop on overflow - just reset the buffer
       GetCoreCallback()->ClearImageBuffer(this);
       // don't process this same image again...
-      return GetCoreCallback()->InsertImage(this, pI, w, h, b, &md, false);
+//      return GetCoreCallback()->InsertImage(this, pI, w, h, b, &md, false);
+      return GetCoreCallback()->InsertImage(this, pI, w, h, b, md.Serialize().c_str(), false);
    } else
       return ret;
 }

@@ -1245,12 +1245,16 @@ public:
       this->GetLabel(label);
       Metadata md;
       md.put("Camera", label);
-      int ret = GetCoreCallback()->InsertImage(this, GetImageBuffer(), GetImageWidth(), GetImageHeight(), GetImageBytesPerPixel(), &md);
+      int ret = GetCoreCallback()->InsertImage(this, GetImageBuffer(), GetImageWidth(),
+                                                     GetImageHeight(), GetImageBytesPerPixel(),
+                                                     md.Serialize().c_str());
       if (!stopOnOverflow_ && ret == DEVICE_BUFFER_OVERFLOW)
       {
          // do not stop on overflow - just reset the buffer
          GetCoreCallback()->ClearImageBuffer(this);
-         return GetCoreCallback()->InsertImage(this, GetImageBuffer(), GetImageWidth(), GetImageHeight(), GetImageBytesPerPixel(), &md);
+         return GetCoreCallback()->InsertImage(this, GetImageBuffer(), GetImageWidth(),
+                                                     GetImageHeight(), GetImageBytesPerPixel(),
+                                                     md.Serialize().c_str());
       } else
          return ret;
    }

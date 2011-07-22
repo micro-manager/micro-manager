@@ -3855,7 +3855,7 @@ int AndorCamera::OnSpuriousNoiseFilter(MM::PropertyBase* pProp, MM::ActionType e
          width,
          height,
          bytesPerPixel,
-         &md);
+         md.Serialize().c_str());
 
       if (!stopOnOverflow_ && retCode == DEVICE_BUFFER_OVERFLOW)
       {
@@ -3865,7 +3865,7 @@ int AndorCamera::OnSpuriousNoiseFilter(MM::PropertyBase* pProp, MM::ActionType e
             GetImageWidth(),
             GetImageHeight(),
             GetImageBytesPerPixel(),
-            &md);
+            md.Serialize().c_str());
       } else
          return DEVICE_OK;
    }
