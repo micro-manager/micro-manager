@@ -16,7 +16,7 @@
 (ns org.micromanager.mm
   (:import [org.micromanager MMStudioMainFrame]
            [org.micromanager.navigation MultiStagePosition]
-           [mmcorej Configuration Metadata StrVector]
+           [mmcorej Configuration DoubleVector Metadata StrVector]
            [org.json JSONArray JSONObject]
            [java.text SimpleDateFormat]
            [org.micromanager.navigation MultiStagePosition StagePosition]
@@ -247,3 +247,16 @@
     (doseq [item str-seq]
       (.add v item))
     v))
+
+(defn double-vector [doubles]
+  (let [v (DoubleVector.)]
+    (doseq [item doubles]
+      (.add v item))
+    v))
+
+(defn test-z-sequence []
+  (let [cam (core getCameraDevice)
+        z (core getFocusDevice)]
+    (core setProperty cam "TriggerDevice" "D-DA")
+    (core loadStageSequence z (double-vector (range 10 190 20)))
+    (core startStageSequence z)))

@@ -699,13 +699,7 @@ public:
       minVolts=0.0; maxVolts= 10.0; return DEVICE_OK;
    }
    bool Busy() {return false;}
-   int Initialize()
-   {
-      if (g_hub && g_hub->GenerateRandomError())
-         return SIMULATED_ERROR;
-
-      return DEVICE_OK;
-   }
+   int Initialize();
 
    // Sequence functions
    int IsDASequenceable(bool& isSequenceable) const
@@ -713,38 +707,52 @@ public:
       if (g_hub && g_hub->GenerateRandomError())
          return SIMULATED_ERROR;
 
-      isSequenceable = false; return DEVICE_OK;
+      isSequenceable = true;
+      return DEVICE_OK;
    }
    int GetDASequenceMaxLength(long& nrEvents) const 
    {
       if (g_hub && g_hub->GenerateRandomError())
          return SIMULATED_ERROR;
 
-      nrEvents = 0; return DEVICE_OK;
+      nrEvents = 256;
+      return DEVICE_OK;
    }
    int StartDASequence() const
    {
       if (g_hub && g_hub->GenerateRandomError())
          return SIMULATED_ERROR;
 
+      (const_cast<DemoDA *>(this))->SetSequenceStateOn();
       return DEVICE_OK;
    }
    int StopDASequence() const
    {
       if (g_hub && g_hub->GenerateRandomError())
          return SIMULATED_ERROR;
-
+   
+      (const_cast<DemoDA *>(this))->SetSequenceStateOff();
       return DEVICE_OK;
    }
    int SendDASequence() const;
    int ClearDASequence();
    int AddToDASequence(double voltage);
 
+   int DemoDA::OnTrigger(MM::PropertyBase* pProp, MM::ActionType eAct);
 
 private:
    double volt_;
    double gatedVolts_;
    bool open_;
+   std::vector<double> nascentSequence_;
+   std::vector<double> sentSequence_;
+   long sequenceIndex_;
+   bool sequenceRunning_;
+
+   void DemoDA::SetSequenceStateOn() { sequenceRunning_ = true; }
+   void DemoDA::SetSequenceStateOff() { sequenceRunning_ = false; sequenceIndex_ = 0; }
+
+   void DemoDA::SetSentSequence();
 };
 
 

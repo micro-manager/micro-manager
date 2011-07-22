@@ -1467,6 +1467,107 @@ void CMMCore::setAdapterOriginXY(const char* deviceName, double x, double y) thr
    CORE_LOG3("Stage %s's current position was set as %.2f,%.2f um.\n", deviceName, x, y);
 }
 
+
+/**
+ * Queries stage if it can be used in a sequence
+ * @param deviceName - device label
+ */
+bool CMMCore::isStageSequenceable(const char* deviceName) const throw (CMMError)
+{
+   MMThreadGuard guard(deviceLock_);
+
+   MM::Stage* pStage = getSpecificDevice<MM::Stage>(deviceName);
+
+   bool isSequenceable;
+   int ret = pStage->IsStageSequenceable(isSequenceable);
+   if (ret != DEVICE_OK)
+      throw CMMError(deviceName, getDeviceErrorText(ret, pStage).c_str(), MMERR_DEVICE_GENERIC);
+
+   return isSequenceable;
+   
+}
+
+
+/**
+ * Starts an ongoing sequence of triggered events in a stage
+ * This should only be called for stages
+ * @param label - deviceName
+ */
+void CMMCore::startStageSequence(const char* label) const throw (CMMError)
+{
+   MMThreadGuard guard(deviceLock_);
+
+   MM::Stage* pDevice = getSpecificDevice<MM::Stage>(label);
+
+   int ret = pDevice->StartStageSequence();
+   if (ret != DEVICE_OK)
+      throw CMMError(label, getDeviceErrorText(ret, pDevice).c_str(), MMERR_DEVICE_GENERIC);
+   
+}
+
+/**
+ * Stops an ongoing sequence of triggered events in a stage
+ * This should only be called for stages that are sequenceable
+ * @param label - deviceName
+ */
+void CMMCore::stopStageSequence(const char* label) const throw (CMMError)
+{
+   MMThreadGuard guard(deviceLock_);
+
+   MM::Stage* pDevice = getSpecificDevice<MM::Stage>(label);
+
+   int ret = pDevice->StopStageSequence();
+   if (ret != DEVICE_OK)
+      throw CMMError(label, getDeviceErrorText(ret, pDevice).c_str(), MMERR_DEVICE_GENERIC);
+
+}
+
+/**
+ * Gets the maximum length of a stage's position sequence.
+ * This should only be called for stages that are sequenceable
+ * @param label - deviceName
+ */
+long CMMCore::getStageSequenceMaxLength(const char* label) const throw (CMMError)
+{
+   MMThreadGuard guard(deviceLock_);
+
+   MM::Stage* pDevice = getSpecificDevice<MM::Stage>(label);
+   long length;
+   int ret = pDevice->GetStageSequenceMaxLength(length);
+   if (ret != DEVICE_OK)
+      throw CMMError(label, getDeviceErrorText(ret, pDevice).c_str(), MMERR_DEVICE_GENERIC);
+
+   return length;
+}
+
+/**
+ * Transfer a sequence of events/states/whatever to the device
+ * This should only be called for device-properties that are sequenceable
+ * @param label - deviceName
+ * @param positionSequence - sequence of positions that the stage will execute in reponse to external triggers
+ */
+void CMMCore::loadStageSequence(const char* label, std::vector<double> positionSequence) const throw (CMMError)
+{
+   MMThreadGuard guard(deviceLock_);
+
+   MM::Stage* pDevice = getSpecificDevice<MM::Stage>(label);
+   
+   int ret;
+   std::vector<double>::iterator it;
+   for ( it=positionSequence.begin() ; it < positionSequence.end(); it++ )
+   {
+      ret = pDevice->AddToStageSequence(*it);
+      if (ret != DEVICE_OK)
+         throw CMMError(label, getDeviceErrorText(ret, pDevice).c_str(), MMERR_DEVICE_GENERIC);
+   }
+
+   ret = pDevice->SendStageSequence();
+   if (ret != DEVICE_OK)
+      throw CMMError(label, getDeviceErrorText(ret, pDevice).c_str(), MMERR_DEVICE_GENERIC);
+  
+}
+
+
 /**
  * Acquires a single image with current settings.
  * Snap is not allowed while the acquisition thread is run

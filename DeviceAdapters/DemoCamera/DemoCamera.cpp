@@ -2761,11 +2761,29 @@ int DemoMagnifier::OnHighMag(MM::PropertyBase* pProp, MM::ActionType eAct)
 DemoDA::DemoDA () : 
 volt_(0), 
 gatedVolts_(0), 
-open_(true) 
+open_(true),
+sequenceRunning_(false),
+sequenceIndex_(0),
+sentSequence_(vector<double>()),
+nascentSequence_(vector<double>())
 {
 }
 
 DemoDA::~DemoDA() {
+}
+
+int DemoDA::Initialize()
+{
+   if (g_hub && g_hub->GenerateRandomError())
+      return SIMULATED_ERROR;
+
+   // Triggers to test sequence capabilities
+   CPropertyAction* pAct = new CPropertyAction (this, &DemoDA::OnTrigger);
+   CreateProperty("Trigger", "-", MM::String, false, pAct);
+   AddAllowedValue("Trigger", "-");
+   AddAllowedValue("Trigger", "+");
+
+   return DEVICE_OK;
 }
 
 int DemoDA::SetGateOpen(bool open) 
@@ -2798,7 +2816,9 @@ int DemoDA::SetSignal(double volts) {
    volt_ = volts; 
    if (open_)
       gatedVolts_ = volts;
-
+   stringstream s;
+   s << "Voltage set to " << volts;
+   LogMessage(s.str(), false);
    return DEVICE_OK;
 }
 
@@ -2811,9 +2831,69 @@ int DemoDA::GetSignal(double& volts)
    return DEVICE_OK;
 }
 
-int DemoDA::SendDASequence() const {return DEVICE_OK;}
-int DemoDA::ClearDASequence() {return DEVICE_OK;}
-int DemoDA::AddToDASequence(double voltage) {return DEVICE_OK;}
+int DemoDA::SendDASequence() const
+{
+   if (g_hub && g_hub->GenerateRandomError())
+      return SIMULATED_ERROR;
+
+   (const_cast<DemoDA*> (this))->SetSentSequence();
+   return DEVICE_OK;
+}
+
+// private
+void DemoDA::SetSentSequence()
+{
+   sentSequence_ = nascentSequence_;
+}
+
+int DemoDA::ClearDASequence()
+{
+   if (g_hub && g_hub->GenerateRandomError())
+      return SIMULATED_ERROR;
+
+   nascentSequence_.clear();
+   return DEVICE_OK;
+}
+
+int DemoDA::AddToDASequence(double voltage) {
+   if (g_hub && g_hub->GenerateRandomError())
+      return SIMULATED_ERROR;
+
+   nascentSequence_.push_back(voltage);
+   return DEVICE_OK;
+}
+
+int DemoDA::OnTrigger(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   if (g_hub && g_hub->GenerateRandomError())
+      return SIMULATED_ERROR;
+
+   if (eAct == MM::BeforeGet)
+   {
+      pProp->Set("-");
+   } else if (eAct == MM::AfterSet) {
+      if (!sequenceRunning_)
+         return ERR_SEQUENCE_INACTIVE;
+      std::string tr;
+      pProp->Get(tr);
+      if (tr == "+") {
+         if (sequenceIndex_ < (int) sentSequence_.size()) {
+           double voltage = sentSequence_[sequenceIndex_];
+            int ret = SetSignal(voltage);
+            if (ret != DEVICE_OK)
+               return ERR_IN_SEQUENCE;
+            sequenceIndex_++;
+            if (sequenceIndex_ >= (int) sentSequence_.size()) {
+               sequenceIndex_ = 0;
+            }
+         } else
+         {
+            return ERR_IN_SEQUENCE;
+         }
+      }
+   }
+   return DEVICE_OK;
+}
 
 ///////////////////////////////////////////////////////////////////////////////
 // CDemoAutoFocus implementation
