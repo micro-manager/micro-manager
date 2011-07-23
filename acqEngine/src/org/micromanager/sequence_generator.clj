@@ -53,7 +53,7 @@
                  (apply = s)))))
     (apply == (map :exposure channels))
     (apply = (map :z-offset channels))))
-
+ 
 (defn select-triggerable-sequences [property-sequences]
   (into (sorted-map)
     (filter #(let [[[d p] _] %]
@@ -144,15 +144,18 @@
         c2 (:channel e2)
         p1 (:properties c1)
         p2 (:properties c2)]
-    (channels-sequenceable
-      (make-property-sequences [p1 p2])
-      [c1 c2])))
+    (and
+      (channels-sequenceable
+        (make-property-sequences [p1 p2])
+        [c1 c2])
+      (or (core isStageSequenceable (core getFocusDevice))
+          (= (e1 :slice) (e2 :slice))))))
 
 (defn burst-valid [e1 e2]
   (and
     (let [wait-time (:wait-time-ms e2)]
       (or (nil? wait-time) (>= (:exposure e2) wait-time)))
-    (select-values-match? e1 e2 [:exposure :position :slice])
+    (select-values-match? e1 e2 [:exposure :position])
     (event-triggerable e1 e2)
     (not (:autofocus e2))))
         
