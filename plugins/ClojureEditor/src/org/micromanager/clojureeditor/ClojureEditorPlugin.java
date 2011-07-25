@@ -19,7 +19,8 @@ public class ClojureEditorPlugin implements MMPlugin {
    }
 
    public void show() {
-      clooj.core.show();
+      // this line does not compile:
+      //clooj.core.show();
    }
 
    public void configurationChanged() {
