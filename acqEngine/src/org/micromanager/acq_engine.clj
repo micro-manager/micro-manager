@@ -162,7 +162,7 @@
 
 (defn arm-property-sequences [property-sequences]
   (doseq [[[d p] s] property-sequences]
-    (println (seq (str-vector s)))
+    (log "property sequence:" (seq (str-vector s)))
     (core loadPropertySequence d p (str-vector s))
     (core startPropertySequence d p)
     (swap! active-property-sequences conj [d p])))
@@ -173,7 +173,7 @@
       (let [delta-z (- (get-in @state [:last-positions z])
                        (first slice-sequence))
             adjusted-slices (map #(+ delta-z %) slice-sequence)]
-        (println "adjusted-slices: " adjusted-slices)
+        (log "adjusted-slices: " adjusted-slices)
         (core loadStageSequence z (double-vector adjusted-slices))
         (core startStageSequence z)
         (reset! active-slice-sequence z)))))

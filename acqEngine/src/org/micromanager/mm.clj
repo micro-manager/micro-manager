@@ -50,7 +50,7 @@
       [(keyword (.getName f)) (.get f obj)])))
 
 (defn log [& x]
-  (.logMessage mmc (apply str x) true))
+  (.logMessage mmc (apply pr-str x) true))
 
 (defmacro log-cmd
   ([cmd-count expr]
