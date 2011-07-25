@@ -23,7 +23,7 @@
            json-to-data get-pixel-type get-msp-z-position set-msp-z-position
            get-msp MultiStagePosition-to-map ChannelSpec-to-map
            get-pixel-type get-current-time-str rekey
-           data-object-to-map str-vector]]
+           data-object-to-map str-vector double-vector]]
         [org.micromanager.sequence-generator :only [generate-acq-sequence
                                                     make-property-sequences]])
   (:import [org.micromanager AcqControlDlg]
@@ -64,6 +64,8 @@
   (swap! pending-devices conj dev))
 
 (def active-property-sequences (atom (set nil)))
+
+(def active-slice-sequence (atom nil))
 
 ;; time
 
@@ -158,16 +160,29 @@
         (device-best-effort shutter
           (core setShutterOpen false))))))
 
-(defn arm-property-sequences [trigger-sequence]
-  (doseq [[[d p] s] trigger-sequence]
+(defn arm-property-sequences [property-sequences]
+  (doseq [[[d p] s] property-sequences]
+    (println (seq (str-vector s)))
     (core loadPropertySequence d p (str-vector s))
     (core startPropertySequence d p)
     (swap! active-property-sequences conj [d p])))
 
+(defn arm-slice-sequence [slice-sequence]
+  (let [z (core getFocusDevice)]
+    (when slice-sequence
+      (let [delta-z (- (get-in @state [:last-positions z])
+                       (first slice-sequence))
+            adjusted-slices (map #(+ delta-z %) slice-sequence)]
+        (println "adjusted-slices: " adjusted-slices)
+        (core loadStageSequence z (double-vector adjusted-slices))
+        (core startStageSequence z)
+        (reset! active-slice-sequence z)))))
+
 (defn init-burst [length trigger-sequence]
   (when trigger-sequence
     (log trigger-sequence)
-    (arm-property-sequences trigger-sequence))
+    (arm-property-sequences (trigger-sequence :properties))
+    (arm-slice-sequence (trigger-sequence :slices)))
   (core setAutoShutter (@state :init-auto-shutter))
   (swap! state assoc :burst-init-time (elapsed-time @state))
   (core startSequenceAcquisition length 0 true))
@@ -197,7 +212,10 @@
 (defn stop-trigger []
   (doseq [[d p] @active-property-sequences]
     (core stopPropertySequence d p)
-    (swap! active-property-sequences disj [d p])))
+    (swap! active-property-sequences disj [d p]))
+  (when @active-slice-sequence
+    (core stopStageSequence @active-slice-sequence)
+    (reset! active-slice-sequence nil)))
 
 ;; sleeping
 

@@ -2845,6 +2845,7 @@ int DemoDA::SendDASequence() const
 void DemoDA::SetSentSequence()
 {
    sentSequence_ = nascentSequence_;
+   nascentSequence_.clear();
 }
 
 int DemoDA::ClearDASequence()

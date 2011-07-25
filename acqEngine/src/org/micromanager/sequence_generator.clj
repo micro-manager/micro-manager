@@ -51,8 +51,9 @@
            (for [[[d p] s] property-sequences]
              (or (core isPropertySequenceable d p)
                  (apply = s)))))
-    (apply == (map :exposure channels))
-    (apply = (map :z-offset channels))))
+    (when-not (empty? channels)
+      (apply = (map :exposure channels))
+      (apply = (map :z-offset channels)))))
  
 (defn select-triggerable-sequences [property-sequences]
   (into (sorted-map)
@@ -161,7 +162,8 @@
         
 (defn make-triggers [events]
   (let [props (map #(-> % :channel :properties) events)]
-    (-> props make-property-sequences select-triggerable-sequences)))
+    {:properties (-> props make-property-sequences select-triggerable-sequences)
+     :slices (when (-> events first :slice) (map :slice events))}))
 
 (defn make-bursts [events]
   (let [e1 (first events)
@@ -287,7 +289,8 @@
                (>= autofocus-skip (dec numFrames)))
            (zero? (count runnables))
            (> default-exposure interval-ms))
-             (let [triggers (select-triggerable-sequences property-sequences)]
+             (let [triggers 
+                   {:properties (select-triggerable-sequences property-sequences)}]
                (if (< 1 num-positions)
                  (generate-multiposition-bursts
                    positions numFrames use-autofocus channels
