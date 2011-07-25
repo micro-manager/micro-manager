@@ -90,7 +90,7 @@ public class LiveAcqDisplay extends Thread {
                ReportingUtils.logError(ex2);
             }
             long t2 = System.currentTimeMillis();
-            ReportingUtils.logMessage(imageCount + " images displayed in " + (t2 - t1) + " ms.");
+            ReportingUtils.logMessage(imageCount + " images saved in " + (t2 - t1) + " ms.");
             cleanup();
          }
       };
@@ -118,7 +118,6 @@ public class LiveAcqDisplay extends Thread {
                ReportingUtils.logError(ex2);
             }
             long t2 = System.currentTimeMillis();
-            ReportingUtils.logMessage(imageCount + " images saved in " + (t2 - t1) + " ms.");
          }
       };
       displayThread.start();
