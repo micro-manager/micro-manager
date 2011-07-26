@@ -78,7 +78,7 @@ ClojureEditor.jar:  \
 	$(srcdir)/ClojureEditor/src/org/micromanager/clojureeditor/*.java
 	test -d build || mkdir build
 	rm -rf build/*
-	$(JAVAC) -source 1.5 -target 1.5 -sourcepath $(srcdir):. -classpath $(srcdir)/ClojureEditor.jar:../../3rdpartypublic/classext/clooj-0.1.0.jar:$(IJJARPATH):$(BSHJARPATH):$(COMMONSMATHJARPATH):$(SWINGLAYOUTJARPATH):../bin/MMCoreJ.jar:../mmstudio/MMJ_.jar:. $(srcdir)/ClojureEditor/src/org/micromanager/clojureeditor/*.java -d build
+	$(JAVAC) -source 1.5 -target 1.5 -sourcepath $(srcdir):. -classpath $(srcdir)/ClojureEditor.jar:../../3rdpartypublic/classext/clooj-0.1.2.jar:$(IJJARPATH):$(BSHJARPATH):$(COMMONSMATHJARPATH):$(SWINGLAYOUTJARPATH):../bin/MMCoreJ.jar:../mmstudio/MMJ_.jar:. $(srcdir)/ClojureEditor/src/org/micromanager/clojureeditor/*.java -d build
 	## Work around bug in 'jar': jar cf MM_.jar -C bin/ bin/* does not work
 	cd build && jar cf ../ClojureEditor.jar * 
 
