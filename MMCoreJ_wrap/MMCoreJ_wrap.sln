@@ -173,6 +173,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Stradus", "..\DeviceAdapter
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ThorlabsDCxxxx", "..\DeviceAdapters\ThorlabsDCxxxx\ThorlabsDCxxxx.vcproj", "{DEE8AF34-2F99-4AA8-AFDA-948DE44F1DB2}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "AndorSDK3", "..\DeviceAdapters\AndorSDK3\AndorSDK3.vcproj", "{A9E3F2DD-8B71-4FA3-9AFE-DC2040D2CDDD}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
@@ -821,6 +823,14 @@ Global
 		{DEE8AF34-2F99-4AA8-AFDA-948DE44F1DB2}.Release|Win32.ActiveCfg = Release|Win32
 		{DEE8AF34-2F99-4AA8-AFDA-948DE44F1DB2}.Release|Win32.Build.0 = Release|Win32
 		{DEE8AF34-2F99-4AA8-AFDA-948DE44F1DB2}.Release|x64.ActiveCfg = Release|Win32
+		{A9E3F2DD-8B71-4FA3-9AFE-DC2040D2CDDD}.Debug|Win32.ActiveCfg = Debug|Win32
+		{A9E3F2DD-8B71-4FA3-9AFE-DC2040D2CDDD}.Debug|Win32.Build.0 = Debug|Win32
+		{A9E3F2DD-8B71-4FA3-9AFE-DC2040D2CDDD}.Debug|x64.ActiveCfg = Debug|x64
+		{A9E3F2DD-8B71-4FA3-9AFE-DC2040D2CDDD}.Debug|x64.Build.0 = Debug|x64
+		{A9E3F2DD-8B71-4FA3-9AFE-DC2040D2CDDD}.Release|Win32.ActiveCfg = Release|Win32
+		{A9E3F2DD-8B71-4FA3-9AFE-DC2040D2CDDD}.Release|Win32.Build.0 = Release|Win32
+		{A9E3F2DD-8B71-4FA3-9AFE-DC2040D2CDDD}.Release|x64.ActiveCfg = Release|x64
+		{A9E3F2DD-8B71-4FA3-9AFE-DC2040D2CDDD}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
