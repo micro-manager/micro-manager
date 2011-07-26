@@ -719,6 +719,12 @@ int CCameraAdapter::Initialize()
    s_unLogCallbackEnd = piulCombineLogItems( s_unLogCallbackFrame, s_unLogCallbackTrace );
    s_unLogCallbackBegin = piulCombineLogItems( s_unLogCallbackEnd, s_unLogCallbacks );
 
+  /*******************************************************
+   *
+   * DO NOT INITIALIZE THESE PROPERTIES.
+   *
+   * THE API WILL INITIALIZE THESE WHEN IT IS READY.
+   *
    // initialize image buffer
    piulLogMessage( m_sMyName, s_unLogConstruct, "Initializing the image buffer" );
    RETURN_ON_PIL_ERROR( GetProperties() );
@@ -760,6 +766,9 @@ int CCameraAdapter::Initialize()
    // synchronize all properties
    // --------------------------
    //RETURN_ON_MM_ERROR( UpdateStatus() );
+   *
+   *
+   *******************************************************/
 
    m_bIsInitialized = true;
 
