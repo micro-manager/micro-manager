@@ -101,9 +101,9 @@ bool LeicaCubeModel::IsMethodAvailable(int methodId)
  * IL model. Inherits from LeicaDeviceModel
  */
 LeicaILTurretModel::LeicaILTurretModel() :
+   LeicaDeviceModel(),
    cube_(maxNrCubes_ + 1)
 {
-   LeicaDeviceModel::LeicaDeviceModel();
    position_ = 1;
 }
 
@@ -111,9 +111,9 @@ LeicaILTurretModel::LeicaILTurretModel() :
  * Condensor model. 
  */
 LeicaCondensorModel::LeicaCondensorModel() :
+   LeicaDeviceModel(),
    filter_(maxNrFilters_ + 1)
 {
-   LeicaDeviceModel::LeicaDeviceModel();
    position_ = 1;
 }
 
@@ -137,9 +137,9 @@ bool LeicaObjectiveModel::IsMethodAvailable(int methodId)
  * ObjectiveTurret model. Inherits from LeicaDeviceModel
  */
 LeicaObjectiveTurretModel::LeicaObjectiveTurretModel() :
+   LeicaDeviceModel(),
    objective_(maxNrObjectives_ + 1)
 {
-   LeicaDeviceModel::LeicaDeviceModel();
    position_ = 1;
 }
 
@@ -148,10 +148,10 @@ LeicaObjectiveTurretModel::LeicaObjectiveTurretModel() :
  * DIC Turret model
  */
 LeicaDICPrismTurretModel::LeicaDICPrismTurretModel() :
+   LeicaDeviceModel(),
    motorized_(false),
    prismName_(maxNrPrisms_ + 1)
 {
-   LeicaDeviceModel::LeicaDeviceModel();
    position_ = 1;
 }
 
