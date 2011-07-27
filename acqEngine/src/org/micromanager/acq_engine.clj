@@ -88,17 +88,17 @@
      (catch Exception e#
             (do (ReportingUtils/logError e#) false))))
 
-(defmacro device-best-effort [dev & body]
-  `(let [attempt# #(do (wait-for-device ~dev)
-                       (add-to-pending ~dev)
+(defmacro device-best-effort [device & body]
+  `(let [attempt# #(do (wait-for-device ~device)
+                       (add-to-pending ~device)
                        ~@body)]
     (when-not
       (or 
         (successful? (attempt#)) ; first attempt
         (do (log "second attempt") (successful? (attempt#)))
         (do (log "reload and try a third time")
-            (successful? (reload-device ~dev) (attempt#)))) ; third attempt after reloading
-      (throw (Exception. (str "Device failure: " ~dev)))
+            (successful? (reload-device ~device) (attempt#)))) ; third attempt after reloading
+      (throw (Exception. (str "Device failure: " ~device)))
       (swap! state assoc :stop true)
       nil)))
 
@@ -251,28 +251,31 @@
   (merge
     (map-config (core getSystemStateCache))
     (:metadata event)
-    {
-     "AxisPositions" (when-let [axes (get-in event [:position :axes])] (JSONObject. axes))
-     "Binning" (state :binning)
-     "BitDepth" (state :bit-depth)
-     "Channel" (get-in event [:channel :name])
-     "ChannelIndex" (:channel-index event)
-     "Exposure-ms" (:exposure event)
-     "Frame" (:frame-index event)
-     "Height" (state :init-height)
-     "NextFrame" (:next-frame-index event)
-     "PixelSizeUm" (state :pixel-size-um)
-     "PixelType" (state :pixel-type)
-     "PositionIndex" (:position-index event)
-     "PositionName" (if-let [pos (:position event)] (if-args #(.getLabel %) (get-msp pos)))
-     "Slice" (:slice-index event)
-     "SlicePosition" (:slice event)
-     "Source" (state :source)
-     "Time" (get-current-time-str)
-     "UUID" (UUID/randomUUID)
-     "Width"  (state :init-width)
-     "ZPositionUm" (get-in state [:last-positions (state :default-z-drive)])
-    }))
+    (let [[x y] (get-in state [:last-positions (state :default-xy-stage)])]
+      {
+       "AxisPositions" (when-let [axes (get-in event [:position :axes])] (JSONObject. axes))
+       "Binning" (state :binning)
+       "BitDepth" (state :bit-depth)
+       "Channel" (get-in event [:channel :name])
+       "ChannelIndex" (:channel-index event)
+       "Exposure-ms" (:exposure event)
+       "Frame" (:frame-index event)
+       "Height" (state :init-height)
+       "NextFrame" (:next-frame-index event)
+       "PixelSizeUm" (state :pixel-size-um)
+       "PixelType" (state :pixel-type)
+       "PositionIndex" (:position-index event)
+       "PositionName" (if-let [pos (:position event)] (if-args #(.getLabel %) (get-msp pos)))
+       "Slice" (:slice-index event)
+       "SlicePosition" (:slice event)
+       "Source" (state :source)
+       "Time" (get-current-time-str)
+       "UUID" (UUID/randomUUID)
+       "Width"  (state :init-width)
+       "XPositionUm" x
+       "YPositionUm" y
+       "ZPositionUm" (get-in state [:last-positions (state :default-z-drive)])
+      })))
    
 (defn annotate-image [img event state]
   {:pix (:pix img)
@@ -339,7 +342,8 @@
       :start-time (clock-ms)
       :init-auto-shutter (core getAutoShutter)
       :init-exposure (core getExposure)
-      :default-z-drive (core getFocusDevice)
+      :default-z-drive default-z-drive
+      :default-xy-stage (core getXYStageDevice)
       :init-z-position z
       :init-system-state (get-system-config-cached)
       :init-continuous-focus (core isContinuousFocusEnabled)
@@ -541,15 +545,16 @@
    :binning (core getProperty (core getCameraDevice) "Binning")})
 
 (defn acquire-tagged-image []
-  (core snapImage)
-    (annotate-image (collect-snap-image) (create-basic-event) (create-basic-state)))
+  (binding [state (atom (create-basic-state))]
+    (core snapImage)
+      (annotate-image (collect-snap-image) (create-basic-event) @state)))
     
-(defn show-image [display tagged-img]
+(defn show-image [display tagged-img focus]
   (let [myTaggedImage (make-TaggedImage tagged-img)
         cache (.getImageCache display)]
     (.putImage cache myTaggedImage)
     (.showImage display myTaggedImage)
-    (when-not false
+    (when focus
       (.show display))))
     
 (defn add-to-album []
@@ -562,7 +567,7 @@
 	  my-tagged-image
 	    (update-in tagged-image [:tags] merge
 	      {"PositionIndex" count "PositionName" (str "Snap" count)})]
-      (show-image @current-album my-tagged-image))))
+      (show-image @current-album my-tagged-image true))))
 
 (defn reset-snap-window [tagged-image]
   (when-not (and @snap-window
@@ -574,7 +579,7 @@
 (defn do-snap []
   (let [tagged-image (acquire-tagged-image)]
     (reset-snap-window tagged-image)
-    (show-image @snap-window tagged-image)))
+    (show-image @snap-window tagged-image true)))
 
 ;; live mode
 
@@ -583,7 +588,8 @@
 (defn enable-live-mode [^Boolean on]
       (if on
         (let [event (create-basic-event)
-              state (create-basic-state)]
+              state (create-basic-state)
+              first-image (atom true)]
           (dosync (ref-set live-mode-running true))
           (core startContinuousSequenceAcquisition 0)
           (log "started sequence acquisition")
@@ -592,7 +598,8 @@
                            (let [raw-image {:pix (core getLastImage) :tags nil}
                                  img (annotate-image raw-image event state)]
                               (reset-snap-window img)
-                              (show-image @snap-window img)))
+                              (show-image @snap-window img @first-image)
+                              (reset! first-image false)))
                          (core stopSequenceAcquisition))
                     "Live mode (clojure)")))
         (dosync (ref-set live-mode-running false))))
@@ -701,6 +708,8 @@
 (defn run-test []
   (test-dialog (create-acq-eng)))
 
+(defn stop []
+  (swap! (.state last-acq) assoc :running false))
 
 
 
