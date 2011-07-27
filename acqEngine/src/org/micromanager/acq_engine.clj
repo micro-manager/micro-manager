@@ -118,6 +118,11 @@
 (defn get-z-stage-position [stage]
   (if-not (empty? stage) (core getPosition stage) 0))
   
+(defn get-xy-stage-position [stage]
+  (if-not (empty? stage)
+    (let [xy (.getXYStagePosition gui)]
+      [(.x xy) (.y xy)])))
+
 (defn set-z-stage-position [stage pos]
   (when-not (empty? stage)
     (when (and (core isContinuousFocusEnabled)
@@ -330,20 +335,23 @@
 
 (defn prepare-state [this]
   (let [default-z-drive (core getFocusDevice)
-        z (get-z-stage-position default-z-drive)]
+        default-xy-stage (core getXYStageDevice)
+        z (get-z-stage-position default-z-drive)
+        xy (get-xy-stage-position default-xy-stage)]
     (swap! (.state this) assoc
       :pause false
       :stop false
       :running true
       :finished false
       :last-wake-time (clock-ms)
-      :last-positions {default-z-drive z}
+      :last-positions {default-z-drive z
+                       default-xy-stage xy}       
       :reference-z-position z
       :start-time (clock-ms)
       :init-auto-shutter (core getAutoShutter)
       :init-exposure (core getExposure)
       :default-z-drive default-z-drive
-      :default-xy-stage (core getXYStageDevice)
+      :default-xy-stage default-xy-stage
       :init-z-position z
       :init-system-state (get-system-config-cached)
       :init-continuous-focus (core isContinuousFocusEnabled)
