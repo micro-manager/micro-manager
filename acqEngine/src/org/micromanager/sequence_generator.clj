@@ -17,12 +17,14 @@
 (ns org.micromanager.sequence-generator
   (:use [org.micromanager.mm :only [select-values-match? core]]))
 
+(def MAX-Z-TRIGGER-DIST 5.0)
+
 (defstruct channel :name :exposure :z-offset :use-z-stack :skip-frames)
 
 (defstruct stage-position :stage-device :axes)
 
 (defstruct acq-settings :frames :positions :channels :slices :slices-first
-  :time-first :keep-shutter-open-slices :keep-shutter-open-channels
+  :time-first :keep-shutter-open-slices :keep-shuftter-open-channels
   :use-autofocus :autofocus-skip :relative-slices :exposure :interval-ms)
 
 (defn pairs [x]
@@ -49,16 +51,15 @@
   (and
     (not (some false?
            (for [[[d p] s] property-sequences]
-             (or (core isPropertySequenceable d p)
-                 (apply = s)))))
-    (when-not (empty? channels)
-      (apply = (map :exposure channels))
-      (apply = (map :z-offset channels)))))
+             (or (apply = s)
+                 (and (core isPropertySequenceable d p)
+                      (<= (count s) (core getPropertySequenceMaxLength d p)))))))))
  
 (defn select-triggerable-sequences [property-sequences]
   (into (sorted-map)
-    (filter #(let [[[d p] _] %]
-               (core isPropertySequenceable d p))
+    (filter #(let [[[d p] vs] %]
+               (and (core isPropertySequenceable d p)
+                    (not (apply = vs))))
             property-sequences)))
 
 (defn make-dimensions [settings]
@@ -79,7 +80,7 @@
     (map #(assoc % dim-index-kw 0) events)))
 
 (defn create-loops [dimensions]
-  (reduce #(apply (partial nest-loop %1) %2) [{:task :snap}] dimensions))
+  (reduce #(apply (partial nest-loop %1) %2) [{}] dimensions))
 
 (defn make-main-loops [settings]
   (create-loops (make-dimensions settings)))
@@ -140,49 +141,66 @@
       (if-assoc (not= (:frame-index e1) (:frame-index e2))
         e2 :wait-time-ms interval-ms))))
         
-(defn event-triggerable [e1 e2]
-  (let [c1 (:channel e1)
-        c2 (:channel e2)
-        p1 (:properties c1)
-        p2 (:properties c2)]
+(defn event-triggerable [burst event]
+  (let [n (count burst)
+        e1 (peek burst)
+        e2 event
+        channels (map :channel (conj burst event))
+        props (map :properties channels)]
     (and
-      (channels-sequenceable
-        (make-property-sequences [p1 p2])
-        [c1 c2])
-      (or (core isStageSequenceable (core getFocusDevice))
-          (= (e1 :slice) (e2 :slice))))))
-
+      (channels-sequenceable (make-property-sequences props) channels)
+      (or (= (e1 :slice) (e2 :slice))
+          (let [z-drive (core getFocusDevice)]
+            (and
+              (core isStageSequenceable z-drive)
+              (<= n (core getStageSequenceMaxLength z-drive))
+              (<= (Math/abs (- (e1 :slice) (e2 :slice))) MAX-Z-TRIGGER-DIST)
+              (<= (e1 :slice-index) (e2 :slice-index))))))))
+  
 (defn burst-valid [e1 e2]
   (and
     (let [wait-time (:wait-time-ms e2)]
       (or (nil? wait-time) (>= (:exposure e2) wait-time)))
     (select-values-match? e1 e2 [:exposure :position])
-    (event-triggerable e1 e2)
     (not (:autofocus e2))))
-        
+
 (defn make-triggers [events]
   (let [props (map #(-> % :channel :properties) events)]
-    {:properties (-> props make-property-sequences select-triggerable-sequences)
-     :slices (when (-> events first :slice) (map :slice events))}))
+    (merge
+      {:properties (-> props make-property-sequences select-triggerable-sequences)}
+      (let [slices (map :slice events)]
+        (when-not (apply = slices)  
+          {:slices (when (-> events first :slice) slices)})))))
 
-(defn make-bursts [events]
-  (let [e1 (first events)
-        ne (next events)
-        [run later] (split-with #(burst-valid e1 %) ne)]
-    (when e1
-      (if (not (empty? run))
-        (lazy-cat
-          (list (assoc e1 :task :init-burst
-                          :burst-length (inc (count run))
-                          :trigger-sequence (make-triggers (cons e1 run))))
-          (map #(assoc % :task :collect-burst) (drop-last run))
-          (list (assoc (last run) :task :finish-burst))
-          (make-bursts later))
-        (lazy-cat (list e1) (make-bursts later))))))
+(defn accumulate-burst-event [events]
+  (loop [remaining-events (next events)
+         burst [(first events)]]
+    (let [e1 (last burst)
+          e2 (first remaining-events)]
+      (if (and e1
+               (burst-valid e1 e2)
+               (event-triggerable burst e2))
+        (recur (next remaining-events)
+               (conj burst e2))
+        [burst remaining-events]))))
       
+(defn make-bursts [events]
+  (let [[burst later] (accumulate-burst-event events)]
+    (when burst
+      (cons
+        (if (< 1 (count burst))
+          (assoc (first burst)
+             :task :burst
+             :burst-data burst
+             :trigger-sequence (make-triggers burst))
+          (assoc (first burst) :task :snap))
+        (when later
+          (make-bursts later))))))
+
 (defn add-next-task-tags [events]
   (for [p (pairs events)]
-    (assoc (first p) :next-frame-index (get (second p) :frame-index))))
+    (do ;(println p)
+        (assoc (first p) :next-frame-index (get (second p) :frame-index)))))
 
 (defn selectively-update-tag [events event-template key update-fn]
   (let [ks (keys event-template)]
@@ -243,9 +261,6 @@
                                       (= numChannels (inc c)))]
                  (assoc %
                     :next-frame-index (inc f)
-                    :task (cond first-plane :init-burst
-                                last-plane :finish-burst
-                                :else :collect-burst)
                     :wait-time-ms 0.0
                     :exposure exposure
                     :position-index 0
@@ -254,11 +269,12 @@
                     :channel (get channels c)
                     :slice-index 0
                     :metadata (make-channel-metadata (get channels c))))))]
-    (cons (assoc (first x)
-            :burst-length (* numFrames numChannels)
-            :trigger-sequence triggers)
-          (rest x))))
-
+    (list
+      (assoc (first x)
+              :task :burst
+              :burst-data x
+              :trigger-sequence (make-triggers x)))))
+  
 
 (defn generate-multiposition-bursts [positions num-frames use-autofocus
                                      channels default-exposure triggers]

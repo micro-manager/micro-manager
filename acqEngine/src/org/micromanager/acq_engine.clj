@@ -63,7 +63,7 @@
 (defn add-to-pending [dev]
   (swap! pending-devices conj dev))
 
-(def active-property-sequences (atom (set nil)))
+(def active-property-sequences (atom nil))
 
 (def active-slice-sequence (atom nil))
 
@@ -80,6 +80,48 @@
 
 (defn elapsed-time [state]
   (if (state :start-time) (- (clock-ms) (state :start-time)) 0))
+
+;; image metadata
+
+(defn generate-metadata [event state]
+  (merge
+    (map-config (core getSystemStateCache))
+    (:metadata event)
+    (let [[x y] (get-in state [:last-positions (state :default-xy-stage)])]
+      {
+       "AxisPositions" (when-let [axes (get-in event [:position :axes])] (JSONObject. axes))
+       "Binning" (state :binning)
+       "BitDepth" (state :bit-depth)
+       "Channel" (get-in event [:channel :name])
+       "ChannelIndex" (:channel-index event)
+       "Exposure-ms" (:exposure event)
+       "Frame" (:frame-index event)
+       "Height" (state :init-height)
+       "NextFrame" (:next-frame-index event)
+       "PixelSizeUm" (state :pixel-size-um)
+       "PixelType" (state :pixel-type)
+       "PositionIndex" (:position-index event)
+       "PositionName" (if-let [pos (:position event)] (if-args #(.getLabel %) (get-msp pos)))
+       "Slice" (:slice-index event)
+       "SlicePosition" (:slice event)
+       "Source" (state :source)
+       "Time" (get-current-time-str)
+       "UUID" (UUID/randomUUID)
+       "Width"  (state :init-width)
+       "XPositionUm" x
+       "YPositionUm" y
+       "ZPositionUm" (get-in state [:last-positions (state :default-z-drive)])
+      })))
+   
+(defn annotate-image [img event state]
+  {:pix (:pix img)
+   :tags 
+   (merge
+     (generate-metadata event state)
+     (:tags img))}) ;; include any existing metadata
+
+(defn make-TaggedImage [annotated-img]
+  (TaggedImage. (:pix annotated-img) (JSONObject. (:tags annotated-img))))
 
 ;; hardware error handling
 
@@ -132,7 +174,7 @@
 
 (defn set-stage-position
   ([stage-dev z]
-    ;(log (@state :last-positions) "," stage-dev)
+    (log "set-stage-position" (@state :last-positions) "," stage-dev)
     (when (not= z (get-in @state [:last-positions stage-dev]))
       (device-best-effort stage-dev (set-z-stage-position stage-dev z))
       (swap! state assoc-in [:last-positions stage-dev] z)))
@@ -166,33 +208,37 @@
           (core setShutterOpen false))))))
 
 (defn arm-property-sequences [property-sequences]
-  (doseq [[[d p] s] property-sequences]
-    (log "property sequence:" (seq (str-vector s)))
-    (core loadPropertySequence d p (str-vector s))
-    (core startPropertySequence d p)
-    (swap! active-property-sequences conj [d p])))
-
+  (let [new-seq (not= property-sequences @active-property-sequences)]
+    (doseq [[[d p] s] property-sequences]
+      (log "property sequence:" (seq (str-vector s)))
+      (when new-seq
+        (core loadPropertySequence d p (str-vector s)))
+      (core startPropertySequence d p))
+    (reset! active-property-sequences property-sequences)))
+  
 (defn arm-slice-sequence [slice-sequence]
-  (let [z (core getFocusDevice)]
-    (when slice-sequence
-      (let [delta-z (- (get-in @state [:last-positions z])
-                       (first slice-sequence))
-            adjusted-slices (map #(+ delta-z %) slice-sequence)]
-        (log "adjusted-slices: " adjusted-slices)
-        (core loadStageSequence z (double-vector adjusted-slices))
-        (core startStageSequence z)
-        (reset! active-slice-sequence z)))))
+    (let [z (core getFocusDevice)
+          delta-z (- (@state :reference-z-position)
+                     (first slice-sequence))
+          adjusted-slices (map #(+ delta-z %) slice-sequence)
+          new-seq (not= [z adjusted-slices] @active-slice-sequence)]
+      (log "adjusted-slices: " adjusted-slices ";" "reference-z-position" (@state :reference-z-position))
+      (when new-seq
+        (core loadStageSequence z (double-vector adjusted-slices)))
+      (core startStageSequence z)
+      (reset! active-slice-sequence [z adjusted-slices])
+      adjusted-slices))
 
 (defn init-burst [length trigger-sequence]
-  (when trigger-sequence
-    (log trigger-sequence)
-    (arm-property-sequences (trigger-sequence :properties))
-    (arm-slice-sequence (trigger-sequence :slices)))
   (core setAutoShutter (@state :init-auto-shutter))
-  (swap! state assoc :burst-init-time (elapsed-time @state))
-  (core startSequenceAcquisition length 0 true))
-
-(defn collect-burst-image []
+  (arm-property-sequences (:properties trigger-sequence))
+  (let [absolute-slices (arm-slice-sequence (:slices trigger-sequence))]
+    (swap! state assoc :burst-init-time (elapsed-time @state))
+    (core startSequenceAcquisition length 0 true)
+    (swap! state assoc-in [:last-positions (core getFocusDevice)]
+           (last absolute-slices))))
+  
+(defn pop-burst-image []
   (while (and (core isSequenceRunning) (zero? (core getRemainingImageCount)))
     (Thread/sleep 5))
   (let [md (Metadata.)
@@ -204,9 +250,23 @@
                (dissoc tags "ElapsedTime-ms"))]
     {:pix pix :tags (dissoc tags "StartTime-ms")}))
 
-(defn collect-snap-image []
-  {:pix (core getImage)
-   :tags {"ElapsedTime-ms" (@state :last-image-time)}})
+(defn collect-burst-images [event out-queue]
+  (doseq [event-data (event :burst-data) :while (not (@state :stop))]
+    (let [image (pop-burst-image)]
+      (.put out-queue (make-TaggedImage (annotate-image image event-data @state))))
+   (if (core isBufferOverflowed)
+      (do (swap! state assoc :stop true)
+          (ReportingUtils/showError "Circular buffer overflowed.")))))
+
+(defn collect-snap-image [event out-queue]
+  (let [image
+         {:pix (core getImage)
+          :tags {"ElapsedTime-ms" (@state :last-image-time)}}]
+    (do (log "collect-snap-image: "
+               (select-keys event [:position-index :frame-index
+                                   :slice-index :channel-index]))
+          (.put out-queue
+                (make-TaggedImage (annotate-image image event @state))))))
 
 (defn return-config []
   (dorun (map set-property
@@ -215,11 +275,11 @@
       (set (get-system-config-cached))))))
 
 (defn stop-trigger []
-  (doseq [[d p] @active-property-sequences]
+  (doseq [[[d p] _] @active-property-sequences]
     (core stopPropertySequence d p)
-    (swap! active-property-sequences disj [d p]))
+    (reset! active-property-sequences nil))
   (when @active-slice-sequence
-    (core stopStageSequence @active-slice-sequence)
+    (core stopStageSequence (first @active-slice-sequence))
     (reset! active-slice-sequence nil)))
 
 ;; sleeping
@@ -233,6 +293,7 @@
     (.await sleepy time-ms TimeUnit/MILLISECONDS)))
 
 (defn acq-sleep [interval-ms]
+  (log "acq-sleep")
   (set-stage-position (core getFocusDevice) (@state :reference-z-position))
   (wait-for-device (core getFocusDevice))
   (when (and (@state :init-continuous-focus)
@@ -250,48 +311,6 @@
         (state-assoc! :reference-z-position 
                       (get-z-stage-position (core getFocusDevice)))))))
 
-;; image metadata
-
-(defn generate-metadata [event state]
-  (merge
-    (map-config (core getSystemStateCache))
-    (:metadata event)
-    (let [[x y] (get-in state [:last-positions (state :default-xy-stage)])]
-      {
-       "AxisPositions" (when-let [axes (get-in event [:position :axes])] (JSONObject. axes))
-       "Binning" (state :binning)
-       "BitDepth" (state :bit-depth)
-       "Channel" (get-in event [:channel :name])
-       "ChannelIndex" (:channel-index event)
-       "Exposure-ms" (:exposure event)
-       "Frame" (:frame-index event)
-       "Height" (state :init-height)
-       "NextFrame" (:next-frame-index event)
-       "PixelSizeUm" (state :pixel-size-um)
-       "PixelType" (state :pixel-type)
-       "PositionIndex" (:position-index event)
-       "PositionName" (if-let [pos (:position event)] (if-args #(.getLabel %) (get-msp pos)))
-       "Slice" (:slice-index event)
-       "SlicePosition" (:slice event)
-       "Source" (state :source)
-       "Time" (get-current-time-str)
-       "UUID" (UUID/randomUUID)
-       "Width"  (state :init-width)
-       "XPositionUm" x
-       "YPositionUm" y
-       "ZPositionUm" (get-in state [:last-positions (state :default-z-drive)])
-      })))
-   
-(defn annotate-image [img event state]
-  {:pix (:pix img)
-   :tags 
-   (merge
-     (generate-metadata event state)
-     (:tags img))}) ;; include any existing metadata
-
-(defn make-TaggedImage [annotated-img]
-  (TaggedImage. (:pix annotated-img) (JSONObject. (:tags annotated-img))))
-
 ;; higher level
 
 (defn expose [event]
@@ -301,27 +320,14 @@
            [false false])]
     (condp = (:task event)
       :snap (apply snap-image shutter-states)
-      :init-burst (init-burst (:burst-length event) (:trigger-sequence event))
+      :burst (init-burst (count (:burst-data event))
+                         (:trigger-sequence event))
       nil)))
 
-(defn collect-image [event out-queue]
-  (let [image (condp = (:task event)
-                :snap (collect-snap-image)
-                :init-burst (collect-burst-image)
-                :collect-burst (collect-burst-image)
-                :finish-burst (let [img (collect-burst-image)]
-                                (stop-trigger)
-                                (when (core isSequenceRunning)
-                                  (core stopSequenceAcquisition))
-                                img))]
-    (if (core isBufferOverflowed)
-      (do (swap! state assoc :stop true)
-          (ReportingUtils/showError "Circular buffer overflowed."))
-      (do (log "collect-image: "
-               (select-keys event [:position-index :frame-index
-                                   :slice-index :channel-index]))
-          (.put out-queue
-                (make-TaggedImage (annotate-image image event @state)))))))
+(defn collect [event out-queue]
+  (condp = (:task event)
+                :snap (collect-snap-image event out-queue)
+                :burst (collect-burst-images event out-queue)))
 
 (defn compute-z-position [event]
   (if-let [z-drive (@state :default-z-drive)]
@@ -397,25 +403,20 @@
     (action)))
 
 (defn make-event-fns [event out-queue]
-  (let [task (:task event)]
-    (cond
-      (or (= task :collect-burst) (= task :finish-burst))
-        (list #(collect-image event out-queue))
-      (or (= task :snap) (= task :init-burst))
-        (list
-          #(log event)
-          #(doall (map (fn [x] (.run x)) (event :runnables)))
-          #(when-let [wait-time-ms (event :wait-time-ms)]
-            (acq-sleep wait-time-ms))
-          #(run-actions (create-presnap-actions event))
-          #(when (:autofocus event)
-            (set-msp-z-position (:position event) (@state :default-z-drive) (run-autofocus)))
-          #(when-let [z-drive (@state :default-z-drive)]
-            (let [z (compute-z-position event)]
-              (set-stage-position z-drive z)))
-          #(do (wait-for-pending-devices)
-               (expose event)
-               (collect-image event out-queue))))))
+  (list
+    #(log event)
+    #(doall (map (fn [x] (.run x)) (event :runnables)))
+    #(when-let [wait-time-ms (event :wait-time-ms)]
+      (acq-sleep wait-time-ms))
+    #(run-actions (create-presnap-actions event))
+    #(when (:autofocus event)
+      (set-msp-z-position (:position event) (@state :default-z-drive) (run-autofocus)))
+    #(when-let [z-drive (@state :default-z-drive)]
+      (let [z (compute-z-position event)]
+        (set-stage-position z-drive z)))
+    #(do (wait-for-pending-devices)
+         (expose event)
+         (collect event out-queue))))
 
 (defn execute [event-fns]
   (doseq [event-fn event-fns :while (not (:stop @state))]
