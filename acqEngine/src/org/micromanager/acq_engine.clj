@@ -217,6 +217,7 @@
     (reset! active-property-sequences property-sequences)))
   
 (defn arm-slice-sequence [slice-sequence]
+  (when slice-sequence
     (let [z (core getFocusDevice)
           delta-z (- (@state :reference-z-position)
                      (first slice-sequence))
@@ -227,10 +228,11 @@
         (core loadStageSequence z (double-vector adjusted-slices)))
       (core startStageSequence z)
       (reset! active-slice-sequence [z adjusted-slices])
-      adjusted-slices))
+      adjusted-slices)))
 
 (defn init-burst [length trigger-sequence]
   (core setAutoShutter (@state :init-auto-shutter))
+  (println "autoshutter:" (core getAutoShutter))
   (arm-property-sequences (:properties trigger-sequence))
   (let [absolute-slices (arm-slice-sequence (:slices trigger-sequence))]
     (swap! state assoc :burst-init-time (elapsed-time @state))

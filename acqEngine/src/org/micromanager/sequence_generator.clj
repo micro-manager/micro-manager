@@ -273,7 +273,7 @@
       (assoc (first x)
               :task :burst
               :burst-data x
-              :trigger-sequence (make-triggers x)))))
+              :trigger-sequence triggers))))
   
 
 (defn generate-multiposition-bursts [positions num-frames use-autofocus
