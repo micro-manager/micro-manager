@@ -85,17 +85,17 @@ ClojureEditor.jar:  \
 all: PixelCalibrator.jar RecallPlugin.jar StageControl.jar MultiCamera.jar Big.jar ImageFlipper.jar SlideExplorer.jar DataBrowser.jar ClojureEditor.jar
 
 install: 
-	test -d $(IJPATH)/mmplugins || mkdir $(IJPATH)/mmplugins
-	## cp MMTracker_.jar $(IJPATH)/mmplugins
-	cp PixelCalibrator.jar $(IJPATH)/mmplugins
-	cp SlideExplorer.jar $(IJPATH)/mmplugins
-	cp RecallPlugin.jar $(IJPATH)/mmplugins
-	cp StageControl.jar $(IJPATH)/mmplugins
-	cp MultiCamera.jar $(IJPATH)/mmplugins
-	cp Big.jar $(IJPATH)/mmplugins
-	cp DataBrowser.jar $(IJPATH)/mmplugins
-	cp ClojureEditor.jar $(IJPATH)/mmplugins
-	## cp ImageFlipper.jar $(IJPATH)/mmplugins
+	test -d $(DESTDIR)$(IJPATH)/mmplugins || mkdir $(DESTDIR)$(IJPATH)/mmplugins
+	## cp MMTracker_.jar $(DESTDIR)$(IJPATH)/mmplugins
+	cp PixelCalibrator.jar $(DESTDIR)$(IJPATH)/mmplugins
+	cp SlideExplorer.jar $(DESTDIR)$(IJPATH)/mmplugins
+	cp RecallPlugin.jar $(DESTDIR)$(IJPATH)/mmplugins
+	cp StageControl.jar $(DESTDIR)$(IJPATH)/mmplugins
+	cp MultiCamera.jar $(DESTDIR)$(IJPATH)/mmplugins
+	cp Big.jar $(DESTDIR)$(IJPATH)/mmplugins
+	cp DataBrowser.jar $(DESTDIR)$(IJPATH)/mmplugins
+	cp ClojureEditor.jar $(DESTDIR)$(IJPATH)/mmplugins
+	## cp ImageFlipper.jar $(DESTDIR)$(IJPATH)/mmplugins
 	
 clean:
 	test -f MMTracker_.jar && rm MMTracker_.jar || echo "MMTracker_.jar not found"
