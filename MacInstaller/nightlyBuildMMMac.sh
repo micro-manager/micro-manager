@@ -36,6 +36,7 @@ I386=$BUILDDIR/Micro-Manager1.4-i386
 X86_64=$BUILDDIR/Micro-Manager1.4-x86_64
 
 REPOSITORY=$REPOSITORYROOT/micromanager1.4
+RDPARTYPUBLIC=$REPOSITORYROOT/3rdpartypublic
 RPPC=$REPOSITORYROOT/micromanager1.4-ppc
 RI386=$REPOSITORYROOT/micromanager1.4-i386
 RX86_64=$REPOSITORYROOT/micromanager1.4-x86_64
@@ -44,6 +45,8 @@ CLASSEXT=$REPOSITORY/../3rdpartypublic/classext
 test -d $BUILDDIR && rm -rf $TARGET*
 mkdir $BUILDDIR
 
+cd $RDPARTYPUBLIC
+svn update
 cd $REPOSITORY
 svn update --accept theirs-conflict
 cd $REPOSITORY/SecretDeviceAdapters
