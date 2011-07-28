@@ -126,6 +126,7 @@ import javax.swing.BorderFactory;
 import javax.swing.JPanel;
 import javax.swing.JSplitPane;
 import javax.swing.event.AncestorListener;
+import mmcorej.MetadataSingleTag;
 import mmcorej.TaggedImage;
 import org.micromanager.acquisition.AcquisitionVirtualStack;
 
@@ -936,7 +937,7 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
       acquireButton.addActionListener(new ActionListener() {
 
          public void actionPerformed(ActionEvent e) {
-            snapAndAddToImage5D(null);
+            snapAndAddToImage5D();
          }
       });
 
@@ -2806,9 +2807,6 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
             enableLiveMode(false);
             return;
          }
-         if (!isNewImageAvailable()) {
-            return;
-         }
          try {
             if (core_.getRemainingImageCount() > 0) {
                Object img = core_.getLastImage();
@@ -3955,7 +3953,6 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
          if (core_.isSequenceRunning()) {
             img = core_.getLastImage();
             core_.getLastImageMD(0, 0, md);
-            //img = core_.getLastTaggedImage();
          } else {
             core_.snapImage();
             img = core_.getImage();
@@ -4000,9 +3997,6 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
 
    public void addToSnapSeries(Object img, String acqName) {
       try {
-         // boolean liveRunning = liveRunning_;
-         // if (liveRunning)
-         //    enableLiveMode(false);
          if (acqName == null) {
             acqName = "Snap" + snapCount_;
          }
@@ -4328,7 +4322,7 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
       }
    }
 
-   public void snapAndAddToImage5D(String acqName) {
+   public void snapAndAddToImage5D() {
       try {
          getPipeline().acquireSingle();
       } catch (Exception ex) {
@@ -4340,39 +4334,6 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
       engine_ = eng;
    }
    
-   //Returns true if there is a newer image to display that can be get from MMCore
-   //Implements "optimistic" approach: returns true even
-   //if there was an error while getting the image time stamp
-   private boolean isNewImageAvailable() {
-      boolean ret = true;
-      /* disabled until metadata-related methods in MMCoreJ can handle exceptions
-      Metadata md = new Metadata();
-      MetadataSingleTag tag = null;
-      try
-      {
-      core_.getLastImageMD(0, 0, md);
-      String strTag=MMCoreJ.getG_Keyword_Elapsed_Time_ms();
-      tag = md.GetSingleTag(strTag);
-      if(tag != null)
-      {
-      double newFrameTimeStamp = Double.valueOf(tag.GetValue());
-      ret = newFrameTimeStamp > lastImageTimeMs_;
-      if (ret)
-      {
-      lastImageTimeMs_ = newFrameTimeStamp;
-      }
-      }
-      }
-      catch(Exception e)
-      {
-      ReportingUtils.logError(e);
-      }
-       */
-      return ret;
-   }
-
-   ;
-
    public void suspendLiveMode() {
       liveModeSuspended_ = isLiveModeOn();
       enableLiveMode(false);

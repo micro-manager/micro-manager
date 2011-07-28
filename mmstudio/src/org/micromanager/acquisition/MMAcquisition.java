@@ -28,8 +28,6 @@ package org.micromanager.acquisition;
 import java.awt.Color;
 import java.io.File;
 import java.util.Iterator;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import mmcorej.CMMCore;
 
 import mmcorej.TaggedImage;

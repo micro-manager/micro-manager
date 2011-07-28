@@ -48,7 +48,7 @@ public class HotKeyAction {
                   gui_.toggleShutter();
                   return true;
                case ACQUIRE:
-                  gui_.snapAndAddToImage5D(null);
+                  gui_.snapAndAddToImage5D();
                   return true;
             }
          } else {

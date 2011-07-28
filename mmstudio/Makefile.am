@@ -95,6 +95,11 @@ MMJ_.jar:  \
 	$(srcdir)/src/org/micromanager/utils/GammaSliderCalculator.java \
 	$(srcdir)/src/org/micromanager/utils/GUIColors.java \
 	$(srcdir)/src/org/micromanager/utils/GUIUtils.java \
+	$(srcdir)/src/org/micromanager/utils/HotKeyAction.java \
+	$(srcdir)/src/org/micromanager/utils/HotKeys.java \
+	$(srcdir)/src/org/micromanager/utils/HotKeysDialog.form \
+	$(srcdir)/src/org/micromanager/utils/HotKeysDialog.java \
+	$(srcdir)/src/org/micromanager/utils/HttpUtils.java \
 	$(srcdir)/src/org/micromanager/utils/ImageController.java \
 	$(srcdir)/src/org/micromanager/utils/ImageUtils.java \
 	$(srcdir)/src/org/micromanager/utils/JavaUtils.java \

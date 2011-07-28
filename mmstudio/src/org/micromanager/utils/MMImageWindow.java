@@ -59,7 +59,7 @@ import java.awt.Graphics;
 /**
  * ImageJ compatible image window. Derived from the original ImageJ class.
  */
-public class MMImageWindow extends ImageWindow {
+public final class MMImageWindow extends ImageWindow {
 	private static final long serialVersionUID = 1L;
 	private static final String WINDOW_X = "mmimg_y";
 	private static final String WINDOW_Y = "mmimg_x";
