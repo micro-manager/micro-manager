@@ -107,7 +107,7 @@ int XCiteExacte::Initialize()
    char cBuff[6];
    vector<string> allowedValues;
 
-   LogMessage("XCiteExacte: Initialization", true);
+   LogMessage("XCiteExacte: Initialization");
 
    // Connect to hardware
    status = ExecuteCommand(cmdConnect);
@@ -213,10 +213,7 @@ int XCiteExacte::Initialize()
 
    // Power factor ("field")
    pAct = new CPropertyAction(this, &XCiteExacte::OnGetPowerFactor);
-   CreateProperty("Power-Factor", "Unknown", MM::String, true, pAct);
-
-   // Power factor ("field")
-   ExecuteCommand(cmdGetPowerFactor, NULL, 0, &response);
+   CreateProperty("Power-Factor", "Unknown", MM::String, false, pAct);
 
    // Output power ("slider")
    pAct = new CPropertyAction(this, &XCiteExacte::OnOutputPower);
@@ -599,9 +596,9 @@ int XCiteExacte::OnGetPowerFactor(MM::PropertyBase* pProp, MM::ActionType eAct)
       // Verify the returned power factor is a valid number (older units fail)
       if (0 != atoi(buff.c_str()))
          powerFactor_ = buff;
-      pProp->Set(powerFactor_.c_str());
-      SetProperty("Power-Factor", powerFactor_.c_str());
       LogMessage("XCiteExacte: Get Power Factor: " + powerFactor_);
+      SetProperty("Power-Factor", powerFactor_.c_str());
+      pProp->Set(powerFactor_.c_str());
    }
    return DEVICE_OK;
 }
