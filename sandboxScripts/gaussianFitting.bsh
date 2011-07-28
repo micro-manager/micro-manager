@@ -26,16 +26,17 @@ class GaussianResidual implements MultivariateRealFunction {
        }
 
        public double value(double[] params) {
-               print("Count: " + count_);
-               count_++;
-               double residual = 0.0;
-               for (int i = 0; i < nx_; i++) {
-                       for (int j = 0; j < ny_; j++) {
-                               residual += sqr(gaussian(params, i, j) - data_[(i*nx_) + j]);
-                       }
-               }
+          print("Count: " + count_);
+          count_++;
+          double residual = 0.0;
+          for (int i = 0; i < nx_; i++) {
+              for (int j = 0; j < ny_; j++) {
+                  residual += sqr(gaussian(params, i, j) - data_[(i*nx_) + j]);
+              }
+          }
+
 			for (int i=0; i< params.length; i++)
-      		print(" " + paramNames[i] + ": " + params[i]);
+       		print(" " + paramNames[i] + ": " + params[i]);
 
 			print("Residual: " + residual);
          return residual;
@@ -80,7 +81,7 @@ ImagePlus siPlus = IJ.getImage();
 ImageProcessor siProc = siPlus.getProcessor();
 gs.setImage(siProc.getPixels(), siProc.getWidth(), siProc.getHeight());
 
-double[] params0 = {16000.0, 8.0, 8.0, 1.0, 850.0};
+double[] params0 = {18227.0, 8.0, 8.0, 1.1, 833.0};
 double[] steps = new double[5];
 String [] paramNames = {"A", "x_c", "y_c", "sigma", "b"};
 
@@ -103,3 +104,38 @@ Anormalized = paramsOut[0] * (2 * Math.PI * paramsOut[3] * paramsOut[3]);
 print("Amplitude normalized: " + Anormalized);
 
 update();
+
+
+/*
+Test results with spot.tif:
+
+
+{16000.0, 6.0, 6.0, 1.0, 950.0};
+Final result:
+ A: 15738.577859908994
+ x_c: 7.988932869806975
+ y_c: 7.867408043582612
+ sigma: 1.1155914422969246
+ b: 893.2280475496258
+Amplitude normalized: 123070.99265663263
+
+
+{14000.0, 7.0, 7.0, 1.1, 950.0};
+Final result:
+ A: 15737.612214255922
+ x_c: 7.989068579466751
+ y_c: 7.867486961754296
+ sigma: 1.1156501440850772
+ b: 893.4551315247891
+Amplitude normalized: 123076.39299270682
+
+{18227.0, 8.0, 8.0, 1.1, 833.0};
+Final result:
+ A: 15741.066006821242
+ x_c: 7.989197116683281
+ y_c: 7.8673489165119195
+ sigma: 1.1153886931354937
+ b: 893.3895494145304
+Amplitude normalized: 123045.71202676519
+
+*/

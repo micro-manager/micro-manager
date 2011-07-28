@@ -64,7 +64,7 @@ AC_SUBST(LINKFORSHARED)
 case $host in
    *-*-linux*)
    LPTHREAD="-lpthread"
-   DEVICEADAPTERPATH="/usr/lib/micro-manager"
+   DEVICEADAPTERPATH="\${libdir}/micro-manager"
    JARPATH="/usr/share/java"
    ;;
 esac

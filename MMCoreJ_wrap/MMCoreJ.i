@@ -434,12 +434,19 @@
     searchPaths.add(directory);
     directory = directory.getParentFile();
     searchPaths.add(directory);
-    File directoryMM = new File(new File(directory, "mm"), getPlatformString());
+    String platform = getPlatformString();
+    File directoryMM = new File(new File(directory, "mm"), platform);
     searchPaths.add(directoryMM);
     directory = directory.getParentFile();
     searchPaths.add(directory);
-    directoryMM = new File(new File(directory, "mm"), getPlatformString());
-    searchPaths.add(directoryMM);    
+    directoryMM = new File(new File(directory, "mm"), platform);
+    searchPaths.add(directoryMM);
+    // on Linux use the LSB-defined library paths
+    if (platform.startsWith("linux"))
+    {
+        searchPaths.add(new File("/usr/local/lib/micro-manager"));
+        searchPaths.add(new File("/usr/lib/micro-manager"));
+    }
     
 	try {
 	    loadLibrary(searchPaths, "MMCoreJ_wrap");
@@ -594,5 +601,4 @@ namespace std {
 %include "../MMCore/MMCore.h"
 %include "../MMDevice/ImageMetadata.h"
 %include "../MMCore/MMEventCallback.h"
-
 
