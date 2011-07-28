@@ -250,7 +250,7 @@ public:
       try
       {
          sequenceEvents_.push_back(value);
-         if (sequenceEvents_.size() >= (unsigned) GetSequenceMaxSize())           
+         if (sequenceEvents_.size() > (unsigned) GetSequenceMaxSize())           
             return DEVICE_SEQUENCE_TOO_LARGE;
       } catch (...)
       {
