@@ -22,9 +22,9 @@ endif
 if BUILD_SENSICAM
    SENSICAM = Sensicam
 endif
-#if BUILD_SIMPLECAM
-#   SIMPLECAM = SimpleCam
-#endif
+if BUILD_SIMPLECAM
+   SIMPLECAM = SimpleCam
+endif
 if BUILD_USBMANAGER
    USBMANAGER = USBManager 
 endif
