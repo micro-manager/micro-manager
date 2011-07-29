@@ -304,7 +304,6 @@ CScionCamera::CScionCamera() :
    index(0),
    stream_mode(0),
    restart_stream(0),
-   shutterSync_("On"),
    frame_period_28mhz(1),
    frame_period_14mhz(1),
    frame_period_7mhz(1),
@@ -809,8 +808,8 @@ else
 	cc = start_snap();
 
    // Wait until a full frame has been exposed plus the differential between exposure time and a full frame/
-   if (shutterSync_)
-      CDeviceUtils::SleepMs(GetWaitTime());
+   CDeviceUtils::SleepMs(GetWaitTime());
+
 	if(cc == 0)
 		{
 		// got frame
@@ -1392,23 +1391,6 @@ else if (eAct == MM::AfterSet)
 return DEVICE_OK;
 }
 
-int CScionCamera::OnShutterSync(MM::PropertyBase* pProp, MM::ActionType eAct)
-{
-   if (eAct == MM::BeforeGet) {
-      if (shutterSync_)
-         pProp->Set("On");
-      else
-         pProp->Set("Off");
-   } else if (eAct == MM::AfterSet) {
-      std::string val;
-      pProp->Get(val);
-      if (val == "On")
-         shutterSync_ = true;
-      else
-         shutterSync_ = false;
-   }
-   return DEVICE_OK;
-}
 
 /**
  * Handles "Gain" property.
@@ -2561,13 +2543,6 @@ pAct = new CPropertyAction (this, &CScionCamera::OnExposure);
 nRet = CreateProperty(MM::g_Keyword_Exposure, 
 	CDeviceUtils::ConvertToString(d_exposure), MM::Float, false, pAct);
 assert(nRet == DEVICE_OK);
-
-// Delay after exposure (used to correct for unknown delay between sending the software trigger to the camera and exposure start, can hopefully be removed in the future)
-pAct = new CPropertyAction (this, &CScionCamera::OnShutterSync);
-nRet = CreateProperty("Shutter Sync",	"On", MM::String, false, pAct);
-assert(nRet == DEVICE_OK);
-AddAllowedValue("Shutter Sync", "On");
-AddAllowedValue("Shutter Sync", "Off");
 
 // camera gain
 pAct = new CPropertyAction (this, &CScionCamera::OnGain);
