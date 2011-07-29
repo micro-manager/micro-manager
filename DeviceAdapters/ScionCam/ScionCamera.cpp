@@ -304,7 +304,10 @@ CScionCamera::CScionCamera() :
    index(0),
    stream_mode(0),
    restart_stream(0),
-   afterExposureDelay_(133),
+   shutterSync_("On"),
+   frame_period_28mhz(1),
+   frame_period_14mhz(1),
+   frame_period_7mhz(1),
    d_gain(0.0),
    d_max_gain(0.0),
    d_min_gain(0.0),
@@ -638,6 +641,27 @@ else
 	}
 
 
+if(max_width == 1600)
+{
+   frame_period_28mhz = 92;
+   frame_period_14mhz = 183;
+   frame_period_7mhz = 367;
+}
+else if(max_width == 1024)
+{
+   frame_period_28mhz = 38;
+   frame_period_14mhz = 75;
+   frame_period_7mhz = 150;
+}
+else
+{
+   frame_period_28mhz = 67;
+   frame_period_14mhz = 133;
+   frame_period_7mhz = 266;
+}
+
+
+
 //
 // get buffers for internal use
 //
@@ -783,11 +807,13 @@ else
 	{
 	// start a capture - block for exposure time and then return
 	cc = start_snap();
-   CDeviceUtils::SleepMs(afterExposureDelay_);
+
+   // Wait until a full frame has been exposed plus the differential between exposure time and a full frame/
+   if (shutterSync_)
+      CDeviceUtils::SleepMs(GetWaitTime());
 	if(cc == 0)
 		{
 		// got frame
-
 		return DEVICE_OK;
 		}
 	else if(cc == 1)					
@@ -941,6 +967,39 @@ else
 	return 0;
 	}
 }
+
+/**
+ * Calculates time we have to wait for a fresh image
+ */
+long CScionCamera::GetWaitTime() const
+{
+   long frame_period = 0;
+
+   if(so.cam_config->get_rate() == SFW_FR_28MHZ)
+   {
+      frame_period = frame_period_28mhz;
+   }
+   else if(so.cam_config->get_rate() == SFW_FR_14MHZ)
+   {
+      frame_period = frame_period_14mhz;
+   }
+   else
+   {
+      frame_period = frame_period_7mhz;
+   }
+
+   long  exposure = (long)d_exposure;
+   long  duration = 0;
+   long  exp_start = frame_period - (exposure % frame_period);
+
+   duration = frame_period + exp_start;
+
+   return duration;
+}
+
+
+
+
 
 /**
  * Returns image buffer X-size in pixels.
@@ -1333,12 +1392,20 @@ else if (eAct == MM::AfterSet)
 return DEVICE_OK;
 }
 
-int CScionCamera::OnAfterExposureDelay(MM::PropertyBase* pProp, MM::ActionType eAct)
+int CScionCamera::OnShutterSync(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
    if (eAct == MM::BeforeGet) {
-      pProp->Set(afterExposureDelay_);
+      if (shutterSync_)
+         pProp->Set("On");
+      else
+         pProp->Set("Off");
    } else if (eAct == MM::AfterSet) {
-      pProp->Get(afterExposureDelay_);
+      std::string val;
+      pProp->Get(val);
+      if (val == "On")
+         shutterSync_ = true;
+      else
+         shutterSync_ = false;
    }
    return DEVICE_OK;
 }
@@ -1768,6 +1835,7 @@ if (eAct == MM::AfterSet)
 		pProp->Set(g_ReadoutSpeed_14Mhz);
 		return ERR_UNKNOWN_MODE;
 		}
+
 }
 
 return DEVICE_OK;
@@ -2495,10 +2563,11 @@ nRet = CreateProperty(MM::g_Keyword_Exposure,
 assert(nRet == DEVICE_OK);
 
 // Delay after exposure (used to correct for unknown delay between sending the software trigger to the camera and exposure start, can hopefully be removed in the future)
-pAct = new CPropertyAction (this, &CScionCamera::OnAfterExposureDelay);
-nRet = CreateProperty("After Exposure Delay", 
-	CDeviceUtils::ConvertToString(afterExposureDelay_), MM::Integer, false, pAct);
+pAct = new CPropertyAction (this, &CScionCamera::OnShutterSync);
+nRet = CreateProperty("Shutter Sync",	"On", MM::String, false, pAct);
 assert(nRet == DEVICE_OK);
+AddAllowedValue("Shutter Sync", "On");
+AddAllowedValue("Shutter Sync", "Off");
 
 // camera gain
 pAct = new CPropertyAction (this, &CScionCamera::OnGain);
