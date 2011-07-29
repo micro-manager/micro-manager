@@ -23,9 +23,9 @@
 #ifndef _AndorLaserCombiner_H_
 #define _AndorLaserCombiner_H_
 
-#include "MMDevice.h"
-#include "DeviceBase.h"
-#include "DeviceUtils.h"
+#include "../../MMDevice/MMDevice.h"
+#include "../../MMDevice/DeviceBase.h"
+#include "../../MMDevice/DeviceUtils.h"
 #include <string>
 //#include <iostream>
 #include <vector>

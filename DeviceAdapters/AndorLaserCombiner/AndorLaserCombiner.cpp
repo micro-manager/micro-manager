@@ -35,15 +35,17 @@
    #define snprintf _snprintf 
 #endif
 
+
 // declarations for the ALC library
 #include "ALC_REV.h"
 
-//#include "MMDevice.h"
+#include "../../MMDevice/MMDevice.h"
 #include "AndorLaserCombiner.h"
 #include <string>
 #include <math.h>
-#include "ModuleInterface.h"
-//#include "DeviceUtils.h"
+#include "../../MMDevice/ModuleInterface.h"
+#include "../../MMDevice/DeviceUtils.h"
+//#include "../Utilities/CodeUtility.h"
 //#include "../../MMCore/CoreUtils.h"
 #include <sstream>
 #include <iostream>
@@ -93,7 +95,11 @@ public:
 	ALCImpl(void):alcHandle_(0),Create_ALC_REV_(0),Delete_ALC_REV_(0),ALC_REVObject_(0),pALC_REVLaser_(0),
 		pALC_REVPiezo_(0), pALC_REV_DIO_(0)
 	{
+		#ifdef _M_X64
+		std::string libraryName = "AB_ALC_REV64.dll";
+    #else
 		std::string libraryName = "AB_ALC_REV.dll";
+    #endif
 		alcHandle_ = LoadLibraryA(libraryName.c_str());
 		if( NULL == alcHandle_)
 		{
