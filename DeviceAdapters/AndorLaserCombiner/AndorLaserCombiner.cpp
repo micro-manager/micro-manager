@@ -19,6 +19,9 @@
 //                CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 //                INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 //
+// REVISIONS:     Ed Simmons 2011 ed@esimaging.co.uk 
+//                - Explicit controls for TTL outputs, July 27, 2011
+//
 // CVS:           $Id:$        
 // CVS:           $Id $        
 // CVS:           $Id: $        
@@ -426,7 +429,16 @@ void AndorLaserCombiner::GenerateALCProperties()
       AddAllowedValue("LaserPort",  "A");
       AddAllowedValue("LaserPort",  "B");
       AddAllowedValue("LaserPort",  "C");
-   }
+   } else {
+	    // only create TTL 1 + 2 if no MPU present
+      pA = new CPropertyAction(this, &AndorLaserCombiner::OnDOUT1);
+      CreateProperty("DOUT1", "0", MM::Integer, false, pA);
+      SetPropertyLimits("DOUT1", 0, 1);
+      
+      pA = new CPropertyAction(this, &AndorLaserCombiner::OnDOUT2);
+      CreateProperty("DOUT2", "0", MM::Integer, false, pA);
+      SetPropertyLimits("DOUT2", 0, 1);
+    }
 
 
 
@@ -435,6 +447,30 @@ void AndorLaserCombiner::GenerateALCProperties()
 	stmp << "0x" << std::hex << (unsigned short)DOUT_;
 	CreateProperty("DOUT",  stmp.str().c_str(),  MM::String, false, pA);
 
+	pA = new CPropertyAction(this, &AndorLaserCombiner::OnDOUT3);
+	CreateProperty("DOUT3", "0", MM::Integer, false, pA);
+	SetPropertyLimits("DOUT3", 0, 1);
+	
+	pA = new CPropertyAction(this, &AndorLaserCombiner::OnDOUT4);
+	CreateProperty("DOUT4", "0", MM::Integer, false, pA);
+	SetPropertyLimits("DOUT4", 0, 1);
+	
+	pA = new CPropertyAction(this, &AndorLaserCombiner::OnDOUT5);
+	CreateProperty("DOUT5", "0", MM::Integer, false, pA);
+	SetPropertyLimits("DOUT5", 0, 1);
+	
+	pA = new CPropertyAction(this, &AndorLaserCombiner::OnDOUT6);
+	CreateProperty("DOUT6", "0", MM::Integer, false, pA);
+	SetPropertyLimits("DOUT6", 0, 1);
+	
+	pA = new CPropertyAction(this, &AndorLaserCombiner::OnDOUT7);
+	CreateProperty("DOUT7", "0", MM::Integer, false, pA);
+	SetPropertyLimits("DOUT7", 0, 1);
+	
+	pA = new CPropertyAction(this, &AndorLaserCombiner::OnDOUT8);
+	CreateProperty("DOUT8", "0", MM::Integer, false, pA);
+	SetPropertyLimits("DOUT8", 0, 1);
+	
 	pA = new CPropertyAction(this, &AndorLaserCombiner::OnNLasers);
 	CreateProperty("NLasers",  (boost::lexical_cast<std::string,int>(nLasers_)).c_str(),  MM::Integer, true, pA);
 
@@ -655,6 +691,209 @@ int AndorLaserCombiner::OnDOUT(MM::PropertyBase* pProp, MM::ActionType eAct)
    return HandleErrors();
 }
 
+int AndorLaserCombiner::OnDOUT1(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   if (eAct == MM::BeforeGet) {
+      long prop;
+	  prop = DOUT_ & 1; // get just the lowest bit of the switch state
+	  pProp->Set(prop);
+   }
+   else if (eAct == MM::AfterSet)
+   {
+      long prop;
+	  pProp->Get(prop);
+	  
+	  if(prop){
+		  DOUT_ |= prop;
+	  } else {
+		  DOUT_ &= 254; // clear just the lowest bit
+	  }
+	  DOUT(DOUT_);
+   }
+ 
+   return DEVICE_OK;
+}
+
+int AndorLaserCombiner::OnDOUT2(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   if (eAct == MM::BeforeGet) {
+      long prop;
+	  prop = DOUT_ >> 1 & 1;
+	  pProp->Set(prop);
+   }
+   else if (eAct == MM::AfterSet)
+   {
+      long prop;
+	  pProp->Get(prop);
+	  
+	  if(prop){
+		  DOUT_ |= prop << 1;
+	  } else {
+		  DOUT_ &= 253; 
+	  }
+	  DOUT(DOUT_);
+   }
+
+   return DEVICE_OK;
+}
+
+int AndorLaserCombiner::OnDOUT3(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   if (eAct == MM::BeforeGet) {
+      long prop;
+	  prop = DOUT_ >> 2 & 1;
+	  pProp->Set(prop);
+   }
+   else if (eAct == MM::AfterSet)
+   {
+      long prop;
+	  pProp->Get(prop);
+	  
+	  if(prop){
+		  DOUT_ |= prop  << 2;
+	  } else {
+		  DOUT_ &= 251; 
+	  }
+	  if(multiPortUnitPresent_)
+      {
+         DOUT_ &= 0xFC;
+	  }
+	  DOUT(DOUT_);
+   }
+
+   return DEVICE_OK;
+}
+
+int AndorLaserCombiner::OnDOUT4(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   if (eAct == MM::BeforeGet) {
+      long prop;
+	  prop = DOUT_ >> 3 & 1;
+	  pProp->Set(prop);
+   }
+   else if (eAct == MM::AfterSet)
+   {
+      long prop;
+	  pProp->Get(prop);
+	  
+	  if(prop){
+		  DOUT_ |= prop << 3;
+	  } else {
+		  DOUT_ &= 247; 
+	  }
+	  if(multiPortUnitPresent_)
+      {
+         DOUT_ &= 0xFC;
+	  }
+	  DOUT(DOUT_);
+   }
+
+   return DEVICE_OK;
+}
+
+int AndorLaserCombiner::OnDOUT5(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   if (eAct == MM::BeforeGet) {
+      long prop;
+	  prop = DOUT_ >> 4 & 1;
+	  pProp->Set(prop);
+   }
+   else if (eAct == MM::AfterSet)
+   {
+      long prop;
+	  pProp->Get(prop);
+	  
+	  if(prop){
+		  DOUT_ |= prop << 4;
+	  } else {
+		  DOUT_ &= 239; 
+	  }
+	  if(multiPortUnitPresent_)
+      {
+         DOUT_ &= 0xFC;
+	  }
+	  DOUT(DOUT_);
+   }
+
+   return DEVICE_OK;
+}
+
+int AndorLaserCombiner::OnDOUT6(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   if (eAct == MM::BeforeGet) {
+      long prop;
+	  prop = DOUT_ >> 5 & 1;
+	  pProp->Set(prop);
+   }
+   else if (eAct == MM::AfterSet)
+   {
+      long prop;
+	  pProp->Get(prop);
+	  
+	  if(prop){
+		  DOUT_ |= prop  << 5;
+	  } else {
+		  DOUT_ &= 223; 
+	  }
+	  if(multiPortUnitPresent_)
+      {
+         DOUT_ &= 0xFC;
+	  }
+	  DOUT(DOUT_);
+   }
+
+   return DEVICE_OK;
+}
+
+int AndorLaserCombiner::OnDOUT7(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   if (eAct == MM::BeforeGet) {
+      long prop;
+	  prop = DOUT_ >> 6 & 1;
+	  pProp->Set(prop);
+   }
+   else if (eAct == MM::AfterSet)
+   {
+      long prop;
+	  pProp->Get(prop);
+	  
+	  if(prop){
+		  DOUT_ |= prop  << 6;
+	  } else {
+		  DOUT_ &= 191; 
+	  }
+	  if(multiPortUnitPresent_)
+      {
+         DOUT_ &= 0xFC;
+	  }
+	  DOUT(DOUT_);
+   }
+
+   return DEVICE_OK;
+}
+
+int AndorLaserCombiner::OnDOUT8(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   if (eAct == MM::BeforeGet) {
+      long prop;
+	  prop = DOUT_ >> 7 & 1;
+	  pProp->Set(prop);
+   }
+   else if (eAct == MM::AfterSet)
+   {
+      long prop;
+	  pProp->Get(prop);
+	  
+	  if(prop){
+		  DOUT_ |= prop  << 7;
+	  } else {
+		  DOUT_ &= 127; 
+	  }
+	  DOUT(DOUT_);
+   }
+
+   return DEVICE_OK;
+}
 
 int AndorLaserCombiner::OnNLasers(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
