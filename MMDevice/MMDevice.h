@@ -942,6 +942,8 @@ namespace MM {
       virtual bool InitializeImageBuffer(unsigned channels, unsigned slices, unsigned int w, unsigned int h, unsigned int pixDepth) = 0;
       virtual int InsertMultiChannel(const Device* caller, const unsigned char* buf, unsigned numChannels, unsigned width, unsigned height, unsigned byteDepth, Metadata* md = 0) = 0;
       virtual void SetAcqStatus(const Device* caller, int statusCode) = 0;
+      virtual long getImageBufferTotalFrames() = 0;
+      virtual long getImageBufferFreeFrames() = 0;
 
       // autofocus
       virtual const char* GetImage() = 0;

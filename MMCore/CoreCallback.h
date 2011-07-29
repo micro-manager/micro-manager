@@ -145,8 +145,8 @@ public:
    void SetAcqStatus(const MM::Device* caller, int statusCode);
    void ClearImageBuffer(const MM::Device* caller);
    bool InitializeImageBuffer(unsigned channels, unsigned slices, unsigned int w, unsigned int h, unsigned int pixDepth);
-
-
+   long getImageBufferTotalFrames() {return core_->getBufferTotalCapacity();}
+   long getImageBufferFreeFrames() {return core_->getBufferFreeCapacity();}
 
    int OpenFrame(const MM::Device* caller);
    int CloseFrame(const MM::Device* caller);
