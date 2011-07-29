@@ -44,7 +44,7 @@ else
    fi
 fi
 AC_SUBST(LIBUSB)
-AM_CONDITIONAL([BUILD_USBMANAGER], [test -f "$LIBUSB"])
+AM_CONDITIONAL([BUILD_USBMANAGER], [test -n "$LIBUSB"])
 
 # Only build PVCAM if header files present.
 AC_MSG_CHECKING(for Pvcam)
@@ -148,12 +148,22 @@ if test x$have_libgphoto2 = xno; then
    buildsc=false
    AC_MSG_RESULT([not found])
 else
-   buildsc=true
    AC_MSG_RESULT([found])
    GPHOTO2_VERSION=`$PKG_CONFIG --modversion libgphoto2`
    GPHOTO2_PORT_VERSION=`$PKG_CONFIG --modversion libgphoto2_port`
    GPHOTO2_LIBDIR=`$PKG_CONFIG --variable=libdir libgphoto2`
-   LIBGPHOTO2=`$PKG_CONFIG --variable=libdir libgphoto2`/libgphoto2.la
+   LIBGPHOTO2LIBDIR=`$PKG_CONFIG --variable=libdir libgphoto2`
+   AC_FIND_FILE([libgphoto2.la libgphoto2.a], [$LIBGPHOTO2LIBDIR], FREEIMAGEINCDIR)
+   buildsc=false
+   if test -f "$LIBGPHOTO2LIBDIR/libgphoto2.la"; then
+      LIBGPHOTO2=$LIBGPHOTO2LIBDIR/libgphoto2.la -lltdl
+      buildsc=true
+   else
+      if test -f "$LIBGPHOTO2LIBDIR/libgphoto2.so"; then
+         LIBGPHOTO2=-lgphoto2
+         buildsc=true
+      fi
+   fi
 fi
 
 # On mac, install dynamic gphoto2 libraries 
@@ -174,8 +184,9 @@ AC_SUBST(LIBGPHOTO2)
 
 # LibFreeImage
 AC_MSG_CHECKING(for libFreeImage headers)
-AM_CONDITIONAL([LIBFREEIMAGEFOUND], [test -f "../../3rdpartypublic/FreeImage/Dist/FreeImage"])
-if test -f "../../3rdpartypublic/FreeImage/Dist/FreeImage.h"; then
+AC_FIND_FILE([FreeImage.h], [../../3rdpartypublic/FreeImage/Dist /usr/local/include /usr/include], FREEIMAGEINCDIR)
+AM_CONDITIONAL([LIBFREEIMAGEFOUND], [test -f "$FREEIMAGEINCDIR/FreeImage.h"])
+if test -f "$FREEIMAGEINCDIR/FreeImage.h"; then
    AC_MSG_RESULT([found])
    AC_FIND_FILE([libfreeimage.a], [/usr/lib /usr/lib64 /usr/local/$ARCH/lib], FREEIMAGELIBDIR)
    if test x$FREEIMAGELIBDIR = xNO; then
@@ -184,12 +195,32 @@ if test -f "../../3rdpartypublic/FreeImage/Dist/FreeImage.h"; then
    else
       AC_MSG_RESULT(["libfreeimage.a" found])
       AC_SUBST(LIBFREEIMAGE, "$FREEIMAGELIBDIR/libfreeimage.a")
-      AC_SUBST(LIBFREEIMAGE_CXXFLAGS, "-I../../../3rdpartypublic/FreeImage/Dist -I../../../3rdpartypublic/FreeImage/Wrapper/FreeImagePlus ")
+      AC_SUBST(LIBFREEIMAGE_CXXFLAGS, "-I$FREEIMAGEINCDIR")
    fi
 else
    buildsc=false
    AC_MSG_RESULT([not found: To build the GPhoto device adapter download and install FreeImage in ../../3rdpartypublic/FreeImage])
 fi
+
+# LibFreeImagePlus
+AC_MSG_CHECKING(for libFreeImagePlus headers)
+AC_FIND_FILE([FreeImagePlus.h], [../../3rdpartypublic/FreeImage/Wrapper/FreeImagePlus /usr/local/include /usr/include], FREEIMAGEPLUSINCDIR)
+AM_CONDITIONAL([LIBFREEIMAGEPLUSFOUND], [test -f "$FREEIMAGEPLUSINCDIR/FreeImagePlus.h"])
+if test -f "$FREEIMAGEPLUSINCDIR/FreeImagePlus.h"; then
+   AC_MSG_RESULT([found])
+   AC_SUBST(LIBFREEIMAGEPLUS_CXXFLAGS, "-I$FREEIMAGEPLUSINCDIR")
+   AC_FIND_FILE([libfreeimageplus.a], [/usr/lib /usr/lib64 /usr/local/$ARCH/lib], FREEIMAGEPLUSLIBDIR)
+   if test x$FREEIMAGEPLUSLIBDIR = xNO; then
+      AC_MSG_RESULT(["libfreeimageplus.a" not found (can be ok).])
+   else
+      AC_MSG_RESULT(["libfreeimageplus.a" found])
+      AC_SUBST(LIBFREEIMAGEPLUS, "$FREEIMAGEPLUSLIBDIR/libfreeimageplus.a")
+   fi
+else
+   buildsc=false
+   AC_MSG_RESULT([not found: To build the GPhoto device adapter download and install FreeImage in ../../3rdpartypublic/FreeImage])
+fi
+
 AM_CONDITIONAL([BUILD_SIMPLECAM], [test x$buildsc = xtrue])
 
 # Video4linux
