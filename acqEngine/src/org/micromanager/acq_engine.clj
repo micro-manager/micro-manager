@@ -75,6 +75,7 @@
 (defn compute-time-from-core [tags]
   (when (@state :burst-init-time)
     (when-let [t (tags "ElapsedTime-ms")]
+      (log "ElapsedTime-ms" t)
       (+ (Double/parseDouble t)
          (@state :burst-init-time)))))
 
@@ -241,7 +242,7 @@
            (last absolute-slices))))
   
 (defn pop-burst-image []
-  (while (and (core isSequenceRunning) (zero? (core getRemainingImageCount)))
+  (while (and (. mmc isSequenceRunning) (zero? (. mmc getRemainingImageCount)))
     (Thread/sleep 5))
   (let [md (Metadata.)
         pix (core popNextImageMD md)
@@ -250,6 +251,7 @@
         tags (if (and t (pos? t))
                (assoc tags "ElapsedTime-ms" t)
                (dissoc tags "ElapsedTime-ms"))]
+    (log "compute-time t")
     {:pix pix :tags (dissoc tags "StartTime-ms")}))
 
 (defn collect-burst-images [event out-queue]
@@ -258,7 +260,9 @@
       (.put out-queue (make-TaggedImage (annotate-image image event-data @state))))
    (if (core isBufferOverflowed)
       (do (swap! state assoc :stop true)
-          (ReportingUtils/showError "Circular buffer overflowed.")))))
+          (ReportingUtils/showError "Circular buffer overflowed."))))
+  (while (and (not (@state :stop)) (. mmc isSequenceRunning))
+    (Thread/sleep 5)))
 
 (defn collect-snap-image [event out-queue]
   (let [image
@@ -418,7 +422,8 @@
         (set-stage-position z-drive z)))
     #(do (wait-for-pending-devices)
          (expose event)
-         (collect event out-queue))))
+         (collect event out-queue)
+         (stop-trigger))))
 
 (defn execute [event-fns]
   (doseq [event-fn event-fns :while (not (:stop @state))]
