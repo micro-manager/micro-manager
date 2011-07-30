@@ -171,28 +171,30 @@ bool CircularBuffer::InsertMultiChannel(const unsigned char* pixArray, unsigned 
             // Perhaps we need to add specific tags to each channel
             md = *pMd;
          }
-         else
+
+         try
          {
-            // if metadata was not supplied by the camera insert current timestamp
+            MetadataSingleTag tag = md.GetSingleTag(MM::g_Keyword_Elapsed_Time_ms);
+         }
+         catch (MetadataKeyError)
+         {
+            // if time tag was not supplied by the camera insert current timestamp
             MM::MMTime timestamp = GetMMTimeNow();
-            Metadata md;
-            MetadataSingleTag mst(MM::g_Keyword_Elapsed_Time_ms, "Buffer", true);
-            mst.SetValue(CDeviceUtils::ConvertToString(timestamp.getMsec()));
-            md.SetTag(mst);
+            md.PutImageTag(MM::g_Keyword_Elapsed_Time_ms, CDeviceUtils::ConvertToString(timestamp.getMsec()));
          }
 
-         md.put("Width",width);
-         md.put("Height",height);
+         md.PutImageTag("Width",width);
+         md.PutImageTag("Height",height);
          if (byteDepth == 1)
-            md.put("PixelType","GRAY8");
+            md.PutImageTag("PixelType","GRAY8");
          else if (byteDepth == 2)
-            md.put("PixelType","GRAY16");
+            md.PutImageTag("PixelType","GRAY16");
          else if (byteDepth == 4)
-            md.put("PixelType","RGB32");
+            md.PutImageTag("PixelType","RGB32");
          else if (byteDepth == 8)
-            md.put("PixelType","RGB64");
+            md.PutImageTag("PixelType","RGB64");
          else
-            md.put("PixelType","Unknown");
+            md.PutImageTag("PixelType","Unknown");
 
          pImg->SetMetadata(md);
          pImg->SetPixels(pixArray + i*singleChannelSize);
