@@ -235,7 +235,11 @@ public:
     int GetDASequenceMaxLength(long& nrEvents) const  {nrEvents = 0; return DEVICE_OK;}
     int StartDASequence() const {return DEVICE_OK;} 
     int StopDASequence() const {return DEVICE_OK;}
-    int LoadDASequence(std::vector<double> voltages) const {return DEVICE_OK;}
+    int LoadDASequence(std::vector<double> voltages) const {return DEVICE_OK;} 
+    int ClearDASequence() {return DEVICE_OK;}
+    int AddToDASequence(double voltage) {return DEVICE_OK;}
+    int SendDASequence() const {return DEVICE_OK;}
+
     
    
     
@@ -289,6 +293,10 @@ public:
      int StartDASequence() const {return DEVICE_OK;} 
      int StopDASequence() const {return DEVICE_OK;}
      int LoadDASequence(std::vector<double> voltages) const {return DEVICE_OK;}
+     int ClearDASequence() {return DEVICE_OK;}
+     int AddToDASequence(double voltage) {return DEVICE_OK;}
+     int SendDASequence() const {return DEVICE_OK;}
+
      
 private:
      int ITC18RunOnce(double &value);		
