@@ -389,7 +389,6 @@ SerialPort::SerialPort(const char* portName) :
    parity_(g_Parity_None),
    verbose_(true)
 {
-   //MMThreadGuard g(portLock_);
 
    portName_ = portName;
 
@@ -472,7 +471,7 @@ SerialPort::SerialPort(const char* portName) :
 SerialPort::~SerialPort()
 {
    Shutdown();
-   //MMThreadGuard g(portLock_);
+
    delete pPort_;
    delete pThread_;
    delete pService_;
@@ -492,10 +491,6 @@ int SerialPort::Initialize()
       it++;
    }
 
-   // verify callbacks are supported
-//   if (!IsCallbackRegistered())
-//      return DEVICE_NO_CALLBACK_REGISTERED;
-
    long sb;
    int ret = GetPropertyData(MM::g_Keyword_StopBits, stopBits_.c_str(), sb);
    assert(ret == DEVICE_OK);
@@ -513,7 +508,6 @@ int SerialPort::Initialize()
 
    pService_ = new boost::asio::io_service();
 
-   //MMThreadGuard g2(portLock_);
    try
    {
       pPort_ = new AsioClient (*pService_, boost::lexical_cast<unsigned int>(baud), this->portName_,
@@ -549,13 +543,11 @@ int SerialPort::Initialize()
 
 int SerialPort::Shutdown()
 {
-   //std::ostringstream logMsg;
-   //logMsg << "shutting down Serial port " << portName_  << std::endl; 
-   //LogMessage(logMsg.str().c_str());
+   if (!initialized_)
+      return DEVICE_OK;
 
    do
    {
-      //MMThreadGuard g(portLock_);
       if( 0 != pPort_)
       {
          pPort_->ShutDownInProgress(true);
@@ -591,6 +583,9 @@ std::string SerialPort::Name(void) const
 
 int SerialPort::SetCommand(const char* command, const char* term)
 {
+   if (!initialized_)
+      return ERR_PORT_NOTINITIALIZED;
+
    int retv = DEVICE_OK;
    bool bfalse = false;
    std::string sendText(command);
@@ -603,11 +598,6 @@ int SerialPort::SetCommand(const char* command, const char* term)
    if (transmitCharWaitMs_ < 0.001)
    {
       pPort_->WriteCharactersAsynchronously(sendText.c_str(), sendText.length() );
-      /*{
-         LogMessage("write error",false);
-         retv = DEVICE_ERR;
-      }*/
-      
       written = sendText.length();
    }
    else
@@ -616,16 +606,7 @@ int SerialPort::SetCommand(const char* command, const char* term)
       {
          const MM::MMTime maxTime (5, 0);
          MM::MMTime startTime (GetCurrentMMTime());
-         do
-         {
-            
-            pPort_->WriteOneCharacterAsynchronously(*jj );
-            /*{
-               LogMessage("error writing!", false);
-               retv = DEVICE_ERR;
-               break;
-            }*/
-         }while(bfalse);
+         pPort_->WriteOneCharacterAsynchronously(*jj );
          CDeviceUtils::SleepMs((long)(0.5+transmitCharWaitMs_));         
          ++written;
       }
@@ -637,6 +618,9 @@ int SerialPort::SetCommand(const char* command, const char* term)
 
 int SerialPort::GetAnswer(char* answer, unsigned bufLen, const char* term)
 {
+   if (!initialized_)
+      return ERR_PORT_NOTINITIALIZED;
+
    if (bufLen < 1)
    {
       LogMessage("BUFFER_OVERRUN error occured!");
@@ -726,7 +710,7 @@ int SerialPort::GetAnswer(char* answer, unsigned bufLen, const char* term)
 int SerialPort::Write(const unsigned char* buf, unsigned long bufLen)
 {
    if (!initialized_)
-      return ERR_OPEN_FAILED;
+      return ERR_PORT_NOTINITIALIZED;
 
    int ret = DEVICE_OK;
    // send characters one by one to accomodate slow devices
@@ -758,7 +742,7 @@ int SerialPort::Write(const unsigned char* buf, unsigned long bufLen)
 int SerialPort::Read(unsigned char* buf, unsigned long bufLen, unsigned long& charsRead)
 {
    if (!initialized_)
-      return ERR_OPEN_FAILED;
+      return ERR_PORT_NOTINITIALIZED;
 
    int r = DEVICE_OK;
    if( 0 < bufLen)
@@ -801,7 +785,9 @@ int SerialPort::Read(unsigned char* buf, unsigned long bufLen, unsigned long& ch
 
 int SerialPort::Purge()
 {
-   //MMThreadGuard g(portLock_);
+   if (!initialized_)
+      return ERR_PORT_NOTINITIALIZED;
+
    pPort_->Purge();
    return DEVICE_OK;
 }
