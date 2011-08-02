@@ -327,19 +327,22 @@ int XCiteExacte::Initialize()
 
 int XCiteExacte::Shutdown()
 {
-   int status;
+   if (initialized_) 
+   {
+      int status;
 
-   // Unlock front panel
-   status = ExecuteCommand(cmdUnlockFrontPanel);
-   if (status != DEVICE_OK)
-      return status;
+      // Unlock front panel
+      status = ExecuteCommand(cmdUnlockFrontPanel);
+      if (status != DEVICE_OK)
+         return status;
 
-   // Disable PC control of shutter
-   status = ExecuteCommand(cmdDisableShutterControl);
-   if (status != DEVICE_OK)
-      return status;
+      // Disable PC control of shutter
+      status = ExecuteCommand(cmdDisableShutterControl);
+      if (status != DEVICE_OK)
+         return status;
 
-   initialized_ = false;
+      initialized_ = false;
+   }
    return DEVICE_OK;
 }
 
