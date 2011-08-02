@@ -2035,7 +2035,8 @@ int LeicaMonitoringThread::svc()
                                std::string tmp;
                                os >> tmp;
                                os >> shutterPos;
-                               if (tmp == "--") {
+                               // if (tmp == "--") {
+                               if (tmp.size() > 0) {
                                   scopeModel_->ILShutter_.SetPosition(shutterPos);
                                   scopeModel_->ILShutter_.SetBusy(false);
                                }
