@@ -240,7 +240,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="lib32/atcorem.lib"
-				OutputFile="$(OutDir)/mmgr_dal_Andor.dll"
+				OutputFile="$(OutDir)/mmgr_dal_Andor3.dll"
 				LinkIncremental="1"
 				AdditionalLibraryDirectories="..\..\..\3rdparty\Andor\SDK"
 				GenerateDebugInformation="true"
@@ -324,7 +324,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="lib64/atcorem.lib"
-				OutputFile="$(OutDir)/mmgr_dal_Andor.dll"
+				OutputFile="$(OutDir)/mmgr_dal_Andor3.dll"
 				LinkIncremental="1"
 				AdditionalLibraryDirectories="..\..\..\3rdparty\Andor\SDK"
 				GenerateDebugInformation="true"
