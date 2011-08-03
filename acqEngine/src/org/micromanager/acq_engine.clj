@@ -88,9 +88,12 @@
   (merge
     (map-config (core getSystemStateCache))
     (:metadata event)
-    (let [[x y] (get-in state [:last-positions (state :default-xy-stage)])]
+    (let [[x y] (let [xy-stage (state :default-xy-stage)]
+                  (when-not (empty? xy-stage)
+                    (get-in state [:last-positions xy-stage])))]
       {
-       "AxisPositions" (when-let [axes (get-in event [:position :axes])] (JSONObject. axes))
+       "AxisPositions" (when-let [axes (get-in event [:position :axes])]
+                         (JSONObject. axes))
        "Binning" (state :binning)
        "BitDepth" (state :bit-depth)
        "Channel" (get-in event [:channel :name])
@@ -356,8 +359,8 @@
       :running true
       :finished false
       :last-wake-time (clock-ms)
-      :last-positions {default-z-drive z
-                       default-xy-stage xy}       
+      :last-positions (merge {default-z-drive z}
+                             {default-xy-stage xy})       
       :reference-z-position z
       :start-time (clock-ms)
       :init-auto-shutter (core getAutoShutter)
