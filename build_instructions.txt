@@ -1,1 +1,1 @@
-Build instructions are on the Micro-Manager wiki, https://valelab.ucsf.edu/~nico/MMwiki/index.php/Documentation .
+Build instructions are on the Micro-Manager wiki, https://valelab.ucsf.edu/~MM/MMwiki/index.php/Documentation .
