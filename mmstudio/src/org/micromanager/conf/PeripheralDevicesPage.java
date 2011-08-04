@@ -79,36 +79,28 @@ public class PeripheralDevicesPage extends PagePanel {
 
          for (Device d : devices_) {
             if (!d.getName().equals("Core")) {
-               StrVector disco = core_.getDiscoverableDevices(d.getName());
-               if (0 < disco.size()) {
-                  for (String devvs : disco) {
+               
+               // device "discovery" happens here
+               StrVector installed = core_.getInstalledDevices(d.getName());
+               // end of discovery
+               
+               if (0 < installed.size()) {
+                  for (int i=0; i<installed.size(); i++) {
                      try {
-                        Device allPossiblePeripherals[] = Device.getLibraryContents(d.getLibrary(), core_);
-                        // find the device description
-                        String descr = "";
-                        String defaultName = "";
-                        for (int idd = 0; idd < allPossiblePeripherals.length; ++idd) {
-
-                           if (allPossiblePeripherals[idd].getAdapterName().equalsIgnoreCase(devvs)) {
-                              descr = allPossiblePeripherals[idd].getDescription();
-                              defaultName = allPossiblePeripherals[idd].getAdapterName();
-                              break;
-                           }
-                        }
-                        if (0 < defaultName.length()) {
-                           Device newDev = new Device(defaultName, d.getLibrary(), defaultName, descr);
-                           newDev.setDiscoverable(true);
-                           masterDevices_.add(d.getName());
+                        if (mod.findDevice(installed.get(i)) == null)
+                        {
+                           String descr = "N/A"; //core_.getDeviceDescription(installed.get(i));
+                           Device newDev = new Device(installed.get(i), d.getLibrary(), installed.get(i), descr);   
                            selected_.add(true);
+                           masterDevices_.add(d.getName());
                            peripheralDevices_.add(newDev);
                         }
-                        // // ReportingUtils.displayNonBlockingMessage(message);
                      } catch (Exception e) {
+                        ReportingUtils.logError("Installed device not found: " + e.getMessage());
                      }
                   }
                }
             }
-
          }
       }
 
@@ -325,6 +317,8 @@ public class PeripheralDevicesPage extends PagePanel {
             Vector<Device> pd = tmd.getPeripheralDevices();
             Vector<String> hubs = tmd.getMasterDevices();
             Vector<Boolean> sel = tmd.getSelected();
+            for (int i=0; i<hubs.size(); i++)
+               core_.clearInstalledDevices(hubs.get(i));
             model_.AddSelectedPeripherals(core_, pd, hubs, sel);
             model_.loadDeviceDataFromHardware(core_);
          } catch (Exception e) {

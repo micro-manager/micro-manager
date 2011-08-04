@@ -37,8 +37,9 @@
 #include <vector>
 #include <map>
 
+#define ERR_NOT_INITIALIZED 1001
 
-class LeicaScope : public CGenericBase<LeicaScope>
+class LeicaScope : public HubBase<LeicaScope>
 {
    public:
       LeicaScope();
@@ -51,8 +52,10 @@ class LeicaScope : public CGenericBase<LeicaScope>
       void GetName(char* pszName) const;
       bool Busy();
       MM::DeviceDetectionStatus DetectDevice();
-      int GetNumberOfDiscoverableDevices();
-      void GetDiscoverableDevice(int deviceNum, char * deviceName, unsigned int maxLength);
+
+      // HUB interface
+      // -------------
+      int DetectInstalledDevices();
 
       // action interface                                                       
       // ----------------                                                       
@@ -66,6 +69,8 @@ class LeicaScope : public CGenericBase<LeicaScope>
       std::vector<std::string> discoveredDevices_;
 
       void AttemptToDiscover(int deviceCode, const char* deviceName);
+      int GetNumberOfDiscoverableDevices();
+      void GetDiscoverableDevice(int deviceNum, char *deviceName, unsigned int maxLength);
 };
 
 

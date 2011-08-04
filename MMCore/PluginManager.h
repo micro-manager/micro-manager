@@ -65,11 +65,10 @@ public:
    // device browsing support
    static void AddSearchPath(std::string path);
    static std::vector<std::string> GetModules();
-   static std::vector<std::string> GetAvailableDevices(const char* moduleName, bool devDiscoveryEnabled) throw (CMMError);
-   static std::vector<std::string> GetAvailableDeviceDescriptions(const char* moduleName, bool devDiscoveryEnabled) throw (CMMError);
-   static std::vector<long> GetAvailableDeviceTypes(const char* moduleName, bool devDiscoveryEnabled) throw (CMMError);
-   static std::vector<bool> GetDeviceDiscoverability(const char* moduleName, bool devDiscoveryEnabled) throw (CMMError);
-
+   static std::vector<std::string> GetAvailableDevices(const char* moduleName) throw (CMMError);
+   static std::vector<std::string> GetAvailableDeviceDescriptions(const char* moduleName) throw (CMMError);
+   static std::vector<long> GetAvailableDeviceTypes(const char* moduleName) throw (CMMError);
+   //static std::vector<bool> GetDeviceDiscoverability(const char* moduleName) throw (CMMError);
 
    // persistence
    static void SetPersistentData(HDEVMODULE hLib, const char* moduleName);

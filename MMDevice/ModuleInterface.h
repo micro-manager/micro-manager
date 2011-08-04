@@ -51,7 +51,7 @@
 // NOTE: If any of the exported module API calls changes, the interface version
 // must be incremented
 // new version 5 supports device discoverability
-#define MODULE_INTERFACE_VERSION 6
+#define MODULE_INTERFACE_VERSION 7
 
 #ifdef WIN32
 const char* const LIB_NAME_PREFIX = "mmgr_dal_";
@@ -71,15 +71,12 @@ extern "C" {
    MODULE_API long GetDeviceInterfaceVersion();
    MODULE_API unsigned GetNumberOfDevices();
    MODULE_API bool GetDeviceName(unsigned deviceIndex, char* name, unsigned bufferLength);
-   MODULE_API bool GetDeviceDescription(unsigned deviceIndex, char* name, unsigned bufferLength);
-   /* look up by device name */
-   MODULE_API bool GetDeviceIsDiscoverable(char* name, bool* pvalue);
+   MODULE_API bool GetDeviceDescription(const char* deviceName, char* name, unsigned bufferLength);
    /**
     * Intializes the list of available devices and perhaps other global initialization tasks.
     * The method may be called any number of times during the uManager session.
     */
    MODULE_API void InitializeModuleData();
-   MODULE_API void EnableDeviceDiscovery(bool enable);
 }
 
 // corresponding function pointers
@@ -89,22 +86,11 @@ typedef long (*fnGetModuleVersion)();
 typedef long (*fnGetDeviceInterfaceVersion) ();
 typedef unsigned (*fnGetNumberOfDevices)();
 typedef bool (*fnGetDeviceName)(unsigned, char*, unsigned);
-typedef bool (*fnGetDeviceDescription)(unsigned, char*, unsigned);
+typedef bool (*fnGetDeviceDescription)(const char*, char*, unsigned);
 typedef bool (*fnGetDeviceIsDiscoverable)(char* , bool* );
 typedef void (*fnInitializeModuleData)();
-typedef void (*fnEnableDeviceDiscovery)(bool);
 
-// functions for internal use
+// functions for internal use within the module
 void AddAvailableDeviceName(const char* deviceName, const char* description = "Description N/A");
-void SetDeviceIsDiscoverable( const char* pdevice, const bool value);
-
-
-
-// allow phased-in deployment of device discovering....
-
-bool DiscoverabilityTest();
-
-
-
 
 #endif //_MODULE_INTERFACE_H_

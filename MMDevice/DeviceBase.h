@@ -110,7 +110,23 @@ public:
    {
       CDeviceUtils::CopyLimitedString(name, moduleName_.c_str());
    }
+   
+   /**
+   * Assigns description string for a device (for use only by the calling code).
+   */
+   void SetDescription(const char* descr)
+   {
+      description_ = descr;
+   }
 
+   /**
+   * Returns device description (for use only by the calling code).
+   */
+   void GetDescription(char* name) const
+   {
+      CDeviceUtils::CopyLimitedString(name, description_.c_str());
+   }
+   
    /**
    * Sets the library handle (for use only by the calling code).
    */
@@ -708,19 +724,10 @@ public:
    int AcqBeforeStack() {return DEVICE_OK;}
    int AcqAfterStack() {return DEVICE_OK;}
 
-   // device discovery
+   // device discovery (auto-configuration)
    MM::DeviceDetectionStatus DetectDevice(void){ 
       return  MM::Unimplemented;
    };
-
-   // device 'inventory'
-   int GetNumberOfDiscoverableDevices(){ return 0;};
-   void GetDiscoverableDevice(int /*peripheralNum*/, char* /*peripheralName*/, unsigned int /*maxNameLen*/){return;}; 
-
-   // properties for a peripheral device reported by that device's hub
-   int GetDiscoDeviceNumberOfProperties(int /*peripheralNum*/){return 0;};
-   void GetDiscoDeviceProperty(int /*peripheralNum*/, short /*propertyNumber*/,char* /*propertyName*/, char* /*propValue*/, unsigned int /*maxValueLen*/){ return;};
-
 
    ////////////////////////////////////////////////////////////////////////////
    // Protected methods, for internal use by the device adapters 
@@ -1107,6 +1114,7 @@ private:
    HDEVMODULE module_;
    std::string label_;
    std::string moduleName_;
+   std::string description_;
    std::map<int, std::string> messages_;
    double delayMs_;
    bool usesDelay_;
@@ -1680,6 +1688,37 @@ class CSLMBase : public CDeviceBase<MM::SLM, U>
 template <class U>
 class CommandDispatchBase : public CDeviceBase<MM::CommandDispatch, U>
 {
+
+};
+
+/**
+* Base class for creating special HUB devices for managing device libraries.
+*/
+template <class U>
+class HubBase : public CDeviceBase<MM::Hub, U>
+{
+public:
+   HubBase() {}
+
+   unsigned GetNumberOfInstalledDevices() {return (unsigned)installedDevices.size();}
+   MM::Device* GetInstalledDevice(int devIdx) {return installedDevices[devIdx];}
+
+   // to provide automatic device discovery override this method with code to
+   // populate "installedDevices" list
+   int DetectInstalledDevices() {return DEVICE_OK;} // default behavior is to do nothing
+
+   void ClearInstalledDevices()
+   {
+      for (unsigned i=0; i<installedDevices.size(); i++)
+         delete installedDevices[i];
+      installedDevices.clear();
+   }
+
+protected:
+   void AddInstalledDevice(MM::Device* pdev) {installedDevices.push_back(pdev);}
+
+private:
+   std::vector<MM::Device*> installedDevices;
 
 };
 

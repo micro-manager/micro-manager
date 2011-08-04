@@ -29,9 +29,15 @@
 
 typedef std::pair<std::string, std::string> DeviceInfo; 
 std::vector<DeviceInfo> g_availableDevices;
-std::map<std::string,bool> g_deviceDiscoverability;
 
-bool discoverabilityEnabled_g;
+int FindDeviceIndex(const char* deviceName)
+{
+   for (unsigned i=0; i<g_availableDevices.size(); i++)
+      if (g_availableDevices[i].first.compare(deviceName) == 0)
+         return i;
+
+   return -1;
+}
 
 MODULE_API long GetModuleVersion()
 {
@@ -41,27 +47,6 @@ MODULE_API long GetModuleVersion()
 MODULE_API long GetDeviceInterfaceVersion()
 {
    return DEVICE_INTERFACE_VERSION;   
-}
-
-void AddAvailableDeviceName(const char* name, const char* descr)
-{
-   std::vector<DeviceInfo>::const_iterator it;
-   for (it=g_availableDevices.begin(); it!=g_availableDevices.end(); ++it)
-      if (it->first.compare(name) == 0)
-         return; // already there
-
-   // add to the list
-   SetDeviceIsDiscoverable(name, false);
-   g_availableDevices.push_back(std::make_pair(name, descr));   
-}
-
-void SetDeviceIsDiscoverable( const char* pdevice, const bool value)
-{
-   if(pdevice)
-   {
-      g_deviceDiscoverability[std::string(pdevice)] = value;
-   }
-
 }
 
 MODULE_API unsigned GetNumberOfDevices()
@@ -81,48 +66,32 @@ MODULE_API bool GetDeviceName(unsigned deviceIndex, char* name, unsigned bufLen)
    return true;
 }
 
-MODULE_API bool GetDeviceDescription(unsigned deviceIndex, char* description, unsigned bufLen)
+MODULE_API bool GetDeviceDescription(const char* deviceName, char* description, unsigned bufLen)
 {
-   if (deviceIndex >= g_availableDevices.size())
-      return false;
-   
-   strncpy(description, g_availableDevices[deviceIndex].second.c_str(), bufLen-1);
+   int idx = FindDeviceIndex(deviceName);
+   if (idx < 0)
+      return false; // device name not found
+   else
+      strncpy(description, g_availableDevices[idx].second.c_str(), bufLen-1);
+
    return true;
 }
 
-
-MODULE_API bool GetDeviceIsDiscoverable(char* pDeviceName, bool* pvalue)
+///////////////////////////////////////////////////////////////////////////////
+// Functions for internal use (inside the Module)
+//
+void AddAvailableDeviceName(const char* name, const char* descr)
 {
-   bool ret = false;
-   if( pvalue)
-   {
-      *pvalue = false;
-      std::string name(pDeviceName);
-      std::map<std::string,bool>::iterator ii = g_deviceDiscoverability.find(name);
-      if( ii != g_deviceDiscoverability.end())
-      {
-         // found it
-         *pvalue = (*ii).second;
-         ret = true;
-      }
-   }
+   std::vector<DeviceInfo>::const_iterator it;
+   for (it=g_availableDevices.begin(); it!=g_availableDevices.end(); ++it)
+      if (it->first.compare(name) == 0)
+         return; // already there
 
-   return ret;
-
-
+   // add to the list
+   g_availableDevices.push_back(std::make_pair(name, descr));   
 }
 
-MODULE_API void EnableDeviceDiscovery(bool enable)
+unsigned GetNumberOfDevicesInternal()
 {
-   discoverabilityEnabled_g = enable;
+   return (unsigned) g_availableDevices.size();
 }
-
-
-
-// 
-bool DiscoverabilityTest()
-{
-   return ::discoverabilityEnabled_g;
-   //return CDeviceUtils::CheckEnvironment("DISCOVERABILITYTEST");
-}
-

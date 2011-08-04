@@ -359,11 +359,14 @@ MM::Device* CPluginManager::LoadDevice(const char* label, const char* moduleName
    assert(hLib);
 
    fnCreateDevice hCreateDeviceFunc(0);
+   fnGetDeviceDescription hGetDeviceDescription(0);
    try
    {
       CheckVersion(hLib); // verify that versions match
       hCreateDeviceFunc = (fnCreateDevice) GetModuleFunction(hLib, "CreateDevice");
       assert(hCreateDeviceFunc);
+      hGetDeviceDescription = (fnGetDeviceDescription) GetModuleFunction(hLib, "GetDeviceDescription");
+      assert(hGetDeviceDescription);
    }
    catch (CMMError& err)
    {
@@ -380,10 +383,14 @@ MM::Device* CPluginManager::LoadDevice(const char* label, const char* moduleName
    if (pDevice == 0)
       throw CMMError(deviceName, MMERR_CreateFailed);
 
+   char descr[MM::MaxStrLength] = "N/A";
+   hGetDeviceDescription(deviceName, descr, MM::MaxStrLength);
+
    // make sure that each device carries a reference to the module it belongs to!!!
    pDevice->SetModuleHandle(hLib);
    pDevice->SetLabel(label);
    pDevice->SetModuleName(moduleName);
+   pDevice->SetDescription(descr);
 
    // assign label
    devices_[label] = pDevice;
@@ -567,7 +574,7 @@ vector<string> CPluginManager::GetModules()
 /**
  * List all available devices in the specified module.
  */
-vector<string> CPluginManager::GetAvailableDevices(const char* moduleName, bool devDiscoveryEnabled) throw (CMMError)
+vector<string> CPluginManager::GetAvailableDevices(const char* moduleName) throw (CMMError)
 {
    vector<string> devices;
    HDEVMODULE hLib = LoadPluginLibrary(moduleName);
@@ -576,14 +583,9 @@ vector<string> CPluginManager::GetAvailableDevices(const char* moduleName, bool 
    fnGetNumberOfDevices hGetNumberOfDevices(0);
    fnGetDeviceName hGetDeviceName(0);
    fnInitializeModuleData hInitializeModuleData(0);
-   fnEnableDeviceDiscovery hEnableDeviceDiscovery(0);
 
    try
    {
-      // inform the library whether we're doing automated device discovery
-      hEnableDeviceDiscovery = (fnEnableDeviceDiscovery) GetModuleFunction(hLib, "EnableDeviceDiscovery"); 
-      hEnableDeviceDiscovery(devDiscoveryEnabled);
-
       // initalize module data
       hInitializeModuleData = (fnInitializeModuleData) GetModuleFunction(hLib, "InitializeModuleData");
       assert(hInitializeModuleData);
@@ -616,73 +618,10 @@ vector<string> CPluginManager::GetAvailableDevices(const char* moduleName, bool 
    return devices;
 }
 
-
-std::vector<bool> CPluginManager::GetDeviceDiscoverability(const char* moduleName, bool devDiscoveryEnabled) throw (CMMError)
-{
-   std::vector<bool> values;
-   HDEVMODULE hLib = 0;
-   try
-   {
-      hLib = LoadPluginLibrary(moduleName);
-      CheckVersion(hLib); // verify that versions match
-
-      fnGetNumberOfDevices hGetNumberOfDevices(0);
-      fnGetDeviceName hGetDeviceName(0);
-      fnInitializeModuleData hInitializeModuleData(0);
-      fnGetDeviceIsDiscoverable hGetDeviceIsDiscoverable(NULL);
-      fnEnableDeviceDiscovery hEnableDeviceDiscovery(0);
-
-      // inform the library whether we're doing automated device discovery
-      hEnableDeviceDiscovery = (fnEnableDeviceDiscovery) GetModuleFunction(hLib, "EnableDeviceDiscovery"); 
-      hEnableDeviceDiscovery(devDiscoveryEnabled);
-
-      // initalize module data
-      hInitializeModuleData = (fnInitializeModuleData) GetModuleFunction(hLib, "InitializeModuleData");
-      assert(hInitializeModuleData);
-      hInitializeModuleData();
-
-      hGetNumberOfDevices = (fnGetNumberOfDevices) GetModuleFunction(hLib, "GetNumberOfDevices");
-      assert(hGetNumberOfDevices);
-      hGetDeviceName = (fnGetDeviceName) GetModuleFunction(hLib, "GetDeviceName");
-      assert(hGetDeviceName);
-
-      hGetDeviceIsDiscoverable = (fnGetDeviceIsDiscoverable)GetModuleFunction(hLib, "GetDeviceIsDiscoverable");
-      assert(hGetDeviceIsDiscoverable);
-
-      unsigned numDev = hGetNumberOfDevices();
-      for (unsigned i=0; i<numDev; i++)
-      {
-         bool discoverable = false;
-         char deviceName[MM::MaxStrLength];
-         if (hGetDeviceName(i, deviceName, MM::MaxStrLength))
-         {
-            hGetDeviceIsDiscoverable(deviceName, &discoverable);
-
-         }
-         values.push_back(discoverable);
-      }
-   }
-   catch (CMMError& err)
-   {
-      std::ostringstream o;
-      o << " module " << moduleName;
-
-      CMMError newErr( o.str().c_str(), err.getCoreMsg().c_str(), err.getCode());
-      ReleasePluginLibrary(hLib);
-      throw newErr;
-   }
-   
-   ReleasePluginLibrary(hLib);
-   return values;
-}
-
-
-
-
 /**
  * List all available devices in the specified module.
  */
-vector<string> CPluginManager::GetAvailableDeviceDescriptions(const char* moduleName, bool devDiscoveryEnabled) throw (CMMError)
+vector<string> CPluginManager::GetAvailableDeviceDescriptions(const char* moduleName) throw (CMMError)
 {
    vector<string> descriptions;
    HDEVMODULE hLib = LoadPluginLibrary(moduleName);
@@ -691,14 +630,10 @@ vector<string> CPluginManager::GetAvailableDeviceDescriptions(const char* module
    fnGetNumberOfDevices hGetNumberOfDevices(0);
    fnGetDeviceDescription hGetDeviceDescription(0);
    fnInitializeModuleData hInitializeModuleData(0);
-   fnEnableDeviceDiscovery hEnableDeviceDiscovery(0);
+   fnGetDeviceName hGetDeviceName(0);
 
    try
    {
-      // inform the library whether we're doing automated device discovery
-      hEnableDeviceDiscovery = (fnEnableDeviceDiscovery) GetModuleFunction(hLib, "EnableDeviceDiscovery"); 
-      hEnableDeviceDiscovery(devDiscoveryEnabled);
-
       hInitializeModuleData = (fnInitializeModuleData) GetModuleFunction(hLib, "InitializeModuleData");
       assert(hInitializeModuleData);
       hInitializeModuleData();
@@ -707,13 +642,21 @@ vector<string> CPluginManager::GetAvailableDeviceDescriptions(const char* module
       assert(hGetNumberOfDevices);
       hGetDeviceDescription = (fnGetDeviceDescription) GetModuleFunction(hLib, "GetDeviceDescription");
       assert(hGetDeviceDescription);
+      hGetDeviceName = (fnGetDeviceName) GetModuleFunction(hLib, "GetDeviceName");
+      assert(hGetDeviceName);
 
       unsigned numDev = hGetNumberOfDevices();
       for (unsigned i=0; i<numDev; i++)
       {
-         char deviceDescr[MM::MaxStrLength];
-         if (hGetDeviceDescription(i, deviceDescr, MM::MaxStrLength))
-            descriptions.push_back(deviceDescr);
+         char deviceName[MM::MaxStrLength];
+         if (hGetDeviceName(i, deviceName, MM::MaxStrLength))
+         {
+            char deviceDescr[MM::MaxStrLength];
+            if (hGetDeviceDescription(deviceName, deviceDescr, MM::MaxStrLength))
+               descriptions.push_back(deviceDescr);
+            else
+               descriptions.push_back("N/A");
+         }
       }
    }
    catch (CMMError& err)
@@ -733,7 +676,7 @@ vector<string> CPluginManager::GetAvailableDeviceDescriptions(const char* module
 /**
  * List all device types in the specified module.
  */
-vector<long> CPluginManager::GetAvailableDeviceTypes(const char* moduleName, bool devDiscoveryEnabled ) throw (CMMError)
+vector<long> CPluginManager::GetAvailableDeviceTypes(const char* moduleName) throw (CMMError)
 {
    vector<long> types;
    HDEVMODULE hLib = LoadPluginLibrary(moduleName);
@@ -741,14 +684,9 @@ vector<long> CPluginManager::GetAvailableDeviceTypes(const char* moduleName, boo
 
    fnGetNumberOfDevices hGetNumberOfDevices(0);
    fnInitializeModuleData hInitializeModuleData(0);
-   fnEnableDeviceDiscovery hEnableDeviceDiscovery(0);
 
    try
    {
-      // inform the library whether we're doing automated device discovery
-      hEnableDeviceDiscovery = (fnEnableDeviceDiscovery) GetModuleFunction(hLib, "EnableDeviceDiscovery"); 
-      hEnableDeviceDiscovery(devDiscoveryEnabled);
-
       hInitializeModuleData = (fnInitializeModuleData) GetModuleFunction(hLib, "InitializeModuleData");
       assert(hInitializeModuleData);
       hInitializeModuleData();

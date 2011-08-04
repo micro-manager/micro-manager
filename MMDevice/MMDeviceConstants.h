@@ -209,7 +209,8 @@ namespace MM {
       MagnifierDevice,
       ProgrammableIODevice,
       SLMDevice,
-      CommandDispatchDevice
+      CommandDispatchDevice,
+      HubDevice
    };
 
    enum PropertyType {

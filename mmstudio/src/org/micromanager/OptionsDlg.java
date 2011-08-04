@@ -134,32 +134,6 @@ public class OptionsDlg extends MMDialog {
       springLayout.putConstraint(SpringLayout.SOUTH, doNotAskForConfigFileCheckBox, 50, SpringLayout.NORTH, getContentPane());
       doNotAskForConfigFileCheckBox.setSelected(opts_.doNotAskForConfigFile_);
 
-      final JCheckBox enableDeviceDiscoveryCheckBox = new JCheckBox();
-      enableDeviceDiscoveryCheckBox.addActionListener(new ActionListener() {
-         public void actionPerformed(ActionEvent arg0) {
-	    final  boolean oldValue = core_.getDeviceDiscoveryEnabled();
-            opts_.enableDeviceDiscovery_ = enableDeviceDiscoveryCheckBox.isSelected();
-				core_.setDeviceDiscoveryEnabled(opts_.enableDeviceDiscovery_);
-				/*
-				if( oldValue !=opts_.enableDeviceDiscovery_ )
-					try{
-					core_.reset();
-					}catch(Throwable t){
-						ReportingUtils.showError(t);
-					}
-				 
-				 */
-
-         }
-      });
-      enableDeviceDiscoveryCheckBox.setText("Enable Peripheral Device Discovery");
-      getContentPane().add(enableDeviceDiscoveryCheckBox);
-      springLayout.putConstraint(SpringLayout.EAST, enableDeviceDiscoveryCheckBox, 220, SpringLayout.WEST, getContentPane());
-      springLayout.putConstraint(SpringLayout.WEST, enableDeviceDiscoveryCheckBox, 0, SpringLayout.WEST, debugLogEnabledCheckBox);
-      springLayout.putConstraint(SpringLayout.SOUTH, enableDeviceDiscoveryCheckBox, 70, SpringLayout.NORTH, getContentPane());
-      enableDeviceDiscoveryCheckBox.setSelected(opts_.enableDeviceDiscovery_);
-
-
       final JButton clearLogFileButton = new JButton();
       clearLogFileButton.setMargin(new Insets(0, 0, 0, 0));
       clearLogFileButton.setToolTipText("Erases all entries in the current log file (recommended)");

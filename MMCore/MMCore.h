@@ -147,15 +147,6 @@ public:
    std::vector<std::string> getAvailableDeviceDescriptions(const char* library) throw (CMMError);
    std::vector<long> getAvailableDeviceTypes(const char* library) throw (CMMError);
 
-   /** 
-   * Device inventory discovery interface.
-   */
-
-
-   std::vector<bool> getDeviceDiscoverability(const char* library ///< library just as in getAvailableDevices
-      );
-
-
    /** @name Generic device interface
    * API guaranteed to work for all devices.
    */
@@ -188,7 +179,8 @@ public:
    MM::PropertyType getPropertyType(const char* label, const char* propName) const throw (CMMError);
    MM::DeviceType getDeviceType(const char* label) throw (CMMError);
    std::string getDeviceLibrary(const char* label) throw (CMMError);
-   std::string getDeviceNameInLibrary(const char* label) throw (CMMError);
+   std::string getDeviceName(const char* label) throw (CMMError);
+   std::string getDeviceDescription(const char* label) throw (CMMError);
    bool deviceBusy(const char* deviceName) throw (CMMError);
    void waitForDevice(const char* deviceName) throw (CMMError);
    void waitForConfig(const char* group, const char* configName) throw (CMMError);
@@ -430,9 +422,9 @@ public:
    // device discovery
    MM::DeviceDetectionStatus detectDevice(char* deviceName);
 
-   // hubs and 'scopes can provide a list of peripheral devices currently attached
-   std::vector<std::string> getDiscoverableDevices(const char* deviceLabel); 
-
+   // hubs can provide a list of peripheral devices currently attached
+   std::vector<std::string> getInstalledDevices(const char* hubDeviceLabel); 
+   void clearInstalledDevices(const char* hubDeviceLabel); 
 
    template <class T>
    T* getSpecificDevice(const char* deviceLabel) const throw (CMMError)
@@ -459,16 +451,6 @@ public:
    }  
 
    std::vector<std::string> getMACAddresses(void);
-
-   void setDeviceDiscoveryEnabled(bool en){
-      enableDeviceDiscovery_ = en;
-   }
-   
-   bool getDeviceDiscoveryEnabled(){
-      return enableDeviceDiscovery_;
-   }
-
-
 
 private:
    // make object non-copyable
@@ -533,7 +515,7 @@ private:
 
    MMThreadLock* pPostedErrorsLock_;
    mutable std::deque<std::pair< int, std::string> > postedErrors_;
-   bool enableDeviceDiscovery_;
+   //bool enableDeviceDiscovery_;
 
 
 };

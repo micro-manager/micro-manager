@@ -287,9 +287,6 @@ int LeicaScope::GetNumberOfDiscoverableDevices()
          return 0;
    }
 
-   if(::DiscoverabilityTest())
-   {
-
       AttemptToDiscover(g_IL_Turret, g_LeicaReflector);
       AttemptToDiscover(g_Revolver, g_LeicaNosePiece);
       AttemptToDiscover(g_Field_Diaphragm_TL, g_LeicaFieldDiaphragmTL);
@@ -313,7 +310,6 @@ int LeicaScope::GetNumberOfDiscoverableDevices()
       AttemptToDiscover(g_Condensor, g_LeicaCondensorTurret);
       AttemptToDiscover(g_Lamp, g_LeicaTransmittedLight);
       AttemptToDiscover(g_AFC, g_LeicaAFC);
-   }
 
    return (int) discoveredDevices_.size();
 }
@@ -384,6 +380,48 @@ bool LeicaScope::Busy()
    bool busy;
    g_ScopeModel.method_.GetBusy(busy);
    return busy;
+}
+
+int LeicaScope::DetectInstalledDevices()
+{
+   discoveredDevices_.clear();
+   if (!g_ScopeInterface.IsInitialized())
+   {
+      return ERR_NOT_INITIALIZED;
+   }
+
+   AttemptToDiscover(g_IL_Turret, g_LeicaReflector);
+   AttemptToDiscover(g_Revolver, g_LeicaNosePiece);
+   AttemptToDiscover(g_Field_Diaphragm_TL, g_LeicaFieldDiaphragmTL);
+   AttemptToDiscover(g_Aperture_Diaphragm_TL, g_LeicaApertureDiaphragmTL);
+   AttemptToDiscover(g_Field_Diaphragm_IL, g_LeicaFieldDiaphragmIL);
+   AttemptToDiscover(g_Aperture_Diaphragm_IL, g_LeicaApertureDiaphragmIL);
+   AttemptToDiscover(g_ZDrive, g_LeicaFocusAxis);
+   AttemptToDiscover(g_Mag_Changer_Mot, g_LeicaMagChanger);
+   // AttemptToDiscover(___, g_LeicaTubeLensShutter); Not supported.
+   AttemptToDiscover(g_Side_Port, g_LeicaSidePort);
+   AttemptToDiscover(g_Lamp, g_LeicaIncidentLightShutter);
+   AttemptToDiscover(g_Lamp, g_LeicaTransmittedLightShutter);
+   // AttemptToDiscover(___, g_LeicaHalogenLightSwitch); Not supported.
+   // AttemptToDiscover(___, g_LeicaRLFLAttenuator); Not supported.
+   AttemptToDiscover(g_XDrive, g_LeicaXYStage);
+   // AttemptToDiscover(___, g_LeicaBasePort); Not supported.
+   // AttemptToDiscover(___, g_LeicaUniblitz); Not supported.
+   // AttemptToDiscover(___, g_LeicaFilterWheel); Not supported.
+   AttemptToDiscover(g_TL_Polarizer, g_LeicaTLPolarizer);
+   AttemptToDiscover(g_DIC_Turret, g_LeicaDICTurret);
+   AttemptToDiscover(g_Condensor, g_LeicaCondensorTurret);
+   AttemptToDiscover(g_Lamp, g_LeicaTransmittedLight);
+   AttemptToDiscover(g_AFC, g_LeicaAFC);
+
+   for (size_t i=0; i<discoveredDevices_.size(); i++)
+   {
+      MM::Device* pDev = ::CreateDevice(discoveredDevices_[i].c_str());
+      if (pDev)
+         AddInstalledDevice(pDev);
+   }
+
+   return DEVICE_OK;
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -467,7 +505,7 @@ ILShutter::~ILShutter ()
 void ILShutter::GetName(char* name) const
 {
    assert(name_.length() < CDeviceUtils::GetMaxStringLength());
-   CDeviceUtils::CopyLimitedString(name, name_.c_str());
+   CDeviceUtils::CopyLimitedString(name, g_LeicaIncidentLightShutter);
 }
 
 int ILShutter::Initialize()
@@ -635,7 +673,7 @@ TLShutter::~TLShutter ()
 void TLShutter::GetName(char* name) const
 {
    assert(name_.length() < CDeviceUtils::GetMaxStringLength());
-   CDeviceUtils::CopyLimitedString(name, name_.c_str());
+   CDeviceUtils::CopyLimitedString(name, g_LeicaTransmittedLightShutter);
 }
 
 int TLShutter::Initialize()
@@ -818,7 +856,7 @@ ILTurret::~ILTurret()
 
 void ILTurret::GetName(char* name) const
 {
-   CDeviceUtils::CopyLimitedString(name, name_.c_str());
+   CDeviceUtils::CopyLimitedString(name, g_LeicaReflector);
 }
 
 int ILTurret::Initialize()
@@ -979,7 +1017,7 @@ ObjectiveTurret::~ObjectiveTurret()
 
 void ObjectiveTurret::GetName(char* name) const
 {
-   CDeviceUtils::CopyLimitedString(name, name_.c_str());
+   CDeviceUtils::CopyLimitedString(name, g_LeicaNosePiece);
 }
 
 int ObjectiveTurret::Initialize()
@@ -1850,7 +1888,7 @@ MagChanger::~MagChanger()
 
 void MagChanger::GetName(char* name) const
 {
-   CDeviceUtils::CopyLimitedString(name, name_.c_str());
+   CDeviceUtils::CopyLimitedString(name, g_LeicaMagChanger);
 }
 
 int MagChanger::Initialize()
@@ -2002,7 +2040,7 @@ TLPolarizer::~TLPolarizer()
 
 void TLPolarizer::GetName(char* name) const
 {
-   CDeviceUtils::CopyLimitedString(name, name_.c_str());
+   CDeviceUtils::CopyLimitedString(name, g_LeicaTLPolarizer);
 }
 
 int TLPolarizer::Initialize()
@@ -2132,7 +2170,7 @@ DICTurret::~DICTurret()
 
 void DICTurret::GetName(char* name) const
 {
-   CDeviceUtils::CopyLimitedString(name, name_.c_str());
+   CDeviceUtils::CopyLimitedString(name, g_LeicaDICTurret);
 }
 
 int DICTurret::Initialize()
@@ -2308,7 +2346,7 @@ CondensorTurret::~CondensorTurret()
 
 void CondensorTurret::GetName(char* name) const
 {
-   CDeviceUtils::CopyLimitedString(name, name_.c_str());
+   CDeviceUtils::CopyLimitedString(name, g_LeicaCondensorTurret);
 }
 
 int CondensorTurret::Initialize()
@@ -2437,7 +2475,7 @@ TransmittedLight::~TransmittedLight ()
 void TransmittedLight::GetName(char* name) const
 {
    assert(name_.length() < CDeviceUtils::GetMaxStringLength());
-   CDeviceUtils::CopyLimitedString(name, name_.c_str());
+   CDeviceUtils::CopyLimitedString(name, g_LeicaTransmittedLight);
 }
 
 int TransmittedLight::Initialize()
@@ -2687,7 +2725,7 @@ int AFC::Shutdown()
 
 void AFC::GetName (char* Name) const
 {
-   CDeviceUtils::CopyLimitedString(Name, g_LeicaDeviceName);
+   CDeviceUtils::CopyLimitedString(Name, g_LeicaAFC);
 }
 
 bool AFC::Busy() 
@@ -2827,7 +2865,7 @@ SidePort::~SidePort()
 
 void SidePort::GetName(char* name) const
 {
-   CDeviceUtils::CopyLimitedString(name, name_.c_str());
+   CDeviceUtils::CopyLimitedString(name, g_LeicaSidePort);
 }
 
 int SidePort::Initialize()

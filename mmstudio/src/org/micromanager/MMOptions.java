@@ -48,7 +48,7 @@ public class MMOptions {
    public String startupScript_ = "MMStartup.bsh";
    boolean conserveRam_ = false;
    boolean autoreloadDevices_ = false;
-   public boolean enableDeviceDiscovery_  = false;
+   //public boolean enableDeviceDiscovery_  = false;
    
    public void saveSettings() {
       Preferences root = Preferences.userNodeForPackage( this.getClass());
@@ -62,7 +62,7 @@ public class MMOptions {
       prefs.putInt(BUFFSIZE_MB, circularBufferSizeMB_);
       prefs.put(DISPLAY_BACKGROUND, displayBackground_);
       prefs.put(STARTUP_SCRIPT_FILE, startupScript_);
-      prefs.putBoolean(ENABLE_DEVICE_DISCOVERY, enableDeviceDiscovery_);
+      // prefs.putBoolean(ENABLE_DEVICE_DISCOVERY, enableDeviceDiscovery_);
    }
    
    public void loadSettings() {
@@ -77,6 +77,6 @@ public class MMOptions {
       startupScript_ = prefs.get(STARTUP_SCRIPT_FILE, startupScript_);
       conserveRam_ = prefs.getBoolean(CONSERVE_RAM, conserveRam_);
       autoreloadDevices_ = prefs.getBoolean(AUTORELOAD_DEVICES, autoreloadDevices_);
-      enableDeviceDiscovery_ = prefs.getBoolean(ENABLE_DEVICE_DISCOVERY, enableDeviceDiscovery_);
+      // enableDeviceDiscovery_ = prefs.getBoolean(ENABLE_DEVICE_DISCOVERY, enableDeviceDiscovery_);
    }
 }

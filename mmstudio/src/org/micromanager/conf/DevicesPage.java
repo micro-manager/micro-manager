@@ -27,8 +27,6 @@ import java.awt.Container;
 import java.awt.Cursor;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.HashMap;
-import java.util.Vector;
 import java.util.prefs.Preferences;
 
 import javax.swing.JButton;
@@ -37,11 +35,10 @@ import javax.swing.JTable;
 import javax.swing.ListSelectionModel;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.TableModel;
-import mmcorej.BooleanVector;
-import mmcorej.CMMCore;
 
+import mmcorej.CMMCore;
 import mmcorej.MMCoreJ;
-import mmcorej.StrVector;
+
 import org.micromanager.utils.ReportingUtils;
 
 /**
@@ -61,80 +58,18 @@ public class DevicesPage extends PagePanel {
       
       MicroscopeModel model_;
       Device devices_[];
-      Vector<Device> filteredDevices_;
-
-      private void filterDevices(){
-         filteredDevices_.clear();
-         // some assumptions here are:
-         // there may be multiple non-discoverable devices in the the same library
-         // however, only ONE of the non-discoverable devices is the Hub for that library
-         HashMap<String, Object> loadedDevices = new HashMap<String, Object>();
-
-         // at this point the adapter might not be loaded, since the user may be adding the entries
-         // from the MMDeviceList.txt or else the entries may already be in the configuration file.
-         // ... so for every configured device we must:
-         // 1. find which library it's in
-         // 2. load the library but NOT the device
-         // 3. check the discoverable device list for that device
-         // 4. filter the peripherals on that hub from the VIEW of this list of top-level devices
-
-         for(Device d: devices_){
-            if( !MMCoreJ.getG_Keyword_CoreDevice().equals(d.getName())){
-                String thisLibrary = d.getLibrary();
-                if(!loadedDevices.containsKey(thisLibrary) ){
-                    try{
-                        Object info[] = new Object[2];
-                        StrVector devicesAvailable = core_.getAvailableDevices(thisLibrary); // force a call into the module API to load the dyn. lib.
-                        // todo - if argument to getDeviceDiscoverability is invalid there is a strange crash upon
-                        // the handling of the exception thrown from the pluginmanager in the core....
-                        BooleanVector discoverability = core_.getDeviceDiscoverability(thisLibrary);
-                        info[0] = devicesAvailable;
-                        info[1] = discoverability;
-                        loadedDevices.put( thisLibrary, info);
-                    }
-                    catch( Exception e){
-                       ReportingUtils.logError(e);
-                    }
-                }
-            }
-         }
-
-         for(Device d: devices_){
-            if( !MMCoreJ.getG_Keyword_CoreDevice().equals(d.getName())){
-                Object[] info = (Object[])loadedDevices.get(d.getLibrary());
-                StrVector devicesAvailable = (StrVector)info[0];
-                BooleanVector discoverability = (BooleanVector)info[1];
-                for( int ii = 0; ii < devicesAvailable.size(); ++ii){
-                    // the devicesAvailble should be identified by their default name
-                    if(devicesAvailable.get(ii).equals(d.getAdapterName())){
-                        if( ii < discoverability.size()){
-                            d.setDiscoverable(discoverability.get(ii));
-                        }
-                        break;
-                    }
-                }
-            }
-         }
-
-         for( Device d:devices_){
-            if( !d.isDiscoverable())
-               filteredDevices_.add(d);
-         }
-      }
 
       public DeviceTable_TableModel(MicroscopeModel model) {
-         filteredDevices_ = new Vector<Device> ();
          setMicroscopeModel(model);
       }
       
       public void setMicroscopeModel(MicroscopeModel mod) {
          devices_ = mod.getDevices();
          model_ = mod;
-         filterDevices();
       }
       
       public int getRowCount() {
-         return filteredDevices_.size();
+         return devices_.length;
       }
       public int getColumnCount() {
          return COLUMN_NAMES.length;
@@ -146,17 +81,17 @@ public class DevicesPage extends PagePanel {
       public Object getValueAt(int rowIndex, int columnIndex) {
          
          if (columnIndex == 0)
-            return filteredDevices_.get(rowIndex).getName();
+            return devices_[rowIndex].getName();
          else if (columnIndex == 1)
-            return new String (filteredDevices_.get(rowIndex).getAdapterName() + "/" + filteredDevices_.get(rowIndex).getLibrary());
+            return new String (devices_[rowIndex].getAdapterName() + "/" + devices_[rowIndex].getLibrary());
          else
-            return filteredDevices_.get(rowIndex).getDescription();
+            return devices_[rowIndex].getDescription();
       }
 
       @Override
       public void setValueAt(Object value, int row, int col) {
          String newName = (String) value;
-         String oldName = filteredDevices_.get(row).getName();
+         String oldName = devices_[row].getName();
          if (col == 0) {
             try {
                model_.changeDeviceName(oldName, newName);
@@ -177,7 +112,6 @@ public class DevicesPage extends PagePanel {
       
       public void refresh() {
          devices_ = model_.getDevices();
-         filterDevices();
          this.fireTableDataChanged();
       }
    }

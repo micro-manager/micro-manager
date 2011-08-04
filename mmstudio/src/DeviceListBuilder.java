@@ -33,15 +33,7 @@ public class DeviceListBuilder {
    public static void main(String[] args) {
       StringBuffer resultingFile = new StringBuffer();
       
-      boolean deviceDiscoveryEnabled = false;
-      if( 0< args.length){
-         String env = args[0];
-         if(null != env){
-            if( env.equalsIgnoreCase("deviceDiscoveryEnabled"))
-               deviceDiscoveryEnabled = true;
-         }
-      }
-      if (MicroscopeModel.generateDeviceListFile(deviceDiscoveryEnabled, resultingFile,null))
+      if (MicroscopeModel.generateDeviceListFile(resultingFile, null))
          ReportingUtils.logMessage("Device list " + resultingFile + " generated.");
       else
          ReportingUtils.logMessage("Device list " + resultingFile + " not generated or invalid.");

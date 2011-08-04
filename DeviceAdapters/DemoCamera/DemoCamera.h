@@ -55,7 +55,7 @@
 // DemoHub
 //////////////////////
 
-class DemoHub : public CGenericBase<DemoHub>
+class DemoHub : public HubBase<DemoHub>
 {
 public:
    DemoHub():initialized_(false), busy_(false), errorRate_(0.0), divideOneByMe_(1) {} ;
@@ -69,23 +69,21 @@ public:
    bool Busy() { return busy_;} ;
    bool GenerateRandomError();
 
+   // HUB api
+   int DetectInstalledDevices();
 
-   // peripheral device discovery
-   int GetNumberOfDiscoverableDevices();
-   void GetDiscoverableDevice(int peripheralNum, char* peripheralName, unsigned int maxNameLen);
    // action interface
    int OnErrorRate(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnDivideOneByMe(MM::PropertyBase* pProp, MM::ActionType eAct);
 
-
 private:
+   void GetPeripheralInventory();
+
    bool busy_;
    bool initialized_;
    std::vector<std::string> peripherals_;
-   void GetPeripheralInventory();
    double errorRate_;
    long divideOneByMe_;
-
 };
 
 ////////////////////////
@@ -153,8 +151,6 @@ public:
    // ----------------
 	// floating point read-only properties for testing
 	int OnTestProperty(MM::PropertyBase* pProp, MM::ActionType eAct, long);
-
-
    int OnBinning(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnPixelType(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnBitDepth(MM::PropertyBase* pProp, MM::ActionType eAct);
@@ -171,9 +167,8 @@ public:
 
 private:
    int SetAllowedBinning();
-
+   void TestResourceLocking(const bool);
    void GenerateEmptyImage(ImgBuffer& img);
-
    void GenerateSyntheticImage(ImgBuffer& img, double exp);
    int ResizeImageBuffer();
 
@@ -201,12 +196,10 @@ private:
 	bool saturatePixels_;
 	double fractionOfPixelsToDropOrSaturate_;
 
-
 	double testProperty_[10];
    MMThreadLock* pDemoResourceLock_;
    MMThreadLock imgPixelsLock_;
    int nComponents_;
-   void TestResourceLocking(const bool);
    friend class MySequenceThread;
    MySequenceThread * thd_;
 };

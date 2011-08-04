@@ -62,18 +62,15 @@ public class MicroscopeModel {
    ArrayList<String> synchroDevices_;
    // this device list is created WITHOUT automated peripheral device discovery
    public static final String DEVLIST_FILE_NAME = "MMDeviceList.txt";
-   // this device list is created WITH automated peripheral device discovery (i.e. 'primary' devices only)
-   public static final String DEVLISTPRIME_FILE_NAME = "MMDeviceListPrime.txt";
    public static final String PIXEL_SIZE_GROUP = "PixelSizeGroup";
 
    boolean sendConfiguration_;
 
-   public static boolean generateDeviceListFile(boolean enableDeviceDiscovery, StringBuffer deviceListFileName, CMMCore c ) {
+   public static boolean generateDeviceListFile(StringBuffer deviceListFileName, CMMCore c ) {
       try {
 			deviceListFileName.delete(0, deviceListFileName.length());
-         deviceListFileName.append((enableDeviceDiscovery?DEVLISTPRIME_FILE_NAME:DEVLIST_FILE_NAME ));
+         deviceListFileName.append(DEVLIST_FILE_NAME);
          CMMCore core = (null==c)?new CMMCore():c;
-         core.setDeviceDiscoveryEnabled(enableDeviceDiscovery);
          core.enableDebugLog(true);
          StrVector libs = getDeviceLibraries(core);
          ArrayList<Device> devs = new ArrayList<Device>();
@@ -98,8 +95,8 @@ public class MicroscopeModel {
             BufferedWriter out = new BufferedWriter(new FileWriter(f.getAbsolutePath()));
             for (int i = 0; i < devs.size(); i++) {
                Device dev = devs.get(i);
-                  // do not output serial devices or other discoverable peripherals
-               if (!dev.isSerialPort() && !dev.isDiscoverable()) {
+                  // do not output serial devices
+               if (!dev.isSerialPort()) {
                   String descr = dev.getDescription().replaceAll(",", ";");
                   out.write(dev.getLibrary() + "," + dev.getAdapterName() + "," + descr + "," + dev.getTypeAsInt());
                   out.newLine();
@@ -222,7 +219,7 @@ public class MicroscopeModel {
    public void loadAvailableDeviceList(CMMCore core) {
       try {
          ArrayList<Device> devsTotal = new ArrayList<Device>();
-         String deviceListFileName = (core.getDeviceDiscoveryEnabled()?DEVLISTPRIME_FILE_NAME:DEVLIST_FILE_NAME );
+         String deviceListFileName = (DEVLIST_FILE_NAME);
 
          // attempt to load device info from file
          File f = new File(deviceListFileName);
@@ -1065,50 +1062,32 @@ public class MicroscopeModel {
    public Device[] getDevices() {
       Device[] devs = new Device[devices_.size()];
       for (int i = 0; i < devs.length; i++) {
-         devs[i] = devices_.get(i);
-
-         
+         devs[i] = devices_.get(i);         
       }
       return devs;
    }
 
    // all the devices in the model that are discoverable on a hub
+   // TODO: implement this method
    public Device[] getPeripheralDevices() {
       int len = 0;
-
-      for( Device d : devices_){
-         if(d.isDiscoverable())
-            ++len;
-      }
       Device[] devs = new Device[len];
-      if( 0 < len){
-         len = 0;
-         for(Device d : devices_){
-            if(d.isDiscoverable())
-               devs[len++] = d;
-         }
-      }
       return devs;
    }
 
-
+   // TODO: implement
    public void removePeripherals( String hubName, CMMCore core){
       Device d = findDevice(hubName);
       // check if this is hub device, that is simply any device with a non-empty discoverable peripheral list
       String thisLibrary = d.getLibrary();
       try{
          StrVector devicesAvailable = core.getAvailableDevices(thisLibrary); // force a call into the module API to load the dyn. lib.
-         BooleanVector discoverability = core.getDeviceDiscoverability(thisLibrary);
          for( Device peripheral: devices_){
              for( int ii = 0; ii < devicesAvailable.size(); ++ii){
                  // the devicesAvailble should be identified by their default name
                  if(devicesAvailable.get(ii).equals(peripheral.getAdapterName())){
-                     if( ii < discoverability.size()){
-                        if( discoverability.get(ii)){
-                           removeDevice(peripheral.getName());
-                        }
-                     }
-                     break; // look for next device
+                    removeDevice(peripheral.getName());    
+                    break; // look for next device
                  }
              }
          }
@@ -1294,7 +1273,7 @@ public class MicroscopeModel {
    public void AddSelectedPeripherals(CMMCore c, Vector<Device> pd, Vector<String> hubs, Vector<Boolean> sel){
       for(int idit = 0; idit < pd.size(); ++idit){
          if( sel.get(idit)){      
-            Device newDev = new Device(pd.get(idit).getName(), pd.get(idit).getLibrary(), pd.get(idit).getAdapterName(), pd.get(idit).getDescription(),true);
+            Device newDev = new Device(pd.get(idit).getName(), pd.get(idit).getLibrary(), pd.get(idit).getAdapterName(), pd.get(idit).getDescription());
             try {
                addDevice(newDev);
                c.loadDevice(newDev.getName(), newDev.getLibrary(), newDev.getAdapterName());
@@ -1304,14 +1283,15 @@ public class MicroscopeModel {
                   c.setProperty(newDev.getName(), p.name, p.value);
                }
             } catch (Exception e) {
+               ReportingUtils.showError(e);
             }    
          }
          else{
             try{
-            c.unloadDevice(pd.get(idit).getName());
+               c.unloadDevice(pd.get(idit).getName());
             }
             catch(Exception e){
-
+               ReportingUtils.logError(e.getMessage());
             }
          }
       }
@@ -1349,6 +1329,7 @@ public class MicroscopeModel {
             try {
                 c.unloadAllDevices();
             } catch (Exception ex) {
+               ReportingUtils.logError(e.getMessage());               
             }
             status = false;
         }

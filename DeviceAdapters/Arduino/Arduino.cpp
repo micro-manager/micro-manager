@@ -60,6 +60,9 @@ MODULE_API void InitializeModuleData()
    AddAvailableDeviceName(g_DeviceNameArduinoDA2, "DA2");
    AddAvailableDeviceName(g_DeviceNameArduinoInput, "Input");
 
+   // We left this list so that we can see which devices are discoverable
+   // TODO: remove when finished with revision
+/*
    if( DiscoverabilityTest())
    {  
       SetDeviceIsDiscoverable(g_DeviceNameArduinoHub, false);
@@ -69,6 +72,7 @@ MODULE_API void InitializeModuleData()
       SetDeviceIsDiscoverable(g_DeviceNameArduinoDA2, true);
       SetDeviceIsDiscoverable(g_DeviceNameArduinoInput, true);
    }
+*/
 }
 
 MODULE_API MM::Device* CreateDevice(const char* deviceName)

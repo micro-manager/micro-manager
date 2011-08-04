@@ -109,34 +109,13 @@ MODULE_API void InitializeModuleData()
    AddAvailableDeviceName(g_LightPathDeviceName, "Demo light path");
    AddAvailableDeviceName(g_AutoFocusDeviceName, "Demo auto focus");
    AddAvailableDeviceName(g_ShutterDeviceName, "Demo shutter");
-   AddAvailableDeviceName(g_DADeviceName, "Demo DA");
-   AddAvailableDeviceName(g_MagnifierDeviceName, "Demo Optovar");
+   // AddAvailableDeviceName(g_DADeviceName, "Demo DA");
+   // AddAvailableDeviceName(g_MagnifierDeviceName, "Demo Optovar");
    AddAvailableDeviceName("TransposeProcessor", "TransposeProcessor");
    AddAvailableDeviceName("ImageFlipX", "ImageFlipX");
    AddAvailableDeviceName("ImageFlipY", "ImageFlipY");
    AddAvailableDeviceName("MedianFilter", "MedianFilter");
    AddAvailableDeviceName(g_HubDeviceName, "DHub");
-
-   if (DiscoverabilityTest())
-   {
-      SetDeviceIsDiscoverable(g_WheelDeviceName, true);
-      SetDeviceIsDiscoverable(g_StateDeviceName, true);
-      SetDeviceIsDiscoverable(g_ObjectiveDeviceName, true);
-      SetDeviceIsDiscoverable(g_StageDeviceName, true); 
-      SetDeviceIsDiscoverable(g_XYStageDeviceName, true);
-      SetDeviceIsDiscoverable(g_LightPathDeviceName, true);
-      SetDeviceIsDiscoverable(g_AutoFocusDeviceName, true);
-      SetDeviceIsDiscoverable(g_ShutterDeviceName, true);
-      SetDeviceIsDiscoverable(g_DADeviceName, true);
-      SetDeviceIsDiscoverable(g_MagnifierDeviceName, true);
-      SetDeviceIsDiscoverable("TransposeProcessor", true);
-      SetDeviceIsDiscoverable("ImageFlipX", true);
-      SetDeviceIsDiscoverable("ImageFlipY", true);
-      SetDeviceIsDiscoverable("MedianFilter", true);
-   }
-
-
-
 }
 
 MODULE_API MM::Device* CreateDevice(const char* deviceName)
@@ -3247,17 +3226,11 @@ int MedianFilter::Process(unsigned char *pBuffer, unsigned int width, unsigned i
 }
 
 
-
-
-
-
-
 int DemoHub::Initialize()
 {
    if (g_hub && g_hub->GenerateRandomError())
       return SIMULATED_ERROR;
 
-	initialized_ = true;
    SetErrorText(SIMULATED_ERROR, "Simulated Error");
 	CPropertyAction *pAct = new CPropertyAction (this, &DemoHub::OnErrorRate);
 	CreateProperty("SimulatedErrorRate", "0.0", MM::Float, false, pAct);
@@ -3275,74 +3248,40 @@ int DemoHub::Initialize()
    os<<this->divideOneByMe_;
    CreateProperty("DivideOneByMe", os.str().c_str(), MM::Integer, false, pAct);
 
-   
+  	initialized_ = true;
+ 
 	return DEVICE_OK;
 }
 
-void  DemoHub::GetPeripheralInventory()
-{
-   if (g_hub && g_hub->GenerateRandomError())
-      return;
-
-    
-   peripherals_.clear();
-   if( DiscoverabilityTest())
-   {  
-      Initialize();
-      // all the adapters in this module
-      int n = GetNumberOfDevices();
-      char deviceName[MM::MaxStrLength];
-      for( int i = 0; i < n; ++i)
-      {
-         bool succ = GetDeviceName(i, deviceName, MM::MaxStrLength);
-         if( succ)
-         {
-            bool isDiscoverable;
-            succ = GetDeviceIsDiscoverable( deviceName, &isDiscoverable);
-            if( succ)
-            {
-               if(isDiscoverable)
-               {
-                  peripherals_.push_back(deviceName);
-               }
-
-            }
-         }
-      }
-   }
-}
-
-
-int DemoHub::GetNumberOfDiscoverableDevices()
+int DemoHub::DetectInstalledDevices()
 {
    if (g_hub && g_hub->GenerateRandomError())
       return SIMULATED_ERROR;
+  
+   ClearInstalledDevices();
 
-   GetPeripheralInventory();
-   return  (int) peripherals_.size();
+   // make sure this method is called before we look for available devices
+   InitializeModuleData();
 
+   char hubName[MM::MaxStrLength];
+   GetName(hubName); // this device name
+   for (unsigned i=0; i<GetNumberOfDevices(); i++)
+   { 
+      char deviceName[MM::MaxStrLength];
+      bool success = GetDeviceName(i, deviceName, MM::MaxStrLength);
+      if (success && (strcmp(hubName, deviceName) != 0))
+      {
+         MM::Device* pDev = CreateDevice(deviceName);
+         AddInstalledDevice(pDev);
+      }
+   }
+   return DEVICE_OK; 
 }
 
-void DemoHub::GetDiscoverableDevice(int peripheralNum, char* peripheralName, unsigned int maxNameLen)
-{ 
-   if (g_hub && g_hub->GenerateRandomError())
-      return;
-
-   if( -1 < peripheralNum)
-   {
-      if( peripheralNum < int(peripherals_.size()))
-      {
-            strncpy(peripheralName, peripherals_[peripheralNum].c_str(), maxNameLen - 1);
-            peripheralName[maxNameLen - 1] = 0;
-      }
-   
-   }
-   return;
-} 
-
-
-
-void DemoHub::GetName(char* pName) const{  CDeviceUtils::CopyLimitedString(pName, g_HubDeviceName);} ;
+void DemoHub::GetName(char* pName) const
+{
+   CDeviceUtils::CopyLimitedString(pName, g_HubDeviceName);
+}
 
 bool DemoHub::GenerateRandomError()
 {

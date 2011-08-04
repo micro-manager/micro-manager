@@ -1709,7 +1709,7 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
                return;
             }
             ReportingUtils.setCore(core_);
-            core_.setDeviceDiscoveryEnabled(options_.enableDeviceDiscovery_);
+            //core_.setDeviceDiscoveryEnabled(options_.enableDeviceDiscovery_);
 
             core_.enableDebugLog(options_.debugLogEnabled_);
             core_.logMessage("MM Studio version: " + getVersion());
@@ -2946,7 +2946,9 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
       } else {
          buttonSnap_.setEnabled(!enable);
          autoShutterCheckBox_.setEnabled(!enable);
-         getPipeline().enableLiveMode(enable);
+         Pipeline p = getPipeline();
+         if (p != null)
+            p.enableLiveMode(enable);
          liveRunning_ = enable;
       }
 
@@ -4368,7 +4370,7 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
             Cursor waitc = new Cursor(Cursor.WAIT_CURSOR);
             setCursor(waitc);
             StringBuffer resultFile = new StringBuffer();
-            MicroscopeModel.generateDeviceListFile(options_.enableDeviceDiscovery_, resultFile, core_);
+            MicroscopeModel.generateDeviceListFile(resultFile, core_);
             //MicroscopeModel.generateDeviceListFile();
             setCursor(oldc);
             return resultFile.toString();

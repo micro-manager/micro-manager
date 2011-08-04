@@ -110,8 +110,7 @@ MMThreadLock CMMCore::deviceLock_;
  */
 CMMCore::CMMCore() :
    camera_(0), everSnapped_(false), shutter_(0), focusStage_(0), xyStage_(0), autoFocus_(0), slm_(0), imageProcessor_(0), pollingIntervalMs_(10), timeoutMs_(5000),
-   logStream_(0), autoShutter_(true), callback_(0), configGroups_(0), properties_(0), externalCallback_(0), pixelSizeGroup_(0), cbuf_(0), pPostedErrorsLock_(NULL), 
-   enableDeviceDiscovery_(false)
+   logStream_(0), autoShutter_(true), callback_(0), configGroups_(0), properties_(0), externalCallback_(0), pixelSizeGroup_(0), cbuf_(0), pPostedErrorsLock_(NULL)
 {
    // get current working directory
 #ifdef _WINDOWS
@@ -395,14 +394,13 @@ string CMMCore::getVersionInfo() const
 }
 
 /**
- * Get available devices from the specified library.
+ * Get available devices from the specified device library.
  */
-vector<string> CMMCore::getAvailableDevices(const char* library ///< the device adapter library name
-                                            ) throw (CMMError)
+vector<string> CMMCore::getAvailableDevices(const char* library) throw (CMMError)
 {
    try
    {
-      return CPluginManager::GetAvailableDevices(library, enableDeviceDiscovery_);
+      return CPluginManager::GetAvailableDevices(library);
    }
    catch (CMMError& e)
    {
@@ -413,12 +411,11 @@ vector<string> CMMCore::getAvailableDevices(const char* library ///< the device 
 /**
  * Get descriptions for available devices from the specified library.
  */
-vector<string> CMMCore::getAvailableDeviceDescriptions(const char* library ///< the device adapter library name
-                                                       ) throw (CMMError)
+vector<string> CMMCore::getAvailableDeviceDescriptions(const char* library) throw (CMMError)
 {
    try
    {
-      return CPluginManager::GetAvailableDeviceDescriptions(library,enableDeviceDiscovery_);
+      return CPluginManager::GetAvailableDeviceDescriptions(library);
    }
    catch (CMMError& e)
    {
@@ -429,12 +426,11 @@ vector<string> CMMCore::getAvailableDeviceDescriptions(const char* library ///< 
 /**
  * Get type information for available devices from the specified library.
  */
-vector<long> CMMCore::getAvailableDeviceTypes(const char* library ///< the device adapter library name
-                                              ) throw (CMMError)
+vector<long> CMMCore::getAvailableDeviceTypes(const char* library) throw (CMMError)
 {
    try
    {
-      return CPluginManager::GetAvailableDeviceTypes(library, enableDeviceDiscovery_);
+      return CPluginManager::GetAvailableDeviceTypes(library);
    }
    catch (CMMError& e)
    {
@@ -442,28 +438,6 @@ vector<long> CMMCore::getAvailableDeviceTypes(const char* library ///< the devic
       throw;
    }
 }
-
-
-std::vector<bool> CMMCore::getDeviceDiscoverability(const char* library)
-{
-
-   try
-   {
-
-      std::vector<bool> ret;
-      ret = CPluginManager::GetDeviceDiscoverability(library,enableDeviceDiscovery_);
-      return ret;
-   }
-
-   catch (CMMError& e)
-   {
-      logError("core", e.getMsg().c_str());
-      throw;
-   }
-}
-
-
-
 
 /**
  * Displays the module and device interface versions.
@@ -994,9 +968,11 @@ std::string CMMCore::getDeviceLibrary(const char* label) throw (CMMError)
 }
 
 /**
- * Returns device name (as specified in library/module/device adapter).
+ * Returns device name for a given device label.
+ * "Name" is determined by the library and is immutable, while "label" is
+ * user assigned and represents a high-level handle to a device.
  */
-std::string CMMCore::getDeviceNameInLibrary(const char* label) throw (CMMError)
+std::string CMMCore::getDeviceName(const char* label) throw (CMMError)
 {
    if (strcmp(label, MM::g_Keyword_CoreDevice) == 0)
       return "Core";
@@ -1008,6 +984,21 @@ std::string CMMCore::getDeviceNameInLibrary(const char* label) throw (CMMError)
    return string(name);
 }
 
+/**
+ * Returns description text for a given device label.
+ * "Description" is determined by the library and is immutable.
+ */
+std::string CMMCore::getDeviceDescription(const char* label) throw (CMMError)
+{
+   if (strcmp(label, MM::g_Keyword_CoreDevice) == 0)
+      return "Core device";
+   
+   MM::Device* pDevice = getDevice(label);
+
+   char name[MM::MaxStrLength];
+   pDevice->GetDescription(name);
+   return string(name);
+}
 
 
 /**
@@ -5531,25 +5522,41 @@ MM::DeviceDetectionStatus CMMCore::detectDevice(char* deviceName)
 
    return result;
 }
-
-std::vector<std::string> CMMCore::getDiscoverableDevices(const char* deviceLabel)
+/**
+ * Performs auto-detection of devices installed in the hardware setup.
+ * Hardware setup is represented by the Hub device. Typically, a motorized microscope is represented by the
+ * Hub device, capable of discovering what specific devices are cuirrently installed. For example, it can
+ * report that Z-stage, filter changer and objective turrent are currently installed and return three
+ * device names in the string list.
+ */
+std::vector<std::string> CMMCore::getInstalledDevices(const char* deviceLabel)
 {
    std::vector<std::string> result;
    MM::Device* pDevice  = pluginManager_.GetDevice(deviceLabel);
-   char pname[4096];
-   if( NULL != pDevice)
+   if (pDevice && pDevice->GetType() == MM::HubDevice)
    {
-
-      int n = pDevice->GetNumberOfDiscoverableDevices();
-      for( int iter = 0; iter < n; ++iter)
+      MM::Hub* pHub = static_cast<MM::Hub*>(pDevice);
+      pHub->DetectInstalledDevices();
+      for(int i=0; i<pHub->GetNumberOfInstalledDevices(); i++)
       {
-         pDevice->GetDiscoverableDevice(iter, pname, 4096);
-         result.push_back(pname);
+         MM::Device* pInstDev = pHub->GetInstalledDevice(i);
+         char devName[MM::MaxStrLength];
+         pInstDev->GetName(devName);
+         result.push_back(devName);
       }
    }
    return result;
 }
 
+void CMMCore::clearInstalledDevices(const char* hubDeviceLabel)
+{
+   MM::Device* pDevice  = pluginManager_.GetDevice(hubDeviceLabel);
+   if (pDevice && pDevice->GetType() == MM::HubDevice)
+   {
+      MM::Hub* pHub = static_cast<MM::Hub*>(pDevice);
+      pHub->ClearInstalledDevices();
+   }  
+}
 
 // at least on OS X, there is a 'primary' MAC address, so we'll
 // assume that is the first one.

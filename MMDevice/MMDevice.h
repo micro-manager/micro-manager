@@ -182,6 +182,9 @@ namespace MM {
    };
 
 
+   /**
+    * Timeout utility class
+    */
    class TimeoutMs
    {
    public:
@@ -215,6 +218,9 @@ namespace MM {
 
 
 
+   /**
+    * Information about images passed from the camera
+    */
    struct ImageMetadata
    {
       ImageMetadata() : exposureMs(0.0), ZUm(0.0), score(0.0) {}
@@ -278,8 +284,10 @@ namespace MM {
       virtual void SetModuleHandle(HDEVMODULE hLibraryHandle) = 0;
       virtual void SetLabel(const char* label) = 0;
       virtual void GetLabel(char* name) const = 0;
-      virtual void SetModuleName(const char* label) = 0;
-      virtual void GetModuleName(char* name) const = 0;
+      virtual void SetModuleName(const char* moduleName) = 0;
+      virtual void GetModuleName(char* moduleName) const = 0;
+      virtual void SetDescription(const char* description) = 0;
+      virtual void GetDescription(char* description) const = 0;
 
       virtual int Initialize() = 0;
       /**
@@ -306,15 +314,6 @@ namespace MM {
 
       //device discovery API
       virtual MM::DeviceDetectionStatus DetectDevice(void) = 0;
-
-      // this API should be able to run BEFORE initialization, provided that communication parameters
-      // are correct.
-      virtual int GetNumberOfDiscoverableDevices() = 0;
-      virtual void GetDiscoverableDevice(int peripheralNum, char* peripheralName, unsigned int maxNameLen) = 0;
-
-      // the hubs may have provided properties about the peripheral devices that are needed to initialize the device!
-      virtual int GetDiscoDeviceNumberOfProperties(int peripheralNum) = 0;
-      virtual void GetDiscoDeviceProperty(int peripheralNum, short propertyNumber, char* propertyName, char* propValue, unsigned int maxNameLen) = 0;
 
    };
 
@@ -878,6 +877,25 @@ namespace MM {
       virtual int LogCommand(const char* logCommandText) = 0;
    };
 
+   /**
+    * HUB device. Used for complex uber-device functionality in microscope stands
+    * and managing auto-configuration (discovery) of other devices
+    */
+   class Hub : public Device
+   {
+   public:
+      Hub() {}
+      virtual ~Hub() {}
+
+      // MMDevice API
+      virtual DeviceType GetType() const {return HubDevice;}
+      static const DeviceType Type = HubDevice;
+
+      virtual int DetectInstalledDevices() = 0;
+      virtual void ClearInstalledDevices() = 0;
+      virtual unsigned GetNumberOfInstalledDevices() = 0;
+      virtual Device* GetInstalledDevice(int devIdx) = 0;
+   };
 
    /**
     * Callback API to the core control module.

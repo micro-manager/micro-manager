@@ -108,7 +108,8 @@ MODULE_API void InitializeModuleData()
    AddAvailableDeviceName(g_ZeissFilterWheel1,"FilterWheel 1"); 
    AddAvailableDeviceName(g_ZeissFilterWheel2,"FilterWheel 2"); 
 
-
+   // TODO: remove when finished with revision
+/*
    if( DiscoverabilityTest())
    {
       // only the 'turrets' implment isPresent??
@@ -125,6 +126,7 @@ MODULE_API void InitializeModuleData()
       SetDeviceIsDiscoverable(g_ZeissSidePort,true);
       SetDeviceIsDiscoverable(g_ZeissLampMirror,true);
    }
+*/
 }
 
 using namespace std;
@@ -671,8 +673,6 @@ void ZeissScope::GetPeripheralInventory()
 {
    peripherals_.clear();
 
-   if(::DiscoverabilityTest())
-   {
       if(!initialized_)
          Initialize();
 
@@ -694,7 +694,6 @@ void ZeissScope::GetPeripheralInventory()
                peripherals_.push_back(iii->second);
          }
       }
-   }
 }
 
 
