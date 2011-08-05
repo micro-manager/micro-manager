@@ -1,5 +1,4 @@
  //////////////////////////////////////////////////////////////////////////////
- //int ReadNBytes(int n, unsignbed char* answer);
 // FILE:          Arduino.h
 // PROJECT:       Micro-Manager
 // SUBSYSTEM:     DeviceAdapters
@@ -19,7 +18,6 @@
 
 #include "../../MMDevice/MMDevice.h"
 #include "../../MMDevice/DeviceBase.h"
-//#include "ArduinoInterface.h"
 #include <string>
 #include <map>
 
@@ -38,7 +36,7 @@
 
 class ArduinoInputMonitorThread;
 
-class CArduinoHub : public CGenericBase<CArduinoHub>  
+class CArduinoHub : public HubBase<CArduinoHub>  
 {
 public:
    CArduinoHub();
@@ -51,22 +49,20 @@ public:
 
    MM::DeviceDetectionStatus DetectDevice(void);
 
+   int DetectInstalledDevices();
+
    int OnPort(MM::PropertyBase* pPropt, MM::ActionType eAct);
    int OnLogic(MM::PropertyBase* pPropt, MM::ActionType eAct);
    int OnVersion(MM::PropertyBase* pPropt, MM::ActionType eAct);
 
    // Device Discovery interface
-   int GetNumberOfDiscoverableDevices();
-   void GetDiscoverableDevice(int peripheralNum, char* peripheralName, unsigned int maxNameLen);
    int GetDiscoDeviceNumberOfProperties(int peripheralNum);
    void GetDiscoDeviceProperty(int peripheralNum, short propertyNumber, char* propertyName, char* propValue, unsigned int maxNameLen);
 
 private:
-   std::vector<std::string> peripherals_;
    int GetControllerVersion(int&);
    std::string port_;
    bool initialized_;
-   void GetPeripheralInventory();
 };
 
 class CArduinoShutter : public CShutterBase<CArduinoShutter>  

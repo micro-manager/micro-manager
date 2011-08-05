@@ -199,6 +199,9 @@ int CArduinoHub::GetControllerVersion(int& version)
 
 MM::DeviceDetectionStatus CArduinoHub::DetectDevice(void)
 {
+   if (initialized_)
+      return MM::CanCommunicate;
+
    // all conditions must be satisfied...
    MM::DeviceDetectionStatus result = MM::Misconfigured;
    char answerTO[MM::MaxStrLength];
@@ -257,39 +260,6 @@ MM::DeviceDetectionStatus CArduinoHub::DetectDevice(void)
    return result;
 }
 
-void CArduinoHub::GetPeripheralInventory()
-{
-   peripherals_.clear();
-   peripherals_.push_back(g_DeviceNameArduinoSwitch);
-   peripherals_.push_back(g_DeviceNameArduinoShutter);
-   peripherals_.push_back(g_DeviceNameArduinoInput);
-   peripherals_.push_back(g_DeviceNameArduinoDA);
-   peripherals_.push_back(g_DeviceNameArduinoDA2);
-}
-
-int CArduinoHub::GetNumberOfDiscoverableDevices()
-{
-   GetPeripheralInventory();
-   return peripherals_.size();
-}
-
-void CArduinoHub::GetDiscoverableDevice(int peripheralNum, char* peripheralName, unsigned int maxNameLen)
-{
-   if(peripheralNum >= 0 && peripheralNum < int(peripherals_.size()))
-   {                                                                      
-       strncpy(peripheralName, peripherals_[peripheralNum].c_str(), maxNameLen - 1);  
-       peripheralName[maxNameLen - 1] = 0;                              
-   }                                                                      
-   return;                                                                   
-}
-
-int CArduinoHub::GetDiscoDeviceNumberOfProperties(int peripheralNum)
-{
-   if (peripheralNum == 3 || peripheralNum == 4)
-      return 1;
-   
-   return 0;
-}
 
 void CArduinoHub::GetDiscoDeviceProperty(int peripheralNum, short propertyNumber, char* propertyName, char* propValue, unsigned int maxNameLen)
 {
@@ -355,6 +325,38 @@ int CArduinoHub::Initialize()
    initialized_ = true;
    return DEVICE_OK;
 }
+
+int CArduinoHub::DetectInstalledDevices()
+{
+   printf ("Detecting devices\n");
+   if (MM::CanCommunicate == DetectDevice()) 
+   {
+      printf("Can communicate\n");
+      std::vector<std::string> peripherals; 
+      peripherals.clear();
+      peripherals.push_back(g_DeviceNameArduinoSwitch);
+      peripherals.push_back(g_DeviceNameArduinoShutter);
+      peripherals.push_back(g_DeviceNameArduinoInput);
+      peripherals.push_back(g_DeviceNameArduinoDA);
+      peripherals.push_back(g_DeviceNameArduinoDA2);
+      for (size_t i=0; i < peripherals.size(); i++) 
+      {
+         MM::Device* pDev = ::CreateDevice(peripherals[i].c_str());
+         if (pDev) 
+         {
+            AddInstalledDevice(pDev);
+            printf("%s\n", peripherals[i].c_str());
+         }
+      }
+   } else 
+   {
+      printf("Can not communicate\n");
+   }
+
+   return DEVICE_OK;
+}
+
+
 
 int CArduinoHub::Shutdown()
 {
