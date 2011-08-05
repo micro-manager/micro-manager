@@ -328,10 +328,8 @@ int CArduinoHub::Initialize()
 
 int CArduinoHub::DetectInstalledDevices()
 {
-   printf ("Detecting devices\n");
    if (MM::CanCommunicate == DetectDevice()) 
    {
-      printf("Can communicate\n");
       std::vector<std::string> peripherals; 
       peripherals.clear();
       peripherals.push_back(g_DeviceNameArduinoSwitch);
@@ -348,9 +346,6 @@ int CArduinoHub::DetectInstalledDevices()
             printf("%s\n", peripherals[i].c_str());
          }
       }
-   } else 
-   {
-      printf("Can not communicate\n");
    }
 
    return DEVICE_OK;
