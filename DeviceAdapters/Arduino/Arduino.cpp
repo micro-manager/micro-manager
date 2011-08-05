@@ -261,34 +261,6 @@ MM::DeviceDetectionStatus CArduinoHub::DetectDevice(void)
 }
 
 
-void CArduinoHub::GetDiscoDeviceProperty(int peripheralNum, short propertyNumber, char* propertyName, char* propValue, unsigned int maxNameLen)
-{
-   if (peripheralNum == 3) 
-   {
-      if (propertyNumber == 0) 
-      {
-         if (maxNameLen > 8)
-         {
-            propertyName = "Channel";
-            propValue = "1";
-         }
-      }
-   }
-   else if (peripheralNum == 4) 
-   {
-      if (propertyNumber == 0) 
-      {
-         if (maxNameLen > 8)
-         {
-            propertyName = "Channel";
-            propValue = "2";
-         }
-      }
-   }
-
-};
-
-
 int CArduinoHub::Initialize()
 {
    // Name
@@ -343,7 +315,6 @@ int CArduinoHub::DetectInstalledDevices()
          if (pDev) 
          {
             AddInstalledDevice(pDev);
-            printf("%s\n", peripherals[i].c_str());
          }
       }
    }

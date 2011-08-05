@@ -55,10 +55,6 @@ public:
    int OnLogic(MM::PropertyBase* pPropt, MM::ActionType eAct);
    int OnVersion(MM::PropertyBase* pPropt, MM::ActionType eAct);
 
-   // Device Discovery interface
-   int GetDiscoDeviceNumberOfProperties(int peripheralNum);
-   void GetDiscoDeviceProperty(int peripheralNum, short propertyNumber, char* propertyName, char* propValue, unsigned int maxNameLen);
-
 private:
    int GetControllerVersion(int&);
    std::string port_;
