@@ -1903,7 +1903,7 @@ int LeicaMonitoringThread::svc()
             const char* eoln = strstr(rcvBuf, "\r");
             if (eoln != 0) {
                strncpy (message, rcvBuf, eoln - rcvBuf);
-               printf ("Message: %s\n", message);
+               // printf ("Message: %s\n", message);
                core_.LogMessage (&device_, message, true);
                memmove(rcvBuf, eoln + 1, LeicaScopeInterface::RCV_BUF_LENGTH - (eoln - rcvBuf) -1);
             }
@@ -2023,25 +2023,26 @@ int LeicaMonitoringThread::svc()
                               scopeModel_->ILTurret_.SetPosition(turretPos);
                             else
                             {
-                               std::ostringstream os;
-                               os << "invalid position reported " << turretPos << "outside of ["<<minPos<<","<<maxPos<<"]";
-                               core_.LogMessage(&device_, os.str().c_str(), false);
+                               std::ostringstream oss;
+                               oss << "invalid position reported " << turretPos << "outside of ["<<minPos<<","<<maxPos<<"]";
+                               core_.LogMessage(&device_, oss.str().c_str(), false);
 
                             }
                             scopeModel_->ILTurret_.SetBusy(false);
                             if (standFamily_ == g_CTRMIC) {
-                               int shutterPos;
+                               int shutterPos = 0;
                                // TODO: cleanup after user feedback
                                std::string tmp;
                                os >> tmp;
-                               os >> shutterPos;
                                // if (tmp == "--") {
+                               std::ostringstream pp;
                                if (tmp.size() > 0) {
+                                  os >> shutterPos;
+                                  pp << " setting ILShutter position to " << shutterPos;
                                   scopeModel_->ILShutter_.SetPosition(shutterPos);
                                   scopeModel_->ILShutter_.SetBusy(false);
                                }
-                               std::ostringstream pp;
-                               pp << "ILTurret reports, tmp: " << tmp << " pos: " << turretPos;
+                               pp << "   ILTurret reports, tmp: " << tmp << " pos: " << turretPos << " shutterPos: " << shutterPos;
                                core_.LogMessage(&device_, pp.str().c_str(), true);
                             }
                          }
