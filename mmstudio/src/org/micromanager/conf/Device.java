@@ -52,6 +52,7 @@ import org.micromanager.utils.PropertyItem;
       private double delayMs_;
       private boolean usesDelay_;
       private int numPos_ = 0;
+      private String parentHub_;
 
    public Device(String name, String lib, String adapterName, String descr, boolean discoverable, String master,Vector<String> slaves ) {
       name_ = name;
@@ -64,6 +65,7 @@ import org.micromanager.utils.PropertyItem;
       setupProperties_ = new ArrayList<PropertyItem>();
       usesDelay_ = false;
       delayMs_ = 0.0;
+      parentHub_ = new String();
    }
 
    public Device(String name, String lib, String adapterName, String descr) {
@@ -77,6 +79,7 @@ import org.micromanager.utils.PropertyItem;
       setupProperties_ = new ArrayList<PropertyItem>();
       usesDelay_ = false;
       delayMs_ = 0.0;
+      parentHub_ = new String();
    }
    public Device(String name, String lib, String adapterName) {
       this(name, lib, adapterName, "");
@@ -313,5 +316,13 @@ import org.micromanager.utils.PropertyItem;
          return "";
       else
          return type_.toString();
+   }
+
+   public void setParentHub(String hub) {
+      parentHub_ = hub;
+   }
+   
+   public String getParentHub() {
+      return parentHub_;
    }
  }

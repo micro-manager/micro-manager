@@ -1078,21 +1078,19 @@ public class MicroscopeModel {
    // TODO: implement
    public void removePeripherals( String hubName, CMMCore core){
       Device d = findDevice(hubName);
-      // check if this is hub device, that is simply any device with a non-empty discoverable peripheral list
-      String thisLibrary = d.getLibrary();
-      try{
-         StrVector devicesAvailable = core.getAvailableDevices(thisLibrary); // force a call into the module API to load the dyn. lib.
-         for( Device peripheral: devices_){
-             for( int ii = 0; ii < devicesAvailable.size(); ++ii){
-                 // the devicesAvailble should be identified by their default name
-                 if(devicesAvailable.get(ii).equals(peripheral.getAdapterName())){
-                    removeDevice(peripheral.getName());    
-                    break; // look for next device
-                 }
-             }
+      ArrayList<String> toRemove = new ArrayList<String>();
+      if (d != null) {
+         // if device is a hub figure out which child devices
+         // should be removed as well
+         for (int i=0; i<devices_.size(); i++) {
+            if (devices_.get(i).getParentHub().compareTo(d.getName()) == 0)
+               toRemove.add(devices_.get(i).getName());
          }
-      }
-      catch(Exception e){
+         
+         // now remove them
+         for (int i=0; i<toRemove.size(); i++) {
+            removeDevice(toRemove.get(i));
+         }
       }
    }
 
@@ -1274,6 +1272,7 @@ public class MicroscopeModel {
       for(int idit = 0; idit < pd.size(); ++idit){
          if( sel.get(idit)){      
             Device newDev = new Device(pd.get(idit).getName(), pd.get(idit).getLibrary(), pd.get(idit).getAdapterName(), pd.get(idit).getDescription());
+            newDev.setParentHub(hubs.get(idit));
             try {
                addDevice(newDev);
                c.loadDevice(newDev.getName(), newDev.getLibrary(), newDev.getAdapterName());
