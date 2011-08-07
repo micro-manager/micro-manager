@@ -3360,9 +3360,45 @@ string CMMCore::getStateLabel(const char* deviceLabel) const throw (CMMError)
 void CMMCore::defineStateLabel(const char* deviceLabel, long state, const char* label) throw (CMMError)
 {
    MM::State* pStateDev = getSpecificDevice<MM::State>(deviceLabel);
-   int nRet = pStateDev->SetPositionLabel(state, label);
+
+   // Remember old label so that we can update configurations that use it
+   char oldLabel[MM::MaxStrLength];
+   int nRet = pStateDev->GetPositionLabel(state, oldLabel);
    if (nRet != DEVICE_OK)
       throw CMMError(deviceLabel, getDeviceErrorText(nRet, pStateDev).c_str(), MMERR_DEVICE_GENERIC);
+
+   // Set new label
+   nRet = pStateDev->SetPositionLabel(state, label);
+   if (nRet != DEVICE_OK)
+      throw CMMError(deviceLabel, getDeviceErrorText(nRet, pStateDev).c_str(), MMERR_DEVICE_GENERIC);
+
+   if (strcmp(label, oldLabel) != 0)
+   {
+      // Fix existing configurations that use the old label
+      std::vector<std::string> configGroups = getAvailableConfigGroups();
+      std::vector<std::string>::const_iterator itcfg = configGroups.begin();
+      while (itcfg != configGroups.end()) 
+      {
+         std::vector<std::string> configs = getAvailableConfigs((*itcfg).c_str());
+         std::vector<std::string>::const_iterator itcf = configs.begin();
+         while (itcf != configs.end()) 
+         {
+            Configuration conf = getConfigData((*itcfg).c_str(), (*itcf).c_str());
+            if (conf.isPropertyIncluded(deviceLabel, MM::g_Keyword_Label) ) 
+            {
+               PropertySetting setting(deviceLabel, MM::g_Keyword_Label, oldLabel);
+               if (conf.isSettingIncluded(setting))
+               {
+                  deleteConfig((*itcfg).c_str(), (*itcf).c_str(), deviceLabel, MM::g_Keyword_Label);
+                  defineConfig((*itcfg).c_str(), (*itcf).c_str(), deviceLabel, MM::g_Keyword_Label, label);
+               }
+            }
+            itcf++;
+         }
+
+         itcfg++;
+      }
+   }
 
    CORE_DEBUG3("State %d for device %s defined as label %s\n", (int)state, deviceLabel, label);
 }
