@@ -1699,6 +1699,10 @@ class HubBase : public CDeviceBase<MM::Hub, U>
 {
 public:
    HubBase() {}
+   ~HubBase()
+   {
+      ClearInstalledDevices();
+   }
 
    unsigned GetNumberOfInstalledDevices() {return (unsigned)installedDevices.size();}
    MM::Device* GetInstalledDevice(int devIdx) {return installedDevices[devIdx];}

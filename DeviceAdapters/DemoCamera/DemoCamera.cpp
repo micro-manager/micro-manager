@@ -3254,10 +3254,7 @@ int DemoHub::Initialize()
 }
 
 int DemoHub::DetectInstalledDevices()
-{
-   if (g_hub && g_hub->GenerateRandomError())
-      return SIMULATED_ERROR;
-  
+{  
    ClearInstalledDevices();
 
    // make sure this method is called before we look for available devices

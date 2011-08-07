@@ -74,34 +74,8 @@ public class PeripheralDevicesPage extends PagePanel {
       }
 
       public void setMicroscopeModel(MicroscopeModel mod) {
-         devices_ = mod.getDevices();
          model_ = mod;
-
-         for (Device d : devices_) {
-            if (!d.getName().equals("Core")) {
-               
-               // device "discovery" happens here
-               StrVector installed = core_.getInstalledDevices(d.getName());
-               // end of discovery
-               
-               if (0 < installed.size()) {
-                  for (int i=0; i<installed.size(); i++) {
-                     try {
-                        if (mod.findDevice(installed.get(i)) == null)
-                        {
-                           String descr = "N/A"; //core_.getDeviceDescription(installed.get(i));
-                           Device newDev = new Device(installed.get(i), d.getLibrary(), installed.get(i), descr);   
-                           selected_.add(true);
-                           masterDevices_.add(d.getName());
-                           peripheralDevices_.add(newDev);
-                        }
-                     } catch (Exception e) {
-                        ReportingUtils.logError("Installed device not found: " + e.getMessage());
-                     }
-                  }
-               }
-            }
-         }
+         rebuild();
       }
 
       public int getRowCount() {
@@ -211,7 +185,38 @@ public class PeripheralDevicesPage extends PagePanel {
          return masterDevices_;
       }
 
-      ;
+      public void rebuild() {
+         devices_ = model_.getDevices();
+         masterDevices_.clear();
+         peripheralDevices_.clear();
+         selected_.clear();
+
+         for (Device d : devices_) {
+            if (!d.getName().equals("Core")) {
+               
+               // device "discovery" happens here
+               StrVector installed = core_.getInstalledDevices(d.getName());
+               // end of discovery
+               
+               if (0 < installed.size()) {
+                  for (int i=0; i<installed.size(); i++) {
+                     try {
+                        if (model_.findDevice(installed.get(i)) == null)
+                        {
+                           String descr = "N/A"; //TODO: core_.getDeviceDescription(installed.get(i));
+                           Device newDev = new Device(installed.get(i), d.getLibrary(), installed.get(i), descr);   
+                           selected_.add(false);
+                           masterDevices_.add(d.getName());
+                           peripheralDevices_.add(newDev);
+                        }
+                     } catch (Exception e) {
+                        ReportingUtils.logError("Installed device not found: " + e.getMessage());
+                     }
+                  }
+               }
+            }
+         }
+      }
    }
    private JTable deviceTable_;
    private JScrollPane scrollPane_;
@@ -317,10 +322,9 @@ public class PeripheralDevicesPage extends PagePanel {
             Vector<Device> pd = tmd.getPeripheralDevices();
             Vector<String> hubs = tmd.getMasterDevices();
             Vector<Boolean> sel = tmd.getSelected();
-            for (int i=0; i<hubs.size(); i++)
-               core_.clearInstalledDevices(hubs.get(i));
             model_.AddSelectedPeripherals(core_, pd, hubs, sel);
             model_.loadDeviceDataFromHardware(core_);
+            tmd.rebuild();
          } catch (Exception e) {
             handleException(e);
             status = false;
