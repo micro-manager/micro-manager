@@ -59,20 +59,6 @@ MODULE_API void InitializeModuleData()
    AddAvailableDeviceName(g_DeviceNameArduinoDA, "DA");
    AddAvailableDeviceName(g_DeviceNameArduinoDA2, "DA2");
    AddAvailableDeviceName(g_DeviceNameArduinoInput, "Input");
-
-   // We left this list so that we can see which devices are discoverable
-   // TODO: remove when finished with revision
-/*
-   if( DiscoverabilityTest())
-   {  
-      SetDeviceIsDiscoverable(g_DeviceNameArduinoHub, false);
-      SetDeviceIsDiscoverable(g_DeviceNameArduinoSwitch, true);
-      SetDeviceIsDiscoverable(g_DeviceNameArduinoShutter, true);
-      SetDeviceIsDiscoverable(g_DeviceNameArduinoDA, true);
-      SetDeviceIsDiscoverable(g_DeviceNameArduinoDA2, true);
-      SetDeviceIsDiscoverable(g_DeviceNameArduinoInput, true);
-   }
-*/
 }
 
 MODULE_API MM::Device* CreateDevice(const char* deviceName)
@@ -94,11 +80,11 @@ MODULE_API MM::Device* CreateDevice(const char* deviceName)
    }
    else if (strcmp(deviceName, g_DeviceNameArduinoDA) == 0)
    {
-      return new CArduinoDA();
+      return new CArduinoDA(1); // channel 1
    }
    else if (strcmp(deviceName, g_DeviceNameArduinoDA2) == 0)
    {
-      return new CArduinoDA();
+      return new CArduinoDA(2); // channel 2
    }
    else if (strcmp(deviceName, g_DeviceNameArduinoInput) == 0)
    {
@@ -1118,7 +1104,7 @@ int CArduinoSwitch::OnRepeatTimedPattern(MM::PropertyBase* pProp, MM::ActionType
 // CArduinoDA implementation
 // ~~~~~~~~~~~~~~~~~~~~~~
 
-CArduinoDA::CArduinoDA() :
+CArduinoDA::CArduinoDA(int channel) :
       busy_(false), 
       minV_(0.0), 
       maxV_(5.0), 
@@ -1126,9 +1112,8 @@ CArduinoDA::CArduinoDA() :
       gatedVolts_(0.0),
       encoding_(0), 
       resolution_(8), 
-      channel_(1), 
+      channel_(channel), 
       maxChannel_(2),
-      name_(""),
       gateOpen_(true)
 {
    InitializeDefaultErrorMessages();
@@ -1140,17 +1125,20 @@ CArduinoDA::CArduinoDA() :
    SetErrorText(ERR_CLOSE_FAILED, "Failed closing the device");
    SetErrorText(ERR_NO_PORT_SET, "Hub Device not found.  The Arduino Hub device is needed to create this device");
 
+   /* Channel property is not needed
    CPropertyAction* pAct = new CPropertyAction(this, &CArduinoDA::OnChannel);
-   CreateProperty("Channel", "2", MM::Integer, false, pAct, true);
+   CreateProperty("Channel", channel_ == 1 ? "1" : "2", MM::Integer, false, pAct, true);
    for (int i=1; i<= 2; i++){
       std::ostringstream os;
       os << i;
       AddAllowedValue("Channel", os.str().c_str());
    }
+   */
 
-   pAct = new CPropertyAction(this, &CArduinoDA::OnMaxVolt);
+   CPropertyAction* pAct = new CPropertyAction(this, &CArduinoDA::OnMaxVolt);
    CreateProperty("MaxVolt", "5.0", MM::Float, false, pAct, true);
 
+   name_ = channel_ == 1 ? g_DeviceNameArduinoDA : g_DeviceNameArduinoDA2;
 }
 
 CArduinoDA::~CArduinoDA()
@@ -1350,8 +1338,7 @@ CArduinoShutter::~CArduinoShutter()
 
 void CArduinoShutter::GetName(char* name) const
 {
-   assert(name_.length() < CDeviceUtils::GetMaxStringLength());
-   CDeviceUtils::CopyLimitedString(name, name_.c_str());
+   CDeviceUtils::CopyLimitedString(name, g_DeviceNameArduinoShutter);
 }
 
 bool CArduinoShutter::Busy()
@@ -1374,7 +1361,7 @@ int CArduinoShutter::Initialize()
    // -----------------
    
    // Name
-   int ret = CreateProperty(MM::g_Keyword_Name, name_.c_str(), MM::String, true);
+   int ret = CreateProperty(MM::g_Keyword_Name, g_DeviceNameArduinoShutter, MM::String, true);
    if (DEVICE_OK != ret)
       return ret;
 

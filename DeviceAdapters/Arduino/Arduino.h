@@ -141,7 +141,7 @@ private:
 class CArduinoDA : public CSignalIOBase<CArduinoDA>  
 {
 public:
-   CArduinoDA();
+   CArduinoDA(int channel);
    ~CArduinoDA();
   
    // MMDevice API
@@ -188,8 +188,8 @@ private:
    unsigned int resolution_;
    unsigned channel_;
    unsigned maxChannel_;
-   std::string name_;
    bool gateOpen_;
+   std::string name_;
 };
 
 class CArduinoInput : public CGenericBase<CArduinoInput>  

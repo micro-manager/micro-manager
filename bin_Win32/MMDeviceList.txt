@@ -20,6 +20,7 @@ Arduino,Arduino-Hub,Hub,8
 Arduino,Arduino-Switch,Switch,4
 Arduino,Arduino-Shutter,Shutter,3
 Arduino,Arduino-DAC,DA,13
+Arduino,Arduino-DAC2,DA,13
 Arduino,Arduino-Input,Input,8
 BaumerOptronic,BaumerOptronic,Baumer Optronic driver for Leica Cameras,2
 CSUX,CSUX-Hub,CSUX Hub (Needed for CSUX),8
