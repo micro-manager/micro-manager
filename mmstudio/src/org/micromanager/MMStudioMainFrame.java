@@ -266,6 +266,8 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
    private static MMStudioMainFrame gui_;
    // Callback
    private CoreEventCallback cb_;
+   // Lock invoked while shutting down
+   private final Object shutdownLock_ = new Object();
 
    private JMenuBar menuBar_;
    private ConfigPadButtonPanel configPadButtonPanel_;
@@ -870,7 +872,10 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
       textFieldExp_.addFocusListener(new FocusAdapter() {
          @Override
          public void focusLost(FocusEvent fe) {
-            setExposure();
+            synchronized(shutdownLock_) {
+            if (core_ != null)
+               setExposure();
+            }
          }
       });
       textFieldExp_.setFont(new Font("Arial", Font.PLAIN, 10));
@@ -1693,8 +1698,8 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
 
          @Override
          public void windowClosing(WindowEvent e) {
-            running_ = false;
             closeSequence();
+            running_ = false;
          }
 
          @Override
@@ -3319,12 +3324,15 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
          }
       }
 
-      try {
-         if (core_ != null){
-            core_.delete();
+      synchronized (shutdownLock_) {
+         try {
+            if (core_ != null){
+               core_.delete();
+               core_ = null;
+            }
+         } catch (Exception err) {
+            ReportingUtils.showError(err);
          }
-      } catch (Exception err) {
-         ReportingUtils.showError(err);
       }
    }
 
@@ -3403,6 +3411,9 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
 
    public void closeSequence() {
 
+      if (!this.isRunning())
+         return;
+
       if (engine_ != null && engine_.isAcquisitionRunning()) {
          int result = JOptionPane.showConfirmDialog(
                this,
@@ -3427,7 +3438,7 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
          if (core_ != null)
             this.logError(e);
       }
-      dispose();
+      this.dispose();
       if (options_.closeOnExit_) {
          if (!runsAsPlugin_) {
             System.exit(0);
