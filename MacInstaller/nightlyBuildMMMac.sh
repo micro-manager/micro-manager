@@ -176,6 +176,14 @@ else
 fi
 
 
-
 # upload to mightly build server:
 scp Micro-Manager$VERSION.dmg $UPLOADPLACE
+
+# build and upload documentation
+cd $REPOSITORY
+make dox
+scp -r doxygen/out/* valelab.ucsf.edu:public_html/doxygen/
+cd mmstudio
+make javadoc
+scp -r doc/* valelab.ucsf.edu:public_html/doc/mmstudio/
+
