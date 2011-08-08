@@ -274,8 +274,10 @@
     (do (log "collect-snap-image: "
                (select-keys event [:position-index :frame-index
                                    :slice-index :channel-index]))
+      (when out-queue
           (.put out-queue
-                (make-TaggedImage (annotate-image image event @state))))))
+                (make-TaggedImage (annotate-image image event @state)))))
+    image))
 
 (defn return-config []
   (dorun (map set-property
@@ -565,8 +567,9 @@
 
 (defn acquire-tagged-image []
   (binding [state (atom (create-basic-state))]
-    (core snapImage)
-      (annotate-image (collect-snap-image) (create-basic-event) @state)))
+    (let [event (create-basic-event)]
+      (core snapImage)
+        (annotate-image (collect-snap-image event nil) event @state))))
     
 (defn show-image [display tagged-img focus]
   (let [myTaggedImage (make-TaggedImage tagged-img)

@@ -83,7 +83,7 @@
     `(let [perm# (~getter)
            temp# ~temp
            different# (not= perm# temp#)]
-    (println perm#)
+    ;(println perm#)
     (when different# (~setter temp#))
     (do ~@body)
     (when different# (~setter perm#)))))
