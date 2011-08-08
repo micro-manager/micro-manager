@@ -731,7 +731,7 @@ public:
    int ClearDASequence();
    int AddToDASequence(double voltage);
 
-   int DemoDA::OnTrigger(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnTrigger(MM::PropertyBase* pProp, MM::ActionType eAct);
 
 private:
    double volt_;
@@ -742,10 +742,10 @@ private:
    long sequenceIndex_;
    bool sequenceRunning_;
 
-   void DemoDA::SetSequenceStateOn() { sequenceRunning_ = true; }
-   void DemoDA::SetSequenceStateOff() { sequenceRunning_ = false; sequenceIndex_ = 0; }
+   void SetSequenceStateOn() { sequenceRunning_ = true; }
+   void SetSequenceStateOff() { sequenceRunning_ = false; sequenceIndex_ = 0; }
 
-   void DemoDA::SetSentSequence();
+   void SetSentSequence();
 };
 
 
