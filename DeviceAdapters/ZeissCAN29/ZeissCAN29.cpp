@@ -673,13 +673,14 @@ int ZeissScope::OnPort(MM::PropertyBase* pProp, MM::ActionType eAct)
       if (initialized_) {
          // revert
          pProp->Set(g_hub.port_.c_str());
-         return ERR_PORT_CHANGE_FORBIDDEN;
+         // return ERR_PORT_CHANGE_FORBIDDEN;
+      } else {
+         // take this port.  TODO: should we check if this is a valid port?
+         pProp->Get(g_hub.port_);
+         // set flags indicating we have a port
+         g_hub.portInitialized_ = true;
+         initialized_ = true;
       }
-      // take this port.  TODO: should we check if this is a valid port?
-      pProp->Get(g_hub.port_);
-      // set flags indicating we have a port
-      g_hub.portInitialized_ = true;
-      initialized_ = true;
    }
 
    return DEVICE_OK;
