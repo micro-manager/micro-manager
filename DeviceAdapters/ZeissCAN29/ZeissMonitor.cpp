@@ -131,13 +131,14 @@ void ZeissMonitoringThread::interpretMessage(unsigned char* message)
             if (message[4] == 0xA3) {
                memcpy(&position, message + 8, 4);
                position = ntohl(position);
+               hub_.SetModelPosition(message[7], position);
             } else {
                memcpy(&position, message + 8, 2);
                position = ntohs((unsigned short) position);
+               // Changers and Shutters will report 0 when they are in transit
+               if (position != 0)
+                  hub_.SetModelPosition(message[7], position);
             }
-            // NS, 2011-08-03:
-            // Since the device is moving, we will only confuse ourselves by recording the actual moving position
-            // hub_.SetModelPosition(message[7], position);
             hub_.SetModelBusy(message[7], true);
          }
          else if (message[6] == 0x03) { // target position settled
