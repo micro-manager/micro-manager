@@ -609,7 +609,12 @@ int ILShutter::GetOpen(bool &open)
    else if (position == 1)
       open = true;
    else
+   {
+      std::ostringstream os;
+      os << "ILShutter was found in a strange position: " << position;
+      LogMessage(os.str().c_str(), false);
       return ERR_UNEXPECTED_ANSWER;
+   }
 
    return DEVICE_OK;
 }

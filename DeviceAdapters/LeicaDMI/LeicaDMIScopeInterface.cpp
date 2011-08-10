@@ -476,7 +476,10 @@ int LeicaScopeInterface::Initialize(MM::Device& device, MM::Core& core)
    }
 
    if (scopeModel_->IsDeviceAvailable(g_IL_Turret)) {
-      command << g_IL_Turret << "023";
+      if (standFamily_ = g_CTRMIC)
+         command << g_IL_Turret << "004";
+      else
+         command << g_IL_Turret << "023";
       ret = core.SetSerialCommand(&device, port_.c_str(), command.str().c_str(), "\r");
       if (ret != DEVICE_OK)
          return ret;
@@ -2005,6 +2008,7 @@ int LeicaMonitoringThread::svc()
                       case(22) :
                          scopeModel_->ILTurret_.SetBusy(false);
                          break;
+                      case (4) :
                       case (23) :
                          {
                             int turretPos;
