@@ -5,14 +5,20 @@
 
 	<target name="compile" description="Compile ClojureEditor plugin.">
 		<mkdir dir="build" />
-		<javac srcdir="./src" destdir="./build" optimize="on" source="1.6" target="1.6" debug="on">
-			<classpath "${classext}/**" />
+		<javac srcdir="./src" destdir="./build" optimize="on" source="1.5" target="1.5" debug="on">
+			<classpath>
+				<pathelement path="../../mmstudio/MMJ_.jar"/>
+				<fileset dir="../../../3rdpartypublic/classext/" >
+					<include name="*.jar"/>
+				</fileset>
+			</classpath>
+
 		</javac>
 	</target>
 
 	<target name="build" description="Build ClojureEditor.jar">
 		<jar jarfile="ClojureEditor.jar" basedir="build" />
-		<copy file="ClojureEditor.jar" todir="${MMPluginsDir-inst}" />
+		<copy file="ClojureEditor.jar" todir="..\..\Install_AllPlatforms\micro-manager\mmplugins\" />
 	</target>
 	
 	<target name="clean" description="Delete the ClojureEditor build files.">
