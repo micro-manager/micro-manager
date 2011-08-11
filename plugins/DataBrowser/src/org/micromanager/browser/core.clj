@@ -103,7 +103,7 @@
         column-indices
           (int-array (map #(.getModelIndex %) (get-table-columns table)))
         filters
-          (map #(RowFilter/regexFilter (str "\\Q" % "\\E") column-indices)
+          (map #(RowFilter/regexFilter (str "(?i)\\Q" % "\\E") column-indices)
                chunks)]
     (do (.setRowFilter sorter   
           (RowFilter/andFilter filters)))))
