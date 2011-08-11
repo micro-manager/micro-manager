@@ -129,10 +129,15 @@
 		<copy file="${commons_math}" todir="${MMPluginDir-inst}" />
 		<copy file="${clojure}" todir="${MMPluginDir-inst}" />
 		<copy file="${clojurecontrib}" todir="${MMPluginDir-inst}" />
+		<copy todir="${MMPluginDir-inst}">
+			<fileset dir="../../3rdpartypublic/classext/" casesensitive="no">
+				<include name="clooj*.jar"/>
+			</fileset>
+		</copy>
+
 		<copy file="${BinRoot}/MMCoreJ_wrap.dll" todir="${InstallRoot}" />
 		<copy file="${BinRoot}/LaunchMicroManager.bat" todir="${InstallRoot}" />
 		<copy file="${BinRoot}/MMConfig_demo.cfg" todir="${InstallRoot}" />
-
 		<copy todir="${InstallRoot}">
 			<fileset dir="${BinRoot}" casesensitive="no">
 				<include name="mmgr_dal_*.dll"/>
