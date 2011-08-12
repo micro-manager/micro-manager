@@ -211,16 +211,15 @@
         (device-best-effort shutter
           (core setShutterOpen false))))))
 
-(defn arm-property-sequences [property-sequences]
+(defn load-property-sequences [property-sequences]
   (let [new-seq (not= property-sequences @active-property-sequences)]
     (doseq [[[d p] s] property-sequences]
       (log "property sequence:" (seq (str-vector s)))
       (when new-seq
-        (core loadPropertySequence d p (str-vector s)))
-      (core startPropertySequence d p))
+        (core loadPropertySequence d p (str-vector s))))
     (reset! active-property-sequences property-sequences)))
   
-(defn arm-slice-sequence [slice-sequence]
+(defn load-slice-sequence [slice-sequence]
   (when slice-sequence
     (let [z (core getFocusDevice)
           delta-z (- (@state :reference-z-position)
@@ -230,15 +229,23 @@
       (log "adjusted-slices: " adjusted-slices ";" "reference-z-position" (@state :reference-z-position))
       (when new-seq
         (core loadStageSequence z (double-vector adjusted-slices)))
-      (core startStageSequence z)
       (reset! active-slice-sequence [z adjusted-slices])
       adjusted-slices)))
+
+(defn start-property-sequences [property-sequences]
+  (doseq [[[d p] _] property-sequences]
+    (core startPropertySequence d p)))
+          
+(defn start-slice-sequence []
+  (core startStageSequence (core getFocusDevice)))
 
 (defn init-burst [length trigger-sequence]
   (core setAutoShutter (@state :init-auto-shutter))
   (println "autoshutter:" (core getAutoShutter))
-  (arm-property-sequences (:properties trigger-sequence))
-  (let [absolute-slices (arm-slice-sequence (:slices trigger-sequence))]
+  (load-property-sequences (:properties trigger-sequence))
+  (let [absolute-slices (load-slice-sequence (:slices trigger-sequence))]
+    (start-property-sequences (:properties trigger-sequence))
+    (start-slice-sequence)
     (swap! state assoc :burst-init-time (elapsed-time @state))
     (core startSequenceAcquisition length 0 true)
     (swap! state assoc-in [:last-positions (core getFocusDevice)]
