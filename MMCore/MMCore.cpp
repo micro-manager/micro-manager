@@ -1544,6 +1544,10 @@ void CMMCore::loadStageSequence(const char* label, std::vector<double> positionS
    MM::Stage* pDevice = getSpecificDevice<MM::Stage>(label);
    
    int ret;
+   ret = pDevice->ClearStageSequence();
+   if (ret != DEVICE_OK)
+      throw CMMError(label, getDeviceErrorText(ret, pDevice).c_str(), MMERR_DEVICE_GENERIC);
+
    std::vector<double>::iterator it;
    for ( it=positionSequence.begin() ; it < positionSequence.end(); it++ )
    {
