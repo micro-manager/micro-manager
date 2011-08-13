@@ -219,14 +219,16 @@
         (core loadPropertySequence d p (str-vector s))))
     (reset! active-property-sequences property-sequences)))
   
-(defn load-slice-sequence [slice-sequence]
+(defn load-slice-sequence [slice-sequence relative-z]
   (when slice-sequence
+    (println slice-sequence relative-z)
     (let [z (core getFocusDevice)
-          delta-z (- (@state :reference-z-position)
-                     (first slice-sequence))
-          adjusted-slices (map #(+ delta-z %) slice-sequence)
+          ref (@state :reference-z-position)
+          adjusted-slices (if relative-z
+                            (map #(+ ref %) slice-sequence)
+                            slice-sequence)
           new-seq (not= [z adjusted-slices] @active-slice-sequence)]
-      (log "adjusted-slices: " adjusted-slices ";" "reference-z-position" (@state :reference-z-position))
+      (println "adjusted-slices: " adjusted-slices ";" "reference-z-position" (@state :reference-z-position))
       (when new-seq
         (core loadStageSequence z (double-vector adjusted-slices)))
       (reset! active-slice-sequence [z adjusted-slices])
@@ -239,11 +241,11 @@
 (defn start-slice-sequence []
   (core startStageSequence (core getFocusDevice)))
 
-(defn init-burst [length trigger-sequence]
+(defn init-burst [length trigger-sequence relative-z]
   (core setAutoShutter (@state :init-auto-shutter))
   (println "autoshutter:" (core getAutoShutter))
   (load-property-sequences (:properties trigger-sequence))
-  (let [absolute-slices (load-slice-sequence (:slices trigger-sequence))]
+  (let [absolute-slices (load-slice-sequence (:slices trigger-sequence) relative-z)]
     (start-property-sequences (:properties trigger-sequence))
     (start-slice-sequence)
     (swap! state assoc :burst-init-time (elapsed-time @state))
@@ -326,6 +328,7 @@
           wake-time (if (> now (+ target-time 10)) now target-time)]
       (state-assoc! :last-wake-time wake-time)
       (when-not (core isContinuousFocusEnabled)
+        (println "reference z set")
         (state-assoc! :reference-z-position 
                       (get-z-stage-position (core getFocusDevice)))))))
 
@@ -339,7 +342,8 @@
     (condp = (:task event)
       :snap (apply snap-image shutter-states)
       :burst (init-burst (count (:burst-data event))
-                         (:trigger-sequence event))
+                         (:trigger-sequence event)
+                         (:relative-z event))
       nil)))
 
 (defn collect [event out-queue]
