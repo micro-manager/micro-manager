@@ -133,6 +133,7 @@ public class PixelCalibratorPlugin implements MMPlugin {
          }
          
          int response = JOptionPane.showConfirmDialog(null,
+                 String.format("XScale=%.2f YScale=%.2f XShear=%.4f YShear=%.4f\n", result.getScaleX(), result.getScaleY(), result.getShearX(), result.getShearY()) + 
                  "<html>The Pixel Calibrator plugin has measured a pixel size of " + pixelSize + " &#956;m.<br>" + "Do you wish to store this value in your pixel calibration settings?</html>",
                  "Pixel calibration succeeded!",
                  JOptionPane.YES_NO_OPTION);
