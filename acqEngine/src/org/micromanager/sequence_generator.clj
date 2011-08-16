@@ -245,10 +245,11 @@
                                       channels default-exposure
                                       triggers]
   (let [numChannels (max 1 (count channels))
+        numFrames (max 1 numFrames)
         exposure (if (pos? numChannels)
                    (:exposure (first channels))
                    default-exposure)
-        x
+        events
         (->> (for [f (range numFrames)
                    c (range numChannels)]
                {:frame-index f
@@ -269,10 +270,11 @@
                     :channel (get channels c)
                     :slice-index 0
                     :metadata (make-channel-metadata (get channels c))))))]
+    (println "events:" events)
     (list
-      (assoc (first x)
+      (assoc (first events)
               :task :burst
-              :burst-data x
+              :burst-data events
               :trigger-sequence triggers))))
   
 
