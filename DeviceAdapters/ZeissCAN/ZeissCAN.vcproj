@@ -355,6 +355,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\mcu28.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\..\MMDevice\ModuleInterface.cpp"
 				>
 			</File>

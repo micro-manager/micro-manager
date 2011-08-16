@@ -51,6 +51,7 @@
 #define ERR_INVALID_TURRET_POSITION  10013
 #define ERR_MODULE_NOT_FOUND         10014
 #define ERR_NO_FOCUS_DRIVE           10015
+#define ERR_NO_XY_DRIVE              10016
 
 class ZeissHub
 {
@@ -551,6 +552,51 @@ private:
    long pos_;
    int numPos_;
    int turretId_;
+};
+
+// ZEISS XY stage with MCU28 controller
+class XYStage : public CXYStageBase<XYStage>
+{
+public:
+   XYStage();
+   ~XYStage();
+
+   bool Busy();
+   void GetName(char* pszName) const;
+
+   int Initialize();
+   int Shutdown();
+     
+   // XYStage API
+   // -----------
+   int SetPositionSteps(long x, long y);
+   int SetRelativePositionSteps(long x, long y);
+   int GetPositionSteps(long& x, long& y);
+   int Home();
+   int Stop();
+   int SetOrigin();
+   int GetLimitsUm(double& xMin, double& xMax, double& yMin, double& yMax);
+   int GetStepLimits(long& xMin, long& xMax, long& yMin, long& yMax);
+   double GetStepSizeXUm();
+   double GetStepSizeYUm();
+
+   // action interface
+   // ----------------
+   //int OnPosition(MM::PropertyBase* pProp, MM::ActionType eAct);
+   //int OnLoadSample(MM::PropertyBase* pProp, MM::ActionType eAct);
+
+
+private:
+   int GetXYFirmwareVersion();
+   std::string xyFirmware_;
+   std::string firmware_;
+   bool busy_;
+   bool initialized_;
+   typedef enum {
+      ZMSF_MOVING = 0x0002, // trajectory is in progress
+      ZMSF_SETTLE = 0x0004  // settling after movement
+   } ZmStatFlags;
+
 };
 
 #endif // _ZeissCAN_H_

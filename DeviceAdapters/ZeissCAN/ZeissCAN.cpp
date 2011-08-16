@@ -69,6 +69,7 @@ const char* g_ZeissExternal = "External-Internal Shutter";
 const char* g_ZeissExtFilterWheel = "ZeissExternalFilterWheel";
 const char* g_ZeissFilterWheel1 = "ZeissFilterWheel1";
 const char* g_ZeissFilterWheel2 = "ZeissFilterWheel2";
+const char* g_ZeissXYStage = "XYStage";
 
 // List of Turret numbers (from Zeiss documentation)
 int g_ReflectorTurret = 1;
