@@ -122,8 +122,12 @@
 (defn get-system-config-cached []
   (config-struct (core getSystemStateCache)))
 
+(defn get-property-value [dev prop]
+  (when (core hasProperty dev prop)
+    (core getProperty dev prop)))
+
 (defn get-property [dev prop]
-  [dev prop (core getProperty dev prop)])
+  [dev prop (get-property-value dev prop)])
 
 (defn map-config [^Configuration config]
   (into {}

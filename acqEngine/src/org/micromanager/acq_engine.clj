@@ -23,7 +23,8 @@
            json-to-data get-pixel-type get-msp-z-position set-msp-z-position
            get-msp MultiStagePosition-to-map ChannelSpec-to-map
            get-pixel-type get-current-time-str rekey
-           data-object-to-map str-vector double-vector]]
+           data-object-to-map str-vector double-vector
+           get-property-value]]
         [org.micromanager.sequence-generator :only [generate-acq-sequence
                                                     make-property-sequences]])
   (:import [org.micromanager AcqControlDlg]
@@ -241,15 +242,19 @@
 (defn start-slice-sequence []
   (core startStageSequence (core getFocusDevice)))
 
+(defn first-trigger-missing? []
+  (= "1" (get-property-value (core getCameraDevice) "OutputTriggerFirstMissing")))
+
 (defn init-burst [length trigger-sequence relative-z]
   (core setAutoShutter (@state :init-auto-shutter))
   (println "autoshutter:" (core getAutoShutter))
   (load-property-sequences (:properties trigger-sequence))
   (let [absolute-slices (load-slice-sequence (:slices trigger-sequence) relative-z)]
     (start-property-sequences (:properties trigger-sequence))
-    (start-slice-sequence)
+    (when absolute-slices
+      (start-slice-sequence))
     (swap! state assoc :burst-init-time (elapsed-time @state))
-    (core startSequenceAcquisition length 0 true)
+    (core startSequenceAcquisition (if (first-trigger-missing?) (inc length) length) 0 true)
     (swap! state assoc-in [:last-positions (core getFocusDevice)]
            (last absolute-slices))))
   
@@ -267,6 +272,7 @@
     {:pix pix :tags (dissoc tags "StartTime-ms")}))
 
 (defn collect-burst-images [event out-queue]
+  (when (first-trigger-missing?) (pop-burst-image)) ; drop first image if first trigger doesn't happen
   (doseq [event-data (event :burst-data) :while (not (@state :stop))]
     (let [image (pop-burst-image)]
       (.put out-queue (make-TaggedImage (annotate-image image event-data @state))))
@@ -460,6 +466,7 @@
 ;; generic metadata
 
 (defn convert-settings [^SequenceSettings settings]
+  (println "SequenceSettings slices:" (.slices settings))
   (-> settings
     (data-object-to-map)
     (rekey
@@ -743,6 +750,4 @@
 
 (defn stop []
   (swap! (.state last-acq) assoc :running false))
-
-
 
