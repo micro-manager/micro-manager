@@ -3,7 +3,7 @@
 // PROJECT:       Micro-Manager
 // SUBSYSTEM:     DeviceAdapters
 //-----------------------------------------------------------------------------
-// DESCRIPTION:   Arduino adapter.  Needs acompanying firmware
+// DESCRIPTION:   Arduino adapter.  Needs accompanying firmware
 // COPYRIGHT:     University of California, San Francisco, 2008
 // LICENSE:       LGPL
 // 
@@ -365,6 +365,7 @@ int CArduinoHub::OnLogic(MM::PropertyBase* pProp, MM::ActionType pAct)
 CArduinoSwitch::CArduinoSwitch() : 
    nrPatternsUsed_(0),
    currentDelay_(0),
+   sequenceOn_(false),
    blanking_(false),
    initialized_(false),
    numPos_(64), 
@@ -438,10 +439,19 @@ int CArduinoSwitch::Initialize()
    if (nRet != DEVICE_OK)
       return nRet;
 
+   pAct = new CPropertyAction(this, &CArduinoSwitch::OnSequence);
+   nRet = CreateProperty("Sequence", "On", MM::String, false, pAct);
+   if (nRet != DEVICE_OK)
+      return nRet;
+   AddAllowedValue("Sequence", "On");
+   AddAllowedValue("Sequence", "Off");
+
+
    // Patterns are used for triggered output
    // Set Pattern will set the current switch state in the Arduino as the specified pattern
    // Get Pattern will match the current switch state to specified patterns
    // Beside the switch State, also the Delay will be stored
+   /*
    pAct = new CPropertyAction (this, &CArduinoSwitch::OnSetPattern);
    nRet = CreateProperty("SetPattern", "", MM::String, false, pAct);
    if (nRet != DEVICE_OK)
@@ -484,6 +494,7 @@ int CArduinoSwitch::Initialize()
    AddAllowedValue("TriggerMode", "Start");
    AddAllowedValue("TriggerMode", "Running");
    AddAllowedValue("TriggerMode", "Idle");
+   */
 
    // Starts "blanking" mode: goal is to synchronize laser light with camera exposure
    std::string blankMode = "Blanking Mode";
@@ -580,6 +591,45 @@ int CArduinoSwitch::WriteToPort(long value)
    return DEVICE_OK;
 }
 
+int CArduinoSwitch::LoadSequence(unsigned size, unsigned char* seq)
+{
+   PurgeComPort(g_port.c_str());
+
+   for (unsigned i=0; i < size; i++)
+   {
+      unsigned char value = seq[i];
+
+      value = 63 & value;
+      if (g_invertedLogic)
+         value = ~value;
+
+      unsigned char command[3];
+      command[0] = 5;
+      command[1] = (unsigned char) i;
+      command[2] = value;
+      int ret = WriteToComPort(g_port.c_str(), (const unsigned char*) command, 3);
+      if (ret != DEVICE_OK)
+         return ret;
+
+      MM::MMTime startTime = GetCurrentMMTime();
+      unsigned long bytesRead = 0;
+      unsigned char answer[3];
+      while ((bytesRead < 3) && ( (GetCurrentMMTime() - startTime).getMsec() < 250)) {
+         unsigned long br;
+         ret = ReadFromComPort(g_port.c_str(), answer + bytesRead, 3, br);
+      if (ret != DEVICE_OK)
+         return ret;
+      bytesRead += br;
+      }
+      if (answer[0] != 5)
+         return ERR_COMMUNICATION;
+
+      i++;
+   }
+
+   return DEVICE_OK;
+}
+
 ///////////////////////////////////////////////////////////////////////////////
 // Action handlers
 ///////////////////////////////////////////////////////////////////////////////
@@ -598,10 +648,101 @@ int CArduinoSwitch::OnState(MM::PropertyBase* pProp, MM::ActionType eAct)
       if (g_shutterState > 0)
          return WriteToPort(pos);
    }
+   else if (eAct == MM::IsSequenceable)                                      
+   {                                                                         
+      if (sequenceOn_)                                                       
+         pProp->SetSequenceable(NUMPATTERNS);                           
+      else                                                                   
+         pProp->SetSequenceable(0);                                          
+   } 
+   else if (eAct == MM::AfterLoadSequence)                                   
+   {                                                                         
+      std::vector<std::string> sequence = pProp->GetSequence();              
+      if (sequence.size() > NUMPATTERNS)                                
+         return DEVICE_SEQUENCE_TOO_LARGE;                                   
+      unsigned char* seq = new unsigned char[sequence.size()];               
+      for (unsigned int i=0; i < sequence.size(); i++)                       
+      {                                                                      
+         seq[i] = (unsigned char)sequence[i][0];
+      }                                                                      
+      int ret = LoadSequence((unsigned) sequence.size(), seq);
+      if (ret != DEVICE_OK)                                                  
+         return ret;                                                         
+                                                                             
+      delete[] seq;                                                          
+   }                                                                         
+   else if (eAct == MM::StartSequence)
+   { 
+      MMThreadGuard myLock(g_lock);
+
+      PurgeComPort(g_port.c_str());
+      unsigned char command[1];
+      command[0] = 8;
+      int ret = WriteToComPort(g_port.c_str(), (const unsigned char*) command, 1);
+      if (ret != DEVICE_OK)
+         return ret;
+
+      MM::MMTime startTime = GetCurrentMMTime();
+      unsigned long bytesRead = 0;
+      unsigned char answer[1];
+      while ((bytesRead < 1) && ( (GetCurrentMMTime() - startTime).getMsec() < 250)) {
+         unsigned long br;
+         ret = ReadFromComPort(g_port.c_str(), answer + bytesRead, 1, br);
+         if (ret != DEVICE_OK)
+            return ret;
+         bytesRead += br;
+      }
+   }                                                                         
+   else if (eAct == MM::StopSequence)                                        
+   {                                                                         
+      MMThreadGuard myLock(g_lock);
+
+      unsigned char command[1];
+      command[0] = 9;
+      int ret = WriteToComPort(g_port.c_str(), (const unsigned char*) command, 1);
+      if (ret != DEVICE_OK)
+         return ret;
+
+      MM::MMTime startTime = GetCurrentMMTime();
+      unsigned long bytesRead = 0;
+      unsigned char answer[2];
+      while ((bytesRead < 2) && ( (GetCurrentMMTime() - startTime).getMsec() < 250)) {
+         unsigned long br;
+         ret = ReadFromComPort(g_port.c_str(), answer + bytesRead, 2, br);
+         if (ret != DEVICE_OK)
+            return ret;
+         bytesRead += br;
+      }
+      if (answer[0] != 9)
+         return ERR_COMMUNICATION;
+      g_triggerMode = false;
+   }                                                                         
 
    return DEVICE_OK;
 }
 
+int CArduinoSwitch::OnSequence(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   if (eAct == MM::BeforeGet)
+   {
+      if (sequenceOn_)
+         pProp->Set("On");
+      else
+         pProp->Set("Off");
+   }
+   else if (eAct == MM::AfterSet)
+   {
+      std::string state;
+      pProp->Get(state);
+      if (state == "On")
+         sequenceOn_ = true;
+      else
+         sequenceOn_ = false;
+   }
+   return DEVICE_OK;
+}
+
+/*
 int CArduinoSwitch::OnSetPattern(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
    if (eAct == MM::BeforeGet) {
@@ -870,6 +1011,7 @@ int CArduinoSwitch::OnStartTrigger(MM::PropertyBase* pProp, MM::ActionType eAct)
 
    return DEVICE_OK;
 }
+*/
 
 int CArduinoSwitch::OnStartTimedOutput(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
