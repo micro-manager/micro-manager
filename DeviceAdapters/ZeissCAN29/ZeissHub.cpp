@@ -1548,6 +1548,12 @@ int ZeissHub::ExecuteCommand(MM::Device& device, MM::Core& core, const unsigned 
          tenCounter++;
          preparedCommand[i+4+tenCounter] = command[i];
       }
+      if (command[i]==0x0D) {
+         preparedCommand[i+4+tenCounter] = 0x10;
+         tenCounter++;
+         preparedCommand[i+4+tenCounter] = command[i];
+      }
+      
    }
    preparedCommand[commandLength+4+tenCounter]=0x10;
    preparedCommand[commandLength+5+tenCounter]=0x03;
@@ -1590,6 +1596,12 @@ int ZeissHub::GetAnswer(MM::Device& device, MM::Core& core, unsigned char* answe
            else if (rcvBuf_[0] == 0x10) {
               tenFound = false;
               dataReadLength -= 1;
+           } else if (rcvBuf_[0] == 0x0D) {
+              tenFound = false;
+              // make current position of 0x0D available
+              dataReadLength -= 1;
+              // overwrite the 0x10 preceeding the original 0x0D with 0X0D
+              dataRead[dataReadLength - 1] = 0x0D;
            }
            else {
               tenFound = false;

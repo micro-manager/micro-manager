@@ -51,7 +51,7 @@ ZeissMessageParser::ZeissMessageParser(unsigned char* inputStream, long inputStr
 
 /*
  * Find a message starting with 0x10 0x02 and ends with 0x10 0x03.  
- * Strips escaped 0x10 chars (which are escaped with 0x10)
+ * Strips escaped 0x10 and 0x0D chars (which are escaped with 0x10)
  */
 int ZeissMessageParser::GetNextMessage(unsigned char* nextMessage, int& nextMessageLength) {
    bool startFound = false;
@@ -69,6 +69,11 @@ int ZeissMessageParser::GetNextMessage(unsigned char* nextMessage, int& nextMess
          tenFound = false;
       }
       else if (tenFound && (inputStream_[index_] == 0x10) ) {
+         nextMessage[nextMessageLength] = inputStream_[index_];
+         nextMessageLength++;
+         tenFound = false;
+      }
+      else if (tenFound && (inputStream_[index_] == 0x0D) ) {
          nextMessage[nextMessageLength] = inputStream_[index_];
          nextMessageLength++;
          tenFound = false;
