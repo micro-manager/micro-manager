@@ -26,7 +26,7 @@
 const char* g_DeviceNameArduinoHub = "Arduino-Hub";
 const char* g_DeviceNameArduinoSwitch = "Arduino-Switch";
 const char* g_DeviceNameArduinoShutter = "Arduino-Shutter";
-const char* g_DeviceNameArduinoDA = "Arduino-DAC";
+const char* g_DeviceNameArduinoDA1 = "Arduino-DAC1";
 const char* g_DeviceNameArduinoDA2 = "Arduino-DAC2";
 const char* g_DeviceNameArduinoInput = "Arduino-Input";
 
@@ -53,12 +53,12 @@ const char* g_invertedLogicString = "Inverted";
 ///////////////////////////////////////////////////////////////////////////////
 MODULE_API void InitializeModuleData()
 {
-   AddAvailableDeviceName(g_DeviceNameArduinoHub, "Hub");
-   AddAvailableDeviceName(g_DeviceNameArduinoSwitch, "Switch");
+   AddAvailableDeviceName(g_DeviceNameArduinoHub, "Hub (required)");
+   AddAvailableDeviceName(g_DeviceNameArduinoSwitch, "Digital out 8-bit");
    AddAvailableDeviceName(g_DeviceNameArduinoShutter, "Shutter");
-   AddAvailableDeviceName(g_DeviceNameArduinoDA, "DA");
-   AddAvailableDeviceName(g_DeviceNameArduinoDA2, "DA2");
-   AddAvailableDeviceName(g_DeviceNameArduinoInput, "Input");
+   AddAvailableDeviceName(g_DeviceNameArduinoDA1, "DAC channel 1");
+   AddAvailableDeviceName(g_DeviceNameArduinoDA2, "DAC channel 2");
+   AddAvailableDeviceName(g_DeviceNameArduinoInput, "ADC");
 }
 
 MODULE_API MM::Device* CreateDevice(const char* deviceName)
@@ -78,7 +78,7 @@ MODULE_API MM::Device* CreateDevice(const char* deviceName)
    {
       return new CArduinoShutter;
    }
-   else if (strcmp(deviceName, g_DeviceNameArduinoDA) == 0)
+   else if (strcmp(deviceName, g_DeviceNameArduinoDA1) == 0)
    {
       return new CArduinoDA(1); // channel 1
    }
@@ -293,7 +293,7 @@ int CArduinoHub::DetectInstalledDevices()
       peripherals.push_back(g_DeviceNameArduinoSwitch);
       peripherals.push_back(g_DeviceNameArduinoShutter);
       peripherals.push_back(g_DeviceNameArduinoInput);
-      peripherals.push_back(g_DeviceNameArduinoDA);
+      peripherals.push_back(g_DeviceNameArduinoDA1);
       peripherals.push_back(g_DeviceNameArduinoDA2);
       for (size_t i=0; i < peripherals.size(); i++) 
       {
@@ -1138,7 +1138,7 @@ CArduinoDA::CArduinoDA(int channel) :
    CPropertyAction* pAct = new CPropertyAction(this, &CArduinoDA::OnMaxVolt);
    CreateProperty("MaxVolt", "5.0", MM::Float, false, pAct, true);
 
-   name_ = channel_ == 1 ? g_DeviceNameArduinoDA : g_DeviceNameArduinoDA2;
+   name_ = channel_ == 1 ? g_DeviceNameArduinoDA1 : g_DeviceNameArduinoDA2;
 }
 
 CArduinoDA::~CArduinoDA()
