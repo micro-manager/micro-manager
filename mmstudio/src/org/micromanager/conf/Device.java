@@ -241,6 +241,11 @@ import org.micromanager.utils.PropertyItem;
    public boolean isCamera() {
       return type_ == DeviceType.CameraDevice;
    }
+   
+   public boolean isHub() {
+      return type_ == DeviceType.HubDevice;
+   }
+
 
    public int getNumberOfSetupLabels() {
 

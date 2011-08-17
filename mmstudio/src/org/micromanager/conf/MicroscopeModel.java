@@ -54,6 +54,7 @@ public class MicroscopeModel {
    ArrayList<Device> devices_;
    Device availableDevices_[];
    Device availableComPorts_[];
+   Device availableHubs_[];
    boolean comPortInUse_[];
    boolean modified_ = false;
    String fileName_;
@@ -117,6 +118,7 @@ public class MicroscopeModel {
       devices_ = new ArrayList<Device>();
       fileName_ = new String("");
       availableDevices_ = new Device[0];
+      availableHubs_ = new Device[0];
       configGroups_ = new Hashtable<String, ConfigGroup>();
       synchroDevices_ = new ArrayList<String>();
       availableComPorts_ = new Device[0];
@@ -229,6 +231,7 @@ public class MicroscopeModel {
 
          // assign available devices
          availableDevices_ = new Device[devsTotal.size()];
+         ArrayList<Device> hubs = new ArrayList<Device>();
          for (int i = 0; i < devsTotal.size(); i++) {
             availableDevices_[i] = devsTotal.get(i);
          }
@@ -257,7 +260,11 @@ public class MicroscopeModel {
          availableDevices_ = new Device[devsTotal.size()];
          for (int i = 0; i < devsTotal.size(); i++) {
             availableDevices_[i] = devsTotal.get(i);
+            if (availableDevices_[i].isHub())
+               hubs.add(availableDevices_[i]);
          }
+         availableHubs_ = new Device[hubs.size()];
+         hubs.toArray(availableHubs_);
       } catch (Exception e3) {
          ReportingUtils.showError(e3);
       }
@@ -292,6 +299,10 @@ public class MicroscopeModel {
 
    public Device[] getAvailableDeviceList() {
       return availableDevices_;
+   }
+   
+   public Device[] getAvailableHubs() {
+      return availableHubs_;
    }
 
    public Device[] getAvailableSerialPorts() {

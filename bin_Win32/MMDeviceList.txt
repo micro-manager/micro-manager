@@ -16,7 +16,7 @@ Andor,Andor,Generic Andor Camera Adapter,2
 AndorLaserCombiner,AndorLaserCombiner,AndorLaserCombiner,3
 AndorLaserCombiner,PiezoStage,PiezoStage,5
 Apogee,ApogeeCamera,Apogee Alta camera adapter,2
-Arduino,Arduino-Hub,Hub,8
+Arduino,Arduino-Hub,Hub,18
 Arduino,Arduino-Switch,Switch,4
 Arduino,Arduino-Shutter,Shutter,3
 Arduino,Arduino-DAC,DA,13
@@ -58,7 +58,7 @@ DemoCamera,TransposeProcessor,TransposeProcessor,11
 DemoCamera,ImageFlipX,ImageFlipX,11
 DemoCamera,ImageFlipY,ImageFlipY,11
 DemoCamera,MedianFilter,MedianFilter,11
-DemoCamera,DHub,DHub,8
+DemoCamera,DHub,DHub,18
 FreeSerialPort,FreeSerialPort,Free-form communication Serial Port.,8
 GenericSLM,GenericSLM,Spatial Light Modulator controlled through computer graphics output,16
 GigECamera,GigE camera adapter,GigE camera,2
@@ -77,7 +77,7 @@ K8061,K8061-Shutter,Shutter,3
 K8061,K8061-DAC,DA,13
 K8061,K8061-Input,Input,8
 KDV,KDVZStage,Focus drive for Meiji Techno EMZ,5
-LeicaDMI,Scope,Leica DMI microscope controlled through serial interface,8
+LeicaDMI,Scope,Leica DMI microscope controlled through serial interface,18
 LeicaDMI,TL-Shutter,Transmitted Light Shutter,3
 LeicaDMI,IL-Shutter,Incident Light Shutter,3
 LeicaDMI,IL-Turret,Reflector Turret (dichroics),4
@@ -150,7 +150,7 @@ NikonTE2000,Uniblitz-Shutter,Uniblitz shutter,3
 NikonTE2000,PerfectFocus,PFS autofocus device,9
 NikonTE2000,PFS-Offset,PFS Offset Lens,5
 NikonTE2000,Excitation Filter wheel,Nikon excitation side filter changer,4
-NikonTI,TIScope,Nikon TI microscope,8
+NikonTI,TIScope,Nikon TI microscope,18
 NikonTI,TICondenserCassette,Condenser,4
 NikonTI,TINosePiece,Objective Turret,4
 NikonTI,TIFilterBlock1,FilterBlock 1,4
