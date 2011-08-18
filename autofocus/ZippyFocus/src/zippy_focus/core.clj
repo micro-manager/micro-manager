@@ -2,7 +2,10 @@
   (:import [org.micromanager.api Autofocus]
            [org.micromanager.utils PropertyItem])
   (:use [org.micromanager.mm
-            :only (load-mm gui mmc core double-vector)]))
+            :only (load-mm gui mmc core double-vector)])
+  (:gen-class
+    [:name ZippyFocus
+     :extends AutofocusBase]))
 
 (defn triggerable-focus? []
   (core isStageSequenceable (core getFocusDevice)))
