@@ -41,7 +41,6 @@ const int g_Min_MMVersion = 1;
 const int g_Max_MMVersion = 2;
 bool g_portAvailable = false;
 bool g_invertedLogic = false;
-bool g_triggerMode = false;
 bool g_timedOutputActive = false;
 const char* g_normalLogicString = "Normal";
 const char* g_invertedLogicString = "Inverted";
@@ -585,7 +584,6 @@ int CArduinoSwitch::WriteToPort(long value)
    if (answer[0] != 1)
       return ERR_COMMUNICATION;
 
-   g_triggerMode = false;
    g_timedOutputActive = false;
 
    return DEVICE_OK;
@@ -611,6 +609,7 @@ int CArduinoSwitch::LoadSequence(unsigned size, unsigned char* seq)
       if (ret != DEVICE_OK)
          return ret;
 
+
       MM::MMTime startTime = GetCurrentMMTime();
       unsigned long bytesRead = 0;
       unsigned char answer[3];
@@ -624,8 +623,27 @@ int CArduinoSwitch::LoadSequence(unsigned size, unsigned char* seq)
       if (answer[0] != 5)
          return ERR_COMMUNICATION;
 
-      i++;
    }
+
+   unsigned char command[2];
+   command[0] = 6;
+   command[1] = (unsigned char) size;
+   int ret = WriteToComPort(g_port.c_str(), (const unsigned char*) command, 2);
+   if (ret != DEVICE_OK)
+      return ret;
+
+   MM::MMTime startTime = GetCurrentMMTime();
+   unsigned long bytesRead = 0;
+   unsigned char answer[2];
+   while ((bytesRead < 2) && ( (GetCurrentMMTime() - startTime).getMsec() < 250)) {
+      unsigned long br;
+      ret = ReadFromComPort(g_port.c_str(), answer + bytesRead, 2, br);
+      if (ret != DEVICE_OK)
+         return ret;
+      bytesRead += br;
+   }
+   if (answer[0] != 6)
+      return ERR_COMMUNICATION;
 
    return DEVICE_OK;
 }
@@ -658,12 +676,16 @@ int CArduinoSwitch::OnState(MM::PropertyBase* pProp, MM::ActionType eAct)
    else if (eAct == MM::AfterLoadSequence)                                   
    {                                                                         
       std::vector<std::string> sequence = pProp->GetSequence();              
+      std::ostringstream os;
       if (sequence.size() > NUMPATTERNS)                                
          return DEVICE_SEQUENCE_TOO_LARGE;                                   
       unsigned char* seq = new unsigned char[sequence.size()];               
       for (unsigned int i=0; i < sequence.size(); i++)                       
-      {                                                                      
-         seq[i] = (unsigned char)sequence[i][0];
+      {
+         std::istringstream os (sequence[i]);
+         int val;
+         os >> val;
+         seq[i] = (unsigned char) val;
       }                                                                      
       int ret = LoadSequence((unsigned) sequence.size(), seq);
       if (ret != DEVICE_OK)                                                  
@@ -692,9 +714,11 @@ int CArduinoSwitch::OnState(MM::PropertyBase* pProp, MM::ActionType eAct)
             return ret;
          bytesRead += br;
       }
-   }                                                                         
+      if (answer[0] != 8)
+         return ERR_COMMUNICATION;
+   }
    else if (eAct == MM::StopSequence)                                        
-   {                                                                         
+   {
       MMThreadGuard myLock(g_lock);
 
       unsigned char command[1];
@@ -715,7 +739,11 @@ int CArduinoSwitch::OnState(MM::PropertyBase* pProp, MM::ActionType eAct)
       }
       if (answer[0] != 9)
          return ERR_COMMUNICATION;
-      g_triggerMode = false;
+
+      std::ostringstream os;
+      os << "Sequence had " << (int) answer[1] << " transitions";
+      LogMessage(os.str().c_str(), false);
+
    }                                                                         
 
    return DEVICE_OK;
@@ -1049,7 +1077,6 @@ int CArduinoSwitch::OnStartTimedOutput(MM::PropertyBase* pProp, MM::ActionType e
          if (answer[0] != 12)
             return ERR_COMMUNICATION;
          g_timedOutputActive = true;
-         g_triggerMode = false;
       } else {
          unsigned char command[1];
          command[0] = 9;
@@ -1069,7 +1096,6 @@ int CArduinoSwitch::OnStartTimedOutput(MM::PropertyBase* pProp, MM::ActionType e
          }
          if (answer[0] != 9)
             return ERR_COMMUNICATION;
-         g_triggerMode = false;
          g_timedOutputActive = false;
          g_timedOutputActive = false;
       }
@@ -1114,7 +1140,6 @@ int CArduinoSwitch::OnBlanking(MM::PropertyBase* pProp, MM::ActionType eAct)
          if (answer[0] != 20)
             return ERR_COMMUNICATION;
          blanking_ = true;
-         g_triggerMode = false;
          g_timedOutputActive = false;
       } else if (prop =="Stop" && blanking_){
          unsigned char command[1];
@@ -1136,7 +1161,6 @@ int CArduinoSwitch::OnBlanking(MM::PropertyBase* pProp, MM::ActionType eAct)
          if (answer[0] != 21)
             return ERR_COMMUNICATION;
          blanking_ = false;
-         g_triggerMode = false;
          g_timedOutputActive = false;
       }
    }
@@ -1235,7 +1259,6 @@ int CArduinoSwitch::OnRepeatTimedPattern(MM::PropertyBase* pProp, MM::ActionType
       if (answer[0] != 11)
          return ERR_COMMUNICATION;
 
-      g_triggerMode = false;
       g_timedOutputActive = false;
    }
 
@@ -1364,7 +1387,6 @@ int CArduinoDA::WriteToPort(unsigned long value)
    if (answer[0] != 3)
       return ERR_COMMUNICATION;
 
-   g_triggerMode = false;
    g_timedOutputActive = false;
 
    return DEVICE_OK;
@@ -1605,7 +1627,6 @@ int CArduinoShutter::WriteToPort(long value)
    if (answer[0] != 1)
       return ERR_COMMUNICATION;
 
-   g_triggerMode = false;
    g_timedOutputActive = false;
 
    return DEVICE_OK;
