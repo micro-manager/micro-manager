@@ -1,6 +1,6 @@
 (ns zippy-focus.core
-  (:import [org.micromanager.api Autofocus]
-           [org.micromanager.utils PropertyItem])
+  (:import [org.micromanager.utils PropertyItem]
+           [org.micromanager.api Autofocus])
   (:use [org.micromanager.mm
             :only (load-mm gui mmc core double-vector)])
   (:gen-class
