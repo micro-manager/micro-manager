@@ -1,6 +1,7 @@
 (ns zippy-focus.core
-  (:import [org.micromanager.utils PropertyItem]
-           [org.micromanager.api Autofocus])
+  (:import [org.micromanager.utils ImageUtils PropertyItem]
+           [org.micromanager.api Autofocus]
+           [ij ImagePlus])
   (:use [org.micromanager.mm
             :only (load-mm gui mmc core double-vector)])
   (:gen-class
@@ -25,19 +26,36 @@
       (core isSequenceRunning)))
 
 (defn pop-burst-image []
-  (while (and (. mmc isSequenceRunning)
+  (while (and ;(. mmc isSequenceRunning)
               (zero? (. mmc getRemainingImageCount)))
     (Thread/sleep 1))
   (core popNextImage))
 
-(defn grab-images []
-  (doall
-    (for [_ (range) :while (more-images-expected)]
-      (pop-burst-image))))
+(defn grab-images [n]
+    (for [_ (range n) :while (more-images-expected)]
+      (pop-burst-image)))
+
+(defn image-stat [img]
+  (.. ImageUtils (makeProcessor mmc img) getStatistics))
+
+(defn image-mean [img]
+  (.mean (image-stat img)))
+
+(defn image-std-dev [img]
+  (let [stat (image-stat img)]
+    (/ (.stdDev stat) (.mean stat))))
+
+(defn image-sharpness [img]
+  (let [proc (ImageUtils/makeProcessor mmc img)
+        mean (.. proc getStatistics mean)
+        mean-edge (do (.findEdges proc) (.. proc getStatistics mean))]
+    (/ mean-edge mean)))
 
 (defn score-image [score-type img]
   (condp = score-type
-    "Sum" (apply + img)
+    "Mean" (image-mean img)
+    "StdDev" (image-std-dev img)
+    "Sharpness" (image-sharpness img)
     0))
 
 (defn acquire-images [z-drive trigger exposure]
@@ -45,9 +63,8 @@
     (core setPosition z-drive (first trigger))
     (core loadStageSequence z-drive (double-vector trigger))
     (core startStageSequence z-drive)
-    (core waitForDevice z-drive)
     (core startSequenceAcquisition (count trigger) 0 false)
-    (grab-images))
+    (grab-images (count trigger)))
 
 (defn run-autofocus [search-params]
   (let [z-drive (core getFocusDevice)
@@ -55,17 +72,20 @@
         trigger (make-sweep-vector current-z search-params)
         current-exposure (core getExposure)]
     (let [images (acquire-images z-drive trigger (:exposure search-params))
-          scores (map #(score-image "Sum" %) images)
+          scores (map #(score-image (:score-type search-params) %) (seque images))
           best-index (apply max-key #(nth scores %) (range (count images)))
           best-z (nth trigger best-index)]
+      (core stopSequenceAcquisition)
+      (core stopStageSequence z-drive)
       (core setPosition z-drive best-z)
       (core setExposure current-exposure)
       best-z)))
            
 (defn run-test []
   (reset! search-params
-          {:range 10
-           :tolerance 1.00
-           :score-type "Sum"
-           :exposure 10})
-  (run-autofocus @search-params))
+          {:range 5
+           :tolerance 0.25
+           :score-type "Sharpness"
+           :exposure 2})
+  (run-autofocus @search-params)
+  (. gui snapSingleImage))
