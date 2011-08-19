@@ -199,11 +199,11 @@ public class PeripheralDevicesPage extends PagePanel {
                // end of discovery
                
                if (0 < installed.size()) {
-                  for (int i=0; i<installed.size(); i++) {
+                  for (int i=0; i<installed.size(); i++) {                        
                      try {
                         if (model_.findDevice(installed.get(i)) == null)
                         {
-                           String descr = "N/A"; //TODO: core_.getDeviceDescription(installed.get(i));
+                           String descr = core_.getInstalledDeviceDescription(d.getName(), installed.get(i));
                            Device newDev = new Device(installed.get(i), d.getLibrary(), installed.get(i), descr);   
                            selected_.add(false);
                            masterDevices_.add(d.getName());

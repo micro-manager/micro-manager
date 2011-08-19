@@ -382,6 +382,14 @@ CArduinoSwitch::CArduinoSwitch() :
 
    for (int i=0; i < NUMPATTERNS; i++)
       pattern_[i] = 0;
+
+   // Description
+   int ret = CreateProperty(MM::g_Keyword_Description, "Arduino digital output driver", MM::String, true);
+   assert(DEVICE_OK == ret);
+
+   // Name
+   ret = CreateProperty(MM::g_Keyword_Name, g_DeviceNameArduinoSwitch, MM::String, true);
+   assert(DEVICE_OK == ret);
 }
 
 CArduinoSwitch::~CArduinoSwitch()
@@ -404,16 +412,6 @@ int CArduinoSwitch::Initialize()
    // set property list
    // -----------------
    
-   // Name
-   int nRet = CreateProperty(MM::g_Keyword_Name, g_DeviceNameArduinoSwitch, MM::String, true);
-   if (DEVICE_OK != nRet)
-      return nRet;
-
-   // Description
-   nRet = CreateProperty(MM::g_Keyword_Description, "Arduino digital output driver", MM::String, true);
-   if (DEVICE_OK != nRet)
-      return nRet;
-
    // create positions and labels
    const int bufSize = 65;
    char buf[bufSize];
@@ -426,7 +424,7 @@ int CArduinoSwitch::Initialize()
    // State
    // -----
    CPropertyAction* pAct = new CPropertyAction (this, &CArduinoSwitch::OnState);
-   nRet = CreateProperty(MM::g_Keyword_State, "0", MM::Integer, false, pAct);
+   int nRet = CreateProperty(MM::g_Keyword_State, "0", MM::Integer, false, pAct);
    if (nRet != DEVICE_OK)
       return nRet;
    SetPropertyLimits(MM::g_Keyword_State, 0, numPos_ - 1);
@@ -1304,6 +1302,14 @@ CArduinoDA::CArduinoDA(int channel) :
    CreateProperty("MaxVolt", "5.0", MM::Float, false, pAct, true);
 
    name_ = channel_ == 1 ? g_DeviceNameArduinoDA1 : g_DeviceNameArduinoDA2;
+
+   // Description
+   int nRet = CreateProperty(MM::g_Keyword_Description, "Arduino DAC driver", MM::String, true);
+   assert(DEVICE_OK == nRet);
+
+   // Name
+   nRet = CreateProperty(MM::g_Keyword_Name, name_.c_str(), MM::String, true);
+   assert(DEVICE_OK == nRet);
 }
 
 CArduinoDA::~CArduinoDA()
@@ -1326,20 +1332,10 @@ int CArduinoDA::Initialize()
    // set property list
    // -----------------
    
-   // Name
-   int nRet = CreateProperty(MM::g_Keyword_Name, name_.c_str(), MM::String, true);
-   if (DEVICE_OK != nRet)
-      return nRet;
-
-   // Description
-   nRet = CreateProperty(MM::g_Keyword_Description, "Arduino DAC driver", MM::String, true);
-   if (DEVICE_OK != nRet)
-      return nRet;
-
    // State
    // -----
    CPropertyAction* pAct = new CPropertyAction (this, &CArduinoDA::OnVolts);
-   nRet = CreateProperty("Volts", "0.0", MM::Float, false, pAct);
+   int nRet = CreateProperty("Volts", "0.0", MM::Float, false, pAct);
    if (nRet != DEVICE_OK)
       return nRet;
    SetPropertyLimits("Volts", minV_, maxV_);
@@ -1493,6 +1489,14 @@ CArduinoShutter::CArduinoShutter() : initialized_(false), name_(g_DeviceNameArdu
    EnableDelay();
 
    SetErrorText(ERR_NO_PORT_SET, "Hub Device not found.  The Arduino Hub device is needed to create this device");
+
+   // Name
+   int ret = CreateProperty(MM::g_Keyword_Name, g_DeviceNameArduinoShutter, MM::String, true);
+   assert(DEVICE_OK == ret);
+
+   // Description
+   ret = CreateProperty(MM::g_Keyword_Description, "Arduino shutter driver", MM::String, true);
+   assert(DEVICE_OK == ret);
 }
 
 CArduinoShutter::~CArduinoShutter()
@@ -1524,20 +1528,10 @@ int CArduinoShutter::Initialize()
    // set property list
    // -----------------
    
-   // Name
-   int ret = CreateProperty(MM::g_Keyword_Name, g_DeviceNameArduinoShutter, MM::String, true);
-   if (DEVICE_OK != ret)
-      return ret;
-
-   // Description
-   ret = CreateProperty(MM::g_Keyword_Description, "Arduino shutter driver", MM::String, true);
-   if (DEVICE_OK != ret)
-      return ret;
-
    // OnOff
    // ------
    CPropertyAction* pAct = new CPropertyAction (this, &CArduinoShutter::OnOnOff);
-   ret = CreateProperty("OnOff", "0", MM::Integer, false, pAct);
+   int ret = CreateProperty("OnOff", "0", MM::Integer, false, pAct);
    if (ret != DEVICE_OK)
       return ret;
 
@@ -1687,6 +1681,14 @@ CArduinoInput::CArduinoInput() :
    CreateProperty("Pull-Up-Resistor", "On", MM::String, false, 0, true);
    AddAllowedValue("Pull-Up-Resistor", "On");
    AddAllowedValue("Pull-Up-Resistor", "Off");
+
+   // Name
+   int ret = CreateProperty(MM::g_Keyword_Name, name_.c_str(), MM::String, true);
+   assert(DEVICE_OK == ret);
+
+   // Description
+   ret = CreateProperty(MM::g_Keyword_Description, "Arduino shutter driver", MM::String, true);
+   assert(DEVICE_OK == ret);
 }
 
 CArduinoInput::~CArduinoInput()
@@ -1711,12 +1713,8 @@ int CArduinoInput::Initialize()
    if (g_version < 2)
       return ERR_VERSION_MISMATCH;
 
-   // Name
-   int ret = CreateProperty(MM::g_Keyword_Name, name_.c_str(), MM::String, true);
-   if (DEVICE_OK != ret)
-      return ret;
 
-   ret = GetProperty("Pin", pins_);
+   int ret = GetProperty("Pin", pins_);
    if (ret != DEVICE_OK)
       return ret;
    if (strcmp("All", pins_) != 0)

@@ -424,7 +424,7 @@ public:
 
    // hubs can provide a list of peripheral devices currently attached
    std::vector<std::string> getInstalledDevices(const char* hubDeviceLabel); 
-   void clearInstalledDevices(const char* hubDeviceLabel); 
+   std::string getInstalledDeviceDescription(const char* hubLabel, const char* deviceLabel);
 
    template <class T>
    T* getSpecificDevice(const char* deviceLabel) const throw (CMMError)

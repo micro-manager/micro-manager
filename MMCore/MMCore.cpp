@@ -5577,7 +5577,7 @@ std::vector<std::string> CMMCore::getInstalledDevices(const char* deviceLabel)
    {
       MM::Hub* pHub = static_cast<MM::Hub*>(pDevice);
       pHub->DetectInstalledDevices();
-      for(int i=0; i<pHub->GetNumberOfInstalledDevices(); i++)
+      for(unsigned i=0; i<pHub->GetNumberOfInstalledDevices(); i++)
       {
          MM::Device* pInstDev = pHub->GetInstalledDevice(i);
          char devName[MM::MaxStrLength];
@@ -5588,14 +5588,29 @@ std::vector<std::string> CMMCore::getInstalledDevices(const char* deviceLabel)
    return result;
 }
 
-void CMMCore::clearInstalledDevices(const char* hubDeviceLabel)
+std::string CMMCore::getInstalledDeviceDescription(const char* hubLabel, const char* deviceLabel)
 {
-   MM::Device* pDevice  = pluginManager_.GetDevice(hubDeviceLabel);
+   std::string result("N/A");
+   MM::Device* pDevice  = pluginManager_.GetDevice(hubLabel);
    if (pDevice && pDevice->GetType() == MM::HubDevice)
    {
       MM::Hub* pHub = static_cast<MM::Hub*>(pDevice);
-      pHub->ClearInstalledDevices();
-   }  
+      // do not attempt to detect devices, assume instead
+      // that detection has already been performed
+      for(unsigned i=0; i<pHub->GetNumberOfInstalledDevices(); i++)
+      {
+         MM::Device* pInstDev = pHub->GetInstalledDevice(i);
+         char descr[MM::MaxStrLength] = "N/A";
+         char name[MM::MaxStrLength] = "";
+         pInstDev->GetName(name);
+         if (strcmp(name, deviceLabel) == 0)
+         {
+            pInstDev->GetDescription(descr);
+            result = descr;
+         }
+      }
+   }
+   return result;
 }
 
 // at least on OS X, there is a 'primary' MAC address, so we'll
