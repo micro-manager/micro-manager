@@ -35,7 +35,8 @@ public class Display {
 
 	public Display(Hub hub, int imageType, int width, int height) {
 		hub_ = hub;
-		IJ.setTool("hand");
+		if (IJ.getInstance() != null)
+		   IJ.setTool("hand");
 
                 type_ = imageType;
 		proc_ = ImageUtils.makeProcessor(imageType, width, height);
