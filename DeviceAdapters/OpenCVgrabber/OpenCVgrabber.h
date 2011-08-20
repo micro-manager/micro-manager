@@ -103,7 +103,7 @@ public:
    // action interface
    // ----------------
 	// floating point read-only properties for testing
-	int OnTestProperty(MM::PropertyBase* pProp, MM::ActionType eAct, long);
+//	int OnTestProperty(MM::PropertyBase* pProp, MM::ActionType eAct, long);
 
 
 

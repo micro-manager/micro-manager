@@ -508,6 +508,7 @@ const unsigned char* COpenCVgrabber::GetImageBuffer()
 
    if (pixelType.compare(g_PixelType_32bitRGB) == 0)
    {
+	  /*
 	   if(roiX_ == 0 && roiY_ == 0){
 		   for(int i=0; i < temp->width * temp->height; i++){
 				memcpy(img_.GetPixelsRW()+i*4, temp->imageData+i*3,3);
@@ -528,7 +529,11 @@ const unsigned char* COpenCVgrabber::GetImageBuffer()
 			}
 			cvReleaseImage(&ROI);
 	   }
-		
+		*/
+	    for(int i=0; i < temp->width * temp->height; i++){
+				memcpy(img_.GetPixelsRW()+i*4, temp->imageData+i*3,3);
+			} 
+
    } else {
 		for(int i=0; i < cameraCCDXSize_ * cameraCCDYSize_; i++){
 			memcpy(img_.GetPixelsRW()+i, temp->imageData+i*3,1);
@@ -536,7 +541,8 @@ const unsigned char* COpenCVgrabber::GetImageBuffer()
    }
 
 
-   return (unsigned char*)(img_.GetPixels());
+unsigned char *pB = (unsigned char*)(img_.GetPixels());
+   return pB;
 }
 
 /**
@@ -764,7 +770,7 @@ int COpenCVgrabber::InsertImage()
    MM::MMTime timeStamp = this->GetCurrentMMTime();
    char label[MM::MaxStrLength];
    this->GetLabel(label);
- 
+ /*
    // Important:  metadata about the image are generated here:
    Metadata md;
    md.put("Camera", label);
@@ -773,13 +779,13 @@ int COpenCVgrabber::InsertImage()
    md.put(MM::g_Keyword_Metadata_ImageNumber, CDeviceUtils::ConvertToString(imageCounter_));
    md.put(MM::g_Keyword_Metadata_ROI_X, CDeviceUtils::ConvertToString( (long) roiX_)); 
    md.put(MM::g_Keyword_Metadata_ROI_Y, CDeviceUtils::ConvertToString( (long) roiY_)); 
-
-   ++imageCounter_;
-
+   */
+   imageCounter_++;
+   /*
    char buf[MM::MaxStrLength];
    GetProperty(MM::g_Keyword_Binning, buf);
    md.put(MM::g_Keyword_Binning, buf);
-
+   */
    MMThreadGuard g(imgPixelsLock_);
 
 
@@ -788,13 +794,15 @@ int COpenCVgrabber::InsertImage()
    unsigned int h = GetImageHeight();
    unsigned int b = GetImageBytesPerPixel();
 
-   int ret = GetCoreCallback()->InsertImage(this, pI, w, h, b, &md);
+   int ret = GetCoreCallback()->InsertImage(this, pI, w, h, b);
    if (!stopOnOverflow_ && ret == DEVICE_BUFFER_OVERFLOW)
    {
       // do not stop on overflow - just reset the buffer
       GetCoreCallback()->ClearImageBuffer(this);
       // don't process this same image again...
-      return GetCoreCallback()->InsertImage(this, pI, w, h, b, &md, false);
+//      return GetCoreCallback()->InsertImage(this, pI, w, h, b, &md, false);
+      //return GetCoreCallback()->InsertImage(this, pI, w, h, b, md.Serialize().c_str(), false);
+	  return GetCoreCallback()->InsertImage(this, pI, w, h, b);
    } else
       return ret;
 }
@@ -817,15 +825,14 @@ int COpenCVgrabber::ThreadRun (void)
       	triggerDev->SetProperty("Trigger","+");
       }
    }
+   
+   
    ret = SnapImage();
-   if(ret != DEVICE_OK) return ret;
-   
+   if (ret != DEVICE_OK) return ret;
+
    ret = InsertImage();
-   if (ret != DEVICE_OK)
-   {
-      return ret;
-   }
-   
+   if (ret != DEVICE_OK) return ret;
+
    return ret;
 };
 
@@ -920,9 +927,7 @@ int MySequenceThread::svc(void) throw()
       {  
          ret=camera_->ThreadRun();
       } while (DEVICE_OK == ret && !IsStopped() && imageCounter_++ < numImages_-1);
-      if(IsSuspended())
-		  camera_->LogMessage("SeqAcquisition suspended by the user\n");
-	  if (IsStopped())
+      if (IsStopped())
          camera_->LogMessage("SeqAcquisition interrupted by the user\n");
 
    }catch( CMMError& e){
