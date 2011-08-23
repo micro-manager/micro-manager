@@ -226,7 +226,7 @@ int ASIBase::ClearPort(void)
 } 
 
 // Communication "send" utility function:
-int ASIBase::SendCommand(const char *command)
+int ASIBase::SendCommand(const char *command) const
 {
    std::string base_command = "";
    int ret;
@@ -240,7 +240,7 @@ int ASIBase::SendCommand(const char *command)
 }
 
 // Communication "send & receive" utility function:
-int ASIBase::QueryCommand(const char *command, std::string &answer)
+int ASIBase::QueryCommand(const char *command, std::string &answer) const
 {
    const char *terminator;
    int ret;
@@ -1538,7 +1538,7 @@ int ZStage::Initialize()
    {
       CPropertyAction* pAct = new CPropertyAction (this, &ZStage::OnSequence);
       const char* spn = "Use Sequence";
-      CreateProperty(spn, "No", MM::String, false, pAct, true);
+      CreateProperty(spn, "No", MM::String, false, pAct);
       AddAllowedValue(spn, "No");
       AddAllowedValue(spn, "Yes");
    }
@@ -1767,26 +1767,86 @@ int ZStage::GetLimits(double& /*min*/, double& /*max*/)
 
 bool ZStage::HasRingBuffer()
 {
-   // TODO: implement
+   ClearPort();
+
+   string answer;
+   int ret = QueryCommand("RM", answer); 
+   if (ret != DEVICE_OK)
+      return false;
+
+   if (answer.substr(0,2).compare(":A") == 0 || answer.substr(1,2).compare(":A") == 0)
+   {
+      int ret = QueryCommand("TTL", answer); 
+      if (ret != DEVICE_OK)
+         return false;
+      if (answer.substr(0,2).compare(":A") == 0 || answer.substr(1,2).compare(":A") == 0)
+         return true;
+   }
+      
    return false;
 }
 
 
 int ZStage::StartStageSequence() const
 {
-   // TODO: implement
-   return DEVICE_OK;
+   string answer;
+   // Note, what to do with F axis????
+   int ret = QueryCommand("RM Y=4 Z=0", answer); // ensure that ringbuffer pointer points to first entry and that we only trigger the Z axis
+   if (ret != DEVICE_OK)
+      return ret;
+
+   if (answer.substr(0,2).compare(":A") == 0 || answer.substr(1,2).compare(":A") == 0)
+   {  
+      ret = QueryCommand("TTL X=1", answer); // switches on TTL triggering
+      if (ret != DEVICE_OK)
+         return ret;
+
+      if (answer.substr(0,2).compare(":A") == 0 || answer.substr(1,2).compare(":A") == 0)
+         return DEVICE_OK;
+   }
+
+   return ERR_UNRECOGNIZED_ANSWER;
 }
 
 int ZStage::StopStageSequence() const 
 {
-   // TODO: implement
+   std::string answer;
+   int ret = QueryCommand("TTL X=0", answer); // switches off TTL triggering
+   if (ret != DEVICE_OK)
+      return ret;
+
+   if (answer.substr(0,2).compare(":A") == 0 || answer.substr(1,2).compare(":A") == 0)
+         return DEVICE_OK;
+
    return DEVICE_OK;
 }
 
 int ZStage::SendStageSequence() const
 {
-   // TODO: implement
+   // first clear the buffer in the device
+   std::string answer;
+   int ret = QueryCommand("RM X=0", answer); // clears the ringbuffer
+   if (ret != DEVICE_OK)
+      return ret;
+
+   if (answer.substr(0,2).compare(":A") == 0 || answer.substr(1,2).compare(":A") == 0)
+   {
+      for (unsigned i=0; i< sequence_.size(); i++)
+      {
+         // Note, what to do with F axis????
+         ostringstream os;
+         os.precision(0);
+         // Strange, but this command needs <CR><LF>.  
+         os << fixed << "LD Z=" << sequence_[i] * 10 << "\r\n"; 
+         ret = QueryCommand(os.str().c_str(), answer);
+         if (ret != DEVICE_OK)
+            return ret;
+
+         // the asnwer will also have a :N-1 in it, ignore.
+         if (! (answer.substr(0,2).compare(":A") == 0 || answer.substr(1,2).compare(":A") == 0) )
+            return ERR_UNRECOGNIZED_ANSWER;
+      }
+   }
 
    return DEVICE_OK;
 }
@@ -1794,8 +1854,17 @@ int ZStage::SendStageSequence() const
 int ZStage::ClearStageSequence()
 {
    sequence_.clear();
+
+   // clear the buffer in the device
+   std::string answer;
+   int ret = QueryCommand("RM X=0", answer); // clears the ringbuffer
+   if (ret != DEVICE_OK)
+      return ret;
+
+   if (answer.substr(0,2).compare(":A") == 0 || answer.substr(1,2).compare(":A") == 0)
+      return DEVICE_OK;
    
-   return DEVICE_OK;
+   return ERR_UNRECOGNIZED_ANSWER;
 }
 
 int ZStage::AddToStageSequence(double position)
@@ -1840,6 +1909,27 @@ int ZStage::OnAxis(MM::PropertyBase* pProp, MM::ActionType eAct)
    else if (eAct == MM::AfterSet)
    {
       pProp->Get(axis_);
+   }
+
+   return DEVICE_OK;
+}
+
+int ZStage::OnSequence(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   if (eAct == MM::BeforeGet)
+   {
+      if (sequenceable_)
+         pProp->Set("Yes");
+      else
+         pProp->Set("No");
+   }
+   else if (eAct == MM::AfterSet)
+   {
+      std::string prop;
+      pProp->Get(prop);
+      sequenceable_ = false;
+      if (prop == "Yes")
+         sequenceable_ = true;
    }
 
    return DEVICE_OK;

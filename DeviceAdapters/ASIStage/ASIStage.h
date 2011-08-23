@@ -75,9 +75,9 @@ public:
 
    int ClearPort(void);
    int CheckDeviceStatus(void);
-   int SendCommand(const char *command);
+   int SendCommand(const char *command) const;
    int QueryCommandACK(const char *command);
-   int QueryCommand(const char *command, std::string &answer);
+   int QueryCommand(const char *command, std::string &answer) const;
 
 protected:
    bool oldstage_;
