@@ -97,7 +97,7 @@ class ZeissTurret
 };
 
 
-class ZeissScope : public CGenericBase<ZeissScope>
+class ZeissScope : public HubBase<ZeissScope>
 {
    public:
       ZeissScope();
@@ -114,11 +114,9 @@ class ZeissScope : public CGenericBase<ZeissScope>
       // ----------------                                                       
       int OnPort(MM::PropertyBase* pProp, MM::ActionType eAct); 
 
-      // device detection
-      MM::DeviceDetectionStatus DetectDevice(void);
-
-      int GetNumberOfDiscoverableDevices();
-      void GetDiscoverableDevice(int peripheralNum, char* peripheralName, unsigned int maxNameLen);
+      // HUB interface
+      // -------------
+      int DetectInstalledDevices();
 
    private:
       std::vector<std::string> peripherals_;
@@ -126,6 +124,9 @@ class ZeissScope : public CGenericBase<ZeissScope>
       // this would better be a static member!!!!
       std::map<int,std::string>& turretIDMap();
       void GetPeripheralInventory();
+      MM::DeviceDetectionStatus DetectDevice(void);
+      int GetNumberOfDiscoverableDevices();
+      void GetDiscoverableDevice(int peripheralNum, char* peripheralName, unsigned int maxNameLen);
       bool initialized_;
       //std::string port_;
       double answerTimeoutMs_;
@@ -495,13 +496,13 @@ public:
    int OnPosition(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnLoadSample(MM::PropertyBase* pProp, MM::ActionType eAct);
 
-   // Sequence functions
+   // Sequence functions (unimplemented)
    int IsStageSequenceable(bool& isSequenceable) const {isSequenceable = false; return DEVICE_OK;}
    int GetStageSequenceMaxLength(long& nrEvents) const  {nrEvents = 0; return DEVICE_OK;}
    int StartStageSequence() const {return DEVICE_OK;}
    int StopStageSequence() const {return DEVICE_OK;}
    int ClearStageSequence() {return DEVICE_OK;}
-   int AddToStageSequence(double position) {return DEVICE_OK;}
+   int AddToStageSequence(double /*position*/) {return DEVICE_OK;}
    int SendStageSequence() const {return DEVICE_OK;}
 
 private:
@@ -570,7 +571,6 @@ public:
    // XYStage API
    // -----------
    int SetPositionSteps(long x, long y);
-   int SetRelativePositionSteps(long x, long y);
    int GetPositionSteps(long& x, long& y);
    int Home();
    int Stop();
@@ -592,11 +592,7 @@ private:
    std::string firmware_;
    bool busy_;
    bool initialized_;
-   typedef enum {
-      ZMSF_MOVING = 0x0002, // trajectory is in progress
-      ZMSF_SETTLE = 0x0004  // settling after movement
-   } ZmStatFlags;
-
+   double stepSizeUm_;
 };
 
 #endif // _ZeissCAN_H_

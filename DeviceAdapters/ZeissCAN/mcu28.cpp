@@ -50,7 +50,7 @@ using namespace std;
 // XYStage mcu28
 ///////////////////////////////////////////////////////////////////////////////
 XYStage::XYStage() :
-initialized_ (false)
+initialized_ (false), stepSizeUm_(0.001)
 {
    InitializeDefaultErrorMessages();
 
@@ -113,17 +113,17 @@ bool XYStage::Busy()
    if (firmware_ == "MF")
       return false;
 
-   const char * command = "FPZFs";
-   int ret = g_hub.ExecuteCommand(*this, *GetCoreCallback(),  command);
+   const char * commandX = "NPXm1";
+   const char * commandY = "NPYm1";
+   int ret = g_hub.ExecuteCommand(*this, *GetCoreCallback(),  commandX);
    if (ret != DEVICE_OK)
    {
       this->LogMessage("ExecuteCommand failed in XYStage::Busy");
       return false; // error, so say we're not busy
    }
 
-   // first two chars should read 'PF'
+   // first two chars should read 'PN'
    string response;
-   unsigned long flags;
    ret = g_hub.GetAnswer(*this, *GetCoreCallback(), response);
    if (ret != DEVICE_OK)
    {
@@ -132,23 +132,40 @@ bool XYStage::Busy()
    }
 
    // Note: if the controller reports that the motors are moving or settling, we'll consider the z-drive to be busy
-   if (response.substr(0,2) == "PF") 
+   if (response.substr(0,2) == "PN") 
    {
-      flags = strtol(response.substr(2,4).c_str(), NULL, 16);
-      if ( (flags & ZMSF_MOVING) || (flags & ZMSF_SETTLE) )
+      unsigned long status = strtol(response.substr(2,1).c_str(), NULL, 16);
+      status &= 0x01;
+      if (status != 0)
          return true;
-      else
-         return false;
    }
-   // this is actually an unexpected answer, but we can not communicate this up the choain
-   this->LogMessage("Unexpected answer from Microscope in XYStage::Busy");
+
+   // Repeat for Y
+   ret = g_hub.ExecuteCommand(*this, *GetCoreCallback(),  commandY);
+   if (ret != DEVICE_OK)
+   {
+      this->LogMessage("ExecuteCommand failed in XYStage::Busy");
+      return false; // error, so say we're not busy
+   }
+
+   // first two chars should read 'PN'
+   ret = g_hub.GetAnswer(*this, *GetCoreCallback(), response);
+   if (ret != DEVICE_OK)
+   {
+      this->LogMessage("GetAnswer failed in XYStage::Busy");
+      return false; // error, so say we're not busy
+   }
+
+   // Note: if the controller reports that the motors are moving or settling, we'll consider the z-drive to be busy
+   if (response.substr(0,2) == "PN") 
+   {
+      unsigned long status = strtol(response.substr(2,1).c_str(), NULL, 16);
+      status &= 0x01;
+      if (status != 0)
+         return true;
+   }
+
    return false;
-
-}
-
-int XYStage::SetRelativePositionSteps(long x, long y)
-{
-   return DEVICE_OK;
 }
 
 int XYStage::SetPositionSteps(long stepsX, long stepsY)
@@ -159,12 +176,23 @@ int XYStage::SetPositionSteps(long stepsX, long stepsY)
    char tmp[98];
    // convert the steps into a twos-complement 6bit number
    if (stepsX < 0)
-      stepsX = stepsX+0xffffff+1;
+      stepsX = stepsX + 0xffffff + 1;
    snprintf(tmp, 9, "%08lX", stepsX);
    string tmp2 = tmp;
-   ostringstream cmd;
-   cmd << "FPZT" << tmp2.substr(2,6).c_str();
-   int ret = g_hub.ExecuteCommand(*this, *GetCoreCallback(),  cmd.str().c_str());
+   ostringstream cmdX;
+   cmdX << "NPXT" << tmp2.substr(2,6).c_str();
+   int ret = g_hub.ExecuteCommand(*this, *GetCoreCallback(),  cmdX.str().c_str());
+   if (ret != DEVICE_OK)
+      return ret;
+
+   // do the same for YAxis
+   if (stepsY < 0)
+      stepsY = stepsY + 0xffffff + 1;
+   snprintf(tmp, 9, "%08lX", stepsY);
+   tmp2 = tmp;
+   ostringstream cmdY;
+   cmdY << "NPYT" << tmp2.substr(2,6).c_str();
+   ret = g_hub.ExecuteCommand(*this, *GetCoreCallback(),  cmdY.str().c_str());
    if (ret != DEVICE_OK)
       return ret;
 
@@ -176,8 +204,11 @@ int XYStage::SetPositionSteps(long stepsX, long stepsY)
  */
 int XYStage::GetPositionSteps(long& stepsX, long& stepsY)
 {
-   const char* cmd ="FPZp" ;
-   int ret = g_hub.ExecuteCommand(*this, *GetCoreCallback(),  cmd);
+   const char* cmdX ="NPXp" ;
+   const char* cmdY ="NPYp" ;
+
+   // retrieve x axis
+   int ret = g_hub.ExecuteCommand(*this, *GetCoreCallback(),  cmdX);
    if (ret != DEVICE_OK)
       return ret;
 
@@ -186,7 +217,7 @@ int XYStage::GetPositionSteps(long& stepsX, long& stepsY)
    if (ret != DEVICE_OK)
       return ret;
 
-   if (response.substr(0,2) == "PF") 
+   if (response.substr(0,2) == "PN") 
    {
       stepsX = strtol(response.substr(2).c_str(), NULL, 16);
    }
@@ -200,13 +231,41 @@ int XYStage::GetPositionSteps(long& stepsX, long& stepsY)
       stepsX = stepsX - 0xFFFFFF - 1;
    }
 
+   // retrieve y axis
+   ret = g_hub.ExecuteCommand(*this, *GetCoreCallback(),  cmdY);
+   if (ret != DEVICE_OK)
+      return ret;
+
+   ret = g_hub.GetAnswer(*this, *GetCoreCallback(), response);
+   if (ret != DEVICE_OK)
+      return ret;
+
+   if (response.substr(0,2) == "PN") 
+   {
+      stepsY = strtol(response.substr(2).c_str(), NULL, 16);
+   }
+   else  
+      return ERR_UNEXPECTED_ANSWER;
+
+   // To 'translate' 'negative' numbers according to the Zeiss schema (there must be a more elegant way of doing this:
+   sign = strtol(response.substr(2,1).c_str(), NULL, 16);
+   if (sign > 7)  // negative numbers
+   {
+      stepsY = stepsY - 0xFFFFFF - 1;
+   }
+
    return DEVICE_OK;
 }
 
 int XYStage::SetOrigin()
 {
-   const char* cmd ="FPZP0" ;
-   int ret = g_hub.ExecuteCommand(*this, *GetCoreCallback(),  cmd);
+   const char* cmdX ="NPXP0" ;
+   int ret = g_hub.ExecuteCommand(*this, *GetCoreCallback(),  cmdX);
+   if (ret != DEVICE_OK)
+      return ret;
+
+   const char* cmdY ="NPYP0" ;
+   ret = g_hub.ExecuteCommand(*this, *GetCoreCallback(),  cmdY);
    if (ret != DEVICE_OK)
       return ret;
 
@@ -224,12 +283,12 @@ int XYStage::GetStepLimits(long& xMin, long& xMax, long& yMin, long& yMax)
 
 double XYStage::GetStepSizeXUm()
 {
-   return 1.0;
+   return stepSizeUm_;
 }
 
 double XYStage::GetStepSizeYUm()
 {
-   return 1.0;
+   return stepSizeUm_;
 }
 
 int XYStage::Home()
@@ -239,13 +298,24 @@ int XYStage::Home()
 
 int XYStage::Stop()
 {
-   return DEVICE_OK;
+   const char* cmdX ="NPXS" ;
+   int ret = g_hub.ExecuteCommand(*this, *GetCoreCallback(),  cmdX);
+   if (ret != DEVICE_OK)
+      return ret;
+
+   const char* cmdY ="NPYS" ;
+   ret = g_hub.ExecuteCommand(*this, *GetCoreCallback(),  cmdY);
+   if (ret != DEVICE_OK)
+      return ret;
+
+    return DEVICE_OK;
 }
 
+// TODO: this doesn't work for MCU28
 int XYStage::GetXYFirmwareVersion()
 {
    // get firmware info
-   const char * command = "FPTv0";
+   const char * command = "NPTv0";
    int ret = g_hub.ExecuteCommand(*this, *GetCoreCallback(),  command);
    if (ret != DEVICE_OK)
       return ret;
@@ -255,7 +325,7 @@ int XYStage::GetXYFirmwareVersion()
    ret = g_hub.GetAnswer(*this, *GetCoreCallback(), response);
    if (ret != DEVICE_OK)
       return ret;
-   if (response.substr(0,2).compare("PF") == 0) 
+   if (response.substr(0,2).compare("PN") == 0) 
    {
       xyFirmware_ = response.substr(2);
       firmware_ = response.substr(2,2);

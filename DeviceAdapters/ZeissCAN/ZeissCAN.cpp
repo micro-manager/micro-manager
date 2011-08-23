@@ -108,6 +108,7 @@ MODULE_API void InitializeModuleData()
    AddAvailableDeviceName(g_ZeissExtFilterWheel,"External FilterWheel"); 
    AddAvailableDeviceName(g_ZeissFilterWheel1,"FilterWheel 1"); 
    AddAvailableDeviceName(g_ZeissFilterWheel2,"FilterWheel 2"); 
+   AddAvailableDeviceName(g_ZeissXYStage,"XY Stage (MCU 28)"); 
 
    // TODO: remove when finished with revision
 /*
@@ -173,6 +174,8 @@ MODULE_API MM::Device* CreateDevice(const char* deviceName)
       return new FilterWheel(2);
    else if (strcmp(deviceName, g_ZeissExtFilterWheel) == 0)
       return new FilterWheel(3);
+   else if (strcmp(deviceName, g_ZeissXYStage) == 0)
+      return new XYStage();
 
    return 0;
 }
@@ -697,6 +700,31 @@ void ZeissScope::GetPeripheralInventory()
       }
 }
 
+int ZeissScope::DetectInstalledDevices()
+{
+      int ret;
+      bool exists;
+
+      std::map<int,std::string>& turrr = turretIDMap();
+      std::map<int, std::string>::iterator iii;
+
+
+      for( iii = turrr.begin(); turrr.end() != iii; ++iii)
+      {
+      
+         ret = g_turret.GetPresence(*this, *GetCoreCallback(), iii->first, exists);
+         if (DEVICE_OK == ret)
+         {
+            if(exists)
+            {
+               MM::Device* pDev = ::CreateDevice(iii->second.c_str());
+               if (pDev)
+                  AddInstalledDevice(pDev);
+            }
+         }
+      }
+      return DEVICE_OK;
+}
 
 
 int ZeissScope::GetNumberOfDiscoverableDevices()
