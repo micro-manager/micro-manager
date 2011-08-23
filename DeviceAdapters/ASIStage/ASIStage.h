@@ -113,7 +113,6 @@ public:
   int GetPositionSteps(long& x, long& y);
   int Home();
   int Stop();
-  //bool XyIsBusy();//jizhen
   int SetOrigin();
   int Calibrate();
   int Calibrate1();
@@ -193,24 +192,29 @@ public:
    // ----------------
    int OnPort(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnAxis(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnSequence(MM::PropertyBase* pProp, MM::ActionType eAct);
 
    // Sequence functions
-   int IsStageSequenceable(bool& isSequenceable) const {isSequenceable = false; return DEVICE_OK;}
-   int GetStageSequenceMaxLength(long& nrEvents) const  {nrEvents = 0; return DEVICE_OK;}
-   int StartStageSequence() const {return DEVICE_OK;}
-   int StopStageSequence() const {return DEVICE_OK;}
-   int ClearStageSequence() {return DEVICE_OK;}
-   int AddToStageSequence(double position) {return DEVICE_OK;}
-   int SendStageSequence() const {return DEVICE_OK;}
+   int IsStageSequenceable(bool& isSequenceable) const {isSequenceable = sequenceable_; return DEVICE_OK;}
+   int GetStageSequenceMaxLength(long& nrEvents) const  {nrEvents = nrEvents_; return DEVICE_OK;}
+   int StartStageSequence() const;
+   int StopStageSequence() const;
+   int ClearStageSequence();
+   int AddToStageSequence(double position);
+   int SendStageSequence() const;
 
 private:
+   bool HasRingBuffer();
    int ExecuteCommand(const std::string& cmd, std::string& response);
    int Autofocus(long param);
    //int GetResolution(double& res);
 
+   std::vector<double> sequence_;
    std::string axis_;
    double stepSizeUm_;
    double answerTimeoutMs_;
+   bool sequenceable_;
+   long nrEvents_;
    long curSteps_;
 };
 

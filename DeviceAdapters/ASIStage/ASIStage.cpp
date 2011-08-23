@@ -1465,7 +1465,9 @@ ZStage::ZStage() :
    ASIBase(this, "1H"),
    axis_("Z"),
    stepSizeUm_(0.1),
-   answerTimeoutMs_(1000)
+   answerTimeoutMs_(1000),
+   sequenceable_(false),
+   nrEvents_(50)
 {
    InitializeDefaultErrorMessages();
 
@@ -1532,13 +1534,15 @@ int ZStage::Initialize()
    if (ret != DEVICE_OK) 
       ret = GetPositionSteps(curSteps_);
 
-   if (ret != DEVICE_OK)
-      return ret;
-
-   ret = UpdateStatus();
-   if (ret != DEVICE_OK)
-      return ret;
-
+   if (HasRingBuffer())
+   {
+      CPropertyAction* pAct = new CPropertyAction (this, &ZStage::OnSequence);
+      const char* spn = "Use Sequence";
+      CreateProperty(spn, "No", MM::String, false, pAct, true);
+      AddAllowedValue(spn, "No");
+      AddAllowedValue(spn, "Yes");
+   }
+      
    initialized_ = true;
    return DEVICE_OK;
 }
@@ -1760,6 +1764,47 @@ int ZStage::GetLimits(double& /*min*/, double& /*max*/)
 {
    return DEVICE_UNSUPPORTED_COMMAND;
 }
+
+bool ZStage::HasRingBuffer()
+{
+   // TODO: implement
+   return false;
+}
+
+
+int ZStage::StartStageSequence() const
+{
+   // TODO: implement
+   return DEVICE_OK;
+}
+
+int ZStage::StopStageSequence() const 
+{
+   // TODO: implement
+   return DEVICE_OK;
+}
+
+int ZStage::SendStageSequence() const
+{
+   // TODO: implement
+
+   return DEVICE_OK;
+}
+
+int ZStage::ClearStageSequence()
+{
+   sequence_.clear();
+   
+   return DEVICE_OK;
+}
+
+int ZStage::AddToStageSequence(double position)
+{
+   sequence_.push_back(position);
+
+   return DEVICE_OK;
+}
+
 
 ///////////////////////////////////////////////////////////////////////////////
 // Action handlers
