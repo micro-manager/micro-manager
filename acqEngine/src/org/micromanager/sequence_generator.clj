@@ -2,8 +2,8 @@
 ; PROJECT:      Micro-Manager
 ; SUBSYSTEM:    mmstudio acquisition engine
 ; ----------------------------------------------------------------------------
-; AUTHOR:       Arthur Edelstein, arthuredelstein@gmail.com, Dec 14, 2010
-;               Adapted from the acq eng by Nenad Amodaj and Nico Stuurman
+; AUTHOR:       Arthur Edelstein, arthuredelstein@gmail.com, 2010-2011
+;               Developed from the acq eng by Nenad Amodaj and Nico Stuurman
 ; COPYRIGHT:    University of California, San Francisco, 2006-2011
 ; LICENSE:      This file is distributed under the BSD license.
 ;               License text is included with the source distribution.

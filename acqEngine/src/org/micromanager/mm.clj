@@ -2,7 +2,7 @@
 ; PROJECT:      Micro-Manager
 ; SUBSYSTEM:    mmstudio acquisition engine
 ; ----------------------------------------------------------------------------
-; AUTHOR:       Arthur Edelstein, arthuredelstein@gmail.com, Dec 14, 2010
+; AUTHOR:       Arthur Edelstein, arthuredelstein@gmail.com, 2010-2011
 ; COPYRIGHT:    University of California, San Francisco, 2006-2011
 ; LICENSE:      This file is distributed under the BSD license.
 ;               License text is included with the source distribution.
@@ -233,8 +233,8 @@
 (defn get-msp [idx]
   (when idx
     (let [p-list (. gui getPositionList)]
-      (if (pos? (. p-list getNumberOfPositions))
-        (. p-list (getPosition idx))))))
+      (when (pos? (. p-list getNumberOfPositions))
+        (.getPosition p-list idx)))))
 
 (defn get-msp-z-position [idx z-stage]
   (if-let [msp (get-msp idx)]

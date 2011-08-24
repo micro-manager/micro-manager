@@ -2,8 +2,8 @@
 ; PROJECT:      Micro-Manager
 ; SUBSYSTEM:    mmstudio acquisition engine
 ; ----------------------------------------------------------------------------
-; AUTHOR:       Arthur Edelstein, arthuredelstein@gmail.com, Dec 14, 2010
-;               Adapted from the acq eng by Nenad Amodaj and Nico Stuurman
+; AUTHOR:       Arthur Edelstein, arthuredelstein@gmail.com, 2010-2011
+;               Developed from the acq eng by Nenad Amodaj and Nico Stuurman
 ; COPYRIGHT:    University of California, San Francisco, 2006-2011
 ; LICENSE:      This file is distributed under the BSD license.
 ;               License text is included with the source distribution.
@@ -68,6 +68,8 @@
 
 (def active-slice-sequence (atom nil))
 
+(def pixel-type-depths {"GRAY8" 1 "GRAY16" 2 "RGB32" 4 "RGB64" 8})
+
 ;; time
 
 (defn clock-ms []
@@ -91,7 +93,7 @@
     (:metadata event)
     (let [[x y] (let [xy-stage (state :default-xy-stage)]
                   (when-not (empty? xy-stage)
-                    (get-in state [:last-positions xy-stage])))]
+                    (get-in state [:last-stage-positions xy-stage])))]
       {
        "AxisPositions" (when-let [axes (get-in event [:position :axes])]
                          (JSONObject. axes))
@@ -101,6 +103,7 @@
        "ChannelIndex" (:channel-index event)
        "Exposure-ms" (:exposure event)
        "Frame" (:frame-index event)
+       "FrameIndex" (:frame-index event)
        "Height" (state :init-height)
        "NextFrame" (:next-frame-index event)
        "PixelSizeUm" (state :pixel-size-um)
@@ -108,6 +111,7 @@
        "PositionIndex" (:position-index event)
        "PositionName" (if-let [pos (:position event)] (if-args #(.getLabel %) (get-msp pos)))
        "Slice" (:slice-index event)
+       "SliceIndex" (:slice-index event)
        "SlicePosition" (:slice event)
        "Source" (state :source)
        "Time" (get-current-time-str)
@@ -115,7 +119,7 @@
        "Width"  (state :init-width)
        "XPositionUm" x
        "YPositionUm" y
-       "ZPositionUm" (get-in state [:last-positions (state :default-z-drive)])
+       "ZPositionUm" (get-in state [:last-stage-positions (state :default-z-drive)])
       })))
    
 (defn annotate-image [img event state]
@@ -175,29 +179,33 @@
     (when (and (core isContinuousFocusEnabled)
                (not (core isContinuousFocusDrive stage)))
       (core enableContinuousFocus false))
-      (core setPosition stage pos)))
+      (device-best-effort stage (core setPosition stage pos))))
 
 (defn set-stage-position
   ([stage-dev z]
-    (log "set-stage-position" (@state :last-positions) "," stage-dev)
-    (when (not= z (get-in @state [:last-positions stage-dev]))
-      (device-best-effort stage-dev (set-z-stage-position stage-dev z))
-      (swap! state assoc-in [:last-positions stage-dev] z)))
+    (when (not= z (get-in @state [:last-stage-positions stage-dev]))
+      (set-z-stage-position stage-dev z)
+      (swap! state assoc-in [:last-stage-positions stage-dev] z)))
   ([stage-dev x y]
-    ;(log (@state :last-positions) "," stage-dev)
     (when (and x y
-               (not= [x y] (get-in @state [:last-positions stage-dev])))
+               (not= [x y] (get-in @state [:last-stage-positions stage-dev])))
       (device-best-effort stage-dev (core setXYPosition stage-dev x y))
-      (swap! state assoc-in [:last-positions stage-dev] [x y]))))
+      (swap! state assoc-in [:last-stage-positions stage-dev] [x y]))))
 
 (defn set-property
   ([prop] (let [[d p v] prop]
             (device-best-effort d (core setProperty d p v)))))
 
 (defn run-autofocus []
-  (.. gui getAutofocusManager getDevice fullFocus)
-  (log "running autofocus " (.. gui getAutofocusManager getDevice getDeviceName))
-  (state-assoc! :reference-z-position (core getPosition (core getFocusDevice))))
+  (let [z-drive (@state :default-z-drive)
+        z0 (get-z-stage-position z-drive)]
+  (try
+    (let [z (.. gui getAutofocusManager getDevice fullFocus)]
+      (swap! state assoc-in [:last-stage-positions (@state :default-z-drive)] z))
+    (catch Exception e
+           (ReportingUtils/logError e)
+           (set-stage-position :default-z-drive z-drive (+ 1.0e-6 z0)))))
+    (log "running autofocus " (.. gui getAutofocusManager getDevice getDeviceName)))
 
 (defn snap-image [open-before close-after]
   (with-core-setting [getAutoShutter setAutoShutter false]
@@ -224,12 +232,12 @@
   (when slice-sequence
     (println slice-sequence relative-z)
     (let [z (core getFocusDevice)
-          ref (@state :reference-z-position)
+          ref (@state :reference-z)
           adjusted-slices (if relative-z
                             (map #(+ ref %) slice-sequence)
                             slice-sequence)
           new-seq (not= [z adjusted-slices] @active-slice-sequence)]
-      (println "adjusted-slices: " adjusted-slices ";" "reference-z-position" (@state :reference-z-position))
+      (println "adjusted-slices: " adjusted-slices ";" "reference-z" (@state :reference-z))
       (when new-seq
         (core loadStageSequence z (double-vector adjusted-slices)))
       (reset! active-slice-sequence [z adjusted-slices])
@@ -255,7 +263,7 @@
       (start-slice-sequence))
     (swap! state assoc :burst-init-time (elapsed-time @state))
     (core startSequenceAcquisition (if (first-trigger-missing?) (inc length) length) 0 true)
-    (swap! state assoc-in [:last-positions (core getFocusDevice)]
+    (swap! state assoc-in [:last-stage-positions (core getFocusDevice)]
            (last absolute-slices))))
   
 (defn pop-burst-image []
@@ -320,8 +328,6 @@
 
 (defn acq-sleep [interval-ms]
   (log "acq-sleep")
-  (set-stage-position (core getFocusDevice) (@state :reference-z-position))
-  (wait-for-device (core getFocusDevice))
   (when (and (@state :init-continuous-focus)
     (not (core isContinuousFocusEnabled)))
       (core enableContinuousFocus true))
@@ -332,11 +338,7 @@
     (await-resume)
     (let [now (clock-ms)
           wake-time (if (> now (+ target-time 10)) now target-time)]
-      (state-assoc! :last-wake-time wake-time)
-      (when-not (core isContinuousFocusEnabled)
-        (println "reference z set")
-        (state-assoc! :reference-z-position 
-                      (get-z-stage-position (core getFocusDevice)))))))
+      (state-assoc! :last-wake-time wake-time))))
 
 ;; higher level
 
@@ -357,13 +359,26 @@
                 :snap (collect-snap-image event out-queue)
                 :burst (collect-burst-images event out-queue)))
 
+(defn z-in-msp [msp z-drive]
+  (-> msp MultiStagePosition-to-map :axes (get z-drive) first))
+
 (defn compute-z-position [event]
-  (if-let [z-drive (@state :default-z-drive)]
-    (+ (or (get-in event [:channel :z-offset]) 0)
-       (or (:slice event) 0)
-       (if (and (:slice event) (not (:relative-z event)))
-         0
-         (@state :reference-z-position)))))
+  (let [z-ref (or (-> event :position get-msp (z-in-msp (@state :default-z-drive)))
+                  (@state :reference-z))]
+    (+ (or (get-in event [:channel :z-offset]) 0) ;; add a channel offset if there is one.
+       (if-let [slice (:slice event)]
+         (+ slice
+            (if (:relative-z event)
+              z-ref
+              0))
+         z-ref))))
+
+(defn store-new-z-reference []
+  (let [z-drive (@state :default-z-drive)]
+    (when (and (or (not (core isContinuousFocusEnabled))
+                   (core isContinuousFocusDrive z-drive))
+               (not (z-in-msp z-drive)))
+      (state-assoc! :reference-z (get-z-stage-position z-drive)))))
 
 ;; startup and shutdown
 
@@ -378,9 +393,10 @@
       :running true
       :finished false
       :last-wake-time (clock-ms)
-      :last-positions (merge {default-z-drive z}
-                             {default-xy-stage xy})       
-      :reference-z-position z
+      :last-stage-positions (into {} [[default-z-drive z]
+                                [default-xy-stage xy]])
+      :last-position nil     
+      :reference-z z
       :start-time (clock-ms)
       :init-auto-shutter (core getAutoShutter)
       :init-exposure (core getExposure)
@@ -407,45 +423,47 @@
   (stop-trigger)
   (core setAutoShutter (@state :init-auto-shutter))
   (core setExposure (@state :init-exposure))
-  (when (not= (get-in @state [:last-positions (core getFocusDevice)]) (@state :init-z-position))
-    (set-z-stage-position (core getFocusDevice) (@state :init-z-position)))
+  (set-stage-position (@state :default-z-drive) (@state :init-z-position))
   (when (and (@state :init-continuous-focus)
              (not (core isContinuousFocusEnabled)))
     (core enableContinuousFocus true))
   (return-config))
 
-;; iterations
-
-(defn create-presnap-actions [event]
-  (concat
-    (for [[axis pos] (:axes (MultiStagePosition-to-map (get-msp (:position event)))) :when pos]
-      [axis #(apply set-stage-position axis pos)])
-    (for [[d p v] (get-in event [:channel :properties])]
-      [d #(set-property [d p v])])
-    (when-lets [exposure (:exposure event)
-                camera (core getCameraDevice)]
-      (list [camera #(device-best-effort camera (core setExposure exposure))]))))
-
-(defn run-actions [action-map]
-  (doseq [[dev action] action-map]
-    (action)))
-
+;; running events
+  
 (defn make-event-fns [event out-queue]
-  (list
-    #(log event)
-    #(doall (map (fn [x] (.run x)) (event :runnables)))
-    #(when-let [wait-time-ms (event :wait-time-ms)]
-      (acq-sleep wait-time-ms))
-    #(run-actions (create-presnap-actions event))
-    #(when (:autofocus event)
-      (set-msp-z-position (:position event) (@state :default-z-drive) (run-autofocus)))
-    #(when-let [z-drive (@state :default-z-drive)]
-      (let [z (compute-z-position event)]
-        (set-stage-position z-drive z)))
-    #(do (wait-for-pending-devices)
-         (expose event)
-         (collect event out-queue)
-         (stop-trigger))))
+  (let [current-position (:position event)
+        z-drive (@state :default-z-drive)
+        check-z-ref (and z-drive
+                         (-> current-position get-msp (z-in-msp z-drive) not)
+                         (or (:autofocus event)
+                             (:wait-time-ms event)))]
+    (flatten
+      (list
+        #(log event)
+        (for [[axis pos] (:axes (MultiStagePosition-to-map (get-msp current-position))) :when pos]
+          #(apply set-stage-position axis pos))
+        (for [[d p v] (get-in event [:channel :properties])]
+          #(set-property [d p v]))
+        #(when-lets [exposure (:exposure event)
+                     camera (core getCameraDevice)]
+           (device-best-effort camera (core setExposure exposure)))
+        #(when check-z-ref
+           (set-stage-position z-drive (@state :reference-z)))
+        #(when-let [wait-time-ms (:wait-time-ms event)]
+           (acq-sleep wait-time-ms))
+        #(when (:autofocus event)
+           (run-autofocus))
+        #(when check-z-ref
+           (store-new-z-reference))
+        #(when z-drive
+           (let [z (compute-z-position event)]
+             (set-stage-position z-drive z)))
+        (event :runnables)
+        #(do (wait-for-pending-devices)
+             (expose event)
+             (collect event out-queue)
+             (stop-trigger))))))
 
 (defn execute [event-fns]
   (doseq [event-fn event-fns :while (not (:stop @state))]
@@ -456,12 +474,12 @@
   (def acq-settings settings)
   (prepare-state this)
   (binding [state (.state this)]
-    (def last-state state)
-      (let [acq-seq (generate-acq-sequence settings @attached-runnables)]
-        (execute (mapcat #(make-event-fns % out-queue) acq-seq))
-        (.put out-queue TaggedImageQueue/POISON)
-        (cleanup)
-        (def acq-sequence acq-seq))))
+    (def last-state state) ; for debugging
+    (let [acq-seq (generate-acq-sequence settings @attached-runnables)]
+      (execute (mapcat #(make-event-fns % out-queue) acq-seq))
+      (.put out-queue TaggedImageQueue/POISON)
+      (cleanup)
+      (def acq-sequence acq-seq))))
 
 ;; generic metadata
 
