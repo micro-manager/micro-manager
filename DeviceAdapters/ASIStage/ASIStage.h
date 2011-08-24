@@ -205,6 +205,7 @@ public:
 
 private:
    bool HasRingBuffer();
+   int GetControllerInfo();
    int ExecuteCommand(const std::string& cmd, std::string& response);
    int Autofocus(long param);
    //int GetResolution(double& res);

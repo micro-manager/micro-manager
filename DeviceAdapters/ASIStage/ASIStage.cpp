@@ -1542,6 +1542,8 @@ int ZStage::Initialize()
       AddAllowedValue(spn, "No");
       AddAllowedValue(spn, "Yes");
    }
+
+   // GetControllerInfo();
       
    initialized_ = true;
    return DEVICE_OK;
@@ -1870,6 +1872,49 @@ int ZStage::ClearStageSequence()
 int ZStage::AddToStageSequence(double position)
 {
    sequence_.push_back(position);
+
+   return DEVICE_OK;
+}
+
+/*
+ * This function checks what is available in this controller
+ * It should really be part of a Hub Device
+ */
+int ZStage::GetControllerInfo()
+{
+   int ret = SendCommand("BU X");
+   if (ret != DEVICE_OK)
+      return ret;
+
+   std::string answer;
+   unsigned char cInfo[MM::MaxStrLength];
+   unsigned long charsRead = 0;
+   unsigned long readThisRead;
+   MM::MMTime startTime = GetCurrentMMTime();
+   int counter = 0;
+
+   while ( (GetCurrentMMTime() - startTime < MM::MMTime(300000) )  && ret == DEVICE_OK) 
+   {
+      ret = ReadFromComPort(port_.c_str(), cInfo + charsRead, MM::MaxStrLength - charsRead, readThisRead);
+      if (ret == DEVICE_OK && readThisRead > 0)
+      {
+         charsRead += readThisRead;
+         startTime = GetCurrentMMTime();
+      }
+      counter++;     
+   }
+
+   cInfo[charsRead] = 0;
+   char * pch;
+   // printf ("Splitting string \"%s\" into tokens:\n",charsRead);
+   pch = strtok ((char*) cInfo,"\r");
+   while (pch != NULL)
+   {
+      printf ("%s\n",pch);
+      pch = strtok (NULL, "\r");
+   }
+
+   LogMessage("That was fun");
 
    return DEVICE_OK;
 }
