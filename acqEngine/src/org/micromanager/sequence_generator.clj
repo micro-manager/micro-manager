@@ -153,7 +153,7 @@
           (let [z-drive (core getFocusDevice)]
             (and
               (core isStageSequenceable z-drive)
-              (<= n (core getStageSequenceMaxLength z-drive))
+              (< n (core getStageSequenceMaxLength z-drive))
               (<= (Math/abs (- (e1 :slice) (e2 :slice))) MAX-Z-TRIGGER-DIST)
               (<= (e1 :slice-index) (e2 :slice-index))))))))
   
