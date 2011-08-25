@@ -376,8 +376,7 @@
 (defn store-new-z-reference []
   (let [z-drive (@state :default-z-drive)]
     (when (and (or (not (core isContinuousFocusEnabled))
-                   (core isContinuousFocusDrive z-drive))
-               (not (z-in-msp z-drive)))
+                   (core isContinuousFocusDrive z-drive)))
       (state-assoc! :reference-z (get-z-stage-position z-drive)))))
 
 ;; startup and shutdown
@@ -438,32 +437,33 @@
                          (-> current-position get-msp (z-in-msp z-drive) not)
                          (or (:autofocus event)
                              (:wait-time-ms event)))]
-    (flatten
-      (list
-        #(log event)
-        (for [[axis pos] (:axes (MultiStagePosition-to-map (get-msp current-position))) :when pos]
-          #(apply set-stage-position axis pos))
-        (for [[d p v] (get-in event [:channel :properties])]
-          #(set-property [d p v]))
-        #(when-lets [exposure (:exposure event)
-                     camera (core getCameraDevice)]
-           (device-best-effort camera (core setExposure exposure)))
-        #(when check-z-ref
-           (set-stage-position z-drive (@state :reference-z)))
-        #(when-let [wait-time-ms (:wait-time-ms event)]
-           (acq-sleep wait-time-ms))
-        #(when (:autofocus event)
-           (run-autofocus))
-        #(when check-z-ref
-           (store-new-z-reference))
-        #(when z-drive
-           (let [z (compute-z-position event)]
-             (set-stage-position z-drive z)))
-        (event :runnables)
-        #(do (wait-for-pending-devices)
-             (expose event)
-             (collect event out-queue)
-             (stop-trigger))))))
+    (filter identity
+            (flatten
+              (list
+                #(log event)
+                (for [[axis pos] (:axes (MultiStagePosition-to-map (get-msp current-position))) :when pos]
+                  #(apply set-stage-position axis pos))
+                (for [[d p v] (get-in event [:channel :properties])]
+                  #(set-property [d p v]))
+                #(when-lets [exposure (:exposure event)
+                             camera (core getCameraDevice)]
+                            (device-best-effort camera (core setExposure exposure)))
+                #(when check-z-ref
+                   (set-stage-position z-drive (@state :reference-z)))
+                #(when-let [wait-time-ms (:wait-time-ms event)]
+                   (acq-sleep wait-time-ms))
+                #(when (:autofocus event)
+                   (run-autofocus))
+                #(when check-z-ref
+                   (store-new-z-reference))
+                #(when z-drive
+                   (let [z (compute-z-position event)]
+                     (set-stage-position z-drive z)))
+                (event :runnables)
+                #(do (wait-for-pending-devices)
+                     (expose event)
+                     (collect event out-queue)
+                     (stop-trigger)))))))
 
 (defn execute [event-fns]
   (doseq [event-fn event-fns :while (not (:stop @state))]
