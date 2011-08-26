@@ -232,7 +232,7 @@ public class AddDeviceDlg extends JDialog implements MouseListener,
       if (cbShowAll_.isSelected())
          devices_ = model.getAvailableDeviceList();
       else
-         devices_ = model.getAvailableHubs();
+         devices_ = model.getAvailableDevicesCompact();
       
       String thisLibrary = "";
       DefaultMutableTreeNode root = new DefaultMutableTreeNode(

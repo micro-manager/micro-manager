@@ -177,6 +177,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "OpenCVgrabber", "..\DeviceA
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "AndorSDK3", "..\DeviceAdapters\AndorSDK3\AndorSDK3.vcproj", "{A9E3F2DD-8B71-4FA3-9AFE-DC2040D2CDDD}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "CARVII", "..\DeviceAdapters\CARVII\CARVII.vcproj", "{AA9B1613-8359-4944-B08D-B96639D0998E}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
@@ -839,6 +841,12 @@ Global
 		{A9E3F2DD-8B71-4FA3-9AFE-DC2040D2CDDD}.Release|Win32.Build.0 = Release|Win32
 		{A9E3F2DD-8B71-4FA3-9AFE-DC2040D2CDDD}.Release|x64.ActiveCfg = Release|x64
 		{A9E3F2DD-8B71-4FA3-9AFE-DC2040D2CDDD}.Release|x64.Build.0 = Release|x64
+		{AA9B1613-8359-4944-B08D-B96639D0998E}.Debug|Win32.ActiveCfg = Debug|Win32
+		{AA9B1613-8359-4944-B08D-B96639D0998E}.Debug|Win32.Build.0 = Debug|Win32
+		{AA9B1613-8359-4944-B08D-B96639D0998E}.Debug|x64.ActiveCfg = Debug|Win32
+		{AA9B1613-8359-4944-B08D-B96639D0998E}.Release|Win32.ActiveCfg = Release|Win32
+		{AA9B1613-8359-4944-B08D-B96639D0998E}.Release|Win32.Build.0 = Release|Win32
+		{AA9B1613-8359-4944-B08D-B96639D0998E}.Release|x64.ActiveCfg = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

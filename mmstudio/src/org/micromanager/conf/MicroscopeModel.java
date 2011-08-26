@@ -38,6 +38,7 @@ import mmcorej.BooleanVector;
 
 import mmcorej.CMMCore;
 import mmcorej.Configuration;
+import mmcorej.DeviceType;
 import mmcorej.MMCoreJ;
 import mmcorej.PropertySetting;
 import mmcorej.StrVector;
@@ -303,6 +304,26 @@ public class MicroscopeModel {
    
    public Device[] getAvailableHubs() {
       return availableHubs_;
+   }
+   
+   /**
+    * Creates a list of devices that are either hubs or don't belong to hubs
+    */
+   public Device[] getAvailableDevicesCompact() {
+      ArrayList<Device> compactList = new ArrayList<Device>();
+      for (int i=0; i<availableDevices_.length; i++) {
+         boolean include = true;
+         for (int j=0; j<availableHubs_.length; j++) {
+            if (availableHubs_[j].getLibrary().compareTo(availableDevices_[i].getLibrary()) == 0 &&
+                  !availableDevices_[i].isHub()) {
+               include = false; // exclude devices that belong to hubs
+            }
+         }
+         if (include)
+            compactList.add(availableDevices_[i]);
+      }
+
+      return compactList.toArray(new Device[compactList.size()]);
    }
 
    public Device[] getAvailableSerialPorts() {
