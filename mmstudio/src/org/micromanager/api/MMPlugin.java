@@ -22,7 +22,7 @@
 
 package org.micromanager.api;
 
-public interface MMPlugin {
+   public interface MMPlugin {
    
    /**
 	*  The menu name is stored in a static string, so Micro-Manager

@@ -128,6 +128,7 @@ import javax.swing.JSplitPane;
 import javax.swing.event.AncestorListener;
 import mmcorej.MetadataSingleTag;
 import mmcorej.TaggedImage;
+import org.json.JSONException;
 import org.micromanager.acquisition.AcquisitionVirtualStack;
 
 import org.micromanager.acquisition.AcquisitionWrapperEngine;
@@ -937,7 +938,7 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
             MMStudioMainFrame.class,
             "/org/micromanager/icons/snapAppend.png"));
       acquireButton.setIconTextGap(6);
-      acquireButton.setToolTipText("Acquire single frame");
+      acquireButton.setToolTipText("Acquire single frame and add to an album");
       acquireButton.setFont(new Font("Arial", Font.PLAIN, 10));
       acquireButton.addActionListener(new ActionListener() {
 
@@ -3816,6 +3817,10 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
       }
    }
 
+   public String getUniqueAcquisitionName(String stub) {
+      return acqMgr_.getUniqueAcquisitionName(stub);
+   }
+
    public void openAcquisition(String name, String rootDir) throws MMScriptException {
       openAcquisition(name, rootDir, true);
    }
@@ -4010,6 +4015,7 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
 
    public void addToSnapSeries(Object img, String acqName) {
       try {
+         acqMgr_.getCurrentAlbum();
          if (acqName == null) {
             acqName = "Snap" + snapCount_;
          }
@@ -4066,11 +4072,35 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
 
    }
 
+   public String getCurrentAlbum() {
+      return acqMgr_.getCurrentAlbum();
+   }
+
+   public String createNewAlbum() {
+      return acqMgr_.createNewAlbum();
+   }
+
+   public void appendImage(String name, TaggedImage taggedImg) throws MMScriptException {
+      MMAcquisition acq = acqMgr_.getAcquisition(name);
+      int f = 1 + acq.getLastAcquiredFrame();
+      try {
+         taggedImg.tags.put("FrameIndex", f);
+         } catch (JSONException e) {
+            throw new MMScriptException("Unable to set the frame index.");
+         }
+      acq.insertTaggedImage(taggedImg, f, 0, 0);
+   }
+
+   public void addToAlbum(TaggedImage taggedImg) throws MMScriptException {
+      acqMgr_.addToAlbum(taggedImg);
+   }
+
    public void addImage(String name, Object img, int frame, int channel,
          int slice) throws MMScriptException {
       MMAcquisition acq = acqMgr_.getAcquisition(name);
       acq.insertImage(img, frame, channel, slice);
    }
+
 
    public void addImage(String name, TaggedImage taggedImg) throws MMScriptException {
       acqMgr_.getAcquisition(name).insertImage(taggedImg);

@@ -566,14 +566,18 @@
 
 ;; acquire button
 
-(def current-album (atom nil))
+(def current-album-tags (atom nil))
+
+(def albums (atom {}))
+
+(def current-album-name (atom nil))
 
 (def snap-window (atom nil))
 
-(defn compatible-image? [display annotated-image]
+(defn compatible-to-current-album? [image-tags]
   (select-values-match?
-    (json-to-data (.. display getImageCache getSummaryMetadata))
-    (:tags annotated-image)
+    @current-album-tags
+    image-tags
     ["Width" "Height" "PixelType"]))  
 
 (defn create-image-window [first-image]
@@ -605,7 +609,7 @@
   (binding [state (atom (create-basic-state))]
     (let [event (create-basic-event)]
       (core snapImage)
-        (annotate-image (collect-snap-image event nil) event @state))))
+      (annotate-image (collect-snap-image event nil) event @state))))
     
 (defn show-image [display tagged-img focus]
   (let [myTaggedImage (make-TaggedImage tagged-img)
@@ -614,22 +618,13 @@
     (.showImage display myTaggedImage)
     (when focus
       (.show display))))
-    
+
 (defn add-to-album []
-  (let [tagged-image (acquire-tagged-image)]
-    (when-not (and @current-album
-                   (compatible-image? @current-album tagged-image)
-	           (not (.windowClosed @current-album)))
-      (reset! current-album (create-image-window tagged-image)))
-    (let [count (.getNumPositions @current-album)
-	  my-tagged-image
-	    (update-in tagged-image [:tags] merge
-	      {"PositionIndex" count "PositionName" (str "Snap" count)})]
-      (show-image @current-album my-tagged-image true))))
+  (.addToAlbum gui (make-TaggedImage (acquire-tagged-image))))
 
 (defn reset-snap-window [tagged-image]
   (when-not (and @snap-window
-                   (compatible-image? @snap-window tagged-image)
+                   ;(compatible-image? @snap-window tagged-image)
                    (not (.windowClosed @snap-window)))
     (when @snap-window (.close @snap-window))
     (reset! snap-window (create-image-window tagged-image))))

@@ -58,6 +58,7 @@ public class VirtualAcquisitionDisplay {
    final private int numComponents_;
    private AcquisitionEngine eng_;
    private boolean finished_ = false;
+   private final String name_;
 
    /* This interface and the following two classes
     * allow us to manipulate the dimensions
@@ -143,11 +144,13 @@ public class VirtualAcquisitionDisplay {
          super.nFrames = nFrames;
       }
    }
-   
+
    public VirtualAcquisitionDisplay(MMImageCache imageCache, AcquisitionEngine eng) {
-
-
-
+      this(imageCache, eng, "Untitled");
+   }
+   
+   public VirtualAcquisitionDisplay(MMImageCache imageCache, AcquisitionEngine eng, String name) {
+      name_ = name;
       imageCache_ = imageCache;
       eng_ = eng;
       pSelector_ = createPositionScrollbar();
@@ -462,7 +465,7 @@ public class VirtualAcquisitionDisplay {
 
       hc_.enableShowFolderButton(imageCache_.getDiskLocation() != null);
       String path = isDiskCached()
-              ? new File(imageCache_.getDiskLocation()).getName() : "Untitled";
+              ? new File(imageCache_.getDiskLocation()).getName() : name_;
       if (hyperImage_.isVisible()) {
          hyperImage_.getWindow().setTitle(path + " (" + status + ")");
       }

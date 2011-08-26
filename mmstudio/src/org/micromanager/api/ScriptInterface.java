@@ -115,6 +115,21 @@ public interface ScriptInterface {
 
    public void openAcquisition(String name, String rootDir, int nrFrames, int nrChannels, int nrSlices, boolean show, boolean save) throws MMScriptException;
 
+   /*
+    * Returns a name beginning with stem that is not yet used.
+    * @param stem
+    */
+   public String getUniqueAcquisitionName(String stem);
+   
+   /*
+    * Return the name of the current album.
+    */
+   public String getCurrentAlbum();
+
+   /*
+    * Create a new album.
+    */
+   public String createNewAlbum();
 
    public void initializeAcquisition(String name, int width, int height, int depth) throws MMScriptException;
    
@@ -500,5 +515,7 @@ public interface ScriptInterface {
    public Rectangle getROI() throws MMScriptException;
 
    public void setROI(Rectangle r) throws MMScriptException;
+
+   public void appendImage(String name, TaggedImage taggedImg) throws MMScriptException;
 
 }

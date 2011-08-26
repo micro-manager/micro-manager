@@ -394,6 +394,8 @@ public class ChannelControlPanel extends javax.swing.JPanel {
    }
 
    public final void drawDisplaySettings() {
+       int min;
+       int max;
        if (autostretch_) {
          if( rejectOutliers_){
             // calculations here are correct but aren't used to update display image
@@ -405,21 +407,20 @@ public class ChannelControlPanel extends javax.swing.JPanel {
             int totalPoints =  acq_.getHyperImage().getWidth() * acq_.getHyperImage().getHeight();
             int[] histogram = acq_.getChannelHistogram(channelIndex_);
             
-            if (histogram == null) {
-               // TODO: temporary fix - N.A.
-               ReportingUtils.logError("Unexpected null histogram encountered for channelIndex = " + channelIndex_);
-               return;
+            if (histogram != null) {
+               HistogramUtils hu = new HistogramUtils(histogram, totalPoints, fractionToReject_);
+      			min = hu.getMinAfterRejectingOutliers();
+               max = hu.getMaxAfterRejectingOutliers();
+            } else {
+               min = getMin();
+               max = getMax();
             }
-            
-            HistogramUtils hu = new HistogramUtils(histogram, totalPoints, fractionToReject_);
-				int minAfterRejectingOutliers = hu.getMinAfterRejectingOutliers();
-            int maxAfterRejectingOutliers = hu.getMaxAfterRejectingOutliers();
-
-            acq_.setChannelDisplayRange(channelIndex_, minAfterRejectingOutliers, maxAfterRejectingOutliers, false);
-         }else{
-            acq_.setChannelDisplayRange(channelIndex_, getMin(), getMax(), false);
+         } else {
+            min = getMin();
+            max = getMax();
          }
-      }
+         acq_.setChannelDisplayRange(channelIndex_, min, max, false);
+       }
 
       hp_.setCursors(acq_.getChannelMin(channelIndex_)/binSize_,
               acq_.getChannelMax(channelIndex_)/binSize_,

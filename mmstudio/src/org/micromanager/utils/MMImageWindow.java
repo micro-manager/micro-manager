@@ -187,9 +187,7 @@ public final class MMImageWindow extends ImageWindow {
 		addToSeriesButton.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				try {
-					gui_.addToSnapSeries(getImagePlus().getProcessor()
-							.getPixels(),null);
-
+					gui_.addToAlbum(ImageUtils.makeTaggedImage(getImagePlus().getProcessor()));
 				} catch (Exception e2) {
 					ReportingUtils.showError(e2);
 				}

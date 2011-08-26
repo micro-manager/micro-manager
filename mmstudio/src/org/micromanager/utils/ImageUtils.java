@@ -11,6 +11,7 @@ import java.awt.Color;
 import java.awt.Point;
 
 import mmcorej.CMMCore;
+import mmcorej.TaggedImage;
 import org.json.JSONObject;
 import org.micromanager.acquisition.TaggedImageStorageDiskDefault;
 import org.micromanager.api.TaggedImageStorage;
@@ -433,6 +434,22 @@ public class ImageUtils {
          return result;
       }
       return null;
+   }
+
+   public static TaggedImage makeTaggedImage(ImageProcessor proc) {
+      JSONObject tags = new JSONObject();
+      try {
+         MDUtils.setChannelIndex(tags, 0);
+         MDUtils.setSliceIndex(tags, 0);
+         MDUtils.setPositionIndex(tags, 0);
+         MDUtils.setFrameIndex(tags, 0);
+         MDUtils.setWidth(tags, proc.getWidth());
+         MDUtils.setHeight(tags, proc.getHeight());
+         MDUtils.setPixelType(tags, getImageProcessorType(proc));
+      } catch (Exception e) {
+         return null;
+      }
+      return new TaggedImage(proc.getPixels(), tags);
    }
 
 }

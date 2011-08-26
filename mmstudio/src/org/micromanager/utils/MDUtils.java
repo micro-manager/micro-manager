@@ -6,6 +6,7 @@
 package org.micromanager.utils;
 
 import ij.ImagePlus;
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Iterator;
@@ -34,71 +35,71 @@ public class MDUtils {
       }
    }
    
-   public static int getPositionIndex(JSONObject map) throws Exception {
+   public static int getPositionIndex(JSONObject map) throws JSONException {
       return map.getInt("PositionIndex");
    }
 
-   public static void setPositionIndex(JSONObject map, int positionIndex) throws Exception {
+   public static void setPositionIndex(JSONObject map, int positionIndex) throws JSONException {
       map.put("PositionIndex", positionIndex);
    }
 
-   public static int getBitDepth(JSONObject map) throws Exception {
+   public static int getBitDepth(JSONObject map) throws JSONException {
       return map.getInt("BitDepth");
    }
 
-   public static void setBitDepth(JSONObject map, int bitDepth) throws Exception {
+   public static void setBitDepth(JSONObject map, int bitDepth) throws JSONException {
       map.put("BitDepth", bitDepth);
    }
 
-   public static int getWidth(JSONObject map) throws Exception {
+   public static int getWidth(JSONObject map) throws JSONException {
       return map.getInt("Width");
    }
 
-   public static void setWidth(JSONObject map, int width) throws Exception {
+   public static void setWidth(JSONObject map, int width) throws JSONException {
       map.put("Width", width);
    }
 
-   public static int getHeight(JSONObject map) throws Exception {
+   public static int getHeight(JSONObject map) throws JSONException {
       return map.getInt("Height");
    }
 
-   public static void setHeight(JSONObject map, int height) throws Exception {
+   public static void setHeight(JSONObject map, int height) throws JSONException {
       map.put("Height", height);
    }
 
-   public static int getBinning(JSONObject map) throws Exception {
+   public static int getBinning(JSONObject map) throws JSONException {
       return map.getInt("Binning");
    }
 
-   public static void setBinning(JSONObject map, int binning) throws Exception {
+   public static void setBinning(JSONObject map, int binning) throws JSONException {
       map.put("Binning", binning);
    }
 
-   public static int getSliceIndex(JSONObject map) throws Exception {
-      return map.getInt("Slice");
+   public static int getSliceIndex(JSONObject map) throws JSONException {
+      return map.getInt("SliceIndex");
    }
 
-   public static void setSliceIndex(JSONObject map, int sliceIndex) throws Exception {
-      map.put("Slice", sliceIndex);
+   public static void setSliceIndex(JSONObject map, int sliceIndex) throws JSONException {
+      map.put("SliceIndex", sliceIndex);
    }
 
-   public static int getChannelIndex(JSONObject map) throws Exception {
+   public static int getChannelIndex(JSONObject map) throws JSONException {
       return map.getInt("ChannelIndex");
    }
 
-   public static void setChannelIndex(JSONObject map, int channelIndex) throws Exception {
+   public static void setChannelIndex(JSONObject map, int channelIndex) throws JSONException {
       map.put("ChannelIndex", channelIndex);
    }
 
-   public static int getFrameIndex(JSONObject map) throws Exception {
-      return map.getInt("Frame");
+   public static int getFrameIndex(JSONObject map) throws JSONException {
+      return map.getInt("FrameIndex");
    }
 
-   public static void setFrameIndex(JSONObject map, int frameIndex) throws Exception {
-      map.put("Frame", frameIndex);
+   public static void setFrameIndex(JSONObject map, int frameIndex) throws JSONException {
+      map.put("FrameIndex", frameIndex);
    }
 
-   public static String getPositionName(JSONObject map) throws Exception {
+   public static String getPositionName(JSONObject map) throws JSONException {
       if (map.has("PositionName") && !map.isNull("PositionName")) {
          return map.getString("PositionName");
       } else {
@@ -106,26 +107,26 @@ public class MDUtils {
       }
    }
 
-   public static void setPositionName(JSONObject map, String positionName) throws Exception {
+   public static void setPositionName(JSONObject map, String positionName) throws JSONException {
       map.put("PositionName", positionName);
    }
 
-   public static String getChannelName(JSONObject map) throws Exception {
+   public static String getChannelName(JSONObject map) throws JSONException {
       return map.getString("Channel");
    }
 
-   public static String getFileName(JSONObject map) throws Exception {
+   public static String getFileName(JSONObject map) throws JSONException {
       return map.getString("FileName");
    }
 
-   public static void setFileName(JSONObject map, String filename) throws Exception {
+   public static void setFileName(JSONObject map, String filename) throws JSONException {
       map.put("FileName", filename);
    }
 
-   public static String getPixelType(JSONObject map)  throws Exception {
+   public static String getPixelType(JSONObject map)  throws JSONException, MMScriptException {
       try {
          return map.getString("PixelType");
-      } catch (Exception e) {
+      } catch (JSONException e) {
          try {
             int ijType = map.getInt("IJType");
             if (ijType == ImagePlus.GRAY8)
@@ -134,27 +135,27 @@ public class MDUtils {
                return "GRAY16";
             else if (ijType == ImagePlus.COLOR_RGB)
                return "RGB32";
-            else throw new Exception();
+            else throw new MMScriptException("Can't figure out pixel type");
             // There is no IJType for RGB64.
-         } catch (Exception e2) {
-            throw new Exception ("Can't figure out pixel type");
+         } catch (MMScriptException e2) {
+            throw new MMScriptException ("Can't figure out pixel type");
          }
       }
    }
 
-   public static void addRandomUUID(JSONObject map) throws Exception {
+   public static void addRandomUUID(JSONObject map) throws JSONException {
       UUID uuid = UUID.randomUUID();
       map.put("UUID", uuid.toString());
    }
 
-   public static UUID getUUID(JSONObject map) throws Exception {
+   public static UUID getUUID(JSONObject map) throws JSONException {
       if (map.has("UUID"))
          return UUID.fromString(map.getString("UUID"));
       else
          return null;
    }
 
-   public static void setPixelType(JSONObject map, int type) throws Exception {
+   public static void setPixelType(JSONObject map, int type) throws JSONException {
       switch (type) {
          case ImagePlus.GRAY8:
             map.put("PixelType", "GRAY8");
@@ -171,7 +172,7 @@ public class MDUtils {
       }
    }
 
-   public static int getSingleChannelType(JSONObject map) throws Exception {
+   public static int getSingleChannelType(JSONObject map) throws JSONException, MMScriptException {
       String pixelType = getPixelType(map);
       if (pixelType.contentEquals("GRAY8")) {
          return ImagePlus.GRAY8;
@@ -182,11 +183,11 @@ public class MDUtils {
       } else if (pixelType.contentEquals("RGB64")) {
          return ImagePlus.GRAY16;
       } else {
-         throw new Exception();
+         throw new MMScriptException("Can't figure out channel type.");
       }
    }
 
-   public static int getNumberOfComponents(JSONObject map) throws Exception {
+   public static int getNumberOfComponents(JSONObject map) throws MMScriptException, JSONException {
       String pixelType = getPixelType(map);
       if (pixelType.contentEquals("GRAY8"))
            return 1;
@@ -197,55 +198,55 @@ public class MDUtils {
       else if (pixelType.contentEquals("RGB64"))
            return 3;
       else {
-         throw new Exception("Pixel type not recognized!");
+         throw new MMScriptException("Pixel type not recognized!");
       }
    }
 
-   public static boolean isGRAY8(JSONObject map) throws Exception {
+   public static boolean isGRAY8(JSONObject map) throws JSONException, MMScriptException {
       return getPixelType(map).contentEquals("GRAY8");
    }
 
-   public static boolean isGRAY16(JSONObject map) throws Exception {
+   public static boolean isGRAY16(JSONObject map) throws JSONException, MMScriptException {
       return getPixelType(map).contentEquals("GRAY16");
    }
 
-   public static boolean isRGB32(JSONObject map) throws Exception {
+   public static boolean isRGB32(JSONObject map) throws JSONException, MMScriptException {
       return getPixelType(map).contentEquals("RGB32");
    }
 
-   public static boolean isRGB64(JSONObject map) throws Exception {
+   public static boolean isRGB64(JSONObject map) throws JSONException, MMScriptException {
       return getPixelType(map).contentEquals("RGB64");
    }
 
-   public static boolean isGRAY8(TaggedImage img) throws Exception {
+   public static boolean isGRAY8(TaggedImage img) throws JSONException, MMScriptException {
       return isGRAY8(img.tags);
    }
 
-   public static boolean isGRAY16(TaggedImage img) throws Exception {
+   public static boolean isGRAY16(TaggedImage img) throws JSONException, MMScriptException {
       return isGRAY16(img.tags);
    }
 
-   public static boolean isRGB32(TaggedImage img) throws Exception {
+   public static boolean isRGB32(TaggedImage img) throws JSONException, MMScriptException {
       return isRGB32(img.tags);
    }
 
-   public static boolean isRGB64(TaggedImage img) throws Exception {
+   public static boolean isRGB64(TaggedImage img) throws JSONException, MMScriptException {
       return isRGB64(img.tags);
    }
 
-   public static boolean isGRAY(JSONObject map) throws Exception {
+   public static boolean isGRAY(JSONObject map) throws JSONException, MMScriptException {
       return (isGRAY8(map) || isGRAY16(map));
    }
 
-   public static boolean isRGB(JSONObject map) throws Exception {
+   public static boolean isRGB(JSONObject map) throws JSONException, MMScriptException {
       return (isRGB32(map) || isRGB64(map));
    }
 
-   public static boolean isGRAY(TaggedImage img) throws Exception {
+   public static boolean isGRAY(TaggedImage img) throws JSONException, MMScriptException {
       return isGRAY(img.tags);
    }
 
-   public static boolean isRGB(TaggedImage img) throws Exception {
+   public static boolean isRGB(TaggedImage img) throws JSONException, MMScriptException {
       return isRGB(img.tags);
    }
 
@@ -259,7 +260,7 @@ public class MDUtils {
          String value = setting.getPropertyValue();
             md.put(key, value);
          } catch (Exception ex) {
-
+            ReportingUtils.showError(ex);
          }
       }
    }
@@ -271,7 +272,7 @@ public class MDUtils {
                               getSliceIndex(md),
                               getFrameIndex(md),
                               getPositionIndex(md));
-      } catch (Exception ex) {
+      } catch (JSONException ex) {
          ReportingUtils.logError(ex);
          return null;
       }
@@ -294,8 +295,8 @@ public class MDUtils {
             ++i;
          }
          return indices;
-      } catch (Exception e) {
-         ReportingUtils.logError(e);
+      } catch (ParseException ex) {
+         ReportingUtils.logError(ex);
          return null;
       }
    }
@@ -342,6 +343,20 @@ public class MDUtils {
          ReportingUtils.logError(ex, "Error in MDUtils::getROI");
       }
       return roi;
+   }
+
+   public static int getDepth(JSONObject tags) throws MMScriptException, JSONException {
+      String pixelType = getPixelType(tags);
+      if (pixelType.contains("GRAY8"))
+         return 1;
+      else if (pixelType.contains("GRAY16"))
+         return 2;
+      else if (pixelType.contains("RGB32"))
+         return 4;
+      else if (pixelType.contains("RGB64"))
+         return 8;
+      else
+         return 0;
    }
 
 }

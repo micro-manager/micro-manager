@@ -2,11 +2,17 @@ package org.micromanager.acquisition;
 
 import java.util.Enumeration;
 import java.util.Hashtable;
+import mmcorej.TaggedImage;
+import org.json.JSONException;
+import org.json.JSONObject;
+import org.micromanager.utils.MDUtils;
 
 import org.micromanager.utils.MMScriptException;
+import org.micromanager.utils.ReportingUtils;
 
 public class AcquisitionManager {
    Hashtable<String, MMAcquisition> acqs_;
+   private String album_ = null;
    
    public AcquisitionManager() {
       acqs_ = new Hashtable<String, MMAcquisition>();
@@ -89,18 +95,87 @@ public class AcquisitionManager {
    }
 
    public String getUniqueAcquisitionName(String name) {
-      char seperator = '_';
+      char separator = '_';
       while (acquisitionExists(name)) {
-         int lastSeperator = name.lastIndexOf(seperator);
-         if (lastSeperator == -1)
-            name += seperator + "1";
+         int lastSeparator = name.lastIndexOf(separator);
+         if (lastSeparator == -1)
+            name += separator + "1";
          else {
-            Integer i = Integer.parseInt(name.substring(lastSeperator + 1));
+            Integer i = Integer.parseInt(name.substring(lastSeparator + 1));
             i++;
-            name = name.substring(0, lastSeperator) + seperator + i;
+            name = name.substring(0, lastSeparator) + separator + i;
          }
       }
       return name;
    }
+
+   public String getCurrentAlbum() {
+      if (album_ == null) {
+         return createNewAlbum();
+      } else {
+         return album_;
+      }
+   }
+
+   public String createNewAlbum() {
+      album_ = getUniqueAcquisitionName("Album");
+      return album_;
+   }
+
+   public String addToAlbum(TaggedImage image) throws MMScriptException {
+      boolean newNeeded = true;
+      MMAcquisition acq = null;
+      String album = getCurrentAlbum();
+      JSONObject tags = image.tags;
+      int imageWidth, imageHeight, imageDepth;
+
+      try {
+         imageWidth = MDUtils.getWidth(tags);
+         imageHeight = MDUtils.getHeight(tags);
+         imageDepth = MDUtils.getDepth(tags);
+      } catch (Exception e) {
+         throw new MMScriptException("Something wrong with image tags.");
+      }
+
+      if (acquisitionExists(album)) {
+         acq = acqs_.get(album);
+         try {
+         if (acq.getWidth() == imageWidth &&
+             acq.getHeight() == imageHeight &&
+             acq.getDepth() == imageDepth)
+             newNeeded = false;
+         } catch (Exception e) {
+         }
+      }
+
+      if (newNeeded) {
+         album = createNewAlbum();
+         openAcquisition(album, "", true, false);
+         acq = getAcquisition(album);
+         acq.setDimensions(2, 1, 1, 1);
+         acq.setImagePhysicalDimensions(imageWidth, imageHeight, imageDepth);
+
+         try {
+            JSONObject summary = new JSONObject();
+            summary.put("PixelType", tags.get("PixelType"));
+            acq.setSummaryProperties(summary);
+         } catch (JSONException ex) {
+            ex.printStackTrace();
+         }
+         
+         acq.initialize();
+      }
+
+      int f = 1 + acq.getLastAcquiredFrame();
+      try {
+         MDUtils.setFrameIndex(image.tags, f);
+      } catch (JSONException ex) {
+         ReportingUtils.showError(ex);
+      }
+      acq.insertImage(image);
+
+      return album;
+   }
+
 
 }

@@ -68,7 +68,10 @@
 (defmacro core [& args]
   `(log-cmd 3 (. mmc ~@args)))
 
-(defmacro when-lets [bindings & body]
+(defmacro when-lets
+  "Serially binds values to locals as in let, but stops and returns nil
+   if any value is nil."
+  [bindings & body]
   (assert (vector? bindings))
   (let [n (count bindings)]
     (assert (zero? (mod n 2)))
@@ -92,7 +95,9 @@
   (let [[getter setter temp] gst]
     `(with-setting [#(core ~getter) #(core ~setter %) ~temp] ~@body)))
 
-(defmacro do-when [f & args]
+(defmacro do-when
+  "Apply f to args when all arguments are non-nil."
+  [f & args]
   (let [args_ args]
     `(when (and ~@args_)
       (~f ~@args_))))

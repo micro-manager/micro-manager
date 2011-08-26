@@ -178,7 +178,7 @@ public class MMAcquisition {
          createDefaultAcqSettings(name, imageCache);
       }
 
-      virtAcq_ = new VirtualAcquisitionDisplay(imageCache, null);
+      virtAcq_ = new VirtualAcquisitionDisplay(imageCache, null, name);
 
       if (show_ && diskCached_ && existing_) {
          // start loading all other images in a background thread
@@ -298,14 +298,14 @@ public class MMAcquisition {
 
          tags.put("Channel", getChannelName(channel));
          tags.put("ChannelIndex", channel);
-         tags.put("Frame", frame);
+         tags.put("FrameIndex", frame);
          tags.put("Height", height_);
          tags.put("PositionIndex", position);
          // the following influences the format data will be saved!
          if (numPositions_ > 1) {
             tags.put("PositionName", "Pos" + position);
          }
-         tags.put("Slice", slice);
+         tags.put("SliceIndex", slice);
          tags.put("Width", width_);
          if (depth_ == 1) {
             tags.put("PixelType", "GRAY8");
@@ -329,9 +329,10 @@ public class MMAcquisition {
       try {
          JSONObject tags = taggedImg.tags;
 
+         tags.put("FrameIndex", frame);
          tags.put("Frame", frame);
          tags.put("ChannelIndex", channel);
-         tags.put("Slice", slice);
+         tags.put("SliceIndex", slice);
          if (depth_ == 1) {
             tags.put("PixelType", "GRAY8");
          } else if (depth_ == 2) {
@@ -355,9 +356,20 @@ public class MMAcquisition {
       if (!initialized_) {
          throw new MMScriptException("Acquisition data must be initialized before inserting images");
       }
+
       try {
          JSONObject tags = taggedImg.tags;
+      
+         if (! (MDUtils.getWidth(tags) == width_
+                 && MDUtils.getHeight(tags) == height_)) {
+            throw new MMScriptException("Image dimensions do not match MMAcquisition.");
+         }
+         if (! MDUtils.getPixelType(tags).contentEquals(getPixelType(depth_))) {
+            throw new MMScriptException("Pixel type does not match MMAcquisition.");
+         }
+         
          int channel = tags.getInt("ChannelIndex");
+         int frame = MDUtils.getFrameIndex(tags);
          tags.put("Channel", getChannelName(channel));
          long elapsedTimeMillis = System.currentTimeMillis() - startTimeMs_;
          tags.put("ElapsedTime-ms", elapsedTimeMillis);
@@ -382,7 +394,7 @@ public class MMAcquisition {
          try {
             virtAcq_.showImage(taggedImg);
          } catch (Exception e) {
-            throw new MMScriptException("Unabel to show image");
+            throw new MMScriptException("Unable to show image");
          }
       }
    }
@@ -632,5 +644,23 @@ public class MMAcquisition {
 
    public void setSystemState(JSONObject md) throws MMScriptException {
       throw new UnsupportedOperationException("Not supported yet.");
+   }
+
+   private static String getPixelType(int depth) {
+      switch (depth) {
+         case 1:
+            return "GRAY8";
+         case 2:
+            return "GRAY16";
+         case 4:
+            return "RGB32";
+         case 8:
+            return "RGB64";
+      }
+      return null;
+   }
+
+   public int getLastAcquiredFrame() {
+      return virtAcq_.imageCache_.lastAcquiredFrame();
    }
 }
