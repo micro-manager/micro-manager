@@ -27,7 +27,6 @@ import java.awt.Color;
 import java.awt.Component;
 import java.awt.Rectangle;
 import java.awt.geom.Point2D;
-import java.util.concurrent.Callable;
 
 import mmcorej.CMMCore;
 import mmcorej.TaggedImage;
@@ -111,7 +110,17 @@ public interface ScriptInterface {
     */
    public void openAcquisition(String name, String rootDir, int nrFrames, int nrChannels, int nrSlices, int nrPositions, boolean show, boolean save) throws MMScriptException;
 
+   /*
+    * See openAcquisition(name, rootDir, nrFrames, nrChannels, nrSlices, nrPosition, show).
+    */
+
    public void openAcquisition(String name, String rootDir, int nrFrames, int nrChannels, int nrSlices, boolean show) throws MMScriptException;
+
+   /*
+    * See openAcquisition(name, rootDir, nrFrames, nrChannels, nrSlices, nrPosition, show). The save flag
+    * determines whether images will be saved to disk as they are added to the acquisition.
+    */
+
 
    public void openAcquisition(String name, String rootDir, int nrFrames, int nrChannels, int nrSlices, boolean show, boolean save) throws MMScriptException;
 
@@ -127,10 +136,13 @@ public interface ScriptInterface {
    public String getCurrentAlbum();
 
    /*
-    * Create a new album.
+    * Add a TaggedImage to an album; create a new album if necessary.
     */
-   public String createNewAlbum();
+   public void addToAlbum(TaggedImage image) throws MMScriptException;
 
+   /*
+    * Set up an acquisition that has already been opened.
+    */
    public void initializeAcquisition(String name, int width, int height, int depth) throws MMScriptException;
    
    /**
@@ -178,6 +190,11 @@ public interface ScriptInterface {
     */
    public void addImage(String name, TaggedImage taggedImg) throws MMScriptException;
 
+
+   /*
+    * Same as addImage(name, taggedImg), but also specifies whether the image is
+    * updated in the display.
+    */
    public void addImage(String name, TaggedImage taggedImg, boolean updateDisplay) throws MMScriptException;
 
    /**
@@ -200,8 +217,15 @@ public interface ScriptInterface {
     */
    public void setAcquisitionProperty(String acqName, String propertyName, String value) throws MMScriptException;
 
+   /*
+    * Same as setAcquisitionSummary
+    */
    public void setAcquisitionSystemState(String acqName, JSONObject md) throws MMScriptException;
 
+
+   /*
+    * Sets the summary metadata for an acquisition (as opposed to metadata for individual planes).
+    */
    public void setAcquisitionSummary(String acqName, JSONObject md) throws MMScriptException;
    
    /**
@@ -373,7 +397,12 @@ public interface ScriptInterface {
     * @return Name of the active XYStage device
     */
    public String getXYStageName();
-   
+
+
+   /*
+    * Assigns the current stage position of the default xy-stage to be (x,y),
+    * thereby offseting the coordinates of all other positions.
+    */
    public void setXYOrigin(double x, double y) throws MMScriptException;
    
    
@@ -382,6 +411,9 @@ public interface ScriptInterface {
     */
    public void saveConfigPresets();
 
+   /*
+    * Returns the ImageJ ImageWindow instance that is used for Snap and Live display.
+    */
    public ImageWindow getImageWin();
 
    /**
@@ -458,7 +490,7 @@ public interface ScriptInterface {
    /**
     * Shows an error including stacktrace in the UI and logs to the Micro-
     * Manager log
-    * @param e - Java excpetion to be shown and logged
+    * @param e - Java exception to be shown and logged
     * @param msg - Error message to be shown and logged
     */
    public void showError(Exception e, String msg);
@@ -505,17 +537,31 @@ public interface ScriptInterface {
     */
    public Color getBackgroundColor();
 
+   /*
+    * Show an image with the pixel array pix (uses current camera settings
+    * to figure out the shape of the image.
+    */
 
    public boolean displayImage(Object pix);
 
+   /*
+    * Determines whether live mode is currently running.
+    */
    public boolean isLiveModeOn();
 
+    /*
+    * Turn live mode on or off (equivalent to pressing the Live mode button)
+    */
    public void enableLiveMode(boolean b);
-   
+
+   /*
+    * Get the default camera's ROI -- a convenience function
+    */
    public Rectangle getROI() throws MMScriptException;
 
+   /*
+    * Set the default camera's ROI -- a convenience function
+    */
    public void setROI(Rectangle r) throws MMScriptException;
-
-   public void appendImage(String name, TaggedImage taggedImg) throws MMScriptException;
 
 }
