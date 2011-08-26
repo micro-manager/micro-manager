@@ -201,23 +201,23 @@ public class MultiCameraFrame extends javax.swing.JFrame implements MMListenerIn
 
        setBackground(gui_.getBackgroundColor());
 
-       if (cameras_.length <= 1) {
-          cameraSelectComboBox.setEnabled(false);
-       } else {
-          cameraSelectComboBox.removeAllItems();
+       cameraSelectComboBox.removeAllItems();
 
-          for (String camera: cameras_) {
-             cameraSelectComboBox.addItem(camera);
-          }
+       for (String camera : cameras_) {
+          cameraSelectComboBox.addItem(camera);
+       }
 
-          for (int i = 0; i < cameras_.length; i++) {
-             String item = cameras_[i];
-             for (int j = i + 1; j< cameras_.length; j++) {
-                cameraSelectComboBox.addItem(item + SEPERATOR + cameras_[i+j]);
-             }
+       for (int i = 0; i < cameras_.length; i++) {
+          String item = cameras_[i];
+          for (int j = i + 1; j < cameras_.length; j++) {
+             cameraSelectComboBox.addItem(item + SEPERATOR + cameras_[i + j]);
           }
        }
        cameraSelectComboBox.setSelectedItem(currentCamera);
+       if (cameras_.length <= 1) {
+          cameraSelectComboBox.setEnabled(false);
+       }
+
        updateCameraList();
 
        exposureTextField.setText(getExposure());
