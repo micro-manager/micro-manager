@@ -119,6 +119,7 @@ class ZeissScope : public HubBase<ZeissScope>
       int DetectInstalledDevices();
 
    private:
+      bool IsMCU28Present();
       std::vector<std::string> peripherals_;
       std::map<int,std::string>* pTurretIDMap_;
       // this would better be a static member!!!!
@@ -584,7 +585,6 @@ public:
    // ----------------
    //int OnPosition(MM::PropertyBase* pProp, MM::ActionType eAct);
    //int OnLoadSample(MM::PropertyBase* pProp, MM::ActionType eAct);
-
 
 private:
    int GetXYFirmwareVersion();

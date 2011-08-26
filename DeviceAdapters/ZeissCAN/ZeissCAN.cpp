@@ -558,6 +558,26 @@ bool ZeissScope::Busy()
    return false;
 }
 
+bool ZeissScope::IsMCU28Present()
+{
+   // get firmware info
+   const char * command = "NPTv0";
+   int ret = g_hub.ExecuteCommand(*this, *GetCoreCallback(),  command);
+   if (ret != DEVICE_OK)
+      return false;
+
+   // first two chars should read 'PF'
+   string response;
+   ret = g_hub.GetAnswer(*this, *GetCoreCallback(), response);
+   if (ret != DEVICE_OK)
+      return false;
+
+   if (response.substr(0,2).compare("PN") == 0) 
+      return true; // got the right answer
+   else
+      return false;
+}
+
 MM::DeviceDetectionStatus ZeissScope::DetectDevice(void)
 {
    // all conditions must be satisfied...
@@ -722,6 +742,14 @@ int ZeissScope::DetectInstalledDevices()
                   AddInstalledDevice(pDev);
             }
          }
+      }
+
+      // finally check if MCU28 is installed
+      if (IsMCU28Present())
+      {
+         MM::Device* pDev = ::CreateDevice(g_ZeissXYStage);
+         if (pDev)
+            AddInstalledDevice(pDev);
       }
       return DEVICE_OK;
 }
