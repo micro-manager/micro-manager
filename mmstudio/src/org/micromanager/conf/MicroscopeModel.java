@@ -722,7 +722,7 @@ public class MicroscopeModel {
       }
    }
 
-   private String getDeviceDescription(String library, String adapter) {
+   public String getDeviceDescription(String library, String adapter) {
       Device dev = findAvailableDevice(library, adapter);
       if (dev != null) {
          return dev.getDescription();

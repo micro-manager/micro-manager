@@ -193,24 +193,24 @@ public class PeripheralDevicesPage extends PagePanel {
 
          for (Device d : devices_) {
             if (!d.getName().equals("Core")) {
-               
+
                // device "discovery" happens here
                StrVector installed = core_.getInstalledDevices(d.getName());
                // end of discovery
-               
+
                if (0 < installed.size()) {
                   for (int i=0; i<installed.size(); i++) {                        
                      try {
                         if (model_.findDevice(installed.get(i)) == null)
                         {
-                           String descr = core_.getInstalledDeviceDescription(d.getName(), installed.get(i));
+                           String descr = model_.getDeviceDescription(d.getLibrary(), installed.get(i));
                            Device newDev = new Device(installed.get(i), d.getLibrary(), installed.get(i), descr);   
                            selected_.add(false);
                            masterDevices_.add(d.getName());
                            peripheralDevices_.add(newDev);
                         }
                      } catch (Exception e) {
-                        ReportingUtils.logError("Installed device not found: " + e.getMessage());
+                        ReportingUtils.logError(e.getMessage());
                      }
                   }
                }
