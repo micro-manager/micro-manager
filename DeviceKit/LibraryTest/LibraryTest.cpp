@@ -1,15 +1,13 @@
 // LibraryTest.cpp : Defines the entry point for the console application.
 //
 #include "../../MMCore/MMCore.h"
+#include "../Common/DeviceTypes.h"
 #include <iostream>
 #include <iomanip>
 #include <sstream>
 #include <assert.h>
 
 using namespace std;
-
-const char* g_OK = "OK";
-const char* g_Failed = "Failed";
 
 int main(int argc, char* argv[])
 {
@@ -48,7 +46,7 @@ int main(int argc, char* argv[])
 
       for (unsigned i=0; i<devices.size(); i++)
       {
-         cout << devices[i] << ", " << descriptions[i] << ", type " << types[i] << endl;
+         cout << devices[i] << ", " << descriptions[i] << ", type " << ::getDeviceTypeVerbose(MM::DeviceType(types[i])) << endl;
       }
 
       // attempt to load all devices
@@ -66,7 +64,7 @@ int main(int argc, char* argv[])
       vector<string> loadedDevices(core.getLoadedDevices());
       for (unsigned i=0; i<loadedDevices.size(); i++)
       {
-         cout << loadedDevices[i] << ", " << core.getDeviceName(loadedDevices[i].c_str()) << endl;
+         cout  << loadedDevices[i] << ", " << core.getDeviceName(loadedDevices[i].c_str()) << endl;
       }
 
       cout << endl << "Unloading all devices..." << endl;
