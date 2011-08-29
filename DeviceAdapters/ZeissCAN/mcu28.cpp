@@ -50,7 +50,8 @@ using namespace std;
 // XYStage mcu28
 ///////////////////////////////////////////////////////////////////////////////
 XYStage::XYStage() :
-initialized_ (false), stepSizeUm_(0.001)
+   initialized_ (false),
+   stepSizeUm_(0.2) // assuming fixed step size at 0.2um
 {
    InitializeDefaultErrorMessages();
 
@@ -93,6 +94,26 @@ int XYStage::Initialize()
    // Firmware version
    ret = CreateProperty("XY firmware", xyFirmware_.c_str(), MM::String, true);
    if (DEVICE_OK != ret)
+      return ret;
+
+   // X and Y positions
+   CPropertyAction* pAct = new CPropertyAction (this, &XYStage::OnX);
+   ret = CreateProperty("X_um", "0.0", MM::Float, false, pAct);
+   if (DEVICE_OK != ret)
+      return ret;
+
+   // X and Y positions
+   pAct = new CPropertyAction (this, &XYStage::OnY);
+   ret = CreateProperty("Y_um", "0.0", MM::Float, false, pAct);
+   if (DEVICE_OK != ret)
+      return ret;
+
+   // just get position once at the start to initialize cached values
+   double x,y;
+   GetPositionUm(x, y);
+
+   ret = UpdateStatus();
+   if (ret != DEVICE_OK)
       return ret;
 
    initialized_ = true;
@@ -271,14 +292,14 @@ int XYStage::SetOrigin()
 
    return DEVICE_OK;
 }
-int XYStage::GetLimitsUm(double& xMin, double& xMax, double& yMin, double& yMax)
+int XYStage::GetLimitsUm(double&, double&, double&, double&)
 {
-   return DEVICE_OK;
+   return DEVICE_UNSUPPORTED_COMMAND;
 }
 
-int XYStage::GetStepLimits(long& xMin, long& xMax, long& yMin, long& yMax)
+int XYStage::GetStepLimits(long&, long&, long&, long&)
 {
-   return DEVICE_OK;
+   return DEVICE_UNSUPPORTED_COMMAND;
 }
 
 double XYStage::GetStepSizeXUm()
@@ -338,3 +359,34 @@ int XYStage::GetXYFirmwareVersion()
 // Action handlers                                                           
 ///////////////////////////////////////////////////////////////////////////////
 
+int XYStage::OnX(MM::PropertyBase* pProp, MM::ActionType eAct) 
+{
+   if (eAct == MM::BeforeGet) 
+   {
+      pProp->Set(GetCachedXUm());
+   } 
+   else if (eAct == MM::AfterSet) 
+   {
+      double xUm;
+      pProp->Get(xUm);
+      SetPositionUm(xUm, GetCachedYUm());
+   }
+
+   return DEVICE_OK;
+}
+
+int XYStage::OnY(MM::PropertyBase* pProp, MM::ActionType eAct) 
+{
+   if (eAct == MM::BeforeGet) 
+   {
+      pProp->Set(GetCachedYUm());
+   } 
+   else if (eAct == MM::AfterSet) 
+   {
+      double yUm;
+      pProp->Get(yUm);
+      SetPositionUm(GetCachedYUm(), yUm);
+   }
+
+   return DEVICE_OK;
+}

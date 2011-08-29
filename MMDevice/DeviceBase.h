@@ -1605,6 +1605,18 @@ public:
       return DEVICE_UNSUPPORTED_COMMAND;
    }
 
+protected:
+
+   /**
+    * GetCachedXUm() and GetCachedUm() allow the device adapter to implent X and Y positions as properties
+    * more efficiently than using GetPositionUm(). Because of transpose and origin functionality the base
+    * class always keeps track of current x,y position in user-coordinate system
+    * Use of this method is optional and the best way to take advantage of it is to implement
+    * "get" property with cached values instead of querying the stage
+    */
+   double GetCachedXUm() {return xPos_;}
+   double GetCachedYUm() {return yPos_;}
+
 private:
 
    void GetOrientation(bool& mirrorX, bool& mirrorY) 
