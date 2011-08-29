@@ -72,7 +72,7 @@
 
 ;; time
 
-(defn clock-ms []
+(defn jvm-time-ms []
   (quot (System/nanoTime) 1000000))
 
 (defn compute-time-from-core [tags]
@@ -83,7 +83,7 @@
          (@state :burst-init-time)))))
 
 (defn elapsed-time [state]
-  (if (state :start-time) (- (clock-ms) (state :start-time)) 0))
+  (if (state :start-time) (- (jvm-time-ms) (state :start-time)) 0))
 
 ;; image metadata
 
@@ -323,7 +323,7 @@
 
 (defn interruptible-sleep [time-ms]
   (let [sleepy (CountDownLatch. 1)]
-    (state-assoc! :sleepy sleepy :next-wake-time (+ (clock-ms) time-ms))
+    (state-assoc! :sleepy sleepy :next-wake-time (+ (jvm-time-ms) time-ms))
     (.await sleepy time-ms TimeUnit/MILLISECONDS)))
 
 (defn acq-sleep [interval-ms]
@@ -332,11 +332,11 @@
     (not (core isContinuousFocusEnabled)))
       (core enableContinuousFocus true))
   (let [target-time (+ (@state :last-wake-time) interval-ms)
-        delta (- target-time (clock-ms))]
+        delta (- target-time (jvm-time-ms))]
     (when (pos? delta)
       (interruptible-sleep delta))
     (await-resume)
-    (let [now (clock-ms)
+    (let [now (jvm-time-ms)
           wake-time (if (> now (+ target-time 10)) now target-time)]
       (state-assoc! :last-wake-time wake-time))))
 
@@ -376,7 +376,8 @@
 (defn store-new-z-reference []
   (let [z-drive (@state :default-z-drive)]
     (when (and (or (not (core isContinuousFocusEnabled))
-                   (core isContinuousFocusDrive z-drive)))
+                   (core isContinuousFocusDrive z-drive))
+               (not (z-in-msp z-drive)))
       (state-assoc! :reference-z (get-z-stage-position z-drive)))))
 
 ;; startup and shutdown
@@ -391,12 +392,12 @@
       :stop false
       :running true
       :finished false
-      :last-wake-time (clock-ms)
+      :last-wake-time (jvm-time-ms)
       :last-stage-positions (into {} [[default-z-drive z]
                                 [default-xy-stage xy]])
       :last-position nil     
       :reference-z z
-      :start-time (clock-ms)
+      :start-time (jvm-time-ms)
       :init-auto-shutter (core getAutoShutter)
       :init-exposure (core getExposure)
       :default-z-drive default-z-drive
@@ -437,33 +438,32 @@
                          (-> current-position get-msp (z-in-msp z-drive) not)
                          (or (:autofocus event)
                              (:wait-time-ms event)))]
-    (filter identity
-            (flatten
-              (list
-                #(log event)
-                (for [[axis pos] (:axes (MultiStagePosition-to-map (get-msp current-position))) :when pos]
-                  #(apply set-stage-position axis pos))
-                (for [[d p v] (get-in event [:channel :properties])]
-                  #(set-property [d p v]))
-                #(when-lets [exposure (:exposure event)
-                             camera (core getCameraDevice)]
-                            (device-best-effort camera (core setExposure exposure)))
-                #(when check-z-ref
-                   (set-stage-position z-drive (@state :reference-z)))
-                #(when-let [wait-time-ms (:wait-time-ms event)]
-                   (acq-sleep wait-time-ms))
-                #(when (:autofocus event)
-                   (run-autofocus))
-                #(when check-z-ref
-                   (store-new-z-reference))
-                #(when z-drive
-                   (let [z (compute-z-position event)]
-                     (set-stage-position z-drive z)))
-                (event :runnables)
-                #(do (wait-for-pending-devices)
-                     (expose event)
-                     (collect event out-queue)
-                     (stop-trigger)))))))
+    (flatten
+      (list
+        #(log event)
+        (for [[axis pos] (:axes (MultiStagePosition-to-map (get-msp current-position))) :when pos]
+          #(apply set-stage-position axis pos))
+        (for [[d p v] (get-in event [:channel :properties])]
+          #(set-property [d p v]))
+        #(when-lets [exposure (:exposure event)
+                     camera (core getCameraDevice)]
+           (device-best-effort camera (core setExposure exposure)))
+        #(when check-z-ref
+           (set-stage-position z-drive (@state :reference-z)))
+        #(when-let [wait-time-ms (:wait-time-ms event)]
+           (acq-sleep wait-time-ms))
+        #(when (:autofocus event)
+           (run-autofocus))
+        #(when check-z-ref
+           (store-new-z-reference))
+        #(when z-drive
+           (let [z (compute-z-position event)]
+             (set-stage-position z-drive z)))
+        (event :runnables)
+        #(do (wait-for-pending-devices)
+             (expose event)
+             (collect event out-queue)
+             (stop-trigger))))))
 
 (defn execute [event-fns]
   (doseq [event-fn event-fns :while (not (:stop @state))]
