@@ -123,13 +123,13 @@
        "ZPositionUm" (get-in state [:last-stage-positions (state :default-z-drive)])
       })))
    
-(defn annotate-image [img event state]
+(defn annotate-image [img event state elapsed-time-ms]
   {:pix (:pix img)
    :tags 
    (merge
      (generate-metadata event state)
      (:tags img)
-     {"ElapsedTime-ms" (burst-time (:tags img) state)}
+     {"ElapsedTime-ms" elapsed-time-ms}
      )}) ;; include any existing metadata
 
 (defn make-TaggedImage [annotated-img]
@@ -288,7 +288,8 @@
               (swap! state assoc
                      :burst-time-offset (- (elapsed-time @state)
                                            (core-time-from-tags (image :tags)))))
-            (.put out-queue (make-TaggedImage (annotate-image image evt @state))))
+            (.put out-queue (make-TaggedImage (annotate-image image evt @state
+                                                              (burst-time (:tags image) @state)))))
           (when (core isBufferOverflowed)
             (swap! state assoc :stop true)
             (ReportingUtils/showError "Circular buffer overflowed."))))
@@ -299,13 +300,13 @@
 (defn collect-snap-image [event out-queue]
   (let [image
          {:pix (core getImage)
-          :tags {"ElapsedTime-ms" (@state :last-image-time)}}]
+          :tags nil}]
     (do (log "collect-snap-image: "
                (select-keys event [:position-index :frame-index
                                    :slice-index :channel-index]))
       (when out-queue
           (.put out-queue
-                (make-TaggedImage (annotate-image image event @state)))))
+                (make-TaggedImage (annotate-image image event @state (elapsed-time @state))))))
     image))
 
 (defn return-config []
@@ -616,7 +617,7 @@
   (binding [state (atom (create-basic-state))]
     (let [event (create-basic-event)]
       (core snapImage)
-      (annotate-image (collect-snap-image event nil) event @state))))
+      (annotate-image (collect-snap-image event nil) event @state nil))))
     
 (defn show-image [display tagged-img focus]
   (let [myTaggedImage (make-TaggedImage tagged-img)
@@ -649,14 +650,16 @@
       (if on
         (let [event (create-basic-event)
               state (create-basic-state)
-              first-image (atom true)]
+              first-image (atom true)
+              start-time (jvm-time-ms)]
           (dosync (ref-set live-mode-running true))
           (core startContinuousSequenceAcquisition 0)
           (log "started sequence acquisition")
           (.start (Thread.
                     #(do (while @live-mode-running
                            (let [raw-image {:pix (core getLastImage) :tags nil}
-                                 img (annotate-image raw-image event state)]
+                                 elapsed-time-ms (- (jvm-time-ms) start-time)
+                                 img (annotate-image raw-image event state elapsed-time-ms)]
                               (reset-snap-window img)
                               (show-image @snap-window img @first-image)
                               (reset! first-image false)))
