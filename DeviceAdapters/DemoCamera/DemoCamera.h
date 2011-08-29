@@ -516,7 +516,6 @@ public:
       if (g_hub && g_hub->GenerateRandomError())
          return SIMULATED_ERROR;
 
-      posX_um_ = x * stepSize_um_;
       x = (long)(posX_um_ / stepSize_um_);
       y = (long)(posY_um_ / stepSize_um_);
       return DEVICE_OK;
