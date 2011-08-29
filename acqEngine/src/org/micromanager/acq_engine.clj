@@ -75,15 +75,16 @@
 (defn jvm-time-ms []
   (quot (System/nanoTime) 1000000))
 
-(defn compute-time-from-core [tags]
-  (when (@state :burst-init-time)
-    (when-let [t (tags "ElapsedTime-ms")]
-      (log "ElapsedTime-ms" t)
-      (+ (Double/parseDouble t)
-         (@state :burst-init-time)))))
-
 (defn elapsed-time [state]
   (if (state :start-time) (- (jvm-time-ms) (state :start-time)) 0))
+
+(defn core-time-from-tags [tags]
+  (try (Double/parseDouble (tags "ElapsedTime-ms")) (catch Exception e nil)))
+
+(defn burst-time [tags state]
+  (when (and (:burst-time-offset state) (get tags "ElapsedTime-ms"))
+    (+ (core-time-from-tags tags)
+       (:burst-time-offset state))))
 
 ;; image metadata
 
@@ -127,7 +128,9 @@
    :tags 
    (merge
      (generate-metadata event state)
-     (:tags img))}) ;; include any existing metadata
+     (:tags img)
+     {"ElapsedTime-ms" (burst-time (:tags img) state)}
+     )}) ;; include any existing metadata
 
 (defn make-TaggedImage [annotated-img]
   (TaggedImage. (:pix annotated-img) (JSONObject. (:tags annotated-img))))
@@ -261,7 +264,6 @@
     (start-property-sequences (:properties trigger-sequence))
     (when absolute-slices
       (start-slice-sequence))
-    (swap! state assoc :burst-init-time (elapsed-time @state))
     (core startSequenceAcquisition (if (first-trigger-missing?) (inc length) length) 0 true)
     (swap! state assoc-in [:last-stage-positions (core getFocusDevice)]
            (last absolute-slices))))
@@ -271,22 +273,26 @@
     (Thread/sleep 5))
   (let [md (Metadata.)
         pix (core popNextImageMD md)
-        tags (parse-core-metadata md)
-        t (compute-time-from-core tags)
-        tags (if (and t (pos? t))
-               (assoc tags "ElapsedTime-ms" t)
-               (dissoc tags "ElapsedTime-ms"))]
-    (log "compute-time t")
+        tags (parse-core-metadata md)]
     {:pix pix :tags (dissoc tags "StartTime-ms")}))
-
+    
 (defn collect-burst-images [event out-queue]
   (when (first-trigger-missing?) (pop-burst-image)) ; drop first image if first trigger doesn't happen
-  (doseq [event-data (event :burst-data) :while (not (@state :stop))]
-    (let [image (pop-burst-image)]
-      (.put out-queue (make-TaggedImage (annotate-image image event-data @state))))
-   (if (core isBufferOverflowed)
-      (do (swap! state assoc :stop true)
-          (ReportingUtils/showError "Circular buffer overflowed."))))
+  (swap! state assoc :burst-time-offset nil)
+  (dorun
+    (map-indexed
+      (fn [i evt]
+        (when-not (@state :stop)
+          (let [image (pop-burst-image)]
+            (when (zero? i)
+              (swap! state assoc
+                     :burst-time-offset (- (elapsed-time @state)
+                                           (core-time-from-tags (image :tags)))))
+            (.put out-queue (make-TaggedImage (annotate-image image evt @state))))
+          (when (core isBufferOverflowed)
+            (swap! state assoc :stop true)
+            (ReportingUtils/showError "Circular buffer overflowed."))))
+      (event :burst-data)))
   (while (and (not (@state :stop)) (. mmc isSequenceRunning))
     (Thread/sleep 5)))
 
@@ -373,11 +379,11 @@
               0))
          z-ref))))
 
-(defn store-new-z-reference []
+(defn store-new-z-reference [msp]
   (let [z-drive (@state :default-z-drive)]
     (when (and (or (not (core isContinuousFocusEnabled))
                    (core isContinuousFocusDrive z-drive))
-               (not (z-in-msp z-drive)))
+               (not (z-in-msp msp z-drive)))
       (state-assoc! :reference-z (get-z-stage-position z-drive)))))
 
 ;; startup and shutdown
@@ -438,32 +444,33 @@
                          (-> current-position get-msp (z-in-msp z-drive) not)
                          (or (:autofocus event)
                              (:wait-time-ms event)))]
-    (flatten
-      (list
-        #(log event)
-        (for [[axis pos] (:axes (MultiStagePosition-to-map (get-msp current-position))) :when pos]
-          #(apply set-stage-position axis pos))
-        (for [[d p v] (get-in event [:channel :properties])]
-          #(set-property [d p v]))
-        #(when-lets [exposure (:exposure event)
-                     camera (core getCameraDevice)]
-           (device-best-effort camera (core setExposure exposure)))
-        #(when check-z-ref
-           (set-stage-position z-drive (@state :reference-z)))
-        #(when-let [wait-time-ms (:wait-time-ms event)]
-           (acq-sleep wait-time-ms))
-        #(when (:autofocus event)
-           (run-autofocus))
-        #(when check-z-ref
-           (store-new-z-reference))
-        #(when z-drive
-           (let [z (compute-z-position event)]
-             (set-stage-position z-drive z)))
-        (event :runnables)
-        #(do (wait-for-pending-devices)
-             (expose event)
-             (collect event out-queue)
-             (stop-trigger))))))
+    (filter identity
+      (flatten
+        (list
+          #(log event)
+          (for [[axis pos] (:axes (MultiStagePosition-to-map current-position)) :when pos]
+            #(apply set-stage-position axis pos))
+          (for [[d p v] (get-in event [:channel :properties])]
+            #(set-property [d p v]))
+          #(when-lets [exposure (:exposure event)
+                       camera (core getCameraDevice)]
+             (device-best-effort camera (core setExposure exposure)))
+          #(when check-z-ref
+             (set-stage-position z-drive (@state :reference-z)))
+          #(when-let [wait-time-ms (:wait-time-ms event)]
+             (acq-sleep wait-time-ms))
+          #(when (:autofocus event)
+             (run-autofocus))
+          #(when check-z-ref
+             (store-new-z-reference (get-msp current-position)))
+          #(when z-drive
+             (let [z (compute-z-position event)]
+               (set-stage-position z-drive z)))
+          (event :runnables)
+          #(do (wait-for-pending-devices)
+               (expose event)
+               (collect event out-queue)
+               (stop-trigger)))))))
 
 (defn execute [event-fns]
   (doseq [event-fn event-fns :while (not (:stop @state))]
