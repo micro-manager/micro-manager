@@ -32,6 +32,7 @@ import mmcorej.CMMCore;
 import mmcorej.TaggedImage;
 import org.json.JSONObject;
 
+import org.micromanager.acquisition.MMAcquisition;
 import org.micromanager.navigation.PositionList;
 import org.micromanager.utils.MMScriptException;
 
@@ -161,6 +162,11 @@ public interface ScriptInterface {
     * Closes all currently open acquisitions.
     */
    public void closeAllAcquisitions();
+   
+   /**
+    * Returns the acquisition currently in progress
+    */
+   public MMAcquisition getCurrentAcquisition();
    
    /**
     * Snaps an image with current settings and moves pixels into the specified layer of the MDA viewer

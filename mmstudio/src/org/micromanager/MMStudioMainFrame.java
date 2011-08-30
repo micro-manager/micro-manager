@@ -3820,6 +3820,11 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
    public String getUniqueAcquisitionName(String stub) {
       return acqMgr_.getUniqueAcquisitionName(stub);
    }
+   
+   // TODO:
+   public MMAcquisition getCurrentAcquisition() {
+      return null; // if none available
+   }
 
    public void openAcquisition(String name, String rootDir) throws MMScriptException {
       openAcquisition(name, rootDir, true);

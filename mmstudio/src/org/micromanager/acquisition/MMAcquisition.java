@@ -434,6 +434,13 @@ public class MMAcquisition {
       return null;
    }
 
+   public MMImageCache getImageCache() {
+      if (virtAcq_ == null)
+         return null;
+      else
+         return virtAcq_.getImageCache();
+   }
+   
    public JSONObject getSummaryMetadata() {
       if (isInitialized())
          return virtAcq_.imageCache_.getSummaryMetadata();
