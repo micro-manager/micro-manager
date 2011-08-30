@@ -50,6 +50,13 @@ MultiCamera.jar:  \
 	$(JAVAC) -source 1.5 -target 1.5 -sourcepath $(srcdir):. -classpath $(srcdir)/MultiCamera.jar:$(IJJARPATH):$(BSHJARPATH):$(COMMONSMATHJARPATH):$(SWINGLAYOUTJARPATH):../bin/MMCoreJ.jar:../mmstudio/MMJ_.jar:. $(srcdir)/MultiCamera/src/org/micromanager/multicamera/*.java -d build
 	cd build && jar cf ../MultiCamera.jar * 
 
+SplitView.jar:  \
+	$(srcdir)/SplitView/src/org/micromanager/splitview/*.java
+	test -d build || mkdir build
+	rm -rf build/*
+	$(JAVAC) -source 1.5 -target 1.5 -sourcepath $(srcdir):. -classpath $(srcdir)/SplitView.jar:$(IJJARPATH):$(BSHJARPATH):$(COMMONSMATHJARPATH):$(SWINGLAYOUTJARPATH):../bin/MMCoreJ.jar:../mmstudio/MMJ_.jar:. $(srcdir)/SplitView/src/org/micromanager/splitview/*.java -d build
+	cd build && jar cf ../SplitView.jar * 
+
 Big.jar:  \
 	$(srcdir)/Big/src/edu/umassmed/big/*.java
 	test -d build || mkdir build
@@ -95,6 +102,7 @@ install:
 	cp Big.jar $(DESTDIR)$(IJPATH)/mmplugins
 	cp DataBrowser.jar $(DESTDIR)$(IJPATH)/mmplugins
 	cp ClojureEditor.jar $(DESTDIR)$(IJPATH)/mmplugins
+	cp SplitView.jar $(DESTDIR)$(IJPATH)/mmplugins
 	## cp ImageFlipper.jar $(DESTDIR)$(IJPATH)/mmplugins
 	
 clean:
