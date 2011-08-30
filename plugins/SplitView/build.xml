@@ -1,0 +1,58 @@
+<!-- Ant makefile for the Micro-Manager SplitView plugin  -->
+<!-- This file assumes Micro-Manager project tree structure -->
+
+<project name="SplitView" default="build">
+
+	<!-- Specify the system path to the ImageJ root directory -->
+	<property name="InstallRoot" value="../../Install_AllPlatforms/micro-manager"/>
+
+	<!-- Do not modify from this point on -->
+	<property name="MMPluginDir" value="../../mmstudio"/>
+	<property name="MMCoreJ" value="../../bin_Win32/MMCoreJ.jar"/>
+	<property name="MMPluginsDir-inst" value="${InstallRoot}/mmplugins"/>
+	<property name="BinRoot" value="../../bin_Win32"/>
+        <property name="classext" value="../../../3rdpartypublic/classext"/>
+
+        <property name="IJ" value="${classext}/ij.jar"/>
+        <property name="beanshell" value="${classext}/bsh-2.0b4.jar"/>
+        <property name="swinglayout" value="${classext}/swing-layout-1.0.4.jar"/>
+        <property name="commonsmath" value="${classext}/commons-math-2.0.jar"/>
+        <property name="swingx" value="${classext}/swingx-0.9.5.jar"/>
+
+	<path id="project.MMPlugins.path">
+		<pathelement location="${MMPluginDir}"/>
+	</path>
+
+	<path id="project.class.path">
+		<pathelement location="${MMCoreJ}" />
+		<pathelement location="${MMPluginDir}/MMJ_.jar"/>
+
+		<pathelement location="${IJ}" />
+		<pathelement location="${beanshell}" />
+		<pathelement location="${swinglayout}" />
+		<pathelement location="${commonsmath}" />
+		<pathelement location="${swingx}" />
+
+	</path>
+
+	<target name="compile" description="Compile SplitView plugin.">
+		<mkdir dir="build" />
+		<javac srcdir="./src" destdir="./build" optimize="on" source="1.5" target="1.5" debug="on">
+			<classpath refid="project.class.path" />
+		</javac>
+		<copy todir="./build/">
+			<fileset dir="./src/" includes="**/*.form" />
+		</copy>
+	</target>
+
+	<target name="build" description="Build SplitView.jar">
+		<jar jarfile="SplitView.jar" basedir="build" />
+		<copy file="SplitView.jar" todir="${MMPluginsDir-inst}" />
+	</target>
+	
+	<target name="clean" description="Delete the SplitView build files.">
+		<delete dir="build" />
+		<delete file="SplitView.jar" />
+	</target>
+	
+</project>
