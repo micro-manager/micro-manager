@@ -2,6 +2,8 @@ package org.micromanager.acquisition;
 
 import java.util.Enumeration;
 import java.util.Hashtable;
+import java.util.Set;
+
 import mmcorej.TaggedImage;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -178,4 +180,9 @@ public class AcquisitionManager {
    }
 
 
+   public String[] getAcqusitionNames() {
+      Set<String> keySet = acqs_.keySet();
+      String keys[] = new String[keySet.size()];
+      return keySet.toArray(keys);
+   }
 }

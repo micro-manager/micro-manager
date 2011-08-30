@@ -168,6 +168,10 @@ public interface ScriptInterface {
     */
    public MMAcquisition getCurrentAcquisition();
    
+   public String[] getAcquisitionNames();
+   
+   public MMAcquisition getAcquisition(String name) throws MMScriptException;
+   
    /**
     * Snaps an image with current settings and moves pixels into the specified layer of the MDA viewer
     * @throws MMScriptException 

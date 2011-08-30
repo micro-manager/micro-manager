@@ -4119,6 +4119,15 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
       acqMgr_.closeAll();
    }
 
+   public String[] getAcquisitionNames()
+   {
+      return acqMgr_.getAcqusitionNames();
+   }
+   
+   public MMAcquisition getAcquisition(String name) throws MMScriptException {
+      return acqMgr_.getAcquisition(name);
+   }
+
    private class ScriptConsoleMessage implements Runnable {
 
       String msg_;
