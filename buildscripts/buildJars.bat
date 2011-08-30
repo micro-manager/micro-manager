@@ -41,6 +41,10 @@ pushd plugins\MultiCamera
 call ant -buildfile build.xml %cleantarget% compile build 
 popd
 
+pushd plugins\SplitView
+call ant -buildfile build.xml %cleantarget% compile build 
+popd
+
 pushd plugins\ClojureEditor
 call ant -buildfile build.xml %cleantarget% compile build 
 popd
