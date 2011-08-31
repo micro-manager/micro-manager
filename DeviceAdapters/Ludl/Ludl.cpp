@@ -348,6 +348,11 @@ int Hub::Initialize()
    if (DEVICE_OK != ret)
       return ret;
 
+   // Make sure controller uses high level command set
+   ret = changeCommandLevel(*this,  *GetCoreCallback(), g_CommandLevelHigh);
+   if (ret != DEVICE_OK)
+      return ret;
+
    // Version of the controller:
    std::string result;
    ret = QueryVersion(result);
