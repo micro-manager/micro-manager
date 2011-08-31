@@ -4,6 +4,7 @@
  */
 package org.micromanager.acquisition;
 
+import org.micromanager.api.ImageCache;
 import org.micromanager.api.ImageCacheListener;
 import java.lang.ref.SoftReference;
 import java.util.ArrayList;
@@ -24,7 +25,7 @@ import org.micromanager.utils.ReportingUtils;
  *
  * @author arthur
  */
-public class MMImageCache implements TaggedImageStorage {
+public class MMImageCache implements TaggedImageStorage, ImageCache {
    public static String menuName_ = null;
    public ArrayList<ImageCacheListener> imageStorageListeners_
            = new ArrayList<ImageCacheListener>();
@@ -205,7 +206,7 @@ public class MMImageCache implements TaggedImageStorage {
       }
    }
 
-   void setImageComment(String comment, JSONObject tags) {
+   public void setImageComment(String comment, JSONObject tags) {
       JSONObject comments = getCommentsJSONObject();
       String label = MDUtils.getLabel(tags);
       try {
@@ -216,7 +217,7 @@ public class MMImageCache implements TaggedImageStorage {
 
    }
 
-   String getImageComment(JSONObject tags) {
+   public String getImageComment(JSONObject tags) {
       if (tags == null)
          return "";
       try {

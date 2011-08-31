@@ -32,6 +32,7 @@ import javax.swing.table.AbstractTableModel;
 import mmcorej.TaggedImage;
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.micromanager.api.ImageCache;
 import org.micromanager.utils.ImageFocusListener;
 import org.micromanager.utils.GUIUtils;
 import org.micromanager.utils.HistogramUtils;
@@ -674,7 +675,7 @@ public class MetadataPanel extends javax.swing.JPanel
 
    private JSONObject selectChangingTags(ImagePlus imgp, JSONObject md) {
       JSONObject mdChanging = new JSONObject();
-      MMImageCache cache = getCache(imgp);
+      ImageCache cache = getCache(imgp);
       if (cache != null) {
          for (String key : cache.getChangingKeys()) {
             if (md.has(key)) {
@@ -754,7 +755,7 @@ public class MetadataPanel extends javax.swing.JPanel
          update(imp);
    }
 
-   private MMImageCache getCache(ImagePlus imgp) {
+   private ImageCache getCache(ImagePlus imgp) {
       if ( VirtualAcquisitionDisplay.getDisplay(imgp) != null) {
          return VirtualAcquisitionDisplay.getDisplay(imgp).imageCache_;
       } else {
@@ -843,7 +844,7 @@ public class MetadataPanel extends javax.swing.JPanel
       }
 
       ImagePlus imgp = focusedWindow.getImagePlus();
-      MMImageCache cache = getCache(imgp);
+      ImageCache cache = getCache(imgp);
       VirtualAcquisitionDisplay acq = getVirtualAcquisitionDisplay(imgp);
       sizeBarCheckBox.setSelected(imgp.getOverlay()!= null && !imgp.getHideOverlay());
 

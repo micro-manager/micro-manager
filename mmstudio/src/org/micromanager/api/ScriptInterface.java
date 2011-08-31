@@ -579,4 +579,6 @@ public interface ScriptInterface {
     * Attach a display to the image cache.
     */
    public void addImageStorageListener(ImageCacheListener listener);
+
+   public ImageCache getImageCache();
 }

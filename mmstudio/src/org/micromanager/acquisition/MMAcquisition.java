@@ -36,6 +36,7 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 import org.json.JSONException;
 import org.micromanager.MMStudioMainFrame;
+import org.micromanager.api.ImageCache;
 
 import org.micromanager.api.TaggedImageStorage;
 import org.micromanager.utils.MDUtils;
@@ -389,7 +390,11 @@ public class MMAcquisition {
       } catch (JSONException ex) {
          throw new MMScriptException(ex);
       }
-      virtAcq_.imageCache_.putImage(taggedImg);
+      try {
+        virtAcq_.imageCache_.putImage(taggedImg);
+      } catch (Exception ex) {
+         throw new MMScriptException(ex);
+      }
       if (updateDisplay) {
          try {
             virtAcq_.showImage(taggedImg);
@@ -434,7 +439,7 @@ public class MMAcquisition {
       return null;
    }
 
-   public MMImageCache getImageCache() {
+   public ImageCache getImageCache() {
       if (virtAcq_ == null)
          return null;
       else

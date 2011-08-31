@@ -26,6 +26,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 import org.micromanager.MMStudioMainFrame;
 import org.micromanager.api.AcquisitionEngine;
+import org.micromanager.api.ImageCache;
 import org.micromanager.utils.FileDialogs;
 import org.micromanager.utils.ImageUtils;
 import org.micromanager.utils.JavaUtils;
@@ -50,7 +51,7 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
 
    final static Color[] rgb = {Color.red, Color.green, Color.blue};
 
-   final MMImageCache imageCache_;
+   final ImageCache imageCache_;
    final private ImagePlus hyperImage_;
    final private HyperstackControls hc_;
    final AcquisitionVirtualStack virtualStack_;
@@ -149,11 +150,11 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
       }
    }
 
-   public VirtualAcquisitionDisplay(MMImageCache imageCache, AcquisitionEngine eng) {
+   public VirtualAcquisitionDisplay(ImageCache imageCache, AcquisitionEngine eng) {
       this(imageCache, eng, "Untitled");
    }
    
-   public VirtualAcquisitionDisplay(MMImageCache imageCache, AcquisitionEngine eng, String name) {
+   public VirtualAcquisitionDisplay(ImageCache imageCache, AcquisitionEngine eng, String name) {
       name_ = name;
       imageCache_ = imageCache;
       eng_ = eng;
@@ -828,7 +829,7 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
       return hyperImage_;
    }
 
-   public MMImageCache getImageCache() {
+   public ImageCache getImageCache() {
       return imageCache_;
    }
 
@@ -930,7 +931,7 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
    }
 
    public boolean isDiskCached() {
-      MMImageCache imageCache = imageCache_;
+      ImageCache imageCache = imageCache_;
       if (imageCache == null)
          return false;
       else
