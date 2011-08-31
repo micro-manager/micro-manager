@@ -76,11 +76,11 @@ public class MDUtils {
    }
 
    public static int getSliceIndex(JSONObject map) throws JSONException {
-      return map.getInt("SliceIndex");
+      return map.getInt("Slice");
    }
 
    public static void setSliceIndex(JSONObject map, int sliceIndex) throws JSONException {
-      map.put("SliceIndex", sliceIndex);
+      map.put("Slice", sliceIndex);
    }
 
    public static int getChannelIndex(JSONObject map) throws JSONException {
@@ -92,11 +92,11 @@ public class MDUtils {
    }
 
    public static int getFrameIndex(JSONObject map) throws JSONException {
-      return map.getInt("FrameIndex");
+      return map.getInt("Frame");
    }
 
    public static void setFrameIndex(JSONObject map, int frameIndex) throws JSONException {
-      map.put("FrameIndex", frameIndex);
+      map.put("Frame", frameIndex);
    }
 
    public static String getPositionName(JSONObject map) throws JSONException {

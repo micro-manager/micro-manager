@@ -298,14 +298,14 @@ public class MMAcquisition {
 
          tags.put("Channel", getChannelName(channel));
          tags.put("ChannelIndex", channel);
-         tags.put("FrameIndex", frame);
+         tags.put("Frame", frame);
          tags.put("Height", height_);
          tags.put("PositionIndex", position);
          // the following influences the format data will be saved!
          if (numPositions_ > 1) {
             tags.put("PositionName", "Pos" + position);
          }
-         tags.put("SliceIndex", slice);
+         tags.put("Slice", slice);
          tags.put("Width", width_);
          if (depth_ == 1) {
             tags.put("PixelType", "GRAY8");
