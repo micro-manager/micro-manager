@@ -29,7 +29,7 @@
                                                     make-property-sequences]])
   (:import [org.micromanager AcqControlDlg]
            [org.micromanager.api AcquisitionEngine TaggedImageAnalyzer]
-           [org.micromanager.acquisition AcquisitionWrapperEngine LiveAcqDisplay TaggedImageQueue
+           [org.micromanager.acquisition AcquisitionWrapperEngine LiveAcq TaggedImageQueue
                                          ProcessorStack SequenceSettings MMImageCache
                                          TaggedImageStorageRam VirtualAcquisitionDisplay]
            [mmcorej TaggedImage Configuration Metadata]
@@ -423,7 +423,7 @@
 
 (defn cleanup []
   (log "cleanup")
-  (do-when #(.update %) (:display @state))
+ ; (do-when #(.update %) (:display @state))
   (state-assoc! :finished true, :running false, :display nil)
   (when (core isSequenceRunning)
     (core stopSequenceAcquisition))
@@ -683,7 +683,7 @@
                      "Acquisition Engine Thread (Clojure)")
         processors (ProcessorStack. out-queue (.getTaggedImageProcessors acq-eng))
         out-queue-2 (.begin processors)
-        display (LiveAcqDisplay. mmc out-queue-2 (make-summary-metadata settings)
+        display (LiveAcq. mmc out-queue-2 (make-summary-metadata settings)
                   (:save settings) acq-eng)]
     (def outq out-queue)
     (when-not (:stop @(.state this))

@@ -2,8 +2,7 @@
   (:import [org.micromanager.utils ImageUtils PropertyItem]
            [org.micromanager.api Autofocus]
            [ij ImagePlus])
-  (:use [org.micromanager.mm
-            :only (load-mm gui mmc core double-vector)])
+  (:use [org.micromanager.mm :only (load-mm gui mmc core double-vector)])
   (:gen-class
     :name org.micromanager.ZippyFocus
     :implements [org.micromanager.api.Autofocus]))
@@ -26,14 +25,13 @@
       (core isSequenceRunning)))
 
 (defn pop-burst-image []
-  (while (and ;(. mmc isSequenceRunning)
-              (zero? (. mmc getRemainingImageCount)))
+  (while (and (zero? (. mmc getRemainingImageCount)))
     (Thread/sleep 1))
   (core popNextImage))
 
 (defn grab-images [n]
-    (for [_ (range n) :while (more-images-expected)]
-      (pop-burst-image)))
+  (for [_ (range n) :while (more-images-expected)]
+    (pop-burst-image)))
 
 (defn image-stat [img]
   (.. ImageUtils (makeProcessor mmc img) getStatistics))
@@ -59,12 +57,12 @@
     0))
 
 (defn acquire-images [z-drive trigger exposure]
-    (core setExposure exposure)
-    (core setPosition z-drive (first trigger))
-    (core loadStageSequence z-drive (double-vector trigger))
-    (core startStageSequence z-drive)
-    (core startSequenceAcquisition (count trigger) 0 false)
-    (grab-images (count trigger)))
+  (core setExposure exposure)
+  (core setPosition z-drive (first trigger))
+  (core loadStageSequence z-drive (double-vector trigger))
+  (core startStageSequence z-drive)
+  (core startSequenceAcquisition (count trigger) 0 false)
+  (grab-images (count trigger)))
 
 (defn run-autofocus [search-params]
   (let [z-drive (core getFocusDevice)

@@ -9,6 +9,7 @@ import ij.process.ImageProcessor;
 import java.awt.image.ColorModel;
 import mmcorej.TaggedImage;
 import org.json.JSONObject;
+import org.micromanager.api.TaggedImageStorage;
 import org.micromanager.utils.ImageUtils;
 import org.micromanager.utils.MDUtils;
 import org.micromanager.utils.ReportingUtils;
@@ -18,14 +19,14 @@ import org.micromanager.utils.ReportingUtils;
  * 
  */
 public class AcquisitionVirtualStack extends ij.VirtualStack {
-   final private MMImageCache imageCache_;
+   final private TaggedImageStorage imageCache_;
    final private VirtualAcquisitionDisplay acq_;
    final protected int width_, height_, type_;
    private int nSlices_;
    private int positionIndex_ = 0;
 
    public AcquisitionVirtualStack(int width, int height, int type,
-           ColorModel cm, MMImageCache imageCache, int nSlices,
+           ColorModel cm, TaggedImageStorage imageCache, int nSlices,
            VirtualAcquisitionDisplay acq) {
       super(width, height, cm, "");
       imageCache_ = imageCache;
@@ -52,7 +53,7 @@ public class AcquisitionVirtualStack extends ij.VirtualStack {
       nSlices_ = size;
    }
 
-   public MMImageCache getCache() {
+   public TaggedImageStorage getCache() {
       return imageCache_;
    }
 

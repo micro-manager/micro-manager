@@ -6,11 +6,9 @@ package org.micromanager.acquisition;
 
 import java.io.File;
 import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import javax.swing.SwingUtilities;
 import mmcorej.CMMCore;
 import mmcorej.TaggedImage;
 import org.json.JSONObject;
@@ -24,7 +22,7 @@ import org.micromanager.utils.ReportingUtils;
  *
  * @author arthur
  */
-public class LiveAcqDisplay extends Thread {
+public class LiveAcq extends Thread {
 
    private static int untitledID_ = 0;
    protected final CMMCore core_;
@@ -32,9 +30,8 @@ public class LiveAcqDisplay extends Thread {
    private BlockingQueue<TaggedImage> imageProducingQueue_;
    private MMImageCache imageCache_ = null;
    private VirtualAcquisitionDisplay display_ = null;
-   private JSONObject lastTags_ = null;
 
-   public LiveAcqDisplay(CMMCore core,
+   public LiveAcq(CMMCore core,
            BlockingQueue<TaggedImage> imageProducingQueue,
            JSONObject summaryMetadata,
            boolean diskCached,
@@ -50,7 +47,7 @@ public class LiveAcqDisplay extends Thread {
       if (diskCached_) {
          try {
             acqPath = createAcqPath(summaryMetadata.getString("Directory"),
-                                    summaryMetadata.getString("Prefix"));
+                    summaryMetadata.getString("Prefix"));
             imageFileManager = ImageUtils.newImageStorageInstance(acqPath,
                     true, (JSONObject) null);
          } catch (Exception e) {
@@ -63,15 +60,16 @@ public class LiveAcqDisplay extends Thread {
          imageFileManager = new TaggedImageStorageRam(null);
       }
 
-
       imageCache_ = new MMImageCache(imageFileManager);
       imageCache_.setSummaryMetadata(summaryMetadata);
 
       display_ = new VirtualAcquisitionDisplay(imageCache_, eng);
+      imageCache_.addImageStorageListener(display_);
    }
 
    public void start() {
-      Thread savingThread = new Thread("LiveAcqDisplay saving thread.") {
+      Thread savingThread = new Thread("LiveAcq saving thread.") {
+
          public void run() {
             long t1 = System.currentTimeMillis();
             int imageCount = 0;
@@ -96,56 +94,16 @@ public class LiveAcqDisplay extends Thread {
       };
       savingThread.start();
 
-
-      Thread displayThread = new Thread("LiveAcqDisplay display thread.") {
-         public void run() {
-            long t1 = System.currentTimeMillis();
-            int imageCount = 0;
-            long t = 0;
-            long tLast = 0;
-            try {
-               while (!imageCache_.isFinished()) {
-                  updateDisplay();
-                  t = System.currentTimeMillis();
-                  if (t - tLast < 30) {
-                     JavaUtils.sleep((int) (t - tLast));
-                  }
-                  tLast = t;
-                  ++imageCount;
-               }
-               updateDisplay();
-            } catch (Exception ex2) {
-               ReportingUtils.logError(ex2);
-            }
-            long t2 = System.currentTimeMillis();
-         }
-      };
-      displayThread.start();
    }
-   
+
    private static String getUniqueUntitledName() {
       ++untitledID_;
       return "Untitled" + untitledID_;
    }
 
-
    protected void cleanup() {
       try {
          imageCache_.finished();
-      } catch (Exception e) {
-         ReportingUtils.logError(e);
-      }
-   }
-
-   private void updateDisplay() {
-      try {
-
-         JSONObject tags = imageCache_.getLastImageTags();
-
-         if (tags != null && tags != lastTags_) {
-            display_.showImage(tags);
-            lastTags_ = tags;
-         }
       } catch (Exception e) {
          ReportingUtils.logError(e);
       }
@@ -167,7 +125,7 @@ public class LiveAcqDisplay extends Thread {
          if (theName.startsWith(prefix)) {
             try {
                //e.g.: "blah_32.ome.tiff"
-               Pattern p = Pattern.compile("\\Q" + prefix +"\\E"+ "(\\d+).*+");
+               Pattern p = Pattern.compile("\\Q" + prefix + "\\E" + "(\\d+).*+");
                Matcher m = p.matcher(theName);
                if (m.matches()) {
                   number = Integer.parseInt(m.group(1));
@@ -180,9 +138,5 @@ public class LiveAcqDisplay extends Thread {
          }
       }
       return maxNumber;
-   }
-
-   public void update() {
-      display_.updateWindow();
    }
 }

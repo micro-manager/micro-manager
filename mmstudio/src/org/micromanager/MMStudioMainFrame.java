@@ -78,6 +78,7 @@ import mmcorej.StrVector;
 
 import org.json.JSONObject;
 import org.micromanager.acquisition.AcquisitionManager;
+import org.micromanager.api.ImageCacheListener;
 import org.micromanager.acquisition.MMImageCache;
 import org.micromanager.api.AcquisitionEngine;
 import org.micromanager.api.Autofocus;
@@ -142,6 +143,7 @@ import org.micromanager.api.TaggedImageStorage;
 import org.micromanager.utils.FileDialogs;
 import org.micromanager.utils.FileDialogs.FileType;
 import org.micromanager.utils.HotKeysDialog;
+import org.micromanager.utils.MDUtils;
 import org.micromanager.utils.MMKeyDispatcher;
 import org.micromanager.utils.ReportingUtils;
 
@@ -571,6 +573,10 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
          }
       };
       pipelineClassLoadingThread_.start();
+   }
+
+   public void addImageStorageListener(ImageCacheListener listener) {
+      throw new UnsupportedOperationException("Not supported yet.");
    }
 
  
@@ -4089,7 +4095,7 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
       MMAcquisition acq = acqMgr_.getAcquisition(name);
       int f = 1 + acq.getLastAcquiredFrame();
       try {
-         taggedImg.tags.put("FrameIndex", f);
+         MDUtils.setFrameIndex(taggedImg.tags, f);
          } catch (JSONException e) {
             throw new MMScriptException("Unable to set the frame index.");
          }
@@ -4105,7 +4111,6 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
       MMAcquisition acq = acqMgr_.getAcquisition(name);
       acq.insertImage(img, frame, channel, slice);
    }
-
 
    public void addImage(String name, TaggedImage taggedImg) throws MMScriptException {
       acqMgr_.getAcquisition(name).insertImage(taggedImg);

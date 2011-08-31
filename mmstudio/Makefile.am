@@ -28,7 +28,7 @@ MMJ_.jar:  \
 	$(srcdir)/src/org/micromanager/acquisition/ChannelControlPanel.form \
 	$(srcdir)/src/org/micromanager/acquisition/ComponentTitledBorder.java \
 	$(srcdir)/src/org/micromanager/acquisition/HyperstackControls.java \
-	$(srcdir)/src/org/micromanager/acquisition/LiveAcqDisplay.java \
+	$(srcdir)/src/org/micromanager/acquisition/LiveAcq.java \
 	$(srcdir)/src/org/micromanager/acquisition/MMAcquisition.java \
 	$(srcdir)/src/org/micromanager/acquisition/MMImageCache.java \
 	$(srcdir)/src/org/micromanager/acquisition/VirtualAcquisitionDisplay.java \

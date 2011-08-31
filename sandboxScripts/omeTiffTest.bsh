@@ -1,4 +1,6 @@
 import org.micromanager.utils.*;
+import org.micromanager.acquisition.*;
 import org.micromanager.ometiff.*;
 
+//ImageUtils.setPreferredTaggedImageStorage(TaggedImageStorageDiskDefault.class);
 ImageUtils.setPreferredTaggedImageStorage(TaggedImageStorageOMETIFF.class);

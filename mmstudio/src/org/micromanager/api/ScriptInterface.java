@@ -285,7 +285,7 @@ public interface ScriptInterface {
     * Load setting for Burst Acquisition from file
     * Will open Burst Acquisition Dialog when it is not yet open
     * Not Implemented!
-    * @Depreciated
+    * @Deprecated
     */
    public void loadBurstAcquisition(String path) throws MMScriptException;
 
@@ -300,7 +300,7 @@ public interface ScriptInterface {
     * Executes Acquisition with current settings but allows for changing the data path
     * Will open the Acquisition Dialog when it is not open yet.
     * Returns after Acquisition finishes
-    * @Depreciated - typo
+    * @Deprecated - typo
     */
    public void runAcqusition(String name, String root) throws MMScriptException;
 
@@ -308,7 +308,7 @@ public interface ScriptInterface {
     * Executes Acquisition with current settings but allows for changing the data path
     * Will open the Acquisition Dialog when it is not open yet.
     * Returns after Acquisition finishes
-    * @Depreciated - typo
+    * @Deprecated - typo
     */
    public void runAcquisition(String name, String root) throws MMScriptException;
 
@@ -574,4 +574,9 @@ public interface ScriptInterface {
     */
    public void setROI(Rectangle r) throws MMScriptException;
 
+
+   /*
+    * Attach a display to the image cache.
+    */
+   public void addImageStorageListener(ImageCacheListener listener);
 }

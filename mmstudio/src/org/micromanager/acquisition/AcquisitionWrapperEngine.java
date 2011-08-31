@@ -55,7 +55,7 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
    private String dirName_;
    private int numFrames_;
    private double interval_;
-   private LiveAcqDisplay display_;
+   private LiveAcq display_;
    private double minZStepUm_;
    private String comment_;
    private boolean saveFiles_;

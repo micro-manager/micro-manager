@@ -1,5 +1,6 @@
 package org.micromanager.acquisition;
 
+import org.micromanager.api.ImageCacheListener;
 import ij.ImageStack;
 import ij.process.LUT;
 import java.awt.event.AdjustmentEvent;
@@ -18,6 +19,7 @@ import java.awt.event.WindowEvent;
 import java.io.File;
 import java.io.IOException;
 import javax.swing.JOptionPane;
+import javax.swing.SwingUtilities;
 import mmcorej.TaggedImage;
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -35,7 +37,7 @@ import org.micromanager.utils.ReportingUtils;
  *
  * @author arthur
  */
-public class VirtualAcquisitionDisplay {
+public class VirtualAcquisitionDisplay implements ImageCacheListener {
    
    public static VirtualAcquisitionDisplay getDisplay(ImagePlus imgp) {
       ImageStack stack = imgp.getStack();
@@ -59,6 +61,8 @@ public class VirtualAcquisitionDisplay {
    private AcquisitionEngine eng_;
    private boolean finished_ = false;
    private final String name_;
+   private long lastDisplayTime_;
+   private JSONObject lastDisplayTags_;
 
    /* This interface and the following two classes
     * allow us to manipulate the dimensions
@@ -216,6 +220,41 @@ public class VirtualAcquisitionDisplay {
       }
       updateAndDraw();
       updateWindow();
+   }
+
+
+         /*
+    * Method required by ImageStorageListener
+    */
+   public void imageReceived(TaggedImage taggedImage) {
+      SwingUtilities.invokeLater(new Runnable() {
+         public void run() {
+            updateDisplay(false);
+         }
+      });
+   }
+
+   /*
+    * Method reuired by ImageStorageListener
+    */
+   public void imagingFinished(String path) {
+      updateDisplay(true);
+   }
+
+   private void updateDisplay(boolean finalUpdate) {
+      try {
+         long t = System.currentTimeMillis();
+         if (finalUpdate || (Math.abs(t - lastDisplayTime_) > 30)) {
+            JSONObject tags = imageCache_.getLastImageTags();
+            if (tags != null && tags != lastDisplayTags_) {
+               showImage(tags);
+               lastDisplayTags_ = tags;
+            }
+            lastDisplayTime_ = t;
+         }
+      } catch (Exception e) {
+         ReportingUtils.logError(e);
+      }
    }
 
    private ScrollbarWithLabel getTSelector() {
@@ -424,8 +463,9 @@ public class VirtualAcquisitionDisplay {
       }
 
       String status = "";
-
-      if (eng_ != null) {
+      final AcquisitionEngine eng = eng_;
+      
+      if (eng != null) {
          if (acquisitionIsRunning()) {
             if (!abortRequested()) {
                hc_.enableAcquisitionControls(true);
@@ -441,13 +481,14 @@ public class VirtualAcquisitionDisplay {
          } else {
             hc_.enableAcquisitionControls(false);
             if (!status.contentEquals("interrupted")) {
-              if (eng_.isFinished()) {
+              if (eng.isFinished()) {
                  status = "finished";
+                 eng_ = null;
               }
             }
          }
          status += ", ";
-         if (eng_.isFinished()) {
+         if (eng.isFinished()) {
             eng_ = null;
             finished_ = true;
          }

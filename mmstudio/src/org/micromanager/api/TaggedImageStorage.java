@@ -7,6 +7,7 @@ package org.micromanager.api;
 
 import mmcorej.TaggedImage;
 import org.json.JSONObject;
+import org.micromanager.acquisition.TaggedImageStorageDiskDefault;
 import org.micromanager.utils.MMException;
 
 /**
@@ -27,5 +28,4 @@ public interface TaggedImageStorage {
    public void close();
    public String getDiskLocation();
    public int lastAcquiredFrame();
-
 }

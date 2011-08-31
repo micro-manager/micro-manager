@@ -4,6 +4,7 @@
  */
 package org.micromanager.acquisition;
 
+import org.micromanager.api.ImageCacheListener;
 import java.lang.ref.SoftReference;
 import java.util.ArrayList;
 import org.micromanager.api.TaggedImageStorage;
@@ -12,7 +13,6 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
 import mmcorej.TaggedImage;
-import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.micromanager.MMStudioMainFrame;
@@ -26,8 +26,8 @@ import org.micromanager.utils.ReportingUtils;
  */
 public class MMImageCache implements TaggedImageStorage {
    public static String menuName_ = null;
-   public static ArrayList<ImageStorageListener> imageStorageListeners_
-           = new ArrayList<ImageStorageListener>();
+   public ArrayList<ImageCacheListener> imageStorageListeners_
+           = new ArrayList<ImageCacheListener>();
    private TaggedImageStorage imageStorage_;
    private Set<String> changingKeys_;
    private JSONObject firstTags_;
@@ -37,15 +37,15 @@ public class MMImageCache implements TaggedImageStorage {
    private boolean conserveRam_;
 
 
-   public static void addImageStorageListener(ImageStorageListener l) {
+   public void addImageStorageListener(ImageCacheListener l) {
       imageStorageListeners_.add(l);
    }
 
-   public static ImageStorageListener[] getImageStorageListeners() {
-      return (ImageStorageListener []) imageStorageListeners_.toArray();
+   public ImageCacheListener[] getImageStorageListeners() {
+      return (ImageCacheListener []) imageStorageListeners_.toArray();
    }
 
-   public static void removeImageStorageListener(ImageStorageListener l) {
+   public void removeImageStorageListener(ImageCacheListener l) {
       imageStorageListeners_.remove(l);
    }
 
@@ -60,8 +60,8 @@ public class MMImageCache implements TaggedImageStorage {
       imageStorage_.finished();
       String path = getDiskLocation();
       if (path != null) {
-         for (ImageStorageListener l:imageStorageListeners_) {
-            l.imageStorageFinished(path);
+         for (ImageCacheListener l:imageStorageListeners_) {
+            l.imagingFinished(path);
          }
       }
    }
@@ -122,6 +122,9 @@ public class MMImageCache implements TaggedImageStorage {
          synchronized (this) {
             lastFrame_ = Math.max(lastFrame_, MDUtils.getFrameIndex(taggedImg.tags));
             lastTags_ = taggedImg.tags;
+         }
+         for (ImageCacheListener l:imageStorageListeners_) {
+            l.imageReceived(taggedImg);
          }
       } catch (Exception ex) {
          ReportingUtils.logError(ex);
