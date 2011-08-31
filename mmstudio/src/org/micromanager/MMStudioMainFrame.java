@@ -78,6 +78,7 @@ import mmcorej.StrVector;
 
 import org.json.JSONObject;
 import org.micromanager.acquisition.AcquisitionManager;
+import org.micromanager.api.ImageCache;
 import org.micromanager.api.ImageCacheListener;
 import org.micromanager.acquisition.MMImageCache;
 import org.micromanager.api.AcquisitionEngine;
@@ -576,6 +577,10 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
    }
 
    public void addImageStorageListener(ImageCacheListener listener) {
+      throw new UnsupportedOperationException("Not supported yet.");
+   }
+
+   public ImageCache getAcquisitionImageCache(String acquisitionName) {
       throw new UnsupportedOperationException("Not supported yet.");
    }
 

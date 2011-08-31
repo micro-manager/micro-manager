@@ -580,5 +580,9 @@ public interface ScriptInterface {
     */
    public void addImageStorageListener(ImageCacheListener listener);
 
-   public ImageCache getImageCache();
+
+   /*
+    * Get the image cache object associated with the acquisition.
+    */
+   public ImageCache getAcquisitionImageCache(String acquisitionName);
 }
