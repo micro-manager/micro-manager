@@ -585,4 +585,12 @@ public interface ScriptInterface {
     * Get the image cache object associated with the acquisition.
     */
    public ImageCache getAcquisitionImageCache(String acquisitionName);
+
+
+   /**
+    * Opens the XYPositionList when it is not opened
+    * Adds the current position to the list (same as pressing the "Mark" button)
+    */
+   public void markCurrentPosition();
+
 }

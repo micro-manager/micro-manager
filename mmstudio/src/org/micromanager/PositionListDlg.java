@@ -763,7 +763,7 @@ public void addPosition(MultiStagePosition msp, String label) {
     * Store current xyPosition.
     * Use data collected in refreshCurrentPosition()
     */
-   private void markPosition() {
+   public void markPosition() {
       refreshCurrentPosition();
       MultiStagePosition msp = new MultiStagePosition();
       msp = curMsp_;

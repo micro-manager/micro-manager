@@ -2697,6 +2697,7 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
       }
    }
 
+
    private void setShutterButton(boolean state) {
       if (state) {
          toggleButtonShutter_.setSelected(true);
@@ -2759,6 +2760,20 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
 
    private boolean isCameraAvailable() {
       return cameraLabel_.length() > 0;
+   }
+
+   /**
+    * Part of ScriptInterface API
+    * Opens the XYPositionList when it is not opened
+    * Adds the current position to the list (same as pressing the "Mark" button)
+    */
+   public void markCurrentPosition() {
+      if (posListDlg_ == null) {
+         showXYPositionList();
+      }
+      if (posListDlg_ != null) {
+         posListDlg_.markPosition();
+      }
    }
 
    public boolean isImageWindowOpen() {
