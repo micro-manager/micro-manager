@@ -303,4 +303,5 @@ public interface AcquisitionEngine {
 
    public long getNextWakeTime();
    public boolean isFinished();
+   public ImageCache getImageCache();
 }

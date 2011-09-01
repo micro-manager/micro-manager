@@ -13,6 +13,7 @@ import mmcorej.CMMCore;
 import mmcorej.TaggedImage;
 import org.json.JSONObject;
 import org.micromanager.api.AcquisitionEngine;
+import org.micromanager.api.ImageCache;
 import org.micromanager.api.TaggedImageStorage;
 import org.micromanager.utils.ImageUtils;
 import org.micromanager.utils.JavaUtils;
@@ -64,7 +65,7 @@ public class LiveAcq extends Thread {
       imageCache_.setSummaryMetadata(summaryMetadata);
 
       display_ = new VirtualAcquisitionDisplay(imageCache_, eng);
-      imageCache_.addImageStorageListener(display_);
+      imageCache_.addImageCacheListener(display_);
    }
 
    public void start() {
@@ -138,5 +139,9 @@ public class LiveAcq extends Thread {
          }
       }
       return maxNumber;
+   }
+
+   public ImageCache getImageCache() {
+      return imageCache_;
    }
 }

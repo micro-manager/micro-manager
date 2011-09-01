@@ -19,6 +19,7 @@ import org.micromanager.MMStudioMainFrame;
 import org.micromanager.api.AcquisitionEngine;
 import org.micromanager.api.DataProcessor;
 import org.micromanager.api.DeviceControlGUI;
+import org.micromanager.api.ImageCache;
 import org.micromanager.api.Pipeline;
 import org.micromanager.navigation.PositionList;
 import org.micromanager.utils.AutofocusManager;
@@ -277,6 +278,10 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
 
    public long getNextWakeTime() {
       return pipeline_.nextWakeTime();
+   }
+
+   public ImageCache getImageCache() {
+      return pipeline_.getImageCache();
    }
 
 //////////////////// Setters and Getters ///////////////////////////////

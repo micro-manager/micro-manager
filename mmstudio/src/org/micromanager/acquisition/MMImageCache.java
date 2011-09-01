@@ -38,7 +38,7 @@ public class MMImageCache implements TaggedImageStorage, ImageCache {
    private boolean conserveRam_;
 
 
-   public void addImageStorageListener(ImageCacheListener l) {
+   public void addImageCacheListener(ImageCacheListener l) {
       imageStorageListeners_.add(l);
    }
 

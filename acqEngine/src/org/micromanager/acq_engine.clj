@@ -683,15 +683,16 @@
                      "Acquisition Engine Thread (Clojure)")
         processors (ProcessorStack. out-queue (.getTaggedImageProcessors acq-eng))
         out-queue-2 (.begin processors)
-        display (LiveAcq. mmc out-queue-2 (make-summary-metadata settings)
+        live-acq (LiveAcq. mmc out-queue-2 (make-summary-metadata settings)
                   (:save settings) acq-eng)]
+    (swap! (.state this) assoc :image-cache (.getImageCache live-acq))
     (def outq out-queue)
     (when-not (:stop @(.state this))
       (if (. gui getLiveMode)
         (. gui enableLiveMode false))
       (.start acq-thread)
-      (swap! (.state this) assoc :display display)
-      (.start display))))
+      (swap! (.state this) assoc :display live-acq)
+      (.start live-acq))))
 
 (defn -acquireSingle [this]
   (load-mm)
@@ -751,6 +752,10 @@
   
 (defn -clearRunnables [this]
   (reset! attached-runnables (vec nil)))
+
+
+(defn -getImageCache [this]
+  (:image-cache @(.state this)))
 
 ;; testing
 

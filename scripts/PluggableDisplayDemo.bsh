@@ -1,0 +1,20 @@
+// Arthur Edelstein, September 2011
+
+// This script demonstrates how to use Micro-Manager's pluggable display interface.
+// Start an acquisition using the Multi-D Acq. dialog, and then run this script
+// to attach a second live display. Implementing the ImageCacheListener
+// interface can allow you to create alternative displays.
+
+import org.micromanager.acquisition.VirtualAcquisitionDisplay;
+import org.micromanager.api.ImageCache;
+import org.micromanager.api.ImageCacheListener;
+
+// First get the ImageCache from the running acquisition:
+ImageCache cache = acq.getImageCache();
+
+// Now create the display. The VirtualAcquisitionDisplay is one implementation.
+ImageCacheListener display = new VirtualAcquisitionDisplay(cache, acq);
+
+// Finally, attach the display as a listener, so it will update as the acquisition
+// acquires new images.
+cache.addImageCacheListener(display);

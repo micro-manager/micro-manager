@@ -14,7 +14,7 @@ import org.json.JSONObject;
  * @author arthur
  */
 public interface ImageCache extends TaggedImageStorage {
-   void addImageStorageListener(ImageCacheListener l);
+   void addImageCacheListener(ImageCacheListener l);
    Set<String> getChangingKeys();
    String getComment();
    String getDiskLocation();
