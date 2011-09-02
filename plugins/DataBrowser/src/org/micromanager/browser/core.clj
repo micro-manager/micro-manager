@@ -27,7 +27,8 @@
            [java.awt.event ItemEvent ItemListener KeyAdapter MouseAdapter
                            WindowAdapter WindowListener]
            [com.swtdesigner SwingResourceManager]
-           [org.micromanager.acquisition ImageStorageListener MMImageCache]
+           [org.micromanager.api ImageCacheListener]
+           [org.micromanager.acquisition MMImageCache]
            [org.micromanager.utils JavaUtils ReportingUtils])
   (:use [org.micromanager.browser.utils
             :only (gen-map constrain-to-parent create-button create-icon-button
@@ -556,8 +557,8 @@ inside an existing location in your collection."
       (update-collection-menu (get-last-collection-name)))))
 
 (defn create-image-storage-listener []
-  (reify ImageStorageListener
-    (imageStorageFinished [_ path]
+  (reify ImageCacheListener
+    (imagingFinished [_ path]
       ;(println "image storage:" path)
       (doseq [data-set (find-data-sets path)]
         (.put pending-data-sets [data-set ""])))))
@@ -694,7 +695,7 @@ inside an existing location in your collection."
   (update-browser-status)
   (start-scanning-thread)
   (start-reading-thread)
-  (MMImageCache/addImageStorageListener (create-image-storage-listener))
+  ;(MMImageCache/addImageCacheListener (create-image-storage-listener))
   (awt-event
     (.show (@browser :frame))
     (.setModel (:table @browser) (create-browser-table-model tags))
