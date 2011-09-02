@@ -45,6 +45,7 @@ public interface ScriptInterface {
    /**
     * Blocks the script execution for the specified number of milliseconds.
     * Script can be aborted during sleep.
+    * @throws MMScriptException 
     */
    public void sleep(long ms) throws MMScriptException;
    
@@ -132,12 +133,14 @@ public interface ScriptInterface {
    public String getUniqueAcquisitionName(String stem);
    
    /*
-    * Return the name of the current album.
+    * Returns the name of the current album.
+    * Albums are used by the "Acquire" button in the main window of Micro-Manager
     */
    public String getCurrentAlbum();
 
    /*
     * Add a TaggedImage to an album; create a new album if necessary.
+    * Albums are used by the "Acquire" button in the main window of Micro-Manager
     */
    public void addToAlbum(TaggedImage image) throws MMScriptException;
 
@@ -589,7 +592,7 @@ public interface ScriptInterface {
 
    /**
     * Opens the XYPositionList when it is not opened
-    * Adds the current position to the list (same as pressing the "Mark" button)
+    * Adds the current position to the list (same as pressing the "Mark" button in the XYPositionList)
     */
    public void markCurrentPosition();
 
