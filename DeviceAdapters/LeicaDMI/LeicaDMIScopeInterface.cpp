@@ -1511,15 +1511,23 @@ int LeicaScopeInterface::SetTLShutterPosition(MM::Device& device, MM::Core& core
  */
 int LeicaScopeInterface::SetILShutterPosition(MM::Device& device, MM::Core& core, int position)
 {
-   scopeModel_->ILShutter_.SetBusy(true);
+   
    std::ostringstream os;
    if (standFamily_ == g_DMI456) {
+      scopeModel_->ILShutter_.SetBusy(true);
       os << g_Lamp << "032" << " 1" << " " << position;
       return core.SetSerialCommand(&device, port_.c_str(), os.str().c_str(), "\r");
    }
-   // in case of CTRMIC
-   os << g_IL_Turret << "025 " << position;
-   return core.SetSerialCommand(&device, port_.c_str(), os.str().c_str(), "\r");
+   // in case of CTRMIC (it does not send confirmation when moving shutter to position it is already on, so do not move in that case)
+   int currentPosition;
+   scopeModel_->ILShutter_.GetPosition(currentPosition);
+   if (currentPosition != position)
+   {
+      scopeModel_->ILShutter_.SetBusy(true);
+      os << g_IL_Turret << "025 " << position;
+      return core.SetSerialCommand(&device, port_.c_str(), os.str().c_str(), "\r");
+   }
+   return DEVICE_OK;
 }
 
 /**
@@ -2001,7 +2009,7 @@ int LeicaMonitoringThread::svc()
                          os >> posTL >> posIL;
                          scopeModel_->TLShutter_.GetMinPosition(minPos);
                          scopeModel_->TLShutter_.GetMaxPosition(maxPos);
-                         if (minPos <= posTL <= maxPos)
+                         if (minPos <= posTL && posTL <= maxPos)
                             scopeModel_->TLShutter_.SetPosition(posTL);
                          scopeModel_->ILTurret_.GetMinPosition(minPos);
                          scopeModel_->ILTurret_.GetMaxPosition(maxPos);
@@ -2062,7 +2070,8 @@ int LeicaMonitoringThread::svc()
                          break;
                          // dark flap in CTR_MIC
                       case (25) :
-                         scopeModel_->ILShutter_.SetBusy(false);
+                         // This merely ackowledges receipt of the command
+                         //scopeModel_->ILShutter_.SetBusy(false);
                          break;
                       case (26) :
                          int posILS;
