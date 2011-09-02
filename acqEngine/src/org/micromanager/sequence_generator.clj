@@ -15,7 +15,7 @@
 ;               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 
 (ns org.micromanager.sequence-generator
-  (:use [org.micromanager.mm :only [select-values-match? core]]))
+  (:use [org.micromanager.mm :only [select-values-match? core mmc]]))
 
 (def MAX-Z-TRIGGER-DIST 5.0)
 
@@ -150,9 +150,9 @@
     (and
       (channels-sequenceable (make-property-sequences props) channels)
       (or (= (e1 :slice) (e2 :slice))
-          (let [z-drive (core getFocusDevice)]
+          (let [z-drive (. mmc getFocusDevice)]
             (and
-              (core isStageSequenceable z-drive)
+              (. mmc isStageSequenceable z-drive)
               (< n (core getStageSequenceMaxLength z-drive))
               (<= (Math/abs (- (e1 :slice) (e2 :slice))) MAX-Z-TRIGGER-DIST)
               (<= (e1 :slice-index) (e2 :slice-index))))))))
