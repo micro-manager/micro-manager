@@ -271,7 +271,7 @@
                     :channel (get channels c)
                     :slice-index 0
                     :metadata (make-channel-metadata (get channels c))))))]
-    (println "events:" events)
+    ;(println "events:" events)
     (list
       (assoc (first events)
               :task :burst
