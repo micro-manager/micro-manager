@@ -492,7 +492,7 @@
 ;; generic metadata
 
 (defn convert-settings [^SequenceSettings settings]
-  (println "SequenceSettings slices:" (.slices settings))
+  ;(println "SequenceSettings slices:" (.slices settings))
   (-> settings
     (data-object-to-map)
     (rekey

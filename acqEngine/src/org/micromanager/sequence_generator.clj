@@ -185,17 +185,18 @@
         [burst remaining-events]))))
       
 (defn make-bursts [events]
-  (let [[burst later] (accumulate-burst-event events)]
-    (when burst
-      (cons
-        (if (< 1 (count burst))
-          (assoc (first burst)
-             :task :burst
-             :burst-data burst
-             :trigger-sequence (make-triggers burst))
-          (assoc (first burst) :task :snap))
-        (when later
-          (make-bursts later))))))
+  (lazy-seq
+    (let [[burst later] (accumulate-burst-event events)]
+      (when burst
+        (cons
+          (if (< 1 (count burst))
+            (assoc (first burst)
+                   :task :burst
+                   :burst-data burst
+                   :trigger-sequence (make-triggers burst))
+            (assoc (first burst) :task :snap))
+          (when later
+            (make-bursts later)))))))
 
 (defn add-next-task-tags [events]
   (for [p (pairs events)]
