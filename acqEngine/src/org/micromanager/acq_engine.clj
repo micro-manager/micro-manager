@@ -449,7 +449,8 @@
       (flatten
         (list
           #(log event)
-          (for [[axis pos] (:axes (MultiStagePosition-to-map current-position)) :when pos]
+          (for [[axis pos] (:axes (MultiStagePosition-to-map (get-msp current-position)))
+                :when pos]
             #(apply set-stage-position axis pos))
           (for [[d p v] (get-in event [:channel :properties])]
             #(set-property [d p v]))
@@ -484,10 +485,11 @@
   (binding [state (.state this)]
     (def last-state state) ; for debugging
     (let [acq-seq (generate-acq-sequence settings @attached-runnables)]
+       (def acq-sequence acq-seq)
       (execute (mapcat #(make-event-fns % out-queue) acq-seq))
       (.put out-queue TaggedImageQueue/POISON)
       (cleanup)
-      (def acq-sequence acq-seq))))
+     )))
 
 ;; generic metadata
 
