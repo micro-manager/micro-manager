@@ -179,6 +179,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "AndorSDK3", "..\DeviceAdapt
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "CARVII", "..\DeviceAdapters\CARVII\CARVII.vcproj", "{AA9B1613-8359-4944-B08D-B96639D0998E}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Scientifica", "..\DeviceAdapters\Scientifica\Scientifica.vcproj", "{20B38F93-934F-4022-9507-72693315AF6E}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
@@ -847,6 +849,14 @@ Global
 		{AA9B1613-8359-4944-B08D-B96639D0998E}.Release|Win32.ActiveCfg = Release|Win32
 		{AA9B1613-8359-4944-B08D-B96639D0998E}.Release|Win32.Build.0 = Release|Win32
 		{AA9B1613-8359-4944-B08D-B96639D0998E}.Release|x64.ActiveCfg = Release|Win32
+		{20B38F93-934F-4022-9507-72693315AF6E}.Debug|Win32.ActiveCfg = Debug|Win32
+		{20B38F93-934F-4022-9507-72693315AF6E}.Debug|Win32.Build.0 = Debug|Win32
+		{20B38F93-934F-4022-9507-72693315AF6E}.Debug|x64.ActiveCfg = Debug|x64
+		{20B38F93-934F-4022-9507-72693315AF6E}.Debug|x64.Build.0 = Debug|x64
+		{20B38F93-934F-4022-9507-72693315AF6E}.Release|Win32.ActiveCfg = Release|Win32
+		{20B38F93-934F-4022-9507-72693315AF6E}.Release|Win32.Build.0 = Release|Win32
+		{20B38F93-934F-4022-9507-72693315AF6E}.Release|x64.ActiveCfg = Release|x64
+		{20B38F93-934F-4022-9507-72693315AF6E}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
