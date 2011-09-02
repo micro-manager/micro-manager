@@ -1893,12 +1893,14 @@ int LeicaMonitoringThread::svc()
          int ret = core_.ReadFromSerial(&device_, port_.c_str(), (unsigned char*) (rcvBuf + bufLen), dataLength, charsRead);
 
          // Remove after debuggging with Stamatis!
+         /*
 			if( 0 < charsRead)
 			{
 				std::ostringstream tmpOut;
 				tmpOut << "MonitoringThread, read " << charsRead << " from serial port";
 				core_.LogMessage(&device_, tmpOut.str().c_str(), true);
 			}
+         */
 
          rcvBuf[charsRead + bufLen] = 0;
          memset(message, 0, strlen(message));
@@ -1995,9 +1997,16 @@ int LeicaMonitoringThread::svc()
                          break;
                       case (33) :
                          int posTL, posIL;
+                         int minPos, maxPos;
                          os >> posTL >> posIL;
-                         scopeModel_->TLShutter_.SetPosition(posTL);
-                         scopeModel_->ILShutter_.SetPosition(posIL);
+                         scopeModel_->TLShutter_.GetMinPosition(minPos);
+                         scopeModel_->TLShutter_.GetMaxPosition(maxPos);
+                         if (minPos <= posTL <= maxPos)
+                            scopeModel_->TLShutter_.SetPosition(posTL);
+                         scopeModel_->ILTurret_.GetMinPosition(minPos);
+                         scopeModel_->ILTurret_.GetMaxPosition(maxPos);
+                         if (minPos <= posIL && posIL <= maxPos)
+                            scopeModel_->ILShutter_.SetPosition(posIL);
                          scopeModel_->TLShutter_.SetBusy(false);
                          scopeModel_->ILShutter_.SetBusy(false);
                          break;
@@ -2054,6 +2063,7 @@ int LeicaMonitoringThread::svc()
                          // dark flap in CTR_MIC
                       case (25) :
                          scopeModel_->ILShutter_.SetBusy(false);
+                         break;
                       case (26) :
                          int posILS;
                          os >> posILS;
