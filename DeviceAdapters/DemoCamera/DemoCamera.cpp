@@ -1665,7 +1665,7 @@ void CDemoCamera::GenerateSyntheticImage(ImgBuffer& img, double exp)
       if( NULL!= pTmpBuffer)
 			memset( pTmpBuffer, 0, img.Height() * img.Width() * 3);
 
-      for (j=0; j<img.Width(); j++)
+      for (j=0; j<img.Height(); j++)
       {
          unsigned char theBytes[4];
          for (k=0; k<img.Width(); k++)
