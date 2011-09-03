@@ -188,7 +188,7 @@ make javadoc
 scp -r doc/* valelab.ucsf.edu:public_html/doc/mmstudio/
 
 # tag the repository
-if [ "$FULL" != "full" ]; then
+if [ "$FULL" == "full" ]; then
    svn mkdir -m "Making tag $VERSION" https://valelab.ucsf.edu/svn/micromanager2/tags/$VERSION
    svn copy https://valelab.ucsf.edu/svn/micromanager2/trunk/ https://valelab.ucsf.edu/svn/micromanager2/tags/$VERSION -m "Tagging version $VERSION"
 fi
