@@ -31,9 +31,6 @@ const char* g_CameraName = "MMCam";
 
 const char* g_PixelType_8bit = "8bit";
 const char* g_PixelType_16bit = "16bit";
-const char* g_PixelType_32bitRGB = "32bitRGB";
-const char* g_PixelType_64bitRGB = "64bitRGB";
-const char* g_PixelType_32bit = "32bit";
 
 // windows DLL entry code
 #ifdef WIN32
@@ -108,10 +105,12 @@ MMCamera::MMCamera() :
    initialized_(false),
    exposureMs_(10.0),
    roiX_(0),
-   roiY_(0)
+   roiY_(0),
+   thd_(0)
 {
    // call the base class method to set-up default error codes/messages
    InitializeDefaultErrorMessages();
+   thd_ = new SequenceThread(this);
 }
 
 /**
@@ -123,6 +122,10 @@ MMCamera::MMCamera() :
 */
 MMCamera::~MMCamera()
 {
+   if (initialized_)
+      Shutdown();
+
+   delete thd_;
 }
 
 /**
@@ -138,12 +141,9 @@ void MMCamera::GetName(char* name) const
 
 /**
 * Intializes the hardware.
-* Required by the MM::Device API.
 * Typically we access and initialize hardware at this point.
-* Device properties are typically created here as well, except
-* the ones we need to use for defining initialization parameters.
-* Such pre-initialization properties are created in the constructor.
-* (This device does not have any pre-initialization properties)
+* Device properties are typically created here as well.
+* Required by the MM::Device API.
 */
 int MMCamera::Initialize()
 {
@@ -165,6 +165,9 @@ int MMCamera::Initialize()
    vector<string> binningValues;
    binningValues.push_back("1");
    binningValues.push_back("2"); 
+
+   ret = SetAllowedValues(MM::g_Keyword_Binning, binningValues);
+   assert(ret == DEVICE_OK);
 
    // pixel type
    pAct = new CPropertyAction (this, &MMCamera::OnPixelType);
@@ -200,11 +203,9 @@ int MMCamera::Initialize()
 
 /**
 * Shuts down (unloads) the device.
-* Required by the MM::Device API.
 * Ideally this method will completely unload the device and release all resources.
 * Shutdown() may be called multiple times in a row.
-* After Shutdown() we should be allowed to call Initialize() again to load the device
-* without causing problems.
+* Required by the MM::Device API.
 */
 int MMCamera::Shutdown()
 {
@@ -220,6 +221,7 @@ int MMCamera::Shutdown()
 */
 int MMCamera::SnapImage()
 {
+   GenerateImage();
    return DEVICE_OK;
 }
 
@@ -235,8 +237,7 @@ int MMCamera::SnapImage()
 */
 const unsigned char* MMCamera::GetImageBuffer()
 {
-   unsigned char *pB = (unsigned char*)(img_.GetPixels());
-   return pB;
+   return const_cast<unsigned char*>(img_.GetPixels());
 }
 
 /**
@@ -353,11 +354,7 @@ int MMCamera::ClearROI()
 */
 double MMCamera::GetExposure() const
 {
-   char buf[MM::MaxStrLength];
-   int ret = GetProperty(MM::g_Keyword_Exposure, buf);
-   if (ret != DEVICE_OK)
-      return 0.0;
-   return atof(buf);
+   return exposureMs_;
 }
 
 /**
@@ -366,7 +363,7 @@ double MMCamera::GetExposure() const
 */
 void MMCamera::SetExposure(double exp)
 {
-   SetProperty(MM::g_Keyword_Exposure, CDeviceUtils::ConvertToString(exp));
+   exposureMs_ = exp;
 }
 
 /**
@@ -375,11 +372,7 @@ void MMCamera::SetExposure(double exp)
 */
 int MMCamera::GetBinning() const
 {
-   char buf[MM::MaxStrLength];
-   int ret = GetProperty(MM::g_Keyword_Binning, buf);
-   if (ret != DEVICE_OK)
-      return 1;
-   return atoi(buf);
+   return binning_;
 }
 
 /**
@@ -477,9 +470,14 @@ int MMCamera::OnBinning(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
    if (eAct == MM::AfterSet)
    {
+      long binSize;
+      pProp->Get(binSize);
+      binning_ = (int)binSize;
+      return ResizeImageBuffer();
    }
    else if (eAct == MM::BeforeGet)
    {
+      pProp->Set((long)binning_);
    }
 
    return DEVICE_OK;
@@ -492,9 +490,25 @@ int MMCamera::OnPixelType(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
    if (eAct == MM::AfterSet)
    {
+      string val;
+      pProp->Get(val);
+      if (val.compare(g_PixelType_8bit) == 0)
+         bytesPerPixel_ = 1;
+      else if (val.compare(g_PixelType_16bit) == 0)
+         bytesPerPixel_ = 2;
+      else
+         assert(false);
+
+      ResizeImageBuffer();
    }
    else if (eAct == MM::BeforeGet)
    {
+      if (bytesPerPixel_ == 1)
+         pProp->Set(g_PixelType_8bit);
+      else if (bytesPerPixel_ == 2)
+         pProp->Set(g_PixelType_16bit);
+      else
+         assert(false); // this should never happen
    }
 
    return DEVICE_OK;
@@ -507,9 +521,11 @@ int MMCamera::OnGain(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
    if (eAct == MM::AfterSet)
    {
+      pProp->Get(gain_);
    }
    else if (eAct == MM::BeforeGet)
    {
+      pProp->Set(gain_);
    }
 
    return DEVICE_OK;
@@ -525,11 +541,19 @@ int MMCamera::OnGain(MM::PropertyBase* pProp, MM::ActionType eAct)
 */
 int MMCamera::ResizeImageBuffer()
 {
+   img_.Resize(IMAGE_WIDTH/binning_, IMAGE_HEIGHT/binning_, bytesPerPixel_);
+
    return DEVICE_OK;
 }
 
+/**
+ * Generate an image with fixed value for all pixels
+ */
 void MMCamera::GenerateImage()
 {
+   const int maxValue = (1 << MAX_BIT_DEPTH) - 1; // max for the 12 bit camera
+   const double maxExp = 1000;
+   double step = maxValue/maxExp;
    unsigned char* pBuf = const_cast<unsigned char*>(img_.GetPixels());
-   memset(pBuf, 0, img_.Height()*img_.Width()*img_.Depth());
+   memset(pBuf, (int) (step * max(exposureMs_, maxExp)), img_.Height()*img_.Width()*img_.Depth());
 }

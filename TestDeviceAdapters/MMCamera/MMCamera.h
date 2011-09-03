@@ -84,7 +84,7 @@ private:
    static const int IMAGE_HEIGHT = 480;
    static const int MAX_BIT_DEPTH = 12;
 
-   SequenceThread * thd_;
+   SequenceThread* thd_;
    int binning_;
    int bytesPerPixel_;
    double gain_;

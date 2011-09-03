@@ -56,6 +56,9 @@ int main(int argc, char* argv[])
       if (type == MM::CameraDevice)
       {
          cout << "Testing camera specific functions:" << endl;
+         core.setExposure(10.0);
+         core.snapImage();
+         core.getImage();
       }
       else if (type == MM::StateDevice)
       {
