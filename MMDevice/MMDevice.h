@@ -770,16 +770,59 @@ namespace MM {
       // Sequence functions
       // Sequences can be used for fast acquisitions, synchronized by TTLs rather than
       // computer commands. 
-      // Sequences of voltagess can be uploaded to the stage.  The device will cycle through
+      // Sequences of voltages can be uploaded to the DA.  The device will cycle through
       // the uploaded list of voltages (triggered by an external trigger - most often coming 
       // from the camera).  If the device is capable (and ready) to do so isSequenceable will
       // be true. If your device can not execute this simply set isSequenceable to false
+      /**
+       * Lets the UI know whether or not this DA device accepts sequences
+       * If the device is sequenceable, it is usually best to add a property through which 
+       * the user can set "isSequenceable", since only the user knows whether the device
+       * is atucally connected to a trigger source
+       * @param isSequenceable signals whether other sequence functions will work
+       * @return errorcode (DEVICE_OK if no error)
+       */
       virtual int IsDASequenceable(bool& isSequenceable) const = 0;
+      /**
+       * Returns the maximum length of a sequence that the hardware can store
+       * @param nrEvents max length of sequence
+       * @return errorcode (DEVICE_OK if no error)
+       */
       virtual int GetDASequenceMaxLength(long& nrEvents) const = 0;
+      /**
+       * Tells the device to start running a sequnece (i.e. start switching between voltages 
+       * send previously, triggered by a TTL
+       * @return errorcode (DEVICE_OK if no error)
+       */
       virtual int StartDASequence() const = 0;
+      /**
+       * Tells the device to stop running the sequence
+       * @return errorcode (DEVICE_OK if no error)
+       */
       virtual int StopDASequence() const = 0;
+      /**
+       * Clears the DA sequnce from the device and the adapter.
+       * If this functions is not called in between running 
+       * two sequences, it is expected that the same sequence will run twice.
+       * To upload a new sequence, first call this functions, then call AddToDASequence(double
+       * voltage) as often as needed.
+       * @return errorcode (DEVICE_OK if no error)
+       */
       virtual int ClearDASequence() = 0;
+
+      /**
+       * Adds a new data point (voltgae) to the sequence
+       * The data point can eithed be added to a representation of the sequence in the 
+       * adapter, or it can be directly written to the device
+       * @return errorcode (DEVICE_OK if no error)
+       */
       virtual int AddToDASequence(double voltage) = 0;
+      /**
+       * Sends the complete sequence to the device
+       * If the individual data points were already send to the device, there is 
+       * nothing to be done.
+       * @return errorcode (DEVICE_OK if no error)
+       */
       virtual int SendDASequence() const = 0;
    };
 
