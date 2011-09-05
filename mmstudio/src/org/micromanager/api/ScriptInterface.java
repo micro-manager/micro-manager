@@ -32,6 +32,8 @@ import mmcorej.CMMCore;
 import mmcorej.TaggedImage;
 import org.json.JSONObject;
 
+import org.micromanager.AcqControlDlg;
+import org.micromanager.PositionListDlg;
 import org.micromanager.acquisition.MMAcquisition;
 import org.micromanager.navigation.PositionList;
 import org.micromanager.utils.MMScriptException;
@@ -572,19 +574,19 @@ public interface ScriptInterface {
     */
    public Rectangle getROI() throws MMScriptException;
 
-   /*
+   /**
     * Set the default camera's ROI -- a convenience function
     */
    public void setROI(Rectangle r) throws MMScriptException;
 
 
-   /*
+   /**
     * Attach a display to the image cache.
     */
    public void addImageStorageListener(ImageCacheListener listener);
 
 
-   /*
+   /**
     * Get the image cache object associated with the acquisition.
     */
    public ImageCache getAcquisitionImageCache(String acquisitionName);
@@ -595,5 +597,25 @@ public interface ScriptInterface {
     * Adds the current position to the list (same as pressing the "Mark" button in the XYPositionList)
     */
    public void markCurrentPosition();
+
+   /**
+    * Returns the Multi-Dimensional Acquisition Window 
+    * To show the window, call:
+    * AcqControlDlg dlg = gui.getAcqDlg();
+    * dlg.setVisible(true);
+    */
+   public AcqControlDlg getAcqDlg();
+
+   /**
+    * Returns the PositionList Dialog
+    * If the Dialog did not yet exist, it will be created
+    * The Dialog will not necesseraly be shown, call the setVisibile method of the dialog to do so
+    */
+   public PositionListDlg getXYPosListDlg();
+
+   /**
+    * Returns true when an acquisition is currently running
+    */
+   public boolean isAcquisitionRunning();
 
 }

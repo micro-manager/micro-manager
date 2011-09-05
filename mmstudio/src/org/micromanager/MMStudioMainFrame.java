@@ -2465,8 +2465,8 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
       openAcqDirectory_ = dir;
    }
 
-      /**
-    * Open an existing acquisition directory and build image5d window.
+    /**
+    * Open an existing acquisition directory and build viewer window.
     *
     */
    public void openAcquisitionData() {
@@ -2774,6 +2774,31 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
       if (posListDlg_ != null) {
          posListDlg_.markPosition();
       }
+   }
+
+   /**
+    * Implements ScriptInterface
+    */
+   public AcqControlDlg getAcqDlg() {
+      return acqControlWin_;
+   }
+
+   /**
+    * Implements ScriptInterface
+    */
+   public PositionListDlg getXYPosListDlg() {
+      if (posListDlg_ == null)
+         posListDlg_ = new PositionListDlg(core_, this, posList_, options_);
+      return posListDlg_;
+   }
+
+   /**
+    * Implements ScriptInterface
+    */
+   public boolean isAcquisitionRunning() {
+      if (engine_ == null)
+         return false;
+      return engine_.isAcquisitionRunning();
    }
 
    public boolean isImageWindowOpen() {
