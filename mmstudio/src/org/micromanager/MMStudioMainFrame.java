@@ -2801,6 +2801,41 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
       return engine_.isAcquisitionRunning();
    }
 
+   /**
+    * Implements ScriptInterface
+    */
+   public boolean versionLessThan(String version) throws MMScriptException {
+      try {
+         String[] v = VERSION.split(" ", 2);
+         String[] m = v[0].split("\\.", 3);
+         String[] v2 = version.split(" ", 2);
+         String[] m2 = v2[0].split("\\.", 3);
+         for (int i=0; i < 3; i++) {
+            if (Integer.parseInt(m[i]) < Integer.parseInt(m2[i])) {
+               ReportingUtils.showError("This code needs Micro-Manager version " + version + " or greater");
+               return true;
+            }
+            if (Integer.parseInt(m[i]) > Integer.parseInt(m2[i])) {
+               return false;
+            }
+         }
+         if (v2.length < 2 || v2[1] == "")
+            return false;
+         if (v.length < 2 ) {
+            ReportingUtils.showError("This code needs Micro-Manager version " + version + " or greater");
+            return true;
+         }
+         if (Integer.parseInt(v[1]) < Integer.parseInt(v2[1])) {
+            ReportingUtils.showError("This code needs Micro-Manager version " + version + " or greater");
+            return false;
+         }
+         return true;
+
+      } catch (Exception ex) {
+         throw new MMScriptException ("Format of version String should be \"a.b.c\"");
+      }
+   }
+
    public boolean isImageWindowOpen() {
       boolean ret = imageWin_ != null;
       ret = ret && !imageWin_.isClosed();
