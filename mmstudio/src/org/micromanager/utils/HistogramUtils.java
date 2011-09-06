@@ -83,13 +83,12 @@ public class HistogramUtils {
       outliers = 0;
       for (iterator = 0; iterator < histogram_.length; ++iterator) {
          outliers += histogram_[iterator];
-         if (outliers >= maxOutliers) {
-            ret = iterator;
+         if (outliers > maxOutliers) {
+            ret = Math.max(0, iterator);
             break;
          }
       }
       return ret;
-
    }
 
    //ignore a fraction of high pixels
@@ -102,14 +101,14 @@ public class HistogramUtils {
       int outliers = 0;
       for (int iterator = histogram_.length - 1; iterator >= 0; --iterator) {
          outliers += histogram_[iterator];
-         if (outliers >= maxOutliers) {
-            ret = iterator;
+         if (outliers > maxOutliers) {
+            ret = Math.min(iterator, histogram_.length - 1);
             break;
          }
       }
       return ret;
-
    }
+
    public double getFractionToReject(){
       return fractionToReject_;
    }
