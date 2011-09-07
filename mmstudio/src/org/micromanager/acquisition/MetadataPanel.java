@@ -23,6 +23,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Vector;
 import javax.swing.JPanel;
+import javax.swing.SpinnerNumberModel;
 import javax.swing.SpringLayout;
 import javax.swing.table.AbstractTableModel;
 import mmcorej.TaggedImage;
@@ -71,6 +72,8 @@ public class MetadataPanel extends javax.swing.JPanel
 
       setDisplayState(CompositeImage.COMPOSITE);
       this.autostretchCheckBoxStateChanged(null);
+
+      rejectPercentSpinner_.setModel(new SpinnerNumberModel(0., 0., 100., 0.1));
    }
 
    public static MetadataPanel showMetadataPanel() {
