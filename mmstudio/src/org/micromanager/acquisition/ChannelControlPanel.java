@@ -12,6 +12,9 @@ package org.micromanager.acquisition;
 
 import ij.ImagePlus;
 import java.awt.Color;
+import java.awt.event.MouseWheelEvent;
+import java.awt.event.MouseWheelListener;
+import java.lang.Math;
 import javax.swing.JColorChooser;
 import org.micromanager.graph.GraphData;
 import org.micromanager.graph.HistogramPanel;
@@ -305,8 +308,6 @@ public class ChannelControlPanel extends javax.swing.JPanel {
       updateBinSize();
       
       hp.addCursorListener(new CursorListener() {
-
-
          public void onLeftCursor(double pos) {
             turnOffAutostretch();
             int max = acq_.getChannelMax(channelIndex_);
@@ -339,6 +340,14 @@ public class ChannelControlPanel extends javax.swing.JPanel {
                gamma = MathFunctions.clip(0.05, gamma, 20);
             acq_.setChannelGamma(channelIndex_, gamma, true);
             drawDisplaySettings();
+         }
+      });
+
+      hp.addMouseWheelListener(new MouseWheelListener() {
+         public void mouseWheelMoved(MouseWheelEvent e) {
+            int notches = e.getWheelRotation();
+            binSize_ = Math.min(Math.max(binSize_ * Math.pow(2, 0.5 * notches), 1./8), 256);
+            updateChannelSettings();
          }
       });
 
