@@ -31,10 +31,11 @@ public class ChannelControlPanel extends javax.swing.JPanel {
    private final int channelIndex_;
    private final VirtualAcquisitionDisplay acq_;
    private final HistogramPanel hp_;
+   private final MetadataPanel metadataPanel_;
+
    private double binSize_;
    private boolean autostretch_ = false;
    private boolean rejectOutliers_ = false;
-   private final MetadataPanel metadataPanel_;
    private boolean logScale_ = false;
    private double fractionToReject_;
 
@@ -49,7 +50,6 @@ public class ChannelControlPanel extends javax.swing.JPanel {
       HistogramUtils huu = new HistogramUtils(null);
       fractionToReject_ = huu.getFractionToReject();
       updateChannelSettings();
-      drawDisplaySettings();
 
    }
 
@@ -271,13 +271,11 @@ public class ChannelControlPanel extends javax.swing.JPanel {
    }
 
    public void setAutostretch(boolean state) {
-      autostretch_ = state;
-      if (state) {
+      if (state && !autostretch_) {
          setAutoRange();
-      }
+        }
+        autostretch_ = state;
    }
-
-
 
    public void setRejectOutliers(boolean v){
       rejectOutliers_ = v;
@@ -419,7 +417,7 @@ public class ChannelControlPanel extends javax.swing.JPanel {
             min = getMin();
             max = getMax();
          }
-         acq_.setChannelDisplayRange(channelIndex_, min, max, false);
+         acq_.setChannelDisplayRange(channelIndex_, min, max, true);
        }
 
       hp_.setCursors(acq_.getChannelMin(channelIndex_)/binSize_,
@@ -523,7 +521,12 @@ public class ChannelControlPanel extends javax.swing.JPanel {
    }
 
    public void setFractionToReject(double v){
+      double oldVal = fractionToReject_;
       fractionToReject_ = v;
+      if (v != oldVal) {
+         updateChannelSettings();
+      }
+
    }
 
 }

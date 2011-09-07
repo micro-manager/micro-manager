@@ -74,7 +74,7 @@
                   </Group>
                   <Component id="jPanel1" alignment="0" min="-2" max="-2" attributes="0"/>
                   <Group type="103" rootIndex="1" groupAlignment="0" attributes="0">
-                      <Component id="contrastScrollPane" alignment="0" pref="620" max="32767" attributes="0"/>
+                      <Component id="contrastScrollPane" alignment="0" pref="604" max="32767" attributes="0"/>
                   </Group>
               </Group>
             </DimensionLayout>
@@ -88,12 +88,12 @@
                       </Group>
                       <EmptySpace type="unrelated" max="-2" attributes="0"/>
                       <Component id="jPanel1" min="-2" max="-2" attributes="0"/>
-                      <EmptySpace pref="597" max="32767" attributes="0"/>
+                      <EmptySpace pref="569" max="32767" attributes="0"/>
                   </Group>
                   <Group type="103" rootIndex="1" groupAlignment="0" attributes="0">
                       <Group type="102" alignment="0" attributes="0">
                           <EmptySpace min="-2" pref="79" max="-2" attributes="0"/>
-                          <Component id="contrastScrollPane" pref="573" max="32767" attributes="0"/>
+                          <Component id="contrastScrollPane" pref="555" max="32767" attributes="0"/>
                       </Group>
                   </Group>
               </Group>
@@ -181,6 +181,7 @@
                   </Properties>
                   <Events>
                     <EventHandler event="stateChanged" listener="javax.swing.event.ChangeListener" parameters="javax.swing.event.ChangeEvent" handler="rejectPercentSpinner_StateChanged"/>
+                    <EventHandler event="keyPressed" listener="java.awt.event.KeyListener" parameters="java.awt.event.KeyEvent" handler="rejectPercentSpinner_KeyPressed"/>
                   </Events>
                 </Component>
                 <Component class="javax.swing.JCheckBox" name="logScaleCheckBox">
@@ -270,10 +271,10 @@
               <Layout>
                 <DimensionLayout dim="0">
                   <Group type="103" groupAlignment="0" attributes="0">
-                      <Component id="imageMetadataTableScrollPane" alignment="0" pref="620" max="32767" attributes="0"/>
+                      <Component id="imageMetadataTableScrollPane" alignment="0" pref="604" max="32767" attributes="0"/>
                       <Group type="102" alignment="1" attributes="0">
                           <Component id="jLabel2" min="-2" max="-2" attributes="0"/>
-                          <EmptySpace pref="359" max="32767" attributes="0"/>
+                          <EmptySpace pref="260" max="32767" attributes="0"/>
                           <Component id="showUnchangingPropertiesCheckbox" min="-2" max="-2" attributes="0"/>
                       </Group>
                   </Group>
@@ -286,7 +287,7 @@
                               <Component id="jLabel2" alignment="3" min="-2" max="-2" attributes="0"/>
                           </Group>
                           <EmptySpace max="-2" attributes="0"/>
-                          <Component id="imageMetadataTableScrollPane" pref="522" max="32767" attributes="0"/>
+                          <Component id="imageMetadataTableScrollPane" pref="497" max="32767" attributes="0"/>
                       </Group>
                   </Group>
                 </DimensionLayout>
@@ -351,7 +352,7 @@
               <Layout>
                 <DimensionLayout dim="0">
                   <Group type="103" groupAlignment="0" attributes="0">
-                      <Component id="summaryMetadataScrollPane" alignment="1" pref="620" max="32767" attributes="0"/>
+                      <Component id="summaryMetadataScrollPane" alignment="1" pref="604" max="32767" attributes="0"/>
                       <Group type="102" alignment="0" attributes="0">
                           <Component id="jLabel3" min="-2" max="-2" attributes="0"/>
                           <EmptySpace max="-2" attributes="0"/>
@@ -363,7 +364,7 @@
                       <Group type="102" alignment="1" attributes="0">
                           <Component id="jLabel3" min="-2" max="-2" attributes="0"/>
                           <EmptySpace min="-2" pref="4" max="-2" attributes="0"/>
-                          <Component id="summaryMetadataScrollPane" pref="82" max="32767" attributes="0"/>
+                          <Component id="summaryMetadataScrollPane" max="32767" attributes="0"/>
                       </Group>
                   </Group>
                 </DimensionLayout>
@@ -436,9 +437,9 @@
                   <Group type="103" groupAlignment="0" attributes="0">
                       <Group type="102" attributes="0">
                           <Component id="summaryCommentsLabel" min="-2" max="-2" attributes="0"/>
-                          <EmptySpace pref="514" max="32767" attributes="0"/>
+                          <EmptySpace pref="458" max="32767" attributes="0"/>
                       </Group>
-                      <Component id="summaryCommentsScrollPane" alignment="0" pref="620" max="32767" attributes="0"/>
+                      <Component id="summaryCommentsScrollPane" alignment="0" pref="604" max="32767" attributes="0"/>
                   </Group>
                 </DimensionLayout>
                 <DimensionLayout dim="1">
@@ -446,7 +447,7 @@
                       <Group type="102" alignment="0" attributes="0">
                           <Component id="summaryCommentsLabel" min="-2" max="-2" attributes="0"/>
                           <EmptySpace max="-2" attributes="0"/>
-                          <Component id="summaryCommentsScrollPane" pref="180" max="32767" attributes="0"/>
+                          <Component id="summaryCommentsScrollPane" pref="176" max="32767" attributes="0"/>
                       </Group>
                   </Group>
                 </DimensionLayout>
@@ -497,7 +498,7 @@
                           <Component id="imageCommentsLabel" min="-2" max="-2" attributes="0"/>
                           <EmptySpace min="-2" pref="400" max="-2" attributes="0"/>
                       </Group>
-                      <Component id="imageCommentsScrollPane" alignment="0" pref="620" max="32767" attributes="0"/>
+                      <Component id="imageCommentsScrollPane" alignment="0" pref="604" max="32767" attributes="0"/>
                   </Group>
                 </DimensionLayout>
                 <DimensionLayout dim="1">
@@ -505,7 +506,7 @@
                       <Group type="102" alignment="0" attributes="0">
                           <Component id="imageCommentsLabel" min="-2" max="-2" attributes="0"/>
                           <EmptySpace min="-2" pref="0" max="-2" attributes="0"/>
-                          <Component id="imageCommentsScrollPane" pref="433" max="32767" attributes="0"/>
+                          <Component id="imageCommentsScrollPane" pref="409" max="32767" attributes="0"/>
                       </Group>
                   </Group>
                 </DimensionLayout>
