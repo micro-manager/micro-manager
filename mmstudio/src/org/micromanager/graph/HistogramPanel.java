@@ -273,7 +273,7 @@ public class HistogramPanel extends GraphPanel {
    private void setupMouseListeners() {
       addMouseListener(new MouseAdapter() {
          public void mousePressed(MouseEvent e) {
-            currentHandle = getClickBand(e.getY());
+            currentHandle = getClickBand(e.getX(), e.getY());
             int x = e.getX();
             int y = e.getY();
             if (currentHandle != 0) {
@@ -334,19 +334,25 @@ public class HistogramPanel extends GraphPanel {
    }
 
 
-   int getClickBand(int y) {
+   int getClickBand(int x, int y) {
       Rectangle box = getBox();
       //int xmin = box.x;
       //int xmax = box.x + box.width;
       int ymin = box.y + box.height;
       int ymax = box.y;
-
+      float xUnit = (float) (box.width / bounds_.getRangeX());
+      float deviceCursorLoX = getDevicePoint(new Point2D.Float(cursorLoPos_, 0), box, xUnit, (float) 1.0).x;
+      float deviceCursorHiX = getDevicePoint(new Point2D.Float(cursorHiPos_, 0), box, xUnit, (float) 1.0).x;
       if (y < ymin + 10 && y >= ymin) {
-         return 1;
+         return 1; // Low cursor margin
       } else if (y <= ymax && y > ymax - 10) {
-         return 2;
+         return 2; // High cursor margin
+      }  else if ((x > deviceCursorLoX - 5) && (x < deviceCursorLoX + 5)) {
+         return 1; // Low cursor vertical line
+      }  else if ((x > deviceCursorHiX - 5) && (x < deviceCursorHiX + 5)) {
+         return 2; // High cursor vertical line
       } else if (y > ymax && y < ymin) {
-         return 3;
+         return 3; // Gamma curve margin
       } else {
          return 0;
       }
