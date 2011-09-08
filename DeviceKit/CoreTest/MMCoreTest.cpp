@@ -172,7 +172,7 @@ void TestDemoDevices(CMMCore& core)
    // Example 4: snap an image
    // ------------------------
    core.setExposure(100.0);
-   core.setProperty("TheCamera", "PixelType", "8bit");
+   core.setProperty("Camera", "PixelType", "8bit");
    core.snapImage();
    cout << "Image snapped." << endl;
 
@@ -254,23 +254,23 @@ void TestCameraStreaming(CMMCore& core)
 
 void TestPixelSize(CMMCore& core)
 {
-   core.definePixelSizeConfig("Resolution10", "DObjective", "State", "1");
-   core.definePixelSizeConfig("Resolution20", "DObjective", "State", "3");
-   core.definePixelSizeConfig("Resolution40", "DObjective", "State", "0");
+   core.definePixelSizeConfig("Resolution10", "Objective", "State", "1");
+   core.definePixelSizeConfig("Resolution20", "Objective", "State", "3");
+   core.definePixelSizeConfig("Resolution40", "Objective", "State", "0");
    core.setPixelSizeUm("Resolution10", 1.0);
    core.setPixelSizeUm("Resolution20", 0.5);
    core.setPixelSizeUm("Resolution40", 0.25);
 
-   core.setState("DObjective", 2);
+   core.setState("Objective", 2);
    cout << "Pixel size = " << core.getPixelSizeUm() << " um" << endl;
 
-   core.setState("DObjective", 1);
+   core.setState("Objective", 1);
    cout << "Pixel size = " << core.getPixelSizeUm() << " um" << endl;
 
-   core.setState("DObjective", 3);
+   core.setState("Objective", 3);
    cout << "Pixel size = " << core.getPixelSizeUm() << " um" << endl;
 
-   core.setState("DObjective", 0);
+   core.setState("Objective", 0);
    cout << "Pixel size = " << core.getPixelSizeUm() << " um" << endl;
 
 }
@@ -282,20 +282,6 @@ void TestColorMode(CMMCore& core)
    core.snapImage();
    core.getImage();
    cout << "image: " << core.getImageWidth() << " X " << core.getImageHeight() << " X " << core.getNumberOfComponents() << endl;
-}
-
-void TestHam(CMMCore& core)
-{
-   core.snapImage();
-   core.getImage();
-   core.setCameraDevice("TheCamera");
-   core.snapImage();
-   core.getImage();
-   cout << "CAM1 " << core.getImageWidth() << " X " << core.getImageHeight() << endl;
-   core.setCameraDevice("AnotherCamera");
-   core.snapImage();
-   core.getImage();
-   cout << "CAM2 " << core.getImageWidth() << " X " << core.getImageHeight() << endl;
 }
 
 /**
