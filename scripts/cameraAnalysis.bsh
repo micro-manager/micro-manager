@@ -14,6 +14,6 @@ for (int i=0; i <stack.getSize()/2; i++) {
 	ipDiff = calc.run("Subtract create 32-bit", new ij.ImagePlus("1", ip), new ij.ImagePlus("2",ip2) );
 	ij.process.ImageStatistics statsDiff = ipDiff.getStatistics();
 	stdDev = statsDiff.stdDev/sqrt2;
-	gui.message("Mean:" +  stats.mean + " Std: " + stdDev + "PCF: " + stats.mean/(stdDev*stdDev));
+	gui.message("Mean:" +  stats.mean + " Std: " + stdDev + " PCF: " + stats.mean/(stdDev*stdDev));
 	data.add(stats.mean, statsDiff.stdDev/sqrt2);
 }

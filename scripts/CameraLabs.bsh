@@ -9,12 +9,13 @@
  * Nico Stuurman, 2/4/2010
  */
 
+
+double finalExposure = 640;
 // Nr of data points desired
 int nrExposures = 50;
 // initial exposure in ms
 double startExposure = 0.0025;
 // final (maximum exposure in ms)
-double finalExposure = 20.0;
 
 // Place where data will be auto-saved
 acqRoot = "C:/Data";
@@ -66,7 +67,8 @@ gui.openAcquisition(acqName, acqRoot, nrExposures, 1, 1);
 exposure = startExposure;
 for (int i=0; i< nrExposures; i++) {
 	mmc.setExposure(exposure);
-	gui.snapAndAddImage("ecf", i , 0, 0);
+	gui.snapAndAddImage("ecf", 2*i , 0, 0);
+	gui.snapAndAddImage("ecf", 2*i + 1, 0, 0);
 	exposure = factor * exposure;
 }
 gui.closeAcquisition(acqName);
