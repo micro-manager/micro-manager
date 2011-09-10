@@ -1,8 +1,11 @@
 import org.jfree.data.xy.XYSeries;
+import ij.measure.ResultsTable;
 
 img = ij.IJ.getImage();
 ij.ImageStack stack = img.getImageStack();
 XYSeries data = new XYSeries("");
+ResultsTable rt = new ResultsTable();
+rt.reset();
 
 for (int i=0; i <stack.getSize()/2; i++) {
 	ip = stack.getProcessor(2*i + 1);
@@ -10,10 +13,18 @@ for (int i=0; i <stack.getSize()/2; i++) {
 	//gui.message("Mean:" +  stats.mean + " Std: " + stats.stdDev);
 	stdDev = stats.stdDev;
 	if (i>0) {
-		gui.message("Mean:" +  stats.mean + " Std: " + stdDev + " PCF: " + stats.mean/(stdDev*stdDev) + " slope: " + 
-		 ( (Math.log(stdDev) - Math.log(data.getY(i-1))) / (Math.log(stats.mean) - Math.log(data.getX(i-1)))) );
+		rt.incrementCounter();
+		rt.addValue("Signal DN", stats.mean);
+		rt.addValue("Noise DN", stdDev);
+		rt.addValue("Slope of Log", ( (Math.log(stdDev) - Math.log(data.getY(i-1))) / (Math.log(stats.mean) - Math.log(data.getX(i-1)))));
+		rt.addValue("PCF", stats.mean/(stdDev*stdDev));
+		gui.message("Processing: " + i);
+		//gui.message("Mean:" +  stats.mean + " Std: " + stdDev + " PCF: " + stats.mean/(stdDev*stdDev) + " slope: " + 
+		// ( (Math.log(stdDev) - Math.log(data.getY(i-1))) / (Math.log(stats.mean) - Math.log(data.getX(i-1)))) );
 	}
 	data.add(stats.mean, stats.stdDev);
 }
 
-plotData("Fixed Pattern Noise", data, "Signal DN", "Noise DN", 100, 100, true, true);
+t = "Photon Transfer Data (fpn) -" + img.getTitle();
+rt.show(t);
+plotData("Photon Transfer Curve (fpn) -" + img.getTitle(), data, "Signal DN", "Noise DN", 100, 100, true, true);

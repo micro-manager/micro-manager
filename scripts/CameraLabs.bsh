@@ -10,12 +10,12 @@
  */
 
 
+// final (maximum exposure in ms)
 double finalExposure = 640;
 // Nr of data points desired
 int nrExposures = 50;
 // initial exposure in ms
 double startExposure = 0.0025;
-// final (maximum exposure in ms)
 
 // Place where data will be auto-saved
 acqRoot = "C:/Data";
