@@ -251,7 +251,7 @@ public final class ScriptPanel extends MMFrame implements MouseListener, Scripti
            if ( (row >= 0) && (model_.isScriptAvailable(row, column)) ) {
               if (row != lastRowSelected_ || column != lastColumnSelected_) {
                   // check for changes and offer to save if needed
-                  if (!promptToSave()) {
+                  if (!promptToSave(lastRowSelected_)) {
                      table_.changeSelection(lastRowSelected_, lastColumnSelected_, false, false);
                      return;
                   }
@@ -334,7 +334,7 @@ public final class ScriptPanel extends MMFrame implements MouseListener, Scripti
       addWindowListener(new WindowAdapter() {
          @Override
          public void windowClosing(WindowEvent arg0) {
-            if (!promptToSave()) 
+            if (!promptToSave(-1))
                return;
             prefs_.putInt(RIGHT_DIVIDER_LOCATION, rightSplitPane_.getDividerLocation());
             prefs_.putInt(DIVIDER_LOCATION, splitPane_.getDividerLocation());
@@ -567,7 +567,7 @@ public final class ScriptPanel extends MMFrame implements MouseListener, Scripti
       saveButton.setFont(new Font("", Font.PLAIN, 10));
       saveButton.addActionListener(new ActionListener() {
          public void actionPerformed(ActionEvent arg0) {
-            saveScript();
+            saveScript(-1);
          }
       });
       saveButton.setText("Save");
@@ -649,9 +649,10 @@ public final class ScriptPanel extends MMFrame implements MouseListener, Scripti
 
    /**
     * Prompt and save file if contents were modified
+    * @param row - row number of script in question
     * @return - true if the file was saved
     */
-   public boolean promptToSave() {
+   public boolean promptToSave(int row) {
       if (scriptPaneSaved_)
          return true;
       String message;
@@ -665,7 +666,7 @@ public final class ScriptPanel extends MMFrame implements MouseListener, Scripti
             JOptionPane.INFORMATION_MESSAGE);
       switch (result) {
          case JOptionPane.YES_OPTION:
-            saveScript();
+            saveScript(row);
          case JOptionPane.NO_OPTION:
             // avoid prompting again:
             scriptPaneSaved_ = true;
@@ -682,14 +683,14 @@ public final class ScriptPanel extends MMFrame implements MouseListener, Scripti
          addScriptToModel(scriptFile_);
       }
       else if (scriptFile_ == null && ! scriptPaneSaved_) {
-         if (!promptToSave()) 
+         if (!promptToSave(-1))
             return;
          addScriptToModel(scriptFile_);
       }
       else
       {
          // check for changes and offer to save if needed
-         if (!promptToSave()) 
+         if (!promptToSave(-1))
             return;
 
          File curFile = FileDialogs.openFile(this, "Select a Beanshell script", BSH_FILE);
@@ -715,7 +716,7 @@ public final class ScriptPanel extends MMFrame implements MouseListener, Scripti
     */
    private void removeScript()
    {
-      if (!promptToSave()) 
+      if (!promptToSave(-1))
          return;
 
       model_.RemoveScript(scriptTable_.getSelectedRow(), scriptTable_.getSelectedColumn());
@@ -728,15 +729,18 @@ public final class ScriptPanel extends MMFrame implements MouseListener, Scripti
 
    /**
     * Saves the script in the editor Pane
+    * @param row - row of script in editor pane (or <0 for current)
     */
-   private void saveScript()
+   private void saveScript(int row)
    {
       if (scriptFile_ == null) {
          saveScriptAs();
          return;
       }
       if (scriptFile_ != null && (scriptTable_.getSelectedRow() > -1) ) {
-         boolean modified = (scriptFile_.lastModified() != model_.getLastMod(scriptTable_.getSelectedRow(), 0));
+         if (row < 0)
+            row = scriptTable_.getSelectedRow();
+         boolean modified = (scriptFile_.lastModified() != model_.getLastMod(row, 0));
          if (modified) {
             int result = JOptionPane.showConfirmDialog(this,
                   "Script was changed on disk.  Continue saving anyways?",
@@ -758,9 +762,11 @@ public final class ScriptPanel extends MMFrame implements MouseListener, Scripti
          int[] cellAddress = new int[2];
          model_.GetCell(scriptFile_, cellAddress);
          model_.setLastMod(cellAddress[0], 0, scriptFile_.lastModified());
-         JOptionPane.showMessageDialog(this, "File saved");
+         gui_.message("Saved file: " + scriptFile_.getName());
       } catch (IOException ioe){
          ReportingUtils.showError(ioe);
+      } catch (MMScriptException mex) {
+         // nothing to do
       }
    }
 
@@ -769,7 +775,7 @@ public final class ScriptPanel extends MMFrame implements MouseListener, Scripti
     */
    private void saveScriptAs () 
    {
-      String suffixes [] = {"bsh"};
+      //String suffixes [] = {"bsh"};
       File saveFile = FileDialogs.save(this, "Save beanshell script", BSH_FILE);
       if (saveFile != null) {
          try {
@@ -902,7 +908,7 @@ public final class ScriptPanel extends MMFrame implements MouseListener, Scripti
    private void newPane()
    {
       // check for changes and offer to save if needed
-      if (!promptToSave()) 
+      if (!promptToSave(-1))
          return;
 
       int row = scriptTable_.getSelectedRow();
@@ -920,7 +926,7 @@ public final class ScriptPanel extends MMFrame implements MouseListener, Scripti
     */
    private void openScriptInPane() {
       // check for changes and offer to save if needed
-      if (!promptToSave()) 
+      if (!promptToSave(-1))
          return;
 
       File curFile = FileDialogs.openFile(this, "Choose Beanshell script", BSH_FILE);
@@ -991,7 +997,7 @@ public final class ScriptPanel extends MMFrame implements MouseListener, Scripti
    }
 
    public  void closePanel() {
-      if (!promptToSave()) 
+      if (!promptToSave(-1))
          return;
       savePosition();
       saveScriptsToPrefs();
