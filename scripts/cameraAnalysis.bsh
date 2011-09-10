@@ -17,11 +17,11 @@ for (int i=0; i <stack.getSize()/2; i++) {
 	ipDiff = calc.run("Subtract create 32-bit", new ij.ImagePlus("1", ip), new ij.ImagePlus("2",ip2) );
 	ij.process.ImageStatistics statsDiff = ipDiff.getStatistics();
 	stdDev = statsDiff.stdDev/sqrt2;
+	rt.incrementCounter();
+	rt.addValue("Signal DN", stats.mean);
+	rt.addValue("Noise DN", stdDev);
+	rt.addValue("Diff in signal", statsDiff.mean); 
 	if (i>0) {
-		rt.incrementCounter();
-		rt.addValue("Signal DN", stats.mean);
-		rt.addValue("Noise DN", stdDev);
-		rt.addValue("Diff in signal", statsDiff.mean); 
 		rt.addValue("Slope of Log", ( (Math.log(stdDev) - Math.log(data.getY(i-1))) / (Math.log(stats.mean) - Math.log(data.getX(i-1)))));
 		rt.addValue("PCF", stats.mean/(stdDev*stdDev));
 		gui.message("Processing: " + i);
