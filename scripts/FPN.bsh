@@ -7,6 +7,13 @@ XYSeries data = new XYSeries("");
 for (int i=0; i <stack.getSize()/2; i++) {
 	ip = stack.getProcessor(2*i + 1);
 	ij.process.ImageStatistics stats = ip.getStatistics();
-	gui.message("Mean:" +  stats.mean + " Std: " + stats.stdDev);
+	//gui.message("Mean:" +  stats.mean + " Std: " + stats.stdDev);
+	stdDev = stats.stdDev;
+	if (i>0) {
+		gui.message("Mean:" +  stats.mean + " Std: " + stdDev + " PCF: " + stats.mean/(stdDev*stdDev) + " slope: " + 
+		 ( (Math.log(stdDev) - Math.log(data.getY(i-1))) / (Math.log(stats.mean) - Math.log(data.getX(i-1)))) );
+	}
 	data.add(stats.mean, stats.stdDev);
 }
+
+plotData("Fixed Pattern Noise", data, "Signal DN", "Noise DN", 100, 100, true, true);
