@@ -38,6 +38,7 @@
 #define ERR_INVALID_PACKET_LENGTH    10012
 #define ERR_RESPONSE_TIMEOUT         10013
 #define ERR_BUSY                     10014
+#define ERR_STEPS_OUT_OF_RANGE       10015
 
 // utility functions
 int ClearPort(MM::Device& device, MM::Core& core);
@@ -86,6 +87,9 @@ const double stepSizeUm = 0.05;        // step size in microns
 const double accelScale = 13.7438;     // scaling factor for acceleration
 const double velocityScale = 134218.0; // scaling factor for velocity
 
+//////////////////////////////////////////////////////////////////////////////
+// global utility
+int ClearPort(MM::Device& device, MM::Core& core, std::string port);
 
 //////////////////////////////////////////////////////////////////////////////
 // XYStage class
@@ -111,16 +115,16 @@ public:
 
    // XYStage API
    // -----------
-  int SetPositionSteps(long x, long y);
-  int SetRelativePositionSteps(long x, long y);
-  int GetPositionSteps(long& x, long& y);
-  int Home();
-  int Stop();
-  int SetOrigin();
-  int GetLimitsUm(double& xMin, double& xMax, double& yMin, double& yMax);
-  int GetStepLimits(long& xMin, long& xMax, long& yMin, long& yMax);
-  double GetStepSizeXUm() {return stepSizeUm;}
-  double GetStepSizeYUm() {return stepSizeUm;}
+   int SetPositionSteps(long x, long y);
+   int SetRelativePositionSteps(long x, long y);
+   int GetPositionSteps(long& x, long& y);
+   int Home();
+   int Stop();
+   int SetOrigin();
+   int GetLimitsUm(double& xMin, double& xMax, double& yMin, double& yMax);
+   int GetStepLimits(long& xMin, long& xMax, long& yMin, long& yMax);
+   double GetStepSizeXUm() {return stepSizeUm;}
+   double GetStepSizeYUm() {return stepSizeUm;}
 
    // action interface
    // ----------------
@@ -210,5 +214,59 @@ class CommandThread : public MMDeviceThreadBase
       int errCode_;
 };
 
+class PiezoZStage : public CStageBase<PiezoZStage>
+{
+public:
+   PiezoZStage();
+   ~PiezoZStage();
+  
+   // Device API
+   // ----------
+   int Initialize();
+   int Shutdown();
+  
+   void GetName(char* pszName) const;
+   bool Busy();
+
+   // Stage API
+   // ---------
+   int SetPositionUm(double pos);
+   int GetPositionUm(double& pos);
+   int SetPositionSteps(long steps);
+   int GetPositionSteps(long& steps);
+   int SetOrigin();
+   int GetLimits(double& min, double& max);
+
+   bool IsContinuousFocusDrive() const {return false;}
+
+   // action interface
+   // ----------------
+   int OnPort(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnPosition(MM::PropertyBase* pProp, MM::ActionType eAct);
+
+   // Sequence functions - empty stubs
+   // (not supporting sequences)
+   int IsStageSequenceable(bool& isSequenceable) const {isSequenceable = false; return DEVICE_OK;}
+   int GetStageSequenceMaxLength(long& nrEvents) const  {nrEvents = 0; return DEVICE_OK;}
+   int StartStageSequence() const {return DEVICE_OK;}
+   int StopStageSequence() const {return DEVICE_OK;}
+   int ClearStageSequence() {return DEVICE_OK;}
+   int AddToStageSequence(double /*position*/) {return DEVICE_OK;}
+   int SendStageSequence() const {return DEVICE_OK;}
+
+private:
+   int SetCommand(const unsigned char* command, unsigned length);
+   int GetCommand(unsigned char* response, unsigned length, double timeoutMs);
+   bool GetValue(std::string& sMessage, double& pos);
+   int SetMaxTravel();
+   double GetTravelTimeMs(long steps);
+
+   std::string port_;
+   double stepSizeUm_;
+   bool initialized_;
+   double answerTimeoutMs_;
+   double maxTravelUm_;
+   double curPosUm_; // cached current position
+};
 
 #endif //_THORLABS_H_

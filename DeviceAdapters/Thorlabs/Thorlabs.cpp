@@ -33,6 +33,8 @@
 #include <sstream>
 
 const char* g_XYStageDeviceName = "XYStage";
+const char* g_PiezoZStageDeviceName = "PiezoZStage";
+
 const char* g_SerialNumberProp = "SerialNumber";
 const char* g_ModelNumberProp = "ModelNumber";
 const char* g_SWVersionProp = "SoftwareVersion";
@@ -126,6 +128,7 @@ unsigned const char* GenerateYCommand(const unsigned char* xCmd)
 MODULE_API void InitializeModuleData()
 {
    AddAvailableDeviceName(g_XYStageDeviceName, "Thorlabs BD102 XY Stage");
+   AddAvailableDeviceName(g_PiezoZStageDeviceName, "Thorlabs piezo Z Stage");
 }
 
 MODULE_API MM::Device* CreateDevice(const char* deviceName)
@@ -136,6 +139,11 @@ MODULE_API MM::Device* CreateDevice(const char* deviceName)
    if (strcmp(deviceName, g_XYStageDeviceName) == 0)
    {
       XYStage* s = new XYStage();
+      return s;
+   }
+   if (strcmp(deviceName, g_PiezoZStageDeviceName) == 0)
+   {
+      PiezoZStage* s = new PiezoZStage();
       return s;
    }
 
