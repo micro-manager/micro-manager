@@ -32,6 +32,10 @@ const char* g_CameraName = "MMCam";
 const char* g_PixelType_8bit = "8bit";
 const char* g_PixelType_16bit = "16bit";
 
+const char* g_CameraModelProperty = "Model";
+const char* g_CameraModel_A = "A";
+const char* g_CameraModel_B = "B";
+
 // windows DLL entry code
 #ifdef WIN32
 BOOL APIENTRY DllMain(  HANDLE /*hModule*/, 
@@ -110,6 +114,23 @@ MMCamera::MMCamera() :
 {
    // call the base class method to set-up default error codes/messages
    InitializeDefaultErrorMessages();
+
+   // Description property
+   int ret = CreateProperty(MM::g_Keyword_Description, "MMCamera example adapter", MM::String, true);
+   assert(ret == DEVICE_OK);
+
+   // camera type pre-initialization property
+   ret = CreateProperty(g_CameraModelProperty, g_CameraModel_A, MM::String, false, 0, true);
+   assert(ret == DEVICE_OK);
+
+   vector<string> modelValues;
+   modelValues.push_back(g_CameraModel_A);
+   modelValues.push_back(g_CameraModel_A); 
+
+   ret = SetAllowedValues(g_CameraModelProperty, modelValues);
+   assert(ret == DEVICE_OK);
+
+   // create live video thread
    thd_ = new SequenceThread(this);
 }
 
@@ -153,13 +174,9 @@ int MMCamera::Initialize()
    // set property list
    // -----------------
 
-   // Description
-   int ret = CreateProperty(MM::g_Keyword_Description, "MMCamera example adapter", MM::String, true);
-   assert(ret == DEVICE_OK);
-
    // binning
    CPropertyAction *pAct = new CPropertyAction (this, &MMCamera::OnBinning);
-   ret = CreateProperty(MM::g_Keyword_Binning, "1", MM::Integer, false, pAct);
+   int ret = CreateProperty(MM::g_Keyword_Binning, "1", MM::Integer, false, pAct);
    assert(ret == DEVICE_OK);
 
    vector<string> binningValues;
