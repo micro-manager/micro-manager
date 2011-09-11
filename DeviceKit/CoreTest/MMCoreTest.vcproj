@@ -211,7 +211,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="MMCorer.lib Iphlpapi.lib"
+				AdditionalDependencies="MMCore.lib Iphlpapi.lib"
 				LinkIncremental="1"
 				AdditionalLibraryDirectories="&quot;..\..\..\3rdpartypublic\boost\stage_$(PlatformName)\lib&quot;;&quot;..\..\lib_$(PlatformName)&quot;"
 				GenerateDebugInformation="true"
