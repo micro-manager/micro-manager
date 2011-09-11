@@ -27,10 +27,13 @@ import javax.swing.JOptionPane;
 double cutoff_ = 0.002;
 // Exposure will be reduced tooBright_ fold when the image was too bright
 double tooBright_ = 5;
-// When brighest pixel is lower than this fraction it is too low 
-double lowFraction_ = 0.4;
+// Aim for the brightest pixel to be this fraction of the dynamic range
+double aim_ = 0.85;
+// When brightest pixel is higher than this fraction of the dynamic range, 
+// consider the image to be saturated
+double saturated_ = 0.95;
 // Highest allowed exposure: to avoid extreme exposures, do not go higher than this:
-double maxExposure_ = 60000;
+double maxExposure_ = 10000;
 
 
 
@@ -44,7 +47,6 @@ boolean testExposure () {
    img = mmc.getImage();
    int width = mmc.getImageWidth();
    int height = mmc.getImageHeight();
-   // byteDepth = mmc.getBytesPerPixel();
 
    int nrPixels = width * height;
 
@@ -81,14 +83,14 @@ boolean testExposure () {
 	double nrBits = mmc.getImageBitDepth();
 	double maxPossible = java.lang.Math.pow (2.0, nrBits);
 
-	if (maxValue > (0.9 * maxPossible) ) {
+	if (maxValueD > (saturated_ * maxPossible) ) {
       nextExposure = 1/tooBright_ * exposure;
       mmc.setExposure(nextExposure);
 		gui.message ("Saturated image, cutting down on Exposure");
 		return false;
 	}
 
-	double nextExposure = 0.85 * maxPossible / maxValueD * exposure;
+	double nextExposure = aim_ * maxPossible / maxValueD * exposure;
 	gui.message("Max pixel Value: " + maxValue + " Max Possible: " + maxPossible + " Best Exposure: " + nextExposure);
 
 	if (nextExposure > maxExposure_) {

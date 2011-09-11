@@ -24,11 +24,11 @@ for (int i=0; i <stack.getSize()/2; i++) {
 	if (i>0) {
 		rt.addValue("Slope of Log", ( (Math.log(stdDev) - Math.log(data.getY(i-1))) / (Math.log(stats.mean) - Math.log(data.getX(i-1)))));
 		rt.addValue("PCF", stats.mean/(stdDev*stdDev));
-		gui.message("Processing: " + i);
-	}	
+	}
+	gui.message("Processing: " + i);
 	data.add(stats.mean, stdDev);
 }
 
 t = "Photon Transfer Data -" + img.getTitle();
 rt.show(t);
-plotData("Photon Transfer Curve -" + img.getTitle(), data, "Signal DN", "Noise DN", 100, 100, true, true);
+plotData("Photon Transfer Curve -" + img.getTitle(), data, "Signal (DN)", "Noise (DN)", 100, 100, true, true);

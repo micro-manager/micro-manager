@@ -4,6 +4,7 @@ import java.awt.geom.Ellipse2D;
 import java.awt.geom.Point2D;
 
 import org.jfree.chart.axis.LogAxis;
+import org.jfree.chart.axis.NumberTickUnit;
 import org.jfree.chart.plot.PlotOrientation;
 import org.jfree.chart.plot.XYPlot;
 import org.jfree.chart.renderer.xy.XYLineAndShapeRenderer;
@@ -34,13 +35,21 @@ public static void plotData(String title, XYSeries data, String xTitle,
       plot.setRangeGridlinePaint(Color.lightGray);
 		if (xLog) {
 			LogAxis xAxis = new LogAxis(xTitle);
-			plot.setDomainAxis(xAxis);
+			xAxis.setTickUnit(new NumberTickUnit(1.0, new java.text.DecimalFormat(), 10));
+			plot.setDomainAxis(xAxis);		
+      	plot.setDomainGridlinePaint(Color.lightGray);
+			plot.setDomainGridlineStroke(new BasicStroke(1.0f));
+			plot.setDomainMinorGridlinePaint(Color.lightGray);
+			plot.setDomainMinorGridlineStroke(new BasicStroke(0.2f));
+			plot.setDomainMinorGridlinesVisible(true);	
 		}
 		if (yLog) {
 			LogAxis yAxis = new LogAxis(yTitle);
+			yAxis.setTickUnit(new NumberTickUnit(1.0, new java.text.DecimalFormat(), 10));
 			plot.setRangeAxis(yAxis);
 			plot.setRangeGridlineStroke(new BasicStroke(1.0f));
-			plot.setRangeMinorGridlineStroke(new BasicStroke(0.5f));
+			plot.setRangeMinorGridlinePaint(Color.lightGray);
+			plot.setRangeMinorGridlineStroke(new BasicStroke(0.2f));
 			plot.setRangeMinorGridlinesVisible(true);
 		}
       XYLineAndShapeRenderer renderer = (XYLineAndShapeRenderer) plot.getRenderer();
