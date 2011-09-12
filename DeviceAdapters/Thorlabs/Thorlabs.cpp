@@ -141,11 +141,11 @@ MODULE_API MM::Device* CreateDevice(const char* deviceName)
       XYStage* s = new XYStage();
       return s;
    }
-   if (strcmp(deviceName, g_PiezoZStageDeviceName) == 0)
-   {
-      PiezoZStage* s = new PiezoZStage();
-      return s;
-   }
+   //if (strcmp(deviceName, g_PiezoZStageDeviceName) == 0)
+   //{
+   //   PiezoZStage* s = new PiezoZStage();
+   //   return s;
+   //}
 
    return 0;
 }

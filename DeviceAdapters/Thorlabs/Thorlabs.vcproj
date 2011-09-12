@@ -341,10 +341,6 @@
 				>
 			</File>
 			<File
-				RelativePath=".\PiezoZStage.cpp"
-				>
-			</File>
-			<File
 				RelativePath="..\..\MMDevice\Property.cpp"
 				>
 			</File>
