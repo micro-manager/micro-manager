@@ -69,6 +69,7 @@ cp -r MacInstaller/Micro-Manager $TARGET
 find $TARGET -name '.svn' -exec rm -fr {} \;
 cp $CLASSEXT/ij.jar $TARGET
 cp $CLASSEXT/*.jar $TARGET/plugins/
+rm $TARGET/plugins/ij.jar || echo "No problem"
 cp -r $TARGET $PPC
 cp -r $TARGET $I386
 cp -r $TARGET $X86_64
@@ -157,7 +158,7 @@ cd $I386
 java -cp plugins/Micro-Manager/MMJ_.jar:plugins/Micro-Manager/MMCoreJ.jar DeviceListBuilder notDeviceDiscoveryEnabled
 cp $I386/MMDeviceList.txt $TARGET/MMDeviceList.txt
 java -cp plugins/Micro-Manager/MMJ_.jar:plugins/Micro-Manager/MMCoreJ.jar DeviceListBuilder deviceDiscoveryEnabled
-cp $I386/MMDeviceListPrime.txt $TARGET/MMDeviceListPrime.txt
+//cp $I386/MMDeviceListPrime.txt $TARGET/MMDeviceListPrime.txt
 
 #Install Python, only I386
 cp $RI386/bin/MMCorePy.py $TARGET/
