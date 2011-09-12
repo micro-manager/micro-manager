@@ -83,7 +83,7 @@
 		</copy>
 
 		<copy file="${IJLauncher}" todir="${InstallRoot}" />
-		<copy file="${IJ}" todir="${InstallRoot}" />
+		<copy file="../../3rdpartypublic/classext/ij.jar" todir="${InstallRoot}" />
 		<copy file="MMJ_.jar" todir="${MMPluginDir-inst}" />
 		<copy file="MMJ_.jar" todir="${BinRoot}/plugins/Micro-Manager" />
 

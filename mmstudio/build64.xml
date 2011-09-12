@@ -26,16 +26,6 @@
 		<pathelement location="${MMPluginDir}"/>
 	</path>
 
-	<path id="project.run.path">
-		<pathelement location="${MMPluginDir}/MMJ_.jar"/>
-		<pathelement location="${MMPluginDir}/MMCoreJ.jar"/>
-		<pathelement location="${MMPluginDir}/bsh-2.0b4.jar"/>
-		<pathelement location="${MMPluginDir}/swingx-0.9.5.jar"/>
-		<pathelement location="${MMPluginDir}/swing-layout-1.0.4.jar"/>
-		<pathelement location="${MMPluginDir}/commons-math-2.0.jar"/>
-		<pathelement location="${MMPluginDir}/clojure.jar"/>
-		<pathelement location="${IJ}"/>
-	</path>
 
 	<target name="compile" description="Compile MM Studio.">
 		<mkdir dir="build" />
@@ -99,6 +89,8 @@
 		  		<include name="**/mmgr_dal_*.dll"/>
 			</fileset>
             </delete>
+
+		<copy file="../../3rdpartypublic/classext/ij.jar" todir="${InstallRoot}" />
 
 		<copy todir="${MMPluginDir-inst}">
 			<fileset dir="../../3rdpartypublic/classext/" casesensitive="no">
