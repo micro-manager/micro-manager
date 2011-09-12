@@ -18,13 +18,6 @@
 
 	<!-- Do not modify from this point on -->
 	<property name="MMPluginDir" value="${ImageJPath}/plugins/Micro-Manager"/>
-	<property name="IJ" value="../../3rdpartypublic/classext/ij.jar"/>
-	<property name="beanshell" value="../../3rdpartypublic/classext/bsh-2.0b4.jar"/>
-	<property name="swingx" value="../../3rdpartypublic/classext/swingx-0.9.5.jar"/>
-	<property name="swing_layout" value="../../3rdpartypublic/classext/swing-layout-1.0.4.jar"/>
-	<property name="commons_math" value="../../3rdpartypublic/classext/commons-math-2.0.jar"/>
-	<property name="clojure" value="../../3rdpartypublic/classext/clojure.jar"/>
-	<property name="clojurecontrib" value="../../3rdpartypublic/classext/clojure-contrib.jar"/>
 	<property name="MMCoreJ" value="../bin_x64/MMCoreJ.jar"/>
 	<property name="MMPluginDir-inst" value="${InstallRoot}/plugins/Micro-Manager"/>
 	<property name="BinRoot" value="../bin_x64"/>
@@ -42,17 +35,6 @@
 		<pathelement location="${MMPluginDir}/commons-math-2.0.jar"/>
 		<pathelement location="${MMPluginDir}/clojure.jar"/>
 		<pathelement location="${IJ}"/>
-	</path>
-
-	<path id="project.class.path">
-		<pathelement location="${IJ}" />
-		<pathelement location="${beanshell}" />
-		<pathelement location="${swingx}" />
-		<pathelement location="${MMCoreJ}" />
-		<pathelement location="${swing_layout}" />
-		<pathelement location="${commons_math}" />
-		<pathelement location="${clojure}" />
-		<pathelement location="${MMPluginDir}/MMJ_.jar"/>
 	</path>
 
 	<target name="compile" description="Compile MM Studio.">
@@ -118,22 +100,12 @@
 			</fileset>
             </delete>
 
-		<copy file="${ImageJPath}/ImageJ.exe" todir="${InstallRoot}" />
-		<copy file="${IJ}" todir="${InstallRoot}" />
-		<copy file="MMJ_.jar" todir="${MMPluginDir-inst}" />
-		<copy file="MMJ_.jar" todir="${BinRoot}/plugins/Micro-Manager" />
-		<copy file="${beanshell}" todir="${MMPluginDir-inst}" />
-		<copy file="${swingx}" todir="${MMPluginDir-inst}" />
-		<copy file="${MMCoreJ}" todir="${MMPluginDir-inst}" />
-		<copy file="${swing_layout}" todir="${MMPluginDir-inst}" />
-		<copy file="${commons_math}" todir="${MMPluginDir-inst}" />
-		<copy file="${clojure}" todir="${MMPluginDir-inst}" />
-		<copy file="${clojurecontrib}" todir="${MMPluginDir-inst}" />
 		<copy todir="${MMPluginDir-inst}">
 			<fileset dir="../../3rdpartypublic/classext/" casesensitive="no">
-				<include name="clooj*.jar"/>
+				<include name="*.jar"/>
 			</fileset>
 		</copy>
+		<delete file="${MMPluginDir-inst}/ij.jar" />
 
 		<copy file="${BinRoot}/MMCoreJ_wrap.dll" todir="${InstallRoot}" />
 		<copy file="${BinRoot}/LaunchMicroManager.bat" todir="${InstallRoot}" />
