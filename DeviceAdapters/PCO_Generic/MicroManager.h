@@ -112,10 +112,14 @@ public:
    int OnCameraType(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnCCDType(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnExposure(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnFpsMode(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnFps(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnPixelRate(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnBinning(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnPixelType(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnGain(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnEMGain(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnEMLeftROI(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnDemoMode(MM::PropertyBase* pProp, MM::ActionType eAct);
  
    /*
@@ -175,8 +179,13 @@ private:
    int m_bufnr;
    WORD *m_pic;
    bool m_bDemoMode;
+   bool m_bStartStopMode;
+   int  m_iSkipImages;
 
    double m_dExposure; 
+   double m_dFps; 
+   int    m_iFpsMode;
+   int    m_iPixelRate;
    bool m_bBusy;
    bool m_bInitialized;
 

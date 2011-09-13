@@ -146,6 +146,12 @@ CPCOCam::CPCOCam() :
   m_nTimesLen = MMSENSICAM_MAX_STRLEN;
   m_pCamera = new CCamera();
   m_bDemoMode = FALSE;
+  m_bStartStopMode = FALSE;
+  m_iSkipImages = 1;
+  m_iFpsMode = 0;
+  m_dFps = 10.0;
+  m_iPixelRate = 0;
+
 
   // DemoMode (pre-initialization property)
   CPropertyAction* pAct = new CPropertyAction (this, &CPCOCam::OnDemoMode);
@@ -204,6 +210,102 @@ int CPCOCam::OnExposure(MM::PropertyBase* pProp, MM::ActionType eAct)
         sprintf(m_pszTimes, "%f", m_dExposure / 1000.0);
       else
         sprintf(m_pszTimes, "0,%d,-1,-1", (int)m_dExposure);
+      nErr = SetupCamera();
+    }
+	    
+    if (nErr != 0)
+      return nErr;
+  }
+  return DEVICE_OK;
+}
+
+int CPCOCam::OnFpsMode(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+  if (eAct == MM::BeforeGet)
+  {
+    if(m_iFpsMode == 0)
+      pProp->Set("Off");
+    else
+      pProp->Set("On");
+  }
+  else if (eAct == MM::AfterSet)
+  {
+    int nErr = 0;
+    string tmp;
+    long fpsModeTmp;
+    int ihelp;
+    pProp->Get(tmp);
+    ((MM::Property *) pProp)->GetData(tmp.c_str(), fpsModeTmp);
+    ihelp = (fpsModeTmp == 1);
+
+    if(ihelp != m_iFpsMode)
+    {
+
+      m_iFpsMode = ihelp;
+      if(m_iFpsMode == 1)
+        sprintf(m_pszTimes, "%ffps,%f,-1,-1", m_dFps, m_dExposure);
+      else
+        sprintf(m_pszTimes, "0,%d,-1,-1", (int)m_dExposure);
+      nErr = SetupCamera();
+    }
+	    
+    if (nErr != 0)
+      return nErr;
+  }
+  return DEVICE_OK;
+}
+
+int CPCOCam::OnFps(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+  if (eAct == MM::BeforeGet)
+  {
+    pProp->Set(m_dFps);
+  }
+  else if (eAct == MM::AfterSet)
+  {
+    int nErr = 0;
+    double dhelp;
+    pProp->Get(dhelp);
+    if(dhelp != m_dFps)
+    {
+      m_dFps = dhelp;
+      if(m_iFpsMode == 1)
+        sprintf(m_pszTimes, "%ffps,%f,-1,-1", m_dFps, m_dExposure);
+      else
+        sprintf(m_pszTimes, "0,%d,-1,-1", (int)m_dExposure);
+      nErr = SetupCamera();
+    }
+	    
+    if (nErr != 0)
+      return nErr;
+  }
+  return DEVICE_OK;
+}
+
+int CPCOCam::OnPixelRate(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+  if (eAct == MM::BeforeGet)
+  {
+    if(m_iPixelRate == 286000000)
+      pProp->Set("286MHz");
+    else
+      pProp->Set("95MHz");
+  }
+  else if (eAct == MM::AfterSet)
+  {
+    int ipixr[2] = {95333333, 286000000};
+    int nErr = 0;
+    string tmp;
+    long fpsModeTmp;
+    int ihelp;
+    pProp->Get(tmp);
+    ((MM::Property *) pProp)->GetData(tmp.c_str(), fpsModeTmp);
+    ihelp = ipixr[fpsModeTmp];
+
+    if(ihelp != m_iPixelRate)
+    {
+
+      m_iPixelRate = ihelp;
       nErr = SetupCamera();
     }
 	    
@@ -295,11 +397,55 @@ int CPCOCam::OnBinning(MM::PropertyBase* pProp, MM::ActionType eAct)
   return DEVICE_OK;
 }
 
+int CPCOCam::OnEMLeftROI(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+  int nMode;
+  int nErr;
+
+  if(m_bDemoMode)
+    return DEVICE_OK;
+  nErr = 0;
+  if (eAct == MM::AfterSet)
+  {
+    long left;
+    pProp->Get(left);
+    if(m_pCamera->iCamClass == 2)
+    {
+      left -= 1;
+      if(left < 0)
+        left = 0;
+    }
+
+    m_nRoiXMin = left;
+    m_nRoiYMin = 1;
+    m_nRoiXMax = roiXMaxFull_;
+    m_nRoiYMax = roiYMaxFull_;
+    nErr = SetupCamera();
+    if(nErr != 0)
+    {
+      return nErr;
+    }
+    return ResizeImageBuffer();
+  }
+  else if (eAct == MM::BeforeGet)
+  {
+    nErr = m_pCamera->getsettings(&nMode, &m_nTrig, &m_nRoiXMin, &m_nRoiXMax, &m_nRoiYMin, &m_nRoiYMax,
+                           &m_nHBin, &m_nVBin, m_pszTimes, &m_iGain, &m_iOffset, &m_uiFlags);
+    if (nErr != 0)
+      return nErr;
+
+    pProp->Set((long)m_nRoiXMin);
+  }
+  return DEVICE_OK;
+}
+
+
 int CPCOCam::SetupCamera()
 {
   unsigned int uiMode;
   int nErr;
   int istopresult;
+  int iOffsPxr;
 
   if(m_bDemoMode)
   {
@@ -312,13 +458,18 @@ int CPCOCam::SetupCamera()
   if (nErr != 0)
     return nErr;
 
+  iOffsPxr = m_iOffset;
+
+
   m_nTimesLen = MMSENSICAM_MAX_STRLEN;
   nErr = m_pCamera->testcoc(&m_nMode, &m_nTrig, &m_nRoiXMin, &m_nRoiXMax, &m_nRoiYMin, &m_nRoiYMax,
-                            &m_nHBin, &m_nVBin, m_pszTimes, &m_nTimesLen, &m_iGain, &m_iOffset, &m_uiFlags);
+                            &m_nHBin, &m_nVBin, m_pszTimes, &m_nTimesLen, &m_iGain, &iOffsPxr, &m_uiFlags);
   if ((nErr != 0) && (nErr != 103))
     return nErr;
+  if((m_nCameraType == 0x1300) || (m_nCameraType == 0x1310))
+    iOffsPxr = m_iPixelRate;
   nErr = m_pCamera->setcoc(m_nMode, m_nTrig, m_nRoiXMin, m_nRoiXMax, m_nRoiYMin, m_nRoiYMax,
-                           m_nHBin, m_nVBin, m_pszTimes, m_iGain, m_iOffset, m_uiFlags);
+                           m_nHBin, m_nVBin, m_pszTimes, m_iGain, iOffsPxr, m_uiFlags);
   if (nErr != 0)
     return nErr;
   nErr = ResizeImageBuffer();
@@ -578,27 +729,36 @@ int CPCOCam::Initialize()
   }
   if(m_pCamera->iCamClass == 3)
   {
+    int iroixmax, iroiymax;
     int mode, trig, roix1, roix2, roiy1, roiy2, hbin, vbin, size, gain, offset;
     unsigned int flags;
     char table[400];
 
-    mode = 0; trig = 0; roix1 = 1; roix2 = 1000;
-    roiy1 = 1; roiy2 = 960; size = 0; gain = 0; offset = 0; flags = 0;
+    m_pCamera->GetMaximumROI(&iroixmax, &iroiymax);
+
+    mode = 0; trig = 0; roix1 = 1; roix2 = iroixmax;
+    roiy1 = 1; roiy2 = iroiymax; size = 0; gain = 0; offset = 0; flags = 0;
     sprintf_s(table, 400, "0, 10, -1, -1");
 
     hbin = vbin = 2;
+    roix2 /= 2;
+    roiy2 /= 2;
     m_pCamera->testcoc(&mode, &trig, &roix1, &roix2, &roiy1, &roiy2,
       &hbin, &vbin, table, &size, &gain, &offset, &flags);
     if((hbin == 2) && (vbin == 2))
       binValues.push_back("2");
 
     hbin = vbin = 4;
+    roix2 /= 2;
+    roiy2 /= 2;
     m_pCamera->testcoc(&mode, &trig, &roix1, &roix2, &roiy1, &roiy2,
       &hbin, &vbin, table, &size, &gain, &offset, &flags);
     if((hbin == 4) && (vbin == 4))
       binValues.push_back("4");
 
     hbin = vbin = 8;
+    roix2 /= 2;
+    roiy2 /= 2;
     m_pCamera->testcoc(&mode, &trig, &roix1, &roix2, &roiy1, &roiy2,
       &hbin, &vbin, table, &size, &gain, &offset, &flags);
     if((hbin == 8) && (vbin == 8))
@@ -653,12 +813,61 @@ int CPCOCam::Initialize()
     nRet = SetPropertyLimits(MM::g_Keyword_EMGain, 1.0, 9.0);
     if (nRet != DEVICE_OK)
       return nRet;
+
+    pAct = new CPropertyAction (this, &CPCOCam::OnEMLeftROI);
+    nRet = CreateProperty("EM left ROI", "1", MM::Integer, false, pAct);
+    if (nRet != DEVICE_OK)
+      return nRet;
+
+    
+    vector<string> roiValues;
+    roiValues.push_back("1");
+    roiValues.push_back("2");
+
+    nRet = SetAllowedValues("EM left ROI", roiValues);
+    if (nRet != DEVICE_OK)
+      return nRet;
+    UpdateProperty("EM left ROI");
+
   }
   // Exposure
   pAct = new CPropertyAction (this, &CPCOCam::OnExposure);
   nRet = CreateProperty(MM::g_Keyword_Exposure, "10", MM::Float, false, pAct);
   if (nRet != DEVICE_OK)
     return nRet;
+  if((m_nCameraType == 0x1300) ||// fps setting for pco.edge
+     (m_nCameraType == 0x1310))
+  {
+    pAct = new CPropertyAction (this, &CPCOCam::OnFps);
+    nRet = CreateProperty("Fps", "1", MM::Float, false, pAct);
+    if (nRet != DEVICE_OK)
+      return nRet;
+    nRet = SetPropertyLimits("Fps", 1.0, 100.0);
+    if (nRet != DEVICE_OK)
+      return nRet;
+
+    pAct = new CPropertyAction (this, &CPCOCam::OnFpsMode);
+    nRet = CreateProperty("Fps Mode", "Off", MM::String, false, pAct);
+    if (nRet != DEVICE_OK)
+      return nRet;
+    nRet = AddAllowedValue("Fps Mode","Off",0);
+    if (nRet != DEVICE_OK)
+      return nRet;
+    nRet = AddAllowedValue("Fps Mode","On",1);
+    if (nRet != DEVICE_OK)
+      return nRet;
+
+    pAct = new CPropertyAction (this, &CPCOCam::OnPixelRate);
+    nRet = CreateProperty("PixelRate", "95MHz", MM::String, false, pAct);
+    if (nRet != DEVICE_OK)
+      return nRet;
+    nRet = AddAllowedValue("PixelRate","95MHz",0);
+    if (nRet != DEVICE_OK)
+      return nRet;
+    nRet = AddAllowedValue("PixelRate","286MHz",1);
+    if (nRet != DEVICE_OK)
+      return nRet;
+  }
 
   //test if SET_COC gets right values
   if(m_pCamera->iCamClass == 1)
@@ -706,11 +915,20 @@ int CPCOCam::Shutdown()
 int CPCOCam::SnapImage()
 {
   int nErr;
+  int cnt = m_iSkipImages;
 
   if(m_bDemoMode)
     return DEVICE_OK;
-  m_pCamera->ResetEvWait();
-  nErr = m_pCamera->WaitForImage();
+  if(m_bStartStopMode == TRUE)
+  {
+    m_pCamera->StopCam(&nErr);
+    m_pCamera->StartCam();
+  }
+  do
+  {
+    m_pCamera->ResetEvWait();
+    nErr = m_pCamera->WaitForImage();
+  }while(cnt-- > 0);
 
   if (nErr != 0)
     return nErr;

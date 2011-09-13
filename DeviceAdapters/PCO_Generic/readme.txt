@@ -18,7 +18,7 @@ files in pco_generic.zip (library and header files) to the following folder:
 <somewhere>..\3rdparty\pco\windows.
 
 Please copy the following files into the MicroManager folder:
-  pco_cnv.dll, pco_cdlg.dll
+  pco_conv.dll, pco_cdlg.dll
 
 With a PixelFly or SensiCam you're ready to go.
 
@@ -35,6 +35,10 @@ Additionally for the Matrox Cameralink interface:
 
 Additionally for the National Cameralink interface:
   sc2_cl_nat.dll
+
+Additionally for the Silicon Software Cameralink interface:
+  sc2_cl_me3.dll or
+  sc2_cl_me4.dll
 
 All files mentioned above can be found either in the CamWare folder, or the sdk.
 
