@@ -44,7 +44,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="../../../3rdparty/Andor/ALC_REV_SDK/include;../../../3rdpartypublic/boost"
+				AdditionalIncludeDirectories="../../../3rdparty/Andor/ALC/ALC_REV_SDK/Include;../../../3rdpartypublic/boost"
 				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_USRDLL;MODULE_EXPORTS"
 				MinimalRebuild="true"
 				ExceptionHandling="2"
@@ -129,7 +129,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="../../../3rdparty/Andor/ALC_REV_SDK/include;../../../3rdpartypublic/boost"
+				AdditionalIncludeDirectories="../../../3rdparty/Andor/ALC/ALC_REV_SDK/Include;../../../3rdpartypublic/boost"
 				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_USRDLL;MODULE_EXPORTS"
 				MinimalRebuild="true"
 				ExceptionHandling="2"
