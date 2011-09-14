@@ -800,8 +800,7 @@ int COpenCVgrabber::InsertImage()
       // do not stop on overflow - just reset the buffer
       GetCoreCallback()->ClearImageBuffer(this);
       // don't process this same image again...
-//      return GetCoreCallback()->InsertImage(this, pI, w, h, b, &md, false);
-      //return GetCoreCallback()->InsertImage(this, pI, w, h, b, md.Serialize().c_str(), false);
+	  //return GetCoreCallback()->InsertImage(this, pI, w, h, b, &md, false);
 	  return GetCoreCallback()->InsertImage(this, pI, w, h, b);
    } else
       return ret;
@@ -1220,8 +1219,8 @@ int COpenCVgrabber::OnResolution(MM::PropertyBase* pProp, MM::ActionType eAct)
    {
    case MM::AfterSet:
       {
-         if(IsCapturing())
-            return DEVICE_CAMERA_BUSY_ACQUIRING;
+         //if(IsCapturing())
+           // return DEVICE_CAMERA_BUSY_ACQUIRING;
 
 		 std::string resolution;
          pProp->Get(resolution);
@@ -1395,9 +1394,12 @@ int COpenCVgrabber::OnResolution(MM::PropertyBase* pProp, MM::ActionType eAct)
       } break;
    case MM::BeforeGet:
       {
-         //pProp->Set((long)bitDepth_);
+		  std::ostringstream oss;
+		  oss << CDeviceUtils::ConvertToString(cameraCCDXSize_) << "x";
+		  oss << CDeviceUtils::ConvertToString(cameraCCDYSize_);
+		  pProp->Set(oss.str().c_str());
          ret=DEVICE_OK;
-      }break;
+      } break;
    }
    return ret; 
 }
