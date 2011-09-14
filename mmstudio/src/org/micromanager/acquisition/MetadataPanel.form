@@ -471,9 +471,6 @@
                         <Property name="toolTipText" type="java.lang.String" value="Enter your comments for the whole acquisition here"/>
                         <Property name="wrapStyleWord" type="boolean" value="true"/>
                       </Properties>
-                      <Events>
-                        <EventHandler event="focusLost" listener="java.awt.event.FocusListener" parameters="java.awt.event.FocusEvent" handler="summaryCommentsTextAreaFocusLost"/>
-                      </Events>
                     </Component>
                   </SubComponents>
                 </Container>
@@ -530,9 +527,6 @@
                         <Property name="toolTipText" type="java.lang.String" value="Comments for each image may be entered here."/>
                         <Property name="wrapStyleWord" type="boolean" value="true"/>
                       </Properties>
-                      <Events>
-                        <EventHandler event="focusLost" listener="java.awt.event.FocusListener" parameters="java.awt.event.FocusEvent" handler="imageCommentsTextAreaFocusLost"/>
-                      </Events>
                     </Component>
                   </SubComponents>
                 </Container>

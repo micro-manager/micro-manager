@@ -25,6 +25,8 @@ import java.util.Vector;
 import javax.swing.JPanel;
 import javax.swing.SpinnerNumberModel;
 import javax.swing.SpringLayout;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
 import javax.swing.table.AbstractTableModel;
 import mmcorej.TaggedImage;
 import org.json.JSONException;
@@ -64,7 +66,7 @@ public class MetadataPanel extends javax.swing.JPanel
       //update(WindowManager.getCurrentImage());
       imageMetadataTable.setModel(imageMetadataModel_);
       summaryMetadataTable.setModel(summaryMetadataModel_);
-
+      addTextChangeListeners();
       setDisplayState(CompositeImage.COMPOSITE);
       this.autostretchCheckBoxStateChanged(null);
 
@@ -157,7 +159,7 @@ public class MetadataPanel extends javax.swing.JPanel
          }
       });
 
-      rejectPercentSpinner_.setFont(new java.awt.Font("Lucida Grande", 0, 10)); // NOI18N
+      rejectPercentSpinner_.setFont(new java.awt.Font("Lucida Grande", 0, 10));
       rejectPercentSpinner_.addChangeListener(new javax.swing.event.ChangeListener() {
          public void stateChanged(javax.swing.event.ChangeEvent evt) {
             rejectPercentSpinner_StateChanged(evt);
@@ -388,11 +390,6 @@ public class MetadataPanel extends javax.swing.JPanel
       summaryCommentsTextArea.setTabSize(3);
       summaryCommentsTextArea.setToolTipText("Enter your comments for the whole acquisition here");
       summaryCommentsTextArea.setWrapStyleWord(true);
-      summaryCommentsTextArea.addFocusListener(new java.awt.event.FocusAdapter() {
-         public void focusLost(java.awt.event.FocusEvent evt) {
-            summaryCommentsTextAreaFocusLost(evt);
-         }
-      });
       summaryCommentsScrollPane.setViewportView(summaryCommentsTextArea);
 
       org.jdesktop.layout.GroupLayout summaryCommentsPaneLayout = new org.jdesktop.layout.GroupLayout(summaryCommentsPane);
@@ -424,11 +421,6 @@ public class MetadataPanel extends javax.swing.JPanel
       imageCommentsTextArea.setTabSize(3);
       imageCommentsTextArea.setToolTipText("Comments for each image may be entered here.");
       imageCommentsTextArea.setWrapStyleWord(true);
-      imageCommentsTextArea.addFocusListener(new java.awt.event.FocusAdapter() {
-         public void focusLost(java.awt.event.FocusEvent evt) {
-            imageCommentsTextAreaFocusLost(evt);
-         }
-      });
       imageCommentsScrollPane.setViewportView(imageCommentsTextArea);
 
       org.jdesktop.layout.GroupLayout imageCommentsPanelLayout = new org.jdesktop.layout.GroupLayout(imageCommentsPanel);
@@ -475,14 +467,6 @@ public class MetadataPanel extends javax.swing.JPanel
           setDisplayState(displayModeCombo.getSelectedIndex() + 1);
        }
 }//GEN-LAST:event_displayModeComboActionPerformed
-
-    private void summaryCommentsTextAreaFocusLost(java.awt.event.FocusEvent evt) {//GEN-FIRST:event_summaryCommentsTextAreaFocusLost
-       writeSummaryComments(WindowManager.getCurrentImage());
-}//GEN-LAST:event_summaryCommentsTextAreaFocusLost
-
-    private void imageCommentsTextAreaFocusLost(java.awt.event.FocusEvent evt) {//GEN-FIRST:event_imageCommentsTextAreaFocusLost
-       writeImageComments(WindowManager.getCurrentImage());
-}//GEN-LAST:event_imageCommentsTextAreaFocusLost
 
     private void showUnchangingPropertiesCheckboxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_showUnchangingPropertiesCheckboxActionPerformed
        showUnchangingKeys_ = showUnchangingPropertiesCheckbox.isSelected();
@@ -543,6 +527,7 @@ public class MetadataPanel extends javax.swing.JPanel
     private void rejectPercentSpinner_KeyPressed(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_rejectPercentSpinner_KeyPressed
        updateChannelSettings();
     }//GEN-LAST:event_rejectPercentSpinner_KeyPressed
+
    // Variables declaration - do not modify//GEN-BEGIN:variables
    private javax.swing.JPanel ChannelsTablePanel;
    private javax.swing.JSplitPane CommentsSplitPane;
@@ -597,6 +582,46 @@ public class MetadataPanel extends javax.swing.JPanel
 
    void setAutostretch(boolean state) {
       autostretchCheckBox.setSelected(state);
+   }
+
+   private void addTextChangeListeners() {
+      summaryCommentsTextArea.getDocument()
+              .addDocumentListener(new DocumentListener() {
+         private void handleChange() {
+            writeSummaryComments(WindowManager.getCurrentImage());
+         }
+
+         public void insertUpdate(DocumentEvent e) {
+            handleChange();
+         }
+
+         public void removeUpdate(DocumentEvent e) {
+            handleChange();
+         }
+
+         public void changedUpdate(DocumentEvent e) {
+            handleChange();
+         }
+      });
+
+      imageCommentsTextArea.getDocument()
+              .addDocumentListener(new DocumentListener() {
+         private void handleChange() {
+            writeImageComments(WindowManager.getCurrentImage());
+         }
+
+         public void insertUpdate(DocumentEvent e) {
+            handleChange();
+         }
+
+         public void removeUpdate(DocumentEvent e) {
+            handleChange();
+         }
+
+         public void changedUpdate(DocumentEvent e) {
+            handleChange();
+         }
+      });
    }
 
    class MetadataTableModel extends AbstractTableModel {
