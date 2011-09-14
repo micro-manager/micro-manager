@@ -48,6 +48,7 @@ public class TaggedImageStorageDiskDefault implements TaggedImageStorage {
    private HashMap<String, JSONObject> metadataTable_ = null;
    private JSONObject displaySettings_;
    private int lastFrame_ = -1;
+   private Thread shutdownHook_;
 
    public TaggedImageStorageDiskDefault(String dir) {
       this(dir, false, null);
@@ -70,6 +71,15 @@ public class TaggedImageStorageDiskDefault implements TaggedImageStorage {
       } catch (Exception e) {
          ReportingUtils.logError(e);
       }
+
+      shutdownHook_ = new Thread() {
+         public void run() {
+            writeDisplaySettings();
+         }
+      };
+      
+      Runtime.getRuntime().addShutdownHook(this.shutdownHook_);
+
    }
 
    public int lastAcquiredFrame() {
@@ -525,6 +535,7 @@ public class TaggedImageStorageDiskDefault implements TaggedImageStorage {
    public void close() {
       try {
          writeDisplaySettings();
+         Runtime.getRuntime().removeShutdownHook(shutdownHook_);
       } catch (Exception e) {
          ReportingUtils.logError(e);
       }
@@ -541,5 +552,9 @@ public class TaggedImageStorageDiskDefault implements TaggedImageStorage {
       return dir_;
    }
 
+   public void finalize() throws Throwable {
+      close();
+      super.finalize();
+   }
 
 }
