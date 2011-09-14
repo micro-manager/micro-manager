@@ -38,9 +38,6 @@ import java.awt.geom.Point2D;
 import java.awt.geom.Point2D.Float;
 import java.util.ArrayList;
 
-
-import org.micromanager.utils.ReportingUtils;
-
 /**
  * Histogram view. 
  */

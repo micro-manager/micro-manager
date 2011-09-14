@@ -405,12 +405,6 @@ public class ChannelControlPanel extends javax.swing.JPanel {
        int max;
        if (autostretch_) {
          if( rejectOutliers_){
-            // calculations here are correct but aren't used to update display image
-            // until user 'cycles' the autostretch check box.
-            // so feature is temporarily disabled.
-
-            // image may have dropped or saturated pixels which should not influence contrast setting, i.e.
-				// don't let pixels lying outside 3 sigma influence the automatic contrast setting
             int totalPoints =  acq_.getHyperImage().getWidth() * acq_.getHyperImage().getHeight();
             int[] histogram = acq_.getChannelHistogram(channelIndex_);
             

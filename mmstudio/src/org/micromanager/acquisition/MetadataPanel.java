@@ -53,7 +53,6 @@ public class MetadataPanel extends javax.swing.JPanel
    private boolean updatingDisplayModeCombo_ = false;
    private ArrayList<ChannelControlPanel> ccpList_;
    private Color overlayColor_ = Color.white;
-   private double fractionOutliersToReject_;
 
    /** Creates new form MetadataPanel */
    public MetadataPanel() {
@@ -65,10 +64,6 @@ public class MetadataPanel extends javax.swing.JPanel
       //update(WindowManager.getCurrentImage());
       imageMetadataTable.setModel(imageMetadataModel_);
       summaryMetadataTable.setModel(summaryMetadataModel_);
-
-      HistogramUtils defaultHistogram = new HistogramUtils(null);
-      // start out with a fraction that represents 3 sigma in normal distribution
-      fractionOutliersToReject_ = defaultHistogram.getFractionToReject();
 
       setDisplayState(CompositeImage.COMPOSITE);
       this.autostretchCheckBoxStateChanged(null);

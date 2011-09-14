@@ -39,7 +39,7 @@ import org.micromanager.utils.ReportingUtils;
  * @author arthur
  */
 public class VirtualAcquisitionDisplay implements ImageCacheListener {
-   
+
    public static VirtualAcquisitionDisplay getDisplay(ImagePlus imgp) {
       ImageStack stack = imgp.getStack();
       if (stack instanceof AcquisitionVirtualStack) {
@@ -48,9 +48,7 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
          return null;
       }
    }
-
    final static Color[] rgb = {Color.red, Color.green, Color.blue};
-
    final ImageCache imageCache_;
    final private ImagePlus hyperImage_;
    final private HyperstackControls hc_;
@@ -70,24 +68,31 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
     * in an ImagePlus without it throwing conniptions.
     */
    public interface IMMImagePlus {
+
       public int getNChannelsUnverified();
+
       public int getNSlicesUnverified();
+
       public int getNFramesUnverified();
+
       public void setNChannelsUnverified(int nChannels);
+
       public void setNSlicesUnverified(int nSlices);
+
       public void setNFramesUnverified(int nFrames);
    }
 
-   public class MMCompositeImage extends CompositeImage implements IMMImagePlus{
+   public class MMCompositeImage extends CompositeImage implements IMMImagePlus {
+
       MMCompositeImage(ImagePlus imgp, int type) {
          super(imgp, type);
       }
-      
+
       @Override
       public int getImageStackSize() {
          return super.nChannels * super.nSlices * super.nFrames;
       }
-      
+
       @Override
       public int getStackSize() {
          return getImageStackSize();
@@ -96,9 +101,11 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
       public int getNChannelsUnverified() {
          return super.nChannels;
       }
+
       public int getNSlicesUnverified() {
          return super.nSlices;
       }
+
       public int getNFramesUnverified() {
          return super.nFrames;
       }
@@ -106,15 +113,18 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
       public void setNChannelsUnverified(int nChannels) {
          super.nChannels = nChannels;
       }
+
       public void setNSlicesUnverified(int nSlices) {
          super.nSlices = nSlices;
       }
+
       public void setNFramesUnverified(int nFrames) {
          super.nFrames = nFrames;
       }
    }
 
    public class MMImagePlus extends ImagePlus implements IMMImagePlus {
+
       MMImagePlus(String title, ImageStack stack) {
          super(title, stack);
       }
@@ -132,9 +142,11 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
       public int getNChannelsUnverified() {
          return super.nChannels;
       }
+
       public int getNSlicesUnverified() {
          return super.nSlices;
       }
+
       public int getNFramesUnverified() {
          return super.nFrames;
       }
@@ -142,9 +154,11 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
       public void setNChannelsUnverified(int nChannels) {
          super.nChannels = nChannels;
       }
+
       public void setNSlicesUnverified(int nSlices) {
          super.nSlices = nSlices;
       }
+
       public void setNFramesUnverified(int nFrames) {
          super.nFrames = nFrames;
       }
@@ -153,7 +167,7 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
    public VirtualAcquisitionDisplay(ImageCache imageCache, AcquisitionEngine eng) {
       this(imageCache, eng, "Untitled");
    }
-   
+
    public VirtualAcquisitionDisplay(ImageCache imageCache, AcquisitionEngine eng, String name) {
       name_ = name;
       imageCache_ = imageCache;
@@ -177,16 +191,17 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
          //numFrames = Math.max(Math.min(2,summaryMetadata.getInt("Frames")), 1);
          numChannels = Math.max(summaryMetadata.getInt("Channels"), 1);
          numPositions = Math.max(summaryMetadata.getInt("Positions"), 0);
-          numComponents = Math.max(MDUtils.getNumberOfComponents(summaryMetadata),1);
+         numComponents = Math.max(MDUtils.getNumberOfComponents(summaryMetadata), 1);
       } catch (Exception e) {
          ReportingUtils.showError(e);
       }
       numComponents_ = numComponents;
       numGrayChannels = numComponents_ * numChannels;
 
-      if (imageCache_.getDisplayAndComments() == null || imageCache_.getDisplayAndComments().isNull("Channels"))
+      if (imageCache_.getDisplayAndComments() == null || imageCache_.getDisplayAndComments().isNull("Channels")) {
          imageCache_.setDisplayAndComments(getDisplaySettingsFromSummary(summaryMetadata));
-      
+      }
+
       int type = 0;
       try {
          type = MDUtils.getSingleChannelType(summaryMetadata);
@@ -215,7 +230,7 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
          setNumFrames(1);
       }
       setNumPositions(numPositions);
-      for (int i=0;i<numGrayChannels;++i) {
+      for (int i = 0; i < numGrayChannels; ++i) {
          updateChannelLUT(i);
          updateChannelContrast(i);
       }
@@ -224,30 +239,34 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
    }
 
 
-         /*
+   /*
     * Method required by ImageStorageListener
     */
-   public void imageReceived(TaggedImage taggedImage) {
+   public void imageReceived(final TaggedImage taggedImage) {
       SwingUtilities.invokeLater(new Runnable() {
          public void run() {
-            updateDisplay(false);
+            updateDisplay(taggedImage, false);
          }
       });
    }
 
    /*
-    * Method reuired by ImageStorageListener
+    * Method required by ImageStorageListener
     */
    public void imagingFinished(String path) {
-      updateDisplay(true);
+      updateDisplay(null, true);
    }
 
-   private void updateDisplay(boolean finalUpdate) {
+   private void updateDisplay(TaggedImage taggedImage, boolean finalUpdate) {
       try {
          long t = System.currentTimeMillis();
-         if (finalUpdate || (Math.abs(t - lastDisplayTime_) > 30)) {
-            JSONObject tags = imageCache_.getLastImageTags();
-            if (tags != null && tags != lastDisplayTags_) {
+         JSONObject tags;
+         if (taggedImage != null)
+            tags = taggedImage.tags;
+         else
+            tags = imageCache_.getLastImageTags();
+         if (finalUpdate  || (MDUtils.getFrameIndex(tags) == 0) || (Math.abs(t - lastDisplayTime_) > 30)) {
+            if (tags != null /*&& tags != lastDisplayTags_*/) {
                showImage(tags);
                lastDisplayTags_ = tags;
             }
@@ -280,7 +299,6 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
       return tSelector;
    }
 
-
    public int rgbToGrayChannel(int channelIndex) {
       try {
          if (MDUtils.getNumberOfComponents(imageCache_.getSummaryMetadata()) == 3) {
@@ -292,7 +310,6 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
          return 0;
       }
    }
-
 
    public int grayToRGBChannel(int grayIndex) {
       try {
@@ -314,12 +331,13 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
          try {
             chColors = MDUtils.getJSONArrayMember(summaryMetadata, "ChColors");
          } catch (JSONException ex) {
-            int[] defaultColors = { Color.RED.getRGB(),
-                                    Color.GREEN.getRGB(),
-                                    Color.BLUE.getRGB() };
+            int[] defaultColors = {Color.RED.getRGB(),
+               Color.GREEN.getRGB(),
+               Color.BLUE.getRGB()};
             chColors = new JSONArray();
-            for (int i = 0; i < chNames.length(); i++)
+            for (int i = 0; i < chNames.length(); i++) {
                chColors.put(defaultColors[i % defaultColors.length]);
+            }
             summaryMetadata.put("ChColors", chColors);
          }
          JSONArray chMaxes;
@@ -327,8 +345,9 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
             chMaxes = MDUtils.getJSONArrayMember(summaryMetadata, "ChContrastMax");
          } catch (JSONException ex) {
             chMaxes = new JSONArray();
-            for (int i = 0; i < chNames.length(); i++)
+            for (int i = 0; i < chNames.length(); i++) {
                chMaxes.put(256);
+            }
             summaryMetadata.put("ChContrastMax", chMaxes);
          }
          JSONArray chMins;
@@ -336,8 +355,9 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
             chMins = MDUtils.getJSONArrayMember(summaryMetadata, "ChContrastMin");
          } catch (JSONException ex) {
             chMins = new JSONArray();
-            for (int i = 0; i < chNames.length(); i++)
+            for (int i = 0; i < chNames.length(); i++) {
                chMins.put(0);
+            }
             summaryMetadata.put("ChContrastMin", chMins);
          }
          int numComponents = 1;
@@ -345,19 +365,19 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
             numComponents = MDUtils.getNumberOfComponents(summaryMetadata);
          } catch (JSONException ex) {
          }
-         
+
          JSONArray channels = new JSONArray();
-         for (int k=0;k<chNames.length();++k) {
+         for (int k = 0; k < chNames.length(); ++k) {
             String name = (String) chNames.get(k);
             int color = chColors.getInt(k);
             int min = chMins.getInt(k);
             int max = chMaxes.getInt(k);
-            for (int component=0; component<numComponents; ++component) {
+            for (int component = 0; component < numComponents; ++component) {
                JSONObject channelObject = new JSONObject();
                if (numComponents == 1) {
                   channelObject.put("Color", color);
                } else {
-                  channelObject.put("Color",rgb[component].getRGB());
+                  channelObject.put("Color", rgb[component].getRGB());
                }
                channelObject.put("Name", name);
                channelObject.put("Gamma", 1.0);
@@ -367,12 +387,12 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
             }
          }
          if (chNames.length() == 0) {
-            for (int component = 0;component <numComponents; ++component) {
+            for (int component = 0; component < numComponents; ++component) {
                JSONObject channelObject = new JSONObject();
                if (numComponents == 1) {
                   channelObject.put("Color", Color.white);
                } else {
-                  channelObject.put("Color",rgb[component].getRGB());
+                  channelObject.put("Color", rgb[component].getRGB());
                }
                channelObject.put("Name", "Default");
                channelObject.put("Gamma", 1.0);
@@ -465,7 +485,7 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
 
       String status = "";
       final AcquisitionEngine eng = eng_;
-      
+
       if (eng != null) {
          if (acquisitionIsRunning()) {
             if (!abortRequested()) {
@@ -482,10 +502,10 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
          } else {
             hc_.enableAcquisitionControls(false);
             if (!status.contentEquals("interrupted")) {
-              if (eng.isFinished()) {
-                 status = "finished";
-                 eng_ = null;
-              }
+               if (eng.isFinished()) {
+                  status = "finished";
+                  eng_ = null;
+               }
             }
          }
          status += ", ";
@@ -515,53 +535,54 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
    }
 
    public void showImage(TaggedImage taggedImg) throws Exception {
-       showImage(taggedImg.tags);
+      showImage(taggedImg.tags);
    }
 
    public void showImage(JSONObject md) throws Exception {
-         updateWindow();
-         if (md == null)
-            return;
-         int cameraChannel = this.rgbToGrayChannel(MDUtils.getChannelIndex(md));
-         int frame = MDUtils.getFrameIndex(md);
-         int position = MDUtils.getPositionIndex(md);
-         int slice = MDUtils.getSliceIndex(md);
+      updateWindow();
+      if (md == null) {
+         return;
+      }
+      int cameraChannel = this.rgbToGrayChannel(MDUtils.getChannelIndex(md));
+      int frame = MDUtils.getFrameIndex(md);
+      int position = MDUtils.getPositionIndex(md);
+      int slice = MDUtils.getSliceIndex(md);
 
-         if (tSelector_ != null) {
-            if (tSelector_.getMaximum() <= (1 + frame)) {
-               this.setNumFrames(1 + frame);
-            }
+      if (tSelector_ != null) {
+         if (tSelector_.getMaximum() <= (1 + frame)) {
+            this.setNumFrames(1 + frame);
          }
+      }
 
+      try {
+         int p = 1 + MDUtils.getPositionIndex(md);
+         if (p >= getNumPositions()) {
+            setNumPositions(p);
+         }
+         setPosition(MDUtils.getPositionIndex(md));
+         hyperImage_.setPosition(1 + cameraChannel,
+                 1 + MDUtils.getSliceIndex(md),
+                 1 + MDUtils.getFrameIndex(md));
+      } catch (Exception e) {
+         ReportingUtils.logError(e);
+      }
+
+      if (frame == 0) {
          try {
-            int p = 1 + MDUtils.getPositionIndex(md);
-            if (p >= getNumPositions()) {
-               setNumPositions(p);
-            }
-            setPosition(MDUtils.getPositionIndex(md));
-            hyperImage_.setPosition(1 + cameraChannel,
-                                    1 + MDUtils.getSliceIndex(md),
-                                    1 + MDUtils.getFrameIndex(md));
-         } catch (Exception e) {
-            ReportingUtils.logError(e);
-         }
-
-         if (this.getChannelMin(cameraChannel) >= getChannelMax(cameraChannel)) {
-            try {
-               Object pix = imageCache_.getImage(cameraChannel, slice, frame, position).pix;
-               int pixelMin = Math.min(this.getChannelMin(cameraChannel),ImageUtils.getMin(pix));
-               int pixelMax = Math.max(this.getChannelMax(cameraChannel),ImageUtils.getMax(pix));
-               if (MDUtils.isRGB(md)) {
-                  for (int i=0; i<3; ++i) {
-                     setChannelDisplayRange(cameraChannel + i, pixelMin, pixelMax, false);
-                  }
-               } else {
-                  setChannelDisplayRange(cameraChannel, pixelMin, pixelMax, false);
+            Object pix = imageCache_.getImage(cameraChannel, slice, frame, position).pix;
+            int pixelMin = Math.min(this.getChannelMin(cameraChannel), ImageUtils.getMin(pix));
+            int pixelMax = Math.max(this.getChannelMax(cameraChannel), ImageUtils.getMax(pix));
+            if (MDUtils.isRGB(md)) {
+               for (int i = 0; i < 3; ++i) {
+                  setChannelDisplayRange(cameraChannel + i, pixelMin, pixelMax, false);
                }
-            } catch (Exception ex) {
-               ReportingUtils.showError(ex);
+            } else {
+               setChannelDisplayRange(cameraChannel, pixelMin, pixelMax, false);
             }
+         } catch (Exception ex) {
+            ReportingUtils.showError(ex);
          }
+      }
 
       // Make sure image is shown if it is a single plane:
       if (hyperImage_.getStackSize() == 1) {
@@ -871,7 +892,7 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
             if (JavaUtils.isWindows()) {
                Runtime.getRuntime().exec("Explorer /n,/select," + location.getAbsolutePath());
             } else if (JavaUtils.isMac()) {
-               if (! location.isDirectory()) {
+               if (!location.isDirectory()) {
                   location = location.getParentFile();
                }
                Runtime.getRuntime().exec("open " + location.getAbsolutePath());
@@ -932,10 +953,11 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
 
    public boolean isDiskCached() {
       ImageCache imageCache = imageCache_;
-      if (imageCache == null)
+      if (imageCache == null) {
          return false;
-      else
+      } else {
          return imageCache.getDiskLocation() != null;
+      }
    }
 
    public void show() {
@@ -962,9 +984,7 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
          String[] chanNames = new String[nChannels];
          for (int i = 0; i < nChannels; ++i) {
             try {
-               chanNames[i] = imageCache_.getDisplayAndComments()
-                       .getJSONArray("Channels")
-                       .getJSONObject(i).getString("Name");
+               chanNames[i] = imageCache_.getDisplayAndComments().getJSONArray("Channels").getJSONObject(i).getString("Name");
             } catch (Exception ex) {
                ReportingUtils.logError(ex);
             }
@@ -1010,7 +1030,7 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
          return;
       }
       // Some strange ImageJ bug means we have to run this twice:
-      for (int i=0;i<2;++i) {
+      for (int i = 0; i < 2; ++i) {
          if (hyperImage_.isComposite()) {
             setChannelWithoutMovingSlider(channel);
             CompositeImage ci = (CompositeImage) hyperImage_;
@@ -1041,7 +1061,7 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
          int z = hyperImage_.getSlice();
          int t = hyperImage_.getFrame();
 
-         hyperImage_.updatePosition(channel+1, z, t);
+         hyperImage_.updatePosition(channel + 1, z, t);
       }
    }
 
@@ -1071,7 +1091,7 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
    }
 
    public Color getChannelColor(int channelIndex) {
-       try {
+      try {
          return new Color(getChannelSetting(channelIndex).getInt("Color"));
       } catch (Exception ex) {
          return Color.WHITE;
@@ -1105,18 +1125,17 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
    }
 
    public void setChannelDisplayRange(int channel, int min, int max, boolean redraw) {
-
+      System.out.println("Channel:"+channel);
       JSONObject chan = getChannelSetting(channel);
       try {
          if (chan.getInt("Min") == min && chan.getInt("Max") == max) {
             return;
          }
       } catch (Exception e) {
-         
       }
 
       {
-          try {
+         try {
             chan.put("Min", min);
             chan.put("Max", max);
          } catch (Exception e) {
@@ -1133,8 +1152,7 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
 
    private JSONObject getChannelSetting(int channel) {
       try {
-         JSONArray array = imageCache_.getDisplayAndComments()
-                 .getJSONArray("Channels");
+         JSONArray array = imageCache_.getDisplayAndComments().getJSONArray("Channels");
          if (array != null) {
             return array.getJSONObject(channel);
          } else {
@@ -1145,5 +1163,4 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
          return null;
       }
    }
-   
 }
