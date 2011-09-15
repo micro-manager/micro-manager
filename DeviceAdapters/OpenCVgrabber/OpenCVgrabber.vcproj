@@ -207,7 +207,7 @@
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
-				AdditionalIncludeDirectories="..\..\..\3rdpartypublic\OpenCV2.1\include\opencv"
+				AdditionalIncludeDirectories="..\..\..\3rdpartypublic\OpenCV2.3\include\opencv"
 				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;MODULE_EXPORTS"
 				ExceptionHandling="2"
 				RuntimeLibrary="0"
@@ -228,10 +228,10 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="cxcore210.lib highgui210.lib"
+				AdditionalDependencies="opencv_core231.lib opencv_highgui231.lib"
 				OutputFile="$(OutDir)\mmgr_dal_$(ProjectName).dll"
 				LinkIncremental="1"
-				AdditionalLibraryDirectories="..\..\..\3rdpartypublic\OpenCV2.1\lib"
+				AdditionalLibraryDirectories="..\..\..\3rdpartypublic\OpenCV2.3\lib_x86"
 				GenerateDebugInformation="true"
 				SubSystem="2"
 				OptimizeReferences="2"
@@ -289,7 +289,7 @@
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
-				AdditionalIncludeDirectories="..\..\..\3rdpartypublic\OpenCV2.1\include\opencv"
+				AdditionalIncludeDirectories="..\..\..\3rdpartypublic\OpenCV2.3\include\opencv"
 				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;MODULE_EXPORTS"
 				ExceptionHandling="2"
 				RuntimeLibrary="0"
@@ -310,10 +310,10 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="cxcore210.lib highgui210.lib"
+				AdditionalDependencies="opencv_core231.lib opencv_highgui231.lib"
 				OutputFile="$(OutDir)\mmgr_dal_$(ProjectName).dll"
 				LinkIncremental="1"
-				AdditionalLibraryDirectories="..\..\..\3rdpartypublic\OpenCV2.1\lib"
+				AdditionalLibraryDirectories="..\..\..\3rdpartypublic\OpenCV2.3\lib_x64"
 				GenerateDebugInformation="true"
 				SubSystem="2"
 				OptimizeReferences="2"
