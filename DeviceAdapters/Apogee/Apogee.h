@@ -115,6 +115,10 @@ public:
 	int OnIoPin5Mode(MM::PropertyBase* pProp, MM::ActionType eAct);
 	int OnIoPin6Mode(MM::PropertyBase* pProp, MM::ActionType eAct);
 	int OnShutterMode(MM::PropertyBase* pProp, MM::ActionType eAct);
+    int OnTriggerMode(MM::PropertyBase* pProp, MM::ActionType eAct);
+    int OnLedMode(MM::PropertyBase* pProp, MM::ActionType eAct);
+    int OnLedAState(MM::PropertyBase* pProp, MM::ActionType eAct);
+    int OnLedBState(MM::PropertyBase* pProp, MM::ActionType eAct);
 
 private:
 	ICamera2Ptr AltaCamera;		// Camera interface
@@ -123,6 +127,8 @@ private:
 
 	int OnIoPinMode(MM::PropertyBase* pProp, MM::ActionType eAct, long mask, const char *altStr);
 	int OnIoPortDirMode(MM::PropertyBase* pProp, MM::ActionType eAct, long mask);
+
+    int OnLedState(MM::PropertyBase* pProp, MM::ActionType eAct, bool IsA);
 
 	ImgBuffer img_;
 	int pixelDepth_;

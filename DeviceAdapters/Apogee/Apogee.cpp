@@ -388,13 +388,14 @@ int CApogeeCamera::Initialize()
     pAct = new CPropertyAction (this, &CApogeeCamera::OnGain);
     nRet = CreateProperty(MM::g_Keyword_Gain, "0", MM::Integer, false, pAct);
     assert(nRet == DEVICE_OK);
-    SetPropertyLimits(MM::g_Keyword_Gain, -5, 8);
+    SetPropertyLimits(MM::g_Keyword_Gain, 0, 1023);
     
     // camera offset
 	// *** Gary prefers "Offset-12bit"
     pAct = new CPropertyAction (this, &CApogeeCamera::OnOffset);
     nRet = CreateProperty(MM::g_Keyword_Offset, "0", MM::Integer, false, pAct);
     assert(nRet == DEVICE_OK);
+    SetPropertyLimits(MM::g_Keyword_Offset, 0, 255);
 
 	// Only set up cooler properties if the camera supports cooling
 	if(AltaCamera->CoolerControl){
@@ -519,6 +520,55 @@ int CApogeeCamera::Initialize()
 	io6ModeValues.push_back("Input timer pulse");
 	nRet = SetAllowedValues("IoSignal_6", io6ModeValues);
 	assert(nRet == DEVICE_OK);
+
+    // Trigger Mode
+	pAct = new CPropertyAction (this, &CApogeeCamera::OnTriggerMode);
+    nRet = CreateProperty("TriggerMode", "None", MM::String, false, pAct);
+    assert(nRet == DEVICE_OK);
+    vector<string> triggerModeValues;
+    triggerModeValues.push_back("None");
+    triggerModeValues.push_back("NormalEach");
+	triggerModeValues.push_back("NormalGroup");
+    triggerModeValues.push_back("NormalEachGroup");
+	triggerModeValues.push_back("TdiKineticsEach");
+	triggerModeValues.push_back("TdiKineticsGroup");
+    triggerModeValues.push_back("TdiKineticsEachGroup");
+    nRet = SetAllowedValues("TriggerMode", triggerModeValues);
+    assert(nRet == DEVICE_OK);
+
+    // LED Mode
+	pAct = new CPropertyAction (this, &CApogeeCamera::OnLedMode);
+    nRet = CreateProperty("LedMode", "DisableAll", MM::String, false, pAct);
+    assert(nRet == DEVICE_OK);
+    vector<string> ledModeValues;
+    ledModeValues.push_back("DisableAll");
+    ledModeValues.push_back("DisableWhileExpose");
+	ledModeValues.push_back("EnableAll");
+    nRet = SetAllowedValues("LedMode", ledModeValues);
+    assert(nRet == DEVICE_OK);
+
+    // LED State
+    vector<string> ledStateValues;
+    ledStateValues.push_back("Expose");
+    ledStateValues.push_back("ImageActive");
+	ledStateValues.push_back("Flushing");
+    ledStateValues.push_back("ExtTriggerWaiting");
+    ledStateValues.push_back("ExtTriggerReceived");
+    ledStateValues.push_back("ExtShutterInput");
+    ledStateValues.push_back("ExtStartReadout");
+    ledStateValues.push_back("AtTemp");
+
+    pAct = new CPropertyAction (this, &CApogeeCamera::OnLedAState);
+    nRet = CreateProperty("LedA", "Expose", MM::String, false, pAct);
+    assert(nRet == DEVICE_OK);
+    nRet = SetAllowedValues("LedA", ledStateValues);
+    assert(nRet == DEVICE_OK);
+
+    pAct = new CPropertyAction (this, &CApogeeCamera::OnLedBState);
+    nRet = CreateProperty("LedB", "Expose", MM::String, false, pAct);
+    assert(nRet == DEVICE_OK);
+    nRet = SetAllowedValues("LedB", ledStateValues);
+    assert(nRet == DEVICE_OK);
 
     // synchronize all properties
     // --------------------------
@@ -1016,6 +1066,219 @@ int CApogeeCamera::OnIoPin6Mode(MM::PropertyBase* pProp, MM::ActionType eAct){
 	return OnIoPinMode(pProp, eAct, 32, "Input timer pulse");
 }
 
+int CApogeeCamera::OnTriggerMode(MM::PropertyBase* pProp, MM::ActionType eAct){
+
+    if(eAct == MM::BeforeGet){
+        const int NORM_GROUP = 0x8;
+        const int NORM_EACH = 0x4;
+        const int TK_GROUP = 0x2;
+        const int TK_EACH = 0x1;
+        const int TRIG_NONE = 0x0;
+        int value = AltaCamera->TriggerNormalGroup << 3 | AltaCamera->TriggerNormalEach << 2 | 
+        AltaCamera->TriggerTdiKineticsGroup << 1 | AltaCamera->TriggerTdiKineticsEach;
+        switch(value){
+            case TRIG_NONE:
+                pProp->Set("None");
+            break;
+            case NORM_GROUP:
+                pProp->Set("NormalGroup");
+            break;
+            case NORM_EACH:
+                pProp->Set("NormalEach");
+            break;
+            case ( NORM_GROUP | NORM_EACH ):
+                pProp->Set("NormalEachGroup");
+            break;
+            case TK_GROUP:
+                pProp->Set("TdiKineticsGroup");
+            break;
+            case TK_EACH:
+                pProp->Set("TdiKineticsEach");
+            break;
+            case ( TK_GROUP | TK_EACH ):
+                pProp->Set("TdiKineticsEachGroup");
+            break;
+            default:
+                assert(!"Unexpected trigger mode returned from camera");
+            break;
+        }
+    }else if(eAct == MM::AfterSet){
+        string mode;
+        pProp->Get(mode);
+        if(mode.compare("None")==0){
+            AltaCamera->TriggerNormalGroup = FALSE;
+            AltaCamera->TriggerNormalEach = FALSE;
+            AltaCamera->TriggerTdiKineticsGroup = FALSE; 
+            AltaCamera->TriggerTdiKineticsEach = FALSE;
+        }
+        else if(mode.compare("NormalEach")==0){
+            AltaCamera->TriggerNormalGroup = FALSE;
+            AltaCamera->TriggerNormalEach = TRUE;
+            AltaCamera->TriggerTdiKineticsGroup = FALSE; 
+            AltaCamera->TriggerTdiKineticsEach = FALSE;
+        }
+        else if(mode.compare("NormalGroup")==0){
+            AltaCamera->TriggerNormalGroup = TRUE;
+            AltaCamera->TriggerNormalEach = FALSE;
+            AltaCamera->TriggerTdiKineticsGroup = FALSE; 
+            AltaCamera->TriggerTdiKineticsEach = FALSE;
+        }
+        else if(mode.compare("NormalEachGroup")==0){
+            AltaCamera->TriggerNormalGroup = TRUE;
+            AltaCamera->TriggerNormalEach = TRUE;
+            AltaCamera->TriggerTdiKineticsGroup = FALSE; 
+            AltaCamera->TriggerTdiKineticsEach = FALSE;
+        }
+        else if(mode.compare("TdiKineticsEach")==0){
+            AltaCamera->TriggerNormalGroup = FALSE;
+            AltaCamera->TriggerNormalEach = FALSE;
+            AltaCamera->TriggerTdiKineticsGroup = FALSE; 
+            AltaCamera->TriggerTdiKineticsEach = TRUE;
+        }
+        else if(mode.compare("TdiKineticsGroup")==0){
+            AltaCamera->TriggerNormalGroup = FALSE;
+            AltaCamera->TriggerNormalEach = FALSE;
+            AltaCamera->TriggerTdiKineticsGroup = TRUE; 
+            AltaCamera->TriggerTdiKineticsEach = FALSE;
+        }
+        else if(mode.compare("TdiKineticsEachGroup")==0){
+            AltaCamera->TriggerNormalGroup = FALSE;
+            AltaCamera->TriggerNormalEach = FALSE;
+            AltaCamera->TriggerTdiKineticsGroup = TRUE; 
+            AltaCamera->TriggerTdiKineticsEach = TRUE;
+        }
+        else
+            assert(!"Unsupported trigger mode");
+    }
+    return DEVICE_OK;
+}
+
+int CApogeeCamera::OnLedMode(MM::PropertyBase* pProp, MM::ActionType eAct)
+{ 
+    if(eAct == MM::BeforeGet){
+        switch( AltaCamera->LedMode ){
+            case Apn_LedMode_DisableAll:
+                pProp->Set("DisableAll");
+            break;
+            case Apn_LedMode_DisableWhileExpose:
+                pProp->Set("DisableWhileExpose");
+            break;
+            case Apn_LedMode_EnableAll:
+                pProp->Set("EnableAll");
+            break;
+            default:
+                assert(!"Unsupported LED mode");
+            break;
+        }
+    }else if(eAct == MM::AfterSet){
+        string mode;
+        pProp->Get(mode);
+        if(mode.compare("DisableAll")==0){
+            AltaCamera->LedMode = Apn_LedMode_DisableAll;
+        }
+        else if(mode.compare("DisableWhileExpose")==0){
+            AltaCamera->LedMode = Apn_LedMode_DisableWhileExpose;
+        }
+        else if(mode.compare("EnableAll")==0){
+            AltaCamera->LedMode = Apn_LedMode_EnableAll;
+        }
+        else{
+            assert(!"Unsupported LED mode");
+        }
+    }
+    return DEVICE_OK;
+}
+
+int CApogeeCamera::OnLedState(MM::PropertyBase* pProp, MM::ActionType eAct, const bool IsA)
+{
+     if(eAct == MM::BeforeGet){
+         Apn_LedState state = Apn_LedState_Expose;
+         if( IsA ){
+             state = AltaCamera->LedA;
+         }
+         else{
+             state = AltaCamera->LedB;
+         }
+        switch( state ){
+            case Apn_LedState_Expose:
+                pProp->Set("Expose");
+            break;
+            case Apn_LedState_ImageActive:
+                pProp->Set("ImageActive");
+            break;
+            case Apn_LedState_Flushing:
+                pProp->Set("Flushing");
+            break;
+            case Apn_LedState_ExtTriggerWaiting:
+                pProp->Set("ExtTriggerWaiting");
+            break;
+            case Apn_LedState_ExtTriggerReceived:
+                pProp->Set("ExtTriggerReceived");
+            break;
+            case Apn_LedState_ExtShutterInput:
+                pProp->Set("ExtShutterInput");
+            break;
+            case Apn_LedState_ExtStartReadout:
+                pProp->Set("ExtStartReadout");
+            break;
+            case Apn_LedState_AtTemp:
+                pProp->Set("AtTemp");
+            break;
+            default:
+                assert(!"Unsupported LED state");
+            break;
+        }
+    }else if(eAct == MM::AfterSet){
+        Apn_LedState state = Apn_LedState_Expose;
+        string mode;
+        pProp->Get(mode);
+        if(mode.compare("Expose")==0){
+            state = Apn_LedState_Expose;
+        }
+        else if(mode.compare("ImageActive")==0){
+             state = Apn_LedState_ImageActive;
+        }
+        else if(mode.compare("Flushing")==0){
+             state = Apn_LedState_Flushing;
+        }
+        else if(mode.compare("ExtTriggerWaiting")==0){
+             state = Apn_LedState_ExtTriggerWaiting;
+        }
+        else if(mode.compare("ExtTriggerReceived")==0){
+             state = Apn_LedState_ExtTriggerReceived;
+        }
+        else if(mode.compare("ExtShutterInput")==0){
+             state = Apn_LedState_ExtShutterInput;
+        }
+        else if(mode.compare("ExtShutterInput")==0){
+             state = Apn_LedState_ExtShutterInput;
+        }
+        else if(mode.compare("AtTemp")==0){
+             state = Apn_LedState_AtTemp;
+        }
+        else{
+            assert(!"Unsupported LED mode");
+        }
+
+         if( IsA ){
+             AltaCamera->LedA = state;
+         }
+         else{
+             AltaCamera->LedB = state;
+         }
+    }
+    return DEVICE_OK;
+}
+
+int CApogeeCamera::OnLedAState(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+    return OnLedState( pProp, eAct, true );
+}
+
+int CApogeeCamera::OnLedBState(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+    return OnLedState( pProp, eAct, false );
+}
 
 ///////////////////////////////////////////////////////////////////////////////
 // Performs exposure and grabs a single image to the camera's internal buffer.
