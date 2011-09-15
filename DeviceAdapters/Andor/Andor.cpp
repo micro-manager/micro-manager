@@ -46,6 +46,7 @@
 #else 
 #include "atmcdLXd.h"
 #include <dlfcn.h>
+#include <stdio.h>
 #ifndef MAX_PATH
 #define MAX_PATH PATH_MAX
 #endif
@@ -265,6 +266,7 @@ spuriousNoiseFilterDescriptionStr_("")
    hAndorDll = dlopen("libandor.so.2", RTLD_LAZY|RTLD_GLOBAL);
    if (!hAndorDll)
    {
+      fprintf(stderr,"Failed to find libandor.so.2\n");
       exit(1);
    } 
    else
