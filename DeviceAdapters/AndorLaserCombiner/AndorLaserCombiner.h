@@ -38,7 +38,8 @@ const int MaxLasers = 10;
 class ALCImpl;
 class AndorLaserCombiner;
 
-class PiezoStage : public CStageBase<PiezoStage>
+class PiezoStage : public CStageBase<PiezoStage>,
+                   public MM::SequenceableStage
 {
    friend class AndorLaserCombiner;
 public:
@@ -68,7 +69,8 @@ public:
    bool IsContinuousFocusDrive() const {return false;}
 
 
-      // Sequence functions
+   // TODO: Implement these for Andor Laser Z sequencing
+   // Sequence functions
    int IsStageSequenceable(bool& isSequenceable) const {isSequenceable = false; return DEVICE_OK;}
    int GetStageSequenceMaxLength(long& nrEvents) const  {nrEvents = 0; return DEVICE_OK;}
    int StartStageSequence() const {return DEVICE_OK;}

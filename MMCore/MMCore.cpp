@@ -1490,7 +1490,7 @@ void CMMCore::startStageSequence(const char* label) const throw (CMMError)
 
    MM::Stage* pDevice = getSpecificDevice<MM::Stage>(label);
 
-   int ret = pDevice->StartStageSequence();
+   int ret = ((MM::SequenceableStage*) pDevice)->StartStageSequence();
    if (ret != DEVICE_OK)
       throw CMMError(label, getDeviceErrorText(ret, pDevice).c_str(), MMERR_DEVICE_GENERIC);
    
@@ -1507,7 +1507,7 @@ void CMMCore::stopStageSequence(const char* label) const throw (CMMError)
 
    MM::Stage* pDevice = getSpecificDevice<MM::Stage>(label);
 
-   int ret = pDevice->StopStageSequence();
+   int ret = ((MM::SequenceableStage*) pDevice)->StopStageSequence();
    if (ret != DEVICE_OK)
       throw CMMError(label, getDeviceErrorText(ret, pDevice).c_str(), MMERR_DEVICE_GENERIC);
 
@@ -1524,7 +1524,7 @@ long CMMCore::getStageSequenceMaxLength(const char* label) const throw (CMMError
 
    MM::Stage* pDevice = getSpecificDevice<MM::Stage>(label);
    long length;
-   int ret = pDevice->GetStageSequenceMaxLength(length);
+   int ret = ((MM::SequenceableStage*) pDevice)->GetStageSequenceMaxLength(length);
    if (ret != DEVICE_OK)
       throw CMMError(label, getDeviceErrorText(ret, pDevice).c_str(), MMERR_DEVICE_GENERIC);
 
@@ -1544,19 +1544,19 @@ void CMMCore::loadStageSequence(const char* label, std::vector<double> positionS
    MM::Stage* pDevice = getSpecificDevice<MM::Stage>(label);
    
    int ret;
-   ret = pDevice->ClearStageSequence();
+   ret = ((MM::SequenceableStage*) pDevice)->ClearStageSequence();
    if (ret != DEVICE_OK)
       throw CMMError(label, getDeviceErrorText(ret, pDevice).c_str(), MMERR_DEVICE_GENERIC);
 
    std::vector<double>::iterator it;
    for ( it=positionSequence.begin() ; it < positionSequence.end(); it++ )
    {
-      ret = pDevice->AddToStageSequence(*it);
+      ret = ((MM::SequenceableStage*) pDevice)->AddToStageSequence(*it);
       if (ret != DEVICE_OK)
          throw CMMError(label, getDeviceErrorText(ret, pDevice).c_str(), MMERR_DEVICE_GENERIC);
    }
 
-   ret = pDevice->SendStageSequence();
+   ret = ((MM::SequenceableStage*) pDevice)->SendStageSequence();
    if (ret != DEVICE_OK)
       throw CMMError(label, getDeviceErrorText(ret, pDevice).c_str(), MMERR_DEVICE_GENERIC);
   

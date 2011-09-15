@@ -513,7 +513,23 @@ namespace MM {
       virtual int GetPositionSteps(long& steps) = 0;
       virtual int SetOrigin() = 0;
       virtual int GetLimits(double& lower, double& upper) = 0;
+      /*
+       * Returns whether a stage can be sequenced (synchronized by TTLs)
+       * If returning true, then a Stage class should also inherit
+       * the SequenceableStage class and implement its methods.
+       */
+      virtual int IsStageSequenceable(bool& isSequenceable) const = 0;
 
+      // Check if a stage has continuous focusing capability (positions can be set while continuous focus runs).
+      virtual bool IsContinuousFocusDrive() const = 0;
+   };
+
+   /**
+    * Virtual mixin class for sequenceable stages
+    */
+   class SequenceableStage 
+   {
+   public:
       // Sequence functions
       // Sequences can be used for fast acquisitions, sycnchronized by TTLs rather than
       // computer commands. 
@@ -522,7 +538,6 @@ namespace MM {
       // from the camera).  If the device is capable (and ready) to do so isSequenceable will
       // be true. If your device can not execute this (true for most stages
       // simply set isSequenceable to false
-      virtual int IsStageSequenceable(bool& isSequenceable) const = 0;
       virtual int GetStageSequenceMaxLength(long& nrEvents) const = 0;
       virtual int StartStageSequence() const = 0;
       virtual int StopStageSequence() const = 0;
@@ -532,10 +547,8 @@ namespace MM {
       virtual int AddToStageSequence(double position) = 0;
       // Signal that we are done sending sequence values so that the adapter can send the whole sequence to the device
       virtual int SendStageSequence() const = 0; 
-
-
-      // Check if a stage has continuous focusing capability (positions can be set while continuous focus runs).
-      virtual bool IsContinuousFocusDrive() const = 0;
+      // Virtual destructor necessary for mixin
+      virtual ~SequenceableStage() {}
    };
 
    /** 

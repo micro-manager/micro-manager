@@ -213,21 +213,13 @@ public:
       return DEVICE_OK;
    }
 
+   int IsStageSequenceable(bool& isSequenceable) const {isSequenceable = false; return DEVICE_OK;}
    bool IsContinuousFocusDrive() const {return false;}
 
    // action interface
    // ----------------
    int OnPosition(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnStepSize(MM::PropertyBase* pProp, MM::ActionType eAct);
-
-   // Sequence functions
-   int IsStageSequenceable(bool& isSequenceable) const {isSequenceable = false; return DEVICE_OK;}
-   int GetStageSequenceMaxLength(long& nrEvents) const  {nrEvents = 0; return DEVICE_OK;}
-   int StartStageSequence() const {return DEVICE_OK;}
-   int StopStageSequence() const {return DEVICE_OK;}
-   int ClearStageSequence() {return DEVICE_OK;}
-   int AddToStageSequence(double position) {return DEVICE_OK;}
-   int SendStageSequence() const {return DEVICE_OK;}
 
 private:
    int stepSize_nm_;
@@ -436,14 +428,8 @@ public:
    int OnPosition(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnStepSize(MM::PropertyBase* pProp, MM::ActionType eAct);
 
-   // Sequence functions
    int IsStageSequenceable(bool& isSequenceable) const {isSequenceable = false; return DEVICE_OK;}
-   int GetStageSequenceMaxLength(long& nrEvents) const  {nrEvents = 0; return DEVICE_OK;}
-   int StartStageSequence() const {return DEVICE_OK;}
-   int StopStageSequence() const {return DEVICE_OK;}
-   int ClearStageSequence() {return DEVICE_OK;}
-   int AddToStageSequence(double position) {return DEVICE_OK;}
-   int SendStageSequence() const {return DEVICE_OK;}
+
 
 private:
    double stepSize_nm_;

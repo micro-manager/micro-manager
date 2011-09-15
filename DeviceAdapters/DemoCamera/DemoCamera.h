@@ -380,7 +380,8 @@ private:
 // Simulation of the single axis stage
 //////////////////////////////////////////////////////////////////////////////
 
-class CDemoStage : public CStageBase<CDemoStage>
+class CDemoStage : public CStageBase<CDemoStage>,
+                   public MM::SequenceableStage
 {
 public:
    CDemoStage();

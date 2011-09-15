@@ -117,7 +117,8 @@ private:
 /**
  * Allows a DA device to act like a Drive (better hook it up to a drive!)
  */
-class DAZStage : public CStageBase<DAZStage>
+class DAZStage : public CStageBase<DAZStage>,
+                 public MM::SequenceableStage
 {
 public:
    DAZStage();
@@ -203,20 +204,12 @@ public:
   int SetOrigin();
   int GetLimits(double& min, double& max);
 
+  int IsStageSequenceable(bool& isSequenceable) const {isSequenceable = false; return DEVICE_OK;}
   bool IsContinuousFocusDrive() const {return true;}
 
    // action interface
    // ----------------
    int OnAutoFocusDevice(MM::PropertyBase* pProp, MM::ActionType eAct);
-
-   // Sequence functions
-   int IsStageSequenceable(bool& isSequenceable) const {isSequenceable = false; return DEVICE_OK;}
-   int GetStageSequenceMaxLength(long& nrEvents) const  {nrEvents = 0; return DEVICE_OK;}
-   int StartStageSequence() const {return DEVICE_OK;}
-   int StopStageSequence() const {return DEVICE_OK;}
-   int ClearStageSequence() {return DEVICE_OK;}
-   int AddToStageSequence(double position) {return DEVICE_OK;}
-   int SendStageSequence() const {return DEVICE_OK;}
 
 private:
    std::vector<std::string> availableAutoFocusDevices_;

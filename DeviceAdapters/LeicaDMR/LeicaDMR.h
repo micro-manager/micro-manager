@@ -191,6 +191,7 @@ public:
    }
    int Move(double speed);
 
+   int IsStageSequenceable(bool& isSequenceable) const {isSequenceable = false; return DEVICE_OK;}
    bool IsContinuousFocusDrive() const {return false;}
 
    // action interface
@@ -198,15 +199,6 @@ public:
    int OnPosition(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnThreshold(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnStop(MM::PropertyBase* pProp, MM::ActionType eAct);
-
-   // Sequence functions
-   int IsStageSequenceable(bool& isSequenceable) const {isSequenceable = false; return DEVICE_OK;}
-   int GetStageSequenceMaxLength(long& nrEvents) const  {nrEvents = 0; return DEVICE_OK;}
-   int StartStageSequence() const {return DEVICE_OK;}
-   int StopStageSequence() const {return DEVICE_OK;}
-   int ClearStageSequence() {return DEVICE_OK;}
-   int AddToStageSequence(double position) {return DEVICE_OK;}
-   int SendStageSequence() const {return DEVICE_OK;}
 
 private:                                                                     
    double stepSize_um_;
