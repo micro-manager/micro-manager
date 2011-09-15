@@ -50,7 +50,6 @@
 
 //////////////////////////////////////////////////////////////////////////////
 // COpenCVgrabber class
-// Simulation of the Camera device
 //////////////////////////////////////////////////////////////////////////////
 
 class MySequenceThread;
@@ -149,10 +148,9 @@ private:
 	long cameraCCDYSize_;
 	std::string triggerDevice_;
 
-   MMThreadLock* pDemoResourceLock_;
+
    MMThreadLock imgPixelsLock_;
    int nComponents_;
-   void TestResourceLocking(const bool);
    friend class MySequenceThread;
    MySequenceThread * thd_;
 };

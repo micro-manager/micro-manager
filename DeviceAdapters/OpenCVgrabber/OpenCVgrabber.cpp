@@ -98,10 +98,6 @@ const char* g_Res28 = "2560x1600";//wqxga
 const char* g_Res29 = "2560x2048";//sqxga
 const char* g_Res30 = "2592x1944";
 
-const char* g_Keyword_Contrast = "Contrast";
-const char* g_Keyword_Saturation = "Saturation";
-
-
 // TODO: linux entry code
 
 // windows DLL entry code
@@ -186,13 +182,11 @@ COpenCVgrabber::COpenCVgrabber() :
 	cameraCCDXSize_(800),
 	cameraCCDYSize_(600),
    nComponents_(4),
-   pDemoResourceLock_(0),
    triggerDevice_("")
 {
    // call the base class method to set-up default error codes/messages
    InitializeDefaultErrorMessages();
    readoutStartTime_ = GetCurrentMMTime();
-   pDemoResourceLock_ = new MMThreadLock();
    thd_ = new MySequenceThread(this);
 }
 
@@ -205,15 +199,17 @@ COpenCVgrabber::COpenCVgrabber() :
 */
 COpenCVgrabber::~COpenCVgrabber()
 {
-	if(capture){
-	   cvReleaseCapture(&capture);
-	}
-	if(temp){
-	   cvReleaseImage(&temp);
-	}
+	
    StopSequenceAcquisition();
+
+   if(capture){
+      cvReleaseCapture(&capture);
+   }
+   if(temp){
+      cvReleaseImage(&temp);
+   }
+
    delete thd_;
-   delete pDemoResourceLock_;
 }
 
 /**
@@ -372,14 +368,6 @@ int COpenCVgrabber::Initialize()
    assert(nRet == DEVICE_OK);
    SetPropertyLimits(MM::g_Keyword_Exposure, 0, 10000);
 
-   
-   /*
-   // camera gain
-   pAct = new CPropertyAction (this, &COpenCVgrabber::OnGain);
-   nRet = CreateProperty(MM::g_Keyword_Gain, "50", MM::Integer, false, pAct);
-   assert(nRet == DEVICE_OK);
-   SetPropertyLimits(MM::g_Keyword_Gain, 0, 1023);
-   */
    // camera offset
    nRet = CreateProperty(MM::g_Keyword_Offset, "0", MM::Integer, false);
    assert(nRet == DEVICE_OK);
@@ -406,11 +394,6 @@ int COpenCVgrabber::Initialize()
    nRet = ResizeImageBuffer();
    if (nRet != DEVICE_OK)
       return nRet;
-
-#ifdef TESTRESOURCELOCKING
-   TestResourceLocking(true);
-   LogMessage("TestResourceLocking OK",true);
-#endif
 
    initialized_ = true;
 
@@ -551,7 +534,6 @@ unsigned char *pB = (unsigned char*)(img_.GetPixels());
 */
 unsigned COpenCVgrabber::GetImageWidth() const
 {
-   
    return img_.Width();
 }
 
@@ -824,8 +806,7 @@ int COpenCVgrabber::ThreadRun (void)
       	triggerDev->SetProperty("Trigger","+");
       }
    }
-   
-   
+      
    ret = SnapImage();
    if (ret != DEVICE_OK) return ret;
 
@@ -1219,175 +1200,28 @@ int COpenCVgrabber::OnResolution(MM::PropertyBase* pProp, MM::ActionType eAct)
    {
    case MM::AfterSet:
       {
-         //if(IsCapturing())
-           // return DEVICE_CAMERA_BUSY_ACQUIRING;
+		 
+         if(IsCapturing())
+            return DEVICE_CAMERA_BUSY_ACQUIRING;
 
 		 std::string resolution;
          pProp->Get(resolution);
 
-		 if (resolution.compare(g_Res0) == 0)
-         {
-			cvSetCaptureProperty(capture, CV_CAP_PROP_FRAME_WIDTH, 320);
-			cvSetCaptureProperty(capture, CV_CAP_PROP_FRAME_HEIGHT, 200);
-			pProp->Set(g_Res0);
-         } else if (resolution.compare(g_Res1) == 0)
-         {
-			cvSetCaptureProperty(capture, CV_CAP_PROP_FRAME_WIDTH, 320);
-			cvSetCaptureProperty(capture, CV_CAP_PROP_FRAME_HEIGHT, 240);
-			pProp->Set(g_Res1);
-         } else if (resolution.compare(g_Res2) == 0)
-         {
-			cvSetCaptureProperty(capture, CV_CAP_PROP_FRAME_WIDTH, 340);
-			cvSetCaptureProperty(capture, CV_CAP_PROP_FRAME_HEIGHT, 256);
-			pProp->Set(g_Res2);
-         } else if (resolution.compare(g_Res3) == 0)
-         {
-			cvSetCaptureProperty(capture, CV_CAP_PROP_FRAME_WIDTH, 480);
-			cvSetCaptureProperty(capture, CV_CAP_PROP_FRAME_HEIGHT, 320);
-			pProp->Set(g_Res3);
-         } else if (resolution.compare(g_Res4) == 0)
-         {
-			cvSetCaptureProperty(capture, CV_CAP_PROP_FRAME_WIDTH, 640);
-			cvSetCaptureProperty(capture, CV_CAP_PROP_FRAME_HEIGHT, 480);
-			pProp->Set(g_Res4);
-         } else if (resolution.compare(g_Res5) == 0)
-         {
-			cvSetCaptureProperty(capture, CV_CAP_PROP_FRAME_WIDTH, 680);
-			cvSetCaptureProperty(capture, CV_CAP_PROP_FRAME_HEIGHT, 512);
-			pProp->Set(g_Res5);
-         } else if (resolution.compare(g_Res6) == 0)
-         {
-			cvSetCaptureProperty(capture, CV_CAP_PROP_FRAME_WIDTH, 720);
-			cvSetCaptureProperty(capture, CV_CAP_PROP_FRAME_HEIGHT, 480);
-			pProp->Set(g_Res6);
-         } else if (resolution.compare(g_Res7) == 0)
-         {
-			cvSetCaptureProperty(capture, CV_CAP_PROP_FRAME_WIDTH, 768);
-			cvSetCaptureProperty(capture, CV_CAP_PROP_FRAME_HEIGHT, 576);
-			pProp->Set(g_Res7);
-         } else if (resolution.compare(g_Res8) == 0)
-         {
-			cvSetCaptureProperty(capture, CV_CAP_PROP_FRAME_WIDTH, 800);
-			cvSetCaptureProperty(capture, CV_CAP_PROP_FRAME_HEIGHT, 480);
-			pProp->Set(g_Res8);
-         } else if (resolution.compare(g_Res9) == 0)
-         {
-			cvSetCaptureProperty(capture, CV_CAP_PROP_FRAME_WIDTH, 854);
-			cvSetCaptureProperty(capture, CV_CAP_PROP_FRAME_HEIGHT, 480);
-			pProp->Set(g_Res9);
-         } else if (resolution.compare(g_Res10) == 0)
-         {
-			cvSetCaptureProperty(capture, CV_CAP_PROP_FRAME_WIDTH, 800);
-			cvSetCaptureProperty(capture, CV_CAP_PROP_FRAME_HEIGHT, 600);
-			pProp->Set(g_Res10);
-         } else if (resolution.compare(g_Res11) == 0)
-         {
-			cvSetCaptureProperty(capture, CV_CAP_PROP_FRAME_WIDTH, 1024);
-			cvSetCaptureProperty(capture, CV_CAP_PROP_FRAME_HEIGHT, 600);
-			pProp->Set(g_Res11);
-         } else if (resolution.compare(g_Res12) == 0)
-         {
-			cvSetCaptureProperty(capture, CV_CAP_PROP_FRAME_WIDTH, 1024);
-			cvSetCaptureProperty(capture, CV_CAP_PROP_FRAME_HEIGHT, 768);
-			pProp->Set(g_Res12);
-         } else if (resolution.compare(g_Res13) == 0)
-         {
-			cvSetCaptureProperty(capture, CV_CAP_PROP_FRAME_WIDTH, 1136);
-			cvSetCaptureProperty(capture, CV_CAP_PROP_FRAME_HEIGHT, 768);
-			pProp->Set(g_Res13);
-         } else if (resolution.compare(g_Res14) == 0)
-         {
-			cvSetCaptureProperty(capture, CV_CAP_PROP_FRAME_WIDTH, 1280);
-			cvSetCaptureProperty(capture, CV_CAP_PROP_FRAME_HEIGHT, 720);
-			pProp->Set(g_Res14);
-         } else if (resolution.compare(g_Res15) == 0)
-         {
-			cvSetCaptureProperty(capture, CV_CAP_PROP_FRAME_WIDTH, 1280);
-			cvSetCaptureProperty(capture, CV_CAP_PROP_FRAME_HEIGHT, 800);
-			pProp->Set(g_Res15);
-         } else if (resolution.compare(g_Res16) == 0)
-         {
-			cvSetCaptureProperty(capture, CV_CAP_PROP_FRAME_WIDTH, 1280);
-			cvSetCaptureProperty(capture, CV_CAP_PROP_FRAME_HEIGHT, 960);
-			pProp->Set(g_Res16);
-         } else if (resolution.compare(g_Res17) == 0)
-         {
-			cvSetCaptureProperty(capture, CV_CAP_PROP_FRAME_WIDTH, 1280);
-			cvSetCaptureProperty(capture, CV_CAP_PROP_FRAME_HEIGHT, 1024);
-			pProp->Set(g_Res17);
-         } else if (resolution.compare(g_Res18) == 0)
-         {
-			cvSetCaptureProperty(capture, CV_CAP_PROP_FRAME_WIDTH, 1360);
-			cvSetCaptureProperty(capture, CV_CAP_PROP_FRAME_HEIGHT, 1024);
-			pProp->Set(g_Res18);
-         } else if (resolution.compare(g_Res19) == 0)
-         {
-			cvSetCaptureProperty(capture, CV_CAP_PROP_FRAME_WIDTH, 1400);
-			cvSetCaptureProperty(capture, CV_CAP_PROP_FRAME_HEIGHT, 1050);
-			pProp->Set(g_Res19);
-         } else if (resolution.compare(g_Res20) == 0)
-         {
-			cvSetCaptureProperty(capture, CV_CAP_PROP_FRAME_WIDTH, 1440);
-			cvSetCaptureProperty(capture, CV_CAP_PROP_FRAME_HEIGHT, 900);
-			pProp->Set(g_Res20);
-         } else if (resolution.compare(g_Res21) == 0)
-         {
-			cvSetCaptureProperty(capture, CV_CAP_PROP_FRAME_WIDTH, 1440);
-			cvSetCaptureProperty(capture, CV_CAP_PROP_FRAME_HEIGHT, 960);
-			pProp->Set(g_Res21);
-         } else if (resolution.compare(g_Res22) == 0)
-         {
-			cvSetCaptureProperty(capture, CV_CAP_PROP_FRAME_WIDTH, 1600);
-			cvSetCaptureProperty(capture, CV_CAP_PROP_FRAME_HEIGHT, 1200);
-			pProp->Set(g_Res22);
-         } else if (resolution.compare(g_Res23) == 0)
-         {
-			cvSetCaptureProperty(capture, CV_CAP_PROP_FRAME_WIDTH, 1680);
-			cvSetCaptureProperty(capture, CV_CAP_PROP_FRAME_HEIGHT, 1050);
-			pProp->Set(g_Res23);
-         } else if (resolution.compare(g_Res24) == 0)
-         {
-			cvSetCaptureProperty(capture, CV_CAP_PROP_FRAME_WIDTH, 1920);
-			cvSetCaptureProperty(capture, CV_CAP_PROP_FRAME_HEIGHT, 1080);
-			pProp->Set(g_Res24);
-         } else if (resolution.compare(g_Res25) == 0)
-         {
-			cvSetCaptureProperty(capture, CV_CAP_PROP_FRAME_WIDTH, 1920);
-			cvSetCaptureProperty(capture, CV_CAP_PROP_FRAME_HEIGHT, 1200);
-			pProp->Set(g_Res25);
-         } else if (resolution.compare(g_Res26) == 0)
-         {
-			cvSetCaptureProperty(capture, CV_CAP_PROP_FRAME_WIDTH, 2048);
-			cvSetCaptureProperty(capture, CV_CAP_PROP_FRAME_HEIGHT, 1080);
-			pProp->Set(g_Res26);
-         } else if (resolution.compare(g_Res27) == 0)
-         {
-			cvSetCaptureProperty(capture, CV_CAP_PROP_FRAME_WIDTH, 2048);
-			cvSetCaptureProperty(capture, CV_CAP_PROP_FRAME_HEIGHT, 1536);
-			pProp->Set(g_Res27);
-         } else if (resolution.compare(g_Res28) == 0)
-         {
-			cvSetCaptureProperty(capture, CV_CAP_PROP_FRAME_WIDTH, 2560);
-			cvSetCaptureProperty(capture, CV_CAP_PROP_FRAME_HEIGHT, 1600);
-			pProp->Set(g_Res28);
-         } else if (resolution.compare(g_Res29) == 0)
-         {
-			cvSetCaptureProperty(capture, CV_CAP_PROP_FRAME_WIDTH, 2560);
-			cvSetCaptureProperty(capture, CV_CAP_PROP_FRAME_HEIGHT, 2048);
-			pProp->Set(g_Res29);
-         } else if (resolution.compare(g_Res30) == 0)
-         {
-			cvSetCaptureProperty(capture, CV_CAP_PROP_FRAME_WIDTH, 2592);
-			cvSetCaptureProperty(capture, CV_CAP_PROP_FRAME_HEIGHT, 1944);
-			pProp->Set(g_Res30);
-         } else  {
-			 ret = DEVICE_ERR;
-			 pProp->Set("Error");
-		 }
+		 std::istringstream iss(resolution);
+		 string width, height;
+		 getline(iss,width,'x');
+		 getline(iss,height);
+		 
+		 long w = atoi(width.c_str());
+		 long h = atoi(height.c_str());
+
+		 cvSetCaptureProperty(capture, CV_CAP_PROP_FRAME_WIDTH, (double) w);
+		 cvSetCaptureProperty(capture, CV_CAP_PROP_FRAME_HEIGHT, (double) h);
 
 		 cameraCCDXSize_ = (long) cvGetCaptureProperty(capture, CV_CAP_PROP_FRAME_WIDTH);
 		 cameraCCDYSize_ = (long) cvGetCaptureProperty(capture, CV_CAP_PROP_FRAME_HEIGHT);
-
+		 if(!(cameraCCDXSize_ > 0) && !(cameraCCDYSize_ > 0))
+			 return DEVICE_ERR;
 		 ret = ResizeImageBuffer();
 		 if (ret != DEVICE_OK) return ret;
 
@@ -1398,6 +1232,7 @@ int COpenCVgrabber::OnResolution(MM::PropertyBase* pProp, MM::ActionType eAct)
 		  oss << CDeviceUtils::ConvertToString(cameraCCDXSize_) << "x";
 		  oss << CDeviceUtils::ConvertToString(cameraCCDYSize_);
 		  pProp->Set(oss.str().c_str());
+		  
          ret=DEVICE_OK;
       } break;
    }
@@ -1554,13 +1389,4 @@ void COpenCVgrabber::GenerateEmptyImage(ImgBuffer& img)
       return;
    unsigned char* pBuf = const_cast<unsigned char*>(img.GetPixels());
    memset(pBuf, 0, img.Height()*img.Width()*img.Depth());
-}
-
-
-
-void COpenCVgrabber::TestResourceLocking(const bool recurse)
-{
-   MMThreadGuard g(*pDemoResourceLock_);
-   if(recurse)
-      TestResourceLocking(false);
 }
