@@ -1564,6 +1564,115 @@ void CMMCore::loadStageSequence(const char* label, std::vector<double> positionS
 
 
 /**
+ * Queries XY stage if it can be used in a sequence
+ * @param deviceName - device label
+ */
+bool CMMCore::isXYStageSequenceable(const char* deviceName) const throw (CMMError)
+{
+   MMThreadGuard guard(deviceLock_);
+
+   MM::XYStage* pStage = getSpecificDevice<MM::XYStage>(deviceName);
+
+   bool isSequenceable;
+   int ret = pStage->IsXYStageSequenceable(isSequenceable);
+   if (ret != DEVICE_OK)
+      throw CMMError(deviceName, getDeviceErrorText(ret, pStage).c_str(), MMERR_DEVICE_GENERIC);
+
+   return isSequenceable;
+   
+}
+
+
+/**
+ * Starts an ongoing sequence of triggered events in an XY stage
+ * This should only be called for stages
+ * @param label - deviceName
+ */
+void CMMCore::startXYStageSequence(const char* label) const throw (CMMError)
+{
+   MMThreadGuard guard(deviceLock_);
+
+   MM::XYStage* pDevice = getSpecificDevice<MM::XYStage>(label);
+
+   int ret = ((MM::SequenceableXYStage*) pDevice)->StartXYStageSequence();
+   if (ret != DEVICE_OK)
+      throw CMMError(label, getDeviceErrorText(ret, pDevice).c_str(), MMERR_DEVICE_GENERIC);
+   
+}
+
+/**
+ * Stops an ongoing sequence of triggered events in an XY stage
+ * This should only be called for stages that are sequenceable
+ * @param label - deviceName
+ */
+void CMMCore::stopXYStageSequence(const char* label) const throw (CMMError)
+{
+   MMThreadGuard guard(deviceLock_);
+
+   MM::XYStage* pDevice = getSpecificDevice<MM::XYStage>(label);
+
+   int ret = ((MM::SequenceableXYStage*) pDevice)->StopXYStageSequence();
+   if (ret != DEVICE_OK)
+      throw CMMError(label, getDeviceErrorText(ret, pDevice).c_str(), MMERR_DEVICE_GENERIC);
+
+}
+
+/**
+ * Gets the maximum length of an XY stage's position sequence.
+ * This should only be called for XY stages that are sequenceable
+ * @param label - deviceName
+ */
+long CMMCore::getXYStageSequenceMaxLength(const char* label) const throw (CMMError)
+{
+   MMThreadGuard guard(deviceLock_);
+
+   MM::XYStage* pDevice = getSpecificDevice<MM::XYStage>(label);
+   long length;
+   int ret = ((MM::SequenceableXYStage*) pDevice)->GetXYStageSequenceMaxLength(length);
+   if (ret != DEVICE_OK)
+      throw CMMError(label, getDeviceErrorText(ret, pDevice).c_str(), MMERR_DEVICE_GENERIC);
+
+   return length;
+}
+
+/**
+ * Transfer a sequence of stage positions to the xy stage.
+ * xSequence and ySequence must have the same length.
+ * This should only be called for XY stages that are sequenceable
+ * @param label - deviceName
+ * @param xSequence - sequence of x positions that the stage will execute in reponse to external triggers
+ * @param ySequence - sequence of y positions that the stage will execute in reponse to external triggers
+ */
+void CMMCore::loadXYStageSequence(const char* label,
+                                  std::vector<double> xSequence,
+                                  std::vector<double> ySequence) const throw (CMMError)
+{
+   MMThreadGuard guard(deviceLock_);
+
+   MM::XYStage* pDevice = getSpecificDevice<MM::XYStage>(label);
+   
+   int ret;
+   ret = ((MM::SequenceableXYStage*) pDevice)->ClearXYStageSequence();
+   if (ret != DEVICE_OK)
+      throw CMMError(label, getDeviceErrorText(ret, pDevice).c_str(), MMERR_DEVICE_GENERIC);
+
+   std::vector<double>::iterator itx, ity;
+   for ( itx=xSequence.begin(), ity=ySequence.begin() ;
+         (itx < xSequence.end()) && (ity < ySequence.end()); itx++, ity++)
+   {
+      ret = ((MM::SequenceableXYStage*) pDevice)->AddToXYStageSequence(*itx, *ity);
+      if (ret != DEVICE_OK)
+         throw CMMError(label, getDeviceErrorText(ret, pDevice).c_str(), MMERR_DEVICE_GENERIC);
+   }
+
+   ret = ((MM::SequenceableXYStage*) pDevice)->SendXYStageSequence();
+   if (ret != DEVICE_OK)
+      throw CMMError(label, getDeviceErrorText(ret, pDevice).c_str(), MMERR_DEVICE_GENERIC);
+  
+}
+
+
+/**
  * Acquires a single image with current settings.
  * Snap is not allowed while the acquisition thread is run
  */

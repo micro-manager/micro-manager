@@ -366,12 +366,30 @@ public:
    void home(const char* deviceLabel) throw (CMMError);
    void setOriginXY(const char* deviceLabel) throw (CMMError);
    void setAdapterOriginXY(const char* deviceName, double x, double y) throw (CMMError);
+   //@ }
+
+   /** @name Stage sequencing
+   * API for loading sequences onto single-axis stages
+   */
+   //@ {
    bool isStageSequenceable(const char* label) const throw (CMMError);
    void startStageSequence(const char* label) const throw (CMMError);
    void stopStageSequence(const char* label) const throw (CMMError);
    long getStageSequenceMaxLength(const char* label) const throw (CMMError);
    void loadStageSequence(const char* label, std::vector<double> positionSequence) const throw (CMMError);
+   //@ }
 
+   /** @name XY Stage sequencing
+   * API for loading sequences onto XY stages
+   */
+   //@ {
+   bool isXYStageSequenceable(const char* label) const throw (CMMError);
+   void startXYStageSequence(const char* label) const throw (CMMError);
+   void stopXYStageSequence(const char* label) const throw (CMMError);
+   long getXYStageSequenceMaxLength(const char* label) const throw (CMMError);
+   void loadXYStageSequence(const char* label,
+                            std::vector<double> xSequence,
+                            std::vector<double> ySequence) const throw (CMMError);
    //@ }
 
    /** @name Serial port control

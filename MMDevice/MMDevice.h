@@ -34,7 +34,7 @@
 // Header version
 // If any of the class declarations changes, the interface version
 // must be incremented
-#define DEVICE_INTERFACE_VERSION 45
+#define DEVICE_INTERFACE_VERSION 46
 ///////////////////////////////////////////////////////////////////////////////
 
 #pragma once
@@ -465,6 +465,40 @@ namespace MM {
        */
       virtual bool IsCapturing() = 0;
 
+      /*
+       * Returns whether a camera's exposure time can be sequenced.
+       * If returning true, then a Camera adapter class should also inherit
+       * the SequenceableExposure class and implement its methods.
+       */
+      virtual int IsStageSequenceable(bool& isSequenceable) const = 0;
+
+   };
+
+/**
+    * Virtual mixin class for sequenceable XY stages
+    */
+   class SequenceableExposure 
+   {
+   public:
+      // Sequence functions
+      // Sequences can be used for fast acquisitions, sycnchronized by TTLs rather than
+      // computer commands. 
+      // Sequences of exposures can be uploaded to the camera.  The camera will cycle through
+      // the uploaded list of exposures (triggered by either an internal or 
+      // external trigger).  If the device is capable (and ready) to do so isSequenceable will
+      // be true. If your device can not execute this (true for most cameras)
+      // simply set IsExposureSequenceable to false
+      virtual int GetExposureSequenceMaxLength(long& nrEvents) const = 0;
+      virtual int StartExposureSequence() const = 0;
+      virtual int StopExposureSequence() const = 0;
+      // Remove all values in the sequence
+      virtual int ClearExposureSequence() = 0;
+      // Add one value to the sequence
+      virtual int AddToExposureSequence(double exposureTime_ms) = 0;
+      // Signal that we are done sending sequence values so that the adapter can send the whole sequence to the device
+      virtual int SendExposureSequence() const = 0; 
+      // Virtual destructor necessary for mixin
+      virtual ~SequenceableExposure() {}
    };
 
    /** 
@@ -581,6 +615,39 @@ namespace MM {
       virtual int GetStepLimits(long& xMin, long& xMax, long& yMin, long& yMax) = 0;
       virtual double GetStepSizeXUm() = 0;
       virtual double GetStepSizeYUm() = 0;
+       /*
+       * Returns whether a stage can be sequenced (synchronized by TTLs)
+       * If returning true, then an XYStage class should also inherit
+       * the SequenceableXYStage class and implement its methods.
+       */
+      virtual int IsXYStageSequenceable(bool& isSequenceable) const = 0;     
+   };
+
+/**
+    * Virtual mixin class for sequenceable XY stages
+    */
+   class SequenceableXYStage 
+   {
+   public:
+      // Sequence functions
+      // Sequences can be used for fast acquisitions, sycnchronized by TTLs rather than
+      // computer commands. 
+      // Sequences of positions can be uploaded to the XY stage.  The device will cycle through
+      // the uploaded list of states (triggered by an external trigger - most often coming 
+      // from the camera).  If the device is capable (and ready) to do so isSequenceable will
+      // be true. If your device can not execute this (true for most XY stages
+      // simply set isSequenceable to false
+      virtual int GetXYStageSequenceMaxLength(long& nrEvents) const = 0;
+      virtual int StartXYStageSequence() const = 0;
+      virtual int StopXYStageSequence() const = 0;
+      // Remove all values in the sequence
+      virtual int ClearXYStageSequence() = 0;
+      // Add one value to the sequence
+      virtual int AddToXYStageSequence(double positionX, double positionY) = 0;
+      // Signal that we are done sending sequence values so that the adapter can send the whole sequence to the device
+      virtual int SendXYStageSequence() const = 0; 
+      // Virtual destructor necessary for mixin
+      virtual ~SequenceableXYStage() {}
    };
 
    /**
@@ -780,6 +847,26 @@ namespace MM {
       virtual int GetSignal(double& volts) = 0;
       virtual int GetLimits(double& minVolts, double& maxVolts) = 0;
 
+      /**
+       * Lets the UI know whether or not this DA device accepts sequences
+       * If the device is sequenceable, it is usually best to add a property through which 
+       * the user can set "isSequenceable", since only the user knows whether the device
+       * is actually connected to a trigger source.
+       * If isDASequenceable returns true, the device adapter must
+       * also inherit the SequenceableDA class and provide method
+       * implementations.
+       * @param isSequenceable signals whether other sequence functions will work
+       * @return errorcode (DEVICE_OK if no error)
+       */
+      virtual int IsDASequenceable(bool& isSequenceable) const = 0;
+   };
+
+   /**
+    * Virtual mixin class for sequenceable SignalIO (DA) device
+    */
+   class SequenceableDA
+   {
+   public:
       // Sequence functions
       // Sequences can be used for fast acquisitions, synchronized by TTLs rather than
       // computer commands. 
@@ -787,15 +874,6 @@ namespace MM {
       // the uploaded list of voltages (triggered by an external trigger - most often coming 
       // from the camera).  If the device is capable (and ready) to do so isSequenceable will
       // be true. If your device can not execute this simply set isSequenceable to false
-      /**
-       * Lets the UI know whether or not this DA device accepts sequences
-       * If the device is sequenceable, it is usually best to add a property through which 
-       * the user can set "isSequenceable", since only the user knows whether the device
-       * is atucally connected to a trigger source
-       * @param isSequenceable signals whether other sequence functions will work
-       * @return errorcode (DEVICE_OK if no error)
-       */
-      virtual int IsDASequenceable(bool& isSequenceable) const = 0;
       /**
        * Returns the maximum length of a sequence that the hardware can store
        * @param nrEvents max length of sequence
@@ -837,6 +915,9 @@ namespace MM {
        * @return errorcode (DEVICE_OK if no error)
        */
       virtual int SendDASequence() const = 0;
+
+      // Virtual destructor necessary for mixin
+      virtual ~SequenceableDA() {}
    };
 
    /**

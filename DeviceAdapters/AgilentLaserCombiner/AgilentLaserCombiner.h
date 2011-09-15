@@ -121,23 +121,13 @@ public:
    int GetSignal(double& volts) {volts_ = (float) volts; return DEVICE_UNSUPPORTED_COMMAND;}     
    int GetLimits(double& minVolts, double& maxVolts) {minVolts = (float) minV_; maxVolts = (float) maxV_; return DEVICE_OK;}
    
+   int IsDASequenceable(bool& isSequenceable) const {isSequenceable = false; return DEVICE_OK;}
+
    // action interface
    // ----------------
    int OnVolts(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnMaxVolt(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnChannel(MM::PropertyBase* pProp, MM::ActionType eAct);
-
- // Sequence functions
-   int IsDASequenceable(bool& isSequenceable) const {isSequenceable = false; return DEVICE_OK;}
-   int GetDASequenceMaxLength(long& nrEvents) const  {nrEvents = 0; return DEVICE_OK;}
-   int StartDASequence() const {return DEVICE_OK;}
-   int StopDASequence() const {return DEVICE_OK;}
-   int ClearDASequence() {return DEVICE_OK;}
-   int AddToDASequence(double /*voltage*/) {return DEVICE_OK;}
-   int SendDASequence() const {return DEVICE_OK;}
-
-
-
 
 private:
    bool initialized_;

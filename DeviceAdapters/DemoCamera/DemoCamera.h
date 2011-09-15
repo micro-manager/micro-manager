@@ -672,7 +672,8 @@ private:
 // DemoShutter class
 // Simulation of shutter device
 //////////////////////////////////////////////////////////////////////////////
-class DemoDA : public CSignalIOBase<DemoDA>
+class DemoDA : public CSignalIOBase<DemoDA>,
+               public MM::SequenceableDA
 {
 public:
    DemoDA ();
