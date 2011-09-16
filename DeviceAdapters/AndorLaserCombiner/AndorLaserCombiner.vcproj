@@ -212,7 +212,7 @@
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
-				AdditionalIncludeDirectories="../../../3rdparty/Andor/ALC_REV_SDK/include;../../../3rdpartypublic/boost"
+				AdditionalIncludeDirectories="../../../3rdparty/Andor/ALC/ALC_REV_SDK/include;../../../3rdpartypublic/boost"
 				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;MODULE_EXPORTS"
 				ExceptionHandling="2"
 				RuntimeLibrary="0"
@@ -296,7 +296,7 @@
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
-				AdditionalIncludeDirectories="../../../3rdparty/Andor/ALC_REV_SDK/include;../../../3rdpartypublic/boost"
+				AdditionalIncludeDirectories="../../../3rdparty/Andor/ALC/ALC_REV_SDK/include;../../../3rdpartypublic/boost"
 				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;MODULE_EXPORTS"
 				ExceptionHandling="2"
 				RuntimeLibrary="0"
