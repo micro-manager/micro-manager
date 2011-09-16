@@ -1488,7 +1488,7 @@ void CMMCore::startExposureSequence(const char* cameraLabel) const throw (CMMErr
 
    MM::Camera* pDevice = getSpecificDevice<MM::Camera>(cameraLabel);
 
-   int ret = (dynamic_cast<MM::SequenceableExposure*>(pDevice))->StartExposureSequence();
+   int ret = (static_cast<MM::SequenceableExposure*>(pDevice))->StartExposureSequence();
    if (ret != DEVICE_OK)
       throw CMMError(cameraLabel, getDeviceErrorText(ret, pDevice).c_str(), MMERR_DEVICE_GENERIC);
    
@@ -1505,7 +1505,7 @@ void CMMCore::stopExposureSequence(const char* cameraLabel) const throw (CMMErro
 
    MM::Camera* pDevice = getSpecificDevice<MM::Camera>(cameraLabel);
 
-   int ret = (dynamic_cast<MM::SequenceableExposure*>(pDevice))->StopExposureSequence();
+   int ret = (static_cast<MM::SequenceableExposure*>(pDevice))->StopExposureSequence();
    if (ret != DEVICE_OK)
       throw CMMError(cameraLabel, getDeviceErrorText(ret, pDevice).c_str(), MMERR_DEVICE_GENERIC);
 }
@@ -1521,7 +1521,7 @@ long CMMCore::getExposureSequenceMaxLength(const char* cameraLabel) const throw 
 
    MM::Camera* pDevice = getSpecificDevice<MM::Camera>(cameraLabel);
    long length;
-   int ret = (dynamic_cast<MM::SequenceableExposure*>(pDevice))->GetExposureSequenceMaxLength(length);
+   int ret = (static_cast<MM::SequenceableExposure*>(pDevice))->GetExposureSequenceMaxLength(length);
    if (ret != DEVICE_OK)
       throw CMMError(cameraLabel, getDeviceErrorText(ret, pDevice).c_str(), MMERR_DEVICE_GENERIC);
 
@@ -1541,19 +1541,19 @@ void CMMCore::loadExposureSequence(const char* cameraLabel, std::vector<double> 
    MM::Camera* pDevice = getSpecificDevice<MM::Camera>(cameraLabel);
    
    int ret;
-   ret =  (dynamic_cast<MM::SequenceableExposure*>(pDevice))->ClearExposureSequence();
+   ret =  (static_cast<MM::SequenceableExposure*>(pDevice))->ClearExposureSequence();
    if (ret != DEVICE_OK)
       throw CMMError(cameraLabel, getDeviceErrorText(ret, pDevice).c_str(), MMERR_DEVICE_GENERIC);
 
    std::vector<double>::iterator it;
    for ( it=exposureTime_ms.begin() ; it < exposureTime_ms.end(); it++ )
    {
-      ret = (dynamic_cast<MM::SequenceableExposure*>(pDevice))->AddToExposureSequence(*it);
+      ret = (static_cast<MM::SequenceableExposure*>(pDevice))->AddToExposureSequence(*it);
       if (ret != DEVICE_OK)
          throw CMMError(cameraLabel, getDeviceErrorText(ret, pDevice).c_str(), MMERR_DEVICE_GENERIC);
    }
 
-   ret = (dynamic_cast<MM::SequenceableExposure*>(pDevice))->SendExposureSequence();
+   ret = (static_cast<MM::SequenceableExposure*>(pDevice))->SendExposureSequence();
    if (ret != DEVICE_OK)
       throw CMMError(cameraLabel, getDeviceErrorText(ret, pDevice).c_str(), MMERR_DEVICE_GENERIC);
   
@@ -1592,7 +1592,7 @@ void CMMCore::startStageSequence(const char* label) const throw (CMMError)
 
    MM::Stage* pDevice = getSpecificDevice<MM::Stage>(label);
 
-   int ret = (dynamic_cast<MM::SequenceableStage *>(pDevice))->StartStageSequence();
+   int ret = (static_cast<MM::SequenceableStage *>(pDevice))->StartStageSequence();
    if (ret != DEVICE_OK)
       throw CMMError(label, getDeviceErrorText(ret, pDevice).c_str(), MMERR_DEVICE_GENERIC);
    
@@ -1609,7 +1609,7 @@ void CMMCore::stopStageSequence(const char* label) const throw (CMMError)
 
    MM::Stage* pDevice = getSpecificDevice<MM::Stage>(label);
 
-   int ret = (dynamic_cast<MM::SequenceableStage *>(pDevice))->StopStageSequence();
+   int ret = (static_cast<MM::SequenceableStage *>(pDevice))->StopStageSequence();
    if (ret != DEVICE_OK)
       throw CMMError(label, getDeviceErrorText(ret, pDevice).c_str(), MMERR_DEVICE_GENERIC);
 
@@ -1626,7 +1626,7 @@ long CMMCore::getStageSequenceMaxLength(const char* label) const throw (CMMError
 
    MM::Stage* pDevice = getSpecificDevice<MM::Stage>(label);
    long length;
-   int ret = (dynamic_cast<MM::SequenceableStage *>(pDevice))->GetStageSequenceMaxLength(length);
+   int ret = (static_cast<MM::SequenceableStage *>(pDevice))->GetStageSequenceMaxLength(length);
    if (ret != DEVICE_OK)
       throw CMMError(label, getDeviceErrorText(ret, pDevice).c_str(), MMERR_DEVICE_GENERIC);
 
@@ -1646,19 +1646,19 @@ void CMMCore::loadStageSequence(const char* label, std::vector<double> positionS
    MM::Stage* pDevice = getSpecificDevice<MM::Stage>(label);
    
    int ret;
-   ret = (dynamic_cast<MM::SequenceableStage *>(pDevice))->ClearStageSequence();
+   ret = (static_cast<MM::SequenceableStage *>(pDevice))->ClearStageSequence();
    if (ret != DEVICE_OK)
       throw CMMError(label, getDeviceErrorText(ret, pDevice).c_str(), MMERR_DEVICE_GENERIC);
 
    std::vector<double>::iterator it;
    for ( it=positionSequence.begin() ; it < positionSequence.end(); it++ )
    {
-      ret = (dynamic_cast<MM::SequenceableStage *>(pDevice))->AddToStageSequence(*it);
+      ret = (static_cast<MM::SequenceableStage *>(pDevice))->AddToStageSequence(*it);
       if (ret != DEVICE_OK)
          throw CMMError(label, getDeviceErrorText(ret, pDevice).c_str(), MMERR_DEVICE_GENERIC);
    }
 
-   ret = (dynamic_cast<MM::SequenceableStage *>(pDevice))->SendStageSequence();
+   ret = (static_cast<MM::SequenceableStage *>(pDevice))->SendStageSequence();
    if (ret != DEVICE_OK)
       throw CMMError(label, getDeviceErrorText(ret, pDevice).c_str(), MMERR_DEVICE_GENERIC);
   
@@ -1696,7 +1696,7 @@ void CMMCore::startXYStageSequence(const char* label) const throw (CMMError)
 
    MM::XYStage* pDevice = getSpecificDevice<MM::XYStage>(label);
 
-   int ret = (dynamic_cast<MM::SequenceableXYStage*>(pDevice))->StartXYStageSequence();
+   int ret = (static_cast<MM::SequenceableXYStage*>(pDevice))->StartXYStageSequence();
    if (ret != DEVICE_OK)
       throw CMMError(label, getDeviceErrorText(ret, pDevice).c_str(), MMERR_DEVICE_GENERIC);
    
@@ -1713,7 +1713,7 @@ void CMMCore::stopXYStageSequence(const char* label) const throw (CMMError)
 
    MM::XYStage* pDevice = getSpecificDevice<MM::XYStage>(label);
 
-   int ret = (dynamic_cast<MM::SequenceableXYStage*> (pDevice))->StopXYStageSequence();
+   int ret = (static_cast<MM::SequenceableXYStage*> (pDevice))->StopXYStageSequence();
    if (ret != DEVICE_OK)
       throw CMMError(label, getDeviceErrorText(ret, pDevice).c_str(), MMERR_DEVICE_GENERIC);
 
@@ -1730,7 +1730,7 @@ long CMMCore::getXYStageSequenceMaxLength(const char* label) const throw (CMMErr
 
    MM::XYStage* pDevice = getSpecificDevice<MM::XYStage>(label);
    long length;
-   int ret = (dynamic_cast<MM::SequenceableXYStage*>(pDevice))->GetXYStageSequenceMaxLength(length);
+   int ret = (static_cast<MM::SequenceableXYStage*>(pDevice))->GetXYStageSequenceMaxLength(length);
    if (ret != DEVICE_OK)
       throw CMMError(label, getDeviceErrorText(ret, pDevice).c_str(), MMERR_DEVICE_GENERIC);
 
@@ -1754,7 +1754,7 @@ void CMMCore::loadXYStageSequence(const char* label,
    MM::XYStage* pDevice = getSpecificDevice<MM::XYStage>(label);
    
    int ret;
-   ret = (dynamic_cast<MM::SequenceableXYStage*>(pDevice))->ClearXYStageSequence();
+   ret = (static_cast<MM::SequenceableXYStage*>(pDevice))->ClearXYStageSequence();
    if (ret != DEVICE_OK)
       throw CMMError(label, getDeviceErrorText(ret, pDevice).c_str(), MMERR_DEVICE_GENERIC);
 
@@ -1762,12 +1762,12 @@ void CMMCore::loadXYStageSequence(const char* label,
    for ( itx=xSequence.begin(), ity=ySequence.begin() ;
          (itx < xSequence.end()) && (ity < ySequence.end()); itx++, ity++)
    {
-      ret = (dynamic_cast<MM::SequenceableXYStage*>(pDevice))->AddToXYStageSequence(*itx, *ity);
+      ret = (static_cast<MM::SequenceableXYStage*>(pDevice))->AddToXYStageSequence(*itx, *ity);
       if (ret != DEVICE_OK)
          throw CMMError(label, getDeviceErrorText(ret, pDevice).c_str(), MMERR_DEVICE_GENERIC);
    }
 
-   ret = (dynamic_cast<MM::SequenceableXYStage*>(pDevice))->SendXYStageSequence();
+   ret = (static_cast<MM::SequenceableXYStage*>(pDevice))->SendXYStageSequence();
    if (ret != DEVICE_OK)
       throw CMMError(label, getDeviceErrorText(ret, pDevice).c_str(), MMERR_DEVICE_GENERIC);
   
