@@ -586,22 +586,22 @@ int DAZStage::IsStageSequenceable(bool& isSequenceable) const
 
 int DAZStage::GetStageSequenceMaxLength(long& nrEvents) const  
 {
-   return ((MM::SequenceableDA*) DADevice_)->GetDASequenceMaxLength(nrEvents);
+   return (dynamic_cast<MM::SequenceableDA*>(DADevice_))->GetDASequenceMaxLength(nrEvents);
 }
 
 int DAZStage::StartStageSequence() const 
 {
-   return ((MM::SequenceableDA*) DADevice_)->StartDASequence();
+   return (dynamic_cast<MM::SequenceableDA*>(DADevice_))->StartDASequence();
 }
 
 int DAZStage::StopStageSequence() const 
 {
-   return ((MM::SequenceableDA*) DADevice_)->StopDASequence();
+   return (dynamic_cast<MM::SequenceableDA*>(DADevice_))->StopDASequence();
 }
 
 int DAZStage::ClearStageSequence() 
 {
-   return ((MM::SequenceableDA*) DADevice_)->ClearDASequence();
+   return (dynamic_cast<MM::SequenceableDA*>(DADevice_))->ClearDASequence();
 }
 
 int DAZStage::AddToStageSequence(double position) 
@@ -615,15 +615,13 @@ int DAZStage::AddToStageSequence(double position)
       else if (voltage < minStageVolt_)
          voltage = minStageVolt_;
    
-   return ((MM::SequenceableDA*) DADevice_)->AddToDASequence(voltage);
-
+   return (dynamic_cast<MM::SequenceableDA*>(DADevice_))->AddToDASequence(voltage);
 }
 
 int DAZStage::SendStageSequence() const
 {
-   return ((MM::SequenceableDA*) DADevice_)->SendDASequence();
+   return (dynamic_cast<MM::SequenceableDA*>(DADevice_))->SendDASequence();
 }
-
 
 
 ///////////////////////////////////////

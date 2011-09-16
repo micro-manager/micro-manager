@@ -117,8 +117,8 @@ private:
 /**
  * Allows a DA device to act like a Drive (better hook it up to a drive!)
  */
-class DAZStage : public CStageBase<DAZStage>,
-                 public MM::SequenceableStage
+class DAZStage : public MM::SequenceableStage,
+                 public CStageBase<DAZStage>
 {
 public:
    DAZStage();
