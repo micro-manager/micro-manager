@@ -10,20 +10,20 @@
 
 <body>
 
-<span style="font-family: Helvetica,Arial,sans-serif; font-weight: bold;"></span><span style="font-family: Helvetica,Arial,sans-serif;">Select
-   the <b>serial ports</b> you use to control your devices. The port
-settings are shown at the right-hand side. Edit the settings
-using parameters specified in the documentation of the device. If you
-are unsure what the correct settings are, try: BaudRate=9600 baud,
-Parity=None, StopBits=1.<br>
-
-<br>
-
-The <span style="font-weight: bold;">AnswerTimeout</span>
-parameter specifies (in milliseconds) how long Micro-Manager will
-wait for the response from the device.
-Values from 500ms to 2000ms are OK for most devices, but some (like the Nikon TE2000) can need up to 7000 ms.<br>
-
+    <h2>Setting up Serial Ports</h2>
+    <ul>
+        <li>Here you will identify settings for the <b>serial ports</b> you use to control your devices. </li>
+        <li>The settings are shown at the right-hand side and the particlar settings for your device can also be found in the same Device Support pages on 
+            the Micro-Manager website. </li>
+        <li>If you are still unsure what the correct settings are, try: BaudRate=9600 baud,
+            Parity=None, StopBits=1. </li>
+    </ul>
+    <b>Note:</b>
+    <ul>
+        <li>The <b>AnswerTimeout</b> parameter specifies (in milliseconds) how long 
+            Micro-Manager will wait for the response from the device.</li>
+        <li>Values from 500 ms to 2000 ms are OK for most devices, but some (like the Nikon TE2000) may need up to 7000 ms.</li>
+    </ul>
 </span>
 </body>
 </html>
