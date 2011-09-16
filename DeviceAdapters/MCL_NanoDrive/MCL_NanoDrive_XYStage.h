@@ -49,6 +49,7 @@ public:
 	virtual double GetStepSizeXUm();
 	virtual double GetStepSizeYUm();
 	int getHandle(){  return MCLhandle_;}
+   int IsXYStageSequenceable(bool& isSequenceable) const {isSequenceable = false; return DEVICE_OK;}
 
 	// Action interface
 	int OnPositionXUm(MM::PropertyBase* pProp, MM::ActionType eAct);

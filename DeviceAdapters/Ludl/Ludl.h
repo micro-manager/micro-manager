@@ -228,6 +228,7 @@ public:
   int GetLimitsUm(double& xMin, double& xMax, double& yMin, double& yMax);
   double GetStepSizeXUm() {return stepSizeUm_;}
   double GetStepSizeYUm() {return stepSizeUm_;}
+  int IsXYStageSequenceable(bool& isSequenceable) const {isSequenceable = false; return DEVICE_OK;}
 
    // action interface
    // ----------------

@@ -307,6 +307,12 @@ public:
    bool isBufferOverflowed() const;
    void setCircularBufferMemoryFootprint(unsigned sizeMB) throw (CMMError);
    void initializeCircularBuffer() throw (CMMError);
+
+   bool isExposureSequenceable(const char* cameraLabel) const throw (CMMError);
+   void startExposureSequence(const char* cameraLabel) const throw (CMMError);
+   void stopExposureSequence(const char* cameraLabel) const throw (CMMError);
+   long getExposureSequenceMaxLength(const char* cameraLabel) const throw (CMMError);
+   void loadExposureSequence(const char* cameraLabel, std::vector<double> exposureSequence_ms) const throw (CMMError);
    //@ }
 
    /** @name Auto-focusing

@@ -130,6 +130,7 @@ public:
     unsigned GetBitDepth() const;
     int GetBinning() const;
     int SetBinning(int binSize);
+    int IsExposureSequenceable(bool& isSequenceable) const {isSequenceable = false; return DEVICE_OK;}
     long GetImageBufferSize() const;
     double GetExposure() const;
     void SetExposure(double exp);

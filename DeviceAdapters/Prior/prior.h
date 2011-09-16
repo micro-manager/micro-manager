@@ -143,6 +143,7 @@ public:
   int GetStepLimits(long& xMin, long& xMax, long& yMin, long& yMax);
   double GetStepSizeXUm() {return stepSizeXUm_;}
   double GetStepSizeYUm() {return stepSizeYUm_;}
+  int IsXYStageSequenceable(bool& isSequenceable) const {isSequenceable = false; return DEVICE_OK;}
 
    // action interface
    // ----------------

@@ -1439,7 +1439,6 @@ void CMMCore::setOriginXY(const char* deviceName) throw (CMMError)
    }
    CORE_LOG1("Stage %s's current position was zeroed.\n", deviceName);
 }
-//eof jizhen
 
 /**
  * Set the current position to be  x,y in um
@@ -1457,6 +1456,109 @@ void CMMCore::setAdapterOriginXY(const char* deviceName, double x, double y) thr
    }
    CORE_LOG3("Stage %s's current position was set as %.2f,%.2f um.\n", deviceName, x, y);
 }
+
+
+/**
+ * Queries camera if exposure can be used in a sequence
+ * @param cameraLabel - device label
+ */
+bool CMMCore::isExposureSequenceable(const char* cameraLabel) const throw (CMMError)
+{
+   MMThreadGuard guard(deviceLock_);
+
+   MM::Camera* pCamera = getSpecificDevice<MM::Camera>(cameraLabel);
+
+   bool isSequenceable;
+   int ret = pCamera->IsExposureSequenceable(isSequenceable);
+   if (ret != DEVICE_OK)
+      throw CMMError(cameraLabel, getDeviceErrorText(ret, pCamera).c_str(), MMERR_DEVICE_GENERIC);
+
+   return isSequenceable;
+}
+
+
+/**
+ * Starts an ongoing sequence of triggered exposures in a camera
+ * This should only be called for cameras where exposure time is sequenceable
+ * @param cameraLabel - the camera
+ */
+void CMMCore::startExposureSequence(const char* cameraLabel) const throw (CMMError)
+{
+   MMThreadGuard guard(deviceLock_);
+
+   MM::Camera* pDevice = getSpecificDevice<MM::Camera>(cameraLabel);
+
+   int ret = ((MM::SequenceableExposure*) pDevice)->StartExposureSequence();
+   if (ret != DEVICE_OK)
+      throw CMMError(cameraLabel, getDeviceErrorText(ret, pDevice).c_str(), MMERR_DEVICE_GENERIC);
+   
+}
+
+/**
+ * Stops an ongoing sequence of triggered exposures in a camera
+ * This should only be called for cameras where exposure time is sequenceable
+ * @param cameraLabel - deviceName
+ */
+void CMMCore::stopExposureSequence(const char* cameraLabel) const throw (CMMError)
+{
+   MMThreadGuard guard(deviceLock_);
+
+   MM::Camera* pDevice = getSpecificDevice<MM::Camera>(cameraLabel);
+
+   int ret = ((MM::SequenceableExposure*) pDevice)->StopExposureSequence();
+   if (ret != DEVICE_OK)
+      throw CMMError(cameraLabel, getDeviceErrorText(ret, pDevice).c_str(), MMERR_DEVICE_GENERIC);
+}
+
+/**
+ * Gets the maximum length of a camera's exposure sequence.
+ * This should only be called for cameras where exposure time is sequenceable
+ * @param cameraLabel - deviceName
+ */
+long CMMCore::getExposureSequenceMaxLength(const char* cameraLabel) const throw (CMMError)
+{
+   MMThreadGuard guard(deviceLock_);
+
+   MM::Camera* pDevice = getSpecificDevice<MM::Camera>(cameraLabel);
+   long length;
+   int ret = ((MM::SequenceableExposure*) pDevice)->GetExposureSequenceMaxLength(length);
+   if (ret != DEVICE_OK)
+      throw CMMError(cameraLabel, getDeviceErrorText(ret, pDevice).c_str(), MMERR_DEVICE_GENERIC);
+
+   return length;
+}
+
+/**
+ * Transfer a sequence of exposure times to the camera.
+ * This should only be called for cameras where exposure time is sequenceable
+ * @param cameraLabel - deviceName
+ * @param exposureTime_ms - sequence of exposure times the camera will use during a sequence acquisition
+ */
+void CMMCore::loadExposureSequence(const char* cameraLabel, std::vector<double> exposureTime_ms) const throw (CMMError)
+{
+   MMThreadGuard guard(deviceLock_);
+
+   MM::Camera* pDevice = getSpecificDevice<MM::Camera>(cameraLabel);
+   
+   int ret;
+   ret = ((MM::SequenceableExposure*) pDevice)->ClearExposureSequence();
+   if (ret != DEVICE_OK)
+      throw CMMError(cameraLabel, getDeviceErrorText(ret, pDevice).c_str(), MMERR_DEVICE_GENERIC);
+
+   std::vector<double>::iterator it;
+   for ( it=exposureTime_ms.begin() ; it < exposureTime_ms.end(); it++ )
+   {
+      ret = ((MM::SequenceableExposure*) pDevice)->AddToExposureSequence(*it);
+      if (ret != DEVICE_OK)
+         throw CMMError(cameraLabel, getDeviceErrorText(ret, pDevice).c_str(), MMERR_DEVICE_GENERIC);
+   }
+
+   ret = ((MM::SequenceableExposure*) pDevice)->SendExposureSequence();
+   if (ret != DEVICE_OK)
+      throw CMMError(cameraLabel, getDeviceErrorText(ret, pDevice).c_str(), MMERR_DEVICE_GENERIC);
+  
+}
+
 
 
 /**

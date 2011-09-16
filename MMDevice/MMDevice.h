@@ -34,7 +34,7 @@
 // Header version
 // If any of the class declarations changes, the interface version
 // must be incremented
-#define DEVICE_INTERFACE_VERSION 46
+#define DEVICE_INTERFACE_VERSION 47
 ///////////////////////////////////////////////////////////////////////////////
 
 #pragma once
@@ -470,12 +470,12 @@ namespace MM {
        * If returning true, then a Camera adapter class should also inherit
        * the SequenceableExposure class and implement its methods.
        */
-      virtual int IsStageSequenceable(bool& isSequenceable) const = 0;
+      virtual int IsExposureSequenceable(bool& isSequenceable) const = 0;
 
    };
 
 /**
-    * Virtual mixin class for sequenceable XY stages
+    * Virtual mixin class for cameras whose exposure is sequenceable
     */
    class SequenceableExposure 
    {

@@ -135,6 +135,7 @@ public:
 	double GetStepSizeXUm() {return stepSize_um_;}
 	double GetStepSizeYUm() {return stepSize_um_;}
 	int Move(double /*vx*/, double /*vy*/) {return DEVICE_OK;} // ok
+   int IsXYStageSequenceable(bool& isSequenceable) const {isSequenceable = false; return DEVICE_OK;}
 
 	// action interface
 	// ----------------

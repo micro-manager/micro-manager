@@ -99,7 +99,7 @@ public:
    double GetPixelSizeUm() const {return nominalPixelSizeUm_ * GetBinning();}
    int GetBinning() const;
    int SetBinning(int binSize);
-
+   int IsExposureSequenceable(bool& isSequenceable) const {isSequenceable = false; return DEVICE_OK;}
 	int NextTwainImageIntoImageBuffer(ImgBuffer& img);
 	int StartTwainCamera(void);
 

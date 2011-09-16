@@ -144,6 +144,7 @@ public:
    double GetPixelSizeUm() const {return nominalPixelSizeUm_ * GetBinning();}
    int GetBinning() const;
    int SetBinning(int bS);
+   int IsExposureSequenceable(bool& isSequenceable) const {isSequenceable = false; return DEVICE_OK;}
 
    unsigned  GetNumberOfComponents() const { return nComponents_;};
 
@@ -600,6 +601,9 @@ public:
       return stepSize_um_;
    }
    int Move(double /*vx*/, double /*vy*/) {return DEVICE_OK;}
+
+   int IsXYStageSequenceable(bool& isSequenceable) const {isSequenceable = false; return DEVICE_OK;}
+
 
    // action interface
    // ----------------

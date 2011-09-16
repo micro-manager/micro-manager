@@ -154,6 +154,7 @@ public:
    void SetExposure(double exp);
    int GetBinning() const;
    int SetBinning(int binSize);
+   int IsExposureSequenceable(bool& isSequenceable) const {isSequenceable = false; return DEVICE_OK;}
    int SetROI(unsigned x, unsigned y, unsigned xSize, unsigned ySize); 
    int GetROI(unsigned& x, unsigned& y, unsigned& xSize, unsigned& ySize); 
    int ClearROI();

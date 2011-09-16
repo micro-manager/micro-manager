@@ -86,6 +86,8 @@ public:
    int StartSequenceAcquisition(long numImages, double /*interval_ms*/, bool stopOnOverflow);
    int StopSequenceAcquisition();
    bool IsCapturing();
+   int IsExposureSequenceable(bool& isSequenceable) const {isSequenceable = false; return DEVICE_OK;}
+
 
    // action interface
    int OnBoard(MM::PropertyBase* pProp, MM::ActionType eAct);

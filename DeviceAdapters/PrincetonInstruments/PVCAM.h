@@ -162,6 +162,7 @@ public:
    unsigned GetBitDepth() const;
    int GetBinning() const;
    int SetBinning(int binSize);
+   int IsExposureSequenceable(bool& isSequenceable) const {isSequenceable = false; return DEVICE_OK;}
    double GetExposure() const;
    void SetExposure(double dExp);
    int SetROI(unsigned x, unsigned y, unsigned xSize, unsigned ySize); 

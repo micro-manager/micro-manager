@@ -141,6 +141,8 @@ public:
 	*/
 	int SetBinning( int binSize ) {  return SetProperty( MM::g_Keyword_Binning, CDeviceUtils::ConvertToString( binSize ) );  }
 
+   int IsExposureSequenceable(bool& isSequenceable) const {isSequenceable = false; return DEVICE_OK;}
+
 	// ROI-related functions
 	int SetROI(unsigned x, unsigned y, unsigned xSize, unsigned ySize); 
 	int GetROI(unsigned& x, unsigned& y, unsigned& xSize, unsigned& ySize); 

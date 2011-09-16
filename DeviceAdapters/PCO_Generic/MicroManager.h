@@ -95,6 +95,7 @@ public:
    unsigned int GetNumberOfComponents() const;
    int GetBinning() const;
    int SetBinning(int binSize);
+   int IsExposureSequenceable(bool& isSequenceable) const {isSequenceable = false; return DEVICE_OK;}
    long GetImageBufferSize() const {return img_.Width() * img_.Height() * GetImageBytesPerPixel();}
    double GetExposure() const {return m_dExposure;}
    void SetExposure(double dExp);

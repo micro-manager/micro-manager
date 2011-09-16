@@ -88,6 +88,7 @@ public:
 	double GetPixelSizeUm() const {return nominalPixelSizeUm_ * GetBinning();}
 	int GetBinning() const;
 	int SetBinning(int binSize);
+   int IsExposureSequenceable(bool& isSequenceable) const {isSequenceable = false; return DEVICE_OK;}
 	void SetExposure(double exp_ms);
 	double GetExposure() const;
 	int SetROI(unsigned  x, unsigned  y, unsigned  xSize, unsigned  ySize);

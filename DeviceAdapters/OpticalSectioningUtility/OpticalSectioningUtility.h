@@ -57,6 +57,7 @@ public:
    double GetPixelSizeUm() const;
    int GetBinning() const;
    int SetBinning(int bS);
+   int IsExposureSequenceable(bool& isSequenceable) const {isSequenceable = false; return DEVICE_OK;}
 
 private:
    int OnPhysicalCamera(MM::PropertyBase* pProp, MM::ActionType eAct);

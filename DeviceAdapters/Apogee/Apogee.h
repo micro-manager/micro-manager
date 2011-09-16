@@ -78,8 +78,9 @@ public:
     double GetPixelSizeUm() const {return nominalPixelSizeUm_ * GetBinning();}
     int GetBinning() const;
     int SetBinning(int binSize);
+    int IsExposureSequenceable(bool& isSequenceable) const {isSequenceable = false; return DEVICE_OK;}
     int StartSequenceAcquisition(long numImages, double /*interval_ms*/, bool stopOnOverflow);
-	int StartSequenceAcquisition(double interval);
+    int StartSequenceAcquisition(double interval);
     int StopSequenceAcquisition();
     bool IsCapturing();
 	int TransferImage();
