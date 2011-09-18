@@ -1102,6 +1102,12 @@ public class MultiCameraFrame extends javax.swing.JFrame implements MMListenerIn
                    i++;
                    core_.setProperty("Core", "Camera", camera);
                    core_.prepareSequenceAcquisition(camera);
+                   lastSelectedCamera = camera;
+                }
+             }
+             for (String camera : cameras_) {
+                if (selectedCameras_.get(camera)) {
+                   core_.setProperty("Core", "Camera", camera);
                    core_.startContinuousSequenceAcquisition(0);
                    lastSelectedCamera = camera;
                 }
