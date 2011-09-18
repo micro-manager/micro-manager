@@ -20,7 +20,7 @@
 // AUTHOR:        Nenad Amodaj, http://nenad.amodaj.com, 2011
 //
 
-#define TESTRUN // uncomment this macro to run in 'dry' testing mode (no COM port queries)
+// #define TESTRUN // uncomment this macro to run in 'dry' testing mode (no COM port queries)
 
 #ifdef WIN32
    #include <windows.h>
@@ -39,65 +39,65 @@ const char* g_PositionProp = "Position";
 ///////////
 // commands
 ///////////
-const unsigned char setPosCmd[] = {0x46, // cmd low byte
-                                   0x06, // cmd high byte
-                                   0x04,
-                                   0x00,
-                                   0xD0, // CH_VAR
-                                   0x01,
-                                   0x01, // SUB_CH
-                                   0x00,
-                                   0x00, // position low byte
-                                   0x00  // position high byte 
-                                        };             
+const unsigned char setPosCmd[] =  {         0x46, // cmd low byte
+                                             0x06, // cmd high byte
+                                             0x04,
+                                             0x00,
+                                             0xD0, // CH_VAR
+                                             0x01,
+                                             0x01, // SUB_CH
+                                             0x00,
+                                             0x00, // position low byte
+                                             0x00  // position high byte 
+                                          };             
 
-const unsigned char getPosCmd[] = {0x47, // cmd low byte
-                                   0x06, // cmd high byte
-                                   0x01, // SUB_CH
-                                   0x00,
-                                   0x50, // CH_BASE
-                                   0x01 
-                                        };
+const unsigned char getPosCmd[] = {          0x47, // cmd low byte
+                                             0x06, // cmd high byte
+                                             0x01, // SUB_CH
+                                             0x00,
+                                             0x50, // CH_BASE
+                                             0x01 
+                                          };
 
-const unsigned char getPosRsp[] = {0x48, // cmd low byte
-                                   0x06, // cmd high byte
-                                   0x04,
-                                   0x00,
-                                   0x81,
-                                   0x50, // CH_BASE
-                                   0x01, // SUB_CH
-                                   0x00,
-                                   0x00, // position low byte
-                                   0x00  // position high byte 
-                                        };             
+const unsigned char getPosRsp[] = {          0x48, // cmd low byte
+                                             0x06, // cmd high byte
+                                             0x04,
+                                             0x00,
+                                             0x81,
+                                             0x50, // CH_BASE
+                                             0x01, // SUB_CH
+                                             0x00,
+                                             0x00, // position low byte
+                                             0x00  // position high byte 
+                                          };             
 
-const unsigned char getMaxTravelCmd[] = { 0x50, // cmd low byte
-                                          0x06, // cmd high byte
-                                          0x01, // SUB_CH
-                                          0x00,
-                                          0x50, // CH_BASE
-                                          0x01 
-                                        };
+const unsigned char getMaxTravelCmd[] = {    0x50, // cmd low byte
+                                             0x06, // cmd high byte
+                                             0x01, // SUB_CH
+                                             0x00,
+                                             0x50, // CH_BASE
+                                             0x01 
+                                          };
 
-const unsigned char getMaxTravelRsp[] = { 0x51, // cmd low byte
-                                          0x06, // cmd high byte
-                                          0x04,
-                                          0x00,
-                                          0x81,
-                                          0x50, // CH_BASE
-                                          0x01, // SUB_CH
-                                          0x00,
-                                          0x00, // position low byte
-                                          0x00  // position high byte 
-                                        }; 
+const unsigned char getMaxTravelRsp[] = {    0x51, // cmd low byte
+                                             0x06, // cmd high byte
+                                             0x04,
+                                             0x00,
+                                             0x81,
+                                             0x50, // CH_BASE
+                                             0x01, // SUB_CH
+                                             0x00,
+                                             0x00, // position low byte
+                                             0x00  // position high byte 
+                                          }; 
 
-const unsigned char setZeroCmd[] = {   0x58, // cmd low byte
-                                       0x06, // cmd high byte
-                                       0x01, // SUB_CH
-                                       0x01,
-                                       0x50, // CH_BASE
-                                       0x01
-                                       };
+const unsigned char setZeroCmd[] = {         0x58, // cmd low byte
+                                             0x06, // cmd high byte
+                                             0x01, // SUB_CH
+                                             0x01,
+                                             0x50, // CH_BASE
+                                             0x01
+                                          };
 
 const unsigned char getControlModeCmd[] = {  0x41, // cmd low byte
                                              0x06, // cmd high byte
