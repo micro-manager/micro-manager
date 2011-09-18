@@ -2429,6 +2429,8 @@ int Universal::PushImage2(void* pixBuffer)
    MM::MMTime timestamp = GetCurrentMMTime();
    Metadata md;
 
+   md.put("Camera", label);
+
    MetadataSingleTag mstStartTime(MM::g_Keyword_Metadata_StartTime, label, true);
 	mstStartTime.SetValue(CDeviceUtils::ConvertToString(startTime_.getMsec()));
    md.SetTag(mstStartTime);
