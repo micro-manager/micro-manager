@@ -381,8 +381,7 @@ private:
 // Simulation of the single axis stage
 //////////////////////////////////////////////////////////////////////////////
 
-class CDemoStage : public CStageBase<CDemoStage>,
-                   public MM::SequenceableStage
+class CDemoStage : public CStageBase<CDemoStage>
 {
 public:
    CDemoStage();
@@ -676,8 +675,7 @@ private:
 // DemoShutter class
 // Simulation of shutter device
 //////////////////////////////////////////////////////////////////////////////
-class DemoDA : public CSignalIOBase<DemoDA>,
-               public MM::SequenceableDA
+class DemoDA : public CSignalIOBase<DemoDA>
 {
 public:
    DemoDA ();

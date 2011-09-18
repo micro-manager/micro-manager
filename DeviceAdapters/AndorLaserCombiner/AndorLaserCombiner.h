@@ -38,8 +38,7 @@ const int MaxLasers = 10;
 class ALCImpl;
 class AndorLaserCombiner;
 
-class PiezoStage : public CStageBase<PiezoStage>,
-                   public MM::SequenceableStage
+class PiezoStage : public CStageBase<PiezoStage>
 {
    friend class AndorLaserCombiner;
 public:

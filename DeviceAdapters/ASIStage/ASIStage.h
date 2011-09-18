@@ -162,8 +162,7 @@ private:
    bool stopSignal_;
 };
 
-class ZStage : public CStageBase<ZStage>,
-               public ASIBase, public MM::SequenceableStage
+class ZStage : public CStageBase<ZStage>, public ASIBase
 {
 public:
    ZStage();

@@ -472,14 +472,6 @@ namespace MM {
        */
       virtual int IsExposureSequenceable(bool& isSequenceable) const = 0;
 
-   };
-
-/**
-    * Virtual mixin class for cameras whose exposure is sequenceable
-    */
-   class SequenceableExposure 
-   {
-   public:
       // Sequence functions
       // Sequences can be used for fast acquisitions, sycnchronized by TTLs rather than
       // computer commands. 
@@ -488,17 +480,15 @@ namespace MM {
       // external trigger).  If the device is capable (and ready) to do so isSequenceable will
       // be true. If your device can not execute this (true for most cameras)
       // simply set IsExposureSequenceable to false
-      virtual int GetExposureSequenceMaxLength(long& nrEvents) const = 0;
-      virtual int StartExposureSequence() const = 0;
-      virtual int StopExposureSequence() const = 0;
+      virtual int GetExposureSequenceMaxLength(long& /*nrEvents*/) const {return DEVICE_UNSUPPORTED_COMMAND;}
+      virtual int StartExposureSequence() const {return DEVICE_UNSUPPORTED_COMMAND;}
+      virtual int StopExposureSequence() const {return DEVICE_UNSUPPORTED_COMMAND;}
       // Remove all values in the sequence
-      virtual int ClearExposureSequence() = 0;
+      virtual int ClearExposureSequence() {return DEVICE_UNSUPPORTED_COMMAND;}
       // Add one value to the sequence
-      virtual int AddToExposureSequence(double exposureTime_ms) = 0;
+      virtual int AddToExposureSequence(double /*exposureTime_ms*/) {return DEVICE_UNSUPPORTED_COMMAND;}
       // Signal that we are done sending sequence values so that the adapter can send the whole sequence to the device
-      virtual int SendExposureSequence() const = 0; 
-      // Virtual destructor necessary for mixin
-      virtual ~SequenceableExposure() {}
+      virtual int SendExposureSequence() const {return DEVICE_UNSUPPORTED_COMMAND;}
    };
 
    /** 
@@ -556,14 +546,7 @@ namespace MM {
 
       // Check if a stage has continuous focusing capability (positions can be set while continuous focus runs).
       virtual bool IsContinuousFocusDrive() const = 0;
-   };
 
-   /**
-    * Virtual mixin class for sequenceable stages
-    */
-   class SequenceableStage 
-   {
-   public:
       // Sequence functions
       // Sequences can be used for fast acquisitions, sycnchronized by TTLs rather than
       // computer commands. 
@@ -572,17 +555,15 @@ namespace MM {
       // from the camera).  If the device is capable (and ready) to do so isSequenceable will
       // be true. If your device can not execute this (true for most stages
       // simply set isSequenceable to false
-      virtual int GetStageSequenceMaxLength(long& nrEvents) const = 0;
-      virtual int StartStageSequence() const = 0;
-      virtual int StopStageSequence() const = 0;
+      virtual int GetStageSequenceMaxLength(long& /*nrEvents*/) const {return DEVICE_UNSUPPORTED_COMMAND;};
+      virtual int StartStageSequence() const {return DEVICE_UNSUPPORTED_COMMAND;};
+      virtual int StopStageSequence() const {return DEVICE_UNSUPPORTED_COMMAND;}
       // Remove all values in the sequence
-      virtual int ClearStageSequence() = 0;
+      virtual int ClearStageSequence()  {return DEVICE_UNSUPPORTED_COMMAND;}
       // Add one value to the sequence
-      virtual int AddToStageSequence(double position) = 0;
+      virtual int AddToStageSequence(double /*position*/) {return DEVICE_UNSUPPORTED_COMMAND;}
       // Signal that we are done sending sequence values so that the adapter can send the whole sequence to the device
-      virtual int SendStageSequence() const = 0; 
-      // Virtual destructor necessary for mixin
-      virtual ~SequenceableStage() {}
+      virtual int SendStageSequence() const {return DEVICE_UNSUPPORTED_COMMAND;}
    };
 
    /** 
@@ -621,14 +602,6 @@ namespace MM {
        * the SequenceableXYStage class and implement its methods.
        */
       virtual int IsXYStageSequenceable(bool& isSequenceable) const = 0;     
-   };
-
-/**
-    * Virtual mixin class for sequenceable XY stages
-    */
-   class SequenceableXYStage 
-   {
-   public:
       // Sequence functions
       // Sequences can be used for fast acquisitions, sycnchronized by TTLs rather than
       // computer commands. 
@@ -637,17 +610,16 @@ namespace MM {
       // from the camera).  If the device is capable (and ready) to do so isSequenceable will
       // be true. If your device can not execute this (true for most XY stages
       // simply set isSequenceable to false
-      virtual int GetXYStageSequenceMaxLength(long& nrEvents) const = 0;
-      virtual int StartXYStageSequence() const = 0;
-      virtual int StopXYStageSequence() const = 0;
+      virtual int GetXYStageSequenceMaxLength(long& /*nrEvents*/) const {return DEVICE_UNSUPPORTED_COMMAND;}
+      virtual int StartXYStageSequence() const {return DEVICE_UNSUPPORTED_COMMAND;}
+      virtual int StopXYStageSequence() const {return DEVICE_UNSUPPORTED_COMMAND;}
       // Remove all values in the sequence
-      virtual int ClearXYStageSequence() = 0;
+      virtual int ClearXYStageSequence() const {return DEVICE_UNSUPPORTED_COMMAND;}
       // Add one value to the sequence
-      virtual int AddToXYStageSequence(double positionX, double positionY) = 0;
+      virtual int AddToXYStageSequence(double /*positionX*/, double /*positionY*/) const {return DEVICE_UNSUPPORTED_COMMAND;}
       // Signal that we are done sending sequence values so that the adapter can send the whole sequence to the device
-      virtual int SendXYStageSequence() const = 0; 
-      // Virtual destructor necessary for mixin
-      virtual ~SequenceableXYStage() {}
+      virtual int SendXYStageSequence() const {return DEVICE_UNSUPPORTED_COMMAND;}
+
    };
 
    /**
@@ -859,14 +831,7 @@ namespace MM {
        * @return errorcode (DEVICE_OK if no error)
        */
       virtual int IsDASequenceable(bool& isSequenceable) const = 0;
-   };
 
-   /**
-    * Virtual mixin class for sequenceable SignalIO (DA) device
-    */
-   class SequenceableDA
-   {
-   public:
       // Sequence functions
       // Sequences can be used for fast acquisitions, synchronized by TTLs rather than
       // computer commands. 
@@ -879,18 +844,18 @@ namespace MM {
        * @param nrEvents max length of sequence
        * @return errorcode (DEVICE_OK if no error)
        */
-      virtual int GetDASequenceMaxLength(long& nrEvents) const = 0;
+      virtual int GetDASequenceMaxLength(long& /*nrEvents*/) const {return DEVICE_UNSUPPORTED_COMMAND;}
       /**
        * Tells the device to start running a sequnece (i.e. start switching between voltages 
        * send previously, triggered by a TTL
        * @return errorcode (DEVICE_OK if no error)
        */
-      virtual int StartDASequence() const = 0;
+      virtual int StartDASequence() const {return DEVICE_UNSUPPORTED_COMMAND;}
       /**
        * Tells the device to stop running the sequence
        * @return errorcode (DEVICE_OK if no error)
        */
-      virtual int StopDASequence() const = 0;
+      virtual int StopDASequence() const {return DEVICE_UNSUPPORTED_COMMAND;}
       /**
        * Clears the DA sequnce from the device and the adapter.
        * If this functions is not called in between running 
@@ -899,7 +864,7 @@ namespace MM {
        * voltage) as often as needed.
        * @return errorcode (DEVICE_OK if no error)
        */
-      virtual int ClearDASequence() = 0;
+      virtual int ClearDASequence() {return DEVICE_UNSUPPORTED_COMMAND;}
 
       /**
        * Adds a new data point (voltgae) to the sequence
@@ -907,17 +872,15 @@ namespace MM {
        * adapter, or it can be directly written to the device
        * @return errorcode (DEVICE_OK if no error)
        */
-      virtual int AddToDASequence(double voltage) = 0;
+      virtual int AddToDASequence(double /*voltage*/) {return DEVICE_UNSUPPORTED_COMMAND;}
       /**
        * Sends the complete sequence to the device
        * If the individual data points were already send to the device, there is 
        * nothing to be done.
        * @return errorcode (DEVICE_OK if no error)
        */
-      virtual int SendDASequence() const = 0;
+      virtual int SendDASequence() const {return DEVICE_UNSUPPORTED_COMMAND;}
 
-      // Virtual destructor necessary for mixin
-      virtual ~SequenceableDA() {}
    };
 
    /**
