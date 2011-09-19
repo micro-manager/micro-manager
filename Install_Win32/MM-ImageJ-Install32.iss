@@ -68,6 +68,8 @@ Source: micro-manager\MexJCam.dll; DestDir: {app}; Flags: ignoreversion
 Source: micro-manager\ProcessLib.dll; DestDir: {app}; Flags: ignoreversion
 Source: micro-manager\FxLib.dll; DestDir: {app}; Flags: ignoreversion
 Source: micro-manager\SysInfo.dll; DestDir: {app}; Flags: ignoreversion
+Source: micro-manager\opencv_highgui231.dll; DestDir: {app}; Flags: ignoreversion
+Source: micro-manager\opencv_core231.dll; DestDir: {app}; Flags: ignoreversion
 
 ; Breeze stuff
 Source: micro-manager\DSLRRemoteLib.dll; DestDir: {app}; Flags: ignoreversion
