@@ -597,7 +597,7 @@ public final class ScriptPanel extends MMFrame implements MouseListener, Scripti
       helpButton.addActionListener(new ActionListener() {
          public void actionPerformed(ActionEvent e) {
             try {
-               ij.plugin.BrowserLauncher.openURL("https://valelab.ucsf.edu/~nico/MMwiki/index.php/Script_Panel_GUI");
+               ij.plugin.BrowserLauncher.openURL("https://valelab.ucsf.edu/~MM/MMwiki/index.php/Script_Panel_GUI");
             } catch (IOException e1) {
                ReportingUtils.showError(e1);
             }
