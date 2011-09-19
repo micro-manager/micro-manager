@@ -44,7 +44,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="..\..\..\3rdpartypublic\OpenCV2.1\include\opencv"
+				AdditionalIncludeDirectories="..\..\..\3rdpartypublic\OpenCV2.3\include"
 				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_USRDLL;MODULE_EXPORTS"
 				MinimalRebuild="true"
 				ExceptionHandling="2"
