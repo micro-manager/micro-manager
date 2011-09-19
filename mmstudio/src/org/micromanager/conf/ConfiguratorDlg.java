@@ -24,6 +24,7 @@
 package org.micromanager.conf;
 
 import java.awt.Color;
+import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -55,8 +56,11 @@ import javax.swing.JEditorPane;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JScrollPane;
+import javax.swing.JTextArea;
+import javax.swing.JViewport;
 import javax.swing.WindowConstants;
 import javax.swing.border.LineBorder;
+import javax.swing.text.DefaultCaret;
 
 import mmcorej.CMMCore;
 import mmcorej.StrVector;
@@ -109,6 +113,7 @@ public class ConfiguratorDlg extends JDialog {
      */
     private void initialize() {
         prefs_ = Preferences.userNodeForPackage(this.getClass());
+        
         org.micromanager.utils.HotKeys.active_ = false;
 
         addWindowListener(new WindowAdapter() {
@@ -120,22 +125,30 @@ public class ConfiguratorDlg extends JDialog {
         setResizable(false);
         getContentPane().setLayout(null);
         setTitle("Hardware Configuration Wizard");
-        setBounds(50, 100, 602, 529);
+        setBounds(50, 100, 602, 672);
 
         final JScrollPane scrollPane = new JScrollPane();
-        scrollPane.setBounds(9, 320, 578, 136);
+        scrollPane.setBounds(9, 320, 578, 286);
         getContentPane().add(scrollPane);
-
+        scrollPane.getViewport().setViewPosition(new Point(0,0));
+        
+      
+        
+        
         helpTextPane_ = new JEditorPane();
         scrollPane.setViewportView(helpTextPane_);
         helpTextPane_.setEditable(false);
         //helpTextPane_.setBorder(new LineBorder(Color.black, 1, false));
 
+        DefaultCaret caret = (DefaultCaret)helpTextPane_.getCaret();
+        caret.setUpdatePolicy(DefaultCaret.NEVER_UPDATE);
+        
         helpTextPane_.setContentType("text/html; charset=ISO-8859-1");
 
         nextButton_ = new JButton();
         nextButton_.addActionListener(new ActionListener() {
 
+           
             public void actionPerformed(ActionEvent arg0) {
                 if (curPage_ == pages_.length - 1) {
                     
@@ -152,7 +165,7 @@ public class ConfiguratorDlg extends JDialog {
 
 
         nextButton_.setText("Next >");
-        nextButton_.setBounds(494, 462, 93, 23);
+        nextButton_.setBounds(494, 612, 93, 23);
         getContentPane().add(nextButton_);
         getRootPane().setDefaultButton(nextButton_);
 
@@ -164,7 +177,7 @@ public class ConfiguratorDlg extends JDialog {
             }
         });
         backButton_.setText("< Back");
-        backButton_.setBounds(395, 462, 93, 23);
+        backButton_.setBounds(395, 612, 93, 23);
         getContentPane().add(backButton_);
         pagesLabel_ = new JLabel();
         pagesLabel_.setBorder(new LineBorder(Color.black, 1, false));
@@ -269,7 +282,7 @@ public class ConfiguratorDlg extends JDialog {
         // By default, load plain text help
         helpTextPane_.setContentType("text/plain");
         helpTextPane_.setText(pages_[curPage_].getHelpText());
-
+         
         // Try to load html help text
         try {
             File curDir = new File(".");
@@ -281,7 +294,8 @@ public class ConfiguratorDlg extends JDialog {
             String helpText = readStream(ConfiguratorDlg.class.getResourceAsStream(helpFileName));
             helpTextPane_.setContentType("text/html; charset=ISO-8859-1");
             helpTextPane_.setText(helpText);
-
+            
+            
         } catch (MalformedURLException e1) {
             ReportingUtils.showError(e1);
         } catch (IOException e) {
