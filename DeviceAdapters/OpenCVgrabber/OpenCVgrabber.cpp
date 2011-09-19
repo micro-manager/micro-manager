@@ -40,8 +40,8 @@
 // opencv includes
 
 
-#include "..\..\..\3rdpartypublic\OpenCV2.1\include\opencv\cv.h"
-#include "..\..\..\3rdpartypublic\OpenCV2.1\include\opencv\highgui.h"
+#include "opencv/cv.h"
+#include "opencv/highgui.h"
 
 using namespace cv;
 using namespace std;
