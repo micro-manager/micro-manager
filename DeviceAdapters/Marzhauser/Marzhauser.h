@@ -121,7 +121,10 @@ public:
 
 private:
    int GetCommand(const std::string& cmd, std::string& response);
-   
+
+   int OnBacklashX(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnBacklashY(MM::PropertyBase* pProp, MM::ActionType eAct);
+
    bool initialized_;
    bool range_measured_;
    double answerTimeoutMs_;
@@ -158,6 +161,7 @@ public:
    int SetPositionSteps(long steps);
    int GetPositionSteps(long& steps);
    int SetOrigin();
+   int SetAdapterOrigin();
    int Stop();
    int GetLimits(double& min, double& max);
 
@@ -171,9 +175,12 @@ public:
 private:
    int GetCommand(const std::string& cmd, std::string& response);
 
+   int OnBacklashZ(MM::PropertyBase* pProp, MM::ActionType eAct);
+
    bool initialized_;
    double answerTimeoutMs_;
    double stepSizeUm_;
+   double originZ_;
 };
 
 
