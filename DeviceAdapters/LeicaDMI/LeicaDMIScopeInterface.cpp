@@ -476,7 +476,7 @@ int LeicaScopeInterface::Initialize(MM::Device& device, MM::Core& core)
    }
 
    if (scopeModel_->IsDeviceAvailable(g_IL_Turret)) {
-      if (standFamily_ = g_CTRMIC)
+      if (standFamily_ == g_CTRMIC)
          command << g_IL_Turret << "004";
       else
          command << g_IL_Turret << "023";
@@ -619,22 +619,40 @@ int LeicaScopeInterface::GetDevicesPresent(MM::Device& device, MM::Core& core)
 // returns the stand designation and list of IDs of all addressable IDs
    std::ostringstream os;
    os << g_Master << "001";
-   int ret = core.SetSerialCommand(&device, port_.c_str(), os.str().c_str(), "\r");
-   if (ret != DEVICE_OK)
-      return ret;
+   bool standFound = false;
+   int count = 0;
+   int maxTries = 3;
+   std::string stand;
 
-   long unsigned int responseLength = RCV_BUF_LENGTH;
-   char response[RCV_BUF_LENGTH] = "";
-   ret = core.GetSerialAnswer(&device, port_.c_str(), responseLength, response, "\r");
-   if (ret != DEVICE_OK)
-      return ret;
-   std::stringstream ss(response);
-   std::string answer, stand;
-   ss >> answer;
-   if (answer.compare(os.str()) != 0)
-      return ERR_SCOPE_NOT_ACTIVE;
+   while (!standFound && (count < maxTries))
+   {
+      count ++;
+      int ret = core.SetSerialCommand(&device, port_.c_str(), os.str().c_str(), "\r");
+      if (ret != DEVICE_OK)
+         return ret;
+
+      long unsigned int responseLength = RCV_BUF_LENGTH;
+      char response[RCV_BUF_LENGTH] = "";
+      ret = core.GetSerialAnswer(&device, port_.c_str(), responseLength, response, "\r");
+      if (ret != DEVICE_OK)
+         return ret;
+      std::stringstream ss(response);
+      std::string answer;
+      ss >> answer;
+      if (answer.compare(os.str()) == 0)
+      {
+         standFound = true;
+         ss >> stand;
+         int devId;
+         while (ss >> devId) {
+            scopeModel_->SetDeviceAvailable(devId);
+         }
+      }
+   }
+
+   if (!standFound)
+         return ERR_SCOPE_NOT_ACTIVE;
    
-   ss >> stand;
    scopeModel_->SetStandType(stand);
    scopeModel_->SetStandFamily(g_DMI456);
    standFamily_ = g_DMI456;
@@ -645,11 +663,7 @@ int LeicaScopeInterface::GetDevicesPresent(MM::Device& device, MM::Core& core)
       standFamily_ = g_CTRMIC;
    }
 
-   int devId;
-   while (ss >> devId) {
-      scopeModel_->SetDeviceAvailable(devId);
-   }
-   return ret;
+   return DEVICE_OK;
 }
 
 /**
