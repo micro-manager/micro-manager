@@ -50,7 +50,7 @@
 
 ;; globals
 
-(def state (atom {:running false :stop false}))
+(def ^:dynamic state (atom {:running false :stop false}))
 
 (def settings (atom nil))
 

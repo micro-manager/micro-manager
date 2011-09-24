@@ -272,11 +272,12 @@
                     :slice-index 0
                     :metadata (make-channel-metadata (get channels c))))))]
     ;(println "events:" events)
-    (list
-      (assoc (first events)
-              :task :burst
-              :burst-data events
-              :trigger-sequence triggers))))
+    (lazy-seq
+      (list
+        (assoc (first events)
+               :task :burst
+               :burst-data events
+               :trigger-sequence triggers)))))
   
 
 (defn generate-multiposition-bursts [positions num-frames use-autofocus
