@@ -27,6 +27,7 @@
            get-property-value]]
         [org.micromanager.sequence-generator :only [generate-acq-sequence
                                                     make-property-sequences]])
+  (:require [clojure.set])
   (:import [org.micromanager AcqControlDlg]
            [org.micromanager.api AcquisitionEngine TaggedImageAnalyzer]
            [org.micromanager.acquisition AcquisitionWrapperEngine LiveAcq TaggedImageQueue
