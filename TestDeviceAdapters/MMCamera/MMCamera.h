@@ -71,6 +71,7 @@ public:
    bool IsCapturing();
    int GetBinning() const;
    int SetBinning(int binSize);
+   int IsExposureSequenceable(bool& seq) const {seq = false; return DEVICE_OK;}
 
    // action interface
    // ----------------
