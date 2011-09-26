@@ -51,7 +51,7 @@
 
 ;; globals
 
-(def ^:dynamic state (atom {:running false :stop false}))
+(def ^:dynamic state (atom {:stop false}))
 
 (def settings (atom nil))
 
@@ -398,7 +398,6 @@
     (swap! (.state this) assoc
       :pause false
       :stop false
-      :running true
       :finished false
       :last-wake-time (jvm-time-ms)
       :last-stage-positions (into {} [[default-z-drive z]
@@ -425,7 +424,7 @@
 (defn cleanup []
   (log "cleanup")
  ; (do-when #(.update %) (:display @state))
-  (state-assoc! :finished true, :running false, :display nil)
+  (state-assoc! :finished true :display nil)
   (when (core isSequenceRunning)
     (core stopSequenceAcquisition))
   (stop-trigger)
@@ -495,7 +494,6 @@
 ;; generic metadata
 
 (defn convert-settings [^SequenceSettings settings]
-  ;(println "SequenceSettings slices:" (.slices settings))
   (-> settings
     (data-object-to-map)
     (rekey
@@ -673,7 +671,7 @@
 ;; java interop
 
 (defn -init []
-  [[] (atom {:running false :stop false})])
+  [[] (atom {:stop false})])
 
 (defn -run [this acq-settings acq-eng]
   (def last-acq this)
@@ -688,7 +686,8 @@
         out-queue-2 (.begin processors)
         live-acq (LiveAcq. mmc out-queue-2 (make-summary-metadata settings)
                   (:save settings) acq-eng)]
-    (swap! (.state this) assoc :image-cache (.getImageCache live-acq))
+    (swap! (.state this) assoc :image-cache (.getImageCache live-acq)
+                               :acq-thread acq-thread)
     (def outq out-queue)
     (when-not (:stop @(.state this))
       (if (. gui getLiveMode)
@@ -728,7 +727,9 @@
     (log @state)))
 
 (defn -isRunning [this]
-  (:running @(.state this)))
+  (if-let [acq-thread (:acq-thread @(.state this))]
+    (.isAlive acq-thread)
+    false))
 
 (defn -isFinished [this]
   (or (get @(.state this) :finished) false))
@@ -780,5 +781,6 @@
   (test-dialog (create-acq-eng)))
 
 (defn stop []
-  (swap! (.state last-acq) assoc :running false))
+  (when-let [acq-thread (:acq-thread (.state last-acq))]
+    (.stop acq-thread)))
 
