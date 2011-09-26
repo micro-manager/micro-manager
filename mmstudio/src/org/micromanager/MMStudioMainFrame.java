@@ -1362,11 +1362,16 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
       });
       calibrationMenuItem.setText("Pixel Size Calibration...");
       toolsMenu.add(calibrationMenuItem);
-      calibrationMenuItem.setToolTipText(TooltipTextMaker.addHTMLBreaksForTooltip(
-    		  "Define size calibrations specific to each objective lens.  " +
+      
+      String calibrationTooltip = "Define size calibrations specific to each objective lens.  " +
     		  "When the objective in use has a calibration defined, " +
     		  "micromanager will automatically use it when " +
-    		  "calculating metadata")); 
+    		  "calculating metadata"; 
+      if (!System.getProperty("mrj.version").equals(null)) // running on a mac
+    	  calibrationMenuItem.setToolTipText(calibrationTooltip);
+      else
+          calibrationMenuItem.setToolTipText(TooltipTextMaker.addHTMLBreaksForTooltip(calibrationTooltip));
+    		  
 
       toolsMenu.addSeparator();
 
@@ -3301,7 +3306,11 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
        } catch (IllegalAccessException e) {
           ReportingUtils.logError(e);
        }
-      newMenuItem.setToolTipText( TooltipTextMaker.addHTMLBreaksForTooltip(toolTipDescription) );
+      
+      if (!System.getProperty("mrj.version").equals(null)) // running on a mac
+          newMenuItem.setToolTipText(toolTipDescription);
+      else      
+          newMenuItem.setToolTipText( TooltipTextMaker.addHTMLBreaksForTooltip(toolTipDescription) );
       
     	  
       pluginMenu_.add(newMenuItem);
