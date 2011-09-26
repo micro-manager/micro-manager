@@ -33,6 +33,7 @@
            [org.micromanager.acquisition AcquisitionWrapperEngine LiveAcq TaggedImageQueue
                                          ProcessorStack SequenceSettings MMImageCache
                                          TaggedImageStorageRam VirtualAcquisitionDisplay]
+           [org.micromanager.utils ReportingUtils]
            [mmcorej TaggedImage Configuration Metadata]
            [java.util.prefs Preferences]
            [java.net InetAddress]
@@ -480,16 +481,19 @@
     (await-resume)))
 
 (defn run-acquisition [this settings out-queue]
-  (def acq-settings settings)
-  (prepare-state this)
-  (binding [state (.state this)]
-    (def last-state state) ; for debugging
-    (let [acq-seq (generate-acq-sequence settings @attached-runnables)]
-       (def acq-sequence acq-seq)
-      (execute (mapcat #(make-event-fns % out-queue) acq-seq))
-      (.put out-queue TaggedImageQueue/POISON)
-      (cleanup)
-     )))
+  (try
+    (def acq-settings settings)
+    (prepare-state this)
+    (binding [state (.state this)]
+      (def last-state state) ; for debugging
+      (let [acq-seq (generate-acq-sequence settings @attached-runnables)]
+        (def acq-sequence acq-seq)
+        (execute (mapcat #(make-event-fns % out-queue) acq-seq))
+        (.put out-queue TaggedImageQueue/POISON)
+        (cleanup)
+        ))
+    (catch Throwable t (do (ReportingUtils/showError t "Acquisition failed.")
+                           (cleanup)))))
 
 ;; generic metadata
 
