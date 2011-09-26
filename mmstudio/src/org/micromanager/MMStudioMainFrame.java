@@ -66,6 +66,7 @@ import javax.swing.JToggleButton;
 import javax.swing.SpringLayout;
 import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
+import javax.swing.ToolTipManager;
 import javax.swing.UIManager;
 import javax.swing.event.AncestorEvent;
 
@@ -107,6 +108,7 @@ import org.micromanager.utils.MMImageWindow;
 import org.micromanager.utils.MMScriptException;
 import org.micromanager.utils.NumberUtils;
 import org.micromanager.utils.TextUtils;
+import org.micromanager.utils.TooltipTextMaker;
 import org.micromanager.utils.WaitDialog;
 
 
@@ -155,7 +157,7 @@ import org.micromanager.utils.ReportingUtils;
 public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, ScriptInterface {
 
    private static final String MICRO_MANAGER_TITLE = "Micro-Manager 1.4";
-   private static final String VERSION = "1.4.5";
+   private static final String VERSION = "1.4.7  20110920";
    private static final long serialVersionUID = 3556500289598574541L;
    private static final String MAIN_FRAME_X = "x";
    private static final String MAIN_FRAME_Y = "y";
@@ -177,6 +179,7 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
    private static final String SCRIPT_GUI_OBJECT = "gui";
    private static final String AUTOFOCUS_DEVICE = "autofocus_device";
    private static final String MOUSE_MOVES_STAGE = "mouse_moves_stage";
+   private static final int TOOLTIP_DISPLAY_DURATION_MILLISECONDS = 15000;
 
 
    // cfg file saving
@@ -439,7 +442,7 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
                 dlg.setVisible(true);
             }
         });
-        aboutMenuItem.setText("About...");
+        aboutMenuItem.setText("About Micromanager...");
         helpMenu.add(aboutMenuItem);
         menuBar_.validate();
     }
@@ -802,6 +805,9 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
       int dividerPos = mainPrefs_.getInt(MAIN_FRAME_DIVIDER_POS, 178);
       openAcqDirectory_ = mainPrefs_.get(OPEN_ACQ_DIR, "");
 
+      ToolTipManager ttManager = ToolTipManager.sharedInstance();
+      ttManager.setDismissDelay(TOOLTIP_DISPLAY_DURATION_MILLISECONDS);
+      
       setBounds(x, y, width, height);
       setExitStrategy(options_.closeOnExit_);
       setTitle(MICRO_MANAGER_TITLE);
@@ -1230,6 +1236,7 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
          }
       });
       refreshMenuItem.setText("Refresh GUI");
+      refreshMenuItem.setToolTipText("Refresh all GUI controls directly from the hardware");
       toolsMenu.add(refreshMenuItem);
 
       final JMenuItem rebuildGuiMenuItem = new JMenuItem();
@@ -1240,6 +1247,7 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
          }
       });
       rebuildGuiMenuItem.setText("Rebuild GUI");
+      rebuildGuiMenuItem.setToolTipText("Regenerate micromanager user interface");
       toolsMenu.add(rebuildGuiMenuItem);
 
       toolsMenu.addSeparator();
@@ -1253,7 +1261,8 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
          }
       });
       scriptPanelMenuItem.setText("Script Panel...");
-
+      scriptPanelMenuItem.setToolTipText("Open micromanager script editor window");
+      
       final JMenuItem hotKeysMenuItem = new JMenuItem();
       toolsMenu.add(hotKeysMenuItem);
       hotKeysMenuItem.addActionListener(new ActionListener() {
@@ -1265,6 +1274,7 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
          }
       });
       hotKeysMenuItem.setText("Shortcuts...");
+      hotKeysMenuItem.setToolTipText("Create keyboard shortcuts to activate image acquisition, mark positions, or run custom scripts");
 
       final JMenuItem propertyEditorMenuItem = new JMenuItem();
       toolsMenu.add(propertyEditorMenuItem);
@@ -1275,7 +1285,8 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
          }
       });
       propertyEditorMenuItem.setText("Device/Property Browser...");
-
+      propertyEditorMenuItem.setToolTipText("Open new window to view and edit property values in current configuration");
+      
       toolsMenu.addSeparator();
 
       final JMenuItem xyListMenuItem = new JMenuItem();
@@ -1289,6 +1300,7 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
             MMStudioMainFrame.class, "icons/application_view_list.png"));
       xyListMenuItem.setText("XY List...");
       toolsMenu.add(xyListMenuItem);
+      xyListMenuItem.setToolTipText("Open position list manager window");
 
       final JMenuItem acquisitionMenuItem = new JMenuItem();
       acquisitionMenuItem.addActionListener(new ActionListener() {
@@ -1301,6 +1313,7 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
             MMStudioMainFrame.class, "icons/film.png"));
       acquisitionMenuItem.setText("Multi-Dimensional Acquisition...");
       toolsMenu.add(acquisitionMenuItem);
+      acquisitionMenuItem.setToolTipText("Open multi-dimensional acquisition window");
 
       /*
       final JMenuItem splitViewMenuItem = new JMenuItem();
@@ -1335,6 +1348,7 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
 
       centerAndDragMenuItem_.setText("Mouse Moves Stage");
       centerAndDragMenuItem_.setSelected(mainPrefs_.getBoolean(MOUSE_MOVES_STAGE, false));
+      centerAndDragMenuItem_.setToolTipText("When enabled, double clicking in live window moves stage");
 
       toolsMenu.add(centerAndDragMenuItem_);
 
@@ -1348,6 +1362,11 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
       });
       calibrationMenuItem.setText("Pixel Size Calibration...");
       toolsMenu.add(calibrationMenuItem);
+      calibrationMenuItem.setToolTipText(TooltipTextMaker.addHTMLBreaksForTooltip(
+    		  "Define size calibrations specific to each objective lens.  " +
+    		  "When the objective in use has a calibration defined, " +
+    		  "micromanager will automatically use it when " +
+    		  "calculating metadata")); 
 
       toolsMenu.addSeparator();
 
@@ -1403,6 +1422,7 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
       });
       configuratorMenuItem.setText("Hardware Configuration Wizard...");
       toolsMenu.add(configuratorMenuItem);
+      configuratorMenuItem.setToolTipText("Open wizard to create new hardware configuration");
 
       final JMenuItem loadSystemConfigMenuItem = new JMenuItem();
       toolsMenu.add(loadSystemConfigMenuItem);
@@ -1414,6 +1434,7 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
          }
       });
       loadSystemConfigMenuItem.setText("Load Hardware Configuration...");
+      loadSystemConfigMenuItem.setToolTipText("Un-initialize current configuration and initialize new one");
 
       switchConfigurationMenu_ = new JMenu();
       for (int i=0; i<5; i++)
@@ -1432,9 +1453,11 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
          }
       });
       reloadConfigMenuItem.setText("Reload Hardware Configuration");
+      reloadConfigMenuItem.setToolTipText("Un-initialize current configuration and initialize most recently loaded configuration");
 
       switchConfigurationMenu_.setText("Switch Hardware Configuration");
       toolsMenu.add(switchConfigurationMenu_);
+      switchConfigurationMenu_.setToolTipText("Switch between recently used configurations");
 
       final JMenuItem saveConfigurationPresetsMenuItem = new JMenuItem();
       saveConfigurationPresetsMenuItem.addActionListener(new ActionListener() {
@@ -1444,8 +1467,9 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
             updateChannelCombos();
          }
       });
-      saveConfigurationPresetsMenuItem.setText("Save Configuration Settings...");
+      saveConfigurationPresetsMenuItem.setText("Save Configuration Settings as...");
       toolsMenu.add(saveConfigurationPresetsMenuItem);
+      saveConfigurationPresetsMenuItem.setToolTipText("Save current configuration settings as new configuration file");
 
 /*
       final JMenuItem regenerateConfiguratorDeviceListMenuItem = new JMenuItem();
@@ -1593,7 +1617,7 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
       buttonAcqSetup.setIconTextGap(1);
       buttonAcqSetup.setIcon(SwingResourceManager.getIcon(
             MMStudioMainFrame.class, "/org/micromanager/icons/film.png"));
-      buttonAcqSetup.setToolTipText("Open Acquistion dialog");
+      buttonAcqSetup.setToolTipText("Open multi-dimensional acquisition window");
       buttonAcqSetup.setFont(new Font("Arial", Font.PLAIN, 10));
       buttonAcqSetup.addActionListener(new ActionListener() {
 
@@ -3246,7 +3270,7 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
       return VERSION;
    }
 
-   private void addPluginToMenu(final PluginItem plugin) {
+   private void addPluginToMenu(final PluginItem plugin, Class<?> cl) {
       // add plugin menu items
 
       final JMenuItem newMenuItem = new JMenuItem();
@@ -3260,6 +3284,26 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
          }
       });
       newMenuItem.setText(plugin.menuItem);
+      
+      
+      String toolTipDescription = "";
+      try {
+          // Get this static field from the class implementing MMPlugin.
+    	  toolTipDescription = (String) cl.getDeclaredField("tooltipDescription").get(null);
+       } catch (SecurityException e) {
+          ReportingUtils.logError(e);
+          toolTipDescription = "Description not available";
+       } catch (NoSuchFieldException e) {
+    	   toolTipDescription = "Description not available";
+          ReportingUtils.logError(cl.getName() + " fails to implement static String tooltipDescription.");
+       } catch (IllegalArgumentException e) {
+          ReportingUtils.logError(e);
+       } catch (IllegalAccessException e) {
+          ReportingUtils.logError(e);
+       }
+      newMenuItem.setToolTipText( TooltipTextMaker.addHTMLBreaksForTooltip(toolTipDescription) );
+      
+    	  
       pluginMenu_.add(newMenuItem);
       pluginMenu_.validate();
       menuBar_.validate();
@@ -4385,10 +4429,11 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
          pi.pluginClass = cl;
          plugins_.add(pi);
          final PluginItem pi2 = pi;
+         final Class<?> cl2 = cl;
          SwingUtilities.invokeLater(
             new Runnable() {
                public void run() {
-                  addPluginToMenu(pi2);
+                  addPluginToMenu(pi2, cl2);
                }
             });
 

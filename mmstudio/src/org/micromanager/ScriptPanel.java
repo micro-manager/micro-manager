@@ -91,6 +91,7 @@ import org.micromanager.utils.FileDialogs;
 import org.micromanager.utils.FileDialogs.FileType;
 import org.micromanager.utils.HotKeysDialog;
 import org.micromanager.utils.ReportingUtils;
+import org.micromanager.utils.TooltipTextMaker;
 
 
 public final class ScriptPanel extends MMFrame implements MouseListener, ScriptingGUI {
@@ -385,6 +386,7 @@ public final class ScriptPanel extends MMFrame implements MouseListener, Scripti
          }
       });
       addButton.setText("Add");
+      addButton.setToolTipText("Add shortcut to beanshell script in file system");
       addButton.setPreferredSize(buttonSize);
       spLeft.putConstraint(SpringLayout.NORTH, addButton, gap, SpringLayout.NORTH, leftPanel);
       spLeft.putConstraint(SpringLayout.WEST, addButton, gap, SpringLayout.WEST, leftPanel);
@@ -399,10 +401,12 @@ public final class ScriptPanel extends MMFrame implements MouseListener, Scripti
          }
       });
       removeButton.setText("Remove");
+      removeButton.setToolTipText("Remove currently selected shortcut");
       removeButton.setPreferredSize(buttonSize);
       spLeft.putConstraint(SpringLayout.NORTH, removeButton, gap, SpringLayout.NORTH, leftPanel);
       spLeft.putConstraint(SpringLayout.WEST, removeButton, gap, SpringLayout.EAST, addButton);
       leftPanel.add(removeButton);
+     
 
       final JButton hotkeyButton = new JButton();
       hotkeyButton.setMargin(new Insets(0,0,0,0));
@@ -414,6 +418,9 @@ public final class ScriptPanel extends MMFrame implements MouseListener, Scripti
          }
       });
       hotkeyButton.setText("ShortCuts");
+      hotkeyButton.setToolTipText(TooltipTextMaker.addHTMLBreaksForTooltip("Opens " +
+      		"shortcuts manager window.  Allows the creation " +
+      		"of keyboard shortcuts to automatically run scripts"));
       hotkeyButton.setPreferredSize(buttonSize);
       spLeft.putConstraint(SpringLayout.NORTH, hotkeyButton, gap, SpringLayout.NORTH, leftPanel);
       spLeft.putConstraint(SpringLayout.WEST, hotkeyButton, gap, SpringLayout.EAST, removeButton);

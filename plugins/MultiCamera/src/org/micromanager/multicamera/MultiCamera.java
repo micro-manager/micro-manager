@@ -7,6 +7,7 @@ import org.micromanager.api.ScriptInterface;
 
 public class MultiCamera implements MMPlugin {
    public static String menuName = "Multi Camera";
+   public static String tooltipDescription = "Plugin that allows you to use multiple cameras simultanuously"; 
    private CMMCore core_;
    private ScriptInterface gui_;
    private MultiCameraFrame myFrame_;
@@ -43,7 +44,7 @@ public class MultiCamera implements MMPlugin {
    }
 
    public String getDescription() {
-      return "Plugin that send commands to multiple cameras simultanuously";
+      return tooltipDescription;
    }
    
    public String getVersion() {

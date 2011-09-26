@@ -9,6 +9,10 @@ import org.micromanager.utils.ReportingUtils;
 public class SlideExplorerPlugin implements MMPlugin {
 
 	public static String menuName = "Slide Explorer";
+	public static String tooltipDescription = 
+			"Develop real-time map of slide by panning and zooming, move " +
+			"stage with a single click, and acquire tiled images with arbitrary"
+					+" shapes.  (Pixel calibrator plugin must be run before this plugin is used)";
 	private CMMCore core_;
 	private Hub hub_;
     private ScriptInterface app_;
@@ -30,7 +34,7 @@ public class SlideExplorerPlugin implements MMPlugin {
 
 	public String getDescription() {
 		// TODO Auto-generated method stub
-		return null;
+		return tooltipDescription;
 	}
 
 	public String getInfo() {

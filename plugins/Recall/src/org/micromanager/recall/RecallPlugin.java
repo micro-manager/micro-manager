@@ -13,6 +13,9 @@ import org.micromanager.utils.ReportingUtils;
 
 public class RecallPlugin implements MMPlugin {
    public static String menuName = "Live Replay";
+   public static String tooltipDescription = "Recalls live images remaining in internal"
+		   +" buffer.  The size of Micromanager's internal buffer can be changed" +
+		   "in options (under Tools menu)";
    private CMMCore core_;
    private MMStudioMainFrame gui_;
 
@@ -87,7 +90,7 @@ public class RecallPlugin implements MMPlugin {
    }
 
    public String getDescription() {
-      return "Recalls live images remaining in internal buffer.  Set size of the buffer in options (under Tools menu)";
+      return tooltipDescription;
    }
    
    public String getVersion() {

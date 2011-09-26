@@ -28,7 +28,8 @@ package org.micromanager.api;
 	*  The menu name is stored in a static string, so Micro-Manager
 	*  can obtain it without instantiating the plugin
 	*/
-   public static String menuName = null;	
+   public static String menuName = null;
+   public static String tooltipDescription = null;
 	
    /**
     * The main app calls this method to remove the module window

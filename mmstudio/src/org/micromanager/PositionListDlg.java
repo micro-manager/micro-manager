@@ -377,6 +377,7 @@ public class PositionListDlg extends MMDialog implements MouseListener {
       });
       markButton.setIcon(SwingResourceManager.getIcon(PositionListDlg.class, "icons/flag_green.png"));
       markButton.setText("Mark");
+      markButton.setToolTipText("Adds point with coordinates of current stage position");
       getContentPane().add(markButton);
       
       int northConstraint = 17;
@@ -418,6 +419,7 @@ public class PositionListDlg extends MMDialog implements MouseListener {
       });
       upButton.setIcon(SwingResourceManager.getIcon(PositionListDlg.class, "icons/arrow_up.png"));
       upButton.setText(""); // "Up"
+      upButton.setToolTipText("Move currently selected position up list (positions higher on list are acquired earlier)");
       getContentPane().add(upButton);
       springLayout.putConstraint(SpringLayout.NORTH, upButton, northConstraint, SpringLayout.NORTH, getContentPane());
       springLayout.putConstraint(SpringLayout.SOUTH, upButton, northConstraint+buttonHeight, SpringLayout.NORTH, getContentPane());
@@ -435,6 +437,7 @@ public class PositionListDlg extends MMDialog implements MouseListener {
       });
       downButton.setIcon(SwingResourceManager.getIcon(PositionListDlg.class, "icons/arrow_down.png"));
       downButton.setText(""); // "Down"
+      downButton.setToolTipText("Move currently selected position down list (lower positions on list are acquired later)");
       getContentPane().add(downButton);
       springLayout.putConstraint(SpringLayout.NORTH, downButton, northConstraint, SpringLayout.NORTH, getContentPane());
       // increment northConstraint for next button....
@@ -457,6 +460,7 @@ public class PositionListDlg extends MMDialog implements MouseListener {
       });
       gotoButton.setIcon(SwingResourceManager.getIcon(PositionListDlg.class, "icons/resultset_next.png"));
       gotoButton.setText("Go to");
+      gotoButton.setToolTipText("Moves stage to currently selected position");
       getContentPane().add(gotoButton);
       springLayout.putConstraint(SpringLayout.NORTH, gotoButton, northConstraint, SpringLayout.NORTH, getContentPane());
       springLayout.putConstraint(SpringLayout.SOUTH, gotoButton, northConstraint+=buttonHeight, SpringLayout.NORTH, getContentPane());
@@ -489,6 +493,7 @@ public class PositionListDlg extends MMDialog implements MouseListener {
       });
       removeButton.setIcon(SwingResourceManager.getIcon(PositionListDlg.class, "icons/cross.png"));
       removeButton.setText("Remove");
+      removeButton.setToolTipText("Removes currently selected position from list");
       getContentPane().add(removeButton);
       springLayout.putConstraint(SpringLayout.NORTH, removeButton, northConstraint, SpringLayout.NORTH, getContentPane());
       springLayout.putConstraint(SpringLayout.SOUTH, removeButton, northConstraint+=buttonHeight, SpringLayout.NORTH, getContentPane());
@@ -508,7 +513,8 @@ public class PositionListDlg extends MMDialog implements MouseListener {
       });
        
       setOriginButton.setIcon(SwingResourceManager.getIcon(PositionListDlg.class, "icons/empty.png"));
-      setOriginButton.setText("Calibrate");
+      setOriginButton.setText("Set Origin");
+      setOriginButton.setToolTipText("Drives X and Y stages back to their original positions and zeros their position values");
       getContentPane().add(setOriginButton);
       springLayout.putConstraint(SpringLayout.NORTH, setOriginButton, northConstraint, SpringLayout.NORTH, getContentPane());
       springLayout.putConstraint(SpringLayout.SOUTH, setOriginButton, northConstraint+=buttonHeight, SpringLayout.NORTH, getContentPane());
@@ -531,6 +537,7 @@ public class PositionListDlg extends MMDialog implements MouseListener {
       });
       removeAllButton.setIcon(SwingResourceManager.getIcon(PositionListDlg.class, "icons/delete.png"));
       removeAllButton.setText("Clear All");
+      removeAllButton.setToolTipText("Removes all positions from list");
       getContentPane().add(removeAllButton);
       springLayout.putConstraint(SpringLayout.NORTH, removeAllButton, northConstraint, SpringLayout.NORTH, getContentPane());
       springLayout.putConstraint(SpringLayout.SOUTH, removeAllButton, northConstraint+=buttonHeight, SpringLayout.NORTH, getContentPane());
@@ -564,6 +571,7 @@ public class PositionListDlg extends MMDialog implements MouseListener {
       });
       tileButton.setIcon(SwingResourceManager.getIcon(PositionListDlg.class, "icons/empty.png"));
       tileButton.setText("Create Grid");
+      tileButton.setToolTipText("Open new window to create grid of equally spaced positions");
       getContentPane().add(tileButton);
       springLayout.putConstraint(SpringLayout.SOUTH, tileButton, -1, SpringLayout.NORTH, closeButton);
       springLayout.putConstraint(SpringLayout.NORTH, tileButton, -27, SpringLayout.NORTH, closeButton);
@@ -579,6 +587,7 @@ public class PositionListDlg extends MMDialog implements MouseListener {
       });
       saveAsButton.setIcon(SwingResourceManager.getIcon(PositionListDlg.class, "icons/empty.png"));
       saveAsButton.setText("Save As...");
+      saveAsButton.setToolTipText("Save position list as");
       getContentPane().add(saveAsButton);
       springLayout.putConstraint(SpringLayout.SOUTH, saveAsButton, -28, SpringLayout.NORTH, closeButton);
       springLayout.putConstraint(SpringLayout.NORTH, saveAsButton, -55, SpringLayout.NORTH, closeButton);
@@ -594,6 +603,7 @@ public class PositionListDlg extends MMDialog implements MouseListener {
       });
       loadButton.setIcon(SwingResourceManager.getIcon(PositionListDlg.class, "icons/empty.png"));
       loadButton.setText("Load...");
+      loadButton.setToolTipText("Load position list");
       getContentPane().add(loadButton);
       springLayout.putConstraint(SpringLayout.SOUTH, loadButton, -56, SpringLayout.NORTH, closeButton);
       springLayout.putConstraint(SpringLayout.NORTH, loadButton, -83, SpringLayout.NORTH, closeButton);

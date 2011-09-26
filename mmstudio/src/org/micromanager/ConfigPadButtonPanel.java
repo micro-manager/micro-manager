@@ -52,13 +52,19 @@ public final class ConfigPadButtonPanel extends JPanel {
 
       createLabel("Group:");
       addGroupButton_ = createButton("","/org/micromanager/icons/plus.png");
+      addGroupButton_.setToolTipText("Create new group of properties");
       removeGroupButton_ = createButton("","/org/micromanager/icons/minus.png");
+      removeGroupButton_.setToolTipText("Delete currently selected group");
       editGroupButton_ = createButton("Edit","");
+      editGroupButton_.setToolTipText("Edit currently selected group");
 
       createLabel("Preset:");
       addPresetButton_ = createButton("","/org/micromanager/icons/plus.png");
+      addPresetButton_.setToolTipText("Create new preset (set of values for each property in group)");
       removePresetButton_ = createButton("","/org/micromanager/icons/minus.png");
+      removePresetButton_.setToolTipText("Delete currently selected preset");
       editPresetButton_ = createButton("Edit","");
+      editPresetButton_.setToolTipText("Edit property values for currently selected preset");
 
       GridLayout layout = new GridLayout(1,8,2,1);
       setLayout(layout);

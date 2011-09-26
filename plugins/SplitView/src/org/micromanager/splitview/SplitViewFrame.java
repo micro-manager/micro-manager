@@ -370,6 +370,7 @@ public class SplitViewFrame extends javax.swing.JFrame {
       });
 
       topLeftColorButton.setText("Left Color");
+      topLeftColorButton.setToolTipText("Select display color for top/left channel");
       topLeftColorButton.addActionListener(new java.awt.event.ActionListener() {
          public void actionPerformed(java.awt.event.ActionEvent evt) {
             topLeftColorButtonActionPerformed(evt);
@@ -377,6 +378,7 @@ public class SplitViewFrame extends javax.swing.JFrame {
       });
 
       bottomRightColorButton.setText("Right Color");
+      bottomRightColorButton.setToolTipText("Select display color for bottom/right channel");
       bottomRightColorButton.addActionListener(new java.awt.event.ActionListener() {
          public void actionPerformed(java.awt.event.ActionEvent evt) {
             bottomRightColorButtonActionPerformed(evt);

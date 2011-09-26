@@ -7,6 +7,8 @@ import org.micromanager.api.ScriptInterface;
 
 public class StageControl implements MMPlugin {
    public static String menuName = "Stage Control";
+   public static String tooltipDescription = "A virtual joystick that allows for manual control"
+		   +" of the XY and Z stages";
    private CMMCore core_;
    private ScriptInterface gui_;
    private StageControlFrame myFrame_;
@@ -35,7 +37,7 @@ public class StageControl implements MMPlugin {
    }
 
    public String getDescription() {
-      return "Stage Control Plugin";
+      return tooltipDescription;
    }
    
    public String getVersion() {
