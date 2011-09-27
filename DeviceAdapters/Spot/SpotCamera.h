@@ -92,6 +92,11 @@ public:
    int GetBinning() const;
    int SetBinning(int binSize);
     
+   // Sequence related functions
+   // -------------------------
+  int IsExposureSequenceable(bool& isSequenceable) const {isSequenceable = false; return DEVICE_OK;}
+
+
    // action interface
    // ----------------
    int OnExposure(MM::PropertyBase* pProp, MM::ActionType eAct);
@@ -218,10 +223,6 @@ private:
 	bool exposureComplete_;
 	
 	bool autoEposureCalculationDone_;
-
-
-
- 
 };
 
 #endif //_SPOTCAMERA_H_
