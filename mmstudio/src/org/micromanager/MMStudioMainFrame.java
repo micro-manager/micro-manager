@@ -1367,7 +1367,7 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
     		  "When the objective in use has a calibration defined, " +
     		  "micromanager will automatically use it when " +
     		  "calculating metadata"; 
-      if (!J
+      if (JavaUtils.isMac())
     	  calibrationMenuItem.setToolTipText(calibrationTooltip);
       else
           calibrationMenuItem.setToolTipText(TooltipTextMaker.addHTMLBreaksForTooltip(calibrationTooltip));
