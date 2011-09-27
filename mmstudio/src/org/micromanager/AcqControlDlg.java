@@ -582,7 +582,6 @@ public class AcqControlDlg extends JDialog implements PropertyChangeListener {
          acqEng_ = acqEng;
       }
 
-      @Override
       public Component getTableCellRendererComponent(JTable table, Object value,
               boolean isSelected, boolean hasFocus, int rowIndex, int colIndex) {
 
