@@ -92,6 +92,10 @@ public:
    int GetBinning() const;
    int SetBinning(int binSize);
 
+   // Sequence related functions
+   // ---------------
+   int IsExposureSequenceable(bool& isSequenceable) const {isSequenceable = false; return DEVICE_OK;}
+
    // action interface
    // ----------------
    int OnBinning(MM::PropertyBase* pProp, MM::ActionType eAct);
