@@ -157,7 +157,7 @@ import org.micromanager.utils.ReportingUtils;
 public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, ScriptInterface {
 
    private static final String MICRO_MANAGER_TITLE = "Micro-Manager 1.4";
-   private static final String VERSION = "1.4.7  20110920";
+   private static final String VERSION = "1.4.7  20110927";
    private static final long serialVersionUID = 3556500289598574541L;
    private static final String MAIN_FRAME_X = "x";
    private static final String MAIN_FRAME_Y = "y";
@@ -1367,7 +1367,7 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
     		  "When the objective in use has a calibration defined, " +
     		  "micromanager will automatically use it when " +
     		  "calculating metadata"; 
-      if (!System.getProperty("mrj.version").equals(null)) // running on a mac
+      if (!J
     	  calibrationMenuItem.setToolTipText(calibrationTooltip);
       else
           calibrationMenuItem.setToolTipText(TooltipTextMaker.addHTMLBreaksForTooltip(calibrationTooltip));
@@ -3307,7 +3307,7 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
           ReportingUtils.logError(e);
        }
       
-      if (!System.getProperty("mrj.version").equals(null)) // running on a mac
+      if (JavaUtils.isMac()) // running on a mac
           newMenuItem.setToolTipText(toolTipDescription);
       else      
           newMenuItem.setToolTipText( TooltipTextMaker.addHTMLBreaksForTooltip(toolTipDescription) );
