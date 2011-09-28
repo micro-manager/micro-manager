@@ -34,7 +34,7 @@
 #endif
 
 #include "../../MMDevice/ModuleInterface.h"
-#include "PVCAM.h"
+#include "PVCAMInt.h"
 #include "PVCAMUtils.h"
 #include "PVCAMProperty.h"
 
@@ -84,6 +84,8 @@ extern const char* g_ReadoutPort_HighCap;
 
 const char* g_TriggerMode = "TriggerMode";
 
+const char* g_CoolingFan = "CoolingFan";
+
 string Yes("Yes");
 string No("No");
 string shutter("Shutter");
@@ -117,7 +119,8 @@ SParam param_set[] = {
    {"Y-dimension", PARAM_PAR_SIZE},
    {"ShutterMode",PARAM_SHTR_OPEN_MODE},
    {"ExposureMode", PARAM_EXPOSURE_MODE},
-   {"LogicOutput", PARAM_LOGIC_OUTPUT}
+   {"LogicOutput", PARAM_LOGIC_OUTPUT},
+   {"CoolingFan", PARAM_HEAD_COOLING_CTRL}
 };
 const int n_param = sizeof(param_set)/sizeof(SParam);
 
@@ -152,7 +155,7 @@ sequenceModeReady_(false)
    SetErrorText(ERR_BUSY_ACQUIRING, "Acquisition already in progress.");
    
    //Set the list of post processing features tied to their parameter, only works with Windows at the moment
-#ifdef WIN32
+#ifdef WIN32_NOT
    mPPNames.insert(PPNamesDef::value_type(PP_PARAMETER_RF_FUNCTION			,"RING FUNCTION FUNCTION"));
    mPPNames.insert(PPNamesDef::value_type(PP_FEATURE_BIAS_ENABLED				,"BIAS ENABLED"			));
    mPPNames.insert(PPNamesDef::value_type(PP_FEATURE_BIAS_LEVEL				,"BIAS LEVEL"				));
@@ -557,6 +560,35 @@ int Universal::OnTemperature(MM::PropertyBase* pProp, MM::ActionType eAct)
       pProp->Set(temp/100);
    }
 
+   return DEVICE_OK;
+}
+   
+int Universal::OnCoolingFan(MM::PropertyBase* pProp, MM::ActionType eAct) {
+	if (eAct == MM::AfterSet) {
+	  long fanState;
+      string par;
+      pProp->Get(par);
+
+	  if( par == "On" ) {
+		  //fprintf( stderr, "selected fan to On; par = %s", par );
+		  fanState = COOLING_FAN_CTRL_ON;
+	  } else if( par == "Off" ) {
+		  //fprintf( stderr, "selected fan to Off; par = %s", par );
+		  fanState = COOLING_FAN_CTRL_OFF;
+	  }
+
+      if (!SetLongParam_PvCam_safe(hPVCAM_, PARAM_COOLING_FAN_CTRL, fanState))
+         return LogCamError(__LINE__);
+ //  
+   } else if (eAct == MM::BeforeGet) {
+ //     long fan;
+
+ //     if (!GetLongParam_PvCam_safe(hPVCAM_, PARAM_COOLING_FAN_CTRL, &fan))
+ //        return LogCamError(__LINE__);
+	//  fprintf( stderr, "beforeget fan %li\n", fan );
+
+ //     pProp->Set(fanOff);
+   }
    return DEVICE_OK;
 }
 
@@ -966,181 +998,28 @@ int Universal::Initialize()
    AddAllowedValue(g_TriggerMode, trigFirst, (long)TRIGGER_FIRST_MODE);
    AddAllowedValue(g_TriggerMode, trigStrobed, (long)STROBED_MODE);
 
-/********************** Begin Post Processing ****************************************/
-#ifdef WIN32
-	uns16 AccessType;
-	 
-	if (PlGetParamSafe( hPVCAM_, PARAM_ADC_OFFSET, ATTR_AVAIL, &bAvail) && bAvail)
-	{
-		char buf[BUFSIZE];
-		string strVal;
-		int16 min, max, defaultValue; 
-		pAct = new CPropertyAction (this, &Universal::OnSetBias);
-		PlGetParamSafe(hPVCAM_, PARAM_ADC_OFFSET, ATTR_MIN, &min);
-		PlGetParamSafe(hPVCAM_, PARAM_ADC_OFFSET, ATTR_MAX, &max);
-		PlGetParamSafe(hPVCAM_, PARAM_ADC_OFFSET, ATTR_DEFAULT, &defaultValue);
-		strVal = itoa(defaultValue,buf,10);//_fcvt(defaultValue, 2, &decimal, &sign);
-		nRet = CreateProperty(MM::g_Keyword_Offset, strVal.c_str(), MM::Integer, false, pAct);
-		SetPropertyLimits(MM::g_Keyword_Offset,  min, max);
-		assert(nRet == DEVICE_OK);
-	}
+   // cooling fan
+   const char* fanOn = "On";
+   const char* fanOff = "Off"; 
 
-   if (PlGetParamSafe( hPVCAM_, PARAM_ACTUAL_GAIN, ATTR_AVAIL, &bAvail) && bAvail)
-   {
-	   PlGetParamSafe( hPVCAM_, PARAM_ACTUAL_GAIN, ATTR_ACCESS, &AccessType);
-	   pAct = new CPropertyAction (this, &Universal::OnActGainProperties);
-	   nRet = CreateProperty("Actual Gain e/ADU", "0", MM::Float, AccessType == ACC_READ_ONLY, pAct);
+   int chkAvail;
+   if (!PlGetParamSafe( hPVCAM_, PARAM_GAIN_INDEX, ATTR_AVAIL, &chkAvail ))
+      return LogCamError(__LINE__, "");
+
+   if( chkAvail ) {
+	   pAct = new CPropertyAction (this, &Universal::OnCoolingFan);
+	   nRet = CreateProperty(g_CoolingFan, fanOn, MM::String, false, pAct );
 	   assert(nRet == DEVICE_OK);
-   }
+	   AddAllowedValue(g_CoolingFan, fanOn, (long)COOLING_FAN_CTRL_ON);
+	   AddAllowedValue(g_CoolingFan, fanOff, (long)COOLING_FAN_CTRL_OFF);
+   } else
+      LogMessage("This Camera's fan can't be controlled");
 
+   // readout time is a function of the number of pixels to digitize, the ADC speed, and the overhead which includes
+   //   skipping pixels, and all clocking vertical and horizontal
+   // in cont mode, not triggering, frame rate should equal ( exposure time + shutter close delay + readout time )^-1
+   //
 
-   if (PlGetParamSafe( hPVCAM_, PARAM_READ_NOISE, ATTR_AVAIL, &bAvail) && bAvail)
-   {
-	   PlGetParamSafe( hPVCAM_, PARAM_READ_NOISE, ATTR_ACCESS, &AccessType);
-	   pAct = new CPropertyAction (this, &Universal::OnReadNoiseProperties);
-	   nRet = CreateProperty("Current Read Noise", "0", MM::Float, AccessType == ACC_READ_ONLY, pAct);
-	   assert(nRet == DEVICE_OK);
-   }
-
-
-	if (PlGetParamSafe(hPVCAM_, PARAM_PP_INDEX, ATTR_AVAIL, &bAvail) && bAvail)
-	{
-
-		long CntPP = 0;
-		uns32 PP_count = 0;
-
-
-	   vector<std::string> ringValues;
-	   ringValues.push_back(rapidCal.c_str());
-	   ringValues.push_back(shutter.c_str());
-	   
-	   pAct = new CPropertyAction (this, &Universal::OnResetPostProcProperties);
-	   nRet = CreateProperty("PP4 Reset", No.c_str(), MM::String, false, pAct);
-	   vector<std::string> resetValues;
-	   resetValues.push_back(No.c_str());
-	   resetValues.push_back(Yes.c_str());
-	   nRet = SetAllowedValues("PP4 Reset", resetValues);
-	   resetPP_ = No.c_str();
-	   assert(nRet == DEVICE_OK);
-
-
-
-		if (PlGetParamSafe(hPVCAM_, PARAM_PP_INDEX, ATTR_COUNT, &PP_count))
-		{
-			PPNamesDef::iterator PPNamesIterator;
-			int index;
-			uns32 paramID = 1;
-
-			for (int16 i = 0 ; i < (int16)PP_count; i++) 
-			{
-				char propName[BUFSIZE];
-				char buf[BUFSIZE];
-				string	strVal;
-				uns32 min, max, defaultValue; 
-
-				if (PlSetParamSafe(hPVCAM_, PARAM_PP_INDEX, &i))
-				{
-
-					if (PlGetParamSafe(hPVCAM_,PARAM_PP_FEAT_NAME, ATTR_CURRENT, propName))
-					{
-						//if (strstr(propName,"BIAS") == NULL )
-						{
-							uns32 paramCnt =  0;
-							if (PlGetParamSafe(hPVCAM_, PARAM_PP_PARAM_INDEX, ATTR_COUNT, &paramCnt))
-							{
-
-								for (int16 j = 0; j < (int16)paramCnt; j++)
-								{
-									if (PlSetParamSafe(hPVCAM_, PARAM_PP_PARAM_INDEX, &j))
-									{
-										ostringstream pN;
-//										PlGetParamSafe(hPVCAM_, PARAM_PP_PARAM_NAME, ATTR_CURRENT, buf);
-//										uns32 paramID = 0;
-										PlGetParamSafe(hPVCAM_, PARAM_PP_PARAM_ID, ATTR_CURRENT, &paramID);
-										PPNamesIterator = mPPNames.find(paramID);
-										if (PPNamesIterator != mPPNames.end() )   
-										{
-											strcpy(propName, (*PPNamesIterator).second.c_str());
-											if (strstr(propName,"ENABLED") == NULL )
-												if (strstr(propName,"RING") == NULL )
-													pN <<"PP2 " << propName;
-												else
-													pN <<"PP3 " << propName;
-
-											else
-												pN <<"PP1 " << propName;
-
-		//									pN << " " << buf;
-											PlGetParamSafe(hPVCAM_, PARAM_PP_PARAM, ATTR_MIN, &min);
-											PlGetParamSafe(hPVCAM_, PARAM_PP_PARAM, ATTR_MAX, &max);
-											PlGetParamSafe(hPVCAM_, PARAM_PP_PARAM, ATTR_DEFAULT, &defaultValue);
-											
-											strVal = itoa(defaultValue,buf,10);//_fcvt(defaultValue, 2, &decimal, &sign);
-											CPropertyActionEx *pExAct = new CPropertyActionEx(this, &Universal::OnPostProcProperties, CntPP++);
-											if (max - min == 0)
-											{
-												nRet = CreateProperty(pN.str().c_str(), strVal.c_str(), MM::Integer, false, pExAct);
-												SetAllowedValues(pN.str().c_str(), resetValues);
-											}
-											else if (max - min == 1)
-											{
-												nRet = CreateProperty(pN.str().c_str(), No.c_str(), MM::String, false, pExAct);
-												if (strstr(propName,"RING") == NULL )
-													SetAllowedValues(pN.str().c_str(), resetValues);
-												else 
-													SetAllowedValues(pN.str().c_str(), ringValues);
-
-											}
-											else if (max - min < 10)
-											{
-												nRet = CreateProperty(pN.str().c_str(), strVal.c_str(), MM::String, false, pExAct);
-												vector<std::string> values;
-
-												if (strstr(propName,"FLUX") != NULL )
-												{
-													values.push_back(zeroFlux.c_str());
-													values.push_back(oneFlux.c_str());
-													values.push_back(twoFlux.c_str());
-												}
-												else{
-													for (int index = (int)min; index <= (int)max; index++) {
-														ostringstream os;
-														os << index;
-														values.push_back(os.str());
-													}
-												}
-												SetAllowedValues(pN.str().c_str(), values);
-											
-											}
-											else 
-											{
-												if (strstr(propName,"B.E.R.T.") != NULL )
-												{
-													max = max/100;
-													min = min/100;
-													nRet = CreateProperty(pN.str().c_str(), strVal.c_str(), MM::Float, false, pExAct);
-													SetPropertyLimits(pN.str().c_str(),  min, max);
-												} else {
-													nRet = CreateProperty(pN.str().c_str(), strVal.c_str(), MM::Integer, false, pExAct);
-													SetPropertyLimits(pN.str().c_str(),  min, max);
-												}
-											}
-											PProc* ptr = new PProc(pN.str().c_str(), i,j);
-											ptr->SetRange(max-min);
-											PostProc_.push_back (*ptr);
-											delete ptr;
-										}
-									}
-								}
-							}
-						}
-					}
-				}  
-			}
-		}
-	}
-#endif
-/********************** End Post Processing ****************************************/
    // synchronize all properties
    // --------------------------
    // nRet = UpdateStatus();
@@ -1347,7 +1226,10 @@ const unsigned char* Universal::GetImageBuffer()
    // wait for data or error
    void* pixBuffer = const_cast<unsigned char*> (img_.GetPixels());
    MM::MMTime start = GetCurrentMMTime();
-   MM::MMTime maxDuration = (GetExposure() + 5000) * 1000;
+   MM::MMTime maxDuration = (GetExposure() + 15000) * 1000;
+//   float notscan = GetReadoutTime();
+ //  float exptime = GetExposure();
+  // MM::MMTime maxDuration = (GetExposure() + GetReadoutTime() + 2000 ) * 1000;
 	bool timeout = false;
    // Check status, timeout when this takes exposure time + 5 seconds
    while(pl_exp_check_status(hPVCAM_, &status, &not_needed) && 
@@ -1388,6 +1270,14 @@ double Universal::GetExposure() const
    char buf[MM::MaxStrLength];
    buf[0] = '\0';
    GetProperty(MM::g_Keyword_Exposure, buf);
+   return atof(buf);
+}
+
+double Universal::GetReadoutTime() const
+{
+   char buf[MM::MaxStrLength];
+   buf[0] = '\0';
+   GetProperty(MM::g_Keyword_ReadoutTime, buf);
    return atof(buf);
 }
 
@@ -2195,7 +2085,6 @@ int Universal::PushImage()
    memcpy(pixBuffer, imgPtr, GetImageBufferSize());
 
    // process image
-   /*
    MM::ImageProcessor* ip = GetCoreCallback()->GetImageProcessor(this);
    if (ip)
    {
@@ -2203,7 +2092,6 @@ int Universal::PushImage()
       if (nRet != DEVICE_OK) 
          return LogMMError(nRet, __LINE__);
    }
-   */
 
    // create metadata
    char label[MM::MaxStrLength];
@@ -2374,238 +2262,52 @@ void Universal::LogMMMessage(int lineNr, std::string message, bool debug) const 
 /**************************** Post Processing Functions ******************************/
 #ifdef WIN32
 
-
-int Universal::OnResetPostProcProperties(MM::PropertyBase* pProp, MM::ActionType eAct)
-{
-   bool ret; 
-	SuspendSequence();
-
-	if (eAct == MM::AfterSet)
-	{
-		pProp->Get(resetPP_);
-		if (Yes.c_str() == resetPP_)
-		{
-			if(pl_pp_reset(hPVCAM_))
-			{
-/*				int cnt = PostProc_.size();
-				for (int i = 0; i < cnt; i++)
-				{
-					PostProc_[i].SetcurValue (2);
-				}
-*/				UpdateStatus();
-				resetPP_ = No.c_str();
-			}
-		}
-	}
-	else if (eAct == MM::BeforeGet)
-	{
-		pProp->Set(resetPP_.c_str());
-	}
-	ResumeSequence();
-	return DEVICE_OK;
-}
-/* Because we are doing alot of calls to pvcam I am not callinng the safe functions, instead I suspend at the front*/
-int Universal::OnPostProcProperties(MM::PropertyBase* pProp, MM::ActionType eAct, long index)
-{
-	
-   uns32 temp = 0;
-	SuspendSequence();
-
-
-	if (PostProc_[index].GetRange() == 1)
-	{
-		string value;
-		if (eAct == MM::AfterSet)
-		{
-			pProp->Get(value);
-			int16 ppIndx;
-			ppIndx = (int16)PostProc_[index].GetppIndex ();
-			if (pl_set_param(hPVCAM_, PARAM_PP_INDEX, &ppIndx))
-			{
-				ppIndx = (int16)PostProc_[index].GetpropIndex();
-				if (pl_set_param(hPVCAM_, PARAM_PP_PARAM_INDEX, &ppIndx))
-				{
-					if (value == Yes.c_str())
-						temp = 1;
-					else if (value == No.c_str())
-						temp = 0;
-					else if (value == rapidCal.c_str())
-						temp = 0;
-					else 
-						temp = 1;
-					if (!pl_set_param(hPVCAM_, PARAM_PP_PARAM, &temp))
-						return pl_error_code();
-					PostProc_[index].SetcurValue (temp);
-				}
-			}
-		}
-		else if (eAct == MM::BeforeGet)
-		{
-			int16 ppIndx;
-			ppIndx = (int16)PostProc_[index].GetppIndex ();
-			if (pl_set_param(hPVCAM_, PARAM_PP_INDEX, &ppIndx))
-			{
-				ppIndx = (int16)PostProc_[index].GetpropIndex();
-				if (pl_set_param(hPVCAM_, PARAM_PP_PARAM_INDEX, &ppIndx))
-					if (!pl_get_param(hPVCAM_, PARAM_PP_PARAM, ATTR_CURRENT, &temp))
-						return pl_error_code();
-					else
-					{
-//						temp = (long)PostProc_[index].GetcurValue ();
-						if (strstr(PostProc_[index].GetName().c_str(), "RING") == NULL)
-						{
-							if (temp == 1)
-								value = Yes.c_str();
-							else 
-								value = No.c_str();
-						}
-						else 
-							if (temp == 0)
-								value = rapidCal.c_str();
-							else 
-								value = shutter.c_str();
-
-						pProp->Set(value.c_str());
-					}
-			}
-		}
-	}
-
-	else 
-	{
-		long value;
-		double xvalue;
-		if (eAct == MM::AfterSet)
-		{
-			int16 ppIndx1, ppIndx2;
-			ppIndx2 = ppIndx1 = (int16)PostProc_[index].GetppIndex ();
-			if (pl_set_param(hPVCAM_, PARAM_PP_INDEX, &ppIndx1))
-			{
-				ppIndx1 = (int16)PostProc_[index].GetpropIndex();
-				if (pl_set_param(hPVCAM_, PARAM_PP_PARAM_INDEX, &ppIndx1))
-				{
-					if (strstr(PostProc_[index].GetName().c_str(), "B.E.R.T.") != NULL)
-					{
-						pProp->Get(xvalue);
-						value = (long)(xvalue*100);
-					} else if (strstr(PostProc_[index].GetName().c_str(), "FLUX") != NULL){
-						string tmp;
-						pProp->Get(tmp);
-						if (strstr(tmp.c_str(), "micro") != NULL)
-							value = 0;
-						else if (strstr(tmp.c_str(), "msec") != NULL)
-							value = 1;
-						else 
-							value = 2;
-					}
-					else{
-
-						pProp->Get(value);
-					}
-	
-					temp = value;
-					PostProc_[index].SetcurValue (temp);
-					if (!pl_set_param(hPVCAM_, PARAM_PP_PARAM, &temp))
-						return pl_error_code();
-				}
-			}
-		}
-		else if (eAct == MM::BeforeGet)
-		{
-			int16 ppIndx;
-			ppIndx = (int16)PostProc_[index].GetppIndex ();
-			if (pl_set_param(hPVCAM_, PARAM_PP_INDEX, &ppIndx))
-			{
-				ppIndx = (int16)PostProc_[index].GetpropIndex();
-				if (pl_set_param(hPVCAM_, PARAM_PP_PARAM_INDEX, &ppIndx))
-					if (!pl_get_param(hPVCAM_, PARAM_PP_PARAM, ATTR_CURRENT, &temp))
-						return pl_error_code();
-					else
-					{
-//						temp = (long)PostProc_[index].GetcurValue ();
-						if (strstr(PostProc_[index].GetName().c_str(), "B.E.R.T.") != NULL ) 
-						{
-							double val = temp;
-							val = val/100;
-							pProp->Set(val);
-						}
-						else if (strstr(PostProc_[index].GetName().c_str(), "FLUX") != NULL){
-							long val = temp;
-							if (val == 0)
-								pProp->Set(zeroFlux.c_str());
-							else if (val == 1)
-								pProp->Set(oneFlux.c_str());
-							else 
-								pProp->Set(twoFlux.c_str());
-						}
-						else
-							pProp->Set((long)temp);
-					}
-			}
-		}
-	}
-/*
-	if (eAct == MM::AfterSet)
-	{
-		double xtmp;
-		pProp->Get(xtmp);
-		PostProc_[index].SetcurValue(xtmp);
-	}
-	else if (eAct == MM::BeforeGet)
-	{
-		pProp->Set(PostProc_[index].GetcurValue());
-	}
-	*/
-	ResumeSequence();
-	return DEVICE_OK;
-}
-
 int Universal::OnActGainProperties(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
-	SuspendSequence();
+	//SuspendSequence();
 
-	long temp = 0;
-	if (eAct == MM::AfterSet)
-	{
-		pProp->Get(temp);
-		if (!SetLongParam_PvCam(hPVCAM_, PARAM_ACTUAL_GAIN, temp))
-			return pl_error_code();
-	}
-	else if (eAct == MM::BeforeGet)
-	{
-		long temp;
-		if (!GetLongParam_PvCam(hPVCAM_, PARAM_ACTUAL_GAIN, &temp))
-			return pl_error_code();
-		double val = temp;
-		val = val/100;
-		pProp->Set(val);
-	}
-	ResumeSequence();
+	//long temp = 0;
+	//if (eAct == MM::AfterSet)
+	//{
+	//	pProp->Get(temp);
+	//	if (!SetLongParam_PvCam(hPVCAM_, PARAM_ACTUAL_GAIN, temp))
+	//		return pl_error_code();
+	//}
+	//else if (eAct == MM::BeforeGet)
+	//{
+	//	long temp;
+	//	if (!GetLongParam_PvCam(hPVCAM_, PARAM_ACTUAL_GAIN, &temp))
+	//		return pl_error_code();
+	//	double val = temp;
+	//	val = val/100;
+	//	pProp->Set(val);
+	//}
+	//ResumeSequence();
 	return DEVICE_OK;
 }
 
-int Universal::OnReadNoiseProperties(MM::PropertyBase* pProp, MM::ActionType eAct)
-{
-   long temp = 0;
-	SuspendSequence();
-
-	if (eAct == MM::AfterSet)
-	{
-		pProp->Get(temp);
-		if (!SetLongParam_PvCam(hPVCAM_, PARAM_READ_NOISE, temp))
-			return pl_error_code();
-	}
-	else if (eAct == MM::BeforeGet)
-	{
-		if (!GetLongParam_PvCam(hPVCAM_, PARAM_READ_NOISE, &temp))
-			return pl_error_code();
-		double val = temp;
-		val = val/100;
-		pProp->Set(val);
-	}
-	ResumeSequence();
-	return DEVICE_OK;
-}
+//int Universal::OnReadNoiseProperties(MM::PropertyBase* pProp, MM::ActionType eAct)
+//{
+//   long temp = 0;
+//	SuspendSequence();
+//
+//	if (eAct == MM::AfterSet)
+//	{
+//		pProp->Get(temp);
+//		if (!SetLongParam_PvCam(hPVCAM_, PARAM_READ_NOISE, temp))
+//			return pl_error_code();
+//	}
+//	else if (eAct == MM::BeforeGet)
+//	{
+//		if (!GetLongParam_PvCam(hPVCAM_, PARAM_READ_NOISE, &temp))
+//			return pl_error_code();
+//		double val = temp;
+//		val = val/100;
+//		pProp->Set(val);
+//	}
+//	ResumeSequence();
+//	return DEVICE_OK;
+//}
 
 int Universal::OnSetBias(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
