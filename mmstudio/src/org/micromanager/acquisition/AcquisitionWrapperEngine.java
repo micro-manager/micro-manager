@@ -22,14 +22,13 @@ import org.micromanager.api.DeviceControlGUI;
 import org.micromanager.api.ImageCache;
 import org.micromanager.api.Pipeline;
 import org.micromanager.navigation.PositionList;
+import org.micromanager.utils.AcqOrderMode;
 import org.micromanager.utils.AutofocusManager;
 import org.micromanager.utils.ChannelSpec;
 import org.micromanager.utils.ContrastSettings;
 import org.micromanager.utils.MMException;
 import org.micromanager.utils.NumberUtils;
-import org.micromanager.utils.PositionMode;
 import org.micromanager.utils.ReportingUtils;
-import org.micromanager.utils.SliceMode;
 
 /**
  *
@@ -46,9 +45,9 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
    private boolean useSlices_;
    private boolean useFrames_;
    private boolean useChannels_;
+   private boolean useMultiPosition_;
    private boolean keepShutterOpenForStack_;
    private boolean keepShutterOpenForChannels_;
-   private boolean useMultiPosition_;
    private ArrayList<ChannelSpec> channels_ = new ArrayList<ChannelSpec>();
    private String rootName_;
    private String dirName_;
@@ -58,8 +57,7 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
    private double minZStepUm_;
    private String comment_;
    private boolean saveFiles_;
-   private int sliceMode_;
-   private int positionMode_;
+   private int acqOrderMode_;
    private boolean useAutoFocus_;
    private int afSkipInterval_;
    private List<DataProcessor<TaggedImage>> taggedImageProcessors_;
@@ -196,8 +194,10 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
 
       // Other
 
-      acquisitionSettings.timeFirst = !(positionMode_ == PositionMode.TIME_LAPSE);
-      acquisitionSettings.slicesFirst = !(sliceMode_ == SliceMode.CHANNELS_FIRST);
+      acquisitionSettings.timeFirst = (acqOrderMode_ == AcqOrderMode.TIME_POS_CHANNEL_SLICE || 
+    		  acqOrderMode_ == AcqOrderMode.TIME_POS_SLICE_CHANNEL);
+      acquisitionSettings.slicesFirst = (acqOrderMode_ == AcqOrderMode.POS_TIME_SLICE_CHANNEL ||
+    		  acqOrderMode_ == AcqOrderMode.TIME_POS_SLICE_CHANNEL);
 
       acquisitionSettings.useAutofocus = useAutoFocus_;
       acquisitionSettings.skipAutofocusCount = afSkipInterval_;
@@ -547,24 +547,16 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
       //Ignore
    }
 
-   public int getSliceMode() {
-      return sliceMode_;
+   public int getAcqOrderMode() {
+	   return acqOrderMode_;
    }
 
    public int getDisplayMode() {
       return 0;
    }
 
-   public void setSliceMode(int mode) {
-      sliceMode_ = mode;
-   }
-
-   public int getPositionMode() {
-      return positionMode_;
-   }
-
-   public void setPositionMode(int mode) {
-      positionMode_ = mode;
+   public void setAcqOrderMode(int mode) {
+      acqOrderMode_ = mode;
    }
 
    public void enableAutoFocus(boolean enabled) {
@@ -636,52 +628,44 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
 
       String txt;
       txt =
-              "Number of time points: " + numFrames
-              + "\nNumber of positions: " + numPositions
-              + "\nNumber of slices: " + numSlices
-              + "\nNumber of channels: " + numChannels
-              + "\nTotal images: " + totalImages
-              + "\nDuration: " + hrs + "h " + mins + "m " + NumberUtils.doubleToDisplayString(remainSec) + "s";
-      String order = "\nOrder: ";
-      String ptSetting = null;
-      if (useMultiPosition_ && useFrames_) {
-         if (positionMode_ == PositionMode.TIME_LAPSE) {
-            ptSetting = "Position, Time";
+    		  "Number of time points: " + numFrames
+    		  + "\nNumber of positions: " + numPositions
+    		  + "\nNumber of slices: " + numSlices
+    		  + "\nNumber of channels: " + numChannels
+    		  + "\nTotal images: " + totalImages
+    		  + "\nDuration: " + hrs + "h " + mins + "m " + NumberUtils.doubleToDisplayString(remainSec) + "s";
 
-         } else if (positionMode_ == PositionMode.MULTI_FIELD) {
-            ptSetting = "Time, Position";
-         }
-      } else if (useMultiPosition_ && !useFrames_) {
-         ptSetting = "Position";
-      } else if (!useMultiPosition_ && useFrames_) {
-         ptSetting = "Time";
+      if (useFrames_ || useMultiPosition_  || useChannels_ || useSlices_ ) {
+    	  StringBuffer order = new StringBuffer("\nOrder: ");
+    	  if ( useFrames_ && useMultiPosition_ ) 
+    		  if (acqOrderMode_ == AcqOrderMode.TIME_POS_CHANNEL_SLICE || 
+    		  acqOrderMode_ == AcqOrderMode.TIME_POS_SLICE_CHANNEL)
+    			  order.append("Time, Position");
+    		  else
+    			  order.append("Position, Time");
+    	  else if ( useFrames_ ) 
+    		  order.append("Time");
+    	  else if ( useMultiPosition_ ) 
+    		  order.append("Position");
+
+    	  if ( (useFrames_ || useMultiPosition_) && ( useChannels_ || useSlices_ )  )
+    		  order.append(", ");
+
+    	  if ( useChannels_ && useSlices_ ) 
+    		  if (acqOrderMode_ == AcqOrderMode.TIME_POS_CHANNEL_SLICE || 
+    		  acqOrderMode_ == AcqOrderMode.POS_TIME_CHANNEL_SLICE)
+    			  order.append("Channel, Slice");
+    		  else
+    			  order.append("Slice, Channel");
+    	  else if ( useChannels_ ) 
+    		  order.append("Channel");
+    	  else if ( useSlices_ ) 
+    		  order.append("Slice");
+
+    	  return txt + order.toString();
       }
-
-      String csSetting = null;
-
-      if (useSlices_ && useChannels_) {
-         if (sliceMode_ == SliceMode.CHANNELS_FIRST) {
-            csSetting = "Channel, Slice";
-         } else {
-            csSetting = "Slice, Channel";
-         }
-      } else if (useSlices_ && !useChannels_) {
-         csSetting = "Slice";
-      } else if (!useSlices_ && useChannels_) {
-         csSetting = "Channel";
-      }
-
-      if (ptSetting == null && csSetting == null) {
-         order = "";
-      } else if (ptSetting != null && csSetting == null) {
-         order += ptSetting;
-      } else if (ptSetting == null && csSetting != null) {
-         order += csSetting;
-      } else if (ptSetting != null && csSetting != null) {
-         order += csSetting + ", " + ptSetting;
-      }
-
-      return txt + order;
+      else
+    	  return txt;
    }
 
    /**

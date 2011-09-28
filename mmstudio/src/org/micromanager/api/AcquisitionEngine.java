@@ -269,12 +269,10 @@ public interface AcquisitionEngine {
            boolean use);
    public void setSaveFiles(boolean selected);
    public boolean getSaveFiles();
-   public void setDisplayMode(int mode);
-   public int getSliceMode();
    public int getDisplayMode();
-   public void setSliceMode(int mode);
-   public int getPositionMode();
-   public void setPositionMode(int mode);
+   public void setDisplayMode(int mode);
+   public int getAcqOrderMode();
+   public void setAcqOrderMode(int mode);
    public void enableAutoFocus(boolean enabled);
    public boolean isAutoFocusEnabled();
    public int getAfSkipInterval();
