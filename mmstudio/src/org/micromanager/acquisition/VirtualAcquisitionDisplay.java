@@ -584,6 +584,7 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
          }
       }
 
+
       // Make sure image is shown if it is a single plane:
       if (hyperImage_.getStackSize() == 1) {
          hyperImage_.getProcessor().setPixels(
@@ -1025,6 +1026,7 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
       }
    }
 
+
    private void updateChannelContrast(int channel) {
       if (hyperImage_ == null) {
          return;
@@ -1125,7 +1127,6 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
    }
 
    public void setChannelDisplayRange(int channel, int min, int max, boolean redraw) {
-      System.out.println("Channel:"+channel);
       JSONObject chan = getChannelSetting(channel);
       try {
          if (chan.getInt("Min") == min && chan.getInt("Max") == max) {

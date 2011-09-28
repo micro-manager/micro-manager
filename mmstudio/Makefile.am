@@ -80,6 +80,7 @@ MMJ_.jar:  \
 	$(srcdir)/src/org/micromanager/navigation/XYZKeyListener.java \
 	$(srcdir)/src/org/micromanager/navigation/ZWheelListener.java \
 	$(srcdir)/src/org/micromanager/script/BeanshellEngine.java \
+	$(srcdir)/src/org/micromanager/utils/AcqOrderMode.java \
 	$(srcdir)/src/org/micromanager/utils/AutofocusBase.java \
 	$(srcdir)/src/org/micromanager/utils/AutofocusManager.java \
 	$(srcdir)/src/org/micromanager/utils/AutofocusPropertyEditor.java \
@@ -116,7 +117,6 @@ MMJ_.jar:  \
 	$(srcdir)/src/org/micromanager/utils/MathFunctions.java \
 	$(srcdir)/src/org/micromanager/utils/MemoryUtils.java \
 	$(srcdir)/src/org/micromanager/utils/NumberUtils.java \
-	$(srcdir)/src/org/micromanager/utils/PositionMode.java \
 	$(srcdir)/src/org/micromanager/utils/ProgressBar.java \
 	$(srcdir)/src/org/micromanager/utils/PropertyUsageCellEditor.java \
 	$(srcdir)/src/org/micromanager/utils/PropertyValueCellEditor.java \
@@ -129,7 +129,6 @@ MMJ_.jar:  \
 	$(srcdir)/src/org/micromanager/utils/ScriptFileFilter.java \
 	$(srcdir)/src/org/micromanager/utils/ShowFlags.java \
 	$(srcdir)/src/org/micromanager/utils/ShowFlagsPanel.java \
-	$(srcdir)/src/org/micromanager/utils/SliceMode.java \
 	$(srcdir)/src/org/micromanager/utils/SliderPanel.java \
 	$(srcdir)/src/org/micromanager/utils/TextUtils.java \
 	$(srcdir)/src/org/micromanager/utils/WaitDialog.java \
