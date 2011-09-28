@@ -1,9 +1,10 @@
 (ns buildcheck.core
   (:import (java.io File))
-  (:use [local-file :only (file*)])
-  (:require [clj-http.client :as client]))
+  (:use [local-file :only (file*)]
+        [clj-mail.core])
+  (:gen-class))
 
-(def micromanager (file* "../../.."))
+(def micromanager (file* "../.."))
 
 (def MS-PER-HOUR (* 60 60 1000))
 
@@ -42,15 +43,23 @@
       (println "\nVisual Studio reported errors:")
       (dorun (map println vs-errors))
       (println "\nOutdated device adapter DLLs:")
-      (dorun (map #(println (.getAbsolutePath %)) outdated-dlls)))
-    (println "\n\n")))
+      (dorun (map #(println (.getAbsolutePath %)) outdated-dlls))
+      (println "\n\n"))))
 
 (defn send-full-report [mode]
   (let [report
         (with-out-str
           (report-build-errors 32 mode)
           (report-build-errors 64 mode))]
-    (client/post "http://valelab.ucsf.edu/~MM/upload_corelog.php"
-                 {:body report})))
+    (when-not (empty? report)
+     (with-session
+       "mmbuilderrors@gmail.com" (slurp "C:\\pass.txt") "smtp.gmail.com" 465 "smtp" true
+       (send-email (text-email ["info@micro-manager.org"] "mm build errors" report)))  
+    report
+    )))
+
+(defn -main [mode]
+  (send-full-report (get {"inc" :inc "full" :full} mode)))
+
     
  
