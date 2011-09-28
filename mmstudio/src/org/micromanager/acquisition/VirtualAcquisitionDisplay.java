@@ -569,15 +569,18 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
 
       if (frame == 0) {
          try {
-            Object pix = imageCache_.getImage(cameraChannel, slice, frame, position).pix;
-            int pixelMin = Math.min(this.getChannelMin(cameraChannel), ImageUtils.getMin(pix));
-            int pixelMax = Math.max(this.getChannelMax(cameraChannel), ImageUtils.getMax(pix));
-            if (MDUtils.isRGB(md)) {
-               for (int i = 0; i < 3; ++i) {
-                  setChannelDisplayRange(cameraChannel + i, pixelMin, pixelMax, false);
+            TaggedImage image = imageCache_.getImage(cameraChannel, slice, frame, position);
+            if (image != null) {
+               Object pix = image.pix;
+               int pixelMin = Math.min(this.getChannelMin(cameraChannel), ImageUtils.getMin(pix));
+               int pixelMax = Math.max(this.getChannelMax(cameraChannel), ImageUtils.getMax(pix));
+               if (MDUtils.isRGB(md)) {
+                  for (int i = 0; i < 3; ++i) {
+                     setChannelDisplayRange(cameraChannel + i, pixelMin, pixelMax, false);
+                  }
+               } else {
+                  setChannelDisplayRange(cameraChannel, pixelMin, pixelMax, false);
                }
-            } else {
-               setChannelDisplayRange(cameraChannel, pixelMin, pixelMax, false);
             }
          } catch (Exception ex) {
             ReportingUtils.showError(ex);
