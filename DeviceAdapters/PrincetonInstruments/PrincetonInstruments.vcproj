@@ -215,7 +215,7 @@
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
-				AdditionalIncludeDirectories="&quot;..\..\..\3rdparty\Microsoft\VisualC++\include&quot;;../../../3rdparty/RoperScientific/Windows/PvCam/SDK"
+				AdditionalIncludeDirectories="&quot;D:\projects\3rdparty\PrincetonInstruments\SDK-2.7.8.0&quot;;&quot;..\..\..\3rdparty\Microsoft\VisualC++\include&quot;"
 				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;MODULE_EXPORTS"
 				ExceptionHandling="2"
 				RuntimeLibrary="0"
@@ -237,10 +237,10 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="Pvcam32.lib"
+				AdditionalDependencies="ff.lib pv_icl32.lib pvcam32.lib RSEMCalib.lib"
 				OutputFile="$(OutDir)/mmgr_dal_PrincetonInstruments.dll"
 				LinkIncremental="1"
-				AdditionalLibraryDirectories="../../../3rdparty/RoperScientific/Windows/PvCam/SDK/Libs"
+				AdditionalLibraryDirectories="&quot;D:\projects\3rdparty\PrincetonInstruments\SDK-2.7.8.0&quot;"
 				GenerateDebugInformation="true"
 				SubSystem="2"
 				OptimizeReferences="2"
@@ -299,7 +299,7 @@
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
-				AdditionalIncludeDirectories="&quot;..\..\..\3rdparty\Microsoft\VisualC++\include&quot;;../../../3rdparty/RoperScientific/Windows/PvCam/SDK"
+				AdditionalIncludeDirectories="&quot;D:\projects\3rdparty\PrincetonInstruments\SDK-2.7.8.0&quot;;&quot;..\..\..\3rdparty\Microsoft\VisualC++\include&quot;"
 				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;MODULE_EXPORTS"
 				ExceptionHandling="2"
 				RuntimeLibrary="0"
@@ -321,10 +321,10 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="Pvcam64.lib"
+				AdditionalDependencies="ff.lib pv_icl32.lib pvcam32.lib RSEMCalib.lib"
 				OutputFile="$(OutDir)/mmgr_dal_PrincetonInstruments.dll"
 				LinkIncremental="1"
-				AdditionalLibraryDirectories="&quot;../../../3rdparty/RoperScientific/Windows/PvCam/SDK/Libs/$(PlatformName)&quot;"
+				AdditionalLibraryDirectories="&quot;D:\projects\3rdparty\PrincetonInstruments\SDK-2.7.8.0&quot;"
 				GenerateDebugInformation="true"
 				SubSystem="2"
 				OptimizeReferences="2"

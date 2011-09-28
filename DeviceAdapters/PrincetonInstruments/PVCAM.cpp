@@ -30,7 +30,7 @@
 #endif
 
 #include "../../MMDevice/ModuleInterface.h"
-#include "PVCAM.h"
+#include "PVCAMInt.h"
 
 #ifdef WIN32
 #include "Headers/master.h"
