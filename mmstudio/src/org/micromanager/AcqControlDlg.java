@@ -770,7 +770,8 @@ public class AcqControlDlg extends JDialog implements PropertyChangeListener {
 	   positionsPanel_.setToolTipText("Acquire images from a series of positions in the XY plane");
 	   slicesPanel_.setToolTipText("Acquire images from a series of Z positions");
 	   
-	   String imageName = "file:C:/projects/micromanager/mmstudio/src/org/micromanager/icons/acq_order_figure.png"; 
+	   String imageName = this.getClass().getResource("icons/acq_order_figure.png").toString();
+	   
 	   String acqOrderToolTip =
 			   "<html>Lets you select the order of image acquisition when some combination of multiple dimensions<br>" +
 			   "(i.e. time points, XY positions, Z-slices, or Channels)  is selected.  During image acquisition, the<br>" +
@@ -1044,7 +1045,7 @@ public class AcqControlDlg extends JDialog implements PropertyChangeListener {
       // Summary panel
 
       summaryTextArea_ = new JTextArea();
-      summaryTextArea_.setFont(new Font("Arial", Font.PLAIN, 14));
+      summaryTextArea_.setFont(new Font("Arial", Font.PLAIN, 10));
       summaryTextArea_.setEditable(false);
       summaryTextArea_.setBounds(4, 19, 350, 120);
       summaryTextArea_.setMargin(new Insets(2, 2, 2, 2));
