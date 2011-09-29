@@ -100,7 +100,7 @@ public class MMImageCache implements TaggedImageStorage, ImageCache {
       if (newImageFileManager == null) {
          return;
       }
-      for (String label : softTable_.keySet()) {
+      for (String label : imageStorage_.imageKeys()) {
          int pos[] = MDUtils.getIndices(label);
          try {
             newImageFileManager.putImage(getImage(pos[0], pos[1], pos[2], pos[3]));
@@ -254,6 +254,10 @@ public class MMImageCache implements TaggedImageStorage, ImageCache {
 
    public Set<String> getChangingKeys() {
       return changingKeys_;
+   }
+
+   public Set<String> imageKeys() {
+      return imageStorage_.imageKeys();
    }
 
 

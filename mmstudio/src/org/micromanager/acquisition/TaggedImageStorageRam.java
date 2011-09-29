@@ -6,6 +6,7 @@
 package org.micromanager.acquisition;
 
 import java.util.HashMap;
+import java.util.Set;
 import mmcorej.TaggedImage;
 import org.json.JSONObject;
 import org.micromanager.api.TaggedImageStorage;
@@ -46,6 +47,10 @@ public class TaggedImageStorageRam implements TaggedImageStorage {
 
    public TaggedImage getImage(int channel, int slice, int frame, int position) {
       return imageMap_.get(MDUtils.generateLabel(channel, slice, frame, position));
+   }
+
+   public Set<String> imageKeys() {
+      return imageMap_.keySet();
    }
 
    public void finished() {

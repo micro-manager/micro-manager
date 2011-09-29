@@ -22,6 +22,7 @@ import java.io.Writer;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.Set;
 import mmcorej.TaggedImage;
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -179,6 +180,10 @@ public class TaggedImageStorageDiskDefault implements TaggedImageStorage {
       } else {
          return null;
       }
+   }
+
+   public Set<String> imageKeys() {
+      return metadataTable_.keySet();
    }
 
    private String createFileName(JSONObject md) {
