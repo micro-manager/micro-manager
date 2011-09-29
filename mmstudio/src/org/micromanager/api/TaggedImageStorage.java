@@ -5,6 +5,7 @@
 
 package org.micromanager.api;
 
+import java.util.Set;
 import mmcorej.TaggedImage;
 import org.json.JSONObject;
 import org.micromanager.acquisition.TaggedImageStorageDiskDefault;
@@ -19,6 +20,7 @@ public interface TaggedImageStorage {
    public TaggedImage getImage(int channelIndex, int sliceIndex,
                                int frameIndex, int positionIndex);
    public void putImage(TaggedImage taggedImage) throws MMException;
+   public Set<String> imageKeys();
    public void finished();
    public boolean isFinished();
    public void setSummaryMetadata(JSONObject md);
