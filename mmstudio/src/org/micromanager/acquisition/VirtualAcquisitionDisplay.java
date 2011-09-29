@@ -1059,6 +1059,7 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
          ci.setChannelLut(lut);
       } else {
          hyperImage_.getProcessor().setColorModel(lut);
+         updateChannelContrast(channel);
       }
    }
 
