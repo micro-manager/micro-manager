@@ -60,10 +60,8 @@ public class MMImageCache implements TaggedImageStorage, ImageCache {
    public void finished() {
       imageStorage_.finished();
       String path = getDiskLocation();
-      if (path != null) {
-         for (ImageCacheListener l:imageStorageListeners_) {
-            l.imagingFinished(path);
-         }
+      for (ImageCacheListener l:imageStorageListeners_) {
+         l.imagingFinished(path);
       }
    }
 

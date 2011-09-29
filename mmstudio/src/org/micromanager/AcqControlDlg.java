@@ -1045,7 +1045,7 @@ public class AcqControlDlg extends JDialog implements PropertyChangeListener {
       // Summary panel
 
       summaryTextArea_ = new JTextArea();
-      summaryTextArea_.setFont(new Font("Arial", Font.PLAIN, 10));
+      summaryTextArea_.setFont(new Font("Arial", Font.PLAIN, 11));
       summaryTextArea_.setEditable(false);
       summaryTextArea_.setBounds(4, 19, 350, 120);
       summaryTextArea_.setMargin(new Insets(2, 2, 2, 2));

@@ -255,6 +255,7 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
     */
    public void imagingFinished(String path) {
       updateDisplay(null, true);
+      updateWindow();
    }
 
    private void updateDisplay(TaggedImage taggedImage, boolean finalUpdate) {
