@@ -46,20 +46,21 @@
       (dorun (map #(println (.getAbsolutePath %)) outdated-dlls))
       (println "\n\n"))))
 
-(defn send-full-report [mode]
+(defn send-full-report [mode send?]
   (let [report
         (with-out-str
           (report-build-errors 32 mode)
           (report-build-errors 64 mode))]
-    (when-not (empty? report)
-     (with-session
-       "mmbuilderrors@gmail.com" (slurp "C:\\pass.txt") "smtp.gmail.com" 465 "smtp" true
-       (send-email (text-email ["info@micro-manager.org"] "mm build errors" report)))  
-    report
-    )))
+    (when send
+      (when-not (empty? report)
+        (with-session
+          "mmbuilderrors@gmail.com" (slurp "C:\\pass.txt") "smtp.gmail.com" 465 "smtp" true
+          (send-email (text-email ["info@micro-manager.org"] "mm build errors" report)))  
+        (println report)
+        ))))
 
 (defn -main [mode]
-  (send-full-report (get {"inc" :inc "full" :full} mode)))
+  (send-full-report (get {"inc" :inc "full" :full} mode) true))
 
     
  
