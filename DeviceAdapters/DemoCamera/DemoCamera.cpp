@@ -240,6 +240,7 @@ CDemoCamera::CDemoCamera() :
 	binSize_(1),
 	cameraCCDXSize_(512),
 	cameraCCDYSize_(512),
+   ccdT_ (0.0),
    nComponents_(1),
    pDemoResourceLock_(0),
    triggerDevice_(""),
@@ -403,9 +404,15 @@ int CDemoCamera::Initialize()
    assert(nRet == DEVICE_OK);
 
    // camera temperature
-   nRet = CreateProperty(MM::g_Keyword_CCDTemperature, "0", MM::Float, false);
+   pAct = new CPropertyAction (this, &CDemoCamera::OnCCDTemp);
+   nRet = CreateProperty(MM::g_Keyword_CCDTemperature, "0", MM::Float, false, pAct);
    assert(nRet == DEVICE_OK);
    SetPropertyLimits(MM::g_Keyword_CCDTemperature, -100, 10);
+
+   // camera temperature RO
+   pAct = new CPropertyAction (this, &CDemoCamera::OnCCDTemp);
+   nRet = CreateProperty("CCDTemperature RO", "0", MM::Float, true, pAct);
+   assert(nRet == DEVICE_OK);
 
    // readout time
    pAct = new CPropertyAction (this, &CDemoCamera::OnReadoutTime);
@@ -1432,6 +1439,19 @@ int CDemoCamera::OnTriggerDevice(MM::PropertyBase* pProp, MM::ActionType eAct)
    return DEVICE_OK;
 }
 
+
+int CDemoCamera::OnCCDTemp(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   if (eAct == MM::BeforeGet)
+   {
+      pProp->Set(ccdT_);
+   }
+   else if (eAct == MM::AfterSet)
+   {
+      pProp->Get(ccdT_);
+   }
+   return DEVICE_OK;
+}
 
 ///////////////////////////////////////////////////////////////////////////////
 // Private CDemoCamera methods

@@ -164,6 +164,7 @@ public:
    int OnDropPixels(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnSaturatePixels(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnFractionOfPixelsToDropOrSaturate(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnCCDTemp(MM::PropertyBase* pProp, MM::ActionType eAct);
    MM::MMTime CurrentTime(void) { return GetCurrentMMTime(); };
 
 private:
@@ -191,6 +192,7 @@ private:
 	long binSize_;
 	long cameraCCDXSize_;
 	long cameraCCDYSize_;
+   double ccdT_;
 	std::string triggerDevice_;
 
 	bool dropPixels_;
