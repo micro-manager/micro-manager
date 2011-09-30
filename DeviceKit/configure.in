@@ -1,0 +1,65 @@
+#       -*- Autoconf -*-
+# Process this file with autoconf to produce a configure script.
+
+AC_PREREQ(2.57)
+AC_INIT(FULL-PACKAGE-NAME, VERSION, BUG-REPORT-ADDRESS)
+#AC_CONFIG_SRCDIR([DemoCamera/DemoCamera.cpp])
+AC_CANONICAL_HOST
+AM_INIT_AUTOMAKE
+AC_PROG_LIBTOOL
+
+m4_include([../configure.common])
+
+AX_BOOST_BASE
+AX_BOOST_DATE_TIME
+
+# Checks for typedefs, structures, and compiler characteristics.
+AC_HEADER_STDBOOL
+AC_C_CONST
+AC_C_INLINE
+
+# Checks for library functions.
+AC_HEADER_STDC
+AC_CHECK_FUNCS([memset])
+AC_CHECK_LIB(dl, dlopen) # for dynamic linking on linux
+
+
+#---------------------------------------------------
+# Check for ZLIB
+#---------------------------------------------------
+AC_MSG_CHECKING(for zlib)
+AC_FIND_FILE([zlib.h], [/usr/local/$ARCH/include /usr/include], ZLIBINCDIR)
+if test x$ZLIBINCDIR = xNO; then
+   AC_MSG_RESULT([not found]) 
+   exit 1
+else 
+   AC_CHECK_HEADERS([$ZLIBINCDIR/zlib.h])
+   if test -z "$LIBZLIB" ; then
+      AC_FIND_FILE([libz.a], [/usr/local/$ARCH/lib /usr/local/lib /usr/lib /usr/lib64 /usr/lib/$build_platform-$build_os], ZLIBLIBDIR)
+      if test x$ZLIBLIBDIR = xNO; then
+         AC_MSG_RESULT([zlib not found])
+         exit 1
+      else
+         AC_MSG_RESULT([zlib.a found])
+         LIBZLIB="$ZLIBLIBDIR/libz.a"
+      fi 
+   fi 
+fi 
+AC_SUBST(LIBZLIB) 
+
+# On the Mac we need some frameworks that can be in the way on Linux
+case $host in
+   *apple-darwin*)
+      SERIALFRAMEWORKS="-framework CoreFoundation -framework IOKit"
+      AC_MSG_RESULT($SERIALFRAMEWORKS)
+      ;;
+   *linux*)
+      ;;
+esac
+AC_SUBST(SERIALFRAMEWORKS)
+
+
+AC_CONFIG_FILES(Makefile CoreTest/Makefile DeviceTest/Makefile LibraryTest/Makefile)
+
+
+AC_OUTPUT
