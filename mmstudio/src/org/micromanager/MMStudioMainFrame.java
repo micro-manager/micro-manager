@@ -3377,6 +3377,9 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
          // update Channel menus in Multi-dimensional acquisition dialog
          updateChannelCombos();
 
+         // Needed to update read-only properties.  May slow things down...
+         core_.updateSystemStateCache();
+
       } catch (Exception e) {
          ReportingUtils.logError(e);
       }
