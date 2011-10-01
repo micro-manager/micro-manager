@@ -192,12 +192,12 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
       if (this.useMultiPosition_)
          acquisitionSettings.positions.addAll(Arrays.asList(posList_.getPositions()));
 
-      // Other
-
-      acquisitionSettings.timeFirst = (acqOrderMode_ == AcqOrderMode.TIME_POS_CHANNEL_SLICE || 
-    		  acqOrderMode_ == AcqOrderMode.TIME_POS_SLICE_CHANNEL);
-      acquisitionSettings.slicesFirst = (acqOrderMode_ == AcqOrderMode.POS_TIME_SLICE_CHANNEL ||
-    		  acqOrderMode_ == AcqOrderMode.TIME_POS_SLICE_CHANNEL);
+      
+        //timeFirst = true means that time points are collected at each position
+      acquisitionSettings.timeFirst = (acqOrderMode_ == AcqOrderMode.POS_TIME_CHANNEL_SLICE || 
+    		  acqOrderMode_ == AcqOrderMode.POS_TIME_SLICE_CHANNEL);
+      acquisitionSettings.slicesFirst = (acqOrderMode_ == AcqOrderMode.POS_TIME_CHANNEL_SLICE ||
+    		  acqOrderMode_ == AcqOrderMode.TIME_POS_CHANNEL_SLICE);
 
       acquisitionSettings.useAutofocus = useAutoFocus_;
       acquisitionSettings.skipAutofocusCount = afSkipInterval_;
