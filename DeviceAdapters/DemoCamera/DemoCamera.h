@@ -738,6 +738,7 @@ public:
 
    int OnTrigger(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnVoltage(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnRealVoltage(MM::PropertyBase* pProp, MM::ActionType eAct);
 
 private:
    double volt_;

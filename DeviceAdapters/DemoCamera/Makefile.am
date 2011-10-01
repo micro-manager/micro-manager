@@ -4,7 +4,7 @@ libmmgr_dal_DemoCamera_la_SOURCES = DemoCamera.cpp DemoCamera.h ../../MMDevice/M
 libmmgr_dal_DemoCamera_la_LDFLAGS = -module 
 libmmgr_dal_DemoCamera_la_LIBADD = ../../MMDevice/.libs/libMMDevice.a
 
-install:
+install: libmmgr_dal_DemoCamera.la
 	cp .libs/libmmgr_dal_DemoCamera.so $(DESTDIR)$(DEVICEADAPTERPATH)/libmmgr_dal_DemoCamera$(MMSUFFIX)
 
 EXTRA_DIST = DemoCamera.vcproj license.txt

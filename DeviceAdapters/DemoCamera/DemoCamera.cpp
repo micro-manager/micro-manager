@@ -2767,6 +2767,8 @@ sequenceIndex_(0),
 sentSequence_(vector<double>()),
 nascentSequence_(vector<double>())
 {
+   SetErrorText(SIMULATED_ERROR, "Random, simluated error");
+   SetErrorText(ERR_SEQUENCE_INACTIVE, "Sequence triggered, but sequence is not running");
 }
 
 DemoDA::~DemoDA() {
@@ -2786,6 +2788,9 @@ int DemoDA::Initialize()
    pAct = new CPropertyAction(this, &DemoDA::OnVoltage);
    CreateProperty("Voltage", "0", MM::Float, false, pAct);
    SetPropertyLimits("Voltage", 0.0, 10.0);
+
+   pAct = new CPropertyAction(this, &DemoDA::OnRealVoltage);
+   CreateProperty("Real Voltage", "0", MM::Float, true, pAct);
 
    return DEVICE_OK;
 }
@@ -2917,6 +2922,16 @@ int DemoDA::OnVoltage(MM::PropertyBase* pProp, MM::ActionType eAct)
    return DEVICE_OK;
 }
 
+int DemoDA::OnRealVoltage(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   if (eAct == MM::BeforeGet)
+   {
+      pProp->Set(gatedVolts_);
+   }
+   return DEVICE_OK;
+}
+
+///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 // CDemoAutoFocus implementation
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
