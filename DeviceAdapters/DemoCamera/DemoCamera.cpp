@@ -109,8 +109,8 @@ MODULE_API void InitializeModuleData()
    AddAvailableDeviceName(g_LightPathDeviceName, "Demo light path");
    AddAvailableDeviceName(g_AutoFocusDeviceName, "Demo auto focus");
    AddAvailableDeviceName(g_ShutterDeviceName, "Demo shutter");
-   // AddAvailableDeviceName(g_DADeviceName, "Demo DA");
-   // AddAvailableDeviceName(g_MagnifierDeviceName, "Demo Optovar");
+   AddAvailableDeviceName(g_DADeviceName, "Demo DA");
+   AddAvailableDeviceName(g_MagnifierDeviceName, "Demo Optovar");
    AddAvailableDeviceName("TransposeProcessor", "TransposeProcessor");
    AddAvailableDeviceName("ImageFlipX", "ImageFlipX");
    AddAvailableDeviceName("ImageFlipY", "ImageFlipY");
@@ -2783,6 +2783,10 @@ int DemoDA::Initialize()
    AddAllowedValue("Trigger", "-");
    AddAllowedValue("Trigger", "+");
 
+   pAct = new CPropertyAction(this, &DemoDA::OnVoltage);
+   CreateProperty("Voltage", "0", MM::Float, false, pAct);
+   SetPropertyLimits("Voltage", 0.0, 10.0);
+
    return DEVICE_OK;
 }
 
@@ -2892,6 +2896,23 @@ int DemoDA::OnTrigger(MM::PropertyBase* pProp, MM::ActionType eAct)
             return ERR_IN_SEQUENCE;
          }
       }
+   }
+   return DEVICE_OK;
+}
+
+int DemoDA::OnVoltage(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   if (eAct == MM::BeforeGet)
+   {
+      double volts = 0.0;
+      GetSignal(volts);
+      pProp->Set(volts);
+   }
+   else if (eAct == MM::AfterSet)
+   {
+      double volts = 0.0;
+      pProp->Get(volts);
+      SetSignal(volts);
    }
    return DEVICE_OK;
 }
