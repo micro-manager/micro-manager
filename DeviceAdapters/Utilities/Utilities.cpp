@@ -223,6 +223,7 @@ int MultiShutter::OnPhysicalShutter(MM::PropertyBase* pProp, MM::ActionType eAct
  * DAShutter implementation
  */
 DAShutter::DAShutter() :
+   DADevice_(0),
    DADeviceName_ (""),
    initialized_ (false)
 {
@@ -325,13 +326,16 @@ int DAShutter::GetOpen(bool& open)
 // Action Interface
 //////////////////////////////////////
 int DAShutter::OnDADevice(MM::PropertyBase* pProp, MM::ActionType eAct)
-{
+{ 
    if (eAct == MM::BeforeGet)
    {
       pProp->Set(DADeviceName_.c_str());
    }
    else if (eAct == MM::AfterSet)
    {
+      // Make sure that the "old" DA device is open:
+      SetOpen(true);
+
       std::string DADeviceName;
       pProp->Get(DADeviceName);
       MM::SignalIO* DADevice = (MM::SignalIO*) GetDevice(DADeviceName.c_str());
@@ -340,6 +344,9 @@ int DAShutter::OnDADevice(MM::PropertyBase* pProp, MM::ActionType eAct)
          DADeviceName_ = DADeviceName;
       } else
          return ERR_INVALID_DEVICE_NAME;
+
+      // Gates are open by default.  Start with shutter closed:
+      SetOpen(false);
    }
    return DEVICE_OK;
 }
