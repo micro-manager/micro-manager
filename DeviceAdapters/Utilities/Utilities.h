@@ -70,6 +70,7 @@ public:
    // action interface
    // ----------------
    int OnPhysicalShutter(MM::PropertyBase* pProp, MM::ActionType eAct, long index);
+   int OnState(MM::PropertyBase* pProp, MM::ActionType eAct);
 
 private:
    std::vector<std::string> availableShutters_;

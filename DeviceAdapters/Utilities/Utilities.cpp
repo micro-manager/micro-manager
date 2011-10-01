@@ -153,6 +153,12 @@ int MultiShutter::Initialize()
       SetAllowedValues(os.str().c_str(), availableShutters_);
    }
 
+
+   CPropertyAction* pAct = new CPropertyAction(this, &MultiShutter::OnState);
+   CreateProperty("State", "0", MM::Integer, false, pAct);
+   AddAllowedValue("State", "0");
+   AddAllowedValue("State", "1");
+
    int ret = UpdateStatus();
    if (ret != DEVICE_OK)
       return ret;
@@ -186,6 +192,7 @@ int MultiShutter::SetOpen(bool open)
             return ret;
       }
    }
+   open_ = open;
    return DEVICE_OK;
 }
 
@@ -218,6 +225,31 @@ int MultiShutter::OnPhysicalShutter(MM::PropertyBase* pProp, MM::ActionType eAct
    return DEVICE_OK;
 }
 
+
+int MultiShutter::OnState(MM::PropertyBase* pProp, MM::ActionType eAct)
+{ 
+   if (eAct == MM::BeforeGet)
+   {
+      bool open;
+      int ret = GetOpen(open);
+      if (ret != DEVICE_OK)
+         return ret;
+      long state = 0;
+      if (open)
+         state = 1;
+      pProp->Set(state);
+   }
+   else if (eAct == MM::AfterSet)
+   {
+      long state;
+      pProp->Get(state);
+      bool open = false;
+      if (state == 1)
+         open = true;
+      SetOpen(open);
+   }
+   return DEVICE_OK;
+}
 
 /**********************************************************************
  * DAShutter implementation
