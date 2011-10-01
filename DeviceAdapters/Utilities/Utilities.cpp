@@ -270,7 +270,6 @@ int DAShutter::Initialize()
    }
 
 
-
    CPropertyAction* pAct = new CPropertyAction (this, &DAShutter::OnDADevice);      
    std::string defaultDA = "Undefined";
    if (availableDAs_.size() >= 1)
@@ -284,6 +283,11 @@ int DAShutter::Initialize()
    // This is needed, otherwise DeviceDA_ is not always set resulting in crashes
    // This could lead to strange problems if multiple DA devices are loaded
    SetProperty("DA Device", defaultDA.c_str());
+
+   pAct = new CPropertyAction(this, &DAShutter::OnState);
+   CreateProperty("State", "0", MM::Integer, false, pAct);
+   AddAllowedValue("State", "0");
+   AddAllowedValue("State", "1");
 
    int ret = UpdateStatus();
    if (ret != DEVICE_OK)
@@ -351,6 +355,31 @@ int DAShutter::OnDADevice(MM::PropertyBase* pProp, MM::ActionType eAct)
    return DEVICE_OK;
 }
 
+
+int DAShutter::OnState(MM::PropertyBase* pProp, MM::ActionType eAct)
+{ 
+   if (eAct == MM::BeforeGet)
+   {
+      bool open;
+      int ret = GetOpen(open);
+      if (ret != DEVICE_OK)
+         return ret;
+      long state = 0;
+      if (open)
+         state = 1;
+      pProp->Set(state);
+   }
+   else if (eAct == MM::AfterSet)
+   {
+      long state;
+      pProp->Get(state);
+      bool open = false;
+      if (state == 1)
+         open = true;
+      return SetOpen(open);
+   }
+   return DEVICE_OK;
+}
 
 /**************************
  * DAZStage implementation
