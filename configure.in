@@ -303,5 +303,5 @@ if test -z "${BUILD_SECRETDEVICEADAPTERS}" ; then
    AC_CONFIG_SUBDIRS([SecretDeviceAdapters])
 fi
 
-AC_CONFIG_SUBDIRS(DeviceAdapters Test_Programs)
+AC_CONFIG_SUBDIRS(DeviceAdapters DeviceKit)
 AC_OUTPUT(Makefile MMCore/Makefile MMCoreJ_wrap/Makefile mmstudio/Makefile acqEngine/Makefile plugins/Makefile scripts/Makefile autofocus/Makefile MMDevice/Makefile  MMCorePy_wrap/Makefile)
