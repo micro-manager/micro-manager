@@ -224,7 +224,7 @@ public class HyperstackControls extends java.awt.Panel implements ImageListener 
             String xyPosition;
             try {
                xyPosition = taggedImg.tags.getString("PositionName");
-               if (xyPosition != null) {
+               if (xyPosition != null && !xyPosition.contentEquals("null")) {
                   status += xyPosition + ", ";
                }
             } catch (Exception e) {
@@ -232,8 +232,8 @@ public class HyperstackControls extends java.awt.Panel implements ImageListener 
             }
 
             try {
-               String time = NumberUtils.doubleToDisplayString(taggedImg.tags.getDouble("ElapsedTime-ms"));
-               status += time + " ms";
+               String time = NumberUtils.doubleToDisplayString(taggedImg.tags.getDouble("ElapsedTime-ms")/1000);
+               status += time + " s";
             } catch (JSONException ex) {
                ReportingUtils.logError("MetaData did not contain ElapsedTime-ms field");
             }
@@ -253,7 +253,7 @@ public class HyperstackControls extends java.awt.Panel implements ImageListener 
             String chan;
             try {
                chan = MDUtils.getChannelName(taggedImg.tags);
-               if (chan != null) {
+               if (chan != null && !chan.contentEquals("null")) {
                   status += ", " + chan;
                }
             } catch (Exception ex) {
