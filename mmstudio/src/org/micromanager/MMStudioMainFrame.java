@@ -1366,12 +1366,13 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
       String calibrationTooltip = "Define size calibrations specific to each objective lens.  " +
     		  "When the objective in use has a calibration defined, " +
     		  "micromanager will automatically use it when " +
-    		  "calculating metadata"; 
-      if (JavaUtils.isMac())
-    	  calibrationMenuItem.setToolTipText(calibrationTooltip);
+    		  "calculating metadata";
+      
+      String mrjProp = System.getProperty("mrj.version");
+      if (mrjProp != null && !mrjProp.equals(null)) // running on a mac
+         calibrationMenuItem.setToolTipText(calibrationTooltip);
       else
-          calibrationMenuItem.setToolTipText(TooltipTextMaker.addHTMLBreaksForTooltip(calibrationTooltip));
-    		  
+         calibrationMenuItem.setToolTipText(TooltipTextMaker.addHTMLBreaksForTooltip(calibrationTooltip));
 
       toolsMenu.addSeparator();
 
@@ -3307,7 +3308,8 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
           ReportingUtils.logError(e);
        }
       
-      if (JavaUtils.isMac()) // running on a mac
+      String mrjProp = System.getProperty("mrj.version");
+      if (mrjProp != null && !mrjProp.equals(null)) // running on a mac
           newMenuItem.setToolTipText(toolTipDescription);
       else      
           newMenuItem.setToolTipText( TooltipTextMaker.addHTMLBreaksForTooltip(toolTipDescription) );
