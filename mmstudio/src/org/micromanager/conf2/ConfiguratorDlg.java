@@ -30,13 +30,13 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.InputStream;
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.net.InetAddress;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -56,19 +56,17 @@ import javax.swing.JEditorPane;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JScrollPane;
-import javax.swing.JTextArea;
-import javax.swing.JViewport;
 import javax.swing.WindowConstants;
 import javax.swing.border.LineBorder;
 import javax.swing.text.DefaultCaret;
 
 import mmcorej.CMMCore;
 import mmcorej.StrVector;
+
 import org.micromanager.MMStudioMainFrame;
 import org.micromanager.utils.FileDialogs;
-
-import org.micromanager.utils.ReportingUtils;
 import org.micromanager.utils.HttpUtils;
+import org.micromanager.utils.ReportingUtils;
 
 /**
  * Configuration Wizard main panel.
@@ -122,17 +120,14 @@ public class ConfiguratorDlg extends JDialog {
         });
         setResizable(false);
         getContentPane().setLayout(null);
-        setTitle("Hardware Configuration Wizard");
+        setTitle("New Hardware Configuration Wizard");
         setBounds(50, 100, 602, 672);
 
         final JScrollPane scrollPane = new JScrollPane();
         scrollPane.setBounds(9, 320, 578, 286);
         getContentPane().add(scrollPane);
         scrollPane.getViewport().setViewPosition(new Point(0,0));
-        
-      
-        
-        
+
         helpTextPane_ = new JEditorPane();
         scrollPane.setViewportView(helpTextPane_);
         helpTextPane_.setEditable(false);

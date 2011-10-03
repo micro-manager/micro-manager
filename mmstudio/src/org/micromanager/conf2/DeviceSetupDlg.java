@@ -19,6 +19,7 @@ import javax.swing.JLabel;
 import javax.swing.JTextField;
 import java.awt.event.ActionListener;
 import java.awt.event.ActionEvent;
+import java.awt.Dialog.ModalityType;
 
 public class DeviceSetupDlg extends MMDialog {
 
@@ -35,6 +36,8 @@ public class DeviceSetupDlg extends MMDialog {
     * Create the dialog.
     */
    public DeviceSetupDlg(MicroscopeModel mod, CMMCore c, String library, String devName) {
+      setModalityType(ModalityType.APPLICATION_MODAL);
+      setModal(true);
       setBounds(100, 100, 450, 300);
       model = mod;
       lib = library;
@@ -81,12 +84,22 @@ public class DeviceSetupDlg extends MMDialog {
          getContentPane().add(buttonPane, BorderLayout.SOUTH);
          {
             JButton okButton = new JButton("OK");
+            okButton.addActionListener(new ActionListener() {
+               public void actionPerformed(ActionEvent e) {
+                  onOK();
+               }
+            });
             okButton.setActionCommand("OK");
             buttonPane.add(okButton);
             getRootPane().setDefaultButton(okButton);
          }
          {
             JButton cancelButton = new JButton("Cancel");
+            cancelButton.addActionListener(new ActionListener() {
+               public void actionPerformed(ActionEvent e) {
+                  onCancel();
+               }
+            });
             cancelButton.setActionCommand("Cancel");
             buttonPane.add(cancelButton);
          }
@@ -102,6 +115,16 @@ public class DeviceSetupDlg extends MMDialog {
       
       setTitle("Device: " + name + " | Library: " + lib);
       devLabel.setText("NewLabel");
+   }
+
+   protected void onCancel() {
+      // TODO Auto-generated method stub
+      
+   }
+
+   protected void onOK() {
+      // TODO Auto-generated method stub
+      
    }
 
    private void loadDevice() {
@@ -130,6 +153,7 @@ public class DeviceSetupDlg extends MMDialog {
    private void initializeDevice() {
       try {
          core.initializeDevice(devLabel.getText());
+         btnInitialize.setEnabled(false);
       } catch (Exception e) {
          showMessage(e.getMessage());
       }

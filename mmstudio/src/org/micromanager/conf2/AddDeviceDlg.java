@@ -50,6 +50,7 @@ import javax.swing.JCheckBox;
 /**
  * Dialog to add a new device to the configuration.
  */
+@SuppressWarnings("unused")
 public class AddDeviceDlg extends JDialog implements MouseListener,
       TreeSelectionListener {
 
@@ -327,6 +328,7 @@ public class AddDeviceDlg extends JDialog implements MouseListener,
             String descr = userData[2].toString();
             
             DeviceSetupDlg dlg = new DeviceSetupDlg(model_, core_, lib, adapterName);
+            dlg.setVisible(true);
          }
       }
       return true;
