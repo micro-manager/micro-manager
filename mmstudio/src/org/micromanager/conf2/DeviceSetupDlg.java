@@ -129,6 +129,7 @@ public class DeviceSetupDlg extends MMDialog {
             buttonPane.add(cancelButton);
          }
       }
+      
       addWindowListener(new WindowAdapter() {
          public void windowClosing(final WindowEvent e) {
             savePosition();

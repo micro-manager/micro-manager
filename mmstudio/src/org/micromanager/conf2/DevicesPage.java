@@ -33,6 +33,8 @@ import javax.swing.JButton;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.ListSelectionModel;
+import javax.swing.event.ListSelectionEvent;
+import javax.swing.event.ListSelectionListener;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.TableModel;
 
@@ -44,7 +46,7 @@ import org.micromanager.utils.ReportingUtils;
 /**
  * Wizard page to add or remove devices.
  */
-public class DevicesPage extends PagePanel {
+public class DevicesPage extends PagePanel implements ListSelectionListener {
    private static final long serialVersionUID = 1L;
 
    class DeviceTable_TableModel extends AbstractTableModel {
@@ -119,6 +121,8 @@ public class DevicesPage extends PagePanel {
    private JTable deviceTable_;
    private JScrollPane scrollPane_;
    private static final String HELP_FILE_NAME = "conf_devices_page.html";
+   private JButton peripheralButton;
+   private JButton removeButton;
    /**
     * Create the panel
     */
@@ -142,6 +146,7 @@ public class DevicesPage extends PagePanel {
       deviceTable_ = new JTable();
       deviceTable_.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
       scrollPane_.setViewportView(deviceTable_);
+      deviceTable_.getSelectionModel().addListSelectionListener(this);
 
       final JButton addButton = new JButton();
       addButton.addActionListener(new ActionListener() {
@@ -153,18 +158,41 @@ public class DevicesPage extends PagePanel {
       addButton.setBounds(469, 10, 93, 23);
       add(addButton);
 
-      final JButton removeButton = new JButton();
+      removeButton = new JButton();
       removeButton.addActionListener(new ActionListener() {
          public void actionPerformed(ActionEvent arg0) {
             removeDevice();
          }
       });
       removeButton.setText("Remove");
-      removeButton.setBounds(469, 39, 93, 23);
+      removeButton.setBounds(469, 92, 93, 23);
       add(removeButton);
+      removeButton.setEnabled(false);
+      
+      peripheralButton = new JButton("Child...");
+      peripheralButton.addActionListener(new ActionListener() {
+         public void actionPerformed(ActionEvent e) {
+            addPeripherals();
+         }
+      });
+      peripheralButton.setBounds(469, 34, 93, 23);
+      add(peripheralButton);
+      peripheralButton.setEnabled(false);
       //
    }
    
+   protected void addPeripherals() {
+      int sel = deviceTable_.getSelectedRow();
+      if (sel < 0)
+         return;      
+      String devName = (String)deviceTable_.getValueAt(sel, 0);
+      
+      PeripheralSetupDlg dlg = new PeripheralSetupDlg(model_, core_, devName);
+      dlg.setVisible(true);
+      
+      rebuildTable();
+   }
+
    protected void removeDevice() {
       int sel = deviceTable_.getSelectedRow();
       if (sel < 0)
@@ -249,5 +277,36 @@ public class DevicesPage extends PagePanel {
    
    public void saveSettings() {
       
+   }
+
+
+   /**
+    * Handler for list selection events in our device table
+    */
+   public void valueChanged(ListSelectionEvent e) {
+      int row = deviceTable_.getSelectedRow();
+      if (row < 0) {
+         // nothing selected
+         peripheralButton.setEnabled(false);
+         removeButton.setEnabled(false);
+         return;
+      }
+      
+      String devName = (String)deviceTable_.getValueAt(row, 0);
+      Device dev = model_.findDevice(devName);
+      if (dev == null) {
+         // device selected but not found in the model
+         // this should never happen
+         ReportingUtils.logError("Internal error in PeripheralSetupDlg: device not found");
+         peripheralButton.setEnabled(false);
+         removeButton.setEnabled(false);
+         return;
+      }
+      
+      // if device is hub it may have some children available
+      peripheralButton.setEnabled(dev.isHub());
+      
+      // any selected device can be removed unless it is Core
+      removeButton.setEnabled(!dev.isCore());
    }
 }
