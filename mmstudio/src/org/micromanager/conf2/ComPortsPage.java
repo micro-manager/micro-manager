@@ -91,7 +91,7 @@ public class ComPortsPage extends PagePanel {
             ltm.setValue(spname);
          }
          PropertyTableModel tm = (PropertyTableModel) portTable_.getModel();
-         tm.updateValues(model_, PropertyTableModel.COMPORT);
+         tm.updateValues(model_, PropertyTableModel.COMPORT, null);
          tm.fireTableStructureChanged();
          portTable_.repaint();
       }
@@ -380,7 +380,7 @@ public class ComPortsPage extends PagePanel {
    }
 
    private void buildPortTable() {
-      PropertyTableModel tm = new PropertyTableModel(this, model_, PropertyTableModel.COMPORT);
+      PropertyTableModel tm = new PropertyTableModel(model_, PropertyTableModel.COMPORT);
       portTable_.setModel(tm);
       PropertyValueCellEditor propValueEditor = new PropertyValueCellEditor();
       PropertyValueCellRenderer propValueRenderer = new PropertyValueCellRenderer();

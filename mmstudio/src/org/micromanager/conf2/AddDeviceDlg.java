@@ -327,7 +327,7 @@ public class AddDeviceDlg extends JDialog implements MouseListener,
             String lib = userData[0].toString();
             String descr = userData[2].toString();
             
-            DeviceSetupDlg dlg = new DeviceSetupDlg(model_, core_, lib, adapterName);
+            DeviceSetupDlg dlg = new DeviceSetupDlg(model_, core_, lib, adapterName, descr);
             dlg.setVisible(true);
          }
       }

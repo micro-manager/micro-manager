@@ -52,7 +52,7 @@ import org.micromanager.utils.ReportingUtils;
  *
  */
 public class EditPropertiesPage extends PagePanel {
-    class DetectionTask extends Thread {
+    private class DetectionTask extends Thread {
         DetectionTask(String id) {
             super(id);
         }
@@ -341,7 +341,7 @@ public class EditPropertiesPage extends PagePanel {
         add(detectButton_);
     }
     private void rebuildTable() {
-        PropertyTableModel tm = new PropertyTableModel(this, model_, PropertyTableModel.PREINIT);
+        PropertyTableModel tm = new PropertyTableModel(model_, PropertyTableModel.PREINIT);
         propTable_.setModel(tm);
         PropertyValueCellEditor propValueEditor = new PropertyValueCellEditor();
         PropertyValueCellRenderer propValueRenderer = new PropertyValueCellRenderer();

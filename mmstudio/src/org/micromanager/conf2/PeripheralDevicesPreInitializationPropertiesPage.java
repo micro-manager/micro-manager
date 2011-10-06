@@ -69,7 +69,7 @@ public class PeripheralDevicesPreInitializationPropertiesPage extends PagePanel 
    }
 
    private void rebuildTable() {
-      PropertyTableModel tm = new PropertyTableModel(this, model_, PropertyTableModel.PREINIT);
+      PropertyTableModel tm = new PropertyTableModel(model_, PropertyTableModel.PREINIT);
       propTable_.setModel(tm);
       PropertyValueCellEditor propValueEditor = new PropertyValueCellEditor();
       PropertyValueCellRenderer propValueRenderer = new PropertyValueCellRenderer();

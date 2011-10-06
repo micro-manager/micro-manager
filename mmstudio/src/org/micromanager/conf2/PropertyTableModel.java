@@ -28,15 +28,13 @@ import java.util.ArrayList;
 import javax.swing.table.AbstractTableModel;
 import org.micromanager.utils.MMPropertyTableModel;
 import org.micromanager.utils.PropertyItem;
+import org.micromanager.utils.ReportingUtils;
 
 /**
  * Table model for device property tables. 
  */
 class PropertyTableModel extends AbstractTableModel implements MMPropertyTableModel {
-   private final PagePanel parentPage_;
-   
    private static final long serialVersionUID = 1L;
-   
    public final String[] COLUMN_NAMES = new String[] {
          "Device",
          "Property",
@@ -53,19 +51,28 @@ class PropertyTableModel extends AbstractTableModel implements MMPropertyTableMo
    PropertyItem props_[];
    String devNames_[];
    
-   public PropertyTableModel(PagePanel page, MicroscopeModel model, int mode) {
-      parentPage_ = page;
-      updateValues(model, mode);
+   public PropertyTableModel(MicroscopeModel model, int mode) {
+      updateValues(model, mode, null);
    }
 
+   /**
+    * Handles single device case
+    */
+   public PropertyTableModel(MicroscopeModel model, Device dev) {
+      updateValues(model, PREINIT, dev);
+   }
 
-   public void updateValues(MicroscopeModel model, int mode) {
-
-      if (mode == COMPORT)
-         devices_ = model.getAvailableSerialPorts();
-      else
-         devices_ = model.getDevices();
+   public void updateValues(MicroscopeModel model, int mode, Device dev) {
       model_ = model;
+      if (dev == null) {
+         if (mode == COMPORT)
+            devices_ = model.getAvailableSerialPorts();
+         else
+            devices_ = model.getDevices();
+      } else {
+         devices_ = new Device[1];
+         devices_[0] = dev;
+      }
       
       model_.dumpComPortsSetupProps(); // >>>>>>>
       
@@ -137,7 +144,7 @@ class PropertyTableModel extends AbstractTableModel implements MMPropertyTableMo
             props_[row].value = (String)value;
             fireTableCellUpdated(row, col);
          } catch (Exception e) {
-            parentPage_.handleError(e.getMessage());
+            ReportingUtils.logError(e.getMessage());
          }
       }
    }
