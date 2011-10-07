@@ -755,10 +755,10 @@ public class AcqControlDlg extends JDialog implements PropertyChangeListener {
       positionsPanel_ = (CheckBoxPanel) createPanel("Multiple positions (XY)", 5, 93, 220, 154, true);
       slicesPanel_ = (CheckBoxPanel) createPanel("Z-stacks (slices)", 5, 156, 220, 306, true);
      
-      acquisitionOrderPanel_ = createPanel("Acquisition order", 226, 5, 413, 63);
+      acquisitionOrderPanel_ = createPanel("Acquisition order", 226, 5, 427, 63);
      
       summaryPanel_ = createPanel("Summary", 226, 152, 510, 306);
-      afPanel_ = (CheckBoxPanel) createPanel("Autofocus", 226, 65, 415, 150, true);
+      afPanel_ = (CheckBoxPanel) createPanel("Autofocus", 226, 65, 427, 150, true);
 
       channelsPanel_ = (CheckBoxPanel) createPanel("Channels", 5, 308, 510, 451, true);
       savePanel_ = (CheckBoxPanel) createPanel("Save images", 5, 453, 510, 620, true);
@@ -1028,7 +1028,7 @@ public class AcqControlDlg extends JDialog implements PropertyChangeListener {
 
       acqOrderBox_ = new JComboBox(); 	
       acqOrderBox_.setFont(new Font("", Font.PLAIN, 10));
-      acqOrderBox_.setBounds(4, 26, 179, 22);
+      acqOrderBox_.setBounds(2, 26, 195, 22);
       acquisitionOrderPanel_.add(acqOrderBox_);
 
       acqOrderModes_ = new AcqOrderMode[4];
@@ -1346,7 +1346,7 @@ public class AcqControlDlg extends JDialog implements PropertyChangeListener {
          }
       });
       closeButton.setText("Close");
-      closeButton.setBounds(430, 10, 77, 22);
+      closeButton.setBounds(432, 10, 77, 22);
       getContentPane().add(closeButton);
 
       final JButton acquireButton = new JButton();
@@ -1363,7 +1363,7 @@ public class AcqControlDlg extends JDialog implements PropertyChangeListener {
          }
       });
       acquireButton.setText("Acquire!");
-      acquireButton.setBounds(430, 44, 77, 22);
+      acquireButton.setBounds(432, 44, 77, 22);
       getContentPane().add(acquireButton);
 
 
@@ -1376,7 +1376,7 @@ public class AcqControlDlg extends JDialog implements PropertyChangeListener {
       });
       stopButton.setText("Stop");
       stopButton.setFont(new Font("Arial", Font.BOLD, 12));
-      stopButton.setBounds(430, 68, 77, 22);
+      stopButton.setBounds(432, 68, 77, 22);
       getContentPane().add(stopButton);
 
 
@@ -1392,7 +1392,7 @@ public class AcqControlDlg extends JDialog implements PropertyChangeListener {
       });
 
       loadButton.setText("Load...");
-      loadButton.setBounds(430, 102, 77, 22);
+      loadButton.setBounds(432, 102, 77, 22);
       getContentPane().add(loadButton);
       loadButton.setToolTipText("Load acquisition settings");
 
@@ -1406,7 +1406,7 @@ public class AcqControlDlg extends JDialog implements PropertyChangeListener {
       });
       saveAsButton.setToolTipText("Save current acquisition settings as");
       saveAsButton.setText("Save as...");
-      saveAsButton.setBounds(430, 126, 77, 22);
+      saveAsButton.setBounds(432, 126, 77, 22);
       saveAsButton.setMargin(new Insets(-5, -5, -5, -5));
       getContentPane().add(saveAsButton);
 
