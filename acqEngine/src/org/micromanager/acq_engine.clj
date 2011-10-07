@@ -126,6 +126,7 @@
       })))
    
 (defn annotate-image [img event state elapsed-time-ms]
+  (println (:tags img))
   {:pix (:pix img)
    :tags 
    (merge
@@ -238,9 +239,9 @@
     (println slice-sequence relative-z)
     (let [z (core getFocusDevice)
           ref (@state :reference-z)
-          adjusted-slices (if relative-z
-                            (map #(+ ref %) slice-sequence)
-                            slice-sequence)
+          adjusted-slices (vec (if relative-z
+                                 (map #(+ ref %) slice-sequence)
+                                 slice-sequence))
           new-seq (not= [z adjusted-slices] @active-slice-sequence)]
       (println "adjusted-slices: " adjusted-slices ";" "reference-z" (@state :reference-z))
       (when new-seq
@@ -281,21 +282,25 @@
 (defn collect-burst-images [event out-queue]
   (when (first-trigger-missing?) (pop-burst-image)) ; drop first image if first trigger doesn't happen
   (swap! state assoc :burst-time-offset nil)
-  (dorun
-    (map-indexed
-      (fn [i evt]
-        (when-not (@state :stop)
-          (let [image (pop-burst-image)]
-            (when (zero? i)
-              (swap! state assoc
-                     :burst-time-offset (- (elapsed-time @state)
-                                           (core-time-from-tags (image :tags)))))
-            (.put out-queue (make-TaggedImage (annotate-image image evt @state
-                                                              (burst-time (:tags image) @state)))))
-          (when (core isBufferOverflowed)
-            (swap! state assoc :stop true)
-            (ReportingUtils/showError "Circular buffer overflowed."))))
-      (event :burst-data)))
+  (let [slices (second @active-slice-sequence)]
+    (println "slices: " slices)
+    (dorun
+      (map-indexed
+        (fn [i evt]
+          (when-not (@state :stop)
+            (let [image (pop-burst-image)
+                  image+ (if-not slices image (assoc-in image [:tags "ZPositionUm"] (get slices i)))]
+              (println image+)
+              (when (zero? i)
+                (swap! state assoc
+                       :burst-time-offset (- (elapsed-time @state)
+                                             (core-time-from-tags (image :tags)))))
+              (.put out-queue (make-TaggedImage (annotate-image image+ evt @state
+                                                                (burst-time (:tags image) @state)))))
+            (when (core isBufferOverflowed)
+              (swap! state assoc :stop true)
+              (ReportingUtils/showError "Circular buffer overflowed."))))
+        (event :burst-data))))
   (while (and (not (@state :stop)) (. mmc isSequenceRunning))
     (Thread/sleep 5)))
 
