@@ -115,10 +115,12 @@ public:
    int SetBinning(int bS);                                    
    int IsExposureSequenceable(bool& isSequenceable) const;
    unsigned  GetNumberOfComponents() const;
+   unsigned  GetNumberOfChannels() const;
 
    // action interface
    // ---------------
    int OnPhysicalCamera(MM::PropertyBase* pProp, MM::ActionType eAct, long nr);
+   int OnBinning(MM::PropertyBase* pProp, MM::ActionType eAct);
 
 private:
    std::vector<std::string> availableCameras_;

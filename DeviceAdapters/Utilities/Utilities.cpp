@@ -330,6 +330,9 @@ int MultiCamera::Initialize()
       SetAllowedValues(os.str().c_str(), availableCameras_);
    }
 
+   CPropertyAction* pAct = new CPropertyAction(this, &MultiCamera::OnBinning);
+   CreateProperty(MM::g_Keyword_Binning, "1", MM::Integer, false, pAct, false);
+
    initialized_ = true;
 
    return DEVICE_OK;
@@ -375,6 +378,7 @@ const unsigned char* MultiCamera::GetImageBuffer()
 
 // Check if all cameras have the same size
 // If they do not, return 0
+// TODO: deal with cameras differing in size by scaling or padding
 unsigned MultiCamera::GetImageWidth() const
 {
    if (physicalCameras_[0] != 0)
@@ -433,68 +437,172 @@ unsigned MultiCamera::GetBitDepth() const
       }
       return bitDepth;
    }
+   return 0;
 }
 
 long MultiCamera::GetImageBufferSize() const
 {
-   return 0;
+   long imageBufferSize = 0;
+   for (int i = 0; i < physicalCameras_.size(); i++)
+   {
+      if (physicalCameras_[i] != 0) 
+         imageBufferSize += physicalCameras_[i]->GetImageBufferSize();
+   }
+   return imageBufferSize;
 }
 
 double MultiCamera::GetExposure() const
 {
+   if (physicalCameras_[0] != 0)
+   {
+      double exposure = physicalCameras_[0]->GetExposure();
+      for (int i = 1; i < physicalCameras_.size(); i++)
+      {
+         if (physicalCameras_[i] != 0) 
+            if (exposure != physicalCameras_[i]->GetExposure())
+               return 0;
+      }
+      return exposure;
+   }
    return 0.0;
 }
 
 void MultiCamera::SetExposure(double exp)
 {
+   for (int i = 0; i < physicalCameras_.size(); i++)
+   {
+      if (physicalCameras_[i] != 0) 
+         physicalCameras_[i]->SetExposure(exp);
+   }
 }
 
 int MultiCamera::SetROI(unsigned x, unsigned y, unsigned xSize, unsigned ySize)
 {
+   for (int i = 0; i < physicalCameras_.size(); i++)
+   {
+      // TODO: deal with case when CCD size are not identical
+      if (physicalCameras_[i] != 0) 
+      {
+         int ret = physicalCameras_[i]->SetROI(x, y, xSize, ySize);
+         if (ret != DEVICE_OK)
+            return ret;
+      }
+   }
    return DEVICE_OK;
 }
 
 int MultiCamera::GetROI(unsigned& x, unsigned& y, unsigned& xSize, unsigned& ySize)
 {
-   x = 0;
-   y = 0;
-   xSize = 0;
-   ySize = 0;
+   // TODO: check if ROI is same on all cameras
+   if (physicalCameras_[0] != 0)
+   {
+      int ret = physicalCameras_[0]->GetROI(x, y, xSize, ySize);
+      if (ret != DEVICE_OK)
+         return ret;
+   }
+
    return DEVICE_OK;
 }
 
 int MultiCamera::ClearROI()
 {
+   for (int i = 0; i < physicalCameras_.size(); i++)
+   {
+      if (physicalCameras_[i] != 0)
+      {
+         int ret = physicalCameras_[i]->ClearROI();
+         if (ret != DEVICE_OK)
+            return ret;
+      }
+   }
+
    return DEVICE_OK;
 }
 
 int MultiCamera::PrepareSequenceAcqusition()
 {
+   for (int i = 0; i < physicalCameras_.size(); i++)
+   {
+      if (physicalCameras_[i] != 0)
+      {
+         int ret = physicalCameras_[i]->PrepareSequenceAcqusition();
+         if (ret != DEVICE_OK)
+            return ret;
+      }
+   }
+
    return DEVICE_OK;
 }
 
 int MultiCamera::StartSequenceAcquisition(double interval)
 {
+   for (int i = 0; i < physicalCameras_.size(); i++)
+   {
+      if (physicalCameras_[i] != 0)
+      {
+         int ret = physicalCameras_[i]->StartSequenceAcquisition(interval);
+         if (ret != DEVICE_OK)
+            return ret;
+      }
+   }
    return DEVICE_OK;
 }
 
 int MultiCamera::StartSequenceAcquisition(long numImages, double interval_ms, bool stopOnOverflow)
 {
+   for (int i = 0; i < physicalCameras_.size(); i++)
+   {
+      if (physicalCameras_[i] != 0)
+      {
+         int ret = physicalCameras_[i]->StartSequenceAcquisition(numImages, interval_ms, stopOnOverflow);
+         if (ret != DEVICE_OK)
+            return ret;
+      }
+   }
    return DEVICE_OK;
 }
 
 int MultiCamera::StopSequenceAcquisition()
 {
+   for (int i = 0; i < physicalCameras_.size(); i++)
+   {
+      if (physicalCameras_[i] != 0)
+      {
+         int ret = physicalCameras_[i]->StopSequenceAcquisition();
+         if (ret != DEVICE_OK)
+            return ret;
+      }
+   }
    return DEVICE_OK;
 }
 
 int MultiCamera::GetBinning() const
 {
-   return 1;
+   int binning = 0;
+   if (physicalCameras_[0] != 0)
+      binning = physicalCameras_[0]->GetBinning();
+   for (int i = 0; i < physicalCameras_.size(); i++)
+   {
+      if (physicalCameras_[i] != 0)
+      {
+         if (binning != physicalCameras_[i]->GetBinning())
+            return 0;
+      }
+   }
+   return binning;
 }
 
 int MultiCamera::SetBinning(int bS)
 {
+   for (int i = 0; i < physicalCameras_.size(); i++)
+   {
+      if (physicalCameras_[i] != 0)
+      {
+         int ret = physicalCameras_[i]->SetBinning(bS);
+         if (ret != DEVICE_OK)
+            return ret;
+      }
+   }
    return DEVICE_OK;
 }
 
@@ -508,6 +616,11 @@ int MultiCamera::IsExposureSequenceable(bool& isSequenceable) const
 unsigned MultiCamera::GetNumberOfComponents() const
 {
    return 1;
+}
+
+unsigned MultiCamera::GetNumberOfChannels() const
+{
+   return physicalCameras_.size();
 }
 
 int MultiCamera::OnPhysicalCamera(MM::PropertyBase* pProp, MM::ActionType eAct, long i)
@@ -531,10 +644,40 @@ int MultiCamera::OnPhysicalCamera(MM::PropertyBase* pProp, MM::ActionType eAct, 
          } else
             return ERR_INVALID_DEVICE_NAME;
       }
+      // TODO: Set allowed binning values correctly
+      if (physicalCameras_[0] != 0)
+      {
+         ClearAllowedValues(MM::g_Keyword_Binning);
+         int nr = physicalCameras_[0]->GetNumberOfPropertyValues(MM::g_Keyword_Binning);
+         for (int j = 0; j < nr; j++)
+         {
+            char value[MM::MaxStrLength];
+            physicalCameras_[0]->GetPropertyValueAt(MM::g_Keyword_Binning, j, value);
+            AddAllowedValue(MM::g_Keyword_Binning, value);
+         }
+      }
    }
 
    return DEVICE_OK;
 }
+
+int MultiCamera::OnBinning(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   if (eAct == MM::BeforeGet)
+   {
+      pProp->Set((long)GetBinning());
+   }
+   else if (eAct == MM::AfterSet)
+   {
+      long binning;
+      pProp->Get(binning);
+      int ret = SetBinning(binning);
+      if (ret != DEVICE_OK)
+         return ret;
+   }
+   return DEVICE_OK;
+}
+
 
 /**********************************************************************
  * DAShutter implementation
