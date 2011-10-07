@@ -243,11 +243,7 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
     * Method required by ImageStorageListener
     */
    public void imageReceived(final TaggedImage taggedImage) {
-      SwingUtilities.invokeLater(new Runnable() {
-         public void run() {
-            updateDisplay(taggedImage, false);
-         }
-      });
+      updateDisplay(taggedImage, false);
    }
 
    /*
