@@ -215,7 +215,7 @@
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
-				AdditionalIncludeDirectories="&quot;D:\projects\3rdparty\PrincetonInstruments\SDK-2.7.8.0&quot;;&quot;..\..\..\3rdparty\Microsoft\VisualC++\include&quot;"
+				AdditionalIncludeDirectories="..\..\..\3rdparty\PrincetonInstruments\SDK-2.7.8.0&quot;;&quot;..\..\..\3rdparty\Microsoft\VisualC++\include&quot;"
 				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;MODULE_EXPORTS"
 				ExceptionHandling="2"
 				RuntimeLibrary="0"
@@ -240,7 +240,7 @@
 				AdditionalDependencies="ff.lib pv_icl32.lib pvcam32.lib RSEMCalib.lib"
 				OutputFile="$(OutDir)/mmgr_dal_PrincetonInstruments.dll"
 				LinkIncremental="1"
-				AdditionalLibraryDirectories="&quot;D:\projects\3rdparty\PrincetonInstruments\SDK-2.7.8.0&quot;"
+				AdditionalLibraryDirectories="..\..\..\3rdparty\PrincetonInstruments\SDK-2.7.8.0&quot;"
 				GenerateDebugInformation="true"
 				SubSystem="2"
 				OptimizeReferences="2"
@@ -299,7 +299,7 @@
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
-				AdditionalIncludeDirectories="&quot;D:\projects\3rdparty\PrincetonInstruments\SDK-2.7.8.0&quot;;&quot;..\..\..\3rdparty\Microsoft\VisualC++\include&quot;"
+				AdditionalIncludeDirectories="..\..\..\3rdparty\PrincetonInstruments\SDK-2.7.8.0&quot;;&quot;..\..\..\3rdparty\Microsoft\VisualC++\include&quot;"
 				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;MODULE_EXPORTS"
 				ExceptionHandling="2"
 				RuntimeLibrary="0"
