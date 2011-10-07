@@ -44,6 +44,12 @@
 #define ERR_DEFINITE_FOCUS_TIMEOUT         10020
 #define ERR_TIMEOUT                        10021
 
+
+//////////////////////////////////////////////////////////////////////////////
+// Max number of physical cameras
+//
+#define MAX_NUMBER_PHYSICAL_CAMERAS       3
+
 /*
  * MultiShutter: Combines multiple physical shutters into one logical device
  */
@@ -79,6 +85,24 @@ private:
    long nrPhysicalShutters_;
    bool open_;
    bool initialized_;
+};
+
+/**
+ * CameraSnapThread: helper thread for MultiCamera
+ */
+class CameraSnapThread : public MMDeviceThreadBase
+{
+   public:
+      CameraSnapThread(){};
+      ~CameraSnapThread();
+
+      void SetCamera(MM::Camera* camera) {camera_ = camera;};
+      int svc();
+      void Start();
+      CameraSnapThread & operator = (const CameraSnapThread & ) {}
+
+   private:
+      MM::Camera* camera_;
 };
 
 /*
@@ -126,7 +150,6 @@ private:
    std::vector<std::string> availableCameras_;
    std::vector<std::string> usedCameras_;
    std::vector<MM::Camera*> physicalCameras_;
-   long nrPhysicalCameras_;
    bool initialized_;
 };
 

@@ -258,7 +258,6 @@ int MultiShutter::OnState(MM::PropertyBase* pProp, MM::ActionType eAct)
 // Multi Shutter implementation
 ///////////////////////////////////////////////////////////////////////////////
 MultiCamera::MultiCamera() :
-   nrPhysicalCameras_(3),
    initialized_(false)
 {
    InitializeDefaultErrorMessages();
@@ -271,7 +270,7 @@ MultiCamera::MultiCamera() :
    // Description                                                            
    CreateProperty(MM::g_Keyword_Description, "Combines multiple cameras into a single camera", MM::String, true);
 
-   for (int i = 0; i < nrPhysicalCameras_; i++) {
+   for (int i = 0; i < MAX_NUMBER_PHYSICAL_CAMERAS; i++) {
       usedCameras_.push_back(g_Undefined);
       physicalCameras_.push_back(0);
    }
@@ -321,7 +320,7 @@ int MultiCamera::Initialize()
          availableCameras_.push_back(*iter);
    }
 
-   for (long i = 0; i < nrPhysicalCameras_; i++) 
+   for (long i = 0; i < MAX_NUMBER_PHYSICAL_CAMERAS; i++) 
    {
       CPropertyActionEx* pAct = new CPropertyActionEx (this, &MultiCamera::OnPhysicalCamera, i);
       std::ostringstream os;
@@ -345,35 +344,34 @@ void MultiCamera::GetName(char* name) const
 
 int MultiCamera::SnapImage()
 {
-   // TODO: snap images from each camera on its own thread
-   std::vector<MM::Camera*>::iterator iter;
-   for (iter = physicalCameras_.begin(); 
-         iter != physicalCameras_.end(); 
-         iter++ ) 
+   CameraSnapThread t[MAX_NUMBER_PHYSICAL_CAMERAS];
+   for (int i = 0; i < physicalCameras_.size(); i++)
    {
-      if (*iter != 0) {
-         int ret = (*iter)->SnapImage();
-         if (ret != DEVICE_OK)
-            return ret;
+      if (physicalCameras_[i] != 0) 
+      {
+         t[i].SetCamera(physicalCameras_[i]);
+         t[i].Start();
       }
    }
+   // Function should wait for the individual SnapImages to return...
+
    return DEVICE_OK;
 }
 
 const unsigned char* MultiCamera::GetImageBuffer()
 {
-   std::vector<MM::Camera*>::iterator iter;
-   for (iter = physicalCameras_.begin(); 
-         iter != physicalCameras_.end(); 
-         iter++ ) 
+   unsigned long singleImageSize = GetImageWidth() * GetImageHeight() * GetBitDepth();
+   // TODO: replace with a single buffer that gets resized when needed
+   // This will surely lead to memory problems!!!!!
+   unsigned char *p = new unsigned char [ singleImageSize * physicalCameras_.size() ]; 
+   for (int i = 0; i < physicalCameras_.size(); i++)
    {
-      if (*iter != 0) 
+      if (physicalCameras_[i] != 0) 
       {
-         // TODO: FIX!!!!
-         return (*iter)->GetImageBuffer();
+         memcpy (p + i* singleImageSize, physicalCameras_[i]->GetImageBuffer(), singleImageSize);
       }
    }
-   return 0;
+   return p;
 }
 
 // Check if all cameras have the same size
@@ -678,6 +676,21 @@ int MultiCamera::OnBinning(MM::PropertyBase* pProp, MM::ActionType eAct)
    return DEVICE_OK;
 }
 
+
+CameraSnapThread::~CameraSnapThread()
+{
+   wait();
+}
+
+int CameraSnapThread::svc()
+{
+   return camera_->SnapImage();
+}
+
+void CameraSnapThread::Start()
+{
+   activate();
+}
 
 /**********************************************************************
  * DAShutter implementation
