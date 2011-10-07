@@ -126,7 +126,6 @@
       })))
    
 (defn annotate-image [img event state elapsed-time-ms]
-  (println (:tags img))
   {:pix (:pix img)
    :tags 
    (merge
@@ -283,14 +282,12 @@
   (when (first-trigger-missing?) (pop-burst-image)) ; drop first image if first trigger doesn't happen
   (swap! state assoc :burst-time-offset nil)
   (let [slices (second @active-slice-sequence)]
-    (println "slices: " slices)
     (dorun
       (map-indexed
         (fn [i evt]
           (when-not (@state :stop)
             (let [image (pop-burst-image)
                   image+ (if-not slices image (assoc-in image [:tags "ZPositionUm"] (get slices i)))]
-              (println image+)
               (when (zero? i)
                 (swap! state assoc
                        :burst-time-offset (- (elapsed-time @state)
