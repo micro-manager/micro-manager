@@ -158,7 +158,7 @@
 				AdditionalDependencies="Pvcam64.lib"
 				OutputFile="$(OutDir)/mmgr_dal_PrincetonInstruments.dll"
 				LinkIncremental="2"
-				AdditionalLibraryDirectories="&quot;../../../3rdparty/RoperScientific/Windows/PvCam/SDK/Libs/$(PlatformName)&quot;"
+				AdditionalLibraryDirectories="..\..\..\3rdparty\PrincetonInstruments\SDK-2.7.8.0&quot;;&quot;..\..\..\3rdparty\Microsoft\VisualC++\include&quot;"
 				GenerateDebugInformation="true"
 				ProgramDatabaseFile="$(OutDir)/PrincetonInstruments.pdb"
 				SubSystem="2"
