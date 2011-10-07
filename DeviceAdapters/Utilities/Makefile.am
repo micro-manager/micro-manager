@@ -1,6 +1,6 @@
 AM_CXXFLAGS = -fpermissive
 lib_LTLIBRARIES = libmmgr_dal_Utilities.la
-libmmgr_dal_Utilities_la_SOURCES = Utilities.cpp Utilities.h
+libmmgr_dal_Utilities_la_SOURCES = Utilities.h Utilities.cpp
 libmmgr_dal_Utilities_la_LIBADD = ../../MMDevice/.libs/libMMDevice.a 
 libmmgr_dal_Utilities_la_LDFLAGS = -module
 

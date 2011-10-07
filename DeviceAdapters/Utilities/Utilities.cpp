@@ -31,9 +31,10 @@
 #endif
 
 
-const char* g_DeviceNameMultiShutter = "Multi Shutter";
 const char* g_Undefined = "Undefined";
 const char* g_NoDevice = "None";
+const char* g_DeviceNameMultiShutter = "Multi Shutter";
+const char* g_DeviceNameMultiCamera = "Multi Camera";
 const char* g_DeviceNameDAShutter = "DA Shutter";
 const char* g_DeviceNameDAZStage = "DA Z Stage";
 const char* g_DeviceNameAutoFocusStage = "AutoFocus Stage";
@@ -48,6 +49,7 @@ const char* g_PropertyMaxUm = "Stage High Position(um)";
 MODULE_API void InitializeModuleData()
 {
    AddAvailableDeviceName(g_DeviceNameMultiShutter, "Combine multiple physical shutters into a single logical shutter");
+   AddAvailableDeviceName(g_DeviceNameMultiCamera, "Combine multiple physical cameras into a single logical camera");
    AddAvailableDeviceName(g_DeviceNameDAShutter, "DA used as a shutter");
    AddAvailableDeviceName(g_DeviceNameDAZStage, "DA-controlled Z-stage");
    AddAvailableDeviceName(g_DeviceNameAutoFocusStage, "AutoFocus offset acting as a Z-stage");
@@ -61,6 +63,8 @@ MODULE_API MM::Device* CreateDevice(const char* deviceName)
 
    if (strcmp(deviceName, g_DeviceNameMultiShutter) == 0) { 
       return new MultiShutter();
+   } else if (strcmp(deviceName, g_DeviceNameMultiCamera) == 0) { 
+      return new MultiCamera();
    } else if (strcmp(deviceName, g_DeviceNameDAShutter) == 0) { 
       return new DAShutter();
    } else if (strcmp(deviceName, g_DeviceNameDAZStage) == 0) { 
@@ -84,7 +88,7 @@ MODULE_API void DeleteDevice(MM::Device* pDevice)
 // Multi Shutter implementation
 ///////////////////////////////////////////////////////////////////////////////
 MultiShutter::MultiShutter() :
-   nrPhysicalShutters_(5),
+   nrPhysicalShutters_(5), // determines how many slots for shutters we have
    open_(false),
    initialized_ (false)
 {
@@ -98,21 +102,20 @@ MultiShutter::MultiShutter() :
    // Description                                                            
    CreateProperty(MM::g_Keyword_Description, "Combines multiple physical shutters into a single ", MM::String, true);
 
-   CreateProperty(MM::g_Keyword_Description, "Combines multiple physical shutters into a single ", MM::String, true);
    for (int i = 0; i < nrPhysicalShutters_; i++) {
       usedShutters_.push_back(g_Undefined);
       physicalShutters_.push_back(0);
    }
-}  
+}
  
 MultiShutter::~MultiShutter()
 {
    Shutdown();
 }
 
-void MultiShutter::GetName(char* Name) const
+void MultiShutter::GetName(char* name) const
 {
-   CDeviceUtils::CopyLimitedString(Name, g_DeviceNameMultiShutter);
+   CDeviceUtils::CopyLimitedString(name, g_DeviceNameMultiShutter);
 }                                                                            
                                                                              
 int MultiShutter::Initialize() 
@@ -248,6 +251,288 @@ int MultiShutter::OnState(MM::PropertyBase* pProp, MM::ActionType eAct)
          open = true;
       SetOpen(open);
    }
+   return DEVICE_OK;
+}
+
+///////////////////////////////////////////////////////////////////////////////
+// Multi Shutter implementation
+///////////////////////////////////////////////////////////////////////////////
+MultiCamera::MultiCamera() :
+   nrPhysicalCameras_(3),
+   initialized_(false)
+{
+   InitializeDefaultErrorMessages();
+
+   SetErrorText(ERR_INVALID_DEVICE_NAME, "Please select a valid camera");
+
+   // Name                                                                   
+   CreateProperty(MM::g_Keyword_Name, g_DeviceNameMultiCamera, MM::String, true); 
+                                                                             
+   // Description                                                            
+   CreateProperty(MM::g_Keyword_Description, "Combines multiple cameras into a single camera", MM::String, true);
+
+   for (int i = 0; i < nrPhysicalCameras_; i++) {
+      usedCameras_.push_back(g_Undefined);
+      physicalCameras_.push_back(0);
+   }
+}
+
+MultiCamera::~MultiCamera()
+{
+   if (initialized_)
+      Shutdown();
+}
+
+int MultiCamera::Shutdown()
+{
+   // Rely on the cameras to shut themselves down
+   return DEVICE_OK;
+}
+
+int MultiCamera::Initialize()
+{
+   // get list with available Cameras.   
+   std::vector<std::string> availableCameras;
+   availableCameras.clear();
+   char deviceName[MM::MaxStrLength];
+   unsigned int deviceIterator = 0;
+   for(;;)
+   {
+      GetLoadedDeviceOfType(MM::CameraDevice, deviceName, deviceIterator++);
+      if( 0 < strlen(deviceName))
+      {
+         availableCameras.push_back(std::string(deviceName));
+      }
+      else
+         break;
+   }
+
+   availableCameras_.push_back(g_Undefined);
+   std::vector<std::string>::iterator iter;
+   for (iter = availableCameras.begin(); 
+         iter != availableCameras.end(); 
+         iter++ ) 
+   {
+      MM::Device* camera = GetDevice((*iter).c_str());
+      std::ostringstream os;
+      os << this << " " << camera;
+      LogMessage(os.str().c_str());
+      if (camera &&  (this != camera))
+         availableCameras_.push_back(*iter);
+   }
+
+   for (long i = 0; i < nrPhysicalCameras_; i++) 
+   {
+      CPropertyActionEx* pAct = new CPropertyActionEx (this, &MultiCamera::OnPhysicalCamera, i);
+      std::ostringstream os;
+      os << "Physical Camera " << i+1;
+      CreateProperty(os.str().c_str(), availableCameras_[0].c_str(), MM::String, false, pAct, false);
+      SetAllowedValues(os.str().c_str(), availableCameras_);
+   }
+
+   initialized_ = true;
+
+   return DEVICE_OK;
+}
+
+void MultiCamera::GetName(char* name) const
+{
+   CDeviceUtils::CopyLimitedString(name, g_DeviceNameMultiCamera);
+}
+
+int MultiCamera::SnapImage()
+{
+   // TODO: snap images from each camera on its own thread
+   std::vector<MM::Camera*>::iterator iter;
+   for (iter = physicalCameras_.begin(); 
+         iter != physicalCameras_.end(); 
+         iter++ ) 
+   {
+      if (*iter != 0) {
+         int ret = (*iter)->SnapImage();
+         if (ret != DEVICE_OK)
+            return ret;
+      }
+   }
+   return DEVICE_OK;
+}
+
+const unsigned char* MultiCamera::GetImageBuffer()
+{
+   std::vector<MM::Camera*>::iterator iter;
+   for (iter = physicalCameras_.begin(); 
+         iter != physicalCameras_.end(); 
+         iter++ ) 
+   {
+      if (*iter != 0) 
+      {
+         // TODO: FIX!!!!
+         return (*iter)->GetImageBuffer();
+      }
+   }
+   return 0;
+}
+
+// Check if all cameras have the same size
+// If they do not, return 0
+unsigned MultiCamera::GetImageWidth() const
+{
+   if (physicalCameras_[0] != 0)
+   {
+      unsigned width = physicalCameras_[0]->GetImageWidth();
+      for (int i = 1; i < physicalCameras_.size(); i++)
+      {
+         if (physicalCameras_[i] != 0) 
+            if (width != physicalCameras_[i]->GetImageWidth())
+               return 0;
+      }
+      return width;
+   }
+}
+
+unsigned MultiCamera::GetImageHeight() const
+{
+   if (physicalCameras_[0] != 0)
+   {
+      unsigned height = physicalCameras_[0]->GetImageWidth();
+      for (int i = 1; i < physicalCameras_.size(); i++)
+      {
+         if (physicalCameras_[i] != 0) 
+            if (height != physicalCameras_[i]->GetImageHeight())
+               return 0;
+      }
+      return height;
+   }
+}
+
+unsigned MultiCamera::GetImageBytesPerPixel() const
+{
+   if (physicalCameras_[0] != 0)
+   {
+      unsigned bytes = physicalCameras_[0]->GetImageBytesPerPixel();
+      for (int i = 1; i < physicalCameras_.size(); i++)
+      {
+         if (physicalCameras_[i] != 0) 
+            if (bytes != physicalCameras_[i]->GetImageBytesPerPixel())
+               return 0;
+      }
+      return bytes;
+   }
+}
+
+unsigned MultiCamera::GetBitDepth() const
+{
+   if (physicalCameras_[0] != 0)
+   {
+      unsigned bitDepth = physicalCameras_[0]->GetBitDepth();
+      for (int i = 1; i < physicalCameras_.size(); i++)
+      {
+         if (physicalCameras_[i] != 0) 
+            if (bitDepth != physicalCameras_[i]->GetBitDepth())
+               return 0;
+      }
+      return bitDepth;
+   }
+}
+
+long MultiCamera::GetImageBufferSize() const
+{
+   return 0;
+}
+
+double MultiCamera::GetExposure() const
+{
+   return 0.0;
+}
+
+void MultiCamera::SetExposure(double exp)
+{
+}
+
+int MultiCamera::SetROI(unsigned x, unsigned y, unsigned xSize, unsigned ySize)
+{
+   return DEVICE_OK;
+}
+
+int MultiCamera::GetROI(unsigned& x, unsigned& y, unsigned& xSize, unsigned& ySize)
+{
+   x = 0;
+   y = 0;
+   xSize = 0;
+   ySize = 0;
+   return DEVICE_OK;
+}
+
+int MultiCamera::ClearROI()
+{
+   return DEVICE_OK;
+}
+
+int MultiCamera::PrepareSequenceAcqusition()
+{
+   return DEVICE_OK;
+}
+
+int MultiCamera::StartSequenceAcquisition(double interval)
+{
+   return DEVICE_OK;
+}
+
+int MultiCamera::StartSequenceAcquisition(long numImages, double interval_ms, bool stopOnOverflow)
+{
+   return DEVICE_OK;
+}
+
+int MultiCamera::StopSequenceAcquisition()
+{
+   return DEVICE_OK;
+}
+
+int MultiCamera::GetBinning() const
+{
+   return 1;
+}
+
+int MultiCamera::SetBinning(int bS)
+{
+   return DEVICE_OK;
+}
+
+int MultiCamera::IsExposureSequenceable(bool& isSequenceable) const
+{
+   isSequenceable = false;
+
+   return DEVICE_OK;
+}
+
+unsigned MultiCamera::GetNumberOfComponents() const
+{
+   return 1;
+}
+
+int MultiCamera::OnPhysicalCamera(MM::PropertyBase* pProp, MM::ActionType eAct, long i)
+{
+   if (eAct == MM::BeforeGet)
+   {
+      pProp->Set(usedCameras_[i].c_str());
+   }
+   else if (eAct == MM::AfterSet)
+   {
+      std::string cameraName;
+      pProp->Get(cameraName);
+      if (cameraName == g_Undefined) {
+         usedCameras_[i] = g_Undefined;
+         physicalCameras_[i] = 0;
+      } else {
+         MM::Camera* camera = (MM::Camera*) GetDevice(cameraName.c_str());
+         if (camera != 0) {
+            usedCameras_[i] = cameraName;
+            physicalCameras_[i] = camera;
+         } else
+            return ERR_INVALID_DEVICE_NAME;
+      }
+   }
+
    return DEVICE_OK;
 }
 

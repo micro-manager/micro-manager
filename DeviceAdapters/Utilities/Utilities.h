@@ -81,6 +81,54 @@ private:
    bool initialized_;
 };
 
+/*
+ * MultiCamera: Combines multiple physical cameras into one logical device
+ */
+class MultiCamera : public CCameraBase<MultiCamera>
+{
+public:
+   MultiCamera();
+   ~MultiCamera();
+
+   int Initialize();
+   int Shutdown();
+
+   void GetName(char* name) const;
+
+   int SnapImage();
+   const unsigned char* GetImageBuffer();
+   unsigned GetImageWidth() const;
+   unsigned GetImageHeight() const;
+   unsigned GetImageBytesPerPixel() const;
+   unsigned GetBitDepth() const;
+   long GetImageBufferSize() const;
+   double GetExposure() const;
+   void SetExposure(double exp);
+   int SetROI(unsigned x, unsigned y, unsigned xSize, unsigned ySize);
+   int GetROI(unsigned& x, unsigned& y, unsigned& xSize, unsigned& ySize);
+   int ClearROI();
+   int PrepareSequenceAcqusition();
+   int StartSequenceAcquisition(double interval);
+   int StartSequenceAcquisition(long numImages, double interval_ms, bool stopOnOverflow);
+   int StopSequenceAcquisition();
+   int GetBinning() const; 
+   int SetBinning(int bS);                                    
+   int IsExposureSequenceable(bool& isSequenceable) const;
+   unsigned  GetNumberOfComponents() const;
+
+   // action interface
+   // ---------------
+   int OnPhysicalCamera(MM::PropertyBase* pProp, MM::ActionType eAct, long nr);
+
+private:
+   std::vector<std::string> availableCameras_;
+   std::vector<std::string> usedCameras_;
+   std::vector<MM::Camera*> physicalCameras_;
+   long nrPhysicalCameras_;
+   bool initialized_;
+};
+
+
 /**
  * DAShutter: Adds shuttering capabilities to a DA device
  */
