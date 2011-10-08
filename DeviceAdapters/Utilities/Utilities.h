@@ -147,6 +147,11 @@ public:
    int OnBinning(MM::PropertyBase* pProp, MM::ActionType eAct);
 
 private:
+   int ResizeImageBuffer();
+
+   unsigned long bufferSize_;
+   unsigned char* imageBuffer_;
+
    std::vector<std::string> availableCameras_;
    std::vector<std::string> usedCameras_;
    std::vector<MM::Camera*> physicalCameras_;

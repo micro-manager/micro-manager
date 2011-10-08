@@ -258,6 +258,8 @@ int MultiShutter::OnState(MM::PropertyBase* pProp, MM::ActionType eAct)
 // Multi Shutter implementation
 ///////////////////////////////////////////////////////////////////////////////
 MultiCamera::MultiCamera() :
+   bufferSize_(0),
+   imageBuffer_(0),
    initialized_(false)
 {
    InitializeDefaultErrorMessages();
@@ -284,6 +286,7 @@ MultiCamera::~MultiCamera()
 
 int MultiCamera::Shutdown()
 {
+   delete imageBuffer_;
    // Rely on the cameras to shut themselves down
    return DEVICE_OK;
 }
@@ -361,18 +364,30 @@ int MultiCamera::SnapImage()
 const unsigned char* MultiCamera::GetImageBuffer()
 {
    unsigned long singleImageSize = GetImageWidth() * GetImageHeight() * GetBitDepth();
-   // TODO: replace with a single buffer that gets resized when needed
-   // This will surely lead to memory problems!!!!!
-   unsigned char *p = new unsigned char [ singleImageSize * physicalCameras_.size() ]; 
+   if (bufferSize_ != singleImageSize * physicalCameras_.size() )
+      ResizeImageBuffer();;
+
    for (int i = 0; i < physicalCameras_.size(); i++)
    {
       if (physicalCameras_[i] != 0) 
       {
-         memcpy (p + i* singleImageSize, physicalCameras_[i]->GetImageBuffer(), singleImageSize);
+         memcpy (imageBuffer_ + i * singleImageSize, physicalCameras_[i]->GetImageBuffer(), singleImageSize);
       }
    }
-   return p;
+   return imageBuffer_;;
 }
+
+int MultiCamera::ResizeImageBuffer()
+{
+   if (imageBuffer_ != 0)
+      delete (imageBuffer_);
+
+   bufferSize_ = GetImageWidth() * GetImageHeight() * GetBitDepth() * physicalCameras_.size();;
+   imageBuffer_ = new unsigned char[bufferSize_];
+
+   return DEVICE_OK;
+}
+
 
 // Check if all cameras have the same size
 // If they do not, return 0
