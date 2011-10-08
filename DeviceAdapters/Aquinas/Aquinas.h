@@ -38,13 +38,21 @@ public:
 
    // action interface
    // ---------------
+   int OnPort(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnID(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnSetPressure(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnValveState(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnValveOnOff(MM::PropertyBase* pProp, MM::ActionType eAct, long valveNr);
 
 private:
+   int SetValveState();
+
    std::string port_;
+   bool busy_;
    bool initialized_;
+   double pressureSetPoint_;
+   std::string id_;
+   unsigned char valveState_;
 };
 
 #endif
