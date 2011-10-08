@@ -32,8 +32,11 @@ import ij.process.ByteProcessor;
 import ij.process.ColorProcessor;
 import ij.process.ImageProcessor;
 import ij.process.ShortProcessor;
+import ij.CompositeImage;
+import ij.ImageStack;
 
 import java.awt.Color;
+import java.awt.Graphics;
 import java.awt.Panel;
 import java.awt.Point;
 import java.awt.Rectangle;
@@ -52,9 +55,8 @@ import mmcorej.CMMCore;
 import org.micromanager.MMStudioMainFrame;
 
 import com.swtdesigner.SwingResourceManager;
-import ij.CompositeImage;
-import ij.ImageStack;
-import java.awt.Graphics;
+
+
 
 /**
  * ImageJ compatible image window. Derived from the original ImageJ class.

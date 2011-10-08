@@ -252,7 +252,6 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
    private JButton saveConfigButton_;
    private ScriptPanel scriptPanel_;
    private org.micromanager.utils.HotKeys hotKeys_;
-   //private SplitView splitView_;
    private CenterAndDragListener centerAndDragListener_;
    private ZWheelListener zWheelListener_;
    private XYZKeyListener xyzKeyListener_;
@@ -261,7 +260,6 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
    private int snapCount_ = -1;
    private boolean liveModeSuspended_;
    public Font defaultScriptFont_ = null;
-   public JLabel citePleaLabel_;
    
    public static FileType MM_CONFIG_FILE
             = new FileType("MM_CONFIG_FILE",
@@ -362,8 +360,7 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
       } catch (Exception e) {
          ReportingUtils.showError(e);
       }
-      Cursor defaultCursor = new Cursor(Cursor.DEFAULT_CURSOR);
-      setCursor(defaultCursor);
+      setCursor(new Cursor(Cursor.DEFAULT_CURSOR));
    }
 
     private void initializeHelpMenu() {
@@ -1701,16 +1698,16 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
       topLayout.putConstraint(SpringLayout.WEST, refreshButton, 7,
             SpringLayout.WEST, topPanel);
 
-      JLabel citePleaLabel_ = new JLabel("<html>Please <a href=\"http://micro-manager.org\">cite Micro-Manager</a> so funding will continue!</html>");
-      topPanel.add(citePleaLabel_);
-      citePleaLabel_.setFont(new Font("Arial", Font.PLAIN, 11));
-      topLayout.putConstraint(SpringLayout.SOUTH, citePleaLabel_, 139,
+      JLabel citePleaLabel = new JLabel("<html>Please <a href=\"http://micro-manager.org\">cite Micro-Manager</a> so funding will continue!</html>");
+      topPanel.add(citePleaLabel);
+      citePleaLabel.setFont(new Font("Arial", Font.PLAIN, 11));
+      topLayout.putConstraint(SpringLayout.SOUTH, citePleaLabel, 139,
               SpringLayout.NORTH, topPanel);
-      topLayout.putConstraint(SpringLayout.NORTH, citePleaLabel_, 119,
+      topLayout.putConstraint(SpringLayout.NORTH, citePleaLabel, 119,
             SpringLayout.NORTH, topPanel);
-      topLayout.putConstraint(SpringLayout.EAST, citePleaLabel_, 270,
+      topLayout.putConstraint(SpringLayout.EAST, citePleaLabel, 270,
             SpringLayout.WEST, topPanel);
-      topLayout.putConstraint(SpringLayout.WEST, citePleaLabel_, 7,
+      topLayout.putConstraint(SpringLayout.WEST, citePleaLabel, 7,
             SpringLayout.WEST, topPanel);
 
       class Pleader extends Thread{
@@ -1727,7 +1724,7 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
          }
 
       }
-      citePleaLabel_.addMouseListener(new MouseAdapter() {
+      citePleaLabel.addMouseListener(new MouseAdapter() {
          @Override
           public void mousePressed(MouseEvent e) {
              Pleader p = new Pleader();
@@ -1858,6 +1855,7 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
             pluginMenu_.setText("Plugins");
             menuBar_.add(pluginMenu_);
             new Thread("Plugin loading") {
+               @Override
                public void run() {
                   // Needed for loading clojure-based jars:
                   Thread.currentThread().setContextClassLoader(this.getClass().getClassLoader());
@@ -2398,10 +2396,6 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
       try {
          if (win != null) {
             win.saveAttributes();
-        //    WindowManager.removeWindow(win);
-
-           //    win.close();
-
             win.dispose();
             win = null;
          }
@@ -2849,7 +2843,7 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
                return false;
             }
          }
-         if (v2.length < 2 || v2[1] == "")
+         if (v2.length < 2 || v2[1].equals("") )
             return false;
          if (v.length < 2 ) {
             ReportingUtils.showError("This code needs Micro-Manager version " + version + " or greater");
@@ -3179,10 +3173,10 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
 
    private void doSnap() {
       if (core_.getNumberOfComponents() == 1) {
-         if(4==core_.getBytesPerPixel()){
+         if(4 == core_.getBytesPerPixel()) {
             doSnapFloat();
-         }else{
-         doSnapMonochrome();
+         } else {
+            doSnapMonochrome();
          }
       } else {
          doSnapColor();
@@ -4176,11 +4170,7 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
          long depth = core_.getBytesPerPixel();
          //MMAcquisitionSnap acq = null;
 
-         if (acqMgr_.hasActiveImage5D(acqName)) {
-           // acq = (MMAcquisitionSnap) acqMgr_.getAcquisition(acqName);
-           // newSnap = !acq.isCompatibleWithCameraSettings();
-            ;
-         } else {
+         if (! acqMgr_.hasActiveImage5D(acqName)) {
             newSnap = true;
          }
 
@@ -4410,7 +4400,7 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
 
    public String installPlugin(Class<?> cl) {
       String className = cl.getSimpleName();
-      String msg = new String(className + " module loaded.");
+      String msg = className + " module loaded.";
       try {
          for (PluginItem plugin : plugins_) {
             if (plugin.className.contentEquals(className)) {
@@ -4491,7 +4481,7 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
    }
 
    public String installAutofocusPlugin(Class<?> autofocus) {
-      String msg = new String(autofocus.getSimpleName() + " module loaded.");
+      String msg = autofocus.getSimpleName() + " module loaded.";
       if (afMgr_ != null) {
          try {
             afMgr_.refresh();

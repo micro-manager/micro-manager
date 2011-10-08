@@ -627,7 +627,7 @@ public interface ScriptInterface {
     * Examples:
     * 1.4.6
     * 1.4.6 20110831
-    * When a date is appended to a version number, it will be newer than the same version number
+    * When a date is appended to a version number, it will be newer than the same version 
     * without a date
     */
    public boolean versionLessThan(String version) throws MMScriptException;
