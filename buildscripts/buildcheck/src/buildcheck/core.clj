@@ -36,7 +36,7 @@
                                        (condp = bits
                                          32 "bin_Win32"
                                          64 "bin_x64")) 24)]
-    (when-not (or (empty? vs-errors) (empty? outdated-dlls))
+    (when-not (and (empty? vs-errors) (empty? outdated-dlls))
       (println (str "MICROMANAGER " bits "-bit "
                     ({:inc "INCREMENTAL" :full "FULL"} mode)
                     " BUILD ERROR REPORT"))
