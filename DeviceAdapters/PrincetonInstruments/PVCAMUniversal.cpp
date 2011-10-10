@@ -1572,18 +1572,22 @@ int Universal::GetSpeedString(std::string& modeString)
 
    // read pixel time:
    long pixelTime;
-
    if (!GetLongParam_PvCam_safe(hPVCAM_, PARAM_PIX_TIME, &pixelTime))
       return LogCamError(__LINE__, "");
-
-   double rate = 1000/pixelTime; // in MHz
 
    // read bit depth
    long bitDepth;
    if (!GetLongParam_PvCam_safe(hPVCAM_, PARAM_BIT_DEPTH, &bitDepth))
       return LogCamError(__LINE__, "");
 
-   tmp << rate << "MHz " << bitDepth << "bit";
+   double rate;
+   if( pixelTime > 9999 ) {
+	  rate = 1000000.0/pixelTime; // in kHz
+      tmp << rate << " kHz " << bitDepth << "bit";
+   } else {
+      rate = 1000.0/pixelTime; // in MHz
+      tmp << rate << " MHz " << bitDepth << "bit";
+   }
    modeString = tmp.str();
    return DEVICE_OK;
 }
