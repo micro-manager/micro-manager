@@ -57,8 +57,10 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
    final private ScrollbarWithLabel tSelector_;
    final private MMImagePlus mmImagePlus_;
    final private int numComponents_;
+
    private AcquisitionEngine eng_;
    private boolean finished_ = false;
+   private boolean promptToSave_ = true;
    private final String name_;
    private long lastDisplayTime_;
    private JSONObject lastDisplayTags_;
@@ -238,6 +240,14 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
       updateWindow();
    }
 
+   /**
+    * Allows bypassing the prompt to Save
+    * @param promptToSave boolean flag
+    */
+   public void promptToSave(boolean promptToSave)
+   {
+      promptToSave_ = promptToSave;
+   }
 
    /*
     * Method required by ImageStorageListener
@@ -733,7 +743,7 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
                }
             }
 
-            if (imageCache_.getDiskLocation() == null) {
+            if (imageCache_.getDiskLocation() == null && promptToSave_) {
                int result = JOptionPane.showConfirmDialog(this,
                        "This data set has not yet been saved.\n"
                        + "Do you want to save it?",

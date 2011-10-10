@@ -121,6 +121,7 @@ public:
 
    int SnapImage();
    const unsigned char* GetImageBuffer();
+   const unsigned char* GetImageBuffer(unsigned channelNr);
    unsigned GetImageWidth() const;
    unsigned GetImageHeight() const;
    unsigned GetImageBytesPerPixel() const;
@@ -140,6 +141,7 @@ public:
    int IsExposureSequenceable(bool& isSequenceable) const;
    unsigned  GetNumberOfComponents() const;
    unsigned  GetNumberOfChannels() const;
+   int GetChannelName(unsigned channel, char* name);
 
    // action interface
    // ---------------
@@ -147,14 +149,14 @@ public:
    int OnBinning(MM::PropertyBase* pProp, MM::ActionType eAct);
 
 private:
-   int ResizeImageBuffer();
-
+   int Logical2Physical(int logical);
    unsigned long bufferSize_;
    unsigned char* imageBuffer_;
 
    std::vector<std::string> availableCameras_;
    std::vector<std::string> usedCameras_;
    std::vector<MM::Camera*> physicalCameras_;
+   unsigned int nrCamerasInUse_;
    bool initialized_;
 };
 

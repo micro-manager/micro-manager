@@ -268,6 +268,7 @@ public:
    void setExposure(double exp) throw (CMMError);
    double getExposure() const throw (CMMError);
    void* getImage() const throw (CMMError);
+   void* getImage(unsigned numChannel) const throw (CMMError);
    void snapImage() throw (CMMError);
    unsigned getImageWidth() const;
    unsigned getImageHeight() const;
@@ -275,6 +276,7 @@ public:
    unsigned getImageBitDepth() const;
    unsigned getNumberOfComponents() const;
    unsigned getNumberOfCameraChannels() const;
+   std::string getCameraChannelName(unsigned int channelNr) const;
    long getImageBufferSize() const;
    void assignImageSynchro(const char* deviceLabel) throw (CMMError);
    void removeImageSynchro(const char* label) throw (CMMError);

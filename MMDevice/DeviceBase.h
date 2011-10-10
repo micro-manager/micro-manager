@@ -1213,7 +1213,10 @@ public:
    */
    virtual double GetPixelSizeUm() const {return GetBinning();}
 
-   virtual unsigned GetNumberOfComponents() const {return 1;}
+   virtual unsigned GetNumberOfComponents() const 
+   {
+      return 1;
+   }
 
    virtual int GetComponentName(unsigned channel, char* name)
    {
@@ -1224,11 +1227,36 @@ public:
       return DEVICE_OK;
    }
 
-   virtual unsigned GetNumberOfChannels() const {return 1;}
+   virtual unsigned GetNumberOfChannels() const 
+   {
+      return 1;
+   }
+
+   virtual int GetChannelName(unsigned /* channel */, char* name)
+   {
+      CDeviceUtils::CopyLimitedString(name, "Test");
+      return DEVICE_OK;
+   }
+
+   virtual const unsigned char* GetImageBuffer(unsigned channelNr)
+   {
+      return 0;
+   }
 
    virtual const unsigned int* GetImageBufferAsRGB32()
    {
       return 0;
+   }
+
+   virtual void AddTag(const char* key, const char* value)
+   {
+      metadata_.PutImageTag(key, value);
+   }
+
+
+   virtual void RemoveTag(const char* key)
+   {
+      metadata_.RemoveTag(key);
    }
 
    // temporary debug methods
@@ -1322,6 +1350,7 @@ protected:
 protected:
    bool busy_;
    bool stopOnOverflow_;
+   Metadata metadata_;
 
    class BaseSequenceThread;
    BaseSequenceThread * thd_;

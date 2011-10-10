@@ -125,12 +125,10 @@ import java.awt.KeyboardFocusManager;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.Collections;
-import java.util.concurrent.Callable;
 import javax.swing.BorderFactory;
 import javax.swing.JPanel;
 import javax.swing.JSplitPane;
 import javax.swing.event.AncestorListener;
-import mmcorej.MetadataSingleTag;
 import mmcorej.TaggedImage;
 import org.json.JSONException;
 import org.micromanager.acquisition.AcquisitionVirtualStack;
@@ -257,6 +255,9 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
    private XYZKeyListener xyzKeyListener_;
    private AcquisitionManager acqMgr_;
    private static MMImageWindow imageWin_;
+   private final String multiCameraAcq_ = "Multi-Camera Snap";
+   private Color[] multiCameraColors_ = {Color.RED, Color.GREEN, Color.BLUE, Color.YELLOW, Color.CYAN};
+   private String[] multiCameraNames_ = {"Camera-1", "Camera-2", "Camera-3", "Camera-4", "Camera-5"};
    private int snapCount_ = -1;
    private boolean liveModeSuspended_;
    public Font defaultScriptFont_ = null;
@@ -276,7 +277,6 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
 
    private JMenuBar menuBar_;
    private ConfigPadButtonPanel configPadButtonPanel_;
-   private boolean virtual_ = false;
    private final JMenu switchConfigurationMenu_;
    private final MetadataPanel metadataPanel_;
    public static FileType MM_DATA_SET 
@@ -288,6 +288,7 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
    private Class pipelineClass_ = null;
    private Pipeline acquirePipeline_ = null;
    private final JSplitPane splitPane_;
+
 
    public ImageWindow getImageWin() {
       return imageWin_;
@@ -361,6 +362,60 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
          ReportingUtils.showError(e);
       }
       setCursor(new Cursor(Cursor.DEFAULT_CURSOR));
+   }
+
+   /**
+    * Snaps an image for a multi-Channel camera
+    * This version does not (yet) support attachment of mouse listeners
+    * for stage movement.
+    */
+   private void doSnapMultiChannel()
+   {
+      int w = (int) core_.getImageWidth();
+      int h = (int)  core_.getImageHeight();
+      int d = (int) core_.getBytesPerPixel();
+      long c = core_.getNumberOfCameraChannels();
+
+      if (c > 1)
+      {
+         try {
+            if (acquisitionExists(multiCameraAcq_)) {
+               if (c != (getAcquisition(multiCameraAcq_)).getChannels()) {
+                  closeAcquisitionImage5D(multiCameraAcq_);
+               }
+               if ( (getAcquisitionImageWidth(multiCameraAcq_) != w) ||
+                    (getAcquisitionImageHeight(multiCameraAcq_) != h) ||
+                    (getAcquisitionImageByteDepth(multiCameraAcq_) != d) )
+                  closeAcquisitionImage5D(multiCameraAcq_);
+            }
+
+            if (!acquisitionExists(multiCameraAcq_)) {
+               openAcquisition(multiCameraAcq_, "", 1, (int) c, 1, true);
+               for (int i = 0; i < c; i++) {
+                  if (i < multiCameraColors_.length) {
+                     setChannelColor(multiCameraAcq_, i, multiCameraColors_[i]);
+                  }
+                  setChannelName(multiCameraAcq_, i, core_.getCameraChannelName(i));
+                  //if (i < multiCameraNames_.length) {
+                  //   setChannelName(multiCameraAcq_, i, multiCameraNames_[i]);
+                  //}
+               }
+               initializeAcquisition(multiCameraAcq_, w, h, d);
+               getAcquisition(multiCameraAcq_).promptToSave(false);
+            }
+
+            setCursor(new Cursor(Cursor.WAIT_CURSOR));
+            core_.snapImage();
+            getAcquisition(multiCameraAcq_).toFront();
+
+            for (int i = 0; i < c; i++) {
+               addImage(multiCameraAcq_, core_.getImage(i), 0, i, 0);
+            }
+         } catch (Exception ex) {
+            ReportingUtils.showError(ex);
+         }
+         setCursor(new Cursor(Cursor.DEFAULT_CURSOR));
+      }
    }
 
     private void initializeHelpMenu() {
@@ -2903,7 +2958,6 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
    // Timer task that displays the live image
    class LiveModeTimerTask extends TimerTask {
       public boolean running_ = false;
-      private boolean cancelled_ = false;
 
       public synchronized boolean isRunning() {
          return running_;
@@ -3176,7 +3230,12 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
          if(4 == core_.getBytesPerPixel()) {
             doSnapFloat();
          } else {
-            doSnapMonochrome();
+            if (core_.getNumberOfCameraChannels() > 1)
+            {
+               doSnapMultiChannel();
+            } else {
+               doSnapMonochrome();
+            }
          }
       } else {
          doSnapColor();

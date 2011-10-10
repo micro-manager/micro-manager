@@ -830,6 +830,13 @@ int CDemoCamera::InsertImage()
  
    // Important:  metadata about the image are generated here:
    Metadata md;
+   // Copy the metadata inserted by other processes:
+   std::vector<std::string> keys = metadata_.GetKeys();
+   for (int i= 0; i < keys.size(); i++) {
+      md.put(keys[i], metadata_.GetSingleTag(keys[i].c_str()).GetValue().c_str());
+   }
+
+   // Add our own metadata
    md.put("Camera", label);
    md.put(MM::g_Keyword_Metadata_StartTime, CDeviceUtils::ConvertToString(sequenceStartTime_.getMsec()));
    md.put(MM::g_Keyword_Elapsed_Time_ms, CDeviceUtils::ConvertToString((timeStamp - sequenceStartTime_).getMsec()));
@@ -845,19 +852,17 @@ int CDemoCamera::InsertImage()
 
    MMThreadGuard g(imgPixelsLock_);
 
-
    const unsigned char* pI = GetImageBuffer();
    unsigned int w = GetImageWidth();
    unsigned int h = GetImageHeight();
    unsigned int b = GetImageBytesPerPixel();
 
-   int ret = GetCoreCallback()->InsertImage(this, pI, w, h, b, &md);
+   int ret = GetCoreCallback()->InsertImage(this, pI, w, h, b, md.Serialize().c_str());
    if (!stopOnOverflow_ && ret == DEVICE_BUFFER_OVERFLOW)
    {
       // do not stop on overflow - just reset the buffer
       GetCoreCallback()->ClearImageBuffer(this);
       // don't process this same image again...
-//      return GetCoreCallback()->InsertImage(this, pI, w, h, b, &md, false);
       return GetCoreCallback()->InsertImage(this, pI, w, h, b, md.Serialize().c_str(), false);
    } else
       return ret;
@@ -878,13 +883,10 @@ int CDemoCamera::ThreadRun (void)
    if (triggerDevice_.length() > 0) {
       MM::Device* triggerDev = GetDevice(triggerDevice_.c_str());
       if (triggerDev != 0) {
-      	//char label[256];
-      	//triggerDev->GetLabel(label);
       	LogMessage("trigger requested");
       	triggerDev->SetProperty("Trigger","+");
       }
    }
-   
    
    ret = SnapImage();
    if (ret != DEVICE_OK)

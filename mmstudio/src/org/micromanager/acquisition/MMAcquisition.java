@@ -417,9 +417,16 @@ public class MMAcquisition {
       return initialized_;
    }
 
+   /**
+    * Same as close(), but also closes the display
+    */
    public void closeImage5D() {
       close();
       virtAcq_.close();
+   }
+
+   public void toFront() {
+      virtAcq_.getHyperImage().getWindow().toFront();
    }
 
    public void setComment(String comment) throws MMScriptException {
@@ -505,6 +512,10 @@ public class MMAcquisition {
             throw new MMScriptException(ex);
          }
       }
+   }
+
+   public void promptToSave(boolean promptToSave) {
+      VirtualAcquisitionDisplay.getDisplay(virtAcq_.getHyperImage()).promptToSave(promptToSave);
    }
 
    public void setChannelContrast(int channel, int min, int max) throws MMScriptException {

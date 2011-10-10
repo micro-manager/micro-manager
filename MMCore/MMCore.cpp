@@ -1940,6 +1940,7 @@ bool CMMCore::getShutterOpen() throw (CMMError)
    }
    return state;
 }
+
 /**
  * Exposes the internal image buffer.
  *
@@ -1977,12 +1978,8 @@ void* CMMCore::getImage() const throw (CMMError)
 		
       	if (imageProcessor_)
 	      {
-            //CMMCore* pc = const_cast<CMMCore*>(this);
-            //pc->logMessage("call Process from getImage()");
             imageProcessor_->Process((unsigned char*)pBuf, camera_->GetImageWidth(),  camera_->GetImageHeight(), camera_->GetImageBytesPerPixel() );
 	      }
-
-
 		} catch( CMMError& e){
 			throw e;
 		} catch (...) {
@@ -2000,6 +1997,42 @@ void* CMMCore::getImage() const throw (CMMError)
    }
 }
 
+/**
+ * Returns the internal image buffer for a given Camera Channel
+ *
+ * Designed specifically for the SWIG wrapping for Java and scripting languages.
+ * @return a pointer to the internal image buffer.
+ */
+void* CMMCore::getImage(unsigned channelNr) const throw (CMMError)
+{
+   if (!camera_)
+      throw CMMError(getCoreErrorText(MMERR_CameraNotAvailable).c_str(), MMERR_CameraNotAvailable);
+   else
+   {
+      void* pBuf(0);
+      try {
+         pBuf = const_cast<unsigned char*> (camera_->GetImageBuffer(channelNr));
+		
+      	if (imageProcessor_)
+	      {
+            imageProcessor_->Process((unsigned char*)pBuf, camera_->GetImageWidth(),  camera_->GetImageHeight(), camera_->GetImageBytesPerPixel() );
+	      }
+		} catch( CMMError& e){
+			throw e;
+		} catch (...) {
+         logError("CMMCore::getImage()", getCoreErrorText(MMERR_UnhandledException).c_str());
+         throw CMMError(getCoreErrorText(MMERR_UnhandledException).c_str(), MMERR_UnhandledException);
+      }
+
+      if (pBuf != 0)
+         return pBuf;
+      else
+      {
+         logError("CMMCore::getImage()", getCoreErrorText(MMERR_CameraBufferReadFailed).c_str());
+         throw CMMError(getCoreErrorText(MMERR_CameraBufferReadFailed).c_str(), MMERR_CameraBufferReadFailed);
+      }
+   }
+}
 
 /**
  * Returns the size of the internal image buffer.
@@ -3366,6 +3399,17 @@ unsigned CMMCore::getNumberOfCameraChannels() const
       return camera_->GetNumberOfChannels();
 
    return 0;
+}
+
+string CMMCore::getCameraChannelName(unsigned int channelNr) const
+{
+   if (camera_)
+   {
+      char name[MM::MaxStrLength];
+      camera_->GetChannelName(channelNr, name);
+      return name;
+   }
+   return "";
 }
 
 /**

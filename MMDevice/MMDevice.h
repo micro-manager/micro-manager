@@ -354,6 +354,17 @@ namespace MM {
        */
       virtual const unsigned char* GetImageBuffer() = 0;
       /**
+       * Returns pixel data for cameras with multiple channels.
+       * See description for GetImageBuffer() for details.
+       * Use this overloaded version for cameras with multiple channels
+       * The behavior for calling GetImageBuffer(channelNr) for a single channel
+       * camera is not defined (currently, it will return 0).
+       * When GetImageBuffer() is called for a multi-channel camera, the 
+       * camera adapter should return the ImageBuffer for the first channel
+       * @param channelNr Number of the channel for which the image data are requested.
+       */
+      virtual const unsigned char* GetImageBuffer(unsigned channelNr) = 0;
+      /**
        * Returns pixel data with interleaved RGB pixels in 32 bpp format
        */
       virtual const unsigned int* GetImageBufferAsRGB32() = 0;
@@ -365,16 +376,22 @@ namespace MM {
       /**
        * Returns the name for each component 
        */
-      virtual int GetComponentName(unsigned channel, char* name) = 0;
-
+      virtual int GetComponentName(unsigned component, char* name) = 0;
       /**
-       * Returns the number of simultaneous channels that camera is capaable of
+       * Returns the number of simultaneous channels that camera is capaable of.
+       * This should be used by devices capable of generating mutiple channels of imagedata simultanuously.
+       * Note: this should not be used by color cameras (use getNumberOfComponents instead).
        */
       virtual int unsigned GetNumberOfChannels() const = 0;
-
+      /**
+       * Returns the name for each Channel.
+       * An implementation of this function is provided in DeviceBase.h.  It will return an empty string
+       */
+      virtual int GetChannelName(unsigned channel, char* name) = 0;
       /**
        * Returns the size in bytes of the image buffer.
        * Required by the MM::Camera API.
+       * For multi-channel cameras, return the size of a single channel
        */
       virtual long GetImageBufferSize()const = 0;
       /**
@@ -464,6 +481,14 @@ namespace MM {
        * Return true when Sequence acquisition is activce, false otherwise
        */
       virtual bool IsCapturing() = 0;
+      /**
+       * Adds a metadata tag that should be added to the metadata during image sequence acquisition
+       */
+      virtual void AddTag(const char* key, const char* value) = 0;
+      /**
+       * Remove the tage with the given key from the metadata that will be added during sequence acquisition
+       */
+      virtual void RemoveTag(const char* key) = 0;
 
       /*
        * Returns whether a camera's exposure time can be sequenced.
