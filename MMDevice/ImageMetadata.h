@@ -308,12 +308,15 @@ public:
       MetadataTag* newTag = tag.Clone();
 
       // delete existing tag with the same key (if any)
-      TagIterator it = tags_.find(tag.GetQualifiedName());
-      if (it != tags_.end())
-         delete it->second;
+      tags_.erase(tag.GetQualifiedName());
 
       // assing a new tag
       tags_[tag.GetQualifiedName()] = newTag;
+   }
+
+   void RemoveTag(const char* key)
+   {
+      tags_.erase(key);
    }
 
    /*
