@@ -25,7 +25,7 @@ import mmcorej.StrVector;
 import org.micromanager.conf2.PeripheralDevicesPage.DeviceTable_TableModel;
 import org.micromanager.utils.MMDialog;
 import org.micromanager.utils.ReportingUtils;
-import java.awt.Dialog.ModalityType;
+//import java.awt.Dialog.ModalityType;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.WindowAdapter;
