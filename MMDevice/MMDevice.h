@@ -34,7 +34,7 @@
 // Header version
 // If any of the class declarations changes, the interface version
 // must be incremented
-#define DEVICE_INTERFACE_VERSION 47
+#define DEVICE_INTERFACE_VERSION 48
 ///////////////////////////////////////////////////////////////////////////////
 
 #pragma once
