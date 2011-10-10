@@ -33,8 +33,8 @@
 #include "../../MMDevice/DeviceThreads.h"
 
 #ifdef WIN32
-#include "Headers/master.h"
-#include "Headers/pvcam.h"
+#include "master.h"
+#include "pvcam.h"
 #endif
 
 #ifdef __APPLE__
