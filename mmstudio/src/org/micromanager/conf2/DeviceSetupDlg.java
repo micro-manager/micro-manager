@@ -57,7 +57,7 @@ public class DeviceSetupDlg extends MMDialog {
     * Create the dialog.
     */
    public DeviceSetupDlg(MicroscopeModel mod, CMMCore c, String library, String devName, String descr) {
-      setModalityType(ModalityType.APPLICATION_MODAL);
+      //setModalityType(ModalityType.APPLICATION_MODAL);
       setModal(true);
       setBounds(100, 100, 450, 300);
       model = mod;

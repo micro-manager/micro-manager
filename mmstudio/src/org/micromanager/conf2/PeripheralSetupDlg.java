@@ -217,7 +217,7 @@ public class PeripheralSetupDlg extends MMDialog {
 
    public PeripheralSetupDlg(MicroscopeModel mod, CMMCore c, String hub) {
       setBounds(100, 100, 479, 353);
-      setModalityType(ModalityType.APPLICATION_MODAL);
+      //setModalityType(ModalityType.APPLICATION_MODAL);
       setModal(true);
       setResizable(false);
       hub_ = hub;
