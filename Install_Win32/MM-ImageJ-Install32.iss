@@ -109,6 +109,7 @@ Source: ..\Install_AllPlatforms\micro-manager\mmautofocus\*; DestDir: {app}\mmau
 ; NOTE: Don't use "Flags: ignoreversion" on any shared system files
 
 [DIRS]
+Name: {app}; Permissions: users-modify
 Name: {app}\macros; Permissions: users-modify
 Name: {app}\plugins; Permissions: users-modify
 Name: {app}\mmplugins; Permissions: users-modify

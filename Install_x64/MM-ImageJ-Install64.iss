@@ -103,6 +103,9 @@ Source: ..\Install_AllPlatforms\micro-manager\mmautofocus\*; DestDir: {app}\mmau
 
 ; NOTE: Don't use "Flags: ignoreversion" on any shared system files
 
+[DIRS]
+Name: {app}; Permissions: users-modify
+
 [Icons]
 Name: {group}\Micro-Manager-1.4; Filename: {app}\ImageJ.exe; WorkingDir: {app}
 Name: {group}\{cm:UninstallProgram,Micro-Manager-1.4}; Filename: {uninstallexe}
