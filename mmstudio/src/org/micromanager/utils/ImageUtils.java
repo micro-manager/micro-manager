@@ -452,4 +452,22 @@ public class ImageUtils {
       return new TaggedImage(proc.getPixels(), tags);
    }
 
+
+   public static TaggedImage makeTaggedImage(Object pixels, int channelIndex,
+           int sliceIndex, int positionIndex, int frameIndex, int width,
+           int height, int numberOfBytesPerPixel) {
+      JSONObject tags = new JSONObject();
+      try {
+         MDUtils.setChannelIndex(tags, channelIndex);
+         MDUtils.setSliceIndex(tags, sliceIndex);
+         MDUtils.setPositionIndex(tags, positionIndex);
+         MDUtils.setFrameIndex(tags, frameIndex);
+         MDUtils.setWidth(tags, width);
+         MDUtils.setHeight(tags, height);
+         MDUtils.setPixelTypeFromByteDepth(tags, numberOfBytesPerPixel);
+      } catch (Exception e) {
+         return null;
+      }
+      return new TaggedImage(pixels, tags);
+   }
 }

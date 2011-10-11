@@ -144,6 +144,7 @@ import org.micromanager.api.TaggedImageStorage;
 import org.micromanager.utils.FileDialogs;
 import org.micromanager.utils.FileDialogs.FileType;
 import org.micromanager.utils.HotKeysDialog;
+import org.micromanager.utils.ImageUtils;
 import org.micromanager.utils.MDUtils;
 import org.micromanager.utils.MMKeyDispatcher;
 import org.micromanager.utils.ReportingUtils;
@@ -257,7 +258,6 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
    private static MMImageWindow imageWin_;
    private final String multiCameraAcq_ = "Multi-Camera Snap";
    private Color[] multiCameraColors_ = {Color.RED, Color.GREEN, Color.BLUE, Color.YELLOW, Color.CYAN};
-   private String[] multiCameraNames_ = {"Camera-1", "Camera-2", "Camera-3", "Camera-4", "Camera-5"};
    private boolean multiChannelCamera_ = false;
    private long multiChannelCameraNrCh_ = 0;
    private int snapCount_ = -1;
@@ -419,7 +419,18 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
          long c = core_.getNumberOfCameraChannels();
 
          for (int i = 0; i < c; i++) {
-            addImage(multiCameraAcq_, core_.getImage(i), 0, i, 0);
+            TaggedImage ti = ImageUtils.makeTaggedImage(core_.getImage(i),
+                    i,
+                    0,
+                    0,
+                    0,
+                    getAcquisitionImageWidth(multiCameraAcq_),
+                    getAcquisitionImageHeight(multiCameraAcq_),
+                    getAcquisitionImageByteDepth(multiCameraAcq_) );
+            boolean update = false;
+            if (i == c -1)
+               update = true;
+            addImage(multiCameraAcq_,ti, update);
          }
       } catch (Exception ex) {
          ReportingUtils.showError(ex);

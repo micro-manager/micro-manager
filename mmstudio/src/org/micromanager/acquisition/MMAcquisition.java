@@ -308,11 +308,8 @@ public class MMAcquisition {
          }
          tags.put("Slice", slice);
          tags.put("Width", width_);
-         if (depth_ == 1) {
-            tags.put("PixelType", "GRAY8");
-         } else if (depth_ == 2) {
-            tags.put("PixelType", "GRAY16");
-         }
+         MDUtils.setPixelTypeFromByteDepth(tags, depth_);
+ 
          TaggedImage tg = new TaggedImage(pixels, tags);
          insertImage(tg);
       } catch (JSONException e) {
@@ -334,11 +331,7 @@ public class MMAcquisition {
          tags.put("Frame", frame);
          tags.put("ChannelIndex", channel);
          tags.put("SliceIndex", slice);
-         if (depth_ == 1) {
-            tags.put("PixelType", "GRAY8");
-         } else if (depth_ == 2) {
-            tags.put("PixelType", "GRAY16");
-         }
+         MDUtils.setPixelTypeFromByteDepth(tags, depth_);
          tags.put("PositionIndex", 0);
          insertImage(taggedImg);
       } catch (JSONException e) {

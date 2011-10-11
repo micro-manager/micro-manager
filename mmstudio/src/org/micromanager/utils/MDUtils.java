@@ -172,6 +172,24 @@ public class MDUtils {
       }
    }
 
+      public static void setPixelTypeFromByteDepth(JSONObject map, int depth) throws JSONException {
+      switch (depth) {
+         case 1:
+            map.put("PixelType", "GRAY8");
+         break;
+         case 2:
+            map.put("PixelType", "GRAY16");
+         break;
+         case 4:
+            map.put("PixelType", "RGB32");
+         break;
+         case 8:
+            map.put("PixelType", "RGB64");
+         break;
+      }
+   }
+
+
    public static int getSingleChannelType(JSONObject map) throws JSONException, MMScriptException {
       String pixelType = getPixelType(map);
       if (pixelType.contentEquals("GRAY8")) {
