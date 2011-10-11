@@ -348,7 +348,7 @@ void MultiCamera::GetName(char* name) const
 int MultiCamera::SnapImage()
 {
    CameraSnapThread t[MAX_NUMBER_PHYSICAL_CAMERAS];
-   for (int i = 0; i < physicalCameras_.size(); i++)
+   for (unsigned int i = 0; i < physicalCameras_.size(); i++)
    {
       if (physicalCameras_[i] != 0) 
       {
@@ -374,7 +374,7 @@ const unsigned char* MultiCamera::GetImageBuffer(unsigned channelNr)
    // We have a vector of physicalCameras, and a vector of Strings listing the cameras
    // we actually use.  
    int j = -1;
-   for (int i = 0; i < physicalCameras_.size(); i++)
+   for (unsigned int i = 0; i < physicalCameras_.size(); i++)
    {
       if (usedCameras_[i] != g_Undefined)
          j++;
@@ -392,7 +392,7 @@ unsigned MultiCamera::GetImageWidth() const
    if (physicalCameras_[0] != 0)
    {
       unsigned width = physicalCameras_[0]->GetImageWidth();
-      for (int i = 1; i < physicalCameras_.size(); i++)
+      for (unsigned int i = 1; i < physicalCameras_.size(); i++)
       {
          if (physicalCameras_[i] != 0) 
             if (width != physicalCameras_[i]->GetImageWidth())
@@ -400,6 +400,7 @@ unsigned MultiCamera::GetImageWidth() const
       }
       return width;
    }
+   return 0;
 }
 
 unsigned MultiCamera::GetImageHeight() const
@@ -407,7 +408,7 @@ unsigned MultiCamera::GetImageHeight() const
    if (physicalCameras_[0] != 0)
    {
       unsigned height = physicalCameras_[0]->GetImageWidth();
-      for (int i = 1; i < physicalCameras_.size(); i++)
+      for (unsigned int i = 1; i < physicalCameras_.size(); i++)
       {
          if (physicalCameras_[i] != 0) 
             if (height != physicalCameras_[i]->GetImageHeight())
@@ -415,6 +416,7 @@ unsigned MultiCamera::GetImageHeight() const
       }
       return height;
    }
+   return 0;
 }
 
 unsigned MultiCamera::GetImageBytesPerPixel() const
@@ -422,7 +424,7 @@ unsigned MultiCamera::GetImageBytesPerPixel() const
    if (physicalCameras_[0] != 0)
    {
       unsigned bytes = physicalCameras_[0]->GetImageBytesPerPixel();
-      for (int i = 1; i < physicalCameras_.size(); i++)
+      for (unsigned int i = 1; i < physicalCameras_.size(); i++)
       {
          if (physicalCameras_[i] != 0) 
             if (bytes != physicalCameras_[i]->GetImageBytesPerPixel())
@@ -430,6 +432,7 @@ unsigned MultiCamera::GetImageBytesPerPixel() const
       }
       return bytes;
    }
+   return 0;
 }
 
 unsigned MultiCamera::GetBitDepth() const
@@ -437,7 +440,7 @@ unsigned MultiCamera::GetBitDepth() const
    if (physicalCameras_[0] != 0)
    {
       unsigned bitDepth = physicalCameras_[0]->GetBitDepth();
-      for (int i = 1; i < physicalCameras_.size(); i++)
+      for (unsigned int i = 1; i < physicalCameras_.size(); i++)
       {
          if (physicalCameras_[i] != 0) 
             if (bitDepth != physicalCameras_[i]->GetBitDepth())
@@ -451,7 +454,7 @@ unsigned MultiCamera::GetBitDepth() const
 long MultiCamera::GetImageBufferSize() const
 {
    long imageBufferSize = 0;
-   for (int i = 0; i < physicalCameras_.size(); i++)
+   for (unsigned int i = 0; i < physicalCameras_.size(); i++)
    {
       if (physicalCameras_[i] != 0) 
          imageBufferSize += physicalCameras_[i]->GetImageBufferSize();
@@ -465,7 +468,7 @@ double MultiCamera::GetExposure() const
    if (physicalCameras_[0] != 0)
    {
       double exposure = physicalCameras_[0]->GetExposure();
-      for (int i = 1; i < physicalCameras_.size(); i++)
+      for (unsigned int i = 1; i < physicalCameras_.size(); i++)
       {
          if (physicalCameras_[i] != 0) 
             if (exposure != physicalCameras_[i]->GetExposure())
@@ -478,7 +481,7 @@ double MultiCamera::GetExposure() const
 
 void MultiCamera::SetExposure(double exp)
 {
-   for (int i = 0; i < physicalCameras_.size(); i++)
+   for (unsigned int i = 0; i < physicalCameras_.size(); i++)
    {
       if (physicalCameras_[i] != 0) 
          physicalCameras_[i]->SetExposure(exp);
@@ -487,7 +490,7 @@ void MultiCamera::SetExposure(double exp)
 
 int MultiCamera::SetROI(unsigned x, unsigned y, unsigned xSize, unsigned ySize)
 {
-   for (int i = 0; i < physicalCameras_.size(); i++)
+   for (unsigned int i = 0; i < physicalCameras_.size(); i++)
    {
       // TODO: deal with case when CCD size are not identical
       if (physicalCameras_[i] != 0) 
@@ -515,7 +518,7 @@ int MultiCamera::GetROI(unsigned& x, unsigned& y, unsigned& xSize, unsigned& ySi
 
 int MultiCamera::ClearROI()
 {
-   for (int i = 0; i < physicalCameras_.size(); i++)
+   for (unsigned int i = 0; i < physicalCameras_.size(); i++)
    {
       if (physicalCameras_[i] != 0)
       {
@@ -530,7 +533,7 @@ int MultiCamera::ClearROI()
 
 int MultiCamera::PrepareSequenceAcqusition()
 {
-   for (int i = 0; i < physicalCameras_.size(); i++)
+   for (unsigned int i = 0; i < physicalCameras_.size(); i++)
    {
       if (physicalCameras_[i] != 0)
       {
@@ -545,7 +548,7 @@ int MultiCamera::PrepareSequenceAcqusition()
 
 int MultiCamera::StartSequenceAcquisition(double interval)
 {
-   for (int i = 0; i < physicalCameras_.size(); i++)
+   for (unsigned int i = 0; i < physicalCameras_.size(); i++)
    {
       if (physicalCameras_[i] != 0)
       {
@@ -559,7 +562,7 @@ int MultiCamera::StartSequenceAcquisition(double interval)
 
 int MultiCamera::StartSequenceAcquisition(long numImages, double interval_ms, bool stopOnOverflow)
 {
-   for (int i = 0; i < physicalCameras_.size(); i++)
+   for (unsigned int i = 0; i < physicalCameras_.size(); i++)
    {
       if (physicalCameras_[i] != 0)
       {
@@ -573,7 +576,7 @@ int MultiCamera::StartSequenceAcquisition(long numImages, double interval_ms, bo
 
 int MultiCamera::StopSequenceAcquisition()
 {
-   for (int i = 0; i < physicalCameras_.size(); i++)
+   for (unsigned int i = 0; i < physicalCameras_.size(); i++)
    {
       if (physicalCameras_[i] != 0)
       {
@@ -590,7 +593,7 @@ int MultiCamera::GetBinning() const
    int binning = 0;
    if (physicalCameras_[0] != 0)
       binning = physicalCameras_[0]->GetBinning();
-   for (int i = 0; i < physicalCameras_.size(); i++)
+   for (unsigned int i = 0; i < physicalCameras_.size(); i++)
    {
       if (physicalCameras_[i] != 0)
       {
@@ -603,7 +606,7 @@ int MultiCamera::GetBinning() const
 
 int MultiCamera::SetBinning(int bS)
 {
-   for (int i = 0; i < physicalCameras_.size(); i++)
+   for (unsigned int i = 0; i < physicalCameras_.size(); i++)
    {
       if (physicalCameras_[i] != 0)
       {
@@ -635,7 +638,7 @@ unsigned MultiCamera::GetNumberOfChannels() const
 int MultiCamera::GetChannelName(unsigned channel, char* name)
 {
    CDeviceUtils::CopyLimitedString(name, "");
-   int ch = Logical2Physical(channel);
+   unsigned int ch = Logical2Physical(channel);
    if (ch > -1l && ch < usedCameras_.size())
    {
       CDeviceUtils::CopyLimitedString(name, usedCameras_[ch].c_str());
@@ -646,7 +649,7 @@ int MultiCamera::GetChannelName(unsigned channel, char* name)
 int MultiCamera::Logical2Physical(int logical)
 {
    int j = -1;
-   for (int i = 0; i < usedCameras_.size(); i++)
+   for (unsigned int i = 0; i < usedCameras_.size(); i++)
    {
       if (usedCameras_[i] != g_Undefined)
          j++;
@@ -691,7 +694,7 @@ int MultiCamera::OnPhysicalCamera(MM::PropertyBase* pProp, MM::ActionType eAct, 
             return ERR_INVALID_DEVICE_NAME;
       }
       nrCamerasInUse_ = 0;
-      for (int i = 0; i < usedCameras_.size(); i++) 
+      for (unsigned int i = 0; i < usedCameras_.size(); i++) 
       {
          if (usedCameras_[i] != g_Undefined)
             nrCamerasInUse_++;
