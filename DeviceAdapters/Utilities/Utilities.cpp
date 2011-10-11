@@ -361,33 +361,28 @@ int MultiCamera::SnapImage()
    return DEVICE_OK;
 }
 
+/**
+ * return the ImageBuffer of the first physical camera
+ */
 const unsigned char* MultiCamera::GetImageBuffer()
 {
-   unsigned long singleImageSize = GetImageWidth() * GetImageHeight() * GetBitDepth();
-   if (bufferSize_ != singleImageSize * physicalCameras_.size() )
-      ResizeImageBuffer();;
+   return GetImageBuffer(0);
+}
 
+const unsigned char* MultiCamera::GetImageBuffer(unsigned channelNr)
+{
+   // We have a vector of physicalCameras, and a vector of Strings listing the cameras
+   // we actually use.  
+   int j = -1;
    for (int i = 0; i < physicalCameras_.size(); i++)
    {
-      if (physicalCameras_[i] != 0) 
-      {
-         memcpy (imageBuffer_ + i * singleImageSize, physicalCameras_[i]->GetImageBuffer(), singleImageSize);
-      }
+      if (usedCameras_[i] != g_Undefined)
+         j++;
+      if (j == (int) channelNr)
+         return physicalCameras_[i]->GetImageBuffer();
    }
-   return imageBuffer_;;
+   return 0;
 }
-
-int MultiCamera::ResizeImageBuffer()
-{
-   if (imageBuffer_ != 0)
-      delete (imageBuffer_);
-
-   bufferSize_ = GetImageWidth() * GetImageHeight() * GetBitDepth() * physicalCameras_.size();;
-   imageBuffer_ = new unsigned char[bufferSize_];
-
-   return DEVICE_OK;
-}
-
 
 // Check if all cameras have the same size
 // If they do not, return 0
@@ -461,6 +456,7 @@ long MultiCamera::GetImageBufferSize() const
       if (physicalCameras_[i] != 0) 
          imageBufferSize += physicalCameras_[i]->GetImageBufferSize();
    }
+   printf ("Image Buffer Size: %ld\n", imageBufferSize);
    return imageBufferSize;
 }
 
@@ -633,8 +629,33 @@ unsigned MultiCamera::GetNumberOfComponents() const
 
 unsigned MultiCamera::GetNumberOfChannels() const
 {
-   return physicalCameras_.size();
+   return nrCamerasInUse_;
 }
+
+int MultiCamera::GetChannelName(unsigned channel, char* name)
+{
+   CDeviceUtils::CopyLimitedString(name, "");
+   int ch = Logical2Physical(channel);
+   if (ch > -1l && ch < usedCameras_.size())
+   {
+      CDeviceUtils::CopyLimitedString(name, usedCameras_[ch].c_str());
+   }
+   return DEVICE_OK;
+}
+
+int MultiCamera::Logical2Physical(int logical)
+{
+   int j = -1;
+   for (int i = 0; i < usedCameras_.size(); i++)
+   {
+      if (usedCameras_[i] != g_Undefined)
+         j++;
+      if (j == logical)
+         return i;
+   }
+   return -1;
+}
+  
 
 int MultiCamera::OnPhysicalCamera(MM::PropertyBase* pProp, MM::ActionType eAct, long i)
 {
@@ -642,10 +663,15 @@ int MultiCamera::OnPhysicalCamera(MM::PropertyBase* pProp, MM::ActionType eAct, 
    {
       pProp->Set(usedCameras_[i].c_str());
    }
+
    else if (eAct == MM::AfterSet)
    {
+      if (physicalCameras_[i] != 0)
+         physicalCameras_[i]->RemoveTag(MM::g_Keyword_CameraChannel);
+
       std::string cameraName;
       pProp->Get(cameraName);
+
       if (cameraName == g_Undefined) {
          usedCameras_[i] = g_Undefined;
          physicalCameras_[i] = 0;
@@ -654,9 +680,19 @@ int MultiCamera::OnPhysicalCamera(MM::PropertyBase* pProp, MM::ActionType eAct, 
          if (camera != 0) {
             usedCameras_[i] = cameraName;
             physicalCameras_[i] = camera;
+            std::ostringstream os;
+            os << i;
+            camera->AddTag(MM::g_Keyword_CameraChannel, os.str().c_str());
          } else
             return ERR_INVALID_DEVICE_NAME;
       }
+      nrCamerasInUse_ = 0;
+      for (int i = 0; i < usedCameras_.size(); i++) 
+      {
+         if (usedCameras_[i] != g_Undefined)
+            nrCamerasInUse_++;
+      }
+
       // TODO: Set allowed binning values correctly
       if (physicalCameras_[0] != 0)
       {
