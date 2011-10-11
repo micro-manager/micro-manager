@@ -401,10 +401,10 @@ int CK8061DA::Shutdown()
 
 int CK8061DA::WriteToPort(long value)
 {
-   int ret = g_K8061Interface.OutputAnalogChannel(*this, *GetCoreCallback(), channel_, (int) value);
+   int ret = g_K8061Interface.OutputAnalogChannel(*this, *GetCoreCallback(), (unsigned char) channel_, (unsigned char) value);
    if (ret != DEVICE_OK)
    {
-      this->LogMessage("Error reported by libk8055 function WriteAllDigital");
+      this->LogMessage("Error reported by libk8061 function WriteAllDigital");
       return ret;
    }
 
@@ -448,10 +448,10 @@ int CK8061DA::SetGateOpen(bool open)
    } else {
       gateOpen_ = false;
       gatedVolts_ = 0;
-      return WriteSignal(0.0);
    }
 
-   return DEVICE_OK;
+   return WriteSignal(0.0);
+   
 }
 
 ///////////////////////////////////////////////////////////////////////////////

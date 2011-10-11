@@ -271,7 +271,7 @@ bool MT20Burner::Busy()
 int MT20Burner::OnHours(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
 	std::string ret;
-	char* ret_msg;
+	// char* ret_msg;
 
 	if(eAct == MM::BeforeGet)
 	{
@@ -648,7 +648,7 @@ int MT20Filterwheel::OnState(MM::PropertyBase* pProp, MM::ActionType eAct)
 	{
 		long pos;
 		pProp->Get(pos);
-		if(pos >= numPos_ || pos < 0)
+		if(pos >= (long) numPos_ || pos < 0)
 		{
 			sprintf(ret_msg, "Invalid position %l requested of MT20-Filterwheel in MT20Filterwheel::OnState() after set\n", pos);
 			LogMessage(ret_msg, false);
@@ -799,7 +799,7 @@ int MT20Attenuator::OnState(MM::PropertyBase* pProp, MM::ActionType eAct)
 	{
 		long pos;
 		pProp->Get(pos);
-		if(pos >= numPos_ || pos < 0)
+		if(pos >= (long) numPos_ || pos < 0)
 		{
 			sprintf(ret_msg, "Invalid state %l requested of MT20-Attenuator in MT20Attenuator::OnState() after set\n", pos);
 			LogMessage(ret_msg, false);

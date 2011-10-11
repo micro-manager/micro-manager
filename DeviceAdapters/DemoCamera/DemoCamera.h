@@ -462,7 +462,7 @@ public:
       return DEVICE_OK;
    }
    int ClearStageSequence() {return DEVICE_OK;}
-   int AddToStageSequence(double position) {return DEVICE_OK;}
+   int AddToStageSequence(double /* position */) {return DEVICE_OK;}
    int SendStageSequence() const {return DEVICE_OK;}
 
 private:

@@ -1900,7 +1900,7 @@ int LeicaMonitoringThread::svc()
 {
    core_.LogMessage (&device_, "Starting MonitoringThread", true);
 
-   unsigned long dataLength = 0;
+   size_t dataLength = 0;
    unsigned long charsRead = 0;
    char rcvBuf[LeicaScopeInterface::RCV_BUF_LENGTH];
    char message[LeicaScopeInterface::RCV_BUF_LENGTH];
@@ -1910,9 +1910,9 @@ int LeicaMonitoringThread::svc()
    while (!stop_) 
    {
       do { 
-         dataLength = (unsigned long) LeicaScopeInterface::RCV_BUF_LENGTH - strlen(rcvBuf);
+         dataLength = LeicaScopeInterface::RCV_BUF_LENGTH - strlen(rcvBuf);
          int bufLen = (int) strlen(rcvBuf);
-         int ret = core_.ReadFromSerial(&device_, port_.c_str(), (unsigned char*) (rcvBuf + bufLen), dataLength, charsRead);
+         int ret = core_.ReadFromSerial(&device_, port_.c_str(), (unsigned char*) (rcvBuf + bufLen), (unsigned long) dataLength, charsRead);
 
          // Remove after debuggging with Stamatis!
          /*

@@ -583,7 +583,7 @@ Dev Addres   Label   Id   Description
                   }
                   if(validEntry)
                   {
-                     inventoryDeviceAddresses_.push_back(deviceID);
+                     inventoryDeviceAddresses_.push_back((const short) deviceID);
                      char ID = '?';
                      if ( (itt+1) != tokens.end())
                      {
@@ -601,7 +601,7 @@ Dev Addres   Label   Id   Description
 int Hub::GetNumberOfDiscoverableDevices()
 {
    QueryPeripheralInventory();
-   return discoverableDevices_.size();
+   return (int) discoverableDevices_.size();
 
 }
 

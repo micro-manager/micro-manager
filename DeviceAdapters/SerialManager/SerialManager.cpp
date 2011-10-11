@@ -587,17 +587,16 @@ int SerialPort::SetCommand(const char* command, const char* term)
       return ERR_PORT_NOTINITIALIZED;
 
    int retv = DEVICE_OK;
-   bool bfalse = false;
    std::string sendText(command);
    if (term != 0)
       sendText += term;
 
    // send characters one by one to accomodate slow devices
-   unsigned long written = 0;
+   size_t written = 0;
 
    if (transmitCharWaitMs_ < 0.001)
    {
-      pPort_->WriteCharactersAsynchronously(sendText.c_str(), sendText.length() );
+      pPort_->WriteCharactersAsynchronously(sendText.c_str(), (int) sendText.length() );
       written = sendText.length();
    }
    else

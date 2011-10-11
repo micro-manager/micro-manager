@@ -514,8 +514,8 @@ int XYStage::GetPositionSteps(long& x, long& y)
 {
 	double xx, yy;
 	int ret=GetPositionUm(xx,yy);
-	x=xx*stepSizeUm_;
-	y=yy*stepSizeUm_;
+	x = (long) (xx*stepSizeUm_);
+	y = (long) (yy*stepSizeUm_);
 	return ret;
 }
 
@@ -700,10 +700,10 @@ int XYStage::GetStepLimits(long& xMin, long& xMax, long& yMin, long& yMax)
 {
 	double dxMin, dxMax, dyMin, dyMax;
 	int ret=GetLimitsUm(dxMin, dxMax, dyMin, dyMax);
-	xMin=dxMin*stepSizeUm_;
-        xMax=dxMax*stepSizeUm_;
-	yMin=dyMin*stepSizeUm_;
-	yMax=dyMax*stepSizeUm_;
+	xMin = (long) (dxMin*stepSizeUm_);
+    xMax = (long) (dxMax*stepSizeUm_);
+	yMin = (long) (dyMin*stepSizeUm_);
+	yMax = (long) (dyMax*stepSizeUm_);
 	return ret;
 }
 
