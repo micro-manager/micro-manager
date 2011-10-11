@@ -3827,6 +3827,11 @@ int AndorCamera::OnSpuriousNoiseFilter(MM::PropertyBase* pProp, MM::ActionType e
 
       MM::MMTime timestamp = this->GetCurrentMMTime();
       Metadata md;
+      // Copy the metadata inserted by other processes:
+      std::vector<std::string> keys = metadata_.GetKeys();
+      for (unsigned int i= 0; i < keys.size(); i++) {
+         md.put(keys[i], metadata_.GetSingleTag(keys[i].c_str()).GetValue().c_str());
+      }
 
       md.put("Camera", label);   
       md.put(MM::g_Keyword_Metadata_StartTime, CDeviceUtils::ConvertToString(startTime_.getMsec()));
