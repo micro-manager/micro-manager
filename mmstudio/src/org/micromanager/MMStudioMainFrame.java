@@ -258,6 +258,8 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
    private final String multiCameraAcq_ = "Multi-Camera Snap";
    private Color[] multiCameraColors_ = {Color.RED, Color.GREEN, Color.BLUE, Color.YELLOW, Color.CYAN};
    private String[] multiCameraNames_ = {"Camera-1", "Camera-2", "Camera-3", "Camera-4", "Camera-5"};
+   private boolean multiChannelCamera_ = false;
+   private long multiChannelCameraNrCh_ = 0;
    private int snapCount_ = -1;
    private boolean liveModeSuspended_;
    public Font defaultScriptFont_ = null;
@@ -364,12 +366,7 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
       setCursor(new Cursor(Cursor.DEFAULT_CURSOR));
    }
 
-   /**
-    * Snaps an image for a multi-Channel camera
-    * This version does not (yet) support attachment of mouse listeners
-    * for stage movement.
-    */
-   private void doSnapMultiChannel()
+   private void checkMultiChannelWindow()
    {
       int w = (int) core_.getImageWidth();
       int h = (int)  core_.getImageHeight();
@@ -396,26 +393,38 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
                      setChannelColor(multiCameraAcq_, i, multiCameraColors_[i]);
                   }
                   setChannelName(multiCameraAcq_, i, core_.getCameraChannelName(i));
-                  //if (i < multiCameraNames_.length) {
-                  //   setChannelName(multiCameraAcq_, i, multiCameraNames_[i]);
-                  //}
                }
                initializeAcquisition(multiCameraAcq_, w, h, d);
                getAcquisition(multiCameraAcq_).promptToSave(false);
             }
-
-            setCursor(new Cursor(Cursor.WAIT_CURSOR));
-            core_.snapImage();
-            getAcquisition(multiCameraAcq_).toFront();
-
-            for (int i = 0; i < c; i++) {
-               addImage(multiCameraAcq_, core_.getImage(i), 0, i, 0);
-            }
          } catch (Exception ex) {
             ReportingUtils.showError(ex);
          }
-         setCursor(new Cursor(Cursor.DEFAULT_CURSOR));
       }
+   }
+
+   /**
+    * Snaps an image for a multi-Channel camera
+    * This version does not (yet) support attachment of mouse listeners
+    * for stage movement.
+    */
+   private void doSnapMultiChannel()
+   {
+      checkMultiChannelWindow();
+
+      try {
+         setCursor(new Cursor(Cursor.WAIT_CURSOR));
+         core_.snapImage();
+         getAcquisition(multiCameraAcq_).toFront();
+         long c = core_.getNumberOfCameraChannels();
+
+         for (int i = 0; i < c; i++) {
+            addImage(multiCameraAcq_, core_.getImage(i), 0, i, 0);
+         }
+      } catch (Exception ex) {
+         ReportingUtils.showError(ex);
+      }
+      setCursor(new Cursor(Cursor.DEFAULT_CURSOR));
    }
 
     private void initializeHelpMenu() {
@@ -2972,22 +2981,43 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
       public void run() {
          Thread.currentThread().setPriority(3);
          running_ = true;
-         if (!isImageWindowOpen()) {
+         if (!multiChannelCamera_ && !isImageWindowOpen()) {
             // stop live acquisition if user closed the window
+            enableLiveMode(false);
+            return;
+         } else if (multiChannelCamera_ && !acquisitionExists(multiCameraAcq_)) {
             enableLiveMode(false);
             return;
          }
          try {
             if (core_.getRemainingImageCount() > 0) {
-               Object img = core_.getLastImage();
-               if (img != img_) {
-                  img_ = img;
-                  displayImage(img_);
-                  Thread.yield();
+               if (!multiChannelCamera_) {
+                  Object img = core_.getLastImage();
+                  if (img != img_) {
+                     img_ = img;
+                     displayImage(img_);
+                     Thread.yield();
+                  }
+               } else for (int i = 0; i < multiChannelCameraNrCh_ &&
+                       core_.getRemainingImageCount() > 0; i++)
+               {
+                  TaggedImage ti = core_.getLastTaggedImage();
+                  int channel = ti.tags.getInt("CameraChannelIndex");
+                  ti.tags.put("Channel", core_.getCameraChannelName(channel));
+                  MDUtils.setChannelIndex(ti.tags, channel);
+                  MDUtils.setFrameIndex(ti.tags, 0);
+                  MDUtils.setSliceIndex(ti.tags, 0);
+                  MDUtils.setPositionIndex(ti.tags, 0);
+                  boolean update = false;
+                  if (multiChannelCameraNrCh_ == channel + 1)
+                     update = true;
+                  addImage(multiCameraAcq_, ti, update);
+                  System.out.println("Channel: " + channel);
                }
             }
          } catch (Exception e) {
             ReportingUtils.showError(e);
+            enableLiveMode(false);
             return;
          }
 
@@ -3005,16 +3035,24 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
                return;
             }
             try {
-               if (!isImageWindowOpen() && creatingImageWindow_.isFalse()) {
-                  imageWin_ = createImageWindow();
-               }
+               multiChannelCameraNrCh_ = core_.getNumberOfCameraChannels();
+               if (multiChannelCameraNrCh_ > 1) {
+                  multiChannelCamera_ = true;
+                  checkMultiChannelWindow();
+                  getAcquisition(multiCameraAcq_).toFront();
+               } else {
+                  multiChannelCamera_ = false;
+                  if (!isImageWindowOpen() && creatingImageWindow_.isFalse()) {
+                     imageWin_ = createImageWindow();
+                  }
 
-               // this is needed to clear the subtitle, should be folded into
-               // drawInfo
-               imageWin_.getGraphics().clearRect(0, 0, imageWin_.getWidth(),
-                       40);
-               imageWin_.drawInfo(imageWin_.getGraphics());
-               imageWin_.toFront();
+                  // this is needed to clear the subtitle, should be folded into
+                  // drawInfo
+                  imageWin_.getGraphics().clearRect(0, 0, imageWin_.getWidth(),
+                          40);
+                  imageWin_.drawInfo(imageWin_.getGraphics());
+                  imageWin_.toFront();
+               }
 
                // turn off auto shutter and open the shutter
                autoShutterOrg_ = core_.getAutoShutter();
@@ -3032,29 +3070,32 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
                if ((shutterLabel_.length() > 0) && autoShutterOrg_) {
                   core_.setShutterOpen(true);
                }
-               // attach mouse wheel listener to control focus:
-               if (zWheelListener_ == null) {
-                  zWheelListener_ = new ZWheelListener(core_, this);
-               }
-               zWheelListener_.start(imageWin_);
+               if (!multiChannelCamera_) {
+                  // attach mouse wheel listener to control focus:
+                  if (zWheelListener_ == null) {
+                     zWheelListener_ = new ZWheelListener(core_, this);
+                  }
+                  zWheelListener_.start(imageWin_);
 
-               // attach key listener to control the stage and focus:
-               if (xyzKeyListener_ == null) {
-                  xyzKeyListener_ = new XYZKeyListener(core_, this);
+                  // attach key listener to control the stage and focus:
+                  if (xyzKeyListener_ == null) {
+                     xyzKeyListener_ = new XYZKeyListener(core_, this);
+                  }
+                  xyzKeyListener_.start(imageWin_);
                }
-               xyzKeyListener_.start(imageWin_);
 
                // Do not display more often than dictated by the exposure time
                setLiveModeInterval();
                core_.startContinuousSequenceAcquisition(0.0);
                liveModeTimerTask_ = new LiveModeTimerTask();
-               liveModeTimer_.schedule(liveModeTimerTask_, (long) 0, (long) liveModeInterval_);
+               liveModeTimer_.schedule(liveModeTimerTask_, (long) 0, (long) liveModeInterval_  );
                // Only hide the shutter checkbox if we are in autoshuttermode
                buttonSnap_.setEnabled(false);
                if (autoShutterOrg_) {
                   toggleButtonShutter_.setEnabled(false);
                }
-               imageWin_.setSubTitle("Live (running)");
+               if (core_.getNumberOfCameraChannels() == 1)
+                  imageWin_.setSubTitle("Live (running)");
                liveRunning_ = true;
             } catch (Exception err) {
                ReportingUtils.showError(err, "Failed to enable live mode.");
@@ -3101,7 +3142,8 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
                // Should be removed when underlying problem is dealt with
                Thread.sleep(100);
 
-               imageWin_.setSubTitle("Live (stopped)");
+               if (!multiChannelCamera_)
+                  imageWin_.setSubTitle("Live (stopped)");
                liveModeTimerTask_ = null;
 
             } catch (Exception err) {
@@ -3169,13 +3211,16 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
 
    public boolean displayImage(Object pixels) {
       try {
-         if (!isImageWindowOpen() ||  imageWin_.windowNeedsResizing()
-               && creatingImageWindow_.isFalse()) {
-            createImageWindow();
+         if (core_.getNumberOfCameraChannels() > 1)
+            checkMultiChannelWindow();
+         else {
+            if (!isImageWindowOpen() ||  imageWin_.windowNeedsResizing()
+                  && creatingImageWindow_.isFalse()) {
+               createImageWindow();
+            }
+            imageWin_.newImage(pixels);
+            updateLineProfile();
          }
-
-         imageWin_.newImage(pixels);
-         updateLineProfile();
       } catch (Exception e) {
          ReportingUtils.logError(e);
          return false;
