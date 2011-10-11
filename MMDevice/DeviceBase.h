@@ -1238,7 +1238,7 @@ public:
       return DEVICE_OK;
    }
 
-   virtual const unsigned char* GetImageBuffer(unsigned channelNr)
+   virtual const unsigned char* GetImageBuffer(unsigned /* channelNr */)
    {
       return 0;
    }
