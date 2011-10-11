@@ -87,7 +87,8 @@ namespace MM {
    const char* const g_Keyword_Description      = "Description";
    const char* const g_Keyword_CameraName       = "CameraName";
    const char* const g_Keyword_CameraID         = "CameraID";
-   const char* const g_Keyword_CameraChannel    = "CameraChannel";
+   const char* const g_Keyword_CameraChannelName     = "CameraChannelName";
+   const char* const g_Keyword_CameraChannelIndex    = "CameraChannelIndex";
    const char* const g_Keyword_Binning          = "Binning";
    const char* const g_Keyword_Exposure         = "Exposure";
    const char* const g_Keyword_ActualExposure   = "ActualExposure";

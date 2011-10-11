@@ -667,7 +667,10 @@ int MultiCamera::OnPhysicalCamera(MM::PropertyBase* pProp, MM::ActionType eAct, 
    else if (eAct == MM::AfterSet)
    {
       if (physicalCameras_[i] != 0)
-         physicalCameras_[i]->RemoveTag(MM::g_Keyword_CameraChannel);
+      {
+         physicalCameras_[i]->RemoveTag(MM::g_Keyword_CameraChannelName);
+         physicalCameras_[i]->RemoveTag(MM::g_Keyword_CameraChannelIndex);
+      }
 
       std::string cameraName;
       pProp->Get(cameraName);
@@ -682,7 +685,8 @@ int MultiCamera::OnPhysicalCamera(MM::PropertyBase* pProp, MM::ActionType eAct, 
             physicalCameras_[i] = camera;
             std::ostringstream os;
             os << i;
-            camera->AddTag(MM::g_Keyword_CameraChannel, os.str().c_str());
+            camera->AddTag(MM::g_Keyword_CameraChannelName, usedCameras_[i].c_str());
+            camera->AddTag(MM::g_Keyword_CameraChannelIndex, os.str().c_str());
          } else
             return ERR_INVALID_DEVICE_NAME;
       }
