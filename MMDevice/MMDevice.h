@@ -350,6 +350,7 @@ namespace MM {
        * The calling program allso assumes that camera never changes the size of
        * the pixel buffer on its own. In other words, the buffer can change only if
        * appropriate properties are set (such as binning, pixel type, etc.)
+       * Multi-Channel cameras should return the content of the first channel in this call.
        *
        */
       virtual const unsigned char* GetImageBuffer() = 0;
@@ -357,8 +358,9 @@ namespace MM {
        * Returns pixel data for cameras with multiple channels.
        * See description for GetImageBuffer() for details.
        * Use this overloaded version for cameras with multiple channels
-       * The behavior for calling GetImageBuffer(channelNr) for a single channel
-       * camera is not defined (currently, it will return 0).
+       * When calling this function for a single channel camera, this function
+       * should return the content of the imagebuffer as returned by the function
+       * GetImageBuffer().  This behavior is implemented in the DeviceBase.
        * When GetImageBuffer() is called for a multi-channel camera, the 
        * camera adapter should return the ImageBuffer for the first channel
        * @param channelNr Number of the channel for which the image data are requested.

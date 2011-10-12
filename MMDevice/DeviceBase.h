@@ -1240,6 +1240,8 @@ public:
 
    virtual const unsigned char* GetImageBuffer(unsigned /* channelNr */)
    {
+      if (GetNumberOfChannels() == 1)
+         return GetImageBuffer();
       return 0;
    }
 
