@@ -278,7 +278,8 @@ spuriousNoiseFilterDescriptionStr_("")
    driverDir_ = "/usr/local/etc/andor/";
 #endif
 
-   if (GetListOfAvailableCameras() != DRV_SUCCESS) exit;
+   if (GetListOfAvailableCameras() != DRV_SUCCESS) 
+	   exit(1);
 
 }
 
@@ -1254,56 +1255,67 @@ int AndorCamera::GetListOfAvailableCameras()
       //OptAcquire
       if(caps.ulFeatures&AC_FEATURES_OPTACQUIRE) //some cameras might not support this
       {    
-        unsigned int ui_numberOfModes = 0;
-        char * pc_acqModes;
-        vector<string> OAModeNames;  
-        unsigned int ui_retVal = ::OA_Initialize("C:\\userconfig.xml", strlen("C:\\userconfig.xml"));
-        //Get the number of available Preset modes for the current camera
-        ui_retVal = ::OA_GetNumberOfPreSetModes(&ui_numberOfModes);
-        if(ui_retVal == DRV_SUCCESS && ui_numberOfModes > 0) {
-          //Allocate enough memory to hold the list of Mode names remembering to add space for the delimiter
-          pc_acqModes = static_cast<char *>(malloc((ui_numberOfModes*MAX_PATH) + (ui_numberOfModes + 1)));
-          //Get a list of Preset mode names
-          ui_retVal = OA_GetPreSetModeNames(pc_acqModes);
+         unsigned int ui_numberOfModes = 0;
+         char * pc_acqModes;
+         vector<string> OAModeNames;  
+		   unsigned int ui_retVal = 0;
+		   try 
+		   {
+            ui_retVal = ::OA_Initialize("C:\\userconfig.xml", (unsigned int) strlen("C:\\userconfig.xml"));
+   		
+			   //Get the number of available Preset modes for the current camera
+            ui_retVal = ::OA_GetNumberOfPreSetModes(&ui_numberOfModes);
+			   if(ui_retVal == DRV_SUCCESS && ui_numberOfModes > 0) {
+			      //Allocate enough memory to hold the list of Mode names remembering to add space for the delimiter
+			      pc_acqModes = static_cast<char *>(malloc((ui_numberOfModes*MAX_PATH) + (ui_numberOfModes + 1)));
+			      //Get a list of Preset mode names
+			      ui_retVal = OA_GetPreSetModeNames(pc_acqModes);
 
-          if(ui_retVal == DRV_SUCCESS) {
+			      if(ui_retVal == DRV_SUCCESS) {
 
-            if(!HasProperty("OptAcquireMode"))
-            {
-               pAct = new CPropertyAction (this, &AndorCamera::OnOptAcquireMode);
-               nRet = CreateProperty("OptAcquireMode", "NoMode", MM::String, false, pAct);
-               assert(nRet == DEVICE_OK);
-            }
-            else
-            {
-               nRet = SetProperty("OptAcquireMode",  "NoMode");  
-               if (nRet != DEVICE_OK)
-                  return nRet;
-            }
-      
-            SetProperty("OptAcquireMode",  "NoMode"); 
-            //Add Preset mode names to list 
-            char * pc_result = strtok( pc_acqModes, "," );
-            for(unsigned int i = 0; i < ui_numberOfModes; i++){              
-              if (NULL != pc_result) {        		
-                OAModeNames.push_back(pc_result);
-              }
-              pc_result = strtok(NULL, "," );
-            }
-          }
-          nRet = SetAllowedValues("OptAcquireMode", OAModeNames);
-          free(pc_acqModes);
-        }
-        if (nRet != DEVICE_OK)
-           return nRet;
-      
-         // Description
-        if (!HasProperty("OptAcquireMode Description"))
-        {
-           pAct = new CPropertyAction (this, &AndorCamera::OnOADescription);
-           nRet = CreateProperty("OptAcquireMode Description", "Selected OptAcquireMode Description", MM::String, true, pAct);
-        }
-        assert(nRet == DEVICE_OK);
+				      if(!HasProperty("OptAcquireMode"))
+				      {
+				         pAct = new CPropertyAction (this, &AndorCamera::OnOptAcquireMode);
+				         nRet = CreateProperty("OptAcquireMode", "NoMode", MM::String, false, pAct);
+				         assert(nRet == DEVICE_OK);
+				      }
+				      else
+				      {
+				         nRet = SetProperty("OptAcquireMode",  "NoMode");  
+				         if (nRet != DEVICE_OK)
+					        return nRet;
+				      }
+      	      
+				      SetProperty("OptAcquireMode",  "NoMode"); 
+				      //Add Preset mode names to list 
+				      char * pc_result = strtok( pc_acqModes, "," );
+				      for(unsigned int i = 0; i < ui_numberOfModes; i++){              
+				         if (NULL != pc_result) {        		
+					         OAModeNames.push_back(pc_result);
+				         }
+				         pc_result = strtok(NULL, "," );
+				      }
+			      }
+			      nRet = SetAllowedValues("OptAcquireMode", OAModeNames);
+			      free(pc_acqModes);
+			   }
+			   if (nRet != DEVICE_OK)
+			      return nRet;
+   	      
+			    // Description
+			   if (!HasProperty("OptAcquireMode Description"))
+			   {
+			      pAct = new CPropertyAction (this, &AndorCamera::OnOADescription);
+			      nRet = CreateProperty("OptAcquireMode Description", "Selected OptAcquireMode Description", MM::String, true, pAct);
+			   }
+			   assert(nRet == DEVICE_OK);
+
+		   } 
+		   catch (...)
+		   {
+			   LogMessage("Caught an exception in the Andor driver while calling OA_Initialize");
+		   }
+
       }
 
       //DMA parameters
