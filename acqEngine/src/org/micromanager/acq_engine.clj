@@ -119,6 +119,7 @@
        "Source" (state :source)
        "Time" (get-current-time-str)
        "UUID" (UUID/randomUUID)
+       "WaitInterval" (:wait-time-ms event)
        "Width"  (state :init-width)
        "XPositionUm" x
        "YPositionUm" y
@@ -511,12 +512,14 @@
       :skipAutofocusCount      :autofocus-skip
       :relativeZSlice          :relative-slices
       :intervalMs              :interval-ms
+      :customIntervalsMs       :custom-intervals-ms
     )
     (assoc :frames (range (.numFrames settings))
            :channels (vec (filter :use-channel (map ChannelSpec-to-map (.channels settings))))
            :positions (vec (range (.. settings positions size)))
            :slices (vec (.slices settings))
-           :default-exposure (core getExposure))))
+           :default-exposure (core getExposure)
+           :custom-intervals-ms (vec (.customIntervalsMs settings)))))
 
 (defn get-IJ-type [depth]
   (get {1 ImagePlus/GRAY8 2 ImagePlus/GRAY16 4 ImagePlus/COLOR_RGB 8 64} depth))
@@ -558,6 +561,7 @@
       "GridRow" 0
       "Height" (core getImageHeight)
       "Interval_ms" (settings :interval-ms)
+      "CustomIntervals_ms" (JSONArray. (settings :custom-intervals-ms))
       "IJType" (get-IJ-type depth)
       "KeepShutterOpenChannels" (settings :keep-shutter-open-channels)
       "KeepShutterOpenSlices" (settings :keep-shutter-open-slices)
@@ -596,7 +600,7 @@
     ["Width" "Height" "PixelType"]))  
 
 (defn create-image-window [first-image]
-  (let [summary {:interval-ms 0.0, :use-autofocus false, :autofocus-skip 0,
+  (let [summary {:interval-ms 0.0, :custom-interval-ms [] :use-autofocus false, :autofocus-skip 0,
                  :relative-slices true, :keep-shutter-open-slices false, :comment "",
                  :prefix "Untitled", :root "",
                  :time-first false, :positions (), :channels (), :slices-first true,

@@ -64,7 +64,8 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
    private List<Class> imageRequestProcessors_;
    private boolean absoluteZ_;
    private Pipeline pipeline_;
-
+   private ArrayList<Double> customTimePointsMs_;
+ 
    public AcquisitionWrapperEngine() {
       imageRequestProcessors_ = new ArrayList<Class>();
       taggedImageProcessors_ = new ArrayList<DataProcessor<TaggedImage>>();
@@ -152,12 +153,15 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
       updateChannelCameras();
 
       // Frames
-      if (useFrames_) {
+      if (customTimePointsMs_ != null) {
+     	 acquisitionSettings.customIntervalsMs = customTimePointsMs_;
+     	 acquisitionSettings.numFrames = acquisitionSettings.customIntervalsMs.size();
+      } else if (useFrames_) {
          acquisitionSettings.numFrames = numFrames_;
          acquisitionSettings.intervalMs = interval_;
-      } else {
-         acquisitionSettings.numFrames = 0;
-      }
+      } else 
+    	  acquisitionSettings.numFrames = 0;
+      
 
       // Slices
       if (useSlices_) {
@@ -766,7 +770,17 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
    /**
     * @return the taggedImageProcessors_
     */
-   public List<DataProcessor<TaggedImage>> getTaggedImageProcessors() {
-      return taggedImageProcessors_;
-   }
+      public List<DataProcessor<TaggedImage>> getTaggedImageProcessors() {
+    	  return taggedImageProcessors_;
+      }
+
+      public void setCustomTimePoints(double[] customTimePoints) {
+    	  if (customTimePoints == null)
+    		  customTimePointsMs_ = null;
+    	  else {
+    		  customTimePointsMs_ = new ArrayList<Double>();
+    		  System.out.println("sdgfas");
+    		  for(double d: customTimePoints)
+    			  customTimePointsMs_.add(d);
+    	  }}
 }

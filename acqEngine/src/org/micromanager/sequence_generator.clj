@@ -25,7 +25,7 @@
 
 (defstruct acq-settings :frames :positions :channels :slices :slices-first
   :time-first :keep-shutter-open-slices :keep-shuftter-open-channels
-  :use-autofocus :autofocus-skip :relative-slices :exposure :interval-ms)
+  :use-autofocus :autofocus-skip :relative-slices :exposure :interval-ms :custom-intervals-ms)
 
 (defn pairs [x]
   (partition 2 1 (lazy-cat x (list nil))))
@@ -134,12 +134,12 @@
                (or (not= (:position-index e1) (:position-index e2))
                    (not= (:frame-index e1) (:frame-index e2)))))))))
 
-(defn process-wait-time [events interval-ms]
+(defn process-wait-time [events interval]
   (cons
-    (assoc (first events) :wait-time-ms 0)
+    (assoc (first events) :wait-time-ms (if (vector? interval) (first interval) 0))    ;if supplied first custom time point is delay before acquisition start
     (for [[e1 e2] (pairs events) :when e2]
       (if-assoc (not= (:frame-index e1) (:frame-index e2))
-        e2 :wait-time-ms interval-ms))))
+        e2 :wait-time-ms  (if (vector? interval) (nth interval (:frame-index e2)) interval)))))
         
 (defn event-triggerable [burst event]
   (let [n (count burst)
@@ -184,7 +184,7 @@
                (conj burst e2))
         [burst remaining-events]))))
       
-(defn make-bursts [events]
+(defn make-bursts [events]  
   (lazy-seq
     (let [[burst later] (accumulate-burst-event events)]
       (when burst
@@ -222,7 +222,7 @@
 
 (defn generate-default-acq-sequence [settings runnables]
   (let [{:keys [slices keep-shutter-open-channels keep-shutter-open-slices
-                use-autofocus autofocus-skip interval-ms relative-slices
+                use-autofocus autofocus-skip interval-ms custom-intervals-ms relative-slices
                 runnable-list]} settings]
    (-> (make-main-loops settings)
      (#(map (partial build-event settings) %))
@@ -230,7 +230,7 @@
        (manage-shutter keep-shutter-open-channels keep-shutter-open-slices)
        (process-channel-skip-frames)
        (process-use-autofocus use-autofocus autofocus-skip)
-       (process-wait-time interval-ms)
+       (process-wait-time (if (first custom-intervals-ms) custom-intervals-ms interval-ms))
        (attach-runnables runnables)
        (make-bursts)
        (add-next-task-tags)   
@@ -293,7 +293,7 @@
 (defn generate-acq-sequence [settings runnables]
   (let [{:keys [numFrames time-first positions slices channels
                 use-autofocus default-exposure interval-ms
-                autofocus-skip]} settings
+                autofocus-skip custom-intervals-ms]} settings
         num-positions (count positions)
         property-sequences (make-property-sequences (map :properties channels))]
     (cond
@@ -308,6 +308,7 @@
            (or (not use-autofocus)
                (>= autofocus-skip (dec numFrames)))
            (zero? (count runnables))
+           (not (first custom-intervals-ms))
            (> default-exposure interval-ms))
              (let [triggers 
                    {:properties (select-triggerable-sequences property-sequences)}]

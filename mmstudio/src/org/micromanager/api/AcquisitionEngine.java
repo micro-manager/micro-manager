@@ -106,6 +106,13 @@ public interface AcquisitionEngine {
    public int getCurrentFrameCount();
 
    /**
+    * Used to provide acquisition with custom time intervals in between frames
+    * passing null resets 
+    */
+   public void setCustomTimePoints(double[] customTimePointsMs);
+
+   
+   /**
     * Unconditional shutdown.  Will stop acuiqistion and multi-field acquisition
     */
    public void shutdown();
