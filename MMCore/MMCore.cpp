@@ -1944,8 +1944,12 @@ bool CMMCore::getShutterOpen() throw (CMMError)
 /**
  * Exposes the internal image buffer.
  *
+ * Multi-Channel cameras will return the content of the first 
+ * channel in this function
+ *
  * Designed specifically for the SWIG wrapping for Java and scripting languages.
  * @return a pointer to the internal image buffer.
+ * @throws CMMError - when the camera returns no data
  */
 void* CMMCore::getImage() const throw (CMMError)
 {
@@ -2000,7 +2004,11 @@ void* CMMCore::getImage() const throw (CMMError)
 /**
  * Returns the internal image buffer for a given Camera Channel
  *
+ * Single channel cameras will return the content of their image buffer
+ * irrespective of the channelNr argument
  * Designed specifically for the SWIG wrapping for Java and scripting languages.
+ *
+ * @param channelNr Channel number for which the image buffer is requested
  * @return a pointer to the internal image buffer.
  */
 void* CMMCore::getImage(unsigned channelNr) const throw (CMMError)
