@@ -156,7 +156,14 @@ class V4L2 : public CCameraBase<V4L2>
 public:
 
 
-
+/**
+ * TODO: implement if possible
+ */
+int IsExposureSequenceable(bool& isSequenceable) const 
+{
+   isSequenceable = false; 
+   return DEVICE_OK;
+}
 
 bool
 VideoInit(State*state)
