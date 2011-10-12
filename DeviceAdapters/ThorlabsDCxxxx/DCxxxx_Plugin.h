@@ -15,7 +15,7 @@
 //
 // COPYRIGHT:     Thorlabs GmbH
 // LICENSE:       LGPL
-// VERSION:			1.0.0
+// VERSION:			1.1.0
 // DATE:				06-Oct-2009
 // AUTHOR:        Olaf Wohlmann, owohlmann@thorlabs.com
 //
@@ -265,13 +265,14 @@ public:
 	int OnPercentalBrightness(MM::PropertyBase* pProp, MM::ActionType eAct, long index);
 	int OnLimitCurrent(MM::PropertyBase* pProp, MM::ActionType eAct, long index);
 	int OnMaximumCurrent(MM::PropertyBase* pProp, MM::ActionType eAct, long index);
-	
+
 private:
 	int LEDOnOff(int);
 	int SwitchToMultiSelection(void);
 	int CreateStaticReadOnlyProperties(void);
 	int ValidateDevice(void);
-	
+	int GetStatus(int* status);
+
 private:
 	bool dynErrlist_free		(void);
 	bool dynErrlist_lookup	(int err, std::string* descr);
@@ -280,7 +281,7 @@ private:
 
 
 private:
-	static int const NUM_LEDS = 4; 
+	static int const NUM_LEDS = 4;
 	std::string 	m_name;
 	std::string 	m_port;
 	std::string 	m_LEDOn;
@@ -295,6 +296,7 @@ private:
 	long				m_maximumCurrent[NUM_LEDS];
 	long 				m_constCurrent[NUM_LEDS];
 	long 		      m_percBrightness[NUM_LEDS];
+	long				m_channelAvailable[NUM_LEDS];
 	bool 				m_busy;
 	bool 				m_initialized;
 

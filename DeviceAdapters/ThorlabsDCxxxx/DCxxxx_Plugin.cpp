@@ -15,7 +15,7 @@
 //
 // COPYRIGHT:     Thorlabs GmbH
 // LICENSE:       LGPL
-// VERSION:			1.0.0
+// VERSION:			1.1.0
 // DATE:				06-Oct-2009
 // AUTHOR:        Olaf Wohlmann, owohlmann@thorlabs.com
 //
@@ -688,7 +688,7 @@ int DC2xxx::OnOperationMode(MM::PropertyBase* pProp, MM::ActionType eAct)
 	else if (eAct == MM::AfterSet)
 	{
 		LEDOnOff(0);
-		
+
 		pProp->Get(answer);
 		if (answer == "Constant Current")
 		{
@@ -978,10 +978,10 @@ int DC2xxx::ValidateDevice(void)
 	if (nRet != DEVICE_OK) return nRet;
 	getLastError(&nRet);
 	if (nRet != DEVICE_OK) return nRet;
-	
+
 	if(( (devName.find("DC2010")) == std::string::npos ) && (( (devName.find("DC2100")) == std::string::npos ) ) )	nRet = ERR_INVALID_DEVICE;
 
-	return nRet;	
+	return nRet;
 }
 
 
@@ -1056,7 +1056,7 @@ int DC3100::Initialize()
 	// validate
 	int nRet = ValidateDevice();
 	if (DEVICE_OK != nRet)	return nRet;
-	
+
 	// Initialize the maximum current action
 	CPropertyAction* pAct = new CPropertyAction (this, &DC3100::OnMaximumCurrent);
 	nRet = CreateProperty("Maximum Current", "1000", MM::Integer, true, pAct);
@@ -1571,7 +1571,7 @@ int DC3100::OnOperationMode(MM::PropertyBase* pProp, MM::ActionType eAct)
 	else if (eAct == MM::AfterSet)
 	{
 		LEDOnOff(0);
-		
+
 		pProp->Get(answer);
 		if (answer == "Constant Current")
 		{
@@ -1804,10 +1804,10 @@ int DC3100::ValidateDevice(void)
 	if (nRet != DEVICE_OK) return nRet;
 	getLastError(&nRet);
 	if (nRet != DEVICE_OK) return nRet;
-	
+
 	if((devName.find("DC3100")) == std::string::npos) nRet = ERR_INVALID_DEVICE;
 
-	return nRet;	
+	return nRet;
 }
 
 
@@ -1843,6 +1843,7 @@ DC4100::DC4100() :
 		m_maximumCurrent[i] = 0;
 		m_constCurrent[i] = 0;
 		m_percBrightness[i] = 0;
+		m_channelAvailable[i] = 0;
 	}
 
 	// Name
@@ -1880,10 +1881,12 @@ void DC4100::GetName(char* Name) const
 ---------------------------------------------------------------------------*/
 int DC4100::Initialize()
 {
+	int status = 0;
+
 	// validate
 	int nRet = ValidateDevice();
 	if (DEVICE_OK != nRet)	return nRet;
-	
+
 	// Initialize the mode selection action
 	CPropertyAction* pAct = new CPropertyAction (this, &DC4100::OnOperationMode);
 	nRet = CreateProperty("Operation Mode", "Constant Current", MM::String, false, pAct);
@@ -1899,13 +1902,24 @@ int DC4100::Initialize()
 	nRet = CreateProperty("Status", "No Fault", MM::String, true, pAct);
 	if (DEVICE_OK != nRet)	return nRet;
 
+	// Check the status word to see which channels are valid
+	nRet = GetStatus(&status);
+	if (DEVICE_OK != nRet)	return nRet;
+	if (!(status & 0x00000020))	m_channelAvailable[0] = 1;
+	if (!(status & 0x00000080))	m_channelAvailable[1] = 1;
+	if (!(status & 0x00000200))	m_channelAvailable[2] = 1;
+	if (!(status & 0x00000800))	m_channelAvailable[3] = 1;
+
 	CPropertyActionEx* pActEx;
-   for (long i = 0; i < NUM_LEDS; i++) 
+   for (long i = 0; i < NUM_LEDS; i++)
 	{
+		// skip channels which are not available
+		if(!m_channelAvailable[i])	continue;
+
 		// constant current
 		pActEx = new CPropertyActionEx(this, &DC4100::OnConstantCurrent, i);
 		std::ostringstream os1;
-		os1 << "Constant Current LED-" << i;
+		os1 << "Constant Current LED-" << i+1;
 		nRet = CreateProperty(os1.str().c_str(), "0", MM::Integer, false, pActEx);
 		if (nRet != DEVICE_OK) return nRet;
 		SetPropertyLimits(os1.str().c_str(), 0, 1000);
@@ -1913,7 +1927,7 @@ int DC4100::Initialize()
 		// percental brightness
 		pActEx = new CPropertyActionEx(this, &DC4100::OnPercentalBrightness, i);
 		std::ostringstream os2;
-		os2 << "Percental Brightness LED-" << i;
+		os2 << "Percental Brightness LED-" << i+1;
 		nRet = CreateProperty(os2.str().c_str(), "0", MM::Integer, false, pActEx);
 		if (nRet != DEVICE_OK) return nRet;
 		SetPropertyLimits(os2.str().c_str(), 0, 100);
@@ -1921,7 +1935,7 @@ int DC4100::Initialize()
 		// limit current
 		pActEx = new CPropertyActionEx(this, &DC4100::OnLimitCurrent, i);
 		std::ostringstream os3;
-		os3 << "Limit Current LED-" << i;
+		os3 << "Limit Current LED-" << i+1;
 		nRet = CreateProperty(os3.str().c_str(), "1000", MM::Integer, false, pActEx);
 		if (nRet != DEVICE_OK) return nRet;
 		SetPropertyLimits(os3.str().c_str(), 0, 1000);
@@ -1929,12 +1943,12 @@ int DC4100::Initialize()
 		// maximum current
 		pActEx = new CPropertyActionEx(this, &DC4100::OnMaximumCurrent, i);
 		std::ostringstream os4;
-		os4 << "Maximum Current LED-" << i;
+		os4 << "Maximum Current LED-" << i+1;
 		nRet = CreateProperty(os4.str().c_str(), "1000", MM::Integer, true, pActEx);
 		if (nRet != DEVICE_OK) return nRet;
 		SetPropertyLimits(os4.str().c_str(), 0, 1000);
    }
-	
+
 	CreateStaticReadOnlyProperties();
 
 	// for safety
@@ -2001,6 +2015,9 @@ int DC4100::GetOpen(bool &open)
 
 	for(int i = 0; i < NUM_LEDS; i++)
 	{
+		// skip channels which are not available
+		if(!m_channelAvailable[i])	continue;
+
 		command[i] << "o? " << i;
 		ret = SendSerialCommand(m_port.c_str(), command[i].str().c_str(), "\r\n");
 		if (ret != DEVICE_OK) return ret;
@@ -2296,17 +2313,8 @@ int DC4100::OnStatus(MM::PropertyBase* pProp, MM::ActionType eAct)
 
 	if (eAct == MM::BeforeGet)
 	{
-		command << "r?";
-		ret = SendSerialCommand(m_port.c_str(), command.str().c_str(), "\n");
+		ret = GetStatus(&tmp);
 		if (ret != DEVICE_OK) return ret;
-		ret = GetSerialAnswer(m_port.c_str(), "\n", answer);
-		if (ret != DEVICE_OK) return ret;
-		// error handling
-		getLastError(&ret);
-
-		// parsing status byte
-		std::istringstream iss(answer);
-		iss >> tmp;
 
 		// clear string
 		m_status.clear();
@@ -2454,7 +2462,7 @@ int DC4100::OnLimitCurrent(MM::PropertyBase* pProp, MM::ActionType eAct, long in
 
 	// set limits
 	std::ostringstream os;
-	os << "Constant Current LED-" << index;
+	os << "Constant Current LED-" << index+1;
 	SetPropertyLimits(os.str().c_str(), 0, m_limitCurrent[index]);
 
 	return ret;
@@ -2487,7 +2495,7 @@ int DC4100::OnMaximumCurrent(MM::PropertyBase* pProp, MM::ActionType eAct, long 
 
 	// set limits
 	std::ostringstream os;
-	os << "Limit Current LED-" << index;
+	os << "Limit Current LED-" << index+1;
 	SetPropertyLimits(os.str().c_str(), 0, m_maximumCurrent[index]);
 
 	return ret;
@@ -2531,8 +2539,11 @@ int DC4100::CreateStaticReadOnlyProperties(void)
 	nRet = CreateProperty("Firmware Revision", m_firmwareRev.c_str(), MM::String, true);
 	if (DEVICE_OK != nRet)	return nRet;
 
-	for (long i = 0; i < NUM_LEDS; i++) 
+	for (long i = 0; i < NUM_LEDS; i++)
 	{
+		// skip channels which are not available
+		if(!m_channelAvailable[i])	continue;
+
 		// wavelength
 		wlcmd[i] << "wl? " << i;
 		nRet = SendSerialCommand(m_port.c_str(), wlcmd[i].str().c_str(), "\r\n");
@@ -2541,7 +2552,7 @@ int DC4100::CreateStaticReadOnlyProperties(void)
 		if (nRet != DEVICE_OK) return nRet;
 		getLastError(&nRet);
 		if (nRet != DEVICE_OK) return nRet;
-		wlstr[i] << "Wavelength LED-" << i;
+		wlstr[i] << "Wavelength LED-" << i+1;
 		nRet = CreateProperty(wlstr[i].str().c_str(), m_wavelength[i].c_str(), MM::String, true);
 		if (DEVICE_OK != nRet)	return nRet;
 
@@ -2553,7 +2564,7 @@ int DC4100::CreateStaticReadOnlyProperties(void)
 		if (nRet != DEVICE_OK) return nRet;
 		getLastError(&nRet);
 		if (nRet != DEVICE_OK) return nRet;
-		fbstr[i] << "Forward Bias LED-" << i;
+		fbstr[i] << "Forward Bias LED-" << i+1;
 		nRet = CreateProperty(fbstr[i].str().c_str(), m_forwardBias[i].c_str(), MM::String, true);
 		if (DEVICE_OK != nRet)	return nRet;
 
@@ -2565,7 +2576,7 @@ int DC4100::CreateStaticReadOnlyProperties(void)
 		if (nRet != DEVICE_OK) return nRet;
 		getLastError(&nRet);
 		if (nRet != DEVICE_OK) return nRet;
-		hsstr[i] << "Serial Number LED-" << i;
+		hsstr[i] << "Serial Number LED-" << i+1;
 		nRet = CreateProperty(hsstr[i].str().c_str(), m_headSerialNo[i].c_str(), MM::String, true);
 		if (DEVICE_OK != nRet)	return nRet;
 	}
@@ -2590,9 +2601,38 @@ int DC4100::ValidateDevice(void)
 	if (nRet != DEVICE_OK) return nRet;
 	getLastError(&nRet);
 	if (nRet != DEVICE_OK) return nRet;
-	
-   if((devName.find("DC4100")) == std::string::npos && (devName.find("LEDD4")) == std::string::npos) 
+
+   if((devName.find("DC4100")) == std::string::npos && (devName.find("LEDD4")) == std::string::npos)
        nRet = ERR_INVALID_DEVICE;
 
-	return nRet;	
+	return nRet;
+}
+
+
+/*---------------------------------------------------------------------------
+ This requests the device status information.
+---------------------------------------------------------------------------*/
+int DC4100::GetStatus(int* status)
+{
+	int ret = DEVICE_OK;
+	std::ostringstream command;
+	std::string answer;
+	int tmp = 0;
+
+	command << "r?";
+	ret = SendSerialCommand(m_port.c_str(), command.str().c_str(), "\n");
+	if (ret != DEVICE_OK) return ret;
+	ret = GetSerialAnswer(m_port.c_str(), "\n", answer);
+	if (ret != DEVICE_OK) return ret;
+	// error handling
+	getLastError(&ret);
+
+	// parsing status byte
+	std::istringstream iss(answer);
+	iss >> tmp;
+
+	// return the status
+	if(status)	*status = tmp;
+
+	return ret;
 }
