@@ -555,7 +555,7 @@ int SimpleAutofocus::OnRecalculate(MM::PropertyBase* pProp, MM::ActionType eAct)
       {
          // check if camera is available
          char coreCameraDeviceName[MM::MaxStrLength];
-         char value[MM::MaxStrLength];
+         //char value[MM::MaxStrLength];
          pCore_->GetDeviceProperty(MM::g_Keyword_CoreDevice, MM::g_Keyword_CoreCamera, coreCameraDeviceName);
          MM::Device* pCamera = pCore_->GetDevice(this, coreCameraDeviceName);
          if(
@@ -1000,8 +1000,8 @@ int SimpleAutofocus::BrentSearch( )
    int ret = DEVICE_OK;
    double baseDist = 0.;
    double bestDist = 0.;
-   double curSh = 0. ;
-   double bestSh = 0.;
+   //double curSh = 0. ;
+   //double bestSh = 0.;
    MM::MMTime tPrev;
    MM::MMTime tcur;
    double curDist = Z();

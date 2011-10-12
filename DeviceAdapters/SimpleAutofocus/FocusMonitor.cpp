@@ -129,7 +129,7 @@ int FocusMonitor::Initialize()
    if (nRet != DEVICE_OK)
       return nRet;
 
-   CPropertyAction *pAct = new CPropertyAction(this, &FocusMonitor::OnCorrect);
+   //CPropertyAction *pAct = new CPropertyAction(this, &FocusMonitor::OnCorrect);
    nRet = CreateProperty(g_PropertyCorrect, g_OFF, MM::String, false);
    assert(nRet == DEVICE_OK);
    int ret = SetAllowedValues(g_PropertyCorrect, vals);
@@ -157,7 +157,7 @@ int FocusMonitor::Shutdown()
    return DEVICE_OK;
 }
 
-int FocusMonitor::Process(unsigned char* buffer, unsigned width, unsigned height, unsigned byteDepth)
+int FocusMonitor::Process(unsigned char* /* buffer */, unsigned /*width*/, unsigned /*height*/, unsigned /* byteDepth*/)
 {
    if (!IsPropertyEqualTo(g_PropertyOnOff, g_ON))
       return DEVICE_OK; // processor inactive
@@ -167,9 +167,10 @@ int FocusMonitor::Process(unsigned char* buffer, unsigned width, unsigned height
    double score(0.0);
    if (afDev)
       return afDev->GetCurrentFocusScore(score);
-   else
-      return ERR_IP_NO_AF_DEVICE;
+   //else
+   return ERR_IP_NO_AF_DEVICE;
 
+   /*
    // keep size constant
    if (scoreQueue_.size() == QUEUE_SIZE)
       scoreQueue_.pop();
@@ -181,10 +182,11 @@ int FocusMonitor::Process(unsigned char* buffer, unsigned width, unsigned height
    assert(ret == DEVICE_OK);
 
    return DEVICE_OK;
+   */
 }
 
 
-int FocusMonitor::OnCorrect(MM::PropertyBase* pProp, MM::ActionType eAct)
+int FocusMonitor::OnCorrect(MM::PropertyBase* /* pProp */, MM::ActionType eAct)
 {
    if (eAct == MM::AfterSet)
    {

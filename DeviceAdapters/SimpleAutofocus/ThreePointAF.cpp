@@ -106,7 +106,7 @@ int ThreePointAF::FullFocus()
 	return DEVICE_OK;
 }
 
-int ThreePointAF::SetOffset(double offset)
+int ThreePointAF::SetOffset(double /* offset */)
 {
 	return DEVICE_OK;
 }
@@ -135,7 +135,7 @@ int ThreePointAF::GetCurrentFocusScore(double &score)
 // Properties
 ///////////////////////////////////////////////////////////////////////////////
 
-int ThreePointAF::OnStepsize(MM::PropertyBase *pProp, MM::ActionType eAct)
+int ThreePointAF::OnStepsize(MM::PropertyBase* /* pProp */, MM::ActionType eAct)
 {
 	if(eAct == MM::AfterSet)
 	{
@@ -146,7 +146,7 @@ int ThreePointAF::OnStepsize(MM::PropertyBase *pProp, MM::ActionType eAct)
 	return DEVICE_OK;
 }
 
-int ThreePointAF::OnFocusChannel(MM::PropertyBase *pProp, MM::ActionType eAct)
+int ThreePointAF::OnFocusChannel(MM::PropertyBase* /* pProp */, MM::ActionType eAct)
 {
 	if(eAct == MM::AfterSet)
 	{

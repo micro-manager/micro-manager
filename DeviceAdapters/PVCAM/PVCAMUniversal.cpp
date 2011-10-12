@@ -237,7 +237,7 @@ int Universal::OnBinning(MM::PropertyBase* pProp, MM::ActionType eAct)
    {
       SuspendSequence();
       long bin;
-      unsigned long oldBinSize = binSize_;
+      // unsigned long oldBinSize = binSize_;
       pProp->Get(bin);
       binSize_ = bin;
       ClearROI(); // reset region of interest
@@ -462,7 +462,7 @@ int Universal::OnTriggerTimeOut(MM::PropertyBase* pProp, MM::ActionType eAct)
    return DEVICE_OK;
 }
 
-int Universal::OnTriggerMode(MM::PropertyBase* pProp, MM::ActionType eAct)
+int Universal::OnTriggerMode(MM::PropertyBase* /* pProp */, MM::ActionType eAct)
 {
    START_METHOD("Universal::OnTriggerMode");
 

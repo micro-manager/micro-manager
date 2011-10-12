@@ -305,8 +305,8 @@ void Sapphire::StripString(string& StringToModify)
 {
    if(StringToModify.empty()) return;
 
-   int startIndex = StringToModify.find_first_not_of(" ");
-   int endIndex = StringToModify.find_last_not_of(" ");
+   size_t startIndex = StringToModify.find_first_not_of(" ");
+   size_t endIndex = StringToModify.find_last_not_of(" ");
    string tempString = StringToModify;
    StringToModify.erase();
 

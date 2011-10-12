@@ -379,7 +379,7 @@ int SutterUtils::SetCommand(MM::Device& device, MM::Core& core,
          // start time of entire transaction
          MM::MMTime commandStartTime = core.GetCurrentMMTime();
          // write command to the port
-         ret = core.WriteToSerial(&device, port.c_str(), &command[0], command.size());
+         ret = core.WriteToSerial(&device, port.c_str(), &command[0], (unsigned long) command.size());
 
          if( DEVICE_OK == ret)
          {

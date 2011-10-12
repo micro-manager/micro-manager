@@ -915,7 +915,7 @@ int TEHub::ParseResponse(MM::Device& device, MM::Core& core, const char* cmd, st
       return DEVICE_SERIAL_INVALID_RESPONSE;
 
    value = rcvBuf_ + 4;
-   unsigned int responselength_ = strlen(rcvBuf_);
+   size_t responselength_ = strlen(rcvBuf_);
    if (rcvBuf_[0] == 'n' && responselength_ > 4)
    {
       int err = atoi(value.c_str()); // error occured

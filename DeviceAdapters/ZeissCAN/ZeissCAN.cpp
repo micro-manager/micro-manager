@@ -758,7 +758,7 @@ int ZeissScope::DetectInstalledDevices()
 int ZeissScope::GetNumberOfDiscoverableDevices()
 {
    GetPeripheralInventory();
-   return peripherals_.size();
+   return (int) peripherals_.size();
 
 }
 
