@@ -102,7 +102,7 @@ if test "$IMAGEJDIR" != "no" ; then
    #----------------------------------------------------------------
    AC_MSG_CHECKING(for ImageJ directory)
 
-   if test -z "$IMAGEJDIR"; then
+   if test "$IMAGEJDIR" = "yes"; then
       IMAGEJDIR="/Applications/ImageJ /usr/local/ImageJ /usr/local/imagej "
    fi
    IJPATH=""
