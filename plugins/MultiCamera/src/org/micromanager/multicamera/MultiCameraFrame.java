@@ -27,8 +27,10 @@ import ij.gui.Roi;
 import java.awt.Color;
 import java.awt.event.ItemEvent;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
 
+import java.util.Vector;
 import mmcorej.CMMCore;
 import mmcorej.DeviceType;
 import mmcorej.MMCoreJ;
@@ -171,26 +173,44 @@ public class MultiCameraFrame extends javax.swing.JFrame implements MMListenerIn
 
 
        mmcorej.StrVector cameras = core_.getLoadedDevicesOfType(DeviceType.CameraDevice);
-       cameras_ = cameras.toArray();
+       String[] allCameras = cameras.toArray();
+       Vector<String> usedCameras = new Vector<String>();
 
-       if (cameras_.length < 1) {
+       if (allCameras.length < 1) {
           gui_.showError("This plugin needs at least one camera");
           throw new IllegalArgumentException("This plugin needs at least one camera");
        }
-       selectedCameras_ = new HashMap<String, Boolean>();
 
        String currentCamera = core_.getCameraDevice();
        imageWidth_ = core_.getImageWidth();
        imageHeight_ = core_.getImageHeight();
-       for (String camera : cameras_) {
-          if (!camera.equals(currentCamera)) {
-             core_.setCameraDevice(camera);
-             if (imageWidth_ != core_.getImageWidth() ||
-                 imageHeight_ != core_.getImageHeight()) {
-                throw new IllegalArgumentException("This plugin only works with cameras of identical size");
-             }
+       for (String camera : allCameras) {
+          core_.setCameraDevice(camera);
+          if (imageWidth_ != core_.getImageWidth()
+                  || imageHeight_ != core_.getImageHeight()) {
+             throw new IllegalArgumentException("This plugin only works with cameras of identical size");
+          }
+          if (core_.getNumberOfCameraChannels() == 1) {
+             usedCameras.add(camera);
           }
        }
+       
+       core_.setCameraDevice(currentCamera);
+       
+       cameras_ = new String[usedCameras.size()];
+       Iterator c = usedCameras.iterator();
+       int counter = 0;
+       while (c.hasNext()) {
+           cameras_[counter] = (String) c.next();
+           counter++;
+       }
+       
+       if (cameras_.length < 1) {
+          gui_.showError("This plugin needs at least one camera");
+          throw new IllegalArgumentException("This plugin needs at least one camera");
+       }
+       
+       selectedCameras_ = new HashMap<String, Boolean>();
 
        frameXPos_ = prefs_.getInt(FRAMEXPOS, frameXPos_);
        frameYPos_ = prefs_.getInt(FRAMEYPOS, frameYPos_);
