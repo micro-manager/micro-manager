@@ -109,7 +109,7 @@ public interface AcquisitionEngine {
     * Used to provide acquisition with custom time intervals in between frames
     * passing null resets 
     */
-   public void setCustomTimePoints(double[] customTimePointsMs);
+   public void setCustomTimeIntervals(double[] customTimeIntervalsMs);
 
    
    /**
