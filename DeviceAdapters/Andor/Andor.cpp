@@ -1518,39 +1518,37 @@ int AndorCamera::GetListOfAvailableCameras()
    /**
    * Acquires a single frame.
    * Micro-Manager expects that this function blocks the calling thread until the exposure phase is over.
+   * This wait is implemented by sleeping ActualInterval_ms_ - ReadoutTime_ + 0.99 ms.
+   * Note that this is likely not long enough when using internal triggering.
    */
    int AndorCamera::SnapImage()
    {
-      DriverGuard dg(this);
+      { // scope for driver guard
+         DriverGuard dg(this);
 
-      if (sequenceRunning_)   // If we are in the middle of a SequenceAcquisition
-         return ERR_BUSY_ACQUIRING;
+         if (sequenceRunning_)   // If we are in the middle of a SequenceAcquisition
+            return ERR_BUSY_ACQUIRING;
 
-      if(iCurrentTriggerMode_ == SOFTWARE) 
-      {
-         /* int ret = */ PrepareSnap();
-         SendSoftwareTrigger();
-      }
-      else if (iCurrentTriggerMode_ == INTERNAL) 
-      {        
-         AbortAcquisition();
-         int status = DRV_ACQUIRING;
-         int error = DRV_SUCCESS;
-         while (error == DRV_SUCCESS && status == DRV_ACQUIRING) {
-           error = GetStatus(&status); 
+         if(iCurrentTriggerMode_ == SOFTWARE) 
+         {
+            /* int ret = */ PrepareSnap();
+            SendSoftwareTrigger();
          }
-         SetIsolatedCropMode(0, currentCropHeight_, currentCropWidth_, 1, 1);
-         SetImage(binSize_, binSize_, roi_.x+1, roi_.x+roi_.xSize, roi_.y+1, roi_.y+roi_.ySize);
-         StartAcquisition();
+         else if (iCurrentTriggerMode_ == INTERNAL) 
+         {        
+            AbortAcquisition();
+            int status = DRV_ACQUIRING;
+            int error = DRV_SUCCESS;
+            while (error == DRV_SUCCESS && status == DRV_ACQUIRING) {
+              error = GetStatus(&status); 
+            }
+            SetIsolatedCropMode(0, currentCropHeight_, currentCropWidth_, 1, 1);
+            SetImage(binSize_, binSize_, roi_.x+1, roi_.x+roi_.xSize, roi_.y+1, roi_.y+roi_.ySize);
+            StartAcquisition();
+         }
       }
 
-      if (iCurrentTriggerMode_ == EXTERNAL) {
-         int ret = WaitForAcquisitionByHandleTimeOut(myCameraID_, imageTimeOut_ms_);
-         if (ret != DRV_SUCCESS)
-            return ret;
-      }
-      else
-         CDeviceUtils::SleepMs((long) (ActualInterval_ms_ - ReadoutTime_ + 0.99)); 
+      CDeviceUtils::SleepMs((long) (ActualInterval_ms_ - ReadoutTime_ + 0.99)); 
 
       return DEVICE_OK;
    }
@@ -1560,13 +1558,12 @@ int AndorCamera::GetListOfAvailableCameras()
    {
       DriverGuard dg(this);
 
-      if (IsAcquiring() && iCurrentTriggerMode_ != EXTERNAL)
+      if (IsAcquiring() )
       {
          int ret = WaitForAcquisitionByHandleTimeOut(myCameraID_, imageTimeOut_ms_);
          if (ret != DRV_SUCCESS)
             return 0;
       }
-         //WaitForAcquisition();
 
       pImgBuffer_ = GetAcquiredImage();
       assert(img_.Depth() == 2);
