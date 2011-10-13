@@ -29,6 +29,8 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.io.IOException;
+import java.util.Hashtable;
+import java.util.Vector;
 
 import javax.swing.JButton;
 import javax.swing.JComponent;
@@ -161,6 +163,7 @@ public class AddDeviceDlg extends JDialog implements MouseListener,
    private JCheckBox cbShowAll_;
    private JScrollPane scrollPane_;
    private CMMCore core_;
+   private boolean listByLib_;
 
    /**
     * Create the dialog
@@ -174,6 +177,7 @@ public class AddDeviceDlg extends JDialog implements MouseListener,
       setBounds(400, 100, 596, 529);
       devicesPage_ = devicesPage;
       core_ = core;
+      listByLib_ = true;
 
       final JButton addButton = new JButton();
       addButton.addActionListener(new ActionListener() {
@@ -213,7 +217,7 @@ public class AddDeviceDlg extends JDialog implements MouseListener,
       cbShowAll_ = new JCheckBox("Show all");
       cbShowAll_.addActionListener(new ActionListener() {
          public void actionPerformed(ActionEvent e) {
-            buildTree(model_);
+            buildTreeByLib(model_);
             scrollPane_.setViewportView(theTree_);
          }
       });
@@ -226,53 +230,93 @@ public class AddDeviceDlg extends JDialog implements MouseListener,
          }
       });
       
-      buildTree(model);
+      buildTreeByLib(model);
       scrollPane_ = new JScrollPane(theTree_);
       scrollPane_.setBounds(10, 10, 471, 475);
       getContentPane().add(scrollPane_);
 
    }
    
-   private void buildTree(MicroscopeModel model) {
-      Device devices_[] = null;
-      if (cbShowAll_.isSelected())
-         devices_ = model.getAvailableDeviceList();
-      else
-         devices_ = model.getAvailableDevicesCompact();
-      
-      String thisLibrary = "";
-      DefaultMutableTreeNode root = new DefaultMutableTreeNode(
-            "Devices supported by " + "\u00B5" + "Manager");
-      TreeNodeShowsDeviceAndDescription node = null;
-      for (int idd = 0; idd < devices_.length; ++idd) {
-         // assume that the first library doesn't have an empty name! (of
-         // course!)
-         if (0 != thisLibrary.compareTo(devices_[idd].getLibrary())) {
-            // create a new node of devices for this library
-            node = new TreeNodeShowsDeviceAndDescription(
-                  devices_[idd].getLibrary());
-            root.add(node);
-            thisLibrary = devices_[idd].getLibrary(); // remember which library
-                                                      // we are processing
-         }
-         Object[] userObject = { devices_[idd].getLibrary(),
-               devices_[idd].getAdapterName(), devices_[idd].getDescription() };
-         TreeNodeShowsDeviceAndDescription aLeaf = new TreeNodeShowsDeviceAndDescription(
-               "");
-         aLeaf.setUserObject(userObject);
-         node.add(aLeaf);
-      }
-      // try building a tree
-      theTree_ = new TreeWContextMenu(root, this);
-      theTree_.addTreeSelectionListener(this);
-      
-      MouseListener ml = new TreeMouseListener() ;
-      
-      theTree_.addMouseListener(ml);
-      theTree_.setRootVisible(false);
-      theTree_.setShowsRootHandles(true);
-   }
+	private void buildTreeByType(MicroscopeModel model) {
+		Device devices_[] = null;
+		if (cbShowAll_.isSelected())
+			devices_ = model.getAvailableDeviceList();
+		else
+			devices_ = model.getAvailableDevicesCompact();
 
+		// organize devices by type
+		Hashtable<String, Vector<Device>> nodes = new Hashtable<String, Vector<Device>>();
+		for (int i = 0; i < devices_.length; i++) {
+			if (nodes.containsKey(devices_[i].getVerboseType()))
+				nodes.get(devices_[i].getVerboseType()).add(devices_[i]);
+			else {
+				Vector<Device> v = new Vector<Device>();
+				v.add(devices_[i]);
+				nodes.put(devices_[i].getVerboseType(), v);
+			}
+
+		}
+
+		DefaultMutableTreeNode root = new DefaultMutableTreeNode(
+				"Devices supported by " + "\u00B5" + "Manager");
+
+		TreeNodeShowsDeviceAndDescription node = null;
+		for (String nodeName : (String[]) nodes.keySet().toArray()) {
+			// create a new node of devices for this library
+			node = new TreeNodeShowsDeviceAndDescription(nodeName);
+			root.add(node);
+			Vector<Device> devs = nodes.get(nodeName);
+			for (int i = 0; i < devs.size(); i++) {
+				Object[] userObject = { devs.get(i).getLibrary(),
+						devs.get(i).getAdapterName(),
+						devs.get(i).getDescription() };
+				TreeNodeShowsDeviceAndDescription aLeaf = new TreeNodeShowsDeviceAndDescription(
+						"");
+				aLeaf.setUserObject(userObject);
+				node.add(aLeaf);
+			}
+		}
+	}
+
+   private void buildTreeByLib(MicroscopeModel model) {
+	      Device devices_[] = null;
+	      if (cbShowAll_.isSelected())
+	         devices_ = model.getAvailableDeviceList();
+	      else
+	         devices_ = model.getAvailableDevicesCompact();
+	      
+	      String thisLibrary = "";
+	      DefaultMutableTreeNode root = new DefaultMutableTreeNode(
+	            "Devices supported by " + "\u00B5" + "Manager");
+	      TreeNodeShowsDeviceAndDescription node = null;
+	      for (int idd = 0; idd < devices_.length; ++idd) {
+	         // assume that the first library doesn't have an empty name! (of
+	         // course!)
+	         if (0 != thisLibrary.compareTo(devices_[idd].getLibrary())) {
+	            // create a new node of devices for this library
+	            node = new TreeNodeShowsDeviceAndDescription(
+	                  devices_[idd].getLibrary());
+	            root.add(node);
+	            thisLibrary = devices_[idd].getLibrary(); // remember which library
+	                                                      // we are processing
+	         }
+	         Object[] userObject = { devices_[idd].getLibrary(),
+	               devices_[idd].getAdapterName(), devices_[idd].getDescription() };
+	         TreeNodeShowsDeviceAndDescription aLeaf = new TreeNodeShowsDeviceAndDescription(
+	               "");
+	         aLeaf.setUserObject(userObject);
+	         node.add(aLeaf);
+	      }
+	      // try building a tree
+	      theTree_ = new TreeWContextMenu(root, this);
+	      theTree_.addTreeSelectionListener(this);
+	      
+	      MouseListener ml = new TreeMouseListener() ;
+	      
+	      theTree_.addMouseListener(ml);
+	      theTree_.setRootVisible(false);
+	      theTree_.setShowsRootHandles(true);
+	   }
 
    private void displayDocumentation() {
       try {
