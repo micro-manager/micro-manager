@@ -28,8 +28,19 @@
 #else
 #endif
 
+// this adapter can use PI modules to communicate with older firmware
+// versions or with interface not supported by micro-manager
+// e.g. the C-843 controller is a PCI board needing a special driver,
+// and the E-710 controller need a translation layer to understand
+// These additional modules are provided on the PI product CDs and are available
+// for Windows platforms, some of these libraries are also available for Linux
+// No modules are available for MAC OS X, so in this code the "DLL" controller
+// calling these modules is disabled for MAC OS X by using the preprocessor constand "__APPLE__"
+
 #include "PI_GCS_2.h"
+#ifndef __APPLE__
 #include "PIGCSControllerDLL.h"
+#endif
 #include "PIGCSControllerCom.h"
 #include "PIZStage_DLL.h"
 #include "PIXYStage_DLL.h"
@@ -144,14 +155,21 @@ MODULE_API void InitializeModuleData()
 {
    AddAvailableDeviceName(PIZStage::DeviceName_, "PI GCS Z-stage");
    AddAvailableDeviceName(PIXYStage::DeviceName_, "PI GCS XY-stage");
+#ifndef __APPLE__
    AddAvailableDeviceName(PIGCSControllerDLLDevice::DeviceName_, "PI GCS DLL Controller");
+#endif
    AddAvailableDeviceName(PIGCSControllerComDevice::DeviceName_, "PI GCS Controller");
+
+#ifndef __APPLE__
    AddAvailableDeviceName("C-843", "PI C-843 Controller");
+#endif
    AddAvailableDeviceName("C-663.11", "PI C-663.11 Controller");
    AddAvailableDeviceName("C-863.11", "PI C-863.11 Controller");
    AddAvailableDeviceName("C-867", "PI C-867 Controller");
    AddAvailableDeviceName("E-517/E-545", "PI E-517/E-545 Controller");
+#ifndef __APPLE__
    AddAvailableDeviceName("E-710", "PI E-710 Controller");
+#endif
    AddAvailableDeviceName("E-712", "PI E-712 Controller");
    AddAvailableDeviceName("E-753", "PI E-753 Controller");
 }
@@ -172,12 +190,14 @@ MODULE_API MM::Device* CreateDevice(const char* deviceName)
       return s;
    }
 
+#ifndef __APPLE__
    if (strcmp(deviceName, PIGCSControllerDLLDevice::DeviceName_) == 0)
    {
       PIGCSControllerDLLDevice* s = new PIGCSControllerDLLDevice();
       s->CreateProperties();
       return s;
    }
+#endif
 
    if (strcmp(deviceName, PIGCSControllerComDevice::DeviceName_) == 0)
    {
@@ -186,16 +206,6 @@ MODULE_API MM::Device* CreateDevice(const char* deviceName)
       return s;
    }
 
-   if (strcmp(deviceName, "C-843") == 0)
-   {
-      PIGCSControllerDLLDevice* s = new PIGCSControllerDLLDevice();
-      s->SetDLL("C843_GCS_DLL.dll");
-      s->SetInterface("PCI", "1");
-      s->ShowInterfaceProperties(false);
-      s->CreateProperties();
-      return s;
-   }
-  
    if (	(strcmp(deviceName, "C-867") == 0)
 	||	(strcmp(deviceName, "C-663.11") == 0)
 	||	(strcmp(deviceName, "C-863.11") == 0)	)
@@ -214,6 +224,7 @@ MODULE_API MM::Device* CreateDevice(const char* deviceName)
       return s;
    }
 
+#ifndef __APPLE__
    if (strcmp(deviceName, "E-710") == 0)
    {
       PIGCSControllerDLLDevice* s = new PIGCSControllerDLLDevice();
@@ -223,6 +234,17 @@ MODULE_API MM::Device* CreateDevice(const char* deviceName)
       s->CreateProperties();
       return s;
    }
+
+   if (strcmp(deviceName, "C-843") == 0)
+   {
+      PIGCSControllerDLLDevice* s = new PIGCSControllerDLLDevice();
+      s->SetDLL("C843_GCS_DLL.dll");
+      s->SetInterface("PCI", "1");
+      s->ShowInterfaceProperties(false);
+      s->CreateProperties();
+      return s;
+   }
+#endif  
 
    if( (strcmp(deviceName, "E-712") == 0)
     || (strcmp(deviceName, "E-753") == 0) )

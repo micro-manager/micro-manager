@@ -22,6 +22,8 @@
 // CVS:           $Id: PIGCSControllerDLL.cpp,v 1.11, 2010-12-09 14:37:03Z, Rachel Bach$
 //
 
+#ifndef __APPLE__
+
 #ifdef WIN32
    #include <windows.h>
    #define snprintf _snprintf 
@@ -733,3 +735,4 @@ bool PIGCSControllerDLL::qTPC(int* nrOutputChannels)
 	return (qTPC_(ID_, nrOutputChannels) == TRUE);
 }
 
+#endif __APPLE__
