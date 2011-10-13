@@ -390,7 +390,8 @@ public class MMAcquisition {
       }
       if (updateDisplay) {
          try {
-            virtAcq_.showImage(taggedImg);
+            if (virtAcq_ != null)
+               virtAcq_.showImage(taggedImg);
          } catch (Exception e) {
             throw new MMScriptException("Unable to show image");
          }
@@ -415,7 +416,8 @@ public class MMAcquisition {
     */
    public void closeImage5D() {
       close();
-      virtAcq_.close();
+      if (virtAcq_ != null)
+         virtAcq_.close();
    }
 
    public void toFront() {

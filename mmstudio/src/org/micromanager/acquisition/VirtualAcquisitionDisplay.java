@@ -100,26 +100,32 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
          return getImageStackSize();
       }
 
+      @Override
       public int getNChannelsUnverified() {
          return super.nChannels;
       }
 
+      @Override
       public int getNSlicesUnverified() {
          return super.nSlices;
       }
 
+      @Override
       public int getNFramesUnverified() {
          return super.nFrames;
       }
 
+      @Override
       public void setNChannelsUnverified(int nChannels) {
          super.nChannels = nChannels;
       }
 
+      @Override
       public void setNSlicesUnverified(int nSlices) {
          super.nSlices = nSlices;
       }
 
+      @Override
       public void setNFramesUnverified(int nFrames) {
          super.nFrames = nFrames;
       }
@@ -141,26 +147,32 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
          return getImageStackSize();
       }
 
+      @Override
       public int getNChannelsUnverified() {
          return super.nChannels;
       }
 
+      @Override
       public int getNSlicesUnverified() {
          return super.nSlices;
       }
 
+      @Override
       public int getNFramesUnverified() {
          return super.nFrames;
       }
 
+      @Override
       public void setNChannelsUnverified(int nChannels) {
          super.nChannels = nChannels;
       }
 
+      @Override
       public void setNSlicesUnverified(int nSlices) {
          super.nSlices = nSlices;
       }
 
+      @Override
       public void setNFramesUnverified(int nFrames) {
          super.nFrames = nFrames;
       }
@@ -252,6 +264,7 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
    /*
     * Method required by ImageStorageListener
     */
+   @Override
    public void imageReceived(final TaggedImage taggedImage) {
       updateDisplay(taggedImage, false);
    }
@@ -259,6 +272,7 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
    /*
     * Method required by ImageStorageListener
     */
+   @Override
    public void imagingFinished(String path) {
       updateDisplay(null, true);
       updateWindow();
@@ -816,6 +830,7 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
       pSelector.setBlockIncrement(1);
       pSelector.addAdjustmentListener(new AdjustmentListener() {
 
+         @Override
          public void adjustmentValueChanged(AdjustmentEvent e) {
             updatePosition(pSelector.getValue());
             // ReportingUtils.logMessage("" + pSelector.getValue());

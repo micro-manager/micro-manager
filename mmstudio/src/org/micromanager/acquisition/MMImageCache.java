@@ -139,6 +139,8 @@ public class MMImageCache implements TaggedImageStorage, ImageCache {
    public TaggedImage getImage(int channel, int slice, int frame, int position) {
       String label = MDUtils.generateLabel(channel, slice, frame, position);
       TaggedImage taggedImg = null;
+      if (softTable_ == null)
+         return null;
       if (softTable_.containsKey(label))
          taggedImg = softTable_.get(label).get();
       if (taggedImg == null) {

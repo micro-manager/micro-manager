@@ -379,11 +379,14 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
             if (acquisitionExists(multiCameraAcq_)) {
                if (c != (getAcquisition(multiCameraAcq_)).getChannels()) {
                   closeAcquisitionImage5D(multiCameraAcq_);
+                  closeAcquisition(multiCameraAcq_);
                }
                if ( (getAcquisitionImageWidth(multiCameraAcq_) != w) ||
                     (getAcquisitionImageHeight(multiCameraAcq_) != h) ||
-                    (getAcquisitionImageByteDepth(multiCameraAcq_) != d) )
+                    (getAcquisitionImageByteDepth(multiCameraAcq_) != d) ) {
                   closeAcquisitionImage5D(multiCameraAcq_);
+                  closeAcquisition(multiCameraAcq_);
+               }
             }
 
             if (!acquisitionExists(multiCameraAcq_)) {
@@ -446,6 +449,7 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
         final JMenuItem usersGuideMenuItem = new JMenuItem();
         usersGuideMenuItem.addActionListener(new ActionListener() {
 
+            @Override
             public void actionPerformed(ActionEvent e) {
                 try {
                     ij.plugin.BrowserLauncher.openURL("http://valelab.ucsf.edu/~MM/MMwiki/index.php/Micro-Manager_User%27s_Guide");
@@ -459,7 +463,8 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
         final JMenuItem configGuideMenuItem = new JMenuItem();
         configGuideMenuItem.addActionListener(new ActionListener() {
 
-            public void actionPerformed(ActionEvent e) {
+            @Override
+             public void actionPerformed(ActionEvent e) {
                 try {
                     ij.plugin.BrowserLauncher.openURL("http://valelab.ucsf.edu/~MM/MMwiki/index.php/Micro-Manager_Configuration_Guide");
                 } catch (IOException e1) {
@@ -3023,6 +3028,11 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
                   if (multiChannelCameraNrCh_ == channel + 1)
                      update = true;
                   addImage(multiCameraAcq_, ti, update);
+                  if (!acquisitionExists(multiCameraAcq_)) {
+                     enableLiveMode(false);
+                     return;
+                  }
+                  // TODO: remove after debugging
                   System.out.println("Channel: " + channel);
                }
             }
@@ -3878,26 +3888,11 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
                + "Try resetting registry settings to factory defaults (Menu Tools|Options).");
       }
    }
-
-   /**
-    * Opens Split View dialog.
-    */
-  /*
-   protected void splitViewDialog() {
-      try {
-         if (splitView_ == null) {
-            splitView_ = new SplitView(core_, this, options_);
-         }
-         splitView_.setVisible(true);
-      } catch (Exception exc) {
-         ReportingUtils.showError(exc,
-               "\nSplit View Window failed to open due to internal error.");
-      }
-   }
-*/
+   
    /**
     * /** Opens a dialog to record stage positions
     */
+   @Override
    public void showXYPositionList() {
       if (posListDlg_ == null) {
          posListDlg_ = new PositionListDlg(core_, this, posList_, options_);
@@ -3911,6 +3906,7 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
       }
    }
 
+   @Override
    public void setConfigChanged(boolean status) {
       configChanged_ = status;
       setConfigSaveButtonStatus(configChanged_);
@@ -3921,6 +3917,7 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
     * Returns the current background color
     * @return
     */
+   @Override
    public Color getBackgroundColor() {
       return guiColors_.background.get((options_.displayBackground_));
    }
@@ -3928,6 +3925,7 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
    /*
     * Changes background color of this window and all other MM windows
     */
+   @Override
    public void setBackgroundStyle(String backgroundType) {
       setBackground(guiColors_.background.get((backgroundType)));
       paint(MMStudioMainFrame.this.getGraphics());
@@ -3939,6 +3937,7 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
        }
    }
 
+   @Override
    public String getBackgroundStyle() {
       return options_.displayBackground_;
    }
@@ -3958,6 +3957,7 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
       public ExecuteAcq() {
       }
 
+      @Override
       public void run() {
          if (acqControlWin_ != null) {
             acqControlWin_.runAcquisition();
@@ -3973,6 +3973,7 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
          filePath_ = path;
       }
 
+      @Override
       public void run() {
          // stop current acquisition if any
          engine_.shutdown();
@@ -3992,11 +3993,13 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
       }
    }
 
+   @Override
    public void startAcquisition() throws MMScriptException {
       testForAbortRequests();
       SwingUtilities.invokeLater(new ExecuteAcq());
    }
 
+   @Override
    public void runAcquisition() throws MMScriptException {
       testForAbortRequests();
       if (acqControlWin_ != null) {
@@ -4014,6 +4017,7 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
       }
    }
 
+   @Override
    public void runAcquisition(String name, String root)
          throws MMScriptException {
       testForAbortRequests();
@@ -4032,20 +4036,24 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
       }
    }
 
+   @Override
    public void runAcqusition(String name, String root) throws MMScriptException {
       runAcquisition(name, root);
    }
 
+   @Override
    public void loadAcquisition(String path) throws MMScriptException {
       testForAbortRequests();
       SwingUtilities.invokeLater(new LoadAcq(path));
    }
 
+   @Override
    public void setPositionList(PositionList pl) throws MMScriptException {
       testForAbortRequests();
       // use serialization to clone the PositionList object
       posList_ = pl; // PositionList.newInstance(pl);
       SwingUtilities.invokeLater(new Runnable() {
+         @Override
          public void run() {
             if (posListDlg_ != null) {
                posListDlg_.setPositionList(posList_);
@@ -4055,12 +4063,14 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
       });
    }
 
+   @Override
    public PositionList getPositionList() throws MMScriptException {
       testForAbortRequests();
       // use serialization to clone the PositionList object
       return posList_; //PositionList.newInstance(posList_);
    }
 
+   @Override
    public void sleep(long ms) throws MMScriptException {
       if (scriptPanel_ != null) {
          if (scriptPanel_.stopRequestPending()) {
@@ -4070,11 +4080,13 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
       }
    }
 
+   @Override
    public String getUniqueAcquisitionName(String stub) {
       return acqMgr_.getUniqueAcquisitionName(stub);
    }
    
    // TODO:
+   @Override
    public MMAcquisition getCurrentAcquisition() {
       return null; // if none available
    }
@@ -4091,17 +4103,20 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
       display.show();
    }
 
+   @Override
    public void openAcquisition(String name, String rootDir, int nrFrames,
          int nrChannels, int nrSlices, int nrPositions) throws MMScriptException {
       this.openAcquisition(name, rootDir, nrFrames, nrChannels, nrSlices,
               nrPositions, true, false);
    }
 
+   @Override
    public void openAcquisition(String name, String rootDir, int nrFrames,
          int nrChannels, int nrSlices) throws MMScriptException {
       openAcquisition(name, rootDir, nrFrames, nrChannels, nrSlices, 0);
    }
    
+   @Override
    public void openAcquisition(String name, String rootDir, int nrFrames,
          int nrChannels, int nrSlices, int nrPositions, boolean show)
          throws MMScriptException {
@@ -4109,12 +4124,14 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
    }
 
 
+   @Override
    public void openAcquisition(String name, String rootDir, int nrFrames,
          int nrChannels, int nrSlices, boolean show)
          throws MMScriptException {
       this.openAcquisition(name, rootDir, nrFrames, nrChannels, nrSlices, 0, show, false);
    }   
 
+   @Override
    public void openAcquisition(String name, String rootDir, int nrFrames,
          int nrChannels, int nrSlices, int nrPositions, boolean show, boolean virtual)
          throws MMScriptException {
@@ -4123,6 +4140,7 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
       acq.setDimensions(nrFrames, nrChannels, nrSlices, nrPositions);
    }
 
+   @Override
    public void openAcquisition(String name, String rootDir, int nrFrames,
          int nrChannels, int nrSlices, boolean show, boolean virtual)
          throws MMScriptException {
@@ -4146,6 +4164,7 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
        */
    }
 
+   @Override
    public void initializeAcquisition(String name, int width, int height,
          int depth) throws MMScriptException {
       MMAcquisition acq = acqMgr_.getAcquisition(name);
@@ -4153,29 +4172,35 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
       acq.initialize();
    }
 
+   @Override
    public int getAcquisitionImageWidth(String acqName) throws MMScriptException {
       MMAcquisition acq = acqMgr_.getAcquisition(acqName);
       return acq.getWidth();
    }
 
+   @Override
    public int getAcquisitionImageHeight(String acqName) throws MMScriptException{
       MMAcquisition acq = acqMgr_.getAcquisition(acqName);
       return acq.getHeight();
    }
 
+   @Override
    public int getAcquisitionImageByteDepth(String acqName) throws MMScriptException{
       MMAcquisition acq = acqMgr_.getAcquisition(acqName);
       return acq.getDepth();
    }
 
+   @Override
    public Boolean acquisitionExists(String name) {
       return acqMgr_.acquisitionExists(name);
    }
 
+   @Override
    public void closeAcquisition(String name) throws MMScriptException {
       acqMgr_.closeAcquisition(name);
    }
 
+   @Override
    public void closeAcquisitionImage5D(String title) throws MMScriptException {
       acqMgr_.closeImage5D(title);
    }
@@ -4186,10 +4211,12 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
     * t
     * @param path - path to file specifying acquisition settings
     */
+   @Override
    public void loadBurstAcquisition(String path) throws MMScriptException {
       this.loadAcquisition(path);
    }
 
+   @Override
    public void refreshGUI() {
       updateGUI(true);
    }
