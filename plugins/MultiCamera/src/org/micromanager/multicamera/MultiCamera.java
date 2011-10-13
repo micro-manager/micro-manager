@@ -12,6 +12,7 @@ public class MultiCamera implements MMPlugin {
    private ScriptInterface gui_;
    private MultiCameraFrame myFrame_;
 
+    @Override
    public void setApp(ScriptInterface app) {
       gui_ = app;                                        
       core_ = app.getMMCore();
@@ -27,31 +28,38 @@ public class MultiCamera implements MMPlugin {
       myFrame_.setVisible(true);
    }
 
+    @Override
    public void dispose() {
       if (myFrame_ != null)
          myFrame_.safePrefs();
    }
 
+    @Override
    public void show() {
          String ig = "Multi Camera";
    }
 
+    @Override
    public void configurationChanged() {
    }
 
+    @Override
    public String getInfo () {
       return "Multi Camera Plugin";
    }
 
+    @Override
    public String getDescription() {
       return tooltipDescription;
    }
    
+    @Override
    public String getVersion() {
-      return "0.1";
+      return "0.11";
    }
    
+    @Override
    public String getCopyright() {
-      return "University of California, 2010";
+      return "University of California, 2010, 2011";
    }
 }
