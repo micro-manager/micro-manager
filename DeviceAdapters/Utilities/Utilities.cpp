@@ -389,34 +389,46 @@ const unsigned char* MultiCamera::GetImageBuffer(unsigned channelNr)
 // TODO: deal with cameras differing in size by scaling or padding
 unsigned MultiCamera::GetImageWidth() const
 {
-   if (physicalCameras_[0] != 0)
+   unsigned width = 0;
+   int j = 0;
+   while (width == 0 && j < physicalCameras_.size() ) 
    {
-      unsigned width = physicalCameras_[0]->GetImageWidth();
-      for (unsigned int i = 1; i < physicalCameras_.size(); i++)
-      {
-         if (physicalCameras_[i] != 0) 
-            if (width != physicalCameras_[i]->GetImageWidth())
-               return 0;
-      }
-      return width;
+      if (physicalCameras_[j] != 0)
+         width = physicalCameras_[j]->GetImageWidth();
+      j++;
    }
-   return 0;
+  
+   for (unsigned int i = 0; i < physicalCameras_.size(); i++)
+   {
+      if (physicalCameras_[i] != 0 && i != j)
+      {
+         if (width != physicalCameras_[i]->GetImageWidth())
+            return 0;
+      }
+   }
+   return width;
 }
 
 unsigned MultiCamera::GetImageHeight() const
 {
-   if (physicalCameras_[0] != 0)
+   unsigned height = 0;
+   int j = 0;
+   while (height == 0 && j < physicalCameras_.size() ) 
    {
-      unsigned height = physicalCameras_[0]->GetImageWidth();
-      for (unsigned int i = 1; i < physicalCameras_.size(); i++)
-      {
-         if (physicalCameras_[i] != 0) 
-            if (height != physicalCameras_[i]->GetImageHeight())
-               return 0;
-      }
-      return height;
+      if (physicalCameras_[j] != 0)
+         height = physicalCameras_[j]->GetImageHeight();
+      j++;
    }
-   return 0;
+  
+   for (unsigned int i = 0; i < physicalCameras_.size(); i++)
+   {
+      if (physicalCameras_[i] != 0  && i != j)  
+      {
+         if (height != physicalCameras_[i]->GetImageHeight())
+            return 0;
+      }
+   }
+   return height;
 }
 
 unsigned MultiCamera::GetImageBytesPerPixel() const
@@ -459,7 +471,6 @@ long MultiCamera::GetImageBufferSize() const
       if (physicalCameras_[i] != 0) 
          imageBufferSize += physicalCameras_[i]->GetImageBufferSize();
    }
-   printf ("Image Buffer Size: %ld\n", imageBufferSize);
    return imageBufferSize;
 }
 
