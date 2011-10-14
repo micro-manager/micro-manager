@@ -1680,13 +1680,13 @@ int ReflectorTurret::GetPosition(int& position)
    position = 0;
    int count = 0;
    int ret = DEVICE_OK;
-   while (position == 0 && count < 10)
+   while (position == 0 && count < 15)
    {
 	   ret = g_turret.GetPosition(*this, *GetCoreCallback(), turretId_, position);
        if (ret != DEVICE_OK)
 		 return ret;
 	   count++;
-	   CDeviceUtils::SleepMs(100);
+	   CDeviceUtils::SleepMs(200);
    }
 
    // Deal with faulty position given by Axiovert200m on startup here:
@@ -1694,9 +1694,9 @@ int ReflectorTurret::GetPosition(int& position)
    {
       position = 1;
       LogMessage("Received false position for Reflector Turret position from Microscope", true);
-      ret = SetPosition(position);
-      if (ret != DEVICE_OK)
-         return ret;
+      // ret = SetPosition(position);
+      // if (ret != DEVICE_OK)
+      //   return ret;
    }
 
    return DEVICE_OK;
