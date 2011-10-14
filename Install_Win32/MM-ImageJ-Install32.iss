@@ -109,11 +109,11 @@ Source: ..\Install_AllPlatforms\micro-manager\mmautofocus\*; DestDir: {app}\mmau
 ; NOTE: Don't use "Flags: ignoreversion" on any shared system files
 
 [DIRS]
-Name: {app}; Permissions: users-modify
-Name: {app}\macros; Permissions: users-modify
-Name: {app}\plugins; Permissions: users-modify
-Name: {app}\mmplugins; Permissions: users-modify
-Name: {app}\mmautofocus; Permissions: users-modify
+Name: "{app}"; Permissions: users-modify
+Name: "{app}\macros"; Permissions: users-modify
+Name: "{app}\plugins"; Permissions: users-modify
+Name: "{app}\mmplugins"; Permissions: users-modify
+Name: "{app}\mmautofocus"; Permissions: users-modify
 
 [Icons]
 Name: {group}\Micro-Manager-1.4; Filename: {app}\ImageJ.exe; WorkingDir: {app}
@@ -124,4 +124,4 @@ Name: {commondesktop}\Micro-Manager 1.4; Filename: {app}\ImageJ.exe; Tasks: desk
 Root: HKLM; Subkey: "SYSTEM\CurrentControlSet\Control\Session Manager\Environment"; ValueType: string; ValueName: "DISCOVERABILITYTEST"; ValueData: "1"
 
 [Run]
-Filename: {app}\ImageJ.exe; Description: {cm:LaunchProgram,Micro-Manager-1.4}; Flags: nowait postinstall
+Filename: "{app}\ImageJ.exe"; Description: {cm:LaunchProgram,Micro-Manager-1.4}; Flags: nowait postinstall
