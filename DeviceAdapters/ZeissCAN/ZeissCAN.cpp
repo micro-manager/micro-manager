@@ -1645,8 +1645,18 @@ int ReflectorTurret::Shutdown()
 
 bool ReflectorTurret::Busy()
 {
+   
+   int position;
+   int ret = g_turret.GetPosition(*this, *GetCoreCallback(), turretId_, position);
+   if (ret != DEVICE_OK) {
+      this->LogMessage("GetBusy failed in Reflector::Busy, GetPosition");
+      return false; // error, so say we're not busy
+   }
+   if (position == 0)
+      return true;
+
    bool busy;
-   int ret = g_turret.GetBusy(*this, *GetCoreCallback(), turretId_, busy);
+   ret = g_turret.GetBusy(*this, *GetCoreCallback(), turretId_, busy);
    if (ret != DEVICE_OK)  // This is bad and should not happen
    {
       this->LogMessage("GetBusy failed in Reflector::Busy");
@@ -1667,9 +1677,17 @@ int ReflectorTurret::SetPosition(int position)
 
 int ReflectorTurret::GetPosition(int& position)
 {
-   int ret = g_turret.GetPosition(*this, *GetCoreCallback(), turretId_, position);
-   if (ret != DEVICE_OK)
-      return ret;
+   position = 0;
+   int count = 0;
+   int ret = DEVICE_OK;
+   while (position == 0 && count < 10)
+   {
+	   ret = g_turret.GetPosition(*this, *GetCoreCallback(), turretId_, position);
+       if (ret != DEVICE_OK)
+		 return ret;
+	   count++;
+	   CDeviceUtils::SleepMs(100);
+   }
 
    // Deal with faulty position given by Axiovert200m on startup here:
    if ((position < 1) || (position > numPos_))
