@@ -3014,26 +3014,36 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
                      displayImage(img_);
                      Thread.yield();
                   }
-               } else for (int i = 0; i < multiChannelCameraNrCh_ &&
-                       core_.getRemainingImageCount() > 0; i++)
-               {
-                  TaggedImage ti = core_.getLastTaggedImage();
-                  int channel = ti.tags.getInt("CameraChannelIndex");
-                  ti.tags.put("Channel", core_.getCameraChannelName(channel));
-                  MDUtils.setChannelIndex(ti.tags, channel);
-                  MDUtils.setFrameIndex(ti.tags, 0);
-                  MDUtils.setSliceIndex(ti.tags, 0);
-                  MDUtils.setPositionIndex(ti.tags, 0);
-                  boolean update = false;
-                  if (multiChannelCameraNrCh_ == channel + 1)
-                     update = true;
-                  addImage(multiCameraAcq_, ti, update);
-                  if (!acquisitionExists(multiCameraAcq_)) {
-                     enableLiveMode(false);
-                     return;
+               } else {
+                  boolean foundAll = false;
+                  boolean[] found = new boolean[(int)multiChannelCameraNrCh_];
+                  while (!foundAll && core_.getRemainingImageCount() > 0) {
+
+                     TaggedImage ti = core_.getLastTaggedImage();
+                     int channel = ti.tags.getInt("CameraChannelIndex");
+                     if (!found[channel]) {
+                        found[channel] = true;
+                        ti.tags.put("Channel", core_.getCameraChannelName(channel));
+                        MDUtils.setChannelIndex(ti.tags, channel);
+                        MDUtils.setFrameIndex(ti.tags, 0);
+                        MDUtils.setSliceIndex(ti.tags, 0);
+                        MDUtils.setPositionIndex(ti.tags, 0);
+                        boolean update = false;
+                        if (multiChannelCameraNrCh_ == channel + 1)
+                           update = true;
+                        addImage(multiCameraAcq_, ti, update);
+                        if (!acquisitionExists(multiCameraAcq_)) {
+                           enableLiveMode(false);
+                           return;
+                        }
+                        // TODO: remove after debugging
+                        System.out.println("Channel: " + channel);
+                        foundAll = true;
+                        for (int i = 0; i < found.length; i++)
+                           if (!found[i])
+                              foundAll = false;
+                     }
                   }
-                  // TODO: remove after debugging
-                  System.out.println("Channel: " + channel);
                }
             }
          } catch (Exception e) {
