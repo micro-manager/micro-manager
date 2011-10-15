@@ -68,7 +68,6 @@ public class MultiCameraFrame extends javax.swing.JFrame implements MMListenerIn
    private String[] cameras_;
    private HashMap<String, Boolean> selectedCameras_;
    private HashMap<String, Integer> channelIndex_;
-   private String activeCamera_;
    private boolean initialized_ = false;
 
    private static final String ACQNAME = "MultiColorAcq";
@@ -94,7 +93,7 @@ public class MultiCameraFrame extends javax.swing.JFrame implements MMListenerIn
    private static final String EMSWITCH = "EMSwitch";
    private static final String AMPGAIN = "Pre-Amp-Gain";
    private static final String FRAMETRANSFER = "FrameTransfer";
-   // Retarded, but Andor calls this readout mode
+   // Andor calls this readout mode
    private static final String SPEED = "ReadoutMode";
    private static final String TRIGGER = "Trigger";
    private static final String TEMP = "CCDTemperature";
@@ -104,7 +103,6 @@ public class MultiCameraFrame extends javax.swing.JFrame implements MMListenerIn
    private boolean liveRunning_ = false;
    private static final String GUILIVEMODE = "Gui";
    private static final String PLUGINLIVEMODE = "Plugin";
-   private static final String NOLIVEMODE = "None";
    private String liveMode_ = GUILIVEMODE;
 
    private LiveImagingThread th_;
@@ -161,9 +159,7 @@ public class MultiCameraFrame extends javax.swing.JFrame implements MMListenerIn
       }
    }
 
-   private LiveImagingThread liveImagingThread_;
-
-    /** Creates new form MultiCameraFrame */
+      /** Creates new form MultiCameraFrame */
     public MultiCameraFrame(ScriptInterface gui) throws Exception {
        gui_ = gui;
        dGui_ = (DeviceControlGUI) gui_;
@@ -195,7 +191,7 @@ public class MultiCameraFrame extends javax.swing.JFrame implements MMListenerIn
           }
        }
        
-       core_.setCameraDevice(currentCamera);
+       core_.setCameraDevice(usedCameras.get(0));
        
        cameras_ = new String[usedCameras.size()];
        Iterator c = usedCameras.iterator();
@@ -244,13 +240,13 @@ public class MultiCameraFrame extends javax.swing.JFrame implements MMListenerIn
 
        updateItems(binningComboBox, MMCoreJ.getG_Keyword_Binning());
 
-       if (!core_.hasProperty(currentCamera, MODE)) {
+       if (!core_.hasProperty(cameras_[0], MODE)) {
           jLabel5.setEnabled(false);
           modeComboBox.setEnabled(false);
        } else {
           modeComboBox.removeAllItems();
           modeComboBox.addItem(MIXED);
-          if (core_.hasProperty(currentCamera, ADCONVERTER)) {
+          if (core_.hasProperty(cameras_[0], ADCONVERTER)) {
              modeComboBox.addItem(MODECONV16);
              modeComboBox.addItem(MODEEM14);
              modeComboBox.addItem(MODEEM16);
@@ -261,23 +257,23 @@ public class MultiCameraFrame extends javax.swing.JFrame implements MMListenerIn
           modeComboBox.setSelectedItem(getMode());
        }
 
-       if (!core_.hasProperty(currentCamera, EMGAIN)) {
+       if (!core_.hasProperty(cameras_[0], EMGAIN)) {
           jLabel4.setEnabled(false);
           EMGainTextField.setEnabled(false);
           EMGainSlider.setEnabled(false);
        } else {
-          EMGainMin_ = (int) core_.getPropertyLowerLimit(currentCamera, EMGAIN);
-          EMGainMax_ = (int) core_.getPropertyUpperLimit(currentCamera, EMGAIN);
+          EMGainMin_ = (int) core_.getPropertyLowerLimit(cameras_[0], EMGAIN);
+          EMGainMax_ = (int) core_.getPropertyUpperLimit(cameras_[0], EMGAIN);
           EMGainSlider.setMinimum(EMGainMin_);
           EMGainSlider.setMaximum(EMGainMax_);
-          int gain = NumberUtils.coreStringToInt(core_.getProperty(currentCamera, EMGAIN));
+          int gain = NumberUtils.coreStringToInt(core_.getProperty(cameras_[0], EMGAIN));
           EMGainSlider.setValue(gain);
           EMGainTextField.setText(NumberUtils.intToDisplayString(gain));
 
-          if (!core_.hasProperty(currentCamera, EMSWITCH)) {
+          if (!core_.hasProperty(cameras_[0], EMSWITCH)) {
              EMCheckBox.setEnabled(false);
           } else {
-             String val = core_.getProperty(currentCamera, EMSWITCH);
+             String val = core_.getProperty(cameras_[0], EMSWITCH);
              if (val.equals("On")) {
                 EMCheckBox.setSelected(true);
              } 
@@ -285,7 +281,7 @@ public class MultiCameraFrame extends javax.swing.JFrame implements MMListenerIn
        }
 
        // Pre-amp Gain
-       if (!core_.hasProperty(currentCamera, AMPGAIN)) {
+       if (!core_.hasProperty(cameras_[0], AMPGAIN)) {
           GainLabel.setEnabled(false);
           gainComboBox.setEnabled(false);
        } else {
@@ -293,7 +289,7 @@ public class MultiCameraFrame extends javax.swing.JFrame implements MMListenerIn
        }
 
        // Readout speed
-       if (!core_.hasProperty(currentCamera, SPEED)) {
+       if (!core_.hasProperty(cameras_[0], SPEED)) {
           SpeedLabel.setEnabled(false);
           speedComboBox.setEnabled(false);
        } else {
@@ -301,7 +297,7 @@ public class MultiCameraFrame extends javax.swing.JFrame implements MMListenerIn
        }
 
        // Frame Transfer
-       if (!core_.hasProperty(currentCamera, FRAMETRANSFER)) {
+       if (!core_.hasProperty(cameras_[0], FRAMETRANSFER)) {
           FrameTransferLabel.setEnabled(false);
           frameTransferComboBox.setEnabled(false);
        } else {
@@ -309,7 +305,7 @@ public class MultiCameraFrame extends javax.swing.JFrame implements MMListenerIn
        }
 
        // Trigger
-       if (!core_.hasProperty(currentCamera, TRIGGER)) {
+       if (!core_.hasProperty(cameras_[0], TRIGGER)) {
           TriggerLabel.setEnabled(false);
           triggerComboBox.setEnabled(false);
        } else {
@@ -319,6 +315,8 @@ public class MultiCameraFrame extends javax.swing.JFrame implements MMListenerIn
        updateTemp();
 
        initialized(true, true);
+       
+       core_.setCameraDevice(currentCamera);
     }
 
     public void safePrefs() {
