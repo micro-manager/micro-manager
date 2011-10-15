@@ -279,8 +279,8 @@ spuriousNoiseFilterDescriptionStr_("")
 #endif
 
    if (GetListOfAvailableCameras() != DRV_SUCCESS) 
-	   exit(1);
-
+	   //exit(1);
+      LogMessage("No Andor camera found!");
 }
 
 AndorCamera::~AndorCamera()
