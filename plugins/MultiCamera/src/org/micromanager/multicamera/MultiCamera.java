@@ -6,8 +6,11 @@ import org.micromanager.api.ScriptInterface;
 
 
 public class MultiCamera implements MMPlugin {
-   public static String menuName = "Multi Camera";
-   public static String tooltipDescription = "Plugin that allows you to use multiple cameras simultanuously"; 
+   public static String menuName = "Multi-Andor Control";
+   public static String tooltipDescription = "This plugin lets your control multiple "
+           + "cameras simultanuously.  It is specifically written for Andor cameras. "
+           + "Use the Utilities->Multi Camera adapter to combine multiple Andor cameras "
+           + "into a single logical camera."; 
    private CMMCore core_;
    private ScriptInterface gui_;
    private MultiCameraFrame myFrame_;
@@ -36,7 +39,7 @@ public class MultiCamera implements MMPlugin {
 
     @Override
    public void show() {
-         String ig = "Multi Camera";
+         String ig = "Andor Control";
    }
 
     @Override
@@ -55,7 +58,7 @@ public class MultiCamera implements MMPlugin {
    
     @Override
    public String getVersion() {
-      return "0.11";
+      return "0.12";
    }
    
     @Override
