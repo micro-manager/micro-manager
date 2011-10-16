@@ -93,6 +93,46 @@ import org.micromanager.utils.PropertyItem;
       return type_.swigValue();
    }
    
+   public String getTypeAsString() {
+      String devType = new String("Unknown");
+      
+      if (type_ == DeviceType.CameraDevice) {
+         devType = "Camera";
+      } else if (type_ == DeviceType.SerialDevice) {
+         devType = "Serial Port";
+      } else if (type_ == DeviceType.ShutterDevice) {
+         devType = "Shutter";
+      } else if (type_ == DeviceType.CoreDevice) {
+         devType = "Micro-manager Core";
+      } else if (type_ == DeviceType.AutoFocusDevice) {
+         devType = "Autofocus";
+      } else if (type_ == DeviceType.CommandDispatchDevice ) {
+         devType = "Command Dispatcher";
+      } else if (type_ == DeviceType.HubDevice) {
+         devType = "Motorized scope or Hub";
+      } else if (type_ == DeviceType.GenericDevice) {
+         devType = "Generic Device";
+      } else if (type_ == DeviceType.AnyType) {
+         devType = "Misc.";    
+      } else if (type_ == DeviceType.ImageProcessorDevice) {
+         devType = "Image Processor";    
+      } else if (type_ == DeviceType.ImageStreamerDevice) {
+         devType = "Image Streamer";    
+      } else if (type_ == DeviceType.ProgrammableIODevice) {
+         devType = "Programmable I/O Device";    
+      } else if (type_ == DeviceType.SignalIODevice) {
+         devType = "Signal I/O Device";    
+      } else if (type_ == DeviceType.SLMDevice) {
+         devType = "SLM";    
+      } else if (type_ == DeviceType.StageDevice) {
+         devType = "Single Axis Stage";    
+      } else if (type_ == DeviceType.XYStageDevice) {
+         devType = "XY Stage";    
+      }
+      
+      return devType;
+   }
+
    /**
     * Obtain all properties and their current values.
     * @param core
@@ -307,20 +347,6 @@ import org.micromanager.utils.PropertyItem;
    
    public int getNumberOfStates() {
       return numPos_;
-   }
-   public String getVerboseType() {
-//      String devType = new String("unknown");
-//      if (type_ == DeviceType.CameraDevice) {
-//         devType = "Camera";
-//      } else if (type_ == DeviceType.SerialDevice) {
-//         devType = "Serial port";
-//      } else if (type_ == DeviceType.ShutterDevice) {
-//         devType = "Shutter";
-//      } else if (type_ == DeviceType.)
-      if (type_ == DeviceType.AnyType)
-         return "";
-      else
-         return type_.toString();
    }
 
    public void setParentHub(String hub) {

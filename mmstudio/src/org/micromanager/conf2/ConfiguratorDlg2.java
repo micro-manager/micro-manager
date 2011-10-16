@@ -1,5 +1,5 @@
 ///////////////////////////////////////////////////////////////////////////////
-//FILE:          ConfiguratorDlg.java
+//FILE:          ConfiguratorDlg2.java
 //PROJECT:       Micro-Manager
 //SUBSYSTEM:     mmstudio
 //-----------------------------------------------------------------------------
@@ -73,7 +73,7 @@ import org.micromanager.utils.ReportingUtils;
  * Based on the dialog frame to be activated as part of the
  * MMStudio
  */
-public class ConfiguratorDlg extends JDialog {
+public class ConfiguratorDlg2 extends JDialog {
 
     private static final long serialVersionUID = 1L;
     private JLabel pagesLabel_;
@@ -95,7 +95,7 @@ public class ConfiguratorDlg extends JDialog {
     /**
      * Create the application
      */
-    public ConfiguratorDlg(CMMCore core, String defFile) {
+    public ConfiguratorDlg2(CMMCore core, String defFile) {
         super();
         core_ = core;
         defaultPath_ = defFile;
@@ -278,8 +278,8 @@ public class ConfiguratorDlg extends JDialog {
             if (helpFileName == null) {
                 return;
             }
-            URL htmlURL = ConfiguratorDlg.class.getResource(helpFileName);
-            String helpText = readStream(ConfiguratorDlg.class.getResourceAsStream(helpFileName));
+            URL htmlURL = ConfiguratorDlg2.class.getResource(helpFileName);
+            String helpText = readStream(ConfiguratorDlg2.class.getResourceAsStream(helpFileName));
             helpTextPane_.setContentType("text/html; charset=ISO-8859-1");
             helpTextPane_.setText(helpText);
             
@@ -440,7 +440,7 @@ public class ConfiguratorDlg extends JDialog {
             try {
                 u.join();
             } catch (InterruptedException ex) {
-                Logger.getLogger(ConfiguratorDlg.class.getName()).log(Level.SEVERE, null, ex);
+                Logger.getLogger(ConfiguratorDlg2.class.getName()).log(Level.SEVERE, null, ex);
             }
             if (0 < u.Status().length()) {
                 ReportingUtils.logError("Error uploading configuration file: " + u.Status());

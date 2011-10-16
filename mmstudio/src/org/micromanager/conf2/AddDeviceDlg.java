@@ -59,6 +59,8 @@ public class AddDeviceDlg extends JDialog implements MouseListener,
    private static final long serialVersionUID = 1L;
 
    class TreeWContextMenu extends JTree implements ActionListener {
+      private static final long serialVersionUID = 1L;
+
       public TreeWContextMenu(DefaultMutableTreeNode n, AddDeviceDlg d) {
          super(n);
          d_ = d;
@@ -100,7 +102,7 @@ public class AddDeviceDlg extends JDialog implements MouseListener,
          }
       }
    }
-   
+
    class TreeMouseListener extends MouseAdapter {
       public void mousePressed(MouseEvent e) {
          if (2 == e.getClickCount()) {
@@ -110,11 +112,14 @@ public class AddDeviceDlg extends JDialog implements MouseListener,
          }
       }
    }
-   
-   class TreeNodeShowsDeviceAndDescription extends DefaultMutableTreeNode {
 
-      public TreeNodeShowsDeviceAndDescription(String value) {
+   class DeviceTreeNode extends DefaultMutableTreeNode {
+      private static final long serialVersionUID = 1L;
+      boolean showLib_;
+
+      public DeviceTreeNode(String value, boolean byLib) {
          super(value);
+         showLib_ = byLib;
       }
 
       @Override
@@ -125,7 +130,12 @@ public class AddDeviceDlg extends JDialog implements MouseListener,
             if (uo.getClass().isArray()) {
                Object[] userData = (Object[]) uo;
                if (2 < userData.length) {
-                  ret = userData[1].toString() + " | " + userData[2].toString();
+                  if (showLib_)
+                     ret = userData[1].toString() + " | "
+                           + userData[2].toString();
+                  else
+                     ret = userData[0].toString() + " | "
+                           + userData[2].toString();
                }
             } else {
                ret = uo.toString();
@@ -168,16 +178,17 @@ public class AddDeviceDlg extends JDialog implements MouseListener,
    /**
     * Create the dialog
     */
-   public AddDeviceDlg(MicroscopeModel model, CMMCore core, DevicesPage devicesPage) {
+   public AddDeviceDlg(MicroscopeModel model, CMMCore core,
+         DevicesPage devicesPage) {
       super();
       setModal(true);
       setResizable(false);
       getContentPane().setLayout(null);
       setTitle("Add Device");
-      setBounds(400, 100, 596, 529);
+      setBounds(400, 100, 624, 529);
       devicesPage_ = devicesPage;
       core_ = core;
-      listByLib_ = true;
+      listByLib_ = false;
 
       final JButton addButton = new JButton();
       addButton.addActionListener(new ActionListener() {
@@ -217,11 +228,10 @@ public class AddDeviceDlg extends JDialog implements MouseListener,
       cbShowAll_ = new JCheckBox("Show all");
       cbShowAll_.addActionListener(new ActionListener() {
          public void actionPerformed(ActionEvent e) {
-            buildTreeByLib(model_);
-            scrollPane_.setViewportView(theTree_);
+            buildTree();
          }
       });
-      cbShowAll_.setBounds(487, 462, 81, 23);
+      cbShowAll_.setBounds(486, 462, 81, 23);
       cbShowAll_.setSelected(false); // showing only hubs by default
       getContentPane().add(cbShowAll_);
       documentationButton.addActionListener(new ActionListener() {
@@ -229,94 +239,114 @@ public class AddDeviceDlg extends JDialog implements MouseListener,
             displayDocumentation();
          }
       });
-      
-      buildTreeByLib(model);
+
+      if (listByLib_)
+         buildTreeByLib(model);
+      else
+         buildTreeByType(model);
+
+      JCheckBox chckbxNewCheckBox = new JCheckBox("List by library");
+      chckbxNewCheckBox.setSelected(listByLib_);
+      chckbxNewCheckBox.addActionListener(new ActionListener() {
+         public void actionPerformed(ActionEvent e) {
+            listByLib_ = ((JCheckBox) e.getSource()).isSelected();
+            buildTree();
+         }
+      });
+      chckbxNewCheckBox.setBounds(486, 436, 97, 23);
+      getContentPane().add(chckbxNewCheckBox);
+
       scrollPane_ = new JScrollPane(theTree_);
       scrollPane_.setBounds(10, 10, 471, 475);
+      scrollPane_.setViewportView(theTree_);
       getContentPane().add(scrollPane_);
-
    }
-   
-	private void buildTreeByType(MicroscopeModel model) {
-		Device devices_[] = null;
-		if (cbShowAll_.isSelected())
-			devices_ = model.getAvailableDeviceList();
-		else
-			devices_ = model.getAvailableDevicesCompact();
 
-		// organize devices by type
-		Hashtable<String, Vector<Device>> nodes = new Hashtable<String, Vector<Device>>();
-		for (int i = 0; i < devices_.length; i++) {
-			if (nodes.containsKey(devices_[i].getVerboseType()))
-				nodes.get(devices_[i].getVerboseType()).add(devices_[i]);
-			else {
-				Vector<Device> v = new Vector<Device>();
-				v.add(devices_[i]);
-				nodes.put(devices_[i].getVerboseType(), v);
-			}
+   private void buildTreeByType(MicroscopeModel model) {
+      Device devices_[] = null;
+      if (cbShowAll_.isSelected())
+         devices_ = model.getAvailableDeviceList();
+      else
+         devices_ = model.getAvailableDevicesCompact();
 
-		}
+      // organize devices by type
+      Hashtable<String, Vector<Device>> nodes = new Hashtable<String, Vector<Device>>();
+      for (int i = 0; i < devices_.length; i++) {
+         if (nodes.containsKey(devices_[i].getTypeAsString()))
+            nodes.get(devices_[i].getTypeAsString()).add(devices_[i]);
+         else {
+            Vector<Device> v = new Vector<Device>();
+            v.add(devices_[i]);
+            nodes.put(devices_[i].getTypeAsString(), v);
+         }
+      }
 
-		DefaultMutableTreeNode root = new DefaultMutableTreeNode(
-				"Devices supported by " + "\u00B5" + "Manager");
+      DefaultMutableTreeNode root = new DefaultMutableTreeNode(
+            "Devices supported by " + "\u00B5" + "Manager");
 
-		TreeNodeShowsDeviceAndDescription node = null;
-		for (String nodeName : (String[]) nodes.keySet().toArray()) {
-			// create a new node of devices for this library
-			node = new TreeNodeShowsDeviceAndDescription(nodeName);
-			root.add(node);
-			Vector<Device> devs = nodes.get(nodeName);
-			for (int i = 0; i < devs.size(); i++) {
-				Object[] userObject = { devs.get(i).getLibrary(),
-						devs.get(i).getAdapterName(),
-						devs.get(i).getDescription() };
-				TreeNodeShowsDeviceAndDescription aLeaf = new TreeNodeShowsDeviceAndDescription(
-						"");
-				aLeaf.setUserObject(userObject);
-				node.add(aLeaf);
-			}
-		}
-	}
+      DeviceTreeNode node = null;
+      Object nodeNames[] = nodes.keySet().toArray();
+      for (Object nodeName : nodeNames) {
+         // create a new node of devices for this library
+         node = new DeviceTreeNode((String) nodeName, false);
+         root.add(node);
+         Vector<Device> devs = nodes.get(nodeName);
+         for (int i = 0; i < devs.size(); i++) {
+            Object[] userObject = { devs.get(i).getLibrary(),
+                  devs.get(i).getAdapterName(), devs.get(i).getDescription() };
+            DeviceTreeNode aLeaf = new DeviceTreeNode("", false);
+            aLeaf.setUserObject(userObject);
+            node.add(aLeaf);
+         }
+      }
+      // try building a tree
+      theTree_ = new TreeWContextMenu(root, this);
+      theTree_.addTreeSelectionListener(this);
+
+      MouseListener ml = new TreeMouseListener();
+
+      theTree_.addMouseListener(ml);
+      theTree_.setRootVisible(false);
+      theTree_.setShowsRootHandles(true);
+   }
 
    private void buildTreeByLib(MicroscopeModel model) {
-	      Device devices_[] = null;
-	      if (cbShowAll_.isSelected())
-	         devices_ = model.getAvailableDeviceList();
-	      else
-	         devices_ = model.getAvailableDevicesCompact();
-	      
-	      String thisLibrary = "";
-	      DefaultMutableTreeNode root = new DefaultMutableTreeNode(
-	            "Devices supported by " + "\u00B5" + "Manager");
-	      TreeNodeShowsDeviceAndDescription node = null;
-	      for (int idd = 0; idd < devices_.length; ++idd) {
-	         // assume that the first library doesn't have an empty name! (of
-	         // course!)
-	         if (0 != thisLibrary.compareTo(devices_[idd].getLibrary())) {
-	            // create a new node of devices for this library
-	            node = new TreeNodeShowsDeviceAndDescription(
-	                  devices_[idd].getLibrary());
-	            root.add(node);
-	            thisLibrary = devices_[idd].getLibrary(); // remember which library
-	                                                      // we are processing
-	         }
-	         Object[] userObject = { devices_[idd].getLibrary(),
-	               devices_[idd].getAdapterName(), devices_[idd].getDescription() };
-	         TreeNodeShowsDeviceAndDescription aLeaf = new TreeNodeShowsDeviceAndDescription(
-	               "");
-	         aLeaf.setUserObject(userObject);
-	         node.add(aLeaf);
-	      }
-	      // try building a tree
-	      theTree_ = new TreeWContextMenu(root, this);
-	      theTree_.addTreeSelectionListener(this);
-	      
-	      MouseListener ml = new TreeMouseListener() ;
-	      
-	      theTree_.addMouseListener(ml);
-	      theTree_.setRootVisible(false);
-	      theTree_.setShowsRootHandles(true);
-	   }
+      Device devices_[] = null;
+      if (cbShowAll_.isSelected())
+         devices_ = model.getAvailableDeviceList();
+      else
+         devices_ = model.getAvailableDevicesCompact();
+
+      String thisLibrary = "";
+      DefaultMutableTreeNode root = new DefaultMutableTreeNode(
+            "Devices supported by " + "\u00B5" + "Manager");
+      DeviceTreeNode node = null;
+      for (int idd = 0; idd < devices_.length; ++idd) {
+         // assume that the first library doesn't have an empty name! (of
+         // course!)
+         if (0 != thisLibrary.compareTo(devices_[idd].getLibrary())) {
+            // create a new node of devices for this library
+            node = new DeviceTreeNode(devices_[idd].getLibrary(), true);
+            root.add(node);
+            thisLibrary = devices_[idd].getLibrary(); // remember which library
+                                                      // we are processing
+         }
+         Object[] userObject = { devices_[idd].getLibrary(),
+               devices_[idd].getAdapterName(), devices_[idd].getDescription() };
+         DeviceTreeNode aLeaf = new DeviceTreeNode("", true);
+         aLeaf.setUserObject(userObject);
+         node.add(aLeaf);
+      }
+      // try building a tree
+      theTree_ = new TreeWContextMenu(root, this);
+      theTree_.addTreeSelectionListener(this);
+
+      MouseListener ml = new TreeMouseListener();
+
+      theTree_.addMouseListener(ml);
+      theTree_.setRootVisible(false);
+      theTree_.setShowsRootHandles(true);
+   }
 
    private void displayDocumentation() {
       try {
@@ -353,14 +383,14 @@ public class AddDeviceDlg extends JDialog implements MouseListener,
       }
       if (0 < srows.length) {
          if (0 < srows[0]) {
-            TreeNodeShowsDeviceAndDescription node = (TreeNodeShowsDeviceAndDescription) theTree_
+            DeviceTreeNode node = (DeviceTreeNode) theTree_
                   .getLastSelectedPathComponent();
 
             Object[] userData = node.getUserDataArray();
             if (null == userData) {
                // if a folder has one child go ahead and add the children
                if (1 == node.getLeafCount()) {
-                  node = (TreeNodeShowsDeviceAndDescription) node.getChildAt(0);
+                  node = (DeviceTreeNode) node.getChildAt(0);
                   userData = node.getUserDataArray();
                   if (null == userData)
                      return false;
@@ -370,8 +400,9 @@ public class AddDeviceDlg extends JDialog implements MouseListener,
             String adapterName = userData[1].toString();
             String lib = userData[0].toString();
             String descr = userData[2].toString();
-            
-            DeviceSetupDlg dlg = new DeviceSetupDlg(model_, core_, lib, adapterName, descr);
+
+            DeviceSetupDlg dlg = new DeviceSetupDlg(model_, core_, lib,
+                  adapterName, descr);
             dlg.setVisible(true);
          }
       }
@@ -385,7 +416,7 @@ public class AddDeviceDlg extends JDialog implements MouseListener,
       if (null != srows) {
          if (0 < srows.length) {
             if (0 < srows[0]) {
-               TreeNodeShowsDeviceAndDescription node = (TreeNodeShowsDeviceAndDescription) theTree_
+               DeviceTreeNode node = (DeviceTreeNode) theTree_
                      .getLastSelectedPathComponent();
                Object uo = node.getUserObject();
                if (uo != null) {
@@ -399,5 +430,12 @@ public class AddDeviceDlg extends JDialog implements MouseListener,
          }
       }
    }
-   
+
+   private void buildTree() {
+      if (listByLib_)
+         buildTreeByLib(model_);
+      else
+         buildTreeByType(model_);
+      scrollPane_.setViewportView(theTree_);
+   }
 }
