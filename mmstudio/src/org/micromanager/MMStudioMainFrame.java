@@ -704,6 +704,9 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
       public void onConfigGroupChanged(String groupName, String newConfig) {
          try {
             configPad_.refreshGroup(groupName, newConfig);
+            for (MMListenerInterface mmIntf:MMListeners_) {
+               mmIntf.configGroupChangedAlert(groupName, newConfig);
+            }
          } catch (Exception e) {
          }
       }
@@ -711,12 +714,19 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
       @Override
       public void onPixelSizeChanged(double newPixelSizeUm) {
          updatePixSizeUm (newPixelSizeUm);
+         for (MMListenerInterface mmIntf:MMListeners_) {
+            mmIntf.pixelSizeChangedAlert(newPixelSizeUm);
+         }
       }
 
       @Override
       public void onStagePositionChanged(String deviceName, double pos) {
-         if (deviceName.equals(zStageLabel_))
+         if (deviceName.equals(zStageLabel_)) {
             updateZPos(pos);
+            for (MMListenerInterface mmIntf:MMListeners_) {
+               mmIntf.stagePositionChangedAlert(deviceName, pos);
+            }
+         }
       }
 
       @Override
@@ -727,8 +737,12 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
 
       @Override
       public void onXYStagePositionChanged(String deviceName, double xPos, double yPos) {
-         if (deviceName.equals(xyStageLabel_))
+         if (deviceName.equals(xyStageLabel_)) {
             updateXYPos(xPos, yPos);
+            for (MMListenerInterface mmIntf:MMListeners_) {
+               mmIntf.xyStagePositionChanged(deviceName, xPos, yPos);
+            }
+         }
       }
 
       @Override
