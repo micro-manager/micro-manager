@@ -564,6 +564,7 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
       if (md == null) {
          return;
       }
+      int displayChannel = hyperImage_.getChannel();
       int cameraChannel = this.rgbToGrayChannel(MDUtils.getChannelIndex(md));
       int frame = MDUtils.getFrameIndex(md);
       int position = MDUtils.getPositionIndex(md);
@@ -609,11 +610,19 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
       }
 
 
+      // This is needed when displaying live images in a single frame window:
+      int ch = hyperImage_.getChannel();
+      if (hyperImage_.getStackSize() == ch) {
+         hyperImage_.setPositionWithoutUpdate(displayChannel, 1, 1);
+         hyperImage_.getProcessor().setPixels(hyperImage_.getStack().getPixels(displayChannel));
+      }
+            
       // Make sure image is shown if it is a single plane:
       if (hyperImage_.getStackSize() == 1) {
          hyperImage_.getProcessor().setPixels(
                  hyperImage_.getStack().getPixels(1));
       }
+       
 
       updateAndDraw();
    }
