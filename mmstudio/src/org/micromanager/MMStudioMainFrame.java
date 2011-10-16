@@ -3001,6 +3001,10 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
       public synchronized boolean isRunning() {
          return running_;
       }
+      
+      public synchronized void setRunning(boolean running) {
+         running_ = running;
+      }
 
       @Override
       public synchronized boolean cancel() {
@@ -3010,7 +3014,7 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
 
       public void run() {
          Thread.currentThread().setPriority(3);
-         running_ = true;
+         setRunning(true);
          if (!multiChannelCamera_ && !isImageWindowOpen()) {
             // stop live acquisition if user closed the window
             enableLiveMode(false);
@@ -3020,7 +3024,7 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
             return;
          }
          try {
-            if (core_.getRemainingImageCount() > 0) {
+            if (core_.getRemainingImageCount() > 0 && isRunning()) {
                if (!multiChannelCamera_) {
                   Object img = core_.getLastImage();
                   if (img != img_) {
@@ -3031,7 +3035,7 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
                } else {
                   boolean foundAll = false;
                   boolean[] found = new boolean[(int)multiChannelCameraNrCh_];
-                  while (!foundAll && core_.getRemainingImageCount() > 0) {
+                  while (!foundAll && core_.getRemainingImageCount() > 0 && isRunning()) {
 
                      TaggedImage ti = core_.getLastTaggedImage();
                      int channel = ti.tags.getInt("CameraChannelIndex");
@@ -3045,11 +3049,12 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
                         boolean update = false;
                         if (multiChannelCameraNrCh_ == channel + 1)
                            update = true;
-                        addImage(multiCameraAcq_, ti, update);
                         if (!acquisitionExists(multiCameraAcq_)) {
                            enableLiveMode(false);
                            return;
                         }
+                        
+                        addImage(multiCameraAcq_, ti, update);
                         // TODO: remove after debugging
                         System.out.println("Channel: " + channel);
                         foundAll = true;
