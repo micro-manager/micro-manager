@@ -30,8 +30,10 @@
 #include <set>
 #include <vector>
 #include <map>
+#include "MMEventCallback.h";
 
 class CMMCore;
+class MMEventCallback;
 
 class CoreProperty
 {

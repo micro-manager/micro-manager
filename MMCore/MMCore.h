@@ -95,6 +95,7 @@ typedef unsigned int* imgRGB32;
 class CMMCore
 {
    friend class CoreCallback;
+   friend class CorePropertyCollection;
 
 public:
 
