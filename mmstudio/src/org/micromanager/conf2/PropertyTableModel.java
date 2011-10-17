@@ -26,6 +26,9 @@ package org.micromanager.conf2;
 import java.util.ArrayList;
 
 import javax.swing.table.AbstractTableModel;
+
+import mmcorej.MMCoreJ;
+
 import org.micromanager.utils.MMPropertyTableModel;
 import org.micromanager.utils.PropertyItem;
 import org.micromanager.utils.ReportingUtils;
@@ -50,15 +53,18 @@ class PropertyTableModel extends AbstractTableModel implements MMPropertyTableMo
    Device devices_[];
    PropertyItem props_[];
    String devNames_[];
+   DeviceSetupDlg setupDlg_;
    
    public PropertyTableModel(MicroscopeModel model, int mode) {
+      setupDlg_ = null;
       updateValues(model, mode, null);
    }
 
    /**
     * Handles single device case
     */
-   public PropertyTableModel(MicroscopeModel model, Device dev) {
+   public PropertyTableModel(MicroscopeModel model, Device dev, DeviceSetupDlg dlg) {
+      setupDlg_ = dlg;
       updateValues(model, PREINIT, dev);
    }
 
@@ -143,6 +149,8 @@ class PropertyTableModel extends AbstractTableModel implements MMPropertyTableMo
          try {
             props_[row].value = (String)value;
             fireTableCellUpdated(row, col);
+            if (props_[row].name.compareTo(MMCoreJ.getG_Keyword_Port()) == 0 && setupDlg_ != null)
+               setupDlg_.rebuildComTable(props_[row].value);
          } catch (Exception e) {
             ReportingUtils.logError(e.getMessage());
          }
