@@ -58,7 +58,6 @@ Source: ..\..\3rdparty\Microsoft\VisualC++\lib\x86\Microsoft.VC90.OPENMP\Microso
 
 ; device libraries
 Source: micro-manager\ATMCD32D.dll; DestDir: {app}; Flags: ignoreversion
-Source: micro-manager\CamUsb_API.dll; DestDir: {app}; Flags: ignoreversion
 Source: micro-manager\inpout32.dll; DestDir: {app}; Flags: ignoreversion
 Source: micro-manager\usb_main.bin; DestDir: {app}; Flags: ignoreversion
 Source: ..\drivers\K8061\x86\libusb0_x86.dll; DestDir: {app}; DestName: libusb0.dll; Flags: ignoreversion
@@ -124,4 +123,4 @@ Name: {commondesktop}\Micro-Manager 1.4; Filename: {app}\ImageJ.exe; Tasks: desk
 Root: HKLM; Subkey: "SYSTEM\CurrentControlSet\Control\Session Manager\Environment"; ValueType: string; ValueName: "DISCOVERABILITYTEST"; ValueData: "1"
 
 [Run]
-Filename: "{app}\ImageJ.exe"; Description: {cm:LaunchProgram,Micro-Manager-1.4}; Flags: nowait postinstall
+Filename: "{app}\ImageJ.exe"; WorkingDir: "{app}"; Description: {cm:LaunchProgram,Micro-Manager-1.4}; Flags: nowait postinstall
