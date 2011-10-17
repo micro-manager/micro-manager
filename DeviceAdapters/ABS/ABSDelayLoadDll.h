@@ -1,14 +1,12 @@
 // Delay Load DLL header
 #pragma once
 
-
 #include "delayimp.h"
 #pragma comment(lib, "DelayImp.lib")					// add __delayLoadHelper
 
-
 // ------------------------------ Functions -----------------------------------
 //
-LONG WINAPI DelayLoadDllExceptionFilter(PEXCEPTION_POINTERS pExcPointers) {
+static LONG WINAPI DelayLoadDllExceptionFilter(PEXCEPTION_POINTERS pExcPointers) {
    LONG lDisposition = EXCEPTION_EXECUTE_HANDLER;
    PDelayLoadInfo pDelayLoadInfo =
     PDelayLoadInfo(pExcPointers->ExceptionRecord->ExceptionInformation[0]);

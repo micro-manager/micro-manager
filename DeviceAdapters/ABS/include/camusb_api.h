@@ -482,6 +482,25 @@ USBAPI BOOL CCONV CamUSB_GetCameraFunctions( u32 *pulFunctionMask,
 
 #endif
 
+// ----------------------------------------------------------------------------
+// CamUSB_GetCameraFunctionsEx
+/*! \brief		returns the mask of the supported functions
+*
+* \param		pqwApiFunctionMask	pointer to the function mask supported by Api
+*                                   (includes emulated features)
+* \param        pqwEmuFunctionMask  pointer to the function mask emulated by the Api
+* \param		pqwCamFunctionMask	pointer to the function mask supported by camera
+* \param		nDevNr			Camera index number, that identifies the
+*								camera device which should be used with this
+*								function
+*
+* \retval		TRUE		success
+* \retval		FALSE		error
+*/
+USBAPI BOOL CCONV CamUSB_GetCameraFunctionsEx( u64* pqwApiFunctionMask,
+                                               u64* pqwEmuFunctionMask,
+                                               u64* pqwCamFunctionMask,
+                                               BYTE nDevNr=0);
 
 // --------------------------------------------------------------------------
 // CamUSB_GetFunctionCaps

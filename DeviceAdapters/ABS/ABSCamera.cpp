@@ -1,2037 +1,2063 @@
-/////////////////////////////////////////////////////////////////////////////
-// Name:        ABSCamera.cpp
-// Purpose:     Implementierung der Kameraklasse als Adapter für µManager
-// Author:      Michael Himmelreich
-// Created:     31. Juli 2007
-// Copyright:   (c) Michael Himmelreich
-// Project:     ConfoVis
-/////////////////////////////////////////////////////////////////////////////
-
-
-// ------------------------------ Includes --------------------------------------
-//
-
-#ifdef WIN32
-   #define WIN32_LEAN_AND_MEAN
-   #include <windows.h>
-   #define snprintf _snprintf 
-#endif
-
+#include "ABSCamera.h"
+#include <cstdio>
 #include <string>
 #include <math.h>
 #include <sstream>
-
-		
-#include "./ABSCamera.h"						// main header files
-#include "./../../MMDevice/ModuleInterface.h"   // module interface
-#include "./include/camusb_api.h"				// ABS Camera API
-#include "./include/camusb_api_util.h"			// ABS Camera API
-#include "./include/camusb_api_ext.h"			// ABS Camera API
-
-// heartbeat prototype
-USBAPI BOOL CCONV CamUSB_HeartBeatCfg( u32 dwCMD, u32 &dwValue, u08 nDevNr);
-
-
-// ----------------------------------------------------------------------------
-//
-#include "ABSDelayLoadDll.h"						// add support for Delay loading of an dll
-#pragma comment(lib, "./include/camusb_api_hal.lib")	// add ABS Camera support
-// don't work since VC2005 => put it manually to project settings
-// #pragma comment(linker, "/DelayLoad:CamUSB_API.Dll")	// remove CamUSB-API dll from default dll import
-
-#include "./include/safeutil.h"						// macros to delete release pointers safely
-
-
-// ------------------------------ Defines --------------------------------------
-//
-
+#include <algorithm>
+#include <iostream>
+#include "../../MMCore/Error.h"
+#include "stringtools.h"
 using namespace std;
 
+
+
+const double CABSCamera::nominalPixelSizeUm_ = 1.0;
+double g_IntensityFactor_ = 1.0;
 // External names used used by the rest of the system
 // to load particular device from the "DemoCamera.dll" library
-const char* g_CameraDeviceNameBase = "ABSCam";
+const char* g_CameraName = "ABSCam";
+#ifdef _AMD64_
+	const char* g_ApiDllName = "CamUsb_Api64_hal.dll";
+#else
+	const char* g_ApiDllName = "CamUsb_Api_hal.dll";
+#endif
+// constants for naming pixel types (allowed values of the "PixelType" property)
+const char* g_PixelType_8bit = "8bit";
+const char* g_PixelType_16bit = "16bit";
+const char* g_PixelType_32bitRGB = "32bitRGB";
+const char* g_PixelType_64bitRGB = "64bitRGB";
+const char* g_PixelType_32bit = "32bit";  // floating point greyscale
 
 
-SupportedPixelTypes g_sSupportedPixelTypesMono[] =
-{
-   {"8Bit",   PIX_MONO8},
-   {"10Bit",  PIX_MONO10},
-   {"12Bit",  PIX_MONO12}   
-};
+const char* g_ScanMode_Continuous  = "Continuous";
+const char* g_ScanMode_TriggeredSW = "Triggered SW";
+const char* g_ScanMode_TriggeredHW = "Triggered HW";
 
-SupportedPixelTypes g_sSupportedPixelTypesColor[] =
-{
-  //{"8Bit",  PIX_RGB8_PLANAR}, 
-  {"8Bit",  PIX_BGRA8_PACKED},      
-  // {"10Bit", PIX_BGRA10_PACKED},
-  // {"12Bit", PIX_BGRA12_PACKED}
-};
-
-// constants for naming color modes
-const char* g_ColorMode_Grayscale = "Grayscale";
-const char* g_ColorMode_Color	  = "Color";
 
 // ------------------------------ Macros --------------------------------------
 //
 // return the error code of the function instead of Successfull or Failed!!!
-#define GET_RC(func, dev)  ((!func) ? CamUSB_GetLastError(dev) : retOK)
-
-// ------------------------------ Prototypes -----------------------------------
-//
-typedef std::pair<std::string, std::string> DeviceInfo;
-extern std::vector<DeviceInfo> g_availableDevices;
-// clears all device names provided by abs camera
-void ClearAllDeviceNames(void);
-
-// create an ABSCamera object
-ABSCamera* CreateABSDevice(const char* szDeviceName);
-
-static bool g_bInitializeModuleDataDone = false;
-// ------------------------------ DLL main --------------------------------------
-//
-// windows DLL entry code
-#ifdef WIN32
-  BOOL APIENTRY DllMain( HANDLE /*hModule*/, DWORD  ul_reason_for_call, LPVOID /*lpReserved*/ ) 
-  {
-    switch (ul_reason_for_call)
-   	{
-      case DLL_PROCESS_ATTACH:
-  	  case DLL_THREAD_ATTACH:
-   	  case DLL_THREAD_DETACH:
-   	  case DLL_PROCESS_DETACH:
-   		break;
-   	}
-    return TRUE;
-  }
-#endif
-
+#define GET_RC(_func, _dev)  ((!_func) ? CamUSB_GetLastError((u08)_dev) : retOK)
 
 
 ///////////////////////////////////////////////////////////////////////////////
-// Exported MMDevice API
-///////////////////////////////////////////////////////////////////////////////
-
-MODULE_API void InitializeModuleData()
-{
-	u32		dwCountCameras;
-	u32		dwElements = 0;	
-	S_CAMERA_LIST_EX* pCamLstEx = NULL;
-	
-	char* szCameraDescription;	// description of the camera			
-	char* szDeviveName;			// used devicename
-
-  g_bInitializeModuleDataDone = false;
-
-	// allocate strings
-	szDeviveName		= new char[MAX_PATH + 1];
-	szCameraDescription = new char[MAX_PATH + 1];
-	// init strings
-	ZeroMemory(szDeviveName,	 sizeof(char) * (MAX_PATH + 1));
-	ZeroMemory(szCameraDescription, sizeof(char) * (MAX_PATH + 1));
-
-  /*
-	// fire the debugger directly or crash without one
-	__asm
-	{
-      int 3;
-	 }
-   */
-
-	// remove all old device names
-	ClearAllDeviceNames();
-
-	// Wrap all calls to delay-load DLL functions inside an SEH
-	// try-except block
-	__try 
-	{
-		// suche angeschlossene ABS Camera's
-		dwCountCameras = CamUSB_GetCameraListEx( pCamLstEx, dwElements );
-	
-		if (dwCountCameras > 0)
-		{
-			dwElements= dwCountCameras;
-			pCamLstEx = new S_CAMERA_LIST_EX[dwElements];      
-			dwCountCameras = CamUSB_GetCameraListEx( pCamLstEx, dwElements );
-		}
-
-		// put the device names in
-		if (dwCountCameras > 0)
-		{
-			for (DWORD dwCam = 0; dwCam < dwCountCameras; dwCam++)
-			{
-				snprintf( szDeviveName,		   MAX_PATH, "%s%02d", g_CameraDeviceNameBase, dwCam);
-				snprintf( szCameraDescription, MAX_PATH, "ABS %s #%X", (char*)pCamLstEx[dwCam].sVersion.szDeviceName, pCamLstEx[dwCam].sVersion.dwSerialNumber); 											
-				
-				AddAvailableDeviceName( szDeviveName, szCameraDescription );
-			}		
-		}
-		else
-		{
-			snprintf( szDeviveName,		   MAX_PATH, "%s", g_CameraDeviceNameBase);
-			snprintf( szCameraDescription, MAX_PATH, "%s", "ABS GmbH no camera device connected!");
-
-			AddAvailableDeviceName( szDeviveName, szCameraDescription );
-		}
-
-    g_bInitializeModuleDataDone = true;
-	}
-	__except (DelayLoadDllExceptionFilter(GetExceptionInformation())) 
-	{
-      
-		// Prepare to exit elegantly  and inform the "others"		
-		snprintf( szDeviveName,		   MAX_PATH, "%s", g_CameraDeviceNameBase);
-		snprintf( szCameraDescription, MAX_PATH, "%s", "CamUSB_API_hal.dll not found or wrong version! Device won't work!");
-
-		AddAvailableDeviceName( szDeviveName, szCameraDescription );
-	}
-		
-	SAFE_DELETE_ARRAY(szDeviveName);
-	SAFE_DELETE_ARRAY(szCameraDescription);
-	SAFE_DELETE_ARRAY(pCamLstEx);
-}
-
-MODULE_API MM::Device* CreateDevice(const char* szDeviceName)
-{
-  // true if the camusb_api.dll wasn't found
-	bool bApiNotAvailable = FALSE;
-
-	// Wrap all calls to delay-load DLL functions inside an SEH
-	// try-except block
-	__try 
-	{
-		// call read last error code => to force the delay load to load CamUBS_API.dll => if fail return an error
-		CamUSB_GetLastError( GLOBAL_DEVNR ); 
-	}
-	__except (DelayLoadDllExceptionFilter(GetExceptionInformation())) 
-	{      
-		// Prepare to exit elegantly  and inform the "others"		
-		bApiNotAvailable = true;
-	}
-
-  // ABSCamera object will be created within CreateABSDevice to allow "structured exception handling"
-	// return camera object (if possible)
-	return (bApiNotAvailable) ? NULL : CreateABSDevice(szDeviceName);
-}
-
-MODULE_API void DeleteDevice(MM::Device* pDevice)
-{
-	// Wrap all calls to delay-load DLL functions inside an SEH
-	// try-except block
-	__try 
-	{
-		SAFE_DELETE(pDevice);  
-	}
-	__except (DelayLoadDllExceptionFilter(GetExceptionInformation())) 
-	{
-  		// Prepare to exit elegantly	
-	}
-}
-
-ABSCamera* CreateABSDevice(const char* szDeviceName)
-{
-  
-  if (!g_bInitializeModuleDataDone) InitializeModuleData();
-
-	// init camera return object pointer as ...supplied name not recognized
-	ABSCamera* pABSCamera = NULL;
-
-	// decide which device class to create based on the deviceName parameter
-	if (NULL != szDeviceName)       
-	{
-	  int iDeviceNumber   = 0;
-	  size_t iBaseNameLenght = strlen(g_CameraDeviceNameBase);
-	  
-	  // should the first camera be used
-	  if ( (strncmp(g_CameraDeviceNameBase, szDeviceName, min( strlen(szDeviceName), iBaseNameLenght+2)) == 0) ||                    // first one
-		   (-1 != sscanf_s(szDeviceName + iBaseNameLenght, "%d", &iDeviceNumber)) ) // specific camera should be used
-	  {
-		// create camera with specific camera id
-		pABSCamera = (ABSCamera*) new ABSCamera(iDeviceNumber, szDeviceName);
-	  }      
-	}
-
-	return pABSCamera;
-}
-
-
-///////////////////////////////////////////////////////////////////////////////
-// ABSCamera implementation
+// CABSCamera implementation
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-const double ABSCamera::fNominalPixelSizeUm = 1.0;
-
+volatile int CABSCamera::staticDeviceNo = NO_CAMERA_DEVICE;
 /**
- * ABSCamera constructor.
- * Setup default all variables and create device properties required to exist
- * before intialization. In this case, no such properties were required. All
- * properties will be created in the Initialize() method.
- *
- * As a general guideline Micro-Manager devices do not access hardware in the
- * the constructor. We should do as little as possible in the constructor and
- * perform most of the initialization in the Initialize() method.
- */
-ABSCamera::ABSCamera(int iDeviceNumber, const char* szDeviceName) : 
-   initialized( false ),   
-   deviceNumber( 0 ),
-   cameraFunctionMask( 0 ),
-   numberOfChannels( 1 ),
-   resolutionCap( NULL ),
-   flipCap( NULL ),
-   pixelTypeCap( NULL ),
-   gainCap( NULL ),
-   exposureCap( NULL ),
-   autoExposureCap( NULL ),   
-   temperatureCap( NULL ),
-   framerateCap( NULL ),
-   bColor( false ),
-   bAbortGetImageCalled( false ),
-   bSetGetExposureActive( false ),
-   cameraProvidedImageBuffer( NULL )
-
+* CABSCamera constructor.
+* Setup default all variables and create device properties required to exist
+* before intialization. In this case, no such properties were required. All
+* properties will be created in the Initialize() method.
+*
+* As a general guideline Micro-Manager devices do not access hardware in the
+* the constructor. We should do as little as possible in the constructor and
+* perform most of the initialization in the Initialize() method.
+*/
+CABSCamera::CABSCamera() :
+   CCameraBase<CABSCamera> (),
+   dPhase_(0),
+   initialized_(false),
+   readoutUs_(0.0),
+   scanMode_( g_ScanMode_TriggeredSW ),
+   bitDepth_(8),
+   roiX_(0),
+   roiY_(0),
+   sequenceStartTime_(0),
+	binSize_(1),
+	cameraCCDXSize_(512),
+	cameraCCDYSize_(512),
+   nComponents_(1),
+   pDemoResourceLock_(0),
+   triggerDevice_(""),
+	dropPixels_(false),
+	saturatePixels_(false),
+	fractionOfPixelsToDropOrSaturate_(0.002)
+	,deviceNo_( -1 )
+	,colorCamera_( false ) 
 {
-   MM_THREAD_INITIALIZE_GUARD(&lockImgBufPtr);
-
-   this->cPixeltypes.clear();
-
-   // remember device name and set the device index    
-   m_szDeviceName = std::string(szDeviceName);
-   deviceNumber   = (BYTE) iDeviceNumber;
+   memset(testProperty_,0,sizeof(testProperty_));
 
    // call the base class method to set-up default error codes/messages
    InitializeDefaultErrorMessages();
+   readoutStartTime_ = GetCurrentMMTime();
+   pDemoResourceLock_ = new MMThreadLock();
+   thd_ = new CABSCameraSequenceThread(this);
 
-   // set sequence acquisition to stop
+   // clear camera device id string
+   cameraDeviceID_.clear();
+
+   // create a pre-initialization property and list all the available cameras
+	// Spot sends us the Model Name + (serial number)
+   CPropertyAction *pAct = new CPropertyAction (this, &CABSCamera::OnCameraSelection);
+   // create property but add values on request
+   CreateProperty("Camera", "", MM::String, false, pAct, true);   
+}
+
+/**
+* CABSCamera destructor.
+* If this device used as intended within the Micro-Manager system,
+* Shutdown() will be always called before the destructor. But in any case
+* we need to make sure that all resources are properly released even if
+* Shutdown() was not called.
+*/
+CABSCamera::~CABSCamera()
+{
    StopSequenceAcquisition();
+   delete thd_;
+   delete pDemoResourceLock_;
 }
 
 /**
- * ABSCamera destructor.
- * If this device used as intended within the Micro-Manager system,
- * Shutdown() will be always called before the destructor. But in any case
- * we need to make sure that all resources are properly released even if
- * Shutdown() was not called.
- */
-ABSCamera::~ABSCamera()
+* Obtains device name.
+* Required by the MM::Device API.
+*/
+void CABSCamera::GetName(char* name) const
 {
-  if ( this->initialized ) this->Shutdown();  
-  MM_THREAD_DELETE_GUARD(&lockImgBufPtr);
-}
-
-/**
- * Obtains device name.
- * Required by the MM::Device API.
- */
-void ABSCamera::GetName(char* name) const
-{
-   if (!g_bInitializeModuleDataDone) InitializeModuleData();
    // We just return the name we use for referring to this
-   // device adapter. 
-   CDeviceUtils::CopyLimitedString(name, (char*) m_szDeviceName.c_str());
+   // device adapter.
+   CDeviceUtils::CopyLimitedString(name, g_CameraName);
 }
 
 /**
- * Tells us if device is still processing asynchronous command.
- * Required by the MM:Device API.
- */
-bool ABSCamera::Busy()
+* Intializes the hardware.
+* Required by the MM::Device API.
+* Typically we access and initialize hardware at this point.
+* Device properties are typically created here as well, except
+* the ones we need to use for defining initialization parameters.
+* Such pre-initialization properties are created in the constructor.
+* (This device does not have any pre-initialization properties)
+*/
+int CABSCamera::Initialize()
 {
-  return CCameraBase<ABSCamera>::Busy();
-}
+	int nRet;
+	ostringstream serialNumberStream;
 
-/**
- * Intializes the hardware.
- * Required by the MM::Device API.
- * Typically we access and initialize hardware at this point.
- * Device properties are typically created here as well, except
- * the ones we need to use for defining initialization parameters.
- * Such pre-initialization properties are created in the constructor.
- * (This device does not have any pre-initialization properties)
- */
-int ABSCamera::Initialize()
-{
-  u32 dwRC;
-  
-  if (!g_bInitializeModuleDataDone) InitializeModuleData();
 
-  if ( this->initialized ) return DEVICE_OK;
-
-  this->busy_ = true;
+   if ( isInitialized() )
+	   return DEVICE_OK;
    
-  // initialise camera
-  // try to init camera without reboot (makes the init process a bit fast)
-  dwRC = GET_RC(CamUSB_InitCamera( this->deviceNumber, NO_SERIAL_NUMBER, FALSE ), this->deviceNumber);
+   if ( false == isApiDllAvailable() )
+	   return DEVICE_NATIVE_MODULE_FAILED;
+
+   u32 serialNumber = NO_SERIAL_NUMBER;
+   u08 platformID   = CPID_NONE;
+	   
+   // if id is set try to select the correct camera
+   if ( 0 < cameraDeviceID().size() )
+   {
+		bool cameraFound = false;
+	   // get list of available devices
+	   CCameraList cCameraList;
+	   getAvailableCameras( cCameraList );
+	
+	   // check if the selected camera is at the list
+	   CCameraList::iterator iter = cCameraList.begin();
+	   while ( iter != cCameraList.end() )
+	   {
+			if ( cameraDeviceID() == buildCameraDeviceID( iter->sVersion.dwSerialNumber, (const char*) iter->sVersion.szDeviceName ).c_str() ) 
+			{			 
+				serialNumber = iter->sVersion.dwSerialNumber;
+				platformID	 = iter->sVersion.bPlatformID;
+				cameraFound  = true;
+				break;
+			}
+			iter++;
+		}
+		
+		if ( false == cameraFound )
+			return DEVICE_NOT_CONNECTED;
+	}
+	
+	// open camera device
+	u32 dwRC;
+	int deviceNumber = accquireDeviceNumber();
+	// open camera without reboot
+	dwRC = GET_RC( CamUSB_InitCameraEx( deviceNumber, serialNumber, 0, 0, platformID ), deviceNumber );
+
+	if ( retNO_FW_RUNNING == dwRC ) // open camera with reboot
+		dwRC = GET_RC( CamUSB_InitCameraEx( deviceNumber, serialNumber, 1, 0, platformID ), deviceNumber );
+
+	if ( FALSE == IsNoError( dwRC ) )
+	{
+		releaseDeviceNumber( deviceNumber );		
+		return convertApiErrorCode( dwRC );
+	}
+	else // remember device number for later access
+	{
+		setDeviceNo( deviceNumber );
+	}
+
+	// camera device is now open do the right things
+
+	// read camera information
+	cameraVersion_.dwStructSize = sizeof( S_CAMERA_VERSION );
+	dwRC = GET_RC( CamUSB_GetCameraVersion( &cameraVersion_, deviceNo() ), deviceNo() );
+	if ( FALSE == IsNoError(dwRC) )
+	{ nRet = convertApiErrorCode( dwRC ); goto Initialize_Done; }
+	
+	// disbale heartbeat
+	u32 dwValue = 0;
+	dwRC = GET_RC( CamUSB_HeartBeatCfg( 0x80000001, dwValue, deviceNo() ), deviceNo() );
+	
+	// basic setup
+	// check if it is a color camera
+	{
+		// set default pixeltype
+		CamUSB_SetPixelType( PIX_MONO8, deviceNo() );
+
+		S_RESOLUTION_CAPS * resolutionCaps = 0;
+		u32 rc = getCap( FUNC_RESOLUTION, (void* &) resolutionCaps );
+		if ( IsNoError( rc) )
+		{
+			setColor( ((resolutionCaps->wSensorType & ST_COLOR) == ST_COLOR) );
+
+			cameraCCDXSize_ = resolutionCaps->wVisibleSizeX;
+			binSize_        = 1;
+			cameraCCDYSize_ = resolutionCaps->wVisibleSizeY;			
+
+			last16BitDepth  =  CDeviceUtils::ConvertToString( (long) resolutionCaps->wMaxBPP );
+
+			CamUSB_SetCameraResolution(0, 0, resolutionCaps->wVisibleSizeX, resolutionCaps->wVisibleSizeY, 0, 0, 1, deviceNo() );
+		}
+	
+		if (resolutionCaps) 
+			delete [] resolutionCaps;
+	}
+
+	
+
+   // set property list
+   // -----------------
+   // Name
+   nRet = CreateProperty(MM::g_Keyword_Name, g_CameraName, MM::String, true);
+   if (DEVICE_OK != nRet)
+      { goto Initialize_Done; }
+
+   // Description
+   nRet = CreateProperty(MM::g_Keyword_Description, "ABS GmbH UK11xx Camera Device Adapter", MM::String, true);
+   if (DEVICE_OK != nRet)
+      { goto Initialize_Done; }
+
+   // CameraName
+	nRet = CreateProperty(MM::g_Keyword_CameraName, string( (const char*)cameraVersion_.szDeviceName ).c_str() , MM::String, true);
+   assert(nRet == DEVICE_OK);
+
+   // CameraID
+	serialNumberStream << hex << cameraVersion_.dwSerialNumber;
+   nRet = CreateProperty(MM::g_Keyword_CameraID, serialNumberStream.str().c_str(), MM::String, true);
+   assert(nRet == DEVICE_OK);
+
+   // binning
+   CPropertyAction *pAct = new CPropertyAction (this, &CABSCamera::OnBinning);
+   nRet = CreateProperty(MM::g_Keyword_Binning, "1", MM::Integer, false, pAct);
+   assert(nRet == DEVICE_OK);
+	nRet = SetAllowedBinning();
+   if (nRet != DEVICE_OK)
+      { goto Initialize_Done; }
+	else SetProperty(MM::g_Keyword_Binning, "1");
+	
+   // pixel type
+   pAct = new CPropertyAction (this, &CABSCamera::OnPixelType);
+   nRet = CreateProperty(MM::g_Keyword_PixelType, g_PixelType_8bit, MM::String, false, pAct);
+   assert(nRet == DEVICE_OK);
+	nRet = setAllowedPixelTypes();
+   if (nRet != DEVICE_OK)
+      { goto Initialize_Done; }
+	
+   // Bit depth
+   pAct = new CPropertyAction (this, &CABSCamera::OnBitDepth);
+   nRet = CreateProperty("BitDepth", "8", MM::Integer, false, pAct);
+   assert(nRet == DEVICE_OK);
+	nRet = setAllowedBitDepth();
+   if (nRet != DEVICE_OK)
+      { goto Initialize_Done; }
   
-  // on error try to boot the camera
-  if ( !IsNoError(dwRC) )
-  {
-      // init camera with reboot
-      dwRC = GET_RC(CamUSB_InitCamera( this->deviceNumber ), this->deviceNumber);
 
-      if ( !IsNoError(dwRC) )
-      {
-        this->ShowError( dwRC );
-        return DEVICE_LOCALLY_DEFINED_ERROR;
-      }
-  }
+   // camera exposure
+	pAct = new CPropertyAction (this, &CABSCamera::OnExposure);
+   nRet = CreateProperty(MM::g_Keyword_Exposure, "10.0", MM::Float, false, pAct);
+   assert(nRet == DEVICE_OK);
+	nRet = setAllowedExpsoure();
+   if (nRet != DEVICE_OK)
+      { goto Initialize_Done; }
 
-  // read camera information
-  camVersion.dwStructSize = sizeof( S_CAMERA_VERSION );
-  unsigned long iRC;
-  iRC = GET_RC( CamUSB_GetCameraVersion( &camVersion, this->deviceNumber ), this->deviceNumber );
-  if ( !IsNoError(iRC) )
-  {    
-    this->ShowError(iRC);
-    return DEVICE_LOCALLY_DEFINED_ERROR;
-  }
+   // scan mode
+   pAct = new CPropertyAction (this, &CABSCamera::OnScanMode);
+   nRet = CreateProperty("ScanMode", "Triggered SW", MM::String, false, pAct);
+   assert(nRet == DEVICE_OK);
+   AddAllowedValue("ScanMode", g_ScanMode_Continuous   );
+   AddAllowedValue("ScanMode", g_ScanMode_TriggeredSW );
+   AddAllowedValue("ScanMode", g_ScanMode_TriggeredHW );
 
-  // disbale heartbeat
-  u32 dwValue = 0;
-  CamUSB_HeartBeatCfg( 0x80000001, dwValue, this->deviceNumber );
+   // camera gain
+	pAct = new CPropertyAction (this, &CABSCamera::OnGain);
+   nRet = CreateProperty(MM::g_Keyword_Gain, "1.0", MM::Float, false, pAct);
+   assert(nRet == DEVICE_OK);
+	nRet = setAllowedGain();
+   if (nRet != DEVICE_OK)
+      { goto Initialize_Done; }
 
-  // set device name
-  int nRet = CreateProperty(MM::g_Keyword_Name, (char*) m_szDeviceName.c_str(), MM::String, true);
-  if ( nRet != DEVICE_OK ) return nRet;
+	// camera temperature	
+	{
+		temperatureUnit_  =  1.0;
+		temperatureIndex_ = -1;
 
-  // set device description
-  nRet = CreateProperty(MM::g_Keyword_Description, "ABS Camera Device Adapter", MM::String, true);
-  if ( nRet != DEVICE_OK ) return nRet;
+		S_TEMPERATURE_CAPS * temperatureCaps = 0;
+		u32 rc = getCap( FUNC_TEMPERATURE, (void* &) temperatureCaps );
+		if ( IsNoError( rc) )
+		{
+			if ( temperatureCaps->dwSensors > 0 )
+			{
+				temperatureUnit_	= temperatureCaps->sSensor[0].wUnit;
+				temperatureIndex_ = 0;
 
-  // set camera name
-  ostringstream cameraName;
-  cameraName << camVersion.szDeviceName;
-  nRet = CreateProperty(MM::g_Keyword_CameraName, cameraName.str().c_str(), MM::String, true);
-  assert(nRet == DEVICE_OK);
-        
-  // set camera ID
-  ostringstream serialNumber;
-  serialNumber << camVersion.dwSerialNumber;
-  nRet = CreateProperty(MM::g_Keyword_CameraID, serialNumber.str().c_str(), MM::String, true);
-  assert(nRet == DEVICE_OK);
+				pAct = new CPropertyAction (this, &CABSCamera::OnTemperature);
+				nRet = CreateProperty(MM::g_Keyword_CCDTemperature, "20.0 °C", MM::String, true, pAct);
+				assert(nRet == DEVICE_OK);							
+			}
+		}
+
+		if (temperatureCaps) 
+			delete [] temperatureCaps;
+	}
 
 
-  // try to set the default resolution for this camera
-  dwRC = GET_RC(CamUSB_SetStandardRes(STDRES_FULLSENSOR, this->deviceNumber), this->deviceNumber);
 
-  // read function mask of the camera  
-  dwRC = GET_RC( CamUSB_GetCameraFunctions( &this->cameraFunctionMask, this->deviceNumber ), this->deviceNumber );
-  if ( !IsNoError(dwRC) )
-  {    
-    this->ShowError(dwRC); 
-    return DEVICE_LOCALLY_DEFINED_ERROR;
-  }
+	/*
+   // camera offset
+   nRet = CreateProperty(MM::g_Keyword_Offset, "0", MM::Integer, false);
+   assert(nRet == DEVICE_OK);
 
-  // clear camaera caps
-  SAFE_DELETE(this->resolutionCap);
-  SAFE_DELETE(this->flipCap);  
-  SAFE_DELETE(this->pixelTypeCap);
-  SAFE_DELETE(this->gainCap);
-  SAFE_DELETE(this->exposureCap);
-  SAFE_DELETE(this->autoExposureCap);
-  SAFE_DELETE(this->temperatureCap);
-  SAFE_DELETE(this->framerateCap);
+   // readout time
+   pAct = new CPropertyAction (this, &CABSCamera::OnReadoutTime);
+   nRet = CreateProperty(MM::g_Keyword_ReadoutTime, "0", MM::Float, false, pAct);
+   assert(nRet == DEVICE_OK);
+
+   // CCD size of the camera we are modeling
+   pAct = new CPropertyAction (this, &CABSCamera::OnCameraCCDXSize);
+   CreateProperty("OnCameraCCDXSize", "512", MM::Integer, false, pAct);
+   pAct = new CPropertyAction (this, &CABSCamera::OnCameraCCDYSize);
+   CreateProperty("OnCameraCCDYSize", "512", MM::Integer, false, pAct);
+
+   // Trigger device
+   pAct = new CPropertyAction (this, &CABSCamera::OnTriggerDevice);
+   CreateProperty("TriggerDevice","", MM::String, false, pAct);
+
+   pAct = new CPropertyAction (this, &CABSCamera::OnDropPixels);
+	CreateProperty("DropPixels", "0", MM::Integer, false, pAct);
+   AddAllowedValue("DropPixels", "0");
+   AddAllowedValue("DropPixels", "1");
+
+	pAct = new CPropertyAction (this, &CABSCamera::OnSaturatePixels);
+	CreateProperty("SaturatePixels", "0", MM::Integer, false, pAct);
+   AddAllowedValue("SaturatePixels", "0");
+   AddAllowedValue("SaturatePixels", "1");
+
+   pAct = new CPropertyAction (this, &CABSCamera::OnFractionOfPixelsToDropOrSaturate);
+	CreateProperty("FractionOfPixelsToDropOrSaturate", "0.002", MM::Float, false, pAct);
+	SetPropertyLimits("FractionOfPixelsToDropOrSaturate", 0., 0.1);
+
+*/
+
+   // synchronize all properties
+   // --------------------------
+   nRet = UpdateStatus();
+   if (nRet != DEVICE_OK)
+      { goto Initialize_Done; };
+
+
+   // setup the buffer
+   // ----------------
+   nRet = ResizeImageBuffer();
+   if (nRet != DEVICE_OK)
+      { goto Initialize_Done; }
+
+#ifdef TESTRESOURCELOCKING
+   TestResourceLocking(true);
+   LogMessage("TestResourceLocking OK",true);
+#endif
+
   
-  // read camera capabilities
-  try
-  {
-    this->resolutionCap     = (S_RESOLUTION_CAPS*)	this->GetCameraCap( FUNC_RESOLUTION );
-    this->flipCap           = (S_FLIP_CAPS*)        this->GetCameraCap( FUNC_FLIP );    
-    this->pixelTypeCap      = (S_PIXELTYPE_CAPS*)   this->GetCameraCap( FUNC_PIXELTYPE );
-    this->gainCap           = (S_GAIN_CAPS*)        this->GetCameraCap( FUNC_GAIN );
-    this->exposureCap       = (S_EXPOSURE_CAPS*)    this->GetCameraCap( FUNC_EXPOSURE );
-    this->autoExposureCap   = (S_AUTOEXPOSURE_CAPS*)this->GetCameraCap( FUNC_AUTOEXPOSURE );
-    this->temperatureCap    = (S_TEMPERATURE_CAPS*) this->GetCameraCap( FUNC_TEMPERATURE );
-    this->framerateCap      = (S_FRAMERATE_CAPS*)   this->GetCameraCap( FUNC_FRAMERATE );
-  }
-  catch ( ... )
-  {    
-    this->ShowError( CamUSB_GetLastError(this->deviceNumber) );
-    return DEVICE_LOCALLY_DEFINED_ERROR;
-  }
+	setInitialized( true );
 
-  // turn autoexposure off
-  if ( this->autoExposureCap != NULL )
-  {
-    S_AUTOEXPOSURE_PARAMS autoExposurePara;
-    if ( this->GetCameraFunction( FUNC_AUTOEXPOSURE, &autoExposurePara, sizeof(S_AUTOEXPOSURE_PARAMS) ) != DEVICE_OK ) return DEVICE_ERR;
+Initialize_Done:
+	if (nRet != DEVICE_OK)
+	{
+		int deviceNumber = deviceNo();
+		setDeviceNo( NO_CAMERA_DEVICE );
 
-    autoExposurePara.bAECActive = 0;
-    autoExposurePara.bAGCActive = 0;
-
-    if ( this->SetCameraFunction( FUNC_AUTOEXPOSURE, &autoExposurePara, sizeof(S_AUTOEXPOSURE_PARAMS) ) != DEVICE_OK ) return DEVICE_ERR;
-  }     
-
-
-  // setup supported pixeltypes
-  if ( this->pixelTypeCap != NULL ) InitSupportedPixeltypes();
-  
-
-  // set capture mode to continuous -> higher Framerates for the live view in µManager
-  dwRC = GET_RC(CamUSB_SetCaptureMode(MODE_CONTINUOUS, 0, this->deviceNumber), this->deviceNumber);
-  
-  if ( !IsNoError(dwRC) )
-  {
-    this->ShowError( dwRC );
-    return DEVICE_LOCALLY_DEFINED_ERROR;
-  }
-
-  // set default color mode
-  bColor = ((NULL != this->resolutionCap) && (this->resolutionCap->wSensorType & ST_COLOR)) ? true : false;
-
-  // setup exposure
-  nRet = this->createExposure();
-  if ( nRet != DEVICE_OK ) return nRet;
-
-  // setup binning
-  nRet = this->createBinning();
-  if ( nRet != DEVICE_OK ) return nRet;
-
-  // setup pixel type
-  nRet = this->createPixelType();
-  if ( nRet != DEVICE_OK ) return nRet;
-
-  // setup gain
-  nRet = this->createGain();
-  if ( nRet != DEVICE_OK ) return nRet;
-
-  // camera offset
-  nRet = this->createOffset();
-  if ( nRet != DEVICE_OK ) return nRet;
-
-  // camera temperature
-  nRet = this->createTemperature();
-  if ( nRet != DEVICE_OK ) return nRet;
-
-  // camera temperature
-  nRet = this->createActualInterval();
-  if ( nRet != DEVICE_OK ) return nRet;
-
-  // camera temperature
-  nRet = this->createColorMode();
-  if ( nRet != DEVICE_OK ) return nRet;
-
-  if (this->flipCap)
-  {
-    if (this->flipCap->wFlipModeMask & FLIP_HORIZONTAL)
-    {      
-       /*
-      MM::Property* pProp = properties_.Find(MM::g_Keyword_Transpose_MirrorX);
-      if (NULL != pProp)
-      {
-        CPropertyAction *pAct = new CPropertyAction (this, &ABSCamera::OnFlipX); // function called if exposure time property is read or written
-        pProp->RegisterAction(pAct);
-      }        
-      */
-    }
-
-    if (this->flipCap->wFlipModeMask & FLIP_VERTICAL)
-    {
-       /*
-      MM::Property* pProp = properties_.Find(MM::g_Keyword_Transpose_MirrorY);
-      if (NULL != pProp)
-      {
-        CPropertyAction *pAct = new CPropertyAction (this, &ABSCamera::OnFlipY); // function called if exposure time property is read or written
-        pProp->RegisterAction(pAct);
-      }                   
-      */
-    }
-  }
-
-
-  // synchronize all properties
-  // --------------------------
-  nRet = UpdateStatus();
-  if (nRet != DEVICE_OK) return nRet;
-
-  // setup the image buffer
-  // ----------------
-  nRet = this->ResizeImageBuffer();
-  if (nRet != DEVICE_OK) return nRet;
-
-  this->initialized = true;
-  this->busy_ = false;
-
-  return SnapImage();
+		if ( NO_CAMERA_DEVICE != deviceNumber  )
+		{
+			CamUSB_FreeCamera( deviceNumber );
+			releaseDeviceNumber( deviceNumber );		
+		}
+	}
+	else
+	{
+		// initialize image buffer
+		GenerateEmptyImage(img_);		
+	}
+	return nRet;
 }
 
-// setup exposure
-int ABSCamera::createExposure()
+/**
+* Shuts down (unloads) the device.
+* Required by the MM::Device API.
+* Ideally this method will completely unload the device and release all resources.
+* Shutdown() may be called multiple times in a row.
+* After Shutdown() we should be allowed to call Initialize() again to load the device
+* without causing problems.
+*/
+int CABSCamera::Shutdown()
 {
-  u32 dwRC;
-  int nRet;
-  float exposureTime = 100.0f; // exposure time in ms
-
-  unsigned long exposureValue; // current hardware exposure time in µs
-
-  // set basic exposure value
-  if (camVersion.wSensorType & ST_COLOR) // color camera?
-  {
-    exposureValue = 75*1000; // µs
-  }
-  else  
-  {
-    exposureValue = 35*1000; // µs
-  }
-    
-  // set and read back the exposure
-  dwRC = GET_RC(CamUSB_SetExposureTime( &exposureValue, this->deviceNumber ), this->deviceNumber);
-  if (!IsNoError(dwRC))
-  {
-    this->ShowError(dwRC);
-    return DEVICE_LOCALLY_DEFINED_ERROR;
-  }
-  
-  CPropertyAction *pAct = new CPropertyAction (this, &ABSCamera::OnExposure); // function called if exposure time property is read or written
-  
-
-  // µs -> ms
-  exposureTime = static_cast<float>( exposureValue ) / 1000.0f;
-
-  // create exposure property 
-  nRet = CreateProperty(MM::g_Keyword_Exposure, CDeviceUtils::ConvertToString(exposureTime), MM::Float, false, pAct ); // create property
-  if ( nRet != DEVICE_OK ) return nRet;
-
-  return UpdateExposureLimits();
- 
+	if ( false == isInitialized() )
+	   return DEVICE_OK;
+	
+	if ( NO_CAMERA_DEVICE != deviceNo() )
+	{		
+		u32 dwRC;
+		dwRC = GET_RC( CamUSB_FreeCamera( (u08) deviceNo() ), deviceNo() );		
+		setDeviceNo( NO_CAMERA_DEVICE );
+		releaseDeviceNumber( deviceNo() );
+	}
+	
+	setInitialized( false );   
+   return DEVICE_OK;
 }
 
-// set limits for exposure time
-int ABSCamera::UpdateExposureLimits(void)
+/**
+* Performs exposure and grabs a single image.
+* This function should block during the actual exposure and return immediately afterwards 
+* (i.e., before readout).  This behavior is needed for proper synchronization with the shutter.
+* Required by the MM::Camera API.
+*/
+int CABSCamera::SnapImage()
+{   
+	static int callCounter = 0;
+	++callCounter;
+
+   MM::MMTime startTime = GetCurrentMMTime();
+   
+	u32 rc = getCameraImage( img_ );
+   
+   readoutStartTime_ = startTime;
+
+   return convertApiErrorCode( rc );
+}
+
+
+/**
+* Returns pixel data.
+* Required by the MM::Camera API.
+* The calling program will assume the size of the buffer based on the values
+* obtained from GetImageBufferSize(), which in turn should be consistent with
+* values returned by GetImageWidth(), GetImageHight() and GetImageBytesPerPixel().
+* The calling program allso assumes that camera never changes the size of
+* the pixel buffer on its own. In other words, the buffer can change only if
+* appropriate properties are set (such as binning, pixel type, etc.)
+*/
+const unsigned char* CABSCamera::GetImageBuffer()
 {  
-  double minExposureTime; // min. allowed exposure time
-  double maxExposureTime; // max. allowed exposure time
-
-  if ( this->exposureCap != NULL )
-  {
-    minExposureTime = static_cast<double>( this->exposureCap->sExposureRange[0].dwMin ) / 1000.0;
-    minExposureTime = 0.0f;
-    maxExposureTime = static_cast<double>( this->exposureCap->sExposureRange[this->exposureCap->dwCountRanges-1].dwMax ) / 1000.0;
-  }
-  else
-  {
-    u32 dwRC;
-    u32 dwExposure = 0;
-    // get exposure time
-    dwRC = GET_RC(CamUSB_SetExposureTime( &dwExposure, this->deviceNumber ), this->deviceNumber);
-    if (!IsNoError(dwRC))
-    {
-      this->ShowError(dwRC);
-      return DEVICE_LOCALLY_DEFINED_ERROR;
-    }
-    minExposureTime = static_cast<double>( dwExposure ) / 1000.0;
-    maxExposureTime = static_cast<double>( dwExposure ) / 1000.0;
-  }
-  return SetPropertyLimits( MM::g_Keyword_Exposure, minExposureTime, maxExposureTime ); // set limits 
-}
-
-// setup binning
-int ABSCamera::createBinning()
-{
-  int nRet;
-  CPropertyAction *pAct = NULL;
-  bool bReadOnly = false;
-  
-  // create vector of allowed values
-  vector<string> binValues;
-  binValues.push_back("1"); // default for each camera
-
-  bReadOnly = ( this->resolutionCap == NULL || this->resolutionCap->dwBinModes == XY_BIN_NONE );
-  pAct = new CPropertyAction (this, &ABSCamera::OnBinning);                        // function called if binning property is read or written
-  nRet = CreateProperty(MM::g_Keyword_Binning, "1", MM::Integer, bReadOnly, pAct); // create binning property
-  if ( nRet != DEVICE_OK ) return nRet;
-
-  // setup allowed values for binning
-  if ( bReadOnly ) return SetAllowedValues(MM::g_Keyword_Binning, binValues);       // set allowed values for binning property;
-
-  // fill the vector of allowed values
-  if ( ( this->resolutionCap->dwBinModes & XY_BIN_2X ) != 0 ) binValues.push_back("2");
-  if ( ( this->resolutionCap->dwBinModes & XY_BIN_3X ) != 0 ) binValues.push_back("3");
-  if ( ( this->resolutionCap->dwBinModes & XY_BIN_4X ) != 0 ) binValues.push_back("4");
-  if ( ( this->resolutionCap->dwBinModes & XY_BIN_5X ) != 0 ) binValues.push_back("5");
-  if ( ( this->resolutionCap->dwBinModes & XY_BIN_6X ) != 0 ) binValues.push_back("6");
-  if ( ( this->resolutionCap->dwBinModes & XY_BIN_7X ) != 0 ) binValues.push_back("7");
-  if ( ( this->resolutionCap->dwBinModes & XY_BIN_8X ) != 0 ) binValues.push_back("8");
-  if ( ( this->resolutionCap->dwBinModes & XY_BIN_9X ) != 0 ) binValues.push_back("9");
-
-  return SetAllowedValues(MM::g_Keyword_Binning, binValues); // set allowed values for binning property
-}
-
-// setup pixel types
-int ABSCamera::createPixelType()
-{
-  int nRet;
-  std::string pixelTypeHW;
-  CPropertyAction* pAct = new CPropertyAction (this, &ABSCamera::OnPixelType);  // function called if pixel type property is read or written
-
-    // get default pixel string 
-  pixelTypeHW = (bColor) ? g_sSupportedPixelTypesColor[0].strPixelType : g_sSupportedPixelTypesMono[0].strPixelType;
-  nRet = CreateProperty(MM::g_Keyword_PixelType, pixelTypeHW.c_str(), MM::String, false, pAct); // create pixel type property
-  
-  if ( nRet != DEVICE_OK ) return nRet; // bei Fehler -> Abbruch
-
-  nRet = UpdatePixelTypes();
-
-  return nRet;
-}
-
-// update the list of valid pixel types based on the ColorMode settings coded in bColor
-int ABSCamera::UpdatePixelTypes(void)
-{
-  int nRet;  
-  int nUsedBpp;
-  unsigned long pixelType;
-  std::string   pixelTypeHW;
-  bool bPixelTypeAssigned = false;
-  SupportedPixelTypes currentPixelType;
-
-  vector<string> pixelTypeValues; // vector of allowed pixel types
-  
-  if ( this->pixelTypeCap == NULL ) return DEVICE_ERR;
-
-  // read current pixel type from hardware  
-  unsigned long iRC;
-  iRC = GET_RC( CamUSB_GetPixelType( &pixelType, this->deviceNumber ), this->deviceNumber );
-  if ( !IsNoError(iRC) )
-  {    
-    this->ShowError(iRC); 
-    return DEVICE_LOCALLY_DEFINED_ERROR;
-  }
-
-  // update supported types based on color on monochrome settings
-  InitSupportedPixeltypes(); 
-
-  nUsedBpp = GetUsedBpp(pixelType);
-  
-  for ( unsigned int p=0; p < this->cPixeltypes.size(); p++ )
-  {
-    // equal bit/pixel but not the last pixeltype (Max)
-    if ((nUsedBpp == GetUsedBpp( this->cPixeltypes[p].dwPixelType ) ) && 
-        (p+1 < this->cPixeltypes.size()) )
-    {
-      currentPixelType = this->cPixeltypes[p];
-      bPixelTypeAssigned = true;
-    }
-    pixelTypeValues.push_back( this->cPixeltypes[p].strPixelType );    
-  }
-
-  // assign a default value if non assigned yet
-  if (!bPixelTypeAssigned && (this->cPixeltypes.size() > 0))
-  {
-    currentPixelType = this->cPixeltypes[0];
-  }
-
-  nRet = SetPixelType( currentPixelType.dwPixelType );
-  nRet = SetProperty( MM::g_Keyword_PixelType, currentPixelType.strPixelType.c_str() ); // set allowed pixel types
-  nRet = SetAllowedValues(MM::g_Keyword_PixelType, pixelTypeValues); // set allowed pixel types
-
-  OnPropertiesChanged(); // notify GUI to update
-
-  return nRet;
-}
-
-// update the list of valid pixel types based on the ColorMode settings coded in bColor
-int ABSCamera::SetPixelType(unsigned long dwPixelType)
-{
-  unsigned long iRC;
-  iRC = GET_RC( CamUSB_SetPixelType( dwPixelType, this->deviceNumber), this->deviceNumber );
-  if ( !IsNoError(iRC) )
-  {    
-    this->ShowError(iRC); 
-    return DEVICE_LOCALLY_DEFINED_ERROR;
-  }
-
-  // setup number of channels depending on current pixel type  
-  if ( (GetBpp( dwPixelType ) / GetUsedBpp( dwPixelType )) > 1 ) 
-  {
-      numberOfChannels = 4;	  	      
-  }
-  else
-  {
-    numberOfChannels = 1;
-  }
-
-  ResizeImageBuffer();
-
-  return DEVICE_OK;
-}
-
-// setup gain
-int ABSCamera::createGain()
-{
-  int nRet;
-
-  float gain = 0.0f;
-  CPropertyAction *pAct = new CPropertyAction (this, &ABSCamera::OnGain);   // function called if gein is read or written
-
-
-  // read current gain from hardware
-  if ( this->gainCap == NULL )
-  {
-    nRet = CreateProperty(MM::g_Keyword_Gain, "1.0", MM::Float, true, pAct ); // Property für Gain anlegen
-    if ( nRet != DEVICE_OK ) return nRet;
-    return SetPropertyLimits( MM::g_Keyword_Gain, 1.0, 1.0 ); // limits setzen
-  }
-
-  float gainFactor = 1.0f; // factor to calculate value for gain property
-
-  if ( this->gainCap->bGainUnit == GAINUNIT_NONE ) gainFactor =  0.001f;
-  if ( this->gainCap->bGainUnit == GAINUNIT_10X  ) gainFactor = 0.0001f;
-
-  u32 dwRC;
-  u32 dwGain;
-  u16 wGainChannel;
-  // check if color or monochrom camera
-  BOOL bRGBGain = ((gainCap->wGainChannelMask & GAIN_RGB) == GAIN_RGB);
-
-  // set default gain 0
-  wGainChannel = (bRGBGain) ? (GAIN_GREEN | GAIN_LOCKED) : GAIN_GLOBAL;
-  dwGain = 0;
-  dwRC = GET_RC(CamUSB_SetGain( &dwGain, wGainChannel, this->deviceNumber), this->deviceNumber);
-
-  // get the current gain (may it is different from the one set (WhiteBalance)
-  wGainChannel = (bRGBGain) ? GAIN_GREEN : GAIN_GLOBAL;
-  dwRC = GET_RC(CamUSB_GetGain( &dwGain, wGainChannel, this->deviceNumber), this->deviceNumber);
-  if ( !IsNoError(dwRC) )
-  {
-    nRet = CreateProperty(MM::g_Keyword_Gain, "1.0", MM::Float, true, pAct ); // Property für Gain anlegen
-    if ( nRet != DEVICE_OK ) return nRet;
-    return SetPropertyLimits( MM::g_Keyword_Gain, 1.0, 1.0 ); // limits setzen
-  }
-  else // gain value read
-  {
-    gain = static_cast<float>( dwGain ) * gainFactor;
-  }
-
-  ostringstream gainStr;
-  gainStr << gain;
-
-  nRet = CreateProperty(MM::g_Keyword_Gain, gainStr.str().c_str(), MM::Float, false, pAct ); // create gain property 
-  if ( nRet != DEVICE_OK ) return nRet;
-
-  // set limits for gain property
-  float minGain = static_cast<float>( this->gainCap->sGainRange[0].dwMin) * gainFactor; // min. allowed gain value
-  float maxGain =  static_cast<float>( this->gainCap->sGainRange[this->gainCap->wGainRanges-1].dwMax) * gainFactor; // max. allowed gain value
-
-  return SetPropertyLimits( MM::g_Keyword_Gain, minGain, maxGain ); // set limits for gain property
-}
-
-
-// camera offset
-int ABSCamera::createOffset()
-{  
-  return CreateProperty(MM::g_Keyword_Offset, "0", MM::Integer, true); // Property für Offset anlegen   
-}
-
-// camera temperature
-int ABSCamera::createTemperature()
-{  
-  int nRet = DEVICE_OK;
-  
-  if (( this->temperatureCap != NULL ) &&
-      ( this->temperatureCap->dwSensors > 0 ))
-  {
-    CPropertyAction *pAct = new CPropertyAction (this, &ABSCamera::OnTemperature);   // function called if temperature is read or written
-    nRet = CreateProperty(MM::g_Keyword_CCDTemperature, "0.0", MM::Float, true, pAct);
-    if ( nRet != DEVICE_OK ) return nRet;
-
-    nRet = SetPropertyLimits( MM::g_Keyword_CCDTemperature, -40.0, 90.0 ); // limits setzen
-  }
-
-  return nRet;
-}
-
-// camera ActualInterval
-int ABSCamera::createActualInterval()
-{  
-  return CreateProperty(MM::g_Keyword_ActualInterval_ms, "0.0", MM::Float, true);
-}
-
- 
-// color mode
-int ABSCamera::createColorMode()
-{
-  int nRet = DEVICE_OK;
-  CPropertyAction *pAct = NULL;
-  
-  if ( this->resolutionCap != NULL )
-  {
-    vector<string> colorValues;
-    pAct = new CPropertyAction (this, &ABSCamera::OnColorMode);
-
-    // add color if supported
-    if (this->resolutionCap->wSensorType & ST_COLOR)
-    {    
-      colorValues.push_back(g_ColorMode_Color);
-    }
-    // add monochrom anyway
-    colorValues.push_back(g_ColorMode_Grayscale);         
-    
-    std::string strDefaultColorMode = colorValues[ 0 ];
-    // create property
-    nRet = CreateProperty(MM::g_Keyword_ColorMode, (char*)strDefaultColorMode.c_str(), MM::String, (colorValues.size() <= 1), pAct);
-    if (nRet == DEVICE_OK)
-      nRet = SetAllowedValues(MM::g_Keyword_ColorMode, colorValues);
-  }
-
-  return nRet;  
+   MMThreadGuard g(imgPixelsLock_);
+   MM::MMTime readoutTime(readoutUs_);
+   while (readoutTime > (GetCurrentMMTime() - readoutStartTime_)) {}		
+   unsigned char *pB = (unsigned char*)(img_.GetPixels());
+   return pB;
 }
 
 /**
- * Shuts down (unloads) the device.
- * Required by the MM::Device API.
- * Ideally this method will completely unload the device and release all resources.
- * Shutdown() may be called multiple times in a row.
- * After Shutdown() we should be allowed to call Initialize() again to load the device
- * without causing problems.
- */
-int ABSCamera::Shutdown()
+* Returns image buffer X-size in pixels.
+* Required by the MM::Camera API.
+*/
+unsigned CABSCamera::GetImageWidth() const
 {
-  StopSequenceAcquisition();
-
-  // release images which are not longer needed
-  if ((cameraProvidedImageBuffer != NULL) &&
-      (cameraProvidedImageHdr    != NULL) )
-  {
-    CamUSB_ReleaseImage((u08*)cameraProvidedImageBuffer, (S_IMAGE_HEADER*)cameraProvidedImageHdr, this->deviceNumber);
-  }
-
-  this->initialized = false;
-  
-  // free camera device
-  CamUSB_FreeCamera( this->deviceNumber );
-
-  // clear camaera caps
-  SAFE_DELETE(this->resolutionCap);
-  SAFE_DELETE(this->pixelTypeCap);
-  SAFE_DELETE(this->gainCap);
-  SAFE_DELETE(this->exposureCap);
-  SAFE_DELETE(this->autoExposureCap);
-  SAFE_DELETE(this->temperatureCap);
-  SAFE_DELETE(this->framerateCap);    
-  return DEVICE_OK;
-}
-
-
-
-/**
- * Performs exposure and grabs a single image.
- * Required by the MM::Camera API.
- */
-int ABSCamera::SnapImage()
-{
-  // useing own buffers
-  u32 dwRC;
-  bool bThreadIsActive = IsCapturing();
-  bool bTryAgain = true;
-
-  // read required size of the image buffer
-  unsigned long imageSize = static_cast<unsigned long>( this->GetImageBufferSize() );
-
-  u08*            pImg    ;//= (u08*) imageBuffer.GetPixels(); // pointer of image
-  //S_IMAGE_HEADER  sImgHdr = {0};
-  S_IMAGE_HEADER* pImgHdr ;//= &sImgHdr; // pointer of image header
-  
-  unsigned char* cameraProvidedImageBufferNew = NULL;
-  unsigned char* cameraProvidedImageHdrNew    = NULL;
-  
-  do 
-  {
-    pImg     = NULL;
-    pImgHdr  = NULL;
-    imageSize= 0;
-
-    dwRC = GET_RC(CamUSB_GetImage( &pImg, &pImgHdr, imageSize, this->deviceNumber), this->deviceNumber);  
-    
-
-    if ((retOK == dwRC)     ||    // image successfully captured
-        (!IsNoError(dwRC))  ||    // error abort image
-        (bThreadIsActive && bAbortGetImageCalled && (retNOIMG == dwRC))) // retNOIMG during abort loop
-    {
-      if (!IsNoError(dwRC)) this->ShowError(dwRC);
-      if (bThreadIsActive && bAbortGetImageCalled && (retNOIMG == dwRC)) bAbortGetImageCalled = false;
-      bTryAgain = false;
-    }
-
-  } while(bTryAgain);
-  
-  // remeber new values
-  cameraProvidedImageBufferNew = (unsigned char*) pImg;
-  cameraProvidedImageHdrNew    = (unsigned char*) pImgHdr;
-
-  if (!bThreadIsActive && bAbortGetImageCalled) bAbortGetImageCalled = false;
-
-  // change image pointer and release the old images which are not longer needed
-  if ((cameraProvidedImageBufferNew != cameraProvidedImageBuffer) &&
-      (cameraProvidedImageBufferNew != NULL) &&
-      (cameraProvidedImageHdrNew    != cameraProvidedImageHdr) &&      
-      (cameraProvidedImageHdrNew    != NULL) )
-  {
-    unsigned char  *tmpIB, *tmpIH;
-    tmpIB = cameraProvidedImageBuffer;
-    tmpIH = cameraProvidedImageHdr;
-
-    MM_THREAD_GUARD_LOCK(&lockImgBufPtr);
-      cameraProvidedImageHdr    = cameraProvidedImageHdrNew;
-      cameraProvidedImageBuffer = cameraProvidedImageBufferNew;
-    MM_THREAD_GUARD_UNLOCK(&lockImgBufPtr);
-
-    CamUSB_ReleaseImage((u08*)tmpIB, (S_IMAGE_HEADER*)tmpIH, this->deviceNumber);
-  }
-
-  return (retOK == dwRC) ? DEVICE_OK : DEVICE_ERR;
+   return img_.Width();
 }
 
 /**
- * Returns pixel data.
- * Required by the MM::Camera API.
- * The calling program will assume the size of the buffer based on the values
- * obtained from GetImageBufferSize(), which in turn should be consistent with
- * values returned by GetImageWidth(), GetImageHight() and GetImageBytesPerPixel().
- * The calling program allso assumes that camera never changes the size of
- * the pixel buffer on its own. In other words, the buffer can change only if
- * appropriate properties are set (such as binning, pixel type, etc.)
- */
-const unsigned char* ABSCamera::GetImageBuffer()
-{     
-  const unsigned char *pImgBuffer = imageBuffer.GetPixels();
-  MM_THREAD_GUARD_LOCK(&lockImgBufPtr);
-    if (NULL != cameraProvidedImageBuffer) pImgBuffer = cameraProvidedImageBuffer;
-  MM_THREAD_GUARD_UNLOCK(&lockImgBufPtr);
-  return pImgBuffer;
-}
-// used for color images
-const unsigned int* ABSCamera::GetImageBufferAsRGB32()
+* Returns image buffer Y-size in pixels.
+* Required by the MM::Camera API.
+*/
+unsigned CABSCamera::GetImageHeight() const
 {
-    return (const unsigned int*)GetImageBuffer();    
-}
-
-
-unsigned int ABSCamera::GetNumberOfComponents() const
-{
-  return this->numberOfChannels;  
-}
-
-
-int ABSCamera::GetComponentName(unsigned channel, char* name)
-{
-  if (!bColor && (channel > 0))  return DEVICE_NONEXISTENT_CHANNEL;      
-  
-  switch (channel)
-  {
-  case 0:      
-    if (!bColor) 
-      CDeviceUtils::CopyLimitedString(name, "Grayscale");
-    else 
-      CDeviceUtils::CopyLimitedString(name, "B");      
-    break;
-
-  case 1:
-    CDeviceUtils::CopyLimitedString(name, "G");
-    break;
-
-  case 2:
-    CDeviceUtils::CopyLimitedString(name, "R");
-    break;
-
-  default:
-    return DEVICE_NONEXISTENT_CHANNEL;
-    break;
-  }
-  return DEVICE_OK;
-}
- 
-
-/**
- * Returns image buffer X-size in pixels.
- * Required by the MM::Camera API.
- */
-unsigned ABSCamera::GetImageWidth() const
-{
-   return imageBuffer.Width();
+   return img_.Height();
 }
 
 /**
- * Returns image buffer Y-size in pixels.
- * Required by the MM::Camera API.
- */
-unsigned ABSCamera::GetImageHeight() const
+* Returns image buffer pixel depth in bytes.
+* Required by the MM::Camera API.
+*/
+unsigned CABSCamera::GetImageBytesPerPixel() const
 {
-   return imageBuffer.Height();
-}
-
-/**
- * Returns image buffer pixel depth in bytes.
- * Required by the MM::Camera API.
- */
-unsigned ABSCamera::GetImageBytesPerPixel() const
-{
-  return imageBuffer.Depth() / GetNumberOfComponents();  
+   return img_.Depth();
 } 
 
 /**
- * Returns the bit depth (dynamic range) of the pixel.
- * This does not affect the buffer size, it just gives the client application
- * a guideline on how to interpret pixel values.
- * Required by the MM::Camera API.
- */
-unsigned ABSCamera::GetBitDepth() const
-{
-  
-  unsigned int bitDepth = 8;
-  
-  // read current pixel type from hardware
-  unsigned long pixelType;
-  unsigned long iRC;
-  iRC = GET_RC( CamUSB_GetPixelType( &pixelType, this->deviceNumber ), this->deviceNumber );
-  if ( IsNoError(iRC) )
-  {    
-      bitDepth = GetUsedBpp( pixelType );    
-  }
-  else
-  {
-    this->ShowError(iRC); 
-  }
-
-  if ( bitDepth == 8) bitDepth *= (GetImageBytesPerPixel() * GetNumberOfComponents()) ;
-  
-  return bitDepth;
-}
-
-/**
- * Returns the size in bytes of the image buffer.
- * Required by the MM::Camera API.
- */
-long ABSCamera::GetImageBufferSize() const
-{
-  return GetImageWidth() * GetImageHeight() * GetImageBytesPerPixel() * GetNumberOfComponents();  
-}
-
-/**
- * Sets the camera Region Of Interest.
- * Required by the MM::Camera API.
- * This command will change the dimensions of the image.
- * Depending on the hardware capabilities the camera may not be able to configure the
- * exact dimensions requested - but should try do as close as possible.
- * If the hardware does not have this capability the software should simulate the ROI by
- * appropriately cropping each frame.
- * @param x - top-left corner coordinate
- * @param y - top-left corner coordinate
- * @param xSize - width
- * @param ySize - height
- */
-int ABSCamera::SetROI( unsigned x, unsigned y, unsigned xSize, unsigned ySize )
-{ 
-  u32 dwRC;
-
-  if(IsCapturing())
-      return ERR_BUSY_ACQIRING;
-  
-  if ( this->resolutionCap == NULL ) return DEVICE_ERR;
-
-  short x_HW, y_HW; // hardware offsets
-  unsigned short xSize_HW, ySize_HW; // hardware size
-  unsigned long skip_HW, binning_HW; // hardware binning and skip
-
-  // read hardware resolution values
-  dwRC = GET_RC( CamUSB_GetCameraResolution( &x_HW, &y_HW, &xSize_HW, &ySize_HW, &skip_HW, &binning_HW, this->deviceNumber ), this->deviceNumber );
-  if ( !IsNoError( dwRC ) )
-  {
-    this->ShowError(dwRC);
-    return DEVICE_LOCALLY_DEFINED_ERROR;
-  }
-
-  dwRC = GET_RC(CamUSB_SetCameraResolution( (short) x, (short) y,
-                                            (WORD) xSize, (WORD) ySize,
-                                            skip_HW, binning_HW,                                              
-                                            TRUE,
-                                            this->deviceNumber),
-                                            this->deviceNumber);
-
-  if (IsNoError(dwRC))
-  {
-      // update exposure range setting because the depends on the currently set resolution
-      try
-      {
-        SAFE_DELETE_ARRAY(this->exposureCap);
-        this->exposureCap = (S_EXPOSURE_CAPS*) this->GetCameraCap( FUNC_EXPOSURE );    
-        UpdateExposureLimits();
-      }
-      catch ( ... )
-      {
-        this->ShowError( CamUSB_GetLastError(this->deviceNumber) );
-        return DEVICE_LOCALLY_DEFINED_ERROR;
-      }
-  }
-  else
-  {
-      this->ShowError(dwRC);
-      return DEVICE_LOCALLY_DEFINED_ERROR;
-  }
-
-  // resize image buffer
-  return this->ResizeImageBuffer();
-}
-
-/**
- * Returns the actual dimensions of the current ROI.
- * Required by the MM::Camera API.
- */
-int ABSCamera::GetROI(unsigned& x, unsigned& y, unsigned& xSize, unsigned& ySize)
-{
-
-  // read current ROI from hardware
-  S_RESOLUTION_RETVALS resolutionReturn;
-  unsigned long size = sizeof(S_RESOLUTION_RETVALS);
-  
-  unsigned long iRC;
-  iRC = GET_RC( CamUSB_GetFunction( FUNC_RESOLUTION, &resolutionReturn, &size, NULL, 0, NULL, 0, this->deviceNumber ), this->deviceNumber );
-  if ( !IsNoError(iRC) )
-  {    
-    this->ShowError(iRC);
-    return DEVICE_LOCALLY_DEFINED_ERROR;
-  }
-  
-  x = resolutionReturn.wOffsetX;
-  y = resolutionReturn.wOffsetY;
-  xSize = resolutionReturn.wSizeX;
-  ySize = resolutionReturn.wSizeY;
-
-  return DEVICE_OK;
-}
-
-/**
- * Resets the Region of Interest to full frame.
- * Required by the MM::Camera API.
- */
-int ABSCamera::ClearROI()
-{
-  // set ROI to full size
-  if ( this->resolutionCap == NULL ) return DEVICE_ERR;
-  this->SetROI( 0, 0, this->resolutionCap->wVisibleSizeX, this->resolutionCap->wVisibleSizeY );
-  return DEVICE_OK;
-}
-
-/**
- * Returns the current exposure setting in milliseconds.
- * Required by the MM::Camera API.
- */
-double ABSCamera::GetExposure() const
-{
-  double exposure = 0.0;
-  unsigned long exposureValue;
-
-  //bSetGetExposureActive = true;
-  
-  // read exposure time from hardware
-  unsigned long iRC;
-  iRC = GET_RC( CamUSB_GetExposureTime( &exposureValue, this->deviceNumber ), this->deviceNumber );
-  if ( !IsNoError(iRC) )
-  {    
-    this->ShowError(iRC);
-  }
-  else
-  {
-    // µs -> ms
-    exposure = static_cast<double>( exposureValue ) / 1000.0;
-    //SetProperty(MM::g_Keyword_Exposure, CDeviceUtils::ConvertToString(exposure));        
-  }
-
-  //bSetGetExposureActive = false;
-
-  return exposure;
-  
-}
-
-/**
- * Sets exposure in milliseconds.
- * Required by the MM::Camera API.
- */
-void ABSCamera::SetExposure(double exposure)
-{
-  bSetGetExposureActive = true;
-  
-  unsigned long exposureValue = static_cast<unsigned long>(exposure) * 1000;
-  
-  // set exposure time 
-  unsigned long iRC;
-  iRC = GET_RC( CamUSB_SetExposureTime( &exposureValue, this->deviceNumber ), this->deviceNumber );
-  if ( !IsNoError(iRC) )
-  {    
-    this->ShowError(iRC);
-  }
-
-  exposure = static_cast<double>( exposureValue  / 1000.0);
-  SetProperty(MM::g_Keyword_Exposure, CDeviceUtils::ConvertToString(exposure));    
-
-  bSetGetExposureActive = false;
-}
-
-
-// handels exposure property
-int ABSCamera::OnExposure(MM::PropertyBase* pProp, MM::ActionType eAct)
-{
-  double exposure;
-
-  if (bSetGetExposureActive) return DEVICE_OK;   
-  if ( this->exposureCap == NULL ) return DEVICE_OK;
-  if (eAct == MM::AfterSet) // property was written -> apply value to hardware
-  {    
-    pProp->Get(exposure);
-
-    unsigned long exposureValue = static_cast<unsigned long>(exposure) * 1000l;
-    // set exposure time 
-    unsigned long iRC;
-    iRC = GET_RC( CamUSB_SetExposureTime( &exposureValue, this->deviceNumber ), this->deviceNumber );
-    if ( !IsNoError(iRC) )
-    {    
-     this->ShowError(iRC);
-    }
-
-    exposure = static_cast<double>( exposureValue  / 1000.0);
-    pProp->Set( exposure );    
-  }
-  else if (eAct == MM::BeforeGet) // property will be read -> update property with value from hardware
-  {    
-    exposure = GetExposure();
-
-    // write hardware value to property
-    pProp->Set( exposure );
-  }
-
-  return DEVICE_OK;   
-}
-
-
-int ABSCamera::OnTemperature(MM::PropertyBase* pProp, MM::ActionType eAct)
-{
-  if ( this->temperatureCap == NULL ) return DEVICE_OK;
-
-  // property should be written -> don't allowed
-  if (eAct == MM::AfterSet) 
-  {
-    return DEVICE_LOCALLY_DEFINED_ERROR;
-  }
-  else if (eAct == MM::BeforeGet) // property will be read -> update property with value from hardware
-  {
-    S_TEMPERATURE_PARAMS  sTP = {0};
-    S_TEMPERATURE_RETVALS sTR = {0};
-    u32 dwRC;
-    u32 dwSize;
-
-    sTP.wSensorIndex = 0;
-    dwSize = sizeof(sTR);
-    dwRC = GET_RC(CamUSB_GetFunction(FUNC_TEMPERATURE, &sTR, &dwSize, &sTP, sizeof(sTP), NULL, 0, this->deviceNumber), this->deviceNumber); 
-
-    if (IsNoError(dwRC))
-    {
-      float fTemp;
-      
-      switch (this->temperatureCap->dwSensor[0].wUnit)
-      {
-      case TEMP_SENS_UNIT_2C: fTemp = sTR.wSensorValue * 0.50f;      break;
-      case TEMP_SENS_UNIT_4C: fTemp = sTR.wSensorValue * 0.25f;      break;
-      default:                fTemp = sTR.wSensorValue * 1.00f;      break;
-      }
-      
-      // write hardware value to property
-      pProp->Set( fTemp );
-    }
-  }
-  
-  return DEVICE_OK;
-}
-
-int ABSCamera::OnFlipX(MM::PropertyBase* pProp, MM::ActionType eAct)
-{
-  long nFlip, nFlipX;
-  if (NULL == this->flipCap) return DEVICE_OK;
-  
-  // property should be written 
-  if (eAct == MM::AfterSet) 
-  {
-    pProp->Get(nFlipX);
-    nFlip = GetFlip();
-    nFlip &= ~FLIP_HORIZONTAL;
-    if (nFlipX != 0)  nFlip |= FLIP_HORIZONTAL;
-    SetFlip(nFlip & FLIP_BOTH);
-  }
-  else if (eAct == MM::BeforeGet) // property will be read -> update property with value from hardware
-  {    
-    nFlip = GetFlip();
-    nFlip = (nFlip & FLIP_HORIZONTAL) ? 1 : 0;
-    pProp->Set(nFlip);
-  }
-
-  return DEVICE_OK;
-}
-
-int ABSCamera::OnFlipY(MM::PropertyBase* pProp, MM::ActionType eAct)
-{
-  long nFlip, nFlipY;
-  if (NULL == this->flipCap) return DEVICE_OK;
-  
-  // property should be written 
-  if (eAct == MM::AfterSet) 
-  {
-    pProp->Get(nFlipY);
-    nFlip = GetFlip();
-    nFlip &= ~FLIP_VERTICAL;
-    if (nFlipY != 0)  nFlip |= FLIP_VERTICAL;
-    SetFlip(nFlip & FLIP_BOTH);
-  }
-  else if (eAct == MM::BeforeGet) // property will be read -> update property with value from hardware
-  {    
-    nFlip = GetFlip();
-    nFlip = (nFlip & FLIP_VERTICAL) ? 1 : 0;
-    pProp->Set(nFlip);
-  }
-
-  return DEVICE_OK;
-
-}
-  
-// color mode mono / color
-int ABSCamera::OnColorMode(MM::PropertyBase* pProp, MM::ActionType eAct)
-{
-  int nRet = DEVICE_OK;
-  // property should be written -> change it
-  if (eAct == MM::AfterSet) 
-  {
-    std::string strColorMode;
-
-    if(IsCapturing())
-         return DEVICE_CAN_NOT_SET_PROPERTY;
-
-    pProp->Get(strColorMode);
-
-    // check if color mode is selected
-    bColor = (strColorMode.compare( g_ColorMode_Color ) == 0 );
-
-    nRet = UpdatePixelTypes();    
-  }
-  else if (eAct == MM::BeforeGet) // property will be read -> update property with value from hardware
-  {
-    pProp->Set((bColor) ? g_ColorMode_Color : g_ColorMode_Grayscale);
-  }
-  
-  return nRet;
-}
-
-// handels gain property
-int ABSCamera::OnGain(MM::PropertyBase* pProp, MM::ActionType eAct)
-{
-  if ( this->gainCap == NULL ) return DEVICE_OK;
-    
-  // check if color or monochrom camera
-  BOOL bRGBGain = ((this->gainCap->wGainChannelMask & GAIN_RGB) == GAIN_RGB);
-  u32 dwRC;
-  u32 dwGain;
-  u16 wGainChannel;
-  double gain;
-  float gainFactor = 1.0f; // factor for calculating property value from hardware value 
-  if ( this->gainCap->bGainUnit == GAINUNIT_NONE ) gainFactor =  0.001f;
-  if ( this->gainCap->bGainUnit == GAINUNIT_10X  ) gainFactor = 0.0001f;
-
-  if (eAct == MM::AfterSet) // property was written -> apply value to hardware
-  {    
-    pProp->Get(gain);
-
-    // setup value
-    dwGain = (u32) (gain / gainFactor);                             
-    // set channel
-    wGainChannel = (bRGBGain) ? (GAIN_GREEN | GAIN_LOCKED) : GAIN_GLOBAL;   
-
-    dwRC = GET_RC(CamUSB_SetGain( &dwGain, wGainChannel, this->deviceNumber), this->deviceNumber);
-    if ( !IsNoError(dwRC) )
-    {
-        this->ShowError(dwRC);
-        return DEVICE_LOCALLY_DEFINED_ERROR;
-    }
-    else // gain value set
-    {
-        gain = static_cast<float>( dwGain ) * gainFactor;
-        pProp->Set( gain ); // write back to GUI
-    }
-  }
-  else if (eAct == MM::BeforeGet) // property will be read -> update property with value from hardware
-  {         
-    dwGain = 0;
-    // set channel
-    wGainChannel = (bRGBGain) ? GAIN_GREEN : GAIN_GLOBAL;   
-
-    dwRC = GET_RC(CamUSB_GetGain( &dwGain, wGainChannel, this->deviceNumber), this->deviceNumber);
-    if ( !IsNoError(dwRC) )
-    {
-        this->ShowError(dwRC);
-        return DEVICE_LOCALLY_DEFINED_ERROR;
-    }
-    else // gain value set
-    {
-        gain = static_cast<float>( dwGain ) * gainFactor;
-        pProp->Set( gain ); // write back to GUI
-    }
-  }
-  return DEVICE_OK; 
-}
-
-/**
- * Returns the current binning factor.
- * Required by the MM::Camera API.
- */
-int ABSCamera::GetBinning() const
-{
-  char buf[MM::MaxStrLength];
-  int ret = GetProperty(MM::g_Keyword_Binning, buf);
-  if (ret != DEVICE_OK) return 1;
-  return atoi(buf);
-
-}
-
-/**
- * Sets binning factor.
- * Required by the MM::Camera API.
- */
-int ABSCamera::SetBinning(int binFactor)
-{
-  if(IsCapturing())
-    return ERR_BUSY_ACQIRING;
-  return SetProperty(MM::g_Keyword_Binning, CDeviceUtils::ConvertToString(binFactor));
-}
-
-
-///////////////////////////////////////////////////////////////////////////////
-// ABSCamera Action handlers
-///////////////////////////////////////////////////////////////////////////////
-
-/**
- * Handles "Binning" property.
- */
-int ABSCamera::OnBinning(MM::PropertyBase* pProp, MM::ActionType eAct)
-{
-  u32 dwRC;
-  if ( this->resolutionCap == NULL ) return DEVICE_OK; // property was written -> apply value to hardware
-  if (eAct == MM::AfterSet)
-  {
-    long binning;
-    pProp->Get(binning);
-
-    unsigned long size = sizeof(S_RESOLUTION_RETVALS);
-    S_RESOLUTION_RETVALS resolutionReturn;
-
-    unsigned long iRC;
-    iRC = GET_RC( CamUSB_GetFunction( FUNC_RESOLUTION, &resolutionReturn, &size, NULL, 0, NULL, 0, this->deviceNumber ), this->deviceNumber );
-    if ( !IsNoError(iRC) )
-    {    
-      this->ShowError(iRC);
-      return DEVICE_LOCALLY_DEFINED_ERROR;
-    }
-    
-    // convert to camera value
-    resolutionReturn.dwBin = BinValueToCamValue( binning );
-    // limit to supported modes
-    if (this->resolutionCap != 0) resolutionReturn.dwBin &= resolutionCap->dwBinModes;
-    // convert back to internal value
-    if ( binning != CamValueToBinValue( resolutionReturn.dwBin ))
-    {
-      binning = CamValueToBinValue( resolutionReturn.dwBin );
-      pProp->Set( binning );
-    }
-    
-    // don't allow negativ offset's to set by the user directly
-    if ((resolutionReturn.wOffsetX < 0 ) || (resolutionReturn.wOffsetY < 0 ))
-    {
-        resolutionReturn.wOffsetX = 0;
-        resolutionReturn.wOffsetY = 0;
-    }
-
-    // must be at least the same (Skip may be higher than bin but not contrary
-    resolutionReturn.dwSkip = resolutionReturn.dwBin;
-
-    // try to keep the current exposure, each time the resolution is changed...
-    resolutionReturn.bKeepExposure = 1;
-
-    // use CamUSB_SetCameraResolution => to update the ROI for Skip and binning
-    dwRC = GET_RC(CamUSB_SetCameraResolution( resolutionReturn.wOffsetX,
-                                              resolutionReturn.wOffsetY,
-                                              resolutionReturn.wSizeX,
-                                              resolutionReturn.wSizeY,
-                                              resolutionReturn.dwSkip,
-                                              resolutionReturn.dwBin,
-                                              resolutionReturn.bKeepExposure,
-                                              this->deviceNumber),
-                                              this->deviceNumber);
-
-    ///if (!CamUSB_SetFunction( FUNC_RESOLUTION, &resolutionReturn, size ) )
-    if ( !IsNoError(dwRC) )
-    {
-      this->ShowError(dwRC);
-      return DEVICE_LOCALLY_DEFINED_ERROR;
-    }
-
-    this->ResizeImageBuffer();
-  }
-  else if (eAct == MM::BeforeGet) // property will be read -> update property with value from hardware
-  {
-    long binning, binningHW;
-    pProp->Get(binning);
-    binningHW = binning;
-
-    unsigned long size = sizeof(S_RESOLUTION_RETVALS);
-    S_RESOLUTION_RETVALS resolutionReturn;
-
-    unsigned long iRC;
-    iRC = GET_RC( CamUSB_GetFunction( FUNC_RESOLUTION, &resolutionReturn, &size, NULL, 0, NULL, 0, this->deviceNumber ), this->deviceNumber );
-    if ( !IsNoError(iRC) )
-    {    
-      this->ShowError(iRC);    
-      return DEVICE_LOCALLY_DEFINED_ERROR;
-    }
-
-    binningHW = CamValueToBinValue( resolutionReturn.dwBin );
-    if ( binning != binningHW ) 
-    {
-      pProp->Set( binningHW );
-      this->ResizeImageBuffer();
-    }
-  }
-
-  return DEVICE_OK; 
-}
-
-/**
- * Handles "PixelType" property.
- */
-int ABSCamera::OnPixelType(MM::PropertyBase* pProp, MM::ActionType eAct)
-{
-  int nRet = DEVICE_OK;
-  if ( this->pixelTypeCap == NULL ) return nRet;
-
-  if (eAct == MM::AfterSet) // property was written -> apply value to hardware
-  {
-    u32 dwPixelType = 0; 
-    std::string pixelType;
-    pProp->Get(pixelType);
-
-    dwPixelType = StringToPixelType( pixelType );
-    
-    for ( u32 n=0; n < this->cPixeltypes.size(); n++ )
-    {
-      if ( pixelType.compare( this->cPixeltypes[n].strPixelType ) == 0 ) 
-      {
-         dwPixelType = this->cPixeltypes[n].dwPixelType;
-         break;
-      }
-    }
-    nRet = SetPixelType(dwPixelType);    
-  }
-  else if (eAct == MM::BeforeGet) // property will be read -> update property with value from hardware
-  {
-    bool bFound = false;
-    std::string pixelType, pixelTypeHW;
-    unsigned int nIndexPixelTypeFound = 0;
-
-    pProp->Get(pixelType);
-
-    // read current pixel type from hardware
-    unsigned long pixType;
-    unsigned long iRC;
-    iRC = GET_RC( CamUSB_GetPixelType( &pixType, this->deviceNumber ), this->deviceNumber );
-    if ( !IsNoError(iRC) )
-    {    
-      this->ShowError(iRC);
-      return DEVICE_LOCALLY_DEFINED_ERROR;
-    }
-
-    for ( u32 n=0; n < this->cPixeltypes.size(); n++ )
-    {
-      if ( pixType == this->cPixeltypes[n].dwPixelType ) 
-      {
-        nIndexPixelTypeFound = n;
-        bFound = true;
-        break;
-      }
-    }
-
-    if (bFound == false)
-    {
-      bColor = !bColor;     // toggle color setting in hope to find the pixeltype there
-      InitSupportedPixeltypes();
-      for ( u32 n=0; n < this->cPixeltypes.size(); n++ )
-      {
-        if ( pixType == cPixeltypes[n].dwPixelType ) 
-        {
-          nIndexPixelTypeFound = n;
-          bFound = true;
-          break;
-        }
-      }
-    
-      // if pixeltype is still not found restore old color settings an set the first pixeltype
-      if (bFound == false)
-      {
-        // pixel not found at mono or color pixeltypes => set supported default pixeltype
-        bColor = !bColor;
-        InitSupportedPixeltypes();
-        SetPixelType( this->cPixeltypes[0].dwPixelType );
-        UpdatePixelTypes();
-        nIndexPixelTypeFound = 0;
-        bFound = true;
-      }      
-    }
-  
-    // if current value and previous value are different update ImageBuffer size
-    if (( this->cPixeltypes[nIndexPixelTypeFound].strPixelType != pixelType ) &&
-        ( this->cPixeltypes[nIndexPixelTypeFound].dwPixelType  != StringToPixelType(pixelType) ) )          
-    {
-        pProp->Set( this->cPixeltypes[nIndexPixelTypeFound].strPixelType.c_str() );
-        ResizeImageBuffer();
-    }    
-  }
-  return nRet; 
-}
-
-/**
- * Sync internal image buffer size to the chosen property values.
- */
-int ABSCamera::ResizeImageBuffer()
-{
-  unsigned int x, y, sizeX, sizeY;
-
-  // read current ROI
-  int nRet = this->GetROI( x, y, sizeX, sizeY );
-  if ( nRet != DEVICE_OK ) return nRet;
-
-  // read binning property
-  int binSize = GetBinning();
-  
-  // read current pixel type from hardware
-  unsigned long pixelType;
-  unsigned long iRC;
-  iRC = GET_RC( CamUSB_GetPixelType( &pixelType, this->deviceNumber ), this->deviceNumber );
-  if ( !IsNoError(iRC) )
-  {    
-    this->ShowError(iRC);
-    return DEVICE_LOCALLY_DEFINED_ERROR;
-  }
-  // calculate required bytes
-  int byteDepth = GetBpp( pixelType ) / 8;
-   
-  // resize image buffer
-  imageBuffer.Resize( sizeX / binSize, sizeY / binSize, byteDepth);
-  
-
-  // if thead don't run make sure the core image buffer is updated as well (if thread is active it is done before/allready)
-  if (!IsCapturing())
-  {
-    // make sure the circular buffer is properly sized => use 2 Buffers
-    GetCoreCallback()->InitializeImageBuffer(GetNumberOfComponents(), ABSCAM_CIRCULAR_BUFFER_IMG_COUNT, GetImageWidth(), GetImageHeight(), GetImageBytesPerPixel());
-  }
-
-  return DEVICE_OK;
-}
-
-// show ABSCamera error with the specified number
-void ABSCamera::ShowError( unsigned long errorNumber ) const
-{
-  char errorMessage[MAX_PATH]; // error string (MAX_PATH is normally around 255)
-  char messageCaption[MAX_PATH];      // caption string
-
-  memset(errorMessage, 0, sizeof(errorMessage));
-  memset(messageCaption, 0, sizeof(messageCaption));
-
-  CamUSB_GetErrorString( errorMessage, MAX_PATH, errorNumber );
-
-  if ( IsNoError(errorNumber) )
-  {
-    sprintf( messageCaption, "Warning for ABSCamera device number %i", this->deviceNumber );
-  }
-  else
-  {
-    sprintf( messageCaption, "Error for ABSCamera device number %i", this->deviceNumber );
-  }
-
-  ((ABSCamera*) this)->SetErrorText(DEVICE_LOCALLY_DEFINED_ERROR, errorMessage);
-  LogMessage(messageCaption);
-  LogMessage(errorMessage);
-}
-
-// read camera caps
-void* ABSCamera::GetCameraCap( unsigned __int64 CamFuncID ) const
-{
-  void* cameraCap = NULL;
-  if ( ( this->cameraFunctionMask & CamFuncID ) == CamFuncID )
-  {
-    unsigned long capSize;
-    CamUSB_GetFunctionCaps( CamFuncID, NULL ,&capSize, this->deviceNumber );
-    cameraCap = new char[capSize];
-    if ( CamUSB_GetFunctionCaps( CamFuncID, cameraCap, &capSize, this->deviceNumber ) == false )
-    {
-      throw new exception();
-    }
-  }
-  return cameraCap;
-}
-
-// read camera parameter from hardware
-int ABSCamera::GetCameraFunction( unsigned __int64 CamFuncID, void* functionPara, unsigned long size, void* functionParaOut, unsigned long sizeOut) const
-{
-  if ( ( this->cameraFunctionMask & CamFuncID ) == CamFuncID )
-  {
-    unsigned long iRC;
-    iRC = GET_RC( CamUSB_GetFunction( CamFuncID, functionPara, &size, functionParaOut, sizeOut, NULL, 0, this->deviceNumber ), this->deviceNumber );
-    if ( !IsNoError(iRC) )
-    {
-      this->ShowError(iRC);
-      return DEVICE_LOCALLY_DEFINED_ERROR;
-    }
-  }
-  return DEVICE_OK;
-}
-
-// set camera parameter to hardware
-int ABSCamera::SetCameraFunction( unsigned __int64 CamFuncID, void* functionPara, unsigned long size )  const
-{
-  if ( ( this->cameraFunctionMask & CamFuncID ) == CamFuncID )
-  {
-    unsigned long iRC;
-    iRC = GET_RC( CamUSB_SetFunction( CamFuncID, functionPara, size, NULL, NULL, NULL, 0, this->deviceNumber ), this->deviceNumber );
-    if ( !IsNoError(iRC) )
-    {
-      this->ShowError(iRC);
-      return DEVICE_LOCALLY_DEFINED_ERROR;
-    }
-  }
-  return DEVICE_OK;
-}
-
-int ABSCamera::StartSequenceAcquisition(long numImages, double interval_ms, bool stopOnOverflow)
-{
-  int ret;
-  bAbortGetImageCalled = false;
-  u16 wFrameRate = (u16) (1000.0 / interval_ms);
-  u32 dwRC;
-
-  if (IsCapturing())
-    return DEVICE_CAMERA_BUSY_ACQUIRING;
-
-  // remember overflow flag
-  stopOnOverflow_ = stopOnOverflow;
-
-  // open the shutter (have not to be done)
-  ret = GetCoreCallback()->PrepareForAcq(this);
-  if (ret != DEVICE_OK)
-         return ret;
-
-  // make sure the circular buffer is properly sized => use 3 Buffers (ABSCAM_CIRCULAR_BUFFER_IMG_COUNT)
-  GetCoreCallback()->InitializeImageBuffer(GetNumberOfComponents(), ABSCAM_CIRCULAR_BUFFER_IMG_COUNT, GetImageWidth(), GetImageHeight(), GetImageBytesPerPixel());
-
-  double actualIntervalMs = max(GetExposure(), interval_ms);
-  SetProperty(MM::g_Keyword_ActualInterval_ms, CDeviceUtils::ConvertToString(actualIntervalMs)); 
-
-  // unlimited ?
-  if (interval_ms == 0.0) wFrameRate = 0;
-
-  // set framerate
-  dwRC = GET_RC(CamUSB_SetFramerateLimit(&wFrameRate, this->deviceNumber), this->deviceNumber);
-  // switch to coninous mode
-  dwRC = GET_RC(CamUSB_SetCaptureMode(MODE_CONTINUOUS, 0, this->deviceNumber), this->deviceNumber);     
-
-  // start thread
-  thd_->Start(numImages, interval_ms);
-  
-  return DEVICE_OK;
-}
-
-int ABSCamera::StopSequenceAcquisition()
-{
-  int nRet;
-
-  bAbortGetImageCalled = true;
-  CamUSB_AbortGetImage(this->deviceNumber);
-
-  // call base class
-  nRet = CCameraBase<ABSCamera>::StopSequenceAcquisition();
-
-  CamUSB_SetCaptureMode(MODE_TRIGGERED_SW, 1, this->deviceNumber);
-  return nRet;
-}
-
-int ABSCamera::ThreadRun()
-{    
-  int ret=DEVICE_ERR;
-
-  // capture image
-  ret = SnapImage();
-  if (ret != DEVICE_OK)
-  {
-     return ret;
-  }
-  // pass image to circular buffer
-  ret = InsertImage();
-  if (ret != DEVICE_OK)
-  {
-     return ret;
-  }
-  return ret;
-}
-
-int ABSCamera::PrepareSequenceAcqusition() 
-{
-  return DEVICE_OK;
-}
-
-int ABSCamera::InsertImage()
-{
-  // insert image into the circular buffer  
-  // insert all three channels at once
-  int ret = GetCoreCallback()->InsertMultiChannel(this, GetImageBuffer(), GetNumberOfComponents(), GetImageWidth(), GetImageHeight(), GetImageBytesPerPixel());  
-  if (!stopOnOverflow_ && ret == DEVICE_BUFFER_OVERFLOW)
-  {
-    // do not stop on overflow - just reset the buffer
-    GetCoreCallback()->ClearImageBuffer(this);
-    // repeat the insert
-    return GetCoreCallback()->InsertMultiChannel(this, GetImageBuffer(), GetNumberOfComponents(), GetImageWidth(), GetImageHeight(), GetImageBytesPerPixel());
-  } 
-  else
-  {
-    return ret;
-  }
-}
-
-void ClearAllDeviceNames(void)
-{	
-	// remove all device names
-	g_availableDevices.clear( );
-}
-
-
-long ABSCamera::GetFlip()
-{
-  u32 dwRC;
-  S_FLIP_RETVALS sFR = {0};
-  u32 dwSize = sizeof(sFR);
-  
-  dwRC = GET_RC(CamUSB_GetFunction(FUNC_FLIP, &sFR, &dwSize, NULL, 0, NULL, 0, this->deviceNumber), this->deviceNumber);
-
-  return (int)sFR.wFlipMode;
-}
-
-void ABSCamera::SetFlip(long nFlip)
-{
-  u32 dwRC;
-  S_FLIP_PARAMS sFP = {0};
-  u32 dwSize = sizeof(sFP);
-  sFP.wFlipMode = (u16) nFlip;
-  
-  dwRC = GET_RC(CamUSB_SetFunction(FUNC_FLIP, &sFP, dwSize, NULL, NULL, NULL, 0, this->deviceNumber), this->deviceNumber);
-}
-
-
-int ABSCamera::InitSupportedPixeltypes( void )
+* Returns the bit depth (dynamic range) of the pixel.
+* This does not affect the buffer size, it just gives the client application
+* a guideline on how to interpret pixel values.
+* Required by the MM::Camera API.
+*/
+unsigned CABSCamera::GetBitDepth() const
 {  
-  SupportedPixelTypes *pSupportedPixelTypes    = NULL;
-  unsigned int         nCntSupportedPixelTypes = 0;
-  int                  iMaxUsedBpp = 0;
-  int                  iCurrentUsedBpp;
-  unsigned int         nMaxSupportedIndex = 0;
+   return bitDepth_;
+}
 
-  // release the old ones
-  this->cPixeltypes.clear();
+/**
+* Returns the size in bytes of the image buffer.
+* Required by the MM::Camera API.
+*/
+long CABSCamera::GetImageBufferSize() const
+{
+   return img_.Width() * img_.Height() * GetImageBytesPerPixel();
+}
 
-  // if no caps return
-  if ( this->pixelTypeCap == NULL ) return DEVICE_ERR;
+/**
+* Sets the camera Region Of Interest.
+* Required by the MM::Camera API.
+* This command will change the dimensions of the image.
+* Depending on the hardware capabilities the camera may not be able to configure the
+* exact dimensions requested - but should try do as close as possible.
+* If the hardware does not have this capability the software should simulate the ROI by
+* appropriately cropping each frame.
+* This demo implementation ignores the position coordinates and just crops the buffer.
+* @param x - top-left corner coordinate
+* @param y - top-left corner coordinate
+* @param xSize - width
+* @param ySize - height
+*/
+int CABSCamera::SetROI(unsigned x, unsigned y, unsigned xSize, unsigned ySize)
+{
+   if (xSize == 0 && ySize == 0)
+   {
+      // effectively clear ROI
+      ResizeImageBuffer();
+      roiX_ = 0;
+      roiY_ = 0;
+   }
+   else
+   {
+      // apply ROI
+      img_.Resize(xSize, ySize);
+      roiX_ = x;
+      roiY_ = y;
+   }
+   return DEVICE_OK;
+}
 
-  if (bColor) // color pixeltypes
-  {
-    nCntSupportedPixelTypes = (unsigned int)         CNT_ELEMENTS(g_sSupportedPixelTypesColor);
-    pSupportedPixelTypes    = (SupportedPixelTypes*) g_sSupportedPixelTypesColor;
-  }
-  else // mono pixeltypes
-  {
-    nCntSupportedPixelTypes = (unsigned int)         CNT_ELEMENTS(g_sSupportedPixelTypesMono);
-    pSupportedPixelTypes    = (SupportedPixelTypes*) g_sSupportedPixelTypesMono;
-  }
+/**
+* Returns the actual dimensions of the current ROI.
+* Required by the MM::Camera API.
+*/
+int CABSCamera::GetROI(unsigned& x, unsigned& y, unsigned& xSize, unsigned& ySize)
+{   
+   x = roiX_;
+   y = roiY_;
+
+   xSize = img_.Width();
+   ySize = img_.Height();
+
+   return DEVICE_OK;
+}
+
+/**
+* Resets the Region of Interest to full frame.
+* Required by the MM::Camera API.
+*/
+int CABSCamera::ClearROI()
+{   
+   ResizeImageBuffer();
+   roiX_ = 0;
+   roiY_ = 0;
+      
+   return DEVICE_OK;
+}
+
+/**
+* Returns the current exposure setting in milliseconds.
+* Required by the MM::Camera API.
+*/
+double CABSCamera::GetExposure() const
+{   
+   char buf[MM::MaxStrLength];
+   int ret = GetProperty(MM::g_Keyword_Exposure, buf);
+   if (ret != DEVICE_OK)
+      return 0.0;
+   return atof(buf);
+}
+
+/**
+* Sets exposure in milliseconds.
+* Required by the MM::Camera API.
+*/
+void CABSCamera::SetExposure(double exp)
+{
+   SetProperty(MM::g_Keyword_Exposure, CDeviceUtils::ConvertToString(exp));
+}
+
+/**
+* Returns the current binning factor.
+* Required by the MM::Camera API.
+*/
+int CABSCamera::GetBinning() const
+{   
+   char buf[MM::MaxStrLength];
+   int ret = GetProperty(MM::g_Keyword_Binning, buf);
+   if (ret != DEVICE_OK)
+      return 1;
+   return atoi(buf);
+}
+
+/**
+* Sets binning factor.
+* Required by the MM::Camera API.
+*/
+int CABSCamera::SetBinning(int binF)
+{
+   return SetProperty(MM::g_Keyword_Binning, CDeviceUtils::ConvertToString(binF));
+}
+
+int CABSCamera::SetAllowedBinning() 
+{
+	S_RESOLUTION_CAPS * resolutionCaps = 0;
+	u32 dwRC = getCap( FUNC_RESOLUTION, (void* &) resolutionCaps );
+   
+	if ( retOK == dwRC )
+	{
+		vector<string> binValues;
+		binValues.push_back("1");
+		if ((resolutionCaps->dwBinModes & XY_BIN_2X) == XY_BIN_2X)
+			binValues.push_back("2");
+		if ((resolutionCaps->dwBinModes & XY_BIN_3X) == XY_BIN_3X)
+			binValues.push_back("3");
+		if ((resolutionCaps->dwBinModes & XY_BIN_4X) == XY_BIN_4X)
+			binValues.push_back("4");
+		if ((resolutionCaps->dwBinModes & XY_BIN_5X) == XY_BIN_5X)
+			binValues.push_back("5");
+		if ((resolutionCaps->dwBinModes & XY_BIN_6X) == XY_BIN_6X)
+			binValues.push_back("6");
+		if ((resolutionCaps->dwBinModes & XY_BIN_7X) == XY_BIN_7X)
+			binValues.push_back("7");
+		if ((resolutionCaps->dwBinModes & XY_BIN_8X) == XY_BIN_8X)
+			binValues.push_back("8");
+
+		if (resolutionCaps) 
+			delete [] resolutionCaps;
+
+		LogMessage("Setting Allowed Binning settings", true);
+		return SetAllowedValues(MM::g_Keyword_Binning, binValues);
+	}
+	else
+		return convertApiErrorCode( dwRC );
+}
+
+int CABSCamera::setAllowedPixelTypes( void ) 
+{
+	S_RESOLUTION_CAPS * resolutionCaps = 0;
+	u32 dwRC = getCap( FUNC_RESOLUTION, (void* &) resolutionCaps );
+   
+	if ( retOK == dwRC )
+	{
+		vector<string> pixelTypeValues;
+		pixelTypeValues.push_back(g_PixelType_8bit);		
+		if (resolutionCaps->wMaxBPP > 8)
+			pixelTypeValues.push_back(g_PixelType_16bit);
+
+		if (resolutionCaps->wSensorType & ST_COLOR)	
+		{
+			pixelTypeValues.push_back(g_PixelType_32bitRGB);
+			if (resolutionCaps->wMaxBPP > 8)
+				pixelTypeValues.push_back(g_PixelType_64bitRGB);
+		}
+
+		if (resolutionCaps) 
+			delete [] resolutionCaps;
+
+		LogMessage("Setting Allowed Pixeltypes settings", true);
+		return SetAllowedValues(MM::g_Keyword_PixelType, pixelTypeValues);
+	}
+	else
+		return convertApiErrorCode( dwRC );
+}
+
+int CABSCamera::setAllowedBitDepth( void )
+{
+	S_RESOLUTION_CAPS * resolutionCaps = 0;
+	u32 dwRC = getCap( FUNC_RESOLUTION, (void* &) resolutionCaps );
+   
+	if ( retOK == dwRC )
+	{
+		vector<string> bitDepths;
+		bitDepths.push_back("8");
+
+		if (resolutionCaps->wMaxBPP >= 10)
+			bitDepths.push_back("10");
+
+		if (resolutionCaps->wMaxBPP >= 12)
+			bitDepths.push_back("12");
+
+		if (resolutionCaps->wMaxBPP >= 14)
+			bitDepths.push_back("14");
+
+		if (resolutionCaps->wMaxBPP >= 16)
+			bitDepths.push_back("16");
+		
+		if (resolutionCaps) 
+			delete [] resolutionCaps;
+
+		LogMessage("Setting Allowed BitDepth settings", true);
+		return SetAllowedValues("BitDepth", bitDepths);
+	}
+	else
+		return convertApiErrorCode( dwRC );
+}
+
+int CABSCamera::setAllowedExpsoure( void )
+{
+	S_EXPOSURE_CAPS * exposureCaps = 0;
+	u32 dwRC = getCap( FUNC_EXPOSURE, (void* &) exposureCaps );
+   
+	if ( retOK == dwRC )
+	{
+		double fMinExposure, fMaxExposure;
+		
+		fMinExposure = exposureCaps->sExposureRange[0].dwMin / 1000.0;
+		fMaxExposure = exposureCaps->sExposureRange[exposureCaps->dwCountRanges-1].dwMax / 1000.0;
+				
+		if (exposureCaps) 
+			delete [] exposureCaps;
+
+		LogMessage("Setting Exposure limits", true);
+		return SetPropertyLimits(MM::g_Keyword_Exposure, fMinExposure, fMaxExposure);
+	}
+	else
+		return convertApiErrorCode( dwRC );
+}
+
+int CABSCamera::setAllowedGain( void )
+{
+	S_GAIN_CAPS * gainCaps = 0;
+	u32 rc = getCap( FUNC_GAIN, (void* &) gainCaps );
+   
+	if ( retOK == rc )
+	{
+		double fMinGain, fMaxGain;		
+		fMinGain = gainCaps->sGainRange[0].dwMin / 1000.0;
+		fMaxGain = gainCaps->sGainRange[gainCaps->wGainRanges-1].dwMax / 1000.0;
+				
+		if (gainCaps) 
+			delete [] gainCaps;
+
+		LogMessage("Setting Gain limits", true);
+		return SetPropertyLimits(MM::g_Keyword_Gain, fMinGain, fMaxGain);
+	}
+	else
+		return convertApiErrorCode( rc );
+}
+
+/**
+ * Required by the MM::Camera API
+ * Please implement this yourself and do not rely on the base class implementation
+ * The Base class implementation is deprecated and will be removed shortly
+ */
+int CABSCamera::StartSequenceAcquisition(double interval) 
+{
+   return StartSequenceAcquisition(LONG_MAX, interval, false);            
+}
+
+/**                                                                       
+* Stop and wait for the Sequence thread finished                                   
+*/                                                                        
+int CABSCamera::StopSequenceAcquisition()                                     
+{                                                                            
+   if (!thd_->IsStopped()) {
+      thd_->Stop();                                                       
+      thd_->wait();                                                       
+   }                                                                      
+                                                                          
+   return DEVICE_OK;                                                      
+} 
+
+/**
+* Simple implementation of Sequence Acquisition
+* A sequence acquisition should run on its own thread and transport new images
+* coming of the camera into the MMCore circular buffer.
+*/
+int CABSCamera::StartSequenceAcquisition(long numImages, double interval_ms, bool stopOnOverflow)
+{   
+   if (IsCapturing())
+      return DEVICE_CAMERA_BUSY_ACQUIRING;
+
+   int ret = GetCoreCallback()->PrepareForAcq(this);
+   if (ret != DEVICE_OK)
+      return ret;
+   sequenceStartTime_ = GetCurrentMMTime();
+   imageCounter_ = 0;
+   thd_->Start(numImages,interval_ms);
+   stopOnOverflow_ = stopOnOverflow;
+   return DEVICE_OK;
+}
+
+/*
+ * Inserts Image and MetaData into MMCore circular Buffer
+ */
+int CABSCamera::InsertImage()
+{
+   MM::MMTime timeStamp = this->GetCurrentMMTime();
+   char label[MM::MaxStrLength];
+   this->GetLabel(label);
+ 
+   // Important:  metadata about the image are generated here:
+   Metadata md;
+   md.put("Camera", label);
+   md.put(MM::g_Keyword_Metadata_StartTime, CDeviceUtils::ConvertToString(sequenceStartTime_.getMsec()));
+   md.put(MM::g_Keyword_Elapsed_Time_ms, CDeviceUtils::ConvertToString((timeStamp - sequenceStartTime_).getMsec()));
+   md.put(MM::g_Keyword_Metadata_ImageNumber, CDeviceUtils::ConvertToString(imageCounter_));
+   md.put(MM::g_Keyword_Metadata_ROI_X, CDeviceUtils::ConvertToString( (long) roiX_)); 
+   md.put(MM::g_Keyword_Metadata_ROI_Y, CDeviceUtils::ConvertToString( (long) roiY_)); 
+
+   imageCounter_++;
+
+   char buf[MM::MaxStrLength];
+   GetProperty(MM::g_Keyword_Binning, buf);
+   md.put(MM::g_Keyword_Binning, buf);
+
+   MMThreadGuard g(imgPixelsLock_);
 
 
-  for ( unsigned int p=0; p < this->pixelTypeCap->dwCount; p++ )
-  {
-      for ( unsigned int n=0; n < nCntSupportedPixelTypes; n++ )
-      {
-        if( pixelTypeCap->dwPixelType[p] == pSupportedPixelTypes[n].dwPixelType )
-        {
-          // add to camera supported list
-          this->cPixeltypes.push_back(pSupportedPixelTypes[n]);
+   const unsigned char* pI = GetImageBuffer();
+   unsigned int w = GetImageWidth();
+   unsigned int h = GetImageHeight();
+   unsigned int b = GetImageBytesPerPixel();
 
-          // detect the deepest pixeltype (max used bpp)
-          iCurrentUsedBpp = GetUsedBpp(pSupportedPixelTypes[n].dwPixelType);
-          if (iCurrentUsedBpp > iMaxUsedBpp)
-          {
-            iMaxUsedBpp        = iCurrentUsedBpp;
-            nMaxSupportedIndex = n;           
-          }
-        }
+   int ret = GetCoreCallback()->InsertImage(this, pI, w, h, b, &md);
+   if (!stopOnOverflow_ && ret == DEVICE_BUFFER_OVERFLOW)
+   {
+      // do not stop on overflow - just reset the buffer
+      GetCoreCallback()->ClearImageBuffer(this);
+      // don't process this same image again...
+//      return GetCoreCallback()->InsertImage(this, pI, w, h, b, &md, false);
+      return GetCoreCallback()->InsertImage(this, pI, w, h, b, md.Serialize().c_str(), false);
+   } else
+      return ret;
+}
+
+/*
+ * Do actual capturing
+ * Called from inside the thread  
+ */
+int CABSCamera::ThreadRun (void)
+{
+   int ret=DEVICE_ERR;
+   
+   // Trigger
+   if (triggerDevice_.length() > 0) {
+      MM::Device* triggerDev = GetDevice(triggerDevice_.c_str());
+      if (triggerDev != 0) {
+      	//char label[256];
+      	//triggerDev->GetLabel(label);
+      	LogMessage("trigger requested");
+      	triggerDev->SetProperty("Trigger","+");
       }
-    }
+   }
+   
+   
+   ret = SnapImage();
+   if (ret != DEVICE_OK)
+   {
+      return ret;
+   }
+   ret = InsertImage();
+   if (ret != DEVICE_OK)
+   {
+      return ret;
+   }
+   return ret;
+};
 
-    if (iMaxUsedBpp != 0)
-    {
-      SupportedPixelTypes supportedPixelTypesMax = pSupportedPixelTypes[nMaxSupportedIndex];
-      supportedPixelTypesMax.strPixelType = "Max";    // modify name to max
-      this->cPixeltypes.push_back(supportedPixelTypesMax);  // add to camera supported list
-    }   
-
-    return DEVICE_OK;
+bool CABSCamera::IsCapturing() {
+   return !thd_->IsStopped();
 }
 
-unsigned int ABSCamera::StringToPixelType( std::string strPixelType )
+/*
+ * called from the thread function before exit 
+ */
+void CABSCamera::OnThreadExiting() throw()
 {
-  unsigned int dwPixelType = 0;
-  for ( u32 n=0; n < this->cPixeltypes.size(); n++ )
-    {
-      if ( strPixelType.compare( this->cPixeltypes[n].strPixelType ) == 0 ) 
+   try
+   {
+      LogMessage(g_Msg_SEQUENCE_ACQUISITION_THREAD_EXITING);
+      GetCoreCallback()?GetCoreCallback()->AcqFinished(this,0):DEVICE_OK;
+   }
+
+   catch( CMMError& e){
+      std::ostringstream oss;
+      oss << g_Msg_EXCEPTION_IN_ON_THREAD_EXITING << " " << e.getMsg() << " " << e.getCode();
+      LogMessage(oss.str().c_str(), false);
+   }
+   catch(...)
+   {
+      LogMessage(g_Msg_EXCEPTION_IN_ON_THREAD_EXITING, false);
+   }
+}
+
+
+CABSCameraSequenceThread::CABSCameraSequenceThread(CABSCamera* pCam)
+   :intervalMs_(default_intervalMS)
+   ,numImages_(default_numImages)
+   ,imageCounter_(0)
+   ,stop_(true)
+   ,suspend_(false)
+   ,camera_(pCam)
+   ,startTime_(0)
+   ,actualDuration_(0)
+   ,lastFrameTime_(0)
+{};
+
+CABSCameraSequenceThread::~CABSCameraSequenceThread() {};
+
+void CABSCameraSequenceThread::Stop() {
+   MMThreadGuard(this->stopLock_);
+   stop_=true;
+}
+
+void CABSCameraSequenceThread::Start(long numImages, double intervalMs)
+{
+   MMThreadGuard(this->stopLock_);
+   MMThreadGuard(this->suspendLock_);
+   numImages_=numImages;
+   intervalMs_=intervalMs;
+   imageCounter_=0;
+   stop_ = false;
+   suspend_=false;
+   activate();
+   actualDuration_ = 0;
+   startTime_= camera_->GetCurrentMMTime();
+   lastFrameTime_ = 0;
+}
+
+bool CABSCameraSequenceThread::IsStopped(){
+   MMThreadGuard(this->stopLock_);
+   return stop_;
+}
+
+void CABSCameraSequenceThread::Suspend() {
+   MMThreadGuard(this->suspendLock_);
+   suspend_ = true;
+}
+
+bool CABSCameraSequenceThread::IsSuspended() {
+   MMThreadGuard(this->suspendLock_);
+   return suspend_;
+}
+
+void CABSCameraSequenceThread::Resume() {
+   MMThreadGuard(this->suspendLock_);
+   suspend_ = false;
+}
+
+int CABSCameraSequenceThread::svc(void) throw()
+{
+   int ret=DEVICE_ERR;
+   try 
+   {
+      do
+      {  
+         ret=camera_->ThreadRun();
+      } while (DEVICE_OK == ret && !IsStopped() && imageCounter_++ < numImages_-1);
+      if (IsStopped())
+         camera_->LogMessage("SeqAcquisition interrupted by the user\n");
+
+   }catch( CMMError& e){
+      camera_->LogMessage(e.getMsg(), false);
+      ret = e.getCode();
+   }catch(...){
+      camera_->LogMessage(g_Msg_EXCEPTION_IN_THREAD, false);
+   }
+   stop_=true;
+   actualDuration_ = camera_->GetCurrentMMTime() - startTime_;
+   camera_->OnThreadExiting();
+   return ret;
+}
+
+
+///////////////////////////////////////////////////////////////////////////////
+// CABSCamera Action handlers
+///////////////////////////////////////////////////////////////////////////////
+
+/*
+* this Read Only property will update whenever any property is modified
+*/
+
+int CABSCamera::OnTestProperty(MM::PropertyBase* pProp, MM::ActionType eAct, long indexx)
+{
+   if (eAct == MM::BeforeGet)
+   {
+      pProp->Set(testProperty_[indexx]);
+   }
+   else if (eAct == MM::AfterSet)
+   {
+      pProp->Get(testProperty_[indexx]);
+   }
+	return DEVICE_OK;
+
+}
+
+
+
+/**
+* Handles "Binning" property.
+*/
+int CABSCamera::OnBinning(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   int ret = DEVICE_ERR;
+   switch(eAct)
+   {
+   case MM::AfterSet:
       {
-         dwPixelType = this->cPixeltypes[n].dwPixelType;
-         break;
+         if(IsCapturing())
+            return DEVICE_CAMERA_BUSY_ACQUIRING;
+
+         // the user just set the new value for the property, so we have to
+         // apply this value to the 'hardware'.
+         long binFactor;
+         pProp->Get(binFactor);
+			if(binFactor > 0 && binFactor < 10)
+			{
+				img_.Resize(cameraCCDXSize_/binFactor, cameraCCDYSize_/binFactor);
+				binSize_ = binFactor;
+            std::ostringstream os;
+            os << binSize_;
+            OnPropertyChanged("Binning", os.str().c_str());
+				ret=DEVICE_OK;
+			}
+      }break;
+   case MM::BeforeGet:
+      {
+         ret=DEVICE_OK;
+			pProp->Set(binSize_);
+      }break;
+   }
+   return ret; 
+}
+
+/**
+* Handles "PixelType" property.
+*/
+int CABSCamera::OnPixelType(MM::PropertyBase* pProp, MM::ActionType eAct)
+{   
+   int ret = DEVICE_ERR;
+   switch(eAct)
+   {
+   case MM::AfterSet:
+      {
+         if(IsCapturing())
+            return DEVICE_CAMERA_BUSY_ACQUIRING;
+
+         string pixelType;
+         pProp->Get(pixelType);
+			u32 newPixelType = 0;
+         if (pixelType.compare(g_PixelType_8bit) == 0)
+         {
+            nComponents_ = 1;
+            img_.Resize(img_.Width(), img_.Height(), 1);
+				if ( 8 != bitDepth_)
+					SetProperty("BitDepth", "8");
+
+				newPixelType = PIX_MONO8;
+            ret=DEVICE_OK;
+         }
+         else if (pixelType.compare(g_PixelType_16bit) == 0)
+         {
+            nComponents_ = 1;				
+            img_.Resize(img_.Width(), img_.Height(), 2);
+				if ( 8 == bitDepth_)
+					SetProperty("BitDepth", last16BitDepth.c_str() );
+
+				switch (bitDepth_)
+				{
+				case 16: newPixelType = PIX_MONO16; break;
+				case 14: newPixelType = PIX_MONO14; break;
+				case 12: newPixelType = PIX_MONO12; break;
+				case 10: 
+				default: newPixelType = PIX_MONO10; break;
+				}
+            ret=DEVICE_OK;
+         }
+			else if ( pixelType.compare(g_PixelType_32bitRGB) == 0)
+			{
+            nComponents_ = 4;
+            img_.Resize(img_.Width(), img_.Height(), 4);				
+            
+				if ( 8 != bitDepth_)
+					SetProperty("BitDepth", "8"); 	
+				
+				newPixelType = PIX_BGRA8_PACKED;
+
+				ret=DEVICE_OK;
+			}
+			else if ( pixelType.compare(g_PixelType_64bitRGB) == 0)
+			{
+            nComponents_ = 4;
+            img_.Resize(img_.Width(), img_.Height(), 8);            
+				if ( 8 == bitDepth_)
+					SetProperty("BitDepth", last16BitDepth.c_str() ); 
+
+				switch (bitDepth_)
+				{
+				//case 16: newPixelType = PIX_BGRA16_PACKED; break;
+				case 14: newPixelType = PIX_BGRA14_PACKED; break;
+				case 12: newPixelType = PIX_BGRA12_PACKED; break;
+				case 10: 
+				default: newPixelType = PIX_BGRA10_PACKED; break;
+				}
+				ret=DEVICE_OK;
+			}
+		   else
+         {
+            // on error switch to default pixel type
+            nComponents_ = 1;
+            img_.Resize(img_.Width(), img_.Height(), 1);
+            pProp->Set(g_PixelType_8bit);				
+            ret = ERR_UNKNOWN_MODE;
+         }
+
+			if ( DEVICE_OK == ret)
+			{
+				u32 rc = GET_RC( CamUSB_SetPixelType( newPixelType, deviceNo()), deviceNo() );
+				ret = convertApiErrorCode( rc );
+			}
+      } break;
+   case MM::BeforeGet:
+      {
+         long bytesPerPixel = GetImageBytesPerPixel();
+         if (bytesPerPixel == 1)
+         	pProp->Set(g_PixelType_8bit);
+         else if (bytesPerPixel == 2)
+         	pProp->Set(g_PixelType_16bit);
+         else if (bytesPerPixel == 4)
+				pProp->Set(g_PixelType_32bitRGB);                     
+         else if (bytesPerPixel == 8) 
+				pProp->Set(g_PixelType_64bitRGB);
+			else
+				pProp->Set(g_PixelType_8bit);
+         ret=DEVICE_OK;
+      }break;
+   }
+   return ret; 
+}
+
+/**
+* Handles "BitDepth" property.
+*/
+int CABSCamera::OnBitDepth(MM::PropertyBase* pProp, MM::ActionType eAct)
+{   
+   int ret = DEVICE_ERR;
+   switch(eAct)
+   {
+   case MM::AfterSet:
+      {
+         if(IsCapturing())
+            return DEVICE_CAMERA_BUSY_ACQUIRING;
+
+         long bitDepth;
+         pProp->Get(bitDepth);
+
+			unsigned int bytesPerComponent;
+
+         switch (bitDepth) {
+            case 8:
+					bytesPerComponent = 1;
+               bitDepth_ = 8;
+               ret=DEVICE_OK;
+            break;
+            case 10:
+					bytesPerComponent = 2;
+               bitDepth_ = 10;
+               ret=DEVICE_OK;
+            break;
+            case 12:
+					bytesPerComponent = 2;
+               bitDepth_ = 12;
+               ret=DEVICE_OK;
+            break;
+            case 14:
+					bytesPerComponent = 2;
+               bitDepth_ = 14;
+               ret=DEVICE_OK;
+            break;
+            case 16:
+					bytesPerComponent = 2;
+               bitDepth_ = 16;
+               ret=DEVICE_OK;
+            break;
+            case 32:
+               bytesPerComponent = 4;
+               bitDepth_ = 32; 
+               ret=DEVICE_OK;
+            break;
+            default: 
+               // on error switch to default pixel type
+					bytesPerComponent = 1;
+
+               pProp->Set((long)8);
+               bitDepth_ = 8;
+               ret = ERR_UNKNOWN_MODE;
+            break;
+         }
+
+			if (DEVICE_OK == ret) 
+			{
+				if ( 8 != bitDepth_)
+					pProp->Get( last16BitDepth );
+			}
+
+			char buf[MM::MaxStrLength];
+			GetProperty(MM::g_Keyword_PixelType, buf);
+			std::string pixelType(buf);
+			unsigned int bytesPerPixel = 1;
+			
+
+         // automagickally change pixel type when bit depth exceeds possible value
+         if (pixelType.compare(g_PixelType_8bit) == 0)
+         {
+				if( 2 == bytesPerComponent)
+				{
+					SetProperty(MM::g_Keyword_PixelType, g_PixelType_16bit);
+					bytesPerPixel = 2;
+				}
+				else if ( 4 == bytesPerComponent)
+            {
+					SetProperty(MM::g_Keyword_PixelType, g_PixelType_32bit);
+					bytesPerPixel = 4;
+
+            }else
+				{
+				   bytesPerPixel = 1;
+				}
+         }
+         else if (pixelType.compare(g_PixelType_16bit) == 0)
+         {
+				if( 1 == bytesPerComponent)
+				{
+					SetProperty(MM::g_Keyword_PixelType, g_PixelType_8bit);
+					bytesPerPixel = 1;
+				}
+				else
+				{
+				   bytesPerPixel = 2;
+				}
+         }
+			else if ( pixelType.compare(g_PixelType_32bitRGB) == 0)
+			{
+				if( 2 == bytesPerComponent)
+				{
+					SetProperty(MM::g_Keyword_PixelType, g_PixelType_64bitRGB);
+					bytesPerPixel = 8;
+				}
+				else
+				{
+				   bytesPerPixel = 4;
+				}				
+			}
+			else if ( pixelType.compare(g_PixelType_32bit) == 0)
+			{
+				bytesPerPixel = 4;
+			}
+			else if ( pixelType.compare(g_PixelType_64bitRGB) == 0)
+			{
+				if( 1 == bytesPerComponent)
+				{
+					SetProperty(MM::g_Keyword_PixelType, g_PixelType_32bitRGB);
+					bytesPerPixel = 4;
+				}
+				else
+				{
+				   bytesPerPixel = 8;
+				}		
+			}
+			img_.Resize(img_.Width(), img_.Height(), bytesPerPixel);
+
+      } break;
+   case MM::BeforeGet:
+      {
+         pProp->Set((long)bitDepth_);
+         ret=DEVICE_OK;
+      }break;
+   }
+   return ret; 
+}
+/**
+* Handles "ReadoutTime" property.
+*/
+int CABSCamera::OnReadoutTime(MM::PropertyBase* pProp, MM::ActionType eAct)
+{   
+   if (eAct == MM::AfterSet)
+   {
+      double readoutMs;
+      pProp->Get(readoutMs);
+
+      readoutUs_ = readoutMs * 1000.0;
+   }
+   else if (eAct == MM::BeforeGet)
+   {
+      pProp->Set(readoutUs_ / 1000.0);
+   }
+
+   return DEVICE_OK;
+}
+
+int CABSCamera::OnDropPixels(MM::PropertyBase* pProp, MM::ActionType eAct)
+{   
+   if (eAct == MM::AfterSet)
+   {
+      long tvalue = 0;
+      pProp->Get(tvalue);
+		dropPixels_ = (0==tvalue)?false:true;
+   }
+   else if (eAct == MM::BeforeGet)
+   {
+      pProp->Set(dropPixels_?1L:0L);
+   }
+
+   return DEVICE_OK;
+}
+
+int CABSCamera::OnSaturatePixels(MM::PropertyBase* pProp, MM::ActionType eAct)
+{   
+   if (eAct == MM::AfterSet)
+   {
+      long tvalue = 0;
+      pProp->Get(tvalue);
+		saturatePixels_ = (0==tvalue)?false:true;
+   }
+   else if (eAct == MM::BeforeGet)
+   {
+      pProp->Set(saturatePixels_?1L:0L);
+   }
+
+   return DEVICE_OK;
+}
+
+int CABSCamera::OnFractionOfPixelsToDropOrSaturate(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   if (eAct == MM::AfterSet)
+   {
+      double tvalue = 0;
+      pProp->Get(tvalue);
+		fractionOfPixelsToDropOrSaturate_ = tvalue;
+   }
+   else if (eAct == MM::BeforeGet)
+   {
+      pProp->Set(fractionOfPixelsToDropOrSaturate_);
+   }
+
+   return DEVICE_OK;
+}
+
+/*
+* Handles "ScanMode" property.
+* Changes allowed Binning values to test whether the UI updates properly
+*/
+int CABSCamera::OnScanMode(MM::PropertyBase* pProp, MM::ActionType eAct)
+{    
+   if (eAct == MM::AfterSet) 
+	{
+      pProp->Get(scanMode_);
+   
+		u32 rc;
+		u08 captureMode, countImages;
+
+		if ( scanMode_ == g_ScanMode_Continuous )
+		{
+			captureMode = MODE_CONTINUOUS;
+			countImages = 0;			
+		}		
+		else if ( scanMode_ == g_ScanMode_TriggeredHW )
+		{
+			captureMode = MODE_TRIGGERED_HW;
+			countImages = 1;			
+		}
+		else // handle all other as g_ScanMode_TriggeredSW
+		{
+			if ( scanMode_ == g_ScanMode_TriggeredSW )
+				pProp->Set(g_ScanMode_TriggeredSW);
+
+			captureMode = MODE_TRIGGERED_SW;
+			countImages = 1;			
+		}
+
+		// set capture mode at camera
+		LogMessage("Set property ScanMode", true);
+		rc = GET_RC( CamUSB_SetCaptureMode( captureMode, countImages, deviceNo(), 0, 0), deviceNo() );
+
+		return convertApiErrorCode( rc );      
+   } 
+	else if (eAct == MM::BeforeGet) 
+	{
+		u32 rc;
+		u08 captureMode, countImages;
+
+		LogMessage("Reading property ScanMode", true);
+		rc = GET_RC( CamUSB_GetCaptureMode( &captureMode, &countImages, deviceNo() ), deviceNo() );
+
+		if ( !IsNoError( rc ) )
+		{
+			captureMode = MODE_TRIGGERED_SW;
+		}
+
+		switch ( captureMode )
+		{
+		case MODE_CONTINUOUS:	pProp->Set( g_ScanMode_Continuous );	break;
+
+		case MODE_TRIGGERED_HW:	pProp->Set( g_ScanMode_TriggeredHW );	break;
+
+		case MODE_TRIGGERED_SW:
+		default:						pProp->Set( g_ScanMode_TriggeredSW );	break;
+		}
+
+		return convertApiErrorCode( rc ); 		
+   }
+   return DEVICE_OK;
+}
+
+int CABSCamera::OnCameraCCDXSize(MM::PropertyBase* pProp , MM::ActionType eAct)
+{   
+   if (eAct == MM::BeforeGet)
+   {
+		pProp->Set(cameraCCDXSize_);
+   }
+   else if (eAct == MM::AfterSet)
+   {
+      long value;
+      pProp->Get(value);
+		if ( (value < 16) || (33000 < value))
+			return DEVICE_ERR;  // invalid image size
+		if( value != cameraCCDXSize_)
+		{
+			cameraCCDXSize_ = value;
+			img_.Resize(cameraCCDXSize_/binSize_, cameraCCDYSize_/binSize_);
+		}
+   }
+	return DEVICE_OK;
+
+}
+
+int CABSCamera::OnCameraCCDYSize(MM::PropertyBase* pProp, MM::ActionType eAct)
+{   
+   if (eAct == MM::BeforeGet)
+   {
+		pProp->Set(cameraCCDYSize_);
+   }
+   else if (eAct == MM::AfterSet)
+   {
+      long value;
+      pProp->Get(value);
+		if ( (value < 16) || (33000 < value))
+			return DEVICE_ERR;  // invalid image size
+		if( value != cameraCCDYSize_)
+		{
+			cameraCCDYSize_ = value;
+			img_.Resize(cameraCCDXSize_/binSize_, cameraCCDYSize_/binSize_);
+		}
+   }
+	return DEVICE_OK;
+
+}
+
+int CABSCamera::OnExposure(MM::PropertyBase* pProp, MM::ActionType eAct)
+{	
+	if (eAct == MM::BeforeGet)
+   {
+		u32 rc, exposureUs;
+		rc = GET_RC( CamUSB_GetExposureTime( &exposureUs, deviceNo() ), deviceNo() ); 
+		if ( IsNoError( rc ) )
+		{
+			pProp->Set( exposureUs / 1000.0 );
+		}
+		return convertApiErrorCode( rc ); 
+   }
+   else if (eAct == MM::AfterSet)
+   {
+      double value;
+		u32 rc, exposureUs;
+
+      pProp->Get(value);
+		exposureUs = (u32)(value * 1000.0 + 0.5);
+		rc = GET_RC( CamUSB_SetExposureTime( &exposureUs, deviceNo() ), deviceNo()); 
+		if ( IsNoError( rc ) )
+		{
+			// update with new settings
+			pProp->Set( exposureUs / 1000.0 );
+		}
+		return convertApiErrorCode( rc ); 
+   }
+	return DEVICE_OK;
+}
+
+int CABSCamera::OnGain(MM::PropertyBase* pProp, MM::ActionType eAct)
+{	
+	if (eAct == MM::BeforeGet)
+   {
+		u32 rc, gain;
+		u16 gainChannel = ( isColor() ) ? GAIN_GREEN : GAIN_GLOBAL;
+		
+		rc = GET_RC( CamUSB_GetGain( &gain, gainChannel, deviceNo() ), deviceNo()); 
+		if ( IsNoError( rc ) )
+		{
+			pProp->Set( gain / 1000.0 );
+		}
+		return convertApiErrorCode( rc ); 
+   }
+   else if (eAct == MM::AfterSet)
+   {
+		double value;
+		u32 rc, gain;
+		u16 gainChannel = ( isColor() ) ? (GAIN_GREEN|GAIN_LOCKED) : GAIN_GLOBAL;
+
+      pProp->Get(value);
+		gain = (u32)(value * 1000.0f + 0.5f);
+		rc = GET_RC( CamUSB_SetGain( &gain, gainChannel, deviceNo() ), deviceNo()); 
+		if ( IsNoError( rc ) )
+		{
+			// update with new settings
+			pProp->Set( gain / 1000.0 );
+		}
+		return convertApiErrorCode( rc ); 
+   }
+	return DEVICE_OK;
+}
+
+int  CABSCamera::OnTemperature(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+	if (eAct == MM::BeforeGet)
+   {
+		u32 rc, size;
+		S_TEMPERATURE_PARAMS  sTP = {0};
+		S_TEMPERATURE_RETVALS sTR = {0};
+		sTP.wSensorIndex = (u16)temperatureIndex_;
+		size = sizeof(sTR);
+		
+		rc = GET_RC( CamUSB_GetFunction( FUNC_TEMPERATURE, &sTR, &size, &sTP, size, 0, 0, deviceNo() ), deviceNo()); 
+		if ( IsNoError( rc ) )
+		{
+			string temperature;
+			str::sprintf( temperature, "%3.2f °C \0\0", sTR.wSensorValue / temperatureUnit_ );
+			pProp->Set( temperature.c_str() );
+		}
+		return convertApiErrorCode( rc ); 
+   }
+   else if (eAct == MM::AfterSet)
+   {		
+		return convertApiErrorCode( retFUNCSET ); 
+   }
+	return DEVICE_OK;
+}
+
+int CABSCamera::OnTriggerDevice(MM::PropertyBase* pProp, MM::ActionType eAct)
+{   
+   if (eAct == MM::BeforeGet)
+   {
+      pProp->Set(triggerDevice_.c_str());
+   }
+   else if (eAct == MM::AfterSet)
+   {
+      pProp->Get(triggerDevice_);
+   }
+   return DEVICE_OK;
+}
+
+
+///////////////////////////////////////////////////////////////////////////////
+// Private CABSCamera methods
+///////////////////////////////////////////////////////////////////////////////
+
+/**
+* Sync internal image buffer size to the chosen property values.
+*/
+int CABSCamera::ResizeImageBuffer()
+{
+   char buf[MM::MaxStrLength];
+   //int ret = GetProperty(MM::g_Keyword_Binning, buf);
+   //if (ret != DEVICE_OK)
+   //   return ret;
+   //binSize_ = atol(buf);
+
+   int ret = GetProperty(MM::g_Keyword_PixelType, buf);
+   if (ret != DEVICE_OK)
+      return ret;
+
+	std::string pixelType(buf);
+	int byteDepth = 0;
+
+   if (pixelType.compare(g_PixelType_8bit) == 0)
+   {
+      byteDepth = 1;
+   }
+   else if (pixelType.compare(g_PixelType_16bit) == 0)
+   {
+      byteDepth = 2;
+   }
+	else if ( pixelType.compare(g_PixelType_32bitRGB) == 0)
+	{
+      byteDepth = 4;
+	}
+	else if ( pixelType.compare(g_PixelType_32bit) == 0)
+	{
+      byteDepth = 4;
+	}
+	else if ( pixelType.compare(g_PixelType_64bitRGB) == 0)
+	{
+      byteDepth = 8;
+	}
+
+   img_.Resize(cameraCCDXSize_/binSize_, cameraCCDYSize_/binSize_, byteDepth);
+   return DEVICE_OK;
+}
+
+void CABSCamera::GenerateEmptyImage(ImgBuffer& img)
+{
+   MMThreadGuard g(imgPixelsLock_);
+   if (img.Height() == 0 || img.Width() == 0 || img.Depth() == 0)
+      return;
+   unsigned char* pBuf = const_cast<unsigned char*>(img.GetPixels());
+   memset(pBuf, 0, img.Height()*img.Width()*img.Depth());
+}
+
+u32 CABSCamera::getCameraImage( ImgBuffer& img )
+{
+	MMThreadGuard g(imgPixelsLock_);
+	
+	S_IMAGE_HEADER  imageHeader = {0};
+	S_IMAGE_HEADER *imageHeaderPointer = &imageHeader;
+	u08* imagePointer = img.GetPixelsRW();
+	u32 size	= img.Width() * img.Height() * img.Depth();
+
+	u32 rc = GET_RC( CamUSB_GetImage( &imagePointer, &imageHeaderPointer, size, deviceNo()), deviceNo() );
+	if ( retNOIMG == rc )
+		rc	= GET_RC( CamUSB_GetImage( &imagePointer, &imageHeaderPointer, size, deviceNo()), deviceNo() );
+
+	return rc;
+}
+/**
+* Generate a spatial sine wave.
+*/
+void CABSCamera::GenerateSyntheticImage(ImgBuffer& img, double exp)
+{ 
+  
+   MMThreadGuard g(imgPixelsLock_);
+
+	//std::string pixelType;
+	char buf[MM::MaxStrLength];
+   GetProperty(MM::g_Keyword_PixelType, buf);
+	std::string pixelType(buf);
+
+	if (img.Height() == 0 || img.Width() == 0 || img.Depth() == 0)
+      return;
+
+   const double cPi = 3.14159265358979;
+   long lPeriod = img.Width()/2;
+   double dLinePhase = 0.0;
+   const double dAmp = exp;
+   const double cLinePhaseInc = 2.0 * cPi / 4.0 / img.Height();
+
+   static bool debugRGB = false;
+#ifdef TIFFDEMO
+	debugRGB = true;
+#endif
+   static  unsigned char* pDebug  = NULL;
+   static unsigned long dbgBufferSize = 0;
+   static long iseq = 1;
+
+ 
+
+	// for integer images: bitDepth_ is 8, 10, 12, 16 i.e. it is depth per component
+   long maxValue = (1L << bitDepth_)-1;
+
+	long pixelsToDrop = 0;
+	if( dropPixels_)
+		pixelsToDrop = (long)(0.5 + fractionOfPixelsToDropOrSaturate_*img.Height()*img.Width());
+	long pixelsToSaturate = 0;
+	if( saturatePixels_)
+		pixelsToSaturate = (long)(0.5 + fractionOfPixelsToDropOrSaturate_*img.Height()*img.Width());
+
+   unsigned j, k;
+   if (pixelType.compare(g_PixelType_8bit) == 0)
+   {
+      double pedestal = 127 * exp / 100.0 * GetBinning() * GetBinning();
+      unsigned char* pBuf = const_cast<unsigned char*>(img.GetPixels());
+      for (j=0; j<img.Height(); j++)
+      {
+         for (k=0; k<img.Width(); k++)
+         {
+            long lIndex = img.Width()*j + k;
+            *(pBuf + lIndex) = (unsigned char) (g_IntensityFactor_ * min(255.0, (pedestal + dAmp * sin(dPhase_ + dLinePhase + (2.0 * cPi * k) / lPeriod))));
+         }
+         dLinePhase += cLinePhaseInc;
       }
-    }
-  return dwPixelType;
-}
+	   for(int snoise = 0; snoise < pixelsToSaturate; ++snoise)
+		{
+			j = (unsigned)( (double)(img.Height()-1)*(double)rand()/(double)RAND_MAX);
+			k = (unsigned)( (double)(img.Width()-1)*(double)rand()/(double)RAND_MAX);
+			*(pBuf + img.Width()*j + k) = (unsigned char)maxValue;
+		}
+		int pnoise;
+		for(pnoise = 0; pnoise < pixelsToDrop; ++pnoise)
+		{
+			j = (unsigned)( (double)(img.Height()-1)*(double)rand()/(double)RAND_MAX);
+			k = (unsigned)( (double)(img.Width()-1)*(double)rand()/(double)RAND_MAX);
+			*(pBuf + img.Width()*j + k) = 0;
+		}
 
-unsigned int ABSCamera::BinValueToCamValue( int iBinning )
+   }
+   else if (pixelType.compare(g_PixelType_16bit) == 0)
+   {
+      double pedestal = maxValue/2 * exp / 100.0 * GetBinning() * GetBinning();
+      double dAmp16 = dAmp * maxValue/255.0; // scale to behave like 8-bit
+      unsigned short* pBuf = (unsigned short*) const_cast<unsigned char*>(img.GetPixels());
+      for (j=0; j<img.Height(); j++)
+      {
+         for (k=0; k<img.Width(); k++)
+         {
+            long lIndex = img.Width()*j + k;
+            *(pBuf + lIndex) = (unsigned short) (g_IntensityFactor_ * min((double)maxValue, pedestal + dAmp16 * sin(dPhase_ + dLinePhase + (2.0 * cPi * k) / lPeriod)));
+         }
+         dLinePhase += cLinePhaseInc;
+      }         
+	   for(int snoise = 0; snoise < pixelsToSaturate; ++snoise)
+		{
+			j = (unsigned)(0.5 + (double)img.Height()*(double)rand()/(double)RAND_MAX);
+			k = (unsigned)(0.5 + (double)img.Width()*(double)rand()/(double)RAND_MAX);
+			*(pBuf + img.Width()*j + k) = (unsigned short)maxValue;
+		}
+		int pnoise;
+		for(pnoise = 0; pnoise < pixelsToDrop; ++pnoise)
+		{
+			j = (unsigned)(0.5 + (double)img.Height()*(double)rand()/(double)RAND_MAX);
+			k = (unsigned)(0.5 + (double)img.Width()*(double)rand()/(double)RAND_MAX);
+			*(pBuf + img.Width()*j + k) = 0;
+		}
+	
+	}
+   else if (pixelType.compare(g_PixelType_32bit) == 0)
+   {
+      double pedestal = 127 * exp / 100.0 * GetBinning() * GetBinning();
+      float* pBuf = (float*) const_cast<unsigned char*>(img.GetPixels());
+      float saturatedValue = 255.;
+      memset(pBuf, 0, img.Height()*img.Width()*4);
+      static unsigned int j2;
+      for (j=0; j<img.Height(); j++)
+      {
+         for (k=0; k<img.Width(); k++)
+         {
+            long lIndex = img.Width()*j + k;
+            double value =  (g_IntensityFactor_ * min(255.0, (pedestal + dAmp * sin(dPhase_ + dLinePhase + (2.0 * cPi * k) / lPeriod))));
+            *(pBuf + lIndex) = (float) value;
+            if( 0 == lIndex)
+            {
+               std::ostringstream os;
+               os << " first pixel is " << (float)value;
+               LogMessage(os.str().c_str(), true);
+
+            }
+         }
+         dLinePhase += cLinePhaseInc;
+      }
+
+	   for(int snoise = 0; snoise < pixelsToSaturate; ++snoise)
+		{
+			j = (unsigned)(0.5 + (double)img.Height()*(double)rand()/(double)RAND_MAX);
+			k = (unsigned)(0.5 + (double)img.Width()*(double)rand()/(double)RAND_MAX);
+			*(pBuf + img.Width()*j + k) = saturatedValue;
+		}
+		int pnoise;
+		for(pnoise = 0; pnoise < pixelsToDrop; ++pnoise)
+		{
+			j = (unsigned)(0.5 + (double)img.Height()*(double)rand()/(double)RAND_MAX);
+			k = (unsigned)(0.5 + (double)img.Width()*(double)rand()/(double)RAND_MAX);
+			*(pBuf + img.Width()*j + k) = 0;
+      }
+	
+	}
+	else if (pixelType.compare(g_PixelType_32bitRGB) == 0)
+	{
+      double pedestal = 127 * exp / 100.0;
+      unsigned int * pBuf = (unsigned int*) img.GetPixelsRW();
+
+      unsigned char* pTmpBuffer = NULL;
+
+      if(debugRGB)
+      {
+         const unsigned long bfsize = img.Height() * img.Width() * 3;
+         if(  bfsize != dbgBufferSize)
+         {
+            if (NULL != pDebug)
+            {
+               free(pDebug);
+               pDebug = NULL;
+            }
+            pDebug = (unsigned char*)malloc( bfsize);
+            if( NULL != pDebug)
+            {
+               dbgBufferSize = bfsize;
+            }
+         }
+      }
+
+		// only perform the debug operations if pTmpbuffer is not 0
+      pTmpBuffer = pDebug;
+      unsigned char* pTmp2 = pTmpBuffer;
+      if( NULL!= pTmpBuffer)
+			memset( pTmpBuffer, 0, img.Height() * img.Width() * 3);
+
+      for (j=0; j<img.Height(); j++)
+      {
+         unsigned char theBytes[4];
+         for (k=0; k<img.Width(); k++)
+         {
+            long lIndex = img.Width()*j + k;
+            unsigned char value0 =   (unsigned char) min(255.0, (pedestal + dAmp * sin(dPhase_ + dLinePhase + (2.0 * cPi * k) / lPeriod)));
+            theBytes[0] = value0;
+            if( NULL != pTmpBuffer)
+               pTmp2[2] = value0;
+            unsigned char value1 =   (unsigned char) min(255.0, (pedestal + dAmp * sin(dPhase_ + dLinePhase*2 + (2.0 * cPi * k) / lPeriod)));
+            theBytes[1] = value1;
+            if( NULL != pTmpBuffer)
+               pTmp2[1] = value1;
+            unsigned char value2 = (unsigned char) min(255.0, (pedestal + dAmp * sin(dPhase_ + dLinePhase*4 + (2.0 * cPi * k) / lPeriod)));
+            theBytes[2] = value2;
+
+            if( NULL != pTmpBuffer){
+               pTmp2[0] = value2;
+               pTmp2+=3;
+            }
+            theBytes[3] = 0;
+            unsigned long tvalue = *(unsigned long*)(&theBytes[0]);
+            *(pBuf + lIndex) =  tvalue ;  //value0+(value1<<8)+(value2<<16);
+         }
+         dLinePhase += cLinePhaseInc;
+      }
+
+
+      // ImageJ's AWT images are loaded with a Direct Color processor which expects BGRA, that's why we swapped the Blue and Red components in the generator above.
+      if(NULL != pTmpBuffer)
+      {
+         // write the compact debug image...
+			/*
+         char ctmp[12];
+         snprintf(ctmp,12,"%ld",iseq++);
+         int status = writeCompactTiffRGB( img.Width(), img.Height(), pTmpBuffer, ("democamera"+std::string(ctmp)).c_str()
+            );
+			status = status;
+			*/
+      }
+
+	}
+
+	// generate an RGB image with bitDepth_ bits in each color
+	else if (pixelType.compare(g_PixelType_64bitRGB) == 0)
+	{
+		double maxPixelValue = (1<<(bitDepth_))-1;
+      double pedestal = 127 * exp / 100.0;
+      unsigned long long * pBuf = (unsigned long long*) img.GetPixelsRW();
+      for (j=0; j<img.Height(); j++)
+      {
+         for (k=0; k<img.Width(); k++)
+         {
+            long lIndex = img.Width()*j + k;
+            unsigned long long value0 = (unsigned char) min(maxPixelValue, (pedestal + dAmp * sin(dPhase_ + dLinePhase + (2.0 * cPi * k) / lPeriod)));
+            unsigned long long value1 = (unsigned char) min(maxPixelValue, (pedestal + dAmp * sin(dPhase_ + dLinePhase*2 + (2.0 * cPi * k) / lPeriod)));
+            unsigned long long value2 = (unsigned char) min(maxPixelValue, (pedestal + dAmp * sin(dPhase_ + dLinePhase*4 + (2.0 * cPi * k) / lPeriod)));
+            unsigned long long tval = value0+(value1<<16)+(value2<<32);
+         *(pBuf + lIndex) = tval;
+			}
+         dLinePhase += cLinePhaseInc;
+      }
+	}
+
+   dPhase_ += cPi / 4.;
+}
+void CABSCamera::TestResourceLocking(const bool recurse)
 {
-  unsigned int dwBin;
-
-  switch ( iBinning )
-  {
-  case 9:   dwBin = XY_BIN_9X; break;
-  case 8:   dwBin = XY_BIN_8X; break;
-  case 7:   dwBin = XY_BIN_7X; break;
-  case 6:   dwBin = XY_BIN_6X; break;
-  case 5:   dwBin = XY_BIN_5X; break;
-  case 4:   dwBin = XY_BIN_4X; break;
-  case 3:   dwBin = XY_BIN_3X; break;
-  case 2:   dwBin = XY_BIN_2X; break;
-  case 1:
-  default:  dwBin = XY_BIN_NONE; break;
-  }
-  return dwBin;
+   MMThreadGuard g(*pDemoResourceLock_);
+   if(recurse)
+      TestResourceLocking(false);
 }
 
-int ABSCamera::CamValueToBinValue( unsigned int dwBin )
+int CABSCamera::OnCameraSelection(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
-  int iBinning;
+	if (eAct == MM::BeforeGet)
+	{		
+		ClearAllowedValues("Camera");
 
-  switch ( dwBin )
-  {
-  case XY_BIN_9X: iBinning = 9; break;
-  case XY_BIN_8X: iBinning = 8; break;
-  case XY_BIN_7X: iBinning = 7; break;
-  case XY_BIN_6X: iBinning = 6; break;
-  case XY_BIN_5X: iBinning = 5; break;
-  case XY_BIN_4X: iBinning = 4; break;
-  case XY_BIN_3X: iBinning = 3; break;
-  case XY_BIN_2X: iBinning = 2; break;
-  case XY_BIN_NONE:
-  default:        iBinning = 1; break;
-  }
-  return iBinning;
+		// it is importent to ask which camera's are connected, this is only possible by 
+		// communicate with the API - DLL
+		// - first check if they is available
+		// - if not no camera available / or no dll		
+		if ( isApiDllAvailable() )
+		{
+			CCameraList cCameraList;
+			getAvailableCameras( cCameraList );
+			
+			if ( cCameraList.size() > 0)
+			{
+				CCameraList::iterator iter = cCameraList.begin();
+				while ( iter != cCameraList.end() )
+				{
+					AddAllowedValue( "Camera", buildCameraDeviceID( iter->sVersion.dwSerialNumber, (const char*) iter->sVersion.szDeviceName ).c_str() ); // no camera yet
+					iter++;
+				}
+			}
+			else
+			{
+				AddAllowedValue( "Camera", "No camera found!"); // no camera yet
+			}
+		}
+		else
+		{			
+			string strInfo = g_ApiDllName + string(" not found!");
+			AddAllowedValue( "Camera",  strInfo.c_str() ); // no API DLL found
+		}
+	}
+	else if (eAct == MM::AfterSet)
+	{
+		string cameraDeviceID;
+		if ( false == pProp->Get( cameraDeviceID ) )
+			cameraDeviceID.clear();
+		
+		setCameraDeviceID( cameraDeviceID );   
+	}
+	return DEVICE_OK;
 }
+
+bool CABSCamera::isApiDllAvailable( void )
+{
+	bool bAvailable = false;
+	// Wrap all calls to delay-load DLL functions inside an SEH
+	// try-except block
+	__try 
+	{
+		CamUSB_GetLastError( GLOBAL_DEVNR );     
+		bAvailable = true;
+	}
+	__except ( DelayLoadDllExceptionFilter(GetExceptionInformation()) ) 
+	{
+		std::cerr << "CABSCamera::isApiDllAvailable() failed => dll not found" << std::endl;
+	}
+	return bAvailable;
+}
+
+string CABSCamera::buildCameraDeviceID( unsigned long serialNumber, const char* deviceName )
+{
+	string cameraDeviceID;
+	str::sprintf( cameraDeviceID, "#%05X", serialNumber );
+	return (string( deviceName ) + cameraDeviceID);
+}
+
+bool CABSCamera::isInitialized( void ) const
+{
+	return initialized_;
+}
+
+void CABSCamera::setInitialized( const bool bInitialized ) 
+{
+	initialized_ = bInitialized;
+}
+
+bool CABSCamera::isColor( void ) const
+{
+	return colorCamera_;
+}
+	
+void CABSCamera::setColor( const bool colorCamera )
+{
+	colorCamera_ = colorCamera;
+}
+
+void CABSCamera::setCameraDeviceID( string cameraDeviceID )
+{
+	cameraDeviceID_ = cameraDeviceID;
+}
+
+string CABSCamera::cameraDeviceID( void ) const
+{
+	return cameraDeviceID_;
+}
+
+void CABSCamera::setDeviceNo( int deviceNo )
+{
+	deviceNo_ = deviceNo;
+}
+
+int CABSCamera::deviceNo( void ) const
+{
+	return deviceNo_;
+}
+
+int CABSCamera::accquireDeviceNumber( void )
+{
+	return ++staticDeviceNo;
+}
+
+void CABSCamera::releaseDeviceNumber( int deviceNo )
+{
+	if (deviceNo != NO_CAMERA_DEVICE)
+		if (staticDeviceNo != NO_CAMERA_DEVICE)
+			--staticDeviceNo;
+}
+
+int CABSCamera::convertApiErrorCode( unsigned long errorNumber )
+{
+	string errorMessage;
+	errorMessage.resize( 260, 0 );
+	CamUSB_GetErrorString( (char *) errorMessage.c_str(), errorMessage.size(), errorNumber );
+
+	str::ResizeByZeroTermination( errorMessage );
+
+	if ( IsNoError( errorNumber ) )
+	{
+		if ( retOK != errorNumber )
+			errorMessage = "API-DLL Warning: " + errorMessage;	 
+	}
+	else
+		errorMessage = "API-DLL Error: " + errorMessage;	 
+	
+	SetErrorText(ERR_CAMERA_API_BASE + errorNumber, errorMessage.c_str() );
+  
+	LogMessage(errorMessage);
+  
+	return ( retOK == errorNumber ) ? (DEVICE_OK) : (ERR_CAMERA_API_BASE + errorNumber);
+}
+
+// scan for device
+void CABSCamera::getAvailableCameras( CCameraList & cCameraList )
+{
+	const int iCntElements = 16;
+	cCameraList.resize( iCntElements );
+	int nCamerasFound = CamUSB_GetCameraListEx( &cCameraList[0], cCameraList.size() );
+	cCameraList.resize( min(nCamerasFound, iCntElements ) );
+}
+
+
+unsigned long CABSCamera::getCap( unsigned __int64 functionId, void* & capability )
+{
+	u32 rc, dataSize;	
+	rc = GET_RC( CamUSB_GetFunctionCaps( functionId, 0, &dataSize, deviceNo() ), deviceNo()); 
+	if ( retOK == rc )
+	{
+		capability = new u08[ dataSize ];
+		rc = GET_RC( CamUSB_GetFunctionCaps( functionId, capability, &dataSize, deviceNo() ), deviceNo()); 
+	}
+	return rc;
+}
+
+/*
+if ( isInitialized() ) 
+		{
+         int ret = OnPropertiesChanged();
+         if (ret != DEVICE_OK)
+		}      return ret;
+		*/
+

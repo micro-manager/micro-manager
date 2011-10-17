@@ -34,6 +34,29 @@
 
 // ----------------------------------------------------------------------------
 //
+//! \brief <b>Check the socket handle if not invalid and close it, then set
+//! \brief the socket handle to invalid </b>
+//!
+#define SAFE_CLOSESOCKET(s)			    {if ((s!=0) && (s != INVALID_SOCKET)) closesocket(s); s = INVALID_SOCKET;}
+
+
+// ----------------------------------------------------------------------------
+//
+//! \brief <b>Check the socket handle if not invalid and shut it down, then set
+//! \brief the socket handle to invalid </b>
+//!
+#define SAFE_SHUTDOWN(s, flag)			    {if ((s!=0) && (s != INVALID_SOCKET)) shutdown(s, flag);}
+
+
+// ----------------------------------------------------------------------------
+//
+//! \brief close an socketevent
+//!
+#define SAFE_CLOSESOCKETEVENT(sevt)    {if (sevt != WSA_INVALID_EVENT) WSACloseEvent(sevt); sevt=WSA_INVALID_EVENT;}
+
+
+// ----------------------------------------------------------------------------
+//
 //! \brief <b>Check if the pointer is not NULL, release it and set 
 //! \brief it to NULL </b>
 //!
@@ -51,6 +74,12 @@
 //! \brief <b>Check if the pointer is not NULL, free it and set it to NULL </b>
 //!
 #define SAFE_FREE(Pointer)		        {if (Pointer != NULL) free(Pointer); Pointer = NULL;}
+
+// ----------------------------------------------------------------------------
+//
+//! \brief <b>Check if the pointer is not NULL, free it via IPP and set it to NULL </b>
+//!
+#define SAFE_FREE_IPP(Pointer)		        {if (Pointer != NULL) ippsFree(Pointer); Pointer = NULL;}
 
 // ----------------------------------------------------------------------------
 //

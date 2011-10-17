@@ -613,6 +613,30 @@ USBAPI BOOL CCONV CamUSB_WriteLUT(WORD wLUTIndex,
 USBAPI BOOL CCONV CamUSB_SaveCameraSettingsToFile(  char* szFileName, 
                                                     char* szSettingsName,
                                                     BYTE  nDevNr=0); 
+
+// --------------------------------------------------------------------------
+// CamUSB_SaveCameraSettingsToFileEx
+//! \brief		Writes the current camera setting in a INI file which can
+//! \brief		be applied by CamUSB_LoadCameraSettingsFromFile
+//!
+//! \param      dwFlags         optional flags to control the behavoir
+//!                             default => 0
+//! \param		szFileName	    file name of INI-file to write
+//! \param		szSettingsName	name of settings data which should be used
+//!	\param		nDevNr		Camera index number, that identifies the 
+//!							camera device which should be used with this
+//!							function
+//!
+//! \retval		TRUE		success
+//!	\retval		FALSE		error
+//!
+USBAPI BOOL CCONV CamUSB_SaveCameraSettingsToFileEx(  
+                                                  u32   dwFlags,
+                                                  char* szFileName, 
+                                                  char* szSettingsName,
+                                                  BYTE  nDevNr=0); 
+
+
 // --------------------------------------------------------------------------
 // CamUSB_LoadCameraSettingsFromFile
 //! \brief		Load the new camera setting from an INI file which can
@@ -630,7 +654,7 @@ USBAPI BOOL CCONV CamUSB_SaveCameraSettingsToFile(  char* szFileName,
 USBAPI BOOL CCONV CamUSB_LoadCameraSettingsFromFile(  char* szFileName,
                                                       char* szSettingsName,
                                                       BYTE  nDevNr=0);
-                                  
+
 //!@}
 
 #endif // _CAMUSB_API_EXT_H_

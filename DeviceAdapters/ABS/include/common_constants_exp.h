@@ -36,7 +36,6 @@
 #define FUNC_BLACKLEVEL				0x0000000000000400	//!< black level compensation
 #define FUNC_TIMESYNC	            0x0000000000000800	//!< time synchronization (#S_TIMESYNC_CAPS, #S_TIMESYNC_PARAMS)
 
-#define FUNC_BACKLIGHT_COMPENSATION	0x0000000000001000	//!< back light compensation
 #define FUNC_BADPIXEL_CORRECTION	0x0000000000002000	//!< bad pixel correction
 #define FUNC_FLIP					0x0000000000004000	//!< image flip (#S_FLIP_CAPS, #S_FLIP_PARAMS)
 #define FUNC_CLOCK					0x0000000000008000	//!< sensor pixel clock
@@ -46,7 +45,7 @@
 
 #define FUNC_MEMORY					0x0000000000080000	//!< camera memory (eeprom/flash) access
 
-#define FUNC_RESERVED				0x0000000020140000  //!< reserved for further use 
+#define FUNC_RESERVED				0x0000200020141000  //!< reserved for further use 
 
 #define FUNC_LOCK_UPDATE			0x0000000000200000	//!< lock sensor settings update
 #define FUNC_COLOR_CORRECTION		0x0000000000400000	//!< color correction S_COLOR_CORRECTION_PARAMS
@@ -56,27 +55,20 @@
 #define FUNC_BRIGHTNESS_CONTRAST	0x0000000002000000  //!< brightness / contrast S_BRIGHTNESS_CONTRAST_PARAMS
 #define FUNC_FRAMERATE				0x0000000004000000  //!< framerate control see #S_FRAMERATE_PARAMS
 
-//! \if DOXYGEN_INCLUDE_LINECAM \cond DON_T_DOCUMENT \endif
-//! \brief line camera control S_LINE_CAM_PARAMS
-//! \brief \ref example_6
-#define FUNC_LINE_CAM				0x0000000008000000
-//! \if DOXYGEN_INCLUDE_LINECAM \endcond \endif
-
 #define FUNC_JPEG					0x0000000010000000  //!< jpeg quqlity control S_JPEG_CAPS
 #define FUNC_TRIGGER_OPTIONS		0x0000000040000000	//!< trigger options control see #S_TRIGGER_OPTION_PARAMS
 #define FUNC_64BIT_FUNCID			0x0000000080000000	//!< set if 64bit FunctionID's are supported
 
-
 #define FUNC_RTC                    0x0000000100000000	//!< to get / set the RTC - values
 
-//! \if DOXYGEN_INCLUDE_VDL  \cond DON_T_DOCUMENT \endif
+//! \cond DOXYGEN_INCLUDE_VDL
 // VDL => "Video Data Logger"
 #define FUNC_VDL_STATUS			    0x0000000200000000	//!< to get the current VDL status
 #define FUNC_VDL_SETTINGS		    0x0000000400000000	//!< to get/set the VDL settings
 #define FUNC_VDL_TRIGGER            0x0000000800000000	//!< to trigger the VDL by software
 #define FUNC_VDL_DIR                0x0000001000000000	//!< to read directory informations
 #define FUNC_VDL_FILE               0x0000002000000000	//!< to read image files
-//! \if DOXYGEN_INCLUDE_VDL  \endcond \endif
+//! \endcond DOXYGEN_INCLUDE_VDL
 
 #define FUNC_EDGE_ENHANCE           0x0000004000000000	//!< egde enhancement
 #define FUNC_MULTISHOT_CFG          0x0000008000000000	//!< multishot configuration
@@ -88,7 +80,8 @@
 
 #define FUNC_LUT_POST               0x0000080000000000	//!< post LUT processing
 #define FUNC_COOLING                0x0000100000000000	//!< image sensor cooling
-#define FUNC_CENTROID               0x0000200000000000	//!< centroid configuration
+#define FUNC_COLOR_MAPPING          0x0000400000000000	//!< image color mapping
+#define FUNC_BACKLIGHT_COMPENSATION 0x0000800000000000  //!< back light compensation
 
 //!@}
 
@@ -129,17 +122,23 @@
 
 #define	ST_MT9V023M				0x0009			//!< Micron MT9V023 (WideVGA, Mono)
 #define ST_MT9V023C				0x4009			//!< Micron MT9V023 (Wide-VGA, Color)
+#define ST_MT9V023R				0x6009			//!< Aptina MT9V023 (Wide-VGA, RedClear)
 
 #define	ST_MT9V024M				0x000A			//!< Aptina MT9V024 (WideVGA, Mono)
 #define ST_MT9V024C				0x400A			//!< Aptina MT9V024 (Wide-VGA, Color)
+#define ST_MT9V024R				0x600A			//!< Aptina MT9V024 (Wide-VGA, RedClear)
+
+#define	ST_EV76C560M            0x000B			//!< E2V Semi EV76C560 (SXGA, Mono)
+#define ST_EV76C560C    		0x400B			//!< E2V Semi EV76C560 (SXGA, Color)
 
 #define	ST_FPA640x512			0x0010			//!< InGaAs-Sensor 640x512(ShortWave-IR VGA)
 #define	ST_FPA320x256           0x0011			//!< InGaAs-Sensor 320x256(ShortWave-IR QVGA)   
 #define	ST_FPA320x256_K         0x0012		    //!< InGaAs-Sensor 320x256TEC       (ShortWave-IR QVGA)
 #define	ST_FPA320x256_K22       0x0013			//!< InGaAs-Sensor 320x256TEC-2,2µm (ShortWave-IR QVGA)
 
-#define	ST_SIS002A              0x0020			//!< special image sensor 001A
-#define	ST_SIS002B              0x4021			//!< special image sensor 001B
+#define ST_SIS002A				0x0020			//!< Special Image Sensor SIS002A
+#define ST_SIS002B				0x4021			//!< Special Image Sensor SIS002B
+
 
 #define ST_SIS9010				0x8022			//!< Special Image Sensor SIS9010
 
@@ -168,8 +167,21 @@
 #define ST_ICX274C				0xC007			//!< Sony ICX274AQ (CCD, 2 MP, Color)
 
 #define ST_ICX282C				0xC008			//!< Sony ICX282AQ (CCD, 5 MP, Color)
-
 #define ST_ICX252C				0xC009			//!< Sony ICX252AQ (CCD, 3 MP, Color)
+
+#define	ST_KAI0XX50M			0x8010			//!< KODAK InterlineCCD KAI-0xx50 (generic)
+#define	ST_KAI01050M			0x8011			//!< KODAK InterlineCCD KAI-01050 Mono
+#define	ST_KAI01050C			0xC011			//!< KODAK InterlineCCD KAI-01050 Color
+#define	ST_KAI01150M			0x8012			//!< KODAK InterlineCCD KAI-01150 Mono
+#define	ST_KAI01150C			0xC012			//!< KODAK InterlineCCD KAI-01150 Color
+#define	ST_KAI02050M			0x8013			//!< KODAK InterlineCCD KAI-02050 Mono
+#define	ST_KAI02050C			0xC013			//!< KODAK InterlineCCD KAI-02050 Color
+#define	ST_KAI02150M			0x8014			//!< KODAK InterlineCCD KAI-02150 Mono
+#define	ST_KAI02150C			0xC014			//!< KODAK InterlineCCD KAI-02150 Color
+#define	ST_KAI04050M			0x8015			//!< KODAK InterlineCCD KAI-04050 Mono
+#define	ST_KAI04050C			0xC015			//!< KODAK InterlineCCD KAI-04050 Color
+#define	ST_KAI08050M			0x8016			//!< KODAK InterlineCCD KAI-08050 Mono
+#define	ST_KAI08050C			0xC016			//!< KODAK InterlineCCD KAI-08050 Color
 
 #define	ST_REDCLEAR     		0x2000			//!< if set if bayer mask with only red. Green and blue mask is cleared.
 #define	ST_COLOR				0x4000			//!< if set Color Sensor else Mono
@@ -248,10 +260,12 @@
 #define CPID_UK20XX				0x04			//!< platform UK20xx (2000/2001)
 #define CPID_UK30XX				0x06			//!< platform UK30xx
 #define CPID_UK99XX				0x07			//!< platform UK9900
+#define CPID_GMK9XX				0x08			//!< platform GMK9XX
 #define CPID_OEM001				0x20			//!< platform OEM001
 #define CPID_OEM002				0x21			//!< platform OEM002
 #define CPID_DK80XX				0x30			//!< platform DK80xx
 #define CPID_DK84XX				0x31			//!< platform DK84xx
+#define CPID_PK80XX				0x40			//!< platform PK80xx
 #define CPID_GK99XX				0x50			//!< platform GK99xx
 #define CPID_GK11XX				0x51			//!< platform GK11xx
 #define CPID_EMUDEV				0xFF			//!< platform emulated device, input from local system
@@ -276,7 +290,7 @@
 //!@{
 #define	MODE_TRIGGERED_SW		0x00			//!< software triggered mode
 #define	MODE_TRIGGERED_HW		0x01			//!< hardware triggered mode
-#define	MODE_CONTINUOUS         0x02            //!< continuous mode
+#define	MODE_CONTINUOUS         0x02            //!< continuous mode (live stream) 
 #define	MODE_EVENT_SYNC         0x05            //!< image content based trigger (with hardware triggered mode
 #define	MODE_EVENT              0x06            //!< image content based trigger (with continuous mode)
 #define	MODE_TIME               0x09            //!< time based image trigger
@@ -357,6 +371,8 @@
 
 //! Red-, Green- and Blue-Channel
 #define GAIN_RGB				(GAIN_RED|GAIN_GREEN|GAIN_BLUE)
+//! Red-, Green1/2 and Blue-Channel
+#define GAIN_RG12B				(GAIN_RED|GAIN_GREEN1|GAIN_GREEN2|GAIN_BLUE)
 
 //! generic gain channel mask
 #define GAIN_GENERIC_MASK   	(GAIN_RGB|GAIN_GREEN1|GAIN_GREEN2|GAIN_GLOBAL)
@@ -390,6 +406,25 @@
 #define GAINUNIT_10X			0x0002
 
 //!@}
+
+/////////////////////////////////////////////////////////////////////////////
+//! \name Constants: White Balance
+//!  used by #FUNC_WHITE_BALANCE
+/////////////////////////////////////////////////////////////////////////////
+//!@{
+#define WB_MODE_INVALID     0x0000  //!< invalid mode
+#define WB_MODE_ONE_PUSH    0x0001  //!< default mode single calculation
+#define WB_MODE_MANUAL      0x0002  //!< set balance directly
+
+//! automatic mode try to set optimal balance and adapt permanently
+#define WB_MODE_AUTOMATIC   0x0004  
+                                          
+#define WB_OPT_INVALID      0x0000  //!< invalid option
+#define WB_OPT_ROI_IMGAGE   0x0001  //!< ROI is releative to current image settings (default)
+#define WB_OPT_ROI_SENSOR   0x0002  //!< ROI is releative to full visible sensor size (bin,skip, resize are ignored)
+#define WB_OPT_INDOOR       0x0100  //!< indoor artificial light (3200k)
+#define WB_OPT_OUTDOOR      0x0200  //!< outdoor (5800k)
+#define WB_OPT_SODIUM       0x0400  //!< sodium vapor lamp (590nm)
 
 /////////////////////////////////////////////////////////////////////////////
 //! \name Constants: I/O Port Types
@@ -493,6 +528,7 @@
 #define MEMORY_TYPE_NON_VOLATILE	0x0020		//!< memory is non-volatile
 #define MEMORY_TYPE_READ			0x0100		//!< memory can be read
 #define MEMORY_TYPE_WRITE			0x0200		//!< memory can be written
+#define MEMORY_TYPE_CONFIG_DATA 	0x8000		//!< memory belongs to config data
 
 //!@}
 
@@ -563,6 +599,8 @@
 #define BPC_OPTION_SETDATA			0x80000000	    //!< to write bad pixel data to camera memory
 #define BPC_OPTION_GETDATA			0x40000000	    //!< to read bad pixel data from camera memory
 #define BPC_OPTION_STATE			0x00000001	    //!< badpixel correction state will be changed (SET) see #S_BADPIXEL_PARAMS::dwState
+#define BPC_OPTION_MODE 			0x00000002	    //!< badpixel correction mode see #BPC_MODE_NN
+#define BPC_OPTION_MASK			    0xC0000003	    //!< mask all options
 
 //!@}
 
@@ -575,6 +613,19 @@
 #define BPC_STATE_DISABLED			0x00000000	    //!< badpixel correction will be inactive
 #define BPC_STATE_ENABLED			0x00000001	    //!< badpixel correction will be performed for each image
 #define BPC_STATE_INVCFG			0x80000000	    //!< invalid badpixel correction data (Only for Get valid)
+#define BPC_STATE_MASK			    0x80000001	    //!< mask all states
+
+//!@}
+
+////////////////////////////////////////////////////////////////////////////
+//! \name Constants: BadPixel Correction Mode
+//!  used by #FUNC_BADPIXEL_CORRECTION see #S_BADPIXEL_PARAMS::dwMode
+/////////////////////////////////////////////////////////////////////////////
+//!@{
+
+#define BPC_MODE_NN     			0x00000000	    //!< modus nearest neighbour
+#define BPC_MODE_LINE_H			    0x00000001	    //!< modus linear horizontal
+#define BPC_MODE_MASK			    0x00000001	    //!< mask all modes
 
 //!@}
 
@@ -643,6 +694,8 @@
 #define SHCO_FLAG_EXPOSURE_DO  			0x00000030		//!< exposure (for dark offset) value is valid #S_SHADING_CORRECTION_PARAMS::dwExposureDO
 #define SHCO_FLAG_DARK_REF_SET			0x00001000		//!< indicate that a dark reference is present	
 #define SHCO_FLAG_WHITE_REF_SET			0x00002000		//!< indicate that a white reference is present
+#define SHCO_FLAG_DONT_PACK  			0x00010000		//!< indicate that the data should not be packed befor they are stored on disk/mem
+#define SHCO_FLAG_IGNORE_STYPE 			0x00020000		//!< indicate that sensortype checkings are ignored 
 
 //!@}
 
@@ -657,7 +710,7 @@
 
 //!@}
 
-//! \if DOXYGEN_INCLUDE_LINECAM \cond DON_T_DOCUMENT \endif
+//! \cond DOXYGEN_INCLUDE_LINECAM
 /////////////////////////////////////////////////////////////////////////////
 //! \name Constants: Line Camera Mode
 //!  used by #FUNC_LINE_CAM
@@ -668,7 +721,7 @@
 #define	LINECAM_LINETRIG_TRIG_HW	0x0001		//!< line camera line trigger is hardware triggered
 
 //!@}
-//! \if DOXYGEN_INCLUDE_LINECAM \endcond \endif
+//! \endcond DOXYGEN_INCLUDE_LINECAM
 
 /////////////////////////////////////////////////////////////////////////////
 //! \name Constants: Trigger Options
@@ -712,37 +765,60 @@
 
 #define X_SKIP_MASK		0x0000FFFF
 #define X_SKIP_SHIFT	0
-#define X_SKIP_NONE		0x00000000		//!< no x skip
-#define X_SKIP_2X		0x00000001		//!< 2 x skip (use 2 pixel skip  2 pixel,..)
-#define X_SKIP_3X		0x00000002		//!< 3 x skip (use 2 pixel skip  4 pixel,..)
-#define X_SKIP_4X		0x00000004		//!< 4 x skip (use 2 pixel skip  6 pixel,..)
-#define X_SKIP_5X		0x00000008		//!< 5 x skip (use 2 pixel skip  8 pixel,..)
-#define X_SKIP_6X		0x00000010		//!< 6 x skip (use 2 pixel skip 10 pixel,..)
-#define X_SKIP_7X		0x00000020		//!< 7 x skip (use 2 pixel skip 12 pixel,..)
-#define X_SKIP_8X		0x00000040		//!< 8 x skip (use 2 pixel skip 14 pixel,..)
-#define X_SKIP_9X		0x00000080		//!< 9 x skip (use 2 pixel skip 16 pixel,..)
+#define X_SKIP_NONE		0x00000000		//!<  no x skip
+#define X_SKIP_2X		0x00000001		//!<  2x X skip (use 2 pixel skip  2 pixel,..)
+#define X_SKIP_3X		0x00000002		//!<  3x X skip (use 2 pixel skip  4 pixel,..)
+#define X_SKIP_4X		0x00000004		//!<  4x X skip (use 2 pixel skip  6 pixel,..)
+#define X_SKIP_5X		0x00000008		//!<  5x X skip (use 2 pixel skip  8 pixel,..)
+#define X_SKIP_6X		0x00000010		//!<  6x X skip (use 2 pixel skip 10 pixel,..)
+#define X_SKIP_7X		0x00000020		//!<  7x X skip (use 2 pixel skip 12 pixel,..)
+#define X_SKIP_8X		0x00000040		//!<  8x X skip (use 2 pixel skip 14 pixel,..)
+#define X_SKIP_9X		0x00000080		//!<  9x X skip (use 2 pixel skip 16 pixel,..)
+#define X_SKIP_10X		0x00000100		//!< 10x X skip (use 2 pixel skip 16 pixel,..)
+#define X_SKIP_11X		0x00000200		//!< 11x X skip (use 2 pixel skip 16 pixel,..)
+#define X_SKIP_12X		0x00000400		//!< 12x X skip (use 2 pixel skip 16 pixel,..)
+#define X_SKIP_13X		0x00000800		//!< 13x X skip (use 2 pixel skip 16 pixel,..)
+#define X_SKIP_14X		0x00001000		//!< 14x X skip (use 2 pixel skip 16 pixel,..)
+#define X_SKIP_15X		0x00002000		//!< 15x X skip (use 2 pixel skip 16 pixel,..)
+#define X_SKIP_16X		0x00004000		//!< 16x X skip (use 2 pixel skip 16 pixel,..)
 
 #define Y_SKIP_MASK		0xFFFF0000
 #define Y_SKIP_SHIFT	16
 #define Y_SKIP_NONE		0x00000000		//!< no y skip
-#define Y_SKIP_2X		0x00010000		//!< 2 y skip (use 2 pixel skip  2 pixel,..)
-#define Y_SKIP_3X		0x00020000		//!< 3 y skip (use 2 pixel skip  4 pixel,..)
-#define Y_SKIP_4X		0x00040000		//!< 4 y skip (use 2 pixel skip  6 pixel,..)
-#define Y_SKIP_5X		0x00080000		//!< 5 y skip (use 2 pixel skip  8 pixel,..)
-#define Y_SKIP_6X		0x00100000		//!< 6 y skip (use 2 pixel skip 10 pixel,..)
-#define Y_SKIP_7X		0x00200000		//!< 7 y skip (use 2 pixel skip 12 pixel,..)
-#define Y_SKIP_8X		0x00400000		//!< 8 y skip (use 2 pixel skip 14 pixel,..)
-#define Y_SKIP_9X		0x00800000		//!< 9 y skip (use 2 pixel skip 16 pixel,..)
+#define Y_SKIP_2X		0x00010000		//!<  2x Y skip (use 2 pixel skip  2 pixel,..)
+#define Y_SKIP_3X		0x00020000		//!<  3x Y skip (use 2 pixel skip  4 pixel,..)
+#define Y_SKIP_4X		0x00040000		//!<  4x Y skip (use 2 pixel skip  6 pixel,..)
+#define Y_SKIP_5X		0x00080000		//!<  5x Y skip (use 2 pixel skip  8 pixel,..)
+#define Y_SKIP_6X		0x00100000		//!<  6x Y skip (use 2 pixel skip 10 pixel,..)
+#define Y_SKIP_7X		0x00200000		//!<  7x Y skip (use 2 pixel skip 12 pixel,..)
+#define Y_SKIP_8X		0x00400000		//!<  8x Y skip (use 2 pixel skip 14 pixel,..)
+#define Y_SKIP_9X		0x00800000		//!<  9x Y skip (use 2 pixel skip 16 pixel,..)
+#define Y_SKIP_10X		0x01000000		//!< 10x Y skip (use 2 pixel skip 16 pixel,..)
+#define Y_SKIP_11X		0x02000000		//!< 11x Y skip (use 2 pixel skip 16 pixel,..)
+#define Y_SKIP_12X		0x04000000		//!< 12x Y skip (use 2 pixel skip 16 pixel,..)
+#define Y_SKIP_13X		0x08000000		//!< 13x Y skip (use 2 pixel skip 16 pixel,..)
+#define Y_SKIP_14X		0x10000000		//!< 14x Y skip (use 2 pixel skip 16 pixel,..)
+#define Y_SKIP_15X		0x20000000		//!< 15x Y skip (use 2 pixel skip 16 pixel,..)
+#define Y_SKIP_16X		0x40000000		//!< 16x Y skip (use 2 pixel skip 16 pixel,..)
+
 
 #define XY_SKIP_NONE	0x00000000		//!< no xy skip
-#define XY_SKIP_2X		0x00010001		//!< 2 xy skip (use 2 pixel skip  2 pixel,..)
-#define XY_SKIP_3X		0x00020002		//!< 3 xy skip (use 2 pixel skip  4 pixel,..)
-#define XY_SKIP_4X		0x00040004		//!< 4 xy skip (use 2 pixel skip  6 pixel,..)
-#define XY_SKIP_5X		0x00080008		//!< 5 xy skip (use 2 pixel skip  8 pixel,..)
-#define XY_SKIP_6X		0x00100010		//!< 6 xy skip (use 2 pixel skip 10 pixel,..)
-#define XY_SKIP_7X		0x00200020		//!< 7 xy skip (use 2 pixel skip 12 pixel,..)
-#define XY_SKIP_8X		0x00400040		//!< 8 xy skip (use 2 pixel skip 14 pixel,..)
-#define XY_SKIP_9X		0x00800080		//!< 9 xy skip (use 2 pixel skip 16 pixel,..)
+#define XY_SKIP_2X		0x00010001		//!<  2x XY skip (use 2 pixel skip  2 pixel,..)
+#define XY_SKIP_3X		0x00020002		//!<  3x XY skip (use 2 pixel skip  4 pixel,..)
+#define XY_SKIP_4X		0x00040004		//!<  4x XY skip (use 2 pixel skip  6 pixel,..)
+#define XY_SKIP_5X		0x00080008		//!<  5x XY skip (use 2 pixel skip  8 pixel,..)
+#define XY_SKIP_6X		0x00100010		//!<  6x XY skip (use 2 pixel skip 10 pixel,..)
+#define XY_SKIP_7X		0x00200020		//!<  7x XY skip (use 2 pixel skip 12 pixel,..)
+#define XY_SKIP_8X		0x00400040		//!<  8x XY skip (use 2 pixel skip 14 pixel,..)
+#define XY_SKIP_9X		0x00800080		//!<  9x XY skip (use 2 pixel skip 16 pixel,..)
+#define XY_SKIP_10X		0x01000100		//!< 10x XY skip (use 2 pixel skip 16 pixel,..)
+#define XY_SKIP_11X		0x02000200		//!< 11x XY skip (use 2 pixel skip 16 pixel,..)
+#define XY_SKIP_12X		0x04000400		//!< 12x XY skip (use 2 pixel skip 16 pixel,..)
+#define XY_SKIP_13X		0x08000800		//!< 13x XY skip (use 2 pixel skip 16 pixel,..)
+#define XY_SKIP_14X		0x10001000		//!< 14x XY skip (use 2 pixel skip 16 pixel,..)
+#define XY_SKIP_15X		0x20002000		//!< 15x XY skip (use 2 pixel skip 16 pixel,..)
+#define XY_SKIP_16X		0x40004000		//!< 16x XY skip (use 2 pixel skip 16 pixel,..)
+
 
 //!@}
 
@@ -756,37 +832,58 @@
 
 #define X_BIN_MASK		0x0000FFFF
 #define X_BIN_SHIFT		0
-#define X_BIN_NONE		0x00000000		//!< no X bin
-#define X_BIN_2X		0x00000001		//!< 2x X bin
-#define X_BIN_3X		0x00000002		//!< 3x X bin
-#define X_BIN_4X		0x00000004		//!< 4x X bin
-#define X_BIN_5X		0x00000008		//!< 5x X bin
-#define X_BIN_6X		0x00000010		//!< 6x X bin
-#define X_BIN_7X		0x00000020		//!< 7x X bin
-#define X_BIN_8X		0x00000040		//!< 8x X bin
-#define X_BIN_9X		0x00000080		//!< 9x X bin
+#define X_BIN_NONE		0x00000000		//!<  no X bin
+#define X_BIN_2X		0x00000001		//!<  2x X bin
+#define X_BIN_3X		0x00000002		//!<  3x X bin
+#define X_BIN_4X		0x00000004		//!<  4x X bin
+#define X_BIN_5X		0x00000008		//!<  5x X bin
+#define X_BIN_6X		0x00000010		//!<  6x X bin
+#define X_BIN_7X		0x00000020		//!<  7x X bin
+#define X_BIN_8X		0x00000040		//!<  8x X bin
+#define X_BIN_9X		0x00000080		//!<  9x X bin
+#define X_BIN_10X		0x00000100		//!< 10x X bin (use 2 pixel bin 16 pixel,..)
+#define X_BIN_11X		0x00000200		//!< 11x X bin (use 2 pixel bin 16 pixel,..)
+#define X_BIN_12X		0x00000400		//!< 12x X bin (use 2 pixel bin 16 pixel,..)
+#define X_BIN_13X		0x00000800		//!< 13x X bin (use 2 pixel bin 16 pixel,..)
+#define X_BIN_14X		0x00001000		//!< 14x X bin (use 2 pixel bin 16 pixel,..)
+#define X_BIN_15X		0x00002000		//!< 15x X bin (use 2 pixel bin 16 pixel,..)
+#define X_BIN_16X		0x00004000		//!< 16x X bin (use 2 pixel bin 16 pixel,..)
 
 #define Y_BIN_MASK		0xFFFF0000
 #define Y_BIN_SHIFT		16
-#define Y_BIN_NONE		0x00000000		//!< no Y bin
-#define Y_BIN_2X		0x00010000		//!< 2x Y bin
-#define Y_BIN_3X		0x00020000		//!< 3x Y bin
-#define Y_BIN_4X		0x00040000		//!< 4x Y bin
-#define Y_BIN_5X		0x00080000		//!< 5x Y bin
-#define Y_BIN_6X		0x00100000		//!< 6x Y bin
-#define Y_BIN_7X		0x00200000		//!< 7x Y bin
-#define Y_BIN_8X		0x00400000		//!< 8x Y bin
-#define Y_BIN_9X		0x00800000		//!< 9x Y bin
+#define Y_BIN_NONE		0x00000000		//!<  no Y bin
+#define Y_BIN_2X		0x00010000		//!<  2x Y bin
+#define Y_BIN_3X		0x00020000		//!<  3x Y bin
+#define Y_BIN_4X		0x00040000		//!<  4x Y bin
+#define Y_BIN_5X		0x00080000		//!<  5x Y bin
+#define Y_BIN_6X		0x00100000		//!<  6x Y bin
+#define Y_BIN_7X		0x00200000		//!<  7x Y bin
+#define Y_BIN_8X		0x00400000		//!<  8x Y bin
+#define Y_BIN_9X		0x00800000		//!<  9x Y bin
+#define Y_BIN_10X		0x01000000		//!< 10x Y bin (use 2 pixel bin 16 pixel,..)
+#define Y_BIN_11X		0x02000000		//!< 11x Y bin (use 2 pixel bin 16 pixel,..)
+#define Y_BIN_12X		0x04000000		//!< 12x Y bin (use 2 pixel bin 16 pixel,..)
+#define Y_BIN_13X		0x08000000		//!< 13x Y bin (use 2 pixel bin 16 pixel,..)
+#define Y_BIN_14X		0x10000000		//!< 14x Y bin (use 2 pixel bin 16 pixel,..)
+#define Y_BIN_15X		0x20000000		//!< 15x Y bin (use 2 pixel bin 16 pixel,..)
+#define Y_BIN_16X		0x40000000		//!< 16x Y bin (use 2 pixel bin 16 pixel,..)
 
-#define XY_BIN_NONE		0x00000000		//!< no XY bin
-#define XY_BIN_2X		0x00010001		//!< 2x XY bin
-#define XY_BIN_3X		0x00020002		//!< 3x XY bin
-#define XY_BIN_4X		0x00040004		//!< 4x XY bin
-#define XY_BIN_5X		0x00080008		//!< 5x XY bin
-#define XY_BIN_6X		0x00100010		//!< 6x XY bin
-#define XY_BIN_7X		0x00200020		//!< 7x XY bin
-#define XY_BIN_8X		0x00400040		//!< 8x XY bin
-#define XY_BIN_9X		0x00800080		//!< 9x XY bin
+#define XY_BIN_NONE		0x00000000		//!<  no XY bin
+#define XY_BIN_2X		0x00010001		//!<  2x XY bin
+#define XY_BIN_3X		0x00020002		//!<  3x XY bin
+#define XY_BIN_4X		0x00040004		//!<  4x XY bin
+#define XY_BIN_5X		0x00080008		//!<  5x XY bin
+#define XY_BIN_6X		0x00100010		//!<  6x XY bin
+#define XY_BIN_7X		0x00200020		//!<  7x XY bin
+#define XY_BIN_8X		0x00400040		//!<  8x XY bin
+#define XY_BIN_9X		0x00800080		//!<  9x XY bin
+#define XY_BIN_10X		0x01000100		//!< 10x XY bin (use 2 pixel bin 16 pixel,..)
+#define XY_BIN_11X		0x02000200		//!< 11x XY bin (use 2 pixel bin 16 pixel,..)
+#define XY_BIN_12X		0x04000400		//!< 12x XY bin (use 2 pixel bin 16 pixel,..)
+#define XY_BIN_13X		0x08000800		//!< 13x XY bin (use 2 pixel bin 16 pixel,..)
+#define XY_BIN_14X		0x10001000		//!< 14x XY bin (use 2 pixel bin 16 pixel,..)
+#define XY_BIN_15X		0x20002000		//!< 15x XY bin (use 2 pixel bin 16 pixel,..)
+#define XY_BIN_16X		0x40004000		//!< 16x XY bin (use 2 pixel bin 16 pixel,..) 
 
 //!@}
 
@@ -852,6 +949,11 @@
 #define OVERLAY_FACTOR_Y_7		0x00000700  //!< 7 * default y-size
 #define OVERLAY_FACTOR_Y_8		0x00000800  //!< 8 * default y-size
 
+#define OVERLAY_FACTOR_X_MASK   0x000000F0  //!< x size factor mask
+#define OVERLAY_FACTOR_X_SHIFT           4  //!< x shift value
+#define OVERLAY_FACTOR_Y_MASK   0x00000F00  //!< y size factor mask
+#define OVERLAY_FACTOR_Y_SHIFT           8  //!< y shift value
+
 //! \brief xor the time stamp in the image see #S_TIMESTAMP_OVERLAY_PARAMS
 #define OVERLAY_XOR				0x80000000
 //! \brief write a black background with white or blue letters in the image
@@ -899,6 +1001,33 @@
 //!@}
 
 
+/////////////////////////////////////////////////////////////////////////////
+//! \name Constants: image color mapping
+//! used by #FUNC_COLOR_MAPPING
+/////////////////////////////////////////////////////////////////////////////
+//!@{
+
+#define COMA_STATE_DISABLED     (0x0000)     //!< disable color / bit mapping
+#define COMA_STATE_ENABLED      (0x0001)     //!< enable color / bit mapping
+#define COMA_STATE_MASK         (0x0001)     //!< state mask 
+
+#define COMA_MODE_COLORMAPPING  (0x0002)     //!< color mapping modus
+#define COMA_MODE_BITMAPPING    (0x0004)     //!< bit mapping modus
+#define COMA_MODE_MASK          (0x0006)     //!< mask the color mapping mode
+
+#define COMA_MAPPING_08         (0x0000)     //!< 8/16Bit source data will be mapped to 3 *  8Bit BGR
+#define COMA_MAPPING_16         (0x0010)     //!< 8/16Bit source data will be mapped to 3 * 16Bit BGR
+#define COMA_MAPPING_MASK       (0x0010)     //!< mask the source destination mapping
+
+//! If the flag data is set, the data passed by a #CamUSB_SetFunction call 
+//! (#S_COLOR_MAPPING_DATA_CM, #S_COLOR_MAPPING_DATA_BM) is used to setup the
+//! color mapping LUT. If the flag is set during a #CamUSB_GetFunction call, 
+//! the current mapping data is requested to be returned within the data pointer.
+#define COMA_FLAG_DATA          (0x8000)     
+#define COMA_FLAG_MASK          (0x8000)    //!< mask the supported flags
+
+//!@}
+
 
 /////////////////////////////////////////////////////////////////////////////
 //! \name Constants: Image Header PayLoad-Types
@@ -921,9 +1050,15 @@
 #define	PE_MFI_GET_TOTAL_FIELDS(payload_ext)  (((payload_ext & PAYLOAD_EXT_TYPE_MASK)==PAYLOAD_EXT_TYPE_MULT_FIELD_IMG) ? ((payload_ext & PE_MFI_TOTAL_FIELD_MASK)>>4) : 0)
 #define	PE_MFI_GET_CURRENT_FIELD(payload_ext) (((payload_ext & PAYLOAD_EXT_TYPE_MASK)==PAYLOAD_EXT_TYPE_MULT_FIELD_IMG) ?  (payload_ext & PE_MFI_CURRENT_FIELD_MASK)   : 0)
 
+#define PAYLOAD_EXT_TYPE_APPENDED_DATA  0x4000  //!< data appended flag
+#define EXTENSION_TYPE_HISTOGRAMM       0x0002  //!< histogram 256*4byte entries appended
+#define EXTENSION_TYPE_HIST_XYPERCENT   0x0004  //!< histogram xy percent value added (4Byte)
+#define EXTENSION_TYPE_HIST_OVERFLW     0x0008  //!< histogram count pixel equal above overflow level added (4Byte)
+#define EXTENSION_TYPE_HIST_UNDERFLW    0x0010  //!< histogram count pixel equal above underflow level added (4Byte)
+
 //!@}
 
-//! \if DOXYGEN_INCLUDE_VDL  \cond DON_T_DOCUMENT \endif
+//! \cond DOXYGEN_INCLUDE_VDL
 /////////////////////////////////////////////////////////////////////////////
 //! \name Constants: Video Data Logger (VDL)
 //! \brief S_VDL_STATUS_RETVALS::wVDLState  Bit definitions
@@ -1009,7 +1144,7 @@
 #define VDL_FILE_MAX_BUFSIZE    0x00010000
 
 //!@}
-//! \if DOXYGEN_INCLUDE_VDL  \endcond \endif
+//! \endcond DOXYGEN_INCLUDE_VDL
 
 /////////////////////////////////////////////////////////////////////////////
 //! \name Constants: Real Time Clock (RTC)
@@ -1036,6 +1171,7 @@
 // misc
 #define STR_DeviceName                  "DeviceName"
 #define STR_SensorID                    "SensorID"
+#define STR_SerialNo                    "SerialNo"
 #define STR_Name                        "Name"
 #define STR_ShortName                   "ShortName"
 #define STR_FunctionIDs                 "FunctionIDs"
@@ -1050,6 +1186,7 @@
 #define STR_Res_OffsetY					"Res_OffsetY"
 #define STR_Res_SizeX					"Res_SizeX"
 #define STR_Res_SizeY					"Res_SizeY"
+#define STR_Res_Resize        "Res_Resize"
 // framerate
 #define STR_FPS_Framerate				"FPS_Framerate"
 #define STR_FPS_MaxFramerate			"FPS_MaxFramerate"
@@ -1115,6 +1252,9 @@
 #define STR_JPG_JpegFormat              "JPG_JpegFormat"
 // Black level compensation
 #define STR_BLL_BLLActive               "BLL_BLLActive"
+#define STR_BLL_BLLFlags                "BLL_BLLFlags"
+#define STR_BLL_BLLValue                "BLL_BLLValue"
+
 // SensorClock
 #define STR_CLK_SensorClk               "CLK_SensorClk"
 // Line Camera
@@ -1210,6 +1350,9 @@
 #define STR_TRIGGEROPT_CYCTIME      "TRIGGEROPT_CYCTIME"
 #define STR_TRIGGEROPT_MINPULS      "TRIGGEROPT_MINPULS"
 
+// color mapping configuration
+#define STR_COMA_FileName           "COMA_FileName"
+
 //!@}
 //! \endcond
 
@@ -1233,11 +1376,16 @@
 
 #define STATUS_MASK_ALL_ERROR		0x000003FF	//!< mask for all errors
 
-#define STATUS_MASK_POWER      		0x03000000	//!< mask for all power settings
+#define STATUS_NO_STATIC_CONFIG     0x00100000  //!< no valid static configuration data present
+#define STATUS_NO_CAMERA_CONFIG     0x00200000  //!< no valid camera configuration data present
+#define STATUS_NO_SENSOR_CONFIG     0x00400000  //!< no valid sensor configuration data present
+
+#define STATUS_MASK_POWER      		0x07000000	//!< mask for all power settings
 #define STATUS_POWER_FULL_READY     0x00000000  //!< no power restrictions detected or checked
 #define STATUS_POWER_NO_CAMERA      0x01000000  //!< power restrictions detected => camera not fully initialized
-#define STATUS_POWER_NO_COOLING     0x02000000  //!< no power restrictions detected or checked
-#define STATUS_POWER_CHECKED        0x40000000  //!< no power restrictions checked
+#define STATUS_POWER_NO_COOLING     0x02000000  //!< power restrictions detected => cooling not possible
+#define STATUS_POWER_FAILED         0x04000000  //!< power restrictions test failed
+#define STATUS_POWER_CHECKED        0x40000000  //!< power restrictions checked
 
 #define STATUS_JUST_FW_START		0x80000000	//!< indicate FW was started
 
@@ -1303,23 +1451,23 @@
 //!@{
 
 #ifdef _LANGUAGE_C	
-	
+
 //! \brief Modul types for  function CamDev_GetVersion
 enum EModulType
 {
-	EMT_CamDevAPI,		//!< CamDev API DLL
-	EMT_DriverUSB,		//!< USB driver
-	EMT_DriverGigE,		//!< GigE filter driver
-	EMT_DriverLibUSB,	//!< USB driver based on "LibUSB - project"
+    EMT_CamDevAPI,		//!< CamDev API DLL
+    EMT_DriverUSB,		//!< USB driver
+    EMT_DriverGigE,		//!< GigE filter driver
+    EMT_DriverLibUSB,	//!< USB driver based on "LibUSB - project"
 };
 
 //! \brief Modul types for  function CamDev_GetVersion
 enum ECameraType
 {
-	ECT_All		= 0,	//!< all supported cameras
-	ECT_USB		= 1,	//!< only USB cameras
-	ECT_GigE	= 2,	//!< only GigE cameras
-	ECT_LibUSB	= 4,	//!< only USB cameras with driver based on "LibUSB - project"
+    ECT_All		= 0,	//!< all supported cameras
+    ECT_USB		= 1,	//!< only USB cameras
+    ECT_GigE	= 2,	//!< only GigE cameras
+    ECT_LibUSB	= 4,	//!< only USB cameras with driver based on "LibUSB - project"
 };
 
 #endif
@@ -1429,6 +1577,8 @@ enum ECameraType
 
 #define retCONFIG_SIZE			0x0000006A		//!< invalid size of configuration data
 #define retCONFIG_CRC			0x0000006B		//!< invalid CRC of configuration data
+#define retCONFIG_TYPE			0x0000006C		//!< invalid type of configuration data
+#define retCONFIG_PARAM			0x0000006D		//!< invalid configuration data parameter or not found
 
 #define retCAPMODE				0x00000070		//!< unsupported capture mode
 #define retCAPMODE_IMGCOUNT		0x00000071		//!< too many images requested for capture
@@ -1630,7 +1780,7 @@ enum ECameraType
 
 #define	retBUSY					0x00000412		// peripherial device already running
 
-
+#define retINVALIDSECTION       0x0000041E      // Invalid valid section name
 #define retINVALIDPARAM			0x0000041F      // A parameter passed to the function is invalid
 #define	retFORMAT				0x00000420		// Error in Host-Protocol (Format)
 #define	retFORMAT_CMD			0x00000421		// Error in Host-Protocol (Format cmd out)
@@ -1645,7 +1795,7 @@ enum ECameraType
 #define	retABORT				0x00000442		//async. operation aborted
 #define	retIMAGECONVERTABORT	0x00000443		//abort image convert
 
-
+#define	retRECONNECT     		0x000004FD		//!< Camera needs to be reconnected to USB
 #define	retREINIT				0x000004FE		//!< Camera needs to be reconfigured
 #define	retRESUME				0x000004FF		//!< Camera resumed from suspension
 #define	retCAMREMOVED			0x00000500		//!< Camera removed

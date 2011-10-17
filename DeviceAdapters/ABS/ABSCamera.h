@@ -1,55 +1,49 @@
-/////////////////////////////////////////////////////////////////////////////
-// Name:        ABSCamera.h
-// Purpose:     Definition der Kameraklasse als Adapter für µManager
-// Author:      Michael Himmelreich
-// Created:     31. Juli 2007
-// Copyright:   (c) Michael Himmelreich
-// Project:     ConfoVis
-/////////////////////////////////////////////////////////////////////////////
+#ifndef __ABSCAMERA_H__
+#define __ABSCAMERA_H__
 
+#ifdef WIN32
+   #define WIN32_LEAN_AND_MEAN
+   #include <windows.h>   
+   #define snprintf _snprintf 
+   #pragma warning(disable : 4996) // disable warning for deperecated CRT functions on Windows 
+#endif
 
+#include "MMDevice.h"
+#include "MMDeviceConstants.h"
+#include "ModuleInterface.h"
+#include "DeviceBase.h"
+#include "ImgBuffer.h"
+#include "DeviceThreads.h"
+#include <string>
+#include <map>
+#include <algorithm>
+using namespace std;
 
-#ifndef _ABSCAMERA_H_
-#define _ABSCAMERA_H_
+// ---------------------------Camera - API ------------------------------------
+#include "camusb_api.h"				                // ABS Camera API
+#include "camusb_api_util.h"			            // ABS Camera API utilities
+#include "camusb_api_ext.h"			                // ABS Camera API extended
+#include "safeutil.h"						        // macros to delete release pointers safely
+#include "ABSDelayLoadDll.h"						// add support for Delay loading of an dll
 
-#include "./../../MMDevice/MMDevice.h"
-#include "./../../MMDevice/DeviceBase.h"
-#include "./../../MMDevice/DeviceUtils.h"
-#include "./../../MMDevice/ImgBuffer.h"
-#include "./include/camusb_api.h"
-
-#include <string>	// std::string
-#include <vector>	// std::string
-#include <map>		// std::map
 
 //////////////////////////////////////////////////////////////////////////////
 // Error codes
 //
 #define ERR_UNKNOWN_MODE         102
 #define ERR_UNKNOWN_POSITION     103
-#define ERR_BUSY_ACQIRING        104
+#define ERR_IN_SEQUENCE          104
+#define ERR_SEQUENCE_INACTIVE    105
+#define SIMULATED_ERROR				200
+#define ERR_CAMERA_API_BASE      200
 
-#define ABSCAM_CIRCULAR_BUFFER_IMG_COUNT  (1)
+typedef vector<S_CAMERA_LIST_EX> CCameraList;
 
-//////////////////////////////////////////////////////////////////////////////
-// structs
-//
-//! \brief list of supported pixeltypes (supported for this application)
-typedef struct tagSupportedPixelTypes
-{
-   std::string strPixelType;
-   unsigned int dwPixelType;
-} SupportedPixelTypes;
-
-// pixeltype list typedef
-typedef std::vector<SupportedPixelTypes> CSupportedPixeltypes;
-
-
-class ABSCamera : public CCameraBase<ABSCamera>  
+class CABSCamera : public CCameraBase<CABSCamera>  
 {
 public:
-   ABSCamera(int iDeviceNumber, const char* szDeviceName);
-   ~ABSCamera();
+   CABSCamera();
+   ~CABSCamera();
   
    // MMDevice API
    // ------------
@@ -57,16 +51,11 @@ public:
    int Shutdown();
   
    void GetName(char* name) const;      
-   bool Busy();
    
    // MMCamera API
    // ------------
    int SnapImage();
    const unsigned char* GetImageBuffer();
-   const unsigned int* GetImageBufferAsRGB32();
-   unsigned int GetNumberOfComponents() const;
-   int GetComponentName(unsigned channel, char* name);
-         
    unsigned GetImageWidth() const;
    unsigned GetImageHeight() const;
    unsigned GetImageBytesPerPixel() const;
@@ -74,106 +63,171 @@ public:
    long GetImageBufferSize() const;
    double GetExposure() const;
    void SetExposure(double exp);
-   int SetROI( unsigned x, unsigned y, unsigned xSize, unsigned ySize ); 
-   int GetROI( unsigned& x, unsigned& y, unsigned& xSize, unsigned& ySize ); 
+   int SetROI(unsigned x, unsigned y, unsigned xSize, unsigned ySize); 
+   int GetROI(unsigned& x, unsigned& y, unsigned& xSize, unsigned& ySize); 
    int ClearROI();
-   
-   virtual int StartSequenceAcquisition(long numImages, double interval_ms, bool stopOnOverflow);
-   virtual int StartSequenceAcquisition(double interval)
+   int PrepareSequenceAcqusition()
    {
-     return StartSequenceAcquisition(LONG_MAX, interval, false);   
+         return DEVICE_OK;
    }
-   virtual int StopSequenceAcquisition();
-   virtual int PrepareSequenceAcqusition();
-
-   double GetNominalPixelSizeUm() const {return fNominalPixelSizeUm;}
-   double GetPixelSizeUm() const {return fNominalPixelSizeUm * GetBinning();}
-   
+   int StartSequenceAcquisition(double interval);
+   int StartSequenceAcquisition(long numImages, double interval_ms, bool stopOnOverflow);
+   int StopSequenceAcquisition();
+   int InsertImage();
+   int ThreadRun();
+   bool IsCapturing();
+   void OnThreadExiting() throw(); 
+   double GetNominalPixelSizeUm() const {return nominalPixelSizeUm_;}
+   double GetPixelSizeUm() const {return nominalPixelSizeUm_ * GetBinning();}
    int GetBinning() const;
-   int SetBinning(int binSize);
-
+   int SetBinning(int bS);
    int IsExposureSequenceable(bool& isSequenceable) const {isSequenceable = false; return DEVICE_OK;}
+
+   unsigned  GetNumberOfComponents() const { return nComponents_;};
 
    // action interface
    // ----------------
-   int OnExposure(MM::PropertyBase* pProp, MM::ActionType eAct);
+	// floating point read-only properties for testing
+	int OnTestProperty(MM::PropertyBase* pProp, MM::ActionType eAct, long);
    int OnBinning(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnPixelType(MM::PropertyBase* pProp, MM::ActionType eAct);
-   int OnGain(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnBitDepth(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnReadoutTime(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnScanMode(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnErrorSimulation(MM::PropertyBase* , MM::ActionType );
+   int OnCameraCCDXSize(MM::PropertyBase* , MM::ActionType );
+   int OnCameraCCDYSize(MM::PropertyBase* , MM::ActionType );
+   int OnTriggerDevice(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnDropPixels(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnSaturatePixels(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnFractionOfPixelsToDropOrSaturate(MM::PropertyBase* pProp, MM::ActionType eAct);
 
-   int OnTemperature(MM::PropertyBase* pProp, MM::ActionType eAct);
-   int OnColorMode(MM::PropertyBase* pProp, MM::ActionType eAct);
-   
-   int OnReadoutTime(MM::PropertyBase* /* pProp */, MM::ActionType /* eAct */) { return DEVICE_OK; };
-   
-   int OnFlipX(MM::PropertyBase* pProp, MM::ActionType eAct);
-   int OnFlipY(MM::PropertyBase* pProp, MM::ActionType eAct);
-private:  
+	int OnExposure(MM::PropertyBase* pProp, MM::ActionType eAct);
+	int OnGain(MM::PropertyBase* pProp, MM::ActionType eAct);
+	int OnTemperature(MM::PropertyBase* pProp, MM::ActionType eAct);
+	
+	
 
-    MM_THREAD_GUARD lockImgBufPtr;
+   MM::MMTime CurrentTime(void) { return GetCurrentMMTime(); };
 
-    virtual int ThreadRun();
-    virtual int InsertImage();
+   int OnCameraSelection(MM::PropertyBase* pProp, MM::ActionType eAct);
+   static bool isApiDllAvailable( void );
 
-   int UpdateExposureLimits(void);
-   int UpdatePixelTypes(void);
-   //! set pixel type at camera an update the internal members "numberOfChannels" and call ResizeImageBuffer
-   int SetPixelType(unsigned long dwPixelType);
+   string buildCameraDeviceID( unsigned long serialNumber, const char* deviceName );
+   void setCameraDeviceID( string cameraDeviceID );
+   string cameraDeviceID( void ) const;
+protected:
+	bool isInitialized( void ) const;		
+	void setInitialized( const bool bInitialized );
+	bool isColor( void ) const;		
+	void setColor( const bool colorCamera );
+	void getAvailableCameras( CCameraList & cCameraList );
+	void setDeviceNo( int deviceNo );
+	int deviceNo( void ) const;
 
-   long GetFlip();
-    void SetFlip(long nFlip);
+	static int accquireDeviceNumber( void );
+	static void releaseDeviceNumber( int deviceNo );
 
-   // property creation
-   int createExposure(void);
-   int createBinning(void);
-   int createPixelType(void);
-   int createGain(void);
-   int createOffset(void);
-   int createTemperature(void);
-   int createActualInterval(void);
-   int createColorMode(void);
+	int convertApiErrorCode( unsigned long errorNumber );	
+	
+	unsigned long getCameraImage( ImgBuffer& img );
+	unsigned long getCap( unsigned __int64 functionId, void* & capability );
+	int setAllowedPixelTypes( void );
+	int setAllowedBitDepth( void );
+	int setAllowedExpsoure( void );
+	int setAllowedGain( void );
 
-   static const double fNominalPixelSizeUm;
-   std::string m_szDeviceName;
+private:
+	static volatile int staticDeviceNo;
+	string cameraDeviceID_;
+	int	 deviceNo_;
+	bool	 colorCamera_;
+	string last16BitDepth;
+	double temperatureUnit_;
+	int	 temperatureIndex_;
 
-   ImgBuffer imageBuffer;
-   bool initialized;   
-
-   unsigned char *cameraProvidedImageBuffer;
-   unsigned char *cameraProvidedImageHdr;
-
-   bool bSetGetExposureActive;   
-
-   bool bColor;
-   volatile bool bAbortGetImageCalled;
-   unsigned int numberOfChannels;
-   unsigned char deviceNumber;
-   unsigned __int64 cameraFunctionMask;
-
-   S_CAMERA_VERSION     camVersion;
-   S_RESOLUTION_CAPS*   resolutionCap;
+	S_CAMERA_VERSION     cameraVersion_;
+   /*S_RESOLUTION_CAPS*   resolutionCap;
    S_FLIP_CAPS*         flipCap;
    S_PIXELTYPE_CAPS*    pixelTypeCap;
    S_GAIN_CAPS*         gainCap;
    S_EXPOSURE_CAPS*     exposureCap;
    S_AUTOEXPOSURE_CAPS* autoExposureCap;
    S_TEMPERATURE_CAPS*  temperatureCap;
-   S_FRAMERATE_CAPS*    framerateCap;
+   S_FRAMERATE_CAPS*    framerateCap;*/
 
-   CSupportedPixeltypes cPixeltypes;        // list of supported pixeltypes
-   int InitSupportedPixeltypes( void );     // init list of supported pixeltypes (cPixeltypes)
-   unsigned int StringToPixelType( std::string strPixelType );
-   unsigned int BinValueToCamValue( int iBinning );
-   int          CamValueToBinValue( unsigned int dwBin );
-   
-
+private:
+   int SetAllowedBinning();
+   void TestResourceLocking(const bool);
+   void GenerateEmptyImage(ImgBuffer& img);
    void GenerateSyntheticImage(ImgBuffer& img, double exp);
    int ResizeImageBuffer();
-   void ShowError( unsigned long errorNumber ) const;   
-   void* GetCameraCap( unsigned __int64 CamFuncID )  const;   
-   int GetCameraFunction( unsigned __int64 CamFuncID, void* functionPara, unsigned long size, void* functionParamOut = NULL, unsigned long sizeOut = 0 )  const;   
-   int SetCameraFunction( unsigned __int64 CamFuncID, void* functionPara, unsigned long size ) const;
-  
+
+   static const double nominalPixelSizeUm_;
+
+   double dPhase_;
+   ImgBuffer img_;
+   bool busy_;
+   bool stopOnOverFlow_;
+   bool initialized_;
+   double readoutUs_;
+   MM::MMTime readoutStartTime_;
+   string scanMode_;
+   int bitDepth_;
+   unsigned roiX_;
+   unsigned roiY_;
+   MM::MMTime sequenceStartTime_;
+   long imageCounter_;
+	long binSize_;
+	long cameraCCDXSize_;
+	long cameraCCDYSize_;
+	std::string triggerDevice_;
+
+	bool dropPixels_;
+	bool saturatePixels_;
+	double fractionOfPixelsToDropOrSaturate_;
+
+	double testProperty_[10];
+   MMThreadLock* pDemoResourceLock_;
+   MMThreadLock imgPixelsLock_;
+   int nComponents_;
+   friend class CABSCameraSequenceThread;
+   CABSCameraSequenceThread * thd_;
 };
 
-#endif //_ABSCAMERA_H_
+class CABSCameraSequenceThread : public MMDeviceThreadBase
+{
+   friend class CABSCamera;
+   enum { default_numImages=1, default_intervalMS = 100 };
+   public:
+      CABSCameraSequenceThread(CABSCamera* pCam);
+      ~CABSCameraSequenceThread();
+      void Stop();
+      void Start(long numImages, double intervalMs);
+      bool IsStopped();
+      void Suspend();
+      bool IsSuspended();
+      void Resume();
+      double GetIntervalMs(){return intervalMs_;}                               
+      void SetLength(long images) {numImages_ = images;}                        
+      long GetLength() const {return numImages_;}
+      long GetImageCounter(){return imageCounter_;}                             
+      MM::MMTime GetStartTime(){return startTime_;}                             
+      MM::MMTime GetActualDuration(){return actualDuration_;}
+   private:                                                                     
+      int svc(void) throw();
+      CABSCamera* camera_;                                                     
+      bool stop_;                                                               
+      bool suspend_;                                                            
+      long numImages_;                                                          
+      long imageCounter_;                                                       
+      double intervalMs_;                                                       
+      MM::MMTime startTime_;                                                    
+      MM::MMTime actualDuration_;                                               
+      MM::MMTime lastFrameTime_;                                                
+      MMThreadLock stopLock_;                                                   
+      MMThreadLock suspendLock_;                                                
+}; 
+
+
+#endif // __ABSCAMERA_H__

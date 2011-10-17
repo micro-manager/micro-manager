@@ -13,6 +13,12 @@
 #ifndef _COMMON_STRUCTS_EXPORTED_H_
 #define _COMMON_STRUCTS_EXPORTED_H_
 
+#ifdef WIN32
+  #ifndef _WIN32    
+    #define _WIN32
+  #endif
+#endif
+
 #ifndef _WIN32
 	#ifndef DOXYGEN_SHOULD_SKIP_THIS
 		#define _NO_FUNCTION_INCLUDE		// do not include function prototypes
@@ -70,16 +76,15 @@
 	#define G_VAL2F (gain_val)				((float) (gain_val / 1000.0f))
 
     union U_CAMERA_NOTIFY
-        {
-            u32 wParam;             //!< window message parameter value
-
-			struct
-			{
-					u08    bUSB_ID;     //!< camera USB-ID
-					u08    bPlatformID; //!< camera platform id
-					u08    bNotifyCode; //!< camera notification code see #NOTIFY_CODE_CAM_ATTACHED 
-					u08    bDevNr;      //!< used nDevNr if initialized by this application
-			} sNotify;
+    {
+      u32 wParam;             //!< window message parameter value
+      struct S_CAM_NOTIFY
+      {
+          u08    bUSB_ID;     //!< camera USB-ID
+          u08    bPlatformID; //!< camera platform id
+          u08    bNotifyCode; //!< camera notification code see #NOTIFY_CODE_CAM_ATTACHED 
+          u08    bDevNr;      //!< used nDevNr if initialized by this application
+      };
     };
 
 #endif
@@ -122,7 +127,21 @@ typedef struct {
 	i32 	dwOffset_y;						//!< vertical (y) offset
 } S_IMAGE_HEADER;
 
+
+typedef struct {
+	u16 	wExtensions;        //!< count extensions
+    u16 	wSizeLo;            //!< bytes followed this header including the header size low part
+	u16 	wSizeHi;            //!< bytes followed this header including the header size high part	
+} S_APPENDED_DATA_HDR;
+
+typedef struct {
+	u16 	wType;              //!< extension type
+    u16 	wSizeLo;            //!< bytes followed this header including the header size low part
+	u16 	wSizeHi;            //!< bytes followed this header including the header size high part	
+} S_EXTENSION_HDR;
+
 //!@}
+
 
 
 /////////////////////////////////////////////////////////////////////////////
@@ -652,7 +671,7 @@ typedef struct
 typedef struct
 {
 	u16		wTypeMask;						//!< type of memory region (see #MEMORY_TYPE_EEPROM)
-	u08		bReserved[2];					//!< reserved
+	u16     wMemID;     					//!< memory id used to access the memory region
 	u32		dwSize;							//!< size of region in bytes
 } S_MEMORY_CAP;
 
@@ -674,7 +693,7 @@ typedef struct
 //! => functionID => #FUNC_MEMORY
 typedef struct
 {
-	u16		wMemIndex;						//!< index of memory to read/write from/to\n(see #S_MEMORY_CAPS::wMemories)
+	u16		wMemID;						    //!< ID of memory to read/write from/to\n(see #S_MEMORY_CAP::wMemID)
 	u08		bReserved[2];					//!< reserved
 	u32		dwMemAddress;					//!< address in memory region to begin reading/writing
 	u16		wMemDataSize;					//!< size of read/write data in bytes
@@ -757,7 +776,7 @@ typedef struct
 typedef struct
 {
 	u32					dwSensors;				       //!< count possible temperature sensors
-	S_TEMPERATURE_CAP	dwSensor[TEMPERATURE_SENSORS]; //!< array of temperature sensors caps
+	S_TEMPERATURE_CAP	sSensor[TEMPERATURE_SENSORS]; //!< array of temperature sensors caps
 } S_TEMPERATURE_CAPS;
 
 
@@ -903,23 +922,38 @@ typedef struct
 //!
 typedef struct
 {
-	i16		wOffsetX;	 //!< offset x
-	i16		wOffsetY;	 //!< offset y
-	u16		wSizeX;		 //!< size x
-	u16		wSizeY;		 //!< size y
-	i16		wMinBalance; //!< minimum white balance target value
-	i16		wMaxBalance; //!< maximum white balance target value
+	i16		wOffsetX;	      //!< minimum offset x
+	i16		wOffsetY;	      //!< minimum offset y
+	u16		wSizeX;		      //!< maximum size x (minimum always 4)
+	u16		wSizeY;		      //!< maximum size y (minimum always 4)
+	i16		wMinBalance;    //!< minimum white balance target value
+	i16		wMaxBalance;    //!< maximum white balance target value
+  
+  u32   dwModeMask;     //!< supported white balance modes
+  u32   dwOptionMask;   //!< supported white balance options
+  
+  u08   bReserverd[40]; //!< reserved
 } S_WHITE_BALANCE_CAPS;
 
 //! \brief  Camera White Balance
 //! Returned in "pData" by #CamUSB_GetFunctionCaps => functionID => #FUNC_WHITE_BALANCE
+//! \remark if wOffsetX, wOffsetY, wSizeX, wSizeY are set to zero the ROI is ignored, 
+//!         the current sensor settings will be used for calculations
 typedef struct
 {
-	i16		wOffsetX;	//!< offset x
-	i16		wOffsetY;	//!< offset y
-	u16		wSizeX;		//!< size x
-	u16		wSizeY;		//!< size y
-	i16		wBalance;		//!< white balance target value
+	i16		wOffsetX;	        //!< offset x
+	i16		wOffsetY;	        //!< offset y
+	u16		wSizeX;		        //!< size x
+	u16		wSizeY;		        //!< size y 
+	i16		wBalance;		      //!< white balance target value
+  u16		wReserverd;   		//!< reserved
+  
+  //! white balance mode if set to #WB_MODE_INVALID than #WB_MODE_ONE_PUSH will be used
+  u32   dwMode;           
+  //! white balance option if set to #WB_OPT_ROI_INVALID than #WB_OPT_ROI_SENSOR will be used
+  u32   dwOption;
+
+  u08   bReserverd[40];   //!< reserved
 } S_WHITE_BALANCE_PARAMS, S_WHITE_BALANCE_RETVALS;
 
 // --------------------------------------------------------------------------
@@ -1207,6 +1241,13 @@ typedef struct
     u08 pBadPixData[32768];				//!< see #mexBlemishDescription
 } S_BADPIXEL_DATA3;
 
+//! \brief  Camera BadPixel Data (stored at camera)
+//! Used by #CamUSB_SetFunction => FunctionID #FUNC_BADPIXEL_CORRECTION
+typedef struct 
+{	
+    u08 pBadPixData[63*1024];				//!< see #mexBlemishDescription
+} S_BADPIXEL_DATA4;
+
 //! \brief  Camera BadPixel
 //! returned by #CamUSB_GetFunctionCaps => functionID => #FUNC_BADPIXEL_CORRECTION
 //!
@@ -1214,7 +1255,8 @@ typedef struct
 {
 	u32 dwOptions;				//!< supported options see #BPC_OPTION_SETDATA
 	u32 dwMaxBadPixDataSize;	//!< maximum bad pixel data size, supported by the camera
-	u32 dwReserved[4];			//!< reserved
+    u32 dwModes;				//!< supported interpolation modes for bad pixel    
+	u32 dwReserved[3];			//!< reserved
 } S_BADPIXEL_CAPS;
 
 
@@ -1224,62 +1266,10 @@ typedef struct
 {
 	u32 dwOption;				//!< BadPixel correction options
 	u32 dwState;				//!< switch BadPixel correction on/off	see #BPC_STATE_DISABLED (ignored if not #BPC_OPTION_STATE is set)
-	u32 dwReserved[4];			//!< reserved
+    u32 dwMode;				    //!< switch the interpolation mode for bad pixel
+	u32 dwReserved[3];			//!< reserved
 } S_BADPIXEL_PARAMS, S_BADPIXEL_RETVALS;
 
-
-
-
-//! \if DOXYGEN_INCLUDE_LINECAM \cond DON_T_DOCUMENT \endif
-// --------------------------------------------------------------------------
-//! \brief  Line Camera
-//! returned by #CamUSB_GetFunctionCaps => functionID => #FUNC_LINE_CAM
-//! \ref example_6
-//!
-//! The minimum offset values are "0" and must be a multiple of 2,
-//! the minimum wSizeX value is "4" and must be a multiple of 4,
-//! the minimum wSizeY value is the maximum "4" and  #S_LINE_CAM_PARAMS::wScanLines,
-//! wSizeY must also be a multiple of #S_LINE_CAM_PARAMS::wScanLines.
-typedef struct
-{
-    u16		wScanLinesMin;	//!< minimum ScanLines value
-	u16		wScanLinesMax;	//!< maximum ScanLines value
-	u16		wScanLinesStep;	//!< ScanLines step value
-    u08     bReserved[6];   //!< reserved
-    u16		wOffsetXMax;    //!< X-offset first used pixel in used "matrix sensor row" (scanline)
-	u16		wOffsetYMax;    //!< Y-offset first scanline (position of the used matrix sensor row)
-	u16		wSizeXMax;	    //!< X-size (width of resulting image in scanlines )
-	u16		wSizeYMax;	    //!< Y-size (height of resulting image in scanlines )
-} S_LINE_CAM_CAPS;
-
-//! \brief  Line Camera
-//! used by #CamUSB_GetFunction and  #CamUSB_SetFunction => functionID => #FUNC_LINE_CAM
-//! \ref example_6
-//! The minimum offset values are "0" and must be a multiple of 2,
-//! the minimum wSizeX value is "4" and must be a multiple of 4,
-//! the minimum wSizeY value is the maximum "4" and  #S_LINE_CAM_PARAMS::wScanLines,
-//! wSizeY must also be a multiple of #S_LINE_CAM_PARAMS::wScanLines.
-typedef struct
-{
-	//! \brief Line camera mode enable/disable\n
-	//! Remark: the following values are valid only if wLineCamEnable=1
-	u16		wLineCamEnable;
-	u16		wScanLines;		    //!< # of Lines to be captured (line trigger)
-    u16		wOffsetX;           //!< X-offset first used pixel in used "matrix sensor row" (scanline)
-	u16		wOffsetY;	        //!< Y-offset first scanline (position of the used matrix sensor row)
-	u16		wSizeX;		        //!< X-size (width of resulting image in scanlines )
-	u16		wSizeY;		        //!< Y-size (height of resulting image in scanlines )
-    u16     wLineTriggerMode;   //!< mode of used line trigger
-    u08     bReserved[6];       //!< reserved
-
-	//! \brief max. line trigger frequency (depends mostly on exposure time)
-	//! CycleTime=RowTime * (max(ScanLines+2+25,dwExposure)+1);
-	//! line_freq =1/CycleTime; (only valid for retvals)
-	u32		dwLineTriggerFreq;
-} S_LINE_CAM_PARAMS, S_LINE_CAM_RETVALS;
-
-//!@}
-//! \if DOXYGEN_INCLUDE_LINECAM \endcond \endif
 
 /////////////////////////////////////////////////////////////////////////////
 //! \name Typedefs: Camera Async Trigger Struct
@@ -1321,7 +1311,7 @@ typedef struct
 //!@}
 
 
-//! \if DOXYGEN_INCLUDE_VDL  \cond DON_T_DOCUMENT \endif
+//! \cond DOXYGEN_INCLUDE_VDL
 /////////////////////////////////////////////////////////////////////////////
 //! \name Typedefs: Video Data Logger (VDL) structs
 /////////////////////////////////////////////////////////////////////////////
@@ -1478,7 +1468,8 @@ typedef struct
 } S_VDL_FILE_RETVALS;
 
 //!@}
-//! \if DOXYGEN_INCLUDE_VDL  \endcond \endif
+
+//! \endcond DOXYGEN_INCLUDE_VDL
 
 
 /////////////////////////////////////////////////////////////////////////////
@@ -1715,7 +1706,7 @@ typedef struct
         u64 hHandle;
         u32 dwReserved1;        // padding
     #else
-        u32 hHandle;
+    u32 hHandle;            
     #endif
 
     u32 dwMessage;          //!< used as windows message for SendMessage (valid with #NOTIFY_TYPE_MESSAGE)
@@ -1748,7 +1739,9 @@ typedef struct
     i16 wTargetTempMin;     //!< minimum supported temperature as target value for automatic cooling (10 => 1.0°C)
     i16 wTargetTempMax;     //!< maximum supported temperature as target value for automatic cooling (10 => 1.0°C)
     u16 wTargetTempStep;    //!< possible temperature step size (value 10 is equal to 1.0°C => 5 = 0.5°C; -124 = -12.4°C)    
-    u08 bReserved[54];      //!< reserved
+    u16 wMinPeltierVoltage; //!< minimum peltier voltage e.g. 600 mean 0.6 V 
+    u16 wMaxPeltierVoltage; //!< maximum peltier voltage 9400 mean 9.4 V 
+    u08 bReserved[50];      //!< reserved
 } S_COOLING_CAPS;
 
 
@@ -1767,62 +1760,59 @@ typedef struct
 //!@}
 
 
-
-
 /////////////////////////////////////////////////////////////////////////////
-//! \name Typedefs: Camera function centroid
+//! \name Typedefs: Camera function image color mapping (mono to color)
 /////////////////////////////////////////////////////////////////////////////
 //!@{
 // --------------------------------------------------------------------------
-// structure for centroid function
+// structure for image color mapping (mono to color)
 
-//! \brief  centroid caps\n
-//! Used by #CamUSB_GetFunctionCaps => FunctionID => #FUNC_CENTROID
+//! \brief  Image color mapping caps\n
+//! Used by #CamUSB_GetFunctionCaps => FunctionID => #FUNC_COLOR_MAPPING
 
-//! \brief centroid caps
+//! \brief color mapping caps
 typedef struct
 {
-    u16 wMaxSpotCountX; //!< maximum no of spot windows per line
-    u16 wMaxSpotCountY; //!< maximum no of spot windows per column
-    f32 fMaxSpotSizeX;  //!< maximum horizontal spot window size in pixel
-    f32 fMaxSpotSizeY;  //!< maximum vertical spot window size in pixel
-    f32 fMinSpotSizeX;  //!< minimum horizontal spot window size in pixel
-    f32 fMinSpotSizeY;  //!< minimum vertical spot window size in pixel
-    u32 dwReserved[6];   //!< reserved   
-} S_CENTROID_CAPS;
+    u32 dwMode;                     //!< supported color mapping modes #COMA_MODE_COLORMAPPING or #COMA_MODE_BITMAPPING   
+    u32 dwMaxColorMappingEntries;   //!< max. number of supported color mapping entries #S_COLOR_MAPPING_DATA_CM
+} S_COLOR_MAPPING_CAPS;
 
-//! \brief centroid parameter / return values
-//! Passed as "pCmd" or "pMsg" parameter in #CamUSB_SetFunction / #CamUSB_GetFunction => functionID => #FUNC_CENTROID
+//! \brief color mapping data mode "color mapping"
+//! Used by #CamUSB_GetFunction / #CamUSB_SetFunction => FunctionID => #FUNC_COLOR_MAPPING, 
+//! if the mode COMA_MODE_COLORMAPPING and the flag COMA_FLAG_DATA is set at the command structure,
+//! as data array passed in pData.
 typedef struct
 {
-    f32 fSpotSizeX;     //!< horizontal size of spot windows in pixel e.g. 15,15 or 30,3 
-    f32 fSpotSizeY;     //!< vertical size of spot windows in pixel e.g. 15,15 or 30,3 
-    f32 fSpotOffX;		//!< horizontal offset of first spot window in pixel
-    f32 fSpotOffY;		//!< vertical offset of first spot window in pixel
-    f32 fSpotGapX;		//!< horizontal gap between spot windows in pixel
-    f32 fSpotGapY;		//!< vertical gap between spot windows in pixel
-    u32 dwSpotCountX;	//!< horizontal spot window count 
-    u32 dwSpotCountY;	//!< vertical  spot window count
-    u32 dwReserved[4];  //!< reserved
-} S_CENTROID_PARAMS, S_CENTROID_RETVALS;
+    f64 fGrayValue;     //!< gray value
+    f64 fRed;           //!< red value
+    f64 fGreen;         //!< green value
+    f64 fBlue;          //!< blue value  
 
-//! \brief centroid pixel information for #PIX_CENTROID_3I
-//! return by #CamUSB_GetImage if pixel type #PIX_CENTROID_3I is set
+} S_COLOR_MAPPING_DATA_CM;
+
+//! \brief color mapping data mode "bit mapping"
+//! Used by #CamUSB_GetFunction / #CamUSB_SetFunction => FunctionID => #FUNC_COLOR_MAPPING, 
+//! if the mode COMA_MODE_BITMAPPING and the flag COMA_FLAG_DATA is set at the command structure,
+//! as data passed in pData.
 typedef struct
 {
-    u32 dwSumX;     //!< weighted sum x
-    u32 dwSumA;     //!< sum of all pixel
-    u32 dwSumY;     //!< weighted sum y
-} S_CENTROID_PIX3I;
+    unsigned short wRed[16];
+    unsigned short wGreen[16];
+    unsigned short wBlue[16];
 
-//! \brief centroid pixel information for #PIX_CENTROID_2F
-//! return by #CamUSB_GetImage if pixel type #PIX_CENTROID_2F is set
+} S_COLOR_MAPPING_DATA_BM;
+
+//! \brief Image color mapping parameter
+//! Passed as "pCmd" or "pMsg" parameter in #CamUSB_SetFunction / #CamUSB_GetFunction => functionID => #FUNC_COLOR_MAPPING
 typedef struct
-{
-    f32 fX;     //!< x pos (absolute to image origin 0;0)
-    f32 fY;     //!< y pos (absolute to image origin 0;0)
-} S_CENTROID_PIX2F;
-
+{    
+    //! color mapping mode #COMA_MODE_COLORMAPPING, #COMA_MODE_BITMAPPING, #COMA_MODE_DISABLED
+    u32		dwMode;
+    
+    //! number of S_COLOR_MAPPING_DATA_CM entries passed over data pipe,
+    //! only used with mode #COMA_MODE_COLORMAPPING
+    u32     dwColorMappingEntries;  
+} S_COLOR_MAPPING_PARAMS, S_COLOR_MAPPING_RETVALS;
 
 //!@}
 

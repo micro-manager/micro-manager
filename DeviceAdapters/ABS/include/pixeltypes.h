@@ -93,7 +93,7 @@
 //! \name  Buffer formats: Mono buffer defines 
 //!@{
 //! <hr>
-#define PIX_MONO8			(PIX_MONO | PIX_OCCUPY8BIT  | 0x0001)   //!< Mono 8Bit
+#define PIX_MONO8			(PIX_MONO | PIX_OCCUPY8BIT  | 0x0001) //!< Mono 8Bit
 #define PIX_MONO8SIGEND		(PIX_MONO | PIX_OCCUPY8BIT  | 0x0002)   //!< not supported
 #define PIX_MONO10			(PIX_MONO | PIX_OCCUPY16BIT | 0x0003)   //!< Mono 10Bit stored 16Bit (uses the lower bits)
 #define PIX_MONO10_PACKED	(PIX_MONO | PIX_OCCUPY12BIT | 0x0004)   //!< not supported
@@ -294,12 +294,13 @@
 //!@}
 
 // ----------------------------------------------------------------------------
-//! \name  Buffer formats: centroid result defines
+//! \name  Buffer formats: Line Camera defines
 //!@{
 //! <hr>
-#define PIX_CENTROID_3I			(PIX_CUSTOM | PIX_OCCUPY96BIT | 0x0300)    //!< 96Bit 3x 32bit integer
-#define PIX_CENTROID_2F			(PIX_CUSTOM | PIX_OCCUPY64BIT | 0x0301)    //!< 64Bit 2x 32bit float
+#define PIX_LINECAM12_PACKED12	(PIX_CUSTOM | PIX_OCCUPY12BIT | 0x0240)     //!< line camera data packed 12bit
+#define PIX_LINECAM12	        (PIX_CUSTOM | PIX_OCCUPY16BIT | 0x0241)     //!< line camera data 16bit
 
 //!@}
+
 
 #endif // _PIX_H_

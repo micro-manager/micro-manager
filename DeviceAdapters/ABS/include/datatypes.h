@@ -18,28 +18,28 @@
 
 #ifndef _WIN32
 	// DSP Firmware
-	typedef unsigned long long 	    u64;
-	typedef signed long long 	    i64;
-	typedef unsigned long 		    u32;
-	typedef signed long			    i32;
-	typedef unsigned short		    u16;
-	typedef signed short		    i16;
-	typedef unsigned char		    u08;
-	typedef signed char			    i08;
-    typedef float   			    f32;
+	typedef unsigned long long 	u64;
+	typedef signed long long 	i64;
+	typedef unsigned long 		u32;
+	typedef signed long			i32;
+	typedef unsigned short		u16;
+	typedef signed short		i16;
+	typedef unsigned char		u08;
+	typedef signed char			i08;
+    typedef float   			f32;
     typedef double   			    f64;
 
 #else
 	// Windows
-	typedef	unsigned char		    u08;
-	typedef	unsigned short		    u16;
-	typedef	unsigned long		    u32;
-	typedef	unsigned __int64	    u64;
-	typedef	signed char			    i08;
-	typedef	signed short		    i16;
-	typedef	signed long			    i32;
-    typedef	signed __int64	        i64;
-    typedef float   			    f32;
+	typedef	unsigned char		u08;
+	typedef	unsigned short		u16;
+	typedef	unsigned long		u32;
+	typedef	unsigned __int64	u64;
+	typedef	signed char			i08;
+	typedef	signed short		i16;
+	typedef	signed long			i32;
+    typedef	signed __int64	    i64;
+    typedef float   			f32;
     typedef double   			    f64;
 
     typedef	u08*		        pu08;
@@ -58,7 +58,7 @@
         typedef void*	            pv64;
     #elif  _WIN32
         typedef void*   			pv32;
-        typedef PVOID64	            pv64;
+        //typedef PVOID64	            pv64;
     #else // non windows
         typedef void*   			pv32;
         //typedef unsigned long long*	pv64;        
