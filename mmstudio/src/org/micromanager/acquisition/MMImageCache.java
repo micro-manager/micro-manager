@@ -163,10 +163,9 @@ public class MMImageCache implements TaggedImageStorage, ImageCache {
             String key = keys.next();
             try {
                if (!taggedImg.tags.isNull(key)) {
-                  if (!firstTags_.has(key))
+                  if (!firstTags_.has(key) || firstTags_.isNull(key))
                      changingKeys_.add(key);
-                  else if (!firstTags_.getString(key)
-                            .contentEquals(taggedImg.tags.getString(key))) {
+                  else if (!taggedImg.tags.getString(key).contentEquals(firstTags_.getString(key))) {
                      changingKeys_.add(key);
                   }
                }

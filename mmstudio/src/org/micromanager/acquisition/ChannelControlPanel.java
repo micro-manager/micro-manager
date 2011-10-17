@@ -14,7 +14,6 @@ import ij.ImagePlus;
 import java.awt.Color;
 import java.awt.event.MouseWheelEvent;
 import java.awt.event.MouseWheelListener;
-import java.lang.Math;
 import javax.swing.JColorChooser;
 import org.micromanager.graph.GraphData;
 import org.micromanager.graph.HistogramPanel;
@@ -218,6 +217,7 @@ public class ChannelControlPanel extends javax.swing.JPanel {
     private void fullButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_fullButtonActionPerformed
        setFullRange();
        acq_.updateAndDraw();
+       updateChannelSettings();
        drawDisplaySettings();
     }//GEN-LAST:event_fullButtonActionPerformed
 
@@ -229,6 +229,7 @@ public class ChannelControlPanel extends javax.swing.JPanel {
 
     private void channelNameCheckboxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_channelNameCheckboxActionPerformed
        updateChannelVisibility();
+       updateChannelSettings();
        acq_.updateAndDraw();
        drawDisplaySettings();
     }//GEN-LAST:event_channelNameCheckboxActionPerformed
@@ -236,6 +237,7 @@ public class ChannelControlPanel extends javax.swing.JPanel {
     private void autoButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_autoButtonActionPerformed
        setAutoRange();
        acq_.updateAndDraw();
+       updateChannelSettings();
        drawDisplaySettings();
     }//GEN-LAST:event_autoButtonActionPerformed
 

@@ -19,7 +19,6 @@ import java.awt.event.WindowEvent;
 import java.io.File;
 import java.io.IOException;
 import javax.swing.JOptionPane;
-import javax.swing.SwingUtilities;
 import mmcorej.TaggedImage;
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -263,19 +262,21 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
    }
 
    /*
-    * Method required by ImageStorageListener
+    * Method required by ImageCacheListener
     */
    @Override
    public void imageReceived(final TaggedImage taggedImage) {
       updateDisplay(taggedImage, false);
+      updateAndDraw();
    }
 
    /*
-    * Method required by ImageStorageListener
+    * Method required by ImageCacheListener
     */
    @Override
    public void imagingFinished(String path) {
       updateDisplay(null, true);
+      updateAndDraw();
       updateWindow();
    }
 
@@ -1161,23 +1162,13 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
    public void setChannelDisplayRange(int channel, int min, int max) {
       JSONObject chan = getChannelSetting(channel);
       try {
-         if (chan.getInt("Min") == min && chan.getInt("Max") == max) {
-            return;
-         }
+         chan.put("Min", min);
+         chan.put("Max", max);
       } catch (Exception e) {
+         ReportingUtils.logError(e);
       }
 
-      {
-         try {
-            chan.put("Min", min);
-            chan.put("Max", max);
-         } catch (Exception e) {
-            ReportingUtils.logError(e);
-         }
-
-
-         updateChannelContrast(channel);
-      }
+      updateChannelContrast(channel);
    }
 
    private JSONObject getChannelSetting(int channel) {
