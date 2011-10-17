@@ -631,8 +631,6 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
          hyperImage_.getProcessor().setPixels(
                  hyperImage_.getStack().getPixels(1));
       }
-       
-    //  updateAndDraw();
    }
 
    private void updatePosition(int p) {
@@ -641,7 +639,6 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
          Object pixels = virtualStack_.getPixels(hyperImage_.getCurrentSlice());
          hyperImage_.getProcessor().setPixels(pixels);
       }
-      //updateAndDraw();
    }
 
    public void setPosition(int p) {
@@ -1044,7 +1041,6 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
       }
       CompositeImage ci = (CompositeImage) hyperImage_;
       ci.getActiveChannels()[channelIndex] = visible;
-     // updateAndDraw();
    }
 
    public int[] getChannelHistogram(int channelIndex) {
@@ -1142,7 +1138,7 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
       }
    }
 
-   public void setChannelColor(int channel, int rgb, boolean updateDisplay) throws MMScriptException {
+   public void setChannelColor(int channel, int rgb) throws MMScriptException {
       JSONObject chan = getChannelSetting(channel);
       try {
          chan.put("Color", rgb);
@@ -1150,12 +1146,9 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
          ReportingUtils.logError(ex);
       }
       updateChannelLUT(channel);
-      if (updateDisplay) {
-     //    updateAndDraw();
-      }
    }
 
-   public void setChannelGamma(int channel, double gamma, boolean updateDisplay) {
+   public void setChannelGamma(int channel, double gamma) {
       JSONObject chan = getChannelSetting(channel);
       try {
          chan.put("Gamma", gamma);
@@ -1163,9 +1156,6 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
          ReportingUtils.logError(e);
       }
       updateChannelLUT(channel);
-      if (updateDisplay) {
-     //    updateAndDraw();
-      }
    }
 
    public void setChannelDisplayRange(int channel, int min, int max) {
