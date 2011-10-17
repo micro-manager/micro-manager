@@ -15,6 +15,7 @@ import java.awt.Color;
 import java.awt.event.MouseWheelEvent;
 import java.awt.event.MouseWheelListener;
 import javax.swing.JColorChooser;
+import javax.swing.SwingUtilities;
 import org.micromanager.graph.GraphData;
 import org.micromanager.graph.HistogramPanel;
 import org.micromanager.graph.HistogramPanel.CursorListener;
@@ -216,41 +217,41 @@ public class ChannelControlPanel extends javax.swing.JPanel {
 
     private void fullButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_fullButtonActionPerformed
        setFullRange();
-       acq_.updateAndDraw();
        updateChannelSettings();
        drawDisplaySettings();
+       acq_.updateAndDraw();
     }//GEN-LAST:event_fullButtonActionPerformed
 
     private void colorPickerLabelMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_colorPickerLabelMouseClicked
        editColor();
-       acq_.updateAndDraw();
        drawDisplaySettings();
+       acq_.updateAndDraw();
     }//GEN-LAST:event_colorPickerLabelMouseClicked
 
     private void channelNameCheckboxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_channelNameCheckboxActionPerformed
        updateChannelVisibility();
+       drawDisplaySettings();
        updateChannelSettings();
        acq_.updateAndDraw();
-       drawDisplaySettings();
     }//GEN-LAST:event_channelNameCheckboxActionPerformed
 
     private void autoButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_autoButtonActionPerformed
        setAutoRange();
-       acq_.updateAndDraw();
-       updateChannelSettings();
        drawDisplaySettings();
+       updateChannelSettings();
+       acq_.updateAndDraw();
     }//GEN-LAST:event_autoButtonActionPerformed
 
     private void zoomInButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_zoomInButtonActionPerformed
        binSize_ = Math.max(binSize_ / 2, 1./8);
-       updateChannelSettings();
        drawDisplaySettings();
+       updateChannelSettings();
     }//GEN-LAST:event_zoomInButtonActionPerformed
 
     private void zoomOutButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_zoomOutButtonActionPerformed
        binSize_ = Math.min(binSize_ * 2, 256);
-       updateChannelSettings();
        drawDisplaySettings();
+       updateChannelSettings();
     }//GEN-LAST:event_zoomOutButtonActionPerformed
 
    // Variables declaration - do not modify//GEN-BEGIN:variables
@@ -330,6 +331,7 @@ public class ChannelControlPanel extends javax.swing.JPanel {
             }
             setDisplayRange(min, max);
             drawDisplaySettings();
+            
             acq_.updateAndDraw();
          }
 
@@ -344,6 +346,7 @@ public class ChannelControlPanel extends javax.swing.JPanel {
             setDisplayRange(min, max);
             drawDisplaySettings();
             acq_.updateAndDraw();
+            
          }
 
          public void onGammaCurve(double gamma) {
@@ -437,7 +440,6 @@ public class ChannelControlPanel extends javax.swing.JPanel {
             min = getMin();
             max = getMax();
          }
-         acq_.setChannelDisplayRange(channelIndex_, min, max);
       }
 
       hp_.setCursors(acq_.getChannelMin(channelIndex_) / binSize_,
