@@ -506,15 +506,18 @@ public class MetadataPanel extends javax.swing.JPanel
        for (ChannelControlPanel ccp : ccpList_) {
           ccp.setLogScale(logScaleCheckBox.isSelected());
        }
+       drawDisplaySettings();
     }//GEN-LAST:event_logScaleCheckBoxActionPerformed
 
     private void rejectOutliersCB_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_rejectOutliersCB_ActionPerformed
        rejectPercentSpinner_.setEnabled(rejectOutliersCB_.isSelected() && autostretchCheckBox.isSelected());
        updateChannelSettings();
+       drawDisplaySettings();
     }//GEN-LAST:event_rejectOutliersCB_ActionPerformed
 
     private void rejectPercentSpinner_StateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_rejectPercentSpinner_StateChanged
        updateChannelSettings();
+       drawDisplaySettings();
     }//GEN-LAST:event_rejectPercentSpinner_StateChanged
 
     private void autostretchCheckBoxStateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_autostretchCheckBoxStateChanged
@@ -522,10 +525,12 @@ public class MetadataPanel extends javax.swing.JPanel
        boolean rejectem = rejectOutliersCB_.isSelected() && autostretchCheckBox.isSelected();
        rejectPercentSpinner_.setEnabled(rejectem);
        updateChannelSettings();
+       drawDisplaySettings();
     }//GEN-LAST:event_autostretchCheckBoxStateChanged
 
     private void rejectPercentSpinner_KeyPressed(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_rejectPercentSpinner_KeyPressed
        updateChannelSettings();
+       drawDisplaySettings();
     }//GEN-LAST:event_rejectPercentSpinner_KeyPressed
 
    // Variables declaration - do not modify//GEN-BEGIN:variables
@@ -809,6 +814,7 @@ public class MetadataPanel extends javax.swing.JPanel
             }
          } else if (tabSelected == 0) {
             updateChannelSettings();
+            drawDisplaySettings();
          } else if (tabSelected == 2) {
             VirtualAcquisitionDisplay acq = getVirtualAcquisitionDisplay(imp);
             if (acq != null) {
@@ -914,8 +920,10 @@ public class MetadataPanel extends javax.swing.JPanel
 
          p.add(ccp);
          ccpList_.add(ccp);
-         updateChannelSettings();
       }
+
+      updateChannelSettings();
+      drawDisplaySettings();
    }
 
    private Double getFractionOutliersToReject() {
@@ -927,19 +935,37 @@ public class MetadataPanel extends javax.swing.JPanel
       }
    }
 
+   private void drawDisplaySettings(ChannelControlPanel ccp) {
+      ccp.drawDisplaySettings();
+   }
+
+
    private synchronized void updateChannelSettings() {
       if (ccpList_ == null) {
          return;
       }
 
       for (ChannelControlPanel ccp : ccpList_) {
-         Double fractionOutliersToReject = getFractionOutliersToReject();
-         if (fractionOutliersToReject != null) {
-            ccp.setFractionToReject(fractionOutliersToReject);
-         }
-         ccp.setAutostretch(autostretchCheckBox.isSelected());
-         ccp.setRejectOutliers(rejectOutliersCB_.isSelected() && autostretchCheckBox.isSelected());
-         ccp.updateChannelSettings();
+         updateChannelSettings(ccp);
       }
+   }
+
+
+   private void drawDisplaySettings() {
+      if (ccpList_ != null) {
+         for (ChannelControlPanel ccp:ccpList_) {
+            drawDisplaySettings(ccp);
+         }
+      }
+   }
+
+   private void updateChannelSettings(ChannelControlPanel ccp) {
+      Double fractionOutliersToReject = getFractionOutliersToReject();
+      if (fractionOutliersToReject != null) {
+         ccp.setFractionToReject(fractionOutliersToReject);
+      }
+      ccp.setAutostretch(autostretchCheckBox.isSelected());
+      ccp.setRejectOutliers(rejectOutliersCB_.isSelected() && autostretchCheckBox.isSelected());
+      ccp.updateChannelSettings();
    }
 }

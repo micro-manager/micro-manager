@@ -217,28 +217,38 @@ public class ChannelControlPanel extends javax.swing.JPanel {
 
     private void fullButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_fullButtonActionPerformed
        setFullRange();
+       acq_.updateAndDraw();
+       drawDisplaySettings();
     }//GEN-LAST:event_fullButtonActionPerformed
 
     private void colorPickerLabelMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_colorPickerLabelMouseClicked
        editColor();
+       acq_.updateAndDraw();
+       drawDisplaySettings();
     }//GEN-LAST:event_colorPickerLabelMouseClicked
 
     private void channelNameCheckboxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_channelNameCheckboxActionPerformed
        updateChannelVisibility();
+       acq_.updateAndDraw();
+       drawDisplaySettings();
     }//GEN-LAST:event_channelNameCheckboxActionPerformed
 
     private void autoButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_autoButtonActionPerformed
        setAutoRange();
+       acq_.updateAndDraw();
+       drawDisplaySettings();
     }//GEN-LAST:event_autoButtonActionPerformed
 
     private void zoomInButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_zoomInButtonActionPerformed
        binSize_ = Math.max(binSize_ / 2, 1./8);
        updateChannelSettings();
+       drawDisplaySettings();
     }//GEN-LAST:event_zoomInButtonActionPerformed
 
     private void zoomOutButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_zoomOutButtonActionPerformed
        binSize_ = Math.min(binSize_ * 2, 256);
        updateChannelSettings();
+       drawDisplaySettings();
     }//GEN-LAST:event_zoomOutButtonActionPerformed
 
    // Variables declaration - do not modify//GEN-BEGIN:variables
@@ -276,8 +286,8 @@ public class ChannelControlPanel extends javax.swing.JPanel {
    public void setAutostretch(boolean state) {
       if (state && !autostretch_) {
          setAutoRange();
-        }
-        autostretch_ = state;
+      }
+      autostretch_ = state;
    }
 
    public void setRejectOutliers(boolean v){
@@ -317,6 +327,8 @@ public class ChannelControlPanel extends javax.swing.JPanel {
                max = min;
             }
             setDisplayRange(min, max);
+            drawDisplaySettings();
+            acq_.updateAndDraw();
          }
 
          public void onRightCursor(double pos) {
@@ -328,6 +340,8 @@ public class ChannelControlPanel extends javax.swing.JPanel {
                min = max;
             }
             setDisplayRange(min, max);
+            drawDisplaySettings();
+            acq_.updateAndDraw();
          }
 
          public void onGammaCurve(double gamma) {
@@ -340,6 +354,7 @@ public class ChannelControlPanel extends javax.swing.JPanel {
                gamma = MathFunctions.clip(0.05, gamma, 20);
             acq_.setChannelGamma(channelIndex_, gamma, true);
             drawDisplaySettings();
+            acq_.updateAndDraw();
          }
       });
 
@@ -348,6 +363,7 @@ public class ChannelControlPanel extends javax.swing.JPanel {
             int notches = e.getWheelRotation();
             binSize_ = Math.min(Math.max(binSize_ * Math.pow(2, 0.5 * notches), 1./8), 256);
             updateChannelSettings();
+            drawDisplaySettings();
          }
       });
 
@@ -369,7 +385,7 @@ public class ChannelControlPanel extends javax.swing.JPanel {
          hp_.setData(makeGraphData(histogram));
          hp_.setAutoBounds();
          hp_.setTraceStyle(true, color);
-         drawDisplaySettings();
+        // drawDisplaySettings();
       }
    }
 
@@ -396,8 +412,7 @@ public class ChannelControlPanel extends javax.swing.JPanel {
 
    public void setDisplayRange(int min, int max) {
       acq_.setChannelDisplayRange(channelIndex_,
-              min, max, true);
-      drawDisplaySettings();
+              min, max);
    }
 
    public final void drawDisplaySettings() {
@@ -420,7 +435,7 @@ public class ChannelControlPanel extends javax.swing.JPanel {
             min = getMin();
             max = getMax();
          }
-         acq_.setChannelDisplayRange(channelIndex_, min, max, true);
+         acq_.setChannelDisplayRange(channelIndex_, min, max);
        }
 
       hp_.setCursors(acq_.getChannelMin(channelIndex_)/binSize_,

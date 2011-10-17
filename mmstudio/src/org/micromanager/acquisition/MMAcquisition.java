@@ -515,7 +515,7 @@ public class MMAcquisition {
 
    public void setChannelContrast(int channel, int min, int max) throws MMScriptException {
       if (isInitialized())
-         virtAcq_.setChannelDisplayRange(channel, min, max, true);
+         virtAcq_.setChannelDisplayRange(channel, min, max);
       throw new MMScriptException (NOTINITIALIZED);
    }
 

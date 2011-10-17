@@ -64,6 +64,7 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
    private final String name_;
    private long lastDisplayTime_;
    private JSONObject lastDisplayTags_;
+   private boolean updating_ = false;
 
    /* This interface and the following two classes
     * allow us to manipulate the dimensions
@@ -492,11 +493,15 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
       }
    }
 
-   private void updateAndDraw() {
-      if (hyperImage_ instanceof CompositeImage) {
-         ((CompositeImage) hyperImage_).setChannelsUpdated();
+   public void updateAndDraw() {
+      if (!updating_) {
+      updating_ = true;
+         if (hyperImage_ instanceof CompositeImage) {
+            ((CompositeImage) hyperImage_).setChannelsUpdated();
+         }
+         hyperImage_.updateAndDraw();
+      updating_ = false;
       }
-      hyperImage_.updateAndDraw();
    }
 
    public void updateWindow() {
@@ -602,10 +607,10 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
                }
                if (MDUtils.isRGB(md)) {
                   for (int i = 0; i < 3; ++i) {
-                     setChannelDisplayRange(cameraChannel + i, pixelMin, pixelMax, false);
+                     setChannelDisplayRange(cameraChannel + i, pixelMin, pixelMax);
                   }
                } else {
-                  setChannelDisplayRange(cameraChannel, pixelMin, pixelMax, false);
+                  setChannelDisplayRange(cameraChannel, pixelMin, pixelMax);
                }
             }
          } catch (Exception ex) {
@@ -627,7 +632,7 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
                  hyperImage_.getStack().getPixels(1));
       }
        
-      updateAndDraw();
+    //  updateAndDraw();
    }
 
    private void updatePosition(int p) {
@@ -636,7 +641,7 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
          Object pixels = virtualStack_.getPixels(hyperImage_.getCurrentSlice());
          hyperImage_.getProcessor().setPixels(pixels);
       }
-      updateAndDraw();
+      //updateAndDraw();
    }
 
    public void setPosition(int p) {
@@ -1039,7 +1044,7 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
       }
       CompositeImage ci = (CompositeImage) hyperImage_;
       ci.getActiveChannels()[channelIndex] = visible;
-      updateAndDraw();
+     // updateAndDraw();
    }
 
    public int[] getChannelHistogram(int channelIndex) {
@@ -1147,7 +1152,7 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
       }
       updateChannelLUT(channel);
       if (updateDisplay) {
-         updateAndDraw();
+     //    updateAndDraw();
       }
    }
 
@@ -1160,11 +1165,11 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
       }
       updateChannelLUT(channel);
       if (updateDisplay) {
-         updateAndDraw();
+     //    updateAndDraw();
       }
    }
 
-   public void setChannelDisplayRange(int channel, int min, int max, boolean redraw) {
+   public void setChannelDisplayRange(int channel, int min, int max) {
       JSONObject chan = getChannelSetting(channel);
       try {
          if (chan.getInt("Min") == min && chan.getInt("Max") == max) {
@@ -1183,9 +1188,6 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
 
 
          updateChannelContrast(channel);
-         if (redraw) {
-            updateAndDraw();
-         }
       }
    }
 
