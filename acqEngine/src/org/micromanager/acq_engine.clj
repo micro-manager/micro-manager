@@ -600,7 +600,7 @@
     ["Width" "Height" "PixelType"]))  
 
 (defn create-image-window [first-image]
-  (let [summary {:interval-ms 0.0, :custom-interval-ms [] :use-autofocus false, :autofocus-skip 0,
+  (let [summary {:interval-ms 0.0, :custom-intervals-ms [] :use-autofocus false, :autofocus-skip 0,
                  :relative-slices true, :keep-shutter-open-slices false, :comment "",
                  :prefix "Untitled", :root "",
                  :time-first false, :positions (), :channels (), :slices-first true,
