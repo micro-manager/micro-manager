@@ -390,7 +390,7 @@ const unsigned char* MultiCamera::GetImageBuffer(unsigned channelNr)
 unsigned MultiCamera::GetImageWidth() const
 {
    unsigned width = 0;
-   int j = 0;
+   unsigned int j = 0;
    while (width == 0 && j < physicalCameras_.size() ) 
    {
       if (physicalCameras_[j] != 0)
@@ -412,7 +412,7 @@ unsigned MultiCamera::GetImageWidth() const
 unsigned MultiCamera::GetImageHeight() const
 {
    unsigned height = 0;
-   int j = 0;
+   unsigned int j = 0;
    while (height == 0 && j < physicalCameras_.size() ) 
    {
       if (physicalCameras_[j] != 0)
