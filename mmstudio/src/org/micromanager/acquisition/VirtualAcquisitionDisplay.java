@@ -494,13 +494,13 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
    }
 
    public void updateAndDraw() {
-      if (!updating_) {
-      updating_ = true;
+     if (!updating_) {
+         updating_ = true;
          if (hyperImage_ instanceof CompositeImage) {
             ((CompositeImage) hyperImage_).setChannelsUpdated();
          }
          hyperImage_.updateAndDraw();
-      updating_ = false;
+         updating_ = false;
       }
    }
 
@@ -1082,7 +1082,6 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
          } else {
             hyperImage_.setDisplayRange(getChannelMin(channel), getChannelMax(channel));
          }
-         hyperImage_.updateImage();
       }
    }
 
