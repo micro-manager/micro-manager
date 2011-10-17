@@ -416,16 +416,16 @@ public class ChannelControlPanel extends javax.swing.JPanel {
    }
 
    public final void drawDisplaySettings() {
-       int min;
-       int max;
-       if (autostretch_) {
-         if( rejectOutliers_){
-            int totalPoints =  acq_.getHyperImage().getWidth() * acq_.getHyperImage().getHeight();
+      int min;
+      int max;
+      if (autostretch_) {
+         if (rejectOutliers_) {
+            int totalPoints = acq_.getHyperImage().getWidth() * acq_.getHyperImage().getHeight();
             int[] histogram = acq_.getChannelHistogram(channelIndex_);
-            
+
             if (histogram != null) {
                HistogramUtils hu = new HistogramUtils(histogram, totalPoints, fractionToReject_);
-      			min = hu.getMinAfterRejectingOutliers();
+               min = hu.getMinAfterRejectingOutliers();
                max = hu.getMaxAfterRejectingOutliers();
             } else {
                min = getMin();
@@ -436,13 +436,13 @@ public class ChannelControlPanel extends javax.swing.JPanel {
             max = getMax();
          }
          acq_.setChannelDisplayRange(channelIndex_, min, max);
-       }
+      }
 
-      hp_.setCursors(acq_.getChannelMin(channelIndex_)/binSize_,
-              acq_.getChannelMax(channelIndex_)/binSize_,
+      hp_.setCursors(acq_.getChannelMin(channelIndex_) / binSize_,
+              acq_.getChannelMax(channelIndex_) / binSize_,
               acq_.getChannelGamma(channelIndex_));
-      minLabel.setText("min: "+getMin());
-      maxLabel.setText("max: "+getMax());
+      minLabel.setText("min: " + getMin());
+      maxLabel.setText("max: " + getMax());
       histMaxLabel.setText(Integer.toString((int) (binSize_ * 256)));
       hp_.repaint();
    }
