@@ -29,6 +29,12 @@ class ComPropTableModel extends AbstractTableModel implements MMPropertyTableMod
    public void updateValues(MicroscopeModel model, Device dev) {
       model_ = model;
       dev_ = dev;
+      try {
+         System.out.println("InitPort " + dev_.getPropertyValue("BaudRate"));
+      } catch (MMConfigFileException e) {
+         // TODO Auto-generated catch block
+         e.printStackTrace();
+      }
       
       if (!dev.isSerialPort())
          return;
@@ -79,7 +85,9 @@ class ComPropTableModel extends AbstractTableModel implements MMPropertyTableMod
       if (col == 2) {
          try {
             props_[row].value = (String)value;
+            dev_.setPropertyValue(props_[row].name, props_[row].value);
             fireTableCellUpdated(row, col);
+            System.out.println("setVal " + dev_.getPropertyValue("BaudRate"));
          } catch (Exception e) {
             ReportingUtils.logError(e.getMessage());
          }
@@ -109,5 +117,9 @@ class ComPropTableModel extends AbstractTableModel implements MMPropertyTableMod
       if (dev_.getName().compareTo(s.deviceName_) == 0)
          return dev_.findSetupProperty(s.propertyName_);
       return null;
+   }
+   
+   public Device getPortDevice() {
+      return dev_;
    }
 }

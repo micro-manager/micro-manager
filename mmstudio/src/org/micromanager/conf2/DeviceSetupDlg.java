@@ -42,6 +42,7 @@ public class DeviceSetupDlg extends MMDialog {
    private final JPanel contentPanel = new JPanel();
    private CMMCore core;
    private String name;
+   private Device portDev;
    private String lib;
    private String description;
    private MicroscopeModel model;
@@ -63,13 +64,14 @@ public class DeviceSetupDlg extends MMDialog {
    public DeviceSetupDlg(MicroscopeModel mod, CMMCore c, String library, String devName, String descr) {
       //setModalityType(ModalityType.APPLICATION_MODAL);
       setModal(true);
-      setBounds(100, 100, 478, 385);
+      setBounds(100, 100, 478, 481);
       model = mod;
       lib = library;
       name = devName;
       core = c;
       initialized = false;
       description = descr;
+      portDev = null;
       
       getContentPane().setLayout(new BorderLayout());
       contentPanel.setBorder(new EmptyBorder(5, 5, 5, 5));
@@ -147,7 +149,7 @@ public class DeviceSetupDlg extends MMDialog {
       devLabel.setText(name);
       
       JScrollPane scrollPaneProp = new JScrollPane();
-      scrollPaneProp.setBounds(10, 67, 451, 102);
+      scrollPaneProp.setBounds(10, 67, 451, 157);
       contentPanel.add(scrollPaneProp);
       
       propTable = new JTable();
@@ -183,11 +185,11 @@ public class DeviceSetupDlg extends MMDialog {
       contentPanel.add(detectButton);
       
       JLabel lblNewLabel_1 = new JLabel("Port Properties");
-      lblNewLabel_1.setBounds(10, 180, 209, 14);
+      lblNewLabel_1.setBounds(10, 235, 209, 14);
       contentPanel.add(lblNewLabel_1);
       
       JScrollPane scrollPaneCOM = new JScrollPane();
-      scrollPaneCOM.setBounds(10, 205, 451, 102);
+      scrollPaneCOM.setBounds(10, 260, 451, 143);
       contentPanel.add(scrollPaneCOM);
       
       comTable = new JTable();
@@ -317,9 +319,15 @@ public class DeviceSetupDlg extends MMDialog {
       if (portName == null)
          return;
       
-      Device portDev = model.findSerialPort(portName);
+      portDev = model.findSerialPort(portName);
       if (portDev == null)
          return;
+      try {
+         System.out.println("rebuild " + portDev.getPropertyValue("BaudRate"));
+      } catch (MMConfigFileException e1) {
+         // TODO Auto-generated catch block
+         e1.printStackTrace();
+      }
       
       // load port if necessary
       StrVector loadedPorts = core.getLoadedDevicesOfType(DeviceType.SerialDevice);
@@ -360,13 +368,35 @@ public class DeviceSetupDlg extends MMDialog {
    private void initializeDevice() {
       try {
          if (!initialized) {
-            core.initializeDevice(devLabel.getText());
-            btnInitialize.setEnabled(false);
-            initialized = true;
+            // first initialize port
+            if (initializePort()) {
+               // then device
+               core.initializeDevice(devLabel.getText());
+               btnInitialize.setEnabled(false);
+               initialized = true;
+            }
          }
       } catch (Exception e) {
          showMessage(e.getMessage());
       }
+   }
+   private boolean initializePort() {
+      if (portDev != null) {
+         try {
+            core.unloadDevice(portDev.getName());
+            core.loadDevice(portDev.getName(), portDev.getLibrary(), portDev.getAdapterName());
+            System.out.println("InitPort " + portDev.getPropertyValue("BaudRate"));
+            for (int j = 0; j < portDev.getNumberOfProperties(); j++) {
+               PropertyItem prop = portDev.getProperty(j);
+               core.setProperty(portDev.getName(), prop.name, prop.value);
+            }
+            core.initializeDevice(portDev.getName());
+         } catch (Exception e) {
+            showMessage(e.getMessage());
+            return false;
+         }
+      }
+      return true;
    }
    
    public void showMessage(String msg) {
