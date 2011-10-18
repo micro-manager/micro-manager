@@ -18,6 +18,7 @@ import java.awt.event.AdjustmentListener;
 import java.awt.event.WindowEvent;
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import javax.swing.JOptionPane;
 import mmcorej.TaggedImage;
 import org.json.JSONArray;
@@ -64,6 +65,8 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
    private long lastDisplayTime_;
    private JSONObject lastDisplayTags_;
    private boolean updating_ = false;
+   private int[] channelInitiated_;
+   
 
    /* This interface and the following two classes
     * allow us to manipulate the dimensions
@@ -212,6 +215,8 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
       numComponents_ = numComponents;
       numGrayChannels = numComponents_ * numChannels;
 
+      channelInitiated_ = new int[numGrayChannels];
+      
       if (imageCache_.getDisplayAndComments() == null || imageCache_.getDisplayAndComments().isNull("Channels")) {
          imageCache_.setDisplayAndComments(getDisplaySettingsFromSummary(summaryMetadata));
       }
@@ -636,7 +641,7 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
 
    private void updatePosition(int p) {
       virtualStack_.setPositionIndex(p);
-      if (!isComposite()) {
+      if (!hyperImage_.isComposite()) {
          Object pixels = virtualStack_.getPixels(hyperImage_.getCurrentSlice());
          hyperImage_.getProcessor().setPixels(pixels);
       }
@@ -1006,10 +1011,6 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
       hyperImage_.getWindow().toFront();
    }
 
-   public boolean isComposite() {
-      return hyperImage_ instanceof CompositeImage;
-   }
-
    // CHANNEL SECTION ////////////
    public int getNumChannels() {
       return ((IMMImagePlus) hyperImage_).getNChannelsUnverified();
@@ -1020,7 +1021,7 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
    }
 
    public String[] getChannelNames() {
-      if (isComposite()) {
+      if (hyperImage_.isComposite()) {
          int nChannels = getNumGrayChannels();
          String[] chanNames = new String[nChannels];
          for (int i = 0; i < nChannels; ++i) {
@@ -1037,7 +1038,7 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
    }
 
    public void setChannelVisibility(int channelIndex, boolean visible) {
-      if (!isComposite()) {
+      if (!hyperImage_.isComposite()) {
          return;
       }
       CompositeImage ci = (CompositeImage) hyperImage_;
@@ -1070,15 +1071,21 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
       if (hyperImage_ == null) {
          return;
       }
-      // Some strange ImageJ bug means we have to run this twice:
-      for (int i = 0; i < 2; ++i) {
-         if (hyperImage_.isComposite()) {
-            setChannelWithoutMovingSlider(channel);
-            CompositeImage ci = (CompositeImage) hyperImage_;
+
+      if (hyperImage_.isComposite()) {
+         setChannelWithoutMovingSlider(channel);
+         CompositeImage ci = (CompositeImage) hyperImage_;
+         ci.setDisplayRange(getChannelMin(channel), getChannelMax(channel));
+
+         // Ugly, dirty hack around ImageJ:
+         if (channelInitiated_[channel] < 3) {
+            ++channelInitiated_[channel];
+            updateAndDraw();
             ci.setDisplayRange(getChannelMin(channel), getChannelMax(channel));
-         } else {
-            hyperImage_.setDisplayRange(getChannelMin(channel), getChannelMax(channel));
+            updateAndDraw();
          }
+      } else {
+         hyperImage_.setDisplayRange(getChannelMin(channel), getChannelMax(channel));
       }
    }
 
