@@ -2313,7 +2313,6 @@ try {
     g_pvcamLock.Unlock();
 
     sequenceModeReady_ = false;
-    CCameraBase<Universal>::OnThreadExiting();
 
     txtEnd << "OnThreadExiting Frame count = " << imageCounter_;
     LogCamError(__LINE__, txtEnd.str());
