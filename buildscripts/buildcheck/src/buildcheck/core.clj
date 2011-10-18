@@ -38,7 +38,7 @@
   (old-files
     (filter
       #(.. % getName (endsWith ".jar"))
-      (file-seq (File. dir)))
+      (file-seq dir))
     time-limit-hours))
 
 (defn report-build-errors [bits mode]
