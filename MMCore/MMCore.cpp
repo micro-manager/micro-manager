@@ -2837,6 +2837,10 @@ std::vector<std::string> CMMCore::getAllowedPropertyValues(const char* label, co
  */
 string CMMCore::getProperty(const char* label, const char* propName) const throw (CMMError)
 {
+
+   if (label == NULL || propName == NULL)
+      throw CMMError(MMERR_NullPointerException);
+
    // in case we requested Core device
    if (strcmp(label, MM::g_Keyword_CoreDevice) == 0)
    {
@@ -2875,7 +2879,10 @@ string CMMCore::getProperty(const char* label, const char* propName) const throw
 void CMMCore::setProperty(const char* label, const char* propName, 
                           const char* propValue) throw (CMMError)
 {
-   // check for forbiden characters
+  if (label == NULL || propName == NULL || propValue == NULL)
+     throw CMMError(MMERR_NullPointerException);
+
+  // check for forbiden characters
    string val(propValue);
    if (std::string::npos != val.find_first_of(MM::g_FieldDelimiters, 0))
       throw CMMError(label, getCoreErrorText(MMERR_InvalidContents).c_str(), MMERR_InvalidContents);
@@ -4054,7 +4061,7 @@ void CMMCore::setPixelSizeConfig(const char* resolutionID) throw (CMMError)
 void CMMCore::setConfig(const char* groupName, const char* configName) throw (CMMError)
 {
    if (groupName == NULL || configName == NULL)
-      return;
+      throw CMMError(MMERR_NullPointerException);
 
    Configuration* pCfg = configGroups_->Find(groupName, configName);
    ostringstream os;
@@ -4168,8 +4175,8 @@ string CMMCore::getCurrentConfig(const char* groupName) const throw (CMMError)
 
 
    string empty("");
-   if (groupName == 0)
-      return empty;
+   if (groupName == NULL)
+      throw CMMError(MMERR_NullPointerException);
 
    vector<string> cfgs = configGroups_->GetAvailableConfigs(groupName);
    if (cfgs.empty())

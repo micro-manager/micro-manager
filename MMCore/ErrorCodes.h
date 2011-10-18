@@ -74,4 +74,5 @@
 #define MMERR_NotAllowedDuringSequenceAcquisition  46
 #define MMERR_OutOfMemory					47
 #define MMERR_InvalidImageSequence 48
+#define MMERR_NullPointerException 49
 #endif //_ERRORCODES_H_
