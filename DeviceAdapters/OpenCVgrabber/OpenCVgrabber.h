@@ -71,6 +71,8 @@ public:
    // ------------
    int SnapImage();
    const unsigned char* GetImageBuffer();
+   const unsigned char* GetImageBuffer(unsigned channel);
+   //const unsigned int* GetImageBufferAsRGB32();
    unsigned GetImageWidth() const;
    unsigned GetImageHeight() const;
    unsigned GetImageBytesPerPixel() const;
@@ -99,13 +101,9 @@ public:
    int IsExposureSequenceable(bool& isSequenceable) const {isSequenceable = false; return DEVICE_OK;}
 
    unsigned  GetNumberOfComponents() const { return nComponents_;};
-
+   //unsigned GetNumberOfChannels() const { return nChannels_;};
    // action interface
    // ----------------
-	// floating point read-only properties for testing
-//	int OnTestProperty(MM::PropertyBase* pProp, MM::ActionType eAct, long);
-
-
 
 	int OnGain(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnBinning(MM::PropertyBase* pProp, MM::ActionType eAct);
@@ -152,6 +150,8 @@ private:
 
    MMThreadLock imgPixelsLock_;
    int nComponents_;
+   //int nChannels_;
+
    friend class MySequenceThread;
    MySequenceThread * thd_;
 };

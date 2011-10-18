@@ -49,7 +49,7 @@ using namespace std;
 
 CvCapture* capture;
 IplImage* frame; // do not modify, do not release!
-IplImage* temp = 0; // used during conversion
+IplImage* temp; // used during conversion
 
 
 const double COpenCVgrabber::nominalPixelSizeUm_ = 1.0;
@@ -199,16 +199,9 @@ COpenCVgrabber::COpenCVgrabber() :
 */
 COpenCVgrabber::~COpenCVgrabber()
 {
-	
-   StopSequenceAcquisition();
-
    if(capture){
-      cvReleaseCapture(&capture);
-   }
-   if(temp){
-      cvReleaseImage(&temp);
-   }
-
+	   cvReleaseCapture(&capture);
+	}
    delete thd_;
 }
 
@@ -417,9 +410,7 @@ int COpenCVgrabber::Shutdown()
 	if(capture){
 	   cvReleaseCapture(&capture);
 	}
-	if(temp){
-	   cvReleaseImage(&temp);
-	}
+
    initialized_ = false;
    return DEVICE_OK;
 }
@@ -827,7 +818,6 @@ void COpenCVgrabber::OnThreadExiting() throw()
 {
    try
    {
-	  
       LogMessage(g_Msg_SEQUENCE_ACQUISITION_THREAD_EXITING);
       GetCoreCallback()?GetCoreCallback()->AcqFinished(this,0):DEVICE_OK;
    }
