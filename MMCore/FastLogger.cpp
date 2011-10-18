@@ -89,11 +89,11 @@ int LoggerThread::svc(void)
 		if (0 < stmp.length())
 		{
 			if( 0 != (_MMLogger_g->flags() & STDERR))
-				std::cerr << stmp<<'\n';
-
+				std::cerr << stmp << '\n' << flush;
+                                
 			MMThreadGuard fileGuard(logFileLock_g);
 			if( NULL != plogFile_g)
-				*plogFile_g<< stmp<<'\n';
+				*plogFile_g << stmp << '\n' << flush;
 		}
 		CDeviceUtils::SleepMs(30);
    } while (!stop_ );
