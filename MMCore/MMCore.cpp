@@ -4061,8 +4061,14 @@ void CMMCore::setPixelSizeConfig(const char* resolutionID) throw (CMMError)
  */
 void CMMCore::setConfig(const char* groupName, const char* configName) throw (CMMError)
 {
-   if (groupName == NULL || configName == NULL)
-      throw CMMError(MMERR_NullPointerException);
+   if (groupName == 0)
+   {
+      throw CMMError("GroupName not defined", MMERR_NoConfigGroup);
+   }
+   if (configName == 0)
+   {
+      throw CMMError("ConfigName not defined", MMERR_NoConfiguration);
+   }
 
    Configuration* pCfg = configGroups_->Find(groupName, configName);
    ostringstream os;
