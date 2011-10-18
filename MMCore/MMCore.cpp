@@ -169,6 +169,7 @@ CMMCore::CMMCore() :
    errorText_[MMERR_NotAllowedDuringSequenceAcquisition] = "This operation can not be executed while sequence acquisition is runnning.";
    errorText_[MMERR_OutOfMemory] = "Out of memory.";
 	errorText_[MMERR_InvalidImageSequence] = "Issue snapImage before getImage.";
+   errorText_[MMERR_NullPointerException] = "Null Pointer Exceptioni.";
 
    initializeLogging();
    CORE_LOG("-------->>\n");
