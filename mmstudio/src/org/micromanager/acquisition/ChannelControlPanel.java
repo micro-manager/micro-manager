@@ -217,28 +217,22 @@ public class ChannelControlPanel extends javax.swing.JPanel {
 
     private void fullButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_fullButtonActionPerformed
        setFullRange();
-       updateChannelSettings();
-       drawDisplaySettings();
        acq_.updateAndDraw();
     }//GEN-LAST:event_fullButtonActionPerformed
 
     private void colorPickerLabelMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_colorPickerLabelMouseClicked
        editColor();
-       drawDisplaySettings();
        acq_.updateAndDraw();
     }//GEN-LAST:event_colorPickerLabelMouseClicked
 
     private void channelNameCheckboxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_channelNameCheckboxActionPerformed
        updateChannelVisibility();
        drawDisplaySettings();
-       updateChannelSettings();
        acq_.updateAndDraw();
     }//GEN-LAST:event_channelNameCheckboxActionPerformed
 
     private void autoButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_autoButtonActionPerformed
        setAutoRange();
-       drawDisplaySettings();
-       updateChannelSettings();
        acq_.updateAndDraw();
     }//GEN-LAST:event_autoButtonActionPerformed
 
@@ -440,11 +434,14 @@ public class ChannelControlPanel extends javax.swing.JPanel {
             min = getMin();
             max = getMax();
          }
+      } else {
+         min = acq_.getChannelMin(channelIndex_);
+         max = acq_.getChannelMax(channelIndex_);
       }
 
-      hp_.setCursors(acq_.getChannelMin(channelIndex_) / binSize_,
-              acq_.getChannelMax(channelIndex_) / binSize_,
-              acq_.getChannelGamma(channelIndex_));
+      hp_.setCursors(min / binSize_,
+                     max / binSize_,
+                     acq_.getChannelGamma(channelIndex_));
       minLabel.setText("min: " + getMin());
       maxLabel.setText("max: " + getMax());
       histMaxLabel.setText(Integer.toString((int) (binSize_ * 256)));
@@ -510,7 +507,6 @@ public class ChannelControlPanel extends javax.swing.JPanel {
                min = i;
             }
          }
-
          return min;
       } else {
          return 0;
