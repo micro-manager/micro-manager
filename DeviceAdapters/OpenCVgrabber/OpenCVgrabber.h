@@ -71,7 +71,7 @@ public:
    // ------------
    int SnapImage();
    const unsigned char* GetImageBuffer();
-   const unsigned char* GetImageBuffer(unsigned channel);
+   //const unsigned char* GetImageBuffer(unsigned channel);
    //const unsigned int* GetImageBufferAsRGB32();
    unsigned GetImageWidth() const;
    unsigned GetImageHeight() const;
