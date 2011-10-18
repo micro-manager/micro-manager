@@ -94,7 +94,7 @@
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
-				CommandLine="copy &quot;$(TargetPath)&quot; ..\..\bin_$(PlatformName)&#x0D;&#x0A;"
+				CommandLine="copy &quot;$(TargetPath)&quot; ..\..\bin_$(PlatformName)"
 			/>
 		</Configuration>
 		<Configuration

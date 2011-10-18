@@ -83,8 +83,6 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "MCL_MicroDrive", "..\Device
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "MCL_NanoDrive", "..\DeviceAdapters\MCL_NanoDrive\NanoDrive_Device_Adapter.vcproj", "{06A4A3EA-9461-4780-B6EA-81004B3F3D56}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ABSCamera", "..\DeviceAdapters\ABS\ABS.vcproj", "{F80E3510-4425-4DEE-AAF9-F4682F467A82}"
-EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "PCO-Generic", "..\DeviceAdapters\PCO_Generic\MicroManager.vcproj", "{391502E7-BAAF-42DF-9327-2114B73FF8DF}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "PiperMmAdapter", "..\DeviceAdapters\Piper\PiperMmAdapter.vcproj", "{8FDA6D04-7C5D-4061-8467-AE0C104A2C83}"
@@ -501,12 +499,6 @@ Global
 		{06A4A3EA-9461-4780-B6EA-81004B3F3D56}.Release|Win32.ActiveCfg = Release|Win32
 		{06A4A3EA-9461-4780-B6EA-81004B3F3D56}.Release|Win32.Build.0 = Release|Win32
 		{06A4A3EA-9461-4780-B6EA-81004B3F3D56}.Release|x64.ActiveCfg = Release|x64
-		{F80E3510-4425-4DEE-AAF9-F4682F467A82}.Debug|Win32.ActiveCfg = Debug|Win32
-		{F80E3510-4425-4DEE-AAF9-F4682F467A82}.Debug|Win32.Build.0 = Debug|Win32
-		{F80E3510-4425-4DEE-AAF9-F4682F467A82}.Debug|x64.ActiveCfg = Debug|x64
-		{F80E3510-4425-4DEE-AAF9-F4682F467A82}.Release|Win32.ActiveCfg = Release|Win32
-		{F80E3510-4425-4DEE-AAF9-F4682F467A82}.Release|Win32.Build.0 = Release|Win32
-		{F80E3510-4425-4DEE-AAF9-F4682F467A82}.Release|x64.ActiveCfg = Release|x64
 		{391502E7-BAAF-42DF-9327-2114B73FF8DF}.Debug|Win32.ActiveCfg = Debug|Win32
 		{391502E7-BAAF-42DF-9327-2114B73FF8DF}.Debug|Win32.Build.0 = Debug|Win32
 		{391502E7-BAAF-42DF-9327-2114B73FF8DF}.Debug|x64.ActiveCfg = Debug|x64
