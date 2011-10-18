@@ -384,6 +384,17 @@ const unsigned char* MultiCamera::GetImageBuffer(unsigned channelNr)
    return 0;
 }
 
+bool MultiCamera::IsCapturing()
+{
+   std::vector<MM::Camera*>::iterator iter;
+   for (iter = physicalCameras_.begin(); iter != physicalCameras_.end(); iter++ ) {
+      if ( (*iter != 0) && (*iter)->IsCapturing())
+         return true;
+   }
+
+   return false;
+}
+
 // Check if all cameras have the same size
 // If they do not, return 0
 // TODO: deal with cameras differing in size by scaling or padding
