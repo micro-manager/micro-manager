@@ -185,6 +185,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "PI_GCS_2", "..\DeviceAdapte
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Aquinas", "..\DeviceAdapters\Aquinas\Aquinas.vcproj", "{00B6552D-65F7-4412-BF78-E72F34152AB9}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ABSCamera", "..\DeviceAdapters\ABS\ABSCamera.vcproj", "{AA828D40-0B3D-484C-BAB9-C72018D7760E}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
@@ -882,6 +884,14 @@ Global
 		{00B6552D-65F7-4412-BF78-E72F34152AB9}.Release|Win32.ActiveCfg = Release|Win32
 		{00B6552D-65F7-4412-BF78-E72F34152AB9}.Release|Win32.Build.0 = Release|Win32
 		{00B6552D-65F7-4412-BF78-E72F34152AB9}.Release|x64.ActiveCfg = Release|Win32
+		{AA828D40-0B3D-484C-BAB9-C72018D7760E}.Debug|Win32.ActiveCfg = Debug|Win32
+		{AA828D40-0B3D-484C-BAB9-C72018D7760E}.Debug|Win32.Build.0 = Debug|Win32
+		{AA828D40-0B3D-484C-BAB9-C72018D7760E}.Debug|x64.ActiveCfg = Debug|x64
+		{AA828D40-0B3D-484C-BAB9-C72018D7760E}.Debug|x64.Build.0 = Debug|x64
+		{AA828D40-0B3D-484C-BAB9-C72018D7760E}.Release|Win32.ActiveCfg = Release|Win32
+		{AA828D40-0B3D-484C-BAB9-C72018D7760E}.Release|Win32.Build.0 = Release|Win32
+		{AA828D40-0B3D-484C-BAB9-C72018D7760E}.Release|x64.ActiveCfg = Release|x64
+		{AA828D40-0B3D-484C-BAB9-C72018D7760E}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

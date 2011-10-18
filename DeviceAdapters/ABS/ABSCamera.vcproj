@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="Windows-1252"?>
 <VisualStudioProject
 	ProjectType="Visual C++"
-	Version="9,00"
+	Version="9.00"
 	Name="ABSCamera"
 	ProjectGUID="{AA828D40-0B3D-484C-BAB9-C72018D7760E}"
 	RootNamespace="ABSCamera"
@@ -94,7 +94,7 @@
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
-				CommandLine="copy &quot;$(TargetPath)&quot; ..\..\bin_$(PlatformName)&#x0D;&#x0A;copy &quot;$(TargetPath)&quot; &quot;c:\Program Files (x86)\Micro-Manager-1.4\&quot;&#x0D;&#x0A;"
+				CommandLine="copy &quot;$(TargetPath)&quot; ..\..\bin_$(PlatformName)&#x0D;&#x0A;"
 			/>
 		</Configuration>
 		<Configuration
