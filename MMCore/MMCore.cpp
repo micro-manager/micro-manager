@@ -3761,7 +3761,7 @@ void CMMCore::defineConfiguration(const char* configName, const char* deviceLabe
 void CMMCore::setConfiguration(const char* configName) throw (CMMError)
 {
    // tolerate empty configuration names
-   if (strlen(configName) == 0)
+   if (configName == 0 || strlen(configName) == 0)
       return;
 
    CConfigMap::const_iterator it = configs_.find(configName);
@@ -3787,7 +3787,7 @@ void CMMCore::setConfiguration(const char* configName) throw (CMMError)
 void CMMCore::deleteConfiguration(const char* configName) throw (CMMError)
 {
    // tolerate empty configuration names
-   if (strlen(configName) == 0)
+   if (configName == 0 || strlen(configName) == 0)
       return;
 
    CConfigMap::const_iterator it = configs_.find(configName);
@@ -4053,6 +4053,9 @@ void CMMCore::setPixelSizeConfig(const char* resolutionID) throw (CMMError)
  */
 void CMMCore::setConfig(const char* groupName, const char* configName) throw (CMMError)
 {
+   if (groupName == NULL || configName == NULL)
+      return;
+
    Configuration* pCfg = configGroups_->Find(groupName, configName);
    ostringstream os;
    os << groupName << "/" << configName;
@@ -4165,6 +4168,9 @@ string CMMCore::getCurrentConfig(const char* groupName) const throw (CMMError)
 
 
    string empty("");
+   if (groupName == 0)
+      return empty;
+
    vector<string> cfgs = configGroups_->GetAvailableConfigs(groupName);
    if (cfgs.empty())
       return empty;
