@@ -38,7 +38,7 @@ import org.micromanager.utils.ReportingUtils;
  *
  * @author arthur
  */
-public class VirtualAcquisitionDisplay implements ImageCacheListener {
+public final class VirtualAcquisitionDisplay implements ImageCacheListener {
 
    public static VirtualAcquisitionDisplay getDisplay(ImagePlus imgp) {
       ImageStack stack = imgp.getStack();
@@ -575,30 +575,11 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
       if (md == null) {
          return;
       }
-      int displayChannel = hyperImage_.getChannel();
+      int channel = MDUtils.getChannelIndex(md);
       int cameraChannel = this.rgbToGrayChannel(MDUtils.getChannelIndex(md));
       int frame = MDUtils.getFrameIndex(md);
       int position = MDUtils.getPositionIndex(md);
       int slice = MDUtils.getSliceIndex(md);
-
-      if (tSelector_ != null) {
-         if (tSelector_.getMaximum() <= (1 + frame)) {
-            this.setNumFrames(1 + frame);
-         }
-      }
-
-      try {
-         int p = 1 + MDUtils.getPositionIndex(md);
-         if (p >= getNumPositions()) {
-            setNumPositions(p);
-         }
-         setPosition(MDUtils.getPositionIndex(md));
-         hyperImage_.setPosition(1 + cameraChannel,
-                 1 + MDUtils.getSliceIndex(md),
-                 1 + MDUtils.getFrameIndex(md));
-      } catch (Exception e) {
-         ReportingUtils.logError(e);
-      }
 
       if (frame == 0) {
          try {
@@ -623,13 +604,29 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
             ReportingUtils.showError(ex);
          }
       }
+      
+      if (tSelector_ != null) {
+         if (tSelector_.getMaximum() <= (1 + frame)) {
+            this.setNumFrames(1 + frame);
+         }
+      }
 
-
-      // This is needed when displaying live images in a single frame window:
-      int ch = hyperImage_.getChannel();
-      if (hyperImage_.getStackSize() == ch) {
-         hyperImage_.setPositionWithoutUpdate(displayChannel, 1, 1);
-         hyperImage_.getProcessor().setPixels(hyperImage_.getStack().getPixels(displayChannel));
+      try {
+         int p = 1 + MDUtils.getPositionIndex(md);
+         if (p >= getNumPositions()) {
+            setNumPositions(p);
+         }
+         setPosition(MDUtils.getPositionIndex(md));
+         if (MDUtils.isRGB(md))
+            hyperImage_.setPosition(1 + cameraChannel,
+                 1 + MDUtils.getSliceIndex(md),
+                 1 + MDUtils.getFrameIndex(md));
+         else
+            hyperImage_.setPosition(1 + channel,
+                 1 + MDUtils.getSliceIndex(md),
+                 1 + MDUtils.getFrameIndex(md));
+      } catch (Exception e) {
+         ReportingUtils.logError(e);
       }
             
       // Make sure image is shown if it is a single plane:
@@ -637,6 +634,8 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
          hyperImage_.getProcessor().setPixels(
                  hyperImage_.getStack().getPixels(1));
       }
+      
+      updateAndDraw();
    }
 
    private void updatePosition(int p) {

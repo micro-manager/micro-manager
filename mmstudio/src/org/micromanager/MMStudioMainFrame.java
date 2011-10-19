@@ -3056,7 +3056,7 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
                         
                         addImage(multiCameraAcq_, ti, update);
                         // TODO: remove after debugging
-                        System.out.println("Channel: " + channel);
+                        // System.out.println("Channel: " + channel);
                         foundAll = true;
                         for (int i = 0; i < found.length; i++)
                            if (!found[i])
