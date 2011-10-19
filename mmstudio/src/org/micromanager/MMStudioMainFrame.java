@@ -3047,20 +3047,25 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
                         MDUtils.setSliceIndex(ti.tags, 0);
                         MDUtils.setPositionIndex(ti.tags, 0);
                         boolean update = false;
-                        if (multiChannelCameraNrCh_ == channel + 1)
-                           update = true;
+                        //if (multiChannelCameraNrCh_ == channel + 1)
+                        //   update = true;
                         if (!acquisitionExists(multiCameraAcq_)) {
                            enableLiveMode(false);
                            return;
                         }
                         
-                        addImage(multiCameraAcq_, ti, update);
+
                         // TODO: remove after debugging
                         // System.out.println("Channel: " + channel);
                         foundAll = true;
                         for (int i = 0; i < found.length; i++)
                            if (!found[i])
                               foundAll = false;
+                        
+                        addImage(multiCameraAcq_, ti, foundAll);
+                        if (!foundAll) {
+                           Thread.sleep(10);
+                        }
                      }
                   }
                }
@@ -4419,6 +4424,12 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
       acqMgr_.getAcquisition(name).insertImage(taggedImg, updateDisplay);
    }
 
+   public void addImage(String name, TaggedImage taggedImg, 
+           boolean updateDisplay,
+           boolean waitForDisplay) throws MMScriptException {
+      acqMgr_.getAcquisition(name).insertImage(taggedImg, updateDisplay, waitForDisplay);
+   }
+   
    public void closeAllAcquisitions() {
       acqMgr_.closeAll();
    }

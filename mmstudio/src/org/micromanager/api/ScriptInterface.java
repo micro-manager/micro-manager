@@ -260,6 +260,7 @@ public interface ScriptInterface {
 
    /**
     * Inserts image into the acquisition handle and gives option whether or not to update the display.
+    * This version will wait for the display to finish drawing the image
     * @param name Name of the acquisition.
     * @param taggedImg Tagged Image (image with associated metadata).  The metadata determine where in the acquisition this image will be inserted.
     * @param updateDisplay Flag used to indicate whether or not to update the display.
@@ -267,6 +268,18 @@ public interface ScriptInterface {
     */
    public void addImage(String name, TaggedImage taggedImg, boolean updateDisplay) throws MMScriptException;
 
+   /**
+    * Inserts image into the acquisition handle and gives option whether or not to update the display.
+    * Also optionally waits for the display to finish drawing the image
+    * @param name Name of the acquisition.
+    * @param taggedImg Tagged Image (image with associated metadata).  The metadata determine where in the acquisition this image will be inserted.
+    * @param updateDisplay Flag used to indicate whether or not to update the display.
+    * @throws MMScriptException
+    */
+   public void addImage(String name, TaggedImage taggedImg, 
+           boolean updateDisplay, boolean waitForDisplay) throws MMScriptException;
+
+   
    /**
     * Returns the width (in pixels) of the viewer attached to this acquisition
     */

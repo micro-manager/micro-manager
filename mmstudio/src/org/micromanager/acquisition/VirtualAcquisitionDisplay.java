@@ -18,8 +18,8 @@ import java.awt.event.AdjustmentListener;
 import java.awt.event.WindowEvent;
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
 import javax.swing.JOptionPane;
+import javax.swing.SwingUtilities;
 import mmcorej.TaggedImage;
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -57,7 +57,6 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
    final private ScrollbarWithLabel tSelector_;
    final private MMImagePlus mmImagePlus_;
    final private int numComponents_;
-
    private AcquisitionEngine eng_;
    private boolean finished_ = false;
    private boolean promptToSave_ = true;
@@ -66,7 +65,7 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
    private JSONObject lastDisplayTags_;
    private boolean updating_ = false;
    private int[] channelInitiated_;
-   
+
 
    /* This interface and the following two classes
     * allow us to manipulate the dimensions
@@ -216,7 +215,7 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
       numGrayChannels = numComponents_ * numChannels;
 
       channelInitiated_ = new int[numGrayChannels];
-      
+
       if (imageCache_.getDisplayAndComments() == null || imageCache_.getDisplayAndComments().isNull("Channels")) {
          imageCache_.setDisplayAndComments(getDisplaySettingsFromSummary(summaryMetadata));
       }
@@ -261,8 +260,7 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
     * Allows bypassing the prompt to Save
     * @param promptToSave boolean flag
     */
-   public void promptToSave(boolean promptToSave)
-   {
+   public void promptToSave(boolean promptToSave) {
       promptToSave_ = promptToSave;
    }
 
@@ -289,13 +287,14 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
       try {
          long t = System.currentTimeMillis();
          JSONObject tags;
-         if (taggedImage != null)
+         if (taggedImage != null) {
             tags = taggedImage.tags;
-         else
+         } else {
             tags = imageCache_.getLastImageTags();
-         if (finalUpdate  || (MDUtils.getFrameIndex(tags) == 0) || (Math.abs(t - lastDisplayTime_) > 30)) {
+         }
+         if (finalUpdate || (MDUtils.getFrameIndex(tags) == 0) || (Math.abs(t - lastDisplayTime_) > 30)) {
             if (tags != null /*&& tags != lastDisplayTags_*/) {
-               showImage(tags);
+               showImage(tags, true);
                lastDisplayTags_ = tags;
             }
             lastDisplayTime_ = t;
@@ -500,7 +499,7 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
    }
 
    public void updateAndDraw() {
-     if (!updating_) {
+      if (!updating_) {
          updating_ = true;
          if (hyperImage_ instanceof CompositeImage) {
             ((CompositeImage) hyperImage_).setChannelsUpdated();
@@ -510,6 +509,25 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
       }
    }
 
+   public void updateAndDrawEDT() {
+      if (!updating_) {
+         updating_ = true;
+
+         SwingUtilities.invokeLater(new Runnable() {
+
+            public void run() {
+               if (hyperImage_ instanceof CompositeImage) {
+                  ((CompositeImage) hyperImage_).setChannelsUpdated();
+               }
+               hyperImage_.updateAndDraw();
+               //hyperImage_.draw();
+            }
+         });
+
+         updating_ = false;
+      }
+   }
+   
    public void updateWindow() {
       if (hc_ == null) {
          return;
@@ -566,11 +584,31 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
 
    }
 
+   /**
+    * Displays tagged image in the multi-D viewer
+    * Will wait for the screen update
+    *      
+    * @param taggedImg
+    * @throws Exception 
+    */
+   
    public void showImage(TaggedImage taggedImg) throws Exception {
-      showImage(taggedImg.tags);
+      showImage(taggedImg, true);
+   }
+   
+   /**
+    * Displays tagged image in the multi-D viewer
+    * Optionally waits for the display to draw the image
+    *     * 
+    * @param taggedImg
+    * @throws Exception 
+    */
+   public void showImage(TaggedImage taggedImg, boolean waitForDisplay) throws Exception {
+      showImage(taggedImg.tags, waitForDisplay);
    }
 
-   public void showImage(JSONObject md) throws Exception {
+
+   public void showImage(JSONObject md, boolean waitForDisplay) throws Exception {
       updateWindow();
       if (md == null) {
          return;
@@ -586,7 +624,7 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
             TaggedImage image = imageCache_.getImage(cameraChannel, slice, frame, position);
             if (image != null) {
                Object pix = image.pix;
-               int pixelMin = ImageUtils.getMin(pix);                
+               int pixelMin = ImageUtils.getMin(pix);
                int pixelMax = ImageUtils.getMax(pix);
                if (slice > 0) {
                   pixelMin = Math.min(this.getChannelMin(cameraChannel), pixelMin);
@@ -604,7 +642,7 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
             ReportingUtils.showError(ex);
          }
       }
-      
+
       if (tSelector_ != null) {
          if (tSelector_.getMaximum() <= (1 + frame)) {
             this.setNumFrames(1 + frame);
@@ -617,25 +655,46 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
             setNumPositions(p);
          }
          setPosition(MDUtils.getPositionIndex(md));
-         if (MDUtils.isRGB(md))
+         if (MDUtils.isRGB(md)) {
             hyperImage_.setPosition(1 + cameraChannel,
-                 1 + MDUtils.getSliceIndex(md),
-                 1 + MDUtils.getFrameIndex(md));
-         else
-            hyperImage_.setPosition(1 + channel,
-                 1 + MDUtils.getSliceIndex(md),
-                 1 + MDUtils.getFrameIndex(md));
+                    1 + MDUtils.getSliceIndex(md),
+                    1 + MDUtils.getFrameIndex(md));
+         } else {
+            hyperImage_.setPositionWithoutUpdate(1 + channel,
+                    1 + MDUtils.getSliceIndex(md),
+                    1 + MDUtils.getFrameIndex(md));
+         }
       } catch (Exception e) {
          ReportingUtils.logError(e);
       }
-            
+
       // Make sure image is shown if it is a single plane:
       if (hyperImage_.getStackSize() == 1) {
          hyperImage_.getProcessor().setPixels(
                  hyperImage_.getStack().getPixels(1));
       }
       
-      updateAndDraw();
+      
+      Runnable updateAndDraw = new Runnable() {
+
+         public void run() {
+            if (hyperImage_ instanceof CompositeImage) {
+               ((CompositeImage) hyperImage_).setChannelsUpdated();
+            }
+            hyperImage_.updateAndDraw();
+         }
+      };
+
+      if (!SwingUtilities.isEventDispatchThread()) {
+         if (waitForDisplay) {
+            SwingUtilities.invokeAndWait(updateAndDraw);
+         } else {
+            SwingUtilities.invokeLater(updateAndDraw);
+         }
+      } else {
+         updateAndDraw();
+      }
+
    }
 
    private void updatePosition(int p) {
@@ -1064,7 +1123,6 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
          }
       }
    }
-
 
    private void updateChannelContrast(int channel) {
       if (hyperImage_ == null) {

@@ -343,10 +343,17 @@ public class MMAcquisition {
       insertImage(taggedImg, show_);
    }
 
+   
+   public void insertImage(TaggedImage taggedImg, boolean updateDisplay) throws MMScriptException {
+      insertImage(taggedImg, updateDisplay, true);
+   }
+   
    /*
     * This is the insertImage version that actually puts data into the acquisition
     */
-   public void insertImage(TaggedImage taggedImg, boolean updateDisplay) throws MMScriptException {
+   public void insertImage(TaggedImage taggedImg, 
+           boolean updateDisplay, 
+           boolean waitForDisplay) throws MMScriptException {
       if (!initialized_) {
          throw new MMScriptException("Acquisition data must be initialized before inserting images");
       }
@@ -391,7 +398,7 @@ public class MMAcquisition {
       if (updateDisplay) {
          try {
             if (virtAcq_ != null)
-               virtAcq_.showImage(taggedImg);
+               virtAcq_.showImage(taggedImg, waitForDisplay);
          } catch (Exception e) {
             throw new MMScriptException("Unable to show image");
          }
