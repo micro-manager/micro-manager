@@ -2719,6 +2719,11 @@ int AFC::Initialize()
    AddAllowedValue("FullFocusTime", "700", 700);
    AddAllowedValue("FullFocusTime", "1000", 1000);
 
+   pAct = new CPropertyAction(this, &AFC::OnOffset);
+   ret = CreateProperty("Offset", "0.0", MM::Float, false, pAct);
+   if (ret != DEVICE_OK)
+      return ret;
+
    initialized_ = true;
    return 0;
 }
@@ -2835,6 +2840,25 @@ int AFC::OnFullFocusTime(MM::PropertyBase* pProp, MM::ActionType eAct)
    return DEVICE_OK;
 }
 
+int AFC::OnOffset(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   if (eAct == MM::BeforeGet)
+   {
+      double offset;
+      int ret = GetOffset(offset);
+      if (ret != DEVICE_OK)
+         return ret;
+      pProp->Set(offset);
+   }
+   else if (eAct == MM::AfterSet)
+   {
+      double offset;
+      pProp->Get(offset);
+      return SetOffset(offset);
+   }
+
+   return DEVICE_OK;
+}
 // ...
 
 

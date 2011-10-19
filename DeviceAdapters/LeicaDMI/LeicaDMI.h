@@ -472,6 +472,7 @@ public:
    //Action Handlers
    int OnDichroicMirrorPosition(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnFullFocusTime(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnOffset(MM::PropertyBase* pProp, MM::ActionType eAct);
 
 private:
    bool initialized_;
