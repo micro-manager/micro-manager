@@ -2419,7 +2419,7 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
       }
 
       Roi roi = curImage.getRoi();
-
+      
       try {
          if (roi == null) {
             // if there is no ROI, create one
@@ -2445,6 +2445,10 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
          }
 
          Rectangle r = roi.getBoundingRect();
+         // if we already had an ROI defined, correct for the offsets
+         Rectangle cameraR =  getROI();
+         r.x += cameraR.x;
+         r.y += cameraR.y;
          // Stop (and restart) live mode if it is running
          setROI(r);
 
