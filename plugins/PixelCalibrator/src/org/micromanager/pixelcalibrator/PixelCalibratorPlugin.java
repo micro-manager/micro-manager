@@ -126,7 +126,7 @@ public class PixelCalibratorPlugin implements MMPlugin {
          calDialog.setVisible(true);
 
 
-         Preferences prefs = Preferences.userNodeForPackage(MMStudioMainFrame.class);
+         Preferences prefs = Preferences.systemNodeForPackage(MMStudioMainFrame.class);
          
          try {
             JavaUtils.putObjectInPrefs(prefs, "affine_transform_" + core_.getCurrentPixelSizeConfig(), result);
