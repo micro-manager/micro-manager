@@ -45,6 +45,7 @@ import javax.swing.event.TreeSelectionListener;
 import javax.swing.tree.DefaultMutableTreeNode;
 
 import mmcorej.CMMCore;
+import mmcorej.StrVector;
 
 import org.micromanager.utils.ReportingUtils;
 import javax.swing.JCheckBox;
@@ -178,8 +179,7 @@ public class AddDeviceDlg extends JDialog implements MouseListener,
    /**
     * Create the dialog
     */
-   public AddDeviceDlg(MicroscopeModel model, CMMCore core,
-         DevicesPage devicesPage) {
+   public AddDeviceDlg(MicroscopeModel model, CMMCore core, DevicesPage devicesPage) {
       super();
       setModal(true);
       setResizable(false);
@@ -401,9 +401,42 @@ public class AddDeviceDlg extends JDialog implements MouseListener,
             String lib = userData[0].toString();
             String descr = userData[2].toString();
 
-            DeviceSetupDlg dlg = new DeviceSetupDlg(model_, core_, lib,
-                  adapterName, descr);
+            DeviceSetupDlg dlg = new DeviceSetupDlg(model_, core_, lib, adapterName, descr);
             dlg.setVisible(true);
+            String devLabel = dlg.getDeviceName();
+            Device dev = model_.findDevice(devLabel);
+            if (dev == null) {
+               return false;
+            }
+            if (dev.isHub() && !dev.getName().equals("Core")) {
+               
+               // device "discovery" happens here
+               StrVector installed = core_.getInstalledDevices(dev.getName());
+               // end of discovery
+               
+               Vector<Device> peripherals = new Vector<Device>();
+
+               if (0 < installed.size()) {
+                  for (int i=0; i<installed.size(); i++) {                        
+                     try {
+                        if (model_.findDevice(installed.get(i)) == null)
+                        {
+                           String description = model_.getDeviceDescription(dev.getLibrary(), dev.getAdapterName());
+                           Device newDev = new Device(dev.getAdapterName(), dev.getLibrary(), dev.getAdapterName(), descr);
+                           peripherals.add(newDev);
+                        }
+                     } catch (Exception e) {
+                        ReportingUtils.logError(e.getMessage());
+                     }
+                  }
+               }
+               
+               if (peripherals.size() > 0) {
+                  PeripheralSetupDlg dlgp = new PeripheralSetupDlg(model_, core_, dev.getName(), peripherals);
+                  dlgp.setVisible(true);
+               }
+               
+            }
          }
       }
       return true;

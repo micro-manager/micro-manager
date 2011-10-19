@@ -30,6 +30,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import javax.swing.JLabel;
 
 public class PeripheralSetupDlg extends MMDialog {
 
@@ -215,7 +216,8 @@ public class PeripheralSetupDlg extends MMDialog {
    private String hub_;
    private final JPanel contentPanel = new JPanel();   
 
-   public PeripheralSetupDlg(MicroscopeModel mod, CMMCore c, String hub) {
+   public PeripheralSetupDlg(MicroscopeModel mod, CMMCore c, String hub, Vector<Device> per) {
+      setTitle("Peripheral Devices Setup");
       setBounds(100, 100, 479, 353);
       //setModalityType(ModalityType.APPLICATION_MODAL);
       setModal(true);
@@ -233,12 +235,20 @@ public class PeripheralSetupDlg extends MMDialog {
       contentPanel.setLayout(null);
       
       scrollPane_ = new JScrollPane();
-      scrollPane_.setBounds(10, 10, 453, 262);
+      scrollPane_.setBounds(10, 36, 453, 236);
       contentPanel.add(scrollPane_);
 
       deviceTable_ = new JTable();
       deviceTable_.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
       scrollPane_.setViewportView(deviceTable_);
+      
+      JLabel lblNewLabel = new JLabel("HUB (parent device):");
+      lblNewLabel.setBounds(10, 11, 111, 14);
+      contentPanel.add(lblNewLabel);
+      
+      JLabel lblParentDev = new JLabel(hub_);
+      lblParentDev.setBounds(131, 11, 332, 14);
+      contentPanel.add(lblParentDev);
       
       {
          JPanel buttonPane = new JPanel();

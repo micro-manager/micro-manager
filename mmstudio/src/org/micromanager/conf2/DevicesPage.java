@@ -187,7 +187,7 @@ public class DevicesPage extends PagePanel implements ListSelectionListener {
          return;      
       String devName = (String)deviceTable_.getValueAt(sel, 0);
       
-      PeripheralSetupDlg dlg = new PeripheralSetupDlg(model_, core_, devName);
+      PeripheralSetupDlg dlg = new PeripheralSetupDlg(model_, core_, devName, null);
       dlg.setVisible(true);
       
       rebuildTable();
@@ -262,7 +262,10 @@ public class DevicesPage extends PagePanel implements ListSelectionListener {
                Cursor waitc = new Cursor(Cursor.WAIT_CURSOR);
                ancestor.setCursor(waitc);
             }
-            status = model_.loadModel(core_, true);
+            
+            // NOTE: this is not needed anymore bacause devices are already loaded
+            // Maybe we just need loadDeviceDataFromHardware?
+            //status = model_.loadModel(core_, true);
             if (null != ancestor){
                if( null != oldc)
                   ancestor.setCursor(oldc);

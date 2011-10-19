@@ -178,15 +178,15 @@ public class ConfiguratorDlg2 extends JDialog {
         getContentPane().add(pagesLabel_);
 
         // add page panels
-        pages_ = new PagePanel[10];
+        pages_ = new PagePanel[6];
 
         int pageNumber = 0;
         pages_[pageNumber++] = new IntroPage(prefs_);
         pages_[pageNumber++] = new DevicesPage(prefs_);
-        pages_[pageNumber++] = new EditPropertiesPage(prefs_);
-        pages_[pageNumber++] = new ComPortsPage(prefs_);
-        pages_[pageNumber++] = new PeripheralDevicesPage(prefs_);
-        pages_[pageNumber++] = new PeripheralDevicesPreInitializationPropertiesPage(prefs_);
+        // pages_[pageNumber++] = new EditPropertiesPage(prefs_);
+        // pages_[pageNumber++] = new ComPortsPage(prefs_);
+        // pages_[pageNumber++] = new PeripheralDevicesPage(prefs_);
+        // pages_[pageNumber++] = new PeripheralDevicesPreInitializationPropertiesPage(prefs_);
         pages_[pageNumber++] = new RolesPage(prefs_);
         pages_[pageNumber++] = new DelayPage(prefs_);
         pages_[pageNumber++] = new LabelsPage(prefs_);
