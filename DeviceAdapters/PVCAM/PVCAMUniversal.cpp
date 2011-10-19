@@ -2314,6 +2314,10 @@ try {
 
     sequenceModeReady_ = false;
 
+    MM::Core* cb = GetCoreCallback();
+    if (cb)
+      cb->AcqFinished(this, 0);
+
     txtEnd << "OnThreadExiting Frame count = " << imageCounter_;
     LogCamError(__LINE__, txtEnd.str());
 } catch (...) {
