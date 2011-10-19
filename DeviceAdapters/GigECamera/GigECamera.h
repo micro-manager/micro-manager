@@ -152,6 +152,7 @@ public:
 	int PrepareSequenceAcqusition() { return DEVICE_OK; }
 	int StartSequenceAcquisition(long numImages, double interval_ms, bool stopOnOverflow);
 	int StopSequenceAcquisition();
+   bool IsCapturing();
 
 	// pixel-size-related functions
 	// the GenICam spec and the JAI sdk have no way to query sensor pixel size.

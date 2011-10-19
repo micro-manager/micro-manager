@@ -237,3 +237,7 @@ int CGigECamera::SnapImage()
 	return DEVICE_OK;
 }
 
+bool CGigECamera::IsCapturing()
+{
+   return doContinuousAcquisition;
+}
