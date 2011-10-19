@@ -18,57 +18,9 @@
 #ifndef _CAMUSB_API_UTIL_H_
 #define _CAMUSB_API_UTIL_H_
 
-#ifndef _WINDOWS_
-    #pragma message( " " )
-    #pragma message( "      ===========================================" )
-    #pragma message( "      |                                         |" )
-    #pragma message( "      |    Standard Win32 defines not found!    |" )
-    #pragma message( "      |                                         |" )
-    #pragma message( "      | You have to include the windows.h       |" )
-    #pragma message( "      | or over stdafx.h                        |" )
-    #pragma message( "      |                                         |" )
-    #pragma message( "      ===========================================" )
-    #pragma message( " " )
-    #error You have to include the "windows.h" directly or over "stdafx.h"
-#endif
-
-
-#ifndef DOXYGEN_SHOULD_SKIP_THIS
-  #ifdef CAM_USB_API_EXPORTS	// Import bzw. Export festlegen
-	#define USBAPI extern "C" __declspec(dllexport)
-  #else
-	#define USBAPI extern "C" __declspec(dllimport)
-  #endif
-
-  #ifndef _VBASIC6
-	#define CCONV	__cdecl		//!< call convention
-  #else
-	#define CCONV	__stdcall	//!< call convention
-  #endif
-#else
-	#ifndef _WIN32
-		#define _WIN32
-	#endif
-
-//! \cond DON_T_DOCUMENT
-	#define CCONV               //!< to clear the call convention for documentation
-	#define USBAPI	            //!< to clear DLL import and export defines for documentation
-
-//! \endcond
-
-#endif
-
-#ifdef INCLUDE_IMPORT
-	#include "include\common_structs_exp.h"
-	#include "include\common_constants_exp.h"
-	#include "include\pixeltypes.h"
-	#include "include\datatypes.h"
-#else
-	#include "..\..\include\common_structs_exp.h"
-	#include "..\..\include\common_constants_exp.h"
-	#include "..\..\include\pixeltypes.h"
-	#include "..\..\include\datatypes.h"
-#endif
+// -------------------------- Includes ----------------------------------------
+//
+#include "CamUSB_API.h"   //!< include base header
 
 // ----------------------------------------------------------------------------
 //! \name  API utility functions
@@ -154,6 +106,23 @@ USBAPI u32 CCONV GetStdResString( u32 dwStdRes,
 USBAPI u32 CCONV Sensortype2String( u16 wSensorType,
                                     char* pszSensorIDStr,
                                     u32 dwMaxLen);
+                                    
+// ----------------------------------------------------------------------------
+//
+// TargetID2String
+//
+//! \brief	convert the sensor id to as string value
+//!
+//! \param	dwTargetID      [ in] target id to translate
+//! \param	pszTargetIDStr  [out] target id string
+//! \param	dwMaxLen        [ in] max size of target id string
+//!
+//! \retval	count string elements
+//!
+USBAPI u32 CCONV TargetID2String( u32 dwTargetID,
+                                  char* pszTargetIDStr,
+                                  u32 dwMaxLen,
+                                  bool bShort = false );                                    
 
 // ----------------------------------------------------------------------------
 //

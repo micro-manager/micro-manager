@@ -45,7 +45,7 @@
 
 #define FUNC_MEMORY					0x0000000000080000	//!< camera memory (eeprom/flash) access
 
-#define FUNC_RESERVED				0x0000200020141000  //!< reserved for further use 
+#define FUNC_RESERVED               0x0001200020141000  //!< reserved for further use 
 
 #define FUNC_LOCK_UPDATE			0x0000000000200000	//!< lock sensor settings update
 #define FUNC_COLOR_CORRECTION		0x0000000000400000	//!< color correction S_COLOR_CORRECTION_PARAMS
@@ -182,6 +182,7 @@
 #define	ST_KAI04050C			0xC015			//!< KODAK InterlineCCD KAI-04050 Color
 #define	ST_KAI08050M			0x8016			//!< KODAK InterlineCCD KAI-08050 Mono
 #define	ST_KAI08050C			0xC016			//!< KODAK InterlineCCD KAI-08050 Color
+#define	ST_EX490EP              0xC017			//!< Sony FCB-EX490EP Color
 
 #define	ST_REDCLEAR     		0x2000			//!< if set if bayer mask with only red. Green and blue mask is cleared.
 #define	ST_COLOR				0x4000			//!< if set Color Sensor else Mono
@@ -214,6 +215,7 @@
 #define	FLASH_29LV160			0x01			//!< AMD AM29LV160D (
 #define	FLASH_M25P64			0x02			//!< STM M25P64 (64 MBit, SPI)
 #define FLASH_M25P40			0x03			//!< STM M25P40 (4 MBit, SPI)
+#define FLASH_M25P128			0x04			//!< STM M25P128(128 MBit, SPI)
 
 //!@}
 
@@ -224,6 +226,10 @@
 #define FPGA_NONE				0x00			//!< no FPGA present
 #define FPGA_XC3S400			0x01			//!< Xilinx XC3S400
 #define FPGA_XC3S1000			0x02			//!< Xilinx XC3S1000
+
+//!  0x03..0x07 reserved for other XILINX devices
+
+#define FPGA_LFE3_70			0x08			//!< Lattice ECP3-70
 
 //!@}
 
@@ -238,6 +244,44 @@
 
 //!@}
 
+//! \name Constants: Target Types
+//!@{
+#define TARGET_NONE           0x00000000			//!< no CPLD present
+#define TARGET_MASK           0x0000FFFF			//!< target detail type mask see #DSP_NONE, #FPGA_NONE, #CPLD_NONE (based on taget type)
+
+#define TARGET_ID_0           0x00000000			//!< id for the first device of a type
+#define TARGET_ID_1           0x00100000			//!< id for the second device of the same type
+#define TARGET_ID_2           0x00200000			//!< id for the third device of the same type
+#define TARGET_ID_MASK        0x00F00000			//!< id of target type if same type is present twice
+
+#define TARGET_TYPE_DSP       0x01000000	    //!< target is a DSP
+#define TARGET_TYPE_FPGA      0x02000000	    //!< target is a FPGA
+#define TARGET_TYPE_CPLD      0x03000000	    //!< target is a CPLD
+#define TARGET_TYPE_FLASH     0x04000000	    //!< target is a FLASH memory
+#define TARGET_TYPE_RAM       0x05000000	    //!< target is a volatile memory
+#define TARGET_TYPE_USB       0x06000000	    //!< target is a USB controller
+#define TARGET_TYPE_PCIE      0x07000000	    //!< target is a PCIe controller
+#define TARGET_TYPE_ETHERNET  0x08000000	    //!< target is a Ethernet controller
+#define TARGET_TYPE_IMGSENSOR 0x09000000	    //!< target is a image sensor
+#define TARGET_TYPE_MASK      0x0F000000			//!< target of targets
+
+// example Transport id's  
+
+// example target id's  Firmware
+#define TARGET_BF533      (TARGET_TYPE_DSP        | TARGET_ID_0 | DSP_BF533)      //!< DSP BF533 as target
+#define TARGET_LFE3_70    (TARGET_TYPE_FPGA       | TARGET_ID_0 | FPGA_LFE3_70)   //!< FPGA as target
+#define TARGET_XC2C128    (TARGET_TYPE_CPLD       | TARGET_ID_0 | CPLD_XC2C128)   //!< CPLD 0 as target
+#define TARGET_XC2C128_1  (TARGET_TYPE_CPLD       | TARGET_ID_1 | CPLD_XC2C128)   //!< CPLD 1 as target
+#define TARGET_EX490EP    (TARGET_TYPE_IMGSENSOR  | TARGET_ID_0 | ST_EX490EP)     //!< image sensor EX490EP as target
+//!@}
+
+//! \name Constants: RAM Types
+//!@{
+
+#define	RAM_NONE        0x00  //!< no volatile memory
+#define	RAM_MT46V32M16  0x01  //!< MICRON 4x8Mx16Bit DDR-SDRAM
+
+//!@}
 
 //! \name Constants: USB Controller Types
 //! used by #S_CAMERA_VERSION
@@ -247,6 +291,45 @@
 #define USB_NET2272				0x02			//!< PLX NET2272
 #define USB_PDIUSB12			0x03			//!< Philips PDIUSBD12
 #define USB_DSP_548_OTG			0x04			//!< AD Blackfin BF548
+
+//!@}
+
+//! \name Constants: GigE Controller Types
+//!@{
+#define ETHERNET_NONE     0x0000			//!< no Gige controller present
+#define ETHERNET_AX88180  0x0001			//!< ASIX AX88180 10/100/1000M Gigabit Ethernet Controller
+
+//!@}
+
+//! \name Constants: PCIE Controller Types
+//!@{
+#define PCIE_NONE          0x0000			  //!< no PCIe controller present
+#define PCIE_LFE3_70_X2    0x0001	      //!< PCIe x2 ABS optimizied IPCore
+#define PCIE_LFE3_70_X4    0x0002	      //!< PCIe x4 ABS optimizied IPCore
+
+//!@}
+
+
+//! \name Constants: Transport IDs
+//!@{
+#define	TRANSPORTID_NONE          0x00000000  
+
+#define	TRANSPORTID_DEVICE_MASK   0x0000FFFF
+
+#define	TRANSPORTID_TYPE_USB      0x10000000
+#define	TRANSPORTID_TYPE_PCIE     0x20000000
+#define	TRANSPORTID_TYPE_GIGE     0x30000000
+#define	TRANSPORTID_TYPE_MASK     0x70000000
+
+#define	TRANSPORTID_CYPRESS_SX2   (TRANSPORTID_TYPE_USB  | USB_CYPRESS_SX2)
+#define	TRANSPORTID_NET2272       (TRANSPORTID_TYPE_USB  | USB_NET2272)
+#define	TRANSPORTID_PDIUSB12      (TRANSPORTID_TYPE_USB  | USB_PDIUSB12)
+#define	TRANSPORTID_DSP_548_OTG   (TRANSPORTID_TYPE_USB  | USB_DSP_548_OTG)
+
+#define	TRANSPORTID_AX88180       (TRANSPORTID_TYPE_GIGE | ETHERNET_AX88180)
+
+#define	TRANSPORTID_LFE3_70_X2    (TRANSPORTID_TYPE_PCIE | PCIE_LFE3_70_X2)
+#define	TRANSPORTID_LFE3_70_X4    (TRANSPORTID_TYPE_PCIE | PCIE_LFE3_70_X4)
 
 //!@}
 
@@ -420,7 +503,7 @@
 #define WB_MODE_AUTOMATIC   0x0004  
                                           
 #define WB_OPT_INVALID      0x0000  //!< invalid option
-#define WB_OPT_ROI_IMGAGE   0x0001  //!< ROI is releative to current image settings (default)
+#define WB_OPT_ROI_IMAGE    0x0001  //!< ROI is releative to current image settings (default)
 #define WB_OPT_ROI_SENSOR   0x0002  //!< ROI is releative to full visible sensor size (bin,skip, resize are ignored)
 #define WB_OPT_INDOOR       0x0100  //!< indoor artificial light (3200k)
 #define WB_OPT_OUTDOOR      0x0200  //!< outdoor (5800k)
@@ -445,6 +528,7 @@
 #define PORT_TYPE_MID_STROBE_OUT	0x0800		//!< mid strobe for extra strobe functionality
 #define PORT_TYPE_MODE_SELECT_IN	0x1000		//!< mode select input (custom firmware)
 #define PORT_TYPE_IMG_TOGGLE_OUT	0x2000		//!< image toggle output signal (custom firmware)
+#define PORT_TYPE_TIMER_OUT         0x4000    //!< port type is timer / clock
 
 //!@}
 
@@ -466,6 +550,9 @@
 #define PORT_FEATURE_TRIG_MASK		0x00F0		//!< mask for triggered features
 
 #define PORT_FEATURE_DELAY			0x0100		//!< delay support
+#define PORT_FEATURE_SINGLE_PERIOD    0x0200	    //!< one period clock/timer
+#define PORT_FEATURE_PWM              0x0400	    //!< continuous clock/timer
+#define PORT_FEATURE_COMMON_MASK      0x0700	    //!< mask for common features
 
 //!@}
 
@@ -640,9 +727,6 @@
 #define CM_MANUAL		0x02	    //!< cooling at manual mode on
 
 //!@}
-
-
-//!< #CM_OFF, #CM_AUTOMATIC or #CM_MANUAL
 
 
 ////////////////////////////////////////////////////////////////////////////
@@ -978,7 +1062,6 @@
 #define SLEEPMODE_NONE              0x00000000      //!< no sleep mode active
 #define SLEEPMODE_SENSOR            0x00000001      //!< sleep mode: sensor module shutdown active
 
-//
 //!@}
 
 /////////////////////////////////////////////////////////////////////////////
@@ -1028,6 +1111,34 @@
 
 //!@}
 
+
+/////////////////////////////////////////////////////////////////////////////
+//! \name Constants: auto exposure / brightness control
+//! used by #FUNC_AUTOEXPOSURE
+/////////////////////////////////////////////////////////////////////////////
+//!@{
+
+//! S_AUTOEXPOSURE_CAPS2::iMinBrightnessOffset and S_AUTOEXPOSURE_CAPS2::iMaxBrightnessOffset 
+//! are valid values and have
+#define AEXP_OPTION_BRIGHNESSOFFSET   0x00000001   
+
+//! internal algorithm is used to control the brightness,
+//! which requires #AEXP_FEATURE_FULL to work
+#define AEXP_OPTION_INTERN_ALGORITHM  0x00000002   
+
+#define AEXP_FEATURE_GAIN             0x00000001   //!< auto gain control supported
+#define AEXP_FEATURE_EXPOSURE         0x00000002   //!< auto exposure control supported
+#define AEXP_FEATURE_IRIS             0x00000004   //!< auto iris control supported
+#define AEXP_FEATURE_GAIN_LIMIT       0x00000010   //!< a gain limit is supported S_AUTOEXPOSURE_PARAMS::dwMaxGain (S_AUTOEXPOSURE_PARAMS::dwMinGain will be ignored)      
+#define AEXP_FEATURE_GAIN_RANGE       0x00000020   //!< a gain range is supported S_AUTOEXPOSURE_PARAMS::dwMinGain till S_AUTOEXPOSURE_PARAMS::dwMaxGain
+#define AEXP_FEATURE_EXPOSURE_RANGE   0x00000040   //!< a gain range is supported S_AUTOEXPOSURE_PARAMS::dwMinExposure till S_AUTOEXPOSURE_PARAMS::dwMaxExposure
+
+#define AEXP_FEATURE_FULL             0x00010000   //!< auto gain / exposure / iris control possible         
+#define AEXP_FEATURE_GAIN_EXPOSURE    0x00020000   //!< auto gain / exposure control possible
+#define AEXP_FEATURE_GAIN_IRIS        0x00040000   //!< auto gain / iris control possible
+
+#define AEXP_FEATURE_SUPPORTED_MASK   0x0000FFFF   //!< mask of supported features
+#define AEXP_FEATURE_COMBINATION_MASK 0x00FF0000   //!< mask of combineable features
 
 /////////////////////////////////////////////////////////////////////////////
 //! \name Constants: Image Header PayLoad-Types
@@ -1321,6 +1432,7 @@
 // Bad Pixel Correction Configuration
 #define STR_BADPIX_OPTIONS              "BADPIX_OPTIONS"
 #define STR_BADPIX_STATE                "BADPIX_STATE"
+#define STR_BADPIX_MODE                 "BADPIX_MODE"
 
 // Shading Correction
 #define STR_SHCO_ACTION                 "SHCO_ACTION"
@@ -1373,6 +1485,7 @@
 #define STATUS_ERROR_CPLD			0x00000080	//!< CPLD error
 #define STATUS_ERROR_TEMP_SENSOR	0x00000100	//!< temperature sensor error
 #define STATUS_ERROR_CLOCK_GEN		0x00000200	//!< sensor clock generator error
+#define STATUS_ERROR_REF_CLOCK		0x00000300	//!< error setting reference clock
 
 #define STATUS_MASK_ALL_ERROR		0x000003FF	//!< mask for all errors
 
@@ -1639,6 +1752,10 @@ enum ECameraType
 #define retBUS_WIDTH			0x000000A9		//!< invalid bus address or data width
 #define retBUS_VERIFY			0x000000AA		//!< bus verify failed
 
+#define retBUS_ID				0x000000AB		//!< unsupported bus id
+#define retBUS_PROTOCOL			0x000000AC		//!< unsupported protocol type
+#define retBUS_STATE			0x000000AD		//!< unsupported bus state
+
 #define retFLIP_MODE			0x000000B0		//!< flip mode not supported
 #define retFLIP_HOR_BIN			0x000000B1		//!< horizontal flip mode is not supported in combination with binning
 
@@ -1816,6 +1933,16 @@ enum ECameraType
 #define retLUTZERODATA_NA		0x0000050E		//!< data transfer from/to LUT zero not allowed
 #define retDISABLEDBYAE			0x0000050F		//!< disabled by auto exosure
 
+// VISCA specific return value
+#define retVISCA_ACK          0x00000510    //!< Visca ACK (command understood)
+#define retVISCA_COMPLEATION  retOK         //!< Visca Completion (command processed)
+#define retVISCA_MSGLEN       0x00000511    //!< Visca Message length error (>14 bytes)
+#define retVISCA_SYNTAX       0x00000512    //!< Visca Syntax Error
+#define retVISCA_CMDBUF       0x00000513    //!< Visca Command buffer full    
+#define retVISCA_CMDCAN       0x00000514    //!< Visca Command cancelled
+#define retVISCA_NOSOCK       0x00000515    //!< Visca No socket (to be cancelled)
+#define retVISCA_CMDNOE       0x00000516    //!< Visca Command not executable        
+#define retVISCA_ERROR        0x00000517    //!< Visca generic error
 
 
 #define retFILE_OPEN			0x00000600		//!< Unable to open file

@@ -18,7 +18,10 @@
 #ifndef _CAMUSB_API_EXT_H_
 #define _CAMUSB_API_EXT_H_
 
-#include "CamUSB_API.h"		
+// -------------------------- Includes ----------------------------------------
+//
+#include "CamUSB_API.h"   //!< include base header
+
 
 /////////////////////////////////////////////////////////////////////////////
 //! \name Functions: Image Sensor

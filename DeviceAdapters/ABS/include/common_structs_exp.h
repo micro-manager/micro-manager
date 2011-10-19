@@ -25,12 +25,13 @@
 		#include "sensor.h"
 		#include "ioports.h"
 		#include "memory.h"
+    #include "commprot.h"
 		#include "cmdfunctions.h"
 		//#include "./JPEG/JPEG.h"
 		#define		JPEG_FORMATS				(1)
 	    #define		TEST_PATTERN_PIXEL          (1)	
 	    #define		MAX_MULTI_ROI				(1)	
-
+        #define		DEVICE_FIRMWARE_RANGES      (3)	
 		#undef _NO_FUNCTION_INCLUDE
     #else
     union U_CAMERA_NOTIFY
@@ -50,7 +51,8 @@
 
 // PC specific defines
 #ifdef _WIN32
-	#pragma once
+#pragma once
+#pragma pack(push, 1)   //! alignment set to 1 byte
 
 	#include "datatypes.h"				// include data type defines
 
@@ -69,11 +71,12 @@
     #define		TEST_PATTERN_PIXEL          (1)
     #define     MAX_MULTI_ROI               (4)
     #define     MAX_TIMES                   (8)
+    #define     DEVICE_FIRMWARE_RANGES      (3) // default number of firmware ranges
 
 	//! float to gain value
-	#define F2G_VAL (fFloat)				((u32) (fFloat * 1000))
+#define F2G_VAL ( _fFloat )         ((u32)  (_fFloat * 1000))
 	//! gain value to float
-	#define G_VAL2F (gain_val)				((float) (gain_val / 1000.0f))
+#define G_VAL2F ( _gain_val )       ((f32)  (_gain_val / 1000.0f))
 
     union U_CAMERA_NOTIFY
     {
@@ -244,6 +247,31 @@ typedef struct
 	u32		dwSDRAMSize;				//!< camera SDRAM size in Bytes
 
 } S_CAMERA_VERSION;
+
+
+
+
+typedef struct S_FIRMWARE_VERSION
+{
+  u32	dwVersion;    //!< current firmware version
+  u08	szName[16];   //!< firmware name (zero terminated)
+} S_FIRMWARE_VERSION;
+
+
+typedef struct S_CAMERA_VERSION_2
+{  
+  u64 qwSerialNumber;     //!< device serial number
+  u08	szDeviceName[32];	  //!< short name of device (zero terminated)  
+  u32 dwSensorID;         //!< image sensor type, see #ST_MT9T001C
+  u32 dwPlatformID;       //!< device platform identification #CPID_NONE    
+  u32 dwTransportID;      //!< device main communication channel #TRANSPORTID_NONE
+  u32 dwHWRevision;       //!< hardware revision    
+  u32 dwReserved[3];      //!< reserved    
+  u32 dwCountFW;          //!< number of valid firmware versions at sFirmware
+  S_FIRMWARE_VERSION sFirmware[ DEVICE_FIRMWARE_RANGES ];  
+} S_CAMERA_VERSION_2;
+
+
 
 //!@}
 
@@ -848,27 +876,53 @@ typedef struct
 
 //! \brief  Camera Auto Exposure Capabilities
 //! returned in "pData" by #CamUSB_GetFunctionCaps => functionID => #FUNC_AUTOEXPOSURE
-//!
+//! => deprecated
 typedef struct
 {
-	//! \brief 0 => AEC and AGC are only active if both are active \n
+  //! 0 => AEC and AGC are only active if both are active \n
 	//! 1 => AEC and AGC can be activated separately
 	u08		bSeparateAEC_AGC;
 
 	u08		bMaxFrameSkip;			//!< maximum frame skip (is ignored)
 
-    //! \brief maximum target value (brightness), normaly 255\n
-
+  //! maximum target value (brightness), normally 255\n
 	u16		wMaxTargetBrightness;
 
 } S_AUTOEXPOSURE_CAPS;
 
+//! \brief  Camera Auto Exposure Capabilities
+//! returned in "pData" by #CamUSB_GetFunctionCaps => functionID => #FUNC_AUTOEXPOSURE
+//!
+typedef struct
+{
+  //! 0   => AEC and AGC are only active if both are active \n
+	//! 1 => AEC and AGC can be activated separately
+  //! 255 => if this is a S_AUTOEXPOSURE_CAPS2 structure
+  //! check S_AUTOEXPOSURE_CAPS2::dwFeatures to see which controls are possible  
+	u08		bSeparateAEC_AGC;
+
+	u08		bMaxFrameSkip;			//!< maximum frame skip (is ignored)
+
+  i16		wMaxTargetBrightness;   //!< 255 means target mean pixel value is 255 = very bright
+  i16   wMinTargetBrightness;   //!<   0 means target mean pixel value is 0 = very dark
+  u16   wStepTargetBrightness;  //!< step size to change wTargetBrightness if used as target brightness
+
+  i16   iMaxBrightnessOffset;   //!<   0 means 0dB offset; -1500 mean -1,5dB offset; 10500 mean +10,5dB offset
+  i16   iMinBrightnessOffset;   //!<   0 means 0dB offset; -1500 mean -1,5dB offset; 10500 mean +10,5dB offset
+  u16   wStepBrightnessOffset;  //!< step size to change wTargetBrightness if used as target brightness offset
+
+  u16   wOptions;               //!< mask of supported options see #AEXP_OPTION_BRIGHNESSOFFSET
+  u32   dwFeatures;             //!< mask of supported features see #AEXP_FEATURE_GAIN_EXPOSURE or #AEXP_FEATURE_GAIN_LIMIT
+
+  u32   dwReserved[6];          //!< reserved
+
+} S_AUTOEXPOSURE_CAPS2;
 
 // \brief  Camera Auto Exposure Parameters and return values \n
 // used by #CamUSB_SetFunction/#CamUSB_GetFunction
 // => functionID => #FUNC_AUTOEXPOSURE
 // \remark if you pass a zero sROI (S_AUTOEXPOSURE_ROI) a default ROI
-//  will be used for autoexposure which is relative to the current resolution.
+//  will be used for auto exposure which is relative to the current resolution.
 //
 
 //! Camera Auto Exposure Parameters
@@ -884,16 +938,21 @@ typedef struct
 	//! ignored by some sensors\n
 	u08		bBrightnessPercentile;
 
-	//! \brief target brightness value from 0 up to
+  //! target brightness value from 0 up to
 	//! \link S_RESOLUTION_CAPS::wMaxBPP sensor max bpp \endlink
 	//! value (0..255)\n
 	//! 255 => means very bright \n
 	//! 127 => is default        \n
     //!   0 => means very dark   \n
-    //!
-	u16		wTargetBrightness;
+  //! \n
+  //! if S_AUTOEXPOSURE_PARAMS::wOptions bit AEXP_OPTION_TARGETOFFSET is set\n
+  //! wTargetBrightness represents the offset for the internal reference brightness level in dB \n
+  //! The minimum/maximum values can be ready over CamUSB_GetFunctionCaps if a S_AUTOEXPOSURE_CAPS2 
+  //! structure is passed
+  i16   wTargetBrightness;
 
-    u16     wTriggerCycleTime;     //!< (ignored) trigger cycle time in ms (used for autoexposure timeout if SW or HW Triggered capturemode)
+  //!< (ignored) trigger cycle time in ms (used for auto exposure timeout if SW or HW Triggered capture mode)
+  u16   wTriggerCycleTime;     
 
 	//! \brief ROI for brightness calculations, if the ROI a zero region
     //! the current resolution will be used for brightness calculations
@@ -902,7 +961,7 @@ typedef struct
 
     u08     bHysterese;                 //!< (ignored) 0 => use internal default; use 1..100%
     u08     bSpeed;                     //!< (ignored) 0 => use internal default; use 1..100% of max speed
-    u16     wOptions;                   //!< (ignored) like anti flicker (50Hz and 60Hz)
+  u16   wOptions;                   //!< see #AEXP_OPTION_TARGETOFFSET
     u32     dwMinExposure;              //!< min. allowed exposure value for exposure control in µs (0 => default value)
 
     //! \brief max. allowed exposure value for exposure control in µs (0 => default value)\n
@@ -912,7 +971,9 @@ typedef struct
 
     u32     dwMinGain;                  //!< min. allowed gain value for exposure control (0 => default value)
     u32     dwMaxGain;                  //!< max. allowed gain value for exposure control (0 => default value)
-    u32     dwReserved[2];              //!< reserved
+
+  u08   bAICActive;                 //!< AutoIrisControl 0 => inactive 1=> active
+  u08   dwReserved[7];              //!< reserved
 } S_AUTOEXPOSURE_PARAMS, S_AUTOEXPOSURE_RETVALS;
 
 // --------------------------------------------------------------------------
@@ -950,7 +1011,7 @@ typedef struct
   
   //! white balance mode if set to #WB_MODE_INVALID than #WB_MODE_ONE_PUSH will be used
   u32   dwMode;           
-  //! white balance option if set to #WB_OPT_ROI_INVALID than #WB_OPT_ROI_SENSOR will be used
+  //! white balance option if set to #WB_OPT_INVALID than #WB_OPT_ROI_SENSOR will be used
   u32   dwOption;
 
   u08   bReserverd[40];   //!< reserved
@@ -1816,6 +1877,25 @@ typedef struct
 
 //!@}
 
+
+/////////////////////////////////////////////////////////////////////////////
+//! \name Typedefs: Common range
+/////////////////////////////////////////////////////////////////////////////
+//!@{
+
+// --------------------------------------------------------------------------
+//! \brief u32 value range
+typedef struct {
+  u32		dwMin;				//!< minimum value
+  u32		dwMax;				//!< maximum value
+  u32		dwStep;				//!< modify at count of dwStep
+} S_RANGE_U32;
+
+//!@}
+
+#ifdef _WIN32
+	#pragma pack(pop) 
+#endif
 
 #endif //_COMMON_STRUCTS_EXPORTED_H_
 

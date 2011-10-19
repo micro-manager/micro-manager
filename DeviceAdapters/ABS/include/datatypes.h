@@ -4,6 +4,7 @@
 //!	\brief		Typedefs for simple data types
 //!	\author		ABS GmbH Jena (HBau, RG)
 //!	\date		2006-01-06 -> reorganised
+//				2010-22-06 ->TC	avoid warning for multiple typedefs (in services_types.h)
 /////////////////////////////////////////////////////////////////////////////
 
 
@@ -18,14 +19,18 @@
 
 #ifndef _WIN32
 	// DSP Firmware
+ #ifndef _SERVICES_TYPES_H	//some types already defined in services_types.h
 	typedef unsigned long long 	u64;
-	typedef signed long long 	i64;
 	typedef unsigned long 		u32;
-	typedef signed long			i32;
 	typedef unsigned short		u16;
-	typedef signed short		i16;
+ #endif
 	typedef unsigned char		u08;
+	
+	typedef signed long long 	i64;
+	typedef signed long			i32;
+	typedef signed short		i16;
 	typedef signed char			i08;
+	
     typedef float   			f32;
     typedef double   			    f64;
 

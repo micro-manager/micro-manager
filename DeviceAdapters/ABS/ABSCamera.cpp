@@ -2012,7 +2012,7 @@ int CABSCamera::convertApiErrorCode( unsigned long errorNumber )
 {
 	string errorMessage;
 	errorMessage.resize( 260, 0 );
-	CamUSB_GetErrorString( (char *) errorMessage.c_str(), errorMessage.size(), errorNumber );
+	CamUSB_GetErrorString( (char *) errorMessage.c_str(), (u32)errorMessage.size(), errorNumber );
 
 	str::ResizeByZeroTermination( errorMessage );
 
@@ -2036,7 +2036,7 @@ void CABSCamera::getAvailableCameras( CCameraList & cCameraList )
 {
 	const int iCntElements = 16;
 	cCameraList.resize( iCntElements );
-	int nCamerasFound = CamUSB_GetCameraListEx( &cCameraList[0], cCameraList.size() );
+	int nCamerasFound = CamUSB_GetCameraListEx( &cCameraList[0], (u32)cCameraList.size() );
 	cCameraList.resize( min(nCamerasFound, iCntElements ) );
 }
 

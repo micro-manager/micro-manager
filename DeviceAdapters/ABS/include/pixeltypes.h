@@ -30,8 +30,12 @@
 
 #define PIX_MONO                        0x01000000      //!< indicate a monochrome image
 #define PIX_RGB                         0x02000000      //!< indicate a color image (with red green blue components)
+#define PIX_BAYGB                       0x08000000      //!< bayer mask start with green blue
+#define PIX_BAYBG                       0x10000000      //!< bayer mask start with blue  green
+#define PIX_BAYRG                       0x20000000      //!< bayer mask start with red   green
+#define PIX_BAYGR                       0x40000000      //!< bayer mask start with green red
 #define PIX_CUSTOM                      0x80000000      //!< custom color type    
-#define PIX_COLOR_MASK                  0xFF000000
+#define PIX_COLOR_MASK                  0xFF000000      //!< color mask    
 
 //!@}
 
@@ -68,7 +72,7 @@
 
 
 // ----------------------------------------------------------------------------
-//! \name  Color channels for custom singlecolor pixel formats
+//! \name  Color channels for custom single color pixel formats
 //! <hr>
 //!@{
 //! Indicate used color channel when capturing a single color channel\n
@@ -141,21 +145,167 @@
 #define PIX_BAYGB14			(PIX_MONO | PIX_OCCUPY16BIT | 0x022C)   //!< Bayer pattern 12Bit stored at stored 16Bit (uses the lower bits, first line: green - blue)
 #define PIX_BAYBG14			(PIX_MONO | PIX_OCCUPY16BIT | 0x022D)   //!< Bayer pattern 14Bit stored at stored 16Bit (uses the lower bits, first line: blue - green)
 
-#define PIX_BAYGR10_PACKED10 (PIX_MONO| PIX_OCCUPY10BIT | 0x0206)   //!< not supported for applications
-#define PIX_BAYRG10_PACKED10 (PIX_MONO| PIX_OCCUPY10BIT | 0x0207)   //!< not supported for applications
-#define PIX_BAYGB10_PACKED10 (PIX_MONO| PIX_OCCUPY10BIT | 0x0208)   //!< not supported for applications
-#define PIX_BAYBG10_PACKED10 (PIX_MONO| PIX_OCCUPY10BIT | 0x0209)   //!< not supported for applications
+#define PIX_BAYGR10_PACKED10  (PIX_MONO | PIX_OCCUPY10BIT | 0x0206)   //!< not supported for applications
+#define PIX_BAYRG10_PACKED10  (PIX_MONO | PIX_OCCUPY10BIT | 0x0207)   //!< not supported for applications
+#define PIX_BAYGB10_PACKED10  (PIX_MONO | PIX_OCCUPY10BIT | 0x0208)   //!< not supported for applications
+#define PIX_BAYBG10_PACKED10  (PIX_MONO | PIX_OCCUPY10BIT | 0x0209)   //!< not supported for applications
 
-#define PIX_BAYGR12_PACKED12 (PIX_MONO| PIX_OCCUPY12BIT | 0x020A)   //!< not supported for applications
-#define PIX_BAYRG12_PACKED12 (PIX_MONO| PIX_OCCUPY12BIT | 0x020B)   //!< not supported for applications
-#define PIX_BAYGB12_PACKED12 (PIX_MONO| PIX_OCCUPY12BIT | 0x020C)   //!< not supported for applications
-#define PIX_BAYBG12_PACKED12 (PIX_MONO| PIX_OCCUPY12BIT | 0x020D)   //!< not supported for applications
+#define PIX_BAYGR12_PACKED12  (PIX_MONO | PIX_OCCUPY12BIT | 0x020A)   //!< not supported for applications
+#define PIX_BAYRG12_PACKED12  (PIX_MONO | PIX_OCCUPY12BIT | 0x020B)   //!< not supported for applications
+#define PIX_BAYGB12_PACKED12  (PIX_MONO | PIX_OCCUPY12BIT | 0x020C)   //!< not supported for applications
+#define PIX_BAYBG12_PACKED12  (PIX_MONO | PIX_OCCUPY12BIT | 0x020D)   //!< not supported for applications
 
 
-#define PIX_BAYGR14_PACKED14 (PIX_MONO| PIX_OCCUPY14BIT | 0x0226)   //!< not supported for applications
-#define PIX_BAYRG14_PACKED14 (PIX_MONO| PIX_OCCUPY14BIT | 0x0227)   //!< not supported for applications
-#define PIX_BAYGB14_PACKED14 (PIX_MONO| PIX_OCCUPY14BIT | 0x0228)   //!< not supported for applications
-#define PIX_BAYBG14_PACKED14 (PIX_MONO| PIX_OCCUPY14BIT | 0x0229)   //!< not supported for applications
+#define PIX_BAYGR14_PACKED14  (PIX_MONO | PIX_OCCUPY14BIT | 0x0226)   //!< not supported for applications
+#define PIX_BAYRG14_PACKED14  (PIX_MONO | PIX_OCCUPY14BIT | 0x0227)   //!< not supported for applications
+#define PIX_BAYGB14_PACKED14  (PIX_MONO | PIX_OCCUPY14BIT | 0x0228)   //!< not supported for applications
+#define PIX_BAYBG14_PACKED14  (PIX_MONO | PIX_OCCUPY14BIT | 0x0229)   //!< not supported for applications
+
+//!@}
+
+// ----------------------------------------------------------------------------
+//! \name  Buffer formats: Multi channel buffer defines 
+//!@{
+//! <hr>
+#define PIX_BAYGR8_C1           (PIX_CUSTOM | PIX_BAYGR | PIX_OCCUPY8BIT | 0x0010)       //!< Bayer pattern 8Bit 1 channel (first line: green - red)
+#define PIX_BAYGR8_C2           (PIX_CUSTOM | PIX_BAYGR | PIX_OCCUPY8BIT | 0x0020)       //!< Bayer pattern 8Bit 2 channel (first line: green - red)
+#define PIX_BAYGR8_C4           (PIX_CUSTOM | PIX_BAYGR | PIX_OCCUPY8BIT | 0x0040)       //!< Bayer pattern 8Bit 4 channel (first line: green - red)
+
+#define PIX_BAYBG8_C1           (PIX_CUSTOM | PIX_BAYBG | PIX_OCCUPY8BIT | 0x0010)       //!< Bayer pattern 8Bit 1 channel (first line: blue  - green)
+#define PIX_BAYBG8_C2           (PIX_CUSTOM | PIX_BAYBG | PIX_OCCUPY8BIT | 0x0020)       //!< Bayer pattern 8Bit 2 channel (first line: blue  - green)
+#define PIX_BAYBG8_C4           (PIX_CUSTOM | PIX_BAYBG | PIX_OCCUPY8BIT | 0x0040)       //!< Bayer pattern 8Bit 4 channel (first line: blue  - green)
+
+#define PIX_BAYRG8_C1           (PIX_CUSTOM | PIX_BAYRG | PIX_OCCUPY8BIT  | 0x0010)      //!< Bayer pattern 8Bit 1 channel (first line: red   - green)
+#define PIX_BAYRG8_C2           (PIX_CUSTOM | PIX_BAYRG | PIX_OCCUPY8BIT  | 0x0020)      //!< Bayer pattern 8Bit 2 channel (first line: red   - green)
+#define PIX_BAYRG8_C4           (PIX_CUSTOM | PIX_BAYRG | PIX_OCCUPY8BIT  | 0x0040)      //!< Bayer pattern 8Bit 4 channel (first line: red   - green)
+
+#define PIX_BAYGB8_C1           (PIX_CUSTOM | PIX_BAYGB | PIX_OCCUPY8BIT  | 0x0010)      //!< Bayer pattern 8Bit 1 channel (first line: green - blue)
+#define PIX_BAYGB8_C2           (PIX_CUSTOM | PIX_BAYGB | PIX_OCCUPY8BIT  | 0x0020)      //!< Bayer pattern 8Bit 2 channel (first line: green - blue)
+#define PIX_BAYGB8_C4           (PIX_CUSTOM | PIX_BAYGB | PIX_OCCUPY8BIT  | 0x0040)      //!< Bayer pattern 8Bit 4 channel (first line: green - blue)
+
+#define PIX_BAYGR10_C1          (PIX_CUSTOM | PIX_BAYGR | PIX_OCCUPY16BIT | 0x0010)      //!< Bayer pattern 8Bit 1 channel (first line: green - red)
+#define PIX_BAYGR10_C2          (PIX_CUSTOM | PIX_BAYGR | PIX_OCCUPY16BIT | 0x0020)      //!< Bayer pattern 8Bit 2 channel (first line: green - red)
+#define PIX_BAYGR10_C4          (PIX_CUSTOM | PIX_BAYGR | PIX_OCCUPY16BIT | 0x0040)      //!< Bayer pattern 8Bit 4 channel (first line: green - red)
+
+#define PIX_BAYBG10_C1          (PIX_CUSTOM | PIX_BAYBG | PIX_OCCUPY16BIT | 0x0010)      //!< Bayer pattern 8Bit 1 channel (first line: blue  - green)
+#define PIX_BAYBG10_C2          (PIX_CUSTOM | PIX_BAYBG | PIX_OCCUPY16BIT | 0x0020)      //!< Bayer pattern 8Bit 2 channel (first line: blue  - green)
+#define PIX_BAYBG10_C4          (PIX_CUSTOM | PIX_BAYBG | PIX_OCCUPY16BIT | 0x0040)      //!< Bayer pattern 8Bit 4 channel (first line: blue  - green)
+
+#define PIX_BAYRG10_C1          (PIX_CUSTOM | PIX_BAYRG | PIX_OCCUPY16BIT | 0x0010)      //!< Bayer pattern 8Bit 1 channel (first line: red   - green)
+#define PIX_BAYRG10_C2          (PIX_CUSTOM | PIX_BAYRG | PIX_OCCUPY16BIT | 0x0020)      //!< Bayer pattern 8Bit 2 channel (first line: red   - green)
+#define PIX_BAYRG10_C4          (PIX_CUSTOM | PIX_BAYRG | PIX_OCCUPY16BIT | 0x0040)      //!< Bayer pattern 8Bit 4 channel (first line: red   - green)
+
+#define PIX_BAYGB10_C1          (PIX_CUSTOM | PIX_BAYGB | PIX_OCCUPY16BIT | 0x0010)      //!< Bayer pattern 8Bit 1 channel (first line: green - blue)
+#define PIX_BAYGB10_C2          (PIX_CUSTOM | PIX_BAYGB | PIX_OCCUPY16BIT | 0x0020)      //!< Bayer pattern 8Bit 2 channel (first line: green - blue)
+#define PIX_BAYGB10_C4          (PIX_CUSTOM | PIX_BAYGB | PIX_OCCUPY16BIT | 0x0040)      //!< Bayer pattern 8Bit 4 channel (first line: green - blue)
+
+#define PIX_BAYGR12_C1          (PIX_CUSTOM | PIX_BAYGR | PIX_OCCUPY16BIT | 0x0012)      //!< Bayer pattern 8Bit 1 channel (first line: green - red)
+#define PIX_BAYGR12_C2          (PIX_CUSTOM | PIX_BAYGR | PIX_OCCUPY16BIT | 0x0022)      //!< Bayer pattern 8Bit 2 channel (first line: green - red)
+#define PIX_BAYGR12_C4          (PIX_CUSTOM | PIX_BAYGR | PIX_OCCUPY16BIT | 0x0042)      //!< Bayer pattern 8Bit 4 channel (first line: green - red)
+
+#define PIX_BAYBG12_C1          (PIX_CUSTOM | PIX_BAYBG | PIX_OCCUPY16BIT | 0x0012)      //!< Bayer pattern 8Bit 1 channel (first line: blue  - green)
+#define PIX_BAYBG12_C2          (PIX_CUSTOM | PIX_BAYBG | PIX_OCCUPY16BIT | 0x0022)      //!< Bayer pattern 8Bit 2 channel (first line: blue  - green)
+#define PIX_BAYBG12_C4          (PIX_CUSTOM | PIX_BAYBG | PIX_OCCUPY16BIT | 0x0042)      //!< Bayer pattern 8Bit 4 channel (first line: blue  - green)
+
+#define PIX_BAYRG12_C1          (PIX_CUSTOM | PIX_BAYRG | PIX_OCCUPY16BIT | 0x0012)      //!< Bayer pattern 8Bit 1 channel (first line: red   - green)
+#define PIX_BAYRG12_C2          (PIX_CUSTOM | PIX_BAYRG | PIX_OCCUPY16BIT | 0x0022)      //!< Bayer pattern 8Bit 2 channel (first line: red   - green)
+#define PIX_BAYRG12_C4          (PIX_CUSTOM | PIX_BAYRG | PIX_OCCUPY16BIT | 0x0042)      //!< Bayer pattern 8Bit 4 channel (first line: red   - green)
+
+#define PIX_BAYGB12_C1          (PIX_CUSTOM | PIX_BAYGB | PIX_OCCUPY16BIT | 0x0012)      //!< Bayer pattern 8Bit 1 channel (first line: green - blue)
+#define PIX_BAYGB12_C2          (PIX_CUSTOM | PIX_BAYGB | PIX_OCCUPY16BIT | 0x0022)      //!< Bayer pattern 8Bit 2 channel (first line: green - blue)
+#define PIX_BAYGB12_C4          (PIX_CUSTOM | PIX_BAYGB | PIX_OCCUPY16BIT | 0x0042)      //!< Bayer pattern 8Bit 4 channel (first line: green - blue)
+
+#define PIX_BAYGR14_C1          (PIX_CUSTOM | PIX_BAYGR | PIX_OCCUPY16BIT | 0x0014)      //!< Bayer pattern 8Bit 1 channel (first line: green - red)
+#define PIX_BAYGR14_C2          (PIX_CUSTOM | PIX_BAYGR | PIX_OCCUPY16BIT | 0x0024)      //!< Bayer pattern 8Bit 2 channel (first line: green - red)
+#define PIX_BAYGR14_C4          (PIX_CUSTOM | PIX_BAYGR | PIX_OCCUPY16BIT | 0x0044)      //!< Bayer pattern 8Bit 4 channel (first line: green - red)
+
+#define PIX_BAYBG14_C1          (PIX_CUSTOM | PIX_BAYBG | PIX_OCCUPY16BIT | 0x0014)      //!< Bayer pattern 8Bit 1 channel (first line: blue  - green)
+#define PIX_BAYBG14_C2          (PIX_CUSTOM | PIX_BAYBG | PIX_OCCUPY16BIT | 0x0024)      //!< Bayer pattern 8Bit 2 channel (first line: blue  - green)
+#define PIX_BAYBG14_C4          (PIX_CUSTOM | PIX_BAYBG | PIX_OCCUPY16BIT | 0x0044)      //!< Bayer pattern 8Bit 4 channel (first line: blue  - green)
+
+#define PIX_BAYRG14_C1          (PIX_CUSTOM | PIX_BAYRG | PIX_OCCUPY16BIT | 0x0014)      //!< Bayer pattern 8Bit 1 channel (first line: red   - green)
+#define PIX_BAYRG14_C2          (PIX_CUSTOM | PIX_BAYRG | PIX_OCCUPY16BIT | 0x0024)      //!< Bayer pattern 8Bit 2 channel (first line: red   - green)
+#define PIX_BAYRG14_C4          (PIX_CUSTOM | PIX_BAYRG | PIX_OCCUPY16BIT | 0x0044)      //!< Bayer pattern 8Bit 4 channel (first line: red   - green)
+
+#define PIX_BAYGB14_C1          (PIX_CUSTOM | PIX_BAYGB | PIX_OCCUPY16BIT | 0x0014)      //!< Bayer pattern 8Bit 1 channel (first line: green - blue)
+#define PIX_BAYGB14_C2          (PIX_CUSTOM | PIX_BAYGB | PIX_OCCUPY16BIT | 0x0024)      //!< Bayer pattern 8Bit 2 channel (first line: green - blue)
+#define PIX_BAYGB14_C4          (PIX_CUSTOM | PIX_BAYGB | PIX_OCCUPY16BIT | 0x0044)      //!< Bayer pattern 8Bit 4 channel (first line: green - blue)
+
+#define PIX_BAYGR10_C1_PACKED   (PIX_CUSTOM | PIX_BAYGR | PIX_OCCUPY10BIT | 0x0010)      //!< Bayer pattern 8Bit 1 channel (first line: green - red)
+#define PIX_BAYGR10_C2_PACKED   (PIX_CUSTOM | PIX_BAYGR | PIX_OCCUPY10BIT | 0x0020)      //!< Bayer pattern 8Bit 2 channel (first line: green - red)
+#define PIX_BAYGR10_C4_PACKED   (PIX_CUSTOM | PIX_BAYGR | PIX_OCCUPY10BIT | 0x0040)      //!< Bayer pattern 8Bit 4 channel (first line: green - red)
+
+#define PIX_BAYBG10_C1_PACKED   (PIX_CUSTOM | PIX_BAYBG | PIX_OCCUPY10BIT | 0x0010)      //!< Bayer pattern 8Bit 1 channel (first line: blue  - green)
+#define PIX_BAYBG10_C2_PACKED   (PIX_CUSTOM | PIX_BAYBG | PIX_OCCUPY10BIT | 0x0020)      //!< Bayer pattern 8Bit 2 channel (first line: blue  - green)
+#define PIX_BAYBG10_C4_PACKED   (PIX_CUSTOM | PIX_BAYBG | PIX_OCCUPY10BIT | 0x0040)      //!< Bayer pattern 8Bit 4 channel (first line: blue  - green)
+
+#define PIX_BAYRG10_C1_PACKED   (PIX_CUSTOM | PIX_BAYRG | PIX_OCCUPY10BIT | 0x0010)      //!< Bayer pattern 8Bit 1 channel (first line: red   - green)
+#define PIX_BAYRG10_C2_PACKED   (PIX_CUSTOM | PIX_BAYRG | PIX_OCCUPY10BIT | 0x0020)      //!< Bayer pattern 8Bit 2 channel (first line: red   - green)
+#define PIX_BAYRG10_C4_PACKED   (PIX_CUSTOM | PIX_BAYRG | PIX_OCCUPY10BIT | 0x0040)      //!< Bayer pattern 8Bit 4 channel (first line: red   - green)
+
+#define PIX_BAYGB10_C1_PACKED   (PIX_CUSTOM | PIX_BAYGB | PIX_OCCUPY10BIT | 0x0010)      //!< Bayer pattern 8Bit 1 channel (first line: green - blue)
+#define PIX_BAYGB10_C2_PACKED   (PIX_CUSTOM | PIX_BAYGB | PIX_OCCUPY10BIT | 0x0020)      //!< Bayer pattern 8Bit 2 channel (first line: green - blue)
+#define PIX_BAYGB10_C4_PACKED   (PIX_CUSTOM | PIX_BAYGB | PIX_OCCUPY10BIT | 0x0040)      //!< Bayer pattern 8Bit 4 channel (first line: green - blue)
+
+#define PIX_BAYGR12_C1_PACKED   (PIX_CUSTOM | PIX_BAYGR | PIX_OCCUPY12BIT | 0x0010)      //!< Bayer pattern 8Bit 1 channel (first line: green - red)
+#define PIX_BAYGR12_C2_PACKED   (PIX_CUSTOM | PIX_BAYGR | PIX_OCCUPY12BIT | 0x0020)      //!< Bayer pattern 8Bit 2 channel (first line: green - red)
+#define PIX_BAYGR12_C4_PACKED   (PIX_CUSTOM | PIX_BAYGR | PIX_OCCUPY12BIT | 0x0040)      //!< Bayer pattern 8Bit 4 channel (first line: green - red)
+
+#define PIX_BAYBG12_C1_PACKED   (PIX_CUSTOM | PIX_BAYBG | PIX_OCCUPY12BIT | 0x0010)      //!< Bayer pattern 8Bit 1 channel (first line: blue  - green)
+#define PIX_BAYBG12_C2_PACKED   (PIX_CUSTOM | PIX_BAYBG | PIX_OCCUPY12BIT | 0x0020)      //!< Bayer pattern 8Bit 2 channel (first line: blue  - green)
+#define PIX_BAYBG12_C4_PACKED   (PIX_CUSTOM | PIX_BAYBG | PIX_OCCUPY12BIT | 0x0040)      //!< Bayer pattern 8Bit 4 channel (first line: blue  - green)
+
+#define PIX_BAYRG12_C1_PACKED   (PIX_CUSTOM | PIX_BAYRG | PIX_OCCUPY12BIT | 0x0010)      //!< Bayer pattern 8Bit 1 channel (first line: red   - green)
+#define PIX_BAYRG12_C2_PACKED   (PIX_CUSTOM | PIX_BAYRG | PIX_OCCUPY12BIT | 0x0020)      //!< Bayer pattern 8Bit 2 channel (first line: red   - green)
+#define PIX_BAYRG12_C4_PACKED   (PIX_CUSTOM | PIX_BAYRG | PIX_OCCUPY12BIT | 0x0040)      //!< Bayer pattern 8Bit 4 channel (first line: red   - green)
+
+#define PIX_BAYGB12_C1_PACKED   (PIX_CUSTOM | PIX_BAYGB | PIX_OCCUPY12BIT | 0x0010)      //!< Bayer pattern 8Bit 1 channel (first line: green - blue)
+#define PIX_BAYGB12_C2_PACKED   (PIX_CUSTOM | PIX_BAYGB | PIX_OCCUPY12BIT | 0x0020)      //!< Bayer pattern 8Bit 2 channel (first line: green - blue)
+#define PIX_BAYGB12_C4_PACKED   (PIX_CUSTOM | PIX_BAYGB | PIX_OCCUPY12BIT | 0x0040)      //!< Bayer pattern 8Bit 4 channel (first line: green - blue)
+
+#define PIX_BAYGR14_C1_PACKED   (PIX_CUSTOM | PIX_BAYGR | PIX_OCCUPY14BIT | 0x0010)      //!< Bayer pattern 8Bit 1 channel (first line: green - red)
+#define PIX_BAYGR14_C2_PACKED   (PIX_CUSTOM | PIX_BAYGR | PIX_OCCUPY14BIT | 0x0020)      //!< Bayer pattern 8Bit 2 channel (first line: green - red)
+#define PIX_BAYGR14_C4_PACKED   (PIX_CUSTOM | PIX_BAYGR | PIX_OCCUPY14BIT | 0x0040)      //!< Bayer pattern 8Bit 4 channel (first line: green - red)
+
+#define PIX_BAYBG14_C1_PACKED   (PIX_CUSTOM | PIX_BAYBG | PIX_OCCUPY14BIT | 0x0010)      //!< Bayer pattern 8Bit 1 channel (first line: blue  - green)
+#define PIX_BAYBG14_C2_PACKED   (PIX_CUSTOM | PIX_BAYBG | PIX_OCCUPY14BIT | 0x0020)      //!< Bayer pattern 8Bit 2 channel (first line: blue  - green)
+#define PIX_BAYBG14_C4_PACKED   (PIX_CUSTOM | PIX_BAYBG | PIX_OCCUPY14BIT | 0x0040)      //!< Bayer pattern 8Bit 4 channel (first line: blue  - green)
+
+#define PIX_BAYRG14_C1_PACKED   (PIX_CUSTOM | PIX_BAYRG | PIX_OCCUPY14BIT | 0x0010)      //!< Bayer pattern 8Bit 1 channel (first line: red   - green)
+#define PIX_BAYRG14_C2_PACKED   (PIX_CUSTOM | PIX_BAYRG | PIX_OCCUPY14BIT | 0x0020)      //!< Bayer pattern 8Bit 2 channel (first line: red   - green)
+#define PIX_BAYRG14_C4_PACKED   (PIX_CUSTOM | PIX_BAYRG | PIX_OCCUPY14BIT | 0x0040)      //!< Bayer pattern 8Bit 4 channel (first line: red   - green)
+
+#define PIX_BAYGB14_C1_PACKED   (PIX_CUSTOM | PIX_BAYGB | PIX_OCCUPY14BIT | 0x0010)      //!< Bayer pattern 8Bit 1 channel (first line: green - blue)
+#define PIX_BAYGB14_C2_PACKED   (PIX_CUSTOM | PIX_BAYGB | PIX_OCCUPY14BIT | 0x0020)      //!< Bayer pattern 8Bit 2 channel (first line: green - blue)
+#define PIX_BAYGB14_C4_PACKED   (PIX_CUSTOM | PIX_BAYGB | PIX_OCCUPY14BIT | 0x0040)      //!< Bayer pattern 8Bit 4 channel (first line: green - blue)
+
+#define PIX_MONO8_C1            (PIX_CUSTOM | PIX_MONO  | PIX_OCCUPY8BIT  | 0x0010)      //!< Mono 8Bit 1 channel
+#define PIX_MONO8_C2            (PIX_CUSTOM | PIX_MONO  | PIX_OCCUPY8BIT  | 0x0020)      //!< Mono 8Bit 2 channel
+#define PIX_MONO8_C4            (PIX_CUSTOM | PIX_MONO  | PIX_OCCUPY8BIT  | 0x0040)      //!< Mono 8Bit 4 channel
+
+#define PIX_MONO10_C1           (PIX_CUSTOM | PIX_MONO  | PIX_OCCUPY16BIT | 0x0010)      //!< Mono 10Bit stored 16Bit 1 channel (uses the lower bits)
+#define PIX_MONO10_C2           (PIX_CUSTOM | PIX_MONO  | PIX_OCCUPY16BIT | 0x0020)      //!< Mono 10Bit stored 16Bit 2 channel (uses the lower bits)
+#define PIX_MONO10_C4           (PIX_CUSTOM | PIX_MONO  | PIX_OCCUPY16BIT | 0x0040)      //!< Mono 10Bit stored 16Bit 4 channel (uses the lower bits)
+
+#define PIX_MONO12_C1           (PIX_CUSTOM | PIX_MONO  | PIX_OCCUPY16BIT | 0x0012)      //!< Mono 12Bit stored 16Bit 1 channel (uses the lower bits)
+#define PIX_MONO12_C2           (PIX_CUSTOM | PIX_MONO  | PIX_OCCUPY16BIT | 0x0022)      //!< Mono 12Bit stored 16Bit 2 channel (uses the lower bits)
+#define PIX_MONO12_C4           (PIX_CUSTOM | PIX_MONO  | PIX_OCCUPY16BIT | 0x0042)      //!< Mono 12Bit stored 16Bit 4 channel (uses the lower bits)
+
+#define PIX_MONO14_C1           (PIX_CUSTOM | PIX_MONO  | PIX_OCCUPY16BIT | 0x0014)      //!< Mono 14Bit stored 16Bit 1 channel (uses the lower bits)
+#define PIX_MONO14_C2           (PIX_CUSTOM | PIX_MONO  | PIX_OCCUPY16BIT | 0x0024)      //!< Mono 14Bit stored 16Bit 2 channel (uses the lower bits)
+#define PIX_MONO14_C4           (PIX_CUSTOM | PIX_MONO  | PIX_OCCUPY16BIT | 0x0044)      //!< Mono 14Bit stored 16Bit 4 channel (uses the lower bits)
+
+#define PIX_MONO10_C1_PACKED    (PIX_CUSTOM | PIX_MONO  | PIX_OCCUPY10BIT | 0x0010)      //!< Mono 10Bit stored 10Bit 1 channel 
+#define PIX_MONO10_C2_PACKED    (PIX_CUSTOM | PIX_MONO  | PIX_OCCUPY10BIT | 0x0020)      //!< Mono 10Bit stored 10Bit 2 channel 
+#define PIX_MONO10_C4_PACKED    (PIX_CUSTOM | PIX_MONO  | PIX_OCCUPY10BIT | 0x0040)      //!< Mono 10Bit stored 10Bit 4 channel 
+                                                                                              
+#define PIX_MONO12_C1_PACKED    (PIX_CUSTOM | PIX_MONO  | PIX_OCCUPY12BIT | 0x0010)      //!< Mono 12Bit stored 12Bit 1 channel 
+#define PIX_MONO12_C2_PACKED    (PIX_CUSTOM | PIX_MONO  | PIX_OCCUPY12BIT | 0x0020)      //!< Mono 12Bit stored 12Bit 2 channel 
+#define PIX_MONO12_C4_PACKED    (PIX_CUSTOM | PIX_MONO  | PIX_OCCUPY12BIT | 0x0040)      //!< Mono 12Bit stored 12Bit 4 channel 
+                                                                                              
+#define PIX_MONO14_C1_PACKED    (PIX_CUSTOM | PIX_MONO  | PIX_OCCUPY14BIT | 0x0010)      //!< Mono 14Bit stored 14Bit 1 channel 
+#define PIX_MONO14_C2_PACKED    (PIX_CUSTOM | PIX_MONO  | PIX_OCCUPY14BIT | 0x0020)      //!< Mono 14Bit stored 14Bit 2 channel 
+#define PIX_MONO14_C4_PACKED    (PIX_CUSTOM | PIX_MONO  | PIX_OCCUPY14BIT | 0x0040)      //!< Mono 14Bit stored 14Bit 4 channel
 
 //!@}
 
@@ -206,9 +356,10 @@
 //!@{
 //! <hr>
 #define PIX_YUV411_PACKED	(PIX_RGB  | PIX_OCCUPY12BIT | 0x001E)   //!< not supported
-#define PIX_YUV422_PACKED	(PIX_RGB  | PIX_OCCUPY16BIT | 0x001F)   //!< YUV-422
+#define PIX_YUV422_PACKED	(PIX_RGB  | PIX_OCCUPY16BIT | 0x001F)   //!< YUYV-422
 #define PIX_YUV444_PACKED	(PIX_RGB  | PIX_OCCUPY24BIT | 0x0020)   //!< not supported
-
+#define PIX_UYVY422_PACKED  (PIX_RGB  | PIX_OCCUPY16BIT | 0x0021)   //!< UYVY-422 (interlaced)
+#define PIX_UYVY422P_PACKED (PIX_RGB  | PIX_OCCUPY16BIT | 0x0099)   //!< UYVY-422 (progressive)
 #define PIX_YUV420_PACKED	(PIX_RGB  | PIX_OCCUPY12BIT | 0x0104)	//!< not supported
 
 //!@}

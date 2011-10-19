@@ -45,13 +45,10 @@
 	#else
 	  #define USBAPI __declspec(dllimport)
     #endif
-  #define INCLUDE_IMPORT // => api import
   #endif
 
-  #ifndef _VBASIC6
+  #ifndef CCONV
 	#define CCONV	__cdecl		//!< call convention
-  #else
-	#define CCONV	__stdcall	//!< call convention
   #endif
 
 #else
@@ -64,17 +61,11 @@
 
 #endif
 
-#ifdef INCLUDE_IMPORT
-	#include "include\common_structs_exp.h"
-	#include "include\common_constants_exp.h"
-	#include "include\pixeltypes.h"
-	#include "include\datatypes.h"
-#else
-	#include "..\..\include\common_structs_exp.h"
-	#include "..\..\include\common_constants_exp.h"
-	#include "..\..\include\pixeltypes.h"
-	#include "..\..\include\datatypes.h"
-#endif
+//! default includes
+#include "include\datatypes.h"
+#include "include\common_constants_exp.h"
+#include "include\common_structs_exp.h"
+#include "include\pixeltypes.h"
 
 
 /////////////////////////////////////////////////////////////////////////////
@@ -234,7 +225,7 @@ USBAPI DWORD CCONV CamUSB_GetCameraList( S_CAMERA_LIST *pCamLst,
 /*! \brief		returns the number of connected cameras and if possible their
  *				Camera Version Information and if available the user cfg
  *
- *	\param		pCamLstEx	 Pointer to an S_CAMERA_LIST array
+ *	\param		pCamLstEx	 Pointer to an S_CAMERA_LIST_EX array
  *							 if NULL only the number of cameras is returned
  *	\param		dwElements	 Count of array elements
  *							 if 0 only the number of cameras is returned
@@ -637,15 +628,18 @@ USBAPI BOOL CCONV CamUSB_SetFunction ( u32     ulCamFunctionID,
  *								function
  *	\param		dwTimeout		Time to wait for image completion before function	
  *								return retNOIMG (time in ms)
+ *  \param		dwImageBufferLineSize	Size in bytes of one image buffer line to allow aligend image buffers 
+ *            (if parameter is 0 or if API-DLL provided bufferes are used this parameter it is ignored)
  *
  *  \retval		TRUE			success
  *	\retval		FALSE			error
  */
-USBAPI BOOL CCONV CamUSB_GetImage ( LPBYTE *ppImageBuffer,
+USBAPI BOOL CCONV CamUSB_GetImage ( u08 **ppImageBuffer,
                                     S_IMAGE_HEADER **ppImageHeader,
-                                    DWORD  dwImageBufSize=0,
-                                    BYTE   nDevNr=0,
-                                    DWORD  dwTimeout = GETIMAGE_DEFAULT_TIMEOUT);
+                                    u32 dwImageBufSize = 0,
+                                    u08 nDevNr = 0,
+                                    u32 dwTimeout = GETIMAGE_DEFAULT_TIMEOUT,
+                                    u32 dwImageBufferLineSize = 0);
 
 
 // --------------------------------------------------------------------------
@@ -657,19 +651,23 @@ USBAPI BOOL CCONV CamUSB_GetImage ( LPBYTE *ppImageBuffer,
  *
  *  \param		pImageHeader	Pointer the image  header struct
  *
- *  \param		dwImageBufSize	Size in Byte of the image buffer, if pImageBuffer
+ *  \param		dwImageBufferSize	Size in Byte of the image buffer, if pImageBuffer
  *								point to a valid buffer
  *	\param		nDevNr			Camera index number, that identifies the
  *								camera device which should be used with this
  *								function
+ *  \param		dwImageBufferLineSize	Size in bytes of one image buffer line to allow aligend image buffers 
+ *                                  (if parameter is 0 it is ignored)
+ *
  *
  *  \retval		TRUE			success
  *	\retval		FALSE			error 
  */
-USBAPI BOOL CCONV CamUSB_GetImage_SP ( LPBYTE pImageBuffer,
+USBAPI BOOL CCONV CamUSB_GetImage_SP ( u08  *pImageBuffer,
                                        S_IMAGE_HEADER *pImageHeader,
-                                       DWORD  dwImageBufSize=0,
-                                       BYTE   nDevNr=0);
+                                       u32  dwImageBufferSize = 0,
+                                       u08  nDevNr = 0,
+                                       u32  dwImageBufferLineSize = 0);
 
 
 
@@ -688,9 +686,9 @@ USBAPI BOOL CCONV CamUSB_GetImage_SP ( LPBYTE pImageBuffer,
  *  \retval		TRUE			success
  *	\retval		FALSE			error
  */
-USBAPI BOOL CCONV CamUSB_ReleaseImage ( LPBYTE pImageBuffer,
+USBAPI BOOL CCONV CamUSB_ReleaseImage ( u08 *pImageBuffer,
                                         S_IMAGE_HEADER *pImageHeader,
-                                        BYTE   nDevNr=0);
+                                        u08 nDevNr = 0 );
 
 // --------------------------------------------------------------------------
 // CamUSB_AbortGetImage
@@ -717,14 +715,14 @@ USBAPI BOOL CCONV CamUSB_AbortGetImage( BYTE nDevNr=0 );
  *
  *  \param      pAsyncTrigDev   Pointer to a list of camera trigger structs,
                                 which identifies the camera devices
-                                to be triggerd
+                                to be triggered
  *  \param      nCntDevs        Number of device numbers at the list
  *	\param		dwTimeout		Time to wait for image completion before function	
  *
- * \retval		Return TRUE if successfull. On FALSE you have to call
+ * \retval		Return TRUE if successfully. On FALSE you have to call
  * 				"CamUSB_GetLastError( MAX_CAMERA_DEVICES )" to check the
  *				global error value, if it "retOK" you have to check
- *				the errorcodes returned in pAsyncTrigDev - struct!
+ *				the error codes returned in pAsyncTrigDev - struct!
  */
 USBAPI BOOL CCONV CamUSB_TriggerImage( S_ASYNC_TRIGGER_DEV *pAsyncTrigDev, 
                                        u08 nCntDevs, 
