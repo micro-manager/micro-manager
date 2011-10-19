@@ -121,8 +121,6 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Corvus", "..\DeviceAdapters
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "SimpleAutofocus", "..\DeviceAdapters\SimpleAutofocus\SimpleAutoFocus.vcproj", "{AF83E7A0-34A5-4304-8D88-148D933EAFAF}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "OpticalSectioningUtility", "..\DeviceAdapters\OpticalSectioningUtility\OpticalSectioningUtility.vcproj", "{756F9077-6F83-48EC-A75B-4AB01C690B35}"
-EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "SerialManager", "..\DeviceAdapters\SerialManager\SerialManager.vcproj", "{2EF7ACDC-F742-4CB6-B301-A242F52BE5C3}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "PrincetonInstruments", "..\DeviceAdapters\PrincetonInstruments\PrincetonInstruments.vcproj", "{A28DEB4E-E645-4990-A91D-4A7FF6762240}"
@@ -644,12 +642,6 @@ Global
 		{AF83E7A0-34A5-4304-8D88-148D933EAFAF}.Release|Win32.Build.0 = Release|Win32
 		{AF83E7A0-34A5-4304-8D88-148D933EAFAF}.Release|x64.ActiveCfg = Release|x64
 		{AF83E7A0-34A5-4304-8D88-148D933EAFAF}.Release|x64.Build.0 = Release|x64
-		{756F9077-6F83-48EC-A75B-4AB01C690B35}.Debug|Win32.ActiveCfg = Debug|Win32
-		{756F9077-6F83-48EC-A75B-4AB01C690B35}.Debug|Win32.Build.0 = Debug|Win32
-		{756F9077-6F83-48EC-A75B-4AB01C690B35}.Debug|x64.ActiveCfg = Debug|x64
-		{756F9077-6F83-48EC-A75B-4AB01C690B35}.Release|Win32.ActiveCfg = Release|Win32
-		{756F9077-6F83-48EC-A75B-4AB01C690B35}.Release|Win32.Build.0 = Release|Win32
-		{756F9077-6F83-48EC-A75B-4AB01C690B35}.Release|x64.ActiveCfg = Release|Win32
 		{2EF7ACDC-F742-4CB6-B301-A242F52BE5C3}.Debug|Win32.ActiveCfg = Debug|Win32
 		{2EF7ACDC-F742-4CB6-B301-A242F52BE5C3}.Debug|Win32.Build.0 = Debug|Win32
 		{2EF7ACDC-F742-4CB6-B301-A242F52BE5C3}.Debug|x64.ActiveCfg = Debug|x64
