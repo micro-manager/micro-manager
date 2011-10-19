@@ -509,25 +509,7 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
       }
    }
 
-   public void updateAndDrawEDT() {
-      if (!updating_) {
-         updating_ = true;
-
-         SwingUtilities.invokeLater(new Runnable() {
-
-            public void run() {
-               if (hyperImage_ instanceof CompositeImage) {
-                  ((CompositeImage) hyperImage_).setChannelsUpdated();
-               }
-               hyperImage_.updateAndDraw();
-               //hyperImage_.draw();
-            }
-         });
-
-         updating_ = false;
-      }
-   }
-   
+  
    public void updateWindow() {
       if (hc_ == null) {
          return;
@@ -1133,14 +1115,19 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
          setChannelWithoutMovingSlider(channel);
          CompositeImage ci = (CompositeImage) hyperImage_;
          ci.setDisplayRange(getChannelMin(channel), getChannelMax(channel));
+         /*
+         ci.updateImage();
+         ci.setDisplayRange(getChannelMin(channel), getChannelMax(channel));
+         ci.updateImage();
+         */
 
          // Ugly, dirty hack around ImageJ:
-         if (channelInitiated_[channel] < 3) {
+      /*   if (channelInitiated_[channel] < 3) {
             ++channelInitiated_[channel];
             updateAndDraw();
             ci.setDisplayRange(getChannelMin(channel), getChannelMax(channel));
             updateAndDraw();
-         }
+         }*/
       } else {
          hyperImage_.setDisplayRange(getChannelMin(channel), getChannelMax(channel));
       }
