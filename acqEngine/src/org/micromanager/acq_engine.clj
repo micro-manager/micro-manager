@@ -662,7 +662,8 @@
         (let [event (create-basic-event)
               state (create-basic-state)
               first-image (atom true)
-              start-time (jvm-time-ms)]
+              start-time (jvm-time-ms)
+              last-time (atom 0)]
           (dosync (ref-set live-mode-running true))
           (core startContinuousSequenceAcquisition 0)
           (log "started sequence acquisition")
@@ -670,10 +671,14 @@
                     #(do (while @live-mode-running
                            (let [raw-image {:pix (core getLastImage) :tags nil}
                                  elapsed-time-ms (- (jvm-time-ms) start-time)
-                                 img (annotate-image raw-image event state elapsed-time-ms)]
-                              (reset-snap-window img)
-                              (show-image @snap-window img @first-image)
-                              (reset! first-image false)))
+                                 img (annotate-image raw-image event state elapsed-time-ms)
+                                 this-time (System/currentTimeMillis)
+                                 dt (- 33 (- this-time @last-time))]
+                             (reset-snap-window img)
+                             (Thread/sleep (max 0 dt))
+                             (reset! last-time this-time)
+                             (show-image @snap-window img @first-image)
+                             (reset! first-image false)))
                          (core stopSequenceAcquisition))
                     "Live mode (clojure)")))
         (dosync (ref-set live-mode-running false))))
