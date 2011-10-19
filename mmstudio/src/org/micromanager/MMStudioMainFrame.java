@@ -3265,6 +3265,10 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
    }
 
    public boolean displayImage(final Object pixels) {
+      return displayImage(pixels, true);
+   }
+
+   public boolean displayImage(final Object pixels, boolean wait) {
       try {
          if (core_.getNumberOfCameraChannels() > 1)
             checkMultiChannelWindow();
@@ -3282,7 +3286,11 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
             if (SwingUtilities.isEventDispatchThread()) {
                displayRunnable.run();
             } else {
-               SwingUtilities.invokeLater(displayRunnable);
+               if (wait) {
+                  SwingUtilities.invokeAndWait(displayRunnable);
+               } else {
+                  SwingUtilities.invokeLater(displayRunnable);
+               }
             }
          }
       } catch (Exception e) {
