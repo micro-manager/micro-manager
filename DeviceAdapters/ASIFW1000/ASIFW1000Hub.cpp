@@ -260,9 +260,12 @@ int ASIFW1000Hub::FilterWheelBusy(MM::Device& device, MM::Core& core, bool& busy
    }
 
    unsigned long read = 0;
-   MM::MMTime startTime = core.GetCurrentMMTime();
-   while (read == 0 && ( (core.GetCurrentMMTime() - startTime) < 10000))
+   MM::TimeoutMs timerOut(core.GetCurrentMMTime(), 200 );
+   while (read == 0 && ( !timerOut.expired(core.GetCurrentMMTime()) ) )
+   {
       ret = core.ReadFromSerial(&device, port_.c_str(), (unsigned char*)rcvBuf_, 1, read);  
+   }
+
    if (ret != DEVICE_OK) {
       std::ostringstream os;
       os << "ERROR: ReadFromSerial returned error code: " << ret;
