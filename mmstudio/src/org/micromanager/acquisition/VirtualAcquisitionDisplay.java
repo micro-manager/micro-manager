@@ -1122,7 +1122,9 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
    private void setChannelDisplayRange(int channel, CompositeImage ci) {
       int min = getChannelMin(channel);
       int max = getChannelMax(channel);
-      // The following two lines are necessary for a correct update:
+      // ImageJ WORKAROUND
+      // The following two lines of code are both necessary for a correct update.
+      // Otherwise min and max get inconsistent in ImageJ.
       ci.getProcessor(channel + 1).setMinAndMax(min, max);
       ci.setDisplayRange(min, max);
    }
