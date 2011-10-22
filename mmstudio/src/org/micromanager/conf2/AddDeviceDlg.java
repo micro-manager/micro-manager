@@ -361,21 +361,6 @@ public class AddDeviceDlg extends JDialog implements MouseListener,
       devicesPage_.rebuildTable();
    }
 
-   public void mouseClicked(MouseEvent e) {
-   }
-
-   public void mousePressed(MouseEvent e) {
-   }
-
-   public void mouseReleased(MouseEvent e) {
-   }
-
-   public void mouseEntered(MouseEvent e) {
-   }
-
-   public void mouseExited(MouseEvent e) {
-   }
-
    protected boolean addDevice() {
       int srows[] = theTree_.getSelectionRows();
       if (srows == null) {
@@ -421,8 +406,8 @@ public class AddDeviceDlg extends JDialog implements MouseListener,
                      try {
                         if (model_.findDevice(installed.get(i)) == null)
                         {
-                           String description = model_.getDeviceDescription(dev.getLibrary(), dev.getAdapterName());
-                           Device newDev = new Device(dev.getAdapterName(), dev.getLibrary(), dev.getAdapterName(), descr);
+                           String description = model_.getDeviceDescription(dev.getLibrary(), installed.get(i));
+                           Device newDev = new Device(installed.get(i), dev.getLibrary(), installed.get(i), descr);
                            peripherals.add(newDev);
                         }
                      } catch (Exception e) {
@@ -470,5 +455,35 @@ public class AddDeviceDlg extends JDialog implements MouseListener,
       else
          buildTreeByType(model_);
       scrollPane_.setViewportView(theTree_);
+   }
+
+   @Override
+   public void mouseClicked(MouseEvent e) {
+      // TODO Auto-generated method stub
+      
+   }
+
+   @Override
+   public void mousePressed(MouseEvent e) {
+      // TODO Auto-generated method stub
+      
+   }
+
+   @Override
+   public void mouseReleased(MouseEvent e) {
+      // TODO Auto-generated method stub
+      
+   }
+
+   @Override
+   public void mouseEntered(MouseEvent e) {
+      // TODO Auto-generated method stub
+      
+   }
+
+   @Override
+   public void mouseExited(MouseEvent e) {
+      // TODO Auto-generated method stub
+      
    }
 }

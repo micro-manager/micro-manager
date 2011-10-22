@@ -51,26 +51,17 @@ public class PeripheralSetupDlg extends MMDialog {
          "Description",
          "Selected"
       };
-      MicroscopeModel model_;
-      Device devices_[];
-      Vector<Device> peripheralDevices_;
       Vector<Boolean> selected_;
-      Vector<String> masterDevices_;
 
-      public DeviceTable_TableModel(MicroscopeModel model) {
-         peripheralDevices_ = new Vector<Device>();
+      public DeviceTable_TableModel() {
          selected_ = new Vector<Boolean>();
-         masterDevices_ = new Vector<String>();
-         setMicroscopeModel(model);
-      }
-
-      public void setMicroscopeModel(MicroscopeModel mod) {
-         model_ = mod;
-         rebuild();
+         for (int i=0; i<peripherals_.size(); i++) {
+            selected_.add(false);
+         }
       }
 
       public int getRowCount() {
-         return peripheralDevices_.size();
+         return peripherals_.size();
       }
 
       public int getColumnCount() {
@@ -94,13 +85,13 @@ public class PeripheralSetupDlg extends MMDialog {
       public Object getValueAt(int rowIndex, int columnIndex) {
 
          if (HUBCOLUMN == columnIndex) {
-            return masterDevices_.get(rowIndex);
+            return hub_;
          } else if (columnIndex == NAMECOLUMN) {
-            return peripheralDevices_.get(rowIndex).getName();
+            return peripherals_.get(rowIndex).getName();
          } else if (columnIndex == ADAPTERCOLUMN) {
-            return new String(peripheralDevices_.get(rowIndex).getAdapterName() + "/" + peripheralDevices_.get(rowIndex).getLibrary());
+            return new String(peripherals_.get(rowIndex).getAdapterName() + "/" + peripherals_.get(rowIndex).getLibrary());
          } else if (columnIndex == DESCRIPTIONCOLUMN) {
-            return peripheralDevices_.get(rowIndex).getDescription();
+            return peripherals_.get(rowIndex).getDescription();
          } else if (SELECTIONCOLUMN == columnIndex) {
             return selected_.get(rowIndex);
          } else {
@@ -115,10 +106,10 @@ public class PeripheralSetupDlg extends MMDialog {
                break;
             case NAMECOLUMN: {
                String n = (String) value;
-               String o = peripheralDevices_.get(row).getName();
+               String o = peripherals_.get(row).getName();
+               peripherals_.get(row).setName(n);
                try {
-
-                  //  NOT YET!  model_.changeDeviceName(o, n);
+                  model_.changeDeviceName(o, n);
                   fireTableCellUpdated(row, col);
                } catch (Exception e) {
                   handleError(e.getMessage());
@@ -156,65 +147,21 @@ public class PeripheralSetupDlg extends MMDialog {
       }
 
       public void refresh() {
-         devices_ = model_.getDevices();
          this.fireTableDataChanged();
       }
-
-      Vector<Device> getPeripheralDevices() {
-         return peripheralDevices_;
-      }
-
-      ;
 
       Vector<Boolean> getSelected() {
          return selected_;
       }
 
-      ;
-
-      Vector<String> getMasterDevices() {
-         return masterDevices_;
-      }
-
-      public void rebuild() {
-         devices_ = model_.getDevices();
-         masterDevices_.clear();
-         peripheralDevices_.clear();
-         selected_.clear();
-
-         for (Device d : devices_) {
-            if (!d.getName().equals("Core")) {
-
-               // device "discovery" happens here
-               StrVector installed = core_.getInstalledDevices(d.getName());
-               // end of discovery
-
-               if (0 < installed.size()) {
-                  for (int i=0; i<installed.size(); i++) {                        
-                     try {
-                        if (model_.findDevice(installed.get(i)) == null)
-                        {
-                           String descr = model_.getDeviceDescription(d.getLibrary(), installed.get(i));
-                           Device newDev = new Device(installed.get(i), d.getLibrary(), installed.get(i), descr);   
-                           selected_.add(false);
-                           masterDevices_.add(d.getName());
-                           peripheralDevices_.add(newDev);
-                        }
-                     } catch (Exception e) {
-                        ReportingUtils.logError(e.getMessage());
-                     }
-                  }
-               }
-            }
-         }
-      }
    }
    private JTable deviceTable_;
    private JScrollPane scrollPane_;
    private CMMCore core_;
    private MicroscopeModel model_;
    private String hub_;
-   private final JPanel contentPanel = new JPanel();   
+   private final JPanel contentPanel = new JPanel();
+   private Vector<Device> peripherals_;
 
    public PeripheralSetupDlg(MicroscopeModel mod, CMMCore c, String hub, Vector<Device> per) {
       setTitle("Peripheral Devices Setup");
@@ -225,7 +172,7 @@ public class PeripheralSetupDlg extends MMDialog {
       hub_ = hub;
       core_ = c;
       model_ = mod;
-
+      peripherals_ = per;
       String hubColumn = Integer.toString(HUBCOLUMN + 1);
       String nameColumn = Integer.toString(NAMECOLUMN + 1);
 
@@ -309,15 +256,8 @@ public class PeripheralSetupDlg extends MMDialog {
    }
 
    public void rebuildTable() {
-      TableModel tm = deviceTable_.getModel();
-      DeviceTable_TableModel tmd;
-      if (tm instanceof DeviceTable_TableModel) {
-         tmd = (DeviceTable_TableModel) deviceTable_.getModel();
-         tmd.refresh();
-      } else {
-         tmd = new DeviceTable_TableModel(model_);
-         deviceTable_.setModel(tmd);
-      }
+      DeviceTable_TableModel tmd = new DeviceTable_TableModel();
+      deviceTable_.setModel(tmd);
       tmd.fireTableStructureChanged();
       tmd.fireTableDataChanged();
    }
@@ -330,12 +270,13 @@ public class PeripheralSetupDlg extends MMDialog {
       try {
          DeviceTable_TableModel tmd = (DeviceTable_TableModel) deviceTable_.getModel();
 
-         Vector<Device> pd = tmd.getPeripheralDevices();
-         Vector<String> hubs = tmd.getMasterDevices();
+         Vector<String> hubs = new Vector<String>();
+         for (int i=0; i < peripherals_.size(); i++) {
+            hubs.add(new String(hub_));
+         }
          Vector<Boolean> sel = tmd.getSelected();
-         model_.AddSelectedPeripherals(core_, pd, hubs, sel);
+         model_.AddSelectedPeripherals(core_, peripherals_, hubs, sel);
          model_.loadDeviceDataFromHardware(core_);
-         tmd.rebuild();
       } catch (Exception e) {
          handleError(e.getMessage());
       } finally {
