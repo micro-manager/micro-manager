@@ -26,6 +26,7 @@
 #include <iostream>
 
 const char* g_ConixQuadFilterName = "ConixQuadFilter";
+const char* g_ConixHexFilterName = "ConixHexFilter";
 const char* g_ConixXYStageName = "ConixXYStage";
 const char* g_ConixZStageName = "ConixZStage";
 
@@ -75,7 +76,7 @@ MODULE_API void DeleteDevice(MM::Device* pDevice)
 
 
 ///////////////////////////////////////////////////////////////////////////////
-// VMMController device
+// QuadFluor device
 ///////////////////////////////////////////////////////////////////////////////
 
 QuadFluor::QuadFluor() :
@@ -203,15 +204,6 @@ bool QuadFluor::Busy()
 
 
 
-int QuadFluor::ExecuteCommand(const string& cmd)
-{
-
-   // Even though we have no clue, we'll say all is fine
-   return DEVICE_OK;
-}
-
-
-
 ///////////////////////////////////////////////////////////////////////////////
 // Action handlers
 ///////////////////////////////////////////////////////////////////////////////
@@ -328,26 +320,215 @@ int QuadFluor::OnState(MM::PropertyBase* pProp, MM::ActionType eAct)
 }
 
 
+///////////////////////////////////////////////////////////////////////////////
+// HexaFluor device
+///////////////////////////////////////////////////////////////////////////////
 
-int QuadFluor::OnCommand(MM::PropertyBase* pProp, MM::ActionType eAct)
+HexaFluor::HexaFluor() :
+   initialized_(false),
+   numPos_(6),
+   port_("Undefined"),
+   pendingCommand_(false),
+   baseCommand_("Cube ")
 {
-   if (eAct == MM::BeforeGet)
-   {
-      pProp->Set(command_.c_str());
-   }
-   else if (eAct == MM::AfterSet)
-   {
-      pProp->Get(command_);
-printf ("%s\n","Executing Command:");
-      return ExecuteCommand(command_);
+   InitializeDefaultErrorMessages();
+
+   // create pre-initialization properties
+   // ------------------------------------
+
+   // Name
+   CreateProperty(MM::g_Keyword_Name, g_ConixHexFilterName, MM::String, true);
+
+   // Description
+   CreateProperty(MM::g_Keyword_Description, "Conix Motorized 6-Filter changer for Nikon TE200/300", MM::String, true);
+
+   // Port
+   CPropertyAction* pAct = new CPropertyAction (this, &HexaFluor::OnPort);
+   CreateProperty(MM::g_Keyword_Port, "Undefined", MM::String, false, pAct, true);
+}
+
+
+
+HexaFluor::~HexaFluor()
+{
+   Shutdown();
+}
+
+
+
+void HexaFluor::GetName(char* Name) const
+{
+   CDeviceUtils::CopyLimitedString(Name, g_ConixHexFilterName);
+}
+
+
+
+int HexaFluor::Initialize()
+{
+   // set property list
+   // -----------------
+   
+   // Get and Set State (allowed values 1-4, start at 0 for Hardware Configuration Wizard))
+   CPropertyAction *pAct = new CPropertyAction (this, &HexaFluor::OnState);
+   int nRet=CreateProperty(MM::g_Keyword_State, "0", MM::Integer, false, pAct);
+   if (nRet != DEVICE_OK)
+      return nRet;
+
+   for (int i = 0; i < numPos_; i++) {
+      std::ostringstream os;
+      os << i;
+      nRet = AddAllowedValue(MM::g_Keyword_State, os.str().c_str());
    }
 
-printf ("%s\n","Outof OnCommand");
+   // create default positions and labels
+   for (long i=0; i < numPos_; i++)
+   {
+      std::ostringstream os;
+      os << "Position: " << i;
+      SetPositionLabel(i, os.str().c_str());
+   }
+
+
+   // Label
+   // -----
+   pAct = new CPropertyAction (this, &CStateBase::OnLabel);
+   nRet = CreateProperty(MM::g_Keyword_Label, "", MM::String, false, pAct);
+   if (nRet != DEVICE_OK)                                                     
+      return nRet;   
+
+   initialized_ = true;
    return DEVICE_OK;
 }
 
 
 
+int HexaFluor::Shutdown()
+{
+   if (initialized_)
+   {
+      initialized_ = false;
+   }
+   return DEVICE_OK;
+}
+
+bool HexaFluor::Busy()
+{
+   // the commands are blocking, so we cannot be busy
+   return false;
+}
+
+
+///////////////////////////////////////////////////////////////////////////////
+// Action handlers
+///////////////////////////////////////////////////////////////////////////////
+/*
+ * Sets the Serial Port to be used.
+ * Should be called before initialization
+ */
+int HexaFluor::OnPort(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   if (eAct == MM::BeforeGet)
+   {
+      pProp->Set(port_.c_str());
+   }
+   else if (eAct == MM::AfterSet)
+   {
+      if (initialized_)
+      {
+         // revert
+         pProp->Set(port_.c_str());
+         //return ERR_PORT_CHANGE_FORBIDDEN;
+      }
+
+      pProp->Get(port_);
+   }
+   return DEVICE_OK;
+}
+
+
+int HexaFluor::GetPosition(int& position) 
+{
+   // send command
+   int ret = SendSerialCommand(port_.c_str(), baseCommand_.c_str(), "\r");
+   if (ret != DEVICE_OK)
+      return ret;
+
+   // block/wait for acknowledge, or until we time out;
+   string answer;
+   ret = GetSerialAnswer(port_.c_str(), "\r", answer);
+   if (ret != DEVICE_OK)
+      return ret;
+
+   if (answer.length() > 2 && answer.substr(0, 2).compare(":N") == 0)
+   {
+      int errNo = atoi(answer.substr(2).c_str());
+      return ERR_OFFSET + errNo;
+   }
+   else if (answer.length() > 2 && answer.substr(0, 2).compare(":A") == 0)
+   {
+      position = atoi(answer.substr(2).c_str());
+      if (position == 0)
+         return ERR_UNRECOGNIZED_ANSWER;
+
+      return DEVICE_OK;
+   }
+
+   return ERR_UNRECOGNIZED_ANSWER;
+}
+
+
+
+int HexaFluor::SetPosition(int position)
+{
+   ostringstream command;
+   command << baseCommand_ << position;
+
+   // send command
+   int ret = SendSerialCommand(port_.c_str(), command.str().c_str(), "\r");
+   if (ret != DEVICE_OK)
+      return ret;
+
+   // block/wait for acknowledge, or until we time out;
+   string answer;
+   ret = GetSerialAnswer(port_.c_str(), "\r", answer);
+   if (ret != DEVICE_OK)
+      return ret;
+
+   if (answer.substr(0, 2).compare(":A") == 0)
+   {
+      return DEVICE_OK;
+   }
+   else if (answer.length() > 2 && answer.substr(0, 2).compare(":N") == 0)
+   {
+      int errNo = atoi(answer.substr(2).c_str());
+      return ERR_OFFSET + errNo;
+   }
+
+   return ERR_UNRECOGNIZED_ANSWER;
+}
+
+
+
+// Needs to be worked on (a lot)
+int HexaFluor::OnState(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   if (eAct == MM::BeforeGet) {
+      int position, ret;
+      ret = GetPosition(position);
+      if (ret != DEVICE_OK)
+         return ret;
+      pProp->Set((long) position - 1);
+   }
+   else if (eAct == MM::AfterSet) {
+      long position;
+      int ret;
+      pProp->Get(position);
+      ret = SetPosition((int) position + 1);
+      if (ret != DEVICE_OK)
+         return ret;
+   }
+   return DEVICE_OK;
+}
 
 
 ///////////////////////////////////////////////////////////////////////////////

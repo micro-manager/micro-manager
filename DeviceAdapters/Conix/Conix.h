@@ -59,12 +59,10 @@ public:
    // ----------------
    int OnPort(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnState(MM::PropertyBase* pProp, MM::ActionType eAct);
-   int OnCommand(MM::PropertyBase* pProp, MM::ActionType eAct);
 
 private:
    int GetPosition(int& position);
    int SetPosition(int position);
-   int ExecuteCommand(const std::string& cmd);
 
    bool initialized_;
    unsigned numPos_;
@@ -77,6 +75,47 @@ private:
 };
 
 
+//////////////////////////////////////////////////////////////////////////////
+// HexaFluor class
+//
+//////////////////////////////////////////////////////////////////////////////
+
+class HexaFluor : public CStateDeviceBase<HexaFluor>
+{
+public:
+   HexaFluor();
+   ~HexaFluor();
+  
+   // Device API
+   // ----------
+   int Initialize();
+   int Shutdown();
+  
+   void GetName(char* pszName) const;
+   bool Busy();
+   unsigned long GetNumberOfPositions()const {return numPos_;}
+
+    
+
+   // action interface
+   // ----------------
+   int OnPort(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnState(MM::PropertyBase* pProp, MM::ActionType eAct);
+
+private:
+   int GetPosition(int& position);
+   int SetPosition(int position);
+
+   bool initialized_;
+   unsigned numPos_;
+   // MMCore name of serial port
+   std::string port_;
+   // Command exchange with MMCore
+   std::string command_;
+   // Has a command been sent to which no answer has been received yet?
+   bool pendingCommand_;
+   std::string baseCommand_;
+};
 
 //////////////////////////////////////////////////////////////////////////////
 // ConixXYStage class
