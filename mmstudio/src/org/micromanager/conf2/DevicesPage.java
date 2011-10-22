@@ -205,6 +205,11 @@ public class DevicesPage extends PagePanel implements ListSelectionListener {
       }
       model_.removePeripherals(devName, core_);
       model_.removeDevice(devName);
+      try {
+         core_.unloadDevice(devName);
+      } catch (Exception e) {
+         handleError(e.getMessage());
+      }
       rebuildTable();
    }
    

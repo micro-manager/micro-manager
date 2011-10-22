@@ -1122,6 +1122,12 @@ public class MicroscopeModel {
          // now remove them
          for (int i=0; i<toRemove.size(); i++) {
             removeDevice(toRemove.get(i));
+            try {
+               core.unloadDevice(toRemove.get(i));
+            } catch (Exception e) {
+               // TODO Auto-generated catch block
+               e.printStackTrace();
+            }
          }
       }
    }
