@@ -350,8 +350,7 @@ public class AddDeviceDlg extends JDialog implements MouseListener,
 
    private void displayDocumentation() {
       try {
-         ij.plugin.BrowserLauncher.openURL(documentationURLroot_
-               + libraryDocumentationName_);
+         ij.plugin.BrowserLauncher.openURL(documentationURLroot_ + libraryDocumentationName_);
       } catch (IOException e1) {
          ReportingUtils.showError(e1);
       }
@@ -382,45 +381,74 @@ public class AddDeviceDlg extends JDialog implements MouseListener,
                }
             }
 
+            // get selected device
             String adapterName = userData[1].toString();
             String lib = userData[0].toString();
             String descr = userData[2].toString();
 
-            DeviceSetupDlg dlg = new DeviceSetupDlg(model_, core_, lib, adapterName, descr);
-            dlg.setVisible(true);
-            String devLabel = dlg.getDeviceName();
-            Device dev = model_.findDevice(devLabel);
-            if (dev == null) {
+            // load new device
+            String label = new String(adapterName);
+            Device d = model_.findDevice(label);
+            int retries = 0;
+            while (d != null) {
+               retries++;
+               label = new String(label + "-" + retries);
+               d = model_.findDevice(adapterName);
+            }
+
+            Device dev;
+            try {
+               core_.loadDevice(label, lib, adapterName);
+               dev = new Device(label, lib, adapterName, descr);
+               dev.loadDataFromHardware(core_);
+               model_.addDevice(dev);
+            } catch (Exception e) {
+               JOptionPane.showMessageDialog(this, e.getMessage());
                return false;
             }
+
+            // open device setup dialog
+            DeviceSetupDlg dlg = new DeviceSetupDlg(model_, core_, dev);
+            dlg.setVisible(true);
+
+            if (!dev.isInitialized()) {
+               // user canceled or things did not work out
+               model_.removeDevice(dev.getName());
+               try {
+                  core_.unloadDevice(dev.getName());
+               } catch (Exception e) {
+                  JOptionPane.showMessageDialog(this, e.getMessage());
+               }
+               return false;
+            }
+            // > at this point device is initialized and added to the model
+
+            // check if there are any child devices installed
             if (dev.isHub() && !dev.getName().equals("Core")) {
-               
-               // device "discovery" happens here
-               StrVector installed = core_.getInstalledDevices(dev.getName());
-               // end of discovery
-               
+
+               String installed[] = dev.getPeripherals();
                Vector<Device> peripherals = new Vector<Device>();
 
-               if (0 < installed.size()) {
-                  for (int i=0; i<installed.size(); i++) {                        
-                     try {
-                        if (model_.findDevice(installed.get(i)) == null)
-                        {
-                           String description = model_.getDeviceDescription(dev.getLibrary(), installed.get(i));
-                           Device newDev = new Device(installed.get(i), dev.getLibrary(), installed.get(i), descr);
-                           peripherals.add(newDev);
-                        }
-                     } catch (Exception e) {
-                        ReportingUtils.logError(e.getMessage());
+               for (int i = 0; i < installed.length; i++) {
+                  try {
+                     if (model_.findDevice(installed[i]) == null) {
+                        String description = model_.getDeviceDescription(
+                              dev.getLibrary(), installed[i]);
+                        Device newDev = new Device(installed[i],
+                              dev.getLibrary(), installed[i], description);
+                        peripherals.add(newDev);
                      }
+                  } catch (Exception e) {
+                     ReportingUtils.logError(e.getMessage());
                   }
                }
-               
+
                if (peripherals.size() > 0) {
-                  PeripheralSetupDlg dlgp = new PeripheralSetupDlg(model_, core_, dev.getName(), peripherals);
+                  PeripheralSetupDlg dlgp = new PeripheralSetupDlg(model_,
+                        core_, dev.getName(), peripherals);
                   dlgp.setVisible(true);
                }
-               
+
             }
          }
       }

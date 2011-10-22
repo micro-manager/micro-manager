@@ -41,15 +41,9 @@ public class DeviceSetupDlg extends MMDialog {
    private static final long serialVersionUID = 1L;
    private final JPanel contentPanel = new JPanel();
    private CMMCore core;
-   private String adapterName;
    private Device portDev;
-   private String lib;
-   private String description;
    private MicroscopeModel model;
-   private JTextField devLabel;
-   private JButton btnInitialize;
-   private JButton btnLoad;
-   private boolean initialized;
+   private Device dev;
    private JTable propTable;
    private JButton detectButton;
    private boolean requestCancel;
@@ -57,21 +51,19 @@ public class DeviceSetupDlg extends MMDialog {
    private DetectionTask dt;
    private final String DETECT_PORTS = "Scan";
    private JTable comTable;
+   private JTextField devLabel;
 
    /**
     * Create the dialog.
     */
-   public DeviceSetupDlg(MicroscopeModel mod, CMMCore c, String library, String devName, String descr) {
+   public DeviceSetupDlg(MicroscopeModel mod, CMMCore c, Device d) {
       //setModalityType(ModalityType.APPLICATION_MODAL);
       setModal(true);
       setBounds(100, 100, 478, 515);
       model = mod;
-      lib = library;
-      adapterName = devName;
       core = c;
-      initialized = false;
-      description = descr;
       portDev = null;
+      dev = d;
       
       getContentPane().setLayout(new BorderLayout());
       contentPanel.setBorder(new EmptyBorder(5, 5, 5, 5));
@@ -83,32 +75,11 @@ public class DeviceSetupDlg extends MMDialog {
          contentPanel.add(lblNewLabel);
       }
       
-      devLabel = new JTextField();
-      devLabel.setBounds(47, 8, 125, 20);
+      devLabel = new JTextField(dev.getName());
+      devLabel.setBounds(47, 8, 165, 20);
       contentPanel.add(devLabel);
       devLabel.setColumns(10);
-      
-      btnLoad = new JButton("Load");
-      btnLoad.setToolTipText("Load device");
-      btnLoad.addActionListener(new ActionListener() {
-         public void actionPerformed(ActionEvent e) {
-            loadDevice();
-         }
-      });
-      btnLoad.setBounds(176, 7, 91, 23);
-      contentPanel.add(btnLoad);
-      
-      btnInitialize = new JButton("Initialize");
-      btnInitialize.setToolTipText("Initialize device");
-      btnInitialize.addActionListener(new ActionListener() {
-         public void actionPerformed(ActionEvent e) {
-            initializeDevice();
-         }
-      });
-      btnInitialize.setBounds(359, 7, 93, 23);
-      contentPanel.add(btnInitialize);
-      btnInitialize.setEnabled(false);
-      
+                 
       {
          JPanel buttonPane = new JPanel();
          buttonPane.setLayout(new FlowLayout(FlowLayout.RIGHT));
@@ -145,8 +116,7 @@ public class DeviceSetupDlg extends MMDialog {
       Rectangle r = getBounds();
       loadPosition(r.x, r.y);
       
-      setTitle("Device: " + adapterName + " | Library: " + lib);
-      devLabel.setText(adapterName);
+      setTitle("Device: " + dev.getAdapterName() + " | Library: " + dev.getLibrary());
       
       JScrollPane scrollPaneProp = new JScrollPane();
       scrollPaneProp.setBounds(10, 64, 442, 164);
@@ -181,7 +151,7 @@ public class DeviceSetupDlg extends MMDialog {
          }
       });
       detectButton.setToolTipText("Scan COM ports to detect this device");
-      detectButton.setBounds(267, 7, 93, 23);
+      detectButton.setBounds(359, 235, 93, 23);
       contentPanel.add(detectButton);
       
       JLabel lblNewLabel_1 = new JLabel("Port Properties (RS 232 settings)");
@@ -200,18 +170,11 @@ public class DeviceSetupDlg extends MMDialog {
       JLabel lblNewLabel_2 = new JLabel("Initialization Properties");
       lblNewLabel_2.setBounds(10, 39, 442, 14);
       contentPanel.add(lblNewLabel_2);
+      
+      loadSettings();
    }
 
    protected void onCancel() {
-      Device d = model.findDevice(devLabel.getText());
-      if (d != null) {
-         model.removeDevice(d.getName());
-         try {
-            core.unloadDevice(d.getName());
-         } catch (Exception e) {
-            showMessage("Error unloading device " + devLabel.getText() + ", but no further action required.");
-         }
-      }
       dispose();
    }
 
@@ -222,56 +185,37 @@ public class DeviceSetupDlg extends MMDialog {
          return;
       }
       
-      if (!initialized) {
-         showMessage("Device must be initialized before pressing OK.\nPress Initialize and try again, or press Cancel to abort.");
+      if (initializeDevice())
+         dispose();
+      else
          return;
-      }
-      dispose();
    }  
 
-   private void loadDevice() {
-      // attempt to load device
-      try {
-         Device d = model.findDevice(devLabel.getText());
-         if (d == null) {
-            core.loadDevice(devLabel.getText(), lib, adapterName);
-            btnLoad.setEnabled(false);
-            devLabel.setEditable(false);
-            btnInitialize.setEnabled(true);
-            Device dev = new Device(devLabel.getText(), lib, adapterName, description);
-            dev.loadDataFromHardware(core);
-            model.addDevice(dev);
-            
-            // update the table
-            rebuildPropTable();
-            
-            // setup com ports
-            ArrayList<Device> ports = new ArrayList<Device>();
-            Device avPorts[] = model.getAvailableSerialPorts();
-            for(int i=0; i<avPorts.length; i++)
-               if (!model.isPortInUse(avPorts[i]))
-                  ports.add(avPorts[i]);
+   private void loadSettings() {
 
-            // identify "port" properties and assign available com ports declared for use
-            for (int i=0; i<dev.getNumberOfProperties(); i++) {
-               PropertyItem p = dev.getProperty(i);
-               if (p.name.compareTo(MMCoreJ.getG_Keyword_Port()) == 0) {
-                  if (ports.size() == 0) {
-                     // no ports available, tell user and return
-                     JOptionPane.showMessageDialog(null, "No Serial Ports are found in your computer!");
-                     return;
-                  }
-                  String allowed[] = new String[ports.size()];
-                  for (int k=0; k<ports.size(); k++)
-                     allowed[k] = ports.get(k).getName();
-                  p.allowed = allowed;
-               }
+      rebuildPropTable();
+
+      // setup com ports
+      ArrayList<Device> ports = new ArrayList<Device>();
+      Device avPorts[] = model.getAvailableSerialPorts();
+      for(int i=0; i<avPorts.length; i++)
+         if (!model.isPortInUse(avPorts[i]))
+            ports.add(avPorts[i]);
+
+      // identify "port" properties and assign available com ports declared for use
+      for (int i=0; i<dev.getNumberOfProperties(); i++) {
+         PropertyItem p = dev.getProperty(i);
+         if (p.name.compareTo(MMCoreJ.getG_Keyword_Port()) == 0) {
+            if (ports.size() == 0) {
+               // no ports available, tell user and return
+               JOptionPane.showMessageDialog(null, "No Serial Ports are found in your computer!");
+               return;
             }
-         } else {
-            showMessage("Device label " + devLabel + " already in use.");
+            String allowed[] = new String[ports.size()];
+            for (int k=0; k<ports.size(); k++)
+               allowed[k] = ports.get(k).getName();
+            p.allowed = allowed;
          }
-      } catch (Exception e1) {
-         showMessage(e1.getMessage());
       }
    }
    
@@ -366,28 +310,37 @@ public class DeviceSetupDlg extends MMDialog {
       comTable.repaint();
    }
 
-   private void initializeDevice() {
+   private boolean initializeDevice() {
       try {
-         if (!initialized) {
+         if (dev.isInitialized()) {
+            // re-initialize
+            return true;
+         } else {
             // transfer properties to device
             PropertyTableModel ptm = (PropertyTableModel)propTable.getModel();
             for (int i=0; i<ptm.getRowCount(); i++) {
                Setting s = ptm.getSetting(i);
                core.setProperty(s.deviceName_, s.propertyName_, s.propertyValue_);
             }
-            
+
             // first initialize port...
             if (initializePort()) {
                // ...then device
-               core.initializeDevice(devLabel.getText());
-               btnInitialize.setEnabled(false);
-               initialized = true;
+               dev.setName(devLabel.getText());
+               core.initializeDevice(dev.getName());
+               dev.setInitialized(true);
+               dev.discoverPeripherals(core);
+               return true;
             }
+            
+            return false; // port failed
          }
       } catch (Exception e) {
          showMessage(e.getMessage());
+         return false;
       }
    }
+   
    private boolean initializePort() {
       if (portDev != null) {
          try {

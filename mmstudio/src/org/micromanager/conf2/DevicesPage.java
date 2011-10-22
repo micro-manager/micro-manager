@@ -27,6 +27,7 @@ import java.awt.Container;
 import java.awt.Cursor;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.Vector;
 import java.util.prefs.Preferences;
 
 import javax.swing.JButton;
@@ -42,6 +43,7 @@ import mmcorej.CMMCore;
 import mmcorej.MMCoreJ;
 
 import org.micromanager.utils.ReportingUtils;
+import javax.swing.JLabel;
 
 /**
  * Wizard page to add or remove devices.
@@ -121,8 +123,9 @@ public class DevicesPage extends PagePanel implements ListSelectionListener {
    private JTable deviceTable_;
    private JScrollPane scrollPane_;
    private static final String HELP_FILE_NAME = "conf_devices_page.html";
-   private JButton peripheralButton;
+   private JButton editButton;
    private JButton removeButton;
+   private JButton peripheralsButton;
    /**
     * Create the panel
     */
@@ -155,7 +158,7 @@ public class DevicesPage extends PagePanel implements ListSelectionListener {
          }
       });
       addButton.setText("Add...");
-      addButton.setBounds(469, 10, 93, 23);
+      addButton.setBounds(469, 41, 99, 23);
       add(addButton);
 
       removeButton = new JButton();
@@ -165,33 +168,66 @@ public class DevicesPage extends PagePanel implements ListSelectionListener {
          }
       });
       removeButton.setText("Remove");
-      removeButton.setBounds(469, 92, 93, 23);
+      removeButton.setBounds(469, 119, 99, 23);
       add(removeButton);
       removeButton.setEnabled(false);
       
-      peripheralButton = new JButton("Child...");
-      peripheralButton.addActionListener(new ActionListener() {
+      editButton = new JButton("Edit...");
+      editButton.addActionListener(new ActionListener() {
          public void actionPerformed(ActionEvent e) {
-            addPeripherals();
+            editDevice();
          }
       });
-      peripheralButton.setBounds(469, 34, 93, 23);
-      add(peripheralButton);
-      peripheralButton.setEnabled(false);
+      editButton.setBounds(469, 68, 99, 23);
+      add(editButton);
+      editButton.setEnabled(false);
+      
+      peripheralsButton = new JButton("Peripherals...");
+      peripheralsButton.addActionListener(new ActionListener() {
+         public void actionPerformed(ActionEvent e) {
+            editDevice();
+         }
+      });
+      peripheralsButton.setEnabled(false);
+      peripheralsButton.setBounds(469, 93, 99, 23);
+      add(peripheralsButton);
       //
    }
    
-   protected void addPeripherals() {
+
+   protected void editDevice() {
       int sel = deviceTable_.getSelectedRow();
       if (sel < 0)
          return;      
       String devName = (String)deviceTable_.getValueAt(sel, 0);
       
-      PeripheralSetupDlg dlg = new PeripheralSetupDlg(model_, core_, devName, null);
-      dlg.setVisible(true);
-      
-      rebuildTable();
+      Device dev = model_.findDevice(devName);
+
+      String installed[] = dev.getPeripherals();
+      Vector<Device> peripherals = new Vector<Device>();
+
+      for (int i = 0; i < installed.length; i++) {
+         try {
+            if (model_.findDevice(installed[i]) == null) {
+               String description = model_.getDeviceDescription(
+                     dev.getLibrary(), installed[i]);
+               Device newDev = new Device(installed[i],
+                     dev.getLibrary(), installed[i], description);
+               peripherals.add(newDev);
+            }
+         } catch (Exception e) {
+            ReportingUtils.logError(e.getMessage());
+         }
+      }
+
+      if (peripherals.size() > 0) {
+         if (devName.contentEquals(new StringBuffer().append(MMCoreJ.getG_Keyword_CoreDevice()))) {
+            handleError(dev + " does not have any more available peripherals!");
+            return;
+         }
+      }
    }
+
 
    protected void removeDevice() {
       int sel = deviceTable_.getSelectedRow();
@@ -295,7 +331,7 @@ public class DevicesPage extends PagePanel implements ListSelectionListener {
       int row = deviceTable_.getSelectedRow();
       if (row < 0) {
          // nothing selected
-         peripheralButton.setEnabled(false);
+         editButton.setEnabled(false);
          removeButton.setEnabled(false);
          return;
       }
@@ -306,13 +342,17 @@ public class DevicesPage extends PagePanel implements ListSelectionListener {
          // device selected but not found in the model
          // this should never happen
          ReportingUtils.logError("Internal error in PeripheralSetupDlg: device not found");
-         peripheralButton.setEnabled(false);
+         editButton.setEnabled(false);
          removeButton.setEnabled(false);
+         peripheralsButton.setEnabled(false);
          return;
       }
       
       // if device is hub it may have some children available
-      peripheralButton.setEnabled(dev.isHub());
+      peripheralsButton.setEnabled(dev.isHub() && dev.getNumberOfSetupProperties() > 0);
+
+      // settings can be edited unless device is core
+      editButton.setEnabled(!dev.isCore() && dev.getNumberOfSetupProperties() > 0);
       
       // any selected device can be removed unless it is Core
       removeButton.setEnabled(!dev.isCore());

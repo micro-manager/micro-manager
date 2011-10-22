@@ -35,6 +35,7 @@ import mmcorej.LongVector;
 import mmcorej.MMCoreJ;
 import mmcorej.StrVector;
 import org.micromanager.utils.PropertyItem;
+import org.micromanager.utils.ReportingUtils;
 
 /**
  * Data structure describing a general MM device.
@@ -53,6 +54,8 @@ import org.micromanager.utils.PropertyItem;
       private boolean usesDelay_;
       private int numPos_ = 0;
       private String parentHub_;
+      private String childDevices_[];
+      private boolean initialized_;
 
    public Device(String name, String lib, String adapterName, String descr, boolean discoverable, String master,Vector<String> slaves ) {
       name_ = name;
@@ -66,6 +69,8 @@ import org.micromanager.utils.PropertyItem;
       usesDelay_ = false;
       delayMs_ = 0.0;
       parentHub_ = new String();
+      childDevices_ = new String[0];
+      initialized_ = false;
    }
 
    public Device(String name, String lib, String adapterName, String descr) {
@@ -80,7 +85,9 @@ import org.micromanager.utils.PropertyItem;
       usesDelay_ = false;
       delayMs_ = 0.0;
       parentHub_ = new String();
+      childDevices_ = new String[0];
    }
+
    public Device(String name, String lib, String adapterName) {
       this(name, lib, adapterName, "");
    }
@@ -183,6 +190,25 @@ import org.micromanager.utils.PropertyItem;
       }
       
       return devList;
+   }
+   
+   public void discoverPeripherals(CMMCore core) {
+      // check if there are any child devices installed
+      if (isHub() && getName().equals("Core")) {
+         
+         // device "discovery" happens here
+         StrVector installed = core.getInstalledDevices(getName());
+         // end of discovery
+         
+         childDevices_ = new String[(int)installed.size()];
+         for (int i=0; i<installed.size(); i++) {
+            childDevices_[i] = new String(installed.get(i));
+         }
+      }
+   }
+   
+   public String[] getPeripherals() {
+      return childDevices_;
    }
 
    /**
@@ -355,5 +381,13 @@ import org.micromanager.utils.PropertyItem;
    
    public String getParentHub() {
       return parentHub_;
+   }
+   
+   public boolean isInitialized() {
+      return initialized_;
+   }
+   
+   public void setInitialized(boolean state) {
+      initialized_ = state;
    }
  }
