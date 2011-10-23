@@ -185,7 +185,7 @@ public class DevicesPage extends PagePanel implements ListSelectionListener {
       peripheralsButton = new JButton("Peripherals...");
       peripheralsButton.addActionListener(new ActionListener() {
          public void actionPerformed(ActionEvent e) {
-            editDevice();
+            editPeripherals();
          }
       });
       peripheralsButton.setEnabled(false);
@@ -195,7 +195,7 @@ public class DevicesPage extends PagePanel implements ListSelectionListener {
    }
    
 
-   protected void editDevice() {
+   protected void editPeripherals() {
       int sel = deviceTable_.getSelectedRow();
       if (sel < 0)
          return;      
@@ -221,13 +221,16 @@ public class DevicesPage extends PagePanel implements ListSelectionListener {
       }
 
       if (peripherals.size() > 0) {
-         if (devName.contentEquals(new StringBuffer().append(MMCoreJ.getG_Keyword_CoreDevice()))) {
-            handleError(dev + " does not have any more available peripherals!");
-            return;
-         }
+         PeripheralSetupDlg dlgp = new PeripheralSetupDlg(model_, core_, dev.getName(), peripherals);
+         dlgp.setVisible(true);
+      } else {
+         handleError("There are no available peripheral devices.");
       }
    }
 
+   private void editDevice() {
+      
+   }
 
    protected void removeDevice() {
       int sel = deviceTable_.getSelectedRow();
@@ -349,10 +352,10 @@ public class DevicesPage extends PagePanel implements ListSelectionListener {
       }
       
       // if device is hub it may have some children available
-      peripheralsButton.setEnabled(dev.isHub() && dev.getNumberOfSetupProperties() > 0);
+      peripheralsButton.setEnabled(dev.isHub() && dev.getPeripherals().length > 0);
 
       // settings can be edited unless device is core
-      editButton.setEnabled(!dev.isCore() && dev.getNumberOfSetupProperties() > 0);
+      editButton.setEnabled(!dev.isCore() && dev.getPreInitProperties().length > 0);
       
       // any selected device can be removed unless it is Core
       removeButton.setEnabled(!dev.isCore());

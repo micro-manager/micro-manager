@@ -194,7 +194,7 @@ import org.micromanager.utils.ReportingUtils;
    
    public void discoverPeripherals(CMMCore core) {
       // check if there are any child devices installed
-      if (isHub() && getName().equals("Core")) {
+      if (isHub() && !getName().equals("Core")) {
          
          // device "discovery" happens here
          StrVector installed = core.getInstalledDevices(getName());
@@ -205,6 +205,15 @@ import org.micromanager.utils.ReportingUtils;
             childDevices_[i] = new String(installed.get(i));
          }
       }
+   }
+   
+   public String[] getPreInitProperties() {
+      Vector<String> piProps = new Vector<String>();
+      for (PropertyItem p : properties_) {
+         if (p.preInit)
+            piProps.add(p.name);
+      }
+      return piProps.toArray(new String[piProps.size()]);
    }
    
    public String[] getPeripherals() {
