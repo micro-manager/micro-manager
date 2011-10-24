@@ -202,7 +202,7 @@ Shutter::Shutter(const char* name, int id) :
 
    EnableDelay();
 
-   UpdateStatus();
+   // UpdateStatus();
 }
 
 Shutter::~Shutter()
@@ -479,7 +479,7 @@ Wheel::Wheel(const char* name, unsigned id) :
 
    EnableDelay();
 
-   UpdateStatus();
+   // UpdateStatus();
 }
 
 Wheel::~Wheel()
@@ -2203,7 +2203,7 @@ Lumen::Lumen() :
 
    EnableDelay();
 
-   UpdateStatus();
+   // UpdateStatus();
 }
 
 Lumen::~Lumen()
@@ -2450,7 +2450,7 @@ TTLShutter::TTLShutter(const char* name, int id) :
 
    EnableDelay();
 
-   UpdateStatus();
+   //UpdateStatus();
 }
 
 TTLShutter::~TTLShutter()
