@@ -620,7 +620,8 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
                }
             }
          } catch (Exception ex) {
-            ReportingUtils.showError(ex);
+            ReportingUtils.logError(ex);
+            throw(ex);
          }
       }
 
@@ -1125,7 +1126,9 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
       // ImageJ WORKAROUND
       // The following two lines of code are both necessary for a correct update.
       // Otherwise min and max get inconsistent in ImageJ.
-      ci.getProcessor(channel + 1).setMinAndMax(min, max);
+      if (ci.getProcessor(channel+1) != null) {
+         ci.getProcessor(channel + 1).setMinAndMax(min, max);
+      }
       ci.setDisplayRange(min, max);
    }
 
