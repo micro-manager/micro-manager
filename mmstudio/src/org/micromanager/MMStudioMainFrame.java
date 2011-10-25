@@ -2992,7 +2992,7 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
 
    public boolean isLiveModeOn() {
       if (core_.getNumberOfComponents() == 1) {
-      return liveModeTimerTask_ != null && liveModeTimerTask_.isRunning();
+         return liveModeTimerTask_ != null && liveModeTimerTask_.isRunning();
       } else {
          return getPipeline().isLiveRunning();
       }
@@ -3000,6 +3000,8 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
 
    // Timer task that displays the live image
    class LiveModeTimerTask extends TimerTask {
+      static final String CCHANNELINDEX = "CameraChannelIndex";
+      
       public boolean running_ = false;
 
       public synchronized boolean isRunning() {
@@ -3042,7 +3044,13 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
                   while (!foundAll && core_.getRemainingImageCount() > 0 && isRunning()) {
 
                      TaggedImage ti = core_.getLastTaggedImage();
-                     int channel = ti.tags.getInt("CameraChannelIndex");
+                     String camera = core_.getCameraDevice();
+                     int channel;
+                     if (ti.tags.has(CCHANNELINDEX))
+                        channel = ti.tags.getInt(CCHANNELINDEX);
+                     else 
+                        channel = ti.tags.getInt(camera + "-" + CCHANNELINDEX);
+                     
                      if (!found[channel]) {
                         found[channel] = true;
                         ti.tags.put("Channel", core_.getCameraChannelName(channel));
