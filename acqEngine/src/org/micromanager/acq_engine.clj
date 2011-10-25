@@ -279,6 +279,12 @@
         tags (parse-core-metadata md)]
     {:pix pix :tags (dissoc tags "StartTime-ms")}))
     
+(defn make-multicamera-events [event]
+  (let [num-camera-channels (core getNumberOfCameraChannels)]
+    (for [camera-channel (range num-camera-channels)]
+      (let [super-channel-index (+ camera-channel (* num-camera-channels (event :channel-index)))]
+        (assoc event :channel-index super-channel-index)))))
+
 (defn collect-burst-images [event out-queue]
   (when (first-trigger-missing?) (pop-burst-image)) ; drop first image if first trigger doesn't happen
   (swap! state assoc :burst-time-offset nil)
@@ -288,39 +294,37 @@
         (fn [i evt]
           (when-not (@state :stop)
             (let [image (pop-burst-image)
-                  image+ (if-not slices image (assoc-in image [:tags "ZPositionUm"] (get slices i)))]
+                  image+ (if-not slices
+                           image
+                           (assoc-in image [:tags "ZPositionUm"] (get slices i)))]
               (when (zero? i)
                 (swap! state assoc
                        :burst-time-offset (- (elapsed-time @state)
                                              (core-time-from-tags (image :tags)))))
+              (println (image+ :tags))
               (.put out-queue (make-TaggedImage (annotate-image image+ evt @state
                                                                 (burst-time (:tags image) @state)))))
             (when (core isBufferOverflowed)
               (swap! state assoc :stop true)
               (ReportingUtils/showError "Circular buffer overflowed."))))
-        (event :burst-data))))
+        (flatten (map make-multicamera-events) (event :burst-data)))))
   (while (and (not (@state :stop)) (. mmc isSequenceRunning))
     (Thread/sleep 5)))
 
 (defn collect-snap-image [event out-queue]
   (log "collect-snap-image")
-  (let [num-camera-channels (core getNumberOfCameraChannels)]
-    (doall
-      (for [camera-channel (range num-camera-channels)]
-        (let [image
-              {:pix (core getImage camera-channel)
-               :tags nil}]
-          (log "collect-snap-image: "
-               (select-keys event [:position-index :frame-index
-                                   :slice-index :channel-index]))
-          (log camera-channel)
-          (let [super-channel-index (+ camera-channel (* num-camera-channels (event :channel-index)))
-                event1 (assoc event :channel-index super-channel-index)]
-            (log "super-channel-index:" super-channel-index)
-            (when out-queue
-              (.put out-queue
-                    (make-TaggedImage (annotate-image image event1 @state (elapsed-time @state))))))
-          image)))))
+  (doall
+    (for [event1 (make-multicamera-events event)]
+      (let [image
+            {:pix (core getImage camera-channel)
+             :tags nil}]
+        (log "collect-snap-image: "
+             (select-keys event [:position-index :frame-index
+                                 :slice-index :channel-index]))
+        (when out-queue
+          (.put out-queue
+                (make-TaggedImage (annotate-image image event1 @state (elapsed-time @state)))))
+        image))))
 
 (defn return-config []
   (dorun (map set-property
