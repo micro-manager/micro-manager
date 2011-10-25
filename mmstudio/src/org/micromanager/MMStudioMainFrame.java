@@ -179,6 +179,7 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
    private static final String AUTOFOCUS_DEVICE = "autofocus_device";
    private static final String MOUSE_MOVES_STAGE = "mouse_moves_stage";
    private static final int TOOLTIP_DISPLAY_DURATION_MILLISECONDS = 15000;
+   private static final int TOOLTIP_DISPLAY_INITIAL_DELAY_MILLISECONDS = 2000;
 
 
    // cfg file saving
@@ -898,6 +899,7 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
 
       ToolTipManager ttManager = ToolTipManager.sharedInstance();
       ttManager.setDismissDelay(TOOLTIP_DISPLAY_DURATION_MILLISECONDS);
+      ttManager.setInitialDelay(TOOLTIP_DISPLAY_INITIAL_DELAY_MILLISECONDS);
       
       setBounds(x, y, width, height);
       setExitStrategy(options_.closeOnExit_);
