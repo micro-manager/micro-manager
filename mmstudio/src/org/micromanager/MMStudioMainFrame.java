@@ -1683,7 +1683,7 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
 
       configPadButtonPanel_ = new ConfigPadButtonPanel();
       configPadButtonPanel_.setConfigPad(configPad_);
-      configPadButtonPanel_.setGUI(this);
+      configPadButtonPanel_.setGUI(MMStudioMainFrame.this);
       topPanel.add(configPadButtonPanel_);
       topLayout.putConstraint(SpringLayout.EAST, configPadButtonPanel_, -4,
             SpringLayout.EAST, topPanel);
