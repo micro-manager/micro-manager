@@ -102,6 +102,9 @@ import org.micromanager.utils.NumberUtils;
 import org.micromanager.utils.TooltipTextMaker;
 
 import com.swtdesigner.SwingResourceManager;
+import java.awt.BorderLayout;
+import java.awt.CardLayout;
+import javax.swing.BoxLayout;
 import org.micromanager.acquisition.ComponentTitledBorder;
 import org.micromanager.utils.FileDialogs;
 import org.micromanager.utils.ReportingUtils;
@@ -156,8 +159,8 @@ public class AcqControlDlg extends JDialog implements PropertyChangeListener {
    private JLabel displayMode_;
    private JCheckBox stackKeepShutterOpenCheckBox_;
    private JCheckBox chanKeepShutterOpenCheckBox_;
-   private AcqOrderMode[] acqOrderModes_; 
-
+   private AcqOrderMode[] acqOrderModes_;
+   private AdvancedOptionsDialog advancedOptionsWindow_;
    // persistent properties (app settings)
    private static final String ACQ_CONTROL_X = "acq_x";
    private static final String ACQ_CONTROL_Y = "acq_y";
@@ -200,12 +203,17 @@ public class AcqControlDlg extends JDialog implements PropertyChangeListener {
    private static final String ACQ_COLUMN_WIDTH = "column_width";
    private static final String ACQ_COLUMN_ORDER = "column_order";
    private static final int ACQ_DEFAULT_COLUMN_WIDTH = 77;
+   private static final String CUSTOM_INTERVAL_PREFIX = "customInterval";
+   private static final String ACQ_ENABLE_CUSTOM_INTERVALS = "enableCustomIntervals";
    private static final FileType ACQ_SETTINGS_FILE = new FileType("ACQ_SETTINGS_FILE", "Acquisition settings",
            System.getProperty("user.home") + "/AcqSettings.xml",
            true, "xml");
    private int columnWidth_[];
    private int columnOrder_[];
    private CheckBoxPanel framesPanel_;
+   private CardLayout framesPanelLayout_;
+   private static final String DEFAULT_FRAMES_PANEL_NAME = "Default frames panel";
+   private static final String OVERRIDE_FRAMES_PANEL_NAME = "Override frames panel";
    private CheckBoxPanel channelsPanel_;
    private CheckBoxPanel slicesPanel_;
    protected CheckBoxPanel positionsPanel_;
@@ -217,7 +225,6 @@ public class AcqControlDlg extends JDialog implements PropertyChangeListener {
    private Border nightBorder_;
    private Vector<JPanel> panelList_;
    private boolean disableGUItoSettings_ = false;
-  
 
    /**
     * Data representation class for the channels list
@@ -237,27 +244,25 @@ public class AcqControlDlg extends JDialog implements PropertyChangeListener {
          "Color"
       };
       private final String[] TOOLTIPS = new String[]{
-    		  "Toggle channel/group on/off",
-    		  "Choose preset property values for channel or group",
-    		  "Set exposure time in ms",
-    		  TooltipTextMaker.addHTMLBreaksForTooltip("Set a Z offset specific to this channel/group (the main " +
-    		  "object in one of the channels/groups is in a different focal plane from the other channels/groups"),
-    		  "Collect images in multiple Z planes?",
-    		  TooltipTextMaker.addHTMLBreaksForTooltip("Setting 'Skip Frame' to a number other than " +
-    		  "0 will cause the acquisition to 'skip' taking images in " +
-    		  "that channel (after taking the first image) for the indicated " +
-    		  "number of time intervals. The 5D-Image Viewer will 'fill in' these skipped " +
-    		  "frames with the previous image. In some situations it may be " +
-    		  "desirable to acquire certain channels at lower sampling rates, " +
-    		  "to reduce photo-toxicity and to save disk space. "),
-    		  
-    		  "Select channel/group color for display in viewer"};
-      
+         "Toggle channel/group on/off",
+         "Choose preset property values for channel or group",
+         "Set exposure time in ms",
+         TooltipTextMaker.addHTMLBreaksForTooltip("Set a Z offset specific to this channel/group (the main "
+         + "object in one of the channels/groups is in a different focal plane from the other channels/groups"),
+         "Collect images in multiple Z planes?",
+         TooltipTextMaker.addHTMLBreaksForTooltip("Setting 'Skip Frame' to a number other than "
+         + "0 will cause the acquisition to 'skip' taking images in "
+         + "that channel (after taking the first image) for the indicated "
+         + "number of time intervals. The 5D-Image Viewer will 'fill in' these skipped "
+         + "frames with the previous image. In some situations it may be "
+         + "desirable to acquire certain channels at lower sampling rates, "
+         + "to reduce photo-toxicity and to save disk space. "),
+         "Select channel/group color for display in viewer"};
 
       public String getToolTipText(int columnIndex) {
-    	  return TOOLTIPS[columnIndex];
+         return TOOLTIPS[columnIndex];
       }
-      
+
       public ChannelTableModel(AcquisitionEngine eng) {
          acqEng_ = eng;
          addTableModelListener(this);
@@ -598,9 +603,9 @@ public class AcqControlDlg extends JDialog implements PropertyChangeListener {
          if (hasFocus) {
             // this cell is the anchor and the table has the focus
          }
-         
-         colIndex = table.convertColumnIndexToModel(colIndex);     
-         
+
+         colIndex = table.convertColumnIndexToModel(colIndex);
+
          setOpaque(false);
          if (colIndex == 0) {
             JCheckBox check = new JCheckBox("", channel.useChannel_);
@@ -669,66 +674,70 @@ public class AcqControlDlg extends JDialog implements PropertyChangeListener {
       }
    }
 
-   public void createChannelTable() 
-   {      
-	   model_ = new ChannelTableModel(acqEng_);
+   public void createChannelTable() {
+      model_ = new ChannelTableModel(acqEng_);
 
-	   channelTable_ = new JTable() {
-		   protected JTableHeader createDefaultTableHeader()  {
-			   return new JTableHeader(columnModel)  {
-				   public String getToolTipText(MouseEvent e) {
-					   String tip = null;
-					   java.awt.Point p = e.getPoint();
-					   int index = columnModel.getColumnIndexAtX(p.x);
-					   int realIndex = columnModel.getColumn(index).getModelIndex();
-					   return model_.getToolTipText(realIndex);
-				   } }; }};
+      channelTable_ = new JTable() {
+
+         protected JTableHeader createDefaultTableHeader() {
+            return new JTableHeader(columnModel) {
+
+               public String getToolTipText(MouseEvent e) {
+                  String tip = null;
+                  java.awt.Point p = e.getPoint();
+                  int index = columnModel.getColumnIndexAtX(p.x);
+                  int realIndex = columnModel.getColumn(index).getModelIndex();
+                  return model_.getToolTipText(realIndex);
+               }
+            };
+         }
+      };
 
       channelTable_.setFont(new Font("Dialog", Font.PLAIN, 10));
       channelTable_.setAutoCreateColumnsFromModel(false);
       channelTable_.setModel(model_);
       model_.setChannels(acqEng_.getChannels());
-  
+
       ChannelCellEditor cellEditor = new ChannelCellEditor();
       ChannelCellRenderer cellRenderer = new ChannelCellRenderer(acqEng_);
       channelTable_.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
-      
+
       for (int k = 0; k < model_.getColumnCount(); k++) {
-    	  int colIndex = search(columnOrder_, k);
-    	  if (colIndex < 0) {
-    		  colIndex = k;
-    	  }
-    	  if (colIndex == model_.getColumnCount() - 1) {
-    		  ColorRenderer cr = new ColorRenderer(true);
-    		  ColorEditor ce = new ColorEditor(model_, model_.getColumnCount() - 1);
-    		  TableColumn column = new TableColumn(model_.getColumnCount() - 1, 200, cr, ce);
-    		  column.setPreferredWidth(columnWidth_[model_.getColumnCount() - 1]);
-    		  channelTable_.addColumn(column);  
-    	  
-    	  } else {
-    		  TableColumn column = new TableColumn(colIndex, 200, cellRenderer, cellEditor);
-    		  column.setPreferredWidth(columnWidth_[colIndex]);
-    		  channelTable_.addColumn(column);
-    	  }
+         int colIndex = search(columnOrder_, k);
+         if (colIndex < 0) {
+            colIndex = k;
+         }
+         if (colIndex == model_.getColumnCount() - 1) {
+            ColorRenderer cr = new ColorRenderer(true);
+            ColorEditor ce = new ColorEditor(model_, model_.getColumnCount() - 1);
+            TableColumn column = new TableColumn(model_.getColumnCount() - 1, 200, cr, ce);
+            column.setPreferredWidth(columnWidth_[model_.getColumnCount() - 1]);
+            channelTable_.addColumn(column);
+
+         } else {
+            TableColumn column = new TableColumn(colIndex, 200, cellRenderer, cellEditor);
+            column.setPreferredWidth(columnWidth_[colIndex]);
+            channelTable_.addColumn(column);
+         }
       }
 
       channelTablePane_.setViewportView(channelTable_);
    }
 
    public JPanel createPanel(String text, int left, int top, int right, int bottom) {
-	   return createPanel(text, left, top, right, bottom, false);
+      return createPanel(text, left, top, right, bottom, false);
    }
 
    public JPanel createPanel(String text, int left, int top, int right, int bottom, boolean checkBox) {
-	   ComponentTitledPanel thePanel;
-	   if (checkBox) {
-		   thePanel = new CheckBoxPanel(text);
-	   } else {
-		   thePanel = new LabelPanel(text);
-	   }
+      ComponentTitledPanel thePanel;
+      if (checkBox) {
+         thePanel = new CheckBoxPanel(text);
+      } else {
+         thePanel = new LabelPanel(text);
+      }
 
-	   thePanel.setTitleFont(new Font("Dialog", Font.BOLD, 12));
-	   panelList_.add(thePanel);
+      thePanel.setTitleFont(new Font("Dialog", Font.BOLD, 12));
+      panelList_.add(thePanel);
       thePanel.setBounds(left, top, right - left, bottom - top);
       dayBorder_ = BorderFactory.createEtchedBorder();
       nightBorder_ = BorderFactory.createEtchedBorder(Color.gray, Color.darkGray);
@@ -754,52 +763,52 @@ public class AcqControlDlg extends JDialog implements PropertyChangeListener {
       framesPanel_ = (CheckBoxPanel) createPanel("Time points", 5, 5, 220, 91, true); // (text, left, top, right, bottom)
       positionsPanel_ = (CheckBoxPanel) createPanel("Multiple positions (XY)", 5, 93, 220, 154, true);
       slicesPanel_ = (CheckBoxPanel) createPanel("Z-stacks (slices)", 5, 156, 220, 306, true);
-     
+
       acquisitionOrderPanel_ = createPanel("Acquisition order", 226, 5, 427, 63);
-     
-      summaryPanel_ = createPanel("Summary", 226, 152, 510, 306);
+
+      summaryPanel_ = createPanel("Summary", 226, 152, 427, 306);
       afPanel_ = (CheckBoxPanel) createPanel("Autofocus", 226, 65, 427, 150, true);
 
       channelsPanel_ = (CheckBoxPanel) createPanel("Channels", 5, 308, 510, 451, true);
       savePanel_ = (CheckBoxPanel) createPanel("Save images", 5, 453, 510, 620, true);
-      
+
    }
-   
+
    private void createToolTips() {
-	   framesPanel_.setToolTipText("Acquire images over a repeating time interval");
-	   positionsPanel_.setToolTipText("Acquire images from a series of positions in the XY plane");
-	   slicesPanel_.setToolTipText("Acquire images from a series of Z positions");
-	   
-	   String imageName = this.getClass().getResource("icons/acq_order_figure.png").toString();
-	   
-	   String acqOrderToolTip =
-			   "<html>Lets you select the order of image acquisition when some combination of multiple dimensions<br>" +
-			   "(i.e. time points, XY positions, Z-slices, or Channels)  is selected.  During image acquisition, the<br>" +
-			   "values of each dimension are iterated in the reverse order of their listing here.  \"Time\" and \"Position\" <br>" +
-			   "always precede \"Slice\" and \"Channel\" <br><br>" +
-			   "For example, suppose there are are two time points, two XY positions, and two Z slices, and Acquisition<br>" +
-			   "order is set to \"Time, Position, Slice\".  The microscope will acquire images in the following order: <br> " + 
-			   "Time point 1, XY position 1, Z-slice 1 <br>" +
-			   "Time point 1, XY position 1, Z-slice 2 <br>" +
-			   "Time point 1, XY position 2, Z-slice 1 <br>" +
-			   "Time point 1, XY position 2, Z-slice 2 <br>" +
-			   "Time point 2, XY position 1, Z-slice 1 <br>" +
-			   "etc. <br><br>" +
-			   "<img src="+imageName+"></html>";   
-	   acquisitionOrderPanel_.setToolTipText(acqOrderToolTip);
-	   acqOrderBox_.setToolTipText(acqOrderToolTip);
-		
-	   	
-	   afPanel_.setToolTipText("Toggle autofocus on/off");
-	   channelsPanel_.setToolTipText("Lets you acquire images in multiple channels (groups of " +
-	   		"properties with multiple preset values" );
-	   savePanel_.setToolTipText(TooltipTextMaker.addHTMLBreaksForTooltip("If the Save images option is selected, " +
-	   		"images will be saved to disk continuously during the acquisition. If this option is not selected, images " +
-	   		"are accumulated only in the 5D-Image window, and once the acquisition is finished, image data can be saved" +
-	   		" to disk. However, saving files automatically during acquisition secures the acquired data against an " +
-	   		"unexpected computer failure or accidental closing of image window. Even when saving to disk, some of the" +
-	   		" acquired images are still kept in memory, facilitating fast playback. If such behavior is not desired, " +
-	   		"check the 'Conserve RAM' option (Tools | Options)" ));
+      framesPanel_.setToolTipText("Acquire images over a repeating time interval");
+      positionsPanel_.setToolTipText("Acquire images from a series of positions in the XY plane");
+      slicesPanel_.setToolTipText("Acquire images from a series of Z positions");
+
+      String imageName = this.getClass().getResource("icons/acq_order_figure.png").toString();
+
+      String acqOrderToolTip =
+              "<html>Lets you select the order of image acquisition when some combination of multiple dimensions<br>"
+              + "(i.e. time points, XY positions, Z-slices, or Channels)  is selected.  During image acquisition, the<br>"
+              + "values of each dimension are iterated in the reverse order of their listing here.  \"Time\" and \"Position\" <br>"
+              + "always precede \"Slice\" and \"Channel\" <br><br>"
+              + "For example, suppose there are are two time points, two XY positions, and two Z slices, and Acquisition<br>"
+              + "order is set to \"Time, Position, Slice\".  The microscope will acquire images in the following order: <br> "
+              + "Time point 1, XY position 1, Z-slice 1 <br>"
+              + "Time point 1, XY position 1, Z-slice 2 <br>"
+              + "Time point 1, XY position 2, Z-slice 1 <br>"
+              + "Time point 1, XY position 2, Z-slice 2 <br>"
+              + "Time point 2, XY position 1, Z-slice 1 <br>"
+              + "etc. <br><br>"
+              + "<img src=" + imageName + "></html>";
+      acquisitionOrderPanel_.setToolTipText(acqOrderToolTip);
+      acqOrderBox_.setToolTipText(acqOrderToolTip);
+
+
+      afPanel_.setToolTipText("Toggle autofocus on/off");
+      channelsPanel_.setToolTipText("Lets you acquire images in multiple channels (groups of "
+              + "properties with multiple preset values");
+      savePanel_.setToolTipText(TooltipTextMaker.addHTMLBreaksForTooltip("If the Save images option is selected, "
+              + "images will be saved to disk continuously during the acquisition. If this option is not selected, images "
+              + "are accumulated only in the 5D-Image window, and once the acquisition is finished, image data can be saved"
+              + " to disk. However, saving files automatically during acquisition secures the acquired data against an "
+              + "unexpected computer failure or accidental closing of image window. Even when saving to disk, some of the"
+              + " acquired images are still kept in memory, facilitating fast playback. If such behavior is not desired, "
+              + "check the 'Conserve RAM' option (Tools | Options)"));
 
 
    }
@@ -826,6 +835,7 @@ public class AcqControlDlg extends JDialog implements PropertyChangeListener {
       numberFormat_ = NumberFormat.getNumberInstance();
 
       addWindowListener(new WindowAdapter() {
+
          @Override
          public void windowClosing(final WindowEvent e) {
             close();
@@ -839,9 +849,37 @@ public class AcqControlDlg extends JDialog implements PropertyChangeListener {
       setBackground(guiColors_.background.get(gui_.getBackgroundStyle()));
 
       createEmptyPanels();
-  
+
 
       // Frames panel
+      JPanel defaultPanel = new JPanel();
+      JPanel overridePanel = new JPanel();
+      defaultPanel.setLayout(null);
+      JLabel overrideLabel = new JLabel("Custom time intervals enabled");
+
+      overrideLabel.setFont(new Font("Arial", Font.BOLD, 12));
+      overrideLabel.setForeground(Color.red);
+
+      JButton disableCustomIntervalsButton = new JButton("Disable custom intervals");
+      disableCustomIntervalsButton.addActionListener(new ActionListener() {
+
+         public void actionPerformed(ActionEvent e) {
+            acqEng_.enableCustomTimeIntervals(false);
+            updateGUIContents();
+         }
+      });
+      disableCustomIntervalsButton.setFont(new Font("Arial", Font.PLAIN, 10));
+
+      overridePanel.add(overrideLabel, BorderLayout.PAGE_START);
+      overridePanel.add(disableCustomIntervalsButton, BorderLayout.PAGE_END);
+
+
+      framesPanelLayout_ = new CardLayout();
+      framesPanel_.setLayout(framesPanelLayout_);
+      framesPanel_.add(defaultPanel, DEFAULT_FRAMES_PANEL_NAME);
+      framesPanel_.add(overridePanel, OVERRIDE_FRAMES_PANEL_NAME);
+      framesPanelLayout_.show(framesPanel_, DEFAULT_FRAMES_PANEL_NAME);
+
 
       framesPanel_.addActionListener(new ActionListener() {
 
@@ -854,8 +892,8 @@ public class AcqControlDlg extends JDialog implements PropertyChangeListener {
       numberLabel.setFont(new Font("Arial", Font.PLAIN, 10));
 
       numberLabel.setText("Number");
-      framesPanel_.add(numberLabel);
-      numberLabel.setBounds(15, 25, 54, 24);
+      defaultPanel.add(numberLabel);
+      numberLabel.setBounds(15, 0, 54, 24);
 
       SpinnerModel sModel = new SpinnerNumberModel(
               new Integer(1),
@@ -867,8 +905,8 @@ public class AcqControlDlg extends JDialog implements PropertyChangeListener {
       ((JSpinner.DefaultEditor) numFrames_.getEditor()).getTextField().setFont(new Font("Arial", Font.PLAIN, 10));
 
       //numFrames_.setValue((int) acqEng_.getNumFrames());
-      framesPanel_.add(numFrames_);
-      numFrames_.setBounds(60, 25, 70, 24);
+      defaultPanel.add(numFrames_);
+      numFrames_.setBounds(60, 0, 70, 24);
       numFrames_.addChangeListener(new ChangeListener() {
 
          public void stateChanged(ChangeEvent e) {
@@ -879,17 +917,17 @@ public class AcqControlDlg extends JDialog implements PropertyChangeListener {
       final JLabel intervalLabel = new JLabel();
       intervalLabel.setFont(new Font("Arial", Font.PLAIN, 10));
       intervalLabel.setText("Interval");
-      intervalLabel.setToolTipText("Interval between successive time points.  Setting an interval" +
-      		"of 0 will cause micromanager to acquire 'burts' of images as fast as possible");
-      framesPanel_.add(intervalLabel);
-      intervalLabel.setBounds(15, 52, 43, 24);
+      intervalLabel.setToolTipText("Interval between successive time points.  Setting an interval"
+              + "of 0 will cause micromanager to acquire 'burts' of images as fast as possible");
+      defaultPanel.add(intervalLabel);
+      intervalLabel.setBounds(15, 27, 43, 24);
 
       interval_ = new JFormattedTextField(numberFormat_);
       interval_.setFont(new Font("Arial", Font.PLAIN, 10));
       interval_.setValue(new Double(1.0));
       interval_.addPropertyChangeListener("value", this);
-      framesPanel_.add(interval_);
-      interval_.setBounds(60, 52, 55, 24);
+      defaultPanel.add(interval_);
+      interval_.setBounds(60, 27, 55, 24);
 
       timeUnitCombo_ = new JComboBox();
       timeUnitCombo_.addActionListener(new ActionListener() {
@@ -900,8 +938,8 @@ public class AcqControlDlg extends JDialog implements PropertyChangeListener {
       });
       timeUnitCombo_.setModel(new DefaultComboBoxModel(new String[]{"ms", "s", "min"}));
       timeUnitCombo_.setFont(new Font("Arial", Font.PLAIN, 10));
-      timeUnitCombo_.setBounds(120, 52, 67, 24);
-      framesPanel_.add(timeUnitCombo_);
+      timeUnitCombo_.setBounds(120, 27, 67, 24);
+      defaultPanel.add(timeUnitCombo_);
 
 
       // Positions (XY) panel
@@ -1026,7 +1064,7 @@ public class AcqControlDlg extends JDialog implements PropertyChangeListener {
 
       // Acquisition order panel
 
-      acqOrderBox_ = new JComboBox(); 	
+      acqOrderBox_ = new JComboBox();
       acqOrderBox_.setFont(new Font("", Font.PLAIN, 10));
       acqOrderBox_.setBounds(2, 26, 195, 22);
       acquisitionOrderPanel_.add(acqOrderBox_);
@@ -1080,11 +1118,11 @@ public class AcqControlDlg extends JDialog implements PropertyChangeListener {
       final JLabel afSkipFrame1 = new JLabel();
       afSkipFrame1.setFont(new Font("Dialog", Font.PLAIN, 10));
       afSkipFrame1.setText("Skip frame(s): ");
-      afSkipFrame1.setToolTipText(TooltipTextMaker.addHTMLBreaksForTooltip("The number of 'frames skipped' corresponds" +
-      		"to the number of time intervals of image acquisition that pass before micromanager autofocuses again.  Micromanager " +
-      		"will always autofocus when moving to a new position regardless of this value"));
-    		  
-    		  
+      afSkipFrame1.setToolTipText(TooltipTextMaker.addHTMLBreaksForTooltip("The number of 'frames skipped' corresponds"
+              + "to the number of time intervals of image acquisition that pass before micromanager autofocuses again.  Micromanager "
+              + "will always autofocus when moving to a new position regardless of this value"));
+
+
       afSkipFrame1.setBounds(35, 54, 70, 21);
       afPanel_.add(afSkipFrame1);
 
@@ -1206,7 +1244,7 @@ public class AcqControlDlg extends JDialog implements PropertyChangeListener {
       });
       upButton.setText("Up");
       upButton.setToolTipText(TooltipTextMaker.addHTMLBreaksForTooltip(
-    		  "Move currently selected channel up (Channels higher on list are acquired first)"));
+              "Move currently selected channel up (Channels higher on list are acquired first)"));
       upButton.setBounds(430, 93, 68, 22);
       channelsPanel_.add(upButton);
 
@@ -1228,7 +1266,7 @@ public class AcqControlDlg extends JDialog implements PropertyChangeListener {
       });
       downButton.setText("Down");
       downButton.setToolTipText(TooltipTextMaker.addHTMLBreaksForTooltip(
-    		  "Move currently selected channel down (Channels lower on list are acquired later)"));
+              "Move currently selected channel down (Channels lower on list are acquired later)"));
       downButton.setBounds(430, 117, 68, 22);
       channelsPanel_.add(downButton);
 
@@ -1333,7 +1371,6 @@ public class AcqControlDlg extends JDialog implements PropertyChangeListener {
 
 
       // Main buttons
-
       final JButton closeButton = new JButton();
       closeButton.setFont(new Font("Arial", Font.PLAIN, 10));
       closeButton.addActionListener(new ActionListener() {
@@ -1346,7 +1383,7 @@ public class AcqControlDlg extends JDialog implements PropertyChangeListener {
          }
       });
       closeButton.setText("Close");
-      closeButton.setBounds(432, 10, 77, 22);
+      closeButton.setBounds(432, 10, 80, 22);
       getContentPane().add(closeButton);
 
       final JButton acquireButton = new JButton();
@@ -1363,7 +1400,7 @@ public class AcqControlDlg extends JDialog implements PropertyChangeListener {
          }
       });
       acquireButton.setText("Acquire!");
-      acquireButton.setBounds(432, 44, 77, 22);
+      acquireButton.setBounds(432, 44, 80, 22);
       getContentPane().add(acquireButton);
 
 
@@ -1376,7 +1413,7 @@ public class AcqControlDlg extends JDialog implements PropertyChangeListener {
       });
       stopButton.setText("Stop");
       stopButton.setFont(new Font("Arial", Font.BOLD, 12));
-      stopButton.setBounds(432, 68, 77, 22);
+      stopButton.setBounds(432, 68, 80, 22);
       getContentPane().add(stopButton);
 
 
@@ -1392,7 +1429,7 @@ public class AcqControlDlg extends JDialog implements PropertyChangeListener {
       });
 
       loadButton.setText("Load...");
-      loadButton.setBounds(432, 102, 77, 22);
+      loadButton.setBounds(432, 102, 80, 22);
       getContentPane().add(loadButton);
       loadButton.setToolTipText("Load acquisition settings");
 
@@ -1406,10 +1443,22 @@ public class AcqControlDlg extends JDialog implements PropertyChangeListener {
       });
       saveAsButton.setToolTipText("Save current acquisition settings as");
       saveAsButton.setText("Save as...");
-      saveAsButton.setBounds(432, 126, 77, 22);
+      saveAsButton.setBounds(432, 126, 80, 22);
       saveAsButton.setMargin(new Insets(-5, -5, -5, -5));
       getContentPane().add(saveAsButton);
 
+      final JButton advancedButton = new JButton();
+      advancedButton.setFont(new Font("Arial", Font.PLAIN, 10));
+      advancedButton.addActionListener(new ActionListener() {
+
+         public void actionPerformed(ActionEvent e) {
+            showAdvancedDialog();
+            updateGUIContents();
+         }
+      });
+      advancedButton.setText("Advanced");
+      advancedButton.setBounds(432, 170, 80, 22);
+      getContentPane().add(advancedButton);
 
       // update GUI contentss
       // -------------------
@@ -1448,7 +1497,7 @@ public class AcqControlDlg extends JDialog implements PropertyChangeListener {
             applySettings();
          }
       });
- 
+
 
 
 
@@ -1466,7 +1515,7 @@ public class AcqControlDlg extends JDialog implements PropertyChangeListener {
       applySettings();
 
       createToolTips();
-      
+
    }
 
    /** Called when a field's "value" property changes. Causes the Summary to be updated*/
@@ -1573,9 +1622,9 @@ public class AcqControlDlg extends JDialog implements PropertyChangeListener {
       String os_name = System.getProperty("os.name", "");
       rootField_.setText(acqPrefs_.get(ACQ_ROOT_NAME, System.getProperty("user.home") + "/AcquisitionData"));
 
-     
+
       acqEng_.setAcqOrderMode(acqPrefs_.getInt(ACQ_ORDER_MODE, acqEng_.getAcqOrderMode()));
-      
+
       acqEng_.setDisplayMode(acqPrefs_.getInt(ACQ_DISPLAY_MODE, acqEng_.getDisplayMode()));
       acqEng_.enableAutoFocus(acqPrefs_.getBoolean(ACQ_AF_ENABLE, acqEng_.isAutoFocusEnabled()));
       acqEng_.setAfSkipInterval(acqPrefs_.getInt(ACQ_AF_SKIP_INTERVAL, acqEng_.getAfSkipInterval()));
@@ -1583,6 +1632,20 @@ public class AcqControlDlg extends JDialog implements PropertyChangeListener {
       afPanel_.setSelected(acqEng_.isAutoFocusEnabled());
       acqEng_.keepShutterOpenForChannels(acqPrefs_.getBoolean(ACQ_CHANNELS_KEEP_SHUTTER_OPEN, false));
       acqEng_.keepShutterOpenForStack(acqPrefs_.getBoolean(ACQ_STACK_KEEP_SHUTTER_OPEN, false));
+
+
+      ArrayList<Double> customIntervals = new ArrayList<Double>();
+      int h = 0;
+      while (acqPrefs_.getDouble(CUSTOM_INTERVAL_PREFIX + h, -1) >= 0.0) {
+         customIntervals.add(acqPrefs_.getDouble(CUSTOM_INTERVAL_PREFIX + h, -1));
+         h++;
+      }
+      double[] intervals = new double[customIntervals.size()];
+      for (int j = 0; j < intervals.length; j++) {
+         intervals[j] = customIntervals.get(j);
+      }
+      acqEng_.setCustomTimeIntervals(intervals);
+      acqEng_.enableCustomTimeIntervals(acqPrefs_.getBoolean(ACQ_ENABLE_CUSTOM_INTERVALS, false));
 
 
       int numChannels = acqPrefs_.getInt(ACQ_NUM_CHANNELS, 0);
@@ -1645,10 +1708,10 @@ public class AcqControlDlg extends JDialog implements PropertyChangeListener {
       acqPrefs_.putBoolean(ACQ_SAVE_FILES, savePanel_.isSelected());
       acqPrefs_.put(ACQ_DIR_NAME, nameField_.getText());
       acqPrefs_.put(ACQ_ROOT_NAME, rootField_.getText());
-      
+
 
       acqPrefs_.putInt(ACQ_ORDER_MODE, acqEng_.getAcqOrderMode());
-      
+
       acqPrefs_.putInt(ACQ_DISPLAY_MODE, acqEng_.getDisplayMode());
       acqPrefs_.putBoolean(ACQ_AF_ENABLE, acqEng_.isAutoFocusEnabled());
       acqPrefs_.putInt(ACQ_AF_SKIP_INTERVAL, acqEng_.getAfSkipInterval());
@@ -1674,6 +1737,17 @@ public class AcqControlDlg extends JDialog implements PropertyChangeListener {
          acqPrefs_.putInt(CHANNEL_COLOR_B_PREFIX + i, channel.color_.getBlue());
          acqPrefs_.putInt(CHANNEL_SKIP_PREFIX + i, channel.skipFactorFrame_);
       }
+
+      //Save custom time intervals
+      double[] customIntervals = acqEng_.getCustomTimeIntervals();
+      if (customIntervals != null && customIntervals.length > 0) {
+         for (int h = 0; h < customIntervals.length; h++) {
+            acqPrefs_.putDouble(CUSTOM_INTERVAL_PREFIX + h, customIntervals[h]);
+         }
+      }
+
+      acqPrefs_.putBoolean(ACQ_ENABLE_CUSTOM_INTERVALS, acqEng_.customTimeIntervalsEnabled());
+
 
       // Save model column widths and order
       for (int k = 0; k < model_.getColumnCount(); k++) {
@@ -1837,131 +1911,140 @@ public class AcqControlDlg extends JDialog implements PropertyChangeListener {
       return -1;
    }
 
-   public void updateGUIContents() {
-	   if (disableGUItoSettings_) {
-		   return;
-	   }
-	   disableGUItoSettings_ = true;
-	   // Disable update prevents action listener loops
-
-
-	   // TODO: remove setChannels()
-	   model_.setChannels(acqEng_.getChannels());
-
-	   double intervalMs = acqEng_.getFrameIntervalMs();
-	   interval_.setText(numberFormat_.format(convertMsToTime(intervalMs, timeUnitCombo_.getSelectedIndex())));
-
-	   zBottom_.setText(NumberUtils.doubleToDisplayString(acqEng_.getSliceZBottomUm()));
-	   zTop_.setText(NumberUtils.doubleToDisplayString(acqEng_.getZTopUm()));
-	   zStep_.setText(NumberUtils.doubleToDisplayString(acqEng_.getSliceZStepUm()));
-
-	   framesPanel_.setSelected(acqEng_.isFramesSettingEnabled());
-	   slicesPanel_.setSelected(acqEng_.isZSliceSettingEnabled());
-	   positionsPanel_.setSelected(acqEng_.isMultiPositionEnabled());
-	   afPanel_.setSelected(acqEng_.isAutoFocusEnabled());
-	   acqOrderBox_.setEnabled(positionsPanel_.isSelected() || framesPanel_.isSelected() ||
-			   slicesPanel_.isSelected() || channelsPanel_.isSelected());
-
-	   afSkipInterval_.setEnabled(acqEng_.isAutoFocusEnabled());
-
-	   // These values need to be cached or we will loose them due to the Spinners OnChanged methods calling applySetting
-	   Integer numFrames = new Integer(acqEng_.getNumFrames());
-	   Integer afSkipInterval = new Integer(acqEng_.getAfSkipInterval());
-	   if (acqEng_.isFramesSettingEnabled()) {
-		   numFrames_.setValue(numFrames);
-	   }
-
-	   afSkipInterval_.setValue(afSkipInterval);
-
-	   enableZSliceControls(acqEng_.isZSliceSettingEnabled());
-	   model_.fireTableStructureChanged();
-
-	   channelGroupCombo_.setSelectedItem(acqEng_.getChannelGroup());
-	   try {
-		   displayModeCombo_.setSelectedIndex(acqEng_.getDisplayMode());
-	   } catch (IllegalArgumentException e) {
-		   displayModeCombo_.setSelectedIndex(0);
-	   }
-
-
-	   for (AcqOrderMode mode : acqOrderModes_) {
-		   mode.setEnabled(framesPanel_.isSelected(), positionsPanel_.isSelected(),
-				   slicesPanel_.isSelected(), channelsPanel_.isSelected()); 
-	   }
-
-	   // add correct acquisition order options
-	   int selectedIndex = acqEng_.getAcqOrderMode();
-	   acqOrderBox_.removeAllItems();
-	   if ( framesPanel_.isSelected() && positionsPanel_.isSelected() &&
-			   slicesPanel_.isSelected() && channelsPanel_.isSelected() ) {
-		   acqOrderBox_.addItem(acqOrderModes_[0]);
-		   acqOrderBox_.addItem(acqOrderModes_[1]);
-		   acqOrderBox_.addItem(acqOrderModes_[2]);
-		   acqOrderBox_.addItem(acqOrderModes_[3]);  
-	   } else if ( framesPanel_.isSelected() && positionsPanel_.isSelected() ){
-		   if (selectedIndex == 0 || selectedIndex == 2) {
-			   acqOrderBox_.addItem(acqOrderModes_[0]);
-			   acqOrderBox_.addItem(acqOrderModes_[2]); 
-		   } else {
-			   acqOrderBox_.addItem(acqOrderModes_[1]);
-			   acqOrderBox_.addItem(acqOrderModes_[3]); 
-		   }
-	   } else if ( channelsPanel_.isSelected()&& slicesPanel_.isSelected() ){
-		   if (selectedIndex == 0 || selectedIndex == 1) {
-			   acqOrderBox_.addItem(acqOrderModes_[0]);
-			   acqOrderBox_.addItem(acqOrderModes_[1]); 
-		   } else {
-			   acqOrderBox_.addItem(acqOrderModes_[2]);
-			   acqOrderBox_.addItem(acqOrderModes_[3]); 
-		   }
-	   } else
-		   acqOrderBox_.addItem(acqOrderModes_[selectedIndex]);
-
-	   acqOrderBox_.setSelectedItem( acqOrderModes_[acqEng_.getAcqOrderMode()] );	  
-
-
-	   zValCombo_.setSelectedIndex(zVals_);
-	   stackKeepShutterOpenCheckBox_.setSelected(acqEng_.isShutterOpenForStack());
-	   chanKeepShutterOpenCheckBox_.setSelected(acqEng_.isShutterOpenForChannels());
-
-	   channelTable_.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
-
-	   boolean selected = channelsPanel_.isSelected();
-	   channelTable_.setEnabled(selected);
-	   channelTable_.getTableHeader().setForeground(selected ? Color.black : Color.gray);
-
-
-	   // update summary
-	   summaryTextArea_.setText(acqEng_.getVerboseSummary());
-
-	   disableGUItoSettings_ = false;
+   private void checkForCustomTimeIntervals() {
+      if (acqEng_.customTimeIntervalsEnabled()) {
+         framesPanelLayout_.show(framesPanel_, OVERRIDE_FRAMES_PANEL_NAME);
+      } else {
+         framesPanelLayout_.show(framesPanel_, DEFAULT_FRAMES_PANEL_NAME);
+      }
    }
 
+   public void updateGUIContents() {
+      if (disableGUItoSettings_) {
+         return;
+      }
+      disableGUItoSettings_ = true;
+      // Disable update prevents action listener loops
+
+
+      // TODO: remove setChannels()
+      model_.setChannels(acqEng_.getChannels());
+
+      double intervalMs = acqEng_.getFrameIntervalMs();
+      interval_.setText(numberFormat_.format(convertMsToTime(intervalMs, timeUnitCombo_.getSelectedIndex())));
+
+      zBottom_.setText(NumberUtils.doubleToDisplayString(acqEng_.getSliceZBottomUm()));
+      zTop_.setText(NumberUtils.doubleToDisplayString(acqEng_.getZTopUm()));
+      zStep_.setText(NumberUtils.doubleToDisplayString(acqEng_.getSliceZStepUm()));
+
+      framesPanel_.setSelected(acqEng_.isFramesSettingEnabled());
+      checkForCustomTimeIntervals();
+      slicesPanel_.setSelected(acqEng_.isZSliceSettingEnabled());
+      positionsPanel_.setSelected(acqEng_.isMultiPositionEnabled());
+      afPanel_.setSelected(acqEng_.isAutoFocusEnabled());
+      acqOrderBox_.setEnabled(positionsPanel_.isSelected() || framesPanel_.isSelected()
+              || slicesPanel_.isSelected() || channelsPanel_.isSelected());
+
+      afSkipInterval_.setEnabled(acqEng_.isAutoFocusEnabled());
+
+      // These values need to be cached or we will loose them due to the Spinners OnChanged methods calling applySetting
+      Integer numFrames = new Integer(acqEng_.getNumFrames());
+      Integer afSkipInterval = new Integer(acqEng_.getAfSkipInterval());
+      if (acqEng_.isFramesSettingEnabled()) {
+         numFrames_.setValue(numFrames);
+      }
+
+      afSkipInterval_.setValue(afSkipInterval);
+
+      enableZSliceControls(acqEng_.isZSliceSettingEnabled());
+      model_.fireTableStructureChanged();
+
+      channelGroupCombo_.setSelectedItem(acqEng_.getChannelGroup());
+      try {
+         displayModeCombo_.setSelectedIndex(acqEng_.getDisplayMode());
+      } catch (IllegalArgumentException e) {
+         displayModeCombo_.setSelectedIndex(0);
+      }
+
+
+      for (AcqOrderMode mode : acqOrderModes_) {
+         mode.setEnabled(framesPanel_.isSelected(), positionsPanel_.isSelected(),
+                 slicesPanel_.isSelected(), channelsPanel_.isSelected());
+      }
+
+      // add correct acquisition order options
+      int selectedIndex = acqEng_.getAcqOrderMode();
+      acqOrderBox_.removeAllItems();
+      if (framesPanel_.isSelected() && positionsPanel_.isSelected()
+              && slicesPanel_.isSelected() && channelsPanel_.isSelected()) {
+         acqOrderBox_.addItem(acqOrderModes_[0]);
+         acqOrderBox_.addItem(acqOrderModes_[1]);
+         acqOrderBox_.addItem(acqOrderModes_[2]);
+         acqOrderBox_.addItem(acqOrderModes_[3]);
+      } else if (framesPanel_.isSelected() && positionsPanel_.isSelected()) {
+         if (selectedIndex == 0 || selectedIndex == 2) {
+            acqOrderBox_.addItem(acqOrderModes_[0]);
+            acqOrderBox_.addItem(acqOrderModes_[2]);
+         } else {
+            acqOrderBox_.addItem(acqOrderModes_[1]);
+            acqOrderBox_.addItem(acqOrderModes_[3]);
+         }
+      } else if (channelsPanel_.isSelected() && slicesPanel_.isSelected()) {
+         if (selectedIndex == 0 || selectedIndex == 1) {
+            acqOrderBox_.addItem(acqOrderModes_[0]);
+            acqOrderBox_.addItem(acqOrderModes_[1]);
+         } else {
+            acqOrderBox_.addItem(acqOrderModes_[2]);
+            acqOrderBox_.addItem(acqOrderModes_[3]);
+         }
+      } else {
+         acqOrderBox_.addItem(acqOrderModes_[selectedIndex]);
+      }
+
+      acqOrderBox_.setSelectedItem(acqOrderModes_[acqEng_.getAcqOrderMode()]);
+
+
+      zValCombo_.setSelectedIndex(zVals_);
+      stackKeepShutterOpenCheckBox_.setSelected(acqEng_.isShutterOpenForStack());
+      chanKeepShutterOpenCheckBox_.setSelected(acqEng_.isShutterOpenForChannels());
+
+      channelTable_.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
+
+      boolean selected = channelsPanel_.isSelected();
+      channelTable_.setEnabled(selected);
+      channelTable_.getTableHeader().setForeground(selected ? Color.black : Color.gray);
+
+
+      // update summary
+      summaryTextArea_.setText(acqEng_.getVerboseSummary());
+
+      disableGUItoSettings_ = false;
+   }
 
    private void applySettings() {
-	   if (disableGUItoSettings_) {
-		   return;
-	   }
-	   disableGUItoSettings_ = true;
+      if (disableGUItoSettings_) {
+         return;
+      }
+      disableGUItoSettings_ = true;
 
-	   AbstractCellEditor ae = (AbstractCellEditor) channelTable_.getCellEditor();
-	   if (ae != null) {
-		   ae.stopCellEditing();
-	   }
+      AbstractCellEditor ae = (AbstractCellEditor) channelTable_.getCellEditor();
+      if (ae != null) {
+         ae.stopCellEditing();
+      }
 
-	   try {
-		   double zStep = NumberUtils.displayStringToDouble(zStep_.getText());
-		   if (Math.abs(zStep) < acqEng_.getMinZStepUm()) {
-			   zStep = acqEng_.getMinZStepUm();
-		   }
-		   acqEng_.setSlices(NumberUtils.displayStringToDouble(zBottom_.getText()), NumberUtils.displayStringToDouble(zTop_.getText()), zStep, zVals_ == 0 ? false : true);
-		   acqEng_.enableZSliceSetting(slicesPanel_.isSelected());
-		   acqEng_.enableMultiPosition(positionsPanel_.isSelected());
+      try {
+         double zStep = NumberUtils.displayStringToDouble(zStep_.getText());
+         if (Math.abs(zStep) < acqEng_.getMinZStepUm()) {
+            zStep = acqEng_.getMinZStepUm();
+         }
+         acqEng_.setSlices(NumberUtils.displayStringToDouble(zBottom_.getText()), NumberUtils.displayStringToDouble(zTop_.getText()), zStep, zVals_ == 0 ? false : true);
+         acqEng_.enableZSliceSetting(slicesPanel_.isSelected());
+         acqEng_.enableMultiPosition(positionsPanel_.isSelected());
 
 
-		   acqEng_.setDisplayMode(((DisplayMode) displayModeCombo_.getSelectedItem()).getID());
-		   acqEng_.setAcqOrderMode(((AcqOrderMode) acqOrderBox_.getSelectedItem()).getID() );
-		   acqEng_.enableChannelsSetting(channelsPanel_.isSelected());
+         acqEng_.setDisplayMode(((DisplayMode) displayModeCombo_.getSelectedItem()).getID());
+         acqEng_.setAcqOrderMode(((AcqOrderMode) acqOrderBox_.getSelectedItem()).getID());
+         acqEng_.enableChannelsSetting(channelsPanel_.isSelected());
          acqEng_.setChannels(((ChannelTableModel) channelTable_.getModel()).getChannels());
          acqEng_.enableFramesSetting(framesPanel_.isSelected());
          acqEng_.setFrames((Integer) numFrames_.getValue(),
@@ -2084,6 +2167,13 @@ public class AcqControlDlg extends JDialog implements PropertyChangeListener {
       repaint();
    }
 
+   private void showAdvancedDialog() {
+      if (advancedOptionsWindow_ == null) {
+         advancedOptionsWindow_ = new AdvancedOptionsDialog(acqEng_);
+      }
+      advancedOptionsWindow_.setVisible(true);
+   }
+
    public class ComponentTitledPanel extends JPanel {
 
       public ComponentTitledBorder compTitledBorder;
@@ -2149,9 +2239,17 @@ public class AcqControlDlg extends JDialog implements PropertyChangeListener {
       }
 
       public void setChildrenEnabled(boolean enabled) {
+
          Component comp[] = this.getComponents();
          for (int i = 0; i < comp.length; i++) {
-            comp[i].setEnabled(enabled);
+            if (comp[i].getClass().equals(JPanel.class)) {
+               Component subComp[] = ((JPanel) comp[i]).getComponents();
+               for (int c = 0; c < subComp.length; c++) {
+                  subComp[c].setEnabled(enabled);
+               }
+            } else {
+               comp[i].setEnabled(enabled);
+            }
          }
       }
 
@@ -2174,4 +2272,4 @@ public class AcqControlDlg extends JDialog implements PropertyChangeListener {
          }
       }
    }
-} 
+}

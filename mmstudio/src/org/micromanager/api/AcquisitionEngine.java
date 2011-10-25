@@ -106,12 +106,27 @@ public interface AcquisitionEngine {
    public int getCurrentFrameCount();
 
    /**
+    * enables/diasables the use of custom time points
+    * @param enable 
+    */
+   public void enableCustomTimeIntervals(boolean enable);
+   
+   /*
+    * returns true if acquisition engine is se p to use custom time intervals
+    */
+   public boolean customTimeIntervalsEnabled(); 
+   
+   /**
     * Used to provide acquisition with custom time intervals in between frames
-    * passing null resets 
+    * passing null resets to default time points
     */
    public void setCustomTimeIntervals(double[] customTimeIntervalsMs);
 
-   
+   /*
+    * returns list of custom time intervals, or null if none are specified   
+    */
+   public double[] getCustomTimeIntervals();
+
    /**
     * Unconditional shutdown.  Will stop acuiqistion and multi-field acquisition
     */

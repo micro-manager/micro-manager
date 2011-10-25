@@ -35,6 +35,7 @@ import org.micromanager.utils.ReportingUtils;
  * @author arthur
  */
 public class AcquisitionWrapperEngine implements AcquisitionEngine {
+
    private CMMCore core_;
    private MMStudioMainFrame gui_;
    private PositionList posList_;
@@ -65,10 +66,12 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
    private boolean absoluteZ_;
    private Pipeline pipeline_;
    private ArrayList<Double> customTimeIntervalsMs_;
- 
+   private boolean useCustomIntervals_;
+
    public AcquisitionWrapperEngine() {
       imageRequestProcessors_ = new ArrayList<Class>();
       taggedImageProcessors_ = new ArrayList<DataProcessor<TaggedImage>>();
+      useCustomIntervals_ = false;
    }
 
    public void acquire() throws MMException {
@@ -76,8 +79,9 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
    }
 
    public Pipeline getPipeline() {
-      if (pipeline_ == null)
+      if (pipeline_ == null) {
          pipeline_ = gui_.getPipeline();
+      }
       return pipeline_;
    }
 
@@ -90,7 +94,7 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
    }
 
    private void updateChannelCameras() {
-      for(ChannelSpec channel:channels_) {
+      for (ChannelSpec channel : channels_) {
          channel.camera_ = getSource(channel);
       }
    }
@@ -107,6 +111,7 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
    /*
     * Clear all attached runnables from the acquisition engine.
     */
+
    public void clearRunnables() {
       getPipeline().clearRunnables();
    }
@@ -126,12 +131,10 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
       }
    }
 
-
    public void addImageProcessor(Class taggedImageProcessorClass) {
       try {
          taggedImageProcessors_.add(
-                 (DataProcessor<TaggedImage>)
-                 taggedImageProcessorClass.newInstance());
+                 (DataProcessor<TaggedImage>) taggedImageProcessorClass.newInstance());
       } catch (InstantiationException ex) {
          ReportingUtils.logError(ex);
       } catch (IllegalAccessException ex) {
@@ -153,15 +156,19 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
       updateChannelCameras();
 
       // Frames
-      if (customTimeIntervalsMs_ != null) {
-     	 acquisitionSettings.customIntervalsMs = customTimeIntervalsMs_;
-     	 acquisitionSettings.numFrames = acquisitionSettings.customIntervalsMs.size();
-      } else if (useFrames_) {
-         acquisitionSettings.numFrames = numFrames_;
-         acquisitionSettings.intervalMs = interval_;
-      } else 
-    	  acquisitionSettings.numFrames = 0;
-      
+      if (useFrames_) {
+         if (useCustomIntervals_) {
+            acquisitionSettings.customIntervalsMs = customTimeIntervalsMs_;
+            acquisitionSettings.numFrames = acquisitionSettings.customIntervalsMs.size();
+         } else {
+            acquisitionSettings.numFrames = numFrames_;
+            acquisitionSettings.intervalMs = interval_;
+         }
+      } else {
+         acquisitionSettings.numFrames = 0;
+      }
+
+
 
       // Slices
       if (useSlices_) {
@@ -187,21 +194,24 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
       // Channels
 
       if (this.useChannels_) {
-         for (ChannelSpec channel:channels_)
-            if (channel.useChannel_)
+         for (ChannelSpec channel : channels_) {
+            if (channel.useChannel_) {
                acquisitionSettings.channels.add(channel);
+            }
+         }
       }
 
       // Positions
-      if (this.useMultiPosition_)
+      if (this.useMultiPosition_) {
          acquisitionSettings.positions.addAll(Arrays.asList(posList_.getPositions()));
+      }
 
-      
-        //timeFirst = true means that time points are collected at each position
-      acquisitionSettings.timeFirst = (acqOrderMode_ == AcqOrderMode.POS_TIME_CHANNEL_SLICE || 
-    		  acqOrderMode_ == AcqOrderMode.POS_TIME_SLICE_CHANNEL);
-      acquisitionSettings.slicesFirst = (acqOrderMode_ == AcqOrderMode.POS_TIME_CHANNEL_SLICE ||
-    		  acqOrderMode_ == AcqOrderMode.TIME_POS_CHANNEL_SLICE);
+
+      //timeFirst = true means that time points are collected at each position
+      acquisitionSettings.timeFirst = (acqOrderMode_ == AcqOrderMode.POS_TIME_CHANNEL_SLICE
+              || acqOrderMode_ == AcqOrderMode.POS_TIME_SLICE_CHANNEL);
+      acquisitionSettings.slicesFirst = (acqOrderMode_ == AcqOrderMode.POS_TIME_CHANNEL_SLICE
+              || acqOrderMode_ == AcqOrderMode.TIME_POS_CHANNEL_SLICE);
 
       acquisitionSettings.useAutofocus = useAutoFocus_;
       acquisitionSettings.skipAutofocusCount = afSkipInterval_;
@@ -216,13 +226,12 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
       return acquisitionSettings;
    }
 
-
 //////////////////// Actions ///////////////////////////////////////////
-
    public void stop(boolean interrupted) {
       try {
-         if (pipeline_ != null)
+         if (pipeline_ != null) {
             pipeline_.stop();
+         }
       } catch (Exception ex) {
          ReportingUtils.showError(ex, "Acquisition engine stop request failed");
       }
@@ -242,7 +251,7 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
       }
       return false;
    }
-   
+
    public boolean abortRequested() {
       return pipeline_.stopHasBeenRequested();
    }
@@ -259,21 +268,21 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
       }
    }
 
-
 //// State Queries /////////////////////////////////////////////////////
-
    public boolean isAcquisitionRunning() {
-      if (pipeline_ != null)
+      if (pipeline_ != null) {
          return pipeline_.isRunning();
-      else
+      } else {
          return false;
+      }
    }
 
    public boolean isFinished() {
-      if (pipeline_ != null)
+      if (pipeline_ != null) {
          return pipeline_.isFinished();
-      else
+      } else {
          return false;
+      }
    }
 
    public boolean isMultiFieldRunning() {
@@ -289,7 +298,6 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
    }
 
 //////////////////// Setters and Getters ///////////////////////////////
-
    public void setCore(CMMCore core_, AutofocusManager afMgr) {
       this.core_ = core_;
    }
@@ -361,6 +369,7 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
       }
       return core_.getAvailableConfigs(core_.getChannelGroup()).toArray();
    }
+
    public int getNumFrames() {
       return numFrames_;
    }
@@ -391,8 +400,9 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
     * Resets the engine.
     */
    public void clear() {
-      if (channels_ != null)
+      if (channels_ != null) {
          channels_.clear();
+      }
       numFrames_ = 0;
    }
 
@@ -552,7 +562,7 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
    }
 
    public int getAcqOrderMode() {
-	   return acqOrderMode_;
+      return acqOrderMode_;
    }
 
    public int getDisplayMode() {
@@ -600,7 +610,7 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
       if (!useFrames_) {
          numFrames = 1;
       }
-      int numSlices = useSlices_ ? (int) (1 + Math.abs(sliceZTopUm_-sliceZBottomUm_)/sliceZStepUm_) : 1;
+      int numSlices = useSlices_ ? (int) (1 + Math.abs(sliceZTopUm_ - sliceZBottomUm_) / sliceZStepUm_) : 1;
       if (!useSlices_) {
          numSlices = 1;
       }
@@ -612,16 +622,24 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
 
       int numChannels = 0;
       if (useChannels_) {
-         for (ChannelSpec channel:channels_)
-            if (channel.useChannel_)
+         for (ChannelSpec channel : channels_) {
+            if (channel.useChannel_) {
                ++numChannels;
+            }
          }
-      else {
+      } else {
          numChannels = 1;
       }
 
       int totalImages = numFrames * numSlices * numChannels * numPositions;
-      double totalDurationSec = interval_ * numFrames / 1000.0;
+      double totalDurationSec = 0;
+      if (!useCustomIntervals_) {
+         totalDurationSec = interval_ * numFrames / 1000.0;
+      } else {
+         for (Double d : customTimeIntervalsMs_) {
+            totalDurationSec += d / 1000.0;
+         }
+      }
       int hrs = (int) (totalDurationSec / 3600);
       double remainSec = totalDurationSec - hrs * 3600;
       int mins = (int) (remainSec / 60);
@@ -632,44 +650,50 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
 
       String txt;
       txt =
-    		  "Number of time points: " + numFrames
-    		  + "\nNumber of positions: " + numPositions
-    		  + "\nNumber of slices: " + numSlices
-    		  + "\nNumber of channels: " + numChannels
-    		  + "\nTotal images: " + totalImages
-    		  + "\nDuration: " + hrs + "h " + mins + "m " + NumberUtils.doubleToDisplayString(remainSec) + "s";
+              "Number of time points: " + (!useCustomIntervals_
+              ? numFrames : customTimeIntervalsMs_.size())
+              + "\nNumber of positions: " + numPositions
+              + "\nNumber of slices: " + numSlices
+              + "\nNumber of channels: " + numChannels
+              + "\nTotal images: " + totalImages
+              + "\nDuration: " + hrs + "h " + mins + "m " + NumberUtils.doubleToDisplayString(remainSec) + "s";
 
-      if (useFrames_ || useMultiPosition_  || useChannels_ || useSlices_ ) {
-    	  StringBuffer order = new StringBuffer("\nOrder: ");
-    	  if ( useFrames_ && useMultiPosition_ ) 
-    		  if (acqOrderMode_ == AcqOrderMode.TIME_POS_CHANNEL_SLICE || 
-    		  acqOrderMode_ == AcqOrderMode.TIME_POS_SLICE_CHANNEL)
-    			  order.append("Time, Position");
-    		  else
-    			  order.append("Position, Time");
-    	  else if ( useFrames_ ) 
-    		  order.append("Time");
-    	  else if ( useMultiPosition_ ) 
-    		  order.append("Position");
+      if (useFrames_ || useMultiPosition_ || useChannels_ || useSlices_) {
+         StringBuffer order = new StringBuffer("\nOrder: ");
+         if (useFrames_ && useMultiPosition_) {
+            if (acqOrderMode_ == AcqOrderMode.TIME_POS_CHANNEL_SLICE
+                    || acqOrderMode_ == AcqOrderMode.TIME_POS_SLICE_CHANNEL) {
+               order.append("Time, Position");
+            } else {
+               order.append("Position, Time");
+            }
+         } else if (useFrames_) {
+            order.append("Time");
+         } else if (useMultiPosition_) {
+            order.append("Position");
+         }
 
-    	  if ( (useFrames_ || useMultiPosition_) && ( useChannels_ || useSlices_ )  )
-    		  order.append(", ");
+         if ((useFrames_ || useMultiPosition_) && (useChannels_ || useSlices_)) {
+            order.append(", ");
+         }
 
-    	  if ( useChannels_ && useSlices_ ) 
-    		  if (acqOrderMode_ == AcqOrderMode.TIME_POS_CHANNEL_SLICE || 
-    		  acqOrderMode_ == AcqOrderMode.POS_TIME_CHANNEL_SLICE)
-    			  order.append("Channel, Slice");
-    		  else
-    			  order.append("Slice, Channel");
-    	  else if ( useChannels_ ) 
-    		  order.append("Channel");
-    	  else if ( useSlices_ ) 
-    		  order.append("Slice");
+         if (useChannels_ && useSlices_) {
+            if (acqOrderMode_ == AcqOrderMode.TIME_POS_CHANNEL_SLICE
+                    || acqOrderMode_ == AcqOrderMode.POS_TIME_CHANNEL_SLICE) {
+               order.append("Channel, Slice");
+            } else {
+               order.append("Slice, Channel");
+            }
+         } else if (useChannels_) {
+            order.append("Channel");
+         } else if (useSlices_) {
+            order.append("Slice");
+         }
 
-    	  return txt + order.toString();
+         return txt + order.toString();
+      } else {
+         return txt;
       }
-      else
-    	  return txt;
    }
 
    /**
@@ -703,7 +727,7 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
          return new String[0];
       }
       ArrayList<String> strGroups = new ArrayList<String>();
-      for (String group:groups) {
+      for (String group : groups) {
          if (groupIsEligibleChannel(group)) {
             strGroups.add(group);
          }
@@ -744,7 +768,7 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
       }
    }
 
-      private boolean groupIsEligibleChannel(String group) {
+   private boolean groupIsEligibleChannel(String group) {
       StrVector cfgs = core_.getAvailableConfigs(group);
       if (cfgs.size() == 1) {
          Configuration presetData;
@@ -770,18 +794,40 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
    /**
     * @return the taggedImageProcessors_
     */
-      public List<DataProcessor<TaggedImage>> getTaggedImageProcessors() {
-    	  return taggedImageProcessors_;
+   public List<DataProcessor<TaggedImage>> getTaggedImageProcessors() {
+      return taggedImageProcessors_;
+   }
+
+   public void setCustomTimeIntervals(double[] customTimeIntervals) {
+      if (customTimeIntervals == null || customTimeIntervals.length == 0) {
+         customTimeIntervalsMs_ = null;
+         enableCustomTimeIntervals(false);
+      } else {
+         enableCustomTimeIntervals(true);
+         customTimeIntervalsMs_ = new ArrayList<Double>();
+         for (double d : customTimeIntervals) {
+            customTimeIntervalsMs_.add(d);
+         }
       }
+   }
 
-      public void setCustomTimeIntervals(double[] customTimeIntervals) {
-    	  if (customTimeIntervals == null)
-    		  customTimeIntervalsMs_ = null;
-    	  else {
-    		  customTimeIntervalsMs_ = new ArrayList<Double>();
-    		  for(double d: customTimeIntervals)
-    			  customTimeIntervalsMs_.add(d);
-    	  }}
+   public double[] getCustomTimeIntervals() {
+      if (customTimeIntervalsMs_ == null) {
+         return null;
+      }
+      double[] intervals = new double[customTimeIntervalsMs_.size()];
+      for (int i = 0; i < customTimeIntervalsMs_.size(); i++) {
+         intervals[i] = customTimeIntervalsMs_.get(i);
+      }
+      return intervals;
 
-	
+   }
+
+   public void enableCustomTimeIntervals(boolean enable) {
+      useCustomIntervals_ = enable;
+   }
+
+   public boolean customTimeIntervalsEnabled() {
+      return useCustomIntervals_;
+   }
 }
