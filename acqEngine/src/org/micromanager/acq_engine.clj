@@ -303,16 +303,24 @@
     (Thread/sleep 5)))
 
 (defn collect-snap-image [event out-queue]
-  (let [image
-         {:pix (core getImage)
-          :tags nil}]
-    (do (log "collect-snap-image: "
+  (log "collect-snap-image")
+  (let [num-camera-channels (core getNumberOfCameraChannels)]
+    (doall
+      (for [camera-channel (range num-camera-channels)]
+        (let [image
+              {:pix (core getImage camera-channel)
+               :tags nil}]
+          (log "collect-snap-image: "
                (select-keys event [:position-index :frame-index
                                    :slice-index :channel-index]))
-      (when out-queue
-          (.put out-queue
-                (make-TaggedImage (annotate-image image event @state (elapsed-time @state))))))
-    image))
+          (log camera-channel)
+          (let [super-channel-index (+ camera-channel (* num-camera-channels (event :channel-index)))
+                event1 (assoc event :channel-index super-channel-index)]
+            (log "super-channel-index:" super-channel-index)
+            (when out-queue
+              (.put out-queue
+                    (make-TaggedImage (annotate-image image event1 @state (elapsed-time @state))))))
+          image)))))
 
 (defn return-config []
   (dorun (map set-property
@@ -544,14 +552,16 @@
 
 (defn make-summary-metadata [settings]
   (let [depth (int (core getBytesPerPixel))
-        channels (settings :channels)]
+        channels (settings :channels)
+        num-camera-channels (core getNumberOfCameraChannels)
+        super-channels (flatten (for [channel channels] (repeat num-camera-channels channel)))]
      (JSONObject. {
       "BitDepth" (core getImageBitDepth)
-      "Channels" (count (settings :channels))
-      "ChNames" (JSONArray. (map :name channels))
-      "ChColors" (JSONArray. (map #(.getRGB (:color %)) channels))         
-      "ChContrastMax" (JSONArray. (repeat (count channels) Integer/MIN_VALUE))
-      "ChContrastMin" (JSONArray. (repeat (count channels) Integer/MAX_VALUE))
+      "Channels" (count super-channels)
+      "ChNames" (JSONArray. (map :name super-channels))
+      "ChColors" (JSONArray. (map #(.getRGB (:color %)) super-channels))         
+      "ChContrastMax" (JSONArray. (repeat (count super-channels) Integer/MIN_VALUE))
+      "ChContrastMin" (JSONArray. (repeat (count super-channels) Integer/MAX_VALUE))
       "Comment" (settings :comment)
       "ComputerName" (.. InetAddress getLocalHost getHostName)
       "Depth" (core getBytesPerPixel)
