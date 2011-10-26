@@ -287,6 +287,15 @@ public:
 
       return keyList;
    }
+
+   bool HasTag(const char* key)
+   {
+      TagIterator it = tags_.find(key);
+      if (it != tags_.end())
+         return true;
+      else
+         return false;
+   }
    
    MetadataSingleTag GetSingleTag(const char* key) const throw (MetadataKeyError)
    {

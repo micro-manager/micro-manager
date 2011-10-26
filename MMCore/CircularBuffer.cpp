@@ -172,11 +172,7 @@ bool CircularBuffer::InsertMultiChannel(const unsigned char* pixArray, unsigned 
             md = *pMd;
          }
 
-         try
-         {
-            MetadataSingleTag tag = md.GetSingleTag(MM::g_Keyword_Elapsed_Time_ms);
-         }
-         catch (MetadataKeyError)
+         if (!md.HasTag(MM::g_Keyword_Elapsed_Time_ms))
          {
             // if time tag was not supplied by the camera insert current timestamp
             MM::MMTime timestamp = GetMMTimeNow();
