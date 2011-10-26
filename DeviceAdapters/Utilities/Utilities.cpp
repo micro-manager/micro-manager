@@ -661,7 +661,7 @@ int MultiCamera::GetChannelName(unsigned channel, char* name)
 {
    CDeviceUtils::CopyLimitedString(name, "");
    unsigned int ch = Logical2Physical(channel);
-   if (ch > -1l && ch < usedCameras_.size())
+   if (ch >= 0 && ch < usedCameras_.size())
    {
       CDeviceUtils::CopyLimitedString(name, usedCameras_[ch].c_str());
    }
@@ -712,7 +712,6 @@ int MultiCamera::OnPhysicalCamera(MM::PropertyBase* pProp, MM::ActionType eAct, 
             os << i;
             char myName[MM::MaxStrLength];
             GetLabel(myName);
-            printf("%s\n" ,myName);
             camera->AddTag(MM::g_Keyword_CameraChannelName, myName, usedCameras_[i].c_str());
             camera->AddTag(MM::g_Keyword_CameraChannelIndex, myName, os.str().c_str());
          } else
