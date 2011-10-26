@@ -1250,9 +1250,9 @@ public:
       return 0;
    }
 
-   virtual void AddTag(const char* key, const char* value)
+   virtual void AddTag(const char* key, std::string deviceLabel, const char* value)
    {
-      metadata_.PutImageTag(key, value);
+      metadata_.PutTag(key, deviceLabel, value);
    }
 
 

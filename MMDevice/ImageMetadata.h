@@ -421,14 +421,17 @@ public:
          if (id.compare("s") == 0)
          {
             MetadataSingleTag ms;
-            std::string strVal;
-            is >> strVal;
-            ms.SetName(strVal.c_str());
-            is >> strVal;
-            ms.SetDevice(strVal.c_str());
+            char str[MM::MaxStrLength];
+            // Read away empty line feed
+            is.getline(str, MM::MaxStrLength);
+            is.getline(str, MM::MaxStrLength);
+            ms.SetName(str);
+            is.getline(str, MM::MaxStrLength);
+            ms.SetDevice(str);
             int ro;
             is >> ro;
             ms.SetReadOnly(ro == 1 ? true : false);
+            std::string strVal;
             is >> strVal;
             ms.SetValue(strVal.c_str());
 

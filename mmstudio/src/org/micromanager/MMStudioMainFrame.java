@@ -3047,12 +3047,8 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
 
                      TaggedImage ti = core_.getLastTaggedImage();
                      String camera = core_.getCameraDevice();
-                     int channel;
-                     if (ti.tags.has(CCHANNELINDEX))
-                        channel = ti.tags.getInt(CCHANNELINDEX);
-                     else 
-                        channel = ti.tags.getInt(camera + "-" + CCHANNELINDEX);
-                     
+                     int channel = ti.tags.getInt(camera + "-" + CCHANNELINDEX);
+
                      if (!found[channel]) {
                         found[channel] = true;
                         ti.tags.put("Channel", core_.getCameraChannelName(channel));
@@ -3060,17 +3056,12 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
                         MDUtils.setFrameIndex(ti.tags, 0);
                         MDUtils.setSliceIndex(ti.tags, 0);
                         MDUtils.setPositionIndex(ti.tags, 0);
-                        boolean update = false;
-                        //if (multiChannelCameraNrCh_ == channel + 1)
-                        //   update = true;
+
                         if (!acquisitionExists(multiCameraAcq_)) {
                            enableLiveMode(false);
                            return;
                         }
-                        
 
-                        // TODO: remove after debugging
-                        // System.out.println("Channel: " + channel);
                         foundAll = true;
                         for (int i = 0; i < found.length; i++)
                            if (!found[i])

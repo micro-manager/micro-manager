@@ -833,7 +833,8 @@ int CDemoCamera::InsertImage()
    // Copy the metadata inserted by other processes:
    std::vector<std::string> keys = metadata_.GetKeys();
    for (unsigned int i= 0; i < keys.size(); i++) {
-      md.put(keys[i], metadata_.GetSingleTag(keys[i].c_str()).GetValue().c_str());
+      MetadataSingleTag mst = metadata_.GetSingleTag(keys[i].c_str());
+      md.PutTag(mst.GetName(), mst.GetDevice(), mst.GetValue());
    }
 
    // Add our own metadata

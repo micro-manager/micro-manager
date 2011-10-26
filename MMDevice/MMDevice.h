@@ -34,7 +34,7 @@
 // Header version
 // If any of the class declarations changes, the interface version
 // must be incremented
-#define DEVICE_INTERFACE_VERSION 48
+#define DEVICE_INTERFACE_VERSION 49
 ///////////////////////////////////////////////////////////////////////////////
 
 #pragma once
@@ -486,7 +486,7 @@ namespace MM {
       /**
        * Adds a metadata tag that should be added to the metadata during image sequence acquisition
        */
-      virtual void AddTag(const char* key, const char* value) = 0;
+      virtual void AddTag(const char* key, std::string deviceLabel, const char* value) = 0;
       /**
        * Remove the tage with the given key from the metadata that will be added during sequence acquisition
        */
