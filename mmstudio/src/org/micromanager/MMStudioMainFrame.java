@@ -401,9 +401,9 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
                openAcquisition(multiCameraAcq_, "", 1, (int) c, 1, true);
                for (long i = 0; i < c; i++) {
                   String chName = core_.getCameraChannelName(i);
-                  Color cl = new Color(colorPrefs_.getInt("Color_" + chName,
-                       multiCameraColors_[(int)i % multiCameraColors_.length].getRGB()));
-                  setChannelColor(multiCameraAcq_, (int) i, cl);
+                  int defaultColor = multiCameraColors_[(int)i % multiCameraColors_.length].getRGB();
+                  setChannelColor(multiCameraAcq_, (int) i, 
+                          getChannelColor(chName, defaultColor) );
                   setChannelName(multiCameraAcq_, (int) i, chName);
                }
                initializeAcquisition(multiCameraAcq_, w, h, d);
@@ -417,11 +417,19 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
    
    public void saveChannelColor(String chName, int rgb)
    {
-      if (colorPrefs_ != null)
-      {
+      if (colorPrefs_ != null) {
          colorPrefs_.putInt("Color_" + chName, rgb);      
       }          
    }
+   
+   public Color getChannelColor(String chName, int defaultColor)
+   {  
+      if (colorPrefs_ != null) {
+         defaultColor = colorPrefs_.getInt("Color_" + chName, defaultColor);
+      }
+      return new Color(defaultColor);
+   }
+   
 
    /**
     * Snaps an image for a multi-Channel camera
