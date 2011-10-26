@@ -1197,7 +1197,9 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
          ReportingUtils.logError(ex);
       }
       updateChannelLUT(channel);
-      MMStudioMainFrame.getInstance().saveChannelColor(getChannelNames()[channel], rgb);
+      String[] chNames = getChannelNames();
+      if (chNames != null && chNames.length > channel)
+         MMStudioMainFrame.getInstance().saveChannelColor(getChannelNames()[channel], rgb);
    }
 
    public void setChannelGamma(int channel, double gamma) {
