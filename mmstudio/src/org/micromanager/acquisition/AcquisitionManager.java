@@ -144,7 +144,8 @@ public class AcquisitionManager {
          try {
          if (acq.getWidth() == imageWidth &&
              acq.getHeight() == imageHeight &&
-             acq.getDepth() == imageDepth)
+             acq.getDepth() == imageDepth  &&
+                ! acq.getImageCache().isFinished() )
              newNeeded = false;
          } catch (Exception e) {
          }
