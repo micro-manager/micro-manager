@@ -398,12 +398,21 @@
               0))
          z-ref))))
 
-(defn store-new-z-reference [msp]
+(defn recall-z-reference [current-position]
   (let [z-drive (@state :default-z-drive)]
     (when (and (or (not (core isContinuousFocusEnabled))
-                   (core isContinuousFocusDrive z-drive))
-               (not (z-in-msp msp z-drive)))
-      (state-assoc! :reference-z (get-z-stage-position z-drive)))))
+                   (core isContinuousFocusDrive z-drive)))
+      (set-z-stage-position z-drive
+        (or (get-msp-z-position current-position z-drive)
+            (@state :reference-z))))))
+
+(defn store-z-reference [current-position]
+  (let [z-drive (@state :default-z-drive)]
+    (when (and (or (not (core isContinuousFocusEnabled))
+                   (core isContinuousFocusDrive z-drive)))
+      (let [z (get-z-stage-position z-drive)]
+        (set-msp-z-position current-position z-drive z)
+        (state-assoc! :reference-z z)))))
 
 ;; startup and shutdown
 
@@ -459,7 +468,6 @@
   (let [current-position (:position event)
         z-drive (@state :default-z-drive)
         check-z-ref (and z-drive
-                         (-> current-position get-msp (z-in-msp z-drive) not)
                          (or (:autofocus event)
                              (:wait-time-ms event)))]
     (filter identity
@@ -475,13 +483,13 @@
                        camera (core getCameraDevice)]
              (device-best-effort camera (core setExposure exposure)))
           #(when check-z-ref
-             (set-stage-position z-drive (@state :reference-z)))
+             (recall-z-reference current-position))
           #(when-let [wait-time-ms (:wait-time-ms event)]
              (acq-sleep wait-time-ms))
           #(when (:autofocus event)
              (run-autofocus))
           #(when check-z-ref
-             (store-new-z-reference (get-msp current-position)))
+             (store-z-reference current-position))
           #(when z-drive
              (let [z (compute-z-position event)]
                (set-stage-position z-drive z)))

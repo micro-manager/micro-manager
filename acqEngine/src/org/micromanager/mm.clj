@@ -247,8 +247,8 @@
       (. stage-pos x))))
 
 (defn set-msp-z-position [idx z-stage z]
-  (if-let [msp (get-msp idx)]
-    (if-let [stage-pos (. msp (get z-stage))]
+  (when-let [msp (get-msp idx)]
+    (when-let [stage-pos (. msp (get z-stage))]
       (set! (. stage-pos x) z))))
 
 (defn str-vector [str-seq]
