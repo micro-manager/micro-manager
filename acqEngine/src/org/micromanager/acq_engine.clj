@@ -283,7 +283,8 @@
   (let [num-camera-channels (core getNumberOfCameraChannels)]
     (for [camera-channel (range num-camera-channels)]
       (let [super-channel-index (+ camera-channel (* num-camera-channels (event :channel-index)))]
-        (assoc event :channel-index super-channel-index)))))
+        (assoc event :channel-index super-channel-index
+                     :camera-channel-index camera-channel)))))
 
 (defn collect-burst-images [event out-queue]
   (when (first-trigger-missing?) (pop-burst-image)) ; drop first image if first trigger doesn't happen
@@ -316,7 +317,7 @@
   (doall
     (for [event1 (make-multicamera-events event)]
       (let [image
-            {:pix (core getImage camera-channel)
+            {:pix (core getImage (event1 :camera-channel-index))
              :tags nil}]
         (log "collect-snap-image: "
              (select-keys event [:position-index :frame-index
