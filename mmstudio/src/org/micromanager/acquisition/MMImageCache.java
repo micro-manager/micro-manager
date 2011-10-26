@@ -108,6 +108,7 @@ public class MMImageCache implements TaggedImageStorage, ImageCache {
       }
       newImageFileManager.setDisplayAndComments(this.getDisplayAndComments());
       newImageFileManager.finished();
+      imageStorage_ = newImageFileManager; 
    }
 
    public void putImage(TaggedImage taggedImg) {
