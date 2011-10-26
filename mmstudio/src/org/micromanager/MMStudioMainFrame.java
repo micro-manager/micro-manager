@@ -238,6 +238,8 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
    // applications settings
    private Preferences mainPrefs_;
    private Preferences systemPrefs_;
+   private Preferences colorPrefs_;
+
    // MMcore
    private CMMCore core_;
    private AcquisitionEngine engine_;
@@ -377,6 +379,11 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
       if (c > 1)
       {
          try {
+            ArrayList<String> chNames = new ArrayList<String>();
+            for (long i = 0; i < c; i++) {
+               chNames.add(core_.getCameraChannelName(i));
+            }
+               
             if (acquisitionExists(multiCameraAcq_)) {
                if (c != (getAcquisition(multiCameraAcq_)).getChannels()) {
                   closeAcquisitionImage5D(multiCameraAcq_);
@@ -392,11 +399,12 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
 
             if (!acquisitionExists(multiCameraAcq_)) {
                openAcquisition(multiCameraAcq_, "", 1, (int) c, 1, true);
-               for (int i = 0; i < c; i++) {
-                  if (i < multiCameraColors_.length) {
-                     setChannelColor(multiCameraAcq_, i, multiCameraColors_[i]);
-                  }
-                  setChannelName(multiCameraAcq_, i, core_.getCameraChannelName(i));
+               for (long i = 0; i < c; i++) {
+                  String chName = core_.getCameraChannelName(i);
+                  Color cl = new Color(colorPrefs_.getInt("Color_" + chName,
+                       multiCameraColors_[(int)i % multiCameraColors_.length].getRGB()));
+                  setChannelColor(multiCameraAcq_, (int) i, cl);
+                  setChannelName(multiCameraAcq_, (int) i, chName);
                }
                initializeAcquisition(multiCameraAcq_, w, h, d);
                getAcquisition(multiCameraAcq_).promptToSave(false);
@@ -405,6 +413,14 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
             ReportingUtils.showError(ex);
          }
       }
+   }
+   
+   public void saveChannelColor(String chName, int rgb)
+   {
+      if (colorPrefs_ != null)
+      {
+         colorPrefs_.putInt("Color_" + chName, rgb);      
+      }          
    }
 
    /**
@@ -851,6 +867,10 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
          ReportingUtils.logError(e);
       }
       systemPrefs_ = mainPrefs_;
+      
+      colorPrefs_ = mainPrefs_.node(mainPrefs_.absolutePath() + "/" + 
+              AcqControlDlg.COLOR_SETTINGS_NODE);
+      
       // check system preferences
       try {
          Preferences p = Preferences.systemNodeForPackage(this.getClass());
