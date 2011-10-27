@@ -159,7 +159,11 @@ void CorePropertyCollection::Execute(const char* propName, const char* value)
       // should never get here...
       assert(!"Unable to execute set property command.\n");
    }
-   core_->externalCallback_->onPropertyChanged("Core", propName, value); 
+
+   if (core_->externalCallback_)
+   {
+      core_->externalCallback_->onPropertyChanged("Core", propName, value); 
+   }
 }
 
 string CorePropertyCollection::Get(const char* propName) const
