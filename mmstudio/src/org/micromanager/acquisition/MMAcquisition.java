@@ -410,7 +410,7 @@ public class MMAcquisition {
          if (virtAcq_.acquisitionIsRunning()) {
             virtAcq_.abort();
          }
-         //virtAcq_.close();
+         virtAcq_.imageCache_.finished();
       }
    }
 
