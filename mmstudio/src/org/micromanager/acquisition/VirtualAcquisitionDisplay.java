@@ -663,6 +663,7 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
             if (hyperImage_ instanceof CompositeImage) {
                ((CompositeImage) hyperImage_).setChannelsUpdated();
             }
+            if (hyperImage_ != null && hyperImage_.isVisible())
             hyperImage_.updateAndDraw();
          }
       };

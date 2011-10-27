@@ -682,30 +682,31 @@
 (def live-mode-running (ref false))
 
 (defn enable-live-mode [^Boolean on]
-      (if on
-        (let [event (create-basic-event)
-              state (create-basic-state)
-              first-image (atom true)
-              start-time (jvm-time-ms)]
-          (dosync (ref-set live-mode-running true))
-          (core startContinuousSequenceAcquisition 0)
-          (log "started sequence acquisition")
-          (.start (Thread.
-                    #(dorun (loop [last-time 0]
-                              (when @live-mode-running
-                                (let [raw-image {:pix (core getLastImage) :tags nil}
-                                      elapsed-time-ms (- (jvm-time-ms) start-time)
-                                      img (annotate-image raw-image event state elapsed-time-ms)
-                                      this-time (System/currentTimeMillis)
-                                      dt (- 33 (- this-time last-time))]
-                                  (reset-snap-window img)
-                                  (Thread/sleep (max 0 dt))
-                                  (show-image @snap-window img @first-image)
-                                  (reset! first-image false)
-                                  (recur this-time))))
-                            (core stopSequenceAcquisition))
-                    "Live mode (clojure)")))
-        (dosync (ref-set live-mode-running false))))
+  (if on
+    (let [event (create-basic-event)
+          state (create-basic-state)
+          start-time (jvm-time-ms)]
+      (dosync (ref-set live-mode-running true))
+      (core startContinuousSequenceAcquisition 0)
+      (log "started sequence acquisition")
+      (.start (Thread.
+                #(dorun (loop [last-time 0
+                               first-image true]
+                          (when @live-mode-running
+                            (let [raw-image {:pix (core getLastImage) :tags nil}
+                                  elapsed-time-ms (- (jvm-time-ms) start-time)
+                                  img (annotate-image raw-image event state elapsed-time-ms)
+                                  this-time (System/currentTimeMillis)
+                                  dt (- 33 (- this-time last-time))]                      
+                              (if first-image (reset-snap-window img)  )             
+                              (Thread/sleep (max 0 dt))                                     
+                              (if (.windowClosed @snap-window) 
+                                (edt (.enableLiveMode gui false))  
+                                (show-image @snap-window img first-image)  )
+                              (recur this-time false))))
+                        (core stopSequenceAcquisition))
+                "Live mode (clojure)")))
+    (dosync (ref-set live-mode-running false))))
 
 ;; java interop
 
