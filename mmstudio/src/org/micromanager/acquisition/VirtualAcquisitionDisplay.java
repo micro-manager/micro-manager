@@ -595,28 +595,28 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
          return;
       }
       int channel = MDUtils.getChannelIndex(md);
-      int cameraChannel = this.rgbToGrayChannel(MDUtils.getChannelIndex(md));
+      int superChannel = this.rgbToGrayChannel(MDUtils.getChannelIndex(md));
       int frame = MDUtils.getFrameIndex(md);
       int position = MDUtils.getPositionIndex(md);
       int slice = MDUtils.getSliceIndex(md);
 
       if (frame == 0) {
          try {
-            TaggedImage image = imageCache_.getImage(cameraChannel, slice, frame, position);
+            TaggedImage image = imageCache_.getImage(superChannel, slice, frame, position);
             if (image != null) {
                Object pix = image.pix;
                int pixelMin = ImageUtils.getMin(pix);
                int pixelMax = ImageUtils.getMax(pix);
                if (slice > 0) {
-                  pixelMin = Math.min(this.getChannelMin(cameraChannel), pixelMin);
-                  pixelMax = Math.max(this.getChannelMax(cameraChannel), pixelMax);
+                  pixelMin = Math.min(this.getChannelMin(superChannel), pixelMin);
+                  pixelMax = Math.max(this.getChannelMax(superChannel), pixelMax);
                }
                if (MDUtils.isRGB(md)) {
                   for (int i = 0; i < 3; ++i) {
-                     setChannelDisplayRange(cameraChannel + i, pixelMin, pixelMax);
+                     setChannelDisplayRange(superChannel + i, pixelMin, pixelMax);
                   }
                } else {
-                  setChannelDisplayRange(cameraChannel, pixelMin, pixelMax);
+                  setChannelDisplayRange(superChannel, pixelMin, pixelMax);
                }
             }
          } catch (Exception ex) {
@@ -638,7 +638,7 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
          }
          setPosition(MDUtils.getPositionIndex(md));
          if (MDUtils.isRGB(md)) {
-            hyperImage_.setPosition(1 + cameraChannel,
+            hyperImage_.setPosition(1 + superChannel,
                     1 + MDUtils.getSliceIndex(md),
                     1 + MDUtils.getFrameIndex(md));
          } else {
@@ -685,6 +685,7 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
          Object pixels = virtualStack_.getPixels(hyperImage_.getCurrentSlice());
          hyperImage_.getProcessor().setPixels(pixels);
       }
+      updateAndDraw();
    }
 
    public void setPosition(int p) {
