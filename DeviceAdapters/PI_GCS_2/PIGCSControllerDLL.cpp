@@ -735,4 +735,4 @@ bool PIGCSControllerDLL::qTPC(int* nrOutputChannels)
 	return (qTPC_(ID_, nrOutputChannels) == TRUE);
 }
 
-#endif __APPLE__
+#endif

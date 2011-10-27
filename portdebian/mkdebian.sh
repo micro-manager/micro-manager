@@ -71,8 +71,7 @@ cat portdebian/debiancontrol.ij | sed "s/ARCH/$ARCH/" | sed "s/VERSION/$VERSION/
 
 ##### JAR-files  MMIJ
 mkdir -p $ROOTIJ/usr/share/imagej/plugins/Micro-Manager/
-cp Bleach/MMBleach_.jar autofocus/MMAutofocus_.jar autofocus/MMAutofocusTB_.jar MMCoreJ_wrap/MMCoreJ.jar Tracking/Tracker_.jar \
-mmstudio/MMJ_.jar $ROOTIJ/usr/share/imagej/plugins/Micro-Manager/
+cp plugins/*.jar mmstudio/MMJ_.jar $ROOTIJ/usr/share/imagej/plugins/Micro-Manager/
 ln -s /usr/share/java/bsh.jar $ROOTIJ/usr/share/imagej/plugins/Micro-Manager/bsh_.jar
 
 ##### Overwrite imagej with fixes

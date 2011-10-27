@@ -30,7 +30,7 @@
 #include <set>
 #include <vector>
 #include <map>
-#include "MMEventCallback.h";
+#include "MMEventCallback.h"
 
 class CMMCore;
 class MMEventCallback;

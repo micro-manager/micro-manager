@@ -35,7 +35,7 @@ public:
       std::cout << "onPropertiesChanged()" << std:: endl; 
    }
 
-   virtual void onPropertyChanged(char* name, const char* propName, const char* propValue)
+   virtual void onPropertyChanged(const char* name, const char* propName, const char* propValue)
    {
       std::cout << "onPropertyChanged() " << name << " " << propName << " " << propValue;
       std::cout << std:: endl; 
