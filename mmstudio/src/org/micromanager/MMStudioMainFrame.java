@@ -2381,7 +2381,7 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
    }
 
    public Rectangle getROI() throws MMScriptException {
-      // ROI values are give as x,y,w,h in individual one-member arrays (pointers in C++):
+      // ROI values are given as x,y,w,h in individual one-member arrays (pointers in C++):
       int[][] a = new int[4][1];
       try {
          core_.getROI(a[0], a[1], a[2], a[3]);
