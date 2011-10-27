@@ -131,7 +131,7 @@ int main(int argc, char* argv[])
    if (eType == MM::CameraDevice)
    {
       cout << "Testing camera specific functions:" << endl;
-      MM::Camera* pCamera = dynamic_cast<MM::Camera*> (pDevice);
+      MM::Camera* pCamera = static_cast<MM::Camera*> (pDevice);
       assert(pCamera);
 
       cout << "SnapImage()...";
@@ -185,7 +185,7 @@ int main(int argc, char* argv[])
    else if (eType == MM::StateDevice)
    {
       cout << "Testing State Device specific functions:" << endl;
-      MM::State* pStateDevice = dynamic_cast<MM::State*> (pDevice);
+      MM::State* pStateDevice = static_cast<MM::State*> (pDevice);
       assert(pStateDevice);
 
       long numPos = pStateDevice->GetNumberOfPositions();
