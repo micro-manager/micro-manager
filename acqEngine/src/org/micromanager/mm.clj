@@ -22,10 +22,14 @@
            [org.micromanager.navigation MultiStagePosition StagePosition]
            [org.micromanager.utils ChannelSpec]
            [java.util Date]
-           [ij IJ]))
+           [ij IJ]
+           [javax.swing SwingUtilities]))
 
 (declare gui)
 (declare mmc)
+
+(defmacro edt [& body]
+  `(SwingUtilities/invokeLater (fn [] ~@body)))
 
 (defn load-mm
   ([gui] (def mmc (.getMMCore gui)))
