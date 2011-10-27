@@ -21,12 +21,20 @@ public interface TaggedImageStorage {
                                int frameIndex, int positionIndex);
    public void putImage(TaggedImage taggedImage) throws MMException;
    public Set<String> imageKeys();
+   /**
+    * Call this function when no more images are expected
+    * Finishes writing the metadata file and closes it.
+    * After calling this function, the imagestorage is read-only
+    */
    public void finished();
    public boolean isFinished();
    public void setSummaryMetadata(JSONObject md);
    public JSONObject getSummaryMetadata();
    public void setDisplayAndComments(JSONObject settings);
    public JSONObject getDisplayAndComments();
+   /**
+    * Disposes of the tagges images in the imagestorage
+    */
    public void close();
    public String getDiskLocation();
    public int lastAcquiredFrame();
