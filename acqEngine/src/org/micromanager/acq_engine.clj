@@ -312,20 +312,20 @@
   (while (and (not (@state :stop)) (. mmc isSequenceRunning))
     (Thread/sleep 5)))
 
-(defn collect-snapped-images [event out-queue]
-  (log "collect-snapped-images")
+(defn collect-snap-image [event out-queue]
+  (log "collect-snap-image")
   (doall
     (for [event1 (make-multicamera-events event)]
       (let [image
             {:pix (core getImage (event1 :camera-channel-index))
              :tags nil}]
-        (log "collect-snapped-images: "
-             (select-keys event1 [:position-index :frame-index
+        (log "collect-snap-image: "
+             (select-keys event [:position-index :frame-index
                                  :slice-index :channel-index]))
-        (let [taggedImage (make-TaggedImage (annotate-image image event1 @state (elapsed-time @state)))]
-          (when out-queue
-            (.put out-queue taggedImage))
-          taggedImage)))))
+        (when out-queue
+          (.put out-queue
+                (make-TaggedImage (annotate-image image event1 @state (elapsed-time @state)))))
+        image))))
 
 (defn return-config []
   (dorun (map set-property
@@ -381,7 +381,7 @@
 
 (defn collect [event out-queue]
   (condp = (:task event)
-                :snap (collect-snapped-images event out-queue)
+                :snap (collect-snap-image event out-queue)
                 :burst (collect-burst-images event out-queue)))
 
 (defn z-in-msp [msp z-drive]
@@ -622,11 +622,11 @@
     image-tags
     ["Width" "Height" "PixelType"]))  
 
-(defn create-image-window [tagged-images]
+(defn create-image-window [first-image]
   (let [summary {:interval-ms 0.0, :custom-intervals-ms [] :use-autofocus false, :autofocus-skip 0,
                  :relative-slices true, :keep-shutter-open-slices false, :comment "",
                  :prefix "Untitled", :root "",
-                 :time-first false, :positions (), :channels [:first], :slices-first true,
+                 :time-first false, :positions (), :channels (), :slices-first true,
                  :slices nil, :numFrames 0, :keep-shutter-open-channels false,
                  :zReference 0.0, :frames (), :save false}
 		summary-metadata (make-summary-metadata summary)
@@ -648,37 +648,34 @@
    :pixel-type (get-pixel-type)
    :binning (core getProperty (core getCameraDevice) "Binning")})
 
-(defn acquire-tagged-images []
+(defn acquire-tagged-image []
   (binding [state (atom (create-basic-state))]
     (let [event (create-basic-event)]
       (core snapImage)
-      (collect-snapped-images event nil))))
+      (annotate-image (collect-snap-image event nil) event @state nil))))
     
-(defn show-image [display tagged-images focus]
-  (let [cache (.getImageCache display)]
-    (doseq [tagged-image tagged-images]
-      (println tagged-image)
-      (.putImage cache tagged-image)
-      (.showImage display tagged-image)
-      (when focus
-        (.show display)))))
+(defn show-image [display tagged-img focus]
+  (let [myTaggedImage (make-TaggedImage tagged-img)
+        cache (.getImageCache display)]
+    (.putImage cache myTaggedImage)
+    (.showImage display myTaggedImage)
+    (when focus
+      (.show display))))
 
 (defn add-to-album []
-  (doseq [image (acquire-tagged-images)]
-    (.addToAlbum gui image)))
+  (.addToAlbum gui (make-TaggedImage (acquire-tagged-image))))
 
-(defn reset-snap-window [tagged-images]
+(defn reset-snap-window [tagged-image]
   (when-not (and @snap-window
                    ;(compatible-image? @snap-window tagged-image)
                    (not (.windowClosed @snap-window)))
     (when @snap-window (.close @snap-window))
-    (reset! snap-window (create-image-window tagged-images))))
+    (reset! snap-window (create-image-window tagged-image))))
 
 (defn do-snap []
-  (println "do-snap")
-  (let [tagged-images (acquire-tagged-images)]
-    (reset-snap-window tagged-images)
-    (show-image @snap-window tagged-images true)))
+  (let [tagged-image (acquire-tagged-image)]
+    (reset-snap-window tagged-image)
+    (show-image @snap-window tagged-image true)))
 
 ;; live mode
 
