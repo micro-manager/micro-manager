@@ -24,7 +24,7 @@
            get-msp MultiStagePosition-to-map ChannelSpec-to-map
            get-pixel-type get-current-time-str rekey
            data-object-to-map str-vector double-vector
-           get-property-value]]
+           get-property-value edt]]
         [org.micromanager.sequence-generator :only [generate-acq-sequence
                                                     make-property-sequences]])
   (:require [clojure.set])
