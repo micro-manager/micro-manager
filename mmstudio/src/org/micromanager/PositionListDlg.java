@@ -1110,7 +1110,7 @@ public void addPosition(MultiStagePosition msp, String label) {
             // check if the device busy?
             boolean busy = core_.deviceBusy(deviceName);
             int delay=500; //500 ms 
-            int period=60000;//60 sec
+            int period=600000;//600 sec
             int elapse = 0;
             while (busy && elapse<period){
                Thread.sleep(delay);
