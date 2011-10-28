@@ -51,7 +51,7 @@ extern const char* g_msg_CNTR_AXIS_UNDER_JOYSTICK_CONTROL;
 #define ERR_OFFSET 10100
 
 #ifndef WIN32
-#define WINAPI __attribute__((stdcall))
+#define WINAPI
 #define BOOL int
 #define TRUE 1
 #define FALSE 0
