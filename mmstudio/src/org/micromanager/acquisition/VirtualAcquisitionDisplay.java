@@ -55,6 +55,7 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
    final AcquisitionVirtualStack virtualStack_;
    final private ScrollbarWithLabel pSelector_;
    final private ScrollbarWithLabel tSelector_;
+   final private ScrollbarWithLabel zSelector_;
    final private MMImagePlus mmImagePlus_;
    final private int numComponents_;
    private AcquisitionEngine eng_;
@@ -242,11 +243,13 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
       applyPixelSizeCalibration(hyperImage_);
       createWindow(hyperImage_, hc_);
       tSelector_ = getTSelector();
+      zSelector_ = getZSelector();
       if (imageCache_.lastAcquiredFrame() > 1) {
          setNumFrames(1 + imageCache_.lastAcquiredFrame());
       } else {
          setNumFrames(1);
       }
+      setNumSlices(numSlices);
       setNumPositions(numPositions);
       for (int i = 0; i < numGrayChannels; ++i) {
          updateChannelLUT(i);
@@ -324,6 +327,28 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
          }
       }
       return tSelector;
+   }
+
+   private ScrollbarWithLabel getZSelector() {
+      ScrollbarWithLabel zSelector = null;
+      ImageWindow win = hyperImage_.getWindow();
+      if (win instanceof StackWindow) {
+         try {
+            zSelector = (ScrollbarWithLabel) JavaUtils.getRestrictedFieldValue((StackWindow) win, StackWindow.class, "zSelector");
+         } catch (NoSuchFieldException ex) {
+            zSelector = null;
+            ReportingUtils.logError(ex);
+         }
+      }
+      if (zSelector == null) {
+         try {
+            zSelector = (ScrollbarWithLabel) JavaUtils.getRestrictedFieldValue((StackWindow) win, StackWindow.class, "animationSelector");
+         } catch (NoSuchFieldException ex) {
+            zSelector = null;
+            ReportingUtils.logError(ex);
+         }
+      }
+      return zSelector;
    }
 
    public int rgbToGrayChannel(int channelIndex) {
@@ -481,6 +506,13 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
          ((IMMImagePlus) hyperImage_).setNFramesUnverified(n);
          tSelector_.setMaximum(n + 1);
          // JavaUtils.setRestrictedFieldValue(win, StackWindow.class, "nFrames", n);
+      }
+   }
+
+   private void setNumSlices(int n) {
+      if (zSelector_ != null) {
+         ((IMMImagePlus) hyperImage_).setNSlicesUnverified(n);
+         zSelector_.setMaximum(n + 1);
       }
    }
 
