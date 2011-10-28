@@ -6,7 +6,7 @@
 // DESCRIPTION:   Implementation of X-Cite Led Singleton Class
 //
 // COPYRIGHT:     Lumen Dynamics,
-//            Mission Bay Imaging, San Francisco, 2011
+//				  Mission Bay Imaging, San Francisco, 2011
 //                All rights reserved
 //
 // LICENSE:       This library is free software; you can redistribute it and/or
@@ -62,69 +62,69 @@ MODULE_API void InitializeModuleData()
 {
     g_pXLed = XLed::Instance();       // Initiate the XLed instance
 
-    struct tm tmNewTime;
-    __time64_t lLongTime;
+    //struct tm tmNewTime;
+    //__time64_t lLongTime;
 
-    _time64(&lLongTime);                        // Get time as 64-bit integer.
+    //_time64(&lLongTime);                        // Get time as 64-bit integer.
                                                 // Convert to local time.
-    _localtime64_s(&tmNewTime, &lLongTime );    // C4996
+    //_localtime64_s(&tmNewTime, &lLongTime );    // C4996
 
-    ofstream ofsLogfile;
+    //ofstream ofsLogfile;
 
-    XLed::Instance()->SetDebugLogFlag(XLed::Instance()->GetXLedStr(XLed::XL_LogFilename).length() > 0);
+    //XLed::Instance()->SetDebugLogFlag(XLed::Instance()->GetXLedStr(XLed::XL_LogFilename).length() > 0);
 
-    // log the InitializeModuleData function call
-    if (XLed::Instance()->GetDebugLogFlag())
-   {
-        ofsLogfile.open(XLed::Instance()->GetXLedStr(XLed::XL_LogFilename).c_str(), ios_base::out | ios_base::app);
-    }
+    //log the InitializeModuleData function call
+    //if (XLed::Instance()->GetDebugLogFlag())
+	//{
+    //    ofsLogfile.open(XLed::Instance()->GetXLedStr(XLed::XL_LogFilename).c_str(), ios_base::out | ios_base::app);
+    //}
 
-   // initialize the controller device name
-   AddAvailableDeviceName( XLed::Instance()->GetXLedStr(XLed::XL_CtrlBoardName).c_str(),  XLed::Instance()->GetXLedStr(XLed::XL_CtrlBoardName).c_str());
+	// initialize the controller device name
+	AddAvailableDeviceName( XLed::Instance()->GetXLedStr(XLed::XL_CtrlBoardName).c_str(),  XLed::Instance()->GetXLedStr(XLed::XL_CtrlBoardName).c_str());
 
-    if (ofsLogfile.is_open())
-    {
-        ofsLogfile << "[" << tmNewTime.tm_year << "::" << tmNewTime.tm_mon << "::" << tmNewTime.tm_mday << "::" << tmNewTime.tm_hour << "::" << tmNewTime.tm_min << "::" << tmNewTime.tm_sec << "]   ";
-        ofsLogfile << "<XLed::AddAvailableDeviceName> :: XLedCtrl = (" << XLed::Instance()->GetXLedStr(XLed::XL_CtrlBoardName).c_str() << ")\n" << flush;
-        ofsLogfile.close();
-    }
+    //if (ofsLogfile.is_open())
+    //{
+    //    ofsLogfile << "[" << tmNewTime.tm_year << "::" << tmNewTime.tm_mon << "::" << tmNewTime.tm_mday << "::" << tmNewTime.tm_hour << "::" << tmNewTime.tm_min << "::" << tmNewTime.tm_sec << "]   ";
+    //    ofsLogfile << "<XLed::AddAvailableDeviceName> :: XLedCtrl = (" << XLed::Instance()->GetXLedStr(XLed::XL_CtrlBoardName).c_str() << ")\n" << flush;
+    //    ofsLogfile.close();
+    //}
 
-   // initialize the W LED device name
-   AddAvailableDeviceName(XLed::Instance()->GetXLedStr(XLed::XL_WLedDevName).c_str(), XLed::Instance()->GetXLedStr(XLed::XL_WLedDevName).c_str());
+	// initialize the W LED device name
+	AddAvailableDeviceName(XLed::Instance()->GetXLedStr(XLed::XL_WLedDevName).c_str(), XLed::Instance()->GetXLedStr(XLed::XL_WLedDevName).c_str());
 
-    if (ofsLogfile.is_open())
-    {
-        ofsLogfile << "[" << tmNewTime.tm_year << "::" << tmNewTime.tm_mon << "::" << tmNewTime.tm_mday << "::" << tmNewTime.tm_hour << "::" << tmNewTime.tm_min << "::" << tmNewTime.tm_sec << "]   ";
-        ofsLogfile << "<XLed::AddAvailableDeviceName> :: XLedDevW = (" << XLed::Instance()->GetXLedStr(XLed::XL_WLedDevName).c_str() << ")\n" << flush;
-    }
+    //if (ofsLogfile.is_open())
+    //{
+    //    ofsLogfile << "[" << tmNewTime.tm_year << "::" << tmNewTime.tm_mon << "::" << tmNewTime.tm_mday << "::" << tmNewTime.tm_hour << "::" << tmNewTime.tm_min << "::" << tmNewTime.tm_sec << "]   ";
+    //    ofsLogfile << "<XLed::AddAvailableDeviceName> :: XLedDevW = (" << XLed::Instance()->GetXLedStr(XLed::XL_WLedDevName).c_str() << ")\n" << flush;
+    //}
 
-   // initialize the X LED device name
-   AddAvailableDeviceName(XLed::Instance()->GetXLedStr(XLed::XL_XLedDevName).c_str(), XLed::Instance()->GetXLedStr(XLed::XL_XLedDevName).c_str());
+	// initialize the X LED device name
+	AddAvailableDeviceName(XLed::Instance()->GetXLedStr(XLed::XL_XLedDevName).c_str(), XLed::Instance()->GetXLedStr(XLed::XL_XLedDevName).c_str());
 
-    if (ofsLogfile.is_open())
-    {
-        ofsLogfile << "[" << tmNewTime.tm_year << "::" << tmNewTime.tm_mon << "::" << tmNewTime.tm_mday << "::" << tmNewTime.tm_hour << "::" << tmNewTime.tm_min << "::" << tmNewTime.tm_sec << "]   ";
-        ofsLogfile << "<XLed::AddAvailableDeviceName> :: XLedDevX = (" << XLed::Instance()->GetXLedStr(XLed::XL_XLedDevName).c_str() << ")\n" << flush;
-    }
+    //if (ofsLogfile.is_open())
+    //{
+    //    ofsLogfile << "[" << tmNewTime.tm_year << "::" << tmNewTime.tm_mon << "::" << tmNewTime.tm_mday << "::" << tmNewTime.tm_hour << "::" << tmNewTime.tm_min << "::" << tmNewTime.tm_sec << "]   ";
+    //    ofsLogfile << "<XLed::AddAvailableDeviceName> :: XLedDevX = (" << XLed::Instance()->GetXLedStr(XLed::XL_XLedDevName).c_str() << ")\n" << flush;
+    //}
 
-   // initialize the Y LED device name
-   AddAvailableDeviceName(XLed::Instance()->GetXLedStr(XLed::XL_YLedDevName).c_str(), XLed::Instance()->GetXLedStr(XLed::XL_YLedDevName).c_str());
+	// initialize the Y LED device name
+	AddAvailableDeviceName(XLed::Instance()->GetXLedStr(XLed::XL_YLedDevName).c_str(), XLed::Instance()->GetXLedStr(XLed::XL_YLedDevName).c_str());
 
-    if (ofsLogfile.is_open())
-    {
-        ofsLogfile << "[" << tmNewTime.tm_year << "::" << tmNewTime.tm_mon << "::" << tmNewTime.tm_mday << "::" << tmNewTime.tm_hour << "::" << tmNewTime.tm_min << "::" << tmNewTime.tm_sec << "]   ";
-        ofsLogfile << "<XLed::AddAvailableDeviceName> :: XLedDevY = (" << XLed::Instance()->GetXLedStr(XLed::XL_YLedDevName).c_str() << ")\n" << flush;
-    }
+    //if (ofsLogfile.is_open())
+    //{
+    //    ofsLogfile << "[" << tmNewTime.tm_year << "::" << tmNewTime.tm_mon << "::" << tmNewTime.tm_mday << "::" << tmNewTime.tm_hour << "::" << tmNewTime.tm_min << "::" << tmNewTime.tm_sec << "]   ";
+    //    ofsLogfile << "<XLed::AddAvailableDeviceName> :: XLedDevY = (" << XLed::Instance()->GetXLedStr(XLed::XL_YLedDevName).c_str() << ")\n" << flush;
+    //}
 
-   // initialize the Z LED device name
-   AddAvailableDeviceName(XLed::Instance()->GetXLedStr(XLed::XL_ZLedDevName).c_str(), XLed::Instance()->GetXLedStr(XLed::XL_ZLedDevName).c_str());
+	// initialize the Z LED device name
+	AddAvailableDeviceName(XLed::Instance()->GetXLedStr(XLed::XL_ZLedDevName).c_str(), XLed::Instance()->GetXLedStr(XLed::XL_ZLedDevName).c_str());
 
-    if (ofsLogfile.is_open())
-    {
-        ofsLogfile << "[" << tmNewTime.tm_year << "::" << tmNewTime.tm_mon << "::" << tmNewTime.tm_mday << "::" << tmNewTime.tm_hour << "::" << tmNewTime.tm_min << "::" << tmNewTime.tm_sec << "]   ";
-        ofsLogfile << "<XLed::AddAvailableDeviceName> :: XLedDevZ = (" << XLed::Instance()->GetXLedStr(XLed::XL_ZLedDevName).c_str() << ")\n" << flush;
-        ofsLogfile.close();
-    }
+    //if (ofsLogfile.is_open())
+    //{
+    //    ofsLogfile << "[" << tmNewTime.tm_year << "::" << tmNewTime.tm_mon << "::" << tmNewTime.tm_mday << "::" << tmNewTime.tm_hour << "::" << tmNewTime.tm_min << "::" << tmNewTime.tm_sec << "]   ";
+    //    ofsLogfile << "<XLed::AddAvailableDeviceName> :: XLedDevZ = (" << XLed::Instance()->GetXLedStr(XLed::XL_ZLedDevName).c_str() << ")\n" << flush;
+    //    ofsLogfile.close();
+   // }
 }
 
 //
@@ -135,174 +135,174 @@ MODULE_API MM::Device* CreateDevice(const char* sDeviceName)
     // checking for null pinter
     if (sDeviceName == 0) return 0;
 
-    struct tm tmNewTime;
-    __time64_t lLongTime;
+    //struct tm tmNewTime;
+    //__time64_t lLongTime;
 
-    _time64(&lLongTime);                        // Get time as 64-bit integer.
+    //_time64(&lLongTime);                        // Get time as 64-bit integer.
                                                 // Convert to local time.
-    _localtime64_s(&tmNewTime, &lLongTime );    // C4996
+    //_localtime64_s(&tmNewTime, &lLongTime );    // C4996
 
-    std::ofstream ofsLogfile;
+    //std::ofstream ofsLogfile;
 
-    if (XLed::Instance()->GetDebugLogFlag())
-   {
-        ofsLogfile.open(XLed::Instance()->GetXLedStr(XLed::XL_LogFilename).c_str(), ios_base::out | ios_base::app);
-    }
+    //if (XLed::Instance()->GetDebugLogFlag())
+	//{
+    //    ofsLogfile.open(XLed::Instance()->GetXLedStr(XLed::XL_LogFilename).c_str(), ios_base::out | ios_base::app);
+    //}
 
-    if (ofsLogfile.is_open())
-    {
-        ofsLogfile << "[" << tmNewTime.tm_year << "::" << tmNewTime.tm_mon << "::" << tmNewTime.tm_mday << "::" << tmNewTime.tm_hour << "::" << tmNewTime.tm_min << "::" << tmNewTime.tm_sec << "]   ";
-        ofsLogfile << "<XLed::CreateDevice> deviceName = (" << sDeviceName << ") :: XLedCtrl = (" << XLed::Instance()->GetXLedStr(XLed::XL_CtrlBoardName).c_str() << ")" << flush;
-    }
+    //if (ofsLogfile.is_open())
+    //{
+    //    ofsLogfile << "[" << tmNewTime.tm_year << "::" << tmNewTime.tm_mon << "::" << tmNewTime.tm_mday << "::" << tmNewTime.tm_hour << "::" << tmNewTime.tm_min << "::" << tmNewTime.tm_sec << "]   ";
+    //    ofsLogfile << "<XLed::CreateDevice> deviceName = (" << sDeviceName << ") :: XLedCtrl = (" << XLed::Instance()->GetXLedStr(XLed::XL_CtrlBoardName).c_str() << ")" << flush;
+    //}
 
     if (strcmp(sDeviceName, XLed::Instance()->GetXLedStr(XLed::XL_CtrlBoardName).c_str()) == 0) 
     {
         // if device name is XLed Controller, create the XLed device
         XLedCtrl*  pXLedCtrl = new XLedCtrl();
 
-        if (ofsLogfile.is_open())
-        {
-            if (pXLedCtrl == NULL)
-                ofsLogfile << "<FAIL TO ALLOCATE>\n" << flush;
-            else
-                ofsLogfile << "<SUCCESSFULLY ADD>\n" << flush;
-            ofsLogfile.close();
-        }
+        //if (ofsLogfile.is_open())
+        //{
+        //    if (pXLedCtrl == NULL)
+        //        ofsLogfile << "<FAIL TO ALLOCATE>\n" << flush;
+        //    else
+        //        ofsLogfile << "<SUCCESSFULLY ADD>\n" << flush;
+        //    ofsLogfile.close();
+        //}
 
         return pXLedCtrl;
     }
-    else
-    {
-        if (ofsLogfile.is_open())
-        {
-            ofsLogfile << "<UNMATCHED DEVICE>\n" << flush;
-        }
-    }
+    //else
+    //{
+    //    if (ofsLogfile.is_open())
+    //    {
+    //        ofsLogfile << "<UNMATCHED DEVICE>\n" << flush;
+    //    }
+    //}
 
-    if (ofsLogfile.is_open())
-    {
-        ofsLogfile << "[" << tmNewTime.tm_year << "::" << tmNewTime.tm_mon << "::" << tmNewTime.tm_mday << "::" << tmNewTime.tm_hour << "::" << tmNewTime.tm_min << "::" << tmNewTime.tm_sec << "]   ";
-        ofsLogfile << "<XLed::CreateDevice> deviceName = (" << sDeviceName << ") :: XLedDevW = (" << XLed::Instance()->GetXLedStr(XLed::XL_WLedDevName).c_str() << ")" << flush;
-    }
+    //if (ofsLogfile.is_open())
+    //{
+    //    ofsLogfile << "[" << tmNewTime.tm_year << "::" << tmNewTime.tm_mon << "::" << tmNewTime.tm_mday << "::" << tmNewTime.tm_hour << "::" << tmNewTime.tm_min << "::" << tmNewTime.tm_sec << "]   ";
+    //    ofsLogfile << "<XLed::CreateDevice> deviceName = (" << sDeviceName << ") :: XLedDevW = (" << XLed::Instance()->GetXLedStr(XLed::XL_WLedDevName).c_str() << ")" << flush;
+    //}
 
     if (strcmp(sDeviceName, XLed::Instance()->GetXLedStr(XLed::XL_WLedDevName).c_str()) == 0)
     {
         // if device name is XY Stage, create the XY Stage Device 
         XLedDev* pXLedDevW =  new XLedDev(XLed::XL_LedDevW);
 
-        if (ofsLogfile.is_open())
-        {
-            if (pXLedDevW == NULL)
-                ofsLogfile << "<FAIL TO ALLOCATE>\n" << flush;
-            else
-                ofsLogfile << "<SUCCESSFULLY ADD>\n" << flush;
-            ofsLogfile.close();
-        }
+        //if (ofsLogfile.is_open())
+        //{
+        //    if (pXLedDevW == NULL)
+        //        ofsLogfile << "<FAIL TO ALLOCATE>\n" << flush;
+        //    else
+        //        ofsLogfile << "<SUCCESSFULLY ADD>\n" << flush;
+        //    ofsLogfile.close();
+        //}
 
         return pXLedDevW;
     }
-    else
-    {
-        if (ofsLogfile.is_open())
-        {
-            ofsLogfile << "<UNMATCHED DEVICE>\n" << flush;
-        }
-    }
+    //else
+    //{
+    //    if (ofsLogfile.is_open())
+    //    {
+    //        ofsLogfile << "<UNMATCHED DEVICE>\n" << flush;
+    //    }
+    //}
 
-    if (ofsLogfile.is_open())
-    {
-        ofsLogfile << "[" << tmNewTime.tm_year << "::" << tmNewTime.tm_mon << "::" << tmNewTime.tm_mday << "::" << tmNewTime.tm_hour << "::" << tmNewTime.tm_min << "::" << tmNewTime.tm_sec << "]   ";
-        ofsLogfile << "<XLed::CreateDevice> deviceName = (" << sDeviceName << ") :: XLedDevX = (" << XLed::Instance()->GetXLedStr(XLed::XL_XLedDevName).c_str() << ")" << flush;
-    }
+    //if (ofsLogfile.is_open())
+    //{
+    //    ofsLogfile << "[" << tmNewTime.tm_year << "::" << tmNewTime.tm_mon << "::" << tmNewTime.tm_mday << "::" << tmNewTime.tm_hour << "::" << tmNewTime.tm_min << "::" << tmNewTime.tm_sec << "]   ";
+    //    ofsLogfile << "<XLed::CreateDevice> deviceName = (" << sDeviceName << ") :: XLedDevX = (" << XLed::Instance()->GetXLedStr(XLed::XL_XLedDevName).c_str() << ")" << flush;
+    //}
 
     if (strcmp(sDeviceName, XLed::Instance()->GetXLedStr(XLed::XL_XLedDevName).c_str()) == 0)
     {
         // if device name is Z Stage, create the Z Stage Device 
         XLedDev* pXLedDevX = new XLedDev(XLed::XL_LedDevX);
 
-        if (ofsLogfile.is_open())
-        {
-            if (pXLedDevX == NULL)
-                ofsLogfile << "<FAIL TO ALLOCATE>\n" << flush;
-            else
-                ofsLogfile << "<SUCCESSFULLY ADD>\n" << flush;
-            ofsLogfile.close();
-        }
+        //if (ofsLogfile.is_open())
+        //{
+        //    if (pXLedDevX == NULL)
+        //        ofsLogfile << "<FAIL TO ALLOCATE>\n" << flush;
+        //    else
+        //        ofsLogfile << "<SUCCESSFULLY ADD>\n" << flush;
+        //    ofsLogfile.close();
+        //}
 
         return pXLedDevX;
     }
-    else
-    {
-        if (ofsLogfile.is_open())
-        {
-            ofsLogfile << "<UNMATCHED DEVICE>\n" << flush;
-        }
-    }
+    //else
+    //{
+    //    if (ofsLogfile.is_open())
+    //    {
+    //        ofsLogfile << "<UNMATCHED DEVICE>\n" << flush;
+    //    }
+    //}
 
-    if (ofsLogfile.is_open())
-    {
-        ofsLogfile << "[" << tmNewTime.tm_year << "::" << tmNewTime.tm_mon << "::" << tmNewTime.tm_mday << "::" << tmNewTime.tm_hour << "::" << tmNewTime.tm_min << "::" << tmNewTime.tm_sec << "]   ";
-        ofsLogfile << "<XLed::CreateDevice> deviceName = (" << sDeviceName << ") :: XLedDevY = (" << XLed::Instance()->GetXLedStr(XLed::XL_YLedDevName).c_str() << ")" << flush;
-    }
+    //if (ofsLogfile.is_open())
+    //{
+    //    ofsLogfile << "[" << tmNewTime.tm_year << "::" << tmNewTime.tm_mon << "::" << tmNewTime.tm_mday << "::" << tmNewTime.tm_hour << "::" << tmNewTime.tm_min << "::" << tmNewTime.tm_sec << "]   ";
+    //    ofsLogfile << "<XLed::CreateDevice> deviceName = (" << sDeviceName << ") :: XLedDevY = (" << XLed::Instance()->GetXLedStr(XLed::XL_YLedDevName).c_str() << ")" << flush;
+    //}
 
     if (strcmp(sDeviceName, XLed::Instance()->GetXLedStr(XLed::XL_YLedDevName).c_str()) == 0)
     {
         // if device name is Z Stage, create the Z Stage Device 
         XLedDev* pXLedDevY = new XLedDev(XLed::XL_LedDevY);
 
-        if (ofsLogfile.is_open())
-        {
-            if (pXLedDevY == NULL)
-                ofsLogfile << "<FAIL TO ALLOCATE>\n" << flush;
-            else
-                ofsLogfile << "<SUCCESSFULLY ADD>\n" << flush;
-            ofsLogfile.close();
-        }
+        //if (ofsLogfile.is_open())
+        //{
+        //    if (pXLedDevY == NULL)
+        //        ofsLogfile << "<FAIL TO ALLOCATE>\n" << flush;
+        //    else
+        //        ofsLogfile << "<SUCCESSFULLY ADD>\n" << flush;
+        //    ofsLogfile.close();
+        //}
 
         return pXLedDevY;
     }
-    else
-    {
-        if (ofsLogfile.is_open())
-        {
-            ofsLogfile << "<UNMATCHED DEVICE>\n" << flush;
-        }
-    }
+    //else
+    //{
+    //    if (ofsLogfile.is_open())
+    //    {
+    //        ofsLogfile << "<UNMATCHED DEVICE>\n" << flush;
+    //    }
+    //}
 
-    if (ofsLogfile.is_open())
-    {
-        ofsLogfile << "[" << tmNewTime.tm_year << "::" << tmNewTime.tm_mon << "::" << tmNewTime.tm_mday << "::" << tmNewTime.tm_hour << "::" << tmNewTime.tm_min << "::" << tmNewTime.tm_sec << "]   ";
-        ofsLogfile << "<XLed::CreateDevice> deviceName = (" << sDeviceName << ") :: XLedDevZ = (" << XLed::Instance()->GetXLedStr(XLed::XL_ZLedDevName).c_str() << ")" << flush;
-    }
+    //if (ofsLogfile.is_open())
+    //{
+    //    ofsLogfile << "[" << tmNewTime.tm_year << "::" << tmNewTime.tm_mon << "::" << tmNewTime.tm_mday << "::" << tmNewTime.tm_hour << "::" << tmNewTime.tm_min << "::" << tmNewTime.tm_sec << "]   ";
+    //    ofsLogfile << "<XLed::CreateDevice> deviceName = (" << sDeviceName << ") :: XLedDevZ = (" << XLed::Instance()->GetXLedStr(XLed::XL_ZLedDevName).c_str() << ")" << flush;
+    //}
 
     if (strcmp(sDeviceName, XLed::Instance()->GetXLedStr(XLed::XL_ZLedDevName).c_str()) == 0)
     {
         // if device name is Z Stage, create the Z Stage Device 
         XLedDev* pXLedDevZ = new XLedDev(XLed::XL_LedDevZ);
 
-        if (ofsLogfile.is_open())
-        {
-            if (pXLedDevZ == NULL)
-                ofsLogfile << "<FAIL TO ALLOCATE>\n" << flush;
-            else
-                ofsLogfile << "<SUCCESSFULLY ADD>\n" << flush;
-            ofsLogfile.close();
-        }
+        //if (ofsLogfile.is_open())
+        //{
+        //    if (pXLedDevZ == NULL)
+        //        ofsLogfile << "<FAIL TO ALLOCATE>\n" << flush;
+        //    else
+        //        ofsLogfile << "<SUCCESSFULLY ADD>\n" << flush;
+        //    ofsLogfile.close();
+        //}
 
         return pXLedDevZ;
     }
-    else
-    {
-        if (ofsLogfile.is_open())
-        {
-            ofsLogfile << "<UNMATCHED DEVICE>\n" << flush;
-        }
-    }
+    //else
+    //{
+    //    if (ofsLogfile.is_open())
+    //    {
+    //        ofsLogfile << "<UNMATCHED DEVICE>\n" << flush;
+    //    }
+    //}
 
-    if (ofsLogfile.is_open())
-    {
-        ofsLogfile.close();
-    }
+    //if (ofsLogfile.is_open())
+    //{
+    //    ofsLogfile.close();
+    //}
 
     // device name is not recognized, return null
     return NULL;
@@ -405,9 +405,9 @@ XLed::XLed()
     XLed::m_sXLedStr[XLed::XL_TriggerDelayTimeLabel]    = "L.16 Trigger Delay Time (0-65535)";        // 47: Led device trigger delay time label
     XLed::m_sXLedStr[XLed::XL_PWMUnitsLabel]            = "L.17 IPG Units (0:uS/1:mS/2:S)";           // 48: Led device PWM units label
     XLed::m_sXLedStr[XLed::XL_LedTempLabel]             = "L.18 Current Temperature (Deg.C)";                 // 49: Led device temperature label
-    XLed::m_sXLedStr[XLed::XL_LedMaxTempLabel]          = "L.19 Max Allowed Temperature (Deg.C)";     // 50: Led device max allowed temperature label [Â°C]
-    XLed::m_sXLedStr[XLed::XL_LedMinTempLabel]          = "L.20 Min Allowed Temperature (Deg.C)";     // 51: Led device min allowed temperature label [Â°C]
-    XLed::m_sXLedStr[XLed::XL_LedTempHystLabel]         = "L.21 Temperature Hysteresis (Deg.C)";      // 52: Led device temperature hysteresis label [Â°C]
+    XLed::m_sXLedStr[XLed::XL_LedMaxTempLabel]          = "L.19 Max Allowed Temperature (Deg.C)";     // 50: Led device max allowed temperature label [°C]
+    XLed::m_sXLedStr[XLed::XL_LedMinTempLabel]          = "L.20 Min Allowed Temperature (Deg.C)";     // 51: Led device min allowed temperature label [°C]
+    XLed::m_sXLedStr[XLed::XL_LedTempHystLabel]         = "L.21 Temperature Hysteresis (Deg.C)";      // 52: Led device temperature hysteresis label [°C]
     XLed::m_sXLedStr[XLed::XL_Reserved]                 = "Reserved";                                 // 53: Led device software version label
 }
 
@@ -479,4 +479,3 @@ unsigned char* XLed::GetParameter(int nParameterID)
     if (nParameterID >= XL_MaxParameters) return NULL;
     return &m_sParamData[nParameterID * XL_MaxPropSize];
 }
-
