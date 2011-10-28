@@ -493,7 +493,7 @@ int XLedCtrl::Initialize()
 
         char sCtrlDescLabel[120];
         memset(sCtrlDescLabel, 0, 120);
-        sprintf(sCtrlDescLabel, "%s%s", XLed::Instance()->GetXLedStr(XLed::XL_CtrlBoardDescLabel), MM::g_Keyword_Description);
+        sprintf(sCtrlDescLabel, "%s%s", XLed::Instance()->GetXLedStr(XLed::XL_CtrlBoardDescLabel).c_str(), MM::g_Keyword_Description);
         ret = CreateProperty(sCtrlDescLabel/*MM::g_Keyword_Description*/, XLed::Instance()->GetXLedStr(XLed::XL_CtrlBoardDesc).c_str(), MM::String, true);
 
         if (nDebugLog > 0)
