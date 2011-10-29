@@ -444,10 +444,21 @@ public class AddDeviceDlg extends JDialog implements MouseListener,
                }
 
                if (peripherals.size() > 0) {
-                  PeripheralSetupDlg dlgp = new PeripheralSetupDlg(model_,
-                        core_, dev.getName(), peripherals);
+                  PeripheralSetupDlg dlgp = new PeripheralSetupDlg(model_, core_, dev.getName(), peripherals);
                   dlgp.setVisible(true);
-               }
+                  Device sel[] = dlgp.getSelectedPeripherals();
+                  for (int i=0; i<sel.length; i++) {
+                     try {
+                        core_.loadDevice(sel[i].getName(), sel[i].getLibrary(), sel[i].getAdapterName());
+                        core_.initializeDevice(sel[i].getName());
+                        model_.addDevice(sel[i]);
+                     } catch (MMConfigFileException e) {
+                        JOptionPane.showMessageDialog(this, e.getMessage());
+                     } catch (Exception e) {
+                        JOptionPane.showMessageDialog(this, e.getMessage());
+                     }
+                  }
+               } 
 
             }
          }

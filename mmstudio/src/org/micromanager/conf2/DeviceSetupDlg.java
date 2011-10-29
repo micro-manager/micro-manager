@@ -185,6 +185,16 @@ public class DeviceSetupDlg extends MMDialog {
          return;
       }
       
+      if (d.isInitialized()) {
+         try {
+            core.unloadDevice(d.getName());
+            core.loadDevice(d.getName(), d.getLibrary(), d.getAdapterName());
+         } catch (Exception e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+         }
+      }
+      
       if (initializeDevice())
          dispose();
       else

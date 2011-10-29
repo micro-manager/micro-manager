@@ -267,24 +267,37 @@ public class PeripheralSetupDlg extends MMDialog {
    }
 
    public void onOK() {
-      try {
-         DeviceTable_TableModel tmd = (DeviceTable_TableModel) deviceTable_.getModel();
-
-         Vector<String> hubs = new Vector<String>();
-         for (int i=0; i < peripherals_.size(); i++) {
-            hubs.add(new String(hub_));
-         }
-         Vector<Boolean> sel = tmd.getSelected();
-         model_.AddSelectedPeripherals(core_, peripherals_, hubs, sel);
-         model_.loadDeviceDataFromHardware(core_);
-      } catch (Exception e) {
-         handleError(e.getMessage());
-      } finally {
-         dispose();
-      }
+//      try {
+//         DeviceTable_TableModel tmd = (DeviceTable_TableModel) deviceTable_.getModel();
+//
+//         Vector<String> hubs = new Vector<String>();
+//         for (int i=0; i < peripherals_.size(); i++) {
+//            hubs.add(new String(hub_));
+//         }
+//         Vector<Boolean> sel = tmd.getSelected();
+//         model_.AddSelectedPeripherals(core_, peripherals_, hubs, sel);
+//         model_.loadDeviceDataFromHardware(core_);
+//      } catch (Exception e) {
+//         handleError(e.getMessage());
+//      } finally {
+//         dispose();
+//      }
+      
+      dispose();
    }
    
    public void onCancel() {
       dispose();
+   }
+
+   public Device[] getSelectedPeripherals() {
+      DeviceTable_TableModel tmd = (DeviceTable_TableModel) deviceTable_.getModel();
+      Vector<Device> sel = new Vector<Device>();
+      Vector<Boolean> selFlags = tmd.getSelected();
+      for (int i=0; i<peripherals_.size(); i++) {
+         if (selFlags.get(i))
+            sel.add(peripherals_.get(i));
+      }
+      return sel.toArray(new Device[sel.size()]);
    }
 }

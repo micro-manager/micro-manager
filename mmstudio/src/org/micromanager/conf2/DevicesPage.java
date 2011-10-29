@@ -31,6 +31,7 @@ import java.util.Vector;
 import java.util.prefs.Preferences;
 
 import javax.swing.JButton;
+import javax.swing.JOptionPane;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.ListSelectionModel;
@@ -196,16 +197,17 @@ public class DevicesPage extends PagePanel implements ListSelectionListener {
    
 
    protected void editPeripherals() {
-      int sel = deviceTable_.getSelectedRow();
-      if (sel < 0)
+      int selRow = deviceTable_.getSelectedRow();
+      if (selRow < 0)
          return;      
-      String devName = (String)deviceTable_.getValueAt(sel, 0);
+      String devName = (String)deviceTable_.getValueAt(selRow, 0);
       
       Device dev = model_.findDevice(devName);
 
       String installed[] = dev.getPeripherals();
       Vector<Device> peripherals = new Vector<Device>();
 
+      // find which devices can be installed
       for (int i = 0; i < installed.length; i++) {
          try {
             if (model_.findDevice(installed[i]) == null) {
@@ -220,16 +222,54 @@ public class DevicesPage extends PagePanel implements ListSelectionListener {
          }
       }
 
+      // display dialog and load selected
       if (peripherals.size() > 0) {
          PeripheralSetupDlg dlgp = new PeripheralSetupDlg(model_, core_, dev.getName(), peripherals);
          dlgp.setVisible(true);
+         Device sel[] = dlgp.getSelectedPeripherals();
+         for (int i=0; i<sel.length; i++) {
+            try {
+               core_.loadDevice(sel[i].getName(), sel[i].getLibrary(), sel[i].getAdapterName());
+               core_.initializeDevice(sel[i].getName());
+               model_.addDevice(sel[i]);
+            } catch (MMConfigFileException e) {
+               JOptionPane.showMessageDialog(this, e.getMessage());
+            } catch (Exception e) {
+               JOptionPane.showMessageDialog(this, e.getMessage());
+            }
+         }
+         rebuildTable();
       } else {
          handleError("There are no available peripheral devices.");
       }
    }
 
    private void editDevice() {
+      int selRow = deviceTable_.getSelectedRow();
+      if (selRow < 0)
+         return;      
+      String devName = (String)deviceTable_.getValueAt(selRow, 0);
       
+      Device dev = model_.findDevice(devName);
+      try {
+         dev.loadDataFromHardware(core_);
+      } catch (Exception e) {
+         // TODO Auto-generated catch block
+         e.printStackTrace();
+      }
+      DeviceSetupDlg dlg = new DeviceSetupDlg(model_, core_, dev);
+      dlg.setVisible(true);
+      
+      if (!dev.isInitialized()) {
+         // user canceled or things did not work out
+         model_.removeDevice(dev.getName());
+         try {
+            core_.unloadDevice(dev.getName());
+         } catch (Exception e) {
+            JOptionPane.showMessageDialog(this, e.getMessage());
+         }
+         rebuildTable();
+      }
    }
 
    protected void removeDevice() {
@@ -283,11 +323,7 @@ public class DevicesPage extends PagePanel implements ListSelectionListener {
 			model_.removeDuplicateComPorts();
 			rebuildTable();
 			if (fromNextPage) {
-				try {
-					core_.unloadAllDevices();
-				} catch (Exception e) {
-					handleError(e.getMessage());
-				}
+			   // do nothing for now
 			}
 			return true;
 		} catch (Exception e2) {
