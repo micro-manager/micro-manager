@@ -298,7 +298,7 @@ public:
    int Initialize();
    int Shutdown();
 
-   MM::DeviceDetectionStatus LED::DetectDevice(void);
+   MM::DeviceDetectionStatus DetectDevice(void);
 
    void GetName (char* pszName) const;
    bool Busy();
