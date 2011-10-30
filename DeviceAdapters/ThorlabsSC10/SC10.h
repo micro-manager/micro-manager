@@ -72,4 +72,4 @@ private:
 };
 
 
-#endif _SC10_H_
+#endif //_SC10_H_
