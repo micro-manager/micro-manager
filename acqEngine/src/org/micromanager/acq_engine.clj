@@ -308,7 +308,7 @@
             (when (core isBufferOverflowed)
               (swap! state assoc :stop true)
               (ReportingUtils/showError "Circular buffer overflowed."))))
-        (flatten (map make-multicamera-events) (event :burst-data)))))
+        (flatten (map make-multicamera-events (event :burst-data))))))
   (while (and (not (@state :stop)) (. mmc isSequenceRunning))
     (Thread/sleep 5)))
 
