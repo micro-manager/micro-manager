@@ -313,19 +313,15 @@
     (Thread/sleep 5)))
 
 (defn collect-snap-image [event out-queue]
-  (log "collect-snap-image")
-  (doall
-    (for [event1 (make-multicamera-events event)]
-      (let [image
-            {:pix (core getImage (event1 :camera-channel-index))
-             :tags nil}]
-        (log "collect-snap-image: "
-             (select-keys event [:position-index :frame-index
-                                 :slice-index :channel-index]))
-        (when out-queue
-          (.put out-queue
-                (make-TaggedImage (annotate-image image event1 @state (elapsed-time @state)))))
-        image))))
+  (let [image
+        {:pix (core getImage)
+         :tags nil}]
+    (select-keys event [:position-index :frame-index
+                        :slice-index :channel-index])
+    (when out-queue
+      (.put out-queue
+            (make-TaggedImage (annotate-image image event @state (elapsed-time @state)))))
+    image))
 
 (defn return-config []
   (dorun (map set-property
