@@ -216,6 +216,7 @@ private:
    double stepSizeUm_;
    double answerTimeoutMs_;
    bool sequenceable_;
+   bool hasRingBuffer_;
    long nrEvents_;
    long curSteps_;
 };

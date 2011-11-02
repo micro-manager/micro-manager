@@ -1467,6 +1467,7 @@ ZStage::ZStage() :
    stepSizeUm_(0.1),
    answerTimeoutMs_(1000),
    sequenceable_(false),
+   hasRingBuffer_(false),
    nrEvents_(50)
 {
    InitializeDefaultErrorMessages();
@@ -1517,14 +1518,8 @@ int ZStage::Initialize()
    if (ret != DEVICE_OK)
        return ret;
 
-   // set stage step size and resolution
-   //double res;
-   //int ret = GetResolution(res);
-   //if (ret != DEVICE_OK)
-   //   return ret;
-
-   //if (res <= 0.0)
-   //   return ERR_INVALID_STEP_SIZE;
+   // needs to be called first since it sets hasRingBuffer_
+   GetControllerInfo();
 
    stepSizeUm_ = 0.1; //res;
 
@@ -1542,8 +1537,6 @@ int ZStage::Initialize()
       AddAllowedValue(spn, "No");
       AddAllowedValue(spn, "Yes");
    }
-
-   // GetControllerInfo();
       
    initialized_ = true;
    return DEVICE_OK;
@@ -1769,23 +1762,7 @@ int ZStage::GetLimits(double& /*min*/, double& /*max*/)
 
 bool ZStage::HasRingBuffer()
 {
-   ClearPort();
-
-   string answer;
-   int ret = QueryCommand("RM", answer); 
-   if (ret != DEVICE_OK)
-      return false;
-
-   if (answer.substr(0,2).compare(":A") == 0 || answer.substr(1,2).compare(":A") == 0)
-   {
-      int ret = QueryCommand("TTL", answer); 
-      if (ret != DEVICE_OK)
-         return false;
-      if (answer.substr(0,2).compare(":A") == 0 || answer.substr(1,2).compare(":A") == 0)
-         return true;
-   }
-      
-   return false;
+   return hasRingBuffer_;
 }
 
 
@@ -1882,39 +1859,21 @@ int ZStage::AddToStageSequence(double position)
  */
 int ZStage::GetControllerInfo()
 {
-   int ret = SendCommand("BU X");
+   std::string answer;
+   int ret = QueryCommand("BU X", answer);
    if (ret != DEVICE_OK)
       return ret;
 
-   std::string answer;
-   unsigned char cInfo[MM::MaxStrLength];
-   unsigned long charsRead = 0;
-   unsigned long readThisRead;
-   MM::MMTime startTime = GetCurrentMMTime();
-   int counter = 0;
-
-   while ( (GetCurrentMMTime() - startTime < MM::MMTime(300000) )  && ret == DEVICE_OK) 
+   std::istringstream iss(answer);
+   std::string token;
+   while (getline(iss, token, '\r'))
    {
-      ret = ReadFromComPort(port_.c_str(), cInfo + charsRead, MM::MaxStrLength - charsRead, readThisRead);
-      if (ret == DEVICE_OK && readThisRead > 0)
-      {
-         charsRead += readThisRead;
-         startTime = GetCurrentMMTime();
-      }
-      counter++;     
+      if (token == "RING BUFFER")
+         hasRingBuffer_ = true;
+      // TODO: add in tests for other capabilities/devices
    }
 
-   cInfo[charsRead] = 0;
-   char * pch;
-   // printf ("Splitting string \"%s\" into tokens:\n",charsRead);
-   pch = strtok ((char*) cInfo,"\r");
-   while (pch != NULL)
-   {
-      printf ("%s\n",pch);
-      pch = strtok (NULL, "\r");
-   }
-
-   LogMessage("That was fun");
+   LogMessage(answer.c_str(), false);
 
    return DEVICE_OK;
 }
