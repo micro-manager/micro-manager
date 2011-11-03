@@ -98,6 +98,8 @@ import org.micromanager.utils.TooltipTextMaker;
 import com.swtdesigner.SwingResourceManager;
 import java.awt.BorderLayout;
 import java.awt.CardLayout;
+import java.awt.FlowLayout;
+import java.awt.GridLayout;
 import org.micromanager.acquisition.ComponentTitledBorder;
 import org.micromanager.utils.FileDialogs;
 import org.micromanager.utils.ReportingUtils;
@@ -204,7 +206,8 @@ public class AcqControlDlg extends JDialog implements PropertyChangeListener {
    private int columnWidth_[];
    private int columnOrder_[];
    private CheckBoxPanel framesPanel_;
-   private CardLayout framesPanelLayout_;
+   private JPanel framesSubPanel_;
+   private CardLayout framesSubPanelLayout_;
    private static final String DEFAULT_FRAMES_PANEL_NAME = "Default frames panel";
    private static final String OVERRIDE_FRAMES_PANEL_NAME = "Override frames panel";
    private CheckBoxPanel channelsPanel_;
@@ -866,12 +869,16 @@ public class AcqControlDlg extends JDialog implements PropertyChangeListener {
       overridePanel.add(overrideLabel, BorderLayout.PAGE_START);
       overridePanel.add(disableCustomIntervalsButton, BorderLayout.PAGE_END);
 
+      framesPanel_.setLayout(new BorderLayout());
+      framesSubPanelLayout_ = new CardLayout();
+      framesSubPanel_ = new JPanel(framesSubPanelLayout_);
+      //this subpanel is needed for the time points panel to properly render
+      framesPanel_.add(framesSubPanel_);
 
-      framesPanelLayout_ = new CardLayout();
-      framesPanel_.setLayout(framesPanelLayout_);
-      framesPanel_.add(defaultPanel, DEFAULT_FRAMES_PANEL_NAME);
-      framesPanel_.add(overridePanel, OVERRIDE_FRAMES_PANEL_NAME);
-      framesPanelLayout_.show(framesPanel_, DEFAULT_FRAMES_PANEL_NAME);
+      framesSubPanel_.add(defaultPanel, DEFAULT_FRAMES_PANEL_NAME);
+      framesSubPanel_.add(overridePanel, OVERRIDE_FRAMES_PANEL_NAME);
+
+      framesSubPanelLayout_.show(framesSubPanel_, DEFAULT_FRAMES_PANEL_NAME);
 
 
       framesPanel_.addActionListener(new ActionListener() {
@@ -1906,9 +1913,9 @@ public class AcqControlDlg extends JDialog implements PropertyChangeListener {
 
    private void checkForCustomTimeIntervals() {
       if (acqEng_.customTimeIntervalsEnabled()) {
-         framesPanelLayout_.show(framesPanel_, OVERRIDE_FRAMES_PANEL_NAME);
+         framesSubPanelLayout_.show(framesSubPanel_, OVERRIDE_FRAMES_PANEL_NAME);
       } else {
-         framesPanelLayout_.show(framesPanel_, DEFAULT_FRAMES_PANEL_NAME);
+         framesSubPanelLayout_.show(framesSubPanel_, DEFAULT_FRAMES_PANEL_NAME);
       }
    }
 
