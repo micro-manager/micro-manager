@@ -3959,6 +3959,8 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
          }
 
          acqControlWin_.setVisible(true);
+         
+         acqControlWin_.repaint();
 
          // TODO: this call causes a strange exception the first time the
          // dialog is created
