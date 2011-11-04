@@ -45,6 +45,12 @@
 #include <algorithm>
 using namespace std;
 
+#ifdef linux
+#define LIB_NAME_SUFFIX ".so.0"
+#else
+#define LIB_NAME_SUFFIX ""
+#endif
+
 ///////////////////////////////////////////////////////////////////////////////
 // CPluginManager class
 // --------------------
@@ -156,6 +162,7 @@ HDEVMODULE CPluginManager::LoadPluginLibrary(const char* shortName)
    // add specific name prefix
    string name(LIB_NAME_PREFIX);
    name += shortName;
+   name += LIB_NAME_SUFFIX;
    name = FindInSearchPath(name);
 
    string errorText;
@@ -172,18 +179,6 @@ HDEVMODULE CPluginManager::LoadPluginLibrary(const char* shortName)
       hMod = dlopen(name.c_str(), RTLD_NOW | RTLD_NODELETE | RTLD_LOCAL);
       if (hMod)
          return  hMod;
-      #ifdef linux
-      // Linux-specific code block by Johan Henriksson
-      else {
-         string name2 = (string) name + (string) ".so.0";
-         hMod = dlopen(name2.c_str(), RTLD_NOW | RTLD_NOLOAD | RTLD_LOCAL);
-         if (hMod)
-            return hMod;
-         hMod = dlopen(name2.c_str(), RTLD_NOW | RTLD_NODELETE | RTLD_LOCAL);
-         if (hMod)
-            return hMod;
-      }
-      #endif // linux
    #endif // WIN32
    GetSystemError (errorText);
    errorText += " ";
@@ -496,8 +491,9 @@ void CPluginManager::GetModules(vector<string> &modules, const char* searchPath)
       while ((dirp = readdir(dp)) != NULL)
       {
          if (strncmp(dirp->d_name,LIB_NAME_PREFIX,strlen(LIB_NAME_PREFIX)) == 0 ) {
-           // remove prefix
+           // remove prefix and suffix
            string strippedName = std::string(dirp->d_name).substr(strlen(LIB_NAME_PREFIX));
+           strippedName = strippedName.substr(0,strippedName.length()-strlen(LIB_NAME_SUFFIX));
            modules.push_back(strippedName);
          }
       }

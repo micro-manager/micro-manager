@@ -20,7 +20,8 @@ echo $ARCH
 echo "--$VERSION--"
 
 ##### Meta information   MM
-mkdir $ROOTPORT/DEBIAN
+mkdir -p $ROOTPORT/DEBIAN
+mkdir -p $ROOTBIN/usr/lib/micro-manager/
 cp doc/copyright.txt $ROOTPORT/DEBIAN/copyright
 #cp portdebian/debiancontrol.port $ROOTPORT/DEBIAN/control
 echo "#!/bin/sh" > $ROOTBIN/DEBIAN/postinst
@@ -40,13 +41,14 @@ mkdir -p $ROOTPORT/usr/share/java/
 cp MMCoreJ_wrap/MMCoreJ.jar $ROOTPORT/usr/share/java/
 	#####../3rdpartypublic/classext/bsh-2.0b4.jar ../3rdpartypublic/classext/syntax.jar ../3rdpartypublic/classext/ij.jar #assume these are available
 
-##### Core
-mkdir -p $ROOTBIN/usr/lib/micro-manager/
-cp MMCoreJ_wrap/.libs/libMMCoreJ_wrap.so $ROOTBIN/usr/lib/micro-manager/
-
 ##### All plugins
 cp DeviceAdapters/*/.libs/*.so $ROOTBIN/usr/lib/micro-manager/
 strip $ROOTBIN/usr/lib/micro-manager/*
+rename 's/\.so$/\.so\.0/' $ROOTBIN/usr/lib/micro-manager/lib*
+
+##### Core
+cp MMCoreJ_wrap/.libs/libMMCoreJ_wrap.so $ROOTBIN/usr/lib/micro-manager/
+
 
 ##### Make shared objects visible without hardcoding the path
 mkdir -p $ROOTPORT/etc/ld.so.conf.d/

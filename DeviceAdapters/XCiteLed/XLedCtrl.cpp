@@ -376,7 +376,7 @@ char* XLedCtrl::GetXLedStatus(unsigned char* sResp, char* sXLedStatus)
 //
 int XLedCtrl::GetStatusDescription(long lStatus, char* sStatus)
 {
-    char* sStatusBitsOn[] =
+    const char* sStatusBitsOn[] =
     {
         "Alarm on",
         "Light guide sensor",
@@ -397,7 +397,7 @@ int XLedCtrl::GetStatusDescription(long lStatus, char* sStatus)
         NULL
     };
 
-    char* sStatusBitsOff[] =
+    const char* sStatusBitsOff[] =
     {
         "Alarm off",
         "X",
@@ -567,7 +567,7 @@ int XLedCtrl::Initialize()
     {
         lLedStatus = atol((const char*)sXLedStatus);
         memset(sXLedStatus, 0, XLed::XL_MaxPropSize);
-        sprintf(sXLedStatus, "%04x", lLedStatus);
+        sprintf(sXLedStatus, "%04lx", lLedStatus);
     }
 
     pAct = new CPropertyAction(this, &XLedCtrl::OnState);
@@ -627,7 +627,7 @@ int XLedCtrl::Initialize()
 
     // get All On/Off
     char sAllOnOff[8];
-    sprintf(sAllOnOff, "%d", m_lAllOnOff);
+    sprintf(sAllOnOff, "%ld", m_lAllOnOff);
     pAct = new CPropertyAction(this, &XLedCtrl::OnAllOnOff);
 
     // Create all on/off property
@@ -1296,7 +1296,7 @@ int XLedCtrl::OnLCDScrnNumber(MM::PropertyBase* pProp, MM::ActionType pAct)
         if (lScrnNumber > 13) lScrnNumber = 13;
         if (lScrnNumber == 7) lScrnNumber = 6;
 
-        sprintf((char*)&sCmdSet[3], "%d", lScrnNumber);
+        sprintf((char*)&sCmdSet[3], "%ld", lScrnNumber);
         sCmdSet[strlen((char*)sCmdSet)] = (unsigned char)XLed::XL_TxTerm;
 
         ret = XLedSerialIO(sCmdSet, sResp);
@@ -1369,7 +1369,7 @@ int XLedCtrl::OnLCDScrnBrite(MM::PropertyBase* pProp, MM::ActionType pAct)
         if (lScrnBrite < 0) lScrnBrite = 0;
         if (lScrnBrite > 255) lScrnBrite = 255;
 
-        sprintf((char*)&sCmdSet[3], "%d", lScrnBrite);
+        sprintf((char*)&sCmdSet[3], "%ld", lScrnBrite);
         sCmdSet[strlen((char*)sCmdSet)] = (unsigned char)XLed::XL_TxTerm;
 
         ret = XLedSerialIO(sCmdSet, sResp);
@@ -1428,7 +1428,7 @@ int XLedCtrl::OnLCDScrnSaver(MM::PropertyBase* pProp, MM::ActionType pAct)
         if (lScrnTimeout < 0) lScrnTimeout = 0;
         if (lScrnTimeout > 9999) lScrnTimeout = 9999;
 
-        sprintf((char*)&sCmdSet[3], "%d", lScrnTimeout);
+        sprintf((char*)&sCmdSet[3], "%ld", lScrnTimeout);
         sCmdSet[strlen((const char*)sCmdSet)] = XLed::XL_TxTerm;
 
         ret = XLedSerialIO(sCmdSet, sResp);
@@ -1560,7 +1560,7 @@ int XLedCtrl::OnSpeakerVolume(MM::PropertyBase* pProp, MM::ActionType pAct)
         if (lSPeakerVol < 0) lSPeakerVol = 0;
         if (lSPeakerVol > 255) lSPeakerVol = 255;
 
-        sprintf((char*)&sCmdSet[3], "%d", lSPeakerVol);
+        sprintf((char*)&sCmdSet[3], "%ld", lSPeakerVol);
         sCmdSet[strlen((const char*)sCmdSet)] = XLed::XL_TxTerm;
 
         ret = XLedSerialIO(sCmdSet, sResp);

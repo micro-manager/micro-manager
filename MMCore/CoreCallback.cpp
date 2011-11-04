@@ -337,7 +337,7 @@ int CoreCallback::WriteToSerial(const MM::Device* caller, const char* portName, 
    }
 
    // don't allow self reference
-   if (dynamic_cast<MM::Device*>(pSerial) == caller)
+   if (pSerial == caller)
       return DEVICE_SELF_REFERENCE;
 
    return pSerial->Write(buf, length);
@@ -363,7 +363,7 @@ int CoreCallback::ReadFromSerial(const MM::Device* caller, const char* portName,
    }
 
    // don't allow self reference
-   if (dynamic_cast<MM::Device*>(pSerial) == caller)
+   if (pSerial == caller)
       return DEVICE_SELF_REFERENCE;
 
    return pSerial->Read(buf, bufLength, bytesRead);
@@ -389,7 +389,7 @@ int CoreCallback::PurgeSerial(const MM::Device* caller, const char* portName)
    }
 
    // don't allow self reference
-   if (dynamic_cast<MM::Device*>(pSerial) == caller)
+   if (pSerial == caller)
       return DEVICE_SELF_REFERENCE;
 
    return pSerial->Purge();
