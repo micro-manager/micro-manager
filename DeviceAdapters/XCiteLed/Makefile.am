@@ -6,6 +6,6 @@ libmmgr_dal_XCiteLed_la_LIBADD = ../../MMDevice/.libs/libMMDevice.a
 libmmgr_dal_XCiteLed_la_LDFLAGS = -module
 
 install:
-	cp .libs/libmmgr_dal_XCiteLed.so $(DESTDIR)$(DEVICEADAPTERPATH)/libmmgr_dal_XCite$(MMSUFFIX)
+	cp .libs/libmmgr_dal_XCiteLed.so $(DESTDIR)$(DEVICEADAPTERPATH)/libmmgr_dal_XCiteLed$(MMSUFFIX)
 
 EXTRA_DIST =  XCiteLed.vcproj  XCiteLed.sln
