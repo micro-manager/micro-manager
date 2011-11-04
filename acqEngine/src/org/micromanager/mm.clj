@@ -51,7 +51,10 @@
     (for [f (.getFields (type obj))
           :when (zero? (bit-and
                          (.getModifiers f) java.lang.reflect.Modifier/STATIC))]
-      [(keyword (.getName f)) (.get f obj)])))
+      [(keyword (.getName f))
+       (if (= Boolean/TYPE (.getType f))
+         (.getBoolean f obj)
+         (.get f obj))])))
 
 (defn log [& x]
   (.logMessage mmc (apply pr-str x) true))
@@ -67,7 +70,8 @@
               "  --> nil"
               (str "  --> " result#)))
             result#))))
-  ([expr] (log-cmd 1 expr)))
+   ([expr] `(log-cmd 1 ~expr)))
+
 
 (defmacro core [& args]
   `(log-cmd 3 (. mmc ~@args)))

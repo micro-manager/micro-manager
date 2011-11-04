@@ -236,14 +236,12 @@
   
 (defn load-slice-sequence [slice-sequence relative-z]
   (when slice-sequence
-    (println slice-sequence relative-z)
     (let [z (core getFocusDevice)
           ref (@state :reference-z)
           adjusted-slices (vec (if relative-z
                                  (map #(+ ref %) slice-sequence)
                                  slice-sequence))
           new-seq (not= [z adjusted-slices] @active-slice-sequence)]
-      (println "adjusted-slices: " adjusted-slices ";" "reference-z" (@state :reference-z))
       (when new-seq
         (core loadStageSequence z (double-vector adjusted-slices)))
       (reset! active-slice-sequence [z adjusted-slices])
@@ -261,7 +259,6 @@
 
 (defn init-burst [length trigger-sequence relative-z]
   (core setAutoShutter (@state :init-auto-shutter))
-  (println "autoshutter:" (core getAutoShutter))
   (load-property-sequences (:properties trigger-sequence))
   (let [absolute-slices (load-slice-sequence (:slices trigger-sequence) relative-z)]
     (start-property-sequences (:properties trigger-sequence))
@@ -280,7 +277,7 @@
     {:pix pix :tags (dissoc tags "StartTime-ms")}))
     
 (defn make-multicamera-events [event]
-  (let [num-camera-channels (core getNumberOfCameraChannels)]
+  (let [num-camera-channels (long (core getNumberOfCameraChannels))]
     (for [camera-channel (range num-camera-channels)]
       (let [super-channel-index (+ camera-channel (* num-camera-channels (event :channel-index)))]
         (assoc event :channel-index super-channel-index
@@ -302,7 +299,7 @@
                 (swap! state assoc
                        :burst-time-offset (- (elapsed-time @state)
                                              (core-time-from-tags (image :tags)))))
-              (println (image+ :tags))
+              ;(println (image+ :tags))
               (.put out-queue (make-TaggedImage (annotate-image image+ evt @state
                                                                 (burst-time (:tags image) @state)))))
             (when (core isBufferOverflowed)
@@ -482,7 +479,7 @@
              (recall-z-reference current-position))
           #(when-let [wait-time-ms (:wait-time-ms event)]
              (acq-sleep wait-time-ms))
-          #(when (:autofocus event)
+          #(when (get event :autofocus)
              (run-autofocus))
           #(when check-z-ref
              (store-z-reference current-position))
@@ -518,6 +515,7 @@
 ;; generic metadata
 
 (defn convert-settings [^SequenceSettings settings]
+  (def seqSettings settings)
   (-> settings
     (data-object-to-map)
     (rekey
@@ -555,14 +553,14 @@
                 (:properties channel)))
             default-cam)]
     (set-property chan-cam)
-    (let [n (int (core getNumberOfComponents))]
+    (let [n (long (core getNumberOfComponents))]
       (set-property default-cam)
       (get {1 1 , 4 3} n))))
 
 (defn make-summary-metadata [settings]
-  (let [depth (int (core getBytesPerPixel))
+  (let [depth (core getBytesPerPixel)
         channels (settings :channels)
-        num-camera-channels (core getNumberOfCameraChannels)
+        num-camera-channels (long (core getNumberOfCameraChannels))
         super-channels (flatten (for [channel channels] (repeat num-camera-channels channel)))]
      (JSONObject. {
       "BitDepth" (core getImageBitDepth)
@@ -803,8 +801,6 @@
   (doto
     (proxy [AcquisitionWrapperEngine] []
       (runPipeline [^SequenceSettings settings]
-        (println "ss positions: " (.size (.positions settings)))
-        (println "position-count: " (.getNumberOfPositions (.getPositionList gui)))
         (-run settings this)
     (.setCore mmc (.getAutofocusManager gui))
     (.setParentGUI gui)

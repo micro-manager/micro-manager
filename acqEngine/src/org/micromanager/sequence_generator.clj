@@ -94,7 +94,7 @@
 
 (defn process-skip-z-stack [events slices]
   (if (pos? (count slices))
-    (let [middle-slice (get slices (int (/ (count slices) 2)))]
+    (let [middle-slice (get slices (long (/ (count slices) 2)))]
       (filter
         #(or
            (nil? (% :channel))
@@ -130,9 +130,9 @@
     (assoc e2 :autofocus
       (and use-autofocus
         (or (not e1)
-          (and (zero? (mod (e2 :frame-index) (inc autofocus-skip)))
-               (or (not= (:position-index e1) (:position-index e2))
-                   (not= (:frame-index e1) (:frame-index e2)))))))))
+            (and (zero? (mod (e2 :frame-index) (inc autofocus-skip)))
+                 (or (not= (:position-index e1) (:position-index e2))
+                     (not= (:frame-index e1) (:frame-index e2)))))))))
 
 (defn process-wait-time [events interval]
   (cons
@@ -224,17 +224,17 @@
   (let [{:keys [slices keep-shutter-open-channels keep-shutter-open-slices
                 use-autofocus autofocus-skip interval-ms custom-intervals-ms relative-slices
                 runnable-list]} settings]
-   (-> (make-main-loops settings)
-     (#(map (partial build-event settings) %))
-       (process-skip-z-stack slices)
-       (manage-shutter keep-shutter-open-channels keep-shutter-open-slices)
-       (process-channel-skip-frames)
-       (process-use-autofocus use-autofocus autofocus-skip)
-       (process-wait-time (if (first custom-intervals-ms) custom-intervals-ms interval-ms))
-       (attach-runnables runnables)
-       (make-bursts)
-       (add-next-task-tags)   
-    )))
+    (-> (make-main-loops settings)
+        (#(map (partial build-event settings) %))
+        (process-skip-z-stack slices)
+        (manage-shutter keep-shutter-open-channels keep-shutter-open-slices)
+        (process-channel-skip-frames)
+        (process-use-autofocus use-autofocus autofocus-skip)
+        (process-wait-time (if (first custom-intervals-ms) custom-intervals-ms interval-ms))
+        (attach-runnables runnables)
+        (make-bursts)
+        (add-next-task-tags)   
+        )))
 
 (defn make-channel-metadata [channel]
   (when-let [props (:properties channel)]
