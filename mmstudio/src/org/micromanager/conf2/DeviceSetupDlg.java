@@ -195,9 +195,11 @@ public class DeviceSetupDlg extends MMDialog {
          }
       }
       
-      if (initializeDevice())
+      if (initializeDevice()) {
          dispose();
-      else
+         if (portDev != null)
+            model.useSerialPort(portDev, true);
+      } else
          return;
    }  
 
@@ -331,6 +333,7 @@ public class DeviceSetupDlg extends MMDialog {
             for (int i=0; i<ptm.getRowCount(); i++) {
                Setting s = ptm.getSetting(i);
                core.setProperty(s.deviceName_, s.propertyName_, s.propertyValue_);
+               dev.loadDataFromHardware(core);
             }
 
             // first initialize port...
@@ -339,6 +342,7 @@ public class DeviceSetupDlg extends MMDialog {
                dev.setName(devLabel.getText());
                core.initializeDevice(dev.getName());
                dev.setInitialized(true);
+               dev.updateSetupProperties();
                dev.discoverPeripherals(core);
                return true;
             }
@@ -359,7 +363,13 @@ public class DeviceSetupDlg extends MMDialog {
             System.out.println("InitPort " + portDev.getPropertyValue("BaudRate"));
             for (int j = 0; j < portDev.getNumberOfProperties(); j++) {
                PropertyItem prop = portDev.getProperty(j);
-               core.setProperty(portDev.getName(), prop.name, prop.value);
+               if (prop.preInit) {
+                  core.setProperty(portDev.getName(), prop.name, prop.value);
+                  if (portDev.findSetupProperty(prop.name) == null)
+                     portDev.addSetupProperty(new PropertyItem(prop.name, prop.value, true));
+                  else
+                     portDev.setSetupPropertyValue(prop.name, prop.value);
+               }
             }
             core.initializeDevice(portDev.getName());
          } catch (Exception e) {

@@ -324,6 +324,8 @@ public class DevicesPage extends PagePanel implements ListSelectionListener {
 			rebuildTable();
 			if (fromNextPage) {
 			   // do nothing for now
+			} else {
+			   model_.loadModel(core_, true);
 			}
 			return true;
 		} catch (Exception e2) {

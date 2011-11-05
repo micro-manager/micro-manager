@@ -399,4 +399,11 @@ import org.micromanager.utils.ReportingUtils;
    public void setInitialized(boolean state) {
       initialized_ = state;
    }
+   
+   public void updateSetupProperties() {
+      setupProperties_.clear();
+      for (int i=0; i<properties_.length; i++) {
+         setupProperties_.add(new PropertyItem(properties_[i].name, properties_[i].value, properties_[i].preInit));
+      }
+   }
  }
