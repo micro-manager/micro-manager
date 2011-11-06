@@ -36,7 +36,7 @@
 
 const int bytesInMB = 1048576;
 const long adjustThreshold = LONG_MAX / 2;
-const int maxCBSize = 1000;    //a reasonable limit to circular buffer size
+const int maxCBSize = 10000;    //a reasonable limit to circular buffer size
 
 static MMThreadLock g_bufferLock;
 
@@ -159,9 +159,6 @@ bool CircularBuffer::InsertMultiChannel(const unsigned char* pixArray, unsigned 
          ImgBuffer* pImg = frameArray_[insertIndex_ % frameArray_.size()].FindImage(i, 0);
          if (!pImg)
             return false;
-
-
-         
 
          Metadata md;
 
