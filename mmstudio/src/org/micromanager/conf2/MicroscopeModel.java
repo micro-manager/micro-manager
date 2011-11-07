@@ -1485,6 +1485,7 @@ public class MicroscopeModel {
             }
            
             core_.initializeDevice(portDev.getName());
+            portDev.loadDataFromHardware(core_);
          } catch (Exception e) {
             ReportingUtils.showError(e);
          }
@@ -1509,7 +1510,9 @@ public class MicroscopeModel {
          if (d.isHub() && !d.isInitialized()) {
             try {
                core_.initializeDevice(d.getName());
+               d.loadDataFromHardware(core_);
                d.setInitialized(true);
+               d.discoverPeripherals(core_);
             } catch (Exception e) {
                int sel = JOptionPane.showConfirmDialog(null, e.getMessage() + "\nRemove device " + d.getName() + " from the list?", 
                      "Initialization Error", JOptionPane.YES_NO_OPTION);
@@ -1532,6 +1535,7 @@ public class MicroscopeModel {
          if (!d.isInitialized() && !d.isCore()) {
             try { 
                core_.initializeDevice(d.getName());
+               d.loadDataFromHardware(core_);
                d.setInitialized(true);
             } catch (Exception e) {
                int sel = JOptionPane.showConfirmDialog(null, e.getMessage() + "\nRemove device " + d.getName() + " from the list?", 

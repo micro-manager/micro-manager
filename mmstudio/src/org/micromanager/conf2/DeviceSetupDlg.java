@@ -213,20 +213,25 @@ public class DeviceSetupDlg extends MMDialog {
       for(int i=0; i<avPorts.length; i++)
          if (!model.isPortInUse(avPorts[i]))
             ports.add(avPorts[i]);
-
+         else if (dev.getPort().compareTo(avPorts[i].getName()) == 0) {
+            ports.add(avPorts[i]);
+         }
+      
       // identify "port" properties and assign available com ports declared for use
       for (int i=0; i<dev.getNumberOfProperties(); i++) {
          PropertyItem p = dev.getProperty(i);
          if (p.name.compareTo(MMCoreJ.getG_Keyword_Port()) == 0) {
             if (ports.size() == 0) {
                // no ports available, tell user and return
-               JOptionPane.showMessageDialog(null, "No Serial Ports are found in your computer!");
+               JOptionPane.showMessageDialog(null, "There are no unused ports available!");
                return;
             }
             String allowed[] = new String[ports.size()];
             for (int k=0; k<ports.size(); k++)
                allowed[k] = ports.get(k).getName();
             p.allowed = allowed;
+            
+            rebuildComTable(p.value);
          }
       }
    }
@@ -325,30 +330,32 @@ public class DeviceSetupDlg extends MMDialog {
    private boolean initializeDevice() {
       try {
          if (dev.isInitialized()) {
-            // re-initialize
-            return true;
-         } else {
-            // transfer properties to device
-            PropertyTableModel ptm = (PropertyTableModel)propTable.getModel();
-            for (int i=0; i<ptm.getRowCount(); i++) {
-               Setting s = ptm.getSetting(i);
-               core.setProperty(s.deviceName_, s.propertyName_, s.propertyValue_);
-               dev.loadDataFromHardware(core);
-            }
-
-            // first initialize port...
-            if (initializePort()) {
-               // ...then device
-               dev.setName(devLabel.getText());
-               core.initializeDevice(dev.getName());
-               dev.setInitialized(true);
-               dev.updateSetupProperties();
-               dev.discoverPeripherals(core);
-               return true;
-            }
-            
-            return false; // port failed
+            // device was initialized before so now we have to re-set it
+            core.unloadDevice(dev.getName());
+            core.loadDevice(dev.getName(), dev.getLibrary(), dev.getAdapterName());
          }
+
+         // transfer properties to device
+         PropertyTableModel ptm = (PropertyTableModel)propTable.getModel();
+         for (int i=0; i<ptm.getRowCount(); i++) {
+            Setting s = ptm.getSetting(i);
+            core.setProperty(s.deviceName_, s.propertyName_, s.propertyValue_);
+         }
+         dev.loadDataFromHardware(core);
+
+         // first initialize port...
+         if (initializePort()) {
+            // ...then device
+            dev.setName(devLabel.getText());
+            core.initializeDevice(dev.getName());
+            dev.loadDataFromHardware(core);
+            dev.setInitialized(true);
+            dev.updateSetupProperties();
+            dev.discoverPeripherals(core);
+            return true;
+         }            
+         return false; // port failed
+
       } catch (Exception e) {
          showMessage(e.getMessage());
          return false;
@@ -359,6 +366,7 @@ public class DeviceSetupDlg extends MMDialog {
       if (portDev != null) {
          try {
             core.unloadDevice(portDev.getName());
+            Thread.sleep(1000);
             core.loadDevice(portDev.getName(), portDev.getLibrary(), portDev.getAdapterName());
             for (int j = 0; j < portDev.getNumberOfProperties(); j++) {
                PropertyItem prop = portDev.getProperty(j);
@@ -371,6 +379,8 @@ public class DeviceSetupDlg extends MMDialog {
                }
             }
             core.initializeDevice(portDev.getName());
+            Thread.sleep(1000);
+            portDev.loadDataFromHardware(core);
             model.useSerialPort(portDev, true);
             
          } catch (Exception e) {

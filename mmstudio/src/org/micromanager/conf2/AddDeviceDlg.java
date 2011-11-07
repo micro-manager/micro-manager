@@ -188,7 +188,7 @@ public class AddDeviceDlg extends JDialog implements MouseListener,
       setBounds(400, 100, 624, 529);
       devicesPage_ = devicesPage;
       core_ = core;
-      listByLib_ = false;
+      listByLib_ = true;
 
       final JButton addButton = new JButton();
       addButton.addActionListener(new ActionListener() {

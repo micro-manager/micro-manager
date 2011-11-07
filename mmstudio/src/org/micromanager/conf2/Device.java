@@ -198,7 +198,7 @@ import org.micromanager.utils.ReportingUtils;
    
    public void discoverPeripherals(CMMCore core) {
       // check if there are any child devices installed
-      if (isHub() && !getName().equals("Core")) {
+      if (isHub() && !getName().equals("Core") && childDevices_.length == 0) {
          
          // device "discovery" happens here
          StrVector installed = core.getInstalledDevices(getName());
