@@ -47,6 +47,7 @@ using namespace std;
 const char* g_XYStageDeviceName = "XYStage";
 const char* g_ZStageDeviceName = "ZStage";
 const char* g_CRIFDeviceName = "CRIF";
+const char* g_CRISPDeviceName = "CRISP";
 const char* g_AZ100TurretName = "AZ100 Turret";
 const char* g_LEDName = "LED";
 const char* g_Open = "Open";
@@ -64,6 +65,20 @@ const char* g_CRIF_K = "Lock";
 const char* g_CRIF_E = "Error";
 const char* g_CRIF_O = "Laser Off";
 
+// CRISP states
+const char* g_CRISPState = "CRISP State";
+const char* g_CRISP_I = "Idle";
+const char* g_CRISP_R = "Ready";
+const char* g_CRISP_D = "Dim";
+const char* g_CRISP_K = "Lock";
+const char* g_CRISP_F = "In Focus";
+const char* g_CRISP_N = "Inhibit";
+const char* g_CRISP_E = "Error";
+const char* g_CRISP_G = "loG_cal";
+const char* g_CRISP_f = "Dither";
+const char* g_CRISP_C = "Curve";
+const char* g_CRISP_B = "Balance";
+
 using namespace std;
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -74,6 +89,7 @@ MODULE_API void InitializeModuleData()
    AddAvailableDeviceName(g_ZStageDeviceName, "Add-on Z-stage");
    AddAvailableDeviceName(g_XYStageDeviceName, "XY Stage");
    AddAvailableDeviceName(g_CRIFDeviceName, "CRIF");
+   AddAvailableDeviceName(g_CRISPDeviceName, "CRISP");
    AddAvailableDeviceName(g_AZ100TurretName, "AZ100 Turret");
    AddAvailableDeviceName(g_LEDName, "LED");
 }
@@ -96,6 +112,10 @@ MODULE_API MM::Device* CreateDevice(const char* deviceName)
    else if (strcmp(deviceName, g_CRIFDeviceName) == 0)
    {
       return  new CRIF();
+   }
+   else if (strcmp(deviceName, g_CRISPDeviceName) == 0)
+   {
+      return  new CRISP();
    }
    else if (strcmp(deviceName, g_AZ100TurretName) == 0)
    {
@@ -2441,7 +2461,509 @@ int CRIF::OnWaitAfterLock(MM::PropertyBase* pProp, MM::ActionType eAct)
 }
 
 
+//////////////////////////////////////////////////////////////////////
+// CRISP reflection-based autofocussing unit (Nico, Nov 2011)
+////
+CRISP::CRISP() :
+   ASIBase(this, "" /* LX-4000 Prefix Unknown */),
+   justCalibrated_(false),
+   axis_("Z"),
+   stepSizeUm_(0.1),
+   na_(0.65),
+   waitAfterLock_(3000)
+{
+   InitializeDefaultErrorMessages();
 
+   SetErrorText(ERR_NOT_CALIBRATED, "CRISP is not calibrated.  Try focusing close to a coverslip and selecting 'Calibrate'");
+   SetErrorText(ERR_UNRECOGNIZED_ANSWER, "The ASI controller said something incomprehensible");
+   SetErrorText(ERR_NOT_LOCKED, "The CRISP failed to lock");
+
+   // create pre-initialization properties
+   // ------------------------------------
+
+   // Name
+   CreateProperty(MM::g_Keyword_Name, g_CRISPDeviceName, MM::String, true);
+
+   // Description
+   CreateProperty(MM::g_Keyword_Description, "ASI CRISP Autofocus adapter", MM::String, true);
+
+   // Port
+   CPropertyAction* pAct = new CPropertyAction (this, &CRISP::OnPort);
+   CreateProperty(MM::g_Keyword_Port, "Undefined", MM::String, false, pAct, true);
+
+}
+
+CRISP::~CRISP()
+{
+   initialized_ = false;
+}
+
+
+int CRISP::Initialize()
+{
+   if (initialized_)
+      return DEVICE_OK;
+
+   CPropertyAction* pAct = new CPropertyAction(this, &CRISP::OnFocus);
+   CreateProperty (g_CRIFState, "Undefined", MM::String, false, pAct);
+
+   // Add values (TODO: check manual)
+   AddAllowedValue(g_CRISPState, g_CRISP_I);
+   AddAllowedValue(g_CRISPState, g_CRISP_R);
+   AddAllowedValue(g_CRISPState, g_CRISP_D);
+   AddAllowedValue(g_CRISPState, g_CRISP_K);
+   AddAllowedValue(g_CRISPState, g_CRISP_F);
+   AddAllowedValue(g_CRISPState, g_CRISP_N);
+   AddAllowedValue(g_CRISPState, g_CRISP_E);
+   AddAllowedValue(g_CRISPState, g_CRISP_G);
+   AddAllowedValue(g_CRISPState, g_CRISP_f);
+   AddAllowedValue(g_CRISPState, g_CRISP_C);
+   AddAllowedValue(g_CRISPState, g_CRISP_B);
+
+   pAct = new CPropertyAction(this, &CRISP::OnWaitAfterLock);
+   CreateProperty("Wait ms after Lock", "3000", MM::Integer, false, pAct);
+
+   pAct = new CPropertyAction(this, &CRISP::OnNA);
+   CreateProperty("Objective NA", "0.8", MM::Float, false, pAct);
+   SetPropertyLimits("Objective NA", 0, 1.65);
+
+   initialized_ = true;
+   return DEVICE_OK;
+}
+
+int CRISP::Shutdown()
+{
+   initialized_ = false;
+   return DEVICE_OK;
+}
+
+bool CRISP::Busy()
+{
+   //TODO implement
+   return false;
+}
+
+// TODO: See if this can be implemented for the CRIF
+int CRISP::GetOffset(double& offset)
+{
+   offset = 0;
+   return DEVICE_OK;
+}
+
+// TODO: See if this can be implemented for the CRIF
+int CRISP::SetOffset(double /* offset */)
+{
+   return DEVICE_OK;
+}
+
+void CRISP::GetName(char* pszName) const
+{
+   CDeviceUtils::CopyLimitedString(pszName, g_CRISPDeviceName);
+}
+
+int CRISP::GetFocusState(std::string& focusState)
+{
+   // empty the Rx serial buffer before sending command
+   ClearPort();
+
+   const char* command = "LK X?"; // Requests single char lock state description
+   string answer;
+   // query command
+   int ret = QueryCommand(command, answer);
+   if (ret != DEVICE_OK)
+      return ERR_UNRECOGNIZED_ANSWER;
+
+   // translate response to one of our globals (see page 6 of CRIF manual)
+   char test = answer.c_str()[3];
+   switch (test) {
+      case 'I': 
+         focusState = g_CRISP_I;
+         break;
+      case 'R': 
+         focusState = g_CRISP_R;
+         break;
+      case '1': 
+      case '2': 
+      case '3': 
+         focusState = g_CRIF_Cal;
+         break;
+      case 'D': 
+         focusState = g_CRISP_D;
+         break;
+      case 'F': 
+         focusState = g_CRISP_F;
+         break;
+      case 'N': 
+         focusState = g_CRISP_N;
+         break;
+      case 'E': 
+         focusState = g_CRISP_E;
+         break;
+      case 'G': 
+         focusState = g_CRISP_G;
+         break;
+      case 'f': 
+         focusState = g_CRISP_f;
+         break;
+      case 'C': 
+         focusState = g_CRISP_C;
+         break;
+      case 'B': 
+         focusState = g_CRISP_B;
+         break;
+      default:
+         return ERR_UNRECOGNIZED_ANSWER;
+   }
+
+   return DEVICE_OK;
+}
+
+int CRISP::SetFocusState(std::string focusState)
+{
+   std::string currentState;
+   int ret = GetFocusState(currentState);
+   if (ret != DEVICE_OK)
+      return ret;
+
+   if (focusState == g_CRISP_I )
+   {
+      // Unlock and switch off laser:
+      ret = SetContinuousFocusing(false);
+      if (ret != DEVICE_OK)
+         return ret;
+   }
+
+   else if (focusState == g_CRIF_L)
+   {
+      if ( (currentState == g_CRIF_I) || currentState == g_CRIF_O)
+      {
+         const char* command = "LK Z";
+         // query command and wait for acknowledgement
+         int ret = QueryCommandACK(command);
+         if (ret != DEVICE_OK)
+            return ret;
+      }
+   }
+
+   else if (focusState == g_CRIF_Cal) 
+   {
+      const char* command = "LK Z";
+      if (currentState == g_CRIF_B || currentState == g_CRIF_O)
+      {
+         // query command and wait for acknowledgement
+         int ret = QueryCommandACK(command);
+         if (ret != DEVICE_OK)
+            return ret;
+         ret = GetFocusState(currentState);
+         if (ret != DEVICE_OK)
+            return ret;
+      }  
+      if (currentState == g_CRIF_I) // Idle, first switch on laser
+      {
+         // query command and wait for acknowledgement
+         int ret = QueryCommandACK(command);
+         if (ret != DEVICE_OK)
+            return ret;
+         ret = GetFocusState(currentState);
+         if (ret != DEVICE_OK)
+            return ret;
+      }
+      if (currentState == g_CRIF_L)
+      {
+         // query command and wait for acknowledgement
+         int ret = QueryCommandACK(command);
+         if (ret != DEVICE_OK)
+            return ret;
+      }
+
+      // now wait for the lock to occur
+      MM::MMTime startTime = GetCurrentMMTime();
+      MM::MMTime wait(3,0);
+      bool cont = false;
+      std::string finalState;
+      do {
+         CDeviceUtils::SleepMs(250);
+         GetFocusState(finalState);
+         cont = (startTime - GetCurrentMMTime()) < wait;
+      } while ( finalState != g_CRIF_G && finalState != g_CRIF_B && cont);
+
+      justCalibrated_ = true; // we need this to know whether this is the first time we lock
+   }
+
+   else if ( (focusState == g_CRIF_K) || (focusState == g_CRIF_k) )
+   {
+      // only try a lock when we are good
+      if ( (currentState == g_CRIF_G) || (currentState == g_CRIF_O) ) 
+      {
+         int ret = SetContinuousFocusing(true);
+         if (ret != DEVICE_OK)
+            return ret;
+      }
+      else if (! ( (currentState == g_CRIF_k) || currentState == g_CRIF_K) ) 
+      {
+         // tell the user that we first need to calibrate before starting a lock
+         return ERR_NOT_CALIBRATED;
+      }
+   }
+
+   return DEVICE_OK;
+}
+
+bool CRISP::IsContinuousFocusLocked()
+{
+   std::string focusState;
+   int ret = GetFocusState(focusState);
+   if (ret != DEVICE_OK)
+      return false;
+
+   if (focusState == g_CRISP_F)
+      return true;
+
+   return false;
+}
+
+
+int CRISP::SetContinuousFocusing(bool state)
+{
+   // empty the Rx serial buffer before sending command
+   ClearPort();
+
+   string command;
+   if (state)
+   {
+      // TODO: check that the system has been calibrated and can be locked!
+      if (justCalibrated_)
+         command = "LK";
+      else
+         command = "RL"; // Turns on laser and initiated lock state using previously saved reference
+   }
+   else
+   {
+      command = "UL"; // Turns off laser and unlocks
+   }
+   string answer;
+   // query command
+   int ret = QueryCommand(command.c_str(), answer);
+   if (ret != DEVICE_OK)
+      return ret;
+
+   // The controller only acknowledges receipt of the command
+   if (answer.substr(0,2) != ":A")
+      return ERR_UNRECOGNIZED_ANSWER;
+
+   justCalibrated_ = false;
+
+   return DEVICE_OK;
+}
+
+
+int CRISP::GetContinuousFocusing(bool& state)
+{
+   std::string focusState;
+   int ret = GetFocusState(focusState);
+   if (ret != DEVICE_OK)
+      return ret;
+
+   if (focusState == g_CRIF_K)
+      state = true;
+   else
+      state =false;
+   
+   return DEVICE_OK;
+}
+
+int CRISP::FullFocus()
+{
+   double pos;
+   int ret = GetPositionUm(pos);
+   if (ret != DEVICE_OK)
+      return ret;
+   ret = SetContinuousFocusing(true);
+   if (ret != DEVICE_OK)
+      return ret;
+
+   MM::MMTime startTime = GetCurrentMMTime();
+   MM::MMTime wait(3, 0);
+   while (!IsContinuousFocusLocked() && ( (GetCurrentMMTime() - startTime) < wait) ) {
+      CDeviceUtils::SleepMs(25);
+   }
+
+   CDeviceUtils::SleepMs(waitAfterLock_);
+
+   if (!IsContinuousFocusLocked()) {
+      SetContinuousFocusing(false);
+      SetPositionUm(pos);
+      return ERR_NOT_LOCKED;
+   }
+
+   return SetContinuousFocusing(false);
+}
+
+int CRISP::IncrementalFocus()
+{
+   return FullFocus();
+}
+
+int CRISP::GetLastFocusScore(double& score)
+{
+   // empty the Rx serial buffer before sending command
+   ClearPort();
+
+   score = 0;
+   const char* command = "LOCK Y?"; // Requests present value of the PSD signal as shown on LCD panel
+   string answer;
+   // query command
+   int ret = QueryCommand(command, answer);
+   if (ret != DEVICE_OK)
+      return ret;
+
+   score = atof (answer.substr(2).c_str());
+   if (score == 0)
+      return ERR_UNRECOGNIZED_ANSWER;
+
+   return DEVICE_OK;
+}
+
+int CRISP::SetPositionUm(double pos)
+{
+   // empty the Rx serial buffer before sending command
+   ClearPort();
+
+   ostringstream command;
+   command << fixed << "M " << axis_ << "=" << pos / stepSizeUm_; // in 10th of micros
+
+   string answer;
+   // query the device
+   int ret = QueryCommand(command.str().c_str(), answer);
+   if (ret != DEVICE_OK)
+      return ret;
+
+   if (answer.substr(0,2).compare(":A") == 0 || answer.substr(1,2).compare(":A") == 0)
+   {
+      return DEVICE_OK;
+   }
+   // deal with error later
+   else if (answer.substr(0, 2).compare(":N") == 0 && answer.length() > 2)
+   {
+      int errNo = atoi(answer.substr(4).c_str());
+      return ERR_OFFSET + errNo;
+   }
+
+   return ERR_UNRECOGNIZED_ANSWER; 
+}
+
+int CRISP::GetPositionUm(double& pos)
+{
+   // empty the Rx serial buffer before sending command
+   ClearPort();
+
+   ostringstream command;
+   command << "W " << axis_;
+
+   string answer;
+   // query command
+   int ret = QueryCommand(command.str().c_str(), answer);
+   if (ret != DEVICE_OK)
+      return ret;
+
+   if (answer.length() > 2 && answer.substr(0, 2).compare(":N") == 0)
+   {
+      int errNo = atoi(answer.substr(2).c_str());
+      return ERR_OFFSET + errNo;
+   }
+   else if (answer.length() > 0)
+   {
+      char head[64];
+      float zz;
+      char iBuf[256];
+      strcpy(iBuf,answer.c_str());
+      sscanf(iBuf, "%s %f\r\n", head, &zz);
+	  
+	   pos = zz * stepSizeUm_;
+
+      return DEVICE_OK;
+   }
+
+   return ERR_UNRECOGNIZED_ANSWER;
+}
+
+///////////////////////////////////////////////////////////////////////////////
+// Action handlers
+///////////////////////////////////////////////////////////////////////////////
+
+int CRISP::OnPort(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   if (eAct == MM::BeforeGet)
+   {
+      pProp->Set(port_.c_str());
+   }
+   else if (eAct == MM::AfterSet)
+   {
+      if (initialized_)
+      {
+         // revert
+         pProp->Set(port_.c_str());
+         return ERR_PORT_CHANGE_FORBIDDEN;
+      }
+
+      pProp->Get(port_);
+   }
+
+   return DEVICE_OK;
+}
+
+
+int CRISP::OnFocus(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   if (eAct == MM::BeforeGet)
+   {
+      int ret = GetFocusState(focusState_);
+      if (ret != DEVICE_OK)
+         return ret;
+      pProp->Set(focusState_.c_str());
+   }
+   else if (eAct == MM::AfterSet)
+   {
+      pProp->Get(focusState_);
+      int ret = SetFocusState(focusState_);
+      if (ret != DEVICE_OK)
+         return ret;
+   }
+
+   return DEVICE_OK;
+}
+
+int CRISP::OnWaitAfterLock(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   if (eAct == MM::BeforeGet)
+   {
+      pProp->Set(waitAfterLock_);
+   }
+   else if (eAct == MM::AfterSet)
+   {
+      pProp->Get(waitAfterLock_);
+   }
+
+   return DEVICE_OK;
+}
+
+int CRISP::OnNA(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   if (eAct == MM::BeforeGet)
+   {
+      pProp->Set(na_);
+   }
+   else if (eAct == MM::AfterSet)
+   {
+      pProp->Get(na_);
+   }
+
+   return DEVICE_OK;
+}
+
+/**
+ *  AZ100 adapter 
+ */
 /**
  *  AZ100 adapter 
  */

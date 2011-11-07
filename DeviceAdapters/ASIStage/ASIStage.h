@@ -266,6 +266,51 @@ private:
 };
 
 
+class CRISP : public CAutoFocusBase<CRISP>, public ASIBase
+{
+public:
+   CRISP();
+   ~CRISP();
+
+   //MMDevice API
+   bool Busy();
+   void GetName(char* pszName) const;
+
+   int Initialize();
+   int Shutdown();
+
+   // AutoFocus API
+   virtual int SetContinuousFocusing(bool state);
+   virtual int GetContinuousFocusing(bool& state);
+   virtual bool IsContinuousFocusLocked();
+   virtual int FullFocus();
+   virtual int IncrementalFocus();
+   virtual int GetLastFocusScore(double& score);
+   virtual int GetCurrentFocusScore(double& score) ;
+   virtual int GetOffset(double& offset);
+   virtual int SetOffset(double offset);
+
+   // action interface
+   // ----------------
+   int OnPort(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnFocus(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnNA(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnWaitAfterLock(MM::PropertyBase* pProp, MM::ActionType eAct);
+
+private:
+   int GetFocusState(std::string& focusState);
+   int SetFocusState(std::string focusState);
+   int SetPositionUm(double pos);
+   int GetPositionUm(double& pos);
+
+   bool justCalibrated_;
+   double stepSizeUm_;
+   double na_;
+   std::string focusState_;
+   long waitAfterLock_;
+   std::string axis_;
+};
+
 class AZ100Turret : public CStateDeviceBase<AZ100Turret>, public ASIBase
 {
 public:
