@@ -286,7 +286,7 @@ public:
    virtual int FullFocus();
    virtual int IncrementalFocus();
    virtual int GetLastFocusScore(double& score);
-   virtual int GetCurrentFocusScore(double& score) ;
+   virtual int GetCurrentFocusScore(double& /*score*/) {return DEVICE_UNSUPPORTED_COMMAND;}
    virtual int GetOffset(double& offset);
    virtual int SetOffset(double offset);
 
