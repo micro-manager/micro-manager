@@ -27,13 +27,15 @@ package org.micromanager.conf2;
 import java.util.ArrayList;
 import java.util.Hashtable;
 import java.util.Vector;
-import mmcorej.BooleanVector;
+
+import javax.swing.JOptionPane;
 
 import mmcorej.CMMCore;
 import mmcorej.DeviceType;
 import mmcorej.LongVector;
 import mmcorej.MMCoreJ;
 import mmcorej.StrVector;
+
 import org.micromanager.utils.PropertyItem;
 import org.micromanager.utils.ReportingUtils;
 
@@ -135,6 +137,8 @@ import org.micromanager.utils.ReportingUtils;
          devType = "Single Axis Stage";    
       } else if (type_ == DeviceType.XYStageDevice) {
          devType = "XY Stage";    
+      } else {
+         ReportingUtils.logError("Unercongized device type: " + this.adapterName_);
       }
       
       return devType;
@@ -405,5 +409,15 @@ import org.micromanager.utils.ReportingUtils;
       for (int i=0; i<properties_.length; i++) {
          setupProperties_.add(new PropertyItem(properties_[i].name, properties_[i].value, properties_[i].preInit));
       }
+   }
+      
+   public String getPort() {
+      for (int i=0; i<getNumberOfProperties(); i++) {
+         PropertyItem p = getProperty(i);
+         if (p.name.compareTo(MMCoreJ.getG_Keyword_Port()) == 0) {
+            return p.value;
+         }
+      }
+      return new String("");
    }
  }

@@ -298,7 +298,7 @@ public class PeripheralDevicesPage extends PagePanel {
       try {
          rebuildTable();
          if (fromNextPage) {
-            model_.loadModel(core_, false);
+            model_.loadModel(core_);
          }
       } catch (Exception e2) {
          ReportingUtils.showError(e2);
@@ -341,7 +341,7 @@ public class PeripheralDevicesPage extends PagePanel {
                Cursor waitc = new Cursor(Cursor.WAIT_CURSOR);
                ancestor.setCursor(waitc);
             }
-            model_.loadModel(core_, false);
+            model_.loadModel(core_);
 
             if (null != ancestor) {
                if (null != oldc) {

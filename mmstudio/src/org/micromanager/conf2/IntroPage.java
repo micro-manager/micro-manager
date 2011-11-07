@@ -130,6 +130,13 @@ public class IntroPage extends PagePanel {
    
    public boolean enterPage(boolean fromNextPage) {
       if (fromNextPage) {
+         // if we are returning from the previous page clear everything and start all over
+         model_.reset();
+         try {
+            core_.unloadAllDevices();
+         } catch (Exception e) {
+            ReportingUtils.showError(e);
+         };
          filePathField_.setText(model_.getFileName());
       }
       return true;

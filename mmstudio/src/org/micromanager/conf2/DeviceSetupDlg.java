@@ -360,7 +360,6 @@ public class DeviceSetupDlg extends MMDialog {
          try {
             core.unloadDevice(portDev.getName());
             core.loadDevice(portDev.getName(), portDev.getLibrary(), portDev.getAdapterName());
-            System.out.println("InitPort " + portDev.getPropertyValue("BaudRate"));
             for (int j = 0; j < portDev.getNumberOfProperties(); j++) {
                PropertyItem prop = portDev.getProperty(j);
                if (prop.preInit) {
@@ -372,6 +371,8 @@ public class DeviceSetupDlg extends MMDialog {
                }
             }
             core.initializeDevice(portDev.getName());
+            model.useSerialPort(portDev, true);
+            
          } catch (Exception e) {
             showMessage(e.getMessage());
             return false;
