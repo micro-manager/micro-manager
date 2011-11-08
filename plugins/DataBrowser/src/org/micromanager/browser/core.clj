@@ -297,8 +297,8 @@
                         (doseq [data-set (find-data-sets location)]
                           ; (println "data-set:" data-set)
                           (.put pending-data-sets [data-set location]))
-                        (recur))))
-                  (catch Exception e nil))))
+                        (recur)))))
+                  (catch Exception e nil)))
           "data browser scanning thread") .start))
 
 
