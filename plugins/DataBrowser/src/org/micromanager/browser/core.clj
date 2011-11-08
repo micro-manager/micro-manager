@@ -304,23 +304,24 @@
 
 (defn start-reading-thread []
   (doto (Thread.
-            (fn []
+          (fn []
+            (try
               (dorun
                 (loop []
                   (Thread/sleep 5)
-                  (try
-                    (let [data-set (.take pending-data-sets)]
-                      ;(println @current-locations (second data-set) (contains? @current-locations (second data-set)))
-                      (if (= data-set pending-data-sets) ;; poison
-                        (update-browser-status)
-                        (let [loc (second data-set)]
-                          (when (or (= loc "") (contains? @current-locations loc))
-                            (let [m (apply get-summary-map data-set)]
-                              (add-browser-table-row (map #(get m %) tags))
-                              (remove-sibling-positions m)
-                              (awt-event (update-browser-status))))
-                          (recur))))
-                    (catch Exception e (.printStackTrace e))))))
+                  (let [data-set (.take pending-data-sets)]
+                    ;(println @current-locations (second data-set) (contains? @current-locations (second data-set)))
+                    (if (= data-set pending-data-sets) ;; poison
+                      (update-browser-status)
+                      (let [loc (second data-set)]
+                        (when (or (= loc "") (contains? @current-locations loc))
+                          (let [m (apply get-summary-map data-set)]
+                            (add-browser-table-row (map #(get m %) tags))
+                            (remove-sibling-positions m)
+                            (awt-event (update-browser-status))))
+                        (recur))))))
+              (catch Exception e (.printStackTrace e))
+              ))
           "data browser reading thread") .start))
 
 (defn scan-location [location]
