@@ -288,8 +288,8 @@
 (defn start-scanning-thread []
   (doto (Thread.
             (fn []
-              (dorun (loop []
-                (try
+              (try
+                (dorun (loop []
                   (Thread/sleep 5)
                   (let [location (.take pending-locations)]
                     (when-not (= location pending-locations)
