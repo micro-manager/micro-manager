@@ -94,6 +94,16 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
       }
 
       @Override
+      public ImageProcessor getProcessor() {
+         if (super.getMode() == CompositeImage.COMPOSITE )
+            return super.getProcessor();
+         ImageProcessor ip = super.getProcessor();
+         ip.setPixels( getImageStack().getProcessor( 
+                 getStackIndex(getChannel(),getSlice(),getFrame()) ).getPixels());
+         return ip;
+      }
+      
+      @Override
       public int getImageStackSize() {
          return super.nChannels * super.nSlices * super.nFrames;
       }
@@ -627,11 +637,21 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
          return;
       }
       int channel = MDUtils.getChannelIndex(md);
-      int superChannel = this.rgbToGrayChannel(MDUtils.getChannelIndex(md));
       int frame = MDUtils.getFrameIndex(md);
       int position = MDUtils.getPositionIndex(md);
       int slice = MDUtils.getSliceIndex(md);
-
+      int superChannel = this.rgbToGrayChannel(MDUtils.getChannelIndex(md));
+      if (hyperImage_.getClass().equals(MMCompositeImage.class)) {
+         boolean[] active = ((MMCompositeImage) hyperImage_ ).getActiveChannels();
+         for (int k = 0; k < active.length; k++) {
+          if (active[k]) {
+             superChannel += k;           //allows selected channel to persist in 
+             break;                    //Composite or Grayscale display modes in RGB live mode
+          }  
+         }
+      }
+         
+      
       if (frame == 0) {
          try {
             TaggedImage image = imageCache_.getImage(superChannel, slice, frame, position);
@@ -826,6 +846,7 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
       mmImagePlus_.setNSlicesUnverified(slices);
       if (channels > 1) {
          hyperImage = new MMCompositeImage(mmImagePlus_, CompositeImage.COMPOSITE);
+         hyperImage.setOpenAsHyperStack(true);
       } else {
          hyperImage = mmImagePlus_;
          mmImagePlus_.setOpenAsHyperStack(true);
@@ -833,7 +854,7 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
       return hyperImage;
    }
 
-   private void createWindow(ImagePlus hyperImage, HyperstackControls hc) {
+   private void createWindow(ImagePlus hyperImage, HyperstackControls hc) {      
       final ImageWindow win = new StackWindow(hyperImage) {
 
          private boolean windowClosingDone_ = false;
