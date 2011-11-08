@@ -59,7 +59,7 @@ public class DeviceSetupDlg extends MMDialog {
    public DeviceSetupDlg(MicroscopeModel mod, CMMCore c, Device d) {
       //setModalityType(ModalityType.APPLICATION_MODAL);
       setModal(true);
-      setBounds(100, 100, 478, 515);
+      setBounds(100, 100, 478, 528);
       model = mod;
       core = c;
       portDev = null;
@@ -151,15 +151,15 @@ public class DeviceSetupDlg extends MMDialog {
          }
       });
       detectButton.setToolTipText("Scan COM ports to detect this device");
-      detectButton.setBounds(359, 235, 93, 23);
+      detectButton.setBounds(359, 247, 93, 23);
       contentPanel.add(detectButton);
       
       JLabel lblNewLabel_1 = new JLabel("Port Properties (RS 232 settings)");
-      lblNewLabel_1.setBounds(10, 239, 442, 14);
+      lblNewLabel_1.setBounds(10, 251, 442, 14);
       contentPanel.add(lblNewLabel_1);
       
       JScrollPane scrollPaneCOM = new JScrollPane();
-      scrollPaneCOM.setBounds(10, 264, 442, 169);
+      scrollPaneCOM.setBounds(10, 281, 442, 169);
       contentPanel.add(scrollPaneCOM);
       
       comTable = new JTable();
@@ -168,7 +168,7 @@ public class DeviceSetupDlg extends MMDialog {
       comTable.setAutoCreateColumnsFromModel(false);
       
       JLabel lblNewLabel_2 = new JLabel("Initialization Properties");
-      lblNewLabel_2.setBounds(10, 39, 442, 14);
+      lblNewLabel_2.setBounds(10, 49, 442, 14);
       contentPanel.add(lblNewLabel_2);
       
       loadSettings();
@@ -218,9 +218,15 @@ public class DeviceSetupDlg extends MMDialog {
          }
       
       // identify "port" properties and assign available com ports declared for use
+      boolean anyPorts = false;
+      boolean anyProps = false;
       for (int i=0; i<dev.getNumberOfProperties(); i++) {
          PropertyItem p = dev.getProperty(i);
+         if (p.preInit)
+            anyProps = true;
+         
          if (p.name.compareTo(MMCoreJ.getG_Keyword_Port()) == 0) {
+            anyPorts = true;
             if (ports.size() == 0) {
                // no ports available, tell user and return
                JOptionPane.showMessageDialog(null, "There are no unused ports available!");
@@ -234,6 +240,18 @@ public class DeviceSetupDlg extends MMDialog {
             rebuildComTable(p.value);
          }
       }
+      
+      // resize dialog based on the properties
+      if (anyProps && !anyPorts) {
+         Rectangle r = getBounds();
+         r.height = 300;
+         setBounds(r);
+      } else if (!anyProps && !anyPorts) {
+         Rectangle r = getBounds();
+         r.height = 112;
+         setBounds(r);
+      }
+      
    }
    
    private void rebuildPropTable() {
