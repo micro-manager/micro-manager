@@ -38,7 +38,7 @@
                    awt-event persist-window-shape close-window
                    create-alphanumeric-comparator
                    super-location? get-file-parent)]
-        [clojure.data.json :only (read-json write-json)]
+        [clojure.data.json :only (read-json json-str)]
         [org.micromanager.mm :only (load-mm gui)]))
 
 (def browser (atom nil))
@@ -465,7 +465,7 @@ inside an existing location in your collection."
   (let [data-path (get @collections collection-name)]
     (-> (File. data-path) .getParent (File.) .mkdirs)
     (with-open [pr (PrintWriter. data-path)]
-      (write-json settings pr))))
+      (.print pr (json-str settings)))))
 
 (defn load-data-and-settings [name]
   (or 
