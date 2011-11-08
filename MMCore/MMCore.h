@@ -360,13 +360,20 @@ public:
    //@ }
 
    /** @name Stage control
-   * API for controlling X, Y and Z stages
+   * API for controlling one-dimensional stages
    */
    //@ {
    void setPosition(const char* deviceLabel, double position) throw (CMMError);
    double getPosition(const char* deviceLabel) const throw (CMMError);
    void setRelativePosition(const char* deviceLabel, double d) throw (CMMError);
    void setOrigin(const char* deviceLabel) throw (CMMError);
+   void setAdapterOrigin(const char* deviceLabel, double d) throw (CMMError);
+   //@ }
+   
+   /** @name XYStage control
+   * API for controlling XY stages
+   */
+   //@ {
    void setXYPosition(const char* deviceLabel, double x, double y) throw (CMMError);
    void setRelativeXYPosition(const char* deviceLabel, double dx, double dy) throw (CMMError);
    void getXYPosition(const char* deviceLabel, double &x_stage, double &y_stage) throw (CMMError);
