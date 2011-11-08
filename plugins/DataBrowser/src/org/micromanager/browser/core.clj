@@ -289,15 +289,16 @@
   (doto (Thread.
             (fn []
               (try
-                (dorun (loop []
-                  (Thread/sleep 5)
-                  (let [location (.take pending-locations)]
-                    (when-not (= location pending-locations)
-                      (doseq [data-set (find-data-sets location)]
-                       ; (println "data-set:" data-set)
-                        (.put pending-data-sets [data-set location]))
-                        (recur)))
-                  (catch Exception e nil)))))
+                (dorun
+                  (loop []
+                    (Thread/sleep 5)
+                    (let [location (.take pending-locations)]
+                      (when-not (= location pending-locations)
+                        (doseq [data-set (find-data-sets location)]
+                          ; (println "data-set:" data-set)
+                          (.put pending-data-sets [data-set location]))
+                        (recur))))
+                  (catch Exception e nil))))
           "data browser scanning thread") .start))
 
 
