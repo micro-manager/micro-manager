@@ -260,6 +260,7 @@ int MultiShutter::OnState(MM::PropertyBase* pProp, MM::ActionType eAct)
 MultiCamera::MultiCamera() :
    bufferSize_(0),
    imageBuffer_(0),
+   nrCamerasInUse_(0),
    initialized_(false)
 {
    InitializeDefaultErrorMessages();
