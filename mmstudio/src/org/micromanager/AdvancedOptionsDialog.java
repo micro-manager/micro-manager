@@ -48,7 +48,7 @@ public class AdvancedOptionsDialog extends MMDialog {
 
     public AdvancedOptionsDialog(AcquisitionEngine acqEng) {
         super();
-        this.setModalityType(Dialog.ModalityType.APPLICATION_MODAL);
+        this.setModal(true);
         acqEng_ = acqEng;
         loadPosition(0,0,600,500);
         addWindowListener(new WindowAdapter() {

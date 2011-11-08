@@ -249,7 +249,7 @@ public class CustomTimeIntervalsPanel extends JPanel {
 
         public LogTimeDialog() {
             super();
-             this.setModalityType(Dialog.ModalityType.APPLICATION_MODAL);
+            this.setModal(true);
             this.setSize(new Dimension(520, 300));
             this.setResizable(false);
             this.setTitle("Create logarithmically spaced time points");
@@ -593,7 +593,7 @@ public class CustomTimeIntervalsPanel extends JPanel {
 
         public LinearTimeDialog() {
             super();
-             this.setModalityType(Dialog.ModalityType.APPLICATION_MODAL);
+             this.setModal(true);
             this.setSize(new Dimension(350, 200));
             this.setResizable(false);
             initComponents();
