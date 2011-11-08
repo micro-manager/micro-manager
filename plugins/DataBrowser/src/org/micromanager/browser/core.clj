@@ -38,7 +38,7 @@
                    awt-event persist-window-shape close-window
                    create-alphanumeric-comparator
                    super-location? get-file-parent)]
-        [clojure.contrib.json :only (read-json write-json)]
+        [clojure.data.json :only (read-json write-json)]
         [org.micromanager.mm :only (load-mm gui)]))
 
 (def browser (atom nil))
