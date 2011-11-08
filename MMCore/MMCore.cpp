@@ -1442,6 +1442,25 @@ void CMMCore::setOriginXY(const char* deviceName) throw (CMMError)
 }
 
 /**
+ * zero the current stage position.
+ * @return void 
+ * @param const char* deviceName
+ */
+void CMMCore::setOrigin(const char* deviceName) throw (CMMError)
+{
+   MMThreadGuard guard(deviceLock_);
+
+   MM::Stage* pStage = getSpecificDevice<MM::Stage>(deviceName);
+   int ret = pStage->SetOrigin();
+   if (ret != DEVICE_OK)
+   {
+      logError(deviceName, getDeviceErrorText(ret, pStage).c_str());
+      throw CMMError(getDeviceErrorText(ret, pStage).c_str(), MMERR_DEVICE_GENERIC);
+   }
+   CORE_LOG1("Stage %s's current position was zeroed.\n", deviceName);
+}
+
+/**
  * Set the current position to be  x,y in um
  */
 void CMMCore::setAdapterOriginXY(const char* deviceName, double x, double y) throw (CMMError)
