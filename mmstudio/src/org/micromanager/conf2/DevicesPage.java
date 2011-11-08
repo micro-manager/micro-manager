@@ -44,7 +44,6 @@ import mmcorej.CMMCore;
 import mmcorej.MMCoreJ;
 
 import org.micromanager.utils.ReportingUtils;
-import javax.swing.JLabel;
 
 /**
  * Wizard page to add or remove devices.

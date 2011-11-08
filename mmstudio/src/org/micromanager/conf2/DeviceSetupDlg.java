@@ -199,8 +199,10 @@ public class DeviceSetupDlg extends MMDialog {
          dispose();
          if (portDev != null)
             model.useSerialPort(portDev, true);
-      } else
+      } else {
+         // initialization failed
          return;
+      }
    }  
 
    private void loadSettings() {
@@ -376,6 +378,14 @@ public class DeviceSetupDlg extends MMDialog {
 
       } catch (Exception e) {
          showMessage(e.getMessage());
+         // reset device, just in case it does not know how to handle repeated initializations
+         try {
+            core.unloadDevice(dev.getName());
+            core.loadDevice(dev.getName(), dev.getLibrary(), dev.getAdapterName());
+         } catch (Exception e1) {
+            // TODO Auto-generated catch block
+            e1.printStackTrace();
+         }
          return false;
       }
    }
@@ -414,6 +424,8 @@ public class DeviceSetupDlg extends MMDialog {
    }
    
    private class DetectionTask extends Thread {
+      
+      private String foundPort;
 
       DetectionTask(String id) {
          super(id);
@@ -640,6 +652,7 @@ public class DeviceSetupDlg extends MMDialog {
             progressDialog.setVisible(false);
             core.enableDebugLog(currentDebugLogSetting);
             rebuildPropTable();
+            //rebuildComTable();
             // restore normal operation of the Detect button
             detectButton.setText(DETECT_PORTS);
          }
