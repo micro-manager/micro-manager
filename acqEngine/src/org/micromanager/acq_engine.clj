@@ -139,7 +139,7 @@
   (TaggedImage. (:pix annotated-img) (JSONObject. (:tags annotated-img))))
 
 ;; hardware error handling
-
+"
 (defmacro successful? [& body]
   `(try (do ~@body true)
      (catch Exception e#
@@ -236,12 +236,14 @@
   
 (defn load-slice-sequence [slice-sequence relative-z]
   (when slice-sequence
+    (println slice-sequence relative-z)
     (let [z (core getFocusDevice)
           ref (@state :reference-z)
           adjusted-slices (vec (if relative-z
                                  (map #(+ ref %) slice-sequence)
                                  slice-sequence))
           new-seq (not= [z adjusted-slices] @active-slice-sequence)]
+      (println "adjusted-slices: " adjusted-slices ";" "reference-z" (@state :reference-z))
       (when new-seq
         (core loadStageSequence z (double-vector adjusted-slices)))
       (reset! active-slice-sequence [z adjusted-slices])
@@ -259,6 +261,7 @@
 
 (defn init-burst [length trigger-sequence relative-z]
   (core setAutoShutter (@state :init-auto-shutter))
+  (println "autoshutter:" (core getAutoShutter))
   (load-property-sequences (:properties trigger-sequence))
   (let [absolute-slices (load-slice-sequence (:slices trigger-sequence) relative-z)]
     (start-property-sequences (:properties trigger-sequence))
@@ -277,7 +280,7 @@
     {:pix pix :tags (dissoc tags "StartTime-ms")}))
     
 (defn make-multicamera-events [event]
-  (let [num-camera-channels (long (core getNumberOfCameraChannels))]
+  (let [num-camera-channels (core getNumberOfCameraChannels)]
     (for [camera-channel (range num-camera-channels)]
       (let [super-channel-index (+ camera-channel (* num-camera-channels (event :channel-index)))]
         (assoc event :channel-index super-channel-index
@@ -299,26 +302,30 @@
                 (swap! state assoc
                        :burst-time-offset (- (elapsed-time @state)
                                              (core-time-from-tags (image :tags)))))
-              ;(println (image+ :tags))
+              (println (image+ :tags))
               (.put out-queue (make-TaggedImage (annotate-image image+ evt @state
                                                                 (burst-time (:tags image) @state)))))
             (when (core isBufferOverflowed)
               (swap! state assoc :stop true)
               (ReportingUtils/showError "Circular buffer overflowed."))))
-        (flatten (map make-multicamera-events (event :burst-data))))))
+        (flatten (map make-multicamera-events) (event :burst-data)))))
   (while (and (not (@state :stop)) (. mmc isSequenceRunning))
     (Thread/sleep 5)))
 
 (defn collect-snap-image [event out-queue]
-  (let [image
-        {:pix (core getImage)
-         :tags nil}]
-    (select-keys event [:position-index :frame-index
-                        :slice-index :channel-index])
-    (when out-queue
-      (.put out-queue
-            (make-TaggedImage (annotate-image image event @state (elapsed-time @state)))))
-    image))
+  (log "collect-snap-image")
+  (doall
+    (for [event1 (make-multicamera-events event)]
+      (let [image
+            {:pix (core getImage (event1 :camera-channel-index))
+             :tags nil}]
+        (log "collect-snap-image: "
+             (select-keys event [:position-index :frame-index
+                                 :slice-index :channel-index]))
+        (when out-queue
+          (.put out-queue
+                (make-TaggedImage (annotate-image image event1 @state (elapsed-time @state)))))
+        image))))
 
 (defn return-config []
   (dorun (map set-property
@@ -479,7 +486,7 @@
              (recall-z-reference current-position))
           #(when-let [wait-time-ms (:wait-time-ms event)]
              (acq-sleep wait-time-ms))
-          #(when (get event :autofocus)
+          #(when (:autofocus event)
              (run-autofocus))
           #(when check-z-ref
              (store-z-reference current-position))
@@ -515,7 +522,6 @@
 ;; generic metadata
 
 (defn convert-settings [^SequenceSettings settings]
-  (def seqSettings settings)
   (-> settings
     (data-object-to-map)
     (rekey
@@ -553,14 +559,14 @@
                 (:properties channel)))
             default-cam)]
     (set-property chan-cam)
-    (let [n (long (core getNumberOfComponents))]
+    (let [n (int (core getNumberOfComponents))]
       (set-property default-cam)
       (get {1 1 , 4 3} n))))
 
 (defn make-summary-metadata [settings]
-  (let [depth (core getBytesPerPixel)
+  (let [depth (int (core getBytesPerPixel))
         channels (settings :channels)
-        num-camera-channels (long (core getNumberOfCameraChannels))
+        num-camera-channels (core getNumberOfCameraChannels)
         super-channels (flatten (for [channel channels] (repeat num-camera-channels channel)))]
      (JSONObject. {
       "BitDepth" (core getImageBitDepth)
@@ -627,7 +633,10 @@
 		cache (doto (MMImageCache. (TaggedImageStorageRam. summary-metadata))
 						(.setSummaryMetadata summary-metadata))]
 		(doto (VirtualAcquisitionDisplay. cache nil)
-                           (.promptToSave false))))
+                           (.promptToSave false)
+                            (.setChannelDisplayRange 0 0 256)
+                            (.setChannelDisplayRange 1 0 256) 
+                            (.setChannelDisplayRange 2 0 256))))
 
 (defn create-basic-event []
   {:position-index 0, :position nil,
@@ -652,7 +661,7 @@
   (let [myTaggedImage (make-TaggedImage tagged-img)
         cache (.getImageCache display)]
     (.putImage cache myTaggedImage)
-    (.showImage display myTaggedImage)
+    (.showImage display (. myTaggedImage tags) true false)
     (when focus
       (.show display))))
 
@@ -693,7 +702,7 @@
                                   this-time (System/currentTimeMillis)
                                   dt (- 33 (- this-time last-time))]                      
                               (if first-image (reset-snap-window img)  )             
-                              (Thread/sleep (max 0 dt))                                     
+                              (Thread/sleep (max 0 dt))  
                               (if (.windowClosed @snap-window) 
                                 (edt (.enableLiveMode gui false))  
                                 (show-image @snap-window img first-image)  )
@@ -801,6 +810,8 @@
   (doto
     (proxy [AcquisitionWrapperEngine] []
       (runPipeline [^SequenceSettings settings]
+        (println "ss positions: " (.size (.positions settings)))
+        (println "position-count: " (.getNumberOfPositions (.getPositionList gui)))
         (-run settings this)
     (.setCore mmc (.getAutofocusManager gui))
     (.setParentGUI gui)
