@@ -45,7 +45,6 @@ import javax.swing.event.TreeSelectionListener;
 import javax.swing.tree.DefaultMutableTreeNode;
 
 import mmcorej.CMMCore;
-import mmcorej.StrVector;
 
 import org.micromanager.utils.ReportingUtils;
 import javax.swing.JCheckBox;
@@ -231,7 +230,7 @@ public class AddDeviceDlg extends JDialog implements MouseListener,
             buildTree();
          }
       });
-      cbShowAll_.setBounds(486, 462, 81, 23);
+      cbShowAll_.setBounds(476, 462, 137, 23);
       cbShowAll_.setSelected(false); // showing only hubs by default
       getContentPane().add(cbShowAll_);
       documentationButton.addActionListener(new ActionListener() {
@@ -253,11 +252,11 @@ public class AddDeviceDlg extends JDialog implements MouseListener,
             buildTree();
          }
       });
-      chckbxNewCheckBox.setBounds(486, 436, 97, 23);
+      chckbxNewCheckBox.setBounds(476, 436, 137, 23);
       getContentPane().add(chckbxNewCheckBox);
 
       scrollPane_ = new JScrollPane(theTree_);
-      scrollPane_.setBounds(10, 10, 471, 475);
+      scrollPane_.setBounds(10, 10, 461, 475);
       scrollPane_.setViewportView(theTree_);
       getContentPane().add(scrollPane_);
    }
