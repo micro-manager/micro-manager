@@ -391,8 +391,8 @@ public class AddDeviceDlg extends JDialog implements MouseListener,
             int retries = 0;
             while (d != null) {
                retries++;
-               label = new String(label + "-" + retries);
-               d = model_.findDevice(adapterName);
+               label = new String(adapterName + "-" + retries);
+               d = model_.findDevice(label);
             }
 
             Device dev;

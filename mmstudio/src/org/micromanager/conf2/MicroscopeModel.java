@@ -140,6 +140,10 @@ public class MicroscopeModel {
    public boolean isModified() {
       return modified_;
    }
+   
+   public void setModified(boolean mod) {
+      modified_ = mod;
+   }
 
    public String getFileName() {
       return fileName_;

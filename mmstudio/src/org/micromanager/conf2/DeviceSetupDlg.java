@@ -216,6 +216,7 @@ public class DeviceSetupDlg extends MMDialog {
          dispose();
          if (portDev != null)
             model.useSerialPort(portDev, true);
+         model.setModified(true);
       } else {
          // initialization failed
          return;
