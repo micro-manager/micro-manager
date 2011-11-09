@@ -616,6 +616,11 @@
     image-tags
     ["Width" "Height" "PixelType"]))  
 
+(defn initialize-display-ranges [window]  
+  (do (.setChannelDisplayRange window 0 0 256)
+      (.setChannelDisplayRange window 1 0 256)
+      (.setChannelDisplayRange window 2 0 256)))
+
 (defn create-image-window [first-image]
   (let [summary {:interval-ms 0.0, :custom-intervals-ms [] :use-autofocus false, :autofocus-skip 0,
                  :relative-slices true, :keep-shutter-open-slices false, :comment "",
@@ -627,7 +632,8 @@
 		cache (doto (MMImageCache. (TaggedImageStorageRam. summary-metadata))
 						(.setSummaryMetadata summary-metadata))]
 		(doto (VirtualAcquisitionDisplay. cache nil)
-                           (.promptToSave false))))
+                           (.promptToSave false)
+                           (initialize-display-ranges))))
 
 (defn create-basic-event []
   {:position-index 0, :position nil,
@@ -652,7 +658,7 @@
   (let [myTaggedImage (make-TaggedImage tagged-img)
         cache (.getImageCache display)]
     (.putImage cache myTaggedImage)
-    (.showImage display myTaggedImage)
+    (.showImage display (. myTaggedImage tags) true false) 
     (when focus
       (.show display))))
 
