@@ -630,8 +630,11 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
       showImage(taggedImg.tags, waitForDisplay);
    }
 
-
    public void showImage(JSONObject md, boolean waitForDisplay) throws Exception {
+      showImage(md,waitForDisplay,true);
+   }
+   
+   public void showImage(JSONObject md, boolean waitForDisplay, boolean allowContrastToChange) throws Exception {
       updateWindow();
       if (md == null) {
          return;
@@ -651,25 +654,24 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
          }
       }
          
-      
-      if (frame == 0) {
+
+      if (frame == 0 && allowContrastToChange) {
          try {
             TaggedImage image = imageCache_.getImage(superChannel, slice, frame, position);
             if (image != null) {
                Object pix = image.pix;
                int pixelMin = ImageUtils.getMin(pix);
                int pixelMax = ImageUtils.getMax(pix);
-               if (slice > 0) {
+               if (slice > 0 ) {
                   pixelMin = Math.min(this.getChannelMin(superChannel), pixelMin);
                   pixelMax = Math.max(this.getChannelMax(superChannel), pixelMax);
                }
-               if (MDUtils.isRGB(md)) {
-                  for (int i = 0; i < 3; ++i) {
+               
+               setChannelDisplayRange(superChannel, pixelMin, pixelMax);
+               if (MDUtils.isRGB(md))
+                  for (int i = 1; i < 3; ++i) 
                      setChannelDisplayRange(superChannel + i, pixelMin, pixelMax);
-                  }
-               } else {
-                  setChannelDisplayRange(superChannel, pixelMin, pixelMax);
-               }
+                  
             }
          } catch (Exception ex) {
             ReportingUtils.logError(ex);

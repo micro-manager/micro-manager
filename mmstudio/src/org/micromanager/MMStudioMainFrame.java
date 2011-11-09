@@ -3105,8 +3105,8 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
                   if (finished) { 
                      for (int i = 0; i < taggedImages.length; i++)
                         if (i != lastChannelToAdd) 
-                           addImage(multiCameraAcq_, taggedImages[i], false);                   
-                     addImage(multiCameraAcq_, taggedImages[lastChannelToAdd], true);
+                           addImage(multiCameraAcq_, taggedImages[i], false, true, false);                   
+                     addImage(multiCameraAcq_, taggedImages[lastChannelToAdd], true, true, false);
                   }
                }
             }
@@ -4488,6 +4488,13 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
            boolean waitForDisplay) throws MMScriptException {
       acqMgr_.getAcquisition(name).insertImage(taggedImg, updateDisplay, waitForDisplay);
    }
+   
+   public void addImage(String name, TaggedImage taggedImg, 
+           boolean updateDisplay,
+           boolean waitForDisplay,
+           boolean allowContrastToChange) throws MMScriptException {
+   acqMgr_.getAcquisition(name).insertImage(taggedImg, updateDisplay, waitForDisplay, allowContrastToChange);
+}
    
    public void closeAllAcquisitions() {
       acqMgr_.closeAll();
