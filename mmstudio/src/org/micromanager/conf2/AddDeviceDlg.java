@@ -359,7 +359,7 @@ public class AddDeviceDlg extends JDialog implements MouseListener,
       devicesPage_.rebuildTable();
    }
 
-   protected boolean addDevice() {
+   private boolean addDevice() {
       int srows[] = theTree_.getSelectionRows();
       if (srows == null) {
          return false;
@@ -431,10 +431,8 @@ public class AddDeviceDlg extends JDialog implements MouseListener,
                for (int i = 0; i < installed.length; i++) {
                   try {
                      if (model_.findDevice(installed[i]) == null) {
-                        String description = model_.getDeviceDescription(
-                              dev.getLibrary(), installed[i]);
-                        Device newDev = new Device(installed[i],
-                              dev.getLibrary(), installed[i], description);
+                        String description = model_.getDeviceDescription(dev.getLibrary(), installed[i]);
+                        Device newDev = new Device(installed[i], dev.getLibrary(), installed[i], description);
                         peripherals.add(newDev);
                      }
                   } catch (Exception e) {
@@ -449,8 +447,23 @@ public class AddDeviceDlg extends JDialog implements MouseListener,
                   for (int i=0; i<sel.length; i++) {
                      try {
                         core_.loadDevice(sel[i].getName(), sel[i].getLibrary(), sel[i].getAdapterName());
-                        core_.initializeDevice(sel[i].getName());
                         model_.addDevice(sel[i]);
+                        sel[i].loadDataFromHardware(core_);
+                        
+                        // offer to edit pre-init properties
+                        String props[] = sel[i].getPreInitProperties();
+                        if (props.length > 0) {
+                           DeviceSetupDlg dlgProps = new DeviceSetupDlg(model_, core_, sel[i]);
+                           dlgProps.setVisible(true);
+                           if (!sel[i].isInitialized()) {
+                              core_.unloadDevice(sel[i].getName());
+                              model_.removeDevice(sel[i].getName());
+                           }
+                        } else {
+                           core_.initializeDevice(sel[i].getName());
+                           sel[i].setInitialized(true);
+                        }
+                                                
                      } catch (MMConfigFileException e) {
                         JOptionPane.showMessageDialog(this, e.getMessage());
                      } catch (Exception e) {

@@ -120,7 +120,7 @@ public class ConfiguratorDlg2 extends JDialog {
         });
         setResizable(false);
         getContentPane().setLayout(null);
-        setTitle("New Hardware Configuration Wizard");
+        setTitle("*New Hardware Configuration Wizard");
         setBounds(50, 100, 602, 672);
 
         final JScrollPane scrollPane = new JScrollPane();

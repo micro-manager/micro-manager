@@ -275,11 +275,8 @@ public class DeviceSetupDlg extends MMDialog {
    }
    
    private void rebuildPropTable() {
-      Device d = model.findDevice(devLabel.getText());
-      if (d == null)
-         return;
       
-      PropertyTableModel tm = new PropertyTableModel(model, d, this);
+      PropertyTableModel tm = new PropertyTableModel(model, dev, this);
       propTable.setModel(tm);
       PropertyValueCellEditor propValueEditor = new PropertyValueCellEditor();
       PropertyValueCellRenderer propValueRenderer = new PropertyValueCellRenderer();

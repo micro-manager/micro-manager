@@ -236,8 +236,22 @@ public class DevicesPage extends PagePanel implements ListSelectionListener {
          for (int i=0; i<sel.length; i++) {
             try {
                core_.loadDevice(sel[i].getName(), sel[i].getLibrary(), sel[i].getAdapterName());
-               core_.initializeDevice(sel[i].getName());
+               sel[i].loadDataFromHardware(core_);
                model_.addDevice(sel[i]);
+               
+               // offer to edit pre-init properties
+               String props[] = sel[i].getPreInitProperties();
+               if (props.length > 0) {
+                  DeviceSetupDlg dlgProps = new DeviceSetupDlg(model_, core_, sel[i]);
+                  dlgProps.setVisible(true);
+                  if (!sel[i].isInitialized()) {
+                     core_.unloadDevice(sel[i].getName());
+                     model_.removeDevice(sel[i].getName());
+                  }
+               } else {
+                  core_.initializeDevice(sel[i].getName());
+                  sel[i].setInitialized(true);
+               }
             } catch (MMConfigFileException e) {
                JOptionPane.showMessageDialog(this, e.getMessage());
             } catch (Exception e) {

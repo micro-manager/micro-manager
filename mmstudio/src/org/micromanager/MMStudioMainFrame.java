@@ -88,6 +88,7 @@ import org.micromanager.api.DeviceControlGUI;
 import org.micromanager.api.MMPlugin;
 import org.micromanager.api.ScriptInterface;
 import org.micromanager.api.MMListenerInterface;
+import org.micromanager.conf2.ConfiguratorDlg2;
 import org.micromanager.conf.ConfiguratorDlg;
 import org.micromanager.conf.MMConfigFileException;
 import org.micromanager.conf.MicroscopeModel;
@@ -1501,60 +1502,28 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
       configuratorMenuItem.addActionListener(new ActionListener() {
 
          public void actionPerformed(ActionEvent arg0) {
-            try {
-               if (configChanged_) {
-                  Object[] options = {"Yes", "No"};
-                  int n = JOptionPane.showOptionDialog(null,
-                        "Save Changed Configuration?", "Micro-Manager",
-                        JOptionPane.YES_NO_OPTION,
-                        JOptionPane.QUESTION_MESSAGE, null, options,
-                        options[0]);
-                  if (n == JOptionPane.YES_OPTION) {
-                     saveConfigPresets();
-                  }
-                  configChanged_ = false;
-               }
-
-               boolean liveRunning = false;
-               if (liveRunning_) {
-                  liveRunning = liveRunning_;
-                  enableLiveMode(false);
-               }
-
-               // unload all devices before starting configurator
-               core_.reset();
-               GUIUtils.preventDisplayAdapterChangeExceptions();
-
-               // run Configurator
-               ConfiguratorDlg configurator = new ConfiguratorDlg(core_,
-                     sysConfigFile_);
-               configurator.setVisible(true);
-               GUIUtils.preventDisplayAdapterChangeExceptions();
-
-               // re-initialize the system with the new configuration file
-               sysConfigFile_ = configurator.getFileName();
-               mainPrefs_.put(SYSTEM_CONFIG_FILE, sysConfigFile_);
-               loadSystemConfiguration();
-               GUIUtils.preventDisplayAdapterChangeExceptions();
-
-               if (liveRunning) {
-                  enableLiveMode(liveRunning);
-               }
-
-            } catch (Exception e) {
-               ReportingUtils.showError(e);
-               return;
-            }
+            runHardwareWizard(false);
          }
       });
+      
       configuratorMenuItem.setText("Hardware Configuration Wizard...");
       toolsMenu.add(configuratorMenuItem);
       configuratorMenuItem.setToolTipText("Open wizard to create new hardware configuration");
 
+      final JMenuItem cfg2MenuItem = new JMenuItem();
+      cfg2MenuItem.addActionListener(new ActionListener() {
+         public void actionPerformed(ActionEvent arg0) {
+            runHardwareWizard(true);
+         }
+      });
+      
+      cfg2MenuItem.setText("*New Hardware Configuration Wizard...");
+      toolsMenu.add(cfg2MenuItem);
+      cfg2MenuItem.setToolTipText("New (experimental) Hardware Configuration Wizard");
+
       final JMenuItem loadSystemConfigMenuItem = new JMenuItem();
       toolsMenu.add(loadSystemConfigMenuItem);
       loadSystemConfigMenuItem.addActionListener(new ActionListener() {
-
          public void actionPerformed(ActionEvent e) {
             loadConfiguration();
             initializeGUI();
@@ -4920,6 +4889,62 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
 
    public void showError(String msg) {
       ReportingUtils.showError(msg);
+   }
+
+   private void runHardwareWizard(boolean v2) {
+      try {
+         if (configChanged_) {
+            Object[] options = {"Yes", "No"};
+            int n = JOptionPane.showOptionDialog(null,
+                  "Save Changed Configuration?", "Micro-Manager",
+                  JOptionPane.YES_NO_OPTION,
+                  JOptionPane.QUESTION_MESSAGE, null, options,
+                  options[0]);
+            if (n == JOptionPane.YES_OPTION) {
+               saveConfigPresets();
+            }
+            configChanged_ = false;
+         }
+
+         boolean liveRunning = false;
+         if (liveRunning_) {
+            liveRunning = liveRunning_;
+            enableLiveMode(false);
+         }
+
+         // unload all devices before starting configurator
+         core_.reset();
+         GUIUtils.preventDisplayAdapterChangeExceptions();
+
+         // run Configurator
+         if (v2) {
+            ConfiguratorDlg2 cfg2 = new ConfiguratorDlg2(core_, sysConfigFile_);
+            cfg2.setVisible(true);
+            GUIUtils.preventDisplayAdapterChangeExceptions();
+
+            // re-initialize the system with the new configuration file
+            sysConfigFile_ = cfg2.getFileName();
+         } else {
+            ConfiguratorDlg configurator = new ConfiguratorDlg(core_, sysConfigFile_);
+            configurator.setVisible(true);
+            GUIUtils.preventDisplayAdapterChangeExceptions();
+            
+            // re-initialize the system with the new configuration file
+            sysConfigFile_ = configurator.getFileName();
+         }
+         
+         mainPrefs_.put(SYSTEM_CONFIG_FILE, sysConfigFile_);
+         loadSystemConfiguration();
+         GUIUtils.preventDisplayAdapterChangeExceptions();
+
+         if (liveRunning) {
+            enableLiveMode(liveRunning);
+         }
+
+      } catch (Exception e) {
+         ReportingUtils.showError(e);
+         return;
+      }
    }
 }
 
