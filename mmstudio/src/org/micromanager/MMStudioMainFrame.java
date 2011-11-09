@@ -458,7 +458,7 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
             boolean update = false;
             if (i == c -1)
                update = true;
-            addImage(multiCameraAcq_,ti, update);
+            addImage(multiCameraAcq_,ti, update, true, false);
          }
       } catch (Exception ex) {
          ReportingUtils.showError(ex);
