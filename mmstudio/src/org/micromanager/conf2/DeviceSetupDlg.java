@@ -179,6 +179,23 @@ public class DeviceSetupDlg extends MMDialog {
    }
 
    protected void onOK() {
+      if (dev.getName().compareTo(devLabel.getText()) != 0) {
+         if (model.findDevice(devLabel.getText()) != null) {
+            showMessage("Device name " + devLabel.getText() + " is already in use.\nPress Cancel and try again.");
+            return;            
+         }
+         
+         try {
+            core.unloadDevice(dev.getName());
+            dev.setInitialized(false);
+            core.loadDevice(devLabel.getText(), dev.getLibrary(), dev.getAdapterName());         
+         } catch (Exception e) {
+            showMessage("Device failed to re-load with changed name.");
+            return;
+         }
+         
+         dev.setName(devLabel.getText());
+      }
       Device d = model.findDevice(devLabel.getText());
       if (d==null) {
          showMessage("Device " + devLabel.getText() + " is not loaded properly.\nPress Cancel and try again.");
@@ -359,7 +376,7 @@ public class DeviceSetupDlg extends MMDialog {
          PropertyTableModel ptm = (PropertyTableModel)propTable.getModel();
          for (int i=0; i<ptm.getRowCount(); i++) {
             Setting s = ptm.getSetting(i);
-            core.setProperty(s.deviceName_, s.propertyName_, s.propertyValue_);
+            core.setProperty(dev.getName(), s.propertyName_, s.propertyValue_);
          }
          dev.loadDataFromHardware(core);
 

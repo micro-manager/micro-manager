@@ -27,6 +27,9 @@ import java.awt.Container;
 import java.awt.Cursor;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
 import java.util.Vector;
 import java.util.prefs.Preferences;
 
@@ -108,10 +111,7 @@ public class DevicesPage extends PagePanel implements ListSelectionListener {
      
       @Override
       public boolean isCellEditable(int nRow, int nCol) {
-         if(nCol == 0)
-            return true;
-         else
-            return false;
+         return false;
       }
       
       public void refresh() {
@@ -150,6 +150,13 @@ public class DevicesPage extends PagePanel implements ListSelectionListener {
       deviceTable_.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
       scrollPane_.setViewportView(deviceTable_);
       deviceTable_.getSelectionModel().addListSelectionListener(this);
+      
+      deviceTable_.addMouseListener(new MouseAdapter() {
+         public void mouseClicked(MouseEvent e) {
+            if (e.getClickCount() == 2) {
+               editDevice();
+            }
+         }});
 
       final JButton addButton = new JButton();
       addButton.addActionListener(new ActionListener() {
@@ -267,9 +274,9 @@ public class DevicesPage extends PagePanel implements ListSelectionListener {
          } catch (Exception e) {
             JOptionPane.showMessageDialog(this, e.getMessage());
          }
-         rebuildTable();
       }
-   }
+      rebuildTable();
+  }
 
    protected void removeDevice() {
       int sel = deviceTable_.getSelectedRow();
@@ -393,7 +400,7 @@ public class DevicesPage extends PagePanel implements ListSelectionListener {
       peripheralsButton.setEnabled(dev.isHub() && dev.getPeripherals().length > 0);
 
       // settings can be edited unless device is core
-      editButton.setEnabled(!dev.isCore() && dev.getPreInitProperties().length > 0);
+      editButton.setEnabled(!dev.isCore());
       
       // any selected device can be removed unless it is Core
       removeButton.setEnabled(!dev.isCore());
