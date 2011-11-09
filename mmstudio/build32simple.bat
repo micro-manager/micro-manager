@@ -13,9 +13,9 @@ javac -sourcepath ./src -d build -source 1.5 -target 1.5 -g ^
 
 rem copying files
 md build\org\micromanager\icons
-copy /Y src\org\micromanager\icons\*.png build\org\micromanager\icons
-copy /Y src\org\micromanager\icons\*.gif build\org\micromanager\icons
-copy /Y src\org\micromanager\conf\*.html build\org\micromanager\conf
+copy /Y src\org\micromanager\icons\*.png build\org\micromanager\icons\
+copy /Y src\org\micromanager\icons\*.gif build\org\micromanager\icons\
+copy /Y src\org\micromanager\conf\*.html build\org\micromanager\conf\
 
 rem make jars
 copy /Y bin\plugins_mmstudio.config build\plugins.config
@@ -29,7 +29,7 @@ del ..\Install_Win32\micro-manager\MMCoreJ_wrap.dll
 copy /Y ..\DeviceAdapters\TetheredCam\*.dll ..\Install_Win32\micro-manager\
 copy /Y ..\..\3rdpartypublic\classext\data.json.jar ..\Install_Win32\micro-manager\plugins\Micro-Manager\
 move /Y ..\Install_Win32\micro-manager\plugins\ij.jar ..\Install_Win32\micro-manager\
-copy /Y ..\..\3rdpartypublic\JavaLauncher\ImageJ.exe
+copy /Y ..\..\3rdpartypublic\JavaLauncher\ImageJ.exe ..\Install_Win32\micro-manager\
 copy /Y MMJ_.jar ..\Install_Win32\micro-manager\
 copy /Y MMJ_.jar ..\bin32\plugins\Micro-Manager\
 copy /Y ..\scripts\*.bsh ..\Install_Win32\micro-manager\scripts\
