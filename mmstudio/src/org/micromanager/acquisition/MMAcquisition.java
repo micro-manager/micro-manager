@@ -689,4 +689,8 @@ public class MMAcquisition {
    public int getLastAcquiredFrame() {
       return virtAcq_.imageCache_.lastAcquiredFrame();
    }
+   
+   public VirtualAcquisitionDisplay getAcquisitionWindow() {
+      return virtAcq_;
+   }
 }

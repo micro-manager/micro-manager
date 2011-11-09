@@ -3069,37 +3069,44 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
                      Thread.yield();
                   }
                } else {
-                  boolean foundAll = false;
-                  boolean[] found = new boolean[(int)multiChannelCameraNrCh_];
-                  while (!foundAll && core_.getRemainingImageCount() > 0 && isRunning()) {
-
+                  
+                  TaggedImage[] taggedImages = new TaggedImage[(int)multiChannelCameraNrCh_];
+                  boolean finished = false;
+                  int lastChannelToAdd = 0;
+                  while ( !finished && isRunning() ) {
+                     if(!acquisitionExists(multiCameraAcq_)) {
+                        enableLiveMode(false);
+                        return;
+                     }
+                     if( core_.getRemainingImageCount() == 0 ) {     //allow core to obtain more images
+                        Thread.sleep(10);
+                        continue;
+                     }
+                                                         
                      TaggedImage ti = core_.getLastTaggedImage();
                      String camera = core_.getCameraDevice();
                      int channel = ti.tags.getInt(camera + "-" + CCHANNELINDEX);
+                     taggedImages[channel] = ti;
+                     ti.tags.put("Channel", core_.getCameraChannelName(channel));
+                     MDUtils.setChannelIndex(ti.tags, channel);
+                     MDUtils.setFrameIndex(ti.tags, 0);
+                     MDUtils.setPositionIndex(ti.tags, 0);
+                     MDUtils.setSliceIndex(ti.tags, 0);
 
-                     if (!found[channel]) {
-                        found[channel] = true;
-                        ti.tags.put("Channel", core_.getCameraChannelName(channel));
-                        MDUtils.setChannelIndex(ti.tags, channel);
-                        MDUtils.setFrameIndex(ti.tags, 0);
-                        MDUtils.setSliceIndex(ti.tags, 0);
-                        MDUtils.setPositionIndex(ti.tags, 0);
+                     finished = true;
+                     for (int k = 0; k < taggedImages.length; k++) 
+                        if (taggedImages[k] == null) 
+                           finished = false;                     
+                  }
+                  VirtualAcquisitionDisplay display = getAcquisition(multiCameraAcq_).getAcquisitionWindow();
+                  if (display != null) 
+                     lastChannelToAdd = display.getHyperImage().getChannel() - 1;    
 
-                        if (!acquisitionExists(multiCameraAcq_)) {
-                           enableLiveMode(false);
-                           return;
-                        }
-
-                        foundAll = true;
-                        for (int i = 0; i < found.length; i++)
-                           if (!found[i])
-                              foundAll = false;
-                        
-                        addImage(multiCameraAcq_, ti, foundAll);
-                        if (!foundAll) {
-                           Thread.sleep(10);
-                        }
-                     }
+                  if (finished) { 
+                     for (int i = 0; i < taggedImages.length; i++)
+                        if (i != lastChannelToAdd) 
+                           addImage(multiCameraAcq_, taggedImages[i], false);                   
+                     addImage(multiCameraAcq_, taggedImages[lastChannelToAdd], true);
                   }
                }
             }
