@@ -437,12 +437,9 @@ public class DeviceSetupDlg extends MMDialog {
             ArrayList<Device> ports = new ArrayList<Device>();
             model.removeDuplicateComPorts();
             Device availablePorts[] = model.getAvailableSerialPorts();
-            for (Device p : availablePorts) {
-               model.useSerialPort(p, true);
-            }
             String portsInModel = "Serial ports available in configuration: ";
             for (int ip = 0; ip < availablePorts.length; ++ip) {
-               if (model.isPortInUse(availablePorts[ip])) {
+               if (! model.isPortInUse(availablePorts[ip])) {
                   ports.add(availablePorts[ip]);
                }
             }
@@ -618,6 +615,7 @@ public class DeviceSetupDlg extends MMDialog {
                      int aiterator = 0;
                      foundem += dd.getName() + " on ";
                      for (String ss : communicating) {
+                        this.foundPort = ss;
                         foundem += (ss + "\n");
                         allowed[aiterator++] = ss;
                      }
@@ -652,7 +650,8 @@ public class DeviceSetupDlg extends MMDialog {
             progressDialog.setVisible(false);
             core.enableDebugLog(currentDebugLogSetting);
             rebuildPropTable();
-            //rebuildComTable();
+            if (foundPort != null)
+               rebuildComTable(foundPort);
             // restore normal operation of the Detect button
             detectButton.setText(DETECT_PORTS);
          }
