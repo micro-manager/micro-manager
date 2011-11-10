@@ -374,7 +374,8 @@
 
 (defn collect [event out-queue]
   (condp = (:task event)
-                :snap (collect-snap-image event out-queue)
+                :snap (doseq [sub-event (make-multicamera-events event)]
+                        (collect-snap-image sub-event out-queue))
                 :burst (collect-burst-images event out-queue)))
 
 (defn z-in-msp [msp z-drive]
@@ -441,6 +442,7 @@
       )))
 
 (defn cleanup []
+  (try
   (log "cleanup")
  ; (do-when #(.update %) (:display @state))
   (state-assoc! :finished true :display nil)
@@ -453,7 +455,8 @@
   (when (and (@state :init-continuous-focus)
              (not (core isContinuousFocusEnabled)))
     (core enableContinuousFocus true))
-  (return-config))
+  (return-config)
+    (catch Throwable t (ReportingUtils/showError t "Acquisition cleanup failed."))))
 
 ;; running events
   
@@ -560,8 +563,9 @@
 (defn make-summary-metadata [settings]
   (let [depth (core getBytesPerPixel)
         channels (settings :channels)
-        num-camera-channels (long (core getNumberOfCameraChannels))
-        super-channels (flatten (for [channel channels] (repeat num-camera-channels channel)))]
+        num-camera-channels (core getNumberOfCameraChannels)
+        simple-channels (if-not (empty? channels) channels [{:name "Default" :color java.awt.Color/WHITE}])
+        super-channels (flatten (for [channel simple-channels] (repeat num-camera-channels channel)))]
      (JSONObject. {
       "BitDepth" (core getImageBitDepth)
       "Channels" (count super-channels)
