@@ -109,7 +109,7 @@ public class PeripheralSetupDlg extends MMDialog {
                String o = peripherals_.get(row).getName();
                peripherals_.get(row).setName(n);
                try {
-                  model_.changeDeviceName(o, n);
+                  //model_.changeDeviceName(o, n);
                   fireTableCellUpdated(row, col);
                } catch (Exception e) {
                   handleError(e.getMessage());

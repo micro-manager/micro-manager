@@ -1498,6 +1498,7 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
 
       toolsMenu.addSeparator();
 
+      // >>>>>>>>>>>>>>>>>>>>> TODO: REVISE AFTER HWW TESTING, N.A. Nov 2011
       final JMenuItem configuratorMenuItem = new JMenuItem();
       configuratorMenuItem.addActionListener(new ActionListener() {
 
@@ -1518,9 +1519,11 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
       });
       
       cfg2MenuItem.setText("*New Hardware Configuration Wizard...");
-      toolsMenu.add(cfg2MenuItem);
+      //toolsMenu.add(cfg2MenuItem);
       cfg2MenuItem.setToolTipText("New (experimental) Hardware Configuration Wizard");
-
+      // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+      
+      
       final JMenuItem loadSystemConfigMenuItem = new JMenuItem();
       toolsMenu.add(loadSystemConfigMenuItem);
       loadSystemConfigMenuItem.addActionListener(new ActionListener() {
