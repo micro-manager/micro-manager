@@ -56,6 +56,9 @@ Source: ..\..\3rdparty\Microsoft\VisualC++\lib\x86\Microsoft.VC90.OPENMP\vcomp90
 Source: ..\..\3rdparty\Microsoft\VisualC++\lib\x86\Microsoft.VC90.OPENMP\Microsoft.VC90.OpenMP.manifest ; DestDir: {app}\Microsoft.VC90.OPENMP; Flags: ignoreversion
 
 
+;include the jre for 32 bit
+Source: ..\..\3rdparty\jre_32\* ; DestDir: {app}\jre; Flags: ignoreversion recursesubdirs createallsubdirs
+
 ; device libraries
 Source: micro-manager\ATMCD32D.dll; DestDir: {app}; Flags: ignoreversion
 Source: micro-manager\inpout32.dll; DestDir: {app}; Flags: ignoreversion
