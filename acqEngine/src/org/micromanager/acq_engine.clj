@@ -24,7 +24,7 @@
            get-msp MultiStagePosition-to-map ChannelSpec-to-map
            get-pixel-type get-current-time-str rekey
            data-object-to-map str-vector double-vector
-           get-property-value]]
+           get-property-value edt]]
         [org.micromanager.sequence-generator :only [generate-acq-sequence
                                                     make-property-sequences]])
   (:require [clojure.set])
@@ -276,6 +276,13 @@
         tags (parse-core-metadata md)]
     {:pix pix :tags (dissoc tags "StartTime-ms")}))
     
+(defn make-multicamera-events [event]
+  (let [num-camera-channels (long (core getNumberOfCameraChannels))]
+    (for [camera-channel (range num-camera-channels)]
+      (let [super-channel-index (+ camera-channel (* num-camera-channels (event :channel-index)))]
+        (assoc event :channel-index super-channel-index
+                     :camera-channel-index camera-channel)))))
+
 (defn collect-burst-images [event out-queue]
   (when (first-trigger-missing?) (pop-burst-image)) ; drop first image if first trigger doesn't happen
   (swap! state assoc :burst-time-offset nil)
@@ -292,26 +299,25 @@
                 (swap! state assoc
                        :burst-time-offset (- (elapsed-time @state)
                                              (core-time-from-tags (image :tags)))))
-             ; (println (image+ :tags))
+              ;(println (image+ :tags))
               (.put out-queue (make-TaggedImage (annotate-image image+ evt @state
                                                                 (burst-time (:tags image) @state)))))
             (when (core isBufferOverflowed)
               (swap! state assoc :stop true)
               (ReportingUtils/showError "Circular buffer overflowed."))))
-        (flatten (map make-multicamera-events) (event :burst-data)))))
+        (flatten (map make-multicamera-events (event :burst-data))))))
   (while (and (not (@state :stop)) (. mmc isSequenceRunning))
     (Thread/sleep 5)))
 
 (defn collect-snap-image [event out-queue]
   (let [image
-         {:pix (core getImage)
-          :tags nil}]
-    (do (log "collect-snap-image: "
-               (select-keys event [:position-index :frame-index
-                                   :slice-index :channel-index]))
-      (when out-queue
-          (.put out-queue
-                (make-TaggedImage (annotate-image image event @state (elapsed-time @state))))))
+        {:pix (core getImage)
+         :tags nil}]
+    (select-keys event [:position-index :frame-index
+                        :slice-index :channel-index])
+    (when out-queue
+      (.put out-queue
+            (make-TaggedImage (annotate-image image event @state (elapsed-time @state)))))
     image))
 
 (defn return-config []
@@ -366,17 +372,9 @@
                          (:relative-z event))
       nil)))
 
-(defn make-multicamera-events [event]
-  (let [num-camera-channels (core getNumberOfCameraChannels)]
-    (for [camera-channel (range num-camera-channels)]
-      (let [super-channel-index (+ camera-channel (* num-camera-channels (event :channel-index)))]
-        (assoc event :channel-index super-channel-index
-                     :camera-channel-index camera-channel)))))
-
 (defn collect [event out-queue]
   (condp = (:task event)
-                :snap (doseq [sub-event (make-multicamera-events event)]
-                        (collect-snap-image sub-event out-queue))
+                :snap (collect-snap-image event out-queue)
                 :burst (collect-burst-images event out-queue)))
 
 (defn z-in-msp [msp z-drive]
@@ -393,12 +391,21 @@
               0))
          z-ref))))
 
-(defn store-new-z-reference [msp]
+(defn recall-z-reference [current-position]
   (let [z-drive (@state :default-z-drive)]
     (when (and (or (not (core isContinuousFocusEnabled))
-                   (core isContinuousFocusDrive z-drive))
-               (not (z-in-msp msp z-drive)))
-      (state-assoc! :reference-z (get-z-stage-position z-drive)))))
+                   (core isContinuousFocusDrive z-drive)))
+      (set-z-stage-position z-drive
+        (or (get-msp-z-position current-position z-drive)
+            (@state :reference-z))))))
+
+(defn store-z-reference [current-position]
+  (let [z-drive (@state :default-z-drive)]
+    (when (and (or (not (core isContinuousFocusEnabled))
+                   (core isContinuousFocusDrive z-drive)))
+      (let [z (get-z-stage-position z-drive)]
+        (set-msp-z-position current-position z-drive z)
+        (state-assoc! :reference-z z)))))
 
 ;; startup and shutdown
 
@@ -434,7 +441,6 @@
       )))
 
 (defn cleanup []
-  (try
   (log "cleanup")
  ; (do-when #(.update %) (:display @state))
   (state-assoc! :finished true :display nil)
@@ -447,8 +453,7 @@
   (when (and (@state :init-continuous-focus)
              (not (core isContinuousFocusEnabled)))
     (core enableContinuousFocus true))
-  (return-config)
-    (catch Throwable t (ReportingUtils/showError t "Acquisition cleanup failed."))))
+  (return-config))
 
 ;; running events
   
@@ -456,7 +461,6 @@
   (let [current-position (:position event)
         z-drive (@state :default-z-drive)
         check-z-ref (and z-drive
-                         (-> current-position get-msp (z-in-msp z-drive) not)
                          (or (:autofocus event)
                              (:wait-time-ms event)))]
     (filter identity
@@ -472,13 +476,13 @@
                        camera (core getCameraDevice)]
              (device-best-effort camera (core setExposure exposure)))
           #(when check-z-ref
-             (set-stage-position z-drive (@state :reference-z)))
+             (recall-z-reference current-position))
           #(when-let [wait-time-ms (:wait-time-ms event)]
              (acq-sleep wait-time-ms))
-          #(when (:autofocus event)
+          #(when (get event :autofocus)
              (run-autofocus))
           #(when check-z-ref
-             (store-new-z-reference (get-msp current-position)))
+             (store-z-reference current-position))
           #(when z-drive
              (let [z (compute-z-position event)]
                (set-stage-position z-drive z)))
@@ -495,7 +499,6 @@
 
 (defn run-acquisition [this settings out-queue]
   (try
-    (log "Multi-Dimensional Acquisition started.")
     (def acq-settings settings)
     (prepare-state this)
     (binding [state (.state this)]
@@ -512,6 +515,7 @@
 ;; generic metadata
 
 (defn convert-settings [^SequenceSettings settings]
+  (def seqSettings settings)
   (-> settings
     (data-object-to-map)
     (rekey
@@ -549,16 +553,15 @@
                 (:properties channel)))
             default-cam)]
     (set-property chan-cam)
-    (let [n (core getNumberOfComponents)]
+    (let [n (long (core getNumberOfComponents))]
       (set-property default-cam)
       (get {1 1 , 4 3} n))))
 
 (defn make-summary-metadata [settings]
-  (let [depth (int (core getBytesPerPixel))
+  (let [depth (core getBytesPerPixel)
         channels (settings :channels)
-        num-camera-channels (core getNumberOfCameraChannels)
-        simple-channels (if-not (empty? channels) channels [{:name "Default" :color java.awt.Color/WHITE}])
-        super-channels (flatten (for [channel simple-channels] (repeat num-camera-channels channel)))]
+        num-camera-channels (long (core getNumberOfCameraChannels))
+        super-channels (flatten (for [channel channels] (repeat num-camera-channels channel)))]
      (JSONObject. {
       "BitDepth" (core getImageBitDepth)
       "Channels" (count super-channels)
@@ -613,6 +616,11 @@
     image-tags
     ["Width" "Height" "PixelType"]))  
 
+(defn initialize-display-ranges [window]  
+  (do (.setChannelDisplayRange window 0 0 256)
+      (.setChannelDisplayRange window 1 0 256)
+      (.setChannelDisplayRange window 2 0 256)))
+
 (defn create-image-window [first-image]
   (let [summary {:interval-ms 0.0, :custom-intervals-ms [] :use-autofocus false, :autofocus-skip 0,
                  :relative-slices true, :keep-shutter-open-slices false, :comment "",
@@ -622,8 +630,10 @@
                  :zReference 0.0, :frames (), :save false}
 		summary-metadata (make-summary-metadata summary)
 		cache (doto (MMImageCache. (TaggedImageStorageRam. summary-metadata))
-						(.setSummaryMetadata summary-metadata))]	
-    (doto (VirtualAcquisitionDisplay. cache nil))))
+						(.setSummaryMetadata summary-metadata))]
+		(doto (VirtualAcquisitionDisplay. cache nil)
+                           (.promptToSave false)
+                           (initialize-display-ranges))))
 
 (defn create-basic-event []
   {:position-index 0, :position nil,
@@ -648,7 +658,7 @@
   (let [myTaggedImage (make-TaggedImage tagged-img)
         cache (.getImageCache display)]
     (.putImage cache myTaggedImage)
-    (.showImage display myTaggedImage)
+    (.showImage display (. myTaggedImage tags) true false) 
     (when focus
       (.show display))))
 
@@ -672,25 +682,31 @@
 (def live-mode-running (ref false))
 
 (defn enable-live-mode [^Boolean on]
-      (if on
-        (let [event (create-basic-event)
-              state (create-basic-state)
-              first-image (atom true)
-              start-time (jvm-time-ms)]
-          (dosync (ref-set live-mode-running true))
-          (core startContinuousSequenceAcquisition 0)
-          (log "started sequence acquisition")
-          (.start (Thread.
-                    #(do (while @live-mode-running
-                           (let [raw-image {:pix (core getLastImage) :tags nil}
-                                 elapsed-time-ms (- (jvm-time-ms) start-time)
-                                 img (annotate-image raw-image event state elapsed-time-ms)]
-                              (reset-snap-window img)
-                              (show-image @snap-window img @first-image)
-                              (reset! first-image false)))
-                         (core stopSequenceAcquisition))
-                    "Live mode (clojure)")))
-        (dosync (ref-set live-mode-running false))))
+  (if on
+    (let [event (create-basic-event)
+          state (create-basic-state)
+          start-time (jvm-time-ms)]
+      (dosync (ref-set live-mode-running true))
+      (core startContinuousSequenceAcquisition 0)
+      (log "started sequence acquisition")
+      (.start (Thread.
+                #(dorun (loop [last-time 0
+                               first-image true]
+                          (when @live-mode-running
+                            (let [raw-image {:pix (core getLastImage) :tags nil}
+                                  elapsed-time-ms (- (jvm-time-ms) start-time)
+                                  img (annotate-image raw-image event state elapsed-time-ms)
+                                  this-time (System/currentTimeMillis)
+                                  dt (- 33 (- this-time last-time))]                      
+                              (if first-image (reset-snap-window img)  )             
+                              (Thread/sleep (max 0 dt))                                     
+                              (if (.windowClosed @snap-window) 
+                                (edt (.enableLiveMode gui false))  
+                                (show-image @snap-window img first-image)  )
+                              (recur this-time false))))
+                        (core stopSequenceAcquisition))
+                "Live mode (clojure)")))
+    (dosync (ref-set live-mode-running false))))
 
 ;; java interop
 
