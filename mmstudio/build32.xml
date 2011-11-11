@@ -62,7 +62,12 @@
 				<include name="**/*.html"/>
 			</fileset>
 		</copy>
-	</target>
+		<copy todir="./build/org/micromanager/conf2">
+			<fileset dir="./src/org/micromanager/conf2" casesensitive="no">
+				<include name="**/*.html"/>
+			</fileset>
+		</copy>
+</target>
 
 	<target name="build" description="Build MMJ_.jar">
 

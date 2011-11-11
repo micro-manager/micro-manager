@@ -157,7 +157,7 @@ import org.micromanager.utils.ReportingUtils;
 public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, ScriptInterface {
 
    private static final String MICRO_MANAGER_TITLE = "Micro-Manager 1.4";
-   private static final String VERSION = "1.4.7  20110927";
+   private static final String VERSION = "1.4.7  20111110";
    private static final long serialVersionUID = 3556500289598574541L;
    private static final String MAIN_FRAME_X = "x";
    private static final String MAIN_FRAME_Y = "y";
