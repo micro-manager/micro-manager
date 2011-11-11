@@ -15,6 +15,21 @@
   (map first
        (re-seq #"\n[^\n]+\b([1-9]|[0-9][1-9]|[0-9][0-9][1-9])\b\serror\(s\)[^\n]+\n" result-text)))
 
+(defn visual-studio-error-info [result-text errors]
+  (for [error errors]
+    (let [prefix (ffirst (re-seq #"\n([1-9]|[0-9][1-9]|[0-9][0-9][1-9])>" error))
+          pattern (re-pattern (str prefix "[^\\n]+"))]
+      (println prefix)
+      (println "pattern:" pattern)
+      (when prefix
+          (re-seq (re-pattern pattern) result-text)))))
+
+(defn visual-studio-error-text [result-text]
+  (->> (visual-studio-error-info result-text (visual-studio-errors result-text))
+       (interpose "\n")
+       flatten
+       (apply str)))
+
 (defn javac-errors [result-text]
   (map first
     (re-seq #"\[javac\]\s\b([1-9]|[0-9][1-9]|[0-9][0-9][1-9])\b\serrors?" result-text)))
@@ -44,21 +59,21 @@
 (defn report-build-errors [bits mode]
   (let [f (result-file bits mode)
         result-txt (slurp f)
-        vs-errors (visual-studio-errors result-txt)
+        vs-error-text (visual-studio-error-text result-txt)
         outdated-dlls (old-dlls (File. micromanager
                                        (condp = bits
                                          32 "bin_Win32"
                                          64 "bin_x64")) 24)
         javac-errs (javac-errors result-txt)
         outdated-jars (old-jars (File. micromanager "Install_AllPlatforms") 24)]
-    (when-not (and (empty? vs-errors) (empty? outdated-dlls)
+    (when-not (and (empty? vs-error-text) (empty? outdated-dlls)
                    (empty? javac-errs) (empty? outdated-jars))
       (println (str "\n\nMICROMANAGER " bits "-bit "
                     ({:inc "INCREMENTAL" :full "FULL"} mode)
                     " BUILD ERROR REPORT"))
-      (println (str "For a full report, see " (.getAbsolutePath f)))
+      (println (str "For the full build output, see " (.getAbsolutePath f)))
       (println "\nVisual Studio reported errors:")
-      (if-not (empty? vs-errors) (dorun (map println vs-errors)) (println "None."))
+      (if-not (empty? vs-error-text) (println vs-error-text) (println "None."))
       (println "\nOutdated device adapter DLLs:")
       (if-not (empty? outdated-dlls) (dorun (map #(println (.getName %)) outdated-dlls)) (println "None."))
       (println "\nErrors reported by java compiler:")
