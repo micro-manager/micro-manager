@@ -100,9 +100,9 @@ public class LabelsPage extends PagePanel {
             return;
          }
          
-         PropertyItem p = curDevice_.findProperty(MMCoreJ.getG_Keyword_Label());
-         if (p == null)
-            return;
+         //PropertyItem p = curDevice_.findProperty(MMCoreJ.getG_Keyword_Label());
+         //if (p == null)
+         //   return;
          
          labels_ = new String[curDevice_.getNumberOfStates()];
          for (int i= 0; i<labels_.length; i++)
@@ -312,6 +312,7 @@ public class LabelsPage extends PagePanel {
       try {
          try{
          model_.loadStateLabelsFromHardware(core_);
+         tm.setData(model_);
          }catch(Throwable t){
             ReportingUtils.logError(t);}
 

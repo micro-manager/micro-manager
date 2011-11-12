@@ -253,6 +253,8 @@ import org.micromanager.utils.ReportingUtils;
       // we can only add the state labels after initialization of the device!!
       if (type_ == DeviceType.StateDevice)  {
          StrVector stateLabels = core.getStateLabels(name_);
+         numPos_ = (int)stateLabels.size();
+         setupLabels_.clear();
          for (int state = 0; state < numPos_; state++) {
             setSetupLabel(state, stateLabels.get(state));
          }
@@ -336,7 +338,7 @@ import org.micromanager.utils.ReportingUtils;
 //    }
    
    public Label getSetupLabel(int j) {
-      return (Label) setupLabels_.values().toArray()[j];
+      return (Label) setupLabels_.get(new Integer(j));
    }
    
    public void setSetupLabel(int pos, String label) {
