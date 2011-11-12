@@ -2001,6 +2001,11 @@ int CRIF::Initialize()
    if (initialized_)
       return DEVICE_OK;
 
+   // check status first (test for communication protocol)
+   int ret = CheckDeviceStatus();
+   if (ret != DEVICE_OK)
+      return ret;
+
    CPropertyAction* pAct = new CPropertyAction(this, &CRIF::OnFocus);
    CreateProperty (g_CRIFState, "Undefined", MM::String, false, pAct);
 
@@ -2504,8 +2509,13 @@ int CRISP::Initialize()
    if (initialized_)
       return DEVICE_OK;
 
+   // check status first (test for communication protocol)
+   int ret = CheckDeviceStatus();
+   if (ret != DEVICE_OK)
+      return ret;
+
    CPropertyAction* pAct = new CPropertyAction(this, &CRISP::OnFocus);
-   CreateProperty (g_CRIFState, "Undefined", MM::String, false, pAct);
+   CreateProperty (g_CRISPState, "Undefined", MM::String, false, pAct);
 
    // Add values (TODO: check manual)
    AddAllowedValue(g_CRISPState, g_CRISP_I);
@@ -2625,7 +2635,7 @@ int CRISP::SetFocusState(std::string focusState)
    if (ret != DEVICE_OK)
       return ret;
 
-   if (focusState == g_CRISP_I )
+   if (focusState == g_CRISP_R )
    {
       // Unlock and switch off laser:
       ret = SetContinuousFocusing(false);
@@ -2633,16 +2643,11 @@ int CRISP::SetFocusState(std::string focusState)
          return ret;
    }
 
-   else if (focusState == g_CRIF_L)
+   else if (focusState == g_CRIF_K)
    {
-      if ( (currentState == g_CRIF_I) || currentState == g_CRIF_O)
-      {
-         const char* command = "LK Z";
-         // query command and wait for acknowledgement
-         int ret = QueryCommandACK(command);
-         if (ret != DEVICE_OK)
-            return ret;
-      }
+      ret = SetContinuousFocusing(true);
+      if (ret != DEVICE_OK)
+         return ret;
    }
 
    else if (focusState == g_CRIF_Cal) 
@@ -2731,15 +2736,11 @@ int CRISP::SetContinuousFocusing(bool state)
    string command;
    if (state)
    {
-      // TODO: check that the system has been calibrated and can be locked!
-      if (justCalibrated_)
-         command = "LK";
-      else
-         command = "RL"; // Turns on laser and initiated lock state using previously saved reference
+      command = "LK F=83";
    }
    else
    {
-      command = "UL"; // Turns off laser and unlocks
+      command = "LK F=85"; // Turns off laser and unlocks
    }
    string answer;
    // query command
@@ -2750,8 +2751,6 @@ int CRISP::SetContinuousFocusing(bool state)
    // The controller only acknowledges receipt of the command
    if (answer.substr(0,2) != ":A")
       return ERR_UNRECOGNIZED_ANSWER;
-
-   justCalibrated_ = false;
 
    return DEVICE_OK;
 }
@@ -2810,7 +2809,7 @@ int CRISP::GetLastFocusScore(double& score)
    ClearPort();
 
    score = 0;
-   const char* command = "LOCK Y?"; // Requests present value of the PSD signal as shown on LCD panel
+   const char* command = "LK Y?"; // Requests present value of the PSD signal as shown on LCD panel
    string answer;
    // query command
    int ret = QueryCommand(command, answer);
