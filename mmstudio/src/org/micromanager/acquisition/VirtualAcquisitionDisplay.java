@@ -908,7 +908,6 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
 
          @Override
          public void windowClosed(WindowEvent E) {
-            closed_ = true;
             this.windowClosing(E);
             super.windowClosed(E);
          }
