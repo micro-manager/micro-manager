@@ -177,7 +177,6 @@ public class MicroscopeModel {
          // do not override existing device labels:
          if (dev.getNumberOfSetupLabels() == 0) {
             dev.getSetupLabelsFromHardware(core);
-
          }
       }
    }

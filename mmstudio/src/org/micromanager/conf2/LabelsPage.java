@@ -51,9 +51,8 @@ import org.micromanager.utils.ReportingUtils;
  */
 public class LabelsPage extends PagePanel {
    private static final long serialVersionUID = 1L;
-   private boolean initialized_ = false;
    private String labels_[] = new String[0];
-   private String deviceLabels_[][] = new String[0][0];
+   private String originalLabels_[][] = new String[0][0];
    ArrayList<Device> devices_ = new ArrayList<Device>();
    
    public class SelectionListener implements ListSelectionListener {
@@ -99,11 +98,7 @@ public class LabelsPage extends PagePanel {
          if (curDevice_ == null) {
             return;
          }
-         
-         //PropertyItem p = curDevice_.findProperty(MMCoreJ.getG_Keyword_Label());
-         //if (p == null)
-         //   return;
-         
+                  
          labels_ = new String[curDevice_.getNumberOfStates()];
          for (int i= 0; i<labels_.length; i++)
             labels_[i] = new String("State-" + i);
@@ -159,10 +154,7 @@ public class LabelsPage extends PagePanel {
       };
       
       public void setData(MicroscopeModel model) {
-         if (!initialized_) {
-            storeLabels();
-            initialized_ = true;
-         }
+         // identify state devices
          Device devs[] = model.getDevices();
          devices_.clear();
          for (int i=0; i<devs.length; i++) {
@@ -170,6 +162,8 @@ public class LabelsPage extends PagePanel {
                devices_.add(devs[i]);
             }
          }
+         
+         storeLabels();
       }
       
       public int getRowCount() {
@@ -271,7 +265,7 @@ public class LabelsPage extends PagePanel {
       if (selectedDevice != null) {
          for (int j=0; j<devices_.size(); j++) {
             if (selectedDevice == devices_.get(j)) {
-               labels_ = deviceLabels_[j];
+               labels_ = originalLabels_[j];
                for (int k=0; k<labels_.length; k++)
                   selectedDevice.setSetupLabel(k, labels_[k]);
                labelTableModel.fireTableStructureChanged();
@@ -282,27 +276,22 @@ public class LabelsPage extends PagePanel {
 
    public void storeLabels() {
       // Store the initial list of labels for the reset button
-      String labels[] = new String[0];
-      Device devs[] = model_.getDevices();
-      devices_.clear();
-      for (int i=0; i<devs.length; i++) {
-         if (devs[i].isStateDevice()) {
-            devices_.add(devs[i]);
-         }
-      }
-      deviceLabels_ = new String[devices_.size()][0];
+      originalLabels_ = new String[devices_.size()][0];
       for (int j=0; j<devices_.size(); j++) {
-         labels = new String[devices_.get(j).getNumberOfStates()];
+         String labels[] = new String[devices_.get(j).getNumberOfStates()];
          for (int i= 0; i<labels.length; i++)
             labels[i] = new String("State-" + i);
          
          for (int i=0; i<devices_.get(j).getNumberOfSetupLabels(); i++) {
             Label lab = devices_.get(j).getSetupLabel(i);
-            labels[lab.state_] = lab.label_;
+            if (lab.state_ < devices_.get(j).getNumberOfStates())
+               labels[lab.state_] = lab.label_;
+            else
+               ReportingUtils.showError("Configuration label " + lab.label_ + "exceeds maximum position and will be ignored");
          }
-         deviceLabels_[j] = new String[labels.length];
+         originalLabels_[j] = new String[labels.length];
          for (int k=0; k<labels.length; k++)
-            deviceLabels_[j][k]=labels[k];
+            originalLabels_[j][k]=labels[k];
       }
    }
 
@@ -312,7 +301,6 @@ public class LabelsPage extends PagePanel {
       try {
          try{
          model_.loadStateLabelsFromHardware(core_);
-         tm.setData(model_);
          }catch(Throwable t){
             ReportingUtils.logError(t);}
 
@@ -330,7 +318,6 @@ public class LabelsPage extends PagePanel {
          return false;
       }
 
-      resetLabels();
       return true;
   }
 
