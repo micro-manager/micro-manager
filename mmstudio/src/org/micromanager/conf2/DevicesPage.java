@@ -217,10 +217,8 @@ public class DevicesPage extends PagePanel implements ListSelectionListener {
       for (int i = 0; i < installed.length; i++) {
          try {
             if (model_.findDevice(installed[i]) == null) {
-               String description = model_.getDeviceDescription(
-                     dev.getLibrary(), installed[i]);
-               Device newDev = new Device(installed[i],
-                     dev.getLibrary(), installed[i], description);
+               String description = model_.getDeviceDescription(dev.getLibrary(), installed[i]);
+               Device newDev = new Device(installed[i], dev.getLibrary(), installed[i], description);
                peripherals.add(newDev);
             }
          } catch (Exception e) {
