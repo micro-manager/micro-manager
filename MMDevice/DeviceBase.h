@@ -1157,7 +1157,7 @@ public:
    using CDeviceBase<MM::Camera, U>::SetProperty;
    using CDeviceBase<MM::Camera, U>::LogMessage;
 
-   CCameraBase() : busy_(false), thd_(0), stopOnOverflow_(false)
+   CCameraBase() //: busy_(false), thd_(0), stopOnOverflow_(false)
    {
       // create and intialize common transpose properties
       std::vector<std::string> allowedValues;
@@ -1172,16 +1172,16 @@ public:
       CreateProperty(MM::g_Keyword_Transpose_Correction, "0", MM::Integer, false);
       SetAllowedValues(MM::g_Keyword_Transpose_Correction, allowedValues);
 
-      thd_ = new BaseSequenceThread(this);
+    //  thd_ = new BaseSequenceThread(this);
    }
 
    virtual ~CCameraBase()
    {
-      if (!thd_->IsStopped()) {
+/*      if (!thd_->IsStopped()) {
          thd_->Stop();
          thd_->wait();
       }
-      delete thd_;
+      delete thd_;*/
    }
 
    virtual bool Busy() {return busy_;}
@@ -1198,15 +1198,15 @@ public:
    /**
    * Stop and wait for the thread finished
    */
-   virtual int StopSequenceAcquisition()
-   {
+   virtual int StopSequenceAcquisition() = 0;
+  /* {
       if (!thd_->IsStopped()) {
          thd_->Stop();
          thd_->wait();
       }
 
       return DEVICE_OK;
-   }
+   }*/
 
    /**
    * Default implementation of the pixel size cscaling.
@@ -1263,10 +1263,10 @@ public:
 
    // temporary debug methods
    int PrepareSequenceAcqusition() {return DEVICE_UNSUPPORTED_COMMAND;}
+   
+   virtual int StartSequenceAcquisition(long numImages, double interval_ms, bool stopOnOverflow) = 0;
 
-   /**
-   * Default implementation.
-   */
+   /*
    virtual int StartSequenceAcquisition(long numImages, double interval_ms, bool stopOnOverflow)
    {
       if (IsCapturing())
@@ -1279,7 +1279,8 @@ public:
       stopOnOverflow_ = stopOnOverflow;
       return DEVICE_OK;
    }
-
+*/
+   /*
    virtual int InsertImage()
    {
       char label[MM::MaxStrLength];
@@ -1299,7 +1300,9 @@ public:
       } else
          return ret;
    }
+   */
 
+/*
    //Do actual capturing
    //Called from inside the thread cicle 
    virtual int ThreadRun (void)
@@ -1349,11 +1352,12 @@ protected:
          LogMessage(g_Msg_EXCEPTION_IN_ON_THREAD_EXITING, false);
       }
    }
+   */
 protected:
    bool busy_;
    bool stopOnOverflow_;
    Metadata metadata_;
-
+/*
    class BaseSequenceThread;
    BaseSequenceThread * thd_;
    friend class BaseSequenceThread;
@@ -1452,7 +1456,7 @@ protected:
       MM::MMTime lastFrameTime_;
       MMThreadLock stopLock_;
       MMThreadLock suspendLock_;
-   };
+   };*/
 };
 
 /**

@@ -133,9 +133,8 @@ SpotCamera::SpotCamera(const char* /*szDeviceName*/) : CCameraBase<SpotCamera>()
 	snapImageStartTime_(0.),
 	previousFrameRateStartTime_(0.),
 	startme_(false),
-	stopRequest_(false)
-	
-
+	stopRequest_(false),
+   thd_(NULL)
 {
  
 
@@ -174,6 +173,8 @@ SpotCamera::SpotCamera(const char* /*szDeviceName*/) : CCameraBase<SpotCamera>()
 
 	}
 	
+   
+   thd_ = new CameraSequenceThread(this);
 
    // call the base class method to set-up default error codes/messages
    InitializeDefaultErrorMessages();
@@ -188,6 +189,12 @@ SpotCamera::SpotCamera(const char* /*szDeviceName*/) : CCameraBase<SpotCamera>()
  */
 SpotCamera::~SpotCamera()
 {
+
+`   if (!thd_->IsStopped()) {
+      thd_->Stop();
+      thd_->wait();
+   }
+   delete thd_;
 
 	if ( this->initialized ) this->Shutdown();  
 	delete pImplementation_;
@@ -1744,7 +1751,7 @@ int SpotCamera::CallBackToCamera()
 	previousFrameRateStartTime_  = GetCurrentMMTime().getMsec();
 	
 	// wait for next image and put it into 'circular' buffer
-	int nRet = CCameraBase<SpotCamera>::InsertImage();
+	int nRet = InsertImage();
 	if( DEVICE_OK == nRet)
 	{
 		bool complete = (numImages_ <= ++imageCounter_);
@@ -1817,4 +1824,38 @@ bool SpotCamera::WaitForExposureComplete(void)
 
 	return ret;
 
+}
+
+
+int SpotCamera::InsertImage()
+{
+   char label[MM::MaxStrLength];
+   this->GetLabel(label);
+   Metadata md;
+   md.put("Camera", label);
+   int ret = GetCoreCallback()->InsertImage(this, GetImageBuffer(), GetImageWidth(),
+      GetImageHeight(), GetImageBytesPerPixel(),
+      md.Serialize().c_str());
+   if (!stopOnOverflow_ && ret == DEVICE_BUFFER_OVERFLOW)
+   {
+      // do not stop on overflow - just reset the buffer
+      GetCoreCallback()->ClearImageBuffer(this);
+      return GetCoreCallback()->InsertImage(this, GetImageBuffer(), GetImageWidth(),
+         GetImageHeight(), GetImageBytesPerPixel(),
+         md.Serialize().c_str());
+   } else
+      return ret;
+}
+
+void SpotCamera::OnThreadExiting() throw()
+{
+   try
+   {
+      LogMessage(g_Msg_SEQUENCE_ACQUISITION_THREAD_EXITING);
+      GetCoreCallback()?GetCoreCallback()->AcqFinished(this,0):DEVICE_OK;
+   }
+   catch(...)
+   {
+      LogMessage(g_Msg_EXCEPTION_IN_ON_THREAD_EXITING, false);
+   }
 }
