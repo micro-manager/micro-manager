@@ -212,7 +212,7 @@ fi
 
 # OpenCV
 AX_OPENCV
-AM_CONDITIONAL([BUILD_OPENCV],[test -n OPENCV_LDFLAGS])
+AM_CONDITIONAL(BUILD_OPENCV,test x$hasopencv = xtrue)
 
 # Only build ... when the code is there
 AM_CONDITIONAL([BUILD_TEST],[test -f "Test/Test.h"])
@@ -273,7 +273,6 @@ AC_SUBST(MMSUFFIX)
 AC_MSG_CHECKING(library prefix)
 AC_MSG_RESULT($MMPREFIX)
 AC_SUBST(MMPREFIX)
-
 
 # Checks for library functions.
 AC_HEADER_STDC

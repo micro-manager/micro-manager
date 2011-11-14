@@ -45,6 +45,7 @@ if test "x$want_opencv" = "xyes"; then
        done
    fi
    if test "$succeeded" = "yes"; then
+      hasopencv=true
       AC_MSG_RESULT(yes)
       OPENCV_LDFLAGS="$OPENCV_LDFLAGS -lopencv_video -lopencv_core -lopencv_highgui"
       AC_SUBST(OPENCV_CPPFLAGS)
