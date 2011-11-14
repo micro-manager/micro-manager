@@ -46,10 +46,10 @@ if test "x$want_opencv" = "xyes"; then
    fi
    if test "$succeeded" = "yes"; then
       AC_MSG_RESULT(yes)
-      OPENCV_LDFLAGS="$OPENCV_LDFLAGS -lcxcore -lhighgui -lcv"
+      OPENCV_LDFLAGS="$OPENCV_LDFLAGS -lopencv_video -lopencv_core -lopencv_highgui"
       AC_SUBST(OPENCV_CPPFLAGS)
       AC_SUBST(OPENCV_LDFLAGS)
-      AC_DEFINE(HAVE_OPENCV,,[define if the OpenCV library is available])
+      AC_DEFINE(HAVE_OPENCV,[true],[define if the OpenCV library is available])
    else
       AC_MSG_RESULT(no)
    fi
