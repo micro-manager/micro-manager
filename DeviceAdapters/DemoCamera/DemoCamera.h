@@ -147,7 +147,6 @@ public:
    int IsExposureSequenceable(bool& isSequenceable) const {isSequenceable = false; return DEVICE_OK;}
 
    unsigned  GetNumberOfComponents() const { return nComponents_;};
-   bool Busy() {return busy_;}
 
    // action interface
    // ----------------
@@ -206,8 +205,6 @@ private:
    int nComponents_;
    friend class MySequenceThread;
    MySequenceThread * thd_;
-   bool stopOnOverflow_;
-   Metadata metadata_;
 };
 
 class MySequenceThread : public MMDeviceThreadBase
