@@ -293,17 +293,27 @@ public:
    // action interface
    // ----------------
    int OnPort(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnAxis(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnFocus(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnNA(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnWaitAfterLock(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnLockRange(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnLEDIntensity(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnNumAvg(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnCalGain(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnGainMultiplier(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnFocusCurve(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnFocusCurveData(MM::PropertyBase* pProp, MM::ActionType eAct);
 
 private:
    int GetFocusState(std::string& focusState);
    int SetFocusState(std::string focusState);
-   int SetPositionUm(double pos);
-   int GetPositionUm(double& pos);
+   int GetValue(std::string cmd, float& val);
+   int SetCommand(std::string cmd);
 
+   std::string focusCurveData_;
    bool justCalibrated_;
+   long ledIntensity_;
    double stepSizeUm_;
    double na_;
    std::string focusState_;

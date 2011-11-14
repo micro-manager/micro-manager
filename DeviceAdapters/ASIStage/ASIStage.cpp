@@ -2471,9 +2471,11 @@ int CRIF::OnWaitAfterLock(MM::PropertyBase* pProp, MM::ActionType eAct)
 ////
 CRISP::CRISP() :
    ASIBase(this, "" /* LX-4000 Prefix Unknown */),
+   focusCurveData_(""),
    justCalibrated_(false),
    axis_("Z"),
    stepSizeUm_(0.1),
+   ledIntensity_(50),
    na_(0.65),
    waitAfterLock_(3000)
 {
@@ -2496,6 +2498,11 @@ CRISP::CRISP() :
    CPropertyAction* pAct = new CPropertyAction (this, &CRISP::OnPort);
    CreateProperty(MM::g_Keyword_Port, "Undefined", MM::String, false, pAct, true);
 
+   // Axis
+   pAct = new CPropertyAction (this, &CRISP::OnAxis);
+   CreateProperty("Axis", "Z", MM::String, false, pAct, true);
+   AddAllowedValue("Axis", "Z");
+   AddAllowedValue("Axis", "F");
 }
 
 CRISP::~CRISP()
@@ -2537,7 +2544,33 @@ int CRISP::Initialize()
    CreateProperty("Objective NA", "0.8", MM::Float, false, pAct);
    SetPropertyLimits("Objective NA", 0, 1.65);
 
-   initialized_ = true;
+   pAct = new CPropertyAction(this, &CRISP::OnLockRange);
+   CreateProperty("Max Lock Range(mm)", "0.05", MM::Float, false, pAct);
+
+   pAct = new CPropertyAction(this, &CRISP::OnCalGain);
+   CreateProperty("Calibration Gain", "0.05", MM::Integer, false, pAct);
+
+   pAct = new CPropertyAction(this, &CRISP::OnLEDIntensity);
+   CreateProperty("LED Intensity", "50", MM::Integer, false, pAct);
+   SetPropertyLimits("LED Intensity", 0, 100);
+
+   pAct = new CPropertyAction(this, &CRISP::OnGainMultiplier);
+   CreateProperty("GainMultiplier", "10", MM::Integer, false, pAct);
+   SetPropertyLimits("GainMultiplier", 1, 100);
+
+   pAct = new CPropertyAction(this, &CRISP::OnNumAvg);
+   CreateProperty("Number of Averages", "1", MM::Integer, false, pAct);
+   SetPropertyLimits("Number of Averages", 0, 10);
+
+   const char* fc = "Obtain Focus Curve";
+   pAct = new CPropertyAction(this, &CRISP::OnFocusCurve);
+   CreateProperty(fc, " ", MM::String, false, pAct);
+   AddAllowedValue(fc, " ");
+   AddAllowedValue(fc, "Do it");
+
+   pAct = new CPropertyAction(this, &CRISP::OnFocusCurveData);
+   CreateProperty("Focus Curve Data", "", MM::String, true, pAct);
+
    return DEVICE_OK;
 }
 
@@ -2553,17 +2586,31 @@ bool CRISP::Busy()
    return false;
 }
 
-// TODO: See if this can be implemented for the CRIF
+/**
+ * Note that offset is not in um but arbitrary (integer) numbers
+ */
 int CRISP::GetOffset(double& offset)
 {
-   offset = 0;
+   float val;
+   int ret = GetValue("LK Z?", val);
+   if (ret != DEVICE_OK)
+      return ret;
+
+   int v = (int) val;
+
+   offset = (double) v;
+
    return DEVICE_OK;
 }
 
-// TODO: See if this can be implemented for the CRIF
-int CRISP::SetOffset(double /* offset */)
+/**
+ * Note that offset is not in um but arbitrary (integer) numbers
+ */
+int CRISP::SetOffset(double  offset)
 {
-   return DEVICE_OK;
+   std::ostringstream os;
+   os << "LK Z=" << fixed << (int) offset;
+   return SetCommand(os.str().c_str());
 }
 
 void CRISP::GetName(char* pszName) const
@@ -2742,17 +2789,8 @@ int CRISP::SetContinuousFocusing(bool state)
    {
       command = "LK F=85"; // Turns off laser and unlocks
    }
-   string answer;
-   // query command
-   int ret = QueryCommand(command.c_str(), answer);
-   if (ret != DEVICE_OK)
-      return ret;
 
-   // The controller only acknowledges receipt of the command
-   if (answer.substr(0,2) != ":A")
-      return ERR_UNRECOGNIZED_ANSWER;
-
-   return DEVICE_OK;
+   return SetCommand(command);
 }
 
 
@@ -2771,13 +2809,13 @@ int CRISP::GetContinuousFocusing(bool& state)
    return DEVICE_OK;
 }
 
+/**
+ * Does a "one-shot" autofocu: locks and then unlocks again
+ */
 int CRISP::FullFocus()
 {
    double pos;
-   int ret = GetPositionUm(pos);
-   if (ret != DEVICE_OK)
-      return ret;
-   ret = SetContinuousFocusing(true);
+   int ret = SetContinuousFocusing(true);
    if (ret != DEVICE_OK)
       return ret;
 
@@ -2791,7 +2829,6 @@ int CRISP::FullFocus()
 
    if (!IsContinuousFocusLocked()) {
       SetContinuousFocusing(false);
-      SetPositionUm(pos);
       return ERR_NOT_LOCKED;
    }
 
@@ -2809,7 +2846,7 @@ int CRISP::GetLastFocusScore(double& score)
    ClearPort();
 
    score = 0;
-   const char* command = "LK Y?"; // Requests present value of the PSD signal as shown on LCD panel
+   const char* command = "LK Y?"; // Requests present value of the focus error as shown on LCD panel
    string answer;
    // query command
    int ret = QueryCommand(command, answer);
@@ -2823,45 +2860,11 @@ int CRISP::GetLastFocusScore(double& score)
    return DEVICE_OK;
 }
 
-int CRISP::SetPositionUm(double pos)
+int CRISP::GetValue(string cmd, float& val)
 {
-   // empty the Rx serial buffer before sending command
-   ClearPort();
-
-   ostringstream command;
-   command << fixed << "M " << axis_ << "=" << pos / stepSizeUm_; // in 10th of micros
-
-   string answer;
-   // query the device
-   int ret = QueryCommand(command.str().c_str(), answer);
-   if (ret != DEVICE_OK)
-      return ret;
-
-   if (answer.substr(0,2).compare(":A") == 0 || answer.substr(1,2).compare(":A") == 0)
-   {
-      return DEVICE_OK;
-   }
-   // deal with error later
-   else if (answer.substr(0, 2).compare(":N") == 0 && answer.length() > 2)
-   {
-      int errNo = atoi(answer.substr(4).c_str());
-      return ERR_OFFSET + errNo;
-   }
-
-   return ERR_UNRECOGNIZED_ANSWER; 
-}
-
-int CRISP::GetPositionUm(double& pos)
-{
-   // empty the Rx serial buffer before sending command
-   ClearPort();
-
-   ostringstream command;
-   command << "W " << axis_;
-
    string answer;
    // query command
-   int ret = QueryCommand(command.str().c_str(), answer);
+   int ret = QueryCommand(cmd.c_str(), answer);
    if (ret != DEVICE_OK)
       return ret;
 
@@ -2873,16 +2876,34 @@ int CRISP::GetPositionUm(double& pos)
    else if (answer.length() > 0)
    {
       char head[64];
-      float zz;
       char iBuf[256];
       strcpy(iBuf,answer.c_str());
-      sscanf(iBuf, "%s %f\r\n", head, &zz);
-	  
-	   pos = zz * stepSizeUm_;
-
+      sscanf(iBuf, "%s %f\r\n", head, &val);
       return DEVICE_OK;
    }
 
+   return ERR_UNRECOGNIZED_ANSWER;
+}
+
+
+int CRISP::SetCommand(std::string cmd)
+{
+   string answer;
+   // query command
+   int ret = QueryCommand(cmd.c_str(), answer);
+   if (ret != DEVICE_OK)
+      return ret;
+
+   if (answer.length() > 2 && answer.substr(0, 2).compare(":N") == 0)
+   {
+      int errNo = atoi(answer.substr(2).c_str());
+      return ERR_OFFSET + errNo;
+   }
+
+   if (answer.substr(0,2) == ":A") {
+      return DEVICE_OK;
+   }
+ 
    return ERR_UNRECOGNIZED_ANSWER;
 }
 
@@ -2960,13 +2981,164 @@ int CRISP::OnNA(MM::PropertyBase* pProp, MM::ActionType eAct)
    return DEVICE_OK;
 }
 
-/**
- *  AZ100 adapter 
- */
-/**
- *  AZ100 adapter 
- */
+int CRISP::OnCalGain(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   if (eAct == MM::BeforeGet)
+   {
+      float calGain;
+      int ret = GetValue("LR X?", calGain);
+      if (ret != DEVICE_OK)
+         return ret;
 
+      pProp->Set(calGain);
+   }
+   else if (eAct == MM::AfterSet)
+   {
+      double lr;
+      pProp->Get(lr);
+      ostringstream command;
+      command << fixed << "LR X=" << (int) lr;
+
+      return SetCommand(command.str());
+   }
+
+   return DEVICE_OK;
+}
+int CRISP::OnLockRange(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   if (eAct == MM::BeforeGet)
+   {
+      float lockRange;
+      int ret = GetValue("RT F?", lockRange);
+      if (ret != DEVICE_OK)
+         return ret;
+
+      pProp->Set(lockRange);
+   }
+   else if (eAct == MM::AfterSet)
+   {
+      double lr;
+      pProp->Get(lr);
+      ostringstream command;
+      command << fixed << "LR Z=" << lr;
+
+      return SetCommand(command.str());
+   }
+
+   return DEVICE_OK;
+}
+
+int CRISP::OnNumAvg(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   if (eAct == MM::BeforeGet)
+   {
+      float numAvg;
+      int ret = GetValue("RT F?", numAvg);
+      if (ret != DEVICE_OK)
+         return ret;
+
+      pProp->Set(numAvg);
+   }
+   else if (eAct == MM::AfterSet)
+   {
+      long nr;
+      pProp->Get(nr);
+      ostringstream command;
+      command << fixed << "RT F=" << nr;
+
+      return SetCommand(command.str());
+   }
+
+   return DEVICE_OK;
+}
+
+int CRISP::OnGainMultiplier(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   if (eAct == MM::BeforeGet)
+   {
+      float gainMultiplier;
+      std::string command = "KA " + axis_;
+      int ret = GetValue(command.c_str(), gainMultiplier);
+      if (ret != DEVICE_OK)
+         return ret;
+
+      pProp->Set(gainMultiplier);
+   }
+   else if (eAct == MM::AfterSet)
+   {
+      long nr;
+      pProp->Get(nr);
+      ostringstream command;
+      command << fixed << "KA Z=" << nr;
+
+      return SetCommand(command.str());
+   }
+
+   return DEVICE_OK;
+}
+
+int CRISP::OnLEDIntensity(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   if (eAct == MM::BeforeGet)
+   {
+      pProp->Set(ledIntensity_);
+   }
+   else if (eAct == MM::AfterSet)
+   {
+      pProp->Get(ledIntensity_);
+   }
+
+   return DEVICE_OK;
+}
+
+int CRISP::OnFocusCurve(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   if (eAct == MM::BeforeGet)
+   {
+      pProp->Set(" ");
+   } 
+   else if (eAct == MM::AfterSet)
+   {
+      std::string val;
+      pProp->Get(val);
+      if (val == "Do it")
+      {
+         // TODO: may need to extend serial port timeout temporarily
+         int ret = QueryCommand("LK F=97", focusCurveData_);
+         if (ret != DEVICE_OK)
+            return ret;
+      }
+   }
+   return DEVICE_OK;
+}
+
+int CRISP::OnFocusCurveData(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   if (eAct == MM::BeforeGet)
+   {
+      pProp->Set(focusCurveData_.c_str());
+   }
+   return DEVICE_OK;
+}
+
+int CRISP::OnAxis(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   if (eAct == MM::BeforeGet)
+   {
+      pProp->Set(axis_.c_str());
+   }
+   else if (eAct == MM::AfterSet)
+   {
+      pProp->Get(axis_);
+   }
+
+   return DEVICE_OK;
+}
+
+
+/***************************************************************************
+ *  AZ100 adapter 
+ */
 AZ100Turret::AZ100Turret() :
    ASIBase(this, "" /* LX-4000 Prefix Unknown */),
    numPos_(4),
