@@ -2810,11 +2810,10 @@ int CRISP::GetContinuousFocusing(bool& state)
 }
 
 /**
- * Does a "one-shot" autofocu: locks and then unlocks again
+ * Does a "one-shot" autofocus: locks and then unlocks again
  */
 int CRISP::FullFocus()
 {
-   double pos;
    int ret = SetContinuousFocusing(true);
    if (ret != DEVICE_OK)
       return ret;
