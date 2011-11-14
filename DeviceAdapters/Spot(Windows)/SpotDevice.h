@@ -28,7 +28,6 @@
 #include <vector>
 #include <sstream>
 
-
 #ifdef _WINDOWS
 #include "../../../3rdparty/Spot/WINDOWS/SpotCam/SpotCam.h"
 #define SpotAPI(X) (*p##X)
@@ -51,7 +50,6 @@ typedef SPOT_RECT Rect;
 #endif
 
 #include "CodeUtility.h"
-
 namespace ExposureComputationImageTypeNS
 {
 enum ExposureComputationImageType { BrightField = 1, DarkField = 2 };
@@ -336,6 +334,8 @@ public:
 	std::string reason_;
 
 };
+
+
 
 
 

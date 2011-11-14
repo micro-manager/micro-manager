@@ -92,7 +92,6 @@ nBufSize_(0)
    }
 
 
-
 }
 
 
@@ -1954,7 +1953,6 @@ SpotDevice::~SpotDevice(void)
 		FreeLibrary(hSpotCamDLL_);
 #endif
 }
-
 
 
 
