@@ -245,8 +245,14 @@ int COpenCVgrabber::Initialize()
       printf("Cannot retrieve frame from camera!");
       return DEVICE_NOT_CONNECTED;
    }
+#ifdef __APPLE__
+   long w = frame->width;
+   long h = frame->height;
+#else
    long w = (long) cvGetCaptureProperty(capture, CV_CAP_PROP_FRAME_WIDTH);
    long h = (long) cvGetCaptureProperty(capture, CV_CAP_PROP_FRAME_HEIGHT);
+#endif
+
 
    if(w > 0 && h > 0){
 		cameraCCDXSize_ = w;
@@ -376,6 +382,7 @@ int COpenCVgrabber::Initialize()
    pAct = new CPropertyAction (this, &COpenCVgrabber::OnCameraCCDYSize);
    CreateProperty("OnCameraCCDYSize", /*"512"*/CDeviceUtils::ConvertToString(h), MM::Integer, false, pAct);
  
+
    // synchronize all properties
    // --------------------------
    nRet = UpdateStatus();
@@ -1191,11 +1198,11 @@ int COpenCVgrabber::OnResolution(MM::PropertyBase* pProp, MM::ActionType eAct)
    case MM::AfterSet:
       {
 		 
-         if(IsCapturing())
-            return DEVICE_CAMERA_BUSY_ACQUIRING;
+       if(IsCapturing())
+          return DEVICE_CAMERA_BUSY_ACQUIRING;
 
 		 std::string resolution;
-         pProp->Get(resolution);
+       pProp->Get(resolution);
 
 		 std::istringstream iss(resolution);
 		 string width, height;
