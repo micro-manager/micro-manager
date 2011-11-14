@@ -7,8 +7,8 @@
 //                XY Stage
 //                Z  Stage
 //                TTL Shutter
-//                DAC-0 (e.g. Lamp 1)
-//                DAC-1 (e.g. Lamp 2)
+//                DAC-0 (e.g. LED100 #1)
+//                DAC-1 (e.g. LED100 #2)
 //                ADC   (e.g. 0..5 V)
 //
 // AUTHOR:        Falk Dettmar, falk.dettmar@marzhauser-st.de, 09/04/2009
@@ -46,6 +46,7 @@
 const char* g_ControllerName    = "Tango Controller";
 const char* g_XYStageDeviceName = "XY Stage";
 const char* g_ZStageDeviceName  = "Z Axis";
+const char* g_AStageDeviceName  = "A Axis";
 const char* g_ShutterName       = "Tango TTL Shutter";
 const char* g_Lamp1Name         = "Tango Lamp-1";
 const char* g_Lamp2Name         = "Tango Lamp-2";
@@ -75,6 +76,7 @@ MODULE_API void InitializeModuleData()
    AddAvailableDeviceName(g_ControllerName,    "Tango Controller");             
    AddAvailableDeviceName(g_XYStageDeviceName, "XY Stage");
    AddAvailableDeviceName(g_ZStageDeviceName,  "Z Axis");
+   AddAvailableDeviceName(g_AStageDeviceName,  "A Axis");
    AddAvailableDeviceName(g_ShutterName,       "Tango TTL Shutter");
    AddAvailableDeviceName(g_Lamp1Name,         "Tango Lamp-1 [0..100%]"); 
    AddAvailableDeviceName(g_Lamp2Name,         "Tango Lamp-2 [0..100%]"); 
@@ -88,6 +90,7 @@ MODULE_API MM::Device* CreateDevice(const char* deviceName)
    if (strcmp(deviceName, g_ControllerName)    == 0) return new Hub();                           
    if (strcmp(deviceName, g_XYStageDeviceName) == 0) return new XYStage();                                     
    if (strcmp(deviceName, g_ZStageDeviceName)  == 0) return new ZStage();
+   if (strcmp(deviceName, g_AStageDeviceName)  == 0) return new AStage();
    if (strcmp(deviceName, g_ShutterName)       == 0) return new Shutter();
    if (strcmp(deviceName, g_Lamp1Name)         == 0) return new Lamp(g_Lamp1Name, 0); //legal range of id = [0..1]
    if (strcmp(deviceName, g_Lamp2Name)         == 0) return new Lamp(g_Lamp2Name, 1);
@@ -163,7 +166,7 @@ bool Hub::Busy()
 int Hub::Initialize()
 {
    // empty the Rx serial buffer before sending command
-   int ret = ClearPort(*this, *GetCoreCallback(), port_);
+   int ret = ClearPort(); //*this, *GetCoreCallback(), port_);
    if (ret != DEVICE_OK) return ret;
 
    // Name
@@ -232,6 +235,46 @@ int Hub::Shutdown()
 
 
 
+// Communication "clear buffer" utility function:
+int  Hub::ClearPort(void)
+{
+   // Clear contents of serial port
+   const int bufSize = 255;
+   unsigned char clear[bufSize];
+   unsigned long read = bufSize;
+   int ret;
+   while ((int) read == bufSize)
+   {
+      ret = ReadFromComPort(port_.c_str(), clear, bufSize, read);
+      if (ret != DEVICE_OK)
+         return ret;
+   }
+   return DEVICE_OK;                                                           
+} 
+
+
+/*
+int SendCommand(const char *command)
+{
+   std::string base_command = command;
+   int ret = SendSerialCommand(port_.c_str(), base_command.c_str(), g_TxTerm);
+   return ret;
+}
+
+
+// Communication "send & receive" utility function:
+int Hub::QueryCommand(const char *command, std::string &answer) const
+{
+   // send command
+   int ret = SendCommand(command);
+   if (ret != DEVICE_OK) return ret;
+
+   // block/wait for acknowledge (or until we time out)
+   ret = GetSerialAnswer(port_.c_str(), g_RxTerm, answer);
+   return ret;
+}
+*/
+
 //////////////// Action Handlers (Hub) /////////////////
 
 int Hub::OnPort(MM::PropertyBase* pProp, MM::ActionType pAct)
@@ -270,8 +313,8 @@ XYStage::XYStage() :
    initialized_(false),
    range_measured_(false),
    answerTimeoutMs_(1000),
-   stepSizeXUm_(0.01), //  1000 * pitch/819200 
-   stepSizeYUm_(0.01), //  1000 * pitch/819200 
+   stepSizeXUm_(0.0012), //=1000*pitch[mm]/gear/(motorsteps*4096)  (assume gear=1 motorsteps=200 => stepsize=pitch/819.2)
+   stepSizeYUm_(0.0012),
    speedX_(20.0), //[mm/s]
    speedY_(20.0), //[mm/s]
    accelX_(0.2), //[m/s²]
@@ -321,13 +364,27 @@ int XYStage::Initialize()
    // Step size
    // ---------
    CPropertyAction* pAct = new CPropertyAction (this, &XYStage::OnStepSizeX);
-   // TODO: get current step size from the controller
-   int ret = CreateProperty("StepSizeX [um]", "1.0", MM::Float, false, pAct);
+   // get current step size from the controller
+   int ret = GetCommand("?pitch x", resp);
+   if (ret != DEVICE_OK) return DEVICE_UNSUPPORTED_COMMAND;
+   float pitch;
+   char iBuf[256];
+   strcpy(iBuf,resp.c_str());
+   sscanf(iBuf, "%f\r", &pitch);
+   stepSizeXUm_ = pitch/819.2;
+   ret = CreateProperty("StepSizeX [um]", CDeviceUtils::ConvertToString(stepSizeXUm_), MM::Float, false, pAct); // mm/s
    if (ret != DEVICE_OK) return ret;
+
    pAct = new CPropertyAction (this, &XYStage::OnStepSizeY);
-   // TODO: get current step size from the controller
-   ret = CreateProperty("StepSizeY [um]", "1.0", MM::Float, false, pAct);
+   // get current step size from the controller
+   ret = GetCommand("?pitch y", resp);
+   if (ret != DEVICE_OK) return DEVICE_UNSUPPORTED_COMMAND;
+   strcpy(iBuf,resp.c_str());
+   sscanf(iBuf, "%f\r", &pitch);
+   stepSizeYUm_ = pitch/819.2;
+   ret = CreateProperty("StepSizeY [um]", CDeviceUtils::ConvertToString(stepSizeYUm_), MM::Float, false, pAct); // mm/s
    if (ret != DEVICE_OK) return ret;
+
 
    // Speed (in mm/s)
    // -----
@@ -379,21 +436,30 @@ int XYStage::Initialize()
 
 
    // Backlash (in µm)
-   pAct = new CPropertyAction (this, &XYStage::OnBacklashX);
-
    ret = GetCommand("?backlash x", resp);
-   if (ret != DEVICE_OK) return DEVICE_UNSUPPORTED_COMMAND;
-
-   ret = CreateProperty("Backlash X [um]", resp.c_str(), MM::Float, false, pAct);
-   if (ret != DEVICE_OK) return ret;
-
-   pAct = new CPropertyAction (this, &XYStage::OnBacklashY);
+   if (ret == DEVICE_OK)
+   {
+      pAct = new CPropertyAction (this, &XYStage::OnBacklashX);
+	  ret = CreateProperty("Backlash X [um]", resp.c_str(), MM::Float, false, pAct);
+      if (ret != DEVICE_OK) return ret;
+   }
 
    ret = GetCommand("?backlash y", resp);
-   if (ret != DEVICE_OK) return DEVICE_UNSUPPORTED_COMMAND;
+   if (ret == DEVICE_OK)
+   {
+      pAct = new CPropertyAction (this, &XYStage::OnBacklashY);
+	  ret = CreateProperty("Backlash Y [um]", resp.c_str(), MM::Float, false, pAct);
+      if (ret != DEVICE_OK) return ret;
+   }
 
-   ret = CreateProperty("Backlash Y [um]", resp.c_str(), MM::Float, false, pAct);
-   if (ret != DEVICE_OK) return ret;
+/*
+   ret = GetCommand("?configsnapshot", resp);
+   if (ret == DEVICE_OK)
+   {
+      if (atoi(resp.c_str()) == 1) sequenceable_ = true;
+      else                         sequenceable_ = false;
+   }
+*/
 
    ret = UpdateStatus();
    if (ret != DEVICE_OK) return ret;
@@ -500,6 +566,40 @@ int XYStage::SetPositionUm(double x, double y)
   
 
 /**
+ * Sets relative position in µm
+ */
+int XYStage::SetRelativePositionUm(double dx, double dy)
+{
+   ostringstream os;
+   os << "XYStage::SetPositionUm() " << dx << " " << dy;
+   this->LogMessage(os.str().c_str());
+
+   // switch to µm
+   int ret = SendSerialCommand(port_.c_str(), "!dim 1 1", g_TxTerm);
+   if (ret != DEVICE_OK) return ret;
+
+   // format the command
+   ostringstream cmd;
+   cmd << "!mor "<< dx << " " << dy;
+
+   ret = SendSerialCommand(port_.c_str(), cmd.str().c_str(), g_TxTerm);
+   if (ret != DEVICE_OK) return ret;
+
+   string resp;
+   ret = GetCommand("?err", resp);
+   if (ret != DEVICE_OK) return ret;
+   if (resp.length() < 1) return DEVICE_SERIAL_INVALID_RESPONSE;
+
+   int err;
+   istringstream is(resp);
+   is >> err;
+
+   if (err != 0) return DEVICE_SERIAL_INVALID_RESPONSE;
+   else          return DEVICE_OK;
+}
+  
+
+/**
  * Sets position in steps.
  */
 int XYStage::SetPositionSteps(long x, long y)
@@ -571,6 +671,8 @@ int XYStage::GetPositionSteps(long& x, long& y)
    return DEVICE_OK;
 }
 
+
+
 /**
  * Defines current position as origin (0,0) coordinate of the controller.
  */
@@ -580,16 +682,19 @@ int XYStage::SetOrigin()
    if (ret != DEVICE_OK) return ret;
   
    string resp;
-   ret = GetCommand("?status", resp);
-   if (ret != DEVICE_OK) return ret;
+   ret = GetCommand("?err", resp);
+   if (ret != DEVICE_OK)  return ret;
+   if (resp.length() < 1) return DEVICE_SERIAL_INVALID_RESPONSE;
 
-   if (resp.compare("OK...") != 0)
-   {
-      return DEVICE_SERIAL_INVALID_RESPONSE;
-   }
+   int err;
+   istringstream is(resp);
+   is >> err;
+   if (err != 0) return DEVICE_SERIAL_INVALID_RESPONSE;
 
    return SetAdapterOrigin();
 }
+
+
 
 /**
  * Defines current position as origin (0,0) coordinate of our coordinate system
@@ -607,6 +712,36 @@ int XYStage::SetAdapterOrigin()
 
    return DEVICE_OK;
 }
+
+
+/**
+ * Defines current position as (x,y) coordinate of the controller.
+ */
+int XYStage::SetAdapterOriginUm(double x, double y)
+{
+   // switch to steps
+   int ret = SendSerialCommand(port_.c_str(), "!dim 1 1", g_TxTerm);
+   if (ret != DEVICE_OK) return ret;
+
+   // format the command
+   ostringstream cmd;
+   cmd << "!pos "<< x << " " << y;
+   ret = SendSerialCommand(port_.c_str(), cmd.str().c_str(), g_TxTerm);
+   if (ret != DEVICE_OK) return ret;
+
+   string resp;
+   ret = GetCommand("?err", resp);
+   if (ret != DEVICE_OK)  return ret;
+   if (resp.length() < 1) return DEVICE_SERIAL_INVALID_RESPONSE;
+
+   int err;
+   istringstream is(resp);
+   is >> err;
+
+   if (err != 0) return DEVICE_SERIAL_INVALID_RESPONSE;
+   else          return DEVICE_OK;
+}
+
 
 
 int XYStage::Home()
@@ -730,6 +865,38 @@ int XYStage::GetLimitsUm(double& xMin, double& xMax, double& yMin, double& yMax)
 }
 
 
+
+int XYStage::Move(double vx, double vy)
+{
+   // switch to mm/s
+   int ret = SendSerialCommand(port_.c_str(), "!dim 9 9", g_TxTerm);
+   if (ret != DEVICE_OK) return ret;
+
+   // if vx and vy are not in mm/s then please convert here to mm/s
+   double vx_ = vx;
+   double vy_ = vy;
+
+   // format the command
+   ostringstream cmd;
+   cmd << "!speed "<< vx_ << " " << vy_;
+   ret = SendSerialCommand(port_.c_str(), cmd.str().c_str(), g_TxTerm);
+   if (ret != DEVICE_OK) return ret;
+
+   string resp;
+   ret = GetCommand("?err", resp);
+   if (ret != DEVICE_OK) return ret;
+   if (resp.length() < 1) return DEVICE_SERIAL_INVALID_RESPONSE;
+
+   int err;
+   istringstream is(resp);
+   is >> err;
+
+   if (err != 0) return DEVICE_SERIAL_INVALID_RESPONSE;
+   else          return DEVICE_OK;
+}
+
+
+
 int XYStage::GetStepLimits(long& xMin, long& xMax, long& yMin, long& yMax)
 {
    // switch to steps
@@ -826,9 +993,16 @@ int XYStage::OnStepSizeX(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
    if (eAct == MM::BeforeGet)
    {
-      // TODO: modify this method to query the step size
-      // from the controller
-      pProp->Set(stepSizeXUm_);
+     // get current step size from the controller
+     string resp;
+     int ret = GetCommand("?pitch x", resp);
+     if (ret != DEVICE_OK) return DEVICE_UNSUPPORTED_COMMAND;
+     float pitch;
+     char iBuf[256];
+     strcpy(iBuf,resp.c_str());
+     sscanf(iBuf, "%f\r", &pitch);
+     double stepSizeXUm = pitch/819.2;
+     pProp->Set(stepSizeXUm);
    }
    else if (eAct == MM::AfterSet)
    {
@@ -850,9 +1024,16 @@ int XYStage::OnStepSizeY(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
    if (eAct == MM::BeforeGet)
    {
-      // TODO: modify this method to query the step size
-      // from the controller
-      pProp->Set(stepSizeYUm_);
+     // get current step size from the controller
+     string resp;
+     int ret = GetCommand("?pitch y", resp);
+     if (ret != DEVICE_OK) return DEVICE_UNSUPPORTED_COMMAND;
+     float pitch;
+     char iBuf[256];
+     strcpy(iBuf,resp.c_str());
+     sscanf(iBuf, "%f\r", &pitch);
+     double stepSizeYUm = pitch/819.2;
+     pProp->Set(stepSizeYUm);
    }
    else if (eAct == MM::AfterSet)
    {
@@ -1163,7 +1344,6 @@ int XYStage::OnBacklashY(MM::PropertyBase* pProp, MM::ActionType eAct)
 }
 
 
-
 ///////////////////////////////////////////////////////////////////////////////
 // Z - Stage
 ///////////////////////////////////////////////////////////////////////////////
@@ -1173,7 +1353,10 @@ int XYStage::OnBacklashY(MM::PropertyBase* pProp, MM::ActionType eAct)
  */
 ZStage::ZStage() :
    initialized_(false),
+   range_measured_(false),
    answerTimeoutMs_(1000),
+   speedZ_(20.0), //[mm/s]
+   accelZ_(0.2), //[m/s²]
    originZ_(0),
    stepSizeUm_(0.1)
 {
@@ -1203,6 +1386,7 @@ void ZStage::GetName(char* Name) const
    CDeviceUtils::CopyLimitedString(Name, g_ZStageDeviceName);
 }
 
+
 int ZStage::Initialize()
 {
    if (!g_DeviceTangoAvailable) return DEVICE_NOT_CONNECTED;
@@ -1211,23 +1395,54 @@ int ZStage::Initialize()
    // set property list
    // -----------------
    
-   // Position
-   // --------
+   // Step size
+   // ---------
    CPropertyAction* pAct = new CPropertyAction (this, &ZStage::OnStepSize);
-   int ret = CreateProperty("StepSize [um]", "1.0", MM::Float, false, pAct);
-   if (ret != DEVICE_OK)
-      return ret;
-
-   // Backlash (in µm)
-   pAct = new CPropertyAction (this, &ZStage::OnBacklashZ);
-   // get current Backlash from the controller
+   // get current step size from the controller
    string resp;
-   ret = GetCommand("?backlash z", resp);
+   int ret = GetCommand("?pitch z", resp);
+   if (ret != DEVICE_OK) return DEVICE_UNSUPPORTED_COMMAND;
+   float pitch;
+   char iBuf[256];
+   strcpy(iBuf,resp.c_str());
+   sscanf(iBuf, "%f\r", &pitch);
+   stepSizeUm_ = pitch/819.2;
+   ret = CreateProperty("StepSize [um]", CDeviceUtils::ConvertToString(stepSizeUm_), MM::Float, false, pAct);
+   if (ret != DEVICE_OK) return ret;
+
+   // switch to mm/s
+   ret = SendSerialCommand(port_.c_str(), "!dim z 9", g_TxTerm);
+   if (ret != DEVICE_OK) return ret;
+
+   ret = GetCommand("?vel z", resp);
    if (ret != DEVICE_OK) return DEVICE_UNSUPPORTED_COMMAND;
 
-   ret = CreateProperty("Backlash Z [um]", resp.c_str(), MM::Float, false, pAct);
-   if (ret != DEVICE_OK)
-      return ret;
+   pAct = new CPropertyAction (this, &ZStage::OnSpeed);
+   ret = CreateProperty("SpeedZ [mm/s]", resp.c_str(), MM::Float, false, pAct); // mm/s
+   if (ret != DEVICE_OK) return ret;
+   SetPropertyLimits("SpeedZ [mm/s]", 0.001, 100.0); // mm/s
+
+
+   // Accel (Acceleration (in m/s²)
+   // -----
+   ret = GetCommand("?accel z", resp);
+   if (ret != DEVICE_OK) return DEVICE_UNSUPPORTED_COMMAND;
+
+   pAct = new CPropertyAction (this, &ZStage::OnAccel);
+   ret = CreateProperty("Acceleration Z [m/s^2]", resp.c_str(), MM::Float, false, pAct);
+   if (ret != DEVICE_OK) return ret;
+   SetPropertyLimits("Acceleration Z [m/s^2]", 0.01, 2.0);
+   
+   // Backlash (in µm)
+   // get current Backlash from the controller
+   ret = GetCommand("?backlash z", resp);
+   if (ret == DEVICE_OK)
+   {
+      pAct = new CPropertyAction (this, &ZStage::OnBacklash);
+      ret = CreateProperty("Backlash Z [um]", resp.c_str(), MM::Float, false, pAct);
+      if (ret != DEVICE_OK) return ret;
+   }
+
 /*
    ret = GetCommand("?configsnapshot", resp);
    if (ret == DEVICE_OK)
@@ -1312,6 +1527,36 @@ int ZStage::SetPositionUm(double pos)
 
    return DEVICE_OK;
 }
+
+
+
+int ZStage::SetRelativePositionUm(double d)
+{
+   // switch to µm
+   int ret = SendSerialCommand(port_.c_str(), "!dim z 1", g_TxTerm);
+   if (ret != DEVICE_OK) return ret;
+
+   // format the command
+   ostringstream cmd;
+   cmd << "!mor z " << d;
+
+   ret = SendSerialCommand(port_.c_str(), cmd.str().c_str(), g_TxTerm);
+   if (ret != DEVICE_OK) return ret;
+
+   string resp;
+   ret = GetCommand("?err", resp);
+   if (ret != DEVICE_OK)  return ret;
+   if (resp.length() < 1) return DEVICE_SERIAL_INVALID_RESPONSE;
+
+   int err;
+   istringstream is(resp);
+   is >> err;
+   if (err != 0) return DEVICE_SERIAL_INVALID_RESPONSE;
+
+   return DEVICE_OK;
+}
+
+
 
 int ZStage::GetPositionUm(double& pos)
 {
@@ -1429,10 +1674,101 @@ int ZStage::SetOrigin()
 }
 
 
-int ZStage::GetLimits(double& /*min*/, double& /*max*/)
+/**
+ * Defines current position as (d) coordinate of the controller.
+ */
+int ZStage::SetAdapterOriginUm(double d)
 {
-   return DEVICE_UNSUPPORTED_COMMAND;
+   // switch to steps
+   int ret = SendSerialCommand(port_.c_str(), "!dim z 1", g_TxTerm);
+   if (ret != DEVICE_OK) return ret;
+
+   // format the command
+   ostringstream cmd;
+   cmd << "!pos z "<< d;
+   ret = SendSerialCommand(port_.c_str(), cmd.str().c_str(), g_TxTerm);
+   if (ret != DEVICE_OK) return ret;
+
+   string resp;
+   ret = GetCommand("?err", resp);
+   if (ret != DEVICE_OK)  return ret;
+   if (resp.length() < 1) return DEVICE_SERIAL_INVALID_RESPONSE;
+
+   int err;
+   istringstream is(resp);
+   is >> err;
+
+   if (err != 0) return DEVICE_SERIAL_INVALID_RESPONSE;
+   else          return DEVICE_OK;
 }
+
+
+
+
+int ZStage::Move(double v)
+{
+   // switch to mm/s
+   int ret = SendSerialCommand(port_.c_str(), "!dim z 9", g_TxTerm);
+   if (ret != DEVICE_OK) return ret;
+
+   // if v is not in mm/s then please convert here to mm/s
+   double v_ = v;
+
+   // format the command
+   ostringstream cmd;
+   cmd << "!speed z "<< v_;
+   ret = SendSerialCommand(port_.c_str(), cmd.str().c_str(), g_TxTerm);
+   if (ret != DEVICE_OK) return ret;
+
+   string resp;
+   ret = GetCommand("?err", resp);
+   if (ret != DEVICE_OK) return ret;
+   if (resp.length() < 1) return DEVICE_SERIAL_INVALID_RESPONSE;
+
+   int err;
+   istringstream is(resp);
+   is >> err;
+
+   if (err != 0) return DEVICE_SERIAL_INVALID_RESPONSE;
+   else          return DEVICE_OK;
+}
+
+
+
+/**
+ * Returns the stage position limits in um.
+ */
+int ZStage::GetLimits(double& min, double& max)
+{
+  if (!range_measured_) return DEVICE_UNKNOWN_POSITION;
+
+  // switch to µm
+  int ret = SendSerialCommand(port_.c_str(), "!dim z 1", g_TxTerm);
+  if (ret != DEVICE_OK) return ret;
+
+  // format the command
+  const char* cmd = "?lim z";
+  ret = SendSerialCommand(port_.c_str(), cmd, g_TxTerm);
+  if (ret != DEVICE_OK) return ret;
+  
+  // block/wait for acknowledge, or until we time out;
+  string resp;
+  ret = GetSerialAnswer(port_.c_str(), g_RxTerm, resp);
+  if (ret != DEVICE_OK)  return ret;
+  if (resp.length() < 1) return DEVICE_SERIAL_INVALID_RESPONSE;
+
+  float lower, upper;
+  char iBuf[256];
+  strcpy(iBuf,resp.c_str());
+  sscanf(iBuf, "%f %f\r", &lower, &upper);
+  min = lower;
+  max = upper;
+
+  return DEVICE_OK;
+}
+
+
+
 
 
 
@@ -1478,7 +1814,106 @@ int ZStage::GetCommand(const string& cmd, string& response)
 }
 
 
-int ZStage::OnBacklashZ(MM::PropertyBase* pProp, MM::ActionType eAct)
+int ZStage::OnSpeed(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   if (eAct == MM::BeforeGet)
+   {
+      // switch to mm/s
+      int ret = SendSerialCommand(port_.c_str(), "!dim z 9", g_TxTerm);
+      if (ret != DEVICE_OK) return ret;
+
+	  string resp;
+      ret = GetCommand("?vel z", resp);
+      if (ret != DEVICE_OK) return ret;
+
+	  // tokenize on space:
+      stringstream ss(resp);
+      string buf;
+      vector<string> tokens;
+      while (ss >> buf)
+         tokens.push_back(buf);
+      double speed = atof(tokens.at(0).c_str());
+      speedZ_ = speed;
+      pProp->Set(speedZ_);
+   }
+   else if (eAct == MM::AfterSet)
+   {
+      // switch to mm/s
+      int ret = SendSerialCommand(port_.c_str(), "!dim z 9", g_TxTerm);
+      if (ret != DEVICE_OK) return ret;
+
+	  double uiSpeed; // Speed in mm/sec
+      pProp->Get(uiSpeed);
+      double speed = uiSpeed;
+
+      ostringstream cmd;
+      cmd << "!vel z " << speed;
+	  ret = SendSerialCommand(port_.c_str(), cmd.str().c_str(), g_TxTerm);
+      if (ret != DEVICE_OK) return ret;
+
+      string resp;
+      ret = GetCommand("?err", resp);
+      if (ret != DEVICE_OK)  return ret;
+      if (resp.length() < 1) return DEVICE_SERIAL_INVALID_RESPONSE;
+
+      int err;
+      istringstream is(resp);
+      is >> err;
+      if (err != 0) return DEVICE_SERIAL_INVALID_RESPONSE;
+
+      speedZ_ = speed;
+   }
+   return DEVICE_OK;
+}
+
+
+int ZStage::OnAccel(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   if (eAct == MM::BeforeGet)
+   {
+      string resp;
+      int ret = GetCommand("?accel z", resp);
+      if (ret != DEVICE_OK) return ret;
+
+	  // tokenize on space:
+      stringstream ss(resp);
+      string buf;
+      vector<string> tokens;
+      while (ss >> buf)
+         tokens.push_back(buf);
+      double accel = atof(tokens.at(0).c_str());
+      accelZ_ = accel;
+      pProp->Set(accelZ_);
+   }
+   else if (eAct == MM::AfterSet)
+   {
+      double accel;
+      pProp->Get(accel);
+      if (accel < 0.001)  accel =  0.001; //clipping to useful values
+      if (accel > 10.0 )  accel = 10.0;
+
+	  ostringstream cmd;
+      cmd << "!accel z " << accel;
+	  int ret = SendSerialCommand(port_.c_str(), cmd.str().c_str(), g_TxTerm);
+      if (ret != DEVICE_OK) return ret;
+
+      string resp;
+      ret = GetCommand("?err", resp);
+      if (ret != DEVICE_OK)  return ret;
+      if (resp.length() < 1) return DEVICE_SERIAL_INVALID_RESPONSE;
+
+      int err;
+      istringstream is(resp);
+      is >> err;
+      if (err != 0) return DEVICE_SERIAL_INVALID_RESPONSE;
+
+      accelZ_ = accel;
+   }
+   return DEVICE_OK;
+}
+
+
+int ZStage::OnBacklash(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
    if (eAct == MM::BeforeGet)
    {
@@ -1500,7 +1935,7 @@ int ZStage::OnBacklashZ(MM::PropertyBase* pProp, MM::ActionType eAct)
    {
       double backlash;
       pProp->Get(backlash);
-      if (backlash < 0.0)  backlash =  0.0; //clipping to useful values
+      if (backlash <  0.0) backlash =  0.0; //clipping to useful values
       if (backlash > 10.0) backlash = 10.0;
 
 	  ostringstream cmd;
@@ -1549,6 +1984,651 @@ int ZStage::OnStepSize(MM::PropertyBase* pProp, MM::ActionType eAct)
    return DEVICE_OK;
 }
 
+
+
+
+///////////////////////////////////////////////////////////////////////////////
+// A - Stage
+///////////////////////////////////////////////////////////////////////////////
+
+/**
+ * Single axis stage.
+ */
+AStage::AStage() :
+   initialized_(false),
+   range_measured_(false),
+   answerTimeoutMs_(1000),
+   speed_(20.0), //[mm/s]
+   accel_(0.2), //[m/s²]
+   origin_(0),
+   stepSizeUm_(0.1)
+{
+   InitializeDefaultErrorMessages();
+
+   // create pre-initialization properties
+   // ------------------------------------
+
+   // Name
+   CreateProperty(MM::g_Keyword_Name, g_AStageDeviceName, MM::String, true);
+
+   // Description
+   CreateProperty(MM::g_Keyword_Description, "Tango A axis driver", MM::String, true);
+}
+
+AStage::~AStage()
+{
+   Shutdown();
+}
+
+///////////////////////////////////////////////////////////////////////////////
+// Stage methods required by the API
+///////////////////////////////////////////////////////////////////////////////
+
+void AStage::GetName(char* Name) const
+{
+   CDeviceUtils::CopyLimitedString(Name, g_AStageDeviceName);
+}
+
+
+int AStage::Initialize()
+{
+   if (!g_DeviceTangoAvailable) return DEVICE_NOT_CONNECTED;
+   if (g_NumberOfAxes < 4) return DEVICE_NOT_CONNECTED;
+
+   // set property list
+   // -----------------
+   
+   // Step size
+   // ---------
+   CPropertyAction* pAct = new CPropertyAction (this, &AStage::OnStepSize);
+   // get current step size from the controller
+   string resp;
+   int ret = GetCommand("?pitch a", resp);
+   if (ret != DEVICE_OK) return DEVICE_UNSUPPORTED_COMMAND;
+   float pitch;
+   char iBuf[256];
+   strcpy(iBuf,resp.c_str());
+   sscanf(iBuf, "%f\r", &pitch);
+   stepSizeUm_ = pitch/819.2;
+   ret = CreateProperty("StepSize [um]", CDeviceUtils::ConvertToString(stepSizeUm_), MM::Float, false, pAct);
+   if (ret != DEVICE_OK) return ret;
+
+   // switch to mm/s
+   ret = SendSerialCommand(port_.c_str(), "!dim a 9", g_TxTerm);
+   if (ret != DEVICE_OK) return ret;
+
+   ret = GetCommand("?vel a", resp);
+   if (ret != DEVICE_OK) return DEVICE_UNSUPPORTED_COMMAND;
+
+   pAct = new CPropertyAction (this, &AStage::OnSpeed);
+   ret = CreateProperty("SpeedA [mm/s]", resp.c_str(), MM::Float, false, pAct); // mm/s
+   if (ret != DEVICE_OK) return ret;
+   SetPropertyLimits("SpeedA [mm/s]", 0.001, 100.0); // mm/s
+
+
+   // Accel (Acceleration (in m/s²)
+   // -----
+   ret = GetCommand("?accel a", resp);
+   if (ret != DEVICE_OK) return DEVICE_UNSUPPORTED_COMMAND;
+
+   pAct = new CPropertyAction (this, &AStage::OnAccel);
+   ret = CreateProperty("Acceleration A [m/s^2]", resp.c_str(), MM::Float, false, pAct);
+   if (ret != DEVICE_OK) return ret;
+   SetPropertyLimits("Acceleration A [m/s^2]", 0.01, 2.0);
+   
+   // Backlash (in µm)
+   // get current Backlash from the controller
+   ret = GetCommand("?backlash a", resp);
+   if (ret == DEVICE_OK)
+   {
+      pAct = new CPropertyAction (this, &AStage::OnBacklash);
+      ret = CreateProperty("Backlash Z [um]", resp.c_str(), MM::Float, false, pAct);
+      if (ret != DEVICE_OK) return ret;
+   }
+
+/*
+   ret = GetCommand("?configsnapshot", resp);
+   if (ret == DEVICE_OK)
+   {
+      if (atoi(resp.c_str()) == 1) sequenceable_ = true;
+      else                         sequenceable_ = false;
+   }
+*/
+   ret = UpdateStatus();
+   if (ret != DEVICE_OK)
+      return ret;
+
+   initialized_ = true;
+   return DEVICE_OK;
+}
+
+int AStage::Shutdown()
+{
+   if (initialized_)
+   {
+      initialized_ = false;
+   }
+   return DEVICE_OK;
+}
+
+bool AStage::Busy()
+{
+  string resp;
+  int ret;
+
+   // send command
+   ret = GetCommand("?statusaxis", resp);
+   if (ret != DEVICE_OK)
+   {
+      ostringstream os;
+      os << "SendSerialCommand failed in AStage::Busy, error code:" << ret;
+      this->LogMessage(os.str().c_str(), false);
+      // return false; // can't write, continue just so that we can read an answer in case write succeeded even though we received an error
+   }
+
+   if (resp[3] == 'M') return true;
+   else return false;
+}
+
+
+int AStage::Stop()
+{
+   int ret;
+   ret = SendSerialCommand(port_.c_str(), "a a", g_TxTerm);
+   return ret;
+}
+
+
+int AStage::SetPositionUm(double pos)
+{
+   ostringstream os;
+   os << "AStage::SetPositionUm() " << pos;
+   this->LogMessage(os.str().c_str());
+
+   // switch to µm
+   int ret = SendSerialCommand(port_.c_str(), "!dim a 1", g_TxTerm);
+   if (ret != DEVICE_OK)
+      return ret;
+
+   // format the command
+   ostringstream cmd;
+   cmd << "!moa a " << pos;
+
+   ret = SendSerialCommand(port_.c_str(), cmd.str().c_str(), g_TxTerm);
+   if (ret != DEVICE_OK)
+     return ret;
+
+   string resp;
+   ret = GetCommand("?err", resp);
+   if (ret != DEVICE_OK)  return ret;
+   if (resp.length() < 1) return DEVICE_SERIAL_INVALID_RESPONSE;
+
+   int err;
+   istringstream is(resp);
+   is >> err;
+   if (err != 0) return DEVICE_SERIAL_INVALID_RESPONSE;
+
+   return DEVICE_OK;
+}
+
+
+
+int AStage::SetRelativePositionUm(double d)
+{
+   // switch to µm
+   int ret = SendSerialCommand(port_.c_str(), "!dim a 1", g_TxTerm);
+   if (ret != DEVICE_OK)
+      return ret;
+
+   // format the command
+   ostringstream cmd;
+   cmd << "!mor a " << d;
+
+   ret = SendSerialCommand(port_.c_str(), cmd.str().c_str(), g_TxTerm);
+   if (ret != DEVICE_OK)
+     return ret;
+
+   string resp;
+   ret = GetCommand("?err", resp);
+   if (ret != DEVICE_OK)  return ret;
+   if (resp.length() < 1) return DEVICE_SERIAL_INVALID_RESPONSE;
+
+   int err;
+   istringstream is(resp);
+   is >> err;
+   if (err != 0) return DEVICE_SERIAL_INVALID_RESPONSE;
+
+   return DEVICE_OK;
+}
+
+
+
+int AStage::GetPositionUm(double& pos)
+{
+int ret;
+   // switch to µm
+   ret = SendSerialCommand(port_.c_str(), "!dim a 1", g_TxTerm);
+   if (ret != DEVICE_OK)
+      return ret;
+
+   // format the command
+   const char* cmd = "?pos a";
+   ret = SendSerialCommand(port_.c_str(), cmd, g_TxTerm);
+   if (ret != DEVICE_OK)
+      return ret;
+  
+   // block/wait for acknowledge, or until we time out;
+   string resp;
+   ret = GetSerialAnswer(port_.c_str(), g_RxTerm, resp);
+   if (ret != DEVICE_OK)  return ret;
+   if (resp.length() < 1) return DEVICE_SERIAL_INVALID_RESPONSE;
+
+   float aa;
+   char iBuf[256];
+   strcpy(iBuf,resp.c_str());
+   sscanf(iBuf, "%f\r", &aa);
+   pos = aa;
+
+   ostringstream os;
+   os << "AStage::GetPositionUm() " << pos;
+   this->LogMessage(os.str().c_str());
+   return DEVICE_OK;
+}
+  
+int AStage::SetPositionSteps(long pos)
+{
+int ret;
+   // switch to steps
+   ret = SendSerialCommand(port_.c_str(), "!dim a 0", g_TxTerm);
+   if (ret != DEVICE_OK)
+      return ret;
+
+   // format the command
+   ostringstream cmd;
+   cmd << "MOA A " << pos;
+
+   ret = SendSerialCommand(port_.c_str(), cmd.str().c_str(), g_TxTerm);
+   if (ret != DEVICE_OK)
+      return ret;
+  
+   string resp;
+   ret = GetCommand("?err", resp);
+   if (ret != DEVICE_OK)  return ret;
+   if (resp.length() < 1) return DEVICE_SERIAL_INVALID_RESPONSE;
+
+   int err;
+   istringstream is(resp);
+   is >> err;
+   if (err != 0) return DEVICE_SERIAL_INVALID_RESPONSE;
+
+   return DEVICE_OK;
+}
+  
+int AStage::GetPositionSteps(long& steps)
+{
+int ret;
+   // switch to steps
+   ret = SendSerialCommand(port_.c_str(), "!dim a 0", g_TxTerm);
+   if (ret != DEVICE_OK)
+      return ret;
+
+   // format the command
+   const char* cmd = "?pos a";
+   ret = SendSerialCommand(port_.c_str(), cmd, g_TxTerm);
+   if (ret != DEVICE_OK)
+      return ret;
+  
+   string resp;
+   ret = GetSerialAnswer(port_.c_str(), g_RxTerm, resp);
+   if (ret != DEVICE_OK) 
+      return ret;
+   if (resp.length() < 1) return DEVICE_SERIAL_INVALID_RESPONSE;
+
+   istringstream is(resp);
+   is >> steps;
+   return DEVICE_OK;
+}
+  
+int AStage::SetAdapterOrigin()
+{
+   double aa;
+   int ret = GetPositionUm(aa);
+   if (ret != DEVICE_OK)
+      return ret;
+   origin_ = aa;
+
+   return DEVICE_OK;
+}
+
+
+int AStage::SetOrigin()
+{
+   int ret = SendSerialCommand(port_.c_str(), "!pos a 0", g_TxTerm);
+   if (ret != DEVICE_OK) return ret;
+  
+   string resp;
+   ret = GetCommand("?status", resp);
+   if (ret != DEVICE_OK) return ret;
+
+   if (resp.compare("OK...") != 0)
+   {
+      return DEVICE_SERIAL_INVALID_RESPONSE;
+   }
+
+   return SetAdapterOrigin();
+}
+
+
+/**
+ * Defines current position as (d) coordinate of the controller.
+ */
+int AStage::SetAdapterOriginUm(double d)
+{
+   // switch to steps
+   int ret = SendSerialCommand(port_.c_str(), "!dim a 1", g_TxTerm);
+   if (ret != DEVICE_OK) return ret;
+
+   // format the command
+   ostringstream cmd;
+   cmd << "!pos a "<< d;
+   ret = SendSerialCommand(port_.c_str(), cmd.str().c_str(), g_TxTerm);
+   if (ret != DEVICE_OK) return ret;
+
+   string resp;
+   ret = GetCommand("?err", resp);
+   if (ret != DEVICE_OK)  return ret;
+   if (resp.length() < 1) return DEVICE_SERIAL_INVALID_RESPONSE;
+
+   int err;
+   istringstream is(resp);
+   is >> err;
+
+   if (err != 0) return DEVICE_SERIAL_INVALID_RESPONSE;
+   else          return DEVICE_OK;
+}
+
+
+
+
+int AStage::Move(double v)
+{
+   // switch to mm/s
+   int ret = SendSerialCommand(port_.c_str(), "!dim a 9", g_TxTerm);
+   if (ret != DEVICE_OK) return ret;
+
+   // if v is not in mm/s then please convert here to mm/s
+   double v_ = v;
+
+   // format the command
+   ostringstream cmd;
+   cmd << "!speed a "<< v_;
+   ret = SendSerialCommand(port_.c_str(), cmd.str().c_str(), g_TxTerm);
+   if (ret != DEVICE_OK) return ret;
+
+   string resp;
+   ret = GetCommand("?err", resp);
+   if (ret != DEVICE_OK) return ret;
+   if (resp.length() < 1) return DEVICE_SERIAL_INVALID_RESPONSE;
+
+   int err;
+   istringstream is(resp);
+   is >> err;
+
+   if (err != 0) return DEVICE_SERIAL_INVALID_RESPONSE;
+   else          return DEVICE_OK;
+}
+
+
+
+/**
+ * Returns the stage position limits in um.
+ */
+int AStage::GetLimits(double& min, double& max)
+{
+  if (!range_measured_) return DEVICE_UNKNOWN_POSITION;
+
+  // switch to µm
+  int ret = SendSerialCommand(port_.c_str(), "!dim a 1", g_TxTerm);
+  if (ret != DEVICE_OK) return ret;
+
+  // format the command
+  const char* cmd = "?lim a";
+  ret = SendSerialCommand(port_.c_str(), cmd, g_TxTerm);
+  if (ret != DEVICE_OK) return ret;
+  
+  // block/wait for acknowledge, or until we time out;
+  string resp;
+  ret = GetSerialAnswer(port_.c_str(), g_RxTerm, resp);
+  if (ret != DEVICE_OK)  return ret;
+  if (resp.length() < 1) return DEVICE_SERIAL_INVALID_RESPONSE;
+
+  float lower, upper;
+  char iBuf[256];
+  strcpy(iBuf,resp.c_str());
+  sscanf(iBuf, "%f %f\r", &lower, &upper);
+  min = lower;
+  max = upper;
+
+  return DEVICE_OK;
+}
+
+
+
+
+
+///////////////////////////////////////////////////////////////////////////////
+// Helper, internal methods
+///////////////////////////////////////////////////////////////////////////////
+
+int AStage::GetCommand(const string& cmd, string& response)
+{
+   if (DEVICE_OK != SendSerialCommand(port_.c_str(), cmd.c_str(), g_TxTerm))
+      return DEVICE_SERIAL_COMMAND_FAILED;
+
+   // block/wait for acknowledge, or until we time out;
+   const unsigned bufLen = 256;
+   char answer[bufLen];
+   unsigned curIdx = 0;
+   memset(answer, 0, bufLen);
+   unsigned long read;
+   unsigned long startTime = GetClockTicksUs();
+
+   char* pLF = 0;
+   do {
+      if (DEVICE_OK != ReadFromComPort(port_.c_str(), reinterpret_cast<unsigned char *> (answer + curIdx), bufLen - curIdx, read))
+         return DEVICE_SERIAL_COMMAND_FAILED;
+      curIdx += read;
+
+      // look for the LF
+      pLF = strstr(answer, g_RxTerm);
+      if (pLF)
+         *pLF = 0; // terminate the string
+
+	  CDeviceUtils::SleepMs(1);
+   }
+   while(!pLF && (((GetClockTicksUs() - startTime) / 1000) < answerTimeoutMs_));
+
+   if (!pLF)
+      return DEVICE_SERIAL_TIMEOUT;
+
+   response = answer;
+   return DEVICE_OK;
+}
+
+
+int AStage::OnSpeed(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   if (eAct == MM::BeforeGet)
+   {
+      // switch to mm/s
+      int ret = SendSerialCommand(port_.c_str(), "!dim a 9", g_TxTerm);
+      if (ret != DEVICE_OK) return ret;
+
+	  string resp;
+      ret = GetCommand("?vel a", resp);
+      if (ret != DEVICE_OK) return ret;
+
+	  // tokenize on space:
+      stringstream ss(resp);
+      string buf;
+      vector<string> tokens;
+      while (ss >> buf)
+         tokens.push_back(buf);
+      double speed = atof(tokens.at(0).c_str());
+      speed_ = speed;
+      pProp->Set(speed_);
+   }
+   else if (eAct == MM::AfterSet)
+   {
+      // switch to mm/s
+      int ret = SendSerialCommand(port_.c_str(), "!dim a 9", g_TxTerm);
+      if (ret != DEVICE_OK) return ret;
+
+	  double uiSpeed; // Speed in mm/sec
+      pProp->Get(uiSpeed);
+      double speed = uiSpeed;
+
+      ostringstream cmd;
+      cmd << "!vel a " << speed;
+	  ret = SendSerialCommand(port_.c_str(), cmd.str().c_str(), g_TxTerm);
+      if (ret != DEVICE_OK) return ret;
+
+      string resp;
+      ret = GetCommand("?err", resp);
+      if (ret != DEVICE_OK)  return ret;
+      if (resp.length() < 1) return DEVICE_SERIAL_INVALID_RESPONSE;
+
+      int err;
+      istringstream is(resp);
+      is >> err;
+      if (err != 0) return DEVICE_SERIAL_INVALID_RESPONSE;
+
+      speed_ = speed;
+   }
+   return DEVICE_OK;
+}
+
+
+int AStage::OnAccel(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   if (eAct == MM::BeforeGet)
+   {
+      string resp;
+      int ret = GetCommand("?accel a", resp);
+      if (ret != DEVICE_OK) return ret;
+
+	  // tokenize on space:
+      stringstream ss(resp);
+      string buf;
+      vector<string> tokens;
+      while (ss >> buf)
+         tokens.push_back(buf);
+      double accel = atof(tokens.at(0).c_str());
+      accel_ = accel;
+      pProp->Set(accel_);
+   }
+   else if (eAct == MM::AfterSet)
+   {
+      double accel;
+      pProp->Get(accel);
+      if (accel < 0.001)  accel =  0.001; //clipping to useful values
+      if (accel > 10.0 )  accel = 10.0;
+
+	  ostringstream cmd;
+      cmd << "!accel a " << accel;
+	  int ret = SendSerialCommand(port_.c_str(), cmd.str().c_str(), g_TxTerm);
+      if (ret != DEVICE_OK) return ret;
+
+      string resp;
+      ret = GetCommand("?err", resp);
+      if (ret != DEVICE_OK)  return ret;
+      if (resp.length() < 1) return DEVICE_SERIAL_INVALID_RESPONSE;
+
+      int err;
+      istringstream is(resp);
+      is >> err;
+      if (err != 0) return DEVICE_SERIAL_INVALID_RESPONSE;
+
+      accel_ = accel;
+   }
+   return DEVICE_OK;
+}
+
+
+int AStage::OnBacklash(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   if (eAct == MM::BeforeGet)
+   {
+      string resp;
+      int ret = GetCommand("?backlash a", resp);
+      if (ret != DEVICE_OK) return DEVICE_UNSUPPORTED_COMMAND;
+
+	  // tokenize on space:
+      stringstream ss(resp);
+      string buf;
+      vector<string> tokens;
+      while (ss >> buf)
+         tokens.push_back(buf);
+      double backlash_ = atof(tokens.at(0).c_str());
+      pProp->Set(backlash_);
+   }
+
+   else if (eAct == MM::AfterSet)
+   {
+      double backlash;
+      pProp->Get(backlash);
+      if (backlash <  0.0) backlash =  0.0; //clipping to useful values
+      if (backlash > 10.0) backlash = 10.0;
+
+	  ostringstream cmd;
+      cmd << "!backlash a " << backlash;
+	  int ret = SendSerialCommand(port_.c_str(), cmd.str().c_str(), g_TxTerm);
+      if (ret !=DEVICE_OK) return ret;
+
+      string resp;
+      ret = GetCommand("?err", resp);
+      if (ret != DEVICE_OK)  return DEVICE_UNSUPPORTED_COMMAND;
+      if (resp.length() < 1) return DEVICE_SERIAL_INVALID_RESPONSE;
+
+      int err;
+      istringstream is(resp);
+      is >> err;
+      if (err != 0) return DEVICE_SERIAL_INVALID_RESPONSE;
+   }
+   return DEVICE_OK;
+}
+
+
+
+
+///////////////////////////////////////////////////////////////////////////////
+// Action handlers
+///////////////////////////////////////////////////////////////////////////////
+
+int AStage::OnStepSize(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   if (eAct == MM::BeforeGet)
+   {
+      pProp->Set(stepSizeUm_);
+   }
+   else if (eAct == MM::AfterSet)
+   {
+      double stepSize;
+      pProp->Get(stepSize);
+      if (stepSize <= 0.0)
+      {
+         pProp->Set(stepSizeUm_);
+         return DEVICE_INVALID_INPUT_PARAM;
+      }
+      stepSizeUm_ = stepSize;
+   }
+
+   return DEVICE_OK;
+}
+
+
+
+
 ///////////////////////////////////////////////////////////////////////////////
 // Shutter 
 // ~~~~~~~
@@ -1589,13 +2669,20 @@ int Shutter::Initialize()
    // State
    // -----
    CPropertyAction* pAct = new CPropertyAction (this, &Shutter::OnState);
-   int ret = CreateProperty(MM::g_Keyword_State, "0", MM::Integer, false, pAct);
+
+   // get current Shutter state from the controller
+   string resp;
+   int ret = GetCommand("?shutter", resp);
+   if (ret != DEVICE_OK) return DEVICE_UNSUPPORTED_COMMAND;
+
+   ret = CreateProperty(MM::g_Keyword_State, resp.c_str(), MM::Integer, false, pAct);
    if (ret != DEVICE_OK) return ret;
 
    AddAllowedValue(MM::g_Keyword_State, "0"); // low  = closed
    AddAllowedValue(MM::g_Keyword_State, "1"); // high = open
 
-//   EnableDelay();
+
+
 
    ret = UpdateStatus();
    if (ret != DEVICE_OK) return ret;
@@ -1784,7 +2871,10 @@ Lamp::Lamp (const char* name, int id) :
    name_ (name),
    id_(id), 
    open_(false),
-   answerTimeoutMs_(1000)
+   intensity_(0),
+   answerTimeoutMs_(1000),
+   usec_(0),
+   fireT_(0)
 {
    InitializeDefaultErrorMessages();
 }
@@ -1900,27 +2990,31 @@ int Lamp::Initialize()
    if (DEVICE_OK != ret)
       return ret;
 
-   // Check current intensity of lamp
-   ret = GetLampIntensity(intensity_);
-   if (DEVICE_OK != ret)
-      return ret;
 
-   // State
-   CPropertyAction* pAct = new CPropertyAction (this, &Lamp::OnState);
-   if (intensity_ > 0) ret = CreateProperty(MM::g_Keyword_State, "1", MM::Integer, false, pAct); 
-   else                ret = CreateProperty(MM::g_Keyword_State, "0", MM::Integer, false, pAct); 
-   if (ret != DEVICE_OK) 
-      return ret; 
+   CPropertyAction* pAct; 
+   // get current intensity from the controller
+   double intensity;
+   ret = GetLampIntensity(intensity);
+   if (ret == DEVICE_OK)
+   {
+     pAct = new CPropertyAction(this, &Lamp::OnIntensity);
+     CreateProperty("Intensity", CDeviceUtils::ConvertToString(intensity_), MM::Float, false, pAct);
+     SetPropertyLimits("Intensity", 0.0, 100.0); // [0..100] percent (= [0..10V])
 
-   AddAllowedValue(MM::g_Keyword_State, "0"); // Closed
-   AddAllowedValue(MM::g_Keyword_State, "1"); // Open
+	 // State
+     pAct = new CPropertyAction (this, &Lamp::OnState);
+     if (intensity_ > 0) ret = CreateProperty(MM::g_Keyword_State, "1", MM::Integer, false, pAct); 
+     else                ret = CreateProperty(MM::g_Keyword_State, "0", MM::Integer, false, pAct); 
+     if (ret != DEVICE_OK) return ret; 
+     AddAllowedValue(MM::g_Keyword_State, "0"); // Closed
+     AddAllowedValue(MM::g_Keyword_State, "1"); // Open
+   }
 
-   // Intensity
-   pAct = new CPropertyAction(this, &Lamp::OnIntensity);
-   CreateProperty("Intensity", "0.0", MM::Float, false, pAct);
-   SetPropertyLimits("Intensity", 0.0, 100.0); // [0..100] percent (= [0..10V])
 
-//   EnableDelay();
+   // Fire
+   pAct = new CPropertyAction(this, &Lamp::OnFire);
+   CreateProperty("Fire", "0.0", MM::Float, false, pAct);
+   SetPropertyLimits("Fire", 0.0, 10.0); // [0..10] seconds
 
    ret = UpdateStatus();
    if (ret != DEVICE_OK) 
@@ -1945,21 +3039,21 @@ int Lamp::Shutdown()
    return DEVICE_OK;
 }
 
+
 int Lamp::SetOpen(bool open)
 {
    if (open) {
       int ret = SetLampIntensity(intensity_);
-      if (ret != DEVICE_OK)
-         return ret;
+      if (ret != DEVICE_OK) return ret;
       open_ = true;
    } else {
       int ret = SetLampIntensity(0);
-      if (ret != DEVICE_OK)
-         return ret;
+      if (ret != DEVICE_OK) return ret;
       open_ = false;
    }
    return DEVICE_OK;
 }
+
 
 int Lamp::GetOpen(bool &open)
 {
@@ -1967,9 +3061,62 @@ int Lamp::GetOpen(bool &open)
    return DEVICE_OK;
 }
 
-int Lamp::Fire(double /*deltaT*/)
+
+// this supports Tango precision timer output (as used in conjunction with LED100 device)
+int Lamp::Fire(double deltaT) //assume unit is [ms]
 {
-   return DEVICE_UNSUPPORTED_COMMAND;  
+  ostringstream  cmd;
+  int ret;
+
+  //Tango precision shutter time counts in integer microseconds
+  int usec = (int)(deltaT * 1000);
+
+  if (usec != usec_) //set controller parameters first
+  {
+	usec_ = usec;
+
+	cmd << "!trig 0";
+    int ret = SendSerialCommand(port_.c_str(), cmd.str().c_str(), g_TxTerm);
+    if (ret !=DEVICE_OK) return ret;
+
+	cmd << "!adigout 0 0";
+    ret = SendSerialCommand(port_.c_str(), cmd.str().c_str(), g_TxTerm);
+    if (ret !=DEVICE_OK) return ret;
+
+	cmd << "!trigo 6";
+    ret = SendSerialCommand(port_.c_str(), cmd.str().c_str(), g_TxTerm);
+    if (ret !=DEVICE_OK) return ret;
+
+    string resp;
+    ret = GetCommand("?err", resp);
+    if (ret != DEVICE_OK)  return ret;
+    if (resp.length() < 1) return DEVICE_SERIAL_INVALID_RESPONSE;
+
+	cmd << "!trigm 103";
+    ret = SendSerialCommand(port_.c_str(), cmd.str().c_str(), g_TxTerm);
+    if (ret !=DEVICE_OK) return ret;
+
+	cmd << "!trigs " << usec;
+    ret = SendSerialCommand(port_.c_str(), cmd.str().c_str(), g_TxTerm);
+    if (ret !=DEVICE_OK) return ret;
+
+    cmd << "!trig 1";
+    ret = SendSerialCommand(port_.c_str(), cmd.str().c_str(), g_TxTerm);
+    if (ret !=DEVICE_OK) return ret;
+
+  }
+
+  // send trigger command
+  cmd << "trigger";
+  ret = SendSerialCommand(port_.c_str(), cmd.str().c_str(), g_TxTerm);
+  if (ret !=DEVICE_OK) return ret;
+
+  string resp;
+  ret = GetCommand("?err", resp);
+  if (ret != DEVICE_OK) return ret;
+  if (resp.length() < 1) return DEVICE_SERIAL_INVALID_RESPONSE;
+
+  return DEVICE_OK;  
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -2012,25 +3159,35 @@ int Lamp::OnState(MM::PropertyBase* pProp, MM::ActionType eAct)
 
 int Lamp::OnIntensity(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
-   if (eAct == MM::BeforeGet) {
-      if (open_) {
-         int ret = GetLampIntensity(intensity_);
-         if (ret != DEVICE_OK)
-            return ret;
-      } else {
-         // shutter is closed.  Return the cached value
-         // TODO: check if user increased brightness
-      }
-      pProp->Set(intensity_); //(long)
-   } else if (eAct == MM::AfterSet) {
-      double intensity;
-      pProp->Get(intensity);
-      intensity_ = intensity;
-      if (open_) {
-         int ret = SetLampIntensity(intensity_);
-         if (ret != DEVICE_OK)
-            return ret;
-      }
+  if (eAct == MM::BeforeGet) {
+    int ret = GetLampIntensity(intensity_);
+    if (ret != DEVICE_OK) return ret;
+    pProp->Set(intensity_); //(long)
+  }
+  else if (eAct == MM::AfterSet) {
+    double intensity;
+    pProp->Get(intensity);
+    int ret = SetLampIntensity(intensity);
+    if (ret != DEVICE_OK) return ret;
+  }
+  return DEVICE_OK;
+}
+
+
+int Lamp::OnFire(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   if (eAct == MM::BeforeGet)
+   {
+      pProp->Set(fireT_);
+   }
+   else if (eAct == MM::AfterSet)
+   {
+      double fireT;
+      pProp->Get(fireT);
+	  fireT_ = fireT;
+      int ret = Fire(fireT_);
+      if (ret != DEVICE_OK)
+      return ret;
    }
 
    return DEVICE_OK;

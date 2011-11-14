@@ -47,6 +47,7 @@ std::string port_;
 
 int ClearPort(MM::Device& device, MM::Core& core, const char* port);
 
+
 class Hub : public CGenericBase<Hub>
 {
    public:
@@ -65,6 +66,11 @@ class Hub : public CGenericBase<Hub>
       int DeInitialize() {initialized_ = false; return DEVICE_OK;};
       bool Initialized() {return initialized_;};
 
+      int ClearPort(void);
+      int SendCommand (const char *command) const;
+      int QueryCommand(const char *command, std::string &answer) const;
+
+
       // action interface
       // ---------------
       int OnPort    (MM::PropertyBase* pProp, MM::ActionType eAct);
@@ -74,6 +80,9 @@ class Hub : public CGenericBase<Hub>
       std::string command_;
       bool initialized_;
       double answerTimeoutMs_;
+
+   protected:
+
 };
 
 
@@ -96,18 +105,23 @@ public:
    // XYStage API
    // -----------
    int SetPositionUm(double x, double y);
+int SetRelativePositionUm(double dx, double dy);
+int SetAdapterOriginUm(double x, double y);
    int GetPositionUm(double& x, double& y);
+   int GetLimitsUm(double& xMin, double& xMax, double& yMin, double& yMax);
+int Move(double vx, double vy);
+
    int SetPositionSteps(long x, long y);
    int GetPositionSteps(long& x, long& y);
    int SetRelativePositionSteps(long x, long y);
-   int SetOrigin();
-   int SetAdapterOrigin();
    int Home();
    int Stop();
+   int SetOrigin();
+   int SetAdapterOrigin();
    int GetStepLimits(long& xMin, long& xMax, long& yMin, long& yMax);
-   int GetLimitsUm(double& xMin, double& xMax, double& yMin, double& yMax);
    double GetStepSizeXUm() {return stepSizeXUm_;}
    double GetStepSizeYUm() {return stepSizeYUm_;}
+
    int IsXYStageSequenceable(bool& isSequenceable) const {isSequenceable = false; return DEVICE_OK;}
 
    // action interface
@@ -118,12 +132,11 @@ public:
    int OnSpeedY    (MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnAccelX    (MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnAccelY    (MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnBacklashX (MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnBacklashY (MM::PropertyBase* pProp, MM::ActionType eAct);
 
 private:
    int GetCommand(const std::string& cmd, std::string& response);
-
-   int OnBacklashX(MM::PropertyBase* pProp, MM::ActionType eAct);
-   int OnBacklashY(MM::PropertyBase* pProp, MM::ActionType eAct);
 
    bool initialized_;
    bool range_measured_;
@@ -137,7 +150,6 @@ private:
    double originX_;
    double originY_;
 };
-
 
 
 class ZStage : public CStageBase<ZStage>
@@ -157,6 +169,10 @@ public:
    // Stage API
    // ---------
    int SetPositionUm(double pos);
+   int SetRelativePositionUm(double d);
+   int Move(double velocity);
+   int SetAdapterOriginUm(double d);
+
    int GetPositionUm(double& pos);
    int SetPositionSteps(long steps);
    int GetPositionSteps(long& steps);
@@ -171,16 +187,73 @@ public:
    // action interface
    // ----------------
    int OnStepSize (MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnSpeed    (MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnAccel    (MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnBacklash (MM::PropertyBase* pProp, MM::ActionType eAct);
+
 
 private:
    int GetCommand(const std::string& cmd, std::string& response);
 
-   int OnBacklashZ(MM::PropertyBase* pProp, MM::ActionType eAct);
-
    bool initialized_;
+   bool range_measured_;
    double answerTimeoutMs_;
    double stepSizeUm_;
+   double speedZ_;
+   double accelZ_;
    double originZ_;
+};
+
+
+class AStage : public CStageBase<AStage>
+{
+public:
+   AStage();
+   ~AStage();
+  
+   // Device API
+   // ----------
+   int Initialize();
+   int Shutdown();
+  
+   void GetName(char* pszName) const;
+   bool Busy();
+
+   // Stage API
+   // ---------
+   int SetPositionUm(double pos);
+   int SetRelativePositionUm(double d);
+   int Move(double velocity);
+   int SetAdapterOriginUm(double d);
+   int GetPositionUm(double& pos);
+   int SetPositionSteps(long steps);
+   int GetPositionSteps(long& steps);
+   int SetOrigin();
+   int SetAdapterOrigin();
+   int Stop();
+   int GetLimits(double& min, double& max);
+
+   int IsStageSequenceable(bool& isSequenceable) const {isSequenceable = false; return DEVICE_OK;}
+   bool IsContinuousFocusDrive() const {return false;}
+
+   // action interface
+   // ----------------
+   int OnStepSize (MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnSpeed    (MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnAccel    (MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnBacklash (MM::PropertyBase* pProp, MM::ActionType eAct);
+
+
+private:
+   int GetCommand(const std::string& cmd, std::string& response);
+
+   bool initialized_;
+   bool range_measured_;
+   double answerTimeoutMs_;
+   double stepSizeUm_;
+   double speed_;
+   double accel_;
+   double origin_;
 };
 
 
@@ -234,11 +307,14 @@ public:
    // action interface
    int OnState    (MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnIntensity(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnFire     (MM::PropertyBase* pProp, MM::ActionType eAct);
 
 private:
    bool initialized_;
    bool open_;
    double intensity_;
+   double fireT_;
+   int usec_;
    int GetCommand(const std::string& cmd, std::string& response);
    int GetLampIntensity(double& intensity);
    int SetLampIntensity(double  intensity);
