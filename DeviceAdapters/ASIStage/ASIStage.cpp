@@ -75,6 +75,8 @@ const char* g_CRISP_F = "In Focus";
 const char* g_CRISP_N = "Inhibit";
 const char* g_CRISP_E = "Error";
 const char* g_CRISP_G = "loG_cal";
+const char* g_CRISP_SG = "gain_Cal";
+const char* g_CRISP_Cal = "Calibrating";
 const char* g_CRISP_f = "Dither";
 const char* g_CRISP_C = "Curve";
 const char* g_CRISP_B = "Balance";
@@ -2536,6 +2538,7 @@ int CRISP::Initialize()
    AddAllowedValue(g_CRISPState, g_CRISP_f);
    AddAllowedValue(g_CRISPState, g_CRISP_C);
    AddAllowedValue(g_CRISPState, g_CRISP_B);
+   AddAllowedValue(g_CRISPState, g_CRISP_SG);
 
    pAct = new CPropertyAction(this, &CRISP::OnWaitAfterLock);
    CreateProperty("Wait ms after Lock", "3000", MM::Integer, false, pAct);
@@ -2642,7 +2645,11 @@ int CRISP::GetFocusState(std::string& focusState)
       case '1': 
       case '2': 
       case '3': 
-         focusState = g_CRIF_Cal;
+      case 'g':
+      case 'h' :
+      case 'i' :
+      case 'j' :
+         focusState = g_CRISP_Cal;
          break;
       case 'D': 
          focusState = g_CRISP_D;
@@ -2682,9 +2689,19 @@ int CRISP::SetFocusState(std::string focusState)
    if (ret != DEVICE_OK)
       return ret;
 
-   if (focusState == g_CRISP_R )
+   if (focusState == currentState)
+      return DEVICE_OK;
+
+   if (focusState == g_CRISP_I)
    {
-      // Unlock and switch off laser:
+      // Idle (switch off LED)
+      const char* command = "LK F=79";
+      return SetCommand(command);
+   }
+
+   else if (focusState == g_CRISP_R )
+   {
+      // Unlock 
       ret = SetContinuousFocusing(false);
       if (ret != DEVICE_OK)
          return ret;
@@ -2692,72 +2709,33 @@ int CRISP::SetFocusState(std::string focusState)
 
    else if (focusState == g_CRIF_K)
    {
+      // Lock
       ret = SetContinuousFocusing(true);
       if (ret != DEVICE_OK)
          return ret;
    }
 
-   else if (focusState == g_CRIF_Cal) 
+   else if (focusState == g_CRISP_G) 
    {
-      const char* command = "LK Z";
-      if (currentState == g_CRIF_B || currentState == g_CRIF_O)
-      {
-         // query command and wait for acknowledgement
-         int ret = QueryCommandACK(command);
-         if (ret != DEVICE_OK)
-            return ret;
-         ret = GetFocusState(currentState);
-         if (ret != DEVICE_OK)
-            return ret;
-      }  
-      if (currentState == g_CRIF_I) // Idle, first switch on laser
-      {
-         // query command and wait for acknowledgement
-         int ret = QueryCommandACK(command);
-         if (ret != DEVICE_OK)
-            return ret;
-         ret = GetFocusState(currentState);
-         if (ret != DEVICE_OK)
-            return ret;
-      }
-      if (currentState == g_CRIF_L)
-      {
-         // query command and wait for acknowledgement
-         int ret = QueryCommandACK(command);
-         if (ret != DEVICE_OK)
-            return ret;
-      }
-
-      // now wait for the lock to occur
-      MM::MMTime startTime = GetCurrentMMTime();
-      MM::MMTime wait(3,0);
-      bool cont = false;
-      std::string finalState;
-      do {
-         CDeviceUtils::SleepMs(250);
-         GetFocusState(finalState);
-         cont = (startTime - GetCurrentMMTime()) < wait;
-      } while ( finalState != g_CRIF_G && finalState != g_CRIF_B && cont);
-
-      justCalibrated_ = true; // we need this to know whether this is the first time we lock
+      // Log-Amp Calibration
+      const char* command = "LK F=72"; 
+      return SetCommand(command);
    }
 
-   else if ( (focusState == g_CRIF_K) || (focusState == g_CRIF_k) )
+   else if (focusState == g_CRISP_SG) 
    {
-      // only try a lock when we are good
-      if ( (currentState == g_CRIF_G) || (currentState == g_CRIF_O) ) 
-      {
-         int ret = SetContinuousFocusing(true);
-         if (ret != DEVICE_OK)
-            return ret;
-      }
-      else if (! ( (currentState == g_CRIF_k) || currentState == g_CRIF_K) ) 
-      {
-         // tell the user that we first need to calibrate before starting a lock
-         return ERR_NOT_CALIBRATED;
-      }
+      // gain_Cal Calibration
+      const char* command = "LK F=67"; 
+      return SetCommand(command);
    }
 
+   else if (focusState == g_CRISP_f)
+   {
+      // Dither
+      const char* command = "LK F=102";
+      return SetCommand(command);
+   }
+   
    return DEVICE_OK;
 }
 
@@ -2874,10 +2852,16 @@ int CRISP::GetValue(string cmd, float& val)
    }
    else if (answer.length() > 0)
    {
-      char head[64];
-      char iBuf[256];
-      strcpy(iBuf,answer.c_str());
-      sscanf(iBuf, "%s %f\r\n", head, &val);
+      size_t index = 0;
+      while (!isdigit(answer[index]) && (index < answer.length()))
+         index++;
+      if (index >= answer.length())
+         return ERR_UNRECOGNIZED_ANSWER;
+      val = (float) atof( (answer.substr(index)).c_str());
+      //char head[64];
+      //char iBuf[256];
+      //strcpy(iBuf,answer.c_str());
+      //sscanf(iBuf, "%s %f\r\n", head, &val);
       return DEVICE_OK;
    }
 
@@ -3008,7 +2992,7 @@ int CRISP::OnLockRange(MM::PropertyBase* pProp, MM::ActionType eAct)
    if (eAct == MM::BeforeGet)
    {
       float lockRange;
-      int ret = GetValue("RT F?", lockRange);
+      int ret = GetValue("LR Z?", lockRange);
       if (ret != DEVICE_OK)
          return ret;
 
@@ -3056,7 +3040,7 @@ int CRISP::OnGainMultiplier(MM::PropertyBase* pProp, MM::ActionType eAct)
    if (eAct == MM::BeforeGet)
    {
       float gainMultiplier;
-      std::string command = "KA " + axis_;
+      std::string command = "KA " + axis_ + "?";
       int ret = GetValue(command.c_str(), gainMultiplier);
       if (ret != DEVICE_OK)
          return ret;
