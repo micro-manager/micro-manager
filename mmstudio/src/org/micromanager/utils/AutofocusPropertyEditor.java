@@ -370,9 +370,11 @@ public class AutofocusPropertyEditor extends MMDialog {
          if (afMgr_.getDevice() != null)
             properties = afMgr_.getDevice().getProperties();
          
-         for (int j=0; j<properties.length; j++){                    
-            if ((showReadOnly_ && properties[j].readOnly) || !properties[j].readOnly) {
-               propList_.add(properties[j]);
+         for (int j=0; j<properties.length; j++){  
+            if (!properties[j].preInit) {
+               if ((showReadOnly_ && properties[j].readOnly) || !properties[j].readOnly) {
+                  propList_.add(properties[j]);
+               }
             }
          }
          this.fireTableStructureChanged();
