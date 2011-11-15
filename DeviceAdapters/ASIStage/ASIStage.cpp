@@ -80,6 +80,7 @@ const char* g_CRISP_Cal = "Calibrating";
 const char* g_CRISP_f = "Dither";
 const char* g_CRISP_C = "Curve";
 const char* g_CRISP_B = "Balance";
+const char* g_CRISP_RFO = "Reset Focus Offset";
 
 using namespace std;
 
@@ -2479,7 +2480,7 @@ CRISP::CRISP() :
    stepSizeUm_(0.1),
    ledIntensity_(50),
    na_(0.65),
-   waitAfterLock_(3000)
+   waitAfterLock_(1000)
 {
    InitializeDefaultErrorMessages();
 
@@ -2539,6 +2540,7 @@ int CRISP::Initialize()
    AddAllowedValue(g_CRISPState, g_CRISP_C);
    AddAllowedValue(g_CRISPState, g_CRISP_B);
    AddAllowedValue(g_CRISPState, g_CRISP_SG);
+   AddAllowedValue(g_CRISPState, g_CRISP_RFO);
 
    pAct = new CPropertyAction(this, &CRISP::OnWaitAfterLock);
    CreateProperty("Wait ms after Lock", "3000", MM::Integer, false, pAct);
@@ -2675,6 +2677,9 @@ int CRISP::GetFocusState(std::string& focusState)
       case 'B': 
          focusState = g_CRISP_B;
          break;
+      case 'l':
+         focusState = g_CRISP_RFO;
+         break;
       default:
          return ERR_UNRECOGNIZED_ANSWER;
    }
@@ -2733,6 +2738,13 @@ int CRISP::SetFocusState(std::string focusState)
    {
       // Dither
       const char* command = "LK F=102";
+      return SetCommand(command);
+   }
+
+   else if (focusState == g_CRISP_RFO)
+   {
+      // Reset focus offset
+      const char* command = "LK F=108";
       return SetCommand(command);
    }
    
@@ -2797,7 +2809,7 @@ int CRISP::FullFocus()
       return ret;
 
    MM::MMTime startTime = GetCurrentMMTime();
-   MM::MMTime wait(3, 0);
+   MM::MMTime wait(1, 0);
    while (!IsContinuousFocusLocked() && ( (GetCurrentMMTime() - startTime) < wait) ) {
       CDeviceUtils::SleepMs(25);
    }
@@ -2858,10 +2870,7 @@ int CRISP::GetValue(string cmd, float& val)
       if (index >= answer.length())
          return ERR_UNRECOGNIZED_ANSWER;
       val = (float) atof( (answer.substr(index)).c_str());
-      //char head[64];
-      //char iBuf[256];
-      //strcpy(iBuf,answer.c_str());
-      //sscanf(iBuf, "%s %f\r\n", head, &val);
+
       return DEVICE_OK;
    }
 
