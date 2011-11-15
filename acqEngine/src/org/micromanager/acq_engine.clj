@@ -276,20 +276,23 @@
         tags (parse-core-metadata md)]
     {:pix pix :tags (dissoc tags "StartTime-ms")}))
     
-(defn make-multicamera-events [event]
-  (let [num-camera-channels (long (core getNumberOfCameraChannels))]
-    (for [camera-channel (range num-camera-channels)]
-      (let [super-channel-index (+ camera-channel (* num-camera-channels (event :channel-index)))]
-        (assoc event :channel-index super-channel-index
-                     :camera-channel-index camera-channel)))))
+(defn make-multicamera-channel [camera-channel raw-channel-index]
+  (+ camera-channel (* (core getNumberOfCameraChannels) raw-channel-index)))
 
+(defn make-multicamera-events [event]
+  (let [num-camera-channels (core getNumberOfCameraChannels)]
+    (for [camera-channel (range num-camera-channels)]
+      (let [super-channel-index (make-multicamera-channel camera-channel (event :channel-index))]
+        (assoc event :channel-index super-channel-index
+               :camera-channel-index camera-channel)))))
+  
 (defn collect-burst-images [event out-queue]
   (when (first-trigger-missing?) (pop-burst-image)) ; drop first image if first trigger doesn't happen
   (swap! state assoc :burst-time-offset nil)
   (let [slices (second @active-slice-sequence)]
-    (dorun
-      (map-indexed
-        (fn [i evt]
+    (doseq [event (:burst-data event)]
+     (doseq [i (range (core getNumberOfCameraChannels))]
+       (println "i=" i)
           (when-not (@state :stop)
             (let [image (pop-burst-image)
                   image+ (if-not slices
@@ -299,19 +302,23 @@
                 (swap! state assoc
                        :burst-time-offset (- (elapsed-time @state)
                                              (core-time-from-tags (image :tags)))))
-              ;(println (image+ :tags))
-              (.put out-queue (make-TaggedImage (annotate-image image+ evt @state
-                                                                (burst-time (:tags image) @state)))))
+              (println (image+ :tags))
+              (let [cam-chan (get-in image [:tags "Dual-Camera-CameraChannelIndex"])
+                    event+ (if cam-chan
+                             (assoc event :channel-index
+                                  (Long/parseLong cam-chan))
+                             event)]
+                (.put out-queue (make-TaggedImage (annotate-image image+ event+ @state
+                                                                (burst-time (:tags image) @state))))))
             (when (core isBufferOverflowed)
               (swap! state assoc :stop true)
-              (ReportingUtils/showError "Circular buffer overflowed."))))
-        (flatten (map make-multicamera-events (event :burst-data))))))
+              (ReportingUtils/showError "Circular buffer overflowed."))))))
   (while (and (not (@state :stop)) (. mmc isSequenceRunning))
     (Thread/sleep 5)))
 
 (defn collect-snap-image [event out-queue]
   (let [image
-        {:pix (core getImage)
+        {:pix (core getImage (event :channel-index))
          :tags nil}]
     (select-keys event [:position-index :frame-index
                         :slice-index :channel-index])
