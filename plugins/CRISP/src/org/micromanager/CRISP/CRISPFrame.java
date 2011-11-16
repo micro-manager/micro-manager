@@ -11,15 +11,31 @@
 
 package org.micromanager.CRISP;
 
+import java.awt.Color;
+import java.awt.Cursor;
+import java.awt.Shape;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.geom.Ellipse2D;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.prefs.Preferences;
+import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.SpinnerModel;
+import javax.swing.Timer;
 import mmcorej.CMMCore;
 import mmcorej.DeviceType;
+import org.jfree.chart.ChartFactory;
+import org.jfree.chart.ChartFrame;
+import org.jfree.chart.JFreeChart;
+import org.jfree.chart.plot.PlotOrientation;
+import org.jfree.chart.plot.XYPlot;
+import org.jfree.chart.renderer.xy.XYLineAndShapeRenderer;
 import org.micromanager.api.ScriptInterface;
 import org.micromanager.utils.ReportingUtils;
+import org.jfree.data.xy.XYSeries;
+import org.jfree.data.xy.XYSeriesCollection;
 
 /**
  *
@@ -104,6 +120,43 @@ public class CRISPFrame extends javax.swing.JFrame {
 
     }
 
+
+    /**
+    * Create a frame with a plot of the data given in XYSeries
+    */
+   public static void plotData(String title, XYSeries data, String xTitle,
+           String yTitle, int xLocation, int yLocation) {
+      // JFreeChart code
+      XYSeriesCollection dataset = new XYSeriesCollection();
+      dataset.addSeries(data);
+      JFreeChart chart = ChartFactory.createScatterPlot(title, // Title
+                xTitle, // x-axis Label
+                yTitle, // y-axis Label
+                dataset, // Dataset
+                PlotOrientation.VERTICAL, // Plot Orientation
+                false, // Show Legend
+                true, // Use tooltips
+                false // Configure chart to generate URLs?
+            );
+      XYPlot plot = (XYPlot) chart.getPlot();
+      plot.setBackgroundPaint(Color.white);
+      plot.setRangeGridlinePaint(Color.lightGray);
+      XYLineAndShapeRenderer renderer = (XYLineAndShapeRenderer) plot.getRenderer();
+      renderer.setBaseShapesVisible(true);
+      renderer.setSeriesPaint(0, Color.black);
+      renderer.setSeriesFillPaint(0, Color.white);
+      renderer.setSeriesLinesVisible(0, true);
+      Shape circle = new Ellipse2D.Float(-2.0f, -2.0f, 4.0f, 4.0f);
+      renderer.setSeriesShape(0, circle, false);
+      renderer.setUseFillPaint(true);
+
+      ChartFrame graphFrame = new ChartFrame(title, chart);
+      graphFrame.getChartPanel().setMouseWheelEnabled(true);
+      graphFrame.pack();
+      graphFrame.setLocation(xLocation, yLocation);
+      graphFrame.setVisible(true);
+   }
+
     /** This method is called from within the constructor to
      * initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is
@@ -128,6 +181,14 @@ public class CRISPFrame extends javax.swing.JFrame {
       UpdateButton_ = new javax.swing.JButton();
       SaveButton_ = new javax.swing.JButton();
       ResetOffsetButton_ = new javax.swing.JButton();
+      jSeparator2 = new javax.swing.JSeparator();
+      saveConfigButton_ = new javax.swing.JButton();
+      groupComboBox_ = new javax.swing.JComboBox();
+      jLabel5 = new javax.swing.JLabel();
+      newGroupButton_ = new javax.swing.JButton();
+      jLabel6 = new javax.swing.JLabel();
+      presetComboBox_ = new javax.swing.JComboBox();
+      newPresetButton_ = new javax.swing.JButton();
 
       setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
       setTitle("ASI CRISP Control");
@@ -201,6 +262,11 @@ public class CRISPFrame extends javax.swing.JFrame {
       });
 
       SaveButton_.setText("Save Calibration");
+      SaveButton_.addActionListener(new java.awt.event.ActionListener() {
+         public void actionPerformed(java.awt.event.ActionEvent evt) {
+            SaveButton_ActionPerformed(evt);
+         }
+      });
 
       ResetOffsetButton_.setText("Reset Offset");
       ResetOffsetButton_.addActionListener(new java.awt.event.ActionListener() {
@@ -208,6 +274,20 @@ public class CRISPFrame extends javax.swing.JFrame {
             ResetOffsetButton_ActionPerformed(evt);
          }
       });
+
+      saveConfigButton_.setText("Save Config");
+
+      groupComboBox_.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "Item 1", "Item 2", "Item 3", "Item 4" }));
+
+      jLabel5.setText("Group");
+
+      newGroupButton_.setText("New");
+
+      jLabel6.setText("Preset");
+
+      presetComboBox_.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "Item 1", "Item 2", "Item 3", "Item 4" }));
+
+      newPresetButton_.setText("New");
 
       javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
       getContentPane().setLayout(layout);
@@ -218,7 +298,7 @@ public class CRISPFrame extends javax.swing.JFrame {
             .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                .addGroup(layout.createSequentialGroup()
                   .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                     .addComponent(jSeparator1, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, 263, Short.MAX_VALUE)
+                     .addComponent(jSeparator1, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, 266, Short.MAX_VALUE)
                      .addGroup(layout.createSequentialGroup()
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
                            .addGroup(javax.swing.GroupLayout.Alignment.LEADING, layout.createSequentialGroup()
@@ -239,16 +319,37 @@ public class CRISPFrame extends javax.swing.JFrame {
                               .addComponent(LEDSpinner_, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
                         .addGap(16, 16, 16)
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                           .addComponent(UpdateButton_, javax.swing.GroupLayout.DEFAULT_SIZE, 113, Short.MAX_VALUE)
-                           .addComponent(SaveButton_, javax.swing.GroupLayout.DEFAULT_SIZE, 113, Short.MAX_VALUE)
-                           .addComponent(ResetOffsetButton_, javax.swing.GroupLayout.DEFAULT_SIZE, 113, Short.MAX_VALUE)
-                           .addComponent(CurveButton_, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, 113, Short.MAX_VALUE))))
+                           .addComponent(UpdateButton_, javax.swing.GroupLayout.DEFAULT_SIZE, 116, Short.MAX_VALUE)
+                           .addComponent(SaveButton_, javax.swing.GroupLayout.DEFAULT_SIZE, 116, Short.MAX_VALUE)
+                           .addComponent(ResetOffsetButton_, javax.swing.GroupLayout.DEFAULT_SIZE, 116, Short.MAX_VALUE)
+                           .addComponent(CurveButton_, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, 116, Short.MAX_VALUE))))
                   .addContainerGap())
                .addGroup(layout.createSequentialGroup()
                   .addComponent(LockButton_, javax.swing.GroupLayout.PREFERRED_SIZE, 86, javax.swing.GroupLayout.PREFERRED_SIZE)
-                  .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 76, Short.MAX_VALUE)
+                  .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 79, Short.MAX_VALUE)
                   .addComponent(CalibrateButton_, javax.swing.GroupLayout.PREFERRED_SIZE, 86, javax.swing.GroupLayout.PREFERRED_SIZE)
-                  .addGap(25, 25, 25))))
+                  .addGap(25, 25, 25))
+               .addGroup(layout.createSequentialGroup()
+                  .addComponent(jSeparator2, javax.swing.GroupLayout.DEFAULT_SIZE, 266, Short.MAX_VALUE)
+                  .addContainerGap())))
+         .addGroup(layout.createSequentialGroup()
+            .addGap(92, 92, 92)
+            .addComponent(saveConfigButton_)
+            .addContainerGap(103, Short.MAX_VALUE))
+         .addGroup(layout.createSequentialGroup()
+            .addContainerGap()
+            .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+               .addComponent(jLabel6, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, 47, Short.MAX_VALUE)
+               .addComponent(jLabel5, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.PREFERRED_SIZE, 47, javax.swing.GroupLayout.PREFERRED_SIZE))
+            .addGap(18, 18, 18)
+            .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+               .addComponent(presetComboBox_, javax.swing.GroupLayout.Alignment.TRAILING, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+               .addComponent(groupComboBox_, javax.swing.GroupLayout.Alignment.TRAILING, 0, 118, Short.MAX_VALUE))
+            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+            .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+               .addComponent(newGroupButton_, javax.swing.GroupLayout.PREFERRED_SIZE, 58, javax.swing.GroupLayout.PREFERRED_SIZE)
+               .addComponent(newPresetButton_, javax.swing.GroupLayout.PREFERRED_SIZE, 58, javax.swing.GroupLayout.PREFERRED_SIZE))
+            .addGap(25, 25, 25))
       );
       layout.setVerticalGroup(
          layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -279,7 +380,21 @@ public class CRISPFrame extends javax.swing.JFrame {
                .addComponent(jLabel4, javax.swing.GroupLayout.DEFAULT_SIZE, 28, Short.MAX_VALUE)
                .addComponent(NASpinner_, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                .addComponent(CurveButton_))
-            .addContainerGap())
+            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+            .addComponent(jSeparator2, javax.swing.GroupLayout.PREFERRED_SIZE, 10, javax.swing.GroupLayout.PREFERRED_SIZE)
+            .addGap(1, 1, 1)
+            .addComponent(saveConfigButton_)
+            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+            .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+               .addComponent(groupComboBox_, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+               .addComponent(jLabel5)
+               .addComponent(newGroupButton_))
+            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+            .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+               .addComponent(presetComboBox_, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+               .addComponent(jLabel6)
+               .addComponent(newPresetButton_))
+            .addGap(11, 11, 11))
       );
 
       pack();
@@ -327,10 +442,42 @@ public class CRISPFrame extends javax.swing.JFrame {
 
          core_.setProperty(CRISP_, "CRISP State", "Dither");
 
-         String msg = "Note the middle number on the bottom of the display.  " +
-                 "Adjust the detector lateral adjustment screw until the value is > 100, or" +
-                 "< -100, and stable.  Then press OK.";
+         String value = core_.getProperty(CRISP_, "Dither Error");
+         
+         final JLabel jl = new JLabel();
+         final JLabel jlA = new JLabel();
+         final JLabel jlB = new JLabel();
+         final String msg1 = "Value:  ";
+         final String msg2 = "Adjust the detector lateral adjustment screw until the value is > 100 or" +
+                 "< -100 and stable.";
+         jlA.setText(msg1);
+         jl.setText(value);
+         jl.setAlignmentX(JLabel.CENTER);
+         
+         Object[] msg = {msg1, jl, msg2};
+
+         ActionListener al = new ActionListener() {
+            public void actionPerformed(ActionEvent evt) {
+               try {
+                 jl.setText(core_.getProperty(CRISP_, "Dither Error"));
+               } catch (Exception ex) {
+                  ReportingUtils.logError("Error while getting CRISP dither Error");
+               }
+            }
+         };
+
+         Timer timer = new Timer(100, al);
+         timer.setInitialDelay(500);
+         timer.start();
+
+         /*JOptionPane optionPane = new JOptionPane(new JLabel("Hello World",JLabel.CENTER));
+         JDialog dialog = optionPane.createDialog("");
+    dialog.setModal(true);
+    dialog.setVisible(true); */
+
          JOptionPane.showMessageDialog(null, msg, "CRISP Calibration", JOptionPane.OK_OPTION);
+
+         timer.stop();
 
          core_.setProperty(CRISP_, "CRISP State", "gain_Cal");
 
@@ -339,9 +486,10 @@ public class CRISPFrame extends javax.swing.JFrame {
             state = core_.getProperty(CRISP_, "CRISP State");
             Thread.sleep(100);
          }
+         // ReportingUtils.showMessage("Calibration failed. Focus, make sure that the NA variable is set correctly and try again.");
 
       } catch (Exception ex) {
-         ReportingUtils.displayNonBlockingMessage("Calibration failed");
+         ReportingUtils.showMessage("Calibration failed. Focus, make sure that the NA variable is set correctly and try again.");
       }
     }//GEN-LAST:event_CalibrateButton_ActionPerformed
 
@@ -405,29 +553,41 @@ public class CRISPFrame extends javax.swing.JFrame {
        try {
           core_.enableContinuousFocus(false);
           // TODO: emulate pressing Zero button
+
+
+          setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+
           core_.setProperty(CRISP_, "Obtain Focus Curve", "Do it");
           String vals = core_.getProperty(CRISP_, "Focus Curve Data0");
           vals += core_.getProperty(CRISP_, "Focus Curve Data1");
           vals += core_.getProperty(CRISP_, "Focus Curve Data2");
           vals += core_.getProperty(CRISP_, "Focus Curve Data3");
 
-
+          XYSeries data = new XYSeries("");
           String[] valLines = vals.split("\r\n");
-          float[] zVals = new float[valLines.length];
-          int[] fes = new int[valLines.length];
           for (int i=0; i < valLines.length; i++) {
-             // System.out.println(valLines[i]);
              String[] tokens = valLines[i].split("\\s+");
-             zVals[i] = Float.parseFloat(tokens[2]);
-             fes[i] = Integer.parseInt(tokens[3]);
-             System.out.println(" " + i + " " + zVals[i] + " " + fes[i]);
+             data.add(Float.parseFloat(tokens[2]), Integer.parseInt(tokens[3]));
           }
-          //System.out.println(vals);
 
+          String na = core_.getProperty(CRISP_, "Objective NA");
+          plotData("CRISP Focus Curve, for NA=" + na,  data, "Z-position(microns)",
+              "Focus Error Signal", 200, 200);
+          
+       } catch (Exception ex) {
+          ReportingUtils.showError("Problem acquiring focus curve");
+       } finally {
+          setCursor(Cursor.getDefaultCursor());
+       }
+    }//GEN-LAST:event_CurveButton_ActionPerformed
+
+    private void SaveButton_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_SaveButton_ActionPerformed
+       try {
+          core_.setProperty(CRISP_, "CRISP State", "Save to Controller");
        } catch (Exception ex) {
           ReportingUtils.showError("Problem acquiring focus curve");
        }
-    }//GEN-LAST:event_CurveButton_ActionPerformed
+    }//GEN-LAST:event_SaveButton_ActionPerformed
 
   public void safePrefs() {
       prefs_.putInt(FRAMEXPOS, this.getX());
@@ -446,11 +606,19 @@ public class CRISPFrame extends javax.swing.JFrame {
    private javax.swing.JButton ResetOffsetButton_;
    private javax.swing.JButton SaveButton_;
    private javax.swing.JButton UpdateButton_;
+   private javax.swing.JComboBox groupComboBox_;
    private javax.swing.JLabel jLabel1;
    private javax.swing.JLabel jLabel2;
    private javax.swing.JLabel jLabel3;
    private javax.swing.JLabel jLabel4;
+   private javax.swing.JLabel jLabel5;
+   private javax.swing.JLabel jLabel6;
    private javax.swing.JSeparator jSeparator1;
+   private javax.swing.JSeparator jSeparator2;
+   private javax.swing.JButton newGroupButton_;
+   private javax.swing.JButton newPresetButton_;
+   private javax.swing.JComboBox presetComboBox_;
+   private javax.swing.JButton saveConfigButton_;
    // End of variables declaration//GEN-END:variables
 
 }

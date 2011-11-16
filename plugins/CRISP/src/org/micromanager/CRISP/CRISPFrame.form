@@ -28,7 +28,7 @@
               <Group type="103" groupAlignment="0" attributes="0">
                   <Group type="102" alignment="0" attributes="0">
                       <Group type="103" groupAlignment="0" attributes="0">
-                          <Component id="jSeparator1" alignment="1" pref="263" max="32767" attributes="0"/>
+                          <Component id="jSeparator1" alignment="1" pref="266" max="32767" attributes="0"/>
                           <Group type="102" alignment="0" attributes="0">
                               <Group type="103" groupAlignment="1" max="-2" attributes="0">
                                   <Group type="102" alignment="0" attributes="1">
@@ -54,10 +54,10 @@
                               </Group>
                               <EmptySpace min="-2" pref="16" max="-2" attributes="0"/>
                               <Group type="103" groupAlignment="1" attributes="0">
-                                  <Component id="UpdateButton_" pref="113" max="32767" attributes="1"/>
-                                  <Component id="SaveButton_" alignment="1" pref="113" max="32767" attributes="1"/>
-                                  <Component id="ResetOffsetButton_" alignment="1" pref="113" max="32767" attributes="1"/>
-                                  <Component id="CurveButton_" alignment="0" pref="113" max="32767" attributes="1"/>
+                                  <Component id="UpdateButton_" pref="116" max="32767" attributes="1"/>
+                                  <Component id="SaveButton_" alignment="1" pref="116" max="32767" attributes="1"/>
+                                  <Component id="ResetOffsetButton_" alignment="1" pref="116" max="32767" attributes="1"/>
+                                  <Component id="CurveButton_" alignment="0" pref="116" max="32767" attributes="1"/>
                               </Group>
                           </Group>
                       </Group>
@@ -65,11 +65,38 @@
                   </Group>
                   <Group type="102" alignment="0" attributes="0">
                       <Component id="LockButton_" min="-2" pref="86" max="-2" attributes="1"/>
-                      <EmptySpace pref="76" max="32767" attributes="0"/>
+                      <EmptySpace pref="79" max="32767" attributes="0"/>
                       <Component id="CalibrateButton_" min="-2" pref="86" max="-2" attributes="1"/>
                       <EmptySpace min="-2" pref="25" max="-2" attributes="0"/>
                   </Group>
+                  <Group type="102" alignment="0" attributes="0">
+                      <Component id="jSeparator2" pref="266" max="32767" attributes="0"/>
+                      <EmptySpace max="-2" attributes="0"/>
+                  </Group>
               </Group>
+          </Group>
+          <Group type="102" alignment="0" attributes="0">
+              <EmptySpace min="-2" pref="92" max="-2" attributes="0"/>
+              <Component id="saveConfigButton_" min="-2" max="-2" attributes="0"/>
+              <EmptySpace pref="103" max="32767" attributes="0"/>
+          </Group>
+          <Group type="102" alignment="0" attributes="0">
+              <EmptySpace max="-2" attributes="0"/>
+              <Group type="103" groupAlignment="1" attributes="0">
+                  <Component id="jLabel6" alignment="0" pref="47" max="32767" attributes="0"/>
+                  <Component id="jLabel5" alignment="0" min="-2" pref="47" max="-2" attributes="0"/>
+              </Group>
+              <EmptySpace type="separate" max="-2" attributes="0"/>
+              <Group type="103" groupAlignment="0" max="-2" attributes="0">
+                  <Component id="presetComboBox_" alignment="1" max="32767" attributes="1"/>
+                  <Component id="groupComboBox_" alignment="1" pref="118" max="32767" attributes="1"/>
+              </Group>
+              <EmptySpace type="unrelated" max="-2" attributes="0"/>
+              <Group type="103" groupAlignment="0" attributes="0">
+                  <Component id="newGroupButton_" min="-2" pref="58" max="-2" attributes="0"/>
+                  <Component id="newPresetButton_" min="-2" pref="58" max="-2" attributes="0"/>
+              </Group>
+              <EmptySpace min="-2" pref="25" max="-2" attributes="0"/>
           </Group>
       </Group>
     </DimensionLayout>
@@ -107,7 +134,23 @@
                   <Component id="NASpinner_" alignment="3" min="-2" max="-2" attributes="0"/>
                   <Component id="CurveButton_" alignment="3" min="-2" max="-2" attributes="0"/>
               </Group>
-              <EmptySpace min="-2" max="-2" attributes="0"/>
+              <EmptySpace max="-2" attributes="0"/>
+              <Component id="jSeparator2" min="-2" pref="10" max="-2" attributes="0"/>
+              <EmptySpace min="-2" pref="1" max="-2" attributes="0"/>
+              <Component id="saveConfigButton_" min="-2" max="-2" attributes="0"/>
+              <EmptySpace max="-2" attributes="0"/>
+              <Group type="103" groupAlignment="3" attributes="0">
+                  <Component id="groupComboBox_" alignment="3" min="-2" max="-2" attributes="0"/>
+                  <Component id="jLabel5" alignment="3" min="-2" max="-2" attributes="0"/>
+                  <Component id="newGroupButton_" alignment="3" min="-2" max="-2" attributes="0"/>
+              </Group>
+              <EmptySpace max="-2" attributes="0"/>
+              <Group type="103" groupAlignment="3" attributes="0">
+                  <Component id="presetComboBox_" alignment="3" min="-2" max="-2" attributes="0"/>
+                  <Component id="jLabel6" alignment="3" min="-2" max="-2" attributes="0"/>
+                  <Component id="newPresetButton_" alignment="3" min="-2" max="-2" attributes="0"/>
+              </Group>
+              <EmptySpace min="-2" pref="11" max="-2" attributes="0"/>
           </Group>
       </Group>
     </DimensionLayout>
@@ -223,6 +266,9 @@
       <Properties>
         <Property name="text" type="java.lang.String" value="Save Calibration"/>
       </Properties>
+      <Events>
+        <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="SaveButton_ActionPerformed"/>
+      </Events>
     </Component>
     <Component class="javax.swing.JButton" name="ResetOffsetButton_">
       <Properties>
@@ -231,6 +277,57 @@
       <Events>
         <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="ResetOffsetButton_ActionPerformed"/>
       </Events>
+    </Component>
+    <Component class="javax.swing.JSeparator" name="jSeparator2">
+    </Component>
+    <Component class="javax.swing.JButton" name="saveConfigButton_">
+      <Properties>
+        <Property name="text" type="java.lang.String" value="Save Config"/>
+      </Properties>
+    </Component>
+    <Component class="javax.swing.JComboBox" name="groupComboBox_">
+      <Properties>
+        <Property name="model" type="javax.swing.ComboBoxModel" editor="org.netbeans.modules.form.editors2.ComboBoxModelEditor">
+          <StringArray count="4">
+            <StringItem index="0" value="Item 1"/>
+            <StringItem index="1" value="Item 2"/>
+            <StringItem index="2" value="Item 3"/>
+            <StringItem index="3" value="Item 4"/>
+          </StringArray>
+        </Property>
+      </Properties>
+    </Component>
+    <Component class="javax.swing.JLabel" name="jLabel5">
+      <Properties>
+        <Property name="text" type="java.lang.String" value="Group"/>
+      </Properties>
+    </Component>
+    <Component class="javax.swing.JButton" name="newGroupButton_">
+      <Properties>
+        <Property name="text" type="java.lang.String" value="New"/>
+      </Properties>
+    </Component>
+    <Component class="javax.swing.JLabel" name="jLabel6">
+      <Properties>
+        <Property name="text" type="java.lang.String" value="Preset"/>
+      </Properties>
+    </Component>
+    <Component class="javax.swing.JComboBox" name="presetComboBox_">
+      <Properties>
+        <Property name="model" type="javax.swing.ComboBoxModel" editor="org.netbeans.modules.form.editors2.ComboBoxModelEditor">
+          <StringArray count="4">
+            <StringItem index="0" value="Item 1"/>
+            <StringItem index="1" value="Item 2"/>
+            <StringItem index="2" value="Item 3"/>
+            <StringItem index="3" value="Item 4"/>
+          </StringArray>
+        </Property>
+      </Properties>
+    </Component>
+    <Component class="javax.swing.JButton" name="newPresetButton_">
+      <Properties>
+        <Property name="text" type="java.lang.String" value="New"/>
+      </Properties>
     </Component>
   </SubComponents>
 </Form>
