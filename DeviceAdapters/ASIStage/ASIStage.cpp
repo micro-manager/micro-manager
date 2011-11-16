@@ -81,6 +81,7 @@ const char* g_CRISP_f = "Dither";
 const char* g_CRISP_C = "Curve";
 const char* g_CRISP_B = "Balance";
 const char* g_CRISP_RFO = "Reset Focus Offset";
+const char* g_CRISP_S = "Save to Controller";
 
 using namespace std;
 
@@ -2540,6 +2541,7 @@ int CRISP::Initialize()
    AddAllowedValue(g_CRISPState, g_CRISP_B);
    AddAllowedValue(g_CRISPState, g_CRISP_SG);
    AddAllowedValue(g_CRISPState, g_CRISP_RFO);
+   AddAllowedValue(g_CRISPState, g_CRISP_S);
 
    pAct = new CPropertyAction(this, &CRISP::OnWaitAfterLock);
    CreateProperty("Wait ms after Lock", "3000", MM::Integer, false, pAct);
@@ -2582,6 +2584,18 @@ int CRISP::Initialize()
 
    pAct = new CPropertyAction(this, &CRISP::OnSNR);
    CreateProperty("Signal Noise Ratio", "", MM::Float, true, pAct);
+
+   pAct = new CPropertyAction(this, &CRISP::OnDitherError);
+   CreateProperty("Dither Error", "", MM::Integer, true, pAct);
+
+
+   // Values that only we can change should be cached and enquired here:
+
+   float val;
+   ret = GetValue("LR Y?", val);
+   if (ret != DEVICE_OK)
+      return ret;
+   na_ = (double) val;
 
    return DEVICE_OK;
 }
@@ -2754,6 +2768,13 @@ int CRISP::SetFocusState(std::string focusState)
    {
       // Reset focus offset
       const char* command = "LK F=108";
+      return SetCommand(command);
+   }
+
+   else if (focusState == g_CRISP_S)
+   {
+      // Reset focus offset
+      const char* command = "SS Z";
       return SetCommand(command);
    }
    
@@ -2982,6 +3003,9 @@ int CRISP::OnNA(MM::PropertyBase* pProp, MM::ActionType eAct)
    else if (eAct == MM::AfterSet)
    {
       pProp->Get(na_);
+      ostringstream command;
+      command << fixed << "LR Y=" << na_;
+      return SetCommand(command.str().c_str());
    }
 
    return DEVICE_OK;
@@ -3109,34 +3133,28 @@ int CRISP::OnFocusCurve(MM::PropertyBase* pProp, MM::ActionType eAct)
       pProp->Get(val);
       if (val == "Do it")
       {
-         // TODO: may need to extend serial port timeout temporarily
          std::string answer;
          int ret = QueryCommand("LK F=97", answer);
          if (ret != DEVICE_OK)
             return ret;
 
-
-         // we will time out while getting these data, so do not throw an error
+         // We will time out while getting these data, so do not throw an error
          // Also, the total length will be about 3500 chars, since MM::MaxStrlength is 1024, we
          // need at least 4 strings.
          int index = 0;
          focusCurveData_[index] = "";
-         while (ret == DEVICE_OK && index < 5)
+         while (ret == DEVICE_OK && index < SIZE_OF_FC_ARRAY)
          {
             ret = GetSerialAnswer(port_.c_str(), "\r", answer);
             focusCurveData_[index] += answer + "\r\n";
-            if (focusCurveData_[index].length() > 975)
+            if (focusCurveData_[index].length() > (MM::MaxStrLength - 40))
             {
                index++;
                focusCurveData_[index] = "";
             }
          }
       }
-      for (int i=0; i < 5; i++)
-      {
-         int l = focusCurveData_[i].length();
-         printf("Length of String: %d\n", l);
-      }
+     
    }
    return DEVICE_OK;
 }
@@ -3183,6 +3201,29 @@ int CRISP::OnSNR(MM::PropertyBase* pProp, MM::ActionType eAct)
 
    return DEVICE_OK;
 }
+
+int CRISP::OnDitherError(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   if (eAct == MM::BeforeGet)
+   {
+      std::string answer;
+      int ret = QueryCommand("EXTRA X?", answer);
+      if (ret != DEVICE_OK)
+         return ret;
+
+      long val;
+      std::istringstream is(answer);
+      std::string tok;
+      for (int i=0; i <3; i++)
+         is >> tok;
+      std::istringstream s(tok);
+      s >> val;
+      pProp->Set(val);
+   }
+   return DEVICE_OK;
+}
+
+
 
 /***************************************************************************
  *  AZ100 adapter 

@@ -305,6 +305,7 @@ public:
    int OnFocusCurve(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnFocusCurveData(MM::PropertyBase* pProp, MM::ActionType eAct, long index);
    int OnSNR(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnDitherError(MM::PropertyBase* pProp, MM::ActionType eAct);
 
 private:
    int GetFocusState(std::string& focusState);
@@ -312,7 +313,8 @@ private:
    int GetValue(std::string cmd, float& val);
    int SetCommand(std::string cmd);
 
-   std::string focusCurveData_[4];
+   static const int SIZE_OF_FC_ARRAY = 8;
+   std::string focusCurveData_[SIZE_OF_FC_ARRAY];
    bool justCalibrated_;
    long ledIntensity_;
    double stepSizeUm_;
