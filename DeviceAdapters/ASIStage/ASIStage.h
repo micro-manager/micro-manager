@@ -303,7 +303,7 @@ public:
    int OnCalGain(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnGainMultiplier(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnFocusCurve(MM::PropertyBase* pProp, MM::ActionType eAct);
-   int OnFocusCurveData(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnFocusCurveData(MM::PropertyBase* pProp, MM::ActionType eAct, long index);
    int OnSNR(MM::PropertyBase* pProp, MM::ActionType eAct);
 
 private:
@@ -312,7 +312,7 @@ private:
    int GetValue(std::string cmd, float& val);
    int SetCommand(std::string cmd);
 
-   std::string focusCurveData_;
+   std::string focusCurveData_[4];
    bool justCalibrated_;
    long ledIntensity_;
    double stepSizeUm_;

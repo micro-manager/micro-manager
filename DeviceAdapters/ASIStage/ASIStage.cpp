@@ -2474,7 +2474,6 @@ int CRIF::OnWaitAfterLock(MM::PropertyBase* pProp, MM::ActionType eAct)
 ////
 CRISP::CRISP() :
    ASIBase(this, "" /* LX-4000 Prefix Unknown */),
-   focusCurveData_(""),
    justCalibrated_(false),
    axis_("Z"),
    stepSizeUm_(0.1),
@@ -2573,8 +2572,13 @@ int CRISP::Initialize()
    AddAllowedValue(fc, " ");
    AddAllowedValue(fc, "Do it");
 
-   pAct = new CPropertyAction(this, &CRISP::OnFocusCurveData);
-   CreateProperty("Focus Curve Data", "", MM::String, true, pAct);
+   for (long i = 0; i < 4; i++)
+   {
+      std::ostringstream os("");
+      os << "Focus Curve Data" << i;
+      CPropertyActionEx* pActEx = new CPropertyActionEx(this, &CRISP::OnFocusCurveData, i);
+      CreateProperty(os.str().c_str(), "", MM::String, true, pActEx);
+   }
 
    pAct = new CPropertyAction(this, &CRISP::OnSNR);
    CreateProperty("Signal Noise Ratio", "", MM::Float, true, pAct);
@@ -2650,6 +2654,8 @@ int CRISP::GetFocusState(std::string& focusState)
       case '1': 
       case '2': 
       case '3': 
+      case '4': 
+      case '5': 
       case 'g':
       case 'h' :
       case 'i' :
@@ -3108,23 +3114,38 @@ int CRISP::OnFocusCurve(MM::PropertyBase* pProp, MM::ActionType eAct)
          int ret = QueryCommand("LK F=97", answer);
          if (ret != DEVICE_OK)
             return ret;
+
+
          // we will time out while getting these data, so do not throw an error
-         
-         while (ret == DEVICE_OK)
+         // Also, the total length will be about 3500 chars, since MM::MaxStrlength is 1024, we
+         // need at least 4 strings.
+         int index = 0;
+         focusCurveData_[index] = "";
+         while (ret == DEVICE_OK && index < 5)
          {
             ret = GetSerialAnswer(port_.c_str(), "\r", answer);
-            focusCurveData_ += answer + "\r\n";
+            focusCurveData_[index] += answer + "\r\n";
+            if (focusCurveData_[index].length() > 975)
+            {
+               index++;
+               focusCurveData_[index] = "";
+            }
          }
+      }
+      for (int i=0; i < 5; i++)
+      {
+         int l = focusCurveData_[i].length();
+         printf("Length of String: %d\n", l);
       }
    }
    return DEVICE_OK;
 }
 
-int CRISP::OnFocusCurveData(MM::PropertyBase* pProp, MM::ActionType eAct)
+int CRISP::OnFocusCurveData(MM::PropertyBase* pProp, MM::ActionType eAct, long index)
 {
    if (eAct == MM::BeforeGet)
    {
-      pProp->Set(focusCurveData_.c_str());
+      pProp->Set(focusCurveData_[index].c_str());
    }
    return DEVICE_OK;
 }
