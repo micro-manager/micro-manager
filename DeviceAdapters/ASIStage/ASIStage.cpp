@@ -2576,6 +2576,9 @@ int CRISP::Initialize()
    pAct = new CPropertyAction(this, &CRISP::OnFocusCurveData);
    CreateProperty("Focus Curve Data", "", MM::String, true, pAct);
 
+   pAct = new CPropertyAction(this, &CRISP::OnSNR);
+   CreateProperty("Signal Noise Ratio", "", MM::Float, true, pAct);
+
    return DEVICE_OK;
 }
 
@@ -2809,7 +2812,7 @@ int CRISP::FullFocus()
       return ret;
 
    MM::MMTime startTime = GetCurrentMMTime();
-   MM::MMTime wait(1, 0);
+   MM::MMTime wait(0, waitAfterLock_ * 1000);
    while (!IsContinuousFocusLocked() && ( (GetCurrentMMTime() - startTime) < wait) ) {
       CDeviceUtils::SleepMs(25);
    }
@@ -2847,6 +2850,11 @@ int CRISP::GetLastFocusScore(double& score)
       return ERR_UNRECOGNIZED_ANSWER;
 
    return DEVICE_OK;
+}
+
+int CRISP::GetCurrentFocusScore(double& score)
+{
+   return GetLastFocusScore(score);
 }
 
 int CRISP::GetValue(string cmd, float& val)
@@ -3096,9 +3104,17 @@ int CRISP::OnFocusCurve(MM::PropertyBase* pProp, MM::ActionType eAct)
       if (val == "Do it")
       {
          // TODO: may need to extend serial port timeout temporarily
-         int ret = QueryCommand("LK F=97", focusCurveData_);
+         std::string answer;
+         int ret = QueryCommand("LK F=97", answer);
          if (ret != DEVICE_OK)
             return ret;
+         // we will time out while getting these data, so do not throw an error
+         
+         while (ret == DEVICE_OK)
+         {
+            ret = GetSerialAnswer(port_.c_str(), "\r", answer);
+            focusCurveData_ += answer + "\r\n";
+         }
       }
    }
    return DEVICE_OK;
@@ -3127,6 +3143,25 @@ int CRISP::OnAxis(MM::PropertyBase* pProp, MM::ActionType eAct)
    return DEVICE_OK;
 }
 
+int CRISP::OnSNR(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   if (eAct == MM::BeforeGet)
+   {
+      std::string command = "EXTRA Y?";
+      std::string answer;
+      int ret = QueryCommand(command.c_str(), answer);
+      if (ret != DEVICE_OK)
+         return ret;
+
+      std::stringstream ss(answer);
+      double snr;
+      ss >> snr;
+
+      pProp->Set(snr);
+   }
+
+   return DEVICE_OK;
+}
 
 /***************************************************************************
  *  AZ100 adapter 

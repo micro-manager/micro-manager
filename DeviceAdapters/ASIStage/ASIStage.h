@@ -286,7 +286,7 @@ public:
    virtual int FullFocus();
    virtual int IncrementalFocus();
    virtual int GetLastFocusScore(double& score);
-   virtual int GetCurrentFocusScore(double& /*score*/) {return DEVICE_UNSUPPORTED_COMMAND;}
+   virtual int GetCurrentFocusScore(double& score);
    virtual int GetOffset(double& offset);
    virtual int SetOffset(double offset);
 
@@ -304,6 +304,7 @@ public:
    int OnGainMultiplier(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnFocusCurve(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnFocusCurveData(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnSNR(MM::PropertyBase* pProp, MM::ActionType eAct);
 
 private:
    int GetFocusState(std::string& focusState);
