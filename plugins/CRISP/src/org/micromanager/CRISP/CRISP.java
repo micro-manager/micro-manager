@@ -15,7 +15,7 @@ import org.micromanager.api.ScriptInterface;
  */
 
 public class CRISP implements MMPlugin {
-   public static String menuName = "ASi CRISP Control";
+   public static String menuName = "ASI CRISP Control";
    public static String tooltipDescription = "Plugin to control the ASI CRISP";
    private CMMCore core_;
    private ScriptInterface gui_;
@@ -54,7 +54,7 @@ public class CRISP implements MMPlugin {
 
     @Override
    public String getInfo () {
-      return "ASi CRISP Plugin";
+      return "ASI CRISP Plugin";
    }
 
     @Override
