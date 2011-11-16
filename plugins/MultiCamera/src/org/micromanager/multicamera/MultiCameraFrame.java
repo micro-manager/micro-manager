@@ -10,24 +10,17 @@ Author: Nico Stuurman: nico at cmp.ucsf.edu
  */
 package org.micromanager.multicamera;
 
-import java.awt.Rectangle;
 import java.text.NumberFormat;
 import java.text.ParseException;
 import java.util.prefs.Preferences;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 import javax.swing.DefaultComboBoxModel;
 
-import ij.ImagePlus;
-import ij.WindowManager;
-import ij.gui.Roi;
 import java.awt.event.ItemEvent;
 
 import java.util.Vector;
 import mmcorej.CMMCore;
 import mmcorej.DeviceType;
-import mmcorej.MMCoreJ;
 import mmcorej.StrVector;
 
 import org.micromanager.api.ScriptInterface;
