@@ -65,6 +65,13 @@ Big.jar:  \
 	## Work around bug in 'jar': jar cf MM_.jar -C bin/ bin/* does not work
 	cd build && jar cf ../Big.jar * 
 
+CRISP.jar:  \
+	$(srcdir)/CRISP/src/org/micromanager/CRISP/*.java
+	test -d build || mkdir build
+	rm -rf build/*
+	$(JAVAC) -source 1.5 -target 1.5 -sourcepath $(srcdir):. -classpath $(IJJARPATH):$(BSHJARPATH):$(COMMONSMATHJARPATH):$(SWINGLAYOUTJARPATH):../bin/MMCoreJ.jar:../mmstudio/MMJ_.jar:. $(srcdir)/CRISP/src/org/micromanager/CRISP/*.java -d build
+	cd build && jar cf ../CRISP.jar * 
+
 ImageFlipper.jar:  \
 	$(srcdir)/ImageFlipper/src/org/micromanager/imageflipper/*.java
 	test -d build || mkdir build
@@ -89,7 +96,7 @@ ClojureEditor.jar:  \
 	## Work around bug in 'jar': jar cf MM_.jar -C bin/ bin/* does not work
 	cd build && jar cf ../ClojureEditor.jar * 
 
-all: PixelCalibrator.jar RecallPlugin.jar StageControl.jar MultiCamera.jar Big.jar ImageFlipper.jar SlideExplorer.jar DataBrowser.jar ClojureEditor.jar SplitView.jar
+all: PixelCalibrator.jar RecallPlugin.jar StageControl.jar MultiCamera.jar CRISP.jar Big.jar ImageFlipper.jar SlideExplorer.jar DataBrowser.jar ClojureEditor.jar SplitView.jar
 
 install: 
 	test -d $(DESTDIR)$(IJPATH)/mmplugins || mkdir $(DESTDIR)$(IJPATH)/mmplugins
@@ -99,6 +106,7 @@ install:
 	cp RecallPlugin.jar $(DESTDIR)$(IJPATH)/mmplugins
 	cp StageControl.jar $(DESTDIR)$(IJPATH)/mmplugins
 	cp MultiCamera.jar $(DESTDIR)$(IJPATH)/mmplugins
+	cp CRISP.jar $(DESTDIR)$(IJPATH)/mmplugins
 	cp Big.jar $(DESTDIR)$(IJPATH)/mmplugins
 	cp DataBrowser.jar $(DESTDIR)$(IJPATH)/mmplugins
 	cp ClojureEditor.jar $(DESTDIR)$(IJPATH)/mmplugins
@@ -112,6 +120,7 @@ clean:
 	test -f Projector.jar && rm Projector.jar || echo "Projector.jar not found"
 	test -f StageControl.jar && rm StageControl.jar || echo "StageControl.jar not found"
 	test -f MultiCamera.jar && rm MultiCamera.jar || echo "MultiCamera.jar not found"
+	test -f CRISP.jar && rm CRISP.jar || echo "CRISP.jar not found"
 	test -f RecallPlugin.jar && rm RecallPlugin.jar || echo "RecallPlugin.jar not found"
 	test -f Big.jar && rm Big.jar || echo "Big.jar not found"
 	test -f ImageFlipper.jar && rm ImageFlipper.jar || echo "ImageFlipper.jar not found"

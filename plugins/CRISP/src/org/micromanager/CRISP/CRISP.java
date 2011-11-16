@@ -15,11 +15,8 @@ import org.micromanager.api.ScriptInterface;
  */
 
 public class CRISP implements MMPlugin {
-   public static String menuName = "Multi-Andor Control";
-   public static String tooltipDescription = "This plugin lets your control multiple "
-           + "cameras simultanuously.  It is specifically written for Andor cameras. "
-           + "Use the Utilities->Multi Camera adapter to combine multiple Andor cameras "
-           + "into a single logical camera.";
+   public static String menuName = "ASi CRISP Control";
+   public static String tooltipDescription = "Plugin to control the ASI CRISP";
    private CMMCore core_;
    private ScriptInterface gui_;
    private CRISPFrame myFrame_;
@@ -48,7 +45,7 @@ public class CRISP implements MMPlugin {
 
     @Override
    public void show() {
-         String ig = "Andor Control";
+         String ig = "ASI CRISP Control";
    }
 
     @Override
@@ -57,7 +54,7 @@ public class CRISP implements MMPlugin {
 
     @Override
    public String getInfo () {
-      return "Multi Camera Plugin";
+      return "ASi CRISP Plugin";
    }
 
     @Override
@@ -67,7 +64,7 @@ public class CRISP implements MMPlugin {
 
     @Override
    public String getVersion() {
-      return "0.12";
+      return "0.10";
    }
 
     @Override
