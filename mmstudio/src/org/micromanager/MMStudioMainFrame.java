@@ -1929,7 +1929,7 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
             configPadButtonPanel_.setCore(core_);
 
             // initialize controls
-            initializeGUI();
+            // initializeGUI();  Not needed since it is already called in loadSystemConfiguration
             initializeHelpMenu();
             
             String afDevice = mainPrefs_.get(AUTOFOCUS_DEVICE, "");
