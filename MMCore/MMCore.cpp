@@ -2898,11 +2898,10 @@ string CMMCore::getProperty(const char* label, const char* propName) const throw
    if (nRet != DEVICE_OK)
       throw CMMError(label, getDeviceErrorText(nRet, pDevice).c_str(), MMERR_DEVICE_GENERIC);
    
-   // uste the opportunity to update the cache
-   /* TODO: it would be nice but actually we can't do that since this is a const method
+   // use the opportunity to update the cache
+   // Note, stateCache is mutable so that we can update it from this const function
    PropertySetting s(label, propName, value);
    stateCache_.addSetting(s);
-   */
 
    return string(value);
 }

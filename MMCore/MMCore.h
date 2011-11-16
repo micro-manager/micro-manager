@@ -526,7 +526,7 @@ private:
    CConfigMap configs_;
    CPropBlockMap propBlocks_;
    bool debugLog_;
-   Configuration stateCache_; // system state cache
+   mutable Configuration stateCache_; // system state cache
 
    bool isConfigurationCurrent(const Configuration& config) const;
    void applyConfiguration(const Configuration& config) throw (CMMError);
