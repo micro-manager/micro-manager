@@ -18,6 +18,7 @@ import java.awt.event.AdjustmentListener;
 import java.awt.event.WindowEvent;
 import java.io.File;
 import java.io.IOException;
+import java.util.prefs.Preferences;
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
 import mmcorej.TaggedImage;
@@ -66,7 +67,7 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
    private JSONObject lastDisplayTags_;
    private boolean updating_ = false;
    private int[] channelInitiated_;
-
+   final Preferences prefs_ = Preferences.userNodeForPackage(this.getClass());
 
    /* This interface and the following two classes
     * allow us to manipulate the dimensions
@@ -1243,7 +1244,7 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
       try {
          return new Color(getChannelSetting(channelIndex).getInt("Color"));
       } catch (Exception ex) {
-         return Color.WHITE;
+         return MMStudioMainFrame.getInstance().getChannelColor(getChannelNames()[channelIndex], Color.WHITE.getRGB());
       }
    }
 
@@ -1280,7 +1281,7 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
       }
 
       updateChannelContrast(channel);
-   }
+   } 
 
    private JSONObject getChannelSetting(int channel) {
       try {
