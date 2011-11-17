@@ -51,7 +51,6 @@ import java.util.logging.Logger;
 import java.util.prefs.Preferences;
 
 import javax.swing.JButton;
-import javax.swing.JDialog;
 import javax.swing.JEditorPane;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
@@ -66,6 +65,7 @@ import mmcorej.StrVector;
 import org.micromanager.MMStudioMainFrame;
 import org.micromanager.utils.FileDialogs;
 import org.micromanager.utils.HttpUtils;
+import org.micromanager.utils.MMDialog;
 import org.micromanager.utils.ReportingUtils;
 
 /**
@@ -73,7 +73,7 @@ import org.micromanager.utils.ReportingUtils;
  * Based on the dialog frame to be activated as part of the
  * MMStudio
  */
-public class ConfiguratorDlg2 extends JDialog {
+public class ConfiguratorDlg2 extends MMDialog {
 
     private static final long serialVersionUID = 1L;
     private JLabel pagesLabel_;
@@ -122,6 +122,7 @@ public class ConfiguratorDlg2 extends JDialog {
         getContentPane().setLayout(null);
         setTitle("*New Hardware Configuration Wizard");
         setBounds(50, 100, 602, 672);
+        loadPosition(50, 100);
 
         final JScrollPane scrollPane = new JScrollPane();
         scrollPane.setBounds(9, 320, 578, 286);
@@ -399,6 +400,7 @@ public class ConfiguratorDlg2 extends JDialog {
         for (int i = 0; i < pages_.length; i++) {
             pages_[i].saveSettings();
         }
+        savePosition();
 
         if (microModel_.isModified()) {
             int result = JOptionPane.showConfirmDialog(this,

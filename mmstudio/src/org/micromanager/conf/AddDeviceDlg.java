@@ -31,8 +31,8 @@ import java.awt.event.MouseListener;
 import java.io.IOException;
 
 import javax.swing.JButton;
+import javax.swing.JCheckBox;
 import javax.swing.JComponent;
-import javax.swing.JDialog;
 import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 import javax.swing.JPopupMenu;
@@ -41,18 +41,23 @@ import javax.swing.JTree;
 import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
 import javax.swing.tree.DefaultMutableTreeNode;
+
+import org.micromanager.utils.MMDialog;
 import org.micromanager.utils.ReportingUtils;
-import javax.swing.JCheckBox;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 
 /**
  * Dialog to add a new device to the configuration.
  */
-public class AddDeviceDlg extends JDialog implements MouseListener,
+public class AddDeviceDlg extends MMDialog implements MouseListener,
       TreeSelectionListener {
 
    private static final long serialVersionUID = 1L;
 
    class TreeWContextMenu extends JTree implements ActionListener {
+      private static final long serialVersionUID = 1L;
+
       public TreeWContextMenu(DefaultMutableTreeNode n, AddDeviceDlg d) {
          super(n);
          d_ = d;
@@ -106,6 +111,7 @@ public class AddDeviceDlg extends JDialog implements MouseListener,
    }
    
    class TreeNodeShowsDeviceAndDescription extends DefaultMutableTreeNode {
+      private static final long serialVersionUID = 1L;
 
       public TreeNodeShowsDeviceAndDescription(String value) {
          super(value);
@@ -162,11 +168,18 @@ public class AddDeviceDlg extends JDialog implements MouseListener,
     */
    public AddDeviceDlg(MicroscopeModel model, DevicesPage devicesPage) {
       super();
+      addWindowListener(new WindowAdapter() {
+         @Override
+         public void windowClosing(WindowEvent e) {
+            savePosition();
+         }
+      });
       setModal(true);
       setResizable(false);
       getContentPane().setLayout(null);
       setTitle("Add Device");
       setBounds(400, 100, 596, 529);
+      loadPosition(400, 100);
       devicesPage_ = devicesPage;
 
       final JButton addButton = new JButton();
