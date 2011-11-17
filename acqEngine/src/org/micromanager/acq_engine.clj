@@ -287,32 +287,34 @@
                :camera-channel-index camera-channel)))))
   
 (defn collect-burst-images [event out-queue]
-  (when (first-trigger-missing?) (pop-burst-image)) ; drop first image if first trigger doesn't happen
+  (when (first-trigger-missing?)
+    (pop-burst-image)) ; drop first image if first trigger doesn't happen
   (swap! state assoc :burst-time-offset nil)
-  (let [slices (second @active-slice-sequence)]
+  (let [slices (second @active-slice-sequence)
+        camera-index (str (core getCameraDevice) "-CameraChannelIndex")]
     (doseq [event (:burst-data event)]
-     (doseq [i (range (core getNumberOfCameraChannels))]
-       (println "i=" i)
-          (when-not (@state :stop)
-            (let [image (pop-burst-image)
-                  image+ (if-not slices
-                           image
-                           (assoc-in image [:tags "ZPositionUm"] (get slices i)))]
-              (when (zero? i)
-                (swap! state assoc
-                       :burst-time-offset (- (elapsed-time @state)
-                                             (core-time-from-tags (image :tags)))))
-              (println (image+ :tags))
-              (let [cam-chan (get-in image [:tags "Dual-Camera-CameraChannelIndex"])
-                    event+ (if cam-chan
-                             (assoc event :channel-index
+      (doseq [i (range (core getNumberOfCameraChannels))]
+        (println "i=" i)
+        (when-not (@state :stop)
+          (let [image (pop-burst-image)
+                image+ (if-not slices
+                         image
+                         (assoc-in image [:tags "ZPositionUm"] (get slices i)))]
+            (when (zero? i)
+              (swap! state assoc
+                     :burst-time-offset (- (elapsed-time @state)
+                                           (core-time-from-tags (image :tags)))))
+            (println (image+ :tags))
+            (let [cam-chan (get-in image [:tags camera-index])
+                  event+ (if cam-chan
+                           (assoc event :channel-index
                                   (Long/parseLong cam-chan))
-                             event)]
-                (.put out-queue (make-TaggedImage (annotate-image image+ event+ @state
+                           event)]
+              (.put out-queue (make-TaggedImage (annotate-image image+ event+ @state
                                                                 (burst-time (:tags image) @state))))))
-            (when (core isBufferOverflowed)
-              (swap! state assoc :stop true)
-              (ReportingUtils/showError "Circular buffer overflowed."))))))
+          (when (core isBufferOverflowed)
+            (swap! state assoc :stop true)
+            (ReportingUtils/showError "Circular buffer overflowed."))))))
   (while (and (not (@state :stop)) (. mmc isSequenceRunning))
     (Thread/sleep 5)))
 
@@ -567,12 +569,22 @@
       (set-property default-cam)
       (get {1 1 , 4 3} n))))
 
+(defn get-camera-channel-names []
+  (map #(core getCameraChannelName %)
+       (range (core getNumberOfCameraChannels))))
+       
+(defn super-channels [simple-channel camera-channel-names]
+  (map #(update-in simple-channel [:name] str "-" %) camera-channel-names))
+
+(defn all-super-channels [simple-channels camera-channel-names]
+  (flatten (map #(super-channels % camera-channel-names) simple-channels)))
+
 (defn make-summary-metadata [settings]
   (let [depth (core getBytesPerPixel)
         channels (settings :channels)
         num-camera-channels (core getNumberOfCameraChannels)
         simple-channels (if-not (empty? channels) channels [{:name "Default" :color java.awt.Color/WHITE}])
-        super-channels (flatten (for [channel simple-channels] (repeat num-camera-channels channel)))]
+        super-channels (all-super-channels simple-channels (get-camera-channel-names))]
      (JSONObject. {
       "BitDepth" (core getImageBitDepth)
       "Binning" (core getProperty (core getCameraDevice) "Binning")
