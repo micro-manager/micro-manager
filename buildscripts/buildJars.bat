@@ -51,6 +51,7 @@ popd
 
 pushd plugins\CRISP
 call build
+popd
 
 rem pushd plugins\Bleach
 rem call ant -buildfile build.xml %cleantarget% compile build
