@@ -60,6 +60,7 @@ public class DeviceSetupDlg extends MMDialog {
       //setModalityType(ModalityType.APPLICATION_MODAL);
       setModal(true);
       setBounds(100, 100, 478, 528);
+      loadPosition(100, 100);
       model = mod;
       core = c;
       portDev = null;
@@ -112,9 +113,6 @@ public class DeviceSetupDlg extends MMDialog {
             savePosition();
          }
       });
-
-      Rectangle r = getBounds();
-      loadPosition(r.x, r.y);
       
       setTitle("Device: " + dev.getAdapterName() + " | Library: " + dev.getLibrary());
       
@@ -175,10 +173,12 @@ public class DeviceSetupDlg extends MMDialog {
    }
 
    protected void onCancel() {
+      savePosition();
       dispose();
    }
 
    protected void onOK() {
+      savePosition();
       if (dev.getName().compareTo(devLabel.getText()) != 0) {
          if (model.findDevice(devLabel.getText()) != null) {
             showMessage("Device name " + devLabel.getText() + " is already in use.\nPress Cancel and try again.");

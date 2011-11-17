@@ -149,7 +149,6 @@ public class PeripheralSetupDlg extends MMDialog {
    }
    private JTable deviceTable_;
    private JScrollPane scrollPane_;
-   private CMMCore core_;
    private MicroscopeModel model_;
    private String hub_;
    private final JPanel contentPanel = new JPanel();
@@ -158,11 +157,11 @@ public class PeripheralSetupDlg extends MMDialog {
    public PeripheralSetupDlg(MicroscopeModel mod, CMMCore c, String hub, Vector<Device> per) {
       setTitle("Peripheral Devices Setup");
       setBounds(100, 100, 479, 353);
+      loadPosition(100, 100);
       //setModalityType(ModalityType.APPLICATION_MODAL);
       setModal(true);
       setResizable(false);
       hub_ = hub;
-      core_ = c;
       model_ = mod;
       peripherals_ = per;
 
@@ -218,9 +217,6 @@ public class PeripheralSetupDlg extends MMDialog {
             savePosition();
          }
       });
-
-      Rectangle r = getBounds();
-      loadPosition(r.x, r.y);
       
       rebuildTable();
    }
@@ -272,11 +268,12 @@ public class PeripheralSetupDlg extends MMDialog {
 //      } finally {
 //         dispose();
 //      }
-      
+      savePosition();
       dispose();
    }
    
    public void onCancel() {
+      savePosition();
       dispose();
    }
 

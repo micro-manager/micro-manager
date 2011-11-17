@@ -120,7 +120,7 @@ public class ConfiguratorDlg2 extends MMDialog {
         });
         setResizable(false);
         getContentPane().setLayout(null);
-        setTitle("*New Hardware Configuration Wizard");
+        setTitle("*Hardware Configuration Wizard");
         setBounds(50, 100, 602, 672);
         loadPosition(50, 100);
 

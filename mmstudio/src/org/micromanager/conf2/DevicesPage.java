@@ -216,7 +216,7 @@ public class DevicesPage extends PagePanel implements ListSelectionListener {
       // find which devices can be installed
       for (int i = 0; i < installed.length; i++) {
          try {
-            if (model_.findDevice(installed[i]) == null) {
+            if (!model_.hasAdapterName(dev.getLibrary(), installed[i])) {
                String description = model_.getDeviceDescription(dev.getLibrary(), installed[i]);
                Device newDev = new Device(installed[i], dev.getLibrary(), installed[i], description);
                peripherals.add(newDev);

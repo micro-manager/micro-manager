@@ -46,14 +46,17 @@ import javax.swing.tree.DefaultMutableTreeNode;
 
 import mmcorej.CMMCore;
 
+import org.micromanager.utils.MMDialog;
 import org.micromanager.utils.ReportingUtils;
 import javax.swing.JCheckBox;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 
 /**
  * Dialog to add a new device to the configuration.
  */
 @SuppressWarnings("unused")
-public class AddDeviceDlg extends JDialog implements MouseListener,
+public class AddDeviceDlg extends MMDialog implements MouseListener,
       TreeSelectionListener {
 
    private static final long serialVersionUID = 1L;
@@ -180,11 +183,18 @@ public class AddDeviceDlg extends JDialog implements MouseListener,
     */
    public AddDeviceDlg(MicroscopeModel model, CMMCore core, DevicesPage devicesPage) {
       super();
+      addWindowListener(new WindowAdapter() {
+         @Override
+         public void windowClosing(WindowEvent e) {
+            savePosition();
+         }
+      });
       setModal(true);
       setResizable(false);
       getContentPane().setLayout(null);
       setTitle("Add Device");
       setBounds(400, 100, 624, 529);
+      loadPosition(400, 100);
       devicesPage_ = devicesPage;
       core_ = core;
       listByLib_ = true;
@@ -207,6 +217,7 @@ public class AddDeviceDlg extends JDialog implements MouseListener,
       doneButton.addActionListener(new ActionListener() {
 
          public void actionPerformed(ActionEvent arg0) {
+            savePosition();
             dispose();
          }
       });
@@ -430,7 +441,7 @@ public class AddDeviceDlg extends JDialog implements MouseListener,
 
                for (int i = 0; i < installed.length; i++) {
                   try {
-                     if (model_.findDevice(installed[i]) == null) {
+                     if (!model_.hasAdapterName(dev.getLibrary(), installed[i])) {
                         String description = model_.getDeviceDescription(dev.getLibrary(), installed[i]);
                         Device newDev = new Device(installed[i], dev.getLibrary(), installed[i], description);
                         peripherals.add(newDev);

@@ -1236,6 +1236,16 @@ public class MicroscopeModel {
       return null;
    }
 
+   boolean hasAdapterName(String library, String adapterName) {
+      for (int i = 0; i < devices_.size(); i++) {
+         Device dev = devices_.get(i);
+         if (dev.getAdapterName().contentEquals(adapterName) && dev.getLibrary().contentEquals(library)) {
+            return true;
+         }
+      }
+      return false;
+   }
+   
    Device findSerialPort(String name) {
       for (int i = 0; i < availableComPorts_.length; i++) {
          if (availableComPorts_[i].getName().contentEquals(
