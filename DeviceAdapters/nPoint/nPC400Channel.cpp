@@ -792,7 +792,7 @@ int nPC400CH::OnRadius (MM::PropertyBase* pProp, MM::ActionType eAct)
 {
     if (!m_yChannelAvailable) return DEVICE_UNSUPPORTED_COMMAND;
 
-    int ret = DEVICE_OK;
+    //int ret = DEVICE_OK;
 
     double dRadius = m_dRadius;
 
