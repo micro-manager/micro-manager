@@ -344,35 +344,21 @@ public class DevicesPage extends PagePanel implements ListSelectionListener {
 			   // do nothing for now
 			} else {
 			   model_.loadModel(core_);
-			   model_.initializeModel(core_);
+			   Cursor oldCur = getCursor();
+			   setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+            model_.initializeModel(core_);
+            setCursor(oldCur);
 			}
 			return true;
 		} catch (Exception e2) {
 			ReportingUtils.showError(e2);
+			setCursor(Cursor.getDefaultCursor());
 		}
 		return false;
 	}
 
     public boolean exitPage(boolean toNextPage) {
-        boolean status = true;
-        if (toNextPage) {
-            Container ancestor = getTopLevelAncestor();
-            Cursor oldc = null;
-            if (null != ancestor){
-               oldc = ancestor.getCursor();
-               Cursor waitc = new Cursor(Cursor.WAIT_CURSOR);
-               ancestor.setCursor(waitc);
-            }
-            
-            // NOTE: this is not needed anymore bacause devices are already loaded
-            // Maybe we just need loadDeviceDataFromHardware?
-            //status = model_.loadModel(core_, true);
-            if (null != ancestor){
-               if( null != oldc)
-                  ancestor.setCursor(oldc);
-            }
-        }
-        return status;
+        return true;
     }
 
    public void loadSettings() {

@@ -138,6 +138,7 @@ public class IntroPage extends PagePanel {
             ReportingUtils.showError(e);
          };
          filePathField_.setText(model_.getFileName());
+         initialized_ = false;
       }
       return true;
    }
