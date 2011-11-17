@@ -49,6 +49,9 @@ pushd plugins\ClojureEditor
 call ant -buildfile build.xml %cleantarget% compile build 
 popd
 
+pushd plugins\CRISP
+call build
+
 rem pushd plugins\Bleach
 rem call ant -buildfile build.xml %cleantarget% compile build
 rem popd
