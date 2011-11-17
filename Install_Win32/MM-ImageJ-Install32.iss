@@ -57,7 +57,7 @@ Source: ..\..\3rdparty\Microsoft\VisualC++\lib\x86\Microsoft.VC90.OPENMP\Microso
 
 
 ;include the jre for 32 bit
-Source: ..\..\3rdparty\jre_32\* ; DestDir: {app}\jre; Flags: ignoreversion recursesubdirs createallsubdirs
+Source: ..\..\3rdparty\jre6_32\* ; DestDir: {app}\jre; Flags: ignoreversion recursesubdirs createallsubdirs
 
 ; device libraries
 Source: micro-manager\ATMCD32D.dll; DestDir: {app}; Flags: ignoreversion
@@ -89,7 +89,7 @@ Source: micro-manager\MMCorePy.py; DestDir: {app}; Flags: ignoreversion skipifso
 Source: micro-manager\MMCoreWrapDemo.py; DestDir: {app}; Flags: ignoreversion skipifsourcedoesntexist
 
 ; drivers
-Source: ..\drivers\*; DestDir: {app}\drivers; Flags: ignoreversion recursesubdirs
+;Source: ..\drivers\*; DestDir: {app}\drivers; Flags: ignoreversion recursesubdirs
 
 ; beanshell scripts
 Source: ..\scripts\*; DestDir: {app}\scripts; Flags: ignoreversion

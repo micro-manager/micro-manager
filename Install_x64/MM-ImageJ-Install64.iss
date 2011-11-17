@@ -82,7 +82,7 @@ Source: micro-manager\mmgr_dal_*.dll; DestDir: {app}; Flags: ignoreversion
 ;Source: micro-manager\MMCoreWrapDemo.py; DestDir: {app}; Flags: ignoreversion skipifsourcedoesntexist
 
 ; drivers
-Source: ..\drivers\*; DestDir: {app}\drivers; Flags: ignoreversion recursesubdirs
+;Source: ..\drivers\*; DestDir: {app}\drivers; Flags: ignoreversion recursesubdirs
 
 ; beanshell scripts
 Source: ..\scripts\*; DestDir: {app}\scripts; Flags: ignoreversion
