@@ -130,6 +130,15 @@ if test "$IMAGEJDIR" != "no" ; then
    if test "$ABSOLUTEJARPATH" = "" ; then
       AC_MSG_ERROR([AbsoluteLayout.jar not found.  It should be in the classext directory.])
    fi
+   #----------------------------------------------------------------
+   # Find JFreeChart 
+   #----------------------------------------------------------------
+   AC_MSG_CHECKING(for JFreeChart jar file)
+   if test -r "$CLASSEXT/jfreechart-1.0.13.jar" ; then
+      JFREECHARTJARPATH="$CLASSEXT/jfreechart-1.0.13.jar:$CLASSEXT/jcommon-1.0.16.jar"
+      AC_MSG_RESULT($JFREECHARTJARPATH)
+   fi
+   # TODO: look in other paths
 fi
 
 
@@ -139,6 +148,7 @@ AC_SUBST(SWINGXJARPATH)
 AC_SUBST(COMMONSMATHJARPATH)
 AC_SUBST(SWINGLAYOUTJARPATH)
 AC_SUBST(ABSOLUTEJARPATH)
+AC_SUBST(JFREECHARTJARPATH)
 AC_SUBST(IJJARPATH)
 
 AC_MSG_CHECKING([whether to build the core])
@@ -302,6 +312,7 @@ AM_CONDITIONAL(BUILD_SECRETDEVICEADAPTERS, test -f "SecretDeviceAdapters/configu
 if test -z "${BUILD_SECRETDEVICEADAPTERS}" ; then
    AC_CONFIG_SUBDIRS([SecretDeviceAdapters])
 fi
+
 
 AC_CONFIG_SUBDIRS(DeviceAdapters DeviceKit)
 AC_OUTPUT(Makefile MMCore/Makefile MMCoreJ_wrap/Makefile mmstudio/Makefile acqEngine/Makefile plugins/Makefile scripts/Makefile autofocus/Makefile MMDevice/Makefile  MMCorePy_wrap/Makefile)
