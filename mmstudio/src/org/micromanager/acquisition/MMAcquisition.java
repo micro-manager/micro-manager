@@ -230,7 +230,7 @@ public class MMAcquisition {
          }
          if (compName != null)
             summaryMetadata.put("ComputerName",compName);
-         summaryMetadata.put("Date", new SimpleDateFormat("YYY-MM-dd").format(Calendar.getInstance().getTime()));
+         summaryMetadata.put("Date", new SimpleDateFormat("yyyy-MM-dd").format(Calendar.getInstance().getTime()));
          summaryMetadata.put("Depth", core.getBytesPerPixel());
          summaryMetadata.put("Frames", numFrames_);
          summaryMetadata.put("GridColumn", 0);
