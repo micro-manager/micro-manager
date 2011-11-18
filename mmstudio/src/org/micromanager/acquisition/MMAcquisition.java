@@ -25,9 +25,17 @@
  */
 package org.micromanager.acquisition;
 
+import ij.ImagePlus;
 import java.awt.Color;
 import java.io.File;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
 import java.util.Iterator;
+import java.util.UUID;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import mmcorej.CMMCore;
 
 import mmcorej.TaggedImage;
@@ -214,26 +222,45 @@ public class MMAcquisition {
          summaryMetadata.put("Channels", numChannels_);
          setDefaultChannelTags(summaryMetadata);
          summaryMetadata.put("Comment", comment_);
+         String compName = null;
+         try {
+            compName = InetAddress.getLocalHost().getHostName();
+         } catch (UnknownHostException e) {
+           ReportingUtils.showError(e);
+         }
+         if (compName != null)
+            summaryMetadata.put("ComputerName",compName);
+         summaryMetadata.put("Date", new SimpleDateFormat("YYY-MM-dd").format(Calendar.getInstance().getTime()));
          summaryMetadata.put("Depth", core.getBytesPerPixel());
          summaryMetadata.put("Frames", numFrames_);
          summaryMetadata.put("GridColumn", 0);
          summaryMetadata.put("GridRow", 0);
          summaryMetadata.put("Height", height_);
+         int ijType = -1;
+         if (depth_ == 1) 
+            ijType = ImagePlus.GRAY8; 
+         else if (depth_ == 2)
+            ijType = ImagePlus.GRAY16;
+         else if (depth_==8) 
+            ijType = 64; 
+         else if (depth_ == 4 && core.getNumberOfComponents() == 1)
+            ijType = ImagePlus.GRAY32;
+         else if(depth_ == 4 && core.getNumberOfComponents() == 4)
+            ijType = ImagePlus.COLOR_RGB;        
+         summaryMetadata.put("IJType", ijType);
          summaryMetadata.put("MetadataVersion", 10);
          summaryMetadata.put("MicroManagerVersion", MMStudioMainFrame.getInstance().getVersion());
          summaryMetadata.put("NumComponents", 1);
          summaryMetadata.put("Positions", numPositions_);
          summaryMetadata.put("Source", "Micro-Manager");
          summaryMetadata.put("PixelAspect", 1.0);
-         summaryMetadata.put("PixelSize_um", core.getPixelSizeUm());
-         if (depth_ == 1) {
-            summaryMetadata.put("PixelType", "GRAY8");
-         } else if (depth_ == 2) {
-            summaryMetadata.put("PixelType", "GRAY16");
-         }
+         summaryMetadata.put("PixelSize_um", core.getPixelSizeUm());        
+         summaryMetadata.put("PixelType", (core.getNumberOfComponents() == 1 ? "GRAY" : "RGB") +  (8*depth_));
          summaryMetadata.put("Slices", numSlices_);
          summaryMetadata.put("StartTime", MDUtils.getCurrentTime());
+         summaryMetadata.put("Time", Calendar.getInstance().getTime());
          summaryMetadata.put("UserName", System.getProperty("user.name"));
+         summaryMetadata.put("UUID",UUID.randomUUID());
          summaryMetadata.put("Width", width_);
          startTimeMs_ = System.currentTimeMillis();
          imageCache.setSummaryMetadata(summaryMetadata);
