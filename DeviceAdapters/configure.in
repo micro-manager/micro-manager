@@ -177,13 +177,22 @@ AC_MSG_CHECKING(for libFreeImage headers)
 AM_CONDITIONAL([LIBFREEIMAGEFOUND], [test -f "../../3rdpartypublic/FreeImage/Dist/FreeImage"])
 if test -f "../../3rdpartypublic/FreeImage/Dist/FreeImage.h"; then
    AC_MSG_RESULT([found])
+   AC_FIND_FILE([libfreeimageplus.a], [/usr/lib /usr/lib64 /usr/local/$ARCH/lib], FREEIMAGEPLUSLIBDIR)
+   freeimageplus=""
+   if test x$FREEIMAGEPLUSLIBDIR = xNO; then
+      AC_MSG_RESULT(["libfreeimageplus.a" not found])
+   else
+      AC_MSG_RESULT(["libfreeimageplus.a" found])
+      freeimageplus="$FREEIMAGEPLUSLIBDIR/libfreeimageplus.a"
+   fi
+   
    AC_FIND_FILE([libfreeimage.a], [/usr/lib /usr/lib64 /usr/local/$ARCH/lib], FREEIMAGELIBDIR)
    if test x$FREEIMAGELIBDIR = xNO; then
       buildsc=false
       AC_MSG_RESULT(["libfreeimage.a" not found...])
    else
       AC_MSG_RESULT(["libfreeimage.a" found])
-      AC_SUBST(LIBFREEIMAGE, "$FREEIMAGELIBDIR/libfreeimage.a")
+      AC_SUBST(LIBFREEIMAGE, "$FREEIMAGELIBDIR/libfreeimage.a $freeimageplus")
       AC_SUBST(LIBFREEIMAGE_CXXFLAGS, "-I../../../3rdpartypublic/FreeImage/Dist -I../../../3rdpartypublic/FreeImage/Wrapper/FreeImagePlus ")
    fi
 else
