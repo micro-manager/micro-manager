@@ -3139,12 +3139,40 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
             enableLiveMode(false);
             return;
          }
-
       }
-
-
    };
+   
+//   class MonochromeLiveTimer extends javax.swing.Timer {
+//      
+//      public MonochromeLiveTimer(int delay) {
+//         super(delay,null);
+//         this.addActionListener(monochromeLiveAction());
+//      }
+//      
+//      private ActionListener monochromeLiveAction() {
+//         return new ActionListener() {
+//            @Override
+//            public void actionPerformed(ActionEvent e) {
+////               //check is user closed window
+////               if (rgbWin_.windowClosed()) 
+////                  enableLiveMode(false);
+////               else
+////                  try {
+////                     TaggedImage ti = core_.getLastTaggedImage();
+////                     MDUtils.setChannelIndex(ti.tags, 0);
+////                     MDUtils.setFrameIndex(ti.tags, 0);
+////                     MDUtils.setPositionIndex(ti.tags, 0);
+////                     MDUtils.setSliceIndex(ti.tags, 0);
+////                     rgbWin_.getImageCache().putImage(ti);
+////                     rgbWin_.showImage(ti.tags,true,false);
+////                  } catch (Exception ex) {
+////                     ReportingUtils.showError(ex);
+////                  }
+//            }};
+//      }  
+//   }
 
+   
    class RGBLiveTimer extends javax.swing.Timer {
       VirtualAcquisitionDisplay rgbWin_;
       
@@ -3204,6 +3232,7 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
                      rgbWin_.showImage(ti.tags,true,false);
                   } catch (Exception ex) {
                      ReportingUtils.showError(ex);
+                     enableLiveMode(false);
                   }
             }};
       }  
