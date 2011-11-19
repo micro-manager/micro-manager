@@ -196,7 +196,11 @@ public class PropertyTableData extends AbstractTableModel implements MMPropertyT
 	public void refresh() {
 		try {            
          update();
-			gui_.suspendLiveMode();
+         
+         
+			/*
+          * Not sure why this was here, it cause the properties to be read twice!
+          * gui_.suspendLiveMode();
 			for (int i=0; i<propList_.size(); i++){
 				PropertyItem item = propList_.get(i);
             if (showDevice(flags_, item.device)) {
@@ -204,6 +208,8 @@ public class PropertyTableData extends AbstractTableModel implements MMPropertyT
             }
 			}
 			gui_.resumeLiveMode();
+          
+          */
 			this.fireTableDataChanged();
 		} catch (Exception e) {
 			handleException(e);
