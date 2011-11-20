@@ -47,6 +47,7 @@
 #define ERR_UNKNOWN_POSITION     103
 #define ERR_IN_SEQUENCE          104
 #define ERR_SEQUENCE_INACTIVE    105
+#define ERR_STAGE_MOVING         106
 #define SIMULATED_ERROR          200
 
 
@@ -486,7 +487,7 @@ public:
    CDemoXYStage();
    ~CDemoXYStage();
 
-   bool Busy() {return busy_;}
+   bool Busy();
    void GetName(char* pszName) const;
 
    int Initialize();
@@ -506,6 +507,19 @@ public:
       if (g_hub && g_hub->GenerateRandomError())
          return SIMULATED_ERROR;
 
+      if (timeOutTimer_ != 0)
+      {
+         if (!timeOutTimer_->expired(GetCurrentMMTime()))
+               return ERR_STAGE_MOVING;
+         delete (timeOutTimer_);
+      }
+      double newPosX = x * stepSize_um_;
+      double newPosY = y * stepSize_um_;
+      double difX = newPosX - posX_um_;
+      double difY = newPosY - posY_um_;
+      double distance = sqrt( (difX * difX) + (difY * difY) );
+      long timeOut = (long) (distance / velocity_);
+      timeOutTimer_ = new MM::TimeoutMs(GetCurrentMMTime(),  timeOut);
       posX_um_ = x * stepSize_um_;
       posY_um_ = y * stepSize_um_;
       int ret = OnXYStagePositionChanged(posX_um_, posY_um_);
@@ -615,6 +629,8 @@ private:
    double posX_um_;
    double posY_um_;
    bool busy_;
+   MM::TimeoutMs* timeOutTimer_;
+   double velocity_;
    bool initialized_;
    double lowerLimit_;
    double upperLimit_;

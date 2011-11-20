@@ -2514,6 +2514,8 @@ stepSize_um_(0.015),
 posX_um_(0.0),
 posY_um_(0.0),
 busy_(false),
+timeOutTimer_(0),
+velocity_(10.0), // in micron per second
 initialized_(false),
 lowerLimit_(0.0),
 upperLimit_(20000.0)
@@ -2572,6 +2574,19 @@ int CDemoXYStage::Shutdown()
    }
    return DEVICE_OK;
 }
+
+bool CDemoXYStage::Busy()
+{
+   if (timeOutTimer_ == 0)
+      return false;
+   if (timeOutTimer_->expired(GetCurrentMMTime()))
+   {
+      // delete(timeOutTimer_);
+      return false;
+   }
+   return true;
+}
+
 
 ///////////////////////////////////////////////////////////////////////////////
 // Action handlers
