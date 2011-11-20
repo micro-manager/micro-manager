@@ -3,7 +3,7 @@
 // PROJECT:       Micro-Manager
 // SUBSYSTEM:     DeviceAdapters
 //-----------------------------------------------------------------------------
-// DESCRIPTION:   Implements capture from DirectShow and WDM class drivers.
+// DESCRIPTION:   Implements capture from DirectShow and WDM class drivers on Windows, V4L2 on Linux
 //                Based heavily on the demo camera project.
 //                
 // AUTHOR:        Ed Simmons ed@esimaging.co.uk
@@ -1217,7 +1217,7 @@ int COpenCVgrabber::OnResolution(MM::PropertyBase* pProp, MM::ActionType eAct)
 
 		 cameraCCDXSize_ = (long) cvGetCaptureProperty(capture, CV_CAP_PROP_FRAME_WIDTH);
 		 cameraCCDYSize_ = (long) cvGetCaptureProperty(capture, CV_CAP_PROP_FRAME_HEIGHT);
-		 if(!(cameraCCDXSize_ > 0) && !(cameraCCDYSize_ > 0))
+		 if(!(cameraCCDXSize_ > 0) || !(cameraCCDYSize_ > 0))
 			 return DEVICE_ERR;
 		 ret = ResizeImageBuffer();
 		 if (ret != DEVICE_OK) return ret;
