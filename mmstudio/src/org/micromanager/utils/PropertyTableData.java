@@ -40,6 +40,8 @@ public class PropertyTableData extends AbstractTableModel implements MMPropertyT
 
 	private String[] presetNames_;
    private Component parentComponent_;
+   
+   private volatile boolean updating_;
 
 
 	public PropertyTableData(CMMCore core, String groupName, String presetName, int PropertyValueColumn, int PropertyUsedColumn, Component parentComponent) {
@@ -233,6 +235,8 @@ public class PropertyTableData extends AbstractTableModel implements MMPropertyT
 			Configuration cfg = core_.getConfigGroupState(groupName);
 
 			gui_.suspendLiveMode();
+         
+         setUpdating(true);
 
 			for (int i=0; i<devices.size(); i++) {
 
@@ -257,6 +261,8 @@ public class PropertyTableData extends AbstractTableModel implements MMPropertyT
                }
             }
 			}
+         
+         setUpdating(false);
 
 			updateRowVisibility(flags); 
 
@@ -342,5 +348,11 @@ public class PropertyTableData extends AbstractTableModel implements MMPropertyT
 	public ArrayList<PropertyItem> getPropList() {
 		return propList_;
 	}
+   public void setUpdating(boolean updating) {
+      updating_ = updating;
+   }
+   public boolean updating() {
+      return updating_;
+   }
 	
 }

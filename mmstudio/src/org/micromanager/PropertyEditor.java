@@ -86,17 +86,21 @@ public class PropertyEditor extends MMFrame{
    private JCheckBox showReadonlyCheckBox_;
    private JScrollPane scrollPane_;
    private MMStudioMainFrame gui_;
-
+   
    public class myMMListener extends MMListenerAdapter {
-        @Override
-       public void propertiesChangedAlert() {
-         refresh();
+
+      @Override
+      public void propertiesChangedAlert() {
+         // avoid re-executing a refrech because of callbacks while we are updating
+         if (!data_.updating()) {
+            refresh();
+         }
       }
 
-        @Override
+      @Override
       public void propertyChangedAlert(String device, String property, String value) {
-        data_.update(device, property, value);
-     }
+         data_.update(device, property, value);
+      }
    }
 
    private myMMListener myMMListener_ = new myMMListener();
