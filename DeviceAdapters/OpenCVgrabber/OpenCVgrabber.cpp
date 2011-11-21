@@ -363,7 +363,7 @@ int COpenCVgrabber::Initialize()
 
    // exposure
    
-   nRet = CreateProperty(MM::g_Keyword_Exposure,  "40"/*CDeviceUtils::ConvertToString(GetExposure())*/, MM::Float, false);
+   nRet = CreateProperty(MM::g_Keyword_Exposure,  "10"/*CDeviceUtils::ConvertToString(GetExposure())*/, MM::Float, false);
    assert(nRet == DEVICE_OK);
    SetPropertyLimits(MM::g_Keyword_Exposure, 0, 10000);
 
@@ -482,6 +482,8 @@ const unsigned char* COpenCVgrabber::GetImageBuffer()
 
    temp = cvRetrieveFrame(capture);
    if(!temp) return 0;
+   //Mat temp_mat (temp);
+   
 
    char buf[MM::MaxStrLength];
    GetProperty(MM::g_Keyword_PixelType, buf);
@@ -489,38 +491,61 @@ const unsigned char* COpenCVgrabber::GetImageBuffer()
 
    if (pixelType.compare(g_PixelType_32bitRGB) == 0)
    {
-	  /*
+      /*
+      Mat rgba( img_.Width(), img_.Height(),CV_8UC4, Scalar(255,128,0,0) );
+      Mat rgb(img_.Width(), img_.Height(),CV_8UC3, Scalar(0,0,0));
+      Mat alpha(  img_.Width(), img_.Height(),CV_8UC1 ,Scalar(0));
+      
+      
+      int from_to[] = {0,0,  1,1,  2,2, 3,3};
+      
+      Mat in[] = {rgb,alpha};
+      
+      mixChannels( in, 2, &rgba, 1, from_to, 4);
+      
+      IplImage ipl_img = rgba;
+      memcpy(img_.GetPixelsRW(),ipl_img.imageData,img_.Width() * img_.Height() * 4);
+      */
+      
 	   if(roiX_ == 0 && roiY_ == 0){
+         unsigned int srcOffset = 0;
+         unsigned int dstOffset = 0;
 		   for(int i=0; i < temp->width * temp->height; i++){
-				memcpy(img_.GetPixelsRW()+i*4, temp->imageData+i*3,3);
+				memcpy(img_.GetPixelsRW()+dstOffset, temp->imageData+srcOffset,3);
+            srcOffset += 3;
+            dstOffset += 4;
 			} 
 	   } else {
 			cvSetImageROI(temp,cvRect(roiX_,roiY_,img_.Width(),img_.Height()));
 			IplImage *ROI = cvCreateImage(cvSize(img_.Width(),img_.Height()),
 							   temp->depth,
-                               temp->nChannels);
+                        temp->nChannels);
 
 			
 			if(!ROI) return 0; //failed to create ROI image
 			cvCopy(temp,ROI,NULL);
 			cvResetImageROI(temp);
-			
+			// nasty padding loop
+         unsigned int srcOffset = 0;
+         unsigned int dstOffset = 0;
 			for(int i=0; i < ROI->width * ROI->height; i++){
-				memcpy(img_.GetPixelsRW()+i*4, ROI->imageData+i*3,3);
+				memcpy(img_.GetPixelsRW()+dstOffset, temp->imageData+srcOffset,3);
+            srcOffset += 3;
+            dstOffset += 4;
 			}
-			cvReleaseImage(&ROI);
+			
+         //cvCvtColor(&ROI,(CvArr *) temp->imageData,CV_RGB2RGBA);// possible alternative to the padding loop - if I can get it not to break!
+         cvReleaseImage(&ROI);
 	   }
-		*/
-	    for(int i=0; i < temp->width * temp->height; i++){
-				memcpy(img_.GetPixelsRW()+i*4, temp->imageData+i*3,3);
-			} 
-
+      
    } else {
-		for(int i=0; i < cameraCCDXSize_ * cameraCCDYSize_; i++){
-			memcpy(img_.GetPixelsRW()+i, temp->imageData+i*3,1);
-		}
-   }
-
+		unsigned int srcOffset = 0;
+		for(int i=0; i < temp->width * temp->height; i++){
+			memcpy(img_.GetPixelsRW()+i, temp->imageData+srcOffset,1);
+			srcOffset += 3;
+		} 
+	}
+   
 
 unsigned char *pB = (unsigned char*)(img_.GetPixels());
    return pB;
@@ -644,7 +669,8 @@ int COpenCVgrabber::ClearROI()
 double COpenCVgrabber::GetExposure() const
 {
 	double exp = cvGetCaptureProperty(capture,CV_CAP_PROP_EXPOSURE); // try to get the exposure from OpenCV - not all drivers allow this
-	if(exp >= 1) return exp; // if it works, great, return it, otherwise...
+	if(exp >= 1)
+      return exp; // if it works, great, return it, otherwise...
 
 
    char buf[MM::MaxStrLength];
@@ -662,7 +688,7 @@ double COpenCVgrabber::GetExposure() const
 void COpenCVgrabber::SetExposure(double exp)
 {
    SetProperty(MM::g_Keyword_Exposure, CDeviceUtils::ConvertToString(exp));
-   cvSetCaptureProperty(capture,CV_CAP_PROP_EXPOSURE,exp); // there is no benefit from checking if this works (many capture drivers via opencv just don't allow this) - just carry on regardless.
+   cvSetCaptureProperty(capture,CV_CAP_PROP_EXPOSURE,(long)exp); // there is no benefit from checking if this works (many capture drivers via opencv just don't allow this) - just carry on regardless.
 }
 
 /**
@@ -750,7 +776,7 @@ int COpenCVgrabber::InsertImage()
    MM::MMTime timeStamp = this->GetCurrentMMTime();
    char label[MM::MaxStrLength];
    this->GetLabel(label);
- /*
+ 
    // Important:  metadata about the image are generated here:
    Metadata md;
    md.put("Camera", label);
@@ -759,13 +785,13 @@ int COpenCVgrabber::InsertImage()
    md.put(MM::g_Keyword_Metadata_ImageNumber, CDeviceUtils::ConvertToString(imageCounter_));
    md.put(MM::g_Keyword_Metadata_ROI_X, CDeviceUtils::ConvertToString( (long) roiX_)); 
    md.put(MM::g_Keyword_Metadata_ROI_Y, CDeviceUtils::ConvertToString( (long) roiY_)); 
-   */
+   
    imageCounter_++;
-   /*
+   
    char buf[MM::MaxStrLength];
    GetProperty(MM::g_Keyword_Binning, buf);
    md.put(MM::g_Keyword_Binning, buf);
-   */
+   
    MMThreadGuard g(imgPixelsLock_);
 
 
@@ -774,14 +800,14 @@ int COpenCVgrabber::InsertImage()
    unsigned int h = GetImageHeight();
    unsigned int b = GetImageBytesPerPixel();
 
-   int ret = GetCoreCallback()->InsertImage(this, pI, w, h, b);
+   int ret = GetCoreCallback()->InsertImage(this, pI, w, h, b, md.Serialize().c_str());
    if (!stopOnOverflow_ && ret == DEVICE_BUFFER_OVERFLOW)
    {
       // do not stop on overflow - just reset the buffer
       GetCoreCallback()->ClearImageBuffer(this);
       // don't process this same image again...
-	  //return GetCoreCallback()->InsertImage(this, pI, w, h, b, &md, false);
-	  return GetCoreCallback()->InsertImage(this, pI, w, h, b);
+	  return GetCoreCallback()->InsertImage(this, pI, w, h, b, md.Serialize().c_str(), false);
+	  //return GetCoreCallback()->InsertImage(this, pI, w, h, b);
    } else
       return ret;
 }
@@ -1073,14 +1099,14 @@ int COpenCVgrabber::OnPixelType(MM::PropertyBase* pProp, MM::ActionType eAct)
             nComponents_ = 1;
             img_.Resize(img_.Width(), img_.Height(), 1);
             bitDepth_ = 8;
-
+            //cvSetCaptureProperty(capture, CV_CAP_PROP_MONOCROME,1);
             ret=DEVICE_OK;
          }
          else if ( pixelType.compare(g_PixelType_32bitRGB) == 0)
 		{
             nComponents_ = 4;
             img_.Resize(img_.Width(), img_.Height(), 4);
-
+            //cvSetCaptureProperty(capture, CV_CAP_PROP_MONOCROME,0);
             ret=DEVICE_OK;
 		}
 		else
