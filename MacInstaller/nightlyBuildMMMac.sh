@@ -98,7 +98,7 @@ make install || exit
 cd $RI386
 ./mmUnixBuild.sh || exit
 MACOSX_DEPLOYMENT_TARGET=10.4
-./configure --with-imagej=$I386 --enable-python --enable-arch=i386 --with-boost=/usr/local/i386 CXX="g++-4.0" CXXFLAGS="-g -O2 -mmacosx-version-min=10.4 -isysroot /Developer/SDKs/MacOSX10.4u.sdk -arch i386"  --disable-dependency-tracking PKG_CONFIG_LIBDIR="/usr/local/i386/lib/pkgconfig/" || exit
+./configure --with-imagej=$I386 --enable-python --enable-arch=i386 --with-boost=/usr/local/i386 --with-opencv=/usr/local/i386 CXX="g++-4.0" CXXFLAGS="-g -O2 -mmacosx-version-min=10.4 -isysroot /Developer/SDKs/MacOSX10.4u.sdk -arch i386"  --disable-dependency-tracking PKG_CONFIG_LIBDIR="/usr/local/i386/lib/pkgconfig/" || exit
 make clean || exit
 make || exit
 make install || exit
@@ -107,7 +107,7 @@ make install || exit
 cd $RX86_64
 ./mmUnixBuild.sh || exit
 export MACOSX_DEPLOYMENT_TARGET=10.5
-./configure --with-imagej=$X86_64 --enable-arch=x86_64 --with-boost=/usr/local/x86_64 CXX="g++-4.2" CXXFLAGS="-g -O2 -mmacosx-version-min=10.5 -isysroot /Developer/SDKs/MacOSX10.5.sdk -arch x86_64" --disable-dependency-tracking PKG_CONFIG_LIBDIR="/usr/local/x86_64/lib/pkgconfig/" || exit
+./configure --with-imagej=$X86_64 --enable-arch=x86_64 --with-boost=/usr/local/x86_64 --with-opencv=/usr/local/x86_64 CXX="g++-4.2" CXXFLAGS="-g -O2 -mmacosx-version-min=10.5 -isysroot /Developer/SDKs/MacOSX10.5.sdk -arch x86_64" --disable-dependency-tracking PKG_CONFIG_LIBDIR="/usr/local/x86_64/lib/pkgconfig/" || exit
 make clean || exit
 make || exit
 make install || exit
