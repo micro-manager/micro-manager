@@ -294,7 +294,10 @@ public class ReportProblemDialog extends javax.swing.JDialog {
 
     private void sendButton_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_sendButton_ActionPerformed
 
-       String EMAIL_REGEX = "^[\\w-_\\.+]*[\\w-_\\.]\\@([\\w]+\\.)+[\\w]+[\\w]$";
+       // This regex does not allow addresses with dashes in them
+       //String EMAIL_REGEX = "^[\\w-_\\.+]*[\\w-_\\.]\\@([\\w]+\\.)+[\\w]+[\\w]$";
+       // simpler, and seems to work:
+       String EMAIL_REGEX = "[\\w-]+@([\\w-]+\\.)+[\\w-]+";
        if (emailText_.getText().matches(EMAIL_REGEX)) {
           if (0 < name_.getText().length()) {
              if (0 < organization_.getText().length()) {
