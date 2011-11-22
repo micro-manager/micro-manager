@@ -187,6 +187,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "XCiteLed", "..\DeviceAdapte
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "nPC400", "..\DeviceAdapters\nPoint\nPC400.vcproj", "{52A0BB2A-0A16-40F8-86D4-99E0379F6E55}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "VariLC", "..\DeviceAdapters\VariLC\VariLC.vcproj", "{2B522528-9660-4B78-8E2A-000000000000}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
@@ -894,6 +896,14 @@ Global
 		{52A0BB2A-0A16-40F8-86D4-99E0379F6E55}.Release|Win32.Build.0 = Release|Win32
 		{52A0BB2A-0A16-40F8-86D4-99E0379F6E55}.Release|x64.ActiveCfg = Release|x64
 		{52A0BB2A-0A16-40F8-86D4-99E0379F6E55}.Release|x64.Build.0 = Release|x64
+		{2B522528-9660-4B78-8E2A-000000000000}.Debug|Win32.ActiveCfg = Debug|Win32
+		{2B522528-9660-4B78-8E2A-000000000000}.Debug|Win32.Build.0 = Debug|Win32
+		{2B522528-9660-4B78-8E2A-000000000000}.Debug|x64.ActiveCfg = Debug|x64
+		{2B522528-9660-4B78-8E2A-000000000000}.Debug|x64.Build.0 = Debug|x64
+		{2B522528-9660-4B78-8E2A-000000000000}.Release|Win32.ActiveCfg = Release|Win32
+		{2B522528-9660-4B78-8E2A-000000000000}.Release|Win32.Build.0 = Release|Win32
+		{2B522528-9660-4B78-8E2A-000000000000}.Release|x64.ActiveCfg = Release|x64
+		{2B522528-9660-4B78-8E2A-000000000000}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
