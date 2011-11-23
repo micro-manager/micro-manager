@@ -58,6 +58,7 @@ public:
    const unsigned char* GetTopImage() const;
    const unsigned char* GetNextImage();
    const ImgBuffer* GetTopImageBuffer(unsigned channel, unsigned slice) const;
+   const ImgBuffer* GetNthFromTopImageBuffer(unsigned long n) const;
    const ImgBuffer* GetNextImageBuffer(unsigned channel, unsigned slice);
    void Clear() {insertIndex_=0; saveIndex_=0; overflow_ = false;}
 

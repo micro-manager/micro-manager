@@ -240,6 +240,24 @@ const ImgBuffer* CircularBuffer::GetTopImageBuffer(unsigned channel, unsigned sl
       return frameArray_[(insertIndex_-1) % frameArray_.size()].FindImage(channel, slice);
 }
 
+/**
+* Returns an ImgBuffer to the image inserted n images before the last one
+*/
+const ImgBuffer* CircularBuffer::GetNthFromTopImageBuffer(unsigned long n) const
+{
+   MMThreadGuard guard(g_bufferLock);
+
+   if (frameArray_.size() == 0)
+      return 0;
+
+   if (insertIndex_ <= n)
+      return 0;
+
+   if (n >= frameArray_.size() )
+      return 0;
+
+   return frameArray_[(insertIndex_-1-n) % frameArray_.size()].FindImage(0, 0);
+}
 
 const unsigned char* CircularBuffer::GetNextImage()
 {

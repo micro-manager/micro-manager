@@ -2344,6 +2344,21 @@ void* CMMCore::getLastImageMD(Metadata& md) const throw (CMMError)
 }
 
 /**
+ * Gets the image that was inserted n images ago
+ */
+void* CMMCore::getNthButLastImageMD(unsigned long n, Metadata& md) const throw (CMMError)
+{
+   const ImgBuffer* pBuf = cbuf_->GetNthFromTopImageBuffer(n);
+   if (pBuf != 0)
+   {
+      md = pBuf->GetMetadata();
+      return const_cast<unsigned char*>(pBuf->GetPixels());
+   }
+   else
+      throw CMMError(getCoreErrorText(MMERR_CircularBufferEmpty).c_str(), MMERR_CircularBufferEmpty);
+}
+
+/**
  * Gets and removes the next image from the circular buffer.
  * Returns 0 if the buffer is empty.
  */
