@@ -3111,8 +3111,9 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
                   liveModeTimer_.setType(LiveModeTimer.MULTI_CAMERA);  
                }
                liveModeTimer_.start();
-               
+              
 
+               
                if (autoShutterOrg_) {
                   toggleButtonShutter_.setEnabled(false);
                }
