@@ -171,10 +171,13 @@ public class GroupEditor extends ConfigDialog {
                               Arrays.sort(item.allowed);
                            }                          
                            
-                            for (String allowedValue:item.allowed) {
-                               if (!allowedValue.equals(""))
-                                   core_.defineConfig(newName, allowedValue, item.device, item.name, allowedValue);
-                            }
+                            for (String allowedValue : item.allowed) {
+                              if (!allowedValue.equals("")) {
+                                 // Make sure that forbiddedn characters do not make it into the Preset Name
+                                 String presetName = allowedValue.replaceAll("[/\\*!']", "-");
+                                 core_.defineConfig(newName, presetName, item.device, item.name, allowedValue);
+                              }
+                           }
                         } else {
                             core_.defineConfig(newName,"NewPreset", item.device, item.name, item.getValueInCoreFormat());
                         }
