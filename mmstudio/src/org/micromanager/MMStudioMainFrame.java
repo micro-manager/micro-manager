@@ -45,13 +45,13 @@ import java.awt.geom.Point2D;
 import java.io.File;
 import java.io.IOException;
 
+import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.prefs.Preferences;
 import java.util.Timer;
-import java.util.TimerTask;
 
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
@@ -128,6 +128,7 @@ import java.awt.KeyboardFocusManager;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.Collections;
+import java.util.HashMap;
 import javax.swing.BorderFactory;
 import javax.swing.JPanel;
 import javax.swing.JSplitPane;
@@ -137,6 +138,7 @@ import org.json.JSONException;
 import org.micromanager.acquisition.AcquisitionVirtualStack;
 
 import org.micromanager.acquisition.AcquisitionWrapperEngine;
+import org.micromanager.acquisition.LiveModeTimer;
 import org.micromanager.acquisition.MMAcquisition;
 import org.micromanager.acquisition.MetadataPanel;
 import org.micromanager.acquisition.TaggedImageStorageDiskDefault;
@@ -151,7 +153,6 @@ import org.micromanager.utils.ImageUtils;
 import org.micromanager.utils.MDUtils;
 import org.micromanager.utils.MMKeyDispatcher;
 import org.micromanager.utils.ReportingUtils;
-
 
 
 /*
@@ -230,11 +231,8 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
    private ContrastPanel contrastPanel_;
    // Timer interval - image display interval
    private double liveModeInterval_ = 40;
-   private Timer liveModeTimer_;
-   private LiveModeTimerTask liveModeTimerTask_;
-   private RGBLiveTimer rgbLiveModeTimer_;
+   private LiveModeTimer liveModeTimer_;
    private GraphData lineProfileData_;
-   private Object img_;
    // labels for standard devices
    private String cameraLabel_;
    private String zStageLabel_;
@@ -252,7 +250,6 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
    private PositionListDlg posListDlg_;
    private String openAcqDirectory_ = "";
    private boolean running_;
-   private boolean liveRunning_ = false;
    private boolean configChanged_ = false;
    private StrVector shutters_ = null;
 
@@ -264,8 +261,6 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
    private XYZKeyListener xyzKeyListener_;
    private AcquisitionManager acqMgr_;
    private static MMImageWindow imageWin_;
-   private final String multiCameraAcq_ = "Multi-Camera Snap";
-   private final String rgbAcq_ = "RGB-Camera Acquisition";
    private Color[] multiCameraColors_ = {Color.RED, Color.GREEN, Color.BLUE, Color.YELLOW, Color.CYAN};
    private boolean multiChannelCamera_ = false;
    private long multiChannelCameraNrCh_ = 0;
@@ -273,6 +268,8 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
    private boolean liveModeSuspended_;
    public Font defaultScriptFont_ = null;
    
+   public static final String MULTI_CAMERA_ACQ = "Multi-Camera Snap";
+   public static final String RGB_ACQ = "RGB-Camera Acquisition";
    public static FileType MM_CONFIG_FILE
             = new FileType("MM_CONFIG_FILE",
                            "Micro-Manager Config File",
@@ -299,7 +296,6 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
    private Class pipelineClass_ = null;
    private Pipeline acquirePipeline_ = null;
    private final JSplitPane splitPane_;
-   private volatile boolean ignorePropertyChanges_;
 
 
    public ImageWindow getImageWin() {
@@ -316,18 +312,18 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
       try {
          setCursor(new Cursor(Cursor.WAIT_CURSOR));
          core_.snapImage();
-         getAcquisition(rgbAcq_).toFront();
+         getAcquisition(RGB_ACQ).toFront();
          
             TaggedImage ti = ImageUtils.makeTaggedImage(core_.getImage(),
                     0,
                     0,
                     0,
                     0,
-                    getAcquisitionImageWidth(rgbAcq_),
-                    getAcquisitionImageHeight(rgbAcq_),
-                    getAcquisitionImageByteDepth(rgbAcq_) );
+                    getAcquisitionImageWidth(RGB_ACQ),
+                    getAcquisitionImageHeight(RGB_ACQ),
+                    getAcquisitionImageByteDepth(RGB_ACQ) );
             
-            addImage(rgbAcq_,ti, true, true, false);
+            addImage(RGB_ACQ,ti, true, true, false);
   
       } catch (Exception ex) {
          ReportingUtils.showError(ex);
@@ -410,30 +406,30 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
                chNames.add(core_.getCameraChannelName(i));
             }
                
-            if (acquisitionExists(multiCameraAcq_)) {
-               if (c != (getAcquisition(multiCameraAcq_)).getChannels()) {
-                  closeAcquisitionImage5D(multiCameraAcq_);
-                  closeAcquisition(multiCameraAcq_);
+            if (acquisitionExists(MULTI_CAMERA_ACQ)) {
+               if (c != (getAcquisition(MULTI_CAMERA_ACQ)).getChannels()) {
+                  closeAcquisitionImage5D(MULTI_CAMERA_ACQ);
+                  closeAcquisition(MULTI_CAMERA_ACQ);
                }
-               if ( (getAcquisitionImageWidth(multiCameraAcq_) != w) ||
-                    (getAcquisitionImageHeight(multiCameraAcq_) != h) ||
-                    (getAcquisitionImageByteDepth(multiCameraAcq_) != d) ) {
-                  closeAcquisitionImage5D(multiCameraAcq_);
-                  closeAcquisition(multiCameraAcq_);
+               if ( (getAcquisitionImageWidth(MULTI_CAMERA_ACQ) != w) ||
+                    (getAcquisitionImageHeight(MULTI_CAMERA_ACQ) != h) ||
+                    (getAcquisitionImageByteDepth(MULTI_CAMERA_ACQ) != d) ) {
+                  closeAcquisitionImage5D(MULTI_CAMERA_ACQ);
+                  closeAcquisition(MULTI_CAMERA_ACQ);
                }
             }
 
-            if (!acquisitionExists(multiCameraAcq_)) {
-               openAcquisition(multiCameraAcq_, "", 1, (int) c, 1, true);
+            if (!acquisitionExists(MULTI_CAMERA_ACQ)) {
+               openAcquisition(MULTI_CAMERA_ACQ, "", 1, (int) c, 1, true);
                for (long i = 0; i < c; i++) {
                   String chName = core_.getCameraChannelName(i);
                   int defaultColor = multiCameraColors_[(int)i % multiCameraColors_.length].getRGB();
-                  setChannelColor(multiCameraAcq_, (int) i, 
+                  setChannelColor(MULTI_CAMERA_ACQ, (int) i, 
                           getChannelColor(chName, defaultColor) );
-                  setChannelName(multiCameraAcq_, (int) i, chName);
+                  setChannelName(MULTI_CAMERA_ACQ, (int) i, chName);
                }
-               initializeAcquisition(multiCameraAcq_, w, h, d);
-               getAcquisition(multiCameraAcq_).promptToSave(false);
+               initializeAcquisition(MULTI_CAMERA_ACQ, w, h, d);
+               getAcquisition(MULTI_CAMERA_ACQ).promptToSave(false);
             }
          } catch (Exception ex) {
             ReportingUtils.showError(ex);
@@ -448,21 +444,21 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
       int d = (int) core_.getBytesPerPixel();
   
          try {                        
-            if (acquisitionExists(rgbAcq_)) {             
-               if ( (getAcquisitionImageWidth(rgbAcq_) != w) ||
-                    (getAcquisitionImageHeight(rgbAcq_) != h) ||
-                    (getAcquisitionImageByteDepth(rgbAcq_) != d) )
+            if (acquisitionExists(RGB_ACQ)) {             
+               if ( (getAcquisitionImageWidth(RGB_ACQ) != w) ||
+                    (getAcquisitionImageHeight(RGB_ACQ) != h) ||
+                    (getAcquisitionImageByteDepth(RGB_ACQ) != d) )
                {
-                  closeAcquisitionImage5D(rgbAcq_);
-                  closeAcquisition(rgbAcq_);
-                  openAcquisition(rgbAcq_, "", 1, 1, 1, true);
-                  initializeAcquisition(rgbAcq_, w, h, d);
-                  getAcquisition(rgbAcq_).promptToSave(false);
+                  closeAcquisitionImage5D(RGB_ACQ);
+                  closeAcquisition(RGB_ACQ);
+                  openAcquisition(RGB_ACQ, "", 1, 1, 1, true);
+                  initializeAcquisition(RGB_ACQ, w, h, d);
+                  getAcquisition(RGB_ACQ).promptToSave(false);
                }
             } else {         
-            openAcquisition(rgbAcq_, "", 1, 1, 1, true);       //creates new acquisition
-            initializeAcquisition(rgbAcq_, w, h, d);
-            getAcquisition(rgbAcq_).promptToSave(false);
+            openAcquisition(RGB_ACQ, "", 1, 1, 1, true);       //creates new acquisition
+            initializeAcquisition(RGB_ACQ, w, h, d);
+            getAcquisition(RGB_ACQ).promptToSave(false);
             }
          } catch (Exception ex) {
             ReportingUtils.showError(ex);
@@ -498,7 +494,7 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
       try {
          setCursor(new Cursor(Cursor.WAIT_CURSOR));
          core_.snapImage();
-         getAcquisition(multiCameraAcq_).toFront();
+         getAcquisition(MULTI_CAMERA_ACQ).toFront();
          long c = core_.getNumberOfCameraChannels();
 
          for (int i = 0; i < c; i++) {
@@ -507,13 +503,13 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
                     0,
                     0,
                     0,
-                    getAcquisitionImageWidth(multiCameraAcq_),
-                    getAcquisitionImageHeight(multiCameraAcq_),
-                    getAcquisitionImageByteDepth(multiCameraAcq_) );
+                    getAcquisitionImageWidth(MULTI_CAMERA_ACQ),
+                    getAcquisitionImageHeight(MULTI_CAMERA_ACQ),
+                    getAcquisitionImageByteDepth(MULTI_CAMERA_ACQ) );
             boolean update = false;
             if (i == c -1)
                update = true;
-            addImage(multiCameraAcq_,ti, update, true, false);
+            addImage(MULTI_CAMERA_ACQ,ti, update, true, false);
          }
       } catch (Exception ex) {
          ReportingUtils.showError(ex);
@@ -760,18 +756,13 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
          // TODO: remove test once acquisition engine is fully multithreaded
          if (engine_ != null && engine_.isAcquisitionRunning()) {
             core_.logMessage("Notification from MMCore ignored because acquistion is running!");
-         } else  {
-            if (ignorePropertyChanges_) {
-               core_.logMessage("Notification from MMCore ignored since the system is still loading");
-            } else {
-               core_.updateSystemStateCache();
-               updateGUI(true);
-               // update all registered listeners
-               for (MMListenerInterface mmIntf:MMListeners_) {
-                  mmIntf.propertiesChangedAlert();
-               }
-               core_.logMessage("Notification from MMCore!");
+         } else {
+            updateGUI(true);
+            // update all registered listeners
+            for (MMListenerInterface mmIntf:MMListeners_) {
+               mmIntf.propertiesChangedAlert();
             }
+            core_.logMessage("Notification from MMCore!");
          }
       }
 
@@ -966,9 +957,6 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
             dlg.setVisible(true);
          }
       }
-
-      liveModeTimer_ = new Timer("liveModeTimer");
-
 
       // load application preferences
       // NOTE: only window size and position preferences are loaded,
@@ -1413,7 +1401,6 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
       refreshMenuItem.addActionListener(new ActionListener() {
 
          public void actionPerformed(ActionEvent e) {
-            core_.updateSystemStateCache();
             updateGUI(true);
          }
       });
@@ -1426,7 +1413,6 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
 
          public void actionPerformed(ActionEvent e) {
             initializeGUI();
-            core_.updateSystemStateCache();
          }
       });
       rebuildGuiMenuItem.setText("Rebuild GUI");
@@ -1841,7 +1827,6 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
       refreshButton.addActionListener(new ActionListener() {
 
          public void actionPerformed(ActionEvent e) {
-            core_.updateSystemStateCache();
             updateGUI(true);
          }
       });
@@ -2460,8 +2445,8 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
 
    public void setROI(Rectangle r) throws MMScriptException {
       boolean liveRunning = false;
-      if (liveRunning_) {
-         liveRunning = liveRunning_;
+      if (isLiveModeOn()) {
+         liveRunning = true;
          enableLiveMode(false);
       }
       try {
@@ -2524,8 +2509,8 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
    private void clearROI() {
       try {
          boolean liveRunning = false;
-         if (liveRunning_) {
-            liveRunning = liveRunning_;
+         if (isLiveModeOn()) {
+            liveRunning = true;
             enableLiveMode(false);
          }
          core_.clearROI();
@@ -2707,8 +2692,8 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
    protected void changeBinning() {
       try {
          boolean liveRunning = false;
-         if (liveRunning_ ) {
-            liveRunning = liveRunning_;
+         if (isLiveModeOn() ) {
+            liveRunning = true;
             enableLiveMode(false);
         } 
          
@@ -3054,235 +3039,117 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
       return ret;
    }
 
-   public boolean isLiveModeOn() {
-      if (core_.getNumberOfComponents() == 1) {
-         return liveModeTimerTask_ != null && liveModeTimerTask_.isRunning();
-      } else {
-         return rgbLiveModeTimer_ != null && rgbLiveModeTimer_.isRunning();
-      }
-   }
-
-   // Timer task that displays the live image
-   class LiveModeTimerTask extends TimerTask {
-      static final String CCHANNELINDEX = "CameraChannelIndex";
-      
-      public boolean running_ = false;
-
-      public synchronized boolean isRunning() {
-         return running_;
-      }
-      
-      public synchronized void setRunning(boolean running) {
-         running_ = running;
-      }
-
-      @Override
-      public synchronized boolean cancel() {
-         running_ = false;
-         return super.cancel();
-      }
-
-      public void run() {
-         Thread.currentThread().setPriority(3);
-         setRunning(true);
-         if (!multiChannelCamera_ && !isImageWindowOpen()) {
-            // stop live acquisition if user closed the window
-            enableLiveMode(false);
-            return;
-         } else if (multiChannelCamera_ && !acquisitionExists(multiCameraAcq_)) {
-            enableLiveMode(false);
-            return;
-         }
-         try {
-            if (core_.getRemainingImageCount() > 0 && isRunning()) {
-               if (!multiChannelCamera_) {
-                  Object img = core_.getLastImage();
-                  if (img != img_) {
-                     img_ = img;
-                     displayImage(img_);
-                     Thread.yield();
-                  }
-               } else {
-                  
-                  TaggedImage[] taggedImages = new TaggedImage[(int)multiChannelCameraNrCh_];
-                  boolean finished = false;
-                  int lastChannelToAdd = 0;
-                  while ( !finished && isRunning() ) {
-                     if(!acquisitionExists(multiCameraAcq_)) {
-                        enableLiveMode(false);
-                        return;
-                     }
-                     if( core_.getRemainingImageCount() == 0 ) {     //allow core to obtain more images
-                        Thread.sleep(10);
-                        continue;
-                     }
-                                                         
-                     TaggedImage ti = core_.getLastTaggedImage();
-                     String camera = core_.getCameraDevice();
-                     int channel = ti.tags.getInt(camera + "-" + CCHANNELINDEX);
-                     taggedImages[channel] = ti;
-                     ti.tags.put("Channel", core_.getCameraChannelName(channel));
-                     MDUtils.setChannelIndex(ti.tags, channel);
-                     MDUtils.setFrameIndex(ti.tags, 0);
-                     MDUtils.setPositionIndex(ti.tags, 0);
-                     MDUtils.setSliceIndex(ti.tags, 0);
-
-                     finished = true;
-                     for (int k = 0; k < taggedImages.length; k++) 
-                        if (taggedImages[k] == null) 
-                           finished = false;                     
-                  }
-                  VirtualAcquisitionDisplay display = getAcquisition(multiCameraAcq_).getAcquisitionWindow();
-                  if (display != null) 
-                     lastChannelToAdd = display.getHyperImage().getChannel() - 1;    
-
-                  if (finished) { 
-                     for (int i = 0; i < taggedImages.length; i++)
-                        if (i != lastChannelToAdd) 
-                           addImage(multiCameraAcq_, taggedImages[i], false, true, false);                   
-                     addImage(multiCameraAcq_, taggedImages[lastChannelToAdd], true, true, false);
-                  }
-               }
-            }
-         } catch (Exception e) {
-            ReportingUtils.showError(e);
-            enableLiveMode(false);
-            return;
-         }
-      }
-   };
-   
-//   class MonochromeLiveTimer extends javax.swing.Timer {
-//      
-//      public MonochromeLiveTimer(int delay) {
-//         super(delay,null);
-//         this.addActionListener(monochromeLiveAction());
-//      }
-//      
-//      private ActionListener monochromeLiveAction() {
-//         return new ActionListener() {
-//            @Override
-//            public void actionPerformed(ActionEvent e) {
-////               //check is user closed window
-////               if (rgbWin_.windowClosed()) 
-////                  enableLiveMode(false);
-////               else
-////                  try {
-////                     TaggedImage ti = core_.getLastTaggedImage();
-////                     MDUtils.setChannelIndex(ti.tags, 0);
-////                     MDUtils.setFrameIndex(ti.tags, 0);
-////                     MDUtils.setPositionIndex(ti.tags, 0);
-////                     MDUtils.setSliceIndex(ti.tags, 0);
-////                     rgbWin_.getImageCache().putImage(ti);
-////                     rgbWin_.showImage(ti.tags,true,false);
-////                  } catch (Exception ex) {
-////                     ReportingUtils.showError(ex);
-////                  }
-//            }};
-//      }  
-//   }
-
-   
-   class RGBLiveTimer extends javax.swing.Timer {
-      VirtualAcquisitionDisplay rgbWin_;
-      
-      public RGBLiveTimer(int delay) {
-         super(delay, null);
-         this.addActionListener(rgbLiveAction());  
-      }
-      
-      @Override
-      public void start() {
-         initialize();
-         try {
-            core_.startContinuousSequenceAcquisition(0);
-            super.start();
-            liveRunning_ = true;
-         } catch (Exception ex) {
-           ReportingUtils.showError(ex);
-         } 
-      }
-      
-      @Override
-      public void stop() {
-         super.stop();
-         try {
-            core_.stopSequenceAcquisition();
-            liveRunning_ = false;
-         } catch (Exception ex) {
-             ReportingUtils.showError(ex);
-         }          
-      }
-           
-      private void initialize() {      
-         try {
-            checkRGBAcquisition();
-            getAcquisition(rgbAcq_).toFront();
-            rgbWin_ = getAcquisition(rgbAcq_).getAcquisitionWindow();           
-         } catch (MMScriptException ex) {
-           ReportingUtils.showError(ex);
-         }
-      }
-            
-      private ActionListener rgbLiveAction() {
-         return new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-               //check is user closed window
-               if (rgbWin_.windowClosed()) 
-                  enableLiveMode(false);
-               else
-                  try {
-                     TaggedImage ti = core_.getLastTaggedImage();
-                     MDUtils.setChannelIndex(ti.tags, 0);
-                     MDUtils.setFrameIndex(ti.tags, 0);
-                     MDUtils.setPositionIndex(ti.tags, 0);
-                     MDUtils.setSliceIndex(ti.tags, 0);
-                     rgbWin_.getImageCache().putImage(ti);
-                     rgbWin_.showImage(ti.tags,true,false);
-                  } catch (Exception ex) {
-                     ReportingUtils.showError(ex);
-                     enableLiveMode(false);
-                  }
-            }};
-      }  
+     public boolean isLiveModeOn() {
+        return liveModeTimer_ != null && liveModeTimer_.isRunning();
    }
    
    public void enableLiveMode(boolean enable) {
       if (core_ == null)
          return;
-      if (core_.getNumberOfComponents() == 1) {
-         enableMonochromeLiveMode(enable);
-      } else {
-         enableRGBLiveMode(enable);
-      }
+      if (enable == isLiveModeOn() )
+         return;
+      if (core_.getNumberOfComponents() == 1) { //monochrome or multi camera
+         multiChannelCameraNrCh_ = core_.getNumberOfCameraChannels();
+         if (multiChannelCameraNrCh_ > 1) {
+            multiChannelCamera_ = true;
+            enableMultiCameraLiveMode(enable);
+        } else
+            enableMonochromeLiveMode(enable);
+      } else 
+         enableRGBLiveMode(enable);    
       updateButtonsForLiveMode();
    }
    
-  private void enableMonochromeLiveMode(boolean enable) {
-     if (enable) {
-            if (isLiveModeOn()) {
-               return;
+   private void enableLiveModeListeners(boolean enable) {
+      if (enable) {
+         // attach mouse wheel listener to control focus:
+         if (zWheelListener_ == null) {
+            zWheelListener_ = new ZWheelListener(core_, this);
+         }
+         zWheelListener_.start(imageWin_);
+
+         // attach key listener to control the stage and focus:
+         if (xyzKeyListener_ == null) {
+            xyzKeyListener_ = new XYZKeyListener(core_, this);
+         }
+         xyzKeyListener_.start(imageWin_);
+      } else {
+         if (zWheelListener_ != null) {
+            zWheelListener_.stop();
+         }
+         if (xyzKeyListener_ != null) {
+            xyzKeyListener_.stop();
+         }
+      }
+   }
+   
+     private void enableMultiCameraLiveMode(boolean enable) {
+        if (enable) {        
+            try {              
+               checkMultiChannelWindow();
+               getAcquisition(MULTI_CAMERA_ACQ).toFront();
+               
+               // turn off auto shutter and open the shutter
+               autoShutterOrg_ = core_.getAutoShutter();
+               if (shutterLabel_.length() > 0) {
+                  shutterOrg_ = core_.getShutterOpen();
+               }
+               core_.setAutoShutter(false);
+
+               shutterLabel_ = core_.getShutterDevice();
+               // only open the shutter when we have one and the Auto shutter
+               // checkbox was checked
+               if ((shutterLabel_.length() > 0) && autoShutterOrg_) {
+                  core_.setShutterOpen(true);
+               }
+
+               setLiveModeInterval();
+               if (liveModeTimer_ == null) 
+                  liveModeTimer_ = new LiveModeTimer((int) liveModeInterval_, LiveModeTimer.MULTI_CAMERA );
+               else {
+                  liveModeTimer_.setDelay((int) liveModeInterval_);
+                  liveModeTimer_.setType(LiveModeTimer.MULTI_CAMERA);  
+               }
+               liveModeTimer_.start();
+               
+
+               if (autoShutterOrg_) {
+                  toggleButtonShutter_.setEnabled(false);
+               }
+              
+            } catch (Exception err) {
+               ReportingUtils.showError(err, "Failed to enable live mode.");
             }
+         } else {                    
             try {
-               multiChannelCameraNrCh_ = core_.getNumberOfCameraChannels();
-               if (multiChannelCameraNrCh_ > 1) {
-                  multiChannelCamera_ = true;
-                  checkMultiChannelWindow();
-                  getAcquisition(multiCameraAcq_).toFront();
-               } else {
-                  multiChannelCamera_ = false;
+                   liveModeTimer_.stop();
+            
+              enableLiveModeListeners(false);
+               
+               // restore auto shutter and close the shutter
+               if (shutterLabel_.length() > 0) 
+                  core_.setShutterOpen(shutterOrg_);
+               core_.setAutoShutter(autoShutterOrg_);
+               if (autoShutterOrg_) 
+                  toggleButtonShutter_.setEnabled(false);
+               else 
+                  toggleButtonShutter_.setEnabled(true);
+                              
+            } catch (Exception err) {
+               ReportingUtils.showError(err, "Failed to disable live mode.");              
+            }
+         }
+     }
+   
+     private void enableMonochromeLiveMode(boolean enable) {
+     if (enable) {
+            try {               
                   if (!isImageWindowOpen() && creatingImageWindow_.isFalse()) {
                      imageWin_ = createImageWindow();
                   }
-
-                  // this is needed to clear the subtitle, should be folded into
-                  // drawInfo
-                  imageWin_.getGraphics().clearRect(0, 0, imageWin_.getWidth(),
-                          40);
                   imageWin_.drawInfo(imageWin_.getGraphics());
                   imageWin_.toFront();
-               }
+             
 
                // turn off auto shutter and open the shutter
                autoShutterOrg_ = core_.getAutoShutter();
@@ -3297,32 +3164,25 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
                if ((shutterLabel_.length() > 0) && autoShutterOrg_) {
                   core_.setShutterOpen(true);
                }
-               if (!multiChannelCamera_) {
-                  // attach mouse wheel listener to control focus:
-                  if (zWheelListener_ == null) {
-                     zWheelListener_ = new ZWheelListener(core_, this);
-                  }
-                  zWheelListener_.start(imageWin_);
+ 
+               enableLiveModeListeners(enable);
 
-                  // attach key listener to control the stage and focus:
-                  if (xyzKeyListener_ == null) {
-                     xyzKeyListener_ = new XYZKeyListener(core_, this);
-                  }
-                  xyzKeyListener_.start(imageWin_);
-               }
-
-               // Do not display more often than dictated by the exposure time
                setLiveModeInterval();
-               core_.startContinuousSequenceAcquisition(0.0);
-               liveModeTimerTask_ = new LiveModeTimerTask();
-               liveModeTimer_.schedule(liveModeTimerTask_, (long) 0, (long) liveModeInterval_  );
-               // Only hide the shutter checkbox if we are in autoshuttermode
+               if (liveModeTimer_ == null) 
+                  liveModeTimer_ = new LiveModeTimer((int) liveModeInterval_,LiveModeTimer.MONOCHROME);
+               else {
+                  liveModeTimer_.setDelay((int) liveModeInterval_);
+                  liveModeTimer_.setType(LiveModeTimer.MONOCHROME);
+               }
+                  
+               liveModeTimer_.start();
+               
+
                if (autoShutterOrg_) {
                   toggleButtonShutter_.setEnabled(false);
                }
                if (core_.getNumberOfCameraChannels() == 1)
                   imageWin_.setSubTitle("Live (running)");
-               liveRunning_ = true;
             } catch (Exception err) {
                ReportingUtils.showError(err, "Failed to enable live mode.");
 
@@ -3333,44 +3193,22 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
                   imageWin_ = null;
                }
             }
-         } else {
-            if (!isLiveModeOn()) {
-               return;
-            }
+         } else {         
             try {
-               liveModeTimerTask_.cancel();
-               core_.stopSequenceAcquisition();
-
-               if (zWheelListener_ != null) {
-                  zWheelListener_.stop();
-               }
-               if (xyzKeyListener_ != null) {
-                  xyzKeyListener_.stop();
-               }
-
+                   liveModeTimer_.stop();
+            
+              enableLiveModeListeners(enable);
+               
                // restore auto shutter and close the shutter
-               if (shutterLabel_.length() > 0) {
+               if (shutterLabel_.length() > 0) 
                   core_.setShutterOpen(shutterOrg_);
-               }
                core_.setAutoShutter(autoShutterOrg_);
-               if (autoShutterOrg_) {
+               if (autoShutterOrg_) 
                   toggleButtonShutter_.setEnabled(false);
-               } else {
+               else 
                   toggleButtonShutter_.setEnabled(true);
-               }
-               liveRunning_ = false;
-             
-               // TODO: add timeout so that we can not hang here
-               while (liveModeTimerTask_.isRunning()); // Make sure Timer properly stops.
-               // This is here to avoid crashes when changing ROI in live mode
-               // with Sensicam
-               // Should be removed when underlying problem is dealt with
-               Thread.sleep(100);
-
-               if (!multiChannelCamera_)
-                  imageWin_.setSubTitle("Live (stopped)");
-               liveModeTimerTask_ = null;
-
+                     
+               imageWin_.setSubTitle("Live (stopped)");
             } catch (Exception err) {
                ReportingUtils.showError(err, "Failed to disable live mode.");
                if (imageWin_ != null) {
@@ -3383,35 +3221,35 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
   }
    
    private void enableRGBLiveMode(boolean enable) {
-      setLiveModeInterval();
-      if (rgbLiveModeTimer_ == null)
-         rgbLiveModeTimer_ = new RGBLiveTimer((int)liveModeInterval_);
-      else 
-         rgbLiveModeTimer_.setDelay((int)liveModeInterval_ );
-      if(enable) {
-         if (isLiveModeOn())
-            return;
-         rgbLiveModeTimer_.start();
-        } else {
-         if(!isLiveModeOn())
-            return;
-           rgbLiveModeTimer_.stop();
-        }   
+      if (enable) {
+         setLiveModeInterval();
+         if (liveModeTimer_ == null) 
+            liveModeTimer_ = new LiveModeTimer((int) liveModeInterval_, LiveModeTimer.RGB);
+         else {
+            liveModeTimer_.setDelay((int) liveModeInterval_);
+            liveModeTimer_.setType(LiveModeTimer.RGB);
+         }
+         checkRGBAcquisition();
+         liveModeTimer_.start();
+      } else
+         liveModeTimer_.stop();
+      
    }
    
     public void updateButtonsForLiveMode() {
-      autoShutterCheckBox_.setEnabled(!liveRunning_);
-      buttonSnap_.setEnabled(!liveRunning_);
-      toggleButtonLive_.setIcon(liveRunning_ ? SwingResourceManager.getIcon(MMStudioMainFrame.class,
+      boolean liveRunning = isLiveModeOn();
+       autoShutterCheckBox_.setEnabled(!liveRunning);
+      buttonSnap_.setEnabled(!liveRunning);
+      toggleButtonLive_.setIcon(liveRunning ? SwingResourceManager.getIcon(MMStudioMainFrame.class,
               "/org/micromanager/icons/cancel.png")
               : SwingResourceManager.getIcon(MMStudioMainFrame.class,
               "/org/micromanager/icons/camera_go.png"));
-      toggleButtonLive_.setSelected(liveRunning_);
-      toggleButtonLive_.setText(liveRunning_ ? "Stop Live" : "Live");
+      toggleButtonLive_.setSelected(liveRunning);
+      toggleButtonLive_.setText(liveRunning ? "Stop Live" : "Live");
    }
 
    public boolean getLiveMode() {
-      return liveRunning_;
+      return isLiveModeOn();
    }
 
    public boolean updateImage() {
@@ -3542,7 +3380,6 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
       }
    }
 
-  
    public void initializeGUI() {
       try {
 
@@ -3673,8 +3510,7 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
       pluginMenu_.validate();
       menuBar_.validate();
    }
-   
-   
+
    public void updateGUI(boolean updateConfigPadStructure) {
 
       try {
@@ -3703,7 +3539,7 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
             contrastPanel_.setPixelBitDepth((int) bitDepth, false);
          }
 
-         if (liveModeTimerTask_ == null || !liveModeTimerTask_.isRunning()) {
+         if (liveModeTimer_ == null || !liveModeTimer_.isRunning()) {
             autoShutterCheckBox_.setSelected(core_.getAutoShutter());
             boolean shutterOpen = core_.getShutterOpen();
             setShutterButton(shutterOpen);
@@ -3729,10 +3565,14 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
          // state devices
          if (updateConfigPadStructure && (configPad_ != null)) {
             configPad_.refreshStructure();
+            // Needed to update read-only properties.  May slow things down...
+            core_.updateSystemStateCache();
          }
-         
+
          // update Channel menus in Multi-dimensional acquisition dialog
          updateChannelCombos();
+
+         
 
       } catch (Exception e) {
          ReportingUtils.logError(e);
@@ -3769,8 +3609,8 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
             saveConfigPresets();
          }
       }
-      if (liveModeTimerTask_ != null)
-         liveModeTimerTask_.cancel();
+      if (liveModeTimer_ != null)
+         liveModeTimer_.stop();
 
 
       try{
@@ -4006,7 +3846,7 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
    }
 
    /**
-    * Loads system configuration from the cfg file.
+    * Loads sytem configuration from the cfg file.
     */
    private boolean loadSystemConfiguration() {
       boolean result = true;
@@ -4024,20 +3864,20 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
          if (sysConfigFile_.length() > 0) {
             GUIUtils.preventDisplayAdapterChangeExceptions();
             core_.waitForSystem();
-            ignorePropertyChanges_ = true;
             core_.loadSystemConfiguration(sysConfigFile_);
-            ignorePropertyChanges_ = false;
             GUIUtils.preventDisplayAdapterChangeExceptions();
+            waitDlg.closeDialog();
+         } else {
+             waitDlg.closeDialog();
          }
       } catch (final Exception err) {
          GUIUtils.preventDisplayAdapterChangeExceptions();
+         waitDlg.closeDialog();
          ReportingUtils.showError(err);
          result = false;
-      } finally {
-         waitDlg.closeDialog();
       }
-      setEnabled(true);
-      initializeGUI();
+      this.setEnabled(true);
+      this.initializeGUI();
 
       updateSwitchConfigurationMenu();
 
@@ -5080,8 +4920,8 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
          }
 
          boolean liveRunning = false;
-         if (liveRunning_) {
-            liveRunning = liveRunning_;
+         if (isLiveModeOn()) {
+            liveRunning = true;
             enableLiveMode(false);
          }
 
@@ -5120,6 +4960,7 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
       }
    }
 }
+
 class BooleanLock extends Object {
 
    private boolean value;
