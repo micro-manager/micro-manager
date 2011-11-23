@@ -349,6 +349,11 @@
       return createTaggedImage(pixels, md);
    }
    
+   public TaggedImage getNBeforeLastTaggedImage(long n) throws java.lang.Exception {
+      Metadata md = new Metadata();
+      Object pixels = getNBeforeLastImageMD(n, md);
+      return createTaggedImage(pixels, md);
+   }
    public TaggedImage popNextTaggedImage() throws java.lang.Exception {
       Metadata md = new Metadata();
       Object pixels = popNextImageMD(md);
