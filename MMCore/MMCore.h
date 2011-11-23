@@ -301,7 +301,7 @@ public:
    void* getLastImageMD(unsigned channel, unsigned slice, Metadata& md) const throw (CMMError);
    void* popNextImageMD(unsigned channel, unsigned slice, Metadata& md) throw (CMMError);
    void* getLastImageMD(Metadata& md) const throw (CMMError);
-   void* getNthButLastImageMD(unsigned long n, Metadata& md) const throw (CMMError);
+   void* getNBeforeLastImageMD(unsigned long n, Metadata& md) const throw (CMMError);
    void* popNextImageMD(Metadata& md) throw (CMMError);
 
    long getRemainingImageCount();

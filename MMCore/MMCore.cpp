@@ -2096,6 +2096,10 @@ long CMMCore::getImageBufferSize() const
 /**
  * Starts straming camera sequence acquisition.
  * This command does not block the calling thread for the duration of the acquisition.
+ *
+ * @param numImages Number of images requested from the camera
+ * @param intervalMs interval between images, currently only supported by Andor cameras
+ * @param stopOnOverflow whether or not the camera stops acquiring when the circular buffer is full
  */
 void CMMCore::startSequenceAcquisition(long numImages, double intervalMs, bool stopOnOverflow) throw (CMMError)
 {
@@ -2206,6 +2210,7 @@ void CMMCore::initializeCircularBuffer() throw (CMMError)
 
 /**
  * Stops streming camera sequence acquisition for a specified camera.
+ * @param label Camera name
  */
 void CMMCore::stopSequenceAcquisition(const char* label) throw (CMMError)
 {
@@ -2338,15 +2343,20 @@ void* CMMCore::getLastImageMD(unsigned channel, unsigned slice, Metadata& md) co
       throw CMMError(getCoreErrorText(MMERR_CircularBufferEmpty).c_str(), MMERR_CircularBufferEmpty);
 }
 
+/**
+ * Returns a pointer to the pixels of the image that was last inserted into the circular buffer
+ * Also provides all metadata associated with that image
+ */
 void* CMMCore::getLastImageMD(Metadata& md) const throw (CMMError)
 {
    return getLastImageMD(0, 0, md);
 }
 
 /**
- * Gets the image that was inserted n images ago
+ * Returns a pointer to the pixels of the image that was inserted n images ago 
+ * Also provides all metadata associated with that image
  */
-void* CMMCore::getNthButLastImageMD(unsigned long n, Metadata& md) const throw (CMMError)
+void* CMMCore::getNBeforeLastImageMD(unsigned long n, Metadata& md) const throw (CMMError)
 {
    const ImgBuffer* pBuf = cbuf_->GetNthFromTopImageBuffer(n);
    if (pBuf != 0)
