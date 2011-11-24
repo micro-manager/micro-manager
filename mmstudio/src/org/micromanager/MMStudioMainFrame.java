@@ -296,6 +296,7 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
    private Class pipelineClass_ = null;
    private Pipeline acquirePipeline_ = null;
    private final JSplitPane splitPane_;
+   private volatile boolean ignorePropertyChanges_; 
 
 
    public ImageWindow getImageWin() {
@@ -757,12 +758,17 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
          if (engine_ != null && engine_.isAcquisitionRunning()) {
             core_.logMessage("Notification from MMCore ignored because acquistion is running!");
          } else {
-            updateGUI(true);
-            // update all registered listeners
-            for (MMListenerInterface mmIntf:MMListeners_) {
-               mmIntf.propertiesChangedAlert();
+            if (ignorePropertyChanges_) {
+               core_.logMessage("Notification from MMCore ignored since the system is still loading");
+            } else {
+               core_.updateSystemStateCache();
+               updateGUI(true);
+               // update all registered listeners 
+               for (MMListenerInterface mmIntf : MMListeners_) {
+                  mmIntf.propertiesChangedAlert();
+               }
+               core_.logMessage("Notification from MMCore!");
             }
-            core_.logMessage("Notification from MMCore!");
          }
       }
 
@@ -1401,6 +1407,7 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
       refreshMenuItem.addActionListener(new ActionListener() {
 
          public void actionPerformed(ActionEvent e) {
+            core_.updateSystemStateCache();
             updateGUI(true);
          }
       });
@@ -1413,6 +1420,7 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
 
          public void actionPerformed(ActionEvent e) {
             initializeGUI();
+            core_.updateSystemStateCache(); 
          }
       });
       rebuildGuiMenuItem.setText("Rebuild GUI");
@@ -1827,6 +1835,7 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
       refreshButton.addActionListener(new ActionListener() {
 
          public void actionPerformed(ActionEvent e) {
+            core_.updateSystemStateCache(); 
             updateGUI(true);
          }
       });
@@ -3847,7 +3856,7 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
    }
 
    /**
-    * Loads sytem configuration from the cfg file.
+    * Loads system configuration from the cfg file.
     */
    private boolean loadSystemConfiguration() {
       boolean result = true;
@@ -3865,20 +3874,22 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
          if (sysConfigFile_.length() > 0) {
             GUIUtils.preventDisplayAdapterChangeExceptions();
             core_.waitForSystem();
+            ignorePropertyChanges_ = true; 
             core_.loadSystemConfiguration(sysConfigFile_);
+            ignorePropertyChanges_ = false; 
             GUIUtils.preventDisplayAdapterChangeExceptions();
-            waitDlg.closeDialog();
-         } else {
-             waitDlg.closeDialog();
+            
          }
       } catch (final Exception err) {
          GUIUtils.preventDisplayAdapterChangeExceptions();
-         waitDlg.closeDialog();
+       
          ReportingUtils.showError(err);
          result = false;
-      }
-      this.setEnabled(true);
-      this.initializeGUI();
+     } finally { 
+ 		         waitDlg.closeDialog(); 
+ 		      } 
+ 		      setEnabled(true); 
+ 		      initializeGUI();
 
       updateSwitchConfigurationMenu();
 
