@@ -498,8 +498,8 @@
           #(when z-drive
              (let [z (compute-z-position event)]
                (set-stage-position z-drive z)))
-          (doseq [runnable (event :runnables)]
-            (.run runnable))
+          (for [runnable (event :runnables)]
+            #(.run runnable))
           #(do (wait-for-pending-devices)
                (expose event)
                (collect event out-queue)
