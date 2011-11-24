@@ -331,6 +331,8 @@ public interface AcquisitionEngine {
     * be specified. Passing a value of -1 should result in the runnable being attached
     * at all values of that index. For example, if the first argument is -1,
     * then the runnable should execute at every frame.
+    *
+    * Subject to change.
     */
    public void attachRunnable(int frame, int position, int channel, int slice, Runnable runnable);
 }
