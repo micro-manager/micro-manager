@@ -1553,31 +1553,17 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
 
       toolsMenu.addSeparator();
 
-      // >>>>>>>>>>>>>>>>>>>>> TODO: REVISE AFTER HWW TESTING, N.A. Nov 2011
       final JMenuItem configuratorMenuItem = new JMenuItem();
       configuratorMenuItem.addActionListener(new ActionListener() {
 
-         public void actionPerformed(ActionEvent arg0) {
-            runHardwareWizard(false);
-         }
-      });
-      
-      configuratorMenuItem.setText("Hardware Configuration Wizard...");
-      toolsMenu.add(configuratorMenuItem);
-      configuratorMenuItem.setToolTipText("Open wizard to create new hardware configuration");
-
-      final JMenuItem cfg2MenuItem = new JMenuItem();
-      cfg2MenuItem.addActionListener(new ActionListener() {
          public void actionPerformed(ActionEvent arg0) {
             runHardwareWizard(true);
          }
       });
       
-      cfg2MenuItem.setText("*New Hardware Configuration Wizard...");
-      //toolsMenu.add(cfg2MenuItem);
-      cfg2MenuItem.setToolTipText("New (experimental) Hardware Configuration Wizard");
-      // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-      
+      configuratorMenuItem.setText("Hardware Configuration Wizard...");
+      toolsMenu.add(configuratorMenuItem);
+      configuratorMenuItem.setToolTipText("Open wizard to create new hardware configuration");      
       
       final JMenuItem loadSystemConfigMenuItem = new JMenuItem();
       toolsMenu.add(loadSystemConfigMenuItem);

@@ -27,6 +27,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.util.ArrayList;
+import java.util.Hashtable;
 import java.util.prefs.Preferences;
 
 import javax.swing.InputMap;
@@ -52,8 +53,9 @@ import org.micromanager.utils.ReportingUtils;
 public class LabelsPage extends PagePanel {
    private static final long serialVersionUID = 1L;
    private String labels_[] = new String[0];
-   private String originalLabels_[][] = new String[0][0];
+   private Hashtable<String, String[]> originalLabels_ = new Hashtable<String, String[]>();
    ArrayList<Device> devices_ = new ArrayList<Device>();
+   boolean originalLabelsStored_ = false;
    
    public class SelectionListener implements ListSelectionListener {
       JTable table;
@@ -265,10 +267,14 @@ public class LabelsPage extends PagePanel {
       if (selectedDevice != null) {
          for (int j=0; j<devices_.size(); j++) {
             if (selectedDevice == devices_.get(j)) {
-               labels_ = originalLabels_[j];
-               for (int k=0; k<labels_.length; k++)
-                  selectedDevice.setSetupLabel(k, labels_[k]);
-               labelTableModel.fireTableStructureChanged();
+               String orgLabs[] = originalLabels_.get(devices_.get(j).getName());
+               if (orgLabs != null) {
+                  for (int k=0; k<labels_.length; k++) {
+                     selectedDevice.setSetupLabel(k, orgLabs[k]);
+                     labels_[k] = new String(orgLabs[k]);
+                  }
+                  labelTableModel.fireTableStructureChanged();
+               }
             }
          }
       }
@@ -276,22 +282,20 @@ public class LabelsPage extends PagePanel {
 
    public void storeLabels() {
       // Store the initial list of labels for the reset button
-      originalLabels_ = new String[devices_.size()][0];
+      // originalLabels_ = new String[devices_.size()][0];
       for (int j=0; j<devices_.size(); j++) {
-         String labels[] = new String[devices_.get(j).getNumberOfStates()];
-         for (int i= 0; i<labels.length; i++)
-            labels[i] = new String("State-" + i);
-         
-         for (int i=0; i<devices_.get(j).getNumberOfSetupLabels(); i++) {
-            Label lab = devices_.get(j).getSetupLabel(i);
-            if (lab.state_ < devices_.get(j).getNumberOfStates())
-               labels[lab.state_] = lab.label_;
-            else
-               ReportingUtils.showError("Configuration label " + lab.label_ + "exceeds maximum position and will be ignored");
+         Device dev = devices_.get(j);
+         if (!originalLabels_.containsKey(dev.getName())) {
+            String labels[] = new String[dev.getNumberOfStates()];
+            for (int i=0; i<dev.getNumberOfStates(); i++) {
+               Label lab = dev.getSetupLabel(i);
+               if (lab != null)
+                  labels[i] = lab.label_;
+               else
+                  labels[i] = new String("State-" + i);
+            }
+            originalLabels_.put(dev.getName(), labels);
          }
-         originalLabels_[j] = new String[labels.length];
-         for (int k=0; k<labels.length; k++)
-            originalLabels_[j][k]=labels[k];
       }
    }
 
@@ -322,7 +326,7 @@ public class LabelsPage extends PagePanel {
   }
 
    public boolean exitPage(boolean next) {
-      // define labels in hardware and syhcronize device data with microscope model
+      // define labels in hardware and synchronize device data with microscope model
       try {
          model_.applySetupLabelsToHardware(core_);
          model_.loadDeviceDataFromHardware(core_);
