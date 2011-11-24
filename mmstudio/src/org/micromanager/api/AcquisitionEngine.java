@@ -324,4 +324,13 @@ public interface AcquisitionEngine {
    public long getNextWakeTime();
    public boolean isFinished();
    public ImageCache getImageCache();
+
+   
+   /*
+    * Attach a runnable to the acquisition engine. Each index (f, p, c, s) can
+    * be specified. Passing a value of -1 should result in the runnable being attached
+    * at all values of that index. For example, if the first argument is -1,
+    * then the runnable should execute at every frame.
+    */
+   public void attachRunnable(int frame, int position, int channel, int slice, Runnable runnable);
 }
