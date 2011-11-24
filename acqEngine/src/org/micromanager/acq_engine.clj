@@ -34,7 +34,7 @@
                                          ProcessorStack SequenceSettings MMImageCache
                                          TaggedImageStorageRam VirtualAcquisitionDisplay]
            [org.micromanager.utils ReportingUtils]
-           [mmcorej TaggedImage Configuration Metadata MMCoreJ]
+           [mmcorej TaggedImage Configuration Metadata]
            [java.util.prefs Preferences]
            [java.net InetAddress]
            [java.util.concurrent TimeUnit CountDownLatch]
@@ -498,7 +498,8 @@
           #(when z-drive
              (let [z (compute-z-position event)]
                (set-stage-position z-drive z)))
-          (event :runnables)
+          (doseq [runnable (event :runnables)]
+            (.run runnable))
           #(do (wait-for-pending-devices)
                (expose event)
                (collect event out-queue)
@@ -587,7 +588,6 @@
         super-channels (all-super-channels simple-channels (get-camera-channel-names))]
      (JSONObject. {
       "BitDepth" (core getImageBitDepth)
-      "Binning" (core getProperty (core getCameraDevice) "Binning")
       "Channels" (count super-channels)
       "ChNames" (JSONArray. (map :name super-channels))
       "ChColors" (JSONArray. (map #(.getRGB (:color %)) super-channels))         
@@ -655,7 +655,7 @@
 		summary-metadata (make-summary-metadata summary)
 		cache (doto (MMImageCache. (TaggedImageStorageRam. summary-metadata))
 						(.setSummaryMetadata summary-metadata))]
-    (doto (VirtualAcquisitionDisplay. cache nil)
+		(doto (VirtualAcquisitionDisplay. cache nil)
                            (.promptToSave false)
                            (initialize-display-ranges))))
 
@@ -703,32 +703,14 @@
 
 ;; live mode
 
-(def live-mode-running (atom false))
-
-(defn need-new-win? [] 
-      (if-not @snap-window true
-    (let [old-height (.get (.getSummaryMetadata @snap-window) "Height")
-          old-width (.get (.getSummaryMetadata @snap-window) "Width")
-          old-pixel-type (.get (.getSummaryMetadata @snap-window) "PixelType")
-          old-binning (.get (.getSummaryMetadata @snap-window) "Binning")
-          new-height (core getImageHeight)
-          new-width (core getImageWidth)
-          new-pixel-type (get-pixel-type)
-          new-binning (core getProperty (core getCameraDevice) "Binning")]
-      (or (not= old-height new-height) (not= old-width new-width) 
-          (not= old-pixel-type new-pixel-type) (not= old-binning new-binning)   ))))
-    
-                         
+(def live-mode-running (ref false))
 
 (defn enable-live-mode [^Boolean on]
   (if on
     (let [event (create-basic-event)
           state (create-basic-state)
-          start-time (jvm-time-ms)   ]
-     (when (need-new-win?)
-        (when @snap-window 
-         (.close @snap-window) ) )
-      (reset! live-mode-running true)
+          start-time (jvm-time-ms)]
+      (dosync (ref-set live-mode-running true))
       (core startContinuousSequenceAcquisition 0)
       (log "started sequence acquisition")
       (.start (Thread.
@@ -739,19 +721,16 @@
                                   elapsed-time-ms (- (jvm-time-ms) start-time)
                                   img (annotate-image raw-image event state elapsed-time-ms)
                                   this-time (System/currentTimeMillis)
-                                  dt (- 33 (- this-time last-time))]                    
-                              (if first-image (reset-snap-window img)  )                         
-                                 (Thread/sleep (max 0 dt))  
+                                  dt (- 33 (- this-time last-time))]                      
+                              (if first-image (reset-snap-window img)  )             
+                              (Thread/sleep (max 0 dt))                                     
                               (if (.windowClosed @snap-window) 
                                 (edt (.enableLiveMode gui false))  
                                 (show-image @snap-window img first-image)  )
                               (recur this-time false))))
                         (core stopSequenceAcquisition))
                 "Live mode (clojure)")))
-    (reset! live-mode-running false)  ))
-
-
-
+    (dosync (ref-set live-mode-running false))))
 
 ;; java interop
 
