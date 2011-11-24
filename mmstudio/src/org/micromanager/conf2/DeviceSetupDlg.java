@@ -219,6 +219,7 @@ public class DeviceSetupDlg extends MMDialog {
          model.setModified(true);
       } else {
          // initialization failed
+         dev.setInitialized(false);
          return;
       }
    }  

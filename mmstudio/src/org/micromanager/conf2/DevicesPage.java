@@ -60,7 +60,8 @@ public class DevicesPage extends PagePanel implements ListSelectionListener {
       public final String[] COLUMN_NAMES = new String[] {
             "Name",
             "Adapter/Library",
-            "Description"
+            "Description",
+            "Status"
       };
       
       MicroscopeModel model_;
@@ -91,8 +92,14 @@ public class DevicesPage extends PagePanel implements ListSelectionListener {
             return devices_[rowIndex].getName();
          else if (columnIndex == 1)
             return new String (devices_[rowIndex].getAdapterName() + "/" + devices_[rowIndex].getLibrary());
-         else
+         else if (columnIndex == 2)
             return devices_[rowIndex].getDescription();
+         else {
+            if (devices_[rowIndex].isCore())
+               return "Default";
+            else
+               return devices_[rowIndex].isInitialized() ? "OK" : "Failed";
+         }
       }
 
       @Override
@@ -277,15 +284,19 @@ public class DevicesPage extends PagePanel implements ListSelectionListener {
       }
       DeviceSetupDlg dlg = new DeviceSetupDlg(model_, core_, dev);
       dlg.setVisible(true);
+      model_.setModified(true);
       
       if (!dev.isInitialized()) {
          // user canceled or things did not work out
-         model_.removeDevice(dev.getName());
-         try {
-            core_.unloadDevice(dev.getName());
-         } catch (Exception e) {
-            JOptionPane.showMessageDialog(this, e.getMessage());
-         }
+         int ret = JOptionPane.showConfirmDialog(this, "Device setup did not work out. Remove from the list?", "Device failed", JOptionPane.YES_NO_OPTION);
+         if (ret == JOptionPane.YES_OPTION) {
+            model_.removeDevice(dev.getName());
+            try {
+               core_.unloadDevice(dev.getName());
+            } catch (Exception e) {
+               JOptionPane.showMessageDialog(this, e.getMessage());
+            }
+          }
       }
       rebuildTable();
   }
@@ -358,7 +369,16 @@ public class DevicesPage extends PagePanel implements ListSelectionListener {
 	}
 
     public boolean exitPage(boolean toNextPage) {
-        return true;
+       Device devs[] = model_.getDevices();
+       for (Device d : devs) {
+          if (!d.isCore() && !d.isInitialized()) {
+             JOptionPane.showMessageDialog(this, "Unable to continue: at least one device failed.\n" +
+                   "To proceed to next step, either remove failed device(s) from the list,\nor edit settings until the status reads OK.\n" +
+                   "To avoid making any changes exit the wizard without saving the configuration.");
+             return false;
+          }
+       }
+       return true;
     }
 
    public void loadSettings() {
