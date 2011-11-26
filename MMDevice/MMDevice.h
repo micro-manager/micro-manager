@@ -315,6 +315,11 @@ namespace MM {
       //device discovery API
       virtual MM::DeviceDetectionStatus DetectDevice(void) = 0;
 
+      // hub-peripheral relationship
+      virtual void SetParentID(const char* parentId) = 0;
+      virtual void GetParentID(char* parentID) const = 0;
+      virtual void SetID(const char* id) = 0;
+      virtual void GetID(char* id) const = 0;
    };
 
    /** 
@@ -1022,6 +1027,7 @@ namespace MM {
       virtual void ClearInstalledDevices() = 0;
       virtual unsigned GetNumberOfInstalledDevices() = 0;
       virtual Device* GetInstalledDevice(int devIdx) = 0;
+      virtual Device* CreatePeripheralDevice(const char* adapterName) = 0;
    };
 
    /**
@@ -1109,6 +1115,7 @@ namespace MM {
       // direct access to specific device types
       virtual MM::ImageProcessor* GetImageProcessor(const MM::Device* caller) = 0;
       virtual MM::AutoFocus* GetAutoFocus(const MM::Device* caller) = 0;
+      virtual MM::Hub* GetParentHub(const MM::Device* caller) = 0;
 
       virtual MM::State* GetStateDevice(const MM::Device* caller, const char* deviceName) = 0;
       virtual MM::SignalIO* GetSignalIODevice(const MM::Device* caller, const char* deviceName) = 0;

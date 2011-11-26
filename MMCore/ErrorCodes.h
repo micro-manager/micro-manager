@@ -75,4 +75,5 @@
 #define MMERR_OutOfMemory					47
 #define MMERR_InvalidImageSequence 48
 #define MMERR_NullPointerException 49
+#define MMERR_CreatePeripheralFailed 50
 #endif //_ERRORCODES_H_

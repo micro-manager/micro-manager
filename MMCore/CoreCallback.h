@@ -220,6 +220,23 @@ public:
       }
    }
 
+   MM::Hub* GetParentHub(const MM::Device* caller)
+   {
+      char parentID[MM::MaxStrLength];
+      caller->GetParentID(parentID);
+      MM::Device* pDev = core_->pluginManager_.GetDeviceFromID(parentID);
+      if (pDev == 0)
+         return 0;
+
+      if (pDev->GetType() != MM::HubDevice)
+      {
+         assert(false);
+         return 0; // this should not happen
+      }
+
+      return static_cast<MM::Hub*> (pDev);
+   }
+
    void GetLoadedDeviceOfType(const MM::Device* /* caller */, MM::DeviceType devType,  char* deviceName, const unsigned int deviceIterator)
    {
       deviceName[0] = 0;

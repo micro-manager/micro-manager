@@ -106,7 +106,8 @@ public:
    * Loading of drivers, initialization and setting-up the environment.
    */
    //@ {
-   void loadDevice(const char* label, const char* library, const char* name) throw (CMMError);
+   void loadDevice(const char* label, const char* library, const char* adapterName) throw (CMMError);
+   void loadPeripheralDevice(const char* label, const char* hubLabel, const char* adapterName) throw (CMMError);
    void unloadDevice(const char* label) throw (CMMError);
    void unloadAllDevices() throw (CMMError);
    void initializeAllDevices() throw (CMMError);
@@ -461,6 +462,7 @@ public:
    // hubs can provide a list of peripheral devices currently attached
    std::vector<std::string> getInstalledDevices(const char* hubDeviceLabel); 
    std::string getInstalledDeviceDescription(const char* hubLabel, const char* deviceLabel);
+   std::vector<std::string> getLoadedPeripheralDevices(const char* hubLabel);
 
    template <class T>
    T* getSpecificDevice(const char* deviceLabel) const throw (CMMError)

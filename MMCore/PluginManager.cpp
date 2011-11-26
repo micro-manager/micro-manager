@@ -393,6 +393,56 @@ MM::Device* CPluginManager::LoadDevice(const char* label, const char* moduleName
 
    return pDevice;
 }
+
+/**
+ * Loads the device specified with the input parameters.
+ * @param label - label for the new device
+ * @param hubLabel - parent device label. Must be one of the existing hubs
+ * @param deviceName the name of the device. The name must correspond to one of the names recognized
+ *                   by the specific plugin library.
+ * @return a pointer to the new device
+ */
+MM::Device* CPluginManager::LoadPeripheralDevice(const char* label, const char* hubLabel, const char* deviceName)
+{
+   // check if the requested label is already taken
+   CDeviceMap::const_iterator it;
+   it = devices_.find(label);
+   if (it != devices_.end())
+   {
+      if( NULL != it->second)
+         throw CMMError(label, MMERR_DuplicateLabel);
+
+   }
+
+   if (strlen(label) == 0)
+      throw CMMError(label, MMERR_InvalidLabel);
+
+   // instantiate the new device
+   MM::Device* pHubDev = GetDevice(hubLabel);
+   if (pHubDev->GetType() != MM::HubDevice)
+      throw CMMError(hubLabel, MMERR_InvalidSpecificDevice);
+
+   MM::Hub* pHub = static_cast<MM::Hub*>(pHubDev);
+      
+   MM::Device* pDevice = pHub->CreatePeripheralDevice(deviceName);
+   if (pDevice == 0)
+      throw CMMError(deviceName, MMERR_CreateFailed);
+
+   // make sure that each device carries a reference to the module it belongs to!!!
+   // hub should do this internally, but we are just going to make sure and do it again
+   pDevice->SetModuleHandle(pHub->GetModuleHandleA());
+   pDevice->SetLabel(label);
+   char moduleName[MM::MaxStrLength];
+   pHub->GetModuleName(moduleName);
+   pDevice->SetModuleName(moduleName);
+
+   // assign label
+   devices_[label] = pDevice;
+   devArray_.push_back(pDevice);
+
+   return pDevice;
+}
+
 /**
  * Obtains the device corresponding to the label
  * @param label device label
@@ -406,6 +456,30 @@ MM::Device* CPluginManager::GetDevice(const char* label) const
       throw CMMError(label, MMERR_InvalidLabel);
 
    return it->second;
+}
+
+/**
+ * Obtains the device corresponding to the ID
+ * @param label device label
+ * @return pointer to the device or 0 if ID is not found
+ */
+MM::Device* CPluginManager::GetDeviceFromID(const char* lookupID) const
+{
+   if (strlen(lookupID) == 0)
+      return 0; // empty id is do-not-care value, so we don't search
+
+   // list all devices and check for a match
+   CDeviceMap::const_iterator it;
+   for (it=devices_.begin(); it != devices_.end(); it++)
+   {
+      char id[MM::MaxStrLength];
+      it->second->GetID(id);
+      if (strncmp(lookupID, id, MM::MaxStrLength) == 0)
+         return it->second; // found
+   }
+
+   // not found
+   return 0;
 }
 
 /**
@@ -449,6 +523,51 @@ vector<string> CPluginManager::GetDeviceList(MM::DeviceType type) const
          labels.push_back(buf);
       }
    }
+   return labels;
+}
+
+/**
+ * Obtains the list of labels for all currently loaded devices of the specific type.
+ * Use type MM::AnyDevice to obtain labels for the entire system.
+ * @return vector of device labels
+ * @param type - device type
+ */
+vector<string> CPluginManager::GetLoadedPeripherals(const char* label) const
+{
+   vector<string> labels;
+
+   // get hub
+   MM::Device* pDev = 0;
+   try
+   {
+      pDev = GetDevice(label);
+      if (pDev->GetType() != MM::HubDevice)
+         return labels;
+   }
+   catch (...)
+   {
+      return labels;
+   }
+
+   MM::Hub* pHub = static_cast<MM::Hub*> (pDev);
+   char id[MM::MaxStrLength];
+   pHub->GetID(id);
+
+   if (strlen(id) == 0)
+      return labels;
+
+   for (size_t i=0; i<devArray_.size(); i++)
+   {
+      char parentID[MM::MaxStrLength];
+      devArray_[i]->GetParentID(parentID);
+      if (strncmp(id, parentID, MM::MaxStrLength) == 0)
+      {
+         char buf[MM::MaxStrLength];
+         devArray_[i]->GetLabel(buf);
+         labels.push_back(buf);
+      }
+   }
+
    return labels;
 }
 

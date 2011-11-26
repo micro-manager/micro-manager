@@ -169,7 +169,8 @@ CMMCore::CMMCore() :
    errorText_[MMERR_NotAllowedDuringSequenceAcquisition] = "This operation can not be executed while sequence acquisition is runnning.";
    errorText_[MMERR_OutOfMemory] = "Out of memory.";
 	errorText_[MMERR_InvalidImageSequence] = "Issue snapImage before getImage.";
-   errorText_[MMERR_NullPointerException] = "Null Pointer Exceptioni.";
+   errorText_[MMERR_NullPointerException] = "Null Pointer Exception.";
+   errorText_[MMERR_CreatePeripheralFailed] = "Hub failed to create specified peripheral device.";
 
    initializeLogging();
    CORE_LOG("-------->>\n");
@@ -664,6 +665,48 @@ void CMMCore::loadDevice(const char* label, const char* library, const char* dev
       logError("MMCore::loadDevice", err.getMsg().c_str());
       throw;
    }
+}
+
+/**
+ * Loads a peripheral device attached to a specified Hub.
+ * @param label assigned name for the device during the core session
+ * @param hubLabel label of the specific hub device (parent label)
+ * @param adapterName the name of the adapter class (child type).
+ */
+void CMMCore::loadPeripheralDevice(const char* label, const char* hubLabel, const char* adapterName) throw (CMMError)
+{
+   // find the hub
+   MM::Hub* pHub = getSpecificDevice<MM::Hub>(hubLabel);
+   
+   // create the device
+   MM::Device* pDev = pluginManager_.LoadPeripheralDevice(label, hubLabel, adapterName);
+   if (pDev == 0)
+   {
+      // peripheral creation did not work out
+      throw CMMError(adapterName, MMERR_CreatePeripheralFailed);
+   }
+
+   // Establish parent-child relationship
+   char id[MM::MaxStrLength];
+   pHub->GetID(id);
+
+   if (strlen(id) == 0)
+   {
+      // this hub does not have unique ID assigned so create one
+      string newID(GetMMTimeNow().serialize());
+
+      // check for duplicates
+      if (pluginManager_.GetDeviceFromID(newID.c_str()) != 0)
+         assert(false); // this can't happen
+
+      pHub->SetID(newID.c_str());
+   }
+   
+   // get the id again to make sure that eventual truncation is covered
+   pHub->GetID(id);
+
+   // establish hub as this device's parent
+   pDev->SetID(id);
 }
 
 /**
@@ -5930,6 +5973,11 @@ std::vector<std::string> CMMCore::getInstalledDevices(const char* deviceLabel)
       }
    }
    return result;
+}
+
+std::vector<std::string> CMMCore::getLoadedPeripheralDevices(const char* hubLabel)
+{
+   return pluginManager_.GetLoadedPeripherals(hubLabel);
 }
 
 std::string CMMCore::getInstalledDeviceDescription(const char* hubLabel, const char* deviceLabel)

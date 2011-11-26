@@ -56,11 +56,14 @@ public:
 	virtual ~CPluginManager();
    
    MM::Device* LoadDevice(const char* label, const char* moduleName, const char* deviceName);
+   MM::Device* LoadPeripheralDevice(const char* label, const char* hubLabel, const char* deviceName);
    void UnloadDevice(MM::Device* device);
    void UnloadAllDevices();
-   MM::Device* GetDevice(const char* label) const;
+   MM::Device* GetDevice(const char* label) const throw (CMMError);
+   MM::Device* GetDeviceFromID(const char* id) const;
    std::string GetDeviceLabel(const MM::Device& device) const;
    std::vector<std::string> GetDeviceList(MM::DeviceType t = MM::AnyType) const;
+   std::vector<std::string> GetLoadedPeripherals(const char* hubLabel) const;
 
    // device browsing support
    static void AddSearchPath(std::string path);
@@ -68,7 +71,6 @@ public:
    static std::vector<std::string> GetAvailableDevices(const char* moduleName) throw (CMMError);
    static std::vector<std::string> GetAvailableDeviceDescriptions(const char* moduleName) throw (CMMError);
    static std::vector<long> GetAvailableDeviceTypes(const char* moduleName) throw (CMMError);
-   //static std::vector<bool> GetDeviceDiscoverability(const char* moduleName) throw (CMMError);
 
    // persistence
    static void SetPersistentData(HDEVMODULE hLib, const char* moduleName);

@@ -731,6 +731,35 @@ public:
       return  MM::Unimplemented;
    };
 
+   // hub - peripheral relationship
+   void SetParentID(const char* parentId)
+   {
+      parentID_ = parentId;
+
+      // truncate if necessary
+      if (parentID_.size() >= MM::MaxStrLength)
+         parentID_ = parentID_.substr(MM::MaxStrLength-1);
+   }
+   
+   void GetParentID(char* parentID) const
+   {
+      CDeviceUtils::CopyLimitedString(parentID, parentID_.c_str());
+   }
+   
+   void SetID(const char* id)
+   {
+      peripheralID_ = id;
+
+      // truncate if necessary
+      if (peripheralID_.size() >= MM::MaxStrLength)
+         peripheralID_ = peripheralID_.substr(MM::MaxStrLength-1);
+   }
+   
+   void GetID(char* id) const
+   {
+      CDeviceUtils::CopyLimitedString(id, peripheralID_.c_str());
+   }
+
    ////////////////////////////////////////////////////////////////////////////
    // Protected methods, for internal use by the device adapters 
    ////////////////////////////////////////////////////////////////////////////
@@ -1124,6 +1153,8 @@ private:
    MM::Core* callback_;
    // specific information about the errant property, etc.
    mutable std::string morePropertyErrorInfo_;
+   std::string peripheralID_;
+   std::string parentID_;
 };
 
 /**
@@ -1763,6 +1794,8 @@ public:
          delete installedDevices[i];
       installedDevices.clear();
    }
+
+   MM::Device* CreatePeripheralDevice(const char* /*adapterName*/) {return 0;}
 
 protected:
    void AddInstalledDevice(MM::Device* pdev) {installedDevices.push_back(pdev);}
