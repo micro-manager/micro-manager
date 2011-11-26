@@ -31,6 +31,7 @@ import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Enumeration;
 import java.util.GregorianCalendar;
 import java.util.Hashtable;
 import java.util.Vector;
@@ -488,6 +489,31 @@ public class MicroscopeModel {
       }
    }
 
+   /**
+    * Updates  labels in configs in memory in the model
+    * 
+    * @param deviceName
+    * @param oldLabel
+    * @param newLabel 
+    */
+   public void updateLabelsInPreset(String deviceName, String oldLabel, String newLabel) {
+      for (Enumeration<ConfigGroup> e = configGroups_.elements(); 
+              e.hasMoreElements(); ) {
+         ConfigGroup grp = e.nextElement();
+         ConfigPreset[] cps = grp.getConfigPresets();
+         for (ConfigPreset cp : cps) {
+            for (int i=0; i < cp.getNumberOfSettings(); i++) {
+               Setting s = cp.getSetting(i);
+               if (s.propertyName_.equals("Label")) {
+                  if (s.deviceName_.equals(deviceName) && s.propertyValue_.equals(oldLabel)) {
+                     s.propertyValue_ = newLabel;
+                  }
+               }
+            }
+         }
+      }
+   }
+   
    /**
     * Copy the configuration presets from the hardware and override the current
     * setup data.

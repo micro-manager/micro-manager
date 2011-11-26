@@ -39,11 +39,10 @@ import javax.swing.ListSelectionModel;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.table.AbstractTableModel;
+import javax.swing.table.TableCellEditor;
 import javax.swing.table.TableModel;
 
-import mmcorej.MMCoreJ;
 import org.micromanager.utils.GUIUtils;
-import org.micromanager.utils.PropertyItem;
 import org.micromanager.utils.ReportingUtils;
 
 /**
@@ -71,10 +70,18 @@ public class LabelsPage extends PagePanel {
          
          ListSelectionModel lsm = (ListSelectionModel)e.getSource();
          LabelTableModel ltm = (LabelTableModel)labelTable_.getModel();
+
          if (lsm.isSelectionEmpty()) {
             ltm.setData(model_, null);
          } else {
-            String devName = (String)table.getValueAt(lsm.getMinSelectionIndex(), 0);
+            if (ltm.getColumnCount() > 0) {
+               try {
+                  labelTable_.getDefaultEditor(String.class).stopCellEditing();
+               } catch (java.lang.NullPointerException ex) {
+                  // nothing to do
+               }
+            }
+            String devName = (String) table.getValueAt(lsm.getMinSelectionIndex(), 0);
             ltm.setData(model_, devName);
          }
          ltm.fireTableStructureChanged();         
@@ -96,19 +103,25 @@ public class LabelsPage extends PagePanel {
 
       public void setData(MicroscopeModel model, String selDevice) {
          curDevice_ = model.findDevice(selDevice);
-         labels_ = new String[0];
+         String newLabels[] = new String[0];
          if (curDevice_ == null) {
+            labels_ = newLabels;
             return;
          }
                   
-         labels_ = new String[curDevice_.getNumberOfStates()];
-         for (int i= 0; i<labels_.length; i++)
-            labels_[i] = new String("State-" + i);
+         newLabels = new String[curDevice_.getNumberOfStates()];
+         for (int i= 0; i<newLabels.length; i++)
+            newLabels[i] = "State-" + i;
          
          for (int i=0; i<curDevice_.getNumberOfSetupLabels(); i++) {
             Label lab = curDevice_.getSetupLabel(i);
-            labels_[lab.state_] = lab.label_;
+            newLabels[lab.state_] = lab.label_;
+            if (labels_.length > lab.state_) {
+               model_.updateLabelsInPreset(curDevice_.getName(), labels_[lab.state_], 
+                       newLabels[lab.state_]);
+            }
          }
+         labels_ = newLabels;
       }
       
       public int getRowCount() {
@@ -138,10 +151,12 @@ public class LabelsPage extends PagePanel {
       @Override
       public void setValueAt(Object value, int row, int col) {
          if (col == 1) {
-            try {
+            try {    
+               String oldLabel = labels_[row];
                labels_[row] = (String) value;
                curDevice_.setSetupLabel(row, (String) value);
                fireTableCellUpdated(row, col);
+               model_.updateLabelsInPreset(curDevice_.getName(), oldLabel, labels_[row]);
             } catch (Exception e) {
                ReportingUtils.showError(e);
             }
@@ -164,7 +179,6 @@ public class LabelsPage extends PagePanel {
                devices_.add(devs[i]);
             }
          }
-         
          storeLabels();
       }
       
@@ -328,6 +342,7 @@ public class LabelsPage extends PagePanel {
    public boolean exitPage(boolean next) {
       // define labels in hardware and synchronize device data with microscope model
       try {
+         labelTable_.getDefaultEditor(String.class).stopCellEditing();
          model_.applySetupLabelsToHardware(core_);
          model_.loadDeviceDataFromHardware(core_);
       } catch (Exception e) {
