@@ -277,8 +277,7 @@ CDemoCamera::~CDemoCamera()
 */
 void CDemoCamera::GetName(char* name) const
 {
-   // We just return the name we use for referring to this
-   // device adapter.
+   // Return the name used to referr to this device adapte
    CDeviceUtils::CopyLimitedString(name, g_CameraDeviceName);
 }
 
@@ -2699,6 +2698,11 @@ DemoMagnifier::DemoMagnifier () :
    CreateProperty("High Position Magnification", "1.6", MM::Float, false, pAct, true);
 };
 
+void DemoMagnifier::GetName(char* name) const
+{
+   CDeviceUtils::CopyLimitedString(name, g_MagnifierDeviceName);
+}
+
 int DemoMagnifier::Initialize()
 {
    if (g_hub && g_hub->GenerateRandomError())
@@ -2790,6 +2794,11 @@ nascentSequence_(vector<double>())
 }
 
 DemoDA::~DemoDA() {
+}
+
+void DemoDA::GetName(char* name) const
+{
+   CDeviceUtils::CopyLimitedString(name, g_DADeviceName);
 }
 
 int DemoDA::Initialize()

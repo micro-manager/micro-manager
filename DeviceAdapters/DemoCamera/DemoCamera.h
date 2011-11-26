@@ -700,7 +700,7 @@ public:
    ~DemoDA ();
 
    int Shutdown() {return DEVICE_OK;}
-   void GetName(char* name) const {strcpy(name,"Demo DA");}
+   void GetName(char* name) const;
    int SetGateOpen(bool open); 
    int GetGateOpen(bool& open);
    int SetSignal(double volts);
@@ -791,7 +791,7 @@ public:
       return DEVICE_OK;
    }
 
-   void GetName(char* name) const {strcpy(name,"Demo Optovar");}
+   void GetName(char* name) const;
 
    bool Busy() {return false;}
    int Initialize();
