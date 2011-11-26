@@ -74,13 +74,13 @@ public class LabelsPage extends PagePanel {
          if (lsm.isSelectionEmpty()) {
             ltm.setData(model_, null);
          } else {
+            // first make sure that active edits are stored
             if (ltm.getColumnCount() > 0) {
-               try {
+               if (labelTable_.isEditing()) {
                   labelTable_.getDefaultEditor(String.class).stopCellEditing();
-               } catch (java.lang.NullPointerException ex) {
-                  // nothing to do
                }
             }
+            // then switch to the new table
             String devName = (String) table.getValueAt(lsm.getMinSelectionIndex(), 0);
             ltm.setData(model_, devName);
          }
@@ -342,7 +342,8 @@ public class LabelsPage extends PagePanel {
    public boolean exitPage(boolean next) {
       // define labels in hardware and synchronize device data with microscope model
       try {
-         labelTable_.getDefaultEditor(String.class).stopCellEditing();
+         if (labelTable_.isEditing())
+            labelTable_.getDefaultEditor(String.class).stopCellEditing();
          model_.applySetupLabelsToHardware(core_);
          model_.loadDeviceDataFromHardware(core_);
       } catch (Exception e) {
