@@ -542,6 +542,7 @@ private:
    std::string getDeviceName(MM::Device* pDev);
    void logError(const char* device, const char* msg, const char* file=0, int line=0) const;
    void updateAllowedChannelGroups();
+   void assignDefaultRole(MM::Device* pDev);
 
    // >>>>> OBSOLETE >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
    void defineConfiguration(const char* configName, const char* deviceName, const char* propName, const char* value);

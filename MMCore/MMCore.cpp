@@ -612,51 +612,7 @@ void CMMCore::loadDevice(const char* label, const char* library, const char* dev
       MM::Device* pDevice = pluginManager_.LoadDevice(label, library, device);
       CORE_LOG3("Device %s loaded from %s and labeled as %s\n", device, library, label);
       pDevice->SetCallback(callback_);
-      
-      // default special roles for particular devices
-      // The roles which are assigned at the load time will make sense for a simple
-      // configuration. More complicated configurations will typically override default settings.
-      switch(pDevice->GetType())
-      {
-         case MM::CameraDevice:
-            /* >>> Linux build asserts false here - apparently rtti does not work accross DLL!?
-            camera_ = dynamic_cast<MM::Camera*>(pDevice);
-            assert(camera_);
-            */
-            camera_ = static_cast<MM::Camera*>(pDevice);
-            CORE_LOG1("Device %s set as default camera.\n", label);
-         break;
-
-         case MM::StateDevice:
-            // nothing to do for now
-         break;
-
-         case MM::ShutterDevice:
-            shutter_ = static_cast<MM::Shutter*>(pDevice);
-            //assignImageSynchro(label);
-            CORE_LOG1("Device %s set as default shutter.\n", label);
-         break;
-
-         case MM::XYStageDevice:
-            xyStage_ = static_cast<MM::XYStage*>(pDevice);
-            CORE_LOG1("Device %s set as default xyStage.\n", label);
-         break;
-
-         case MM::AutoFocusDevice:
-            autoFocus_ = static_cast<MM::AutoFocus*>(pDevice);
-            CORE_LOG1("Device %s set as default auto-focus.\n", label);
-         break;
-
-         case MM::SLMDevice:
-            slm_ = static_cast<MM::SLM*>(pDevice);
-            CORE_LOG1("Device %s set as default SLM.\n", label);
-         break;
-
-         default:
-            // no action on unrecognized device
-            //CORE_LOG1("%s: unknown device type\n", label);
-        break;
-      }
+      assignDefaultRole(pDevice);
    }
    catch (CMMError& err)
    {
@@ -679,6 +635,8 @@ void CMMCore::loadPeripheralDevice(const char* label, const char* hubLabel, cons
    
    // create the device
    MM::Device* pDev = pluginManager_.LoadPeripheralDevice(label, hubLabel, adapterName);
+   CORE_LOG3("Peripheral device %s loaded by %s and labeled as %s\n", adapterName, hubLabel, label);
+   
    if (pDev == 0)
    {
       // peripheral creation did not work out
@@ -686,7 +644,60 @@ void CMMCore::loadPeripheralDevice(const char* label, const char* hubLabel, cons
    }
 
    // establish hub as this device's parent
+   pDev->SetCallback(callback_);
    pDev->SetParentID(hubLabel);
+
+   assignDefaultRole(pDev);
+}
+
+void CMMCore::assignDefaultRole(MM::Device* pDevice)
+{
+   // default special roles for particular devices
+   // The roles which are assigned at the load time will make sense for a simple
+   // configuration. More complicated configurations will typically override default settings.
+   char label[MM::MaxStrLength];
+   pDevice->GetLabel(label);
+   switch(pDevice->GetType())
+   {
+      case MM::CameraDevice:
+         /* >>> Linux build asserts false here - apparently rtti does not work accross DLL!?
+         camera_ = dynamic_cast<MM::Camera*>(pDevice);
+         assert(camera_);
+         */
+         camera_ = static_cast<MM::Camera*>(pDevice);
+         CORE_LOG1("Device %s set as default camera.\n", label);
+      break;
+
+      case MM::StateDevice:
+         // nothing to do for now
+      break;
+
+      case MM::ShutterDevice:
+         shutter_ = static_cast<MM::Shutter*>(pDevice);
+         //assignImageSynchro(label);
+         CORE_LOG1("Device %s set as default shutter.\n", label);
+      break;
+
+      case MM::XYStageDevice:
+         xyStage_ = static_cast<MM::XYStage*>(pDevice);
+         CORE_LOG1("Device %s set as default xyStage.\n", label);
+      break;
+
+      case MM::AutoFocusDevice:
+         autoFocus_ = static_cast<MM::AutoFocus*>(pDevice);
+         CORE_LOG1("Device %s set as default auto-focus.\n", label);
+      break;
+
+      case MM::SLMDevice:
+         slm_ = static_cast<MM::SLM*>(pDevice);
+         CORE_LOG1("Device %s set as default SLM.\n", label);
+      break;
+
+      default:
+         // no action on unrecognized device
+         //CORE_LOG1("%s: unknown device type\n", label);
+     break;
+   }
 }
 
 /**

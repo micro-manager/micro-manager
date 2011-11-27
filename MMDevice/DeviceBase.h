@@ -1078,7 +1078,7 @@ protected:
    /**
    * Check if we have callback mecahnism set up.
    */
-   bool IsCallbackRegistered()
+   bool IsCallbackRegistered() const
    {
       return callback_ == 0 ? false : true;
    }
@@ -1110,6 +1110,14 @@ protected:
       char pid[MM::MaxStrLength];
       this->GetParentID(pid);
       this->CreateProperty(MM::g_Keyword_HubID, pid, MM::String, true);
+   }
+
+   MM::Hub* GetParentHub() const
+   {
+      if (IsCallbackRegistered())
+         return GetCoreCallback()->GetParentHub(this);
+      else
+         return 0;
    }
 
 private:
