@@ -220,7 +220,7 @@ public:
       }
    }
 
-   MM::Hub* GetParentHub(const MM::Device* caller)
+   MM::Hub* GetParentHub(const MM::Device* caller) const
    {
       char parentLabel[MM::MaxStrLength];
       caller->GetParentID(parentLabel);
@@ -245,7 +245,7 @@ public:
       }
    }
 
-   MM::Device* GetPeripheral(const MM::Device* caller, unsigned idx)
+   MM::Device* GetPeripheral(const MM::Device* caller, unsigned idx) const
    {
       std::vector<MM::Device*> peripherals;
       char hubLabel[MM::MaxStrLength];

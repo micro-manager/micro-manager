@@ -88,12 +88,6 @@ private:
    long divideOneByMe_;
 };
 
-////////////////////////
-// Static pointer to hub
-////////////////////////
-
-DemoHub * g_hub = NULL;
-
 
 //////////////////////////////////////////////////////////////////////////////
 // CDemoCamera class
@@ -131,9 +125,17 @@ public:
    int ClearROI();
    int PrepareSequenceAcqusition()
    {
-      if (g_hub && g_hub->GenerateRandomError())
-         return SIMULATED_ERROR;
-         return DEVICE_OK;
+      MM::Hub* pHub = GetCoreCallback()->GetParentHub(this);
+      if (pHub)
+      {
+         DemoHub* myHub = dynamic_cast<DemoHub*> (pHub);
+         if (myHub)
+         {
+            if(myHub->GenerateRandomError())
+               return SIMULATED_ERROR;
+         }
+      }
+      return DEVICE_OK;
    }
    int StartSequenceAcquisition(double interval);
    int StartSequenceAcquisition(long numImages, double interval_ms, bool stopOnOverflow);
@@ -402,7 +404,8 @@ public:
    double GetStepSize() {return stepSize_um_;}
    int SetPositionSteps(long steps) 
    {
-      if (g_hub && g_hub->GenerateRandomError())
+      DemoHub* pHub = dynamic_cast<DemoHub*>(GetCoreCallback()->GetParentHub(this));
+      if (pHub && pHub->GenerateRandomError())
          return SIMULATED_ERROR;
 
       pos_um_ = steps * stepSize_um_; 
@@ -410,20 +413,23 @@ public:
    }
    int GetPositionSteps(long& steps)
    {
-      if (g_hub && g_hub->GenerateRandomError())
+      DemoHub* pHub = dynamic_cast<DemoHub*>(GetCoreCallback()->GetParentHub(this));
+      if (pHub && pHub->GenerateRandomError())
          return SIMULATED_ERROR;
 
       steps = (long)(pos_um_ / stepSize_um_);
       return DEVICE_OK;
    }
    int SetOrigin() {
-      if (g_hub && g_hub->GenerateRandomError())
+      DemoHub* pHub = dynamic_cast<DemoHub*>(GetCoreCallback()->GetParentHub(this));
+      if (pHub && pHub->GenerateRandomError())
          return SIMULATED_ERROR;
       return DEVICE_OK;
    }
    int GetLimits(double& lower, double& upper)
    {
-      if (g_hub && g_hub->GenerateRandomError())
+      DemoHub* pHub = dynamic_cast<DemoHub*>(GetCoreCallback()->GetParentHub(this));
+      if (pHub && pHub->GenerateRandomError())
          return SIMULATED_ERROR;
 
       lower = lowerLimit_;
@@ -440,25 +446,28 @@ public:
 
    // Sequence functions
    int IsStageSequenceable(bool& isSequenceable) const {
-      if (g_hub && g_hub->GenerateRandomError())
-         return SIMULATED_ERROR;
-      isSequenceable = false; return DEVICE_OK;
+      isSequenceable = false;
+      return DEVICE_OK;
    }
    int GetStageSequenceMaxLength(long& nrEvents) const 
    {
-      if (g_hub && g_hub->GenerateRandomError())
+      MM::Hub* h = GetCoreCallback()->GetParentHub(this);
+      DemoHub* pHub = dynamic_cast<DemoHub*>(h);
+      if (pHub && pHub->GenerateRandomError())
          return SIMULATED_ERROR;
       nrEvents = 0; return DEVICE_OK;
    }
    int StartStageSequence() const
    {
-      if (g_hub && g_hub->GenerateRandomError())
+      DemoHub* pHub = dynamic_cast<DemoHub*>(GetCoreCallback()->GetParentHub(this));
+      if (pHub && pHub->GenerateRandomError())
          return SIMULATED_ERROR;
          return DEVICE_OK;
-      }
+   }
    int StopStageSequence() const
    {  
-      if (g_hub && g_hub->GenerateRandomError())
+      DemoHub* pHub = dynamic_cast<DemoHub*>(GetCoreCallback()->GetParentHub(this));
+      if (pHub && pHub->GenerateRandomError())
          return SIMULATED_ERROR;
       return DEVICE_OK;
    }
@@ -504,7 +513,8 @@ public:
    virtual double GetStepSize() {return stepSize_um_;}
    virtual int SetPositionSteps(long x, long y)
    {
-      if (g_hub && g_hub->GenerateRandomError())
+      DemoHub* pHub = dynamic_cast<DemoHub*>(GetCoreCallback()->GetParentHub(this));
+      if (pHub && pHub->GenerateRandomError())
          return SIMULATED_ERROR;
 
       if (timeOutTimer_ != 0)
@@ -530,7 +540,8 @@ public:
    }
    virtual int GetPositionSteps(long& x, long& y)
    {
-      if (g_hub && g_hub->GenerateRandomError())
+      DemoHub* pHub = dynamic_cast<DemoHub*>(GetCoreCallback()->GetParentHub(this));
+      if (pHub && pHub->GenerateRandomError())
          return SIMULATED_ERROR;
 
       x = (long)(posX_um_ / stepSize_um_);
@@ -539,7 +550,8 @@ public:
    }
    int SetRelativePositionSteps(long x, long y)                                                           
    {                                                                                                      
-      if (g_hub && g_hub->GenerateRandomError())
+      DemoHub* pHub = dynamic_cast<DemoHub*>(GetCoreCallback()->GetParentHub(this));
+      if (pHub && pHub->GenerateRandomError())
          return SIMULATED_ERROR;
 
       long xSteps, ySteps;                                                                                
@@ -549,14 +561,16 @@ public:
    } 
    virtual int Home()
    {
-      if (g_hub && g_hub->GenerateRandomError())
+      DemoHub* pHub = dynamic_cast<DemoHub*>(GetCoreCallback()->GetParentHub(this));
+      if (pHub && pHub->GenerateRandomError())
          return SIMULATED_ERROR;
 
       return DEVICE_OK;
    }
    virtual int Stop()
    {
-      if (g_hub && g_hub->GenerateRandomError())
+      DemoHub* pHub = dynamic_cast<DemoHub*>(GetCoreCallback()->GetParentHub(this));
+      if (pHub && pHub->GenerateRandomError())
          return SIMULATED_ERROR;
 
       return DEVICE_OK;
@@ -570,14 +584,16 @@ public:
     */
    virtual int SetOrigin()
    {
-      if (g_hub && g_hub->GenerateRandomError())
+      DemoHub* pHub = dynamic_cast<DemoHub*>(GetCoreCallback()->GetParentHub(this));
+      if (pHub && pHub->GenerateRandomError())
          return SIMULATED_ERROR;
 
       return DEVICE_OK;
    }
    virtual int GetLimits(double& lower, double& upper)
    {
-      if (g_hub && g_hub->GenerateRandomError())
+      DemoHub* pHub = dynamic_cast<DemoHub*>(GetCoreCallback()->GetParentHub(this));
+      if (pHub && pHub->GenerateRandomError())
          return SIMULATED_ERROR;
 
       lower = lowerLimit_;
@@ -586,7 +602,8 @@ public:
    }
    virtual int GetLimitsUm(double& xMin, double& xMax, double& yMin, double& yMax)
    {
-      if (g_hub && g_hub->GenerateRandomError())
+      DemoHub* pHub = dynamic_cast<DemoHub*>(GetCoreCallback()->GetParentHub(this));
+      if (pHub && pHub->GenerateRandomError())
          return SIMULATED_ERROR;
 
       xMin = lowerLimit_; xMax = upperLimit_;
@@ -596,21 +613,24 @@ public:
 
    virtual int GetStepLimits(long& /*xMin*/, long& /*xMax*/, long& /*yMin*/, long& /*yMax*/)
    {
-      if (g_hub && g_hub->GenerateRandomError())
+      DemoHub* pHub = dynamic_cast<DemoHub*>(GetCoreCallback()->GetParentHub(this));
+      if (pHub && pHub->GenerateRandomError())
          return SIMULATED_ERROR;
 
       return DEVICE_UNSUPPORTED_COMMAND;
    }
    double GetStepSizeXUm()
    {
-      if (g_hub && g_hub->GenerateRandomError())
+      DemoHub* pHub = dynamic_cast<DemoHub*>(GetCoreCallback()->GetParentHub(this));
+      if (pHub && pHub->GenerateRandomError())
          return SIMULATED_ERROR;
 
       return stepSize_um_;
    }
    double GetStepSizeYUm()
    {
-      if (g_hub && g_hub->GenerateRandomError())
+      DemoHub* pHub = dynamic_cast<DemoHub*>(GetCoreCallback()->GetParentHub(this));
+      if (pHub && pHub->GenerateRandomError())
          return SIMULATED_ERROR;
 
       return stepSize_um_;
@@ -661,7 +681,8 @@ public:
    // Shutter API
    int SetOpen (bool open = true)
    {
-      if (g_hub && g_hub->GenerateRandomError())
+      DemoHub* pHub = dynamic_cast<DemoHub*>(GetCoreCallback()->GetParentHub(this));
+      if (pHub && pHub->GenerateRandomError())
          return SIMULATED_ERROR;
 
       state_ = open;
@@ -670,7 +691,8 @@ public:
    }
    int GetOpen(bool& open)
    {
-      if (g_hub && g_hub->GenerateRandomError())
+      DemoHub* pHub = dynamic_cast<DemoHub*>(GetCoreCallback()->GetParentHub(this));
+      if (pHub && pHub->GenerateRandomError())
          return SIMULATED_ERROR;
 
       open = state_;
@@ -678,7 +700,8 @@ public:
    }
    int Fire(double /*deltaT*/)
    {
-      if (g_hub && g_hub->GenerateRandomError())
+      DemoHub* pHub = dynamic_cast<DemoHub*>(GetCoreCallback()->GetParentHub(this));
+      if (pHub && pHub->GenerateRandomError())
          return SIMULATED_ERROR;
 
       return DEVICE_UNSUPPORTED_COMMAND;
@@ -711,7 +734,8 @@ public:
    int GetSignal(double& volts);
    int GetLimits(double& minVolts, double& maxVolts)
    {
-      if (g_hub && g_hub->GenerateRandomError())
+      DemoHub* pHub = dynamic_cast<DemoHub*>(GetCoreCallback()->GetParentHub(this));
+      if (pHub && pHub->GenerateRandomError())
          return SIMULATED_ERROR;
 
       minVolts=0.0; maxVolts= 10.0; return DEVICE_OK;
@@ -722,7 +746,8 @@ public:
    // Sequence functions
    int IsDASequenceable(bool& isSequenceable) const
    {
-      if (g_hub && g_hub->GenerateRandomError())
+      DemoHub* pHub = dynamic_cast<DemoHub*>(GetCoreCallback()->GetParentHub(this));
+      if (pHub && pHub->GenerateRandomError())
          return SIMULATED_ERROR;
 
       isSequenceable = true;
@@ -730,7 +755,8 @@ public:
    }
    int GetDASequenceMaxLength(long& nrEvents) const 
    {
-      if (g_hub && g_hub->GenerateRandomError())
+      DemoHub* pHub = dynamic_cast<DemoHub*>(GetCoreCallback()->GetParentHub(this));
+      if (pHub && pHub->GenerateRandomError())
          return SIMULATED_ERROR;
 
       nrEvents = 256;
@@ -738,7 +764,8 @@ public:
    }
    int StartDASequence() const
    {
-      if (g_hub && g_hub->GenerateRandomError())
+      DemoHub* pHub = dynamic_cast<DemoHub*>(GetCoreCallback()->GetParentHub(this));
+      if (pHub && pHub->GenerateRandomError())
          return SIMULATED_ERROR;
 
       (const_cast<DemoDA *>(this))->SetSequenceStateOn();
@@ -746,7 +773,8 @@ public:
    }
    int StopDASequence() const
    {
-      if (g_hub && g_hub->GenerateRandomError())
+      DemoHub* pHub = dynamic_cast<DemoHub*>(GetCoreCallback()->GetParentHub(this));
+      if (pHub && pHub->GenerateRandomError())
          return SIMULATED_ERROR;
    
       (const_cast<DemoDA *>(this))->SetSequenceStateOff();
@@ -789,7 +817,8 @@ public:
 
    int Shutdown()
    {
-      if (g_hub && g_hub->GenerateRandomError())
+      DemoHub* pHub = dynamic_cast<DemoHub*>(GetCoreCallback()->GetParentHub(this));
+      if (pHub && pHub->GenerateRandomError())
          return SIMULATED_ERROR;
 
       return DEVICE_OK;
@@ -1146,42 +1175,44 @@ public:
    // AutoFocus API
    virtual int SetContinuousFocusing(bool state)
    {
-      if (g_hub && g_hub->GenerateRandomError())
+      DemoHub* pHub = dynamic_cast<DemoHub*>(GetCoreCallback()->GetParentHub(this));
+      if (pHub && pHub->GenerateRandomError())
          return SIMULATED_ERROR;
 
       running_ = state; return DEVICE_OK;
    }
    virtual int GetContinuousFocusing(bool& state)
    {
-      if (g_hub && g_hub->GenerateRandomError())
+      DemoHub* pHub = dynamic_cast<DemoHub*>(GetCoreCallback()->GetParentHub(this));
+      if (pHub && pHub->GenerateRandomError())
          return SIMULATED_ERROR;
 
       state = running_; return DEVICE_OK;
    }
    virtual bool IsContinuousFocusLocked()
    {
-      if (g_hub && g_hub->GenerateRandomError())
-         return false;
-
       return running_;
    }
    virtual int FullFocus()
    {
-      if (g_hub && g_hub->GenerateRandomError())
+      DemoHub* pHub = dynamic_cast<DemoHub*>(GetCoreCallback()->GetParentHub(this));
+      if (pHub && pHub->GenerateRandomError())
          return SIMULATED_ERROR;
 
       return DEVICE_OK;
    }
    virtual int IncrementalFocus()
    {
-      if (g_hub && g_hub->GenerateRandomError())
+      DemoHub* pHub = dynamic_cast<DemoHub*>(GetCoreCallback()->GetParentHub(this));
+      if (pHub && pHub->GenerateRandomError())
          return SIMULATED_ERROR;
 
       return DEVICE_OK;
    }
    virtual int GetLastFocusScore(double& score)
    {
-      if (g_hub && g_hub->GenerateRandomError())
+      DemoHub* pHub = dynamic_cast<DemoHub*>(GetCoreCallback()->GetParentHub(this));
+      if (pHub && pHub->GenerateRandomError())
          return SIMULATED_ERROR;
 
       score = 0.0;
@@ -1189,7 +1220,8 @@ public:
    }
    virtual int GetCurrentFocusScore(double& score)
    {
-      if (g_hub && g_hub->GenerateRandomError())
+      DemoHub* pHub = dynamic_cast<DemoHub*>(GetCoreCallback()->GetParentHub(this));
+      if (pHub && pHub->GenerateRandomError())
          return SIMULATED_ERROR;
 
       score = 1.0;
@@ -1197,14 +1229,16 @@ public:
    }
    virtual int GetOffset(double& /*offset*/)
    {
-      if (g_hub && g_hub->GenerateRandomError())
+      DemoHub* pHub = dynamic_cast<DemoHub*>(GetCoreCallback()->GetParentHub(this));
+      if (pHub && pHub->GenerateRandomError())
          return SIMULATED_ERROR;
 
       return DEVICE_OK;
    }
    virtual int SetOffset(double /*offset*/)
    {
-      if (g_hub && g_hub->GenerateRandomError())
+      DemoHub* pHub = dynamic_cast<DemoHub*>(GetCoreCallback()->GetParentHub(this));
+      if (pHub && pHub->GenerateRandomError())
          return SIMULATED_ERROR;
 
       return DEVICE_OK;

@@ -1115,8 +1115,8 @@ namespace MM {
       // direct access to specific device types
       virtual MM::ImageProcessor* GetImageProcessor(const MM::Device* caller) = 0;
       virtual MM::AutoFocus* GetAutoFocus(const MM::Device* caller) = 0;
-      virtual MM::Hub* GetParentHub(const MM::Device* caller) = 0;
-      virtual MM::Device* GetPeripheral(const MM::Device* caller, unsigned idx) = 0;
+      virtual MM::Hub* GetParentHub(const MM::Device* caller) const = 0;
+      virtual MM::Device* GetPeripheral(const MM::Device* caller, unsigned idx) const = 0;
       virtual unsigned GetNumberOfPeripherals(const MM::Device* caller) = 0;
 
       virtual MM::State* GetStateDevice(const MM::Device* caller, const char* deviceName) = 0;

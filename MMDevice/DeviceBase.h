@@ -1086,7 +1086,7 @@ protected:
    /**
    * Get the callback object.
    */
-   MM::Core* GetCoreCallback()
+   MM::Core* GetCoreCallback() const
    {
       return callback_;
    }
