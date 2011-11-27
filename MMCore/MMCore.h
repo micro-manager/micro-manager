@@ -182,6 +182,8 @@ public:
    MM::DeviceType getDeviceType(const char* label) throw (CMMError);
    std::string getDeviceLibrary(const char* label) throw (CMMError);
    std::string getDeviceName(const char* label) throw (CMMError);
+   std::string getParentLabel(const char* label) throw (CMMError);
+   void setParentLabel(const char* label, const char* parentLabel) throw (CMMError);
    std::string getDeviceDescription(const char* label) throw (CMMError);
    bool deviceBusy(const char* deviceName) throw (CMMError);
    void waitForDevice(const char* deviceName) throw (CMMError);

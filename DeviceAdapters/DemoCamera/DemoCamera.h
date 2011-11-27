@@ -72,6 +72,7 @@ public:
 
    // HUB api
    int DetectInstalledDevices();
+   MM::Device* CreatePeripheralDevice(const char* adapterName);
 
    // action interface
    int OnErrorRate(MM::PropertyBase* pProp, MM::ActionType eAct);
@@ -166,7 +167,6 @@ public:
    int OnSaturatePixels(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnFractionOfPixelsToDropOrSaturate(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnCCDTemp(MM::PropertyBase* pProp, MM::ActionType eAct);
-   MM::MMTime CurrentTime(void) { return GetCurrentMMTime(); };
 
 private:
    int SetAllowedBinning();
@@ -643,8 +643,12 @@ private:
 class DemoShutter : public CShutterBase<DemoShutter>
 {
 public:
-   DemoShutter() : state_(false), initialized_(false), changedTime_(0.0) {
+   DemoShutter() : state_(false), initialized_(false), changedTime_(0.0)
+   {
       EnableDelay(); // signals that the dealy setting will be used
+      
+      // parent ID display
+      CreateHubIDProperty();
    }
    ~DemoShutter() {}
 
@@ -818,7 +822,11 @@ private:
 class TransposeProcessor : public CImageProcessorBase<TransposeProcessor>
 {
 public:
-   TransposeProcessor () : inPlace_ (false), pTemp_(NULL), tempSize_(0), busy_(false) {}
+   TransposeProcessor () : inPlace_ (false), pTemp_(NULL), tempSize_(0), busy_(false)
+   {
+      // parent ID display
+      CreateHubIDProperty();
+   }
    ~TransposeProcessor () {if( NULL!= pTemp_) free(pTemp_); tempSize_=0;  }
 
    int Shutdown() {return DEVICE_OK;}
@@ -995,7 +1003,11 @@ private:
 class MedianFilter : public CImageProcessorBase<MedianFilter>
 {
 public:
-   MedianFilter () : busy_(false), performanceTiming_(0.),pSmoothedIm_(0), sizeOfSmoothedIm_(0) {};
+   MedianFilter () : busy_(false), performanceTiming_(0.),pSmoothedIm_(0), sizeOfSmoothedIm_(0)
+   {
+      // parent ID display
+      CreateHubIDProperty();
+   };
    ~MedianFilter () { if(0!=pSmoothedIm_) free(pSmoothedIm_); };
 
    int Shutdown() {return DEVICE_OK;}
@@ -1118,7 +1130,9 @@ public:
       running_(false), 
       busy_(false), 
       initialized_(false)  
-   {}
+      {
+         CreateHubIDProperty();
+      }
 
    ~DemoAutoFocus() {}
       

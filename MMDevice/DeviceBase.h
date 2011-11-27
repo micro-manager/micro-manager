@@ -739,6 +739,11 @@ public:
       // truncate if necessary
       if (parentID_.size() >= MM::MaxStrLength)
          parentID_ = parentID_.substr(MM::MaxStrLength-1);
+
+      if (this->HasProperty(MM::g_Keyword_HubID))
+      {
+         this->SetProperty(MM::g_Keyword_HubID, parentID_.c_str());
+      }
    }
    
    void GetParentID(char* parentID) const
@@ -746,20 +751,6 @@ public:
       CDeviceUtils::CopyLimitedString(parentID, parentID_.c_str());
    }
    
-   void SetID(const char* id)
-   {
-      peripheralID_ = id;
-
-      // truncate if necessary
-      if (peripheralID_.size() >= MM::MaxStrLength)
-         peripheralID_ = peripheralID_.substr(MM::MaxStrLength-1);
-   }
-   
-   void GetID(char* id) const
-   {
-      CDeviceUtils::CopyLimitedString(id, peripheralID_.c_str());
-   }
-
    ////////////////////////////////////////////////////////////////////////////
    // Protected methods, for internal use by the device adapters 
    ////////////////////////////////////////////////////////////////////////////
@@ -1108,8 +1099,18 @@ protected:
       usesDelay_ = state;
    }
 
-	MM::MMTime _start_time;
-	MM::MMTime _end_time;
+   /**
+    * Utility method to create read-only property displaying parentID (hub label).
+    * By looking at this HubID property we can see which hub this peripheral belongs to.
+    * Can be called anywhere in the device code, but the most logical place is the constructor.
+    * Use is optional, to provide useful info.
+    */
+	void CreateHubIDProperty()
+   {
+      char pid[MM::MaxStrLength];
+      this->GetParentID(pid);
+      this->CreateProperty(MM::g_Keyword_HubID, pid, MM::String, true);
+   }
 
 private:
    bool PropertyDefined(const char* propName) const
@@ -1153,7 +1154,6 @@ private:
    MM::Core* callback_;
    // specific information about the errant property, etc.
    mutable std::string morePropertyErrorInfo_;
-   std::string peripheralID_;
    std::string parentID_;
 };
 

@@ -255,6 +255,9 @@ CDemoCamera::CDemoCamera() :
    readoutStartTime_ = GetCurrentMMTime();
    pDemoResourceLock_ = new MMThreadLock();
    thd_ = new MySequenceThread(this);
+
+   // parent ID display
+   CreateHubIDProperty();
 }
 
 /**
@@ -441,8 +444,6 @@ int CDemoCamera::Initialize()
    pAct = new CPropertyAction (this, &CDemoCamera::OnFractionOfPixelsToDropOrSaturate);
 	CreateProperty("FractionOfPixelsToDropOrSaturate", "0.002", MM::Float, false, pAct);
 	SetPropertyLimits("FractionOfPixelsToDropOrSaturate", 0., 0.1);
-
-
 
    // synchronize all properties
    // --------------------------
@@ -1773,6 +1774,8 @@ position_(0)
    InitializeDefaultErrorMessages();
    SetErrorText(ERR_UNKNOWN_POSITION, "Requested position not available in this device");
    EnableDelay(); // signals that the dealy setting will be used
+   // parent ID display
+   CreateHubIDProperty();
 }
 
 CDemoFilterWheel::~CDemoFilterWheel()
@@ -1924,6 +1927,10 @@ position_(0)
    // -----
    CPropertyAction* pAct = new CPropertyAction (this, &CDemoStateDevice::OnNumberOfStates);
    CreateProperty("Number of positions", "0", MM::Integer, false, pAct, true);
+
+   // parent ID display
+   CreateHubIDProperty();
+
 }
 
 CDemoStateDevice::~CDemoStateDevice()
@@ -2082,6 +2089,8 @@ busy_(false),
 initialized_(false)
 {
    InitializeDefaultErrorMessages();
+   // parent ID display
+   CreateHubIDProperty();
 }
 
 CDemoLightPath::~CDemoLightPath()
@@ -2202,6 +2211,8 @@ CDemoObjectiveTurret::CDemoObjectiveTurret() :
    SetErrorText(ERR_IN_SEQUENCE, "Error occurred while executing sequence");
    SetErrorText(ERR_SEQUENCE_INACTIVE, "Sequence triggered, but sequence is not running");
    InitializeDefaultErrorMessages();
+   // parent ID display
+   CreateHubIDProperty();
 }
 
 CDemoObjectiveTurret::~CDemoObjectiveTurret()
@@ -2387,6 +2398,9 @@ lowerLimit_(0.0),
 upperLimit_(20000.0)
 {
    InitializeDefaultErrorMessages();
+
+   // parent ID display
+   CreateHubIDProperty();
 }
 
 CDemoStage::~CDemoStage()
@@ -2520,6 +2534,9 @@ lowerLimit_(0.0),
 upperLimit_(20000.0)
 {
    InitializeDefaultErrorMessages();
+
+   // parent ID display
+   CreateHubIDProperty();
 }
 
 CDemoXYStage::~CDemoXYStage()
@@ -2696,6 +2713,9 @@ DemoMagnifier::DemoMagnifier () :
 {
    CPropertyAction* pAct = new CPropertyAction (this, &DemoMagnifier::OnHighMag);
    CreateProperty("High Position Magnification", "1.6", MM::Float, false, pAct, true);
+
+   // parent ID display
+   CreateHubIDProperty();
 };
 
 void DemoMagnifier::GetName(char* name) const
@@ -2791,6 +2811,9 @@ nascentSequence_(vector<double>())
 {
    SetErrorText(SIMULATED_ERROR, "Random, simluated error");
    SetErrorText(ERR_SEQUENCE_INACTIVE, "Sequence triggered, but sequence is not running");
+
+   // parent ID display
+   CreateHubIDProperty();
 }
 
 DemoDA::~DemoDA() {
@@ -3357,6 +3380,21 @@ int DemoHub::DetectInstalledDevices()
    }
    return DEVICE_OK; 
 }
+
+MM::Device* DemoHub::CreatePeripheralDevice(const char* adapterName)
+{
+   for (unsigned i=0; i<GetNumberOfInstalledDevices(); i++)
+   {
+      MM::Device* d = GetInstalledDevice(i);
+      char name[MM::MaxStrLength];
+      d->GetName(name);
+      if (strcmp(adapterName, name) == 0)
+         return CreateDevice(adapterName);
+
+   }
+   return 0; // adapter name not found
+}
+
 
 void DemoHub::GetName(char* pName) const
 {

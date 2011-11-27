@@ -769,6 +769,14 @@ public class MicroscopeModel {
                   dev.setDelay(Double.parseDouble(tokens[2]));
 
                }
+            } else if (tokens[0].contentEquals(new StringBuffer().append(MMCoreJ.getG_CFGCommand_ParentID()))) {
+               if (tokens.length != 3) {
+                  throw new MMConfigFileException("Invalid number of parameters (3 required):\n" + line); 
+               }
+               Device dev = findDevice(tokens[1]);
+               if (dev != null) {
+                  dev.setParentHub(tokens[2]);
+               }
             }
 
          }

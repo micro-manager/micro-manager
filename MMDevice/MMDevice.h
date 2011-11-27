@@ -318,8 +318,8 @@ namespace MM {
       // hub-peripheral relationship
       virtual void SetParentID(const char* parentId) = 0;
       virtual void GetParentID(char* parentID) const = 0;
-      virtual void SetID(const char* id) = 0;
-      virtual void GetID(char* id) const = 0;
+      // virtual void SetID(const char* id) = 0;
+      // virtual void GetID(char* id) const = 0;
    };
 
    /** 
@@ -1116,6 +1116,8 @@ namespace MM {
       virtual MM::ImageProcessor* GetImageProcessor(const MM::Device* caller) = 0;
       virtual MM::AutoFocus* GetAutoFocus(const MM::Device* caller) = 0;
       virtual MM::Hub* GetParentHub(const MM::Device* caller) = 0;
+      virtual MM::Device* GetPeripheral(const MM::Device* caller, unsigned idx) = 0;
+      virtual unsigned GetNumberOfPeripherals(const MM::Device* caller) = 0;
 
       virtual MM::State* GetStateDevice(const MM::Device* caller, const char* deviceName) = 0;
       virtual MM::SignalIO* GetSignalIODevice(const MM::Device* caller, const char* deviceName) = 0;

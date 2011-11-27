@@ -675,8 +675,7 @@ void CMMCore::loadDevice(const char* label, const char* library, const char* dev
  */
 void CMMCore::loadPeripheralDevice(const char* label, const char* hubLabel, const char* adapterName) throw (CMMError)
 {
-   // find the hub
-   MM::Hub* pHub = getSpecificDevice<MM::Hub>(hubLabel);
+   getSpecificDevice<MM::Hub>(hubLabel); // this doesn't do anything, just throws in case the hub does not exist
    
    // create the device
    MM::Device* pDev = pluginManager_.LoadPeripheralDevice(label, hubLabel, adapterName);
@@ -686,27 +685,8 @@ void CMMCore::loadPeripheralDevice(const char* label, const char* hubLabel, cons
       throw CMMError(adapterName, MMERR_CreatePeripheralFailed);
    }
 
-   // Establish parent-child relationship
-   char id[MM::MaxStrLength];
-   pHub->GetID(id);
-
-   if (strlen(id) == 0)
-   {
-      // this hub does not have unique ID assigned so create one
-      string newID(GetMMTimeNow().serialize());
-
-      // check for duplicates
-      if (pluginManager_.GetDeviceFromID(newID.c_str()) != 0)
-         assert(false); // this can't happen
-
-      pHub->SetID(newID.c_str());
-   }
-   
-   // get the id again to make sure that eventual truncation is covered
-   pHub->GetID(id);
-
    // establish hub as this device's parent
-   pDev->SetID(id);
+   pDev->SetParentID(hubLabel);
 }
 
 /**
@@ -1027,6 +1007,34 @@ std::string CMMCore::getDeviceName(const char* label) throw (CMMError)
    pDevice->GetName(name);
    return string(name);
 }
+
+/**
+ * Returns parent device.
+ */
+std::string CMMCore::getParentLabel(const char* label) throw (CMMError)
+{
+   if (strcmp(label, MM::g_Keyword_CoreDevice) == 0)
+      return "";
+   
+   MM::Device* pDevice = getDevice(label);
+
+   char id[MM::MaxStrLength];
+   pDevice->GetParentID(id);
+   return string(id);
+}
+
+/**
+ * Sets parent device label
+ */ 
+void CMMCore::setParentLabel(const char* label, const char* parentLabel) throw (CMMError)
+{
+   if (strcmp(label, MM::g_Keyword_CoreDevice) == 0)
+      return; // core can't have parent ID
+   
+   MM::Device* pDev = getDevice(label);
+   pDev->SetParentID(parentLabel);
+}
+
 
 /**
  * Returns description text for a given device label.
@@ -5015,6 +5023,22 @@ void CMMCore::saveSystemConfiguration(const char* fileName) throw (CMMError)
       }
    }
 
+   // save the parent (hub) references
+   os << "# Hub references" << endl;
+   for (it=devices.begin(); it != devices.end(); it++)
+   {
+      MM::Device* pDev = pluginManager_.GetDevice((*it).c_str());
+      char parentID[MM::MaxStrLength];
+      pDev->GetParentID(parentID);
+      if (strlen(parentID) > 0)
+      {
+         char label[MM::MaxStrLength];
+         pDev->GetLabel(label);
+         os << MM::g_CFGCommand_Property << ',' << label << ',' << parentID << endl;
+      }
+   }
+
+
    // insert the initialize command
    os << "Property,Core,Initialize,1" << endl;
 
@@ -5256,6 +5280,15 @@ void CMMCore::loadSystemConfiguration(const char* fileName) throw (CMMError)
                if (tokens.size() != 2)
                   throw CMMError(line, getCoreErrorText(MMERR_InvalidCFGEntry).c_str(), MMERR_InvalidCFGEntry);
                assignImageSynchro(tokens[1].c_str());
+            }
+            else if(tokens[0].compare(MM::g_CFGCommand_ParentID) == 0)
+            {
+               // set parent ID
+               // -------------
+               if (tokens.size() != 3)
+                  throw CMMError(line, getCoreErrorText(MMERR_InvalidCFGEntry).c_str(), MMERR_InvalidCFGEntry);
+
+               setParentLabel(tokens[1].c_str(), tokens[2].c_str());
             }
 
          }

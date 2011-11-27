@@ -137,6 +137,7 @@ namespace MM {
    const char* const g_Keyword_Transpose_MirrorY = "TransposeMirrorY";
    const char* const g_Keyword_Transpose_Correction = "TransposeCorrection";
    const char* const g_Keyword_Closed_Position = "ClosedPosition";
+   const char* const g_Keyword_HubID = "HubID";
 
 
    // image annotations
@@ -160,6 +161,7 @@ namespace MM {
    const char* const g_CFGCommand_ImageSynchro = "ImageSynchro";
    const char* const g_CFGCommand_ConfigPixelSize = "ConfigPixelSize";
    const char* const g_CFGCommand_PixelSize_um = "PixelSize_um";
+   const char* const g_CFGCommand_ParentID = "Parent";
 
    // configuration groups
    const char* const g_CFGGroup_System = "System";

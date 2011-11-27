@@ -222,20 +222,57 @@ public:
 
    MM::Hub* GetParentHub(const MM::Device* caller)
    {
-      char parentID[MM::MaxStrLength];
-      caller->GetParentID(parentID);
-      MM::Device* pDev = core_->pluginManager_.GetDeviceFromID(parentID);
-      if (pDev == 0)
+      char parentLabel[MM::MaxStrLength];
+      caller->GetParentID(parentLabel);
+      if (strlen(parentLabel) == 0)
          return 0;
 
-      if (pDev->GetType() != MM::HubDevice)
+      try
       {
-         assert(false);
-         return 0; // this should not happen
-      }
+         MM::Device* pDev = core_->pluginManager_.GetDevice(parentLabel); // this can throw
 
-      return static_cast<MM::Hub*> (pDev);
+         if (pDev->GetType() != MM::HubDevice)
+         {
+            assert(false);
+            return 0; // this should not happen
+         }
+
+         return static_cast<MM::Hub*> (pDev);
+      }
+      catch (...)
+      {
+         return 0;
+      }
    }
+
+   MM::Device* GetPeripheral(const MM::Device* caller, unsigned idx)
+   {
+      std::vector<MM::Device*> peripherals;
+      char hubLabel[MM::MaxStrLength];
+      caller->GetLabel(hubLabel);
+      std::vector<std::string> peripheralLabels = core_->pluginManager_.GetLoadedPeripherals(hubLabel);
+      try
+      {
+         if (idx < peripheralLabels.size())
+            return core_->pluginManager_.GetDevice(peripheralLabels[idx].c_str());
+         else
+            return 0;
+      }
+      catch(...)
+      {
+         // this should not happen
+         assert(false);
+         return 0;
+      }
+   }
+
+   unsigned GetNumberOfPeripherals(const MM::Device* caller)
+   {
+      char hubLabel[MM::MaxStrLength];
+      caller->GetLabel(hubLabel);
+      return core_->pluginManager_.GetLoadedPeripherals(hubLabel).size();
+   }
+
 
    void GetLoadedDeviceOfType(const MM::Device* /* caller */, MM::DeviceType devType,  char* deviceName, const unsigned int deviceIterator)
    {

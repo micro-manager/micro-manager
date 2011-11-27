@@ -459,30 +459,6 @@ MM::Device* CPluginManager::GetDevice(const char* label) const
 }
 
 /**
- * Obtains the device corresponding to the ID
- * @param label device label
- * @return pointer to the device or 0 if ID is not found
- */
-MM::Device* CPluginManager::GetDeviceFromID(const char* lookupID) const
-{
-   if (strlen(lookupID) == 0)
-      return 0; // empty id is do-not-care value, so we don't search
-
-   // list all devices and check for a match
-   CDeviceMap::const_iterator it;
-   for (it=devices_.begin(); it != devices_.end(); it++)
-   {
-      char id[MM::MaxStrLength];
-      it->second->GetID(id);
-      if (strncmp(lookupID, id, MM::MaxStrLength) == 0)
-         return it->second; // found
-   }
-
-   // not found
-   return 0;
-}
-
-/**
  * Obtains the label corresponding to the device pointer
  * @param pDevice device pointer
  * @param label device label
@@ -549,18 +525,11 @@ vector<string> CPluginManager::GetLoadedPeripherals(const char* label) const
       return labels;
    }
 
-   MM::Hub* pHub = static_cast<MM::Hub*> (pDev);
-   char id[MM::MaxStrLength];
-   pHub->GetID(id);
-
-   if (strlen(id) == 0)
-      return labels;
-
    for (size_t i=0; i<devArray_.size(); i++)
    {
       char parentID[MM::MaxStrLength];
       devArray_[i]->GetParentID(parentID);
-      if (strncmp(id, parentID, MM::MaxStrLength) == 0)
+      if (strncmp(label, parentID, MM::MaxStrLength) == 0)
       {
          char buf[MM::MaxStrLength];
          devArray_[i]->GetLabel(buf);

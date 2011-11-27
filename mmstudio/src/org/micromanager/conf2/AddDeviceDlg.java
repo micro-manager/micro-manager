@@ -456,7 +456,9 @@ public class AddDeviceDlg extends MMDialog implements MouseListener,
                   Device sel[] = dlgp.getSelectedPeripherals();
                   for (int i=0; i<sel.length; i++) {
                      try {
-                        core_.loadDevice(sel[i].getName(), sel[i].getLibrary(), sel[i].getAdapterName());
+                        //core_.loadDevice(sel[i].getName(), sel[i].getLibrary(), sel[i].getAdapterName());
+                        core_.loadPeripheralDevice(sel[i].getName(), dev.getName(), sel[i].getAdapterName());
+                        sel[i].setParentHub(dev.getName());
                         model_.addDevice(sel[i]);
                         sel[i].loadDataFromHardware(core_);
                         
@@ -478,6 +480,7 @@ public class AddDeviceDlg extends MMDialog implements MouseListener,
                         JOptionPane.showMessageDialog(this, e.getMessage());
                      } catch (Exception e) {
                         JOptionPane.showMessageDialog(this, e.getMessage());
+                     } finally {
                      }
                   }
                } 
