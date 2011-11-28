@@ -1,14 +1,15 @@
 package org.micromanager.conf2;
 
 import java.awt.BorderLayout;
-import java.awt.Container;
-import java.awt.Cursor;
 import java.awt.FlowLayout;
-import java.awt.Rectangle;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.util.Vector;
-import java.util.prefs.Preferences;
 
 import javax.swing.JButton;
+import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
@@ -16,21 +17,11 @@ import javax.swing.JTable;
 import javax.swing.ListSelectionModel;
 import javax.swing.border.EmptyBorder;
 import javax.swing.table.AbstractTableModel;
-import javax.swing.table.TableModel;
 
 import mmcorej.CMMCore;
 import mmcorej.MMCoreJ;
-import mmcorej.StrVector;
 
-import org.micromanager.conf2.PeripheralDevicesPage.DeviceTable_TableModel;
 import org.micromanager.utils.MMDialog;
-import org.micromanager.utils.ReportingUtils;
-//import java.awt.Dialog.ModalityType;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.awt.event.WindowAdapter;
-import java.awt.event.WindowEvent;
-import javax.swing.JLabel;
 
 public class PeripheralSetupDlg extends MMDialog {
 
