@@ -513,7 +513,7 @@ public class MicroscopeModel {
          }
       }
    }
-   
+      
    /**
     * Copy the configuration presets from the hardware and override the current
     * setup data.
@@ -955,6 +955,21 @@ public class MicroscopeModel {
          }
          out.newLine();
 
+         // HUBID
+         out.write("# Hub (parent) references");
+         out.newLine();
+         for (int i = 0; i < devices_.size(); i++) {
+            Device dev = devices_.get(i);
+            String parentID = dev.getParentHub();
+            if (!parentID.isEmpty()) {
+                  out.write(MMCoreJ.getG_CFGCommand_ParentID() + ","
+                           + dev.getName() + "," + parentID);
+                  out.newLine();
+            }
+         }
+         out.newLine();
+
+         
          // initialize
          out.write("# Initialize");
          out.newLine();
@@ -1218,6 +1233,16 @@ public class MicroscopeModel {
       Device[] devs = new Device[len];
       return devs;
    }
+   
+   public Device[] getChildDevices(Device hub) {
+      ArrayList<Device> children = new ArrayList<Device>();
+      for (int i=0; i<devices_.size(); i++) {
+         if (devices_.get(i).getParentHub().contentEquals(hub.getName()))
+            children.add(devices_.get(i));
+      }
+      
+      return children.toArray(new Device[children.size()]);
+   }
 
    // TODO: implement
    public void removePeripherals(String hubName, CMMCore core) {
@@ -1274,6 +1299,18 @@ public class MicroscopeModel {
       for (int i = 0; i < devices_.size(); i++) {
          Device dev = devices_.get(i);
          if (dev.getAdapterName().contentEquals(adapterName) && dev.getLibrary().contentEquals(library)) {
+            return true;
+         }
+      }
+      return false;
+   }
+   
+   boolean hasAdapterName(String library, String hubName, String adapterName) {
+      for (int i = 0; i < devices_.size(); i++) {
+         Device dev = devices_.get(i);
+         if (dev.getAdapterName().contentEquals(adapterName) &&
+             dev.getLibrary().contentEquals(library) &&
+             dev.getParentHub().contentEquals(hubName)) {
             return true;
          }
       }

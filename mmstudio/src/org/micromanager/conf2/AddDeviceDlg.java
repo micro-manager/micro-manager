@@ -440,7 +440,7 @@ public class AddDeviceDlg extends MMDialog implements MouseListener,
 
                for (int i = 0; i < installed.length; i++) {
                   try {
-                     if (!model_.hasAdapterName(dev.getLibrary(), installed[i])) {
+                     if (!model_.hasAdapterName(dev.getLibrary(), dev.getName(), installed[i])) {
                         String description = model_.getDeviceDescription(dev.getLibrary(), installed[i]);
                         Device newDev = new Device(installed[i], dev.getLibrary(), installed[i], description);
                         peripherals.add(newDev);

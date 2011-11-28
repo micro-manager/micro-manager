@@ -178,12 +178,15 @@ public class DeviceSetupDlg extends MMDialog {
 
    protected void onOK() {
       savePosition();
+      String oldName = dev.getName();
+      String newName = devLabel.getText();
+      
       if (dev.getName().compareTo(devLabel.getText()) != 0) {
          if (model.findDevice(devLabel.getText()) != null) {
             showMessage("Device name " + devLabel.getText() + " is already in use.\nPress Cancel and try again.");
             return;            
          }
-         
+          
          try {
             core.unloadDevice(dev.getName());
             dev.setInitialized(false);
@@ -195,6 +198,7 @@ public class DeviceSetupDlg extends MMDialog {
          
          dev.setName(devLabel.getText());
       }
+      
       Device d = model.findDevice(devLabel.getText());
       if (d==null) {
          showMessage("Device " + devLabel.getText() + " is not loaded properly.\nPress Cancel and try again.");
@@ -220,6 +224,16 @@ public class DeviceSetupDlg extends MMDialog {
          // initialization failed
          dev.setInitialized(false);
          return;
+      }
+      
+      // make sure parent refs are updated
+      if (!oldName.contentEquals(newName)) {
+         Device devs[] = model.getDevices();
+         for (int i=0; i<devs.length; i++) {
+            if (devs[i].getParentHub().contentEquals(oldName)) {
+               devs[i].setParentHub(newName);
+            }
+         }
       }
    }  
 
