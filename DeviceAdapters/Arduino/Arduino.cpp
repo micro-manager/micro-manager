@@ -390,6 +390,10 @@ CArduinoSwitch::CArduinoSwitch() :
    // Name
    ret = CreateProperty(MM::g_Keyword_Name, g_DeviceNameArduinoSwitch, MM::String, true);
    assert(DEVICE_OK == ret);
+
+   // parent ID display
+   CreateHubIDProperty();
+
 }
 
 CArduinoSwitch::~CArduinoSwitch()
@@ -1337,6 +1341,9 @@ CArduinoDA::CArduinoDA(int channel) :
    // Name
    nRet = CreateProperty(MM::g_Keyword_Name, name_.c_str(), MM::String, true);
    assert(DEVICE_OK == nRet);
+
+   // parent ID display
+   CreateHubIDProperty();
 }
 
 CArduinoDA::~CArduinoDA()
@@ -1528,6 +1535,9 @@ CArduinoShutter::CArduinoShutter() : initialized_(false), name_(g_DeviceNameArdu
    // Description
    ret = CreateProperty(MM::g_Keyword_Description, "Arduino shutter driver", MM::String, true);
    assert(DEVICE_OK == ret);
+
+   // parent ID display
+   CreateHubIDProperty();
 }
 
 CArduinoShutter::~CArduinoShutter()
@@ -1724,6 +1734,9 @@ CArduinoInput::CArduinoInput() :
    // Description
    ret = CreateProperty(MM::g_Keyword_Description, "Arduino shutter driver", MM::String, true);
    assert(DEVICE_OK == ret);
+
+   // parent ID display
+   CreateHubIDProperty();
 }
 
 CArduinoInput::~CArduinoInput()
@@ -1969,7 +1982,13 @@ int ArduinoInputMonitorThread::svc()
    while (!stop_)
    {
       long state;
-      aInput_.GetDigitalInput(&state);
+      int ret = aInput_.GetDigitalInput(&state);
+      if (ret != DEVICE_OK)
+      {
+         stop_ = true;
+         return ret;
+      }
+
       if (state != state_) 
       {
          aInput_.ReportStateChange(state);
