@@ -430,7 +430,7 @@ MM::Device* CPluginManager::LoadPeripheralDevice(const char* label, const char* 
 
    // make sure that each device carries a reference to the module it belongs to!!!
    // hub should do this internally, but we are just going to make sure and do it again
-   pDevice->SetModuleHandle(pHub->GetModuleHandleA());
+   pDevice->SetModuleHandle(pHub->GetModuleHandle());
    pDevice->SetLabel(label);
    char moduleName[MM::MaxStrLength];
    pHub->GetModuleName(moduleName);
@@ -448,7 +448,7 @@ MM::Device* CPluginManager::LoadPeripheralDevice(const char* label, const char* 
  * @param label device label
  * @return pointer to the device or 0 if the label is not recognized
  */
-MM::Device* CPluginManager::GetDevice(const char* label) const
+MM::Device* CPluginManager::GetDevice(const char* label) const throw (CMMError)
 {
    CDeviceMap::const_iterator it;
    it = devices_.find(label);
