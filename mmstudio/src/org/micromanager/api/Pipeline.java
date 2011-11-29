@@ -22,9 +22,6 @@ public interface Pipeline {
    public boolean stopHasBeenRequested();
    public long nextWakeTime();
    public void acquireSingle();
-   public void doSnap();
-   public void enableLiveMode(boolean on);
-   public boolean isLiveRunning();
    public void attachRunnable(int frame, int position,
                               int slice, int channel, Runnable runnable);
    public void clearRunnables();
