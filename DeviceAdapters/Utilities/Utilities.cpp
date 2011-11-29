@@ -1675,7 +1675,7 @@ int DAXYStage::GetXYStageSequenceMaxLength(long& nrEvents) const
 	if(ret !=DEVICE_OK) return ret;
 	ret = DADeviceY_->GetDASequenceMaxLength(y);
 	if(ret !=DEVICE_OK) return ret;
-	nrEvents = std::min(x,y);
+	nrEvents = (std::min)(x,y);
     return ret;
 }
 
