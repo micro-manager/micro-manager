@@ -722,17 +722,6 @@
   (load-mm)
   (add-to-album))
 
-(defn -doSnap [this]
-  (load-mm)
-  (do-snap))
-
-(defn -isLiveRunning [this]
-  @live-mode-running)
-
-(defn -enableLiveMode [this ^Boolean on]
-  (load-mm)
-  (enable-live-mode on))
-
 (defn -pause [this]
   (log "pause requested!")
   (swap! (.state this) assoc :pause true))
