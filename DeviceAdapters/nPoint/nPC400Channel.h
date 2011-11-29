@@ -70,8 +70,8 @@ public:
     int GetPos_(long& lPos);
     int GetPositionSteps(long& lPosSteps);
 
-    int nPC400CH::OnPositionSet(MM::PropertyBase* pProp, MM::ActionType eAct);
-    int nPC400CH::OnPositionGet(MM::PropertyBase* pProp, MM::ActionType eAct);
+    int OnPositionSet(MM::PropertyBase* pProp, MM::ActionType eAct);
+    int OnPositionGet(MM::PropertyBase* pProp, MM::ActionType eAct);
 
     // Set origin
     int SetOrigin() { return DEVICE_UNSUPPORTED_COMMAND; }
