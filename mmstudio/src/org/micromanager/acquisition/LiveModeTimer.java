@@ -97,8 +97,11 @@ public class LiveModeTimer extends javax.swing.Timer {
          return new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-               //check is user closed window
-               if (!gui_.isImageWindowOpen())                  
+               if (core_.getRemainingImageCount() == 0) {
+                  System.out.println("zero count");
+                  return;
+               }
+               if (!gui_.isImageWindowOpen())  //check is user closed window             
                   gui_.enableLiveMode(false);
                else
                   try {
@@ -106,6 +109,7 @@ public class LiveModeTimer extends javax.swing.Timer {
                      if(monochromeImg_ != img) {
                         monochromeImg_ = img;
                         gui_.displayImage(monochromeImg_);
+                        System.out.println(System.currentTimeMillis());
                      }
                   } catch (Exception ex) {
                      ReportingUtils.showError(ex);
@@ -118,8 +122,10 @@ public class LiveModeTimer extends javax.swing.Timer {
          return new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-               //check is user closed window
-               if (rgbWin_.windowClosed()) 
+               if (core_.getRemainingImageCount() == 0) {                  
+                  return;
+               }
+               if (rgbWin_.windowClosed())  //check is user closed window
                   gui_.enableLiveMode(false);
                else
                   try {
@@ -160,7 +166,7 @@ public class LiveModeTimer extends javax.swing.Timer {
 
             @Override
             public void actionPerformed(ActionEvent e) {
-               if (core_.getRemainingImageCount() == 0) {
+               if (core_.getRemainingImageCount() == 0) {                  
                   return;
                }
                if (multiCamWin_.windowClosed() || !gui_.acquisitionExists(gui_.MULTI_CAMERA_ACQ)) {
