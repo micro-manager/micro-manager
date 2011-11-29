@@ -57,7 +57,7 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
    final private ScrollbarWithLabel pSelector_;
    final private ScrollbarWithLabel tSelector_;
    final private ScrollbarWithLabel zSelector_;
-   final private MMImagePlus mmImagePlus_;
+//   final private MMImagePlus mmImagePlus_;
    final private int numComponents_;
    private AcquisitionEngine eng_;
    private boolean finished_ = false;
@@ -239,7 +239,7 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
          ReportingUtils.showError(ex, "Unable to determine acquisition type.");
       }
       virtualStack_ = new AcquisitionVirtualStack(width, height, type, null,
-              imageCache, 1 /* numGrayChannels * numSlices * numFrames */, this);
+              imageCache,  numGrayChannels * numSlices * numFrames , this);
       if (summaryMetadata.has("PositionIndex")) {
          try {
             virtualStack_.setPositionIndex(MDUtils.getPositionIndex(summaryMetadata));
@@ -248,9 +248,8 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
          }
       }
 
-      hc_ = new HyperstackControls(this);
-      mmImagePlus_ = createMMImagePlus(virtualStack_);
-      hyperImage_ = createHyperImage(numGrayChannels, numSlices, numFrames, virtualStack_, hc_);
+      hc_ = new HyperstackControls(this);     
+      hyperImage_ = createHyperImage(createMMImagePlus(virtualStack_), numGrayChannels, numSlices, numFrames, virtualStack_, hc_);
       applyPixelSizeCalibration(hyperImage_);
       createWindow(hyperImage_, hc_);
       tSelector_ = getTSelector();
@@ -343,6 +342,8 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
    private ScrollbarWithLabel getZSelector() {
       ScrollbarWithLabel zSelector = null;
       ImageWindow win = hyperImage_.getWindow();
+      if (hyperImage_.getNSlices() <= 1)
+         return null;
       if (win instanceof StackWindow) {
          try {
             zSelector = (ScrollbarWithLabel) JavaUtils.getRestrictedFieldValue((StackWindow) win, StackWindow.class, "zSelector");
@@ -532,13 +533,14 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
    }
 
    public int getStackSize() {
-      if (hyperImage_ != null) {
-         return getNumChannels() * getNumSlices() * getNumFrames();
-      } else if (mmImagePlus_ != null) {
-         return mmImagePlus_.getStackSize();
-      } else {
-         return 2;
-      }
+      if (hyperImage_ == null )
+         return -1;
+      int s = hyperImage_.getNSlices();
+      int c = hyperImage_.getNChannels();
+      int f = hyperImage_.getNFrames();
+      if ( (s > 1 && c > 1) || (c > 1 && f > 1) || (f > 1 && s > 1) )
+         return s * c * f;
+      return Math.max(Math.max(s, c), f);
    }
 
    public void updateAndDraw() {
@@ -840,19 +842,19 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
       return img;
    }
 
-   final public ImagePlus createHyperImage(int channels, int slices,
+   final public ImagePlus createHyperImage(MMImagePlus mmIP, int channels, int slices,
            int frames, final AcquisitionVirtualStack virtualStack,
            HyperstackControls hc) {
       final ImagePlus hyperImage;
-      mmImagePlus_.setNChannelsUnverified(channels);
-      mmImagePlus_.setNFramesUnverified(frames);
-      mmImagePlus_.setNSlicesUnverified(slices);
+      mmIP.setNChannelsUnverified(channels);
+      mmIP.setNFramesUnverified(frames);
+      mmIP.setNSlicesUnverified(slices);
       if (channels > 1) {
-         hyperImage = new MMCompositeImage(mmImagePlus_, CompositeImage.COMPOSITE);
+         hyperImage = new MMCompositeImage(mmIP, CompositeImage.COMPOSITE);
          hyperImage.setOpenAsHyperStack(true);
       } else {
-         hyperImage = mmImagePlus_;
-         mmImagePlus_.setOpenAsHyperStack(true);
+         hyperImage = mmIP;
+         mmIP.setOpenAsHyperStack(true);
       }
       return hyperImage;
    }

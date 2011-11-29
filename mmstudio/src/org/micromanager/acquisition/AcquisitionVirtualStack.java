@@ -33,6 +33,7 @@ public class AcquisitionVirtualStack extends ij.VirtualStack {
       width_ = width;
       height_ = height;
       nSlices_ = nSlices;
+      
       acq_ = acq;
       type_ = type;
    }
@@ -119,9 +120,16 @@ public class AcquisitionVirtualStack extends ij.VirtualStack {
       return ImageUtils.makeProcessor(type_, width_, height_, getPixels(flatIndex));
    }
 
+   
    @Override
    public int getSize() {
-      return acq_.getStackSize();
+      // returns the stack size of VirtualAcquisitionDisplay unless this size is -1
+      // which occurs in constructor while hyperImage_ is still null. In this case
+      // returns the number of slices speciefiec in AcquisitionVirtualStack constructor
+      int size = acq_.getStackSize();
+      if (size == -1)
+          return nSlices_;
+      return size;
    }
 
    @Override
