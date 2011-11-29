@@ -259,6 +259,124 @@ private:
    double originPos_;
 };
 
+// DAXYStage 
+
+class DAXYStage :
+	/*public MM::SequenceableXYStage,*/
+	public CXYStageBase<DAXYStage>
+{
+public:
+   DAXYStage();
+   ~DAXYStage();
+  
+   // Device API
+   // ----------
+   int Initialize();
+   int Shutdown();
+  
+   void GetName(char* pszName) const;
+   bool Busy();
+
+   // XYStage API
+   // -----------
+   int SetPositionUm(double x, double y);
+   int GetPositionUm(double& x, double& y);
+   int SetPositionSteps(long x, long y);
+   int GetPositionSteps(long& x, long& y);
+ 
+  int SetRelativePositionSteps(long x, long y);
+ 
+  int Home();
+  int Stop();
+  int SetOrigin();
+  //int Calibrate();
+  //int Calibrate1();
+  int GetLimitsUm(double& xMin, double& xMax, double& yMin, double& yMax);
+  int GetStepLimits(long& xMin, long& xMax, long& yMin, long& yMax);
+  double GetStepSizeXUm() {return stepSizeXUm_;}
+  double GetStepSizeYUm() {return stepSizeYUm_;}
+
+  // Sequence functions
+   int IsXYStageSequenceable(bool& isSequenceable) const;
+   
+   int GetXYStageSequenceMaxLength(long& nrEvents) const;
+   int StartXYStageSequence() const;
+   int StopXYStageSequence() const;
+   int ClearXYStageSequence();
+   int AddToXYStageSequence(double positionX, double positionY);
+   int SendXYStageSequence() const;
+   
+   // action interface
+   // ----------------
+   int OnPort(MM::PropertyBase* pProp, MM::ActionType eAct);
+
+   int OnDADeviceX(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnDADeviceY(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnStepSizeX(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnStepSizeY(MM::PropertyBase* pProp, MM::ActionType eAct);
+  // int OnPositionX(MM::PropertyBase* pProp, MM::ActionType eAct);
+  // int OnPositionY(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnStageMinVoltX(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnStageMaxVoltX(MM::PropertyBase* pProp, MM::ActionType eAct);
+   //int OnStageMinPosX(MM::PropertyBase* pProp, MM::ActionType eAct);
+   //int OnStageMaxPosX(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnStageMinVoltY(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnStageMaxVoltY(MM::PropertyBase* pProp, MM::ActionType eAct);
+   //int OnStageMinPosY(MM::PropertyBase* pProp, MM::ActionType eAct);
+   //int OnStageMaxPosY(MM::PropertyBase* pProp, MM::ActionType eAct);
+
+   double stepSizeXUm_;
+   double stepSizeYUm_;
+
+private:
+	/*
+   int OnBacklash(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnFinishError(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnError(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnOverShoot(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnWait(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnSpeed(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnMotorCtrl(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnVersion(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnNrMoveRepetitions(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnJSMirror(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnJSSwapXY(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnJSFastSpeed(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnJSSlowSpeed(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int GetPositionStepsSingle(char axis, long& steps);
+   int SetAxisDirection();
+   bool hasCommand(std::string commnand);
+   void Wait();
+   */
+
+
+   std::vector<std::string> availableDAs_;
+   std::string DADeviceNameX_;
+   std::string DADeviceNameY_;
+   MM::SignalIO* DADeviceX_;
+   MM::SignalIO* DADeviceY_;
+   bool initialized_;
+   double minDAVoltX_;
+   double maxDAVoltX_;
+   double minDAVoltY_;
+   double maxDAVoltY_;
+   double minStageVoltX_;
+   double maxStageVoltX_;
+   double minStageVoltY_;
+   double maxStageVoltY_;
+   double minStagePosX_;
+   double maxStagePosX_;
+   double minStagePosY_;
+   double maxStagePosY_;
+   double posX_;
+   double posY_;
+   double originPosX_;
+   double originPosY_;
+  
+   double answerTimeoutMs_;
+
+};
+
 /**
  * Treats an AutoFocus device as a Drive.
  * Can be used to make the AutoFocus offset appear in the position list
