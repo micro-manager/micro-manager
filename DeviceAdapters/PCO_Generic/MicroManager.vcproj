@@ -2,7 +2,7 @@
 <VisualStudioProject
 	ProjectType="Visual C++"
 	Version="9.00"
-	Name="PCO-Generic"
+	Name="PCO_Camera"
 	ProjectGUID="{391502E7-BAAF-42DF-9327-2114B73FF8DF}"
 	RootNamespace="MicroManager"
 	Keyword="Win32Proj"
@@ -245,7 +245,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="version.lib  nafxcw.lib ..\..\..\3rdparty\Pco\windows\pco_generic\Kamlib.lib"
-				OutputFile="$(OutDir)/mmgr_dal_PCO_Camera.dll"
+				OutputFile="$(OutDir)/mmgr_dal_$(ProjectName).dll"
 				LinkIncremental="1"
 				AdditionalLibraryDirectories="&quot;..\..\..\3rdparty\Microsoft\VisualC++\atlmfc\lib&quot;;..\..\..\3rdparty\PCO\Windows\pco_generic"
 				GenerateDebugInformation="true"
@@ -330,7 +330,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="version.lib  nafxcw.lib ..\..\..\3rdparty\Pco\windows\pco_generic\Kamlib64.lib"
-				OutputFile="$(OutDir)/mmgr_dal_PCO_Camera.dll"
+				OutputFile="$(OutDir)/mmgr_dal_$(ProjectName).dll"
 				LinkIncremental="1"
 				AdditionalLibraryDirectories="&quot;..\..\..\3rdparty\Microsoft\VisualC++\atlmfc\lib\ia64&quot;;..\..\..\3rdparty\PCO\Windows\pco_generic"
 				GenerateDebugInformation="true"

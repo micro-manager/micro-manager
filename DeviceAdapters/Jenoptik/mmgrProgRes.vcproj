@@ -2,7 +2,7 @@
 <VisualStudioProject
 	ProjectType="Visual C++"
 	Version="9.00"
-	Name="mmgrProgRes"
+	Name="ProgRes"
 	ProjectGUID="{9D891399-2C51-4BDA-8F44-3A8A506657BA}"
 	RootNamespace="mmgrProgRes"
 	Keyword="Win32Proj"
@@ -238,7 +238,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="shlwapi.lib"
-				OutputFile="$(OutDir)/mmgr_dal_ProgRes.dll"
+				OutputFile="$(OutDir)/mmgr_dal_$(ProjectName).dll"
 				LinkIncremental="1"
 				AdditionalLibraryDirectories="&quot;..\..\..\3rdparty\Microsoft\VisualC++\atlmfc\lib&quot;"
 				GenerateDebugInformation="true"
@@ -322,7 +322,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="shlwapi.lib"
-				OutputFile="$(OutDir)/mmgr_dal_ProgRes.dll"
+				OutputFile="$(OutDir)/mmgr_dal_$(ProjectName).dll"
 				LinkIncremental="1"
 				AdditionalLibraryDirectories="&quot;..\..\..\3rdparty\Microsoft\VisualC++\atlmfc\lib&quot;"
 				GenerateDebugInformation="true"

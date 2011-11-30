@@ -2,7 +2,7 @@
 <VisualStudioProject
 	ProjectType="Visual C++"
 	Version="9.00"
-	Name="PiperMmAdapter"
+	Name="Piper"
 	ProjectGUID="{8FDA6D04-7C5D-4061-8467-AE0C104A2C83}"
 	RootNamespace="PiperMmAdapter"
 	Keyword="Win32Proj"
@@ -245,7 +245,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="PiperAPI.lib"
-				OutputFile="$(OutDir)/mmgr_dal_Piper.dll"
+				OutputFile="$(OutDir)/mmgr_dal_$(ProjectName).dll"
 				LinkIncremental="1"
 				AdditionalLibraryDirectories="&quot;..\..\..\3rdparty\PiperAPI\Lib\$(PlatformName)&quot;;&quot;..\..\..\3rdparty\Microsoft\VisualC++\atlmfc\lib&quot;"
 				UACExecutionLevel="1"
@@ -334,7 +334,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="PiperAPI.lib"
-				OutputFile="$(OutDir)/mmgr_dal_Piper.dll"
+				OutputFile="$(OutDir)/mmgr_dal_$(ProjectName).dll"
 				LinkIncremental="1"
 				AdditionalLibraryDirectories="&quot;..\..\..\3rdparty\PiperAPI\Lib\$(PlatformName)&quot;;&quot;..\..\..\..\Program Files\Microsoft Visual Studio 9.0\VC\atlmfc\lib\amd64&quot;"
 				UACExecutionLevel="1"
