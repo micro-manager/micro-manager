@@ -238,7 +238,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="oldaapi32.lib olmem32.lib"
-				OutputFile="$(OutDir)/mmgr_dal_DTOpenLayer.dll"
+				OutputFile="$(OutDir)/mmgr_dal_$(ProjectName).dll"
 				LinkIncremental="1"
 				AdditionalLibraryDirectories="..\..\..\3rdparty\DataTranslation\SDK\Lib"
 				GenerateDebugInformation="true"
@@ -322,7 +322,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="oldaapi64.lib olmem64.lib"
-				OutputFile="$(OutDir)/mmgr_dal_DTOpenLayer.dll"
+				OutputFile="$(OutDir)/mmgr_dal_$(ProjectName).dll"
 				LinkIncremental="1"
 				AdditionalLibraryDirectories="..\..\..\3rdparty\DataTranslation\SDK\Lib64"
 				GenerateDebugInformation="true"

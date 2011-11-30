@@ -217,7 +217,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="MicroDrive.lib"
-				OutputFile="$(OutDir)\mmgr_dal_MCL_MicroDrive.dll"
+				OutputFile="$(OutDir)/mmgr_dal_$(ProjectName).dll"
 				AdditionalLibraryDirectories=""
 				GenerateDebugInformation="false"
 				OptimizeReferences="0"
@@ -296,7 +296,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="MicroDrive.lib"
-				OutputFile="$(OutDir)\mmgr_dal_MCL_MicroDrive.dll"
+				OutputFile="$(OutDir)/mmgr_dal_$(ProjectName).dll"
 				AdditionalLibraryDirectories=""
 				GenerateDebugInformation="false"
 				OptimizeReferences="0"

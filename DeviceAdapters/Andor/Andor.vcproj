@@ -240,7 +240,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="ATMCD32M.LIB"
-				OutputFile="$(OutDir)/mmgr_dal_Andor.dll"
+				OutputFile="$(OutDir)/mmgr_dal_$(ProjectName).dll"
 				LinkIncremental="1"
 				AdditionalLibraryDirectories="..\..\..\3rdparty\Andor\SDK"
 				GenerateDebugInformation="true"
@@ -324,7 +324,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="atmcd64m.lib"
-				OutputFile="$(OutDir)/mmgr_dal_Andor.dll"
+				OutputFile="$(OutDir)/mmgr_dal_$(ProjectName).dll"
 				LinkIncremental="1"
 				AdditionalLibraryDirectories="..\..\..\3rdparty\Andor\SDK"
 				GenerateDebugInformation="true"

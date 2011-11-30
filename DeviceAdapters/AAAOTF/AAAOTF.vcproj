@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="UTF-8"?>
+﻿<?xml version="1.0" encoding="UTF-8"?>
 <VisualStudioProject
 	ProjectType="Visual C++"
 	Version="9.00"
@@ -234,7 +234,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				ShowProgress="2"
-				OutputFile="$(OutDir)/mmgr_dal_AAAOTF.dll"
+				OutputFile="$(OutDir)/mmgr_dal_$(ProjectName).dll"
 				LinkIncremental="1"
 				AdditionalLibraryDirectories=""
 				GenerateDebugInformation="true"
@@ -316,7 +316,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				ShowProgress="2"
-				OutputFile="$(OutDir)/mmgr_dal_AAAOTF.dll"
+				OutputFile="$(OutDir)/mmgr_dal_$(ProjectName).dll"
 				LinkIncremental="1"
 				AdditionalLibraryDirectories=""
 				GenerateDebugInformation="true"

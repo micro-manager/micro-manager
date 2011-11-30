@@ -243,7 +243,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="Shell32.lib"
-				OutputFile="$(OutDir)/mmgr_dal_TIScam.dll"
+				OutputFile="$(OutDir)/mmgr_dal_$(ProjectName).dll"
 				LinkIncremental="1"
 				AdditionalLibraryDirectories="&quot;..\..\..\3rdpartypublic\boost\stage_$(PlatformName)\lib&quot;;&quot;..\..\..\3rdparty\TheImagingSource\classlib\$(PlatformName)\$(ConfigurationName)&quot;"
 				GenerateDebugInformation="true"
@@ -328,7 +328,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="Shell32.lib"
-				OutputFile="$(OutDir)/mmgr_dal_TIScam.dll"
+				OutputFile="$(OutDir)/mmgr_dal_$(ProjectName).dll"
 				LinkIncremental="1"
 				AdditionalLibraryDirectories="&quot;..\..\..\3rdpartypublic\boost\stage_$(PlatformName)\lib&quot;;&quot;..\..\..\3rdparty\TheImagingSource\classlib\$(PlatformName)\$(ConfigurationName)&quot;"
 				GenerateDebugInformation="true"

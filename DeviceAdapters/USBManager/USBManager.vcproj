@@ -238,7 +238,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="libusb.lib"
-				OutputFile="$(OutDir)/mmgr_dal_USBManager.dll"
+				OutputFile="$(OutDir)/mmgr_dal_$(ProjectName).dll"
 				LinkIncremental="1"
 				AdditionalLibraryDirectories="..\..\..\3rdpartypublic\libusb-win32-bin-1.2.3.0\lib\msvc_$(PlatformName)"
 				GenerateDebugInformation="true"
@@ -322,7 +322,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="libusb.lib"
-				OutputFile="$(OutDir)/mmgr_dal_USBManager.dll"
+				OutputFile="$(OutDir)/mmgr_dal_$(ProjectName).dll"
 				LinkIncremental="1"
 				AdditionalLibraryDirectories="..\..\..\3rdpartypublic\libusb-win32-bin-1.2.3.0\lib\msvc_$(PlatformName)"
 				GenerateDebugInformation="true"

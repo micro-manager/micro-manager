@@ -238,7 +238,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="inpout32.lib"
-				OutputFile="$(OutDir)/mmgr_dal_ParallelPort.dll"
+				OutputFile="$(OutDir)/mmgr_dal_$(ProjectName).dll"
 				LinkIncremental="1"
 				AdditionalLibraryDirectories="..\..\..\3rdparty\inpout32\lib"
 				GenerateDebugInformation="true"

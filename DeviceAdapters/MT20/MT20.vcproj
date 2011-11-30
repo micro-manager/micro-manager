@@ -211,7 +211,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="ws2_32.lib"
-				OutputFile="$(OutDir)\mmgr_dal_MT20.dll"
+				OutputFile="$(OutDir)/mmgr_dal_$(ProjectName).dll"
 				AdditionalLibraryDirectories=""
 				GenerateDebugInformation="true"
 				OptimizeReferences="2"
@@ -288,7 +288,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="ws2_32.lib"
-				OutputFile="$(OutDir)\mmgr_dal_MT20.dll"
+				OutputFile="$(OutDir)/mmgr_dal_$(ProjectName).dll"
 				AdditionalLibraryDirectories=""
 				GenerateDebugInformation="true"
 				OptimizeReferences="2"

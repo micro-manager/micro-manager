@@ -233,7 +233,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				OutputFile="$(OutDir)/mmgr_dal_VariLC.dll"
+				OutputFile="$(OutDir)/mmgr_dal_$(ProjectName).dll"
 				LinkIncremental="1"
 				AdditionalLibraryDirectories="&quot;..\..\..\3rdpartypublic\boost\stage_$(PlatformName)\lib&quot;"
 				GenerateDebugInformation="true"
@@ -315,7 +315,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				OutputFile="$(OutDir)/mmgr_dal_VariLC.dll"
+				OutputFile="$(OutDir)/mmgr_dal_$(ProjectName).dll"
 				LinkIncremental="1"
 				AdditionalLibraryDirectories="&quot;..\..\..\3rdpartypublic\boost\stage_$(PlatformName)\lib&quot;"
 				GenerateDebugInformation="true"
@@ -367,11 +367,11 @@
 				>
 			</File>
 			<File
-				RelativePath=".\VariLC.cpp"
+				RelativePath="..\..\MMDevice\Property.cpp"
 				>
 			</File>
 			<File
-				RelativePath="..\..\MMDevice\Property.cpp"
+				RelativePath=".\VariLC.cpp"
 				>
 			</File>
 		</Filter>
@@ -401,11 +401,11 @@
 				>
 			</File>
 			<File
-				RelativePath=".\VariLC.h"
+				RelativePath="..\..\MMDevice\Property.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\MMDevice\Property.h"
+				RelativePath=".\VariLC.h"
 				>
 			</File>
 		</Filter>
