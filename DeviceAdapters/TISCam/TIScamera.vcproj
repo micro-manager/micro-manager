@@ -2,7 +2,7 @@
 <VisualStudioProject
 	ProjectType="Visual C++"
 	Version="9.00"
-	Name="TIScamera"
+	Name="TIScam"
 	ProjectGUID="{205D835F-D939-4E0D-9516-061AB141480F}"
 	RootNamespace="TIScamera"
 	Keyword="Win32Proj"

@@ -2,7 +2,7 @@
 <VisualStudioProject
 	ProjectType="Visual C++"
 	Version="9.00"
-	Name="AndorSDK3"
+	Name="Andor3"
 	ProjectGUID="{A9E3F2DD-8B71-4FA3-9AFE-DC2040D2CDDD}"
 	RootNamespace="Andor"
 	Keyword="Win32Proj"

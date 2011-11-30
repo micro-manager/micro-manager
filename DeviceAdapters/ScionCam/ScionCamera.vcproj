@@ -2,7 +2,7 @@
 <VisualStudioProject
 	ProjectType="Visual C++"
 	Version="9.00"
-	Name="ScionCamera"
+	Name="ScionCam"
 	ProjectGUID="{799C21D4-0B94-4F88-8F16-243134A07346}"
 	RootNamespace="DemoCamera"
 	Keyword="Win32Proj"
