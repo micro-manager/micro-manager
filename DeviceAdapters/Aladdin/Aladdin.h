@@ -3,8 +3,8 @@
 // PROJECT:       Micro-Manager
 // SUBSYSTEM:     DeviceAdapters
 //-----------------------------------------------------------------------------
-// DESCRIPTION:   PrecisExcite controller adapter
-// COPYRIGHT:     University of California, San Francisco, 2009
+// DESCRIPTION:   Aladdin pump controller adapter
+// COPYRIGHT:     University of California, San Francisco, 2011
 // LICENSE:       This file is distributed under the BSD license.
 //                License text is included with the source distribution.
 //
@@ -16,7 +16,7 @@
 //                CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 //                INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 //
-// AUTHOR:        Arthur Edelstein, arthuredelstein@gmail.com, 3/17/2009
+// AUTHOR:        Kurt Thorn, UCSF, November 2011
 //
 //
 
