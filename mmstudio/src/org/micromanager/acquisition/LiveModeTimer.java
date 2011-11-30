@@ -62,7 +62,7 @@ public class LiveModeTimer extends javax.swing.Timer {
          initialize();
          try {
             core_.startContinuousSequenceAcquisition(0);
-            Thread.sleep(200);  //needed for core to correctly give 1st tagged image
+//            Thread.sleep(200);  //needed for core to correctly give 1st tagged image
             super.start();        
          } catch (Exception ex) {
             ReportingUtils.showError(ex);

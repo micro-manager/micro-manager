@@ -308,7 +308,7 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
    }
 
    private void doSnapColor() {
-  checkRGBAcquisition();
+    checkRGBAcquisition();
 
       try {
          setCursor(new Cursor(Cursor.WAIT_CURSOR));
@@ -325,6 +325,7 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
                     getAcquisitionImageByteDepth(RGB_ACQ) );
             
             addImage(RGB_ACQ,ti, true, true, false);
+            getAcquisition(RGB_ACQ).getAcquisitionWindow().setWindowTitle("RGB Snap");
   
       } catch (Exception ex) {
          ReportingUtils.showError(ex);
@@ -488,7 +489,7 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
     * This version does not (yet) support attachment of mouse listeners
     * for stage movement.
     */
-   private void doSnapMultiChannel()
+   private void doSnapMultiCamera()
    {
       checkMultiChannelWindow();
 
@@ -511,6 +512,7 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
             if (i == c -1)
                update = true;
             addImage(MULTI_CAMERA_ACQ,ti, update, true, false);
+            getAcquisition(MULTI_CAMERA_ACQ).getAcquisitionWindow().setWindowTitle("Multi Camera Snap");
          }
       } catch (Exception ex) {
          ReportingUtils.showError(ex);
@@ -3109,7 +3111,7 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
                }
                liveModeTimer_.start();
               
-
+               getAcquisition(MULTI_CAMERA_ACQ).getAcquisitionWindow().setWindowTitle("Multi Camera Live Mode (running)");
                
                if (autoShutterOrg_) {
                   toggleButtonShutter_.setEnabled(false);
@@ -3120,8 +3122,9 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
             }
          } else {                    
             try {
-                   liveModeTimer_.stop();
-            
+              liveModeTimer_.stop();
+              getAcquisition(MULTI_CAMERA_ACQ).getAcquisitionWindow().setWindowTitle("Multi Camera Live Mode (stopped)");
+              
               enableLiveModeListeners(false);
                
                // restore auto shutter and close the shutter
@@ -3178,9 +3181,8 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
 
                if (autoShutterOrg_) {
                   toggleButtonShutter_.setEnabled(false);
-               }
-               if (core_.getNumberOfCameraChannels() == 1)
-                  imageWin_.setSubTitle("Live (running)");
+               }         
+               imageWin_.setSubTitle("Live (running)");
             } catch (Exception err) {
                ReportingUtils.showError(err, "Failed to enable live mode.");
 
@@ -3221,17 +3223,28 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
    private void enableRGBLiveMode(boolean enable) {
       if (enable) {
          setLiveModeInterval();
-         if (liveModeTimer_ == null) 
+         if (liveModeTimer_ == null) {
             liveModeTimer_ = new LiveModeTimer((int) liveModeInterval_, LiveModeTimer.RGB);
-         else {
+         } else {
             liveModeTimer_.setDelay((int) liveModeInterval_);
             liveModeTimer_.setType(LiveModeTimer.RGB);
          }
          checkRGBAcquisition();
          liveModeTimer_.start();
-      } else
+         try {
+            getAcquisition(RGB_ACQ).getAcquisitionWindow().setWindowTitle("RGB Live Mode (running)");
+         } catch (MMScriptException ex) {
+            ReportingUtils.logError(ex);
+         }
+      } else {
          liveModeTimer_.stop();
-      
+         try {
+            getAcquisition(RGB_ACQ).getAcquisitionWindow().setWindowTitle("RGB Live Mode (stopped)");
+         } catch (MMScriptException ex) {
+            ReportingUtils.logError(ex);
+         }
+      }
+
    }
    
     public void updateButtonsForLiveMode() {
@@ -3368,7 +3381,7 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
          } else {
             if (core_.getNumberOfCameraChannels() > 1)
             {
-               doSnapMultiChannel();
+               doSnapMultiCamera();
             } else {
                doSnapMonochrome();
             }

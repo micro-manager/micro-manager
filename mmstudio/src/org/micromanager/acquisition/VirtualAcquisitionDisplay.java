@@ -57,12 +57,11 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
    final private ScrollbarWithLabel pSelector_;
    final private ScrollbarWithLabel tSelector_;
    final private ScrollbarWithLabel zSelector_;
-//   final private MMImagePlus mmImagePlus_;
    final private int numComponents_;
    private AcquisitionEngine eng_;
    private boolean finished_ = false;
    private boolean promptToSave_ = true;
-   private final String name_;
+   private String name_;
    private long lastDisplayTime_;
    private JSONObject lastDisplayTags_;
    private boolean updating_ = false;
@@ -266,7 +265,7 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
          updateChannelContrast(i);
       }
       updateAndDraw();
-      updateWindow();
+      updateWindow();      
    }
 
    /**
@@ -604,8 +603,12 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
       hc_.enableShowFolderButton(imageCache_.getDiskLocation() != null);
       String path = isDiskCached()
               ? new File(imageCache_.getDiskLocation()).getName() : name_;
+      
       if (hyperImage_.isVisible()) {
-         hyperImage_.getWindow().setTitle(path + " (" + status + ")");
+         if (name_.indexOf("Live") == -1 && name_.indexOf("Snap") == -1)
+            hyperImage_.getWindow().setTitle(path + " (" + status + ")");
+         else
+            hyperImage_.getWindow().setTitle(name_);
       }
 
    }
@@ -1297,5 +1300,10 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
          ReportingUtils.logError(ex);
          return null;
       }
+   }
+   
+   public void setWindowTitle(String name) {
+      name_ = name;
+      updateWindow();
    }
 }
