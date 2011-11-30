@@ -134,8 +134,8 @@ public class LiveModeTimer extends javax.swing.Timer {
                      MDUtils.setFrameIndex(ti.tags, 0);
                      MDUtils.setPositionIndex(ti.tags, 0);
                      MDUtils.setSliceIndex(ti.tags, 0);
-                     rgbWin_.getImageCache().putImage(ti);
-                     rgbWin_.showImage(ti.tags,true,false);
+                     gui_.addImage(gui_.RGB_ACQ, ti, true, true, false);
+                     
                   } catch (Exception ex) {
                      ReportingUtils.showError(ex);
                      gui_.enableLiveMode(false);
@@ -177,6 +177,7 @@ public class LiveModeTimer extends javax.swing.Timer {
                      String camera = core_.getCameraDevice();
 
                      TaggedImage ti = core_.getLastTaggedImage();
+
                      int channel = ti.tags.getInt(camera + "-" + CCHANNELINDEX);
                      images[channel] = ti;
                      int numFound = 1;

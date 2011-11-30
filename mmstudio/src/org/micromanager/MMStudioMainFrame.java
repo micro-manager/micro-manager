@@ -3123,7 +3123,8 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
          } else {                    
             try {
               liveModeTimer_.stop();
-              getAcquisition(MULTI_CAMERA_ACQ).getAcquisitionWindow().setWindowTitle("Multi Camera Live Mode (stopped)");
+              if (acqMgr_.acquisitionExists(MULTI_CAMERA_ACQ))
+                 getAcquisition(MULTI_CAMERA_ACQ).getAcquisitionWindow().setWindowTitle("Multi Camera Live Mode (stopped)");
               
               enableLiveModeListeners(false);
                
@@ -3239,7 +3240,8 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
       } else {
          liveModeTimer_.stop();
          try {
-            getAcquisition(RGB_ACQ).getAcquisitionWindow().setWindowTitle("RGB Live Mode (stopped)");
+            if (acqMgr_.acquisitionExists(RGB_ACQ))
+               getAcquisition(RGB_ACQ).getAcquisitionWindow().setWindowTitle("RGB Live Mode (stopped)");
          } catch (MMScriptException ex) {
             ReportingUtils.logError(ex);
          }
@@ -4881,8 +4883,6 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
       }
 
       liveModeInterval_ = interval;
-      //liveModeTimer_.setDelay((int) liveModeInterval_);
-      //liveModeTimer_.setInitialDelay(liveModeTimer_.getDelay());
    }
 
    public void logMessage(String msg) {

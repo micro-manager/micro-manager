@@ -246,7 +246,7 @@ public class MMAcquisition {
          else if (depth_ == 4 && core.getNumberOfComponents() == 1)
             ijType = ImagePlus.GRAY32;
          else if(depth_ == 4 && core.getNumberOfComponents() == 4)
-            ijType = ImagePlus.COLOR_RGB;        
+            ijType = ImagePlus.COLOR_RGB;
          summaryMetadata.put("IJType", ijType);
          summaryMetadata.put("MetadataVersion", 10);
          summaryMetadata.put("MicroManagerVersion", MMStudioMainFrame.getInstance().getVersion());
