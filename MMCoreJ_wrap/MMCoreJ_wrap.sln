@@ -83,9 +83,9 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "MCL_MicroDrive", "..\Device
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "MCL_NanoDrive", "..\DeviceAdapters\MCL_NanoDrive\NanoDrive_Device_Adapter.vcproj", "{06A4A3EA-9461-4780-B6EA-81004B3F3D56}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "PCO-Generic", "..\DeviceAdapters\PCO_Generic\MicroManager.vcproj", "{391502E7-BAAF-42DF-9327-2114B73FF8DF}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "PCO_Camera", "..\DeviceAdapters\PCO_Generic\MicroManager.vcproj", "{391502E7-BAAF-42DF-9327-2114B73FF8DF}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "PiperMmAdapter", "..\DeviceAdapters\Piper\PiperMmAdapter.vcproj", "{8FDA6D04-7C5D-4061-8467-AE0C104A2C83}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Piper", "..\DeviceAdapters\Piper\PiperMmAdapter.vcproj", "{8FDA6D04-7C5D-4061-8467-AE0C104A2C83}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ThorlabsSC10", "..\DeviceAdapters\ThorlabsSC10\ThorlabsSC10.vcproj", "{DEE8AF34-2F99-4AA8-AFDA-848DE44F1DB3}"
 EndProject
@@ -99,7 +99,7 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "CoherentCube", "..\DeviceAd
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Neos", "..\DeviceAdapters\Neos\Neos.vcproj", "{19B83E51-446A-41DC-8899-ED2D59679999}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ScionCamera", "..\DeviceAdapters\ScionCam\ScionCamera.vcproj", "{799C21D4-0B94-4F88-8F16-243134A07346}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ScionCam", "..\DeviceAdapters\ScionCam\ScionCamera.vcproj", "{799C21D4-0B94-4F88-8F16-243134A07346}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "DLP4000", "..\SecretDeviceAdapters\DLP4000\DLP4000.vcproj", "{5B9F9B2A-3E14-401E-8194-0E4442B0B0CB}"
 EndProject
@@ -111,7 +111,7 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "GenericSLM", "..\DeviceAdap
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "AndorLaserCombiner", "..\DeviceAdapters\AndorLaserCombiner\AndorLaserCombiner.vcproj", "{489AF9AB-7A0E-43DE-8483-3E4B8CCCBFCD}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "mmgrProgRes", "..\DeviceAdapters\Jenoptik\mmgrProgRes.vcproj", "{9D891399-2C51-4BDA-8F44-3A8A506657BA}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ProgRes", "..\DeviceAdapters\Jenoptik\mmgrProgRes.vcproj", "{9D891399-2C51-4BDA-8F44-3A8A506657BA}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "BaumerOptronic", "..\SecretDeviceAdapters\BaumerOptronic\BaumerOptronic.vcproj", "{B06A629B-7EAA-4265-A4C0-8A0EC03B00B0}"
 EndProject
@@ -125,7 +125,7 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "SerialManager", "..\DeviceA
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "PrincetonInstruments", "..\DeviceAdapters\PrincetonInstruments\PrincetonInstruments.vcproj", "{A28DEB4E-E645-4990-A91D-4A7FF6762240}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "TIScamera", "..\DeviceAdapters\TISCam\TIScamera.vcproj", "{205D835F-D939-4E0D-9516-061AB141480F}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "TIScam", "..\DeviceAdapters\TISCam\TIScamera.vcproj", "{205D835F-D939-4E0D-9516-061AB141480F}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "AgilentLaserCombiner", "..\DeviceAdapters\AgilentLaserCombiner\AgilentLaserCombiner.vcproj", "{CF60E682-EF19-4FDD-8060-DE80256C827C}"
 EndProject
@@ -171,7 +171,7 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ThorlabsDCxxxx", "..\Device
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "OpenCVgrabber", "..\DeviceAdapters\OpenCVgrabber\OpenCVgrabber.vcproj", "{028283B8-4E29-457E-9A78-AB6154A0F9D4}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "AndorSDK3", "..\DeviceAdapters\AndorSDK3\AndorSDK3.vcproj", "{A9E3F2DD-8B71-4FA3-9AFE-DC2040D2CDDD}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Andor3", "..\DeviceAdapters\AndorSDK3\AndorSDK3.vcproj", "{A9E3F2DD-8B71-4FA3-9AFE-DC2040D2CDDD}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "CARVII", "..\DeviceAdapters\CARVII\CARVII.vcproj", "{AA9B1613-8359-4944-B08D-B96639D0998E}"
 EndProject
@@ -190,6 +190,8 @@ EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "VariLC", "..\DeviceAdapters\VariLC\VariLC.vcproj", "{2B522528-9660-4B78-8E2A-000000000000}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Aladdin", "..\DeviceAdapters\Aladdin\Aladdin.vcproj", "{8BAA30B8-F062-42F3-A89C-D9E5A0912957}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ESIOImagingControllers", "..\SecretDeviceAdapters\ESImagingIOControllers\ESImagingIOControllers.vcproj", "{6C5DBBEC-8688-4B68-9928-118BB3891FD5}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -916,6 +918,14 @@ Global
 		{8BAA30B8-F062-42F3-A89C-D9E5A0912957}.Release|Win32.Build.0 = Release|Win32
 		{8BAA30B8-F062-42F3-A89C-D9E5A0912957}.Release|x64.ActiveCfg = Release|x64
 		{8BAA30B8-F062-42F3-A89C-D9E5A0912957}.Release|x64.Build.0 = Release|x64
+		{6C5DBBEC-8688-4B68-9928-118BB3891FD5}.Debug|Win32.ActiveCfg = Debug|Win32
+		{6C5DBBEC-8688-4B68-9928-118BB3891FD5}.Debug|Win32.Build.0 = Debug|Win32
+		{6C5DBBEC-8688-4B68-9928-118BB3891FD5}.Debug|x64.ActiveCfg = Debug|x64
+		{6C5DBBEC-8688-4B68-9928-118BB3891FD5}.Debug|x64.Build.0 = Debug|x64
+		{6C5DBBEC-8688-4B68-9928-118BB3891FD5}.Release|Win32.ActiveCfg = Release|Win32
+		{6C5DBBEC-8688-4B68-9928-118BB3891FD5}.Release|Win32.Build.0 = Release|Win32
+		{6C5DBBEC-8688-4B68-9928-118BB3891FD5}.Release|x64.ActiveCfg = Release|x64
+		{6C5DBBEC-8688-4B68-9928-118BB3891FD5}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
