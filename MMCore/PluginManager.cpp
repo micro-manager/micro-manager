@@ -173,10 +173,14 @@ HDEVMODULE CPluginManager::LoadPluginLibrary(const char* shortName)
       if (hMod)
          return (HDEVMODULE) hMod;
    #else
-      HDEVMODULE hMod = dlopen(name.c_str(), RTLD_NOW | RTLD_NOLOAD| RTLD_LOCAL);
+      int mode = RTLD_NOW | RTLD_LOCAL;
+      // Hack to make Andor adapter on Linux work
+      if (strcmp (shortName, "Andor") == 0)
+         mode = RTLD_LAZY | RTLD_NOLOAD | RTLD_LOCAL;
+      HDEVMODULE hMod = dlopen(name.c_str(), RTLD_NOLOAD | mode);
       if (hMod)
          return  hMod;
-      hMod = dlopen(name.c_str(), RTLD_NOW | RTLD_NODELETE | RTLD_LOCAL);
+      hMod = dlopen(name.c_str(), RTLD_NODELETE | mode);
       if (hMod)
          return  hMod;
    #endif // WIN32
