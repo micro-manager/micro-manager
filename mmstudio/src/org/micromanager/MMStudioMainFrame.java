@@ -197,6 +197,7 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
    private JToggleButton toggleButtonLive_;
    private JCheckBox autoShutterCheckBox_;
    private boolean shutterOriginalState_;
+   private boolean autoShutterOriginalState_;
    private MMOptions options_;
    private boolean runsAsPlugin_;
    private JCheckBoxMenuItem centerAndDragMenuItem_;
@@ -3076,9 +3077,12 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
       if (shutterLabel_.length() > 0) {
          if (enable) {
             shutterOriginalState_ = core_.getShutterOpen();
+            autoShutterOriginalState_ = core_.getAutoShutter();
+            core_.setAutoShutter(false);
             core_.setShutterOpen(true);
          } else {
             core_.setShutterOpen(shutterOriginalState_);
+            core_.setAutoShutter(autoShutterOriginalState_);
          }
       }
    }
