@@ -196,8 +196,7 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
    private JLabel labelImageDimensions_;
    private JToggleButton toggleButtonLive_;
    private JCheckBox autoShutterCheckBox_;
-   private boolean autoShutterOrg_;
-   private boolean shutterOrg_;
+   private boolean shutterOriginalState_;
    private MMOptions options_;
    private boolean runsAsPlugin_;
    private JCheckBoxMenuItem centerAndDragMenuItem_;
@@ -1783,21 +1782,33 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
       autoShutterCheckBox_ = new JCheckBox();
       autoShutterCheckBox_.setFont(new Font("Arial", Font.PLAIN, 10));
       autoShutterCheckBox_.addActionListener(new ActionListener() {
-
          public void actionPerformed(ActionEvent e) {
-            core_.setAutoShutter(autoShutterCheckBox_.isSelected());
-            if (shutterLabel_.length() > 0) {
+             shutterLabel_ = core_.getShutterDevice();
+             if (shutterLabel_.length() == 0) {
+                toggleButtonShutter_.setEnabled(false);
+                return;
+             }
+            if (autoShutterCheckBox_.isSelected()) {
                try {
-                  setShutterButton(core_.getShutterOpen());
-               } catch (Exception e1) {
-                  ReportingUtils.showError(e1);
+                  core_.setAutoShutter(true);
+                  core_.setShutterOpen(false);
+                  toggleButtonShutter_.setSelected(false);
+                  toggleButtonShutter_.setText("Open");
+                  toggleButtonShutter_.setEnabled(false);
+               } catch (Exception e2) {
+                  ReportingUtils.logError(e2);
+               }
+            } else {
+               try {
+               core_.setAutoShutter(false);
+               core_.setShutterOpen(false);
+               toggleButtonShutter_.setEnabled(true);
+               toggleButtonShutter_.setText("Open");
+               } catch (Exception exc) {
+                  ReportingUtils.logError(exc);
                }
             }
-            if (autoShutterCheckBox_.isSelected()) {
-               toggleButtonShutter_.setEnabled(false);
-            } else {
-               toggleButtonShutter_.setEnabled(true);
-            }
+          
          }
       });
       autoShutterCheckBox_.setIconTextGap(6);
@@ -2870,10 +2881,10 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
 
    private void setShutterButton(boolean state) {
       if (state) {
-         toggleButtonShutter_.setSelected(true);
+//         toggleButtonShutter_.setSelected(true);
          toggleButtonShutter_.setText("Close");
       } else {
-         toggleButtonShutter_.setSelected(false);
+//         toggleButtonShutter_.setSelected(false);
          toggleButtonShutter_.setText("Open");
       }
    }
@@ -3047,6 +3058,7 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
          return;
       if (enable == isLiveModeOn() )
          return;
+      setLiveModeInterval();
       if (core_.getNumberOfComponents() == 1) { //monochrome or multi camera
          multiChannelCameraNrCh_ = core_.getNumberOfCameraChannels();
          if (multiChannelCameraNrCh_ > 1) {
@@ -3056,9 +3068,33 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
             enableMonochromeLiveMode(enable);
       } else 
          enableRGBLiveMode(enable);    
-      updateButtonsForLiveMode();
+      updateButtonsForLiveMode(enable);
    }
    
+   private void manageShutterLiveMode(boolean enable) throws Exception {
+      shutterLabel_ = core_.getShutterDevice();
+      if (shutterLabel_.length() > 0) {
+         if (enable) {
+            shutterOriginalState_ = core_.getShutterOpen();
+            core_.setShutterOpen(true);
+         } else {
+            core_.setShutterOpen(shutterOriginalState_);
+         }
+      }
+   }
+
+   public void updateButtonsForLiveMode(boolean enable) {
+      toggleButtonShutter_.setEnabled(!enable);
+      autoShutterCheckBox_.setEnabled(!enable);
+      buttonSnap_.setEnabled(!enable);
+      toggleButtonLive_.setIcon(enable ? SwingResourceManager.getIcon(MMStudioMainFrame.class,
+              "/org/micromanager/icons/cancel.png")
+              : SwingResourceManager.getIcon(MMStudioMainFrame.class,
+              "/org/micromanager/icons/camera_go.png"));
+      toggleButtonLive_.setSelected(enable);
+      toggleButtonLive_.setText(enable ? "Stop Live" : "Live");
+   }
+
    private void enableLiveModeListeners(boolean enable) {
       if (enable) {
          // attach mouse wheel listener to control focus:
@@ -3087,21 +3123,7 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
             try {              
                checkMultiChannelWindow();
                getAcquisition(MULTI_CAMERA_ACQ).toFront();
-               
-               // turn off auto shutter and open the shutter
-               autoShutterOrg_ = core_.getAutoShutter();
-               if (shutterLabel_.length() > 0) {
-                  shutterOrg_ = core_.getShutterOpen();
-               }
-               core_.setAutoShutter(false);
-
-               shutterLabel_ = core_.getShutterDevice();
-               // only open the shutter when we have one and the Auto shutter
-               // checkbox was checked
-               if ((shutterLabel_.length() > 0) && autoShutterOrg_) {
-                  core_.setShutterOpen(true);
-               }
-
+  
                setLiveModeInterval();
                if (liveModeTimer_ == null) 
                   liveModeTimer_ = new LiveModeTimer((int) liveModeInterval_, LiveModeTimer.MULTI_CAMERA );
@@ -3109,14 +3131,10 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
                   liveModeTimer_.setDelay((int) liveModeInterval_);
                   liveModeTimer_.setType(LiveModeTimer.MULTI_CAMERA);  
                }
-               liveModeTimer_.start();
-              
+               manageShutterLiveMode(enable);
+               liveModeTimer_.start(); 
                getAcquisition(MULTI_CAMERA_ACQ).getAcquisitionWindow().setWindowTitle("Multi Camera Live Mode (running)");
-               
-               if (autoShutterOrg_) {
-                  toggleButtonShutter_.setEnabled(false);
-               }
-              
+          
             } catch (Exception err) {
                ReportingUtils.showError(err, "Failed to enable live mode.");
             }
@@ -3125,24 +3143,14 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
               liveModeTimer_.stop();
               if (acqMgr_.acquisitionExists(MULTI_CAMERA_ACQ))
                  getAcquisition(MULTI_CAMERA_ACQ).getAcquisitionWindow().setWindowTitle("Multi Camera Live Mode (stopped)");
-              
-              enableLiveModeListeners(false);
-               
-               // restore auto shutter and close the shutter
-               if (shutterLabel_.length() > 0) 
-                  core_.setShutterOpen(shutterOrg_);
-               core_.setAutoShutter(autoShutterOrg_);
-               if (autoShutterOrg_) 
-                  toggleButtonShutter_.setEnabled(false);
-               else 
-                  toggleButtonShutter_.setEnabled(true);
-                              
+                 manageShutterLiveMode(enable);
+                 enableLiveModeListeners(false);
             } catch (Exception err) {
                ReportingUtils.showError(err, "Failed to disable live mode.");              
             }
          }
      }
-   
+     
      private void enableMonochromeLiveMode(boolean enable) {
      if (enable) {
             try {               
@@ -3152,41 +3160,19 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
                   imageWin_.drawInfo(imageWin_.getGraphics());
                   imageWin_.toFront();
              
-
-               // turn off auto shutter and open the shutter
-               autoShutterOrg_ = core_.getAutoShutter();
-               if (shutterLabel_.length() > 0) {
-                  shutterOrg_ = core_.getShutterOpen();
-               }
-               core_.setAutoShutter(false);
-
-               shutterLabel_ = core_.getShutterDevice();
-               // only open the shutter when we have one and the Auto shutter
-               // checkbox was checked
-               if ((shutterLabel_.length() > 0) && autoShutterOrg_) {
-                  core_.setShutterOpen(true);
-               }
- 
                enableLiveModeListeners(enable);
-
-               setLiveModeInterval();
                if (liveModeTimer_ == null) 
                   liveModeTimer_ = new LiveModeTimer((int) liveModeInterval_,LiveModeTimer.MONOCHROME);
                else {
                   liveModeTimer_.setDelay((int) liveModeInterval_);
                   liveModeTimer_.setType(LiveModeTimer.MONOCHROME);
-               }
-                  
+               }                 
+               manageShutterLiveMode(enable);
                liveModeTimer_.start();
-               
-
-               if (autoShutterOrg_) {
-                  toggleButtonShutter_.setEnabled(false);
-               }         
+   
                imageWin_.setSubTitle("Live (running)");
             } catch (Exception err) {
                ReportingUtils.showError(err, "Failed to enable live mode.");
-
                if (imageWin_ != null) {
                   imageWin_.saveAttributes();
                   WindowManager.removeWindow(imageWin_);
@@ -3196,19 +3182,10 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
             }
          } else {         
             try {
-                   liveModeTimer_.stop();
-            
-              enableLiveModeListeners(enable);
-               
-               // restore auto shutter and close the shutter
-               if (shutterLabel_.length() > 0) 
-                  core_.setShutterOpen(shutterOrg_);
-               core_.setAutoShutter(autoShutterOrg_);
-               if (autoShutterOrg_) 
-                  toggleButtonShutter_.setEnabled(false);
-               else 
-                  toggleButtonShutter_.setEnabled(true);
-                     
+               liveModeTimer_.stop();
+               manageShutterLiveMode(enable);
+               enableLiveModeListeners(enable);
+
                imageWin_.setSubTitle("Live (stopped)");
             } catch (Exception err) {
                ReportingUtils.showError(err, "Failed to disable live mode.");
@@ -3231,34 +3208,24 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
             liveModeTimer_.setType(LiveModeTimer.RGB);
          }
          checkRGBAcquisition();
-         liveModeTimer_.start();
          try {
+           manageShutterLiveMode(enable);
+           liveModeTimer_.start();     
             getAcquisition(RGB_ACQ).getAcquisitionWindow().setWindowTitle("RGB Live Mode (running)");
-         } catch (MMScriptException ex) {
+         } catch (Exception ex) {
             ReportingUtils.logError(ex);
          }
       } else {
-         liveModeTimer_.stop();
          try {
+            liveModeTimer_.stop();
+            manageShutterLiveMode(enable);
             if (acqMgr_.acquisitionExists(RGB_ACQ))
                getAcquisition(RGB_ACQ).getAcquisitionWindow().setWindowTitle("RGB Live Mode (stopped)");
-         } catch (MMScriptException ex) {
+         } catch (Exception ex) {
             ReportingUtils.logError(ex);
          }
       }
 
-   }
-   
-    public void updateButtonsForLiveMode() {
-      boolean liveRunning = isLiveModeOn();
-       autoShutterCheckBox_.setEnabled(!liveRunning);
-      buttonSnap_.setEnabled(!liveRunning);
-      toggleButtonLive_.setIcon(liveRunning ? SwingResourceManager.getIcon(MMStudioMainFrame.class,
-              "/org/micromanager/icons/cancel.png")
-              : SwingResourceManager.getIcon(MMStudioMainFrame.class,
-              "/org/micromanager/icons/camera_go.png"));
-      toggleButtonLive_.setSelected(liveRunning);
-      toggleButtonLive_.setText(liveRunning ? "Stop Live" : "Live");
    }
 
    public boolean getLiveMode() {
@@ -3561,8 +3528,6 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
             } else {
                toggleButtonShutter_.setEnabled(true);
             }
-
-            autoShutterOrg_ = core_.getAutoShutter();
          }
 
          // active shutter combo
