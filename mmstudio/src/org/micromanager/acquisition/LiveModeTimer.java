@@ -142,24 +142,6 @@ public class LiveModeTimer extends javax.swing.Timer {
                   }
             }};
       } 
-      
-      private void displayMultiCamImages(final TaggedImage[] images) throws InterruptedException, InvocationTargetException {
-         SwingUtilities.invokeLater(new Runnable() {
-            @Override
-            public void run() {
-               try {
-                  int lastChannelToAdd = multiCamWin_.getHyperImage().getChannel() - 1;
-                  for (int i = 0; i < images.length; i++) 
-                     if (i != lastChannelToAdd) 
-                        gui_.addImage(gui_.MULTI_CAMERA_ACQ, images[i], false, true, false);
-                  gui_.addImage(gui_.MULTI_CAMERA_ACQ, images[lastChannelToAdd], true, true, false);
-               } catch (MMScriptException ex) {
-                  ReportingUtils.logError(ex);
-               }
-            }
-         });
-
-      }
 
       private ActionListener multiCamLiveAction() {
          return new ActionListener() {
@@ -203,9 +185,17 @@ public class LiveModeTimer extends javax.swing.Timer {
                            MDUtils.setFrameIndex(ti.tags, 0);
                            MDUtils.setPositionIndex(ti.tags, 0);
                            MDUtils.setSliceIndex(ti.tags, 0);
-                        }
-                        displayMultiCamImages(images);
-                     }
+                          }
+
+
+                          int lastChannelToAdd = multiCamWin_.getHyperImage().getChannel() - 1;
+                          for (int i = 0; i < images.length; i++) {
+                              if (i != lastChannelToAdd) {
+                                  gui_.addImage(MMStudioMainFrame.MULTI_CAMERA_ACQ, images[i], false, true, false);
+                              }
+                          }
+                          gui_.addImage(MMStudioMainFrame.MULTI_CAMERA_ACQ, images[lastChannelToAdd], true, true, false);
+                      }
 
                   } catch (Exception ex) {
                      ReportingUtils.logError(ex);
