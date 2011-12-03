@@ -1793,8 +1793,10 @@ bool ZStage::HasRingBuffer()
 int ZStage::StartStageSequence() const
 {
    string answer;
-   // Note, what to do with F axis????
-   int ret = QueryCommand("RM Y=4 Z=0", answer); // ensure that ringbuffer pointer points to first entry and that we only trigger the Z axis
+   std::string command = "RM Y=4 Z=0";
+   if (axis_ == "F")
+      command = "RM Y=5 Z=0";
+   int ret = QueryCommand(command.c_str(), answer); // ensure that ringbuffer pointer points to first entry and that we only trigger the Z axis
    if (ret != DEVICE_OK)
       return ret;
 
@@ -1836,16 +1838,15 @@ int ZStage::SendStageSequence() const
    {
       for (unsigned i=0; i< sequence_.size(); i++)
       {
-         // Note, what to do with F axis????
          ostringstream os;
          os.precision(0);
          // Strange, but this command needs <CR><LF>.  
-         os << fixed << "LD Z=" << sequence_[i] * 10 << "\r\n"; 
+         os << fixed << "LD " << axis_ << "=" << sequence_[i] * 10 << "\r\n"; 
          ret = QueryCommand(os.str().c_str(), answer);
          if (ret != DEVICE_OK)
             return ret;
 
-         // the asnwer will also have a :N-1 in it, ignore.
+         // the answer will also have a :N-1 in it, ignore.
          if (! (answer.substr(0,2).compare(":A") == 0 || answer.substr(1,2).compare(":A") == 0) )
             return ERR_UNRECOGNIZED_ANSWER;
       }
