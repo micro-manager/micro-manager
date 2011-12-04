@@ -153,7 +153,8 @@ curImageCnt_(0),
 circFrameSize_(10),
 sequenceModeReady_(false),
 timeOutBase(2),
-suspended_(0)
+suspended_(0),
+outputTriggerFirstMissing_(0)
 {
    InitializeDefaultErrorMessages();
 
@@ -276,6 +277,20 @@ int Universal::OnChipName(MM::PropertyBase* pProp, MM::ActionType eAct)
 
    return DEVICE_OK;
 
+}
+
+// OutputTriggerDelay
+int Universal::OnOutputTriggerFirstMissing(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   if (eAct == MM::AfterSet)
+   {
+      pProp->Get(outputTriggerFirstMissing_);
+   }
+   else if (eAct == MM::BeforeGet)
+   {
+      pProp->Set(outputTriggerFirstMissing_);
+   }
+   return DEVICE_OK;
 }
 
 // Sets and gets exposure
@@ -1259,6 +1274,13 @@ int Universal::Initialize()
    noSupportForStreaming_ = 
       (!PlGetParamSafe(hPVCAM_, PARAM_CIRC_BUFFER, ATTR_AVAIL, &availFlag) || !availFlag);
    */
+
+    // Frame Buffer Size.  On some systems, the driver can not allocate enough memory for 30 frames.  Set the number of frames to be used here:
+   pAct = new CPropertyAction (this, &Universal::OnOutputTriggerFirstMissing);
+   nRet = CreateProperty("OutputTriggerFirstMissing", "0", MM::Integer, false, pAct);
+   AddAllowedValue("OutputTriggerFirstMissing", "0");
+   AddAllowedValue("OutputTriggerFirstMissing", "1");
+
 
    // setup the buffer
    // ----------------

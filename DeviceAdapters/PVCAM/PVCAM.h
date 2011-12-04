@@ -202,6 +202,7 @@ public:
 #endif
    int OnTriggerMode(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnTriggerTimeOut(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnOutputTriggerFirstMissing(MM::PropertyBase* pProp, MM::ActionType eAct); 
 
    // Thread-safe param access:
    rs_bool PlSetParamSafe(int16 hcam, uns32 param_id, void_ptr param_value);
@@ -297,6 +298,7 @@ private:
    friend class AcqSequenceThread;
    AcqSequenceThread*   uniAcqThd_;             // Pointer to the sequencing thread
 
+   long outputTriggerFirstMissing_;
 };
 
 /*
