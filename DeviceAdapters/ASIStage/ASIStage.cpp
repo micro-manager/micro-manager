@@ -1795,7 +1795,7 @@ int ZStage::StartStageSequence() const
    string answer;
    std::string command = "RM Y=4 Z=0";
    if (axis_ == "F")
-      command = "RM Y=5 Z=0";
+      command = "RM Y=8 Z=0";
    int ret = QueryCommand(command.c_str(), answer); // ensure that ringbuffer pointer points to first entry and that we only trigger the Z axis
    if (ret != DEVICE_OK)
       return ret;
