@@ -222,27 +222,10 @@ public:
 
    MM::Hub* GetParentHub(const MM::Device* caller) const
    {
-      char parentLabel[MM::MaxStrLength];
-      caller->GetParentID(parentLabel);
-      if (strlen(parentLabel) == 0)
+      if (caller == 0)
          return 0;
 
-      try
-      {
-         MM::Device* pDev = core_->pluginManager_.GetDevice(parentLabel); // this can throw
-
-         if (pDev->GetType() != MM::HubDevice)
-         {
-            assert(false);
-            return 0; // this should not happen
-         }
-
-         return static_cast<MM::Hub*> (pDev);
-      }
-      catch (...)
-      {
-         return 0;
-      }
+      return dynamic_cast<MM::Hub*>(core_->pluginManager_.GetParentDevice(*caller));
    }
 
    MM::Device* GetPeripheral(const MM::Device* caller, unsigned idx) const
@@ -270,7 +253,7 @@ public:
    {
       char hubLabel[MM::MaxStrLength];
       caller->GetLabel(hubLabel);
-      return core_->pluginManager_.GetLoadedPeripherals(hubLabel).size();
+      return (unsigned) core_->pluginManager_.GetLoadedPeripherals(hubLabel).size();
    }
 
 

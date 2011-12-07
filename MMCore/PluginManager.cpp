@@ -507,6 +507,50 @@ vector<string> CPluginManager::GetDeviceList(MM::DeviceType type) const
 }
 
 /**
+ * Returns parent device or null if there is none
+ */
+MM::Device* CPluginManager::GetParentDevice(const MM::Device& dev) const
+{
+   char parentLabel[MM::MaxStrLength];
+   dev.GetParentID(parentLabel);
+   char module[MM::MaxStrLength];
+   dev.GetModuleName(module);
+
+   if (strlen(parentLabel) == 0)
+   {
+      // no parent specified, but we will try to infer one anyway
+      vector<string> hubList = GetDeviceList(MM::HubDevice);
+      MM::Hub* parentHub = 0;
+      for (vector<string>::size_type i = 0; i<hubList.size(); i++)
+      {
+         MM::Hub* pHub = dynamic_cast<MM::Hub*>(devices_.find(hubList[i])->second);
+         assert(pHub);
+         char hubModule[MM::MaxStrLength];
+         pHub->GetModuleName(hubModule);
+         if (strlen(module) > 0 && strncmp(module, hubModule, MM::MaxStrLength) == 0)
+         {
+            if (parentHub == 0)
+               parentHub = pHub;
+            else
+               return 0; // more than one hub matches, so we can't really tell
+         }
+      }
+      return parentHub;
+   }
+   else
+   {
+      // parent label is specified, we'll try to get the actual device
+      CDeviceMap::const_iterator it;
+      it = devices_.find(parentLabel);
+      if (it == devices_.end() || it->second == 0)
+         return 0; // no such device
+      else
+         return it->second;
+   }
+}
+
+
+/**
  * Obtains the list of labels for all currently loaded devices of the specific type.
  * Use type MM::AnyDevice to obtain labels for the entire system.
  * @return vector of device labels

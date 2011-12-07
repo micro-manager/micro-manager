@@ -62,7 +62,7 @@ public:
 
    int PurgeComPortH() {return PurgeComPort(port_.c_str());}
    int WriteToComPortH(const unsigned char* command, unsigned len) {return WriteToComPort(port_.c_str(), command, len);}
-   int ReadFromComPortH(unsigned char* answer, unsigned maxLen, unsigned long bytesRead)
+   int ReadFromComPortH(unsigned char* answer, unsigned maxLen, unsigned long& bytesRead)
    {
       return ReadFromComPort(port_.c_str(), answer, maxLen, bytesRead);
    }
