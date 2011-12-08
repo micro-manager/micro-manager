@@ -37,13 +37,16 @@
 ; Java Preferences
 
 (defn partition-str [n s]
-  (loop [rem s acc []]
-    (if (pos? (.length rem))
-      (recur (.substring rem n)
-             (conj acc (.substring rem 0 n)))
-      (seq acc))))
+  (loop [rem s
+         acc []]
+    ;(println n)
+    (let [l (.length rem)]
+      (if (pos? l)
+        (recur (if (< n l) (.substring rem n) "")
+               (conj acc (.substring rem 0 (min l n))))
+        (seq acc)))))
 
-(def pref-max-bytes (* 3/4 Preferences/MAX_VALUE_LENGTH))
+(def pref-max-bytes (int (* 3/4 Preferences/MAX_VALUE_LENGTH)))
 
 (defn write-value-to-prefs
   "Writes a pure clojure data structure to Preferences object."
