@@ -1249,7 +1249,10 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
       try {
          return new Color(getChannelSetting(channelIndex).getInt("Color"));
       } catch (Exception ex) {
-         return MMStudioMainFrame.getInstance().getChannelColor(getChannelNames()[channelIndex], Color.WHITE.getRGB());
+         String[] channelNames = getChannelNames();
+         if (channelNames != null)
+            return MMStudioMainFrame.getInstance().getChannelColor(getChannelNames()[channelIndex], Color.WHITE.getRGB());
+         return Color.WHITE;
       }
    }
 
