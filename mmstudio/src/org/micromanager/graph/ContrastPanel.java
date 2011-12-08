@@ -396,7 +396,7 @@ public class ContrastPanel extends JPanel implements ImageController,
 		modeComboBox_.setFont(new Font("", Font.PLAIN, 10));
 		modeComboBox_.addActionListener(new ActionListener() {
 			public void actionPerformed(final ActionEvent e) {
-				setIntensityMode(modeComboBox_.getSelectedIndex()-1);
+				setIntensityMode(modeComboBox_.getSelectedIndex()-1,true);
 			}
 		});
 		modeComboBox_.setModel(new DefaultComboBoxModel(new String[] {
@@ -449,7 +449,7 @@ public class ContrastPanel extends JPanel implements ImageController,
 	  
 	   // override histogram depth based on the selected mode 
 	   if (!forceDepth && modeComboBox_.getSelectedIndex() > 0) {
-         setIntensityMode(modeComboBox_.getSelectedIndex()-1); 
+         setIntensityMode(modeComboBox_.getSelectedIndex()-1,true); 
       }
 	  
 	   if (forceDepth) { // update the mode display to camera-auto
@@ -545,7 +545,7 @@ public class ContrastPanel extends JPanel implements ImageController,
       }
    }
 	 
-	private void setIntensityMode(int mode) {
+	private void setIntensityMode(int mode, boolean updateContrast) {
 		switch (mode) {
 		case 0: 
 			maxIntensity_ = 255;
@@ -566,7 +566,7 @@ public class ContrastPanel extends JPanel implements ImageController,
 			break;
 		}
 		binSize_ = (maxIntensity_ + 1) / HIST_BINS;
-		update();
+		update(updateContrast);
 	}
 
 	protected void onSliderMove() {
@@ -609,29 +609,38 @@ public class ContrastPanel extends JPanel implements ImageController,
        }
    }
 
-
-	public void update() {
-      // calculate histogram
+   public void update(boolean updateHistogram) {
+       // calculate histogram
       if (image_ == null || image_.getProcessor() == null)
          return;
       if (stretchCheckBox_.isSelected()) {
          setAutoScale();
       }
-      
-      updateHistogram();
+      if (updateHistogram)
+         updateHistogram();
       setLutGamma(gamma_);
 
       image_.updateAndDraw();
+   }
+
+	public void update() {
+      update(true);
 	}
 
 
 	// override from ImageController
-	public void setImagePlus(ImagePlus ip, ContrastSettings cs8bit,
+	 public void setImagePlus(ImagePlus ip, ContrastSettings cs8bit,
 			ContrastSettings cs16bit) {
+       setImagePlus(ip,cs8bit,cs16bit,true);
+    }
+   
+   
+   private void setImagePlus(ImagePlus ip, ContrastSettings cs8bit,
+			ContrastSettings cs16bit, boolean updateContrast) {
       cs8bit_ = cs8bit;
       cs16bit_ = cs16bit;
 		image_ = ip;
-		setIntensityMode(modeComboBox_.getSelectedIndex()-1);
+		setIntensityMode(modeComboBox_.getSelectedIndex()-1,updateContrast);
 	}
 
 	/**
@@ -829,7 +838,7 @@ public class ContrastPanel extends JPanel implements ImageController,
 //    ImageProcessor proc = imgp.getChannelProcessor();
       double min = imgp.getDisplayRangeMin();
       double max = imgp.getDisplayRangeMax();
-        setImagePlus(imgp, new ContrastSettings(min, max), new ContrastSettings(min, max));
+        setImagePlus(imgp, new ContrastSettings(min, max), new ContrastSettings(min, max),true);
               imageUpdated(imgp);
 //    update();
    }
@@ -862,12 +871,12 @@ public class ContrastPanel extends JPanel implements ImageController,
    }
 
    public void updateContrast(ImagePlus ip) {
-      updateHistogram(ip);
       if (stretchCheckBox_.isSelected()) {
          double min = ip.getDisplayRangeMin();
          double max = ip.getDisplayRangeMax();
-         setImagePlus(ip, new ContrastSettings(min, max), new ContrastSettings(min, max));
+         setImagePlus(ip, new ContrastSettings(min, max), new ContrastSettings(min, max),false);
       }
+      updateHistogram(ip);
    }
 
    public void onLeftCursor(double pos) {
