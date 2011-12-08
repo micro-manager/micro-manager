@@ -98,7 +98,6 @@ public class LiveModeTimer extends javax.swing.Timer {
             @Override
             public void actionPerformed(ActionEvent e) {
                if (core_.getRemainingImageCount() == 0) {
-                  System.out.println("zero count");
                   return;
                }
                if (!gui_.isImageWindowOpen())  //check is user closed window             
@@ -109,7 +108,6 @@ public class LiveModeTimer extends javax.swing.Timer {
                      if(monochromeImg_ != img) {
                         monochromeImg_ = img;
                         gui_.displayImage(monochromeImg_);
-                        System.out.println(System.currentTimeMillis());
                      }
                   } catch (Exception ex) {
                      ReportingUtils.showError(ex);
