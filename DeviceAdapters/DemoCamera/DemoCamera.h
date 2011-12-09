@@ -49,8 +49,7 @@
 #define ERR_SEQUENCE_INACTIVE    105
 #define ERR_STAGE_MOVING         106
 #define SIMULATED_ERROR          200
-
-
+#define HUB_NOT_AVAILABLE        107
 
 ////////////////////////
 // DemoHub

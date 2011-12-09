@@ -69,7 +69,7 @@ const char* const g_Msg_SEQUENCE_ACQUISITION_THREAD_EXITING="Sequence thread exi
 const char* const g_Msg_DEVICE_CAMERA_BUSY_ACQUIRING="Camera is busy acquiring images.  Stop camera activity before changing this property";
 const char* const g_Msg_DEVICE_CAN_NOT_SET_PROPERTY="The device can not set this property at this moment";
 const char* const g_Msg_DEVICE_NOT_CONNECTED="Unable to communicate with the device.";
-const char* const g_Msg_DEVICE_COMM_HUB_MISSING="Restart Hardware Configuration from the beginning, and define the communication hub or microscope device for this equipment!";
+const char* const g_Msg_DEVICE_COMM_HUB_MISSING= "Parent module (Hub) is not available or defined for this device!";
 const char* const g_Msg_DEVICE_DUPLICATE_LIBRARY="Duplicate Device Library Name";
 const char* const g_Msg_DEVICE_PROPERTY_NOT_SEQUENCEABLE="This property is not sequenceable";
 

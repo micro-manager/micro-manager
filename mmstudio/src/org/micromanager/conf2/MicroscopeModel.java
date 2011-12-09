@@ -1618,6 +1618,10 @@ public class MicroscopeModel {
       for (Device d : devices_) {
          if (!d.isInitialized() && !d.isCore()) {
             try { 
+               String parentHub = d.getParentHub();
+               if (!parentHub.isEmpty())
+                  core_.setParentLabel(d.getName(), parentHub);
+               
                core_.initializeDevice(d.getName());
                d.loadDataFromHardware(core_);
                d.setInitialized(true);

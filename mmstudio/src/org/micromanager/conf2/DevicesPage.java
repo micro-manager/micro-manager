@@ -378,6 +378,16 @@ public class DevicesPage extends PagePanel implements ListSelectionListener {
                    "To avoid making any changes exit the wizard without saving the configuration.");
              return false;
           }
+          
+          // refresh parent ID references (backward compatibility with old config files)
+          try {
+             if (d.getParentHub().isEmpty()) {
+                String parentID = core_.getParentLabel(d.getName());
+                d.setParentHub(parentID);
+             }
+         } catch (Exception e) {
+            ReportingUtils.logError(e);
+         }
        }
        return true;
     }
