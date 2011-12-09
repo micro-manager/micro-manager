@@ -500,10 +500,11 @@
                (set-stage-position z-drive z)))
           (for [runnable (event :runnables)]
             #(.run runnable))
-          #(do (wait-for-pending-devices)
-               (expose event)
-               (collect event out-queue)
-               (stop-trigger)))))))
+          #(device-best-effort (core getCameraDevice)
+             (wait-for-pending-devices)
+             (expose event)
+             (collect event out-queue)
+             (stop-trigger)))))))
 
 (defn execute [event-fns]
   (doseq [event-fn event-fns :while (not (:stop @state))]
