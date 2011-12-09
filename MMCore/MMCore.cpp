@@ -860,6 +860,11 @@ void CMMCore::initializeAllDevices() throw (CMMError)
 {
    vector<string> devices = pluginManager_.GetDeviceList();
    CORE_LOG1("Starting initialization sequence for %d devices...\n", devices.size());
+
+   // we are doing two pass intialization to make sure that hubs are always initialized before
+   // other devices
+
+   // first go through hubs and initialize them
    for (size_t i=0; i<devices.size(); i++)
    {
       MM::Device* pDevice;
@@ -871,14 +876,42 @@ void CMMCore::initializeAllDevices() throw (CMMError)
          logError(devices[i].c_str(), err.getMsg().c_str(), __FILE__, __LINE__);
          throw;
       }
-      int nRet = pDevice->Initialize();
-      if (nRet != DEVICE_OK)
+      if (pDevice->GetType() == MM::HubDevice)
       {
-         logError(devices[i].c_str(), getDeviceErrorText(nRet, pDevice).c_str(), __FILE__, __LINE__);
-         throw CMMError(getDeviceErrorText(nRet, pDevice).c_str(), MMERR_DEVICE_GENERIC);
+         int nRet = pDevice->Initialize();
+         if (nRet != DEVICE_OK)
+         {
+            logError(devices[i].c_str(), getDeviceErrorText(nRet, pDevice).c_str(), __FILE__, __LINE__);
+            throw CMMError(getDeviceErrorText(nRet, pDevice).c_str(), MMERR_DEVICE_GENERIC);
+         }
+         CORE_LOG1("Device %s initialized.\n", devices[i].c_str());
       }
 
-      CORE_LOG1("Device %s initialized.\n", devices[i].c_str());
+   }
+
+   // now initialize other devices
+   for (size_t i=0; i<devices.size(); i++)
+   {
+      MM::Device* pDevice;
+      try {
+         pDevice = pluginManager_.GetDevice(devices[i].c_str());
+      }
+      catch (CMMError& err) {
+         err.setCoreMsg(getCoreErrorText(err.getCode()).c_str());
+         logError(devices[i].c_str(), err.getMsg().c_str(), __FILE__, __LINE__);
+         throw;
+      }
+      if (pDevice->GetType() != MM::HubDevice)
+      {
+         int nRet = pDevice->Initialize();
+         if (nRet != DEVICE_OK)
+         {
+            logError(devices[i].c_str(), getDeviceErrorText(nRet, pDevice).c_str(), __FILE__, __LINE__);
+            throw CMMError(getDeviceErrorText(nRet, pDevice).c_str(), MMERR_DEVICE_GENERIC);
+         }
+         CORE_LOG1("Device %s initialized.\n", devices[i].c_str());
+      }
+
    }
 
    updateCoreProperties();

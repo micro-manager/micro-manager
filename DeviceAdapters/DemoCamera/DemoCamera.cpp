@@ -1842,6 +1842,10 @@ int CDemoFilterWheel::Initialize()
    if (pHub->GenerateRandomError())
       return SIMULATED_ERROR;
 
+   char hubLabel[MM::MaxStrLength];
+   pHub->GetLabel(hubLabel);
+   SetParentID(hubLabel); // for backward comp.
+
    if (initialized_)
       return DEVICE_OK;
 
@@ -2002,6 +2006,10 @@ int CDemoStateDevice::Initialize()
 
    if (pHub->GenerateRandomError())
       return SIMULATED_ERROR;
+
+   char hubLabel[MM::MaxStrLength];
+   pHub->GetLabel(hubLabel);
+   SetParentID(hubLabel); // for backward comp.
 
    if (initialized_)
       return DEVICE_OK;
@@ -2170,6 +2178,10 @@ int CDemoLightPath::Initialize()
    if (pHub->GenerateRandomError())
       return SIMULATED_ERROR;
 
+   char hubLabel[MM::MaxStrLength];
+   pHub->GetLabel(hubLabel);
+   SetParentID(hubLabel); // for backward comp.
+
    if (initialized_)
       return DEVICE_OK;
 
@@ -2297,6 +2309,10 @@ int CDemoObjectiveTurret::Initialize()
 
    if (pHub->GenerateRandomError())
       return SIMULATED_ERROR;
+
+   char hubLabel[MM::MaxStrLength];
+   pHub->GetLabel(hubLabel);
+   SetParentID(hubLabel); // for backward comp.
 
    if (initialized_)
       return DEVICE_OK;
@@ -2492,6 +2508,10 @@ int CDemoStage::Initialize()
    if (pHub->GenerateRandomError())
       return SIMULATED_ERROR;
 
+   char hubLabel[MM::MaxStrLength];
+   pHub->GetLabel(hubLabel);
+   SetParentID(hubLabel); // for backward comp.
+
    if (initialized_)
       return DEVICE_OK;
 
@@ -2632,6 +2652,10 @@ int CDemoXYStage::Initialize()
    if (pHub->GenerateRandomError())
       return SIMULATED_ERROR;
 
+   char hubLabel[MM::MaxStrLength];
+   pHub->GetLabel(hubLabel);
+   SetParentID(hubLabel); // for backward comp.
+
    if (initialized_)
       return DEVICE_OK;
 
@@ -2705,6 +2729,10 @@ int DemoShutter::Initialize()
 
    if (pHub->GenerateRandomError())
       return SIMULATED_ERROR;
+
+   char hubLabel[MM::MaxStrLength];
+   pHub->GetLabel(hubLabel);
+   SetParentID(hubLabel); // for backward comp.
 
    if (initialized_)
       return DEVICE_OK;
@@ -2816,6 +2844,10 @@ int DemoMagnifier::Initialize()
    if (pHub->GenerateRandomError())
       return SIMULATED_ERROR;
 
+   char hubLabel[MM::MaxStrLength];
+   pHub->GetLabel(hubLabel);
+   SetParentID(hubLabel); // for backward comp.
+
    CPropertyAction* pAct = new CPropertyAction (this, &DemoMagnifier::OnPosition);
    int ret = CreateProperty("Position", "1x", MM::String, false, pAct); 
    if (ret != DEVICE_OK) 
@@ -2921,6 +2953,10 @@ int DemoDA::Initialize()
 
    if (pHub->GenerateRandomError())
       return SIMULATED_ERROR;
+
+   char hubLabel[MM::MaxStrLength];
+   pHub->GetLabel(hubLabel);
+   SetParentID(hubLabel); // for backward comp.
 
    // Triggers to test sequence capabilities
    CPropertyAction* pAct = new CPropertyAction (this, &DemoDA::OnTrigger);
@@ -3096,6 +3132,10 @@ int DemoAutoFocus::Initialize()
    if (pHub->GenerateRandomError())
       return SIMULATED_ERROR;
 
+   char hubLabel[MM::MaxStrLength];
+   pHub->GetLabel(hubLabel);
+   SetParentID(hubLabel); // for backward comp.
+
    if (initialized_)
       return DEVICE_OK;
 
@@ -3132,6 +3172,10 @@ int TransposeProcessor::Initialize()
 
    if (pHub->GenerateRandomError())
       return SIMULATED_ERROR;
+
+   char hubLabel[MM::MaxStrLength];
+   pHub->GetLabel(hubLabel);
+   SetParentID(hubLabel); // for backward comp.
 
    if( NULL != this->pTemp_)
    {
