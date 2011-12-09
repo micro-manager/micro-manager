@@ -401,10 +401,20 @@
               0))
          z-ref))))
 
+(defn update-z-positions [msp-index]
+  (let [msp (get-msp msp-index)]
+    (dotimes [i (.size msp)]
+      (let [stage-pos (.get msp i)
+            stage-name (.stageName stage-pos)]
+        (when (= 1 (.numAxes stage-pos))
+          (when (or (not (core isContinuousFocusEnabled))
+                    (core isContinuousFocusDrive stage-name))
+            (set-msp-z-position msp-index stage-name (get-z-stage-position stage-name))))))))
+
 (defn recall-z-reference [current-position]
   (let [z-drive (@state :default-z-drive)]
-    (when (and (or (not (core isContinuousFocusEnabled))
-                   (core isContinuousFocusDrive z-drive)))
+    (when (or (not (core isContinuousFocusEnabled))
+              (core isContinuousFocusDrive z-drive))
       (set-z-stage-position z-drive
         (or (get-msp-z-position current-position z-drive)
             (@state :reference-z))))))
@@ -414,7 +424,6 @@
     (when (and (or (not (core isContinuousFocusEnabled))
                    (core isContinuousFocusDrive z-drive)))
       (let [z (get-z-stage-position z-drive)]
-        (set-msp-z-position current-position z-drive z)
         (state-assoc! :reference-z z)))))
 
 ;; startup and shutdown
@@ -495,6 +504,7 @@
              (run-autofocus))
           #(when check-z-ref
              (store-z-reference current-position))
+          #(update-z-positions current-position)
           #(when z-drive
              (let [z (compute-z-position event)]
                (set-stage-position z-drive z)))
