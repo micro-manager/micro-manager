@@ -55,10 +55,26 @@ public:
    int OnLogic(MM::PropertyBase* pPropt, MM::ActionType eAct);
    int OnVersion(MM::PropertyBase* pPropt, MM::ActionType eAct);
 
+   bool IsPortAvailable() {return portAvailable_;}
+   bool IsLogicInverted() {return invertedLogic_;}
+   bool IsTimedOutputActive() {return timedOutputActive_;}
+   void SetTimedOutput(bool active) {timedOutputActive_ = active;}
+
+   int PurgeComPortH() {return PurgeComPort(port_.c_str());}
+   int WriteToComPortH(const unsigned char* command, unsigned len) {return WriteToComPort(port_.c_str(), command, len);}
+   int ReadFromComPortH(unsigned char* answer, unsigned maxLen, unsigned long& bytesRead)
+   {
+      return ReadFromComPort(port_.c_str(), answer, maxLen, bytesRead);
+   }
+
 private:
    int GetControllerVersion(int&);
    std::string port_;
    bool initialized_;
+   bool portAvailable_;
+   bool invertedLogic_;
+   bool timedOutputActive_;
+
 };
 
 class CArduinoShutter : public CShutterBase<CArduinoShutter>  
@@ -209,7 +225,7 @@ public:
    int ReportStateChange(long newState);
 
 private:
-   int ReadNBytes(unsigned int n, unsigned char* answer);
+   int ReadNBytes(CArduinoHub* h, unsigned int n, unsigned char* answer);
    int SetPullUp(int pin, int state);
 
    MMThreadLock lock_;
