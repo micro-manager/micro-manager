@@ -1,5 +1,5 @@
 Microsoft Visual Studio Solution File, Format Version 10.00
-# Visual Studio 2008
+# Visual C++ Express 2008
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "MMCore", "..\MMCore\MMCore.vcproj", "{36571628-728C-4ACD-A47F-503BA91C5D43}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "MMCoreJ_wrap", "MMCoreJ_wrap.vcproj", "{EFA68887-8A97-49D7-BAB4-768E15A4E597}"
@@ -192,6 +192,8 @@ EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Aladdin", "..\DeviceAdapters\Aladdin\Aladdin.vcproj", "{8BAA30B8-F062-42F3-A89C-D9E5A0912957}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ESIOImagingControllers", "..\SecretDeviceAdapters\ESImagingIOControllers\ESImagingIOControllers.vcproj", "{6C5DBBEC-8688-4B68-9928-118BB3891FD5}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Cobolt", "..\DeviceAdapters\Cobolt\Cobolt.vcproj", "{7EEA4183-1A52-4DC7-8839-9BEF31B59F98}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -926,6 +928,13 @@ Global
 		{6C5DBBEC-8688-4B68-9928-118BB3891FD5}.Release|Win32.Build.0 = Release|Win32
 		{6C5DBBEC-8688-4B68-9928-118BB3891FD5}.Release|x64.ActiveCfg = Release|x64
 		{6C5DBBEC-8688-4B68-9928-118BB3891FD5}.Release|x64.Build.0 = Release|x64
+		{7EEA4183-1A52-4DC7-8839-9BEF31B59F98}.Debug|Win32.ActiveCfg = Debug|Win32
+		{7EEA4183-1A52-4DC7-8839-9BEF31B59F98}.Debug|Win32.Build.0 = Debug|Win32
+		{7EEA4183-1A52-4DC7-8839-9BEF31B59F98}.Debug|x64.ActiveCfg = Debug|x64
+		{7EEA4183-1A52-4DC7-8839-9BEF31B59F98}.Debug|x64.Build.0 = Debug|x64
+		{7EEA4183-1A52-4DC7-8839-9BEF31B59F98}.Release|Win32.ActiveCfg = Release|Win32
+		{7EEA4183-1A52-4DC7-8839-9BEF31B59F98}.Release|Win32.Build.0 = Release|Win32
+		{7EEA4183-1A52-4DC7-8839-9BEF31B59F98}.Release|x64.ActiveCfg = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
