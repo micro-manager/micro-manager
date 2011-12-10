@@ -418,9 +418,10 @@ public class ChannelControlPanel extends javax.swing.JPanel {
       int min;
       int max;
       if (autostretch_) {
+         int[] histogram = acq_.getChannelHistogram(channelIndex_);
          if (rejectOutliers_) {
             int totalPoints = acq_.getHyperImage().getWidth() * acq_.getHyperImage().getHeight();
-            int[] histogram = acq_.getChannelHistogram(channelIndex_);
+            
 
             if (histogram != null) {
                HistogramUtils hu = new HistogramUtils(histogram, totalPoints, fractionToReject_);
@@ -431,8 +432,8 @@ public class ChannelControlPanel extends javax.swing.JPanel {
                max = getMax();
             }
          } else {
-            min = getMin();
-            max = getMax();
+            min = getMin(histogram);
+            max = getMax(histogram);
          }
       } else {
          min = acq_.getChannelMin(channelIndex_);
@@ -498,10 +499,12 @@ public class ChannelControlPanel extends javax.swing.JPanel {
       }
    }
 
-
    private int getMin() {
-
       int[] histogram = acq_.getChannelHistogram(channelIndex_);
+      return getMin(histogram);
+   }
+
+   private int getMin(int[] histogram) {
       if (histogram != null) {
          int min = 0;
          for (int i = 0; i < histogram.length; ++i) {
@@ -514,9 +517,13 @@ public class ChannelControlPanel extends javax.swing.JPanel {
          return 0;
       }
    }
-
+   
    private int getMax() {
       int[] histogram = acq_.getChannelHistogram(channelIndex_);
+      return getMax(histogram);
+   }
+
+   private int getMax(int[] histogram) {
       if (histogram != null) {
          int min = 0;
          int max = 0;

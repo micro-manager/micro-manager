@@ -3019,38 +3019,42 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
    }
 
    public boolean isImageWindowOpen() {
-      boolean ret = imageWin_ != null;
-      ret = ret && !imageWin_.isClosed();
-      if (ret) {
-         try {
-            Graphics g = imageWin_.getGraphics();
-            if (null != g) {
-               int ww = imageWin_.getWidth();
-               g.clearRect(0, 0, ww, 40);
-               imageWin_.drawInfo(g);
-            } else {
-               // explicitly clean up if Graphics is null, rather
-               // than cleaning up in the exception handler below..
-               WindowManager.removeWindow(imageWin_);
-               imageWin_.saveAttributes();
-               imageWin_.dispose();
-               imageWin_ = null;
-               ret = false;
-            }
+      return (imageWin_ != null) && (!imageWin_.isClosed());
+   }
 
-         } catch (Exception e) {
+   /**
+    * This function was split out of isImageWindowOpen to avoid running this code
+    * on every call to isImageWindowOpen
+    * It is currently not called but kept here in case it becomes clear when it is
+    * needed (if ever).
+    */
+   public void updateImageWinInfo() {
+      try {
+         Graphics g = imageWin_.getGraphics();
+         if (null != g) {
+            int ww = imageWin_.getWidth();
+            g.clearRect(0, 0, ww, 40);
+            imageWin_.drawInfo(g);
+         } else {
+            // explicitly clean up if Graphics is null, rather
+            // than cleaning up in the exception handler below..
             WindowManager.removeWindow(imageWin_);
             imageWin_.saveAttributes();
             imageWin_.dispose();
             imageWin_ = null;
-            ReportingUtils.showError(e);
-            ret = false;
          }
-      }
-      return ret;
-   }
 
-     public boolean isLiveModeOn() {
+      } catch (Exception e) {
+         WindowManager.removeWindow(imageWin_);
+         imageWin_.saveAttributes();
+         imageWin_.dispose();
+         imageWin_ = null;
+         ReportingUtils.showError(e);
+      }
+   }
+       
+
+    public boolean isLiveModeOn() {
         return liveModeTimer_ != null && liveModeTimer_.isRunning();
    }
    
