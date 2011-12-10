@@ -434,7 +434,7 @@ public class ContrastPanel extends JPanel implements ImageController,
 		springLayout.putConstraint(SpringLayout.WEST, logHistCheckBox_, 1,
 				SpringLayout.WEST, this);
 
-//      ImagePlus.addImageListener(this);
+      ImagePlus.addImageListener(this);
       GUIUtils.registerImageFocusListener(this);
 	}
 
