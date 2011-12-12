@@ -414,7 +414,7 @@ import org.micromanager.utils.ReportingUtils;
    public String getPort() {
       for (int i=0; i<getNumberOfProperties(); i++) {
          PropertyItem p = getProperty(i);
-         if (p.name.compareTo(MMCoreJ.getG_Keyword_Port()) == 0) {
+         if (p != null && p.name.compareTo(MMCoreJ.getG_Keyword_Port()) == 0) {
             return p.value;
          }
       }
