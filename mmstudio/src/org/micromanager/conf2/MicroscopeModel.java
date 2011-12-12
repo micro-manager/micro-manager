@@ -1521,8 +1521,8 @@ public class MicroscopeModel {
          Device devs[] = getDevices();
          for (int i = 0; i < devs.length; i++) {
             if (!devs[i].isCore()) {
-               c.loadDevice(devs[i].getName(), devs[i].getLibrary(),
-                     devs[i].getAdapterName());
+               c.loadDevice(devs[i].getName(), devs[i].getLibrary(), devs[i].getAdapterName());
+               c.setParentLabel(devs[i].getName(), devs[i].getParentHub());
             }
          }
          

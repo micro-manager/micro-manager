@@ -194,7 +194,8 @@ public class DeviceSetupDlg extends MMDialog {
          try {
             core.unloadDevice(dev.getName());
             dev.setInitialized(false);
-            core.loadDevice(devLabel.getText(), dev.getLibrary(), dev.getAdapterName());         
+            core.loadDevice(devLabel.getText(), dev.getLibrary(), dev.getAdapterName()); 
+            core.setParentLabel(devLabel.getText(), dev.getParentHub());
          } catch (Exception e) {
             showMessage("Device failed to re-load with changed name.");
             return;

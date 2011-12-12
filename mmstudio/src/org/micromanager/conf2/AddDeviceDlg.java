@@ -459,6 +459,7 @@ public class AddDeviceDlg extends MMDialog implements MouseListener,
                         core_.loadDevice(sel[i].getName(), sel[i].getLibrary(), sel[i].getAdapterName());
                         //core_.loadPeripheralDevice(sel[i].getName(), dev.getName(), sel[i].getAdapterName());
                         sel[i].setParentHub(dev.getName());
+                        core_.setParentLabel(sel[i].getName(), dev.getName());
                         model_.addDevice(sel[i]);
                         sel[i].loadDataFromHardware(core_);
                         

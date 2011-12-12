@@ -242,6 +242,7 @@ public class DevicesPage extends PagePanel implements ListSelectionListener {
             try {
                core_.loadDevice(sel[i].getName(), sel[i].getLibrary(), sel[i].getAdapterName());
                sel[i].setParentHub(dev.getName());
+               core_.setParentLabel(sel[i].getName(), dev.getName());
                sel[i].loadDataFromHardware(core_);
                model_.addDevice(sel[i]);
                
