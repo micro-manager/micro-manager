@@ -19,7 +19,6 @@ License along with this software.  If not, see
 */
 
 #include "DiConIlluminator.h"
-#include <setupapi.h>
 #include "../../MMDevice/ModuleInterface.h"
 #include "../../MMCore/Error.h"
 
