@@ -48,23 +48,23 @@ set include
 
 echo continue working in:
 cd
-set buildswitch=BUILD
-IF "%1%"=="FULL" SET buildswitch=REBUILD
+set buildswitch=
+IF "%1%"=="FULL" SET buildswitch=/rebuild
 
 echo building core with command:
-echo devenv /%buildswitch% "Release|x64" .\MMCore\MMCore.vcproj
-devenv /%buildswitch% "Release|x64" .\MMCore\MMCore.vcproj
+echo vcbuild /M8 %buildswitch% .\MMCore\MMCore.vcproj "Release|x64"
+vcbuild /M8 %buildswitch% .\MMCore\MMCore.vcproj "Release|x64"
 
 echo building python wrapper with command:
-echo devenv /%buildswitch% Release .\MMCorePy_wrap\MMCorePy_wrap.sln
-devenv /%buildswitch% Release .\MMCorePy_wrap\MMCorePy_wrap.sln
+echo vcbuild /M8 %buildswitch% .\MMCorePy_wrap\MMCorePy_wrap.sln "Release|x64"
+vcbuild /M8 %buildswitch% .\MMCorePy_wrap\MMCorePy_wrap.sln "Release|x64"
 copy .\bin_x64\MMCorePy.py .\Install_x64\micro-manager
 copy .\bin_x64\_MMCorePy.pyd .\Install_x64\micro-manager
 copy .\MMCorePy_wrap\MMCoreWrapDemo.py .\Install_x64\micro-manager
 
 echo building Java wrapper with command:
-echo devenv /%buildswitch% "Release|x64" .\MMCoreJ_wrap\MMCoreJ_wrap.sln
-devenv /%buildswitch% "Release|x64" .\MMCoreJ_wrap\MMCoreJ_wrap.sln
+echo vcbuild /M8 %buildswitch% .\MMCoreJ_wrap\MMCoreJ_wrap.sln "Release|x64"
+vcbuild /M8 %buildswitch% .\MMCoreJ_wrap\MMCoreJ_wrap.sln "Release|x64"
 
 
 echo Update the version number in MMStudioMainFrame
@@ -134,5 +134,5 @@ ECHO "Done installing"
 :CANTINSTALLHERE
 
 IF NOT "%3%" == "UPLOAD" GOTO FINISH
-pscp -i c:\projects\MM.ppk -batch /projects/micromanager/Install_x64/Output/%TARGETNAME% MM@valelab.ucsf.edu:./public_html/nightlyBuilds/1.4/Windows/%TARGETNAME%
+pscp -i c:\projects\MM.ppk -batch /projects/micromanager/Install_x64/Output/%TARGETNAME% arthur@valelab.ucsf.edu:../MM/public_html/nightlyBuilds/1.4/Windows/%TARGETNAME%
 :FINISH
