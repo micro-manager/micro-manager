@@ -434,7 +434,7 @@ public class ContrastPanel extends JPanel implements ImageController,
 		springLayout.putConstraint(SpringLayout.WEST, logHistCheckBox_, 1,
 				SpringLayout.WEST, this);
 
-      ImagePlus.addImageListener(this);
+//      ImagePlus.addImageListener(this);
       GUIUtils.registerImageFocusListener(this);
 	}
 
@@ -473,7 +473,11 @@ public class ContrastPanel extends JPanel implements ImageController,
       }
       LUT lut = new LUT(8, 256, r, g, b);
       ip.setColorModel(lut);
-      image_.updateAndDraw();
+      
+      if (liveStretchMode_) 
+            setAutoScale();
+      else  //setAutoScale calls updateAndDraw itself
+         image_.updateAndDraw();
    }
 
    public void updateHistogram() {
