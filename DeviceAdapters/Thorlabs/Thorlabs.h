@@ -18,6 +18,7 @@
 //                INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 //
 // AUTHOR:        Nenad Amodaj, nenad@amodaj.com, 2011
+//                http://nenad.amodaj.com
 //
 
 #ifndef _THORLABS_H_
@@ -40,6 +41,8 @@
 #define ERR_BUSY                     10014
 #define ERR_STEPS_OUT_OF_RANGE       10015
 #define ERR_STAGE_NOT_ZEROED         10016
+#define ERR_INVALID_POSITION         10017
+
 
 // utility functions
 int ClearPort(MM::Device& device, MM::Core& core);
@@ -216,7 +219,10 @@ class CommandThread : public MMDeviceThreadBase
       int errCode_;
 };
 
-
+//////////////////////////////////////////////////////////////////////////////
+// PiezoZStage class
+// (device adapter)
+//////////////////////////////////////////////////////////////////////////////
 class PiezoZStage : public CStageBase<PiezoZStage>
 {
 public:
@@ -267,5 +273,39 @@ private:
    bool zeroed_;
    bool zeroInProgress_;
 };
+
+//////////////////////////////////////////////////////////////////////////////
+// IntegratedFilterWheel class
+// (device adapter)
+//////////////////////////////////////////////////////////////////////////////
+class IntegratedFilterWheel : public CStateDeviceBase<IntegratedFilterWheel>
+{
+public:
+   IntegratedFilterWheel();
+   ~IntegratedFilterWheel();
+  
+   // MMDevice API
+   // ------------
+   int Initialize();
+   int Shutdown();
+  
+   void GetName(char* pszName) const;
+   bool Busy();
+   unsigned long GetNumberOfPositions()const {return numPos_;}
+
+   // action interface
+   // ----------------
+   int OnState(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnCOMPort(MM::PropertyBase* pProp, MM::ActionType eAct);
+
+private:
+   bool initialized_;
+   bool busy_;
+   long numPos_;
+   long position_;
+   std::string port_;
+   MM::MMTime changedTime_;
+};
+
 
 #endif //_THORLABS_H_

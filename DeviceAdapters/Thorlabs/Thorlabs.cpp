@@ -34,6 +34,7 @@
 
 const char* g_XYStageDeviceName = "XYStage";
 const char* g_PiezoZStageDeviceName = "PiezoZStage";
+const char* g_WheelDeviceName = "FilterWheel";
 
 const char* g_SerialNumberProp = "SerialNumber";
 const char* g_ModelNumberProp = "ModelNumber";
@@ -129,6 +130,7 @@ MODULE_API void InitializeModuleData()
 {
    AddAvailableDeviceName(g_XYStageDeviceName, "Thorlabs BD102 XY Stage");
    AddAvailableDeviceName(g_PiezoZStageDeviceName, "Thorlabs piezo Z Stage");
+   // AddAvailableDeviceName(g_WheelDeviceName, "Integrated filter wheel");
 }
 
 MODULE_API MM::Device* CreateDevice(const char* deviceName)
@@ -138,13 +140,18 @@ MODULE_API MM::Device* CreateDevice(const char* deviceName)
 
    if (strcmp(deviceName, g_XYStageDeviceName) == 0)
    {
-      XYStage* s = new XYStage();
-      return s;
+      XYStage* xyStage = new XYStage();
+      return xyStage;
    }
    if (strcmp(deviceName, g_PiezoZStageDeviceName) == 0)
    {
-      PiezoZStage* s = new PiezoZStage();
-      return s;
+      PiezoZStage* stage = new PiezoZStage();
+      return stage;
+   }
+   if (strcmp(deviceName, g_WheelDeviceName) == 0)
+   {
+      IntegratedFilterWheel* wheel = new IntegratedFilterWheel();
+      return wheel;
    }
 
    return 0;
