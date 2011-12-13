@@ -60,6 +60,7 @@ import javax.swing.SpinnerNumberModel;
 import javax.swing.SpringLayout;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
+import org.micromanager.MMStudioMainFrame;
 import org.micromanager.utils.ImageFocusListener;
 import org.micromanager.graph.HistogramPanel.CursorListener;
 
@@ -106,6 +107,8 @@ public class ContrastPanel extends JPanel implements ImageController,
 	ContrastSettings cs16bit_;
 	private JCheckBox stretchCheckBox_;
 	private JCheckBox rejectOutliersCheckBox_;
+   private JCheckBox disableHistogramCheckBox_;
+   private boolean disableHistogram_ = false;
 	private boolean logScale_ = false;
 	private JCheckBox logHistCheckBox_;
    private boolean imageUpdated_;
@@ -119,6 +122,7 @@ public class ContrastPanel extends JPanel implements ImageController,
    private double fractionToReject_;
    JLabel percentOutliersLabel_;
    private int[] histogram_;
+
 
 
 	/**
@@ -361,6 +365,26 @@ public class ContrastPanel extends JPanel implements ImageController,
 		springLayout.putConstraint(SpringLayout.NORTH, rejectOutliersCheckBox_, 190,
 				SpringLayout.NORTH, this);
 
+      
+      disableHistogramCheckBox_ = new JCheckBox();
+		disableHistogramCheckBox_.setFont(new Font("", Font.PLAIN, 10));
+		disableHistogramCheckBox_.setText("<html>Disable<br>Histogram<br>Updates</html>");
+		disableHistogramCheckBox_.addChangeListener(new ChangeListener() {
+			public void stateChanged(ChangeEvent ce) {
+            disableHistogram_ = disableHistogramCheckBox_.isSelected();
+			};
+		});
+		add(disableHistogramCheckBox_);
+		springLayout.putConstraint(SpringLayout.EAST, disableHistogramCheckBox_, 5,
+				SpringLayout.WEST, histogramPanel_);
+		springLayout.putConstraint(SpringLayout.WEST, disableHistogramCheckBox_, 0,
+				SpringLayout.WEST, this);
+		springLayout.putConstraint(SpringLayout.SOUTH, disableHistogramCheckBox_, 300,
+				SpringLayout.NORTH, this);
+		springLayout.putConstraint(SpringLayout.NORTH, disableHistogramCheckBox_, 260,
+				SpringLayout.NORTH, this);
+      
+      
       SpinnerModel smodel = new SpinnerNumberModel(100.*fractionToReject_,0.,1.,.01);
       rejectOutliersPercentSpinner_ = new JSpinner();
       rejectOutliersPercentSpinner_.setModel(smodel);
@@ -480,7 +504,8 @@ public class ContrastPanel extends JPanel implements ImageController,
       if (liveStretchMode_) 
             setAutoScale();
       else  //setAutoScale calls updateAndDraw itself
-         image_.updateAndDraw();
+         if (!MMStudioMainFrame.getInstance().isLiveModeOn())
+            image_.updateAndDraw();
    }
 
    public void updateHistogram() {
@@ -567,13 +592,12 @@ public class ContrastPanel extends JPanel implements ImageController,
    }
 
    public void update(boolean updateHistogram) {
-       // calculate histogram
       if (image_ == null || image_.getProcessor() == null)
          return;
       if (stretchCheckBox_.isSelected()) {
          setAutoScale();
       }
-      if (updateHistogram)
+      if (updateHistogram &&!disableHistogram_)
          updateHistogram();
       setLutGamma(gamma_);
 
@@ -605,7 +629,7 @@ public class ContrastPanel extends JPanel implements ImageController,
 	 * 
 	 */
 	private void setAutoScale() {
-		if (image_ == null) {
+		if (image_ == null || disableHistogram_) {
 			return;
       }
 
@@ -633,7 +657,8 @@ public class ContrastPanel extends JPanel implements ImageController,
 
 
       updateCursors();
-		image_.updateAndDraw();
+      if (!MMStudioMainFrame.getInstance().isLiveModeOn())
+         image_.updateAndDraw();
 	}
 
 
@@ -889,14 +914,16 @@ public class ContrastPanel extends JPanel implements ImageController,
    }
 
    public void updateContrast(ImagePlus ip) {      
-      calcHistogramAndStatistics(ip);
+      if (!disableHistogram_)
+          calcHistogramAndStatistics(ip);
       
       if (stretchCheckBox_.isSelected()) {
          double min = ip.getDisplayRangeMin();
          double max = ip.getDisplayRangeMax();
          setImagePlus(ip, new ContrastSettings(min, max), new ContrastSettings(min, max),false);
       }
-      updateHistogram(ip);
+      if (!disableHistogram_)
+         updateHistogram(ip);
    }
 
    public void onLeftCursor(double pos) {
