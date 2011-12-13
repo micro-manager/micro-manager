@@ -80,6 +80,8 @@ import org.micromanager.utils.NumberUtils;
 public class ContrastPanel extends JPanel implements ImageController,
         PropertyChangeListener, ImageFocusListener, ImageListener,
          CursorListener {
+   private static final double SLOW_HIST_UPDATE_TIME_MS = 2000;
+   
 	private static final long serialVersionUID = 1L;
 	private JComboBox modeComboBox_;
 	private HistogramPanel histogramPanel_;
@@ -107,8 +109,9 @@ public class ContrastPanel extends JPanel implements ImageController,
 	ContrastSettings cs16bit_;
 	private JCheckBox stretchCheckBox_;
 	private JCheckBox rejectOutliersCheckBox_;
-   private JCheckBox disableHistogramCheckBox_;
-   private boolean disableHistogram_ = false;
+   private JCheckBox slowHistogramCheckBox_;
+   private boolean slowHistogram_ = false;
+   private boolean calcHistogram_ = true;
 	private boolean logScale_ = false;
 	private JCheckBox logHistCheckBox_;
    private boolean imageUpdated_;
@@ -122,6 +125,8 @@ public class ContrastPanel extends JPanel implements ImageController,
    private double fractionToReject_;
    JLabel percentOutliersLabel_;
    private int[] histogram_;
+   private int slowHistogramCount_;
+   private int numFramesForSlowHist_;
 
 
 
@@ -131,6 +136,8 @@ public class ContrastPanel extends JPanel implements ImageController,
 	public ContrastPanel() {
 		super();
 
+      numFramesForSlowHist_ = (int) (SLOW_HIST_UPDATE_TIME_MS
+              / MMStudioMainFrame.getInstance().getLiveModeInterval() );
       HistogramUtils h = new HistogramUtils(null);
       fractionToReject_ = h.getFractionToReject(); // get the default value
 		setToolTipText("Switch between linear and log histogram");
@@ -187,9 +194,9 @@ public class ContrastPanel extends JPanel implements ImageController,
 				SpringLayout.WEST, this);
 		springLayout.putConstraint(SpringLayout.WEST, minLabel_, 45,
 				SpringLayout.WEST, this);
-		springLayout.putConstraint(SpringLayout.SOUTH, minLabel_, 78,
+		springLayout.putConstraint(SpringLayout.SOUTH, minLabel_, 98,
 				SpringLayout.NORTH, this);
-		springLayout.putConstraint(SpringLayout.NORTH, minLabel_, 64,
+		springLayout.putConstraint(SpringLayout.NORTH, minLabel_, 84,
 				SpringLayout.NORTH, this);
 
       maxLabel_ = new JLabel();
@@ -199,18 +206,18 @@ public class ContrastPanel extends JPanel implements ImageController,
 				SpringLayout.WEST, this);
 		springLayout.putConstraint(SpringLayout.WEST, maxLabel_, 45,
 				SpringLayout.WEST, this);
-		springLayout.putConstraint(SpringLayout.SOUTH, maxLabel_, 94,
+		springLayout.putConstraint(SpringLayout.SOUTH, maxLabel_, 114,
 				SpringLayout.NORTH, this);
-		springLayout.putConstraint(SpringLayout.NORTH, maxLabel_, 80,
+		springLayout.putConstraint(SpringLayout.NORTH, maxLabel_, 100,
 				SpringLayout.NORTH, this);
 
 		JLabel minLabel = new JLabel();
 		minLabel.setFont(new Font("", Font.PLAIN, 10));
 		minLabel.setText("Min");
 		add(minLabel);
-		springLayout.putConstraint(SpringLayout.SOUTH, minLabel, 78,
+		springLayout.putConstraint(SpringLayout.SOUTH, minLabel, 98,
 				SpringLayout.NORTH, this);
-		springLayout.putConstraint(SpringLayout.NORTH, minLabel, 64,
+		springLayout.putConstraint(SpringLayout.NORTH, minLabel, 84,
 				SpringLayout.NORTH, this);
 		springLayout.putConstraint(SpringLayout.EAST, minLabel, 30,
 				SpringLayout.WEST, this);
@@ -221,9 +228,9 @@ public class ContrastPanel extends JPanel implements ImageController,
 		maxLabel.setFont(new Font("", Font.PLAIN, 10));
 		maxLabel.setText("Max");
 		add(maxLabel);
-		springLayout.putConstraint(SpringLayout.SOUTH, maxLabel, 94,
+		springLayout.putConstraint(SpringLayout.SOUTH, maxLabel, 114,
 				SpringLayout.NORTH, this);
-		springLayout.putConstraint(SpringLayout.NORTH, maxLabel, 80,
+		springLayout.putConstraint(SpringLayout.NORTH, maxLabel, 100,
 				SpringLayout.NORTH, this);
 		springLayout.putConstraint(SpringLayout.EAST, maxLabel, 30,
 				SpringLayout.WEST, this);
@@ -236,23 +243,23 @@ public class ContrastPanel extends JPanel implements ImageController,
       add(avgLabel);
       springLayout.putConstraint(SpringLayout.EAST, avgLabel, 42, SpringLayout.WEST, this);
       springLayout.putConstraint(SpringLayout.WEST, avgLabel, 5, SpringLayout.WEST, this);
-      springLayout.putConstraint(SpringLayout.SOUTH, avgLabel, 110, SpringLayout.NORTH, this);
-      springLayout.putConstraint(SpringLayout.NORTH, avgLabel, 96, SpringLayout.NORTH, this);
+      springLayout.putConstraint(SpringLayout.SOUTH, avgLabel, 130, SpringLayout.NORTH, this);
+      springLayout.putConstraint(SpringLayout.NORTH, avgLabel, 116, SpringLayout.NORTH, this);
 
       meanLabel_ = new JLabel();                                              
       meanLabel_.setFont(new Font("", Font.PLAIN, 10));                       
       add(meanLabel_);                                                        
       springLayout.putConstraint(SpringLayout.EAST, meanLabel_, 95, SpringLayout.WEST, this);
       springLayout.putConstraint(SpringLayout.WEST, meanLabel_, 45, SpringLayout.WEST, this);
-      springLayout.putConstraint(SpringLayout.SOUTH, meanLabel_, 110, SpringLayout.NORTH, this);
-      springLayout.putConstraint(SpringLayout.NORTH, meanLabel_, 96, SpringLayout.NORTH, this);
+      springLayout.putConstraint(SpringLayout.SOUTH, meanLabel_, 130, SpringLayout.NORTH, this);
+      springLayout.putConstraint(SpringLayout.NORTH, meanLabel_, 116, SpringLayout.NORTH, this);
                                                                              
       JLabel varLabel = new JLabel();
       varLabel.setFont(new Font("", Font.PLAIN, 10));
       varLabel.setText("Std Dev");
       add(varLabel);
-      springLayout.putConstraint(SpringLayout.SOUTH, varLabel, 126, SpringLayout.NORTH, this);
-      springLayout.putConstraint(SpringLayout.NORTH, varLabel, 112, SpringLayout.NORTH, this);
+      springLayout.putConstraint(SpringLayout.SOUTH, varLabel, 146, SpringLayout.NORTH, this);
+      springLayout.putConstraint(SpringLayout.NORTH, varLabel, 132, SpringLayout.NORTH, this);
       springLayout.putConstraint(SpringLayout.EAST, varLabel, 42, SpringLayout.WEST, this);
       springLayout.putConstraint(SpringLayout.WEST, varLabel, 5, SpringLayout.WEST, this);
 
@@ -261,8 +268,8 @@ public class ContrastPanel extends JPanel implements ImageController,
       add(stdDevLabel_);
       springLayout.putConstraint(SpringLayout.EAST, stdDevLabel_, 95, SpringLayout.WEST, this); 
       springLayout.putConstraint(SpringLayout.WEST, stdDevLabel_, 45, SpringLayout.WEST, this);
-      springLayout.putConstraint(SpringLayout.SOUTH, stdDevLabel_, 126, SpringLayout.NORTH, this);
-      springLayout.putConstraint(SpringLayout.NORTH, stdDevLabel_, 112, SpringLayout.NORTH, this);
+      springLayout.putConstraint(SpringLayout.SOUTH, stdDevLabel_, 146, SpringLayout.NORTH, this);
+      springLayout.putConstraint(SpringLayout.NORTH, stdDevLabel_, 132, SpringLayout.NORTH, this);
 
       final int gammaLow = 0;
       final int gammaHigh = 100;
@@ -275,7 +282,7 @@ public class ContrastPanel extends JPanel implements ImageController,
       add(gammaLabel);
 		springLayout.putConstraint(SpringLayout.WEST, gammaLabel, 5,
 				SpringLayout.WEST, this);
-      springLayout.putConstraint(SpringLayout.NORTH, gammaLabel, 230,
+      springLayout.putConstraint(SpringLayout.NORTH, gammaLabel, 250,
 				SpringLayout.NORTH, this);
 
       gammaValue_ = new JFormattedTextField(numberFormat_);
@@ -335,9 +342,9 @@ public class ContrastPanel extends JPanel implements ImageController,
 				SpringLayout.WEST, histogramPanel_);
 		springLayout.putConstraint(SpringLayout.WEST, stretchCheckBox_, 0,
 				SpringLayout.WEST, this);
-		springLayout.putConstraint(SpringLayout.SOUTH, stretchCheckBox_, 185,
+		springLayout.putConstraint(SpringLayout.SOUTH, stretchCheckBox_, 205,
 				SpringLayout.NORTH, this);
-		springLayout.putConstraint(SpringLayout.NORTH, stretchCheckBox_, 160,
+		springLayout.putConstraint(SpringLayout.NORTH, stretchCheckBox_, 180,
 				SpringLayout.NORTH, this);
 
 
@@ -360,29 +367,13 @@ public class ContrastPanel extends JPanel implements ImageController,
 				SpringLayout.WEST, this);
 		springLayout.putConstraint(SpringLayout.WEST, rejectOutliersCheckBox_, 0,
 				SpringLayout.WEST, this);
-		springLayout.putConstraint(SpringLayout.SOUTH, rejectOutliersCheckBox_, 210,
+		springLayout.putConstraint(SpringLayout.SOUTH, rejectOutliersCheckBox_, 230,
 				SpringLayout.NORTH, this);
-		springLayout.putConstraint(SpringLayout.NORTH, rejectOutliersCheckBox_, 190,
+		springLayout.putConstraint(SpringLayout.NORTH, rejectOutliersCheckBox_, 210,
 				SpringLayout.NORTH, this);
 
       
-      disableHistogramCheckBox_ = new JCheckBox();
-		disableHistogramCheckBox_.setFont(new Font("", Font.PLAIN, 10));
-		disableHistogramCheckBox_.setText("<html>Disable<br>Histogram<br>Updates</html>");
-		disableHistogramCheckBox_.addChangeListener(new ChangeListener() {
-			public void stateChanged(ChangeEvent ce) {
-            disableHistogram_ = disableHistogramCheckBox_.isSelected();
-			};
-		});
-		add(disableHistogramCheckBox_);
-		springLayout.putConstraint(SpringLayout.EAST, disableHistogramCheckBox_, 5,
-				SpringLayout.WEST, histogramPanel_);
-		springLayout.putConstraint(SpringLayout.WEST, disableHistogramCheckBox_, 0,
-				SpringLayout.WEST, this);
-		springLayout.putConstraint(SpringLayout.SOUTH, disableHistogramCheckBox_, 300,
-				SpringLayout.NORTH, this);
-		springLayout.putConstraint(SpringLayout.NORTH, disableHistogramCheckBox_, 260,
-				SpringLayout.NORTH, this);
+      
       
       
       SpinnerModel smodel = new SpinnerNumberModel(100.*fractionToReject_,0.,1.,.01);
@@ -400,9 +391,9 @@ public class ContrastPanel extends JPanel implements ImageController,
 				SpringLayout.WEST, this);
 		springLayout.putConstraint(SpringLayout.WEST, rejectOutliersPercentSpinner_, 35,
 				SpringLayout.WEST, this);
-		springLayout.putConstraint(SpringLayout.SOUTH, rejectOutliersPercentSpinner_, 210,
+		springLayout.putConstraint(SpringLayout.SOUTH, rejectOutliersPercentSpinner_, 230,
 				SpringLayout.NORTH, this);
-		springLayout.putConstraint(SpringLayout.NORTH, rejectOutliersPercentSpinner_, 190,
+		springLayout.putConstraint(SpringLayout.NORTH, rejectOutliersPercentSpinner_, 210,
 				SpringLayout.NORTH, this);
 
       percentOutliersLabel_ = new JLabel();
@@ -411,7 +402,7 @@ public class ContrastPanel extends JPanel implements ImageController,
       add(percentOutliersLabel_);
 		springLayout.putConstraint(SpringLayout.WEST, percentOutliersLabel_, 5,
 				SpringLayout.WEST, this);
-      springLayout.putConstraint(SpringLayout.NORTH, percentOutliersLabel_, 210,
+      springLayout.putConstraint(SpringLayout.NORTH, percentOutliersLabel_, 230,
 				SpringLayout.NORTH, this);
 
  		springLayout.putConstraint(SpringLayout.EAST, percentOutliersLabel_, 5,
@@ -450,18 +441,47 @@ public class ContrastPanel extends JPanel implements ImageController,
 				update();
 			}
 		});
+      slowHistogramCheckBox_ = new JCheckBox();
+		slowHistogramCheckBox_.setFont(new Font("", Font.PLAIN, 10));
+		slowHistogramCheckBox_.setText("Slow hist.");
+		slowHistogramCheckBox_.addChangeListener(new ChangeListener() {
+			public void stateChanged(ChangeEvent ce) {
+            slowHistogram_ = slowHistogramCheckBox_.isSelected();
+            if (slowHistogram_) {
+               numFramesForSlowHist_ = (int) (SLOW_HIST_UPDATE_TIME_MS
+                       / MMStudioMainFrame.getInstance().getLiveModeInterval() );
+               slowHistogramCount_ = numFramesForSlowHist_;
+               calcHistogram_ = false;
+            }
+            else
+               calcHistogram_ = true;
+			};
+		});
+      
 		logHistCheckBox_.setText("Log hist.");
 		add(logHistCheckBox_);
-		springLayout.putConstraint(SpringLayout.SOUTH, logHistCheckBox_, 0,
-				SpringLayout.NORTH, minLabel_);
-		springLayout.putConstraint(SpringLayout.NORTH, logHistCheckBox_, -18,
-				SpringLayout.NORTH, minLabel_);
+		springLayout.putConstraint(SpringLayout.SOUTH, logHistCheckBox_, -20,
+				SpringLayout.NORTH, minLabel);
+		springLayout.putConstraint(SpringLayout.NORTH, logHistCheckBox_, 0,
+				SpringLayout.SOUTH, autoScaleButton);
 		springLayout.putConstraint(SpringLayout.EAST, logHistCheckBox_, 74,
 				SpringLayout.WEST, this);
 		springLayout.putConstraint(SpringLayout.WEST, logHistCheckBox_, 1,
 				SpringLayout.WEST, this);
 
-//      ImagePlus.addImageListener(this);
+      
+   
+		add(slowHistogramCheckBox_);
+		springLayout.putConstraint(SpringLayout.EAST, slowHistogramCheckBox_, 74,
+				SpringLayout.WEST, this);
+		springLayout.putConstraint(SpringLayout.WEST, slowHistogramCheckBox_, 1,
+				SpringLayout.WEST, this);
+		springLayout.putConstraint(SpringLayout.SOUTH, slowHistogramCheckBox_, 0,
+				SpringLayout.NORTH, minLabel);
+		springLayout.putConstraint(SpringLayout.NORTH, slowHistogramCheckBox_, -20,
+				SpringLayout.NORTH, minLabel);
+      
+      
       GUIUtils.registerImageFocusListener(this);
 	}
 
@@ -597,7 +617,7 @@ public class ContrastPanel extends JPanel implements ImageController,
       if (stretchCheckBox_.isSelected()) {
          setAutoScale();
       }
-      if (updateHistogram &&!disableHistogram_)
+      if (updateHistogram &&!calcHistogram_)
          updateHistogram();
       setLutGamma(gamma_);
 
@@ -629,7 +649,7 @@ public class ContrastPanel extends JPanel implements ImageController,
 	 * 
 	 */
 	private void setAutoScale() {
-		if (image_ == null || disableHistogram_) {
+		if (image_ == null || calcHistogram_) {
 			return;
       }
 
@@ -913,17 +933,30 @@ public class ContrastPanel extends JPanel implements ImageController,
       }
    }
 
-   public void updateContrast(ImagePlus ip) {      
-      if (!disableHistogram_)
-          calcHistogramAndStatistics(ip);
-      
+   public void updateContrast(ImagePlus ip) {
+      if (slowHistogram_) {
+         slowHistogramCount_++;
+         if (slowHistogramCount_ >= numFramesForSlowHist_) {
+            slowHistogramCount_ = 0;
+            calcHistogram_ = true;
+         }
+      }
+
+      if (calcHistogram_) {
+         calcHistogramAndStatistics(ip);
+      }
+
       if (stretchCheckBox_.isSelected()) {
          double min = ip.getDisplayRangeMin();
          double max = ip.getDisplayRangeMax();
-         setImagePlus(ip, new ContrastSettings(min, max), new ContrastSettings(min, max),false);
+         setImagePlus(ip, new ContrastSettings(min, max), new ContrastSettings(min, max), false);
       }
-      if (!disableHistogram_)
+      if (calcHistogram_) {
          updateHistogram(ip);
+      }
+      if (slowHistogram_) {
+         calcHistogram_ = false;
+      }
    }
 
    public void onLeftCursor(double pos) {

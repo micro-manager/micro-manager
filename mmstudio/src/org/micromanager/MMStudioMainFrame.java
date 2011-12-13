@@ -230,7 +230,7 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
    private ConfigGroupPad configPad_;
    private ContrastPanel contrastPanel_;
    // Timer interval - image display interval
-   private double liveModeInterval_ = 40;
+   private double liveModeInterval_ = 33;
    private LiveModeTimer liveModeTimer_;
    private GraphData lineProfileData_;
    // labels for standard devices
@@ -3238,6 +3238,10 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
 
    public boolean getLiveMode() {
       return isLiveModeOn();
+   }
+   
+   public double getLiveModeInterval() {
+      return liveModeInterval_;
    }
 
    public boolean updateImage() {
