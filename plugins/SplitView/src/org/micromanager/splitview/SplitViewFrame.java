@@ -87,6 +87,7 @@ public class SplitViewFrame extends javax.swing.JFrame {
        // TODO: Replace with Sequence-based live mode
       interval_ = 30;
       ActionListener timerHandler = new ActionListener() {
+         @Override
          public void actionPerformed(ActionEvent evt) {
             doSnap();
          }
@@ -204,6 +205,7 @@ public class SplitViewFrame extends javax.swing.JFrame {
 
        gui_.openAcquisition(ACQNAME, "", 1, 2, 1);
        gui_.initializeAcquisition(ACQNAME, newWidth_, newHeight_, (int)imgDepth_);
+       gui_.getAcquisition(ACQNAME).promptToSave(false);
        gui_.setChannelColor(ACQNAME, 0, col1_);
        gui_.setChannelColor(ACQNAME, 1, col2_);
        if (orientation_.equals(LR)) {
@@ -212,8 +214,7 @@ public class SplitViewFrame extends javax.swing.JFrame {
       } else {
           gui_.setChannelName(ACQNAME, 0, "Top");
           gui_.setChannelName(ACQNAME, 1, "Bottom");
-      }
-
+       }
    }
    
     private void addSnapToImage()
@@ -236,6 +237,7 @@ public class SplitViewFrame extends javax.swing.JFrame {
          }  else if (gui_.getAcquisitionImageHeight(ACQNAME) != newHeight_  ||
                   gui_.getAcquisitionImageWidth(ACQNAME) != newWidth_ ||
                   gui_.getAcquisitionImageByteDepth(ACQNAME ) != imgDepth_ ) {
+            gui_.getAcquisition(ACQNAME).closeImage5D();
             gui_.closeAcquisition(ACQNAME);
             openAcq();
          }
@@ -250,72 +252,6 @@ public class SplitViewFrame extends javax.swing.JFrame {
             tmpImg.setRoi(0, newHeight_, newWidth_, newHeight_);
          gui_.addImage(ACQNAME, tmpImg.crop().getPixels(), 0, 1, 0);
 
-      /*
-         if (image5D_ == null || image5DWindow_ == null || image5DWindow_.isClosed()) {
-            ImageStack stack = new ImageStack(newWidth_, newHeight_);
-            tmpImg.setRoi(0,0, newWidth_, newHeight_);
-            stack.addSlice("Left", tmpImg.crop());
-            if (orientation_.equals(LR))
-               tmpImg.setRoi(newWidth_, 0, newWidth_, height_);
-            else if (orientation_.equals(TB))
-               tmpImg.setRoi(0, newHeight_, newWidth_, newHeight_);
-            stack.addSlice("Right", tmpImg.crop());
-
-            ReportingUtils.logMessage("Opening new Image5D" + " "  + newWidth_ + " " +  newHeight_);
-            image5D_ = new Image5D("Split-View", stack, 2, 1, 1);
-
-
-            Calibration cal = new Calibration();
-            double pixSizeUm = core_.getPixelSizeUm();
-            if (pixSizeUm > 0) {
-               cal.setUnit("um");
-               cal.pixelWidth = pixSizeUm;
-               cal.pixelHeight = pixSizeUm;
-            }
-            image5D_.setCalibration(cal);
-
-            ChannelCalibration cal1 = new ChannelCalibration();
-            ChannelCalibration cal2 = new ChannelCalibration();
-            if (orientation_.equals(LR)) {
-               cal1.setLabel ("Left");
-               cal2.setLabel ("Right");
-            }
-            else if (orientation_.equals(TB)) {
-               cal1.setLabel ("Top");
-               cal2.setLabel ("Bottom");
-            }
-            image5D_.setChannelCalibration(1, cal1);
-            image5D_.setChannelCalibration(2, cal2);
-            image5D_.setChannelColorModel(1, ChannelDisplayProperties.createModelFromColor(col1_));
-            image5D_.setChannelColorModel(2, ChannelDisplayProperties.createModelFromColor(col2_));                                         
-                                                                                                                                            
-            image5D_.show();                                                                                                                
-            image5D_.setDisplayMode(ChannelControl.OVERLAY);                                                                                
-            image5DWindow_ = (Image5DWindow) image5D_.getWindow();                                                                          
-            WindowListener wndCloser = new WindowAdapter() {                                                                                
-               public void windowClosing(WindowEvent e) {                                                                                   
-                  enableLiveMode(false);                                                                                                    
-                  toggleButtonLive_.setIcon(SwingResourceManager.getIcon(MMStudioMainFrame.class, "/org/micromanager/icons/camera_go.png"));
-                  toggleButtonLive_.setSelected(false);                                                                                     
-               }                                                                                                                            
-            };                                                                                                                              
-            image5DWindow_.addWindowListener(wndCloser);                                                                                    
-         } else {                                                                                                                           
-            // Split the image in two halfs and add them to Image5D                                                                         
-            tmpImg.setRoi(0,0, newWidth_, newHeight_);                                                                                      
-            image5D_.setPixels(tmpImg.crop().getPixels(), 1, 1, 1);                                                                         
-            if (orientation_ == LR)                                                                                                         
-               tmpImg.setRoi(newWidth_, 0, newWidth_, height_);                                                                             
-            else if (orientation_ == TB)
-               tmpImg.setRoi(0, newHeight_, newWidth_, newHeight_);
-
-            image5D_.setPixels(tmpImg.crop().getPixels(), 2, 1, 1);
-            image5D_.updateAndDraw();
-         }
-         image5DWindow_.toFront();
-       *
-       *
-       */
       } catch (Exception e) {
          ReportingUtils.showError(e);
       }

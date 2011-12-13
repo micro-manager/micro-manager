@@ -15,6 +15,7 @@ public class SplitView implements MMPlugin {
    private ScriptInterface gui_;
    private SplitViewFrame myFrame_;
 
+   @Override
    public void setApp(ScriptInterface app) {
       gui_ = app;                                        
       core_ = app.getMMCore();
@@ -30,30 +31,37 @@ public class SplitView implements MMPlugin {
       myFrame_.setVisible(true);
    }
 
+   @Override
    public void dispose() {
       //if (myFrame_ != null)
          //myFrame_.safePrefs();
    }
 
+   @Override
    public void show() {
          String ig = "SplitView";
    }
 
+   @Override
    public void configurationChanged() {
    }
 
+   @Override
    public String getInfo () {
       return "SplitView Plugin";
    }
 
+   @Override
    public String getDescription() {
       return tooltipDescription;
    }
    
+   @Override
    public String getVersion() {
       return "0.1";
    }
    
+   @Override
    public String getCopyright() {
       return "University of California, 2011";
    }
