@@ -82,10 +82,10 @@ public class ContrastPanel extends JPanel implements ImageController,
 	private static final long serialVersionUID = 1L;
 	private JComboBox modeComboBox_;
 	private HistogramPanel histogramPanel_;
-	private JLabel maxField_;
-	private JLabel minField_;
-   private JLabel avgField_;
-   private JLabel varField_;
+	private JLabel maxLabel_;
+	private JLabel minLabel_;
+   private JLabel meanLabel_;
+   private JLabel stdDevLabel_;
 	private SpringLayout springLayout;
 	private ImagePlus image_;
 	private GraphData histogramData_;
@@ -94,6 +94,8 @@ public class ContrastPanel extends JPanel implements ImageController,
    private NumberFormat numberFormat_;
    private double gamma_ = 1.0;
 	private int maxIntensity_ = 255;
+   private double mean_;
+   private double stdDev_;
    private double min_ = 0.0;
    private double max_ = 255.0;
 	private int binSize_ = 1;
@@ -116,6 +118,7 @@ public class ContrastPanel extends JPanel implements ImageController,
    JSpinner rejectOutliersPercentSpinner_;
    private double fractionToReject_;
    JLabel percentOutliersLabel_;
+   private int[] histogram_;
 
 
 	/**
@@ -173,28 +176,28 @@ public class ContrastPanel extends JPanel implements ImageController,
 		springLayout.putConstraint(SpringLayout.NORTH, autoScaleButton, 26,
 				SpringLayout.NORTH, this);
 
-		minField_ = new JLabel();
-		minField_.setFont(new Font("", Font.PLAIN, 10));
-		add(minField_);
-		springLayout.putConstraint(SpringLayout.EAST, minField_, 95,
+		minLabel_ = new JLabel();
+		minLabel_.setFont(new Font("", Font.PLAIN, 10));
+		add(minLabel_);
+		springLayout.putConstraint(SpringLayout.EAST, minLabel_, 95,
 				SpringLayout.WEST, this);
-		springLayout.putConstraint(SpringLayout.WEST, minField_, 45,
+		springLayout.putConstraint(SpringLayout.WEST, minLabel_, 45,
 				SpringLayout.WEST, this);
-		springLayout.putConstraint(SpringLayout.SOUTH, minField_, 78,
+		springLayout.putConstraint(SpringLayout.SOUTH, minLabel_, 78,
 				SpringLayout.NORTH, this);
-		springLayout.putConstraint(SpringLayout.NORTH, minField_, 64,
+		springLayout.putConstraint(SpringLayout.NORTH, minLabel_, 64,
 				SpringLayout.NORTH, this);
 
-      maxField_ = new JLabel();
-		maxField_.setFont(new Font("", Font.PLAIN, 10));
-		add(maxField_);
-		springLayout.putConstraint(SpringLayout.EAST, maxField_, 95,
+      maxLabel_ = new JLabel();
+		maxLabel_.setFont(new Font("", Font.PLAIN, 10));
+		add(maxLabel_);
+		springLayout.putConstraint(SpringLayout.EAST, maxLabel_, 95,
 				SpringLayout.WEST, this);
-		springLayout.putConstraint(SpringLayout.WEST, maxField_, 45,
+		springLayout.putConstraint(SpringLayout.WEST, maxLabel_, 45,
 				SpringLayout.WEST, this);
-		springLayout.putConstraint(SpringLayout.SOUTH, maxField_, 94,
+		springLayout.putConstraint(SpringLayout.SOUTH, maxLabel_, 94,
 				SpringLayout.NORTH, this);
-		springLayout.putConstraint(SpringLayout.NORTH, maxField_, 80,
+		springLayout.putConstraint(SpringLayout.NORTH, maxLabel_, 80,
 				SpringLayout.NORTH, this);
 
 		JLabel minLabel = new JLabel();
@@ -232,13 +235,13 @@ public class ContrastPanel extends JPanel implements ImageController,
       springLayout.putConstraint(SpringLayout.SOUTH, avgLabel, 110, SpringLayout.NORTH, this);
       springLayout.putConstraint(SpringLayout.NORTH, avgLabel, 96, SpringLayout.NORTH, this);
 
-      avgField_ = new JLabel();                                              
-      avgField_.setFont(new Font("", Font.PLAIN, 10));                       
-      add(avgField_);                                                        
-      springLayout.putConstraint(SpringLayout.EAST, avgField_, 95, SpringLayout.WEST, this);
-      springLayout.putConstraint(SpringLayout.WEST, avgField_, 45, SpringLayout.WEST, this);
-      springLayout.putConstraint(SpringLayout.SOUTH, avgField_, 110, SpringLayout.NORTH, this);
-      springLayout.putConstraint(SpringLayout.NORTH, avgField_, 96, SpringLayout.NORTH, this);
+      meanLabel_ = new JLabel();                                              
+      meanLabel_.setFont(new Font("", Font.PLAIN, 10));                       
+      add(meanLabel_);                                                        
+      springLayout.putConstraint(SpringLayout.EAST, meanLabel_, 95, SpringLayout.WEST, this);
+      springLayout.putConstraint(SpringLayout.WEST, meanLabel_, 45, SpringLayout.WEST, this);
+      springLayout.putConstraint(SpringLayout.SOUTH, meanLabel_, 110, SpringLayout.NORTH, this);
+      springLayout.putConstraint(SpringLayout.NORTH, meanLabel_, 96, SpringLayout.NORTH, this);
                                                                              
       JLabel varLabel = new JLabel();
       varLabel.setFont(new Font("", Font.PLAIN, 10));
@@ -249,13 +252,13 @@ public class ContrastPanel extends JPanel implements ImageController,
       springLayout.putConstraint(SpringLayout.EAST, varLabel, 42, SpringLayout.WEST, this);
       springLayout.putConstraint(SpringLayout.WEST, varLabel, 5, SpringLayout.WEST, this);
 
-      varField_ = new JLabel();                                              
-      varField_.setFont(new Font("", Font.PLAIN, 10));                       
-      add(varField_);
-      springLayout.putConstraint(SpringLayout.EAST, varField_, 95, SpringLayout.WEST, this); 
-      springLayout.putConstraint(SpringLayout.WEST, varField_, 45, SpringLayout.WEST, this);
-      springLayout.putConstraint(SpringLayout.SOUTH, varField_, 126, SpringLayout.NORTH, this);
-      springLayout.putConstraint(SpringLayout.NORTH, varField_, 112, SpringLayout.NORTH, this);
+      stdDevLabel_ = new JLabel();                                              
+      stdDevLabel_.setFont(new Font("", Font.PLAIN, 10));                       
+      add(stdDevLabel_);
+      springLayout.putConstraint(SpringLayout.EAST, stdDevLabel_, 95, SpringLayout.WEST, this); 
+      springLayout.putConstraint(SpringLayout.WEST, stdDevLabel_, 45, SpringLayout.WEST, this);
+      springLayout.putConstraint(SpringLayout.SOUTH, stdDevLabel_, 126, SpringLayout.NORTH, this);
+      springLayout.putConstraint(SpringLayout.NORTH, stdDevLabel_, 112, SpringLayout.NORTH, this);
 
       final int gammaLow = 0;
       final int gammaHigh = 100;
@@ -403,7 +406,7 @@ public class ContrastPanel extends JPanel implements ImageController,
 				"camera", "8bit", "10bit", "12bit", "14bit", "16bit" }));
 		add(modeComboBox_);
 		springLayout.putConstraint(SpringLayout.EAST, modeComboBox_, 0,
-				SpringLayout.EAST, maxField_);
+				SpringLayout.EAST, maxLabel_);
 		springLayout.putConstraint(SpringLayout.WEST, modeComboBox_, 0,
 				SpringLayout.WEST, minLabel);
 		springLayout.putConstraint(SpringLayout.SOUTH, modeComboBox_, 27,
@@ -426,9 +429,9 @@ public class ContrastPanel extends JPanel implements ImageController,
 		logHistCheckBox_.setText("Log hist.");
 		add(logHistCheckBox_);
 		springLayout.putConstraint(SpringLayout.SOUTH, logHistCheckBox_, 0,
-				SpringLayout.NORTH, minField_);
+				SpringLayout.NORTH, minLabel_);
 		springLayout.putConstraint(SpringLayout.NORTH, logHistCheckBox_, -18,
-				SpringLayout.NORTH, minField_);
+				SpringLayout.NORTH, minLabel_);
 		springLayout.putConstraint(SpringLayout.EAST, logHistCheckBox_, 74,
 				SpringLayout.WEST, this);
 		springLayout.putConstraint(SpringLayout.WEST, logHistCheckBox_, 1,
@@ -485,67 +488,16 @@ public class ContrastPanel extends JPanel implements ImageController,
    }
 
    public void updateHistogram(ImagePlus image) {
-      System.out.println("update histogram");
-      if (image != null) {
-         int[] rawHistogram = image.getProcessor().getHistogram();
-
-			if( rejectOutliersCheckBox_.isSelected())			{
-				// todo handle negative values
-
-				maxAfterRejectingOutliers_ = rawHistogram.length;
-				// specified percent of pixels are ignored in the automatic contrast setting
-				int totalPoints = image.getHeight() * image.getWidth();
-            fractionToReject_ = 0.01 * (Double)rejectOutliersPercentSpinner_.getValue();
-            HistogramUtils hu = new HistogramUtils(rawHistogram, totalPoints, fractionToReject_);
-            minAfterRejectingOutliers_ = hu.getMinAfterRejectingOutliers();
-            maxAfterRejectingOutliers_ = hu.getMaxAfterRejectingOutliers();
-			}
-         if (histogramData_ == null) {
-            histogramData_ = new GraphData();
-         } // 256 bins
-         int[] histogram = new int[HIST_BINS];
-         int limit = Math.min(rawHistogram.length / binSize_, HIST_BINS);
-         int total = 0;
-         for (int i = 0; i < limit; i++) {
-            histogram[i] = 0;
-            for (int j = 0; j < binSize_; j++) {
-               histogram[i] += rawHistogram[i * binSize_ + j];
-            }
-            total += histogram[i];
-         }
-
-
-         // work around what is apparently a bug in ImageJ
-         if (total == 0) {
-            if (image.getProcessor().getMin() == 0) {
-               histogram[0] = image.getWidth() * image.getHeight();
-            } else {
-               histogram[limit - 1] = image.getWidth() * image.getHeight();
-            }
-         }
-         if (logScale_) {
-            for (int i = 0; i < histogram.length; i++) {
-               histogram[i] = histogram[i] > 0 ? (int) (1000 * Math.log(histogram[i])) : 0;
-            }
-         }
-
-         histogramData_.setData(histogram);
+      if (image != null && histogram_ != null) {
+         histogramData_.setData(histogram_);
          histogramPanel_.setData(histogramData_);
          histogramPanel_.setAutoScale();
-         ImageStatistics stats = image.getStatistics();
-         maxField_.setText(NumberUtils.intToDisplayString((int) stats.max));
-         max_ = stats.max;
-         minField_.setText(NumberUtils.intToDisplayString((int) stats.min));
-         min_ = stats.min;
-         avgField_.setText(NumberUtils.intToDisplayString((int) stats.mean));
-         varField_.setText(NumberUtils.doubleToDisplayString(stats.stdDev));
-         if (min_ == max_) {
-            if (min_ == 0) {
-               max_ += 1;
-            } else {
-               min_ -= 1;
-            }
-         }
+         
+         maxLabel_.setText(NumberUtils.intToDisplayString((int) max_));
+         minLabel_.setText(NumberUtils.intToDisplayString((int) min_));
+         meanLabel_.setText(NumberUtils.intToDisplayString((int) mean_));
+         stdDevLabel_.setText(NumberUtils.doubleToDisplayString(stdDev_));
+         
          histogramPanel_.repaint();
       }
    }
@@ -660,19 +612,9 @@ public class ContrastPanel extends JPanel implements ImageController,
 //      liveStretchMode_ = true;
 
       // protect against an 'Unhandled Exception' inside getStatistics
-      if ( null != image_.getProcessor()){
-         ImageStatistics stats = image_.getStatistics();
-
-         int min = (int) stats.min;
-         int max = (int) stats.max;
-         if (min == max)
-            if (min == 0)
-               max += 1;
-            else
-               min -= 1;
-
-         lutMin_ = min;
-         lutMax_ = max;
+      if ( null != image_.getProcessor()){        
+         lutMin_ = min_;
+         lutMax_ = max_;
 
 			if(rejectOutliersCheckBox_.isSelected()){
 				if( lutMin_ < minAfterRejectingOutliers_  ){
@@ -874,8 +816,81 @@ public class ContrastPanel extends JPanel implements ImageController,
          imageUpdated_ = false;
       }
    }
+   
+   private void calcHistogramAndStatistics(ImagePlus ip) {
+      if (ip != null) {
+         int[] rawHistogram = ip.getProcessor().getHistogram();
+         int imgWidth = ip.getWidth();
+         int imgHeight = ip.getHeight();
+         if (rejectOutliersCheckBox_.isSelected()) {
+            // todo handle negative values
+            maxAfterRejectingOutliers_ = rawHistogram.length;
+            // specified percent of pixels are ignored in the automatic contrast setting
+            int totalPoints = imgHeight * imgWidth;
+            fractionToReject_ = 0.01 * (Double) rejectOutliersPercentSpinner_.getValue();
+            HistogramUtils hu = new HistogramUtils(rawHistogram, totalPoints, fractionToReject_);
+            minAfterRejectingOutliers_ = hu.getMinAfterRejectingOutliers();
+            maxAfterRejectingOutliers_ = hu.getMaxAfterRejectingOutliers();
+         }
+         if (histogramData_ == null) {
+            histogramData_ = new GraphData();
+         } // 256 bins
+         
+         
+          min_ = -1;
+         max_ = 0;
+         mean_ = 0;
+         
+         histogram_ = new int[HIST_BINS];
+         int limit = Math.min(rawHistogram.length / binSize_, HIST_BINS);
+         int total = 0;
+         for (int i = 0; i < limit; i++) {
+            histogram_[i] = 0;
+            for (int j = 0; j < binSize_; j++) {
+               int rawHistIndex = i * binSize_ + j;
+               int rawHistVal = rawHistogram[rawHistIndex];
+               histogram_[i] += rawHistVal;
+               if (rawHistVal > 0) {
+                  max_ = rawHistIndex;
+                  if (min_ == -1) {
+                     min_ = rawHistIndex;
+                  }
+                  mean_ += rawHistIndex * rawHistVal;
+               }
+            }
+            total += histogram_[i];
+            if (logScale_) 
+               histogram_[i] = histogram_[i] > 0 ? (int) (1000 * Math.log(histogram_[i])) : 0;
+         }
+         mean_ /= imgWidth*imgHeight;
+         if (min_ == max_) 
+            if (min_ == 0) 
+               max_++;
+            else 
+               min_--;
 
-   public void updateContrast(ImagePlus ip) {
+         // work around what is apparently a bug in ImageJ
+         if (total == 0) {
+            if (ip.getProcessor().getMin() == 0) {
+               histogram_[0] = imgWidth * imgHeight;
+            } else {
+               histogram_[limit - 1] = imgWidth * imgHeight;
+            }
+         }
+                      
+         stdDev_ = 0;
+         for (int i = 0; i < rawHistogram.length; i++) {
+           for (int j = 0; j < rawHistogram[i]; j++) {
+              stdDev_ += (i - mean_)*(i - mean_);
+           }
+         }
+         stdDev_ = Math.sqrt(stdDev_/(imgWidth*imgHeight));         
+      }
+   }
+
+   public void updateContrast(ImagePlus ip) {      
+      calcHistogramAndStatistics(ip);
+      
       if (stretchCheckBox_.isSelected()) {
          double min = ip.getDisplayRangeMin();
          double max = ip.getDisplayRangeMax();
