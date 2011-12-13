@@ -273,7 +273,7 @@ private:
    bool zeroed_;
    bool zeroInProgress_;
 };
-
+/*
 //////////////////////////////////////////////////////////////////////////////
 // IntegratedFilterWheel class
 // (device adapter)
@@ -306,6 +306,6 @@ private:
    std::string port_;
    MM::MMTime changedTime_;
 };
-
+*/
 
 #endif //_THORLABS_H_

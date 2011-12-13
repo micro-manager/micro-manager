@@ -337,10 +337,6 @@
 				>
 			</File>
 			<File
-				RelativePath=".\IntegratedFilterWheel.cpp"
-				>
-			</File>
-			<File
 				RelativePath="..\..\MMDevice\ModuleInterface.cpp"
 				>
 			</File>
