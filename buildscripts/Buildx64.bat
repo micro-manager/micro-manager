@@ -1,3 +1,5 @@
+echo %date% - %time%
+
 echo stop any instances that might already be running.
 pskill javaw.exe
 pskill java.exe
@@ -136,3 +138,5 @@ ECHO "Done installing"
 IF NOT "%3%" == "UPLOAD" GOTO FINISH
 pscp -i c:\projects\MM.ppk -batch /projects/micromanager/Install_x64/Output/%TARGETNAME% arthur@valelab.ucsf.edu:../MM/public_html/nightlyBuilds/1.4/Windows/%TARGETNAME%
 :FINISH
+
+echo %date% - %time%
