@@ -63,7 +63,7 @@
 			/>
 			<Tool
 				Name="VCResourceCompilerTool"
-				AdditionalIncludeDirectories="C:\projects\3rdparty\Microsoft\VisualC++\atlmfc\include"
+				AdditionalIncludeDirectories="..\..\..\3rdparty\Microsoft\VisualC++\atlmfc\include"
 			/>
 			<Tool
 				Name="VCPreLinkEventTool"
@@ -146,7 +146,7 @@
 			/>
 			<Tool
 				Name="VCResourceCompilerTool"
-				AdditionalIncludeDirectories="&quot;..\..\..\3rdparty\Microsoft\VisualC++\atlmfc\include&quot;"
+				AdditionalIncludeDirectories="..\..\..\3rdparty\Microsoft\VisualC++\atlmfc\include"
 			/>
 			<Tool
 				Name="VCPreLinkEventTool"
@@ -225,6 +225,7 @@
 			/>
 			<Tool
 				Name="VCResourceCompilerTool"
+				AdditionalIncludeDirectories="..\..\..\3rdparty\Microsoft\VisualC++\atlmfc\include"
 			/>
 			<Tool
 				Name="VCPreLinkEventTool"
@@ -305,7 +306,7 @@
 			/>
 			<Tool
 				Name="VCResourceCompilerTool"
-				AdditionalIncludeDirectories="&quot;..\..\..\3rdparty\Microsoft\VisualC++\atlmfc\include&quot;"
+				AdditionalIncludeDirectories="..\..\..\3rdparty\Microsoft\VisualC++\atlmfc\include"
 			/>
 			<Tool
 				Name="VCPreLinkEventTool"
