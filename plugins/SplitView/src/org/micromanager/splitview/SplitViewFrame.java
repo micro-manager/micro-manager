@@ -6,7 +6,6 @@
 package org.micromanager.splitview;
 
 import com.swtdesigner.SwingResourceManager;
-import ij.measure.Calibration;
 import ij.process.ByteProcessor;
 import ij.process.ImageProcessor;
 import ij.process.ShortProcessor;
@@ -21,10 +20,13 @@ import java.util.prefs.Preferences;
 import javax.swing.JColorChooser;
 import mmcorej.CMMCore;
 import mmcorej.TaggedImage;
+import org.json.JSONException;
+import org.json.JSONObject;
 import org.micromanager.MMStudioMainFrame;
 import org.micromanager.api.DataProcessor;
 import org.micromanager.api.ScriptInterface;
 import org.micromanager.api.DeviceControlGUI;
+import org.micromanager.utils.MDUtils;
 import org.micromanager.utils.MMScriptException;
 import org.micromanager.utils.ReportingUtils;
 
@@ -63,18 +65,67 @@ public class SplitViewFrame extends javax.swing.JFrame {
    private String shutterLabel_;
    private boolean shutterOrg_;
    private boolean appliedToMDA_ = false;
-   
+
    public class SplitViewProcessor extends DataProcessor<TaggedImage> {
+
       @Override
-      protected void process() {
-         final TaggedImage taggedImage = poll();
-         produce(taggedImage);
-         System.out.println("Found one");
+      public void process() {
+         TaggedImage taggedImage = poll();
+
+         ImageProcessor tmpImg;
+
+         try {
+            int imgDepth = MDUtils.getDepth(taggedImage.tags);
+            int width = MDUtils.getWidth(taggedImage.tags);
+            int height = MDUtils.getHeight(taggedImage.tags);
+            int channelIndex = MDUtils.getChannelIndex(taggedImage.tags);
+         } catch (MMScriptException ex) {
+            ReportingUtils.logError("SplitViewProcessor, MMSCriptException");
+         } catch (JSONException ex) {
+            ReportingUtils.logError("SplitViewProcessor, JSON Exception");
+         }/*
+            if (imgDepth == 1) {
+               tmpImg = new ByteProcessor(width, height);
+            } else if (imgDepth == 2) {
+               tmpImg = new ShortProcessor(width, height);
+            } else // TODO throw error
+            {
+               produce(taggedImage);
+               return;
+            }
+            tmpImg.setPixels(taggedImage.pix);
+
+            calculateSize(imgDepth, width, height);
+
+
+            tmpImg.setRoi(0, 0, newWidth_, newHeight_);
+            // first channel
+         
+            JSONObject tags = taggedImage.tags;
+            MDUtils.setWidth(tags, newWidth_);
+            MDUtils.setHeight(tags, newHeight_);
+            MDUtils.setChannelIndex(tags, channelIndex * 2);
+            TaggedImage firstIm = new TaggedImage(tmpImg.crop().getPixels(), tags);
+            //produce(firstIm);
+
+            // second channel
+            if (orientation_.equals(LR)) {
+               tmpImg.setRoi(newWidth_, 0, newWidth_, height_);
+            } else if (orientation_.equals(TB)) {
+               tmpImg.setRoi(0, newHeight_, newWidth_, newHeight_);
+            }
+            MDUtils.setChannelIndex(tags, channelIndex * 2 + 1);
+            TaggedImage secondIm = new TaggedImage(tmpImg.crop().getPixels(), tags);
+            //produce(secondIm);
+            */
+            System.out.println("Processed one");
+          
+            produce(taggedImage);
+    
+
       }
    }
-   
    private SplitViewProcessor mmImageProcessor_;
-
 
    public SplitViewFrame(ScriptInterface gui) throws Exception {
       gui_ = gui;
@@ -132,15 +183,12 @@ public class SplitViewFrame extends javax.swing.JFrame {
       snapButton.setIcon(SwingResourceManager.getIcon(SplitView.class, "/org/micromanager/icons/camera.png"));
       snapButton.setFont(buttonFont);
       snapButton.setToolTipText("Snap single image");
-      
+
       mmImageProcessor_ = new SplitViewProcessor();
       mmImageProcessor_.setName("SplitView");
 
    }
- 
 
-   
-   
    private void doSnap() {
       calculateSize();
       addSnapToImage();
@@ -196,6 +244,12 @@ public class SplitViewFrame extends javax.swing.JFrame {
       imgDepth_ = core_.getBytesPerPixel();
       width_ = (int) core_.getImageWidth();
       height_ = (int) core_.getImageHeight();
+
+      calculateSize(imgDepth_, width_, height_);
+
+   }
+
+   private void calculateSize(long depth, int width, int height) {
       if (!orientation_.equals(LR) && !orientation_.equals(TB)) {
          orientation_ = LR;
       }
