@@ -62,7 +62,7 @@ public class SplitViewFrame extends javax.swing.JFrame {
    private boolean autoShutterOrg_;
    private String shutterLabel_;
    private boolean shutterOrg_;
-   private boolean liveRunning_ = false;
+   private boolean appliedToMDA_ = false;
    
    public class SplitViewProcessor extends DataProcessor<TaggedImage> {
       @Override
@@ -134,6 +134,7 @@ public class SplitViewFrame extends javax.swing.JFrame {
       snapButton.setToolTipText("Snap single image");
       
       mmImageProcessor_ = new SplitViewProcessor();
+      mmImageProcessor_.setName("SplitView");
 
    }
  
@@ -461,10 +462,18 @@ public class SplitViewFrame extends javax.swing.JFrame {
     }//GEN-LAST:event_bottomRightColorButtonActionPerformed
 
    private void applyToMDACheckBox_StateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_applyToMDACheckBox_StateChanged
-      if (applyToMDACheckBox_.isSelected()) {
+       
+      Object source = evt.getSource();
+      
+      if (source != applyToMDACheckBox_)
+         return;
+      
+      if (applyToMDACheckBox_.isSelected() && !appliedToMDA_) {
          gui_.getAcquisitionEngine().addImageProcessor(mmImageProcessor_);
-      } else {
-         gui_.getAcquisitionEngine().removeImageProcessor(mmImageProcessor_.getClass());
+         appliedToMDA_ = true;
+      } else if (!applyToMDACheckBox_.isSelected() && appliedToMDA_) {
+         gui_.getAcquisitionEngine().removeImageProcessor(mmImageProcessor_);
+         appliedToMDA_ = false;
       }
    }//GEN-LAST:event_applyToMDACheckBox_StateChanged
     // Variables declaration - do not modify//GEN-BEGIN:variables
