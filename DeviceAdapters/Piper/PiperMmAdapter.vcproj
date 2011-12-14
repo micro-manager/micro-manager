@@ -336,7 +336,7 @@
 				AdditionalDependencies="PiperAPI.lib"
 				OutputFile="$(OutDir)/mmgr_dal_$(ProjectName).dll"
 				LinkIncremental="1"
-				AdditionalLibraryDirectories="&quot;..\..\..\3rdparty\PiperAPI\Lib\$(PlatformName)&quot;;&quot;..\..\..\..\Program Files\Microsoft Visual Studio 9.0\VC\atlmfc\lib\amd64&quot;"
+				AdditionalLibraryDirectories="&quot;..\..\..\3rdparty\PiperAPI\Lib\$(PlatformName)&quot;;&quot;..\..\..\3rdparty\Microsoft\VisualC++\atlmfc\lib\x64&quot;"
 				UACExecutionLevel="1"
 				ModuleDefinitionFile=".\PiperMmAdapter.def"
 				GenerateDebugInformation="false"
