@@ -1,5 +1,9 @@
-/*
+/**
  * SplitViewFrame.java
+ * 
+ * Micro-Manager plugin that can split the acquired image top-down or left-right
+ * and display the split image as a two channel image
+ * Work is in progress to apply this transform also during acquisition
  *
  * Created on Aug 28, 2011, 9:41:57 PM
  */
