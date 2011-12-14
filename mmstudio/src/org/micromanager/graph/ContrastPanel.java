@@ -614,9 +614,9 @@ public class ContrastPanel extends JPanel implements ImageController,
    public void update(boolean updateHistogram) {
       if (image_ == null || image_.getProcessor() == null)
          return;
-      if (stretchCheckBox_.isSelected()) {
-         setAutoScale();
-      }
+//      if (stretchCheckBox_.isSelected()) {
+//         setAutoScale();
+//      }
       if (updateHistogram &&!calcHistogram_)
          updateHistogram();
       setLutGamma(gamma_);
@@ -649,7 +649,7 @@ public class ContrastPanel extends JPanel implements ImageController,
 	 * 
 	 */
 	private void setAutoScale() {
-		if (image_ == null || calcHistogram_) {
+		if (image_ == null || !calcHistogram_) {
 			return;
       }
 
