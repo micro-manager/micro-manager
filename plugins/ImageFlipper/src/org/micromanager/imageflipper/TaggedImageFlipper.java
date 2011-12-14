@@ -3,7 +3,7 @@
  * and open the template in the editor.
  */
 
-package org.micromanager.examples.imageflipper;
+package org.micromanager.imageflipper;
 
 import org.micromanager.api.AcquisitionEngine;
 import org.micromanager.api.MMPlugin;
@@ -18,7 +18,7 @@ public class TaggedImageFlipper implements MMPlugin {
    private ScriptInterface gui_;
 
    public void dispose() {
-      throw new UnsupportedOperationException("Not supported yet.");
+      //throw new UnsupportedOperationException("Not supported yet.");
    }
 
    public void setApp(ScriptInterface app) {
