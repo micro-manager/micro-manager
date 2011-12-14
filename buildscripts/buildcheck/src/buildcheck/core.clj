@@ -20,8 +20,11 @@
 
 (doto (Calendar/getInstance) (.add Calendar/HOUR -1))
 
+;(defn result-file [bits mode]
+;  (File. micromanager (str "/result" bits (name mode) ".txt")))
+
 (defn result-file [bits mode]
-  (File. micromanager (str "/result" bits (name mode) ".txt")))
+  (File. micromanager (str "/results" bits ".txt")))
 
 (defn visual-studio-errors [result-text]
   (map first
@@ -93,21 +96,21 @@
           ({:inc "INCREMENTAL" :full "FULL"} mode)
           " BUILD ERROR REPORT\n"
         "For the full build output, see " (.getAbsolutePath f)
-        "\n\nVisual Studio reported errors:"
+        "\n\nVisual Studio reported errors:\n"
         (if-not (empty? vs-error-text)
           vs-error-text
           "None.")
         "\n\nOutdated device adapter DLLs:\n"
         (if-not (empty? outdated-dlls)
-          (str-lines "\n" (map #(.getName %) outdated-dlls))
+          (str-lines (map #(.getName %) outdated-dlls))
           "None.")
           "\n\nErrors reported by java compiler:\n"
         (if-not (empty? javac-errs)
-          (str-lines "\n" javac-errs)
+          (str-lines javac-errs)
           "None.")
         "\n\nOutdated jar files:\n"
         (if-not (empty? outdated-jars)
-          (str-lines "\n" (map #(.getName %) outdated-jars))
+          (str-lines (map #(.getName %) outdated-jars))
           "None.")
         "\n\nIs installer download available on website?\n"
         (if installer-ok
