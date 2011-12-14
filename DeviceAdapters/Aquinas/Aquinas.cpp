@@ -3,7 +3,7 @@
 // PROJECT:       Micro-Manager
 // SUBSYSTEM:     DeviceAdapters
 //-----------------------------------------------------------------------------
-// DESCRIPTION:   Inetrafces with Aquinas MicroFluidics Controller
+// DESCRIPTION:   Interfaces with Aquinas MicroFluidics Controller
 // COPYRIGHT:     UCSF, 2011
 // LICENSE:       LGPL
 // AUTHOR:        Nico Stuurman, nico@cmp.ucsf.edu

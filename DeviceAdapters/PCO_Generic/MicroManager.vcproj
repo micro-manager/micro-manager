@@ -164,7 +164,7 @@
 				ShowProgress="0"
 				OutputFile="$(OutDir)/mmgr_dal_PCO_Camera.dll"
 				LinkIncremental="2"
-				AdditionalLibraryDirectories="&quot;..\..\..\3rdparty\Microsoft\VisualC++\atlmfc\lib\ia64&quot;;..\..\..\3rdparty\PCO\Windows\pco_generic"
+				AdditionalLibraryDirectories="&quot;..\..\..\3rdparty\Microsoft\VisualC++\atlmfc\lib\x64&quot;;..\..\..\3rdparty\PCO\Windows\pco_generic"
 				GenerateDebugInformation="true"
 				ProgramDatabaseFile="$(OutDir)/pco_camera.pdb"
 				SubSystem="2"
