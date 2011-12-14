@@ -332,7 +332,7 @@
 				AdditionalDependencies="version.lib  nafxcw.lib ..\..\..\3rdparty\Pco\windows\pco_generic\Kamlib64.lib"
 				OutputFile="$(OutDir)/mmgr_dal_$(ProjectName).dll"
 				LinkIncremental="1"
-				AdditionalLibraryDirectories="&quot;..\..\..\3rdparty\Microsoft\VisualC++\atlmfc\lib\ia64&quot;;..\..\..\3rdparty\PCO\Windows\pco_generic"
+				AdditionalLibraryDirectories="&quot;..\..\..\3rdparty\Microsoft\VisualC++\atlmfc\lib\x64&quot;;..\..\..\3rdparty\PCO\Windows\pco_generic"
 				GenerateDebugInformation="true"
 				SubSystem="2"
 				OptimizeReferences="2"
