@@ -149,6 +149,10 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
    public void removeImageProcessor(Class taggedImageProcessor) {
       taggedImageProcessors_.remove(taggedImageProcessor);
    }
+   
+   public void removeImageProcessor(DataProcessor<TaggedImage> taggedImageProcessor) {
+      taggedImageProcessors_.remove(taggedImageProcessor);
+   }
 
    private SequenceSettings gatherSequenceSettings() {
       SequenceSettings acquisitionSettings = new SequenceSettings();

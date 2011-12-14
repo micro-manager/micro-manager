@@ -26,6 +26,7 @@ public abstract class DataProcessor<E> extends Thread {
     * }
     */
 
+   @Override
    public void run() {
       while (!stopRequested_) {
          process();

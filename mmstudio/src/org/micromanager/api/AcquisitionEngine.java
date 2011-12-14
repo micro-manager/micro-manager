@@ -314,11 +314,19 @@ public interface AcquisitionEngine {
    public boolean isPaused();
    public void restoreSystem();
 
+   /**
+    * @deprecated
+    */
    public void addImageProcessor(Class processor);
-   public void addImageProcessor(DataProcessor<TaggedImage> processor);
-
+   /**
+    * @deprecated
+    */
    public void removeImageProcessor(Class processor);
-
+   
+   
+   public void addImageProcessor(DataProcessor<TaggedImage> processor);
+   public void removeImageProcessor(DataProcessor<TaggedImage> taggedImageProcessor);
+   
    public boolean abortRequested();
 
    public long getNextWakeTime();
