@@ -1,6 +1,11 @@
-/*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
+/**
+ * DataProcessor thread allows for on-the-fly modification of image
+ * data during acquisition.  
+ * 
+ * Inherit from this class and use the AcquisitionEngine functions 
+ * addImageProcessor and removeImageProcessor to insert your code into the
+ * acquisition pipeline
+ * 
  */
 
 package org.micromanager.api;
