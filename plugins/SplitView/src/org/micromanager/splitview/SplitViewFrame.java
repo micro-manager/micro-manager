@@ -65,67 +65,75 @@ public class SplitViewFrame extends javax.swing.JFrame {
    private String shutterLabel_;
    private boolean shutterOrg_;
    private boolean appliedToMDA_ = false;
+   private SplitViewProcessor mmImageProcessor_;
 
    public class SplitViewProcessor extends DataProcessor<TaggedImage> {
 
       @Override
       public void process() {
-         TaggedImage taggedImage = poll();
-
-         ImageProcessor tmpImg;
 
          try {
-            int imgDepth = MDUtils.getDepth(taggedImage.tags);
-            int width = MDUtils.getWidth(taggedImage.tags);
-            int height = MDUtils.getHeight(taggedImage.tags);
-            int channelIndex = MDUtils.getChannelIndex(taggedImage.tags);
+            TaggedImage taggedImage = poll();
+            if (taggedImage != null && taggedImage.tags != null) {
+               ImageProcessor tmpImg;
+               int imgDepth = MDUtils.getDepth(taggedImage.tags);
+               int width = MDUtils.getWidth(taggedImage.tags);
+               int height = MDUtils.getHeight(taggedImage.tags);
+               int channelIndex = MDUtils.getChannelIndex(taggedImage.tags);
+
+               System.out.println("Processed one");
+
+               produce(taggedImage);
+
+
+               if (imgDepth == 1) {
+                  tmpImg = new ByteProcessor(width, height);
+               } else if (imgDepth == 2) {
+                  tmpImg = new ShortProcessor(width, height);
+               } else // TODO throw error
+               {
+                  //produce(taggedImage);
+                  return;
+               }
+              
+               tmpImg.setPixels(taggedImage.pix);
+
+               calculateSize(imgDepth, width, height);
+
+               tmpImg.setRoi(0, 0, newWidth_, newHeight_);
+               // first channel
+
+               // Note, this does not copy the tags, rather the pointer
+               // This will mess things up.  Not sure how to copy...
+               JSONObject tags = taggedImage.tags;
+               
+               MDUtils.setWidth(tags, newWidth_);
+               MDUtils.setHeight(tags, newHeight_);              
+               MDUtils.setChannelIndex(tags, channelIndex * 2);
+                
+               TaggedImage firstIm = new TaggedImage(tmpImg.crop().getPixels(), tags);
+               //produce(firstIm);
+
+               // second channel
+               if (orientation_.equals(LR)) {
+                  tmpImg.setRoi(newWidth_, 0, newWidth_, height_);
+               } else if (orientation_.equals(TB)) {
+                  tmpImg.setRoi(0, newHeight_, newWidth_, newHeight_);
+               }
+               //MDUtils.setChannelIndex(tags, channelIndex * 2 + 1);
+               
+               TaggedImage secondIm = new TaggedImage(tmpImg.crop().getPixels(), tags);
+               //produce(secondIm);
+            }
          } catch (MMScriptException ex) {
             ReportingUtils.logError("SplitViewProcessor, MMSCriptException");
          } catch (JSONException ex) {
             ReportingUtils.logError("SplitViewProcessor, JSON Exception");
-         }/*
-            if (imgDepth == 1) {
-               tmpImg = new ByteProcessor(width, height);
-            } else if (imgDepth == 2) {
-               tmpImg = new ShortProcessor(width, height);
-            } else // TODO throw error
-            {
-               produce(taggedImage);
-               return;
-            }
-            tmpImg.setPixels(taggedImage.pix);
-
-            calculateSize(imgDepth, width, height);
-
-
-            tmpImg.setRoi(0, 0, newWidth_, newHeight_);
-            // first channel
-         
-            JSONObject tags = taggedImage.tags;
-            MDUtils.setWidth(tags, newWidth_);
-            MDUtils.setHeight(tags, newHeight_);
-            MDUtils.setChannelIndex(tags, channelIndex * 2);
-            TaggedImage firstIm = new TaggedImage(tmpImg.crop().getPixels(), tags);
-            //produce(firstIm);
-
-            // second channel
-            if (orientation_.equals(LR)) {
-               tmpImg.setRoi(newWidth_, 0, newWidth_, height_);
-            } else if (orientation_.equals(TB)) {
-               tmpImg.setRoi(0, newHeight_, newWidth_, newHeight_);
-            }
-            MDUtils.setChannelIndex(tags, channelIndex * 2 + 1);
-            TaggedImage secondIm = new TaggedImage(tmpImg.crop().getPixels(), tags);
-            //produce(secondIm);
-            */
-            System.out.println("Processed one");
-          
-            produce(taggedImage);
-    
-
+         }
       }
    }
-   private SplitViewProcessor mmImageProcessor_;
+   
+   
 
    public SplitViewFrame(ScriptInterface gui) throws Exception {
       gui_ = gui;
@@ -183,9 +191,6 @@ public class SplitViewFrame extends javax.swing.JFrame {
       snapButton.setIcon(SwingResourceManager.getIcon(SplitView.class, "/org/micromanager/icons/camera.png"));
       snapButton.setFont(buttonFont);
       snapButton.setToolTipText("Snap single image");
-
-      mmImageProcessor_ = new SplitViewProcessor();
-      mmImageProcessor_.setName("SplitView");
 
    }
 
@@ -523,10 +528,13 @@ public class SplitViewFrame extends javax.swing.JFrame {
          return;
       
       if (applyToMDACheckBox_.isSelected() && !appliedToMDA_) {
+         mmImageProcessor_ = new SplitViewProcessor();
+         mmImageProcessor_.setName("SplitView");
          gui_.getAcquisitionEngine().addImageProcessor(mmImageProcessor_);
          appliedToMDA_ = true;
       } else if (!applyToMDACheckBox_.isSelected() && appliedToMDA_) {
-         gui_.getAcquisitionEngine().removeImageProcessor(mmImageProcessor_);
+         if (mmImageProcessor_ != null)
+            gui_.getAcquisitionEngine().removeImageProcessor(mmImageProcessor_);
          appliedToMDA_ = false;
       }
    }//GEN-LAST:event_applyToMDACheckBox_StateChanged
