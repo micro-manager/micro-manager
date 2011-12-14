@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.concurrent.BlockingQueue;
 import org.micromanager.api.DataProcessor;
 import org.micromanager.utils.GentleLinkedBlockingQueue;
+import org.micromanager.utils.ReportingUtils;
 
 /**
  *
@@ -43,9 +44,15 @@ public class ProcessorStack<E> {
    }
 
    public void start() {
-      for (DataProcessor<E> processor:processors_) {
-        if (!processor.isAlive())
-          processor.start();
+      for (DataProcessor<E> processor : processors_) {
+         if (!processor.isAlive()) {
+            if (processor.isStarted()) {
+               ReportingUtils.showError("Processor: " + processor.getName()
+                       + " is no longer running. Remove and re-insert to get it to go again");
+            } else {
+               processor.start();
+            }
+         }
       }
    }
 

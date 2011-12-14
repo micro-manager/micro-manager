@@ -68,9 +68,11 @@ public class LiveAcq extends Thread {
       imageCache_.addImageCacheListener(display_);
    }
 
+   @Override
    public void start() {
       Thread savingThread = new Thread("LiveAcq saving thread.") {
 
+         @Override
          public void run() {
             long t1 = System.currentTimeMillis();
             int imageCount = 0;

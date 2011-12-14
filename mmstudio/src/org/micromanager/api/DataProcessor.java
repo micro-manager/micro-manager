@@ -23,6 +23,7 @@ public abstract class DataProcessor<E> extends Thread {
    private BlockingQueue<E> input_;
    private BlockingQueue<E> output_;
    private boolean stopRequested_ = false;
+   private boolean started_ = false;
 
    protected abstract void process();
    /*    The "Identity" process method:
@@ -33,6 +34,7 @@ public abstract class DataProcessor<E> extends Thread {
 
    @Override
    public void run() {
+      setStarted(true);
       while (!stopRequested_) {
          process();
       }
@@ -40,6 +42,14 @@ public abstract class DataProcessor<E> extends Thread {
 
    public synchronized void requestStop() {
       stopRequested_ = true;
+   }
+   
+   private synchronized void setStarted(boolean started) {
+      started_ = started;
+   }
+   
+   public synchronized boolean isStarted() {
+      return started_;
    }
 
    public DataProcessor() {}
