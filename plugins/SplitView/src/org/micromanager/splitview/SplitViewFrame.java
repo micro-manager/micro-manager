@@ -27,6 +27,7 @@ import mmcorej.TaggedImage;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.micromanager.MMStudioMainFrame;
+import org.micromanager.acquisition.TaggedImageQueue;
 import org.micromanager.api.DataProcessor;
 import org.micromanager.api.ScriptInterface;
 import org.micromanager.api.DeviceControlGUI;
@@ -78,6 +79,12 @@ public class SplitViewFrame extends javax.swing.JFrame {
 
          try {
             TaggedImage taggedImage = poll();
+
+            if (TaggedImageQueue.isPoison(taggedImage)) {
+               produce(taggedImage);
+               return;
+            }
+            
             if (taggedImage != null && taggedImage.tags != null) {
                ImageProcessor tmpImg;
                int imgDepth = MDUtils.getDepth(taggedImage.tags);
@@ -109,7 +116,7 @@ public class SplitViewFrame extends javax.swing.JFrame {
 
                // Note, this does not copy the tags, rather the pointer
                // This will mess things up.  Not sure how to copy...
-               JSONObject tags = taggedImage.tags;
+               JSONObject tags = new JSONObject(taggedImage.tags.toString());
                
                MDUtils.setWidth(tags, newWidth_);
                MDUtils.setHeight(tags, newHeight_);              
@@ -119,14 +126,15 @@ public class SplitViewFrame extends javax.swing.JFrame {
                //produce(firstIm);
 
                // second channel
+               JSONObject tags2 = new JSONObject(tags.toString());
                if (orientation_.equals(LR)) {
                   tmpImg.setRoi(newWidth_, 0, newWidth_, height_);
                } else if (orientation_.equals(TB)) {
                   tmpImg.setRoi(0, newHeight_, newWidth_, newHeight_);
                }
-               //MDUtils.setChannelIndex(tags, channelIndex * 2 + 1);
+               MDUtils.setChannelIndex(tags2, channelIndex * 2 + 1);
                
-               TaggedImage secondIm = new TaggedImage(tmpImg.crop().getPixels(), tags);
+               TaggedImage secondIm = new TaggedImage(tmpImg.crop().getPixels(), tags2);
                //produce(secondIm);
             }
          } catch (MMScriptException ex) {
