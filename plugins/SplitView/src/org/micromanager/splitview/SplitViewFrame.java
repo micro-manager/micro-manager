@@ -94,7 +94,7 @@ public class SplitViewFrame extends javax.swing.JFrame {
 
                System.out.println("Processed one");
 
-               produce(taggedImage);
+               //produce(taggedImage);
 
 
                if (imgDepth == 1) {
@@ -123,19 +123,21 @@ public class SplitViewFrame extends javax.swing.JFrame {
                MDUtils.setChannelIndex(tags, channelIndex * 2);
                 
                TaggedImage firstIm = new TaggedImage(tmpImg.crop().getPixels(), tags);
-               //produce(firstIm);
-
+               produce(firstIm);
+               
                // second channel
-               JSONObject tags2 = new JSONObject(tags.toString());
+               JSONObject tags2 = new JSONObject(taggedImage.tags.toString());
                if (orientation_.equals(LR)) {
                   tmpImg.setRoi(newWidth_, 0, newWidth_, height_);
                } else if (orientation_.equals(TB)) {
                   tmpImg.setRoi(0, newHeight_, newWidth_, newHeight_);
                }
+               MDUtils.setWidth(tags2, newWidth_);
+               MDUtils.setHeight(tags2, newHeight_);  
                MDUtils.setChannelIndex(tags2, channelIndex * 2 + 1);
                
                TaggedImage secondIm = new TaggedImage(tmpImg.crop().getPixels(), tags2);
-               //produce(secondIm);
+               produce(secondIm);
             }
          } catch (MMScriptException ex) {
             ReportingUtils.logError("SplitViewProcessor, MMSCriptException");
@@ -271,11 +273,11 @@ public class SplitViewFrame extends javax.swing.JFrame {
          orientation_ = LR;
       }
       if (orientation_.equals(LR)) {
-         newWidth_ = width_ / 2;
-         newHeight_ = height_;
+         newWidth_ = width / 2;
+         newHeight_ = height;
       } else if (orientation_.equals(TB)) {
-         newWidth_ = width_;
-         newHeight_ = height_ / 2;
+         newWidth_ = width;
+         newHeight_ = height / 2;
       }
    }
 
