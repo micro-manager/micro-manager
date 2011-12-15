@@ -402,7 +402,7 @@
          z-ref))))
 
 (defn update-z-positions [msp-index]
-  (let [msp (get-msp msp-index)]
+  (when-let [msp (get-msp msp-index)]
     (dotimes [i (.size msp)]
       (let [stage-pos (.get msp i)
             stage-name (.stageName stage-pos)]
