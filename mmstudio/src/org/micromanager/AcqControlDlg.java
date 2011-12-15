@@ -1593,7 +1593,15 @@ public class AcqControlDlg extends JDialog implements PropertyChangeListener {
       acqEng_.setFrames(numFrames, interval);
       acqEng_.enableFramesSetting(acqPrefs_.getBoolean(ACQ_ENABLE_MULTI_FRAME, false));
 
-      framesPanel_.setSelected(acqEng_.isFramesSettingEnabled());
+       boolean framesEnabled = acqEng_.isFramesSettingEnabled(); 
+      framesPanel_.setSelected(framesEnabled);
+      framesPanel_.setSelected(framesEnabled);
+      Component[] comps = framesSubPanel_.getComponents();
+      for (Component c: comps)
+         for (Component co: ((JPanel)c).getComponents() )
+            co.setEnabled(framesEnabled);
+      
+      
       numFrames_.setValue(acqEng_.getNumFrames());
 
       int unit = acqPrefs_.getInt(ACQ_TIME_UNIT, 0);
@@ -1937,7 +1945,14 @@ public class AcqControlDlg extends JDialog implements PropertyChangeListener {
       zTop_.setText(NumberUtils.doubleToDisplayString(acqEng_.getZTopUm()));
       zStep_.setText(NumberUtils.doubleToDisplayString(acqEng_.getSliceZStepUm()));
 
-      framesPanel_.setSelected(acqEng_.isFramesSettingEnabled());
+      boolean framesEnabled = acqEng_.isFramesSettingEnabled(); 
+      framesPanel_.setSelected(framesEnabled);
+      Component[] comps = framesSubPanel_.getComponents();
+      for (Component c: comps)
+         for (Component co: ((JPanel)c).getComponents() )
+            co.setEnabled(framesEnabled);
+      
+      
       checkForCustomTimeIntervals();
       slicesPanel_.setSelected(acqEng_.isZSliceSettingEnabled());
       positionsPanel_.setSelected(acqEng_.isMultiPositionEnabled());
