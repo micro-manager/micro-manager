@@ -131,6 +131,9 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
       }
    }
 
+   /**
+    * @deprecated
+    */
    public void addImageProcessor(Class taggedImageProcessorClass) {
       try {
          taggedImageProcessors_.add(
@@ -142,14 +145,21 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
       }
    }
 
+   /**
+    * @deprecated
+    */
+   public void removeImageProcessor(Class taggedImageProcessorClass) {
+      for (DataProcessor<TaggedImage> proc:taggedImageProcessors_) {
+         if (proc.getClass() == taggedImageProcessorClass) {
+            taggedImageProcessors_.remove(proc);
+         }
+      }
+   }
+
    public void addImageProcessor(DataProcessor<TaggedImage> taggedImageProcessor) {
       taggedImageProcessors_.add(taggedImageProcessor);
    }
 
-   public void removeImageProcessor(Class taggedImageProcessor) {
-      taggedImageProcessors_.remove(taggedImageProcessor);
-   }
-   
    public void removeImageProcessor(DataProcessor<TaggedImage> taggedImageProcessor) {
       taggedImageProcessors_.remove(taggedImageProcessor);
    }
