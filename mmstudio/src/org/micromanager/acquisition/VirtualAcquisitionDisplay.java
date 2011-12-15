@@ -51,13 +51,8 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
    }
    final static Color[] rgb = {Color.red, Color.green, Color.blue};
    final ImageCache imageCache_;
-   final private ImagePlus hyperImage_;
-   final private HyperstackControls hc_;
-   final AcquisitionVirtualStack virtualStack_;
-   final private ScrollbarWithLabel pSelector_;
-   final private ScrollbarWithLabel tSelector_;
-   final private ScrollbarWithLabel zSelector_;
-   final private int numComponents_;
+   final Preferences prefs_ = Preferences.userNodeForPackage(this.getClass());
+
    private AcquisitionEngine eng_;
    private boolean finished_ = false;
    private boolean promptToSave_ = true;
@@ -66,7 +61,14 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
    private JSONObject lastDisplayTags_;
    private boolean updating_ = false;
    private int[] channelInitiated_;
-   final Preferences prefs_ = Preferences.userNodeForPackage(this.getClass());
+
+   private int numComponents_;
+   private ImagePlus hyperImage_;
+   private ScrollbarWithLabel pSelector_;
+   private ScrollbarWithLabel tSelector_;
+   private ScrollbarWithLabel zSelector_;
+   private HyperstackControls hc_;
+   private AcquisitionVirtualStack virtualStack_;
 
    /* This interface and the following two classes
     * allow us to manipulate the dimensions
@@ -200,7 +202,9 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
       imageCache_ = imageCache;
       eng_ = eng;
       pSelector_ = createPositionScrollbar();
+   }
 
+   private void handleFirstImage(JSONObject firstImageMetadata) {
       JSONObject summaryMetadata = getSummaryMetadata();
       int numSlices = 1;
       int numFrames = 1;
@@ -211,8 +215,8 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
       int height = 0;
       int numComponents = 1;
       try {
-         width = MDUtils.getWidth(summaryMetadata);
-         height = MDUtils.getHeight(summaryMetadata);
+         width = MDUtils.getWidth(firstImageMetadata);
+         height = MDUtils.getHeight(firstImageMetadata);
          numSlices = Math.max(summaryMetadata.getInt("Slices"), 1);
          numFrames = Math.max(summaryMetadata.getInt("Frames"), 1);
          //numFrames = Math.max(Math.min(2,summaryMetadata.getInt("Frames")), 1);
@@ -233,12 +237,12 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
 
       int type = 0;
       try {
-         type = MDUtils.getSingleChannelType(summaryMetadata);
+         type = MDUtils.getSingleChannelType(firstImageMetadata);
       } catch (Exception ex) {
          ReportingUtils.showError(ex, "Unable to determine acquisition type.");
       }
       virtualStack_ = new AcquisitionVirtualStack(width, height, type, null,
-              imageCache,  numGrayChannels * numSlices * numFrames , this);
+              imageCache_,  numGrayChannels * numSlices * numFrames , this);
       if (summaryMetadata.has("PositionIndex")) {
          try {
             virtualStack_.setPositionIndex(MDUtils.getPositionIndex(summaryMetadata));
@@ -650,6 +654,11 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
       int position = MDUtils.getPositionIndex(md);
       int slice = MDUtils.getSliceIndex(md);
       int superChannel = this.rgbToGrayChannel(MDUtils.getChannelIndex(md));
+
+      if (hyperImage_ == null) {
+         handleFirstImage(md);
+      }
+
       if (hyperImage_.getClass().equals(MMCompositeImage.class)) {
          boolean[] active = ((MMCompositeImage) hyperImage_ ).getActiveChannels();
          for (int k = 0; k < active.length; k++) {
