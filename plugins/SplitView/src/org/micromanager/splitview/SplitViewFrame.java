@@ -108,18 +108,19 @@ public class SplitViewFrame extends javax.swing.JFrame {
                }
               
                tmpImg.setPixels(taggedImage.pix);
+               
+               height = calculateHeight(height);
+               width = calculateWidth(width);
 
-               calculateSize(imgDepth, width, height);
-
-               tmpImg.setRoi(0, 0, newWidth_, newHeight_);
+               tmpImg.setRoi(0, 0, width, height);
                // first channel
 
                // Note, this does not copy the tags, rather the pointer
                // This will mess things up.  Not sure how to copy...
                JSONObject tags = new JSONObject(taggedImage.tags.toString());
                
-               MDUtils.setWidth(tags, newWidth_);
-               MDUtils.setHeight(tags, newHeight_);              
+               MDUtils.setWidth(tags, width);
+               MDUtils.setHeight(tags, height);              
                MDUtils.setChannelIndex(tags, channelIndex * 2);
                 
                TaggedImage firstIm = new TaggedImage(tmpImg.crop().getPixels(), tags);
@@ -128,12 +129,12 @@ public class SplitViewFrame extends javax.swing.JFrame {
                // second channel
                JSONObject tags2 = new JSONObject(taggedImage.tags.toString());
                if (orientation_.equals(LR)) {
-                  tmpImg.setRoi(newWidth_, 0, newWidth_, height_);
+                  tmpImg.setRoi(width, 0, width, height);
                } else if (orientation_.equals(TB)) {
-                  tmpImg.setRoi(0, newHeight_, newWidth_, newHeight_);
+                  tmpImg.setRoi(0, height, width, height);
                }
-               MDUtils.setWidth(tags2, newWidth_);
-               MDUtils.setHeight(tags2, newHeight_);  
+               MDUtils.setWidth(tags2, width);
+               MDUtils.setHeight(tags2, height);  
                MDUtils.setChannelIndex(tags2, channelIndex * 2 + 1);
                
                TaggedImage secondIm = new TaggedImage(tmpImg.crop().getPixels(), tags2);
@@ -261,24 +262,35 @@ public class SplitViewFrame extends javax.swing.JFrame {
 
    private void calculateSize() {
       imgDepth_ = core_.getBytesPerPixel();
-      width_ = (int) core_.getImageWidth();
-      height_ = (int) core_.getImageHeight();
 
-      calculateSize(imgDepth_, width_, height_);
-
+      width_ = calculateWidth((int) core_.getImageWidth());
+      height_ = calculateHeight((int) core_.getImageHeight());
    }
 
-   private void calculateSize(long depth, int width, int height) {
+   public int calculateWidth(int width) {
+      int newWidth = width;
       if (!orientation_.equals(LR) && !orientation_.equals(TB)) {
          orientation_ = LR;
       }
       if (orientation_.equals(LR)) {
-         newWidth_ = width / 2;
-         newHeight_ = height;
+         newWidth = width / 2;
       } else if (orientation_.equals(TB)) {
-         newWidth_ = width;
-         newHeight_ = height / 2;
+         newWidth = width;
       }
+      return newWidth;
+   }
+   
+   public int calculateHeight(int height) {
+      int newHeight = height;
+      if (!orientation_.equals(LR) && !orientation_.equals(TB)) {
+         orientation_ = LR;
+      }
+      if (orientation_.equals(LR)) {
+         newHeight = height;
+      } else if (orientation_.equals(TB)) {
+         newHeight = height / 2;
+      }
+      return newHeight;
    }
 
    private void openAcq() throws MMScriptException {
