@@ -148,11 +148,11 @@ MODULE_API MM::Device* CreateDevice(const char* deviceName)
       PiezoZStage* stage = new PiezoZStage();
       return stage;
    }
-   //if (strcmp(deviceName, g_WheelDeviceName) == 0)
-   //{
-   //   IntegratedFilterWheel* wheel = new IntegratedFilterWheel();
-   //   return wheel;
-   //}
+   if (strcmp(deviceName, g_WheelDeviceName) == 0)
+   {
+      IntegratedFilterWheel* wheel = new IntegratedFilterWheel();
+      return wheel;
+   }
 
    return 0;
 }
