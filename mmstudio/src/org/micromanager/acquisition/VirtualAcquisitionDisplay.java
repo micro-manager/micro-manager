@@ -1,5 +1,6 @@
 package org.micromanager.acquisition;
 
+import java.lang.reflect.InvocationTargetException;
 import org.micromanager.api.ImageCacheListener;
 import ij.ImageStack;
 import ij.process.LUT;
@@ -63,7 +64,7 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
    private int[] channelInitiated_;
 
    private int numComponents_;
-   private ImagePlus hyperImage_;
+   private MMCompositeImage hyperImage_;
    private ScrollbarWithLabel pSelector_;
    private ScrollbarWithLabel tSelector_;
    private ScrollbarWithLabel zSelector_;
@@ -503,6 +504,23 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
       }
    }
 
+   public void updateDimensions() {
+      StackWindow win = (StackWindow) hyperImage_.getWindow();
+      //beanshell: hyperImage_.nChannels = 3;
+      hyperImage_.setNChannelsUnverified(3);
+      hyperImage_.setOpenAsHyperStack(true);
+      win.remove(hc_);
+      try {
+         StackWindow.class.getDeclaredMethod("addScrollbars", ImagePlus.class)
+                 .invoke(win, hyperImage_);
+      } catch (Exception ex) {
+         ReportingUtils.logError(ex);
+      }
+      win.add(hc_);
+      win.pack();
+   }
+
+
    private void setNumPositions(int n) {
       pSelector_.setMinimum(0);
       pSelector_.setMaximum(n);
@@ -529,6 +547,10 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
          ((IMMImagePlus) hyperImage_).setNSlicesUnverified(n);
          zSelector_.setMaximum(n + 1);
       }
+   }
+
+   private void setNumChannels(int n) {
+    //  hyperImage_.getWindow(
    }
 
    public ImagePlus getHyperImage() {
@@ -854,20 +876,15 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
       return img;
    }
 
-   final public ImagePlus createHyperImage(MMImagePlus mmIP, int channels, int slices,
+   final public MMCompositeImage createHyperImage(MMImagePlus mmIP, int channels, int slices,
            int frames, final AcquisitionVirtualStack virtualStack,
            HyperstackControls hc) {
-      final ImagePlus hyperImage;
+      final MMCompositeImage hyperImage;
       mmIP.setNChannelsUnverified(channels);
       mmIP.setNFramesUnverified(frames);
       mmIP.setNSlicesUnverified(slices);
-      if (channels > 1) {
-         hyperImage = new MMCompositeImage(mmIP, CompositeImage.COMPOSITE);
-         hyperImage.setOpenAsHyperStack(true);
-      } else {
-         hyperImage = mmIP;
-         mmIP.setOpenAsHyperStack(true);
-      }
+      hyperImage = new MMCompositeImage(mmIP, CompositeImage.COMPOSITE);
+      hyperImage.setOpenAsHyperStack(true);
       return hyperImage;
    }
 
