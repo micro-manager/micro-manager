@@ -68,7 +68,7 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
    private ScrollbarWithLabel tSelector_;
    private ScrollbarWithLabel zSelector_;
    private HyperstackControls hc_;
-   private AcquisitionVirtualStack virtualStack_;
+   public AcquisitionVirtualStack virtualStack_;
 
    /* This interface and the following two classes
     * allow us to manipulate the dimensions
