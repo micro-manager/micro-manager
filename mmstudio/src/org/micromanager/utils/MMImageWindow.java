@@ -368,29 +368,29 @@ public final class MMImageWindow extends ImageWindow {
                ipr.setPixels(img);
             }
          } else { // convert to stack
-            int w = ipr.getWidth();
-            int h = ipr.getHeight();
-
-            Object[] planes;
-            if (img instanceof byte[]) {
-               planes = ImageUtils.getColorPlanesFromRGB32((byte[]) img);
-            } else if (img instanceof short[]) {
-               planes = ImageUtils.getColorPlanesFromRGB64((short[]) img);
-            } else {
-               planes = null;
-            }
-
-            iplus = new ImagePlus();
-            ImageStack imageStack = new ImageStack(w, h, 3);
-            for (int i=0;i<3;++i) {
-               imageStack.setPixels(planes[i], 1+i);
-            }
-
-            iplus.setStack(imageStack);
-
-            compositeImage_ = new CompositeImage(iplus, CompositeImage.COMPOSITE);
-            compositeImage_.setStack(imageStack);
-            this.setImage(compositeImage_);
+//            int w = ipr.getWidth();
+//            int h = ipr.getHeight();
+//
+//            Object[] planes;
+//            if (img instanceof byte[]) {
+//               planes = ImageUtils.getColorPlanesFromRGB32((byte[]) img);
+//            } else if (img instanceof short[]) {
+//               planes = ImageUtils.getColorPlanesFromRGB64((short[]) img);
+//            } else {
+//               planes = null;
+//            }
+//
+//            iplus = new ImagePlus();
+//            ImageStack imageStack = new ImageStack(w, h, 3);
+//            for (int i=0;i<3;++i) {
+//               imageStack.setPixels(planes[i], 1+i);
+//            }
+//
+//            iplus.setStack(imageStack);
+//
+//            compositeImage_ = new CompositeImage(iplus, CompositeImage.COMPOSITE);
+//            compositeImage_.setStack(imageStack);
+//            this.setImage(compositeImage_);
          }
 
          if (ip != null)

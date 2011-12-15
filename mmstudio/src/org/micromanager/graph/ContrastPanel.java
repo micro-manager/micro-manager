@@ -24,29 +24,21 @@
 package org.micromanager.graph;
 
 import ij.CompositeImage;
-import ij.ImageListener;
 import ij.ImagePlus;
 import ij.gui.ImageWindow;
-
-import ij.process.ColorProcessor;
-import ij.process.ImageStatistics;
 import ij.process.ImageProcessor;
 import ij.process.LUT;
 import ij.process.ShortProcessor;
 import ij.process.ByteProcessor;
 import java.awt.Color;
-
 import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeEvent;
-
 import java.text.NumberFormat;
 import java.text.ParseException;
-
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
@@ -63,12 +55,10 @@ import javax.swing.event.ChangeListener;
 import org.micromanager.MMStudioMainFrame;
 import org.micromanager.utils.ImageFocusListener;
 import org.micromanager.graph.HistogramPanel.CursorListener;
-
 import org.micromanager.utils.ContrastSettings;
 import org.micromanager.utils.GUIUtils;
 import org.micromanager.utils.GammaSliderCalculator;
 import org.micromanager.utils.HistogramUtils;
-import org.micromanager.utils.ImageController;
 import org.micromanager.utils.MMImageWindow;
 import org.micromanager.utils.ReportingUtils;
 import org.micromanager.utils.NumberUtils;
@@ -77,8 +67,8 @@ import org.micromanager.utils.NumberUtils;
  * Slider and histogram panel for adjusting contrast and brightness.
  * 
  */
-public class ContrastPanel extends JPanel implements ImageController,
-        PropertyChangeListener, ImageFocusListener, ImageListener,
+public class ContrastPanel extends JPanel implements 
+        PropertyChangeListener, ImageFocusListener,
          CursorListener {
    private static final double SLOW_HIST_UPDATE_TIME_MS = 2000;
    
@@ -99,26 +89,23 @@ public class ContrastPanel extends JPanel implements ImageController,
 	private int maxIntensity_ = 255;
    private double mean_;
    private double stdDev_;
-   private double min_ = 0.0;
-   private double max_ = 255.0;
+   private double pixelMin_ = 0.0;
+   private double pixelMax_ = 255.0;
 	private int binSize_ = 1;
 	private static final int HIST_BINS = 256;
 	private int numLevels_ = 256;
-   //private DecimalFormat twoDForm_ = new DecimalFormat("#.##");
 	ContrastSettings cs8bit_;
 	ContrastSettings cs16bit_;
-	private JCheckBox stretchCheckBox_;
+	private JCheckBox autoStretchCheckBox_;
 	private JCheckBox rejectOutliersCheckBox_;
    private JCheckBox slowHistogramCheckBox_;
    private boolean slowHistogram_ = false;
    private boolean calcHistogram_ = true;
 	private boolean logScale_ = false;
 	private JCheckBox logHistCheckBox_;
-   private boolean imageUpdated_;
-   private boolean liveWindow_;
-   private boolean liveStretchMode_ = true;
-   private double lutMin_;
-   private double lutMax_;
+   private boolean autoStretch_ = true;
+   private double contrastMin_;
+   private double contrastMax_;
 	private double minAfterRejectingOutliers_;
 	private double maxAfterRejectingOutliers_;
    JSpinner rejectOutliersPercentSpinner_;
@@ -170,7 +157,7 @@ public class ContrastPanel extends JPanel implements ImageController,
 		final JButton autoScaleButton = new JButton();
 		autoScaleButton.addActionListener(new ActionListener() {
 			public void actionPerformed(final ActionEvent e) {
-				setAutoScale();
+				setAutoScale(true);
 			}
 		});
 		autoScaleButton.setFont(new Font("Arial", Font.PLAIN, 10));
@@ -318,33 +305,32 @@ public class ContrastPanel extends JPanel implements ImageController,
 		springLayout.putConstraint(SpringLayout.NORTH, histogramPanel_, 0,
 				SpringLayout.NORTH, fullScaleButton_);
 
-		stretchCheckBox_ = new JCheckBox();
-		stretchCheckBox_.setFont(new Font("", Font.PLAIN, 10));
-		stretchCheckBox_.setText("Auto-stretch");
-		stretchCheckBox_.addChangeListener(new ChangeListener() {
+		autoStretchCheckBox_ = new JCheckBox();
+		autoStretchCheckBox_.setFont(new Font("", Font.PLAIN, 10));
+		autoStretchCheckBox_.setText("Auto-stretch");
+		autoStretchCheckBox_.addChangeListener(new ChangeListener() {
 			public void stateChanged(ChangeEvent ce) {
-            rejectOutliersCheckBox_.setEnabled(stretchCheckBox_.isSelected());
-            boolean rejectControlsEnabled  = stretchCheckBox_.isSelected() && rejectOutliersCheckBox_.isSelected() ;
+            rejectOutliersCheckBox_.setEnabled(autoStretchCheckBox_.isSelected());
+            boolean rejectControlsEnabled  = autoStretchCheckBox_.isSelected() && rejectOutliersCheckBox_.isSelected() ;
             percentOutliersLabel_.setEnabled(rejectControlsEnabled);
             rejectOutliersPercentSpinner_.setEnabled(rejectControlsEnabled );
-            if (stretchCheckBox_.isSelected()) {
-               liveStretchMode_ = true;
-               setAutoScale();
-
+            if (autoStretchCheckBox_.isSelected()) {
+               autoStretch_ = true;
+               setAutoScale(true);
             } else {
-               liveStretchMode_ = false;
+               autoStretch_ = false;
             }
 			};
 		});
-		add(stretchCheckBox_);
+		add(autoStretchCheckBox_);
 
-		springLayout.putConstraint(SpringLayout.EAST, stretchCheckBox_, 5,
+		springLayout.putConstraint(SpringLayout.EAST, autoStretchCheckBox_, 5,
 				SpringLayout.WEST, histogramPanel_);
-		springLayout.putConstraint(SpringLayout.WEST, stretchCheckBox_, 0,
+		springLayout.putConstraint(SpringLayout.WEST, autoStretchCheckBox_, 0,
 				SpringLayout.WEST, this);
-		springLayout.putConstraint(SpringLayout.SOUTH, stretchCheckBox_, 205,
+		springLayout.putConstraint(SpringLayout.SOUTH, autoStretchCheckBox_, 205,
 				SpringLayout.NORTH, this);
-		springLayout.putConstraint(SpringLayout.NORTH, stretchCheckBox_, 180,
+		springLayout.putConstraint(SpringLayout.NORTH, autoStretchCheckBox_, 180,
 				SpringLayout.NORTH, this);
 
 
@@ -354,11 +340,9 @@ public class ContrastPanel extends JPanel implements ImageController,
 		rejectOutliersCheckBox_.addChangeListener(new ChangeListener() {
 			public void stateChanged(ChangeEvent ce) {
             rejectOutliersPercentSpinner_.setEnabled(rejectOutliersCheckBox_.isSelected());
-            percentOutliersLabel_.setEnabled(rejectOutliersCheckBox_.isSelected());
-            if (rejectOutliersCheckBox_.isSelected()) {
-
-					; // as with the other check boxes, takes effect when setAutoScale runs...
-            }
+            percentOutliersLabel_.setEnabled(rejectOutliersCheckBox_.isSelected());    
+            calcHistogramAndStatistics();
+            setAutoScale(true);
 			};
 		});
 		add(rejectOutliersCheckBox_);
@@ -374,9 +358,7 @@ public class ContrastPanel extends JPanel implements ImageController,
 
       
       
-      
-      
-      SpinnerModel smodel = new SpinnerNumberModel(100.*fractionToReject_,0.,1.,.01);
+      SpinnerModel smodel = new SpinnerNumberModel(100*fractionToReject_,0,100,.1);
       rejectOutliersPercentSpinner_ = new JSpinner();
       rejectOutliersPercentSpinner_.setModel(smodel);
       Dimension sd = rejectOutliersPercentSpinner_.getSize();
@@ -385,6 +367,12 @@ public class ContrastPanel extends JPanel implements ImageController,
       add(rejectOutliersPercentSpinner_);
       rejectOutliersPercentSpinner_.setEnabled(false);
       rejectOutliersPercentSpinner_.setToolTipText("% pixels dropped or saturated to reject");
+      smodel.addChangeListener(new ChangeListener() {
+         @Override
+         public void stateChanged(ChangeEvent e) {
+            calcHistogramAndStatistics();
+            setAutoScale(true);
+         }});
 
 
 		springLayout.putConstraint(SpringLayout.EAST, rejectOutliersPercentSpinner_, 90,
@@ -404,19 +392,16 @@ public class ContrastPanel extends JPanel implements ImageController,
 				SpringLayout.WEST, this);
       springLayout.putConstraint(SpringLayout.NORTH, percentOutliersLabel_, 230,
 				SpringLayout.NORTH, this);
-
  		springLayout.putConstraint(SpringLayout.EAST, percentOutliersLabel_, 5,
 				SpringLayout.WEST, histogramPanel_);
-
 
 
 		modeComboBox_ = new JComboBox();
 		modeComboBox_.setFont(new Font("", Font.PLAIN, 10));
 		modeComboBox_.addActionListener(new ActionListener() {
 			public void actionPerformed(final ActionEvent e) {
-				setIntensityMode(modeComboBox_.getSelectedIndex()-1,true);
-			}
-		});
+				setMaxIntensityAndBinSize();
+			}});
 		modeComboBox_.setModel(new DefaultComboBoxModel(new String[] {
 				"camera", "8bit", "10bit", "12bit", "14bit", "16bit" }));
 		add(modeComboBox_);
@@ -438,7 +423,7 @@ public class ContrastPanel extends JPanel implements ImageController,
 				else
 					logScale_ = false;
 
-				update();
+//				update();
 			}
 		});
       slowHistogramCheckBox_ = new JCheckBox();
@@ -453,8 +438,14 @@ public class ContrastPanel extends JPanel implements ImageController,
                slowHistogramCount_ = numFramesForSlowHist_;
                calcHistogram_ = false;
             }
-            else
+            else {
                calcHistogram_ = true;
+               calcHistogramAndStatistics();
+               updateCursors();
+               updateHistogram();
+               if (autoStretch_)
+                  setAutoScale(true);
+            }
 			};
 		});
       
@@ -496,15 +487,26 @@ public class ContrastPanel extends JPanel implements ImageController,
 	  
 	   // override histogram depth based on the selected mode 
 	   if (!forceDepth && modeComboBox_.getSelectedIndex() > 0) {
-         setIntensityMode(modeComboBox_.getSelectedIndex()-1,true); 
+         setMaxIntensityAndBinSize(); 
       }
 	  
 	   if (forceDepth) { // update the mode display to camera-auto
 	       modeComboBox_.setSelectedIndex(0); 
        } 
+      calcHistogramAndStatistics();
+      applyGammaAndContrastToImage();
+      if (autoStretch_)
+         setAutoScale(true);
+      else {
+         updateCursors();
+         updateHistogram();
+      }
    }
 
-   public void setSingleProcessorGamma(double gamma_, ImageProcessor ip, int colIndex) {
+   public void applyGammaAndContrastToImage() {
+      if (image_ == null)
+         return;
+      ImageProcessor ip = image_.getProcessor();
       if (ip == null)
          return;
 
@@ -514,32 +516,22 @@ public class ContrastPanel extends JPanel implements ImageController,
       byte[] b = new byte[256];
       for (int i = 0; i < 256; i++) {
          double val = Math.pow((double) i / maxValue, gamma_) * (double) maxValue;
-         r[i] = (byte) ((colIndex == 0 || colIndex == 1) ? val : 0);
-         g[i] = (byte) ((colIndex == 0 || colIndex == 2) ? val : 0);
-         b[i] = (byte) ((colIndex == 0 || colIndex == 3) ? val : 0);
+         r[i] = (byte) val;
+         g[i] = (byte) val;
+         b[i] = (byte) val;
       }
-      LUT lut = new LUT(8, 256, r, g, b);
-      ip.setColorModel(lut);
-      
-      if (liveStretchMode_) 
-            setAutoScale();
-      else  //setAutoScale calls updateAndDraw itself
-         if (!MMStudioMainFrame.getInstance().isLiveModeOn())
-            image_.updateAndDraw();
+      ip.setColorModel( new LUT(8, 256, r, g, b));
+      ip.setMinAndMax(contrastMin_, contrastMax_);
    }
 
    public void updateHistogram() {
-      updateHistogram(image_);
-   }
-
-   public void updateHistogram(ImagePlus image) {
-      if (image != null && histogram_ != null) {
+      if (image_ != null && histogram_ != null) {
          histogramData_.setData(histogram_);
          histogramPanel_.setData(histogramData_);
          histogramPanel_.setAutoScale();
          
-         maxLabel_.setText(NumberUtils.intToDisplayString((int) max_));
-         minLabel_.setText(NumberUtils.intToDisplayString((int) min_));
+         maxLabel_.setText(NumberUtils.intToDisplayString((int) pixelMax_));
+         minLabel_.setText(NumberUtils.intToDisplayString((int) pixelMin_));
          meanLabel_.setText(NumberUtils.intToDisplayString((int) mean_));
          stdDevLabel_.setText(NumberUtils.doubleToDisplayString(stdDev_));
          
@@ -547,8 +539,8 @@ public class ContrastPanel extends JPanel implements ImageController,
       }
    }
 	 
-	private void setIntensityMode(int mode, boolean updateContrast) {
-		switch (mode) {
+	private void setMaxIntensityAndBinSize() {
+		switch (modeComboBox_.getSelectedIndex()-1) {
 		case 0: 
 			maxIntensity_ = 255;
 			break;
@@ -568,15 +560,7 @@ public class ContrastPanel extends JPanel implements ImageController,
 			break;
 		}
 		binSize_ = (maxIntensity_ + 1) / HIST_BINS;
-		update(updateContrast);
 	}
-
-	protected void onSliderMove() {
-		// correct slider relative positions if necessary
-		updateCursors();
-      applyContrastSettings();
-	}
-
 
    // only used for Gamma
    public void propertyChange(PropertyChangeEvent e) {
@@ -585,194 +569,88 @@ public class ContrastPanel extends JPanel implements ImageController,
       } catch (ParseException p) {
          ReportingUtils.logError(p, "ContrastPanel, Function propertyChange");
       }
-      setLutGamma(gamma_);
+      applyGammaAndContrastToImage();
       updateCursors();
+      if (image_ != null)
+         image_.updateAndDraw();
    }
-
-   private void setLutGamma(double gamma_) {
-       if (image_ == null)
-          return;
-
-       //if (gamma_ == 1)
-       //    return;
-       
-       // TODO: deal with color images
-       if (image_.getProcessor() instanceof ColorProcessor)
-          return;
-
-       if (!(image_ instanceof CompositeImage)) {
-          ImageProcessor ip = image_.getProcessor();
-              setSingleProcessorGamma(gamma_, ip, 0);
-       } else {
-          for (int i=1;i<=3;++i) {
-             ImageProcessor ip = ((CompositeImage) image_).getProcessor(i);
-             setSingleProcessorGamma(gamma_, ip,  i);
-          }
-       }
-   }
-
-   public void update(boolean updateHistogram) {
-      if (image_ == null || image_.getProcessor() == null)
-         return;
-//      if (stretchCheckBox_.isSelected()) {
-//         setAutoScale();
-//      }
-      if (updateHistogram &&!calcHistogram_)
-         updateHistogram();
-      setLutGamma(gamma_);
-
-      image_.updateAndDraw();
-   }
-
-	public void update() {
-      update(true);
-	}
-
-
-	// override from ImageController
-	 public void setImagePlus(ImagePlus ip, ContrastSettings cs8bit,
-			ContrastSettings cs16bit) {
-       setImagePlus(ip,cs8bit,cs16bit,true);
-    }
-   
-   
-   private void setImagePlus(ImagePlus ip, ContrastSettings cs8bit,
-			ContrastSettings cs16bit, boolean updateContrast) {
-      cs8bit_ = cs8bit;
-      cs16bit_ = cs16bit;
-		image_ = ip;
-		setIntensityMode(modeComboBox_.getSelectedIndex()-1,updateContrast);
-	}
 
 	/**
 	 * Auto-scales image display to clip at minimum and maximum pixel values.
 	 * 
 	 */
-	private void setAutoScale() {
-		if (image_ == null || !calcHistogram_) {
-			return;
-      }
-
-//      liveStretchMode_ = true;
-
-      // protect against an 'Unhandled Exception' inside getStatistics
-      if ( null != image_.getProcessor()){        
-         lutMin_ = min_;
-         lutMax_ = max_;
+	private void setAutoScale(boolean applyAndUpdate) {
+         if (image_ == null)
+            return;
+         contrastMin_ = pixelMin_;
+         contrastMax_ = pixelMax_;
 
 			if(rejectOutliersCheckBox_.isSelected()){
-				if( lutMin_ < minAfterRejectingOutliers_  ){
+				if( contrastMin_ < minAfterRejectingOutliers_  ){
                if( 0 < minAfterRejectingOutliers_){
-                  lutMin_ =  minAfterRejectingOutliers_;
+                  contrastMin_ =  minAfterRejectingOutliers_;
                }
 				}
-				if( maxAfterRejectingOutliers_ < lutMax_){
-                  lutMax_ = maxAfterRejectingOutliers_;
+				if( maxAfterRejectingOutliers_ < contrastMax_){
+                  contrastMax_ = maxAfterRejectingOutliers_;
 				}
-
 			}
-      } else {
-         ReportingUtils.logError("Internal error: ImageProcessor is null");
+      
+      if (applyAndUpdate) {
+         applyGammaAndContrastToImage();
+         updateCursors();  
+         image_.updateAndDraw();        
       }
-
-
-      updateCursors();
-      if (!MMStudioMainFrame.getInstance().isLiveModeOn())
-         image_.updateAndDraw();
 	}
 
 
 	private void setFullScale() {
 		if (image_ == null)
 			return;
-      setContrastStretch(false);
-      image_.getProcessor().setMinAndMax(0, maxIntensity_);
-      lutMin_ = 0;
-      lutMax_ = maxIntensity_;
-      updateCursors();
-      
+      autoStretchCheckBox_.setSelected(false);
+      contrastMin_ = 0;
+      contrastMax_ = maxIntensity_;
+     
+      applyGammaAndContrastToImage();
+      updateCursors();      
 		image_.updateAndDraw();
 	}
 
 	private void updateCursors() {
 		if (image_ == null)
 			return;
-
-		histogramPanel_.setCursors(lutMin_ / binSize_,
-				lutMax_ / binSize_,
-            gamma_);
+		histogramPanel_.setCursors(contrastMin_ / binSize_, contrastMax_ / binSize_, gamma_);
 		histogramPanel_.repaint();
-		if (cs8bit_ == null || cs16bit_ == null)
-			return;
-
-		if (image_.getProcessor() != null) {
-			// record settings
-			if (image_.getProcessor() instanceof ShortProcessor) {
-				cs16bit_.min = lutMin_;
-				cs16bit_.max = lutMax_;
-            image_.getProcessor().setMinAndMax(cs16bit_.min, cs16bit_.max);
-			} else {
-				cs8bit_.min = lutMin_;
-				cs8bit_.max = lutMax_;
-            image_.getProcessor().setMinAndMax(cs8bit_.min, cs8bit_.max);
-			}
-		}
 	}
 
-	public void setContrastSettings(ContrastSettings cs8bit,
-			ContrastSettings cs16bit) {
-		cs8bit_ = cs8bit;
-		cs16bit_ = cs16bit;
-
-	}
-
-	public void applyContrastSettings() {
-		applyContrastSettings(cs8bit_, cs16bit_);
-	};
 
    public void applyContrastSettings(ContrastSettings contrast8,
            ContrastSettings contrast16) {
-      applyContrastSettings(image_, contrast8, contrast16);  
-   }
-
-	public void applyContrastSettings(ImagePlus img, ContrastSettings contrast8,
-			ContrastSettings contrast16) {
-		if (img == null)
-			return;
-
-      if (!(img instanceof CompositeImage)) {
-         applyContrastSettings(img.getProcessor(),
-                 contrast8, contrast16);
-      } else {
-         for (int i=1;i<=3;++i) {
-            ImageProcessor proc = ((CompositeImage) img).getProcessor(i);
-            applyContrastSettings(proc,
-                 contrast8, contrast16);
-         }
-      }
-
-      img.updateAndDraw();
-	}
-
-   public void applyContrastSettings(ImageProcessor proc,
-           ContrastSettings contrast8, ContrastSettings contrast16) {
-      if (proc == null)
+      if (image_ == null) {
+         contrastMin_ = contrast16.min;
+         contrastMax_ = contrast16.max;
          return;
-
-     if (proc instanceof ShortProcessor) {
-        proc.setMinAndMax(contrast16.min, contrast16.max);
-     } else if (proc instanceof ByteProcessor) {
-        proc.setMinAndMax(contrast8.min, contrast8.max);
-     }
-
+      }
+      if (image_.getProcessor() instanceof ShortProcessor) {
+         contrastMin_ = contrast16.min;
+         contrastMax_ = contrast16.max;
+      } else {
+         contrastMin_ = contrast8.min;
+         contrastMax_ = contrast8.max;
+      }
+      applyGammaAndContrastToImage();
+      updateCursors();
+      image_.updateAndDraw();;
    }
+
+	
 
 	public void setContrastStretch(boolean stretch) {
-		stretchCheckBox_.setSelected(stretch);
+		autoStretchCheckBox_.setSelected(stretch);
 	}
 
 	public boolean isContrastStretch() {
-		return stretchCheckBox_.isSelected();
+		return autoStretchCheckBox_.isSelected();
 	}
 
    public void setRejectOutliers(boolean reject) {
@@ -789,84 +667,52 @@ public class ContrastPanel extends JPanel implements ImageController,
    
    public void setFractionToReject(double frac) {
       fractionToReject_ = frac;
-      // TODO: this does not work
       rejectOutliersPercentSpinner_.setValue(fractionToReject_ / 0.01);
+      
    }
 	
    public ContrastSettings getContrastSettings() {
-      ContrastSettings ret = cs8bit_;
-      if( null != image_) {
-         if (image_.getProcessor() instanceof ShortProcessor)
-            ret = cs16bit_;
-         else
-            ret = cs8bit_;
-      }
-      return ret;
+      return new ContrastSettings(contrastMin_,contrastMax_);
    }
 
-   private void updateStretchBox() {
-      if (liveWindow_) {
-         stretchCheckBox_.setEnabled(true);
-         stretchCheckBox_.setSelected(liveStretchMode_);
+   private void updateStretchBox(boolean liveWin) {
+      if (liveWin) {
+         autoStretchCheckBox_.setEnabled(true);
+         autoStretchCheckBox_.setSelected(true);         
       } else {
-         stretchCheckBox_.setEnabled(false);
-         stretchCheckBox_.setSelected(false);
+         autoStretchCheckBox_.setEnabled(false);
+         autoStretchCheckBox_.setSelected(false);
       }
    }
 
    public void focusReceived(ImageWindow focusedWindow) {
       if (focusedWindow == null) {
-         histogramPanel_.repaint();
+         updateHistogram();
          return;
       }
       
-      ImagePlus imgp = focusedWindow.getImagePlus();
-      liveWindow_ = (focusedWindow instanceof MMImageWindow);
-      if (!liveWindow_)
+      if (!(focusedWindow instanceof MMImageWindow) ) {
+         updateStretchBox(false);
          return;
-      updateStretchBox();
-
-
-//    ImageProcessor proc = imgp.getChannelProcessor();
-      double min = imgp.getDisplayRangeMin();
-      double max = imgp.getDisplayRangeMax();
-        setImagePlus(imgp, new ContrastSettings(min, max), new ContrastSettings(min, max),true);
-              imageUpdated(imgp);
-//    update();
-   }
-
-   public void imageOpened(ImagePlus ip) {
-      update();
-   }
-
-   public void imageClosed(ImagePlus ip) {
-      update();
-   }
-
-   public void imageUpdated(ImagePlus ip) {
-      if (liveWindow_ && !imageUpdated_) {
-         imageUpdated_ = true;
-
-         double beforeMin = lutMin_;
-         double beforeMax = lutMax_;
-
-         if (liveStretchMode_) {
-            setAutoScale();
-
-         }
-
-         updateCursors();
-         //updateHistogram();
-         //image_.updateAndDraw();
-         imageUpdated_ = false;
       }
+      image_ =  focusedWindow.getImagePlus();
+      if (image_ == null)
+         return;
+     
+      updateStretchBox(true);
+
+      calcHistogramAndStatistics();
+      contrastMin_ = image_.getDisplayRangeMin();
+      contrastMax_ = image_.getDisplayRangeMax();
+      applyGammaAndContrastToImage();
    }
+
    
-   private void calcHistogramAndStatistics(ImagePlus ip) {
-      if (ip != null) {
-         int[] rawHistogram = ip.getProcessor().getHistogram();
-         int imgWidth = ip.getWidth();
-         int imgHeight = ip.getHeight();
+   private void calcHistogramAndStatistics() {
+      if (image_ != null) {
+         int[] rawHistogram = image_.getProcessor().getHistogram();
+         int imgWidth = image_.getWidth();
+         int imgHeight = image_.getHeight();
          if (rejectOutliersCheckBox_.isSelected()) {
             // todo handle negative values
             maxAfterRejectingOutliers_ = rawHistogram.length;
@@ -882,8 +728,8 @@ public class ContrastPanel extends JPanel implements ImageController,
          } // 256 bins
          
          
-          min_ = -1;
-         max_ = 0;
+          pixelMin_ = -1;
+         pixelMax_ = 0;
          mean_ = 0;
          
          histogram_ = new int[HIST_BINS];
@@ -896,9 +742,9 @@ public class ContrastPanel extends JPanel implements ImageController,
                int rawHistVal = rawHistogram[rawHistIndex];
                histogram_[i] += rawHistVal;
                if (rawHistVal > 0) {
-                  max_ = rawHistIndex;
-                  if (min_ == -1) {
-                     min_ = rawHistIndex;
+                  pixelMax_ = rawHistIndex;
+                  if (pixelMin_ == -1) {
+                     pixelMin_ = rawHistIndex;
                   }
                   mean_ += rawHistIndex * rawHistVal;
                }
@@ -908,15 +754,15 @@ public class ContrastPanel extends JPanel implements ImageController,
                histogram_[i] = histogram_[i] > 0 ? (int) (1000 * Math.log(histogram_[i])) : 0;
          }
          mean_ /= imgWidth*imgHeight;
-         if (min_ == max_) 
-            if (min_ == 0) 
-               max_++;
+         if (pixelMin_ == pixelMax_) 
+            if (pixelMin_ == 0) 
+               pixelMax_++;
             else 
-               min_--;
+               pixelMin_--;
 
          // work around what is apparently a bug in ImageJ
          if (total == 0) {
-            if (ip.getProcessor().getMin() == 0) {
+            if (image_.getProcessor().getMin() == 0) {
                histogram_[0] = imgWidth * imgHeight;
             } else {
                histogram_[limit - 1] = imgWidth * imgHeight;
@@ -934,6 +780,9 @@ public class ContrastPanel extends JPanel implements ImageController,
    }
 
    public void updateContrast(ImagePlus ip) {
+      if (ip == null)
+         return;
+      image_ = ip;
       if (slowHistogram_) {
          slowHistogramCount_++;
          if (slowHistogramCount_ >= numFramesForSlowHist_) {
@@ -941,44 +790,45 @@ public class ContrastPanel extends JPanel implements ImageController,
             calcHistogram_ = true;
          }
       }
-
-      if (calcHistogram_) {
-         calcHistogramAndStatistics(ip);
-      }
-
-      if (stretchCheckBox_.isSelected()) {
-         double min = ip.getDisplayRangeMin();
-         double max = ip.getDisplayRangeMax();
-         setImagePlus(ip, new ContrastSettings(min, max), new ContrastSettings(min, max), false);
-      }
-      if (calcHistogram_) {
-         updateHistogram(ip);
-      }
-      if (slowHistogram_) {
+      if (calcHistogram_) 
+         calcHistogramAndStatistics();
+      setMaxIntensityAndBinSize();
+      if (autoStretch_ && calcHistogram_)
+         setAutoScale(false);
+      applyGammaAndContrastToImage();
+      if (autoStretch_ && calcHistogram_)
+         updateCursors();
+      if (calcHistogram_) 
+         updateHistogram();  
+  
+      if (slowHistogram_) 
          calcHistogram_ = false;
-      }
    }
 
    public void onLeftCursor(double pos) {
-      if (liveStretchMode_)
-         stretchCheckBox_.setSelected(true);
+      if (autoStretch_)
+         autoStretchCheckBox_.setSelected(false);
 
-      lutMin_ = Math.max(0, pos) * binSize_;
-      if (lutMax_ < lutMin_)
-         lutMax_ = lutMin_;
+      contrastMin_ = Math.max(0, pos) * binSize_;
+      if (contrastMax_ < contrastMin_)
+         contrastMax_ = contrastMin_;
+      applyGammaAndContrastToImage();
       updateCursors();
-      applyContrastSettings();
+      if (image_ != null)
+         image_.updateAndDraw();
    }
 
    public void onRightCursor(double pos) {
-      if (liveStretchMode_)
-         stretchCheckBox_.setSelected(false);
+      if (autoStretch_)
+         autoStretchCheckBox_.setSelected(false);
       
-      lutMax_ = Math.min(255, pos) * binSize_;
-      if (lutMin_ > lutMax_)
-         lutMin_ = lutMax_;
+      contrastMax_ = Math.min(255, pos) * binSize_;
+      if (contrastMin_ > contrastMax_)
+         contrastMin_ = contrastMax_;
+      applyGammaAndContrastToImage();
       updateCursors();
-      applyContrastSettings();
+       if (image_ != null)
+         image_.updateAndDraw();
    }
 
    public void onGammaCurve(double gamma) {
@@ -988,9 +838,10 @@ public class ContrastPanel extends JPanel implements ImageController,
          else
             gamma_ = gamma;
          gammaValue_.setValue(gamma_);
-         updateCursors();
-         applyContrastSettings();
+      applyGammaAndContrastToImage();
+      updateCursors();
+       if (image_ != null)
+         image_.updateAndDraw();
       }
-   }
-
+   } 
 }
