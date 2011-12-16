@@ -117,6 +117,7 @@
        "SliceIndex" (:slice-index event)
        "SlicePosition" (:slice event)
        "Source" (state :source)
+       "Summary" (state :summary-metadata)
        "Time" (get-current-time-str)
        "UUID" (UUID/randomUUID)
        "WaitInterval" (:wait-time-ms event)
@@ -166,7 +167,7 @@
     (try
       (core waitForDevice dev)
       (swap! pending-devices disj dev)
-      (catch Exception e (println "wait for device" dev "failed.")))))
+      (catch Exception e (log "wait for device" dev "failed.")))))
 
 (defn wait-for-pending-devices []
   (log "pending devices: " @pending-devices)
@@ -294,7 +295,6 @@
         camera-index (str (core getCameraDevice) "-CameraChannelIndex")]
     (doseq [event (:burst-data event)]
       (doseq [i (range (core getNumberOfCameraChannels))]
-        (println "i=" i)
         (when-not (@state :stop)
           (let [image (pop-burst-image)
                 image+ (if-not slices
@@ -304,7 +304,6 @@
               (swap! state assoc
                      :burst-time-offset (- (elapsed-time @state)
                                            (core-time-from-tags (image :tags)))))
-            (println (image+ :tags))
             (let [cam-chan (get-in image [:tags camera-index])
                   event+ (if cam-chan
                            (assoc event :channel-index
@@ -717,10 +716,12 @@
                      "Acquisition Engine Thread (Clojure)")
         processors (ProcessorStack. out-queue (.getTaggedImageProcessors acq-eng))
         out-queue-2 (.begin processors)
-        live-acq (LiveAcq. mmc out-queue-2 (make-summary-metadata settings)
+        summary-metadata (make-summary-metadata settings)
+        live-acq (LiveAcq. mmc out-queue-2 summary-metadata
                   (:save settings) acq-eng)]
     (swap! (.state this) assoc :image-cache (.getImageCache live-acq)
-                               :acq-thread acq-thread)
+                               :acq-thread acq-thread
+                               :summary-metadata summary-metadata)
     (def outq out-queue)
     (when-not (:stop @(.state this))
       (if (. gui getLiveMode)
