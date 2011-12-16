@@ -46,7 +46,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				AdditionalOptions="/wd4127 /wd4100 /wd4238 /wd4706"
-				AdditionalIncludeDirectories="&quot;C:\Python26\Lib\site-packages\numpy\core\include\numpy&quot;;C:\Python26\include"
+				AdditionalIncludeDirectories="&quot;\Python27\Lib\site-packages\numpy\core\include\numpy&quot;;\Python27\include"
 				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;MMCOREPY_WRAP_EXPORTS;__WIN32__"
 				ExceptionHandling="2"
 				RuntimeLibrary="2"
@@ -71,7 +71,7 @@
 				AdditionalDependencies=" Iphlpapi.lib"
 				OutputFile="$(OutDir)/_MMCorePy.pyd"
 				LinkIncremental="1"
-				AdditionalLibraryDirectories="..\MMCore\Win32\Release;C:\Python26\libs;C:\Python26\DLLs;..\lib;&quot;..\..\3rdpartypublic\boost\stage_$(PlatformName)\lib&quot;"
+				AdditionalLibraryDirectories="..\MMCore\Win32\Release;\Python27\libs;\Python27\DLLs;..\lib;&quot;..\..\3rdpartypublic\boost\stage_$(PlatformName)\lib&quot;"
 				GenerateDebugInformation="true"
 				SubSystem="2"
 				OptimizeReferences="2"
@@ -132,8 +132,8 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				AdditionalOptions="/wd4127 /wd4100 /wd4238 /wd4706"
-				AdditionalIncludeDirectories="&quot;C:\Python26\Lib\site-packages\numpy\core\include\numpy&quot;;C:\Python26\include"
-				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;MMCOREPY_WRAP_EXPORTS;__WIN32__"
+				AdditionalIncludeDirectories="&quot;\Python27x64\Lib\site-packages\numpy\core\include\numpy&quot;;\Python27x64\include"
+				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_LIB;_USRDLL;MMCOREPY_WRAP_EXPORTS;__WIN32__"
 				ExceptionHandling="2"
 				RuntimeLibrary="2"
 				RuntimeTypeInfo="true"
@@ -154,10 +154,10 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="mmcore.lib"
+				AdditionalDependencies="MMCore.lib zlib.lib IPHlpApi.Lib"
 				OutputFile="$(OutDir)/_MMCorePy.pyd"
 				LinkIncremental="1"
-				AdditionalLibraryDirectories="C:\Python26\libs;C:\Python26\DLLs;..\lib;&quot;..\..\3rdpartypublic\boost\stage_$(PlatformName)\lib&quot;;..\MMCore\x64\Release"
+				AdditionalLibraryDirectories="\Python27x64\libs;\Python27x64\DLLs;..\lib;&quot;..\..\3rdpartypublic\boost\stage_$(PlatformName)\lib&quot;;..\MMCore\x64\Release;&quot;..\..\3rdpartypublic\zlib\bin_$(PlatformName)&quot;;&quot;\Program Files\Microsoft SDKs\Windows\v7.0\Lib\x64&quot;"
 				GenerateDebugInformation="true"
 				SubSystem="2"
 				OptimizeReferences="2"
