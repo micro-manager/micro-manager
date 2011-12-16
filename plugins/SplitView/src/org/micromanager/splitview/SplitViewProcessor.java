@@ -71,6 +71,23 @@ public class SplitViewProcessor extends DataProcessor<TaggedImage> {
 
             // Weird way of copying a JSONObject
             JSONObject tags = new JSONObject(taggedImage.tags.toString());
+            JSONArray channelColors = parent_.getColors();
+            JSONArray channelNames = tags.getJSONObject("Summary").getJSONArray("ChNames");
+            for (int i = 0; i < channelNames.length(); i++) {
+               String token = "";
+               if (parent_.getOrientation().equals(SplitViewFrame.LR)) {
+                  token = "Right";
+                  if ( (i%2) == 0)
+                     token = "Left";
+               } else 
+                  if (parent_.getOrientation().equals(SplitViewFrame.TB)) {
+                     token = "Bottom";
+                     if ( (i%2) == 0)
+                        token = "Top";
+                  }
+            
+               channelNames.put(i, (String) (channelNames.get(i)) + token);
+            }
 
             MDUtils.setWidth(tags, width);
             MDUtils.setHeight(tags, height);
@@ -78,15 +95,13 @@ public class SplitViewProcessor extends DataProcessor<TaggedImage> {
 
             int originalChannelCount = tags.getJSONObject("Summary").getInt("Channels");
             tags.getJSONObject("Summary").put("Channels", 2 * originalChannelCount);
-            tags.getJSONObject("Summary").put("ChColors", parent_.getColors());
+            tags.getJSONObject("Summary").put("ChColors", channelColors);
             
             TaggedImage firstIm = new TaggedImage(tmpImg.crop().getPixels(), tags);
             produce(firstIm);
 
             // second channel
-            JSONObject tags2 = new JSONObject(taggedImage.tags.toString());
-            tags2.getJSONObject("Summary").put("Channels", 2 * originalChannelCount);
-            tags2.getJSONObject("Summary").put("ChColors", parent_.getColors());
+            JSONObject tags2 = new JSONObject(tags.toString());
             
             if (parent_.getOrientation().equals(SplitViewFrame.LR)) {
                tmpImg.setRoi(width, 0, width, height);
