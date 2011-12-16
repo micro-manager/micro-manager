@@ -29,6 +29,7 @@ import ij.process.ImageStatistics;
 
 import java.awt.Rectangle;
 import java.text.ParseException;
+import javax.swing.SwingUtilities;
 
 import mmcorej.CMMCore;
 import mmcorej.Configuration;
@@ -203,9 +204,14 @@ public class OughtaFocus extends AutofocusBase implements org.micromanager.api.A
          } else {
             core.waitForDevice(core.getCameraDevice());
             core.snapImage();
-            img = core.getImage();
+            final Object img1 = core.getImage();
+            img = img1;
             if (show.contentEquals("Yes")) {
-               app_.displayImage(img);
+               SwingUtilities.invokeLater(new Runnable() {
+                  public void run() {
+                     app_.displayImage(img1);
+                  }
+               });
             }
          }
          long tI = System.currentTimeMillis() - start - tZ;
