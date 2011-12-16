@@ -1209,7 +1209,7 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
             try {
                chanNames[i] = imageCache_.getDisplayAndComments().getJSONArray("Channels").getJSONObject(i).getString("Name");
             } catch (Exception ex) {
-               ReportingUtils.logError(ex);
+               chanNames[i] = null;
             }
          }
          return chanNames;
@@ -1220,7 +1220,14 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
 
    private void setChannelName(int channel, String channelName) {
       try {
-         JSONArray channelArray = imageCache_.getDisplayAndComments().getJSONArray("Channels");
+         JSONObject displayAndComments = imageCache_.getDisplayAndComments();
+         JSONArray channelArray;
+         if (displayAndComments.has("Channels")) {
+            channelArray = displayAndComments.getJSONArray("Channels");
+         }  else {
+            channelArray = new JSONArray();
+            displayAndComments.put("Channels",channelArray);
+         }
          if (channelArray.isNull(channel)) {
              channelArray.put(channel, new JSONObject().put("Name",channelName));
           }
@@ -1386,7 +1393,7 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
    private JSONObject getChannelSetting(int channel) {
       try {
          JSONArray array = imageCache_.getDisplayAndComments().getJSONArray("Channels");
-         if (array != null) {
+         if (array != null && !array.isNull(channel)) {
             return array.getJSONObject(channel);
          } else {
             return null;
