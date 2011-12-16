@@ -23,16 +23,11 @@ import java.text.NumberFormat;
 import java.util.prefs.Preferences;
 import javax.swing.JColorChooser;
 import mmcorej.CMMCore;
-import mmcorej.TaggedImage;
 import org.json.JSONArray;
 import org.json.JSONException;
-import org.json.JSONObject;
 import org.micromanager.MMStudioMainFrame;
-import org.micromanager.acquisition.TaggedImageQueue;
-import org.micromanager.api.DataProcessor;
 import org.micromanager.api.ScriptInterface;
 import org.micromanager.api.DeviceControlGUI;
-import org.micromanager.utils.MDUtils;
 import org.micromanager.utils.MMScriptException;
 import org.micromanager.utils.ReportingUtils;
 
@@ -113,7 +108,8 @@ public class SplitViewFrame extends javax.swing.JFrame {
 
       Dimension buttonSize = new Dimension(120, 20);
 
-      lrRadioButton.setSelected(true);
+      lrRadioButton.setSelected(orientation_.equals(LR));
+      tbRadioButton.setSelected(orientation_.equals(TB));
 
       topLeftColorButton.setForeground(col1_);
       topLeftColorButton.setPreferredSize(buttonSize);
@@ -187,9 +183,12 @@ public class SplitViewFrame extends javax.swing.JFrame {
 
    private void calculateSize() {
       imgDepth_ = core_.getBytesPerPixel();
+      
+      width_ = (int) core_.getImageWidth();
+      height_ = (int) core_.getImageHeight();
 
-      width_ = calculateWidth((int) core_.getImageWidth());
-      height_ = calculateHeight((int) core_.getImageHeight());
+      newWidth_ = calculateWidth(width_);
+      newHeight_ = calculateHeight(height_);
    }
 
    public int calculateWidth(int width) {
