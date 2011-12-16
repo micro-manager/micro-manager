@@ -93,7 +93,7 @@ Source: micro-manager\MMDeviceList*.txt; DestDir: {app}; Flags: ignoreversion
 
 ; ImageJ files
 Source: ..\..\3rdpartypublic\JavaLauncher\ImageJ.exe; DestDir: {app}; Flags: ignoreversion
-;Source: micro-manager\ImageJ.cfg; DestDir: {app}; Flags: onlyifdoesntexist
+Source: micro-manager\ImageJ.cfg; DestDir: {app}; Flags: onlyifdoesntexist; Permissions: users-modify
 Source: ..\..\3rdpartypublic\classext\ij.jar; DestDir: {app}; Flags: ignoreversion
 Source: micro-manager\IJ_Prefs.txt; DestDir: {app}; Flags: onlyifdoesntexist
 Source: micro-manager\macros\*; DestDir: {app}\macros; Flags: ignoreversion recursesubdirs createallsubdirs
