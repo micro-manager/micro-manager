@@ -59,8 +59,8 @@ public class SplitViewFrame extends javax.swing.JFrame {
    private Timer timer_;
    private double interval_ = 30;
    private static final String ACQNAME = "Split View";
-   private static final String LR = "lr";
-   private static final String TB = "tb";
+   public static final String LR = "lr";
+   public static final String TB = "tb";
    private static final String TOPLEFTCOLOR = "TopLeftColor";
    private static final String BOTTOMRIGHTCOLOR = "BottomRightColor";
    private static final String ORIENTATION = "Orientation";
@@ -72,86 +72,6 @@ public class SplitViewFrame extends javax.swing.JFrame {
    private boolean appliedToMDA_ = false;
    private SplitViewProcessor mmImageProcessor_;
 
-   public class SplitViewProcessor extends DataProcessor<TaggedImage> {
-
-      @Override
-      public void process() {
-
-         try {
-            TaggedImage taggedImage = poll();
-
-            if (TaggedImageQueue.isPoison(taggedImage)) {
-               produce(taggedImage);
-               return;
-            }
-            
-            if (taggedImage != null && taggedImage.tags != null) {
-               ImageProcessor tmpImg;
-               int imgDepth = MDUtils.getDepth(taggedImage.tags);
-               int width = MDUtils.getWidth(taggedImage.tags);
-               int height = MDUtils.getHeight(taggedImage.tags);
-               int channelIndex = MDUtils.getChannelIndex(taggedImage.tags);
-
-               System.out.println("Processed one");
-
-               //produce(taggedImage);
-
-
-               if (imgDepth == 1) {
-                  tmpImg = new ByteProcessor(width, height);
-               } else if (imgDepth == 2) {
-                  tmpImg = new ShortProcessor(width, height);
-               } else // TODO throw error
-               {
-                  //produce(taggedImage);
-                  return;
-               }
-              
-               tmpImg.setPixels(taggedImage.pix);
-               
-               height = calculateHeight(height);
-               width = calculateWidth(width);
-
-               tmpImg.setRoi(0, 0, width, height);
-               // first channel
-
-               // Note, this does not copy the tags, rather the pointer
-               // This will mess things up.  Not sure how to copy...
-               JSONObject tags = new JSONObject(taggedImage.tags.toString());
-               
-               MDUtils.setWidth(tags, width);
-               MDUtils.setHeight(tags, height);              
-               MDUtils.setChannelIndex(tags, channelIndex * 2);
-               
-               int originalChannelCount = tags.getJSONObject("Summary").getInt("Channels");
-               tags.getJSONObject("Summary").put("Channels", 2 * originalChannelCount);
-               TaggedImage firstIm = new TaggedImage(tmpImg.crop().getPixels(), tags);
-               produce(firstIm);
-               
-               // second channel
-               JSONObject tags2 = new JSONObject(taggedImage.tags.toString());
-               tags2.getJSONObject("Summary").put("Channels", 2 * originalChannelCount);
-
-               if (orientation_.equals(LR)) {
-                  tmpImg.setRoi(width, 0, width, height);
-               } else if (orientation_.equals(TB)) {
-                  tmpImg.setRoi(0, height, width, height);
-               }
-               MDUtils.setWidth(tags2, width);
-               MDUtils.setHeight(tags2, height);  
-               MDUtils.setChannelIndex(tags2, channelIndex * 2 + 1);
-               
-               TaggedImage secondIm = new TaggedImage(tmpImg.crop().getPixels(), tags2);
-               produce(secondIm);
-            }
-         } catch (MMScriptException ex) {
-            ReportingUtils.logError("SplitViewProcessor, MMSCriptException");
-         } catch (JSONException ex) {
-            ReportingUtils.logError("SplitViewProcessor, JSON Exception");
-         }
-      }
-   }
-   
    
 
    public SplitViewFrame(ScriptInterface gui) throws Exception {
@@ -295,6 +215,10 @@ public class SplitViewFrame extends javax.swing.JFrame {
          newHeight = height / 2;
       }
       return newHeight;
+   }
+   
+   public String getOrientation() {
+      return orientation_;
    }
 
    private void openAcq() throws MMScriptException {
@@ -558,7 +482,7 @@ public class SplitViewFrame extends javax.swing.JFrame {
          return;
       
       if (applyToMDACheckBox_.isSelected() && !appliedToMDA_) {
-         mmImageProcessor_ = new SplitViewProcessor();
+         mmImageProcessor_ = new SplitViewProcessor(this);
          mmImageProcessor_.setName("SplitView");
          gui_.getAcquisitionEngine().addImageProcessor(mmImageProcessor_);
          appliedToMDA_ = true;
