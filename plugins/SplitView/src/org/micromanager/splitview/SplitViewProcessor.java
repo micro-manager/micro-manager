@@ -90,19 +90,10 @@ public class SplitViewProcessor extends DataProcessor<TaggedImage> {
 
             // Weird way of copying a JSONObject
             JSONObject tags = new JSONObject(taggedImage.tags.toString());
-            JSONArray channelColors = parent_.getColors();
-            JSONArray channelNames = tags.getJSONObject("Summary").getJSONArray("ChNames");
-            for (int i = 0; i < channelNames.length(); i++) {
-               channelNames.put(i, (String) (channelNames.get(i)) + getChannelSuffix(i));
-            }
-
             MDUtils.setWidth(tags, width);
             MDUtils.setHeight(tags, height);
             MDUtils.setChannelIndex(tags, channelIndex * 2);
 
-            int originalChannelCount = tags.getJSONObject("Summary").getInt("Channels");
-            tags.getJSONObject("Summary").put("Channels", 2 * originalChannelCount);
-            tags.getJSONObject("Summary").put("ChColors", channelColors);
             tags.put("Channel", MDUtils.getChannelName(taggedImage.tags) + getChannelSuffix(channelIndex*2));
             
             TaggedImage firstIm = new TaggedImage(tmpImg.crop().getPixels(), tags);
