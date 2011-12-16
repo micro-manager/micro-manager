@@ -122,12 +122,16 @@ public class SplitViewFrame extends javax.swing.JFrame {
                MDUtils.setWidth(tags, width);
                MDUtils.setHeight(tags, height);              
                MDUtils.setChannelIndex(tags, channelIndex * 2);
-                
+               
+               int originalChannelCount = tags.getJSONObject("Summary").getInt("Channels");
+               tags.getJSONObject("Summary").put("Channels", 2 * originalChannelCount);
                TaggedImage firstIm = new TaggedImage(tmpImg.crop().getPixels(), tags);
                produce(firstIm);
                
                // second channel
                JSONObject tags2 = new JSONObject(taggedImage.tags.toString());
+               tags2.getJSONObject("Summary").put("Channels", 2 * originalChannelCount);
+
                if (orientation_.equals(LR)) {
                   tmpImg.setRoi(width, 0, width, height);
                } else if (orientation_.equals(TB)) {
