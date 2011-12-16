@@ -7,6 +7,7 @@ import ij.process.ByteProcessor;
 import ij.process.ImageProcessor;
 import ij.process.ShortProcessor;
 import mmcorej.TaggedImage;
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.micromanager.acquisition.TaggedImageQueue;
@@ -77,13 +78,16 @@ public class SplitViewProcessor extends DataProcessor<TaggedImage> {
 
             int originalChannelCount = tags.getJSONObject("Summary").getInt("Channels");
             tags.getJSONObject("Summary").put("Channels", 2 * originalChannelCount);
+            tags.getJSONObject("Summary").put("ChColors", parent_.getColors());
+            
             TaggedImage firstIm = new TaggedImage(tmpImg.crop().getPixels(), tags);
             produce(firstIm);
 
             // second channel
             JSONObject tags2 = new JSONObject(taggedImage.tags.toString());
             tags2.getJSONObject("Summary").put("Channels", 2 * originalChannelCount);
-
+            tags2.getJSONObject("Summary").put("ChColors", parent_.getColors());
+            
             if (parent_.getOrientation().equals(SplitViewFrame.LR)) {
                tmpImg.setRoi(width, 0, width, height);
             } else if (parent_.getOrientation().equals(SplitViewFrame.TB)) {

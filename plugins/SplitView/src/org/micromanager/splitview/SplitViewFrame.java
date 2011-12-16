@@ -24,6 +24,7 @@ import java.util.prefs.Preferences;
 import javax.swing.JColorChooser;
 import mmcorej.CMMCore;
 import mmcorej.TaggedImage;
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.micromanager.MMStudioMainFrame;
@@ -474,6 +475,13 @@ public class SplitViewFrame extends javax.swing.JFrame {
        }
     }//GEN-LAST:event_bottomRightColorButtonActionPerformed
 
+    public JSONArray getColors() throws JSONException {
+       JSONArray myColors = new JSONArray();
+       myColors.put(0, (Object) col1_.getRGB());
+       myColors.put(1, (Object) col2_.getRGB());
+       return myColors;
+    }
+    
    private void applyToMDACheckBox_StateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_applyToMDACheckBox_StateChanged
        
       Object source = evt.getSource();
