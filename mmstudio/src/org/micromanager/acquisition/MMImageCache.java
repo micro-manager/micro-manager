@@ -115,7 +115,7 @@ public class MMImageCache implements TaggedImageStorage, ImageCache {
       try {
          if (!conserveRam_)
             softTable_.put(MDUtils.getLabel(taggedImg.tags), new SoftReference(taggedImg));
-         //taggedImg.tags.put("Summary",imageStorage_.getSummaryMetadata());
+         taggedImg.tags.put("Summary",imageStorage_.getSummaryMetadata());
          checkForChangingTags(taggedImg);
          imageStorage_.putImage(taggedImg);
          synchronized (this) {

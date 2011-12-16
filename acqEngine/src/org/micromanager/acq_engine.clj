@@ -117,7 +117,6 @@
        "SliceIndex" (:slice-index event)
        "SlicePosition" (:slice event)
        "Source" (state :source)
-       "Summary" (state :summary-metadata)
        "Time" (get-current-time-str)
        "UUID" (UUID/randomUUID)
        "WaitInterval" (:wait-time-ms event)
