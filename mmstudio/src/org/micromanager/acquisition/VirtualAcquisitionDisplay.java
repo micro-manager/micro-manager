@@ -205,7 +205,15 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
    }
 
    private void handleFirstImage(JSONObject firstImageMetadata) {
-      JSONObject summaryMetadata = getSummaryMetadata();
+      JSONObject summaryMetadata;
+      try {
+         summaryMetadata = firstImageMetadata.getJSONObject("Summary");
+      } catch (JSONException ex) {
+         summaryMetadata = getSummaryMetadata();
+      }
+      if (summaryMetadata == null) {
+         summaryMetadata = getSummaryMetadata();
+      }
       int numSlices = 1;
       int numFrames = 1;
       int numChannels = 1;
