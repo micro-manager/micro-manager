@@ -109,7 +109,15 @@ public class SplitViewFrame extends javax.swing.JFrame {
       Dimension buttonSize = new Dimension(120, 20);
 
       lrRadioButton.setSelected(orientation_.equals(LR));
+      if (orientation_.equals(LR)) {
+         topLeftColorButton.setText("Left Color");
+         bottomRightColorButton.setText("Right Color");
+      }
       tbRadioButton.setSelected(orientation_.equals(TB));
+      if (orientation_.equals(TB)) {
+         topLeftColorButton.setText("Top Color");
+         bottomRightColorButton.setText("Bottom Color");
+      }
 
       topLeftColorButton.setForeground(col1_);
       topLeftColorButton.setPreferredSize(buttonSize);
@@ -321,7 +329,7 @@ public class SplitViewFrame extends javax.swing.JFrame {
         });
 
         buttonGroup1.add(tbRadioButton);
-        tbRadioButton.setText("Top-Botom Split");
+        tbRadioButton.setText("Top-Bottom Split");
         tbRadioButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 tbRadioButtonActionPerformed(evt);
@@ -368,29 +376,34 @@ public class SplitViewFrame extends javax.swing.JFrame {
         layout.setHorizontalGroup(
             layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
             .add(layout.createSequentialGroup()
-                .add(9, 9, 9)
-                .add(lrRadioButton)
-                .add(18, 18, 18)
-                .add(tbRadioButton)
-                .addContainerGap())
-            .add(layout.createSequentialGroup()
-                .addContainerGap()
-                .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                    .add(topLeftColorButton)
-                    .add(layout.createSequentialGroup()
-                        .add(21, 21, 21)
-                        .add(snapButton)))
-                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, 38, Short.MAX_VALUE)
-                .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                    .add(bottomRightColorButton)
-                    .add(layout.createSequentialGroup()
-                        .add(21, 21, 21)
-                        .add(liveButton)))
-                .add(32, 32, 32))
-            .add(layout.createSequentialGroup()
                 .addContainerGap()
                 .add(applyToMDACheckBox_)
-                .addContainerGap(130, Short.MAX_VALUE))
+                .addContainerGap(135, Short.MAX_VALUE))
+            .add(layout.createSequentialGroup()
+                .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.TRAILING)
+                    .add(org.jdesktop.layout.GroupLayout.LEADING, layout.createSequentialGroup()
+                        .add(9, 9, 9)
+                        .add(lrRadioButton))
+                    .add(org.jdesktop.layout.GroupLayout.LEADING, layout.createSequentialGroup()
+                        .addContainerGap()
+                        .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                            .add(layout.createSequentialGroup()
+                                .add(21, 21, 21)
+                                .add(snapButton)
+                                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED))
+                            .add(topLeftColorButton, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 121, Short.MAX_VALUE))))
+                .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                    .add(layout.createSequentialGroup()
+                        .add(18, 18, 18)
+                        .add(tbRadioButton)
+                        .addContainerGap())
+                    .add(org.jdesktop.layout.GroupLayout.TRAILING, layout.createSequentialGroup()
+                        .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                            .add(layout.createSequentialGroup()
+                                .add(21, 21, 21)
+                                .add(liveButton))
+                            .add(bottomRightColorButton, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 130, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+                        .addContainerGap())))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
