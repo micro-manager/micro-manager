@@ -28,6 +28,25 @@ public class SplitViewProcessor extends DataProcessor<TaggedImage> {
       parent_ = frame;
    }
 
+   private String getChannelSuffix(int channelIndex) {
+      String token;
+      if (parent_.getOrientation().equals(SplitViewFrame.LR)) {
+
+         if ((channelIndex % 2) == 0) {
+            token = "Left";
+         } else {
+            token = "Right";
+         }
+      } else { // if (parent_.getOrientation().equals(SplitViewFrame.TB)) {
+         if ((channelIndex % 2) == 0) {
+            token = "Top";
+         } else {
+            token = "Bottom";
+         }
+      }
+      return token;
+   }
+
    @Override
    public void process() {
 
@@ -74,19 +93,7 @@ public class SplitViewProcessor extends DataProcessor<TaggedImage> {
             JSONArray channelColors = parent_.getColors();
             JSONArray channelNames = tags.getJSONObject("Summary").getJSONArray("ChNames");
             for (int i = 0; i < channelNames.length(); i++) {
-               String token = "";
-               if (parent_.getOrientation().equals(SplitViewFrame.LR)) {
-                  token = "Right";
-                  if ( (i%2) == 0)
-                     token = "Left";
-               } else 
-                  if (parent_.getOrientation().equals(SplitViewFrame.TB)) {
-                     token = "Bottom";
-                     if ( (i%2) == 0)
-                        token = "Top";
-                  }
-            
-               channelNames.put(i, (String) (channelNames.get(i)) + token);
+               channelNames.put(i, (String) (channelNames.get(i)) + getChannelSuffix(i));
             }
 
             MDUtils.setWidth(tags, width);
@@ -96,13 +103,14 @@ public class SplitViewProcessor extends DataProcessor<TaggedImage> {
             int originalChannelCount = tags.getJSONObject("Summary").getInt("Channels");
             tags.getJSONObject("Summary").put("Channels", 2 * originalChannelCount);
             tags.getJSONObject("Summary").put("ChColors", channelColors);
+            tags.put("Channel", MDUtils.getChannelName(taggedImage.tags) + getChannelSuffix(channelIndex*2));
             
             TaggedImage firstIm = new TaggedImage(tmpImg.crop().getPixels(), tags);
-            produce(firstIm);
 
             // second channel
             JSONObject tags2 = new JSONObject(tags.toString());
-            
+            tags2.put("Channel", MDUtils.getChannelName(taggedImage.tags)  + getChannelSuffix(channelIndex*2+1));
+
             if (parent_.getOrientation().equals(SplitViewFrame.LR)) {
                tmpImg.setRoi(width, 0, width, height);
             } else if (parent_.getOrientation().equals(SplitViewFrame.TB)) {
@@ -113,13 +121,15 @@ public class SplitViewProcessor extends DataProcessor<TaggedImage> {
             MDUtils.setChannelIndex(tags2, channelIndex * 2 + 1);
 
             TaggedImage secondIm = new TaggedImage(tmpImg.crop().getPixels(), tags2);
+
             produce(secondIm);
+            produce(firstIm);
          }
       } catch (MMScriptException ex) {
-         ReportingUtils.logError("SplitViewProcessor, MMSCriptException");
+         ReportingUtils.logError(ex);
          produce(taggedImage);
       } catch (JSONException ex) {
-         ReportingUtils.logError("SplitViewProcessor, JSON Exception");
+         ReportingUtils.logError(ex);
          produce(taggedImage);
       }
    }

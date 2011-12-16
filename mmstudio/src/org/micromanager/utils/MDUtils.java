@@ -112,7 +112,19 @@ public class MDUtils {
    }
 
    public static String getChannelName(JSONObject map) throws JSONException {
-      return map.getString("Channel");
+      if (map.has("Channel") && !map.isNull("Channel")) {
+         return map.getString("Channel");
+      } else {
+         return "";
+      }
+   }
+
+   public static int getChannelColor(JSONObject map) throws JSONException {
+      if (map.has("ChColor") && !map.isNull("ChColor")) {
+         return map.getInt("ChColor");
+      } else {
+         return -1;
+      }
    }
 
    public static String getFileName(JSONObject map) throws JSONException {

@@ -71,6 +71,11 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
    private ScrollbarWithLabel zSelector_;
    private HyperstackControls hc_;
    public AcquisitionVirtualStack virtualStack_;
+   private final Preferences displayPrefs_;
+
+
+
+
 
    /* This interface and the following two classes
     * allow us to manipulate the dimensions
@@ -204,18 +209,12 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
       imageCache_ = imageCache;
       eng_ = eng;
       pSelector_ = createPositionScrollbar();
+      displayPrefs_ = Preferences.userNodeForPackage(this.getClass());
+
    }
 
    private void startup(JSONObject firstImageMetadata) {
-      JSONObject summaryMetadata;
-      try {
-         summaryMetadata = firstImageMetadata.getJSONObject("Summary");
-      } catch (Exception ex) {
-         summaryMetadata = getSummaryMetadata();
-      }
-      if (summaryMetadata == null) {
-         summaryMetadata = getSummaryMetadata();
-      }
+      JSONObject summaryMetadata = getSummaryMetadata();
       int numSlices = 1;
       int numFrames = 1;
       int numChannels = 1;
@@ -231,12 +230,17 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
          } else {
             width = MDUtils.getWidth(summaryMetadata);
             height = MDUtils.getHeight(summaryMetadata);
-
          }
          numSlices = Math.max(summaryMetadata.getInt("Slices"), 1);
          numFrames = Math.max(summaryMetadata.getInt("Frames"), 1);
-         //numFrames = Math.max(Math.min(2,summaryMetadata.getInt("Frames")), 1);
-         numChannels = Math.max(summaryMetadata.getInt("Channels"), 1);
+         int imageChannelIndex;
+         try {
+            imageChannelIndex = MDUtils.getChannelIndex(firstImageMetadata);
+         } catch (Exception e) {
+            imageChannelIndex = -1;
+         }
+         numChannels = Math.max(1+imageChannelIndex,
+                 Math.max(summaryMetadata.getInt("Channels"), 1));
          numPositions = Math.max(summaryMetadata.getInt("Positions"), 0);
          numComponents = Math.max(MDUtils.getNumberOfComponents(summaryMetadata), 1);
       } catch (Exception e) {
@@ -683,6 +687,18 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
       int channel = MDUtils.getChannelIndex(md);
       int frame = MDUtils.getFrameIndex(md);
       int position = MDUtils.getPositionIndex(md);
+      String channelName = MDUtils.getChannelName(md);
+      Color channelColor = null;
+      try {
+         new Color(MDUtils.getChannelColor(md));
+      } catch (Exception e) {}
+
+      if (channelName != null)
+         setChannelName(channel, channelName);
+
+      if (channelColor != null)
+         setChannelColor(channel, channelColor.getRGB());
+
       int slice;
       if (this.acquisitionIsRunning() &&
               this.getNextWakeTime() > System.currentTimeMillis() &&
@@ -708,6 +724,7 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
          }
       }
          
+
 
       if (frame == 0 && allowContrastToChange) {
          try {
@@ -1201,6 +1218,18 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
       }
    }
 
+   private void setChannelName(int channel, String channelName) {
+      try {
+         JSONArray channelArray = imageCache_.getDisplayAndComments().getJSONArray("Channels");
+         if (channelArray.isNull(channel)) {
+             channelArray.put(channel, new JSONObject().put("Name",channelName));
+          }
+      } catch (JSONException ex) {
+         ReportingUtils.logError(ex);
+      }
+
+   }
+
    public void setChannelVisibility(int channelIndex, boolean visible) {
       if (!hyperImage_.isComposite()) {
          return;
@@ -1300,7 +1329,7 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
       try {
          return getChannelSetting(channelIndex).getDouble("Gamma");
       } catch (Exception ex) {
-         ReportingUtils.logError(ex);
+         //ReportingUtils.logError(ex);
          return 1.0;
       }
    }
@@ -1309,10 +1338,12 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
       try {
          return new Color(getChannelSetting(channelIndex).getInt("Color"));
       } catch (Exception ex) {
+         try {
          String[] channelNames = getChannelNames();
-         if (channelNames != null)
-            return MMStudioMainFrame.getInstance().getChannelColor(getChannelNames()[channelIndex], Color.WHITE.getRGB());
-         return Color.WHITE;
+         return new Color(displayPrefs_.node("ChColors").getInt(channelNames[channelIndex], 0xFFFFFF));
+         } catch (Exception e) {
+            return Color.WHITE;
+         }
       }
    }
 
@@ -1325,8 +1356,9 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
       }
       updateChannelLUT(channel);
       String[] chNames = getChannelNames();
-      if (chNames != null && chNames.length > channel)
-         MMStudioMainFrame.getInstance().saveChannelColor(getChannelNames()[channel], rgb);
+      if (chNames != null && chNames[channel] != null) {
+         displayPrefs_.node("ChColors").putInt(chNames[channel], rgb);
+      }
    }
 
    public void setChannelGamma(int channel, double gamma) {
