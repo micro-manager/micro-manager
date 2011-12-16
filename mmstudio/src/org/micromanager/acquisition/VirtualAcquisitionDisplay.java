@@ -1230,6 +1230,7 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
          }
          if (channelArray.isNull(channel)) {
              channelArray.put(channel, new JSONObject().put("Name",channelName));
+             updateChannelLUT(channel);
           }
       } catch (JSONException ex) {
          ReportingUtils.logError(ex);
@@ -1361,11 +1362,11 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
       } catch (JSONException ex) {
          ReportingUtils.logError(ex);
       }
-      updateChannelLUT(channel);
       String[] chNames = getChannelNames();
       if (chNames != null && chNames[channel] != null) {
          displayPrefs_.node("ChColors").putInt(chNames[channel], rgb);
       }
+      updateChannelLUT(channel);
    }
 
    public void setChannelGamma(int channel, double gamma) {
