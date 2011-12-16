@@ -15,6 +15,7 @@ import ij.plugin.Animator;
 import ij.process.ImageProcessor;
 import java.awt.Color;
 import java.awt.event.AdjustmentListener;
+import java.awt.event.MouseListener;
 import java.awt.event.WindowEvent;
 import java.io.File;
 import java.io.IOException;
@@ -61,6 +62,7 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
    private JSONObject lastDisplayTags_;
    private boolean updating_ = false;
    private int[] channelInitiated_;
+   private int preferredSlice_ = -1;
 
    private int numComponents_;
    private ImagePlus hyperImage_;
@@ -204,11 +206,11 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
       pSelector_ = createPositionScrollbar();
    }
 
-   private void handleFirstImage(JSONObject firstImageMetadata) {
+   private void startup(JSONObject firstImageMetadata) {
       JSONObject summaryMetadata;
       try {
          summaryMetadata = firstImageMetadata.getJSONObject("Summary");
-      } catch (JSONException ex) {
+      } catch (Exception ex) {
          summaryMetadata = getSummaryMetadata();
       }
       if (summaryMetadata == null) {
@@ -223,8 +225,14 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
       int height = 0;
       int numComponents = 1;
       try {
-         width = MDUtils.getWidth(firstImageMetadata);
-         height = MDUtils.getHeight(firstImageMetadata);
+         if (firstImageMetadata != null) {
+            width = MDUtils.getWidth(firstImageMetadata);
+            height = MDUtils.getHeight(firstImageMetadata);
+         } else {
+            width = MDUtils.getWidth(summaryMetadata);
+            height = MDUtils.getHeight(summaryMetadata);
+
+         }
          numSlices = Math.max(summaryMetadata.getInt("Slices"), 1);
          numFrames = Math.max(summaryMetadata.getInt("Frames"), 1);
          //numFrames = Math.max(Math.min(2,summaryMetadata.getInt("Frames")), 1);
@@ -245,7 +253,11 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
 
       int type = 0;
       try {
-         type = MDUtils.getSingleChannelType(firstImageMetadata);
+         if (firstImageMetadata != null) {
+            type = MDUtils.getSingleChannelType(firstImageMetadata);
+         } else {
+            type = MDUtils.getSingleChannelType(summaryMetadata);
+         }
       } catch (Exception ex) {
          ReportingUtils.showError(ex, "Unable to determine acquisition type.");
       }
@@ -265,6 +277,17 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
       createWindow(hyperImage_, hc_);
       tSelector_ = getTSelector();
       zSelector_ = getZSelector();
+
+      if (zSelector_ != null) {
+         zSelector_.addAdjustmentListener(new AdjustmentListener() {
+
+            public void adjustmentValueChanged(AdjustmentEvent e) {
+               preferredSlice_ = zSelector_.getValue();
+            }
+         });
+      }
+
+
       if (imageCache_.lastAcquiredFrame() > 1) {
          setNumFrames(1 + imageCache_.lastAcquiredFrame());
       } else {
@@ -660,11 +683,19 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
       int channel = MDUtils.getChannelIndex(md);
       int frame = MDUtils.getFrameIndex(md);
       int position = MDUtils.getPositionIndex(md);
-      int slice = MDUtils.getSliceIndex(md);
+      int slice;
+      if (this.acquisitionIsRunning() &&
+              this.getNextWakeTime() > System.currentTimeMillis() &&
+              preferredSlice_ > -1) {
+         slice = preferredSlice_;
+      } else {
+         slice = MDUtils.getSliceIndex(md);
+      }
+      System.out.println(slice);
       int superChannel = this.rgbToGrayChannel(MDUtils.getChannelIndex(md));
 
       if (hyperImage_ == null) {
-         handleFirstImage(md);
+         startup(md);
       }
 
       if (hyperImage_.getClass().equals(MMCompositeImage.class)) {
@@ -768,6 +799,16 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
 
    public void setPosition(int p) {
       pSelector_.setValue(p);
+   }
+
+   public void setSliceIndex(int i) {
+      final int f = hyperImage_.getFrame();
+      final int c = hyperImage_.getChannel();
+      hyperImage_.setPosition(c, i+1, f);
+   }
+
+   public int getSliceIndex() {
+      return hyperImage_.getSlice() - 1;
    }
 
    boolean pause() {
@@ -931,7 +972,6 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
 
          @Override
          public void windowClosed(WindowEvent E) {
-            closed_ = true;
             this.windowClosing(E);
             super.windowClosed(E);
          }
@@ -1128,6 +1168,9 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
    }
 
    public void show() {
+      if (hyperImage_ == null) {
+        startup(null);
+      }
       hyperImage_.show();
       hyperImage_.getWindow().toFront();
    }
