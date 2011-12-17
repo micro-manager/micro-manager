@@ -19,7 +19,7 @@
 //               CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 
-/*
+/**
  * This class is used to execute most of the acquisition and image display
  * functionality in the ScriptInterface
  */
@@ -34,8 +34,6 @@ import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Iterator;
 import java.util.UUID;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import mmcorej.CMMCore;
 
 import mmcorej.TaggedImage;
@@ -460,10 +458,18 @@ public class MMAcquisition {
          virtAcq_.close();
    }
 
+   /**
+    * Brings the window displaying this acquisition to the front
+    */
    public void toFront() {
       virtAcq_.getHyperImage().getWindow().toFront();
    }
 
+   /**
+    * Adds a comment to the metadata associated with this acquisition
+    * @param comment Comment that will be added
+    * @throws MMScriptException 
+    */
    public void setComment(String comment) throws MMScriptException {
       if (isInitialized()) {
          try {
@@ -477,6 +483,10 @@ public class MMAcquisition {
 
    }
 
+   /**
+    * @deprecated 
+    * @return 
+    */
    public AcquisitionData getAcqData() {
       return null;
    }
@@ -488,6 +498,11 @@ public class MMAcquisition {
          return virtAcq_.getImageCache();
    }
    
+   /*
+    * Provides the summary metadata, i.e. metadata applying to the complete
+    * acquisition rather than indviviudal images.
+    * Metadata are returned as a JSONObject
+    */
    public JSONObject getSummaryMetadata() {
       if (isInitialized())
          return virtAcq_.imageCache_.getSummaryMetadata();
@@ -560,6 +575,12 @@ public class MMAcquisition {
       throw new MMScriptException (NOTINITIALIZED);
    }
 
+   /**
+    * @deprecated 
+    * @param frame
+    * @param slice
+    * @throws MMScriptException 
+    */
    public void setContrastBasedOnFrame(int frame, int slice) throws MMScriptException {
       if (!isInitialized()) 
          throw new MMScriptException (NOTINITIALIZED);
@@ -581,8 +602,8 @@ public class MMAcquisition {
        */
    }
 
-   /*
-    * Set a property in summary metadata
+   /**
+    * Sets a property in summary metadata
     */
    public void setProperty(String propertyName, String value) throws MMScriptException {
       if (isInitialized()) {
@@ -600,8 +621,8 @@ public class MMAcquisition {
       }
    }
 
-   /*
-    * Get a property from the summary metadata
+   /**
+    * Gets a property from the summary metadata
     */
    public String getProperty(String propertyName) throws MMScriptException {
       if (isInitialized()) {
@@ -619,6 +640,16 @@ public class MMAcquisition {
       }
    }
 
+   /**
+    * Sets a property in the metadata of the specified image
+    * 
+    * @param frame
+    * @param channel
+    * @param slice
+    * @param propName
+    * @param value
+    * @throws MMScriptException 
+    */
    public void setProperty(int frame, int channel, int slice, String propName,
            String value) throws MMScriptException {
       if (isInitialized()) {
