@@ -15,7 +15,6 @@ import ij.plugin.Animator;
 import ij.process.ImageProcessor;
 import java.awt.Color;
 import java.awt.event.AdjustmentListener;
-import java.awt.event.MouseListener;
 import java.awt.event.WindowEvent;
 import java.io.File;
 import java.io.IOException;
@@ -706,8 +705,9 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
          slice = preferredSlice_;
       } else {
          slice = MDUtils.getSliceIndex(md);
-      }
-      System.out.println(slice);
+      }    
+      // TODO: Remove this!
+      // System.out.println(slice);
       int superChannel = this.rgbToGrayChannel(MDUtils.getChannelIndex(md));
 
       if (hyperImage_ == null) {
@@ -977,7 +977,11 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
             }
 
             if (!closed_) {
-               close();
+               try {
+                  close();
+               } catch (NullPointerException ex) {
+                  ReportingUtils.logError("Null pointer error in ImageJ code while closing window");
+               }
             }
 
             super.windowClosing(e);
