@@ -88,7 +88,8 @@ public class SplitViewFrame extends javax.swing.JFrame {
 
          @Override
          public void actionPerformed(ActionEvent evt) {
-            doSnap();
+            calculateSize();
+            addSnapToImage();    
          }
       };
       timer_ = new Timer((int) interval_, timerHandler);
@@ -140,7 +141,16 @@ public class SplitViewFrame extends javax.swing.JFrame {
 
    private void doSnap() {
       calculateSize();
-      addSnapToImage();
+      if (!gui_.acquisitionExists(ACQNAME)) {
+         try {
+            openAcq();
+         } catch (MMScriptException ex) {
+            ReportingUtils.showError(ex, "Failed to open acquisition Window");
+         }
+      }
+      if (gui_.acquisitionExists(ACQNAME)) {
+         addSnapToImage();
+      }
    }
 
    private void enableLiveMode(boolean enable) {
@@ -148,6 +158,13 @@ public class SplitViewFrame extends javax.swing.JFrame {
          if (enable) {
             if (timer_.isRunning()) {
                return;
+            }
+            if (!gui_.acquisitionExists(ACQNAME)) {
+               try {
+                  openAcq();
+               } catch (MMScriptException ex) {
+                  ReportingUtils.showError(ex, "Failed to open acquisition Window");
+               }
             }
 
             // turn off auto shutter and open the shutter
@@ -262,7 +279,8 @@ public class SplitViewFrame extends javax.swing.JFrame {
          tmpImg.setPixels(img);
 
          if (!gui_.acquisitionExists(ACQNAME)) {
-            openAcq();
+            enableLiveMode(false);
+            return;
          } else if (gui_.getAcquisitionImageHeight(ACQNAME) != newHeight_
                  || gui_.getAcquisitionImageWidth(ACQNAME) != newWidth_
                  || gui_.getAcquisitionImageByteDepth(ACQNAME) != imgDepth_) {
