@@ -3019,7 +3019,7 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
    }
 
    public boolean isImageWindowOpen() {
-      return (imageWin_ != null) && (!imageWin_.isClosed());
+      return (imageWin_ != null) && (!imageWin_.isClosed() && (imageWin_.getGraphics() != null));
    }
 
    /**
