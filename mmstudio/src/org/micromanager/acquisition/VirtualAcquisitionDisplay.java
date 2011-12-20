@@ -68,9 +68,11 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
    private ScrollbarWithLabel pSelector_;
    private ScrollbarWithLabel tSelector_;
    private ScrollbarWithLabel zSelector_;
+   private ScrollbarWithLabel cSelector_;
    private HyperstackControls hc_;
    public AcquisitionVirtualStack virtualStack_;
    private final Preferences displayPrefs_;
+
 
 
 
@@ -278,12 +280,12 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
       hyperImage_ = createHyperImage(createMMImagePlus(virtualStack_), numGrayChannels, numSlices, numFrames, virtualStack_, hc_);
       applyPixelSizeCalibration(hyperImage_);
       createWindow(hyperImage_, hc_);
-      tSelector_ = getTSelector();
-      zSelector_ = getZSelector();
-
+      tSelector_ = getSelector("t");
+      zSelector_ = getSelector("z");
+      cSelector_ = getSelector("c");
+      
       if (zSelector_ != null) {
          zSelector_.addAdjustmentListener(new AdjustmentListener() {
-
             public void adjustmentValueChanged(AdjustmentEvent e) {
                preferredSlice_ = zSelector_.getValue();
             }
@@ -354,51 +356,30 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
       }
    }
 
-   private ScrollbarWithLabel getTSelector() {
-      ScrollbarWithLabel tSelector = null;
+   
+   private ScrollbarWithLabel getSelector(String label) {
+      // label should be "t", "z", or "c"
+      ScrollbarWithLabel selector = null;
       ImageWindow win = hyperImage_.getWindow();
       if (win instanceof StackWindow) {
          try {
-            tSelector = (ScrollbarWithLabel) JavaUtils.getRestrictedFieldValue((StackWindow) win, StackWindow.class, "tSelector");
+            selector = (ScrollbarWithLabel) JavaUtils.getRestrictedFieldValue((StackWindow) win, StackWindow.class, label + "Selector");
          } catch (NoSuchFieldException ex) {
-            tSelector = null;
+            selector = null;
             ReportingUtils.logError(ex);
          }
       }
-      if (tSelector == null) {
+      if (selector == null && label.contentEquals("t") || label.contentEquals("z")) {
          try {
-            tSelector = (ScrollbarWithLabel) JavaUtils.getRestrictedFieldValue((StackWindow) win, StackWindow.class, "animationSelector");
+            selector = (ScrollbarWithLabel) JavaUtils.getRestrictedFieldValue((StackWindow) win, StackWindow.class, "animationSelector");
          } catch (NoSuchFieldException ex) {
-            tSelector = null;
+            selector = null;
             ReportingUtils.logError(ex);
          }
       }
-      return tSelector;
+      return selector;
    }
 
-   private ScrollbarWithLabel getZSelector() {
-      ScrollbarWithLabel zSelector = null;
-      ImageWindow win = hyperImage_.getWindow();
-      if (hyperImage_.getNSlices() <= 1)
-         return null;
-      if (win instanceof StackWindow) {
-         try {
-            zSelector = (ScrollbarWithLabel) JavaUtils.getRestrictedFieldValue((StackWindow) win, StackWindow.class, "zSelector");
-         } catch (NoSuchFieldException ex) {
-            zSelector = null;
-            ReportingUtils.logError(ex);
-         }
-      }
-      if (zSelector == null) {
-         try {
-            zSelector = (ScrollbarWithLabel) JavaUtils.getRestrictedFieldValue((StackWindow) win, StackWindow.class, "animationSelector");
-         } catch (NoSuchFieldException ex) {
-            zSelector = null;
-            ReportingUtils.logError(ex);
-         }
-      }
-      return zSelector;
-   }
 
    public int rgbToGrayChannel(int channelIndex) {
       try {
@@ -565,6 +546,13 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
       }
    }
 
+   private void setNumChannels(int n) {
+      if (cSelector_ != null) {
+         ((IMMImagePlus) hyperImage_).setNChannelsUnverified(n);
+         cSelector_.setMaximum(n + 1);
+      }
+   }
+
    public ImagePlus getHyperImage() {
       return hyperImage_;
    }
@@ -697,11 +685,6 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
          new Color(MDUtils.getChannelColor(md));
       } catch (Exception e) {}
 
-      if (channelName != null)
-         setChannelName(channel, channelName);
-
-      if (channelColor != null)
-         setChannelColor(channel, channelColor.getRGB());
 
       int slice;
       if (this.acquisitionIsRunning() &&
@@ -757,6 +740,23 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
             this.setNumFrames(1 + frame);
          }
       }
+
+      if (cSelector_ != null) {
+         if (cSelector_.getMaximum() <= (1 + superChannel)) {
+            this.setNumChannels(1 + superChannel);
+            ((CompositeImage) hyperImage_).reset();
+            //JavaUtils.invokeRestrictedMethod(hyperImage_, CompositeImage.class,
+            //       "setupLuts", 1 + superChannel, Integer.TYPE);
+         }
+      }
+      
+
+      if (channelName != null)
+         setChannelName(channel, channelName);
+
+      if (channelColor != null)
+         setChannelColor(superChannel, channelColor.getRGB());
+
 
       try {
          int p = 1 + MDUtils.getPositionIndex(md);
