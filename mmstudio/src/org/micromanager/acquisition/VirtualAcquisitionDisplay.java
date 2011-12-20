@@ -683,6 +683,11 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
       if (md == null) {
          return;
       }
+
+      if (hyperImage_ == null) {
+         startup(md);
+      }
+
       int channel = MDUtils.getChannelIndex(md);
       int frame = MDUtils.getFrameIndex(md);
       int position = MDUtils.getPositionIndex(md);
@@ -710,9 +715,6 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
       // System.out.println(slice);
       int superChannel = this.rgbToGrayChannel(MDUtils.getChannelIndex(md));
 
-      if (hyperImage_ == null) {
-         startup(md);
-      }
 
       if (hyperImage_.getClass().equals(MMCompositeImage.class)) {
          boolean[] active = ((MMCompositeImage) hyperImage_ ).getActiveChannels();
