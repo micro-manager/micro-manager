@@ -91,7 +91,7 @@ public class PropertyEditor extends MMFrame{
 
       @Override
       public void propertiesChangedAlert() {
-         // avoid re-executing a refrech because of callbacks while we are updating
+         // avoid re-executing a refresh because of callbacks while we are updating
          if (!data_.updating()) {
             refresh();
          }
@@ -309,7 +309,7 @@ public class PropertyEditor extends MMFrame{
       public PropertyEditorTableData(CMMCore core, String groupName, String presetName,
          int PropertyValueColumn, int PropertyUsedColumn, Component parentComponent) {
 
-         super(core, groupName, presetName, PropertyValueColumn, PropertyUsedColumn, parentComponent);
+         super(core, groupName, presetName, PropertyValueColumn, PropertyUsedColumn, false);
       }
    
       private static final long serialVersionUID = 1L;

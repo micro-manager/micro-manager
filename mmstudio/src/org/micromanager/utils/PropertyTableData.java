@@ -39,19 +39,31 @@ public class PropertyTableData extends AbstractTableModel implements MMPropertyT
 	PropertySetting groupSignature_[];
 
 	private String[] presetNames_;
-   private Component parentComponent_;
    
    private volatile boolean updating_;
+   private boolean groupOnly_;
 
+   /**
+    * PropertyTableData constructor
+    * 
+    * @param core
+    * @param groupName
+    * @param presetName
+    * @param PropertyValueColumn
+    * @param PropertyUsedColumn
+    * @param groupOnly - indicates that only properties included in the group 
+    *          should be read
+    */
 
-	public PropertyTableData(CMMCore core, String groupName, String presetName, int PropertyValueColumn, int PropertyUsedColumn, Component parentComponent) {
+	public PropertyTableData(CMMCore core, String groupName, String presetName, 
+           int PropertyValueColumn, int PropertyUsedColumn, boolean groupOnly) {
 		core_ = core;
 		groupName_ = groupName;
 		presetName_ = presetName;
 		PropertyNameColumn_ = 0;
 		PropertyValueColumn_ = PropertyValueColumn;
 		PropertyUsedColumn_ = PropertyUsedColumn;
-      parentComponent_ = parentComponent;
+      groupOnly_ = groupOnly;
 	}
 
 	public ArrayList<PropertyItem> getProperties() {
@@ -245,20 +257,21 @@ public class PropertyTableData extends AbstractTableModel implements MMPropertyT
                StrVector properties = core_.getDevicePropertyNames(devices.get(i));
                for (int j=0; j<properties.size(); j++) {
                   PropertyItem item = new PropertyItem();
-                  item.readFromCore(core_, devices.get(i), properties.get(j));
-
-                  if ((!item.readOnly || showReadOnly_) && !item.preInit) {
-                     if(cfg.isPropertyIncluded(item.device, item.name)){
-                        item.confInclude = true;
-                        item.setValueFromCoreString(cfg.getSetting(item.device, item.name).getPropertyValue());
-                     } else {
-                        item.confInclude = false;
-                        item.setValueFromCoreString(core_.getProperty(devices.get(i), properties.get(j)));
+                  if (!groupOnly_ || cfg.isPropertyIncluded(devices.get(i), properties.get(j))) {
+                     item.readFromCore(core_, devices.get(i), properties.get(j));
+                     if ((!item.readOnly || showReadOnly_) && !item.preInit) {
+                        if (cfg.isPropertyIncluded(item.device, item.name)) {
+                           item.confInclude = true;
+                           item.setValueFromCoreString(cfg.getSetting(item.device, item.name).getPropertyValue());
+                        } else {
+                           item.confInclude = false;
+                           item.setValueFromCoreString(core_.getProperty(devices.get(i), properties.get(j)));
+                        }
+                        propList_.add(item);
                      }
-
-                     propList_.add(item);
                   }
                }
+               
             }
 			}
          

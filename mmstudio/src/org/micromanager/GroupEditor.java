@@ -50,7 +50,7 @@ public class GroupEditor extends ConfigDialog {
       showFlagsPanelVisible = true;
       scrollPaneTop_ = 140;
       numColumns_ = 3;
-      data_ = new PropertyTableData(core_, groupName_, presetName_, 2, 1, this);
+      data_ = new PropertyTableData(core_, groupName_, presetName_, 2, 1, false);
       initializeData();
       data_.setColumnNames("Property Name", "Use in Group?", "Current Property Value");
       showShowReadonlyCheckBox_ = true;
