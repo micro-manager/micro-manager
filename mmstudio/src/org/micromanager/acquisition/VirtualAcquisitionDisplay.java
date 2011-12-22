@@ -827,17 +827,15 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
                  hyperImage_.getStack().getPixels(1));
       }
       
-      controls_.newImageUpdate(tags);
-
-
+      final JSONObject tags2 = tags;
       Runnable updateAndDraw = new Runnable() {
-
          public void run() {
             if (hyperImage_ instanceof CompositeImage) {
                ((CompositeImage) hyperImage_).setChannelsUpdated();
             }
             if (hyperImage_ != null && hyperImage_.isVisible()) 
                hyperImage_.updateAndDraw();
+               controls_.newImageUpdate(tags2);
          }
             
       };
