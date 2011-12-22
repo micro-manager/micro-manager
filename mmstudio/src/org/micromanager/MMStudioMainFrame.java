@@ -173,6 +173,8 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
    private static final String MAIN_STRETCH_CONTRAST = "stretch_contrast";
    private static final String MAIN_REJECT_OUTLIERS = "reject_outliers";
    private static final String MAIN_REJECT_FRACTION = "reject_fraction";
+   private static final String MAIN_SLOW_HIST = "slow_hist";
+   private static final String MAIN_LOG_HIST = "log_hist";
    private static final String CONTRAST_SETTINGS_8_MIN = "contrast8_MIN";
    private static final String CONTRAST_SETTINGS_8_MAX = "contrast8_MAX";
    private static final String CONTRAST_SETTINGS_16_MIN = "contrast16_MIN";
@@ -228,7 +230,6 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
    private String startupScriptFile_;
    private String sysStateFile_ = "MMSystemState.cfg";
    private ConfigGroupPad configPad_;
-   private ContrastPanel contrastPanel_;
    // Timer interval - image display interval
    private double liveModeInterval_ = 33;
    private LiveModeTimer liveModeTimer_;
@@ -260,7 +261,7 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
    private ZWheelListener zWheelListener_;
    private XYZKeyListener xyzKeyListener_;
    private AcquisitionManager acqMgr_;
-   private static MMImageWindow imageWin_;
+   private static VirtualAcquisitionDisplay simpleDisplay_;
    private Color[] multiCameraColors_ = {Color.RED, Color.GREEN, Color.BLUE, Color.YELLOW, Color.CYAN};
    private boolean multiChannelCamera_ = false;
    private long multiChannelCameraNrCh_ = 0;
@@ -268,8 +269,10 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
    private boolean liveModeSuspended_;
    public Font defaultScriptFont_ = null;
    
+   public static final String SIMPLE_ACQ = "Snap/Live Window";
    public static final String MULTI_CAMERA_ACQ = "Multi-Camera Snap";
-   public static final String RGB_ACQ = "RGB-Camera Acquisition";
+//   public static final String RGB_ACQ = "RGB-Camera Acquisition";
+//   public static final String MONOCHROME_ACQ = "Monochrome Simple Acquisition";
    public static FileType MM_CONFIG_FILE
             = new FileType("MM_CONFIG_FILE",
                            "Micro-Manager Config File",
@@ -300,32 +303,33 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
 
 
    public ImageWindow getImageWin() {
-      return imageWin_;
+      return simpleDisplay_.getHyperImage().getWindow();
    }
 
-   public static MMImageWindow getLiveWin() {
-      return imageWin_;
+   public static VirtualAcquisitionDisplay getSimpleDisplay() {
+      return simpleDisplay_;
    }
 
+   public static VirtualAcquisitionDisplay createSimpleDisplay(String name, ImageCache cache) throws MMScriptException {
+      simpleDisplay_ = new VirtualAcquisitionDisplay(cache, name);
+      return simpleDisplay_;
+   }
+   
    private void doSnapColor() {
-    checkRGBAcquisition();
-
+//    checkRGBAcquisition();
+      checkSimpleAcquisition();
+      
       try {
          setCursor(new Cursor(Cursor.WAIT_CURSOR));
          core_.snapImage();
-         getAcquisition(RGB_ACQ).toFront();
+         getAcquisition(SIMPLE_ACQ).toFront();
          
-            TaggedImage ti = ImageUtils.makeTaggedImage(core_.getImage(),
-                    0,
-                    0,
-                    0,
-                    0,
-                    getAcquisitionImageWidth(RGB_ACQ),
-                    getAcquisitionImageHeight(RGB_ACQ),
-                    getAcquisitionImageByteDepth(RGB_ACQ) );
+            TaggedImage ti = ImageUtils.makeTaggedImage(core_.getImage(), 0, 0, 0, 0,
+                    getAcquisitionImageWidth(SIMPLE_ACQ),
+                    getAcquisitionImageHeight(SIMPLE_ACQ),
+                    getAcquisitionImageByteDepth(SIMPLE_ACQ) );
             
-            addImage(RGB_ACQ,ti, true, true, false);
-            getAcquisition(RGB_ACQ).getAcquisitionWindow().setWindowTitle("RGB Snap");
+            addImage(SIMPLE_ACQ,ti, true, true, false);
   
       } catch (Exception ex) {
          ReportingUtils.showError(ex);
@@ -359,36 +363,26 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
       } catch (Exception ex) {
          ReportingUtils.showError(ex);
       }
-
-
    }
-
+   
    private void doSnapMonochrome() {
+//      checkMonochromeAcquisition();
+      checkSimpleAcquisition();
+      
       try {
-         Cursor waitCursor = new Cursor(Cursor.WAIT_CURSOR);
-         setCursor(waitCursor);
-         if (!isImageWindowOpen()) {
-            imageWin_ = createImageWindow();
-         }
-         if (imageWin_ == null) {
-            return;
-         }
-         imageWin_.toFront();
-         setIJCal(imageWin_);
-         // this is needed to clear the subtite, should be folded into
-         // drawInfo
-         imageWin_.getGraphics().clearRect(0, 0, imageWin_.getWidth(), 40);
-         imageWin_.drawInfo(imageWin_.getGraphics());
-         imageWin_.setSubTitle("Snap");
-         String expStr = textFieldExp_.getText();
-         if (expStr.length() > 0) {
-            core_.setExposure(NumberUtils.displayStringToDouble(expStr));
-            updateImage();
-         } else {
-            handleError("Exposure field is empty!");
-         }
-      } catch (Exception e) {
-         ReportingUtils.showError(e);
+         setCursor(new Cursor(Cursor.WAIT_CURSOR));
+         core_.snapImage();
+         getAcquisition(SIMPLE_ACQ).toFront();
+         
+            TaggedImage ti = ImageUtils.makeTaggedImage(core_.getImage(), 0, 0, 0, 0,
+                    getAcquisitionImageWidth(SIMPLE_ACQ),
+                    getAcquisitionImageHeight(SIMPLE_ACQ),
+                    getAcquisitionImageByteDepth(SIMPLE_ACQ) );
+            
+            addImage(SIMPLE_ACQ,ti, true, true, false);
+  
+      } catch (Exception ex) {
+         ReportingUtils.showError(ex);
       }
       setCursor(new Cursor(Cursor.DEFAULT_CURSOR));
    }
@@ -439,34 +433,94 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
       }
    }
    
-   private void checkRGBAcquisition()
-   {
-      int w = (int) core_.getImageWidth();
-      int h = (int)  core_.getImageHeight();
-      int d = (int) core_.getBytesPerPixel();
+//   private void checkMonochromeAcquisition() {
+//      int w = (int) core_.getImageWidth();
+//      int h = (int)  core_.getImageHeight();
+//      int d = (int) core_.getBytesPerPixel();
+//  
+//         try {                        
+//            if (acquisitionExists(MONOCHROME_ACQ)) {             
+//               if ( (getAcquisitionImageWidth(MONOCHROME_ACQ) != w) ||
+//                    (getAcquisitionImageHeight(MONOCHROME_ACQ) != h) ||
+//                    (getAcquisitionImageByteDepth(MONOCHROME_ACQ) != d) )
+//               {
+//                  closeAcquisitionImage5D(MONOCHROME_ACQ);
+//                  closeAcquisition(MONOCHROME_ACQ);
+//                  openAcquisition(MONOCHROME_ACQ, "", 1, 1, 1, true);
+//                  initializeSimpleAcquisition(MONOCHROME_ACQ, w, h, d);
+//                  
+//                  getAcquisition(MONOCHROME_ACQ).promptToSave(false);
+//               }
+//            } else {         
+//            openAcquisition(MONOCHROME_ACQ, "", 1, 1, 1, true);       //creates new acquisition
+//            initializeSimpleAcquisition(MONOCHROME_ACQ, w, h, d);
+//            getAcquisition(MONOCHROME_ACQ).promptToSave(false);
+//            }
+//         } catch (Exception ex) {
+//            ReportingUtils.showError(ex);
+//         }
+//   }
+   
+ private void checkSimpleAcquisition() {
+      int width = (int) core_.getImageWidth();
+      int height = (int) core_.getImageHeight();
+      int depth = (int) core_.getBytesPerPixel();
+      boolean multiCam = core_.getNumberOfCameraChannels() > 1;
   
          try {                        
-            if (acquisitionExists(RGB_ACQ)) {             
-               if ( (getAcquisitionImageWidth(RGB_ACQ) != w) ||
-                    (getAcquisitionImageHeight(RGB_ACQ) != h) ||
-                    (getAcquisitionImageByteDepth(RGB_ACQ) != d) )
-               {
-                  closeAcquisitionImage5D(RGB_ACQ);
-                  closeAcquisition(RGB_ACQ);
-                  openAcquisition(RGB_ACQ, "", 1, 1, 1, true);
-                  initializeAcquisition(RGB_ACQ, w, h, d);
-                  getAcquisition(RGB_ACQ).promptToSave(false);
+            if (acquisitionExists(SIMPLE_ACQ)) {             
+               if ( (getAcquisitionImageWidth(SIMPLE_ACQ) != width) ||
+                    (getAcquisitionImageHeight(SIMPLE_ACQ) != height) ||
+                    (getAcquisitionImageByteDepth(SIMPLE_ACQ) != depth) ||
+                    (getAcquisitionMultiCam(SIMPLE_ACQ) != multiCam) )
+               {  //Need to close and reopen simple window
+                  closeAcquisitionImage5D(SIMPLE_ACQ);
+                  closeAcquisition(SIMPLE_ACQ);
+                  
+                  openAcquisition(SIMPLE_ACQ, "", 1, 1, 1, true);
+                  initializeSimpleAcquisition(SIMPLE_ACQ, width, height, depth, multiCam);
+                  
+                  getAcquisition(SIMPLE_ACQ).promptToSave(false);
                }
             } else {         
-            openAcquisition(RGB_ACQ, "", 1, 1, 1, true);       //creates new acquisition
-            initializeAcquisition(RGB_ACQ, w, h, d);
-            getAcquisition(RGB_ACQ).promptToSave(false);
+            openAcquisition(SIMPLE_ACQ, "", 1, 1, 1, true);       //creates new acquisition
+            initializeSimpleAcquisition(SIMPLE_ACQ, width, height, depth,multiCam);
+            getAcquisition(SIMPLE_ACQ).promptToSave(false);
             }
          } catch (Exception ex) {
             ReportingUtils.showError(ex);
          }
 
    }
+   
+//   private void checkRGBAcquisition() {
+//      int w = (int) core_.getImageWidth();
+//      int h = (int)  core_.getImageHeight();
+//      int d = (int) core_.getBytesPerPixel();
+//  
+//         try {                        
+//            if (acquisitionExists(RGB_ACQ)) {             
+//               if ( (getAcquisitionImageWidth(RGB_ACQ) != w) ||
+//                    (getAcquisitionImageHeight(RGB_ACQ) != h) ||
+//                    (getAcquisitionImageByteDepth(RGB_ACQ) != d) )
+//               {
+//                  closeAcquisitionImage5D(RGB_ACQ);
+//                  closeAcquisition(RGB_ACQ);
+//                  openAcquisition(RGB_ACQ, "", 1, 1, 1, true);
+//                  initializeSimpleAcquisition(RGB_ACQ, w, h, d);
+//                  
+//                  getAcquisition(RGB_ACQ).promptToSave(false);
+//               }
+//            } else {         
+//            openAcquisition(RGB_ACQ, "", 1, 1, 1, true);       //creates new acquisition
+//            initializeSimpleAcquisition(RGB_ACQ, w, h, d);
+//            getAcquisition(RGB_ACQ).promptToSave(false);
+//            }
+//         } catch (Exception ex) {
+//            ReportingUtils.showError(ex);
+//         }
+//
+//   }
    
    public void saveChannelColor(String chName, int rgb)
    {
@@ -512,7 +566,6 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
             if (i == c -1)
                update = true;
             addImage(MULTI_CAMERA_ACQ,ti, update, true, false);
-            getAcquisition(MULTI_CAMERA_ACQ).getAcquisitionWindow().setWindowTitle("Multi Camera Snap");
          }
       } catch (Exception ex) {
          ReportingUtils.showError(ex);
@@ -661,7 +714,8 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
    }
 
    public void updateContrast(ImagePlus iplus) {
-      contrastPanel_.updateContrast(iplus);
+//      contrastPanel_.updateContrast(iplus);
+//      metadataPanel_.updateContrast(iplus);
    }
 
    /**
@@ -977,6 +1031,8 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
       int height = mainPrefs_.getInt(MAIN_FRAME_HEIGHT, 482);
       boolean stretch = mainPrefs_.getBoolean(MAIN_STRETCH_CONTRAST, true);
       boolean reject = mainPrefs_.getBoolean(MAIN_REJECT_OUTLIERS, false);
+      boolean slowHist = mainPrefs_.getBoolean(MAIN_SLOW_HIST, false);
+      boolean logHist = mainPrefs_.getBoolean(MAIN_LOG_HIST, false);
       double rejectFract = mainPrefs_.getDouble(MAIN_REJECT_FRACTION, 0.027);
       int dividerPos = mainPrefs_.getInt(MAIN_FRAME_DIVIDER_POS, 178);
       openAcqDirectory_ = mainPrefs_.get(OPEN_ACQ_DIR, "");
@@ -1103,11 +1159,7 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
       toggleButtonLive_.setFont(new Font("Arial", Font.PLAIN, 10));
       toggleButtonLive_.addActionListener(new ActionListener() {
 
-         public void actionPerformed(ActionEvent e) {
-            if (!isLiveModeOn()) {
-               // Display interval for Live Mode changes as well
-               setLiveModeInterval();
-            }
+         public void actionPerformed(ActionEvent e) {            
             enableLiveMode(!isLiveModeOn());
          }
       });
@@ -2079,26 +2131,15 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
             8, SpringLayout.WEST, topPanel);
 
 
-      contrastPanel_ = new ContrastPanel();
-      contrastPanel_.setFont(new Font("", Font.PLAIN, 10));
-      contrastPanel_.setContrastStretch(stretch);
-      contrastPanel_.setRejectOutliers(reject);
-      contrastPanel_.setFractionToReject(rejectFract);
-      contrastPanel_.setBorder(BorderFactory.createEmptyBorder());
-      bottomPanel.add(contrastPanel_);
-      topLayout.putConstraint(SpringLayout.SOUTH, contrastPanel_, -20,
-            SpringLayout.SOUTH, bottomPanel);
-      topLayout.putConstraint(SpringLayout.NORTH, contrastPanel_, 0,
-            SpringLayout.NORTH, bottomPanel);
-      topLayout.putConstraint(SpringLayout.EAST, contrastPanel_, 0,
-            SpringLayout.EAST, bottomPanel);
-      topLayout.putConstraint(SpringLayout.WEST, contrastPanel_, 0,
-            SpringLayout.WEST, bottomPanel);
-
-      
-      metadataPanel_ = new MetadataPanel();
-      metadataPanel_.setVisible(false);
-
+      ContrastPanel contrastPanel = new ContrastPanel();
+      contrastPanel.setFont(new Font("", Font.PLAIN, 10));
+      contrastPanel.setContrastStretch(stretch);
+      contrastPanel.setRejectOutliers(reject);
+      contrastPanel.setFractionToReject(rejectFract);
+      contrastPanel.setSlowHist(slowHist);
+      contrastPanel.setLogHist(logHist);
+   
+      metadataPanel_ = new MetadataPanel(contrastPanel);
       bottomPanel.add(metadataPanel_);
       topLayout.putConstraint(SpringLayout.SOUTH, metadataPanel_, -20,
             SpringLayout.SOUTH, bottomPanel);
@@ -2109,21 +2150,6 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
       topLayout.putConstraint(SpringLayout.WEST, metadataPanel_, 0,
             SpringLayout.WEST, bottomPanel);
       metadataPanel_.setBorder(BorderFactory.createEmptyBorder());
-
-      GUIUtils.registerImageFocusListener(new ImageFocusListener() {
-         public void focusReceived(ImageWindow focusedWindow) {
-            if (focusedWindow == null) {
-               contrastPanel_.setVisible(true);
-               metadataPanel_.setVisible(false);
-            } else if (focusedWindow instanceof MMImageWindow) {
-               contrastPanel_.setVisible(true);
-               metadataPanel_.setVisible(false);
-            } else if (focusedWindow.getImagePlus().getStack() instanceof AcquisitionVirtualStack) {
-               contrastPanel_.setVisible(false);
-               metadataPanel_.setVisible(true);
-            }
-         }
-      });
 
 
       final JLabel regionOfInterestLabel_1 = new JLabel();
@@ -2383,20 +2409,20 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
    }
 
    private void updateLineProfile() {
-      if (!isImageWindowOpen() || profileWin_ == null
+      if (WindowManager.getCurrentWindow() == null || profileWin_ == null
             || !profileWin_.isShowing()) {
          return;
       }
 
-      calculateLineProfileData(imageWin_.getImagePlus());
+      calculateLineProfileData(WindowManager.getCurrentImage());
       profileWin_.setData(lineProfileData_);
    }
 
    private void openLineProfileWindow() {
-      if (imageWin_ == null || imageWin_.isClosed()) {
+      if (WindowManager.getCurrentWindow() == null || WindowManager.getCurrentWindow().isClosed()) {
          return;
       }
-      calculateLineProfileData(imageWin_.getImagePlus());
+      calculateLineProfileData(WindowManager.getCurrentImage());
       if (lineProfileData_ == null) {
          return;
       }
@@ -2538,60 +2564,60 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
    private BooleanLock creatingImageWindow_ = new BooleanLock(false);
    private static long waitForCreateImageWindowTimeout_ = 5000;
 
-   private MMImageWindow createImageWindow() {
-      if (creatingImageWindow_.isTrue()) {
-         try {
-            creatingImageWindow_.waitToSetFalse(waitForCreateImageWindowTimeout_);
-         } catch (Exception e) {
-            ReportingUtils.showError(e);
-         }
-         return imageWin_;
-      }
-      creatingImageWindow_.setValue(true);
-      MMImageWindow win = imageWin_;
-      removeMMBackgroundListener(imageWin_);
-      imageWin_ = null;
-      try {
-         if (win != null) {
-            win.saveAttributes();
-            win.dispose();
-            win = null;
-         }
-
-         win = new MMImageWindow(core_, this);
-
-         core_.logMessage("createImageWin1");
-
-         win.setBackground(guiColors_.background.get((options_.displayBackground_)));
-         addMMBackgroundListener(win);
-         setIJCal(win);
-
-         // listeners
-         if (centerAndDragListener_ != null
-               && centerAndDragListener_.isRunning()) {
-            centerAndDragListener_.attach(win.getImagePlus().getWindow());
-         }
-         if (zWheelListener_ != null && zWheelListener_.isRunning()) {
-            zWheelListener_.attach(win.getImagePlus().getWindow());
-         }
-         if (xyzKeyListener_ != null && xyzKeyListener_.isRunning()) {
-            xyzKeyListener_.attach(win.getImagePlus().getWindow());
-         }
-
-         win.getCanvas().requestFocus();
-         imageWin_ = win;
-
-      } catch (Exception e) {
-         if (win != null) {
-            win.saveAttributes();
-            WindowManager.removeWindow(win);
-            win.dispose();
-         }
-         ReportingUtils.showError(e);
-      }
-      creatingImageWindow_.setValue(false);
-      return imageWin_;
-   }
+//   private MMImageWindow createImageWindow() {
+//      if (creatingImageWindow_.isTrue()) {
+//         try {
+//            creatingImageWindow_.waitToSetFalse(waitForCreateImageWindowTimeout_);
+//         } catch (Exception e) {
+//            ReportingUtils.showError(e);
+//         }
+//         return imageWin_;
+//      }
+//      creatingImageWindow_.setValue(true);
+//      MMImageWindow win = imageWin_;
+//      removeMMBackgroundListener(imageWin_);
+//      imageWin_ = null;
+//      try {
+//         if (win != null) {
+//            win.saveAttributes();
+//            win.dispose();
+//            win = null;
+//         }
+//
+//         win = new MMImageWindow(core_, this);
+//
+//         core_.logMessage("createImageWin1");
+//
+//         win.setBackground(guiColors_.background.get((options_.displayBackground_)));
+//         addMMBackgroundListener(win);
+//         setIJCal(win);
+//
+//         // listeners
+//         if (centerAndDragListener_ != null
+//               && centerAndDragListener_.isRunning()) {
+//            centerAndDragListener_.attach(win.getImagePlus().getWindow());
+//         }
+//         if (zWheelListener_ != null && zWheelListener_.isRunning()) {
+//            zWheelListener_.attach(win.getImagePlus().getWindow());
+//         }
+//         if (xyzKeyListener_ != null && xyzKeyListener_.isRunning()) {
+//            xyzKeyListener_.attach(win.getImagePlus().getWindow());
+//         }
+//
+//         win.getCanvas().requestFocus();
+//         imageWin_ = win;
+//
+//      } catch (Exception e) {
+//         if (win != null) {
+//            win.saveAttributes();
+//            WindowManager.removeWindow(win);
+//            win.dispose();
+//         }
+//         ReportingUtils.showError(e);
+//      }
+//      creatingImageWindow_.setValue(false);
+//      return imageWin_;
+//   }
 
    /**
     * Returns instance of the core uManager object;
@@ -2607,6 +2633,9 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
       return gui_;
    }
 
+   public MetadataPanel getMetadataPanel() {
+      return metadataPanel_;
+   }
 
    public final void setExitStrategy(boolean closeOnExit) {
       if (closeOnExit)
@@ -2898,46 +2927,48 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
    }
 
    public Object getPixels() {
-      if (imageWin_ != null) {
-         return imageWin_.getImagePlus().getProcessor().getPixels();
+      ImagePlus ip = WindowManager.getCurrentImage();
+      if (ip != null) {
+         return ip.getProcessor().getPixels();
       }
 
       return null;
    }
 
    public void setPixels(Object obj) {
-      if (imageWin_ == null) {
+      ImagePlus ip = WindowManager.getCurrentImage();
+      if (ip == null) {
          return;
       }
-      imageWin_.getImagePlus().getProcessor().setPixels(obj);
+      ip.getProcessor().setPixels(obj);
    }
 
    public int getImageHeight() {
-      if (imageWin_ != null) {
-         return imageWin_.getImagePlus().getHeight();
-      }
+      ImagePlus ip = WindowManager.getCurrentImage();
+      if (ip != null)
+         return ip.getHeight();
       return 0;
    }
 
    public int getImageWidth() {
-      if (imageWin_ != null) {
-         return imageWin_.getImagePlus().getWidth();
-      }
+      ImagePlus ip = WindowManager.getCurrentImage();
+      if (ip != null)
+         return ip.getWidth();
       return 0;
    }
 
    public int getImageDepth() {
-      if (imageWin_ != null) {
-         return imageWin_.getImagePlus().getBitDepth();
-      }
+      ImagePlus ip = WindowManager.getCurrentImage();
+      if (ip != null)
+         return ip.getBitDepth();
       return 0;
    }
 
    public ImageProcessor getImageProcessor() {
-      if (imageWin_ == null) {
+      ImagePlus ip = WindowManager.getCurrentImage();
+      if (ip == null)
          return null;
-      }
-      return imageWin_.getImagePlus().getProcessor();
+      return ip.getProcessor();
    }
 
    private boolean isCameraAvailable() {
@@ -3018,9 +3049,9 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
       }
    }
 
-   public boolean isImageWindowOpen() {
-      return (imageWin_ != null) && (!imageWin_.isClosed() && (imageWin_.getGraphics() != null));
-   }
+//   public boolean isImageWindowOpen() {
+//      return (imageWin_ != null) && (!imageWin_.isClosed() && (imageWin_.getGraphics() != null));
+//   }
 
    /**
     * This function was split out of isImageWindowOpen to avoid running this code
@@ -3028,30 +3059,30 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
     * It is currently not called but kept here in case it becomes clear when it is
     * needed (if ever).
     */
-   public void updateImageWinInfo() {
-      try {
-         Graphics g = imageWin_.getGraphics();
-         if (null != g) {
-            int ww = imageWin_.getWidth();
-            g.clearRect(0, 0, ww, 40);
-            imageWin_.drawInfo(g);
-         } else {
-            // explicitly clean up if Graphics is null, rather
-            // than cleaning up in the exception handler below..
-            WindowManager.removeWindow(imageWin_);
-            imageWin_.saveAttributes();
-            imageWin_.dispose();
-            imageWin_ = null;
-         }
-
-      } catch (Exception e) {
-         WindowManager.removeWindow(imageWin_);
-         imageWin_.saveAttributes();
-         imageWin_.dispose();
-         imageWin_ = null;
-         ReportingUtils.showError(e);
-      }
-   }
+//   public void updateImageWinInfo() {
+//      try {
+//         Graphics g = imageWin_.getGraphics();
+//         if (null != g) {
+//            int ww = imageWin_.getWidth();
+//            g.clearRect(0, 0, ww, 40);
+//            imageWin_.drawInfo(g);
+//         } else {
+//            // explicitly clean up if Graphics is null, rather
+//            // than cleaning up in the exception handler below..
+//            WindowManager.removeWindow(imageWin_);
+//            imageWin_.saveAttributes();
+//            imageWin_.dispose();
+//            imageWin_ = null;
+//         }
+//
+//      } catch (Exception e) {
+//         WindowManager.removeWindow(imageWin_);
+//         imageWin_.saveAttributes();
+//         imageWin_.dispose();
+//         imageWin_ = null;
+//         ReportingUtils.showError(e);
+//      }
+//   }
        
 
     public boolean isLiveModeOn() {
@@ -3103,28 +3134,28 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
       toggleButtonLive_.setText(enable ? "Stop Live" : "Live");
    }
 
-   private void enableLiveModeListeners(boolean enable) {
-      if (enable) {
-         // attach mouse wheel listener to control focus:
-         if (zWheelListener_ == null) {
-            zWheelListener_ = new ZWheelListener(core_, this);
-         }
-         zWheelListener_.start(imageWin_);
-
-         // attach key listener to control the stage and focus:
-         if (xyzKeyListener_ == null) {
-            xyzKeyListener_ = new XYZKeyListener(core_, this);
-         }
-         xyzKeyListener_.start(imageWin_);
-      } else {
-         if (zWheelListener_ != null) {
-            zWheelListener_.stop();
-         }
-         if (xyzKeyListener_ != null) {
-            xyzKeyListener_.stop();
-         }
-      }
-   }
+//   private void enableLiveModeListeners(boolean enable) {
+//      if (enable) {
+//         // attach mouse wheel listener to control focus:
+//         if (zWheelListener_ == null) {
+//            zWheelListener_ = new ZWheelListener(core_, this);
+//         }
+//         zWheelListener_.start(imageWin_);
+//
+//         // attach key listener to control the stage and focus:
+//         if (xyzKeyListener_ == null) {
+//            xyzKeyListener_ = new XYZKeyListener(core_, this);
+//         }
+//         xyzKeyListener_.start(imageWin_);
+//      } else {
+//         if (zWheelListener_ != null) {
+//            zWheelListener_.stop();
+//         }
+//         if (xyzKeyListener_ != null) {
+//            xyzKeyListener_.stop();
+//         }
+//      }
+//   }
    
      private void enableMultiCameraLiveMode(boolean enable) {
         if (enable) {        
@@ -3141,7 +3172,6 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
                }
                manageShutterLiveMode(enable);
                liveModeTimer_.start(); 
-               getAcquisition(MULTI_CAMERA_ACQ).getAcquisitionWindow().setWindowTitle("Multi Camera Live Mode (running)");
           
             } catch (Exception err) {
                ReportingUtils.showError(err, "Failed to enable live mode.");
@@ -3149,62 +3179,40 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
          } else {                    
             try {
               liveModeTimer_.stop();
-              if (acqMgr_.acquisitionExists(MULTI_CAMERA_ACQ))
-                 getAcquisition(MULTI_CAMERA_ACQ).getAcquisitionWindow().setWindowTitle("Multi Camera Live Mode (stopped)");
                  manageShutterLiveMode(enable);
-                 enableLiveModeListeners(false);
+//                 enableLiveModeListeners(false);
             } catch (Exception err) {
                ReportingUtils.showError(err, "Failed to disable live mode.");              
             }
          }
      }
-     
-     private void enableMonochromeLiveMode(boolean enable) {
-     if (enable) {
-            try {               
-                  if (!isImageWindowOpen() && creatingImageWindow_.isFalse()) {
-                     imageWin_ = createImageWindow();
-                  }
-                  imageWin_.drawInfo(imageWin_.getGraphics());
-                  imageWin_.toFront();
-             
-               enableLiveModeListeners(enable);
-               if (liveModeTimer_ == null) 
-                  liveModeTimer_ = new LiveModeTimer((int) liveModeInterval_,LiveModeTimer.MONOCHROME);
-               else {
-                  liveModeTimer_.setDelay((int) liveModeInterval_);
-                  liveModeTimer_.setType(LiveModeTimer.MONOCHROME);
-               }                 
-               manageShutterLiveMode(enable);
-               liveModeTimer_.start();
    
-               imageWin_.setSubTitle("Live (running)");
-            } catch (Exception err) {
-               ReportingUtils.showError(err, "Failed to enable live mode.");
-               if (imageWin_ != null) {
-                  imageWin_.saveAttributes();
-                  WindowManager.removeWindow(imageWin_);
-                  imageWin_.dispose();
-                  imageWin_ = null;
-               }
-            }
-         } else {         
-            try {
-               liveModeTimer_.stop();
-               manageShutterLiveMode(enable);
-               enableLiveModeListeners(enable);
-
-               imageWin_.setSubTitle("Live (stopped)");
-            } catch (Exception err) {
-               ReportingUtils.showError(err, "Failed to disable live mode.");
-               if (imageWin_ != null) {
-                  WindowManager.removeWindow(imageWin_);
-                  imageWin_.dispose();
-                  imageWin_ = null;
-               }
-            }
+   private void enableMonochromeLiveMode(boolean enable) {
+      if (enable) {
+         setLiveModeInterval();
+         if (liveModeTimer_ == null) {
+            liveModeTimer_ = new LiveModeTimer((int) liveModeInterval_, LiveModeTimer.MONOCHROME);
+         } else {
+            liveModeTimer_.setDelay((int) liveModeInterval_);
+            liveModeTimer_.setType(LiveModeTimer.MONOCHROME);
          }
-  }
+//         checkMonochromeAcquisition();
+         checkSimpleAcquisition();
+         try {
+           manageShutterLiveMode(enable);
+           liveModeTimer_.start();     
+         } catch (Exception ex) {
+            ReportingUtils.logError(ex);
+         }
+      } else {
+         try {
+            liveModeTimer_.stop();
+            manageShutterLiveMode(enable);
+         } catch (Exception ex) {
+            ReportingUtils.logError(ex);
+         }
+      }
+   }
    
    private void enableRGBLiveMode(boolean enable) {
       if (enable) {
@@ -3215,20 +3223,18 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
             liveModeTimer_.setDelay((int) liveModeInterval_);
             liveModeTimer_.setType(LiveModeTimer.RGB);
          }
-         checkRGBAcquisition();
+//         checkRGBAcquisition();
+         checkSimpleAcquisition();
          try {
            manageShutterLiveMode(enable);
            liveModeTimer_.start();     
-            getAcquisition(RGB_ACQ).getAcquisitionWindow().setWindowTitle("RGB Live Mode (running)");
          } catch (Exception ex) {
             ReportingUtils.logError(ex);
          }
       } else {
          try {
             liveModeTimer_.stop();
-            manageShutterLiveMode(enable);
-            if (acqMgr_.acquisitionExists(RGB_ACQ))
-               getAcquisition(RGB_ACQ).getAcquisitionWindow().setWindowTitle("RGB Live Mode (stopped)");
+            manageShutterLiveMode(enable);         
          } catch (Exception ex) {
             ReportingUtils.logError(ex);
          }
@@ -3251,23 +3257,22 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
                return true; // nothing to do, just show the last image
          }
 
-         if (!isImageWindowOpen()) {
-            createImageWindow();
+         if (WindowManager.getCurrentWindow() == null) {
+            return false;
          }
 
+         ImagePlus ip = WindowManager.getCurrentImage();
+         
          core_.snapImage();
-         Object img;
-         img = core_.getImage();
+         Object img = core_.getImage();
 
-         if (imageWin_.windowNeedsResizing()) {
-            createImageWindow();
-         }
+         ip.getProcessor().setPixels(img);
+         ip.updateAndRepaintWindow();
 
          if (!isCurrentImageFormatSupported()) {
             return false;
          }
-
-         imageWin_.newImage(img);
+       
          updateLineProfile();
       } catch (Exception e) {
          ReportingUtils.showError(e);
@@ -3283,63 +3288,77 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
 
    public boolean displayImage(final Object pixels, boolean wait) {
       try {
-         if (core_.getNumberOfCameraChannels() > 1)
-            checkMultiChannelWindow();
-         else {
-            if (!isImageWindowOpen() ||  imageWin_.windowNeedsResizing()
-                  && creatingImageWindow_.isFalse()) {
-               createImageWindow();
+         ImagePlus ip = WindowManager.getCurrentImage();
+            if (ip == null || !(ip instanceof VirtualAcquisitionDisplay.MMImagePlus
+                    || ip instanceof VirtualAcquisitionDisplay.MMCompositeImage)) {
+               return false;
             }
-            Runnable displayRunnable = new Runnable() {
-               public void run() {
-                  imageWin_.newImage(pixels);
-                  updateLineProfile();
-               }
-            };
-            if (SwingUtilities.isEventDispatchThread()) {
-               displayRunnable.run();
-            } else {
-               if (wait) {
-                  SwingUtilities.invokeAndWait(displayRunnable);
-               } else {
-                  SwingUtilities.invokeLater(displayRunnable);
-               }
-            }
-         }
-      } catch (Exception e) {
-         ReportingUtils.logError(e);
+            VirtualAcquisitionDisplay virtAcq;
+            if  (ip instanceof VirtualAcquisitionDisplay.MMImagePlus)
+                virtAcq = ((VirtualAcquisitionDisplay.MMImagePlus) ip).display_;
+            else
+                virtAcq = ((VirtualAcquisitionDisplay.MMCompositeImage) ip).display_;
+            
+            JSONObject tags = virtAcq.getImageCache().getLastImageTags();
+            int width = MDUtils.getWidth(tags);
+            int height = MDUtils.getHeight(tags);
+            int depth  = MDUtils.getBitDepth(tags);
+            if (height != core_.getImageHeight() || width != core_.getImageWidth() || 
+                    depth != core_.getImageBitDepth()) 
+               return false;
+            
+            TaggedImage ti = ImageUtils.makeTaggedImage(pixels, 0, 0, 0,0, width, height, depth);
+            virtAcq.getImageCache().putImage(ti);
+            virtAcq.showImage(ti, wait);
+            return true;
+      } catch (Exception ex) {
+         Logger.getLogger(MMStudioMainFrame.class.getName()).log(Level.SEVERE, null, ex);
          return false;
       }
-
-      return true;
    }
 
    public boolean displayImageWithStatusLine(Object pixels, String statusLine) {
       try {
-         if (!isImageWindowOpen() || imageWin_.windowNeedsResizing()
-               && creatingImageWindow_.isFalse()) {
-            createImageWindow();
-         }
-
-         imageWin_.newImageWithStatusLine(pixels, statusLine);
-         updateLineProfile();
-      } catch (Exception e) {
-         ReportingUtils.logError(e);
+         ImagePlus ip = WindowManager.getCurrentImage();
+            if (ip == null || !(ip instanceof VirtualAcquisitionDisplay.MMImagePlus
+                    || ip instanceof VirtualAcquisitionDisplay.MMCompositeImage)) {
+               return false;
+            }
+            VirtualAcquisitionDisplay virtAcq;
+            if  (ip instanceof VirtualAcquisitionDisplay.MMImagePlus)
+                virtAcq = ((VirtualAcquisitionDisplay.MMImagePlus) ip).display_;
+            else
+                virtAcq = ((VirtualAcquisitionDisplay.MMCompositeImage) ip).display_;
+            
+            JSONObject tags = virtAcq.getImageCache().getLastImageTags();
+            int width = MDUtils.getWidth(tags);
+            int height = MDUtils.getHeight(tags);
+            int depth  = MDUtils.getBitDepth(tags);
+            if (height != core_.getImageHeight() || width != core_.getImageWidth() || 
+                    depth != core_.getImageBitDepth()) 
+               return false;
+            
+            TaggedImage ti = ImageUtils.makeTaggedImage(pixels, 0, 0, 0,0, width, height, depth);
+            virtAcq.getImageCache().putImage(ti);
+            virtAcq.showImage(ti);
+         virtAcq.displayStatusLine(statusLine);
+         return true;
+      } catch (Exception ex) {
+         ReportingUtils.logError(ex);
          return false;
       }
-
-      return true;
    }
 
    public void displayStatusLine(String statusLine) {
-      try {
-         if (isImageWindowOpen()) {
-            imageWin_.displayStatusLine(statusLine);
-         }
-      } catch (Exception e) {
-         ReportingUtils.logError(e);
+      ImagePlus ip = WindowManager.getCurrentImage();
+      VirtualAcquisitionDisplay virtAcq;
+      if (ip instanceof VirtualAcquisitionDisplay.MMImagePlus )
+         virtAcq = ((VirtualAcquisitionDisplay.MMImagePlus) ip).display_;
+      else if (ip instanceof VirtualAcquisitionDisplay.MMCompositeImage)
+         virtAcq = ((VirtualAcquisitionDisplay.MMCompositeImage) ip).display_;
+      else
          return;
-      }
+      virtAcq.displayStatusLine(statusLine);
    }
 
    private boolean isCurrentImageFormatSupported() {
@@ -3355,7 +3374,7 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
       return ret;
    }
 
-   private void doSnap() {
+   public void doSnap() {
       if (core_.getNumberOfComponents() == 1) {
          if(4 == core_.getBytesPerPixel()) {
             doSnapFloat();
@@ -3520,15 +3539,9 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
             textFieldExp_.setText(NumberUtils.doubleToDisplayString(exp));
             String binSize = core_.getProperty(cameraLabel_, MMCoreJ.getG_Keyword_Binning());
             GUIUtils.setComboSelection(comboBinning_, binSize);
-
-            long bitDepth = 8;
-            if (imageWin_ != null) {
-               long hsz = imageWin_.getRawHistogramSize();
-               bitDepth = (long) Math.log(hsz);
-            }
-
-            bitDepth = core_.getImageBitDepth();
-            contrastPanel_.setPixelBitDepth((int) bitDepth, false);
+          
+            metadataPanel_.getSingleChannelContrastPanel().setPixelBitDepth(
+                    (int)core_.getImageBitDepth());
          }
 
          if (liveModeTimer_ == null || !liveModeTimer_.isRunning()) {
@@ -3581,11 +3594,11 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
       enableLiveMode(false);
    }
 
-   public void refreshImage() {
-      if (imageWin_ != null) {
-         imageWin_.getImagePlus().updateAndDraw();
-      }
-   }
+//   public void refreshImage() {
+//      if (imageWin_ != null) {
+//         imageWin_.getImagePlus().updateAndDraw();
+//      }
+//   }
 
    private void cleanupOnClose() {
       // NS: Save config presets if they were changed.
@@ -3601,19 +3614,8 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
       }
       if (liveModeTimer_ != null)
          liveModeTimer_.stop();
-
-
-      try{
-          if (imageWin_ != null) {
-             if (!imageWin_.isClosed())
-                imageWin_.close();
-             imageWin_.dispose();
-             imageWin_ = null;
-          }
-      }
-      catch( Throwable t){
-            ReportingUtils.logError(t, "closing ImageWin_");
-        }
+      
+      WindowManager.closeAllWindows();
 
       if (profileWin_ != null) {
          removeMMBackgroundListener(profileWin_);
@@ -3672,10 +3674,12 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
       mainPrefs_.putInt(MAIN_FRAME_HEIGHT, r.height);
       mainPrefs_.putInt(MAIN_FRAME_DIVIDER_POS, this.splitPane_.getDividerLocation());
 
-      mainPrefs_.putBoolean(MAIN_STRETCH_CONTRAST, contrastPanel_.isContrastStretch());
-      mainPrefs_.putBoolean(MAIN_REJECT_OUTLIERS, contrastPanel_.isRejectOutliers());
-      mainPrefs_.putDouble(MAIN_REJECT_FRACTION, contrastPanel_.getFractionToReject());
-
+      mainPrefs_.putBoolean(MAIN_STRETCH_CONTRAST, metadataPanel_.getSingleChannelContrastPanel().isContrastStretch());
+      mainPrefs_.putBoolean(MAIN_REJECT_OUTLIERS, metadataPanel_.getSingleChannelContrastPanel().isRejectOutliers());
+      mainPrefs_.putDouble(MAIN_REJECT_FRACTION, metadataPanel_.getSingleChannelContrastPanel().getFractionToReject());
+      mainPrefs_.putBoolean(MAIN_SLOW_HIST, metadataPanel_.getSingleChannelContrastPanel().getSlowHist());
+      mainPrefs_.putBoolean(MAIN_LOG_HIST, metadataPanel_.getSingleChannelContrastPanel().getLogHist());
+      
       mainPrefs_.put(OPEN_ACQ_DIR, openAcqDirectory_);
 
       // save field values from the main window
@@ -3782,16 +3786,16 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
 
    public void applyContrastSettings(ContrastSettings contrast8,
          ContrastSettings contrast16) {
-      contrastPanel_.applyContrastSettings(contrast8, contrast16);
+      metadataPanel_.getSingleChannelContrastPanel().applyContrastSettings(contrast8, contrast16);
    }
 
    public ContrastSettings getContrastSettings() {
-      return contrastPanel_.getContrastSettings();
+      return metadataPanel_.getSingleChannelContrastPanel().getContrastSettings();
    }
 
    public boolean is16bit() {
-      if (isImageWindowOpen()
-            && imageWin_.getImagePlus().getProcessor() instanceof ShortProcessor) {
+      ImagePlus ip = WindowManager.getCurrentImage();
+      if (ip != null && ip.getProcessor() instanceof ShortProcessor) {
          return true;
       }
       return false;
@@ -4166,7 +4170,7 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
       //acqMgr_.openAcquisition(name, rootDir, show);
       TaggedImageStorage imageFileManager = new TaggedImageStorageDiskDefault((new File(rootDir, name)).getAbsolutePath());
       MMImageCache cache = new MMImageCache(imageFileManager);
-      VirtualAcquisitionDisplay display = new VirtualAcquisitionDisplay(cache, null);
+      VirtualAcquisitionDisplay display = new VirtualAcquisitionDisplay(cache, (AcquisitionEngine) null);
       display.show();
    }
 
@@ -4232,10 +4236,18 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
    }
 
    @Override
+   public void initializeSimpleAcquisition(String name, int width, int height,
+         int depth, boolean multiCam) throws MMScriptException {
+      MMAcquisition acq = acqMgr_.getAcquisition(name);
+      acq.setImagePhysicalDimensions(width, height, depth, multiCam);
+      acq.initializeSimpleAcq();
+   }
+   
+   @Override
    public void initializeAcquisition(String name, int width, int height,
          int depth) throws MMScriptException {
       MMAcquisition acq = acqMgr_.getAcquisition(name);
-      acq.setImagePhysicalDimensions(width, height, depth);
+      acq.setImagePhysicalDimensions(width, height, depth,false);
       acq.initialize();
    }
 
@@ -4257,6 +4269,11 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
       return acq.getDepth();
    }
 
+   @Override public boolean getAcquisitionMultiCam(String acqName) throws MMScriptException{
+      MMAcquisition acq = acqMgr_.getAcquisition(acqName);
+      return acq.getMultiCamera();
+   }
+   
    @Override
    public Boolean acquisitionExists(String name) {
       return acqMgr_.acquisitionExists(name);
@@ -4337,7 +4354,7 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
          if (!acq.isInitialized()) {
 
             acq.setImagePhysicalDimensions((int) width, (int) height,
-                  (int) depth);
+                  (int) depth, false);
             acq.initialize();
          }
 

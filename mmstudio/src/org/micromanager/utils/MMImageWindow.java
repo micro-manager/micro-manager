@@ -74,7 +74,6 @@ public final class MMImageWindow extends ImageWindow {
 	private static MMStudioMainFrame gui_ = null;
 
 	private Panel buttonPanel_;
-   private CompositeImage compositeImage_ = null;
 
 
 	public MMImageWindow(ImagePlus imp, CMMCore core) throws Exception {
@@ -134,20 +133,7 @@ public final class MMImageWindow extends ImageWindow {
 			ip = new ByteProcessor(width, height);
 		} else if (byteDepth == 2 && components == 1) {
 			ip = new ShortProcessor(width, height);
-		} else if (byteDepth == 4 && components == 4) {
-			// RGB32 format
-			ip = new ColorProcessor(width, height);
-		} else if (byteDepth == 8 && components == 4) {
-			// RGB64 format
-			ip = new ColorProcessor(width, height);
-		}else if (byteDepth == 1 && components == 4) {
-			// Note: unify cameras to return byteDepth per x,y pixel, not per x,y,component
-			ip = new ColorProcessor(width, height);
-		}else if (byteDepth == 2 && components == 4) {
-			// assuming RGB32 format
-			ip = new ColorProcessor(width, height);
-			//todo get actual dynamic range from camera
-		}else {
+		} else {
 			String message = "Unsupported pixel depth: "
 					+ core_.getBytesPerPixel() + " byte(s) and " + components
 					+ " channel(s).";
@@ -362,41 +348,16 @@ public final class MMImageWindow extends ImageWindow {
       ImagePlus iplus = null;
 
       if (null != ip) {
-         if (!deepColor) {
             ip.setTitle(title_);
             if (null != ipr) {
                ipr.setPixels(img);
             }
-         } else { // convert to stack
-//            int w = ipr.getWidth();
-//            int h = ipr.getHeight();
-//
-//            Object[] planes;
-//            if (img instanceof byte[]) {
-//               planes = ImageUtils.getColorPlanesFromRGB32((byte[]) img);
-//            } else if (img instanceof short[]) {
-//               planes = ImageUtils.getColorPlanesFromRGB64((short[]) img);
-//            } else {
-//               planes = null;
-//            }
-//
-//            iplus = new ImagePlus();
-//            ImageStack imageStack = new ImageStack(w, h, 3);
-//            for (int i=0;i<3;++i) {
-//               imageStack.setPixels(planes[i], 1+i);
-//            }
-//
-//            iplus.setStack(imageStack);
-//
-//            compositeImage_ = new CompositeImage(iplus, CompositeImage.COMPOSITE);
-//            compositeImage_.setStack(imageStack);
-//            this.setImage(compositeImage_);
-         }
+          
 
          if (ip != null)
             gui_.updateContrast(ip);
 
-         tearFreeUpdate();
+         this.getImagePlus().updateAndDraw();
 
          // update coordinate and pixel info in imageJ by simulating mouse
          // move
@@ -479,9 +440,5 @@ public final class MMImageWindow extends ImageWindow {
             imgp.setTitle(title_);
     }
 
-     public void tearFreeUpdate() {
-       Graphics g = this.getCanvas().getGraphics();
-       //core_.WaitForScreenRefresh();
-       this.getImagePlus().updateAndDraw();
-    }
+ 
 }

@@ -25,11 +25,11 @@ public class LiveModeTimer extends javax.swing.Timer {
       private static final String CCHANNELINDEX = "CameraChannelIndex";
 
       private int type_;
-      private VirtualAcquisitionDisplay multiCamWin_,rgbWin_;
+      private VirtualAcquisitionDisplay win_;
       private CMMCore core_;
       private MMStudioMainFrame gui_;
       private long multiChannelCameraNrCh_;
-      private Object monochromeImg_;
+      private String acqName_;
       
 
       public LiveModeTimer(int delay, int type) {
@@ -37,20 +37,24 @@ public class LiveModeTimer extends javax.swing.Timer {
          gui_ = MMStudioMainFrame.getInstance();
          core_ = gui_.getCore();
          setType(type);
+         win_ = gui_.getSimpleDisplay();
       }
-  
+
      public void setType(int type) {
       if (!super.isRunning()) {
          ActionListener[] listeners = super.getActionListeners();
          for (ActionListener a : listeners)
             this.removeActionListener(a);
+
          type_ = type;
-         if (type_ == MONOCHROME) 
-         {
-            this.addActionListener(monochromeLiveAction());
-         } else if (type_ == RGB)   {
-            this.addActionListener(rgbLiveAction());
-         } else if (type_ == MULTI_CAMERA) {
+         if (type_ == MULTI_CAMERA)
+               acqName_ = gui_.MULTI_CAMERA_ACQ;
+            else 
+               acqName_ = gui_.SIMPLE_ACQ;
+         
+         if (type_ == MONOCHROME || type_ == RGB)         
+            this.addActionListener(singleCameraLiveAction());
+         else {
             multiChannelCameraNrCh_ = core_.getNumberOfCameraChannels();
             this.addActionListener(multiCamLiveAction());    
          }
@@ -59,11 +63,11 @@ public class LiveModeTimer extends javax.swing.Timer {
 
       @Override
       public void start() {
-         initialize();
          try {
+            win_ = gui_.getAcquisition(acqName_).getAcquisitionWindow();          
             core_.startContinuousSequenceAcquisition(0);
-//            Thread.sleep(200);  //needed for core to correctly give 1st tagged image
-            super.start();        
+            super.start();
+            win_.liveModeEnabled(true);
          } catch (Exception ex) {
             ReportingUtils.showError(ex);
          }
@@ -74,72 +78,36 @@ public class LiveModeTimer extends javax.swing.Timer {
          super.stop();
          try {
             core_.stopSequenceAcquisition();
+            win_.liveModeEnabled(false);
          } catch (Exception ex) {
             ReportingUtils.showError(ex);
          }
       }
-
-      private void initialize() {
-         try {
-            if (type_ == MULTI_CAMERA) {
-               gui_.getAcquisition(gui_.MULTI_CAMERA_ACQ).toFront();
-               multiCamWin_ = gui_.getAcquisition(gui_.MULTI_CAMERA_ACQ).getAcquisitionWindow();
-            } else if (type_ == RGB) {
-               gui_.getAcquisition(gui_.RGB_ACQ).toFront();
-               rgbWin_ = gui_.getAcquisition(gui_.RGB_ACQ).getAcquisitionWindow(); 
-            }
-         } catch (MMScriptException ex) {
-            ReportingUtils.showError(ex);
-         }
-      }
-
-      private ActionListener monochromeLiveAction() {
-         return new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-               if (core_.getRemainingImageCount() == 0) {
-                  return;
-               }
-               if (!gui_.isImageWindowOpen())  //check is user closed window             
-                  gui_.enableLiveMode(false);
-               else
-                  try {
-                     Object img = core_.getLastImage();
-                     if(monochromeImg_ != img) {
-                        monochromeImg_ = img;
-                        gui_.displayImage(monochromeImg_);
-                     }
-                  } catch (Exception ex) {
-                     ReportingUtils.showError(ex);
-                     gui_.enableLiveMode(false);
-                  }
-            }};
-      }  
       
-      private ActionListener rgbLiveAction() {
-         return new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-               if (core_.getRemainingImageCount() == 0) {                  
-                  return;
-               }
-               if (rgbWin_.windowClosed())  //check is user closed window
+   private ActionListener singleCameraLiveAction() {
+      return new ActionListener() {
+         @Override
+         public void actionPerformed(ActionEvent e) {
+            if (core_.getRemainingImageCount() == 0)
+               return;
+            if (win_.windowClosed()) //check is user closed window             
+               gui_.enableLiveMode(false);
+            else {
+               try {
+                  TaggedImage ti = core_.getLastTaggedImage();
+                  MDUtils.setChannelIndex(ti.tags, 0);
+                  MDUtils.setFrameIndex(ti.tags, 0);
+                  MDUtils.setPositionIndex(ti.tags, 0);
+                  MDUtils.setSliceIndex(ti.tags, 0);
+                  gui_.addImage(acqName_, ti, true, true, false);
+               } catch (Exception ex) {
+                  ReportingUtils.showError(ex);
                   gui_.enableLiveMode(false);
-               else
-                  try {
-                     TaggedImage ti = core_.getLastTaggedImage();
-                     MDUtils.setChannelIndex(ti.tags, 0);
-                     MDUtils.setFrameIndex(ti.tags, 0);
-                     MDUtils.setPositionIndex(ti.tags, 0);
-                     MDUtils.setSliceIndex(ti.tags, 0);
-                     gui_.addImage(gui_.RGB_ACQ, ti, true, true, false);
-                     
-                  } catch (Exception ex) {
-                     ReportingUtils.showError(ex);
-                     gui_.enableLiveMode(false);
-                  }
-            }};
-      } 
+               }
+            }
+         }
+      };
+   }
 
       private ActionListener multiCamLiveAction() {
          return new ActionListener() {
@@ -149,7 +117,7 @@ public class LiveModeTimer extends javax.swing.Timer {
                if (core_.getRemainingImageCount() == 0) {                  
                   return;
                }
-               if (multiCamWin_.windowClosed() || !gui_.acquisitionExists(gui_.MULTI_CAMERA_ACQ)) {
+               if (win_.windowClosed() || !gui_.acquisitionExists(gui_.MULTI_CAMERA_ACQ)) {
                   gui_.enableLiveMode(false);  //disable live if user closed window
                } else {
                   try {
@@ -186,7 +154,7 @@ public class LiveModeTimer extends javax.swing.Timer {
                           }
 
 
-                          int lastChannelToAdd = multiCamWin_.getHyperImage().getChannel() - 1;
+                          int lastChannelToAdd = win_.getHyperImage().getChannel() - 1;
                           for (int i = 0; i < images.length; i++) {
                               if (i != lastChannelToAdd) {
                                   gui_.addImage(MMStudioMainFrame.MULTI_CAMERA_ACQ, images[i], false, true, false);

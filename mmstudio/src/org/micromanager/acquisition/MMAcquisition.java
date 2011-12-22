@@ -59,9 +59,10 @@ public class MMAcquisition {
    protected int width_ = 0;
    protected int height_ = 0;
    protected int depth_ = 1;
+   protected boolean multiCam_ = false;
    private boolean initialized_ = false;
    private long startTimeMs_;
-   private String comment_ = "Acquisition from a script";
+   private String comment_ = "";
    private String rootDirectory_;
    private VirtualAcquisitionDisplay virtAcq_;
    private final boolean existing_;
@@ -104,13 +105,15 @@ public class MMAcquisition {
       return testName;
    }
 
-   public void setImagePhysicalDimensions(int width, int height, int depth) throws MMScriptException {
+   public void setImagePhysicalDimensions(int width, int height, 
+           int depth, boolean multiCam) throws MMScriptException {
       if (initialized_) {
          throw new MMScriptException("Can't image change dimensions - the acquisition is already initialized");
       }
       width_ = width;
       height_ = height;
       depth_ = depth;
+      multiCam_ = multiCam;
    }
 
    public int getWidth() {
@@ -124,6 +127,10 @@ public class MMAcquisition {
    public int getDepth() {
       return depth_;
    }
+   
+   public boolean getMultiCamera() {
+      return multiCam_;
+   }
 
    public int getFrames() {
       return numFrames_;
@@ -136,7 +143,7 @@ public class MMAcquisition {
    public int getSlices() {
       return numSlices_;
    }
-
+   
    public void setDimensions(int frames, int channels, int slices) throws MMScriptException {
       setDimensions(frames, channels, slices, 0);
    }
@@ -145,7 +152,6 @@ public class MMAcquisition {
       if (initialized_) {
          throw new MMScriptException("Can't change dimensions - the acquisition is already initialized");
       }
-
       numFrames_ = frames;
       numChannels_ = channels;
       numSlices_ = slices;
@@ -157,6 +163,26 @@ public class MMAcquisition {
          throw new MMScriptException("Can't change root directory - the acquisition is already initialized");
       }
       rootDirectory_ = dir;
+   }
+   
+   //used to initialize snap and live, which only sotre a single image at a time
+   public void initializeSimpleAcq() throws MMScriptException {
+      if (initialized_) {
+         throw new MMScriptException("Acquisition is already initialized");
+      }
+
+      TaggedImageStorage imageFileManager = new TaggedImageStorageRam(null);
+      MMImageCache imageCache = new MMImageCache(imageFileManager);
+      
+      if (!existing_) {
+         createDefaultAcqSettings(name_, imageCache);
+      }
+      virtAcq_ = MMStudioMainFrame.createSimpleDisplay(name_, imageCache);
+      if (show_) {
+         virtAcq_.show();
+      }
+
+      initialized_ = true;
    }
 
    public void initialize() throws MMScriptException {
@@ -199,7 +225,7 @@ public class MMAcquisition {
       initialized_ = true;
    }
 
-   private void createDefaultAcqSettings(String name, MMImageCache imageCache) {
+   private void createDefaultAcqSettings(String name, ImageCache imageCache) {
       //if (new File(rootDirectory_).exists()) {
       //   name = generateRootName(name, rootDirectory_);
       //}

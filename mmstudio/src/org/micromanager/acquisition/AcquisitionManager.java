@@ -135,6 +135,7 @@ public class AcquisitionManager {
          imageWidth = MDUtils.getWidth(tags);
          imageHeight = MDUtils.getHeight(tags);
          imageDepth = MDUtils.getDepth(tags);
+         
       } catch (Exception e) {
          throw new MMScriptException("Something wrong with image tags.");
       }
@@ -145,6 +146,7 @@ public class AcquisitionManager {
          if (acq.getWidth() == imageWidth &&
              acq.getHeight() == imageHeight &&
              acq.getDepth() == imageDepth  &&
+        
                 ! acq.getImageCache().isFinished() )
              newNeeded = false;
          } catch (Exception e) {
@@ -156,7 +158,7 @@ public class AcquisitionManager {
          openAcquisition(album, "", true, false);
          acq = getAcquisition(album);
          acq.setDimensions(2, 1, 1, 1);
-         acq.setImagePhysicalDimensions(imageWidth, imageHeight, imageDepth);
+         acq.setImagePhysicalDimensions(imageWidth, imageHeight, imageDepth, false);
 
          try {
             JSONObject summary = new JSONObject();

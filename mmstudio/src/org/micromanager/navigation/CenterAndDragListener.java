@@ -47,7 +47,7 @@ public class CenterAndDragListener implements MouseListener, MouseMotionListener
 	      isRunning_ = true;
 
 	      // Get a handle to the Live window
-         attach (MMStudioMainFrame.getLiveWin());
+//         attach (MMStudioMainFrame.getLiveWin());
 	   }
 
 	   public void stop() {

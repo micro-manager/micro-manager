@@ -11,14 +11,12 @@
 
 package org.micromanager.acquisition;
 
-import ij.ImageListener;
-import ij.ImagePlus;
-import ij.ImageStack;
+
 import java.text.ParseException;
 import java.util.Timer;
 import java.util.TimerTask;
-import mmcorej.TaggedImage;
 import org.json.JSONException;
+import org.json.JSONObject;
 import org.micromanager.utils.MDUtils;
 import org.micromanager.utils.NumberUtils;
 import org.micromanager.utils.ReportingUtils;
@@ -27,7 +25,7 @@ import org.micromanager.utils.ReportingUtils;
  *
  * @author arthur
  */
-public class HyperstackControls extends java.awt.Panel implements ImageListener {
+public class HyperstackControls extends DisplayControls {
    private final VirtualAcquisitionDisplay acq_;
    
     /** Creates new form HyperstackControls */
@@ -209,106 +207,96 @@ public class HyperstackControls extends java.awt.Panel implements ImageListener 
    private javax.swing.JLabel statusLineLabel;
    // End of variables declaration//GEN-END:variables
 
-   public void imageOpened(ImagePlus ip) {}
-
-   public void imageClosed(ImagePlus ip) {}
-
    public synchronized void setStatusLabel(String text) {
       statusLineLabel.setText(text);
    }
 
-   private void updateStatusLine(TaggedImage taggedImg) {
-      if (taggedImg != null) {
-         String status = "";
+   private void updateStatusLine(JSONObject tags) {
+      String status = "";
+      try {
+         String xyPosition;
          try {
-            String xyPosition;
-            try {
-               xyPosition = taggedImg.tags.getString("PositionName");
-               if (xyPosition != null && !xyPosition.contentEquals("null")) {
-                  status += xyPosition + ", ";
-               }
-            } catch (Exception e) {
-               //Oh well...
+            xyPosition = tags.getString("PositionName");
+            if (xyPosition != null && !xyPosition.contentEquals("null")) {
+               status += xyPosition + ", ";
             }
+         } catch (Exception e) {
+            //Oh well...
+         }
 
+         try {
+            String time = NumberUtils.doubleToDisplayString(tags.getDouble("ElapsedTime-ms") / 1000);
+            status += time + " s";
+         } catch (JSONException ex) {
+            ReportingUtils.logError("MetaData did not contain ElapsedTime-ms field");
+         }
+
+         String zPosition;
+         try {
+            zPosition = NumberUtils.doubleStringCoreToDisplay(tags.getString("ZPositionUm"));
+            status += ", z: " + zPosition + " um";
+         } catch (Exception e) {
             try {
-               String time = NumberUtils.doubleToDisplayString(taggedImg.tags.getDouble("ElapsedTime-ms")/1000);
-               status += time + " s";
-            } catch (JSONException ex) {
-               ReportingUtils.logError("MetaData did not contain ElapsedTime-ms field");
-            }
-            
-            String zPosition;
-            try {
-               zPosition = NumberUtils.doubleStringCoreToDisplay(taggedImg.tags.getString("ZPositionUm"));
+               zPosition = NumberUtils.doubleStringCoreToDisplay(tags.getString("Z-um"));
                status += ", z: " + zPosition + " um";
-            } catch (Exception e) {
-               try {
-                  zPosition = NumberUtils.doubleStringCoreToDisplay(taggedImg.tags.getString("Z-um"));
-                                 status += ", z: " + zPosition + " um";
-               } catch (Exception e1) {
-                  // Do nothing...
-               }
+            } catch (Exception e1) {
+               // Do nothing...
             }
-            String chan;
-            try {
-               chan = MDUtils.getChannelName(taggedImg.tags);
-               if (chan != null && !chan.contentEquals("null")) {
-                  status += ", " + chan;
-               }
-            } catch (Exception ex) {
+         }
+         String chan;
+         try {
+            chan = MDUtils.getChannelName(tags);
+            if (chan != null && !chan.contentEquals("null")) {
+               status += ", " + chan;
             }
-
-            setStatusLabel(status);
          } catch (Exception ex) {
-            ReportingUtils.logError(ex);
          }
+
+         setStatusLabel(status);
+      } catch (Exception ex) {
+         ReportingUtils.logError(ex);
       }
+
    }
 
-   public void imageUpdated(ImagePlus imp) {
-      if (imp == acq_.getHyperImage()) {
-         ImageStack stack = imp.getStack();
-         if (stack instanceof AcquisitionVirtualStack) {
-            AcquisitionVirtualStack vstack = (AcquisitionVirtualStack) imp.getStack();
-            int slice = imp.getCurrentSlice();
-            final TaggedImage taggedImg = vstack.getTaggedImage(slice);
-            updateStatusLine(taggedImg);
-            try {
-               if (acq_.acquisitionIsRunning() && acq_.getNextWakeTime() > 0) {
-                  final long nextImageTime = acq_.getNextWakeTime();
-                  if (System.nanoTime() / 1000000 < nextImageTime) {
-                     final Timer timer = new Timer();
-                     TimerTask task = new TimerTask() {
+   public void newImageUpdate(JSONObject tags) {
+      if (tags == null) {
+         return;
+      }
+      updateStatusLine(tags);
+      try {
+         if (acq_.acquisitionIsRunning() && acq_.getNextWakeTime() > 0) {
+            final long nextImageTime = acq_.getNextWakeTime();
+            if (System.nanoTime() / 1000000 < nextImageTime) {
+               final Timer timer = new Timer();
+               TimerTask task = new TimerTask() {
 
-                        public void run() {
-                           double timeRemainingS = (nextImageTime - System.nanoTime() / 1000000) / 1000;
-                           if (timeRemainingS > 0 && acq_.acquisitionIsRunning()) {
-                              setStatusLabel("Next frame: " + NumberUtils.doubleToDisplayString(1+timeRemainingS) + " s");
-                           } else {
-                              timer.cancel();
-                              setStatusLabel("");
-                           }
-                        }
-                     };
-                     timer.schedule(task, 2000, 100);
+                  public void run() {
+                     double timeRemainingS = (nextImageTime - System.nanoTime() / 1000000) / 1000;
+                     if (timeRemainingS > 0 && acq_.acquisitionIsRunning()) {
+                        setStatusLabel("Next frame: " + NumberUtils.doubleToDisplayString(1 + timeRemainingS) + " s");
+                     } else {
+                        timer.cancel();
+                        setStatusLabel("");
+                     }
                   }
-               }
-               
-            } catch (Exception ex) {
-               ReportingUtils.logError(ex);
+               };
+               timer.schedule(task, 2000, 100);
             }
          }
-      }
 
+      } catch (Exception ex) {
+         ReportingUtils.logError(ex);
+      }
    }
 
-   public void enableAcquisitionControls(boolean state) {
+
+   public void acquiringImagesUpdate(boolean state) {
       abortButton.setEnabled(state);
       pauseAndResumeToggleButton.setEnabled(state);
    }
 
-   void enableShowFolderButton(boolean enabled) {
+   public void imagesOnDiskUpdate(boolean enabled) {
       showFolderButton.setEnabled(enabled);
    }
 

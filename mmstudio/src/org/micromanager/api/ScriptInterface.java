@@ -177,6 +177,16 @@ public interface ScriptInterface {
    public void addToAlbum(TaggedImage image) throws MMScriptException;
 
    /**
+    * Set up a Simple Acquisition that has already been opened
+    * Simple Acquisitions are used in Live and Snap modes.  They
+    * only store a single image at a time, and automatically store
+    * this image in RAM, regardless of whether the conserve RAM
+    * option in tools-options is checked
+    */
+   public void initializeSimpleAcquisition(String name, int width, int height, 
+           int depth, boolean multiCam) throws MMScriptException;
+   
+   /**
     * Set up an acquisition that has already been opened.
     */
    public void initializeAcquisition(String name, int width, int height, int depth) throws MMScriptException;
@@ -295,6 +305,11 @@ public interface ScriptInterface {
     */
    public int getAcquisitionImageByteDepth(String acqName) throws MMScriptException;
 
+   /**
+    * Returns boolean specifying whether multiple cameras used in this acquisition
+    */
+   public boolean getAcquisitionMultiCam(String acqName) throws MMScriptException;
+   
    /**
     * Sets custom property attached to the acquisition summary
     */
