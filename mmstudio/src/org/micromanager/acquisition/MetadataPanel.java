@@ -11,7 +11,6 @@
 package org.micromanager.acquisition;
 
 import ij.CompositeImage;
-import ij.ImageListener;
 import ij.ImagePlus;
 import ij.WindowManager;
 import ij.gui.ImageWindow;
@@ -21,7 +20,6 @@ import java.awt.BorderLayout;
 import java.awt.CardLayout;
 import java.awt.Color;
 import java.awt.Dimension;
-import java.awt.FlowLayout;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Vector;
@@ -633,6 +631,7 @@ public class MetadataPanel extends JPanel
    void setAutostretch(boolean state) {
       autostretchCheckBox.setSelected(state);
    }
+   
 
    private void addTextChangeListeners() {
       summaryCommentsTextArea.getDocument()
@@ -908,7 +907,7 @@ public class MetadataPanel extends JPanel
       ImageCache cache = getCache(imgp);
       VirtualAcquisitionDisplay acq = getVirtualAcquisitionDisplay(imgp);
       sizeBarCheckBox.setSelected(imgp.getOverlay() != null && !imgp.getHideOverlay());
-
+      
       if (acq != null) {
          summaryCommentsTextArea.setText(acq.getSummaryComment());
          JSONObject md = cache.getSummaryMetadata();
@@ -925,6 +924,15 @@ public class MetadataPanel extends JPanel
       }
       if (acq != null) {
          setupChannelControls(acq);
+         
+         if (acq.firstImage()) 
+            if (useSingleChannelHistogram()) {
+               singleChannelContrastPanel_.autostretch(true);
+               singleChannelContrastPanel_.updateHistogram();
+            } else if (ccpList_ != null) 
+                  for (ChannelControlPanel c : ccpList_) 
+                     c.autoScale();   
+            
          update(imgp);
       }
 

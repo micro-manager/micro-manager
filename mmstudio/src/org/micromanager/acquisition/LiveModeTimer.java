@@ -10,6 +10,7 @@ import java.lang.reflect.InvocationTargetException;
 import javax.swing.SwingUtilities;
 import mmcorej.CMMCore;
 import mmcorej.TaggedImage;
+import org.json.JSONException;
 import org.micromanager.MMStudioMainFrame;
 import org.micromanager.utils.MDUtils;
 import org.micromanager.utils.MMScriptException;
@@ -21,10 +22,9 @@ import org.micromanager.utils.ReportingUtils;
  */
 public class LiveModeTimer extends javax.swing.Timer {
 
-      public static final int MONOCHROME = 0, RGB = 1, MULTI_CAMERA = 2;
+      public static final int SINGLE_CAMERA = 1, MULTI_CAMERA = 2;
       private static final String CCHANNELINDEX = "CameraChannelIndex";
 
-      private int type_;
       private VirtualAcquisitionDisplay win_;
       private CMMCore core_;
       private MMStudioMainFrame gui_;
@@ -32,12 +32,10 @@ public class LiveModeTimer extends javax.swing.Timer {
       private String acqName_;
       
 
-      public LiveModeTimer(int delay, int type) {
+      public LiveModeTimer(int delay) {
          super(delay, null);
          gui_ = MMStudioMainFrame.getInstance();
          core_ = gui_.getCore();
-         setType(type);
-         win_ = gui_.getSimpleDisplay();
       }
 
      public void setType(int type) {
@@ -45,16 +43,12 @@ public class LiveModeTimer extends javax.swing.Timer {
          ActionListener[] listeners = super.getActionListeners();
          for (ActionListener a : listeners)
             this.removeActionListener(a);
-
-         type_ = type;
-         if (type_ == MULTI_CAMERA)
-               acqName_ = gui_.MULTI_CAMERA_ACQ;
-            else 
-               acqName_ = gui_.SIMPLE_ACQ;
          
-         if (type_ == MONOCHROME || type_ == RGB)         
+         if (type == SINGLE_CAMERA ) {        
             this.addActionListener(singleCameraLiveAction());
-         else {
+            acqName_ = gui_.SIMPLE_ACQ; 
+         } else {
+            acqName_ = gui_.MULTI_CAMERA_ACQ;
             multiChannelCameraNrCh_ = core_.getNumberOfCameraChannels();
             this.addActionListener(multiCamLiveAction());    
          }
@@ -64,8 +58,15 @@ public class LiveModeTimer extends javax.swing.Timer {
       @Override
       public void start() {
          try {
-            win_ = gui_.getAcquisition(acqName_).getAcquisitionWindow();          
+            win_ = gui_.getSimpleDisplay();         
             core_.startContinuousSequenceAcquisition(0);
+            
+            //Add first image here so initial autoscale works correctly
+            while(core_.getRemainingImageCount() == 0) {}  
+            TaggedImage ti = core_.getLastTaggedImage();
+            addTags(ti);
+            gui_.addImage(acqName_, ti, true, true, false);
+            
             super.start();
             win_.liveModeEnabled(true);
          } catch (Exception ex) {
@@ -84,6 +85,7 @@ public class LiveModeTimer extends javax.swing.Timer {
          }
       }
       
+      
    private ActionListener singleCameraLiveAction() {
       return new ActionListener() {
          @Override
@@ -95,10 +97,7 @@ public class LiveModeTimer extends javax.swing.Timer {
             else {
                try {
                   TaggedImage ti = core_.getLastTaggedImage();
-                  MDUtils.setChannelIndex(ti.tags, 0);
-                  MDUtils.setFrameIndex(ti.tags, 0);
-                  MDUtils.setPositionIndex(ti.tags, 0);
-                  MDUtils.setSliceIndex(ti.tags, 0);
+                  addTags(ti);
                   gui_.addImage(acqName_, ti, true, true, false);
                } catch (Exception ex) {
                   ReportingUtils.showError(ex);
@@ -147,10 +146,7 @@ public class LiveModeTimer extends javax.swing.Timer {
                         for (channel = 0; channel < images.length; channel++) {
                            ti = images[channel];
                            ti.tags.put("Channel", core_.getCameraChannelName(channel));
-                           MDUtils.setChannelIndex(ti.tags, channel);
-                           MDUtils.setFrameIndex(ti.tags, 0);
-                           MDUtils.setPositionIndex(ti.tags, 0);
-                           MDUtils.setSliceIndex(ti.tags, 0);
+                           addTags(ti);
                           }
 
 
@@ -170,5 +166,12 @@ public class LiveModeTimer extends javax.swing.Timer {
             }
          };
       }
-   
+ 
+      
+      private void addTags(TaggedImage ti) throws JSONException {
+         MDUtils.setChannelIndex(ti.tags, 0);
+         MDUtils.setFrameIndex(ti.tags, 0);
+         MDUtils.setPositionIndex(ti.tags, 0);
+         MDUtils.setSliceIndex(ti.tags, 0);
+      }
 }

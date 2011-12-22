@@ -75,6 +75,7 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
    private final Preferences displayPrefs_;
    private boolean simple_ = false;
    private MetadataPanel mdPanel_;
+   private boolean newDisplay_ = false; //used for autostretching on window opening
 
 
 
@@ -160,8 +161,8 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
       
       @Override
       public void draw() {
-         super.draw();
          imageChangedUpdate();
+         super.draw();
       }
       
    }
@@ -216,8 +217,8 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
       
       @Override
       public void draw() {
-         super.draw();
          imageChangedUpdate();
+         super.draw();
       }
       
       
@@ -242,6 +243,7 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
       imageCache_ = imageCache;
       displayPrefs_ = Preferences.userNodeForPackage(this.getClass());
       name_ = name;
+      newDisplay_ = true;
    }
 
    private void startup(JSONObject firstImageMetadata) {
@@ -614,8 +616,10 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
          if (hyperImage_ instanceof CompositeImage) {
             ((CompositeImage) hyperImage_).setChannelsUpdated();
          }
-         hyperImage_.updateAndDraw();
-//         imageChangedUpdate();  //updates histogram  
+         if (hyperImage_ != null && hyperImage_.isVisible()) {
+             hyperImage_.updateAndDraw();
+             controls_.newImageUpdate(virtualStack_.getTaggedImage(hyperImage_.getCurrentSlice()).tags);
+         }
          updating_ = false;
       }
    }
@@ -750,9 +754,7 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
       }
          
      
-      
-      //Autoscale contrast if this is first image
-      if (frame == 0 && allowContrastToChange) {
+      if (frame == 0 && allowContrastToChange) { //Autoscale contrast if this is first image
          try {
             TaggedImage image = imageCache_.getImage(superChannel, slice, frame, position);
             if (image != null) {
@@ -827,15 +829,9 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
                  hyperImage_.getStack().getPixels(1));
       }
       
-      final JSONObject tags2 = tags;
       Runnable updateAndDraw = new Runnable() {
          public void run() {
-            if (hyperImage_ instanceof CompositeImage) {
-               ((CompositeImage) hyperImage_).setChannelsUpdated();
-            }
-            if (hyperImage_ != null && hyperImage_.isVisible()) 
-               hyperImage_.updateAndDraw();
-               controls_.newImageUpdate(tags2);
+            updateAndDraw();
          }
             
       };
@@ -850,6 +846,14 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
          updateAndDraw();
       }
 
+   }
+   
+   public boolean firstImage() {
+      if (newDisplay_) {
+         newDisplay_ = false;
+         return true;
+      }
+      return false;
    }
 
    private void updatePosition(int p) {

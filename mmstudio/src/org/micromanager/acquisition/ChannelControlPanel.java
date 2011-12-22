@@ -230,7 +230,12 @@ public class ChannelControlPanel extends javax.swing.JPanel {
        drawDisplaySettings();
        acq_.updateAndDraw();
     }//GEN-LAST:event_channelNameCheckboxActionPerformed
-
+    
+    public void autoScale() {
+       setAutoRange();
+       acq_.updateAndDraw();
+    }
+    
     private void autoButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_autoButtonActionPerformed
        setAutoRange();
        acq_.updateAndDraw();
