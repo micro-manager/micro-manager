@@ -184,7 +184,7 @@ public interface ScriptInterface {
     * option in tools-options is checked
     */
    public void initializeSimpleAcquisition(String name, int width, int height, 
-           int depth, boolean multiCam) throws MMScriptException;
+           int depth, int multiCamNumCh) throws MMScriptException;
    
    /**
     * Set up an acquisition that has already been opened.
@@ -308,7 +308,7 @@ public interface ScriptInterface {
    /**
     * Returns boolean specifying whether multiple cameras used in this acquisition
     */
-   public boolean getAcquisitionMultiCam(String acqName) throws MMScriptException;
+   public int getAcquisitionMultiCamNumChannels(String acqName) throws MMScriptException;
    
    /**
     * Sets custom property attached to the acquisition summary

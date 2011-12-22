@@ -129,12 +129,15 @@ public class AcquisitionManager {
       MMAcquisition acq = null;
       String album = getCurrentAlbum();
       JSONObject tags = image.tags;
-      int imageWidth, imageHeight, imageDepth;
+      int imageWidth, imageHeight, imageDepth, numChannels;
 
       try {
          imageWidth = MDUtils.getWidth(tags);
          imageHeight = MDUtils.getHeight(tags);
          imageDepth = MDUtils.getDepth(tags);
+         //need to check umber of channels so that multi cam and single cam
+         // acquistions of same size and depth are differentiated
+         numChannels = MDUtils.getNumChannels(tags);  
          
       } catch (Exception e) {
          throw new MMScriptException("Something wrong with image tags.");
@@ -146,7 +149,7 @@ public class AcquisitionManager {
          if (acq.getWidth() == imageWidth &&
              acq.getHeight() == imageHeight &&
              acq.getDepth() == imageDepth  &&
-        
+             acq.getMultiCameraNumChannels() == numChannels &&
                 ! acq.getImageCache().isFinished() )
              newNeeded = false;
          } catch (Exception e) {
@@ -158,7 +161,7 @@ public class AcquisitionManager {
          openAcquisition(album, "", true, false);
          acq = getAcquisition(album);
          acq.setDimensions(2, 1, 1, 1);
-         acq.setImagePhysicalDimensions(imageWidth, imageHeight, imageDepth, false);
+         acq.setImagePhysicalDimensions(imageWidth, imageHeight, imageDepth, numChannels);
 
          try {
             JSONObject summary = new JSONObject();

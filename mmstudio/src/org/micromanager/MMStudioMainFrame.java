@@ -271,8 +271,7 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
    
    public static final String SIMPLE_ACQ = "Snap/Live Window";
    public static final String MULTI_CAMERA_ACQ = "Multi-Camera Snap";
-//   public static final String RGB_ACQ = "RGB-Camera Acquisition";
-//   public static final String MONOCHROME_ACQ = "Monochrome Simple Acquisition";
+
    public static FileType MM_CONFIG_FILE
             = new FileType("MM_CONFIG_FILE",
                            "Micro-Manager Config File",
@@ -465,26 +464,24 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
       int width = (int) core_.getImageWidth();
       int height = (int) core_.getImageHeight();
       int depth = (int) core_.getBytesPerPixel();
-      boolean multiCam = core_.getNumberOfCameraChannels() > 1;
+      int numCamChannels = (int) core_.getNumberOfCameraChannels();
   
          try {                        
             if (acquisitionExists(SIMPLE_ACQ)) {             
                if ( (getAcquisitionImageWidth(SIMPLE_ACQ) != width) ||
                     (getAcquisitionImageHeight(SIMPLE_ACQ) != height) ||
                     (getAcquisitionImageByteDepth(SIMPLE_ACQ) != depth) ||
-                    (getAcquisitionMultiCam(SIMPLE_ACQ) != multiCam) )
+                    (getAcquisitionMultiCamNumChannels(SIMPLE_ACQ) != numCamChannels) )
                {  //Need to close and reopen simple window
                   closeAcquisitionImage5D(SIMPLE_ACQ);
-                  closeAcquisition(SIMPLE_ACQ);
-                  
+                  closeAcquisition(SIMPLE_ACQ); 
                   openAcquisition(SIMPLE_ACQ, "", 1, 1, 1, true);
-                  initializeSimpleAcquisition(SIMPLE_ACQ, width, height, depth, multiCam);
-                  
+                  initializeSimpleAcquisition(SIMPLE_ACQ, width, height, depth, numCamChannels);
                   getAcquisition(SIMPLE_ACQ).promptToSave(false);
                }
             } else {         
             openAcquisition(SIMPLE_ACQ, "", 1, 1, 1, true);       //creates new acquisition
-            initializeSimpleAcquisition(SIMPLE_ACQ, width, height, depth,multiCam);
+            initializeSimpleAcquisition(SIMPLE_ACQ, width, height, depth,numCamChannels);
             getAcquisition(SIMPLE_ACQ).promptToSave(false);
             }
          } catch (Exception ex) {
@@ -4237,9 +4234,9 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
 
    @Override
    public void initializeSimpleAcquisition(String name, int width, int height,
-         int depth, boolean multiCam) throws MMScriptException {
+         int depth, int multiCamNumCh) throws MMScriptException {
       MMAcquisition acq = acqMgr_.getAcquisition(name);
-      acq.setImagePhysicalDimensions(width, height, depth, multiCam);
+      acq.setImagePhysicalDimensions(width, height, depth, multiCamNumCh);
       acq.initializeSimpleAcq();
    }
    
@@ -4247,7 +4244,9 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
    public void initializeAcquisition(String name, int width, int height,
          int depth) throws MMScriptException {
       MMAcquisition acq = acqMgr_.getAcquisition(name);
-      acq.setImagePhysicalDimensions(width, height, depth,false);
+      //number of multi-cam cameras is set to 1 here for backwards compatibility
+      //might want to change this later
+      acq.setImagePhysicalDimensions(width, height, depth,1);
       acq.initialize();
    }
 
@@ -4269,9 +4268,9 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
       return acq.getDepth();
    }
 
-   @Override public boolean getAcquisitionMultiCam(String acqName) throws MMScriptException{
+   @Override public int getAcquisitionMultiCamNumChannels(String acqName) throws MMScriptException{
       MMAcquisition acq = acqMgr_.getAcquisition(acqName);
-      return acq.getMultiCamera();
+      return acq.getMultiCameraNumChannels();
    }
    
    @Override
@@ -4350,11 +4349,12 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
          long width = core_.getImageWidth();
          long height = core_.getImageHeight();
          long depth = core_.getBytesPerPixel();
+         int multiCamNumCh = (int) core_.getNumberOfCameraChannels();
 
          if (!acq.isInitialized()) {
 
             acq.setImagePhysicalDimensions((int) width, (int) height,
-                  (int) depth, false);
+                  (int) depth, multiCamNumCh);
             acq.initialize();
          }
 
