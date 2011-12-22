@@ -78,7 +78,8 @@ int LeicaDMRHub::Initialize(MM::Device& device, MM::Core& core)
 
    ret = GetMicroscope(device, core, microscope_);
    if (ret != DEVICE_OK)
-      return ret;
+      //return ret;
+      microscope_ = "";
 
    std::ostringstream os;
    os << "Microscope type: " << microscope_;
