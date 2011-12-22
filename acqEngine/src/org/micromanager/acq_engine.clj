@@ -664,7 +664,7 @@
 		summary-metadata (make-summary-metadata summary)
 		cache (doto (MMImageCache. (TaggedImageStorageRam. summary-metadata))
 						(.setSummaryMetadata summary-metadata))]
-		(doto (VirtualAcquisitionDisplay. cache nil)
+		(doto (VirtualAcquisitionDisplay. cache nil "Untitled")
                            (.promptToSave false)
                            (initialize-display-ranges))))
 
