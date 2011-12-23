@@ -2406,7 +2406,7 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
       this.setTitle("System: " + sysConfigFile_);
    }
 
-   private void updateLineProfile() {
+   public void updateLineProfile() {
       if (WindowManager.getCurrentWindow() == null || profileWin_ == null
             || !profileWin_.isShowing()) {
          return;
