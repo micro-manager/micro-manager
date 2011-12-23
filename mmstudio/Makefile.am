@@ -110,7 +110,6 @@ MMJ_.jar:  \
 	$(srcdir)/src/org/micromanager/utils/MMDialog.java \
 	$(srcdir)/src/org/micromanager/utils/MMException.java \
 	$(srcdir)/src/org/micromanager/utils/MMFrame.java \
-	$(srcdir)/src/org/micromanager/utils/MMImageWindow.java \
 	$(srcdir)/src/org/micromanager/utils/MMScriptException.java \
 	$(srcdir)/src/org/micromanager/utils/MMSerializationException.java \
 	$(srcdir)/src/org/micromanager/utils/MathFunctions.java \
