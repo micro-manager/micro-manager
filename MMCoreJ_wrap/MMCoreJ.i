@@ -1,4 +1,4 @@
-//////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////
 // FILE:          MMCoreJ.i
 // PROJECT:       Micro-Manager
 // SUBSYSTEM:     MMCoreJ
@@ -339,8 +339,58 @@
       return tags;
     }
 
-   private TaggedImage createTaggedImage(Object pixels, Metadata md) {
-      return new TaggedImage(pixels, metadataToMap(md));	
+   private String getROITag() throws java.lang.Exception {
+      String roi = "";
+      int [] x = new int[1];
+      int [] y = new int[1];
+      int [] xSize = new int[1];
+      int [] ySize = new int[1];
+      getROI(x, y, xSize, ySize);
+      roi += x[0] + "-" + y[0] + "-" + xSize[0] + "-" + ySize[0];
+      return roi;
+   }
+
+   private String getPixelType() {
+     int depth = (int) getBytesPerPixel();
+     switch (depth) {
+         case 1:
+            return "GRAY8";
+         case 2:
+            return "GRAY16";
+         case 4:
+            return "RGB32";
+         case 8:
+            return "RGB64";
+     }
+     return "";
+   }
+
+   private TaggedImage createTaggedImage(Object pixels, Metadata md) throws java.lang.Exception {
+      JSONObject tags = metadataToMap(md);
+      PropertySetting setting;
+      Configuration config = getSystemStateCache();
+      for (int i = 0; i < config.size(); ++i) {
+            setting = config.getSetting(i);
+               String key = setting.getDeviceLabel() + "-" + setting.getPropertyName();
+         String value = setting.getPropertyValue();
+            tags.put(key, value);
+      }
+      tags.put("BitDepth", getImageBitDepth());
+      tags.put("PixelSizeUm", getPixelSizeUm());
+      tags.put("ROI", getROITag());
+      tags.put("Width", getImageWidth());
+      tags.put("Height", getImageHeight());
+      tags.put("PixelType", getPixelType());
+      try {
+         tags.put("Binning", getProperty(getCameraDevice(), "Binning"));
+      } catch (Exception ex) {}
+      return new TaggedImage(pixels, tags);	
+   }
+
+   public TaggedImage getTaggedImage() throws java.lang.Exception {
+      Metadata md = new Metadata();
+      Object pixels = getImage();
+      return createTaggedImage(pixels, md);
    }
 
    public TaggedImage getLastTaggedImage() throws java.lang.Exception {
