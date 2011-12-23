@@ -60,9 +60,7 @@ import org.micromanager.utils.ImageFocusListener;
 import org.micromanager.graph.HistogramPanel.CursorListener;
 import org.micromanager.utils.ContrastSettings;
 import org.micromanager.utils.GUIUtils;
-import org.micromanager.utils.GammaSliderCalculator;
 import org.micromanager.utils.HistogramUtils;
-import org.micromanager.utils.MMImageWindow;
 import org.micromanager.utils.ReportingUtils;
 import org.micromanager.utils.NumberUtils;
 

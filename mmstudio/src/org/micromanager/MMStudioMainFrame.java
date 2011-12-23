@@ -107,7 +107,6 @@ import org.micromanager.utils.GUIColors;
 import org.micromanager.utils.GUIUtils;
 import org.micromanager.utils.JavaUtils;
 import org.micromanager.utils.MMException;
-import org.micromanager.utils.MMImageWindow;
 import org.micromanager.utils.MMScriptException;
 import org.micromanager.utils.NumberUtils;
 import org.micromanager.utils.TextUtils;
@@ -3879,13 +3878,6 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
    @Override
    public String getBackgroundStyle() {
       return options_.displayBackground_;
-   }
-
-   // Set ImageJ pixel calibration
-   private void setIJCal(MMImageWindow imageWin) {
-      if (imageWin != null) {
-         imageWin.setIJCal();
-      }
    }
 
    // //////////////////////////////////////////////////////////////////////////
