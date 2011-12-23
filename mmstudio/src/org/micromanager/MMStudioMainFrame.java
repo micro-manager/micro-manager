@@ -2560,64 +2560,6 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
       }
    }
 
-   private BooleanLock creatingImageWindow_ = new BooleanLock(false);
-   private static long waitForCreateImageWindowTimeout_ = 5000;
-
-//   private MMImageWindow createImageWindow() {
-//      if (creatingImageWindow_.isTrue()) {
-//         try {
-//            creatingImageWindow_.waitToSetFalse(waitForCreateImageWindowTimeout_);
-//         } catch (Exception e) {
-//            ReportingUtils.showError(e);
-//         }
-//         return imageWin_;
-//      }
-//      creatingImageWindow_.setValue(true);
-//      MMImageWindow win = imageWin_;
-//      removeMMBackgroundListener(imageWin_);
-//      imageWin_ = null;
-//      try {
-//         if (win != null) {
-//            win.saveAttributes();
-//            win.dispose();
-//            win = null;
-//         }
-//
-//         win = new MMImageWindow(core_, this);
-//
-//         core_.logMessage("createImageWin1");
-//
-//         win.setBackground(guiColors_.background.get((options_.displayBackground_)));
-//         addMMBackgroundListener(win);
-//         setIJCal(win);
-//
-//         // listeners
-//         if (centerAndDragListener_ != null
-//               && centerAndDragListener_.isRunning()) {
-//            centerAndDragListener_.attach(win.getImagePlus().getWindow());
-//         }
-//         if (zWheelListener_ != null && zWheelListener_.isRunning()) {
-//            zWheelListener_.attach(win.getImagePlus().getWindow());
-//         }
-//         if (xyzKeyListener_ != null && xyzKeyListener_.isRunning()) {
-//            xyzKeyListener_.attach(win.getImagePlus().getWindow());
-//         }
-//
-//         win.getCanvas().requestFocus();
-//         imageWin_ = win;
-//
-//      } catch (Exception e) {
-//         if (win != null) {
-//            win.saveAttributes();
-//            WindowManager.removeWindow(win);
-//            win.dispose();
-//         }
-//         ReportingUtils.showError(e);
-//      }
-//      creatingImageWindow_.setValue(false);
-//      return imageWin_;
-//   }
-
    /**
     * Returns instance of the core uManager object;
     */
@@ -3046,43 +2988,7 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
       } catch (Exception ex) {
          throw new MMScriptException ("Format of version String should be \"a.b.c\"");
       }
-   }
-
-//   public boolean isImageWindowOpen() {
-//      return (imageWin_ != null) && (!imageWin_.isClosed() && (imageWin_.getGraphics() != null));
-//   }
-
-   /**
-    * This function was split out of isImageWindowOpen to avoid running this code
-    * on every call to isImageWindowOpen
-    * It is currently not called but kept here in case it becomes clear when it is
-    * needed (if ever).
-    */
-//   public void updateImageWinInfo() {
-//      try {
-//         Graphics g = imageWin_.getGraphics();
-//         if (null != g) {
-//            int ww = imageWin_.getWidth();
-//            g.clearRect(0, 0, ww, 40);
-//            imageWin_.drawInfo(g);
-//         } else {
-//            // explicitly clean up if Graphics is null, rather
-//            // than cleaning up in the exception handler below..
-//            WindowManager.removeWindow(imageWin_);
-//            imageWin_.saveAttributes();
-//            imageWin_.dispose();
-//            imageWin_ = null;
-//         }
-//
-//      } catch (Exception e) {
-//         WindowManager.removeWindow(imageWin_);
-//         imageWin_.saveAttributes();
-//         imageWin_.dispose();
-//         imageWin_ = null;
-//         ReportingUtils.showError(e);
-//      }
-//   }
-       
+   } 
 
     public boolean isLiveModeOn() {
         return liveModeTimer_ != null && liveModeTimer_.isRunning();
@@ -3561,12 +3467,6 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
    public void stopAllActivity() {
       enableLiveMode(false);
    }
-
-//   public void refreshImage() {
-//      if (imageWin_ != null) {
-//         imageWin_.getImagePlus().updateAndDraw();
-//      }
-//   }
 
    private void cleanupOnClose() {
       // NS: Save config presets if they were changed.
