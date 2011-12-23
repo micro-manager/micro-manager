@@ -160,7 +160,7 @@ public class ContrastPanel extends JPanel implements
 		final JButton autoScaleButton = new JButton();
 		autoScaleButton.addActionListener(new ActionListener() {
 			public void actionPerformed(final ActionEvent e) {
-				setAutoScale(true);
+				autostretch(true);
 			}
 		});
 		autoScaleButton.setFont(new Font("Arial", Font.PLAIN, 10));
@@ -316,7 +316,7 @@ public class ContrastPanel extends JPanel implements
             rejectOutliersPercentSpinner_.setEnabled(rejectControlsEnabled );
             if (autoStretchCheckBox_.isSelected()) {
                autoStretch_ = true;
-               setAutoScale(true);
+               autostretch(true);
             } else {
                autoStretch_ = false;
             }
@@ -342,7 +342,7 @@ public class ContrastPanel extends JPanel implements
             rejectOutliersPercentSpinner_.setEnabled(rejectOutliersCheckBox_.isSelected());
             percentOutliersLabel_.setEnabled(rejectOutliersCheckBox_.isSelected());    
             calcHistogramAndStatistics();
-            setAutoScale(true);
+            autostretch(true);
 			};
 		});
 		add(rejectOutliersCheckBox_);
@@ -371,7 +371,7 @@ public class ContrastPanel extends JPanel implements
          @Override
          public void stateChanged(ChangeEvent e) {
             calcHistogramAndStatistics();
-            setAutoScale(true);
+            autostretch(true);
          }});
 
 
@@ -444,7 +444,7 @@ public class ContrastPanel extends JPanel implements
                updateCursors();
                updateHistogram();
                if (autoStretch_)
-                  setAutoScale(true);
+                  autostretch(true);
             }
 			};
 		});
@@ -567,7 +567,7 @@ public class ContrastPanel extends JPanel implements
 	 * Auto-scales image display to clip at minimum and maximum pixel values.
 	 * 
 	 */
-	private void setAutoScale(boolean applyAndUpdate) {
+	public void autostretch(boolean applyAndUpdate) {
          if (image_ == null)
             return;
          contrastMin_ = pixelMin_;
@@ -699,10 +699,12 @@ public class ContrastPanel extends JPanel implements
          return;
      
       calcHistogramAndStatistics();
-      contrastMin_ = image_.getDisplayRangeMin();
-      contrastMax_ = image_.getDisplayRangeMax();
-      applyGammaAndContrastToImage();
-      updateHistogram();
+
+       contrastMin_ = image_.getDisplayRangeMin();
+       contrastMax_ = image_.getDisplayRangeMax();
+       applyGammaAndContrastToImage();
+       updateCursors();
+       updateHistogram();
    }
    
    @Override
@@ -812,11 +814,12 @@ public class ContrastPanel extends JPanel implements
             calcHistogram_ = true;
          }
       }
-      if (calcHistogram_) 
+      if (calcHistogram_) {
          calcHistogramAndStatistics();
-      setMaxIntensityAndBinSize();
-      if (autoStretch_ && calcHistogram_)
-         setAutoScale(false);
+         setMaxIntensityAndBinSize();
+         if (autoStretch_)
+            autostretch(false);
+      }
       applyGammaAndContrastToImage();
       if (autoStretch_ && calcHistogram_)
          updateCursors();

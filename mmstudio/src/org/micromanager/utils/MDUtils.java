@@ -390,6 +390,8 @@ public class MDUtils {
    }
    
    public static int getNumChannels(JSONObject tags) throws MMScriptException, JSONException {
+      if (!tags.has("Channels"))
+         return 1;
       return tags.getInt("Channels");
    }
 

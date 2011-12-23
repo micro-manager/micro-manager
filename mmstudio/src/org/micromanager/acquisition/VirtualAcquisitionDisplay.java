@@ -618,7 +618,9 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
          }
          if (hyperImage_ != null && hyperImage_.isVisible()) {
              hyperImage_.updateAndDraw();
-             controls_.newImageUpdate(virtualStack_.getTaggedImage(hyperImage_.getCurrentSlice()).tags);
+             TaggedImage ti = virtualStack_.getTaggedImage(hyperImage_.getCurrentSlice());
+             if (ti != null)
+                controls_.newImageUpdate(ti.tags);
          }
          updating_ = false;
       }

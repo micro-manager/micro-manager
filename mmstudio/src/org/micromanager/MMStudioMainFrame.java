@@ -365,7 +365,6 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
    }
    
    private void doSnapMonochrome() {
-//      checkMonochromeAcquisition();
       checkSimpleAcquisition();
       
       try {
@@ -3101,9 +3100,9 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
             multiChannelCamera_ = true;
             enableMultiCameraLiveMode(enable);
         } else
-            enableMonochromeLiveMode(enable);
+            enableSingleCameraLiveMode(enable);
       } else 
-         enableRGBLiveMode(enable);    
+         enableSingleCameraLiveMode(enable);    
       updateButtonsForLiveMode(enable);
    }
    
@@ -3165,11 +3164,9 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
   
                setLiveModeInterval();
                if (liveModeTimer_ == null) 
-                  liveModeTimer_ = new LiveModeTimer((int) liveModeInterval_, LiveModeTimer.MULTI_CAMERA );
-               else {
-                  liveModeTimer_.setDelay((int) liveModeInterval_);
-                  liveModeTimer_.setType(LiveModeTimer.MULTI_CAMERA);  
-               }
+                  liveModeTimer_ = new LiveModeTimer((int) liveModeInterval_ );
+               liveModeTimer_.setDelay((int) liveModeInterval_);
+               liveModeTimer_.setType(LiveModeTimer.MULTI_CAMERA);  
                manageShutterLiveMode(enable);
                liveModeTimer_.start(); 
           
@@ -3187,20 +3184,19 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
          }
      }
    
-   private void enableMonochromeLiveMode(boolean enable) {
+   private void enableSingleCameraLiveMode(boolean enable) {
       if (enable) {
-         setLiveModeInterval();
-         if (liveModeTimer_ == null) {
-            liveModeTimer_ = new LiveModeTimer((int) liveModeInterval_, LiveModeTimer.MONOCHROME);
-         } else {
-            liveModeTimer_.setDelay((int) liveModeInterval_);
-            liveModeTimer_.setType(LiveModeTimer.MONOCHROME);
-         }
-//         checkMonochromeAcquisition();
-         checkSimpleAcquisition();
          try {
-           manageShutterLiveMode(enable);
-           liveModeTimer_.start();     
+            setLiveModeInterval();
+            if (liveModeTimer_ == null) 
+               liveModeTimer_ = new LiveModeTimer((int) liveModeInterval_);
+            liveModeTimer_.setDelay((int) liveModeInterval_);
+            liveModeTimer_.setType(LiveModeTimer.SINGLE_CAMERA);
+         
+            checkSimpleAcquisition();
+ 
+            manageShutterLiveMode(enable);
+            liveModeTimer_.start();     
          } catch (Exception ex) {
             ReportingUtils.logError(ex);
          }
@@ -3212,34 +3208,6 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
             ReportingUtils.logError(ex);
          }
       }
-   }
-   
-   private void enableRGBLiveMode(boolean enable) {
-      if (enable) {
-         setLiveModeInterval();
-         if (liveModeTimer_ == null) {
-            liveModeTimer_ = new LiveModeTimer((int) liveModeInterval_, LiveModeTimer.RGB);
-         } else {
-            liveModeTimer_.setDelay((int) liveModeInterval_);
-            liveModeTimer_.setType(LiveModeTimer.RGB);
-         }
-//         checkRGBAcquisition();
-         checkSimpleAcquisition();
-         try {
-           manageShutterLiveMode(enable);
-           liveModeTimer_.start();     
-         } catch (Exception ex) {
-            ReportingUtils.logError(ex);
-         }
-      } else {
-         try {
-            liveModeTimer_.stop();
-            manageShutterLiveMode(enable);         
-         } catch (Exception ex) {
-            ReportingUtils.logError(ex);
-         }
-      }
-
    }
 
    public boolean getLiveMode() {
