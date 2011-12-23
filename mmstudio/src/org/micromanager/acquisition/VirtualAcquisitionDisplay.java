@@ -609,6 +609,14 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
          return s * c * f;
       return Math.max(Math.max(s, c), f);
    }
+   
+   private void imageChangedWindowUpdate() {
+      if (hyperImage_ != null && hyperImage_.isVisible()) {
+         TaggedImage ti = virtualStack_.getTaggedImage(hyperImage_.getCurrentSlice());
+         if (ti != null)
+            controls_.newImageUpdate(ti.tags);
+      }
+   }
 
    public void updateAndDraw() {
       if (!updating_) {
@@ -618,9 +626,7 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
          }
          if (hyperImage_ != null && hyperImage_.isVisible()) {
              hyperImage_.updateAndDraw();
-             TaggedImage ti = virtualStack_.getTaggedImage(hyperImage_.getCurrentSlice());
-             if (ti != null)
-                controls_.newImageUpdate(ti.tags);
+             imageChangedWindowUpdate();
          }
          updating_ = false;
       }
@@ -1495,5 +1501,6 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
    
    private void imageChangedUpdate() {
       mdPanel_.update(hyperImage_);
+      imageChangedWindowUpdate();
    }
 }
