@@ -69,7 +69,7 @@ import org.micromanager.utils.NumberUtils;
  * 
  */
 public class ContrastPanel extends JPanel implements 
-        PropertyChangeListener, ImageFocusListener,
+        PropertyChangeListener, 
         CursorListener {
    private static final double SLOW_HIST_UPDATE_TIME_MS = 2000;
    
@@ -469,10 +469,7 @@ public class ContrastPanel extends JPanel implements
 				SpringLayout.NORTH, minLabel);
 		springLayout.putConstraint(SpringLayout.NORTH, slowHistogramCheckBox_, -20,
 				SpringLayout.NORTH, minLabel);
-      
-      
-      GUIUtils.registerImageFocusListener(this);
-	}
+      	}
 
    public void setPixelBitDepth(int depth) 
    { 
@@ -687,12 +684,8 @@ public class ContrastPanel extends JPanel implements
       }
    }
 
-   public void focusReceived(ImageWindow focusedWindow) {
-      if (focusedWindow == null || !(focusedWindow instanceof StackWindow)) {        
-         return;
-      }
-          
-      image_ =  focusedWindow.getImagePlus();
+   public void setImage(ImagePlus image) {
+      image_ =  image;
       if (image_ == null)
          return;
      

@@ -775,14 +775,6 @@ public class MetadataPanel extends JPanel
       super.setVisible(visible);
    }
 
-   
-   public void windowClosed() {
-      if (WindowManager.getCurrentWindow() == null) {
-         update((ImagePlus) null);
-      }
-      //dont need to call update if another window open because image focus listener takes care of this
-   }
-
    private void writeSummaryComments(ImagePlus imp) {
       VirtualAcquisitionDisplay acq = getVirtualAcquisitionDisplay(imp);
       if (acq != null) {
@@ -907,6 +899,9 @@ public class MetadataPanel extends JPanel
       ImageCache cache = getCache(imgp);
       VirtualAcquisitionDisplay acq = getVirtualAcquisitionDisplay(imgp);
       sizeBarCheckBox.setSelected(imgp.getOverlay() != null && !imgp.getHideOverlay());
+      
+      if (useSingleChannelHistogram())
+         singleChannelContrastPanel_.setImage(imgp);
       
       if (acq != null) {
          summaryCommentsTextArea.setText(acq.getSummaryComment());
