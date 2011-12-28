@@ -34,8 +34,113 @@
 #include <sstream>
 using namespace std;
 
-extern const char* g_WheelDeviceName;
+/*
+To get position  for example
 
+MGMSG_MOT_REQ_POSCOUNTER (0x0411)
+
+Tx 11,04,01,00,50,01
+
+First 6 bytes are 6 byte header
+
+First 2 are msg ident 11 04  (0x0411)
+
+Next 2 are channel ID (01 00) 1
+
+Next 2 are src dest bytes  (50 dest, 01 src)              
+
+ 
+
+Response for example will be
+
+MGMSG_MOT_GET_POSCOUNTER  (0x0412)
+
+Tx 12,04,06,00,81,50,01,00,00,0A,00,00
+
+First 6 bytes are 6 byte header
+
+First 2 are msg ident 12 04  (0x0412)
+
+Next 2 are number of  bytes in appended structure (06 00) 6
+
+Next 2 are sr dest bytes (81 50) (note dest 81 is Ored with 0x80 to indicate appended packet
+
+ 
+
+Next 6 are appended packet
+
+First 2 are channel ident ( 01 00) 1 
+
+Next 4 are current position in absolute stepper micro-steps (00 0A 00 00) 0xA00 (angle of 0.52 degrees at output for example)
+
+ 
+
+and relate to the output angle of the filter wheel by the gear ratio of stepper gear to
+
+filter wheel gear which is 4.333….. -1. So for 1 turn of the motor which represents
+
+409600 stepper micro-steps hence relates to 360 degrees at the motor. So 1microstep is
+
+360/409600= approx. 0.0008789 degrees.
+
+To move the actual filter wheel by 45 degrees say (an 8 position filter wheel), then 45*4.333..=195 degrees
+
+This is equal to approx. 221867 micro-steps to go from 1 filter position to the next.
+
+*/
+
+///////////
+// commands
+///////////
+const unsigned char getPosCmd[] =  {         0x11, // cmd low byte
+                                             0x04, // cmd high byte
+                                             0x01, // channel id low
+                                             0x00, // channel id hi
+                                             0x50, // dest low
+                                             0x01, // dest hi
+                                          };             
+
+
+const unsigned char getPosRsp[] = {          0x12, // cmd low byte
+                                             0x04, // cmd high byte
+                                             0x06, // num bytes low
+                                             0x00, // num bytes hi
+                                             0x81, // 
+                                             0x50, // 
+                                             0x01, // channel low
+                                             0x00, // channel hi
+                                             0x00, // position low byte
+                                             0x00,  // position  
+                                             0x00, // position
+                                             0x00  // position high byte
+                                          };             
+
+const unsigned char setPosCmd[] =  {         0x53, // cmd low byte
+                                             0x04, // cmd high byte
+                                             0x06, // nun bytes low
+                                             0x00, // num bytes hi
+                                             0x81, // 
+                                             0x50, //
+                                             0x01, // ch low
+                                             0x00, // ch hi
+                                             0x00, // position low byte
+                                             0x00,  // position  
+                                             0x00, // position
+                                             0x00  // position high byte
+                                          };             
+
+const unsigned char getParamsCmd[] =  {      0x15, // cmd low byte
+                                             0x00, // cmd high byte
+                                             0x20, // num bytes low
+                                             0x00, // num bytes hi
+                                             0x50, // 
+                                             0x01
+                                          };             
+
+
+using namespace std;
+
+extern const char* g_WheelDeviceName;
 
 IntegratedFilterWheel::IntegratedFilterWheel() : 
    numPos_(6), 
