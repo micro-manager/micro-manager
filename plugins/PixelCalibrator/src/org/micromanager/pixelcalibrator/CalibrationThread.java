@@ -115,7 +115,7 @@ public class CalibrationThread extends Thread {
             Object pix = core_.getImage();
             app_.displayImage(pix);
             if (liveWin_ == null)
-               liveWin_ = MMStudioMainFrame.getLiveWin();
+               liveWin_ = app_.getImageWin();
             liveWin_.setTitle("Calibrating...");
             return ImageUtils.makeProcessor(core_,pix);
          } catch (InterruptedException e) {
