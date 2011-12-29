@@ -78,8 +78,7 @@ int LeicaDMRHub::Initialize(MM::Device& device, MM::Core& core)
 
    ret = GetMicroscope(device, core, microscope_);
    if (ret != DEVICE_OK)
-      //return ret;
-      microscope_ = "";
+      return ret;
 
    std::ostringstream os;
    os << "Microscope type: " << microscope_;
@@ -127,9 +126,11 @@ int LeicaDMRHub::GetVersion(MM::Device& device, MM::Core& core, std::string& ver
 int LeicaDMRHub::GetMicroscope(MM::Device& device, MM::Core& core, std::string& microscope)
 {
    int ret = GetCommand(device, core, gMic_, 26, microscope);
-   if (ret != DEVICE_OK)
-      return ret;
-   microscope = microscope.erase(microscope.find_last_not_of(" ") + 1);
+   if (ret != DEVICE_OK) {
+      // the dmrxe does not have this command and will time out
+      microscope = "DMRXE";
+   } else
+      microscope = microscope.erase(microscope.find_last_not_of(" ") + 1);
    return DEVICE_OK;
 }
 
