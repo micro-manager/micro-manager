@@ -14,6 +14,7 @@ import ij.measure.Calibration;
 import ij.plugin.Animator;
 import ij.process.ImageProcessor;
 import java.awt.Color;
+import java.awt.Point;
 import java.awt.event.AdjustmentListener;
 import java.awt.event.WindowEvent;
 import java.io.File;
@@ -54,6 +55,9 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
    final ImageCache imageCache_;
    final Preferences prefs_ = Preferences.userNodeForPackage(this.getClass());
 
+   private static final String SIMPLE_WIN_X = "simple_x";
+   private static final String SIMPLE_WIN_Y = "simple_y";
+   
    private AcquisitionEngine eng_;
    private boolean finished_ = false;
    private boolean promptToSave_ = true;
@@ -76,7 +80,6 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
    private boolean simple_ = false;
    private MetadataPanel mdPanel_;
    private boolean newDisplay_ = false; //used for autostretching on window opening
-
 
 
 
@@ -1009,7 +1012,7 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
       }
    }
 
-   private void createWindow(ImagePlus hyperImage, DisplayControls hc) {      
+   private void createWindow(final ImagePlus hyperImage, DisplayControls hc) {      
       final ImageWindow win = new StackWindow(hyperImage) {
 
          private boolean windowClosingDone_ = false;
@@ -1048,6 +1051,10 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
                imageCache_.close();
             }
 
+            Point loc = hyperImage.getWindow().getLocation();
+            prefs_.putInt(SIMPLE_WIN_X, loc.x);
+            prefs_.putInt(SIMPLE_WIN_Y, loc.y);
+
             if (!closed_) {
                try {
                   close();
@@ -1055,7 +1062,8 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
                   ReportingUtils.logError("Null pointer error in ImageJ code while closing window");
                }
             }
-
+            
+            
             super.windowClosing(e);
             MMStudioMainFrame.getInstance().removeMMBackgroundListener(this);
             windowClosingDone_ = true;
@@ -1082,6 +1090,9 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
 
       win.add(hc);
       win.pack();
+      
+      if (simple_ )
+         win.setLocation(prefs_.getInt(SIMPLE_WIN_X, 0),prefs_.getInt(SIMPLE_WIN_Y, 0));
    }
 
    private ScrollbarWithLabel createPositionScrollbar() {
