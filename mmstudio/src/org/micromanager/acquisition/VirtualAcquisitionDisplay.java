@@ -322,6 +322,8 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
       if (!simple_) {
          tSelector_ = getSelector("t");
          zSelector_ = getSelector("z");
+         if (numFrames > 1 && numSlices == 1)   // in this scenario zselector mistakenly gets set to the tselector
+            zSelector_ = null;
          if (zSelector_ != null) {
             zSelector_.addAdjustmentListener(new AdjustmentListener() {
 
