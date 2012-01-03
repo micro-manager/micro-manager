@@ -167,7 +167,6 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
          imageChangedUpdate();
          super.draw();
       }
-      
    }
 
    public class MMImagePlus extends ImagePlus implements IMMImagePlus {
@@ -777,9 +776,11 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
                   pixelMax = Math.max(this.getChannelMax(superChannel), pixelMax);
                }
                
-               setChannelDisplayRange(superChannel, pixelMin, pixelMax);
-               if (MDUtils.isRGB(tags))
-                  for (int i = 1; i < 3; ++i) 
+               if (!MDUtils.isRGB(tags)) {
+                  setChannelDisplayRange(superChannel, pixelMin, pixelMax);
+               }
+               else
+                  for (int i = 0; i < 3; ++i) 
                      setChannelDisplayRange(superChannel + i, pixelMin, pixelMax);
                   
             }
@@ -1511,6 +1512,20 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
    
    private void imageChangedUpdate() {
       mdPanel_.update(hyperImage_);
-      imageChangedWindowUpdate();
+      imageChangedWindowUpdate(); //used to update status line
+   }
+   
+   public void storeSingleChannelDisplaySettings(int min, int max, double gamma) {
+      try {
+         JSONArray array = imageCache_.getDisplayAndComments().getJSONArray("Channels");
+         if (array == null && !array.isNull(0)) 
+            return; 
+         JSONObject settings = array.getJSONObject(0);
+         settings.put("Max", max);
+         settings.put("Min", min);
+         settings.put("Gamma", gamma);
+      } catch (Exception ex) {
+         ReportingUtils.logError(ex);
+      }
    }
 }

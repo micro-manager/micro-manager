@@ -4,6 +4,7 @@
  */
 package org.micromanager.acquisition;
 
+import ij.WindowManager;
 import org.micromanager.api.ImageCache;
 import org.micromanager.api.ImageCacheListener;
 import java.lang.ref.SoftReference;
@@ -17,6 +18,7 @@ import mmcorej.TaggedImage;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.micromanager.MMStudioMainFrame;
+import org.micromanager.utils.ContrastSettings;
 import org.micromanager.utils.MDUtils;
 import org.micromanager.utils.MMException;
 import org.micromanager.utils.ReportingUtils;
@@ -36,6 +38,7 @@ public class MMImageCache implements TaggedImageStorage, ImageCache {
    private int lastFrame_ = -1;
    private JSONObject lastTags_;
    private boolean conserveRam_;
+   private ContrastSettings contrast_;
 
 
    public void addImageCacheListener(ImageCacheListener l) {
@@ -110,6 +113,10 @@ public class MMImageCache implements TaggedImageStorage, ImageCache {
       newImageFileManager.finished();
       imageStorage_ = newImageFileManager; 
    }
+   
+   public void storeSontrastSettings(ContrastSettings cs) {
+      
+   }
 
    public void putImage(TaggedImage taggedImg) {
       try {
@@ -122,6 +129,7 @@ public class MMImageCache implements TaggedImageStorage, ImageCache {
             lastFrame_ = Math.max(lastFrame_, MDUtils.getFrameIndex(taggedImg.tags));
             lastTags_ = taggedImg.tags;
          }
+         
          for (ImageCacheListener l:imageStorageListeners_) {
             l.imageReceived(taggedImg);
          }

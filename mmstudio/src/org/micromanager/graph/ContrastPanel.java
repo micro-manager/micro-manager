@@ -25,6 +25,7 @@ package org.micromanager.graph;
 
 import ij.CompositeImage;
 import ij.ImagePlus;
+import ij.WindowManager;
 import ij.gui.ImageWindow;
 import ij.gui.StackWindow;
 import ij.process.ImageProcessor;
@@ -41,6 +42,8 @@ import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeEvent;
 import java.text.NumberFormat;
 import java.text.ParseException;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
@@ -54,8 +57,11 @@ import javax.swing.SpinnerNumberModel;
 import javax.swing.SpringLayout;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
+import org.json.JSONException;
+import org.json.JSONObject;
 import org.micromanager.MMStudioMainFrame;
 import org.micromanager.acquisition.VirtualAcquisitionDisplay;
+import org.micromanager.api.ImageCache;
 import org.micromanager.utils.ImageFocusListener;
 import org.micromanager.graph.HistogramPanel.CursorListener;
 import org.micromanager.utils.ContrastSettings;
@@ -505,8 +511,11 @@ public class ContrastPanel extends JPanel implements
       }
       ip.setColorModel( new LUT(8, 256, r, g, b));
       ip.setMinAndMax(contrastMin_, contrastMax_);
+      
+      VirtualAcquisitionDisplay.getDisplay(image_).storeSingleChannelDisplaySettings(
+              (int) contrastMin_, (int) contrastMax_, gamma_);
    }
-
+   
    public void updateHistogram() {
       if (image_ != null && histogram_ != null) {
          histogramData_.setData(histogram_);
@@ -683,17 +692,24 @@ public class ContrastPanel extends JPanel implements
          autoStretchCheckBox_.setSelected(false);
       }
    }
+   
+   private void loadContrastSettings() {
+      VirtualAcquisitionDisplay disp = VirtualAcquisitionDisplay.getDisplay(image_);
+      contrastMax_ = disp.getChannelMax(0);
+      contrastMin_ = disp.getChannelMin(0);
+      gamma_ = disp.getChannelGamma(0);
+      updateCursors();
+   }
 
    public void setImage(ImagePlus image) {
       image_ =  image;
       if (image_ == null)
          return;
+      loadContrastSettings();
      
       calcHistogramAndStatistics();
-
-       contrastMin_ = image_.getDisplayRangeMin();
-       contrastMax_ = image_.getDisplayRangeMax();
-       applyGammaAndContrastToImage();
+           
+      applyGammaAndContrastToImage();
        updateCursors();
        updateHistogram();
    }
@@ -798,6 +814,7 @@ public class ContrastPanel extends JPanel implements
       if (ip == null)
          return;
       image_ = ip;
+      loadContrastSettings();
       if (slowHistogram_) {
          slowHistogramCount_++;
          if (slowHistogramCount_ >= numFramesForSlowHist_) {

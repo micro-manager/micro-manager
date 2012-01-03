@@ -901,7 +901,7 @@ public class MetadataPanel extends JPanel
       sizeBarCheckBox.setSelected(imgp.getOverlay() != null && !imgp.getHideOverlay());
       
       if (useSingleChannelHistogram())
-         singleChannelContrastPanel_.setImage(imgp);
+         singleChannelContrastPanel_.setImage(imgp);  //this call loads appropriate contrast settings
       
       if (acq != null) {
          summaryCommentsTextArea.setText(acq.getSummaryComment());
@@ -987,7 +987,7 @@ public class MetadataPanel extends JPanel
 
    
    private synchronized void updateAndDrawHistograms() {
-      if (useSingleChannelHistogram() ) {       
+      if (useSingleChannelHistogram() ) {
          singleChannelContrastPanel_.updateContrast();
       } else if (ccpList_ != null) {
          for (ChannelControlPanel ccp : ccpList_) {
