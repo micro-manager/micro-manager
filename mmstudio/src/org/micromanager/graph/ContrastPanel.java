@@ -405,6 +405,7 @@ public class ContrastPanel extends JPanel implements
 		modeComboBox_.addActionListener(new ActionListener() {
 			public void actionPerformed(final ActionEvent e) {
 				setMaxIntensityAndBinSize();
+            updateContrast();
 			}});
 		modeComboBox_.setModel(new DefaultComboBoxModel(new String[] {
 				"camera", "8bit", "10bit", "12bit", "14bit", "16bit" }));
@@ -534,7 +535,8 @@ public class ContrastPanel extends JPanel implements
 	private void setMaxIntensityAndBinSize() {
 		switch (modeComboBox_.getSelectedIndex()-1) {
       case -1:
-         maxIntensity_ = (int) (Math.pow(2, MMStudioMainFrame.getInstance().getCore().getBytesPerPixel() ) - 1);
+         maxIntensity_ = (int) (Math.pow(2, 8*MMStudioMainFrame.getInstance().getCore().getBytesPerPixel() ) - 1);
+         break;
       case 0: 
 			maxIntensity_ = 255;
 			break;
