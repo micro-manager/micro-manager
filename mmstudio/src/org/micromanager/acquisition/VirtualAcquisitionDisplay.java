@@ -1053,10 +1053,12 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
             if (imageCache_ != null) {
                imageCache_.close();
             }
-
-            Point loc = hyperImage.getWindow().getLocation();
-            prefs_.putInt(SIMPLE_WIN_X, loc.x);
-            prefs_.putInt(SIMPLE_WIN_Y, loc.y);
+            
+            if (hyperImage != null && hyperImage.getWindow() != null && hyperImage.getWindow().getLocation() != null) {
+               Point loc = hyperImage.getWindow().getLocation();
+               prefs_.putInt(SIMPLE_WIN_X, loc.x);
+               prefs_.putInt(SIMPLE_WIN_Y, loc.y);
+            }
 
             if (!closed_) {
                try {
