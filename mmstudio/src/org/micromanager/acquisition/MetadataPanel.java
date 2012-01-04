@@ -1016,8 +1016,9 @@ public class MetadataPanel extends JPanel
       ImagePlus imgp = focusedWindow_.getImagePlus();
       if (imgp == null )
          return prevUseSingleChannelHist_;
-      VirtualAcquisitionDisplay acq = getVirtualAcquisitionDisplay(imgp);    
-      prevUseSingleChannelHist_ = (acq.getNumChannels()== 1);
+      VirtualAcquisitionDisplay vad = getVirtualAcquisitionDisplay(imgp); 
+      if (vad != null)
+         prevUseSingleChannelHist_ = (vad.getNumChannels()== 1);
       return prevUseSingleChannelHist_;
    }
    
