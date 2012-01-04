@@ -40,6 +40,7 @@ using namespace std;
 MODULE_API void InitializeModuleData()
 {
 	AddAvailableDeviceName(g_ConixQuadFilterName,"External Filter Cube Switcher");
+	AddAvailableDeviceName(g_ConixHexFilterName,"External Filter Cube Switcher(6)");
 	AddAvailableDeviceName(g_ConixXYStageName, "Conix XY stage");
 	AddAvailableDeviceName(g_ConixZStageName, "Conix Z stage");
 }
@@ -55,7 +56,9 @@ MODULE_API MM::Device* CreateDevice(const char* deviceName)
 	if (strcmp(deviceName, g_ConixQuadFilterName) == 0) {
 		QuadFluor* pQF = new QuadFluor();
 		return pQF;
-	} else if (strcmp(deviceName, g_ConixXYStageName) == 0) {
+	} else if (strcmp(deviceName, g_ConixHexFilterName) == 0) {
+      return new HexaFluor();
+   } else if (strcmp(deviceName, g_ConixXYStageName) == 0) {
 		return new ConixXYStage(); // create XY stage
 	} else if (strcmp(deviceName, g_ConixZStageName) == 0) {
 		return new ConixZStage(); // create Z stage
