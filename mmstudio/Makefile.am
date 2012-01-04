@@ -103,7 +103,6 @@ MMJ_.jar:  \
 	$(srcdir)/src/org/micromanager/utils/HttpUtils.java \
 	$(srcdir)/src/org/micromanager/utils/ImageUtils.java \
 	$(srcdir)/src/org/micromanager/utils/JavaUtils.java \
-	$(srcdir)/src/org/micromanager/utils/LUTDialog.java \
 	$(srcdir)/src/org/micromanager/utils/LargeMessageDlg.java \
 	$(srcdir)/src/org/micromanager/utils/MDUtils.java \
 	$(srcdir)/src/org/micromanager/utils/MMAutofocusException.java \
