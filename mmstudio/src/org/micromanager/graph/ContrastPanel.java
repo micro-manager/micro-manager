@@ -533,9 +533,9 @@ public class ContrastPanel extends JPanel implements
    }
 	 
 	private void setMaxIntensityAndBinSize() {
-		switch (modeComboBox_.getSelectedIndex()-1) {
+		switch (modeComboBox_.getSelectedIndex()-1) {        
       case -1:
-         maxIntensity_ = (int) (Math.pow(2, 8*MMStudioMainFrame.getInstance().getCore().getBytesPerPixel() ) - 1);
+         maxIntensity_ = (int) (Math.pow(2, MMStudioMainFrame.getInstance().getCore().getImageBitDepth() ) - 1);
          break;
       case 0: 
 			maxIntensity_ = 255;
