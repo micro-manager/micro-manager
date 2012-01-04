@@ -23,15 +23,10 @@
 //
 package org.micromanager.graph;
 
-import ij.CompositeImage;
 import ij.ImagePlus;
-import ij.WindowManager;
-import ij.gui.ImageWindow;
-import ij.gui.StackWindow;
 import ij.process.ImageProcessor;
 import ij.process.LUT;
 import ij.process.ShortProcessor;
-import ij.process.ByteProcessor;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Font;
@@ -58,14 +53,10 @@ import javax.swing.SpringLayout;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import org.json.JSONException;
-import org.json.JSONObject;
 import org.micromanager.MMStudioMainFrame;
 import org.micromanager.acquisition.VirtualAcquisitionDisplay;
-import org.micromanager.api.ImageCache;
-import org.micromanager.utils.ImageFocusListener;
 import org.micromanager.graph.HistogramPanel.CursorListener;
 import org.micromanager.utils.ContrastSettings;
-import org.micromanager.utils.GUIUtils;
 import org.micromanager.utils.HistogramUtils;
 import org.micromanager.utils.ReportingUtils;
 import org.micromanager.utils.NumberUtils;
@@ -535,7 +526,17 @@ public class ContrastPanel extends JPanel implements
 	private void setMaxIntensityAndBinSize() {
 		switch (modeComboBox_.getSelectedIndex()-1) {        
       case -1:
-         maxIntensity_ = (int) (Math.pow(2, MMStudioMainFrame.getInstance().getCore().getImageBitDepth() ) - 1);
+         int bitDepth = 8;
+         if (virtAcq_ != null) {
+            try {
+               bitDepth = virtAcq_.getCurrentMetadata().getInt("BitDepth");
+            } catch (JSONException ex) {
+               bitDepth = (int) MMStudioMainFrame.getInstance().getCore().getImageBitDepth();
+            }
+         } else {
+            bitDepth = (int) MMStudioMainFrame.getInstance().getCore().getImageBitDepth();
+         }
+         maxIntensity_ = (int) (Math.pow(2, bitDepth) - 1);
          break;
       case 0: 
 			maxIntensity_ = 255;
