@@ -80,6 +80,7 @@ public:
    int OnChannel(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnVersion(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnSetLE_Type(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnInitLE(MM::PropertyBase* pProp, MM::ActionType eAct);
 
    int OnRedEnable(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnGreenEnable(MM::PropertyBase* pProp, MM::ActionType eAct);
@@ -102,6 +103,7 @@ private:
    int GetVersion();
    int SendColorLevelCmd(ColorNameT ColorName, int ColorLevel);
    int SendColorEnableCmd(ColorNameT ColorName, bool State, char* EnableMask);
+   int InitLE();
 
    // MMCore name of serial port
    std::string port_;

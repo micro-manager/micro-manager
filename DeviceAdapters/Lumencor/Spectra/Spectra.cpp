@@ -212,6 +212,8 @@ int Spectra::Initialize()
 		ret = SetAllowedValues("SetLE_Type", LETypeStr);
 		assert(ret == DEVICE_OK);
 
+   pAct = new CPropertyAction(this,&Spectra::OnInitLE);
+   CreateProperty("Init_LE",    "0", MM::Integer, false, pAct, false);
    //
    // Declare action function for color Value changes
    //
@@ -324,11 +326,17 @@ int Spectra::SetShutterPosition(bool state)
 int Spectra::SendColorLevelCmd(ColorNameT ColorName,int ColorLevel)
 {
 	unsigned int ColorValue;
-	char DACSetupArray[]= "\x53\x18\x03\x00\x00\x00\x50\x00";
+	unsigned char DACSetupArray[]= "\x53\x18\x03\x00\x00\x00\x50\x00";
+	std::string Cmd;
 
 	ColorValue = 255-(unsigned int)(2.55 * ColorLevel); // map color to range
 	ColorValue &= 0xFF;  // Mask to one byte
-
+	ColorValue = (ColorLevel == 100) ? 0 : ColorValue;
+	ColorValue = (ColorLevel == 0) ? 0xFF : ColorValue;  // coherce to correct values at limits
+	if(LightEngine == Sola_Type)
+	{
+		ColorName = ALL;
+	}
 	switch(ColorName)
 	{
 		case  RED:
@@ -356,16 +364,26 @@ int Spectra::SendColorLevelCmd(ColorNameT ColorName,int ColorLevel)
 			DACSetupArray[3] = 0x03;
 			DACSetupArray[1] = 0x1A;
 			break;
+		case ALL:
+			DACSetupArray[4] = (char) ((ColorValue >> 4) & 0x0F) | 0xF0;
+			DACSetupArray[5] = (char) (ColorValue << 4) & 0xF0;
+			DACSetupArray[3] = 0x0F; // setup for RGCV 
+			DACSetupArray[1] = 0x18;
+			WriteToComPort(port_.c_str(),DACSetupArray, 7); // Write Event Data to device
+
+			DACSetupArray[3] = 0x03;
+			DACSetupArray[1] = 0x1A;
+			WriteToComPort(port_.c_str(),DACSetupArray, 7); // Write Event Data to device
+			break;
 		default:
 			break;		
 	}
-
-	DACSetupArray[4] = (char) ((ColorValue >> 4) & 0x0F) | 0xF0;
-	DACSetupArray[5] = (char) (ColorValue << 4) & 0xF0;
-
-	std::string Cmd = DACSetupArray;
-	SendSerialCommand(port_.c_str(), Cmd.c_str(), ""); // send to device
-	
+	if(ColorName != ALL)
+	{
+		DACSetupArray[4] = (char) ((ColorValue >> 4) & 0x0F) | 0xF0;
+		DACSetupArray[5] = (char) (ColorValue << 4) & 0xF0;
+		WriteToComPort(port_.c_str(),DACSetupArray, 7); // Write Event Data to device
+	}
 	// block/wait no acknowledge so just give it time                      
     CDeviceUtils::SleepMs(200);
 	return DEVICE_OK;  // debug only 
@@ -379,8 +397,11 @@ int Spectra::SendColorLevelCmd(ColorNameT ColorName,int ColorLevel)
 int Spectra::SendColorEnableCmd(ColorNameT ColorName,bool State, char* EnableMask)
 {
 	enum StateValue {OFF=0, ON=1};
-	char DACSetupArray[]= "\x4F\x00\x50\x00";
-
+	unsigned char DACSetupArray[]= "\x4F\x00\x50\x00";
+	if(LightEngine == Sola_Type)
+	{
+		 ColorName = ALL;
+	}
 	switch (ColorName)
 	{	
 		case  RED:
@@ -436,13 +457,13 @@ int Spectra::SendColorEnableCmd(ColorNameT ColorName,bool State, char* EnableMas
 	}
 	if (LightEngine == Aura_Type)
 	{
-		DACSetupArray[1] = DACSetupArray[1] & 0x5F; // make sure we are set to DAC control not Pot for Aura cases
+		// See Aura TTL IF Doc: Front Panel Control/DAC for more detail
+		DACSetupArray[1] = DACSetupArray[1] | 0x20; // Mask for Aura to be sure DACs are Enabled 
 	}
 
 	*EnableMask = DACSetupArray[1]; // Sets the Mask to current state
 
-	std::string Cmd = DACSetupArray;
-	SendSerialCommand(port_.c_str(), Cmd.c_str(), "");
+	WriteToComPort(port_.c_str(),DACSetupArray, 3); // Write Event Data to device
 
    // block/wait no acknowledge so just give it time                     
 	CDeviceUtils::SleepMs(200);
@@ -474,52 +495,34 @@ int Spectra::SendColorEnableCmd(ColorNameT ColorName,bool State, char* EnableMas
 
 int Spectra::GetVersion()
 {
-   // We will verify that we are talking to the Lumencor product by writing to a
-   // Hardware Register then reading it back.
-
-   int ret;
-   std::string Answer(40,'\0');
-   std::string &pAnswer = Answer;
-
-   pAnswer = Answer;
-
-   char GPIO5to7[] = "\x57\x03\xAB\x50"; // Write to the uart register
-   std::string cmd = GPIO5to7;
-   ret = SendSerialCommand(port_.c_str(), cmd.c_str(), ""); // send command to write register
-
-//   char Read_GPIO5to7[] = "\x52\x03\x50"; // Setup Read Register Command
-//   cmd = Read_GPIO5to7;
-//   ret = SendSerialCommand(port_.c_str(), cmd.c_str(), ""); // send command to Read register
-//   ret = GetSerialAnswer(port_.c_str(), "", pAnswer); // get response
-//   OutputDebugString(Answer.c_str());
-//   LogMessage(Answer.c_str());
-
-
-//   if(ret != DEVICE_OK){
-//	   OutputDebugString("Error in Response from Device");
-//	   LogMessage("Error in Response from Device");
-//	   return DEVICE_SERIAL_INVALID_RESPONSE;
-//   }
-
-   char GPIO0to3[] = "\x57\x02\xff\x50";
-//   char SetDACCtl[]="\x4f\x5F\x50"; // DAC Control and all channels offr   For Aura Only
-   char SetDACCtl[]="\x4f\x7F\x50";
-
-	std::string cmd1 = GPIO0to3;;	
-	std::string cmd2 = SetDACCtl;
-
-// std::string command = "rVER";
-// int ret = SendSerialCommand(port_.c_str(), command.c_str(), "\r");
-
-	// Send GPIO Commands
-   ret = SendSerialCommand(port_.c_str(), cmd1.c_str(), "");  // Set GIPO 0-3
-   ret = SendSerialCommand(port_.c_str(), cmd2.c_str(), "");  // setup for DAC control for Aura Only
-
-  // return DEVICE_SERIAL_INVALID_RESPONSE;
+     int ret;
+	 ret = InitLE();
      version_ = "1234"; // this is a dummy value for now.. return real version when hardware supports it
      return DEVICE_OK;  // debug only 
 }
 
+// This function Inits the GPIO on the 
+// and must be done any time the LE is powered off then on again
+int Spectra::InitLE()
+{
+   int ret;
+   char DACCtl[] = "\x4f\x7F\x50";  // Disable All Colors
+   if(LightEngine == Aura_Type)
+   {
+		DACCtl[1] = 0x5f;  // set all off and Dac Control if an Aura
+   }
+   char GPIO0to3[] = "\x57\x02\xff\x50";
+   char GPIO5to7[] = "\x57\x03\xAB\x50"; // Write to the uart register
+
+   std::string cmd =  GPIO5to7;
+   std::string cmd1 = GPIO0to3;	
+   std::string cmd2 = DACCtl;
+	// Send GPIO Commands
+   ret = SendSerialCommand(port_.c_str(), cmd.c_str(), ""); // send command to write register
+   ret = SendSerialCommand(port_.c_str(), cmd1.c_str(), "");  // Set GIPO 0-3
+   ret = SendSerialCommand(port_.c_str(), cmd2.c_str(), "");  // setup for DAC control for Aura Only
+   return DEVICE_OK;  // We dont get a response for these commands so just set to normal return 
+}
 
 int Spectra::Shutdown()                                                
 {                                                                            
@@ -644,6 +647,19 @@ int Spectra::OnSetLE_Type(MM::PropertyBase* pProp, MM::ActionType eAct)
    return DEVICE_OK;
 }
 
+int Spectra::OnInitLE(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   long State;
+   pProp->Get(State); 
+                                                                      
+   if (eAct == MM::AfterSet && State == 1)
+   {  
+	  State = 0; 
+      pProp->Set(State); // reset button
+      int ret = InitLE();
+   }
+   return DEVICE_OK;
+}
 // *****************************************************************************
 //                  Color Value Change Handlers
 // *****************************************************************************
