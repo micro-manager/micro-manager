@@ -442,7 +442,7 @@ public class ConfiguratorDlg2 extends MMDialog {
             }
             if (0 < u.Status().length()) {
                 ReportingUtils.logError("Error uploading configuration file: " + u.Status());
-                ReportingUtils.showMessage("Error uploading configuration file:\n" + u.Status());
+                //ReportingUtils.showMessage("Error uploading configuration file:\n" + u.Status());
             }
         }
 
