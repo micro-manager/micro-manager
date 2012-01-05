@@ -41,6 +41,7 @@ import org.json.JSONObject;
 import org.micromanager.MMStudioMainFrame;
 import org.micromanager.api.AcquisitionEngine;
 import org.micromanager.api.ImageCache;
+import org.micromanager.utils.AcqOrderMode;
 import org.micromanager.utils.FileDialogs;
 import org.micromanager.utils.ImageUtils;
 import org.micromanager.utils.JavaUtils;
@@ -79,6 +80,8 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
    private boolean updating_ = false;
    private int[] channelInitiated_;
    private int preferredSlice_ = -1;
+   private int preferredPosition_ = -1;
+   private int preferredChannel_ = -1;
 
    private int numComponents_;
    private ImagePlus hyperImage_;
@@ -341,14 +344,17 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
       if (!simple_) {
          tSelector_ = getSelector("t");
          zSelector_ = getSelector("z");
-         if (zSelector_ != null) {
+         if (zSelector_ != null) 
             zSelector_.addAdjustmentListener(new AdjustmentListener() {
-
                public void adjustmentValueChanged(AdjustmentEvent e) {
                   preferredSlice_ = zSelector_.getValue();
-               }
-            });
-         }      
+               }});
+         if (cSelector_ != null)
+            cSelector_.addAdjustmentListener(new AdjustmentListener() {
+               public void adjustmentValueChanged(AdjustmentEvent e) {
+                  preferredChannel_ = cSelector_.getValue();
+               }});
+              
          if (imageCache_.lastAcquiredFrame() > 1) {
             setNumFrames(1 + imageCache_.lastAcquiredFrame());
          } else {
@@ -677,7 +683,7 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
    private void setNumChannels(int n) {
       if (cSelector_ != null) {
          ((IMMImagePlus) hyperImage_).setNChannelsUnverified(n);
-         cSelector_.setMaximum(n + 1);
+         cSelector_.setMaximum(n);
       }
    }
 
@@ -934,12 +940,35 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
          updateAndDraw();
       }
 
-      
-         if (zSelector_ != null && this.acquisitionIsRunning() &&
-              slice == zSelector_.getMaximum()-2  &&
-              preferredSlice_ > -1) {
-         hyperImage_.setPosition(channel+1, preferredSlice_, frame+1);
-      }
+      setPreferredScrollbarPositions(channel,slice,frame,position);        
+   }
+   
+   private void setPreferredScrollbarPositions(int channel, int slice, int frame, int position) {
+      if (this.acquisitionIsRunning() ) {            
+            //add channel persistance
+            boolean cReady = false, zReady = false;
+            if (cSelector_ == null || channel == cSelector_.getMaximum()-cSelector_.getMinimum()-1)
+               cReady = true;
+            if (zSelector_ == null || slice == zSelector_.getMaximum()-zSelector_.getMinimum()-1)
+               zReady = true; 
+            if (cReady && zReady)
+               hyperImage_.setPosition(preferredChannel_ == -1 ? channel+1 : preferredChannel_, 
+                       preferredSlice_ == -1 ? slice+1:preferredSlice_, frame+1);
+            
+            if (pSelector_ != null && position == pSelector_.getMaximum()-pSelector_.getMinimum()-1
+                    && preferredPosition_ > -1) {
+                  boolean update = true;
+               if (eng_.getAcqOrderMode() == AcqOrderMode.POS_TIME_CHANNEL_SLICE ||
+                       eng_.getAcqOrderMode() == AcqOrderMode.POS_TIME_SLICE_CHANNEL)
+                  update = false;  // don't want position to persist if position before frame     
+               if (zSelector_ != null && slice != zSelector_.getMaximum()-zSelector_.getMinimum()-1)
+                  update = false;
+               if (cSelector_ != null && channel != cSelector_.getMaximum()-cSelector_.getMinimum()-1)
+                  update = false;
+               if (update)
+                  setPosition(preferredPosition_);
+            }    
+         }
    }
    
    public boolean firstImage() {
@@ -1130,26 +1159,26 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
       }
       //replace default icon with custom one
       if (selector != null) {
-      try {
-         Component icon = (Component) JavaUtils.getRestrictedFieldValue(
+         try {
+            Component icon = (Component) JavaUtils.getRestrictedFieldValue(
                     selector, ScrollbarWithLabel.class, "icon");
-         selector.remove(icon);
-      } catch (NoSuchFieldException ex) {
-         ReportingUtils.logError(ex);
+            selector.remove(icon);
+         } catch (NoSuchFieldException ex) {
+            ReportingUtils.logError(ex);
+         }
+         ScrollbarIcon newIcon = new ScrollbarIcon(label.charAt(0), this);
+         if (label.equals("z")) {
+            zIcon_ = newIcon;
+         } else if (label.equals("t")) {
+            tIcon_ = newIcon;
+         } else if (label.equals("c")) {
+            cIcon_ = newIcon;
+         }
+
+         selector.add(newIcon, BorderLayout.WEST);
+         selector.invalidate();
+         selector.validate();
       }
-      ScrollbarIcon newIcon = new ScrollbarIcon(label.charAt(0),this);
-      if (label.equals("z"))
-         zIcon_ = newIcon;
-      else if (label.equals("t"))
-         tIcon_ = newIcon;
-      else if (label.equals("c"))
-         cIcon_ = newIcon;
-      
-      selector.add(newIcon,BorderLayout.WEST);
-//      selector.revalidate();
-      selector.invalidate();
-      selector.validate();
-      }     
       return selector;
    }
 
@@ -1173,7 +1202,8 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
       pSelector.addAdjustmentListener(new AdjustmentListener() {
          @Override
          public void adjustmentValueChanged(AdjustmentEvent e) {
-            updatePosition(pSelector.getValue());          
+            updatePosition(pSelector.getValue()); 
+            preferredPosition_ = pSelector_.getValue();
             // ReportingUtils.logMessage("" + pSelector.getValue());
          }
       });
