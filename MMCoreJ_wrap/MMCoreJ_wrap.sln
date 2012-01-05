@@ -195,6 +195,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ESIOImagingControllers", ".
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Cobolt", "..\DeviceAdapters\Cobolt\Cobolt.vcproj", "{7EEA4183-1A52-4DC7-8839-9BEF31B59F98}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "XIMEACamera", "..\DeviceAdapters\Ximea\XIMEACamera.vcproj", "{AFC831A1-1946-43A5-BCA9-1B4618703C20}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
@@ -733,7 +735,7 @@ Global
 		{5B2CC024-EC22-4460-8DE7-FFB70C3F8922}.Debug|x64.ActiveCfg = Debug|Win32
 		{5B2CC024-EC22-4460-8DE7-FFB70C3F8922}.Release|Win32.ActiveCfg = Release|Win32
 		{5B2CC024-EC22-4460-8DE7-FFB70C3F8922}.Release|Win32.Build.0 = Release|Win32
-		{5B2CC024-EC22-4460-8DE7-FFB70C3F8922}.Release|x64.ActiveCfg = Release|Win32
+		{5B2CC024-EC22-4460-8DE7-FFB70C3F8922}.Release|x64.ActiveCfg = Release|x64
 		{43FAA548-FAF6-4F58-8F24-C78C41820E27}.Debug|Win32.ActiveCfg = Debug|Win32
 		{43FAA548-FAF6-4F58-8F24-C78C41820E27}.Debug|Win32.Build.0 = Debug|Win32
 		{43FAA548-FAF6-4F58-8F24-C78C41820E27}.Debug|x64.ActiveCfg = Debug|Win32
@@ -938,6 +940,14 @@ Global
 		{7EEA4183-1A52-4DC7-8839-9BEF31B59F98}.Release|Win32.Build.0 = Release|Win32
 		{7EEA4183-1A52-4DC7-8839-9BEF31B59F98}.Release|x64.ActiveCfg = Release|x64
 		{7EEA4183-1A52-4DC7-8839-9BEF31B59F98}.Release|x64.Build.0 = Release|x64
+		{AFC831A1-1946-43A5-BCA9-1B4618703C20}.Debug|Win32.ActiveCfg = Debug|Win32
+		{AFC831A1-1946-43A5-BCA9-1B4618703C20}.Debug|Win32.Build.0 = Debug|Win32
+		{AFC831A1-1946-43A5-BCA9-1B4618703C20}.Debug|x64.ActiveCfg = Debug|x64
+		{AFC831A1-1946-43A5-BCA9-1B4618703C20}.Debug|x64.Build.0 = Debug|x64
+		{AFC831A1-1946-43A5-BCA9-1B4618703C20}.Release|Win32.ActiveCfg = Release|Win32
+		{AFC831A1-1946-43A5-BCA9-1B4618703C20}.Release|Win32.Build.0 = Release|Win32
+		{AFC831A1-1946-43A5-BCA9-1B4618703C20}.Release|x64.ActiveCfg = Release|x64
+		{AFC831A1-1946-43A5-BCA9-1B4618703C20}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
