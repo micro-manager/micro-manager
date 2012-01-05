@@ -327,7 +327,7 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
                     getAcquisitionImageHeight(SIMPLE_ACQ),
                     getAcquisitionImageByteDepth(SIMPLE_ACQ) );
             
-            addImage(SIMPLE_ACQ,ti, true, true, false);
+            addImage(SIMPLE_ACQ,ti, true, true);
   
       } catch (Exception ex) {
          ReportingUtils.showError(ex);
@@ -376,7 +376,7 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
                     getAcquisitionImageHeight(SIMPLE_ACQ),
                     getAcquisitionImageByteDepth(SIMPLE_ACQ) );
             
-            addImage(SIMPLE_ACQ,ti, true, true, false);
+            addImage(SIMPLE_ACQ,ti, true, true);
   
       } catch (Exception ex) {
          ReportingUtils.showError(ex);
@@ -560,7 +560,7 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
             boolean update = false;
             if (i == c -1)
                update = true;
-            addImage(MULTI_CAMERA_ACQ,ti, update, true, false);
+            addImage(MULTI_CAMERA_ACQ,ti, update, true);
          }
       } catch (Exception ex) {
          ReportingUtils.showError(ex);
@@ -4336,18 +4336,11 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
    public void addImage(String name, TaggedImage taggedImg, boolean updateDisplay) throws MMScriptException {
       acqMgr_.getAcquisition(name).insertImage(taggedImg, updateDisplay);
    }
-
-   public void addImage(String name, TaggedImage taggedImg, 
-           boolean updateDisplay,
-           boolean waitForDisplay) throws MMScriptException {
-      acqMgr_.getAcquisition(name).insertImage(taggedImg, updateDisplay, waitForDisplay);
-   }
    
    public void addImage(String name, TaggedImage taggedImg, 
            boolean updateDisplay,
-           boolean waitForDisplay,
-           boolean allowContrastToChange) throws MMScriptException {
-   acqMgr_.getAcquisition(name).insertImage(taggedImg, updateDisplay, waitForDisplay, allowContrastToChange);
+           boolean waitForDisplay) throws MMScriptException {
+   acqMgr_.getAcquisition(name).insertImage(taggedImg, updateDisplay, waitForDisplay);
 }
    
    public void closeAllAcquisitions() {

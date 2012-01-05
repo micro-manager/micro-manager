@@ -806,12 +806,8 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
    public void showImage(TaggedImage taggedImg, boolean waitForDisplay) throws Exception {
       showImage(taggedImg.tags, waitForDisplay);
    }
-
-   public void showImage(JSONObject md, boolean waitForDisplay) throws Exception {
-      showImage(md,waitForDisplay,true);
-   }
    
-   public void showImage(JSONObject tags, boolean waitForDisplay, boolean allowContrastToChange) throws Exception {
+   public void showImage(JSONObject tags, boolean waitForDisplay) throws Exception {
       updateWindow();
       
       if (tags == null) {
@@ -846,7 +842,7 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
       }
          
      
-      if (frame == 0 && allowContrastToChange) { //Autoscale contrast if this is first image
+      if (frame == 0 && !simple_) { //Autoscale contrast if this is first image
          try {
             TaggedImage image = imageCache_.getImage(superChannel, slice, frame, position);
             if (image != null) {

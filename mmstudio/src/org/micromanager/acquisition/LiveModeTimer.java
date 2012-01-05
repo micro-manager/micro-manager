@@ -65,7 +65,7 @@ public class LiveModeTimer extends javax.swing.Timer {
             while(core_.getRemainingImageCount() == 0) {}  
             TaggedImage ti = core_.getLastTaggedImage();
             addTags(ti);
-            gui_.addImage(acqName_, ti, true, true, false);
+            gui_.addImage(acqName_, ti, true, true);
             
             super.start();
             win_.liveModeEnabled(true);
@@ -98,7 +98,7 @@ public class LiveModeTimer extends javax.swing.Timer {
                try {
                   TaggedImage ti = core_.getLastTaggedImage();
                   addTags(ti);
-                  gui_.addImage(acqName_, ti, true, true, false);
+                  gui_.addImage(acqName_, ti, true, true);
                   gui_.updateLineProfile();
                } catch (Exception ex) {
                   ReportingUtils.showError(ex);
@@ -152,10 +152,10 @@ public class LiveModeTimer extends javax.swing.Timer {
                           int lastChannelToAdd = win_.getHyperImage().getChannel() - 1;
                           for (int i = 0; i < images.length; i++) {
                               if (i != lastChannelToAdd) {
-                                  gui_.addImage(MMStudioMainFrame.MULTI_CAMERA_ACQ, images[i], false, true, false);
+                                  gui_.addImage(MMStudioMainFrame.MULTI_CAMERA_ACQ, images[i], false, true);
                               }
                           }
-                          gui_.addImage(MMStudioMainFrame.MULTI_CAMERA_ACQ, images[lastChannelToAdd], true, true, false);
+                          gui_.addImage(MMStudioMainFrame.MULTI_CAMERA_ACQ, images[lastChannelToAdd], true, true);
                           gui_.updateLineProfile();
 
                       }
