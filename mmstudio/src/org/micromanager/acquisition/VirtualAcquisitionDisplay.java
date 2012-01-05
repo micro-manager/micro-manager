@@ -1189,7 +1189,9 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
       
       pIcon_ = new ScrollbarIcon('p',this);
       pSelector.add(pIcon_,BorderLayout.WEST);
-      pSelector.revalidate();
+      //pSelector.revalidate();
+      pSelector.invalidate();
+      pSelector.validate();
       }
       
       return pSelector;
