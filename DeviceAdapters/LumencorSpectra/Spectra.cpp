@@ -31,7 +31,7 @@
 #include <string>
 #include <math.h>
 //#include "../MMDeviceKit-win-Dev45/MMDevice/ModuleInterface.h"
-#include "..\..\MMDevice\ModuleInterface.h"
+#include "../../MMDevice/ModuleInterface.h"
 #include <sstream>
 
 const char* g_LumencorController = "Lumencor";
@@ -106,6 +106,8 @@ int ClearPort(MM::Device& device, MM::Core& core, std::string port)
 *    VOID
 \****************************************************************************/
  
+
+#ifdef WIN32
 void DbgPrintf(LPTSTR fmt,...    )
 {
     va_list marker;
@@ -120,6 +122,7 @@ void DbgPrintf(LPTSTR fmt,...    )
     OutputDebugString(szBuf);
     OutputDebugString(TEXT("\r\n"));
 }
+#endif
 
 ///////////////////////////////////////////////////////////////////////////////
 // Lumencor
@@ -762,7 +765,7 @@ int Spectra::OnRedEnable(MM::PropertyBase* pProp, MM::ActionType eAct)
 			SendColorEnableCmd(RED,false,&EnableMask);
 		}
 		LogMessage("In OnRedEnable ");
-		OutputDebugString("In OnRedEnable");
+		//OutputDebugString("In OnRedEnable");
    }
    return DEVICE_OK;
 }
