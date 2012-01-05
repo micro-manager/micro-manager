@@ -98,7 +98,6 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
    private int lastFrame_;
    private Timer zAnimationTimer_;
    private Timer tAnimationTimer_;
-   private Component animationIcon_;
    private Component zIcon_, pIcon_, tIcon_, cIcon_;
 
 
@@ -817,6 +816,7 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
          startup(tags);
       }
 
+      int slice = MDUtils.getSliceIndex(tags);      
       int channel = MDUtils.getChannelIndex(tags);
       int frame = MDUtils.getFrameIndex(tags);
       int position = MDUtils.getPositionIndex(tags);
@@ -825,16 +825,7 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
       try {
          new Color(MDUtils.getChannelColor(tags));
       } catch (Exception e) {}
-
-
-      int slice;
-      if (this.acquisitionIsRunning() &&
-              this.getNextWakeTime() > System.currentTimeMillis() &&
-              preferredSlice_ > -1) {
-         slice = preferredSlice_;
-      } else {
-         slice = MDUtils.getSliceIndex(tags);
-      }    
+      
       int superChannel = this.rgbToGrayChannel(MDUtils.getChannelIndex(tags));
 
 
@@ -943,6 +934,12 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
          updateAndDraw();
       }
 
+      
+         if (zSelector_ != null && this.acquisitionIsRunning() &&
+              slice == zSelector_.getMaximum()-2  &&
+              preferredSlice_ > -1) {
+         hyperImage_.setPosition(channel+1, preferredSlice_, frame+1);
+      }
    }
    
    public boolean firstImage() {
