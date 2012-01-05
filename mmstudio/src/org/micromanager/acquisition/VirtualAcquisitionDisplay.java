@@ -1,5 +1,10 @@
 package org.micromanager.acquisition;
 
+import java.awt.event.ActionEvent;
+import java.awt.event.MouseEvent;
+import java.lang.reflect.InvocationTargetException;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import org.micromanager.api.ImageCacheListener;
 import ij.ImageStack;
 import ij.process.LUT;
@@ -13,15 +18,22 @@ import ij.io.FileInfo;
 import ij.measure.Calibration;
 import ij.plugin.Animator;
 import ij.process.ImageProcessor;
+import java.awt.BorderLayout;
+import java.awt.Canvas;
 import java.awt.Color;
+import java.awt.Component;
 import java.awt.Point;
+import java.awt.Scrollbar;
+import java.awt.event.ActionListener;
 import java.awt.event.AdjustmentListener;
+import java.awt.event.MouseListener;
 import java.awt.event.WindowEvent;
 import java.io.File;
 import java.io.IOException;
 import java.util.prefs.Preferences;
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
+import javax.swing.Timer;
 import mmcorej.TaggedImage;
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -80,6 +92,14 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
    private boolean simple_ = false;
    private MetadataPanel mdPanel_;
    private boolean newDisplay_ = false; //used for autostretching on window opening
+   
+   private double framesPerSec_ = 7;
+   private int firstFrame_;
+   private int lastFrame_;
+   private Timer zAnimationTimer_;
+   private Timer tAnimationTimer_;
+   private Component animationIcon_;
+   private Component zIcon_, pIcon_, tIcon_, cIcon_;
 
 
 
@@ -317,13 +337,11 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
       }
       hyperImage_ = createHyperImage(createMMImagePlus(virtualStack_), numGrayChannels, numSlices, numFrames, virtualStack_, controls_);
       applyPixelSizeCalibration(hyperImage_);
-      createWindow(hyperImage_, controls_);
+      createWindow();
       cSelector_ = getSelector("c");
       if (!simple_) {
          tSelector_ = getSelector("t");
          zSelector_ = getSelector("z");
-         if (numFrames > 1 && numSlices == 1)   // in this scenario zselector mistakenly gets set to the tselector
-            zSelector_ = null;
          if (zSelector_ != null) {
             zSelector_.addAdjustmentListener(new AdjustmentListener() {
 
@@ -331,13 +349,15 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
                   preferredSlice_ = zSelector_.getValue();
                }
             });
-         }
+         }      
          if (imageCache_.lastAcquiredFrame() > 1) {
             setNumFrames(1 + imageCache_.lastAcquiredFrame());
          } else {
             setNumFrames(1);
          }
-         setNumSlices(numSlices);
+         configureAnimationControls();
+         //cant use these function because of an imageJ bug
+//         setNumSlices(numSlices);
          setNumPositions(numPositions);
       }
       for (int i = 0; i < numGrayChannels; ++i) {
@@ -347,7 +367,86 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
       updateAndDraw();
       updateWindow();
    }
-
+   
+   private void animateSlices(boolean animate) {
+      if (!animate) {
+         zAnimationTimer_.stop();
+         refreshAnimationIcons();
+         return;
+      }
+      if (tAnimationTimer_ != null)
+         animateFrames(false);
+      if (zAnimationTimer_ == null)
+         zAnimationTimer_ = new Timer((int) (1000.0 / framesPerSec_), new ActionListener() {
+         @Override
+         public void actionPerformed(ActionEvent e) {
+            int slice = hyperImage_.getSlice();
+            if (slice >= zSelector_.getMaximum()-1) 
+               hyperImage_.setPosition(hyperImage_.getChannel(), 1, hyperImage_.getFrame());          
+            else 
+               hyperImage_.setPosition(hyperImage_.getChannel(), slice+1, hyperImage_.getFrame());          
+         }});
+      zAnimationTimer_.setDelay((int) (1000.0 / framesPerSec_));
+      zAnimationTimer_.start();
+      refreshAnimationIcons();
+   }
+   
+   private void animateFrames(boolean animate) {
+      if (!animate) {
+         tAnimationTimer_.stop();
+         refreshAnimationIcons();
+         return;
+      }
+      if (zAnimationTimer_ != null)
+         animateSlices(false);
+      if (tAnimationTimer_ == null)
+         tAnimationTimer_ = new Timer((int) (1000.0 / framesPerSec_), new ActionListener() {
+         @Override
+         public void actionPerformed(ActionEvent e) {
+            int frame = hyperImage_.getFrame();
+            if (frame >= lastFrame_) 
+               hyperImage_.setPosition(hyperImage_.getChannel(), hyperImage_.getSlice(), firstFrame_);          
+            else 
+               hyperImage_.setPosition(hyperImage_.getChannel(), hyperImage_.getSlice(), frame + 1);              
+         }});
+      tAnimationTimer_.setDelay((int) (1000.0 / framesPerSec_));
+      tAnimationTimer_.start();
+      refreshAnimationIcons();
+   }
+   
+   private void refreshAnimationIcons() {
+      zIcon_.repaint();
+      tIcon_.repaint();
+   }
+   
+   private void configureAnimationControls() {
+      firstFrame_ = 1;
+      lastFrame_ = tSelector_!= null ? tSelector_.getMaximum()-1 : 1;
+      if (zIcon_ != null) {
+         zIcon_.addMouseListener(new MouseListener() {
+            public void mousePressed(MouseEvent e) {              
+               animateSlices(zAnimationTimer_ == null || !zAnimationTimer_.isRunning());
+            }     
+            public void mouseClicked(MouseEvent e) {}   
+            public void mouseReleased(MouseEvent e) {}   
+            public void mouseEntered(MouseEvent e) {}      
+            public void mouseExited(MouseEvent e) {}       
+         });
+      }
+      if (tIcon_ != null) {
+         tIcon_.addMouseListener(new MouseListener() {
+            public void mousePressed(MouseEvent e) {              
+               animateFrames(tAnimationTimer_ == null || !tAnimationTimer_.isRunning());
+            }     
+            public void mouseClicked(MouseEvent e) {}   
+            public void mouseReleased(MouseEvent e) {}   
+            public void mouseEntered(MouseEvent e) {}      
+            public void mouseExited(MouseEvent e) {}       
+         });
+      }
+   }
+   
+   
    /**
     * Allows bypassing the prompt to Save
     * @param promptToSave boolean flag
@@ -361,6 +460,13 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
     */
    @Override
    public void imageReceived(final TaggedImage taggedImage) {
+      try {
+         int frame = MDUtils.getFrameIndex(taggedImage.tags);
+         if (frame+1 > lastFrame_)  //lastFrame is 1 based index for scrollbar
+            lastFrame_ = frame+1;
+      } catch (JSONException ex) {
+        ReportingUtils.logError(ex);
+      }
       updateDisplay(taggedImage, false);
       updateAndDraw();
    }
@@ -396,30 +502,7 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
       }
    }
 
-   
-   private ScrollbarWithLabel getSelector(String label) {
-      // label should be "t", "z", or "c"
-      ScrollbarWithLabel selector = null;
-      ImageWindow win = hyperImage_.getWindow();
-      if (win instanceof StackWindow) {
-         try {
-            selector = (ScrollbarWithLabel) JavaUtils.getRestrictedFieldValue((StackWindow) win, StackWindow.class, label + "Selector");
-         } catch (NoSuchFieldException ex) {
-            selector = null;
-            ReportingUtils.logError(ex);
-         }
-      }
-      if (selector == null && label.contentEquals("t") || label.contentEquals("z")) {
-         try {
-            selector = (ScrollbarWithLabel) JavaUtils.getRestrictedFieldValue((StackWindow) win, StackWindow.class, "animationSelector");
-         } catch (NoSuchFieldException ex) {
-            selector = null;
-            ReportingUtils.logError(ex);
-         }
-      }
-      return selector;
-   }
-
+  
 
    public int rgbToGrayChannel(int channelIndex) {
       try {
@@ -1015,91 +1098,63 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
       }
    }
 
-   private void createWindow(final ImagePlus hyperImage, DisplayControls hc) {      
-      final ImageWindow win = new StackWindow(hyperImage) {
-
-         private boolean windowClosingDone_ = false;
-         private boolean closed_ = false;
-         
-         @Override
-         public void windowClosing(WindowEvent e) {
-            if (windowClosingDone_) {
-               return;
-            }
-
-            if (eng_ != null && eng_.isAcquisitionRunning()) {
-               if (!abort()) {
-                  return;
-               }
-            }
-
-            if (imageCache_.getDiskLocation() == null && promptToSave_) {
-               int result = JOptionPane.showConfirmDialog(this,
-                       "This data set has not yet been saved.\n"
-                       + "Do you want to save it?",
-                       "Micro-Manager",
-                       JOptionPane.YES_NO_CANCEL_OPTION);
-
-               if (result == JOptionPane.YES_OPTION) {
-                  if (!saveAs()) {
-                     return;
-                  }
-               } else if (result == JOptionPane.CANCEL_OPTION) {
-                  return;
-               }
-            }
-
-            // push current display settings to cache
-            if (imageCache_ != null) {
-               imageCache_.close();
-            }
-            
-            if (hyperImage != null && hyperImage.getWindow() != null && hyperImage.getWindow().getLocation() != null) {
-               Point loc = hyperImage.getWindow().getLocation();
-               prefs_.putInt(SIMPLE_WIN_X, loc.x);
-               prefs_.putInt(SIMPLE_WIN_Y, loc.y);
-            }
-
-            if (!closed_) {
-               try {
-                  close();
-               } catch (NullPointerException ex) {
-                  ReportingUtils.logError("Null pointer error in ImageJ code while closing window");
-               }
-            }
-            
-            
-            super.windowClosing(e);
-            MMStudioMainFrame.getInstance().removeMMBackgroundListener(this);
-            windowClosingDone_ = true;
-            closed_ = true;
-         }
-
-         @Override
-         public void windowClosed(WindowEvent E) {
-            this.windowClosing(E);
-            super.windowClosed(E);
-         }
-
-         @Override
-         public void windowActivated(WindowEvent e) {
-            if (!isClosed()) {
-               super.windowActivated(e);
-            }
-         }
-      };
-
+   private void createWindow() {      
+      DisplayWindow win = new DisplayWindow(hyperImage_);
 
       win.setBackground(MMStudioMainFrame.getInstance().getBackgroundColor());
       MMStudioMainFrame.getInstance().addMMBackgroundListener(win);
 
-      win.add(hc);
+      win.add(controls_);
       win.pack();
       
       if (simple_ )
          win.setLocation(prefs_.getInt(SIMPLE_WIN_X, 0),prefs_.getInt(SIMPLE_WIN_Y, 0));
    }
 
+    
+   private ScrollbarWithLabel getSelector(String label) {
+      // label should be "t", "z", or "c"
+      ScrollbarWithLabel selector = null;
+      ImageWindow win = hyperImage_.getWindow();
+      int slices = ((IMMImagePlus) hyperImage_).getNSlicesUnverified();
+      int frames = ((IMMImagePlus) hyperImage_).getNFramesUnverified();
+      int channels = ((IMMImagePlus) hyperImage_).getNChannelsUnverified();
+      if (win instanceof StackWindow) {
+         try {
+            //ImageJ bug workaround
+            if (frames > 1 && slices == 1 && label.equals("t"))
+               selector = (ScrollbarWithLabel) JavaUtils.getRestrictedFieldValue((StackWindow) win, StackWindow.class, "zSelector");
+            else
+               selector = (ScrollbarWithLabel) JavaUtils.getRestrictedFieldValue((StackWindow) win, StackWindow.class, label + "Selector");
+         } catch (NoSuchFieldException ex) {
+            selector = null;
+            ReportingUtils.logError(ex);
+         }
+      }
+      //replace default icon with custom one
+      if (selector != null) {
+      try {
+         Component icon = (Component) JavaUtils.getRestrictedFieldValue(
+                    selector, ScrollbarWithLabel.class, "icon");
+         selector.remove(icon);
+      } catch (NoSuchFieldException ex) {
+         ReportingUtils.logError(ex);
+      }
+      ScrollbarIcon newIcon = new ScrollbarIcon(label.charAt(0),this);
+      if (label.equals("z"))
+         zIcon_ = newIcon;
+      else if (label.equals("t"))
+         tIcon_ = newIcon;
+      else if (label.equals("c"))
+         cIcon_ = newIcon;
+      
+      selector.add(newIcon,BorderLayout.WEST);
+      selector.revalidate();
+      }     
+      return selector;
+   }
+
+   
    private ScrollbarWithLabel createPositionScrollbar() {
       final ScrollbarWithLabel pSelector = new ScrollbarWithLabel(null, 1, 1, 1, 2, 'p') {
 
@@ -1117,13 +1172,27 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
       pSelector.setUnitIncrement(1);
       pSelector.setBlockIncrement(1);
       pSelector.addAdjustmentListener(new AdjustmentListener() {
-
          @Override
          public void adjustmentValueChanged(AdjustmentEvent e) {
-            updatePosition(pSelector.getValue());
+            updatePosition(pSelector.getValue());          
             // ReportingUtils.logMessage("" + pSelector.getValue());
          }
       });
+      
+      if (pSelector != null) {
+      try {
+         Component icon = (Component) JavaUtils.getRestrictedFieldValue(
+                    pSelector, ScrollbarWithLabel.class, "icon");
+         pSelector.remove(icon);
+      } catch (NoSuchFieldException ex) {
+         ReportingUtils.logError(ex);
+      }
+      
+      pIcon_ = new ScrollbarIcon('p',this);
+      pSelector.add(pIcon_,BorderLayout.WEST);
+      pSelector.revalidate();
+      }
+      
       return pSelector;
    }
 
@@ -1224,31 +1293,39 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
    }
 
    public void setPlaybackFPS(double fps) {
-      if (hyperImage_ != null) {
-         try {
-            JavaUtils.setRestrictedFieldValue(null, Animator.class,
-                    "animationRate", (double) fps);
-         } catch (NoSuchFieldException ex) {
-            ReportingUtils.showError(ex);
-         }
+            framesPerSec_ = fps;
+      if (zAnimationTimer_ != null && zAnimationTimer_.isRunning()) {
+         animateSlices(false);
+         animateSlices(true);
+      } else if (tAnimationTimer_ != null && tAnimationTimer_.isRunning()) {
+         animateFrames(false);
+         animateFrames(true);
       }
    }
 
    public void setPlaybackLimits(int firstFrame, int lastFrame) {
-      if (hyperImage_ != null) {
-         try {
-            JavaUtils.setRestrictedFieldValue(null, Animator.class,
-                    "firstFrame", firstFrame);
-            JavaUtils.setRestrictedFieldValue(null, Animator.class,
-                    "lastFrame", lastFrame);
-         } catch (NoSuchFieldException ex) {
-            ReportingUtils.showError(ex);
-         }
-      }
+      firstFrame_ = firstFrame;
+      lastFrame_ = lastFrame;
    }
 
    public double getPlaybackFPS() {
-      return Animator.getFrameRate();
+      return framesPerSec_;
+   }
+   
+   public boolean isZAnimated() {
+      if (zAnimationTimer_ != null && zAnimationTimer_.isRunning()) 
+         return true;
+      return false;
+   }
+
+   public boolean isTAnimated() {
+      if (tAnimationTimer_ != null && tAnimationTimer_.isRunning()) 
+         return true;
+      return false;
+   }
+
+   public boolean isAnimated() {
+      return isTAnimated() || isZAnimated();
    }
 
    public String getSummaryComment() {
@@ -1532,4 +1609,94 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
          ReportingUtils.logError(ex);
       }
    }
+   
+   private class DisplayWindow extends StackWindow {
+         private boolean windowClosingDone_ = false;
+         private boolean closed_ = false;
+         
+         public DisplayWindow(ImagePlus ip) {
+            super(ip);
+         }
+         
+         @Override
+         public void windowClosing(WindowEvent e) {
+            if (windowClosingDone_) {
+               return;
+            }
+
+            if (eng_ != null && eng_.isAcquisitionRunning()) {
+               if (!abort()) {
+                  return;
+               }
+            }
+
+            if (imageCache_.getDiskLocation() == null && promptToSave_) {
+               int result = JOptionPane.showConfirmDialog(this,
+                       "This data set has not yet been saved.\n"
+                       + "Do you want to save it?",
+                       "Micro-Manager",
+                       JOptionPane.YES_NO_CANCEL_OPTION);
+
+               if (result == JOptionPane.YES_OPTION) {
+                  if (!saveAs()) {
+                     return;
+                  }
+               } else if (result == JOptionPane.CANCEL_OPTION) {
+                  return;
+               }
+            }
+
+            // push current display settings to cache
+            if (imageCache_ != null) {
+               imageCache_.close();
+            }
+            
+            if (hyperImage_ != null && hyperImage_.getWindow() != null && hyperImage_.getWindow().getLocation() != null) {
+               Point loc = hyperImage_.getWindow().getLocation();
+               prefs_.putInt(SIMPLE_WIN_X, loc.x);
+               prefs_.putInt(SIMPLE_WIN_Y, loc.y);
+            }
+
+            if (!closed_) {
+               try {
+                  close();
+               } catch (NullPointerException ex) {
+                  ReportingUtils.logError("Null pointer error in ImageJ code while closing window");
+               }
+            }
+            
+            
+            super.windowClosing(e);
+            MMStudioMainFrame.getInstance().removeMMBackgroundListener(this);
+            windowClosingDone_ = true;
+            closed_ = true;
+         }
+
+         @Override
+         public void windowClosed(WindowEvent E) {
+            this.windowClosing(E);
+            super.windowClosed(E);
+         }
+
+         @Override
+         public void windowActivated(WindowEvent e) {
+            if (!isClosed()) {
+               super.windowActivated(e);
+            }
+         }
+         
+         @Override
+         public void setAnimate(boolean b) {
+            if ( ((IMMImagePlus) hyperImage_).getNFramesUnverified() > 1 )
+               animateFrames(b);
+            else
+               animateSlices(b);
+         }
+         
+         @Override
+         public boolean getAnimate() {
+            return isAnimated();
+         }
+      };   
+
 }

@@ -801,15 +801,6 @@ public class MetadataPanel extends JPanel
 
    // should be called whenever image changes or sliders are moved  
    public void update(ImagePlus imp) {
-      if (imp != null) {
-         ImageWindow win = imp.getWindow();
-         if (win instanceof StackWindow) {
-            if (((StackWindow) win).getAnimate()) {
-               return;
-            }
-         }
-      }
-      
       int tabSelected = tabbedPane.getSelectedIndex();
       if (imp == null) {
          imageMetadataModel_.setMetadata(null);

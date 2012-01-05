@@ -24,6 +24,7 @@
 package org.micromanager.graph;
 
 import ij.ImagePlus;
+import ij.WindowManager;
 import ij.process.ImageProcessor;
 import ij.process.LUT;
 import ij.process.ShortProcessor;
@@ -527,7 +528,10 @@ public class ContrastPanel extends JPanel implements
 		switch (modeComboBox_.getSelectedIndex()-1) {        
       case -1:
          int bitDepth = 8;
-         if (virtAcq_ != null) {
+         ImagePlus ip = WindowManager.getCurrentImage();
+         if (ip != null)
+            bitDepth = ip.getBitDepth();
+         else if (virtAcq_ != null) {
             try {
                bitDepth = virtAcq_.getCurrentMetadata().getInt("BitDepth");
             } catch (JSONException ex) {
