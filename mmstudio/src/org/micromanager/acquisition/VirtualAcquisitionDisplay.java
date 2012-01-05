@@ -1146,7 +1146,9 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
          cIcon_ = newIcon;
       
       selector.add(newIcon,BorderLayout.WEST);
-      selector.revalidate();
+//      selector.revalidate();
+      selector.invalidate();
+      selector.validate();
       }     
       return selector;
    }
