@@ -55,13 +55,13 @@ public class ZWheelListener implements MouseWheelListener {
       }
    }
    
-   public void start (ImageWindow img) {
+   public void start (ImageWindow win) {
       if (isRunning_)
          stop(); 
 
 	  isRunning_ = true;
-	  if (img != null) {
-		  attach(img);
+	  if (win != null) {
+		  attach(win);
 	  }
    }
 

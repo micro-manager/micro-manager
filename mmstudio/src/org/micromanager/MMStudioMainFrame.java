@@ -2899,6 +2899,7 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
 
             manageShutterLiveMode(enable);
             liveModeTimer_.start();
+            enableLiveModeListeners(enable);
          } catch (Exception ex) {
             enableLiveMode(false);
             ReportingUtils.logError(ex);
@@ -2907,6 +2908,7 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
          try {
             liveModeTimer_.stop();
             manageShutterLiveMode(enable);
+            enableLiveModeListeners(enable);
          } catch (Exception ex) {
             ReportingUtils.logError(ex);
          }
@@ -2941,28 +2943,23 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
       toggleButtonLive_.setText(enable ? "Stop Live" : "Live");
    }
 
-//   private void enableLiveModeListeners(boolean enable) {
-//      if (enable) {
-//         // attach mouse wheel listener to control focus:
-//         if (zWheelListener_ == null) {
-//            zWheelListener_ = new ZWheelListener(core_, this);
-//         }
-//         zWheelListener_.start(imageWin_);
-//
-//         // attach key listener to control the stage and focus:
-//         if (xyzKeyListener_ == null) {
-//            xyzKeyListener_ = new XYZKeyListener(core_, this);
-//         }
-//         xyzKeyListener_.start(imageWin_);
-//      } else {
-//         if (zWheelListener_ != null) {
-//            zWheelListener_.stop();
-//         }
-//         if (xyzKeyListener_ != null) {
-//            xyzKeyListener_.stop();
-//         }
-//      }
-//   }
+   private void enableLiveModeListeners(boolean enable) {
+      if (enable) {
+         // attach mouse wheel listener to control focus:
+         if (zWheelListener_ == null) 
+            zWheelListener_ = new ZWheelListener(core_, this);         
+         zWheelListener_.start(getImageWin());
+         // attach key listener to control the stage and focus:
+         if (xyzKeyListener_ == null) 
+            xyzKeyListener_ = new XYZKeyListener(core_, this);
+         xyzKeyListener_.start(getImageWin());
+      } else {
+         if (zWheelListener_ != null) 
+            zWheelListener_.stop();
+         if (xyzKeyListener_ != null) 
+            xyzKeyListener_.stop();
+      }
+   }
 
    public boolean getLiveMode() {
       return isLiveModeOn();

@@ -135,13 +135,13 @@ public final class XYZKeyListener implements KeyListener {
 		}
 	}
 
-	public void start(ImageWindow img) {
+	public void start(ImageWindow win) {
 		if (isRunning_)
 			stop();
 
 		isRunning_ = true;
-		if (img != null) {
-			attach(img);
+		if (win != null) {
+			attach(win);
 		}
 		getOrientation();
 	}
