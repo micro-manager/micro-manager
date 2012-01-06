@@ -48,7 +48,7 @@ public class LiveModeTimer extends javax.swing.Timer {
             this.addActionListener(singleCameraLiveAction());
             acqName_ = gui_.SIMPLE_ACQ; 
          } else {
-            acqName_ = gui_.MULTI_CAMERA_ACQ;
+            acqName_ = gui_.SIMPLE_ACQ;
             multiChannelCameraNrCh_ = core_.getNumberOfCameraChannels();
             this.addActionListener(multiCamLiveAction());    
          }
@@ -64,7 +64,7 @@ public class LiveModeTimer extends javax.swing.Timer {
             //Add first image here so initial autoscale works correctly
             while(core_.getRemainingImageCount() == 0) {}  
             TaggedImage ti = core_.getLastTaggedImage();
-            addTags(ti);
+            addTags(ti,0);
             gui_.addImage(acqName_, ti, true, true);
             
             super.start();
@@ -97,7 +97,7 @@ public class LiveModeTimer extends javax.swing.Timer {
             else {
                try {
                   TaggedImage ti = core_.getLastTaggedImage();
-                  addTags(ti);
+                  addTags(ti,0);
                   gui_.addImage(acqName_, ti, true, true);
                   gui_.updateLineProfile();
                } catch (Exception ex) {
@@ -117,7 +117,7 @@ public class LiveModeTimer extends javax.swing.Timer {
                if (core_.getRemainingImageCount() == 0) {                  
                   return;
                }
-               if (win_.windowClosed() || !gui_.acquisitionExists(gui_.MULTI_CAMERA_ACQ)) {
+               if (win_.windowClosed() || !gui_.acquisitionExists(gui_.SIMPLE_ACQ)) {
                   gui_.enableLiveMode(false);  //disable live if user closed window
                } else {
                   try {
@@ -147,15 +147,16 @@ public class LiveModeTimer extends javax.swing.Timer {
                         for (channel = 0; channel < images.length; channel++) {
                            ti = images[channel];
                            ti.tags.put("Channel", core_.getCameraChannelName(channel));
-                           addTags(ti);
+                           addTags(ti,channel);
                           }
                           int lastChannelToAdd = win_.getHyperImage().getChannel() - 1;
                           for (int i = 0; i < images.length; i++) {
-                              if (i != lastChannelToAdd) {
-                                  gui_.addImage(MMStudioMainFrame.MULTI_CAMERA_ACQ, images[i], false, true);
+                             System.out.println(i + "    " + images[i].tags.get("ChannelIndex"));
+                             if (i != lastChannelToAdd) {
+                                  gui_.addImage(MMStudioMainFrame.SIMPLE_ACQ, images[i], false, true);
                               }
                           }
-                          gui_.addImage(MMStudioMainFrame.MULTI_CAMERA_ACQ, images[lastChannelToAdd], true, true);
+                          gui_.addImage(MMStudioMainFrame.SIMPLE_ACQ, images[lastChannelToAdd], true, true);
                           gui_.updateLineProfile();
 
                       }
@@ -169,8 +170,8 @@ public class LiveModeTimer extends javax.swing.Timer {
       }
  
       
-      private void addTags(TaggedImage ti) throws JSONException {
-         MDUtils.setChannelIndex(ti.tags, 0);
+      private void addTags(TaggedImage ti, int channel) throws JSONException {
+         MDUtils.setChannelIndex(ti.tags, channel);
          MDUtils.setFrameIndex(ti.tags, 0);
          MDUtils.setPositionIndex(ti.tags, 0);
          MDUtils.setSliceIndex(ti.tags, 0);

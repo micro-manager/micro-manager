@@ -314,7 +314,6 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
    }
    
    private void doSnapColor() {
-//    checkRGBAcquisition();
       checkSimpleAcquisition();
       
       try {
@@ -383,139 +382,42 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
       }
       setCursor(new Cursor(Cursor.DEFAULT_CURSOR));
    }
-
-   private void checkMultiChannelWindow()
-   {
-      int w = (int) core_.getImageWidth();
-      int h = (int)  core_.getImageHeight();
-      int d = (int) core_.getBytesPerPixel();
-      long c = core_.getNumberOfCameraChannels();
-
-      if (c > 1)
-      {
-         try {
-            ArrayList<String> chNames = new ArrayList<String>();
-            for (long i = 0; i < c; i++) {
-               chNames.add(core_.getCameraChannelName(i));
-            }
-               
-            if (acquisitionExists(MULTI_CAMERA_ACQ)) {
-               if (c != (getAcquisition(MULTI_CAMERA_ACQ)).getChannels()) {
-                  closeAcquisitionImage5D(MULTI_CAMERA_ACQ);
-                  closeAcquisition(MULTI_CAMERA_ACQ);
-               }
-               if ( (getAcquisitionImageWidth(MULTI_CAMERA_ACQ) != w) ||
-                    (getAcquisitionImageHeight(MULTI_CAMERA_ACQ) != h) ||
-                    (getAcquisitionImageByteDepth(MULTI_CAMERA_ACQ) != d) ) {
-                  closeAcquisitionImage5D(MULTI_CAMERA_ACQ);
-                  closeAcquisition(MULTI_CAMERA_ACQ);
-               }
-            }
-
-            if (!acquisitionExists(MULTI_CAMERA_ACQ)) {
-               openAcquisition(MULTI_CAMERA_ACQ, "", 1, (int) c, 1, true);
-               for (long i = 0; i < c; i++) {
-                  String chName = core_.getCameraChannelName(i);
-                  int defaultColor = multiCameraColors_[(int)i % multiCameraColors_.length].getRGB();
-                  setChannelColor(MULTI_CAMERA_ACQ, (int) i, 
-                          getChannelColor(chName, defaultColor) );
-                  setChannelName(MULTI_CAMERA_ACQ, (int) i, chName);
-               }
-               initializeAcquisition(MULTI_CAMERA_ACQ, w, h, d);
-               getAcquisition(MULTI_CAMERA_ACQ).promptToSave(false);
-            }
-         } catch (Exception ex) {
-            ReportingUtils.showError(ex);
-         }
-      }
-   }
-   
-//   private void checkMonochromeAcquisition() {
-//      int w = (int) core_.getImageWidth();
-//      int h = (int)  core_.getImageHeight();
-//      int d = (int) core_.getBytesPerPixel();
-//  
-//         try {                        
-//            if (acquisitionExists(MONOCHROME_ACQ)) {             
-//               if ( (getAcquisitionImageWidth(MONOCHROME_ACQ) != w) ||
-//                    (getAcquisitionImageHeight(MONOCHROME_ACQ) != h) ||
-//                    (getAcquisitionImageByteDepth(MONOCHROME_ACQ) != d) )
-//               {
-//                  closeAcquisitionImage5D(MONOCHROME_ACQ);
-//                  closeAcquisition(MONOCHROME_ACQ);
-//                  openAcquisition(MONOCHROME_ACQ, "", 1, 1, 1, true);
-//                  initializeSimpleAcquisition(MONOCHROME_ACQ, w, h, d);
-//                  
-//                  getAcquisition(MONOCHROME_ACQ).promptToSave(false);
-//               }
-//            } else {         
-//            openAcquisition(MONOCHROME_ACQ, "", 1, 1, 1, true);       //creates new acquisition
-//            initializeSimpleAcquisition(MONOCHROME_ACQ, w, h, d);
-//            getAcquisition(MONOCHROME_ACQ).promptToSave(false);
-//            }
-//         } catch (Exception ex) {
-//            ReportingUtils.showError(ex);
-//         }
-//   }
    
  private void checkSimpleAcquisition() {
       int width = (int) core_.getImageWidth();
       int height = (int) core_.getImageHeight();
       int depth = (int) core_.getBytesPerPixel();
       int numCamChannels = (int) core_.getNumberOfCameraChannels();
-  
-         try {                        
-            if (acquisitionExists(SIMPLE_ACQ)) {             
-               if ( (getAcquisitionImageWidth(SIMPLE_ACQ) != width) ||
-                    (getAcquisitionImageHeight(SIMPLE_ACQ) != height) ||
-                    (getAcquisitionImageByteDepth(SIMPLE_ACQ) != depth) ||
-                    (getAcquisitionMultiCamNumChannels(SIMPLE_ACQ) != numCamChannels) )
-               {  //Need to close and reopen simple window
-                  closeAcquisitionImage5D(SIMPLE_ACQ);
-                  closeAcquisition(SIMPLE_ACQ); 
-                  openAcquisition(SIMPLE_ACQ, "", 1, 1, 1, true);
-                  initializeSimpleAcquisition(SIMPLE_ACQ, width, height, depth, numCamChannels);
-                  getAcquisition(SIMPLE_ACQ).promptToSave(false);
-               }
-            } else {         
-            openAcquisition(SIMPLE_ACQ, "", 1, 1, 1, true);       //creates new acquisition
-            initializeSimpleAcquisition(SIMPLE_ACQ, width, height, depth,numCamChannels);
-            getAcquisition(SIMPLE_ACQ).promptToSave(false);
+
+      try {
+         if (acquisitionExists(SIMPLE_ACQ)) {
+            if ((getAcquisitionImageWidth(SIMPLE_ACQ) != width)
+                    || (getAcquisitionImageHeight(SIMPLE_ACQ) != height)
+                    || (getAcquisitionImageByteDepth(SIMPLE_ACQ) != depth)
+                    || (getAcquisitionMultiCamNumChannels(SIMPLE_ACQ) != numCamChannels)) {  //Need to close and reopen simple window
+               closeAcquisitionImage5D(SIMPLE_ACQ);
+               closeAcquisition(SIMPLE_ACQ);
             }
-         } catch (Exception ex) {
-            ReportingUtils.showError(ex);
          }
+         if (!acquisitionExists(SIMPLE_ACQ)) {
+            openAcquisition(SIMPLE_ACQ, "", 1, numCamChannels, 1, true);
+            if (numCamChannels > 1) {
+               for (long i = 0; i < numCamChannels; i++) {
+                  String chName = core_.getCameraChannelName(i);
+                  int defaultColor = multiCameraColors_[(int) i % multiCameraColors_.length].getRGB();
+                  setChannelColor(SIMPLE_ACQ, (int) i,
+                          getChannelColor(chName, defaultColor));
+                  setChannelName(SIMPLE_ACQ, (int) i, chName);
+               }
+            }
+            initializeSimpleAcquisition(SIMPLE_ACQ, width, height, depth, numCamChannels);
+            getAcquisition(SIMPLE_ACQ).promptToSave(false);
+         }
+      } catch (Exception ex) {
+         ReportingUtils.showError(ex);
+      }
 
    }
-   
-//   private void checkRGBAcquisition() {
-//      int w = (int) core_.getImageWidth();
-//      int h = (int)  core_.getImageHeight();
-//      int d = (int) core_.getBytesPerPixel();
-//  
-//         try {                        
-//            if (acquisitionExists(RGB_ACQ)) {             
-//               if ( (getAcquisitionImageWidth(RGB_ACQ) != w) ||
-//                    (getAcquisitionImageHeight(RGB_ACQ) != h) ||
-//                    (getAcquisitionImageByteDepth(RGB_ACQ) != d) )
-//               {
-//                  closeAcquisitionImage5D(RGB_ACQ);
-//                  closeAcquisition(RGB_ACQ);
-//                  openAcquisition(RGB_ACQ, "", 1, 1, 1, true);
-//                  initializeSimpleAcquisition(RGB_ACQ, w, h, d);
-//                  
-//                  getAcquisition(RGB_ACQ).promptToSave(false);
-//               }
-//            } else {         
-//            openAcquisition(RGB_ACQ, "", 1, 1, 1, true);       //creates new acquisition
-//            initializeSimpleAcquisition(RGB_ACQ, w, h, d);
-//            getAcquisition(RGB_ACQ).promptToSave(false);
-//            }
-//         } catch (Exception ex) {
-//            ReportingUtils.showError(ex);
-//         }
-//
-//   }
    
    public void saveChannelColor(String chName, int rgb)
    {
@@ -540,27 +442,24 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
     */
    private void doSnapMultiCamera()
    {
-      checkMultiChannelWindow();
+      checkSimpleAcquisition();
 
       try {
          setCursor(new Cursor(Cursor.WAIT_CURSOR));
          core_.snapImage();
-         getAcquisition(MULTI_CAMERA_ACQ).toFront();
+         getAcquisition(SIMPLE_ACQ).toFront();
          long c = core_.getNumberOfCameraChannels();
 
          for (int i = 0; i < c; i++) {
             TaggedImage ti = ImageUtils.makeTaggedImage(core_.getImage(i),
-                    i,
-                    0,
-                    0,
-                    0,
-                    getAcquisitionImageWidth(MULTI_CAMERA_ACQ),
-                    getAcquisitionImageHeight(MULTI_CAMERA_ACQ),
-                    getAcquisitionImageByteDepth(MULTI_CAMERA_ACQ) );
+                    i,0, 0, 0,
+                    getAcquisitionImageWidth(SIMPLE_ACQ),
+                    getAcquisitionImageHeight(SIMPLE_ACQ),
+                    getAcquisitionImageByteDepth(SIMPLE_ACQ) );
             boolean update = false;
             if (i == c -1)
                update = true;
-            addImage(MULTI_CAMERA_ACQ,ti, update, true);
+            addImage(SIMPLE_ACQ,ti, update, true);
          }
       } catch (Exception ex) {
          ReportingUtils.showError(ex);
@@ -3064,8 +2963,8 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
      private void enableMultiCameraLiveMode(boolean enable) {
         if (enable) {        
             try {              
-               checkMultiChannelWindow();
-               getAcquisition(MULTI_CAMERA_ACQ).toFront();
+               checkSimpleAcquisition();
+               getAcquisition(SIMPLE_ACQ).toFront();
   
                setLiveModeInterval();
                if (liveModeTimer_ == null) 
