@@ -260,8 +260,6 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
    private AcquisitionManager acqMgr_;
    private static VirtualAcquisitionDisplay simpleDisplay_;
    private Color[] multiCameraColors_ = {Color.RED, Color.GREEN, Color.BLUE, Color.YELLOW, Color.CYAN};
-   private boolean multiChannelCamera_ = false;
-   private long multiChannelCameraNrCh_ = 0;
    private int snapCount_ = -1;
    private boolean liveModeSuspended_;
    public Font defaultScriptFont_ = null;
@@ -410,6 +408,7 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
             }
             initializeSimpleAcquisition(SIMPLE_ACQ, width, height, depth, numCamChannels);
             getAcquisition(SIMPLE_ACQ).promptToSave(false);
+            getAcquisition(SIMPLE_ACQ).toFront();
          }
       } catch (Exception ex) {
          ReportingUtils.showError(ex);
@@ -2888,19 +2887,30 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
    }
    
    public void enableLiveMode(boolean enable) {
-      if (core_ == null)
+      if (core_ == null) 
          return;
-      if (enable == isLiveModeOn() )
+      if (enable == isLiveModeOn()) 
          return;
-      if (core_.getNumberOfComponents() == 1) { //monochrome or multi camera
-         multiChannelCameraNrCh_ = core_.getNumberOfCameraChannels();
-         if (multiChannelCameraNrCh_ > 1) {
-            multiChannelCamera_ = true;
-            enableMultiCameraLiveMode(enable);
-        } else
-            enableSingleCameraLiveMode(enable);
-      } else 
-         enableSingleCameraLiveMode(enable);    
+      if (enable) {
+         try {
+            checkSimpleAcquisition();
+            if (liveModeTimer_ == null) 
+               liveModeTimer_ = new LiveModeTimer(33);
+
+            manageShutterLiveMode(enable);
+            liveModeTimer_.start();
+         } catch (Exception ex) {
+            enableLiveMode(false);
+            ReportingUtils.logError(ex);
+         }
+      } else {
+         try {
+            liveModeTimer_.stop();
+            manageShutterLiveMode(enable);
+         } catch (Exception ex) {
+            ReportingUtils.logError(ex);
+         }
+      }
       updateButtonsForLiveMode(enable);
    }
    
@@ -2953,54 +2963,6 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
 //         }
 //      }
 //   }
-   
-     private void enableMultiCameraLiveMode(boolean enable) {
-        if (enable) {        
-            try {              
-               checkSimpleAcquisition();
-               getAcquisition(SIMPLE_ACQ).toFront();
-  
-               if (liveModeTimer_ == null) 
-                  liveModeTimer_ = new LiveModeTimer(33);
-               manageShutterLiveMode(enable);
-               liveModeTimer_.start(); 
-          
-            } catch (Exception err) {
-               ReportingUtils.showError(err, "Failed to enable live mode.");
-            }
-         } else {                    
-            try {
-              liveModeTimer_.stop();
-                 manageShutterLiveMode(enable);
-//                 enableLiveModeListeners(false);
-            } catch (Exception err) {
-               ReportingUtils.showError(err, "Failed to disable live mode.");              
-            }
-         }
-     }
-   
-   private void enableSingleCameraLiveMode(boolean enable) {
-      if (enable) {
-         try {
-            if (liveModeTimer_ == null) 
-               liveModeTimer_ = new LiveModeTimer(33);
-         
-            checkSimpleAcquisition();
- 
-            manageShutterLiveMode(enable);
-            liveModeTimer_.start();     
-         } catch (Exception ex) {
-            ReportingUtils.logError(ex);
-         }
-      } else {
-         try {
-            liveModeTimer_.stop();
-            manageShutterLiveMode(enable);
-         } catch (Exception ex) {
-            ReportingUtils.logError(ex);
-         }
-      }
-   }
 
    public boolean getLiveMode() {
       return isLiveModeOn();
