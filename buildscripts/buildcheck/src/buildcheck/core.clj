@@ -91,11 +91,23 @@
            32 "bin_Win32"
            64 "bin_x64")))
 
+(defn get-dll-names [bits]
+  (map dll-name (device-adapter-dlls (bin-dir bits))))
+
 (defn missing-device-adapters [bits]
-  (let [dll-names (map dll-name (device-adapter-dlls (bin-dir bits)))
+  (let [dll-names (get-dll-names bits)
         project-names (map project-name (device-vcproj-files))]
     (sort (clojure.set/difference (set project-names) (set dll-names)))))
      
+(defn device-pages []
+  (let [index-txt (slurp "http://valelab.ucsf.edu/~MM/MMwiki/index.php/Device%20Support")]
+    (map second (re-seq #"a href=\"/~MM/MMwiki/index.php/(.*?)\"" index-txt))))
+
+(defn missing-device-pages [bits]
+  (let [dll-names (get-dll-names bits)
+        device-page-names (device-pages)]
+    (sort (clojure.set/difference (set dll-names) (set device-page-names)))))
+
 (defn str-lines [sequence]
   (apply str (interpose "\n" sequence)))
 
@@ -107,7 +119,8 @@
         javac-errs (javac-errors result-txt)
         outdated-jars (old-jars (File. micromanager "Install_AllPlatforms") 24)
         installer-ok (exe-on-server? bits today-token)
-        missing-adapters (missing-device-adapters bits)]
+        missing-adapters (missing-device-adapters bits)
+        missing-pages (missing-device-pages bits)]
     (when-not (and (empty? vs-error-text) (empty? outdated-dlls)
                    (empty? javac-errs) (empty? outdated-jars)
                    installer-ok)
@@ -140,6 +153,12 @@
         (if installer-ok
           "Yes"
           "No. (build missing)\n")
+        (when (= 32 bits)
+          (str
+            "\n\nMissing device pages:\n"
+            (if-not (empty? missing-pages)
+              (str-lines missing-pages)
+              "None.")))
       ))))
 
 (defn make-full-report [mode send?]
