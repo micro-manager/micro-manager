@@ -218,7 +218,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="m3api.lib"
-				OutputFile="$(OutDir)\mmgr_dal_XIMEA.dll"
+				OutputFile="$(OutDir)\mmgr_dal_$(ProjectName).dll"
 				LinkIncremental="1"
 				AdditionalLibraryDirectories="..\..\..\3rdparty\Ximea\Lib;&quot;$(SolutionDir)\Lib&quot;"
 				GenerateDebugInformation="true"
