@@ -229,8 +229,6 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
    private String startupScriptFile_;
    private String sysStateFile_ = "MMSystemState.cfg";
    private ConfigGroupPad configPad_;
-   // Timer interval - image display interval
-   private double liveModeInterval_ = 33;
    private LiveModeTimer liveModeTimer_;
    private GraphData lineProfileData_;
    // labels for standard devices
@@ -2285,9 +2283,6 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
          double exposure = core_.getExposure();
          textFieldExp_.setText(NumberUtils.doubleToDisplayString(exposure));
 
-         // Interval for Live Mode changes as well
-         setLiveModeInterval();
-
       } catch (Exception exp) {
          // Do nothing.
       }
@@ -2897,7 +2892,6 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
          return;
       if (enable == isLiveModeOn() )
          return;
-      setLiveModeInterval();
       if (core_.getNumberOfComponents() == 1) { //monochrome or multi camera
          multiChannelCameraNrCh_ = core_.getNumberOfCameraChannels();
          if (multiChannelCameraNrCh_ > 1) {
@@ -2966,10 +2960,8 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
                checkSimpleAcquisition();
                getAcquisition(SIMPLE_ACQ).toFront();
   
-               setLiveModeInterval();
                if (liveModeTimer_ == null) 
-                  liveModeTimer_ = new LiveModeTimer((int) liveModeInterval_ );
-               liveModeTimer_.setDelay((int) liveModeInterval_);
+                  liveModeTimer_ = new LiveModeTimer(33);
                manageShutterLiveMode(enable);
                liveModeTimer_.start(); 
           
@@ -2990,10 +2982,8 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
    private void enableSingleCameraLiveMode(boolean enable) {
       if (enable) {
          try {
-            setLiveModeInterval();
             if (liveModeTimer_ == null) 
-               liveModeTimer_ = new LiveModeTimer((int) liveModeInterval_);
-            liveModeTimer_.setDelay((int) liveModeInterval_);
+               liveModeTimer_ = new LiveModeTimer(33);
          
             checkSimpleAcquisition();
  
@@ -3014,10 +3004,6 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
 
    public boolean getLiveMode() {
       return isLiveModeOn();
-   }
-   
-   public double getLiveModeInterval() {
-      return liveModeInterval_;
    }
 
    public boolean updateImage() {
@@ -4614,22 +4600,6 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
          }
       }
 
-   }
-
-   /**
-    *
-    */
-   private void setLiveModeInterval() {
-      double interval = 33.0;
-      try {
-         if (core_.getExposure() > 33.0) {
-            interval = core_.getExposure();
-         }
-      } catch (Exception ex) {
-         ReportingUtils.showError(ex);
-      }
-
-      liveModeInterval_ = interval;
    }
 
    public void logMessage(String msg) {

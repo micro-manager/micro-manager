@@ -6,16 +6,11 @@ package org.micromanager.acquisition;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.lang.reflect.InvocationTargetException;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-import javax.swing.SwingUtilities;
 import mmcorej.CMMCore;
 import mmcorej.TaggedImage;
 import org.json.JSONException;
 import org.micromanager.MMStudioMainFrame;
 import org.micromanager.utils.MDUtils;
-import org.micromanager.utils.MMScriptException;
 import org.micromanager.utils.ReportingUtils;
 
 /**
@@ -23,15 +18,13 @@ import org.micromanager.utils.ReportingUtils;
  * @author Henry
  */
 public class LiveModeTimer extends javax.swing.Timer {
-
-      public static final int SINGLE_CAMERA = 1, MULTI_CAMERA = 2;
       private static final String CCHANNELINDEX = "CameraChannelIndex";
       private static final String ACQ_NAME = MMStudioMainFrame.SIMPLE_ACQ;
 
       private VirtualAcquisitionDisplay win_;
       private CMMCore core_;
       private MMStudioMainFrame gui_;
-      private long multiChannelCameraNrCh_;      
+      private long multiChannelCameraNrCh_; 
 
       public LiveModeTimer(int delay) {
          super(delay, null);
@@ -39,6 +32,16 @@ public class LiveModeTimer extends javax.swing.Timer {
          core_ = gui_.getCore();
       }
 
+      private void setInterval() {
+         double interval = 33;
+         try {
+            interval = Math.max(core_.getExposure(), 33);
+         } catch (Exception e) {
+            ReportingUtils.logError(e);
+         }
+         this.setDelay((int) interval);
+      }
+      
      private void setType() {
       if (!super.isRunning()) {
          ActionListener[] listeners = super.getActionListeners();
@@ -58,6 +61,7 @@ public class LiveModeTimer extends javax.swing.Timer {
          try {
             win_ = gui_.getSimpleDisplay();   
             setType();
+            setInterval();
             core_.startContinuousSequenceAcquisition(0);
             
             //Add first image here so initial autoscale works correctly

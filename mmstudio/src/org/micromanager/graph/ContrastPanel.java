@@ -122,8 +122,7 @@ public class ContrastPanel extends JPanel implements
 	public ContrastPanel() {
 		super();
 
-      numFramesForSlowHist_ = (int) (SLOW_HIST_UPDATE_TIME_MS
-              / MMStudioMainFrame.getInstance().getLiveModeInterval() );
+      numFramesForSlowHist_ = (int) (SLOW_HIST_UPDATE_TIME_MS / 33.0 );
       HistogramUtils h = new HistogramUtils(null);
       fractionToReject_ = h.getFractionToReject(); // get the default value
 		setToolTipText("Switch between linear and log histogram");
@@ -430,8 +429,7 @@ public class ContrastPanel extends JPanel implements
 			public void stateChanged(ChangeEvent ce) {
             slowHistogram_ = slowHistogramCheckBox_.isSelected();
             if (slowHistogram_) {
-               numFramesForSlowHist_ = (int) (SLOW_HIST_UPDATE_TIME_MS
-                       / MMStudioMainFrame.getInstance().getLiveModeInterval() );
+               numFramesForSlowHist_ = (int) (SLOW_HIST_UPDATE_TIME_MS / 33.0 );
                slowHistogramCount_ = numFramesForSlowHist_;
                calcHistogram_ = false;
             }
