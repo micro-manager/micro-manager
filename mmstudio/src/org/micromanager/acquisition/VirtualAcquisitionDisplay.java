@@ -82,6 +82,7 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
    private int preferredSlice_ = -1;
    private int preferredPosition_ = -1;
    private int preferredChannel_ = -1;
+   private Timer preferredPositionTimer_;
 
    private int numComponents_;
    private ImagePlus hyperImage_;
@@ -828,19 +829,7 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
          new Color(MDUtils.getChannelColor(tags));
       } catch (Exception e) {}
       
-      int superChannel = this.rgbToGrayChannel(MDUtils.getChannelIndex(tags));
-
-
-      if (hyperImage_.getClass().equals(MMCompositeImage.class)) {
-         boolean[] active = ((MMCompositeImage) hyperImage_ ).getActiveChannels();
-         for (int k = 0; k < active.length; k++) {
-          if (active[k]) {
-             superChannel += k;           //allows selected channel to persist in 
-             break;                    //Composite or Grayscale display modes in RGB live mode
-          }  
-         }
-      }
-         
+      int superChannel = this.rgbToGrayChannel(MDUtils.getChannelIndex(tags));        
      
       if (frame == 0 && !simple_) { //Autoscale contrast if this is first image
          try {
@@ -882,7 +871,6 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
 
       if (channelName != null)
          setChannelName(channel, channelName);
-
       if (channelColor != null)
          setChannelColor(superChannel, channelColor.getRGB());
 
@@ -892,39 +880,21 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
                this.setNumFrames(1 + frame);
             }
          }
-
-         try {
-            int p = 1 + MDUtils.getPositionIndex(tags);
-            if (p >= getNumPositions()) {
-               setNumPositions(p);
-            }
-            setPosition(MDUtils.getPositionIndex(tags));
-            if (MDUtils.isRGB(tags)) {
-               hyperImage_.setPosition(1 + superChannel,
-                       1 + MDUtils.getSliceIndex(tags),
-                       1 + MDUtils.getFrameIndex(tags));
-            } else {
-               hyperImage_.setPositionWithoutUpdate(1 + channel,
-                       1 + MDUtils.getSliceIndex(tags),
-                       1 + MDUtils.getFrameIndex(tags));
-            }
-         } catch (Exception e) {
-            ReportingUtils.logError(e);
+         if (position + 1 >= getNumPositions()) {
+            setNumPositions(position + 1);
          }
+         setPosition(position);
+         hyperImage_.setPosition(1 + superChannel, 1 + slice, 1 + frame);
       }
 
-      // Make sure image is shown if it is a single plane:
-      if (hyperImage_.getStackSize() == 1) {
-         hyperImage_.getProcessor().setPixels(
-                 hyperImage_.getStack().getPixels(1));
-      }
+      // Make sure image is shown if it is a single plane: (ImageJ workaround)
+      if (hyperImage_.getStackSize() == 1)
+         hyperImage_.getProcessor().setPixels(hyperImage_.getStack().getPixels(1));
       
       Runnable updateAndDraw = new Runnable() {
          public void run() {
             updateAndDraw();
-         }
-            
-      };
+         }  };
 
       if (!SwingUtilities.isEventDispatchThread()) {
          if (waitForDisplay) {
@@ -936,35 +906,32 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
          updateAndDraw();
       }
 
-      setPreferredScrollbarPositions(channel,slice,frame,position);        
+      setPreferredScrollbarPositions();        
    }
    
-   private void setPreferredScrollbarPositions(int channel, int slice, int frame, int position) {
-      if (this.acquisitionIsRunning() ) {            
-            //add channel persistance
-            boolean cReady = false, zReady = false;
-            if (cSelector_ == null || channel == cSelector_.getMaximum()-cSelector_.getMinimum()-1)
-               cReady = true;
-            if (zSelector_ == null || slice == zSelector_.getMaximum()-zSelector_.getMinimum()-1)
-               zReady = true; 
-            if (cReady && zReady)
-               hyperImage_.setPosition(preferredChannel_ == -1 ? channel+1 : preferredChannel_, 
-                       preferredSlice_ == -1 ? slice+1:preferredSlice_, frame+1);
-            
-            if (pSelector_ != null && position == pSelector_.getMaximum()-pSelector_.getMinimum()-1
-                    && preferredPosition_ > -1) {
-                  boolean update = true;
-               if (eng_.getAcqOrderMode() == AcqOrderMode.POS_TIME_CHANNEL_SLICE ||
-                       eng_.getAcqOrderMode() == AcqOrderMode.POS_TIME_SLICE_CHANNEL)
-                  update = false;  // don't want position to persist if position before frame     
-               if (zSelector_ != null && slice != zSelector_.getMaximum()-zSelector_.getMinimum()-1)
-                  update = false;
-               if (cSelector_ != null && channel != cSelector_.getMaximum()-cSelector_.getMinimum()-1)
-                  update = false;
-               if (update)
-                  setPosition(preferredPosition_);
-            }    
+   private void setPreferredScrollbarPositions() {
+      if (this.acquisitionIsRunning() ) {
+         long nextImageTime = eng_.getNextWakeTime();
+         if(System.nanoTime()/1000000 - nextImageTime < -1000 ){ //1 sec or more until next start
+            if (preferredPositionTimer_ == null)
+               preferredPositionTimer_ = new Timer(1000, new ActionListener() {
+                  @Override
+                  public void actionPerformed(ActionEvent e) {
+                     IMMImagePlus ip = ((IMMImagePlus) hyperImage_ );
+                     int c = ip.getNChannelsUnverified(), s = ip.getNSlicesUnverified(), f = ip.getNFramesUnverified();
+                     hyperImage_.setPosition(preferredChannel_ == -1 ? c : preferredChannel_,
+                             preferredSlice_ == -1 ? s : preferredSlice_, f);
+                     if (pSelector_ != null && preferredPosition_ > -1) 
+                        if (eng_.getAcqOrderMode() != AcqOrderMode.POS_TIME_CHANNEL_SLICE
+                                && eng_.getAcqOrderMode() != AcqOrderMode.POS_TIME_SLICE_CHANNEL) 
+                           setPosition(preferredPosition_);
+                     preferredPositionTimer_.stop();;
+                  }});
+            if (preferredPositionTimer_.isRunning())
+               return;
+            preferredPositionTimer_.start();
          }
+      }
    }
    
    public boolean firstImage() {
@@ -1144,7 +1111,7 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
       if (win instanceof StackWindow) {
          try {
             //ImageJ bug workaround
-            if (frames > 1 && slices == 1 && label.equals("t"))
+            if (frames > 1 && slices == 1 && channels == 1 && label.equals("t"))
                selector = (ScrollbarWithLabel) JavaUtils.getRestrictedFieldValue((StackWindow) win, StackWindow.class, "zSelector");
             else
                selector = (ScrollbarWithLabel) JavaUtils.getRestrictedFieldValue((StackWindow) win, StackWindow.class, label + "Selector");
