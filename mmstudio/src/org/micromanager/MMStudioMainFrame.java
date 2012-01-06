@@ -2846,11 +2846,17 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
          if (xyzKeyListener_ == null) 
             xyzKeyListener_ = new XYZKeyListener(core_, this);
          xyzKeyListener_.start(getImageWin());
+         if (centerAndDragListener_ == null)
+            centerAndDragListener_ = new CenterAndDragListener(core_, this);
+         centerAndDragListener_.start();
+         
       } else {
          if (zWheelListener_ != null) 
             zWheelListener_.stop();
          if (xyzKeyListener_ != null) 
             xyzKeyListener_.stop();
+         if (centerAndDragListener_ != null)
+            centerAndDragListener_.stop();
       }
    }
 
@@ -3075,12 +3081,6 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
          // Rebuild stage list in XY PositinList
          if (posListDlg_ != null) {
             posListDlg_.rebuildAxisList();
-         }
-
-         // Mouse moves stage
-         centerAndDragListener_ = new CenterAndDragListener(core_, gui_);
-         if (centerAndDragMenuItem_.isSelected()) {
-            centerAndDragListener_.start();
          }
 
          updateGUI(true);
