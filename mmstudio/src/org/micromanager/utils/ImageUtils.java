@@ -3,6 +3,7 @@ package org.micromanager.utils;
 import ij.ImagePlus;
 import ij.process.ByteProcessor;
 import ij.process.ColorProcessor;
+import ij.process.FloatProcessor;
 import ij.process.ImageProcessor;
 import ij.process.LUT;
 import ij.process.ShortProcessor;
@@ -82,6 +83,8 @@ public class ImageUtils {
                return new ByteProcessor(w, h, (byte[]) imgArray, null);
             case ImagePlus.GRAY16:
                return new ShortProcessor(w, h, (short[]) imgArray, null);
+            case ImagePlus.GRAY32:
+               return new FloatProcessor(w,h, (float[]) imgArray, null);
             case ImagePlus.COLOR_RGB:
                return new ColorProcessor(w, h, (int[]) imgArray);
             default:
@@ -95,6 +98,8 @@ public class ImageUtils {
          return new ByteProcessor(w, h);
       } else if (type == ImagePlus.GRAY16) {
          return new ShortProcessor(w, h);
+      } else if (type == ImagePlus.GRAY32) {
+         return new FloatProcessor(w,h);
       } else if (type == ImagePlus.COLOR_RGB) {
          return new ColorProcessor(w, h);
       } else {

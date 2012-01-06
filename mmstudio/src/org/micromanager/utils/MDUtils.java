@@ -145,6 +145,8 @@ public class MDUtils {
                return "GRAY8";
             else if (ijType == ImagePlus.GRAY16)
                return "GRAY16";
+            else if (ijType == ImagePlus.GRAY32)
+               return "GRAY32";
             else if (ijType == ImagePlus.COLOR_RGB)
                return "RGB32";
             else throw new MMScriptException("Can't figure out pixel type");
@@ -208,6 +210,8 @@ public class MDUtils {
          return ImagePlus.GRAY8;
       } else if (pixelType.contentEquals("GRAY16")) {
          return ImagePlus.GRAY16;
+      } else if (pixelType.contentEquals("GRAY32")) {          
+         return ImagePlus.GRAY32;
       } else if (pixelType.contentEquals("RGB32")) {
          return ImagePlus.GRAY8;
       } else if (pixelType.contentEquals("RGB64")) {
@@ -223,6 +227,8 @@ public class MDUtils {
            return 1;
       else if (pixelType.contentEquals("GRAY16"))
            return 1;
+      else if (pixelType.contentEquals("GRAY32"))
+         return 1;
       else if (pixelType.contentEquals("RGB32"))
            return 3;
       else if (pixelType.contentEquals("RGB64"))
@@ -238,6 +244,10 @@ public class MDUtils {
 
    public static boolean isGRAY16(JSONObject map) throws JSONException, MMScriptException {
       return getPixelType(map).contentEquals("GRAY16");
+   }
+   
+   public static boolean isGRAY32(JSONObject map) throws JSONException, MMScriptException {
+      return getPixelType(map).contentEquals("GRAY32");
    }
 
    public static boolean isRGB32(JSONObject map) throws JSONException, MMScriptException {
@@ -265,7 +275,7 @@ public class MDUtils {
    }
 
    public static boolean isGRAY(JSONObject map) throws JSONException, MMScriptException {
-      return (isGRAY8(map) || isGRAY16(map));
+      return (isGRAY8(map) || isGRAY16(map) || isGRAY32(map));
    }
 
    public static boolean isRGB(JSONObject map) throws JSONException, MMScriptException {

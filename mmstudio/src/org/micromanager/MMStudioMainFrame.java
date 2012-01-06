@@ -305,76 +305,6 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
       simpleDisplay_ = new VirtualAcquisitionDisplay(cache, name);  
    }
    
-   private void doSnapColor() {
-      checkSimpleAcquisition();
-      
-      try {
-         setCursor(new Cursor(Cursor.WAIT_CURSOR));
-         core_.snapImage();
-         getAcquisition(SIMPLE_ACQ).toFront();
-         
-            TaggedImage ti = ImageUtils.makeTaggedImage(core_.getImage(), 0, 0, 0, 0,
-                    getAcquisitionImageWidth(SIMPLE_ACQ),
-                    getAcquisitionImageHeight(SIMPLE_ACQ),
-                    getAcquisitionImageByteDepth(SIMPLE_ACQ) );
-            
-            addImage(SIMPLE_ACQ,ti, true, true);
-  
-      } catch (Exception ex) {
-         ReportingUtils.showError(ex);
-      }
-      setCursor(new Cursor(Cursor.DEFAULT_CURSOR));
-      
-      
-   }
-   
-   private void doSnapFloat() {
-      try {
-         // just a test harness
-         core_.snapImage();
-         byte[] byteImage = (byte[]) core_.getImage();
-         int  ii = (int)core_.getImageWidth();
-         int   jj = (int)core_.getImageHeight();
-         int   npoints = ii*jj;
-         float[] floatImage = new float[npoints];
-
-         ImagePlus implus = new ImagePlus();
-         int iiterator = 0;
-         int oiterator = 0;
-         for (; oiterator < npoints; ++oiterator) {
-            floatImage[oiterator] = Float.intBitsToFloat(((int) byteImage[iiterator+3 ] << 24) + ((int) byteImage[iiterator + 2] << 16) + ((int) byteImage[iiterator + 1] << 8) + (int) byteImage[iiterator]);
-            iiterator += 4;
-         }
-         FloatProcessor fp = new FloatProcessor(ii, jj, floatImage, null);
-         implus.setProcessor(fp);
-         ImageWindow iwindow = new ImageWindow(implus);
-         WindowManager.setCurrentWindow(iwindow);
-      } catch (Exception ex) {
-         ReportingUtils.showError(ex);
-      }
-   }
-   
-   private void doSnapMonochrome() {
-      checkSimpleAcquisition();
-      
-      try {
-         setCursor(new Cursor(Cursor.WAIT_CURSOR));
-         core_.snapImage();
-         getAcquisition(SIMPLE_ACQ).toFront();
-         
-            TaggedImage ti = ImageUtils.makeTaggedImage(core_.getImage(), 0, 0, 0, 0,
-                    getAcquisitionImageWidth(SIMPLE_ACQ),
-                    getAcquisitionImageHeight(SIMPLE_ACQ),
-                    getAcquisitionImageByteDepth(SIMPLE_ACQ) );
-            
-            addImage(SIMPLE_ACQ,ti, true, true);
-  
-      } catch (Exception ex) {
-         ReportingUtils.showError(ex);
-      }
-      setCursor(new Cursor(Cursor.DEFAULT_CURSOR));
-   }
-   
  private void checkSimpleAcquisition() {
       int width = (int) core_.getImageWidth();
       int height = (int) core_.getImageHeight();
@@ -426,40 +356,7 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
       }
       return new Color(defaultColor);
    }
-   
-
-   /**
-    * Snaps an image for a multi-Channel camera
-    * This version does not (yet) support attachment of mouse listeners
-    * for stage movement.
-    */
-   private void doSnapMultiCamera()
-   {
-      checkSimpleAcquisition();
-
-      try {
-         setCursor(new Cursor(Cursor.WAIT_CURSOR));
-         core_.snapImage();
-         getAcquisition(SIMPLE_ACQ).toFront();
-         long c = core_.getNumberOfCameraChannels();
-
-         for (int i = 0; i < c; i++) {
-            TaggedImage ti = ImageUtils.makeTaggedImage(core_.getImage(i),
-                    i,0, 0, 0,
-                    getAcquisitionImageWidth(SIMPLE_ACQ),
-                    getAcquisitionImageHeight(SIMPLE_ACQ),
-                    getAcquisitionImageByteDepth(SIMPLE_ACQ) );
-            boolean update = false;
-            if (i == c -1)
-               update = true;
-            addImage(SIMPLE_ACQ,ti, update, true);
-         }
-      } catch (Exception ex) {
-         ReportingUtils.showError(ex);
-      }
-      setCursor(new Cursor(Cursor.DEFAULT_CURSOR));
-   }
-
+  
     private void initializeHelpMenu() {
         // add help menu item
         final JMenu helpMenu = new JMenu();
@@ -3086,20 +2983,27 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
    }
 
    public void doSnap() {
-      if (core_.getNumberOfComponents() == 1) {
-         if(4 == core_.getBytesPerPixel()) {
-            doSnapFloat();
-         } else {
-            if (core_.getNumberOfCameraChannels() > 1)
-            {
-               doSnapMultiCamera();
-            } else {
-               doSnapMonochrome();
+         checkSimpleAcquisition();
+         try {
+            setCursor(new Cursor(Cursor.WAIT_CURSOR));
+            core_.snapImage();
+            getAcquisition(SIMPLE_ACQ).toFront();
+            long c = core_.getNumberOfCameraChannels();
+            for (int i = 0; i < c; i++) {
+               TaggedImage ti = ImageUtils.makeTaggedImage(core_.getImage(i),
+                       i, 0, 0, 0,
+                       getAcquisitionImageWidth(SIMPLE_ACQ),
+                       getAcquisitionImageHeight(SIMPLE_ACQ),
+                       getAcquisitionImageByteDepth(SIMPLE_ACQ));
+               boolean update = false;
+               if (i == c - 1) 
+                  update = true;
+               addImage(SIMPLE_ACQ, ti, update, true);
             }
+         } catch (Exception ex) {
+            ReportingUtils.showError(ex);
          }
-      } else {
-         doSnapColor();
-      }
+         setCursor(new Cursor(Cursor.DEFAULT_CURSOR));
    }
 
    public void initializeGUI() {
