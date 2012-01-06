@@ -18,8 +18,6 @@
     
 (def yyyymmdd (SimpleDateFormat. "yyyyMMdd"))
 
-(doto (Calendar/getInstance) (.add Calendar/HOUR -1))
-
 ;(defn result-file [bits mode]
 ;  (File. micromanager (str "/result" bits (name mode) ".txt")))
 
@@ -47,20 +45,21 @@
   (map first
     (re-seq #"\[javac\]\s\b([1-9]|[0-9][1-9]|[0-9][0-9][1-9])\b\serrors?" result-text)))
 
+(defn device-adapter-dlls [dir]
+  (filter
+      (fn [file]
+        (let [file-name (.getName file)]
+          (and (.endsWith file-name ".dll")
+               (.startsWith file-name "mmgr_dal"))))
+      (.listFiles dir)))
+
 (defn old-files [files time-limit-hours]
   (let [now (System/currentTimeMillis)
         before (- now (* time-limit-hours MS-PER-HOUR))]
     (filter #(< (.lastModified %) before) files)))
     
 (defn old-dlls [dir time-limit-hours]
-  (old-files
-    (filter
-      (fn [file]
-        (let [file-name (.getName file)]
-          (and (.endsWith file-name ".dll")
-               (.startsWith file-name "mmgr_dal"))))
-      (.listFiles dir))
-    time-limit-hours))
+  (old-files (device-adapter-dlls dir) time-limit-hours))
 
 (defn old-jars [dir time-limit-hours]
   (old-files
@@ -74,6 +73,29 @@
         pattern (re-pattern (str "MMSetup" bits "BIT_[^\\s]+?_" date-token ".exe"))]
     (re-find pattern txt)))
 
+(defn device-vcproj-files []
+  (let [device-adapter-dirs [(File. micromanager "/DeviceAdapters")
+                         (File. micromanager "/SecretDeviceAdapters")]]
+    (filter #(.. % getName (endsWith ".vcproj"))
+            (mapcat file-seq device-adapter-dirs))))
+
+(defn dll-name [file]
+  (second (re-find #"mmgr_dal_(.*?).dll" (.getName file))))
+
+(defn project-name [vcproj-file]
+  (-> vcproj-file clojure.xml/parse :attrs :Name))
+
+(defn bin-dir [bits]
+  (File. micromanager
+         (condp = bits
+           32 "bin_Win32"
+           64 "bin_x64")))
+
+(defn missing-device-adapters [bits]
+  (let [dll-names (map dll-name (device-adapter-dlls (bin-dir bits)))
+        project-names (map project-name (device-vcproj-files))]
+    (sort (clojure.set/difference (set project-names) (set dll-names)))))
+     
 (defn str-lines [sequence]
   (apply str (interpose "\n" sequence)))
 
@@ -81,13 +103,11 @@
   (let [f (result-file bits mode)
         result-txt (slurp f)
         vs-error-text (visual-studio-error-text result-txt)
-        outdated-dlls (old-dlls (File. micromanager
-                                       (condp = bits
-                                         32 "bin_Win32"
-                                         64 "bin_x64")) 24)
+        outdated-dlls (old-dlls (bin-dir bits) 24)
         javac-errs (javac-errors result-txt)
         outdated-jars (old-jars (File. micromanager "Install_AllPlatforms") 24)
-        installer-ok (exe-on-server? bits today-token)]
+        installer-ok (exe-on-server? bits today-token)
+        missing-adapters (missing-device-adapters bits)]
     (when-not (and (empty? vs-error-text) (empty? outdated-dlls)
                    (empty? javac-errs) (empty? outdated-jars)
                    installer-ok)
@@ -111,6 +131,10 @@
         "\n\nOutdated jar files:\n"
         (if-not (empty? outdated-jars)
           (str-lines (map #(.getName %) outdated-jars))
+          "None.")
+        "\n\nUncompiled device adapters:\n"
+        (if-not (empty? missing-adapters)
+          (str-lines missing-adapters)
           "None.")
         "\n\nIs installer download available on website?\n"
         (if installer-ok
