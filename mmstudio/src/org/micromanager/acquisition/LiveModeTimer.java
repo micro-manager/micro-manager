@@ -7,6 +7,8 @@ package org.micromanager.acquisition;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.lang.reflect.InvocationTargetException;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.swing.SwingUtilities;
 import mmcorej.CMMCore;
 import mmcorej.TaggedImage;
@@ -24,13 +26,12 @@ public class LiveModeTimer extends javax.swing.Timer {
 
       public static final int SINGLE_CAMERA = 1, MULTI_CAMERA = 2;
       private static final String CCHANNELINDEX = "CameraChannelIndex";
+      private static final String ACQ_NAME = MMStudioMainFrame.SIMPLE_ACQ;
 
       private VirtualAcquisitionDisplay win_;
       private CMMCore core_;
       private MMStudioMainFrame gui_;
-      private long multiChannelCameraNrCh_;
-      private String acqName_;
-      
+      private long multiChannelCameraNrCh_;      
 
       public LiveModeTimer(int delay) {
          super(delay, null);
@@ -38,40 +39,64 @@ public class LiveModeTimer extends javax.swing.Timer {
          core_ = gui_.getCore();
       }
 
-     public void setType(int type) {
+     private void setType() {
       if (!super.isRunning()) {
          ActionListener[] listeners = super.getActionListeners();
          for (ActionListener a : listeners)
             this.removeActionListener(a);
          
-         if (type == SINGLE_CAMERA ) {        
+         multiChannelCameraNrCh_ = core_.getNumberOfCameraChannels();
+         if ( multiChannelCameraNrCh_== 1)       
             this.addActionListener(singleCameraLiveAction());
-            acqName_ = gui_.SIMPLE_ACQ; 
-         } else {
-            acqName_ = gui_.SIMPLE_ACQ;
-            multiChannelCameraNrCh_ = core_.getNumberOfCameraChannels();
-            this.addActionListener(multiCamLiveAction());    
-         }
+          else 
+            this.addActionListener(multiCamLiveAction());          
       }
    }
 
       @Override
       public void start() {
          try {
-            win_ = gui_.getSimpleDisplay();         
+            win_ = gui_.getSimpleDisplay();   
+            setType();
             core_.startContinuousSequenceAcquisition(0);
             
             //Add first image here so initial autoscale works correctly
             while(core_.getRemainingImageCount() == 0) {}  
             TaggedImage ti = core_.getLastTaggedImage();
-            addTags(ti,0);
-            gui_.addImage(acqName_, ti, true, true);
+            addTags(ti, multiChannelCameraNrCh_ > 1 ? ti.tags.getInt(
+                    core_.getCameraDevice() + "-" + CCHANNELINDEX) :0);
+            gui_.addImage(ACQ_NAME, ti, true, true);
             
+            // Add another image if multicamera
+            if (multiChannelCameraNrCh_ > 1) {
+               String camera = core_.getCameraDevice();
+               int channel = ti.tags.getInt(camera + "-" + CCHANNELINDEX);
+               boolean[] initialized = new boolean[(int) multiChannelCameraNrCh_];
+               initialized[channel] = true;
+               int numFound = 1;
+               while (numFound < multiChannelCameraNrCh_) {
+                  for (int n = 0; n < 2 * multiChannelCameraNrCh_; n++) {
+                     try {
+                        TaggedImage t = core_.getNBeforeLastTaggedImage(n);
+                        int ch = t.tags.getInt(camera + "-" + CCHANNELINDEX);
+                        if (!initialized[ch]) {
+                           numFound++;
+                           initialized[ch] = true;
+                           addTags(t, ch);
+                           gui_.addImage(ACQ_NAME, t, true, true);
+                           break;
+                        }
+                     } catch (Exception e) {
+                        break;
+                     }}}     
+            }
+
             super.start();
             win_.liveModeEnabled(true);
          } catch (Exception ex) {
             ReportingUtils.showError(ex);
          }
+      
       }
 
       @Override
@@ -98,7 +123,7 @@ public class LiveModeTimer extends javax.swing.Timer {
                try {
                   TaggedImage ti = core_.getLastTaggedImage();
                   addTags(ti,0);
-                  gui_.addImage(acqName_, ti, true, true);
+                  gui_.addImage(ACQ_NAME, ti, true, true);
                   gui_.updateLineProfile();
                } catch (Exception ex) {
                   ReportingUtils.showError(ex);

@@ -2970,7 +2970,6 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
                if (liveModeTimer_ == null) 
                   liveModeTimer_ = new LiveModeTimer((int) liveModeInterval_ );
                liveModeTimer_.setDelay((int) liveModeInterval_);
-               liveModeTimer_.setType(LiveModeTimer.MULTI_CAMERA);  
                manageShutterLiveMode(enable);
                liveModeTimer_.start(); 
           
@@ -2995,7 +2994,6 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
             if (liveModeTimer_ == null) 
                liveModeTimer_ = new LiveModeTimer((int) liveModeInterval_);
             liveModeTimer_.setDelay((int) liveModeInterval_);
-            liveModeTimer_.setType(LiveModeTimer.SINGLE_CAMERA);
          
             checkSimpleAcquisition();
  
