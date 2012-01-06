@@ -177,7 +177,8 @@ public class MMAcquisition {
       if (!existing_) {
          createDefaultAcqSettings(name_, imageCache);
       }
-      virtAcq_ = MMStudioMainFrame.createSimpleDisplay(name_, imageCache);
+      MMStudioMainFrame.createSimpleDisplay(name_, imageCache);
+      virtAcq_ = MMStudioMainFrame.getSimpleDisplay();
       if (show_) {
          virtAcq_.show();
       }

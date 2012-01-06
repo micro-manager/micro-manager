@@ -263,10 +263,7 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
    private int snapCount_ = -1;
    private boolean liveModeSuspended_;
    public Font defaultScriptFont_ = null;
-   
    public static final String SIMPLE_ACQ = "Snap/Live Window";
-   public static final String MULTI_CAMERA_ACQ = "Multi-Camera Snap";
-
    public static FileType MM_CONFIG_FILE
             = new FileType("MM_CONFIG_FILE",
                            "Micro-Manager Config File",
@@ -304,9 +301,8 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
       return simpleDisplay_;
    }
 
-   public static VirtualAcquisitionDisplay createSimpleDisplay(String name, ImageCache cache) throws MMScriptException {
-      simpleDisplay_ = new VirtualAcquisitionDisplay(cache, name);
-      return simpleDisplay_;
+   public static void createSimpleDisplay(String name, ImageCache cache) throws MMScriptException {
+      simpleDisplay_ = new VirtualAcquisitionDisplay(cache, name);  
    }
    
    private void doSnapColor() {
