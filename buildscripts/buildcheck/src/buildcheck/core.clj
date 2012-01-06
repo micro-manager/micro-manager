@@ -4,6 +4,7 @@
            (java.util Calendar Date))
   (:use [local-file :only (file*)]
         [clj-mail.core])
+  (:require [clojure.xml])
   (:gen-class))
 
 (def micromanager (file* "../.."))
