@@ -104,8 +104,8 @@
   (let [index-txt (slurp "http://valelab.ucsf.edu/~MM/MMwiki/index.php/Device%20Support")]
     (map second (re-seq #"a href=\"/~MM/MMwiki/index.php/(.*?)\"" index-txt))))
 
-(defn missing-device-pages [bits]
-  (let [dll-names (get-dll-names bits)
+(defn missing-device-pages []
+  (let [dll-names (get-dll-names 32)
         device-page-names (device-pages)]
     (sort (clojure.set/difference (set dll-names) (set device-page-names)))))
 
@@ -126,9 +126,7 @@
         javac-errs (javac-errors result-txt)
         outdated-jars (map #(.getName %)
                            (old-jars (File. micromanager "Install_AllPlatforms") 24))
-        installer-ok (exe-on-server? bits today-token)
-        missing-adapters (missing-device-adapters bits)
-        missing-pages (missing-device-pages bits)]
+        installer-ok (exe-on-server? bits today-token)]
     (when-not (and (empty? vs-error-text) (empty? outdated-dlls) false
                    (empty? javac-errs) (empty? outdated-jars)
                    installer-ok)
@@ -141,13 +139,13 @@
         (report-segment "Outdated device adapter DLLs" outdated-dlls)
         (report-segment "Errors reported by java compiler" javac-errs)
         (report-segment "Outdated jar files" outdated-jars)
-        (report-segment "Uncompiled device adapters" missing-adapters)
+        (report-segment "Uncompiled device adapters" (missing-device-adapters bits))
         "\n\nIs installer download available on website?\n"
         (if installer-ok
           "Yes"
           "No. (build missing)\n")
         (when (= 32 bits)
-          (report-segment "Missing device pages" missing-pages))
+          (report-segment "Missing device pages" (missing-device-pages)))
       ))))
 
 (defn make-full-report [mode send?]
