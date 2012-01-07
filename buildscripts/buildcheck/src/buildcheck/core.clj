@@ -127,7 +127,7 @@
         outdated-jars (map #(.getName %)
                            (old-jars (File. micromanager "Install_AllPlatforms") 24))
         installer-ok (exe-on-server? bits today-token)]
-    (when-not (and (empty? vs-error-text) (empty? outdated-dlls) false
+    (when-not (and (empty? vs-error-text) (empty? outdated-dlls)
                    (empty? javac-errs) (empty? outdated-jars)
                    installer-ok)
       (str
@@ -141,9 +141,7 @@
         (report-segment "Outdated jar files" outdated-jars)
         (report-segment "Uncompiled device adapters" (missing-device-adapters bits))
         "\n\nIs installer download available on website?\n"
-        (if installer-ok
-          "Yes"
-          "No. (build missing)\n")
+        (if installer-ok "Yes" "No. (build missing)\n")
         (when (= 32 bits)
           (report-segment "Missing device pages" (missing-device-pages)))
       ))))
