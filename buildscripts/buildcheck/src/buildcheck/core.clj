@@ -112,17 +112,24 @@
 (defn str-lines [sequence]
   (apply str (interpose "\n" sequence)))
 
+(defn report-segment [title data]
+  (str "\n\n" title ":\n"
+       (if-not (empty? data)
+         (str-lines (flatten (list data)))
+         "None.")))
+
 (defn report-build-errors [bits mode]
   (let [f (result-file bits mode)
         result-txt (slurp f)
         vs-error-text (visual-studio-error-text result-txt)
-        outdated-dlls (old-dlls (bin-dir bits) 24)
+        outdated-dlls (map #(.getName %) (old-dlls (bin-dir bits) 24))
         javac-errs (javac-errors result-txt)
-        outdated-jars (old-jars (File. micromanager "Install_AllPlatforms") 24)
+        outdated-jars (map #(.getName %)
+                           (old-jars (File. micromanager "Install_AllPlatforms") 24))
         installer-ok (exe-on-server? bits today-token)
         missing-adapters (missing-device-adapters bits)
         missing-pages (missing-device-pages bits)]
-    (when-not (and (empty? vs-error-text) (empty? outdated-dlls)
+    (when-not (and (empty? vs-error-text) (empty? outdated-dlls) false
                    (empty? javac-errs) (empty? outdated-jars)
                    installer-ok)
       (str
@@ -130,36 +137,17 @@
           ({:inc "INCREMENTAL" :full "FULL"} mode)
           " BUILD ERROR REPORT\n"
         "For the full build output, see " (.getAbsolutePath f)
-        "\n\nVisual Studio reported errors:\n"
-        (if-not (empty? vs-error-text)
-          vs-error-text
-          "None.")
-        "\n\nOutdated device adapter DLLs:\n"
-        (if-not (empty? outdated-dlls)
-          (str-lines (map #(.getName %) outdated-dlls))
-          "None.")
-          "\n\nErrors reported by java compiler:\n"
-        (if-not (empty? javac-errs)
-          (str-lines javac-errs)
-          "None.")
-        "\n\nOutdated jar files:\n"
-        (if-not (empty? outdated-jars)
-          (str-lines (map #(.getName %) outdated-jars))
-          "None.")
-        "\n\nUncompiled device adapters:\n"
-        (if-not (empty? missing-adapters)
-          (str-lines missing-adapters)
-          "None.")
+        (report-segment "Visual Studio reported errors" vs-error-text)
+        (report-segment "Outdated device adapter DLLs" outdated-dlls)
+        (report-segment "Errors reported by java compiler" javac-errs)
+        (report-segment "Outdated jar files" outdated-jars)
+        (report-segment "Uncompiled device adapters" missing-adapters)
         "\n\nIs installer download available on website?\n"
         (if installer-ok
           "Yes"
           "No. (build missing)\n")
         (when (= 32 bits)
-          (str
-            "\n\nMissing device pages:\n"
-            (if-not (empty? missing-pages)
-              (str-lines missing-pages)
-              "None.")))
+          (report-segment "Missing device pages" missing-pages))
       ))))
 
 (defn make-full-report [mode send?]
