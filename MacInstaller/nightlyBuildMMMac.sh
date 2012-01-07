@@ -122,6 +122,7 @@ for f in $FILES; do lipo -create $PPC/$f $I386/$f $X86_64/$f -o $TARGET/$f; done
 
 # need to do files absent from ppc seperately
 lipo -create $I386/libmmgr_dal_OpenCVgrabber  $X86_64/libmmgr_dal_OpenCVgrabber -o $TARGET/libmmgr_dal_OpenCVgrabber
+lipo -create $I386/libmmgr_dal_Micropix  $X86_64/libmmgr_dal_Micropix -o $TARGET/libmmgr_dal_Micropix
 
 # Build Gphoto on I386 and X86_64 but not on PPC since p2p does not build there
 mkdir $TARGET/libgphoto2
