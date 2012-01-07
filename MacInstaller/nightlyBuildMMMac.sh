@@ -8,12 +8,17 @@
 # contents of $BUILDDIR will be removed!!!
 
 # Use "-f" to build a release version, no option will do nightly build (only difference is in the name of the output)
-while getopts "f" optname
+# Use "-n" to avoid a make clean, i.e. do an incremental only
+while getopts "f:n" optname
 do
    case "$optname" in
       "f")
       echo "Executing full build"
       FULL="full"
+      ;;
+      "n")
+      echo "Incremental build"
+      NOCLEAN="noclean"
       ;;
    esac
 done
@@ -90,7 +95,9 @@ sed -i -e "s/\"1.4.*\"/\"$VERSION\"/"  mmstudio/src/org/micromanager/MMStudioMai
 ./mmUnixBuild.sh || exit
 MACOSX_DEPLOYMENT_TARGET=10.4
 ./configure --with-imagej=$PPC --enable-python --enable-arch=ppc --with-boost=/usr/local/ppc CXX="g++-4.0" CXXFLAGS="-g -O2 -mmacosx-version-min=10.4 -isysroot /Developer/SDKs/MacOSX10.4u.sdk -arch ppc"  --disable-dependency-tracking PKG_CONFIG_LIBDIR="/usr/local/ppc/lib/pkgconfig/" || exit
-make clean || exit
+if [ "$NOCLEAN" != "noclean" ]; then
+   make clean || exit
+fi
 make || exit
 make install || exit
 
@@ -99,7 +106,9 @@ cd $RI386
 ./mmUnixBuild.sh || exit
 MACOSX_DEPLOYMENT_TARGET=10.4
 ./configure --with-imagej=$I386 --enable-python --enable-arch=i386 --with-boost=/usr/local/i386 --with-opencv=/usr/local/i386 CXX="g++-4.0" CXXFLAGS="-g -O2 -mmacosx-version-min=10.4 -isysroot /Developer/SDKs/MacOSX10.4u.sdk -arch i386"  --disable-dependency-tracking PKG_CONFIG_LIBDIR="/usr/local/i386/lib/pkgconfig/" || exit
-make clean || exit
+if [ "$NOCLEAN" != "noclean" ]; then
+   make clean || exit
+fi
 make || exit
 make install || exit
 
@@ -108,7 +117,9 @@ cd $RX86_64
 ./mmUnixBuild.sh || exit
 export MACOSX_DEPLOYMENT_TARGET=10.5
 ./configure --with-imagej=$X86_64 --enable-arch=x86_64 --with-boost=/usr/local/x86_64 --with-opencv=/usr/local/x86_64 CXX="g++-4.2" CXXFLAGS="-g -O2 -mmacosx-version-min=10.5 -isysroot /Developer/SDKs/MacOSX10.5.sdk -arch x86_64" --disable-dependency-tracking PKG_CONFIG_LIBDIR="/usr/local/x86_64/lib/pkgconfig/" || exit
-make clean || exit
+if [ "$NOCLEAN" != "noclean" ]; then
+   make clean || exit
+fi
 make || exit
 make install || exit
 
