@@ -103,6 +103,8 @@ public:
    int OnSetJerk(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnSetStepSize(MM::PropertyBase* pProp, MM::ActionType eAct);
 
+   int IsStageSequenceable(bool & seq) const { seq=false; return DEVICE_OK; }
+   bool IsContinuousFocusDrive() const { return false; }
 
 
   

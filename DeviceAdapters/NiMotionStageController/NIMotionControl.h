@@ -131,6 +131,8 @@ public:
    int OnSetStepSize(MM::PropertyBase* pProp, MM::ActionType eAct);
 //int (MM::PropertyBase* pProp, MM::ActionType eAct);
 
+   int IsXYStageSequenceable(bool & seq) const { seq=false; return DEVICE_OK;}
+
 };
 
 
