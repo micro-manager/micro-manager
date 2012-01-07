@@ -19,7 +19,7 @@
 #ifdef linux
 #include "../../../3rdparty/ITC18-lib-linux/ITC18.h"
 #else 
-#include "../../../3rdparty/ITC18-lib/ITC18.h"
+#include "ITC18.h"
 #endif
 
 #include <string>
