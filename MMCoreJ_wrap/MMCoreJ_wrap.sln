@@ -201,9 +201,11 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "LumencorSpectra", "..\Devic
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Micropix", "..\SecretDeviceAdapters\Micropix\Micropix.vcproj", "{C621764B-8634-4EE9-BC2F-436EE81202F0}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "DECamera", "..\DeviceAdapters\DirectElectron\DECamera.vcproj", "{E206DB83-E348-4E32-AA0F-B7E05E3D8F51}"
-EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "NiMotionStage", "..\DeviceAdapters\NiMotionStageController\NiMotionControl.vcproj", "{936F8694-2A0F-44BC-A71B-8D2CF196F927}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Crystal", "..\SecretDeviceAdapters\Crystal\Crystal.vcproj", "{FB00F98E-4A2C-4888-A11F-29E6A1CA3E17}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "DECamera", "..\DeviceAdapters\DirectElectron\DECamera.vcproj", "{E206DB83-E348-4E32-AA0F-B7E05E3D8F51}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -971,6 +973,18 @@ Global
 		{C621764B-8634-4EE9-BC2F-436EE81202F0}.Release|Win32.Build.0 = Release|Win32
 		{C621764B-8634-4EE9-BC2F-436EE81202F0}.Release|x64.ActiveCfg = Release|x64
 		{C621764B-8634-4EE9-BC2F-436EE81202F0}.Release|x64.Build.0 = Release|x64
+		{936F8694-2A0F-44BC-A71B-8D2CF196F927}.Debug|Win32.ActiveCfg = Debug|Win32
+		{936F8694-2A0F-44BC-A71B-8D2CF196F927}.Debug|Win32.Build.0 = Debug|Win32
+		{936F8694-2A0F-44BC-A71B-8D2CF196F927}.Debug|x64.ActiveCfg = Debug|Win32
+		{936F8694-2A0F-44BC-A71B-8D2CF196F927}.Release|Win32.ActiveCfg = Release|Win32
+		{936F8694-2A0F-44BC-A71B-8D2CF196F927}.Release|Win32.Build.0 = Release|Win32
+		{936F8694-2A0F-44BC-A71B-8D2CF196F927}.Release|x64.ActiveCfg = Release|Win32
+		{FB00F98E-4A2C-4888-A11F-29E6A1CA3E17}.Debug|Win32.ActiveCfg = Debug|Win32
+		{FB00F98E-4A2C-4888-A11F-29E6A1CA3E17}.Debug|Win32.Build.0 = Debug|Win32
+		{FB00F98E-4A2C-4888-A11F-29E6A1CA3E17}.Debug|x64.ActiveCfg = Debug|Win32
+		{FB00F98E-4A2C-4888-A11F-29E6A1CA3E17}.Release|Win32.ActiveCfg = Release|Win32
+		{FB00F98E-4A2C-4888-A11F-29E6A1CA3E17}.Release|Win32.Build.0 = Release|Win32
+		{FB00F98E-4A2C-4888-A11F-29E6A1CA3E17}.Release|x64.ActiveCfg = Release|Win32
 		{E206DB83-E348-4E32-AA0F-B7E05E3D8F51}.Debug|Win32.ActiveCfg = Debug|Win32
 		{E206DB83-E348-4E32-AA0F-B7E05E3D8F51}.Debug|Win32.Build.0 = Debug|Win32
 		{E206DB83-E348-4E32-AA0F-B7E05E3D8F51}.Debug|x64.ActiveCfg = Debug|x64
@@ -979,12 +993,6 @@ Global
 		{E206DB83-E348-4E32-AA0F-B7E05E3D8F51}.Release|Win32.Build.0 = Release|Win32
 		{E206DB83-E348-4E32-AA0F-B7E05E3D8F51}.Release|x64.ActiveCfg = Release|x64
 		{E206DB83-E348-4E32-AA0F-B7E05E3D8F51}.Release|x64.Build.0 = Release|x64
-		{936F8694-2A0F-44BC-A71B-8D2CF196F927}.Debug|Win32.ActiveCfg = Debug|Win32
-		{936F8694-2A0F-44BC-A71B-8D2CF196F927}.Debug|Win32.Build.0 = Debug|Win32
-		{936F8694-2A0F-44BC-A71B-8D2CF196F927}.Debug|x64.ActiveCfg = Debug|Win32
-		{936F8694-2A0F-44BC-A71B-8D2CF196F927}.Release|Win32.ActiveCfg = Release|Win32
-		{936F8694-2A0F-44BC-A71B-8D2CF196F927}.Release|Win32.Build.0 = Release|Win32
-		{936F8694-2A0F-44BC-A71B-8D2CF196F927}.Release|x64.ActiveCfg = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
