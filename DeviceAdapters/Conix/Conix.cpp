@@ -332,9 +332,11 @@ HexaFluor::HexaFluor() :
    numPos_(6),
    port_("Undefined"),
    pendingCommand_(false),
-   baseCommand_("Cube ")
+   baseCommand_("Cube "),
+   changedTime_(0)
 {
    InitializeDefaultErrorMessages();
+EnableDelay();
 
    // create pre-initialization properties
    // ------------------------------------
@@ -416,7 +418,11 @@ int HexaFluor::Shutdown()
 
 bool HexaFluor::Busy()
 {
-   // the commands are blocking, so we cannot be busy
+   MM::MMTime interval = GetCurrentMMTime() - changedTime_;
+
+   if (interval < (1000.0 * GetDelayMs()) )
+      return true;
+
    return false;
 }
 
@@ -506,6 +512,7 @@ int HexaFluor::SetPosition(int position)
       int errNo = atoi(answer.substr(2).c_str());
       return ERR_OFFSET + errNo;
    }
+   changedTime_ = GetCurrentMMTime();
 
    return ERR_UNRECOGNIZED_ANSWER;
 }

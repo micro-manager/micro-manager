@@ -115,6 +115,7 @@ private:
    // Has a command been sent to which no answer has been received yet?
    bool pendingCommand_;
    std::string baseCommand_;
+   MM::MMTime changedTime_;
 };
 
 //////////////////////////////////////////////////////////////////////////////
