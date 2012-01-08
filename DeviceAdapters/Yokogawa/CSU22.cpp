@@ -107,7 +107,10 @@ MODULE_API void DeleteDevice(MM::Device* pDevice)
 
 Hub::Hub() :
    initialized_(false),
-   port_("Undefined")
+   port_("Undefined"),
+   minSpeed_(1200),
+   maxSpeed_(5000),
+   currentSpeed_(5000)
 {
    InitializeDefaultErrorMessages();
 
@@ -154,9 +157,12 @@ int Hub::Initialize()
    if (DEVICE_OK != ret)
       return ret;
 
-   ret = UpdateStatus();
-   if (ret != DEVICE_OK)
-      return ret;
+   // Drive Speed
+   CPropertyAction* pAct = new CPropertyAction (this, &Hub::OnSpeed);
+   ret = CreateProperty(MM::g_Keyword_State, "1500", MM::Integer, false, pAct); 
+   if (ret != DEVICE_OK) 
+      return ret; 
+   SetPropertyLimits(MM::g_Keyword_State, minSpeed_, maxSpeed_);
 
    initialized_ = true;
    
@@ -200,6 +206,36 @@ int Hub::OnPort(MM::PropertyBase* pProp, MM::ActionType eAct)
    return DEVICE_OK;
 }
 
+/*
+ * Speed is read back from the device
+ */
+int Hub::OnSpeed(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   if (eAct == MM::BeforeGet)
+   {
+      // Check current speed of the disk
+      int ret = g_hub.GetDriveSpeedPosition(*this, *GetCoreCallback(), currentSpeed_);
+      if (DEVICE_OK != ret)
+         return ret;
+      // return speed as we know it
+      pProp->Set((long)currentSpeed_);
+   }
+   else if (eAct == MM::AfterSet)
+   {
+      long speed;
+      pProp->Get(speed);
+      if (speed == currentSpeed_)
+         return DEVICE_OK;
+      int ret = g_hub.SetDriveSpeedPosition(*this, *GetCoreCallback(), speed);
+      if (ret == DEVICE_OK) {
+         currentSpeed_ = speed;
+         return DEVICE_OK;
+      }
+      else
+         return  ret;
+   }
+   return DEVICE_OK;
+}
 
 ///////////////////////////////////////////////////////////////////////////////
 // CSU22 ND Filters

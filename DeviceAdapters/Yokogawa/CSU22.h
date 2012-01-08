@@ -63,6 +63,7 @@ public:
    // action interface
    // ----------------
    int OnPort(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnSpeed(MM::PropertyBase* pProp, MM::ActionType eAct);
 
 private:
    bool initialized_;
@@ -72,6 +73,7 @@ private:
    std::string command_;
    // Has a command been sent to which no answer has been received yet?
    bool pendingCommand_;
+   int minSpeed_, maxSpeed_, currentSpeed_;
 };
 
 
