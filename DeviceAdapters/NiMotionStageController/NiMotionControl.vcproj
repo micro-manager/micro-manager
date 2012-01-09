@@ -2,7 +2,7 @@
 <VisualStudioProject
 	ProjectType="Visual C++"
 	Version="9.00"
-	Name="NiMotionStage"
+	Name="NIMotionStage"
 	ProjectGUID="{936F8694-2A0F-44BC-A71B-8D2CF196F927}"
 	RootNamespace="DemoCamera"
 	Keyword="Win32Proj"
@@ -145,7 +145,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="FlexMS32.lib"
-				OutputFile="$(OutDir)/mmgr_dal_NIMotionStage.dll"
+				OutputFile="$(OutDir)/mmgr_dal_$(ProjectName).dll"
 				LinkIncremental="1"
 				AdditionalLibraryDirectories="&quot;..\..\..\3rdParty\NationalInstruments\NI-Motion\FlexMotion\lib\Microsoft&quot;;&quot;..\..\..\3rdParty\NationalInstruments\NI-Motion\lib&quot;"
 				GenerateDebugInformation="true"
