@@ -20,6 +20,7 @@ import java.awt.BorderLayout;
 import java.awt.CardLayout;
 import java.awt.Color;
 import java.awt.Dimension;
+import java.awt.Graphics;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Vector;
@@ -938,30 +939,50 @@ public class MetadataPanel extends JPanel
       } else {
          showMultipleChannelsContrastPanel();
          
-         int hpHeight = 110;
-         int nChannels = acq.getNumGrayChannels();
-
-         JPanel p = new JPanel();
+         final int nChannels = acq.getNumGrayChannels();
+     
+         final SpringLayout layout = new SpringLayout();
+         final JPanel p = new JPanel() {
+            @Override
+            public void paint(Graphics g) {    
+               int channelHeight = Math.max(115,contrastScrollPane.getViewport().getSize().height / nChannels);        
+               this.setPreferredSize(new Dimension(this.getSize().width, channelHeight * nChannels));
+               if (ccpList_ != null) {
+                  for (int i = 0; i < ccpList_.size(); i++) {
+                     ccpList_.get(i).setHeight(channelHeight);
+                     ccpList_.get(i).setLocation(0, channelHeight * i);
+                  }
+               }
+               super.paint(g);
+            }
+         };
+         
+         int hpHeight = Math.max(115, (contrastScrollPane.getSize().height-2) / nChannels);
          p.setPreferredSize(new Dimension(200, nChannels * hpHeight));
          contrastScrollPane.setViewportView(p);
-         SpringLayout layout = new SpringLayout();
+         
          p.setLayout(layout);
          ccpList_ = new ArrayList<ChannelControlPanel>();
-
          for (int i = 0; i < nChannels; ++i) {
-            ChannelControlPanel ccp = new ChannelControlPanel(acq, i, this);
-
-            layout.putConstraint(SpringLayout.NORTH, ccp, hpHeight * i, SpringLayout.NORTH, p);
+            ChannelControlPanel ccp = new ChannelControlPanel(acq, i, this,hpHeight);
             layout.putConstraint(SpringLayout.EAST, ccp, 0, SpringLayout.EAST, p);
             layout.putConstraint(SpringLayout.WEST, ccp, 0, SpringLayout.WEST, p);
-            layout.putConstraint(SpringLayout.SOUTH, ccp, hpHeight * (i + 1), SpringLayout.NORTH, p);
-
             p.add(ccp);
             ccpList_.add(ccp);
          }
+         
+         layout.putConstraint(SpringLayout.NORTH, ccpList_.get(0), 0, SpringLayout.NORTH, p);
+         layout.putConstraint(SpringLayout.SOUTH, ccpList_.get(nChannels-1), 0, SpringLayout.SOUTH, p);
+         for (int i = 1; i < ccpList_.size(); i++)
+            layout.putConstraint(SpringLayout.NORTH, ccpList_.get(i), 0, SpringLayout.SOUTH, ccpList_.get(i-1));
+
+         
+         
+         
          updateAndDrawHistograms();
       }
    }
+  
 
    private Double getFractionOutliersToReject() {
       try {

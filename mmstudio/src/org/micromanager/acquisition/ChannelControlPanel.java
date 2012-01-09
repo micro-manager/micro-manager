@@ -11,10 +11,25 @@
 package org.micromanager.acquisition;
 
 import ij.ImagePlus;
+import java.awt.BorderLayout;
 import java.awt.Color;
+import java.awt.ComponentOrientation;
+import java.awt.Dimension;
+import java.awt.FlowLayout;
+import java.awt.Font;
+import java.awt.Graphics;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
+import java.awt.GridLayout;
+import java.awt.Insets;
+import java.awt.Rectangle;
 import java.awt.event.MouseWheelEvent;
 import java.awt.event.MouseWheelListener;
+import javax.swing.BoxLayout;
 import javax.swing.JColorChooser;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.SpringLayout;
 import javax.swing.SwingUtilities;
 import org.micromanager.graph.GraphData;
 import org.micromanager.graph.HistogramPanel;
@@ -41,11 +56,14 @@ public class ChannelControlPanel extends javax.swing.JPanel {
    private boolean rejectOutliers_ = false;
    private boolean logScale_ = false;
    private double fractionToReject_;
+   private int height_;
+   private String histMax_;
 
    /** Creates new form ChannelControlsPanel */
    public ChannelControlPanel(VirtualAcquisitionDisplay acq, int channelIndex,
-           MetadataPanel metadataPanel) {
-      initComponents();
+           MetadataPanel metadataPanel, int height) {
+      height_ = height;
+      initComponents(); 
       channelIndex_ = channelIndex;
       acq_ = acq;
       hp_ = addHistogramPanel();
@@ -74,10 +92,9 @@ public class ChannelControlPanel extends javax.swing.JPanel {
       zoomOutButton = new javax.swing.JButton();
       minLabel = new javax.swing.JLabel();
       maxLabel = new javax.swing.JLabel();
-      histMaxLabel = new javax.swing.JLabel();
 
       setOpaque(false);
-      setPreferredSize(new java.awt.Dimension(250, 100));
+      setPreferredSize(new java.awt.Dimension(250,height_ ));
 
       fullButton.setFont(fullButton.getFont().deriveFont((float)9));
       fullButton.setText("Full");
@@ -127,8 +144,8 @@ public class ChannelControlPanel extends javax.swing.JPanel {
       histogramPanelHolder.setToolTipText("Adjust the brightness and contrast by dragging triangles at top and bottom. Change the gamma by dragging the curve. (These controls only change display, and do not edit the image data.)");
       histogramPanelHolder.setAlignmentX(0.3F);
       histogramPanelHolder.setPreferredSize(new java.awt.Dimension(0, 100));
-      histogramPanelHolder.setLayout(new java.awt.GridLayout(1, 1));
-
+      histogramPanelHolder.setLayout(new BorderLayout());
+      
       zoomInButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/micromanager/icons/zoom_in.png"))); // NOI18N
       zoomInButton.setToolTipText("Histogram zoom in");
       zoomInButton.setMaximumSize(new java.awt.Dimension(20, 20));
@@ -154,117 +171,156 @@ public class ChannelControlPanel extends javax.swing.JPanel {
       maxLabel.setFont(new java.awt.Font("Lucida Grande", 0, 10));
       maxLabel.setText("max");
 
-      histMaxLabel.setFont(new java.awt.Font("Lucida Grande", 0, 10));
-      histMaxLabel.setText("    ");
+      histMax_ = "   ";
 
-      org.jdesktop.layout.GroupLayout layout = new org.jdesktop.layout.GroupLayout(this);
-      this.setLayout(layout);
-      layout.setHorizontalGroup(
-         layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-         .add(layout.createSequentialGroup()
-            .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-               .add(channelNameCheckbox, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 110, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-               .add(layout.createSequentialGroup()
-                  .add(20, 20, 20)
-                  .add(colorPickerLabel, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 18, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                  .add(22, 22, 22)
-                  .add(fullButton, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 42, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
-               .add(layout.createSequentialGroup()
-                  .add(10, 10, 10)
-                  .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                     .add(layout.createSequentialGroup()
-                        .add(zoomInButton, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 21, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                        .add(29, 29, 29)
-                        .add(autoButton, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 42, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
-                     .add(minLabel, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 100, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                     .add(layout.createSequentialGroup()
-                        .add(20, 20, 20)
-                        .add(zoomOutButton, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 21, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
-                     .add(maxLabel, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 100, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))))
-            .add(4, 4, 4)
-            .add(histogramPanelHolder, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 136, Short.MAX_VALUE))
-         .add(org.jdesktop.layout.GroupLayout.TRAILING, layout.createSequentialGroup()
-            .add(205, 205, 205)
-            .add(histMaxLabel))
-      );
-      layout.setVerticalGroup(
-         layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-         .add(layout.createSequentialGroup()
-            .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-               .add(layout.createSequentialGroup()
-                  .add(channelNameCheckbox, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 17, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                  .add(3, 3, 3)
-                  .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                     .add(colorPickerLabel, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 18, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                     .add(fullButton, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 18, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
-                  .add(2, 2, 2)
-                  .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                     .add(zoomInButton, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 21, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                     .add(autoButton, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 18, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                     .add(layout.createSequentialGroup()
-                        .add(20, 20, 20)
-                        .add(minLabel, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 20, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
-                     .add(zoomOutButton, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 21, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                     .add(layout.createSequentialGroup()
-                        .add(30, 30, 30)
-                        .add(maxLabel, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 30, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))))
-               .add(histogramPanelHolder, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
-            .add(0, 0, 0)
-            .add(histMaxLabel)
-            .addContainerGap(org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-      );
-   }// </editor-fold>//GEN-END:initComponents
+      
+      this.setLayout(new BorderLayout());
+      JPanel controlHolder = new JPanel();
+      JPanel controls = new JPanel();
+      this.add(controlHolder,BorderLayout.LINE_START);
+      controlHolder.add(controls);
+      GridBagLayout gbl = new GridBagLayout();
+      controls.setLayout(gbl);
 
-    private void fullButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_fullButtonActionPerformed
+      controls.setMaximumSize(new Dimension(160,height_));
+      
+      this.add(histogramPanelHolder,BorderLayout.CENTER);
+      
+      
+      GridBagConstraints gbc = new GridBagConstraints();
+      gbc.gridx = 0;
+      gbc.gridy = 0;
+      gbc.gridwidth = 7;
+      gbc.weightx = 1;
+      gbc.weighty = 1;
+      gbc.anchor = GridBagConstraints.NORTHWEST;
+      controls.add(channelNameCheckbox,gbc);
+        
+      gbc = new GridBagConstraints();
+      gbc.gridx = 1;
+      gbc.gridy = 1;
+      gbc.ipadx = 15;
+      gbc.ipady = 15;
+      gbc.weightx = 1;
+      gbc.weighty = 1;
+      gbc.gridwidth = 3;
+      gbc.insets = new Insets(2,2,2,2);
+      controls.add(colorPickerLabel,gbc);
+      
+      gbc = new GridBagConstraints();
+      gbc.gridx = 0;
+      gbc.gridy = 2;
+      gbc.gridwidth = 1;
+      gbc.weightx = 1;
+      gbc.weighty = 1;     
+      gbc.insets = new Insets(2,2,2,2);
+      gbc.fill = GridBagConstraints.NONE;
+      zoomInButton.setPreferredSize(new Dimension(22,22));
+      controls.add(zoomInButton,gbc);
+      
+      gbc = new GridBagConstraints();
+      gbc.gridx = 1;
+      gbc.gridy = 2;
+      gbc.weightx = 1;
+      gbc.weighty = 1;
+      gbc.gridwidth = 1;
+      gbc.insets = new Insets(2,2,2,2);
+      gbc.fill = GridBagConstraints.NONE;
+      zoomOutButton.setPreferredSize(new Dimension(22,22));
+      controls.add(zoomOutButton,gbc);
+      
+      gbc = new GridBagConstraints();
+      gbc.gridx = 0;
+      gbc.gridy = 3;
+      gbc.weightx = 1;
+      gbc.weighty = 1;
+      gbc.gridwidth = 7;
+      gbc.anchor = GridBagConstraints.LINE_START;
+      controls.add(minLabel,gbc);
+      
+      gbc = new GridBagConstraints();
+      gbc.gridx = 0;
+      gbc.gridy = 4;
+      gbc.weightx = 1;
+      gbc.weighty = 1;
+      gbc.gridwidth = 7;
+      gbc.anchor = GridBagConstraints.LINE_START;
+      controls.add(maxLabel,gbc);
+      
+      gbc = new GridBagConstraints();
+      gbc.gridx = 5;
+      gbc.gridy = 1;
+      gbc.weightx = 1;
+      gbc.weighty = 1;
+      gbc.gridwidth = 1;
+      fullButton.setPreferredSize(new Dimension(50,20));
+      controls.add(fullButton,gbc);
+      
+      gbc = new GridBagConstraints();
+      gbc.gridx = 5;
+      gbc.gridy = 2;
+      gbc.weightx = 1;
+      gbc.weighty = 1;
+      gbc.gridwidth = 1;
+      autoButton.setPreferredSize(new Dimension(50,20));
+      controls.add(autoButton,gbc);
+
+
+   }
+   
+   public void setHeight(int height) {    
+      hp_.setSize(hp_.getWidth(),height);
+      histogramPanelHolder.setSize(hp_.getSize());
+      this.setSize(this.getSize().width, height);
+   }
+
+    private void fullButtonActionPerformed(java.awt.event.ActionEvent evt) {
        setFullRange();
        acq_.updateAndDraw();
-    }//GEN-LAST:event_fullButtonActionPerformed
+    }
 
-    private void colorPickerLabelMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_colorPickerLabelMouseClicked
+    private void colorPickerLabelMouseClicked(java.awt.event.MouseEvent evt) {
        editColor();
        acq_.updateAndDraw();
-    }//GEN-LAST:event_colorPickerLabelMouseClicked
+    }
 
-    private void channelNameCheckboxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_channelNameCheckboxActionPerformed
+    private void channelNameCheckboxActionPerformed(java.awt.event.ActionEvent evt) {
        updateChannelVisibility();
        drawDisplaySettings();
        acq_.updateAndDraw();
-    }//GEN-LAST:event_channelNameCheckboxActionPerformed
+    }
     
     public void autoScale() {
        setAutoRange();
        acq_.updateAndDraw();
     }
     
-    private void autoButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_autoButtonActionPerformed
+    private void autoButtonActionPerformed(java.awt.event.ActionEvent evt) {
        setAutoRange();
        acq_.updateAndDraw();
-    }//GEN-LAST:event_autoButtonActionPerformed
+    }
 
-    private void zoomInButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_zoomInButtonActionPerformed
+    private void zoomInButtonActionPerformed(java.awt.event.ActionEvent evt) {
        binSize_ = Math.max(binSize_ / 2, 1./8);
        drawDisplaySettings();
        updateChannelSettings();
-    }//GEN-LAST:event_zoomInButtonActionPerformed
+    }
 
-    private void zoomOutButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_zoomOutButtonActionPerformed
+    private void zoomOutButtonActionPerformed(java.awt.event.ActionEvent evt) {
        binSize_ = Math.min(binSize_ * 2, 256);
        drawDisplaySettings();
        updateChannelSettings();
-    }//GEN-LAST:event_zoomOutButtonActionPerformed
+    }
 
-   // Variables declaration - do not modify//GEN-BEGIN:variables
    private javax.swing.JButton autoButton;
    private javax.swing.JCheckBox channelNameCheckbox;
    private javax.swing.JLabel colorPickerLabel;
    private javax.swing.JButton fullButton;
-   private javax.swing.JLabel histMaxLabel;
    private javax.swing.JPanel histogramPanelHolder;
    private javax.swing.JLabel maxLabel;
    private javax.swing.JLabel minLabel;
    private javax.swing.JButton zoomInButton;
    private javax.swing.JButton zoomOutButton;
-   // End of variables declaration//GEN-END:variables
 
    private void editColor() {
       String name = "selected";
@@ -311,12 +367,20 @@ public class ChannelControlPanel extends javax.swing.JPanel {
    }
 
    public final HistogramPanel addHistogramPanel() {
-      HistogramPanel hp = new HistogramPanel();
-      hp.setMargins(8, 8);
+      HistogramPanel hp = new HistogramPanel() {
+        @Override
+        public void paint(Graphics g) {
+           super.paint(g);
+          g.setColor(Color.black);
+          g.setFont(new Font("Lucida Grande", 0, 10));
+          g.drawString(histMax_, this.getSize().width - 36, this.getSize().height );
+        }
+      };
+      hp.setMargins(8, 12);
       hp.setTextVisible(false);
       hp.setGridVisible(false);
-      //hp.setCursors(0,255,1.0);
-      histogramPanelHolder.add(hp);
+      histogramPanelHolder.add(hp, BorderLayout.CENTER);
+//      histogramPanelHolder.add(histMaxLabel,BorderLayout.PAGE_END );
       updateBinSize();
       
       hp.addCursorListener(new CursorListener() {
@@ -450,7 +514,7 @@ public class ChannelControlPanel extends javax.swing.JPanel {
                      acq_.getChannelGamma(channelIndex_));
       minLabel.setText("min: " + getMin());
       maxLabel.setText("max: " + getMax());
-      histMaxLabel.setText(Integer.toString((int) (binSize_ * 256)));
+      histMax_ = Integer.toString((int) (binSize_ * 256));
       hp_.repaint();
    }
 
