@@ -2,7 +2,7 @@
 <VisualStudioProject
 	ProjectType="Visual C++"
 	Version="9.00"
-	Name="nPC400"
+	Name="NPointC400"
 	ProjectGUID="{52A0BB2A-0A16-40F8-86D4-99E0379F6E55}"
 	RootNamespace="nPC400"
 	Keyword="Win32Proj"
