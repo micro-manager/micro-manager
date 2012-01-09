@@ -299,7 +299,7 @@ public class MetadataPanel extends JPanel
             }
         });
 
-        contrastScrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+        contrastScrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
         contrastScrollPane.setPreferredSize(new java.awt.Dimension(400, 4));
 
         singleChannelPanel_.add(singleChannelContrastPanel_);

@@ -23,6 +23,8 @@ import java.awt.GridBagLayout;
 import java.awt.GridLayout;
 import java.awt.Insets;
 import java.awt.Rectangle;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
 import java.awt.event.MouseWheelEvent;
 import java.awt.event.MouseWheelListener;
 import javax.swing.BoxLayout;
@@ -46,6 +48,8 @@ import org.micromanager.utils.ReportingUtils;
  */
 public class ChannelControlPanel extends javax.swing.JPanel {
 
+   private static final Dimension CONTROLS_SIZE = new Dimension(120,115);
+   
    private final int channelIndex_;
    private final VirtualAcquisitionDisplay acq_;
    private final HistogramPanel hp_;
@@ -58,6 +62,8 @@ public class ChannelControlPanel extends javax.swing.JPanel {
    private double fractionToReject_;
    private int height_;
    private String histMax_;
+   private JPanel controls_;
+   private JPanel controlsHolderPanel_;
 
    /** Creates new form ChannelControlsPanel */
    public ChannelControlPanel(VirtualAcquisitionDisplay acq, int channelIndex,
@@ -174,18 +180,15 @@ public class ChannelControlPanel extends javax.swing.JPanel {
       histMax_ = "   ";
 
       
-      this.setLayout(new BorderLayout());
-      JPanel controlHolder = new JPanel();
-      JPanel controls = new JPanel();
-      this.add(controlHolder,BorderLayout.LINE_START);
-      controlHolder.add(controls);
-      GridBagLayout gbl = new GridBagLayout();
-      controls.setLayout(gbl);
+      this.setLayout(new BoxLayout(this,BoxLayout.X_AXIS));
+      controlsHolderPanel_ =  new JPanel();
+      controls_ = new JPanel();
+      this.add(controlsHolderPanel_);
+      this.add(histogramPanelHolder);
 
-      controls.setMaximumSize(new Dimension(160,height_));
-      
-      this.add(histogramPanelHolder,BorderLayout.CENTER);
-      
+      controlsHolderPanel_.add(controls_);
+      GridBagLayout gbl = new GridBagLayout();
+      controls_.setLayout(gbl);
       
       GridBagConstraints gbc = new GridBagConstraints();
       gbc.gridx = 0;
@@ -194,7 +197,7 @@ public class ChannelControlPanel extends javax.swing.JPanel {
       gbc.weightx = 1;
       gbc.weighty = 1;
       gbc.anchor = GridBagConstraints.NORTHWEST;
-      controls.add(channelNameCheckbox,gbc);
+      controls_.add(channelNameCheckbox,gbc);
         
       gbc = new GridBagConstraints();
       gbc.gridx = 1;
@@ -205,7 +208,7 @@ public class ChannelControlPanel extends javax.swing.JPanel {
       gbc.weighty = 1;
       gbc.gridwidth = 3;
       gbc.insets = new Insets(2,2,2,2);
-      controls.add(colorPickerLabel,gbc);
+      controls_.add(colorPickerLabel,gbc);
       
       gbc = new GridBagConstraints();
       gbc.gridx = 0;
@@ -216,7 +219,7 @@ public class ChannelControlPanel extends javax.swing.JPanel {
       gbc.insets = new Insets(2,2,2,2);
       gbc.fill = GridBagConstraints.NONE;
       zoomInButton.setPreferredSize(new Dimension(22,22));
-      controls.add(zoomInButton,gbc);
+      controls_.add(zoomInButton,gbc);
       
       gbc = new GridBagConstraints();
       gbc.gridx = 1;
@@ -227,7 +230,7 @@ public class ChannelControlPanel extends javax.swing.JPanel {
       gbc.insets = new Insets(2,2,2,2);
       gbc.fill = GridBagConstraints.NONE;
       zoomOutButton.setPreferredSize(new Dimension(22,22));
-      controls.add(zoomOutButton,gbc);
+      controls_.add(zoomOutButton,gbc);
       
       gbc = new GridBagConstraints();
       gbc.gridx = 0;
@@ -236,7 +239,7 @@ public class ChannelControlPanel extends javax.swing.JPanel {
       gbc.weighty = 1;
       gbc.gridwidth = 7;
       gbc.anchor = GridBagConstraints.LINE_START;
-      controls.add(minLabel,gbc);
+      controls_.add(minLabel,gbc);
       
       gbc = new GridBagConstraints();
       gbc.gridx = 0;
@@ -245,7 +248,7 @@ public class ChannelControlPanel extends javax.swing.JPanel {
       gbc.weighty = 1;
       gbc.gridwidth = 7;
       gbc.anchor = GridBagConstraints.LINE_START;
-      controls.add(maxLabel,gbc);
+      controls_.add(maxLabel,gbc);
       
       gbc = new GridBagConstraints();
       gbc.gridx = 5;
@@ -254,7 +257,7 @@ public class ChannelControlPanel extends javax.swing.JPanel {
       gbc.weighty = 1;
       gbc.gridwidth = 1;
       fullButton.setPreferredSize(new Dimension(50,20));
-      controls.add(fullButton,gbc);
+      controls_.add(fullButton,gbc);
       
       gbc = new GridBagConstraints();
       gbc.gridx = 5;
@@ -263,7 +266,7 @@ public class ChannelControlPanel extends javax.swing.JPanel {
       gbc.weighty = 1;
       gbc.gridwidth = 1;
       autoButton.setPreferredSize(new Dimension(50,20));
-      controls.add(autoButton,gbc);
+      controls_.add(autoButton,gbc);
 
 
    }
@@ -271,7 +274,8 @@ public class ChannelControlPanel extends javax.swing.JPanel {
    public void setHeight(int height) {    
       hp_.setSize(hp_.getWidth(),height);
       histogramPanelHolder.setSize(hp_.getSize());
-      this.setSize(this.getSize().width, height);
+      this.setSize(this.getSize().width, height);   
+      controlsHolderPanel_.setSize(CONTROLS_SIZE);
    }
 
     private void fullButtonActionPerformed(java.awt.event.ActionEvent evt) {
@@ -372,15 +376,14 @@ public class ChannelControlPanel extends javax.swing.JPanel {
         public void paint(Graphics g) {
            super.paint(g);
           g.setColor(Color.black);
-          g.setFont(new Font("Lucida Grande", 0, 10));
-          g.drawString(histMax_, this.getSize().width - 36, this.getSize().height );
+          g.setFont(new Font("Lucida Grande", 0, 10));          
+          g.drawString(histMax_, this.getSize().width - 7*histMax_.length(), this.getSize().height );
         }
       };
       hp.setMargins(8, 12);
       hp.setTextVisible(false);
       hp.setGridVisible(false);
       histogramPanelHolder.add(hp, BorderLayout.CENTER);
-//      histogramPanelHolder.add(histMaxLabel,BorderLayout.PAGE_END );
       updateBinSize();
       
       hp.addCursorListener(new CursorListener() {
@@ -446,7 +449,10 @@ public class ChannelControlPanel extends javax.swing.JPanel {
 
          String [] names = acq_.getChannelNames();
          if (names != null && channelIndex_ < names.length) {
-            channelNameCheckbox.setText(names[channelIndex_]);
+            String name = names[channelIndex_];
+            if (name.length() > 9)
+               name = name.substring(0,9)+"...";
+            channelNameCheckbox.setText(name);
          }
 
          int [] histogram = acq_.getChannelHistogram(channelIndex_);
