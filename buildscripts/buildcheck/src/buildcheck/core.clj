@@ -95,10 +95,15 @@
 (defn get-dll-names [bits]
   (map dll-name (device-adapter-dlls (bin-dir bits))))
 
+(def helper-vcprojs #{"DEClientLib" "DEMessaging"})
+
 (defn missing-device-adapters [bits]
   (let [dll-names (get-dll-names bits)
-        project-names (map project-name (device-vcproj-files))]
-    (sort (clojure.set/difference (set project-names) (set dll-names)))))
+        project-names (map project-name (filter #(not (.. % getAbsolutePath (contains "_ATTIC")))
+                                          (device-vcproj-files)))]
+    (sort (clojure.set/difference (set project-names)
+                                  (set dll-names)
+                                  helper-vcprojs))))
      
 (defn device-pages []
   (let [index-txt (slurp "http://valelab.ucsf.edu/~MM/MMwiki/index.php/Device%20Support")]
