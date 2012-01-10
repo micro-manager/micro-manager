@@ -1259,6 +1259,7 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
 
    public void close() {
       if (hyperImage_ != null) {
+         hyperImage_.getWindow().windowClosing(null);
          hyperImage_.close();
       }
    }
@@ -1665,7 +1666,7 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
             windowClosingDone_ = true;
             closed_ = true;
          }
-
+         
          @Override
          public void windowClosed(WindowEvent E) {
             this.windowClosing(E);
