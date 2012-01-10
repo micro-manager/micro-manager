@@ -510,10 +510,13 @@ double MultiCamera::GetExposure() const
 
 void MultiCamera::SetExposure(double exp)
 {
-   for (unsigned int i = 0; i < physicalCameras_.size(); i++)
+   if (exp > 0.0)
    {
-      if (physicalCameras_[i] != 0) 
-         physicalCameras_[i]->SetExposure(exp);
+      for (unsigned int i = 0; i < physicalCameras_.size(); i++)
+      {
+         if (physicalCameras_[i] != 0) 
+           physicalCameras_[i]->SetExposure(exp);
+      }
    }
 }
 
