@@ -19,6 +19,7 @@ import javax.swing.JButton;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JToggleButton;
+import javax.swing.Timer;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.micromanager.MMStudioMainFrame;
@@ -36,6 +37,8 @@ public class SimpleWindowControls extends DisplayControls {
    private JButton snapButton_;
    private JButton liveButton_;
    private JLabel statusLabel_;
+   private Timer liveStatusTimer_;
+   private long liveStartTime_;
    
    
    public SimpleWindowControls(VirtualAcquisitionDisplay virtAcq) {
@@ -205,7 +208,24 @@ public class SimpleWindowControls extends DisplayControls {
       liveButton_.setSelected(acquiring);
       liveButton_.setText(acquiring ? "Stop Live" : "Live");
 
-      System.out.println(liveButton_.getSize());
+      if (acquiring) {
+         liveStartTime_ = System.currentTimeMillis();
+         if (liveStatusTimer_ == null)
+            liveStatusTimer_ = new Timer(80,new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+               long elapsed = System.currentTimeMillis()-liveStartTime_;
+               String label = "Live mode elapsed time: " +
+                       ((elapsed)/1000) + "." + ((elapsed%1000)/100)+ " s";
+               setStatusLabel(label);
+            }});
+         liveStatusTimer_.start();
+         
+      } else {
+         if (liveStatusTimer_ != null)
+            liveStatusTimer_.stop();
+         setStatusLabel("");
+      }
    }
 
    @Override

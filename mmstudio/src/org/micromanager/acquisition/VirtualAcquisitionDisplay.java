@@ -1083,7 +1083,7 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
    public void liveModeEnabled(boolean enabled) {
       if (simple_) {
          controls_.acquiringImagesUpdate(enabled);
-         // Set window title???
+
       }
    }
 
