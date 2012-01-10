@@ -458,7 +458,7 @@ public class ContrastPanel extends JPanel implements
       
    
 		add(slowHistogramCheckBox_);
-		springLayout.putConstraint(SpringLayout.EAST, slowHistogramCheckBox_, 74,
+		springLayout.putConstraint(SpringLayout.EAST, slowHistogramCheckBox_, 84,
 				SpringLayout.WEST, this);
 		springLayout.putConstraint(SpringLayout.WEST, slowHistogramCheckBox_, 1,
 				SpringLayout.WEST, this);
