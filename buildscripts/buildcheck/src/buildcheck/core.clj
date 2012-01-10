@@ -69,12 +69,19 @@
         pattern (re-pattern (str "MMSetup" bits "BIT_[^\\s]+?_" date-token ".exe"))]
     (re-find pattern txt)))
 
-(def non-windows-device-adapters #{"dc1394" "Video4Linux"})
+(def device-adapter-parent-dirs [(File. micromanager "/DeviceAdapters")
+                                 (File. micromanager "/SecretDeviceAdapters")])
+
+(defn do-not-build []
+  (set (apply concat
+         (for [blacklist (map #(File. % "_ADAPTERS_NOT_IN_BUILD.txt") device-adapter-parent-dirs)]
+           (let [txt (slurp blacklist)]
+             (map #(first (.split % ":")) (.split txt "\n")))))))
+
+(def non-windows-device-adapters #{"dc1394" "SimpleCam" "Video4Linux"})
 
 (defn missing-vcproj []
-  (let [device-adapter-parent-dirs [(File. micromanager "/DeviceAdapters")
-                                    (File. micromanager "/SecretDeviceAdapters")]
-        device-adapter-dirs (filter #(and (.isDirectory %)
+  (let [device-adapter-dirs (filter #(and (.isDirectory %)
                                           (not (.. % getName (startsWith "."))))
                                     (mapcat #(.listFiles %) device-adapter-parent-dirs))
         directories-without-vcproj
@@ -86,13 +93,12 @@
         (sort
           (clojure.set/difference
             (set (map #(.getName %) directories-without-vcproj))
+            (do-not-build)
             non-windows-device-adapters))))
 
 (defn device-vcproj-files []
-  (let [device-adapter-parent-dirs [(File. micromanager "/DeviceAdapters")
-                                    (File. micromanager "/SecretDeviceAdapters")]]
     (filter #(.. % getName (endsWith ".vcproj"))
-            (mapcat file-seq device-adapter-parent-dirs))))
+            (mapcat file-seq device-adapter-parent-dirs)))
 
 (defn dll-name [file]
   (second (re-find #"mmgr_dal_(.*?).dll" (.getName file))))
@@ -117,6 +123,7 @@
                                           (device-vcproj-files)))]
     (sort (clojure.set/difference (set project-names)
                                   (set dll-names)
+                                  (do-not-build)
                                   helper-vcprojs))))
      
 (defn device-pages []
@@ -130,7 +137,8 @@
             (clojure.set/union (set non-windows-device-adapters)
                                (missing-vcproj)
                                (set dll-names))
-            (set device-page-names)))))
+            (set device-page-names)
+            (do-not-build)))))
 
 (defn str-lines [sequence]
   (apply str (interpose "\n" sequence)))
