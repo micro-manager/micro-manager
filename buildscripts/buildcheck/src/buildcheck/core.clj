@@ -74,11 +74,28 @@
         pattern (re-pattern (str "MMSetup" bits "BIT_[^\\s]+?_" date-token ".exe"))]
     (re-find pattern txt)))
 
+(defn missing-vcproj []
+  (let [device-adapter-parent-dirs [(File. micromanager "/DeviceAdapters")
+                                    (File. micromanager "/SecretDeviceAdapters")]
+        device-adapter-dirs (filter #(and (.isDirectory %)
+                                          (not (.. % getName (startsWith "."))))
+                                    (mapcat #(.listFiles %) device-adapter-parent-dirs))
+        directories-without-vcproj
+        (filter identity
+                (for [device-adapter-dir device-adapter-dirs]
+                  (when (empty? (filter #(.. % getName (endsWith ".vcproj"))
+                                        (file-seq device-adapter-dir)))
+                    device-adapter-dir)))]
+        (sort
+          (clojure.set/difference
+            (set (map #(.getName %) directories-without-vcproj))
+            #{"dc1394" "Video4Linux"}))))
+
 (defn device-vcproj-files []
-  (let [device-adapter-dirs [(File. micromanager "/DeviceAdapters")
-                         (File. micromanager "/SecretDeviceAdapters")]]
+  (let [device-adapter-parent-dirs [(File. micromanager "/DeviceAdapters")
+                                    (File. micromanager "/SecretDeviceAdapters")]]
     (filter #(.. % getName (endsWith ".vcproj"))
-            (mapcat file-seq device-adapter-dirs))))
+            (mapcat file-seq device-adapter-parent-dirs))))
 
 (defn dll-name [file]
   (second (re-find #"mmgr_dal_(.*?).dll" (.getName file))))
@@ -123,7 +140,7 @@
          (str-lines (flatten (list data)))
          "None.")))
 
-(defn report-build-errors [bits mode]
+(defn report-build-errors [bits mode test]
   (let [f (result-file bits mode)
         result-txt (slurp f)
         vs-error-text (visual-studio-error-text result-txt)
@@ -132,7 +149,7 @@
         outdated-jars (map #(.getName %)
                            (old-jars (File. micromanager "Install_AllPlatforms") 24))
         installer-ok (exe-on-server? bits today-token)]
-    (when-not (and (empty? vs-error-text) (empty? outdated-dlls)
+    (when-not (and (empty? vs-error-text) (empty? outdated-dlls) (not test)
                    (empty? javac-errs) (empty? outdated-jars)
                    installer-ok)
       (str
@@ -148,14 +165,16 @@
         "\n\nIs installer download available on website?\n"
         (if installer-ok "Yes" "No. (build missing)\n")
         (when (= 32 bits)
-          (report-segment "Missing device pages" (missing-device-pages)))
+          (str
+            (report-segment "Missing device pages" (missing-device-pages))
+            (report-segment "Missing .vcproj files" (missing-vcproj))))
       ))))
 
 (defn make-full-report [mode send?]
   (let [report
         (str
-          (report-build-errors 32 mode)
-          (report-build-errors 64 mode))]
+          (report-build-errors 32 mode false)
+          (report-build-errors 64 mode false))]
     (if-not (empty? report)
       (do 
         (when send?
@@ -164,6 +183,9 @@
             (send-email (text-email ["info@micro-manager.org"] "mm build errors" report))))
         (println report))
       (println "Nothing to report."))))
+
+(defn test-report []
+  (println (report-build-errors 32 :full true)))
 
 (defn -main [mode]
   (make-full-report (get {"inc" :inc "full" :full} mode) true))
