@@ -159,10 +159,11 @@ public class SimpleWindowControls extends DisplayControls {
          MMStudioMainFrame gui = MMStudioMainFrame.getInstance();
          ImageCache ic = virtAcq_.getImageCache();
          int channels = ic.getSummaryMetadata().getInt("Channels");
+                     System.out.println("Channels: " + channels);
+
          if (channels == 1) {
             gui.addToAlbum( ic.getImage(0, 0, 0, 0) );
          } else {
-            
             
          }                
       } catch (Exception ex) {
