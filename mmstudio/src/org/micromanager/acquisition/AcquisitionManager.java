@@ -4,6 +4,8 @@ import java.util.Enumeration;
 import java.util.Hashtable;
 import java.util.Set;
 
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import mmcorej.TaggedImage;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -160,7 +162,7 @@ public class AcquisitionManager {
          album = createNewAlbum();
          openAcquisition(album, "", true, false);
          acq = getAcquisition(album);
-         acq.setDimensions(2, 1, 1, 1);
+         acq.setDimensions(2, numChannels, 1, 1);   
          acq.setImagePhysicalDimensions(imageWidth, imageHeight, imageDepth, numChannels);
 
          try {
@@ -175,6 +177,18 @@ public class AcquisitionManager {
       }
 
       int f = 1 + acq.getLastAcquiredFrame();
+      if (numChannels > 1) {
+         try {    // assumes that multi channel additions add channel 0 first
+            JSONObject lastTags = acq.getImageCache().getLastImageTags();
+            int lastCh = -1;
+            if (lastTags != null)
+               lastCh = MDUtils.getChannelIndex(lastTags);
+            if (lastCh == 0)
+               f = acq.getLastAcquiredFrame();
+         } catch (JSONException ex) {
+           ReportingUtils.logError(ex);
+         }
+      }
       try {
          MDUtils.setFrameIndex(image.tags, f);
       } catch (JSONException ex) {

@@ -159,12 +159,11 @@ public class SimpleWindowControls extends DisplayControls {
          MMStudioMainFrame gui = MMStudioMainFrame.getInstance();
          ImageCache ic = virtAcq_.getImageCache();
          int channels = ic.getSummaryMetadata().getInt("Channels");
-                     System.out.println("Channels: " + channels);
-
-         if (channels == 1) {
+         if (channels == 1) { //RGB or monchrome
             gui.addToAlbum( ic.getImage(0, 0, 0, 0) );
-         } else {
-            
+         } else { //multicamera
+            for (int i = 0; i < channels; i++)
+               gui.addToAlbum(ic.getImage(i, 0, 0, 0));
          }                
       } catch (Exception ex) {
          ReportingUtils.logError(ex);
