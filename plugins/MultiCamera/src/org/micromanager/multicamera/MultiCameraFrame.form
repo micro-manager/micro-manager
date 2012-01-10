@@ -31,26 +31,21 @@
   <Layout>
     <DimensionLayout dim="0">
       <Group type="103" groupAlignment="0" attributes="0">
-          <Group type="102" alignment="1" attributes="0">
+          <Group type="102" attributes="0">
               <EmptySpace max="32767" attributes="0"/>
               <Group type="103" groupAlignment="0" attributes="0">
                   <Group type="102" alignment="0" attributes="0">
                       <Group type="103" groupAlignment="0" attributes="0">
                           <Component id="tempButton" min="-2" pref="63" max="-2" attributes="0"/>
-                          <Group type="102" alignment="0" attributes="0">
-                              <Group type="103" groupAlignment="0" attributes="0">
-                                  <Component id="jLabel5" min="-2" max="-2" attributes="0"/>
-                                  <Component id="jLabel4" min="-2" max="-2" attributes="0"/>
-                                  <Component id="GainLabel" min="-2" max="-2" attributes="0"/>
-                                  <Component id="SpeedLabel" min="-2" max="-2" attributes="0"/>
-                                  <Component id="FrameTransferLabel" min="-2" max="-2" attributes="0"/>
-                                  <Component id="TriggerLabel" min="-2" max="-2" attributes="0"/>
-                              </Group>
-                              <EmptySpace min="-2" pref="41" max="-2" attributes="0"/>
-                          </Group>
+                          <Component id="jLabel5" min="-2" max="-2" attributes="0"/>
+                          <Component id="jLabel4" min="-2" max="-2" attributes="0"/>
+                          <Component id="GainLabel" min="-2" max="-2" attributes="0"/>
+                          <Component id="SpeedLabel" min="-2" max="-2" attributes="0"/>
+                          <Component id="FrameTransferLabel" min="-2" max="-2" attributes="0"/>
+                          <Component id="TriggerLabel" min="-2" max="-2" attributes="0"/>
                       </Group>
-                      <EmptySpace min="-2" pref="7" max="-2" attributes="0"/>
-                      <Group type="103" groupAlignment="0" attributes="0">
+                      <EmptySpace min="-2" pref="48" max="-2" attributes="0"/>
+                      <Group type="103" groupAlignment="0" max="-2" attributes="0">
                           <Component id="speedComboBox" min="-2" pref="105" max="-2" attributes="0"/>
                           <Group type="102" alignment="0" attributes="0">
                               <EmptySpace min="50" pref="50" max="50" attributes="0"/>
@@ -62,7 +57,11 @@
                           <Component id="EMCheckBox" min="-2" max="-2" attributes="0"/>
                           <Component id="EMGainTextField" min="-2" pref="49" max="-2" attributes="0"/>
                           <Component id="frameTransferComboBox" min="-2" pref="105" max="-2" attributes="0"/>
-                          <Component id="tempLabel" alignment="0" min="-2" pref="202" max="-2" attributes="0"/>
+                          <Group type="102" alignment="0" attributes="1">
+                              <Component id="tempLabel" min="-2" pref="202" max="-2" attributes="0"/>
+                              <EmptySpace max="32767" attributes="0"/>
+                              <Component id="jLabel1" min="-2" max="-2" attributes="0"/>
+                          </Group>
                       </Group>
                   </Group>
                   <Group type="102" alignment="0" attributes="0">
@@ -133,8 +132,9 @@
               <Group type="103" groupAlignment="3" attributes="0">
                   <Component id="tempButton" alignment="3" min="-2" pref="17" max="-2" attributes="0"/>
                   <Component id="tempLabel" alignment="3" min="-2" max="-2" attributes="0"/>
+                  <Component id="jLabel1" alignment="3" min="-2" max="-2" attributes="0"/>
               </Group>
-              <EmptySpace max="32767" attributes="0"/>
+              <EmptySpace pref="12" max="32767" attributes="0"/>
           </Group>
       </Group>
     </DimensionLayout>
@@ -341,6 +341,14 @@
     <Component class="javax.swing.JLabel" name="tempLabel">
       <Properties>
         <Property name="text" type="java.lang.String" value="jLabel11"/>
+      </Properties>
+    </Component>
+    <Component class="javax.swing.JLabel" name="jLabel1">
+      <Properties>
+        <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
+          <Font name="Lucida Sans" size="10" style="0"/>
+        </Property>
+        <Property name="text" type="java.lang.String" value="v 1.0"/>
       </Properties>
     </Component>
   </SubComponents>
