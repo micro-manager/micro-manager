@@ -7,20 +7,13 @@ package org.micromanager.acquisition;
 import com.swtdesigner.SwingResourceManager;
 import java.awt.BorderLayout;
 import java.awt.Dimension;
-import java.awt.FlowLayout;
 import java.awt.Font;
-import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
-import javax.swing.JToggleButton;
-import javax.swing.Timer;
-import org.json.JSONException;
 import org.json.JSONObject;
 import org.micromanager.MMStudioMainFrame;
 import org.micromanager.api.ImageCache;
@@ -37,8 +30,6 @@ public class SimpleWindowControls extends DisplayControls {
    private JButton snapButton_;
    private JButton liveButton_;
    private JLabel statusLabel_;
-   private Timer liveStatusTimer_;
-   private long liveStartTime_;
    
    
    public SimpleWindowControls(VirtualAcquisitionDisplay virtAcq) {
@@ -208,24 +199,6 @@ public class SimpleWindowControls extends DisplayControls {
       liveButton_.setSelected(acquiring);
       liveButton_.setText(acquiring ? "Stop Live" : "Live");
 
-      if (acquiring) {
-         liveStartTime_ = System.currentTimeMillis();
-         if (liveStatusTimer_ == null)
-            liveStatusTimer_ = new Timer(80,new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-               long elapsed = System.currentTimeMillis()-liveStartTime_;
-               String label = "Live mode elapsed time: " +
-                       ((elapsed)/1000) + "." + ((elapsed%1000)/100)+ " s";
-               setStatusLabel(label);
-            }});
-         liveStatusTimer_.start();
-         
-      } else {
-         if (liveStatusTimer_ != null)
-            liveStatusTimer_.stop();
-         setStatusLabel("");
-      }
    }
 
    @Override
