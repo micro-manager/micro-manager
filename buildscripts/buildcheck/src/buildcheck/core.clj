@@ -17,11 +17,6 @@
                        (.add Calendar/HOUR -1))]
     (.format format (.getTime one-hour-ago))))
     
-(def yyyymmdd (SimpleDateFormat. "yyyyMMdd"))
-
-;(defn result-file [bits mode]
-;  (File. micromanager (str "/result" bits (name mode) ".txt")))
-
 (defn result-file [bits mode]
   (File. micromanager (str "/results" bits ".txt")))
 
@@ -74,6 +69,8 @@
         pattern (re-pattern (str "MMSetup" bits "BIT_[^\\s]+?_" date-token ".exe"))]
     (re-find pattern txt)))
 
+(def non-windows-device-adapters #{"dc1394" "Video4Linux"})
+
 (defn missing-vcproj []
   (let [device-adapter-parent-dirs [(File. micromanager "/DeviceAdapters")
                                     (File. micromanager "/SecretDeviceAdapters")]
@@ -89,7 +86,7 @@
         (sort
           (clojure.set/difference
             (set (map #(.getName %) directories-without-vcproj))
-            #{"dc1394" "Video4Linux"}))))
+            non-windows-device-adapters))))
 
 (defn device-vcproj-files []
   (let [device-adapter-parent-dirs [(File. micromanager "/DeviceAdapters")
@@ -129,7 +126,11 @@
 (defn missing-device-pages []
   (let [dll-names (get-dll-names 32)
         device-page-names (device-pages)]
-    (sort (clojure.set/difference (set dll-names) (set device-page-names)))))
+    (sort (clojure.set/difference
+            (clojure.set/union (set non-windows-device-adapters)
+                               (missing-vcproj)
+                               (set dll-names))
+            (set device-page-names)))))
 
 (defn str-lines [sequence]
   (apply str (interpose "\n" sequence)))
