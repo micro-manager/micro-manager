@@ -207,6 +207,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ITC18", "..\DeviceAdapters\
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "PriorLegacy", "..\DeviceAdapters\PriorLegacy\PriorLegacy.vcproj", "{4BB973FE-D080-4B86-A453-61CB32673787}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Xcite", "..\DeviceAdapters\Xcite\Xcite.vcproj", "{A35BDDC1-60C9-4F86-9658-7D28928D4866}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
@@ -993,6 +995,13 @@ Global
 		{4BB973FE-D080-4B86-A453-61CB32673787}.Release|Win32.Build.0 = Release|Win32
 		{4BB973FE-D080-4B86-A453-61CB32673787}.Release|x64.ActiveCfg = Release|x64
 		{4BB973FE-D080-4B86-A453-61CB32673787}.Release|x64.Build.0 = Release|x64
+		{A35BDDC1-60C9-4F86-9658-7D28928D4866}.Debug|Win32.ActiveCfg = Debug|Win32
+		{A35BDDC1-60C9-4F86-9658-7D28928D4866}.Debug|Win32.Build.0 = Debug|Win32
+		{A35BDDC1-60C9-4F86-9658-7D28928D4866}.Debug|x64.ActiveCfg = Debug|Win32
+		{A35BDDC1-60C9-4F86-9658-7D28928D4866}.Release|Win32.ActiveCfg = Release|Win32
+		{A35BDDC1-60C9-4F86-9658-7D28928D4866}.Release|Win32.Build.0 = Release|Win32
+		{A35BDDC1-60C9-4F86-9658-7D28928D4866}.Release|x64.ActiveCfg = Release|x64
+		{A35BDDC1-60C9-4F86-9658-7D28928D4866}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
