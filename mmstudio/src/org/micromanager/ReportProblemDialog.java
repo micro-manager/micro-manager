@@ -297,7 +297,9 @@ public class ReportProblemDialog extends javax.swing.JDialog {
        // This regex does not allow addresses with dashes in them
        //String EMAIL_REGEX = "^[\\w-_\\.+]*[\\w-_\\.]\\@([\\w]+\\.)+[\\w]+[\\w]$";
        // simpler, and seems to work:
-       String EMAIL_REGEX = "[\\w-]+@([\\w-]+\\.)+[\\w-]+";
+       //String EMAIL_REGEX = "[\\w-]+@([\\w-]+\\.)+[\\w-]+";
+       // this one deals with dots in name (from http://www.regular-expressions.info/email.html)
+       String EMAIL_REGEX = "[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?";
        if (emailText_.getText().matches(EMAIL_REGEX)) {
           if (0 < name_.getText().length()) {
              if (0 < organization_.getText().length()) {
