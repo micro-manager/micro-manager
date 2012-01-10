@@ -185,7 +185,7 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ABSCamera", "..\DeviceAdapt
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "XCiteLed", "..\DeviceAdapters\XCiteLed\XCiteLed.vcproj", "{5A692627-8FBA-4DAB-911D-75E88B96F99F}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "nPC400", "..\DeviceAdapters\nPoint\nPC400.vcproj", "{52A0BB2A-0A16-40F8-86D4-99E0379F6E55}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "NPointC400", "..\DeviceAdapters\nPoint\nPC400.vcproj", "{52A0BB2A-0A16-40F8-86D4-99E0379F6E55}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "VariLC", "..\DeviceAdapters\VariLC\VariLC.vcproj", "{2B522528-9660-4B78-8E2A-000000000000}"
 EndProject
@@ -201,9 +201,11 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "LumencorSpectra", "..\Devic
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Micropix", "..\SecretDeviceAdapters\Micropix\Micropix.vcproj", "{C621764B-8634-4EE9-BC2F-436EE81202F0}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "NiMotionStage", "..\DeviceAdapters\NiMotionStageController\NiMotionControl.vcproj", "{936F8694-2A0F-44BC-A71B-8D2CF196F927}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "NIMotionStage", "..\DeviceAdapters\NiMotionStageController\NiMotionControl.vcproj", "{936F8694-2A0F-44BC-A71B-8D2CF196F927}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ITC18", "..\DeviceAdapters\ITC18\ITC18.vcproj", "{04E18499-E876-4952-8E23-AB72E8558BA2}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "PriorLegacy", "..\DeviceAdapters\PriorLegacy\PriorLegacy.vcproj", "{4BB973FE-D080-4B86-A453-61CB32673787}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -983,6 +985,14 @@ Global
 		{04E18499-E876-4952-8E23-AB72E8558BA2}.Release|Win32.ActiveCfg = Release|Win32
 		{04E18499-E876-4952-8E23-AB72E8558BA2}.Release|Win32.Build.0 = Release|Win32
 		{04E18499-E876-4952-8E23-AB72E8558BA2}.Release|x64.ActiveCfg = Release|Win32
+		{4BB973FE-D080-4B86-A453-61CB32673787}.Debug|Win32.ActiveCfg = Debug|Win32
+		{4BB973FE-D080-4B86-A453-61CB32673787}.Debug|Win32.Build.0 = Debug|Win32
+		{4BB973FE-D080-4B86-A453-61CB32673787}.Debug|x64.ActiveCfg = Debug|x64
+		{4BB973FE-D080-4B86-A453-61CB32673787}.Debug|x64.Build.0 = Debug|x64
+		{4BB973FE-D080-4B86-A453-61CB32673787}.Release|Win32.ActiveCfg = Release|Win32
+		{4BB973FE-D080-4B86-A453-61CB32673787}.Release|Win32.Build.0 = Release|Win32
+		{4BB973FE-D080-4B86-A453-61CB32673787}.Release|x64.ActiveCfg = Release|x64
+		{4BB973FE-D080-4B86-A453-61CB32673787}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
