@@ -436,7 +436,7 @@
         default-xy-stage (core getXYStageDevice)
         z (get-z-stage-position default-z-drive)
         xy (get-xy-stage-position default-xy-stage)
-        exposure-m (core getExposure)]
+        exposure (core getExposure)]
     (swap! (.state this) assoc
       :pause false
       :stop false
