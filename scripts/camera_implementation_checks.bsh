@@ -1,0 +1,20 @@
+
+mmc.setAutoShutter(false); 
+
+int[] exposures = {10, 30, 50, 60, 90, 120};
+for (int exposure:exposures) {
+	//mmc.setExposure(exposure);
+
+	long startTime = System.nanoTime();
+	for (i=0;i<10;++i) {
+ 		mmc.snapImage();
+	}
+	long estimatedTime = ((System.nanoTime() - startTime)/10)/1000000;
+	print("exposure= "+exposure+ ", time= "+estimatedTime);
+	if (exposure>estimatedTime) {
+		print("Fail: SnapImage returns too early. Full exposure time not met.");
+	}
+}
+
+
+
