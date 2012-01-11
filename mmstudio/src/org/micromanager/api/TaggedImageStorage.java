@@ -8,7 +8,6 @@ package org.micromanager.api;
 import java.util.Set;
 import mmcorej.TaggedImage;
 import org.json.JSONObject;
-import org.micromanager.acquisition.TaggedImageStorageDiskDefault;
 import org.micromanager.utils.MMException;
 
 /**
