@@ -157,9 +157,14 @@
         javac-errs (javac-errors result-txt)
         outdated-jars (map #(.getName %)
                            (old-jars (File. micromanager "Install_AllPlatforms") 24))
-        installer-ok (exe-on-server? bits today-token)]
-    (when-not (and (empty? vs-error-text) (empty? outdated-dlls) (not test)
-                   (empty? javac-errs) (empty? outdated-jars)
+        installer-ok (exe-on-server? bits today-token)
+        missing-vcproj-files (missing-vcproj)]
+    (when-not (and (not test)
+                   (empty? vs-error-text)
+                   (empty? outdated-dlls)
+                   (empty? javac-errs)
+                   (empty? outdated-jars)
+                   (empty? missing-vcproj-files)
                    installer-ok)
       (str
         "\n\nMICROMANAGER " bits "-bit "
@@ -176,7 +181,7 @@
         (when (= 32 bits)
           (str
             (report-segment "Missing device pages" (missing-device-pages))
-            (report-segment "Missing .vcproj files" (missing-vcproj))))
+            (report-segment "Missing .vcproj files" missing-vcproj-files)))
       ))))
 
 (defn make-full-report [mode send?]
