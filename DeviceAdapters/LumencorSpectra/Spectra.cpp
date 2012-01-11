@@ -658,7 +658,7 @@ int Spectra::OnInitLE(MM::PropertyBase* pProp, MM::ActionType eAct)
    {  
 	  State = 0; 
       pProp->Set(State); // reset button
-      int ret = InitLE();
+      /*int ret =*/ InitLE();
    }
    return DEVICE_OK;
 }
