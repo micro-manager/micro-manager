@@ -161,6 +161,11 @@
 
 ;; hardware control
 
+(defn set-exposure [camera exp]
+  (when (not= exp (get-in @state [camera :exposures]))
+    (device-best-effort (core setExposure exp))
+    (swap! state assoc-in [camera :exposures] exp)))
+
 (defn wait-for-device [dev]
   (when-not (empty? dev)
     (try
@@ -430,7 +435,8 @@
   (let [default-z-drive (core getFocusDevice)
         default-xy-stage (core getXYStageDevice)
         z (get-z-stage-position default-z-drive)
-        xy (get-xy-stage-position default-xy-stage)]
+        xy (get-xy-stage-position default-xy-stage)
+        exposure-m (core getExposure)]
     (swap! (.state this) assoc
       :pause false
       :stop false
@@ -442,7 +448,8 @@
       :reference-z z
       :start-time (jvm-time-ms)
       :init-auto-shutter (core getAutoShutter)
-      :init-exposure (core getExposure)
+      :init-exposure exposure
+      :exposures {(core getCameraDevice) exposure}
       :default-z-drive default-z-drive
       :default-xy-stage default-xy-stage
       :init-z-position z
@@ -459,19 +466,19 @@
 
 (defn cleanup []
   (try
-  (log "cleanup")
- ; (do-when #(.update %) (:display @state))
-  (state-assoc! :finished true :display nil)
-  (when (core isSequenceRunning)
-    (core stopSequenceAcquisition))
-  (stop-trigger)
-  (core setAutoShutter (@state :init-auto-shutter))
-  (core setExposure (@state :init-exposure))
-  (set-stage-position (@state :default-z-drive) (@state :init-z-position))
-  (when (and (@state :init-continuous-focus)
-             (not (core isContinuousFocusEnabled)))
-    (core enableContinuousFocus true))
-  (return-config)
+    (log "cleanup")
+    ; (do-when #(.update %) (:display @state))
+    (state-assoc! :finished true :display nil)
+    (when (core isSequenceRunning)
+      (core stopSequenceAcquisition))
+    (stop-trigger)
+    (core setAutoShutter (@state :init-auto-shutter))
+    (core set-exposure (core getCameraDevice) (@state :init-exposure))
+    (set-stage-position (@state :default-z-drive) (@state :init-z-position))
+    (when (and (@state :init-continuous-focus)
+               (not (core isContinuousFocusEnabled)))
+      (core enableContinuousFocus true))
+    (return-config)
     (catch Throwable t (ReportingUtils/showError t "Acquisition cleanup failed."))))
 
 ;; running events
@@ -493,7 +500,7 @@
             #(set-property [d p v]))
           #(when-lets [exposure (:exposure event)
                        camera (core getCameraDevice)]
-             (device-best-effort camera (core setExposure exposure)))
+             (device-best-effort set-exposure exposure))
           #(when check-z-ref
              (recall-z-reference current-position))
           #(when-let [wait-time-ms (:wait-time-ms event)]
