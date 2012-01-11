@@ -473,7 +473,7 @@
       (core stopSequenceAcquisition))
     (stop-trigger)
     (core setAutoShutter (@state :init-auto-shutter))
-    (core set-exposure (core getCameraDevice) (@state :init-exposure))
+    (set-exposure (core getCameraDevice) (@state :init-exposure))
     (set-stage-position (@state :default-z-drive) (@state :init-z-position))
     (when (and (@state :init-continuous-focus)
                (not (core isContinuousFocusEnabled)))
