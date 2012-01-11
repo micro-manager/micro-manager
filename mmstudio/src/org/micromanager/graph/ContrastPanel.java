@@ -292,7 +292,7 @@ public class ContrastPanel extends JPanel implements
 		add(histogramPanel_);
 		springLayout.putConstraint(SpringLayout.EAST, histogramPanel_, -5,
 				SpringLayout.EAST, this);
-		springLayout.putConstraint(SpringLayout.WEST, histogramPanel_, 110,
+		springLayout.putConstraint(SpringLayout.WEST, histogramPanel_, 95,
 				SpringLayout.WEST, this);
 
 		springLayout.putConstraint(SpringLayout.SOUTH, histogramPanel_, -6,
