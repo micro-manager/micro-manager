@@ -500,7 +500,7 @@
             #(set-property [d p v]))
           #(when-lets [exposure (:exposure event)
                        camera (core getCameraDevice)]
-             (device-best-effort set-exposure exposure))
+             (device-best-effort (set-exposure exposure)))
           #(when check-z-ref
              (recall-z-reference current-position))
           #(when-let [wait-time-ms (:wait-time-ms event)]
@@ -724,7 +724,7 @@
         out-queue-2 (.begin processors)
         summary-metadata (make-summary-metadata settings)
         live-acq (LiveAcq. mmc out-queue-2 summary-metadata
-                  (:save settings) acq-eng)]
+                  (:save settings) acq-eng gui)]
     (swap! (.state this) assoc :image-cache (.getImageCache live-acq)
                                :acq-thread acq-thread
                                :summary-metadata summary-metadata)

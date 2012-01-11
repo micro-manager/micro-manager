@@ -14,6 +14,7 @@ import mmcorej.TaggedImage;
 import org.json.JSONObject;
 import org.micromanager.api.AcquisitionEngine;
 import org.micromanager.api.ImageCache;
+import org.micromanager.api.ScriptInterface;
 import org.micromanager.api.TaggedImageStorage;
 import org.micromanager.utils.ImageUtils;
 import org.micromanager.utils.JavaUtils;
@@ -36,7 +37,8 @@ public class LiveAcq extends Thread {
            BlockingQueue<TaggedImage> imageProducingQueue,
            JSONObject summaryMetadata,
            boolean diskCached,
-           AcquisitionEngine eng) {
+           AcquisitionEngine eng,
+           ScriptInterface gui) {
       core_ = core;
       diskCached_ = diskCached;
       imageProducingQueue_ = imageProducingQueue;
@@ -61,6 +63,7 @@ public class LiveAcq extends Thread {
          imageFileManager = new TaggedImageStorageRam(null);
       }
 
+      
       imageCache_ = new MMImageCache(imageFileManager);
       imageCache_.setSummaryMetadata(summaryMetadata);
 
