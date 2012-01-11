@@ -1112,12 +1112,18 @@ protected:
       this->CreateProperty(MM::g_Keyword_HubID, pid, MM::String, false);
    }
 
+   /**
+    * Returns the parent Hub device pointer, or null if there isn't any.
+    * GetParentHub() call Makes sure that the hub pointer belongs to a class from the same
+    * module (device library). This is to avoid using dynamic_cast<> which
+    * won't work for Linux.
+    */
    MM::Hub* GetParentHub() const
    {
       if (IsCallbackRegistered())
          return GetCoreCallback()->GetParentHub(this);
-      else
-         return 0;
+      
+      return 0;
    }
 
 private:

@@ -34,14 +34,14 @@ const char* g_DeviceNameArduinoInput = "Arduino-Input";
 // Global info about the state of the Arduino.  This should be folded into a class
 unsigned g_switchState = 0;
 unsigned g_shutterState = 0;
-MMThreadLock g_lock;
-int g_version;
 const int g_Min_MMVersion = 1;
 const int g_Max_MMVersion = 2;
+const char* g_versionProp = "Version";
 const char* g_normalLogicString = "Normal";
 const char* g_invertedLogicString = "Inverted";
 
-
+// static lock
+MMThreadLock CArduinoHub::lock_;
 
 ///////////////////////////////////////////////////////////////////////////////
 // Exported MMDevice API
@@ -85,8 +85,6 @@ MODULE_API MM::Device* CreateDevice(const char* deviceName)
    {
       return new CArduinoInput;
    }
-
-
 
    return 0;
 }
@@ -216,7 +214,7 @@ MM::DeviceDetectionStatus CArduinoHub::DetectDevice(void)
          pS->Initialize();
          // The first second or so after opening the serial port, the Arduino is waiting for firmwareupgrades.  Simply sleep 1 second.
          CDeviceUtils::SleepMs(2000);
-         MMThreadGuard myLock(g_lock);
+         MMThreadGuard myLock(lock_);
          PurgeComPort(port_.c_str());
          int v = 0;
          int ret = GetControllerVersion(v);
@@ -256,21 +254,21 @@ int CArduinoHub::Initialize()
    // The first second or so after opening the serial port, the Arduino is waiting for firmwareupgrades.  Simply sleep 1 second.
    CDeviceUtils::SleepMs(2000);
 
-   MMThreadGuard myLock(g_lock);
+   MMThreadGuard myLock(lock_);
 
    // Check that we have a controller:
    PurgeComPort(port_.c_str());
-   ret = GetControllerVersion(g_version);
+   ret = GetControllerVersion(version_);
    if( DEVICE_OK != ret)
       return ret;
 
-   if (g_version < g_Min_MMVersion || g_version > g_Max_MMVersion)
+   if (version_ < g_Min_MMVersion || version_ > g_Max_MMVersion)
       return ERR_VERSION_MISMATCH;
 
    CPropertyAction* pAct = new CPropertyAction(this, &CArduinoHub::OnVersion);
    std::ostringstream sversion;
-   sversion << g_version;
-   CreateProperty("Version", sversion.str().c_str(), MM::Integer, true, pAct);
+   sversion << version_;
+   CreateProperty(g_versionProp, sversion.str().c_str(), MM::Integer, true, pAct);
 
    ret = UpdateStatus();
    if (ret != DEVICE_OK)
@@ -333,7 +331,7 @@ int CArduinoHub::OnVersion(MM::PropertyBase* pProp, MM::ActionType pAct)
 {
    if (pAct == MM::BeforeGet)
    {
-      pProp->Set((long)g_version);
+      pProp->Set((long)version_);
    }
    return DEVICE_OK;
 }
@@ -409,7 +407,7 @@ void CArduinoSwitch::GetName(char* name) const
 
 int CArduinoSwitch::Initialize()
 {
-   CArduinoHub* hub = dynamic_cast<CArduinoHub*>(GetParentHub());
+   CArduinoHub* hub = static_cast<CArduinoHub*>(GetParentHub());
    if (!hub || !hub->IsPortAvailable()) {
       return ERR_NO_PORT_SET;
    }
@@ -514,11 +512,12 @@ int CArduinoSwitch::Shutdown()
 
 int CArduinoSwitch::WriteToPort(long value)
 {
-   MMThreadGuard myLock(g_lock);
-   CArduinoHub* hub = dynamic_cast<CArduinoHub*>(GetParentHub());
+   CArduinoHub* hub = static_cast<CArduinoHub*>(GetParentHub());
    if (!hub || !hub->IsPortAvailable()) {
       return ERR_NO_PORT_SET;
    }
+
+   MMThreadGuard myLock(hub->GetLock());
 
    value = 63 & value;
    if (hub->IsLogicInverted())
@@ -551,7 +550,7 @@ int CArduinoSwitch::WriteToPort(long value)
 
 int CArduinoSwitch::LoadSequence(unsigned size, unsigned char* seq)
 {
-   CArduinoHub* hub = dynamic_cast<CArduinoHub*>(GetParentHub());
+   CArduinoHub* hub = static_cast<CArduinoHub*>(GetParentHub());
    if (!hub || !hub->IsPortAvailable())
       return ERR_NO_PORT_SET;
 
@@ -618,7 +617,7 @@ int CArduinoSwitch::LoadSequence(unsigned size, unsigned char* seq)
 
 int CArduinoSwitch::OnState(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
-   CArduinoHub* hub = dynamic_cast<CArduinoHub*>(GetParentHub());
+   CArduinoHub* hub = static_cast<CArduinoHub*>(GetParentHub());
    if (!hub || !hub->IsPortAvailable())
       return ERR_NO_PORT_SET;
 
@@ -663,7 +662,7 @@ int CArduinoSwitch::OnState(MM::PropertyBase* pProp, MM::ActionType eAct)
    }                                                                         
    else if (eAct == MM::StartSequence)
    { 
-      MMThreadGuard myLock(g_lock);
+      MMThreadGuard myLock(hub->GetLock());
 
       hub->PurgeComPortH();
       unsigned char command[1];
@@ -687,7 +686,7 @@ int CArduinoSwitch::OnState(MM::PropertyBase* pProp, MM::ActionType eAct)
    }
    else if (eAct == MM::StopSequence)                                        
    {
-      MMThreadGuard myLock(g_lock);
+      MMThreadGuard myLock(hub->GetLock());
 
       unsigned char command[1];
       command[0] = 9;
@@ -740,7 +739,7 @@ int CArduinoSwitch::OnSequence(MM::PropertyBase* pProp, MM::ActionType eAct)
 
 int CArduinoSwitch::OnStartTimedOutput(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
-   CArduinoHub* hub = dynamic_cast<CArduinoHub*>(GetParentHub());
+   CArduinoHub* hub = static_cast<CArduinoHub*>(GetParentHub());
    if (!hub || !hub->IsPortAvailable())
       return ERR_NO_PORT_SET;
 
@@ -752,7 +751,7 @@ int CArduinoSwitch::OnStartTimedOutput(MM::PropertyBase* pProp, MM::ActionType e
    }
    else if (eAct == MM::AfterSet)
    {
-      MMThreadGuard myLock(g_lock);
+      MMThreadGuard myLock(hub->GetLock());
 
       std::string prop;
       pProp->Get(prop);
@@ -806,7 +805,7 @@ int CArduinoSwitch::OnStartTimedOutput(MM::PropertyBase* pProp, MM::ActionType e
 
 int CArduinoSwitch::OnBlanking(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
-   CArduinoHub* hub = dynamic_cast<CArduinoHub*>(GetParentHub());
+   CArduinoHub* hub = static_cast<CArduinoHub*>(GetParentHub());
    if (!hub || !hub->IsPortAvailable())
       return ERR_NO_PORT_SET;
 
@@ -818,7 +817,7 @@ int CArduinoSwitch::OnBlanking(MM::PropertyBase* pProp, MM::ActionType eAct)
    }
    else if (eAct == MM::AfterSet)
    {
-      MMThreadGuard myLock(g_lock);
+      MMThreadGuard myLock(hub->GetLock());
 
       std::string prop;
       pProp->Get(prop);
@@ -874,7 +873,7 @@ int CArduinoSwitch::OnBlanking(MM::PropertyBase* pProp, MM::ActionType eAct)
 
 int CArduinoSwitch::OnBlankingTriggerDirection(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
-   CArduinoHub* hub = dynamic_cast<CArduinoHub*>(GetParentHub());
+   CArduinoHub* hub = static_cast<CArduinoHub*>(GetParentHub());
    if (!hub || !hub->IsPortAvailable())
       return ERR_NO_PORT_SET;
 
@@ -883,7 +882,7 @@ int CArduinoSwitch::OnBlankingTriggerDirection(MM::PropertyBase* pProp, MM::Acti
    }
    else if (eAct == MM::AfterSet)
    {
-      MMThreadGuard myLock(g_lock);
+      MMThreadGuard myLock(hub->GetLock());
 
       std::string direction;
       pProp->Get(direction);
@@ -935,7 +934,7 @@ int CArduinoSwitch::OnDelay(MM::PropertyBase* pProp, MM::ActionType eAct)
 
 int CArduinoSwitch::OnRepeatTimedPattern(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
-   CArduinoHub* hub = dynamic_cast<CArduinoHub*>(GetParentHub());
+   CArduinoHub* hub = static_cast<CArduinoHub*>(GetParentHub());
    if (!hub || !hub->IsPortAvailable())
       return ERR_NO_PORT_SET;
 
@@ -943,7 +942,7 @@ int CArduinoSwitch::OnRepeatTimedPattern(MM::PropertyBase* pProp, MM::ActionType
    }
    else if (eAct == MM::AfterSet)
    {
-      MMThreadGuard myLock(g_lock);
+      MMThreadGuard myLock(hub->GetLock());
 
       long prop;
       pProp->Get(prop);
@@ -1041,7 +1040,7 @@ void CArduinoDA::GetName(char* name) const
 
 int CArduinoDA::Initialize()
 {
-   CArduinoHub* hub = dynamic_cast<CArduinoHub*>(GetParentHub());
+   CArduinoHub* hub = static_cast<CArduinoHub*>(GetParentHub());
    if (!hub || !hub->IsPortAvailable()) {
       return ERR_NO_PORT_SET;
    }
@@ -1077,11 +1076,11 @@ int CArduinoDA::Shutdown()
 
 int CArduinoDA::WriteToPort(unsigned long value)
 {
-   CArduinoHub* hub = dynamic_cast<CArduinoHub*>(GetParentHub());
+   CArduinoHub* hub = static_cast<CArduinoHub*>(GetParentHub());
    if (!hub || !hub->IsPortAvailable())
       return ERR_NO_PORT_SET;
 
-   MMThreadGuard myLock(g_lock);
+   MMThreadGuard myLock(hub->GetLock());
 
    hub->PurgeComPortH();
 
@@ -1248,7 +1247,7 @@ bool CArduinoShutter::Busy()
 
 int CArduinoShutter::Initialize()
 {
-   CArduinoHub* hub = dynamic_cast<CArduinoHub*>(GetParentHub());
+   CArduinoHub* hub = static_cast<CArduinoHub*>(GetParentHub());
    if (!hub || !hub->IsPortAvailable()) {
       return ERR_NO_PORT_SET;
    }
@@ -1326,11 +1325,11 @@ int CArduinoShutter::Fire(double /*deltaT*/)
 
 int CArduinoShutter::WriteToPort(long value)
 {
-   CArduinoHub* hub = dynamic_cast<CArduinoHub*>(GetParentHub());
+   CArduinoHub* hub = static_cast<CArduinoHub*>(GetParentHub());
    if (!hub || !hub->IsPortAvailable())
       return ERR_NO_PORT_SET;
 
-   MMThreadGuard myLock(g_lock);
+   MMThreadGuard myLock(hub->GetLock());
 
    value = 63 & value;
    if (hub->IsLogicInverted())
@@ -1444,7 +1443,7 @@ int CArduinoInput::Shutdown()
 
 int CArduinoInput::Initialize()
 {
-   CArduinoHub* hub = dynamic_cast<CArduinoHub*>(GetParentHub());
+   CArduinoHub* hub = static_cast<CArduinoHub*>(GetParentHub());
    if (!hub || !hub->IsPortAvailable()) {
       return ERR_NO_PORT_SET;
    }
@@ -1452,9 +1451,11 @@ int CArduinoInput::Initialize()
    hub->GetLabel(hubLabel);
    SetParentID(hubLabel); // for backward comp.
 
-   if (g_version < 2)
+   char ver[MM::MaxStrLength] = "0";
+   hub->GetProperty(g_versionProp, ver);
+   int version = atoi(ver);
+   if (version < 2)
       return ERR_VERSION_MISMATCH;
-
 
    int ret = GetProperty("Pin", pins_);
    if (ret != DEVICE_OK)
@@ -1516,11 +1517,11 @@ bool CArduinoInput::Busy()
 
 int CArduinoInput::GetDigitalInput(long* state)
 {
-   CArduinoHub* hub = dynamic_cast<CArduinoHub*>(GetParentHub());
+   CArduinoHub* hub = static_cast<CArduinoHub*>(GetParentHub());
    if (!hub || !hub->IsPortAvailable())
       return ERR_NO_PORT_SET;
 
-   MMThreadGuard myLock(g_lock);
+   MMThreadGuard myLock(hub->GetLock());
 
    unsigned char command[1];
    command[0] = 40;
@@ -1576,13 +1577,13 @@ int CArduinoInput::OnDigitalInput(MM::PropertyBase*  pProp, MM::ActionType eAct)
 
 int CArduinoInput::OnAnalogInput(MM::PropertyBase* pProp, MM::ActionType eAct, long  channel )
 {
-   CArduinoHub* hub = dynamic_cast<CArduinoHub*>(GetParentHub());
+   CArduinoHub* hub = static_cast<CArduinoHub*>(GetParentHub());
    if (!hub || !hub->IsPortAvailable())
       return ERR_NO_PORT_SET;
 
    if (eAct == MM::BeforeGet)
    {
-      MMThreadGuard myLock(g_lock);
+      MMThreadGuard myLock(hub->GetLock());
 
       unsigned char command[2];
       command[0] = 41;
@@ -1613,11 +1614,11 @@ int CArduinoInput::OnAnalogInput(MM::PropertyBase* pProp, MM::ActionType eAct, l
 
 int CArduinoInput::SetPullUp(int pin, int state)
 {
-   MMThreadGuard myLock(g_lock);
-
-   CArduinoHub* hub = dynamic_cast<CArduinoHub*>(GetParentHub());
+   CArduinoHub* hub = static_cast<CArduinoHub*>(GetParentHub());
    if (!hub || !hub->IsPortAvailable())
       return ERR_NO_PORT_SET;
+
+   MMThreadGuard myLock(hub->GetLock());
 
    const int nrChrs = 3;
    unsigned char command[nrChrs];

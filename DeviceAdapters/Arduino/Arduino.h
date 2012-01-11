@@ -48,13 +48,14 @@ public:
    bool Busy();
 
    MM::DeviceDetectionStatus DetectDevice(void);
-
    int DetectInstalledDevices();
 
+   // property handlers
    int OnPort(MM::PropertyBase* pPropt, MM::ActionType eAct);
    int OnLogic(MM::PropertyBase* pPropt, MM::ActionType eAct);
    int OnVersion(MM::PropertyBase* pPropt, MM::ActionType eAct);
 
+   // custom interface for child devices
    bool IsPortAvailable() {return portAvailable_;}
    bool IsLogicInverted() {return invertedLogic_;}
    bool IsTimedOutputActive() {return timedOutputActive_;}
@@ -66,6 +67,7 @@ public:
    {
       return ReadFromComPort(port_.c_str(), answer, maxLen, bytesRead);
    }
+   static MMThreadLock& GetLock() {return lock_;}
 
 private:
    int GetControllerVersion(int&);
@@ -74,7 +76,8 @@ private:
    bool portAvailable_;
    bool invertedLogic_;
    bool timedOutputActive_;
-
+   int version_;
+   static MMThreadLock lock_;
 };
 
 class CArduinoShutter : public CShutterBase<CArduinoShutter>  

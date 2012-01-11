@@ -34,60 +34,6 @@
 #include <sstream>
 using namespace std;
 
-/*
-To get position  for example
-
-MGMSG_MOT_REQ_POSCOUNTER (0x0411)
-
-Tx 11,04,01,00,50,01
-
-First 6 bytes are 6 byte header
-
-First 2 are msg ident 11 04  (0x0411)
-
-Next 2 are channel ID (01 00) 1
-
-Next 2 are src dest bytes  (50 dest, 01 src)              
-
- 
-
-Response for example will be
-
-MGMSG_MOT_GET_POSCOUNTER  (0x0412)
-
-Tx 12,04,06,00,81,50,01,00,00,0A,00,00
-
-First 6 bytes are 6 byte header
-
-First 2 are msg ident 12 04  (0x0412)
-
-Next 2 are number of  bytes in appended structure (06 00) 6
-
-Next 2 are sr dest bytes (81 50) (note dest 81 is Ored with 0x80 to indicate appended packet
-
- 
-
-Next 6 are appended packet
-
-First 2 are channel ident ( 01 00) 1 
-
-Next 4 are current position in absolute stepper micro-steps (00 0A 00 00) 0xA00 (angle of 0.52 degrees at output for example)
-
- 
-
-and relate to the output angle of the filter wheel by the gear ratio of stepper gear to
-
-filter wheel gear which is 4.333….. -1. So for 1 turn of the motor which represents
-
-409600 stepper micro-steps hence relates to 360 degrees at the motor. So 1microstep is
-
-360/409600= approx. 0.0008789 degrees.
-
-To move the actual filter wheel by 45 degrees say (an 8 position filter wheel), then 45*4.333..=195 degrees
-
-This is equal to approx. 221867 micro-steps to go from 1 filter position to the next.
-
-*/
 
 ///////////
 // commands
@@ -129,7 +75,7 @@ const unsigned char setPosCmd[] =  {         0x53, // cmd low byte
                                              0x00  // position high byte
                                           };             
 
-const unsigned char getParamsCmd[] =  {      0x15, // cmd low byte
+const unsigned char reqParamsCmd[] =  {      0x15, // cmd low byte
                                              0x00, // cmd high byte
                                              0x20, // num bytes low
                                              0x00, // num bytes hi
@@ -137,6 +83,28 @@ const unsigned char getParamsCmd[] =  {      0x15, // cmd low byte
                                              0x01
                                           };             
 
+const unsigned char getParamsResp[] = {      0x16, // cmd low
+                                             0x00, //
+                                             0x28, // 
+                                             0x00, // 
+                                             0x81, // 
+                                             0x50, // cmd hi
+
+                                             0x20, // num pos low
+                                             0x00, // 
+                                             0x00, //
+                                             0x00, // num pos hi
+
+                                             0x01, // ch ID low
+                                             0x00, //   
+                                             0x00, // 
+                                             0x00,  // ch ID hi
+
+                                             0x08, // num pos low
+                                             0x00,
+                                             0x00,
+                                             0x00 // num pos hi
+                                          };
 
 using namespace std;
 
@@ -177,8 +145,6 @@ int IntegratedFilterWheel::Initialize()
 
    // set property list
    // -----------------
-   
-
 
    // Name
    int ret = CreateProperty(MM::g_Keyword_Name, g_WheelDeviceName, MM::String, true);
@@ -267,10 +233,8 @@ int IntegratedFilterWheel::OnState(MM::PropertyBase* pProp, MM::ActionType eAct)
          pProp->Set(position_); // revert
          return ERR_INVALID_POSITION;
       }
-      char buf[MM::MaxStrLength];
-      // TODO: format command
-	   
-	   SendSerialCommand(port_.c_str(),buf,"\r");
+      
+      int ret = SetPosition(pos);
       position_ = pos;
    }
 

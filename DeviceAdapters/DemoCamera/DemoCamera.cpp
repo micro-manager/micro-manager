@@ -295,16 +295,17 @@ int CDemoCamera::Initialize()
    if (initialized_)
       return DEVICE_OK;
 
-   DemoHub* pHub = dynamic_cast<DemoHub*>(GetParentHub());
-   if (!pHub)
-      return DEVICE_COMM_HUB_MISSING;
-
-   if (pHub->GenerateRandomError())
-      return SIMULATED_ERROR;
-
-   char hubLabel[MM::MaxStrLength];
-   pHub->GetLabel(hubLabel);
-   SetParentID(hubLabel); // for backward comp.
+   DemoHub* pHub = static_cast<DemoHub*>(GetParentHub());
+   if (pHub)
+   {
+      if (pHub->GenerateRandomError())
+         return SIMULATED_ERROR;
+      char hubLabel[MM::MaxStrLength];
+      pHub->GetLabel(hubLabel);
+      SetParentID(hubLabel); // for backward comp.
+   }
+   else
+      LogMessage(NoHubError);
 
    // set property list
    // -----------------
@@ -491,7 +492,7 @@ int CDemoCamera::Initialize()
 */
 int CDemoCamera::Shutdown()
 {
-   DemoHub* pHub = dynamic_cast<DemoHub*>(GetParentHub());
+   DemoHub* pHub = static_cast<DemoHub*>(GetParentHub());
    if (pHub && pHub->GenerateRandomError())
       return SIMULATED_ERROR;
 
@@ -507,7 +508,7 @@ int CDemoCamera::Shutdown()
 */
 int CDemoCamera::SnapImage()
 {
-   DemoHub* pHub = dynamic_cast<DemoHub*>(GetParentHub());
+   DemoHub* pHub = static_cast<DemoHub*>(GetParentHub());
    if (pHub && pHub->GenerateRandomError())
       return SIMULATED_ERROR;
 
@@ -555,7 +556,7 @@ int CDemoCamera::SnapImage()
 */
 const unsigned char* CDemoCamera::GetImageBuffer()
 {
-   DemoHub* pHub = dynamic_cast<DemoHub*>(GetParentHub());
+   DemoHub* pHub = static_cast<DemoHub*>(GetParentHub());
    if (pHub && pHub->GenerateRandomError())
       return 0;
 
@@ -572,7 +573,7 @@ const unsigned char* CDemoCamera::GetImageBuffer()
 */
 unsigned CDemoCamera::GetImageWidth() const
 {
-   DemoHub* pHub = dynamic_cast<DemoHub*>(GetParentHub());
+   DemoHub* pHub = static_cast<DemoHub*>(GetParentHub());
    if (pHub && pHub->GenerateRandomError())
       return 0;
 
@@ -585,7 +586,7 @@ unsigned CDemoCamera::GetImageWidth() const
 */
 unsigned CDemoCamera::GetImageHeight() const
 {
-   DemoHub* pHub = dynamic_cast<DemoHub*>(GetParentHub());
+   DemoHub* pHub = static_cast<DemoHub*>(GetParentHub());
    if (pHub && pHub->GenerateRandomError())
       return 0;
 
@@ -598,7 +599,7 @@ unsigned CDemoCamera::GetImageHeight() const
 */
 unsigned CDemoCamera::GetImageBytesPerPixel() const
 {
-   DemoHub* pHub = dynamic_cast<DemoHub*>(GetParentHub());
+   DemoHub* pHub = static_cast<DemoHub*>(GetParentHub());
    if (pHub && pHub->GenerateRandomError())
       return 0;
 
@@ -613,7 +614,7 @@ unsigned CDemoCamera::GetImageBytesPerPixel() const
 */
 unsigned CDemoCamera::GetBitDepth() const
 {
-   DemoHub* pHub = dynamic_cast<DemoHub*>(GetParentHub());
+   DemoHub* pHub = static_cast<DemoHub*>(GetParentHub());
    if (pHub && pHub->GenerateRandomError())
       return 0;
 
@@ -626,7 +627,7 @@ unsigned CDemoCamera::GetBitDepth() const
 */
 long CDemoCamera::GetImageBufferSize() const
 {
-   DemoHub* pHub = dynamic_cast<DemoHub*>(GetParentHub());
+   DemoHub* pHub = static_cast<DemoHub*>(GetParentHub());
    if (pHub && pHub->GenerateRandomError())
       return 0;
 
@@ -649,7 +650,7 @@ long CDemoCamera::GetImageBufferSize() const
 */
 int CDemoCamera::SetROI(unsigned x, unsigned y, unsigned xSize, unsigned ySize)
 {
-   DemoHub* pHub = dynamic_cast<DemoHub*>(GetParentHub());
+   DemoHub* pHub = static_cast<DemoHub*>(GetParentHub());
    if (pHub && pHub->GenerateRandomError())
       return SIMULATED_ERROR;
 
@@ -676,7 +677,7 @@ int CDemoCamera::SetROI(unsigned x, unsigned y, unsigned xSize, unsigned ySize)
 */
 int CDemoCamera::GetROI(unsigned& x, unsigned& y, unsigned& xSize, unsigned& ySize)
 {
-   DemoHub* pHub = dynamic_cast<DemoHub*>(GetParentHub());
+   DemoHub* pHub = static_cast<DemoHub*>(GetParentHub());
    if (pHub && pHub->GenerateRandomError())
       return SIMULATED_ERROR;
 
@@ -695,7 +696,7 @@ int CDemoCamera::GetROI(unsigned& x, unsigned& y, unsigned& xSize, unsigned& ySi
 */
 int CDemoCamera::ClearROI()
 {
-   DemoHub* pHub = dynamic_cast<DemoHub*>(GetParentHub());
+   DemoHub* pHub = static_cast<DemoHub*>(GetParentHub());
    if (pHub && pHub->GenerateRandomError())
       return SIMULATED_ERROR;
 
@@ -712,7 +713,7 @@ int CDemoCamera::ClearROI()
 */
 double CDemoCamera::GetExposure() const
 {
-   DemoHub* pHub = dynamic_cast<DemoHub*>(GetParentHub());
+   DemoHub* pHub = static_cast<DemoHub*>(GetParentHub());
    if (pHub && pHub->GenerateRandomError())
       return SIMULATED_ERROR;
 
@@ -738,7 +739,7 @@ void CDemoCamera::SetExposure(double exp)
 */
 int CDemoCamera::GetBinning() const
 {
-   DemoHub* pHub = dynamic_cast<DemoHub*>(GetParentHub());
+   DemoHub* pHub = static_cast<DemoHub*>(GetParentHub());
    if (pHub && pHub->GenerateRandomError())
       return SIMULATED_ERROR;
 
@@ -755,7 +756,7 @@ int CDemoCamera::GetBinning() const
 */
 int CDemoCamera::SetBinning(int binF)
 {
-   DemoHub* pHub = dynamic_cast<DemoHub*>(GetParentHub());
+   DemoHub* pHub = static_cast<DemoHub*>(GetParentHub());
    if (pHub && pHub->GenerateRandomError())
       return SIMULATED_ERROR;
 
@@ -764,7 +765,7 @@ int CDemoCamera::SetBinning(int binF)
 
 int CDemoCamera::SetAllowedBinning() 
 {
-   DemoHub* pHub = dynamic_cast<DemoHub*>(GetParentHub());
+   DemoHub* pHub = static_cast<DemoHub*>(GetParentHub());
    if (pHub && pHub->GenerateRandomError())
       return SIMULATED_ERROR;
 
@@ -794,7 +795,7 @@ int CDemoCamera::SetAllowedBinning()
  * The Base class implementation is deprecated and will be removed shortly
  */
 int CDemoCamera::StartSequenceAcquisition(double interval) {
-   DemoHub* pHub = dynamic_cast<DemoHub*>(GetParentHub());
+   DemoHub* pHub = static_cast<DemoHub*>(GetParentHub());
    if (pHub && pHub->GenerateRandomError())
       return SIMULATED_ERROR;
 
@@ -808,7 +809,7 @@ int CDemoCamera::StopSequenceAcquisition()
 {
    if (IsCallbackRegistered())
    {
-      DemoHub* pHub = dynamic_cast<DemoHub*>(GetParentHub());
+      DemoHub* pHub = static_cast<DemoHub*>(GetParentHub());
       if (pHub && pHub->GenerateRandomError())
          return SIMULATED_ERROR;
    }
@@ -828,7 +829,7 @@ int CDemoCamera::StopSequenceAcquisition()
 */
 int CDemoCamera::StartSequenceAcquisition(long numImages, double interval_ms, bool stopOnOverflow)
 {
-   DemoHub* pHub = dynamic_cast<DemoHub*>(GetParentHub());
+   DemoHub* pHub = static_cast<DemoHub*>(GetParentHub());
    if (pHub && pHub->GenerateRandomError())
       return SIMULATED_ERROR;
 
@@ -850,7 +851,7 @@ int CDemoCamera::StartSequenceAcquisition(long numImages, double interval_ms, bo
  */
 int CDemoCamera::InsertImage()
 {
-   DemoHub* pHub = dynamic_cast<DemoHub*>(GetParentHub());
+   DemoHub* pHub = static_cast<DemoHub*>(GetParentHub());
    if (pHub && pHub->GenerateRandomError())
       return SIMULATED_ERROR;
 
@@ -905,7 +906,7 @@ int CDemoCamera::InsertImage()
  */
 int CDemoCamera::ThreadRun (void)
 {
-   DemoHub* pHub = dynamic_cast<DemoHub*>(GetParentHub());
+   DemoHub* pHub = static_cast<DemoHub*>(GetParentHub());
    if (pHub && pHub->GenerateRandomError())
       return SIMULATED_ERROR;
 
@@ -1049,7 +1050,7 @@ int MySequenceThread::svc(void) throw()
 
 int CDemoCamera::OnTestProperty(MM::PropertyBase* pProp, MM::ActionType eAct, long indexx)
 {
-   DemoHub* pHub = dynamic_cast<DemoHub*>(GetParentHub());
+   DemoHub* pHub = static_cast<DemoHub*>(GetParentHub());
    if (pHub && pHub->GenerateRandomError())
       return SIMULATED_ERROR;
 
@@ -1072,7 +1073,7 @@ int CDemoCamera::OnTestProperty(MM::PropertyBase* pProp, MM::ActionType eAct, lo
 */
 int CDemoCamera::OnBinning(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
-   DemoHub* pHub = dynamic_cast<DemoHub*>(GetParentHub());
+   DemoHub* pHub = static_cast<DemoHub*>(GetParentHub());
    if (pHub && pHub->GenerateRandomError())
       return SIMULATED_ERROR;
 
@@ -1112,7 +1113,7 @@ int CDemoCamera::OnBinning(MM::PropertyBase* pProp, MM::ActionType eAct)
 */
 int CDemoCamera::OnPixelType(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
-   DemoHub* pHub = dynamic_cast<DemoHub*>(GetParentHub());
+   DemoHub* pHub = static_cast<DemoHub*>(GetParentHub());
    if (pHub && pHub->GenerateRandomError())
       return SIMULATED_ERROR;
 
@@ -1196,7 +1197,7 @@ int CDemoCamera::OnPixelType(MM::PropertyBase* pProp, MM::ActionType eAct)
 */
 int CDemoCamera::OnBitDepth(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
-   DemoHub* pHub = dynamic_cast<DemoHub*>(GetParentHub());
+   DemoHub* pHub = static_cast<DemoHub*>(GetParentHub());
    if (pHub && pHub->GenerateRandomError())
       return SIMULATED_ERROR;
 
@@ -1309,7 +1310,7 @@ int CDemoCamera::OnBitDepth(MM::PropertyBase* pProp, MM::ActionType eAct)
 */
 int CDemoCamera::OnReadoutTime(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
-   DemoHub* pHub = dynamic_cast<DemoHub*>(GetParentHub());
+   DemoHub* pHub = static_cast<DemoHub*>(GetParentHub());
    if (pHub && pHub->GenerateRandomError())
       return SIMULATED_ERROR;
 
@@ -1330,7 +1331,7 @@ int CDemoCamera::OnReadoutTime(MM::PropertyBase* pProp, MM::ActionType eAct)
 
 int CDemoCamera::OnDropPixels(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
-   DemoHub* pHub = dynamic_cast<DemoHub*>(GetParentHub());
+   DemoHub* pHub = static_cast<DemoHub*>(GetParentHub());
    if (pHub && pHub->GenerateRandomError())
       return SIMULATED_ERROR;
 
@@ -1350,7 +1351,7 @@ int CDemoCamera::OnDropPixels(MM::PropertyBase* pProp, MM::ActionType eAct)
 
 int CDemoCamera::OnSaturatePixels(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
-   DemoHub* pHub = dynamic_cast<DemoHub*>(GetParentHub());
+   DemoHub* pHub = static_cast<DemoHub*>(GetParentHub());
    if (pHub && pHub->GenerateRandomError())
       return SIMULATED_ERROR;
 
@@ -1370,7 +1371,7 @@ int CDemoCamera::OnSaturatePixels(MM::PropertyBase* pProp, MM::ActionType eAct)
 
 int CDemoCamera::OnFractionOfPixelsToDropOrSaturate(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
-   DemoHub* pHub = dynamic_cast<DemoHub*>(GetParentHub());
+   DemoHub* pHub = static_cast<DemoHub*>(GetParentHub());
    if (pHub && pHub->GenerateRandomError())
       return SIMULATED_ERROR;
 
@@ -1394,7 +1395,7 @@ int CDemoCamera::OnFractionOfPixelsToDropOrSaturate(MM::PropertyBase* pProp, MM:
 */
 int CDemoCamera::OnScanMode(MM::PropertyBase* pProp, MM::ActionType eAct)
 { 
-   DemoHub* pHub = dynamic_cast<DemoHub*>(GetParentHub());
+   DemoHub* pHub = static_cast<DemoHub*>(GetParentHub());
    if (pHub && pHub->GenerateRandomError())
       return SIMULATED_ERROR;
 
@@ -1418,7 +1419,7 @@ int CDemoCamera::OnScanMode(MM::PropertyBase* pProp, MM::ActionType eAct)
 
 int CDemoCamera::OnCameraCCDXSize(MM::PropertyBase* pProp , MM::ActionType eAct)
 {
-   DemoHub* pHub = dynamic_cast<DemoHub*>(GetParentHub());
+   DemoHub* pHub = static_cast<DemoHub*>(GetParentHub());
    if (pHub && pHub->GenerateRandomError())
       return SIMULATED_ERROR;
 
@@ -1444,7 +1445,7 @@ int CDemoCamera::OnCameraCCDXSize(MM::PropertyBase* pProp , MM::ActionType eAct)
 
 int CDemoCamera::OnCameraCCDYSize(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
-   DemoHub* pHub = dynamic_cast<DemoHub*>(GetParentHub());
+   DemoHub* pHub = static_cast<DemoHub*>(GetParentHub());
    if (pHub && pHub->GenerateRandomError())
       return SIMULATED_ERROR;
 
@@ -1470,7 +1471,7 @@ int CDemoCamera::OnCameraCCDYSize(MM::PropertyBase* pProp, MM::ActionType eAct)
 
 int CDemoCamera::OnTriggerDevice(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
-   DemoHub* pHub = dynamic_cast<DemoHub*>(GetParentHub());
+   DemoHub* pHub = static_cast<DemoHub*>(GetParentHub());
    if (pHub && pHub->GenerateRandomError())
       return SIMULATED_ERROR;
 
@@ -1508,7 +1509,7 @@ int CDemoCamera::OnCCDTemp(MM::PropertyBase* pProp, MM::ActionType eAct)
 */
 int CDemoCamera::ResizeImageBuffer()
 {
-   DemoHub* pHub = dynamic_cast<DemoHub*>(GetParentHub());
+   DemoHub* pHub = static_cast<DemoHub*>(GetParentHub());
    if (pHub && pHub->GenerateRandomError())
       return SIMULATED_ERROR;
 
@@ -1835,16 +1836,17 @@ void CDemoFilterWheel::GetName(char* Name) const
 
 int CDemoFilterWheel::Initialize()
 {
-   DemoHub* pHub = dynamic_cast<DemoHub*>(GetParentHub());
-   if (!pHub)
-      return DEVICE_COMM_HUB_MISSING;
-
-   if (pHub->GenerateRandomError())
-      return SIMULATED_ERROR;
-
-   char hubLabel[MM::MaxStrLength];
-   pHub->GetLabel(hubLabel);
-   SetParentID(hubLabel); // for backward comp.
+   DemoHub* pHub = static_cast<DemoHub*>(GetParentHub());
+   if (pHub)
+   {
+      if (pHub->GenerateRandomError())
+         return SIMULATED_ERROR;
+      char hubLabel[MM::MaxStrLength];
+      pHub->GetLabel(hubLabel);
+      SetParentID(hubLabel); // for backward comp.
+   }
+   else
+      LogMessage(NoHubError);
 
    if (initialized_)
       return DEVICE_OK;
@@ -1917,7 +1919,7 @@ bool CDemoFilterWheel::Busy()
 
 int CDemoFilterWheel::Shutdown()
 {
-   DemoHub* pHub = dynamic_cast<DemoHub*>(GetParentHub());
+   DemoHub* pHub = static_cast<DemoHub*>(GetParentHub());
    if (pHub && pHub->GenerateRandomError())
       return SIMULATED_ERROR;
 
@@ -1934,7 +1936,7 @@ int CDemoFilterWheel::Shutdown()
 
 int CDemoFilterWheel::OnState(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
-   DemoHub* pHub = dynamic_cast<DemoHub*>(GetParentHub());
+   DemoHub* pHub = static_cast<DemoHub*>(GetParentHub());
    if (pHub && pHub->GenerateRandomError())
       return SIMULATED_ERROR;
 
@@ -2000,16 +2002,17 @@ void CDemoStateDevice::GetName(char* Name) const
 
 int CDemoStateDevice::Initialize()
 {
-   DemoHub* pHub = dynamic_cast<DemoHub*>(GetParentHub());
-   if (!pHub)
-      return DEVICE_COMM_HUB_MISSING;
-
-   if (pHub->GenerateRandomError())
-      return SIMULATED_ERROR;
-
-   char hubLabel[MM::MaxStrLength];
-   pHub->GetLabel(hubLabel);
-   SetParentID(hubLabel); // for backward comp.
+   DemoHub* pHub = static_cast<DemoHub*>(GetParentHub());
+   if (pHub)
+   {
+      if (pHub->GenerateRandomError())
+         return SIMULATED_ERROR;
+      char hubLabel[MM::MaxStrLength];
+      pHub->GetLabel(hubLabel);
+      SetParentID(hubLabel); // for backward comp.
+   }
+   else
+      LogMessage(NoHubError);
 
    if (initialized_)
       return DEVICE_OK;
@@ -2081,7 +2084,7 @@ bool CDemoStateDevice::Busy()
 
 int CDemoStateDevice::Shutdown()
 {
-   DemoHub* pHub = dynamic_cast<DemoHub*>(GetParentHub());
+   DemoHub* pHub = static_cast<DemoHub*>(GetParentHub());
    if (pHub && pHub->GenerateRandomError())
       return SIMULATED_ERROR;
 
@@ -2098,7 +2101,7 @@ int CDemoStateDevice::Shutdown()
 
 int CDemoStateDevice::OnState(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
-   DemoHub* pHub = dynamic_cast<DemoHub*>(GetParentHub());
+   DemoHub* pHub = static_cast<DemoHub*>(GetParentHub());
    if (pHub && pHub->GenerateRandomError())
       return SIMULATED_ERROR;
 
@@ -2127,7 +2130,7 @@ int CDemoStateDevice::OnState(MM::PropertyBase* pProp, MM::ActionType eAct)
 
 int CDemoStateDevice::OnNumberOfStates(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
-   DemoHub* pHub = dynamic_cast<DemoHub*>(GetParentHub());
+   DemoHub* pHub = static_cast<DemoHub*>(GetParentHub());
    if (pHub && pHub->GenerateRandomError())
       return SIMULATED_ERROR;
 
@@ -2171,16 +2174,17 @@ void CDemoLightPath::GetName(char* Name) const
 
 int CDemoLightPath::Initialize()
 {
-   DemoHub* pHub = dynamic_cast<DemoHub*>(GetParentHub());
-   if (!pHub)
-      return DEVICE_COMM_HUB_MISSING;
-
-   if (pHub->GenerateRandomError())
-      return SIMULATED_ERROR;
-
-   char hubLabel[MM::MaxStrLength];
-   pHub->GetLabel(hubLabel);
-   SetParentID(hubLabel); // for backward comp.
+   DemoHub* pHub = static_cast<DemoHub*>(GetParentHub());
+   if (pHub)
+   {
+      if (pHub->GenerateRandomError())
+         return SIMULATED_ERROR;
+      char hubLabel[MM::MaxStrLength];
+      pHub->GetLabel(hubLabel);
+      SetParentID(hubLabel); // for backward comp.
+   }
+   else
+      LogMessage(NoHubError);
 
    if (initialized_)
       return DEVICE_OK;
@@ -2232,7 +2236,7 @@ int CDemoLightPath::Initialize()
 
 int CDemoLightPath::Shutdown()
 {
-   DemoHub* pHub = dynamic_cast<DemoHub*>(GetParentHub());
+   DemoHub* pHub = static_cast<DemoHub*>(GetParentHub());
    if (pHub && pHub->GenerateRandomError())
       return SIMULATED_ERROR;
 
@@ -2249,7 +2253,7 @@ int CDemoLightPath::Shutdown()
 
 int CDemoLightPath::OnState(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
-   DemoHub* pHub = dynamic_cast<DemoHub*>(GetParentHub());
+   DemoHub* pHub = static_cast<DemoHub*>(GetParentHub());
    if (pHub && pHub->GenerateRandomError())
       return SIMULATED_ERROR;
 
@@ -2303,16 +2307,17 @@ void CDemoObjectiveTurret::GetName(char* Name) const
 
 int CDemoObjectiveTurret::Initialize()
 {
-   DemoHub* pHub = dynamic_cast<DemoHub*>(GetParentHub());
-   if (!pHub)
-      return DEVICE_COMM_HUB_MISSING;
-
-   if (pHub->GenerateRandomError())
-      return SIMULATED_ERROR;
-
-   char hubLabel[MM::MaxStrLength];
-   pHub->GetLabel(hubLabel);
-   SetParentID(hubLabel); // for backward comp.
+   DemoHub* pHub = static_cast<DemoHub*>(GetParentHub());
+   if (pHub)
+   {
+      if (pHub->GenerateRandomError())
+         return SIMULATED_ERROR;
+      char hubLabel[MM::MaxStrLength];
+      pHub->GetLabel(hubLabel);
+      SetParentID(hubLabel); // for backward comp.
+   }
+   else
+      LogMessage(NoHubError);
 
    if (initialized_)
       return DEVICE_OK;
@@ -2370,7 +2375,7 @@ int CDemoObjectiveTurret::Initialize()
 
 int CDemoObjectiveTurret::Shutdown()
 {
-   DemoHub* pHub = dynamic_cast<DemoHub*>(GetParentHub());
+   DemoHub* pHub = static_cast<DemoHub*>(GetParentHub());
    if (pHub && pHub->GenerateRandomError())
       return SIMULATED_ERROR;
 
@@ -2389,7 +2394,7 @@ int CDemoObjectiveTurret::Shutdown()
 
 int CDemoObjectiveTurret::OnState(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
-   DemoHub* pHub = dynamic_cast<DemoHub*>(GetParentHub());
+   DemoHub* pHub = static_cast<DemoHub*>(GetParentHub());
    if (pHub && pHub->GenerateRandomError())
       return SIMULATED_ERROR;
 
@@ -2440,7 +2445,7 @@ int CDemoObjectiveTurret::OnState(MM::PropertyBase* pProp, MM::ActionType eAct)
 
 int CDemoObjectiveTurret::OnTrigger(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
-   DemoHub* pHub = dynamic_cast<DemoHub*>(GetParentHub());
+   DemoHub* pHub = static_cast<DemoHub*>(GetParentHub());
    if (pHub && pHub->GenerateRandomError())
       return SIMULATED_ERROR;
 
@@ -2501,16 +2506,17 @@ void CDemoStage::GetName(char* Name) const
 
 int CDemoStage::Initialize()
 {
-   DemoHub* pHub = dynamic_cast<DemoHub*>(GetParentHub());
-   if (!pHub)
-      return DEVICE_COMM_HUB_MISSING;
-
-   if (pHub->GenerateRandomError())
-      return SIMULATED_ERROR;
-
-   char hubLabel[MM::MaxStrLength];
-   pHub->GetLabel(hubLabel);
-   SetParentID(hubLabel); // for backward comp.
+   DemoHub* pHub = static_cast<DemoHub*>(GetParentHub());
+   if (pHub)
+   {
+      if (pHub->GenerateRandomError())
+         return SIMULATED_ERROR;
+      char hubLabel[MM::MaxStrLength];
+      pHub->GetLabel(hubLabel);
+      SetParentID(hubLabel); // for backward comp.
+   }
+   else
+      LogMessage(NoHubError);
 
    if (initialized_)
       return DEVICE_OK;
@@ -2546,7 +2552,7 @@ int CDemoStage::Initialize()
 
 int CDemoStage::Shutdown()
 {
-   DemoHub* pHub = dynamic_cast<DemoHub*>(GetParentHub());
+   DemoHub* pHub = static_cast<DemoHub*>(GetParentHub());
    if (pHub && pHub->GenerateRandomError())
       return SIMULATED_ERROR;
 
@@ -2559,7 +2565,7 @@ int CDemoStage::Shutdown()
 
 int CDemoStage::SetPositionUm(double pos) 
 {
-   DemoHub* pHub = dynamic_cast<DemoHub*>(GetParentHub());
+   DemoHub* pHub = static_cast<DemoHub*>(GetParentHub());
    if (pHub && pHub->GenerateRandomError())
       return SIMULATED_ERROR;
 
@@ -2585,7 +2591,7 @@ void CDemoStage::SetIntensityFactor(double pos)
 
 int CDemoStage::OnPosition(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
-   DemoHub* pHub = dynamic_cast<DemoHub*>(GetParentHub());
+   DemoHub* pHub = static_cast<DemoHub*>(GetParentHub());
    if (pHub && pHub->GenerateRandomError())
       return SIMULATED_ERROR;
 
@@ -2645,16 +2651,17 @@ void CDemoXYStage::GetName(char* Name) const
 
 int CDemoXYStage::Initialize()
 {
-   DemoHub* pHub = dynamic_cast<DemoHub*>(GetParentHub());
-   if (!pHub)
-      return DEVICE_COMM_HUB_MISSING;
-
-   if (pHub->GenerateRandomError())
-      return SIMULATED_ERROR;
-
-   char hubLabel[MM::MaxStrLength];
-   pHub->GetLabel(hubLabel);
-   SetParentID(hubLabel); // for backward comp.
+   DemoHub* pHub = static_cast<DemoHub*>(GetParentHub());
+   if (pHub)
+   {
+      if (pHub->GenerateRandomError())
+         return SIMULATED_ERROR;
+      char hubLabel[MM::MaxStrLength];
+      pHub->GetLabel(hubLabel);
+      SetParentID(hubLabel); // for backward comp.
+   }
+   else
+      LogMessage(NoHubError);
 
    if (initialized_)
       return DEVICE_OK;
@@ -2683,7 +2690,7 @@ int CDemoXYStage::Initialize()
 
 int CDemoXYStage::Shutdown()
 {
-   DemoHub* pHub = dynamic_cast<DemoHub*>(GetParentHub());
+   DemoHub* pHub = static_cast<DemoHub*>(GetParentHub());
    if (pHub && pHub->GenerateRandomError())
       return SIMULATED_ERROR;
 
@@ -2723,16 +2730,20 @@ void DemoShutter::GetName(char* name) const
 
 int DemoShutter::Initialize()
 {
-   DemoHub* pHub = dynamic_cast<DemoHub*>(GetParentHub());
+   DemoHub* pHub = static_cast<DemoHub*>(GetParentHub());
    if (!pHub)
       return DEVICE_COMM_HUB_MISSING;
 
-   if (pHub->GenerateRandomError())
-      return SIMULATED_ERROR;
-
-   char hubLabel[MM::MaxStrLength];
-   pHub->GetLabel(hubLabel);
-   SetParentID(hubLabel); // for backward comp.
+   if (pHub)
+   {
+      if (pHub->GenerateRandomError())
+         return SIMULATED_ERROR;
+      char hubLabel[MM::MaxStrLength];
+      pHub->GetLabel(hubLabel);
+      SetParentID(hubLabel); // for backward comp.
+   }
+   else
+      LogMessage(NoHubError);
 
    if (initialized_)
       return DEVICE_OK;
@@ -2789,7 +2800,7 @@ bool DemoShutter::Busy()
 
 int DemoShutter::OnState(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
-   DemoHub* pHub = dynamic_cast<DemoHub*>(GetParentHub());
+   DemoHub* pHub = static_cast<DemoHub*>(GetParentHub());
    if (pHub && pHub->GenerateRandomError())
       return SIMULATED_ERROR;
 
@@ -2837,16 +2848,17 @@ void DemoMagnifier::GetName(char* name) const
 
 int DemoMagnifier::Initialize()
 {
-   DemoHub* pHub = dynamic_cast<DemoHub*>(GetParentHub());
-   if (!pHub)
-      return DEVICE_COMM_HUB_MISSING;
-
-   if (pHub->GenerateRandomError())
-      return SIMULATED_ERROR;
-
-   char hubLabel[MM::MaxStrLength];
-   pHub->GetLabel(hubLabel);
-   SetParentID(hubLabel); // for backward comp.
+   DemoHub* pHub = static_cast<DemoHub*>(GetParentHub());
+   if (pHub)
+   {
+      if (pHub->GenerateRandomError())
+         return SIMULATED_ERROR;
+      char hubLabel[MM::MaxStrLength];
+      pHub->GetLabel(hubLabel);
+      SetParentID(hubLabel); // for backward comp.
+   }
+   else
+      LogMessage(NoHubError);
 
    CPropertyAction* pAct = new CPropertyAction (this, &DemoMagnifier::OnPosition);
    int ret = CreateProperty("Position", "1x", MM::String, false, pAct); 
@@ -2879,7 +2891,7 @@ double DemoMagnifier::GetMagnification() {
 
 int DemoMagnifier::OnPosition(MM::PropertyBase* pProp, MM::ActionType eAct) 
 {
-   DemoHub* pHub = dynamic_cast<DemoHub*>(GetParentHub());
+   DemoHub* pHub = static_cast<DemoHub*>(GetParentHub());
    if (pHub && pHub->GenerateRandomError())
       return SIMULATED_ERROR;
 
@@ -2947,16 +2959,17 @@ void DemoDA::GetName(char* name) const
 
 int DemoDA::Initialize()
 {
-   DemoHub* pHub = dynamic_cast<DemoHub*>(GetParentHub());
-   if (!pHub)
-      return DEVICE_COMM_HUB_MISSING;
-
-   if (pHub->GenerateRandomError())
-      return SIMULATED_ERROR;
-
-   char hubLabel[MM::MaxStrLength];
-   pHub->GetLabel(hubLabel);
-   SetParentID(hubLabel); // for backward comp.
+   DemoHub* pHub = static_cast<DemoHub*>(GetParentHub());
+   if (pHub)
+   {
+      if (pHub->GenerateRandomError())
+         return SIMULATED_ERROR;
+      char hubLabel[MM::MaxStrLength];
+      pHub->GetLabel(hubLabel);
+      SetParentID(hubLabel); // for backward comp.
+   }
+   else
+      LogMessage(NoHubError);
 
    // Triggers to test sequence capabilities
    CPropertyAction* pAct = new CPropertyAction (this, &DemoDA::OnTrigger);
@@ -2976,7 +2989,7 @@ int DemoDA::Initialize()
 
 int DemoDA::SetGateOpen(bool open) 
 {
-   DemoHub* pHub = dynamic_cast<DemoHub*>(GetParentHub());
+   DemoHub* pHub = static_cast<DemoHub*>(GetParentHub());
    if (pHub && pHub->GenerateRandomError())
       return SIMULATED_ERROR;
 
@@ -2996,7 +3009,7 @@ int DemoDA::GetGateOpen(bool& open)
 }
 
 int DemoDA::SetSignal(double volts) {
-   DemoHub* pHub = dynamic_cast<DemoHub*>(GetParentHub());
+   DemoHub* pHub = static_cast<DemoHub*>(GetParentHub());
    if (pHub && pHub->GenerateRandomError())
       return SIMULATED_ERROR;
 
@@ -3011,7 +3024,7 @@ int DemoDA::SetSignal(double volts) {
 
 int DemoDA::GetSignal(double& volts) 
 {
-   DemoHub* pHub = dynamic_cast<DemoHub*>(GetParentHub());
+   DemoHub* pHub = static_cast<DemoHub*>(GetParentHub());
    if (pHub && pHub->GenerateRandomError())
       return SIMULATED_ERROR;
 
@@ -3021,7 +3034,7 @@ int DemoDA::GetSignal(double& volts)
 
 int DemoDA::SendDASequence() const
 {
-   DemoHub* pHub = dynamic_cast<DemoHub*>(GetParentHub());
+   DemoHub* pHub = static_cast<DemoHub*>(GetParentHub());
    if (pHub && pHub->GenerateRandomError())
       return SIMULATED_ERROR;
 
@@ -3038,7 +3051,7 @@ void DemoDA::SetSentSequence()
 
 int DemoDA::ClearDASequence()
 {
-   DemoHub* pHub = dynamic_cast<DemoHub*>(GetParentHub());
+   DemoHub* pHub = static_cast<DemoHub*>(GetParentHub());
    if (pHub && pHub->GenerateRandomError())
       return SIMULATED_ERROR;
 
@@ -3047,7 +3060,7 @@ int DemoDA::ClearDASequence()
 }
 
 int DemoDA::AddToDASequence(double voltage) {
-   DemoHub* pHub = dynamic_cast<DemoHub*>(GetParentHub());
+   DemoHub* pHub = static_cast<DemoHub*>(GetParentHub());
    if (pHub && pHub->GenerateRandomError())
       return SIMULATED_ERROR;
 
@@ -3057,7 +3070,7 @@ int DemoDA::AddToDASequence(double voltage) {
 
 int DemoDA::OnTrigger(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
-   DemoHub* pHub = dynamic_cast<DemoHub*>(GetParentHub());
+   DemoHub* pHub = static_cast<DemoHub*>(GetParentHub());
    if (pHub && pHub->GenerateRandomError())
       return SIMULATED_ERROR;
 
@@ -3125,16 +3138,17 @@ void DemoAutoFocus::GetName(char* name) const
 
 int DemoAutoFocus::Initialize()
 {
-   DemoHub* pHub = dynamic_cast<DemoHub*>(GetParentHub());
-   if (!pHub)
-      return DEVICE_COMM_HUB_MISSING;
-
-   if (pHub->GenerateRandomError())
-      return SIMULATED_ERROR;
-
-   char hubLabel[MM::MaxStrLength];
-   pHub->GetLabel(hubLabel);
-   SetParentID(hubLabel); // for backward comp.
+   DemoHub* pHub = static_cast<DemoHub*>(GetParentHub());
+   if (pHub)
+   {
+      if (pHub->GenerateRandomError())
+         return SIMULATED_ERROR;
+      char hubLabel[MM::MaxStrLength];
+      pHub->GetLabel(hubLabel);
+      SetParentID(hubLabel); // for backward comp.
+   }
+   else
+      LogMessage(NoHubError);
 
    if (initialized_)
       return DEVICE_OK;
@@ -3166,16 +3180,17 @@ int DemoAutoFocus::Initialize()
 
 int TransposeProcessor::Initialize()
 {
-   DemoHub* pHub = dynamic_cast<DemoHub*>(GetParentHub());
-   if (!pHub)
-      return DEVICE_COMM_HUB_MISSING;
-
-   if (pHub->GenerateRandomError())
-      return SIMULATED_ERROR;
-
-   char hubLabel[MM::MaxStrLength];
-   pHub->GetLabel(hubLabel);
-   SetParentID(hubLabel); // for backward comp.
+   DemoHub* pHub = static_cast<DemoHub*>(GetParentHub());
+   if (pHub)
+   {
+      if (pHub->GenerateRandomError())
+         return SIMULATED_ERROR;
+      char hubLabel[MM::MaxStrLength];
+      pHub->GetLabel(hubLabel);
+      SetParentID(hubLabel); // for backward comp.
+   }
+   else
+      LogMessage(NoHubError);
 
    if( NULL != this->pTemp_)
    {
@@ -3192,7 +3207,7 @@ int TransposeProcessor::Initialize()
    // ----------------
 int TransposeProcessor::OnInPlaceAlgorithm(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
-   DemoHub* pHub = dynamic_cast<DemoHub*>(GetParentHub());
+   DemoHub* pHub = static_cast<DemoHub*>(GetParentHub());
    if (pHub && pHub->GenerateRandomError())
       return SIMULATED_ERROR;
 
@@ -3213,7 +3228,7 @@ int TransposeProcessor::OnInPlaceAlgorithm(MM::PropertyBase* pProp, MM::ActionTy
 
 int TransposeProcessor::Process(unsigned char *pBuffer, unsigned int width, unsigned int height, unsigned int byteDepth)
 {
-   DemoHub* pHub = dynamic_cast<DemoHub*>(GetParentHub());
+   DemoHub* pHub = static_cast<DemoHub*>(GetParentHub());
    if (pHub && pHub->GenerateRandomError())
       return SIMULATED_ERROR;
 
@@ -3485,7 +3500,7 @@ int MedianFilter::Process(unsigned char *pBuffer, unsigned int width, unsigned i
 
 int DemoHub::Initialize()
 {
-   DemoHub* pHub = dynamic_cast<DemoHub*>(GetParentHub());
+   DemoHub* pHub = static_cast<DemoHub*>(GetParentHub());
    if (pHub && pHub->GenerateRandomError())
       return SIMULATED_ERROR;
 

@@ -507,13 +507,15 @@ vector<string> CPluginManager::GetDeviceList(MM::DeviceType type) const
 }
 
 /**
- * Returns parent device or null if there is none
+ * Returns parent Hub device or null if there is none.
+ * Makes sure that returned hub belongs to the same module (library)
+ * as the device dev.
  */
-MM::Device* CPluginManager::GetParentDevice(const MM::Device& dev) const
+MM::Hub* CPluginManager::GetParentDevice(const MM::Device& dev) const
 {
    char parentLabel[MM::MaxStrLength];
    dev.GetParentID(parentLabel);
-   char module[MM::MaxStrLength];
+   char module[MM::MaxStrLength] = "";
    dev.GetModuleName(module);
 
    if (strlen(parentLabel) == 0)
@@ -523,8 +525,7 @@ MM::Device* CPluginManager::GetParentDevice(const MM::Device& dev) const
       MM::Hub* parentHub = 0;
       for (vector<string>::size_type i = 0; i<hubList.size(); i++)
       {
-         MM::Hub* pHub = dynamic_cast<MM::Hub*>(devices_.find(hubList[i])->second);
-         assert(pHub);
+         MM::Hub* pHub = static_cast<MM::Hub*>(devices_.find(hubList[i])->second);
          char hubModule[MM::MaxStrLength];
          pHub->GetModuleName(hubModule);
          if (strlen(module) > 0 && strncmp(module, hubModule, MM::MaxStrLength) == 0)
@@ -542,10 +543,20 @@ MM::Device* CPluginManager::GetParentDevice(const MM::Device& dev) const
       // parent label is specified, we'll try to get the actual device
       CDeviceMap::const_iterator it;
       it = devices_.find(parentLabel);
-      if (it == devices_.end() || it->second == 0)
+      if (it == devices_.end() || it->second == 0 || it->second->GetType() != MM::HubDevice)
          return 0; // no such device
       else
-         return it->second;
+      {
+         // make sure that hub belongs to the same library
+         // (this is to avoid using dynamic_cast<> in device code)
+         MM::Hub* pHub = static_cast<MM::Hub*>(it->second);
+         char hubModule[MM::MaxStrLength] = "";
+         pHub->GetModuleName(hubModule);
+         if (strlen(module) > 0 && strncmp(module, hubModule, MM::MaxStrLength) == 0)
+            return pHub;
+         else
+            return 0; // the hub is from a different library, so it won;t work
+      }
    }
 }
 

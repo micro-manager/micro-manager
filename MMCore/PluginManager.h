@@ -63,7 +63,7 @@ public:
    std::string GetDeviceLabel(const MM::Device& device) const;
    std::vector<std::string> GetDeviceList(MM::DeviceType t = MM::AnyType) const;
    std::vector<std::string> GetLoadedPeripherals(const char* hubLabel) const;
-   MM::Device* GetParentDevice(const MM::Device& dev) const;
+   MM::Hub* GetParentDevice(const MM::Device& dev) const;
 
    // device browsing support
    static void AddSearchPath(std::string path);

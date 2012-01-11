@@ -225,7 +225,7 @@ public:
       if (caller == 0)
          return 0;
 
-      return dynamic_cast<MM::Hub*>(core_->pluginManager_.GetParentDevice(*caller));
+      return core_->pluginManager_.GetParentDevice(*caller);
    }
 
    MM::Device* GetPeripheral(const MM::Device* caller, unsigned idx) const
