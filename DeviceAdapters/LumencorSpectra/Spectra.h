@@ -25,8 +25,8 @@
 
 //#include "../MMDeviceKit-win-Dev45/MMDevice/MMDevice.h"
 //#include "../MMDeviceKit-win-Dev45/MMDevice/DeviceBase.h"
-#include "../../MMDevice/MMDevice.h"
-#include "../../MMDevice/DeviceBase.h"
+#include "MMDevice.h"
+#include "DeviceBase.h"
 #include <string>
 #include <map>
 
