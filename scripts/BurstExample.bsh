@@ -1,0 +1,43 @@
+  /*
+  * Script to show how to use Sequence acquisition
+  */
+
+// file locations
+acqName = "test-Burst";
+rootDirName = "C:/acquisitionData";
+
+// Number of timepoints
+nrFrames = 50;
+
+
+// clear all previous acquisitions
+gui.closeAllAcquisitions();
+gui.clearMessageWindow();
+gui.openAcquisition(acqName, rootDirName, nrFrames, 1, 1);
+
+long width = mmc.getImageWidth();
+long height = mmc.getImageHeight();
+long depth = mmc.getBytesPerPixel();
+
+gui.initializeAcquisition(acqName, (int) width, (int) height, (int) depth);
+
+exposure = mmc.getExposure();
+binning = mmc.getProperty(mmc.getCameraDevice(), "Binning");
+
+
+mmc.startSequenceAcquisition(nrFrames, 0, false);
+frame = 0;
+now = System.currentTimeMillis();
+while (mmc.getRemainingImageCount() > 0 || mmc.isSequenceRunning(mmc.getCameraDevice())) {
+   if (mmc.getRemainingImageCount() > 0) {
+      img = mmc.popNextImage();
+      gui.addImage(acqName, img, frame, 0,0);
+      frame++;
+   } 
+}
+
+itTook = System.currentTimeMillis() - now;
+
+mmc.stopSequenceAcquisition();
+
+gui.message("Acquisition took: " + itTook + " milliseconds");
