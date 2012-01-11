@@ -161,17 +161,17 @@
 
 ;; hardware control
 
-(defn set-exposure [camera exp]
-  (when (not= exp (get-in @state [camera :exposures]))
-    (device-best-effort (core setExposure exp))
-    (swap! state assoc-in [camera :exposures] exp)))
-
 (defn wait-for-device [dev]
   (when-not (empty? dev)
     (try
       (core waitForDevice dev)
       (swap! pending-devices disj dev)
       (catch Exception e (log "wait for device" dev "failed.")))))
+
+(defn set-exposure [camera exp]
+  (when (not= exp (get-in @state [camera :exposures]))
+    (device-best-effort (core setExposure exp))
+    (swap! state assoc-in [camera :exposures] exp)))
 
 (defn wait-for-pending-devices []
   (log "pending devices: " @pending-devices)
