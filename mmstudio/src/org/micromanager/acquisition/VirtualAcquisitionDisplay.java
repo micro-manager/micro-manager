@@ -1565,7 +1565,7 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
          if (array != null && !array.isNull(channel)) {
             return array.getJSONObject(channel);
          } else {
-            return null;
+            return new JSONObject();
          }
       } catch (Exception ex) {
          ReportingUtils.logError(ex);
@@ -1612,7 +1612,13 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
          public DisplayWindow(ImagePlus ip) {
             super(ip);
          }
-         
+
+         @Override
+         public boolean close() {
+            windowClosing(null);
+            return closed_;
+         }
+
          @Override
          public void windowClosing(WindowEvent e) {
             if (windowClosingDone_) {
@@ -1654,7 +1660,7 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
 
             if (!closed_) {
                try {
-                  close();
+                  super.close();
                } catch (NullPointerException ex) {
                   ReportingUtils.logError("Null pointer error in ImageJ code while closing window");
                }
