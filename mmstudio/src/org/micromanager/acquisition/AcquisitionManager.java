@@ -1,5 +1,6 @@
 package org.micromanager.acquisition;
 
+import java.io.File;
 import java.util.Enumeration;
 import java.util.Hashtable;
 import java.util.Set;
@@ -9,6 +10,7 @@ import java.util.logging.Logger;
 import mmcorej.TaggedImage;
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.micromanager.api.AcquisitionEngine;
 import org.micromanager.utils.MDUtils;
 
 import org.micromanager.utils.MMScriptException;
@@ -204,5 +206,11 @@ public class AcquisitionManager {
       Set<String> keySet = acqs_.keySet();
       String keys[] = new String[keySet.size()];
       return keySet.toArray(keys);
+   }
+
+   public String createAcquisition(JSONObject summaryMetadata, boolean diskCached, AcquisitionEngine engine) {
+      String name = this.getUniqueAcquisitionName("Acq");
+      acqs_.put(name, new MMAcquisition(name, summaryMetadata, diskCached, engine));
+      return name;
    }
 }

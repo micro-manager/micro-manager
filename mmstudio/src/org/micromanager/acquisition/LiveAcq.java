@@ -18,6 +18,7 @@ import org.micromanager.api.ScriptInterface;
 import org.micromanager.api.TaggedImageStorage;
 import org.micromanager.utils.ImageUtils;
 import org.micromanager.utils.JavaUtils;
+import org.micromanager.utils.MMScriptException;
 import org.micromanager.utils.ReportingUtils;
 
 /**
@@ -30,8 +31,9 @@ public class LiveAcq extends Thread {
    protected final CMMCore core_;
    private boolean diskCached_ = false;
    private BlockingQueue<TaggedImage> imageProducingQueue_;
-   private MMImageCache imageCache_ = null;
+   private ImageCache imageCache_ = null;
    private VirtualAcquisitionDisplay display_ = null;
+   private String acqName_;
 
    public LiveAcq(CMMCore core,
            BlockingQueue<TaggedImage> imageProducingQueue,
@@ -43,32 +45,16 @@ public class LiveAcq extends Thread {
       diskCached_ = diskCached;
       imageProducingQueue_ = imageProducingQueue;
 
-      String acqPath;
-
-      TaggedImageStorage imageFileManager;
-
-      if (diskCached_) {
-         try {
-            acqPath = createAcqPath(summaryMetadata.getString("Directory"),
-                    summaryMetadata.getString("Prefix"));
-            imageFileManager = ImageUtils.newImageStorageInstance(acqPath,
-                    true, (JSONObject) null);
-         } catch (Exception e) {
-            ReportingUtils.showError(e, "Unable to create directory for saving images.");
-            eng.stop(true);
-            return;
-         }
-      } else {
-         acqPath = getUniqueUntitledName();
-         imageFileManager = new TaggedImageStorageRam(null);
+      acqName_ = gui.createAcquisition(summaryMetadata, diskCached);
+      try {
+         imageCache_ = gui.getAcquisition(acqName_).getImageCache();
+      } catch (MMScriptException ex) {
+         ReportingUtils.showError(ex);
       }
+   }
 
-      
-      imageCache_ = new MMImageCache(imageFileManager);
-      imageCache_.setSummaryMetadata(summaryMetadata);
-
-      display_ = new VirtualAcquisitionDisplay(imageCache_, eng);
-      imageCache_.addImageCacheListener(display_);
+   public String getAcquisitionName() {
+      return acqName_;
    }
 
    @Override
@@ -99,7 +85,6 @@ public class LiveAcq extends Thread {
          }
       };
       savingThread.start();
-
    }
 
    private static String getUniqueUntitledName() {
@@ -113,37 +98,6 @@ public class LiveAcq extends Thread {
       } catch (Exception e) {
          ReportingUtils.logError(e);
       }
-   }
-
-   private String createAcqPath(String root, String prefix) throws Exception {
-      File rootDir = JavaUtils.createDirectory(root);
-      int curIndex = getCurrentMaxDirIndex(rootDir, prefix + "_");
-      File acqDir = new File(root + "/" + prefix + "_" + (1 + curIndex));
-      return acqDir.getAbsolutePath();
-   }
-
-   private int getCurrentMaxDirIndex(File rootDir, String prefix) throws NumberFormatException {
-      int maxNumber = 0;
-      int number;
-      String theName;
-      for (File acqDir : rootDir.listFiles()) {
-         theName = acqDir.getName();
-         if (theName.startsWith(prefix)) {
-            try {
-               //e.g.: "blah_32.ome.tiff"
-               Pattern p = Pattern.compile("\\Q" + prefix + "\\E" + "(\\d+).*+");
-               Matcher m = p.matcher(theName);
-               if (m.matches()) {
-                  number = Integer.parseInt(m.group(1));
-                  if (number >= maxNumber) {
-                     maxNumber = number;
-                  }
-               }
-            } catch (NumberFormatException e) {
-            } // Do nothing.
-         }
-      }
-      return maxNumber;
    }
 
    public ImageCache getImageCache() {

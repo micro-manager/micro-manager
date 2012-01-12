@@ -3678,10 +3678,10 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
    }
 
    @Override
-   public void runAcquisition() throws MMScriptException {
+   public String runAcquisition() throws MMScriptException {
       testForAbortRequests();
       if (acqControlWin_ != null) {
-         acqControlWin_.runAcquisition();
+         String name = acqControlWin_.runAcquisition();
          try {
             while (acqControlWin_.isAcquisitionRunning()) {
                Thread.sleep(50);
@@ -3689,6 +3689,7 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
          } catch (InterruptedException e) {
             ReportingUtils.showError(e);
          }
+         return name;
       } else {
          throw new MMScriptException(
                "Acquisition window must be open for this command to work.");
@@ -3825,6 +3826,10 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
       this.openAcquisition(name, rootDir, nrFrames, nrChannels, nrSlices, 0, show, virtual);
    }
 
+   public String createAcquisition(JSONObject summaryMetadata, boolean diskCached) {
+      return acqMgr_.createAcquisition(summaryMetadata, diskCached, engine_);
+   }
+
    private void openAcquisitionSnap(String name, String rootDir, boolean show)
          throws MMScriptException {
       /*
@@ -3894,8 +3899,13 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
    }
 
    @Override
-   public void closeAcquisitionImage5D(String title) throws MMScriptException {
-      acqMgr_.closeImage5D(title);
+   public void closeAcquisitionImage5D(String acquisitionName) throws MMScriptException {
+      acqMgr_.closeImage5D(acquisitionName);
+   }
+
+   @Override
+   public void closeAcquisitionWindow(String acquisitionName) throws MMScriptException {
+      acqMgr_.closeImage5D(acquisitionName);
    }
 
    /**

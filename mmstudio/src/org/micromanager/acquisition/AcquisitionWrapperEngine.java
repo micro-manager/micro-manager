@@ -74,8 +74,8 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
       useCustomIntervals_ = false;
    }
 
-   public void acquire() throws MMException {
-      runPipeline(gatherSequenceSettings());
+   public String acquire() throws MMException {
+      return runPipeline(gatherSequenceSettings());
    }
 
    public Pipeline getPipeline() {
@@ -85,11 +85,12 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
       return pipeline_;
    }
 
-   public void runPipeline(SequenceSettings acquisitionSettings) {
+   public String runPipeline(SequenceSettings acquisitionSettings) {
       try {
-         getPipeline().run(acquisitionSettings, this);
+         return getPipeline().run(acquisitionSettings, this);
       } catch (Throwable ex) {
          ReportingUtils.showError(ex);
+         return null;
       }
    }
 

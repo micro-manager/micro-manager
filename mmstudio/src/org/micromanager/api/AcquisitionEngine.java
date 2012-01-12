@@ -67,11 +67,12 @@ public interface AcquisitionEngine {
    // run-time control
 
    /**
-    * Starts acquisition as defined in the Multi-Dimensional Acquistion Window
+    * Starts acquisition as defined in the Multi-Dimensional Acquistion Window.
+    * Returns the acquisition name.
     * @throws MMException
     * @throws MMAcqDataException
     */
-   public void acquire() throws MMException;
+   public String acquire() throws MMException;
 
    /**
     * Stops a running Acquisition

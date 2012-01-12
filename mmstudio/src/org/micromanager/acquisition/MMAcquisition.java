@@ -18,7 +18,6 @@
 //               IN NO EVENT SHALL THE COPYRIGHT OWNER OR
 //               CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
-
 /**
  * This class is used to execute most of the acquisition and image display
  * functionality in the ScriptInterface
@@ -34,6 +33,8 @@ import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Iterator;
 import java.util.UUID;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import mmcorej.CMMCore;
 
 import mmcorej.TaggedImage;
@@ -42,9 +43,12 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 import org.json.JSONException;
 import org.micromanager.MMStudioMainFrame;
+import org.micromanager.api.AcquisitionEngine;
 import org.micromanager.api.ImageCache;
 
 import org.micromanager.api.TaggedImageStorage;
+import org.micromanager.utils.ImageUtils;
+import org.micromanager.utils.JavaUtils;
 import org.micromanager.utils.MDUtils;
 import org.micromanager.utils.MMScriptException;
 import org.micromanager.utils.ReportingUtils;
@@ -90,22 +94,68 @@ public class MMAcquisition {
       diskCached_ = diskCached;
    }
 
-   static private String generateRootName(String name, String baseDir) {
-      // create new acquisition directory
-      int suffixCounter = 0;
-      String testPath;
-      File testDir;
-      String testName;
-      do {
-         testName = name + "_" + suffixCounter;
-         testPath = baseDir + File.separator + testName;
-         suffixCounter++;
-         testDir = new File(testPath);
-      } while (testDir.exists());
-      return testName;
+   public MMAcquisition(String name, JSONObject summaryMetadata, boolean diskCached, AcquisitionEngine eng) {
+      TaggedImageStorage imageFileManager;
+      name_ = name;
+      diskCached_ = diskCached;
+      existing_ = false;
+      show_ = true;
+      if (diskCached) {
+         try {
+            String acqPath = createAcqPath(summaryMetadata.getString("Directory"),
+                    summaryMetadata.getString("Prefix"));
+            imageFileManager = ImageUtils.newImageStorageInstance(acqPath,
+                    true, (JSONObject) null);
+         } catch (Exception e) {
+            ReportingUtils.showError(e, "Unable to create directory for saving images.");
+            eng.stop(true);
+            imageFileManager = null;
+         }
+      } else {
+         imageFileManager = new TaggedImageStorageRam(null);
+      }
+
+
+      MMImageCache imageCache_ = new MMImageCache(imageFileManager);
+      imageCache_.setSummaryMetadata(summaryMetadata);
+
+      virtAcq_ = new VirtualAcquisitionDisplay(imageCache_, eng);
+      imageCache_.addImageCacheListener(virtAcq_);
+      this.summary_ = summaryMetadata;
    }
 
-   public void setImagePhysicalDimensions(int width, int height, 
+   private String createAcqPath(String root, String prefix) throws Exception {
+      File rootDir = JavaUtils.createDirectory(root);
+      int curIndex = getCurrentMaxDirIndex(rootDir, prefix + "_");
+      File acqDir = new File(root + "/" + prefix + "_" + (1 + curIndex));
+      return acqDir.getAbsolutePath();
+   }
+
+   private int getCurrentMaxDirIndex(File rootDir, String prefix) throws NumberFormatException {
+      int maxNumber = 0;
+      int number;
+      String theName;
+      for (File acqDir : rootDir.listFiles()) {
+         theName = acqDir.getName();
+         if (theName.startsWith(prefix)) {
+            try {
+               //e.g.: "blah_32.ome.tiff"
+               Pattern p = Pattern.compile("\\Q" + prefix + "\\E" + "(\\d+).*+");
+               Matcher m = p.matcher(theName);
+               if (m.matches()) {
+                  number = Integer.parseInt(m.group(1));
+                  if (number >= maxNumber) {
+                     maxNumber = number;
+                  }
+               }
+            } catch (NumberFormatException e) {
+            } // Do nothing.
+         }
+      }
+      return maxNumber;
+   }
+
+   public void setImagePhysicalDimensions(int width, int height,
            int depth, int multiCamNumCh) throws MMScriptException {
       if (initialized_) {
          throw new MMScriptException("Can't image change dimensions - the acquisition is already initialized");
@@ -127,7 +177,7 @@ public class MMAcquisition {
    public int getDepth() {
       return depth_;
    }
-   
+
    public int getMultiCameraNumChannels() {
       return multiCamNumCh_;
    }
@@ -143,7 +193,7 @@ public class MMAcquisition {
    public int getSlices() {
       return numSlices_;
    }
-   
+
    public void setDimensions(int frames, int channels, int slices) throws MMScriptException {
       setDimensions(frames, channels, slices, 0);
    }
@@ -164,7 +214,7 @@ public class MMAcquisition {
       }
       rootDirectory_ = dir;
    }
-   
+
    //used to initialize snap and live, which only sotre a single image at a time
    public void initializeSimpleAcq() throws MMScriptException {
       if (initialized_) {
@@ -173,7 +223,7 @@ public class MMAcquisition {
 
       TaggedImageStorage imageFileManager = new TaggedImageStorageRam(null);
       MMImageCache imageCache = new MMImageCache(imageFileManager);
-      
+
       if (!existing_) {
          createDefaultAcqSettings(name_, imageCache);
       }
@@ -187,17 +237,21 @@ public class MMAcquisition {
    }
 
    public void initialize() throws MMScriptException {
-      if (initialized_)
+      if (initialized_) {
          throw new MMScriptException("Acquisition is already initialized");
-      
+      }
+
       TaggedImageStorage imageFileManager;
       String name = name_;
 
       if (diskCached_) {
          String dirName = rootDirectory_ + File.separator + name;
          if (!existing_ && (new File(dirName)).exists()) {
-            name = generateRootName(name_, rootDirectory_);
-            dirName = rootDirectory_ + File.separator + name;
+            try {
+               dirName = createAcqPath(rootDirectory_, name_);
+            } catch (Exception ex) {
+               throw new MMScriptException("Failed to figure out acq saving path.");
+            }
          }
          imageFileManager = new TaggedImageStorageDiskDefault(dirName,
                  !existing_, new JSONObject());
@@ -238,7 +292,7 @@ public class MMAcquisition {
          keys[0] = it.next();
          i++;
       }
-      
+
       try {
          JSONObject summaryMetadata = new JSONObject(summary_, keys);
          CMMCore core = MMStudioMainFrame.getInstance().getCore();
@@ -251,10 +305,11 @@ public class MMAcquisition {
          try {
             compName = InetAddress.getLocalHost().getHostName();
          } catch (UnknownHostException e) {
-           ReportingUtils.showError(e);
+            ReportingUtils.showError(e);
          }
-         if (compName != null)
-            summaryMetadata.put("ComputerName",compName);
+         if (compName != null) {
+            summaryMetadata.put("ComputerName", compName);
+         }
          summaryMetadata.put("Date", new SimpleDateFormat("yyyy-MM-dd").format(Calendar.getInstance().getTime()));
          summaryMetadata.put("Depth", core.getBytesPerPixel());
          summaryMetadata.put("Frames", numFrames_);
@@ -262,16 +317,17 @@ public class MMAcquisition {
          summaryMetadata.put("GridRow", 0);
          summaryMetadata.put("Height", height_);
          int ijType = -1;
-         if (depth_ == 1) 
-            ijType = ImagePlus.GRAY8; 
-         else if (depth_ == 2)
+         if (depth_ == 1) {
+            ijType = ImagePlus.GRAY8;
+         } else if (depth_ == 2) {
             ijType = ImagePlus.GRAY16;
-         else if (depth_==8) 
-            ijType = 64; 
-         else if (depth_ == 4 && core.getNumberOfComponents() == 1)
+         } else if (depth_ == 8) {
+            ijType = 64;
+         } else if (depth_ == 4 && core.getNumberOfComponents() == 1) {
             ijType = ImagePlus.GRAY32;
-         else if(depth_ == 4 && core.getNumberOfComponents() == 4)
+         } else if (depth_ == 4 && core.getNumberOfComponents() == 4) {
             ijType = ImagePlus.COLOR_RGB;
+         }
          summaryMetadata.put("IJType", ijType);
          summaryMetadata.put("MetadataVersion", 10);
          summaryMetadata.put("MicroManagerVersion", MMStudioMainFrame.getInstance().getVersion());
@@ -279,13 +335,13 @@ public class MMAcquisition {
          summaryMetadata.put("Positions", numPositions_);
          summaryMetadata.put("Source", "Micro-Manager");
          summaryMetadata.put("PixelAspect", 1.0);
-         summaryMetadata.put("PixelSize_um", core.getPixelSizeUm());        
-         summaryMetadata.put("PixelType", (core.getNumberOfComponents() == 1 ? "GRAY" : "RGB") +  (8*depth_));
+         summaryMetadata.put("PixelSize_um", core.getPixelSizeUm());
+         summaryMetadata.put("PixelType", (core.getNumberOfComponents() == 1 ? "GRAY" : "RGB") + (8 * depth_));
          summaryMetadata.put("Slices", numSlices_);
          summaryMetadata.put("StartTime", MDUtils.getCurrentTime());
          summaryMetadata.put("Time", Calendar.getInstance().getTime());
          summaryMetadata.put("UserName", System.getProperty("user.name"));
-         summaryMetadata.put("UUID",UUID.randomUUID());
+         summaryMetadata.put("UUID", UUID.randomUUID());
          summaryMetadata.put("Width", width_);
          startTimeMs_ = System.currentTimeMillis();
          imageCache.setSummaryMetadata(summaryMetadata);
@@ -308,14 +364,18 @@ public class MMAcquisition {
          } catch (JSONException ex) {
             try {
                channelColors_.put(i, (Object) Color.white.getRGB());
-            } catch (JSONException exx ) {;}
+            } catch (JSONException exx) {
+               ;
+            }
          }
          try {
             channelNames_.get(i);
          } catch (JSONException ex) {
             try {
                channelNames_.put(i, String.valueOf(i));
-            } catch (JSONException exx) {;}
+            } catch (JSONException exx) {
+               ;
+            }
          }
          try {
             channelMaxes.put(255);
@@ -346,7 +406,7 @@ public class MMAcquisition {
 
       // update acq data
       try {
-         
+
          JSONObject tags = new JSONObject();
 
          tags.put("Channel", getChannelName(channel));
@@ -361,7 +421,7 @@ public class MMAcquisition {
          tags.put("Slice", slice);
          tags.put("Width", width_);
          MDUtils.setPixelTypeFromByteDepth(tags, depth_);
- 
+
          TaggedImage tg = new TaggedImage(pixels, tags);
          insertImage(tg);
       } catch (JSONException e) {
@@ -395,16 +455,15 @@ public class MMAcquisition {
       insertImage(taggedImg, show_);
    }
 
-   
    public void insertImage(TaggedImage taggedImg, boolean updateDisplay) throws MMScriptException {
       insertImage(taggedImg, updateDisplay, true);
    }
-   
+
    /*
     * This is the insertImage version that actually puts data into the acquisition
     */
-   public void insertImage(TaggedImage taggedImg, 
-           boolean updateDisplay, 
+   public void insertImage(TaggedImage taggedImg,
+           boolean updateDisplay,
            boolean waitForDisplay) throws MMScriptException {
       if (!initialized_) {
          throw new MMScriptException("Acquisition data must be initialized before inserting images");
@@ -412,45 +471,34 @@ public class MMAcquisition {
 
       try {
          JSONObject tags = taggedImg.tags;
-      
-         if (! (MDUtils.getWidth(tags) == width_
+
+         if (!(MDUtils.getWidth(tags) == width_
                  && MDUtils.getHeight(tags) == height_)) {
             throw new MMScriptException("Image dimensions do not match MMAcquisition.");
          }
-         if (! MDUtils.getPixelType(tags).contentEquals(getPixelType(depth_))) {
+         if (!MDUtils.getPixelType(tags).contentEquals(getPixelType(depth_))) {
             throw new MMScriptException("Pixel type does not match MMAcquisition.");
          }
-         
+
          int channel = tags.getInt("ChannelIndex");
          int frame = MDUtils.getFrameIndex(tags);
          tags.put("Channel", getChannelName(channel));
          long elapsedTimeMillis = System.currentTimeMillis() - startTimeMs_;
          tags.put("ElapsedTime-ms", elapsedTimeMillis);
          tags.put("Time", MDUtils.getCurrentTime());
-
-         CMMCore core = MMStudioMainFrame.getInstance().getCore();
-         MDUtils.addConfiguration(taggedImg.tags, core.getSystemStateCache());
-         try {
-            taggedImg.tags.put("Binning", core.getProperty (core.getCameraDevice(), "Binning"));
-         } catch (Exception ex) {
-
-         }
-         tags.put("BitDepth", core.getImageBitDepth());
-         tags.put("PixelSizeUm",core.getPixelSizeUm());
-         tags.put("ROI", MDUtils.getROI(core));
-
       } catch (JSONException ex) {
          throw new MMScriptException(ex);
       }
       try {
-        virtAcq_.imageCache_.putImage(taggedImg);
+         virtAcq_.imageCache_.putImage(taggedImg);
       } catch (Exception ex) {
          throw new MMScriptException(ex);
       }
       if (updateDisplay) {
          try {
-            if (virtAcq_ != null)
+            if (virtAcq_ != null) {
                virtAcq_.showImage(taggedImg.tags, waitForDisplay);
+            }
          } catch (Exception e) {
             throw new MMScriptException("Unable to show image");
          }
@@ -475,8 +523,9 @@ public class MMAcquisition {
     */
    public void closeImage5D() {
       close();
-      if (virtAcq_ != null)
+      if (virtAcq_ != null) {
          virtAcq_.close();
+      }
    }
 
    /**
@@ -513,20 +562,22 @@ public class MMAcquisition {
    }
 
    public ImageCache getImageCache() {
-      if (virtAcq_ == null)
+      if (virtAcq_ == null) {
          return null;
-      else
+      } else {
          return virtAcq_.getImageCache();
+      }
    }
-   
+
    /*
     * Provides the summary metadata, i.e. metadata applying to the complete
     * acquisition rather than indviviudal images.
     * Metadata are returned as a JSONObject
     */
    public JSONObject getSummaryMetadata() {
-      if (isInitialized())
+      if (isInitialized()) {
          return virtAcq_.imageCache_.getSummaryMetadata();
+      }
       return null;
    }
 
@@ -591,9 +642,10 @@ public class MMAcquisition {
    }
 
    public void setChannelContrast(int channel, int min, int max) throws MMScriptException {
-      if (isInitialized())
+      if (isInitialized()) {
          virtAcq_.setChannelDisplayRange(channel, min, max);
-      throw new MMScriptException (NOTINITIALIZED);
+      }
+      throw new MMScriptException(NOTINITIALIZED);
    }
 
    /**
@@ -603,8 +655,9 @@ public class MMAcquisition {
     * @throws MMScriptException 
     */
    public void setContrastBasedOnFrame(int frame, int slice) throws MMScriptException {
-      if (!isInitialized()) 
-         throw new MMScriptException (NOTINITIALIZED);
+      if (!isInitialized()) {
+         throw new MMScriptException(NOTINITIALIZED);
+      }
 
       ReportingUtils.logError("API call setContrastBasedOnFrame is not implemented!");
 
@@ -680,8 +733,9 @@ public class MMAcquisition {
          } catch (JSONException e) {
             throw new MMScriptException(e);
          }
-      } else
+      } else {
          throw new MMScriptException("Can not set property before acquisition is initialized");
+      }
    }
 
    public void setSystemState(int frame, int channel, int slice, JSONObject state) throws MMScriptException {
@@ -696,9 +750,10 @@ public class MMAcquisition {
          } catch (JSONException e) {
             throw new MMScriptException(e);
          }
-      } else
+      } else {
          throw new MMScriptException("Can not set system state before acquisition is initialized");
-  }
+      }
+   }
 
    public String getProperty(int frame, int channel, int slice, String propName) throws MMScriptException {
       if (isInitialized()) {
@@ -774,7 +829,7 @@ public class MMAcquisition {
    public int getLastAcquiredFrame() {
       return virtAcq_.imageCache_.lastAcquiredFrame();
    }
-   
+
    public VirtualAcquisitionDisplay getAcquisitionWindow() {
       return virtAcq_;
    }
