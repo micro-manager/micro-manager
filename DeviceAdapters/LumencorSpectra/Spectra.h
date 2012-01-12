@@ -24,7 +24,7 @@
 #define _SPECTRA_H_
 
 #include "../../MMDevice/MMDevice.h"
-#include "../../MMdevice/DeviceBase.h"
+#include "../../MMDevice/DeviceBase.h"
 #include <string>
 #include <map>
 

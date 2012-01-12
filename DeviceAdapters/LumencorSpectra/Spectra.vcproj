@@ -209,7 +209,7 @@
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
-				AdditionalIncludeDirectories="../../MMDevice"
+				AdditionalIncludeDirectories=""
 				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;MODULE_EXPORTS"
 				ExceptionHandling="2"
 				RuntimeLibrary="0"
