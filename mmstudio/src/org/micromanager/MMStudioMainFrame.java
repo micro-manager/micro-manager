@@ -3692,16 +3692,16 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
          return name;
       } else {
          throw new MMScriptException(
-               "Acquisition window must be open for this command to work.");
+               "Acquisition setup window must be open for this command to work.");
       }
    }
 
    @Override
-   public void runAcquisition(String name, String root)
+   public String runAcquisition(String name, String root)
          throws MMScriptException {
       testForAbortRequests();
       if (acqControlWin_ != null) {
-         acqControlWin_.runAcquisition(name, root);
+         String acqName = acqControlWin_.runAcquisition(name, root);
          try {
             while (acqControlWin_.isAcquisitionRunning()) {
                Thread.sleep(100);
@@ -3709,15 +3709,16 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
          } catch (InterruptedException e) {
             ReportingUtils.showError(e);
          }
+         return acqName;
       } else {
          throw new MMScriptException(
-               "Acquisition window must be open for this command to work.");
+               "Acquisition setup window must be open for this command to work.");
       }
    }
 
    @Override
-   public void runAcqusition(String name, String root) throws MMScriptException {
-      runAcquisition(name, root);
+   public String runAcqusition(String name, String root) throws MMScriptException {
+      return runAcquisition(name, root);
    }
 
    @Override

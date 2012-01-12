@@ -1888,21 +1888,26 @@ public class AcqControlDlg extends JDialog implements PropertyChangeListener {
       }
    }
 
-   public void runAcquisition(String acqName, String acqRoot) {
+   public String runAcquisition(String acqName, String acqRoot) {
       if (acqEng_.isAcquisitionRunning()) {
          JOptionPane.showMessageDialog(this, "Unable to start the new acquisition task: previous acquisition still in progress.");
-         return;
+         return null;
       }
 
       try {
          applySettings();
+         ChannelTableModel model = (ChannelTableModel) channelTable_.getModel();
+         if (acqEng_.isChannelsSettingEnabled() && model.duplicateChannels()) {
+            JOptionPane.showMessageDialog(this, "Cannot start acquisition using the same channel twice");
+            return null;
+         }
          acqEng_.setDirName(acqName);
          acqEng_.setRootName(acqRoot);
          acqEng_.setSaveFiles(true);
-         acqEng_.acquire();
+         return acqEng_.acquire();
       } catch (MMException e) {
          ReportingUtils.showError(e);
-         return;
+         return null;
       }
    }
 

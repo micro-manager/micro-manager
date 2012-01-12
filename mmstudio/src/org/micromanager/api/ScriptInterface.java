@@ -403,7 +403,7 @@ public interface ScriptInterface {
     * Returns after Acquisition finishes
     * @Deprecated - typo
     */
-   public void runAcqusition(String name, String root) throws MMScriptException;
+   public String runAcqusition(String name, String root) throws MMScriptException;
 
    /**
     * Executes Acquisition with current settings but allows for changing the data path.
@@ -413,7 +413,7 @@ public interface ScriptInterface {
     * @param root Place in the file system where data can be stored.
     * @throws MMScriptException
     */
-   public void runAcquisition(String name, String root) throws MMScriptException;
+   public String runAcquisition(String name, String root) throws MMScriptException;
 
    /**
     * Loads setting for Acquisition Dialog from file
