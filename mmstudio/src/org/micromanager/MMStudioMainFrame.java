@@ -1728,7 +1728,6 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
          @Override
          public void windowClosing(WindowEvent e) {
             closeSequence();
-            running_ = false;
          }
 
          @Override
@@ -3209,7 +3208,7 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
       enableLiveMode(false);
    }
 
-   private void cleanupOnClose() {
+   private boolean cleanupOnClose() {
       // NS: Save config presets if they were changed.
       if (configChanged_) {
          Object[] options = {"Yes", "No"};
@@ -3224,7 +3223,8 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
       if (liveModeTimer_ != null)
          liveModeTimer_.stop();
       
-      WindowManager.closeAllWindows();
+      if (!WindowManager.closeAllWindows())
+         return false;
 
       if (profileWin_ != null) {
          removeMMBackgroundListener(profileWin_);
@@ -3272,6 +3272,7 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
             ReportingUtils.showError(err);
          }
       }
+      return true;
    }
 
    private void saveSettings() {
@@ -3368,7 +3369,11 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
 
       stopAllActivity();
 
-      cleanupOnClose();
+      if (!cleanupOnClose())
+         return;
+
+      running_ = false;
+
       saveSettings();
       try {
          configPad_.saveSettings();
