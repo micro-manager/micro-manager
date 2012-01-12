@@ -706,7 +706,7 @@
   (.addToAlbum gui (make-TaggedImage (acquire-tagged-image))))
 
 
-;; java interop
+;; java interop -- implements org.micromanager.api.Pipeline
 
 (defn -init []
   [[] (atom {:stop false})])
@@ -734,7 +734,8 @@
         (. gui enableLiveMode false))
       (.start acq-thread)
       (swap! (.state this) assoc :display live-acq)
-      (.start live-acq))))
+      (.start live-acq)
+      (.getAcquisitionName live-acq))))
 
 (defn -acquireSingle [this]
   (load-mm)
