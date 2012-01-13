@@ -500,7 +500,7 @@
             #(set-property [d p v]))
           #(when-lets [exposure (:exposure event)
                        camera (core getCameraDevice)]
-             (device-best-effort (set-exposure exposure)))
+             (device-best-effort (set-exposure camera exposure)))
           #(when check-z-ref
              (recall-z-reference current-position))
           #(when-let [wait-time-ms (:wait-time-ms event)]
