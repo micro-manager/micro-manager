@@ -20,6 +20,7 @@ public interface ImageCache extends TaggedImageStorage {
    String getDiskLocation();
    JSONObject getDisplayAndComments();
    TaggedImage getImage(int channel, int slice, int frame, int position);
+   JSONObject getImageTags(int channel, int slice, int frame, int position);
    ImageCacheListener[] getImageStorageListeners();
    JSONObject getLastImageTags();
    JSONObject getSummaryMetadata();

@@ -18,6 +18,8 @@ public interface TaggedImageStorage {
    public static String storagePluginName = null;
    public TaggedImage getImage(int channelIndex, int sliceIndex,
                                int frameIndex, int positionIndex);
+   public JSONObject getImageTags(int channelIndex, int sliceIndex,
+                               int frameIndex, int positionIndex);
    public void putImage(TaggedImage taggedImage) throws MMException;
    public Set<String> imageKeys();
    /**
