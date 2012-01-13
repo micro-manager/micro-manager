@@ -393,6 +393,7 @@ public interface ScriptInterface {
     * Executes Acquisition with current settings
     * Will open the Acquisition Dialog when it is not open yet
     * Returns after Acquisition finishes
+    * @return The name of the acquisition created.
     * @throws MMScriptException
     */
    public String runAcquisition() throws MMScriptException;
@@ -401,6 +402,7 @@ public interface ScriptInterface {
     * Executes Acquisition with current settings but allows for changing the data path
     * Will open the Acquisition Dialog when it is not open yet.
     * Returns after Acquisition finishes
+    * @return The name of the acquisition created
     * @Deprecated - typo
     */
    public String runAcqusition(String name, String root) throws MMScriptException;
@@ -411,6 +413,7 @@ public interface ScriptInterface {
     * Returns after Acquisition finishes.
     * @param name Name of this acquisition.
     * @param root Place in the file system where data can be stored.
+    * @return The name of the acquisition created
     * @throws MMScriptException
     */
    public String runAcquisition(String name, String root) throws MMScriptException;
