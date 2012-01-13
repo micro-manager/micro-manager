@@ -4,7 +4,12 @@
  */
 package org.micromanager.acquisition;
 
+import ij.CompositeImage;
+import ij.ImagePlus;
 import ij.WindowManager;
+import java.awt.Color;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import org.micromanager.api.ImageCache;
 import org.micromanager.api.ImageCacheListener;
 import java.lang.ref.SoftReference;
@@ -14,7 +19,9 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
+import java.util.prefs.Preferences;
 import mmcorej.TaggedImage;
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.micromanager.MMStudioMainFrame;
@@ -38,7 +45,8 @@ public class MMImageCache implements TaggedImageStorage, ImageCache {
    private int lastFrame_ = -1;
    private JSONObject lastTags_;
    private boolean conserveRam_;
-   private ContrastSettings contrast_;
+   private VirtualAcquisitionDisplay display_;
+   private Preferences prefs_;
 
 
    public void addImageCacheListener(ImageCacheListener l) {
@@ -58,6 +66,7 @@ public class MMImageCache implements TaggedImageStorage, ImageCache {
       changingKeys_ = new HashSet<String>();
       softTable_ = new HashMap<String, SoftReference<TaggedImage>>();
       conserveRam_ = MMStudioMainFrame.getInstance().getConserveRamOption();
+      prefs_ = Preferences.userNodeForPackage(this.getClass());
    }
 
    public void finished() {
@@ -285,7 +294,155 @@ public class MMImageCache implements TaggedImageStorage, ImageCache {
       return imageStorage_.imageKeys();
    }
 
+   public void setDisplay(VirtualAcquisitionDisplay disp) { 
+      display_ = disp;
+   }
+   
+   public ImagePlus getImagePlus() {
+      if (display_ == null)
+         return null;
+      return display_.getHyperImage();
+   }
+   
+   /////////////////////Channels section/////////////////////////
+   public void setChannelContrast(int index, int min, int max) {
+      if (display_ == null)
+         return;
+      display_.setChannelContrast(index, min, max);
+   }
+    
+   public void storeChannelDisplaySettings(int channelIndex, int min, int max, double gamma) {
+      try {
+         JSONObject settings = getChannelSetting(channelIndex);
+         settings.put("Max", max);
+         settings.put("Min", min);
+         settings.put("Gamma", gamma);
+      } catch (Exception ex) {
+         ReportingUtils.logError(ex);
+      }
+   }
 
+
+   public JSONObject getChannelSetting(int channel) {
+      try {
+         JSONArray array = getDisplayAndComments().getJSONArray("Channels");
+         if (array != null && !array.isNull(channel)) {
+            return array.getJSONObject(channel);
+         } else {
+            return null;
+         }
+      } catch (Exception ex) {
+         ReportingUtils.logError(ex);
+         return null;
+      }
+   }
+
+   public int getChannelBitDepth(int channelIndex) {
+      try {
+         return getChannelSetting(channelIndex).getInt("BitDepth");
+      } catch (JSONException ex) {
+         return 8;
+      }
+   }
+   
+   public Color getChannelColor(int channelIndex) {
+      try {
+         return new Color(getChannelSetting(channelIndex).getInt("Color"));
+      } catch (Exception ex) {
+         try {
+            return new Color(prefs_.node("ChColors").getInt(getChannelName(channelIndex), 0xFFFFFF));
+         } catch (Exception e) {
+            return Color.WHITE;
+         }
+      }
+   }
+
+   public void setChannelColor(int channel, int rgb) {
+      JSONObject chan = getChannelSetting(channel);
+      try {
+         chan.put("Color", rgb);
+      } catch (JSONException ex) {
+         ReportingUtils.logError(ex);
+      }
+      prefs_.node("ChColors").putInt(getChannelName(channel), rgb);
+      
+//      updateChannelLUT(channel);
+   }
+
+   public String getChannelName(int channelIndex) {
+      try {
+         return getChannelSetting(channelIndex).getString("Name");
+      } catch (JSONException ex) {
+         ReportingUtils.logError(ex);
+         return null;
+      }
+   }
+   
+   
+   public void setChannelName(int channel, String channelName) {
+      try {
+         JSONObject displayAndComments = getDisplayAndComments();
+         JSONArray channelArray;
+         if (displayAndComments.has("Channels")) {
+            channelArray = displayAndComments.getJSONArray("Channels");
+         }  else {
+            channelArray = new JSONArray();
+            displayAndComments.put("Channels",channelArray);
+         }
+         if (channelArray.isNull(channel)) {
+             channelArray.put(channel, new JSONObject().put("Name",channelName));
+//             updateChannelLUT(channel);/////////////////WHAT ABOUT THIS???/////////////////
+          }
+      } catch (JSONException ex) {
+         ReportingUtils.logError(ex);
+      }
+
+   }
+
+   public void setChannelVisibility(int channelIndex, boolean visible) {
+      if (display_ == null)
+         return;
+      ImagePlus img = display_.getHyperImage();
+      if (!img.isComposite())
+         return;
+      CompositeImage ci = (CompositeImage) img;
+      ci.getActiveChannels()[channelIndex] = visible;
+      //Need to redraw????////////////////////////////////////////////////////////////////
+   }
+
+   public int getChannelMin(int channelIndex) {
+      try {
+         return getChannelSetting(channelIndex).getInt("Min");
+      } catch (Exception ex) {
+         return 0;
+      }
+   }
+
+   public int getChannelMax(int channelIndex) {
+      try {
+         return getChannelSetting(channelIndex).getInt("Max");
+      } catch (Exception ex) {
+         return -1;
+      }
+   }
+
+   public double getChannelGamma(int channelIndex) {
+      try {
+         return getChannelSetting(channelIndex).getDouble("Gamma");
+      } catch (Exception ex) {
+         return 1.0;
+      }
+   }
+
+   public int getNumChannels() {
+      JSONArray array;
+      try {
+         array = getDisplayAndComments().getJSONArray("Channels");
+      } catch (JSONException ex) {
+         return 1;
+      }
+      return array.length();
+   }
 
 
 }

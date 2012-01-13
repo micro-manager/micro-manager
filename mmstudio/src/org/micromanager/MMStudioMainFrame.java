@@ -94,7 +94,7 @@ import org.micromanager.conf2.ConfiguratorDlg2;
 import org.micromanager.conf.ConfiguratorDlg;
 import org.micromanager.conf.MMConfigFileException;
 import org.micromanager.conf.MicroscopeModel;
-import org.micromanager.graph.ContrastPanel;
+import org.micromanager.graph.SingleChannelContrastPanel;
 import org.micromanager.graph.GraphData;
 import org.micromanager.graph.GraphFrame;
 import org.micromanager.navigation.CenterAndDragListener;
@@ -169,11 +169,6 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
    private static final String MAIN_FRAME_DIVIDER_POS = "divider_pos";
    private static final String MAIN_EXPOSURE = "exposure";
    private static final String SYSTEM_CONFIG_FILE = "sysconfig_file";
-   private static final String MAIN_STRETCH_CONTRAST = "stretch_contrast";
-   private static final String MAIN_REJECT_OUTLIERS = "reject_outliers";
-   private static final String MAIN_REJECT_FRACTION = "reject_fraction";
-   private static final String MAIN_SLOW_HIST = "slow_hist";
-   private static final String MAIN_LOG_HIST = "log_hist";
    private static final String CONTRAST_SETTINGS_8_MIN = "contrast8_MIN";
    private static final String CONTRAST_SETTINGS_8_MAX = "contrast8_MAX";
    private static final String CONTRAST_SETTINGS_16_MIN = "contrast16_MIN";
@@ -813,11 +808,6 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
       int y = mainPrefs_.getInt(MAIN_FRAME_Y, 100);
       int width = mainPrefs_.getInt(MAIN_FRAME_WIDTH, 580);
       int height = mainPrefs_.getInt(MAIN_FRAME_HEIGHT, 482);
-      boolean stretch = mainPrefs_.getBoolean(MAIN_STRETCH_CONTRAST, true);
-      boolean reject = mainPrefs_.getBoolean(MAIN_REJECT_OUTLIERS, false);
-      boolean slowHist = mainPrefs_.getBoolean(MAIN_SLOW_HIST, false);
-      boolean logHist = mainPrefs_.getBoolean(MAIN_LOG_HIST, false);
-      double rejectFract = mainPrefs_.getDouble(MAIN_REJECT_FRACTION, 0.027);
       int dividerPos = mainPrefs_.getInt(MAIN_FRAME_DIVIDER_POS, 178);
       openAcqDirectory_ = mainPrefs_.get(OPEN_ACQ_DIR, "");
 
@@ -1915,17 +1905,8 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
             71, SpringLayout.WEST, topPanel);
       topLayout.putConstraint(SpringLayout.WEST, regionOfInterestLabel,
             8, SpringLayout.WEST, topPanel);
-
-
-      ContrastPanel contrastPanel = new ContrastPanel();
-      contrastPanel.setFont(new Font("", Font.PLAIN, 10));
-      contrastPanel.setContrastStretch(stretch);
-      contrastPanel.setRejectOutliers(reject);
-      contrastPanel.setFractionToReject(rejectFract);
-      contrastPanel.setSlowHist(slowHist);
-      contrastPanel.setLogHist(logHist);
    
-      metadataPanel_ = new MetadataPanel(contrastPanel);
+      metadataPanel_ = new MetadataPanel();
       bottomPanel.add(metadataPanel_);
       topLayout.putConstraint(SpringLayout.SOUTH, metadataPanel_, -20,
             SpringLayout.SOUTH, bottomPanel);
@@ -3153,9 +3134,6 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
             textFieldExp_.setText(NumberUtils.doubleToDisplayString(exp));
             String binSize = core_.getProperty(cameraLabel_, MMCoreJ.getG_Keyword_Binning());
             GUIUtils.setComboSelection(comboBinning_, binSize);
-          
-            metadataPanel_.getSingleChannelContrastPanel().setPixelBitDepth(
-                    (int)core_.getImageBitDepth());
          }
 
          if (liveModeTimer_ == null || !liveModeTimer_.isRunning()) {
@@ -3284,11 +3262,7 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
       mainPrefs_.putInt(MAIN_FRAME_HEIGHT, r.height);
       mainPrefs_.putInt(MAIN_FRAME_DIVIDER_POS, this.splitPane_.getDividerLocation());
 
-      mainPrefs_.putBoolean(MAIN_STRETCH_CONTRAST, metadataPanel_.getSingleChannelContrastPanel().isContrastStretch());
-      mainPrefs_.putBoolean(MAIN_REJECT_OUTLIERS, metadataPanel_.getSingleChannelContrastPanel().isRejectOutliers());
-      mainPrefs_.putDouble(MAIN_REJECT_FRACTION, metadataPanel_.getSingleChannelContrastPanel().getFractionToReject());
-      mainPrefs_.putBoolean(MAIN_SLOW_HIST, metadataPanel_.getSingleChannelContrastPanel().getSlowHist());
-      mainPrefs_.putBoolean(MAIN_LOG_HIST, metadataPanel_.getSingleChannelContrastPanel().getLogHist());
+      metadataPanel_.saveSettings();
       
       mainPrefs_.put(OPEN_ACQ_DIR, openAcqDirectory_);
 
@@ -3397,14 +3371,16 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
 
    }
 
-
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////FIX THIS
    public void applyContrastSettings(ContrastSettings contrast8,
          ContrastSettings contrast16) {
-      metadataPanel_.getSingleChannelContrastPanel().applyContrastSettings(contrast8, contrast16);
+//      metadataPanel_.getSingleChannelContrastPanel().applyContrastSettings(contrast8, contrast16);
    }
 
+   @Override
    public ContrastSettings getContrastSettings() {
-      return metadataPanel_.getSingleChannelContrastPanel().getContrastSettings();
+//      return metadataPanel_.getSingleChannelContrastPanel().getContrastSettings();
+      return null;
    }
 
    public boolean is16bit() {

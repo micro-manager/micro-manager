@@ -622,7 +622,7 @@ public class MMAcquisition {
    public void setChannelColor(int channel, int rgb) throws MMScriptException {
       if (isInitialized()) {
          try {
-            virtAcq_.setChannelColor(channel, rgb);
+            virtAcq_.imageCache_.setChannelColor(channel, rgb);
             virtAcq_.imageCache_.getSummaryMetadata().getJSONArray("ChColors").put(channel, rgb);
             virtAcq_.updateAndDraw();
          } catch (JSONException ex) {
@@ -643,7 +643,7 @@ public class MMAcquisition {
 
    public void setChannelContrast(int channel, int min, int max) throws MMScriptException {
       if (isInitialized()) {
-         virtAcq_.setChannelDisplayRange(channel, min, max);
+         virtAcq_.imageCache_.setChannelContrast(channel, min, max);
       }
       throw new MMScriptException(NOTINITIALIZED);
    }

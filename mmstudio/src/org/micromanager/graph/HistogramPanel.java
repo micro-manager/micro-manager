@@ -50,6 +50,8 @@ public class HistogramPanel extends GraphPanel {
    private ArrayList<CursorListener> cursorListeners_;
    private Float ptDevBottom_;
    private Float ptDevTop_;
+   private Float ptDevTopUnclippedX_;
+
    
    public HistogramPanel() {
       super();
@@ -176,8 +178,10 @@ public class HistogramPanel extends GraphPanel {
       ptDevBottom_ = getDevicePoint(ptPosBottom, box, xUnit, yUnit);
       Point2D.Float ptPosTop = new Point2D.Float(xEnd, (float)bounds_.yMax);
       ptDevTop_ = getDevicePoint(ptPosTop, box, xUnit, yUnit);
+      ptDevTopUnclippedX_ = getDevicePointUnclippedXMax(ptPosTop, box, xUnit, yUnit);
       
-      GeneralPath path = generateGammaCurvePath(ptDevTop_, ptDevBottom_, gamma);
+      
+      GeneralPath path = generateGammaCurvePath(ptDevTopUnclippedX_, ptDevBottom_, gamma);
 
       Color oldColor = g.getColor();
       Stroke oldStroke = g.getStroke();
@@ -311,10 +315,10 @@ public class HistogramPanel extends GraphPanel {
    }
 
       private double getGammaFromMousePosition(int x, int y) {
-         if ((ptDevTop_ == null) || (ptDevBottom_ == null))
+         if ((ptDevTopUnclippedX_ == null) || (ptDevBottom_ == null))
             return 0;
-         double width = ptDevTop_.x - ptDevBottom_.x;
-         double height = ptDevBottom_.y - ptDevTop_.y;
+         double width = ptDevTopUnclippedX_.x - ptDevBottom_.x;
+         double height = ptDevBottom_.y - ptDevTopUnclippedX_.y;
          double xn = (x - ptDevBottom_.x) / width;
          double yn = (ptDevBottom_.y - y) / height;
          double gammaClick;

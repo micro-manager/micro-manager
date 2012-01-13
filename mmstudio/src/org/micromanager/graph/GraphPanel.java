@@ -190,6 +190,14 @@ public class GraphPanel extends JPanel {
       // This should be overridden in a derived class
    }
 
+   public Point2D.Float getDevicePointUnclippedXMax(Point2D.Float pt, Rectangle box, float xUnit, float yUnit){
+      Point2D.Float ptDev = new Point2D.Float((float)(pt.x - bounds_.xMin)*xUnit + box.x, box.height - (float)(pt.y - bounds_.yMin)*yUnit + box.y);
+      // clip the drawing region
+      ptDev.x = Math.max(ptDev.x, (float)box.x);
+      ptDev.y = Math.max(Math.min(ptDev.y, (float)box.y + box.height), (float)box.y);
+      return ptDev;
+   }
+   
    public Point2D.Float getDevicePoint(Point2D.Float pt, Rectangle box, float xUnit, float yUnit){
       Point2D.Float ptDev = new Point2D.Float((float)(pt.x - bounds_.xMin)*xUnit + box.x, box.height - (float)(pt.y - bounds_.yMin)*yUnit + box.y);
       // clip the drawing region

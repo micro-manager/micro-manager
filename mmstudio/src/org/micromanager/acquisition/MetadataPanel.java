@@ -10,6 +10,7 @@
  */
 package org.micromanager.acquisition;
 
+import org.micromanager.graph.ChannelControlPanel;
 import ij.CompositeImage;
 import ij.ImagePlus;
 import ij.WindowManager;
@@ -20,12 +21,14 @@ import java.awt.BorderLayout;
 import java.awt.CardLayout;
 import java.awt.Color;
 import java.awt.Dimension;
+import java.awt.Font;
 import java.awt.Graphics;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Vector;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.prefs.Preferences;
 import javax.swing.DebugGraphics;
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.JCheckBox;
@@ -48,11 +51,14 @@ import javax.swing.event.DocumentListener;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.DefaultTableModel;
 import mmcorej.TaggedImage;
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.micromanager.MMStudioMainFrame;
+import org.micromanager.api.ContrastPanel;
 import org.micromanager.api.ImageCache;
-import org.micromanager.graph.ContrastPanel;
+import org.micromanager.graph.MultiChannelContrastPanel;
+import org.micromanager.graph.SingleChannelContrastPanel;
 import org.micromanager.utils.ImageFocusListener;
 import org.micromanager.utils.GUIUtils;
 import org.micromanager.utils.JavaUtils;
@@ -68,14 +74,18 @@ import org.micromanager.utils.ScaleBar;
 public class MetadataPanel extends JPanel
         implements ImageFocusListener {
 
-   private static final String SINGLE_CHANNEL = "Single Channel";
-   private static final String MULTIPLE_CHANNELS = "Multiple Channels";
-   ;
+   private static final String SINGLE_CHANNEL_CONTRAST_PANEL = "Single Channel";
+   private static final String MULTIPLE_CHANNELS_CONTRAST_PANEL = "Multiple Channels";
+   private static final String BLANK_CONTRAST_PANEL = "Blank";
+   private static final String PREF_AUTOSTRETCH = "stretch_contrast";
+   private static final String PREF_REJECT_OUTLIERS = "reject_outliers";
+   private static final String PREF_REJECT_FRACTION = "reject_fraction";
+   private static final String PREF_SLOW_HIST = "slow_hist";
+   private static final String PREF_LOG_HIST = "log_hist";
+   
+   private Preferences prefs_;
     private JSplitPane CommentsSplitPane;
-    private JCheckBox autostretchCheckBox;
     private JPanel multipleChannelsPanel_;
-    private JScrollPane contrastScrollPane;
-    private JComboBox displayModeCombo;
     private JLabel imageCommentsLabel;
     private JPanel imageCommentsPanel;
     private JScrollPane imageCommentsScrollPane;
@@ -83,18 +93,10 @@ public class MetadataPanel extends JPanel
     private JPanel imageMetadataScrollPane;
     private JTable imageMetadataTable;
     private JScrollPane imageMetadataTableScrollPane;
-    private JLabel jLabel1;
     private JLabel jLabel2;
     private JLabel jLabel3;
-    private JPanel jPanel1;
-    private JCheckBox logScaleCheckBox;
     private JSplitPane metadataSplitPane;
-    private JComboBox overlayColorComboBox_;
-    private JCheckBox rejectOutliersCB_;
-    private JSpinner rejectPercentSpinner_;
     private JCheckBox showUnchangingPropertiesCheckbox;
-    private JCheckBox sizeBarCheckBox;
-    private JComboBox sizeBarComboBox;
     private JLabel summaryCommentsLabel;
     private JPanel summaryCommentsPane;
     private JScrollPane summaryCommentsScrollPane;
@@ -103,77 +105,46 @@ public class MetadataPanel extends JPanel
     private JScrollPane summaryMetadataScrollPane;
     private JTable summaryMetadataTable;
     private JTabbedPane tabbedPane;
-    private JPanel masterContrastPanel_;
+    private JPanel contrastPanelHolder_;
     private JPanel singleChannelPanel_;
     private CardLayout contrastPanelLayout_;
    
-   private ContrastPanel singleChannelContrastPanel_;
-   private static MetadataPanel singletonViewer_ = null;
+   private SingleChannelContrastPanel singleChannelContrastPanel_;
+   private MultiChannelContrastPanel multiChannelContrastPanel_;
+   private ContrastPanel currentContrastPanel_;
    private final MetadataTableModel imageMetadataModel_;
    private final MetadataTableModel summaryMetadataModel_;
    private final String[] columnNames_ = {"Property", "Value"};
    private boolean showUnchangingKeys_;
-   private boolean updatingDisplayModeCombo_ = false;
-   private ArrayList<ChannelControlPanel> ccpList_;
-   private Color overlayColor_ = Color.white;
-   private ImageWindow focusedWindow_;
-   private boolean prevUseSingleChannelHist_ = true;
 
    /** Creates new form MetadataPanel */
-   public MetadataPanel(ContrastPanel cp) {
-      singleChannelContrastPanel_ = cp;
+   public MetadataPanel() {
+      prefs_ = Preferences.userNodeForPackage(this.getClass());
+      makeContrastPanels();
       initialize();
       imageMetadataModel_ = new MetadataTableModel();
       summaryMetadataModel_ = new MetadataTableModel();
-//      ImagePlus.addImageListener(this);
       GUIUtils.registerImageFocusListener(this);
-      //update(WindowManager.getCurrentImage());
       imageMetadataTable.setModel(imageMetadataModel_);
       summaryMetadataTable.setModel(summaryMetadataModel_);
       addTextChangeListeners();
-      setDisplayState(CompositeImage.COMPOSITE);
-      this.autostretchCheckBoxStateChanged(null);
-
-      rejectPercentSpinner_.setModel(new SpinnerNumberModel(0., 0., 100., 0.1));
    }
-
-   public static MetadataPanel showMetadataPanel() {
-      if (singletonViewer_ == null) {
-         try {
-            singletonViewer_ = new MetadataPanel((ContrastPanel)
-                    JavaUtils.getRestrictedFieldValue(new ContrastPanel(), ContrastPanel.class, "contrastPanel_"));
-            //GUIUtils.recallPosition(singletonViewer_);
-         } catch (NoSuchFieldException ex) {
-            ReportingUtils.logError(ex);
-         }
-      }
-      singletonViewer_.setVisible(true);
-      return singletonViewer_;
+   
+   private void makeContrastPanels() {    
+      boolean stretch = prefs_.getBoolean(PREF_AUTOSTRETCH, true);
+      boolean reject = prefs_.getBoolean(PREF_REJECT_OUTLIERS, false);
+      boolean slowHist = prefs_.getBoolean(PREF_SLOW_HIST, false);
+      boolean logHist = prefs_.getBoolean(PREF_LOG_HIST, false);
+      double rejectFrac = prefs_.getDouble(PREF_REJECT_FRACTION, 0.027);
+      singleChannelContrastPanel_ = new SingleChannelContrastPanel(this, stretch, reject, slowHist, logHist, rejectFrac);
+      singleChannelContrastPanel_.setFont(new Font("", Font.PLAIN, 10));      
+  
+      multiChannelContrastPanel_ = new MultiChannelContrastPanel(this,stretch,reject,logHist,rejectFrac);
+      multiChannelContrastPanel_.setFont(new Font("", Font.PLAIN, 10));
    }
-
-   /** This method is called from within the constructor to
-    * initialize the form.
-    * WARNING: Do NOT modify this code. The content of this method is
-    * always regenerated by the Form Editor.
-    */
-   @SuppressWarnings("unchecked")
-       // <editor-fold defaultstate="collapsed" desc="Generated Code">
+   
     private void initialize() {
-
         tabbedPane = new JTabbedPane();
-        singleChannelPanel_ = new JPanel(new BorderLayout());
-        multipleChannelsPanel_ = new JPanel();
-        jPanel1 = new JPanel();
-        displayModeCombo = new JComboBox();
-        jLabel1 = new JLabel();
-        autostretchCheckBox = new JCheckBox();
-        rejectOutliersCB_ = new JCheckBox();
-        rejectPercentSpinner_ = new JSpinner();
-        logScaleCheckBox = new JCheckBox();
-        sizeBarCheckBox = new JCheckBox();
-        sizeBarComboBox = new JComboBox();
-        overlayColorComboBox_ = new JComboBox();
-        contrastScrollPane = new JScrollPane();
         metadataSplitPane = new JSplitPane();
         imageMetadataScrollPane = new JPanel();
         imageMetadataTableScrollPane = new JScrollPane();
@@ -200,156 +171,29 @@ public class MetadataPanel extends JPanel
         tabbedPane.addChangeListener(new ChangeListener() {
             public void stateChanged(ChangeEvent evt) {
                 tabbedPaneStateChanged(evt);
-            }
-        });
-
+            }});
+        
+        singleChannelPanel_ = new JPanel(new BorderLayout());
+        multipleChannelsPanel_ = new JPanel(new BorderLayout());
+                
         multipleChannelsPanel_.setPreferredSize(new java.awt.Dimension(400, 594));
-
-        displayModeCombo.setModel(new DefaultComboBoxModel(new String[] { "Composite", "Color", "Grayscale" }));
-        displayModeCombo.setToolTipText("<html>Choose display mode:<br> - Composite = Multicolor overlay<br> - Color = Single channel color view<br> - Grayscale = Single channel grayscale view</li></ul></html>");
-        displayModeCombo.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                displayModeComboActionPerformed(evt);
-            }
-        });
-
-        jLabel1.setText("Display mode:");
-
-        autostretchCheckBox.setText("Autostretch");
-        autostretchCheckBox.addChangeListener(new ChangeListener() {
-            public void stateChanged(ChangeEvent evt) {
-                autostretchCheckBoxStateChanged(evt);
-            }
-        });
-
-        rejectOutliersCB_.setText("ignore %");
-        rejectOutliersCB_.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                rejectOutliersCB_ActionPerformed(evt);
-            }
-        });
-
-        rejectPercentSpinner_.setFont(new java.awt.Font("Lucida Grande", 0, 10));
-        rejectPercentSpinner_.addChangeListener(new ChangeListener() {
-            public void stateChanged(ChangeEvent evt) {
-                rejectPercentSpinner_StateChanged(evt);
-            }
-        });
-        rejectPercentSpinner_.addKeyListener(new java.awt.event.KeyAdapter() {
-            public void keyPressed(java.awt.event.KeyEvent evt) {
-                rejectPercentSpinner_KeyPressed(evt);
-            }
-        });
-
-        logScaleCheckBox.setText("Log hist");
-        logScaleCheckBox.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                logScaleCheckBoxActionPerformed(evt);
-            }
-        });
-
-        org.jdesktop.layout.GroupLayout jPanel1Layout = new org.jdesktop.layout.GroupLayout(jPanel1);
-        jPanel1.setLayout(jPanel1Layout);
-        jPanel1Layout.setHorizontalGroup(
-            jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-            .add(jPanel1Layout.createSequentialGroup()
-                .addContainerGap(24, Short.MAX_VALUE)
-                .add(jLabel1)
-                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(displayModeCombo, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 134, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(autostretchCheckBox)
-                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(rejectOutliersCB_)
-                .add(6, 6, 6)
-                .add(rejectPercentSpinner_, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 63, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(logScaleCheckBox))
-        );
-        jPanel1Layout.setVerticalGroup(
-            jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-            .add(jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.CENTER)
-                .add(autostretchCheckBox)
-                .add(rejectOutliersCB_)
-                .add(rejectPercentSpinner_, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                .add(logScaleCheckBox))
-            .add(jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
-                .add(displayModeCombo, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                .add(jLabel1))
-        );
-
-        sizeBarCheckBox.setText("Scale Bar");
-        sizeBarCheckBox.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                sizeBarCheckBoxActionPerformed(evt);
-            }
-        });
-
-        sizeBarComboBox.setModel(new DefaultComboBoxModel(new String[] { "Top-Left", "Top-Right", "Bottom-Left", "Bottom-Right" }));
-        sizeBarComboBox.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                sizeBarComboBoxActionPerformed(evt);
-            }
-        });
-
-        overlayColorComboBox_.setModel(new DefaultComboBoxModel(new String[] { "White", "Black", "Yellow", "Gray" }));
-        overlayColorComboBox_.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                overlayColorComboBox_ActionPerformed(evt);
-            }
-        });
-
-        contrastScrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
-        contrastScrollPane.setPreferredSize(new java.awt.Dimension(400, 4));
-
+        multipleChannelsPanel_.add(multiChannelContrastPanel_);
         singleChannelPanel_.add(singleChannelContrastPanel_);
         contrastPanelLayout_ = new CardLayout();
-        masterContrastPanel_ = new JPanel(contrastPanelLayout_);
-        masterContrastPanel_.add(multipleChannelsPanel_, MULTIPLE_CHANNELS);
-        masterContrastPanel_.add(singleChannelPanel_, SINGLE_CHANNEL);
-        showSingleChannelContrastPanel();
-        org.jdesktop.layout.GroupLayout channelsTablePanel_Layout = new org.jdesktop.layout.GroupLayout(multipleChannelsPanel_);
-        multipleChannelsPanel_.setLayout(channelsTablePanel_Layout);
-        channelsTablePanel_Layout.setHorizontalGroup(
-            channelsTablePanel_Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-            .add(channelsTablePanel_Layout.createSequentialGroup()
-                .add(sizeBarCheckBox)
-                .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
-                .add(sizeBarComboBox, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 134, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(overlayColorComboBox_, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 105, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
-            .add(jPanel1, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-            .add(channelsTablePanel_Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                .add(contrastScrollPane, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 620, Short.MAX_VALUE))
-        );
-        channelsTablePanel_Layout.setVerticalGroup(
-            channelsTablePanel_Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-            .add(channelsTablePanel_Layout.createSequentialGroup()
-                .add(channelsTablePanel_Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
-                    .add(sizeBarCheckBox)
-                    .add(sizeBarComboBox, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                    .add(overlayColorComboBox_, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
-                .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
-                .add(jPanel1, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(589, Short.MAX_VALUE))
-            .add(channelsTablePanel_Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                .add(channelsTablePanel_Layout.createSequentialGroup()
-                    .add(79, 79, 79)
-                    .add(contrastScrollPane, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 571, Short.MAX_VALUE)))
-        );
+        contrastPanelHolder_ = new JPanel(contrastPanelLayout_);
+        contrastPanelHolder_.add(multipleChannelsPanel_, MULTIPLE_CHANNELS_CONTRAST_PANEL);
+        contrastPanelHolder_.add(singleChannelPanel_, SINGLE_CHANNEL_CONTRAST_PANEL);
+        contrastPanelHolder_.add(new JPanel(new BorderLayout()), BLANK_CONTRAST_PANEL );
+        setContrastPanel(BLANK_CONTRAST_PANEL);       
 
-        tabbedPane.addTab("Channels", masterContrastPanel_);
+        tabbedPane.addTab("Channels", contrastPanelHolder_);
 
         metadataSplitPane.setBorder(null);
         metadataSplitPane.setOrientation(JSplitPane.VERTICAL_SPLIT);
 
         imageMetadataTable.setModel(new DefaultTableModel(
-            new Object [][] {
-
-            },
-            new String [] {
-                "Property", "Value"
-            }
+            new Object [][] { },
+            new String [] {   "Property", "Value"  }
         ) {
             Class[] types = new Class [] {
                 java.lang.String.class, java.lang.String.class
@@ -536,13 +380,7 @@ public class MetadataPanel extends JPanel
                 .add(tabbedPane, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 680, Short.MAX_VALUE)
                 .addContainerGap())
         );
-    }
-   
-    private void displayModeComboActionPerformed(java.awt.event.ActionEvent evt) {                                                 
-       if (!updatingDisplayModeCombo_) {
-          setDisplayState(displayModeCombo.getSelectedIndex() + 1);
-       }
-}                                                
+    }                                          
 
     private void showUnchangingPropertiesCheckboxActionPerformed(java.awt.event.ActionEvent evt) {                                                                 
        showUnchangingKeys_ = showUnchangingPropertiesCheckbox.isSelected();
@@ -554,86 +392,8 @@ public class MetadataPanel extends JPanel
           update(WindowManager.getCurrentImage());
        } catch (Exception e) {
        }
-}                                       
-
-    private void sizeBarCheckBoxActionPerformed(java.awt.event.ActionEvent evt) {                                                
-       showSizeBar();
-    }                                               
-
-    private void sizeBarComboBoxActionPerformed(java.awt.event.ActionEvent evt) {                                                
-       showSizeBar();
-    }                                               
-
-    private void overlayColorComboBox_ActionPerformed(java.awt.event.ActionEvent evt) {                                                      
-       if ((overlayColorComboBox_.getSelectedItem()).equals("Black")) {
-          overlayColor_ = Color.black;
-       } else if ((overlayColorComboBox_.getSelectedItem()).equals("White")) {
-          overlayColor_ = Color.white;
-       } else if ((overlayColorComboBox_.getSelectedItem()).equals("Yellow")) {
-          overlayColor_ = Color.yellow;
-       } else if ((overlayColorComboBox_.getSelectedItem()).equals("Gray")) {
-          overlayColor_ = Color.gray;
-       }
-       showSizeBar();
-
-    }                                                     
-
-    private void logScaleCheckBoxActionPerformed(java.awt.event.ActionEvent evt) {                                                 
-       for (ChannelControlPanel ccp : ccpList_) {
-          ccp.setLogScale(logScaleCheckBox.isSelected());
-       }
-       updateAndDrawHistograms();
-    }                                                
-
-    private void rejectOutliersCB_ActionPerformed(java.awt.event.ActionEvent evt) {                                                  
-       rejectPercentSpinner_.setEnabled(rejectOutliersCB_.isSelected() && autostretchCheckBox.isSelected());
-             updateAndDrawHistograms();
-
-    }                                                 
-
-    private void rejectPercentSpinner_StateChanged(ChangeEvent evt) {                                                   
-             updateAndDrawHistograms();
-
-    }                                                  
-
-    private void autostretchCheckBoxStateChanged(ChangeEvent evt) {                                                 
-       rejectOutliersCB_.setEnabled(autostretchCheckBox.isSelected());
-       boolean rejectem = rejectOutliersCB_.isSelected() && autostretchCheckBox.isSelected();
-       rejectPercentSpinner_.setEnabled(rejectem);
-             updateAndDrawHistograms();
-
-    }                                                
-
-    private void rejectPercentSpinner_KeyPressed(java.awt.event.KeyEvent evt) {                                                 
-              updateAndDrawHistograms();
-    }                                                
-
-    public ContrastPanel getSingleChannelContrastPanel() {
-       return singleChannelContrastPanel_;
-    }
+}                                                                                 
     
-   private ImagePlus getCurrentImage() {
-      try {
-         return WindowManager.getCurrentImage();
-      } catch (Exception e) {
-         return null;
-      }
-   }
-
-   private void setDisplayState(int state) {
-      ImagePlus imgp = getCurrentImage();
-      if (imgp instanceof CompositeImage) {
-         CompositeImage ci = (CompositeImage) imgp;
-         ci.setMode(state);
-         ci.updateAndDraw();
-      }
-   }
-
-   void setAutostretch(boolean state) {
-      autostretchCheckBox.setSelected(state);
-   }
-   
-
    private void addTextChangeListeners() {
       summaryCommentsTextArea.getDocument()
               .addDocumentListener(new DocumentListener() {
@@ -675,7 +435,6 @@ public class MetadataPanel extends JPanel
    }
 
    class MetadataTableModel extends AbstractTableModel {
-
       Vector<Vector<String>> data_;
 
       MetadataTableModel() {
@@ -758,10 +517,6 @@ public class MetadataPanel extends JPanel
       return mdChanging;
    }
 
-   private boolean isHyperImage(ImagePlus imgp) {
-      return VirtualAcquisitionDisplay.getDisplay(imgp) != null;
-   }
-
    private AcquisitionVirtualStack getAcquisitionStack(ImagePlus imp) {
       VirtualAcquisitionDisplay display = VirtualAcquisitionDisplay.getDisplay(imp);
       if (display != null) {
@@ -769,11 +524,6 @@ public class MetadataPanel extends JPanel
       } else {
          return null;
       }
-   }
-
-   @Override
-   public void setVisible(boolean visible) {
-      super.setVisible(visible);
    }
 
    private void writeSummaryComments(ImagePlus imp) {
@@ -790,8 +540,6 @@ public class MetadataPanel extends JPanel
       }
    }
 
-
-
    private ImageCache getCache(ImagePlus imgp) {
       if (VirtualAcquisitionDisplay.getDisplay(imgp) != null) {
          return VirtualAcquisitionDisplay.getDisplay(imgp).imageCache_;
@@ -807,12 +555,7 @@ public class MetadataPanel extends JPanel
          imageMetadataModel_.setMetadata(null);
          summaryMetadataModel_.setMetadata(null);
          summaryCommentsTextArea.setText(null);
-         contrastScrollPane.setViewportView(null);
-         ccpList_ = null;         
-         if(useSingleChannelHistogram())
-            singleChannelContrastPanel_.clearHistogram();
-         else
-            updateAndDrawHistograms();         
+         setContrastPanel(BLANK_CONTRAST_PANEL);
       } else {
          if (tabSelected == 1) {
             AcquisitionVirtualStack stack = getAcquisitionStack(imp);
@@ -833,7 +576,7 @@ public class MetadataPanel extends JPanel
                imageMetadataModel_.setMetadata(null);
             }
          } else if (tabSelected == 0) {
-            updateAndDrawHistograms();
+//            updateAndDrawHistograms();
          } else if (tabSelected == 2) {
             VirtualAcquisitionDisplay acq = getVirtualAcquisitionDisplay(imp);
             if (acq != null) {
@@ -844,38 +587,7 @@ public class MetadataPanel extends JPanel
 
    }
 
-   private void showSizeBar() {
-      boolean show = sizeBarCheckBox.isSelected();
-      ImagePlus ip = WindowManager.getCurrentImage();
-      if (show) {
-         ScaleBar sizeBar = new ScaleBar(ip);
 
-         if (sizeBar != null) {
-            Overlay ol = new Overlay();
-            //ol.setFillColor(Color.white); // this causes the text to get a white background!
-            ol.setStrokeColor(overlayColor_);
-            String selected = (String) sizeBarComboBox.getSelectedItem();
-            if (selected.equals("Top-Right")) {
-               sizeBar.setPosition(ScaleBar.Position.TOPRIGHT);
-            }
-            if (selected.equals("Top-Left")) {
-               sizeBar.setPosition(ScaleBar.Position.TOPLEFT);
-            }
-            if (selected.equals("Bottom-Right")) {
-               sizeBar.setPosition(ScaleBar.Position.BOTTOMRIGHT);
-            }
-            if (selected.equals("Bottom-Left")) {
-               sizeBar.setPosition(ScaleBar.Position.BOTTOMLEFT);
-            }
-            sizeBar.addToOverlay(ol);
-            ol.setStrokeColor(overlayColor_);
-            ip.setOverlay(ol);
-         }
-      }
-      ip.setHideOverlay(!show);
-   }
-
-   //Implements AWTEventListener
    /*
     * This is called, in contrast to update(), only when the ImageWindow
     * in focus has changed.
@@ -885,15 +597,18 @@ public class MetadataPanel extends JPanel
          update((ImagePlus)null);
          return;
       }
-      focusedWindow_ = focusedWindow;
 
       ImagePlus imgp = focusedWindow.getImagePlus();
       ImageCache cache = getCache(imgp);
       VirtualAcquisitionDisplay acq = getVirtualAcquisitionDisplay(imgp);
-      sizeBarCheckBox.setSelected(imgp.getOverlay() != null && !imgp.getHideOverlay());
+      if (acq.getNumChannels() > 1)
+         setContrastPanel(MULTIPLE_CHANNELS_CONTRAST_PANEL);
+      else
+         setContrastPanel(SINGLE_CHANNEL_CONTRAST_PANEL);
       
-      if (useSingleChannelHistogram())
-         singleChannelContrastPanel_.setImage(imgp);  //this call loads appropriate contrast settings
+      
+//      sizeBarCheckBox.setSelected(imgp.getOverlay() != null && !imgp.getHideOverlay());
+      
       
       if (acq != null) {
          summaryCommentsTextArea.setText(acq.getSummaryComment());
@@ -905,21 +620,18 @@ public class MetadataPanel extends JPanel
 
       if (imgp instanceof CompositeImage) {
          CompositeImage cimp = (CompositeImage) imgp;
-         updatingDisplayModeCombo_ = true;
-         displayModeCombo.setSelectedIndex(cimp.getMode() - 1);
-         updatingDisplayModeCombo_ = false;
+//         updatingDisplayModeCombo_ = true;
+//         displayModeCombo.setSelectedIndex(cimp.getMode() - 1);
+//         updatingDisplayModeCombo_ = false;
       }
-      if (acq != null) {
-         setupChannelControls(acq);
+      if (acq != null && currentContrastPanel_ != null) {
+         currentContrastPanel_.setupChannelControls(cache);
+              
+         //load appropriate contrast settings (autoscale if first image)
+         // calc and display hist, apply LUT and draw
+      currentContrastPanel_.displayChanged(imgp, cache, acq.firstImage());
+        
          
-         if (acq.firstImage()) 
-            if (useSingleChannelHistogram()) {
-               singleChannelContrastPanel_.autostretch(true);
-               singleChannelContrastPanel_.updateHistogram();
-            } else if (ccpList_ != null) 
-                  for (ChannelControlPanel c : ccpList_) 
-                     c.autoScale();   
-            
          update(imgp);
       }
 
@@ -931,114 +643,56 @@ public class MetadataPanel extends JPanel
       }
       return VirtualAcquisitionDisplay.getDisplay(imgp);
    }
+   
+   private void setContrastPanel(String label) {
+      contrastPanelLayout_.show(contrastPanelHolder_, label);
+      if (label.equals(BLANK_CONTRAST_PANEL))
+         currentContrastPanel_ = null;
+      else if (label.equals(SINGLE_CHANNEL_CONTRAST_PANEL))
+         currentContrastPanel_ = singleChannelContrastPanel_;
+      else if (label.equals(MULTIPLE_CHANNELS_CONTRAST_PANEL))
+         currentContrastPanel_ = multiChannelContrastPanel_;
+   }
 
-   public synchronized void setupChannelControls(VirtualAcquisitionDisplay acq) {
-      if (useSingleChannelHistogram() ) {
-         showSingleChannelContrastPanel();
-         singleChannelContrastPanel_.setDisplay(acq);
-      } else {
-         showMultipleChannelsContrastPanel();
-         
-         final int nChannels = acq.getNumGrayChannels();
-     
-         final SpringLayout layout = new SpringLayout();
-         final JPanel p = new JPanel() {
-            @Override
-            public void paint(Graphics g) {    
-               int channelHeight = Math.max(115,contrastScrollPane.getViewport().getSize().height / nChannels);        
-               this.setPreferredSize(new Dimension(this.getSize().width, channelHeight * nChannels));
-               if (ccpList_ != null) {
-                  for (int i = 0; i < ccpList_.size(); i++) {
-                     ccpList_.get(i).setHeight(channelHeight);
-                     ccpList_.get(i).setLocation(0, channelHeight * i);
-                  }
-               }
-               super.paint(g);
-            }
-         };
-         
-         int hpHeight = Math.max(115, (contrastScrollPane.getSize().height-2) / nChannels);
-         p.setPreferredSize(new Dimension(200, nChannels * hpHeight));
-         contrastScrollPane.setViewportView(p);
-         
-         p.setLayout(layout);
-         ccpList_ = new ArrayList<ChannelControlPanel>();
-         for (int i = 0; i < nChannels; ++i) {
-            ChannelControlPanel ccp = new ChannelControlPanel(acq, i, this,hpHeight);
-            layout.putConstraint(SpringLayout.EAST, ccp, 0, SpringLayout.EAST, p);
-            layout.putConstraint(SpringLayout.WEST, ccp, 0, SpringLayout.WEST, p);
-            p.add(ccp);
-            ccpList_.add(ccp);
-         }
-         
-         layout.putConstraint(SpringLayout.NORTH, ccpList_.get(0), 0, SpringLayout.NORTH, p);
-         layout.putConstraint(SpringLayout.SOUTH, ccpList_.get(nChannels-1), 0, SpringLayout.SOUTH, p);
-         for (int i = 1; i < ccpList_.size(); i++)
-            layout.putConstraint(SpringLayout.NORTH, ccpList_.get(i), 0, SpringLayout.SOUTH, ccpList_.get(i-1));
-
-         
-         
-         
-         updateAndDrawHistograms();
+   /*
+    * applies LUT to image and then redraws image
+    */
+   public void drawWithoutUpdate() {
+      ImagePlus img = WindowManager.getCurrentImage();
+      if (img == null)
+         return;
+      VirtualAcquisitionDisplay disp = VirtualAcquisitionDisplay.getDisplay(img);
+      if (disp != null && currentContrastPanel_ != null) {       
+            currentContrastPanel_.applyLUTToImage(disp.getHyperImage(),disp.imageCache_); 
+            disp.drawWithoutUpdate();    
       }
    }
-  
-
-   private Double getFractionOutliersToReject() {
-      try {
-         double value = 0.01 * NumberUtils.displayStringToDouble(this.rejectPercentSpinner_.getValue().toString());
-         return value;
-      } catch (Exception e) {
-         return null;
+   
+   public void saveSettings() {
+      if (currentContrastPanel_ != null) {
+         prefs_.putBoolean(PREF_AUTOSTRETCH, currentContrastPanel_.getAutoStretch());
+         prefs_.putBoolean(PREF_REJECT_OUTLIERS, currentContrastPanel_.getRejectOutliers());
+         prefs_.putDouble(PREF_REJECT_FRACTION, currentContrastPanel_.getFractionToReject());
+         prefs_.putBoolean(PREF_SLOW_HIST, currentContrastPanel_.getSlowHist());
+         prefs_.putBoolean(PREF_LOG_HIST, currentContrastPanel_.getLogHist());
       }
    }
 
-   private void drawDisplaySettings(ChannelControlPanel ccp) {
-      ccp.drawDisplaySettings();
+   /*
+    * called just before image is redrawn.  Calcs histogram and stats (and displays
+    * if image is in active window), applies LUT to image.  Does NOT explicitly
+    * call draw because this function should be only be called just before 
+    * ImagePlus.draw or CompositieImage.draw runs as a result of the overriden 
+    * methods in MMCompositeImage and MMImagePlus
+    */
+   public void imageChangedUpdate(ImagePlus img, ImageCache cache) {
+      if (currentContrastPanel_ != null)
+         currentContrastPanel_.imageChanged(img, cache);
    }
 
-   
-   private synchronized void updateAndDrawHistograms() {
-      if (useSingleChannelHistogram() ) {
-         singleChannelContrastPanel_.updateContrast();
-      } else if (ccpList_ != null) {
-         for (ChannelControlPanel ccp : ccpList_) {
-           updateChannelSettings(ccp);
-           drawDisplaySettings(ccp);
-         }
-      } 
-   }
-
-
-
-   private void updateChannelSettings(ChannelControlPanel ccp) {
-      Double fractionOutliersToReject = getFractionOutliersToReject();
-      if (fractionOutliersToReject != null) {
-         ccp.setFractionToReject(fractionOutliersToReject);
-      }
-      ccp.setAutostretch(autostretchCheckBox.isSelected());
-      ccp.setRejectOutliers(rejectOutliersCB_.isSelected() && autostretchCheckBox.isSelected());
-      ccp.updateChannelSettings();
-   }
-   
-   
-   private boolean useSingleChannelHistogram() {
-      if (focusedWindow_ == null)
-         return prevUseSingleChannelHist_;
-      ImagePlus imgp = focusedWindow_.getImagePlus();
-      if (imgp == null )
-         return prevUseSingleChannelHist_;
-      VirtualAcquisitionDisplay vad = getVirtualAcquisitionDisplay(imgp); 
-      if (vad != null)
-         prevUseSingleChannelHist_ = (vad.getNumChannels()== 1);
-      return prevUseSingleChannelHist_;
-   }
-   
-   private void showSingleChannelContrastPanel() {
-     contrastPanelLayout_.show(masterContrastPanel_, SINGLE_CHANNEL);
-   }
-   
-   private void showMultipleChannelsContrastPanel() {
-     contrastPanelLayout_.show(masterContrastPanel_, MULTIPLE_CHANNELS);
+   public void setChannelContrast(int channelIndex, int min, int max, ImagePlus img) {
+      if (currentContrastPanel_ != null) 
+         currentContrastPanel_.setChannelContrast(channelIndex, min, max, img);
+      drawWithoutUpdate();
    }
 }
