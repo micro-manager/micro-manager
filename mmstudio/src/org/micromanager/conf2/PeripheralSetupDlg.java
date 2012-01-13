@@ -26,15 +26,17 @@ import org.micromanager.utils.MMDialog;
 public class PeripheralSetupDlg extends MMDialog {
 
    private static final long serialVersionUID = 1L;
-   private static final int NAMECOLUMN = 0;
-   private static final int ADAPTERCOLUMN = 1;
-   private static final int DESCRIPTIONCOLUMN = 2;
-   private static final int SELECTIONCOLUMN = 3;
+   private static final int HUBCOLUMN = 0;
+   private static final int NAMECOLUMN = 1;
+   private static final int ADAPTERCOLUMN = 2;
+   private static final int DESCRIPTIONCOLUMN = 3;
+   private static final int SELECTIONCOLUMN = 4;
 
    private class DeviceTable_TableModel extends AbstractTableModel {
 
       private static final long serialVersionUID = 1L;
       public final String[] COLUMN_NAMES = new String[]{
+         "Hub",
          "Name",
          "Adapter/Library",
          "Description",
@@ -73,7 +75,9 @@ public class PeripheralSetupDlg extends MMDialog {
 
       public Object getValueAt(int rowIndex, int columnIndex) {
 
-         if (columnIndex == NAMECOLUMN) {
+         if (HUBCOLUMN == columnIndex) {
+            return hub_;
+         } else if (columnIndex == NAMECOLUMN) {
             return peripherals_.get(rowIndex).getName();
          } else if (columnIndex == ADAPTERCOLUMN) {
             return new String(peripherals_.get(rowIndex).getAdapterName() + "/" + peripherals_.get(rowIndex).getLibrary());
@@ -89,6 +93,8 @@ public class PeripheralSetupDlg extends MMDialog {
       @Override
       public void setValueAt(Object value, int row, int col) {
          switch (col) {
+            case HUBCOLUMN:
+               break;
             case NAMECOLUMN: {
                String n = (String) value;
                String o = peripherals_.get(row).getName();
@@ -115,6 +121,8 @@ public class PeripheralSetupDlg extends MMDialog {
       public boolean isCellEditable(int nRow, int nCol) {
          boolean ret = false;
          switch (nCol) {
+            case HUBCOLUMN:
+               break;
             case NAMECOLUMN:
                ret = true;
                break;
@@ -155,6 +163,8 @@ public class PeripheralSetupDlg extends MMDialog {
       hub_ = hub;
       model_ = mod;
       peripherals_ = per;
+      String hubColumn = Integer.toString(HUBCOLUMN + 1);
+      String nameColumn = Integer.toString(NAMECOLUMN + 1);
 
       getContentPane().setLayout(new BorderLayout());
       contentPanel.setBorder(new EmptyBorder(5, 5, 5, 5));
