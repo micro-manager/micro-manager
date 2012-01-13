@@ -6,12 +6,12 @@
 	>
 	<UserMacro
 		Name="MM"
-		Value="C:\projects\micromanager"
+		Value="..\..\..\..\micromanager"
 		PerformEnvironmentSet="true"
 	/>
 	<UserMacro
 		Name="THIRDPARTYLIBS"
-		Value="C:\projects\3rdpartypublic"
+		Value="..\..\..\..\3rdpartypublic"
 		PerformEnvironmentSet="true"
 	/>
 </VisualStudioPropertySheet>
