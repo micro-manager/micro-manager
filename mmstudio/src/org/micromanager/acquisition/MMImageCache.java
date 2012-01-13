@@ -365,8 +365,6 @@ public class MMImageCache implements TaggedImageStorage, ImageCache {
          ReportingUtils.logError(ex);
       }
       prefs_.node("ChColors").putInt(getChannelName(channel), rgb);
-      
-//      updateChannelLUT(channel);
    }
 
    public String getChannelName(int channelIndex) {
@@ -391,7 +389,6 @@ public class MMImageCache implements TaggedImageStorage, ImageCache {
          }
          if (channelArray.isNull(channel)) {
              channelArray.put(channel, new JSONObject().put("Name",channelName));
-//             updateChannelLUT(channel);/////////////////WHAT ABOUT THIS???/////////////////
           }
       } catch (JSONException ex) {
          ReportingUtils.logError(ex);
@@ -407,7 +404,6 @@ public class MMImageCache implements TaggedImageStorage, ImageCache {
          return;
       CompositeImage ci = (CompositeImage) img;
       ci.getActiveChannels()[channelIndex] = visible;
-      //Need to redraw????////////////////////////////////////////////////////////////////
    }
 
    public int getChannelMin(int channelIndex) {
