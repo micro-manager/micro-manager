@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="Windows-1252"?>
+<VisualStudioPropertySheet
+	ProjectType="Visual C++"
+	Version="8.00"
+	Name="buildProps2008"
+	>
+	<UserMacro
+		Name="MM"
+		Value="C:\Users\Sunny\work\micro-manager-svn"
+		PerformEnvironmentSet="true"
+	/>
+	<UserMacro
+		Name="THIRDPARTYLIBS"
+		Value="C:\Users\Sunny\work\micro-manager-thirdparty-svn"
+		PerformEnvironmentSet="true"
+	/>
+</VisualStudioPropertySheet>
