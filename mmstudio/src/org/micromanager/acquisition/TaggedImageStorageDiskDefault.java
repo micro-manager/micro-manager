@@ -4,16 +4,12 @@
  */
 package org.micromanager.acquisition;
 
-import ij.io.FileInfo;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import org.micromanager.api.TaggedImageStorage;
 import ij.CompositeImage;
 import ij.ImagePlus;
 import ij.ImageStack;
 import ij.io.FileSaver;
 import ij.io.Opener;
-import ij.io.TiffDecoder;
 import ij.process.ByteProcessor;
 import ij.process.ColorProcessor;
 import ij.process.ImageProcessor;
@@ -183,17 +179,6 @@ public class TaggedImageStorageDiskDefault implements TaggedImageStorage {
             return null;
          }
       } else {
-         return null;
-      }
-   }
-
-   public JSONObject getImageTags(int channel, int slice, int frame, int position) {
-      String label = MDUtils.generateLabel(channel, slice, frame, position);
-      TiffDecoder td = new TiffDecoder(dir_, filenameTable_.get(label));
-      try {
-         return new JSONObject(td.getTiffInfo()[0].info);
-      } catch (Exception ex) {
-         ReportingUtils.logError(ex);
          return null;
       }
    }

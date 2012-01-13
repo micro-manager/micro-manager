@@ -49,10 +49,6 @@ public class TaggedImageStorageRam implements TaggedImageStorage {
       return imageMap_.get(MDUtils.generateLabel(channel, slice, frame, position));
    }
 
-   public JSONObject getImageTags(int channelIndex, int sliceIndex, int frameIndex, int positionIndex) {
-      return this.getImage(channelIndex, sliceIndex, frameIndex, positionIndex).tags;
-   }
-
    public Set<String> imageKeys() {
       return imageMap_.keySet();
    }
@@ -95,7 +91,5 @@ public class TaggedImageStorageRam implements TaggedImageStorage {
    public int lastAcquiredFrame() {
       return lastFrame_;
    }
-
-
 
 }

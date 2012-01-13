@@ -28,8 +28,6 @@ import java.util.ArrayList;
 import java.util.Hashtable;
 import java.util.Vector;
 
-import javax.swing.JOptionPane;
-
 import mmcorej.CMMCore;
 import mmcorej.DeviceType;
 import mmcorej.LongVector;

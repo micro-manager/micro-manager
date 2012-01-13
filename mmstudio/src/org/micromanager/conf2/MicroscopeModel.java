@@ -31,16 +31,10 @@ import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Enumeration;
 import java.util.GregorianCalendar;
 import java.util.Hashtable;
-import java.util.List;
 import java.util.Vector;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
 
 import javax.swing.JOptionPane;
 
@@ -49,7 +43,6 @@ import mmcorej.Configuration;
 import mmcorej.MMCoreJ;
 import mmcorej.PropertySetting;
 import mmcorej.StrVector;
-import org.micromanager.conf2.Device;
 
 import org.micromanager.utils.PropertyItem;
 import org.micromanager.utils.ReportingUtils;
@@ -81,33 +74,23 @@ public class MicroscopeModel {
       try {
          deviceListFileName.delete(0, deviceListFileName.length());
          deviceListFileName.append(DEVLIST_FILE_NAME);
-         final CMMCore core = (null == c) ? new CMMCore() : c;
+         CMMCore core = (null == c) ? new CMMCore() : c;
          core.enableDebugLog(true);
          StrVector libs = getDeviceLibraries(core);
-         final List<Device> devs = Collections.synchronizedList(new ArrayList<Device>());
-         BlockingQueue<Runnable> workQueue = new LinkedBlockingQueue<Runnable>();
-         for (final String lib :libs) {
-            Runnable findContents = new Runnable() {
-               public void run() {
-                  try {
-                     Device devList[] = Device.getLibraryContents(lib, core);
-                     for (int j = 0; j < devList.length; j++) {
-                        devs.add(devList[j]);
-                     }
-                  } catch (Exception e) {
-                     ReportingUtils.logError(e);
-                     // return false;
-                  }
+         ArrayList<Device> devs = new ArrayList<Device>();
+
+         for (int i = 0; i < libs.size(); i++) {
+            try {
+               Device devList[] = Device.getLibraryContents(libs.get(i), core);
+               for (int j = 0; j < devList.length; j++) {
+                  devs.add(devList[j]);
                }
-            };
-            workQueue.add(findContents);
+            } catch (Exception e) {
+               ReportingUtils.logError(e);
+               // return false;
+            }
          }
-         
-         final int n = (int) libs.size();
-         final ThreadPoolExecutor executor =
-                 new ThreadPoolExecutor(n, n, 1, TimeUnit.SECONDS, workQueue);
-         executor.awaitTermination(3, TimeUnit.MINUTES);
-         
+
          if (null == c)
             core.delete();
          File f = new File(deviceListFileName.toString());

@@ -346,7 +346,7 @@ public class DeviceSetupDlg extends MMDialog {
          lp.next().compareTo(portName);
          loaded = true;
       }
-      if (! loaded) {
+      if (!loaded) {
          try {
             core.loadDevice(portDev.getName(), portDev.getLibrary(), portDev.getAdapterName());
             portDev.loadDataFromHardware(core);
@@ -473,7 +473,7 @@ public class DeviceSetupDlg extends MMDialog {
             Device availablePorts[] = model.getAvailableSerialPorts();
             String portsInModel = "Serial ports available in configuration: ";
             for (int ip = 0; ip < availablePorts.length; ++ip) {
-               if (! model.isPortInUse(availablePorts[ip])) {
+               if (!model.isPortInUse(availablePorts[ip])) {
                   ports.add(availablePorts[ip]);
                }
             }
@@ -509,26 +509,15 @@ public class DeviceSetupDlg extends MMDialog {
                }
             }
             ArrayList<Device> devicesToSearch = new ArrayList<Device>();
+            devicesToSearch.add(dev);
             ArrayList<Detector> detectors = new ArrayList<Detector>();
             // if the device does respond on any port, only communicating ports are allowed in the drop down
             Map<String, ArrayList<String>> portsFoundCommunicating = new HashMap<String, ArrayList<String>>();
             // if the device does not respond on any port, let the user pick any port that was setup with a valid serial port name, etc.
             Map<String, ArrayList<String>> portsOtherwiseCorrectlyConfigured = new HashMap<String, ArrayList<String>>();
-            Device devices[] = model.getDevices();
-            //  build list of devices to look for on the serial ports
-            for (int i = 0; i < devices.length; i++) {
-               for (int j = 0; j < devices[i].getNumberOfProperties(); j++) {
-                  PropertyItem p = devices[i].getProperty(j);
-                  if (p.name.compareTo(MMCoreJ.getG_Keyword_Port()) == 0) {
-                     if (0 == ports.size() ) {
-                        // no ports available, tell user and return
-                        JOptionPane.showMessageDialog(null, "No serial communication ports were found in your computer!");
-                        return;
-                     } else {
-                        devicesToSearch.add(devices[i]);
-                     }
-                  }
-               }
+            if (0 == ports.size() ) {
+               JOptionPane.showMessageDialog(null, "Could not find any unused ports.");
+               return;
             }
             // now simply start a thread for each permutation of port and device, taking care to keep the threads working
             // on unique combinations of device and port
@@ -649,7 +638,7 @@ public class DeviceSetupDlg extends MMDialog {
                      int aiterator = 0;
                      foundem += dd.getName() + " on ";
                      for (String ss : communicating) {
-                        this.foundPort = ss;
+                        foundPort = ss;
                         foundem += (ss + "\n");
                         allowed[aiterator++] = ss;
                      }
@@ -684,8 +673,17 @@ public class DeviceSetupDlg extends MMDialog {
             progressDialog.setVisible(false);
             core.enableDebugLog(currentDebugLogSetting);
             rebuildPropTable();
-            if (foundPort != null)
+            if (foundPort != null) {
+               Device pd = model.findSerialPort(foundPort);
+               if (pd != null)
+                  try {
+                     pd.loadDataFromHardware(core);
+                  } catch (Exception e) {
+                     // TODO Auto-generated catch block
+                     e.printStackTrace();
+                  }
                rebuildComTable(foundPort);
+            }
             // restore normal operation of the Detect button
             detectButton.setText(DETECT_PORTS);
          }

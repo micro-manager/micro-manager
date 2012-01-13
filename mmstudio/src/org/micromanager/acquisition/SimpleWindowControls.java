@@ -80,9 +80,6 @@ public class SimpleWindowControls extends DisplayControls {
       snapButton_.setFocusable(false);
       snapButton_.setIconTextGap(6);
       snapButton_.setText("Snap");
-      snapButton_.setMinimumSize(new Dimension(70,28));
-      snapButton_.setPreferredSize(new Dimension(70,28));
-      snapButton_.setMaximumSize(new Dimension(70,28));
       snapButton_.setIcon(SwingResourceManager.getIcon(
             MMStudioMainFrame.class, "/org/micromanager/icons/camera.png"));
       snapButton_.setFont(new Font("Arial", Font.PLAIN, 10));
@@ -101,9 +98,9 @@ public class SimpleWindowControls extends DisplayControls {
             "/org/micromanager/icons/camera_go.png"));
       liveButton_.setIconTextGap(6);
       liveButton_.setText("Live");
-      liveButton_.setMinimumSize(new Dimension(70,28));
-      liveButton_.setPreferredSize(new Dimension(70,28));
-      liveButton_.setMaximumSize(new Dimension(70,28));
+      liveButton_.setMinimumSize(new Dimension(99,25));
+      liveButton_.setPreferredSize(new Dimension(99,25));
+      liveButton_.setMaximumSize(new Dimension(99,25));
       liveButton_.setFocusable(false);
       liveButton_.setToolTipText("Continuous live view");
       liveButton_.setFont(new Font("Arial", Font.PLAIN, 10));

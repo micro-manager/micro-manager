@@ -147,37 +147,19 @@ public class MMImageCache implements TaggedImageStorage, ImageCache {
    public TaggedImage getImage(int channel, int slice, int frame, int position) {
       String label = MDUtils.generateLabel(channel, slice, frame, position);
       TaggedImage taggedImg = null;
-      if (softTable_ == null) {
+      if (softTable_ == null)
          return null;
-      }
-      if (softTable_.containsKey(label)) {
+      if (softTable_.containsKey(label))
          taggedImg = softTable_.get(label).get();
-      }
       if (taggedImg == null) {
          taggedImg = imageStorage_.getImage(channel, slice, frame, position);
          if (taggedImg != null) {
             checkForChangingTags(taggedImg);
-            if (!conserveRam_) {
+            if (!conserveRam_)
                softTable_.put(label, new SoftReference(taggedImg));
-            }
          }
       }
       return taggedImg;
-   }
-
-   public JSONObject getImageTags(int channel, int slice, int frame, int position) {
-      String label = MDUtils.generateLabel(channel, slice, frame, position);
-      JSONObject tags = null;
-      if (softTable_ == null) {
-         return null;
-      }
-      if (softTable_.containsKey(label)) {
-         tags = softTable_.get(label).get().tags;
-      }
-      if (tags == null) {
-         tags = imageStorage_.getImageTags(channel, slice, frame, position);
-      }
-      return tags;
    }
 
    private void checkForChangingTags(TaggedImage taggedImg) {
@@ -284,8 +266,6 @@ public class MMImageCache implements TaggedImageStorage, ImageCache {
    public Set<String> imageKeys() {
       return imageStorage_.imageKeys();
    }
-
-
 
 
 }
