@@ -46,7 +46,7 @@ public class TaggedImageStorageDiskDefault implements TaggedImageStorage {
    public static String menuName_ = "Micro-Manager default file format";
    private final String dir_;
    private boolean firstElement_;
-   private HashMap<String,Writer> metadataStreams_;
+   private HashMap<Integer,Writer> metadataStreams_;
    private boolean newDataSet_;
    private JSONObject summaryMetadata_;
    private HashMap<String,String> filenameTable_;
@@ -54,6 +54,7 @@ public class TaggedImageStorageDiskDefault implements TaggedImageStorage {
    private JSONObject displaySettings_;
    private int lastFrame_ = -1;
    private Thread shutdownHook_;
+   private HashMap<Integer, String> positionNames_;
 
    public TaggedImageStorageDiskDefault(String dir) {
       this(dir, false, null);
@@ -65,9 +66,10 @@ public class TaggedImageStorageDiskDefault implements TaggedImageStorage {
       dir_ = dir;
       newDataSet_ = newDataSet;
       filenameTable_ = new HashMap<String,String>();
-      metadataStreams_ = new HashMap<String,Writer>();
+      metadataStreams_ = new HashMap<Integer,Writer>();
       metadataTable_ = new HashMap<String, JSONObject>();
       displaySettings_ = new JSONObject();
+      positionNames_ = new HashMap<Integer,String>();
       
       try {
          if (!newDataSet_) {
@@ -112,7 +114,7 @@ public class TaggedImageStorageDiskDefault implements TaggedImageStorage {
          if (!newDataSet_) {
             throw new MMException("This ImageFileManager is read-only.");
          }
-         if (!metadataStreams_.containsKey(getPosition(taggedImg))) {
+         if (!metadataStreams_.containsKey(MDUtils.getPositionIndex(taggedImg.tags))) {
             try {
                openNewDataSet(taggedImg);
             } catch (Exception ex) {
@@ -126,7 +128,7 @@ public class TaggedImageStorageDiskDefault implements TaggedImageStorage {
          String posName = "";
          String fileName = tiffFileName;
          try {
-            posName = getPosition(md);
+            posName = positionNames_.get(MDUtils.getPositionIndex(md));
             if (posName != null && posName.length() > 0 && !posName.contentEquals("null")) {
                JavaUtils.createDirectory(dir_ + "/" + posName);
                fileName = posName + "/" + tiffFileName;
@@ -237,14 +239,14 @@ public class TaggedImageStorageDiskDefault implements TaggedImageStorage {
    private void writeFrameMetadata(JSONObject md) {
       try {    
          String title = "FrameKey-" + MDUtils.getFrameIndex(md) + "-" + MDUtils.getChannelIndex(md) + "-" + MDUtils.getSliceIndex(md);
-         String pos = getPosition(md);
+         int pos = MDUtils.getPositionIndex(md);
          writeMetadata(pos, md, title);
       } catch (Exception ex) {
          ReportingUtils.logError(ex);
       }
    }
 
-   private void writeMetadata(String pos, JSONObject md, String title) {
+   private void writeMetadata(int pos, JSONObject md, String title) {
       try {
          Writer metadataStream = metadataStreams_.get(pos);
          if (!firstElement_) {
@@ -316,12 +318,26 @@ public class TaggedImageStorageDiskDefault implements TaggedImageStorage {
 
    private void openNewDataSet(TaggedImage firstImage) throws Exception, IOException {
       String time = firstImage.tags.getString("Time");
-      String pos = getPosition(firstImage);
-      if (pos == null)
-         pos = "";
-      JavaUtils.createDirectory(dir_ + "/" + pos);
+      int pos;
+      try {
+         pos = MDUtils.getPositionIndex(firstImage.tags);
+      } catch (JSONException e) {
+         pos = 0;
+      }
+      String posName = getPosition(firstImage);
+      if (posName == null)
+         posName = "";
+
+      if (positionNames_.containsKey(pos)
+              && positionNames_.get(pos) != null
+              && !positionNames_.get(pos).contentEquals(posName)) {
+         throw new Exception ("Position name changed during acquisition.");
+      }
+
+      positionNames_.put(pos, posName);
+      JavaUtils.createDirectory(dir_ + "/" + posName);
       firstElement_ = true;
-      Writer metadataStream = new BufferedWriter(new FileWriter(dir_ + "/" + pos + "/metadata.txt"));
+      Writer metadataStream = new BufferedWriter(new FileWriter(dir_ + "/" + posName + "/metadata.txt"));
       metadataStreams_.put(pos, metadataStream);
       metadataStream.write("{" + "\r\n");
       JSONObject summaryMetadata = getSummaryMetadata();
