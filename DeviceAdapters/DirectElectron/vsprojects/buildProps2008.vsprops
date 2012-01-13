@@ -6,12 +6,12 @@
 	>
 	<UserMacro
 		Name="MM"
-		Value="C:\Users\Sunny\work\micro-manager-svn"
+		Value="C:\projects\micromanager"
 		PerformEnvironmentSet="true"
 	/>
 	<UserMacro
 		Name="THIRDPARTYLIBS"
-		Value="C:\Users\Sunny\work\micro-manager-thirdparty-svn"
+		Value="C:\projects\3rdpartypublic"
 		PerformEnvironmentSet="true"
 	/>
 </VisualStudioPropertySheet>
