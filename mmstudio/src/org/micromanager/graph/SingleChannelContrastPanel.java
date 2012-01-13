@@ -530,11 +530,14 @@ public class SingleChannelContrastPanel extends JPanel implements
       //store contrast settings
       cache.storeChannelDisplaySettings(0,(int)contrastMin_, (int)contrastMax_, gamma_);
       
-      //update histogram cursors
+      updateHistogram();
+   }
+  	 
+   private void updateHistogram() {
       histogramPanel_.setCursors(contrastMin_ / binSize_, contrastMax_ / binSize_, gamma_);
 		histogramPanel_.repaint();
    }
-  	 
+   
 	private void setMaxIntensityAndBinSize() {
 		switch (modeComboBox_.getSelectedIndex()-1) {        
       case -1:
@@ -565,6 +568,7 @@ public class SingleChannelContrastPanel extends JPanel implements
 			break;
 		}
 		binSize_ = (maxIntensity_ + 1) / HIST_BINS;
+      updateHistogram();
    }
 
    // only used for Gamma
