@@ -36,6 +36,8 @@ import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeEvent;
 import java.text.NumberFormat;
 import java.text.ParseException;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
@@ -49,13 +51,17 @@ import javax.swing.SpinnerNumberModel;
 import javax.swing.SpringLayout;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
+import org.json.JSONException;
 import org.micromanager.MMStudioMainFrame;
+import org.micromanager.acquisition.MMAcquisition;
 import org.micromanager.acquisition.MetadataPanel;
+import org.micromanager.acquisition.VirtualAcquisitionDisplay;
 import org.micromanager.api.ContrastPanel;
 import org.micromanager.api.ImageCache;
 import org.micromanager.graph.HistogramPanel.CursorListener;
 import org.micromanager.utils.ContrastSettings;
 import org.micromanager.utils.HistogramUtils;
+import org.micromanager.utils.MMScriptException;
 import org.micromanager.utils.ReportingUtils;
 import org.micromanager.utils.NumberUtils;
 
@@ -541,12 +547,19 @@ public class SingleChannelContrastPanel extends JPanel implements
 	private void setMaxIntensityAndBinSize() {
 		switch (modeComboBox_.getSelectedIndex()-1) {        
       case -1:
+         // TODO: first try to read bitdepth from metadata
+         // It is not correct to read BitDepth from ImagePlus!!
+         /*
          int bitDepth = 8;
          ImagePlus ip = WindowManager.getCurrentImage();
          if (ip != null)   //first option is from open window (in case existing dataset opened)
             bitDepth = ip.getBitDepth();
          else
-            bitDepth = (int) MMStudioMainFrame.getInstance().getCore().getImageBitDepth();
+          * 
+          */
+        
+
+         int bitDepth = (int) MMStudioMainFrame.getInstance().getCore().getImageBitDepth();
          maxIntensity_ = (int) (Math.pow(2, bitDepth) - 1);
          break;
       case 0: 
