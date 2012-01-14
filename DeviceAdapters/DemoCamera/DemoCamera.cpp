@@ -2731,9 +2731,6 @@ void DemoShutter::GetName(char* name) const
 int DemoShutter::Initialize()
 {
    DemoHub* pHub = static_cast<DemoHub*>(GetParentHub());
-   if (!pHub)
-      return DEVICE_COMM_HUB_MISSING;
-
    if (pHub)
    {
       if (pHub->GenerateRandomError())
