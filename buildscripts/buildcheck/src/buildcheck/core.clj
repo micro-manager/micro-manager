@@ -175,13 +175,13 @@
         (report-segment "Outdated device adapter DLLs" outdated-dlls)
         (report-segment "Errors reported by java compiler" javac-errs)
         (report-segment "Outdated jar files" outdated-jars)
+        (when (= 32 bits)
+          (report-segment "Missing .vcproj files" missing-vcproj-files))
         (report-segment "Uncompiled device adapters" (missing-device-adapters bits))
         "\n\nIs installer download available on website?\n"
         (if installer-ok "Yes" "No. (build missing)\n")
         (when (= 32 bits)
-          (str
-            (report-segment "Missing device pages" (missing-device-pages))
-            (report-segment "Missing .vcproj files" missing-vcproj-files)))
+          (report-segment "Missing device pages" (missing-device-pages)))
       ))))
 
 (defn make-full-report [mode send?]
