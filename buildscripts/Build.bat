@@ -62,9 +62,9 @@ start /wait vcexpress .\MMCore\MMCore.vcproj %buildswitch% "Release|Win32"
 echo building python wrapper with command:
 echo start /wait vcexpress .\MMCorePy_wrap\MMCorePy_wrap.sln %buildswitch% "Release|Win32"
 start /wait vcexpress .\MMCorePy_wrap\MMCorePy_wrap.sln %buildswitch% "Release|Win32"
-copy .\bin_x64\MMCorePy.py .\Install_x64\micro-manager
-copy .\bin_x64\_MMCorePy.pyd .\Install_x64\micro-manager
-copy .\MMCorePy_wrap\MMCoreWrapDemo.py .\Install_x32\micro-manager
+copy .\bin_Win32\MMCorePy.py .\Install_Win32\micro-manager
+copy .\bin_Win32\_MMCorePy.pyd .\Install_Win32\micro-manager
+copy .\MMCorePy_wrap\MMCoreWrapDemo.py .\Install_Win32\micro-manager
 
 
 echo building Java wrapper with command:
