@@ -24,7 +24,6 @@ MMJ_.jar:  \
 	$(srcdir)/src/org/micromanager/acquisition/AcquisitionManager.java \
 	$(srcdir)/src/org/micromanager/acquisition/AcquisitionVirtualStack.java \
 	$(srcdir)/src/org/micromanager/acquisition/AcquisitionWrapperEngine.java \
-	$(srcdir)/src/org/micromanager/acquisition/ChannelControlPanel.java \
 	$(srcdir)/src/org/micromanager/acquisition/ComponentTitledBorder.java \
 	$(srcdir)/src/org/micromanager/acquisition/HyperstackControls.java \
 	$(srcdir)/src/org/micromanager/acquisition/LiveAcq.java \
@@ -66,7 +65,6 @@ MMJ_.jar:  \
 	$(srcdir)/src/org/micromanager/conf/RolesPage.java \
 	$(srcdir)/src/org/micromanager/conf/Setting.java \
 	$(srcdir)/src/org/micromanager/conf/SynchroPage.java \
-	$(srcdir)/src/org/micromanager/graph/ContrastPanel.java \
 	$(srcdir)/src/org/micromanager/graph/GraphData.java \
 	$(srcdir)/src/org/micromanager/graph/GraphFrame.java \
 	$(srcdir)/src/org/micromanager/graph/GraphPanel.java \
