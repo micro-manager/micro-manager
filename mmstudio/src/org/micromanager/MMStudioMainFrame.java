@@ -1387,7 +1387,7 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
          public void actionPerformed(ActionEvent arg0) {
             // true - new wizard
             // false - old wizard
-            runHardwareWizard(false);
+            runHardwareWizard(true);
          }
       });
       

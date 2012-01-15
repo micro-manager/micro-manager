@@ -151,9 +151,9 @@ public class DeviceSetupDlg extends MMDialog {
       detectButton.setBounds(359, 247, 93, 23);
       contentPanel.add(detectButton);
       
-      JLabel lblNewLabel_1 = new JLabel("Port Properties (RS 232 settings)");
-      lblNewLabel_1.setBounds(10, 251, 442, 14);
-      contentPanel.add(lblNewLabel_1);
+      JLabel portLbl = new JLabel("Port Properties (RS 232 settings)");
+      portLbl.setBounds(10, 251, 442, 14);
+      contentPanel.add(portLbl);
       
       JScrollPane scrollPaneCOM = new JScrollPane();
       scrollPaneCOM.setBounds(10, 281, 442, 169);
@@ -249,12 +249,17 @@ public class DeviceSetupDlg extends MMDialog {
       // setup com ports
       ArrayList<Device> ports = new ArrayList<Device>();
       Device avPorts[] = model.getAvailableSerialPorts();
-      for(int i=0; i<avPorts.length; i++)
-         if (!model.isPortInUse(avPorts[i]))
-            ports.add(avPorts[i]);
-         else if (dev.getPort().compareTo(avPorts[i].getName()) == 0) {
-            ports.add(avPorts[i]);
-         }
+      for(int i=0; i<avPorts.length; i++) {
+//         if (!model.isPortInUse(avPorts[i]))
+//            ports.add(avPorts[i]);
+//         else if (dev.getPort().compareTo(avPorts[i].getName()) == 0)
+//            ports.add(avPorts[i]);
+         // NOTE: commented out code was intended to exclude ports
+         // that were already used by other devices.
+         // But, at this point we have to list all ports (used or not)
+         // to provide compatibility with older device adapters that share the same port
+         ports.add(avPorts[i]);
+      }
       
       // identify "port" properties and assign available com ports declared for use
       boolean anyPorts = false;
@@ -459,10 +464,13 @@ public class DeviceSetupDlg extends MMDialog {
    
    private class DetectionTask extends Thread {
       
-      private String foundPort;
+      private String foundPorts[];
+      private String selectedPort;
 
       DetectionTask(String id) {
          super(id);
+         foundPorts = new String[0];
+         selectedPort = new String();
       }
 
       public void run() {
@@ -473,9 +481,15 @@ public class DeviceSetupDlg extends MMDialog {
             Device availablePorts[] = model.getAvailableSerialPorts();
             String portsInModel = "Serial ports available in configuration: ";
             for (int ip = 0; ip < availablePorts.length; ++ip) {
-               if (!model.isPortInUse(availablePorts[ip])) {
-                  ports.add(availablePorts[ip]);
-               }
+//               if (!model.isPortInUse(availablePorts[ip])) {
+//                  ports.add(availablePorts[ip]);
+//               }
+               // NOTE: commented out code was intended to avoid checking ports
+               // that were already used by other devices.
+               // But, at this point we have to check all ports (used or not)
+               // to provide compatibility with older device adapters that share the same port
+               
+               ports.add(availablePorts[ip]);
             }
             for (Device p1 : ports) {
                if (0 < portsInModel.length()) {
@@ -629,18 +643,17 @@ public class DeviceSetupDlg extends MMDialog {
             for (Device dd : devicesToSearch) {
                ArrayList<String> communicating = portsFoundCommunicating.get(dd.getName());
                ArrayList<String> onlyConfigured = portsOtherwiseCorrectlyConfigured.get(dd.getName());
-               String allowed[] = new String[0];
+               foundPorts = new String[0];
                boolean any = false;
                if (null != communicating) {
                   if (0 < communicating.size()) {
                      any = true;
-                     allowed = new String[communicating.size()];
+                     foundPorts = new String[communicating.size()];
                      int aiterator = 0;
                      foundem += dd.getName() + " on ";
                      for (String ss : communicating) {
-                        foundPort = ss;
                         foundem += (ss + "\n");
-                        allowed[aiterator++] = ss;
+                        foundPorts[aiterator++] = ss;
                      }
                   }
                }
@@ -649,19 +662,29 @@ public class DeviceSetupDlg extends MMDialog {
                   if (null != onlyConfigured) {
                      if (0 < onlyConfigured.size()) {
                         Collections.sort(onlyConfigured);
-                        allowed = new String[onlyConfigured.size()];
+                        foundPorts = new String[onlyConfigured.size()];
                         int i2 = 0;
                         for (String ss : onlyConfigured) {
-                           allowed[i2++] = ss;
+                           foundPorts[i2++] = ss;
                         }
                      }
                   }
                }
                PropertyItem p = dd.findProperty(MMCoreJ.getG_Keyword_Port());
-               p.allowed = allowed;
+               p.allowed = foundPorts;
                p.value = "";
-               if (0 < allowed.length) {
-                  p.value = allowed[0];
+               selectedPort = "";
+               if (0 < foundPorts.length) {
+                  if (foundPorts.length > 1) {
+                     String selectedValue = (String)JOptionPane.showInputDialog(null, "Multiple ports found, choose one", "Port",
+                                            JOptionPane.INFORMATION_MESSAGE, null, foundPorts, foundPorts[0]);
+                     // select the last found port
+                     p.value = selectedValue;
+                  }
+                  else {
+                     p.value = foundPorts[0];
+                  }
+                  selectedPort = p.value;
                }
             }
             progressDialog.ProgressText("Found:\n " + foundem);
@@ -669,12 +692,12 @@ public class DeviceSetupDlg extends MMDialog {
                Thread.sleep(900);
             } catch (InterruptedException ex) {
             }
-         } finally { // nmatches try at entry
+         } finally { // matches try at entry
             progressDialog.setVisible(false);
             core.enableDebugLog(currentDebugLogSetting);
             rebuildPropTable();
-            if (foundPort != null) {
-               Device pd = model.findSerialPort(foundPort);
+            if (!selectedPort.isEmpty()) {
+               Device pd = model.findSerialPort(selectedPort);
                if (pd != null)
                   try {
                      pd.loadDataFromHardware(core);
@@ -682,7 +705,7 @@ public class DeviceSetupDlg extends MMDialog {
                      // TODO Auto-generated catch block
                      e.printStackTrace();
                   }
-               rebuildComTable(foundPort);
+               rebuildComTable(selectedPort);
             }
             // restore normal operation of the Detect button
             detectButton.setText(DETECT_PORTS);
