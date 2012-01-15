@@ -86,6 +86,73 @@
 			/>
 		</Configuration>
 		<Configuration
+			Name="Debug|x64"
+			OutputDirectory="$(SolutionDir)$(PlatformName).VS2008\$(ConfigurationName)\"
+			IntermediateDirectory="$(OutDir)\$(ProjectName)\"
+			ConfigurationType="4"
+			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC71.vsprops;.\buildProps2008.vsprops"
+			CharacterSet="1"
+			>
+			<Tool
+				Name="VCPreBuildEventTool"
+			/>
+			<Tool
+				Name="VCCustomBuildTool"
+			/>
+			<Tool
+				Name="VCXMLDataGeneratorTool"
+			/>
+			<Tool
+				Name="VCWebServiceProxyGeneratorTool"
+			/>
+			<Tool
+				Name="VCMIDLTool"
+				TargetEnvironment="3"
+			/>
+			<Tool
+				Name="VCCLCompilerTool"
+				Optimization="0"
+				AdditionalIncludeDirectories="$(THIRDPARTYLIBS)\google\protocolbuffers\src\;$(THIRDPARTYLIBS)\boost\;%(AdditionalIncludeDirectories)"
+				PreprocessorDefinitions="WIN32;_DEBUG;_CONSOLE;ACE_AS_STATIC_LIBS"
+				MinimalRebuild="true"
+				BasicRuntimeChecks="3"
+				RuntimeLibrary="3"
+				RuntimeTypeInfo="true"
+				UsePrecompiledHeader="0"
+				WarningLevel="4"
+				Detect64BitPortabilityProblems="true"
+				DebugInformationFormat="3"
+			/>
+			<Tool
+				Name="VCManagedResourceCompilerTool"
+			/>
+			<Tool
+				Name="VCResourceCompilerTool"
+			/>
+			<Tool
+				Name="VCPreLinkEventTool"
+			/>
+			<Tool
+				Name="VCLibrarianTool"
+				AdditionalLibraryDirectories="$(THIRDPARTYLIBS)\google\protocolbuffers\vsprojects\$(PlatformName)\$(ConfigurationName);$(THIRDPARTYLIBS)\boost\stage_$(PlatformName)\lib"
+			/>
+			<Tool
+				Name="VCALinkTool"
+			/>
+			<Tool
+				Name="VCXDCMakeTool"
+			/>
+			<Tool
+				Name="VCBscMakeTool"
+			/>
+			<Tool
+				Name="VCFxCopTool"
+			/>
+			<Tool
+				Name="VCPostBuildEventTool"
+			/>
+		</Configuration>
+		<Configuration
 			Name="Release|Win32"
 			OutputDirectory="$(SolutionDir)$(PlatformName).VS2008\$(ConfigurationName)\"
 			IntermediateDirectory="$(OutDir)\$(ProjectName)\"
@@ -148,78 +215,11 @@
 			/>
 		</Configuration>
 		<Configuration
-			Name="Debug|x64"
-			OutputDirectory="$(SolutionDir)$(PlatformName).VS2008\$(ConfigurationName)\"
-			IntermediateDirectory="$(OutDir)\$(ProjectName)\"
-			ConfigurationType="4"
-			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC71.vsprops"
-			CharacterSet="1"
-			>
-			<Tool
-				Name="VCPreBuildEventTool"
-			/>
-			<Tool
-				Name="VCCustomBuildTool"
-			/>
-			<Tool
-				Name="VCXMLDataGeneratorTool"
-			/>
-			<Tool
-				Name="VCWebServiceProxyGeneratorTool"
-			/>
-			<Tool
-				Name="VCMIDLTool"
-				TargetEnvironment="3"
-			/>
-			<Tool
-				Name="VCCLCompilerTool"
-				Optimization="0"
-				AdditionalIncludeDirectories="$(THIRDPARTYLIBS)\google\protocolbuffers\src\;$(THIRDPARTYLIBS)\boost\;%(AdditionalIncludeDirectories)"
-				PreprocessorDefinitions="WIN32;_DEBUG;_CONSOLE;ACE_AS_STATIC_LIBS"
-				MinimalRebuild="true"
-				BasicRuntimeChecks="3"
-				RuntimeLibrary="1"
-				RuntimeTypeInfo="true"
-				UsePrecompiledHeader="0"
-				WarningLevel="4"
-				Detect64BitPortabilityProblems="true"
-				DebugInformationFormat="3"
-			/>
-			<Tool
-				Name="VCManagedResourceCompilerTool"
-			/>
-			<Tool
-				Name="VCResourceCompilerTool"
-			/>
-			<Tool
-				Name="VCPreLinkEventTool"
-			/>
-			<Tool
-				Name="VCLibrarianTool"
-				AdditionalLibraryDirectories="$(THIRDPARTYLIBS)\google\protocolbuffers\vsprojects\$(PlatformName)\$(ConfigurationName);$(THIRDPARTYLIBS)\boost\stage_$(PlatformName)\lib"
-			/>
-			<Tool
-				Name="VCALinkTool"
-			/>
-			<Tool
-				Name="VCXDCMakeTool"
-			/>
-			<Tool
-				Name="VCBscMakeTool"
-			/>
-			<Tool
-				Name="VCFxCopTool"
-			/>
-			<Tool
-				Name="VCPostBuildEventTool"
-			/>
-		</Configuration>
-		<Configuration
 			Name="Release|x64"
 			OutputDirectory="$(SolutionDir)$(PlatformName).VS2008\$(ConfigurationName)\"
 			IntermediateDirectory="$(OutDir)\$(ProjectName)\"
 			ConfigurationType="4"
-			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC71.vsprops"
+			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC71.vsprops;.\buildProps2008.vsprops"
 			CharacterSet="1"
 			>
 			<Tool
@@ -242,7 +242,7 @@
 				Name="VCCLCompilerTool"
 				AdditionalIncludeDirectories="$(THIRDPARTYLIBS)\google\protocolbuffers\src\;$(THIRDPARTYLIBS)\boost\;%(AdditionalIncludeDirectories)"
 				PreprocessorDefinitions="WIN32;NDEBUG;_CONSOLE"
-				RuntimeLibrary="0"
+				RuntimeLibrary="2"
 				UsePrecompiledHeader="0"
 				WarningLevel="4"
 				Detect64BitPortabilityProblems="true"
@@ -352,6 +352,15 @@
 				/>
 			</FileConfiguration>
 			<FileConfiguration
+				Name="Debug|x64"
+				>
+				<Tool
+					Name="VCCustomBuildTool"
+					CommandLine="$(THIRDPARTYLIBS)\google\protocolbuffers\vsprojects\Win32\Debug\protoc --proto_path=$(ProjectDir)..\src\DEMessaging\ --cpp_out=$(ProjectDir)..\src\DEMessaging\ $(ProjectDir)..\src\DEMessaging\DEServer.proto&#x0D;&#x0A;"
+					Outputs="..\src\DEMessaging\DEServer.pb.h;..\src\DEMessaging\DEServer.pb.cc"
+				/>
+			</FileConfiguration>
+			<FileConfiguration
 				Name="Release|Win32"
 				>
 				<Tool
@@ -361,24 +370,11 @@
 				/>
 			</FileConfiguration>
 			<FileConfiguration
-				Name="Debug|x64"
-				ExcludedFromBuild="false"
-				>
-				<Tool
-					Name="VCCustomBuildTool"
-					CommandLine="$(THIRDPARTYLIBS)\google\protocolbuffers\vsprojects\Win32\Debug\protoc --proto_path=$(ProjectDir)..\src\DEMessaging\ --cpp_out=$(ProjectDir)..\src\DEMessaging\ $(ProjectDir)..\src\DEMessaging\DEServer.proto"
-					Message="Compiling %(Identity)"
-					Outputs="..\src\DEMessaging\DEServer.pb.h;..\src\DEMessaging\DEServer.pb.cc"
-				/>
-			</FileConfiguration>
-			<FileConfiguration
 				Name="Release|x64"
-				ExcludedFromBuild="false"
 				>
 				<Tool
 					Name="VCCustomBuildTool"
-					CommandLine="$(THIRDPARTYLIBS)\google\protocolbuffers\vsprojects\Win32\Debug\protoc --proto_path=$(ProjectDir)..\src\DEMessaging\ --cpp_out=$(ProjectDir)..\src\DEMessaging\ $(ProjectDir)..\src\DEMessaging\DEServer.proto"
-					Message="Compiling %(Identity)"
+					CommandLine="$(THIRDPARTYLIBS)\google\protocolbuffers\vsprojects\Win32\Debug\protoc --proto_path=$(ProjectDir)..\src\DEMessaging\ --cpp_out=$(ProjectDir)..\src\DEMessaging\ $(ProjectDir)..\src\DEMessaging\DEServer.proto&#x0D;&#x0A;"
 					Outputs="..\src\DEMessaging\DEServer.pb.h;..\src\DEMessaging\DEServer.pb.cc"
 				/>
 			</FileConfiguration>
