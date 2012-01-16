@@ -25,12 +25,13 @@
         before (- now (* time-limit-hours MS-PER-HOUR))]
     (< (.lastModified file) before)))
 
-(defn vs-log-files []
+(defn vs-log-files [bits]
   (->> micromanager
        file-seq
-       (filter #(= "BuildLog.htm" (.getName %)))
-       (filter #(.contains (.getAbsolutePath %) "Release"))
-       (filter #(not (old-file? % 24)))))
+       (filter #(and (= "BuildLog.htm" (.getName %))
+                     (.contains (.getAbsolutePath %) "Release")
+                     (.contains (.getAbsolutePath %) (str bits))
+                     (not (old-file? % 24))))))
 
 (defn vs-log-text [f]
   (->> (slurp f :encoding "utf-16")
@@ -44,8 +45,8 @@
                log-text)
     true false))
 
-(defn visual-studio-errors []
-  (filter contains-errors? (map vs-log-text (vs-log-files))))
+(defn visual-studio-errors [bits]
+  (filter contains-errors? (map vs-log-text (vs-log-files bits))))
 
 (defn javac-errors [result-text]
   (map first
@@ -160,7 +161,7 @@
 (defn report-build-errors [bits mode test]
   (let [f (result-file bits mode)
         result-txt (slurp f)
-        vs-errors (visual-studio-errors)
+        vs-errors (visual-studio-errors bits)
         outdated-dlls (map #(.getName %) (old-dlls (bin-dir bits) 24))
         javac-errs (javac-errors result-txt)
         outdated-jars (map #(.getName %)
