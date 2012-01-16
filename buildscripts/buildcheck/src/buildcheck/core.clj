@@ -7,7 +7,7 @@
   (:require [clojure.xml])
   (:gen-class))
 
-(def micromanager (file* "../.."))
+(def micromanager (file* "../../.."))
 
 (def MS-PER-HOUR (* 60 60 1000))
 
@@ -16,26 +16,36 @@
         one-hour-ago (doto (Calendar/getInstance)
                        (.add Calendar/HOUR -1))]
     (.format format (.getTime one-hour-ago))))
-    
+
 (defn result-file [bits mode]
   (File. micromanager (str "/results" bits ".txt")))
 
-(defn visual-studio-errors [result-text]
-  (map first
-       (re-seq #"\n[^\n]+\b([1-9]|[0-9][1-9]|[0-9][0-9][1-9])\b\serror\(s\)[^\n]+\n" result-text)))
+(defn old-file? [file time-limit-hours]
+  (let [now (System/currentTimeMillis)
+        before (- now (* time-limit-hours MS-PER-HOUR))]
+    (< (.lastModified file) before)))
 
-(defn visual-studio-error-info [result-text errors]
-  (for [error errors]
-    (let [prefix (ffirst (re-seq #"\n([1-9]|[0-9][1-9]|[0-9][0-9][1-9])>" error))
-          pattern (re-pattern (str prefix "[^\\n]+"))]
-      (when prefix
-          (re-seq (re-pattern pattern) result-text)))))
+(defn vs-log-files []
+  (->> micromanager
+       file-seq
+       (filter #(= "BuildLog.htm" (.getName %)))
+       (filter #(.contains (.getAbsolutePath %) "Release"))
+       (filter #(not (old-file? % 1)))))
 
-(defn visual-studio-error-text [result-text]
-  (->> (visual-studio-error-info result-text (visual-studio-errors result-text))
-       (interpose "\n")
-       flatten
+(defn vs-log-text [f]
+  (->> (slurp f :encoding "utf-16")
+       (re-seq #"(?s)<pre>(.*?)</pre>")
+       (drop 2)
+       (map second)
        (apply str)))
+
+(defn contains-errors? [log-text]
+  (if (re-find #"\n[^\n]+\b([1-9]|[0-9][1-9]|[0-9][0-9][1-9])\b\serror\(s\)[^\n]+\n"
+               log-text)
+    true false))
+
+(defn visual-studio-errors []
+  (filter contains-errors? (map vs-log-text (vs-log-files))))
 
 (defn javac-errors [result-text]
   (map first
@@ -50,10 +60,8 @@
       (.listFiles dir)))
 
 (defn old-files [files time-limit-hours]
-  (let [now (System/currentTimeMillis)
-        before (- now (* time-limit-hours MS-PER-HOUR))]
-    (filter #(< (.lastModified %) before) files)))
-    
+  (filter #(old-file? % time-limit-hours) files))
+
 (defn old-dlls [dir time-limit-hours]
   (old-files (device-adapter-dlls dir) time-limit-hours))
 
@@ -125,7 +133,7 @@
                                   (set dll-names)
                                   (do-not-build)
                                   helper-vcprojs))))
-     
+
 (defn device-pages []
   (let [index-txt (slurp "http://valelab.ucsf.edu/~MM/MMwiki/index.php/Device%20Support")]
     (map second (re-seq #"a href=\"/~MM/MMwiki/index.php/(.*?)\"" index-txt))))
@@ -152,7 +160,7 @@
 (defn report-build-errors [bits mode test]
   (let [f (result-file bits mode)
         result-txt (slurp f)
-        vs-error-text (visual-studio-error-text result-txt)
+        vs-errors (visual-studio-errors)
         outdated-dlls (map #(.getName %) (old-dlls (bin-dir bits) 24))
         javac-errs (javac-errors result-txt)
         outdated-jars (map #(.getName %)
@@ -160,7 +168,7 @@
         installer-ok (exe-on-server? bits today-token)
         missing-vcproj-files (missing-vcproj)]
     (when-not (and (not test)
-                   (empty? vs-error-text)
+                   (empty? vs-errors)
                    (empty? outdated-dlls)
                    (empty? javac-errs)
                    (empty? outdated-jars)
@@ -171,7 +179,7 @@
           ({:inc "INCREMENTAL" :full "FULL"} mode)
           " BUILD ERROR REPORT\n"
         "For the full build output, see " (.getAbsolutePath f)
-        (report-segment "Visual Studio reported errors" vs-error-text)
+        (report-segment "Visual Studio reported errors" vs-errors)
         (report-segment "Outdated device adapter DLLs" outdated-dlls)
         (report-segment "Errors reported by java compiler" javac-errs)
         (report-segment "Outdated jar files" outdated-jars)
