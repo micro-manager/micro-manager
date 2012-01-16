@@ -186,10 +186,10 @@
         (when (= 32 bits)
           (report-segment "Missing .vcproj files" missing-vcproj-files))
         (report-segment "Uncompiled device adapters" (missing-device-adapters bits))
-        "\n\nIs installer download available on website?\n"
-        (if installer-ok "Yes" "No. (build missing)\n")
         (when (= 32 bits)
           (report-segment "Missing device pages" (missing-device-pages)))
+        "\n\nIs installer download available on website?\n"
+        (if installer-ok "Yes." "No. (build missing)\n")
       ))))
 
 (defn make-full-report [mode send?]
