@@ -30,7 +30,7 @@
        file-seq
        (filter #(= "BuildLog.htm" (.getName %)))
        (filter #(.contains (.getAbsolutePath %) "Release"))
-       (filter #(not (old-file? % 1)))))
+       (filter #(not (old-file? % 24)))))
 
 (defn vs-log-text [f]
   (->> (slurp f :encoding "utf-16")
