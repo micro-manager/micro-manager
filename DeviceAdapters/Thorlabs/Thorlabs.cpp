@@ -130,7 +130,7 @@ MODULE_API void InitializeModuleData()
 {
    AddAvailableDeviceName(g_XYStageDeviceName, "Thorlabs BD102 XY Stage");
    AddAvailableDeviceName(g_PiezoZStageDeviceName, "Thorlabs piezo Z Stage");
-   // AddAvailableDeviceName(g_WheelDeviceName, "Integrated filter wheel");
+   AddAvailableDeviceName(g_WheelDeviceName, "Integrated filter wheel");
 }
 
 MODULE_API MM::Device* CreateDevice(const char* deviceName)

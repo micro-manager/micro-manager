@@ -42,6 +42,7 @@
 #define ERR_STEPS_OUT_OF_RANGE       10015
 #define ERR_STAGE_NOT_ZEROED         10016
 #define ERR_INVALID_POSITION         10017
+#define ERR_INVALID_NUMBER_OF_POS    10018
 
 
 // utility functions
@@ -299,12 +300,21 @@ public:
    int OnCOMPort(MM::PropertyBase* pProp, MM::ActionType eAct);
 
 private:
+   int SetCommand(const unsigned char* command, unsigned length);
+   int GetCommand(unsigned char* response, unsigned length, double timeoutMs);
+   int DiscoverNumberOfPositions();
+   int Home();
+   int GoToPosition(long pos);
+   int RetrieveCurrentPosition(long& pos);
+
    bool initialized_;
    bool busy_;
+   bool home_;
    long numPos_;
    long position_;
    std::string port_;
    MM::MMTime changedTime_;
+   double answerTimeoutMs_;      // max wait for the device to answer
 };
 
 
