@@ -313,8 +313,10 @@ private:
    long numPos_;
    long position_;
    std::string port_;
-   MM::MMTime changedTime_;
    double answerTimeoutMs_;      // max wait for the device to answer
+
+   static const unsigned int stepsTurn_ = 1774933; // steps in one wheel turn
+   double offset_;   // offset in steps for the "0" position
 };
 
 

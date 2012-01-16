@@ -123,14 +123,18 @@ IntegratedFilterWheel::IntegratedFilterWheel() :
    busy_(false),
    home_(false),
    initialized_(false), 
-   changedTime_(0.0),
    position_(0),
    port_(""),
-   answerTimeoutMs_(1000.0)
+   answerTimeoutMs_(1000.0),
+   offset_(0.0)
 {
    InitializeDefaultErrorMessages();
 
-   //Com port
+   // offset in steps for the "0" position
+   // (TODO: possibly make it a property to be set in the calibration process)
+   offset_ = 0.0;
+
+   // COM port property
    CPropertyAction* pAct = new CPropertyAction (this, &IntegratedFilterWheel::OnCOMPort);
    CreateProperty(MM::g_Keyword_Port, "", MM::String, false, pAct, true);
 
@@ -220,12 +224,7 @@ int IntegratedFilterWheel::Initialize()
 
 bool IntegratedFilterWheel::Busy()
 {
-   MM::MMTime interval = GetCurrentMMTime() - changedTime_;
-   MM::MMTime delay(GetDelayMs()*1000.0);
-   if (interval < delay)
-      return true;
-   else
-      return false;
+   return false;
 }
 
 
@@ -333,13 +332,19 @@ int IntegratedFilterWheel::DiscoverNumberOfPositions()
  */
 int IntegratedFilterWheel::GoToPosition(long pos)
 {
+   if (numPos_ < 1 || pos < 0 || pos >= numPos_)
+      return ERR_INVALID_POSITION;
+
    ClearPort(*this, *GetCoreCallback(), port_);
+
+   // calculate number of steps to reach specified position
+   unsigned int steps = (unsigned int)(((double)stepsTurn_ / numPos_) * pos + offset_ + 0.5);
 
    // send command
    unsigned char cmd[sizeof(setPosCmd)];
    memcpy(cmd, setPosCmd, sizeof(setPosCmd));
-   long* posPtr = (long*)(cmd + 8);
-   *posPtr = pos;
+   unsigned int* stepsPtr = (unsigned int*)(cmd + 8);
+   *stepsPtr = steps;
    int ret = SetCommand(cmd, sizeof(setPosCmd));
    if (ret != DEVICE_OK)
       return ret;
@@ -354,6 +359,9 @@ int IntegratedFilterWheel::GoToPosition(long pos)
  */
 int IntegratedFilterWheel::RetrieveCurrentPosition(long& pos)
 {
+   if (numPos_ < 1)
+      return ERR_INVALID_NUMBER_OF_POS;
+
    ClearPort(*this, *GetCoreCallback(), port_);
 
    // send command
@@ -377,7 +385,9 @@ int IntegratedFilterWheel::RetrieveCurrentPosition(long& pos)
    if (memcmp(answer, getParamsRsp, 8) != 0)
       return ERR_UNRECOGNIZED_ANSWER;
 
-   pos =(int)*(answer+8);
+   unsigned int steps = *((unsigned int*)(answer + 8));
+   double onePos = (double)stepsTurn_ / numPos_;
+   pos = (long)((steps - offset_) / onePos + 0.5);
 
    return DEVICE_OK;
 }
@@ -397,9 +407,6 @@ int IntegratedFilterWheel::OnState(MM::PropertyBase* pProp, MM::ActionType eAct)
    }
    else if (eAct == MM::AfterSet)
    {
-      // busy timer
-      changedTime_ = GetCurrentMMTime();
-
       long pos;
       pProp->Get(pos);
       if (pos >= numPos_ || pos < 0)
