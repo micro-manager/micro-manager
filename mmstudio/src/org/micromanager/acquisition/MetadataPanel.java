@@ -627,8 +627,8 @@ public class MetadataPanel extends JPanel
       if (acq != null && currentContrastPanel_ != null) {
          currentContrastPanel_.setupChannelControls(cache);
               
-         //load appropriate contrast settings (autoscale if first image)
-         // calc and display hist, apply LUT and draw
+      //load appropriate contrast settings (autoscale if first image)
+      // calc and display hist, apply LUT and draw
       currentContrastPanel_.displayChanged(imgp, cache, acq.firstImage());
         
          

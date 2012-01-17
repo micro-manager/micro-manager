@@ -1416,7 +1416,7 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
                   return;
                }
             }
-
+            
             if (imageCache_.getDiskLocation() == null && promptToSave_) {
                int result = JOptionPane.showConfirmDialog(this,
                        "This data set has not yet been saved.\n"
@@ -1432,6 +1432,8 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
                   return;
                }
             }
+
+            mdPanel_.focusReceived(null);
 
             // push current display settings to cache
             if (imageCache_ != null) {
