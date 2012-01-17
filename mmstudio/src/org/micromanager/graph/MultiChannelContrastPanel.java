@@ -307,7 +307,7 @@ public class MultiChannelContrastPanel extends JPanel implements ContrastPanel {
          c.applyChannelLUTToImage(img, cache);
   }
    
-   public void imageChanged(ImagePlus img, ImageCache cache) {
+   public synchronized void imageChanged(ImagePlus img, ImageCache cache) {
       for (ChannelControlPanel c : ccpList_) {
          c.calcAndDisplayHistAndStats(img);
          if (autostretchCheckBox_.isSelected())

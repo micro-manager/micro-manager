@@ -593,7 +593,7 @@ public class MetadataPanel extends JPanel
     * in focus has changed.
     */
    public void focusReceived(ImageWindow focusedWindow) {
-      if (focusedWindow == null) {
+      if (focusedWindow == null  || !(focusedWindow instanceof VirtualAcquisitionDisplay.DisplayWindow) ) {
          update((ImagePlus)null);
          return;
       }
@@ -685,7 +685,7 @@ public class MetadataPanel extends JPanel
     * ImagePlus.draw or CompositieImage.draw runs as a result of the overriden 
     * methods in MMCompositeImage and MMImagePlus
     */
-   public void imageChangedUpdate(ImagePlus img, ImageCache cache) {
+   public  synchronized void imageChangedUpdate(ImagePlus img, ImageCache cache) {
       if (currentContrastPanel_ != null)
          currentContrastPanel_.imageChanged(img, cache);
    }

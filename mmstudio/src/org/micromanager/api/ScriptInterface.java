@@ -194,12 +194,18 @@ public interface ScriptInterface {
     * option in tools-options is checked
     */
    public void initializeSimpleAcquisition(String name, int width, int height, 
-           int depth, int multiCamNumCh) throws MMScriptException;
+           int depth, int bitDepth, int multiCamNumCh) throws MMScriptException;
    
    /**
     * Set up an acquisition that has already been opened.
     */
    public void initializeAcquisition(String name, int width, int height, int depth) throws MMScriptException;
+   
+   /**
+    * Set up an acquisition that has already been opened.
+    */
+   public void initializeAcquisition(String name, int width, int height, int depth, int bitDepth) throws MMScriptException;
+   
    
    /**
     * Checks whether an acquisition already exists.
@@ -310,8 +316,14 @@ public interface ScriptInterface {
     */
    public int getAcquisitionImageHeight(String acqName) throws MMScriptException;
 
+   
    /**
-    * Returns the width (in pixels) of the viewer attached to this acquisition
+    * Returns the number of bits used per pixel
+    */
+   public int getAcquisitionImageBitDepth(String acqName) throws MMScriptException;
+   
+   /**
+    * Returns the number of bytes used per pixel
     */
    public int getAcquisitionImageByteDepth(String acqName) throws MMScriptException;
 

@@ -1391,7 +1391,7 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
       }
    }
    
-   private class DisplayWindow extends StackWindow {
+   public class DisplayWindow extends StackWindow {
          private boolean windowClosingDone_ = false;
          private boolean closed_ = false;
          
@@ -1433,6 +1433,8 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
                }
             }
 
+            //for some reason window focus listener doesn't always fire, so call
+            //explicitly here
             mdPanel_.focusReceived(null);
 
             // push current display settings to cache

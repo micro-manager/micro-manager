@@ -63,6 +63,7 @@ public class MMAcquisition {
    protected int width_ = 0;
    protected int height_ = 0;
    protected int depth_ = 1;
+   protected int bitDepth_ = 8;    
    protected int multiCamNumCh_ = 1;
    private boolean initialized_ = false;
    private long startTimeMs_;
@@ -156,13 +157,14 @@ public class MMAcquisition {
    }
 
    public void setImagePhysicalDimensions(int width, int height,
-           int depth, int multiCamNumCh) throws MMScriptException {
+           int depth, int bitDepth, int multiCamNumCh) throws MMScriptException {
       if (initialized_) {
          throw new MMScriptException("Can't image change dimensions - the acquisition is already initialized");
       }
       width_ = width;
       height_ = height;
       depth_ = depth;
+      bitDepth_ = bitDepth;
       multiCamNumCh_ = multiCamNumCh;
    }
 
@@ -176,6 +178,10 @@ public class MMAcquisition {
 
    public int getDepth() {
       return depth_;
+   }
+   
+   public int getBitDepth() {
+      return bitDepth_;
    }
 
    public int getMultiCameraNumChannels() {

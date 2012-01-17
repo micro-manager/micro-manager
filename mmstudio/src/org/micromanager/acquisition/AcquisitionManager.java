@@ -133,12 +133,13 @@ public class AcquisitionManager {
       MMAcquisition acq = null;
       String album = getCurrentAlbum();
       JSONObject tags = image.tags;
-      int imageWidth, imageHeight, imageDepth, numChannels;
+      int imageWidth, imageHeight, imageDepth, imageBitDepth, numChannels;
 
       try {
          imageWidth = MDUtils.getWidth(tags);
          imageHeight = MDUtils.getHeight(tags);
          imageDepth = MDUtils.getDepth(tags);
+         imageBitDepth = MDUtils.getBitDepth(tags);
          //need to check umber of channels so that multi cam and single cam
          // acquistions of same size and depth are differentiated
          numChannels = MDUtils.getNumChannels(tags);  
@@ -165,7 +166,7 @@ public class AcquisitionManager {
          openAcquisition(album, "", true, false);
          acq = getAcquisition(album);
          acq.setDimensions(2, numChannels, 1, 1);   
-         acq.setImagePhysicalDimensions(imageWidth, imageHeight, imageDepth, numChannels);
+         acq.setImagePhysicalDimensions(imageWidth, imageHeight, imageDepth, imageBitDepth, numChannels);
 
          try {
             JSONObject summary = new JSONObject();
