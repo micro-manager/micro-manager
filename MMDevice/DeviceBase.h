@@ -1889,6 +1889,17 @@ class CSLMBase : public CDeviceBase<MM::SLM, U>
 };
 
 /**
+* Base class for creating Galvo devices.
+*/
+template <class U>
+class CGalvoBase : public CDeviceBase<MM::Galvo, U>
+{
+
+};
+
+
+
+/**
 * Base class for creating CommandDispatch adapters.
 */
 template <class U>

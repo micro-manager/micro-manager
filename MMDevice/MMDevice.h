@@ -993,6 +993,22 @@ namespace MM {
    };
 
    /**
+    * Galvo API
+    */
+   class Galvo : public Device
+   {
+   public:
+      Galvo() {}
+      virtual ~Galvo() {}
+
+      DeviceType GetType() const {return Type;}
+      static const DeviceType Type = GalvoDevice;
+
+   //Galvo API:
+
+   };
+
+   /**
     * Command monitoring and control device.
     */
    class CommandDispatch : public Device

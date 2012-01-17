@@ -128,6 +128,7 @@ namespace MM {
    const char* const g_Keyword_CoreChannelGroup = "ChannelGroup";
    const char* const g_Keyword_CoreImageProcessor = "ImageProcessor";
    const char* const g_Keyword_CoreSLM          = "SLM";
+   const char* const g_Keyword_CoreGalvo        = "Galvo";
    const char* const g_Keyword_CoreTimeoutMs    = "TimeoutMs";
    const char* const g_Keyword_Channel          = "Channel";
    const char* const g_Keyword_Version          = "Version";
@@ -214,7 +215,8 @@ namespace MM {
       ProgrammableIODevice,
       SLMDevice,
       CommandDispatchDevice,
-      HubDevice
+      HubDevice,
+      GalvoDevice
    };
 
    enum PropertyType {
