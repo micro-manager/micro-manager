@@ -124,7 +124,9 @@ public class GraphPanel extends JPanel {
    
    private void AdjustCursors() {
       cursorLoPos_ = Math.max(cursorLoPos_, (float) bounds_.xMin);
-      cursorHiPos_ = Math.min(cursorHiPos_, (float) bounds_.xMax);      
+//      cursorHiPos_ = Math.min(cursorHiPos_, (float) bounds_.xMax);
+      //took this line out so contrast line can have an endpoint beyond
+      //length of  histogram
    }
    
    /**

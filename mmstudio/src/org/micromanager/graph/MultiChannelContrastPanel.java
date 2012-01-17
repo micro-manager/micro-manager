@@ -154,7 +154,6 @@ public class MultiChannelContrastPanel extends JPanel implements ContrastPanel {
 
       final SpringLayout layout = new SpringLayout();
       final JPanel p = new JPanel() {
-
          @Override
          public void paint(Graphics g) {
             int channelHeight = Math.max(115, contrastScrollPane_.getViewport().getSize().height / nChannels);
@@ -163,11 +162,9 @@ public class MultiChannelContrastPanel extends JPanel implements ContrastPanel {
                for (int i = 0; i < ccpList_.size(); i++) {
                   ccpList_.get(i).setHeight(channelHeight);
                   ccpList_.get(i).setLocation(0, channelHeight * i);
-               }
-            }
+               }}
             super.paint(g);
-         }
-      };
+         }};
 
       int hpHeight = Math.max(115, (contrastScrollPane_.getSize().height - 2) / nChannels);
       p.setPreferredSize(new Dimension(200, nChannels * hpHeight));
@@ -318,6 +315,7 @@ public class MultiChannelContrastPanel extends JPanel implements ContrastPanel {
    
     public void displayChanged(ImagePlus img, ImageCache cache, boolean newWindow) {
        for (ChannelControlPanel c : ccpList_) {
+          
           c.calcAndDisplayHistAndStats(img);
           if (newWindow || autostretchCheckBox_.isSelected())
              c.autostretch();

@@ -30,6 +30,7 @@ import ij.process.LUT;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Font;
+import java.awt.Graphics;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.beans.PropertyChangeListener;
@@ -61,6 +62,7 @@ import org.micromanager.api.ImageCache;
 import org.micromanager.graph.HistogramPanel.CursorListener;
 import org.micromanager.utils.ContrastSettings;
 import org.micromanager.utils.HistogramUtils;
+import org.micromanager.utils.MDUtils;
 import org.micromanager.utils.MMScriptException;
 import org.micromanager.utils.ReportingUtils;
 import org.micromanager.utils.NumberUtils;
@@ -84,7 +86,8 @@ public class SingleChannelContrastPanel extends JPanel implements
    private JFormattedTextField gammaValue_;
    private NumberFormat numberFormat_;
    private double gamma_ = 1.0;
-	private int maxIntensity_ = 255;
+	private int histMax_;
+   private int maxIntensity_;
    private double mean_;
    private double stdDev_;
    private double pixelMin_ = 0.0;
@@ -280,7 +283,15 @@ public class SingleChannelContrastPanel extends JPanel implements
   		springLayout.putConstraint(SpringLayout.NORTH, gammaValue_, 0,
 				SpringLayout.NORTH, gammaLabel);
 
-		histogramPanel_ = new HistogramPanel();
+		histogramPanel_ = new HistogramPanel() {
+          public void paint(Graphics g) {
+           super.paint(g);
+           //For drawing max label
+           g.setColor(Color.black);
+           g.setFont(new Font("Lucida Grande", 0, 10));          
+           String label = ""+histMax_;
+           g.drawString(label, this.getSize().width - 7*label.length(), this.getSize().height );
+        } };
 		histogramPanel_.setMargins(8, 10);
       histogramPanel_.setTraceStyle(true, new Color(50,50,50));
 		histogramPanel_.setTextVisible(false);
@@ -475,7 +486,7 @@ public class SingleChannelContrastPanel extends JPanel implements
    }
 
    private void pixelTypeAction() {
-      setMaxIntensityAndBinSize();
+      setHistMaxAndBinSize();
       ImagePlus img = WindowManager.getCurrentImage(); 
       if (img!= null)
          calcAndDisplayHistAndStats(img);
@@ -544,43 +555,30 @@ public class SingleChannelContrastPanel extends JPanel implements
 		histogramPanel_.repaint();
    }
    
-	private void setMaxIntensityAndBinSize() {
+	private void setHistMaxAndBinSize() {
 		switch (modeComboBox_.getSelectedIndex()-1) {        
       case -1:
-         // TODO: first try to read bitdepth from metadata
-         // It is not correct to read BitDepth from ImagePlus!!
-         /*
-         int bitDepth = 8;
-         ImagePlus ip = WindowManager.getCurrentImage();
-         if (ip != null)   //first option is from open window (in case existing dataset opened)
-            bitDepth = ip.getBitDepth();
-         else
-          * 
-          */
-        
-
-         int bitDepth = (int) MMStudioMainFrame.getInstance().getCore().getImageBitDepth();
-         maxIntensity_ = (int) (Math.pow(2, bitDepth) - 1);
+         histMax_ = maxIntensity_;
          break;
       case 0: 
-			maxIntensity_ = 255;
+			histMax_ = 255;
 			break;
 		case 1:
-			maxIntensity_ = 1023;
+			histMax_ = 1023;
 			break;
 		case 2:
-			maxIntensity_ = 4095;
+			histMax_ = 4095;
 			break;
 		case 3:
-			maxIntensity_ = 16383;
+			histMax_ = 16383;
 			break;
 		case 4:
-			maxIntensity_ = 65535;
+			histMax_ = 65535;
 			break;
 		default:
 			break;
 		}
-		binSize_ = (maxIntensity_ + 1) / HIST_BINS;
+		binSize_ = (histMax_ + 1) / HIST_BINS;
       updateHistogram();
    }
 
@@ -614,7 +612,7 @@ public class SingleChannelContrastPanel extends JPanel implements
 	}
 
 	private void setFullScale() {
-      setMaxIntensityAndBinSize();
+      setHistMaxAndBinSize();
       autoStretchCheckBox_.setSelected(false);
       contrastMin_ = 0;
       contrastMax_ = maxIntensity_;    
@@ -638,7 +636,16 @@ public class SingleChannelContrastPanel extends JPanel implements
    }
    
    public void displayChanged(ImagePlus img, ImageCache cache, boolean newWindow) {
-      setMaxIntensityAndBinSize();
+      try {
+         VirtualAcquisitionDisplay vad = VirtualAcquisitionDisplay.getDisplay(WindowManager.getCurrentImage());
+         int bitDepth = MDUtils.getBitDepth(vad.getSummaryMetadata());
+         maxIntensity_ = (int) (Math.pow(2, bitDepth) - 1);
+      } catch (JSONException ex) {
+         ReportingUtils.logError("BitDepth not in summary metadata");
+         maxIntensity_ = (int) (Math.pow(2, 16)-1);
+      }
+
+      setHistMaxAndBinSize();
       calcAndDisplayHistAndStats(img);
       if (newWindow || autostretch_)
          autostretch();
@@ -825,6 +832,5 @@ public class SingleChannelContrastPanel extends JPanel implements
 //   }
 
    public void setupChannelControls(ImageCache cache) {
-      //don't need to setup controls for single channel
    }
 }
