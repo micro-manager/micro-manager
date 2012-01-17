@@ -1306,7 +1306,7 @@ public:
    }
 
    // temporary debug methods
-   int PrepareSequenceAcqusition() {return DEVICE_UNSUPPORTED_COMMAND;}
+   virtual int PrepareSequenceAcqusition() {return DEVICE_OK;}
 
    /**
    * Default implementation.
@@ -1322,6 +1322,36 @@ public:
       thd_->Start(numImages,interval_ms);
       stopOnOverflow_ = stopOnOverflow;
       return DEVICE_OK;
+   }
+
+   virtual int GetExposureSequenceMaxLength(long& /*nrEvents*/) const 
+   {
+      return DEVICE_UNSUPPORTED_COMMAND;
+   }
+
+   virtual int StartExposureSequence() const 
+   {
+      return DEVICE_UNSUPPORTED_COMMAND;
+   }
+
+   virtual int StopExposureSequence() const 
+   {
+      return DEVICE_UNSUPPORTED_COMMAND;
+   }
+
+   virtual int ClearExposureSequence() 
+   {
+      return DEVICE_UNSUPPORTED_COMMAND;
+   }
+
+   virtual int AddToExposureSequence(double /*exposureTime_ms*/) 
+   {
+      return DEVICE_UNSUPPORTED_COMMAND;
+   }
+
+   virtual int SendExposureSequence() const 
+   {
+      return DEVICE_UNSUPPORTED_COMMAND;
    }
 
    virtual int InsertImage()
@@ -1529,6 +1559,36 @@ class CStageBase : public CDeviceBase<MM::Stage, U>
       return DEVICE_UNSUPPORTED_COMMAND;
    }
 
+   virtual int GetStageSequenceMaxLength(long& /*nrEvents*/) const 
+   {
+      return DEVICE_UNSUPPORTED_COMMAND;
+   }
+
+   virtual int StartStageSequence() const 
+   {
+      return DEVICE_UNSUPPORTED_COMMAND;
+   }
+
+   virtual int StopStageSequence() const 
+   {
+      return DEVICE_UNSUPPORTED_COMMAND;
+   }
+
+   virtual int ClearStageSequence()  
+   {
+      return DEVICE_UNSUPPORTED_COMMAND;
+   }
+
+   virtual int AddToStageSequence(double /*position*/) 
+   {
+      return DEVICE_UNSUPPORTED_COMMAND;
+   }
+
+   virtual int SendStageSequence() const 
+   {
+      return DEVICE_UNSUPPORTED_COMMAND;
+   }
+
 };
 
 /**
@@ -1680,6 +1740,36 @@ public:
       return DEVICE_UNSUPPORTED_COMMAND;
    }
 
+   virtual int GetXYStageSequenceMaxLength(long& /*nrEvents*/) const 
+   {
+      return DEVICE_UNSUPPORTED_COMMAND;
+   }
+
+   virtual int StartXYStageSequence() const 
+   {
+      return DEVICE_UNSUPPORTED_COMMAND;
+   }
+
+   virtual int StopXYStageSequence() const 
+   {
+      return DEVICE_UNSUPPORTED_COMMAND;
+   }
+
+   virtual int ClearXYStageSequence() const 
+   {
+      return DEVICE_UNSUPPORTED_COMMAND;
+   }
+
+   virtual int AddToXYStageSequence(double /*positionX*/, double /*positionY*/) const 
+   {
+      return DEVICE_UNSUPPORTED_COMMAND;
+   }
+
+   virtual int SendXYStageSequence() const 
+   {
+      return DEVICE_UNSUPPORTED_COMMAND;
+   }
+
 protected:
 
    /**
@@ -1753,6 +1843,32 @@ class CImageProcessorBase : public CDeviceBase<MM::ImageProcessor, U>
 template <class U>
 class CSignalIOBase : public CDeviceBase<MM::SignalIO, U>
 {
+   virtual int GetDASequenceMaxLength(long& /*nrEvents*/) const 
+   {
+      return DEVICE_UNSUPPORTED_COMMAND;
+   }
+
+   virtual int StartDASequence() const 
+   {
+      return DEVICE_UNSUPPORTED_COMMAND;
+   }
+
+   virtual int StopDASequence() const {
+      return DEVICE_UNSUPPORTED_COMMAND;
+   }
+
+   virtual int ClearDASequence() {
+      return DEVICE_UNSUPPORTED_COMMAND;
+   }
+
+   virtual int AddToDASequence(double /*voltage*/) 
+   {
+      return DEVICE_UNSUPPORTED_COMMAND;
+   }
+
+   virtual int SendDASequence() const {
+      return DEVICE_UNSUPPORTED_COMMAND;
+   }
 };
 
 /**

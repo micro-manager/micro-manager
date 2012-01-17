@@ -34,7 +34,7 @@
 // Header version
 // If any of the class declarations changes, the interface version
 // must be incremented
-#define DEVICE_INTERFACE_VERSION 49
+#define DEVICE_INTERFACE_VERSION 50
 ///////////////////////////////////////////////////////////////////////////////
 
 #pragma once
@@ -512,15 +512,15 @@ namespace MM {
       // external trigger).  If the device is capable (and ready) to do so isSequenceable will
       // be true. If your device can not execute this (true for most cameras)
       // simply set IsExposureSequenceable to false
-      virtual int GetExposureSequenceMaxLength(long& /*nrEvents*/) const {return DEVICE_UNSUPPORTED_COMMAND;}
-      virtual int StartExposureSequence() const {return DEVICE_UNSUPPORTED_COMMAND;}
-      virtual int StopExposureSequence() const {return DEVICE_UNSUPPORTED_COMMAND;}
+      virtual int GetExposureSequenceMaxLength(long& nrEvents) const =0;
+      virtual int StartExposureSequence() const = 0;
+      virtual int StopExposureSequence() const = 0;
       // Remove all values in the sequence
-      virtual int ClearExposureSequence() {return DEVICE_UNSUPPORTED_COMMAND;}
+      virtual int ClearExposureSequence() = 0;
       // Add one value to the sequence
-      virtual int AddToExposureSequence(double /*exposureTime_ms*/) {return DEVICE_UNSUPPORTED_COMMAND;}
+      virtual int AddToExposureSequence(double exposureTime_ms) = 0;
       // Signal that we are done sending sequence values so that the adapter can send the whole sequence to the device
-      virtual int SendExposureSequence() const {return DEVICE_UNSUPPORTED_COMMAND;}
+      virtual int SendExposureSequence() const = 0;
    };
 
    /** 
@@ -585,17 +585,17 @@ namespace MM {
       // Sequences of positions can be uploaded to the stage.  The device will cycle through
       // the uploaded list of states (triggered by an external trigger - most often coming 
       // from the camera).  If the device is capable (and ready) to do so isSequenceable will
-      // be true. If your device can not execute this (true for most stages
+      // be true. If your device can not execute this (true for most stages)
       // simply set isSequenceable to false
-      virtual int GetStageSequenceMaxLength(long& /*nrEvents*/) const {return DEVICE_UNSUPPORTED_COMMAND;};
-      virtual int StartStageSequence() const {return DEVICE_UNSUPPORTED_COMMAND;};
-      virtual int StopStageSequence() const {return DEVICE_UNSUPPORTED_COMMAND;}
+      virtual int GetStageSequenceMaxLength(long& nrEvents) const = 0;
+      virtual int StartStageSequence() const = 0;
+      virtual int StopStageSequence() const = 0;
       // Remove all values in the sequence
-      virtual int ClearStageSequence()  {return DEVICE_UNSUPPORTED_COMMAND;}
+      virtual int ClearStageSequence() = 0;
       // Add one value to the sequence
-      virtual int AddToStageSequence(double /*position*/) {return DEVICE_UNSUPPORTED_COMMAND;}
+      virtual int AddToStageSequence(double position) = 0;
       // Signal that we are done sending sequence values so that the adapter can send the whole sequence to the device
-      virtual int SendStageSequence() const {return DEVICE_UNSUPPORTED_COMMAND;}
+      virtual int SendStageSequence() const = 0;
    };
 
    /** 
@@ -642,15 +642,15 @@ namespace MM {
       // from the camera).  If the device is capable (and ready) to do so isSequenceable will
       // be true. If your device can not execute this (true for most XY stages
       // simply set isSequenceable to false
-      virtual int GetXYStageSequenceMaxLength(long& /*nrEvents*/) const {return DEVICE_UNSUPPORTED_COMMAND;}
-      virtual int StartXYStageSequence() const {return DEVICE_UNSUPPORTED_COMMAND;}
-      virtual int StopXYStageSequence() const {return DEVICE_UNSUPPORTED_COMMAND;}
+      virtual int GetXYStageSequenceMaxLength(long& nrEvents) const = 0;
+      virtual int StartXYStageSequence() const = 0;
+      virtual int StopXYStageSequence() const = 0;
       // Remove all values in the sequence
-      virtual int ClearXYStageSequence() const {return DEVICE_UNSUPPORTED_COMMAND;}
+      virtual int ClearXYStageSequence() const = 0;
       // Add one value to the sequence
-      virtual int AddToXYStageSequence(double /*positionX*/, double /*positionY*/) const {return DEVICE_UNSUPPORTED_COMMAND;}
+      virtual int AddToXYStageSequence(double positionX, double positionY) const = 0;
       // Signal that we are done sending sequence values so that the adapter can send the whole sequence to the device
-      virtual int SendXYStageSequence() const {return DEVICE_UNSUPPORTED_COMMAND;}
+      virtual int SendXYStageSequence() const = 0;
 
    };
 
@@ -876,18 +876,18 @@ namespace MM {
        * @param nrEvents max length of sequence
        * @return errorcode (DEVICE_OK if no error)
        */
-      virtual int GetDASequenceMaxLength(long& /*nrEvents*/) const {return DEVICE_UNSUPPORTED_COMMAND;}
+      virtual int GetDASequenceMaxLength(long& nrEvents) const; 
       /**
        * Tells the device to start running a sequnece (i.e. start switching between voltages 
        * send previously, triggered by a TTL
        * @return errorcode (DEVICE_OK if no error)
        */
-      virtual int StartDASequence() const {return DEVICE_UNSUPPORTED_COMMAND;}
+      virtual int StartDASequence() const;
       /**
        * Tells the device to stop running the sequence
        * @return errorcode (DEVICE_OK if no error)
        */
-      virtual int StopDASequence() const {return DEVICE_UNSUPPORTED_COMMAND;}
+      virtual int StopDASequence() const;
       /**
        * Clears the DA sequnce from the device and the adapter.
        * If this functions is not called in between running 
@@ -896,7 +896,7 @@ namespace MM {
        * voltage) as often as needed.
        * @return errorcode (DEVICE_OK if no error)
        */
-      virtual int ClearDASequence() {return DEVICE_UNSUPPORTED_COMMAND;}
+      virtual int ClearDASequence();
 
       /**
        * Adds a new data point (voltgae) to the sequence
@@ -904,14 +904,14 @@ namespace MM {
        * adapter, or it can be directly written to the device
        * @return errorcode (DEVICE_OK if no error)
        */
-      virtual int AddToDASequence(double /*voltage*/) {return DEVICE_UNSUPPORTED_COMMAND;}
+      virtual int AddToDASequence(double voltage);
       /**
        * Sends the complete sequence to the device
        * If the individual data points were already send to the device, there is 
        * nothing to be done.
        * @return errorcode (DEVICE_OK if no error)
        */
-      virtual int SendDASequence() const {return DEVICE_UNSUPPORTED_COMMAND;}
+      virtual int SendDASequence() const = 0;
 
    };
 
