@@ -876,18 +876,18 @@ namespace MM {
        * @param nrEvents max length of sequence
        * @return errorcode (DEVICE_OK if no error)
        */
-      virtual int GetDASequenceMaxLength(long& nrEvents) const; 
+      virtual int GetDASequenceMaxLength(long& nrEvents) const = 0; 
       /**
        * Tells the device to start running a sequnece (i.e. start switching between voltages 
        * send previously, triggered by a TTL
        * @return errorcode (DEVICE_OK if no error)
        */
-      virtual int StartDASequence() const;
+      virtual int StartDASequence() const = 0;
       /**
        * Tells the device to stop running the sequence
        * @return errorcode (DEVICE_OK if no error)
        */
-      virtual int StopDASequence() const;
+      virtual int StopDASequence() const = 0;
       /**
        * Clears the DA sequnce from the device and the adapter.
        * If this functions is not called in between running 
@@ -896,7 +896,7 @@ namespace MM {
        * voltage) as often as needed.
        * @return errorcode (DEVICE_OK if no error)
        */
-      virtual int ClearDASequence();
+      virtual int ClearDASequence() = 0;
 
       /**
        * Adds a new data point (voltgae) to the sequence
@@ -904,7 +904,7 @@ namespace MM {
        * adapter, or it can be directly written to the device
        * @return errorcode (DEVICE_OK if no error)
        */
-      virtual int AddToDASequence(double voltage);
+      virtual int AddToDASequence(double voltage) = 0;
       /**
        * Sends the complete sequence to the device
        * If the individual data points were already send to the device, there is 
