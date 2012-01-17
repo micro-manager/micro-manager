@@ -324,23 +324,23 @@ public class ImageUtils {
       int g = color.getGreen();
       int b = color.getBlue();
 
-      int pixelRange = 1 << nbits;
-      byte [] rs = new byte[pixelRange];
-      byte [] gs = new byte[pixelRange];
-      byte [] bs = new byte[pixelRange];
+      int size = 256;
+      byte [] rs = new byte[size];
+      byte [] gs = new byte[size];
+      byte [] bs = new byte[size];
 
       int x;
       double xn;
       double yn;
-      for (int p=0;p<pixelRange;++p) {
-         x = MathFunctions.clip(0, p, pixelRange);
-         xn = x / (double) pixelRange;
+      for (int p=0;p<size;++p) {
+         x = MathFunctions.clip(0, p, size);
+         xn = x / (double) size;
          yn = Math.pow(xn, gamma);
          rs[p] = (byte) (yn * r);
          gs[p] = (byte) (yn * g);
          bs[p] = (byte) (yn * b);
       }
-      return new LUT(rs,gs,bs);
+      return new LUT(nbits,size,rs,gs,bs);
    }
 
    public static void setPreferredTaggedImageStorage(Class storageClass) {

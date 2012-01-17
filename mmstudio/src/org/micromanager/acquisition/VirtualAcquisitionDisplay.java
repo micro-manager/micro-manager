@@ -376,7 +376,7 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
       }
       
       updateAndDraw();
-      updateWindow();
+      updateWindowTitleAndStatus();
    }
    
    private void animateSlices(boolean animate) {
@@ -489,7 +489,7 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
    public void imagingFinished(String path) {
       updateDisplay(null, true);
       updateAndDraw();
-      updateWindow();
+      updateWindowTitleAndStatus();
    }
 
    private void updateDisplay(TaggedImage taggedImage, boolean finalUpdate) {
@@ -582,7 +582,9 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
          } catch (JSONException ex) {
          }
          int bitDepth = 8;
-         if (summaryMetadata.has("PixelType")) {
+         if (summaryMetadata.has("BitDepth"))
+            bitDepth = summaryMetadata.getInt("BitDepth");
+         else if (summaryMetadata.has("PixelType")) {
             String pixelType = summaryMetadata.getString("PixelType");
             if (pixelType.equals("RGB32"))
                bitDepth = 8;
@@ -592,8 +594,6 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
                bitDepth = Integer.parseInt(pixelType.substring(4));        
          } else if (summaryMetadata.has("Depth"))
             bitDepth = summaryMetadata.getInt("Depth") * 8;
-         else if (summaryMetadata.has("BitDepth"))
-            bitDepth = summaryMetadata.getInt("BitDepth");
          JSONArray channels = new JSONArray();
          for (int k = 0; k < chNames.length(); ++k) {
             String name = (String) chNames.get(k);
@@ -743,7 +743,7 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
       }
    }
 
-   public void updateWindow() {
+   public void updateWindowTitleAndStatus() {
       if(simple_) {
          hyperImage_.getWindow().setTitle(name_);
          return;
@@ -827,7 +827,7 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
    }
    
    public void showImage(JSONObject tags, boolean waitForDisplay) throws Exception {
-      updateWindow();
+      updateWindowTitleAndStatus();
       
       if (tags == null) {
          return;
@@ -844,7 +844,7 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
       String channelName = MDUtils.getChannelName(tags);
       Color channelColor = null;
       try {
-         new Color(MDUtils.getChannelColor(tags));
+         channelColor = new Color(MDUtils.getChannelColor(tags));
       } catch (Exception e) {}
       
       int superChannel = this.rgbToGrayChannel(MDUtils.getChannelIndex(tags));        
@@ -969,7 +969,7 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
          } else {
             eng_.setPause(true);
          }
-         updateWindow();
+         updateWindowTitleAndStatus();
          return (eng_.isPaused());
       }
       return false;
@@ -978,7 +978,7 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
    boolean abort() {
       if (eng_ != null) {
          if (eng_.abortRequest()) {
-            updateWindow();
+            updateWindowTitleAndStatus();
             return true;
          }
       }
@@ -1039,7 +1039,7 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
 
       imageCache_.saveAs(newFileManager);
       MMStudioMainFrame.getInstance().setAcqDirectory(root);
-      updateWindow();
+      updateWindowTitleAndStatus();
       return true;
    }
 
@@ -1365,7 +1365,7 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
    
    public void setWindowTitle(String name) {
       name_ = name;
-      updateWindow();
+      updateWindowTitleAndStatus();
    }
    
    public boolean isSimpleDisplay() {
