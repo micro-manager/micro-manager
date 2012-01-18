@@ -28,42 +28,9 @@
 #include "../../MMDevice/DeviceBase.h"
 #include <string>
 #include <map>
+#include "obsROE_Device.h"
 
-//////////////////////////////////////////////////////////////////////////////
-// Error codes
-//
-
-//#define ERR_UNKNOWN_POSITION         10002
-#define ERR_PORT_CHANGE_FORBIDDEN    10004
-#define ERR_SET_POSITION_FAILED      10005
-#define ERR_INVALID_STEP_SIZE        10006
-#define ERR_INVALID_MODE             10008
-#define ERR_UNRECOGNIZED_ANSWER      10009
-#define ERR_UNSPECIFIED_ERROR        10010
-#define ERR_NOT_LOCKED               10011
-#define ERR_NOT_CALIBRATED           10012
-
-#define ERR_OFFSET 10100
-
-//#define ERR_UNKNOWN_COMMAND "Unknown Command"
-#define ERR_UNRECOGNIZED_AXIS_PARAMETERS "Unrecognized Axis Parameters"
-#define ERR_MISSING_PARAMETERS "Missing Parameters"
-#define ERR_PARAMETER_OUTOF_RANGE "Parameter Out of Range"
-#define ERR_UNDEFINED ERROR "Undefined Error"
-// eof from Prior
-
-
-
-class ASIDeviceBase : public CDeviceBase<MM::Device, ASIDeviceBase>
-{
-public:
-   ASIDeviceBase() { }
-   ~ASIDeviceBase() { }
-
-   friend class ASIBase;
-};
-
-class RappScanner : public CXYStageBase<RappScanner>
+class RappScanner : public CGalvoBase<RappScanner>
 {
 public:
    RappScanner();
@@ -81,27 +48,10 @@ public:
    // that's where the device detection is going for now
    MM::DeviceDetectionStatus DetectDevice(void);
 
-   // XYStage API
-   // -----------
-  int SetPositionSteps(long x, long y);
-  int SetRelativePositionSteps(long x, long y);
-  int GetPositionSteps(long& x, long& y);
-  int Home();
-  int Stop();
-  int SetOrigin();
-  int Calibrate();
-  int Calibrate1();
-  int GetLimitsUm(double& xMin, double& xMax, double& yMin, double& yMax);
-  int GetStepLimits(long& xMin, long& xMax, long& yMin, long& yMax);
-  double GetStepSizeXUm() {return stepSizeXUm_;}
-  double GetStepSizeYUm() {return stepSizeYUm_;}
-  int IsXYStageSequenceable(bool& isSequenceable) const {isSequenceable = false; return DEVICE_OK;}
-
-   // action interface
-   // ----------------
-   int OnPort(MM::PropertyBase* pProp, MM::ActionType eAct);
-   int OnStepSizeX(MM::PropertyBase* pProp, MM::ActionType eAct);
-   int OnStepSizeY(MM::PropertyBase* pProp, MM::ActionType eAct); 
+private:
+   bool initialized_;
+   std::string port_;
+   obsROE_Device* UGA_;
 };
 
 
