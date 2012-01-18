@@ -124,10 +124,11 @@ int RappScanner::Initialize()
 {
    UGA_ = new obsROE_Device();
    tStringList devs = UGA_->SearchDevices();
+
    if (devs.size() < 1)
       return DEVICE_NOT_CONNECTED;
 
-   port_ = devs[0];
+   port_ = devs.at(0);
 
    UGA_->Connect(port_.c_str());
    if (UGA_->IsConnected()) {
@@ -142,7 +143,7 @@ int RappScanner::Initialize()
    CreateProperty("CalibrationMode", "1", MM::Integer, false, pAct);
    AddAllowedValue("CalibrationMode", "1");
    AddAllowedValue("CalibrationMode", "0");
-   
+   return DEVICE_OK;
 }
 
 int RappScanner::Shutdown()
@@ -177,7 +178,7 @@ int RappScanner::OnCalibrationMode(MM::PropertyBase* pProp, MM::ActionType eAct)
    else if (eAct == MM::AfterSet)
    {
       pProp->Get(calibrationMode_);
-      if (UGA_->SetCalibrationMode(calibrationMode_ ? 1 : 0, false)) {
+      if (UGA_->SetCalibrationMode(calibrationMode_ == 1, false)) {
          result = DEVICE_OK;
       } else {
          result = DEVICE_NOT_CONNECTED;
