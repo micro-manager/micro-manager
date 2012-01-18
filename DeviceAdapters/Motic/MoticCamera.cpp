@@ -1,6 +1,6 @@
 #include "MoticCamera.h"
 #include "ModuleInterface.h"
-#include "./Motic/MoticImageDevicesProxy.h"
+#include "MoticImageDevicesProxy.h"
 
 #define _LOG_OUT_
 const char* g_CameraName = "MoticCam";
