@@ -48,10 +48,15 @@ public:
    // that's where the device detection is going for now
    MM::DeviceDetectionStatus DetectDevice(void);
 
+   // Property functors
+   int OnCalibrationMode(MM::PropertyBase* pProp, MM::ActionType eAct);
+
+
 private:
    bool initialized_;
    std::string port_;
    obsROE_Device* UGA_;
+   long calibrationMode_;
 };
 
 

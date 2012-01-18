@@ -4,7 +4,7 @@
 // SUBSYSTEM:     DeviceAdapters
 //-----------------------------------------------------------------------------
 // DESCRIPTION:   Rapp UGA40 adapter
-// COPYRIGHT:     University of California, San Francisco, 2007
+// COPYRIGHT:     University of California, San Francisco, 2012
 //                All rights reserved
 //
 // LICENSE:       This library is free software; you can redistribute it and/or
@@ -88,7 +88,7 @@ MM::DeviceDetectionStatus RappScannerDetect(MM::Device& device, MM::Core& core, 
 // RappScanner
 //
 RappScanner::RappScanner() :
-   initialized_(false), port_()
+   initialized_(false), port_(""), calibrationMode_(1)
 {
    InitializeDefaultErrorMessages();
 
@@ -132,11 +132,16 @@ int RappScanner::Initialize()
    UGA_->Connect(port_.c_str());
    if (UGA_->IsConnected()) {
       initialized_ = true;
-      return DEVICE_OK;
    } else {
       initialized_ = false;
       return DEVICE_NOT_CONNECTED;
    }
+
+   
+   CPropertyAction* pAct = new CPropertyAction(this, &RappScanner::OnCalibrationMode);
+   CreateProperty("CalibrationMode", "1", MM::Integer, false, pAct);
+   AddAllowedValue("CalibrationMode", "1");
+   AddAllowedValue("CalibrationMode", "0");
    
 }
 
@@ -160,4 +165,24 @@ int RappScanner::Shutdown()
 bool RappScanner::Busy()
 {
    return false;
+}
+
+int RappScanner::OnCalibrationMode(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   int result = DEVICE_OK;
+   if (eAct == MM::BeforeGet)
+   {
+      pProp->Set(calibrationMode_);
+   }
+   else if (eAct == MM::AfterSet)
+   {
+      pProp->Get(calibrationMode_);
+      if (UGA_->SetCalibrationMode(calibrationMode_ ? 1 : 0, false)) {
+         result = DEVICE_OK;
+      } else {
+         result = DEVICE_NOT_CONNECTED;
+      }
+   }
+   
+   return result;
 }
