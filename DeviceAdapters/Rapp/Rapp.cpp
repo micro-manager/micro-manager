@@ -156,9 +156,9 @@ int RappScanner::Shutdown()
             result = DEVICE_OK;
          }
       }
+
+   delete UGA_;
    }
-   if (UGA_ != NULL)
-      delete UGA_;
    return result;
 }
 
