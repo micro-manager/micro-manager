@@ -96,7 +96,7 @@ public class SingleChannelContrastPanel extends JPanel implements
 	private static final int HIST_BINS = 256;
 	ContrastSettings cs8bit_;
 	ContrastSettings cs16bit_;
-	private JCheckBox autoStretchCheckBox_;
+	private JCheckBox autostretchCheckBox_;
 	private JCheckBox rejectOutliersCheckBox_;
    private JCheckBox slowHistogramCheckBox_;
    private boolean slowHistogram_ = false;
@@ -311,25 +311,25 @@ public class SingleChannelContrastPanel extends JPanel implements
 		springLayout.putConstraint(SpringLayout.NORTH, histogramPanel_, 0,
 				SpringLayout.NORTH, fullScaleButton_);
 
-		autoStretchCheckBox_ = new JCheckBox();
-      autoStretchCheckBox_.setSelected(autostretch);
+		autostretchCheckBox_ = new JCheckBox();
+      autostretchCheckBox_.setSelected(autostretch);
       autostretch_ = autostretch;
-		autoStretchCheckBox_.setFont(new Font("", Font.PLAIN, 10));
-		autoStretchCheckBox_.setText("Auto-stretch");
-		autoStretchCheckBox_.addChangeListener(new ChangeListener() {
+		autostretchCheckBox_.setFont(new Font("", Font.PLAIN, 10));
+		autostretchCheckBox_.setText("Auto-stretch");
+		autostretchCheckBox_.addChangeListener(new ChangeListener() {
 			public void stateChanged(ChangeEvent ce) {
             autostretchCheckboxAction();
 			};
 		});
-		add(autoStretchCheckBox_);
+		add(autostretchCheckBox_);
 
-		springLayout.putConstraint(SpringLayout.EAST, autoStretchCheckBox_, 5,
+		springLayout.putConstraint(SpringLayout.EAST, autostretchCheckBox_, 5,
 				SpringLayout.WEST, histogramPanel_);
-		springLayout.putConstraint(SpringLayout.WEST, autoStretchCheckBox_, 0,
+		springLayout.putConstraint(SpringLayout.WEST, autostretchCheckBox_, 0,
 				SpringLayout.WEST, this);
-		springLayout.putConstraint(SpringLayout.SOUTH, autoStretchCheckBox_, 205,
+		springLayout.putConstraint(SpringLayout.SOUTH, autostretchCheckBox_, 205,
 				SpringLayout.NORTH, this);
-		springLayout.putConstraint(SpringLayout.NORTH, autoStretchCheckBox_, 180,
+		springLayout.putConstraint(SpringLayout.NORTH, autostretchCheckBox_, 180,
 				SpringLayout.NORTH, this);
 
 
@@ -511,11 +511,11 @@ public class SingleChannelContrastPanel extends JPanel implements
    }
    
    private void autostretchCheckboxAction() {
-      rejectOutliersCheckBox_.setEnabled(autoStretchCheckBox_.isSelected());
-      boolean rejectControlsEnabled = autoStretchCheckBox_.isSelected() && rejectOutliersCheckBox_.isSelected();
+      rejectOutliersCheckBox_.setEnabled(autostretchCheckBox_.isSelected());
+      boolean rejectControlsEnabled = autostretchCheckBox_.isSelected() && rejectOutliersCheckBox_.isSelected();
       percentOutliersLabel_.setEnabled(rejectControlsEnabled);
       rejectOutliersPercentSpinner_.setEnabled(rejectControlsEnabled);
-      if (autoStretchCheckBox_.isSelected()) {
+      if (autostretchCheckBox_.isSelected()) {
          autostretch_ = true;
          autoButtonAction();
       } else {
@@ -548,6 +548,10 @@ public class SingleChannelContrastPanel extends JPanel implements
       cache.storeChannelDisplaySettings(0,(int)contrastMin_, (int)contrastMax_, gamma_);
       
       updateHistogram();
+   }
+   
+   public void saveDisplaySettings(ImageCache cache) {
+      cache.storeChannelDisplaySettings(0,(int)contrastMin_, (int)contrastMax_, gamma_);
    }
   	 
    private void updateHistogram() {
@@ -595,7 +599,7 @@ public class SingleChannelContrastPanel extends JPanel implements
    }
 
    //Calculates autostretch, doesnt apply or redraw
-	private void autostretch() {        
+	public void autostretch() {        
          contrastMin_ = pixelMin_;
          contrastMax_ = pixelMax_;
 
@@ -613,7 +617,7 @@ public class SingleChannelContrastPanel extends JPanel implements
 
 	private void setFullScale() {
       setHistMaxAndBinSize();
-      autoStretchCheckBox_.setSelected(false);
+      autostretchCheckBox_.setSelected(false);
       contrastMin_ = 0;
       contrastMax_ = histMax_;    
 	}
@@ -635,7 +639,7 @@ public class SingleChannelContrastPanel extends JPanel implements
       //TODO reimplement slow hist
    }
    
-   public void displayChanged(ImagePlus img, ImageCache cache, boolean newWindow) {
+   public void displayChanged(ImagePlus img, ImageCache cache) {
       try {
          VirtualAcquisitionDisplay vad = VirtualAcquisitionDisplay.getDisplay(WindowManager.getCurrentImage());
          int bitDepth = MDUtils.getBitDepth(vad.getSummaryMetadata());
@@ -647,7 +651,7 @@ public class SingleChannelContrastPanel extends JPanel implements
 
       setHistMaxAndBinSize();
       calcAndDisplayHistAndStats(img);
-      if (newWindow || autostretch_)
+      if (autostretchCheckBox_.isSelected())
          autostretch();
       else 
          loadContrastSettings(cache);
@@ -743,7 +747,7 @@ public class SingleChannelContrastPanel extends JPanel implements
 
    public void onLeftCursor(double pos) {
       if (autostretch_)
-         autoStretchCheckBox_.setSelected(false);
+         autostretchCheckBox_.setSelected(false);
 
       contrastMin_ = Math.max(0, pos) * binSize_;
       if (contrastMax_ < contrastMin_)
@@ -754,7 +758,7 @@ public class SingleChannelContrastPanel extends JPanel implements
 
    public void onRightCursor(double pos) {
       if (autostretch_)
-         autoStretchCheckBox_.setSelected(false);
+         autostretchCheckBox_.setSelected(false);
       
       contrastMax_ = Math.min(255, pos) * binSize_;
       if (contrastMin_ > contrastMax_)
@@ -774,7 +778,7 @@ public class SingleChannelContrastPanel extends JPanel implements
    }
 
 	public boolean getAutoStretch() {
-		return autoStretchCheckBox_.isSelected();
+		return autostretchCheckBox_.isSelected();
 	}
    
    public boolean getSlowHist() {

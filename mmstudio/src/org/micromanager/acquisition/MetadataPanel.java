@@ -116,6 +116,7 @@ public class MetadataPanel extends JPanel
    private final MetadataTableModel summaryMetadataModel_;
    private final String[] columnNames_ = {"Property", "Value"};
    private boolean showUnchangingKeys_;
+   private ImageWindow lastFocusedWindow_;
 
    /** Creates new form MetadataPanel */
    public MetadataPanel() {
@@ -547,6 +548,14 @@ public class MetadataPanel extends JPanel
          return null;
       }
    }
+   
+   public void autoscaleWithoutDraw(ImageCache cache, ImagePlus img) {
+      if (currentContrastPanel_ != null) {
+         currentContrastPanel_.calcAndDisplayHistAndStats(img);
+         currentContrastPanel_.autostretch();
+         currentContrastPanel_.applyLUTToImage(img, cache);
+      }
+   }
 
    // should be called whenever image changes or sliders are moved  
    public void update(ImagePlus imp) {
@@ -586,13 +595,15 @@ public class MetadataPanel extends JPanel
       }
 
    }
-
-
+   
    /*
     * This is called, in contrast to update(), only when the ImageWindow
     * in focus has changed.
     */
    public void focusReceived(ImageWindow focusedWindow) {
+      if (focusedWindow == lastFocusedWindow_)
+         return;
+      lastFocusedWindow_ = focusedWindow;
       if (focusedWindow == null  || !(focusedWindow instanceof VirtualAcquisitionDisplay.DisplayWindow) ) {
          update((ImagePlus)null);
          return;
@@ -606,9 +617,7 @@ public class MetadataPanel extends JPanel
       else
          setContrastPanel(SINGLE_CHANNEL_CONTRAST_PANEL);
       
-      
 //      sizeBarCheckBox.setSelected(imgp.getOverlay() != null && !imgp.getHideOverlay());
-      
       
       if (acq != null) {
          summaryCommentsTextArea.setText(acq.getSummaryComment());
@@ -626,13 +635,13 @@ public class MetadataPanel extends JPanel
       }
       if (acq != null && currentContrastPanel_ != null) {
          currentContrastPanel_.setupChannelControls(cache);
-              
-      //load appropriate contrast settings (autoscale if first image)
-      // calc and display hist, apply LUT and draw
-      currentContrastPanel_.displayChanged(imgp, cache, acq.firstImage());
-        
+       
          
-         update(imgp);
+      //load appropriate contrast settings 
+      // calc and display hist, apply LUT and draw
+      currentContrastPanel_.displayChanged(imgp, cache);      
+         
+      update(imgp);
       }
 
    }

@@ -298,7 +298,23 @@ public class MultiChannelContrastPanel extends JPanel implements ContrastPanel {
          return;
       ccpList_.get(channelIndex).setContrast(min, max);
    }
+
+   public void autostretch() {
+      if (ccpList_ != null)   {
+         for (ChannelControlPanel c : ccpList_) {
+            c.autostretch();
+         }
+      }
+   }
    
+   public void calcAndDisplayHistAndStats(ImagePlus img) {
+       if (ccpList_ != null)   {
+         for (ChannelControlPanel c : ccpList_) {
+            c.calcAndDisplayHistAndStats(img);
+         }
+      }
+   }
+ 
   public void applyLUTToImage(ImagePlus img, ImageCache cache) {
       for (ChannelControlPanel c : ccpList_)
          c.applyChannelLUTToImage(img, cache);
@@ -313,14 +329,13 @@ public class MultiChannelContrastPanel extends JPanel implements ContrastPanel {
       }
    }
    
-    public void displayChanged(ImagePlus img, ImageCache cache, boolean newWindow) {
+    public void displayChanged(ImagePlus img, ImageCache cache) {
        for (ChannelControlPanel c : ccpList_) {
-          
           c.calcAndDisplayHistAndStats(img);
-          if (newWindow || autostretchCheckBox_.isSelected())
+          if (autostretchCheckBox_.isSelected())
              c.autostretch();
           else
-             c.loadContrastSettings(cache);
+             c.loadDisplaySettings(cache);
        }
        mdPanel_.drawWithoutUpdate();
    }

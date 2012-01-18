@@ -14,7 +14,7 @@ public interface ContrastPanel {
 
    public void applyLUTToImage(ImagePlus img, ImageCache cache);
 
-   public void displayChanged(ImagePlus img, ImageCache cache, boolean newWindow);
+   public void displayChanged(ImagePlus img, ImageCache cache);
 
    public boolean getAutoStretch();
 
@@ -31,5 +31,10 @@ public interface ContrastPanel {
    public void setChannelContrast(int channelIndex, int min, int max, ImagePlus img);
    
    public void setupChannelControls(ImageCache cache);
+   
+   public void calcAndDisplayHistAndStats(ImagePlus img);
+   
+   public void autostretch();
+   
 
 }

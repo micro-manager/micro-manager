@@ -115,7 +115,11 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
       initComponents(); 
       channelIndex_ = channelIndex;
       hp_ = addHistogramPanel();
-      mccPanel_ = mccPanel;      
+      mccPanel_ = mccPanel; 
+      ImageCache cache = VirtualAcquisitionDisplay.getDisplay(WindowManager.getCurrentImage()).getImageCache();
+      loadDisplaySettings(cache);
+      updateChannelNameAndColor(cache);
+      cache.setChannelColor(channelIndex_, color_.getRGB());
    }
 
    private void initComponents() {
@@ -359,7 +363,7 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
        fractionToReject_ = frac;
     }
 
-   public void loadContrastSettings(ImageCache cache) {
+   public void loadDisplaySettings(ImageCache cache) {
       contrastMax_ = cache.getChannelMax(channelIndex_);
       if (contrastMax_ < 0)
          contrastMax_ = maxIntensity_;
@@ -480,14 +484,13 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
          CompositeImage ci = (CompositeImage) img;
          ci.setChannelLut(lut);
          setChannelWithoutMovingSlider(img,originalChannel);      
+         
          // ImageJ WORKAROUND
          // The following two lines of code are both necessary for a correct update.
          // Otherwise min and max get inconsistent in ImageJ.
          if (ci.getProcessor(channelIndex_+1) != null)
             ci.getProcessor(channelIndex_ + 1).setMinAndMax(contrastMin_, contrastMax_);
-      } else   //this shouldn't be the case, but you never know...
-         img.getProcessor().setColorModel(lut);
-     
+      }
       img.setDisplayRange(contrastMin_, contrastMax_);
  
       //store contrast settings
@@ -594,7 +597,7 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
    
    public void onRightCursor(double pos) {
       mccPanel_.autostretchCheckBox_.setSelected(false);
-      contrastMax_ = Math.min(255, pos) * binSize_;
+      contrastMax_ = Math.min(NUM_BINS-1, pos) * binSize_;
       if (contrastMin_ > contrastMax_)
          contrastMin_ = contrastMax_;
       mdPanel_.drawWithoutUpdate();

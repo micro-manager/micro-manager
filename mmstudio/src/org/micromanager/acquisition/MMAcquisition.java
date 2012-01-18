@@ -33,6 +33,9 @@ import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Iterator;
 import java.util.UUID;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import java.util.prefs.Preferences;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import mmcorej.CMMCore;
@@ -42,6 +45,7 @@ import mmcorej.TaggedImage;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.json.JSONException;
+import org.micromanager.AcqControlDlg;
 import org.micromanager.MMStudioMainFrame;
 import org.micromanager.api.AcquisitionEngine;
 import org.micromanager.api.ImageCache;
@@ -54,7 +58,10 @@ import org.micromanager.utils.MMScriptException;
 import org.micromanager.utils.ReportingUtils;
 
 public class MMAcquisition {
-
+   
+   public static final Color[] DEFAULT_COLORS = {Color.red, Color.green, Color.blue,
+      Color.orange, Color.pink, Color.yellow};
+   
    private int numFrames_ = 0;
    private int numChannels_ = 0;
    private int numSlices_ = 0;
@@ -359,37 +366,50 @@ public class MMAcquisition {
    private void setDefaultChannelTags(JSONObject md) {
 
       JSONArray channelMaxes = new JSONArray();
-      JSONArray channelMins = new JSONArray();
+      JSONArray channelMins = new JSONArray(); 
 
       // Both channelColors_ and channelNames_ may, or may not yet contain values
       // Since we don't know the size in the constructor, we can not pre-initialize
       // the data.  Therefore, fill in the blanks with deafults here:
-      for (Integer i = 0; i < numChannels_; i++) {
+      channelColors_ = new JSONArray();
+      if (numChannels_ == 1)
          try {
-            channelColors_.get(i);
+            channelColors_.put(0, Color.white.getRGB());
          } catch (JSONException ex) {
+            ReportingUtils.logError(ex);
+         }
+      else
+         for (Integer i = 0; i < numChannels_; i++) {
+            Preferences root = Preferences.userNodeForPackage(AcqControlDlg.class);            
+            Preferences colorPrefs = root.node(root.absolutePath() + "/" + AcqControlDlg.COLOR_SETTINGS_NODE);
+            
+            int color = DEFAULT_COLORS[i % DEFAULT_COLORS.length].getRGB();
             try {
-               channelColors_.put(i, (Object) Color.white.getRGB());
-            } catch (JSONException exx) {
-               ;
+               int newColor = colorPrefs.getInt("Color_" + MMStudioMainFrame.getInstance().getCore().getChannelGroup() 
+                       + "_" + channelNames_.getString(i), Color.white.getRGB());
+               if (newColor != -1)
+                  color = newColor;
+            } catch (JSONException ex) {
+               ReportingUtils.logError(ex);
+            }
+            channelColors_.put(color);
+            
+            try {
+               channelNames_.get(i);
+            } catch (JSONException ex) {
+               try {
+                  channelNames_.put(i, String.valueOf(i));
+               } catch (JSONException exx) {
+                  ;
+               }
+            }
+            try {
+               channelMaxes.put(255);
+               channelMins.put(0);
+            } catch (Exception e) {
+               ReportingUtils.logError(e);
             }
          }
-         try {
-            channelNames_.get(i);
-         } catch (JSONException ex) {
-            try {
-               channelNames_.put(i, String.valueOf(i));
-            } catch (JSONException exx) {
-               ;
-            }
-         }
-         try {
-            channelMaxes.put(255);
-            channelMins.put(0);
-         } catch (Exception e) {
-            ReportingUtils.logError(e);
-         }
-      }
       try {
          md.put("ChColors", channelColors_);
          md.put("ChNames", channelNames_);

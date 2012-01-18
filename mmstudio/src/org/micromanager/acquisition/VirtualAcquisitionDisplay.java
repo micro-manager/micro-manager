@@ -7,6 +7,7 @@ import ij.ImageStack;
 import ij.process.LUT;
 import java.awt.event.AdjustmentEvent;
 import ij.CompositeImage;
+import ij.ImageListener;
 import ij.ImagePlus;
 import ij.WindowManager;
 import ij.gui.ImageWindow;
@@ -347,6 +348,7 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
       }
       hyperImage_ = createHyperImage(createMMImagePlus(virtualStack_), 
               numGrayChannels, numSlices, numFrames, virtualStack_, controls_);
+  
       applyPixelSizeCalibration(hyperImage_);
       createWindow();
       cSelector_ = getSelector("c");
@@ -836,19 +838,13 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
       if (hyperImage_ == null) {
          startup(tags);
       }
-
+      
       int slice = MDUtils.getSliceIndex(tags);      
       int channel = MDUtils.getChannelIndex(tags);
       int frame = MDUtils.getFrameIndex(tags);
       int position = MDUtils.getPositionIndex(tags);
-      String channelName = MDUtils.getChannelName(tags);
-      Color channelColor = null;
-      try {
-         channelColor = new Color(MDUtils.getChannelColor(tags));
-      } catch (Exception e) {}
       
       int superChannel = this.rgbToGrayChannel(MDUtils.getChannelIndex(tags));        
-
 
       if (cSelector_ != null) {
          if (cSelector_.getMaximum() <= (1 + superChannel)) {
@@ -858,13 +854,21 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
             //       "setupLuts", 1 + superChannel, Integer.TYPE);
          }
       }
+
+      // Make sure image is shown if it is a single slice/frame: (ImageJ workaround)
+      IMMImagePlus img = (IMMImagePlus) hyperImage_;
+      if (img.getNFramesUnverified() == 1 && img.getNSlicesUnverified() == 1) {
+         if (img instanceof MMCompositeImage) {
+            MMCompositeImage ci = (MMCompositeImage) img;
+            for (int ch = 0; ch < img.getNChannelsUnverified(); ch++) {
+               ci.getProcessor(ch + 1).setPixels(ci.getStack().getPixels(ch + 1));
+            }
+         } else {
+            hyperImage_.getProcessor().setPixels(hyperImage_.getStack().getPixels(channel + 1));
+         }
+      }
+
       
-
-      if (channelName != null)
-         imageCache_.setChannelName(channel, channelName);
-      if (channelColor != null)
-         imageCache_.setChannelColor(superChannel, channelColor.getRGB());
-
       if (!simple_) {
          if (tSelector_ != null) {
             if (tSelector_.getMaximum() <= (1 + frame)) {
@@ -877,17 +881,19 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
          setPosition(position);
          hyperImage_.setPosition(1 + superChannel, 1 + slice, 1 + frame);
       }
-
-      // Make sure image is shown if it is a single plane: (ImageJ workaround)
-      IMMImagePlus img = (IMMImagePlus) hyperImage_;
-      if ( img.getNFramesUnverified() == 1 && img.getNSlicesUnverified() == 1 ) {
-         if (img instanceof MMCompositeImage) {
-            MMCompositeImage ci = (MMCompositeImage) img;
-            ci.getProcessor(channel + 1).setPixels(ci.getStack().getPixels(channel+1));
-            ///////////////////////////////////////////////////////////////////////////////verify indices correct
-         } else
-         hyperImage_.getProcessor().setPixels(hyperImage_.getStack().getPixels(channel+1));          
+      
+      
+      //Used to autoscale first images in a window
+      if (newDisplay_)  {
+         //call this explicitly to get contrast panel set up, because ImageFocusListener
+         //not guarenteed to fire before this code reached
+         mdPanel_.focusReceived(hyperImage_.getWindow());
+         if (channel + 1 == ((IMMImagePlus) hyperImage_).getNChannelsUnverified() ) {         
+            mdPanel_.autoscaleWithoutDraw(imageCache_, hyperImage_);                     
+            newDisplay_ = false;
+         }
       }
+      
       
       Runnable updateAndDraw = new Runnable() {
          public void run() {
@@ -930,14 +936,6 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
             preferredPositionTimer_.start();
          }
       }
-   }
-   
-   public boolean firstImage() {
-      if (newDisplay_) {
-         newDisplay_ = false;
-         return true;
-      }
-      return false;
    }
 
    private void updatePosition(int p) {
