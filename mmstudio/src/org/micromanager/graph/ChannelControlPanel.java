@@ -340,7 +340,7 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
     public void setFullScale(){
       mccPanel_.autostretchCheckBox_.setSelected(false);
       contrastMin_ = 0;
-      contrastMax_ = maxIntensity_;
+      contrastMax_ = histMax_;
     }
     
     public void autostretch() {

@@ -615,7 +615,7 @@ public class SingleChannelContrastPanel extends JPanel implements
       setHistMaxAndBinSize();
       autoStretchCheckBox_.setSelected(false);
       contrastMin_ = 0;
-      contrastMax_ = maxIntensity_;    
+      contrastMax_ = histMax_;    
 	}
    
    private void loadContrastSettings(ImageCache cache) {
