@@ -879,8 +879,15 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
       }
 
       // Make sure image is shown if it is a single plane: (ImageJ workaround)
-      if (hyperImage_.getStackSize() == 1)
-         hyperImage_.getProcessor().setPixels(hyperImage_.getStack().getPixels(1));
+      IMMImagePlus img = (IMMImagePlus) hyperImage_;
+      if ( img.getNFramesUnverified() == 1 && img.getNSlicesUnverified() == 1 ) {
+         if (img instanceof MMCompositeImage) {
+            MMCompositeImage ci = (MMCompositeImage) img;
+            ci.getProcessor(channel + 1).setPixels(ci.getStack().getPixels(channel+1));
+            ///////////////////////////////////////////////////////////////////////////////verify indices correct
+         } else
+         hyperImage_.getProcessor().setPixels(hyperImage_.getStack().getPixels(channel+1));          
+      }
       
       Runnable updateAndDraw = new Runnable() {
          public void run() {

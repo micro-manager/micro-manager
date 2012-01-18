@@ -506,12 +506,7 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
          return;
       ImageProcessor ip = null;
       if (img.isComposite() && ((CompositeImage) img).getMode()  == CompositeImage.COMPOSITE) {
-         ip = ((CompositeImage) img).getProcessor(channelIndex_ + 1);
-         CompositeImage ci = (CompositeImage) img;
-         
-         //ImageJ worakaround
-         if (channelIndex_ != 0)
-            ip.setPixels(ci.getChannelProcessor().getPixels());      
+         ip = ((CompositeImage) img).getProcessor(channelIndex_ + 1);  
       } else if (img.getChannel() == (channelIndex_ + 1)) {   
          ip = img.getProcessor();
       }
