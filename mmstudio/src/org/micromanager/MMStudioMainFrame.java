@@ -3865,7 +3865,7 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
    @Override
    public int getAcquisitionImageBitDepth(String acqName) throws MMScriptException {
       MMAcquisition acq = acqMgr_.getAcquisition(acqName);
-      return acq.getDepth();
+      return acq.getBitDepth();
    }
    
    @Override
