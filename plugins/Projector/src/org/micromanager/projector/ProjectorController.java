@@ -14,8 +14,6 @@ import java.awt.image.BufferedImage;
 import java.awt.geom.AffineTransform;
 import java.awt.image.AffineTransformOp;
 import java.awt.Color;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import org.micromanager.utils.ReportingUtils;
 import ij.process.ImageProcessor;
 import java.awt.Point;
@@ -35,20 +33,20 @@ public class ProjectorController {
    private String slm;
    private CMMCore mmc;
    private ScriptInterface gui;
-   private int slmWidth;
-   private int slmHeight;
-   private double diameter;
    private AffineTransform trans;
    private boolean imageOn_ = false;
+   private ProjectionDevice dev;
 
    public ProjectorController(ScriptInterface app) {
       gui = app;
       mmc = app.getMMCore();
-      slm = mmc.getSLMDevice();
+      String slm = mmc.getSLMDevice();
+      String galvo = mmc.getGalvoDevice();
+      
       if (slm.length() > 0) {
-         slmWidth = (int) mmc.getSLMWidth(slm);
-         slmHeight = (int) mmc.getSLMHeight(slm);
-         diameter = 5;
+         dev = new SLM(mmc, 5);
+      } else if (galvo.length() > 0) {
+         dev = new Galvo(mmc);
       }
 
    }
@@ -58,32 +56,15 @@ public class ProjectorController {
       trans = getFinalTransform(firstApprox);
    }
 
-   public void addSpot(ImageProcessor proc, int x, int y, double dia) {
-      proc.fillOval((int) (x-dia/2), (int) (y-dia/2), (int) dia, (int) dia);
-   }
+
 // then use:
 //imgp.updateImage();
 //imgp.getCanvas().repaint();
 
 
-   public void displaySpot(int x, int y) {
-      ImageProcessor proc = new ByteProcessor(slmWidth, slmHeight);
-      proc.setColor(Color.black);
-      proc.fill();
-      proc.setColor(Color.white);
-      addSpot(proc,x,y, diameter);
-      ImagePlus img = new ImagePlus("",proc);
-      //img.show();
-      try {
-         mmc.setSLMImage(slm, (byte []) proc.getPixels());
-         mmc.displaySLMImage(slm);
-      } catch (Throwable e) {
-         ReportingUtils.showError("SLM not connecting properly.");
-      }
-   }
 
    public Point measureSpot(Point dmdPt) {
-      displaySpot(dmdPt.x,dmdPt.y);
+      dev.displaySpot(dmdPt.x,dmdPt.y);
       //mmc.sleep(200);
       gui.snapSingleImage();
       ImageProcessor proc = IJ.getImage().getProcessor();
@@ -103,8 +84,8 @@ public class ProjectorController {
    }
 
    public AffineTransform getFirstApproxTransform() {
-      int x = slmWidth/2;
-      int y = slmHeight/2;
+      int x = dev.getWidth()/2;
+      int y = dev.getHeight()/2;
 
       int s = 50;
       Map spotMap = new HashMap();
@@ -138,55 +119,6 @@ public class ProjectorController {
       return MathFunctions.generateAffineTransformFromPointPairs(spotMap2);
    }
    
-
-   public void setRoi() {
-      AffineTransformOp cmo = new AffineTransformOp(trans, AffineTransformOp.TYPE_BILINEAR);
-      ImagePlus imgpCamera = null;
-
-      if (gui.getImageWin() != null) {
-         imgpCamera = gui.getImageWin().getImagePlus();
-      } else {
-         return;
-      }
-
-      int imgWidth = (int) mmc.getImageWidth();
-      int imgHeight = (int) mmc.getImageHeight();
-      
-
-      if (imgpCamera != null) {
-         ImageProcessor procCamera = imgpCamera.getProcessor();
-         ImageCanvas cvsCamera = imgpCamera.getCanvas();
-         Roi roiCamera = imgpCamera.getRoi();
-
-         if (roiCamera != null) {
-            ByteProcessor procMask = new ByteProcessor(imgWidth, imgHeight);
-            procMask.setColor(Color.black);
-            procMask.fill();
-            procMask.setColor(Color.white);
-            procMask.fill(roiCamera);
-            //imgpMask = new ImagePlus("", procMask);
-            //imgpMask.show();
-
-            BufferedImage imgMask = procMask.getBufferedImage();
-            BufferedImage imgSLM = new BufferedImage(slmWidth,slmHeight,BufferedImage.TYPE_BYTE_GRAY);
-            cmo.filter(imgMask,imgSLM);
-            ByteProcessor procSLM = new ByteProcessor(imgSLM);
-            try {
-               mmc.setSLMImage(slm, (byte[]) procSLM.getPixels());
-               if (imageOn_)
-                  mmc.displaySLMImage(slm);
-            } catch (Exception ex) {
-               ReportingUtils.showError(ex);          
-            }
-            //gui.snapSingleImage();
-         } else {
-            ReportingUtils.showMessage("Please draw an ROI for bleaching.");
-         }
-      } else {
-         ReportingUtils.showMessage("Please snap an image first.");
-      }
-   }
-
    public void turnOff() {
       try {
          mmc.setSLMPixelsTo(slm, (byte) 0);
