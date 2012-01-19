@@ -600,7 +600,7 @@ public class MetadataPanel extends JPanel
     * This is called, in contrast to update(), only when the ImageWindow
     * in focus has changed.
     */
-   public void focusReceived(ImageWindow focusedWindow) {
+   public synchronized void focusReceived(ImageWindow focusedWindow) {
       if (focusedWindow == lastFocusedWindow_)
          return;
       lastFocusedWindow_ = focusedWindow;
