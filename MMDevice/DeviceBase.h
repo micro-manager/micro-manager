@@ -1253,7 +1253,7 @@ public:
    }
 
    /**
-   * Default implementation of the pixel size cscaling.
+   * Default implementation of the pixel size scaling.
    */
    virtual double GetPixelSizeUm() const {return GetBinning();}
 
@@ -1271,17 +1271,29 @@ public:
       return DEVICE_OK;
    }
 
+   /**
+    * Multi-Channel cameras use this function to indicate how many channels they 
+    * provide.  Single channel cameras do not need to override this
+    */
    virtual unsigned GetNumberOfChannels() const 
    {
       return 1;
    }
 
+   /**
+    * Multi-channel cameras should provide names for their channels
+    * Single cahnnel cameras do not need to override this default implementation
+    */
    virtual int GetChannelName(unsigned /* channel */, char* name)
    {
-      CDeviceUtils::CopyLimitedString(name, "Test");
+      CDeviceUtils::CopyLimitedString(name, "");
       return DEVICE_OK;
    }
 
+   /**
+    * Version of GetImageBuffer for multi-channel cameras
+    * Single channel (standard) cameras do not need to override this
+    */
    virtual const unsigned char* GetImageBuffer(unsigned /* channelNr */)
    {
       if (GetNumberOfChannels() == 1)
