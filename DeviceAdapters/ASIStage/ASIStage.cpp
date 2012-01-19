@@ -2481,7 +2481,8 @@ CRISP::CRISP() :
    stepSizeUm_(0.1),
    ledIntensity_(50),
    na_(0.65),
-   waitAfterLock_(1000)
+   waitAfterLock_(1000),
+   answerTimeoutMs_(1000)
 {
    InitializeDefaultErrorMessages();
 
@@ -2514,6 +2515,10 @@ CRISP::~CRISP()
    initialized_ = false;
 }
 
+MM::DeviceDetectionStatus CRISP::DetectDevice(void)
+{
+   return ASICheckSerialPort(*this,*GetCoreCallback(), port_, answerTimeoutMs_);
+}
 
 int CRISP::Initialize()
 {

@@ -279,6 +279,8 @@ public:
    int Initialize();
    int Shutdown();
 
+   MM::DeviceDetectionStatus DetectDevice(void);
+
    // AutoFocus API
    virtual int SetContinuousFocusing(bool state);
    virtual int GetContinuousFocusing(bool& state);
@@ -322,6 +324,7 @@ private:
    std::string focusState_;
    long waitAfterLock_;
    std::string axis_;
+   int answerTimeoutMs_;
 };
 
 class AZ100Turret : public CStateDeviceBase<AZ100Turret>, public ASIBase
