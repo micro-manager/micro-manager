@@ -39,11 +39,13 @@ using namespace std;
 // commands
 ///////////
 
-// MGMSG_MOT_MOVE_HOME
+// MGMSG_MOT_MOVE_HOME (Tx)
 const unsigned char homeCmd[] = {0x43, 0x04, 0x10, 0x00, 0x50, 0x01};
+
+// MGMSG_MOT_MOVE_HOME (Rx) - response
 const unsigned char homeRsp[] = {0x44, 0x04, 0x10, 0x00, 0x01, 0x50};
 
-// get position
+// MGMSG_MOT_REQ_POSCOUNTER (Tx)
 const unsigned char getPosCmd[] =  {         0x11, // cmd low byte
                                              0x04, // cmd high byte
                                              0x01, // channel id low
@@ -52,7 +54,7 @@ const unsigned char getPosCmd[] =  {         0x11, // cmd low byte
                                              0x01, // dest hi
                                           };             
 
-
+// MGMSG_MOT_GET_POSCOUNTER (Rx) - response
 const unsigned char getPosRsp[] = {          0x12, // cmd low byte
                                              0x04, // cmd high byte
                                              0x06, // num bytes low
@@ -67,7 +69,7 @@ const unsigned char getPosRsp[] = {          0x12, // cmd low byte
                                              0x00  // position high byte
                                           };             
 
-// set position
+// MGMSG_MOT_MOVE_ABSOLUTE (Tx)
 const unsigned char setPosCmd[] =  {         0x53, // cmd low byte
                                              0x04, // cmd high byte
                                              0x06, // nun bytes low
@@ -82,7 +84,7 @@ const unsigned char setPosCmd[] =  {         0x53, // cmd low byte
                                              0x00  // position high byte
                                           };             
 
-// MGMSG_MOT_REQ_ DEVPARAMS
+// MGMSG_MOT_REQ_DEVPARAMS (Tx)
 const unsigned char reqParamsCmd[] =  {      0x15, // cmd low byte
                                              0x00, // cmd high byte
                                              0x20, // num bytes low
@@ -90,7 +92,7 @@ const unsigned char reqParamsCmd[] =  {      0x15, // cmd low byte
                                              0x50, // 
                                              0x01
                                           };             
-
+// MGMSG_MOT_GET_ DEVPARAMS (Rx) - response
 const unsigned char getParamsRsp[] = {       0x16, // cmd low
                                              0x00, //
                                              0x28, // 
