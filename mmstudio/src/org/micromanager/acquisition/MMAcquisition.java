@@ -385,10 +385,12 @@ public class MMAcquisition {
             
             int color = DEFAULT_COLORS[i % DEFAULT_COLORS.length].getRGB();
             try {
-               int newColor = colorPrefs.getInt("Color_" + MMStudioMainFrame.getInstance().getCore().getChannelGroup() 
-                       + "_" + channelNames_.getString(i), Color.white.getRGB());
-               if (newColor != -1)
-                  color = newColor;
+               String channelGroup = MMStudioMainFrame.getInstance().getCore().getChannelGroup();
+               if (channelGroup.length() == 0)
+                  color = colorPrefs.getInt("Color_Camera_" + channelNames_.getString(i), color);
+               else
+                  color = colorPrefs.getInt("Color_" + channelGroup 
+                       + "_" + channelNames_.getString(i), color);
             } catch (JSONException ex) {
                ReportingUtils.logError(ex);
             }

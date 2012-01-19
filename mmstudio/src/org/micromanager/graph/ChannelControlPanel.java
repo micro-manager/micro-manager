@@ -31,6 +31,9 @@ import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.MouseWheelEvent;
 import java.awt.event.MouseWheelListener;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import java.util.prefs.Preferences;
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
@@ -39,6 +42,12 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.SpringLayout;
 import javax.swing.SwingUtilities;
+import mmcorej.CMMCore;
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+import org.micromanager.AcqControlDlg;
+import org.micromanager.MMStudioMainFrame;
 import org.micromanager.acquisition.MetadataPanel;
 import org.micromanager.acquisition.VirtualAcquisitionDisplay;
 import org.micromanager.api.ImageCache;
@@ -319,8 +328,54 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
     }
     
     private void colorPickerLabelMouseClicked() {
-       editColor();
+      //Can only edit color in this way if there is an active window
+     //so it is ok to get image cache in this way
+     ImageCache cache = VirtualAcquisitionDisplay.getDisplay(WindowManager.getCurrentImage()).getImageCache();
+      String name = "selected";
+      if (cache.getChannelName(channelIndex_) != null)
+         name = cache.getChannelName(channelIndex_);
+      Color newColor = JColorChooser.showDialog(this, "Choose a color for the "
+              + name + " channel", cache.getChannelColor(channelIndex_));
+      if (newColor != null) 
+         cache.setChannelColor(channelIndex_, newColor.getRGB());
+      updateChannelNameAndColor(cache);
+      
+      //if multicamera, save color
+      saveColorPreference(cache, newColor.getRGB());
     }
+    
+    /*
+     * save color to preferences, but only if this is multicamera.  Since
+     * we cannot check for this directly from metadata,this performs a series of
+     * checks to error on the side of not saving the preference
+     */
+    private void saveColorPreference(ImageCache cache, int color) {
+       CMMCore core = MMStudioMainFrame.getInstance().getCore();
+       JSONObject summary = cache.getSummaryMetadata();
+       if (core == null || summary == null)
+          return;
+      int numMultiCamChannels = (int) core.getNumberOfCameraChannels(), numDataChannels = -1;
+      JSONArray dataNames = null;
+      String[] cameraNames = new String[numMultiCamChannels];
+      try {
+         numDataChannels = MDUtils.getNumChannels(summary);
+         dataNames = summary.getJSONArray("ChNames");
+         for (int i = 0; i < numMultiCamChannels; i++)
+            cameraNames[i] = core.getCameraChannelName(i);
+
+       if ( numMultiCamChannels > 1 &&  numDataChannels == numMultiCamChannels
+               && cameraNames.length == dataNames.length()) {
+          for (int h = 0; h < cameraNames.length; h++)
+             if (!cameraNames[h].equals(dataNames.getString(h)) )
+                  return;
+          Preferences root = Preferences.userNodeForPackage(AcqControlDlg.class);              
+          Preferences colorPrefs = root.node(root.absolutePath() + "/" + AcqControlDlg.COLOR_SETTINGS_NODE);
+          colorPrefs.putInt("Color_Camera_" + cameraNames[channelIndex_],color);            
+         }
+      } catch (Exception ex) {
+         return;
+      }
+   }
 
     private void channelNameCheckboxAction() {
        updateChannelVisibility();
@@ -369,21 +424,6 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
          contrastMax_ = maxIntensity_;
       contrastMin_ = cache.getChannelMin(channelIndex_);
       gamma_ = cache.getChannelGamma(channelIndex_);
-   }
-
-   private void editColor() {
-     //Can only edit color in this way if there is an active window
-     //so it is ok to get image cache in this way
-     ImageCache cache = VirtualAcquisitionDisplay.getDisplay(WindowManager.getCurrentImage()).getImageCache();
-      
-      String name = "selected";
-      if (cache.getChannelName(channelIndex_) != null)
-         name = cache.getChannelName(channelIndex_);
-      Color newColor = JColorChooser.showDialog(this, "Choose a color for the "
-              + name + " channel", cache.getChannelColor(channelIndex_));
-      if (newColor != null) 
-         cache.setChannelColor(channelIndex_, newColor.getRGB());
-      updateChannelNameAndColor(cache);
    }
 
    public void setLogScale(boolean logScale) {

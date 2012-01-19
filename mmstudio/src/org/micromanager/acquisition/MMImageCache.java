@@ -46,7 +46,6 @@ public class MMImageCache implements TaggedImageStorage, ImageCache {
    private JSONObject lastTags_;
    private boolean conserveRam_;
    private VirtualAcquisitionDisplay display_;
-   private Preferences prefs_;
 
 
    public void addImageCacheListener(ImageCacheListener l) {
@@ -66,7 +65,6 @@ public class MMImageCache implements TaggedImageStorage, ImageCache {
       changingKeys_ = new HashSet<String>();
       softTable_ = new HashMap<String, SoftReference<TaggedImage>>();
       conserveRam_ = MMStudioMainFrame.getInstance().getConserveRamOption();
-      prefs_ = Preferences.userNodeForPackage(this.getClass());
    }
 
    public void finished() {
@@ -349,11 +347,7 @@ public class MMImageCache implements TaggedImageStorage, ImageCache {
       try {
          return new Color(getChannelSetting(channelIndex).getInt("Color"));
       } catch (Exception ex) {
-         try {
-            return new Color(prefs_.node("ChColors").getInt(getChannelName(channelIndex), 0xFFFFFF));
-         } catch (Exception e) {
-            return Color.WHITE;
-         }
+         return Color.WHITE;
       }
    }
 
@@ -364,7 +358,6 @@ public class MMImageCache implements TaggedImageStorage, ImageCache {
       } catch (JSONException ex) {
          ReportingUtils.logError(ex);
       }
-      prefs_.node("ChColors").putInt(getChannelName(channel), rgb);
    }
 
    public String getChannelName(int channelIndex) {
