@@ -215,6 +215,7 @@ public:
    std::string getAutoFocusDevice();
    std::string getImageProcessorDevice();
    std::string getSLMDevice();
+   std::string getGalvoDevice();
    std::string getChannelGroup();
    void setCameraDevice(const char* cameraLabel) throw (CMMError);
    void setShutterDevice(const char* shutterLabel) throw (CMMError);
@@ -223,6 +224,7 @@ public:
    void setAutoFocusDevice(const char* focusLabel) throw (CMMError);
    void setImageProcessorDevice(const char* procLabel) throw (CMMError);
    void setSLMDevice(const char* slmLabel) throw (CMMError);
+   void setGalvoDevice(const char* galvoLabel) throw (CMMError);
    void setChannelGroup(const char* channelGroup) throw (CMMError);
    //@ }
 
@@ -445,6 +447,15 @@ public:
    unsigned getSLMBytesPerPixel(const char* deviceLabel) const;
    //@ }
 
+   /** @name Galvo control
+   * API for Galvo-based phototargeting devices
+   */
+   //@ {
+   void pointGalvoAndFire(const char* deviceLabel, double x, double y, double pulseTime_us) throw (CMMError);
+   void moveGalvo(const char* deviceLabel, double deltaX, double deltaY) throw (CMMError);
+   void setGalvoPosition(const char* deviceLabel, double x, double y) throw (CMMError);
+   //@ }
+
    /** @name Acquisition context API
    * NOTE: experimental feature
    * API notifying core of acquisition context events
@@ -511,6 +522,7 @@ private:
    MM::XYStage* xyStage_;
    MM::AutoFocus* autoFocus_;
    MM::SLM* slm_;
+   MM::Galvo* galvo_;
 
    std::string channelGroup_;
    MM::ImageProcessor* imageProcessor_;
@@ -543,6 +555,8 @@ private:
    void logError(const char* device, const char* msg, const char* file=0, int line=0) const;
    void updateAllowedChannelGroups();
    void assignDefaultRole(MM::Device* pDev);
+   void updateCoreProperty(const char* propName, MM::DeviceType devType) throw (CMMError);
+
 
    // >>>>> OBSOLETE >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
    void defineConfiguration(const char* configName, const char* deviceName, const char* propName, const char* value);

@@ -1003,9 +1003,11 @@ namespace MM {
 
       DeviceType GetType() const {return Type;}
       static const DeviceType Type = GalvoDevice;
-
+      
    //Galvo API:
-
+      virtual int PointAndFire(double x, double y, double time_us) = 0;
+      virtual int Move(double deltaX, double deltaY) = 0;
+      virtual int SetPosition(double x, double y) = 0;
    };
 
    /**

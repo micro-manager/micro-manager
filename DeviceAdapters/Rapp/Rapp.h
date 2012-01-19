@@ -28,7 +28,11 @@
 #include "../../MMDevice/DeviceBase.h"
 #include <string>
 #include <map>
+
+#pragma warning( push )
+#pragma warning( disable : 4251 )
 #include "obsROE_Device.h"
+#pragma warning( pop )
 
 class RappScanner : public CGalvoBase<RappScanner>
 {
@@ -48,15 +52,25 @@ public:
    // that's where the device detection is going for now
    MM::DeviceDetectionStatus DetectDevice(void);
 
-   // Property functors
-   int OnCalibrationMode(MM::PropertyBase* pProp, MM::ActionType eAct);
+   // Galvo API
+   int PointAndFire(double x, double y, double pulseTime_us);
+   int Move(double deltaX, double deltaY);
+   int SetPosition(double x, double y);
 
+   // Property action handlers
+   int OnCalibrationMode(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnPort(MM::PropertyBase* pProp, MM::ActionType eAct);
 
 private:
    bool initialized_;
    std::string port_;
    obsROE_Device* UGA_;
    long calibrationMode_;
+
+   // Helper functions
+   void RappScanner::RunDummyCalibration();
+   double currentX_;
+   double currentY_;
 };
 
 

@@ -151,7 +151,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="obsROE_Device.lib"
+				AdditionalDependencies="obsROE_Device.lib ROEobsTools.lib"
 				OutputFile="$(OutDir)/mmgr_dal_$(ProjectName).dll"
 				LinkIncremental="1"
 				AdditionalLibraryDirectories="&quot;..\..\..\3rdparty\Rapp\UGA 40 Control SDK\lib&quot;"

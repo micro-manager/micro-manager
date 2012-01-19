@@ -253,7 +253,7 @@ const ImgBuffer* CircularBuffer::GetNthFromTopImageBuffer(unsigned long n) const
    if (n >= frameArray_.size() )
       return 0;
 
-   if (insertIndex_ <= n)
+   if ((unsigned long) insertIndex_ <= n)
    {
       return frameArray_[(frameArray_.size() - n + insertIndex_ - 1) % frameArray_.size()].FindImage(0, 0);
    }

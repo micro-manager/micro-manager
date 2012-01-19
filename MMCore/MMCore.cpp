@@ -109,7 +109,7 @@ MMThreadLock CMMCore::deviceLock_;
  * devices at this point.
  */
 CMMCore::CMMCore() :
-   camera_(0), everSnapped_(false), shutter_(0), focusStage_(0), xyStage_(0), autoFocus_(0), slm_(0), imageProcessor_(0), pollingIntervalMs_(10), timeoutMs_(5000),
+   camera_(0), everSnapped_(false), shutter_(0), focusStage_(0), xyStage_(0), autoFocus_(0), slm_(0), galvo_(0), imageProcessor_(0), pollingIntervalMs_(10), timeoutMs_(5000),
    logStream_(0), autoShutter_(true), callback_(0), configGroups_(0), properties_(0), externalCallback_(0), pixelSizeGroup_(0), cbuf_(0), pPostedErrorsLock_(NULL)
 {
    // get current working directory
@@ -240,6 +240,11 @@ CMMCore::CMMCore() :
 			CoreProperty propSLM;
 			properties_->Add(MM::g_Keyword_CoreSLM, propSLM);
          properties_->AddAllowedValue(MM::g_Keyword_CoreSLM, "");
+
+			// SLM device
+			CoreProperty propGalvo;
+			properties_->Add(MM::g_Keyword_CoreGalvo, propGalvo);
+         properties_->AddAllowedValue(MM::g_Keyword_CoreGalvo, "");
 
 			// channel group
 			CoreProperty propChannelGroup;
@@ -693,6 +698,11 @@ void CMMCore::assignDefaultRole(MM::Device* pDevice)
          CORE_LOG1("Device %s set as default SLM.\n", label);
       break;
 
+      case MM::GalvoDevice:
+         galvo_ = static_cast<MM::Galvo*>(pDevice);
+         CORE_LOG1("Device %s set as default Galvo.\n", label);
+      break;
+
       default:
          // no action on unrecognized device
          //CORE_LOG1("%s: unknown device type\n", label);
@@ -887,59 +897,25 @@ void CMMCore::initializeAllDevices() throw (CMMError)
 
 void CMMCore::updateCoreProperties() throw (CMMError)
 {
-   // Camera device
-   vector<string> cameras = getLoadedDevicesOfType(MM::CameraDevice);
-   cameras.push_back(""); // add empty value
-   properties_->ClearAllowedValues(MM::g_Keyword_CoreCamera);
-   for (size_t i=0; i<cameras.size(); i++)
-      properties_->AddAllowedValue(MM::g_Keyword_CoreCamera, cameras[i].c_str());
+   updateCoreProperty(MM::g_Keyword_CoreCamera, MM::CameraDevice);
+   updateCoreProperty(MM::g_Keyword_CoreShutter, MM::ShutterDevice);
+   updateCoreProperty(MM::g_Keyword_CoreFocus,MM::StageDevice);
+   updateCoreProperty(MM::g_Keyword_CoreXYStage,MM::XYStageDevice);
+   updateCoreProperty(MM::g_Keyword_CoreAutoFocus,MM::AutoFocusDevice);
+   updateCoreProperty(MM::g_Keyword_CoreImageProcessor,MM::ImageProcessorDevice);
+   updateCoreProperty(MM::g_Keyword_CoreSLM,MM::SLMDevice);
+   updateCoreProperty(MM::g_Keyword_CoreGalvo,MM::GalvoDevice);
 
-   // Shutter device
-   vector<string> shutters = getLoadedDevicesOfType(MM::ShutterDevice);
-   shutters.push_back(""); // add empty value
-   properties_->ClearAllowedValues(MM::g_Keyword_CoreShutter);
-   for (size_t i=0; i<shutters.size(); i++)
-      properties_->AddAllowedValue(MM::g_Keyword_CoreShutter, shutters[i].c_str());
-   
-   // focus device
-   vector<string> stages = getLoadedDevicesOfType(MM::StageDevice);
-   stages.push_back(""); // add empty value
-   properties_->ClearAllowedValues(MM::g_Keyword_CoreFocus);
-   for (size_t i=0; i<stages.size(); i++)
-      properties_->AddAllowedValue(MM::g_Keyword_CoreFocus, stages[i].c_str());
-
-   // XY device
-   vector<string> xystages = getLoadedDevicesOfType(MM::XYStageDevice);
-   xystages.push_back(""); // add empty value
-   properties_->ClearAllowedValues(MM::g_Keyword_CoreXYStage);
-   for (size_t i=0; i<xystages.size(); i++)
-      properties_->AddAllowedValue(MM::g_Keyword_CoreXYStage, xystages[i].c_str());
-
-    // auto-focus device
-   vector<string> afmodules = getLoadedDevicesOfType(MM::AutoFocusDevice);
-   afmodules.push_back(""); // add empty value
-   properties_->ClearAllowedValues(MM::g_Keyword_CoreAutoFocus);
-   for (size_t i=0; i<afmodules.size(); i++)
-      properties_->AddAllowedValue(MM::g_Keyword_CoreAutoFocus, afmodules[i].c_str());
-
-   // image processor device
-   vector<string> procmodules = getLoadedDevicesOfType(MM::ImageProcessorDevice);
-   procmodules.push_back(""); // add empty value
-   properties_->ClearAllowedValues(MM::g_Keyword_CoreImageProcessor);
-   for (size_t i=0; i<procmodules.size(); i++)
-      properties_->AddAllowedValue(MM::g_Keyword_CoreImageProcessor, procmodules[i].c_str());
-
-   // slm device
-   vector<string> slmmodules = getLoadedDevicesOfType(MM::SLMDevice);
-   slmmodules.push_back(""); // add empty value
-   properties_->ClearAllowedValues(MM::g_Keyword_CoreSLM);
-   for (size_t i=0; i<slmmodules.size(); i++)
-      properties_->AddAllowedValue(MM::g_Keyword_CoreSLM, slmmodules[i].c_str());
-
-   // Busy flag time out: all positive values are allowed
-   
    properties_->Refresh();
+}
 
+void CMMCore::updateCoreProperty(const char* propName, MM::DeviceType devType) throw (CMMError)
+{
+   vector<string> devices = getLoadedDevicesOfType(devType);
+   devices.push_back(""); // add empty value
+   properties_->ClearAllowedValues(propName);
+   for (size_t i=0; i<devices.size(); i++)
+      properties_->AddAllowedValue(propName, devices[i].c_str());
 }
 
 /**
@@ -2668,7 +2644,7 @@ string CMMCore::getImageProcessorDevice()
 
 /**
  * Returns the label of the currently selected SLM device.
- * @return camera name
+ * @return slm name
  */
 string CMMCore::getSLMDevice()
 {
@@ -2676,6 +2652,26 @@ string CMMCore::getSLMDevice()
    if (slm_)
       try {
          deviceName = pluginManager_.GetDeviceLabel(*slm_);
+      }
+      catch (CMMError& err)
+      {
+         // trap the error and ignore it in this case.
+         // This happens only if the system is in the inconsistent internal state
+         CORE_DEBUG1("Internal error: plugin manager does not recognize device reference. %s\n", err.getMsg().c_str());
+      }
+   return deviceName;
+}
+
+/**
+ * Returns the label of the currently selected Galvo device.
+ * @return galvo name
+ */
+string CMMCore::getGalvoDevice()
+{
+   string deviceName;
+   if (galvo_)
+      try {
+         deviceName = pluginManager_.GetDeviceLabel(*galvo_);
       }
       catch (CMMError& err)
       {
@@ -2725,6 +2721,25 @@ void CMMCore::setSLMDevice(const char* slmLabel) throw (CMMError)
    stateCache_.addSetting(PropertySetting(MM::g_Keyword_CoreDevice, MM::g_Keyword_CoreSLM, getSLMDevice().c_str()));
 }
 
+
+/**
+ * Sets the current galvo device.
+ */
+void CMMCore::setGalvoDevice(const char* galvoLabel) throw (CMMError)
+{
+   if (galvoLabel && strlen(galvoLabel)>0)
+   {
+      galvo_ = getSpecificDevice<MM::Galvo>(galvoLabel);
+      CORE_LOG1("Image processor device set to %s\n", galvoLabel);
+   }
+   else
+   {
+      galvo_ = 0;
+      CORE_LOG("Image processor device removed.\n");
+   }
+   properties_->Refresh(); // TODO: more efficient
+   stateCache_.addSetting(PropertySetting(MM::g_Keyword_CoreDevice, MM::g_Keyword_CoreGalvo, getGalvoDevice().c_str()));
+}
 
 /**
  * Speficies the group determining the channel selection.
@@ -4868,6 +4883,59 @@ unsigned CMMCore::getSLMBytesPerPixel(const char* deviceLabel) const
 
    return pSLM->GetBytesPerPixel();
 }
+
+/* GALVO CODE */
+
+
+/**
+ * Set the Galvo to an x,y position and fire the laser for a predetermined duration.
+ */
+void CMMCore::pointGalvoAndFire(const char* deviceLabel, double x, double y, double pulseTime_us) throw (CMMError)
+{
+   MM::Galvo* pGalvo = getSpecificDevice<MM::Galvo>(deviceLabel);
+
+   int ret = pGalvo->PointAndFire(x,y,pulseTime_us);
+
+   if (ret != DEVICE_OK)
+   {
+      logError(deviceLabel, getDeviceErrorText(ret, pGalvo).c_str());
+      throw CMMError(deviceLabel, getDeviceErrorText(ret, pGalvo).c_str(), MMERR_DEVICE_GENERIC);
+   }
+}
+
+
+/**
+ * Move the galvo x,y position by a certain amount
+ */
+void CMMCore::moveGalvo(const char* deviceLabel, double deltaX, double deltaY) throw (CMMError)
+{
+   MM::Galvo* pGalvo = getSpecificDevice<MM::Galvo>(deviceLabel);
+
+   int ret = pGalvo->Move(deltaX, deltaY);
+
+   if (ret != DEVICE_OK)
+   {
+      logError(deviceLabel, getDeviceErrorText(ret, pGalvo).c_str());
+      throw CMMError(deviceLabel, getDeviceErrorText(ret, pGalvo).c_str(), MMERR_DEVICE_GENERIC);
+   }
+}
+
+/**
+ * Set the Galvo to an x,y position
+ */
+void CMMCore::setGalvoPosition(const char* deviceLabel, double x, double y) throw (CMMError)
+{
+   MM::Galvo* pGalvo = getSpecificDevice<MM::Galvo>(deviceLabel);
+
+   int ret = pGalvo->SetPosition(x, y);
+
+   if (ret != DEVICE_OK)
+   {
+      logError(deviceLabel, getDeviceErrorText(ret, pGalvo).c_str());
+      throw CMMError(deviceLabel, getDeviceErrorText(ret, pGalvo).c_str(), MMERR_DEVICE_GENERIC);
+   }
+}
+
 
 /**
  * Saves the current system state to a text file of the MM specific format.
