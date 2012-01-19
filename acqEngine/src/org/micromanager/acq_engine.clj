@@ -591,7 +591,9 @@
        (range (core getNumberOfCameraChannels))))
        
 (defn super-channels [simple-channel camera-channel-names]
-  (map #(update-in simple-channel [:name] str "-" %) camera-channel-names))
+  (if (< 1 (count camera-channel-names))
+    (map #(update-in simple-channel [:name] str "-" %) camera-channel-names)
+    simple-channel)) 
 
 (defn all-super-channels [simple-channels camera-channel-names]
   (flatten (map #(super-channels % camera-channel-names) simple-channels)))
