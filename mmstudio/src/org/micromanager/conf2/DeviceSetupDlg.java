@@ -46,7 +46,6 @@ public class DeviceSetupDlg extends MMDialog {
    private Device dev;
    private JTable propTable;
    private JButton detectButton;
-   private boolean requestCancel;
    private DetectorJDialog progressDialog;
    private DetectionTask dt;
    private final String DETECT_PORTS = "Scan";
@@ -129,24 +128,19 @@ public class DeviceSetupDlg extends MMDialog {
       detectButton.addActionListener(new ActionListener() {
 
          public void actionPerformed(ActionEvent e) {
-            if (detectButton.getText().equalsIgnoreCase(DETECT_PORTS)) {
-               requestCancel = false;
-               progressDialog = new DetectorJDialog(DeviceSetupDlg.this, false);
-               progressDialog.setTitle("\u00B5" + "Manager device detection");
-               progressDialog.setLocationRelativeTo(DeviceSetupDlg.this);
-               progressDialog.setSize(483, 288);
-               progressDialog.setVisible(true);
-               dt = new DetectionTask("serial_detect");
-               dt.start();
-               detectButton.setText("Cancel");
-           } else {
-               requestCancel = true;
-               dt.finish();
-               detectButton.setText(DETECT_PORTS);
-           }
-
+            if (dt != null && dt.isAlive())
+               return;
+            
+            progressDialog = new DetectorJDialog(DeviceSetupDlg.this, false);
+            progressDialog.setTitle("\u00B5" + "Manager device detection");
+            progressDialog.setLocationRelativeTo(DeviceSetupDlg.this);
+            progressDialog.setSize(483, 288);
+            progressDialog.setVisible(true);
+            dt = new DetectionTask("serial_detect");
+            dt.start();
          }
       });
+      
       detectButton.setToolTipText("Scan COM ports to detect this device");
       detectButton.setBounds(359, 247, 93, 23);
       contentPanel.add(detectButton);
@@ -461,7 +455,14 @@ public class DeviceSetupDlg extends MMDialog {
    public void showMessage(String msg) {
       JOptionPane.showMessageDialog(this, msg);
    }
-   
+
+   public String getDeviceName() {
+      return devLabel.getText();
+   }
+
+   /**
+    * Thread that performs device detection
+    */
    private class DetectionTask extends Thread {
       
       private String foundPorts[];
@@ -497,180 +498,61 @@ public class DeviceSetupDlg extends MMDialog {
                }
                portsInModel += p1.getName();
             }
-            class Detector extends Thread {
-               Detector(String deviceName, String portName) {
-                  super(deviceName);
-                  portName_ = portName;
-                  st0_ = DeviceDetectionStatus.Misconfigured;
-               }
-               private DeviceDetectionStatus st0_;
-               private String portName_;
-               public void run() {
-                  st0_ = core.detectDevice(getName());
-               }
-               public DeviceDetectionStatus getStatus() {
-                  return st0_;
-               }
-               public String PortName() {
-                  return portName_;
-               }
-               public void finish() {
-                  try {
-                     join();
-                  } catch (InterruptedException ex) {
-                     //ReportingUtils.showError(ex);
-                  }
-               }
-            }
-            ArrayList<Device> devicesToSearch = new ArrayList<Device>();
-            devicesToSearch.add(dev);
-            ArrayList<Detector> detectors = new ArrayList<Detector>();
+            
             // if the device does respond on any port, only communicating ports are allowed in the drop down
             Map<String, ArrayList<String>> portsFoundCommunicating = new HashMap<String, ArrayList<String>>();
             // if the device does not respond on any port, let the user pick any port that was setup with a valid serial port name, etc.
-            Map<String, ArrayList<String>> portsOtherwiseCorrectlyConfigured = new HashMap<String, ArrayList<String>>();
-            if (0 == ports.size() ) {
-               JOptionPane.showMessageDialog(null, "Could not find any unused ports.");
-               return;
-            }
-            // now simply start a thread for each permutation of port and device, taking care to keep the threads working
-            // on unique combinations of device and port
             String looking = "";
-            // no devices need to configure serial ports
-            if (devicesToSearch.size() < 1) {
-               return;
-            }
+
             // during detection we'll generate lots of spurious error messages.
             core.enableDebugLog(false);
-            if (devicesToSearch.size() <= ports.size()) {
-               // for case where there are more serial ports than devices
-               for (int iteration = 0; iteration < ports.size(); ++iteration) {
-                  detectors.clear();
-                  looking = "";
-                  for (int diterator = 0; diterator < devicesToSearch.size(); ++diterator) {
-                     int portOffset = (diterator + iteration) % ports.size();
-                     try {
-                        core.setProperty(devicesToSearch.get(diterator).getName(), MMCoreJ.getG_Keyword_Port(), ports.get(portOffset).getName());
-                        detectors.add(new Detector(devicesToSearch.get(diterator).getName(), ports.get(portOffset).getName()));
-                        if (0 < looking.length()) {
-                           looking += "\n";
-                        }
-                        looking += devicesToSearch.get(diterator).getName() + " on " + ports.get(portOffset).getName();
-                     } catch (Exception e) {
-                        // USB devices will try to open the interface and return an error on failure
-                        // so do not show, but only log the error
-                        ReportingUtils.logError(e);
-                     }
+            for (int i = 0; i < ports.size(); i++) {
+               looking = "";
+               try {
+                  core.setProperty(dev.getName(), MMCoreJ.getG_Keyword_Port(), ports.get(i).getName());
+                  if (0 < looking.length()) {
+                     looking += "\n";
                   }
-                  progressDialog.ProgressText("Looking for:\n" + looking);
-                  for (Detector d : detectors) {
-                     d.start();
-                  }
-                  for (Detector d : detectors) {
-                     d.finish();
-                     if (progressDialog.CancelRequest()| requestCancel) {
-                        System.out.print("cancel request");
-                        return; //
-                     }
-                  }
-                  // now the detection at this iteration is complete
-                  for (Detector d : detectors) {
-                     DeviceDetectionStatus st = d.getStatus();
-                     if (DeviceDetectionStatus.CanCommunicate == st) {
-                        ArrayList<String> llist = portsFoundCommunicating.get(d.getName());
-                        if (null == llist) {
-                           portsFoundCommunicating.put(d.getName(), llist = new ArrayList<String>());
-                        }
-                        llist.add(d.PortName());
-                     } else {
-                        ArrayList<String> llist = portsOtherwiseCorrectlyConfigured.get(d.getName());
-                        if (null == llist) {
-                           portsOtherwiseCorrectlyConfigured.put(d.getName(), llist = new ArrayList<String>());
-                        }
-                        llist.add(d.PortName());
-                     }
-                  }
+                  looking += dev.getName() + " on " + ports.get(i).getName();
+               } catch (Exception e) {
+                  // USB devices will try to open the interface and return an error on failure
+                  // so do not show, but only log the error
+                  ReportingUtils.logError(e);
                }
-               //// ****** complete this detection iteration
-            } else { // there are more devices than serial ports...
-               for (int iteration = 0; iteration < devicesToSearch.size(); ++iteration) {
-                  detectors.clear();
-                  looking = "";
-                  for (int piterator = 0; piterator < ports.size(); ++piterator) {
-                     int dOffset = (piterator + iteration) % devicesToSearch.size();
-                     try {
-                        core.setProperty(devicesToSearch.get(dOffset).getName(), MMCoreJ.getG_Keyword_Port(), ports.get(piterator).getName());
-                        detectors.add(new Detector(devicesToSearch.get(dOffset).getName(), ports.get(piterator).getName()));
-                        if (0 < looking.length()) {
-                           looking += "\n";
-                        }
-                        looking += devicesToSearch.get(dOffset).getName() + " on " + ports.get(piterator).getName();
-                     } catch (Exception e) {
-                        ReportingUtils.showError(e);
-                     }
-                  }
-                  progressDialog.ProgressText("Looking for:\n" + looking);
-                  for (Detector d : detectors) {
-                     d.start();
-                  }
-                  for (Detector d : detectors) {
-                     d.finish();
-                     if (progressDialog.CancelRequest() || requestCancel) {
-                        System.out.print("cancel request");
-                        return; //
-                     }                        }
-                  // the detection at this iteration is complete
-                  for (Detector d : detectors) {
-                     DeviceDetectionStatus st = d.getStatus();
-                     if (DeviceDetectionStatus.CanCommunicate == st) {
-                        ArrayList<String> llist = portsFoundCommunicating.get(d.getName());
-                        if (null == llist) {
-                           portsFoundCommunicating.put(d.getName(), llist = new ArrayList<String>());
-                        }
-                        llist.add(d.PortName());
-                     } else {
-                        ArrayList<String> llist = portsOtherwiseCorrectlyConfigured.get(d.getName());
-                        if (null == llist) {
-                           portsOtherwiseCorrectlyConfigured.put(d.getName(), llist = new ArrayList<String>());
-                        }
-                        llist.add(d.PortName());
-                     }
-                  }
+               
+               progressDialog.ProgressText("Looking for:\n" + looking);
+               DeviceDetectionStatus st = core.detectDevice(dev.getName());
+
+               if (progressDialog.CancelRequest()) {
+                  System.out.print("cancel request");
+                  return;
                }
+               
+               if (DeviceDetectionStatus.CanCommunicate == st) {
+                  ArrayList<String> llist = portsFoundCommunicating.get(dev.getName());
+                  if (null == llist) {
+                     portsFoundCommunicating.put(dev.getName(), llist = new ArrayList<String>());
+                  }
+                  llist.add(ports.get(i).getName());
+               } 
             }
+            
             String foundem = "";
             // show the user the result and populate the drop down data
-            for (Device dd : devicesToSearch) {
-               ArrayList<String> communicating = portsFoundCommunicating.get(dd.getName());
-               ArrayList<String> onlyConfigured = portsOtherwiseCorrectlyConfigured.get(dd.getName());
-               foundPorts = new String[0];
-               boolean any = false;
-               if (null != communicating) {
-                  if (0 < communicating.size()) {
-                     any = true;
-                     foundPorts = new String[communicating.size()];
-                     int aiterator = 0;
-                     foundem += dd.getName() + " on ";
-                     for (String ss : communicating) {
-                        foundem += (ss + "\n");
-                        foundPorts[aiterator++] = ss;
-                     }
+            ArrayList<String> communicating = portsFoundCommunicating.get(dev.getName());
+            foundPorts = new String[0];
+            if (null != communicating) {
+               if (0 < communicating.size()) {
+                  foundPorts = new String[communicating.size()];
+                  int aiterator = 0;
+                  foundem += dev.getName() + " on ";
+                  for (String ss : communicating) {
+                     foundem += (ss + "\n");
+                     foundPorts[aiterator++] = ss;
                   }
                }
-               // all this ugliness  because no multimap in Java...
-               if (!any) {
-                  if (null != onlyConfigured) {
-                     if (0 < onlyConfigured.size()) {
-                        Collections.sort(onlyConfigured);
-                        foundPorts = new String[onlyConfigured.size()];
-                        int i2 = 0;
-                        for (String ss : onlyConfigured) {
-                           foundPorts[i2++] = ss;
-                        }
-                     }
-                  }
-               }
-               PropertyItem p = dd.findProperty(MMCoreJ.getG_Keyword_Port());
+
+               PropertyItem p = dev.findProperty(MMCoreJ.getG_Keyword_Port());
                p.allowed = foundPorts;
                p.value = "";
                selectedPort = "";
@@ -711,15 +593,12 @@ public class DeviceSetupDlg extends MMDialog {
             detectButton.setText(DETECT_PORTS);
          }
       }
+      
       public void finish() {
          try {
             join();
          } catch (InterruptedException ex) {
          }
       }
-   }
-
-   public String getDeviceName() {
-      return devLabel.getText();
    }
 }

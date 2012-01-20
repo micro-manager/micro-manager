@@ -1,9 +1,4 @@
 /*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
- */
-
-/*
  * DetectorJDialog.java
  *
  * Created on Feb 14, 2011, 9:48:28 AM

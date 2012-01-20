@@ -6008,7 +6008,7 @@ MM::DeviceDetectionStatus CMMCore::detectDevice(char* deviceName)
 
       if( NULL != pDevice)
       {
-         if(DEVICE_OK == pDevice->GetProperty(MM::g_Keyword_Port,p))
+         if (DEVICE_OK == pDevice->GetProperty(MM::g_Keyword_Port, p))
          {
             if( 0 < strlen(p))
             {
@@ -6032,15 +6032,19 @@ MM::DeviceDetectionStatus CMMCore::detectDevice(char* deviceName)
                }  
             }
          }
-
-
       }
 
+      // run device detection routine
       result = pDevice->DetectDevice();
    }
    catch(...)
    {
-
+      ostringstream txt;
+      string port("none");
+      if (strlen(p) > 0)
+         port = p;
+      txt << "Device Detection: error testing ports " << port << " for device " << deviceName;  
+      logMessage(txt.str().c_str());
    }
 
    // if the device is not there, restore the parameters to the original settings
@@ -6055,7 +6059,11 @@ MM::DeviceDetectionStatus CMMCore::detectDevice(char* deviceName)
                setProperty(p, (*sit).c_str(), (valuesToRestore[*sit]).c_str());
             }
             catch(...)
-            {}
+            {
+               ostringstream txt;
+               txt << "Device Detection: error restoring port " << p << " state after testing for device " << deviceName;  
+               logMessage(txt.str().c_str());
+            }
          }
       }
    }
