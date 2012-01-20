@@ -115,9 +115,37 @@ const unsigned char getParamsRsp[] = {       0x16, // cmd low
                                              0x00,
                                              0x00 // num pos hi
                                           };
+// MGMSG_MOT_REQ_STATUSUPDATE (Tx)
+const unsigned char reqStatusCmd[] = {       0x80, // cmd low
+                                             0x04, // cmd hi
+                                             0x01, // ch id low
+                                             0x00, // ch id hi
+                                             0x50, // dest
+                                             0x01  // src
+                                             };
+// MGMSG_MOT_GET_ STATUSUPDATE (Rx)
+const unsigned char getStatusRsp[] = {       0x81, // cmd low
+                                             0x04, // cmd hi
+                                             0x0E, // ch id low
+                                             0x00, // ch id hi
+                                             0x81, // dest
+                                             0x50, // src
+
+                                             0x01, // ch ident
+                                             0x00,
+
+                                             // current position
+                                             0x00, 0x00, 0x00, 0x00,
+                                             
+                                             // encoder count
+                                             0x00, 0x00, 0x00, 0x00,
+
+                                             // status data
+                                             0x00, 0x00, 0x00, 0x00
+                                             };
+
 
 using namespace std;
-
 extern const char* g_WheelDeviceName;
 
 IntegratedFilterWheel::IntegratedFilterWheel() : 
@@ -226,6 +254,37 @@ int IntegratedFilterWheel::Initialize()
 
 bool IntegratedFilterWheel::Busy()
 {
+   // send command
+   ClearPort(*this, *GetCoreCallback(), port_);
+   int ret = SetCommand(reqStatusCmd, sizeof(reqStatusCmd));
+   if (ret != DEVICE_OK)
+      return false;
+
+   // get response
+   const int answerLength = sizeof(getStatusRsp);
+   assert (answerLength >= 20);
+   unsigned char answer[answerLength];
+   memset(answer, 0, answerLength);
+   ret = GetCommand(answer, answerLength, answerTimeoutMs_);
+   if (ret != DEVICE_OK)
+      return false; 
+
+   // check first 6 bytes for response signature
+   // return "not busy" if there is an error
+   if (memcmp(getStatusRsp, answer, 6) != 0)
+   {
+      LogMessage("Error getting status");
+      return false;
+   }
+
+   // get status code (32 bits)
+   unsigned int status = *((unsigned*)(answer + 16));
+   bool movingCW = (status & P_MOT_SB_INMOTIONCW_MASK) > 0;
+   bool movingCCW = (status & P_MOT_SB_INMOTIONCCW_MASK) > 0;
+
+   if (movingCW || movingCCW)
+      return true; // busy moving
+
    return false;
 }
 

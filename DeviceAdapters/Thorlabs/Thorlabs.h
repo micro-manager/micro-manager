@@ -82,6 +82,32 @@ typedef struct _DCMOTSTATUS
 	unsigned long dwStatusBits;// Status bits (see #defines below).
 } DCMOTSTATUS;
 
+// integrated filter wheel parameters
+#define P_MOT_SB_CWHARDLIMIT        0x00000001        // CW hardware limit switch (0 - no contact, 1 - contact).
+#define P_MOT_SB_CWHARDLIMIT_MASK   0xFFFFFFFE
+#define P_MOT_SB_CCWHARDLIMIT       0x00000002        // CCW hardware limit switch (0 - no contact, 1 - contact).
+#define P_MOT_SB_CCWHARDLIMIT_MASK  0xFFFFFFFD
+#define P_MOT_SB_CWSOFTLIMIT        0x00000004        // CW software limit switch (0 - no contact, 1 - contact).
+#define P_MOT_SB_CWSOFTLIMIT_MASK   0xFFFFFFFB
+#define P_MOT_SB_CCWSOFTLIMIT       0x00000008        // CCW software limit switch (0 - no contact, 1 - contact).
+#define P_MOT_SB_CCWSOFTLIMIT_MASK  0xFFFFFFF7
+#define P_MOT_SB_INMOTIONCW         0x00000010        // Moving clockwise (1 - moving, 0 - stationary).
+#define P_MOT_SB_INMOTIONCW_MASK    0xFFFFFFEF
+#define P_MOT_SB_INMOTIONCCW        0x00000020        // Moving counterclockwise (1 - moving, 0 - stationary).
+#define P_MOT_SB_INMOTIONCCW_MASK   0xFFFFFFDF
+#define P_MOT_SB_JOGGINGCW          0x00000040        // Jogging clockwise (1 - moving, 0 - stationary).
+#define P_MOT_SB_JOGGINGCW_MASK     0xFFFFFFBF
+#define P_MOT_SB_JOGGINGCCW         0x00000080        // Jogging counterclockwise (1 - moving, 0 - stationary).
+#define P_MOT_SB_JOGGINGCCW_MASK    0xFFFFFF7F
+#define P_MOT_SB_CONNECTED          0x00000100        // Motor connected (1 - connected, 0 - not connected).
+#define P_MOT_SB_CONNECTED_MASK     0xFFFFFEFF
+#define P_MOT_SB_HOMING             0x00000200        // Motor homing (1 - homing, 0 - not homing).
+#define P_MOT_SB_HOMING_MASK        0xFFFFFDFF
+#define P_MOT_SB_HOMED              0x00000400        // Motor homed (1 - homed, 0 - not homed).
+#define P_MOT_SB_HOMED_MASK         0xFFFFFBFF
+#define P_MOT_SB_INTERLOCK          0x00001000        // Interlock state (1 - enabled, 0 - disabled)
+#define P_MOT_SB_INTERLOCKMASK      0xFFFFEFFF
+
 ///////////////////////////////////////////////////////////////////////////////
 // fixed stage parameters
 ///////////////////////////////////////////////////////////////////////////////
