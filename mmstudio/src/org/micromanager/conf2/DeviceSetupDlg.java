@@ -522,6 +522,13 @@ public class DeviceSetupDlg extends MMDialog {
                
                progressDialog.ProgressText("Looking for:\n" + looking);
                DeviceDetectionStatus st = core.detectDevice(dev.getName());
+               
+               if (st == DeviceDetectionStatus.Unimplemented) {
+                  JOptionPane.showMessageDialog(null, "This device does not support auto-detection.\n" +
+                        "You have to manually choose port and settings.");
+                  
+                  return;
+               }
 
                if (progressDialog.CancelRequest()) {
                   System.out.print("cancel request");
