@@ -337,12 +337,13 @@ public class MMImageCache implements TaggedImageStorage, ImageCache {
 
    public int getChannelBitDepth(int channelIndex) {
       try {
-         return getChannelSetting(channelIndex).getInt("BitDepth");
+         return firstTags_.getInt("BitDepth");
       } catch (JSONException ex) {
-         return 8;
+         ReportingUtils.logError(ex);
       }
+      return 16;
    }
-   
+
    public Color getChannelColor(int channelIndex) {
       try {
          return new Color(getChannelSetting(channelIndex).getInt("Color"));

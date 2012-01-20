@@ -106,7 +106,6 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
    private double pixelMax_ = 255.0;
    final private int maxIntensity_;
    private Color color_;
-   private int bitDepth_;
 
    public ChannelControlPanel(int channelIndex, MultiChannelContrastPanel mccPanel, MetadataPanel md, int height,
            Color color, int bitDepth, double fractionToReject, boolean logScale) {
@@ -114,7 +113,6 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
       fractionToReject_ = fractionToReject;
       logScale_ = logScale;
       color_ = color;
-      bitDepth_ = bitDepth;
       maxIntensity_ = (int) Math.pow(2, bitDepth) -1;
       histMax_ = maxIntensity_+1;
       binSize_ = histMax_ / NUM_BINS;

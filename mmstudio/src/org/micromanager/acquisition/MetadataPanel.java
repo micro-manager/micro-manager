@@ -44,6 +44,7 @@ import javax.swing.JTextArea;
 import javax.swing.ScrollPaneConstants;
 import javax.swing.SpinnerNumberModel;
 import javax.swing.SpringLayout;
+import javax.swing.SwingUtilities;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.event.DocumentEvent;
@@ -609,9 +610,9 @@ public class MetadataPanel extends JPanel
          return;
       }
 
-      ImagePlus imgp = focusedWindow.getImagePlus();
-      ImageCache cache = getCache(imgp);
-      VirtualAcquisitionDisplay acq = getVirtualAcquisitionDisplay(imgp);
+      final ImagePlus imgp = focusedWindow.getImagePlus();
+      final ImageCache cache = getCache(imgp);
+      final VirtualAcquisitionDisplay acq = getVirtualAcquisitionDisplay(imgp);
       if (acq.getNumChannels() > 1)
          setContrastPanel(MULTIPLE_CHANNELS_CONTRAST_PANEL);
       else
@@ -633,18 +634,21 @@ public class MetadataPanel extends JPanel
 //         displayModeCombo.setSelectedIndex(cimp.getMode() - 1);
 //         updatingDisplayModeCombo_ = false;
       }
-      if (acq != null && currentContrastPanel_ != null) {
-         currentContrastPanel_.setupChannelControls(cache);
-       
-         
-      //load appropriate contrast settings 
-      // calc and display hist, apply LUT and draw
-      currentContrastPanel_.displayChanged(imgp, cache);      
-         
-      update(imgp);
-      }
+      
+      SwingUtilities.invokeLater(new Runnable() {
+         public void run() {
+            if (acq != null && currentContrastPanel_ != null) {
+               currentContrastPanel_.setupChannelControls(cache);
 
+               //load appropriate contrast settings 
+               // calc and display hist, apply LUT and draw
+               currentContrastPanel_.displayChanged(imgp, cache);
+
+               update(imgp);
+            }}});
    }
+
+   
 
    private VirtualAcquisitionDisplay getVirtualAcquisitionDisplay(ImagePlus imgp) {
       if (imgp == null) {
