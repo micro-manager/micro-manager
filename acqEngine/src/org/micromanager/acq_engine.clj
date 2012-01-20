@@ -50,6 +50,12 @@
      :init init
      :state state))
 
+;; test utils
+
+(defn random-error [prob]
+  (when (< (rand) prob)
+    (throw (Exception. "Simulated error"))))
+
 ;; globals
 
 (def ^:dynamic state (atom {:stop false}))

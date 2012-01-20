@@ -178,7 +178,7 @@
                         (get-system-config-cached))
           prop-map (into {} (map #(-> % next vec) props))
           library (core getDeviceLibrary dev)
-          name-in-library (core getDeviceNameInLibrary dev)
+          name-in-library (core getDeviceName dev)
           state-device (eval 'mmcorej.DeviceType/StateDevice) ; load at runtime
           state-labels (when (= state-device (core getDeviceType dev))
                          (vec (core getStateLabels dev)))]
