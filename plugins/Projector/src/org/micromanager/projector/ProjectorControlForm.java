@@ -129,7 +129,7 @@ public class ProjectorControlForm extends javax.swing.JFrame {
     }//GEN-LAST:event_calibrateButtonActionPerformed
 
     private void setRoiButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_setRoiButtonActionPerformed
-       //controller_.setRoi();
+       controller_.setRoi();
     }//GEN-LAST:event_setRoiButtonActionPerformed
 
     private void onButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_onButtonActionPerformed
