@@ -2,6 +2,7 @@ package org.micromanager.acquisition;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.MouseEvent;
+import java.lang.reflect.InvocationTargetException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.micromanager.api.ImageCacheListener;
@@ -841,11 +842,11 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
     * @param taggedImg
     * @throws Exception 
     */
-   public void showImage(TaggedImage taggedImg, boolean waitForDisplay) throws Exception {
+   public void showImage(TaggedImage taggedImg, boolean waitForDisplay) throws InterruptedException, InvocationTargetException {
       showImage(taggedImg.tags, waitForDisplay);
    }
    
-   public void showImage(JSONObject tags, boolean waitForDisplay) throws Exception {
+   public void showImage(JSONObject tags, boolean waitForDisplay) throws InterruptedException, InvocationTargetException {
       updateWindowTitleAndStatus();
       
       if (tags == null) {
@@ -856,13 +857,19 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
          startup(tags);
       }
       
-      int slice = MDUtils.getSliceIndex(tags);      
-      int channel = MDUtils.getChannelIndex(tags);
-      int frame = MDUtils.getFrameIndex(tags);
-      int position = MDUtils.getPositionIndex(tags);
-      
-      int superChannel = this.rgbToGrayChannel(MDUtils.getChannelIndex(tags));        
+   
+      int frame = 0, channel = 0, slice = 0, position = 0, superChannel = 0;
+      try {
+         frame = MDUtils.getFrameIndex(tags);
+         slice = MDUtils.getSliceIndex(tags);
+         channel = MDUtils.getChannelIndex(tags);
+         position = MDUtils.getPositionIndex(tags);
+         superChannel = this.rgbToGrayChannel(MDUtils.getChannelIndex(tags));
+      } catch (JSONException ex) {
+         ReportingUtils.logError(ex);
+      }
 
+      
       if (cSelector_ != null) {
          if (cSelector_.getMaximum() <= (1 + superChannel)) {
             this.setNumChannels(1 + superChannel);

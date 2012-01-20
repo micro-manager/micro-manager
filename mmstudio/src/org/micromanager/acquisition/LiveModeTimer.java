@@ -180,7 +180,6 @@ public class LiveModeTimer extends javax.swing.Timer {
                           }
                           int lastChannelToAdd = win_.getHyperImage().getChannel() - 1;
                           for (int i = 0; i < images.length; i++) {
-                             System.out.println(i + "    " + images[i].tags.get("ChannelIndex"));
                              if (i != lastChannelToAdd) {
                                   gui_.addImage(MMStudioMainFrame.SIMPLE_ACQ, images[i], false, true);
                               }

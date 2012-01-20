@@ -10,6 +10,7 @@
  */
 package org.micromanager.acquisition;
 
+import java.lang.reflect.InvocationTargetException;
 import org.micromanager.graph.ChannelControlPanel;
 import ij.CompositeImage;
 import ij.ImagePlus;
@@ -550,6 +551,9 @@ public class MetadataPanel extends JPanel
       }
    }
    
+   /*
+    * used only for autoscaling on intial image
+    */
    public void autoscaleWithoutDraw(ImageCache cache, ImagePlus img) {
       if (currentContrastPanel_ != null) {
          currentContrastPanel_.calcAndDisplayHistAndStats(img);
@@ -634,18 +638,17 @@ public class MetadataPanel extends JPanel
 //         displayModeCombo.setSelectedIndex(cimp.getMode() - 1);
 //         updatingDisplayModeCombo_ = false;
       }
-      
-      SwingUtilities.invokeLater(new Runnable() {
-         public void run() {
-            if (acq != null && currentContrastPanel_ != null) {
-               currentContrastPanel_.setupChannelControls(cache);
 
-               //load appropriate contrast settings 
-               // calc and display hist, apply LUT and draw
-               currentContrastPanel_.displayChanged(imgp, cache);
 
-               update(imgp);
-            }}});
+      if (acq != null && currentContrastPanel_ != null) {
+         currentContrastPanel_.setupChannelControls(cache);
+
+         //load appropriate contrast settings 
+         // calc and display hist, apply LUT and draw
+         currentContrastPanel_.displayChanged(imgp, cache);
+
+         update(imgp);
+      }
    }
 
    

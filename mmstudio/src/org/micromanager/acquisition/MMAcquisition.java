@@ -528,6 +528,7 @@ public class MMAcquisition {
                virtAcq_.showImage(taggedImg.tags, waitForDisplay);
             }
          } catch (Exception e) {
+            ReportingUtils.logError(e);
             throw new MMScriptException("Unable to show image");
          }
       }
