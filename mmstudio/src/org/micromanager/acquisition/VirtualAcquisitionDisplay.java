@@ -137,14 +137,26 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
          display_ = disp;
       }
       
+      // ImageJ workaround: the following two functions set the currentChannel field to -1,
+      //  which can lead to a null pointer exception if the function is called 
+      // while CompositeImage.updateImage is also running on a different thread
+      @Override
+      public void setMode(int mode) {
+           try {
+            int channel = (Integer) JavaUtils.getRestrictedFieldValue(this, CompositeImage.class, "currentChannel");
+            super.setMode(mode);
+            JavaUtils.setRestrictedFieldValue(this, CompositeImage.class, "currentChannel", channel);
+         } catch (Exception ex) {
+           ReportingUtils.logError(ex);
+         }
+      }
+      
       @Override
       public void setChannelLut(LUT lut) {
-         super.setChannelLut(lut);
-         //ImageJ workaround: this function sets the currentChannel field to -1,
-         //which can lead to a null pointer exception if the function is called 
-         // while CompositeImage.updateImage is also running on a different thread
          try {
-            JavaUtils.setRestrictedFieldValue(this, CompositeImage.class, "currentChannel", super.getChannel()-1);
+            int channel = (Integer) JavaUtils.getRestrictedFieldValue(this, CompositeImage.class, "currentChannel");
+            super.setChannelLut(lut);
+            JavaUtils.setRestrictedFieldValue(this, CompositeImage.class, "currentChannel", channel);
          } catch (Exception ex) {
            ReportingUtils.logError(ex);
          }
@@ -909,13 +921,19 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
       
       //Used to autoscale first images in a window
       if (newDisplay_)  {
-         //call this explicitly to get contrast panel set up, because ImageFocusListener
-         //not guarenteed to fire before this code reached
-         mdPanel_.focusReceived(hyperImage_.getWindow());
-         if (channel + 1 == ((IMMImagePlus) hyperImage_).getNChannelsUnverified() ) {         
-            mdPanel_.autoscaleWithoutDraw(imageCache_, hyperImage_);                     
-            newDisplay_ = false;
+         boolean rgb = false;
+         try {
+            rgb = MDUtils.isRGB(tags);
+         } catch (Exception ex) {
+            ReportingUtils.logError(ex);
          }
+         if (rgb || channel + 1 == ((IMMImagePlus) hyperImage_).getNChannelsUnverified()) {
+            //call this explicitly to get contrast panel set up, because ImageFocusListener
+            //not guarenteed to fire before this code reached
+            mdPanel_.focusReceived(hyperImage_.getWindow());
+            mdPanel_.autoscaleWithoutDraw(imageCache_, hyperImage_);                     
+            newDisplay_ = false; 
+         } 
       }
       
       
