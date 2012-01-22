@@ -22,11 +22,11 @@ bool PropertyHelper::Parse(DEPacket& pkt)
 
 	string property_type = ack.parameter(0).p_string();
 	if( property_type.compare("string")==0 )
-		this->_property = PropertyType::String; 
+		this->_property = String; 
 	else if( property_type.compare("float")==0 )
-		this->_property = PropertyType::Float; 
+		this->_property = Float; 
 	else if( property_type.compare("int")==0 )
-		this->_property = PropertyType::Integer; 
+		this->_property = Integer; 
 	else
 		return false;
 
@@ -39,8 +39,8 @@ bool PropertyHelper::Parse(DEPacket& pkt)
 	if (property_allowable_type.compare("range") == 0)
 	{
 		switch (this->_property) {
-		case PropertyType::Float:
-			this->_type = Type::Range;
+		case Float:
+			this->_type = Range;
 			if (ack.parameter_size() == 4 &&
 				ack.parameter(2).type() == AnyParameter::P_FLOAT &&
 				ack.parameter(3).type() == AnyParameter::P_FLOAT)
@@ -49,8 +49,8 @@ bool PropertyHelper::Parse(DEPacket& pkt)
 				this->_max = ack.parameter(3).p_float();
 			}
 			break;
-		case PropertyType::Integer:
-			this->_type = Type::Range;
+		case Integer:
+			this->_type = Range;
 			if (ack.parameter_size() == 4 &&
 				ack.parameter(2).type() == AnyParameter::P_INT &&
 				ack.parameter(3).type() == AnyParameter::P_INT)
@@ -65,7 +65,7 @@ bool PropertyHelper::Parse(DEPacket& pkt)
 	}
 	else if (property_allowable_type.compare("set") == 0)
 	{
-		this->_type = Type::Set;
+		this->_type = Set;
 		for (int i = 2; i < ack.parameter_size(); i++)
 		{
 			if (ack.parameter(i).type() == AnyParameter::P_STRING)
@@ -76,11 +76,11 @@ bool PropertyHelper::Parse(DEPacket& pkt)
 	}
 	else if (property_allowable_type.compare("allow_all") == 0)
 	{
-		this->_type = Type::Allow_All;
+		this->_type = Allow_All;
 	}
 	else if (property_allowable_type.compare("ReadOnly") == 0)
 	{
-		this->_type = Type::ReadOnly;
+		this->_type = ReadOnly;
 	}
 	else 
 		return false;

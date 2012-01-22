@@ -260,8 +260,8 @@ int CDECamera::Initialize()
 		pixelSize_.x = 6; //default value for DE-12
 		pixelSize_.y = 6; //default value for DE-12	
 		try {
-			this->proxy_->get_Property(g_Property_DE_PixelSizeX, (float)pixelSize_.x);
-			this->proxy_->get_Property(g_Property_DE_PixelSizeY, (float)pixelSize_.y);			
+			this->proxy_->get_Property(g_Property_DE_PixelSizeX, pixelSize_.x);
+			this->proxy_->get_Property(g_Property_DE_PixelSizeY, pixelSize_.y);			
 		}
 		catch (const CommandException& e){
 			// Ignore optional parameters.			
@@ -864,16 +864,16 @@ int CDECamera::OnProperty(MM::PropertyBase* pProp, MM::ActionType eAct)
 		{
 			switch (pProp->GetType())
 			{
-			case MM::PropertyType::String:
+			case MM::String:
 				pProp->Get(strTemp);
 				this->proxy_->set_Property(name, strTemp);
 				break;
-			case MM::PropertyType::Float:
+			case MM::Float:
 				pProp->Get(dblTemp);
 				flTemp = dblTemp;
 				this->proxy_->set_Property(name, flTemp);
 				break;
-			case MM::PropertyType::Integer:
+			case MM::Integer:
 				pProp->Get(longTemp);
 				intTemp = (int)longTemp;
 				this->proxy_->set_Property(name, intTemp);
@@ -886,15 +886,15 @@ int CDECamera::OnProperty(MM::PropertyBase* pProp, MM::ActionType eAct)
 		{
 			switch (pProp->GetType())
 			{
-			case MM::PropertyType::String:
+			case MM::String:
 				this->proxy_->get_Property(name, strTemp);
 				pProp->Set(strTemp.c_str());
 				break;
-			case MM::PropertyType::Float:
+			case MM::Float:
 				this->proxy_->get_Property(name, flTemp);
 				pProp->Set(flTemp);
 				break;
-			case MM::PropertyType::Integer:
+			case MM::Integer:
 				this->proxy_->get_Property(name, intTemp);
 				pProp->Set((long)intTemp);
 				break;
@@ -1023,20 +1023,20 @@ void CDECamera::SetupProperty(string label, PropertyHelper settings)
 
 	switch (settings.GetType())
 	{
-	case PropertyHelper::Type::Allow_All:		
+	case PropertyHelper::Allow_All:		
 		CreateProperty(label.c_str(), "", convertType(settings.GetProperty()), false, pAct);			
 		break;
-	case PropertyHelper::Type::Range:
+	case PropertyHelper::Range:
 		CreateProperty(label.c_str(), "", convertType(settings.GetProperty()), false, pAct);			
 		range = settings.GetRange();		
 		SetPropertyLimits(label.c_str(), range.get<0>(), range.get<1>());			
 		break;
-	case PropertyHelper::Type::Set:
+	case PropertyHelper::Set:
 		CreateProperty(label.c_str(), "", convertType(settings.GetProperty()), false, pAct);			
 		settings.GetSet(values);		
 		SetAllowedValues(label.c_str(), values);		
 		break;
-	case PropertyHelper::Type::ReadOnly:		
+	case PropertyHelper::ReadOnly:		
 		CreateProperty(label.c_str(), "", convertType(settings.GetProperty()), true, pAct);			
 		break;
 	default: 
@@ -1053,11 +1053,11 @@ MM::PropertyType CDECamera::convertType(const PropertyHelper::PropertyType& type
 {
 	switch (type)
 	{
-		case PropertyHelper::PropertyType::Float:
+		case PropertyHelper::Float:
 			return MM::Float;	
-		case PropertyHelper::PropertyType::String:
+		case PropertyHelper::String:
 			return MM::String;	
-		case PropertyHelper::PropertyType::Integer:
+		case PropertyHelper::Integer:
 			return MM::Integer;	
 	}
 	return MM::Undef;
