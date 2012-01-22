@@ -515,7 +515,7 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
 
    public void applyChannelLUTToImage(ImagePlus img, ImageCache cache) {
       LUT lut = ImageUtils.makeLUT(cache.getChannelColor(channelIndex_),
-              gamma_, cache.getChannelBitDepth(channelIndex_));
+              gamma_, cache.getBitDepth() );
       if (img.isComposite()) {
          int originalChannel = img.getChannel() -1; 
          setChannelWithoutMovingSlider(img,channelIndex_);

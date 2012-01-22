@@ -335,15 +335,15 @@ public class MMImageCache implements TaggedImageStorage, ImageCache {
       }
    }
 
-   public int getChannelBitDepth(int channelIndex) {
+   public int getBitDepth() {
       try {
-         return firstTags_.getInt("BitDepth");
+         return imageStorage_.getSummaryMetadata().getInt("BitDepth");
       } catch (JSONException ex) {
-         ReportingUtils.logError(ex);
+         ReportingUtils.logError("MMImageCache.BitDepth: no tag BitDepth found");
       }
       return 16;
    }
-
+   
    public Color getChannelColor(int channelIndex) {
       try {
          return new Color(getChannelSetting(channelIndex).getInt("Color"));

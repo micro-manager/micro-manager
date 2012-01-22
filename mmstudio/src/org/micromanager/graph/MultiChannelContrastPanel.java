@@ -174,7 +174,7 @@ public class MultiChannelContrastPanel extends JPanel implements ContrastPanel {
       ccpList_ = new ArrayList<ChannelControlPanel>();
       for (int i = 0; i < nChannels; ++i) {
          ChannelControlPanel ccp = new ChannelControlPanel(i, this, mdPanel_, hpHeight,
-                 cache.getChannelColor(i),cache.getChannelBitDepth(i),getFractionToReject(),
+                 cache.getChannelColor(i),cache.getBitDepth(),getFractionToReject(),
                  logScaleCheckBox_.isSelected());
          layout.putConstraint(SpringLayout.EAST, ccp, 0, SpringLayout.EAST, p);
          layout.putConstraint(SpringLayout.WEST, ccp, 0, SpringLayout.WEST, p);

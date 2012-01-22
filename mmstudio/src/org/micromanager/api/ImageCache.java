@@ -40,7 +40,8 @@ public interface ImageCache extends TaggedImageStorage {
    public void setChannelContrast(int index, int min, int max);
    public void storeChannelDisplaySettings(int channelIndex, int min, int max, double gamma);
    public JSONObject getChannelSetting(int channel);
-   public int getChannelBitDepth(int channelIndex);
+   public int getBitDepth();
+   //public int getChannelBitDepth(int channelIndex);
    public Color getChannelColor(int channelIndex);
    public void setChannelColor(int channel, int rgb);
    public String getChannelName(int channelIndex);
