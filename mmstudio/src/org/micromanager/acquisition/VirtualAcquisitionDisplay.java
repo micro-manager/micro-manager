@@ -871,17 +871,19 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
       
    
       int frame = 0, channel = 0, slice = 0, position = 0, superChannel = 0;
+      boolean rgb = false;
       try {
          frame = MDUtils.getFrameIndex(tags);
          slice = MDUtils.getSliceIndex(tags);
          channel = MDUtils.getChannelIndex(tags);
          position = MDUtils.getPositionIndex(tags);
          superChannel = this.rgbToGrayChannel(MDUtils.getChannelIndex(tags));
-      } catch (JSONException ex) {
+         rgb = MDUtils.getPixelType(tags).startsWith("RGB");
+      } catch (Exception ex) {
          ReportingUtils.logError(ex);
       }
 
-      
+    
       if (cSelector_ != null) {
          if (cSelector_.getMaximum() <= (1 + superChannel)) {
             this.setNumChannels(1 + superChannel);
@@ -893,7 +895,7 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
 
       // Make sure image is shown if it is a single slice/frame: (ImageJ workaround)
       IMMImagePlus img = (IMMImagePlus) hyperImage_;
-      if (img.getNFramesUnverified() == 1 && img.getNSlicesUnverified() == 1) {
+      if (img.getNFramesUnverified() == 1 && img.getNSlicesUnverified() == 1 && !rgb) {
          if (img instanceof MMCompositeImage) {
             MMCompositeImage ci = (MMCompositeImage) img;
             for (int ch = 0; ch < img.getNChannelsUnverified(); ch++) {
@@ -921,12 +923,6 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
       
       //Used to autoscale first images in a window
       if (newDisplay_)  {
-         boolean rgb = false;
-         try {
-            rgb = MDUtils.isRGB(tags);
-         } catch (Exception ex) {
-            ReportingUtils.logError(ex);
-         }
          if (rgb || channel + 1 == ((IMMImagePlus) hyperImage_).getNChannelsUnverified()) {
             //call this explicitly to get contrast panel set up, because ImageFocusListener
             //not guarenteed to fire before this code reached

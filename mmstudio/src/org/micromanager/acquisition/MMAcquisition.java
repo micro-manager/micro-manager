@@ -510,7 +510,8 @@ public class MMAcquisition {
 
          int channel = tags.getInt("ChannelIndex");
          int frame = MDUtils.getFrameIndex(tags);
-         tags.put("Channel", getChannelName(channel));
+         if (!MDUtils.getPixelType(tags).startsWith("RGB"))
+            tags.put("Channel", getChannelName(channel));
          long elapsedTimeMillis = System.currentTimeMillis() - startTimeMs_;
          tags.put("ElapsedTime-ms", elapsedTimeMillis);
          tags.put("Time", MDUtils.getCurrentTime());
