@@ -69,30 +69,35 @@ public class LiveModeTimer extends javax.swing.Timer {
             TaggedImage ti = core_.getLastTaggedImage();
             addTags(ti, multiChannelCameraNrCh_ > 1 ? ti.tags.getInt(
                     core_.getCameraDevice() + "-" + CCHANNELINDEX) :0);
-            gui_.addImage(ACQ_NAME, ti, true, true);
+            if (multiChannelCameraNrCh_ <= 1)
+               gui_.addImage(ACQ_NAME, ti, true, true);
             
             // Add another image if multicamera
             if (multiChannelCameraNrCh_ > 1) {
                String camera = core_.getCameraDevice();
                int channel = ti.tags.getInt(camera + "-" + CCHANNELINDEX);
-               boolean[] initialized = new boolean[(int) multiChannelCameraNrCh_];
-               initialized[channel] = true;
+               TaggedImage[] images = new TaggedImage[(int) multiChannelCameraNrCh_];
+               images[channel] = ti;
                int numFound = 1;
                while (numFound < multiChannelCameraNrCh_) {
                   for (int n = 0; n < 2 * multiChannelCameraNrCh_; n++) {
                      try {
                         TaggedImage t = core_.getNBeforeLastTaggedImage(n);
                         int ch = t.tags.getInt(camera + "-" + CCHANNELINDEX);
-                        if (!initialized[ch]) {
+                        if (images[ch] == null) {
                            numFound++;
-                           initialized[ch] = true;
+                           images[ch] = t;
                            addTags(t, ch);
-                           gui_.addImage(ACQ_NAME, t, true, true);
                            break;
                         }
                      } catch (Exception e) {
                         break;
-                     }}}     
+                     }}}
+               for (int i = 0; i < multiChannelCameraNrCh_; i++ )
+                  if (images[i] != null)          
+                     gui_.addImage(ACQ_NAME, images[i], i==multiChannelCameraNrCh_-1, true);
+               
+
             }
 
             super.start();
