@@ -17,22 +17,14 @@ import ij.process.ImageProcessor;
 import ij.process.LUT;
 import java.awt.BorderLayout;
 import java.awt.Color;
-import java.awt.ComponentOrientation;
 import java.awt.Dimension;
-import java.awt.FlowLayout;
 import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
-import java.awt.GridLayout;
 import java.awt.Insets;
-import java.awt.Rectangle;
-import java.awt.event.MouseEvent;
-import java.awt.event.MouseListener;
 import java.awt.event.MouseWheelEvent;
 import java.awt.event.MouseWheelListener;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import java.util.prefs.Preferences;
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
@@ -40,11 +32,8 @@ import javax.swing.JCheckBox;
 import javax.swing.JColorChooser;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
-import javax.swing.SpringLayout;
-import javax.swing.SwingUtilities;
 import mmcorej.CMMCore;
 import org.json.JSONArray;
-import org.json.JSONException;
 import org.json.JSONObject;
 import org.micromanager.AcqControlDlg;
 import org.micromanager.MMStudioMainFrame;
@@ -57,10 +46,7 @@ import org.micromanager.graph.HistogramPanel.CursorListener;
 import org.micromanager.utils.HistogramUtils;
 import org.micromanager.utils.ImageUtils;
 import org.micromanager.utils.MDUtils;
-import org.micromanager.utils.MMScriptException;
-import org.micromanager.utils.MathFunctions;
 import org.micromanager.utils.NumberUtils;
-import org.micromanager.utils.ReportingUtils;
 
 /**
  *
@@ -523,13 +509,9 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
          ci.setChannelLut(lut);
          setChannelWithoutMovingSlider(img,originalChannel);      
          
-         // ImageJ WORKAROUND
-         // The following two lines of code are both necessary for a correct update.
-         // Otherwise min and max get inconsistent in ImageJ.
          if (ci.getProcessor(channelIndex_+1) != null)
             ci.getProcessor(channelIndex_ + 1).setMinAndMax(contrastMin_, contrastMax_);
       }
-//      img.setDisplayRange(contrastMin_, contrastMax_);
  
       //store contrast settings
       cache.storeChannelDisplaySettings(channelIndex_,(int)contrastMin_, (int)contrastMax_, gamma_);
