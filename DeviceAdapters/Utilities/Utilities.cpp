@@ -363,7 +363,8 @@ int MultiCamera::SnapImage()
          t[i].Start();
       }
    }
-   // Function should wait for the individual SnapImages to return...
+   // I think that the CameraSnapThread destructor waits until the SnapImage function is done
+   // So, we are likely to be waiting here until all cameras are done snapping
 
    return DEVICE_OK;
 }
@@ -386,7 +387,15 @@ const unsigned char* MultiCamera::GetImageBuffer(unsigned channelNr)
       if (usedCameras_[i] != g_Undefined)
          j++;
       if (j == (int) channelNr)
-         return physicalCameras_[i]->GetImageBuffer();
+      {
+         unsigned height = GetImageHeight();
+         unsigned thisHeight = physicalCameras_[i]->GetImageHeight();
+         if (height == thisHeight)
+            return physicalCameras_[i]->GetImageBuffer();
+         else
+         {
+         }
+      }
    }
    return 0;
 }
@@ -402,50 +411,47 @@ bool MultiCamera::IsCapturing()
    return false;
 }
 
-// Check if all cameras have the same size
-// If they do not, return 0
-// TODO: deal with cameras differing in size by scaling or padding
+/**
+ * Returns the largest width of cameras used
+ */
 unsigned MultiCamera::GetImageWidth() const
 {
+   // TODO: should we use cached width?
+   // If so, when do we cache?
+   // Since this function is const, we can not cache the width found
    unsigned width = 0;
    unsigned int j = 0;
-   while (width == 0 && j < physicalCameras_.size() ) 
+   while (j < physicalCameras_.size() ) 
    {
-      if (physicalCameras_[j] != 0)
-         width = physicalCameras_[j]->GetImageWidth();
+      if (physicalCameras_[j] != 0) {
+         unsigned tmp = physicalCameras_[j]->GetImageWidth();
+         if (tmp > width)
+            width = tmp;
+      }
       j++;
    }
   
-   for (unsigned int i = 0; i < physicalCameras_.size(); i++)
-   {
-      if (physicalCameras_[i] != 0 && i != j)
-      {
-         if (width != physicalCameras_[i]->GetImageWidth())
-            return 0;
-      }
-   }
    return width;
 }
 
+/**
+ * Returns the largest height of cameras used
+ */
 unsigned MultiCamera::GetImageHeight() const
 {
    unsigned height = 0;
    unsigned int j = 0;
-   while (height == 0 && j < physicalCameras_.size() ) 
+   while (j < physicalCameras_.size() ) 
    {
       if (physicalCameras_[j] != 0)
-         height = physicalCameras_[j]->GetImageHeight();
+      {
+         unsigned tmp = physicalCameras_[j]->GetImageHeight();
+         if (tmp > height)
+            height = tmp;
+      }
       j++;
    }
   
-   for (unsigned int i = 0; i < physicalCameras_.size(); i++)
-   {
-      if (physicalCameras_[i] != 0  && i != j)  
-      {
-         if (height != physicalCameras_[i]->GetImageHeight())
-            return 0;
-      }
-   }
    return height;
 }
 
@@ -483,13 +489,20 @@ unsigned MultiCamera::GetBitDepth() const
 
 long MultiCamera::GetImageBufferSize() const
 {
-   long imageBufferSize = 0;
+   long maxSize = 0;
+   int unsigned counter = 0;
    for (unsigned int i = 0; i < physicalCameras_.size(); i++)
    {
       if (physicalCameras_[i] != 0) 
-         imageBufferSize += physicalCameras_[i]->GetImageBufferSize();
+      {
+         counter++;
+         long tmp = physicalCameras_[i]->GetImageBufferSize();
+         if (tmp > maxSize)
+            maxSize = tmp;
+      }
    }
-   return imageBufferSize;
+
+   return counter * maxSize;
 }
 
 double MultiCamera::GetExposure() const

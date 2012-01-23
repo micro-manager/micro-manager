@@ -156,6 +156,10 @@ private:
 
    std::vector<std::string> availableCameras_;
    std::vector<std::string> usedCameras_;
+   std::vector<int> cameraWidths_;
+   std::vector<int> cameraHeights_;
+   unsigned  width_;
+   unsigned height_;
    std::vector<MM::Camera*> physicalCameras_;
    unsigned int nrCamerasInUse_;
    bool initialized_;
