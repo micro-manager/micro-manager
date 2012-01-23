@@ -893,17 +893,13 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
          }
       }
 
-      // Make sure image is shown if it is a single slice/frame: (ImageJ workaround)
+      // This block makes sure the pixels are properly set before showing and/or autoscaling
       IMMImagePlus img = (IMMImagePlus) hyperImage_;
-      if (img.getNFramesUnverified() == 1 && img.getNSlicesUnverified() == 1 && !rgb) {
-         if (img instanceof MMCompositeImage) {
-            MMCompositeImage ci = (MMCompositeImage) img;
-            for (int ch = 0; ch < img.getNChannelsUnverified(); ch++) {
-               ci.getProcessor(ch + 1).setPixels(ci.getStack().getPixels(ch + 1));
-            }
-         } else {
-            hyperImage_.getProcessor().setPixels(hyperImage_.getStack().getPixels(channel + 1));
-         }
+      if (img instanceof MMCompositeImage) {
+         ((MMCompositeImage) img).setChannelsUpdated();
+         ((MMCompositeImage) img).updateImage();
+      } else if (img.getNFramesUnverified() == 1 && img.getNSlicesUnverified() == 1 && !rgb) {       
+         hyperImage_.getProcessor().setPixels(hyperImage_.getStack().getPixels(channel + 1));
       }
 
       
