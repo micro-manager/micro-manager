@@ -529,7 +529,7 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
          if (ci.getProcessor(channelIndex_+1) != null)
             ci.getProcessor(channelIndex_ + 1).setMinAndMax(contrastMin_, contrastMax_);
       }
-      img.setDisplayRange(contrastMin_, contrastMax_);
+//      img.setDisplayRange(contrastMin_, contrastMax_);
  
       //store contrast settings
       cache.storeChannelDisplaySettings(channelIndex_,(int)contrastMin_, (int)contrastMax_, gamma_);

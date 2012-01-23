@@ -137,15 +137,25 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
          display_ = disp;
       }
       
-      // ImageJ workaround: the following two functions set the currentChannel field to -1,
-      //  which can lead to a null pointer exception if the function is called 
-      // while CompositeImage.updateImage is also running on a different thread
+      /*
+       * ImageJ workaround: the following two functions set the currentChannel field to -1, which can lead to a null 
+       * pointer exception if the function is called while CompositeImage.updateImage is also running on a different 
+       * Thread.  Also must explicitly set the ip field min and max, because these values are applied to the current 
+       * channel in CompositeImage.updatImage().  Setting the newChannel field to true will cause this same thing to 
+       * happen in CompositeImage.updateImage() and with no other consequences, provided the selected mode is COMPOSITE.
+       * Here we do both of these in case updateImage and whatever calls these functions are on different threads.
+       */
       @Override
       public void setMode(int mode) {
            try {
             int channel = (Integer) JavaUtils.getRestrictedFieldValue(this, CompositeImage.class, "currentChannel");
             super.setMode(mode);
             JavaUtils.setRestrictedFieldValue(this, CompositeImage.class, "currentChannel", channel);
+            ImageProcessor[] cip = (ImageProcessor[]) JavaUtils.getRestrictedFieldValue(this, CompositeImage.class, "cip");
+            if (cip != null && cip[channel] != null && this.getProcessor() != null)
+               this.getProcessor().setMinAndMax(cip[channel].getMin(), cip[channel].getMax());
+            if (mode == CompositeImage.COMPOSITE)   
+               JavaUtils.setRestrictedFieldValue(this, CompositeImage.class, "newChannel", true);
          } catch (Exception ex) {
            ReportingUtils.logError(ex);
          }
@@ -157,19 +167,14 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
             int channel = (Integer) JavaUtils.getRestrictedFieldValue(this, CompositeImage.class, "currentChannel");
             super.setChannelLut(lut);
             JavaUtils.setRestrictedFieldValue(this, CompositeImage.class, "currentChannel", channel);
+            ImageProcessor[] cip = (ImageProcessor[]) JavaUtils.getRestrictedFieldValue(this, CompositeImage.class, "cip");
+            if (cip != null && cip[channel] != null && this.getProcessor() != null)
+               this.getProcessor().setMinAndMax(cip[channel].getMin(), cip[channel].getMax());
+            if (this.getMode() == CompositeImage.COMPOSITE)   
+               JavaUtils.setRestrictedFieldValue(this, CompositeImage.class, "newChannel", true);
          } catch (Exception ex) {
            ReportingUtils.logError(ex);
          }
-      }
-
-      @Override
-      public ImageProcessor getProcessor() {
-         if (super.getMode() == CompositeImage.COMPOSITE )
-            return super.getProcessor();
-         ImageProcessor ip = super.getProcessor();
-         ip.setPixels( getImageStack().getProcessor( 
-                 getStackIndex(getChannel(),getSlice(),getFrame()) ).getPixels());
-         return ip;
       }
       
       @Override
