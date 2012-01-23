@@ -93,6 +93,7 @@ public class LiveModeTimer extends javax.swing.Timer {
                      } catch (Exception e) {
                         break;
                      }}}
+               //need to add in channel order so that autoscale on window opening works properly
                for (int i = 0; i < multiChannelCameraNrCh_; i++ )
                   if (images[i] != null)          
                      gui_.addImage(ACQ_NAME, images[i], i==multiChannelCameraNrCh_-1, true);
