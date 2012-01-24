@@ -382,18 +382,37 @@ const unsigned char* MultiCamera::GetImageBuffer(unsigned channelNr)
    // We have a vector of physicalCameras, and a vector of Strings listing the cameras
    // we actually use.  
    int j = -1;
+   unsigned height = GetImageHeight();
+   unsigned width = GetImageWidth();
+   unsigned pixDepth = GetImageBytesPerPixel();
    for (unsigned int i = 0; i < physicalCameras_.size(); i++)
    {
       if (usedCameras_[i] != g_Undefined)
          j++;
       if (j == (int) channelNr)
       {
-         unsigned height = GetImageHeight();
          unsigned thisHeight = physicalCameras_[i]->GetImageHeight();
-         if (height == thisHeight)
+         unsigned thisWidth = physicalCameras_[i]->GetImageWidth();
+         if (height == thisHeight && width == thisWidth)
             return physicalCameras_[i]->GetImageBuffer();
          else
          {
+            img_.Resize(width, height, pixDepth);
+            img_.ResetPixels();
+            if (width == thisWidth)
+            {
+               memcpy(img_.GetPixelsRW(), physicalCameras_[i]->GetImageBuffer(), thisHeight * thisWidth * pixDepth);
+            }
+            else 
+            {
+               // we need to copy line by line
+               const unsigned char* pixels = physicalCameras_[i]->GetImageBuffer();
+               for (unsigned i=0; i < thisHeight; i++)
+               {
+                  memcpy(img_.GetPixelsRW() + i * width, pixels + i * thisWidth, thisWidth);
+               }
+            }
+            return img_.GetPixels();
          }
       }
    }
