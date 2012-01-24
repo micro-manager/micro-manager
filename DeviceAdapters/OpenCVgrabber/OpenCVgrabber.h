@@ -101,7 +101,7 @@ public:
    int IsExposureSequenceable(bool& isSequenceable) const {isSequenceable = false; return DEVICE_OK;}
 
    unsigned  GetNumberOfComponents() const { return nComponents_;};
-   //unsigned GetNumberOfChannels() const { return nChannels_;};
+
    // action interface
    // ----------------
 
@@ -117,8 +117,8 @@ public:
    int OnTriggerDevice(MM::PropertyBase* pProp, MM::ActionType eAct);
    MM::MMTime CurrentTime(void) { return GetCurrentMMTime(); };
    int OnResolution(MM::PropertyBase* pProp, MM::ActionType eAct);
-
-
+   int OnFlipX(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnFlipY(MM::PropertyBase* pProp, MM::ActionType eAct);
 private:
    int SetAllowedBinning();
 
@@ -147,10 +147,12 @@ private:
 	long cameraCCDYSize_;
 	std::string triggerDevice_;
 
+   bool xFlip_;
+   bool yFlip_;
 
    MMThreadLock imgPixelsLock_;
    int nComponents_;
-   //int nChannels_;
+   
 
    friend class MySequenceThread;
    MySequenceThread * thd_;

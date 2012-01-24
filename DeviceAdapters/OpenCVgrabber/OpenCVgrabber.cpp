@@ -182,6 +182,8 @@ COpenCVgrabber::COpenCVgrabber() :
 	cameraCCDXSize_(800),
 	cameraCCDYSize_(600),
    nComponents_(4),
+   xFlip_(false),
+   yFlip_(false),
    triggerDevice_("")
 {
    // call the base class method to set-up default error codes/messages
@@ -378,10 +380,18 @@ int COpenCVgrabber::Initialize()
 
    // CCD size of the camera we are using
    pAct = new CPropertyAction (this, &COpenCVgrabber::OnCameraCCDXSize);
-   CreateProperty("OnCameraCCDXSize", /*"512"*/CDeviceUtils::ConvertToString(w), MM::Integer, false, pAct);
+   CreateProperty("OnCameraCCDXSize", /*"512"*/CDeviceUtils::ConvertToString(w), MM::Integer, true, pAct);
    pAct = new CPropertyAction (this, &COpenCVgrabber::OnCameraCCDYSize);
-   CreateProperty("OnCameraCCDYSize", /*"512"*/CDeviceUtils::ConvertToString(h), MM::Integer, false, pAct);
+   CreateProperty("OnCameraCCDYSize", /*"512"*/CDeviceUtils::ConvertToString(h), MM::Integer, true, pAct);
  
+   
+   pAct = new CPropertyAction (this, &COpenCVgrabber::OnFlipX);
+   CreateProperty("Flip X","0",MM::Integer,false,pAct);
+   SetPropertyLimits("Flip X",0,1);
+
+   pAct = new CPropertyAction (this, &COpenCVgrabber::OnFlipY);
+   CreateProperty("Flip Y","0",MM::Integer,false,pAct);
+   SetPropertyLimits("Flip Y",0,1);
 
    // synchronize all properties
    // --------------------------
@@ -484,6 +494,12 @@ const unsigned char* COpenCVgrabber::GetImageBuffer()
    if(!temp) return 0;
    //Mat temp_mat (temp);
    
+   if(xFlip_ == true){ 
+      cvFlip(temp,NULL,1);
+   }
+   if(yFlip_ == true){
+      cvFlip(temp,NULL,0);
+   }
 
    char buf[MM::MaxStrLength];
    GetProperty(MM::g_Keyword_PixelType, buf);
@@ -546,6 +562,7 @@ const unsigned char* COpenCVgrabber::GetImageBuffer()
 		} 
 	}
    
+ 
 
 unsigned char *pB = (unsigned char*)(img_.GetPixels());
    return pB;
@@ -980,6 +997,54 @@ int COpenCVgrabber::OnContrast(MM::PropertyBase* pProp, MM::ActionType eAct)
 }
 */
 
+
+int COpenCVgrabber::OnFlipX(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   int ret = DEVICE_ERR;
+   switch(eAct)
+   {
+   case MM::AfterSet:
+      {
+         
+         long val=0;
+         pProp->Get(val);
+         xFlip_ = val;
+         
+		   ret=DEVICE_OK;
+      }break;
+   case MM::BeforeGet:
+      {
+         
+			pProp->Set((long)xFlip_);
+         ret=DEVICE_OK;
+      }break;
+   }
+   return ret; 
+}
+
+int COpenCVgrabber::OnFlipY(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   int ret = DEVICE_ERR;
+   switch(eAct)
+   {
+   case MM::AfterSet:
+      {
+         
+         long val=0;
+         pProp->Get(val);
+         yFlip_ = val;
+         
+		   ret=DEVICE_OK;
+      }break;
+   case MM::BeforeGet:
+      {
+         
+			pProp->Set((long)yFlip_);
+         ret=DEVICE_OK;
+      }break;
+   }
+   return ret; 
+}
 
 // handles gain property
 
