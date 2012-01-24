@@ -694,6 +694,7 @@
   {:init-width (core getImageWidth)
    :init-height (core getImageHeight)
    :pixel-type (get-pixel-type)
+   :bit-depth (core getImageBitDepth)
    :binning (core getProperty (core getCameraDevice) "Binning")})
 
 (defn acquire-tagged-image []
