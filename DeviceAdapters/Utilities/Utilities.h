@@ -25,6 +25,7 @@
 
 #include "../../MMDevice/MMDevice.h"
 #include "../../MMDevice/DeviceBase.h"
+#include "../../MMDevice/ImgBuffer.h"
 #include <string>
 #include <map>
 
@@ -163,6 +164,7 @@ private:
    std::vector<MM::Camera*> physicalCameras_;
    unsigned int nrCamerasInUse_;
    bool initialized_;
+   ImgBuffer img_;
 };
 
 
