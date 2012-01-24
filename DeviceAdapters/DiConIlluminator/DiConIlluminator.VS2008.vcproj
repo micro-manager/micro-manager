@@ -42,7 +42,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="../../MMCore; ../../MMDevice;C:\WinDDK\7600.16385.1\inc\api"
+				AdditionalIncludeDirectories="../../MMCore; ../../MMDevice"
 				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_USRDLL;DICONILLUMINATOR_EXPORTS;_USRDLL;MODULE_EXPORTS"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
@@ -63,10 +63,8 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="MMCored.lib Setupapi.lib"
 				OutputFile="$(OutDir)\mmgr_dal_$(ProjectName).dll"
 				LinkIncremental="2"
-				AdditionalLibraryDirectories="../../lib_Win32; C:\WinDDK\7600.16385.1\lib\wxp\i386"
 				IgnoreAllDefaultLibraries="false"
 				GenerateDebugInformation="true"
 				SubSystem="2"
@@ -120,7 +118,7 @@
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
-				AdditionalIncludeDirectories="../../MMCore; ../../MMDevice;C:\WinDDK\7600.16385.1\inc\api"
+				AdditionalIncludeDirectories="../../MMCore; ../../MMDevice"
 				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;DICONILLUMINATOR_EXPORTS;_USRDLL;MODULE_EXPORTS"
 				RuntimeLibrary="0"
 				UsePrecompiledHeader="0"
@@ -139,10 +137,8 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="MMCorer.lib Setupapi.lib"
 				OutputFile="$(OutDir)\mmgr_dal_$(ProjectName).dll"
-				LinkIncremental="2"
-				AdditionalLibraryDirectories="../../lib_Win32;C:\WinDDK\7600.16385.1\lib\wxp\i386"
+				LinkIncremental="0"
 				GenerateDebugInformation="false"
 				SubSystem="2"
 				OptimizeReferences="2"
@@ -199,7 +195,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="../../MMCore; ../../MMDevice;C:\WinDDK\7600.16385.1\inc\api"
+				AdditionalIncludeDirectories="../../MMCore; ../../MMDevice"
 				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_USRDLL;DICONILLUMINATOR_EXPORTS;_USRDLL;MODULE_EXPORTS"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
@@ -220,10 +216,8 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="MMCored.lib Setupapi.lib"
 				OutputFile="$(OutDir)\mmgr_dal_$(ProjectName).dll"
 				LinkIncremental="2"
-				AdditionalLibraryDirectories="../../lib_Win32; C:\WinDDK\7600.16385.1\lib\wxp\i386"
 				IgnoreAllDefaultLibraries="false"
 				GenerateDebugInformation="true"
 				SubSystem="2"
@@ -278,7 +272,7 @@
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
-				AdditionalIncludeDirectories="../../MMCore; ../../MMDevice;C:\WinDDK\7600.16385.1\inc\api"
+				AdditionalIncludeDirectories="../../MMCore; ../../MMDevice"
 				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;DICONILLUMINATOR_EXPORTS;_USRDLL;MODULE_EXPORTS"
 				RuntimeLibrary="0"
 				UsePrecompiledHeader="0"
@@ -297,10 +291,8 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="MMCorer.lib Setupapi.lib"
 				OutputFile="$(OutDir)\mmgr_dal_$(ProjectName).dll"
-				LinkIncremental="2"
-				AdditionalLibraryDirectories="../../lib_Win32;C:\WinDDK\7600.16385.1\lib\wxp\i386"
+				LinkIncremental="0"
 				GenerateDebugInformation="false"
 				SubSystem="2"
 				OptimizeReferences="2"
