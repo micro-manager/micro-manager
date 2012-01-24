@@ -40,6 +40,7 @@ import javax.swing.SpringLayout;
 import javax.swing.UIManager;
 import javax.swing.border.LineBorder;
 
+import org.micromanager.MMStudioMainFrame;
 import org.micromanager.utils.MMFrame;
 import org.micromanager.utils.ReportingUtils;
 
@@ -82,6 +83,7 @@ public class GraphFrame extends MMFrame {
    public void setAutoScale() {
       panel_.setAutoBounds();
       updateBounds();
+      refresh();
    }
    public void setData(GraphData data){
       panel_.setData(data);
@@ -225,7 +227,7 @@ public class GraphFrame extends MMFrame {
       btnRefresh.setFont(new Font("Arial", Font.PLAIN, 10));
       btnRefresh.addActionListener(new ActionListener() {
          public void actionPerformed(ActionEvent e) {
-            refresh();
+            MMStudioMainFrame.getInstance().updateLineProfile();
          }
       });
       btnRefresh.setText("Refresh");

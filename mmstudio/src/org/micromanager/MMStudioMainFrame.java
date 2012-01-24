@@ -2992,6 +2992,7 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
             ReportingUtils.showError(ex);
          }
          setCursor(new Cursor(Cursor.DEFAULT_CURSOR));
+         updateLineProfile();
    }
 
    public void initializeGUI() {
