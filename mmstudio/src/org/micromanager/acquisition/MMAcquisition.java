@@ -615,7 +615,10 @@ public class MMAcquisition {
       if (isInitialized()) {
          String name = "";
          try {
-            name = (String) getSummaryMetadata().getJSONArray("ChNames").get(channel);
+            JSONArray chNames =  getSummaryMetadata().getJSONArray("ChNames");
+            if (chNames == null || channel >= chNames.length() )
+               return "";
+            name = chNames.getString(channel);
          } catch (JSONException e) {
             ReportingUtils.logError(e);
             return "";
