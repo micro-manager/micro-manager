@@ -42,28 +42,64 @@ void USBCommAdapter::Clear()
     GetDeviceIDs = NULL;
 }
 
+static bool QueryRegStringValue(HKEY key, const char* const name, char** ppBuffer)
+{
+    DWORD size = 0;
+    DWORD type = REG_SZ;
+    RegQueryValueEx(key, name, NULL, &type, NULL, &size);
+    bool ok = size > 0;
+    if (ok)
+    {
+        *ppBuffer = new char[size+1];            
+        long result = RegQueryValueEx(key, name, NULL, &type, (LPBYTE) (*ppBuffer), &size);
+        ok = (ERROR_SUCCESS == result) && (size > 0); 
+        if (ok)
+        {
+            (*ppBuffer)[size] = '\0';
+        }
+        else
+        {
+            delete [] *ppBuffer;
+            *ppBuffer = NULL;
+        }
+    }
+    else
+    {
+        *ppBuffer = NULL;
+    }
+    return ok;
+}
+
 void USBCommAdapter::InitializePath()
 {
     HKEY key(0);
     path.clear();
+    const char* target = "\\C\\bin\\USBCommDLL.dll";
     long result = RegOpenKeyEx(HKEY_LOCAL_MACHINE, "Software\\DiCon\\USBCommAdapter", 0, KEY_READ, &key);
     if (ERROR_SUCCESS == result)
     {
-        DWORD size = 0;
-        DWORD type = REG_SZ;
-        const char* name = "Path";
-        RegQueryValueEx(key, name, NULL, &type, NULL, &size);
-        if (size > 0)
+        char* buffer = NULL;
+        if (QueryRegStringValue(key, "Version", &buffer))
         {
-            char* buffer = new char[size+1];
-            result = RegQueryValueEx(key, name, NULL, &type, (LPBYTE) buffer, &size);
-            if ((ERROR_SUCCESS == result) && (size > 0))
+            char majorVer = buffer[0] - '0';
+            if (majorVer >= 2)
             {
-                buffer[size] = '\0';
-                path = buffer;
-                path += "\\C\\bin\\USBCommDLL.dll";
+#if defined(_WIN64)
+                target = "\\native\\bin\\USBCommAdapter64.dll";
+#else
+                target = "\\native\\bin\\USBCommAdapter32.dll";
+#endif
             }
             delete [] buffer;
+            buffer = NULL;
+        }
+        
+        if (QueryRegStringValue(key, "Path", &buffer))
+        {
+            path = buffer;
+            path += target;
+            delete [] buffer;
+            buffer = NULL;
         }
     }
 }
