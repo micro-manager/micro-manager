@@ -77,7 +77,6 @@ import org.micromanager.api.ScriptInterface;
 import org.micromanager.utils.ScriptingEngine;
 import org.micromanager.utils.ScriptingGUI;
 import org.micromanager.script.BeanshellEngine;
-import org.micromanager.utils.GUIColors;
 import org.micromanager.utils.MMFrame;
 import org.micromanager.utils.MMScriptException;
 
