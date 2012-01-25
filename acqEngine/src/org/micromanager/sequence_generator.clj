@@ -53,7 +53,8 @@
            (for [[[d p] s] property-sequences]
              (or (apply = s)
                  (and (core isPropertySequenceable d p)
-                      (<= (count s) (core getPropertySequenceMaxLength d p)))))))))
+                      (<= (count s) (core getPropertySequenceMaxLength d p)))))))
+    (apply == (map :exposure channels))))
  
 (defn select-triggerable-sequences [property-sequences]
   (into (sorted-map)
