@@ -452,7 +452,7 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
          @Override
          public void actionPerformed(ActionEvent e) {
             int frame = hyperImage_.getFrame();
-            if (frame >= lastFrame_) 
+            if (frame > lastFrame_) 
                hyperImage_.setPosition(hyperImage_.getChannel(), hyperImage_.getSlice(), firstFrame_);          
             else 
                hyperImage_.setPosition(hyperImage_.getChannel(), hyperImage_.getSlice(), frame + 1);              
@@ -887,6 +887,9 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
       } catch (Exception ex) {
          ReportingUtils.logError(ex);
       }
+      
+      if (frame > lastFrame_)
+         lastFrame_ = frame;
 
     
       if (cSelector_ != null) {
