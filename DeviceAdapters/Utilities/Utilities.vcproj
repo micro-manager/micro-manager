@@ -352,6 +352,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\MMDevice\ImgBuffer.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\..\MMDevice\ModuleInterface.cpp"
 				>
 			</File>
@@ -375,6 +379,10 @@
 			</File>
 			<File
 				RelativePath="..\..\MMDevice\DeviceUtils.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\MMDevice\ImgBuffer.h"
 				>
 			</File>
 			<File
