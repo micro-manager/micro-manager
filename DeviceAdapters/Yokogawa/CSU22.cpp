@@ -159,10 +159,10 @@ int Hub::Initialize()
 
    // Drive Speed
    CPropertyAction* pAct = new CPropertyAction (this, &Hub::OnSpeed);
-   ret = CreateProperty(MM::g_Keyword_State, "1500", MM::Integer, false, pAct); 
+   ret = CreateProperty("DriveSpeed", "1500", MM::Integer, false, pAct); 
    if (ret != DEVICE_OK) 
       return ret; 
-   SetPropertyLimits(MM::g_Keyword_State, minSpeed_, maxSpeed_);
+   SetPropertyLimits("DriveSpeed", minSpeed_, maxSpeed_);
 
    initialized_ = true;
    
