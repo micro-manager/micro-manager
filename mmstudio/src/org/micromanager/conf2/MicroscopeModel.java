@@ -237,13 +237,14 @@ public class MicroscopeModel {
    public void loadAvailableDeviceList(CMMCore core) {
       try {
          ArrayList<Device> devsTotal = new ArrayList<Device>();
-         String deviceListFileName = (DEVLIST_FILE_NAME);
 
+         // NOTE: commented out to avoid using out-of-date device list file
          // attempt to load device info from file
-         File f = new File(deviceListFileName);
-         if (f.exists()) {
-            loadDevicesFromListFile(devsTotal, deviceListFileName);
-         }
+//         String deviceListFileName = (DEVLIST_FILE_NAME);
+//         File f = new File(deviceListFileName);
+//         if (f.exists()) {
+//            loadDevicesFromListFile(devsTotal, deviceListFileName);
+//         }
 
          // assign available devices
          availableDevices_ = new Device[devsTotal.size()];
@@ -256,7 +257,7 @@ public class MicroscopeModel {
 
          for (int i = 0; i < libs.size(); i++) {
             if (!isLibraryAvailable(libs.get(i))) {
-               ReportingUtils.logMessage(libs.get(i));
+               // ReportingUtils.logMessage(libs.get(i));
                Device devs[] = new Device[0];
                try {
                   devs = Device.getLibraryContents(libs.get(i), core);
@@ -269,8 +270,8 @@ public class MicroscopeModel {
                      }
                   }
                } catch (Exception e) {
-                  ReportingUtils.logError(e, "Unable to load " + libs.get(i)
-                        + " library.");
+                  // ReportingUtils.logError(e, "Unable to load " + libs.get(i) + " library.");
+            	   // getLibraryContents failed
                }
             }
          }

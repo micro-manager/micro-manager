@@ -4528,7 +4528,14 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
 
          // run Configurator
          if (v2) {
-            ConfiguratorDlg2 cfg2 = new ConfiguratorDlg2(core_, sysConfigFile_);
+        	 ConfiguratorDlg2 cfg2 = null;
+        	 try {
+        		 setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+        		 cfg2 = new ConfiguratorDlg2(core_, sysConfigFile_);
+        	 } finally {
+        		 setCursor(Cursor.getDefaultCursor());        		 
+        	 }
+        	 
             cfg2.setVisible(true);
             GUIUtils.preventDisplayAdapterChangeExceptions();
 

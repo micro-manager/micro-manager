@@ -24,6 +24,7 @@
 package org.micromanager.conf2;
 
 import java.awt.Color;
+import java.awt.Cursor;
 import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.event.ActionEvent;
