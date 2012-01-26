@@ -293,7 +293,7 @@ public class SingleChannelContrastPanel extends JPanel implements
            g.drawString(label, this.getSize().width - 7*label.length(), this.getSize().height );
         } };
 		histogramPanel_.setMargins(8, 10);
-      histogramPanel_.setTraceStyle(true, new Color(50,50,50));
+      histogramPanel_.setTraceStyle(true, Color.white);
 		histogramPanel_.setTextVisible(false);
 		histogramPanel_.setGridVisible(false);
       

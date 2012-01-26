@@ -26,6 +26,7 @@ package org.micromanager.graph;
 
 import java.awt.BasicStroke;
 import java.awt.Color;
+import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Rectangle;
 import java.awt.Stroke;
@@ -135,7 +136,7 @@ public class HistogramPanel extends GraphPanel {
 
       Color oldColor = g.getColor();
       Stroke oldStroke = g.getStroke();
-      g.setColor(Color.black);
+      g.setColor(new Color(120,120,120));
 
       float dash1[] = {3.0f};
       BasicStroke dashed = new BasicStroke(1.0f, BasicStroke.CAP_BUTT, BasicStroke.JOIN_MITER, 3.0f, dash1, 0.0f);
@@ -185,7 +186,7 @@ public class HistogramPanel extends GraphPanel {
 
       Color oldColor = g.getColor();
       Stroke oldStroke = g.getStroke();
-      g.setColor(Color.black);
+      g.setColor(new Color(120,120,120));
 
       BasicStroke solid = new BasicStroke(1.0f, BasicStroke.CAP_BUTT, BasicStroke.JOIN_MITER);
       g.setStroke(solid);
@@ -359,5 +360,14 @@ public class HistogramPanel extends GraphPanel {
       }
    }
 
+   //Makes histogram background black
+   @Override
+   protected void drawGraph(Graphics2D g, Rectangle box) {
+      Color oldColor = g.getColor();
+      g.setColor(Color.black);
+      g.fillRect(box.x, box.y, box.width, box.height);
+      g.setColor(oldColor);  
+      super.drawGraph(g, box);
+   }
 
 }

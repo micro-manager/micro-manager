@@ -134,7 +134,7 @@ public class GraphPanel extends JPanel {
     * @param g
     * @param box
     */
-   private void drawGraph(Graphics2D g, Rectangle box) {
+   protected void drawGraph(Graphics2D g, Rectangle box) {
       if (data_.getSize() < 2)
          return;
 
@@ -249,7 +249,7 @@ public class GraphPanel extends JPanel {
       
       Color oldColor = g.getColor();
       Stroke oldStroke = g.getStroke();
-      g.setColor(Color.black);
+      g.setColor(Color.yellow);
       g.setStroke(new BasicStroke(1));
       g.draw(box);
       
