@@ -26,13 +26,13 @@ public interface ContrastPanel {
 
    public double getFractionToReject();
 
-   public void imageChanged(ImagePlus img, ImageCache cache);
+   public void imageChanged(ImagePlus img, ImageCache cache, boolean drawHist);
 
    public void setChannelContrast(int channelIndex, int min, int max, ImagePlus img);
    
    public void setupChannelControls(ImageCache cache);
    
-   public void calcAndDisplayHistAndStats(ImagePlus img);
+   public void calcAndDisplayHistAndStats(ImagePlus img, boolean drawHist);
    
    public void autostretch();
    

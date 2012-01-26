@@ -482,26 +482,26 @@ public class SingleChannelContrastPanel extends JPanel implements
          logScale_ = false;
       ImagePlus img = WindowManager.getCurrentImage();
       if (img!= null)
-         calcAndDisplayHistAndStats(img);
+         calcAndDisplayHistAndStats(img,true);
    }
 
    private void pixelTypeAction() {
       setHistMaxAndBinSize();
       ImagePlus img = WindowManager.getCurrentImage(); 
       if (img!= null)
-         calcAndDisplayHistAndStats(img);
+         calcAndDisplayHistAndStats(img,true);
    }
 
    private void rejectOutliersAction() {
       rejectOutliersPercentSpinner_.setEnabled(rejectOutliersCheckBox_.isSelected());
       percentOutliersLabel_.setEnabled(rejectOutliersCheckBox_.isSelected());
-      calcAndDisplayHistAndStats(WindowManager.getCurrentImage());
+      calcAndDisplayHistAndStats(WindowManager.getCurrentImage(),true);
       autoButtonAction();
    }
 
    private void percentOutliersAction() {
       fractionToReject_ = (Double) rejectOutliersPercentSpinner_.getValue();
-      calcAndDisplayHistAndStats(WindowManager.getCurrentImage());
+      calcAndDisplayHistAndStats(WindowManager.getCurrentImage(),true);
       autoButtonAction();
    }
    
@@ -630,8 +630,8 @@ public class SingleChannelContrastPanel extends JPanel implements
       gamma_ = cache.getChannelGamma(0);
    }
    
-   public void imageChanged(ImagePlus img, ImageCache cache) {
-      calcAndDisplayHistAndStats(img);
+   public void imageChanged(ImagePlus img, ImageCache cache, boolean drawHist) {
+      calcAndDisplayHistAndStats(img,drawHist);
       if (autostretch_)
          autostretch();
       applyLUTToImage(img, cache);
@@ -650,7 +650,7 @@ public class SingleChannelContrastPanel extends JPanel implements
       }
 
       setHistMaxAndBinSize();
-      calcAndDisplayHistAndStats(img);
+      calcAndDisplayHistAndStats(img,true);
       if (autostretchCheckBox_.isSelected())
          autostretch();
       else 
@@ -658,7 +658,7 @@ public class SingleChannelContrastPanel extends JPanel implements
      mdPanel_.drawWithoutUpdate();
    }
    
-   public void calcAndDisplayHistAndStats(ImagePlus img) {
+   public void calcAndDisplayHistAndStats(ImagePlus img, boolean drawHist) {
       if (img != null) {
          int[] rawHistogram = img.getProcessor().getHistogram();
          int imgWidth = img.getWidth();
@@ -715,26 +715,27 @@ public class SingleChannelContrastPanel extends JPanel implements
                histogram[numBins - 1] = imgWidth * imgHeight;
             }
          }
-                      
-         stdDev_ = 0;
-         for (int i = 0; i < rawHistogram.length; i++) {
-            for (int j = 0; j < rawHistogram[i]; j++) {
-               stdDev_ += (i - mean_) * (i - mean_);
+        
+         if (drawHist) {
+            stdDev_ = 0;
+            for (int i = 0; i < rawHistogram.length; i++) {
+               for (int j = 0; j < rawHistogram[i]; j++) {
+                  stdDev_ += (i - mean_) * (i - mean_);
+               }
             }
+            stdDev_ = Math.sqrt(stdDev_ / (imgWidth * imgHeight));
+            //Draw histogram and stats
+            histogramData.setData(histogram);
+            histogramPanel_.setData(histogramData);
+            histogramPanel_.setAutoScale();
+
+            maxLabel_.setText(NumberUtils.intToDisplayString((int) pixelMax_));
+            minLabel_.setText(NumberUtils.intToDisplayString((int) pixelMin_));
+            meanLabel_.setText(NumberUtils.intToDisplayString((int) mean_));
+            stdDevLabel_.setText(NumberUtils.doubleToDisplayString(stdDev_));
+
+            histogramPanel_.repaint();
          }
-         stdDev_ = Math.sqrt(stdDev_ / (imgWidth * imgHeight));
-
-         //Draw histogram and stats
-         histogramData.setData(histogram);
-         histogramPanel_.setData(histogramData);
-         histogramPanel_.setAutoScale();
-
-         maxLabel_.setText(NumberUtils.intToDisplayString((int) pixelMax_));
-         minLabel_.setText(NumberUtils.intToDisplayString((int) pixelMin_));
-         meanLabel_.setText(NumberUtils.intToDisplayString((int) mean_));
-         stdDevLabel_.setText(NumberUtils.doubleToDisplayString(stdDev_));
-
-         histogramPanel_.repaint();
       }
    }
    

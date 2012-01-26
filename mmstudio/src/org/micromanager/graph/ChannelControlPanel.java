@@ -370,14 +370,14 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
     private void zoomInButtonAction() {
        binSize_ = Math.max(binSize_ / 2, BIN_SIZE_MIN);
        updateHistMax();
-       calcAndDisplayHistAndStats(WindowManager.getCurrentImage());
+       calcAndDisplayHistAndStats(WindowManager.getCurrentImage(),true);
        updateHistogramCursors();
     }
 
     private void zoomOutButtonAction() {
        binSize_ = Math.min(binSize_ * 2, BIN_SIZE_MAX);              
        updateHistMax();
-       calcAndDisplayHistAndStats(WindowManager.getCurrentImage());
+       calcAndDisplayHistAndStats(WindowManager.getCurrentImage(),true);
        updateHistogramCursors();
     }
     
@@ -413,7 +413,7 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
 
    public void setLogScale(boolean logScale) {
       logScale_ = logScale;
-      calcAndDisplayHistAndStats(WindowManager.getCurrentImage());
+      calcAndDisplayHistAndStats(WindowManager.getCurrentImage(),true);
    }
 
    private void updateChannelVisibility() {
@@ -466,7 +466,7 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
       if (name.length() > 11) 
          name = name.substring(0, 9) + "...";
       channelNameCheckbox_.setText(name);
-      calcAndDisplayHistAndStats(cache.getImagePlus());
+      calcAndDisplayHistAndStats(cache.getImagePlus(),true);
       mdPanel_.drawWithoutUpdate();
       this.repaint();
    }
@@ -501,17 +501,23 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
    }
 
    public void applyChannelLUTToImage(ImagePlus img, ImageCache cache) {
-      LUT lut = ImageUtils.makeLUT(cache.getChannelColor(channelIndex_),
-              gamma_, cache.getBitDepth() );
       if (img.isComposite()) {
-         int originalChannel = img.getChannel() -1; 
-         setChannelWithoutMovingSlider(img,channelIndex_);
          CompositeImage ci = (CompositeImage) img;
-         ci.setChannelLut(lut);
-         setChannelWithoutMovingSlider(img,originalChannel);      
+         if ( !ci.getActiveChannels()[channelIndex_] )
+            return;
+         Color color = cache.getChannelColor(channelIndex_);
          
-         if (ci.getProcessor(channelIndex_+1) != null)
-            ci.getProcessor(channelIndex_ + 1).setMinAndMax(contrastMin_, contrastMax_);
+         LUT lut = ImageUtils.makeLUT(color, gamma_, cache.getBitDepth() );
+         lut.min = contrastMin_;
+         lut.max = contrastMax_;
+         //this sets the min and max for composite images by taking the min and 
+         //max values from the lut
+         ci.setChannelLut(lut, channelIndex_+1);  
+         if (ci.getMode() != CompositeImage.COMPOSITE)
+            ci.getChannelProcessor().setMinAndMax(contrastMin_, contrastMax_);    
+         //This is either the active channel processor or base prcessor in color/grayscale
+         //Since setminAnd max does not get called by setChannelLut in grayscale or color mode,
+         //must call it ourselves
       }
  
       //store contrast settings
@@ -525,18 +531,22 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
 		hp_.repaint();
    }
 
-   public void calcAndDisplayHistAndStats(ImagePlus img) {
+   public void calcAndDisplayHistAndStats(ImagePlus img, boolean drawHist) {
       if (img == null)
          return;
       ImageProcessor ip = null;
-      if (img.isComposite() && ((CompositeImage) img).getMode()  == CompositeImage.COMPOSITE) {
-         ip = ((CompositeImage) img).getProcessor(channelIndex_ + 1);  
-      } else if (img.getChannel() == (channelIndex_ + 1)) {   
-         ip = img.getProcessor();
+      if (img.isComposite() ) {
+         if (((CompositeImage) img).getMode()  == CompositeImage.COMPOSITE) 
+            ip = ((CompositeImage) img).getProcessor(channelIndex_ + 1);
+         else if (channelIndex_ == img.getChannel() - 1)  
+            ip = img.getProcessor(); 
       }
-      if (ip == null) 
-            return;
-         
+      if (ip == null) { 
+         hp_.setVisible(false);
+         return;
+      }
+      hp_.setVisible(true);
+      
       int[] rawHistogram = ip.getHistogram();
       int imgWidth = img.getWidth();
       int imgHeight = img.getHeight();
@@ -591,16 +601,18 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
          }
       }
 
-      //Draw histogram and stats
-      histogramData.setData(histogram);
-      hp_.setData(histogramData);
-      hp_.setAutoScale();
-      hp_.repaint();
+      if (drawHist) {
+         //Draw histogram and stats
+         histogramData.setData(histogram);
+         hp_.setData(histogramData);
+         hp_.setAutoScale();
+         hp_.repaint();
 
-      maxLabel_.setText("Max: " + NumberUtils.intToDisplayString((int) pixelMax_));
-      minLabel_.setText("Min: " + NumberUtils.intToDisplayString((int) pixelMin_));
+         maxLabel_.setText("Max: " + NumberUtils.intToDisplayString((int) pixelMax_));
+         minLabel_.setText("Min: " + NumberUtils.intToDisplayString((int) pixelMin_));
+      }
    }
-  
+
    private VirtualAcquisitionDisplay getCurrentDisplay() {
       ImagePlus img = WindowManager.getCurrentImage();
       if (img == null)

@@ -10,42 +10,25 @@
  */
 package org.micromanager.acquisition;
 
-import java.lang.reflect.InvocationTargetException;
-import org.micromanager.graph.ChannelControlPanel;
-import ij.CompositeImage;
+
 import ij.ImagePlus;
 import ij.WindowManager;
 import ij.gui.ImageWindow;
-import ij.gui.Overlay;
-import ij.gui.StackWindow;
 import java.awt.BorderLayout;
 import java.awt.CardLayout;
-import java.awt.Color;
-import java.awt.Dimension;
 import java.awt.Font;
-import java.awt.Graphics;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Vector;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import java.util.prefs.Preferences;
 import javax.swing.DebugGraphics;
-import javax.swing.DefaultComboBoxModel;
 import javax.swing.JCheckBox;
-import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
-import javax.swing.JSpinner;
 import javax.swing.JSplitPane;
 import javax.swing.JTabbedPane;
 import javax.swing.JTable;
 import javax.swing.JTextArea;
-import javax.swing.ScrollPaneConstants;
-import javax.swing.SpinnerNumberModel;
-import javax.swing.SpringLayout;
-import javax.swing.SwingUtilities;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.event.DocumentEvent;
@@ -53,21 +36,16 @@ import javax.swing.event.DocumentListener;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.DefaultTableModel;
 import mmcorej.TaggedImage;
-import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
-import org.micromanager.MMStudioMainFrame;
 import org.micromanager.api.ContrastPanel;
 import org.micromanager.api.ImageCache;
 import org.micromanager.graph.MultiChannelContrastPanel;
 import org.micromanager.graph.SingleChannelContrastPanel;
 import org.micromanager.utils.ImageFocusListener;
 import org.micromanager.utils.GUIUtils;
-import org.micromanager.utils.JavaUtils;
 import org.micromanager.utils.MDUtils;
-import org.micromanager.utils.NumberUtils;
 import org.micromanager.utils.ReportingUtils;
-import org.micromanager.utils.ScaleBar;
 
 /**
  *
@@ -387,13 +365,18 @@ public class MetadataPanel extends JPanel
 
     private void showUnchangingPropertiesCheckboxActionPerformed(java.awt.event.ActionEvent evt) {                                                                 
        showUnchangingKeys_ = showUnchangingPropertiesCheckbox.isSelected();
-       update(WindowManager.getCurrentImage());
+       ImagePlus img = WindowManager.getCurrentImage();
+       if (img != null) {
+          ImageCache cache = VirtualAcquisitionDisplay.getDisplay(img).getImageCache();
+          imageChangedUpdate(img,cache);
+       }
 }                                                                
 
     private void tabbedPaneStateChanged(ChangeEvent evt) {                                        
-       try {
-          update(WindowManager.getCurrentImage());
-       } catch (Exception e) {
+       ImagePlus img = WindowManager.getCurrentImage();
+       if (img != null) {
+          ImageCache cache = VirtualAcquisitionDisplay.getDisplay(img).getImageCache();
+          imageChangedUpdate(img,cache);
        }
 }                                                                                 
     
@@ -556,61 +539,18 @@ public class MetadataPanel extends JPanel
     */
    public void autoscaleWithoutDraw(ImageCache cache, ImagePlus img) {
       if (currentContrastPanel_ != null) {
-         currentContrastPanel_.calcAndDisplayHistAndStats(img);
+         currentContrastPanel_.calcAndDisplayHistAndStats(img,true);
          currentContrastPanel_.autostretch();
          currentContrastPanel_.applyLUTToImage(img, cache);
       }
    }
-
-   // should be called whenever image changes or sliders are moved  
-   public void update(ImagePlus imp) {
-      int tabSelected = tabbedPane.getSelectedIndex();
-      if (imp == null) {
-         imageMetadataModel_.setMetadata(null);
-         summaryMetadataModel_.setMetadata(null);
-         summaryCommentsTextArea.setText(null);
-         setContrastPanel(BLANK_CONTRAST_PANEL);
-      } else {
-         if (tabSelected == 1) {
-            AcquisitionVirtualStack stack = getAcquisitionStack(imp);
-            if (stack != null) {
-               int slice = imp.getCurrentSlice();
-               TaggedImage taggedImg = stack.getTaggedImage(slice);
-               if (taggedImg == null) {
-                  imageMetadataModel_.setMetadata(null);
-               } else {
-                  JSONObject md = stack.getTaggedImage(slice).tags;
-                  if (!showUnchangingKeys_) {
-                     md = selectChangingTags(imp, md);
-                  }
-                  imageMetadataModel_.setMetadata(md);
-               }
-               summaryMetadataModel_.setMetadata(stack.getCache().getSummaryMetadata());
-            } else {
-               imageMetadataModel_.setMetadata(null);
-            }
-         } else if (tabSelected == 0) {
-//            updateAndDrawHistograms();
-         } else if (tabSelected == 2) {
-            VirtualAcquisitionDisplay acq = getVirtualAcquisitionDisplay(imp);
-            if (acq != null) {
-               imageCommentsTextArea.setText(acq.getImageComment());
-            }
-         }
-      }
-
-   }
-   
-   /*
-    * This is called, in contrast to update(), only when the ImageWindow
-    * in focus has changed.
-    */
+  
    public synchronized void focusReceived(ImageWindow focusedWindow) {
       if (focusedWindow == lastFocusedWindow_)
          return;
       lastFocusedWindow_ = focusedWindow;
       if (focusedWindow == null  || !(focusedWindow instanceof VirtualAcquisitionDisplay.DisplayWindow) ) {
-         update((ImagePlus)null);
+         imageChangedUpdate((ImagePlus)null,null);
          return;
       }
 
@@ -622,7 +562,6 @@ public class MetadataPanel extends JPanel
       else
          setContrastPanel(SINGLE_CHANNEL_CONTRAST_PANEL);
       
-//      sizeBarCheckBox.setSelected(imgp.getOverlay() != null && !imgp.getHideOverlay());
       
       if (acq != null) {
          summaryCommentsTextArea.setText(acq.getSummaryComment());
@@ -632,22 +571,17 @@ public class MetadataPanel extends JPanel
          summaryCommentsTextArea.setText(null);
       }
 
-      if (imgp instanceof CompositeImage) {
-         CompositeImage cimp = (CompositeImage) imgp;
-//         updatingDisplayModeCombo_ = true;
-//         displayModeCombo.setSelectedIndex(cimp.getMode() - 1);
-//         updatingDisplayModeCombo_ = false;
-      }
-
 
       if (acq != null && currentContrastPanel_ != null) {
          currentContrastPanel_.setupChannelControls(cache);
-
-         //load appropriate contrast settings 
-         // calc and display hist, apply LUT and draw
+         if (acq.getNumChannels() > 1) {
+            multiChannelContrastPanel_.displayModeComboActionPerformed();        
+            multiChannelContrastPanel_.sizeBarCheckBoxActionPerformed();
+         }
+         //load appropriate contrast settings calc and display hist, apply LUT and draw
          currentContrastPanel_.displayChanged(imgp, cache);
 
-         update(imgp);
+         imageChangedUpdate(imgp,cache);
       }
    }
 
@@ -701,9 +635,47 @@ public class MetadataPanel extends JPanel
     * ImagePlus.draw or CompositieImage.draw runs as a result of the overriden 
     * methods in MMCompositeImage and MMImagePlus
     */
-   public  synchronized void imageChangedUpdate(ImagePlus img, ImageCache cache) {
-      if (currentContrastPanel_ != null)
-         currentContrastPanel_.imageChanged(img, cache);
+   public void imageChangedUpdate(ImagePlus img, ImageCache cache) {
+      
+      int tabSelected = tabbedPane.getSelectedIndex();
+      if (img == null) {
+         imageMetadataModel_.setMetadata(null);
+         summaryMetadataModel_.setMetadata(null);
+         summaryCommentsTextArea.setText(null);
+         setContrastPanel(BLANK_CONTRAST_PANEL);
+      } else {
+         if (tabSelected == 1) { //Metadata
+            AcquisitionVirtualStack stack = getAcquisitionStack(img);
+            if (stack != null) {
+               int slice = img.getCurrentSlice();
+               TaggedImage taggedImg = stack.getTaggedImage(slice);
+               if (taggedImg == null) {
+                  imageMetadataModel_.setMetadata(null);
+               } else {
+                  JSONObject md = stack.getTaggedImage(slice).tags;
+                  if (!showUnchangingKeys_) {
+                     md = selectChangingTags(img, md);
+                  }
+                  imageMetadataModel_.setMetadata(md);
+               }
+               summaryMetadataModel_.setMetadata(stack.getCache().getSummaryMetadata());
+            } else {
+               imageMetadataModel_.setMetadata(null);
+            }
+            if (currentContrastPanel_ != null)
+               currentContrastPanel_.imageChanged(img, cache, false);
+         } else if (tabSelected == 0) { //Histogram panel
+            if (currentContrastPanel_ != null) {
+               currentContrastPanel_.imageChanged(img, cache, true);
+            }
+         } else if (tabSelected == 2) { //Display and comments
+            VirtualAcquisitionDisplay acq = getVirtualAcquisitionDisplay(img);
+            if (acq != null)
+               imageCommentsTextArea.setText(acq.getImageComment());
+            if (currentContrastPanel_ != null)
+               currentContrastPanel_.imageChanged(img, cache, false);
+         }
+      }
    }
 
    public void setChannelContrast(int channelIndex, int min, int max, ImagePlus img) {

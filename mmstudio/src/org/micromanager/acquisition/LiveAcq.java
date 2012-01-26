@@ -25,7 +25,7 @@ import org.micromanager.utils.ReportingUtils;
  *
  * @author arthur
  */
-public class LiveAcq extends Thread {
+public class LiveAcq  {
 
    private static int untitledID_ = 0;
    protected final CMMCore core_;
@@ -57,7 +57,6 @@ public class LiveAcq extends Thread {
       return acqName_;
    }
 
-   @Override
    public void start() {
       Thread savingThread = new Thread("LiveAcq saving thread.") {
 

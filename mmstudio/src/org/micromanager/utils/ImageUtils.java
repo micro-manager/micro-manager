@@ -319,6 +319,34 @@ public class ImageUtils {
       return p;
    }
 
+    public static LUT makeLUT(Color color, double gamma, int nbits, double min, double max) {
+      int r = color.getRed();
+      int g = color.getGreen();
+      int b = color.getBlue();
+
+      int size = 256;
+      byte [] rs = new byte[size];
+      byte [] gs = new byte[size];
+      byte [] bs = new byte[size];
+
+      double pixelMax = Math.pow(2, nbits)-1;
+      double binSize = pixelMax / 255.0;
+      for (int index=0; index<size; ++index) {
+         double xUnscaled = index * binSize;
+         if (xUnscaled < min) {
+            rs[index] = 0;  gs[index] = 0;  bs[index] = 0;
+         } else if (xUnscaled > max) {
+            rs[index] = (byte) r;  gs[index] = (byte) g;  bs[index] = (byte) b;
+         } else {
+            double multiplier = Math.pow(2,(index/255.0));
+            rs[index] = (byte) (multiplier*r);
+            gs[index] = (byte) (multiplier*g);
+            bs[index] = (byte) (multiplier*b);
+         }    
+      }
+      return new LUT(nbits,size,rs,gs,bs);
+   }
+   
    public static LUT makeLUT(Color color, double gamma, int nbits) {
       int r = color.getRed();
       int g = color.getGreen();
