@@ -254,6 +254,7 @@ public class MultiChannelContrastPanel extends JPanel implements ContrastPanel {
          CompositeImage ci = (CompositeImage) imgp;
          ci.setMode(mode);
          ci.updateAndDraw();
+         mdPanel_.drawWithoutUpdate();
       }
    }
 

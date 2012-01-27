@@ -25,6 +25,8 @@ import java.awt.GridBagLayout;
 import java.awt.Insets;
 import java.awt.event.MouseWheelEvent;
 import java.awt.event.MouseWheelListener;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import java.util.prefs.Preferences;
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
@@ -45,8 +47,10 @@ import org.micromanager.graph.HistogramPanel;
 import org.micromanager.graph.HistogramPanel.CursorListener;
 import org.micromanager.utils.HistogramUtils;
 import org.micromanager.utils.ImageUtils;
+import org.micromanager.utils.JavaUtils;
 import org.micromanager.utils.MDUtils;
 import org.micromanager.utils.NumberUtils;
+import org.micromanager.utils.ReportingUtils;
 
 
 /**
@@ -501,29 +505,38 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
    }
 
    public void applyChannelLUTToImage(ImagePlus img, ImageCache cache) {
-      if (img.isComposite()) {
-         CompositeImage ci = (CompositeImage) img;
-         if ( !ci.getActiveChannels()[channelIndex_] )
-            return;
-         Color color = cache.getChannelColor(channelIndex_);
-         
-         LUT lut = ImageUtils.makeLUT(color, gamma_, cache.getBitDepth() );
-         lut.min = contrastMin_;
-         lut.max = contrastMax_;
-         //this sets the min and max for composite images by taking the min and 
-         //max values from the lut
-         ci.setChannelLut(lut, channelIndex_+1);  
-         if (ci.getMode() != CompositeImage.COMPOSITE)
-            ci.getChannelProcessor().setMinAndMax(contrastMin_, contrastMax_);    
-         //This is either the active channel processor or base prcessor in color/grayscale
-         //Since setminAnd max does not get called by setChannelLut in grayscale or color mode,
-         //must call it ourselves
+      if (!(img instanceof CompositeImage))
+         return;
+      CompositeImage ci = (CompositeImage) img;
+      Color color = cache.getChannelColor(channelIndex_);
+
+      LUT lut = ImageUtils.makeLUT(color, gamma_, cache.getBitDepth());
+      lut.min = contrastMin_;
+      lut.max = contrastMax_;
+      //uses lut.min and lut.max to set min and max of precessor
+      ci.setChannelLut(lut, channelIndex_ + 1);
+
+     
+       try {
+         JavaUtils.setRestrictedFieldValue(ci, CompositeImage.class, "currentChannel", -1);
+      } catch (NoSuchFieldException ex) {
+         ReportingUtils.logError(ex);
       }
- 
-      //store contrast settings
-      cache.storeChannelDisplaySettings(channelIndex_,(int)contrastMin_, (int)contrastMax_, gamma_);
       
-     updateHistogramCursors();
+      if (ci.getChannel() == channelIndex_ + 1) { 
+         LUT grayLut = ImageUtils.makeLUT(Color.white, gamma_, cache.getBitDepth());
+         ci.getProcessor().setColorModel(grayLut);
+         ci.getProcessor().setMinAndMax(contrastMin_, contrastMax_);
+         if (ci.getMode() == CompositeImage.GRAYSCALE)
+            ci.updateImage();
+      }
+     
+
+
+      //store contrast settings
+      cache.storeChannelDisplaySettings(channelIndex_, (int) contrastMin_, (int) contrastMax_, gamma_);
+
+      updateHistogramCursors();
    }
    
    private void updateHistogramCursors() {

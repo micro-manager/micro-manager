@@ -76,6 +76,9 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
    private boolean promptToSave_ = true;
    private String name_;
    private long lastDisplayTime_;
+   private int lastFrameShown_ = 0;
+   private int lastSliceShown_ = 0;
+   private int lastPositionShown_ = 0;
    private boolean updating_ = false;
    private int[] channelInitiated_;
    private int preferredSlice_ = -1;
@@ -137,53 +140,71 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
          display_ = disp;
       }
       
+      private void superReset() {
+         super.reset();
+      }
+      
+      @Override
+      public void reset() {
+         if (SwingUtilities.isEventDispatchThread())
+            super.reset();
+         else
+            SwingUtilities.invokeLater(new Runnable() {
+            @Override
+            public void run() {
+               superReset();
+            } });
+            
+      }
+      
+      
       /*
        * ImageJ workaround: the following two functions set the currentChannel field to -1, which can lead to a null 
        * pointer exception if the function is called while CompositeImage.updateImage is also running on a different 
        * Thread.
        */
       @Override
-      public synchronized void setMode(int mode) {
-         settingMode_ = true;       
-         while (updatingImage_ || settingLut_) {}
+      public synchronized void setMode(final int mode) {
+         Runnable runnable = new Runnable() {
+            @Override
+            public void run() {
+               superSetMode(mode);             
+               }};
+         invokeLaterIfNotEDT(runnable);
+      }
+      
+      private void superSetMode(int mode) {
          super.setMode(mode);
-         if (mode == CompositeImage.COMPOSITE) {
-            //This code fixes a bug where selecting color, closing window, opening a new window, and
-            //selecting composite would result in incorrect channel colors
-            try {
-               JavaUtils.setRestrictedFieldValue(this, CompositeImage.class, "lut", null);
-            } catch (NoSuchFieldException ex) {
-               ReportingUtils.logError(ex);
-               }
-            reset();   
-         }
-         settingMode_ = false;
       }
       
       @Override
-      public synchronized void setChannelLut(LUT lut) {
-         settingLut_ =true;
-         while (updatingImage_ || settingMode_) {}
+      public synchronized void setChannelLut(final LUT lut) {
+         Runnable runnable = new Runnable() {
+            @Override
+            public void run() {
+               superSetLut(lut);
+            }};
+         invokeLaterIfNotEDT(runnable);
+      }
+      
+      private void superSetLut(LUT lut) {
          super.setChannelLut(lut);
-         settingLut_ = false;
       }
       
       @Override
       public synchronized void updateImage() {
-         updatingImage_ = true;
-         while (settingLut_ || settingMode_) {}
-         //ImageJ workaround: CompositeImage.updateImage() sets the min and max of the current channel
-         //processor to the min and max of the processor.  This code keeps the two in sync
-         int mode = getMode();
-         int channel = getChannel() - 1;
-         ImageProcessor ip = getProcessor();
-         if (mode == CompositeImage.COMPOSITE) {
-            ImageProcessor cip = getProcessor(channel + 1);
-            if (ip != null && cip != null)
-               ip.setMinAndMax(cip.getMin(), cip.getMax());
-         }
+         Runnable runnable = new Runnable() {
+            @Override
+            public void run() {
+  
+               superUpdateImage();
+            }};
+
+         invokeLaterIfNotEDT(runnable);
+      }
+      
+      private void superUpdateImage() {
          super.updateImage();
-         updatingImage_ = false;
       }
       
       @Override
@@ -232,17 +253,12 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
       
       @Override
       public void draw() {
-         if (!SwingUtilities.isEventDispatchThread()) {
-            Runnable onEDT = new Runnable() {               
-               public void run() {
-                  imageChangedUpdate();
-                  superDraw();
-               }};      
-               SwingUtilities.invokeLater(onEDT);     
-         } else {
-            imageChangedUpdate();
-            super.draw();
-         }
+         Runnable runnable = new Runnable() {
+            public void run() {
+               imageChangedUpdate();
+               superDraw();
+            } };
+         invokeLaterIfNotEDT(runnable);
       }
       
       @Override
@@ -349,6 +365,13 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
       displayPrefs_ = Preferences.userNodeForPackage(this.getClass());
       name_ = name;
       imageCache_.setDisplay(this);
+   }
+   
+   private void invokeLaterIfNotEDT(Runnable runnable){
+      if (SwingUtilities.isEventDispatchThread())
+         runnable.run();
+      else
+         SwingUtilities.invokeLater(runnable);
    }
 
    private void startup(JSONObject firstImageMetadata) {
@@ -572,16 +595,25 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
       try {
          long t = System.currentTimeMillis();
          JSONObject tags;
-         if (taggedImage != null) {
-            tags = taggedImage.tags;
-         } else {
+         if (taggedImage != null) 
+            tags = taggedImage.tags;      
+         else 
             tags = imageCache_.getLastImageTags();
-         }
-         if (finalUpdate || (MDUtils.getFrameIndex(tags) == 0) || (Math.abs(t - lastDisplayTime_) > 30)) {
-            if (tags != null /*&& tags != lastDisplayTags_*/) {
-               showImage(tags, true);
-            }
-            lastDisplayTime_ = t;
+         if (tags == null)
+            return;
+         int frame = MDUtils.getFrameIndex(tags);
+         int ch = MDUtils.getChannelIndex(tags);
+         int slice = MDUtils.getSliceIndex(tags);
+         int position = MDUtils.getPositionIndex(tags);
+     
+         if (finalUpdate || frame == 0 || (Math.abs(t - lastDisplayTime_) > 30) ||
+                 (ch == getNumChannels()-1 && lastFrameShown_==frame 
+                 && lastSliceShown_==slice && lastPositionShown_==position  )  ) {              
+         showImage(tags, true);
+         lastFrameShown_ = frame;
+         lastSliceShown_ = slice;
+         lastPositionShown_ = position;
+         lastDisplayTime_ = t;
          }
       } catch (Exception e) {
          ReportingUtils.logError(e);
@@ -937,8 +969,8 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
             //This line is neccessary for image processor to have correct pixels in grayscale mode
             ci.getProcessor().setPixels(virtualStack_.getPixels(ci.getCurrentSlice()));
          }
-      } else if (hyperImage_ instanceof MMCompositeImage && 
-              ((MMCompositeImage) hyperImage_).getNChannelsUnverified() == channel+1) {
+      } else 
+         if (hyperImage_ instanceof MMCompositeImage ) {
          MMCompositeImage ci = ((MMCompositeImage) hyperImage_);
          ci.reset();
       }
