@@ -1,0 +1,14 @@
+# Remove the libtool pseudo-library (not needed for non-interdepedent modules)
+install-exec-am:
+	test -z "$(pkglib_LTLIBRARIES)" || (cd $(DESTDIR)$(pkglibdir); rm $(pkglib_LTLIBRARIES))
+
+# Fix the uninstall procedure to properly handle the absence of the libtool pseudo-library
+uninstall-am:
+	@$(NORMAL_UNINSTALL)
+	@list='$(pkglib_LTLIBRARIES)'; \
+        for p in $$list; do \
+          f=`echo $$p | sed -e 's|^.*/||' | sed -e 's|\.la|$(MMSUFFIX)|'`; \
+          echo " $(LIBTOOL) $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=uninstall rm -f '$(DESTDIR)$(pkglibdir)/$$f'"; \
+          $(LIBTOOL) $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=uninstall rm -f "$(DESTDIR)$(pkglibdir)/$$f"; \
+        done
+
