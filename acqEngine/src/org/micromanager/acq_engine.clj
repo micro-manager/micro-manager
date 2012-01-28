@@ -499,7 +499,8 @@
         z-drive (@state :default-z-drive)
         check-z-ref (and z-drive
                          (or (:autofocus event)
-                             (:wait-time-ms event)))]
+                             (when-let [t (:wait-time-ms event)]
+                               (pos? t))))]
     (filter identity
       (flatten
         (list
