@@ -210,8 +210,11 @@
       (swap! state assoc-in [:last-stage-positions stage-dev] [x y]))))
 
 (defn set-property
-  ([prop] (let [[d p v] prop]
-            (device-best-effort d (core setProperty d p v)))))
+  [prop]
+  (let [[d p v] prop]
+    (when (not= v (get-in @state [:last-property-settings d p]))
+      (device-best-effort d (core setProperty d p v))
+      (swap! state assoc-in [:last-property-settings d p] v))))
 
 (defn run-autofocus []
   (let [z-drive (@state :default-z-drive)
@@ -365,8 +368,8 @@
 (defn acq-sleep [interval-ms]
   (log "acq-sleep")
   (when (and (@state :init-continuous-focus)
-    (not (core isContinuousFocusEnabled)))
-      (core enableContinuousFocus true))
+             (not (core isContinuousFocusEnabled)))
+    (core enableContinuousFocus true))
   (let [target-time (+ (@state :last-wake-time) interval-ms)
         delta (- target-time (jvm-time-ms))]
     (when (pos? delta)
@@ -410,28 +413,30 @@
               0))
          z-ref))))
 
+(defn z-stage-needs-adjustment [stage-name]
+  (or (not (@state :init-continuous-focus))
+      ;(not (core isContinuousFocusEnabled))
+      (core isContinuousFocusDrive stage-name)))
+
 (defn update-z-positions [msp-index]
   (when-let [msp (get-msp msp-index)]
     (dotimes [i (.size msp)]
       (let [stage-pos (.get msp i)
             stage-name (.stageName stage-pos)]
         (when (= 1 (.numAxes stage-pos))
-          (when (or (not (core isContinuousFocusEnabled))
-                    (core isContinuousFocusDrive stage-name))
+          (when (z-stage-needs-adjustment stage-name)
             (set-msp-z-position msp-index stage-name (get-z-stage-position stage-name))))))))
 
 (defn recall-z-reference [current-position]
   (let [z-drive (@state :default-z-drive)]
-    (when (or (not (core isContinuousFocusEnabled))
-              (core isContinuousFocusDrive z-drive))
-      (set-z-stage-position z-drive
+    (when (z-stage-needs-adjustment z-drive)
+      (set-stage-position z-drive
         (or (get-msp-z-position current-position z-drive)
             (@state :reference-z))))))
 
 (defn store-z-reference [current-position]
   (let [z-drive (@state :default-z-drive)]
-    (when (and (or (not (core isContinuousFocusEnabled))
-                   (core isContinuousFocusDrive z-drive)))
+    (when (z-stage-needs-adjustment z-drive)
       (let [z (get-z-stage-position z-drive)]
         (state-assoc! :reference-z z)))))
 
@@ -506,7 +511,7 @@
             #(set-property [d p v]))
           #(when-lets [exposure (:exposure event)
                        camera (core getCameraDevice)]
-             (device-best-effort (set-exposure camera exposure)))
+             (set-exposure camera exposure))
           #(when check-z-ref
              (recall-z-reference current-position))
           #(when-let [wait-time-ms (:wait-time-ms event)]
@@ -522,10 +527,10 @@
           (for [runnable (event :runnables)]
             #(.run runnable))
           #(device-best-effort (core getCameraDevice)
-             (wait-for-pending-devices)
-             (expose event)
-             (collect event out-queue)
-             (stop-trigger)))))))
+            (wait-for-pending-devices)
+            (expose event)
+            (collect event out-queue)
+            (stop-trigger)))))))
 
 (defn execute [event-fns]
   (doseq [event-fn event-fns :while (not (:stop @state))]
