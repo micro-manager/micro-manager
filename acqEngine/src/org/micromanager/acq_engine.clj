@@ -193,15 +193,16 @@
       [(.x xy) (.y xy)])))
 
 (defn set-z-stage-position [stage pos]
-  (when-not (empty? stage)
-    (when (and (core isContinuousFocusEnabled)
-               (not (core isContinuousFocusDrive stage)))
-      (core enableContinuousFocus false))
-      (device-best-effort stage (core setPosition stage pos))))
+  (when (and (@state :init-continuous-focus)
+             (not (core isContinuousFocusDrive stage))
+             (core isContinuousFocusEnabled))
+    (core enableContinuousFocus false))
+  (device-best-effort stage (core setPosition stage pos)))
 
 (defn set-stage-position
   ([stage-dev z]
-    (when (not= z (get-in @state [:last-stage-positions stage-dev]))
+    (when (and (not (empty? stage-dev))
+               (not= z (get-in @state [:last-stage-positions stage-dev])))
       (set-z-stage-position stage-dev z)
       (swap! state assoc-in [:last-stage-positions stage-dev] z)))
   ([stage-dev x y]
