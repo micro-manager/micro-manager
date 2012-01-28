@@ -515,8 +515,9 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
       lut.max = contrastMax_;
       //uses lut.min and lut.max to set min and max of precessor
       ci.setChannelLut(lut, channelIndex_ + 1);
-
-     
+    
+      //ImageJ workaround: do this so the appropriate color model and min/max get applied 
+      //in color or grayscael mode
        try {
          JavaUtils.setRestrictedFieldValue(ci, CompositeImage.class, "currentChannel", -1);
       } catch (NoSuchFieldException ex) {

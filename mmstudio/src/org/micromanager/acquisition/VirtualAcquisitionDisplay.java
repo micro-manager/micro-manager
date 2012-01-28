@@ -153,15 +153,14 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
             @Override
             public void run() {
                superReset();
-            } });
-            
+            } });         
       }
       
       
       /*
        * ImageJ workaround: the following two functions set the currentChannel field to -1, which can lead to a null 
        * pointer exception if the function is called while CompositeImage.updateImage is also running on a different 
-       * Thread.
+       * Thread.  So we make sure they are all on the EDT so this never happens
        */
       @Override
       public synchronized void setMode(final int mode) {
@@ -196,7 +195,6 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
          Runnable runnable = new Runnable() {
             @Override
             public void run() {
-  
                superUpdateImage();
             }};
 
