@@ -26,7 +26,6 @@ devicekit:
 	make
 	cd ..
 
-
 dox: 
 	test -d $(srcdir)/doxygen/out/MMDevice || mkdir $(srcdir)/doxygen/out/MMDevice
 	rm -rf $(srcdir)/doxygen/out/MMDevice/*

@@ -7,6 +7,7 @@ AC_CONFIG_MACRO_DIR([../m4])
 AC_CONFIG_SRCDIR([DemoCamera/DemoCamera.cpp])
 AC_CANONICAL_HOST
 AM_INIT_AUTOMAKE
+AC_DISABLE_STATIC
 AC_PROG_LIBTOOL
 
 m4_include([../configure.common])
@@ -17,7 +18,19 @@ AX_BOOST_THREAD
 AX_BOOST_ASIO
 AX_BOOST_SYSTEM
 
-# Checks for header files.
+# Find Micro-Manager headers
+micromanager_path=${ac_pwd}/..
+MMDEVAPI_CXXFLAGS="-I${micromanager_path}"
+AC_SUBST(MMDEVAPI_CXXFLAGS)
+
+# Find Micro-Manager static device library
+## Note: adding the libtool library gives problems on OS X 10.4, adding the static lib works
+MMDEVAPI_LIBADD="${micromanager_path}/MMDevice/.libs/libMMDevice.a"
+AC_SUBST(MMDEVAPI_LIBADD)
+
+# Apply appropriate libtool options for the Micro-Manager device API
+MMDEVAPI_LDFLAGS="-module -shared -shrext \"\$(MMSUFFIX)\" -avoid-version"
+AC_SUBST(MMDEVAPI_LDFLAGS)
 
 # Checkfor libUSB 
 AC_MSG_CHECKING(for libusb)
@@ -296,5 +309,76 @@ AC_SUBST(MMPREFIX)
 AC_HEADER_STDC
 AC_CHECK_FUNCS([memset])
 
-AC_CONFIG_FILES(Makefile AAAOTF/Makefile Aladdin/Makefile AOTF/Makefile Andor/Makefile AndorLaserCombiner/Makefile Aquinas/Makefile Arduino/Makefile ASIFW1000/Makefile ASIStage/Makefile ASIWPTR/Makefile CARVII/Makefile Cobolt/Makefile CoherentCube/Makefile Conix/Makefile Corvus/Makefile DTOpenLayer/Makefile DemoCamera/Makefile ImageProcessorChain/Makefile FreeSerialPort/Makefile ITC18/Makefile SerialManager/Makefile SimpleAutofocus/Makefile USBManager/Makefile LeicaDMI/Makefile LeicaDMR/Makefile Ludl/Makefile LudlLow/Makefile LumencorSpectra/Makefile ZeissCAN/Makefile ZeissCAN29/Makefile Video4Linux/Makefile Vincent/Makefile kdv/Makefile K8055/Makefile K8061/Makefile MaestroServo/Makefile PVCAM/Makefile Neos/Makefile Nikon/Makefile NikonTE2000/Makefile nPoint/Makefile OpenCVgrabber/Makefile ParallelPort/Makefile Pecon/Makefile PrecisExcite/Makefile Sapphire/Makefile ScionCam/Makefile Sensicam/Makefile SimpleCam/Makefile SpectralLMM5/Makefile Spot/Makefile SutterLambda/Makefile Thorlabs/Makefile ThorlabsDCxxxx/Makefile ThorlabsFilterWheel/Makefile ThorlabsSC10/Makefile Prior/Makefile PriorLegacy/Makefile PI/Makefile PI_GCS/Makefile PI_GCS_2/Makefile Scientifica/Makefile Utilities/Makefile dc1394/Makefile QCam/Makefile XCite120PC_Exacte/Makefile XCiteLed/Makefile Xcite/Makefile Yokogawa/Makefile)
+AC_CONFIG_FILES(
+	[Makefile]
+	[AAAOTF/Makefile:AAAOTF/Makefile.in:MMDEVAPI.rules]
+	[Aladdin/Makefile:Aladdin/Makefile.in:MMDEVAPI.rules]
+	[AOTF/Makefile:AOTF/Makefile.in:MMDEVAPI.rules]
+	[Andor/Makefile:Andor/Makefile.in:MMDEVAPI.rules]
+	[AndorLaserCombiner/Makefile:AndorLaserCombiner/Makefile.in:MMDEVAPI.rules]
+	[Aquinas/Makefile:Aquinas/Makefile.in:MMDEVAPI.rules]
+	[Arduino/Makefile:Arduino/Makefile.in:MMDEVAPI.rules]
+	[ASIFW1000/Makefile:ASIFW1000/Makefile.in:MMDEVAPI.rules]
+	[ASIStage/Makefile:ASIStage/Makefile.in:MMDEVAPI.rules]
+	[ASIWPTR/Makefile:ASIWPTR/Makefile.in:MMDEVAPI.rules]
+	[CARVII/Makefile:CARVII/Makefile.in:MMDEVAPI.rules]
+	[Cobolt/Makefile:Cobolt/Makefile.in:MMDEVAPI.rules]
+	[CoherentCube/Makefile:CoherentCube/Makefile.in:MMDEVAPI.rules]
+	[Conix/Makefile:Conix/Makefile.in:MMDEVAPI.rules]
+	[Corvus/Makefile:Corvus/Makefile.in:MMDEVAPI.rules]
+	[DTOpenLayer/Makefile:DTOpenLayer/Makefile.in:MMDEVAPI.rules]
+	[DemoCamera/Makefile:DemoCamera/Makefile.in:MMDEVAPI.rules]
+	[ImageProcessorChain/Makefile:ImageProcessorChain/Makefile.in:MMDEVAPI.rules]
+	[FreeSerialPort/Makefile:FreeSerialPort/Makefile.in:MMDEVAPI.rules]
+	[ITC18/Makefile:ITC18/Makefile.in:MMDEVAPI.rules]
+	[SerialManager/Makefile:SerialManager/Makefile.in:MMDEVAPI.rules]
+	[SimpleAutofocus/Makefile:SimpleAutofocus/Makefile.in:MMDEVAPI.rules]
+	[USBManager/Makefile:USBManager/Makefile.in:MMDEVAPI.rules]
+	[LeicaDMI/Makefile:LeicaDMI/Makefile.in:MMDEVAPI.rules]
+	[LeicaDMR/Makefile:LeicaDMR/Makefile.in:MMDEVAPI.rules]
+	[Ludl/Makefile:Ludl/Makefile.in:MMDEVAPI.rules]
+	[LudlLow/Makefile:LudlLow/Makefile.in:MMDEVAPI.rules]
+	[LumencorSpectra/Makefile:LumencorSpectra/Makefile.in:MMDEVAPI.rules]
+	[ZeissCAN/Makefile:ZeissCAN/Makefile.in:MMDEVAPI.rules]
+	[ZeissCAN29/Makefile:ZeissCAN29/Makefile.in:MMDEVAPI.rules]
+	[Video4Linux/Makefile:Video4Linux/Makefile.in:MMDEVAPI.rules]
+	[Vincent/Makefile:Vincent/Makefile.in:MMDEVAPI.rules]
+	[kdv/Makefile:kdv/Makefile.in:MMDEVAPI.rules]
+	[K8055/Makefile:K8055/Makefile.in:MMDEVAPI.rules]
+	[K8061/Makefile:K8061/Makefile.in:MMDEVAPI.rules]
+	[MaestroServo/Makefile:MaestroServo/Makefile.in:MMDEVAPI.rules]
+	[PVCAM/Makefile:PVCAM/Makefile.in:MMDEVAPI.rules]
+	[Neos/Makefile:Neos/Makefile.in:MMDEVAPI.rules]
+	[Nikon/Makefile:Nikon/Makefile.in:MMDEVAPI.rules]
+	[NikonTE2000/Makefile:NikonTE2000/Makefile.in:MMDEVAPI.rules]
+	[nPoint/Makefile:nPoint/Makefile.in:MMDEVAPI.rules]
+	[OpenCVgrabber/Makefile:OpenCVgrabber/Makefile.in:MMDEVAPI.rules]
+	[ParallelPort/Makefile:ParallelPort/Makefile.in:MMDEVAPI.rules]
+	[Pecon/Makefile:Pecon/Makefile.in:MMDEVAPI.rules]
+	[PrecisExcite/Makefile:PrecisExcite/Makefile.in:MMDEVAPI.rules]
+	[Sapphire/Makefile:Sapphire/Makefile.in:MMDEVAPI.rules]
+	[ScionCam/Makefile:ScionCam/Makefile.in:MMDEVAPI.rules]
+	[Sensicam/Makefile:Sensicam/Makefile.in:MMDEVAPI.rules]
+	[SimpleCam/Makefile:SimpleCam/Makefile.in:MMDEVAPI.rules]
+	[SpectralLMM5/Makefile:SpectralLMM5/Makefile.in:MMDEVAPI.rules]
+	[Spot/Makefile:Spot/Makefile.in:MMDEVAPI.rules]
+	[SutterLambda/Makefile:SutterLambda/Makefile.in:MMDEVAPI.rules]
+	[Thorlabs/Makefile:Thorlabs/Makefile.in:MMDEVAPI.rules]
+	[ThorlabsDCxxxx/Makefile:ThorlabsDCxxxx/Makefile.in:MMDEVAPI.rules]
+	[ThorlabsFilterWheel/Makefile:ThorlabsFilterWheel/Makefile.in:MMDEVAPI.rules]
+	[ThorlabsSC10/Makefile:ThorlabsSC10/Makefile.in:MMDEVAPI.rules]
+	[Prior/Makefile:Prior/Makefile.in:MMDEVAPI.rules]
+	[PriorLegacy/Makefile:PriorLegacy/Makefile.in:MMDEVAPI.rules]
+	[PI/Makefile:PI/Makefile.in:MMDEVAPI.rules]
+	[PI_GCS/Makefile:PI_GCS/Makefile.in:MMDEVAPI.rules]
+	[PI_GCS_2/Makefile:PI_GCS_2/Makefile.in:MMDEVAPI.rules]
+	[Scientifica/Makefile:Scientifica/Makefile.in:MMDEVAPI.rules]
+	[Utilities/Makefile:Utilities/Makefile.in:MMDEVAPI.rules]
+	[dc1394/Makefile:dc1394/Makefile.in:MMDEVAPI.rules]
+	[QCam/Makefile:QCam/Makefile.in:MMDEVAPI.rules]
+	[XCite120PC_Exacte/Makefile:XCite120PC_Exacte/Makefile.in:MMDEVAPI.rules]
+	[XCiteLed/Makefile:XCiteLed/Makefile.in:MMDEVAPI.rules]
+	[Xcite/Makefile:Xcite/Makefile.in:MMDEVAPI.rules]
+	[Yokogawa/Makefile:Yokogawa/Makefile.in:MMDEVAPI.rules]
+)
 AC_OUTPUT

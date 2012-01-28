@@ -637,7 +637,13 @@ void CPluginManager::GetModules(vector<string> &modules, const char* searchPath)
    {
       while ((dirp = readdir(dp)) != NULL)
       {
-         if (strncmp(dirp->d_name,LIB_NAME_PREFIX,strlen(LIB_NAME_PREFIX)) == 0 ) {
+         if (strncmp(dirp->d_name,LIB_NAME_PREFIX,strlen(LIB_NAME_PREFIX)) == 0
+#ifdef linux
+             && strncmp(&dirp->d_name[strlen(dirp->d_name)-strlen(LIB_NAME_SUFFIX)],LIB_NAME_SUFFIX,strlen(LIB_NAME_SUFFIX)) == 0)
+#else
+             && strchr(&dirp->d_name[strlen(dirp->d_name)-strlen(LIB_NAME_SUFFIX)],'.') == NULL)
+#endif
+         {
            // remove prefix and suffix
            string strippedName = std::string(dirp->d_name).substr(strlen(LIB_NAME_PREFIX));
            strippedName = strippedName.substr(0,strippedName.length()-strlen(LIB_NAME_SUFFIX));
