@@ -152,6 +152,7 @@
             (do (ReportingUtils/logError e#) false))))
 
 (defmacro device-best-effort [device & body]
+  (assert (not (empty? body)))
   `(let [attempt# #(do (wait-for-device ~device)
                        (add-to-pending ~device)
                        ~@body)]
@@ -175,9 +176,9 @@
       (catch Exception e (log "wait for device" dev "failed.")))))
 
 (defn set-exposure [camera exp]
-  (when (not= exp (get-in @state [camera :exposures]))
-    (device-best-effort (core setExposure exp))
-    (swap! state assoc-in [camera :exposures] exp)))
+  (when (not= exp (get-in @state [camera :exposure]))
+    (device-best-effort camera (core setExposure exp))
+    (swap! state assoc-in [camera :exposure] exp)))
 
 (defn wait-for-pending-devices []
   (log "pending devices: " @pending-devices)
@@ -460,7 +461,7 @@
       :start-time (jvm-time-ms)
       :init-auto-shutter (core getAutoShutter)
       :init-exposure exposure
-      :exposures {(core getCameraDevice) exposure}
+      :exposure {(core getCameraDevice) exposure}
       :default-z-drive default-z-drive
       :default-xy-stage default-xy-stage
       :init-z-position z
