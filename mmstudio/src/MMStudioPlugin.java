@@ -68,7 +68,7 @@ public class MMStudioPlugin implements PlugIn, CommandListener {
             }
 
             // create and display control panel frame
-            if (!IJ.versionLessThan("1.44d")){
+            if (!IJ.versionLessThan("1.46e")){
                Executer.addCommandListener(this);
             }
             frame_ = new MMStudioMainFrame(true);
