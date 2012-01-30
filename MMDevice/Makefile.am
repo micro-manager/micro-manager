@@ -1,7 +1,27 @@
 AM_CXXFLAGS = $(BOOST_CPPFLAGS)
+
+# Note: It is very important to build a special libtool "convenience" library
+# (using noinst_LTLIBRARIES) due to the way the MM Device API works. Building a
+# normal static library WILL NOT WORK.
 noinst_LTLIBRARIES = libMMDevice.la
-libMMDevice_la_SOURCES = ModuleInterface.cpp Property.cpp DeviceUtils.cpp ImgBuffer.cpp \
-	DeviceBase.h MMDevice.h MMDeviceConstants.h ModuleInterface.h Property.h DeviceUtils.h \
-	ImgBuffer.h DeviceThreads.h ImageMetadata.h
-	
+noinst_HEADERS = DeviceBase.h MMDevice.h MMDeviceConstants.h \
+	ModuleInterface.h Property.h DeviceUtils.h ImgBuffer.h DeviceThreads.h \
+	ImageMetadata.h
+libMMDevice_la_SOURCES = $(noinst_HEADERS) ModuleInterface.cpp \
+	Property.cpp DeviceUtils.cpp ImgBuffer.cpp
+
 EXTRA_DIST = license.txt
+
+if INSTALL_MMDEVAPI
+libMMDevice_ladir = $(includedir)/$(PACKAGE)/MMDevice
+libMMDevice_la_HEADERS = $(noinst_HEADERS)
+
+# Unfortunately automake will not auto-install convenience libraries, so both
+# the "install" and "uninstall" procedure must be performed manually.
+install: install-am
+	test -z "$(DESTDIR)${libdir}" || /bin/mkdir -p "$(DESTDIR)${libdir}"
+	cp -a .libs/libMMDevice.a $(DESTDIR)${libdir}/libMMDevice.a
+
+uninstall: uninstall-am
+	rm -f $(DESTDIR)${libdir}/libMMDevice.a
+endif

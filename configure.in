@@ -314,5 +314,12 @@ if test -z "${BUILD_SECRETDEVICEADAPTERS}" ; then
 fi
 
 
+# Install Device Adapter API library and headers
+install_mmdevapi=false
+AC_ARG_ENABLE(inst-devapi,
+    [  --enable-inst-devapi    Install the Device Adapter API library and headers ],
+    [ install_mmdevapi=true ])
+AM_CONDITIONAL([INSTALL_MMDEVAPI], [test x$install_mmdevapi = xtrue])
+
 AC_CONFIG_SUBDIRS(DeviceAdapters DeviceKit)
 AC_OUTPUT(Makefile MMCore/Makefile MMCoreJ_wrap/Makefile mmstudio/Makefile acqEngine/Makefile plugins/Makefile scripts/Makefile autofocus/Makefile MMDevice/Makefile  MMCorePy_wrap/Makefile)
