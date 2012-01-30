@@ -312,7 +312,7 @@ public class MMAcquisition {
 
          summaryMetadata.put("BitDepth", core.getImageBitDepth());
          summaryMetadata.put("Channels", numChannels_);
-         setDefaultChannelTags(summaryMetadata);
+         setDefaultChannelTags(summaryMetadata, core.getNumberOfComponents() > 1);
          summaryMetadata.put("Comment", comment_);
          String compName = null;
          try {
@@ -363,7 +363,7 @@ public class MMAcquisition {
       }
    }
 
-   private void setDefaultChannelTags(JSONObject md) {
+   private void setDefaultChannelTags(JSONObject md, boolean rgb) {
 
       JSONArray channelMaxes = new JSONArray();
       JSONArray channelMins = new JSONArray(); 
@@ -372,17 +372,33 @@ public class MMAcquisition {
       // Since we don't know the size in the constructor, we can not pre-initialize
       // the data.  Therefore, fill in the blanks with deafults here:
       channelColors_ = new JSONArray();
-      if (numChannels_ == 1)
-         try {
+      
+      if (numChannels_ == 1 && !rgb)
+            try {
             channelColors_.put(0, Color.white.getRGB());
          } catch (JSONException ex) {
             ReportingUtils.logError(ex);
          }
-      else
+      else if (rgb) {
+         try {
+            channelNames_.put(0, "Red");
+            channelNames_.put(1, "Green");
+            channelNames_.put(2, "Blue");
+            channelColors_.put(0, Color.red.getRGB());
+            channelColors_.put(1, Color.green.getRGB());
+            channelColors_.put(2, Color.blue.getRGB());
+            for (int i = 0; i < 3; i++) {
+               channelMaxes.put(255);
+               channelMins.put(0);
+            }
+         } catch (JSONException ex) {
+            ReportingUtils.logError(ex);
+         }
+      } else
          for (Integer i = 0; i < numChannels_; i++) {
-            Preferences root = Preferences.userNodeForPackage(AcqControlDlg.class);            
+            Preferences root = Preferences.userNodeForPackage(AcqControlDlg.class);
             Preferences colorPrefs = root.node(root.absolutePath() + "/" + AcqControlDlg.COLOR_SETTINGS_NODE);
-            
+
             int color = DEFAULT_COLORS[i % DEFAULT_COLORS.length].getRGB();
             try {
                String channelGroup = MMStudioMainFrame.getInstance().getCore().getChannelGroup();
