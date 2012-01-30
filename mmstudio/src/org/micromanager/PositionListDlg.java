@@ -49,7 +49,6 @@ import javax.swing.JTable;
 import javax.swing.JTextField;
 import javax.swing.ListSelectionModel;
 import javax.swing.SpringLayout;
-import javax.swing.filechooser.FileFilter;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.TableCellEditor;
 import javax.swing.table.TableCellRenderer;
@@ -119,6 +118,7 @@ public class PositionListDlg extends MMDialog implements MouseListener {
       public int getColumnCount() {
          return COLUMN_NAMES.length;
       }
+      @Override
       public String getColumnName(int columnIndex) {
          return COLUMN_NAMES[columnIndex];
       }
@@ -133,7 +133,7 @@ public class PositionListDlg extends MMDialog implements MouseListener {
                return ("Current");
             return msp.getLabel();
          } else if (columnIndex == 1) {
-            StringBuffer sb = new StringBuffer();
+            StringBuilder sb = new StringBuilder();
             for (int i=0; i<msp.size(); i++) {
                StagePosition sp = msp.get(i);
                if (i!=0)
@@ -144,6 +144,7 @@ public class PositionListDlg extends MMDialog implements MouseListener {
          } else
             return null;
       }
+      @Override
       public boolean isCellEditable(int rowIndex, int columnIndex) {
          if (rowIndex == 0)
             return false;
@@ -151,6 +152,7 @@ public class PositionListDlg extends MMDialog implements MouseListener {
             return true;
          return false;
       }
+      @Override
       public void setValueAt(Object value, int rowIndex, int columnIndex) {
          if (columnIndex == 0) {
             MultiStagePosition msp = posList_.getPosition(rowIndex - 1);
@@ -237,6 +239,7 @@ public class PositionListDlg extends MMDialog implements MouseListener {
       public int getColumnCount() {
          return COLUMN_NAMES.length;
       }
+      @Override
       public String getColumnName(int columnIndex) {
          return COLUMN_NAMES[columnIndex];
       }
@@ -251,14 +254,17 @@ public class PositionListDlg extends MMDialog implements MouseListener {
          }
          return null;
       }
+      @Override
       public Class<?> getColumnClass(int c) {
          return getValueAt(0, c).getClass();
       }
+      @Override
       public boolean isCellEditable(int rowIndex, int columnIndex) {
          if (columnIndex == 0)
             return true;
          return false;
       }
+      @Override
       public void setValueAt(Object value, int rowIndex, int columnIndex) {
          if (columnIndex == 0) {
             axisList_.get(rowIndex).setUse( (Boolean) value);
@@ -300,6 +306,7 @@ public class PositionListDlg extends MMDialog implements MouseListener {
                            PositionList posList, MMOptions opts) {
       super();
       addWindowListener(new WindowAdapter() {
+         @Override
          public void windowClosing(WindowEvent arg0) {
             savePosition();
          }
@@ -333,6 +340,7 @@ public class PositionListDlg extends MMDialog implements MouseListener {
       posTable_ = new JTable() {
       private static final long serialVersionUID = -3873504142761785021L;
 
+         @Override
       public TableCellRenderer getCellRenderer(int row, int column) {
             if (row == 0)
                return firstRowRenderer;
@@ -394,18 +402,19 @@ public class PositionListDlg extends MMDialog implements MouseListener {
       springLayout.putConstraint(SpringLayout.WEST, axisPane, 10, SpringLayout.WEST, getContentPane());
 
       posTable_.addFocusListener(
-        new java.awt.event.FocusAdapter() 
-        {
-           public void focusLost(java.awt.event.FocusEvent evt) 
-           { 
-              updateMarkButtonText();
-           }
-           public void focusGained(java.awt.event.FocusEvent evt) 
-           {
-              updateMarkButtonText();
-           }
-        }
-        );
+              new java.awt.event.FocusAdapter() {
+
+                 @Override
+                 public void focusLost(java.awt.event.FocusEvent evt) {
+                    updateMarkButtonText();
+                 }
+
+                 @Override
+                 public void focusGained(java.awt.event.FocusEvent evt) {
+                    updateMarkButtonText();
+                 }
+              }
+      );
 
       // the re-ordering buttons:
       
@@ -847,7 +856,7 @@ public void addPosition(MultiStagePosition msp, String label) {
     * Update display of the current xy position.
     */
    private void refreshCurrentPosition() {
-      StringBuffer sb = new StringBuffer();
+      StringBuilder sb = new StringBuilder();
       MultiStagePosition msp = new MultiStagePosition();
       msp.setDefaultXYStage(core_.getXYStageDevice());
       msp.setDefaultZStage(core_.getFocusDevice());
@@ -862,7 +871,7 @@ public void addPosition(MultiStagePosition msp, String label) {
                sp.numAxes = 1;
                sp.x = core_.getPosition(stages.get(i));
                msp.add(sp);
-               sb.append(sp.getVerbose() + "\n");
+               sb.append(sp.getVerbose()).append("\n");
             }
          }
 
@@ -876,7 +885,7 @@ public void addPosition(MultiStagePosition msp, String label) {
                sp.x = core_.getXPosition(stages2D.get(i));
                sp.y = core_.getYPosition(stages2D.get(i));
                msp.add(sp);
-               sb.append(sp.getVerbose() + "\n");
+               sb.append(sp.getVerbose()).append("\n");
             }
          }
       } catch (Exception e) {
@@ -966,15 +975,13 @@ public void addPosition(MultiStagePosition msp, String label) {
       Thread otherThread;
 
       public void setPara(Thread calThread, MMDialog d, String deviceName, double [] x1, double [] y1) {
-//       if ( calThread==null || d ==null || deviceName==null || x1==null || y1==null){
-//       JOptionPane.showMessageDialog(d, "parent dialog or x1 or y1 is null!"); 
-//       }
          this.otherThread = calThread;
          this.d = d;
          this.deviceName = deviceName;
          this.x1 = x1;
          this.y1 = y1;
       }
+      @Override
       public void run() {
 
          try {
@@ -1090,9 +1097,6 @@ public void addPosition(MultiStagePosition msp, String label) {
       Thread stopThread;
 
       public void setPara(Thread stopThread, MMDialog d, String deviceName, double [] x1, double [] y1) {
-//       if ( stopThread==null || d ==null || deviceName==null || x1==null || y1==null){
-//       JOptionPane.showMessageDialog(d, "parent dialog or x1 or y1 is null!"); 
-//       }
          this.stopThread = stopThread;
          this.d = d;
          this.deviceName = deviceName;
@@ -1100,6 +1104,7 @@ public void addPosition(MultiStagePosition msp, String label) {
          this.y1 = y1;
       }
 
+      @Override
       public void run() {
 
 
@@ -1160,11 +1165,9 @@ public void addPosition(MultiStagePosition msp, String label) {
       MMDialog d;
 
       public void setPara(MMDialog d) {
-//       if ( d ==null ){
-//       JOptionPane.showMessageDialog(d, "parent dialog is null!"); 
-//       }
          this.d = d;
       }     
+      @Override
       public void run() {
          JOptionPane.showMessageDialog(d, "Going back to the original position!");              
       }
