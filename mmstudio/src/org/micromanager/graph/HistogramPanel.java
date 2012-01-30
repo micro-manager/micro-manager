@@ -188,7 +188,7 @@ public class HistogramPanel extends GraphPanel {
       Stroke oldStroke = g.getStroke();
       g.setColor(new Color(120,120,120));
 
-      BasicStroke solid = new BasicStroke(1.0f, BasicStroke.CAP_BUTT, BasicStroke.JOIN_MITER);
+      BasicStroke solid = new BasicStroke(2.0f, BasicStroke.CAP_BUTT, BasicStroke.JOIN_MITER);
       g.setStroke(solid);
       g.draw(path);
       g.setColor(oldColor);
