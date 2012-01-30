@@ -106,9 +106,9 @@ public class CalibrationEditor extends MMDialog {
    public CalibrationEditor(String label, String pixelSize) {
       super();
       setModal(true);
-      label_ = new String(label);
-      pixelSize_ = new String(pixelSize);
-      changed_ = new Boolean(false);
+      label_ = label;
+      pixelSize_ = pixelSize;
+      changed_ = false;
       Preferences root = Preferences.userNodeForPackage(this.getClass());
       // Share Prefs with PresetEditor
       setPrefsNode(root.node(root.absolutePath() + "/PresetEditor"));
@@ -121,16 +121,19 @@ public class CalibrationEditor extends MMDialog {
       getContentPane().setLayout(springLayout);
       setSize(551, 562);
       addWindowListener(new WindowAdapter() {
+         @Override
          public void windowClosing(WindowEvent e) {
             savePosition();
             flags_.save(getPrefsNode());
          }
+         @Override
          public void windowOpened(WindowEvent e) {
             // restore values from the previous session
             data_.updateFlags();
             data_.updateStatus();
             data_.showOriginalSelection();
         }
+         @Override
          public void windowClosed(WindowEvent arg0) {
             savePosition();
             flags_.save(getPrefsNode());
@@ -491,7 +494,7 @@ public class CalibrationEditor extends MMDialog {
             if (item.confInclude)
                selected.add(item);
          }
-         if (selected.size() == 0) {
+         if (selected.isEmpty()) {
             JOptionPane.showMessageDialog(null, "Please select \"Use\" column for at least one Property that affects pixel size");
             return false;
          }
@@ -533,10 +536,10 @@ public class CalibrationEditor extends MMDialog {
          }
          
          if (mismatched.size() > 0 || missing.size() > 0) {
-            String mismatchedList = new String("");
+            String mismatchedList = "";
             for (int i=0; i<mismatched.size(); i++)
                mismatchedList += mismatched.get(i).device + "-" + mismatched.get(i).name + "\n";
-            String missingList = new String("");
+            String missingList = "";
             for (int i=0; i<missing.size(); i++)
                missingList += missing.get(i).getDeviceLabel() + "-" + missing.get(i).getPropertyName() + "\n";
             
@@ -609,12 +612,13 @@ public class CalibrationEditor extends MMDialog {
          else if (col == 1)
             return item.value;
          else if (col == 2) {
-            return new Boolean(item.confInclude);
+            return item.confInclude;
          }
          
          return null;
       }
       
+      @Override
       public void setValueAt(Object value, int row, int col) {
          PropertyItem item = propList_.get(row);
          if (col == 1) {
@@ -641,10 +645,12 @@ public class CalibrationEditor extends MMDialog {
          }
       }
       
+      @Override
       public String getColumnName(int column) {
          return columnNames_[column];
       }
       
+      @Override
       public boolean isCellEditable(int nRow, int nCol) {
          if (nCol == 1)
             return tableEditable_ && !propList_.get(nRow).readOnly;
@@ -672,7 +678,7 @@ public class CalibrationEditor extends MMDialog {
          }
       }
 
-      public void updateStatus(){
+      public final void updateStatus(){
          
          // determine the group signature
          groupData_ = new Configuration[0];
@@ -844,7 +850,7 @@ public class CalibrationEditor extends MMDialog {
                   showStateDevicesCheckBox_.setSelected(true);
                } else {
                   showOtherCheckBox_.setSelected(true);
-                  flags_.other_ = true;;
+                  flags_.other_ = true;
                }
             }
          } catch (Exception e) {
@@ -908,6 +914,7 @@ public class CalibrationEditor extends MMDialog {
             }            
          });
          slider_.addSliderMouseListener(new MouseAdapter() {
+            @Override
             public void mouseReleased(MouseEvent e) {
                fireEditingStopped();
             }
@@ -979,7 +986,7 @@ public class CalibrationEditor extends MMDialog {
                return combo_.getSelectedItem();
             }
          } else if (editingCol_ == 2)
-            return new Boolean(check_.isSelected());
+            return check_.isSelected();
          
          return null;
       }
