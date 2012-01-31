@@ -318,10 +318,10 @@ public class MultiChannelContrastPanel extends JPanel implements ContrastPanel {
        showSizeBar();
    }
    
-   public void setChannelContrast(int channelIndex, int min, int max, ImagePlus img) {
+   public void setChannelContrast(int channelIndex, int min, int max, double gamma) {
       if (channelIndex >= ccpList_.size())
          return;
-      ccpList_.get(channelIndex).setContrast(min, max);
+      ccpList_.get(channelIndex).setContrast(min, max, gamma);
    }
 
    public void autostretch() {

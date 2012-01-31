@@ -739,11 +739,12 @@ public class SingleChannelContrastPanel extends JPanel implements
       }
    }
    
-   public void setChannelContrast(int channelIndex, int min, int max, ImagePlus img) {
+   public void setChannelContrast(int channelIndex, int min, int max, double gamma) {
       if (channelIndex != 0)
          return;
       contrastMax_ = max;
       contrastMin_ = min;
+      gamma_ = gamma;
    }
 
    public void onLeftCursor(double pos) {

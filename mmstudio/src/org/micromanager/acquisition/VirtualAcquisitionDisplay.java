@@ -984,13 +984,16 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
 
       final int fchannel = channel;
       Runnable autoscale = new Runnable() {
-         //Autoscale on first imag
+      //Autoscale or load contrast on first imag
          public void run() {
             if (newDisplay_ && fchannel + 1 == ((IMMImagePlus) hyperImage_).getNChannelsUnverified()) {
                //call this explicitly to get contrast panel set up, because ImageFocusListener       
                //not guarenteed to fire before this code reache
                mdPanel_.focusReceived(hyperImage_.getWindow());
-               mdPanel_.autoscaleWithoutDraw(imageCache_, hyperImage_);
+               if (!simple_)
+                  mdPanel_.autoscaleWithoutDraw(imageCache_, hyperImage_);
+               else
+                  mdPanel_.applyContrastWithoutDraw(imageCache_,hyperImage_);
                newDisplay_ = false;
             }}};      
       if (!SwingUtilities.isEventDispatchThread()) {
@@ -1501,7 +1504,7 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
    }
    
    public void setChannelContrast(int channelIndex, int min, int max) {
-      mdPanel_.setChannelContrast(channelIndex, min, max, hyperImage_);
+      mdPanel_.setChannelContrast(channelIndex, min, max);
    }
    
    private void imageChangedUpdate() {
@@ -1561,15 +1564,16 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
             //explicitly here
             mdPanel_.focusReceived(null);
 
-            // push current display settings to cache
-            if (imageCache_ != null) {
-               imageCache_.close();
-            }
             
-            if (hyperImage_ != null && hyperImage_.getWindow() != null && hyperImage_.getWindow().getLocation() != null) {
+            if (simple_ && hyperImage_ != null && hyperImage_.getWindow() != null && hyperImage_.getWindow().getLocation() != null) {
                Point loc = hyperImage_.getWindow().getLocation();
                prefs_.putInt(SIMPLE_WIN_X, loc.x);
                prefs_.putInt(SIMPLE_WIN_Y, loc.y);
+               mdPanel_.saveContrastSettings(imageCache_);
+            }
+            
+            if (imageCache_ != null) {
+               imageCache_.close();
             }
 
             if (!closed_) {

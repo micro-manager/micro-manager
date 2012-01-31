@@ -38,6 +38,7 @@ import javax.swing.table.DefaultTableModel;
 import mmcorej.TaggedImage;
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.micromanager.MMStudioMainFrame;
 import org.micromanager.api.ContrastPanel;
 import org.micromanager.api.ImageCache;
 import org.micromanager.graph.MultiChannelContrastPanel;
@@ -46,6 +47,7 @@ import org.micromanager.utils.ImageFocusListener;
 import org.micromanager.utils.GUIUtils;
 import org.micromanager.utils.MDUtils;
 import org.micromanager.utils.ReportingUtils;
+import org.micromanager.utils.SnapLiveContrastSettings;
 
 /**
  *
@@ -535,6 +537,35 @@ public class MetadataPanel extends JPanel
    }
    
    /*
+    * used to store contrast settings for snap live window
+    */
+   public void saveContrastSettings(ImageCache cache) {
+      String pixelType = cache.getPixelType();
+      int numCh = cache.getNumChannels();
+      for (int i = 0; i < numCh; i++) {
+         int min = cache.getChannelMin(i);
+         int max = cache.getChannelMax(i);
+         double gamma = cache.getChannelGamma(i);
+         MMStudioMainFrame.getInstance().saveSimpleContrastSettings(min, max, gamma, i, pixelType);
+      }
+   }
+   
+   /*
+    * Used for applying loaded contrast settings on intial image
+    */
+   public void applyContrastWithoutDraw(ImageCache cache, ImagePlus img) {
+      if (currentContrastPanel_ != null) {
+         int n = cache.getNumChannels();
+         SnapLiveContrastSettings.MinMaxGamma mmg;
+         for (int i = 0; i < n; i++) {
+            mmg  = MMStudioMainFrame.getInstance().loadSimpleContrastSettigns(cache.getPixelType(),i);
+            currentContrastPanel_.setChannelContrast(i, mmg.min, mmg.max, mmg.gamma);
+         }
+         currentContrastPanel_.applyLUTToImage(img, cache);
+      }
+   }
+   
+   /*
     * used only for autoscaling on intial image
     */
    public void autoscaleWithoutDraw(ImageCache cache, ImagePlus img) {
@@ -678,9 +709,9 @@ public class MetadataPanel extends JPanel
       }
    }
 
-   public void setChannelContrast(int channelIndex, int min, int max, ImagePlus img) {
+   public void setChannelContrast(int channelIndex, int min, int max) {
       if (currentContrastPanel_ != null) 
-         currentContrastPanel_.setChannelContrast(channelIndex, min, max, img);
+         currentContrastPanel_.setChannelContrast(channelIndex, min, max,1.0);
       drawWithoutUpdate();
    }
 }

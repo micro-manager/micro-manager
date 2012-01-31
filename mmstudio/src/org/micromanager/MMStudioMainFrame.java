@@ -153,6 +153,7 @@ import org.micromanager.utils.ImageUtils;
 import org.micromanager.utils.MDUtils;
 import org.micromanager.utils.MMKeyDispatcher;
 import org.micromanager.utils.ReportingUtils;
+import org.micromanager.utils.SnapLiveContrastSettings;
 
 
 /*
@@ -255,6 +256,7 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
    private XYZKeyListener xyzKeyListener_;
    private AcquisitionManager acqMgr_;
    private static VirtualAcquisitionDisplay simpleDisplay_;
+   private SnapLiveContrastSettings simpleContrastSettings_;
    private Color[] multiCameraColors_ = {Color.RED, Color.GREEN, Color.BLUE, Color.YELLOW, Color.CYAN};
    private int snapCount_ = -1;
    private boolean liveModeSuspended_;
@@ -338,6 +340,19 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
          ReportingUtils.showError(ex);
       }
 
+   }
+ 
+   public void saveSimpleContrastSettings(int min, int max, double gamma, int channel, String pixelType) {
+      simpleContrastSettings_.saveSettings(min, max, gamma, channel, pixelType);
+   }
+   
+   public SnapLiveContrastSettings.MinMaxGamma loadSimpleContrastSettigns(String pixelType, int channel) {
+      try {
+         return simpleContrastSettings_.loadSettings(pixelType, channel);
+      } catch (MMException ex) {
+         ReportingUtils.logError(ex);
+         return null;
+      }
    }
    
    public void saveChannelColor(String chName, int rgb)
@@ -750,6 +765,8 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
       running_ = true;
 
       acqMgr_ = new AcquisitionManager();
+      
+      simpleContrastSettings_ = new SnapLiveContrastSettings();
 
       sysConfigFile_ = System.getProperty("user.dir") + "/"
             + DEFAULT_CONFIG_FILE_NAME;

@@ -28,7 +28,7 @@ public interface ContrastPanel {
 
    public void imageChanged(ImagePlus img, ImageCache cache, boolean drawHist);
 
-   public void setChannelContrast(int channelIndex, int min, int max, ImagePlus img);
+   public void setChannelContrast(int channelIndex, int min, int max, double gamma);
    
    public void setupChannelControls(ImageCache cache);
    

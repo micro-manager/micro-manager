@@ -303,6 +303,15 @@ public class MMImageCache implements TaggedImageStorage, ImageCache {
       return  MDUtils.isRGB(getSummaryMetadata());
    }
    
+   public String getPixelType() {
+      try {
+         return MDUtils.getPixelType(getSummaryMetadata());
+      } catch (Exception ex) {
+         ReportingUtils.logError(ex);
+         return null;
+      }
+   }
+   
    /////////////////////Channels section/////////////////////////
    public void setChannelContrast(int index, int min, int max) {
       if (display_ == null)
