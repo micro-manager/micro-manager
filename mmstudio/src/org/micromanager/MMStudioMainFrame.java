@@ -827,7 +827,7 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
       this.setMinimumSize(new Dimension(580,480));
       JPanel topPanel = new JPanel();
       topPanel.setLayout(topLayout);
-      topPanel.setMinimumSize(new Dimension(580, 175));
+      topPanel.setMinimumSize(new Dimension(580, 195));
 
       class ListeningJPanel extends JPanel implements AncestorListener {
 
@@ -1503,7 +1503,7 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
       bottomPanel.add(metadataPanel_);
       topLayout.putConstraint(SpringLayout.SOUTH, metadataPanel_, 0,
             SpringLayout.SOUTH, bottomPanel);
-      topLayout.putConstraint(SpringLayout.NORTH, metadataPanel_, 20,
+      topLayout.putConstraint(SpringLayout.NORTH, metadataPanel_, 0,
             SpringLayout.NORTH, bottomPanel);
       topLayout.putConstraint(SpringLayout.EAST, metadataPanel_, 0,
             SpringLayout.EAST, bottomPanel);
@@ -1511,18 +1511,7 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
             SpringLayout.WEST, bottomPanel);
       metadataPanel_.setBorder(BorderFactory.createEmptyBorder());
 
-      
-      labelImageDimensions_ = new JLabel();
-      labelImageDimensions_.setFont(new Font("Arial", Font.PLAIN, 10));
-      bottomPanel.add(labelImageDimensions_);
-      topLayout.putConstraint(SpringLayout.SOUTH, labelImageDimensions_,
-            5, SpringLayout.NORTH, metadataPanel_);
-      topLayout.putConstraint(SpringLayout.NORTH, labelImageDimensions_,
-            0, SpringLayout.NORTH, bottomPanel);
-      topLayout.putConstraint(SpringLayout.EAST, labelImageDimensions_,
-            -5, SpringLayout.EAST, bottomPanel);
-      topLayout.putConstraint(SpringLayout.WEST, labelImageDimensions_,
-            5, SpringLayout.WEST, bottomPanel);
+
 
       comboBinning_ = new JComboBox();
       comboBinning_.setFont(new Font("Arial", Font.PLAIN, 10));
@@ -1556,31 +1545,45 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
       topLayout.putConstraint(SpringLayout.WEST, cameraSettingsLabel,
             109, SpringLayout.WEST, topPanel);
 
-
+      
+      labelImageDimensions_ = new JLabel();
+      labelImageDimensions_.setFont(new Font("Arial", Font.PLAIN, 10));
+      topPanel.add(labelImageDimensions_);
+      topLayout.putConstraint(SpringLayout.SOUTH, labelImageDimensions_,
+            0, SpringLayout.SOUTH, topPanel);
+      topLayout.putConstraint(SpringLayout.NORTH, labelImageDimensions_,
+            -20, SpringLayout.SOUTH, topPanel);
+      topLayout.putConstraint(SpringLayout.EAST, labelImageDimensions_,
+            0, SpringLayout.EAST, topPanel);
+      topLayout.putConstraint(SpringLayout.WEST, labelImageDimensions_,
+            5, SpringLayout.WEST, topPanel);
+      
+      
       configPad_ = new ConfigGroupPad();
-
+      configPadButtonPanel_ = new ConfigPadButtonPanel();
+      configPadButtonPanel_.setConfigPad(configPad_);
+      configPadButtonPanel_.setGUI(MMStudioMainFrame.this);
+      
       configPad_.setFont(new Font("", Font.PLAIN, 10));
       topPanel.add(configPad_);
       topLayout.putConstraint(SpringLayout.EAST, configPad_, -4,
             SpringLayout.EAST, topPanel);
       topLayout.putConstraint(SpringLayout.WEST, configPad_, 5,
             SpringLayout.EAST, comboBinning_);
-      topLayout.putConstraint(SpringLayout.SOUTH, configPad_, -21,
-            SpringLayout.SOUTH, topPanel);
+      topLayout.putConstraint(SpringLayout.SOUTH, configPad_, -4,
+            SpringLayout.NORTH, configPadButtonPanel_);
       topLayout.putConstraint(SpringLayout.NORTH, configPad_, 21,
             SpringLayout.NORTH, topPanel);
 
-      configPadButtonPanel_ = new ConfigPadButtonPanel();
-      configPadButtonPanel_.setConfigPad(configPad_);
-      configPadButtonPanel_.setGUI(MMStudioMainFrame.this);
+
       topPanel.add(configPadButtonPanel_);
       topLayout.putConstraint(SpringLayout.EAST, configPadButtonPanel_, -4,
             SpringLayout.EAST, topPanel);
       topLayout.putConstraint(SpringLayout.WEST, configPadButtonPanel_, 5,
             SpringLayout.EAST, comboBinning_);
-      topLayout.putConstraint(SpringLayout.SOUTH, configPadButtonPanel_, 0,
+      topLayout.putConstraint(SpringLayout.NORTH, configPadButtonPanel_, -40,
             SpringLayout.SOUTH, topPanel);
-      topLayout.putConstraint(SpringLayout.NORTH, configPadButtonPanel_, -18,
+      topLayout.putConstraint(SpringLayout.SOUTH, configPadButtonPanel_, -20,
             SpringLayout.SOUTH, topPanel);
 
 
@@ -2093,6 +2096,8 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
             SpringLayout.WEST, topPanel);
       topLayout.putConstraint(SpringLayout.WEST, buttonAutofocusTools_, 226,
             SpringLayout.WEST, topPanel);
+      
+  
 
       saveConfigButton_ = new JButton();
       saveConfigButton_.addActionListener(new ActionListener() {
@@ -2512,7 +2517,7 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
     * Updates Status line in main window from cached values
     */
    private void updateStaticInfoFromCache() {
-      String dimText = "Image size: " + staticInfo_.width_ + " X " + staticInfo_.height_ + " X "
+      String dimText = "Image info (from camera): " + staticInfo_.width_ + " X " + staticInfo_.height_ + " X "
             + staticInfo_.bytesPerPixel_ + ", Intensity range: " + staticInfo_.imageBitDepth_ + " bits";
       dimText += ", " + TextUtils.FMT0.format(staticInfo_.pixSizeUm_ * 1000) + "nm/pix";
       if (zStageLabel_.length() > 0) {
