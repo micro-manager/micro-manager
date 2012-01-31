@@ -274,6 +274,12 @@ case $host in
       AC_MSG_CHECKING(Serial adapter linker flags)
       SERIALFRAMEWORKS="-framework CoreFoundation -framework IOKit"
       AC_MSG_RESULT($SERIALFRAMEWORKS)
+      AC_MSG_CHECKING(QuickTime linker flags)
+      QUICKTIMEFRAMEWORKS="-framework QuickTime -framework QTKit"
+      AC_MSG_RESULT($QUICKTIMEFRAMEWORKS)
+      AC_MSG_CHECKING(OpenCV linker flags)
+      OPENCV_XLDFLAGS="-lopencv_imgproc"
+      AC_MSG_RESULT($OPENCV_XLDFLAGS)
       ;;
    *linux*)
       AC_MSG_CHECKING(pvcam linker flags)
@@ -283,6 +289,8 @@ esac
 AC_SUBST(PVCAMFRAMEWORKS)
 AC_SUBST(SPOTFRAMEWORKS)
 AC_SUBST(SERIALFRAMEWORKS)
+AC_SUBST(QUICKTIMEFRAMEWORKS)
+AC_SUBST(OPENCV_XLDFLAGS)
 
 # Micro-Manager libraries have a prefix & suffix to make them unique.  These are defined here:
 case $host in
