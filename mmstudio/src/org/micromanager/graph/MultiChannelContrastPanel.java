@@ -12,6 +12,8 @@ import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Graphics;
 import java.util.ArrayList;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
@@ -23,11 +25,15 @@ import javax.swing.SpinnerNumberModel;
 import javax.swing.SpringLayout;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
+import org.json.JSONException;
 import org.micromanager.acquisition.MetadataPanel;
 import org.micromanager.acquisition.VirtualAcquisitionDisplay;
 import org.micromanager.api.ContrastPanel;
 import org.micromanager.api.ImageCache;
+import org.micromanager.utils.MDUtils;
+import org.micromanager.utils.MMScriptException;
 import org.micromanager.utils.NumberUtils;
+import org.micromanager.utils.ReportingUtils;
 import org.micromanager.utils.ScaleBar;
 
 /**
@@ -150,7 +156,18 @@ public class MultiChannelContrastPanel extends JPanel implements ContrastPanel {
    }
 
    public synchronized void setupChannelControls(ImageCache cache) {
-      final int nChannels = cache.getNumChannels();
+      final int nChannels;
+      boolean rgb;
+      try {
+         rgb = MDUtils.isRGB(cache.getSummaryMetadata());
+      } catch (Exception ex) {
+         ReportingUtils.logError(ex);
+         rgb = false;
+      }
+      if (rgb)
+         nChannels = 3;
+      else
+         nChannels = cache.getNumChannels();
 
       final SpringLayout layout = new SpringLayout();
       final JPanel p = new JPanel() {
@@ -174,7 +191,7 @@ public class MultiChannelContrastPanel extends JPanel implements ContrastPanel {
       ccpList_ = new ArrayList<ChannelControlPanel>();
       for (int i = 0; i < nChannels; ++i) {
          ChannelControlPanel ccp = new ChannelControlPanel(i, this, mdPanel_, hpHeight,
-                 cache.getChannelColor(i),cache.getBitDepth(),getFractionToReject(),
+                 cache.getChannelColor(i) ,cache.getBitDepth(),getFractionToReject(),
                  logScaleCheckBox_.isSelected());
          layout.putConstraint(SpringLayout.EAST, ccp, 0, SpringLayout.EAST, p);
          layout.putConstraint(SpringLayout.WEST, ccp, 0, SpringLayout.WEST, p);

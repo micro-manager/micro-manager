@@ -705,20 +705,14 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
             int color = chColors.getInt(k);
             int min = chMins.getInt(k);
             int max = chMaxes.getInt(k);
-            for (int component = 0; component < numComponents; ++component) {
-               JSONObject channelObject = new JSONObject();
-               if (numComponents == 1) {
-                  channelObject.put("Color", color);
-               } else {
-                  channelObject.put("Color", rgb[component].getRGB());
-               }
-               channelObject.put("Name", name);
-               channelObject.put("Gamma", 1.0);
-               channelObject.put("Min", min);
-               channelObject.put("Max", max);
-               channelObject.put("BitDepth", bitDepth);
-               channels.put(channelObject);
-            }
+            JSONObject channelObject = new JSONObject();
+            channelObject.put("Color", color);
+            channelObject.put("Name", name);
+            channelObject.put("Gamma", 1.0);
+            channelObject.put("Min", min);
+            channelObject.put("Max", max);
+            channelObject.put("BitDepth", bitDepth);
+            channels.put(channelObject);
          }
          if (chNames.length() == 0) {
             for (int component = 0; component < numComponents; ++component) {
@@ -1007,8 +1001,6 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
       }
       
 
-     
-      
       
       if (!simple_) {
          if (tSelector_ != null) {

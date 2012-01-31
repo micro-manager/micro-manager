@@ -28,6 +28,7 @@ import org.micromanager.MMStudioMainFrame;
 import org.micromanager.utils.ContrastSettings;
 import org.micromanager.utils.MDUtils;
 import org.micromanager.utils.MMException;
+import org.micromanager.utils.MMScriptException;
 import org.micromanager.utils.ReportingUtils;
 
 /**
@@ -301,6 +302,10 @@ public class MMImageCache implements TaggedImageStorage, ImageCache {
          return null;
       return display_.getHyperImage();
    }
+
+   private boolean isRGB() throws JSONException, MMScriptException {
+      return  MDUtils.isRGB(getSummaryMetadata());
+   }
    
    /////////////////////Channels section/////////////////////////
    public void setChannelContrast(int index, int min, int max) {
@@ -346,6 +351,8 @@ public class MMImageCache implements TaggedImageStorage, ImageCache {
    
    public Color getChannelColor(int channelIndex) {
       try {
+         if (isRGB())
+            return channelIndex==0 ? Color.red : (channelIndex==1 ? Color.green : Color.blue);
          return new Color(getChannelSetting(channelIndex).getInt("Color"));
       } catch (Exception ex) {
          return Color.WHITE;
@@ -355,6 +362,8 @@ public class MMImageCache implements TaggedImageStorage, ImageCache {
    public void setChannelColor(int channel, int rgb) {
       JSONObject chan = getChannelSetting(channel);
       try {
+         if (chan == null)
+            return;  //no channel settings for rgb images
          chan.put("Color", rgb);
       } catch (JSONException ex) {
          ReportingUtils.logError(ex);
@@ -363,16 +372,20 @@ public class MMImageCache implements TaggedImageStorage, ImageCache {
 
    public String getChannelName(int channelIndex) {
       try {
+         if (isRGB())
+            return channelIndex==0 ? "Red" : (channelIndex==1 ? "Green" : "Blue");
          return getChannelSetting(channelIndex).getString("Name");
-      } catch (JSONException ex) {
+      } catch (Exception ex) {
          ReportingUtils.logError(ex);
-         return null;
+         return "";
       }
    }
    
    
    public void setChannelName(int channel, String channelName) {
       try {
+         if (isRGB())
+            return;
          JSONObject displayAndComments = getDisplayAndComments();
          JSONArray channelArray;
          if (displayAndComments.has("Channels")) {
@@ -384,7 +397,7 @@ public class MMImageCache implements TaggedImageStorage, ImageCache {
          if (channelArray.isNull(channel)) {
              channelArray.put(channel, new JSONObject().put("Name",channelName));
           }
-      } catch (JSONException ex) {
+      } catch (Exception ex) {
          ReportingUtils.logError(ex);
       }
 
