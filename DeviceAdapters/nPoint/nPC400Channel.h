@@ -108,7 +108,12 @@ public:
     // from the camera).  If the device is capable (and ready) to do so isSequenceable will                                   
     // be true. If your device can not execute this (true for most stages                                                     
     // simply set isSequenceable to false                                                                                     
-    int IsStageSequenceable(bool& /*isSequenceable*/) const {return DEVICE_OK;}
+    int IsStageSequenceable(bool& isSequenceable) const 
+    {
+       isSequenceable = false;
+       return DEVICE_OK;
+    }
+
     int GetStageSequenceMaxLength(long& /*nrEvents*/) const  {return DEVICE_OK;}
     int StartStageSequence() const {return DEVICE_OK;}
     int StopStageSequence() const {return DEVICE_OK;}
