@@ -130,6 +130,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import javax.swing.BorderFactory;
 import javax.swing.JPanel;
+import javax.swing.JSeparator;
 import javax.swing.JSplitPane;
 import javax.swing.event.AncestorListener;
 import mmcorej.TaggedImage;
@@ -1498,13 +1499,26 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
       topLayout.putConstraint(SpringLayout.WEST, binningLabel, 112 - 1,
             SpringLayout.WEST, topPanel);
 
+      metadataPanel_ = new MetadataPanel();
+      bottomPanel.add(metadataPanel_);
+      topLayout.putConstraint(SpringLayout.SOUTH, metadataPanel_, 0,
+            SpringLayout.SOUTH, bottomPanel);
+      topLayout.putConstraint(SpringLayout.NORTH, metadataPanel_, 20,
+            SpringLayout.NORTH, bottomPanel);
+      topLayout.putConstraint(SpringLayout.EAST, metadataPanel_, 0,
+            SpringLayout.EAST, bottomPanel);
+      topLayout.putConstraint(SpringLayout.WEST, metadataPanel_, 0,
+            SpringLayout.WEST, bottomPanel);
+      metadataPanel_.setBorder(BorderFactory.createEmptyBorder());
+
+      
       labelImageDimensions_ = new JLabel();
       labelImageDimensions_.setFont(new Font("Arial", Font.PLAIN, 10));
       bottomPanel.add(labelImageDimensions_);
       topLayout.putConstraint(SpringLayout.SOUTH, labelImageDimensions_,
-            -5, SpringLayout.SOUTH, bottomPanel);
+            5, SpringLayout.NORTH, metadataPanel_);
       topLayout.putConstraint(SpringLayout.NORTH, labelImageDimensions_,
-            -25, SpringLayout.SOUTH, bottomPanel);
+            0, SpringLayout.NORTH, bottomPanel);
       topLayout.putConstraint(SpringLayout.EAST, labelImageDimensions_,
             -5, SpringLayout.EAST, bottomPanel);
       topLayout.putConstraint(SpringLayout.WEST, labelImageDimensions_,
@@ -1908,18 +1922,6 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
       topLayout.putConstraint(SpringLayout.WEST, regionOfInterestLabel,
             8, SpringLayout.WEST, topPanel);
    
-      metadataPanel_ = new MetadataPanel();
-      bottomPanel.add(metadataPanel_);
-      topLayout.putConstraint(SpringLayout.SOUTH, metadataPanel_, -20,
-            SpringLayout.SOUTH, bottomPanel);
-      topLayout.putConstraint(SpringLayout.NORTH, metadataPanel_, 0,
-            SpringLayout.NORTH, bottomPanel);
-      topLayout.putConstraint(SpringLayout.EAST, metadataPanel_, 0,
-            SpringLayout.EAST, bottomPanel);
-      topLayout.putConstraint(SpringLayout.WEST, metadataPanel_, 0,
-            SpringLayout.WEST, bottomPanel);
-      metadataPanel_.setBorder(BorderFactory.createEmptyBorder());
-
 
       final JLabel regionOfInterestLabel_1 = new JLabel();
       regionOfInterestLabel_1.setFont(new Font("Arial", Font.BOLD, 11));
