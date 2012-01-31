@@ -25,7 +25,6 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.micromanager.MMStudioMainFrame;
-import org.micromanager.utils.ContrastSettings;
 import org.micromanager.utils.MDUtils;
 import org.micromanager.utils.MMException;
 import org.micromanager.utils.MMScriptException;
@@ -122,9 +121,6 @@ public class MMImageCache implements TaggedImageStorage, ImageCache {
       imageStorage_ = newImageFileManager; 
    }
    
-   public void storeSontrastSettings(ContrastSettings cs) {
-      
-   }
 
    public void putImage(TaggedImage taggedImg) {
       try {

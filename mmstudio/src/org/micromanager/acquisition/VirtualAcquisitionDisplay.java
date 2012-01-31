@@ -982,12 +982,11 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
       }
       
 
-      final boolean frgb = rgb;
       final int fchannel = channel;
       Runnable autoscale = new Runnable() {
          //Autoscale on first imag
          public void run() {
-            if (frgb || newDisplay_ && fchannel + 1 == ((IMMImagePlus) hyperImage_).getNChannelsUnverified()) {
+            if (newDisplay_ && fchannel + 1 == ((IMMImagePlus) hyperImage_).getNChannelsUnverified()) {
                //call this explicitly to get contrast panel set up, because ImageFocusListener       
                //not guarenteed to fire before this code reache
                mdPanel_.focusReceived(hyperImage_.getWindow());
