@@ -510,7 +510,7 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
       CompositeImage ci = (CompositeImage) img;
       Color color = cache.getChannelColor(channelIndex_);
 
-      LUT lut = ImageUtils.makeLUT(color, gamma_, cache.getBitDepth());
+      LUT lut = ImageUtils.makeLUT(color, gamma_);
       lut.min = contrastMin_;
       lut.max = contrastMax_;
       //uses lut.min and lut.max to set min and max of precessor
@@ -525,7 +525,7 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
       }
       
       if (ci.getChannel() == channelIndex_ + 1) { 
-         LUT grayLut = ImageUtils.makeLUT(Color.white, gamma_, cache.getBitDepth());
+         LUT grayLut = ImageUtils.makeLUT(Color.white, gamma_);
          ci.getProcessor().setColorModel(grayLut);
          ci.getProcessor().setMinAndMax(contrastMin_, contrastMax_);
          if (ci.getMode() == CompositeImage.GRAYSCALE)
