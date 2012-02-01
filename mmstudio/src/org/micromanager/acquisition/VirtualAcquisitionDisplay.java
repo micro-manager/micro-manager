@@ -140,6 +140,11 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
          display_ = disp;
       }
       
+      @Override
+      public String getTitle() {
+         return name_;
+      }
+      
       private void superReset() {
          super.reset();
       }
@@ -273,6 +278,11 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
          super(title, stack);
          display_ = disp;
       }
+      
+      @Override
+      public String getTitle() {
+         return name_;
+      }
 
       @Override
       public int getImageStackSize() {
@@ -344,7 +354,7 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
    }
 
    public VirtualAcquisitionDisplay(ImageCache imageCache, AcquisitionEngine eng) {
-      this(imageCache, eng, "Untitled");
+      this(imageCache, eng, WindowManager.getUniqueName("Untitled"));
    }
 
    public VirtualAcquisitionDisplay(ImageCache imageCache, AcquisitionEngine eng, String name) {
