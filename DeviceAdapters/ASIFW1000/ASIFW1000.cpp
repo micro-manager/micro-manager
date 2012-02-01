@@ -181,6 +181,7 @@ MM::DeviceDetectionStatus Hub::DetectDevice(void)
                result = MM::CanCommunicate;
             }
             pS->Shutdown();
+            CDeviceUtils::SleepMs(300);
             if( MM::CanCommunicate == result)
                break;
          }
