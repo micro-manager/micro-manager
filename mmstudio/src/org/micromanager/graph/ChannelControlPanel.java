@@ -367,7 +367,17 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
    }
 
     private void channelNameCheckboxAction() {
-       updateChannelVisibility();
+       CompositeImage ci = (CompositeImage) WindowManager.getCurrentImage();
+       ImageCache cache = VirtualAcquisitionDisplay.getDisplay(ci).getImageCache();
+       boolean[] active = ci.getActiveChannels();
+       if (ci.getMode() != CompositeImage.COMPOSITE)
+          if (active[channelIndex_]) {
+             channelNameCheckbox_.setSelected(true);
+             return;
+          } else 
+             ci.setPosition(channelIndex_+1, ci.getSlice(), ci.getFrame());
+ 
+       cache.setChannelVisibility(channelIndex_, channelNameCheckbox_.isSelected());
        mdPanel_.drawWithoutUpdate();
     }
 
@@ -418,13 +428,6 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
    public void setLogScale(boolean logScale) {
       logScale_ = logScale;
       calcAndDisplayHistAndStats(WindowManager.getCurrentImage(),true);
-   }
-
-   private void updateChannelVisibility() {
-     //Only called if there is an active window
-     //so it is ok to get image cache in this way
-     ImageCache cache = VirtualAcquisitionDisplay.getDisplay(WindowManager.getCurrentImage()).getImageCache();
-     cache.setChannelVisibility(channelIndex_, channelNameCheckbox_.isSelected());
    }
 
    private final HistogramPanel addHistogramPanel() {
@@ -549,12 +552,14 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
       if (img == null)
          return;
       ImageProcessor ip = null;
-      if (img.isComposite() ) {
-         if (((CompositeImage) img).getMode()  == CompositeImage.COMPOSITE) 
-            ip = ((CompositeImage) img).getProcessor(channelIndex_ + 1);
-         else if (channelIndex_ == img.getChannel() - 1)  
-            ip = img.getProcessor(); 
-      }
+      if (((CompositeImage) img).getMode() == CompositeImage.COMPOSITE)
+         ip = ((CompositeImage) img).getProcessor(channelIndex_ + 1);
+      else if (channelIndex_ == img.getChannel() - 1)
+         ip = img.getProcessor();
+     
+
+      boolean[] active = ((CompositeImage) img).getActiveChannels();
+      channelNameCheckbox_.setSelected(active[channelIndex_]);
       if (ip == null) { 
          hp_.setVisible(false);
          return;
@@ -624,6 +629,8 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
 
          maxLabel_.setText("Max: " + NumberUtils.intToDisplayString((int) pixelMax_));
          minLabel_.setText("Min: " + NumberUtils.intToDisplayString((int) pixelMin_));
+         
+         
       }
    }
 
