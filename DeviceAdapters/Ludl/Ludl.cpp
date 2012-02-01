@@ -73,17 +73,6 @@ MODULE_API void InitializeModuleData()
    AddAvailableDeviceName(g_Wheel, "Ludl Filter Wheel");
    AddAvailableDeviceName(g_XYStageDeviceName, "XY Stage");
    AddAvailableDeviceName(g_StageDeviceName, "Single Axis Stage");
-
-   // TODO: remove
-   /*
-   if( DiscoverabilityTest())
-   {
-      SetDeviceIsDiscoverable(g_Shutter, true);
-      SetDeviceIsDiscoverable(g_Wheel, true);
-      SetDeviceIsDiscoverable(g_XYStageDeviceName, true);
-      SetDeviceIsDiscoverable(g_StageDeviceName, true);
-   }
-   */
 }                                                                            
                                                                              
 MODULE_API MM::Device* CreateDevice(const char* deviceName)                  

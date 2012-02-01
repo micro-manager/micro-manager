@@ -296,37 +296,4 @@ private:
    std::string id_;
 };
 
-/*
-class ASIController : public CGenericBase<ASIController>
-{
-public:
-   ASIController();
-   ~ASIController();
-  
-   // Device API
-   // ----------
-   int Initialize();
-   int Shutdown();
-  
-   void GetName(char* pszName) const;
-   bool Busy();
-   MM::DeviceType GetType() const {return MM::GenericDevice;}
-
-   // action interface
-   // ----------------
-   int OnPort(MM::PropertyBase* pProp, MM::ActionType eAct);
-   int OnCommand(MM::PropertyBase* pProp, MM::ActionType eAct);
-   int OnResponse(MM::PropertyBase* pProp, MM::ActionType eAct);;
-
-private:
-   int ExecuteCommand(const std::string& cmd, std::string& response);
-
-   std::string port_;
-   bool initialized_;
-   double answerTimeoutMs_;
-   std::string command_;
-   std::string response_;
-};
-*/
-
 #endif //_LUDL_H_
