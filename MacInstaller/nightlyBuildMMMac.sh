@@ -176,6 +176,8 @@ java -cp plugins/Micro-Manager/MMJ_.jar:plugins/Micro-Manager/MMCoreJ.jar Device
 cp $RI386/bin/MMCorePy.py $TARGET/
 cp $RI386/bin/_MMCorePy.so $TARGET/
 
+# copy over scripts from repository to installation
+cp -f $REPOSITORY/scripts/*.bsh $TARGET/scripts/
 
 cd $REPOSITORY/MacInstaller
 if [ "$FULL" != "full" ]; then
