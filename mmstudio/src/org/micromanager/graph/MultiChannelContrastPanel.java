@@ -235,6 +235,15 @@ public class MultiChannelContrastPanel extends JPanel implements ContrastPanel {
 
    }
 
+   public void setDisplayMode(int mode) {
+      if (mode == CompositeImage.COMPOSITE) 
+         displayModeCombo_.setSelectedIndex(0);
+      else if (mode == CompositeImage.COLOR) 
+         displayModeCombo_.setSelectedIndex(1);
+      else if (mode == CompositeImage.GRAYSCALE)
+         displayModeCombo_.setSelectedIndex(2);  
+   }
+   
    private void showSizeBar() {
       boolean show = sizeBarCheckBox_.isSelected();
       ImagePlus ip = WindowManager.getCurrentImage();

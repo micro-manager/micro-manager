@@ -11,6 +11,7 @@
 package org.micromanager.acquisition;
 
 
+import ij.CompositeImage;
 import ij.ImagePlus;
 import ij.WindowManager;
 import ij.gui.ImageWindow;
@@ -606,7 +607,7 @@ public class MetadataPanel extends JPanel
       if (acq != null && currentContrastPanel_ != null) {
          currentContrastPanel_.setupChannelControls(cache);
          if (acq.getNumChannels() > 1) {
-            multiChannelContrastPanel_.displayModeComboActionPerformed();        
+            multiChannelContrastPanel_.setDisplayMode(((CompositeImage) imgp).getMode());    
             multiChannelContrastPanel_.sizeBarCheckBoxActionPerformed();
          }
          //load appropriate contrast settings calc and display hist, apply LUT and draw
