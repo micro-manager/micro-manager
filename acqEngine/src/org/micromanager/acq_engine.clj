@@ -264,11 +264,14 @@
       adjusted-slices)))
 
 (defn start-property-sequences [property-sequences]
-  (doseq [[[d p] _] property-sequences]
-    (core startPropertySequence d p)))
+  (doseq [[[d p] vals] property-sequences]
+    (core startPropertySequence d p)
+    (swap! state assoc-in [:last-property-settings d p] (last vals))))
           
-(defn start-slice-sequence []
-  (core startStageSequence (core getFocusDevice)))
+(defn start-slice-sequence [slices]
+  (let [z-stage (core getFocusDevice)]
+    (core startStageSequence z-stage)
+    (swap! state assoc-in [:last-stage-positions z-stage] (last slices))))
 
 (defn first-trigger-missing? []
   (= "1" (get-property-value (core getCameraDevice) "OutputTriggerFirstMissing")))
@@ -279,7 +282,7 @@
   (let [absolute-slices (load-slice-sequence (:slices trigger-sequence) relative-z)]
     (start-property-sequences (:properties trigger-sequence))
     (when absolute-slices
-      (start-slice-sequence))
+      (start-slice-sequence (:slice trigger-sequence)))
     (core startSequenceAcquisition (if (first-trigger-missing?) (inc length) length) 0 true)
     (swap! state assoc-in [:last-stage-positions (core getFocusDevice)]
            (last absolute-slices))))
