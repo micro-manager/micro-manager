@@ -3288,8 +3288,6 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
       mainPrefs_.putInt(MAIN_FRAME_WIDTH, r.width);
       mainPrefs_.putInt(MAIN_FRAME_HEIGHT, r.height);
       mainPrefs_.putInt(MAIN_FRAME_DIVIDER_POS, this.splitPane_.getDividerLocation());
-
-      metadataPanel_.saveSettings();
       
       mainPrefs_.put(OPEN_ACQ_DIR, openAcqDirectory_);
 

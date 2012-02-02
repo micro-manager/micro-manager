@@ -60,13 +60,7 @@ public class MetadataPanel extends JPanel
    private static final String SINGLE_CHANNEL_CONTRAST_PANEL = "Single Channel";
    private static final String MULTIPLE_CHANNELS_CONTRAST_PANEL = "Multiple Channels";
    private static final String BLANK_CONTRAST_PANEL = "Blank";
-   private static final String PREF_AUTOSTRETCH = "stretch_contrast";
-   private static final String PREF_REJECT_OUTLIERS = "reject_outliers";
-   private static final String PREF_REJECT_FRACTION = "reject_fraction";
-   private static final String PREF_SLOW_HIST = "slow_hist";
-   private static final String PREF_LOG_HIST = "log_hist";
    
-   private Preferences prefs_;
     private JSplitPane CommentsSplitPane;
     private JPanel multipleChannelsPanel_;
     private JLabel imageCommentsLabel;
@@ -103,7 +97,6 @@ public class MetadataPanel extends JPanel
 
    /** Creates new form MetadataPanel */
    public MetadataPanel() {
-      prefs_ = Preferences.userNodeForPackage(this.getClass());
       makeContrastPanels();
       initialize();
       imageMetadataModel_ = new MetadataTableModel();
@@ -115,15 +108,10 @@ public class MetadataPanel extends JPanel
    }
    
    private void makeContrastPanels() {    
-      boolean stretch = prefs_.getBoolean(PREF_AUTOSTRETCH, true);
-      boolean reject = prefs_.getBoolean(PREF_REJECT_OUTLIERS, false);
-      boolean slowHist = prefs_.getBoolean(PREF_SLOW_HIST, false);
-      boolean logHist = prefs_.getBoolean(PREF_LOG_HIST, false);
-      double rejectFrac = prefs_.getDouble(PREF_REJECT_FRACTION, 0.027);
-      singleChannelContrastPanel_ = new SingleChannelContrastPanel(this, stretch, reject, slowHist, logHist, rejectFrac);
+      singleChannelContrastPanel_ = new SingleChannelContrastPanel(this);
       singleChannelContrastPanel_.setFont(new Font("", Font.PLAIN, 10));      
   
-      multiChannelContrastPanel_ = new MultiChannelContrastPanel(this,stretch,reject,logHist,rejectFrac);
+      multiChannelContrastPanel_ = new MultiChannelContrastPanel(this);
       multiChannelContrastPanel_.setFont(new Font("", Font.PLAIN, 10));
    }
    
@@ -650,15 +638,7 @@ public class MetadataPanel extends JPanel
       }
    }
    
-   public void saveSettings() {
-      if (currentContrastPanel_ != null) {
-         prefs_.putBoolean(PREF_AUTOSTRETCH, currentContrastPanel_.getAutoStretch());
-         prefs_.putBoolean(PREF_REJECT_OUTLIERS, currentContrastPanel_.getRejectOutliers());
-         prefs_.putDouble(PREF_REJECT_FRACTION, currentContrastPanel_.getFractionToReject());
-         prefs_.putBoolean(PREF_SLOW_HIST, currentContrastPanel_.getSlowHist());
-         prefs_.putBoolean(PREF_LOG_HIST, currentContrastPanel_.getLogHist());
-      }
-   }
+ 
 
    /*
     * called just before image is redrawn.  Calcs histogram and stats (and displays

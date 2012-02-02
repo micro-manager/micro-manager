@@ -39,6 +39,7 @@ import java.text.NumberFormat;
 import java.text.ParseException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.prefs.Preferences;
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
@@ -74,6 +75,12 @@ import org.micromanager.utils.NumberUtils;
 public class SingleChannelContrastPanel extends JPanel implements 
         ContrastPanel, PropertyChangeListener, CursorListener {
    private static final double SLOW_HIST_UPDATE_TIME_MS = 2000;
+   
+   private static final String PREF_AUTOSTRETCH = "sc_stretch_contrast";
+   private static final String PREF_REJECT_OUTLIERS = "sc_reject_outliers";
+   private static final String PREF_REJECT_FRACTION = "sc_reject_fraction";
+   private static final String PREF_LOG_HIST = "sc_log_hist";
+   private static final String PREF_SLOW_HIST = "sc_slow_hist";
    
 	private static final long serialVersionUID = 1L;
 	private JComboBox modeComboBox_;
@@ -114,17 +121,41 @@ public class SingleChannelContrastPanel extends JPanel implements
    private int slowHistogramCount_;
    private int numFramesForSlowHist_;
    private MetadataPanel mdPanel_;
+   private Preferences prefs_;
 
 
-	public SingleChannelContrastPanel(MetadataPanel md, boolean autostretch, boolean reject, 
-           boolean slowHist, boolean logHist, double frac) {
+
+	public SingleChannelContrastPanel(MetadataPanel md) {
 		super();
       
       mdPanel_ = md;
 
       numFramesForSlowHist_ = (int) (SLOW_HIST_UPDATE_TIME_MS / 33.0 );
-      fractionToReject_ = frac;
-		setToolTipText("Switch between linear and log histogram");
+      prefs_ = Preferences.userNodeForPackage(this.getClass());
+      
+      
+      boolean autostretch = prefs_.getBoolean(PREF_AUTOSTRETCH, false);
+      boolean reject = prefs_.getBoolean(PREF_REJECT_OUTLIERS, false);
+      boolean slowHist = prefs_.getBoolean(PREF_SLOW_HIST, false);
+      boolean logHist = prefs_.getBoolean(PREF_LOG_HIST, false);
+      fractionToReject_ = prefs_.getDouble(PREF_REJECT_FRACTION, 0.02);
+      
+      init(autostretch, reject, slowHist, logHist);
+      if (!autostretch) {
+         rejectOutliersCheckBox_.setEnabled(false);
+         rejectOutliersPercentSpinner_.setEnabled(false);
+      }
+   }
+   
+   private void saveSettings() {
+      prefs_.putBoolean(PREF_AUTOSTRETCH, autostretchCheckBox_.isSelected());
+      prefs_.putBoolean(PREF_LOG_HIST, logHistCheckBox_.isSelected());
+      prefs_.putBoolean(PREF_REJECT_OUTLIERS, rejectOutliersCheckBox_.isSelected());
+      prefs_.putBoolean(PREF_SLOW_HIST, slowHistogramCheckBox_.isSelected());
+      prefs_.putDouble(PREF_REJECT_FRACTION, 0.01*((Double) rejectOutliersPercentSpinner_.getValue()));
+   }
+   
+   private void init(boolean autostretch, boolean reject, boolean slowHist, boolean logHist) {
 		setFont(new Font("", Font.PLAIN, 10));
 		springLayout = new SpringLayout();
 		setLayout(springLayout);
@@ -353,12 +384,10 @@ public class SingleChannelContrastPanel extends JPanel implements
 		springLayout.putConstraint(SpringLayout.NORTH, rejectOutliersCheckBox_, 210,
 				SpringLayout.NORTH, this);
 
-      
-      
+
       SpinnerModel smodel = new SpinnerNumberModel(100*fractionToReject_,0,100,.1);
       rejectOutliersPercentSpinner_ = new JSpinner();
       rejectOutliersPercentSpinner_.setModel(smodel);
-      rejectOutliersPercentSpinner_.setValue(fractionToReject_ / 0.01);
       Dimension sd = rejectOutliersPercentSpinner_.getSize();
       rejectOutliersPercentSpinner_.setFont(new Font("Arial", Font.PLAIN, 9));
       // user sees the fraction as percent
@@ -473,6 +502,7 @@ public class SingleChannelContrastPanel extends JPanel implements
          calcHistogram_ = false;
       } else 
          calcHistogram_ = true;
+      saveSettings();
    }
 
    private void logHistAction() {
@@ -483,6 +513,7 @@ public class SingleChannelContrastPanel extends JPanel implements
       ImagePlus img = WindowManager.getCurrentImage();
       if (img!= null)
          calcAndDisplayHistAndStats(img,true);
+      saveSettings();
    }
 
    private void pixelTypeAction() {
@@ -497,12 +528,14 @@ public class SingleChannelContrastPanel extends JPanel implements
       percentOutliersLabel_.setEnabled(rejectOutliersCheckBox_.isSelected());
       calcAndDisplayHistAndStats(WindowManager.getCurrentImage(),true);
       autoButtonAction();
+      saveSettings();
    }
 
    private void percentOutliersAction() {
-      fractionToReject_ = (Double) rejectOutliersPercentSpinner_.getValue();
+      fractionToReject_ = ((Double) rejectOutliersPercentSpinner_.getValue());
       calcAndDisplayHistAndStats(WindowManager.getCurrentImage(),true);
       autoButtonAction();
+      saveSettings();
    }
    
    private void gammaBoxAction() {
@@ -521,6 +554,7 @@ public class SingleChannelContrastPanel extends JPanel implements
       } else {
          autostretch_ = false;
       }
+      saveSettings();
    }
 
    public void applyLUTToImage(ImagePlus img, ImageCache cache) {

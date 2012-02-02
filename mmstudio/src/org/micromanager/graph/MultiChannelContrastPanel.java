@@ -14,6 +14,7 @@ import java.awt.Graphics;
 import java.util.ArrayList;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.prefs.Preferences;
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
@@ -42,9 +43,15 @@ import org.micromanager.utils.ScaleBar;
  */
 public class MultiChannelContrastPanel extends JPanel implements ContrastPanel {
 
+   private static final String PREF_AUTOSTRETCH = "mc_stretch_contrast";
+   private static final String PREF_REJECT_OUTLIERS = "mc_reject_outliers";
+   private static final String PREF_REJECT_FRACTION = "mc_reject_fraction";
+   private static final String PREF_LOG_HIST = "mc_log_hist";
+   
+   
    private JScrollPane contrastScrollPane_;
    JComboBox displayModeCombo_;
-   JCheckBox autostretchCheckBox_;
+   JCheckBox autostretchCheckbox_;
    JCheckBox rejectOutliersCB_;
    JSpinner rejectPercentSpinner_;
    JCheckBox logScaleCheckBox_;
@@ -54,27 +61,44 @@ public class MultiChannelContrastPanel extends JPanel implements ContrastPanel {
    JCheckBox syncChannelsCheckbox_;
    private MetadataPanel mdPanel_;
    private ArrayList<ChannelControlPanel> ccpList_;
+   private Preferences prefs_;
    
    private Color overlayColor_ = Color.white;
 
 
-   public MultiChannelContrastPanel(MetadataPanel md, boolean autostretch, boolean reject, 
-           boolean logHist, double frac) {
+   public MultiChannelContrastPanel(MetadataPanel md) {
       mdPanel_ = md;
-      initialize(frac);
-      autostretchCheckBox_.setSelected(autostretch);
-      logScaleCheckBox_.setSelected(logHist);
-      rejectOutliersCB_.setSelected(reject);
-      if (!autostretch)
+      initialize();
+      prefs_ = Preferences.userNodeForPackage(this.getClass());
+      loadSettings();     
+   }
+   
+   private void saveSettings() {
+      prefs_.putBoolean(PREF_AUTOSTRETCH, autostretchCheckbox_.isSelected());
+      prefs_.putBoolean(PREF_LOG_HIST, logScaleCheckBox_.isSelected());
+      prefs_.putDouble(PREF_REJECT_FRACTION, (Double) rejectPercentSpinner_.getValue());
+      prefs_.putBoolean(PREF_REJECT_OUTLIERS, rejectOutliersCB_.isSelected());
+   }
+   
+   private void loadSettings() {
+      autostretchCheckbox_.setSelected(prefs_.getBoolean(PREF_AUTOSTRETCH, false));           
+      logScaleCheckBox_.setSelected(prefs_.getBoolean(PREF_LOG_HIST, false));
+      rejectOutliersCB_.setSelected(prefs_.getBoolean(PREF_REJECT_OUTLIERS, false));
+      rejectPercentSpinner_.setValue(prefs_.getDouble(PREF_REJECT_FRACTION, 0.02));
+      if (!autostretchCheckbox_.isSelected()) {
          rejectOutliersCB_.setEnabled(false);
+         rejectPercentSpinner_.setEnabled(false);
+      } else if (rejectOutliersCB_.isSelected())
+         rejectPercentSpinner_.setEnabled(true);
+      
    }
 
-   private void initialize(double fraction) {
+   private void initialize() {
 
       JPanel jPanel1 = new JPanel();
       JLabel displayModeLabel = new JLabel();
       displayModeCombo_ = new JComboBox();
-      autostretchCheckBox_ = new JCheckBox();
+      autostretchCheckbox_ = new JCheckBox();
       rejectOutliersCB_ = new JCheckBox();
       rejectPercentSpinner_ = new JSpinner();
       logScaleCheckBox_ = new JCheckBox();
@@ -94,8 +118,8 @@ public class MultiChannelContrastPanel extends JPanel implements ContrastPanel {
          }});
       displayModeLabel.setText("Display mode:");
 
-      autostretchCheckBox_.setText("Autostretch");
-      autostretchCheckBox_.addChangeListener(new ChangeListener() {
+      autostretchCheckbox_.setText("Autostretch");
+      autostretchCheckbox_.addChangeListener(new ChangeListener() {
          public void stateChanged(ChangeEvent evt) {
             autostretchCheckBoxStateChanged();
          }});
@@ -114,7 +138,7 @@ public class MultiChannelContrastPanel extends JPanel implements ContrastPanel {
          public void keyPressed(java.awt.event.KeyEvent evt) {
             rejectPercentSpinner_StateChanged();
          }});
-      rejectPercentSpinner_.setModel(new SpinnerNumberModel( fraction  , 0., 100., 0.1));
+      rejectPercentSpinner_.setModel(new SpinnerNumberModel( 0.02  , 0., 100., 0.1));
 
 
       logScaleCheckBox_.setText("Log hist");
@@ -126,9 +150,9 @@ public class MultiChannelContrastPanel extends JPanel implements ContrastPanel {
       org.jdesktop.layout.GroupLayout jPanel1Layout = new org.jdesktop.layout.GroupLayout(jPanel1);
       jPanel1.setLayout(jPanel1Layout);
       jPanel1Layout.setHorizontalGroup(
-              jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING).add(jPanel1Layout.createSequentialGroup().addContainerGap(24, Short.MAX_VALUE).add(displayModeLabel).addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED).add(displayModeCombo_, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 134, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE).addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED).add(autostretchCheckBox_).addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED).add(rejectOutliersCB_).add(6, 6, 6).add(rejectPercentSpinner_, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 63, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE).addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED).add(logScaleCheckBox_)));
+              jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING).add(jPanel1Layout.createSequentialGroup().addContainerGap(24, Short.MAX_VALUE).add(displayModeLabel).addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED).add(displayModeCombo_, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 134, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE).addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED).add(autostretchCheckbox_).addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED).add(rejectOutliersCB_).add(6, 6, 6).add(rejectPercentSpinner_, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 63, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE).addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED).add(logScaleCheckBox_)));
       jPanel1Layout.setVerticalGroup(
-              jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING).add(jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.CENTER).add(autostretchCheckBox_).add(rejectOutliersCB_).add(rejectPercentSpinner_, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE).add(logScaleCheckBox_)).add(jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE).add(displayModeCombo_, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE).add(displayModeLabel)));
+              jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING).add(jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.CENTER).add(autostretchCheckbox_).add(rejectOutliersCB_).add(rejectPercentSpinner_, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE).add(logScaleCheckBox_)).add(jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE).add(displayModeCombo_, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE).add(displayModeLabel)));
 
       sizeBarCheckBox_.setText("Scale Bar");
       sizeBarCheckBox_.addActionListener(new java.awt.event.ActionListener() {
@@ -313,13 +337,14 @@ public class MultiChannelContrastPanel extends JPanel implements ContrastPanel {
          ci.updateAndDraw();
          mdPanel_.drawWithoutUpdate();
       }
+      saveSettings();
    }
 
    private void autostretchCheckBoxStateChanged() {
-       rejectOutliersCB_.setEnabled(autostretchCheckBox_.isSelected());
-       boolean rejectem = rejectOutliersCB_.isSelected() && autostretchCheckBox_.isSelected();
+       rejectOutliersCB_.setEnabled(autostretchCheckbox_.isSelected());
+       boolean rejectem = rejectOutliersCB_.isSelected() && autostretchCheckbox_.isSelected();
        rejectPercentSpinner_.setEnabled(rejectem);
-       if (autostretchCheckBox_.isSelected())
+       if (autostretchCheckbox_.isSelected())
           if (ccpList_ != null && ccpList_.size() > 0)
              for (ChannelControlPanel c : ccpList_)
                 c.autoButtonAction();
@@ -333,6 +358,7 @@ public class MultiChannelContrastPanel extends JPanel implements ContrastPanel {
             c.calcAndDisplayHistAndStats(WindowManager.getCurrentImage(),true);
             c.autoButtonAction();
          }
+      saveSettings();
    }
 
    private void rejectPercentSpinner_StateChanged() {
@@ -342,12 +368,15 @@ public class MultiChannelContrastPanel extends JPanel implements ContrastPanel {
             c.calcAndDisplayHistAndStats(WindowManager.getCurrentImage(),true);
             c.autoButtonAction();
          }
+      saveSettings();
    }
 
    private void logScaleCheckBoxActionPerformed() {
         if (ccpList_ != null && ccpList_.size() > 0)
          for (ChannelControlPanel c : ccpList_)
             c.setLogScale(logScaleCheckBox_.isSelected());
+        
+      saveSettings();
    }
 
    public void sizeBarCheckBoxActionPerformed() {
@@ -392,7 +421,7 @@ public class MultiChannelContrastPanel extends JPanel implements ContrastPanel {
          return;
       for (ChannelControlPanel c : ccpList_) {
          c.calcAndDisplayHistAndStats(img,drawHist);
-         if (autostretchCheckBox_.isSelected())
+         if (autostretchCheckbox_.isSelected())
             c.autostretch();        
          c.applyChannelLUTToImage(img,cache);
       }
@@ -401,7 +430,7 @@ public class MultiChannelContrastPanel extends JPanel implements ContrastPanel {
     public void displayChanged(ImagePlus img, ImageCache cache) {
        for (ChannelControlPanel c : ccpList_) {
           c.calcAndDisplayHistAndStats(img, true);
-          if (autostretchCheckBox_.isSelected())
+          if (autostretchCheckbox_.isSelected())
              c.autostretch();
           else
              c.loadDisplaySettings(cache);
@@ -410,7 +439,7 @@ public class MultiChannelContrastPanel extends JPanel implements ContrastPanel {
    }
 
    public boolean getAutoStretch() {
-      return autostretchCheckBox_.isSelected();
+      return autostretchCheckbox_.isSelected();
    }
 
    public boolean getSlowHist() {

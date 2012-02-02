@@ -396,7 +396,7 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
     }
     
     public void setFullScale(){
-      mccPanel_.autostretchCheckBox_.setSelected(false);
+      mccPanel_.autostretchCheckbox_.setSelected(false);
       contrastMin_ = 0;
       contrastMax_ = histMax_;
     }
@@ -642,7 +642,7 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
    }
 
    public void onLeftCursor(double pos) {
-      mccPanel_.autostretchCheckBox_.setSelected(false);
+      mccPanel_.autostretchCheckbox_.setSelected(false);
       contrastMin_ = Math.max(0, pos) * binSize_;
       if (contrastMax_ < contrastMin_)
          contrastMax_ = contrastMin_;
@@ -650,7 +650,7 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
    }
    
    public void onRightCursor(double pos) {
-      mccPanel_.autostretchCheckBox_.setSelected(false);
+      mccPanel_.autostretchCheckbox_.setSelected(false);
       contrastMax_ = Math.min(NUM_BINS-1, pos) * binSize_;
       if (contrastMin_ > contrastMax_)
          contrastMin_ = contrastMax_;
