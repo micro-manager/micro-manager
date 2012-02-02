@@ -324,6 +324,7 @@ AC_MSG_CHECKING(library prefix)
 AC_MSG_RESULT($MMPREFIX)
 AC_SUBST(MMPREFIX)
 
+
 # Checks for library functions.
 AC_HEADER_STDC
 AC_CHECK_FUNCS([memset])
