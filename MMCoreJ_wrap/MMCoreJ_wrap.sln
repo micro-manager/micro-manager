@@ -225,6 +225,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "DEClientLib", "..\DeviceAda
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "MoticCamera", "..\DeviceAdapters\Motic\MoticCamera.vcproj", "{E8FCC396-C0C5-4D1A-B6A7-A570FB948D24}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "SutterStage", "..\DeviceAdapters\SutterStage\SutterStage.vcproj", "{5772F2FA-DBB1-4ABD-A94D-A320CB2E8FC9}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
@@ -1057,6 +1059,14 @@ Global
 		{E8FCC396-C0C5-4D1A-B6A7-A570FB948D24}.Release|Win32.Build.0 = Release|Win32
 		{E8FCC396-C0C5-4D1A-B6A7-A570FB948D24}.Release|x64.ActiveCfg = Release|x64
 		{E8FCC396-C0C5-4D1A-B6A7-A570FB948D24}.Release|x64.Build.0 = Release|x64
+		{5772F2FA-DBB1-4ABD-A94D-A320CB2E8FC9}.Debug|Win32.ActiveCfg = Debug|Win32
+		{5772F2FA-DBB1-4ABD-A94D-A320CB2E8FC9}.Debug|Win32.Build.0 = Debug|Win32
+		{5772F2FA-DBB1-4ABD-A94D-A320CB2E8FC9}.Debug|x64.ActiveCfg = Debug|x64
+		{5772F2FA-DBB1-4ABD-A94D-A320CB2E8FC9}.Debug|x64.Build.0 = Debug|x64
+		{5772F2FA-DBB1-4ABD-A94D-A320CB2E8FC9}.Release|Win32.ActiveCfg = Release|Win32
+		{5772F2FA-DBB1-4ABD-A94D-A320CB2E8FC9}.Release|Win32.Build.0 = Release|Win32
+		{5772F2FA-DBB1-4ABD-A94D-A320CB2E8FC9}.Release|x64.ActiveCfg = Release|x64
+		{5772F2FA-DBB1-4ABD-A94D-A320CB2E8FC9}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
