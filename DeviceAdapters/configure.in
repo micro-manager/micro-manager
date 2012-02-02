@@ -380,6 +380,7 @@ AC_CONFIG_FILES(
 	[SpectralLMM5/Makefile:SpectralLMM5/Makefile.in:MMDEVAPI.rules]
 	[Spot/Makefile:Spot/Makefile.in:MMDEVAPI.rules]
 	[SutterLambda/Makefile:SutterLambda/Makefile.in:MMDEVAPI.rules]
+	[SutterStage/Makefile:SutterStage/Makefile.in:MMDEVAPI.rules]
 	[SerialManager/Makefile:SerialManager/Makefile.in:MMDEVAPI.rules]
 	[SimpleAutofocus/Makefile:SimpleAutofocus/Makefile.in:MMDEVAPI.rules]
 	[Thorlabs/Makefile:Thorlabs/Makefile.in:MMDEVAPI.rules]
