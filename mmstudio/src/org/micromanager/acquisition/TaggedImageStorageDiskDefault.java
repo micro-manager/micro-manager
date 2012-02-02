@@ -143,7 +143,7 @@ public class TaggedImageStorageDiskDefault implements TaggedImageStorage {
          writeFrameMetadata(md);
          String label = MDUtils.getLabel(md);
          filenameTable_.put(label, fileName);
-         metadataTable_.put(label, md);
+         //metadataTable_.put(label, md);
       } catch (Exception ex) {
          ReportingUtils.logError(ex);
       }
@@ -155,11 +155,14 @@ public class TaggedImageStorageDiskDefault implements TaggedImageStorage {
       if (imp != null) {
          try {
             ImageProcessor proc = imp.getProcessor();
-            JSONObject md;
+            JSONObject md = null;
             try {
                md = new JSONObject((String) imp.getProperty("Info"));
             } catch (Exception e) {
-               md = metadataTable_.get(label);
+               if (metadataTable_.size() > 0) {
+                  md = metadataTable_.get(label);
+                  return null;
+               }
             }
             String pixelType = MDUtils.getPixelType(md);
             Object img;
@@ -201,7 +204,7 @@ public class TaggedImageStorageDiskDefault implements TaggedImageStorage {
    }
 
    public Set<String> imageKeys() {
-      return metadataTable_.keySet();
+      return filenameTable_.keySet();
    }
 
    private String createFileName(JSONObject md) {
