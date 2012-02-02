@@ -177,9 +177,19 @@ public class AcquisitionManager {
          }
          
          acq.initialize();
+         if (numChannels == 1)
+            loadDisplaySettingsFromTags(acq, tags);
       }
+      try {
+         if (numChannels > 1 && MDUtils.getChannelIndex(tags) == numChannels-1 && acq.getLastAcquiredFrame() == 0)
+               loadDisplaySettingsFromTags(acq, tags);
+      } catch (JSONException ex) {
+         ReportingUtils.logError(ex);
+      }
+      
 
       int f = 1 + acq.getLastAcquiredFrame();
+      //This makes sure that the second multicamera image has the correct frame index
       if (numChannels > 1) {
          try {    // assumes that multi channel additions add channel 0 first
             JSONObject lastTags = acq.getImageCache().getLastImageTags();
@@ -202,7 +212,16 @@ public class AcquisitionManager {
       return album;
    }
 
-
+   private void loadDisplaySettingsFromTags(MMAcquisition acq, JSONObject tags) {
+      try {
+            acq.getImageCache().setDisplayAndComments(
+                    VirtualAcquisitionDisplay.getDisplaySettingsFromSummary(tags.getJSONObject("Summary")));
+         } catch (JSONException ex) {
+            ex.printStackTrace();
+         }
+   }
+   
+   
    public String[] getAcqusitionNames() {
       Set<String> keySet = acqs_.keySet();
       String keys[] = new String[keySet.size()];

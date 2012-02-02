@@ -2998,6 +2998,8 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
          checkSimpleAcquisition();
          try {
             setCursor(new Cursor(Cursor.WAIT_CURSOR));
+            //need bit depth tag for add to series button
+            int bitDepth = (int) core_.getImageBitDepth();
             core_.snapImage();
             getAcquisition(SIMPLE_ACQ).toFront();
             long c = core_.getNumberOfCameraChannels();
@@ -3006,7 +3008,8 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
                        i, 0, 0, 0,
                        getAcquisitionImageWidth(SIMPLE_ACQ),
                        getAcquisitionImageHeight(SIMPLE_ACQ),
-                       getAcquisitionImageByteDepth(SIMPLE_ACQ));
+                       getAcquisitionImageByteDepth(SIMPLE_ACQ));  
+               ti.tags.put("BitDepth", bitDepth);
                boolean update = false;
                if (i == c - 1) 
                   update = true;
