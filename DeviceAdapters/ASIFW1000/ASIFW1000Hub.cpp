@@ -46,6 +46,7 @@
 using namespace std;
 
 ASIFW1000Hub::ASIFW1000Hub ()  :
+	oldProtocol_(false),
 	port_("Undefined")
 {
    expireTimeUs_ = 5000000; // each command will finish within 5sec
@@ -64,11 +65,22 @@ ASIFW1000Hub::~ASIFW1000Hub()
 
 int ASIFW1000Hub::GetVersion(MM::Device& device, MM::Core& core, char* version)
 {
-   int ret = ExecuteCommand(device, core, "VN ");
+   int ret;
+
+   oldProtocol_ = false;
+   ret = ExecuteCommand(device, core, "VN ");
    if (ret != DEVICE_OK)
       return ret;
 
    ret = core.GetSerialAnswer(&device, port_.c_str(), RCV_BUF_LENGTH, rcvBuf_, "\n\r");
+   if (ret != DEVICE_OK)
+   {
+      // test for older LX-4000 protocol
+      oldProtocol_ = true;
+      ret = ExecuteCommand(device, core, "VN");
+      if (ret == DEVICE_OK)
+         ret = core.GetSerialAnswer(&device, port_.c_str(), RCV_BUF_LENGTH, rcvBuf_, "\n\r");
+   }
    if (ret != DEVICE_OK)
       return ret;
 
@@ -390,10 +402,14 @@ void ASIFW1000Hub::ClearRcvBuf()
  */
 int ASIFW1000Hub::ExecuteCommand(MM::Device& device, MM::Core& core,  const char* command)
 {
+   std::string base_command = "";
    ClearAllRcvBuf(device, core);
+
+   if (oldProtocol_)
+      base_command += "3F"; // prefix to all commands for old devices
+   base_command += command;
    // send command
-   return core.SetSerialCommand(&device, port_.c_str(), command, "\r");
-  
+   return core.SetSerialCommand(&device, port_.c_str(), base_command.c_str(), "\r");
 }
 
 /**

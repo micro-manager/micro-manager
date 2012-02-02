@@ -85,6 +85,7 @@ private:
    char rcvBuf_[RCV_BUF_LENGTH];
    void ClearRcvBuf();
    void ClearAllRcvBuf(MM::Device& device, MM::Core& core);
+   bool oldProtocol_;
    std::string port_;
    std::vector<char> answerBuf_;
    long expireTimeUs_;
