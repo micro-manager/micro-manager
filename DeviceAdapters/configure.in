@@ -32,6 +32,9 @@ AC_SUBST(MMDEVAPI_LIBADD)
 MMDEVAPI_LDFLAGS="-module -shared -shrext \"\$(MMSUFFIX)\" -avoid-version"
 AC_SUBST(MMDEVAPI_LDFLAGS)
 
+# Location of third party public files
+thirdpartypublic="${micromanager_path}/../3rdpartypublic"
+
 # Checkfor libUSB 
 AC_MSG_CHECKING(for libusb)
 AC_FIND_FILE([usb.h], [/usr/include /usr/local/$ARCH/include], USBINCDIR)
@@ -196,17 +199,10 @@ AC_SUBST(LIBGPHOTO2)
 
 # LibFreeImage
 AC_MSG_CHECKING(for libFreeImage headers)
-AM_CONDITIONAL([LIBFREEIMAGEFOUND], [test -f "../../3rdpartypublic/FreeImage/Dist/FreeImage"])
-if test -f "../../3rdpartypublic/FreeImage/Dist/FreeImage.h"; then
+AC_FIND_FILE([FreeImage.h], [/usr/local/include /usr/include ${thirdpartypublic}/FreeImage/Dist], FREEIMAGEINCDIR)
+AM_CONDITIONAL([LIBFREEIMAGEFOUND], [test -f "$FREEIMAGEINCDIR/FreeImage.h"])
+if test -f "$FREEIMAGEINCDIR/FreeImage.h"; then
    AC_MSG_RESULT([found])
-   AC_FIND_FILE([libfreeimageplus.a], [/usr/lib /usr/lib64 /usr/local/$ARCH/lib], FREEIMAGEPLUSLIBDIR)
-   freeimageplus=""
-   if test x$FREEIMAGEPLUSLIBDIR = xNO; then
-      AC_MSG_RESULT(["libfreeimageplus.a" not found])
-   else
-      AC_MSG_RESULT(["libfreeimageplus.a" found])
-      freeimageplus="$FREEIMAGEPLUSLIBDIR/libfreeimageplus.a"
-   fi
    
    AC_FIND_FILE([libfreeimage.a], [/usr/lib /usr/lib64 /usr/local/$ARCH/lib], FREEIMAGELIBDIR)
    if test x$FREEIMAGELIBDIR = xNO; then
@@ -214,8 +210,23 @@ if test -f "../../3rdpartypublic/FreeImage/Dist/FreeImage.h"; then
       AC_MSG_RESULT(["libfreeimage.a" not found...])
    else
       AC_MSG_RESULT(["libfreeimage.a" found])
-      AC_SUBST(LIBFREEIMAGE, "$FREEIMAGELIBDIR/libfreeimage.a $freeimageplus")
-      AC_SUBST(LIBFREEIMAGE_CXXFLAGS, "-I../../../3rdpartypublic/FreeImage/Dist -I../../../3rdpartypublic/FreeImage/Wrapper/FreeImagePlus ")
+      AC_SUBST(LIBFREEIMAGE, "$FREEIMAGELIBDIR/libfreeimage.a")
+      AC_SUBST(LIBFREEIMAGE_CXXFLAGS, "-I$FREEIMAGEINCDIR")
+   fi
+   
+   AC_MSG_CHECKING(for libFreeImagePlus headers)
+   AC_FIND_FILE([FreeImagePlus.h], [/usr/local/include /usr/include ${thirdpartypublic}/FreeImage/Wrapper/FreeImagePlus], FREEIMAGEPLUSINCDIR)
+   if test -f "$FREEIMAGEPLUSINCDIR/FreeImagePlus.h"; then
+      AC_MSG_RESULT([found])
+
+      AC_SUBST(LIBFREEIMAGEPLUS_CXXFLAGS, "-I$FREEIMAGEPLUSINCDIR")
+      AC_FIND_FILE([libfreeimageplus.a], [/usr/lib /usr/lib64 /usr/local/$ARCH/lib], FREEIMAGEPLUSLIBDIR)
+      if test x$FREEIMAGEPLUSLIBDIR = xNO; then
+         AC_MSG_RESULT(["libfreeimageplus.a" not found (can be ok)])
+      else
+         AC_MSG_RESULT(["libfreeimageplus.a" found])
+         AC_SUBST(LIBFREEIMAGEPLUS, "$FREEIMAGEPLUSLIBDIR/libfreeimageplus.a")
+      fi
    fi
 else
    buildsc=false
