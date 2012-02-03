@@ -297,8 +297,8 @@ int Hub::QueryVersion(std::string& version)
    }
 
    // there is still a :A in the buffer that we should read away:
-   std::string ignoreThis;
-   (void)GetSerialAnswer(port_.c_str(), "\n", ignoreThis);
+   //std::string ignoreThis;
+   //(void)GetSerialAnswer(port_.c_str(), "\n", ignoreThis);
    // When the controller answers with :N -1, ignore
 
    return returnStatus;
@@ -338,7 +338,7 @@ int Hub::Initialize()
 
    // Interface to a hard reset of the controller
    CPropertyAction* pAct = new CPropertyAction(this, &Hub::OnReset);
-   ret = CreateProperty(g_SutterStage_Reset, "Operate", MM::String, false, pAct, true);
+   ret = CreateProperty(g_SutterStage_Reset, "Operate", MM::String, false, pAct);
    if (ret != DEVICE_OK)
       return ret;
    AddAllowedValue(g_SutterStage_Reset, "Operate");
@@ -346,7 +346,7 @@ int Hub::Initialize()
    
    // Transmission Delay, Delay between chars send by controller (number * 0.5 msec)
    pAct = new CPropertyAction(this, &Hub::OnTransmissionDelay);
-   ret = CreateProperty(g_SutterStage_TransmissionDelay, "4", MM::Integer, false, pAct, true);
+   ret = CreateProperty(g_SutterStage_TransmissionDelay, "4", MM::Integer, false, pAct);
    if (ret != DEVICE_OK)
       return ret;
 
