@@ -942,6 +942,9 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
       if (hyperImage_ == null)
          startup(tags);
       
+      hyperImage_.getWindow().toFront();
+      //call this explicitly because it isn't fired immediately
+      mdPanel_.focusReceived(hyperImage_.getWindow());
 
       int channel = 0, frame = 0, slice = 0, position = 0, superChannel = 0;
       boolean rgb = false;
@@ -994,13 +997,11 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
 
       final int fchannel = channel;
       Runnable autoscale = new Runnable() {
-      //Autoscale or load contrast on first imag
+      //Autoscale or load contrast on first image
+         //Live/snap image load contrst settings while MDA and acquire button images autoscale
          public void run() {
-            if (newDisplay_ && fchannel + 1 == ((IMMImagePlus) hyperImage_).getNChannelsUnverified()) {
-               //call this explicitly to get contrast panel set up, because ImageFocusListener       
-               //not guarenteed to fire before this code reache
-               mdPanel_.focusReceived(hyperImage_.getWindow());
-               if (!simple_)
+            if (newDisplay_ && fchannel + 1 == ((IMMImagePlus) hyperImage_).getNChannelsUnverified()) {             
+               if (!simple_) 
                   mdPanel_.autoscaleWithoutDraw(imageCache_, hyperImage_);
                else
                   mdPanel_.applyContrastWithoutDraw(imageCache_,hyperImage_);
@@ -1215,7 +1216,8 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
       }
    }
 
-   private void createWindow() {      
+   private void createWindow() {  
+
       DisplayWindow win = new DisplayWindow(hyperImage_);
 
       win.setBackground(MMStudioMainFrame.getInstance().getBackgroundColor());
@@ -1513,13 +1515,17 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
       controls_.setStatusLabel(status);
    }
    
-   public void setChannelContrast(int channelIndex, int min, int max) {
-      mdPanel_.setChannelContrast(channelIndex, min, max);
+   public void setChannelContrast(int channelIndex, int min, int max, double gamma) {
+      mdPanel_.setChannelContrast(channelIndex, min, max, gamma);
    }
    
    private void imageChangedUpdate() {
       mdPanel_.imageChangedUpdate(hyperImage_,imageCache_);
       imageChangedWindowUpdate(); //used to update status line
+   }
+   
+   public void refreshContrastPanel() {
+      mdPanel_.refresh();
    }
    
    public void drawWithoutUpdate() {

@@ -410,7 +410,7 @@ public class MultiChannelContrastPanel extends JPanel implements ContrastPanel {
    }
  
   public void applyLUTToImage(ImagePlus img, ImageCache cache) {
-     if (ccpList_ == null)
+     if (ccpList_ == null )
         return;
      for (ChannelControlPanel c : ccpList_)
          c.applyChannelLUTToImage(img, cache);
@@ -435,7 +435,7 @@ public class MultiChannelContrastPanel extends JPanel implements ContrastPanel {
           else
              c.loadDisplaySettings(cache);
        }
-       mdPanel_.drawWithoutUpdate();
+       mdPanel_.drawWithoutUpdate(img);
    }
 
    public boolean getAutoStretch() {
@@ -455,3 +455,4 @@ public class MultiChannelContrastPanel extends JPanel implements ContrastPanel {
       return rejectOutliersCB_.isSelected();
    }
 }
+

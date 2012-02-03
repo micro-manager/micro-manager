@@ -163,10 +163,10 @@ public class SimpleWindowControls extends DisplayControls {
          ImageCache ic = virtAcq_.getImageCache();
          int channels = ic.getSummaryMetadata().getInt("Channels");
          if (channels == 1) { //RGB or monchrome
-            gui.addToAlbum( ic.getImage(0, 0, 0, 0) );
+            gui.addToAlbum( ic.getImage(0, 0, 0, 0), ic.getDisplayAndComments() );
          } else { //multicamera
             for (int i = 0; i < channels; i++)
-               gui.addToAlbum(ic.getImage(i, 0, 0, 0));
+               gui.addToAlbum(ic.getImage(i, 0, 0, 0), ic.getDisplayAndComments());
          }                
       } catch (Exception ex) {
          ReportingUtils.logError(ex);

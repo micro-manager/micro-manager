@@ -564,7 +564,20 @@ public class MetadataPanel extends JPanel
          currentContrastPanel_.applyLUTToImage(img, cache);
       }
    }
-  
+   
+   public void refresh() {
+      ImagePlus img = WindowManager.getCurrentImage();
+      if (currentContrastPanel_ == null || img == null)
+         return;
+      VirtualAcquisitionDisplay vad = VirtualAcquisitionDisplay.getDisplay(img);
+      if (vad == null)
+         return;     
+      ImageCache cache = vad.getImageCache();
+      currentContrastPanel_.setupChannelControls(cache);
+      currentContrastPanel_.displayChanged(img, cache);
+      imageChangedUpdate(img, cache);
+   }
+
    public synchronized void focusReceived(ImageWindow focusedWindow) {
       if (focusedWindow == lastFocusedWindow_)
          return;
@@ -627,8 +640,7 @@ public class MetadataPanel extends JPanel
    /*
     * applies LUT to image and then redraws image
     */
-   public void drawWithoutUpdate() {
-      ImagePlus img = WindowManager.getCurrentImage();
+   public void drawWithoutUpdate(ImagePlus img) {
       if (img == null)
          return;
       VirtualAcquisitionDisplay disp = VirtualAcquisitionDisplay.getDisplay(img);
@@ -638,7 +650,9 @@ public class MetadataPanel extends JPanel
       }
    }
    
- 
+   public void drawWithoutUpdate() {
+      drawWithoutUpdate(WindowManager.getCurrentImage());
+   }
 
    /*
     * called just before image is redrawn.  Calcs histogram and stats (and displays
@@ -690,9 +704,9 @@ public class MetadataPanel extends JPanel
       }
    }
 
-   public void setChannelContrast(int channelIndex, int min, int max) {
+   public void setChannelContrast(int channelIndex, int min, int max, double gamma) {
       if (currentContrastPanel_ != null) 
-         currentContrastPanel_.setChannelContrast(channelIndex, min, max,1.0);
+         currentContrastPanel_.setChannelContrast(channelIndex, min, max, gamma);
       drawWithoutUpdate();
    }
 }

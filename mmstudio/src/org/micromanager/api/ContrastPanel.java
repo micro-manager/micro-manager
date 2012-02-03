@@ -35,6 +35,7 @@ public interface ContrastPanel {
    public void calcAndDisplayHistAndStats(ImagePlus img, boolean drawHist);
    
    public void autostretch();
+      
    
 
 }

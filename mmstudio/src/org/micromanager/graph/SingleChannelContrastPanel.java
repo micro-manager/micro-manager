@@ -689,7 +689,7 @@ public class SingleChannelContrastPanel extends JPanel implements
          autostretch();
       else 
          loadContrastSettings(cache);
-     mdPanel_.drawWithoutUpdate();
+     mdPanel_.drawWithoutUpdate(img);
    }
    
    public void calcAndDisplayHistAndStats(ImagePlus img, boolean drawHist) {
@@ -832,7 +832,7 @@ public class SingleChannelContrastPanel extends JPanel implements
    public double getFractionToReject() {
       return fractionToReject_;
    }
-
+ 
    //   public void updateContrast() {
 //      if (virtAcq_ == null)
 //         return;

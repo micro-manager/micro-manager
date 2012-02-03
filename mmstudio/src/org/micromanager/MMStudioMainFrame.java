@@ -4095,7 +4095,11 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
    }
 
    public void addToAlbum(TaggedImage taggedImg) throws MMScriptException {
-      acqMgr_.addToAlbum(taggedImg);
+      addToAlbum(taggedImg, null);
+   }
+   
+   public void addToAlbum(TaggedImage taggedImg, JSONObject displaySettings) throws MMScriptException {
+      acqMgr_.addToAlbum(taggedImg,displaySettings);
    }
 
    public void addImage(String name, Object img, int frame, int channel,

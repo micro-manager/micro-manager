@@ -313,12 +313,7 @@ public class MMImageCache implements TaggedImageStorage, ImageCache {
    }
    
    /////////////////////Channels section/////////////////////////
-   public void setChannelContrast(int index, int min, int max) {
-      if (display_ == null)
-         return;
-      display_.setChannelContrast(index, min, max);
-   }
-    
+
    public void storeChannelDisplaySettings(int channelIndex, int min, int max, double gamma) {
       try {
          JSONObject settings = getChannelSetting(channelIndex);

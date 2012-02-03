@@ -1,5 +1,7 @@
 package org.micromanager.acquisition;
 
+import ij.WindowManager;
+import java.awt.Color;
 import java.io.File;
 import java.util.Enumeration;
 import java.util.Hashtable;
@@ -8,9 +10,11 @@ import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import mmcorej.TaggedImage;
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.micromanager.api.AcquisitionEngine;
+import org.micromanager.api.ImageCache;
 import org.micromanager.utils.MDUtils;
 
 import org.micromanager.utils.MMScriptException;
@@ -128,7 +132,7 @@ public class AcquisitionManager {
       return album_;
    }
 
-   public String addToAlbum(TaggedImage image) throws MMScriptException {
+   public String addToAlbum(TaggedImage image, JSONObject displaySettings) throws MMScriptException {
       boolean newNeeded = true;
       MMAcquisition acq = null;
       String album = getCurrentAlbum();
@@ -177,16 +181,7 @@ public class AcquisitionManager {
          }
          
          acq.initialize();
-         if (numChannels == 1)
-            loadDisplaySettingsFromTags(acq, tags);
       }
-      try {
-         if (numChannels > 1 && MDUtils.getChannelIndex(tags) == numChannels-1 && acq.getLastAcquiredFrame() == 0)
-               loadDisplaySettingsFromTags(acq, tags);
-      } catch (JSONException ex) {
-         ReportingUtils.logError(ex);
-      }
-      
 
       int f = 1 + acq.getLastAcquiredFrame();
       //This makes sure that the second multicamera image has the correct frame index
@@ -203,24 +198,77 @@ public class AcquisitionManager {
          }
       }
       try {
-         MDUtils.setFrameIndex(image.tags, f);
+         MDUtils.setFrameIndex(tags, f);
       } catch (JSONException ex) {
          ReportingUtils.showError(ex);
       }
       acq.insertImage(image);
 
+      //Apply appropriate contrast            
+      if (numChannels == 1) { //monochrome
+         try {
+           if (MDUtils.getFrameIndex(tags) == 0) {
+              if (displaySettings != null) 
+                 copyDisplaySettings(acq, displaySettings);                
+            }
+         } catch (JSONException ex) {
+            ReportingUtils.logError(ex);
+         }
+
+      } else {//multi camera
+         try {
+            if (numChannels > 1 && MDUtils.getChannelIndex(tags) == numChannels - 1 && acq.getLastAcquiredFrame() == 0) {                     
+               if (displaySettings != null) 
+                  copyDisplaySettings(acq, displaySettings);
+            }
+         } catch (JSONException ex) {
+            ReportingUtils.logError(ex);
+         }
+      }
+                    
+    
+     
+      
+      
+      
       return album;
    }
+  
 
-   private void loadDisplaySettingsFromTags(MMAcquisition acq, JSONObject tags) {
-      try {
-            acq.getImageCache().setDisplayAndComments(
-                    VirtualAcquisitionDisplay.getDisplaySettingsFromSummary(tags.getJSONObject("Summary")));
+   private void copyDisplaySettings(MMAcquisition acq, JSONObject displaySettings) {
+      if (displaySettings == null) 
+         return;
+      ImageCache ic = acq.getImageCache();
+      for (int i = 0; i < ic.getNumChannels(); i++) {
+         try {
+            JSONObject channelSetting = (JSONObject) ((JSONArray) displaySettings.get("Channels")).get(i);
+            Object colorOb = channelSetting.get("Color");
+            int color;
+            if (colorOb instanceof Color)
+               color = ((Color) colorOb).getRGB();
+            else
+               color = (Integer) colorOb;
+            
+            
+            int min = channelSetting.getInt("Min");
+            int max = channelSetting.getInt("Max");
+            double gamma = channelSetting.getDouble("Gamma");
+            String name = channelSetting.getString("Name");
+
+            ic.storeChannelDisplaySettings(i, min, max, gamma);
+            acq.getAcquisitionWindow().setChannelContrast(i, min, max, gamma);
+            acq.setChannelColor(i, color);
+            acq.setChannelName(i, name);
+            acq.getAcquisitionWindow().refreshContrastPanel();
+
          } catch (JSONException ex) {
-            ex.printStackTrace();
+            ReportingUtils.logError("Something wrong with Display and Comments");
+         } catch (MMScriptException e) {
+            ReportingUtils.logError(e);
          }
+      }
    }
-   
+
    
    public String[] getAcqusitionNames() {
       Set<String> keySet = acqs_.keySet();

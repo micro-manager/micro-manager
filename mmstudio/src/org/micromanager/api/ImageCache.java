@@ -37,7 +37,6 @@ public interface ImageCache extends TaggedImageStorage {
    void setImageComment(String comment, JSONObject tags);
    String getImageComment(JSONObject tags);
    void setDisplay(VirtualAcquisitionDisplay disp);
-   public void setChannelContrast(int index, int min, int max);
    public void storeChannelDisplaySettings(int channelIndex, int min, int max, double gamma);
    public JSONObject getChannelSetting(int channel);
    public int getBitDepth();

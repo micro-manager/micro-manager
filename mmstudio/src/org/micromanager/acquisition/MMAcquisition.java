@@ -676,7 +676,7 @@ public class MMAcquisition {
 
    public void setChannelContrast(int channel, int min, int max) throws MMScriptException {
       if (isInitialized()) {
-         virtAcq_.imageCache_.setChannelContrast(channel, min, max);
+         virtAcq_.setChannelContrast(channel, min, max,1.0);
       }
       throw new MMScriptException(NOTINITIALIZED);
    }
