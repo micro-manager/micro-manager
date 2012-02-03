@@ -65,6 +65,7 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
       }
    }
    final static Color[] rgb = {Color.red, Color.green, Color.blue};
+   final static String[] rgbNames = {"Red", "Blue", "Green"};
    final ImageCache imageCache_;
    final Preferences prefs_ = Preferences.userNodeForPackage(this.getClass());
 
@@ -657,86 +658,43 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
    public static JSONObject getDisplaySettingsFromSummary(JSONObject summaryMetadata) {
       try {
          JSONObject displaySettings = new JSONObject();
-         JSONArray chColors;
+         
+         JSONArray chColors = MDUtils.getJSONArrayMember(summaryMetadata, "ChColors");
          JSONArray chNames = MDUtils.getJSONArrayMember(summaryMetadata, "ChNames");
-         try {
-            chColors = MDUtils.getJSONArrayMember(summaryMetadata, "ChColors");
-         } catch (JSONException ex) {
-            int[] defaultColors = {Color.RED.getRGB(),
-               Color.GREEN.getRGB(),
-               Color.BLUE.getRGB()};
-            chColors = new JSONArray();
-            for (int i = 0; i < chNames.length(); i++) {
-               chColors.put(defaultColors[i % defaultColors.length]);
-            }
-            summaryMetadata.put("ChColors", chColors);
-         }
-         JSONArray chMaxes;
-         try {
-            chMaxes = MDUtils.getJSONArrayMember(summaryMetadata, "ChContrastMax");
-         } catch (JSONException ex) {
-            chMaxes = new JSONArray();
-            for (int i = 0; i < chNames.length(); i++) {
-               chMaxes.put(256);
-            }
-            summaryMetadata.put("ChContrastMax", chMaxes);
-         }
-         JSONArray chMins;
-         try {
-            chMins = MDUtils.getJSONArrayMember(summaryMetadata, "ChContrastMin");
-         } catch (JSONException ex) {
-            chMins = new JSONArray();
-            for (int i = 0; i < chNames.length(); i++) {
-               chMins.put(0);
-            }
-            summaryMetadata.put("ChContrastMin", chMins);
-         }
-         int numComponents = 1;
-         try {
-            numComponents = MDUtils.getNumberOfComponents(summaryMetadata);
-         } catch (JSONException ex) {
-         }
-         int bitDepth = 8;
-         if (summaryMetadata.has("BitDepth"))
-            bitDepth = summaryMetadata.getInt("BitDepth");
-         else if (summaryMetadata.has("PixelType")) {
-            String pixelType = summaryMetadata.getString("PixelType");
-            if (pixelType.equals("RGB32"))
-               bitDepth = 8;
-            else if (pixelType.equals("RGB64"))
-               bitDepth = 16;
-            else if (pixelType.startsWith("GRAY"))
-               bitDepth = Integer.parseInt(pixelType.substring(4));        
-         } else if (summaryMetadata.has("Depth"))
-            bitDepth = summaryMetadata.getInt("Depth") * 8;
+         JSONArray chMaxes = MDUtils.getJSONArrayMember(summaryMetadata, "ChContrastMax");
+         JSONArray chMins = MDUtils.getJSONArrayMember(summaryMetadata, "ChContrastMin");
+       
+         int numComponents = MDUtils.getNumberOfComponents(summaryMetadata);    
+       
          JSONArray channels = new JSONArray();
-         for (int k = 0; k < chNames.length(); ++k) {
-            String name = (String) chNames.get(k);
-            int color = chColors.getInt(k);
-            int min = chMins.getInt(k);
-            int max = chMaxes.getInt(k);
-            JSONObject channelObject = new JSONObject();
-            channelObject.put("Color", color);
-            channelObject.put("Name", name);
-            channelObject.put("Gamma", 1.0);
-            channelObject.put("Min", min);
-            channelObject.put("Max", max);
-            channelObject.put("BitDepth", bitDepth);
-            channels.put(channelObject);
-         }
-         if (chNames.length() == 0) {
-            for (int component = 0; component < numComponents; ++component) {
+         if (numComponents > 1) //RGB
+         {
+            int rgbChannelBitDepth = summaryMetadata.getString("PixelType").endsWith("32") ? 8 : 16;
+            for (int k = 0; k < 3; k++) {
                JSONObject channelObject = new JSONObject();
-               if (numComponents == 1) {
-                  channelObject.put("Color", Color.white);
-               } else {
-                  channelObject.put("Color", rgb[component].getRGB());
-               }
-               channelObject.put("Name", "Default");
+               channelObject.put("Color", rgb[k].getRGB());
+               channelObject.put("Name", rgbNames[k]);
                channelObject.put("Gamma", 1.0);
+               channelObject.put("Min", 0);
+               channelObject.put("Max", Math.pow(2, rgbChannelBitDepth)-1);
+               channels.put(channelObject);
+            }
+         } else {
+            for (int k = 0; k < chNames.length(); ++k) {
+               String name = (String) chNames.get(k);
+               int color = chColors.getInt(k);
+               int min = chMins.getInt(k);
+               int max = chMaxes.getInt(k);
+               JSONObject channelObject = new JSONObject();
+               channelObject.put("Color", color);
+               channelObject.put("Name", name);
+               channelObject.put("Gamma", 1.0);
+               channelObject.put("Min", min);
+               channelObject.put("Max", max);
                channels.put(channelObject);
             }
          }
+       
          displaySettings.put("Channels", channels);
 
          JSONObject comments = new JSONObject();
@@ -750,7 +708,7 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
          displaySettings.put("Comments", comments);
          return displaySettings;
       } catch (Exception e) {
-         ReportingUtils.logError(e);
+         ReportingUtils.showError("Error creating display settigns from summary metadata");
          return null;
       }
    }

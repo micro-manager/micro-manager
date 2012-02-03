@@ -373,12 +373,16 @@ public class MMAcquisition {
       // the data.  Therefore, fill in the blanks with deafults here:
       channelColors_ = new JSONArray();
       
-      if (numChannels_ == 1 )
-            try {
+      if (numChannels_ == 1)
+         try {
             channelColors_.put(0, Color.white.getRGB());
+            channelNames_.put(0,"Default");
+            channelMins.put(0);
+            channelMaxes.put( Math.pow(2, md.getInt("BitDepth"))-1 );
          } catch (JSONException ex) {
             ReportingUtils.logError(ex);
-         } else
+         }
+      else
          for (Integer i = 0; i < numChannels_; i++) {
             Preferences root = Preferences.userNodeForPackage(AcqControlDlg.class);
             Preferences colorPrefs = root.node(root.absolutePath() + "/" + AcqControlDlg.COLOR_SETTINGS_NODE);
