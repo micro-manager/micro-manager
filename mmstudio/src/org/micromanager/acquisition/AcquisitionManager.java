@@ -242,14 +242,7 @@ public class AcquisitionManager {
       for (int i = 0; i < ic.getNumChannels(); i++) {
          try {
             JSONObject channelSetting = (JSONObject) ((JSONArray) displaySettings.get("Channels")).get(i);
-            Object colorOb = channelSetting.get("Color");
-            int color;
-            if (colorOb instanceof Color)
-               color = ((Color) colorOb).getRGB();
-            else
-               color = (Integer) colorOb;
-            
-            
+            int color = channelSetting.getInt("Color");
             int min = channelSetting.getInt("Min");
             int max = channelSetting.getInt("Max");
             double gamma = channelSetting.getDouble("Gamma");
