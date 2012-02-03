@@ -205,8 +205,8 @@ public class MicroscopeModel {
                      }
                   }
                } catch (Exception e) {
-                  ReportingUtils.logError(e, "Unable to load " + libs.get(i)
-                        + " library.");
+                  ReportingUtils.logError("Unable to load " + libs.get(i)
+                        + " library:" + e.getMessage());
                }
             }
          }
