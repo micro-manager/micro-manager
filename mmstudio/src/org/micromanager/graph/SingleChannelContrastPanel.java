@@ -582,6 +582,7 @@ public class SingleChannelContrastPanel extends JPanel implements
       cache.storeChannelDisplaySettings(0,(int)contrastMin_, (int)contrastMax_, gamma_);
       
       updateHistogram();
+      gammaValue_.setValue(gamma_);
    }
    
    public void saveDisplaySettings(ImageCache cache) {
