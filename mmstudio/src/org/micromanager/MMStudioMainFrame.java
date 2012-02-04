@@ -3005,6 +3005,7 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
                        getAcquisitionImageHeight(SIMPLE_ACQ),
                        getAcquisitionImageByteDepth(SIMPLE_ACQ));  
                ti.tags.put("BitDepth", bitDepth);
+               ti.tags.put("Summary", getAcquisition(SIMPLE_ACQ).getSummaryMetadata());
                boolean update = false;
                if (i == c - 1) 
                   update = true;

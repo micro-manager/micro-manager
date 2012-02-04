@@ -6,11 +6,14 @@ package org.micromanager.acquisition;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import mmcorej.CMMCore;
 import mmcorej.TaggedImage;
 import org.json.JSONException;
 import org.micromanager.MMStudioMainFrame;
 import org.micromanager.utils.MDUtils;
+import org.micromanager.utils.MMScriptException;
 import org.micromanager.utils.ReportingUtils;
 
 /**
@@ -207,9 +210,14 @@ public class LiveModeTimer extends javax.swing.Timer {
       private void addTags(TaggedImage ti, int channel) throws JSONException {
          MDUtils.setChannelIndex(ti.tags, channel);
          MDUtils.setFrameIndex(ti.tags, 0);
-         MDUtils.setPositionIndex(ti.tags, 0);
-         MDUtils.setSliceIndex(ti.tags, 0);
-         int bitDepth = (int) MMStudioMainFrame.getInstance().getCore().getImageBitDepth();
-         ti.tags.put("BitDepth",bitDepth);
+      MDUtils.setPositionIndex(ti.tags, 0);
+      MDUtils.setSliceIndex(ti.tags, 0);
+      int bitDepth = (int) MMStudioMainFrame.getInstance().getCore().getImageBitDepth();
+      ti.tags.put("BitDepth", bitDepth);
+      try {
+         ti.tags.put("Summary", MMStudioMainFrame.getInstance().getAcquisition(ACQ_NAME).getSummaryMetadata());
+      } catch (MMScriptException ex) {
+         ReportingUtils.logError("Error adding summary metadat to tags");
       }
+   }
 }
