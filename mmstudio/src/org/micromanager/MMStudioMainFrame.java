@@ -510,11 +510,6 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
       MMFrames_.remove(comp);
    }
 
-   public void updateContrast(ImagePlus iplus) {
-//      contrastPanel_.updateContrast(iplus);
-//      metadataPanel_.updateContrast(iplus);
-   }
-
    /**
     * Part of ScriptInterface
     * Manipulate acquisition so that it looks like a burst
