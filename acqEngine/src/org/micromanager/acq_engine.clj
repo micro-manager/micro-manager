@@ -122,6 +122,7 @@
        "Slice" (:slice-index event)
        "SliceIndex" (:slice-index event)
        "SlicePosition" (:slice event)
+       "Summary" (state :summary-metadata)
        "Source" (state :source)
        "Time" (get-current-time-str)
        "UUID" (UUID/randomUUID)
@@ -617,7 +618,7 @@
 
 (defn make-summary-metadata [settings]
   (let [depth (core getBytesPerPixel)
-        channels (settings :channels)
+        channels (:channels settings)
         num-camera-channels (core getNumberOfCameraChannels)
         simple-channels (if-not (empty? channels) channels [{:name "Default" :color java.awt.Color/WHITE}])
         super-channels (all-super-channels simple-channels (get-camera-channel-names))]
@@ -628,35 +629,35 @@
       "ChColors" (JSONArray. (map #(.getRGB (:color %)) super-channels))         
       "ChContrastMax" (JSONArray. (repeat (count super-channels) Integer/MIN_VALUE))
       "ChContrastMin" (JSONArray. (repeat (count super-channels) Integer/MAX_VALUE))
-      "Comment" (settings :comment)
+      "Comment" (:comment :settings)
       "ComputerName" (.. InetAddress getLocalHost getHostName)
       "Depth" (core getBytesPerPixel)
-      "Directory" (if (settings :save) (settings :root) "")
-      "Frames" (count (settings :frames))
+      "Directory" (if (:save settings) (settings :root) "")
+      "Frames" (count (:frames settings))
       "GridColumn" 0
       "GridRow" 0
       "Height" (core getImageHeight)
-      "Interval_ms" (settings :interval-ms)
-      "CustomIntervals_ms" (JSONArray. (settings :custom-intervals-ms))
+      "Interval_ms" (:interval-ms settings)
+      "CustomIntervals_ms" (JSONArray. (or (:custom-intervals-ms settings) []))
       "IJType" (get-IJ-type depth)
-      "KeepShutterOpenChannels" (settings :keep-shutter-open-channels)
-      "KeepShutterOpenSlices" (settings :keep-shutter-open-slices)
+      "KeepShutterOpenChannels" (:keep-shutter-open-channels settings)
+      "KeepShutterOpenSlices" (:keep-shutter-open-slices settings)
       "MicroManagerVersion" (.getVersion gui)
       "MetadataVersion" 10
       "PixelAspect" 1.0
       "PixelSize_um" (core getPixelSizeUm)
       "PixelType" (get-pixel-type)
-      "Positions" (count (settings :positions))
-      "Prefix" (if (settings :save) (settings :prefix) "")
+      "Positions" (count (:positions settings))
+      "Prefix" (if (:save settings) (:prefix settings) "")
       "ROI" (JSONArray. (get-camera-roi))
-      "Slices" (count (settings :slices))
-      "SlicesFirst" (settings :slices-first)
+      "Slices" (count (:slices settings))
+      "SlicesFirst" (:slices-first settings)
       "Source" "Micro-Manager"
-      "TimeFirst" (settings :time-first)
+      "TimeFirst" (:time-first settings)
       "UserName" (System/getProperty "user.name")
       "UUID" (UUID/randomUUID)
       "Width" (core getImageWidth)
-      "z-step_um" (get-z-step-um (settings :slices))
+      "z-step_um" (get-z-step-um (:slices settings))
      })))
 
 ;; acquire button
@@ -666,8 +667,6 @@
 (def albums (atom {}))
 
 (def current-album-name (atom nil))
-
-(def snap-window (atom nil))
 
 (defn compatible-to-current-album? [image-tags]
   (select-values-match?
@@ -680,20 +679,6 @@
       (.setChannelDisplayRange window 1 0 256)
       (.setChannelDisplayRange window 2 0 256)))
 
-(defn create-image-window [first-image]
-  (let [summary {:interval-ms 0.0, :custom-intervals-ms [] :use-autofocus false, :autofocus-skip 0,
-                 :relative-slices true, :keep-shutter-open-slices false, :comment "",
-                 :prefix "Untitled", :root "",
-                 :time-first false, :positions (), :channels (), :slices-first true,
-                 :slices nil, :numFrames 0, :keep-shutter-open-channels false,
-                 :zReference 0.0, :frames (), :save false}
-		summary-metadata (make-summary-metadata summary)
-		cache (doto (MMImageCache. (TaggedImageStorageRam. summary-metadata))
-						(.setSummaryMetadata summary-metadata))]
-		(doto (VirtualAcquisitionDisplay. cache nil "Untitled")
-                           (.promptToSave false)
-                           (initialize-display-ranges))))
-
 (defn create-basic-event []
   {:position-index 0, :position nil,
    :frame-index 0, :slice 0.0, :channel-index 0, :slice-index 0, :frame 0
@@ -704,26 +689,21 @@
 (defn create-basic-state []
   {:init-width (core getImageWidth)
    :init-height (core getImageHeight)
+   :summary-metadata (make-summary-metadata nil)
    :pixel-type (get-pixel-type)
    :bit-depth (core getImageBitDepth)
    :binning (core getProperty (core getCameraDevice) "Binning")})
 
-(defn acquire-tagged-image []
-  (binding [state (atom (create-basic-state))]
-    (let [event (create-basic-event)]
-      (core snapImage)
-      (annotate-image (collect-snap-image event nil) event @state nil))))
-    
-(defn show-image [display tagged-img focus]
-  (let [myTaggedImage (make-TaggedImage tagged-img)
-        cache (.getImageCache display)]
-    (.putImage cache myTaggedImage)
-    (.showImage display (. myTaggedImage tags) true false) 
-    (when focus
-      (.show display))))
+(defn acquire-tagged-images []
+  (core snapImage)
+  (let [events (make-multicamera-events (create-basic-event))]
+    (for [event events]
+      (annotate-image (collect-snap-image event nil) event (create-basic-state) nil))))
 
 (defn add-to-album []
-  (.addToAlbum gui (make-TaggedImage (acquire-tagged-image))))
+  (doseq [img (acquire-tagged-images)]
+    (def x img)
+    (.addToAlbum gui (make-TaggedImage img))))
 
 
 ;; java interop -- implements org.micromanager.api.Pipeline
@@ -738,24 +718,25 @@
   (swap! (.state this) assoc :stop false :pause false :finished false)
   (let [out-queue (GentleLinkedBlockingQueue.)
         settings (convert-settings acq-settings)
-        acq-thread (Thread. #(run-acquisition this settings out-queue)
-                     "Acquisition Engine Thread (Clojure)")
-        processors (ProcessorStack. out-queue (.getTaggedImageProcessors acq-eng))
-        out-queue-2 (.begin processors)
-        summary-metadata (make-summary-metadata settings)
-        live-acq (LiveAcq. mmc out-queue-2 summary-metadata
-                  (:save settings) acq-eng gui)]
-    (swap! (.state this) assoc :image-cache (.getImageCache live-acq)
-                               :acq-thread acq-thread
-                               :summary-metadata summary-metadata)
-    (def outq out-queue)
-    (when-not (:stop @(.state this))
-      (if (. gui getLiveMode)
-        (. gui enableLiveMode false))
-      (.start acq-thread)
-      (swap! (.state this) assoc :display live-acq)
-      (.start live-acq)
-      (.getAcquisitionName live-acq))))
+        summary-metadata (make-summary-metadata settings)]
+    (swap! (.state this) assoc :summary-metadata summary-metadata)
+    (let [acq-thread (Thread. #(run-acquisition this settings out-queue)
+                              "Acquisition Engine Thread (Clojure)")
+          processors (ProcessorStack. out-queue (.getTaggedImageProcessors acq-eng))
+          out-queue-2 (.begin processors)
+          live-acq (LiveAcq. mmc out-queue-2 summary-metadata
+                             (:save settings) acq-eng gui)]
+      (swap! (.state this) assoc :image-cache (.getImageCache live-acq)
+             :acq-thread acq-thread
+             :summary-metadata summary-metadata)
+      (def outq out-queue)
+      (when-not (:stop @(.state this))
+        (if (. gui getLiveMode)
+          (. gui enableLiveMode false))
+        (.start acq-thread)
+        (swap! (.state this) assoc :display live-acq)
+        (.start live-acq)
+        (.getAcquisitionName live-acq)))))
 
 (defn -acquireSingle [this]
   (load-mm)

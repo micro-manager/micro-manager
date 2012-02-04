@@ -144,7 +144,7 @@ public class AcquisitionManager {
          imageHeight = MDUtils.getHeight(tags);
          imageDepth = MDUtils.getDepth(tags);
          imageBitDepth = MDUtils.getBitDepth(tags);
-         //need to check umber of channels so that multi cam and single cam
+         //need to check number of channels so that multi cam and single cam
          // acquistions of same size and depth are differentiated
          numChannels = MDUtils.getNumChannels(tags);  
          
