@@ -410,7 +410,7 @@ public class MMAcquisition {
                }
             }
             try {
-               channelMaxes.put(255);
+               channelMaxes.put(Math.pow(2, md.getInt("BitDepth"))-1) ;
                channelMins.put(0);
             } catch (Exception e) {
                ReportingUtils.logError(e);
