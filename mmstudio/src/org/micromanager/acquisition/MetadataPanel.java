@@ -542,7 +542,7 @@ public class MetadataPanel extends JPanel
    /*
     * Used for applying loaded contrast settings on intial image
     */
-   public void applyContrastWithoutDraw(ImageCache cache, ImagePlus img) {
+   public void loadSimpleWinContrastWithoutDraw(ImageCache cache, ImagePlus img) {
       if (currentContrastPanel_ != null) {
          int n = cache.getNumChannels();
          SnapLiveContrastSettings.MinMaxGamma mmg;

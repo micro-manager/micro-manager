@@ -953,23 +953,7 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
       }
       
 
-      final int fchannel = channel;
-      Runnable autoscale = new Runnable() {
-      //Autoscale or load contrast on first image
-         //Live/snap image load contrst settings while MDA and acquire button images autoscale
-         public void run() {
-            if (newDisplay_ && fchannel + 1 == ((IMMImagePlus) hyperImage_).getNChannelsUnverified()) {             
-               if (!simple_) 
-                  mdPanel_.autoscaleWithoutDraw(imageCache_, hyperImage_);
-               else
-                  mdPanel_.applyContrastWithoutDraw(imageCache_,hyperImage_);
-               newDisplay_ = false;
-            }}};      
-      if (!SwingUtilities.isEventDispatchThread()) {
-         SwingUtilities.invokeLater(autoscale);
-      } else {
-         autoscale.run();
-      }
+      initializeContrast(channel);
       
 
       
@@ -1002,6 +986,43 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
       }
 
       setPreferredScrollbarPositions();        
+   }
+   
+   /*
+    * Live/snap should load window contrast settings
+    * MDA should autoscale on frist image
+    * Opening dataset should load from disoplay and comments
+    */
+   private void initializeContrast(final int channel) {
+      Runnable autoscaleOrLoadContrast = new Runnable() {
+         public void run() {
+            if (!newDisplay_) 
+               return;          
+            if (simple_) {
+               if (hyperImage_ instanceof MMCompositeImage
+                       && ((MMCompositeImage) hyperImage_).getNChannelsUnverified() - 1 != channel) {
+                  return;
+               }
+               mdPanel_.loadSimpleWinContrastWithoutDraw(imageCache_, hyperImage_);
+            } else {
+               if (eng_ != null) {
+                  if (hyperImage_ instanceof MMCompositeImage
+                          && ((MMCompositeImage) hyperImage_).getNChannelsUnverified() - 1 != channel) {
+                     return;
+                  }
+                  mdPanel_.autoscaleWithoutDraw(imageCache_, hyperImage_);
+               }
+//               else do nothing because contrast automatically loaded from cache
+
+            }
+            newDisplay_ = false;
+         }
+      };
+      if (!SwingUtilities.isEventDispatchThread()) {
+         SwingUtilities.invokeLater(autoscaleOrLoadContrast);
+      } else {
+         autoscaleOrLoadContrast.run();
+      }
    }
    
    private void setPreferredScrollbarPositions() {
