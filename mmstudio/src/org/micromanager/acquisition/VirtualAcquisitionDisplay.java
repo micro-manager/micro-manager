@@ -875,6 +875,8 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
    }
 
    private void windowToFrontAndSetupMetadataPanel() {
+      if (hyperImage_ == null || hyperImage_.getWindow() == null)
+         return;
       hyperImage_.getWindow().toFront();
       //call this explicitly because it isn't fired immediately
       mdPanel_.focusReceived(hyperImage_.getWindow());
