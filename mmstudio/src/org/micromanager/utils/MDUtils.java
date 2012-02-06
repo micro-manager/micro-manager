@@ -44,11 +44,9 @@ public class MDUtils {
    }
 
    public static int getBitDepth(JSONObject map) throws JSONException {
+      if (map.has("Summary"))
+         return map.getJSONObject("Summary").getInt("BitDepth");
       return map.getInt("BitDepth");
-   }
-
-   public static void setBitDepth(JSONObject map, int bitDepth) throws JSONException {
-      map.put("BitDepth", bitDepth);
    }
 
    public static int getWidth(JSONObject map) throws JSONException {

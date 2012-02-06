@@ -213,7 +213,6 @@ public class LiveModeTimer extends javax.swing.Timer {
       MDUtils.setPositionIndex(ti.tags, 0);
       MDUtils.setSliceIndex(ti.tags, 0);
       int bitDepth = (int) MMStudioMainFrame.getInstance().getCore().getImageBitDepth();
-      ti.tags.put("BitDepth", bitDepth);
       try {
          ti.tags.put("Summary", MMStudioMainFrame.getInstance().getAcquisition(ACQ_NAME).getSummaryMetadata());
       } catch (MMScriptException ex) {

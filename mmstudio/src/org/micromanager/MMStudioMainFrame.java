@@ -171,10 +171,6 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
    private static final String MAIN_FRAME_DIVIDER_POS = "divider_pos";
    private static final String MAIN_EXPOSURE = "exposure";
    private static final String SYSTEM_CONFIG_FILE = "sysconfig_file";
-   private static final String CONTRAST_SETTINGS_8_MIN = "contrast8_MIN";
-   private static final String CONTRAST_SETTINGS_8_MAX = "contrast8_MAX";
-   private static final String CONTRAST_SETTINGS_16_MIN = "contrast16_MIN";
-   private static final String CONTRAST_SETTINGS_16_MAX = "contrast16_MAX";
    private static final String OPEN_ACQ_DIR = "openDataDir";
    private static final String SCRIPT_CORE_OBJECT = "mmc";
    private static final String SCRIPT_ACQENG_OBJECT = "acq";
@@ -3004,7 +3000,6 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
                        getAcquisitionImageWidth(SIMPLE_ACQ),
                        getAcquisitionImageHeight(SIMPLE_ACQ),
                        getAcquisitionImageByteDepth(SIMPLE_ACQ));  
-               ti.tags.put("BitDepth", bitDepth);
                ti.tags.put("Summary", getAcquisition(SIMPLE_ACQ).getSummaryMetadata());
                boolean update = false;
                if (i == c - 1) 
