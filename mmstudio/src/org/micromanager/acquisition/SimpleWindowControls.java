@@ -115,11 +115,13 @@ public class SimpleWindowControls extends DisplayControls {
      
 
 
-      JButton addToSeriesButton = new JButton("Add to Series");
+      JButton addToSeriesButton = new JButton("Album");
+      addToSeriesButton.setIcon(SwingResourceManager.getIcon(MMStudioMainFrame.class,
+              "/org/micromanager/icons/arrow_right.png"));
       addToSeriesButton.setToolTipText("Add current image to album");
       addToSeriesButton.setFocusable(false);
-      addToSeriesButton.setMaximumSize(new Dimension(110, 25));
-      addToSeriesButton.setMinimumSize(new Dimension(110, 25));
+      addToSeriesButton.setMaximumSize(new Dimension(90, 25));
+      addToSeriesButton.setMinimumSize(new Dimension(90, 25));
       addToSeriesButton.setPreferredSize(new Dimension(110, 25));
       addToSeriesButton.addActionListener(new ActionListener() {
          public void actionPerformed(ActionEvent evt) {
@@ -211,3 +213,4 @@ public class SimpleWindowControls extends DisplayControls {
 
    
 }
+

@@ -967,7 +967,7 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
       acquireButton.setIconTextGap(1);
       acquireButton.setIcon(SwingResourceManager.getIcon(
             MMStudioMainFrame.class,
-            "/org/micromanager/icons/snapAppend.png"));
+            "/org/micromanager/icons/camera_plus_arrow.png"));
       acquireButton.setIconTextGap(6);
       acquireButton.setToolTipText("Acquire single frame and add to an album");
       acquireButton.setFont(new Font("Arial", Font.PLAIN, 10));
@@ -978,7 +978,7 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
          }
       });
 
-      acquireButton.setText("Acquire");
+      acquireButton.setText("Album");
       topPanel.add(acquireButton);
       topLayout.putConstraint(SpringLayout.SOUTH, acquireButton, 69,
             SpringLayout.NORTH, topPanel);
