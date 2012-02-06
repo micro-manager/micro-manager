@@ -1023,6 +1023,15 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
                      return;
                   }
                   mdPanel_.autoscaleWithoutDraw(imageCache_, hyperImage_);
+               } else if (!simple_) { //Called when display created by pressing acquire button
+                  if (hyperImage_ instanceof MMCompositeImage) {
+                     if (((MMCompositeImage) hyperImage_).getNChannelsUnverified() - 1 != channel) {
+                        return;
+                     }
+                     mdPanel_.autoscaleWithoutDraw(imageCache_, hyperImage_);
+                  } else {
+                     mdPanel_.autoscaleWithoutDraw(imageCache_, hyperImage_);
+                  }
                }
 //               else do nothing because contrast automatically loaded from cache
 
