@@ -117,8 +117,8 @@ void DbgPrintf(LPTSTR fmt,...    )
 	vsprintf(szBuf, fmt, marker);
 	va_end(marker);
  
-    OutputDebugString(szBuf);
-    OutputDebugString(TEXT("\r\n"));
+    //OutputDebugString(szBuf);
+    //OutputDebugString(TEXT("\r\n"));
 }
 #endif
 ///////////////////////////////////////////////////////////////////////////////
@@ -771,7 +771,7 @@ int Spectra::OnRedEnable(MM::PropertyBase* pProp, MM::ActionType eAct)
 			SendColorEnableCmd(RED,false,&EnableMask);
 		}
 		LogMessage("In OnRedEnable ");
-		OutputDebugString("In OnRedEnable");
+		//OutputDebugString("In OnRedEnable");
    }
    return DEVICE_OK;
 }
