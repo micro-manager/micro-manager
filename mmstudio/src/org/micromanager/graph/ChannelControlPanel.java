@@ -88,13 +88,13 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
    private JPanel controls_;
    private JPanel controlsHolderPanel_;
    
-   private double contrastMin_;
-   private double contrastMax_;
+   private int contrastMin_;
+   private int contrastMax_;
    private double gamma_ = 1;
-	private double minAfterRejectingOutliers_;
-	private double maxAfterRejectingOutliers_;
-   private double pixelMin_ = 0.0;
-   private double pixelMax_ = 255.0;
+	private int minAfterRejectingOutliers_;
+	private int maxAfterRejectingOutliers_;
+   private int pixelMin_ = 0;
+   private int pixelMax_ = 255;
    final private int maxIntensity_;
    private Color color_;
 
@@ -306,17 +306,25 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
    }
 
     private void fullButtonAction() {
+       if (mccPanel_.syncedChannels()) {
+          mccPanel_.fullScaleChannels();
+       } else {
        setFullScale();
        mdPanel_.drawWithoutUpdate();
-    }
+       }
+   }
 
-        
-    public void autoButtonAction() {
-       autostretch();
-       mdPanel_.drawWithoutUpdate();
-    }
-    
-    private void colorPickerLabelMouseClicked() {
+   public void autoButtonAction() {
+      if (mccPanel_.syncedChannels()) {
+         autostretch();
+         mccPanel_.applyContrastToAllChannels(contrastMin_, contrastMax_, gamma_);
+      } else {
+         autostretch();
+         mdPanel_.drawWithoutUpdate();
+      }
+   }
+
+   private void colorPickerLabelMouseClicked() {
       //Can only edit color in this way if there is an active window
      //so it is ok to get image cache in this way
      ImageCache cache = VirtualAcquisitionDisplay.getDisplay(WindowManager.getCurrentImage()).getImageCache();
@@ -487,14 +495,17 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
       histMaxLabel_ = histMax_+"";
    }   
    
-   private void setChannelWithoutMovingSlider(ImagePlus img, int channel) {
-      if (img != null) {
-         int z = img.getSlice();
-         int t = img.getFrame();
-         img.updatePosition(channel + 1, z, t);
-      }
+   public int getContrastMin() {
+      return contrastMin_;
    }
    
+   public int getContrastMax() {
+      return contrastMax_;
+   }
+   
+   public double getContrastGamma() {
+      return gamma_;
+   }
    
    public void setContrast(int min, int max) {
       contrastMin_ = min;
@@ -643,18 +654,24 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
 
    public void onLeftCursor(double pos) {
       mccPanel_.autostretchCheckbox_.setSelected(false);
-      contrastMin_ = Math.max(0, pos) * binSize_;
+      contrastMin_ = (int) (Math.max(0, pos) * binSize_);
       if (contrastMax_ < contrastMin_)
          contrastMax_ = contrastMin_;
-      mdPanel_.drawWithoutUpdate();
+      if (mccPanel_.syncedChannels())
+         mccPanel_.applyContrastToAllChannels(contrastMin_, contrastMax_, gamma_);
+      else
+         mdPanel_.drawWithoutUpdate();
    }
    
    public void onRightCursor(double pos) {
       mccPanel_.autostretchCheckbox_.setSelected(false);
-      contrastMax_ = Math.min(NUM_BINS-1, pos) * binSize_;
+      contrastMax_ = (int) (Math.min(NUM_BINS-1, pos) * binSize_);
       if (contrastMin_ > contrastMax_)
          contrastMin_ = contrastMax_;
-      mdPanel_.drawWithoutUpdate();
+      if (mccPanel_.syncedChannels())
+         mccPanel_.applyContrastToAllChannels(contrastMin_, contrastMax_, gamma_);
+      else
+         mdPanel_.drawWithoutUpdate();
    }
 
    public void onGammaCurve(double gamma) {
@@ -663,7 +680,10 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
             gamma_ = 1;
          else 
             gamma_ = gamma;
-         mdPanel_.drawWithoutUpdate();
+         if (mccPanel_.syncedChannels())
+            mccPanel_.applyContrastToAllChannels(contrastMin_, contrastMax_, gamma_);
+         else            
+            mdPanel_.drawWithoutUpdate();
       }
    }
 }

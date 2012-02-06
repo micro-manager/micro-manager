@@ -47,6 +47,8 @@ public class MultiChannelContrastPanel extends JPanel implements ContrastPanel {
    private static final String PREF_REJECT_OUTLIERS = "mc_reject_outliers";
    private static final String PREF_REJECT_FRACTION = "mc_reject_fraction";
    private static final String PREF_LOG_HIST = "mc_log_hist";
+   private static final String PREF_SYNC_CHANNELS = "mc_sync_channels";
+   private static final String PREF_SLOW_HIST = "mc_slow_hist";
    
    
    private JScrollPane contrastScrollPane_;
@@ -59,6 +61,7 @@ public class MultiChannelContrastPanel extends JPanel implements ContrastPanel {
    JComboBox sizeBarComboBox_;
    JComboBox overlayColorComboBox_;
    JCheckBox syncChannelsCheckbox_;
+   JCheckBox slowHistCheckbox_;
    private MetadataPanel mdPanel_;
    private ArrayList<ChannelControlPanel> ccpList_;
    private Preferences prefs_;
@@ -78,6 +81,8 @@ public class MultiChannelContrastPanel extends JPanel implements ContrastPanel {
       prefs_.putBoolean(PREF_LOG_HIST, logScaleCheckBox_.isSelected());
       prefs_.putDouble(PREF_REJECT_FRACTION, (Double) rejectPercentSpinner_.getValue());
       prefs_.putBoolean(PREF_REJECT_OUTLIERS, rejectOutliersCB_.isSelected());
+      prefs_.putBoolean(PREF_SYNC_CHANNELS, syncChannelsCheckbox_.isSelected());
+      prefs_.putBoolean(PREF_SLOW_HIST, slowHistCheckbox_.isSelected());
    }
    
    private void loadSettings() {
@@ -90,6 +95,8 @@ public class MultiChannelContrastPanel extends JPanel implements ContrastPanel {
          rejectPercentSpinner_.setEnabled(false);
       } else if (rejectOutliersCB_.isSelected())
          rejectPercentSpinner_.setEnabled(true);
+      syncChannelsCheckbox_.setSelected(prefs_.getBoolean(PREF_SYNC_CHANNELS, false));
+      slowHistCheckbox_.setSelected(prefs_.getBoolean(PREF_SLOW_HIST, false));
       
    }
 
@@ -172,11 +179,19 @@ public class MultiChannelContrastPanel extends JPanel implements ContrastPanel {
             overlayColorComboBox_ActionPerformed();
          }});
       
-      syncChannelsCheckbox_ = new JCheckBox("Sync channel contrast");
+      syncChannelsCheckbox_ = new JCheckBox("Sync channels");
       syncChannelsCheckbox_.addChangeListener(new ChangeListener() {
          public void stateChanged(ChangeEvent e) {
             syncChannelsCheckboxAction();
          }});
+      
+      slowHistCheckbox_ = new JCheckBox("Slow hist");
+      slowHistCheckbox_.addChangeListener(new ChangeListener() {
+         public void stateChanged(ChangeEvent e) {
+            slowHistCheckboxAction();
+         }});
+      
+      
 
       org.jdesktop.layout.GroupLayout channelsTablePanel_Layout = new org.jdesktop.layout.GroupLayout(this);
       this.setLayout(channelsTablePanel_Layout);
@@ -187,8 +202,9 @@ public class MultiChannelContrastPanel extends JPanel implements ContrastPanel {
               .add(sizeBarComboBox_, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 134, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
               .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
               .add(overlayColorComboBox_, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 105, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-               .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
-//               .add(syncChannelsCheckbox_, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+              .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
+              .add(syncChannelsCheckbox_, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+              .add(slowHistCheckbox_, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE) 
               )
               .add(jPanel1, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
               .add(channelsTablePanel_Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING).add(contrastScrollPane_, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 620, Short.MAX_VALUE)));
@@ -199,7 +215,8 @@ public class MultiChannelContrastPanel extends JPanel implements ContrastPanel {
               .add(channelsTablePanel_Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE).add(sizeBarCheckBox_)
               .add(sizeBarComboBox_, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
               .add(overlayColorComboBox_, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-//              .add(syncChannelsCheckbox_, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE) 
+              .add(syncChannelsCheckbox_, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)                            
+              .add(slowHistCheckbox_, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE) 
               )
               .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED).add(jPanel1, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE).addContainerGap(589, Short.MAX_VALUE))
               .add(channelsTablePanel_Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
@@ -309,7 +326,50 @@ public class MultiChannelContrastPanel extends JPanel implements ContrastPanel {
    }
    
    private void syncChannelsCheckboxAction() {
+      boolean synced = syncChannelsCheckbox_.isSelected();
+      if (synced) {
+         autostretchCheckbox_.setSelected(false);
+         autostretchCheckbox_.setEnabled(false);
+         setChannelContrastFromFirst();
+      } else {
+         autostretchCheckbox_.setEnabled(true);
+      }
+         
+   }
+   
+   private void slowHistCheckboxAction() {
       
+   }
+   
+   public boolean syncedChannels() {
+      return syncChannelsCheckbox_.isSelected();
+   }
+   
+   public void fullScaleChannels() {
+      if (ccpList_ == null)
+         return;
+      for (ChannelControlPanel c : ccpList_)
+         c.setFullScale();
+      mdPanel_.drawWithoutUpdate();
+   }
+   
+   public void applyContrastToAllChannels(int min, int max, double gamma) {
+        if (ccpList_ == null)
+         return;
+      for (ChannelControlPanel c : ccpList_)
+         c.setContrast(min, max, gamma);
+      mdPanel_.drawWithoutUpdate();
+   }
+   
+   private void setChannelContrastFromFirst() {
+      if (ccpList_ == null || ccpList_.size() <= 1)
+         return;
+      int min = ccpList_.get(0).getContrastMin();
+      int max = ccpList_.get(0).getContrastMax();
+      double gamma = ccpList_.get(0).getContrastGamma();
+      for (int i = 1; i < ccpList_.size(); i++ )
+         ccpList_.get(i).setContrast(min, max, gamma);
+      mdPanel_.drawWithoutUpdate();
    }
    
    public double getFractionToReject() {
