@@ -454,7 +454,13 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
               numGrayChannels, numSlices, numFrames, virtualStack_, controls_);
   
       applyPixelSizeCalibration(hyperImage_);
+      
+      mdPanel_.focusReceived(null);
       createWindow();
+      //Make sure contrast panel sets up correctly here
+      windowToFrontAndSetupMetadataPanel();
+      
+      
       cSelector_ = getSelector("c");
       if (!simple_) {
          tSelector_ = getSelector("t");
@@ -868,6 +874,12 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
      
    }
 
+   private void windowToFrontAndSetupMetadataPanel() {
+      hyperImage_.getWindow().toFront();
+      //call this explicitly because it isn't fired immediately
+      mdPanel_.focusReceived(hyperImage_.getWindow());
+   }
+   
    /**
     * Displays tagged image in the multi-D viewer
     * Will wait for the screen update
@@ -900,9 +912,7 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
       if (hyperImage_ == null)
          startup(tags);
       
-      hyperImage_.getWindow().toFront();
-      //call this explicitly because it isn't fired immediately
-      mdPanel_.focusReceived(hyperImage_.getWindow());
+      windowToFrontAndSetupMetadataPanel();
 
       int channel = 0, frame = 0, slice = 0, position = 0, superChannel = 0;
       boolean rgb = false;
