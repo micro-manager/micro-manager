@@ -23,6 +23,7 @@
 #ifndef _SPECTRA_H_
 #define _SPECTRA_H_
 
+
 #include "../../MMDevice/MMDevice.h"
 #include "../../MMDevice/DeviceBase.h"
 #include <string>
@@ -48,7 +49,7 @@
 #define ERR_OFFSET 10100
 #define ERR_Lumencor_OFFSET 10200
 
-enum ColorNameT {VIOLET,CYAN,GREEN,RED,BLUE,TEAL,RGCU,BT,ALL,YGFILTER};
+enum ColorNameT {VIOLET,CYAN,GREEN,RED,BLUE,TEAL,ALL,YGFILTER,SHUTTER};
 
 
 class Spectra : public CShutterBase<Spectra>

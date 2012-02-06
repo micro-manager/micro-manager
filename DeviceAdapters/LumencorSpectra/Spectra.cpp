@@ -104,8 +104,8 @@ int ClearPort(MM::Device& device, MM::Core& core, std::string port)
 * Returns:
 *    VOID
 \****************************************************************************/
- 
-#ifdef WIN32
+
+#ifdef Win32
 void DbgPrintf(LPTSTR fmt,...    )
 {
     va_list marker;
@@ -121,7 +121,6 @@ void DbgPrintf(LPTSTR fmt,...    )
     OutputDebugString(TEXT("\r\n"));
 }
 #endif
-
 ///////////////////////////////////////////////////////////////////////////////
 // Lumencor
 
@@ -317,9 +316,9 @@ int Spectra::SetShutterPosition(bool state)
 {   
 	enum statevalue {open = 1, closed = 0};
 	if(state == open)
-		SendColorEnableCmd(ALL, true, &EnableMask);  // If on then Set
+		SendColorEnableCmd(SHUTTER, true, &EnableMask);  // If on then Set
 	else
-		SendColorEnableCmd(ALL, false, &EnableMask);  // close
+		SendColorEnableCmd(SHUTTER, false, &EnableMask);  // close
     return DEVICE_OK;
 }
 
@@ -360,13 +359,6 @@ int Spectra::SendColorLevelCmd(ColorNameT ColorName,int ColorLevel)
 		case  TEAL:
 			DACSetupArray[3] = 0x02;
 			break;
-		case RGCU:
-			DACSetupArray[3] = 0x0F;
-			break;
-		case BT:
-			DACSetupArray[3] = 0x03;
-			DACSetupArray[1] = 0x1A;
-			break;
 		case ALL:
 			DACSetupArray[4] = (char) ((ColorValue >> 4) & 0x0F) | 0xF0;
 			DACSetupArray[5] = (char) (ColorValue << 4) & 0xF0;
@@ -374,7 +366,7 @@ int Spectra::SendColorLevelCmd(ColorNameT ColorName,int ColorLevel)
 			DACSetupArray[1] = 0x18;
 			WriteToComPort(port_.c_str(),DACSetupArray, 7); // Write Event Data to device
 
-			DACSetupArray[3] = 0x03;
+			DACSetupArray[3] = 0x03; // BT
 			DACSetupArray[1] = 0x1A;
 			WriteToComPort(port_.c_str(),DACSetupArray, 7); // Write Event Data to device
 			break;
@@ -388,7 +380,7 @@ int Spectra::SendColorLevelCmd(ColorNameT ColorName,int ColorLevel)
 		WriteToComPort(port_.c_str(),DACSetupArray, 7); // Write Event Data to device
 	}
 	// block/wait no acknowledge so just give it time                      
-    CDeviceUtils::SleepMs(200);
+    // CDeviceUtils::SleepMs(200);
 	return DEVICE_OK;  // debug only 
 }
 
@@ -451,10 +443,21 @@ int Spectra::SendColorEnableCmd(ColorNameT ColorName,bool State, char* EnableMas
 			break;
 		case ALL:
 			if(State==ON)
-				DACSetupArray[1] = *EnableMask & 0x7F;
+			{
+				DACSetupArray[1] = ((*EnableMask & 0x40) == 0x40) ? 0x40 : 0x00;
+			}
 			else
 			    DACSetupArray[1] = ((*EnableMask & 0x40) == 0x40) ? 0x7F : 0xCF; // dont toggle YG filter if not needed
 			break;
+		case SHUTTER:
+			if(State== ON)
+			{
+				DACSetupArray[1] = *EnableMask;  // set enabled channels on
+			}
+			else
+			{
+				DACSetupArray[1] = 0x7F; // all off
+			}
 		default:
 			break;		
 	}
@@ -464,12 +467,15 @@ int Spectra::SendColorEnableCmd(ColorNameT ColorName,bool State, char* EnableMas
 		DACSetupArray[1] = DACSetupArray[1] | 0x20; // Mask for Aura to be sure DACs are Enabled 
 	}
 
-	*EnableMask = DACSetupArray[1]; // Sets the Mask to current state
+	if(ColorName != SHUTTER) // shutter is a unique case were we dont want to change our mask
+	{
+		*EnableMask = DACSetupArray[1]; // Sets the Mask to current state
+	}
 
 	WriteToComPort(port_.c_str(),DACSetupArray, 3); // Write Event Data to device
 
    // block/wait no acknowledge so just give it time                     
-	CDeviceUtils::SleepMs(200);
+   // CDeviceUtils::SleepMs(200);
 	return DEVICE_OK;  // debug only 
 }
 
@@ -659,7 +665,7 @@ int Spectra::OnInitLE(MM::PropertyBase* pProp, MM::ActionType eAct)
    {  
 	  State = 0; 
       pProp->Set(State); // reset button
-      /*int ret =*/ InitLE();
+      InitLE();
    }
    return DEVICE_OK;
 }
@@ -765,7 +771,7 @@ int Spectra::OnRedEnable(MM::PropertyBase* pProp, MM::ActionType eAct)
 			SendColorEnableCmd(RED,false,&EnableMask);
 		}
 		LogMessage("In OnRedEnable ");
-		//OutputDebugString("In OnRedEnable");
+		OutputDebugString("In OnRedEnable");
    }
    return DEVICE_OK;
 }
