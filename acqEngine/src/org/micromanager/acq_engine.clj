@@ -459,32 +459,32 @@
         z (get-z-stage-position default-z-drive)
         xy (get-xy-stage-position default-xy-stage)
         exposure (core getExposure)]
-    (swap! (.state this) assoc
-      :pause false
-      :stop false
-      :finished false
-      :last-wake-time (jvm-time-ms)
-      :last-stage-positions (into {} [[default-z-drive z]
-                                [default-xy-stage xy]])
-      :last-position nil     
-      :reference-z z
-      :start-time (jvm-time-ms)
-      :init-auto-shutter (core getAutoShutter)
-      :init-exposure exposure
-      :exposure {(core getCameraDevice) exposure}
-      :default-z-drive default-z-drive
-      :default-xy-stage default-xy-stage
-      :init-z-position z
-      :init-system-state (get-system-config-cached)
-      :init-continuous-focus (core isContinuousFocusEnabled)
-      :init-width (core getImageWidth)
-      :init-height (core getImageHeight)
-      :init-shutter-state (when-not (empty? (core getShutterDevice)) (core getShutterOpen))
-      :binning (core getProperty (core getCameraDevice) "Binning")
-      :bit-depth (core getImageBitDepth)
-      :pixel-size-um (core getPixelSizeUm)
-      :source (core getCameraDevice)
-      :pixel-type (get-pixel-type)
+    (reset! (.state this)
+            {
+             :pause false
+             :stop false
+             :finished false
+             :last-wake-time (jvm-time-ms)
+             :last-stage-positions (into {} [[default-z-drive z]
+                                             [default-xy-stage xy]])
+             :reference-z z
+             :start-time (jvm-time-ms)
+             :init-auto-shutter (core getAutoShutter)
+             :init-exposure exposure
+             :exposure {(core getCameraDevice) exposure}
+             :default-z-drive default-z-drive
+             :default-xy-stage default-xy-stage
+             :init-z-position z
+             :init-system-state (get-system-config-cached)
+             :init-continuous-focus (core isContinuousFocusEnabled)
+             :init-width (core getImageWidth)
+             :init-height (core getImageHeight)
+             :binning (core getProperty (core getCameraDevice) "Binning")
+             :bit-depth (core getImageBitDepth)
+             :pixel-size-um (core getPixelSizeUm)
+             :source (core getCameraDevice)
+             :pixel-type (get-pixel-type)
+            }
       )))
 
 (defn cleanup []
