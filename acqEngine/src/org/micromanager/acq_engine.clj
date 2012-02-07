@@ -547,6 +547,7 @@
 (defn run-acquisition [this settings out-queue]
   (try
     (def acq-settings settings)
+    (log (str "Starting MD Acquisition: " settings))
     (prepare-state this)
     (binding [state (.state this)]
       (def last-state state) ; for debugging
