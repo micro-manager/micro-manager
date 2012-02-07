@@ -126,6 +126,11 @@
        (zero? (mod (% :frame-index) (-> % :channel :skip-frames inc))))
     events))
 
+(defn process-new-position [events]
+  (for [[e1 e2] (pairs-back events)]
+    (assoc e2 :new-position
+      (not= (:position-index e1) (:position-index e2)))))
+
 (defn process-use-autofocus [events use-autofocus autofocus-skip]
   (for [[e1 e2] (pairs-back events)]
     (assoc e2 :autofocus
@@ -231,6 +236,7 @@
         (manage-shutter keep-shutter-open-channels keep-shutter-open-slices)
         (process-channel-skip-frames)
         (process-use-autofocus use-autofocus autofocus-skip)
+        (process-new-position)
         (process-wait-time (if (first custom-intervals-ms) custom-intervals-ms interval-ms))
         (attach-runnables runnables)
         (make-bursts)
@@ -285,11 +291,12 @@
                                      channels default-exposure triggers]
   (let [simple (generate-simple-burst-sequence
                  num-frames use-autofocus channels default-exposure triggers)]
-    (flatten
-      (for [pos-index (range (count positions))]
-        (map #(assoc % :position-index pos-index
+    (process-new-position
+      (flatten
+        (for [pos-index (range (count positions))]
+          (map #(assoc % :position-index pos-index
                        :position (nth positions pos-index))
-             simple)))))
+               simple))))))
 
 (defn generate-acq-sequence [settings runnables]
   (let [{:keys [numFrames time-first positions slices channels

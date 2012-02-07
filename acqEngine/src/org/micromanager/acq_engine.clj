@@ -511,9 +511,10 @@
       (flatten
         (list
           #(log event)
-          (for [[axis pos] (:axes (MultiStagePosition-to-map (get-msp current-position)))
-                :when pos]
-            #(apply set-stage-position axis pos))
+          (when (:new-position event)
+            (for [[axis pos] (:axes (MultiStagePosition-to-map (get-msp current-position)))
+                  :when pos]
+              #(apply set-stage-position axis pos)))
           (for [[d p v] (get-in event [:channel :properties])]
             #(set-property [d p v]))
           #(when-lets [exposure (:exposure event)
@@ -526,8 +527,8 @@
           #(when (get event :autofocus)
              (run-autofocus))
           #(when check-z-ref
-             (store-z-reference current-position))
-          #(update-z-positions current-position)
+             (store-z-reference current-position)
+             (update-z-positions current-position))
           #(when z-drive
              (let [z (compute-z-position event)]
                (set-stage-position z-drive z)))
