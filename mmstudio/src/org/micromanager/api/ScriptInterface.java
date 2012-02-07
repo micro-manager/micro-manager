@@ -415,7 +415,7 @@ public interface ScriptInterface {
     * Will open the Acquisition Dialog when it is not open yet.
     * Returns after Acquisition finishes
     * @return The name of the acquisition created
-    * @Deprecated - typo
+    * @deprecated - typo
     */
    public String runAcqusition(String name, String root) throws MMScriptException;
 
