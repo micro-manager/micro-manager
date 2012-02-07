@@ -359,6 +359,7 @@ AC_CONFIG_FILES(
 	[LudlLow/Makefile:LudlLow/Makefile.in:MMDEVAPI.rules]
 	[LumencorSpectra/Makefile:LumencorSpectra/Makefile.in:MMDEVAPI.rules]
 	[MaestroServo/Makefile:MaestroServo/Makefile.in:MMDEVAPI.rules]
+	[MP285/Makefile:MP285/Makefile.in:MMDEVAPI.rules]
 	[Neos/Makefile:Neos/Makefile.in:MMDEVAPI.rules]
 	[Nikon/Makefile:Nikon/Makefile.in:MMDEVAPI.rules]
 	[NikonTE2000/Makefile:NikonTE2000/Makefile.in:MMDEVAPI.rules]
