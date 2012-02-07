@@ -329,8 +329,8 @@ int ZStage::SetPositionSteps(long lZPosSteps)
     if (ret != DEVICE_OK)  return ret;
 
     double dSteps = (double)labs(lZPosSteps);
-    DWORD dwSleep = (DWORD) (dSteps * 2.0);
-    Sleep(dwSleep);
+    unsigned long dwSleep = (unsigned long) (dSteps * 2.0);
+    CDeviceUtils::SleepMs(dwSleep);
     
     osMessage.str("");
     osMessage << "<ZStage::SetPositionSteps> Sleep..." << dwSleep << " millisec...";

@@ -367,8 +367,8 @@ int XYStage::SetPositionSteps(long lXPosSteps, long lYPosSteps)
     if (ret != DEVICE_OK)  return ret;
 
     double dSteps = labs(lXPosSteps) > labs(lYPosSteps) ? (double)labs(lXPosSteps) : (double)labs(lYPosSteps);
-    DWORD dwSleep = (DWORD) (dSteps * 3.0);
-    Sleep(dwSleep);
+    unsigned long dwSleep = (unsigned long) (dSteps * 3.0);
+    CDeviceUtils::SleepMs(dwSleep);
     
     osMessage.str("");
     osMessage << "<XYStage::SetPositionSteps> Sleep..." << dwSleep << " millisec...";
