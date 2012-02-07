@@ -2910,10 +2910,10 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
             else
                 virtAcq = ((VirtualAcquisitionDisplay.MMCompositeImage) ip).display_;
             
-            JSONObject tags = virtAcq.getImageCache().getLastImageTags();
-            int width = MDUtils.getWidth(tags);
-            int height = MDUtils.getHeight(tags);
-            int depth  = MDUtils.getBitDepth(tags);
+            JSONObject summary = virtAcq.getImageCache().getSummaryMetadata();
+            int width = MDUtils.getWidth(summary);
+            int height = MDUtils.getHeight(summary);
+            int depth  = MDUtils.getBitDepth(summary);
             if (height != core_.getImageHeight() || width != core_.getImageWidth() || 
                     depth != core_.getImageBitDepth()) 
                return false;
