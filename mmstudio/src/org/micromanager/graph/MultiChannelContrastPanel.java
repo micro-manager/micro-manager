@@ -50,6 +50,8 @@ public class MultiChannelContrastPanel extends JPanel implements ContrastPanel {
    private static final String PREF_SYNC_CHANNELS = "mc_sync_channels";
    private static final String PREF_SLOW_HIST = "mc_slow_hist";
    
+   private static final int SLOW_HIST_UPDATE_INTERVAL_MS = 1000;
+   private long slowHistLastUpdateTime_;
    
    private JScrollPane contrastScrollPane_;
    JComboBox displayModeCombo_;
@@ -479,12 +481,24 @@ public class MultiChannelContrastPanel extends JPanel implements ContrastPanel {
    public void imageChanged(ImagePlus img, ImageCache cache, boolean drawHist) {
       if (ccpList_ == null)
          return;
-      for (ChannelControlPanel c : ccpList_) {
-         c.calcAndDisplayHistAndStats(img,drawHist);
-         if (autostretchCheckbox_.isSelected())
-            c.autostretch();        
-         c.applyChannelLUTToImage(img,cache);
+      boolean update = true;
+      if (slowHistCheckbox_.isSelected() ) {
+         long time = System.currentTimeMillis();
+         if (time - slowHistLastUpdateTime_ < SLOW_HIST_UPDATE_INTERVAL_MS) 
+            update = false;
+         else
+            slowHistLastUpdateTime_ = time;
       }
+      if (update) {
+         for (ChannelControlPanel c : ccpList_) {
+            c.calcAndDisplayHistAndStats(img, drawHist);
+            if (autostretchCheckbox_.isSelected()) {
+               c.autostretch();
+            }
+            c.applyChannelLUTToImage(img, cache);
+         }
+      }
+
    }
    
     public void displayChanged(ImagePlus img, ImageCache cache) {
@@ -503,8 +517,7 @@ public class MultiChannelContrastPanel extends JPanel implements ContrastPanel {
    }
 
    public boolean getSlowHist() {
-      //Multi channel contrast panel doesn't have this feature...yet
-      return false;
+      return slowHistCheckbox_.isSelected();
    }
 
    public boolean getLogHist() {
