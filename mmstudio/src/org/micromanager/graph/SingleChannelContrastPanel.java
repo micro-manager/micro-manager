@@ -695,7 +695,7 @@ public class SingleChannelContrastPanel extends JPanel implements
    }
    
    public void calcAndDisplayHistAndStats(ImagePlus img, boolean drawHist) {
-      if (img != null) {
+      if (img != null && img.getProcessor() != null) {
          int[] rawHistogram = img.getProcessor().getHistogram();
          int imgWidth = img.getWidth();
          int imgHeight = img.getHeight();

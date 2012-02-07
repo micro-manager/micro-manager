@@ -917,14 +917,12 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
       windowToFrontAndSetupMetadataPanel();
 
       int channel = 0, frame = 0, slice = 0, position = 0, superChannel = 0;
-      boolean rgb = false;
       try {
          frame = MDUtils.getFrameIndex(tags);
          slice = MDUtils.getSliceIndex(tags);
          channel = MDUtils.getChannelIndex(tags);
          position = MDUtils.getPositionIndex(tags);
          superChannel = this.rgbToGrayChannel(MDUtils.getChannelIndex(tags));
-         rgb = MDUtils.getPixelType(tags).startsWith("RGB");
       } catch (Exception ex) {
          ReportingUtils.logError(ex);
       }
