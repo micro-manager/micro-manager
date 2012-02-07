@@ -82,6 +82,9 @@ public class SingleChannelContrastPanel extends JPanel implements
    private static final String PREF_LOG_HIST = "sc_log_hist";
    private static final String PREF_SLOW_HIST = "sc_slow_hist";
    
+   private static final int SLOW_HIST_UPDATE_INTERVAL_MS = 1000;
+   private long slowHistLastUpdateTime_;
+   
 	private static final long serialVersionUID = 1L;
 	private JComboBox modeComboBox_;
 	private HistogramPanel histogramPanel_;
@@ -105,9 +108,7 @@ public class SingleChannelContrastPanel extends JPanel implements
 	ContrastSettings cs16bit_;
 	private JCheckBox autostretchCheckBox_;
 	private JCheckBox rejectOutliersCheckBox_;
-   private JCheckBox slowHistogramCheckBox_;
-   private boolean slowHistogram_ = false;
-   private boolean calcHistogram_ = true;
+   private JCheckBox slowHistCheckbox_;
 	private boolean logScale_ = false;
 	private JCheckBox logHistCheckBox_;
    private boolean autostretch_;
@@ -118,7 +119,6 @@ public class SingleChannelContrastPanel extends JPanel implements
    JSpinner rejectOutliersPercentSpinner_;
    private double fractionToReject_;
    JLabel percentOutliersLabel_;
-   private int slowHistogramCount_;
    private int numFramesForSlowHist_;
    private MetadataPanel mdPanel_;
    private Preferences prefs_;
@@ -151,7 +151,7 @@ public class SingleChannelContrastPanel extends JPanel implements
       prefs_.putBoolean(PREF_AUTOSTRETCH, autostretchCheckBox_.isSelected());
       prefs_.putBoolean(PREF_LOG_HIST, logHistCheckBox_.isSelected());
       prefs_.putBoolean(PREF_REJECT_OUTLIERS, rejectOutliersCheckBox_.isSelected());
-      prefs_.putBoolean(PREF_SLOW_HIST, slowHistogramCheckBox_.isSelected());
+      prefs_.putBoolean(PREF_SLOW_HIST, slowHistCheckbox_.isSelected());
       prefs_.putDouble(PREF_REJECT_FRACTION, 0.01*((Double) rejectOutliersPercentSpinner_.getValue()));
    }
    
@@ -449,14 +449,14 @@ public class SingleChannelContrastPanel extends JPanel implements
 			public void actionPerformed(final ActionEvent e) {
 				logHistAction();
          }});
-      slowHistogramCheckBox_ = new JCheckBox();
-		slowHistogramCheckBox_.setFont(new Font("", Font.PLAIN, 10));
-		slowHistogramCheckBox_.setText("Slow hist.");
-		slowHistogramCheckBox_.addChangeListener(new ChangeListener() {
+      slowHistCheckbox_ = new JCheckBox();
+		slowHistCheckbox_.setFont(new Font("", Font.PLAIN, 10));
+		slowHistCheckbox_.setText("Slow hist.");
+		slowHistCheckbox_.addChangeListener(new ChangeListener() {
 			public void stateChanged(ChangeEvent ce) {
             slowHistAction();
          };});
-     slowHistogramCheckBox_.setSelected(slowHist);
+     slowHistCheckbox_.setSelected(slowHist);
 
       
 		logHistCheckBox_.setText("Log hist.");
@@ -472,14 +472,14 @@ public class SingleChannelContrastPanel extends JPanel implements
 
       
    
-		add(slowHistogramCheckBox_);
-		springLayout.putConstraint(SpringLayout.EAST, slowHistogramCheckBox_, 84,
+		add(slowHistCheckbox_);
+		springLayout.putConstraint(SpringLayout.EAST, slowHistCheckbox_, 84,
 				SpringLayout.WEST, this);
-		springLayout.putConstraint(SpringLayout.WEST, slowHistogramCheckBox_, 1,
+		springLayout.putConstraint(SpringLayout.WEST, slowHistCheckbox_, 1,
 				SpringLayout.WEST, this);
-		springLayout.putConstraint(SpringLayout.SOUTH, slowHistogramCheckBox_, 0,
+		springLayout.putConstraint(SpringLayout.SOUTH, slowHistCheckbox_, 0,
 				SpringLayout.NORTH, minLabel);
-		springLayout.putConstraint(SpringLayout.NORTH, slowHistogramCheckBox_, -20,
+		springLayout.putConstraint(SpringLayout.NORTH, slowHistCheckbox_, -20,
 				SpringLayout.NORTH, minLabel);
       	   
    }
@@ -494,14 +494,7 @@ public class SingleChannelContrastPanel extends JPanel implements
       mdPanel_.drawWithoutUpdate();
    }
 
-   private void slowHistAction() {
-      slowHistogram_ = slowHistogramCheckBox_.isSelected();
-      if (slowHistogram_) {
-         numFramesForSlowHist_ = (int) (SLOW_HIST_UPDATE_TIME_MS / 33.0);
-         slowHistogramCount_ = numFramesForSlowHist_;
-         calcHistogram_ = false;
-      } else 
-         calcHistogram_ = true;
+   private void slowHistAction() {    
       saveSettings();
    }
 
@@ -666,12 +659,20 @@ public class SingleChannelContrastPanel extends JPanel implements
    }
    
    public void imageChanged(ImagePlus img, ImageCache cache, boolean drawHist) {
-      calcAndDisplayHistAndStats(img,drawHist);
-      if (autostretch_)
-         autostretch();
-      applyLUTToImage(img, cache);
-      
-      //TODO reimplement slow hist
+      boolean update = true;
+      if (slowHistCheckbox_.isSelected()) {
+         long time = System.currentTimeMillis();
+         if (time - slowHistLastUpdateTime_ < SLOW_HIST_UPDATE_INTERVAL_MS) 
+            update = false;
+         else 
+            slowHistLastUpdateTime_ = time;
+      }
+      if (update) {
+         calcAndDisplayHistAndStats(img, drawHist);
+         if (autostretch_) 
+            autostretch();
+         applyLUTToImage(img, cache);
+      }
    }
    
    public void displayChanged(ImagePlus img, ImageCache cache) {
@@ -813,65 +814,7 @@ public class SingleChannelContrastPanel extends JPanel implements
          mdPanel_.drawWithoutUpdate();
       }
    }
-
-	public boolean getAutoStretch() {
-		return autostretchCheckBox_.isSelected();
-	}
-   
-   public boolean getSlowHist() {
-      return slowHistogram_;
-   }
-
-   public boolean getLogHist() {
-      return logScale_;
-   }
-
-   public boolean getRejectOutliers() {
-      return rejectOutliersCheckBox_.isSelected();
-   }
-   
-   public double getFractionToReject() {
-      return fractionToReject_;
-   }
  
-   //   public void updateContrast() {
-//      if (virtAcq_ == null)
-//         return;
-//      if (virtAcq_.windowClosed()) {
-//         histogram_ = null;
-//         updateHistogram();
-//         virtAcq_ = null;
-//         image_ = null;
-//         return;
-//      }
-//      ImagePlus ip = virtAcq_.getImagePlus();
-//      if (ip == null)
-//         return;
-//      image_ = ip;
-//      loadContrastSettings();
-//      if (slowHistogram_) {
-//         slowHistogramCount_++;
-//         if (slowHistogramCount_ >= numFramesForSlowHist_) {
-//            slowHistogramCount_ = 0;
-//            calcHistogram_ = true;
-//         }
-//      }
-//      if (calcHistogram_) {
-//         calcHistogramAndStatistics();
-//         setMaxIntensityAndBinSize();
-//         if (autostretch_)
-//            autostretch(false);
-//      }
-//      applyLUTToImage();
-//      if (autostretch_ && calcHistogram_)
-//         updateCursors();
-//      if (calcHistogram_) 
-//         updateHistogram();  
-//  
-//      if (slowHistogram_) 
-//         calcHistogram_ = false;
-//   }
-
    public void setupChannelControls(ImageCache cache) {
    }
 }

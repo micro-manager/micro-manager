@@ -16,16 +16,6 @@ public interface ContrastPanel {
 
    public void displayChanged(ImagePlus img, ImageCache cache);
 
-   public boolean getAutoStretch();
-
-   public boolean getSlowHist();
-
-   public boolean getLogHist();
-
-   public boolean getRejectOutliers();
-
-   public double getFractionToReject();
-
    public void imageChanged(ImagePlus img, ImageCache cache, boolean drawHist);
 
    public void setChannelContrast(int channelIndex, int min, int max, double gamma);

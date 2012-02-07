@@ -336,11 +336,11 @@ public class MultiChannelContrastPanel extends JPanel implements ContrastPanel {
       } else {
          autostretchCheckbox_.setEnabled(true);
       }
-         
+         saveSettings();
    }
    
    private void slowHistCheckboxAction() {
-      
+      saveSettings();
    }
    
    public boolean syncedChannels() {
@@ -374,7 +374,7 @@ public class MultiChannelContrastPanel extends JPanel implements ContrastPanel {
       mdPanel_.drawWithoutUpdate();
    }
    
-   public double getFractionToReject() {
+   private double getFractionToReject() {
       try {
          double value = 0.01 * NumberUtils.displayStringToDouble(this.rejectPercentSpinner_.getValue().toString());
          return value;
@@ -410,6 +410,7 @@ public class MultiChannelContrastPanel extends JPanel implements ContrastPanel {
           if (ccpList_ != null && ccpList_.size() > 0)
              for (ChannelControlPanel c : ccpList_)
                 c.autoButtonAction();
+       saveSettings();
    }
 
    private void rejectOutliersCB_ActionPerformed() {
@@ -512,20 +513,5 @@ public class MultiChannelContrastPanel extends JPanel implements ContrastPanel {
        mdPanel_.drawWithoutUpdate(img);
    }
 
-   public boolean getAutoStretch() {
-      return autostretchCheckbox_.isSelected();
-   }
-
-   public boolean getSlowHist() {
-      return slowHistCheckbox_.isSelected();
-   }
-
-   public boolean getLogHist() {
-      return logScaleCheckBox_.isSelected();
-   }
-
-   public boolean getRejectOutliers() {
-      return rejectOutliersCB_.isSelected();
-   }
 }
 
