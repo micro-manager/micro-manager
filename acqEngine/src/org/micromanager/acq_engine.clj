@@ -193,6 +193,13 @@
     (let [xy (.getXYStagePosition gui)]
       [(.x xy) (.y xy)])))
 
+(defn set-shutter-open [open?]
+  (let [shutter (core getShutterDevice)]
+    (device-best-effort shutter
+      (when (not= open? (get-in @state [:shutter-states shutter]))
+        (core setShutterOpen open?)
+        (swap! state assoc-in [:shutter-states shutter] open?)))))
+
 (defn set-z-stage-position [stage pos]
   (when (and (@state :init-continuous-focus)
              (not (core isContinuousFocusDrive stage))
@@ -234,14 +241,12 @@
   (with-core-setting [getAutoShutter setAutoShutter false]
     (let [shutter (core getShutterDevice)]
       (when open-before
-        (device-best-effort shutter
-          (core setShutterOpen true)))
+        (set-shutter-open true))
       (wait-for-pending-devices)
       (device-best-effort (core getCameraDevice) (core snapImage))
       (swap! state assoc :last-image-time (elapsed-time @state))
       (when close-after
-        (device-best-effort shutter
-          (core setShutterOpen false))))))
+        (set-shutter-open false)))))
 
 (defn load-property-sequences [property-sequences]
   (let [new-seq (not= property-sequences @active-property-sequences)]
@@ -474,6 +479,7 @@
       :init-continuous-focus (core isContinuousFocusEnabled)
       :init-width (core getImageWidth)
       :init-height (core getImageHeight)
+      :init-shutter-state (when-not (empty? (core getShutterDevice)) (core getShutterOpen))
       :binning (core getProperty (core getCameraDevice) "Binning")
       :bit-depth (core getImageBitDepth)
       :pixel-size-um (core getPixelSizeUm)
@@ -492,6 +498,8 @@
     (core setAutoShutter (@state :init-auto-shutter))
     (set-exposure (core getCameraDevice) (@state :init-exposure))
     (set-stage-position (@state :default-z-drive) (@state :init-z-position))
+    (when-let [state (@state :init-shutter-state)]
+      (set-shutter-open state))
     (when (and (@state :init-continuous-focus)
                (not (core isContinuousFocusEnabled)))
       (core enableContinuousFocus true))
