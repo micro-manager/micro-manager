@@ -153,6 +153,7 @@ public class SingleChannelContrastPanel extends JPanel implements
       prefs_.putBoolean(PREF_REJECT_OUTLIERS, rejectOutliersCheckBox_.isSelected());
       prefs_.putBoolean(PREF_SLOW_HIST, slowHistCheckbox_.isSelected());
       prefs_.putDouble(PREF_REJECT_FRACTION, 0.01*((Double) rejectOutliersPercentSpinner_.getValue()));
+  //comment    
    }
    
    private void init(boolean autostretch, boolean reject, boolean slowHist, boolean logHist) {
