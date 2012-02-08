@@ -114,8 +114,17 @@
                (and
                  (not keep-shutter-open-slices)
                  (not= (e1 :slice) (e2 :slice)))
-               (not= (e1 :frame-index) (e2 :frame-index))
-               (not= (e1 :position-index) (e2 :position-index)))
+               (and (not= (e1 :frame-index) (e2 :frame-index))
+                    (not
+                    ;; special case where we rapidly cycle through channels:
+                      (and (= (e1 :slice) (e2 :slice))
+                           (= (e1 :position-index) (e2 :position-index))
+                           keep-shutter-open-channels
+                           (let [wait (e2 :wait-time-ms)]
+                             (println wait e1 e2)
+                             (or (nil? wait) (zero? wait))))))
+               (not= (e1 :position-index) (e2 :position-index))
+               (:autofocus e1))
         true))))
 
 (defn process-channel-skip-frames [events]
@@ -145,7 +154,9 @@
     (assoc (first events) :wait-time-ms (if (vector? interval) (first interval) 0))    ;if supplied first custom time point is delay before acquisition start
     (for [[e1 e2] (pairs events) :when e2]
       (if-assoc (not= (:frame-index e1) (:frame-index e2))
-        e2 :wait-time-ms  (if (vector? interval) (nth interval (:frame-index e2)) interval)))))
+                e2 :wait-time-ms (if (vector? interval)
+                                   (nth interval (:frame-index e2))
+                                   interval)))))
         
 (defn event-triggerable [burst event]
   (let [n (count burst)
@@ -233,12 +244,12 @@
     (-> (make-main-loops settings)
         (#(map (partial build-event settings) %))
         (process-skip-z-stack slices)
-        (manage-shutter keep-shutter-open-channels keep-shutter-open-slices)
         (process-channel-skip-frames)
         (process-use-autofocus use-autofocus autofocus-skip)
         (process-new-position)
         (process-wait-time (if (first custom-intervals-ms) custom-intervals-ms interval-ms))
         (attach-runnables runnables)
+        (manage-shutter keep-shutter-open-channels keep-shutter-open-slices)
         (make-bursts)
         (add-next-task-tags)   
         )))
