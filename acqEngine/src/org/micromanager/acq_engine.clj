@@ -37,8 +37,9 @@
            [mmcorej TaggedImage Configuration Metadata]
            [java.util.prefs Preferences]
            [java.net InetAddress]
-           [java.util.concurrent TimeUnit CountDownLatch]
-           [org.micromanager.utils GentleLinkedBlockingQueue MDUtils
+           [java.util.concurrent LinkedBlockingQueue
+                                 TimeUnit CountDownLatch]
+           [org.micromanager.utils MDUtils
                                    ReportingUtils]
            [org.json JSONObject JSONArray]
            [java.util Date UUID]
@@ -726,7 +727,7 @@
   (def eng acq-eng)
   (load-mm)
   (swap! (.state this) assoc :stop false :pause false :finished false)
-  (let [out-queue (GentleLinkedBlockingQueue.)
+  (let [out-queue (LinkedBlockingQueue. 10)
         settings (convert-settings acq-settings)
         summary-metadata (make-summary-metadata settings)]
     (swap! (.state this) assoc :summary-metadata summary-metadata)
