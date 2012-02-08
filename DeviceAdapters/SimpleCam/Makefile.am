@@ -23,6 +23,7 @@ install_macos:
 	cp .libs/libmmgr_dal_GPhoto$(MMSUFFIX) $(DESTDIR)$(DEVICEADAPTERPATH)/libmmgr_dal_GPhoto$(MMSUFFIX)
 	install_name_tool -change $(GPHOTO2_LIBDIR)/libgphoto2.2.dylib @loader_path/libgphoto2/libgphoto2.2.dylib $(DEVICEADAPTERPATH)/libmmgr_dal_GPhoto$(MMSUFFIX)
 	install_name_tool -change $(GPHOTO2_LIBDIR)/libgphoto2_port.0.dylib @loader_path/libgphoto2/libgphoto2_port.0.dylib $(DEVICEADAPTERPATH)/libmmgr_dal_GPhoto$(MMSUFFIX)
+	install_name_tool -change /usr/lib/libltdl.3.dylib /usr/lib/libltdl.dylib $(DEVICEADAPTERPATH)/libmmgr_dal_GPhoto$(MMSUFFIX)
 	test -d $(DEVICEADAPTERPATH)/libgphoto2 || mkdir $(DESTDIR)$(DEVICEADAPTERPATH)/libgphoto2
 	test -d $(DEVICEADAPTERPATH)/libgphoto2/libgphoto2 || mkdir $(DESTDIR)$(DEVICEADAPTERPATH)/libgphoto2/libgphoto2
 	test -d $(DEVICEADAPTERPATH)/libgphoto2/libgphoto2_port || mkdir $(DESTDIR)$(DEVICEADAPTERPATH)/libgphoto2/libgphoto2_port
@@ -31,12 +32,15 @@ install_macos:
 	cp $(GPHOTO2_LIBDIR)/libgphoto2.2.dylib $(DEVICEADAPTERPATH)/libgphoto2/
 	install_name_tool -id @loader_path/libgphoto2/libgphoto2.2.dylib $(DEVICEADAPTERPATH)/libgphoto2/libgphoto2.2.dylib
 	install_name_tool -change $(GPHOTO2_LIBDIR)/libgphoto2_port.0.dylib @loader_path/libgphoto2_port.0.dylib $(DEVICEADAPTERPATH)/libgphoto2/libgphoto2.2.dylib
+	install_name_tool -change /usr/lib/libltdl.3.dylib /usr/lib/libltdl.dylib $(DEVICEADAPTERPATH)/libgphoto2/libgphoto2.2.dylib
 	cp $(GPHOTO2_LIBDIR)/libgphoto2_port.0.dylib $(DEVICEADAPTERPATH)/libgphoto2/
 	install_name_tool -id @loader_path/libgphoto2/libgphoto2_port.0.dylib $(DEVICEADAPTERPATH)/libgphoto2/libgphoto2_port.0.dylib
+	install_name_tool -change /usr/lib/libltdl.3.dylib /usr/lib/libltdl.dylib $(DEVICEADAPTERPATH)/libgphoto2/libgphoto2_port.0.dylib
 	cp $(GPHOTO2_LIBDIR)/libgphoto2/$(GPHOTO2_VERSION)/*.so $(DEVICEADAPTERPATH)/libgphoto2/libgphoto2/
 	cp $(GPHOTO2_LIBDIR)/libgphoto2_port/$(GPHOTO2_PORT_VERSION)/*.so $(DEVICEADAPTERPATH)/libgphoto2/libgphoto2_port/
 	ls $(DEVICEADAPTERPATH)/libgphoto2/libgphoto2/*.so $(DESTDIR)$(DEVICEADAPTERPATH)/libgphoto2/libgphoto2_port/*.so | xargs -n 1 install_name_tool -change $(GPHOTO2_LIBDIR)/libgphoto2.2.dylib @loader_path/../libgphoto2.2.dylib
 	ls $(DEVICEADAPTERPATH)/libgphoto2/libgphoto2/*.so $(DESTDIR)$(DEVICEADAPTERPATH)/libgphoto2/libgphoto2_port/*.so | xargs -n 1 install_name_tool -change $(GPHOTO2_LIBDIR)/libgphoto2_port.0.dylib @loader_path/../libgphoto2_port.0.dylib
+	ls $(DEVICEADAPTERPATH)/libgphoto2/libgphoto2/*.so $(DESTDIR)$(DEVICEADAPTERPATH)/libgphoto2/libgphoto2_port/*.so | xargs -n 1 install_name_tool -change /usr/lib/libltdl.3.dylib /usr/lib/libltdl.dylib
 	osacompile -e 'tell application "PTPCamera" to quit' -o $(DEVICEADAPTERPATH)/libgphoto2/KillPtpCamera.app
 
 EXTRA_DIST = license.txt
