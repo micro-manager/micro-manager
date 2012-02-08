@@ -38,9 +38,8 @@
            [mmcorej TaggedImage Configuration Metadata]
            [java.util.prefs Preferences]
            [java.net InetAddress]
-           [java.util.concurrent LinkedBlockingQueue
-                                 TimeUnit CountDownLatch]
-           [org.micromanager.utils MDUtils
+           [java.util.concurrent TimeUnit CountDownLatch]
+           [org.micromanager.utils GentleLinkedBlockingQueue MDUtils
                                    ReportingUtils]
            [org.json JSONObject JSONArray]
            [java.util Date UUID]
@@ -629,29 +628,29 @@
   (flatten (map #(super-channels % camera-channel-names) simple-channels)))
 
 (defn channel-names [simple-channels super-channels]
-  (if (< 1 (count simple-channels))
+  (if (= (count simple-channels) (count super-channels))
     (JSONArray. (map :name super-channels))
     (JSONArray. (map #(. % substring 8) (map :name super-channels))  )))
 
 (defn channel-colors [simple-channels super-channels channel-names]
-    (if (< 1 (count simple-channels))
+    (if (= (count simple-channels) (count super-channels))
       (JSONArray. (map #(.getRGB (:color %)) super-channels)) 
       (JSONArray. (map #(. MMAcquisition getMultiCamDefaultChannelColor % (.getString channel-names %))
                          (range (count super-channels))  ))))      
     
-  
   
 (defn make-summary-metadata [settings]
   (let [depth (core getBytesPerPixel)
         channels (:channels settings)
         num-camera-channels (core getNumberOfCameraChannels)
         simple-channels (if-not (empty? channels) channels [{:name "Default" :color java.awt.Color/WHITE}])
-        super-channels (all-super-channels simple-channels (get-camera-channel-names))]
+        super-channels (all-super-channels simple-channels (get-camera-channel-names))
+        ch-names (channel-names simple-channels super-channels)]
      (JSONObject. {
       "BitDepth" (core getImageBitDepth)
       "Channels" (count super-channels)
-      "ChNames" (channel-names simple-channels super-channels)
-      "ChColors" (JSONArray. (map #(.getRGB (:color %)) super-channels))         
+      "ChNames" ch-names
+      "ChColors" (channel-colors simple-channels super-channels ch-names)       
       "ChContrastMax" (JSONArray. (repeat (count super-channels) Integer/MIN_VALUE))
       "ChContrastMin" (JSONArray. (repeat (count super-channels) Integer/MAX_VALUE))
       "Comment" (:comment :settings)
@@ -741,7 +740,7 @@
   (def eng acq-eng)
   (load-mm)
   (swap! (.state this) assoc :stop false :pause false :finished false)
-  (let [out-queue (LinkedBlockingQueue. 10)
+  (let [out-queue (GentleLinkedBlockingQueue.)
         settings (convert-settings acq-settings)
         summary-metadata (make-summary-metadata settings)]
     (swap! (.state this) assoc :summary-metadata summary-metadata)
