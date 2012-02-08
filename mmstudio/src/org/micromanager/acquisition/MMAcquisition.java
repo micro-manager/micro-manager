@@ -367,6 +367,20 @@ public class MMAcquisition {
          ReportingUtils.showError(ex);
       }
    }
+   
+   public static int getMultiCamDefaultChannelColor(int index, String channelName) {
+      Preferences root = Preferences.userNodeForPackage(AcqControlDlg.class);
+      Preferences colorPrefs = root.node(root.absolutePath() + "/" + AcqControlDlg.COLOR_SETTINGS_NODE);
+      int color = DEFAULT_COLORS[index % DEFAULT_COLORS.length].getRGB();
+      String channelGroup = MMStudioMainFrame.getInstance().getCore().getChannelGroup();
+      if (channelGroup.length() == 0) 
+         color = colorPrefs.getInt("Color_Camera_" + channelName, color);
+      else 
+         color = colorPrefs.getInt("Color_" + channelGroup
+                 + "_" + channelName, color);
+      
+      return color;
+   }
 
    private void setDefaultChannelTags(JSONObject md) {
 
@@ -389,21 +403,11 @@ public class MMAcquisition {
          }
       else
          for (Integer i = 0; i < numChannels_; i++) {
-            Preferences root = Preferences.userNodeForPackage(AcqControlDlg.class);
-            Preferences colorPrefs = root.node(root.absolutePath() + "/" + AcqControlDlg.COLOR_SETTINGS_NODE);
-
-            int color = DEFAULT_COLORS[i % DEFAULT_COLORS.length].getRGB();
             try {
-               String channelGroup = MMStudioMainFrame.getInstance().getCore().getChannelGroup();
-               if (channelGroup.length() == 0)
-                  color = colorPrefs.getInt("Color_Camera_" + channelNames_.getString(i), color);
-               else
-                  color = colorPrefs.getInt("Color_" + channelGroup 
-                       + "_" + channelNames_.getString(i), color);
+               channelColors_.put(getMultiCamDefaultChannelColor(i, channelNames_.getString(i)));
             } catch (JSONException ex) {
                ReportingUtils.logError(ex);
             }
-            channelColors_.put(color);
             
             try {
                channelNames_.get(i);
@@ -415,7 +419,7 @@ public class MMAcquisition {
                }
             }
             try {
-               channelMaxes.put(Math.pow(2, md.getInt("BitDepth"))-1) ;
+               channelMaxes.put(Math.pow(2, md.getInt("BitDepth")) - 1);
                channelMins.put(0);
             } catch (Exception e) {
                ReportingUtils.logError(e);

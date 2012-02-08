@@ -32,6 +32,7 @@
            [org.micromanager.api AcquisitionEngine TaggedImageAnalyzer]
            [org.micromanager.acquisition AcquisitionWrapperEngine LiveAcq TaggedImageQueue
                                          ProcessorStack SequenceSettings MMImageCache
+                                         MMAcquisition
                                          TaggedImageStorageRam VirtualAcquisitionDisplay]
            [org.micromanager.utils ReportingUtils]
            [mmcorej TaggedImage Configuration Metadata]
@@ -627,6 +628,19 @@
 (defn all-super-channels [simple-channels camera-channel-names]
   (flatten (map #(super-channels % camera-channel-names) simple-channels)))
 
+(defn channel-names [simple-channels super-channels]
+  (if (< 1 (count simple-channels))
+    (JSONArray. (map :name super-channels))
+    (JSONArray. (map #(. % substring 8) (map :name super-channels))  )))
+
+(defn channel-colors [simple-channels super-channels channel-names]
+    (if (< 1 (count simple-channels))
+      (JSONArray. (map #(.getRGB (:color %)) super-channels)) 
+      (JSONArray. (map #(. MMAcquisition getMultiCamDefaultChannelColor % (.getString channel-names %))
+                         (range (count super-channels))  ))))      
+    
+  
+  
 (defn make-summary-metadata [settings]
   (let [depth (core getBytesPerPixel)
         channels (:channels settings)
@@ -636,7 +650,7 @@
      (JSONObject. {
       "BitDepth" (core getImageBitDepth)
       "Channels" (count super-channels)
-      "ChNames" (JSONArray. (map :name super-channels))
+      "ChNames" (channel-names simple-channels super-channels)
       "ChColors" (JSONArray. (map #(.getRGB (:color %)) super-channels))         
       "ChContrastMax" (JSONArray. (repeat (count super-channels) Integer/MIN_VALUE))
       "ChContrastMin" (JSONArray. (repeat (count super-channels) Integer/MAX_VALUE))
