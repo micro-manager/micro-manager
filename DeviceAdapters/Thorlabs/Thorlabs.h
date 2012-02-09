@@ -318,7 +318,7 @@ public:
   
    void GetName(char* pszName) const;
    bool Busy();
-   unsigned long GetNumberOfPositions()const {return numPos_;}
+   unsigned long GetNumberOfPositions() const;
 
    // action interface
    // ----------------
@@ -336,7 +336,7 @@ private:
    bool initialized_;
    bool busy_;
    bool home_;
-   long numPos_;
+   long numberOfPositions_;
    long position_;
    std::string port_;
    double answerTimeoutMs_;      // max wait for the device to answer

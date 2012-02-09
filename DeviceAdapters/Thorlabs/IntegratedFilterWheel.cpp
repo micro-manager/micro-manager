@@ -145,11 +145,12 @@ const unsigned char getStatusRsp[] = {       0x81, // cmd low
                                              };
 
 
+//#define DRY_RUN
 using namespace std;
 extern const char* g_WheelDeviceName;
 
 IntegratedFilterWheel::IntegratedFilterWheel() : 
-   numPos_(6), 
+   numberOfPositions_(0), 
    busy_(false),
    home_(false),
    initialized_(false), 
@@ -200,14 +201,6 @@ int IntegratedFilterWheel::Initialize()
    if (DEVICE_OK != ret)
       return ret;
 
-   // create default positions and labels
-   char buf[MM::MaxStrLength];
-   for (long i=0; i<numPos_; i++)
-   {
-      snprintf(buf, MM::MaxStrLength, "Position-%ld", i + 1);
-      SetPositionLabel(i, buf);
-   }
-
    // State
    // -----
    CPropertyAction* pAct = new CPropertyAction (this, &IntegratedFilterWheel::OnState);
@@ -222,8 +215,11 @@ int IntegratedFilterWheel::Initialize()
    if (ret != DEVICE_OK)
       return ret;
 
+
+#ifndef DRY_RUN
    // discover number of positions
    int numPos_ = DiscoverNumberOfPositions();
+
    if (numPos_ == 0)
    {
       // if the number iz zero, homing required
@@ -238,10 +234,20 @@ int IntegratedFilterWheel::Initialize()
       if (numPos_ == 0)
          return ERR_INVALID_NUMBER_OF_POS;
    }
-
    ret = RetrieveCurrentPosition(position_);
-    if (ret != DEVICE_OK)
+   if (ret != DEVICE_OK)
       return ret; 
+#else
+   numberOfPositions_ = 8;
+#endif
+
+    // create default positions and labels
+   char buf[MM::MaxStrLength];
+   for (long i=0; i<numberOfPositions_; i++)
+   {
+      snprintf(buf, MM::MaxStrLength, "Position-%ld", i + 1);
+      SetPositionLabel(i, buf);
+   }
 
    ret = UpdateStatus();
    if (ret != DEVICE_OK)
@@ -296,6 +302,11 @@ int IntegratedFilterWheel::Shutdown()
       initialized_ = false;
    }
    return DEVICE_OK;
+}
+
+unsigned long IntegratedFilterWheel::GetNumberOfPositions() const
+{
+   return numberOfPositions_;
 }
 
 
@@ -393,13 +404,13 @@ int IntegratedFilterWheel::DiscoverNumberOfPositions()
  */
 int IntegratedFilterWheel::GoToPosition(long pos)
 {
-   if (numPos_ < 1 || pos < 0 || pos >= numPos_)
+   if (numberOfPositions_ < 1 || pos < 0 || pos >= numberOfPositions_)
       return ERR_INVALID_POSITION;
 
    ClearPort(*this, *GetCoreCallback(), port_);
 
    // calculate number of steps to reach specified position
-   unsigned int steps = (unsigned int)(((double)stepsTurn_ / numPos_) * pos + offset_ + 0.5);
+   unsigned int steps = (unsigned int)(((double)stepsTurn_ / numberOfPositions_) * pos + offset_ + 0.5);
 
    // send command
    unsigned char cmd[sizeof(setPosCmd)];
@@ -420,7 +431,7 @@ int IntegratedFilterWheel::GoToPosition(long pos)
  */
 int IntegratedFilterWheel::RetrieveCurrentPosition(long& pos)
 {
-   if (numPos_ < 1)
+   if (numberOfPositions_ < 1)
       return ERR_INVALID_NUMBER_OF_POS;
 
    ClearPort(*this, *GetCoreCallback(), port_);
@@ -447,7 +458,7 @@ int IntegratedFilterWheel::RetrieveCurrentPosition(long& pos)
       return ERR_UNRECOGNIZED_ANSWER;
 
    unsigned int steps = *((unsigned int*)(answer + 8));
-   double onePos = (double)stepsTurn_ / numPos_;
+   double onePos = (double)stepsTurn_ / numberOfPositions_;
    pos = (long)((steps - offset_) / onePos + 0.5);
 
    return DEVICE_OK;
@@ -470,7 +481,7 @@ int IntegratedFilterWheel::OnState(MM::PropertyBase* pProp, MM::ActionType eAct)
    {
       long pos;
       pProp->Get(pos);
-      if (pos >= numPos_ || pos < 0)
+      if (pos >= numberOfPositions_ || pos < 0)
       {
          pProp->Set(position_); // revert
          return ERR_INVALID_POSITION;
