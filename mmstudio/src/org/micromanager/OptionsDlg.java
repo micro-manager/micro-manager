@@ -43,6 +43,7 @@ import javax.swing.SpringLayout;
 import mmcorej.CMMCore;
 
 import org.micromanager.api.DeviceControlGUI;
+import org.micromanager.api.ScriptInterface;
 import org.micromanager.utils.GUIColors;
 import org.micromanager.utils.MMDialog;
 import org.micromanager.utils.NumberUtils;
@@ -62,14 +63,14 @@ public class OptionsDlg extends MMDialog {
    private SpringLayout springLayout;
    private Preferences mainPrefs_;
    private JComboBox comboDisplayBackground_;
-   private DeviceControlGUI parent_;
+   private ScriptInterface parent_;
    private GUIColors guiColors_;
    private String currentCfgPath_;
 
    /**
     * Create the dialog
     */
-   public OptionsDlg(MMOptions opts, CMMCore core, Preferences mainPrefs, DeviceControlGUI parent, String cfgPath) {
+   public OptionsDlg(MMOptions opts, CMMCore core, Preferences mainPrefs, ScriptInterface parent, String cfgPath) {
       super();
       currentCfgPath_ = cfgPath;
       parent_ = parent;
@@ -141,10 +142,7 @@ public class OptionsDlg extends MMDialog {
 
          public void actionPerformed(final ActionEvent e) {
             core_.clearLog();
-            core_.logMessage("MM Studio version: " + parent_.getVersion());
-            core_.logMessage(core_.getVersionInfo());
-            core_.logMessage(core_.getAPIVersionInfo());
-            core_.logMessage("Operating System: " + System.getProperty("os.name") + " " + System.getProperty("os.version"));
+            parent_.logStartupProperties();
          }
       });
       clearLogFileButton.setFont(new Font("", Font.PLAIN, 10));
@@ -316,7 +314,7 @@ public class OptionsDlg extends MMDialog {
       if (parent_ != null) // test for null just to avoid crashes (should never be null)
       {
          // set background and trigger redraw of parent and its descendant windows
-         parent_.setBackgroundStyle(background);
+         MMStudioMainFrame.getInstance().setBackgroundStyle(background);
       }
    }
 }

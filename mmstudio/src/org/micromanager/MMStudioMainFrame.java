@@ -546,6 +546,14 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
       //engine_.setDirName(originalDirName);
    }
 
+   public void logStartupProperties() {
+      core_.enableDebugLog(options_.debugLogEnabled_);
+      core_.logMessage("MM Studio version: " + getVersion());
+      core_.logMessage(core_.getVersionInfo());
+      core_.logMessage(core_.getAPIVersionInfo());
+      core_.logMessage("Operating System: " + System.getProperty("os.name") + " " + System.getProperty("os.version"));
+      core_.logMessage("JVM: " + System.getProperty("java.vm.name") + ", version " + System.getProperty("java.version") + "; " + System.getProperty("sun.arch.data.model") + " bit");
+   }
 
    /**
     * @deprecated
@@ -1739,9 +1747,9 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
           }
       });
 
+
       // add window listeners
       addWindowListener(new WindowAdapter() {
-
          @Override
          public void windowClosing(WindowEvent e) {
             closeSequence();
@@ -1759,16 +1767,7 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
                return;
             }
             ReportingUtils.setCore(core_);
-            //core_.setDeviceDiscoveryEnabled(options_.enableDeviceDiscovery_);
-
-            core_.enableDebugLog(options_.debugLogEnabled_);
-            core_.logMessage("MM Studio version: " + getVersion());
-            core_.logMessage(core_.getVersionInfo());
-            core_.logMessage(core_.getAPIVersionInfo());
-            core_.logMessage("Operating System: " + System.getProperty("os.name") + " " + System.getProperty("os.version"));
-            core_.logMessage("JVM: " + System.getProperty("java.vm.name")
-                    + ", version " + System.getProperty("java.version")
-                    + "; " + System.getProperty("sun.arch.data.model") + " bit");
+            logStartupProperties();
                     
             cameraLabel_ = "";
             shutterLabel_ = "";

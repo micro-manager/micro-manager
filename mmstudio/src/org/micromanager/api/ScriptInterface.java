@@ -776,4 +776,14 @@ public interface ScriptInterface {
     */
    public boolean versionLessThan(String version) throws MMScriptException;
 
+   /**
+    * Write various properties of MM and the OS to the log.
+    */
+   public void logStartupProperties();
+
+   /*
+    * Make the main window the frontmost, active window again
+    */
+   public void makeActive();
+
 }
