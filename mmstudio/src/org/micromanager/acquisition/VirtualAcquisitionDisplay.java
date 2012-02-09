@@ -29,6 +29,7 @@ import java.awt.image.ColorModel;
 import java.io.File;
 import java.io.IOException;
 import java.util.prefs.Preferences;
+import ij.gui.Roi;
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
 import javax.swing.Timer;
@@ -1230,9 +1231,17 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
    }
 
    private void createWindow() {  
-
       DisplayWindow win = new DisplayWindow(hyperImage_);
-
+      win.getCanvas().addMouseListener(new MouseListener() {
+            public void mouseClicked(MouseEvent me) {}
+            public void mousePressed(MouseEvent me) {}
+            public void mouseReleased(MouseEvent me) {
+                mdPanel_.refresh();
+            }
+            public void mouseEntered(MouseEvent me) {}
+            public void mouseExited(MouseEvent me) {}
+      });
+      
       win.setBackground(MMStudioMainFrame.getInstance().getBackgroundColor());
       MMStudioMainFrame.getInstance().addMMBackgroundListener(win);
 
