@@ -355,7 +355,7 @@ int Hub::Initialize()
 
    // Interface to a hard reset of the controller
    CPropertyAction* pAct = new CPropertyAction(this, &Hub::OnReset);
-   ret = CreateProperty(g_Ludl_Reset, "Operate", MM::String, false, pAct, true);
+   ret = CreateProperty(g_Ludl_Reset, "Operate", MM::String, false, pAct);
    if (ret != DEVICE_OK)
       return ret;
    AddAllowedValue(g_Ludl_Reset, "Operate");
@@ -363,7 +363,7 @@ int Hub::Initialize()
    
    // Transmission Delay, Delay between chars send by controller (number * 0.5 msec)
    pAct = new CPropertyAction(this, &Hub::OnTransmissionDelay);
-   ret = CreateProperty(g_Ludl_TransmissionDelay, "4", MM::Integer, false, pAct, true);
+   ret = CreateProperty(g_Ludl_TransmissionDelay, "4", MM::Integer, false, pAct);
    if (ret != DEVICE_OK)
       return ret;
 
