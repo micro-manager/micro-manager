@@ -98,8 +98,8 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
    final private int maxIntensity_;
    private Color color_;
 
-   public ChannelControlPanel(int channelIndex, MultiChannelContrastPanel mccPanel, MetadataPanel md, int height,
-           Color color, int bitDepth, double fractionToReject, boolean logScale) {
+   public ChannelControlPanel(int channelIndex, MultiChannelContrastPanel mccPanel, MetadataPanel md, ImageCache cache,
+           int height, Color color, int bitDepth, double fractionToReject, boolean logScale) {
       height_ = height;
       fractionToReject_ = fractionToReject;
       logScale_ = logScale;
@@ -114,7 +114,6 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
       channelIndex_ = channelIndex;
       hp_ = addHistogramPanel();
       mccPanel_ = mccPanel; 
-      ImageCache cache = VirtualAcquisitionDisplay.getDisplay(WindowManager.getCurrentImage()).getImageCache();
       loadDisplaySettings(cache);
       updateChannelNameAndColor(cache);
       cache.setChannelColor(channelIndex_, color_.getRGB());
@@ -327,7 +326,7 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
    private void colorPickerLabelMouseClicked() {
       //Can only edit color in this way if there is an active window
      //so it is ok to get image cache in this way
-     ImageCache cache = VirtualAcquisitionDisplay.getDisplay(WindowManager.getCurrentImage()).getImageCache();
+     ImageCache cache = VirtualAcquisitionDisplay.getDisplay(mdPanel_.getCurrentImage()).getImageCache();
       String name = "selected";
       if (cache.getChannelName(channelIndex_) != null)
          name = cache.getChannelName(channelIndex_);
@@ -375,7 +374,7 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
    }
 
     private void channelNameCheckboxAction() {
-       CompositeImage ci = (CompositeImage) WindowManager.getCurrentImage();
+       CompositeImage ci = (CompositeImage) mdPanel_.getCurrentImage();
        ImageCache cache = VirtualAcquisitionDisplay.getDisplay(ci).getImageCache();
        boolean[] active = ci.getActiveChannels();
        if (ci.getMode() != CompositeImage.COMPOSITE)
@@ -392,14 +391,14 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
     private void zoomInButtonAction() {
        binSize_ = Math.max(binSize_ / 2, BIN_SIZE_MIN);
        updateHistMax();
-       calcAndDisplayHistAndStats(WindowManager.getCurrentImage(),true);
+       calcAndDisplayHistAndStats(mdPanel_.getCurrentImage(),true);
        updateHistogramCursors();
     }
 
     private void zoomOutButtonAction() {
        binSize_ = Math.min(binSize_ * 2, BIN_SIZE_MAX);              
        updateHistMax();
-       calcAndDisplayHistAndStats(WindowManager.getCurrentImage(),true);
+       calcAndDisplayHistAndStats(mdPanel_.getCurrentImage(),true);
        updateHistogramCursors();
     }
     
@@ -435,7 +434,7 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
 
    public void setLogScale(boolean logScale) {
       logScale_ = logScale;
-      calcAndDisplayHistAndStats(WindowManager.getCurrentImage(),true);
+      calcAndDisplayHistAndStats(mdPanel_.getCurrentImage(),true);
    }
 
    private final HistogramPanel addHistogramPanel() {
@@ -646,7 +645,7 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
    }
 
    private VirtualAcquisitionDisplay getCurrentDisplay() {
-      ImagePlus img = WindowManager.getCurrentImage();
+      ImagePlus img = mdPanel_.getCurrentImage();
       if (img == null)
          return null;
       return VirtualAcquisitionDisplay.getDisplay(img);

@@ -93,7 +93,7 @@ public class MetadataPanel extends JPanel
    private final MetadataTableModel summaryMetadataModel_;
    private final String[] columnNames_ = {"Property", "Value"};
    private boolean showUnchangingKeys_;
-   private ImageWindow lastFocusedWindow_;
+   private ImageWindow lastWindow_;
 
    /** Creates new form MetadataPanel */
    public MetadataPanel() {
@@ -356,7 +356,7 @@ public class MetadataPanel extends JPanel
 
     private void showUnchangingPropertiesCheckboxActionPerformed(java.awt.event.ActionEvent evt) {                                                                 
        showUnchangingKeys_ = showUnchangingPropertiesCheckbox.isSelected();
-       ImagePlus img = WindowManager.getCurrentImage();
+       ImagePlus img = getCurrentImage();
        if (img != null) {
           ImageCache cache = VirtualAcquisitionDisplay.getDisplay(img).getImageCache();
           imageChangedUpdate(img,cache);
@@ -364,7 +364,7 @@ public class MetadataPanel extends JPanel
 }                                                                
 
     private void tabbedPaneStateChanged(ChangeEvent evt) {                                        
-       ImagePlus img = WindowManager.getCurrentImage();
+       ImagePlus img = getCurrentImage();
        if (img != null) {
           ImageCache cache = VirtualAcquisitionDisplay.getDisplay(img).getImageCache();
           imageChangedUpdate(img,cache);
@@ -375,7 +375,7 @@ public class MetadataPanel extends JPanel
       summaryCommentsTextArea.getDocument()
               .addDocumentListener(new DocumentListener() {
          private void handleChange() {
-            writeSummaryComments(WindowManager.getCurrentImage());
+            writeSummaryComments(getCurrentImage());
          }
 
          public void insertUpdate(DocumentEvent e) {
@@ -394,7 +394,7 @@ public class MetadataPanel extends JPanel
       imageCommentsTextArea.getDocument()
               .addDocumentListener(new DocumentListener() {
          private void handleChange() {
-            writeImageComments(WindowManager.getCurrentImage());
+            writeImageComments(getCurrentImage());
          }
 
          public void insertUpdate(DocumentEvent e) {
@@ -525,6 +525,12 @@ public class MetadataPanel extends JPanel
       }
    }
    
+   public ImagePlus getCurrentImage() {
+       if (lastWindow_ == null)
+           return null;
+       return lastWindow_.getImagePlus();
+   }
+   
    /*
     * used to store contrast settings for snap live window
     */
@@ -566,7 +572,7 @@ public class MetadataPanel extends JPanel
    }
    
    public void refresh() {
-      ImagePlus img = WindowManager.getCurrentImage();
+      ImagePlus img = getCurrentImage();
       if (currentContrastPanel_ == null || img == null)
          return;
       VirtualAcquisitionDisplay vad = VirtualAcquisitionDisplay.getDisplay(img);
@@ -577,17 +583,17 @@ public class MetadataPanel extends JPanel
       currentContrastPanel_.displayChanged(img, cache);
       imageChangedUpdate(img, cache);
    }
-
-   public synchronized void focusReceived(ImageWindow focusedWindow) {
-      if (focusedWindow == lastFocusedWindow_)
+   
+   public synchronized void setup(ImageWindow win) { 
+      if (win == lastWindow_)
          return;
-      lastFocusedWindow_ = focusedWindow;
-      if (focusedWindow == null  || !(focusedWindow instanceof VirtualAcquisitionDisplay.DisplayWindow) ) {
+      lastWindow_ = win;
+      if (win == null  || !(win instanceof VirtualAcquisitionDisplay.DisplayWindow) ) {
          imageChangedUpdate((ImagePlus)null,null);
          return;
       }
 
-      final ImagePlus imgp = focusedWindow.getImagePlus();
+      final ImagePlus imgp = win.getImagePlus();
       final ImageCache cache = getCache(imgp);
       final VirtualAcquisitionDisplay acq = getVirtualAcquisitionDisplay(imgp);
       if (acq.getNumChannels() > 1)
@@ -616,6 +622,10 @@ public class MetadataPanel extends JPanel
 
          imageChangedUpdate(imgp,cache);
       }
+   }
+
+   public void focusReceived(ImageWindow focusedWindow) {
+       setup (focusedWindow);
    }
 
    
@@ -651,7 +661,7 @@ public class MetadataPanel extends JPanel
    }
    
    public void drawWithoutUpdate() {
-      drawWithoutUpdate(WindowManager.getCurrentImage());
+      drawWithoutUpdate(getCurrentImage());
    }
 
    /*

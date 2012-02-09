@@ -504,7 +504,7 @@ public class SingleChannelContrastPanel extends JPanel implements
          logScale_ = true;
       else 
          logScale_ = false;
-      ImagePlus img = WindowManager.getCurrentImage();
+      ImagePlus img = mdPanel_.getCurrentImage();
       if (img!= null)
          calcAndDisplayHistAndStats(img,true);
       saveSettings();
@@ -512,7 +512,7 @@ public class SingleChannelContrastPanel extends JPanel implements
 
    private void pixelTypeAction() {
       setHistMaxAndBinSize();
-      ImagePlus img = WindowManager.getCurrentImage(); 
+      ImagePlus img = mdPanel_.getCurrentImage(); 
       if (img!= null)
          calcAndDisplayHistAndStats(img,true);
    }
@@ -520,14 +520,14 @@ public class SingleChannelContrastPanel extends JPanel implements
    private void rejectOutliersAction() {
       rejectOutliersPercentSpinner_.setEnabled(rejectOutliersCheckBox_.isSelected());
       percentOutliersLabel_.setEnabled(rejectOutliersCheckBox_.isSelected());
-      calcAndDisplayHistAndStats(WindowManager.getCurrentImage(),true);
+      calcAndDisplayHistAndStats(mdPanel_.getCurrentImage(),true);
       autoButtonAction();
       saveSettings();
    }
 
    private void percentOutliersAction() {
       fractionToReject_ = ((Double) rejectOutliersPercentSpinner_.getValue());
-      calcAndDisplayHistAndStats(WindowManager.getCurrentImage(),true);
+      calcAndDisplayHistAndStats(mdPanel_.getCurrentImage(),true);
       autoButtonAction();
       saveSettings();
    }
@@ -622,7 +622,7 @@ public class SingleChannelContrastPanel extends JPanel implements
       } catch (ParseException p) {
          ReportingUtils.logError(p, "ContrastPanel, Function propertyChange");
       }
-      ImagePlus ip = WindowManager.getCurrentImage();
+      ImagePlus ip = mdPanel_.getCurrentImage();
       if (ip != null) 
             mdPanel_.drawWithoutUpdate();
    }
@@ -678,7 +678,7 @@ public class SingleChannelContrastPanel extends JPanel implements
    
    public void displayChanged(ImagePlus img, ImageCache cache) {
       try {
-         VirtualAcquisitionDisplay vad = VirtualAcquisitionDisplay.getDisplay(WindowManager.getCurrentImage());
+         VirtualAcquisitionDisplay vad = VirtualAcquisitionDisplay.getDisplay(mdPanel_.getCurrentImage());
          int bitDepth = MDUtils.getBitDepth(vad.getSummaryMetadata());
          maxIntensity_ = (int) (Math.pow(2, bitDepth) - 1);
       } catch (JSONException ex) {

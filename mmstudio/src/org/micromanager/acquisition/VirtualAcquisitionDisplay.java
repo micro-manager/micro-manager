@@ -23,10 +23,7 @@ import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Point;
-import java.awt.event.ActionListener;
-import java.awt.event.AdjustmentListener;
-import java.awt.event.MouseListener;
-import java.awt.event.WindowEvent;
+import java.awt.event.*;
 import java.awt.image.BufferedImage;
 import java.awt.image.ColorModel;
 import java.io.File;
@@ -376,6 +373,19 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
       imageCache_.setDisplay(this);
    }
    
+   private void invokeAndWaitIfNotEDT(Runnable runnable) {
+       if (SwingUtilities.isEventDispatchThread())
+         runnable.run();
+      else
+         try {
+            SwingUtilities.invokeAndWait(runnable);
+        } catch (InterruptedException ex) {
+            ReportingUtils.logError(ex);
+        } catch (InvocationTargetException ex) {
+            System.out.println(ex.getCause());
+        }
+   }
+   
    private void invokeLaterIfNotEDT(Runnable runnable){
       if (SwingUtilities.isEventDispatchThread())
          runnable.run();
@@ -455,10 +465,11 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
   
       applyPixelSizeCalibration(hyperImage_);
       
-      mdPanel_.focusReceived(null);
+      mdPanel_.setup(null);
       createWindow();
       //Make sure contrast panel sets up correctly here
-      windowToFrontAndSetupMetadataPanel();
+      windowToFront();
+      setupMetadataPanel();
       
       
       cSelector_ = getSelector("c");
@@ -805,6 +816,7 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
    public void updateAndDraw() {
       if (!updating_) {
          updating_ = true;
+         setupMetadataPanel();
          if (hyperImage_ != null && hyperImage_.isVisible()) {            
             hyperImage_.updateAndDraw();
             imageChangedWindowUpdate();
@@ -874,12 +886,17 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
      
    }
 
-   private void windowToFrontAndSetupMetadataPanel() {
-      if (hyperImage_ == null || hyperImage_.getWindow() == null)
+   private void windowToFront() {
+       if (hyperImage_ == null || hyperImage_.getWindow() == null)
          return;
       hyperImage_.getWindow().toFront();
+   }
+   
+   private void setupMetadataPanel() {
+       if (hyperImage_ == null || hyperImage_.getWindow() == null)
+         return;
       //call this explicitly because it isn't fired immediately
-      mdPanel_.focusReceived(hyperImage_.getWindow());
+      mdPanel_.setup(hyperImage_.getWindow());
    }
    
    /**
@@ -914,8 +931,6 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
       if (hyperImage_ == null)
          startup(tags);
       
-      windowToFrontAndSetupMetadataPanel();
-
       int channel = 0, frame = 0, slice = 0, position = 0, superChannel = 0;
       try {
          frame = MDUtils.getFrameIndex(tags);
@@ -1390,7 +1405,7 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
          //the md panel gets rid of the first before doing stuff with
          //the second 
          if (WindowManager.getCurrentImage() == hyperImage_)
-            mdPanel_.focusReceived(null);
+            mdPanel_.setup(null);
          hyperImage_.getWindow().windowClosing(null);
          hyperImage_.close();
       }
@@ -1576,7 +1591,7 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
 
             //for some reason window focus listener doesn't always fire, so call
             //explicitly here
-            mdPanel_.focusReceived(null);
+            mdPanel_.setup(null);
 
             
             if (simple_ && hyperImage_ != null && hyperImage_.getWindow() != null && hyperImage_.getWindow().getLocation() != null) {

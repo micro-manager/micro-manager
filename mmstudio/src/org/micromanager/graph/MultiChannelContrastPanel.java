@@ -260,7 +260,7 @@ public class MultiChannelContrastPanel extends JPanel implements ContrastPanel {
       p.setLayout(layout);
       ccpList_ = new ArrayList<ChannelControlPanel>();
       for (int i = 0; i < nChannels; ++i) {
-         ChannelControlPanel ccp = new ChannelControlPanel(i, this, mdPanel_, hpHeight,
+         ChannelControlPanel ccp = new ChannelControlPanel(i, this, mdPanel_, cache, hpHeight,
                  cache.getChannelColor(i) ,cache.getBitDepth(),getFractionToReject(),
                  logScaleCheckBox_.isSelected());
          layout.putConstraint(SpringLayout.EAST, ccp, 0, SpringLayout.EAST, p);
@@ -289,7 +289,7 @@ public class MultiChannelContrastPanel extends JPanel implements ContrastPanel {
    
    private void showSizeBar() {
       boolean show = sizeBarCheckBox_.isSelected();
-      ImagePlus ip = WindowManager.getCurrentImage();
+      ImagePlus ip = mdPanel_.getCurrentImage();
       if (show) {
          ScaleBar sizeBar = new ScaleBar(ip);
 
@@ -392,7 +392,7 @@ public class MultiChannelContrastPanel extends JPanel implements ContrastPanel {
          mode = CompositeImage.COLOR;
       else
          mode = CompositeImage.GRAYSCALE;
-      ImagePlus imgp = WindowManager.getCurrentImage();
+      ImagePlus imgp = mdPanel_.getCurrentImage();
       if (imgp instanceof CompositeImage) {
          CompositeImage ci = (CompositeImage) imgp;
          ci.setMode(mode);
@@ -418,7 +418,7 @@ public class MultiChannelContrastPanel extends JPanel implements ContrastPanel {
       if (ccpList_ != null && ccpList_.size() > 0)
          for (ChannelControlPanel c : ccpList_) {
             c.setFractionToReject(getFractionToReject());
-            c.calcAndDisplayHistAndStats(WindowManager.getCurrentImage(),true);
+            c.calcAndDisplayHistAndStats(mdPanel_.getCurrentImage(),true);
             c.autoButtonAction();
          }
       saveSettings();
@@ -428,7 +428,7 @@ public class MultiChannelContrastPanel extends JPanel implements ContrastPanel {
      if (ccpList_ != null && ccpList_.size() > 0)
          for (ChannelControlPanel c : ccpList_) {
             c.setFractionToReject(getFractionToReject());
-            c.calcAndDisplayHistAndStats(WindowManager.getCurrentImage(),true);
+            c.calcAndDisplayHistAndStats(mdPanel_.getCurrentImage(),true);
             c.autoButtonAction();
          }
       saveSettings();
