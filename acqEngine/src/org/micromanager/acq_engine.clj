@@ -460,8 +460,7 @@
         z (get-z-stage-position default-z-drive)
         xy (get-xy-stage-position default-xy-stage)
         exposure (core getExposure)]
-    (reset! (.state this)
-            {
+    (swap! (.state this) assoc
              :pause false
              :stop false
              :finished false
@@ -485,7 +484,6 @@
              :pixel-size-um (core getPixelSizeUm)
              :source (core getCameraDevice)
              :pixel-type (get-pixel-type)
-            }
       )))
 
 (defn cleanup []
@@ -743,6 +741,7 @@
   (let [out-queue (GentleLinkedBlockingQueue.)
         settings (convert-settings acq-settings)
         summary-metadata (make-summary-metadata settings)]
+    (reset! (.state this) nil)
     (swap! (.state this) assoc :summary-metadata summary-metadata)
     (let [acq-thread (Thread. #(run-acquisition this settings out-queue)
                               "Acquisition Engine Thread (Clojure)")
