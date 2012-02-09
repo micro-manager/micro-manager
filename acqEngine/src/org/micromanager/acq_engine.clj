@@ -320,7 +320,8 @@
         camera-index (str (core getCameraDevice) "-CameraChannelIndex")]
     (doseq [event (:burst-data event)]
       (doseq [i (range (core getNumberOfCameraChannels))]
-        (when-not (@state :stop)
+        (when (or (core isSequenceRunning)
+                  (pos? (core getRemainingImageCount)))
           (let [image (pop-burst-image)
                 image+ (if-not slices
                          image
@@ -336,9 +337,12 @@
                            event)]
               (.put out-queue (make-TaggedImage (annotate-image image+ event+ @state
                                                                 (burst-time (:tags image) @state))))))
-          (when (core isBufferOverflowed)
-            (swap! state assoc :stop true)
-            (ReportingUtils/showError "Circular buffer overflowed."))))))
+          (when (and (not (@state :stop))
+                     (core isBufferOverflowed))
+            (swap! state assoc :stop true
+                               :circular-buffer-overflow true))))))
+  (when (@state :circular-buffer-overflow)
+    (ReportingUtils/showError "Circular buffer overflowed."))
   (while (and (not (@state :stop)) (. mmc isSequenceRunning))
     (Thread/sleep 5)))
 
