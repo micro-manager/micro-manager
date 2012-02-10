@@ -1232,6 +1232,7 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
 
    private void createWindow() {  
       DisplayWindow win = new DisplayWindow(hyperImage_);
+      //This mouse listener updates the histogram after an ROI is drawn
       win.getCanvas().addMouseListener(new MouseListener() {
             public void mouseClicked(MouseEvent me) {}
             public void mousePressed(MouseEvent me) {}
