@@ -21,6 +21,7 @@ import org.micromanager.api.ScriptInterface;
  */
 public class GaussianTrack_ implements PlugIn, MMPlugin {
     public static String menuName = "GaussianTrack";
+    public static String tooltipDescription = "Toolbox for analysis of spots using Gaussian Fitting";
     private CMMCore core_;
     private ScriptInterface gui_;
     private MainForm theForm_;
