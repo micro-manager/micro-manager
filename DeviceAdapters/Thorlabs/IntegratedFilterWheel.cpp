@@ -218,9 +218,9 @@ int IntegratedFilterWheel::Initialize()
 
 #ifndef DRY_RUN
    // discover number of positions
-   int numPos_ = DiscoverNumberOfPositions();
+   numberOfPositions_ = DiscoverNumberOfPositions();
 
-   if (numPos_ == 0)
+   if (numberOfPositions_ == 0)
    {
       // if the number iz zero, homing required
       ret = Home();
@@ -228,17 +228,17 @@ int IntegratedFilterWheel::Initialize()
          return ret;
 
       // try again
-      numPos_ = DiscoverNumberOfPositions();
+     numberOfPositions_ = DiscoverNumberOfPositions();
 
       // if the number is still zero, something went wrong
-      if (numPos_ == 0)
+      if (numberOfPositions_ == 0)
          return ERR_INVALID_NUMBER_OF_POS;
    }
    ret = RetrieveCurrentPosition(position_);
    if (ret != DEVICE_OK)
       return ret; 
 #else
-   numberOfPositions_ = 8;
+   numberOfPositions_ = (int)*(getParamsRsp+14);
 #endif
 
     // create default positions and labels
@@ -260,6 +260,7 @@ int IntegratedFilterWheel::Initialize()
 
 bool IntegratedFilterWheel::Busy()
 {
+   /*
    // send command
    ClearPort(*this, *GetCoreCallback(), port_);
    int ret = SetCommand(reqStatusCmd, sizeof(reqStatusCmd));
@@ -290,7 +291,7 @@ bool IntegratedFilterWheel::Busy()
 
    if (movingCW || movingCCW)
       return true; // busy moving
-
+*/
    return false;
 }
 
@@ -354,22 +355,33 @@ int IntegratedFilterWheel::GetCommand(unsigned char* response, unsigned length, 
  */
 int IntegratedFilterWheel::Home()
 {
+   LogMessage("Home()");
    ClearPort(*this, *GetCoreCallback(), port_);
    int ret = SetCommand(homeCmd, sizeof(homeCmd));
    if (ret != DEVICE_OK)
+   {
+      LogMessage("SetCommand() failed");
       return ret;
+   }
 
    const int cmdLength = sizeof(homeRsp);
    unsigned char answer[cmdLength];
    memset(answer, 0, cmdLength);
    ret = GetCommand(answer, cmdLength, answerTimeoutMs_);
    if (ret != DEVICE_OK)
+   {
+      LogMessage("GetCommand() failed");
       return ret;
+   }
 
    if (memcmp(answer, homeRsp, cmdLength) == 0)
+   {
+      LogMessage("Response signature failed");
       return ERR_UNRECOGNIZED_ANSWER;
+   }
 
    home_ = true; // successfully homed
+   LogMessage("Device homed");
 
    return DEVICE_OK;
 }
@@ -380,6 +392,7 @@ int IntegratedFilterWheel::Home()
  */
 int IntegratedFilterWheel::DiscoverNumberOfPositions()
 {
+   LogMessage("DiscoverNumberOfPositions()");
    ClearPort(*this, *GetCoreCallback(), port_);
    int ret = SetCommand(reqParamsCmd, sizeof(reqParamsCmd));
    if (ret != DEVICE_OK)
@@ -390,13 +403,23 @@ int IntegratedFilterWheel::DiscoverNumberOfPositions()
    memset(answer, 0, answLength);
    ret = GetCommand(answer, answLength, answerTimeoutMs_);
    if (ret != DEVICE_OK)
+   {
+      LogMessage("GetCommand() failed");
       return 0;
+   }
 
    // check response signature
    if (memcmp(answer, getParamsRsp, 14) != 0)
-      return ERR_UNRECOGNIZED_ANSWER;
+   {
+      LogMessage("Response signature failed");
+      return 0;
+   }
 
-   return (int)*(answer+14);
+   int numpos = (int)*(answer+14);
+   ostringstream os;
+   os << "Found " << numpos << " positions";
+   LogMessage(os.str().c_str());
+   return numpos;
 }
 
 /**
@@ -404,6 +427,7 @@ int IntegratedFilterWheel::DiscoverNumberOfPositions()
  */
 int IntegratedFilterWheel::GoToPosition(long pos)
 {
+   LogMessage("GoToPosition()");
    if (numberOfPositions_ < 1 || pos < 0 || pos >= numberOfPositions_)
       return ERR_INVALID_POSITION;
 
@@ -431,6 +455,7 @@ int IntegratedFilterWheel::GoToPosition(long pos)
  */
 int IntegratedFilterWheel::RetrieveCurrentPosition(long& pos)
 {
+   LogMessage("RetrieveCurrentPosition()");
    if (numberOfPositions_ < 1)
       return ERR_INVALID_NUMBER_OF_POS;
 
