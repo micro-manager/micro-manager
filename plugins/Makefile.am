@@ -79,6 +79,15 @@ CRISP.jar:  \
 	$(JAVAC) -source 1.5 -target 1.5 -sourcepath $(srcdir):. -classpath $(IJJARPATH):$(BSHJARPATH):$(COMMONSMATHJARPATH):$(SWINGLAYOUTJARPATH):$(JFREECHARTJARPATH):../bin/MMCoreJ.jar:../mmstudio/MMJ_.jar:. $(srcdir)/CRISP/src/org/micromanager/CRISP/*.java -d build
 	cd build && jar cf ../CRISP.jar * 
 
+Gaussian.jar:  \
+	$(srcdir)/Gaussian/source/GaussianTrack_.java \
+	$(srcdir)/Gaussian/source/edu/valelab/GaussianFit/GaussianFit.java \
+	$(srcdir)/Gaussian/source/edu/valelab/GaussianFit/FindLocalMaxima.java 
+	test -d build || mkdir build
+	rm -rf build/*
+	$(JAVAC) -source 1.5 -target 1.5 -sourcepath $(srcdir):. -classpath $(IJJARPATH):$(BSHJARPATH):$(COMMONSMATHJARPATH):$(SWINGLAYOUTJARPATH):$(JFREECHARTJARPATH):../bin/MMCoreJ.jar:../mmstudio/MMJ_.jar:$(CLASSEXT)/TSFProto.jar:$(CLASSEXT)/gproto.jar:. $(srcdir)/Gaussian/source/edu/valelab/GaussianFit/*.java -d build
+	cd build && jar cf ../Gaussian.jar * 
+
 DataBrowser.jar: \
 	$(srcdir)/DataBrowser/src/org/micromanager/browser/*.clj
 	test -d DataBrowser/classes || mkdir DataBrowser/classes
@@ -112,6 +121,7 @@ install:
 	cp ClojureEditor.jar $(DESTDIR)$(IJPATH)/mmplugins
 	cp SplitView.jar $(DESTDIR)$(IJPATH)/mmplugins
 	cp ImageFlipper.jar $(DESTDIR)$(IJPATH)/mmplugins
+	cp Gaussian.jar $(DESTDIR)$(IJPATH)/mmplugins
 	
 clean:
 	test -f MMTracker_.jar && rm MMTracker_.jar || echo "MMTracker_.jar not found"
@@ -124,5 +134,6 @@ clean:
 	test -f RecallPlugin.jar && rm RecallPlugin.jar || echo "RecallPlugin.jar not found"
 	test -f Big.jar && rm Big.jar || echo "Big.jar not found"
 	test -f ImageFlipper.jar && rm ImageFlipper.jar || echo "ImageFlipper.jar not found"
+	test -f Gaussian.jar && rm Gaussian.jar || echo "Gaussian.jar not found"
 	
 EXTRA_DIST = src build.xml
