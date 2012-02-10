@@ -191,7 +191,8 @@ public class MicroscopeModel {
                      }
                   }
                } catch (Exception e) {
-                  ReportingUtils.logError(e, "Unable to load " + libs.get(i) + " library.");
+            	   // This is cluttering CoreLog.txt
+                  // ReportingUtils.logError(e, "Unable to load " + libs.get(i) + " library.");
                }
             }
          }
@@ -252,7 +253,8 @@ public class MicroscopeModel {
                      }
                   }
                } catch (Exception e) {
-                  ReportingUtils.logError(e, "Unable to load " + libs.get(i) + " library.");
+            	   // Cluttering CoreLog.txt
+                  // ReportingUtils.logError(e, "Unable to load " + libs.get(i) + " library.");
                }
             }
          }

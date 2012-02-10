@@ -411,7 +411,7 @@ vector<string> CMMCore::getAvailableDevices(const char* library) throw (CMMError
    }
    catch (CMMError& e)
    {
-      logError("core", e.getMsg().c_str());
+      // logError("core", e.getMsg().c_str());
       throw;
    }
 }

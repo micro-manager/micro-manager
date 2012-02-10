@@ -128,7 +128,7 @@ string CPluginManager::FindInSearchPath(string filename)
       #endif
 
       // test whether it exists
-      cout << "Searching for " << path.str() << endl;
+      //cout << "Searching for " << path.str() << endl;
       ifstream in(path.str().c_str(), ifstream::in);
       in.close();
 

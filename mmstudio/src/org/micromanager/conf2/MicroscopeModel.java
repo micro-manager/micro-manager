@@ -194,9 +194,9 @@ public class MicroscopeModel {
                   devs = Device.getLibraryContents(libs.get(i), core);
                   for (int j = 0; j < devs.length; j++) {
                      if (devs[j].isSerialPort()) {
-                        ReportingUtils.logMessage("   "
-                              + devs[j].getAdapterName() + ", "
-                              + devs[j].getDescription());
+//                        ReportingUtils.logMessage("   "
+//                              + devs[j].getAdapterName() + ", "
+//                              + devs[j].getDescription());
                         devs[j].setName(devs[j].getAdapterName());
                         if (!ports.contains(devs[j])) {
                            ports.add(devs[j]);
@@ -205,8 +205,8 @@ public class MicroscopeModel {
                      }
                   }
                } catch (Exception e) {
-                  ReportingUtils.logError("Unable to load " + libs.get(i)
-                        + " library:" + e.getMessage());
+//                  ReportingUtils.logError("Unable to load " + libs.get(i)
+//                        + " library:" + e.getMessage());
                }
             }
          }
@@ -263,13 +263,15 @@ public class MicroscopeModel {
                   devs = Device.getLibraryContents(libs.get(i), core);
                   for (int j = 0; j < devs.length; j++) {
                      if (!devs[j].isSerialPort()) {
-                        ReportingUtils.logMessage("   "
-                              + devs[j].getAdapterName() + ", "
-                              + devs[j].getDescription());
+//                        ReportingUtils.logMessage("   "
+//                              + devs[j].getAdapterName() + ", "
+//                              + devs[j].getDescription());
                         devsTotal.add(devs[j]);
                      }
                   }
                } catch (Exception e) {
+            	   // This happens when vendor's drivers are not installed
+            	   // we don't won't to clutter the log file with unnecessary errors
                   // ReportingUtils.logError(e, "Unable to load " + libs.get(i) + " library.");
             	   // getLibraryContents failed
                }
