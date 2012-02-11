@@ -699,7 +699,7 @@ public interface ScriptInterface {
     * @param pix Array with pixel data.  pixeldata should match current camera settings.
     */
 
-   public boolean displayTaggedImage(TaggedImage image);
+   // public boolean displayTaggedImage(TaggedImage image);
 
    /**
     * Determines whether live mode is currently running.
