@@ -65,4 +65,9 @@ pushd plugins\DataBrowser
 call build.bat
 popd
 
+pushd plugins\Gaussian
+call build.bat
+popd
+
+
 POPD
