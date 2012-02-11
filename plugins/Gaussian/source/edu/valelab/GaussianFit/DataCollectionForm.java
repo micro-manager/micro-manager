@@ -1,4 +1,4 @@
-/*
+/**
  * DataCollectionForm.java
  *
  * Created on Nov 20, 2010, 8:52:50 AM
@@ -39,7 +39,6 @@ import edu.ucsf.tsf.TaggedSpotsProtos.SpotList;
 import edu.ucsf.tsf.TaggedSpotsProtos.Spot;
 
 import ij.gui.YesNoCancelDialog;
-import ij.process.FloatProcessor;
 import ij.process.ShortProcessor;
 import java.awt.Cursor;
 import java.awt.Dimension;
@@ -52,7 +51,10 @@ import java.io.FileOutputStream;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
+import javax.swing.JOptionPane;
 import org.jfree.data.xy.XYSeries;
+
+import valelab.LocalWeightedMean;
 
 /**
  *
@@ -60,7 +62,7 @@ import org.jfree.data.xy.XYSeries;
  */
 public class DataCollectionForm extends javax.swing.JFrame {
    AbstractTableModel myTableModel_;
-   private final String[] columnNames_ = {"Image", "Nr of spots", "Plot/Render", "Straighten"};
+   private final String[] columnNames_ = {"Image", "Nr of spots", "Plot/Render", "Action"};
    private final String[] plotModes_ = {"t-X", "t-Y", "X-Y"};
    private final String[] renderModes_ = {"Points", "Gaussian"};
    private final String[] renderSizes_  = {"1x", "2x", "4x", "8x"};
@@ -69,6 +71,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
    double[][][] colorCorrection_; // 2D array (one for each pixel) containing xy coordinates of
                                  // first image (0 and 1) and correction to second image (2 and 3)
    public static DataCollectionForm instance_ = null;
+   private static LocalWeightedMean lwm_;
 
 
    /**
@@ -174,7 +177,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
        initComponents();
        jTable1.addMouseListener(new LocalMouseListener());
        jTable1.getColumn("Plot/Render").setCellRenderer(new ButtonRenderer());
-       jTable1.getColumn("Straighten").setCellRenderer(new ButtonRenderer());
+       jTable1.getColumn("Action").setCellRenderer(new ButtonRenderer());
        plotComboBox_.setModel(new javax.swing.DefaultComboBoxModel(plotModes_));
        visualizationModel_.setModel(new javax.swing.DefaultComboBoxModel(renderModes_));
        visualizationMagnification_.setModel(new javax.swing.DefaultComboBoxModel(renderSizes_));
@@ -202,6 +205,8 @@ public class DataCollectionForm extends javax.swing.JFrame {
          else if (column == 3) {
             if (rowData_.get(row).isTrack_)
                straightenTrack(rowData_.get(row));
+            else 
+               correct2C(rowData_.get(row));
          }
 
       }
@@ -268,6 +273,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
         saveButton = new javax.swing.JButton();
         removeButton = new javax.swing.JButton();
         showButton = new javax.swing.JButton();
+        c2StandardButton = new javax.swing.JButton();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
         setTitle("Gaussian tracking data");
@@ -314,11 +320,19 @@ public class DataCollectionForm extends javax.swing.JFrame {
             }
         });
 
-        showButton.setFont(new java.awt.Font("Lucida Grande", 0, 10));
+        showButton.setFont(new java.awt.Font("Lucida Grande", 0, 10)); // NOI18N
         showButton.setText("Show");
         showButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 showButtonActionPerformed(evt);
+            }
+        });
+
+        c2StandardButton.setFont(new java.awt.Font("Lucida Grande", 0, 10)); // NOI18N
+        c2StandardButton.setText("2C Standard");
+        c2StandardButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                c2StandardButtonActionPerformed(evt);
             }
         });
 
@@ -333,8 +347,10 @@ public class DataCollectionForm extends javax.swing.JFrame {
                 .add(saveButton)
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(removeButton)
-                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(showButton)
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                .add(c2StandardButton, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 89, Short.MAX_VALUE)
                 .add(18, 18, 18)
                 .add(visualizationModel_, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 90, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
@@ -342,7 +358,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(plotComboBox_, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 90, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                 .addContainerGap())
-            .add(jScrollPane1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 623, Short.MAX_VALUE)
+            .add(jScrollPane1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 716, Short.MAX_VALUE)
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
@@ -355,7 +371,8 @@ public class DataCollectionForm extends javax.swing.JFrame {
                     .add(visualizationModel_, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                     .add(saveButton, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 19, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                     .add(removeButton, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 19, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                    .add(showButton, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 19, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+                    .add(showButton, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 19, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                    .add(c2StandardButton, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 19, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(jScrollPane1, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 446, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
         );
@@ -404,10 +421,6 @@ public class DataCollectionForm extends javax.swing.JFrame {
             int nrSlices = psl.getNrSlices();
             int nrPositions = psl.getNrPos();
             boolean isTrack = psl.getIsTrack();
-            long nrSpots = 0;
-            if (psl.hasNrSpots())
-               nrSpots = psl.getNrSpots();
-            System.out.println("NrSpots: " + nrSpots);
             int maxNrSpots = 0;
 
             
@@ -448,6 +461,8 @@ public class DataCollectionForm extends javax.swing.JFrame {
        int row = jTable1.getSelectedRow();
        if (row > -1)
          saveData(rowData_.get(row));
+       else
+          JOptionPane.showMessageDialog(null, "Please select a dataset to save");
     }//GEN-LAST:event_saveButtonActionPerformed
 
     private void removeButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_removeButtonActionPerformed
@@ -474,8 +489,27 @@ public class DataCollectionForm extends javax.swing.JFrame {
       jScrollPane1.getViewport().setViewSize(d);
    }//GEN-LAST:event_formComponentResized
 
+   private void c2StandardButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_c2StandardButtonActionPerformed
+      int row = jTable1.getSelectedRow();
+      if (row > -1) {
+         // TODO: calculate transform
+         ArrayList points = new ArrayList();
+         
+         ArrayList<Point2D.Double> xyPoints = new ArrayList<Point2D.Double>();
+         Iterator it = rowData_.get(row).spotList_.iterator();
+         while (it.hasNext()) {
+            GaussianSpotData gs = (GaussianSpotData) it.next();
+            Point2D.Double point = new Point2D.Double(gs.getXCenter(), gs.getYCenter());
+            xyPoints.add(point);
+         }
+         
+      }
+         showResults(rowData_.get(row));
+   }//GEN-LAST:event_c2StandardButtonActionPerformed
+
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JButton c2StandardButton;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JTable jTable1;
     private javax.swing.JButton loadButton;
@@ -515,8 +549,13 @@ public class DataCollectionForm extends javax.swing.JFrame {
          } else {
             if (column == 2)
                setText((value == null ? "" : "Render"));
-            else
-               return null;
+            else {
+               if (column == 3)
+                  setText((value == null ? "" : "2C Correct"));
+               else
+                  setText((value == null ? "" : value.toString()));
+            }
+            //return null;
          }
              
          return this;
@@ -533,6 +572,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
 
       ResultsTable rt = new ResultsTable();
       rt.reset();
+      rt.setPrecision(1);
       int shape = rowData.shape_;
       for (GaussianSpotData gd : rowData.spotList_) {
          if (gd != null) {
@@ -625,6 +665,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
                  setFilepath(rowData.title_).
                  setNrPixelsX(rowData.width_).
                  setNrPixelsY(rowData.height_).
+                 setNrSpots(rowData.spotList_.size()).
                  setPixelSize(160).
                  setBoxSize(rowData.halfSize_ * 2).
                  setNrChannels(rowData.nrChannels_).
@@ -738,7 +779,35 @@ public class DataCollectionForm extends javax.swing.JFrame {
               rowData.nrSlices_, 1, rowData.maxNrSpots_, transformedResultList,
               true);
    }
+   
+   /**
+    * Use the 2Channel calibration to create a new, corrected data set
+    * 
+    * @param rowData 
+    */
+   private void correct2C(MyRowData rowData)
+   {
+      if (rowData.spotList_.size() <= 1) {
+         return;
+      }
 
+      ArrayList<Point2D.Double> xyPoints = new ArrayList<Point2D.Double>();
+      Iterator it = rowData.spotList_.iterator();
+      while (it.hasNext()) {
+         GaussianSpotData gs = (GaussianSpotData) it.next();
+         Point2D.Double point = new Point2D.Double(gs.getXCenter(), gs.getYCenter());
+         xyPoints.add(point);
+      }
+      
+   }
+
+   /**
+    * Renders spotdata using various renderModes
+    * 
+    * @param rowData
+    * @param renderMode - 
+    * @param renderSize 
+    */
    private void renderData(MyRowData rowData,int renderMode, int renderSize) {
       String fsep = System.getProperty("file.separator");
       String title = rowData.name_;
