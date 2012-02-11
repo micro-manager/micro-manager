@@ -462,11 +462,7 @@ int IntegratedFilterWheel::RetrieveCurrentPosition(long& pos)
    ClearPort(*this, *GetCoreCallback(), port_);
 
    // send command
-   unsigned char cmd[sizeof(getPosCmd)];
-   memcpy(cmd, getPosCmd, sizeof(getPosCmd));
-   long* posPtr = (long*)(cmd + 8);
-   *posPtr = pos;
-   int ret = SetCommand(cmd, sizeof(getPosCmd));
+   int ret = SetCommand(getPosCmd, sizeof(getPosCmd));
    if (ret != DEVICE_OK)
       return ret;
 
