@@ -24,7 +24,7 @@
 //                CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, 
 //
 // AUTHOR:        Arthur Edelstein
-//
+//                Thanks to Andre Ratz
 
 #ifdef WIN32
 #define snprintf _snprintf 
@@ -39,7 +39,6 @@
 #include "../../MMDevice/DeviceUtils.h"
 #include <sstream>
 
-
 #include <iostream>
 using namespace std;
 
@@ -47,12 +46,14 @@ const char* g_RappScannerName = "RappScanner";
 
 #define ERR_PORT_CHANGE_FORBIDDEN    10004
 
+#define GALVO_RANGE 4096
+
 ///////////////////////////////////////////////////////////////////////////////
 // Exported MMDevice API
 ///////////////////////////////////////////////////////////////////////////////
 MODULE_API void InitializeModuleData()
 {
-   AddAvailableDeviceName(g_RappScannerName, "Rapp Scanner");
+   AddAvailableDeviceName(g_RappScannerName, "RappScanner");
 }
 
 MODULE_API MM::Device* CreateDevice(const char* deviceName)
@@ -88,7 +89,8 @@ MM::DeviceDetectionStatus RappScannerDetect(MM::Device& /*device*/, MM::Core& /*
 // RappScanner
 //
 RappScanner::RappScanner() :
-   initialized_(false), port_(""), calibrationMode_(0)
+   initialized_(false), port_(""), calibrationMode_(0), polygonAccuracy_(10), polygonMinRectSize_(pointf(10,10)),
+   ttlTriggered_(0)
 {
    InitializeDefaultErrorMessages();
 
@@ -103,7 +105,20 @@ RappScanner::RappScanner() :
 
    // Port
    CPropertyAction* pAct = new CPropertyAction (this, &RappScanner::OnPort);
-   CreateProperty("VirtualComPort", "Undefined", MM::String, false, pAct, true);
+   
+   obsROE_Device* dev = new obsROE_Device();
+
+	std::vector<std::string> s = dev->SearchDevices();
+	if (s.size() <= 0)
+	{
+      s.push_back(std::string("Undefined"));
+	}
+
+   CreateProperty("VirtualComPort", s.at(0).c_str(), MM::String, false, pAct, true);
+	for (unsigned int i = 0; i < s.size(); i++)
+      AddAllowedValue("VirtualComPort", s.at(i).c_str());
+
+
 }  
 
 RappScanner::~RappScanner()
@@ -118,26 +133,14 @@ void RappScanner::GetName(char* Name) const
 
 
 MM::DeviceDetectionStatus RappScanner::DetectDevice(void)
-{
-
-   
+{   
    return MM::Misconfigured;
 }
 
 int RappScanner::Initialize()
 {
-   
    UGA_ = new obsROE_Device();
    
-   /*
-   tStringList devs = UGA_->SearchDevices();
-
-   if (devs.size() < 1)
-      return DEVICE_NOT_CONNECTED;
-
-   port_ = devs.at(0);
-   */
-
    UGA_->Connect(port_.c_str());
    if (UGA_->IsConnected()) {
       UGA_->UseMaxCalibration(true);
@@ -156,6 +159,15 @@ int RappScanner::Initialize()
    CreateProperty("CalibrationMode", "0", MM::Integer, false, pAct);
    AddAllowedValue("CalibrationMode", "1");
    AddAllowedValue("CalibrationMode", "0");
+
+   pAct = new CPropertyAction(this, &RappScanner::OnSequence);
+   CreateProperty("Sequence", "", MM::String, false, pAct);
+
+   pAct = new CPropertyAction(this, &RappScanner::OnTTLTriggered);
+   CreateProperty("TTLTriggered", "0", MM::Integer, false, pAct);
+   AddAllowedValue("TTLTriggered", "0");
+   AddAllowedValue("TTLTriggered", "1");
+
    return DEVICE_OK;
 }
 
@@ -193,29 +205,62 @@ int RappScanner::PointAndFire(double x, double y, double pulseTime_us)
    return result;
 }
 
-int RappScanner::Move(double deltaX, double deltaY)
-{
-   if (deltaX != 0)
-   {
-      UGA_->MoveLaser(Down, (int) deltaX);
-   }
-   if (deltaY != 0)
-   {
-      UGA_->MoveLaser(Right, (int) deltaY);
-   }
-   currentX_ += deltaX;
-   currentY_ += deltaY;
-
-   return DEVICE_OK;
-}
 
 int RappScanner::SetPosition(double x, double y)
 {
    // This function will hopefully be able to call SetDevicePosition(x,y) in the future.
-   Move(x - currentX_, y - currentY_);
+   UGA_->SetDevicePosition((int) x,(int) y);
+   UGA_->CurrentPosition();
+   // Move(x - currentX_, y - currentY_);
    return DEVICE_OK;
 }
 
+
+
+int RappScanner::GetPosition(double& x, double& y)
+{
+   // This function will hopefully be able to call SetDevicePosition(x,y) in the future.
+   pointf p = UGA_->CurrentPosition();
+   x = p.x;
+   y = p.y;
+   return DEVICE_OK;
+}
+
+
+double RappScanner::GetXRange()
+{
+   return (double) GALVO_RANGE;
+}
+
+
+double RappScanner::GetYRange()
+{
+   return (double) GALVO_RANGE;
+}
+
+int RappScanner::AddPolygonVertex(int polygonIndex, double x, double y)
+{
+   polygons_.at(polygonIndex).push_back(pointf((float) x, (float) y));
+   return DEVICE_OK;
+}
+
+int RappScanner::DeletePolygons()
+{
+   polygons_.clear();
+   return DEVICE_OK;
+}
+
+
+int RappScanner::RunSequence()
+{
+   tRectList rectangles;
+   for (unsigned polygonIndex=0;polygonIndex<polygons_.size();++polygonIndex)
+   {
+      UGA_->CreateA(polygons_.at(polygonIndex), polygonAccuracy_, polygonMinRectSize_, &rectangles, false);
+   }
+   UGA_->RunSequence(false);
+   return DEVICE_OK;
+}
 
 /////////////////////////////
 // Property Action Handlers
@@ -241,8 +286,6 @@ int RappScanner::OnCalibrationMode(MM::PropertyBase* pProp, MM::ActionType eAct)
    return result;
 }
 
-
-
 int RappScanner::OnPort(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
    if (eAct == MM::BeforeGet)
@@ -264,6 +307,43 @@ int RappScanner::OnPort(MM::PropertyBase* pProp, MM::ActionType eAct)
    return DEVICE_OK;
 }
 
+int RappScanner::OnSequence(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   if (eAct == MM::BeforeGet)
+   {
+      pProp->Set(sequence_.c_str());
+   }
+   else if (eAct == MM::AfterSet)
+   {
+      pProp->Get(sequence_);
+
+      if (sequence_.size() > 0)
+      {
+         tStringList sequenceList = split(sequence_, ' ');
+
+         if (!UGA_->StoreSequence(sequenceList))
+         {
+            return DEVICE_ERR;
+         } 
+      }
+   }
+
+   return DEVICE_OK;
+}
+
+int RappScanner::OnTTLTriggered(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   if (eAct == MM::BeforeGet)
+   {
+      pProp->Set(ttlTriggered_);
+   }
+   else if (eAct == MM::AfterSet)
+   {
+      pProp->Get(ttlTriggered_);
+   }
+
+   return DEVICE_OK;
+}
 
 /////////////////////////////
 // Helper Functions
@@ -271,32 +351,48 @@ int RappScanner::OnPort(MM::PropertyBase* pProp, MM::ActionType eAct)
 
 void RappScanner::RunDummyCalibration()
 {
-   UGA_->SetCalibrationMode(true, false);
+  UGA_->SetCalibrationMode(true, false);
 
-   int side = 500;
+  int side = 4096;
 
-   UGA_->SetAOIEdge(Up, 0, false);
-   UGA_->SetAOIEdge(Down, side, false);
-   UGA_->SetAOIEdge(Left, 0, false);
-   UGA_->SetAOIEdge(Right, side, false);
+  UGA_->SetAOIEdge(Up, 0, false);
+  UGA_->SetAOIEdge(Down, side-1, false);
+  UGA_->SetAOIEdge(Left, 0, false);
+  UGA_->SetAOIEdge(Right, side-1, false);
 
-   pointf p0(0, 0);
-   pointf p1((float) side-1, 0);
-   pointf p2((float) side-1, (float) side-1);
-   pointf p3(0, (float) side-1);
+  pointf p0(0, 0);
+  pointf p1((float) side-1, 0);
+  pointf p2((float) side-1, (float) side-1);
+  pointf p3(0, (float) side-1);
 
-   UGA_->CenterSpot();
-   UGA_->MoveLaser(Up, side/2);
-   UGA_->MoveLaser(Left, side/2);
+  UGA_->CenterSpot();
+  UGA_->MoveLaser(Up, side/2-1);
+  UGA_->MoveLaser(Left, side/2-1);
 
-   UGA_->InitializeCalibration(4, false);
-   UGA_->SetCalibrationPoint(false, 0, p0, false);
-   UGA_->MoveLaser(Right, side);
-   UGA_->SetCalibrationPoint(false, 1, p1, false);
-   UGA_->MoveLaser(Down, side);
-   UGA_->SetCalibrationPoint(false, 2, p2, false);
-   UGA_->MoveLaser(Left, side);
-   UGA_->SetCalibrationPoint(false, 3, p3, false);
+  pointf xy = UGA_->CurrentPosition();
 
-   UGA_->SetCalibrationMode(calibrationMode_ == 1, false);
+  UGA_->InitializeCalibration(4, false);
+  UGA_->SetCalibrationPoint(false, 0, p0, false);
+  UGA_->MoveLaser(Right, side);
+  UGA_->SetCalibrationPoint(false, 1, p1, false);
+  UGA_->MoveLaser(Down, side);
+  UGA_->SetCalibrationPoint(false, 2, p2, false);
+  UGA_->MoveLaser(Left, side);
+  UGA_->SetCalibrationPoint(false, 3, p3, false);
+
+  UGA_->SetCalibrationMode(calibrationMode_ == 1, false);
+}
+
+std::vector<std::string> & split(const std::string &s, char delim, std::vector<std::string> &elems) {
+    std::stringstream ss(s);
+    std::string item;
+    while(std::getline(ss, item, delim)) {
+        elems.push_back(item);
+    }
+    return elems;
+}
+
+std::vector<std::string> split(const std::string &s, char delim) {
+    std::vector<std::string> elems;
+    return split(s, delim, elems);
 }

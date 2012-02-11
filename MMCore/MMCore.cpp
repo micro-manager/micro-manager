@@ -4905,13 +4905,13 @@ void CMMCore::pointGalvoAndFire(const char* deviceLabel, double x, double y, dou
 
 
 /**
- * Move the galvo x,y position by a certain amount
+ * Set the Galvo to an x,y position
  */
-void CMMCore::moveGalvo(const char* deviceLabel, double deltaX, double deltaY) throw (CMMError)
+void CMMCore::setGalvoPosition(const char* deviceLabel, double x, double y) throw (CMMError)
 {
    MM::Galvo* pGalvo = getSpecificDevice<MM::Galvo>(deviceLabel);
 
-   int ret = pGalvo->Move(deltaX, deltaY);
+   int ret = pGalvo->SetPosition(x, y);
 
    if (ret != DEVICE_OK)
    {
@@ -4921,14 +4921,79 @@ void CMMCore::moveGalvo(const char* deviceLabel, double deltaX, double deltaY) t
 }
 
 /**
- * Set the Galvo to an x,y position
+ * Get the Galvo x,y position
  */
-void CMMCore::setGalvoPosition(const char* deviceLabel, double x, double y) throw (CMMError)
+void CMMCore::getGalvoPosition(const char* deviceLabel, double &x, double &y) throw (CMMError)
 {
    MM::Galvo* pGalvo = getSpecificDevice<MM::Galvo>(deviceLabel);
 
-   int ret = pGalvo->SetPosition(x, y);
+   int ret = pGalvo->GetPosition(x, y);
 
+   if (ret != DEVICE_OK)
+   {
+      logError(deviceLabel, getDeviceErrorText(ret, pGalvo).c_str());
+      throw CMMError(deviceLabel, getDeviceErrorText(ret, pGalvo).c_str(), MMERR_DEVICE_GENERIC);
+   }
+}
+
+
+/**
+ * Get the Galvo x range
+ */
+double CMMCore::getGalvoXRange(const char* deviceLabel) throw (CMMError)
+{
+   MM::Galvo* pGalvo = getSpecificDevice<MM::Galvo>(deviceLabel);
+   return pGalvo->GetXRange();
+}
+
+/**
+ * Get the Galvo y range
+ */
+double CMMCore::getGalvoYRange(const char* deviceLabel) throw (CMMError)
+{
+   MM::Galvo* pGalvo = getSpecificDevice<MM::Galvo>(deviceLabel);
+   return pGalvo->GetYRange();
+}
+
+
+/**
+ * Add a vertex to a galvo polygon.
+ */
+void CMMCore::addGalvoPolygonVertex(const char* deviceLabel, int polygonIndex, double x, double y) throw (CMMError)
+{
+   MM::Galvo* pGalvo = getSpecificDevice<MM::Galvo>(deviceLabel);
+   int ret =  pGalvo->AddPolygonVertex(polygonIndex, x, y);
+   
+   if (ret != DEVICE_OK)
+   {
+      logError(deviceLabel, getDeviceErrorText(ret, pGalvo).c_str());
+      throw CMMError(deviceLabel, getDeviceErrorText(ret, pGalvo).c_str(), MMERR_DEVICE_GENERIC);
+   }
+}
+
+/**
+ * Remove all added polygons
+ */
+void CMMCore::deleteGalvoPolygons(const char* deviceLabel) throw (CMMError)
+{
+   MM::Galvo* pGalvo = getSpecificDevice<MM::Galvo>(deviceLabel);
+   int ret = pGalvo->DeletePolygons();
+   
+   if (ret != DEVICE_OK)
+   {
+      logError(deviceLabel, getDeviceErrorText(ret, pGalvo).c_str());
+      throw CMMError(deviceLabel, getDeviceErrorText(ret, pGalvo).c_str(), MMERR_DEVICE_GENERIC);
+   }
+}
+
+/**
+ * Add a vertex to a galvo polygon.
+ */
+void CMMCore::runGalvoSequence(const char* deviceLabel) throw (CMMError)
+{
+   MM::Galvo* pGalvo = getSpecificDevice<MM::Galvo>(deviceLabel);
+   int ret =  pGalvo->RunSequence();
+   
    if (ret != DEVICE_OK)
    {
       logError(deviceLabel, getDeviceErrorText(ret, pGalvo).c_str());

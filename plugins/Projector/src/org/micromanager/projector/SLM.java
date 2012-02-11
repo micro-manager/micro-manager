@@ -11,6 +11,8 @@ import ij.process.ByteProcessor;
 import ij.process.ImageProcessor;
 import java.awt.Color;
 import java.awt.geom.AffineTransform;
+import java.awt.image.AffineTransformOp;
+import java.awt.image.BufferedImage;
 import mmcorej.CMMCore;
 import org.micromanager.utils.ReportingUtils;
 
@@ -57,11 +59,11 @@ public class SLM implements ProjectionDevice {
       displaySpot((int) x, (int) y);
    }
 
-   public int getWidth() {
+   public double getWidth() {
       return this.slmWidth_;
    }
 
-   public int getHeight() {
+   public double getHeight() {
       return this.slmHeight_;
    }
 
@@ -87,19 +89,19 @@ public class SLM implements ProjectionDevice {
    }
 
    public void setRoi(Roi roi, AffineTransform trans) {
-      throw new UnsupportedOperationException("Not supported yet.");
-/*
+      //throw new UnsupportedOperationException("Not supported yet.");
+
       AffineTransformOp cmo = new AffineTransformOp(trans, AffineTransformOp.TYPE_BILINEAR);
       ImagePlus imgpCamera = null;
 
-      if (gui.getImageWin() != null) {
-         imgpCamera = gui.getImageWin().getImagePlus();
+      if (gui_.getImageWin() != null) {
+         imgpCamera = gui_.getImageWin().getImagePlus();
       } else {
          return;
       }
 
-      int imgWidth = (int) mmc.getImageWidth();
-      int imgHeight = (int) mmc.getImageHeight();
+      int imgWidth = (int) mmc_.getImageWidth();
+      int imgHeight = (int) mmc_.getImageHeight();
 
 
       if (imgpCamera != null) {
@@ -124,9 +126,9 @@ public class SLM implements ProjectionDevice {
             cmo.filter(imgMask,imgSLM);
             ByteProcessor procSLM = new ByteProcessor(imgSLM);
             try {
-               mmc.setSLMImage(slm, (byte[]) procSLM.getPixels());
+               mmc_.setSLMImage(slm_, (byte[]) procSLM.getPixels());
                if (imageOn_)
-                  mmc.displaySLMImage(slm);
+                  mmc_.displaySLMImage(slm_);
             } catch (Exception ex) {
                ReportingUtils.showError(ex);
             }
@@ -138,7 +140,7 @@ public class SLM implements ProjectionDevice {
          ReportingUtils.showMessage("Please snap an image first.");
       }
 
- */
+ 
    }
 
 }

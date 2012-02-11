@@ -45,7 +45,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="&quot;..\..\..\3rdparty\Rapp\UGA 40 Control SDK\UGA40Example&quot;;&quot;..\..\..\3rdparty\Rapp\UGA 40 Control SDK\inc&quot;"
+				AdditionalIncludeDirectories="&quot;..\..\..\3rdparty\Rapp\UGA 40 SDK and Software-Jan2012\SDK\UGA40Example&quot;;&quot;..\..\..\3rdparty\Rapp\UGA 40 SDK and Software-Jan2012\SDK\inc&quot;"
 				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_USRDLL;MODULE_EXPORTS"
 				MinimalRebuild="true"
 				ExceptionHandling="2"
@@ -69,16 +69,16 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="obsROE_Device.lib"
+				AdditionalDependencies="obsROE_Device.lib ROEobsTools.lib"
 				OutputFile="$(OutDir)/mmgr_dal_$(ProjectName).dll"
 				LinkIncremental="2"
-				AdditionalLibraryDirectories="&quot;..\..\..\3rdparty\Rapp\UGA 40 Control SDK\lib&quot;"
+				AdditionalLibraryDirectories="&quot;..\..\..\3rdparty\Rapp\UGA 40 SDK and Software-Jan2012\SDK\lib&quot;"
 				GenerateDebugInformation="true"
-				ProgramDatabaseFile="$(OutDir)/ASIStage.pdb"
+				ProgramDatabaseFile="$(OutDir)/Rapp.pdb"
 				SubSystem="2"
 				RandomizedBaseAddress="1"
 				DataExecutionPrevention="0"
-				ImportLibrary="$(OutDir)/ASIStage.lib"
+				ImportLibrary="$(OutDir)/Rapp.lib"
 				TargetMachine="1"
 			/>
 			<Tool
@@ -129,7 +129,7 @@
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
-				AdditionalIncludeDirectories="&quot;..\..\..\3rdparty\Rapp\UGA 40 Control SDK\UGA40Example&quot;;&quot;..\..\..\3rdparty\Rapp\UGA 40 Control SDK\inc&quot;"
+				AdditionalIncludeDirectories="&quot;..\..\..\3rdparty\Rapp\UGA 40 SDK and Software-Jan2012\SDK\UGA40Example&quot;;&quot;..\..\..\3rdparty\Rapp\UGA 40 SDK and Software-Jan2012\SDK\inc&quot;"
 				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;MODULE_EXPORTS"
 				ExceptionHandling="2"
 				RuntimeLibrary="0"
@@ -154,8 +154,9 @@
 				AdditionalDependencies="obsROE_Device.lib ROEobsTools.lib"
 				OutputFile="$(OutDir)/mmgr_dal_$(ProjectName).dll"
 				LinkIncremental="1"
-				AdditionalLibraryDirectories="&quot;..\..\..\3rdparty\Rapp\UGA 40 Control SDK\lib&quot;"
+				AdditionalLibraryDirectories="&quot;..\..\..\3rdparty\Rapp\UGA 40 SDK and Software-Jan2012\SDK\lib&quot;"
 				GenerateDebugInformation="true"
+				ProgramDatabaseFile="$(OutDir)/Rapp.pdb"
 				SubSystem="2"
 				OptimizeReferences="2"
 				EnableCOMDATFolding="2"

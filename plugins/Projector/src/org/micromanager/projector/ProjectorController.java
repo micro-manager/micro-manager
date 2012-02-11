@@ -86,17 +86,17 @@ public class ProjectorController {
    }
 
    public AffineTransform getFirstApproxTransform() {
-      int x = dev.getWidth() / 2;
-      int y = dev.getHeight() / 2;
+      double x = dev.getWidth() / 2;
+      double y = dev.getHeight() / 2;
 
       int s = 50;
       Map spotMap = new HashMap();
 
-      mapSpot(spotMap, new Point(x, y));
-      mapSpot(spotMap, new Point(x, y + s));
-      mapSpot(spotMap, new Point(x + s, y));
-      mapSpot(spotMap, new Point(x, y - s));
-      mapSpot(spotMap, new Point(x - s, y));
+      mapSpot(spotMap, new Point2D.Double(x, y));
+      mapSpot(spotMap, new Point2D.Double(x, y + s));
+      mapSpot(spotMap, new Point2D.Double(x + s, y));
+      mapSpot(spotMap, new Point2D.Double(x, y - s));
+      mapSpot(spotMap, new Point2D.Double(x - s, y));
 
       return MathFunctions.generateAffineTransformFromPointPairs(spotMap);
    }

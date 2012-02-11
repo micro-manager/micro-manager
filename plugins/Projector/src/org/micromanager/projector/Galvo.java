@@ -38,12 +38,22 @@ public class Galvo implements ProjectionDevice {
       }
    }
 
-   public int getWidth() {
-      return side_;
+   public double getWidth() {
+      try {
+         return (double) mmc_.getGalvoXRange(galvo_);
+      } catch (Exception ex) {
+         ReportingUtils.showError("Unable to get galvo width.");
+         return 0;
+      }
    }
 
-   public int getHeight() {
-      return side_;
+   public double getHeight() {
+      try {
+         return (double) mmc_.getGalvoYRange(galvo_);
+      } catch (Exception ex) {
+         ReportingUtils.showError("Unable to get galvo height.");
+         return 0;
+      }
    }
 
    public void turnOn() {

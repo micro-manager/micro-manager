@@ -14,8 +14,8 @@ import java.awt.geom.AffineTransform;
  */
 public interface ProjectionDevice {
    public void displaySpot(double x, double y);
-   public int getWidth();
-   public int getHeight();
+   public double getWidth();
+   public double getHeight();
    public void turnOn();
    public void turnOff();
    public void setRoi(Roi roi, AffineTransform transform);

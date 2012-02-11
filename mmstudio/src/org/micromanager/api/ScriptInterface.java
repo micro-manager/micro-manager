@@ -694,6 +694,13 @@ public interface ScriptInterface {
 
    public boolean displayImage(Object pix);
 
+     /**
+    * Show a TaggedImage
+    * @param pix Array with pixel data.  pixeldata should match current camera settings.
+    */
+
+   public boolean displayTaggedImage(TaggedImage image);
+
    /**
     * Determines whether live mode is currently running.
     * @return when true, live mode is running, when false live mode is not running.

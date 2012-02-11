@@ -1006,8 +1006,13 @@ namespace MM {
       
    //Galvo API:
       virtual int PointAndFire(double x, double y, double time_us) = 0;
-      virtual int Move(double deltaX, double deltaY) = 0;
       virtual int SetPosition(double x, double y) = 0;
+      virtual int GetPosition(double& x, double& y) = 0;
+      virtual double GetXRange() = 0;
+      virtual double GetYRange() = 0;
+      virtual int AddPolygonVertex(int polygonIndex, double x, double y) = 0;
+      virtual int DeletePolygons() = 0;
+      virtual int RunSequence() = 0;
    };
 
    /**

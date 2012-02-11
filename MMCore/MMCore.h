@@ -452,8 +452,13 @@ public:
    */
    //@ {
    void pointGalvoAndFire(const char* deviceLabel, double x, double y, double pulseTime_us) throw (CMMError);
-   void moveGalvo(const char* deviceLabel, double deltaX, double deltaY) throw (CMMError);
    void setGalvoPosition(const char* deviceLabel, double x, double y) throw (CMMError);
+   void getGalvoPosition(const char* deviceLabel, double &x_stage, double &y_stage) throw (CMMError); // using x_stage to get swig to work
+   double getGalvoXRange(const char* deviceLabel) throw (CMMError);
+   double getGalvoYRange(const char* deviceLabel) throw (CMMError);
+   void addGalvoPolygonVertex(const char* deviceLabel, int polygonIndex, double x, double y) throw (CMMError);
+   void deleteGalvoPolygons(const char* deviceLabel) throw (CMMError);
+   void runGalvoSequence(const char* deviceLabel) throw (CMMError);
    //@ }
 
    /** @name Acquisition context API

@@ -54,25 +54,40 @@ public:
 
    // Galvo API
    int PointAndFire(double x, double y, double pulseTime_us);
-   int Move(double deltaX, double deltaY);
    int SetPosition(double x, double y);
+   int GetPosition(double& x, double& y);
+   int AddPolygonVertex(int polygonIndex, double x, double y);
+   int DeletePolygons();
+   int RunSequence();
+
+   double GetXRange();
+   double GetYRange();
 
    // Property action handlers
    int OnCalibrationMode(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnPort(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnSequence(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnTTLTriggered(MM::PropertyBase* pProp, MM::ActionType eAct);
 
 private:
    bool initialized_;
    std::string port_;
    obsROE_Device* UGA_;
    long calibrationMode_;
+   std::vector<tPointList> polygons_;
+   int polygonAccuracy_;
+   pointf polygonMinRectSize_;
+   double currentX_;
+   double currentY_;
+   std::string sequence_;
+   long ttlTriggered_;
 
    // Helper functions
    void RappScanner::RunDummyCalibration();
-   double currentX_;
-   double currentY_;
+
 };
 
-
+std::vector<std::string> & split(const std::string &s, char delim, std::vector<std::string> &elems);
+std::vector<std::string> split(const std::string &s, char delim);
 
 #endif //_Rapp_H_
