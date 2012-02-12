@@ -196,7 +196,6 @@ public class ConfiguratorDlg2 extends MMDialog {
         microModel_.setSendConfiguration( bvalue);
         microModel_.loadAvailableDeviceList(core_);
         microModel_.setFileName(defaultPath_);
-        microModel_.scanComPorts(core_);
         Rectangle r = pagesLabel_.getBounds();
 
         titleLabel_ = new JLabel();

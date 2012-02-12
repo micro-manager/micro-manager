@@ -182,45 +182,6 @@ public class MicroscopeModel {
       }
    }
 
-   public void scanComPorts(CMMCore core) {
-      try {
-         ArrayList<Device> ports = new ArrayList<Device>();
-         StrVector libs = getDeviceLibraries(core);
-
-         for (int i = 0; i < libs.size(); i++) {
-            if (!isLibraryAvailable(libs.get(i))) {
-               Device devs[] = new Device[0];
-               try {
-                  devs = Device.getLibraryContents(libs.get(i), core);
-                  for (int j = 0; j < devs.length; j++) {
-                     if (devs[j].isSerialPort()) {
-//                        ReportingUtils.logMessage("   "
-//                              + devs[j].getAdapterName() + ", "
-//                              + devs[j].getDescription());
-                        devs[j].setName(devs[j].getAdapterName());
-                        if (!ports.contains(devs[j])) {
-                           ports.add(devs[j]);
-
-                        }
-                     }
-                  }
-               } catch (Exception e) {
-//                  ReportingUtils.logError("Unable to load " + libs.get(i)
-//                        + " library:" + e.getMessage());
-               }
-            }
-         }
-
-         availableComPorts_ = new Device[ports.size()];
-         comPortInUse_ = new Hashtable<String, Device>();
-         for (int i = 0; i < ports.size(); i++) {
-            availableComPorts_[i] = ports.get(i);
-         }
-      } catch (Exception e3) {
-         ReportingUtils.showError(e3);
-      }
-   }
-
    /**
     * Match the file list against currently available DLLs and add ones that are
     * missing Find all paths on java.library.path and add an empty (current)
@@ -237,43 +198,37 @@ public class MicroscopeModel {
    public void loadAvailableDeviceList(CMMCore core) {
       try {
          ArrayList<Device> devsTotal = new ArrayList<Device>();
-
-         // NOTE: commented out to avoid using out-of-date device list file
-         // attempt to load device info from file
-//         String deviceListFileName = (DEVLIST_FILE_NAME);
-//         File f = new File(deviceListFileName);
-//         if (f.exists()) {
-//            loadDevicesFromListFile(devsTotal, deviceListFileName);
-//         }
+         ArrayList<Device> ports = new ArrayList<Device>();
 
          // assign available devices
-         availableDevices_ = new Device[devsTotal.size()];
+         availableDevices_ = new Device[0];
          ArrayList<Device> hubs = new ArrayList<Device>();
-         for (int i = 0; i < devsTotal.size(); i++) {
-            availableDevices_[i] = devsTotal.get(i);
-         }
 
          StrVector libs = getDeviceLibraries(core);
 
          for (int i = 0; i < libs.size(); i++) {
             if (!isLibraryAvailable(libs.get(i))) {
-               // ReportingUtils.logMessage(libs.get(i));
+               // log each loaded device name
+               ReportingUtils.logMessage(libs.get(i));
+               
                Device devs[] = new Device[0];
                try {
                   devs = Device.getLibraryContents(libs.get(i), core);
                   for (int j = 0; j < devs.length; j++) {
+                      ReportingUtils.logMessage("   " + devs[j].getAdapterName() + ", " + devs[j].getDescription());
                      if (!devs[j].isSerialPort()) {
-//                        ReportingUtils.logMessage("   "
-//                              + devs[j].getAdapterName() + ", "
-//                              + devs[j].getDescription());
+                    	// regular device
                         devsTotal.add(devs[j]);
+                     } else {
+                    	// com port
+                        devs[j].setName(devs[j].getAdapterName());
+                        if (!ports.contains(devs[j]))
+                           ports.add(devs[j]);                    	
                      }
                   }
                } catch (Exception e) {
-            	   // This happens when vendor's drivers are not installed
-            	   // we don't won't to clutter the log file with unnecessary errors
-                  // ReportingUtils.logError(e, "Unable to load " + libs.get(i) + " library.");
-            	   // getLibraryContents failed
+            	   // This usually happens when vendor's drivers are not installed
+            	   ReportingUtils.logError(null, "Unable to load " + libs.get(i) + " library.");
                }
             }
          }
@@ -287,37 +242,15 @@ public class MicroscopeModel {
          }
          availableHubs_ = new Device[hubs.size()];
          hubs.toArray(availableHubs_);
+         availableComPorts_ = new Device[ports.size()];
+         comPortInUse_ = new Hashtable<String, Device>();
+         for (int i = 0; i < ports.size(); i++) {
+            availableComPorts_[i] = ports.get(i);
+         }
       } catch (Exception e3) {
          ReportingUtils.showError(e3);
       }
 
-   }
-
-   private void loadDevicesFromListFile(ArrayList<Device> devsTotal,
-         String fileName) {
-      File f = new File(fileName);
-      BufferedReader input = null;
-      try {
-         input = new BufferedReader(new FileReader(f));
-      } catch (FileNotFoundException e) {
-         ReportingUtils.logError(e);
-         return;
-      }
-      String line = null;
-      try {
-         while ((line = input.readLine()) != null) {
-            String tokens[] = line.split(",");
-            if (tokens.length == 4) {
-               String desc = tokens[2].replaceAll(";", ",");
-               Device dev = new Device("Undefined", tokens[0], tokens[1], desc);
-               dev.setTypeByInt(Integer.parseInt(tokens[3]));
-               devsTotal.add(dev);
-            }
-         }
-      } catch (IOException e) {
-         ReportingUtils.logError(e);
-         return;
-      }
    }
 
    public Device[] getAvailableDeviceList() {
