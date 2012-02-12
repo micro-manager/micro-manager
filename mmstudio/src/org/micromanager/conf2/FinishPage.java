@@ -84,21 +84,6 @@ public class FinishPage extends PagePanel {
         browseButton_.setText("Browse...");
         browseButton_.setBounds(443, 31, 100, 23);
         add(browseButton_);
-/*
-        final JButton saveAndTestButton = new JButton();
-        saveAndTestButton.addActionListener(new ActionListener() {
-
-            public void actionPerformed(final ActionEvent e) {
-                saveAndTest();
-            }
-        });
-        saveAndTestButton.setText("Save and test the new configuration");
-        saveAndTestButton.setBounds(96, 59, 277, 30);
-        add(saveAndTestButton);
-
- */
-
-      
 
         sendCheck_ = new JCheckBox();
         sendCheck_.setBounds(10, 100, 360, 33);
@@ -120,9 +105,6 @@ public class FinishPage extends PagePanel {
         sendConfigExplain.setFont(sendCheck_.getFont());
         add(sendConfigExplain);
         
-
-
-
         //
     }
 
@@ -135,7 +117,7 @@ public class FinishPage extends PagePanel {
 
     public boolean exitPage(boolean toNext) {
         if( toNext)
-            saveAndTest();
+            saveConfiguration();
         
         return true;
     }
@@ -170,7 +152,7 @@ public class FinishPage extends PagePanel {
         fileNameField_.setText(absolutePath);
     }
 
-    private void saveAndTest() {
+    private void saveConfiguration() {
          Container ancestor = getTopLevelAncestor();
          Cursor oldc = null;
          if (null != ancestor){
@@ -189,15 +171,13 @@ public class FinishPage extends PagePanel {
                         "File Save",
                         JOptionPane.YES_NO_OPTION);
                 if (sel == JOptionPane.NO_OPTION) {
-                    ReportingUtils.logMessage("H.W. Configuration problem: File must be saved in order to test the configuration!");
+                    ReportingUtils.logMessage("All changes are going to be lost!");
                     return;
                 }
             }
             setFilePath(f);
             model_.removeInvalidConfigurations();
             model_.saveToFile(fileNameField_.getText());
-            core_.loadSystemConfiguration(model_.getFileName());
-            GUIUtils.preventDisplayAdapterChangeExceptions();
         } catch (MMConfigFileException e) {
             ReportingUtils.showError(e);
         } catch (Exception e) {
