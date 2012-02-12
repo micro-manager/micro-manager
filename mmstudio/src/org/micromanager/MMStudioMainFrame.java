@@ -421,7 +421,7 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
 
             public void actionPerformed(ActionEvent e) {
                 if (null == reportProblemDialog_) {
-                    reportProblemDialog_ = new ReportProblemDialog(core_, thisFrame, sysConfigFile_, options_);
+                    reportProblemDialog_ = new ReportProblemDialog(core_, thisFrame, options_);
                     thisFrame.addMMBackgroundListener(reportProblemDialog_);
                     reportProblemDialog_.setBackground(guiColors_.background.get(options_.displayBackground_));
                 }
@@ -2392,6 +2392,14 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
 
    public String getAcqDirectory() {
       return openAcqDirectory_;
+   }
+   
+   /**
+    * Get currently used configuration file
+    * @return - Path to currently used configuration file
+    */
+   public String getSysConfigFile() {
+      return sysConfigFile_;
    }
 
    public void setAcqDirectory(String dir) {

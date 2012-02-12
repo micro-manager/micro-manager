@@ -24,18 +24,16 @@ public class ReportProblemDialog extends javax.swing.JDialog {
    String reportPreamble_;
    CMMCore core_;
    private DeviceControlGUI parent_;
-   String configPath_;
    MMOptions mmoptions_;
 
    /** Creates new form ReportProblemDialog */
-   public ReportProblemDialog(CMMCore c, DeviceControlGUI parentMMGUI, String configPath, MMOptions mmoptions) {
+   public ReportProblemDialog(CMMCore c, DeviceControlGUI parentMMGUI, MMOptions mmoptions) {
       super();
       initComponents();
       reportPreamble_ = "";
 
       core_ = c;
       parent_ = parentMMGUI;
-      configPath_ = configPath;
       mmoptions_ = mmoptions;
    }
 
@@ -247,7 +245,7 @@ public class ReportProblemDialog extends javax.swing.JDialog {
       descriptionPane_.setEditable(false);
       sendButton_.setEnabled(false);
       stepInstructions_.setText("Sending...");
-      ProblemReportSender p = new ProblemReportSender(reportPreamble_, core_, configPath_);
+      ProblemReportSender p = new ProblemReportSender(reportPreamble_, core_);
       String result = p.Send();
       if (0 < result.length()) {
          ReportingUtils.logError(result);

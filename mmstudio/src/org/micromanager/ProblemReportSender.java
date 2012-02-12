@@ -1,3 +1,19 @@
+///////////////////////////////////////////////////////////////////////////////
+//FILE:          ProblemReportSender.java
+//PROJECT:       Micro-Manager
+//SUBSYSTEM:     mmstudio
+//-----------------------------------------------------------------------------
+//AUTHOR:        Karl Hoover, 2010
+//COPYRIGHT:     University of California, San Francisco, 2010-2012
+//LICENSE:       This file is distributed under the BSD license.
+//               License text is included with the source distribution.
+//               This file is distributed in the hope that it will be useful,
+//               but WITHOUT ANY WARRANTY; without even the implied warranty
+//               of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+//               IN NO EVENT SHALL THE COPYRIGHT OWNER OR
+//               CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+//               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
+
 package org.micromanager;
 
 import java.io.BufferedReader;
@@ -26,14 +42,12 @@ import org.micromanager.utils.ReportingUtils;
 class ProblemReportSender extends Thread {
 
     private String status_;
-    private String currentCfgPath_;
     private CMMCore core_;
     String prepreamble_;
 
-    public ProblemReportSender(String prepreamble, CMMCore c, String config) {
+    public ProblemReportSender(String prepreamble, CMMCore c) {
         super("sender");
         status_ = "";
-        currentCfgPath_ = config;
         core_ = c;
         prepreamble_ = prepreamble;
     }
@@ -42,11 +56,12 @@ class ProblemReportSender extends Thread {
         return status_;
     }
 
+   @Override
     public void run() {
         status_ = "";
         // a handy, unique ID for the equipment
         String physicalAddress = "00-00-00-00-00-00";
-        String cfgFile = currentCfgPath_;
+        String cfgFile = MMStudioMainFrame.getInstance().getSysConfigFile();
         // is there a public way to get these keys??
         //mainPrefs_.get("sysconfig_file", cfgFile);
         String preamble = prepreamble_;
@@ -83,11 +98,10 @@ class ProblemReportSender extends Thread {
         } catch (IOException e) {
         }
         String archPath = core_.saveLogArchiveWithPreamble(preamble, preamble.length());
-        //String archPath = core_.saveLogArchive();
         try {
             HttpUtils httpu = new HttpUtils();
-            List<File> list = new ArrayList<File>();
             File archiveFile = new File(archPath);
+            
             // contruct a filename for the archive which is extremely
             // likely to be unique as follows:
             // yyyyMMddHHmmss + timezone + MAC address
@@ -110,7 +124,7 @@ class ProblemReportSender extends Thread {
             qualifiedArchiveFileName.replace('(', '_');
             qualifiedArchiveFileName.replace(')', '_');
             qualifiedArchiveFileName.replace(':', '_');
-            qualifiedArchiveFileName.replace(';', '_');                //File fileToSend = new File(qualifiedArchiveFileName);
+            qualifiedArchiveFileName.replace(';', '_');
             qualifiedArchiveFileName += ".log";
             MMUUEncoder uuec = new MMUUEncoder();
             InputStream reader = new FileInputStream(archiveFile);
