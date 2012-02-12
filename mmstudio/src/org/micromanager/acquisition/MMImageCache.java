@@ -441,9 +441,10 @@ public class MMImageCache implements TaggedImageStorage, ImageCache {
       JSONArray array;
       try {
          array = getDisplayAndComments().getJSONArray("Channels");
-      } catch (JSONException ex) {
-         return 1;
+      } catch (Exception ex) {
+         return 1; 
       }
+         
       return array.length();
    }
 

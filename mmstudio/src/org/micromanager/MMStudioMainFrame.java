@@ -300,6 +300,10 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
    }
    
  private void checkSimpleAcquisition() {
+      if (core_.getCameraDevice().isEmpty()) {
+         ReportingUtils.showError("No camera configured");
+         return;
+      }
       int width = (int) core_.getImageWidth();
       int height = (int) core_.getImageHeight();
       int depth = (int) core_.getBytesPerPixel();
@@ -2789,6 +2793,11 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
       if (enable == isLiveModeOn()) 
          return;
       if (enable) {
+         if (core_.getCameraDevice().isEmpty()) {
+            ReportingUtils.showError("No camera configured");
+            updateButtonsForLiveMode(false);
+            return;
+         }
          try {
             checkSimpleAcquisition();
             if (liveModeTimer_ == null) 
@@ -2993,31 +3002,34 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
    }
 
    public void doSnap() {
-         checkSimpleAcquisition();
-         try {
-            setCursor(new Cursor(Cursor.WAIT_CURSOR));
-            //need bit depth tag for add to series button
-            int bitDepth = (int) core_.getImageBitDepth();
-            core_.snapImage();
-            getAcquisition(SIMPLE_ACQ).toFront();
-            long c = core_.getNumberOfCameraChannels();
-            for (int i = 0; i < c; i++) {
-               TaggedImage ti = ImageUtils.makeTaggedImage(core_.getImage(i),
-                       i, 0, 0, 0,
-                       getAcquisitionImageWidth(SIMPLE_ACQ),
-                       getAcquisitionImageHeight(SIMPLE_ACQ),
-                       getAcquisitionImageByteDepth(SIMPLE_ACQ));  
-               ti.tags.put("Summary", getAcquisition(SIMPLE_ACQ).getSummaryMetadata());
-               boolean update = false;
-               if (i == c - 1) 
-                  update = true;
-               addImage(SIMPLE_ACQ, ti, update, true);
+      if (core_.getCameraDevice().isEmpty()) {
+         ReportingUtils.showError("No camera configured");
+         return;
+      }
+      checkSimpleAcquisition();
+      try {
+         setCursor(new Cursor(Cursor.WAIT_CURSOR));
+         core_.snapImage();
+         getAcquisition(SIMPLE_ACQ).toFront();
+         long c = core_.getNumberOfCameraChannels();
+         for (int i = 0; i < c; i++) {
+            TaggedImage ti = ImageUtils.makeTaggedImage(core_.getImage(i),
+                    i, 0, 0, 0,
+                    getAcquisitionImageWidth(SIMPLE_ACQ),
+                    getAcquisitionImageHeight(SIMPLE_ACQ),
+                    getAcquisitionImageByteDepth(SIMPLE_ACQ));
+            ti.tags.put("Summary", getAcquisition(SIMPLE_ACQ).getSummaryMetadata());
+            boolean update = false;
+            if (i == c - 1) {
+               update = true;
             }
-         } catch (Exception ex) {
-            ReportingUtils.showError(ex);
+            addImage(SIMPLE_ACQ, ti, update, true);
          }
-         setCursor(new Cursor(Cursor.DEFAULT_CURSOR));
-         updateLineProfile();
+      } catch (Exception ex) {
+         ReportingUtils.showError(ex);
+      }
+      setCursor(new Cursor(Cursor.DEFAULT_CURSOR));
+      updateLineProfile();
    }
 
    public void initializeGUI() {
@@ -4386,6 +4398,10 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
    }
 
    public void snapAndAddToImage5D() {
+      if (core_.getCameraDevice().isEmpty()) {
+         ReportingUtils.showError("No camera configured");
+         return;
+      }
       try {
          getPipeline().acquireSingle();
       } catch (Exception ex) {
