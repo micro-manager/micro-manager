@@ -436,6 +436,10 @@ int IntegratedFilterWheel::GoToPosition(long pos)
    // calculate number of steps to reach specified position
    unsigned int steps = (unsigned int)(((double)stepsTurn_ / numberOfPositions_) * pos + offset_ + 0.5);
 
+   ostringstream msg;
+   msg << "Attempting to set position:" << pos << ", steps:" << steps;
+   LogMessage(msg.str());
+
    // send command
    unsigned char cmd[sizeof(setPosCmd)];
    memcpy(cmd, setPosCmd, sizeof(setPosCmd));
@@ -472,7 +476,7 @@ int IntegratedFilterWheel::RetrieveCurrentPosition(long& pos)
    memset(answer, 0, answLength);
    ret = GetCommand(answer, answLength, answerTimeoutMs_);
    if (ret != DEVICE_OK)
-      return 0;
+      return ret;
 
    // check response signature
    if (memcmp(answer, getParamsRsp, 8) != 0)
@@ -481,6 +485,10 @@ int IntegratedFilterWheel::RetrieveCurrentPosition(long& pos)
    unsigned int steps = *((unsigned int*)(answer + 8));
    double onePos = (double)stepsTurn_ / numberOfPositions_;
    pos = (long)((steps - offset_) / onePos + 0.5);
+
+   ostringstream msg;
+   msg << "Steps:" << steps << ", Position:" << pos;
+   LogMessage(msg.str());
 
    return DEVICE_OK;
 }
