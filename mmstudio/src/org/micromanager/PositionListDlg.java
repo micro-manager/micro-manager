@@ -72,11 +72,9 @@ import org.micromanager.utils.ReportingUtils;
 
 public class PositionListDlg extends MMDialog implements MouseListener {
    private static final long serialVersionUID = 1L;
-   private static String POSITION_LIST_FILE_NAME = "MMPositionList.pos";
    private String posListDir_;
    private File curFile_;
    @SuppressWarnings("unused")
-   private static final String MAC_BUTTON_SHAPE = "mini";
    private static FileType POSITION_LIST_FILE =
            new FileType("POSITION_LIST_FILE","Position list file",
                         System.getProperty("user.home") + "/PositionList.pos",
@@ -340,7 +338,7 @@ public class PositionListDlg extends MMDialog implements MouseListener {
       posTable_ = new JTable() {
       private static final long serialVersionUID = -3873504142761785021L;
 
-         @Override
+      @Override
       public TableCellRenderer getCellRenderer(int row, int column) {
             if (row == 0)
                return firstRowRenderer;
@@ -413,8 +411,7 @@ public class PositionListDlg extends MMDialog implements MouseListener {
                  public void focusGained(java.awt.event.FocusEvent evt) {
                     updateMarkButtonText();
                  }
-              }
-      );
+              });
 
       // the re-ordering buttons:
       
@@ -454,9 +451,7 @@ public class PositionListDlg extends MMDialog implements MouseListener {
       springLayout.putConstraint(SpringLayout.EAST, downButton, 0, SpringLayout.EAST, markButton);
       springLayout.putConstraint(SpringLayout.WEST, downButton, 48, SpringLayout.WEST, markButton);      
       
-      
-      
-      
+                
       
       // from this point on, the top right button's positions are computed
       // the Go To button:
@@ -508,9 +503,6 @@ public class PositionListDlg extends MMDialog implements MouseListener {
       springLayout.putConstraint(SpringLayout.SOUTH, removeButton, northConstraint+=buttonHeight, SpringLayout.NORTH, getContentPane());
       springLayout.putConstraint(SpringLayout.EAST, removeButton, 0, SpringLayout.EAST, markButton);
       springLayout.putConstraint(SpringLayout.WEST, removeButton, 0, SpringLayout.WEST, markButton);
-
-
-
 
 
       final JButton setOriginButton = new JButton();
@@ -621,21 +613,15 @@ public class PositionListDlg extends MMDialog implements MouseListener {
 
    }
 
-   protected void updateMarkButtonText() 
-   {
-     //String newText;
-     
-     PosTableModel tm =  (PosTableModel)posTable_.getModel();
-     MultiStagePosition msp = tm.getPositionList().getPosition(posTable_.getSelectedRow() - 1);
-     if( null== msp)
-     {
-        markButtonRef.setText("Mark");
-     }
-     else
-     {
-        markButtonRef.setText("Replace");
-     }   
-   
+   protected void updateMarkButtonText() {
+      PosTableModel tm = (PosTableModel) posTable_.getModel();
+      MultiStagePosition msp = tm.getPositionList().getPosition(posTable_.getSelectedRow() - 1);
+      if (null == msp) {
+         markButtonRef.setText("Mark");
+      } else {
+         markButtonRef.setText("Replace");
+      }
+
    }
    
 
@@ -724,51 +710,43 @@ public void addPosition(MultiStagePosition msp, String label) {
    }
 
    
-   protected void incrementOrderOfSelectedPosition(int direction)
-   {
-         PosTableModel ptm = (PosTableModel)posTable_.getModel();
-         int currentRow = posTable_.getSelectedRow()-1;
-         int newEdittingRow = -1;
-         
-         if( 0 <= currentRow)
-         {
-           int destinationRow = currentRow + direction;
-           {
-              if (0 <= destinationRow)
-              {
-               if  ( destinationRow < posTable_.getRowCount() )
-               {
-                 PositionList pl = ptm.getPositionList(); 
-                 
-                 MultiStagePosition[] mspos =pl.getPositions();
+   protected void incrementOrderOfSelectedPosition(int direction) {
+      PosTableModel ptm = (PosTableModel) posTable_.getModel();
+      int currentRow = posTable_.getSelectedRow() - 1;
+      int newEdittingRow = -1;
 
-                 MultiStagePosition tmp = mspos[currentRow];
-                 pl.replacePosition( currentRow, mspos[destinationRow]);//
-                 pl.replacePosition(destinationRow, tmp);
-                 ptm.setData(pl);
-                  if( destinationRow+1 < ptm.getRowCount() )
-                    newEdittingRow = destinationRow+1;
-               }
-               else
-               {
-                  newEdittingRow = posTable_.getRowCount()-1;
-               }
-              }
-              else
-              {
-                newEdittingRow = 1; 
-              }
-           }
-         }
-         ptm.fireTableDataChanged();
-
-         if(-1 < newEdittingRow)
+      if (0 <= currentRow) {
+         int destinationRow = currentRow + direction;
          {
-           posTable_.changeSelection(newEdittingRow, newEdittingRow, false, false);
-           posTable_.requestFocusInWindow();
+            if (0 <= destinationRow) {
+               if (destinationRow < posTable_.getRowCount()) {
+                  PositionList pl = ptm.getPositionList();
+
+                  MultiStagePosition[] mspos = pl.getPositions();
+
+                  MultiStagePosition tmp = mspos[currentRow];
+                  pl.replacePosition(currentRow, mspos[destinationRow]);//
+                  pl.replacePosition(destinationRow, tmp);
+                  ptm.setData(pl);
+                  if (destinationRow + 1 < ptm.getRowCount()) {
+                     newEdittingRow = destinationRow + 1;
+                  }
+               } else {
+                  newEdittingRow = posTable_.getRowCount() - 1;
+               }
+            } else {
+               newEdittingRow = 1;
+            }
          }
-         updateMarkButtonText();
-      
+      }
+      ptm.fireTableDataChanged();
+
+      if (-1 < newEdittingRow) {
+         posTable_.changeSelection(newEdittingRow, newEdittingRow, false, false);
+         posTable_.requestFocusInWindow();
+      }
+      updateMarkButtonText();
+
    }
    
    
@@ -1107,29 +1085,28 @@ public void addPosition(MultiStagePosition msp, String label) {
       @Override
       public void run() {
 
-
          try {
 
             core_.home(deviceName);
 
             // check if the device busy?
             boolean busy = core_.deviceBusy(deviceName);
-            int delay=500; //500 ms 
-            int period=600000;//600 sec
+            int delay = 500; //500 ms 
+            int period = 600000;//600 sec
             int elapse = 0;
-            while (busy && elapse<period){
+            while (busy && elapse < period) {
                Thread.sleep(delay);
                busy = core_.deviceBusy(deviceName);
-               elapse+=delay;
+               elapse += delay;
             }
 
             stopThread.interrupt();
             stopThread = null;
 
-            double [] x2 = new double[1]; 
-            double [] y2 = new double[1];
+            double[] x2 = new double[1];
+            double[] y2 = new double[1];
 
-            core_.getXYPosition(deviceName,x2,y2);
+            core_.getXYPosition(deviceName, x2, y2);
 
             // zero the coordinates
             core_.setOriginXY(deviceName);
@@ -1138,23 +1115,30 @@ public void addPosition(MultiStagePosition msp, String label) {
             bt.setPara(d);
             bt.start();
 
-            core_.setXYPosition(deviceName, x1[0]-x2[0], y1[0]-y2[0]);
+            core_.setXYPosition(deviceName, x1[0] - x2[0], y1[0] - y2[0]);
             busy = core_.deviceBusy(deviceName);
 
-            if (isInterrupted())return;
+            if (isInterrupted()) {
+               return;
+            }
             busy = core_.deviceBusy(deviceName);
-            while (busy){
-               if (isInterrupted())return;
+            while (busy) {
+               if (isInterrupted()) {
+                  return;
+               }
                Thread.sleep(100);
-               if (isInterrupted())return;
+               if (isInterrupted()) {
+                  return;
+               }
                busy = core_.deviceBusy(deviceName);
             }
 
             bt.interrupt();
-            bt=null;          
+            bt = null;
 
-         } catch (InterruptedException e) { ReportingUtils.logError(e); }
-         catch (Exception e) {
+         } catch (InterruptedException e) {
+            ReportingUtils.logError(e);
+         } catch (Exception e) {
             handleError(e);
          }
       }
