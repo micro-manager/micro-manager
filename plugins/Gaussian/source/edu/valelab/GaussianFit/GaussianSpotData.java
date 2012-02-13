@@ -40,7 +40,8 @@ public class GaussianSpotData {
    }
    
    /**
-    * Copy constructor.  Only copies frame, slice, channel, position , and x, and y!
+    * Copy constructor.  Copies frame, slice, channel, position ,  x,  y,
+    * intensity, background, width, a, theta and sigma!
     */
    public GaussianSpotData(GaussianSpotData spot) {
       frame_ = spot.frame_;
@@ -50,6 +51,12 @@ public class GaussianSpotData {
       nr_ = spot.nr_;
       x_ = spot.x_;
       y_ = spot.y_;
+      intensity_ = spot.intensity_;
+      background_ = spot.background_;
+      width_ = spot.width_;
+      a_ = spot.a_;
+      theta_ = spot.theta_;
+      sigma_ = spot.sigma_;         
    }
 
    public void setData(double intensity, double background, double xCenter, double yCenter,
@@ -100,8 +107,14 @@ public class GaussianSpotData {
    public double getXCenter() {
       return xCenter_;
    }
+   public void setXCenter(double x) {
+      xCenter_ = x;
+   }
    public double getYCenter() {
       return yCenter_;
+   }
+   public void setYCenter(double y) {
+      yCenter_ = y;
    }
    public double getWidth() {
       return width_;

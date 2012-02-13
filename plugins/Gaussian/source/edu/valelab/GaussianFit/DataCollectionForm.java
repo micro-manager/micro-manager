@@ -67,6 +67,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
    private final String[] renderModes_ = {"Points", "Gaussian"};
    private final String[] renderSizes_  = {"1x", "2x", "4x", "8x"};
    public final static String extension_ = ".tsf";
+   private final double MAXMATCHDISTANCE = 1000.0;
    ArrayList<MyRowData> rowData_;
    double[][][] colorCorrection_; // 2D array (one for each pixel) containing xy coordinates of
                                  // first image (0 and 1) and correction to second image (2 and 3)
@@ -205,8 +206,6 @@ public class DataCollectionForm extends javax.swing.JFrame {
          else if (column == 3) {
             if (rowData_.get(row).isTrack_)
                straightenTrack(rowData_.get(row));
-            else 
-               correct2C(rowData_.get(row));
          }
 
       }
@@ -274,6 +273,8 @@ public class DataCollectionForm extends javax.swing.JFrame {
         removeButton = new javax.swing.JButton();
         showButton = new javax.swing.JButton();
         c2StandardButton = new javax.swing.JButton();
+        pairsButton = new javax.swing.JButton();
+        c2CorrectButton = new javax.swing.JButton();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
         setTitle("Gaussian tracking data");
@@ -295,13 +296,13 @@ public class DataCollectionForm extends javax.swing.JFrame {
             }
         });
 
-        plotComboBox_.setFont(new java.awt.Font("Lucida Grande", 0, 10));
+        plotComboBox_.setFont(new java.awt.Font("Lucida Grande", 0, 10)); // NOI18N
         plotComboBox_.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "X-T", "Y-T", "X-Y" }));
 
-        visualizationMagnification_.setFont(new java.awt.Font("Lucida Grande", 0, 10));
+        visualizationMagnification_.setFont(new java.awt.Font("Lucida Grande", 0, 10)); // NOI18N
         visualizationMagnification_.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "1x", "2x", "4x", "8x" }));
 
-        visualizationModel_.setFont(new java.awt.Font("Lucida Grande", 0, 10));
+        visualizationModel_.setFont(new java.awt.Font("Lucida Grande", 0, 10)); // NOI18N
         visualizationModel_.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "Gaussian" }));
 
         saveButton.setFont(new java.awt.Font("Lucida Grande", 0, 10));
@@ -320,7 +321,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
             }
         });
 
-        showButton.setFont(new java.awt.Font("Lucida Grande", 0, 10)); // NOI18N
+        showButton.setFont(new java.awt.Font("Lucida Grande", 0, 10));
         showButton.setText("Show");
         showButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -336,45 +337,72 @@ public class DataCollectionForm extends javax.swing.JFrame {
             }
         });
 
+        pairsButton.setFont(new java.awt.Font("Lucida Grande", 0, 10)); // NOI18N
+        pairsButton.setText("Pairs");
+        pairsButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                pairsButtonActionPerformed(evt);
+            }
+        });
+
+        c2CorrectButton.setFont(new java.awt.Font("Lucida Grande", 0, 10)); // NOI18N
+        c2CorrectButton.setText("2C Correct");
+        c2CorrectButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                c2CorrectButtonActionPerformed(evt);
+            }
+        });
+
         org.jdesktop.layout.GroupLayout layout = new org.jdesktop.layout.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+            .add(jScrollPane1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 716, Short.MAX_VALUE)
             .add(layout.createSequentialGroup()
                 .addContainerGap()
-                .add(loadButton)
+                .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.TRAILING)
+                    .add(org.jdesktop.layout.GroupLayout.LEADING, c2StandardButton, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 75, Short.MAX_VALUE)
+                    .add(org.jdesktop.layout.GroupLayout.LEADING, loadButton))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(saveButton)
+                .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING, false)
+                    .add(c2CorrectButton, 0, 0, Short.MAX_VALUE)
+                    .add(saveButton, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(removeButton)
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(showButton)
-                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(c2StandardButton, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 89, Short.MAX_VALUE)
-                .add(18, 18, 18)
+                .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.TRAILING, false)
+                    .add(pairsButton, 0, 0, Short.MAX_VALUE)
+                    .add(showButton, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .add(111, 111, 111)
                 .add(visualizationModel_, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 90, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(visualizationMagnification_, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 90, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(plotComboBox_, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 90, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                 .addContainerGap())
-            .add(jScrollPane1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 716, Short.MAX_VALUE)
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
             .add(org.jdesktop.layout.GroupLayout.TRAILING, layout.createSequentialGroup()
                 .addContainerGap()
-                .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
-                    .add(loadButton, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 19, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                    .add(plotComboBox_, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                    .add(visualizationMagnification_, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                    .add(visualizationModel_, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                    .add(saveButton, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 19, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                    .add(removeButton, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 19, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                    .add(showButton, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 19, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                    .add(c2StandardButton, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 19, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+                .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.TRAILING)
+                    .add(layout.createSequentialGroup()
+                        .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
+                            .add(loadButton, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 19, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                            .add(saveButton, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 19, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                            .add(removeButton, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 19, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                            .add(showButton, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 19, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                        .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
+                            .add(c2StandardButton, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 19, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                            .add(pairsButton, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 19, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                            .add(c2CorrectButton, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 19, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)))
+                    .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
+                        .add(plotComboBox_, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                        .add(visualizationMagnification_, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                        .add(visualizationModel_, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(jScrollPane1, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 446, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+                .add(jScrollPane1, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 422, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
         );
 
         pack();
@@ -492,27 +520,132 @@ public class DataCollectionForm extends javax.swing.JFrame {
    private void c2StandardButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_c2StandardButtonActionPerformed
       int row = jTable1.getSelectedRow();
       if (row > -1) {
-         // TODO: calculate transform
-         ArrayList points = new ArrayList();
-         
-         ArrayList<Point2D.Double> xyPoints = new ArrayList<Point2D.Double>();
+         // Get points from both channels in first frame as ArrayLists        
+         ArrayList<Point2D.Double> xyPointsCh1 = new ArrayList<Point2D.Double>();
+         ArrayList<Point2D.Double> xyPointsCh2 = new ArrayList<Point2D.Double>();
          Iterator it = rowData_.get(row).spotList_.iterator();
          while (it.hasNext()) {
             GaussianSpotData gs = (GaussianSpotData) it.next();
-            Point2D.Double point = new Point2D.Double(gs.getXCenter(), gs.getYCenter());
-            xyPoints.add(point);
+            if (gs.getFrame() == 1) {
+               Point2D.Double point = new Point2D.Double(gs.getXCenter(), gs.getYCenter());
+               if (gs.getChannel() == 1)
+                  xyPointsCh1.add(point);
+               else if (gs.getChannel() == 2)
+                  xyPointsCh2.add(point);
+            }
          }
          
+         // Find matching points in the two ArrayLists
+         Iterator it2 = xyPointsCh1.iterator();
+         ArrayList <ArrayList<Point2D.Double>> points = new ArrayList<ArrayList<Point2D.Double>>();
+         NearestPoint2D np = new NearestPoint2D(xyPointsCh2, MAXMATCHDISTANCE);
+         
+         while (it2.hasNext()) {
+            ArrayList <Point2D.Double> pair = new ArrayList<Point2D.Double> ();
+            Point2D.Double pCh1 = (Point2D.Double) it2.next();
+            Point2D.Double pCh2 = np.findBF(pCh1);
+            if (pCh2 != null) {
+               pair.add(pCh1);
+               pair.add(pCh2);
+               points.add(pair);
+            }
+         }
+         lwm_ = new LocalWeightedMean(2, points);
+         
       }
-         showResults(rowData_.get(row));
    }//GEN-LAST:event_c2StandardButtonActionPerformed
+
+   private void pairsButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_pairsButtonActionPerformed
+      int row = jTable1.getSelectedRow();
+      if (row > -1) {
+         // Get points from both channels in first frame as ArrayLists        
+         ArrayList<Point2D.Double> xyPointsCh1 = new ArrayList<Point2D.Double>();
+         ArrayList<Point2D.Double> xyPointsCh2 = new ArrayList<Point2D.Double>();
+         Iterator it = rowData_.get(row).spotList_.iterator();
+         while (it.hasNext()) {
+            GaussianSpotData gs = (GaussianSpotData) it.next();
+            if (gs.getFrame() == 1) {
+               Point2D.Double point = new Point2D.Double(gs.getXCenter(), gs.getYCenter());
+               if (gs.getChannel() == 1)
+                  xyPointsCh1.add(point);
+               else if (gs.getChannel() == 2)
+                  xyPointsCh2.add(point);
+            }
+         }
+         
+         // Find matching points in the two ArrayLists
+         Iterator it2 = xyPointsCh1.iterator();
+         NearestPoint2D np = new NearestPoint2D(xyPointsCh2, MAXMATCHDISTANCE);
+         ResultsTable rt = new ResultsTable();
+         rt.reset();
+         rt.setPrecision(2);
+         ArrayList<Double> distancesSquared = new ArrayList<Double>();
+         ArrayList<Double> errorX = new ArrayList<Double>();        
+         ArrayList<Double> errorY = new ArrayList<Double>();
+         
+         while (it2.hasNext()) {
+            Point2D.Double pCh1 = (Point2D.Double) it2.next();
+            Point2D.Double pCh2 = np.findBF(pCh1);
+            if (pCh2 != null) {           
+               rt.incrementCounter();
+               rt.addValue("X1", pCh1.getX());
+               rt.addValue("Y1", pCh1.getY());
+               rt.addValue("X2", pCh2.getX());
+               rt.addValue("Y2", pCh2.getY());
+               double d2 = NearestPoint2D.distance2(pCh1, pCh2);
+               rt.addValue("Distance", Math.sqrt(d2));
+               distancesSquared.add(d2);  
+               
+               double ex = (pCh1.getX() - pCh2.getX()) * (pCh1.getX() - pCh2.getX());
+               ex = Math.sqrt(ex);
+               errorX.add(ex);
+               double ey = (pCh1.getY() - pCh2.getY()) * (pCh1.getY() - pCh2.getY());
+               ey = Math.sqrt(ey);
+               errorY.add(ey);
+              
+            }
+         }
+         rt.show("Pairs found in " + rowData_.get(row).name_);
+ 
+         Double avg = Math.sqrt(listAvg(distancesSquared));
+         
+         ij.IJ.log("Average distance: " + avg.toString());
+         
+         Double avgX = listAvg(errorX);
+         Double avgY = listAvg(errorY);
+         
+         ij.IJ.log ("Error in X: " + avgX.toString() + ", Error in Y: " + avgY.toString());
+         
+         
+      }
+   }//GEN-LAST:event_pairsButtonActionPerformed
+
+   private double listAvg (ArrayList<Double> list) {
+      double total = 0.0;
+      Iterator it = list.iterator();
+      while (it.hasNext()) {
+         total += (Double) it.next();
+      }
+      
+      return total / list.size();
+      
+   }
+   
+   private void c2CorrectButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_c2CorrectButtonActionPerformed
+      int row = jTable1.getSelectedRow();
+      if (row > -1) {     
+         correct2C(rowData_.get(row));
+      }
+   }//GEN-LAST:event_c2CorrectButtonActionPerformed
 
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JButton c2CorrectButton;
     private javax.swing.JButton c2StandardButton;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JTable jTable1;
     private javax.swing.JButton loadButton;
+    private javax.swing.JButton pairsButton;
     private javax.swing.JComboBox plotComboBox_;
     private javax.swing.JButton removeButton;
     private javax.swing.JButton saveButton;
@@ -549,13 +682,8 @@ public class DataCollectionForm extends javax.swing.JFrame {
          } else {
             if (column == 2)
                setText((value == null ? "" : "Render"));
-            else {
-               if (column == 3)
-                  setText((value == null ? "" : "2C Correct"));
-               else
-                  setText((value == null ? "" : value.toString()));
-            }
-            //return null;
+            if (column == 3)
+               return null;     
          }
              
          return this;
@@ -790,15 +918,36 @@ public class DataCollectionForm extends javax.swing.JFrame {
       if (rowData.spotList_.size() <= 1) {
          return;
       }
+      if (lwm_ == null) {
+         ij.IJ.showMessage("No calibration data available.  First Calibrate using 2C Standard");
+         return;
+      }
+      
+      List<GaussianSpotData> correctedData =
+              Collections.synchronizedList(new ArrayList<GaussianSpotData>());
 
-      ArrayList<Point2D.Double> xyPoints = new ArrayList<Point2D.Double>();
       Iterator it = rowData.spotList_.iterator();
       while (it.hasNext()) {
          GaussianSpotData gs = (GaussianSpotData) it.next();
-         Point2D.Double point = new Point2D.Double(gs.getXCenter(), gs.getYCenter());
-         xyPoints.add(point);
+         if (gs.getChannel() == 1) {
+            Point2D.Double point = new Point2D.Double(gs.getXCenter(), gs.getYCenter());
+            Point2D.Double corPoint = lwm_.transform(point);
+            GaussianSpotData gsn = new GaussianSpotData(gs);
+            gsn.setXCenter(corPoint.x);
+            gsn.setYCenter(corPoint.y);
+            correctedData.add(gsn);
+         } else if (gs.getChannel() == 2) {
+            correctedData.add(gs);
+         }
+
       }
-      
+         
+      // Add transformed data to data overview window
+      addSpotData(rowData.name_ + "Channel-Correct", rowData.title_, rowData.width_,
+              rowData.height_, rowData.pixelSizeUm_, rowData.shape_,
+              rowData.halfSize_, rowData.nrChannels_, rowData.nrFrames_,
+              rowData.nrSlices_, 1, rowData.maxNrSpots_, correctedData,
+              false);
    }
 
    /**
@@ -878,6 +1027,10 @@ public class DataCollectionForm extends javax.swing.JFrame {
       }
    }
 
+   private Point2D.Double closestPoint() {
+      return new Point2D.Double(0, 0);
+   }
+   
    private int findMatch(double[][][] imageSpotList, int nr, double cutoff) {
       int j = 0;
       while ( (nr - j) >= 0 || (nr + j) < imageSpotList[0].length ) {
