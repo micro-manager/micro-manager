@@ -95,6 +95,7 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
    public AcquisitionVirtualStack virtualStack_;
    private final Preferences displayPrefs_;
    private boolean simple_ = false;
+   private boolean mda_ = false; //flag if display corresponds to MD acquisition
    private MetadataPanel mdPanel_;
    private boolean newDisplay_ = true; //used for autostretching on window opening
    
@@ -363,6 +364,7 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
       pSelector_ = createPositionScrollbar();
       displayPrefs_ = Preferences.userNodeForPackage(this.getClass());
       imageCache_.setDisplay(this);
+      mda_ = eng != null;
    }
 
    //used for snap and live
@@ -372,6 +374,7 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
       displayPrefs_ = Preferences.userNodeForPackage(this.getClass());
       name_ = name;
       imageCache_.setDisplay(this);
+      mda_ = false;
    }
    
    private void invokeAndWaitIfNotEDT(Runnable runnable) {
@@ -597,13 +600,6 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
     */
    @Override
    public void imageReceived(final TaggedImage taggedImage) {
-      try {
-         int frame = MDUtils.getFrameIndex(taggedImage.tags);
-
-      } catch (JSONException ex) {
-         ReportingUtils.logError(ex);
-      }
-
       if (eng_ != null)
          updateDisplay(taggedImage, false);
    }
@@ -632,15 +628,16 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
          int ch = MDUtils.getChannelIndex(tags);
          int slice = MDUtils.getSliceIndex(tags);
          int position = MDUtils.getPositionIndex(tags);
-     
-         if (finalUpdate || frame == 0 || (Math.abs(t - lastDisplayTime_) > 30) ||
+         boolean show = finalUpdate || frame == 0 || (Math.abs(t - lastDisplayTime_) > 30) ||
                  (ch == getNumChannels()-1 && lastFrameShown_==frame 
-                 && lastSliceShown_==slice && lastPositionShown_==position  )  ) {              
-         showImage(tags, true);
-         lastFrameShown_ = frame;
-         lastSliceShown_ = slice;
-         lastPositionShown_ = position;
-         lastDisplayTime_ = t;
+                 && lastSliceShown_==slice && lastPositionShown_==position  ) ||
+                 (slice == getNumSlices() - 1 && frame == 0 && position == 0 && ch == getNumChannels() - 1);
+         if (show) {
+            showImage(tags, true);
+            lastFrameShown_ = frame;
+            lastSliceShown_ = slice;
+            lastPositionShown_ = position;
+            lastDisplayTime_ = t;
          }
       } catch (Exception e) {
          ReportingUtils.logError(e);
@@ -978,8 +975,7 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
          }
       }
       
-
-      initializeContrast(channel);
+      initializeContrast(channel, slice);
       
 
       
@@ -1019,11 +1015,12 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
     * MDA should autoscale on frist image
     * Opening dataset should load from disoplay and comments
     */
-   private void initializeContrast(final int channel) {
+   private void initializeContrast(final int channel, final int slice) {
       Runnable autoscaleOrLoadContrast = new Runnable() {
          public void run() {
-            if (!newDisplay_) 
-               return;          
+            if (!newDisplay_) {
+               return; 
+            }
             if (simple_) {
                if (hyperImage_ instanceof MMCompositeImage
                        && ((MMCompositeImage) hyperImage_).getNChannelsUnverified() - 1 != channel) {
@@ -1031,13 +1028,20 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
                }
                mdPanel_.loadSimpleWinContrastWithoutDraw(imageCache_, hyperImage_);
             } else {
-               if (eng_ != null) {
+               if (mda_) {
                   if (hyperImage_ instanceof MMCompositeImage
                           && ((MMCompositeImage) hyperImage_).getNChannelsUnverified() - 1 != channel) {
                      return;
                   }
-                  mdPanel_.autoscaleWithoutDraw(imageCache_, hyperImage_);
-               } else if (!simple_) { //Called when display created by pressing acquire button
+                  if (((IMMImagePlus) hyperImage_).getNSlicesUnverified() - 1 != slice) {
+                     return;
+                  }
+                  if (((IMMImagePlus) hyperImage_).getNSlicesUnverified() == 1) {                
+                     mdPanel_.autoscaleWithoutDraw(imageCache_, hyperImage_);
+                  } else {
+                     mdPanel_.autoscaleOverStackWithoutDraw(imageCache_, hyperImage_);
+                  }
+               } else { //Called when display created by pressing acquire button
                   if (hyperImage_ instanceof MMCompositeImage) {
                      if (((MMCompositeImage) hyperImage_).getNChannelsUnverified() - 1 != channel) {
                         return;

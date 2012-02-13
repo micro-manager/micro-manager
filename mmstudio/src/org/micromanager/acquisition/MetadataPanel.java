@@ -15,6 +15,9 @@ import ij.CompositeImage;
 import ij.ImagePlus;
 import ij.WindowManager;
 import ij.gui.ImageWindow;
+import ij.process.ByteProcessor;
+import ij.process.ImageProcessor;
+import ij.process.ShortProcessor;
 import java.awt.BorderLayout;
 import java.awt.CardLayout;
 import java.awt.Font;
@@ -569,6 +572,44 @@ public class MetadataPanel extends JPanel
          currentContrastPanel_.autostretch();
          currentContrastPanel_.applyLUTToImage(img, cache);
       }
+   }
+   
+   public void autoscaleOverStackWithoutDraw(ImageCache cache, ImagePlus img) {
+      int pixMin;
+      int pixMax;
+      int nSlices = ((VirtualAcquisitionDisplay.IMMImagePlus) img).getNSlicesUnverified();
+      int nChannels = ((VirtualAcquisitionDisplay.IMMImagePlus) img).getNChannelsUnverified();
+      for (int channel = 0; channel < nChannels; channel++) {
+         pixMin = Integer.MAX_VALUE;
+         pixMax = 0;
+         for (int z = 0; z < nSlices; z++) {
+            int flatIndex = 1 + channel + z*nChannels;
+            int bytes = img.getBytesPerPixel();
+            if (bytes == 2){
+               short[] pixels = (short[]) img.getStack().getPixels(flatIndex);
+               for ( short value : pixels) {
+                  if (value < pixMin)
+                     pixMin = value;
+                  if (value > pixMax)
+                     pixMax = value;
+               }
+            } else if (bytes == 1) {
+               byte[] pixels = (byte[]) img.getStack().getPixels(flatIndex);
+               for ( byte value : pixels) {
+                  if (value < pixMin)
+                     pixMin = value;
+                  if (value > pixMax)
+                     pixMax = value;    
+               }
+            }
+          
+         }
+         //autoscale the channel
+            if (currentContrastPanel_ != null) 
+               currentContrastPanel_.setChannelContrast(channel,pixMin, pixMax, 1.0);  
+      }
+      if (currentContrastPanel_ != null) 
+         currentContrastPanel_.applyLUTToImage(img, cache);
    }
    
    public void refresh() {
