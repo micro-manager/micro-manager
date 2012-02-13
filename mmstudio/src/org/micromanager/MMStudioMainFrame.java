@@ -2930,11 +2930,13 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
             int width = MDUtils.getWidth(summary);
             int height = MDUtils.getHeight(summary);
             int depth  = MDUtils.getBitDepth(summary);
+            String pixelType = MDUtils.getPixelType(summary);
             if (height != core_.getImageHeight() || width != core_.getImageWidth() || 
                     depth != core_.getImageBitDepth()) 
                return false;
             
             TaggedImage ti = ImageUtils.makeTaggedImage(pixels, 0, 0, 0,0, width, height, depth);
+            ti.tags.put("PixelType", pixelType);
             virtAcq.getImageCache().putImage(ti);
             virtAcq.showImage(ti, wait);
             return true;
