@@ -2929,13 +2929,13 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
             JSONObject summary = virtAcq.getImageCache().getSummaryMetadata();
             int width = MDUtils.getWidth(summary);
             int height = MDUtils.getHeight(summary);
-            int depth  = MDUtils.getBitDepth(summary);
+            int bitDepth  = MDUtils.getBitDepth(summary);
             String pixelType = MDUtils.getPixelType(summary);
             if (height != core_.getImageHeight() || width != core_.getImageWidth() || 
-                    depth != core_.getImageBitDepth()) 
+                    bitDepth != core_.getImageBitDepth()) 
                return false;
-            
-            TaggedImage ti = ImageUtils.makeTaggedImage(pixels, 0, 0, 0,0, width, height, depth);
+            int byteDepth = bitDepth <= 8 ? 1 : 2;
+            TaggedImage ti = ImageUtils.makeTaggedImage(pixels, 0, 0, 0,0, width, height, bitDepth);
             ti.tags.put("PixelType", pixelType);
             virtAcq.getImageCache().putImage(ti);
             virtAcq.showImage(ti, wait);
