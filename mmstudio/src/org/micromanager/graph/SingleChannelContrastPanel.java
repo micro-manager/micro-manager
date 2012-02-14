@@ -816,7 +816,9 @@ public class SingleChannelContrastPanel extends JPanel implements
    public void setupChannelControls(ImageCache cache) {
    }
    
-   public ContrastSettings getContrastSettings() {
+   public ContrastSettings getChannelContrastSettings(int channel) {
+      if (channel != 0)
+         return null;
       return new ContrastSettings(contrastMin_,contrastMax_, gamma_);
    }
 }

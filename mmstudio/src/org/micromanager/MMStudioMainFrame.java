@@ -3009,10 +3009,10 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface, Device
          ReportingUtils.showError("No camera configured");
          return;
       }
-      checkSimpleAcquisition();
       try {
-         setCursor(new Cursor(Cursor.WAIT_CURSOR));
          core_.snapImage();
+         checkSimpleAcquisition();
+         setCursor(new Cursor(Cursor.WAIT_CURSOR));
          getAcquisition(SIMPLE_ACQ).toFront();
          long c = core_.getNumberOfCameraChannels();
          for (int i = 0; i < c; i++) {
@@ -3412,15 +3412,20 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface, Device
 
    }
 
-///////////////////////////////////////////////////////////////////////////////////////////////////////////////////FIX THIS
    public void applyContrastSettings(ContrastSettings contrast8,
          ContrastSettings contrast16) {
-//      metadataPanel_.getSingleChannelContrastPanel().applyContrastSettings(contrast8, contrast16);
+      ImagePlus img = WindowManager.getCurrentImage();
+      if (img == null)
+         return;
+      if (img.getBytesPerPixel() == 1)     
+         metadataPanel_.setChannelContrast(0, contrast8.min, contrast8.max, contrast8.gamma);
+      else
+         metadataPanel_.setChannelContrast(0, contrast16.min, contrast16.max, contrast16.gamma);
    }
 
    @Override
    public ContrastSettings getContrastSettings() {
-      return metadataPanel_.getCurrentContrastSettings();
+      return metadataPanel_.getChannelContrast(0);
    }
 
    public boolean is16bit() {

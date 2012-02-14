@@ -525,11 +525,11 @@ public class MultiChannelContrastPanel extends JPanel implements ContrastPanel {
        mdPanel_.drawWithoutUpdate(img);
    }
 
-    public ContrastSettings getContrastSettings() {
-       if (ccpList_ == null || ccpList_.isEmpty())
+    public ContrastSettings getChannelContrastSettings(int channel) {
+       if (ccpList_ == null || ccpList_.size() - 1 > channel)
           return null;
-       return new ContrastSettings(ccpList_.get(0).getContrastMin(), 
-               ccpList_.get(0).getContrastMax(), ccpList_.get(0).getContrastGamma());
+       return new ContrastSettings(ccpList_.get(channel).getContrastMin(), 
+               ccpList_.get(channel).getContrastMax(), ccpList_.get(channel).getContrastGamma());
     }
     
 }

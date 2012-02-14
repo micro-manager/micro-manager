@@ -91,8 +91,8 @@ public interface ContrastPanel {
    public void autostretch();
       
    /*
-    * Returns the contrastSettings associated with first channel of the current image
+    * Returns the contrastSettings associated with the channel of the current image
     */
-   public ContrastSettings getContrastSettings();
+   public ContrastSettings getChannelContrastSettings(int channel);
 
 }

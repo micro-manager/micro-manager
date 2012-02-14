@@ -802,7 +802,7 @@ public interface ScriptInterface {
    public boolean getLiveMode();
    
    /**
-    * Redundant to setChannelContrast
+    * Use setChannelContrast instead of this function
     * @deprecated
     */
    public void applyContrastSettings(ContrastSettings contrast8_, ContrastSettings contrast16_);

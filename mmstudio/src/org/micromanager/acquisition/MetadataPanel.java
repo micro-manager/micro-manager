@@ -541,12 +541,12 @@ public class MetadataPanel extends JPanel
        return lastWindow_.getImagePlus();
    }
    
-   public ContrastSettings getCurrentContrastSettings() {
+   public ContrastSettings getChannelContrast(int channel) {
       ImagePlus img = getCurrentImage();
       if (img == null)
          return null;
       if (currentContrastPanel_ != null)
-         return currentContrastPanel_.getContrastSettings();
+         return currentContrastPanel_.getChannelContrastSettings( channel);
       return null;
    }
    
