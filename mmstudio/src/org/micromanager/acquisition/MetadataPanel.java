@@ -1,29 +1,35 @@
-/*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
- */
-
-/*
- * MetadataPanel.java
- *
- * Created on Oct 20, 2010, 10:40:52 AM
- */
+///////////////////////////////////////////////////////////////////////////////
+//FILE:          MetadataPanel.java
+//PROJECT:       Micro-Manager
+//SUBSYSTEM:     mmstudio
+//-----------------------------------------------------------------------------
+//
+// AUTHOR:       Henry Pinkard, henry.pinkard@gmail.com, & Arthur Edelstein, 2010
+//
+// COPYRIGHT:    University of California, San Francisco, 2012
+//
+// LICENSE:      This file is distributed under the BSD license.
+//               License text is included with the source distribution.
+//
+//               This file is distributed in the hope that it will be useful,
+//               but WITHOUT ANY WARRANTY; without even the implied warranty
+//               of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+//
+//               IN NO EVENT SHALL THE COPYRIGHT OWNER OR
+//               CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+//               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
+//
 package org.micromanager.acquisition;
 
 
 import ij.CompositeImage;
 import ij.ImagePlus;
-import ij.WindowManager;
 import ij.gui.ImageWindow;
-import ij.process.ByteProcessor;
-import ij.process.ImageProcessor;
-import ij.process.ShortProcessor;
 import java.awt.BorderLayout;
 import java.awt.CardLayout;
 import java.awt.Font;
 import java.util.Arrays;
 import java.util.Vector;
-import java.util.prefs.Preferences;
 import javax.swing.DebugGraphics;
 import javax.swing.JCheckBox;
 import javax.swing.JLabel;

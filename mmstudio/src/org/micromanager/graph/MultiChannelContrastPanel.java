@@ -1,19 +1,33 @@
-/*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
- */
+///////////////////////////////////////////////////////////////////////////////
+//FILE:          MultiChannelContrastPanel.java
+//PROJECT:       Micro-Manager
+//SUBSYSTEM:     mmstudio
+//-----------------------------------------------------------------------------
+//
+// AUTHOR:       Henry Pinkard, henry.pinkard@gmail.com, 2012
+//
+// COPYRIGHT:    University of California, San Francisco, 2012
+//
+// LICENSE:      This file is distributed under the BSD license.
+//               License text is included with the source distribution.
+//
+//               This file is distributed in the hope that it will be useful,
+//               but WITHOUT ANY WARRANTY; without even the implied warranty
+//               of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+//
+//               IN NO EVENT SHALL THE COPYRIGHT OWNER OR
+//               CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+//               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
+//
 package org.micromanager.graph;
 
 import ij.CompositeImage;
 import ij.ImagePlus;
-import ij.WindowManager;
 import ij.gui.Overlay;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Graphics;
 import java.util.ArrayList;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import java.util.prefs.Preferences;
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.JCheckBox;
@@ -26,13 +40,10 @@ import javax.swing.SpinnerNumberModel;
 import javax.swing.SpringLayout;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
-import org.json.JSONException;
 import org.micromanager.acquisition.MetadataPanel;
-import org.micromanager.acquisition.VirtualAcquisitionDisplay;
 import org.micromanager.api.ContrastPanel;
 import org.micromanager.api.ImageCache;
 import org.micromanager.utils.MDUtils;
-import org.micromanager.utils.MMScriptException;
 import org.micromanager.utils.NumberUtils;
 import org.micromanager.utils.ReportingUtils;
 import org.micromanager.utils.ScaleBar;

@@ -1,12 +1,13 @@
 ///////////////////////////////////////////////////////////////////////////////
-//FILE:          ContrastPanel.java
+//FILE:          MetadataPanel.java
 //PROJECT:       Micro-Manager
 //SUBSYSTEM:     mmstudio
 //-----------------------------------------------------------------------------
 //
-// AUTHOR:       Nenad Amodaj, nenad@amodaj.com, October 29, 2006
+// AUTHOR:       Henry Pinkard, henry.pinkard@gmail.com, 2012
+//                (Based off of a similar class by Nenad Amodaj, 2006)
 //
-// COPYRIGHT:    University of California, San Francisco, 2006
+// COPYRIGHT:    University of California, San Francisco, 2012
 //
 // LICENSE:      This file is distributed under the BSD license.
 //               License text is included with the source distribution.
@@ -18,8 +19,6 @@
 //               IN NO EVENT SHALL THE COPYRIGHT OWNER OR
 //               CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
-//
-// CVS:          $Id: ContrastPanel.java 8480 2012-01-11 16:54:23Z henry $
 //
 package org.micromanager.graph;
 

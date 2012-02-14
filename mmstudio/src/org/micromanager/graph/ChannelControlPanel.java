@@ -1,18 +1,28 @@
-/*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
- */
-
-/*
- * ChannelControlsPanel.java
- *
- * Created on Sep 27, 2010, 1:27:24 PM
- */
+///////////////////////////////////////////////////////////////////////////////
+//FILE:          MetadataPanel.java
+//PROJECT:       Micro-Manager
+//SUBSYSTEM:     mmstudio
+//-----------------------------------------------------------------------------
+//
+// AUTHOR:       Henry Pinkard, henry.pinkard@gmail.com, & Arthur Edelstein, 2010
+//
+// COPYRIGHT:    University of California, San Francisco, 2012
+//
+// LICENSE:      This file is distributed under the BSD license.
+//               License text is included with the source distribution.
+//
+//               This file is distributed in the hope that it will be useful,
+//               but WITHOUT ANY WARRANTY; without even the implied warranty
+//               of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+//
+//               IN NO EVENT SHALL THE COPYRIGHT OWNER OR
+//               CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+//               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
+//
 package org.micromanager.graph;
 
 import ij.CompositeImage;
 import ij.ImagePlus;
-import ij.WindowManager;
 import ij.process.ImageProcessor;
 import ij.process.LUT;
 import java.awt.BorderLayout;
@@ -25,8 +35,6 @@ import java.awt.GridBagLayout;
 import java.awt.Insets;
 import java.awt.event.MouseWheelEvent;
 import java.awt.event.MouseWheelListener;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import java.util.prefs.Preferences;
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
@@ -53,10 +61,6 @@ import org.micromanager.utils.NumberUtils;
 import org.micromanager.utils.ReportingUtils;
 
 
-/**
- *
- * @author arthur
- */
 public class ChannelControlPanel extends JPanel implements CursorListener {
 
    private static final Dimension CONTROLS_SIZE = new Dimension(120,115);

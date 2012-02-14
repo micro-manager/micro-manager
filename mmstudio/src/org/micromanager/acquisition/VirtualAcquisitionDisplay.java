@@ -1,5 +1,28 @@
+///////////////////////////////////////////////////////////////////////////////
+//FILE:          VirtualAcquisitionDisplay.java
+//PROJECT:       Micro-Manager
+//SUBSYSTEM:     mmstudio
+//-----------------------------------------------------------------------------
+//
+// AUTHOR:       Henry Pinkard, henry.pinkard@gmail.com, & Arthur Edelstein, 2010
+//
+// COPYRIGHT:    University of California, San Francisco, 2012
+//
+// LICENSE:      This file is distributed under the BSD license.
+//               License text is included with the source distribution.
+//
+//               This file is distributed in the hope that it will be useful,
+//               but WITHOUT ANY WARRANTY; without even the implied warranty
+//               of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+//
+//               IN NO EVENT SHALL THE COPYRIGHT OWNER OR
+//               CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+//               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
+//
+
 package org.micromanager.acquisition;
 
+import org.micromanager.api.DisplayControls;
 import java.lang.reflect.InvocationTargetException;
 import org.micromanager.api.ImageCacheListener;
 import ij.ImageStack;
@@ -37,10 +60,6 @@ import org.micromanager.utils.MDUtils;
 import org.micromanager.utils.MMScriptException;
 import org.micromanager.utils.ReportingUtils;
 
-/**
- *
- * @author arthur
- */
 public final class VirtualAcquisitionDisplay implements ImageCacheListener {
 
    public static VirtualAcquisitionDisplay getDisplay(ImagePlus imgp) {

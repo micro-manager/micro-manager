@@ -1,9 +1,27 @@
-/*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
- */
+///////////////////////////////////////////////////////////////////////////////
+//FILE:          MetadataPanel.java
+//PROJECT:       Micro-Manager
+//SUBSYSTEM:     mmstudio
+//-----------------------------------------------------------------------------
+//
+// AUTHOR:       Henry Pinkard, henry.pinkard@gmail.com, 2012
+//
+// COPYRIGHT:    University of California, San Francisco, 2012
+//
+// LICENSE:      This file is distributed under the BSD license.
+//               License text is included with the source distribution.
+//
+//               This file is distributed in the hope that it will be useful,
+//               but WITHOUT ANY WARRANTY; without even the implied warranty
+//               of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+//
+//               IN NO EVENT SHALL THE COPYRIGHT OWNER OR
+//               CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+//               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
+//
 package org.micromanager.acquisition;
 
+import org.micromanager.api.DisplayControls;
 import com.swtdesigner.SwingResourceManager;
 import java.awt.BorderLayout;
 import java.awt.Dimension;
@@ -19,10 +37,7 @@ import org.micromanager.MMStudioMainFrame;
 import org.micromanager.api.ImageCache;
 import org.micromanager.utils.ReportingUtils;
 
-/**
- *
- * @author Henry
- */
+
 public class SimpleWindowControls extends DisplayControls {
 
    private VirtualAcquisitionDisplay virtAcq_;
