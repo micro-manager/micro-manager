@@ -479,7 +479,7 @@ int IntegratedFilterWheel::RetrieveCurrentPosition(long& pos)
       return ret;
 
    // check response signature
-   if (memcmp(answer, getParamsRsp, 8) != 0)
+   if (memcmp(answer, getPosRsp, 8) != 0)
       return ERR_UNRECOGNIZED_ANSWER;
 
    unsigned int steps = *((unsigned int*)(answer + 8));
