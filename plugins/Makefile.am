@@ -81,8 +81,22 @@ CRISP.jar:  \
 
 Gaussian.jar:  \
 	$(srcdir)/Gaussian/source/GaussianTrack_.java \
+	$(srcdir)/Gaussian/source/edu/valelab/GaussianFit/DataCollectionForm.java \
+	$(srcdir)/Gaussian/source/edu/valelab/GaussianFit/FindLocalMaxima.java \
+	$(srcdir)/Gaussian/source/edu/valelab/GaussianFit/FitAllThread.java \
 	$(srcdir)/Gaussian/source/edu/valelab/GaussianFit/GaussianFit.java \
-	$(srcdir)/Gaussian/source/edu/valelab/GaussianFit/FindLocalMaxima.java 
+	$(srcdir)/Gaussian/source/edu/valelab/GaussianFit/GaussianFitStackThread.java \
+	$(srcdir)/Gaussian/source/edu/valelab/GaussianFit/GaussianInfo.java \
+	$(srcdir)/Gaussian/source/edu/valelab/GaussianFit/GaussianSpotData.java \
+	$(srcdir)/Gaussian/source/edu/valelab/GaussianFit/GaussianTrackThread.java \
+	$(srcdir)/Gaussian/source/edu/valelab/GaussianFit/GaussianUtils.java \
+	$(srcdir)/Gaussian/source/edu/valelab/GaussianFit/MainForm.java \
+	$(srcdir)/Gaussian/source/edu/valelab/GaussianFit/MultiVariateGaussianFunction.java \
+	$(srcdir)/Gaussian/source/edu/valelab/GaussianFit/MyK.java \
+	$(srcdir)/Gaussian/source/edu/valelab/GaussianFit/NearestPoint2D.java \
+	$(srcdir)/Gaussian/source/edu/valelab/GaussianFit/ParametricGaussianFunction.java \
+	$(srcdir)/Gaussian/source/edu/valelab/GaussianFit/ProgressThread.java \
+	$(srcdir)/Gaussian/source/edu/valelab/GaussianFit/Terms.java 
 	test -d build || mkdir build
 	rm -rf build/*
 	$(JAVAC) -source 1.5 -target 1.5 -sourcepath $(srcdir):. -classpath $(IJJARPATH):$(BSHJARPATH):$(COMMONSMATHJARPATH):$(SWINGLAYOUTJARPATH):$(JFREECHARTJARPATH):../bin/MMCoreJ.jar:../mmstudio/MMJ_.jar:$(CLASSEXT)/TSFProto.jar:$(CLASSEXT)/gproto.jar:$(CLASSEXT)/lwm-0.0.2.jar:. $(srcdir)/Gaussian/source/GaussianTrack_.java $(srcdir)/Gaussian/source/edu/valelab/GaussianFit/*.java -d build

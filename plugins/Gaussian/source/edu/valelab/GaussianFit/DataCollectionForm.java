@@ -569,8 +569,10 @@ public class DataCollectionForm extends javax.swing.JFrame {
                ResultsTable rt2 = new ResultsTable();
                rt2.reset();
                rt2.setPrecision(2);
+               ij.IJ.showStatus("Creating Pairs");
  
                for (int frame = 1; frame <= rowData_.get(row).nrFrames_; frame++) {
+                  ij.IJ.showProgress(frame, rowData_.get(row).nrFrames_);
                   // Get points from both channels in each frame as ArrayLists        
                   ArrayList<Point2D.Double> xyPointsCh1 = new ArrayList<Point2D.Double>();
                   ArrayList<Point2D.Double> xyPointsCh2 = new ArrayList<Point2D.Double>();
