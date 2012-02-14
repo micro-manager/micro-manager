@@ -143,7 +143,7 @@ int RappScanner::Initialize()
    
    UGA_->Connect(port_.c_str());
    if (UGA_->IsConnected()) {
-      UGA_->UseMaxCalibration(true);
+      UGA_->UseMaxCalibration(false);
       UGA_->SetCalibrationMode(false, false);
       RunDummyCalibration();
       UGA_->CenterSpot();
@@ -240,6 +240,9 @@ double RappScanner::GetYRange()
 
 int RappScanner::AddPolygonVertex(int polygonIndex, double x, double y)
 {
+   if (polygons_.size() < (unsigned) (1+polygonIndex)) {
+      polygons_.resize(1+polygonIndex);
+   }
    polygons_.at(polygonIndex).push_back(pointf((float) x, (float) y));
    return DEVICE_OK;
 }
@@ -254,10 +257,24 @@ int RappScanner::DeletePolygons()
 int RappScanner::RunSequence()
 {
    tRectList rectangles;
+
+
    for (unsigned polygonIndex=0;polygonIndex<polygons_.size();++polygonIndex)
    {
       UGA_->CreateA(polygons_.at(polygonIndex), polygonAccuracy_, polygonMinRectSize_, &rectangles, false);
    }
+
+   if (sequence_.size() > 0)
+   {
+      std::string sequence2 = replaceChar(sequence_, ':', ',');
+      tStringList sequenceList = split(sequence2, ' ');
+   
+      if (!UGA_->StoreSequence(sequenceList))
+      {
+         return DEVICE_ERR;
+      } 
+   }
+
    UGA_->RunSequence(false);
    return DEVICE_OK;
 }
@@ -316,16 +333,6 @@ int RappScanner::OnSequence(MM::PropertyBase* pProp, MM::ActionType eAct)
    else if (eAct == MM::AfterSet)
    {
       pProp->Get(sequence_);
-
-      if (sequence_.size() > 0)
-      {
-         tStringList sequenceList = split(sequence_, ' ');
-
-         if (!UGA_->StoreSequence(sequenceList))
-         {
-            return DEVICE_ERR;
-         } 
-      }
    }
 
    return DEVICE_OK;
@@ -352,6 +359,7 @@ int RappScanner::OnTTLTriggered(MM::PropertyBase* pProp, MM::ActionType eAct)
 void RappScanner::RunDummyCalibration()
 {
   UGA_->SetCalibrationMode(true, false);
+  UGA_->UseMaxCalibration(true);
 
   int side = 4096;
 
@@ -360,25 +368,18 @@ void RappScanner::RunDummyCalibration()
   UGA_->SetAOIEdge(Left, 0, false);
   UGA_->SetAOIEdge(Right, side-1, false);
 
-  pointf p0(0, 0);
-  pointf p1((float) side-1, 0);
-  pointf p2((float) side-1, (float) side-1);
-  pointf p3(0, (float) side-1);
-
-  UGA_->CenterSpot();
-  UGA_->MoveLaser(Up, side/2-1);
-  UGA_->MoveLaser(Left, side/2-1);
-
-  pointf xy = UGA_->CurrentPosition();
-
-  UGA_->InitializeCalibration(4, false);
-  UGA_->SetCalibrationPoint(false, 0, p0, false);
-  UGA_->MoveLaser(Right, side);
-  UGA_->SetCalibrationPoint(false, 1, p1, false);
-  UGA_->MoveLaser(Down, side);
-  UGA_->SetCalibrationPoint(false, 2, p2, false);
-  UGA_->MoveLaser(Left, side);
-  UGA_->SetCalibrationPoint(false, 3, p3, false);
+  UGA_->InitializeCalibration(16, false);
+  int step = side/4;
+  for (int j=0; j<4; ++j)
+  {
+     for (int i=0; i<4; ++i)
+     {
+        int x = i*step;
+        int y = j*step;
+        UGA_->SetDevicePosition(x,y);
+        UGA_->SetCalibrationPoint(false, 0, pointf((float) x, (float) y), false);
+     }
+  }
 
   UGA_->SetCalibrationMode(calibrationMode_ == 1, false);
 }
@@ -395,4 +396,13 @@ std::vector<std::string> & split(const std::string &s, char delim, std::vector<s
 std::vector<std::string> split(const std::string &s, char delim) {
     std::vector<std::string> elems;
     return split(s, delim, elems);
+}
+
+std::string replaceChar(std::string str, char ch1, char ch2) {
+  std::string str2(str);
+  for (unsigned i = 0; i < str2.length(); ++i) {
+    if (str2[i] == ch1)
+      str2[i] = ch2;
+  }
+  return str2;
 }

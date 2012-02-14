@@ -89,8 +89,8 @@ public class SLM implements ProjectionDevice {
    }
 
    public void setRoi(Roi roi, AffineTransform trans) {
-      //throw new UnsupportedOperationException("Not supported yet.");
-
+      throw new UnsupportedOperationException("Not supported yet.");
+/*
       AffineTransformOp cmo = new AffineTransformOp(trans, AffineTransformOp.TYPE_BILINEAR);
       ImagePlus imgpCamera = null;
 
@@ -140,7 +140,7 @@ public class SLM implements ProjectionDevice {
          ReportingUtils.showMessage("Please snap an image first.");
       }
 
- 
+ */
    }
 
 }

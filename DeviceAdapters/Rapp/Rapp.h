@@ -89,5 +89,6 @@ private:
 
 std::vector<std::string> & split(const std::string &s, char delim, std::vector<std::string> &elems);
 std::vector<std::string> split(const std::string &s, char delim);
+std::string replaceChar(std::string str, char ch1, char ch2);
 
 #endif //_Rapp_H_

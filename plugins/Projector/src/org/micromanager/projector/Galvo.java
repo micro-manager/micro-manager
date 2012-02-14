@@ -23,7 +23,7 @@ import org.micromanager.utils.ReportingUtils;
 public class Galvo implements ProjectionDevice {
    String galvo_;
    CMMCore mmc_;
-   int side_ = 500;
+   int side_ = 4096;
    
    public Galvo(CMMCore mmc) {
       mmc_ = mmc;
@@ -32,7 +32,7 @@ public class Galvo implements ProjectionDevice {
 
    public void displaySpot(double x, double y) {
       try {
-         mmc_.setGalvoPosition(galvo_, x - side_/2,  y - side_/2);
+         mmc_.setGalvoPosition(galvo_, x, y);
       } catch (Exception ex) {
          ReportingUtils.showError(ex);
       }

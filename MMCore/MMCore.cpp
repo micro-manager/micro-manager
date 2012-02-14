@@ -4987,7 +4987,7 @@ void CMMCore::deleteGalvoPolygons(const char* deviceLabel) throw (CMMError)
 }
 
 /**
- * Add a vertex to a galvo polygon.
+ * Run a sequence of galvo positions
  */
 void CMMCore::runGalvoSequence(const char* deviceLabel) throw (CMMError)
 {
@@ -5000,6 +5000,8 @@ void CMMCore::runGalvoSequence(const char* deviceLabel) throw (CMMError)
       throw CMMError(deviceLabel, getDeviceErrorText(ret, pGalvo).c_str(), MMERR_DEVICE_GENERIC);
    }
 }
+
+/* SYSTEM STATE */
 
 
 /**
