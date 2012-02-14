@@ -18,7 +18,6 @@ import mmcorej.TaggedImage;
 import org.micromanager.MMStudioMainFrame;
 import org.micromanager.api.AcquisitionEngine;
 import org.micromanager.api.DataProcessor;
-import org.micromanager.api.DeviceControlGUI;
 import org.micromanager.api.ImageCache;
 import org.micromanager.api.Pipeline;
 import org.micromanager.api.ScriptInterface;

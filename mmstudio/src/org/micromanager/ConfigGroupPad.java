@@ -38,7 +38,6 @@ import mmcorej.Configuration;
 import mmcorej.MMCoreJ;
 import mmcorej.StrVector;
 
-import org.micromanager.api.DeviceControlGUI;
 import org.micromanager.api.ScriptInterface;
 import org.micromanager.utils.*;
 

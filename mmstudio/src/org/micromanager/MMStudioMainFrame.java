@@ -86,7 +86,6 @@ import org.micromanager.api.ImageCacheListener;
 import org.micromanager.acquisition.MMImageCache;
 import org.micromanager.api.AcquisitionEngine;
 import org.micromanager.api.Autofocus;
-import org.micromanager.api.DeviceControlGUI;
 import org.micromanager.api.MMPlugin;
 import org.micromanager.api.ScriptInterface;
 import org.micromanager.api.MMListenerInterface;
@@ -94,7 +93,6 @@ import org.micromanager.conf2.ConfiguratorDlg2;
 import org.micromanager.conf.ConfiguratorDlg;
 import org.micromanager.conf.MMConfigFileException;
 import org.micromanager.conf.MicroscopeModel;
-import org.micromanager.graph.SingleChannelContrastPanel;
 import org.micromanager.graph.GraphData;
 import org.micromanager.graph.GraphFrame;
 import org.micromanager.navigation.CenterAndDragListener;
@@ -159,7 +157,7 @@ import org.micromanager.utils.SnapLiveContrastSettings;
 /*
  * Main panel and application class for the MMStudio.
  */
-public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, ScriptInterface {
+public class MMStudioMainFrame extends JFrame implements ScriptInterface {
 
    private static final String MICRO_MANAGER_TITLE = "Micro-Manager 1.4";
    private static final String VERSION = "1.4.7  20111110";

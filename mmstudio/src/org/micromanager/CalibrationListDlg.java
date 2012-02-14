@@ -45,7 +45,7 @@ import javax.swing.table.AbstractTableModel;
 import mmcorej.CMMCore;
 import mmcorej.Configuration;
 
-import org.micromanager.api.DeviceControlGUI;
+import org.micromanager.api.ScriptInterface;
 import org.micromanager.utils.Calibration;
 import org.micromanager.utils.CalibrationList;
 import org.micromanager.utils.MMDialog;
@@ -63,7 +63,7 @@ public class CalibrationListDlg extends MMDialog {
    private Preferences prefs_;
    //private GUIColors guiColors_;
    private CalibrationList calibrationList_;
-   private DeviceControlGUI parentGUI_;
+   private ScriptInterface parentGUI_;
 
    private class CalTableModel extends AbstractTableModel {
       private static final long serialVersionUID = 1L;
@@ -324,7 +324,7 @@ public class CalibrationListDlg extends MMDialog {
           calTable_.setRowSelectionInterval(row, row);
    }
 
-   public void setParentGUI(DeviceControlGUI parent) {
+   public void setParentGUI(ScriptInterface parent) {
       parentGUI_ = parent;
    }
 

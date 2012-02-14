@@ -36,6 +36,7 @@ import org.micromanager.AcqControlDlg;
 import org.micromanager.PositionListDlg;
 import org.micromanager.acquisition.MMAcquisition;
 import org.micromanager.navigation.PositionList;
+import org.micromanager.utils.AutofocusManager;
 import org.micromanager.utils.ContrastSettings;
 import org.micromanager.utils.MMScriptException;
 
@@ -806,5 +807,36 @@ public interface ScriptInterface {
    
    public void updateGUI(boolean updateConfigPadStructure);
 
+   public void applyContrastSettings(ContrastSettings contrast8_, ContrastSettings contrast16_);
+
+   public boolean displayImageWithStatusLine(Object pixels, String statusLine);   
    
+   public void displayStatusLine(String statusLine);
+
+   public AutofocusManager getAutofocusManager();
+
+   public String getBackgroundStyle();
+
+   public String getVersion();
+
+   public void initializeGUI();
+
+   public boolean isBurstAcquisitionRunning() throws MMScriptException;
+
+   public boolean okToAcquire();
+
+   public void setBackgroundStyle(String backgroundType);
+
+   public void setConfigChanged(boolean status);
+
+   public void showXYPositionList();
+
+      public void startAcquisition() throws MMScriptException;
+
+         public void startBurstAcquisition() throws MMScriptException;
+
+            public void stopAllActivity();
+
+               public boolean updateImage();
+
 }

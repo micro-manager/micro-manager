@@ -62,7 +62,7 @@ import mmcorej.PropertySetting;
 import mmcorej.PropertyType;
 import mmcorej.StrVector;
 
-import org.micromanager.api.DeviceControlGUI;
+import org.micromanager.api.ScriptInterface;
 import org.micromanager.utils.MMDialog;
 import org.micromanager.utils.NumberUtils;
 import org.micromanager.utils.PropertyItem;
@@ -90,7 +90,7 @@ public class CalibrationEditor extends MMDialog {
    
    private JTable table_;
    private PropertyTableData data_;
-   private DeviceControlGUI parentGUI_;
+   private ScriptInterface parentGUI_;
    private ShowFlags flags_;
    
    private JCheckBox showCamerasCheckBox_;
@@ -410,7 +410,7 @@ public class CalibrationEditor extends MMDialog {
       
   }
    
-   public void setParentGUI(DeviceControlGUI parent) {
+   public void setParentGUI(ScriptInterface parent) {
       parentGUI_ = parent;
    }
    

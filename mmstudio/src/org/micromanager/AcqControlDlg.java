@@ -82,7 +82,6 @@ import javax.swing.table.TableColumn;
 import javax.swing.table.TableModel;
 
 import org.micromanager.api.AcquisitionEngine;
-import org.micromanager.api.DeviceControlGUI;
 import org.micromanager.utils.AcqOrderMode;
 import org.micromanager.utils.ChannelSpec;
 import org.micromanager.utils.ColorEditor;
@@ -101,6 +100,7 @@ import java.awt.CardLayout;
 import java.awt.FlowLayout;
 import java.awt.GridLayout;
 import org.micromanager.acquisition.ComponentTitledBorder;
+import org.micromanager.api.ScriptInterface;
 import org.micromanager.utils.FileDialogs;
 import org.micromanager.utils.ReportingUtils;
 
@@ -144,7 +144,7 @@ public class AcqControlDlg extends JDialog implements PropertyChangeListener {
    private JButton setBottomButton_;
    private JButton setTopButton_;
    protected JComboBox displayModeCombo_;
-   private DeviceControlGUI gui_;
+   private ScriptInterface gui_;
    private GUIColors guiColors_;
    private NumberFormat numberFormat_;
    private JLabel namePrefixLabel_;
@@ -815,7 +815,7 @@ public class AcqControlDlg extends JDialog implements PropertyChangeListener {
     * @param acqEng - acquisition engine
     * @param prefs - application preferences node
     */
-   public AcqControlDlg(AcquisitionEngine acqEng, Preferences prefs, DeviceControlGUI gui) {
+   public AcqControlDlg(AcquisitionEngine acqEng, Preferences prefs, ScriptInterface gui) {
       super();
 
       prefs_ = prefs;

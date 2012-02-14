@@ -12,7 +12,7 @@ package org.micromanager;
 
 import javax.swing.JOptionPane;
 import mmcorej.CMMCore;
-import org.micromanager.api.DeviceControlGUI;
+import org.micromanager.api.ScriptInterface;
 import org.micromanager.utils.ReportingUtils;
 
 /**
@@ -23,11 +23,11 @@ public class ReportProblemDialog extends javax.swing.JDialog {
 
    String reportPreamble_;
    CMMCore core_;
-   private DeviceControlGUI parent_;
+   private ScriptInterface parent_;
    MMOptions mmoptions_;
 
    /** Creates new form ReportProblemDialog */
-   public ReportProblemDialog(CMMCore c, DeviceControlGUI parentMMGUI, MMOptions mmoptions) {
+   public ReportProblemDialog(CMMCore c, ScriptInterface parentMMGUI, MMOptions mmoptions) {
       super();
       initComponents();
       reportPreamble_ = "";

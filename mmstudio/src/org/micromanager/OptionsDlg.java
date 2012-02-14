@@ -42,7 +42,6 @@ import javax.swing.SpringLayout;
 
 import mmcorej.CMMCore;
 
-import org.micromanager.api.DeviceControlGUI;
 import org.micromanager.api.ScriptInterface;
 import org.micromanager.utils.GUIColors;
 import org.micromanager.utils.MMDialog;
