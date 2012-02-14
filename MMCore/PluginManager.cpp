@@ -176,7 +176,7 @@ HDEVMODULE CPluginManager::LoadPluginLibrary(const char* shortName)
       int mode = RTLD_NOW | RTLD_LOCAL;
       // Hack to make Andor adapter on Linux work
       if (strcmp (shortName, "Andor") == 0)
-         mode = RTLD_LAZY | RTLD_NOLOAD | RTLD_LOCAL;
+         mode = RTLD_LAZY | RTLD_LOCAL;
       HDEVMODULE hMod = dlopen(name.c_str(), RTLD_NOLOAD | mode);
       if (hMod)
          return  hMod;
