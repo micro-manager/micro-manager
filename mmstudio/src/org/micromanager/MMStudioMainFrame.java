@@ -189,6 +189,7 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
    private JTextField textFieldExp_;
    private JLabel labelImageDimensions_;
    private JToggleButton toggleButtonLive_;
+   private JButton toAlbumButton_;
    private JCheckBox autoShutterCheckBox_;
    private boolean shutterOriginalState_;
    private boolean autoShutterOriginalState_;
@@ -974,31 +975,31 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
 
       // Acquire button
       // -----------
-      JButton acquireButton = new JButton();
-      acquireButton.setMargin(new Insets(2, 2, 2, 2));
-      acquireButton.setIconTextGap(1);
-      acquireButton.setIcon(SwingResourceManager.getIcon(
+      toAlbumButton_ = new JButton();
+      toAlbumButton_.setMargin(new Insets(2, 2, 2, 2));
+      toAlbumButton_.setIconTextGap(1);
+      toAlbumButton_.setIcon(SwingResourceManager.getIcon(
             MMStudioMainFrame.class,
             "/org/micromanager/icons/camera_plus_arrow.png"));
-      acquireButton.setIconTextGap(6);
-      acquireButton.setToolTipText("Acquire single frame and add to an album");
-      acquireButton.setFont(new Font("Arial", Font.PLAIN, 10));
-      acquireButton.addActionListener(new ActionListener() {
+      toAlbumButton_.setIconTextGap(6);
+      toAlbumButton_.setToolTipText("Acquire single frame and add to an album");
+      toAlbumButton_.setFont(new Font("Arial", Font.PLAIN, 10));
+      toAlbumButton_.addActionListener(new ActionListener() {
 
          public void actionPerformed(ActionEvent e) {
             snapAndAddToImage5D();
          }
       });
 
-      acquireButton.setText("Album");
-      topPanel.add(acquireButton);
-      topLayout.putConstraint(SpringLayout.SOUTH, acquireButton, 69,
+      toAlbumButton_.setText("Album");
+      topPanel.add(toAlbumButton_);
+      topLayout.putConstraint(SpringLayout.SOUTH, toAlbumButton_, 69,
             SpringLayout.NORTH, topPanel);
-      topLayout.putConstraint(SpringLayout.NORTH, acquireButton, 48,
+      topLayout.putConstraint(SpringLayout.NORTH, toAlbumButton_, 48,
             SpringLayout.NORTH, topPanel);
-      topLayout.putConstraint(SpringLayout.EAST, acquireButton, 95,
+      topLayout.putConstraint(SpringLayout.EAST, toAlbumButton_, 95,
             SpringLayout.WEST, topPanel);
-      topLayout.putConstraint(SpringLayout.WEST, acquireButton, 7,
+      topLayout.putConstraint(SpringLayout.WEST, toAlbumButton_, 7,
             SpringLayout.WEST, topPanel);
 
       // Shutter button
@@ -2841,6 +2842,7 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
       toggleButtonShutter_.setEnabled(!enable);
       autoShutterCheckBox_.setEnabled(!enable);
       buttonSnap_.setEnabled(!enable);
+      toAlbumButton_.setEnabled(!enable);
       toggleButtonLive_.setIcon(enable ? SwingResourceManager.getIcon(MMStudioMainFrame.class,
               "/org/micromanager/icons/cancel.png")
               : SwingResourceManager.getIcon(MMStudioMainFrame.class,
