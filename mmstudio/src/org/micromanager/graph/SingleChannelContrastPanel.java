@@ -103,8 +103,6 @@ public class SingleChannelContrastPanel extends JPanel implements
    private double pixelMax_ = 255.0;
 	private int binSize_ = 1;
 	private static final int HIST_BINS = 256;
-	ContrastSettings cs8bit_;
-	ContrastSettings cs16bit_;
 	private JCheckBox autostretchCheckBox_;
 	private JCheckBox rejectOutliersCheckBox_;
    private JCheckBox slowHistCheckbox_;

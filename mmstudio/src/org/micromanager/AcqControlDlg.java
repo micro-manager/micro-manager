@@ -180,10 +180,9 @@ public class AcqControlDlg extends JDialog implements PropertyChangeListener {
    private static final String CHANNEL_EXPOSURE_PREFIX = "acqChannelExp";
    private static final String CHANNEL_ZOFFSET_PREFIX = "acqChannelZOffset";
    private static final String CHANNEL_DOZSTACK_PREFIX = "acqChannelDoZStack";
-   private static final String CHANNEL_CONTRAST8_MIN_PREFIX = "acqChannel8ContrastMin";
-   private static final String CHANNEL_CONTRAST8_MAX_PREFIX = "acqChannel8ContrastMax";
-   private static final String CHANNEL_CONTRAST16_MIN_PREFIX = "acqChannel16ContrastMin";
-   private static final String CHANNEL_CONTRAST16_MAX_PREFIX = "acqChannel16ContrastMax";
+   private static final String CHANNEL_CONTRAST_MIN_PREFIX = "acqChannelContrastMin";
+   private static final String CHANNEL_CONTRAST_MAX_PREFIX = "acqChannelContrastMax";
+   private static final String CHANNEL_CONTRAST_GAMMA_PREFIX = "acqChannelContrstGamma";
    private static final String CHANNEL_COLOR_R_PREFIX = "acqChannelColorR";
    private static final String CHANNEL_COLOR_G_PREFIX = "acqChannelColorG";
    private static final String CHANNEL_COLOR_B_PREFIX = "acqChannelColorB";
@@ -1667,18 +1666,16 @@ public class AcqControlDlg extends JDialog implements PropertyChangeListener {
          double exp = acqPrefs_.getDouble(CHANNEL_EXPOSURE_PREFIX + i, 0.0);
          Boolean doZStack = acqPrefs_.getBoolean(CHANNEL_DOZSTACK_PREFIX + i, true);
          double zOffset = acqPrefs_.getDouble(CHANNEL_ZOFFSET_PREFIX + i, 0.0);
-         ContrastSettings s8 = new ContrastSettings();
-         s8.min = acqPrefs_.getDouble(CHANNEL_CONTRAST8_MIN_PREFIX + i, defaultChannel.contrast8_.min);
-         s8.max = acqPrefs_.getDouble(CHANNEL_CONTRAST8_MAX_PREFIX + i, defaultChannel.contrast8_.max);
-         ContrastSettings s16 = new ContrastSettings();
-         s16.min = acqPrefs_.getDouble(CHANNEL_CONTRAST16_MIN_PREFIX + i, defaultChannel.contrast16_.min);
-         s16.max = acqPrefs_.getDouble(CHANNEL_CONTRAST16_MAX_PREFIX + i, defaultChannel.contrast16_.max);
+         ContrastSettings con = new ContrastSettings();
+         con.min = acqPrefs_.getInt(CHANNEL_CONTRAST_MIN_PREFIX + i, defaultChannel.contrast_.min);
+         con.max = acqPrefs_.getInt(CHANNEL_CONTRAST_MAX_PREFIX + i, defaultChannel.contrast_.max);
+         con.gamma = acqPrefs_.getDouble(CHANNEL_CONTRAST_GAMMA_PREFIX + i, defaultChannel.contrast_.gamma);
          int r = acqPrefs_.getInt(CHANNEL_COLOR_R_PREFIX + i, defaultChannel.color_.getRed());
          int g = acqPrefs_.getInt(CHANNEL_COLOR_G_PREFIX + i, defaultChannel.color_.getGreen());
          int b = acqPrefs_.getInt(CHANNEL_COLOR_B_PREFIX + i, defaultChannel.color_.getBlue());
          int skip = acqPrefs_.getInt(CHANNEL_SKIP_PREFIX + i, defaultChannel.skipFactorFrame_);
          Color c = new Color(r, g, b);
-         acqEng_.addChannel(name, exp, doZStack, zOffset, s8, s16, skip, c, use);
+         acqEng_.addChannel(name, exp, doZStack, zOffset, con, skip, c, use);
       }
 
       // Restore Column Width and Column order
@@ -1736,10 +1733,9 @@ public class AcqControlDlg extends JDialog implements PropertyChangeListener {
          acqPrefs_.putDouble(CHANNEL_EXPOSURE_PREFIX + i, channel.exposure_);
          acqPrefs_.putBoolean(CHANNEL_DOZSTACK_PREFIX + i, channel.doZStack_);
          acqPrefs_.putDouble(CHANNEL_ZOFFSET_PREFIX + i, channel.zOffset_);
-         acqPrefs_.putDouble(CHANNEL_CONTRAST8_MIN_PREFIX + i, channel.contrast8_.min);
-         acqPrefs_.putDouble(CHANNEL_CONTRAST8_MAX_PREFIX + i, channel.contrast8_.max);
-         acqPrefs_.putDouble(CHANNEL_CONTRAST16_MIN_PREFIX + i, channel.contrast16_.min);
-         acqPrefs_.putDouble(CHANNEL_CONTRAST16_MAX_PREFIX + i, channel.contrast16_.max);
+         acqPrefs_.putInt(CHANNEL_CONTRAST_MIN_PREFIX + i, channel.contrast_.min);
+         acqPrefs_.putInt(CHANNEL_CONTRAST_MAX_PREFIX + i, channel.contrast_.max);
+         acqPrefs_.putDouble(CHANNEL_CONTRAST_GAMMA_PREFIX + i, channel.contrast_.gamma);
          acqPrefs_.putInt(CHANNEL_COLOR_R_PREFIX + i, channel.color_.getRed());
          acqPrefs_.putInt(CHANNEL_COLOR_G_PREFIX + i, channel.color_.getGreen());
          acqPrefs_.putInt(CHANNEL_COLOR_B_PREFIX + i, channel.color_.getBlue());

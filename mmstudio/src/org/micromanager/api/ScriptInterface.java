@@ -801,13 +801,18 @@ public interface ScriptInterface {
     */
    public boolean getLiveMode();
    
+   /**
+    * Redundant to setChannelContrast
+    * @deprecated
+    */
+   public void applyContrastSettings(ContrastSettings contrast8_, ContrastSettings contrast16_);
+   
    public ContrastSettings getContrastSettings();
 
    public boolean is16bit();
    
    public void updateGUI(boolean updateConfigPadStructure);
 
-   public void applyContrastSettings(ContrastSettings contrast8_, ContrastSettings contrast16_);
 
    public boolean displayImageWithStatusLine(Object pixels, String statusLine);   
    
@@ -831,12 +836,11 @@ public interface ScriptInterface {
 
    public void showXYPositionList();
 
-      public void startAcquisition() throws MMScriptException;
+   public void startAcquisition() throws MMScriptException;
 
-         public void startBurstAcquisition() throws MMScriptException;
+   public void startBurstAcquisition() throws MMScriptException;
 
-            public void stopAllActivity();
+   public void stopAllActivity();
 
-               public boolean updateImage();
-
+   public boolean updateImage();
 }

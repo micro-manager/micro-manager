@@ -23,29 +23,30 @@
 //
 package org.micromanager.utils;
 
-/**
- * Contrast & brightness settings for the main panel
- * TODO: this data structure is almost the same as metadata.DisplaySettings and they
- *       should be merged.
- */
+
 public class ContrastSettings {
-   public double min;
-   public double max;
+   public int min;
+   public int max;
+   public double gamma;
    
    public ContrastSettings() {
-      min = 0.0;
-      max = 0.0;
+      min = 0;
+      max = 0;
+      gamma = 1.0;
    }
-   public ContrastSettings(double min, double max) {
+   public ContrastSettings(int min, int max) {
       this.min = min;
       this.max = max;
+      this.gamma = 1.0;
+   }
+   
+   public ContrastSettings(int min, int max, double gamma) {
+      this.min = min;
+      this.max = max;
+      this.gamma = gamma;      
    }
    
    public double getRange() {
       return max - min;
-   }
-   public void Set(double min, double max) {
-	      this.min = min;
-	      this.max = max;
    }
 }
