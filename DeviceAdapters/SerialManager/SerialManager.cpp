@@ -858,7 +858,15 @@ int SerialPort::OnHandshaking(MM::PropertyBase* /*pProp*/, MM::ActionType eAct)
    else if (eAct == MM::AfterSet)
    {
       if (initialized_)
-         return ERR_PORT_CHANGE_FORBIDDEN;
+      {
+         long handshake;
+         int ret;
+
+         ret = GetCurrentPropertyData(MM::g_Keyword_Handshaking, handshake);
+         if (ret != DEVICE_OK)
+            return ret;
+         pPort_->ChangeFlowControl(boost::asio::serial_port_base::flow_control::type(handshake));
+      }
    }
 
    return DEVICE_OK;

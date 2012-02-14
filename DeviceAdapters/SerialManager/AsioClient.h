@@ -51,7 +51,8 @@ public:
       io_service_(io_service), 
       serialPortImplementation_(io_service, device),
       pSerialPortAdapter_(pPort),
-      shutDownInProgress_(false)
+      shutDownInProgress_(false),
+      device_(device)
    { 
       do // just a scope for the guard
       {
@@ -69,24 +70,7 @@ public:
          if( !!anError)
             pSerialPortAdapter_->LogMessage(("error setting baud in AsioClient(): "+boost::lexical_cast<std::string,int>(anError.value()) + " " + anError.message()).c_str(), false);
 
-         // lexical_cast is useless here
-         std::string sflow;
-         switch( flow)
-         {
-         case boost::asio::serial_port_base::flow_control::none:
-            sflow = "none";
-            break;
-         case boost::asio::serial_port_base::flow_control::software:
-            sflow = "software";
-            break;
-         case boost::asio::serial_port_base::flow_control::hardware:
-            sflow = "hardware";
-            break;
-         };
-         pSerialPortAdapter_->LogMessage(("Attempting to set flow of " + device + " to " + sflow).c_str(), true);
-         serialPortImplementation_.set_option(  boost::asio::serial_port_base::flow_control(flow) , anError ); 
-         if( !!anError)
-            pSerialPortAdapter_->LogMessage(("error setting flow_control in AsioClient(): "+boost::lexical_cast<std::string,int>(anError.value()) + " " + anError.message()).c_str(), false);
+         ChangeFlowControl(flow);
 
          std::string sparity;
          switch( parity)
@@ -130,6 +114,30 @@ public:
 
       ReadStart(); 
    } 
+
+   void ChangeFlowControl(const boost::asio::serial_port_base::flow_control::type& flow)
+   {
+      boost::system::error_code anError;
+
+      // lexical_cast is useless here
+      std::string sflow;
+      switch( flow)
+      {
+      case boost::asio::serial_port_base::flow_control::none:
+         sflow = "none";
+         break;
+      case boost::asio::serial_port_base::flow_control::software:
+         sflow = "software";
+         break;
+      case boost::asio::serial_port_base::flow_control::hardware:
+         sflow = "hardware";
+         break;
+      };
+      pSerialPortAdapter_->LogMessage(("Attempting to set flow of " + device_ + " to " + sflow).c_str(), true);
+      serialPortImplementation_.set_option(  boost::asio::serial_port_base::flow_control(flow) , anError ); 
+      if( !!anError)
+         pSerialPortAdapter_->LogMessage(("error setting flow_control in AsioClient(): "+boost::lexical_cast<std::string,int>(anError.value()) + " " + anError.message()).c_str(), false);
+   }
 
    void WriteOneCharacterAsynchronously(const char msg) // pass the write data to the DoWrite function via the io service in the other thread 
    { 
@@ -349,6 +357,7 @@ private:
    std::deque<char> write_msgs_; // buffered write data 
    std::deque<char> data_read_;
    SerialPort* pSerialPortAdapter_;
+   std::string device_;
 
    MMThreadLock readBufferLock_;
    MMThreadLock writeBufferLock_;
