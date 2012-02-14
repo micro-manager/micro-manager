@@ -39,26 +39,15 @@ public interface DeviceControlGUI {
    public void initializeGUI();
    public String getVersion();
    public boolean updateImage();
-   public boolean displayImage(Object pixels);
    public boolean displayImageWithStatusLine(Object pixels, String statusLine);   
    public void displayStatusLine(String statusLine);
    public boolean okToAcquire();
    public void stopAllActivity();
    public boolean getLiveMode();
-   public void enableLiveMode(boolean enable);
    public void setBackgroundStyle(String backgroundType); 
    public String getBackgroundStyle();
-   public Color getBackgroundColor();
-   /**
-    * Lets Components register themselves so that their background can be  
-    * manipulated by the Micro-Manager UI
-    */
-   public void addMMBackgroundListener(Component frame);
-   /**
-    * Lets Components remove themselves from the list whose background gets
-    * changed by the Micro-Manager UI
-    */
-   public void removeMMBackgroundListener(Component frame);
+
+  
    public void setConfigChanged(boolean status);
    public void refreshGUI();
    public void applyContrastSettings(ContrastSettings contrast8_, ContrastSettings contrast16_);
@@ -76,9 +65,6 @@ public interface DeviceControlGUI {
    public void runBurstAcquisition() throws MMScriptException;
    public void startAcquisition() throws MMScriptException;
    public boolean isBurstAcquisitionRunning() throws MMScriptException;
-   public void loadAcquisition(String path) throws MMScriptException;
-   public void sleep(long ms) throws MMScriptException;
    
-   public void setPositionList(PositionList pl) throws MMScriptException;
    public AutofocusManager getAutofocusManager();
 }
