@@ -21,6 +21,7 @@ import org.micromanager.api.DataProcessor;
 import org.micromanager.api.DeviceControlGUI;
 import org.micromanager.api.ImageCache;
 import org.micromanager.api.Pipeline;
+import org.micromanager.api.ScriptInterface;
 import org.micromanager.navigation.PositionList;
 import org.micromanager.utils.AcqOrderMode;
 import org.micromanager.utils.AutofocusManager;
@@ -321,7 +322,7 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
       posList_ = posList;
    }
 
-   public void setParentGUI(DeviceControlGUI parent) {
+   public void setParentGUI(ScriptInterface parent) {
       gui_ = (MMStudioMainFrame) parent;
    }
 

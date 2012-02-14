@@ -52,7 +52,7 @@ public interface AcquisitionEngine {
 
    
    public void setPositionList(PositionList posList);
-   public void setParentGUI(DeviceControlGUI parent);
+   public void setParentGUI(ScriptInterface parent);
 
    /**
     * Sets which device will be used as the Z (focus) axis
