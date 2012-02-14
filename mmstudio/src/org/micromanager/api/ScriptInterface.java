@@ -468,8 +468,9 @@ public interface ScriptInterface {
    public void setChannelName(String title, int channel, String name) throws MMScriptException;
    
    /**
-    * Sets black (min) and white (max) clipping levels for each channel.
-    * @param channel - channel index
+    * Sets min (black) and max (white or the channel's color) clipping levels for each channel.
+    * @param title - acquisition name
+    * @param channel - channel index (use 0 if there is only a single channel)
     * @param min - black clipping level
     * @param max - white clipping level
     * @throws MMScriptException
@@ -796,7 +797,7 @@ public interface ScriptInterface {
    public void makeActive();
 
   /**
-    * Duplicate of isLiveModeOn()
+    * Use isLiveModeOn() instead of this function
     * @deprecated
     */
    public boolean getLiveMode();
@@ -812,13 +813,18 @@ public interface ScriptInterface {
     * panel or null if no window is associated with the contrast panel.  If the active
     * window has multiple channels, the settings associated with channel 0 are returned
     * @return ContrastSettings object of current windows settings
+    * @deprecated 
     */
    public ContrastSettings getContrastSettings();
-
+   
+   /**
+    * Checks if the image in the active window is 16 bits per pixel
+    * @return true if the image in the active window is 16 bits
+    * @deprecated
+    */
    public boolean is16bit();
    
    public void updateGUI(boolean updateConfigPadStructure);
-
 
    public boolean displayImageWithStatusLine(Object pixels, String statusLine);   
    
