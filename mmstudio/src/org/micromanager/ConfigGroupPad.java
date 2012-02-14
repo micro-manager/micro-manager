@@ -39,6 +39,7 @@ import mmcorej.MMCoreJ;
 import mmcorej.StrVector;
 
 import org.micromanager.api.DeviceControlGUI;
+import org.micromanager.api.ScriptInterface;
 import org.micromanager.utils.*;
 
 
@@ -52,7 +53,7 @@ public class ConfigGroupPad extends JScrollPane{
    private static final long serialVersionUID = 1L;
    private JTable table_;
    private StateTableData data_;
-   private DeviceControlGUI parentGUI_;
+   private ScriptInterface parentGUI_;
    private ArrayList<ChannelSpec> channels_;
    Preferences prefs_;
    private String COLUMN_WIDTH = "group_col_width";
@@ -96,7 +97,7 @@ public class ConfigGroupPad extends JScrollPane{
          prefs_.putInt(COLUMN_WIDTH, table_.getColumnModel().getColumn(0).getWidth());
    }
 
-   public void setParentGUI(DeviceControlGUI parentGUI) {
+   public void setParentGUI(ScriptInterface parentGUI) {
       parentGUI_ = parentGUI;
    }
 
@@ -199,7 +200,7 @@ public class ConfigGroupPad extends JScrollPane{
             try {
                if (value != null && value.toString().length() > 0)
                {
-                 boolean restartLive = parentGUI_.getLiveMode();
+                 boolean restartLive = parentGUI_.isLiveModeOn();
                  if (restartLive)
                     parentGUI_.enableLiveMode(false);
                  

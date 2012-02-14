@@ -36,6 +36,7 @@ import org.micromanager.AcqControlDlg;
 import org.micromanager.PositionListDlg;
 import org.micromanager.acquisition.MMAcquisition;
 import org.micromanager.navigation.PositionList;
+import org.micromanager.utils.ContrastSettings;
 import org.micromanager.utils.MMScriptException;
 
 /**
@@ -793,4 +794,17 @@ public interface ScriptInterface {
     */
    public void makeActive();
 
+  /**
+    * Duplicate of isLiveModeOn()
+    * @deprecated
+    */
+   public boolean getLiveMode();
+   
+   public ContrastSettings getContrastSettings();
+
+   public boolean is16bit();
+   
+   public void updateGUI(boolean updateConfigPadStructure);
+
+   
 }
