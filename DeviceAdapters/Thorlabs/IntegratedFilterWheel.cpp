@@ -145,7 +145,7 @@ const unsigned char getStatusRsp[] = {       0x81, // cmd low
                                              };
 
 
-//#define DRY_RUN
+#define DRY_RUN
 using namespace std;
 extern const char* g_WheelDeviceName;
 
@@ -430,6 +430,9 @@ int IntegratedFilterWheel::GoToPosition(long pos)
    LogMessage("GoToPosition()");
    if (numberOfPositions_ < 1 || pos < 0 || pos >= numberOfPositions_)
       return ERR_INVALID_POSITION;
+#ifdef DRY_RUN
+   position_ = pos;
+#else
 
    ClearPort(*this, *GetCoreCallback(), port_);
 
@@ -448,8 +451,8 @@ int IntegratedFilterWheel::GoToPosition(long pos)
    int ret = SetCommand(cmd, sizeof(setPosCmd));
    if (ret != DEVICE_OK)
       return ret;
-
-   // TODO: sleep?
+#endif
+   CDeviceUtils::SleepMs(100);
  
    return DEVICE_OK;
 }
@@ -462,6 +465,9 @@ int IntegratedFilterWheel::RetrieveCurrentPosition(long& pos)
    LogMessage("RetrieveCurrentPosition()");
    if (numberOfPositions_ < 1)
       return ERR_INVALID_NUMBER_OF_POS;
+#ifdef DRY_RUN
+   pos = position_;
+#else
 
    ClearPort(*this, *GetCoreCallback(), port_);
 
@@ -489,6 +495,7 @@ int IntegratedFilterWheel::RetrieveCurrentPosition(long& pos)
    ostringstream msg;
    msg << "Steps:" << steps << ", Position:" << pos;
    LogMessage(msg.str());
+# endif
 
    return DEVICE_OK;
 }
@@ -504,6 +511,10 @@ int IntegratedFilterWheel::OnState(MM::PropertyBase* pProp, MM::ActionType eAct)
 
    if (eAct == MM::BeforeGet)
    {
+      ret = RetrieveCurrentPosition(position_);
+      if (ret != DEVICE_OK)
+         return ret;
+
       pProp->Set(position_);
    }
    else if (eAct == MM::AfterSet)
