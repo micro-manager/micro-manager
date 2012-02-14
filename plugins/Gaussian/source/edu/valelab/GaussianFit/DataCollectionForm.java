@@ -52,6 +52,7 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import javax.swing.JOptionPane;
+import javax.swing.SwingUtilities;
 import org.jfree.data.xy.XYSeries;
 
 import valelab.LocalWeightedMean;
@@ -556,67 +557,93 @@ public class DataCollectionForm extends javax.swing.JFrame {
    }//GEN-LAST:event_c2StandardButtonActionPerformed
 
    private void pairsButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_pairsButtonActionPerformed
-      int row = jTable1.getSelectedRow();
+      final int row = jTable1.getSelectedRow();
       if (row > -1) {
-         // Get points from both channels in first frame as ArrayLists        
-         ArrayList<Point2D.Double> xyPointsCh1 = new ArrayList<Point2D.Double>();
-         ArrayList<Point2D.Double> xyPointsCh2 = new ArrayList<Point2D.Double>();
-         Iterator it = rowData_.get(row).spotList_.iterator();
-         while (it.hasNext()) {
-            GaussianSpotData gs = (GaussianSpotData) it.next();
-            if (gs.getFrame() == 1) {
-               Point2D.Double point = new Point2D.Double(gs.getXCenter(), gs.getYCenter());
-               if (gs.getChannel() == 1)
-                  xyPointsCh1.add(point);
-               else if (gs.getChannel() == 2)
-                  xyPointsCh2.add(point);
-            }
-         }
-         
-         // Find matching points in the two ArrayLists
-         Iterator it2 = xyPointsCh1.iterator();
-         NearestPoint2D np = new NearestPoint2D(xyPointsCh2, MAXMATCHDISTANCE);
-         ResultsTable rt = new ResultsTable();
-         rt.reset();
-         rt.setPrecision(2);
-         ArrayList<Double> distancesSquared = new ArrayList<Double>();
-         ArrayList<Double> errorX = new ArrayList<Double>();        
-         ArrayList<Double> errorY = new ArrayList<Double>();
-         
-         while (it2.hasNext()) {
-            Point2D.Double pCh1 = (Point2D.Double) it2.next();
-            Point2D.Double pCh2 = np.findBF(pCh1);
-            if (pCh2 != null) {           
-               rt.incrementCounter();
-               rt.addValue("X1", pCh1.getX());
-               rt.addValue("Y1", pCh1.getY());
-               rt.addValue("X2", pCh2.getX());
-               rt.addValue("Y2", pCh2.getY());
-               double d2 = NearestPoint2D.distance2(pCh1, pCh2);
-               rt.addValue("Distance", Math.sqrt(d2));
-               distancesSquared.add(d2);  
-               
-               double ex = (pCh1.getX() - pCh2.getX()) * (pCh1.getX() - pCh2.getX());
-               ex = Math.sqrt(ex);
-               errorX.add(ex);
-               double ey = (pCh1.getY() - pCh2.getY()) * (pCh1.getY() - pCh2.getY());
-               ey = Math.sqrt(ey);
-               errorY.add(ey);
-              
-            }
-         }
-         rt.show("Pairs found in " + rowData_.get(row).name_);
+
+         Runnable doWorkRunnable = new Runnable() {
+
+            public void run() {
+               ResultsTable rt = new ResultsTable();
+               rt.reset();
+               rt.setPrecision(2);
+               ResultsTable rt2 = new ResultsTable();
+               rt2.reset();
+               rt2.setPrecision(2);
  
-         Double avg = Math.sqrt(listAvg(distancesSquared));
-         
-         ij.IJ.log("Average distance: " + avg.toString());
-         
-         Double avgX = listAvg(errorX);
-         Double avgY = listAvg(errorY);
-         
-         ij.IJ.log ("Error in X: " + avgX.toString() + ", Error in Y: " + avgY.toString());
-         
-         
+               for (int frame = 1; frame <= rowData_.get(row).nrFrames_; frame++) {
+                  // Get points from both channels in each frame as ArrayLists        
+                  ArrayList<Point2D.Double> xyPointsCh1 = new ArrayList<Point2D.Double>();
+                  ArrayList<Point2D.Double> xyPointsCh2 = new ArrayList<Point2D.Double>();
+                  Iterator it = rowData_.get(row).spotList_.iterator();
+                  while (it.hasNext()) {
+                     GaussianSpotData gs = (GaussianSpotData) it.next();
+                     if (gs.getFrame() == frame) {
+                        Point2D.Double point = new Point2D.Double(gs.getXCenter(), gs.getYCenter());
+                        if (gs.getChannel() == 1) {
+                           xyPointsCh1.add(point);
+                        } else if (gs.getChannel() == 2) {
+                           xyPointsCh2.add(point);
+                        }
+                     }
+                  }
+
+                  // Find matching points in the two ArrayLists
+                  Iterator it2 = xyPointsCh1.iterator();
+                  NearestPoint2D np = new NearestPoint2D(xyPointsCh2, MAXMATCHDISTANCE);
+
+                  ArrayList<Double> distancesSquared = new ArrayList<Double>();
+                  ArrayList<Double> errorX = new ArrayList<Double>();
+                  ArrayList<Double> errorY = new ArrayList<Double>();
+
+                  while (it2.hasNext()) {
+                     Point2D.Double pCh1 = (Point2D.Double) it2.next();
+                     Point2D.Double pCh2 = np.findBF(pCh1);
+                     if (pCh2 != null) {
+                        rt.incrementCounter();
+                        rt.addValue("X1", pCh1.getX());
+                        rt.addValue("Y1", pCh1.getY());
+                        rt.addValue("X2", pCh2.getX());
+                        rt.addValue("Y2", pCh2.getY());
+                        double d2 = NearestPoint2D.distance2(pCh1, pCh2);
+                        rt.addValue("Distance", Math.sqrt(d2));
+                        distancesSquared.add(d2);
+
+                        double ex = (pCh1.getX() - pCh2.getX()) * (pCh1.getX() - pCh2.getX());
+                        ex = Math.sqrt(ex);
+                        errorX.add(ex);
+                        double ey = (pCh1.getY() - pCh2.getY()) * (pCh1.getY() - pCh2.getY());
+                        ey = Math.sqrt(ey);
+                        errorY.add(ey);
+
+                     }
+                  }
+
+
+                  Double avg = Math.sqrt(listAvg(distancesSquared));
+
+                  ij.IJ.log("Average distance: " + avg.toString());
+
+                  Double avgX = listAvg(errorX);
+                  Double avgY = listAvg(errorY);
+
+                  ij.IJ.log("Error in X: " + avgX.toString() + ", Error in Y: " + avgY.toString());
+
+                  rt2.incrementCounter();
+                  rt2.addValue("Frame Nr.", frame);
+                  rt2.addValue("Avg. distance", avg);
+                  rt2.addValue("X", avgX);
+                  rt2.addValue("Y", avgY);
+                  
+                  rt.show("Pairs found in " + rowData_.get(row).name_);
+                  rt2.show("Summary of Pairs found in " + rowData_.get(row).name_);
+
+               }
+ 
+
+            }
+         };
+         SwingUtilities.invokeLater(doWorkRunnable);
+
       }
    }//GEN-LAST:event_pairsButtonActionPerformed
 
@@ -913,7 +940,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
     * 
     * @param rowData 
     */
-   private void correct2C(MyRowData rowData)
+   private void correct2C(final MyRowData rowData)
    {
       if (rowData.spotList_.size() <= 1) {
          return;
@@ -923,31 +950,50 @@ public class DataCollectionForm extends javax.swing.JFrame {
          return;
       }
       
-      List<GaussianSpotData> correctedData =
-              Collections.synchronizedList(new ArrayList<GaussianSpotData>());
+      ij.IJ.showStatus("Executing color correction");
+      
+      Runnable doWorkRunnable = new Runnable() {
 
-      Iterator it = rowData.spotList_.iterator();
-      while (it.hasNext()) {
-         GaussianSpotData gs = (GaussianSpotData) it.next();
-         if (gs.getChannel() == 1) {
-            Point2D.Double point = new Point2D.Double(gs.getXCenter(), gs.getYCenter());
-            Point2D.Double corPoint = lwm_.transform(point);
-            GaussianSpotData gsn = new GaussianSpotData(gs);
-            gsn.setXCenter(corPoint.x);
-            gsn.setYCenter(corPoint.y);
-            correctedData.add(gsn);
-         } else if (gs.getChannel() == 2) {
-            correctedData.add(gs);
+         public void run() {
+
+            List<GaussianSpotData> correctedData =
+                    Collections.synchronizedList(new ArrayList<GaussianSpotData>());
+            Iterator it = rowData.spotList_.iterator();
+            int frameNr = 1;
+            while (it.hasNext()) {
+               GaussianSpotData gs = (GaussianSpotData) it.next();
+               if (gs.getFrame() != frameNr) {
+                  frameNr = gs.getFrame();
+                  ij.IJ.log("Now Processing frame: " + frameNr);
+                  ij.IJ.showProgress(frameNr, rowData.nrFrames_);
+               }
+               if (gs.getChannel() == 1) {
+                  Point2D.Double point = new Point2D.Double(gs.getXCenter(), gs.getYCenter());
+                  try {
+                     Point2D.Double corPoint = lwm_.transform(point);
+                     GaussianSpotData gsn = new GaussianSpotData(gs);
+                     gsn.setXCenter(corPoint.x);
+                     gsn.setYCenter(corPoint.y);
+                     correctedData.add(gsn);
+                  } catch (Exception ex) {
+                     ex.printStackTrace();
+                  }
+               } else if (gs.getChannel() == 2) {
+                  correctedData.add(gs);
+               }
+
+            }
+
+            // Add transformed data to data overview window
+            addSpotData(rowData.name_ + "Channel-Correct", rowData.title_, rowData.width_,
+                    rowData.height_, rowData.pixelSizeUm_, rowData.shape_,
+                    rowData.halfSize_, rowData.nrChannels_, rowData.nrFrames_,
+                    rowData.nrSlices_, 1, rowData.maxNrSpots_, correctedData,
+                    false);
          }
+      };
 
-      }
-         
-      // Add transformed data to data overview window
-      addSpotData(rowData.name_ + "Channel-Correct", rowData.title_, rowData.width_,
-              rowData.height_, rowData.pixelSizeUm_, rowData.shape_,
-              rowData.halfSize_, rowData.nrChannels_, rowData.nrFrames_,
-              rowData.nrSlices_, 1, rowData.maxNrSpots_, correctedData,
-              false);
+      SwingUtilities.invokeLater(doWorkRunnable);
    }
 
    /**
