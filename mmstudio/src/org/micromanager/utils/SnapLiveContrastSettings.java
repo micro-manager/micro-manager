@@ -25,12 +25,12 @@ public class SnapLiveContrastSettings {
        prefs_ = Preferences.userNodeForPackage(this.getClass());
    }
    
-   public void saveSettings(int min, int max, double gamma, int channel, String pixelType ) {      
+   public void saveSettings(ContrastSettings c, int channel, String pixelType ) {      
       if (!isValidPixelType(pixelType))
          return;
-      prefs_.putDouble(pixelType + CHANNEL + channel + GAMMA, gamma);
-      prefs_.putInt(pixelType + CHANNEL + channel + MAX, max);
-      prefs_.putInt(pixelType + CHANNEL + channel + MIN, min);
+      prefs_.putDouble(pixelType + CHANNEL + channel + GAMMA, c.gamma);
+      prefs_.putInt(pixelType + CHANNEL + channel + MAX, c.max);
+      prefs_.putInt(pixelType + CHANNEL + channel + MIN, c.min);
    }
    
    private int loadMin(String pixelType, int channel) throws MMException {
@@ -62,8 +62,8 @@ public class SnapLiveContrastSettings {
       return prefs_.getDouble(pixelType +CHANNEL + channel +  GAMMA, 1.0);
    }
     
-   public MinMaxGamma loadSettings(String pixelType, int channel)throws MMException {
-      return new MinMaxGamma(loadMin(pixelType,channel),
+   public ContrastSettings loadSettings(String pixelType, int channel)throws MMException {
+      return new ContrastSettings(loadMin(pixelType,channel),
               loadMax(pixelType,channel),loadGamma(pixelType,channel));
    }
    
@@ -72,17 +72,6 @@ public class SnapLiveContrastSettings {
               || type.equals("RGB32") || type.equals("RGB64"))
          return true;
       return false;
-   }
-   
-   public class MinMaxGamma {
-      public int min, max;
-      public double gamma;
-      
-      public MinMaxGamma(int mn, int mx, double gam) {
-         min = mn;
-         max = mx;
-         gamma = gam;
-      }
    }
   
 }

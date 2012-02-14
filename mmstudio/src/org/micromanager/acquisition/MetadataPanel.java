@@ -53,6 +53,7 @@ import org.micromanager.api.ContrastPanel;
 import org.micromanager.api.ImageCache;
 import org.micromanager.graph.MultiChannelContrastPanel;
 import org.micromanager.graph.SingleChannelContrastPanel;
+import org.micromanager.utils.ContrastSettings;
 import org.micromanager.utils.ImageFocusListener;
 import org.micromanager.utils.GUIUtils;
 import org.micromanager.utils.MDUtils;
@@ -550,7 +551,7 @@ public class MetadataPanel extends JPanel
          int min = cache.getChannelMin(i);
          int max = cache.getChannelMax(i);
          double gamma = cache.getChannelGamma(i);
-         MMStudioMainFrame.getInstance().saveSimpleContrastSettings(min, max, gamma, i, pixelType);
+         MMStudioMainFrame.getInstance().saveSimpleContrastSettings(new ContrastSettings(min, max, gamma), i, pixelType);
       }
    }
    
@@ -560,10 +561,10 @@ public class MetadataPanel extends JPanel
    public void loadSimpleWinContrastWithoutDraw(ImageCache cache, ImagePlus img) {
       if (currentContrastPanel_ != null) {
          int n = cache.getNumChannels();
-         SnapLiveContrastSettings.MinMaxGamma mmg;
+         ContrastSettings c;
          for (int i = 0; i < n; i++) {
-            mmg  = MMStudioMainFrame.getInstance().loadSimpleContrastSettigns(cache.getPixelType(),i);
-            currentContrastPanel_.setChannelContrast(i, mmg.min, mmg.max, mmg.gamma);
+            c  = MMStudioMainFrame.getInstance().loadSimpleContrastSettigns(cache.getPixelType(),i);
+            currentContrastPanel_.setChannelContrast(i, c.min, c.max, c.gamma);
          }
          currentContrastPanel_.applyLUTToImage(img, cache);
       }

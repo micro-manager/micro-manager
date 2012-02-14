@@ -141,6 +141,7 @@ import org.micromanager.acquisition.MMAcquisition;
 import org.micromanager.acquisition.MetadataPanel;
 import org.micromanager.acquisition.TaggedImageStorageDiskDefault;
 import org.micromanager.acquisition.VirtualAcquisitionDisplay;
+import org.micromanager.api.DeviceControlGUI;
 import org.micromanager.utils.ImageFocusListener;
 import org.micromanager.api.Pipeline;
 import org.micromanager.api.TaggedImageStorage;
@@ -157,7 +158,7 @@ import org.micromanager.utils.SnapLiveContrastSettings;
 /*
  * Main panel and application class for the MMStudio.
  */
-public class MMStudioMainFrame extends JFrame implements ScriptInterface {
+public class MMStudioMainFrame extends JFrame implements ScriptInterface, DeviceControlGUI {
 
    private static final String MICRO_MANAGER_TITLE = "Micro-Manager 1.4";
    private static final String VERSION = "1.4.7  20111110";
@@ -341,11 +342,11 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
 
    }
  
-   public void saveSimpleContrastSettings(int min, int max, double gamma, int channel, String pixelType) {
-      simpleContrastSettings_.saveSettings(min, max, gamma, channel, pixelType);
+   public void saveSimpleContrastSettings(ContrastSettings c, int channel, String pixelType) {
+      simpleContrastSettings_.saveSettings(c, channel, pixelType);
    }
    
-   public SnapLiveContrastSettings.MinMaxGamma loadSimpleContrastSettigns(String pixelType, int channel) {
+   public ContrastSettings loadSimpleContrastSettigns(String pixelType, int channel) {
       try {
          return simpleContrastSettings_.loadSettings(pixelType, channel);
       } catch (MMException ex) {
