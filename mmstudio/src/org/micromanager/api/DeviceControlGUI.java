@@ -35,38 +35,121 @@ import org.micromanager.utils.MMScriptException;
  * Interface to execute commands in the main panel.
  */
 public interface DeviceControlGUI {
-   public void updateGUI(boolean updateConfigPadStructure);
-   public void initializeGUI();
-   public String getVersion();
-   public boolean updateImage();
-   public boolean displayImage(Object pixels);
-   public boolean displayImageWithStatusLine(Object pixels, String statusLine);   
-   public void displayStatusLine(String statusLine);
-   public boolean okToAcquire();
-   public void stopAllActivity();
-   public boolean getLiveMode();
-   public void enableLiveMode(boolean enable);
-   public void setBackgroundStyle(String backgroundType); 
-   public String getBackgroundStyle();
-   public Color getBackgroundColor();
    /**
-    * Lets Components register themselves so that their background can be  
-    * manipulated by the Micro-Manager UI
+    * All plugins and scripts should be written using ScriptInterface
+    * @deprecated
+    */
+   public void updateGUI(boolean updateConfigPadStructure);
+     /**
+    * All plugins and scripts should be written using ScriptInterface
+    * @deprecated
+    */
+   public void initializeGUI();
+     /**
+    * All plugins and scripts should be written using ScriptInterface
+    * @deprecated
+    */
+   public String getVersion();
+     /**
+    * All plugins and scripts should be written using ScriptInterface
+    * @deprecated
+    */
+   public boolean updateImage();
+     /**
+    * All plugins and scripts should be written using ScriptInterface
+    * @deprecated
+    */
+   public boolean displayImage(Object pixels);
+     /**
+    * All plugins and scripts should be written using ScriptInterface
+    * @deprecated
+    */
+   public boolean displayImageWithStatusLine(Object pixels, String statusLine);
+     /**
+    * All plugins and scripts should be written using ScriptInterface
+    * @deprecated
+    */
+   public void displayStatusLine(String statusLine);
+     /**
+    * All plugins and scripts should be written using ScriptInterface
+    * @deprecated
+    */
+   public boolean okToAcquire();
+     /**
+    * All plugins and scripts should be written using ScriptInterface
+    * @deprecated
+    */
+   public void stopAllActivity();
+     /**
+    * All plugins and scripts should be written using ScriptInterface
+    * @deprecated
+    */
+   public boolean getLiveMode();
+     /**
+    * All plugins and scripts should be written using ScriptInterface
+    * @deprecated
+    */
+   public void enableLiveMode(boolean enable);
+     /**
+    * All plugins and scripts should be written using ScriptInterface
+    * @deprecated
+    */
+   public void setBackgroundStyle(String backgroundType); 
+     /**
+    * All plugins and scripts should be written using ScriptInterface
+    * @deprecated
+    */
+   public String getBackgroundStyle();
+     /**
+    * All plugins and scripts should be written using ScriptInterface
+    * @deprecated
+    */
+   public Color getBackgroundColor();
+    /**
+    * All plugins and scripts should be written using ScriptInterface
+    * @deprecated
     */
    public void addMMBackgroundListener(Component frame);
    /**
-    * Lets Components remove themselves from the list whose background gets
-    * changed by the Micro-Manager UI
+    * All plugins and scripts should be written using ScriptInterface
+    * @deprecated
     */
    public void removeMMBackgroundListener(Component frame);
+     /**
+    * All plugins and scripts should be written using ScriptInterface
+    * @deprecated
+    */
    public void setConfigChanged(boolean status);
+     /**
+    * All plugins and scripts should be written using ScriptInterface
+    * @deprecated
+    */
    public void refreshGUI();
+     /**
+    * All plugins and scripts should be written using ScriptInterface
+    * @deprecated
+    */
    public void applyContrastSettings(ContrastSettings contrast8_, ContrastSettings contrast16_);
+     /**
+    * All plugins and scripts should be written using ScriptInterface
+    * @deprecated
+    */
    public ContrastSettings getContrastSettings();
+     /**
+    * All plugins and scripts should be written using ScriptInterface
+    * @deprecated
+    */
    public boolean is16bit();
+   
+     /**
+    * All plugins and scripts should be written using ScriptInterface
+    * @deprecated
+    */
    public void showXYPositionList();
-   /*
-    * Make the mian window the frontmose, active window again
+   
+     /***
+    * All plugins and scripts should be written using ScriptInterface
+    * @deprecated
     */
    public void makeActive();
    
