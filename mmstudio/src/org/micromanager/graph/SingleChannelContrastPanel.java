@@ -99,8 +99,8 @@ public class SingleChannelContrastPanel extends JPanel implements
    private int maxIntensity_;
    private double mean_;
    private double stdDev_;
-   private double pixelMin_ = 0.0;
-   private double pixelMax_ = 255.0;
+   private int pixelMin_ = 0;
+   private int pixelMax_ = 255;
 	private int binSize_ = 1;
 	private static final int HIST_BINS = 256;
 	private JCheckBox autostretchCheckBox_;
@@ -109,8 +109,8 @@ public class SingleChannelContrastPanel extends JPanel implements
 	private boolean logScale_ = false;
 	private JCheckBox logHistCheckBox_;
    private boolean autostretch_;
-   private double contrastMin_;
-   private double contrastMax_;
+   private int contrastMin_;
+   private int contrastMax_;
 	private double minAfterRejectingOutliers_;
 	private double maxAfterRejectingOutliers_;
    JSpinner rejectOutliersPercentSpinner_;
@@ -632,11 +632,11 @@ public class SingleChannelContrastPanel extends JPanel implements
 			if(rejectOutliersCheckBox_.isSelected()){
 				if( contrastMin_ < minAfterRejectingOutliers_  ){
                if( 0 < minAfterRejectingOutliers_){
-                  contrastMin_ =  minAfterRejectingOutliers_;
+                  contrastMin_ =  (int) minAfterRejectingOutliers_;
                }
 				}
 				if( maxAfterRejectingOutliers_ < contrastMax_){
-                  contrastMax_ = maxAfterRejectingOutliers_;
+                  contrastMax_ = (int) maxAfterRejectingOutliers_;
 				}
 			}
 	}
@@ -785,7 +785,7 @@ public class SingleChannelContrastPanel extends JPanel implements
       if (autostretch_)
          autostretchCheckBox_.setSelected(false);
 
-      contrastMin_ = Math.max(0, pos) * binSize_;
+      contrastMin_ = (int) (Math.max(0, pos) * binSize_);
       if (contrastMax_ < contrastMin_)
          contrastMax_ = contrastMin_;
       mdPanel_.drawWithoutUpdate();
@@ -796,7 +796,7 @@ public class SingleChannelContrastPanel extends JPanel implements
       if (autostretch_)
          autostretchCheckBox_.setSelected(false);
       
-      contrastMax_ = Math.min(255, pos) * binSize_;
+      contrastMax_ = (int) (Math.min(255, pos) * binSize_);
       if (contrastMin_ > contrastMax_)
          contrastMin_ = contrastMax_;
       mdPanel_.drawWithoutUpdate();
@@ -814,5 +814,9 @@ public class SingleChannelContrastPanel extends JPanel implements
    }
  
    public void setupChannelControls(ImageCache cache) {
+   }
+   
+   public ContrastSettings getContrastSettings() {
+      return new ContrastSettings(contrastMin_,contrastMax_, gamma_);
    }
 }

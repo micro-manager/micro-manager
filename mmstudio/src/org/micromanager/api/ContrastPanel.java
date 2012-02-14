@@ -22,6 +22,7 @@
 package org.micromanager.api;
 
 import ij.ImagePlus;
+import org.micromanager.utils.ContrastSettings;
 
 /**
  * Interface for contrast panels, which display and control Image contrast
@@ -89,6 +90,9 @@ public interface ContrastPanel {
     */
    public void autostretch();
       
-   
+   /*
+    * Returns the contrastSettings associated with first channel of the current image
+    */
+   public ContrastSettings getContrastSettings();
 
 }

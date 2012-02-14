@@ -43,6 +43,7 @@ import javax.swing.event.ChangeListener;
 import org.micromanager.acquisition.MetadataPanel;
 import org.micromanager.api.ContrastPanel;
 import org.micromanager.api.ImageCache;
+import org.micromanager.utils.ContrastSettings;
 import org.micromanager.utils.MDUtils;
 import org.micromanager.utils.NumberUtils;
 import org.micromanager.utils.ReportingUtils;
@@ -524,5 +525,12 @@ public class MultiChannelContrastPanel extends JPanel implements ContrastPanel {
        mdPanel_.drawWithoutUpdate(img);
    }
 
+    public ContrastSettings getContrastSettings() {
+       if (ccpList_ == null || ccpList_.isEmpty())
+          return null;
+       return new ContrastSettings(ccpList_.get(0).getContrastMin(), 
+               ccpList_.get(0).getContrastMax(), ccpList_.get(0).getContrastGamma());
+    }
+    
 }
 

@@ -541,6 +541,16 @@ public class MetadataPanel extends JPanel
        return lastWindow_.getImagePlus();
    }
    
+   public ContrastSettings getCurrentContrastSettings() {
+      ImagePlus img = getCurrentImage();
+      if (img == null)
+         return null;
+      if (currentContrastPanel_ != null)
+         return currentContrastPanel_.getContrastSettings();
+      return null;
+   }
+   
+   
    /*
     * used to store contrast settings for snap live window
     */

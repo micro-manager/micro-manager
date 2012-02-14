@@ -807,6 +807,12 @@ public interface ScriptInterface {
     */
    public void applyContrastSettings(ContrastSettings contrast8_, ContrastSettings contrast16_);
    
+   /**
+    * Returns the contrast settings of the active window associated with the contrast 
+    * panel or null if no window is associated with the contrast panel.  If the active
+    * window has multiple channels, the settings associated with channel 0 are returned
+    * @return ContrastSettings object of current windows settings
+    */
    public ContrastSettings getContrastSettings();
 
    public boolean is16bit();

@@ -3420,8 +3420,7 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface, Device
 
    @Override
    public ContrastSettings getContrastSettings() {
-//      return metadataPanel_.getSingleChannelContrastPanel().getContrastSettings();
-      return null;
+      return metadataPanel_.getCurrentContrastSettings();
    }
 
    public boolean is16bit() {
