@@ -623,12 +623,8 @@ public class DataCollectionForm extends javax.swing.JFrame {
 
                   Double avg = Math.sqrt(listAvg(distancesSquared));
 
-                  ij.IJ.log("Average distance: " + avg.toString());
-
                   Double avgX = listAvg(errorX);
                   Double avgY = listAvg(errorY);
-
-                  ij.IJ.log("Error in X: " + avgX.toString() + ", Error in Y: " + avgY.toString());
 
                   rt2.incrementCounter();
                   rt2.addValue("Frame Nr.", frame);
@@ -636,16 +632,16 @@ public class DataCollectionForm extends javax.swing.JFrame {
                   rt2.addValue("X", avgX);
                   rt2.addValue("Y", avgY);
                   
-                  rt.show("Pairs found in " + rowData_.get(row).name_);
+                  
                   rt2.show("Summary of Pairs found in " + rowData_.get(row).name_);
 
                }
- 
-
+               rt.show("Pairs found in " + rowData_.get(row).name_);
             }
          };
-         SwingUtilities.invokeLater(doWorkRunnable);
-
+         
+         (new Thread(doWorkRunnable)).start();
+         
       }
    }//GEN-LAST:event_pairsButtonActionPerformed
 
@@ -966,7 +962,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
                GaussianSpotData gs = (GaussianSpotData) it.next();
                if (gs.getFrame() != frameNr) {
                   frameNr = gs.getFrame();
-                  ij.IJ.log("Now Processing frame: " + frameNr);
+                  ij.IJ.showStatus("Executing color correction");
                   ij.IJ.showProgress(frameNr, rowData.nrFrames_);
                }
                if (gs.getChannel() == 1) {
@@ -995,7 +991,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
          }
       };
 
-      SwingUtilities.invokeLater(doWorkRunnable);
+      (new Thread(doWorkRunnable)).start();
    }
 
    /**
