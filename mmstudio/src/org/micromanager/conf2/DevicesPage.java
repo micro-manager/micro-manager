@@ -30,33 +30,44 @@ import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
+import java.util.Hashtable;
 import java.util.Vector;
 import java.util.prefs.Preferences;
 
 import javax.swing.JButton;
+import javax.swing.JComponent;
+import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
+import javax.swing.JPopupMenu;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.ListSelectionModel;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
+import javax.swing.event.TreeSelectionEvent;
+import javax.swing.event.TreeSelectionListener;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.TableModel;
+import javax.swing.tree.DefaultMutableTreeNode;
 
 import mmcorej.CMMCore;
 import mmcorej.MMCoreJ;
 
+import org.micromanager.conf2.AddDeviceDlg.TreeMouseListener;
+import org.micromanager.conf2.AddDeviceDlg.TreeWContextMenu;
 import org.micromanager.utils.ReportingUtils;
 import javax.swing.JTree;
 import javax.swing.JLabel;
 import java.awt.Font;
 import java.awt.Component;
+import java.io.IOException;
+
 import javax.swing.JCheckBox;
 
 /**
  * Wizard page to add or remove devices.
  */
-public class DevicesPage extends PagePanel implements ListSelectionListener {
+public class DevicesPage extends PagePanel implements ListSelectionListener, MouseListener, TreeSelectionListener {
    private static final long serialVersionUID = 1L;
 
    private JTable deviceTable_;
@@ -65,10 +76,18 @@ public class DevicesPage extends PagePanel implements ListSelectionListener {
    private JButton editButton;
    private JButton removeButton;
    private JButton peripheralsButton;
-   
-
+   private boolean listByLib_;
+   private TreeWContextMenu theTree_;
    private JScrollPane availableScrollPane_;
+   private JCheckBox cbShowAll_;
+   private JCheckBox cbLibrary_;
+   final String documentationURLroot_;
+   String libraryDocumentationName_;
 
+   ///////////////////////////////////////////////////////////
+   /**
+    * Inner class DeviceTable_TableModel
+    */
    class DeviceTable_TableModel extends AbstractTableModel {
       private static final long serialVersionUID = 1L;
 
@@ -141,6 +160,68 @@ public class DevicesPage extends PagePanel implements ListSelectionListener {
          this.fireTableDataChanged();
       }
    }
+   
+   ////////////////////////////////////////////////////////////////
+   /**
+    * TreeWContextMenu
+    */
+   class TreeWContextMenu extends JTree implements ActionListener {
+      private static final long serialVersionUID = 1L;
+      JPopupMenu popupMenu_;
+      DevicesPage dp_;
+
+      public TreeWContextMenu(DefaultMutableTreeNode n, DevicesPage d) {
+         super(n);
+         dp_ = d;
+         popupMenu_ = new JPopupMenu();
+         JMenuItem jmi = new JMenuItem("Add");
+         jmi.setActionCommand("add");
+         jmi.addActionListener(this);
+         popupMenu_.add(jmi);
+         jmi = new JMenuItem("Help");
+         jmi.setActionCommand("help");
+         jmi.addActionListener(this);
+
+         popupMenu_.add(jmi);
+         popupMenu_.setOpaque(true);
+         popupMenu_.setLightWeightPopupEnabled(true);
+
+         addMouseListener(new MouseAdapter() {
+            public void mouseReleased(MouseEvent e) {
+               if (e.isPopupTrigger()) {
+                  popupMenu_.show((JComponent) e.getSource(), e.getX(),
+                        e.getY());
+               }
+            }
+
+         });
+
+      }
+
+      public void actionPerformed(ActionEvent ae) {
+         if (ae.getActionCommand().equals("help")) {
+            dp_.displayDocumentation();
+         } else if (ae.getActionCommand().equals("add")) {
+            if (dp_.addDevice()) {
+               dp_.rebuildDevicesTable();
+            }
+         }
+      }
+   }
+   
+   //////////////////////////////////////////////////
+   /**
+    * TreeMouseListener
+    */
+   class TreeMouseListener extends MouseAdapter {
+      public void mousePressed(MouseEvent e) {
+         if (2 == e.getClickCount()) {
+            if (addDevice()) {
+               rebuildDevicesTable();
+            }
+         }
+      }
+   }
 
    /**
     * Create the panel
@@ -154,9 +235,12 @@ public class DevicesPage extends PagePanel implements ListSelectionListener {
       "In subsequent steps devices will be referred to by their assigned names.\n\n" +
       "You can edit device names by double-clicking in the first column. Device name must be unique and should not contain any special characters.";
       
+      listByLib_ = true;
+
       setLayout(null);
       prefs_ = prefs;
       setHelpFileName(HELP_FILE_NAME);
+      documentationURLroot_ = "https://valelab.ucsf.edu/~MM/MMwiki/index.php/";
 
       installedScrollPane_ = new JScrollPane();
       installedScrollPane_.setBounds(10, 21, 431, 241);
@@ -229,16 +313,37 @@ public class DevicesPage extends PagePanel implements ListSelectionListener {
       availableScrollPane_.setBounds(10, 291, 431, 258);
       add(availableScrollPane_);
       
-      JCheckBox cbLibrary_ = new JCheckBox("List by library");
+      cbLibrary_ = new JCheckBox("List by library");
+      cbLibrary_.addActionListener(new ActionListener() {
+         public void actionPerformed(ActionEvent e) {
+            listByLib_ = ((JCheckBox) e.getSource()).isSelected();
+            buildTree();
+         }
+      });
       cbLibrary_.setSelected(true);
       cbLibrary_.setBounds(451, 507, 103, 23);
       add(cbLibrary_);
       
-      JCheckBox cbShowAll_ = new JCheckBox("Show all");
+      cbShowAll_ = new JCheckBox("Show all");
+      cbShowAll_.addActionListener(new ActionListener() {
+         public void actionPerformed(ActionEvent e) {
+            buildTree();
+         }
+      });
       cbShowAll_.setSelected(false);
-      cbShowAll_.setBounds(451, 530, 137, 23);
+      cbShowAll_.setBounds(451, 530, 99, 23);
       add(cbShowAll_);
+      
+      JButton helpButton = new JButton("Help");
+      helpButton.addActionListener(new ActionListener() {
+         public void actionPerformed(ActionEvent e) {
+            displayDocumentation();
+         }
+      });
+      helpButton.setBounds(451, 319, 99, 23);
+      add(helpButton);
       //
+
    }
    
 
@@ -298,7 +403,7 @@ public class DevicesPage extends PagePanel implements ListSelectionListener {
                JOptionPane.showMessageDialog(this, e.getMessage());
             }
          }
-         rebuildTable();
+         rebuildDevicesTable();
       } else {
          handleError("There are no available peripheral devices.");
       }
@@ -333,7 +438,7 @@ public class DevicesPage extends PagePanel implements ListSelectionListener {
             }
           }
       }
-      rebuildTable();
+      rebuildDevicesTable();
   }
 
    protected void removeDevice() {
@@ -353,16 +458,10 @@ public class DevicesPage extends PagePanel implements ListSelectionListener {
       } catch (Exception e) {
          handleError(e.getMessage());
       }
-      rebuildTable();
+      rebuildDevicesTable();
    }
-   
-   protected void addDevice() {
-      AddDeviceDlg dlg = new AddDeviceDlg(model_, core_, this);
-      dlg.setVisible(true);
-      rebuildTable();
-   }
-   
-   public void rebuildTable() {
+      
+   public void rebuildDevicesTable() {
       TableModel tm = deviceTable_.getModel();
       DeviceTable_TableModel tmd;
       if (tm instanceof DeviceTable_TableModel) {
@@ -377,7 +476,7 @@ public class DevicesPage extends PagePanel implements ListSelectionListener {
    }
    
    public void refresh() {
-      rebuildTable();
+      rebuildDevicesTable();
    }
    
 	public boolean enterPage(boolean fromNextPage) {
@@ -385,7 +484,7 @@ public class DevicesPage extends PagePanel implements ListSelectionListener {
          // double check that list of device libraries is valid before continuing.
          CMMCore.getDeviceLibraries();
 			model_.removeDuplicateComPorts();
-			rebuildTable();
+			rebuildDevicesTable();
 			if (fromNextPage) {
 			   // do nothing for now
 			} else {
@@ -395,11 +494,13 @@ public class DevicesPage extends PagePanel implements ListSelectionListener {
             model_.initializeModel(core_);
             setCursor(oldCur);
 			}
+	      buildTree();
 			return true;
 		} catch (Exception e2) {
 			ReportingUtils.showError(e2);
 			setCursor(Cursor.getDefaultCursor());
 		}
+      
 		return false;
 	}
 
@@ -467,5 +568,286 @@ public class DevicesPage extends PagePanel implements ListSelectionListener {
       
       // any selected device can be removed unless it is Core
       removeButton.setEnabled(!dev.isCore());
+   }
+
+   public void valueChanged(TreeSelectionEvent event) {
+
+      // update URL for library documentation
+      int srows[] = theTree_.getSelectionRows();
+      if (null != srows) {
+         if (0 < srows.length) {
+            if (0 < srows[0]) {
+               DeviceTreeNode node = (DeviceTreeNode) theTree_
+                     .getLastSelectedPathComponent();
+               Object uo = node.getUserObject();
+               if (uo != null) {
+                  if (uo.getClass().isArray()) {
+                     libraryDocumentationName_ = ((Object[]) uo)[0].toString();
+                  } else {
+                     libraryDocumentationName_ = uo.toString();
+                  }
+               }
+            }
+         }
+      }
+   }
+  
+   private boolean addDevice() {
+      int srows[] = theTree_.getSelectionRows();
+      if (srows == null) {
+         return false;
+      }
+      if (0 < srows.length) {
+         if (0 < srows[0]) {
+            DeviceTreeNode node = (DeviceTreeNode) theTree_
+                  .getLastSelectedPathComponent();
+
+            Object[] userData = node.getUserDataArray();
+            if (null == userData) {
+               // if a folder has one child go ahead and add the children
+               if (1 == node.getLeafCount()) {
+                  node = (DeviceTreeNode) node.getChildAt(0);
+                  userData = node.getUserDataArray();
+                  if (null == userData)
+                     return false;
+               }
+            }
+
+            // get selected device
+            if (userData == null) {
+               JOptionPane.showMessageDialog(this, "Multiple devices available in this node!\nPlease expand the node and select a specific device to add.");
+               return false;
+            }
+            String adapterName = userData[1].toString();
+            String lib = userData[0].toString();
+            String descr = userData[2].toString();
+
+            // load new device
+            String label = new String(adapterName);
+            Device d = model_.findDevice(label);
+            int retries = 0;
+            while (d != null) {
+               retries++;
+               label = new String(adapterName + "-" + retries);
+               d = model_.findDevice(label);
+            }
+
+            Device dev;
+            try {
+               core_.loadDevice(label, lib, adapterName);
+               dev = new Device(label, lib, adapterName, descr);
+               dev.loadDataFromHardware(core_);
+               model_.addDevice(dev);
+            } catch (Exception e) {
+               JOptionPane.showMessageDialog(this, e.getMessage());
+               return false;
+            }
+
+            // open device setup dialog
+            DeviceSetupDlg dlg = new DeviceSetupDlg(model_, core_, dev);
+            dlg.setVisible(true);
+
+            if (!dev.isInitialized()) {
+               // user canceled or things did not work out
+               model_.removeDevice(dev.getName());
+               try {
+                  core_.unloadDevice(dev.getName());
+               } catch (Exception e) {
+                  JOptionPane.showMessageDialog(this, e.getMessage());
+               }
+               return false;
+            }
+            // > at this point device is initialized and added to the model
+
+            // check if there are any child devices installed
+            if (dev.isHub() && !dev.getName().equals("Core")) {
+
+               String installed[] = dev.getPeripherals();
+               Vector<Device> peripherals = new Vector<Device>();
+
+               for (int i = 0; i < installed.length; i++) {
+                  try {
+                     if (!model_.hasAdapterName(dev.getLibrary(), dev.getName(), installed[i])) {
+                        String description = model_.getDeviceDescription(dev.getLibrary(), installed[i]);
+                        Device newDev = new Device(installed[i], dev.getLibrary(), installed[i], description);
+                        peripherals.add(newDev);
+                     }
+                  } catch (Exception e) {
+                     ReportingUtils.logError(e.getMessage());
+                  }
+               }
+
+               if (peripherals.size() > 0) {
+                  PeripheralSetupDlg dlgp = new PeripheralSetupDlg(model_, core_, dev.getName(), peripherals);
+                  dlgp.setVisible(true);
+                  Device sel[] = dlgp.getSelectedPeripherals();
+                  for (int i=0; i<sel.length; i++) {
+                     try {
+                        core_.loadDevice(sel[i].getName(), sel[i].getLibrary(), sel[i].getAdapterName());
+                        //core_.loadPeripheralDevice(sel[i].getName(), dev.getName(), sel[i].getAdapterName());
+                        sel[i].setParentHub(dev.getName());
+                        core_.setParentLabel(sel[i].getName(), dev.getName());
+                        model_.addDevice(sel[i]);
+                        sel[i].loadDataFromHardware(core_);
+                        
+                        // offer to edit pre-init properties
+                        String props[] = sel[i].getPreInitProperties();
+                        if (props.length > 0) {
+                           DeviceSetupDlg dlgProps = new DeviceSetupDlg(model_, core_, sel[i]);
+                           dlgProps.setVisible(true);
+                           if (!sel[i].isInitialized()) {
+                              core_.unloadDevice(sel[i].getName());
+                              model_.removeDevice(sel[i].getName());
+                           }
+                        } else {
+                           core_.initializeDevice(sel[i].getName());
+                           sel[i].setInitialized(true);
+                        }
+                                                
+                     } catch (MMConfigFileException e) {
+                        JOptionPane.showMessageDialog(this, e.getMessage());
+                     } catch (Exception e) {
+                        JOptionPane.showMessageDialog(this, e.getMessage());
+                     } finally {
+                     }
+                  }
+               } 
+
+            }
+         }
+      }
+      return true;
+   }
+
+   private void buildTree() {
+      if (listByLib_)
+         buildTreeByLib(model_);
+      else
+         buildTreeByType(model_);
+      availableScrollPane_.setViewportView(theTree_);
+   }
+   
+   private void buildTreeByType(MicroscopeModel model) {
+      Device devices_[] = null;
+      if (cbShowAll_.isSelected())
+         devices_ = model.getAvailableDeviceList();
+      else
+         devices_ = model.getAvailableDevicesCompact();
+
+      // organize devices by type
+      Hashtable<String, Vector<Device>> nodes = new Hashtable<String, Vector<Device>>();
+      for (int i = 0; i < devices_.length; i++) {
+         if (nodes.containsKey(devices_[i].getTypeAsString()))
+            nodes.get(devices_[i].getTypeAsString()).add(devices_[i]);
+         else {
+            Vector<Device> v = new Vector<Device>();
+            v.add(devices_[i]);
+            nodes.put(devices_[i].getTypeAsString(), v);
+         }
+      }
+
+      DefaultMutableTreeNode root = new DefaultMutableTreeNode(
+            "Devices supported by " + "\u00B5" + "Manager");
+
+      DeviceTreeNode node = null;
+      Object nodeNames[] = nodes.keySet().toArray();
+      for (Object nodeName : nodeNames) {
+         // create a new node of devices for this library
+         node = new DeviceTreeNode((String) nodeName, false);
+         root.add(node);
+         Vector<Device> devs = nodes.get(nodeName);
+         for (int i = 0; i < devs.size(); i++) {
+            Object[] userObject = { devs.get(i).getLibrary(),
+                  devs.get(i).getAdapterName(), devs.get(i).getDescription() };
+            DeviceTreeNode aLeaf = new DeviceTreeNode("", false);
+            aLeaf.setUserObject(userObject);
+            node.add(aLeaf);
+         }
+      }
+      // try building a tree
+      theTree_ = new TreeWContextMenu(root, this);
+      theTree_.addTreeSelectionListener(this);
+
+      MouseListener ml = new TreeMouseListener();
+
+      theTree_.addMouseListener(ml);
+      theTree_.setRootVisible(false);
+      theTree_.setShowsRootHandles(true);
+   }
+
+   private void buildTreeByLib(MicroscopeModel model) {
+      Device devices_[] = null;
+      if (cbShowAll_.isSelected())
+         devices_ = model.getAvailableDeviceList();
+      else
+         devices_ = model.getAvailableDevicesCompact();
+
+      String thisLibrary = "";
+      DefaultMutableTreeNode root = new DefaultMutableTreeNode(
+            "Devices supported by " + "\u00B5" + "Manager");
+      DeviceTreeNode node = null;
+      for (int idd = 0; idd < devices_.length; ++idd) {
+         // assume that the first library doesn't have an empty name! (of
+         // course!)
+         if (0 != thisLibrary.compareTo(devices_[idd].getLibrary())) {
+            // create a new node of devices for this library
+            node = new DeviceTreeNode(devices_[idd].getLibrary(), true);
+            root.add(node);
+            thisLibrary = devices_[idd].getLibrary(); // remember which library
+                                                      // we are processing
+         }
+         Object[] userObject = { devices_[idd].getLibrary(),
+               devices_[idd].getAdapterName(), devices_[idd].getDescription() };
+         DeviceTreeNode aLeaf = new DeviceTreeNode("", true);
+         aLeaf.setUserObject(userObject);
+         node.add(aLeaf);
+      }
+      // try building a tree
+      theTree_ = new TreeWContextMenu(root, this);
+      theTree_.addTreeSelectionListener(this);
+
+      MouseListener ml = new TreeMouseListener();
+
+      theTree_.addMouseListener(ml);
+      theTree_.setRootVisible(false);
+      theTree_.setShowsRootHandles(true);
+   }
+
+   private void displayDocumentation() {
+      try {
+         ij.plugin.BrowserLauncher.openURL(documentationURLroot_ + libraryDocumentationName_);
+      } catch (IOException e1) {
+         ReportingUtils.showError(e1);
+      }
+   }
+
+   @Override
+   public void mouseClicked(MouseEvent e) {
+      // TODO Auto-generated method stub
+      
+   }
+
+   @Override
+   public void mousePressed(MouseEvent e) {
+      // TODO Auto-generated method stub
+      
+   }
+
+   @Override
+   public void mouseReleased(MouseEvent e) {
+      // TODO Auto-generated method stub
+      
+   }
+
+   @Override
+   public void mouseEntered(MouseEvent e) {
+      // TODO Auto-generated method stub
+      
+   }
+
+   @Override
+   public void mouseExited(MouseEvent e) {
+      // TODO Auto-generated method stub
+      
    }
 }

@@ -312,7 +312,7 @@ public class AddDeviceDlg extends MMDialog implements MouseListener,
    }
 
    private void rebuildTable() {
-      devicesPage_.rebuildTable();
+      devicesPage_.rebuildDevicesTable();
    }
 
    private boolean addDevice() {
