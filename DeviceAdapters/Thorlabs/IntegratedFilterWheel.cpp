@@ -145,7 +145,7 @@ const unsigned char getStatusRsp[] = {       0x81, // cmd low
                                              };
 
 
-#define DRY_RUN
+//#define DRY_RUN
 using namespace std;
 extern const char* g_WheelDeviceName;
 
