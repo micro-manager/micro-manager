@@ -10,7 +10,9 @@
 //-----------------------------------------------------------------------------
 
 #include "Omicron.h"
-#include "winuser.h"
+// Code compiles on Mac without this include
+// If needed on PC, use ifdefs
+//#include "winuser.h"
 
 const char* g_DeviceOmicronName = "Omicron";
 
@@ -917,7 +919,7 @@ int Omicron::OnReset(MM::PropertyBase* pProp, MM::ActionType eAct)
 		 ret = GetSerialAnswer(port_.c_str(), "\r", answer);
 		 if (ret != DEVICE_OK) return ret;
 
-		 Sleep(2000);
+       CDeviceUtils::SleepMs(2000);
 	 }
 
      return DEVICE_OK;

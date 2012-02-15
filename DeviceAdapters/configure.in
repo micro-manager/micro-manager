@@ -365,6 +365,7 @@ AC_CONFIG_FILES(
 	[NikonTE2000/Makefile:NikonTE2000/Makefile.in:MMDEVAPI.rules]
 	[nPoint/Makefile:nPoint/Makefile.in:MMDEVAPI.rules]
 	[OpenCVgrabber/Makefile:OpenCVgrabber/Makefile.in:MMDEVAPI.rules]
+	[Omicron/Makefile:Omicron/Makefile.in:MMDEVAPI.rules]
 	[ParallelPort/Makefile:ParallelPort/Makefile.in:MMDEVAPI.rules]
 	[Pecon/Makefile:Pecon/Makefile.in:MMDEVAPI.rules]
 	[PrecisExcite/Makefile:PrecisExcite/Makefile.in:MMDEVAPI.rules]
