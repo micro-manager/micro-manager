@@ -208,10 +208,7 @@ int RappScanner::PointAndFire(double x, double y, double pulseTime_us)
 
 int RappScanner::SetPosition(double x, double y)
 {
-   // This function will hopefully be able to call SetDevicePosition(x,y) in the future.
    UGA_->SetDevicePosition((int) x,(int) y);
-   UGA_->CurrentPosition();
-   // Move(x - currentX_, y - currentY_);
    return DEVICE_OK;
 }
 
@@ -219,7 +216,6 @@ int RappScanner::SetPosition(double x, double y)
 
 int RappScanner::GetPosition(double& x, double& y)
 {
-   // This function will hopefully be able to call SetDevicePosition(x,y) in the future.
    pointf p = UGA_->CurrentPosition();
    x = p.x;
    y = p.y;
@@ -275,8 +271,12 @@ int RappScanner::RunSequence()
       } 
    }
 
-   UGA_->RunSequence(false);
-   return DEVICE_OK;
+   if (UGA_->RunSequence(false)) 
+   {
+      return DEVICE_OK;
+   } else {
+      return DEVICE_ERR;
+   }
 }
 
 /////////////////////////////
@@ -358,30 +358,35 @@ int RappScanner::OnTTLTriggered(MM::PropertyBase* pProp, MM::ActionType eAct)
 
 void RappScanner::RunDummyCalibration()
 {
-  UGA_->SetCalibrationMode(true, false);
-  UGA_->UseMaxCalibration(true);
+   int side = 4096;
 
-  int side = 4096;
+   UGA_->SetCalibrationMode(true, false);
 
-  UGA_->SetAOIEdge(Up, 0, false);
-  UGA_->SetAOIEdge(Down, side-1, false);
-  UGA_->SetAOIEdge(Left, 0, false);
-  UGA_->SetAOIEdge(Right, side-1, false);
+   UGA_->SetAOIEdge(Up, 0, false);
+   UGA_->SetAOIEdge(Down, side-1, false);
+   UGA_->SetAOIEdge(Left, 0, false);
+   UGA_->SetAOIEdge(Right, side-1, false);
 
-  UGA_->InitializeCalibration(16, false);
-  int step = side/4;
-  for (int j=0; j<4; ++j)
-  {
-     for (int i=0; i<4; ++i)
-     {
-        int x = i*step;
-        int y = j*step;
-        UGA_->SetDevicePosition(x,y);
-        UGA_->SetCalibrationPoint(false, 0, pointf((float) x, (float) y), false);
-     }
-  }
+   pointf p0(0, 0);
+   pointf p1(side-1, 0);
+   pointf p2(0, side-1);
+   pointf p3(side-1, side-1);
 
-  UGA_->SetCalibrationMode(calibrationMode_ == 1, false);
+   UGA_->UseMaxCalibration(false);
+   UGA_->InitializeCalibration(4, false);
+
+   UGA_->CenterSpot();
+   UGA_->MoveLaser(Up, side/2 - 1);
+   UGA_->MoveLaser(Left, side/2 - 1);
+   UGA_->SetCalibrationPoint(false, 0, p0, false); 
+   UGA_->MoveLaser(Right, side);
+   UGA_->SetCalibrationPoint(false, 1, p1, false);
+   UGA_->MoveLaser(Down, side);
+   UGA_->SetCalibrationPoint(false, 3, p3, false); //Point-ID 2->3
+   UGA_->MoveLaser(Left, side);
+   UGA_->SetCalibrationPoint(false, 2, p2, false); //Point-ID 3->2
+
+   UGA_->SetCalibrationMode(calibrationMode_ == 1, false);
 }
 
 std::vector<std::string> & split(const std::string &s, char delim, std::vector<std::string> &elems) {
