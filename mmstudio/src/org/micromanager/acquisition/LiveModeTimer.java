@@ -66,13 +66,10 @@ public class LiveModeTimer extends javax.swing.Timer {
    @Override
    public void start() {
       try {
-         //Snap an image so that hardware settings will be correct for when
-         //shutter and autoshutter states are stored
-         core_.snapImage();
          manageShutter(true);
          core_.startContinuousSequenceAcquisition(0);
          gui_.checkSimpleAcquisition();
-         win_ = gui_.getSimpleDisplay();
+         win_ = MMStudioMainFrame.getSimpleDisplay();
          setType();
          setInterval();
 
