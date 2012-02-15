@@ -246,6 +246,7 @@ int RappScanner::AddPolygonVertex(int polygonIndex, double x, double y)
 int RappScanner::DeletePolygons()
 {
    polygons_.clear();
+   UGA_->DeletePolygons();
    return DEVICE_OK;
 }
 
@@ -368,9 +369,9 @@ void RappScanner::RunDummyCalibration()
    UGA_->SetAOIEdge(Right, side-1, false);
 
    pointf p0(0, 0);
-   pointf p1(side-1, 0);
-   pointf p2(0, side-1);
-   pointf p3(side-1, side-1);
+   pointf p1((float) side-1, 0);
+   pointf p2(0, (float) side-1);
+   pointf p3((float) side-1, (float) side-1);
 
    UGA_->UseMaxCalibration(false);
    UGA_->InitializeCalibration(4, false);
