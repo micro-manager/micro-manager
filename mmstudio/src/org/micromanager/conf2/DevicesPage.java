@@ -47,12 +47,27 @@ import mmcorej.CMMCore;
 import mmcorej.MMCoreJ;
 
 import org.micromanager.utils.ReportingUtils;
+import javax.swing.JTree;
+import javax.swing.JLabel;
+import java.awt.Font;
+import java.awt.Component;
+import javax.swing.JCheckBox;
 
 /**
  * Wizard page to add or remove devices.
  */
 public class DevicesPage extends PagePanel implements ListSelectionListener {
    private static final long serialVersionUID = 1L;
+
+   private JTable deviceTable_;
+   private JScrollPane installedScrollPane_;
+   private static final String HELP_FILE_NAME = "conf_devices_page.html";
+   private JButton editButton;
+   private JButton removeButton;
+   private JButton peripheralsButton;
+   
+
+   private JScrollPane availableScrollPane_;
 
    class DeviceTable_TableModel extends AbstractTableModel {
       private static final long serialVersionUID = 1L;
@@ -127,12 +142,6 @@ public class DevicesPage extends PagePanel implements ListSelectionListener {
       }
    }
 
-   private JTable deviceTable_;
-   private JScrollPane scrollPane_;
-   private static final String HELP_FILE_NAME = "conf_devices_page.html";
-   private JButton editButton;
-   private JButton removeButton;
-   private JButton peripheralsButton;
    /**
     * Create the panel
     */
@@ -149,13 +158,13 @@ public class DevicesPage extends PagePanel implements ListSelectionListener {
       prefs_ = prefs;
       setHelpFileName(HELP_FILE_NAME);
 
-      scrollPane_ = new JScrollPane();
-      scrollPane_.setBounds(10, 10, 453, 262);
-      add(scrollPane_);
+      installedScrollPane_ = new JScrollPane();
+      installedScrollPane_.setBounds(10, 21, 431, 241);
+      add(installedScrollPane_);
 
       deviceTable_ = new JTable();
       deviceTable_.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-      scrollPane_.setViewportView(deviceTable_);
+      installedScrollPane_.setViewportView(deviceTable_);
       deviceTable_.getSelectionModel().addListSelectionListener(this);
       
       deviceTable_.addMouseListener(new MouseAdapter() {
@@ -172,7 +181,7 @@ public class DevicesPage extends PagePanel implements ListSelectionListener {
          }
       });
       addButton.setText("Add...");
-      addButton.setBounds(469, 41, 99, 23);
+      addButton.setBounds(451, 291, 99, 23);
       add(addButton);
 
       removeButton = new JButton();
@@ -182,7 +191,7 @@ public class DevicesPage extends PagePanel implements ListSelectionListener {
          }
       });
       removeButton.setText("Remove");
-      removeButton.setBounds(469, 119, 99, 23);
+      removeButton.setBounds(451, 72, 99, 23);
       add(removeButton);
       removeButton.setEnabled(false);
       
@@ -192,7 +201,7 @@ public class DevicesPage extends PagePanel implements ListSelectionListener {
             editDevice();
          }
       });
-      editButton.setBounds(469, 68, 99, 23);
+      editButton.setBounds(451, 21, 99, 23);
       add(editButton);
       editButton.setEnabled(false);
       
@@ -203,8 +212,32 @@ public class DevicesPage extends PagePanel implements ListSelectionListener {
          }
       });
       peripheralsButton.setEnabled(false);
-      peripheralsButton.setBounds(469, 93, 99, 23);
+      peripheralsButton.setBounds(451, 46, 99, 23);
       add(peripheralsButton);
+      
+      JLabel lblNewLabel = new JLabel("Installed Devices:");
+      lblNewLabel.setFont(new Font("Tahoma", Font.BOLD, 11));
+      lblNewLabel.setBounds(10, 0, 431, 14);
+      add(lblNewLabel);
+      
+      JLabel lblNewLabel_1 = new JLabel("Available Devices:");
+      lblNewLabel_1.setFont(new Font("Tahoma", Font.BOLD, 11));
+      lblNewLabel_1.setBounds(10, 273, 431, 14);
+      add(lblNewLabel_1);
+      
+      availableScrollPane_ = new JScrollPane((Component) null);
+      availableScrollPane_.setBounds(10, 291, 431, 258);
+      add(availableScrollPane_);
+      
+      JCheckBox cbLibrary_ = new JCheckBox("List by library");
+      cbLibrary_.setSelected(true);
+      cbLibrary_.setBounds(451, 507, 103, 23);
+      add(cbLibrary_);
+      
+      JCheckBox cbShowAll_ = new JCheckBox("Show all");
+      cbShowAll_.setSelected(false);
+      cbShowAll_.setBounds(451, 530, 137, 23);
+      add(cbShowAll_);
       //
    }
    

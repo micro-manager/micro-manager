@@ -213,7 +213,7 @@ public class LabelsPage extends PagePanel {
       setLayout(null);
 
       final JScrollPane labelsScrollPane = new JScrollPane();
-      labelsScrollPane.setBounds(186, 10, 269, 254);
+      labelsScrollPane.setBounds(182, 30, 269, 482);
       add(labelsScrollPane);
 
       labelTable_ = new JTable();
@@ -227,7 +227,7 @@ public class LabelsPage extends PagePanel {
       GUIUtils.stopEditingOnLosingFocus(labelTable_);
 
       final JScrollPane devScrollPane = new JScrollPane();
-      devScrollPane.setBounds(10, 10, 162, 255);
+      devScrollPane.setBounds(10, 30, 162, 482);
       add(devScrollPane);
 
       devTable_ = new JTable();
@@ -245,7 +245,7 @@ public class LabelsPage extends PagePanel {
          }
       });
       readButton.setText("Read");
-      readButton.setBounds(469,10,93,23);
+      readButton.setBounds(457,30,93,23);
       add(readButton);
 
       final JButton resetButton = new JButton();
@@ -256,7 +256,7 @@ public class LabelsPage extends PagePanel {
          }
       });
       resetButton.setText("Reset");
-      resetButton.setBounds(469,43,93,23);
+      resetButton.setBounds(457,53,93,23);
       add(resetButton);  
    }
 

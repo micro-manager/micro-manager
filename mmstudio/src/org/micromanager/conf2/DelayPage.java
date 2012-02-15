@@ -144,7 +144,7 @@ public class DelayPage extends PagePanel {
       setLayout(null);
 
       final JScrollPane scrollPane = new JScrollPane();
-      scrollPane.setBounds(22, 21, 357, 199);
+      scrollPane.setBounds(22, 21, 517, 337);
       add(scrollPane);
 
       deviceTable_ = new JTable();

@@ -92,7 +92,7 @@ public class IntroPage extends PagePanel {
       add(modifyRadioButton_);
 
       filePathField_ = new JTextField();
-      filePathField_.setBounds(10, 84, 424, 19);
+      filePathField_.setBounds(10, 110, 509, 19);
       add(filePathField_);
 
       browseButton_ = new JButton();
@@ -102,7 +102,7 @@ public class IntroPage extends PagePanel {
          }
       });
       browseButton_.setText("Browse...");
-      browseButton_.setBounds(440, 82, 100, 23);
+      browseButton_.setBounds(10, 85, 100, 23);
       add(browseButton_);
       
       createNewRadioButton_.setSelected(true);

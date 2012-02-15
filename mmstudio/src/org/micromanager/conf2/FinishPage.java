@@ -82,7 +82,7 @@ public class FinishPage extends PagePanel {
             }
         });
         browseButton_.setText("Browse...");
-        browseButton_.setBounds(443, 31, 100, 23);
+        browseButton_.setBounds(450, 31, 100, 23);
         add(browseButton_);
 
         sendCheck_ = new JCheckBox();
@@ -101,7 +101,7 @@ public class FinishPage extends PagePanel {
         final JLabel sendConfigExplain = new JLabel();
         sendConfigExplain.setAutoscrolls(true);
         sendConfigExplain.setText("Providing the configuration data will assist securing further project funding.");
-        sendConfigExplain.setBounds(10, 150, 500, 33);
+        sendConfigExplain.setBounds(14, 127, 500, 21);
         sendConfigExplain.setFont(sendCheck_.getFont());
         add(sendConfigExplain);
         

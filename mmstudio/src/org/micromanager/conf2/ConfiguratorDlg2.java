@@ -121,12 +121,12 @@ public class ConfiguratorDlg2 extends MMDialog {
         });
         setResizable(false);
         getContentPane().setLayout(null);
-        setTitle("*Hardware Configuration Wizard");
-        setBounds(50, 100, 602, 672);
+        setTitle("Hardware Configuration Wizard");
+        setBounds(50, 100, 859, 641);
         loadPosition(50, 100);
 
         final JScrollPane scrollPane = new JScrollPane();
-        scrollPane.setBounds(9, 320, 578, 286);
+        scrollPane.setBounds(584, 28, 259, 526);
         getContentPane().add(scrollPane);
         scrollPane.getViewport().setViewPosition(new Point(0,0));
 
@@ -160,7 +160,7 @@ public class ConfiguratorDlg2 extends MMDialog {
 
 
         nextButton_.setText("Next >");
-        nextButton_.setBounds(494, 612, 93, 23);
+        nextButton_.setBounds(750, 565, 93, 23);
         getContentPane().add(nextButton_);
         getRootPane().setDefaultButton(nextButton_);
 
@@ -172,11 +172,11 @@ public class ConfiguratorDlg2 extends MMDialog {
             }
         });
         backButton_.setText("< Back");
-        backButton_.setBounds(395, 612, 93, 23);
+        backButton_.setBounds(647, 565, 93, 23);
         getContentPane().add(backButton_);
         pagesLabel_ = new JLabel();
         pagesLabel_.setBorder(new LineBorder(Color.black, 1, false));
-        pagesLabel_.setBounds(9, 28, 578, 286);
+        pagesLabel_.setBounds(9, 28, 565, 560);
         getContentPane().add(pagesLabel_);
 
         // add page panels

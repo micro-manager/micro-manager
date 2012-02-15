@@ -59,9 +59,20 @@ public class AddDeviceDlg extends MMDialog implements MouseListener,
       TreeSelectionListener {
 
    private static final long serialVersionUID = 1L;
+   private MicroscopeModel model_;
+   private DevicesPage devicesPage_;
+   private TreeWContextMenu theTree_;
+   final String documentationURLroot_;
+   String libraryDocumentationName_;
+   private JCheckBox cbShowAll_;
+   private JScrollPane availableScrollPane_;
+   private CMMCore core_;
+   private boolean listByLib_;
 
    class TreeWContextMenu extends JTree implements ActionListener {
       private static final long serialVersionUID = 1L;
+      JPopupMenu popupMenu_;
+      AddDeviceDlg d_; // pretty ugly
 
       public TreeWContextMenu(DefaultMutableTreeNode n, AddDeviceDlg d) {
          super(n);
@@ -91,9 +102,6 @@ public class AddDeviceDlg extends MMDialog implements MouseListener,
 
       }
 
-      JPopupMenu popupMenu_;
-      AddDeviceDlg d_; // pretty ugly
-
       public void actionPerformed(ActionEvent ae) {
          if (ae.getActionCommand().equals("help")) {
             d_.displayDocumentation();
@@ -114,68 +122,6 @@ public class AddDeviceDlg extends MMDialog implements MouseListener,
          }
       }
    }
-
-   class DeviceTreeNode extends DefaultMutableTreeNode {
-      private static final long serialVersionUID = 1L;
-      boolean showLib_;
-
-      public DeviceTreeNode(String value, boolean byLib) {
-         super(value);
-         showLib_ = byLib;
-      }
-
-      @Override
-      public String toString() {
-         String ret = "";
-         Object uo = getUserObject();
-         if (null != uo) {
-            if (uo.getClass().isArray()) {
-               Object[] userData = (Object[]) uo;
-               if (2 < userData.length) {
-                  if (showLib_)
-                     ret = userData[1].toString() + " | "
-                           + userData[2].toString();
-                  else
-                     ret = userData[0].toString() + " | "
-                           + userData[2].toString();
-               }
-            } else {
-               ret = uo.toString();
-            }
-         }
-         return ret;
-      }
-
-      // if user clicks on a container node, just return a null array instead of
-      // the user data
-
-      public Object[] getUserDataArray() {
-         Object[] ret = null;
-
-         Object uo = getUserObject();
-         if (null != uo) {
-            if (uo.getClass().isArray()) {
-               // retrieve the device info tuple
-               Object[] userData = (Object[]) uo;
-               if (1 < userData.length) {
-                  ret = userData;
-               }
-            }
-
-         }
-         return ret;
-      }
-   }
-
-   private MicroscopeModel model_;
-   private DevicesPage devicesPage_;
-   private TreeWContextMenu theTree_;
-   final String documentationURLroot_;
-   String libraryDocumentationName_;
-   private JCheckBox cbShowAll_;
-   private JScrollPane scrollPane_;
-   private CMMCore core_;
-   private boolean listByLib_;
 
    /**
     * Create the dialog
@@ -254,21 +200,21 @@ public class AddDeviceDlg extends MMDialog implements MouseListener,
       else
          buildTreeByType(model);
 
-      JCheckBox chckbxNewCheckBox = new JCheckBox("List by library");
-      chckbxNewCheckBox.setSelected(listByLib_);
-      chckbxNewCheckBox.addActionListener(new ActionListener() {
+      JCheckBox cbLibrary_ = new JCheckBox("List by library");
+      cbLibrary_.setSelected(listByLib_);
+      cbLibrary_.addActionListener(new ActionListener() {
          public void actionPerformed(ActionEvent e) {
             listByLib_ = ((JCheckBox) e.getSource()).isSelected();
             buildTree();
          }
       });
-      chckbxNewCheckBox.setBounds(476, 436, 137, 23);
-      getContentPane().add(chckbxNewCheckBox);
+      cbLibrary_.setBounds(476, 436, 137, 23);
+      getContentPane().add(cbLibrary_);
 
-      scrollPane_ = new JScrollPane(theTree_);
-      scrollPane_.setBounds(10, 10, 461, 475);
-      scrollPane_.setViewportView(theTree_);
-      getContentPane().add(scrollPane_);
+      availableScrollPane_ = new JScrollPane(theTree_);
+      availableScrollPane_.setBounds(10, 10, 461, 480);
+      availableScrollPane_.setViewportView(theTree_);
+      getContentPane().add(availableScrollPane_);
    }
 
    private void buildTreeByType(MicroscopeModel model) {
@@ -519,7 +465,7 @@ public class AddDeviceDlg extends MMDialog implements MouseListener,
          buildTreeByLib(model_);
       else
          buildTreeByType(model_);
-      scrollPane_.setViewportView(theTree_);
+      availableScrollPane_.setViewportView(theTree_);
    }
 
    @Override
