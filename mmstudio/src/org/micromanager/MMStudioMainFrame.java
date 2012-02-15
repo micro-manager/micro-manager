@@ -190,8 +190,6 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface, Device
    private JToggleButton toggleButtonLive_;
    private JButton toAlbumButton_;
    private JCheckBox autoShutterCheckBox_;
-   private boolean shutterOriginalState_;
-   private boolean autoShutterOriginalState_;
    private MMOptions options_;
    private boolean runsAsPlugin_;
    private JCheckBoxMenuItem centerAndDragMenuItem_;
@@ -299,7 +297,7 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface, Device
       simpleDisplay_ = new VirtualAcquisitionDisplay(cache, name);  
    }
    
- private void checkSimpleAcquisition() {
+ public void checkSimpleAcquisition() {
       if (core_.getCameraDevice().isEmpty()) {
          ReportingUtils.showError("No camera configured");
          return;
@@ -2799,11 +2797,8 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface, Device
             return;
          }
          try {
-            checkSimpleAcquisition();
             if (liveModeTimer_ == null) 
                liveModeTimer_ = new LiveModeTimer(33);
-
-            manageShutterLiveMode(enable);
             liveModeTimer_.start();
             enableLiveModeListeners(enable);
          } catch (Exception ex) {
@@ -2813,28 +2808,12 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface, Device
       } else {
          try {
             liveModeTimer_.stop();
-            manageShutterLiveMode(enable);
             enableLiveModeListeners(enable);
          } catch (Exception ex) {
             ReportingUtils.logError(ex);
          }
       }
       updateButtonsForLiveMode(enable);
-   }
-   
-   private void manageShutterLiveMode(boolean enable) throws Exception {
-      shutterLabel_ = core_.getShutterDevice();
-      if (shutterLabel_.length() > 0) {
-         if (enable) {
-            shutterOriginalState_ = core_.getShutterOpen();
-            autoShutterOriginalState_ = core_.getAutoShutter();
-            core_.setAutoShutter(false);
-            core_.setShutterOpen(true);
-         } else {
-            core_.setShutterOpen(shutterOriginalState_);
-            core_.setAutoShutter(autoShutterOriginalState_);
-         }
-      }
    }
 
    public void updateButtonsForLiveMode(boolean enable) {
