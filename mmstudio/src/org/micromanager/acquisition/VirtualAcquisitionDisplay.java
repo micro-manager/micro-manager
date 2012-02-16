@@ -1104,6 +1104,12 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
       if (!hyperImage_.isComposite()) {
          Object pixels = virtualStack_.getPixels(hyperImage_.getCurrentSlice());
          hyperImage_.getProcessor().setPixels(pixels);
+      } else {
+         CompositeImage ci = (CompositeImage) hyperImage_;
+         if (ci.getMode() == CompositeImage.COMPOSITE)
+            ci.reset();
+         else 
+            ci.getProcessor().setPixels(virtualStack_.getPixels(hyperImage_.getCurrentSlice()));
       }
       updateAndDraw();
    }
