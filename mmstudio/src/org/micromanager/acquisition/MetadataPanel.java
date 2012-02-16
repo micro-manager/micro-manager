@@ -591,41 +591,39 @@ public class MetadataPanel extends JPanel
       }
    }
    
-   public void autoscaleOverStackWithoutDraw(ImageCache cache, ImagePlus img) {
+   public void autoscaleOverStackWithoutDraw(ImageCache cache, ImagePlus img, int channel) {
       int pixMin;
       int pixMax;
       int nSlices = ((VirtualAcquisitionDisplay.IMMImagePlus) img).getNSlicesUnverified();
       int nChannels = ((VirtualAcquisitionDisplay.IMMImagePlus) img).getNChannelsUnverified();
-      for (int channel = 0; channel < nChannels; channel++) {
-         pixMin = Integer.MAX_VALUE;
-         pixMax = 0;
-         for (int z = 0; z < nSlices; z++) {
-            int flatIndex = 1 + channel + z*nChannels;
-            int bytes = img.getBytesPerPixel();
-            if (bytes == 2){
-               short[] pixels = (short[]) img.getStack().getPixels(flatIndex);
-               for ( short value : pixels) {
-                  if (value < pixMin)
-                     pixMin = value;
-                  if (value > pixMax)
-                     pixMax = value;
-               }
-            } else if (bytes == 1) {
-               byte[] pixels = (byte[]) img.getStack().getPixels(flatIndex);
-               for ( byte value : pixels) {
-                  if (value < pixMin)
-                     pixMin = value;
-                  if (value > pixMax)
-                     pixMax = value;    
-               }
+      int bytes = img.getBytesPerPixel();
+      pixMax = 0;
+      pixMin = (int) (Math.pow(2, 8 * bytes) - 1);
+      for (int z = 0; z < nSlices; z++) {
+         int flatIndex = 1 + channel + z * nChannels;
+         if (bytes == 2) {
+            short[] pixels = (short[]) img.getStack().getPixels(flatIndex);
+            for (short value : pixels) {
+               if (value < pixMin)
+                  pixMin = value;
+               if (value > pixMax)
+                  pixMax = value;
             }
-          
+         } else if (bytes == 1) {
+            byte[] pixels = (byte[]) img.getStack().getPixels(flatIndex);
+            for (byte value : pixels) {
+               if (value < pixMin)
+                  pixMin = value;
+               if (value > pixMax)
+                  pixMax = value;
+            }
          }
-         //autoscale the channel
-            if (currentContrastPanel_ != null) 
-               currentContrastPanel_.setChannelContrast(channel,pixMin, pixMax, 1.0);  
       }
-      if (currentContrastPanel_ != null) 
+      //autoscale the channel
+      if (currentContrastPanel_ != null)
+         currentContrastPanel_.setChannelContrast(channel, pixMin, pixMax, 1.0);
+
+      if (currentContrastPanel_ != null)
          currentContrastPanel_.applyLUTToImage(img, cache);
    }
    

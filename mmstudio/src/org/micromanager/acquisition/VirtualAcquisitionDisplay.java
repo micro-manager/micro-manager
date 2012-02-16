@@ -19,9 +19,10 @@
 //               CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 //
-
 package org.micromanager.acquisition;
 
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import org.micromanager.api.DisplayControls;
 import java.lang.reflect.InvocationTargetException;
 import org.micromanager.api.ImageCacheListener;
@@ -74,10 +75,8 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
    final static String[] rgbNames = {"Red", "Blue", "Green"};
    final ImageCache imageCache_;
    final Preferences prefs_ = Preferences.userNodeForPackage(this.getClass());
-
    private static final String SIMPLE_WIN_X = "simple_x";
    private static final String SIMPLE_WIN_Y = "simple_y";
-   
    private AcquisitionEngine eng_;
    private boolean finished_ = false;
    private boolean promptToSave_ = true;
@@ -92,31 +91,25 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
    private int preferredPosition_ = -1;
    private int preferredChannel_ = -1;
    private Timer preferredPositionTimer_;
-
    private int numComponents_;
    private ImagePlus hyperImage_;
    private ScrollbarWithLabel pSelector_;
    private ScrollbarWithLabel tSelector_;
    private ScrollbarWithLabel zSelector_;
-   private ScrollbarWithLabel cSelector_;   
-   private DisplayControls controls_;   
+   private ScrollbarWithLabel cSelector_;
+   private DisplayControls controls_;
    public AcquisitionVirtualStack virtualStack_;
    private final Preferences displayPrefs_;
    private boolean simple_ = false;
    private boolean mda_ = false; //flag if display corresponds to MD acquisition
    private MetadataPanel mdPanel_;
    private boolean newDisplay_ = true; //used for autostretching on window opening
-   
    private double framesPerSec_ = 7;
    private int firstFrame_;
    private int lastFrame_;
    private Timer zAnimationTimer_;
    private Timer tAnimationTimer_;
    private Component zIcon_, pIcon_, tIcon_, cIcon_;
-
-
-
-
 
    /* This interface and the following two classes
     * allow us to manipulate the dimensions
@@ -135,41 +128,43 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
       public void setNSlicesUnverified(int nSlices);
 
       public void setNFramesUnverified(int nFrames);
-      
+
       public void drawWithoutUpdate();
    }
 
    public class MMCompositeImage extends CompositeImage implements IMMImagePlus {
+
       public VirtualAcquisitionDisplay display_;
       private boolean updatingImage_, settingMode_, settingLut_;
-      
+
       MMCompositeImage(ImagePlus imgp, int type, VirtualAcquisitionDisplay disp) {
          super(imgp, type);
          display_ = disp;
       }
-      
+
       @Override
       public String getTitle() {
          return name_;
       }
-      
+
       private void superReset() {
          super.reset();
       }
-      
+
       @Override
       public void reset() {
          if (SwingUtilities.isEventDispatchThread())
             super.reset();
          else
             SwingUtilities.invokeLater(new Runnable() {
-            @Override
-            public void run() {
-               superReset();
-            } });         
+
+               @Override
+               public void run() {
+                  superReset();
+               }
+            });
       }
-      
-      
+
       /*
        * ImageJ workaround: the following two functions set the currentChannel field to -1, which can lead to a null 
        * pointer exception if the function is called while CompositeImage.updateImage is also running on a different 
@@ -178,46 +173,52 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
       @Override
       public synchronized void setMode(final int mode) {
          Runnable runnable = new Runnable() {
+
             @Override
             public void run() {
-               superSetMode(mode);             
-               }};
+               superSetMode(mode);
+            }
+         };
          invokeLaterIfNotEDT(runnable);
       }
-      
+
       private void superSetMode(int mode) {
          super.setMode(mode);
       }
-      
+
       @Override
       public synchronized void setChannelLut(final LUT lut) {
          Runnable runnable = new Runnable() {
+
             @Override
             public void run() {
                superSetLut(lut);
-            }};
+            }
+         };
          invokeLaterIfNotEDT(runnable);
       }
-      
+
       private void superSetLut(LUT lut) {
          super.setChannelLut(lut);
       }
-      
+
       @Override
       public synchronized void updateImage() {
          Runnable runnable = new Runnable() {
+
             @Override
             public void run() {
                superUpdateImage();
-            }};
+            }
+         };
 
          invokeLaterIfNotEDT(runnable);
       }
-      
+
       private void superUpdateImage() {
          super.updateImage();
       }
-      
+
       @Override
       public int getImageStackSize() {
          return super.nChannels * super.nSlices * super.nFrames;
@@ -257,36 +258,40 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
       public void setNFramesUnverified(int nFrames) {
          super.nFrames = nFrames;
       }
-      
+
       private void superDraw() {
          super.draw();
       }
-      
+
       @Override
       public void draw() {
          Runnable runnable = new Runnable() {
+
             public void run() {
+
                imageChangedUpdate();
                superDraw();
-            } };
+            }
+         };
          invokeLaterIfNotEDT(runnable);
       }
-      
+
       @Override
       public void drawWithoutUpdate() {
-        super.getWindow().getCanvas().setImageUpdated();
-        super.draw();
+         super.getWindow().getCanvas().setImageUpdated();
+         super.draw();
       }
    }
 
    public class MMImagePlus extends ImagePlus implements IMMImagePlus {
+
       public VirtualAcquisitionDisplay display_;
-      
+
       MMImagePlus(String title, ImageStack stack, VirtualAcquisitionDisplay disp) {
          super(title, stack);
          display_ = disp;
       }
-      
+
       @Override
       public String getTitle() {
          return name_;
@@ -384,21 +389,21 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
       imageCache_.setDisplay(this);
       mda_ = false;
    }
-   
+
    private void invokeAndWaitIfNotEDT(Runnable runnable) {
-       if (SwingUtilities.isEventDispatchThread())
+      if (SwingUtilities.isEventDispatchThread())
          runnable.run();
       else
          try {
             SwingUtilities.invokeAndWait(runnable);
-        } catch (InterruptedException ex) {
+         } catch (InterruptedException ex) {
             ReportingUtils.logError(ex);
-        } catch (InvocationTargetException ex) {
+         } catch (InvocationTargetException ex) {
             System.out.println(ex.getCause());
-        }
+         }
    }
-   
-   private void invokeLaterIfNotEDT(Runnable runnable){
+
+   private void invokeLaterIfNotEDT(Runnable runnable) {
       if (SwingUtilities.isEventDispatchThread())
          runnable.run();
       else
@@ -472,33 +477,37 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
       } else {
          controls_ = new HyperstackControls(this);
       }
-      hyperImage_ = createHyperImage(createMMImagePlus(virtualStack_), 
+      hyperImage_ = createHyperImage(createMMImagePlus(virtualStack_),
               numGrayChannels, numSlices, numFrames, virtualStack_, controls_);
-  
+
       applyPixelSizeCalibration(hyperImage_);
-      
+
       mdPanel_.setup(null);
       createWindow();
       //Make sure contrast panel sets up correctly here
       windowToFront();
       setupMetadataPanel();
-      
-      
+
+
       cSelector_ = getSelector("c");
       if (!simple_) {
          tSelector_ = getSelector("t");
          zSelector_ = getSelector("z");
-         if (zSelector_ != null) 
+         if (zSelector_ != null)
             zSelector_.addAdjustmentListener(new AdjustmentListener() {
+
                public void adjustmentValueChanged(AdjustmentEvent e) {
                   preferredSlice_ = zSelector_.getValue();
-               }});
+               }
+            });
          if (cSelector_ != null)
             cSelector_.addAdjustmentListener(new AdjustmentListener() {
+
                public void adjustmentValueChanged(AdjustmentEvent e) {
                   preferredChannel_ = cSelector_.getValue();
-               }});
-              
+               }
+            });
+
          if (imageCache_.lastAcquiredFrame() > 1) {
             setNumFrames(1 + imageCache_.lastAcquiredFrame());
          } else {
@@ -509,11 +518,11 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
 //         setNumSlices(numSlices);
          setNumPositions(numPositions);
       }
-      
+
       updateAndDraw();
       updateWindowTitleAndStatus();
    }
-   
+
    private void animateSlices(boolean animate) {
       if (!animate) {
          zAnimationTimer_.stop();
@@ -524,19 +533,21 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
          animateFrames(false);
       if (zAnimationTimer_ == null)
          zAnimationTimer_ = new Timer((int) (1000.0 / framesPerSec_), new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent e) {
-            int slice = hyperImage_.getSlice();
-            if (slice >= zSelector_.getMaximum()-1) 
-               hyperImage_.setPosition(hyperImage_.getChannel(), 1, hyperImage_.getFrame());          
-            else 
-               hyperImage_.setPosition(hyperImage_.getChannel(), slice+1, hyperImage_.getFrame());          
-         }});
+
+            @Override
+            public void actionPerformed(ActionEvent e) {
+               int slice = hyperImage_.getSlice();
+               if (slice >= zSelector_.getMaximum() - 1)
+                  hyperImage_.setPosition(hyperImage_.getChannel(), 1, hyperImage_.getFrame());
+               else
+                  hyperImage_.setPosition(hyperImage_.getChannel(), slice + 1, hyperImage_.getFrame());
+            }
+         });
       zAnimationTimer_.setDelay((int) (1000.0 / framesPerSec_));
       zAnimationTimer_.start();
       refreshAnimationIcons();
    }
-   
+
    private void animateFrames(boolean animate) {
       if (!animate) {
          tAnimationTimer_.stop();
@@ -547,54 +558,73 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
          animateSlices(false);
       if (tAnimationTimer_ == null)
          tAnimationTimer_ = new Timer((int) (1000.0 / framesPerSec_), new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent e) {
-            int frame = hyperImage_.getFrame();
-            if (frame >= lastFrame_) 
-               hyperImage_.setPosition(hyperImage_.getChannel(), hyperImage_.getSlice(), firstFrame_);          
-            else 
-               hyperImage_.setPosition(hyperImage_.getChannel(), hyperImage_.getSlice(), frame + 1);              
-         }});
+
+            @Override
+            public void actionPerformed(ActionEvent e) {
+               int frame = hyperImage_.getFrame();
+               if (frame >= lastFrame_)
+                  hyperImage_.setPosition(hyperImage_.getChannel(), hyperImage_.getSlice(), firstFrame_);
+               else
+                  hyperImage_.setPosition(hyperImage_.getChannel(), hyperImage_.getSlice(), frame + 1);
+            }
+         });
       tAnimationTimer_.setDelay((int) (1000.0 / framesPerSec_));
       tAnimationTimer_.start();
       refreshAnimationIcons();
    }
-   
+
    private void refreshAnimationIcons() {
       if (zIcon_ != null)
          zIcon_.repaint();
       if (tIcon_ != null)
          tIcon_.repaint();
    }
-   
+
    private void configureAnimationControls() {
       firstFrame_ = 1;
-      lastFrame_ = tSelector_!= null ? tSelector_.getMaximum()-1 : 1;
+      lastFrame_ = tSelector_ != null ? tSelector_.getMaximum() - 1 : 1;
       if (zIcon_ != null) {
          zIcon_.addMouseListener(new MouseListener() {
-            public void mousePressed(MouseEvent e) {              
+
+            public void mousePressed(MouseEvent e) {
                animateSlices(zAnimationTimer_ == null || !zAnimationTimer_.isRunning());
-            }     
-            public void mouseClicked(MouseEvent e) {}   
-            public void mouseReleased(MouseEvent e) {}   
-            public void mouseEntered(MouseEvent e) {}      
-            public void mouseExited(MouseEvent e) {}       
+            }
+
+            public void mouseClicked(MouseEvent e) {
+            }
+
+            public void mouseReleased(MouseEvent e) {
+            }
+
+            public void mouseEntered(MouseEvent e) {
+            }
+
+            public void mouseExited(MouseEvent e) {
+            }
          });
       }
       if (tIcon_ != null) {
          tIcon_.addMouseListener(new MouseListener() {
-            public void mousePressed(MouseEvent e) {              
+
+            public void mousePressed(MouseEvent e) {
                animateFrames(tAnimationTimer_ == null || !tAnimationTimer_.isRunning());
-            }     
-            public void mouseClicked(MouseEvent e) {}   
-            public void mouseReleased(MouseEvent e) {}   
-            public void mouseEntered(MouseEvent e) {}      
-            public void mouseExited(MouseEvent e) {}       
+            }
+
+            public void mouseClicked(MouseEvent e) {
+            }
+
+            public void mouseReleased(MouseEvent e) {
+            }
+
+            public void mouseEntered(MouseEvent e) {
+            }
+
+            public void mouseExited(MouseEvent e) {
+            }
          });
       }
    }
-   
-   
+
    /**
     * Allows bypassing the prompt to Save
     * @param promptToSave boolean flag
@@ -626,9 +656,9 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
       try {
          long t = System.currentTimeMillis();
          JSONObject tags;
-         if (taggedImage != null) 
-            tags = taggedImage.tags;      
-         else 
+         if (taggedImage != null)
+            tags = taggedImage.tags;
+         else
             tags = imageCache_.getLastImageTags();
          if (tags == null)
             return;
@@ -636,23 +666,29 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
          int ch = MDUtils.getChannelIndex(tags);
          int slice = MDUtils.getSliceIndex(tags);
          int position = MDUtils.getPositionIndex(tags);
-         boolean show = finalUpdate || frame == 0 || (Math.abs(t - lastDisplayTime_) > 30) ||
-                 (ch == getNumChannels()-1 && lastFrameShown_==frame 
-                 && lastSliceShown_==slice && lastPositionShown_==position  ) ||
-                 (slice == getNumSlices() - 1 && frame == 0 && position == 0 && ch == getNumChannels() - 1);
+         boolean show = finalUpdate || frame == 0 || (Math.abs(t - lastDisplayTime_) > 30)
+                 || (ch == getNumChannels() - 1 && lastFrameShown_ == frame
+                 && lastSliceShown_ == slice && lastPositionShown_ == position)
+                 || (slice == getNumSlices() - 1 && frame == 0 && position == 0 && ch == getNumChannels() - 1);
+
+
+
          if (show) {
             showImage(tags, true);
             lastFrameShown_ = frame;
             lastSliceShown_ = slice;
             lastPositionShown_ = position;
             lastDisplayTime_ = t;
+            forceImagePaint();
          }
       } catch (Exception e) {
          ReportingUtils.logError(e);
       }
    }
 
-  
+   private void forceImagePaint() {
+      hyperImage_.getWindow().getCanvas().paint(hyperImage_.getWindow().getCanvas().getGraphics());
+   }
 
    public int rgbToGrayChannel(int channelIndex) {
       try {
@@ -681,14 +717,14 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
    public static JSONObject getDisplaySettingsFromSummary(JSONObject summaryMetadata) {
       try {
          JSONObject displaySettings = new JSONObject();
-         
+
          JSONArray chColors = MDUtils.getJSONArrayMember(summaryMetadata, "ChColors");
          JSONArray chNames = MDUtils.getJSONArrayMember(summaryMetadata, "ChNames");
          JSONArray chMaxes = MDUtils.getJSONArrayMember(summaryMetadata, "ChContrastMax");
          JSONArray chMins = MDUtils.getJSONArrayMember(summaryMetadata, "ChContrastMin");
-       
-         int numComponents = MDUtils.getNumberOfComponents(summaryMetadata);    
-       
+
+         int numComponents = MDUtils.getNumberOfComponents(summaryMetadata);
+
          JSONArray channels = new JSONArray();
          if (numComponents > 1) //RGB
          {
@@ -699,7 +735,7 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
                channelObject.put("Name", rgbNames[k]);
                channelObject.put("Gamma", 1.0);
                channelObject.put("Min", 0);
-               channelObject.put("Max", Math.pow(2, rgbChannelBitDepth)-1);
+               channelObject.put("Max", Math.pow(2, rgbChannelBitDepth) - 1);
                channels.put(channelObject);
             }
          } else {
@@ -717,7 +753,7 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
                channels.put(channelObject);
             }
          }
-       
+
          displaySettings.put("Channels", channels);
 
          JSONObject comments = new JSONObject();
@@ -801,16 +837,16 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
    }
 
    public int getStackSize() {
-      if (hyperImage_ == null )
+      if (hyperImage_ == null)
          return -1;
       int s = hyperImage_.getNSlices();
       int c = hyperImage_.getNChannels();
       int f = hyperImage_.getNFrames();
-      if ( (s > 1 && c > 1) || (c > 1 && f > 1) || (f > 1 && s > 1) )
+      if ((s > 1 && c > 1) || (c > 1 && f > 1) || (f > 1 && s > 1))
          return s * c * f;
       return Math.max(Math.max(s, c), f);
    }
-   
+
    private void imageChangedWindowUpdate() {
       if (hyperImage_ != null && hyperImage_.isVisible()) {
          TaggedImage ti = virtualStack_.getTaggedImage(hyperImage_.getCurrentSlice());
@@ -818,12 +854,12 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
             controls_.newImageUpdate(ti.tags);
       }
    }
-   
+
    public void updateAndDraw() {
       if (!updating_) {
          updating_ = true;
          setupMetadataPanel();
-         if (hyperImage_ != null && hyperImage_.isVisible()) {            
+         if (hyperImage_ != null && hyperImage_.isVisible()) {
             hyperImage_.updateAndDraw();
             imageChangedWindowUpdate();
          }
@@ -832,7 +868,7 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
    }
 
    public void updateWindowTitleAndStatus() {
-      if(simple_) {
+      if (simple_) {
          if (hyperImage_ != null && hyperImage_.getWindow() != null)
             hyperImage_.getWindow().setTitle(name_);
          return;
@@ -840,7 +876,7 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
       if (controls_ == null) {
          return;
       }
-     
+
       String status = "";
       final AcquisitionEngine eng = eng_;
 
@@ -886,25 +922,25 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
       controls_.imagesOnDiskUpdate(imageCache_.getDiskLocation() != null);
       String path = isDiskCached()
               ? new File(imageCache_.getDiskLocation()).getName() : name_;
-      
-      if (hyperImage_.isVisible()) 
-            hyperImage_.getWindow().setTitle(path + " (" + status + ")");
-     
+
+      if (hyperImage_.isVisible())
+         hyperImage_.getWindow().setTitle(path + " (" + status + ")");
+
    }
 
    private void windowToFront() {
-       if (hyperImage_ == null || hyperImage_.getWindow() == null)
+      if (hyperImage_ == null || hyperImage_.getWindow() == null)
          return;
       hyperImage_.getWindow().toFront();
    }
-   
+
    private void setupMetadataPanel() {
-       if (hyperImage_ == null || hyperImage_.getWindow() == null)
+      if (hyperImage_ == null || hyperImage_.getWindow() == null)
          return;
       //call this explicitly because it isn't fired immediately
       mdPanel_.setup(hyperImage_.getWindow());
    }
-   
+
    /**
     * Displays tagged image in the multi-D viewer
     * Will wait for the screen update
@@ -912,11 +948,10 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
     * @param taggedImg
     * @throws Exception 
     */
-   
    public void showImage(TaggedImage taggedImg) throws Exception {
       showImage(taggedImg, true);
    }
-   
+
    /**
     * Displays tagged image in the multi-D viewer
     * Optionally waits for the display to draw the image
@@ -927,16 +962,16 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
    public void showImage(TaggedImage taggedImg, boolean waitForDisplay) throws InterruptedException, InvocationTargetException {
       showImage(taggedImg.tags, waitForDisplay);
    }
-   
+
    public void showImage(JSONObject tags, boolean waitForDisplay) throws InterruptedException, InvocationTargetException {
       updateWindowTitleAndStatus();
-      
-      if (tags == null) 
+
+      if (tags == null)
          return;
 
       if (hyperImage_ == null)
          startup(tags);
-      
+
       int channel = 0, frame = 0, slice = 0, position = 0, superChannel = 0;
       try {
          frame = MDUtils.getFrameIndex(tags);
@@ -947,7 +982,7 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
       } catch (Exception ex) {
          ReportingUtils.logError(ex);
       }
-   
+
       //make sure pixels get properly set
       if (hyperImage_ != null && frame == 0) {
          IMMImagePlus img = (IMMImagePlus) hyperImage_;
@@ -963,8 +998,7 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
             //This line is neccessary for image processor to have correct pixels in grayscale mode
             ci.getProcessor().setPixels(virtualStack_.getPixels(ci.getCurrentSlice()));
          }
-      } else 
-         if (hyperImage_ instanceof MMCompositeImage ) {
+      } else if (hyperImage_ instanceof MMCompositeImage) {
          MMCompositeImage ci = ((MMCompositeImage) hyperImage_);
          ci.reset();
       }
@@ -972,8 +1006,8 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
 
       if (frame + 1 > lastFrame_)
          lastFrame_ = frame + 1;
-      
-    
+
+
       if (cSelector_ != null) {
          if (cSelector_.getMaximum() <= (1 + superChannel)) {
             this.setNumChannels(1 + superChannel);
@@ -982,11 +1016,11 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
             //       "setupLuts", 1 + superChannel, Integer.TYPE);
          }
       }
-      
-      initializeContrast(channel, slice);
-      
 
-      
+      initializeContrast(channel, slice);
+
+
+
       if (!simple_) {
          if (tSelector_ != null) {
             if (tSelector_.getMaximum() <= (1 + frame)) {
@@ -999,11 +1033,13 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
          setPosition(position);
          hyperImage_.setPosition(1 + superChannel, 1 + slice, 1 + frame);
       }
-      
+
       Runnable updateAndDraw = new Runnable() {
+
          public void run() {
             updateAndDraw();
-         }  };
+         }
+      };
 
       if (!SwingUtilities.isEventDispatchThread()) {
          if (waitForDisplay) {
@@ -1015,9 +1051,9 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
          updateAndDraw();
       }
 
-      setPreferredScrollbarPositions();        
+      setPreferredScrollbarPositions();
    }
-   
+
    /*
     * Live/snap should load window contrast settings
     * MDA should autoscale on frist image
@@ -1025,71 +1061,63 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
     */
    private void initializeContrast(final int channel, final int slice) {
       Runnable autoscaleOrLoadContrast = new Runnable() {
+
          public void run() {
-            if (!newDisplay_) {
-               return; 
-            }
+            if (!newDisplay_)
+               return;
             if (simple_) {
                if (hyperImage_ instanceof MMCompositeImage
-                       && ((MMCompositeImage) hyperImage_).getNChannelsUnverified() - 1 != channel) {
+                       && ((MMCompositeImage) hyperImage_).getNChannelsUnverified() - 1 != channel)
                   return;
-               }
                mdPanel_.loadSimpleWinContrastWithoutDraw(imageCache_, hyperImage_);
-            } else {
+            } else
                if (mda_) {
-                  if (hyperImage_ instanceof MMCompositeImage
-                          && ((MMCompositeImage) hyperImage_).getNChannelsUnverified() - 1 != channel) {
-                     return;
-                  }
-                  if (((IMMImagePlus) hyperImage_).getNSlicesUnverified() - 1 != slice) {
-                     return;
-                  }
-                  if (((IMMImagePlus) hyperImage_).getNSlicesUnverified() == 1) {                
-                     mdPanel_.autoscaleWithoutDraw(imageCache_, hyperImage_);
-                  } else {
-                     mdPanel_.autoscaleOverStackWithoutDraw(imageCache_, hyperImage_);
-                  }
-               } else { //Called when display created by pressing acquire button
-                  if (hyperImage_ instanceof MMCompositeImage) {
-                     if (((MMCompositeImage) hyperImage_).getNChannelsUnverified() - 1 != channel) {
+                  IMMImagePlus immImg = ((IMMImagePlus) hyperImage_);
+                  if (immImg.getNSlicesUnverified() > 1) {
+                     if (immImg.getNSlicesUnverified() - 1 != slice)
                         return;
-                     }
-                     mdPanel_.autoscaleWithoutDraw(imageCache_, hyperImage_);
-                  } else {
-                     mdPanel_.autoscaleWithoutDraw(imageCache_, hyperImage_);
-                  }
-               }
-//               else do nothing because contrast automatically loaded from cache
+                     mdPanel_.autoscaleOverStackWithoutDraw(imageCache_, hyperImage_, channel);
+                     if (channel != immImg.getNChannelsUnverified() - 1)
+                        return;  //don't set new display to false until all channels autscaled
 
-            }
+                  } else if (immImg.getNChannelsUnverified() - 1 == channel)
+                     mdPanel_.autoscaleWithoutDraw(imageCache_, hyperImage_);
+               } else //Called when display created by pressing acquire button
+               if (hyperImage_ instanceof MMCompositeImage) {
+                     if (((MMCompositeImage) hyperImage_).getNChannelsUnverified() - 1 != channel)
+                        return;
+                     mdPanel_.autoscaleWithoutDraw(imageCache_, hyperImage_);
+                  } else
+                     mdPanel_.autoscaleWithoutDraw(imageCache_, hyperImage_); //               else do nothing because contrast automatically loaded from cache
             newDisplay_ = false;
          }
       };
-      if (!SwingUtilities.isEventDispatchThread()) {
+      if (!SwingUtilities.isEventDispatchThread())
          SwingUtilities.invokeLater(autoscaleOrLoadContrast);
-      } else {
+      else
          autoscaleOrLoadContrast.run();
-      }
    }
-   
+
    private void setPreferredScrollbarPositions() {
-      if (this.acquisitionIsRunning() ) {
+      if (this.acquisitionIsRunning()) {
          long nextImageTime = eng_.getNextWakeTime();
-         if(System.nanoTime()/1000000 - nextImageTime < -1000 ){ //1 sec or more until next start
+         if (System.nanoTime() / 1000000 - nextImageTime < -1000) { //1 sec or more until next start
             if (preferredPositionTimer_ == null)
                preferredPositionTimer_ = new Timer(1000, new ActionListener() {
+
                   @Override
                   public void actionPerformed(ActionEvent e) {
-                     IMMImagePlus ip = ((IMMImagePlus) hyperImage_ );
+                     IMMImagePlus ip = ((IMMImagePlus) hyperImage_);
                      int c = ip.getNChannelsUnverified(), s = ip.getNSlicesUnverified(), f = ip.getNFramesUnverified();
                      hyperImage_.setPosition(preferredChannel_ == -1 ? c : preferredChannel_,
                              preferredSlice_ == -1 ? s : preferredSlice_, f);
-                     if (pSelector_ != null && preferredPosition_ > -1) 
+                     if (pSelector_ != null && preferredPosition_ > -1)
                         if (eng_.getAcqOrderMode() != AcqOrderMode.POS_TIME_CHANNEL_SLICE
-                                && eng_.getAcqOrderMode() != AcqOrderMode.POS_TIME_SLICE_CHANNEL) 
+                                && eng_.getAcqOrderMode() != AcqOrderMode.POS_TIME_SLICE_CHANNEL)
                            setPosition(preferredPosition_);
                      preferredPositionTimer_.stop();;
-                  }});
+                  }
+               });
             if (preferredPositionTimer_.isRunning())
                return;
             preferredPositionTimer_.start();
@@ -1108,7 +1136,7 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
          CompositeImage ci = (CompositeImage) hyperImage_;
          if (ci.getMode() == CompositeImage.COMPOSITE)
             ci.reset();
-         else 
+         else
             ci.getProcessor().setPixels(virtualStack_.getPixels(hyperImage_.getCurrentSlice()));
       }
       updateAndDraw();
@@ -1121,11 +1149,11 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
    }
 
    public void setSliceIndex(int i) {
-     if (simple_)
+      if (simple_)
          return;
       final int f = hyperImage_.getFrame();
       final int c = hyperImage_.getChannel();
-      hyperImage_.setPosition(c, i+1, f);
+      hyperImage_.setPosition(c, i + 1, f);
    }
 
    public int getSliceIndex() {
@@ -1214,7 +1242,7 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
    }
 
    final public MMImagePlus createMMImagePlus(AcquisitionVirtualStack virtualStack) {
-      MMImagePlus img = new MMImagePlus(imageCache_.getDiskLocation(), virtualStack,this);
+      MMImagePlus img = new MMImagePlus(imageCache_.getDiskLocation(), virtualStack, this);
       FileInfo fi = new FileInfo();
       fi.width = virtualStack.getWidth();
       fi.height = virtualStack.getHeight();
@@ -1232,7 +1260,7 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
       mmIP.setNFramesUnverified(frames);
       mmIP.setNSlicesUnverified(slices);
       if (channels > 1) {
-         hyperImage = new MMCompositeImage(mmIP, CompositeImage.COMPOSITE,this);
+         hyperImage = new MMCompositeImage(mmIP, CompositeImage.COMPOSITE, this);
          hyperImage.setOpenAsHyperStack(true);
       } else {
          hyperImage = mmIP;
@@ -1240,7 +1268,7 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
       }
       return hyperImage;
    }
-   
+
    public void liveModeEnabled(boolean enabled) {
       if (simple_) {
          controls_.acquiringImagesUpdate(enabled);
@@ -1248,30 +1276,38 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
       }
    }
 
-   private void createWindow() {  
+   private void createWindow() {
       DisplayWindow win = new DisplayWindow(hyperImage_);
       //This mouse listener updates the histogram after an ROI is drawn
       win.getCanvas().addMouseListener(new MouseListener() {
-            public void mouseClicked(MouseEvent me) {}
-            public void mousePressed(MouseEvent me) {}
-            public void mouseReleased(MouseEvent me) {
-                mdPanel_.refresh();
-            }
-            public void mouseEntered(MouseEvent me) {}
-            public void mouseExited(MouseEvent me) {}
+
+         public void mouseClicked(MouseEvent me) {
+         }
+
+         public void mousePressed(MouseEvent me) {
+         }
+
+         public void mouseReleased(MouseEvent me) {
+            mdPanel_.refresh();
+         }
+
+         public void mouseEntered(MouseEvent me) {
+         }
+
+         public void mouseExited(MouseEvent me) {
+         }
       });
-      
+
       win.setBackground(MMStudioMainFrame.getInstance().getBackgroundColor());
       MMStudioMainFrame.getInstance().addMMBackgroundListener(win);
 
       win.add(controls_);
       win.pack();
-      
-      if (simple_ )
-         win.setLocation(prefs_.getInt(SIMPLE_WIN_X, 0),prefs_.getInt(SIMPLE_WIN_Y, 0));
+
+      if (simple_)
+         win.setLocation(prefs_.getInt(SIMPLE_WIN_X, 0), prefs_.getInt(SIMPLE_WIN_Y, 0));
    }
 
-    
    private ScrollbarWithLabel getSelector(String label) {
       // label should be "t", "z", or "c"
       ScrollbarWithLabel selector = null;
@@ -1316,7 +1352,6 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
       return selector;
    }
 
-   
    private ScrollbarWithLabel createPositionScrollbar() {
       final ScrollbarWithLabel pSelector = new ScrollbarWithLabel(null, 1, 1, 1, 2, 'p') {
 
@@ -1334,29 +1369,30 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
       pSelector.setUnitIncrement(1);
       pSelector.setBlockIncrement(1);
       pSelector.addAdjustmentListener(new AdjustmentListener() {
+
          @Override
          public void adjustmentValueChanged(AdjustmentEvent e) {
-            updatePosition(pSelector.getValue()); 
+            updatePosition(pSelector.getValue());
             preferredPosition_ = pSelector_.getValue();
 
          }
       });
-      
+
       if (pSelector != null) {
-      try {
-         Component icon = (Component) JavaUtils.getRestrictedFieldValue(
+         try {
+            Component icon = (Component) JavaUtils.getRestrictedFieldValue(
                     pSelector, ScrollbarWithLabel.class, "icon");
-         pSelector.remove(icon);
-      } catch (NoSuchFieldException ex) {
-         ReportingUtils.logError(ex);
+            pSelector.remove(icon);
+         } catch (NoSuchFieldException ex) {
+            ReportingUtils.logError(ex);
+         }
+
+         pIcon_ = new ScrollbarIcon('p', this);
+         pSelector.add(pIcon_, BorderLayout.WEST);
+         pSelector.invalidate();
+         pSelector.validate();
       }
-      
-      pIcon_ = new ScrollbarIcon('p',this);
-      pSelector.add(pIcon_,BorderLayout.WEST);
-      pSelector.invalidate();
-      pSelector.validate();
-      }
-      
+
       return pSelector;
    }
 
@@ -1463,7 +1499,7 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
    }
 
    public void setPlaybackFPS(double fps) {
-            framesPerSec_ = fps;
+      framesPerSec_ = fps;
       if (zAnimationTimer_ != null && zAnimationTimer_.isRunning()) {
          animateSlices(false);
          animateSlices(true);
@@ -1481,15 +1517,15 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
    public double getPlaybackFPS() {
       return framesPerSec_;
    }
-   
+
    public boolean isZAnimated() {
-      if (zAnimationTimer_ != null && zAnimationTimer_.isRunning()) 
+      if (zAnimationTimer_ != null && zAnimationTimer_.isRunning())
          return true;
       return false;
    }
 
    public boolean isTAnimated() {
-      if (tAnimationTimer_ != null && tAnimationTimer_.isRunning()) 
+      if (tAnimationTimer_ != null && tAnimationTimer_.isRunning())
          return true;
       return false;
    }
@@ -1529,7 +1565,7 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
 
    public void show() {
       if (hyperImage_ == null) {
-        startup(null);
+         startup(null);
       }
       hyperImage_.show();
       hyperImage_.getWindow().toFront();
@@ -1542,137 +1578,137 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
    public int getNumGrayChannels() {
       return getNumChannels();
    }
-   
+
    public void setWindowTitle(String name) {
       name_ = name;
       updateWindowTitleAndStatus();
    }
-   
+
    public boolean isSimpleDisplay() {
       return simple_;
    }
-   
+
    public void displayStatusLine(String status) {
       controls_.setStatusLabel(status);
    }
-   
+
    public void setChannelContrast(int channelIndex, int min, int max, double gamma) {
       mdPanel_.setChannelContrast(channelIndex, min, max, gamma);
    }
-   
+
    private void imageChangedUpdate() {
-      mdPanel_.imageChangedUpdate(hyperImage_,imageCache_);
+      mdPanel_.imageChangedUpdate(hyperImage_, imageCache_);
       imageChangedWindowUpdate(); //used to update status line
    }
-   
+
    public void refreshContrastPanel() {
       mdPanel_.refresh();
    }
-   
+
    public void drawWithoutUpdate() {
       if (hyperImage_ != null) {
          ((IMMImagePlus) hyperImage_).drawWithoutUpdate();
       }
    }
-   
+
    public class DisplayWindow extends StackWindow {
-         private boolean windowClosingDone_ = false;
-         private boolean closed_ = false;
-         
-         public DisplayWindow(ImagePlus ip) {
-            super(ip);
+
+      private boolean windowClosingDone_ = false;
+      private boolean closed_ = false;
+
+      public DisplayWindow(ImagePlus ip) {
+         super(ip);
+      }
+
+      @Override
+      public boolean close() {
+         windowClosing(null);
+         return closed_;
+      }
+
+      @Override
+      public void windowClosing(WindowEvent e) {
+         if (windowClosingDone_) {
+            return;
          }
 
-         @Override
-         public boolean close() {
-            windowClosing(null);
-            return closed_;
-         }
-
-         @Override
-         public void windowClosing(WindowEvent e) {
-            if (windowClosingDone_) {
+         if (eng_ != null && eng_.isAcquisitionRunning()) {
+            if (!abort()) {
                return;
             }
+         }
 
-            if (eng_ != null && eng_.isAcquisitionRunning()) {
-               if (!abort()) {
+         if (imageCache_.getDiskLocation() == null && promptToSave_) {
+            int result = JOptionPane.showConfirmDialog(this,
+                    "This data set has not yet been saved.\n"
+                    + "Do you want to save it?",
+                    "Micro-Manager",
+                    JOptionPane.YES_NO_CANCEL_OPTION);
+
+            if (result == JOptionPane.YES_OPTION) {
+               if (!saveAs()) {
                   return;
                }
-            }
-            
-            if (imageCache_.getDiskLocation() == null && promptToSave_) {
-               int result = JOptionPane.showConfirmDialog(this,
-                       "This data set has not yet been saved.\n"
-                       + "Do you want to save it?",
-                       "Micro-Manager",
-                       JOptionPane.YES_NO_CANCEL_OPTION);
-
-               if (result == JOptionPane.YES_OPTION) {
-                  if (!saveAs()) {
-                     return;
-                  }
-               } else if (result == JOptionPane.CANCEL_OPTION) {
-                  return;
-               }
-            }
-
-            //for some reason window focus listener doesn't always fire, so call
-            //explicitly here
-            mdPanel_.setup(null);
-
-            
-            if (simple_ && hyperImage_ != null && hyperImage_.getWindow() != null && hyperImage_.getWindow().getLocation() != null) {
-               Point loc = hyperImage_.getWindow().getLocation();
-               prefs_.putInt(SIMPLE_WIN_X, loc.x);
-               prefs_.putInt(SIMPLE_WIN_Y, loc.y);
-               mdPanel_.saveContrastSettings(imageCache_);
-            }
-            
-            if (imageCache_ != null) {
-               imageCache_.close();
-            }
-
-            if (!closed_) {
-               try {
-                  super.close();
-               } catch (NullPointerException ex) {
-                  ReportingUtils.logError("Null pointer error in ImageJ code while closing window");
-               }
-            }
-            
-            
-            super.windowClosing(e);
-            MMStudioMainFrame.getInstance().removeMMBackgroundListener(this);
-            windowClosingDone_ = true;
-            closed_ = true;
-         }
-         
-         @Override
-         public void windowClosed(WindowEvent E) {
-            this.windowClosing(E);
-            super.windowClosed(E);
-         }
-
-         @Override
-         public void windowActivated(WindowEvent e) {
-            if (!isClosed()) {
-               super.windowActivated(e);
+            } else if (result == JOptionPane.CANCEL_OPTION) {
+               return;
             }
          }
-         
-         @Override
-         public void setAnimate(boolean b) {
-            if ( ((IMMImagePlus) hyperImage_).getNFramesUnverified() > 1 )
-               animateFrames(b);
-            else
-               animateSlices(b);
-         }
-         
-         @Override
-         public boolean getAnimate() {
-            return isAnimated();
-         }
-      };   
 
+         //for some reason window focus listener doesn't always fire, so call
+         //explicitly here
+         mdPanel_.setup(null);
+
+
+         if (simple_ && hyperImage_ != null && hyperImage_.getWindow() != null && hyperImage_.getWindow().getLocation() != null) {
+            Point loc = hyperImage_.getWindow().getLocation();
+            prefs_.putInt(SIMPLE_WIN_X, loc.x);
+            prefs_.putInt(SIMPLE_WIN_Y, loc.y);
+            mdPanel_.saveContrastSettings(imageCache_);
+         }
+
+         if (imageCache_ != null) {
+            imageCache_.close();
+         }
+
+         if (!closed_) {
+            try {
+               super.close();
+            } catch (NullPointerException ex) {
+               ReportingUtils.logError("Null pointer error in ImageJ code while closing window");
+            }
+         }
+
+
+         super.windowClosing(e);
+         MMStudioMainFrame.getInstance().removeMMBackgroundListener(this);
+         windowClosingDone_ = true;
+         closed_ = true;
+      }
+
+      @Override
+      public void windowClosed(WindowEvent E) {
+         this.windowClosing(E);
+         super.windowClosed(E);
+      }
+
+      @Override
+      public void windowActivated(WindowEvent e) {
+         if (!isClosed()) {
+            super.windowActivated(e);
+         }
+      }
+
+      @Override
+      public void setAnimate(boolean b) {
+         if (((IMMImagePlus) hyperImage_).getNFramesUnverified() > 1)
+            animateFrames(b);
+         else
+            animateSlices(b);
+      }
+
+      @Override
+      public boolean getAnimate() {
+         return isAnimated();
+      }
+   };
 }
