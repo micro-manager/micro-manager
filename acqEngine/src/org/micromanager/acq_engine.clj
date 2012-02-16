@@ -28,7 +28,7 @@
         [org.micromanager.sequence-generator :only [generate-acq-sequence
                                                     make-property-sequences]])
   (:require [clojure.set])
-  (:import [org.micromanager AcqControlDlg]
+  (:import [org.micromanager AcqControlDlg MMStudioMainFrame]
            [org.micromanager.api AcquisitionEngine TaggedImageAnalyzer]
            [org.micromanager.acquisition AcquisitionWrapperEngine LiveAcq TaggedImageQueue
                                          ProcessorStack SequenceSettings MMImageCache
@@ -78,6 +78,10 @@
 (def active-slice-sequence (atom nil))
 
 (def pixel-type-depths {"GRAY8" 1 "GRAY16" 2 "RGB32" 4 "RGB64" 8})
+
+(defn check-for-serious-error []
+  (when (.. MMStudioMainFrame seriousErrorReported_ get)
+    (swap! state :stop true)))
 
 ;; time
 
@@ -333,6 +337,7 @@
         bursts-per-camera-channel (vec (repeat camera-channel-count burst-events))]
     (doall
       (loop [burst-seqs bursts-per-camera-channel i 0]
+        (check-for-serious-error)
         (if (and (not (@state :stop))
                  (not (apply = nil burst-seqs))
                  (or (pos? (core getRemainingImageCount))
@@ -565,6 +570,7 @@
 
 (defn execute [event-fns]
   (doseq [event-fn event-fns :while (not (:stop @state))]
+    (check-for-serious-error)
     (try (event-fn) (catch Throwable e (ReportingUtils/logError e)))
     (await-resume)))
 
