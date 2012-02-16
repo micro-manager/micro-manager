@@ -333,8 +333,9 @@
         bursts-per-camera-channel (vec (repeat camera-channel-count burst-events))]
     (doall (loop [burst-seqs bursts-per-camera-channel i 0]
              (let [image (pop-burst-image)
-                   cam-chan (Long/parseLong (get-in image [:tags camera-index]))
+                   cam-chan (or (Long/parseLong (get-in image [:tags camera-index])) 0)
                    event (first (burst-seqs cam-chan))]
+               (println i ": " cam-chan ": " event)
                (when (zero? i)
                  (swap! state assoc
                         :burst-time-offset (- (elapsed-time @state)
