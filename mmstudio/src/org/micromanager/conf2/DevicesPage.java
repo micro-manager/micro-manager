@@ -53,8 +53,6 @@ import javax.swing.tree.DefaultMutableTreeNode;
 import mmcorej.CMMCore;
 import mmcorej.MMCoreJ;
 
-import org.micromanager.conf2.AddDeviceDlg.TreeMouseListener;
-import org.micromanager.conf2.AddDeviceDlg.TreeWContextMenu;
 import org.micromanager.utils.ReportingUtils;
 import javax.swing.JTree;
 import javax.swing.JLabel;

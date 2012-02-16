@@ -24,7 +24,6 @@
 package org.micromanager.conf2;
 
 import java.awt.Color;
-import java.awt.Cursor;
 import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.event.ActionEvent;
@@ -115,9 +114,10 @@ public class ConfiguratorDlg2 extends MMDialog {
 
         addWindowListener(new WindowAdapter() {
 
-            public void windowClosing(WindowEvent arg0) {
-                onCloseWindow();
-            }
+           @Override
+           public void windowClosing(WindowEvent arg0) {
+              onCloseWindow();
+           }
         });
         setResizable(false);
         getContentPane().setLayout(null);
