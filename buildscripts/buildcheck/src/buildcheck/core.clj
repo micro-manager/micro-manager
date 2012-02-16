@@ -113,7 +113,9 @@
   (second (re-find #"mmgr_dal_(.*?).dll" (.getName file))))
 
 (defn project-name [vcproj-file]
-  (-> vcproj-file clojure.xml/parse :attrs :Name))
+  (try
+    (-> vcproj-file clojure.xml/parse :attrs :Name)
+    (catch Exception e (println vcproj-file))))
 
 (defn bin-dir [bits]
   (File. micromanager
@@ -131,6 +133,7 @@
         project-names (map project-name (filter #(not (.. % getAbsolutePath (contains "_ATTIC")))
                                           (device-vcproj-files)))]
     (sort (clojure.set/difference (set project-names)
+                                  #{nil}
                                   (set dll-names)
                                   (do-not-build)
                                   helper-vcprojs))))
