@@ -353,15 +353,13 @@
     (doall
       (loop [burst-seqs bursts-per-camera-channel i 0]
         (check-for-serious-error)
+        (when (core isBufferOverflowed)
+          (swap! state assoc :circular-buffer-overflow true))
         (when (and (not (@state :stop))
                    (not (apply = nil burst-seqs))
                    (or (pos? (core getRemainingImageCount))
-                       (core isSequenceRunning)))
-          (when (and (not (@state :stop))
-                     (core isBufferOverflowed))
-            (swap! state assoc
-                   :stop true
-                   :circular-buffer-overflow true))
+                       (and (core isSequenceRunning)
+                            (not (@state :circular-buffer-overflow)))))
           (let [image (pop-burst-image)
                 cam-chan (if-let [cam-chan-str (get-in image [:tags camera-index])]
                            (Long/parseLong cam-chan-str)
