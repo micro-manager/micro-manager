@@ -465,14 +465,6 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
       
       hp.addCursorListener(this);
               
-      hp.addMouseWheelListener(new MouseWheelListener() {
-         public void mouseWheelMoved(MouseWheelEvent e) {
-            int notches = e.getWheelRotation();
-            if (notches > 0)
-               zoomOutButtonAction();
-            else if (notches < 0)
-               zoomInButtonAction();
-         }});
       return hp;
    }
 
