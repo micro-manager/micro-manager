@@ -42,6 +42,7 @@ import javax.swing.JCheckBox;
 import javax.swing.JColorChooser;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.SwingUtilities;
 import mmcorej.CMMCore;
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -521,40 +522,49 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
       gamma_ = gamma;
    }
 
-   public void applyChannelLUTToImage(ImagePlus img, ImageCache cache) {
-      if (!(img instanceof CompositeImage))
-         return;
-      CompositeImage ci = (CompositeImage) img;
-      Color color = cache.getChannelColor(channelIndex_);
+   //Need to put this on EDT to avoid index out of bounds because of setting currentChannel to -1
+   public void applyChannelLUTToImage(final ImagePlus img, final ImageCache cache) {
+      Runnable run = new Runnable() {
+         @Override
+         public void run() {
+            if (!(img instanceof CompositeImage)) {
+               return;
+            }
+            CompositeImage ci = (CompositeImage) img;
+            Color color = cache.getChannelColor(channelIndex_);
 
-      LUT lut = ImageUtils.makeLUT(color, gamma_);
-      lut.min = contrastMin_;
-      lut.max = contrastMax_;
-      //uses lut.min and lut.max to set min and max of precessor
-      ci.setChannelLut(lut, channelIndex_ + 1);
-    
-      //ImageJ workaround: do this so the appropriate color model and min/max get applied 
-      //in color or grayscael mode
-       try {
-         JavaUtils.setRestrictedFieldValue(ci, CompositeImage.class, "currentChannel", -1);
-      } catch (NoSuchFieldException ex) {
-         ReportingUtils.logError(ex);
-      }
-      
-      if (ci.getChannel() == channelIndex_ + 1) { 
-         LUT grayLut = ImageUtils.makeLUT(Color.white, gamma_);
-         ci.getProcessor().setColorModel(grayLut);
-         ci.getProcessor().setMinAndMax(contrastMin_, contrastMax_);
-         if (ci.getMode() == CompositeImage.GRAYSCALE)
-            ci.updateImage();
-      }
-     
+            LUT lut = ImageUtils.makeLUT(color, gamma_);
+            lut.min = contrastMin_;
+            lut.max = contrastMax_;
+            //uses lut.min and lut.max to set min and max of precessor
+            ci.setChannelLut(lut, channelIndex_ + 1);
 
+            //ImageJ workaround: do this so the appropriate color model and min/max get applied 
+            //in color or grayscael mode
+            try {
+               JavaUtils.setRestrictedFieldValue(ci, CompositeImage.class, "currentChannel", -1);
+            } catch (NoSuchFieldException ex) {
+               ReportingUtils.logError(ex);
+            }
 
-      //store contrast settings
-      cache.storeChannelDisplaySettings(channelIndex_, (int) contrastMin_, (int) contrastMax_, gamma_);
+            if (ci.getChannel() == channelIndex_ + 1) {
+               LUT grayLut = ImageUtils.makeLUT(Color.white, gamma_);
+               ci.getProcessor().setColorModel(grayLut);
+               ci.getProcessor().setMinAndMax(contrastMin_, contrastMax_);
+               if (ci.getMode() == CompositeImage.GRAYSCALE) {
+                  ci.updateImage();
+               }
+            }
+            //store contrast settings
+            cache.storeChannelDisplaySettings(channelIndex_, (int) contrastMin_, (int) contrastMax_, gamma_);
 
-      updateHistogramCursors();
+            updateHistogramCursors();
+ 
+         }};
+      if (SwingUtilities.isEventDispatchThread())
+         run.run();
+      else
+         SwingUtilities.invokeLater(run);  
    }
    
    private void updateHistogramCursors() {
@@ -643,8 +653,6 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
 
          maxLabel_.setText("Max: " + NumberUtils.intToDisplayString((int) pixelMax_));
          minLabel_.setText("Min: " + NumberUtils.intToDisplayString((int) pixelMin_));
-         
-         
       }
    }
 
