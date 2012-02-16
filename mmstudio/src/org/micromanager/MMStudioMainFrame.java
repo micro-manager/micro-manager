@@ -126,6 +126,7 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.concurrent.atomic.AtomicBoolean;
 import javax.swing.BorderFactory;
 import javax.swing.JPanel;
 import javax.swing.JSeparator;
@@ -284,6 +285,7 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface, Device
    private final JSplitPane splitPane_;
    private volatile boolean ignorePropertyChanges_; 
 
+   public static AtomicBoolean seriousErrorReported_ = new AtomicBoolean(false);
 
    public ImageWindow getImageWin() {
       return simpleDisplay_.getHyperImage().getWindow();

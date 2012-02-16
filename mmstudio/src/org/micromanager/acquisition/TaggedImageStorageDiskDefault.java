@@ -31,6 +31,7 @@ import mmcorej.TaggedImage;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.micromanager.MMStudioMainFrame;
 import org.micromanager.utils.ImageUtils;
 import org.micromanager.utils.JavaUtils;
 import org.micromanager.utils.MDUtils;
@@ -138,6 +139,11 @@ public class TaggedImageStorageDiskDefault implements TaggedImageStorage {
          } catch (Exception ex) {
             ReportingUtils.logError(ex);
          }         
+
+         if (new File(dir_, fileName).exists()) {
+            MMStudioMainFrame.seriousErrorReported_.set(true);
+            throw new Exception("Image saving failed!");
+         }
          
          saveImageFile(img, md, dir_, fileName);
          writeFrameMetadata(md);
@@ -145,7 +151,7 @@ public class TaggedImageStorageDiskDefault implements TaggedImageStorage {
          filenameTable_.put(label, fileName);
          //metadataTable_.put(label, md);
       } catch (Exception ex) {
-         ReportingUtils.logError(ex);
+         ReportingUtils.showError(ex);
       }
    }
 
