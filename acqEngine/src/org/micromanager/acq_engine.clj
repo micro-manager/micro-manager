@@ -99,6 +99,20 @@
     (+ (core-time-from-tags tags)
        (:burst-time-offset state))))
 
+;; channels
+
+(defn get-camera-channel-names []
+  (vec (map #(core getCameraChannelName %)
+       (range (core getNumberOfCameraChannels)))))
+
+(defn super-channel-name [simple-channel-name camera-channel-name]
+  (if (>= 1 (core getNumberOfCameraChannels))
+    simple-channel-name
+    (if (or (empty? simple-channel-name)
+            (= "Default" simple-channel-name))
+      camera-channel-name
+      (str simple-channel-name "-" camera-channel-name))))
+    
 ;; image metadata
 
 (defn generate-metadata [event state]
@@ -334,33 +348,36 @@
   (let [burst-events (assign-z-offsets (event :burst-data))
         camera-index (str (core getCameraDevice) "-CameraChannelIndex")
         camera-channel-count (core getNumberOfCameraChannels)
-        bursts-per-camera-channel (vec (repeat camera-channel-count burst-events))]
+        bursts-per-camera-channel (vec (repeat camera-channel-count burst-events))
+        camera-channel-names (get-camera-channel-names)]
     (doall
       (loop [burst-seqs bursts-per-camera-channel i 0]
         (check-for-serious-error)
         (when (and (not (@state :stop))
-                 (not (apply = nil burst-seqs))
-                 (or (pos? (core getRemainingImageCount))
-                     (core isSequenceRunning)))
+                   (not (apply = nil burst-seqs))
+                   (or (pos? (core getRemainingImageCount))
+                       (core isSequenceRunning)))
+          (when (and (not (@state :stop))
+                     (core isBufferOverflowed))
+            (swap! state assoc
+                   :stop true
+                   :circular-buffer-overflow true))
           (let [image (pop-burst-image)
                 cam-chan (if-let [cam-chan-str (get-in image [:tags camera-index])]
                            (Long/parseLong cam-chan-str)
                            0)
-                event (first (burst-seqs cam-chan))]
-            (println i ": " cam-chan ": " event)
+                camera-channel-name (nth camera-channel-names cam-chan)
+                event (first (burst-seqs cam-chan))
+                event+ (-> event
+                           (update-in [:channel-index] make-multicamera-channel cam-chan)
+                           (update-in [:channel :name] super-channel-name camera-channel-name))]
             (when (zero? i)
               (swap! state assoc
                      :burst-time-offset (- (elapsed-time @state)
                                            (core-time-from-tags (image :tags)))))
-            (when (and (not (@state :stop))
-                       (core isBufferOverflowed))
-              (swap! state assoc
-                     :stop true
-                     :circular-buffer-overflow true))
-            (let [event+ (update-in event [:channel-index] make-multicamera-channel cam-chan)]
-              (.put out-queue (make-TaggedImage (annotate-image image event+ @state
-                                                                (burst-time (:tags image) @state))))
-              (recur (update-in burst-seqs [cam-chan] next) (inc i))))))))
+            (.put out-queue (make-TaggedImage (annotate-image image event+ @state
+                                                              (burst-time (:tags image) @state))))
+            (recur (update-in burst-seqs [cam-chan] next) (inc i)))))))
   (burst-cleanup)) ;; burst is done!
 
 (defn collect-snap-image [event out-queue]
@@ -635,29 +652,20 @@
       (set-property default-cam)
       (get {1 1 , 4 3} n))))
 
-(defn get-camera-channel-names []
-  (map #(core getCameraChannelName %)
-       (range (core getNumberOfCameraChannels))))
-       
+      
 (defn super-channels [simple-channel camera-channel-names]
   (if (< 1 (count camera-channel-names))
-    (map #(update-in simple-channel [:name] str "-" %) camera-channel-names)
+    (map #(update-in simple-channel [:name] super-channel-name %) camera-channel-names)
     simple-channel)) 
 
 (defn all-super-channels [simple-channels camera-channel-names]
   (flatten (map #(super-channels % camera-channel-names) simple-channels)))
 
-(defn channel-names [simple-channels super-channels]
-  (if (= (count simple-channels) (count super-channels))
-    (JSONArray. (map :name super-channels))
-    (JSONArray. (map #(. % substring 8) (map :name super-channels))  )))
-
 (defn channel-colors [simple-channels super-channels channel-names]
-    (if (= (count simple-channels) (count super-channels))
-      (JSONArray. (map #(.getRGB (:color %)) super-channels)) 
-      (JSONArray. (map #(. MMAcquisition getMultiCamDefaultChannelColor % (.getString channel-names %))
-                         (range (count super-channels))  ))))      
-    
+  (if (= (count simple-channels) (count super-channels))
+    (map #(.getRGB (:color %)) super-channels) 
+    (map #(. MMAcquisition getMultiCamDefaultChannelColor % (channel-names %))
+         (range (count super-channels)))))    
   
 (defn make-summary-metadata [settings]
   (let [depth (core getBytesPerPixel)
@@ -665,12 +673,12 @@
         num-camera-channels (core getNumberOfCameraChannels)
         simple-channels (if-not (empty? channels) channels [{:name "Default" :color java.awt.Color/WHITE}])
         super-channels (all-super-channels simple-channels (get-camera-channel-names))
-        ch-names (channel-names simple-channels super-channels)]
+        ch-names (vec (map :name super-channels))]
      (JSONObject. {
       "BitDepth" (core getImageBitDepth)
       "Channels" (count super-channels)
-      "ChNames" ch-names
-      "ChColors" (channel-colors simple-channels super-channels ch-names)       
+      "ChNames" (JSONArray. ch-names)
+      "ChColors" (JSONArray. (channel-colors simple-channels super-channels ch-names))
       "ChContrastMax" (JSONArray. (repeat (count super-channels) Integer/MIN_VALUE))
       "ChContrastMin" (JSONArray. (repeat (count super-channels) Integer/MAX_VALUE))
       "Comment" (:comment :settings)
