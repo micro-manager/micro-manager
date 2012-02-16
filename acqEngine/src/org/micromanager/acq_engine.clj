@@ -129,6 +129,7 @@
        "BitDepth" (state :bit-depth)
        "Channel" (get-in event [:channel :name])
        "ChannelIndex" (:channel-index event)
+       "CameraChannelIndex" (:camera-channel-index event)
        "Exposure-ms" (:exposure event)
        "Frame" (:frame-index event)
        "FrameIndex" (:frame-index event)
@@ -324,10 +325,12 @@
   (+ camera-channel (* (core getNumberOfCameraChannels) (or raw-channel-index 0))))
 
 (defn make-multicamera-events [event]
-  (let [num-camera-channels (core getNumberOfCameraChannels)]
+  (let [num-camera-channels (core getNumberOfCameraChannels)
+        camera-channel-names (get-camera-channel-names)]
     (for [camera-channel (range num-camera-channels)]
       (-> event
           (update-in [:channel-index] make-multicamera-channel camera-channel)
+          (update-in [:channel :name] super-channel-name (camera-channel-names camera-channel))
           (assoc :camera-channel-index camera-channel)))))
 
 (defn assign-z-offsets [burst-events]
@@ -366,8 +369,9 @@
                            0)
                 camera-channel-name (nth camera-channel-names cam-chan)
                 event (-> (first (burst-seqs cam-chan))
-                           (update-in [:channel-index] make-multicamera-channel cam-chan)
-                           (update-in [:channel :name] super-channel-name camera-channel-name))]
+                          (update-in [:channel-index] make-multicamera-channel cam-chan)
+                          (update-in [:channel :name] super-channel-name camera-channel-name)
+                          (assoc :camera-channel-index cam-chan))]
             (when (zero? i)
               (swap! state assoc
                      :burst-time-offset (- (elapsed-time @state)
@@ -379,8 +383,9 @@
 
 (defn collect-snap-image [event out-queue]
   (let [image
-        {:pix (core getImage (event :channel-index))
+        {:pix (core getImage (event :camera-channel-index))
          :tags nil}]
+    (println (event :camera-channel-index))
     (select-keys event [:position-index :frame-index
                         :slice-index :channel-index])
     (when out-queue
