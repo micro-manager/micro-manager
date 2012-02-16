@@ -365,15 +365,14 @@
                            (Long/parseLong cam-chan-str)
                            0)
                 camera-channel-name (nth camera-channel-names cam-chan)
-                event (first (burst-seqs cam-chan))
-                event+ (-> event
+                event (-> (first (burst-seqs cam-chan))
                            (update-in [:channel-index] make-multicamera-channel cam-chan)
                            (update-in [:channel :name] super-channel-name camera-channel-name))]
             (when (zero? i)
               (swap! state assoc
                      :burst-time-offset (- (elapsed-time @state)
                                            (core-time-from-tags (image :tags)))))
-            (.put out-queue (make-TaggedImage (annotate-image image event+ @state
+            (.put out-queue (make-TaggedImage (annotate-image image event @state
                                                               (burst-time (:tags image) @state))))
             (recur (update-in burst-seqs [cam-chan] next) (inc i)))))))
   (burst-cleanup)) ;; burst is done!
