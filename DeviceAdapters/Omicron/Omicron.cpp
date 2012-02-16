@@ -12,7 +12,10 @@
 #include "Omicron.h"
 // Code compiles on Mac without this include
 // If needed on PC, use ifdefs
-//#include "winuser.h"
+
+#ifdef WIN32
+#include "winuser.h"
+#endif
 
 const char* g_DeviceOmicronName = "Omicron";
 
@@ -255,7 +258,7 @@ bool Omicron::Busy()
 // Read only properties
 //---------------------------------------------------------------------------
 
-int Omicron::OnDevice(MM::PropertyBase* pProp, MM::ActionType eAct)
+int Omicron::OnDevice(MM::PropertyBase* pProp, MM::ActionType /*eAct*/)
 {
      return DEVICE_OK;
 }
@@ -281,7 +284,7 @@ int Omicron::OnPort(MM::PropertyBase* pProp, MM::ActionType eAct)
      return DEVICE_OK;
 }
 
-int Omicron::OnFault(MM::PropertyBase* pProp, MM::ActionType eAct)
+int Omicron::OnFault(MM::PropertyBase* pProp, MM::ActionType /*eAct*/)
 {
 	 std::ostringstream command;
      std::string answer;
@@ -346,7 +349,7 @@ int Omicron::OnFault(MM::PropertyBase* pProp, MM::ActionType eAct)
      return DEVICE_OK;
 }
 
-int Omicron::OnHours(MM::PropertyBase* pProp, MM::ActionType eAct)
+int Omicron::OnHours(MM::PropertyBase* pProp, MM::ActionType /*eAct*/)
 {
      std::ostringstream command;
 

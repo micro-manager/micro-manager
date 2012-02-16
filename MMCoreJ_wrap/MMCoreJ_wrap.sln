@@ -227,6 +227,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "MoticCamera", "..\DeviceAda
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "SutterStage", "..\DeviceAdapters\SutterStage\SutterStage.vcproj", "{5772F2FA-DBB1-4ABD-A94D-A320CB2E8FC9}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Omicron", "..\DeviceAdapters\Omicron\Omicron.vcproj", "{FFF4637C-DD40-4E3F-BDAF-6D0C102CBC7D}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
@@ -1067,6 +1069,14 @@ Global
 		{5772F2FA-DBB1-4ABD-A94D-A320CB2E8FC9}.Release|Win32.Build.0 = Release|Win32
 		{5772F2FA-DBB1-4ABD-A94D-A320CB2E8FC9}.Release|x64.ActiveCfg = Release|x64
 		{5772F2FA-DBB1-4ABD-A94D-A320CB2E8FC9}.Release|x64.Build.0 = Release|x64
+		{FFF4637C-DD40-4E3F-BDAF-6D0C102CBC7D}.Debug|Win32.ActiveCfg = Debug|Win32
+		{FFF4637C-DD40-4E3F-BDAF-6D0C102CBC7D}.Debug|Win32.Build.0 = Debug|Win32
+		{FFF4637C-DD40-4E3F-BDAF-6D0C102CBC7D}.Debug|x64.ActiveCfg = Debug|x64
+		{FFF4637C-DD40-4E3F-BDAF-6D0C102CBC7D}.Debug|x64.Build.0 = Debug|x64
+		{FFF4637C-DD40-4E3F-BDAF-6D0C102CBC7D}.Release|Win32.ActiveCfg = Release|Win32
+		{FFF4637C-DD40-4E3F-BDAF-6D0C102CBC7D}.Release|Win32.Build.0 = Release|Win32
+		{FFF4637C-DD40-4E3F-BDAF-6D0C102CBC7D}.Release|x64.ActiveCfg = Release|x64
+		{FFF4637C-DD40-4E3F-BDAF-6D0C102CBC7D}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
