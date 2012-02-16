@@ -124,8 +124,6 @@ public class ConfiguratorDlg2 extends MMDialog {
         setTitle("Hardware Configuration Wizard");
         setBounds(50, 100, 859, 641);
         loadPosition(50, 100);
-        
-        setBackground(MMStudioMainFrame.getInstance().getBackgroundColor());
 
         final JScrollPane scrollPane = new JScrollPane();
         scrollPane.setBounds(584, 28, 259, 526);
