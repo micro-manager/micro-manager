@@ -331,30 +331,31 @@
         camera-index (str (core getCameraDevice) "-CameraChannelIndex")
         camera-channel-count (core getNumberOfCameraChannels)
         bursts-per-camera-channel (vec (repeat camera-channel-count burst-events))]
-    (doall (loop [burst-seqs bursts-per-camera-channel i 0]
-             (let [image (pop-burst-image)
-                   cam-chan (if-let [cam-chan-str (get-in image [:tags camera-index])]
-                              (Long/parseLong cam-chan-str)
-                              0)
-                   event (first (burst-seqs cam-chan))]
-               (println i ": " cam-chan ": " event)
-               (when (zero? i)
-                 (swap! state assoc
-                        :burst-time-offset (- (elapsed-time @state)
-                                              (core-time-from-tags (image :tags)))))
-               (when (and (not (@state :stop))
-                          (core isBufferOverflowed))
-                 (swap! state assoc
-                        :stop true
-                        :circular-buffer-overflow true))
-               (if (and (not (@state :stop))
-                        (not (apply = nil burst-seqs))
-                        (or (pos? (core getRemainingImageCount))
-                            (core isSequenceRunning)))
-                 (let [event+ (update-in event [:channel-index] make-multicamera-channel cam-chan)]
-                   (.put out-queue (make-TaggedImage (annotate-image image event+ @state (burst-time (:tags image) @state))))
-                   (recur (update-in burst-seqs [cam-chan] next) (inc i)))
-                 nil)))))
+    (doall
+      (loop [burst-seqs bursts-per-camera-channel i 0]
+        (if (and (not (@state :stop))
+                 (not (apply = nil burst-seqs))
+                 (or (pos? (core getRemainingImageCount))
+                     (core isSequenceRunning)))
+          (let [image (pop-burst-image)
+                cam-chan (if-let [cam-chan-str (get-in image [:tags camera-index])]
+                           (Long/parseLong cam-chan-str)
+                           0)
+                event (first (burst-seqs cam-chan))]
+            (println i ": " cam-chan ": " event)
+            (when (zero? i)
+              (swap! state assoc
+                     :burst-time-offset (- (elapsed-time @state)
+                                           (core-time-from-tags (image :tags)))))
+            (when (and (not (@state :stop))
+                       (core isBufferOverflowed))
+              (swap! state assoc
+                     :stop true
+                     :circular-buffer-overflow true))
+            (let [event+ (update-in event [:channel-index] make-multicamera-channel cam-chan)]
+              (.put out-queue (make-TaggedImage (annotate-image image event+ @state (burst-time (:tags image) @state))))
+              (recur (update-in burst-seqs [cam-chan] next) (inc i))))
+          nil))))
   (burst-cleanup)) ;; burst is done!
 
 (defn collect-snap-image [event out-queue]
