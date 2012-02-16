@@ -321,7 +321,7 @@ public class DevicesPage extends PagePanel implements ListSelectionListener, Mou
          }
       });
       cbLibrary_.setSelected(true);
-      cbLibrary_.setBounds(451, 507, 103, 23);
+      cbLibrary_.setBounds(446, 507, 133, 23);
       add(cbLibrary_);
       
       cbShowAll_ = new JCheckBox("Show all");
@@ -331,7 +331,7 @@ public class DevicesPage extends PagePanel implements ListSelectionListener, Mou
          }
       });
       cbShowAll_.setSelected(false);
-      cbShowAll_.setBounds(451, 530, 99, 23);
+      cbShowAll_.setBounds(446, 530, 99, 23);
       add(cbShowAll_);
       
       JButton helpButton = new JButton("Help");
