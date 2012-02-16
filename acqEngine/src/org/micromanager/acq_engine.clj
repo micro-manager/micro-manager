@@ -338,7 +338,7 @@
     (doall
       (loop [burst-seqs bursts-per-camera-channel i 0]
         (check-for-serious-error)
-        (if (and (not (@state :stop))
+        (when (and (not (@state :stop))
                  (not (apply = nil burst-seqs))
                  (or (pos? (core getRemainingImageCount))
                      (core isSequenceRunning)))
@@ -358,9 +358,9 @@
                      :stop true
                      :circular-buffer-overflow true))
             (let [event+ (update-in event [:channel-index] make-multicamera-channel cam-chan)]
-              (.put out-queue (make-TaggedImage (annotate-image image event+ @state (burst-time (:tags image) @state))))
-              (recur (update-in burst-seqs [cam-chan] next) (inc i))))
-          nil))))
+              (.put out-queue (make-TaggedImage (annotate-image image event+ @state
+                                                                (burst-time (:tags image) @state))))
+              (recur (update-in burst-seqs [cam-chan] next) (inc i))))))))
   (burst-cleanup)) ;; burst is done!
 
 (defn collect-snap-image [event out-queue]
