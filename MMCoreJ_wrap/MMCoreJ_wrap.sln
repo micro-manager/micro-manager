@@ -229,6 +229,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "SutterStage", "..\DeviceAda
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Omicron", "..\DeviceAdapters\Omicron\Omicron.vcproj", "{FFF4637C-DD40-4E3F-BDAF-6D0C102CBC7D}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "MP285", "..\DeviceAdapters\MP285\MP285.vcproj", "{FEC6A7E8-6DB2-4DB0-9DB4-B568D0C1E521}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
@@ -1077,6 +1079,13 @@ Global
 		{FFF4637C-DD40-4E3F-BDAF-6D0C102CBC7D}.Release|Win32.Build.0 = Release|Win32
 		{FFF4637C-DD40-4E3F-BDAF-6D0C102CBC7D}.Release|x64.ActiveCfg = Release|x64
 		{FFF4637C-DD40-4E3F-BDAF-6D0C102CBC7D}.Release|x64.Build.0 = Release|x64
+		{FEC6A7E8-6DB2-4DB0-9DB4-B568D0C1E521}.Debug|Win32.ActiveCfg = Debug|Win32
+		{FEC6A7E8-6DB2-4DB0-9DB4-B568D0C1E521}.Debug|Win32.Build.0 = Debug|Win32
+		{FEC6A7E8-6DB2-4DB0-9DB4-B568D0C1E521}.Debug|x64.ActiveCfg = Debug|Win32
+		{FEC6A7E8-6DB2-4DB0-9DB4-B568D0C1E521}.Release|Win32.ActiveCfg = Release|Win32
+		{FEC6A7E8-6DB2-4DB0-9DB4-B568D0C1E521}.Release|Win32.Build.0 = Release|Win32
+		{FEC6A7E8-6DB2-4DB0-9DB4-B568D0C1E521}.Release|x64.ActiveCfg = Release|x64
+		{FEC6A7E8-6DB2-4DB0-9DB4-B568D0C1E521}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
