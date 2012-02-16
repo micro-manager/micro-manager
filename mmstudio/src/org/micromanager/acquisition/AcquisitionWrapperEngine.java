@@ -75,6 +75,7 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
    }
 
    public String acquire() throws MMException {
+      MMStudioMainFrame.seriousErrorReported_.set(false);
       return runPipeline(gatherSequenceSettings());
    }
 
