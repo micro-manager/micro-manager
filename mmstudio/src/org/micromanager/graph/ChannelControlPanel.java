@@ -572,9 +572,15 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
 		hp_.repaint();
    }
 
-   public void calcAndDisplayHistAndStats(ImagePlus img, boolean drawHist) {
+   /**
+    * 
+    * @param img
+    * @param drawHist
+    * @return true if hist and stats calculated successfully
+    */
+   public boolean calcAndDisplayHistAndStats(ImagePlus img, boolean drawHist) {
       if (img == null)
-         return;
+         return false;
       ImageProcessor ip = null;
       if (((CompositeImage) img).getMode() == CompositeImage.COMPOSITE)
          ip = ((CompositeImage) img).getProcessor(channelIndex_ + 1);
@@ -586,13 +592,17 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
       channelNameCheckbox_.setSelected(active[channelIndex_]);
       if (ip == null) { 
          hp_.setVisible(false);
-         return;
+         return false;
       }
       hp_.setVisible(true);
       
       int[] rawHistogram = ip.getHistogram();
       int imgWidth = img.getWidth();
       int imgHeight = img.getHeight();
+      
+      if (rawHistogram[0] == imgWidth*imgHeight)
+         return false;  //Blank pixels 
+      
       if (mccPanel_.rejectOutliersCB_.isSelected()) {
          // todo handle negative values
          maxAfterRejectingOutliers_ = rawHistogram.length;
@@ -654,6 +664,7 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
          maxLabel_.setText("Max: " + NumberUtils.intToDisplayString((int) pixelMax_));
          minLabel_.setText("Min: " + NumberUtils.intToDisplayString((int) pixelMin_));
       }
+      return true;
    }
 
    private VirtualAcquisitionDisplay getCurrentDisplay() {
