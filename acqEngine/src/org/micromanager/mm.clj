@@ -124,10 +124,14 @@
    :image-processor (core getImageProcessorDevice)})
    
 (defn config-struct [^Configuration data]
-  (for [prop (map #(.getSetting data %) (range (.size data)))]
-    [(.getDeviceLabel prop)
-     (.getPropertyName prop)
-     (.getPropertyValue prop)]))
+  (into {}
+        (for [prop (map #(.getSetting data %) (range (.size data)))]
+          [[(.getDeviceLabel prop) (.getPropertyName prop)] (.getPropertyValue prop)])))
+
+(defn map-config [config]
+  (into {}
+        (for [[[d p] v] (config-struct config)]
+          [(str d "-" p) v])))
    
 (defn get-config [group config]
   (config-struct (core getConfigData group config)))
@@ -140,12 +144,7 @@
     (core getProperty dev prop)))
 
 (defn get-property [dev prop]
-  [dev prop (get-property-value dev prop)])
-
-(defn map-config [^Configuration config]
-  (into {}
-    (for [prop (config-struct config)]
-      [(str (prop 0) "-" (prop 1)) (prop 2)])))
+  [[dev prop] (get-property-value dev prop)])
        
 (defn get-positions []
   (vec (.. gui getPositionList getPositions)))

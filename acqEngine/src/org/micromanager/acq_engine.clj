@@ -241,7 +241,7 @@
 
 (defn set-property
   [prop]
-  (let [[d p v] prop]
+  (let [[[d p] v] prop]
     (when (not= v (get-in @state [:last-property-settings d p]))
       (device-best-effort d (core setProperty d p v))
       (swap! state assoc-in [:last-property-settings d p] v))))
@@ -562,8 +562,8 @@
             (for [[axis pos] (:axes (MultiStagePosition-to-map (get-msp current-position)))
                   :when pos]
               #(apply set-stage-position axis pos)))
-          (for [[d p v] (get-in event [:channel :properties])]
-            #(set-property [d p v]))
+          (for [prop (get-in event [:channel :properties])]
+            #(set-property prop))
           #(when-lets [exposure (:exposure event)
                        camera (core getCameraDevice)]
              (set-exposure camera exposure))
@@ -645,15 +645,12 @@
   (let [default-cam (get-property "Core" "Camera")
         chan-cam
           (or
-            (first
-              (filter #(= (take 2 %) '("Core" "Camera"))
-                (:properties channel)))
+            (get-in channel [:properties ["Core" "Camera"]])
             default-cam)]
     (set-property chan-cam)
     (let [n (long (core getNumberOfComponents))]
       (set-property default-cam)
       (get {1 1 , 4 3} n))))
-
       
 (defn super-channels [simple-channel camera-channel-names]
   (if (< 1 (count camera-channel-names))

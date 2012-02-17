@@ -37,15 +37,11 @@
   (if pred (assoc m k v) m))
 
 (defn make-property-sequences [channel-properties]
-  (let [ms (for [item channel-properties]
-             (into {} (map #(let [[d p v] %]
-                              [[d p] v])
-                           item)))
-        ks (apply sorted-set
-                  (apply concat (map keys ms)))]
+  (let [ks (apply sorted-set
+                  (apply concat (map keys channel-properties)))]
     (into (sorted-map)
       (for [[d p] ks]
-        [[d p] (map #(get % [d p]) ms)]))))
+        [[d p] (map #(get % [d p]) channel-properties)]))))
 
 (defn channels-sequenceable [property-sequences channels]
   (and
@@ -104,28 +100,33 @@
         events))
     events))
 
+(defn different [e1 e2 selectors]
+  (not= (get-in e1 selectors)
+        (get-in e2 selectors)))
+
 (defn manage-shutter [events keep-shutter-open-channels keep-shutter-open-slices]
   (for [[e1 e2] (pairs events)]
-    (assoc e1 :close-shutter
-      (if e2 (or
-               (and
-                 (not keep-shutter-open-channels)
-                 (not= (e1 :channel) (e2 :channel)))
-               (and
-                 (not keep-shutter-open-slices)
-                 (not= (e1 :slice) (e2 :slice)))
-               (and (not= (e1 :frame-index) (e2 :frame-index))
-                    (not
-                    ;; special case where we rapidly cycle through channels:
-                      (and (= (e1 :slice) (e2 :slice))
-                           (= (e1 :position-index) (e2 :position-index))
-                           keep-shutter-open-channels
-                           (let [wait (e2 :wait-time-ms)]
-                             (println wait e1 e2)
-                             (or (nil? wait) (zero? wait))))))
-               (not= (e1 :position-index) (e2 :position-index))
-               (:autofocus e1))
-        true))))
+    (let [diff #(different e1 e2 %)]
+      (assoc e1 :close-shutter
+             (if e2 (or
+                      (and
+                        (not keep-shutter-open-channels)
+                        (diff [:channel]))
+                      (and
+                        (not keep-shutter-open-slices)
+                        (diff [:slice]))
+                      (and (diff [:frame-index])
+                           (not
+                             ;; special case where we rapidly cycle through channels:
+                             (and (not (diff [:slice]))
+                                  (not (diff [:position-index]))
+                                  keep-shutter-open-channels
+                                  (let [wait (e2 :wait-time-ms)]
+                                    (or (nil? wait) (zero? wait))))))
+                      (diff [:position-index])
+                      (:autofocus e2)
+                      (diff [:channel :properties ["Core" "Shutter"]]))
+               true)))))
 
 (defn process-channel-skip-frames [events]
   (filter
@@ -138,7 +139,7 @@
 (defn process-new-position [events]
   (for [[e1 e2] (pairs-back events)]
     (assoc e2 :new-position
-      (not= (:position-index e1) (:position-index e2)))))
+      (different e1 e2 [:position-index]))))
 
 (defn process-use-autofocus [events use-autofocus autofocus-skip]
   (for [[e1 e2] (pairs-back events)]
@@ -146,14 +147,14 @@
       (and use-autofocus
         (or (not e1)
             (and (zero? (mod (e2 :frame-index) (inc autofocus-skip)))
-                 (or (not= (:position-index e1) (:position-index e2))
-                     (not= (:frame-index e1) (:frame-index e2)))))))))
+                 (or (different e1 e2 [:position-index])
+                     (different e1 e2 [:frame-index]))))))))
 
 (defn process-wait-time [events interval]
   (cons
     (assoc (first events) :wait-time-ms (if (vector? interval) (first interval) 0))    ;if supplied first custom time point is delay before acquisition start
     (for [[e1 e2] (pairs events) :when e2]
-      (if-assoc (not= (:frame-index e1) (:frame-index e2))
+      (if-assoc (different e1 e2 [:frame-index])
                 e2 :wait-time-ms (if (vector? interval)
                                    (nth interval (:frame-index e2))
                                    interval)))))
@@ -257,7 +258,7 @@
 (defn make-channel-metadata [channel]
   (when-let [props (:properties channel)]
     (into {}
-      (for [[d p v] props]
+      (for [[[d p] v] props]
         [(str d "-" p) v]))))
 
 (defn generate-simple-burst-sequence [numFrames use-autofocus
@@ -340,22 +341,6 @@
                  default-exposure triggers)))
       :else
         (generate-default-acq-sequence settings runnables))))
-
-; Triggerable devices
-;
-; Methods are:
-; getPropertySequenceMaxLength
-; isPropertySequenceable
-; loadPropertySequence
-; startPropertySequence
-; stopPropertySequence
-;
-; Triggerable property is "Objective" "State"
-; E.G.
-; (core isPropertySequenceable "Objective" "State")
-; (core getPropertyMaxLength "Objective" "State")
-; 
-
 
 ; Testing:
 
