@@ -105,8 +105,6 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
    private MetadataPanel mdPanel_;
    private boolean newDisplay_ = true; //used for autostretching on window opening
    private double framesPerSec_ = 7;
-   private int firstFrame_;
-   private int lastFrame_;
    private Timer zAnimationTimer_;
    private Timer tAnimationTimer_;
    private Component zIcon_, pIcon_, tIcon_, cIcon_;
@@ -560,12 +558,11 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
          animateSlices(false);
       if (tAnimationTimer_ == null)
          tAnimationTimer_ = new Timer((int) (1000.0 / framesPerSec_), new ActionListener() {
-
             @Override
             public void actionPerformed(ActionEvent e) {
                int frame = hyperImage_.getFrame();
-               if (frame >= lastFrame_)
-                  hyperImage_.setPosition(hyperImage_.getChannel(), hyperImage_.getSlice(), firstFrame_);
+               if (frame >= tSelector_.getMaximum() - 1)
+                  hyperImage_.setPosition(hyperImage_.getChannel(), hyperImage_.getSlice(), 1);
                else
                   hyperImage_.setPosition(hyperImage_.getChannel(), hyperImage_.getSlice(), frame + 1);
             }
@@ -583,8 +580,6 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
    }
 
    private void configureAnimationControls() {
-      firstFrame_ = 1;
-      lastFrame_ = tSelector_ != null ? tSelector_.getMaximum() - 1 : 1;
       if (zIcon_ != null) {
          zIcon_.addMouseListener(new MouseListener() {
 
@@ -1004,11 +999,6 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
          MMCompositeImage ci = ((MMCompositeImage) hyperImage_);
          ci.reset();
       }
-
-
-      if (frame + 1 > lastFrame_)
-         lastFrame_ = frame + 1;
-
 
       if (cSelector_ != null) {
          if (cSelector_.getMaximum() <= (1 + superChannel)) {
@@ -1509,11 +1499,6 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
          animateFrames(false);
          animateFrames(true);
       }
-   }
-
-   public void setPlaybackLimits(int firstFrame, int lastFrame) {
-      firstFrame_ = firstFrame;
-      lastFrame_ = lastFrame;
    }
 
    public double getPlaybackFPS() {
