@@ -81,7 +81,7 @@
 
 (defn check-for-serious-error []
   (when (.. MMStudioMainFrame seriousErrorReported_ get)
-    (swap! state :stop true)))
+    (swap! state assoc :stop true)))
 
 ;; time
 
@@ -119,6 +119,7 @@
   (merge
     (map-config (core getSystemStateCache))
     (:metadata event)
+    (println "pos-ndex" (:position-index event))
     (let [[x y] (let [xy-stage (state :default-xy-stage)]
                   (when-not (empty? xy-stage)
                     (get-in state [:last-stage-positions xy-stage])))]
@@ -138,7 +139,9 @@
        "PixelSizeUm" (state :pixel-size-um)
        "PixelType" (state :pixel-type)
        "PositionIndex" (:position-index event)
-       "PositionName" (if-let [pos (:position-index event)] (if-args #(.getLabel %) (get-msp pos)))
+       "PositionName" (when-lets [pos (:position-index event)
+                                  msp (get-msp pos)]
+                                 (.getLabel msp))
        "Slice" (:slice-index event)
        "SliceIndex" (:slice-index event)
        "SlicePosition" (:slice event)
