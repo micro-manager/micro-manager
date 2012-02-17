@@ -515,6 +515,9 @@ public class MMAcquisition {
 
          if (!(MDUtils.getWidth(tags) == width_
                  && MDUtils.getHeight(tags) == height_)) {
+            ReportingUtils.logError("Metadata width and height: " + MDUtils.getWidth(tags) + "  " +
+                    MDUtils.getHeight(tags) + "   Acquisition Width and height: " + width_ + " "+
+                    height_);
             throw new MMScriptException("Image dimensions do not match MMAcquisition.");
          }
          if (!MDUtils.getPixelType(tags).contentEquals(getPixelType(depth_))) {
