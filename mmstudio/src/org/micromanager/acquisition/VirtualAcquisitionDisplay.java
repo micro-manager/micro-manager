@@ -66,11 +66,10 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
 
    public static VirtualAcquisitionDisplay getDisplay(ImagePlus imgp) {
       ImageStack stack = imgp.getStack();
-      if (stack instanceof AcquisitionVirtualStack) {
+      if (stack instanceof AcquisitionVirtualStack)
          return ((AcquisitionVirtualStack) stack).getVirtualAcquisitionDisplay();
-      } else {
+      else
          return null;
-      }
    }
    final static Color[] rgb = {Color.red, Color.green, Color.blue};
    final static String[] rgbNames = {"Red", "Blue", "Green"};
@@ -108,8 +107,8 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
    private Timer zAnimationTimer_;
    private Timer tAnimationTimer_;
    private Component zIcon_, pIcon_, tIcon_, cIcon_;
-   private HashMap<Integer,Integer> zStackMins_;
-   private HashMap<Integer,Integer> zStackMaxes_;
+   private HashMap<Integer, Integer> zStackMins_;
+   private HashMap<Integer, Integer> zStackMaxes_;
 
    /* This interface and the following two classes
     * allow us to manipulate the dimensions
@@ -377,8 +376,8 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
       pSelector_ = createPositionScrollbar();
       imageCache_.setDisplay(this);
       mda_ = eng != null;
-      zStackMins_ = new HashMap<Integer,Integer>();
-      zStackMaxes_ = new HashMap<Integer,Integer>();
+      zStackMins_ = new HashMap<Integer, Integer>();
+      zStackMaxes_ = new HashMap<Integer, Integer>();
    }
 
    //used for snap and live
@@ -449,34 +448,30 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
 
       channelInitiated_ = new int[numGrayChannels];
 
-      if (imageCache_.getDisplayAndComments() == null || imageCache_.getDisplayAndComments().isNull("Channels")) {
+      if (imageCache_.getDisplayAndComments() == null || imageCache_.getDisplayAndComments().isNull("Channels"))
          imageCache_.setDisplayAndComments(getDisplaySettingsFromSummary(summaryMetadata));
-      }
 
       int type = 0;
       try {
-         if (firstImageMetadata != null) {
+         if (firstImageMetadata != null)
             type = MDUtils.getSingleChannelType(firstImageMetadata);
-         } else {
+         else
             type = MDUtils.getSingleChannelType(summaryMetadata);
-         }
       } catch (Exception ex) {
          ReportingUtils.showError(ex, "Unable to determine acquisition type.");
       }
       virtualStack_ = new AcquisitionVirtualStack(width, height, type, null,
               imageCache_, numGrayChannels * numSlices * numFrames, this);
-      if (summaryMetadata.has("PositionIndex")) {
+      if (summaryMetadata.has("PositionIndex"))
          try {
             virtualStack_.setPositionIndex(MDUtils.getPositionIndex(summaryMetadata));
          } catch (Exception ex) {
             ReportingUtils.logError(ex);
          }
-      }
-      if (simple_) {
+      if (simple_)
          controls_ = new SimpleWindowControls(this);
-      } else {
+      else
          controls_ = new HyperstackControls(this);
-      }
       hyperImage_ = createHyperImage(createMMImagePlus(virtualStack_),
               numGrayChannels, numSlices, numFrames, virtualStack_, controls_);
 
@@ -508,11 +503,10 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
                }
             });
 
-         if (imageCache_.lastAcquiredFrame() > 1) {
+         if (imageCache_.lastAcquiredFrame() > 1)
             setNumFrames(1 + imageCache_.lastAcquiredFrame());
-         } else {
+         else
             setNumFrames(1);
-         }
          configureAnimationControls();
          //cant use these function because of an imageJ bug
 //         setNumSlices(numSlices);
@@ -558,6 +552,7 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
          animateSlices(false);
       if (tAnimationTimer_ == null)
          tAnimationTimer_ = new Timer((int) (1000.0 / framesPerSec_), new ActionListener() {
+
             @Override
             public void actionPerformed(ActionEvent e) {
                int frame = hyperImage_.getFrame();
@@ -580,7 +575,7 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
    }
 
    private void configureAnimationControls() {
-      if (zIcon_ != null) {
+      if (zIcon_ != null)
          zIcon_.addMouseListener(new MouseListener() {
 
             public void mousePressed(MouseEvent e) {
@@ -599,8 +594,7 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
             public void mouseExited(MouseEvent e) {
             }
          });
-      }
-      if (tIcon_ != null) {
+      if (tIcon_ != null)
          tIcon_.addMouseListener(new MouseListener() {
 
             public void mousePressed(MouseEvent e) {
@@ -619,7 +613,6 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
             public void mouseExited(MouseEvent e) {
             }
          });
-      }
    }
 
    /**
@@ -646,7 +639,8 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
    public void imagingFinished(String path) {
       updateDisplay(null, true);
       updateAndDraw();
-      updateWindowTitleAndStatus();
+      if (eng_ != null && !eng_.abortRequested())
+         updateWindowTitleAndStatus();
    }
 
    private void updateDisplay(TaggedImage taggedImage, boolean finalUpdate) {
@@ -689,9 +683,8 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
 
    public int rgbToGrayChannel(int channelIndex) {
       try {
-         if (MDUtils.getNumberOfComponents(imageCache_.getSummaryMetadata()) == 3) {
+         if (MDUtils.getNumberOfComponents(imageCache_.getSummaryMetadata()) == 3)
             return channelIndex * 3;
-         }
          return channelIndex;
       } catch (Exception ex) {
          ReportingUtils.logError(ex);
@@ -701,9 +694,8 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
 
    public int grayToRGBChannel(int grayIndex) {
       try {
-         if (MDUtils.getNumberOfComponents(imageCache_.getSummaryMetadata()) == 3) {
+         if (MDUtils.getNumberOfComponents(imageCache_.getSummaryMetadata()) == 3)
             return grayIndex / 3;
-         }
          return grayIndex;
       } catch (Exception ex) {
          ReportingUtils.logError(ex);
@@ -735,7 +727,7 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
                channelObject.put("Max", Math.pow(2, rgbChannelBitDepth) - 1);
                channels.put(channelObject);
             }
-         } else {
+         } else
             for (int k = 0; k < chNames.length(); ++k) {
                String name = (String) chNames.get(k);
                int color = chColors.getInt(k);
@@ -749,7 +741,6 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
                channelObject.put("Max", max);
                channels.put(channelObject);
             }
-         }
 
          displaySettings.put("Channels", channels);
 
@@ -794,11 +785,10 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
       pSelector_.setMinimum(0);
       pSelector_.setMaximum(n);
       ImageWindow win = hyperImage_.getWindow();
-      if (n > 1 && pSelector_.getParent() == null) {
+      if (n > 1 && pSelector_.getParent() == null)
          win.add(pSelector_, win.getComponentCount() - 1);
-      } else if (n <= 1 && pSelector_.getParent() != null) {
+      else if (n <= 1 && pSelector_.getParent() != null)
          win.remove(pSelector_);
-      }
       win.pack();
    }
 
@@ -870,34 +860,31 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
             hyperImage_.getWindow().setTitle(name_);
          return;
       }
-      if (controls_ == null) {
+      if (controls_ == null)
          return;
-      }
 
       String status = "";
       final AcquisitionEngine eng = eng_;
 
       if (eng != null) {
-         if (acquisitionIsRunning()) {
+         if (acquisitionIsRunning())
             if (!abortRequested()) {
                controls_.acquiringImagesUpdate(true);
-               if (isPaused()) {
+               if (isPaused())
                   status = "paused";
-               } else {
+               else
                   status = "running";
-               }
             } else {
                controls_.acquiringImagesUpdate(false);
                status = "interrupted";
             }
-         } else {
+         else {
             controls_.acquiringImagesUpdate(false);
-            if (!status.contentEquals("interrupted")) {
+            if (!status.contentEquals("interrupted"))
                if (eng.isFinished()) {
                   status = "finished";
                   eng_ = null;
                }
-            }
          }
          status += ", ";
          if (eng.isFinished()) {
@@ -905,16 +892,14 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
             finished_ = true;
          }
       } else {
-         if (finished_ == true) {
+         if (finished_ == true)
             status = "finished, ";
-         }
          controls_.acquiringImagesUpdate(false);
       }
-      if (isDiskCached()) {
+      if (isDiskCached())
          status += "on disk";
-      } else {
+      else
          status += "not yet saved";
-      }
 
       controls_.imagesOnDiskUpdate(imageCache_.getDiskLocation() != null);
       String path = isDiskCached()
@@ -984,9 +969,8 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
       if (hyperImage_ != null && frame == 0) {
          IMMImagePlus img = (IMMImagePlus) hyperImage_;
          if (img.getNChannelsUnverified() == 1) {
-            if (img.getNSlicesUnverified() == 1) {
+            if (img.getNSlicesUnverified() == 1)
                hyperImage_.getProcessor().setPixels(virtualStack_.getPixels(1));
-            }
          } else if (hyperImage_ instanceof MMCompositeImage) {
             //reset rebuilds each of the channel ImageProcessors with the correct pixels
             //from AcquisitionVirtualStack
@@ -1000,28 +984,24 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
          ci.reset();
       }
 
-      if (cSelector_ != null) {
+      if (cSelector_ != null)
          if (cSelector_.getMaximum() <= (1 + superChannel)) {
             this.setNumChannels(1 + superChannel);
             ((CompositeImage) hyperImage_).reset();
             //JavaUtils.invokeRestrictedMethod(hyperImage_, CompositeImage.class,
             //       "setupLuts", 1 + superChannel, Integer.TYPE);
          }
-      }
 
       initializeContrast(channel, slice);
 
 
 
       if (!simple_) {
-         if (tSelector_ != null) {
-            if (tSelector_.getMaximum() <= (1 + frame)) {
+         if (tSelector_ != null)
+            if (tSelector_.getMaximum() <= (1 + frame))
                this.setNumFrames(1 + frame);
-            }
-         }
-         if (position + 1 >= getNumPositions()) {
+         if (position + 1 >= getNumPositions())
             setNumPositions(position + 1);
-         }
          setPosition(position);
          hyperImage_.setPosition(1 + superChannel, 1 + slice, 1 + frame);
       }
@@ -1033,15 +1013,13 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
          }
       };
 
-      if (!SwingUtilities.isEventDispatchThread()) {
-         if (waitForDisplay) {
+      if (!SwingUtilities.isEventDispatchThread())
+         if (waitForDisplay)
             SwingUtilities.invokeAndWait(updateAndDraw);
-         } else {
+         else
             SwingUtilities.invokeLater(updateAndDraw);
-         }
-      } else {
+      else
          updateAndDraw();
-      }
 
       setPreferredScrollbarPositions();
    }
@@ -1072,7 +1050,7 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
                   mdPanel_.autoscaleWithoutDraw(imageCache_, hyperImage_);
                   if (immImg.getNChannelsUnverified() - 1 != channel)
                      return;
-               }      
+               }
             } else //Acquire button
             if (hyperImage_ instanceof MMCompositeImage) {
                if (((MMCompositeImage) hyperImage_).getNChannelsUnverified() - 1 != channel)
@@ -1125,10 +1103,11 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
          hyperImage_.getProcessor().setPixels(pixels);
       } else {
          CompositeImage ci = (CompositeImage) hyperImage_;
-         if (ci.getMode() == CompositeImage.COMPOSITE)           
-            for (int i = 0; i < ((MMCompositeImage) ci).getNChannelsUnverified(); i++ )
-            ci.getProcessor(i + 1).setPixels(virtualStack_.getPixels(
-                    ci.getCurrentSlice() - ci.getChannel() + i + 1));
+         if (ci.getMode() == CompositeImage.COMPOSITE)
+            for (int i = 0; i < ((MMCompositeImage) ci).getNChannelsUnverified(); i++) {
+               ci.getProcessor(i + 1).setPixels(virtualStack_.getPixels(
+                       ci.getCurrentSlice() - ci.getChannel() + i + 1));
+            }
          ci.getProcessor().setPixels(virtualStack_.getPixels(hyperImage_.getCurrentSlice()));
       }
       updateAndDraw();
@@ -1154,11 +1133,10 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
 
    boolean pause() {
       if (eng_ != null) {
-         if (eng_.isPaused()) {
+         if (eng_.isPaused())
             eng_.setPause(false);
-         } else {
+         else
             eng_.setPause(true);
-         }
          updateWindowTitleAndStatus();
          return (eng_.isPaused());
       }
@@ -1166,21 +1144,19 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
    }
 
    boolean abort() {
-      if (eng_ != null) {
+      if (eng_ != null)
          if (eng_.abortRequest()) {
             updateWindowTitleAndStatus();
             return true;
          }
-      }
       return false;
    }
 
    public boolean acquisitionIsRunning() {
-      if (eng_ != null) {
+      if (eng_ != null)
          return eng_.isAcquisitionRunning();
-      } else {
+      else
          return false;
-      }
    }
 
    public long getNextWakeTime() {
@@ -1188,19 +1164,17 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
    }
 
    public boolean abortRequested() {
-      if (eng_ != null) {
+      if (eng_ != null)
          return eng_.abortRequested();
-      } else {
+      else
          return false;
-      }
    }
 
    private boolean isPaused() {
-      if (eng_ != null) {
+      if (eng_ != null)
          return eng_.isPaused();
-      } else {
+      else
          return false;
-      }
    }
 
    boolean saveAs() {
@@ -1211,17 +1185,15 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
                  "Please choose a location for the data set",
                  MMStudioMainFrame.MM_DATA_SET);
          if (f == null) // Canceled.
-         {
+         
             return false;
-         }
          prefix = f.getName();
          root = new File(f.getParent()).getAbsolutePath();
-         if (f.exists()) {
+         if (f.exists())
             ReportingUtils.showMessage(prefix
                     + " is write only! Please choose another name.");
-         } else {
+         else
             break;
-         }
       }
 
       TaggedImageStorageDiskDefault newFileManager = new TaggedImageStorageDiskDefault(root + "/" + prefix, true,
@@ -1262,10 +1234,8 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
    }
 
    public void liveModeEnabled(boolean enabled) {
-      if (simple_) {
+      if (simple_)
          controls_.acquiringImagesUpdate(enabled);
-
-      }
    }
 
    private void createWindow() {
@@ -1307,7 +1277,7 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
       int slices = ((IMMImagePlus) hyperImage_).getNSlicesUnverified();
       int frames = ((IMMImagePlus) hyperImage_).getNFramesUnverified();
       int channels = ((IMMImagePlus) hyperImage_).getNChannelsUnverified();
-      if (win instanceof StackWindow) {
+      if (win instanceof StackWindow)
          try {
             //ImageJ bug workaround
             if (frames > 1 && slices == 1 && channels == 1 && label.equals("t"))
@@ -1318,7 +1288,6 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
             selector = null;
             ReportingUtils.logError(ex);
          }
-      }
       //replace default icon with custom one
       if (selector != null) {
          try {
@@ -1329,13 +1298,12 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
             ReportingUtils.logError(ex);
          }
          ScrollbarIcon newIcon = new ScrollbarIcon(label.charAt(0), this);
-         if (label.equals("z")) {
+         if (label.equals("z"))
             zIcon_ = newIcon;
-         } else if (label.equals("t")) {
+         else if (label.equals("t"))
             tIcon_ = newIcon;
-         } else if (label.equals("c")) {
+         else if (label.equals("c"))
             cIcon_ = newIcon;
-         }
 
          selector.add(newIcon, BorderLayout.WEST);
          selector.invalidate();
@@ -1392,14 +1360,12 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
       try {
          if (hyperImage_ != null) {
             TaggedImage image = virtualStack_.getTaggedImage(hyperImage_.getCurrentSlice());
-            if (image != null) {
+            if (image != null)
                return image.tags;
-            } else {
+            else
                return null;
-            }
-         } else {
+         } else
             return null;
-         }
       } catch (NullPointerException ex) {
          return null;
       }
@@ -1473,21 +1439,19 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
    }
 
    public void showFolder() {
-      if (isDiskCached()) {
+      if (isDiskCached())
          try {
             File location = new File(imageCache_.getDiskLocation());
-            if (JavaUtils.isWindows()) {
+            if (JavaUtils.isWindows())
                Runtime.getRuntime().exec("Explorer /n,/select," + location.getAbsolutePath());
-            } else if (JavaUtils.isMac()) {
-               if (!location.isDirectory()) {
+            else if (JavaUtils.isMac()) {
+               if (!location.isDirectory())
                   location = location.getParentFile();
-               }
                Runtime.getRuntime().exec("open " + location.getAbsolutePath());
             }
          } catch (IOException ex) {
             ReportingUtils.logError(ex);
          }
-      }
    }
 
    public void setPlaybackFPS(double fps) {
@@ -1543,17 +1507,15 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
 
    public boolean isDiskCached() {
       ImageCache imageCache = imageCache_;
-      if (imageCache == null) {
+      if (imageCache == null)
          return false;
-      } else {
+      else
          return imageCache.getDiskLocation() != null;
-      }
    }
 
    public void show() {
-      if (hyperImage_ == null) {
+      if (hyperImage_ == null)
          startup(null);
-      }
       hyperImage_.show();
       hyperImage_.getWindow().toFront();
    }
@@ -1593,9 +1555,8 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
    }
 
    public void drawWithoutUpdate() {
-      if (hyperImage_ != null) {
+      if (hyperImage_ != null)
          ((IMMImagePlus) hyperImage_).drawWithoutUpdate();
-      }
    }
 
    public class DisplayWindow extends StackWindow {
@@ -1615,15 +1576,12 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
 
       @Override
       public void windowClosing(WindowEvent e) {
-         if (windowClosingDone_) {
+         if (windowClosingDone_)
             return;
-         }
 
-         if (eng_ != null && eng_.isAcquisitionRunning()) {
-            if (!abort()) {
+         if (eng_ != null && eng_.isAcquisitionRunning())
+            if (!abort())
                return;
-            }
-         }
 
          if (imageCache_.getDiskLocation() == null && promptToSave_) {
             int result = JOptionPane.showConfirmDialog(this,
@@ -1633,12 +1591,10 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
                     JOptionPane.YES_NO_CANCEL_OPTION);
 
             if (result == JOptionPane.YES_OPTION) {
-               if (!saveAs()) {
+               if (!saveAs())
                   return;
-               }
-            } else if (result == JOptionPane.CANCEL_OPTION) {
+            } else if (result == JOptionPane.CANCEL_OPTION)
                return;
-            }
          }
 
          //for some reason window focus listener doesn't always fire, so call
@@ -1653,17 +1609,15 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
             mdPanel_.saveContrastSettings(imageCache_);
          }
 
-         if (imageCache_ != null) {
+         if (imageCache_ != null)
             imageCache_.close();
-         }
 
-         if (!closed_) {
+         if (!closed_)
             try {
                super.close();
             } catch (NullPointerException ex) {
                ReportingUtils.logError("Null pointer error in ImageJ code while closing window");
             }
-         }
 
 
          super.windowClosing(e);
@@ -1680,9 +1634,8 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
 
       @Override
       public void windowActivated(WindowEvent e) {
-         if (!isClosed()) {
+         if (!isClosed())
             super.windowActivated(e);
-         }
       }
 
       @Override

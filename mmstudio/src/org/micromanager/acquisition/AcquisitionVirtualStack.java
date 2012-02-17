@@ -79,6 +79,8 @@ public class AcquisitionVirtualStack extends ij.VirtualStack {
          
          img = imageCache_.getImage(chanIndex, slice, frame, positionIndex_);
          int backIndex = slice - 1, forwardIndex = slice + 1;
+         //If some but not all channels have z stacks, find the closest slice for the given
+         //channel that has an image
          while (img == null) {
             if (backIndex >= 0) {
                img = imageCache_.getImage(chanIndex, backIndex, frame, positionIndex_);
