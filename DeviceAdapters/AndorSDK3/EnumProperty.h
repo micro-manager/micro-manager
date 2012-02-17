@@ -3,36 +3,40 @@
 
 #include <map>
 #include "atcore++.h"
+#include "MMDeviceConstants.h"
+#include "Property.h"
 
-using namespace andor;
 
 class MySequenceThread;
 class CAndorSDK3Camera;
+class SnapShotControl;
 
-class TEnumProperty : public IObserver
+class TEnumProperty : public andor::IObserver
 {
 public:
-   TEnumProperty(const std::string MM_name, IEnum* enum_feature,
+   TEnumProperty(const std::string MM_name, andor::IEnum* enum_feature,
                  CAndorSDK3Camera* camera, MySequenceThread* thd,
-                 SnapShotControl* snapShotController, bool readOnly);
+                 SnapShotControl* snapShotController, bool readOnly, bool needsCallBack);
    ~TEnumProperty();
 
-   void Update(ISubject* Subject);
+   void Update(andor::ISubject* Subject);
    int OnEnum(MM::PropertyBase* pProp, MM::ActionType eAct);
    typedef MM::Action<TEnumProperty> CPropertyAction;
 
 private:
-   IEnum* enum_feature_;
+   static const unsigned int MAX_CHARS_ENUM_VALUE_BUFFER = 256;
+   bool callBackRegistered_;
+   andor::IEnum* enum_feature_;
    CAndorSDK3Camera* camera_;
    std::string MM_name_;
    MySequenceThread * thd_;
    SnapShotControl* snapShotController_;
 };
 
-class TAndorEnumFilter : public IEnum
+class TAndorEnumFilter : public andor::IEnum
 {
 public:
-   TAndorEnumFilter(IEnum* _enum):m_enum(_enum){}
+   TAndorEnumFilter(andor::IEnum* _enum):m_enum(_enum){}
    virtual ~TAndorEnumFilter() {};
    int GetIndex(){return m_enum->GetIndex();}
    void Set(int Index) {m_enum->Set(Index);}
@@ -45,17 +49,17 @@ public:
    bool IsReadable(){return m_enum->IsReadable();}
    bool IsWritable(){return m_enum->IsWritable();}
    bool IsReadOnly(){return m_enum->IsReadOnly();}
-   void Attach(IObserver* _observer){m_enum->Attach(_observer);}
-   void Detach(IObserver* _observer){m_enum->Detach(_observer);}
+   void Attach(andor::IObserver* _observer){m_enum->Attach(_observer);}
+   void Detach(andor::IObserver* _observer){m_enum->Detach(_observer);}
 
 protected:
-   IEnum* m_enum;
+   andor::IEnum* m_enum;
 };
 
 class TAndorEnumValueMapper : public TAndorEnumFilter
 {
 public:
-   TAndorEnumValueMapper(IEnum* _enum, std::map<std::wstring, std::wstring> _map)
+   TAndorEnumValueMapper(andor::IEnum* _enum, std::map<std::wstring, std::wstring> _map)
    :TAndorEnumFilter(_enum), m_map(_map)
    {
       // Create the revese map

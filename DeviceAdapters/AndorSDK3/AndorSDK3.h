@@ -79,6 +79,8 @@ public:
   
    void GetName(char* name) const;      
    
+   bool GetCameraPresent() { return b_cameraPresent_; };
+
    // MMCamera API
    // ------------
    int SnapImage();
@@ -116,6 +118,8 @@ public:
 
 private:
    int ResizeImageBuffer();
+   void UnpackDataWithPadding(unsigned char* _pucSrcBuffer);
+   void initialiseDeviceCircularBuffer();
 
    static const double nominalPixelSizeUm_;
 
@@ -125,19 +129,23 @@ private:
    bool initialized_;
    double readoutUs_;
    MM::MMTime readoutStartTime_;
-   int bitDepth_;
    unsigned roiX_;
    unsigned roiY_;
    MM::MMTime sequenceStartTime_;
    long imageCounter_;
    bool softwareTriggerMode_;
    double d_frameRate_;
-   int no_of_devices_;
+   int number_of_devices_;
    bool keep_trying_;
    bool in_external_;
    double timeout_;
 
    unsigned char** image_buffers_;
+
+   bool b_cameraPresent_;
+
+   int GetNumberOfDevicesPresent() { return number_of_devices_; };
+   void SetNumberOfDevicesPresent(int deviceCount) { number_of_devices_ = deviceCount; };
 
    MMThreadLock* pDemoResourceLock_;
    MMThreadLock imgPixelsLock_;
@@ -149,6 +157,7 @@ private:
    SnapShotControl* snapShotController_;
 
    // Properties for the property browser
+   TEnumProperty* binning_property;
    TAOIProperty* aoi_property_;
    TEnumProperty* preAmpGain_property;
    TEnumProperty* electronicShutteringMode_property;
@@ -169,7 +178,6 @@ private:
    // atcore++ objects
    IDeviceManager* deviceManager;
    IDevice* systemDevice;
-   IInteger* deviceCount;
    IDevice* cameraDevice;
    IInteger* imageSizeBytes;
    IEnum* cycleMode;
@@ -179,7 +187,6 @@ private:
    ICommand* stopAcquisitionCommand;
    IEnum* triggerMode;
    ICommand* sendSoftwareTrigger;
-   IEnum* pixelEncoding;
    IInteger* frameCount;
    IFloat* frameRate;
 
@@ -238,5 +245,6 @@ class MySequenceThread : public MMDeviceThreadBase
       MMThreadLock stopLock_;                                                   
       MMThreadLock suspendLock_;                                                
 };
+
 
 #endif //_ANDORSDK3_H_

@@ -1,7 +1,10 @@
 #include "SnapShotControl.h"
+#include "atcore++.h"
+
+using namespace andor;
 
 SnapShotControl::SnapShotControl(IDevice* cameraDevice_)
-   : cameraDevice(cameraDevice_), is_poised_(false)
+   : cameraDevice(cameraDevice_), is_poised_(false), mono12PackedMode_(true)
 {
    imageSizeBytes = cameraDevice->GetInteger(L"ImageSizeBytes");
    triggerMode = cameraDevice->GetEnum(L"TriggerMode");
@@ -10,6 +13,7 @@ SnapShotControl::SnapShotControl(IDevice* cameraDevice_)
    startAcquisitionCommand = cameraDevice->GetCommand(L"AcquisitionStart");
    stopAcquisitionCommand = cameraDevice->GetCommand(L"AcquisitionStop");
    sendSoftwareTrigger = cameraDevice->GetCommand(L"SoftwareTrigger");
+   pixelEncoding = cameraDevice->GetEnum(L"PixelEncoding");
 }
 
 SnapShotControl::~SnapShotControl()
@@ -21,6 +25,7 @@ SnapShotControl::~SnapShotControl()
    cameraDevice->Release(cycleMode);
    cameraDevice->Release(triggerMode);
    cameraDevice->Release(sendSoftwareTrigger);
+   cameraDevice->Release(pixelEncoding);
 }
 
 
@@ -50,11 +55,16 @@ void SnapShotControl::poiseForSnapShot()
    bufferControl->Queue(second_image_buffer, (int)imageSizeBytes->Get());
    startAcquisitionCommand->Do();
    is_poised_ = true;
+   mono12PackedMode_ = false;
+   if (pixelEncoding->GetStringByIndex(pixelEncoding->GetIndex()).compare(L"Mono12Packed") == 0)
+   {
+      mono12PackedMode_ = true;
+   }
 }
 
 void SnapShotControl::takeSnapShot(unsigned char*& return_buffer)
 {
-   int buffer_size = NULL;
+   int buffer_size = 0;
    
    if (in_software_) {
       sendSoftwareTrigger->Do();
@@ -70,9 +80,19 @@ void SnapShotControl::leavePoisedMode()
    is_poised_ = false;
 
    delete [] first_image_buffer;
+   first_image_buffer = NULL;
    delete [] second_image_buffer;
+   second_image_buffer = NULL;
 
    if (set_internal_) {
       triggerMode->Set(L"Internal");
    }
+}
+
+void SnapShotControl::prepareCamera()
+{
+   cycleMode->Set(L"Continuous");
+   triggerMode->Set(L"Software");
+   startAcquisitionCommand->Do();
+   stopAcquisitionCommand->Do();
 }
