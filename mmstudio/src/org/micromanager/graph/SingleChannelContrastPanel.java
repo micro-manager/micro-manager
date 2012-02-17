@@ -23,7 +23,6 @@
 package org.micromanager.graph;
 
 import ij.ImagePlus;
-import ij.WindowManager;
 import ij.process.ImageProcessor;
 import ij.process.LUT;
 import java.awt.Color;
@@ -36,8 +35,6 @@ import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeEvent;
 import java.text.NumberFormat;
 import java.text.ParseException;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import java.util.prefs.Preferences;
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.JButton;
@@ -53,8 +50,6 @@ import javax.swing.SpringLayout;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import org.json.JSONException;
-import org.micromanager.MMStudioMainFrame;
-import org.micromanager.acquisition.MMAcquisition;
 import org.micromanager.acquisition.MetadataPanel;
 import org.micromanager.acquisition.VirtualAcquisitionDisplay;
 import org.micromanager.api.ContrastPanel;
@@ -63,7 +58,6 @@ import org.micromanager.graph.HistogramPanel.CursorListener;
 import org.micromanager.utils.ContrastSettings;
 import org.micromanager.utils.HistogramUtils;
 import org.micromanager.utils.MDUtils;
-import org.micromanager.utils.MMScriptException;
 import org.micromanager.utils.ReportingUtils;
 import org.micromanager.utils.NumberUtils;
 
@@ -428,7 +422,7 @@ public class SingleChannelContrastPanel extends JPanel implements
 				pixelTypeAction();
 			}});
 		modeComboBox_.setModel(new DefaultComboBoxModel(new String[] {
-				"camera", "8bit", "10bit", "12bit", "14bit", "16bit" }));
+				"Auto", "8bit", "10bit", "12bit", "14bit", "16bit" }));
 		add(modeComboBox_);
 		springLayout.putConstraint(SpringLayout.EAST, modeComboBox_, 0,
 				SpringLayout.EAST, maxLabel_);
