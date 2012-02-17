@@ -1067,28 +1067,29 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
          public void run() {
             if (!newDisplay_)
                return;
-            if (simple_) {
+            if (simple_) { //Snap/live
                if (hyperImage_ instanceof MMCompositeImage
                        && ((MMCompositeImage) hyperImage_).getNChannelsUnverified() - 1 != channel)
                   return;
                mdPanel_.loadSimpleWinContrastWithoutDraw(imageCache_, hyperImage_);
+            } else if (mda_) { //Multi D acquisition
+               IMMImagePlus immImg = ((IMMImagePlus) hyperImage_);
+               if (immImg.getNSlicesUnverified() > 1) {  //Z stacks
+                  mdPanel_.autoscaleOverStackWithoutDraw(imageCache_, hyperImage_, channel, zStackMins_, zStackMaxes_);
+                  if (channel != immImg.getNChannelsUnverified() - 1 || slice != immImg.getNSlicesUnverified() - 1)
+                     return;  //don't set new display to false until all channels autscaled
+               } else {  //No z stacks
+                  mdPanel_.autoscaleWithoutDraw(imageCache_, hyperImage_);
+                  if (immImg.getNChannelsUnverified() - 1 != channel)
+                     return;
+               }      
+            } else //Acquire button
+            if (hyperImage_ instanceof MMCompositeImage) {
+               if (((MMCompositeImage) hyperImage_).getNChannelsUnverified() - 1 != channel)
+                  return;
+               mdPanel_.autoscaleWithoutDraw(imageCache_, hyperImage_);
             } else
-               if (mda_) {
-                  IMMImagePlus immImg = ((IMMImagePlus) hyperImage_);
-                  if (immImg.getNSlicesUnverified() > 1) {
-                     mdPanel_.autoscaleOverStackWithoutDraw(imageCache_, hyperImage_, channel, zStackMins_,zStackMaxes_);
-                     if (channel != immImg.getNChannelsUnverified() - 1 || slice != immImg.getNSlicesUnverified()-1)
-                        return;  //don't set new display to false until all channels autscaled
-                     
-                  } else if (immImg.getNChannelsUnverified() - 1 == channel)
-                     mdPanel_.autoscaleWithoutDraw(imageCache_, hyperImage_);
-               } else //Called when display created by pressing acquire button
-               if (hyperImage_ instanceof MMCompositeImage) {
-                     if (((MMCompositeImage) hyperImage_).getNChannelsUnverified() - 1 != channel)
-                        return;
-                     mdPanel_.autoscaleWithoutDraw(imageCache_, hyperImage_);
-                  } else
-                     mdPanel_.autoscaleWithoutDraw(imageCache_, hyperImage_); //               else do nothing because contrast automatically loaded from cache
+               mdPanel_.autoscaleWithoutDraw(imageCache_, hyperImage_); //               else do nothing because contrast automatically loaded from cache
             newDisplay_ = false;
          }
       };
