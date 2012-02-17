@@ -23,8 +23,8 @@
 //                IN NO EVENT SHALL THE COPYRIGHT OWNER OR
 //                CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, 
 //
-// AUTHOR:        Arthur Edelstein
-//                Thanks to Andre Ratz
+// AUTHOR:        Arthur Edelstein, 2012
+//                Special thanks to Andre Ratz
 
 #ifdef WIN32
 #define snprintf _snprintf 
@@ -254,7 +254,6 @@ int RappScanner::DeletePolygons()
 int RappScanner::RunSequence()
 {
    tRectList rectangles;
-
 
    for (unsigned polygonIndex=0;polygonIndex<polygons_.size();++polygonIndex)
    {

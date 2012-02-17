@@ -6,8 +6,10 @@
 package org.micromanager.projector;
 
 import ij.gui.PointRoi;
+import ij.gui.PolygonRoi;
 import ij.gui.Roi;
 import java.awt.Point;
+import java.awt.Polygon;
 import java.awt.Rectangle;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Point2D;
@@ -79,8 +81,25 @@ public class Galvo implements ProjectionDevice {
          Point2D.Double pOut = new Point2D.Double();
          trans.transform(pIn, pOut);
          displaySpot(pOut.x, pOut.y);
+      } else if (roi instanceof PolygonRoi) {
+         Polygon poly = ((PolygonRoi) roi).getPolygon();
+         try {
+            mmc_.deleteGalvoPolygons(galvo_);
+            Point2D lastGalvoPoint = null;
+            for (int i = 0; i < poly.npoints; ++i) {
+               Point2D.Double imagePoint = new Point2D.Double(poly.xpoints[i],poly.ypoints[i]);
+               Point2D galvoPoint = trans.transform(imagePoint, null);
+               if (i==0) {
+                  lastGalvoPoint = galvoPoint;
+               }
+               mmc_.addGalvoPolygonVertex(galvo_, 0, galvoPoint.getX(), galvoPoint.getY());
+            }
+            mmc_.addGalvoPolygonVertex(galvo_, 0, lastGalvoPoint.getX(), lastGalvoPoint.getY());
+         } catch (Exception ex) {
+            ReportingUtils.showError(ex);
+         }
       } else {
-         ReportingUtils.showError("Not able to do extended point rois.");
+         ReportingUtils.showError("Not able to handle this type of Roi.");
       }
    }
 
