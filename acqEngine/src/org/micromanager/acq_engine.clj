@@ -119,7 +119,6 @@
   (merge
     (map-config (core getSystemStateCache))
     (:metadata event)
-    (println "pos-ndex" (:position-index event))
     (let [[x y] (let [xy-stage (state :default-xy-stage)]
                   (when-not (empty? xy-stage)
                     (get-in state [:last-stage-positions xy-stage])))]
