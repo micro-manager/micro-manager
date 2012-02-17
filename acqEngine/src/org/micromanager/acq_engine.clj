@@ -138,7 +138,7 @@
        "PixelSizeUm" (state :pixel-size-um)
        "PixelType" (state :pixel-type)
        "PositionIndex" (:position-index event)
-       "PositionName" (if-let [pos (:position event)] (if-args #(.getLabel %) (get-msp pos)))
+       "PositionName" (if-let [pos (:position-index event)] (if-args #(.getLabel %) (get-msp pos)))
        "Slice" (:slice-index event)
        "SliceIndex" (:slice-index event)
        "SlicePosition" (:slice event)
@@ -454,7 +454,7 @@
   (-> msp MultiStagePosition-to-map :axes (get z-drive) first))
 
 (defn compute-z-position [event]
-  (let [z-ref (or (-> event :position get-msp (z-in-msp (@state :default-z-drive)))
+  (let [z-ref (or (-> event :position-index get-msp (z-in-msp (@state :default-z-drive)))
                   (@state :reference-z))]
     (+ (or (get-in event [:channel :z-offset]) 0) ;; add a channel offset if there is one.
        (if-let [slice (:slice event)]
@@ -547,7 +547,7 @@
 ;; running events
   
 (defn make-event-fns [event out-queue]
-  (let [current-position (:position event)
+  (let [current-position (:position-index event)
         z-drive (@state :default-z-drive)
         check-z-ref (and z-drive
                          (or (:autofocus event)

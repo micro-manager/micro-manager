@@ -263,7 +263,7 @@
 
 (defn generate-simple-burst-sequence [numFrames use-autofocus
                                       channels default-exposure
-                                      triggers]
+                                      triggers position-index]
   (let [numChannels (max 1 (count channels))
         numFrames (max 1 numFrames)
         exposure (if (pos? numChannels)
@@ -284,7 +284,7 @@
                     :next-frame-index (inc f)
                     :wait-time-ms 0.0
                     :exposure exposure
-                    :position-index 0
+                    :position-index position-index
                     :autofocus (if first-plane use-autofocus false)
                     :channel-index c
                     :channel (get channels c)
@@ -301,14 +301,13 @@
 
 (defn generate-multiposition-bursts [positions num-frames use-autofocus
                                      channels default-exposure triggers]
-  (let [simple (generate-simple-burst-sequence
-                 num-frames use-autofocus channels default-exposure triggers)]
     (process-new-position
       (flatten
         (for [pos-index (range (count positions))]
           (map #(assoc % :position-index pos-index
                        :position (nth positions pos-index))
-               simple))))))
+               (generate-simple-burst-sequence
+                 num-frames use-autofocus channels default-exposure triggers pos-index))))))
 
 (defn generate-acq-sequence [settings runnables]
   (let [{:keys [numFrames time-first positions slices channels
@@ -338,7 +337,7 @@
                    default-exposure triggers)
                (generate-simple-burst-sequence
                  numFrames use-autofocus channels
-                 default-exposure triggers)))
+                 default-exposure triggers 0)))
       :else
         (generate-default-acq-sequence settings runnables))))
 
