@@ -72,21 +72,30 @@ public class AcquisitionVirtualStack extends ij.VirtualStack {
             pos = imagePlus.convertIndexToPosition(flatIndex);
             nSlices = imagePlus.getNSlices();
          }
-         int chanIndex = acq_.grayToRGBChannel(pos[0]-1);
          TaggedImage img ;
+         int chanIndex = acq_.grayToRGBChannel(pos[0]-1);
          int frame = pos[2] - 1;
          int slice = pos[1] - 1;
          
-         do {
-            int sliceSearchIndex = 0;
-            do {
-               img = imageCache_.getImage(chanIndex,
-                       (nSlices + slice - sliceSearchIndex) % nSlices,
-                       frame, positionIndex_);
-               ++sliceSearchIndex;
-            } while (img == null && sliceSearchIndex < nSlices && frame < imageCache_.lastAcquiredFrame());
-            --frame;
-         } while (img == null && frame >= 0  && frame < (imageCache_.lastAcquiredFrame()-1));
+         img = imageCache_.getImage(chanIndex, slice, frame, positionIndex_);
+         int backIndex = slice - 1, forwardIndex = slice + 1;
+         while (img == null) {
+            if (backIndex >= 0) {
+               img = imageCache_.getImage(chanIndex, backIndex, frame, positionIndex_);
+               if (img != null)
+                  break;
+               backIndex--;
+            }
+            if (forwardIndex < nSlices) {
+               img = imageCache_.getImage(chanIndex, forwardIndex, frame, positionIndex_);
+               if (img != null)
+                  break;
+               forwardIndex++;
+            }
+            if (backIndex < 0 && forwardIndex >= nSlices)
+               break;               
+         }
+           
          return img;
       } catch (Exception e) {
          ReportingUtils.logError(e);
