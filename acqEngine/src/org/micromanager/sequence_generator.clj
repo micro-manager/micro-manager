@@ -91,12 +91,12 @@
 
 (defn process-skip-z-stack [events slices]
   (if (pos? (count slices))
-    (let [middle-slice (get slices (long (/ (count slices) 2)))]
+    (let [middle-slice (get slices (unchecked-divide-int (count slices) 2))]
       (filter
-        #(or
+        #(or 
+           (= middle-slice (% :slice))
            (nil? (% :channel))
-           (-> % :channel :use-z-stack)
-           (= middle-slice (% :slice)))
+           (get-in % [:channel :use-z-stack]))
         events))
     events))
 

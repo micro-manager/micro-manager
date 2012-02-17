@@ -52,9 +52,10 @@
           :when (zero? (bit-and
                          (.getModifiers f) java.lang.reflect.Modifier/STATIC))]
       [(keyword (.getName f))
-       (if (= Boolean/TYPE (.getType f))
-         (.getBoolean f obj)
-         (.get f obj))])))
+       (let [val (.get f obj)]
+         (if (isa? (type val) Boolean)
+           (.booleanValue val)
+           val))])))
 
 (defn log [& x]
   (.logMessage mmc (apply pr-str x) true))

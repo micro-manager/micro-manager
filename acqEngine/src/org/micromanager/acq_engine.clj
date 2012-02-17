@@ -385,7 +385,6 @@
   (let [image
         {:pix (core getImage (event :camera-channel-index))
          :tags nil}]
-    (println (event :camera-channel-index))
     (select-keys event [:position-index :frame-index
                         :slice-index :channel-index])
     (when out-queue
