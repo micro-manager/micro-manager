@@ -21,7 +21,6 @@
 //
 package org.micromanager.acquisition;
 
-
 import ij.CompositeImage;
 import ij.ImagePlus;
 import ij.gui.ImageWindow;
@@ -29,6 +28,7 @@ import java.awt.BorderLayout;
 import java.awt.CardLayout;
 import java.awt.Font;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.Vector;
 import javax.swing.DebugGraphics;
 import javax.swing.JCheckBox;
@@ -70,32 +70,30 @@ public class MetadataPanel extends JPanel
    private static final String SINGLE_CHANNEL_CONTRAST_PANEL = "Single Channel";
    private static final String MULTIPLE_CHANNELS_CONTRAST_PANEL = "Multiple Channels";
    private static final String BLANK_CONTRAST_PANEL = "Blank";
-   
-    private JSplitPane CommentsSplitPane;
-    private JPanel multipleChannelsPanel_;
-    private JLabel imageCommentsLabel;
-    private JPanel imageCommentsPanel;
-    private JScrollPane imageCommentsScrollPane;
-    private JTextArea imageCommentsTextArea;
-    private JPanel imageMetadataScrollPane;
-    private JTable imageMetadataTable;
-    private JScrollPane imageMetadataTableScrollPane;
-    private JLabel jLabel2;
-    private JLabel jLabel3;
-    private JSplitPane metadataSplitPane;
-    private JCheckBox showUnchangingPropertiesCheckbox;
-    private JLabel summaryCommentsLabel;
-    private JPanel summaryCommentsPane;
-    private JScrollPane summaryCommentsScrollPane;
-    private JTextArea summaryCommentsTextArea;
-    private JPanel summaryMetadataPanel;
-    private JScrollPane summaryMetadataScrollPane;
-    private JTable summaryMetadataTable;
-    private JTabbedPane tabbedPane;
-    private JPanel contrastPanelHolder_;
-    private JPanel singleChannelPanel_;
-    private CardLayout contrastPanelLayout_;
-   
+   private JSplitPane CommentsSplitPane;
+   private JPanel multipleChannelsPanel_;
+   private JLabel imageCommentsLabel;
+   private JPanel imageCommentsPanel;
+   private JScrollPane imageCommentsScrollPane;
+   private JTextArea imageCommentsTextArea;
+   private JPanel imageMetadataScrollPane;
+   private JTable imageMetadataTable;
+   private JScrollPane imageMetadataTableScrollPane;
+   private JLabel jLabel2;
+   private JLabel jLabel3;
+   private JSplitPane metadataSplitPane;
+   private JCheckBox showUnchangingPropertiesCheckbox;
+   private JLabel summaryCommentsLabel;
+   private JPanel summaryCommentsPane;
+   private JScrollPane summaryCommentsScrollPane;
+   private JTextArea summaryCommentsTextArea;
+   private JPanel summaryMetadataPanel;
+   private JScrollPane summaryMetadataScrollPane;
+   private JTable summaryMetadataTable;
+   private JTabbedPane tabbedPane;
+   private JPanel contrastPanelHolder_;
+   private JPanel singleChannelPanel_;
+   private CardLayout contrastPanelLayout_;
    private SingleChannelContrastPanel singleChannelContrastPanel_;
    private MultiChannelContrastPanel multiChannelContrastPanel_;
    private ContrastPanel currentContrastPanel_;
@@ -116,274 +114,224 @@ public class MetadataPanel extends JPanel
       summaryMetadataTable.setModel(summaryMetadataModel_);
       addTextChangeListeners();
    }
-   
-   private void makeContrastPanels() {    
+
+   private void makeContrastPanels() {
       singleChannelContrastPanel_ = new SingleChannelContrastPanel(this);
-      singleChannelContrastPanel_.setFont(new Font("", Font.PLAIN, 10));      
-  
+      singleChannelContrastPanel_.setFont(new Font("", Font.PLAIN, 10));
+
       multiChannelContrastPanel_ = new MultiChannelContrastPanel(this);
       multiChannelContrastPanel_.setFont(new Font("", Font.PLAIN, 10));
    }
-   
-    private void initialize() {
-        tabbedPane = new JTabbedPane();
-        metadataSplitPane = new JSplitPane();
-        imageMetadataScrollPane = new JPanel();
-        imageMetadataTableScrollPane = new JScrollPane();
-        imageMetadataTable = new JTable();
-        showUnchangingPropertiesCheckbox = new JCheckBox();
-        jLabel2 = new JLabel();
-        summaryMetadataPanel = new JPanel();
-        summaryMetadataScrollPane = new JScrollPane();
-        summaryMetadataTable = new JTable();
-        jLabel3 = new JLabel();
-        CommentsSplitPane = new JSplitPane();
-        summaryCommentsPane = new JPanel();
-        summaryCommentsLabel = new JLabel();
-        summaryCommentsScrollPane = new JScrollPane();
-        summaryCommentsTextArea = new JTextArea();
-        imageCommentsPanel = new JPanel();
-        imageCommentsLabel = new JLabel();
-        imageCommentsScrollPane = new JScrollPane();
-        imageCommentsTextArea = new JTextArea();
 
-        tabbedPane.setToolTipText("Examine and adjust display settings, metadata, and comments for the multi-dimensional acquisition in the frontmost window.");
-        tabbedPane.setFocusable(false);
-        tabbedPane.setPreferredSize(new java.awt.Dimension(400, 640));
-        tabbedPane.addChangeListener(new ChangeListener() {
-            public void stateChanged(ChangeEvent evt) {
-                tabbedPaneStateChanged(evt);
-            }});
-        
-        singleChannelPanel_ = new JPanel(new BorderLayout());
-        multipleChannelsPanel_ = new JPanel(new BorderLayout());
-                
-        multipleChannelsPanel_.setPreferredSize(new java.awt.Dimension(400, 594));
-        multipleChannelsPanel_.add(multiChannelContrastPanel_);
-        singleChannelPanel_.add(singleChannelContrastPanel_);
-        contrastPanelLayout_ = new CardLayout();
-        contrastPanelHolder_ = new JPanel(contrastPanelLayout_);
-        contrastPanelHolder_.add(multipleChannelsPanel_, MULTIPLE_CHANNELS_CONTRAST_PANEL);
-        contrastPanelHolder_.add(singleChannelPanel_, SINGLE_CHANNEL_CONTRAST_PANEL);
-        contrastPanelHolder_.add(new JPanel(new BorderLayout()), BLANK_CONTRAST_PANEL );
-        setContrastPanel(BLANK_CONTRAST_PANEL);       
+   private void initialize() {
+      tabbedPane = new JTabbedPane();
+      metadataSplitPane = new JSplitPane();
+      imageMetadataScrollPane = new JPanel();
+      imageMetadataTableScrollPane = new JScrollPane();
+      imageMetadataTable = new JTable();
+      showUnchangingPropertiesCheckbox = new JCheckBox();
+      jLabel2 = new JLabel();
+      summaryMetadataPanel = new JPanel();
+      summaryMetadataScrollPane = new JScrollPane();
+      summaryMetadataTable = new JTable();
+      jLabel3 = new JLabel();
+      CommentsSplitPane = new JSplitPane();
+      summaryCommentsPane = new JPanel();
+      summaryCommentsLabel = new JLabel();
+      summaryCommentsScrollPane = new JScrollPane();
+      summaryCommentsTextArea = new JTextArea();
+      imageCommentsPanel = new JPanel();
+      imageCommentsLabel = new JLabel();
+      imageCommentsScrollPane = new JScrollPane();
+      imageCommentsTextArea = new JTextArea();
 
-        tabbedPane.addTab("Channels", contrastPanelHolder_);
+      tabbedPane.setToolTipText("Examine and adjust display settings, metadata, and comments for the multi-dimensional acquisition in the frontmost window.");
+      tabbedPane.setFocusable(false);
+      tabbedPane.setPreferredSize(new java.awt.Dimension(400, 640));
+      tabbedPane.addChangeListener(new ChangeListener() {
 
-        metadataSplitPane.setBorder(null);
-        metadataSplitPane.setOrientation(JSplitPane.VERTICAL_SPLIT);
+         public void stateChanged(ChangeEvent evt) {
+            tabbedPaneStateChanged(evt);
+         }
+      });
 
-        imageMetadataTable.setModel(new DefaultTableModel(
-            new Object [][] { },
-            new String [] {   "Property", "Value"  }
-        ) {
-            Class[] types = new Class [] {
-                java.lang.String.class, java.lang.String.class
-            };
-            boolean[] canEdit = new boolean [] {
-                false, false
-            };
+      singleChannelPanel_ = new JPanel(new BorderLayout());
+      multipleChannelsPanel_ = new JPanel(new BorderLayout());
 
-            public Class getColumnClass(int columnIndex) {
-                return types [columnIndex];
-            }
+      multipleChannelsPanel_.setPreferredSize(new java.awt.Dimension(400, 594));
+      multipleChannelsPanel_.add(multiChannelContrastPanel_);
+      singleChannelPanel_.add(singleChannelContrastPanel_);
+      contrastPanelLayout_ = new CardLayout();
+      contrastPanelHolder_ = new JPanel(contrastPanelLayout_);
+      contrastPanelHolder_.add(multipleChannelsPanel_, MULTIPLE_CHANNELS_CONTRAST_PANEL);
+      contrastPanelHolder_.add(singleChannelPanel_, SINGLE_CHANNEL_CONTRAST_PANEL);
+      contrastPanelHolder_.add(new JPanel(new BorderLayout()), BLANK_CONTRAST_PANEL);
+      setContrastPanel(BLANK_CONTRAST_PANEL);
 
-            public boolean isCellEditable(int rowIndex, int columnIndex) {
-                return canEdit [columnIndex];
-            }
-        });
-        imageMetadataTable.setToolTipText("Metadata tags for each individual image");
-        imageMetadataTable.setDebugGraphicsOptions(DebugGraphics.NONE_OPTION);
-        imageMetadataTable.setDoubleBuffered(true);
-        imageMetadataTableScrollPane.setViewportView(imageMetadataTable);
+      tabbedPane.addTab("Channels", contrastPanelHolder_);
 
-        showUnchangingPropertiesCheckbox.setText("Show unchanging properties");
-        showUnchangingPropertiesCheckbox.setToolTipText("Show/hide properties that are the same for all images in the acquisition");
-        showUnchangingPropertiesCheckbox.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                showUnchangingPropertiesCheckboxActionPerformed(evt);
-            }
-        });
+      metadataSplitPane.setBorder(null);
+      metadataSplitPane.setOrientation(JSplitPane.VERTICAL_SPLIT);
 
-        jLabel2.setText("Per-image properties");
+      imageMetadataTable.setModel(new DefaultTableModel(
+              new Object[][]{},
+              new String[]{"Property", "Value"}) {
 
-        org.jdesktop.layout.GroupLayout imageMetadataScrollPaneLayout = new org.jdesktop.layout.GroupLayout(imageMetadataScrollPane);
-        imageMetadataScrollPane.setLayout(imageMetadataScrollPaneLayout);
-        imageMetadataScrollPaneLayout.setHorizontalGroup(
-            imageMetadataScrollPaneLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-            .add(imageMetadataTableScrollPane, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 620, Short.MAX_VALUE)
-            .add(org.jdesktop.layout.GroupLayout.TRAILING, imageMetadataScrollPaneLayout.createSequentialGroup()
-                .add(jLabel2)
-                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, 308, Short.MAX_VALUE)
-                .add(showUnchangingPropertiesCheckbox))
-        );
-        imageMetadataScrollPaneLayout.setVerticalGroup(
-            imageMetadataScrollPaneLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-            .add(imageMetadataScrollPaneLayout.createSequentialGroup()
-                .add(imageMetadataScrollPaneLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
-                    .add(showUnchangingPropertiesCheckbox)
-                    .add(jLabel2))
-                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(imageMetadataTableScrollPane, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 517, Short.MAX_VALUE))
-        );
+         Class[] types = new Class[]{
+            java.lang.String.class, java.lang.String.class
+         };
+         boolean[] canEdit = new boolean[]{
+            false, false
+         };
 
-        metadataSplitPane.setRightComponent(imageMetadataScrollPane);
+         public Class getColumnClass(int columnIndex) {
+            return types[columnIndex];
+         }
 
-        summaryMetadataPanel.setMinimumSize(new java.awt.Dimension(0, 100));
-        summaryMetadataPanel.setPreferredSize(new java.awt.Dimension(539, 100));
+         public boolean isCellEditable(int rowIndex, int columnIndex) {
+            return canEdit[columnIndex];
+         }
+      });
+      imageMetadataTable.setToolTipText("Metadata tags for each individual image");
+      imageMetadataTable.setDebugGraphicsOptions(DebugGraphics.NONE_OPTION);
+      imageMetadataTable.setDoubleBuffered(true);
+      imageMetadataTableScrollPane.setViewportView(imageMetadataTable);
 
-        summaryMetadataScrollPane.setMinimumSize(new java.awt.Dimension(0, 0));
-        summaryMetadataScrollPane.setPreferredSize(new java.awt.Dimension(454, 80));
+      showUnchangingPropertiesCheckbox.setText("Show unchanging properties");
+      showUnchangingPropertiesCheckbox.setToolTipText("Show/hide properties that are the same for all images in the acquisition");
+      showUnchangingPropertiesCheckbox.addActionListener(new java.awt.event.ActionListener() {
 
-        summaryMetadataTable.setModel(new DefaultTableModel(
-            new Object [][] {
-                {null, null},
-                {null, null},
-                {null, null},
-                {null, null}
-            },
-            new String [] {
-                "Property", "Value"
-            }
-        ) {
-            boolean[] canEdit = new boolean [] {
-                false, false
-            };
+         public void actionPerformed(java.awt.event.ActionEvent evt) {
+            showUnchangingPropertiesCheckboxActionPerformed(evt);
+         }
+      });
 
-            public boolean isCellEditable(int rowIndex, int columnIndex) {
-                return canEdit [columnIndex];
-            }
-        });
-        summaryMetadataTable.setToolTipText("Metadata tags for the whole acquisition");
-        summaryMetadataScrollPane.setViewportView(summaryMetadataTable);
+      jLabel2.setText("Per-image properties");
 
-        jLabel3.setText("Acquisition properties");
+      org.jdesktop.layout.GroupLayout imageMetadataScrollPaneLayout = new org.jdesktop.layout.GroupLayout(imageMetadataScrollPane);
+      imageMetadataScrollPane.setLayout(imageMetadataScrollPaneLayout);
+      imageMetadataScrollPaneLayout.setHorizontalGroup(
+              imageMetadataScrollPaneLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING).add(imageMetadataTableScrollPane, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 620, Short.MAX_VALUE).add(org.jdesktop.layout.GroupLayout.TRAILING, imageMetadataScrollPaneLayout.createSequentialGroup().add(jLabel2).addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, 308, Short.MAX_VALUE).add(showUnchangingPropertiesCheckbox)));
+      imageMetadataScrollPaneLayout.setVerticalGroup(
+              imageMetadataScrollPaneLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING).add(imageMetadataScrollPaneLayout.createSequentialGroup().add(imageMetadataScrollPaneLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE).add(showUnchangingPropertiesCheckbox).add(jLabel2)).addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED).add(imageMetadataTableScrollPane, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 517, Short.MAX_VALUE)));
 
-        org.jdesktop.layout.GroupLayout summaryMetadataPanelLayout = new org.jdesktop.layout.GroupLayout(summaryMetadataPanel);
-        summaryMetadataPanel.setLayout(summaryMetadataPanelLayout);
-        summaryMetadataPanelLayout.setHorizontalGroup(
-            summaryMetadataPanelLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-            .add(org.jdesktop.layout.GroupLayout.TRAILING, summaryMetadataScrollPane, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 620, Short.MAX_VALUE)
-            .add(summaryMetadataPanelLayout.createSequentialGroup()
-                .add(jLabel3)
-                .addContainerGap())
-        );
-        summaryMetadataPanelLayout.setVerticalGroup(
-            summaryMetadataPanelLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-            .add(org.jdesktop.layout.GroupLayout.TRAILING, summaryMetadataPanelLayout.createSequentialGroup()
-                .add(jLabel3)
-                .add(4, 4, 4)
-                .add(summaryMetadataScrollPane, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-        );
+      metadataSplitPane.setRightComponent(imageMetadataScrollPane);
 
-        metadataSplitPane.setLeftComponent(summaryMetadataPanel);
+      summaryMetadataPanel.setMinimumSize(new java.awt.Dimension(0, 100));
+      summaryMetadataPanel.setPreferredSize(new java.awt.Dimension(539, 100));
 
-        tabbedPane.addTab("Metadata", metadataSplitPane);
+      summaryMetadataScrollPane.setMinimumSize(new java.awt.Dimension(0, 0));
+      summaryMetadataScrollPane.setPreferredSize(new java.awt.Dimension(454, 80));
 
-        CommentsSplitPane.setBorder(null);
-        CommentsSplitPane.setDividerLocation(200);
-        CommentsSplitPane.setOrientation(JSplitPane.VERTICAL_SPLIT);
+      summaryMetadataTable.setModel(new DefaultTableModel(
+              new Object[][]{
+                 {null, null},
+                 {null, null},
+                 {null, null},
+                 {null, null}
+              },
+              new String[]{
+                 "Property", "Value"
+              }) {
 
-        summaryCommentsLabel.setText("Acquisition comments:");
+         boolean[] canEdit = new boolean[]{
+            false, false
+         };
 
-        summaryCommentsTextArea.setColumns(20);
-        summaryCommentsTextArea.setLineWrap(true);
-        summaryCommentsTextArea.setRows(1);
-        summaryCommentsTextArea.setTabSize(3);
-        summaryCommentsTextArea.setToolTipText("Enter your comments for the whole acquisition here");
-        summaryCommentsTextArea.setWrapStyleWord(true);
-        summaryCommentsScrollPane.setViewportView(summaryCommentsTextArea);
+         public boolean isCellEditable(int rowIndex, int columnIndex) {
+            return canEdit[columnIndex];
+         }
+      });
+      summaryMetadataTable.setToolTipText("Metadata tags for the whole acquisition");
+      summaryMetadataScrollPane.setViewportView(summaryMetadataTable);
 
-        org.jdesktop.layout.GroupLayout summaryCommentsPaneLayout = new org.jdesktop.layout.GroupLayout(summaryCommentsPane);
-        summaryCommentsPane.setLayout(summaryCommentsPaneLayout);
-        summaryCommentsPaneLayout.setHorizontalGroup(
-            summaryCommentsPaneLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-            .add(summaryCommentsPaneLayout.createSequentialGroup()
-                .add(summaryCommentsLabel)
-                .addContainerGap(491, Short.MAX_VALUE))
-            .add(summaryCommentsScrollPane, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 620, Short.MAX_VALUE)
-        );
-        summaryCommentsPaneLayout.setVerticalGroup(
-            summaryCommentsPaneLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-            .add(summaryCommentsPaneLayout.createSequentialGroup()
-                .add(summaryCommentsLabel)
-                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(summaryCommentsScrollPane, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 177, Short.MAX_VALUE))
-        );
+      jLabel3.setText("Acquisition properties");
 
-        CommentsSplitPane.setLeftComponent(summaryCommentsPane);
+      org.jdesktop.layout.GroupLayout summaryMetadataPanelLayout = new org.jdesktop.layout.GroupLayout(summaryMetadataPanel);
+      summaryMetadataPanel.setLayout(summaryMetadataPanelLayout);
+      summaryMetadataPanelLayout.setHorizontalGroup(
+              summaryMetadataPanelLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING).add(org.jdesktop.layout.GroupLayout.TRAILING, summaryMetadataScrollPane, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 620, Short.MAX_VALUE).add(summaryMetadataPanelLayout.createSequentialGroup().add(jLabel3).addContainerGap()));
+      summaryMetadataPanelLayout.setVerticalGroup(
+              summaryMetadataPanelLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING).add(org.jdesktop.layout.GroupLayout.TRAILING, summaryMetadataPanelLayout.createSequentialGroup().add(jLabel3).add(4, 4, 4).add(summaryMetadataScrollPane, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)));
 
-        imageCommentsPanel.setPreferredSize(new java.awt.Dimension(500, 300));
+      metadataSplitPane.setLeftComponent(summaryMetadataPanel);
 
-        imageCommentsLabel.setText("Per-image comments:");
+      tabbedPane.addTab("Metadata", metadataSplitPane);
 
-        imageCommentsTextArea.setColumns(20);
-        imageCommentsTextArea.setLineWrap(true);
-        imageCommentsTextArea.setRows(1);
-        imageCommentsTextArea.setTabSize(3);
-        imageCommentsTextArea.setToolTipText("Comments for each image may be entered here.");
-        imageCommentsTextArea.setWrapStyleWord(true);
-        imageCommentsScrollPane.setViewportView(imageCommentsTextArea);
+      CommentsSplitPane.setBorder(null);
+      CommentsSplitPane.setDividerLocation(200);
+      CommentsSplitPane.setOrientation(JSplitPane.VERTICAL_SPLIT);
 
-        org.jdesktop.layout.GroupLayout imageCommentsPanelLayout = new org.jdesktop.layout.GroupLayout(imageCommentsPanel);
-        imageCommentsPanel.setLayout(imageCommentsPanelLayout);
-        imageCommentsPanelLayout.setHorizontalGroup(
-            imageCommentsPanelLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-            .add(imageCommentsPanelLayout.createSequentialGroup()
-                .add(imageCommentsLabel)
-                .add(400, 400, 400))
-            .add(imageCommentsScrollPane, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 620, Short.MAX_VALUE)
-        );
-        imageCommentsPanelLayout.setVerticalGroup(
-            imageCommentsPanelLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-            .add(imageCommentsPanelLayout.createSequentialGroup()
-                .add(imageCommentsLabel)
-                .add(0, 0, 0)
-                .add(imageCommentsScrollPane, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 429, Short.MAX_VALUE))
-        );
+      summaryCommentsLabel.setText("Acquisition comments:");
 
-        CommentsSplitPane.setRightComponent(imageCommentsPanel);
+      summaryCommentsTextArea.setColumns(20);
+      summaryCommentsTextArea.setLineWrap(true);
+      summaryCommentsTextArea.setRows(1);
+      summaryCommentsTextArea.setTabSize(3);
+      summaryCommentsTextArea.setToolTipText("Enter your comments for the whole acquisition here");
+      summaryCommentsTextArea.setWrapStyleWord(true);
+      summaryCommentsScrollPane.setViewportView(summaryCommentsTextArea);
 
-        tabbedPane.addTab("Comments", CommentsSplitPane);
+      org.jdesktop.layout.GroupLayout summaryCommentsPaneLayout = new org.jdesktop.layout.GroupLayout(summaryCommentsPane);
+      summaryCommentsPane.setLayout(summaryCommentsPaneLayout);
+      summaryCommentsPaneLayout.setHorizontalGroup(
+              summaryCommentsPaneLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING).add(summaryCommentsPaneLayout.createSequentialGroup().add(summaryCommentsLabel).addContainerGap(491, Short.MAX_VALUE)).add(summaryCommentsScrollPane, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 620, Short.MAX_VALUE));
+      summaryCommentsPaneLayout.setVerticalGroup(
+              summaryCommentsPaneLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING).add(summaryCommentsPaneLayout.createSequentialGroup().add(summaryCommentsLabel).addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED).add(summaryCommentsScrollPane, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 177, Short.MAX_VALUE)));
 
-        org.jdesktop.layout.GroupLayout layout = new org.jdesktop.layout.GroupLayout(this);
-        this.setLayout(layout);
-        layout.setHorizontalGroup(
-            layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-            .add(layout.createSequentialGroup()
-                .addContainerGap()
-                .add(tabbedPane, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 625, Short.MAX_VALUE)
-                .addContainerGap())
-        );
-        layout.setVerticalGroup(
-            layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-            .add(layout.createSequentialGroup()
-                .addContainerGap()
-                .add(tabbedPane, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 680, Short.MAX_VALUE)
-                .addContainerGap())
-        );
-    }                                          
+      CommentsSplitPane.setLeftComponent(summaryCommentsPane);
 
-    private void showUnchangingPropertiesCheckboxActionPerformed(java.awt.event.ActionEvent evt) {                                                                 
-       showUnchangingKeys_ = showUnchangingPropertiesCheckbox.isSelected();
-       ImagePlus img = getCurrentImage();
-       if (img != null) {
-          ImageCache cache = VirtualAcquisitionDisplay.getDisplay(img).getImageCache();
-          imageChangedUpdate(img,cache);
-       }
-}                                                                
+      imageCommentsPanel.setPreferredSize(new java.awt.Dimension(500, 300));
 
-    private void tabbedPaneStateChanged(ChangeEvent evt) {                                        
-       ImagePlus img = getCurrentImage();
-       if (img != null) {
-          ImageCache cache = VirtualAcquisitionDisplay.getDisplay(img).getImageCache();
-          imageChangedUpdate(img,cache);
-       }
-}                                                                                 
-    
+      imageCommentsLabel.setText("Per-image comments:");
+
+      imageCommentsTextArea.setColumns(20);
+      imageCommentsTextArea.setLineWrap(true);
+      imageCommentsTextArea.setRows(1);
+      imageCommentsTextArea.setTabSize(3);
+      imageCommentsTextArea.setToolTipText("Comments for each image may be entered here.");
+      imageCommentsTextArea.setWrapStyleWord(true);
+      imageCommentsScrollPane.setViewportView(imageCommentsTextArea);
+
+      org.jdesktop.layout.GroupLayout imageCommentsPanelLayout = new org.jdesktop.layout.GroupLayout(imageCommentsPanel);
+      imageCommentsPanel.setLayout(imageCommentsPanelLayout);
+      imageCommentsPanelLayout.setHorizontalGroup(
+              imageCommentsPanelLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING).add(imageCommentsPanelLayout.createSequentialGroup().add(imageCommentsLabel).add(400, 400, 400)).add(imageCommentsScrollPane, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 620, Short.MAX_VALUE));
+      imageCommentsPanelLayout.setVerticalGroup(
+              imageCommentsPanelLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING).add(imageCommentsPanelLayout.createSequentialGroup().add(imageCommentsLabel).add(0, 0, 0).add(imageCommentsScrollPane, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 429, Short.MAX_VALUE)));
+
+      CommentsSplitPane.setRightComponent(imageCommentsPanel);
+
+      tabbedPane.addTab("Comments", CommentsSplitPane);
+
+      org.jdesktop.layout.GroupLayout layout = new org.jdesktop.layout.GroupLayout(this);
+      this.setLayout(layout);
+      layout.setHorizontalGroup(
+              layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING).add(layout.createSequentialGroup().addContainerGap().add(tabbedPane, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 625, Short.MAX_VALUE).addContainerGap()));
+      layout.setVerticalGroup(
+              layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING).add(layout.createSequentialGroup().addContainerGap().add(tabbedPane, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 680, Short.MAX_VALUE).addContainerGap()));
+   }
+
+   private void showUnchangingPropertiesCheckboxActionPerformed(java.awt.event.ActionEvent evt) {
+      showUnchangingKeys_ = showUnchangingPropertiesCheckbox.isSelected();
+      ImagePlus img = getCurrentImage();
+      if (img != null) {
+         ImageCache cache = VirtualAcquisitionDisplay.getDisplay(img).getImageCache();
+         imageChangedUpdate(img, cache);
+      }
+   }
+
+   private void tabbedPaneStateChanged(ChangeEvent evt) {
+      ImagePlus img = getCurrentImage();
+      if (img != null) {
+         ImageCache cache = VirtualAcquisitionDisplay.getDisplay(img).getImageCache();
+         imageChangedUpdate(img, cache);
+      }
+   }
+
    private void addTextChangeListeners() {
-      summaryCommentsTextArea.getDocument()
-              .addDocumentListener(new DocumentListener() {
+      summaryCommentsTextArea.getDocument().addDocumentListener(new DocumentListener() {
+
          private void handleChange() {
             writeSummaryComments(getCurrentImage());
          }
@@ -401,8 +349,8 @@ public class MetadataPanel extends JPanel
          }
       });
 
-      imageCommentsTextArea.getDocument()
-              .addDocumentListener(new DocumentListener() {
+      imageCommentsTextArea.getDocument().addDocumentListener(new DocumentListener() {
+
          private void handleChange() {
             writeImageComments(getCurrentImage());
          }
@@ -422,6 +370,7 @@ public class MetadataPanel extends JPanel
    }
 
    class MetadataTableModel extends AbstractTableModel {
+
       Vector<Vector<String>> data_;
 
       MetadataTableModel() {
@@ -443,14 +392,12 @@ public class MetadataPanel extends JPanel
       public synchronized Object getValueAt(int rowIndex, int columnIndex) {
          if (data_.size() > rowIndex) {
             Vector<String> row = data_.get(rowIndex);
-            if (row.size() > columnIndex) {
+            if (row.size() > columnIndex)
                return data_.get(rowIndex).get(columnIndex);
-            } else {
+            else
                return "";
-            }
-         } else {
+         } else
             return "";
-         }
       }
 
       public void clear() {
@@ -485,9 +432,9 @@ public class MetadataPanel extends JPanel
    private JSONObject selectChangingTags(ImagePlus imgp, JSONObject md) {
       JSONObject mdChanging = new JSONObject();
       ImageCache cache = getCache(imgp);
-      if (cache != null) {
+      if (cache != null)
          for (String key : cache.getChangingKeys()) {
-            if (md.has(key)) {
+            if (md.has(key))
                try {
                   mdChanging.put(key, md.get(key));
                } catch (JSONException ex) {
@@ -498,59 +445,52 @@ public class MetadataPanel extends JPanel
                      ReportingUtils.logError(ex1);
                   }
                }
-            }
          }
-      }
       return mdChanging;
    }
 
    private AcquisitionVirtualStack getAcquisitionStack(ImagePlus imp) {
       VirtualAcquisitionDisplay display = VirtualAcquisitionDisplay.getDisplay(imp);
-      if (display != null) {
+      if (display != null)
          return display.virtualStack_;
-      } else {
+      else
          return null;
-      }
    }
 
    private void writeSummaryComments(ImagePlus imp) {
       VirtualAcquisitionDisplay acq = getVirtualAcquisitionDisplay(imp);
-      if (acq != null) {
+      if (acq != null)
          acq.setSummaryComment(summaryCommentsTextArea.getText());
-      }
    }
 
    private void writeImageComments(ImagePlus imgp) {
       VirtualAcquisitionDisplay acq = getVirtualAcquisitionDisplay(imgp);
-      if (acq != null) {
+      if (acq != null)
          acq.setImageComment(imageCommentsTextArea.getText());
-      }
    }
 
    private ImageCache getCache(ImagePlus imgp) {
-      if (VirtualAcquisitionDisplay.getDisplay(imgp) != null) {
+      if (VirtualAcquisitionDisplay.getDisplay(imgp) != null)
          return VirtualAcquisitionDisplay.getDisplay(imgp).imageCache_;
-      } else {
+      else
          return null;
-      }
    }
-   
+
    public ImagePlus getCurrentImage() {
-       if (lastWindow_ == null)
-           return null;
-       return lastWindow_.getImagePlus();
+      if (lastWindow_ == null)
+         return null;
+      return lastWindow_.getImagePlus();
    }
-   
+
    public ContrastSettings getChannelContrast(int channel) {
       ImagePlus img = getCurrentImage();
       if (img == null)
          return null;
       if (currentContrastPanel_ != null)
-         return currentContrastPanel_.getChannelContrastSettings( channel);
+         return currentContrastPanel_.getChannelContrastSettings(channel);
       return null;
    }
-   
-   
+
    /*
     * used to store contrast settings for snap live window
     */
@@ -564,7 +504,7 @@ public class MetadataPanel extends JPanel
          MMStudioMainFrame.getInstance().saveSimpleContrastSettings(new ContrastSettings(min, max, gamma), i, pixelType);
       }
    }
-   
+
    /*
     * Used for applying loaded contrast settings on intial image
     */
@@ -573,79 +513,87 @@ public class MetadataPanel extends JPanel
          int n = cache.getNumChannels();
          ContrastSettings c;
          for (int i = 0; i < n; i++) {
-            c  = MMStudioMainFrame.getInstance().loadSimpleContrastSettigns(cache.getPixelType(),i);
+            c = MMStudioMainFrame.getInstance().loadSimpleContrastSettigns(cache.getPixelType(), i);
             currentContrastPanel_.setChannelContrast(i, c.min, c.max, c.gamma);
          }
          currentContrastPanel_.applyLUTToImage(img, cache);
       }
    }
-   
+
    /*
     * used only for autoscaling on intial image
     */
    public void autoscaleWithoutDraw(ImageCache cache, ImagePlus img) {
       if (currentContrastPanel_ != null) {
-         currentContrastPanel_.calcAndDisplayHistAndStats(img,true);
+         currentContrastPanel_.calcAndDisplayHistAndStats(img, true);
          currentContrastPanel_.autostretch();
          currentContrastPanel_.applyLUTToImage(img, cache);
       }
    }
-   
-   public void autoscaleOverStackWithoutDraw(ImageCache cache, ImagePlus img, int channel) {
-      int pixMin;
-      int pixMax;
+
+   public void autoscaleOverStackWithoutDraw(ImageCache cache, ImagePlus img, int channel,
+           HashMap<Integer, Integer> mins, HashMap<Integer, Integer> maxes) {
       int nSlices = ((VirtualAcquisitionDisplay.IMMImagePlus) img).getNSlicesUnverified();
       int nChannels = ((VirtualAcquisitionDisplay.IMMImagePlus) img).getNChannelsUnverified();
       int bytes = img.getBytesPerPixel();
-      pixMax = 0;
-      pixMin = (int) (Math.pow(2, 8 * bytes) - 1);
-      for (int z = 0; z < nSlices; z++) {
-         int flatIndex = 1 + channel + z * nChannels;
-         if (bytes == 2) {
-            short[] pixels = (short[]) img.getStack().getPixels(flatIndex);
-            for (short value : pixels) {
-               if (value < pixMin)
-                  pixMin = value;
-               if (value > pixMax)
-                  pixMax = value;
-            }
-         } else if (bytes == 1) {
-            byte[] pixels = (byte[]) img.getStack().getPixels(flatIndex);
-            for (byte value : pixels) {
-               if (value < pixMin)
-                  pixMin = value;
-               if (value > pixMax)
-                  pixMax = value;
-            }
+      int pixMin, pixMax;
+      if (mins.containsKey(channel)) {
+         pixMin = mins.get(channel);
+         pixMax = maxes.get(channel);
+      } else {
+         pixMax = 0;
+         pixMin = (int) (Math.pow(2, 8 * bytes) - 1);
+      }
+      int z = img.getSlice() - 1;
+      int flatIndex = 1 + channel + z * nChannels;
+      if (bytes == 2) {
+         short[] pixels = (short[]) img.getStack().getPixels(flatIndex);
+         for (short value : pixels) {
+            if (value < pixMin)
+               pixMin = value;
+            if (value > pixMax)
+               pixMax = value;
+         }
+      } else if (bytes == 1) {
+         byte[] pixels = (byte[]) img.getStack().getPixels(flatIndex);
+         for (byte value : pixels) {
+            if (value < pixMin)
+               pixMin = value;
+            if (value > pixMax)
+               pixMax = value;
          }
       }
+
       //autoscale the channel
       if (currentContrastPanel_ != null)
          currentContrastPanel_.setChannelContrast(channel, pixMin, pixMax, 1.0);
 
       if (currentContrastPanel_ != null)
          currentContrastPanel_.applyLUTToImage(img, cache);
+      
+      mins.put(channel, pixMin);
+      maxes.put(channel, pixMax);
    }
-   
+
    public void refresh() {
       ImagePlus img = getCurrentImage();
       if (currentContrastPanel_ == null || img == null)
          return;
       VirtualAcquisitionDisplay vad = VirtualAcquisitionDisplay.getDisplay(img);
       if (vad == null)
-         return;     
+         return;
       ImageCache cache = vad.getImageCache();
       currentContrastPanel_.setupChannelControls(cache);
       currentContrastPanel_.displayChanged(img, cache);
       imageChangedUpdate(img, cache);
    }
-   
-   public synchronized void setup(ImageWindow win) { 
+
+   public synchronized void setup(ImageWindow win) {
       if (win == lastWindow_)
          return;
       lastWindow_ = win;
-      if (win == null  || !(win instanceof VirtualAcquisitionDisplay.DisplayWindow) ) {
-         imageChangedUpdate((ImagePlus)null,null);
+      if (win == null || !(win instanceof VirtualAcquisitionDisplay.DisplayWindow)) {
+         imageChangedUpdate((ImagePlus) null, null);
          return;
       }
 
@@ -656,43 +604,39 @@ public class MetadataPanel extends JPanel
          setContrastPanel(MULTIPLE_CHANNELS_CONTRAST_PANEL);
       else
          setContrastPanel(SINGLE_CHANNEL_CONTRAST_PANEL);
-      
-      
+
+
       if (acq != null) {
          summaryCommentsTextArea.setText(acq.getSummaryComment());
          JSONObject md = cache.getSummaryMetadata();
          summaryMetadataModel_.setMetadata(md);
-      } else {
+      } else
          summaryCommentsTextArea.setText(null);
-      }
 
 
       if (acq != null && currentContrastPanel_ != null) {
          currentContrastPanel_.setupChannelControls(cache);
          if (acq.getNumChannels() > 1) {
-            multiChannelContrastPanel_.setDisplayMode(((CompositeImage) imgp).getMode());    
+            multiChannelContrastPanel_.setDisplayMode(((CompositeImage) imgp).getMode());
             multiChannelContrastPanel_.sizeBarCheckBoxActionPerformed();
          }
          //load appropriate contrast settings calc and display hist, apply LUT and draw
          currentContrastPanel_.displayChanged(imgp, cache);
 
-         imageChangedUpdate(imgp,cache);
+         imageChangedUpdate(imgp, cache);
       }
    }
 
    public void focusReceived(ImageWindow focusedWindow) {
-       setup (focusedWindow);
+      setup(focusedWindow);
    }
-
-   
 
    private VirtualAcquisitionDisplay getVirtualAcquisitionDisplay(ImagePlus imgp) {
-      if (imgp == null) {
+      if (imgp == null)
          return null;
-      }
       return VirtualAcquisitionDisplay.getDisplay(imgp);
    }
-   
+
    private void setContrastPanel(String label) {
       contrastPanelLayout_.show(contrastPanelHolder_, label);
       if (label.equals(BLANK_CONTRAST_PANEL))
@@ -710,12 +654,12 @@ public class MetadataPanel extends JPanel
       if (img == null)
          return;
       VirtualAcquisitionDisplay disp = VirtualAcquisitionDisplay.getDisplay(img);
-      if (disp != null && currentContrastPanel_ != null) {       
-            currentContrastPanel_.applyLUTToImage(disp.getHyperImage(),disp.imageCache_); 
-            disp.drawWithoutUpdate();    
+      if (disp != null && currentContrastPanel_ != null) {
+         currentContrastPanel_.applyLUTToImage(disp.getHyperImage(), disp.imageCache_);
+         disp.drawWithoutUpdate();
       }
    }
-   
+
    public void drawWithoutUpdate() {
       drawWithoutUpdate(getCurrentImage());
    }
@@ -728,50 +672,45 @@ public class MetadataPanel extends JPanel
     * methods in MMCompositeImage and MMImagePlus
     */
    public void imageChangedUpdate(ImagePlus img, ImageCache cache) {
-      
+
       int tabSelected = tabbedPane.getSelectedIndex();
       if (img == null) {
          imageMetadataModel_.setMetadata(null);
          summaryMetadataModel_.setMetadata(null);
          summaryCommentsTextArea.setText(null);
          setContrastPanel(BLANK_CONTRAST_PANEL);
-      } else {
-         if (tabSelected == 1) { //Metadata
-            AcquisitionVirtualStack stack = getAcquisitionStack(img);
-            if (stack != null) {
-               int slice = img.getCurrentSlice();
-               TaggedImage taggedImg = stack.getTaggedImage(slice);
-               if (taggedImg == null) {
-                  imageMetadataModel_.setMetadata(null);
-               } else {
-                  JSONObject md = stack.getTaggedImage(slice).tags;
-                  if (!showUnchangingKeys_) {
-                     md = selectChangingTags(img, md);
-                  }
-                  imageMetadataModel_.setMetadata(md);
-               }
-               summaryMetadataModel_.setMetadata(stack.getCache().getSummaryMetadata());
-            } else {
+      } else if (tabSelected == 1) { //Metadata
+         AcquisitionVirtualStack stack = getAcquisitionStack(img);
+         if (stack != null) {
+            int slice = img.getCurrentSlice();
+            TaggedImage taggedImg = stack.getTaggedImage(slice);
+            if (taggedImg == null)
                imageMetadataModel_.setMetadata(null);
+            else {
+               JSONObject md = stack.getTaggedImage(slice).tags;
+               if (!showUnchangingKeys_)
+                  md = selectChangingTags(img, md);
+               imageMetadataModel_.setMetadata(md);
             }
-            if (currentContrastPanel_ != null)
-               currentContrastPanel_.imageChanged(img, cache, false);
-         } else if (tabSelected == 0) { //Histogram panel
-            if (currentContrastPanel_ != null) {
-               currentContrastPanel_.imageChanged(img, cache, true);
-            }
-         } else if (tabSelected == 2) { //Display and comments
-            VirtualAcquisitionDisplay acq = getVirtualAcquisitionDisplay(img);
-            if (acq != null)
-               imageCommentsTextArea.setText(acq.getImageComment());
-            if (currentContrastPanel_ != null)
-               currentContrastPanel_.imageChanged(img, cache, false);
-         }
+            summaryMetadataModel_.setMetadata(stack.getCache().getSummaryMetadata());
+         } else
+            imageMetadataModel_.setMetadata(null);
+         if (currentContrastPanel_ != null)
+            currentContrastPanel_.imageChanged(img, cache, false);
+      } else if (tabSelected == 0) { //Histogram panel
+         if (currentContrastPanel_ != null)
+            currentContrastPanel_.imageChanged(img, cache, true);
+      } else if (tabSelected == 2) { //Display and comments
+         VirtualAcquisitionDisplay acq = getVirtualAcquisitionDisplay(img);
+         if (acq != null)
+            imageCommentsTextArea.setText(acq.getImageComment());
+         if (currentContrastPanel_ != null)
+            currentContrastPanel_.imageChanged(img, cache, false);
       }
    }
 
    public void setChannelContrast(int channelIndex, int min, int max, double gamma) {
-      if (currentContrastPanel_ != null) 
+      if (currentContrastPanel_ != null)
          currentContrastPanel_.setChannelContrast(channelIndex, min, max, gamma);
       drawWithoutUpdate();
    }

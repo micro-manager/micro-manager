@@ -43,6 +43,7 @@ import java.awt.Point;
 import java.awt.event.*;
 import java.io.File;
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.prefs.Preferences;
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
@@ -99,7 +100,6 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
    private ScrollbarWithLabel cSelector_;
    private DisplayControls controls_;
    public AcquisitionVirtualStack virtualStack_;
-   private final Preferences displayPrefs_;
    private boolean simple_ = false;
    private boolean mda_ = false; //flag if display corresponds to MD acquisition
    private MetadataPanel mdPanel_;
@@ -110,6 +110,8 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
    private Timer zAnimationTimer_;
    private Timer tAnimationTimer_;
    private Component zIcon_, pIcon_, tIcon_, cIcon_;
+   private HashMap<Integer,Integer> zStackMins_;
+   private HashMap<Integer,Integer> zStackMaxes_;
 
    /* This interface and the following two classes
     * allow us to manipulate the dimensions
@@ -375,16 +377,16 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
       imageCache_ = imageCache;
       eng_ = eng;
       pSelector_ = createPositionScrollbar();
-      displayPrefs_ = Preferences.userNodeForPackage(this.getClass());
       imageCache_.setDisplay(this);
       mda_ = eng != null;
+      zStackMins_ = new HashMap<Integer,Integer>();
+      zStackMaxes_ = new HashMap<Integer,Integer>();
    }
 
    //used for snap and live
    public VirtualAcquisitionDisplay(ImageCache imageCache, String name) throws MMScriptException {
       simple_ = true;
       imageCache_ = imageCache;
-      displayPrefs_ = Preferences.userNodeForPackage(this.getClass());
       name_ = name;
       imageCache_.setDisplay(this);
       mda_ = false;
@@ -1074,12 +1076,10 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
                if (mda_) {
                   IMMImagePlus immImg = ((IMMImagePlus) hyperImage_);
                   if (immImg.getNSlicesUnverified() > 1) {
-                     if (immImg.getNSlicesUnverified() - 1 != slice)
-                        return;
-                     mdPanel_.autoscaleOverStackWithoutDraw(imageCache_, hyperImage_, channel);
-                     if (channel != immImg.getNChannelsUnverified() - 1)
+                     mdPanel_.autoscaleOverStackWithoutDraw(imageCache_, hyperImage_, channel, zStackMins_,zStackMaxes_);
+                     if (channel != immImg.getNChannelsUnverified() - 1 || slice != immImg.getNSlicesUnverified()-1)
                         return;  //don't set new display to false until all channels autscaled
-
+                     
                   } else if (immImg.getNChannelsUnverified() - 1 == channel)
                      mdPanel_.autoscaleWithoutDraw(imageCache_, hyperImage_);
                } else //Called when display created by pressing acquire button
