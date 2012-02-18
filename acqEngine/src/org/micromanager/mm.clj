@@ -28,39 +28,51 @@
 (declare gui)
 (declare mmc)
 
-(defmacro edt [& body]
+(defmacro edt
+  "Run body on the Event Dispatch Thread."
+  [& body]
   `(SwingUtilities/invokeLater (fn [] ~@body)))
 
 (defn load-mm
+  "Load Micro-Manager gui and mmc objects."
   ([gui] (def mmc (.getMMCore gui)))
   ([] (def gui (MMStudioMainFrame/getInstance))
       (load-mm gui)))
 
 (defn rekey
+  "Change the name of key kold to knew."
   ([m kold knew]
     (-> m (dissoc kold) (assoc knew (get m kold))))
   ([m kold knew & ks]
     (reduce #(apply rekey %1 %2)
       m (partition 2 (conj ks knew kold)))))
 
-(defn select-and-rekey [m & ks]
-    (apply rekey (select-keys m (apply concat (partition 1 2 ks))) ks))
+(defn select-and-rekey
+  "Select certain keys and change their names. ks consists
+   of alternating old and new keys."
+  [m & ks]
+  (apply rekey (select-keys m (apply concat (partition 1 2 ks))) ks))
     
-(defn data-object-to-map [obj]
+(defn data-object-to-map
+  "Automatically convert a Java data object (public fields,
+   no methods) to an immutable clojure map."
+  [obj]
   (into {}
     (for [f (.getFields (type obj))
           :when (zero? (bit-and
                          (.getModifiers f) java.lang.reflect.Modifier/STATIC))]
       [(keyword (.getName f))
-       (let [val (.get f obj)]
-         (if (isa? (type val) Boolean)
-           (.booleanValue val)
-           val))])))
+       (if (= Boolean/TYPE (.getType f))
+         (.getBoolean f obj)
+         (.get f obj))])))
 
-(defn log [& x]
+(defn log
+  "Log form x to the Micro-Manager log output (debug only)."
+  [& x]
   (.logMessage mmc (apply pr-str x) true))
 
 (defmacro log-cmd
+  "Log the enclosed expr to the Micro-Manager log output (debug only)."
   ([cmd-count expr]
     (let [[cmd# args#] (split-at cmd-count expr)]
       `(let [expr# (concat '~cmd# (list ~@args#))]
@@ -74,7 +86,11 @@
    ([expr] `(log-cmd 1 ~expr)))
 
 
-(defmacro core [& args]
+(defmacro core
+  "Run args as a method and parameters on Micro-Manager core.
+   If debugging, log the command and the returned value to the
+   Micro-Manager log output."
+  [& args]
   `(log-cmd 3 (. mmc ~@args)))
 
 (defmacro when-lets
@@ -90,7 +106,12 @@
     (let [[a b] (map vec (split-at 2 bindings))]     
       `(when-let ~a (when-lets ~b ~@body))))))
       
-(defmacro with-setting [gst & body]
+(defmacro with-setting
+  "gst consists of a vector containing a getter, a setter, and a temp
+   value. Calls getter to read the current value, uses setter to
+   set the temporary value, executes body, and then calls setter
+   to set the original value again."
+  [gst & body]
   (let [[getter setter temp] gst]
     `(let [perm# (~getter)
            temp# ~temp
@@ -100,7 +121,10 @@
     (do ~@body)
     (when different# (~setter perm#)))))
     
-(defmacro with-core-setting [gst & body]
+(defmacro with-core-setting
+  "Temporarily set a core setting to a value, and then set it back after
+   body is executed."
+  [gst & body]
   (let [[getter setter temp] gst]
     `(with-setting [#(core ~getter) #(core ~setter %) ~temp] ~@body)))
 
@@ -111,12 +135,16 @@
     `(when (and ~@args_)
       (~f ~@args_))))
 
-(defmacro if-args [f & args]
+(defmacro if-args
+  "Apply f to arguments only if all arguments are not nil."
+  [f & args]
   (let [args_ args]
     `(if (and ~@args_)
       (~f ~@args_))))
 
-(defn get-default-devices []
+(defn get-default-devices
+  "Get the list of default (core) devices."
+  []
   {:camera          (core getCameraDevice)
    :shutter         (core getShutterDevice)
    :focus           (core getFocusDevice)
@@ -124,54 +152,87 @@
    :autofocus       (core getAutoFocusDevice)
    :image-processor (core getImageProcessorDevice)})
    
-(defn config-struct [^Configuration data]
+(defn config-struct
+  "Creates a map of properties from a given Micro-Manager Configuration
+   where keys are given as [dev-name prop-name] and values are the property
+   values."
+  [^Configuration data]
   (into {}
         (for [prop (map #(.getSetting data %) (range (.size data)))]
           [[(.getDeviceLabel prop) (.getPropertyName prop)] (.getPropertyValue prop)])))
 
-(defn map-config [config]
+(defn map-config
+  "Creates a map of properties from a configuration map where
+   keys are strings such as \"Core-Shutter\"."
+  [config]
   (into {}
         (for [[[d p] v] (config-struct config)]
           [(str d "-" p) v])))
    
-(defn get-config [group config]
+(defn get-config
+  "Get a map representing a Micro-Manager configuration preset."
+  [group config]
   (config-struct (core getConfigData group config)))
 
-(defn get-system-config-cached []
+(defn get-system-config-cached
+  "Get the current system state cached configuration as a map."
+  []
   (config-struct (core getSystemStateCache)))
 
-(defn get-property-value [dev prop]
+(defn get-property-value
+  "Get a property value."
+  [dev prop]
   (when (core hasProperty dev prop)
     (core getProperty dev prop)))
 
-(defn get-property [dev prop]
+(defn get-property
+  "Get a property vector, given device and property. The results
+   include device, property name, and property value. Device and
+   property are grouped together in a vector: [[dev prop] value]."
+  [dev prop]
   [[dev prop] (get-property-value dev prop)])
        
-(defn get-positions []
+(defn get-positions
+  "Get the position list as a vector of MultiStagePositions."
+  []
   (vec (.. gui getPositionList getPositions)))
 
-(defn get-allowed-property-values [dev prop]
+(defn get-allowed-property-values
+  "Returns a sequence of the allowed property values
+   for a give device and property."
+  [dev prop]
   (seq (core getAllowedPropertyValues dev prop)))
   
-(defn select-values-match? [map1 map2 keys]
+(defn select-values-match?
+  "Checks if a particular set of values in two maps
+   are the same, give a vector of keys for comparison."
+  [map1 map2 keys]
   (= (select-keys map1 keys)
      (select-keys map2 keys)))
      
-(defn current-tagged-image []
+(defn current-tagged-image
+  "Get the current tagged image displayed frontmost in Micro-Manager."
+  []
   (let [img (IJ/getImage)]
     (.. img getStack (getTaggedImage (.getCurrentSlice img)))))
 
-(defn get-camera-roi []
+(defn get-camera-roi
+  "Returns a vector containing the [left top width height] of the roi."
+  []
   (let [r (repeatedly 4 #(int-array 1))]
     (core getROI (nth r 0) (nth r 1) (nth r 2) (nth r 3))
-    (flatten (map seq r))))
+    (vec (flatten (map seq r)))))
 
-(defn parse-core-metadata [^Metadata m]
+(defn parse-core-metadata
+  "Reads the metadata from a core Metadata object into a map."
+  [^Metadata m]
   (into {}
     (for [k (.GetKeys m)]
       [k (.. m (GetSingleTag k) GetValue)])))
 
-(defn reload-device [dev]
+(defn reload-device
+  "Unload a device, and reload it, preserving its property settings."
+  [dev]
   (when (. gui getAutoreloadOption)
     (log "Attempting to reload " dev "...")
     (let [props (filter #(= (first %) dev)
@@ -195,7 +256,9 @@
           (core defineStateLabel dev i (get state-labels i)))))
     (log "...reloading of " dev " has apparently succeeded.")))
 
-(defn json-to-data [json]
+(defn json-to-data
+  "Take a JSON object and convert it to a clojure data object."
+  [json]
   (condp #(isa? (type %2) %1) json
     JSONObject
       (let [keys (iterator-seq (.keys json))]
@@ -209,15 +272,24 @@
           (json-to-data (.get json i))))
     json))
 
-(def iso8601modified (SimpleDateFormat. "yyyy-MM-dd HH:mm:ss Z"))
+(def ^{:doc "the ISO8601 data standard format modified to make it
+             slightly more human-readable."}
+       iso8601modified (SimpleDateFormat. "yyyy-MM-dd HH:mm:ss Z"))
 
-(defn get-current-time-str []
+(defn get-current-time-str 
+  "Get the current time and date in modified ISO8601 format."
+  []
   (. iso8601modified format (Date.)))
 
-(defn get-pixel-type []
+(defn get-pixel-type
+  "Get the current pixel type."
+  []
   (str ({1 "GRAY", 4 "RGB"} (int (core getNumberOfComponents))) (* 8 (core getBytesPerPixel))))
 
-(defn ChannelSpec-to-map [^ChannelSpec chan]
+(defn ChannelSpec-to-map
+  "Convert a Micro-Manager ChannelSpec object to a clojure data map
+   with friendly keys."
+  [^ChannelSpec chan]
   (-> chan
     (data-object-to-map)
     (select-and-rekey
@@ -231,7 +303,9 @@
     )
     (assoc :properties (get-config (core getChannelGroup) (.config_ chan)))))
 
-(defn MultiStagePosition-to-map [^MultiStagePosition msp]
+(defn MultiStagePosition-to-map
+  "Convert a Micro-Manager MultiStagePosition object to a clojure data map."
+  [^MultiStagePosition msp]
   (if msp
     {:label (.getLabel msp)
      :axes
@@ -243,29 +317,41 @@
                   1 [(.x stage-pos)]
                   2 [(.x stage-pos) (.y stage-pos)])])))}))
 
-(defn get-msp [idx]
+(defn get-msp
+  "Get a MultiStagePosition object from the Position List with the specified
+   index number."
+  [idx]
   (when idx
     (let [p-list (. gui getPositionList)]
       (when (pos? (. p-list getNumberOfPositions))
         (.getPosition p-list idx)))))
 
-(defn get-msp-z-position [idx z-stage]
+(defn get-msp-z-position
+  "Get the z position for a given z-stage from the MultiStagePosition
+   with the given index in the Position List."
+  [idx z-stage]
   (if-let [msp (get-msp idx)]
     (if-let [stage-pos (. msp get z-stage)]
       (. stage-pos x))))
 
-(defn set-msp-z-position [idx z-stage z]
+(defn set-msp-z-position
+  "Set the z position for a given z-stage from the MultiStagePosition
+   with the given index in the Position List."
+  [idx z-stage z]
   (when-let [msp (get-msp idx)]
     (when-let [stage-pos (. msp (get z-stage))]
       (set! (. stage-pos x) z))))
 
-(defn str-vector [str-seq]
+(defn str-vector
+  "Convert a sequence of strings into a Micro-Manager StrVector."
+  [str-seq]
   (let [v (StrVector.)]
     (doseq [item str-seq]
       (.add v item))
     v))
 
 (defn double-vector [doubles]
+  "Convert a sequence of numbers to a Micro-Manager DoubleVector."
   (let [v (DoubleVector.)]
     (doseq [item doubles]
       (.add v item))
