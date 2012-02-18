@@ -35,9 +35,9 @@ import org.micromanager.utils.ReportingUtils;
  * @author arthur
  */
 public class MMImageCache implements TaggedImageStorage, ImageCache {
+
    public static String menuName_ = null;
-   public ArrayList<ImageCacheListener> imageStorageListeners_
-           = new ArrayList<ImageCacheListener>();
+   public ArrayList<ImageCacheListener> imageStorageListeners_ = new ArrayList<ImageCacheListener>();
    private TaggedImageStorage imageStorage_;
    private Set<String> changingKeys_;
    private JSONObject firstTags_;
@@ -47,13 +47,12 @@ public class MMImageCache implements TaggedImageStorage, ImageCache {
    private boolean conserveRam_;
    private VirtualAcquisitionDisplay display_;
 
-
    public void addImageCacheListener(ImageCacheListener l) {
       imageStorageListeners_.add(l);
    }
 
    public ImageCacheListener[] getImageStorageListeners() {
-      return (ImageCacheListener []) imageStorageListeners_.toArray();
+      return (ImageCacheListener[]) imageStorageListeners_.toArray();
    }
 
    public void removeImageStorageListener(ImageCacheListener l) {
@@ -70,7 +69,7 @@ public class MMImageCache implements TaggedImageStorage, ImageCache {
    public void finished() {
       imageStorage_.finished();
       String path = getDiskLocation();
-      for (ImageCacheListener l:imageStorageListeners_) {
+      for (ImageCacheListener l : imageStorageListeners_) {
          l.imagingFinished(path);
       }
    }
@@ -118,14 +117,14 @@ public class MMImageCache implements TaggedImageStorage, ImageCache {
       }
       newImageFileManager.setDisplayAndComments(this.getDisplayAndComments());
       newImageFileManager.finished();
-      imageStorage_ = newImageFileManager; 
+      imageStorage_ = newImageFileManager;
    }
-   
 
    public void putImage(TaggedImage taggedImg) {
       try {
-         if (!conserveRam_)
+         if (!conserveRam_) {
             softTable_.put(MDUtils.getLabel(taggedImg.tags), new SoftReference(taggedImg));
+         }
 
          checkForChangingTags(taggedImg);
          imageStorage_.putImage(taggedImg);
@@ -133,8 +132,8 @@ public class MMImageCache implements TaggedImageStorage, ImageCache {
             lastFrame_ = Math.max(lastFrame_, MDUtils.getFrameIndex(taggedImg.tags));
             lastTags_ = taggedImg.tags;
          }
-         
-         for (ImageCacheListener l:imageStorageListeners_) {
+
+         for (ImageCacheListener l : imageStorageListeners_) {
             l.imageReceived(taggedImg);
          }
       } catch (Exception ex) {
@@ -193,9 +192,9 @@ public class MMImageCache implements TaggedImageStorage, ImageCache {
             String key = keys.next();
             try {
                if (!taggedImg.tags.isNull(key)) {
-                  if (!firstTags_.has(key) || firstTags_.isNull(key))
+                  if (!firstTags_.has(key) || firstTags_.isNull(key)) {
                      changingKeys_.add(key);
-                  else if (!taggedImg.tags.getString(key).contentEquals(firstTags_.getString(key))) {
+                  } else if (!taggedImg.tags.getString(key).contentEquals(firstTags_.getString(key))) {
                      changingKeys_.add(key);
                   }
                }
@@ -239,7 +238,7 @@ public class MMImageCache implements TaggedImageStorage, ImageCache {
       JSONObject comments = getCommentsJSONObject();
       String label = MDUtils.getLabel(tags);
       try {
-         comments.put(label,comment);
+         comments.put(label, comment);
       } catch (JSONException ex) {
          ReportingUtils.logError(ex);
       }
@@ -247,8 +246,9 @@ public class MMImageCache implements TaggedImageStorage, ImageCache {
    }
 
    public String getImageComment(JSONObject tags) {
-      if (tags == null)
+      if (tags == null) {
          return "";
+      }
       try {
          String label = MDUtils.getLabel(tags);
          return getCommentsJSONObject().getString(label);
@@ -256,7 +256,7 @@ public class MMImageCache implements TaggedImageStorage, ImageCache {
          return "";
       }
    }
-   
+
    public String getComment() {
       try {
          return getCommentsJSONObject().getString("Summary");
@@ -289,20 +289,21 @@ public class MMImageCache implements TaggedImageStorage, ImageCache {
       return imageStorage_.imageKeys();
    }
 
-   public void setDisplay(VirtualAcquisitionDisplay disp) { 
+   public void setDisplay(VirtualAcquisitionDisplay disp) {
       display_ = disp;
    }
-   
+
    public ImagePlus getImagePlus() {
-      if (display_ == null)
+      if (display_ == null) {
          return null;
+      }
       return display_.getHyperImage();
    }
 
    private boolean isRGB() throws JSONException, MMScriptException {
-      return  MDUtils.isRGB(getSummaryMetadata());
+      return MDUtils.isRGB(getSummaryMetadata());
    }
-   
+
    public String getPixelType() {
       try {
          return MDUtils.getPixelType(getSummaryMetadata());
@@ -311,9 +312,8 @@ public class MMImageCache implements TaggedImageStorage, ImageCache {
          return null;
       }
    }
-   
-   /////////////////////Channels section/////////////////////////
 
+   /////////////////////Channels section/////////////////////////
    public void storeChannelDisplaySettings(int channelIndex, int min, int max, double gamma) {
       try {
          JSONObject settings = getChannelSetting(channelIndex);
@@ -324,7 +324,6 @@ public class MMImageCache implements TaggedImageStorage, ImageCache {
          ReportingUtils.logError(ex);
       }
    }
-
 
    public JSONObject getChannelSetting(int channel) {
       try {
@@ -348,11 +347,12 @@ public class MMImageCache implements TaggedImageStorage, ImageCache {
       }
       return 16;
    }
-   
+
    public Color getChannelColor(int channelIndex) {
       try {
-         if (isRGB())
-            return channelIndex==0 ? Color.red : (channelIndex==1 ? Color.green : Color.blue);
+         if (isRGB()) {
+            return channelIndex == 0 ? Color.red : (channelIndex == 1 ? Color.green : Color.blue);
+         }
          return new Color(getChannelSetting(channelIndex).getInt("Color"));
       } catch (Exception ex) {
          return Color.WHITE;
@@ -362,8 +362,9 @@ public class MMImageCache implements TaggedImageStorage, ImageCache {
    public void setChannelColor(int channel, int rgb) {
       JSONObject chan = getChannelSetting(channel);
       try {
-         if (chan == null)
+         if (chan == null) {
             return;  //no channel settings for rgb images
+         }
          chan.put("Color", rgb);
       } catch (JSONException ex) {
          ReportingUtils.logError(ex);
@@ -372,31 +373,32 @@ public class MMImageCache implements TaggedImageStorage, ImageCache {
 
    public String getChannelName(int channelIndex) {
       try {
-         if (isRGB())
-            return channelIndex==0 ? "Red" : (channelIndex==1 ? "Green" : "Blue");
+         if (isRGB()) {
+            return channelIndex == 0 ? "Red" : (channelIndex == 1 ? "Green" : "Blue");
+         }
          return getChannelSetting(channelIndex).getString("Name");
       } catch (Exception ex) {
          ReportingUtils.logError(ex);
          return "";
       }
    }
-   
-   
+
    public void setChannelName(int channel, String channelName) {
       try {
-         if (isRGB())
+         if (isRGB()) {
             return;
+         }
          JSONObject displayAndComments = getDisplayAndComments();
          JSONArray channelArray;
          if (displayAndComments.has("Channels")) {
             channelArray = displayAndComments.getJSONArray("Channels");
-         }  else {
+         } else {
             channelArray = new JSONArray();
-            displayAndComments.put("Channels",channelArray);
+            displayAndComments.put("Channels", channelArray);
          }
          if (channelArray.isNull(channel)) {
-             channelArray.put(channel, new JSONObject().put("Name",channelName));
-          }
+            channelArray.put(channel, new JSONObject().put("Name", channelName));
+         }
       } catch (Exception ex) {
          ReportingUtils.logError(ex);
       }
@@ -404,11 +406,13 @@ public class MMImageCache implements TaggedImageStorage, ImageCache {
    }
 
    public void setChannelVisibility(int channelIndex, boolean visible) {
-      if (display_ == null)
+      if (display_ == null) {
          return;
+      }
       ImagePlus img = display_.getHyperImage();
-      if (!img.isComposite())
+      if (!img.isComposite()) {
          return;
+      }
       CompositeImage ci = (CompositeImage) img;
       ci.getActiveChannels()[channelIndex] = visible;
    }
@@ -442,11 +446,9 @@ public class MMImageCache implements TaggedImageStorage, ImageCache {
       try {
          array = getDisplayAndComments().getJSONArray("Channels");
       } catch (Exception ex) {
-         return 1; 
+         return 1;
       }
-         
+
       return array.length();
    }
-
-
 }
