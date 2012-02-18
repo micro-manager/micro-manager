@@ -6,8 +6,7 @@ package org.micromanager.acquisition;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+import java.text.NumberFormat;
 import mmcorej.CMMCore;
 import mmcorej.TaggedImage;
 import org.json.JSONException;
@@ -30,20 +29,29 @@ public class LiveModeTimer extends javax.swing.Timer {
    private long multiChannelCameraNrCh_;
    private boolean shutterOriginalState_;
    private boolean autoShutterOriginalState_;
+   private long fpsTimer_;
+   private long fpsCounter_;
+   private long fpsInterval_ = 5000;
+   private final NumberFormat format_;
+   
 
    public LiveModeTimer(int delay) {
       super(delay, null);
       gui_ = MMStudioMainFrame.getInstance();
       core_ = gui_.getCore();
+      format_ = NumberFormat.getInstance();
+      format_.setMaximumFractionDigits(0x1);
    }
 
-   private void setInterval() {
+   public void setInterval() {
       double interval = 33;
       try {
          interval = Math.max(core_.getExposure(), 33);
       } catch (Exception e) {
          ReportingUtils.logError(e);
       }
+      fpsInterval_ =  (long) (20 *  interval);
+      
       this.setDelay((int) interval);
    }
 
@@ -63,19 +71,29 @@ public class LiveModeTimer extends javax.swing.Timer {
       }
    }
 
-   @Override
-   public void start() {
-      try {
+   public void begin() throws Exception {
+
          manageShutter(true);
          core_.startContinuousSequenceAcquisition(0);
-         gui_.checkSimpleAcquisition();
-         win_ = MMStudioMainFrame.getSimpleDisplay();
          setType();
          setInterval();
 
-         //Add first image here so initial autoscale works correctly
-         while (core_.getRemainingImageCount() == 0) {
+         // Wait for first image to create ImageWindow, so that we can be sure about image size
+         long start = System.currentTimeMillis();
+         long now = start;
+         long timeout = this.getDelay() * 4;
+         while (core_.getRemainingImageCount() == 0 && (now - start < timeout) ) {
+            now = System.currentTimeMillis();
          }
+         if (now - start >= timeout) {
+            throw new Exception("Camera did not send image within a reasonable time");
+         }
+         
+         // With first image acquired, create the display
+         gui_.checkSimpleAcquisition();
+         win_ = MMStudioMainFrame.getSimpleDisplay();
+         
+         // Add first image here so initial autoscale works correctly
          TaggedImage ti = core_.getLastTaggedImage();
          addTags(ti, multiChannelCameraNrCh_ > 1 ? ti.tags.getInt(
                  core_.getCameraDevice() + "-" + CCHANNELINDEX) : 0);
@@ -92,16 +110,12 @@ public class LiveModeTimer extends javax.swing.Timer {
             int numFound = 1;
             while (numFound < multiChannelCameraNrCh_) {
                for (int n = 0; n < 2 * multiChannelCameraNrCh_; n++) {
-                  try {
-                     TaggedImage t = core_.getNBeforeLastTaggedImage(n);
-                     int ch = t.tags.getInt(camera + "-" + CCHANNELINDEX);
-                     if (images[ch] == null) {
-                        numFound++;
-                        images[ch] = t;
-                        addTags(t, ch);
-                        break;
-                     }
-                  } catch (Exception e) {
+                  TaggedImage t = core_.getNBeforeLastTaggedImage(n);
+                  int ch = t.tags.getInt(camera + "-" + CCHANNELINDEX);
+                  if (images[ch] == null) {
+                     numFound++;
+                     images[ch] = t;
+                     addTags(t, ch);
                      break;
                   }
                }
@@ -113,14 +127,13 @@ public class LiveModeTimer extends javax.swing.Timer {
                }
             }
 
-
          }
+         
+         fpsCounter_ = 0;
+         fpsTimer_ = System.currentTimeMillis();
 
          super.start();
          win_.liveModeEnabled(true);
-      } catch (Exception ex) {
-         ReportingUtils.showError(ex);
-      }
 
    }
 
@@ -130,9 +143,26 @@ public class LiveModeTimer extends javax.swing.Timer {
       try {
          core_.stopSequenceAcquisition();
          manageShutter(false);
-         win_.liveModeEnabled(false);
+         if (win_ != null)
+            win_.liveModeEnabled(false);
       } catch (Exception ex) {
          ReportingUtils.showError(ex);
+      }
+   }
+   
+   private void updateFPS() {
+      try {
+      fpsCounter_++;
+      long now = System.currentTimeMillis();
+      long diff = now - fpsTimer_;
+      if (diff > fpsInterval_) {
+         double fps = fpsCounter_ / (diff / 1000.0);
+         ij.IJ.showStatus("fps: " + format_.format(fps));
+         fpsCounter_ = 0;
+         fpsTimer_ = now;
+      }
+      } catch (Exception ex) {
+         ReportingUtils.logError(ex);
       }
    }
 
@@ -153,6 +183,7 @@ public class LiveModeTimer extends javax.swing.Timer {
                   addTags(ti, 0);
                   gui_.addImage(ACQ_NAME, ti, true, true);
                   gui_.updateLineProfile();
+                  updateFPS();
                } catch (Exception ex) {
                   ReportingUtils.showError(ex);
                   gui_.enableLiveMode(false);
@@ -170,7 +201,7 @@ public class LiveModeTimer extends javax.swing.Timer {
             if (core_.getRemainingImageCount() == 0) {
                return;
             }
-            if (win_.windowClosed() || !gui_.acquisitionExists(gui_.SIMPLE_ACQ)) {
+            if (win_.windowClosed() || !gui_.acquisitionExists(MMStudioMainFrame.SIMPLE_ACQ)) {
                gui_.enableLiveMode(false);  //disable live if user closed window
             } else {
                try {
@@ -211,7 +242,7 @@ public class LiveModeTimer extends javax.swing.Timer {
                      }
                      gui_.addImage(MMStudioMainFrame.SIMPLE_ACQ, images[lastChannelToAdd], true, true);
                      gui_.updateLineProfile();
-
+                     updateFPS();
                   }
 
                } catch (Exception ex) {
@@ -234,7 +265,7 @@ public class LiveModeTimer extends javax.swing.Timer {
       }
    }
 
-   private void manageShutter(boolean enable) throws Exception {
+   public void manageShutter(boolean enable) throws Exception {
       String shutterLabel = core_.getShutterDevice();
       if (shutterLabel.length() > 0) {
          if (enable) {

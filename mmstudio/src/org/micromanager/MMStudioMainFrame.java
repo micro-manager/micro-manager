@@ -2170,6 +2170,8 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface, Device
    private void setExposure() {
       try {
          core_.setExposure(NumberUtils.displayStringToDouble(textFieldExp_.getText()));
+         if (isLiveModeOn())
+            liveModeTimer_.setInterval();
 
          // Display the new exposure time
          double exposure = core_.getExposure();
@@ -2792,30 +2794,39 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface, Device
          return;
       if (enable == isLiveModeOn()) 
          return;
-      if (enable) {
-         if (core_.getCameraDevice().isEmpty()) {
-            ReportingUtils.showError("No camera configured");
-            updateButtonsForLiveMode(false);
-            return;
-         }
-         try {
-            if (liveModeTimer_ == null) 
+      try {
+         if (enable) {
+            if (core_.getCameraDevice().isEmpty()) {
+               ReportingUtils.showError("No camera configured");
+               updateButtonsForLiveMode(false);
+               return;
+            }
+            if (liveModeTimer_ == null) {
                liveModeTimer_ = new LiveModeTimer(33);
-            liveModeTimer_.start();
+            }
+            liveModeTimer_.begin();
             enableLiveModeListeners(enable);
-         } catch (Exception ex) {
-            enableLiveMode(false);
-            ReportingUtils.logError(ex);
-         }
-      } else {
-         try {
+
+         } else {
             liveModeTimer_.stop();
             enableLiveModeListeners(enable);
-         } catch (Exception ex) {
-            ReportingUtils.logError(ex);
          }
+
+         updateButtonsForLiveMode(enable);
+      } catch (Exception ex) {        
+         ReportingUtils.logError(ex);
+         if (enable) {
+            try {
+               core_.stopSequenceAcquisition();
+               liveModeTimer_.manageShutter(false);
+            } catch (Exception exx) {
+               ReportingUtils.showError(exx);
+               return;
+            }
+         }
+         ReportingUtils.showError(ex.getMessage());
       }
-      updateButtonsForLiveMode(enable);
+      
    }
 
    public void updateButtonsForLiveMode(boolean enable) {
@@ -2827,7 +2838,7 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface, Device
               "/org/micromanager/icons/cancel.png")
               : SwingResourceManager.getIcon(MMStudioMainFrame.class,
               "/org/micromanager/icons/camera_go.png"));
-      toggleButtonLive_.setSelected(enable);
+      toggleButtonLive_.setSelected(false);
       toggleButtonLive_.setText(enable ? "Stop Live" : "Live");
    }
 
