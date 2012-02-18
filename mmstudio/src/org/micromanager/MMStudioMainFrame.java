@@ -844,7 +844,7 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface, Device
       setBackground(guiColors_.background.get((options_.displayBackground_)));
       SpringLayout topLayout = new SpringLayout();
       
-      this.setMinimumSize(new Dimension(580,480));
+      this.setMinimumSize(new Dimension(605,480));
       JPanel topPanel = new JPanel();
       topPanel.setLayout(topLayout);
       topPanel.setMinimumSize(new Dimension(580, 195));
