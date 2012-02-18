@@ -36,6 +36,7 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JSpinner;
+import javax.swing.ScrollPaneConstants;
 import javax.swing.SpinnerNumberModel;
 import javax.swing.SpringLayout;
 import javax.swing.event.ChangeEvent;
@@ -256,7 +257,7 @@ public class MultiChannelContrastPanel extends JPanel implements ContrastPanel {
          @Override
          public void paint(Graphics g) {
             int channelHeight = Math.max(115, contrastScrollPane_.getViewport().getSize().height / nChannels);
-            this.setPreferredSize(new Dimension(this.getSize().width, channelHeight * nChannels));
+            this.setPreferredSize(new Dimension(200, channelHeight * nChannels));
             if (ccpList_ != null) {
                for (int i = 0; i < ccpList_.size(); i++) {
                   ccpList_.get(i).setHeight(channelHeight);
@@ -268,6 +269,7 @@ public class MultiChannelContrastPanel extends JPanel implements ContrastPanel {
       int hpHeight = Math.max(115, (contrastScrollPane_.getSize().height - 2) / nChannels);
       p.setPreferredSize(new Dimension(200, nChannels * hpHeight));
       contrastScrollPane_.setViewportView(p);
+      contrastScrollPane_.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
 
       p.setLayout(layout);
       ccpList_ = new ArrayList<ChannelControlPanel>();
