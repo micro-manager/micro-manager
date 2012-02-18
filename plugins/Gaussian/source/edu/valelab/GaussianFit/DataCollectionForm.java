@@ -52,7 +52,7 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import javax.swing.JOptionPane;
-import javax.swing.SwingUtilities;
+
 import org.jfree.data.xy.XYSeries;
 
 import valelab.LocalWeightedMean;
@@ -81,6 +81,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
     */
    private class MyRowData {
       public final List<GaussianSpotData> spotList_;
+      public final ArrayList<Double> timePoints_;
       public final String name_;
       public final String title_;
       public final int width_;
@@ -109,6 +110,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
               int nrPositions,
               int maxNrSpots, 
               List<GaussianSpotData> spotList,
+              ArrayList<Double> timePoints,
               boolean isTrack) {
          name_ = name;
          title_ = title;
@@ -123,6 +125,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
          nrSlices_ = nrSlices;
          nrPositions_ = nrPositions;
          maxNrSpots_ = maxNrSpots;
+         timePoints_ = timePoints;
          isTrack_ = isTrack;
       }
    }
@@ -246,10 +249,11 @@ public class DataCollectionForm extends javax.swing.JFrame {
            int nrPositions,
            int maxNrSpots, 
            List<GaussianSpotData> spotList,
+           ArrayList<Double> timePoints,
            boolean isTrack) {
       rowData_.add(new MyRowData(name, title, width, height, pixelSizeUm, shape, halfSize,
               nrChannels, nrFrames, nrSlices, nrPositions, maxNrSpots, spotList,
-              isTrack));
+              timePoints, isTrack));
       myTableModel_.fireTableRowsInserted(rowData_.size()-1, rowData_.size());
    }
 
@@ -472,7 +476,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
 
             addSpotData(name, title, width, height, pixelSizeUm, shape, halfSize,
                     nrChannels, nrFrames, nrSlices, nrPositions, maxNrSpots,
-                    spotList, isTrack);
+                    spotList, null, isTrack);
 
          } catch (FileNotFoundException ex) {
             ex.printStackTrace();
@@ -930,7 +934,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
               rowData.height_, rowData.pixelSizeUm_, rowData.shape_,
               rowData.halfSize_, rowData.nrChannels_, rowData.nrFrames_,
               rowData.nrSlices_, 1, rowData.maxNrSpots_, transformedResultList,
-              true);
+              rowData.timePoints_, true);
    }
    
    /**
@@ -944,7 +948,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
          return;
       }
       if (lwm_ == null) {
-         ij.IJ.showMessage("No calibration data available.  First Calibrate using 2C Standard");
+         ij.IJ.showMessage("No calibration data available.  First Calibrate using 2C Reference");
          return;
       }
       
@@ -987,6 +991,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
                     rowData.height_, rowData.pixelSizeUm_, rowData.shape_,
                     rowData.halfSize_, rowData.nrChannels_, rowData.nrFrames_,
                     rowData.nrSlices_, 1, rowData.maxNrSpots_, correctedData,
+                    null, 
                     false);
          }
       };
@@ -1049,17 +1054,34 @@ public class DataCollectionForm extends javax.swing.JFrame {
          XYSeries data = new XYSeries("");
          for (int i = 0; i < rowData.spotList_.size(); i++) {
             GaussianSpotData spot = rowData.spotList_.get(i);
-            data.add(i, spot.getXCenter());
+            if (rowData.timePoints_ != null) {
+               double timePoint = rowData.timePoints_.get(i);
+               data.add(timePoint , spot.getXCenter());
+            } else {
+               data.add(i, spot.getXCenter());
+            }
          }
-         GaussianUtils.plotData(title, data, "Time", "X(nm)", 0, 400);
+         String xAxis = "Time (frameNr)";
+         if (rowData.timePoints_ != null)
+            xAxis = "Time (s)";
+         GaussianUtils.plotData(title, data, xAxis, "X(nm)", 0, 400);
       }
       else if (plotComboBox_.getSelectedIndex() == 1) {
          XYSeries data = new XYSeries("");
          for (int i = 0; i < rowData.spotList_.size(); i++) {
             GaussianSpotData spot = rowData.spotList_.get(i);
-            data.add(i, spot.getYCenter());
+            if (rowData.timePoints_ != null) {
+               double timePoint = rowData.timePoints_.get(i);
+               data.add(timePoint, spot.getYCenter());
+            } else {
+               data.add(i, spot.getYCenter());
+            }
          }
-         GaussianUtils.plotData(title, data, "Time", "Y(nm)", 0, 400);
+         String yAxis = "Time (frameNr)";
+         if (rowData.timePoints_ != null) {
+            yAxis = "Time (s)";
+         }
+         GaussianUtils.plotData(title, data, yAxis, "Y(nm)", 0, 400);
       }
       else if (plotComboBox_.getSelectedIndex() == 2) {
          XYSeries data = new XYSeries("", false, true);

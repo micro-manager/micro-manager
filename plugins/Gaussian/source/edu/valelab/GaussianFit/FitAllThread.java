@@ -88,10 +88,12 @@ public class FitAllThread extends GaussianInfo implements Runnable  {
       int nrFrames = siPlus.getNFrames();
       int nrSlices = siPlus.getNSlices();
       int maxNrSpots = 0;
+      //double elapsedTimeMs0 = 0.0;
+      //ArrayList<Double> timePoints = new ArrayList<Double>();
 
 
       try {
-         Class mmw = Class.forName("org.micromanager.api.MMWindow");
+         Class mmw = Class.forName("org.micromanager.api.MMWindow");        
          MMWindow mw = new MMWindow(siPlus);
 
          if (!mw.isMMWindow()) {
@@ -125,7 +127,8 @@ public class FitAllThread extends GaussianInfo implements Runnable  {
       dcForm.addSpotData(siPlus.getWindow().getTitle(), siPlus.getTitle(), 
               siPlus.getWidth(), siPlus.getHeight(), (float) pixelSize_,
               shape_, halfSize_,
-              nrChannels, nrFrames, nrSlices, nrPositions, resultList_.size(), resultList_, false);
+              nrChannels, nrFrames, nrSlices, nrPositions, resultList_.size(), 
+              resultList_, null, false);
       dcForm.setVisible(true);
 
       // report duration of analysis

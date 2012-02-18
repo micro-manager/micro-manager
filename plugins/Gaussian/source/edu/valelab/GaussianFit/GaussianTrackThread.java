@@ -82,7 +82,7 @@ public class GaussianTrackThread extends GaussianInfo implements Runnable  {
 
 
       String name = siPlus.getWindow().getTitle() + "-" + firstX_ + "-" + firstY_;
-      addListToForm(name, resultList_, siPlus);
+      addListToForm(name, resultList_, siPlus, timePoints);
    }
 
 
@@ -234,13 +234,14 @@ public class GaussianTrackThread extends GaussianInfo implements Runnable  {
       return true;
    }
 
-   private void addListToForm(String name, List<GaussianSpotData> resultList, ImagePlus siPlus) {
+   private void addListToForm(String name, List<GaussianSpotData> resultList, ImagePlus siPlus, ArrayList<Double> timePoints) {
       // Add data to data overview window
       DataCollectionForm dcForm = DataCollectionForm.getInstance();
       dcForm.addSpotData(name, siPlus.getTitle(), siPlus.getWidth(), 
               siPlus.getHeight(),  pixelSize_, shape_,
               halfSize_, siPlus.getNChannels(), siPlus.getNFrames(),
-              siPlus.getNSlices(), 1, resultList.size(), resultList, true);
+              siPlus.getNSlices(), 1, resultList.size(), resultList, 
+              timePoints, true);
       dcForm.setVisible(true);
    }
 
@@ -254,12 +255,6 @@ public class GaussianTrackThread extends GaussianInfo implements Runnable  {
       if (mode_ == TRACK) {
          trackGaussians();
       }
-      /*
-      if (mode_ == FIDUCIAL) {
-         trackFiducials();
-      }
-       *
-       */
-
    }
+   
 }
