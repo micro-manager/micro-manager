@@ -502,21 +502,49 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
                   preferredChannel_ = cSelector_.getValue();
                }
             });
-
-         if (imageCache_.lastAcquiredFrame() > 1)
-            setNumFrames(1 + imageCache_.lastAcquiredFrame());
-         else
-            setNumFrames(1);
+            
+            if (imageCache_.lastAcquiredFrame() > 1)
+               setNumFrames(1 + imageCache_.lastAcquiredFrame());
+            else
+               setNumFrames(1);
          configureAnimationControls();
          //cant use these function because of an imageJ bug
 //         setNumSlices(numSlices);
          setNumPositions(numPositions);
       }
-
+ 
+      
       updateAndDraw();
       updateWindowTitleAndStatus();
+      
+      forcePainting();
    }
 
+   private void forcePainting() {
+      Runnable forcePaint = new Runnable() {
+         public void run() {
+            if (zIcon_!= null)
+               zIcon_.paint(zIcon_.getGraphics());
+            if (tIcon_!= null)
+               tIcon_.paint(tIcon_.getGraphics());
+            if (cIcon_ != null)
+               cIcon_.paint(cIcon_.getGraphics());
+            if (controls_ != null)
+               controls_.paint(controls_.getGraphics());
+            if (pIcon_ != null && pIcon_.isValid())
+               pIcon_.paint(pIcon_.getGraphics());
+
+         }};
+      if (SwingUtilities.isEventDispatchThread())
+         forcePaint.run();
+      else
+         try {
+            SwingUtilities.invokeAndWait(forcePaint);
+         } catch (Exception ex) {
+            ReportingUtils.logError(ex);
+         }
+   }
+   
    private void animateSlices(boolean animate) {
       if (!animate) {
          zAnimationTimer_.stop();
@@ -1185,7 +1213,6 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
                  "Please choose a location for the data set",
                  MMStudioMainFrame.MM_DATA_SET);
          if (f == null) // Canceled.
-         
             return false;
          prefix = f.getName();
          root = new File(f.getParent()).getAbsolutePath();
