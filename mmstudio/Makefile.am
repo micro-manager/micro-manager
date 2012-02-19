@@ -42,29 +42,26 @@ MMJ_.jar:  \
 	$(srcdir)/src/org/micromanager/api/MMWindow.java \
 	$(srcdir)/src/org/micromanager/api/Pipeline.java \
 	$(srcdir)/src/org/micromanager/api/ScriptInterface.java \
-	$(srcdir)/src/org/micromanager/conf/*.html \
-	$(srcdir)/src/org/micromanager/conf/AddDeviceDlg.java \
-	$(srcdir)/src/org/micromanager/conf/ComPortsPage.java \
-	$(srcdir)/src/org/micromanager/conf/ConfigGroup.java \
-	$(srcdir)/src/org/micromanager/conf/ConfiguratorDlg.java \
-	$(srcdir)/src/org/micromanager/conf/DelayPage.java \
-	$(srcdir)/src/org/micromanager/conf/Device.java \
-	$(srcdir)/src/org/micromanager/conf/DevicesPage.java \
-	$(srcdir)/src/org/micromanager/conf/DetectorJDialog.java \
-	$(srcdir)/src/org/micromanager/conf/EditPropertiesPage.java \
-	$(srcdir)/src/org/micromanager/conf/FinishPage.java \
-	$(srcdir)/src/org/micromanager/conf/IntroPage.java \
-	$(srcdir)/src/org/micromanager/conf/Label.java \
-	$(srcdir)/src/org/micromanager/conf/LabelsPage.java \
-	$(srcdir)/src/org/micromanager/conf/MMConfigFileException.java \
-	$(srcdir)/src/org/micromanager/conf/MicroscopeModel.java \
-	$(srcdir)/src/org/micromanager/conf/PagePanel.java \
-	$(srcdir)/src/org/micromanager/conf/PeripheralDevicesPage.java \
-	$(srcdir)/src/org/micromanager/conf/PeripheralDevicesPreInitializationPropertiesPage.java \
-	$(srcdir)/src/org/micromanager/conf/PropertyTableModel.java \
-	$(srcdir)/src/org/micromanager/conf/RolesPage.java \
-	$(srcdir)/src/org/micromanager/conf/Setting.java \
-	$(srcdir)/src/org/micromanager/conf/SynchroPage.java \
+	$(srcdir)/src/org/micromanager/conf2/*.html \
+	$(srcdir)/src/org/micromanager/conf2/AddDeviceDlg.java \
+	$(srcdir)/src/org/micromanager/conf2/ComPropTableModel.java \
+	$(srcdir)/src/org/micromanager/conf2/ConfigGroup.java \
+	$(srcdir)/src/org/micromanager/conf2/ConfiguratorDlg2.java \
+	$(srcdir)/src/org/micromanager/conf2/DelayPage.java \
+	$(srcdir)/src/org/micromanager/conf2/Device.java \
+	$(srcdir)/src/org/micromanager/conf2/DevicesPage.java \
+	$(srcdir)/src/org/micromanager/conf2/DetectorJDialog.java \
+	$(srcdir)/src/org/micromanager/conf2/FinishPage.java \
+	$(srcdir)/src/org/micromanager/conf2/IntroPage.java \
+	$(srcdir)/src/org/micromanager/conf2/Label.java \
+	$(srcdir)/src/org/micromanager/conf2/LabelsPage.java \
+	$(srcdir)/src/org/micromanager/conf2/MMConfigFileException.java \
+	$(srcdir)/src/org/micromanager/conf2/MicroscopeModel.java \
+	$(srcdir)/src/org/micromanager/conf2/PagePanel.java \
+	$(srcdir)/src/org/micromanager/conf2/PeripheralSetupDlg.java \
+	$(srcdir)/src/org/micromanager/conf2/PropertyTableModel.java \
+	$(srcdir)/src/org/micromanager/conf2/RolesPage.java \
+	$(srcdir)/src/org/micromanager/conf2/Setting.java \
 	$(srcdir)/src/org/micromanager/graph/GraphData.java \
 	$(srcdir)/src/org/micromanager/graph/GraphFrame.java \
 	$(srcdir)/src/org/micromanager/graph/GraphPanel.java \
