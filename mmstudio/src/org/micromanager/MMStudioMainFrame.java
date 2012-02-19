@@ -300,7 +300,7 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface, Device
    }
    
  public void checkSimpleAcquisition() {
-      if (core_.getCameraDevice().isEmpty()) {
+      if (core_.getCameraDevice().length() == 0) {
          ReportingUtils.showError("No camera configured");
          return;
       }
@@ -2796,7 +2796,7 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface, Device
          return;
       try {
          if (enable) {
-            if (core_.getCameraDevice().isEmpty()) {
+            if (core_.getCameraDevice().length() == 0) {
                ReportingUtils.showError("No camera configured");
                updateButtonsForLiveMode(false);
                return;
@@ -2997,7 +2997,7 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface, Device
    }
 
    public void doSnap() {
-      if (core_.getCameraDevice().isEmpty()) {
+      if (core_.getCameraDevice().length() == 0) {
          ReportingUtils.showError("No camera configured");
          return;
       }
@@ -4397,7 +4397,7 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface, Device
    }
 
    public void snapAndAddToImage5D() {
-      if (core_.getCameraDevice().isEmpty()) {
+      if (core_.getCameraDevice().length() == 0) {
          ReportingUtils.showError("No camera configured");
          return;
       }

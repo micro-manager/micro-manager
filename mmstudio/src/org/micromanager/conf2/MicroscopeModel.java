@@ -897,7 +897,7 @@ public class MicroscopeModel {
          for (int i = 0; i < devices_.size(); i++) {
             Device dev = devices_.get(i);
             String parentID = dev.getParentHub();
-            if (!parentID.isEmpty()) {
+            if (!(parentID.length() == 0) ) {
                   out.write(MMCoreJ.getG_CFGCommand_ParentID() + ","
                            + dev.getName() + "," + parentID);
                   out.newLine();
@@ -1211,7 +1211,7 @@ public class MicroscopeModel {
          
          // first remove ports if any
          String port = dev.getPort();
-         if (!port.isEmpty())
+         if (! (port.length() == 0))
             comPortInUse_.remove(port);
          
          // then device itself
@@ -1555,7 +1555,7 @@ public class MicroscopeModel {
          if (!d.isInitialized() && !d.isCore()) {
             try { 
                String parentHub = d.getParentHub();
-               if (!parentHub.isEmpty())
+               if (! (parentHub.length() == 0) )
                   core_.setParentLabel(d.getName(), parentHub);
                
                core_.initializeDevice(d.getName());

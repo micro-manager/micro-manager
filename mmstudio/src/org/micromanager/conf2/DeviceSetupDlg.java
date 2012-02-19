@@ -584,7 +584,7 @@ public class DeviceSetupDlg extends MMDialog {
             progressDialog.setVisible(false);
             core.enableDebugLog(currentDebugLogSetting);
             rebuildPropTable();
-            if (!selectedPort.isEmpty()) {
+            if (! (selectedPort.length() == 0)) {
                Device pd = model.findSerialPort(selectedPort);
                if (pd != null)
                   try {

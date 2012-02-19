@@ -514,7 +514,7 @@ public class DevicesPage extends PagePanel implements ListSelectionListener, Mou
           
           // refresh parent ID references (backward compatibility with old config files)
           try {
-             if (d.getParentHub().isEmpty()) {
+             if (d.getParentHub().length() == 0) {
                 String parentID = core_.getParentLabel(d.getName());
                 d.setParentHub(parentID);
              }
