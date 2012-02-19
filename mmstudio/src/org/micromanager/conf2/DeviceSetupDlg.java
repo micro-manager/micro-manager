@@ -161,7 +161,7 @@ public class DeviceSetupDlg extends MMDialog {
       lblNewLabel_2.setBounds(10, 49, 442, 14);
       contentPanel.add(lblNewLabel_2);
       
-      JLabel parentHub = new JLabel(dev.getParentHub().isEmpty() ? "" : "Parent: " + dev.getParentHub());
+      JLabel parentHub = new JLabel( (dev.getParentHub().length() == 0) ? "" : "Parent: " + dev.getParentHub());
       parentHub.setBounds(227, 11, 225, 14);
       contentPanel.add(parentHub);
       
