@@ -2954,30 +2954,41 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface, Device
    }
 
    public boolean displayImageWithStatusLine(Object pixels, String statusLine) {
-      try {
-       
+      String[] acqs = acqMgr_.getAcqusitionNames();
+      VirtualAcquisitionDisplay virtAcq;
+      if (acqs == null || acqs.length == 0) {
          ImagePlus ip = WindowManager.getCurrentImage();
-            if (ip == null || !(ip instanceof VirtualAcquisitionDisplay.MMImagePlus
-                    || ip instanceof VirtualAcquisitionDisplay.MMCompositeImage)) {
-               return false;
-            }
-            VirtualAcquisitionDisplay virtAcq;
-            if  (ip instanceof VirtualAcquisitionDisplay.MMImagePlus)
-                virtAcq = ((VirtualAcquisitionDisplay.MMImagePlus) ip).display_;
-            else
-                virtAcq = ((VirtualAcquisitionDisplay.MMCompositeImage) ip).display_;
-            
-            JSONObject tags = virtAcq.getImageCache().getLastImageTags();
-            int width = MDUtils.getWidth(tags);
-            int height = MDUtils.getHeight(tags);
-            int depth  = MDUtils.getBitDepth(tags);
-            if (height != core_.getImageHeight() || width != core_.getImageWidth() || 
-                    depth != core_.getImageBitDepth()) 
-               return false;
-            
-            TaggedImage ti = ImageUtils.makeTaggedImage(pixels, 0, 0, 0,0, width, height, depth);
-            virtAcq.getImageCache().putImage(ti);
-            virtAcq.showImage(ti);
+         if (ip instanceof VirtualAcquisitionDisplay.MMImagePlus) {
+            virtAcq = ((VirtualAcquisitionDisplay.MMImagePlus) ip).display_;
+         } else if (ip instanceof VirtualAcquisitionDisplay.MMCompositeImage) {
+            virtAcq = ((VirtualAcquisitionDisplay.MMCompositeImage) ip).display_;
+         } else {
+            return false;
+         }
+      } else {
+         String acqName = acqs[acqs.length - 1];
+         MMAcquisition acq;
+         try {
+            acq = acqMgr_.getAcquisition(acqName);
+         } catch (MMScriptException ex) {
+            ReportingUtils.showError("Can't locate acquisition");
+            return false;
+         }
+         virtAcq = acq.getAcquisitionWindow();
+      }
+      try {
+         JSONObject tags = virtAcq.getImageCache().getLastImageTags();
+         int width = MDUtils.getWidth(tags);
+         int height = MDUtils.getHeight(tags);
+         int depth = MDUtils.getBitDepth(tags);
+         if (height != core_.getImageHeight() || width != core_.getImageWidth()
+                 || depth != core_.getImageBitDepth()) {
+            return false;
+         }
+
+         TaggedImage ti = ImageUtils.makeTaggedImage(pixels, 0, 0, 0, 0, width, height, depth);
+         virtAcq.getImageCache().putImage(ti);
+         virtAcq.showImage(ti);
          virtAcq.displayStatusLine(statusLine);
          return true;
       } catch (Exception ex) {
