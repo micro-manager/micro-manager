@@ -43,12 +43,12 @@ public class LiveModeTimer extends javax.swing.Timer {
       format_.setMaximumFractionDigits(0x1);
    }
 
-   public void setInterval() {
+   private void setInterval() {
       double interval = 33;
       try {
          interval = Math.max(core_.getExposure(), 33);
       } catch (Exception e) {
-         ReportingUtils.logError(e);
+         ReportingUtils.logError("Unable to get exposure from core");
       }
       fpsInterval_ =  (long) (20 *  interval);
       
@@ -88,13 +88,14 @@ public class LiveModeTimer extends javax.swing.Timer {
          if (now - start >= timeout) {
             throw new Exception("Camera did not send image within a reasonable time");
          }
-         
+                  
+         TaggedImage ti = core_.getLastTaggedImage();
+
          // With first image acquired, create the display
          gui_.checkSimpleAcquisition();
          win_ = MMStudioMainFrame.getSimpleDisplay();
          
          // Add first image here so initial autoscale works correctly
-         TaggedImage ti = core_.getLastTaggedImage();
          addTags(ti, multiChannelCameraNrCh_ > 1 ? ti.tags.getInt(
                  core_.getCameraDevice() + "-" + CCHANNELINDEX) : 0);
          if (multiChannelCameraNrCh_ <= 1) {
@@ -265,7 +266,7 @@ public class LiveModeTimer extends javax.swing.Timer {
       }
    }
 
-   public void manageShutter(boolean enable) throws Exception {
+   private void manageShutter(boolean enable) throws Exception {
       String shutterLabel = core_.getShutterDevice();
       if (shutterLabel.length() > 0) {
          if (enable) {
