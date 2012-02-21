@@ -398,7 +398,7 @@ int IntegratedFilterWheel::DiscoverNumberOfPositions()
    if (ret != DEVICE_OK)
       return 0;
 
-   const int answLength = sizeof(getParamsRsp);
+   const int answLength = 46;
    unsigned char answer[answLength];
    memset(answer, 0, answLength);
    ret = GetCommand(answer, answLength, answerTimeoutMs_);
