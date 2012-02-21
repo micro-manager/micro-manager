@@ -2910,18 +2910,30 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface, Device
    }
 
    public boolean displayImage(final Object pixels, boolean wait) {
-      try {
+      String[] acqs = acqMgr_.getAcqusitionNames();
+      VirtualAcquisitionDisplay virtAcq;
+      if (acqs == null || acqs.length == 0) {
          ImagePlus ip = WindowManager.getCurrentImage();
-            if (ip == null || !(ip instanceof VirtualAcquisitionDisplay.MMImagePlus
-                    || ip instanceof VirtualAcquisitionDisplay.MMCompositeImage)) {
-               return false;
-            }
-            VirtualAcquisitionDisplay virtAcq;
-            if  (ip instanceof VirtualAcquisitionDisplay.MMImagePlus)
-                virtAcq = ((VirtualAcquisitionDisplay.MMImagePlus) ip).display_;
-            else
-                virtAcq = ((VirtualAcquisitionDisplay.MMCompositeImage) ip).display_;
-            
+         if (ip instanceof VirtualAcquisitionDisplay.MMImagePlus) {
+            virtAcq = ((VirtualAcquisitionDisplay.MMImagePlus) ip).display_;
+         } else if (ip instanceof VirtualAcquisitionDisplay.MMCompositeImage) {
+            virtAcq = ((VirtualAcquisitionDisplay.MMCompositeImage) ip).display_;
+         } else {
+            return false;
+         }
+      } else {
+         String acqName = acqs[acqs.length - 1];
+         MMAcquisition acq;
+         try {
+            acq = acqMgr_.getAcquisition(acqName);
+         } catch (MMScriptException ex) {
+            ReportingUtils.showError("Can't locate acquisition");
+            return false;
+         }
+         virtAcq = acq.getAcquisitionWindow();
+      }
+
+      try {   
             JSONObject summary = virtAcq.getImageCache().getSummaryMetadata();
             int width = MDUtils.getWidth(summary);
             int height = MDUtils.getHeight(summary);
@@ -2930,20 +2942,20 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface, Device
             if (height != core_.getImageHeight() || width != core_.getImageWidth() || 
                     bitDepth != core_.getImageBitDepth()) 
                return false;
-            int byteDepth = bitDepth <= 8 ? 1 : 2;
             TaggedImage ti = ImageUtils.makeTaggedImage(pixels, 0, 0, 0,0, width, height, bitDepth);
             ti.tags.put("PixelType", pixelType);
             virtAcq.getImageCache().putImage(ti);
             virtAcq.showImage(ti, wait);
             return true;
       } catch (Exception ex) {
-         Logger.getLogger(MMStudioMainFrame.class.getName()).log(Level.SEVERE, null, ex);
+         ReportingUtils.showError(ex);
          return false;
       }
    }
 
    public boolean displayImageWithStatusLine(Object pixels, String statusLine) {
       try {
+       
          ImagePlus ip = WindowManager.getCurrentImage();
             if (ip == null || !(ip instanceof VirtualAcquisitionDisplay.MMImagePlus
                     || ip instanceof VirtualAcquisitionDisplay.MMCompositeImage)) {
