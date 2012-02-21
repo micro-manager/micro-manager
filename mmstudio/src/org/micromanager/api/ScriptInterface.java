@@ -693,16 +693,9 @@ public interface ScriptInterface {
     * Show an image with the pixel array pix (uses current camera settings
     * to figure out the shape of the image.
     * @param pix Array with pixel data.  pixeldata should match current camera settings.
+    * @deprecated use addImage instead
     */
-
    public boolean displayImage(Object pix);
-
-     /**
-    * Show a TaggedImage
-    * @param pix Array with pixel data.  pixeldata should match current camera settings.
-    */
-
-   // public boolean displayTaggedImage(TaggedImage image);
 
    /**
     * Determines whether live mode is currently running.
@@ -824,35 +817,110 @@ public interface ScriptInterface {
     */
    public boolean is16bit();
    
+   /**
+    * Refreshes GUI components.  refreshGUI() should be used instead of this function
+    * @param updateConfigPadStructure 
+    * @deprecated
+    */
    public void updateGUI(boolean updateConfigPadStructure);
 
-   public boolean displayImageWithStatusLine(Object pixels, String statusLine);   
+   /**
+    * Show an image with the pixel array pix (uses current camera settings
+    * to figure out the shape of the image.  Also displays line of text on
+    * image window
+    * @param pix Array with pixel data.  pixeldata should match current camera settings.
+    * @param statusLine line of text to display on window
+    * @deprecated use addImage instead
+    */
+   public boolean displayImageWithStatusLine(Object pix, String statusLine);   
    
+   /**
+    * Line of text in the current Image Window
+    * @param statusLine 
+    * @deprecated 
+    */
    public void displayStatusLine(String statusLine);
 
+   /**
+    * @return the currently selected AutoFocusManger object
+    */
    public AutofocusManager getAutofocusManager();
 
+   /**
+    * @return the current Micro-Manager background style--"Day" or "Night"
+    */ 
    public String getBackgroundStyle();
 
+   /**
+    * @return the currently running Micro-Manager version
+    */
    public String getVersion();
 
+   /**
+    * Initializes main GUI components.  Shouldn't need to be explicitly called
+    * @deprecated
+    */
    public void initializeGUI();
 
+   /**
+    * Returns true when any acquisition is currently running.
+    * isAcquisitionRunning() should be used instead of this function
+    * @deprecated 
+    */
    public boolean isBurstAcquisitionRunning() throws MMScriptException;
 
+   /**
+    * isLiveModeOn() should be called instead of this
+    * @return true if live mode is not running, false otherwise
+    * @deprecated
+    */
    public boolean okToAcquire();
 
+   /**
+    * Sets the background color of the GUI and all its registered components to 
+    * the selected backGroundType
+    * @param backgroundType either "Day" or "Night"
+    */
    public void setBackgroundStyle(String backgroundType);
 
+   /**
+    * lets the GUI know that the current configuration has been changed.  Activates
+    * the save button it status is true
+    * @param status 
+    */
    public void setConfigChanged(boolean status);
 
+   /**
+    * shows the position list dialog
+    */
    public void showXYPositionList();
 
+   /**
+    * runAcquisition() should be used instead of this function
+    * Executes Acquisition with current settings
+    * Will open the Acquisition Dialog when it is not open yet
+    * @throws MMScriptException 
+    * @deprecated
+    */
    public void startAcquisition() throws MMScriptException;
 
+   /**
+    * runAcquisition() should be used instead of this function
+    * @throws MMScriptException 
+    * @deprecated
+    */
    public void startBurstAcquisition() throws MMScriptException;
 
+   /**
+    * Calls enableLiveMode(false).  enableLiveMode should instead be called directly
+    * @deprecated
+    */
    public void stopAllActivity();
 
+   /**
+    * Sets the pixels of the current window to a newly snapped image
+    * @return 
+    * @deprecated
+    */
    public boolean updateImage();
 }
