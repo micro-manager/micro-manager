@@ -2169,9 +2169,19 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface, Device
 
    private void setExposure() {
       try {
-         core_.setExposure(NumberUtils.displayStringToDouble(textFieldExp_.getText()));
-         if (isLiveModeOn())
-            liveModeTimer_.setInterval();
+         if (!isLiveModeOn()) {
+            core_.setExposure(NumberUtils.displayStringToDouble(textFieldExp_.getText()));
+         } else {
+            liveModeTimer_.stop();
+            core_.setExposure(NumberUtils.displayStringToDouble(textFieldExp_.getText()));
+            try {
+               liveModeTimer_.begin();
+            } catch (Exception e) {
+               ReportingUtils.showError("Couldn't restart live mode");
+               liveModeTimer_.stop();
+            }
+         }
+        
 
          // Display the new exposure time
          double exposure = core_.getExposure();
@@ -2790,12 +2800,14 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface, Device
    }
    
    public void enableLiveMode(boolean enable) {
-      if (core_ == null) 
+      if (core_ == null) {
          return;
-      if (enable == isLiveModeOn()) 
+      }
+      if (enable == isLiveModeOn()) {
          return;
-      try {
-         if (enable) {
+      }
+      if (enable) {
+         try {
             if (core_.getCameraDevice().length() == 0) {
                ReportingUtils.showError("No camera configured");
                updateButtonsForLiveMode(false);
@@ -2806,27 +2818,18 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface, Device
             }
             liveModeTimer_.begin();
             enableLiveModeListeners(enable);
-
-         } else {
+         } catch (Exception e) {
+            ReportingUtils.logError(e);
             liveModeTimer_.stop();
-            enableLiveModeListeners(enable);
+            enableLiveModeListeners(false);
+            updateButtonsForLiveMode(false);
+            return;
          }
-
-         updateButtonsForLiveMode(enable);
-      } catch (Exception ex) {        
-         ReportingUtils.logError(ex);
-         if (enable) {
-            try {
-               core_.stopSequenceAcquisition();
-               liveModeTimer_.manageShutter(false);
-            } catch (Exception exx) {
-               ReportingUtils.showError(exx);
-               return;
-            }
-         }
-         ReportingUtils.showError(ex.getMessage());
+      } else {
+         liveModeTimer_.stop();
+         enableLiveModeListeners(enable);
       }
-      
+      updateButtonsForLiveMode(enable);
    }
 
    public void updateButtonsForLiveMode(boolean enable) {

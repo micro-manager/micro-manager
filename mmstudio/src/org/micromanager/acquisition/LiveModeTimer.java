@@ -7,6 +7,7 @@ package org.micromanager.acquisition;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.text.NumberFormat;
+import javax.swing.Timer;
 import mmcorej.CMMCore;
 import mmcorej.TaggedImage;
 import org.json.JSONException;
@@ -140,17 +141,33 @@ public class LiveModeTimer extends javax.swing.Timer {
 
    @Override
    public void stop() {
+      stop(true);
+   }
+   
+   private void stop(boolean firstAttempt) {
       super.stop();
       try {
          core_.stopSequenceAcquisition();
          manageShutter(false);
-         if (win_ != null)
+         if (win_ != null) {
             win_.liveModeEnabled(false);
+         }
       } catch (Exception ex) {
          ReportingUtils.showError(ex);
+         //Wait 1 s and try to stop again
+         if (firstAttempt) {
+            final Timer delayStop = new Timer(1000, null);
+            delayStop.addActionListener(new ActionListener() {
+               public void actionPerformed(ActionEvent e) {
+                  stop(false);
+                  delayStop.stop();
+               }
+            });
+            delayStop.start();
+         }
       }
    }
-   
+
    private void updateFPS() {
       try {
       fpsCounter_++;
@@ -185,8 +202,14 @@ public class LiveModeTimer extends javax.swing.Timer {
                   gui_.addImage(ACQ_NAME, ti, true, true);
                   gui_.updateLineProfile();
                   updateFPS();
-               } catch (Exception ex) {
+                  } catch (MMScriptException ex) {
                   ReportingUtils.showError(ex);
+                  gui_.enableLiveMode(false);
+               } catch (JSONException exc) {
+                  ReportingUtils.showError("Problem with image tags");
+                  gui_.enableLiveMode(false);
+               } catch (Exception excp) {
+                  ReportingUtils.showError("Couldn't get tagged image from core");
                   gui_.enableLiveMode(false);
                }
             }
@@ -246,8 +269,15 @@ public class LiveModeTimer extends javax.swing.Timer {
                      updateFPS();
                   }
 
-               } catch (Exception ex) {
-                  ReportingUtils.logError(ex);
+               } catch (MMScriptException ex) {
+                  ReportingUtils.showError(ex);
+                  gui_.enableLiveMode(false);
+               } catch (JSONException exc) {
+                  ReportingUtils.showError("Problem with image tags");
+                  gui_.enableLiveMode(false);
+               } catch (Exception excp) {
+                  ReportingUtils.showError("Couldn't get tagged image from core");
+                  gui_.enableLiveMode(false);
                }
             }
          }
