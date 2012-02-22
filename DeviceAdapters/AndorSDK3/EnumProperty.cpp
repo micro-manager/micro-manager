@@ -6,30 +6,31 @@
 using namespace andor;
 using namespace std;
 
-TEnumProperty::TEnumProperty(const string MM_name,
-                             IEnum* enum_feature,
-                             CAndorSDK3Camera* camera,
-                             MySequenceThread* thd,
-                             SnapShotControl* snapShotController,
-                             bool readOnly, bool needsCallBack) :
-MM_name_(MM_name), enum_feature_(enum_feature), camera_(camera), thd_(thd),
-snapShotController_(snapShotController), callBackRegistered_(needsCallBack)
+TEnumProperty::TEnumProperty(const string MM_name, IEnum * enum_feature, CAndorSDK3Camera * camera,
+                             MySequenceThread * thd, SnapShotControl * snapShotController, bool readOnly,
+                             bool needsCallBack)
+: MM_name_(MM_name),
+  enum_feature_(enum_feature),
+  camera_(camera),
+  thd_(thd),
+  snapShotController_(snapShotController),
+  callBackRegistered_(needsCallBack)
 {
-   CPropertyAction *pAct = new CPropertyAction (this, &TEnumProperty::OnEnum);
+   CPropertyAction * pAct = new CPropertyAction (this, &TEnumProperty::OnEnum);
    camera_->CreateProperty(MM_name_.c_str(), "", MM::String, readOnly, pAct);
 
-   try 
+   try
    {
-      if (needsCallBack) 
+      if (needsCallBack)
       {
          enum_feature_->Attach(this);
       }
-      else 
+      else
       {
          Update(NULL);
       }
    }
-   catch (exception &e) 
+   catch (exception & e)
    {
       // Callback not implemented for this feature
       camera_->LogMessage(e.what());
@@ -38,13 +39,13 @@ snapShotController_(snapShotController), callBackRegistered_(needsCallBack)
 
 TEnumProperty::~TEnumProperty()
 {
-   if (callBackRegistered_) 
+   if (callBackRegistered_)
    {
-      try 
+      try
       {
          enum_feature_->Detach(this);
       }
-      catch (exception &e) 
+      catch (exception & e)
       {
          // Callback not implemented for this feature
          camera_->LogMessage(e.what());
@@ -56,71 +57,71 @@ TEnumProperty::~TEnumProperty()
 inline wchar_t * convertToWString(const string & str, wchar_t * outBuf, unsigned int bufSize)
 {
    wmemset(outBuf, L'\0', bufSize);
-   mbstowcs(outBuf, str.c_str(), str.size() );
+   mbstowcs(outBuf, str.c_str(), str.size());
    return outBuf;
 }
 
 inline char * convertFromWString(const wstring & wstr, char * outBuf, unsigned int bufSize)
 {
    memset(outBuf, '\0', bufSize);
-   wcstombs(outBuf, wstr.c_str(), wstr.size() );
+   wcstombs(outBuf, wstr.c_str(), wstr.size());
    return outBuf;
 }
 
-void TEnumProperty::Update(ISubject* /*Subject*/)
+void TEnumProperty::Update(ISubject * /*Subject*/)
 {
    // This property has been changed in SDK3. The new value will be set by a
    // call to TEnumProperty::OnEnum, in here reset the list of allowed values
    //  No clear required as this is always done by base impl, if call SetAllowedValues
    vector<string> allowed_values;
    char buf[MAX_CHARS_ENUM_VALUE_BUFFER];
-   for (int i=0; i<enum_feature_->Count(); i++)
+   for (int i = 0; i < enum_feature_->Count(); i++)
    {
-      if (enum_feature_->IsIndexAvailable(i)) 
+      if (enum_feature_->IsIndexAvailable(i))
       {
          wstring value_ws = enum_feature_->GetStringByIndex(i);
-         allowed_values.push_back(convertFromWString(value_ws, buf, MAX_CHARS_ENUM_VALUE_BUFFER) );
+         allowed_values.push_back(convertFromWString(value_ws, buf, MAX_CHARS_ENUM_VALUE_BUFFER));
       }
    }
    camera_->SetAllowedValues(MM_name_.c_str(), allowed_values);
 }
 
 // Action handler for OnEnum
-int TEnumProperty::OnEnum(MM::PropertyBase* pProp, MM::ActionType eAct)
+int TEnumProperty::OnEnum(MM::PropertyBase * pProp, MM::ActionType eAct)
 {
-   if ( !enum_feature_->IsImplemented() ) 
+   if (!enum_feature_->IsImplemented())
    {
       return DEVICE_OK;
    }
-   if (eAct == MM::BeforeGet) 
+   if (eAct == MM::BeforeGet)
    {
       char buf[MAX_CHARS_ENUM_VALUE_BUFFER];
       wstring temp_ws = enum_feature_->GetStringByIndex(enum_feature_->GetIndex());
       pProp->Set(convertFromWString(temp_ws, buf, MAX_CHARS_ENUM_VALUE_BUFFER));
    }
-   else if (eAct == MM::AfterSet) 
+   else if (eAct == MM::AfterSet)
    {
-      if (!thd_->IsStopped()) 
+      if (!thd_->IsStopped())
       {
          camera_->StopSequenceAcquisition();
       }
 
       bool was_poised = false;
-      if (snapShotController_->isPoised()) 
+      if (snapShotController_->isPoised())
       {
          snapShotController_->leavePoisedMode();
          was_poised = true;
       }
-      
-      if (enum_feature_->IsWritable()) 
+
+      if (enum_feature_->IsWritable())
       {
          wchar_t buf[MAX_CHARS_ENUM_VALUE_BUFFER];
          string temp_s;
          pProp->Get(temp_s);
-         enum_feature_->Set(convertToWString(temp_s, buf, MAX_CHARS_ENUM_VALUE_BUFFER) );
+         enum_feature_->Set(convertToWString(temp_s, buf, MAX_CHARS_ENUM_VALUE_BUFFER));
       }
 
-      if(was_poised) 
+      if (was_poised)
       {
          snapShotController_->poiseForSnapShot();
       }

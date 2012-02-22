@@ -3,8 +3,10 @@
 
 using namespace andor;
 
-SnapShotControl::SnapShotControl(IDevice* cameraDevice_)
-   : cameraDevice(cameraDevice_), is_poised_(false), mono12PackedMode_(true)
+SnapShotControl::SnapShotControl(IDevice * cameraDevice_)
+: cameraDevice(cameraDevice_),
+  is_poised_(false),
+  mono12PackedMode_(true)
 {
    imageSizeBytes = cameraDevice->GetInteger(L"ImageSizeBytes");
    triggerMode = cameraDevice->GetEnum(L"TriggerMode");
@@ -33,18 +35,21 @@ void SnapShotControl::poiseForSnapShot()
 {
    cycleMode->Set(L"Continuous");
    std::wstring temp_ws = triggerMode->GetStringByIndex(triggerMode->GetIndex());
-   if (temp_ws.compare(L"Internal") == 0) {
+   if (temp_ws.compare(L"Internal") == 0)
+   {
       triggerMode->Set(L"Software");
       set_internal_ = true;
       in_software_ = true;
       in_external_ = false;
    }
-   else if (temp_ws.compare(L"Software") == 0) {
+   else if (temp_ws.compare(L"Software") == 0)
+   {
       set_internal_ = false;
       in_software_ = true;
       in_external_ = false;
    }
-   else {
+   else
+   {
       set_internal_ = false;
       in_software_ = false;
       in_external_ = true;
@@ -62,11 +67,12 @@ void SnapShotControl::poiseForSnapShot()
    }
 }
 
-void SnapShotControl::takeSnapShot(unsigned char*& return_buffer)
+void SnapShotControl::takeSnapShot(unsigned char *& return_buffer)
 {
    int buffer_size = 0;
-   
-   if (in_software_) {
+
+   if (in_software_)
+   {
       sendSoftwareTrigger->Do();
    }
    bufferControl->Wait(return_buffer, buffer_size, AT_INFINITE);
@@ -84,7 +90,8 @@ void SnapShotControl::leavePoisedMode()
    delete [] second_image_buffer;
    second_image_buffer = NULL;
 
-   if (set_internal_) {
+   if (set_internal_)
+   {
       triggerMode->Set(L"Internal");
    }
 }

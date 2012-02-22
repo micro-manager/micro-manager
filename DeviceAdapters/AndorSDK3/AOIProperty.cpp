@@ -8,30 +8,33 @@ using namespace std;
 
 static const unsigned int NUMBER_PREDEFINED_AOIS = 9;
 
-static const char* const AOI_LIST[NUMBER_PREDEFINED_AOIS] = 
+static const char * const AOI_LIST[NUMBER_PREDEFINED_AOIS] =
 {
- "Full Image",
- "2544x2160",
- "2064x2048",
- "1776x1760",
- "1920x1080",
- "1392x1040",
- " 528x512",
- " 240x256",
- " 144x128"
+   "Full Image",
+   "2544x2160",
+   "2064x2048",
+   "1776x1760",
+   "1920x1080",
+   "1392x1040",
+   " 528x512",
+   " 240x256",
+   " 144x128"
 };
 
-static const char* const g_Custom = "Custom AOI";
+static const char * const g_Custom = "Custom AOI";
 
-TAOIProperty::TAOIProperty(const std::string MM_name,
-                           CAndorSDK3Camera* camera,
-                           IDevice* device_hndl,
-                           MySequenceThread* thd,
-                           SnapShotControl* snapShotController,
-                           bool readOnly) :
-MM_name_(MM_name), camera_(camera), thd_(thd), device_hndl_(device_hndl),
-snapShotController_(snapShotController), pbProp_(NULL), fullAoiControl_(false),
-aoi_stride_(NULL), leftOffset_(1), topOffset_(1)
+TAOIProperty::TAOIProperty(const std::string MM_name, CAndorSDK3Camera * camera, IDevice * device_hndl,
+                           MySequenceThread * thd, SnapShotControl * snapShotController, bool readOnly)
+: MM_name_(MM_name),
+  camera_(camera),
+  thd_(thd),
+  device_hndl_(device_hndl),
+  snapShotController_(snapShotController),
+  pbProp_(NULL),
+  fullAoiControl_(false),
+  aoi_stride_(NULL),
+  leftOffset_(1),
+  topOffset_(1)
 {
    // Create the atcore++ objects needed to control the AIO
    aoi_height_ = device_hndl_->GetInteger(L"AOIHeight");
@@ -40,21 +43,21 @@ aoi_stride_(NULL), leftOffset_(1), topOffset_(1)
    aoi_left_ = device_hndl_->GetInteger(L"AOILeft");
 
    // Create the Micro-Manager property
-   CPropertyAction *pAct = new CPropertyAction (this, &TAOIProperty::OnAOI);
+   CPropertyAction * pAct = new CPropertyAction (this, &TAOIProperty::OnAOI);
    camera_->CreateProperty(MM_name_.c_str(), AOI_LIST[0], MM::String, readOnly, pAct);
 
    IBool * full_aoi_control(NULL);
    try
    {
       full_aoi_control = device_hndl_->GetBool(L"FullAOIControl");
-      if ( full_aoi_control->IsImplemented() )
+      if (full_aoi_control->IsImplemented())
       {
          fullAoiControl_ = full_aoi_control->Get();
          //if fullAOIControl is implemented, then Stride will be also
          aoi_stride_ = device_hndl_->GetInteger(L"AOIStride");
       }
       device_hndl_->Release(full_aoi_control);
-   
+
    }
    catch (NotImplementedException &)
    {
@@ -82,7 +85,7 @@ aoi_stride_(NULL), leftOffset_(1), topOffset_(1)
    aoiWidthHeightMap_[144] = 128;
 
    camera_->ClearAllowedValues(MM_name_.c_str());
-   for (unsigned int ui=0; ui < NUMBER_PREDEFINED_AOIS; ++ui) 
+   for (unsigned int ui = 0; ui < NUMBER_PREDEFINED_AOIS; ++ui)
    {
       camera_->AddAllowedValue(MM_name_.c_str(), AOI_LIST[ui], ui);
    }
@@ -106,15 +109,15 @@ TAOIProperty::~TAOIProperty()
    device_hndl_->Release(aoi_stride_);
 }
 
-int TAOIProperty::OnAOI(MM::PropertyBase* pProp, MM::ActionType eAct)
+int TAOIProperty::OnAOI(MM::PropertyBase * pProp, MM::ActionType eAct)
 {
-   if(pbProp_ == NULL) 
+   if (pbProp_ == NULL)
    {
-      pbProp_ = dynamic_cast<MM::Property*>(pProp);
+      pbProp_ = dynamic_cast<MM::Property *>(pProp);
    }
 
    int binning = camera_->GetBinning();
-   if (eAct == MM::BeforeGet) 
+   if (eAct == MM::BeforeGet)
    {
       AT_64 aoi_width = aoi_width_->Get();
       aoi_width *= binning;
@@ -124,83 +127,83 @@ int TAOIProperty::OnAOI(MM::PropertyBase* pProp, MM::ActionType eAct)
          int index = aoiWidthIndexMap_[aoi_width];
          pProp->Set(AOI_LIST[index]);
       }
-      else  
+      else
       {
          pProp->Set(g_Custom);
       }
    }
-   else if (eAct == MM::AfterSet) 
+   else if (eAct == MM::AfterSet)
    {
-      if (!thd_->IsStopped()) 
+      if (!thd_->IsStopped())
       {
          camera_->StopSequenceAcquisition();
       }
 
       bool was_poised = false;
-      if (snapShotController_->isPoised()) 
+      if (snapShotController_->isPoised())
       {
          snapShotController_->leavePoisedMode();
          was_poised = true;
       }
 
-      IInteger* sensorWidth = device_hndl_->GetInteger(L"SensorWidth");
-      IInteger* sensorHeight = device_hndl_->GetInteger(L"SensorHeight");
+      IInteger * sensorWidth = device_hndl_->GetInteger(L"SensorWidth");
+      IInteger * sensorHeight = device_hndl_->GetInteger(L"SensorHeight");
 
       long data = 0;
       camera_->GetCurrentPropertyData(MM_name_.c_str(), data);
 
       TMapAOIIndexType::iterator iter = aoiWidthIndexMap_.begin();
       TMapAOIIndexType::iterator iterEnd = aoiWidthIndexMap_.end();
-      while (iter != iterEnd && iter->second != data) 
+      while (iter != iterEnd && iter->second != data)
       {
          ++iter;
       }
 
       if (iter != iterEnd)
       {
-         try 
+         try
          {
-            aoi_width_->Set(iter->first/binning);
+            aoi_width_->Set(iter->first / binning);
          }
-         catch(exception &e) 
+         catch (exception & e)
          {
             camera_->LogMessage(e.what());
          }
-         
-         AT_64 i64_sensorWidth= sensorWidth->Get();
-         AT_64 i64_TargetLeft = (i64_sensorWidth - (aoi_width_->Get()*binning)) / 2 + 1;
+
+         AT_64 i64_sensorWidth = sensorWidth->Get();
+         AT_64 i64_TargetLeft = (i64_sensorWidth - (aoi_width_->Get() * binning)) / 2 + 1;
          int i_err = 0;
-         do 
+         do
          {
-            try  
+            try
             {
                aoi_left_->Set(i64_TargetLeft);
                i_err = 1;
             }
-            catch(OutOfRangeException &)  
+            catch (OutOfRangeException &)
             {
                i64_TargetLeft--;
             }
          }
-         while (i_err != 1 && i64_TargetLeft>0);
-         
-         try  
+         while (i_err != 1 && i64_TargetLeft > 0);
+
+         try
          {
-            aoi_height_->Set((aoiWidthHeightMap_[iter->first])/binning);
+            aoi_height_->Set((aoiWidthHeightMap_[iter->first]) / binning);
          }
-         catch(exception &e) 
+         catch (exception & e)
          {
             camera_->LogMessage(e.what());
          }
-         
+
          AT_64 i64_sensorHeight = sensorHeight->Get();
-         AT_64 i64_TargetTop = ( i64_sensorHeight - (aoi_height_->Get()*binning) ) / 2 + 1;
-         i64_TargetTop -= (i64_TargetTop-1) % 8;
-         try  
+         AT_64 i64_TargetTop = (i64_sensorHeight - (aoi_height_->Get() * binning)) / 2 + 1;
+         i64_TargetTop -= (i64_TargetTop - 1) % 8;
+         try
          {
             aoi_top_->Set(i64_TargetTop);
          }
-         catch(exception &e)  
+         catch (exception & e)
          {
             camera_->LogMessage(e.what());
          }
@@ -218,7 +221,7 @@ int TAOIProperty::OnAOI(MM::PropertyBase* pProp, MM::ActionType eAct)
 
       camera_->ResizeImageBuffer();
 
-      if(was_poised)  
+      if (was_poised)
       {
          snapShotController_->poiseForSnapShot();
       }
@@ -229,24 +232,24 @@ int TAOIProperty::OnAOI(MM::PropertyBase* pProp, MM::ActionType eAct)
 
 unsigned TAOIProperty::GetHeight()
 {
-   return static_cast<unsigned>(aoi_height_->Get() );
+   return static_cast<unsigned>(aoi_height_->Get());
 }
 
 unsigned TAOIProperty::GetWidth()
 {
-   return static_cast<unsigned>(aoi_width_->Get() );
+   return static_cast<unsigned>(aoi_width_->Get());
 }
 
 unsigned TAOIProperty::GetBytesPerPixel()
 {
    unsigned ret;
-   IFloat* bytesPerPixel = device_hndl_->GetFloat(L"BytesPerPixel");
+   IFloat * bytesPerPixel = device_hndl_->GetFloat(L"BytesPerPixel");
    double d_temp = bytesPerPixel->Get();
-   if (d_temp < 2) 
+   if (d_temp < 2)
    {
       ret = 2;
    }
-   else 
+   else
    {
       ret = static_cast<unsigned>(d_temp);
    }
@@ -260,11 +263,11 @@ unsigned TAOIProperty::GetStride()
 
    if (aoi_stride_)
    {
-      ret = static_cast<unsigned>(aoi_stride_->Get() );
+      ret = static_cast<unsigned>(aoi_stride_->Get());
    }
    else
    {
-      ret = static_cast<unsigned>( GetWidth() * GetBytesPerPixelF() );
+      ret = static_cast<unsigned>(GetWidth() * GetBytesPerPixelF());
    }
 
    return ret;
@@ -273,7 +276,7 @@ unsigned TAOIProperty::GetStride()
 double TAOIProperty::GetBytesPerPixelF()
 {
    double ret;
-   IFloat* bytesPerPixel = device_hndl_->GetFloat(L"BytesPerPixel");
+   IFloat * bytesPerPixel = device_hndl_->GetFloat(L"BytesPerPixel");
    ret = bytesPerPixel->Get();
    device_hndl_->Release(bytesPerPixel);
    return ret;
@@ -281,7 +284,7 @@ double TAOIProperty::GetBytesPerPixelF()
 
 void TAOIProperty::SetReadOnly(bool set_to)
 {
-   if (pbProp_ != NULL) 
+   if (pbProp_ != NULL)
    {
       pbProp_->SetReadOnly(set_to);
    }
@@ -290,8 +293,8 @@ void TAOIProperty::SetReadOnly(bool set_to)
 void TAOIProperty::SetCustomAOISize(unsigned left, unsigned top, unsigned width, unsigned height)
 {
    snapShotController_->leavePoisedMode();
-   
-   try 
+
+   try
    {
       aoi_width_->Set(width);
 
@@ -303,24 +306,24 @@ void TAOIProperty::SetCustomAOISize(unsigned left, unsigned top, unsigned width,
       }
 
       aoi_left_->Set(left);
-      
+
       aoi_height_->Set(height);
 
       top += static_cast<unsigned>(topOffset_);
 
-      if (top > aoi_top_->Max() )
+      if (top > aoi_top_->Max())
       {
-         top = static_cast<unsigned>(aoi_top_->Max() );
+         top = static_cast<unsigned>(aoi_top_->Max());
       }
 
       aoi_top_->Set(top);
    }
-   catch(exception &e) 
+   catch (exception & e)
    {
       camera_->LogMessage(e.what());
    }
    camera_->ResizeImageBuffer();
-   if (pbProp_ != NULL) 
+   if (pbProp_ != NULL)
    {
       pbProp_->Set(g_Custom);
    }

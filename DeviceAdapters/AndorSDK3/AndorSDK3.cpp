@@ -46,20 +46,17 @@ double g_IntensityFactor_ = 1.0;
 
 // External names used used by the rest of the system
 // to load particular device from the "AndorSDK3Camera.dll" library
-const char* const g_CameraName = "Neo";
-const char* const g_CameraDeviceName = "Andor Neo";
-const char* const g_CameraDeviceDescription = "Andor sCMOS Camera Device Adapter";
+const char * const g_CameraName = "Neo";
+const char * const g_CameraDeviceName = "Andor Neo";
+const char * const g_CameraDeviceDescription = "Andor sCMOS Camera Device Adapter";
 
-const char* const g_CameraDefaultBinning = "1x1";
+const char * const g_CameraDefaultBinning = "1x1";
 
 // TODO: linux entry code
 
 // windows DLL entry code
 #ifdef WIN32
-BOOL APIENTRY DllMain( HANDLE /*hModule*/, 
-                      DWORD  ul_reason_for_call, 
-                      LPVOID /*lpReserved*/
-                      )
+BOOL APIENTRY DllMain(HANDLE/*hModule*/, DWORD ul_reason_for_call, LPVOID/*lpReserved*/)
 {
    switch (ul_reason_for_call)
    {
@@ -88,7 +85,7 @@ MODULE_API void InitializeModuleData()
    AddAvailableDeviceName(g_CameraName, g_CameraDeviceDescription);
 }
 
-MODULE_API MM::Device* CreateDevice(const char* deviceName)
+MODULE_API MM::Device * CreateDevice(const char * deviceName)
 {
    if (deviceName == 0)
       return 0;
@@ -97,14 +94,17 @@ MODULE_API MM::Device* CreateDevice(const char* deviceName)
    if (strcmp(deviceName, g_CameraName) == 0)
    {
       // create camera
-      MM::Device* openedDevice = new CAndorSDK3Camera();
-      if(openedDevice) {
-         CAndorSDK3Camera * cameraPtr = dynamic_cast<CAndorSDK3Camera*>(openedDevice);
-         if (cameraPtr && cameraPtr->GetCameraPresent() ) {
+      MM::Device * openedDevice = new CAndorSDK3Camera();
+      if (openedDevice)
+      {
+         CAndorSDK3Camera * cameraPtr = dynamic_cast<CAndorSDK3Camera *>(openedDevice);
+         if (cameraPtr && cameraPtr->GetCameraPresent())
+         {
             return openedDevice;
          }
       }
-      else {
+      else
+      {
          return 0;
       }
    }
@@ -113,7 +113,7 @@ MODULE_API MM::Device* CreateDevice(const char* deviceName)
    return 0;
 }
 
-MODULE_API void DeleteDevice(MM::Device* pDevice)
+MODULE_API void DeleteDevice(MM::Device * pDevice)
 {
    delete pDevice;
 }
@@ -132,32 +132,32 @@ MODULE_API void DeleteDevice(MM::Device* pDevice)
 * the constructor. We should do as little as possible in the constructor and
 * perform most of the initialization in the Initialize() method.
 */
-CAndorSDK3Camera::CAndorSDK3Camera() :
-   CCameraBase<CAndorSDK3Camera> (),
-   deviceManager(NULL),
-   systemDevice(NULL),
-   cameraDevice(NULL),
-   imageSizeBytes(NULL),
-   cycleMode(NULL),
-   exposureTime(NULL),
-   bufferControl(NULL),
-   startAcquisitionCommand(NULL),
-   stopAcquisitionCommand(NULL),
-   triggerMode(NULL),
-   sendSoftwareTrigger(NULL),
-   frameCount(NULL),
-   frameRate(NULL),
-   initialized_(false),
-   b_cameraPresent_(false),
-   number_of_devices_(0),
-   sequenceStartTime_(0),
-   nComponents_(1),
-   pDemoResourceLock_(0),
-   image_buffers_(NULL),
-   d_frameRate_(0),
-   keep_trying_(false),
-   roiX_(0),
-   roiY_(0)
+CAndorSDK3Camera::CAndorSDK3Camera()
+: CCameraBase<CAndorSDK3Camera> (),
+  deviceManager(NULL),
+  systemDevice(NULL),
+  cameraDevice(NULL),
+  imageSizeBytes(NULL),
+  cycleMode(NULL),
+  exposureTime(NULL),
+  bufferControl(NULL),
+  startAcquisitionCommand(NULL),
+  stopAcquisitionCommand(NULL),
+  triggerMode(NULL),
+  sendSoftwareTrigger(NULL),
+  frameCount(NULL),
+  frameRate(NULL),
+  initialized_(false),
+  b_cameraPresent_(false),
+  number_of_devices_(0),
+  sequenceStartTime_(0),
+  nComponents_(1),
+  pDemoResourceLock_(0),
+  image_buffers_(NULL),
+  d_frameRate_(0),
+  keep_trying_(false),
+  roiX_(0),
+  roiY_(0)
 {
    // call the base class method to set-up default error codes/messages
    InitializeDefaultErrorMessages();
@@ -166,34 +166,39 @@ CAndorSDK3Camera::CAndorSDK3Camera() :
    pDemoResourceLock_ = new MMThreadLock();
 #endif
    thd_ = new MySequenceThread(this);
-   
+
    // Create an atcore++ device manager
    deviceManager = new TDeviceManager;
 
    // Open a system device
    systemDevice = deviceManager->OpenSystemDevice();
-   IInteger* deviceCount = systemDevice->GetInteger(L"DeviceCount");
-   SetNumberOfDevicesPresent( static_cast<int>(deviceCount->Get()) );
+   IInteger * deviceCount = systemDevice->GetInteger(L"DeviceCount");
+   SetNumberOfDevicesPresent(static_cast<int>(deviceCount->Get()));
    systemDevice->Release(deviceCount);
 
-   if (GetNumberOfDevicesPresent() > 0) {
-      for (int i=0; i<GetNumberOfDevicesPresent(); i++) {
+   if (GetNumberOfDevicesPresent() > 0)
+   {
+      for (int i = 0; i < GetNumberOfDevicesPresent(); i++)
+      {
          cameraDevice = deviceManager->OpenDevice(i);
-         IString* cameraModelString = cameraDevice->GetString(L"CameraModel");
+         IString * cameraModelString = cameraDevice->GetString(L"CameraModel");
          std::wstring temp_ws = cameraModelString->Get();
          temp_ws.erase(3);
          cameraDevice->Release(cameraModelString);
-         if (temp_ws.compare(L"DC-") == 0) {
+         if (temp_ws.compare(L"DC-") == 0)
+         {
             b_cameraPresent_ = true;
             break;
          }
-         else {
+         else
+         {
             deviceManager->CloseDevice(cameraDevice);
          }
       }
    }
 
-   if ( GetCameraPresent() ) {
+   if (GetCameraPresent())
+   {
       imageSizeBytes = cameraDevice->GetInteger(L"ImageSizeBytes");
       exposureTime = cameraDevice->GetFloat(L"ExposureTime");
       bufferControl = cameraDevice->GetBufferControl();
@@ -243,7 +248,7 @@ CAndorSDK3Camera::~CAndorSDK3Camera()
 * Obtains device name.
 * Required by the MM::Device API.
 */
-void CAndorSDK3Camera::GetName(char* name) const
+void CAndorSDK3Camera::GetName(char * name) const
 {
    // We just return the name we use for referring to this
    // device adapter.
@@ -264,7 +269,8 @@ int CAndorSDK3Camera::Initialize()
    if (initialized_)
       return DEVICE_OK;
 
-   if(0 == GetNumberOfDevicesPresent() ) {
+   if (0 == GetNumberOfDevicesPresent())
+   {
       initialized_ = false;
       return DEVICE_NOT_CONNECTED;
    }
@@ -287,68 +293,73 @@ int CAndorSDK3Camera::Initialize()
       return nRet;
 
    // CameraID
-   IString* cameraSerialNumber = cameraDevice->GetString(L"SerialNumber");
+   IString * cameraSerialNumber = cameraDevice->GetString(L"SerialNumber");
    std::wstring temp_ws = cameraSerialNumber->Get();
    char * p_cameraSerialNumber = new char[temp_ws.size() + 1];
    memset(p_cameraSerialNumber, '\0', temp_ws.size() + 1);
-   wcstombs(p_cameraSerialNumber, temp_ws.c_str(), temp_ws.size() );
+   wcstombs(p_cameraSerialNumber, temp_ws.c_str(), temp_ws.size());
    cameraDevice->Release(cameraSerialNumber);
    nRet = CreateProperty(MM::g_Keyword_CameraID, p_cameraSerialNumber, MM::String, true);
    assert(nRet == DEVICE_OK);
    delete [] p_cameraSerialNumber;
 
    // Properties
-   binning_property = new TEnumProperty(MM::g_Keyword_Binning, cameraDevice->GetEnum(L"AOIBinning"), 
-                                          this, thd_, snapShotController_, false, false);
+   binning_property = new TEnumProperty(MM::g_Keyword_Binning, cameraDevice->GetEnum(L"AOIBinning"),
+                                        this, thd_, snapShotController_, false, false);
    AddAllowedValue(MM::g_Keyword_Binning, g_CameraDefaultBinning);
    SetProperty(MM::g_Keyword_Binning, g_CameraDefaultBinning);
 
    preAmpGain_Enum = cameraDevice->GetEnum(L"PreAmpGainControl");
    preAmpGain_property = new TEnumProperty(MM::g_Keyword_Gain, preAmpGain_Enum,
-                                       this, thd_, snapShotController_, false, true);
+                                           this, thd_, snapShotController_, false, true);
 
    electronicShutteringMode_Enum = cameraDevice->GetEnum(L"ElectronicShutteringMode");
    electronicShutteringMode_property = new TEnumProperty("ElectronicShutteringMode",
-               electronicShutteringMode_Enum, this, thd_, snapShotController_, false, false);
+                                                         electronicShutteringMode_Enum, this, thd_,
+                                                         snapShotController_, false, false);
 
    temperatureControl_Enum = cameraDevice->GetEnum(L"TemperatureControl");
    temperatureControl_proptery = new TEnumProperty("TemperatureControl",
-              temperatureControl_Enum, this, thd_, snapShotController_, false, false);
+                                                   temperatureControl_Enum, this, thd_, snapShotController_, false,
+                                                   false);
 
    pixelReadoutRate_Enum = cameraDevice->GetEnum(L"PixelReadoutRate");
    pixelReadoutRate_property = new TEnumProperty("PixelReadoutRate",
-                pixelReadoutRate_Enum, this, thd_, snapShotController_, false, true);
+                                                 pixelReadoutRate_Enum, this, thd_, snapShotController_, false, true);
 
    pixelEncoding_Enum = cameraDevice->GetEnum(L"PixelEncoding");
    pixelEncoding_property = new TEnumProperty("PixelEncoding",
-                    pixelEncoding_Enum, this, thd_, snapShotController_, true, false);
+                                              pixelEncoding_Enum, this, thd_, snapShotController_, true, false);
 
    accumulationLength_Integer = cameraDevice->GetInteger(L"AccumulateCount");
    accumulationLength_property = new TIntegerProperty("AccumulateCount",
-      accumulationLength_Integer, this, thd_, snapShotController_, false, false);
+                                                      accumulationLength_Integer, this, thd_, snapShotController_,
+                                                      false, false);
 
    temperatureStatus_Enum = cameraDevice->GetEnum(L"TemperatureStatus");
    temperatureStatus_property = new TEnumProperty("TemperatureStatus",
-               temperatureStatus_Enum, this, thd_, snapShotController_, true, false);
+                                                  temperatureStatus_Enum, this, thd_, snapShotController_, true,
+                                                  false);
 
    fanSpeed_Enum = cameraDevice->GetEnum(L"FanSpeed");
    fanSpeed_property = new TEnumProperty("FanSpeed", fanSpeed_Enum, this,
-                                             thd_, snapShotController_, false, false);
+                                         thd_, snapShotController_, false, false);
 
    spuriousNoiseFilter_Boolean = cameraDevice->GetBool(L"SpuriousNoiseFilter");
    spuriousNoiseFilter_property = new TBooleanProperty("SpuriousNoiseFilter",
-                  spuriousNoiseFilter_Boolean, this, thd_, snapShotController_, false);
+                                                       spuriousNoiseFilter_Boolean, this, thd_, snapShotController_,
+                                                       false);
 
    sensorCooling_Boolean = cameraDevice->GetBool(L"SensorCooling");
    sensorCooling_property = new TBooleanProperty("SensorCooling",
-               sensorCooling_Boolean, this, thd_, snapShotController_, false);
-   IBool* sensorCooling = cameraDevice->GetBool(L"SensorCooling");
+                                                 sensorCooling_Boolean, this, thd_, snapShotController_, false);
+   IBool * sensorCooling = cameraDevice->GetBool(L"SensorCooling");
    sensorCooling->Set(true);
    cameraDevice->Release(sensorCooling);
 
    overlap_Boolean = cameraDevice->GetBool(L"Overlap");
    overlap_property = new TBooleanProperty("Overlap", overlap_Boolean,
-                                      this, thd_, snapShotController_, false);
+                                           this, thd_, snapShotController_, false);
 
    // Because the camera wil back up with images in live mode with internal trigger, switch
    // to software trigger by default
@@ -359,26 +370,26 @@ int CAndorSDK3Camera::Initialize()
    triggerMode_map[L"Software"] = L"Software (Recommended for Live Mode)";
    triggerMode_map[L"Internal"] = L"Internal (Recommended for fast acquisitions)";
    triggerMode_valueMapper = new TAndorEnumValueMapper(
-                                            triggerMode_remapper, triggerMode_map);
+      triggerMode_remapper, triggerMode_map);
    triggerMode_property = new TEnumProperty("TriggerMode", triggerMode_valueMapper,
-                                       this, thd_, snapShotController_, false, false);
-   
+                                            this, thd_, snapShotController_, false, false);
+
    readTemperature_Float = cameraDevice->GetFloat(L"SensorTemperature");
    readTemperature_property = new TFloatProperty("SensorTemperature",
-          readTemperature_Float, this, thd_, snapShotController_, true, false);
+                                                 readTemperature_Float, this, thd_, snapShotController_, true, false);
 
    frameRate_Float = cameraDevice->GetFloat(L"FrameRate");
    frameRate_floatHolder = new TAndorFloatHolder(snapShotController_, frameRate_Float);
    frameRate_property = new TFloatProperty("FrameRate", frameRate_floatHolder,
-                                 this, thd_, snapShotController_, false, true);
+                                           this, thd_, snapShotController_, false, true);
 
    exposureTime_Float = cameraDevice->GetFloat(L"ExposureTime");
    exposureTime_valueMapper = new TAndorFloatValueMapper(exposureTime_Float, 1000);
    exposureTime_property = new TFloatProperty(MM::g_Keyword_Exposure,
-          exposureTime_valueMapper, this, thd_, snapShotController_, false, false);
+                                              exposureTime_valueMapper, this, thd_, snapShotController_, false, false);
 
    aoi_property_ = new TAOIProperty("AcquisitionWindow", this, cameraDevice, thd_,
-               snapShotController_, false);
+                                    snapShotController_, false);
 
    // synchronize all properties
    // --------------------------
@@ -410,7 +421,8 @@ int CAndorSDK3Camera::Initialize()
 */
 int CAndorSDK3Camera::Shutdown()
 {
-   if(initialized_) {
+   if (initialized_)
+   {
       delete binning_property;
       delete preAmpGain_property;
       delete electronicShutteringMode_property;
@@ -450,12 +462,12 @@ int CAndorSDK3Camera::Shutdown()
 }
 
 
-void CAndorSDK3Camera::UnpackDataWithPadding(unsigned char* _pucSrcBuffer)
+void CAndorSDK3Camera::UnpackDataWithPadding(unsigned char * _pucSrcBuffer)
 {
-   andoru32 u32_pixelHeight = static_cast<andoru32>(aoi_property_->GetHeight() );
-   andoru32 u32_pixelWidth = static_cast<andoru32>(aoi_property_->GetWidth() );
+   andoru32 u32_pixelHeight = static_cast<andoru32>(aoi_property_->GetHeight());
+   andoru32 u32_pixelWidth = static_cast<andoru32>(aoi_property_->GetWidth());
    andoru32 u32_destinationStride = u32_pixelWidth * aoi_property_->GetBytesPerPixel();
-   andoru32 u32_sourceStride = static_cast<andoru32>(aoi_property_->GetStride() );
+   andoru32 u32_sourceStride = static_cast<andoru32>(aoi_property_->GetStride());
 
    TLineParser * p_sourceLineParser = NULL;
    TLineParser * p_destinationLineParser = NULL;
@@ -471,19 +483,19 @@ void CAndorSDK3Camera::UnpackDataWithPadding(unsigned char* _pucSrcBuffer)
 
    while (puc_sourceLine != NULL && puc_destinationLine != NULL)
    {
-      if ( snapShotController_->isMono12Packed() ) 
+      if (snapShotController_->isMono12Packed())
       {
          // Convert from Mono12Packed to Mono12 using stride
          unsigned short * unpacked_buffer = reinterpret_cast<unsigned short *>(puc_destinationLine);
-         for (andoru32 i=0; i<u32_pixelWidth/2; ++i) 
+         for (andoru32 i = 0; i < u32_pixelWidth / 2; ++i)
          {
-            unpacked_buffer[i*2  ] = static_cast<unsigned short>(EXTRACTLOWPACKED(puc_sourceLine));
-            unpacked_buffer[i*2+1] = static_cast<unsigned short>(EXTRACTHIGHPACKED(puc_sourceLine));
+            unpacked_buffer[i * 2  ] = static_cast<unsigned short>(EXTRACTLOWPACKED(puc_sourceLine));
+            unpacked_buffer[i * 2 + 1] = static_cast<unsigned short>(EXTRACTHIGHPACKED(puc_sourceLine));
             puc_sourceLine += 3;
          }
-         if (u32_pixelWidth%2 != 0) 
+         if (u32_pixelWidth % 2 != 0)
          {
-            unpacked_buffer[u32_pixelWidth-1] = static_cast<unsigned short>(EXTRACTLOWPACKED(puc_sourceLine));
+            unpacked_buffer[u32_pixelWidth - 1] = static_cast<unsigned short>(EXTRACTLOWPACKED(puc_sourceLine));
          }
       }
       else
@@ -507,14 +519,14 @@ void CAndorSDK3Camera::UnpackDataWithPadding(unsigned char* _pucSrcBuffer)
 */
 int CAndorSDK3Camera::SnapImage()
 {
-   unsigned char* return_buffer = NULL;
+   unsigned char * return_buffer = NULL;
 
    snapShotController_->takeSnapShot(return_buffer);
 
    UnpackDataWithPadding(return_buffer);
 
    readoutStartTime_ = GetCurrentMMTime();
-   
+
    return DEVICE_OK;
 }
 
@@ -529,18 +541,20 @@ int CAndorSDK3Camera::SnapImage()
 * the pixel buffer on its own. In other words, the buffer can change only if
 * appropriate properties are set (such as binning, pixel type, etc.)
 */
-const unsigned char* CAndorSDK3Camera::GetImageBuffer()
+const unsigned char * CAndorSDK3Camera::GetImageBuffer()
 {
    MMThreadGuard g(imgPixelsLock_);
    MM::MMTime readoutTime(readoutUs_);
-   while (readoutTime > (GetCurrentMMTime() - readoutStartTime_)) {}
+   while (readoutTime > (GetCurrentMMTime() - readoutStartTime_))
+   {
+   }
 
-		
-   MM::ImageProcessor* ip = NULL;
+
+   MM::ImageProcessor * ip = NULL;
 #ifdef PROCESSIMAGEINDEVICEADAPTER
    ip = GetCoreCallback()->GetImageProcessor(this);
 #endif
-   unsigned char *pB = (unsigned char*)(img_.GetPixels());
+   unsigned char * pB = (unsigned char *)(img_.GetPixels());
 
    if (ip)
    {
@@ -575,7 +589,7 @@ unsigned CAndorSDK3Camera::GetImageHeight() const
 unsigned CAndorSDK3Camera::GetImageBytesPerPixel() const
 {
    return aoi_property_->GetBytesPerPixel();
-} 
+}
 
 /**
 * Returns the bit depth (dynamic range) of the pixel.
@@ -607,8 +621,9 @@ long CAndorSDK3Camera::GetImageBufferSize() const
 
 int CAndorSDK3Camera::ResizeImageBuffer()
 {
-   if(initialized_) {
-      img_.Resize(aoi_property_->GetWidth(), aoi_property_->GetHeight(), aoi_property_->GetBytesPerPixel() );
+   if (initialized_)
+   {
+      img_.Resize(aoi_property_->GetWidth(), aoi_property_->GetHeight(), aoi_property_->GetBytesPerPixel());
    }
    return DEVICE_OK;
 }
@@ -652,7 +667,7 @@ int CAndorSDK3Camera::SetROI(unsigned x, unsigned y, unsigned xSize, unsigned yS
 * Returns the actual dimensions of the current ROI.
 * Required by the MM::Camera API.
 */
-int CAndorSDK3Camera::GetROI(unsigned& x, unsigned& y, unsigned& xSize, unsigned& ySize)
+int CAndorSDK3Camera::GetROI(unsigned & x, unsigned & y, unsigned & xSize, unsigned & ySize)
 {
    x = roiX_;
    y = roiY_;
@@ -672,7 +687,7 @@ int CAndorSDK3Camera::ClearROI()
    aoi_property_->ResetToFullImage();
    roiX_ = 0;
    roiY_ = 0;
-      
+
    return DEVICE_OK;
 }
 
@@ -728,41 +743,46 @@ int CAndorSDK3Camera::SetBinning(int binF)
  * Please implement this yourself and do not rely on the base class implementation
  * The Base class implementation is deprecated and will be removed shortly
  */
-int CAndorSDK3Camera::StartSequenceAcquisition(double interval) {
-   return StartSequenceAcquisition(LONG_MAX, interval, false);            
+int CAndorSDK3Camera::StartSequenceAcquisition(double interval)
+{
+   return StartSequenceAcquisition(LONG_MAX, interval, false);
 }
 
 /**                                                                       
 * Stop and wait for the Sequence thread finished                                   
-*/                                                                        
-int CAndorSDK3Camera::StopSequenceAcquisition()                                     
-{                                                                         
-   if (!thd_->IsStopped()) {
+*/
+int CAndorSDK3Camera::StopSequenceAcquisition()
+{
+   if (!thd_->IsStopped())
+   {
       thd_->Stop();
-      if(snapShotController_->isExternal()) {
+      if (snapShotController_->isExternal())
+      {
          // thd_ will still be waiting for an external trigger. Instruct to
          // stop waiting
          keep_trying_ = false;
       }
-      else {
+      else
+      {
          thd_->wait();
       }
    }
-                                                                          
-   return DEVICE_OK;                                                      
-} 
+
+   return DEVICE_OK;
+}
 
 void CAndorSDK3Camera::initialiseDeviceCircularBuffer()
 {
    try
    {
-      image_buffers_ = new unsigned char*[NO_CIRCLE_BUFFER_FRAMES];
-      for (int i=0; i< NO_CIRCLE_BUFFER_FRAMES; i++) {
-         image_buffers_[i]= new unsigned char[(unsigned int)imageSizeBytes->Get()];
+      image_buffers_ = new unsigned char * [NO_CIRCLE_BUFFER_FRAMES];
+      for (int i = 0; i < NO_CIRCLE_BUFFER_FRAMES; i++)
+      {
+         image_buffers_[i] = new unsigned char[(unsigned int)imageSizeBytes->Get()];
          bufferControl->Queue(image_buffers_[i], (int)imageSizeBytes->Get());
       }
    }
-   catch (exception &e)
+   catch (exception & e)
    {
       string s("[initialiseDeviceCircularBuffer] Caught Exception [Live] with message: ");
       s += e.what();
@@ -801,60 +821,62 @@ int CAndorSDK3Camera::StartSequenceAcquisition(long numImages, double interval_m
 
       initialiseDeviceCircularBuffer();
 
-      if(LONG_MAX != numImages) {
+      if (LONG_MAX != numImages)
+      {
          cycleMode->Set(L"Fixed");
          frameCount->Set(numImages);
       }
-      else {
+      else
+      {
          // When using the Micro-Manager GUI, this code is executed when entering live mode
          cycleMode->Set(L"Continuous");
       }
 
       // Set the frame rate to that held by the frame rate holder. Check the limits
       double held_fr = 0.0;
-      if (frameRate->IsWritable()) 
+      if (frameRate->IsWritable())
       {
          held_fr = frameRate_floatHolder->Get();
-         if (held_fr > frameRate->Max()) 
+         if (held_fr > frameRate->Max())
          {
             held_fr = frameRate->Max();
             frameRate_floatHolder->Set(held_fr);
          }
-         else if (held_fr < frameRate->Min()) 
+         else if (held_fr < frameRate->Min())
          {
             held_fr = frameRate->Min();
             frameRate_floatHolder->Set(held_fr);
          }
          frameRate->Set(held_fr);
       }
-      
+
       try
       {
          startAcquisitionCommand->Do();
-         if(snapShotController_->isSoftware()) 
+         if (snapShotController_->isSoftware())
          {
             sendSoftwareTrigger->Do();
          }
       }
-      catch (exception &e)
+      catch (exception & e)
       {
          string s("[StartSequenceAcquisition] Caught Exception [Live] with message: ");
          s += e.what();
          LogMessage(s);
          return DEVICE_ERR;
       }
-      
+
       keep_trying_ = true;
-      thd_->Start(numImages,interval_ms);
+      thd_->Start(numImages, interval_ms);
       stopOnOverflow_ = stopOnOverflow;
-      
-      if(initialized_) 
+
+      if (initialized_)
       {
          aoi_property_->SetReadOnly(true);
       }
 
    }
-   
+
    return retCode;
 }
 
@@ -866,7 +888,7 @@ int CAndorSDK3Camera::InsertImage()
    MM::MMTime timeStamp = this->GetCurrentMMTime();
    char label[MM::MaxStrLength];
    this->GetLabel(label);
- 
+
    // Important:  metadata about the image are generated here:
    Metadata md;
    md.put("Camera", label);
@@ -885,7 +907,7 @@ int CAndorSDK3Camera::InsertImage()
    MMThreadGuard g(imgPixelsLock_);
 
 
-   const unsigned char* pData = img_.GetPixels();
+   const unsigned char * pData = img_.GetPixels();
    unsigned int w = GetImageWidth();
    unsigned int h = GetImageHeight();
    unsigned int b = GetImageBytesPerPixel();
@@ -897,7 +919,7 @@ int CAndorSDK3Camera::InsertImage()
       GetCoreCallback()->ClearImageBuffer(this);
       // don't process this same image again...
       ret = GetCoreCallback()->InsertImage(this, pData, w, h, b);
-   } 
+   }
 
    return ret;
 }
@@ -906,21 +928,21 @@ int CAndorSDK3Camera::InsertImage()
  * Do actual capturing
  * Called from inside the thread  
  */
-int CAndorSDK3Camera::ThreadRun (void)
+int CAndorSDK3Camera::ThreadRun(void)
 {
-   unsigned char* return_buffer = NULL;
+   unsigned char * return_buffer = NULL;
    int buffer_size = 0;
 
    bool got_image = false;
    //TAndorTime T0, T1;
    //T0.GetCurrentSystemTime();
-   while (!got_image && keep_trying_) 
+   while (!got_image && keep_trying_)
    {
-      try 
+      try
       {
          got_image = bufferControl->Wait(return_buffer, buffer_size, 100);
       }
-      catch (exception &e) 
+      catch (exception & e)
       {
          //if (snapShotController_->isSoftware()) {
          //   sendSoftwareTrigger->Do();
@@ -929,7 +951,7 @@ int CAndorSDK3Camera::ThreadRun (void)
          s += e.what();
          LogMessage(s);
       }
-      catch (...) 
+      catch (...)
       {
          LogMessage("[ThreadRun] Unrecognised Exception caught!");
       }
@@ -941,8 +963,9 @@ int CAndorSDK3Camera::ThreadRun (void)
       //   return DEVICE_ERR;
       //}
    }
-   
-   if (snapShotController_->isSoftware()) {
+
+   if (snapShotController_->isSoftware())
+   {
       sendSoftwareTrigger->Do();
    }
 
@@ -955,7 +978,8 @@ int CAndorSDK3Camera::ThreadRun (void)
 };
 
 
-bool CAndorSDK3Camera::IsCapturing() {
+bool CAndorSDK3Camera::IsCapturing()
+{
    return !thd_->IsStopped();
 }
 
@@ -964,16 +988,18 @@ bool CAndorSDK3Camera::IsCapturing() {
  */
 void CAndorSDK3Camera::OnThreadExiting() throw()
 {
-   if(image_buffers_ != NULL)
+   if (image_buffers_ != NULL)
    {
-      for (int i=0; i< NO_CIRCLE_BUFFER_FRAMES; i++) {
+      for (int i = 0; i < NO_CIRCLE_BUFFER_FRAMES; i++)
+      {
          delete [] image_buffers_[i];
       }
       delete [] image_buffers_;
       image_buffers_ = NULL;
    }
 
-   if(initialized_) {
+   if (initialized_)
+   {
       aoi_property_->SetReadOnly(false);
    }
 
@@ -984,101 +1010,110 @@ void CAndorSDK3Camera::OnThreadExiting() throw()
    try
    {
       LogMessage(g_Msg_SEQUENCE_ACQUISITION_THREAD_EXITING);
-      GetCoreCallback()?GetCoreCallback()->AcqFinished(this,0):DEVICE_OK;
+      GetCoreCallback() ? GetCoreCallback()->AcqFinished(this, 0) : DEVICE_OK;
    }
 
-   catch( CMMError& e){
+   catch (CMMError & e)
+   {
       std::ostringstream oss;
       oss << g_Msg_EXCEPTION_IN_ON_THREAD_EXITING << " " << e.getMsg() << " " << e.getCode();
       LogMessage(oss.str().c_str(), false);
    }
-   catch(...)
+   catch (...)
    {
       LogMessage(g_Msg_EXCEPTION_IN_ON_THREAD_EXITING, false);
    }
 }
 
 
-MySequenceThread::MySequenceThread(CAndorSDK3Camera* pCam)
-   :intervalMs_(default_intervalMS)
-   ,numImages_(default_numImages)
-   ,imageCounter_(0)
-   ,stop_(true)
-   ,suspend_(false)
-   ,camera_(pCam)
-   ,startTime_(0)
-   ,actualDuration_(0)
-   ,lastFrameTime_(0)
-{};
+MySequenceThread::MySequenceThread(CAndorSDK3Camera * pCam)
+: intervalMs_(default_intervalMS),
+  numImages_(default_numImages),
+  imageCounter_(0),
+  stop_(true),
+  suspend_(false),
+  camera_(pCam),
+  startTime_(0),
+  actualDuration_(0),
+  lastFrameTime_(0) 
+{
+}
 
 MySequenceThread::~MySequenceThread() {};
 
-void MySequenceThread::Stop() {
+void MySequenceThread::Stop()
+{
    MMThreadGuard(this->stopLock_);
-   stop_=true;
+   stop_ = true;
 }
 
 void MySequenceThread::Start(long numImages, double intervalMs)
 {
    MMThreadGuard(this->stopLock_);
    MMThreadGuard(this->suspendLock_);
-   numImages_=numImages;
-   intervalMs_=intervalMs;
-   imageCounter_=0;
+   numImages_ = numImages;
+   intervalMs_ = intervalMs;
+   imageCounter_ = 0;
    stop_ = false;
-   suspend_=false;
+   suspend_ = false;
    activate();
    actualDuration_ = 0;
-   startTime_= camera_->GetCurrentMMTime();
+   startTime_ = camera_->GetCurrentMMTime();
    lastFrameTime_ = 0;
 }
 
-bool MySequenceThread::IsStopped(){
+bool MySequenceThread::IsStopped()
+{
    MMThreadGuard(this->stopLock_);
    return stop_;
 }
 
-void MySequenceThread::Suspend() {
+void MySequenceThread::Suspend()
+{
    MMThreadGuard(this->suspendLock_);
    suspend_ = true;
 }
 
-bool MySequenceThread::IsSuspended() {
+bool MySequenceThread::IsSuspended()
+{
    MMThreadGuard(this->suspendLock_);
    return suspend_;
 }
 
-void MySequenceThread::Resume() {
+void MySequenceThread::Resume()
+{
    MMThreadGuard(this->suspendLock_);
    suspend_ = false;
 }
 
 int MySequenceThread::svc(void) throw()
 {
-   int ret=DEVICE_ERR;
-   try 
+   int ret = DEVICE_ERR;
+   try
    {
       do
       {
-         ret=camera_->ThreadRun();
-      } while (DEVICE_OK == ret && !IsStopped() && imageCounter_++ < numImages_-1);
+         ret = camera_->ThreadRun();
+      } 
+      while (DEVICE_OK == ret && !IsStopped() && imageCounter_++ < numImages_ - 1);
       if (IsStopped())
          camera_->LogMessage("[svc] SeqAcquisition interrupted by the user");
 
    }
-   catch( exception& e)
+   catch (exception & e)
    {
       camera_->LogMessage(e.what());
    }
-   catch( CMMError& e)
+   catch (CMMError & e)
    {
       camera_->LogMessage(e.getMsg(), false);
       ret = e.getCode();
-   }catch(...)
+   }
+   catch (...)
    {
       camera_->LogMessage(g_Msg_EXCEPTION_IN_THREAD, false);
    }
-   stop_=true;
+   stop_ = true;
    actualDuration_ = camera_->GetCurrentMMTime() - startTime_;
    camera_->OnThreadExiting();
    return ret;
@@ -1091,6 +1126,6 @@ int MySequenceThread::svc(void) throw()
 void CAndorSDK3Camera::TestResourceLocking(const bool recurse)
 {
    MMThreadGuard g(*pDemoResourceLock_);
-   if(recurse)
+   if (recurse)
       TestResourceLocking(false);
 }
