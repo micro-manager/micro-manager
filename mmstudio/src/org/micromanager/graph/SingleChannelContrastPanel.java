@@ -770,28 +770,50 @@ public class SingleChannelContrastPanel extends JPanel implements
             }
          }
 
+         //need to recalc mean if hist display mode isnt auto
+         if (modeComboBox_.getSelectedIndex() != -1) {
+            mean_ = 0;
+            for (int i = 0; i < rawHistogram.length; i++) {
+               mean_ += i * rawHistogram[i];
+            }
+            mean_ /= imgWidth * imgHeight;
+         }
          if (drawHist) {
             stdDev_ = 0;
-            for (int i = 0; i < rawHistogram.length; i++) {
-               for (int j = 0; j < rawHistogram[i]; j++) {
-                  stdDev_ += (i - mean_) * (i - mean_);
-               }
+            if (modeComboBox_.getSelectedIndex() != -1) {
+               pixelMin_ = rawHistogram.length - 1;
             }
-            stdDev_ = Math.sqrt(stdDev_ / (imgWidth * imgHeight));
-            //Draw histogram and stats
-            histogramData.setData(histogram);
-            histogramPanel_.setData(histogramData);
-            histogramPanel_.setAutoScale();
+            for (int i = rawHistogram.length -1; i >= 0; i--) {
+               if (modeComboBox_.getSelectedIndex() != -1) {
+                  if (rawHistogram[i] > 0 && i < pixelMin_) {
+                     pixelMin_ = i;
+                  } 
+                  if (rawHistogram[i] > 0 && i > pixelMax_) {
+                     pixelMax_ = i;
+                  }
+               }
 
-            maxLabel_.setText(NumberUtils.intToDisplayString((int) pixelMax_));
-            minLabel_.setText(NumberUtils.intToDisplayString((int) pixelMin_));
-            meanLabel_.setText(NumberUtils.intToDisplayString((int) mean_));
-            stdDevLabel_.setText(NumberUtils.doubleToDisplayString(stdDev_));
+                  for (int j = 0; j < rawHistogram[i]; j++) {
+                     stdDev_ += (i - mean_) * (i - mean_);
+                  }
+               }
+               stdDev_ = Math.sqrt(stdDev_ / (imgWidth * imgHeight));
+               //Draw histogram and stats
+               histogramData.setData(histogram);
+               histogramPanel_.setData(histogramData);
+               histogramPanel_.setAutoScale();
 
-            histogramPanel_.repaint();
+               maxLabel_.setText(NumberUtils.intToDisplayString((int) pixelMax_));
+               minLabel_.setText(NumberUtils.intToDisplayString((int) pixelMin_));
+               meanLabel_.setText(NumberUtils.intToDisplayString((int) mean_));
+               stdDevLabel_.setText(NumberUtils.doubleToDisplayString(stdDev_));
+
+               histogramPanel_.repaint();
+            }
          }
       }
-   }
+
+   
 
    public void setChannelContrast(int channelIndex, int min, int max, double gamma) {
       if (channelIndex != 0) {

@@ -653,6 +653,18 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
             pixelMin_--;
          }
       }
+      //Make sure max has correct value is hist display mode isnt auto
+      if (modeComboBox_.getSelectedIndex() != -1) {
+         pixelMin_ = rawHistogram.length-1;
+         for (int i = rawHistogram.length-1; i > 0; i--) {
+            if (rawHistogram[i] > 0 && i > pixelMax_ ) {
+               pixelMax_ = i;
+            }
+            if (rawHistogram[i] > 0 && i < pixelMin_ ) {
+               pixelMin_ = i;
+            }            
+         }
+      }
 
       // work around what is apparently a bug in ImageJ
       if (total == 0) {
