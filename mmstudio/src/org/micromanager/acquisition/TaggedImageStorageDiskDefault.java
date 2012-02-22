@@ -163,11 +163,15 @@ public class TaggedImageStorageDiskDefault implements TaggedImageStorage {
             ImageProcessor proc = imp.getProcessor();
             JSONObject md = null;
             try {
-               md = new JSONObject((String) imp.getProperty("Info"));
+               if (imp.getProperty("Info") != null) {
+                  md = new JSONObject((String) imp.getProperty("Info"));
+               } else {
+                 md = metadataTable_.get(label);
+               }
             } catch (Exception e) {
                if (metadataTable_.size() > 0) {
                   md = metadataTable_.get(label);
-//                  return null;
+                  return null;
                }
             }
             String pixelType = MDUtils.getPixelType(md);
