@@ -267,9 +267,7 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
       @Override
       public void draw() {
          Runnable runnable = new Runnable() {
-
             public void run() {
-
                imageChangedUpdate();
                superDraw();
             }
@@ -937,7 +935,6 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
          setupMetadataPanel();
          if (hyperImage_ != null && hyperImage_.isVisible()) {
             hyperImage_.updateAndDraw();
-            imageChangedWindowUpdate();
          }
          updating_ = false;
       }
@@ -1230,6 +1227,7 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
          }
          ci.getProcessor().setPixels(virtualStack_.getPixels(hyperImage_.getCurrentSlice()));
       }
+      imageChangedUpdate();
       updateAndDraw();
    }
 
