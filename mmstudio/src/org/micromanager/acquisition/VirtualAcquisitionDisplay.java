@@ -1227,6 +1227,7 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
          }
          ci.getProcessor().setPixels(virtualStack_.getPixels(hyperImage_.getCurrentSlice()));
       }
+      //need to call this even though updateAndDraw also calls it to get autostretch to work properly
       imageChangedUpdate();
       updateAndDraw();
    }
