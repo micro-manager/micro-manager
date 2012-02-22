@@ -167,7 +167,7 @@ public class TaggedImageStorageDiskDefault implements TaggedImageStorage {
             } catch (Exception e) {
                if (metadataTable_.size() > 0) {
                   md = metadataTable_.get(label);
-                  return null;
+//                  return null;
                }
             }
             String pixelType = MDUtils.getPixelType(md);
@@ -437,6 +437,9 @@ public class TaggedImageStorageDiskDefault implements TaggedImageStorage {
          }
       }
       readDisplaySettings();
+      if(displaySettings_ == null) {
+         displaySettings_ = VirtualAcquisitionDisplay.getDisplaySettingsFromSummary(summaryMetadata_);
+      }     
    }
 
    private int getChannelIndex(String channelName) {

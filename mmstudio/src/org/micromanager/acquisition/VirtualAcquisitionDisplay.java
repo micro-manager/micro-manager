@@ -773,8 +773,25 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
 
          JSONArray chColors = MDUtils.getJSONArrayMember(summaryMetadata, "ChColors");
          JSONArray chNames = MDUtils.getJSONArrayMember(summaryMetadata, "ChNames");
-         JSONArray chMaxes = MDUtils.getJSONArrayMember(summaryMetadata, "ChContrastMax");
-         JSONArray chMins = MDUtils.getJSONArrayMember(summaryMetadata, "ChContrastMin");
+         JSONArray chMaxes, chMins;
+         if ( summaryMetadata.has("ChContrastMin")) {
+            chMins = MDUtils.getJSONArrayMember(summaryMetadata, "ChContrastMin");
+         } else {
+            chMins = new JSONArray();
+            for (int i = 0; i < chNames.length(); i++)
+               chMins.put(0);
+         }
+         if ( summaryMetadata.has("ChContrastMax")) {
+            chMaxes = MDUtils.getJSONArrayMember(summaryMetadata, "ChContrastMax");
+         } else {
+            int max = 65536;
+            if (summaryMetadata.has("BitDepth"))
+               max = (int) (Math.pow(2, summaryMetadata.getInt("BitDepth"))-1);
+            chMaxes = new JSONArray();
+            for (int i = 0; i < chNames.length(); i++)
+               chMaxes.put(max);
+         }
+            
 
          int numComponents = MDUtils.getNumberOfComponents(summaryMetadata);
 
