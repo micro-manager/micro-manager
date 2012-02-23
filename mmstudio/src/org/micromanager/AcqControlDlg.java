@@ -97,6 +97,7 @@ import org.micromanager.utils.TooltipTextMaker;
 import com.swtdesigner.SwingResourceManager;
 import java.awt.BorderLayout;
 import java.awt.CardLayout;
+import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.GridLayout;
 import org.micromanager.acquisition.ComponentTitledBorder;
@@ -216,6 +217,7 @@ public class AcqControlDlg extends JDialog implements PropertyChangeListener {
    private CheckBoxPanel afPanel_;
    private JPanel summaryPanel_;
    private CheckBoxPanel savePanel_;
+   private ComponentTitledPanel commentsPanel_;
    private Border dayBorder_;
    private Border nightBorder_;
    private Vector<JPanel> panelList_;
@@ -765,7 +767,8 @@ public class AcqControlDlg extends JDialog implements PropertyChangeListener {
       afPanel_ = (CheckBoxPanel) createPanel("Autofocus", 226, 65, 427, 150, true);
 
       channelsPanel_ = (CheckBoxPanel) createPanel("Channels", 5, 308, 510, 451, true);
-      savePanel_ = (CheckBoxPanel) createPanel("Save images", 5, 453, 510, 620, true);
+      savePanel_ = (CheckBoxPanel) createPanel("Save images", 5, 453, 510, 540, true);
+      commentsPanel_ = (ComponentTitledPanel) createPanel("Acquisition Comments",5, 544, 510,630,false);
 
    }
 
@@ -1291,7 +1294,6 @@ public class AcqControlDlg extends JDialog implements PropertyChangeListener {
             if (!savePanel_.isSelected()) {
                displayModeCombo_.setSelectedIndex(0);
             }
-            commentTextArea_.setEnabled(savePanel_.isSelected());
             applySettings();
          }
       });
@@ -1348,15 +1350,9 @@ public class AcqControlDlg extends JDialog implements PropertyChangeListener {
       nameField_.setBounds(90, 55, 354, 22);
       savePanel_.add(nameField_);
 
-      commentLabel_ = new JLabel();
-      commentLabel_.setFont(new Font("Arial", Font.PLAIN, 10));
-      commentLabel_.setText("Comments");
-      commentLabel_.setBounds(10, 80, 76, 22);
-      savePanel_.add(commentLabel_);
-
       JScrollPane commentScrollPane = new JScrollPane();
-      commentScrollPane.setBounds(90, 80, 354, 72);
-      savePanel_.add(commentScrollPane);
+      commentScrollPane.setBounds(10, 28, 485, 50);
+      commentsPanel_.add(commentScrollPane);
 
       commentTextArea_ = new JTextArea();
       commentScrollPane.setViewportView(commentTextArea_);
@@ -1365,8 +1361,7 @@ public class AcqControlDlg extends JDialog implements PropertyChangeListener {
       commentTextArea_.setWrapStyleWord(true);
       commentTextArea_.setLineWrap(true);
       commentTextArea_.setBorder(new EtchedBorder(EtchedBorder.LOWERED));
-      //commentTextArea_.setBounds(91, 485, 354, 62);
-      //savePanel_.add(commentTextArea_);
+
 
 
       // Main buttons
@@ -1465,7 +1460,7 @@ public class AcqControlDlg extends JDialog implements PropertyChangeListener {
       // load window settings
       int x = 100;
       int y = 100;
-      this.setBounds(x, y, 521, 645);
+      this.setBounds(x, y, 521, 670);
 
       if (prefs_ != null) {
          x = prefs_.getInt(ACQ_CONTROL_X, x);
@@ -1529,6 +1524,7 @@ public class AcqControlDlg extends JDialog implements PropertyChangeListener {
          gui_.getAutofocusManager().showOptionsDialog();
       }
    }
+
 
    public boolean inArray(String member, String[] group) {
       for (int i = 0; i < group.length; i++) {
