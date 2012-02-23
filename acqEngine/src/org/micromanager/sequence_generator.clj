@@ -391,23 +391,21 @@
                 autofocus-skip custom-intervals-ms]} settings
         num-positions (count positions)
         property-sequences (make-property-sequences (map :properties channels))]
-    (cond
-      (and (< 1 numFrames)
-           (or time-first
-               (> 2 num-positions))
-           (> 2 (count slices))
-           (or (> 2 (count channels))
-               (and
-                 (channels-sequenceable property-sequences channels)
-                 (apply == 0 (map :skip-frames channels))
-                 (apply = true (map :use-z-stack channels))))
-           (or (not use-autofocus)
-               (>= autofocus-skip (dec numFrames)))
-           (zero? (count runnables))
-           (not (first custom-intervals-ms))
-           (> default-exposure interval-ms))
-      (let [triggers 
-            {:properties (select-triggerable-sequences property-sequences)}]
+    (if (and (< 1 numFrames)
+             (or time-first
+                 (> 2 num-positions))
+             (> 2 (count slices))
+             (or (> 2 (count channels))
+                 (and
+                   (channels-sequenceable property-sequences channels)
+                   (apply == 0 (map :skip-frames channels))
+                   (apply = true (map :use-z-stack channels))))
+             (or (not use-autofocus)
+                 (>= autofocus-skip (dec numFrames)))
+             (zero? (count runnables))
+             (not (first custom-intervals-ms))
+             (> default-exposure interval-ms))
+      (let [triggers {:properties (select-triggerable-sequences property-sequences)}]
         (if (< 1 num-positions)
           (generate-multiposition-bursts
             positions numFrames use-autofocus channels
@@ -415,8 +413,7 @@
           (generate-simple-burst-sequence
             numFrames use-autofocus channels
             default-exposure triggers 0)))
-      :else
-        (generate-default-acq-sequence settings runnables))))
+      (generate-default-acq-sequence settings runnables))))
 
 ; Testing:
 
