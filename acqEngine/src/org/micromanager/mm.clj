@@ -142,19 +142,17 @@
     `(if (and ~@args_)
       (~f ~@args_))))
 
-(defn attempt-each-fn [fns]
-  "Attempt to run each fn in fns, and if they fail,
-   then report at end."
-  (let [errs (atom nil)]
-    (doseq [fun fns]
-      (try (fun)
-           (catch Throwable t (swap! errs conj t))))
-    (when-let [first-err (first @errs)]
-      (throw first-err))))
-
-(defmacro attempt-each
+(defmacro attempt-all
+  "Attempt to evaluate every form in body, regardless of exceptions,
+   then afterwards throw the first exception."
   [& body]
-  `(map #(fn [] %) '~body))
+  (let [errors (gensym "errors")]
+    `(let [~errors (atom nil)]
+       ~@(for [statement# body]
+           `(try ~statement#
+                 (catch Throwable t# (swap! ~errors conj t#))))
+       (when-let [first-err# (first @~errors)]
+         (throw first-err#)))))
 
 (defn get-default-devices
   "Get the list of default (core) devices."

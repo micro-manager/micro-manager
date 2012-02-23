@@ -24,7 +24,7 @@
            get-msp MultiStagePosition-to-map ChannelSpec-to-map
            get-pixel-type get-current-time-str rekey
            data-object-to-map str-vector double-vector
-           get-property-value edt]]
+           get-property-value edt attempt-all]]
         [org.micromanager.sequence-generator :only [generate-acq-sequence
                                                     make-property-sequences]])
   (:require [clojure.set])
@@ -534,21 +534,22 @@
 
 (defn cleanup []
   (try
-    (log "cleanup")
-    ; (do-when #(.update %) (:display @state))
-    (state-assoc! :finished true :display nil)
-    (when (core isSequenceRunning)
-      (core stopSequenceAcquisition))
-    (stop-trigger)
-    (core setAutoShutter (@state :init-auto-shutter))
-    (set-exposure (core getCameraDevice) (@state :init-exposure))
-    (set-stage-position (@state :default-z-drive) (@state :init-z-position))
-    (when-let [state (@state :init-shutter-state)]
-      (set-shutter-open state))
-    (when (and (@state :init-continuous-focus)
-               (not (core isContinuousFocusEnabled)))
-      (core enableContinuousFocus true))
-    (return-config)
+    (attempt-all
+      (log "cleanup")
+      ; (do-when #(.update %) (:display @state))
+      (state-assoc! :finished true :display nil)
+      (when (core isSequenceRunning)
+        (core stopSequenceAcquisition))
+      (stop-trigger)
+      (core setAutoShutter (@state :init-auto-shutter))
+      (set-exposure (core getCameraDevice) (@state :init-exposure))
+      (set-stage-position (@state :default-z-drive) (@state :init-z-position))
+      (when-let [state (@state :init-shutter-state)]
+        (set-shutter-open state))
+      (when (and (@state :init-continuous-focus)
+                 (not (core isContinuousFocusEnabled)))
+        (core enableContinuousFocus true))
+      (return-config))
     (catch Throwable t (ReportingUtils/showError t "Acquisition cleanup failed."))))
 
 ;; running events
