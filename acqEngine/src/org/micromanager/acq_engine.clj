@@ -183,8 +183,9 @@
       (or 
         (successful? (attempt#)) ; first attempt
         (do (log "second attempt") (successful? (attempt#)))
-        (do (log "reload and try a third time")
-            (successful? (reload-device ~device) (attempt#)))) ; third attempt after reloading
+        (when false
+          (do (log "reload and try a third time")
+          (successful? (reload-device ~device) (attempt#))))) ; third attempt after reloading
       (throw (Exception. (str "Device failure: " ~device)))
       (swap! state assoc :stop true)
       nil)))
@@ -315,9 +316,13 @@
     (swap! state assoc-in [:last-stage-positions (core getFocusDevice)]
            (last absolute-slices))))
   
-(defn pop-burst-image []
-  (while (and (. mmc isSequenceRunning) (zero? (. mmc getRemainingImageCount)))
-    (Thread/sleep 5))
+(defn pop-burst-image [timeout-ms]
+  (let [start-time (System/currentTimeMillis)]
+    (while (and (. mmc isSequenceRunning)
+                (zero? (. mmc getRemainingImageCount)))
+      (if (< timeout-ms (- (System/currentTimeMillis) start-time))
+        (throw (Exception. "Timed out waiting for image to arrive from camera."))
+        (Thread/sleep 5))))
   (let [md (Metadata.)
         pix (core popNextImageMD md)
         tags (parse-core-metadata md)]
@@ -348,7 +353,7 @@
 
 (defn collect-burst-images [event out-queue]
   (when (first-trigger-missing?)
-    (pop-burst-image)) ; drop first image if first trigger doesn't happen
+    (pop-burst-image (* 10 (:exposure event)))) ; drop first image if first trigger doesn't happen
   (swap! state assoc :burst-time-offset nil)
   (let [burst-events (assign-z-offsets (event :burst-data))
         camera-index (str (core getCameraDevice) "-CameraChannelIndex")
@@ -365,7 +370,7 @@
                    (or (pos? (core getRemainingImageCount))
                        (and (core isSequenceRunning)
                             (not (@state :circular-buffer-overflow)))))
-          (let [image (pop-burst-image)
+          (let [image (pop-burst-image (* 10 (:exposure event)))
                 cam-chan (if-let [cam-chan-str (get-in image [:tags camera-index])]
                            (Long/parseLong cam-chan-str)
                            0)
@@ -591,7 +596,7 @@
 (defn execute [event-fns]
   (doseq [event-fn event-fns :while (not (:stop @state))]
     (check-for-serious-error)
-    (try (event-fn) (catch Throwable e (ReportingUtils/logError e)))
+    (event-fn)
     (await-resume)))
 
 (defn run-acquisition [this settings out-queue]
