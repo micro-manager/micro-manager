@@ -142,13 +142,19 @@
     `(if (and ~@args_)
       (~f ~@args_))))
 
-(defn try-each [fns]
+(defn attempt-each-fn [fns]
   "Attempt to run each fn in fns, and if they fail,
    then report at end."
   (let [errs (atom nil)]
     (doseq [fun fns]
       (try (fun)
-           (catch Throwable t (swap! errs conj t))))))
+           (catch Throwable t (swap! errs conj t))))
+    (when-let [first-err (first @errs)]
+      (throw first-err))))
+
+(defmacro attempt-each
+  [& body]
+  `(map #(fn [] %) '~body))
 
 (defn get-default-devices
   "Get the list of default (core) devices."
