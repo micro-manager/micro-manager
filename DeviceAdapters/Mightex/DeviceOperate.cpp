@@ -43,7 +43,7 @@ int ModuleWrite( int devHandle, void *buffer, int size, BOOL flushFlag, int &err
 		{
           sendBuffer[0] = 0; // ReportID
           sendBuffer[1] = 1; // ASCII_TYPE
-          sendBuffer[2] = strLength;
+          sendBuffer[2] = (BYTE) strLength;
          for(i = 0; i < sendBuffer[2]; i++)
 		  {
               sendBuffer[3+i] = *bPtr;
