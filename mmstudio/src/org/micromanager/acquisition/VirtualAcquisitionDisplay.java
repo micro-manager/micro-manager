@@ -31,9 +31,11 @@ import ij.process.LUT;
 import ij.CompositeImage;
 import ij.ImagePlus;
 import ij.WindowManager;
+import ij.gui.ImageCanvas;
 import ij.gui.ImageWindow;
 import ij.gui.ScrollbarWithLabel;
 import ij.gui.StackWindow;
+import ij.gui.Toolbar;
 import ij.io.FileInfo;
 import ij.measure.Calibration;
 import java.awt.BorderLayout;
@@ -78,6 +80,7 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
    final Preferences prefs_ = Preferences.userNodeForPackage(this.getClass());
    private static final String SIMPLE_WIN_X = "simple_x";
    private static final String SIMPLE_WIN_Y = "simple_y";
+   private static final String PREF_WIN_LENGTH = "preferred_window_max_length";
    private AcquisitionEngine eng_;
    private boolean finished_ = false;
    private boolean promptToSave_ = true;
@@ -1391,16 +1394,26 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
    }
 
    private void createWindow() {
-      DisplayWindow win = new DisplayWindow(hyperImage_);
-      //This mouse listener updates the histogram after an ROI is drawn
+      final DisplayWindow win = new DisplayWindow(hyperImage_);
       win.getCanvas().addMouseListener(new MouseListener() {
 
          public void mouseClicked(MouseEvent me) {
          }
 
+         //used to store preferred zoom
          public void mousePressed(MouseEvent me) {
+            int id = Toolbar.getToolId();
+            int currentLength = (win.getSize().width + win.getSize().height) / 2;
+            if (id == 11) {//zoom tool selected
+               if (me.getButton() == MouseEvent.BUTTON1) { //Zoom in
+                  prefs_.putInt(PREF_WIN_LENGTH, Math.max(currentLength, 512));
+               } else if (me.getButton() == MouseEvent.BUTTON3) { //Zoom out              
+                  prefs_.putInt(PREF_WIN_LENGTH, Math.max(currentLength, 512));
+               }
+            }
          }
 
+         //updates the histogram after an ROI is drawn
          public void mouseReleased(MouseEvent me) {
             mdPanel_.refresh();
          }
@@ -1418,9 +1431,40 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
       win.add(controls_);
       win.pack();
 
+      //Set magnification
+      zoomToPreferredSize(win);
+      
       if (simple_) {
          win.setLocation(prefs_.getInt(SIMPLE_WIN_X, 0), prefs_.getInt(SIMPLE_WIN_Y, 0));
       }
+   }
+   
+   private void zoomToPreferredSize(DisplayWindow win) {
+      int prefLength =  prefs_.getInt(PREF_WIN_LENGTH, 512);
+      int winLength = (win.getSize().width + win.getSize().height) / 2;
+      double percentDiff = Math.abs(((double) (winLength - prefLength))/((double) prefLength));
+      ImageCanvas canvas = win.getCanvas();
+      if (winLength < prefLength) {
+         while (winLength < prefLength) {               
+            percentDiff = Math.abs(((double) (winLength - prefLength))/((double) prefLength));
+            canvas.zoomIn(canvas.getSize().width / 2, canvas.getSize().height / 2);
+            winLength = (win.getSize().width + win.getSize().height) / 2;
+         }
+         double newPercentDiff = Math.abs(((double) (winLength - prefLength))/((double) prefLength));
+         if (newPercentDiff > percentDiff) {            
+            canvas.zoomOut(canvas.getSize().width / 2, canvas.getSize().height / 2);
+         }
+      } else if (winLength > prefLength) {
+         while (winLength > prefLength) {                      
+            percentDiff = Math.abs(((double) (winLength - prefLength))/((double) prefLength));
+            canvas.zoomOut(canvas.getSize().width / 2, canvas.getSize().height / 2);
+            winLength = (win.getSize().width + win.getSize().height) / 2;
+         }
+         double newPercentDiff = Math.abs(((double) (winLength - prefLength))/((double) prefLength));
+         if (newPercentDiff > percentDiff) {            
+            canvas.zoomIn(canvas.getSize().width / 2, canvas.getSize().height / 2);
+         }   
+      } 
    }
 
    private ScrollbarWithLabel getSelector(String label) {
