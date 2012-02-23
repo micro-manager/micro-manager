@@ -341,7 +341,7 @@
                                       triggers position-index]
   (let [numChannels (max 1 (count channels))
         numFrames (max 1 numFrames)
-        exposure (if (pos? numChannels)
+        exposure (if-not (empty? channels)
                    (:exposure (first channels))
                    default-exposure)
         events
@@ -365,7 +365,8 @@
                     :channel (get channels c)
                     :slice-index 0
                     :metadata (make-channel-metadata (get channels c))))))]
-    ;(println "events:" events)
+    ;(println "events:" events "channels:" channels)
+    ;(println "default-exposure" default-exposure)
     (lazy-seq
       (list
         (assoc (first events)
@@ -391,7 +392,7 @@
         num-positions (count positions)
         property-sequences (make-property-sequences (map :properties channels))]
     (cond
-      (and (< 1 numFrames)
+      (and ;(< 1 numFrames)
            (or time-first
                (> 2 num-positions))
            (> 2 (count slices))
