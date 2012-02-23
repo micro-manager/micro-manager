@@ -391,7 +391,8 @@
         num-positions (count positions)
         property-sequences (make-property-sequences (map :properties channels))]
     (cond
-      (and (or time-first
+      (and (< 1 numFrames)
+           (or time-first
                (> 2 num-positions))
            (> 2 (count slices))
            (or (> 2 (count channels))
