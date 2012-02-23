@@ -330,6 +330,7 @@
         )))
 
 (defn make-channel-metadata
+  "Make the metadata property map for each channel."
   [channel]
   (when-let [props (:properties channel)]
     (into {}
