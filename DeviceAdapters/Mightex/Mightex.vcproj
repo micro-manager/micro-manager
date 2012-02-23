@@ -3,7 +3,7 @@
 	ProjectType="Visual C++"
 	Version="9.00"
 	Name="Mightex"
-	ProjectGUID="{DEE8AF34-2F99-4AA8-AFDA-948DE44F1DB2}"
+	ProjectGUID="{22B180B5-9E3C-455A-80D8-00387EE0A274}"
 	RootNamespace="ThorlabsDCxxxx"
 	Keyword="Win32Proj"
 	TargetFrameworkVersion="131072"
@@ -295,6 +295,7 @@
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
+				AdditionalIncludeDirectories=""
 				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;MODULE_EXPORTS"
 				RuntimeLibrary="0"
 				RuntimeTypeInfo="true"
@@ -318,7 +319,7 @@
 				AdditionalDependencies="hid.lib setupapi.lib"
 				OutputFile="$(OutDir)/mmgr_dal_$(ProjectName).dll"
 				LinkIncremental="1"
-				AdditionalLibraryDirectories="D:\WinDDK\7600.16385.1\lib\win7\amd64"
+				AdditionalLibraryDirectories="C:\WinDDK\7600.16385.1\lib\win7\amd64"
 				GenerateDebugInformation="true"
 				SubSystem="2"
 				OptimizeReferences="2"

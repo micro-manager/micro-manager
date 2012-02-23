@@ -171,7 +171,7 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ThorlabsDCxxxx", "..\Device
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "OpenCVgrabber", "..\DeviceAdapters\OpenCVgrabber\OpenCVgrabber.vcproj", "{028283B8-4E29-457E-9A78-AB6154A0F9D4}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Andor3", "..\DeviceAdapters\AndorSDK3\AndorSDK3.vcproj", "{A9E3F2DD-8B71-4FA3-9AFE-DC2040D2CDDD}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "AndorSDK3", "..\DeviceAdapters\AndorSDK3\AndorSDK3.vcproj", "{A9E3F2DD-8B71-4FA3-9AFE-DC2040D2CDDD}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "CARVII", "..\DeviceAdapters\CARVII\CARVII.vcproj", "{AA9B1613-8359-4944-B08D-B96639D0998E}"
 EndProject
@@ -230,6 +230,8 @@ EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Omicron", "..\DeviceAdapters\Omicron\Omicron.vcproj", "{FFF4637C-DD40-4E3F-BDAF-6D0C102CBC7D}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "MP285", "..\DeviceAdapters\MP285\MP285.vcproj", "{FEC6A7E8-6DB2-4DB0-9DB4-B568D0C1E521}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Mightex", "..\DeviceAdapters\Mightex\Mightex.vcproj", "{22B180B5-9E3C-455A-80D8-00387EE0A274}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -1086,6 +1088,14 @@ Global
 		{FEC6A7E8-6DB2-4DB0-9DB4-B568D0C1E521}.Release|Win32.Build.0 = Release|Win32
 		{FEC6A7E8-6DB2-4DB0-9DB4-B568D0C1E521}.Release|x64.ActiveCfg = Release|x64
 		{FEC6A7E8-6DB2-4DB0-9DB4-B568D0C1E521}.Release|x64.Build.0 = Release|x64
+		{22B180B5-9E3C-455A-80D8-00387EE0A274}.Debug|Win32.ActiveCfg = Debug|Win32
+		{22B180B5-9E3C-455A-80D8-00387EE0A274}.Debug|Win32.Build.0 = Debug|Win32
+		{22B180B5-9E3C-455A-80D8-00387EE0A274}.Debug|x64.ActiveCfg = Debug|x64
+		{22B180B5-9E3C-455A-80D8-00387EE0A274}.Debug|x64.Build.0 = Debug|x64
+		{22B180B5-9E3C-455A-80D8-00387EE0A274}.Release|Win32.ActiveCfg = Release|Win32
+		{22B180B5-9E3C-455A-80D8-00387EE0A274}.Release|Win32.Build.0 = Release|Win32
+		{22B180B5-9E3C-455A-80D8-00387EE0A274}.Release|x64.ActiveCfg = Release|x64
+		{22B180B5-9E3C-455A-80D8-00387EE0A274}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
