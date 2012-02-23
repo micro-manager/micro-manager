@@ -763,8 +763,8 @@ public class AcqControlDlg extends JDialog implements PropertyChangeListener {
 
       acquisitionOrderPanel_ = createPanel("Acquisition order", 226, 5, 427, 63);
 
-      summaryPanel_ = createPanel("Summary", 226, 152, 427, 306);
-      afPanel_ = (CheckBoxPanel) createPanel("Autofocus", 226, 65, 427, 150, true);
+      summaryPanel_ = createPanel("Summary", 226, 156, 427, 306);
+      afPanel_ = (CheckBoxPanel) createPanel("Autofocus", 226, 65, 427, 154, true);
 
       channelsPanel_ = (CheckBoxPanel) createPanel("Channels", 5, 308, 510, 451, true);
       savePanel_ = (CheckBoxPanel) createPanel("Save images", 5, 453, 510, 540, true);
