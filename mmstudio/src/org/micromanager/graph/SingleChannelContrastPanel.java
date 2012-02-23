@@ -430,7 +430,7 @@ public class SingleChannelContrastPanel extends JPanel implements
          }
       });
       modeComboBox_.setModel(new DefaultComboBoxModel(new String[]{
-                 "Auto", "8bit", "10bit", "12bit", "14bit", "16bit"}));
+                  "Auto", "8bit (0-255)", "10bit (0-1023)", "12bit (0-4095)", "14bit (0-16383)", "16bit (0-65535)"}));
       add(modeComboBox_);
       springLayout.putConstraint(SpringLayout.EAST, modeComboBox_, 0,
               SpringLayout.EAST, maxLabel_);
