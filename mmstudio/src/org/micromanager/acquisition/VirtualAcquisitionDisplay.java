@@ -1350,7 +1350,7 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
       TaggedImageStorageDiskDefault newFileManager = new TaggedImageStorageDiskDefault(root + "/" + prefix, true,
               getSummaryMetadata());
 
-      imageCache_.saveAs(newFileManager);
+      imageCache_.saveAs(newFileManager, mda_);
       MMStudioMainFrame.getInstance().setAcqDirectory(root);
       updateWindowTitleAndStatus();
       return true;

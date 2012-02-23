@@ -31,6 +31,7 @@ public interface ImageCache extends TaggedImageStorage {
    int lastAcquiredFrame();
    void removeImageStorageListener(ImageCacheListener l);
    void saveAs(TaggedImageStorage newImageFileManager);
+   void saveAs(TaggedImageStorage newImageFileManager, boolean moveToNewStorage);
    void setComment(String text);
    void setDisplayAndComments(JSONObject settings);
    void setSummaryMetadata(JSONObject tags);

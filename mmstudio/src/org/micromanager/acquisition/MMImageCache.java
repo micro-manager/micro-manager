@@ -104,6 +104,10 @@ public class MMImageCache implements TaggedImageStorage, ImageCache {
    }
 
    public void saveAs(TaggedImageStorage newImageFileManager) {
+      saveAs(newImageFileManager, true);
+   }
+          
+   public void saveAs(TaggedImageStorage newImageFileManager, boolean useNewStorage) {
       if (newImageFileManager == null) {
          return;
       }
@@ -116,7 +120,10 @@ public class MMImageCache implements TaggedImageStorage, ImageCache {
          }
       }
       newImageFileManager.setDisplayAndComments(this.getDisplayAndComments());
-      imageStorage_ = newImageFileManager;
+
+      if (useNewStorage) {
+         imageStorage_ = newImageFileManager;
+      }
    }
 
    public void putImage(TaggedImage taggedImg) {
