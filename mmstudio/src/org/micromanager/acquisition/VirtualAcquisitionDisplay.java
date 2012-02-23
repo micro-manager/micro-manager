@@ -564,14 +564,6 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
    }
 
    private void animateSlices(boolean animate) {
-      if (!animate) {
-         zAnimationTimer_.stop();
-         refreshAnimationIcons();
-         return;
-      }
-      if (tAnimationTimer_ != null) {
-         animateFrames(false);
-      }
       if (zAnimationTimer_ == null) {
          zAnimationTimer_ = new Timer((int) (1000.0 / framesPerSec_), new ActionListener() {
 
@@ -586,20 +578,21 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
             }
          });
       }
+      if (!animate) {
+         zAnimationTimer_.stop();
+         refreshAnimationIcons();
+         return;
+      }
+      if (tAnimationTimer_ != null) {
+         animateFrames(false);
+      }
+      
       zAnimationTimer_.setDelay((int) (1000.0 / framesPerSec_));
       zAnimationTimer_.start();
       refreshAnimationIcons();
    }
 
    private void animateFrames(boolean animate) {
-      if (!animate) {
-         tAnimationTimer_.stop();
-         refreshAnimationIcons();
-         return;
-      }
-      if (zAnimationTimer_ != null) {
-         animateSlices(false);
-      }
       if (tAnimationTimer_ == null) {
          tAnimationTimer_ = new Timer((int) (1000.0 / framesPerSec_), new ActionListener() {
 
@@ -614,6 +607,15 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
             }
          });
       }
+      if (!animate) {
+         tAnimationTimer_.stop();
+         refreshAnimationIcons();
+         return;
+      }
+      if (zAnimationTimer_ != null) {
+         animateSlices(false);
+      }
+    
       tAnimationTimer_.setDelay((int) (1000.0 / framesPerSec_));
       tAnimationTimer_.start();
       refreshAnimationIcons();
@@ -1050,6 +1052,12 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
       if (hyperImage_ == null) {
          startup(tags);
       }
+      final boolean framesAnimated = isTAnimated(), slicesAnimated = isZAnimated();
+      final int animatedFrameIndex = hyperImage_.getFrame(), animatedSliceIndex = hyperImage_.getSlice();
+      if (framesAnimated || slicesAnimated) {
+         animateFrames(false);
+         animateSlices(false);
+      }
 
       int channel = 0, frame = 0, slice = 0, position = 0, superChannel = 0;
       try {
@@ -1112,6 +1120,7 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
 
          public void run() {
             updateAndDraw();
+            restartAnimationAfterShowing(animatedFrameIndex, animatedSliceIndex, framesAnimated, slicesAnimated);
          }
       };
 
@@ -1123,9 +1132,23 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
          }
       } else {
          updateAndDraw();
+         restartAnimationAfterShowing(animatedFrameIndex, animatedSliceIndex, framesAnimated, slicesAnimated);
       }
 
       setPreferredScrollbarPositions();
+   }
+   
+   /**
+    * If animation was running prior to showImage, restarts it with sliders at appropriate positions 
+    */
+   private void restartAnimationAfterShowing(int frame, int slice, boolean framesAnimated, boolean slicesAnimated) {
+      if (framesAnimated) {
+         hyperImage_.setPosition(hyperImage_.getChannel(), hyperImage_.getSlice(), frame+1);
+         animateFrames(true);
+      } else if (slicesAnimated) {
+         hyperImage_.setPosition(hyperImage_.getChannel(), slice+1, hyperImage_.getFrame());
+         animateSlices(true);
+      }
    }
 
    /*
