@@ -687,7 +687,7 @@
       "ChColors" (JSONArray. (channel-colors simple-channels super-channels ch-names))
       "ChContrastMax" (JSONArray. (repeat (count super-channels) Integer/MIN_VALUE))
       "ChContrastMin" (JSONArray. (repeat (count super-channels) Integer/MAX_VALUE))
-      "Comment" (:comment :settings)
+      "Comment" (:comment settings)
       "ComputerName" (.. InetAddress getLocalHost getHostName)
       "Depth" (core getBytesPerPixel)
       "Directory" (if (:save settings) (settings :root) "")
