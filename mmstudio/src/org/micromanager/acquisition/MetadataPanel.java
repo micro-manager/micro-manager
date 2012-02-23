@@ -145,7 +145,6 @@ public class MetadataPanel extends JPanel
       imageCommentsScrollPane = new JScrollPane();
       imageCommentsTextArea = new JTextArea();
 
-      tabbedPane.setToolTipText("Examine and adjust display settings, metadata, and comments for the multi-dimensional acquisition in the frontmost window.");
       tabbedPane.setFocusable(false);
       tabbedPane.setPreferredSize(new java.awt.Dimension(400, 640));
       tabbedPane.addChangeListener(new ChangeListener() {
