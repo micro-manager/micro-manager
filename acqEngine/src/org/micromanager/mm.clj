@@ -142,6 +142,14 @@
     `(if (and ~@args_)
       (~f ~@args_))))
 
+(defn try-each [fns]
+  "Attempt to run each fn in fns, and if they fail,
+   then report at end."
+  (let [errs (atom nil)]
+    (doseq [fun fns]
+      (try (fun)
+           (catch Throwable t (swap! errs conj t))))))
+
 (defn get-default-devices
   "Get the list of default (core) devices."
   []
