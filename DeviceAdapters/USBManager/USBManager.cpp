@@ -48,25 +48,25 @@ void __attribute__ ((destructor)) my_fini(void)
 #ifdef WIN32    
 #include <time.h>
 #pragma warning(disable : 4290)
-   BOOL APIENTRY DllMain( HANDLE /*hModule*/,                                
-                          DWORD  ul_reason_for_call,                         
-                          LPVOID /*lpReserved*/                              
-                   )                                                         
-   {                                                                         
-      switch (ul_reason_for_call)                                            
-      {                                                                      
-      case DLL_PROCESS_ATTACH:                                               
-         usb_init();
+BOOL APIENTRY DllMain( HANDLE /*hModule*/,                                
+                      DWORD  ul_reason_for_call,                         
+                      LPVOID /*lpReserved*/                              
+                      )                                                         
+{                                                                         
+   switch (ul_reason_for_call)                                            
+   {                                                                      
+   case DLL_PROCESS_ATTACH:                                               
+      usb_init();
       break;                                                                 
-      case DLL_THREAD_ATTACH:                                                
+   case DLL_THREAD_ATTACH:                                                
       break;                                                                 
-      case DLL_THREAD_DETACH:                                                
+   case DLL_THREAD_DETACH:                                                
       break;                                                                 
-      case DLL_PROCESS_DETACH:                                               
+   case DLL_PROCESS_DETACH:                                               
       break;                                                                 
-      }                                                                      
-       return TRUE;                                                          
-   }
+   }                                                                      
+   return TRUE;                                                          
+}
 #else
 #include <sys/time.h>
 #endif
@@ -195,15 +195,15 @@ void USBManager::DestroyPort(MM::Device* device)
 
 
 MDUSBDevice::MDUSBDevice(std::string deviceName) :
-   refCount_(0),
-   busy_(false),
-   open_(false),
-   initialized_(false),
-   portTimeoutMs_(2000.0),
-   deviceHandle_('\0'),
-   answerTimeoutMs_(20),
-   overflowBufferOffset_(0),
-   overflowBufferLength_(0)
+refCount_(0),
+busy_(false),
+open_(false),
+initialized_(false),
+portTimeoutMs_(2000.0),
+deviceHandle_('\0'),
+answerTimeoutMs_(20),
+overflowBufferOffset_(0),
+overflowBufferLength_(0)
 {
    deviceLister = new USBDeviceLister();
    deviceLister->ListCachedUSBDevices(availableDevices_);
@@ -217,7 +217,7 @@ MDUSBDevice::MDUSBDevice(std::string deviceName) :
       ++iter;
    }
    this->LogMessage(logMsg.str().c_str(), true);
-  
+
    // Name of the device
    CPropertyAction* pAct = new CPropertyAction (this, &MDUSBDevice::OnDevice);
    int ret = CreateProperty( MM::g_Keyword_Port, deviceName.c_str(), MM::String, true, pAct);
@@ -283,25 +283,25 @@ int MDUSBDevice::Open(const char* /*portName*/)
    for (bus=busses; bus; bus=bus->next) {
       for (dev=bus->devices; dev; dev=dev->next) {
          if ( (dev->descriptor.idVendor == g_knownDevices[i].idVendor) &&
-               (dev->descriptor.idProduct == g_knownDevices[i].idProduct) ) {
-            deviceHandle_ = usb_open(dev);
-            if (deviceHandle_ <= 0)
-               printf ("Received bad deviceHandle\n");
-            if (TakeOverDevice(0) != DEVICE_OK) {
-               printf ("Failed taking over device \n");
-               logMsg << "Can not take over device " << deviceName_ << " from the OS driver";
-               this->LogMessage(logMsg.str().c_str());
-               usb_close(deviceHandle_);
-               return ERR_OPEN_FAILED;
-            }
-            deviceInputEndPoint_ = g_knownDevices[i].inputEndPoint;
-            deviceOutputEndPoint_ = g_knownDevices[i].outputEndPoint;
-            maxPacketSize_ = g_knownDevices[i].maxPacketSize;
-            ostringstream logMsg;
-            logMsg << "USB Device " << deviceName_ << " opened."; 
-            this->LogMessage(logMsg.str().c_str(), true);
-            open_ = true;
-            return DEVICE_OK;
+            (dev->descriptor.idProduct == g_knownDevices[i].idProduct) ) {
+               deviceHandle_ = usb_open(dev);
+               if (deviceHandle_ <= 0)
+                  printf ("Received bad deviceHandle\n");
+               if (TakeOverDevice(0) != DEVICE_OK) {
+                  printf ("Failed taking over device \n");
+                  logMsg << "Can not take over device " << deviceName_ << " from the OS driver";
+                  this->LogMessage(logMsg.str().c_str());
+                  usb_close(deviceHandle_);
+                  return ERR_OPEN_FAILED;
+               }
+               deviceInputEndPoint_ = g_knownDevices[i].inputEndPoint;
+               deviceOutputEndPoint_ = g_knownDevices[i].outputEndPoint;
+               maxPacketSize_ = g_knownDevices[i].maxPacketSize;
+               ostringstream logMsg;
+               logMsg << "USB Device " << deviceName_ << " opened."; 
+               this->LogMessage(logMsg.str().c_str(), true);
+               open_ = true;
+               return DEVICE_OK;
          }
       }
    }
@@ -349,10 +349,10 @@ int MDUSBDevice::Shutdown()
    if (open_)
       Close();
    initialized_ = false;
-   
+
    return DEVICE_OK;
 }
-  
+
 void MDUSBDevice::GetName(char* pszName) const
 {
    CDeviceUtils::CopyLimitedString(pszName, deviceName_.c_str());
@@ -371,9 +371,9 @@ int MDUSBDevice::SetCommand(const char* command, const char* term)
 }
 
 /**
- *  Reads from port into buffer answer of length answerLen untill full, or the terminating
- *  character term was found or a timeout (local variable maxWait) was reached
- */
+*  Reads from port into buffer answer of length answerLen untill full, or the terminating
+*  character term was found or a timeout (local variable maxWait) was reached
+*/
 int MDUSBDevice::GetAnswer(char* answer, unsigned answerLen, const char* term)
 {
    unsigned long charsRead;
@@ -415,15 +415,15 @@ int MDUSBDevice::GetAnswer(char* answer, unsigned answerLen, const char* term)
 }
 
 /*
- * Writes content of buf to the USB device
- * Splits up into chunks with a maxlength of maxPacketSize_
- * Last packet is not padded
- */
+* Writes content of buf to the USB device
+* Splits up into chunks with a maxlength of maxPacketSize_
+* Last packet is not padded
+*/
 int MDUSBDevice::Write(const unsigned char* buf, unsigned long bufLen)
 {
    int packet, nrPackets, packetLength, status;
    unsigned long i;
-   bool succes = false;
+   bool success = false;
    ostringstream logMsg;
 
    logMsg << "USB Out: ";
@@ -439,7 +439,7 @@ int MDUSBDevice::Write(const unsigned char* buf, unsigned long bufLen)
    for (packet = 0; packet < nrPackets; packet++) 
    {
       // don't know why, but we'll try up to 3 times:
-      for (i = 0;  (i < 3) && !succes; i++)
+      for (i = 0;  (i < 3) && !success; i++)
       {
          if (packet < nrPackets -1)
             packetLength = maxPacketSize_;
@@ -449,7 +449,7 @@ int MDUSBDevice::Write(const unsigned char* buf, unsigned long bufLen)
             if (packetLength == 0)
                packetLength = maxPacketSize_;
          }
-         
+
          status = usb_interrupt_write(deviceHandle_, deviceOutputEndPoint_, (char *) buf + (packet * maxPacketSize_), packetLength, (int)answerTimeoutMs_);
          // printf ("status: %d, bufLen: %lu, packetLength: %d, OutputEndpoint: %d, AnswerTimeout: %f\n", status, bufLen, packetLength, deviceOutputEndPoint_, answerTimeoutMs_);
          if (status != (int) bufLen)
@@ -457,20 +457,24 @@ int MDUSBDevice::Write(const unsigned char* buf, unsigned long bufLen)
             logMsg.clear();
             logMsg << "USB write failed...";
             LogMessage(logMsg.str().c_str());
-            if (i == 3)
+            if (i == 2)
+            {
                return ERR_WRITE_FAILED;
+            }
          }
          else 
-            succes = true;
+         {
+            success = true;
+         }
       }
    }
 
    return DEVICE_OK;
 }
- 
+
 /*
- * This functions does the actual reading from the USB device
- */
+* This functions does the actual reading from the USB device
+*/
 int MDUSBDevice::Read(unsigned char* buf, unsigned long bufLen, unsigned long& charsRead)
 {
    ostringstream logMsg;
@@ -482,7 +486,7 @@ int MDUSBDevice::Read(unsigned char* buf, unsigned long bufLen, unsigned long& c
 
    charsRead = 0;
    memset(buf, 0, bufLen);
-   
+
    logMsg << "USB read ";
 
    // keep an internal buffer in case we read too many chars from USB
@@ -566,12 +570,12 @@ int MDUSBDevice::HandleError(int errorCode)
    if (errorCode == ERR_OPEN_FAILED || errorCode == ERR_SETUP_FAILED)
    {
       // figure out if this port is in the list of ports discovered on startup:
-	   vector<std::string>::iterator pResult = find(availableDevices_.begin(),availableDevices_.end(),deviceName_);
+      vector<std::string>::iterator pResult = find(availableDevices_.begin(),availableDevices_.end(),deviceName_);
       if (pResult == availableDevices_.end()) {
          ErrorMsg = "This Device does not exist.  Available devices are: \n";
          for (vector<std::string>::iterator it=availableDevices_.begin();
-               it != availableDevices_.end(); it++) {
-            ErrorMsg += *it + "\n";
+            it != availableDevices_.end(); it++) {
+               ErrorMsg += *it + "\n";
          }
          SetErrorText(ERR_PORT_DOES_NOT_EXIST, ErrorMsg.c_str());
          return (ERR_PORT_DOES_NOT_EXIST);
@@ -583,8 +587,8 @@ int MDUSBDevice::HandleError(int errorCode)
          if (pResult == availableDevices_.end()) {
             ErrorMsg = "This Devices was disconnected.  Currently available Devices are: \n";
             for (vector<std::string>::iterator it=availableDevices_.begin();
-                  it != availableDevices_.end(); it++) {
-               ErrorMsg += *it + "\n";
+               it != availableDevices_.end(); it++) {
+                  ErrorMsg += *it + "\n";
             }
             SetErrorText(ERR_PORT_DISAPPEARED, ErrorMsg.c_str());
             // not in list anymore, report it disappeared:
@@ -638,14 +642,14 @@ int MDUSBDevice::TakeOverDevice(int iface)
    }
    else
    {
-       int status = usb_set_altinterface(deviceHandle_, iface);
-       if (status < 0)
-       {
+      int status = usb_set_altinterface(deviceHandle_, iface);
+      if (status < 0)
+      {
          // printf("USB: Set alt interface error: %d\n", status);
          logMsg << "Set alternate interface error: " << usb_strerror();
          this->LogMessage(logMsg.str().c_str(), true);
          return ERR_CLAIM_INTERFACE;
-       }
+      }
    }
 
    logMsg << "Found interface " << iface << "\nTook over the device";
@@ -700,15 +704,15 @@ int MDUSBDevice::OnTimeout(MM::PropertyBase* pProp, MM::ActionType eAct)
    {  
       pProp->Get(answerTimeoutMs_);
    }     
-         
+
    return DEVICE_OK;
 } 
 
 
 /*
- * Class whose sole function is to list USB devices available on the user's system
- * Methods are provided to give a fresh or a cached list
- */
+* Class whose sole function is to list USB devices available on the user's system
+* Methods are provided to give a fresh or a cached list
+*/
 USBDeviceLister::USBDeviceLister()
 {
    bool stale = GetCurrentMMTime() - g_deviceListLastUpdated > MM::MMTime(5,0) ? true : false;
@@ -729,7 +733,7 @@ USBDeviceLister::~USBDeviceLister()
 MM::MMTime USBDeviceLister::GetCurrentMMTime() 
 {
 #ifdef WIN32
-    time_t seconds;
+   time_t seconds;
    seconds = time (NULL);
    return MM::MMTime((long)seconds, 0);
 #else
@@ -768,10 +772,10 @@ void USBDeviceLister::FindUSBDevices(std::vector<std::string> &availableDevices)
       for (dev = bus->devices; dev; dev = dev->next) {
          for (int i=0; i<g_numberKnownDevices; i++) {
             if ( (dev->descriptor.idVendor == g_knownDevices[i].idVendor) &&
-                  (dev->descriptor.idProduct == g_knownDevices[i].idProduct) ) {
-               availableDevices.push_back(g_knownDevices[i].name);
-               printf ("USB Device found: %s\n", g_knownDevices[i].name.c_str());
-               break;
+               (dev->descriptor.idProduct == g_knownDevices[i].idProduct) ) {
+                  availableDevices.push_back(g_knownDevices[i].name);
+                  printf ("USB Device found: %s\n", g_knownDevices[i].name.c_str());
+                  break;
             }
          }
       }
