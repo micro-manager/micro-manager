@@ -1448,7 +1448,10 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
          while (winLength < prefLength) {               
             percentDiff = Math.abs(((double) (winLength - prefLength))/((double) prefLength));
             canvas.zoomIn(canvas.getSize().width / 2, canvas.getSize().height / 2);
-            winLength = (win.getSize().width + win.getSize().height) / 2;
+            int newWinLength = (win.getSize().width + win.getSize().height) / 2;
+            if (newWinLength == winLength)
+               break;
+            winLength = newWinLength;
          }
          double newPercentDiff = Math.abs(((double) (winLength - prefLength))/((double) prefLength));
          if (newPercentDiff > percentDiff) {            
@@ -1458,7 +1461,10 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
          while (winLength > prefLength) {                      
             percentDiff = Math.abs(((double) (winLength - prefLength))/((double) prefLength));
             canvas.zoomOut(canvas.getSize().width / 2, canvas.getSize().height / 2);
-            winLength = (win.getSize().width + win.getSize().height) / 2;
+            int newWinLength = (win.getSize().width + win.getSize().height) / 2;
+            if (newWinLength == winLength)
+               break;
+            winLength = newWinLength;
          }
          double newPercentDiff = Math.abs(((double) (winLength - prefLength))/((double) prefLength));
          if (newPercentDiff > percentDiff) {            
