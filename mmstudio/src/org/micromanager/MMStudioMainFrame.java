@@ -2819,7 +2819,7 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface, Device
             liveModeTimer_.begin();
             enableLiveModeListeners(enable);
          } catch (Exception e) {
-            ReportingUtils.logError(e);
+            ReportingUtils.showError(e);
             liveModeTimer_.stop();
             enableLiveModeListeners(false);
             updateButtonsForLiveMode(false);
