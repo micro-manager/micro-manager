@@ -479,7 +479,7 @@ int MDUSBDevice::Read(unsigned char* buf, unsigned long bufLen, unsigned long& c
 {
    ostringstream logMsg;
    //usb_interrupt_read really does send us negative numbers
-   unsigned int charsReceived = 0;
+   signed int charsReceived = 0;
    int nrPackets, packet;
    bool statusContinue = true;
    char* internalBuf;
@@ -556,7 +556,14 @@ int MDUSBDevice::Read(unsigned char* buf, unsigned long bufLen, unsigned long& c
 
    free (internalBuf);
 
-   return DEVICE_OK;
+   if (charsReceived < 0)
+   {
+      return DEVICE_ERR;
+   }
+   else
+   {
+      return DEVICE_OK;
+   }
 }
 
 int MDUSBDevice::Purge()
