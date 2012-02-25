@@ -90,7 +90,7 @@ MM::DeviceDetectionStatus RappScannerDetect(MM::Device& /*device*/, MM::Core& /*
 //
 RappScanner::RappScanner() :
    initialized_(false), port_(""), calibrationMode_(0), polygonAccuracy_(10), polygonMinRectSize_(10),
-   ttlTriggered_("Rising Edge"), rasterFrequency_(500), spotSize_(10)
+   ttlTriggered_("Rising Edge"), rasterFrequency_(500), spotSize_(10), laser2_(false)
 {
    InitializeDefaultErrorMessages();
 
@@ -146,7 +146,7 @@ int RappScanner::Initialize()
    UGA_->Connect(port_.c_str());
    if (UGA_->IsConnected()) {
       UGA_->UseMaxCalibration(false);
-      UGA_->SetCalibrationMode(false, false);
+      UGA_->SetCalibrationMode(false, laser2_);
       RunDummyCalibration();
       UGA_->CenterSpot();
       currentX_ = 0;
@@ -216,7 +216,7 @@ int RappScanner::PointAndFire(double x, double y, double pulseTime_us)
 {
    int result = DEVICE_OK;
    pointf xy((float) x,(float) y);
-   UGA_->ClickAndFire(xy, (int) pulseTime_us, false);
+   UGA_->ClickAndFire(xy, (int) pulseTime_us, laser2_);
    return result;
 }
 
@@ -265,7 +265,6 @@ int RappScanner::DeletePolygons()
    return DEVICE_OK;
 }
 
-
 int RappScanner::RunSequence()
 {
    tRectList rectangles;
@@ -273,7 +272,7 @@ int RappScanner::RunSequence()
    pointf minRectDimensions((float) polygonMinRectSize_, (float) polygonMinRectSize_);
    for (unsigned polygonIndex=0;polygonIndex<polygons_.size();++polygonIndex)
    {
-      UGA_->CreateA(polygons_.at(polygonIndex), polygonAccuracy_, minRectDimensions, &rectangles, false);
+      UGA_->CreateA(polygons_.at(polygonIndex), polygonAccuracy_, minRectDimensions, &rectangles, laser2_);
    }
 
    if (sequence_.size() > 0)
@@ -290,7 +289,9 @@ int RappScanner::RunSequence()
    if (UGA_->RunSequence(false)) 
    {
       return DEVICE_OK;
-   } else {
+   } 
+   else
+   {
       return DEVICE_ERR;
    }
 }
@@ -322,7 +323,7 @@ int RappScanner::OnCalibrationMode(MM::PropertyBase* pProp, MM::ActionType eAct)
    else if (eAct == MM::AfterSet)
    {
       pProp->Get(calibrationMode_);
-      if (UGA_->SetCalibrationMode(calibrationMode_ == 1, false)) {
+      if (UGA_->SetCalibrationMode(calibrationMode_ == 1, laser2_)) {
          result = DEVICE_OK;
       } else {
          result = DEVICE_NOT_CONNECTED;
@@ -398,7 +399,7 @@ int RappScanner::OnSpotSize(MM::PropertyBase* pProp, MM::ActionType eAct)
    else if (eAct == MM::AfterSet)
    {
       pProp->Get(spotSize_);
-      UGA_->DefineSpotSize((float) spotSize_, false);
+      UGA_->DefineSpotSize((float) spotSize_, laser2_);
    }
 
    return DEVICE_OK;
@@ -413,7 +414,7 @@ int RappScanner::OnRasterFrequency(MM::PropertyBase* pProp, MM::ActionType eAct)
    else if (eAct == MM::AfterSet)
    {
       pProp->Get(rasterFrequency_);
-      UGA_->SetROIFrequence(rasterFrequency_, false); // [sic]
+      UGA_->SetROIFrequence(rasterFrequency_, laser2_); // [sic]
    }
 
    return DEVICE_OK;
@@ -448,8 +449,6 @@ int RappScanner::OnMinimumRectSize(MM::PropertyBase* pProp, MM::ActionType eAct)
 }
 
 
-
-
 /////////////////////////////
 // Helper Functions
 /////////////////////////////
@@ -458,12 +457,12 @@ void RappScanner::RunDummyCalibration()
 {
    int side = 4096;
 
-   UGA_->SetCalibrationMode(true, false);
+   UGA_->SetCalibrationMode(true, laser2_);
 
-   UGA_->SetAOIEdge(Up, 0, false);
-   UGA_->SetAOIEdge(Down, side-1, false);
-   UGA_->SetAOIEdge(Left, 0, false);
-   UGA_->SetAOIEdge(Right, side-1, false);
+   UGA_->SetAOIEdge(Up, 0, laser2_);
+   UGA_->SetAOIEdge(Down, side-1, laser2_);
+   UGA_->SetAOIEdge(Left, 0, laser2_);
+   UGA_->SetAOIEdge(Right, side-1, laser2_);
 
    pointf p0(0, 0);
    pointf p1((float) side-1, 0);
@@ -471,20 +470,20 @@ void RappScanner::RunDummyCalibration()
    pointf p3((float) side-1, (float) side-1);
 
    UGA_->UseMaxCalibration(false);
-   UGA_->InitializeCalibration(4, false);
+   UGA_->InitializeCalibration(4, laser2_);
 
    UGA_->CenterSpot();
    UGA_->MoveLaser(Up, side/2 - 1);
    UGA_->MoveLaser(Left, side/2 - 1);
-   UGA_->SetCalibrationPoint(false, 0, p0, false); 
+   UGA_->SetCalibrationPoint(false, 0, p0, laser2_); 
    UGA_->MoveLaser(Right, side);
-   UGA_->SetCalibrationPoint(false, 1, p1, false);
+   UGA_->SetCalibrationPoint(false, 1, p1, laser2_);
    UGA_->MoveLaser(Down, side);
-   UGA_->SetCalibrationPoint(false, 3, p3, false); //Point-ID 2->3
+   UGA_->SetCalibrationPoint(false, 3, p3, laser2_); //Point-ID 2->3
    UGA_->MoveLaser(Left, side);
-   UGA_->SetCalibrationPoint(false, 2, p2, false); //Point-ID 3->2
+   UGA_->SetCalibrationPoint(false, 2, p2, laser2_); //Point-ID 3->2
 
-   UGA_->SetCalibrationMode(calibrationMode_ == 1, false);
+   UGA_->SetCalibrationMode(calibrationMode_ == 1, laser2_);
 }
 
 std::vector<std::string> & split(const std::string &s, char delim, std::vector<std::string> &elems) {

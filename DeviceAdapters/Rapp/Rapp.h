@@ -75,6 +75,7 @@ public:
    int OnAccuracy(MM::PropertyBase* pProp, MM::ActionType eAct);
 
 private:
+   bool laser2_;
    bool initialized_;
    std::string port_;
    obsROE_Device* UGA_;
