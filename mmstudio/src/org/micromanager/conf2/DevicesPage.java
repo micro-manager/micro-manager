@@ -656,6 +656,7 @@ public class DevicesPage extends PagePanel implements ListSelectionListener, Mou
                return false;
             }
             // > at this point device is initialized and added to the model
+            refresh();
 
             // check if there are any child devices installed
             if (dev.isHub() && !dev.getName().equals("Core")) {
@@ -707,6 +708,7 @@ public class DevicesPage extends PagePanel implements ListSelectionListener, Mou
                      } catch (Exception e) {
                         JOptionPane.showMessageDialog(this, e.getMessage());
                      } finally {
+                    	 refresh();
                      }
                   }
                } 

@@ -437,7 +437,8 @@ int IntegratedFilterWheel::GoToPosition(long pos)
    ClearPort(*this, *GetCoreCallback(), port_);
 
    // calculate number of steps to reach specified position
-   unsigned int steps = (unsigned int)(((double)stepsTurn_ / numberOfPositions_) * pos + offset_ + 0.5);
+   //unsigned int steps = (unsigned int)(((double)stepsTurn_ / numberOfPositions_) * pos + offset_ + 0.5);
+   unsigned int steps = (unsigned int)(221867.0 * pos + offset_);
 
    ostringstream msg;
    msg << "Attempting to set position:" << pos << ", steps:" << steps;
@@ -489,8 +490,9 @@ int IntegratedFilterWheel::RetrieveCurrentPosition(long& pos)
       return ERR_UNRECOGNIZED_ANSWER;
 
    unsigned int steps = *((unsigned int*)(answer + 8));
-   double onePos = (double)stepsTurn_ / numberOfPositions_;
-   pos = (long)((steps - offset_) / onePos + 0.5);
+   //double onePos = (double)stepsTurn_ / numberOfPositions_;
+   //pos = (long)((steps - offset_) / onePos + 0.5);
+   pos = (long) ((steps - offset_) / 221867.0 + 0.5);
 
    ostringstream msg;
    msg << "Steps:" << steps << ", Position:" << pos;
