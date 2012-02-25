@@ -59,6 +59,7 @@ public:
    int AddPolygonVertex(int polygonIndex, double x, double y);
    int DeletePolygons();
    int RunSequence();
+   int StopSequence();
 
    double GetXRange();
    double GetYRange();
@@ -68,6 +69,10 @@ public:
    int OnPort(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnSequence(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnTTLTriggered(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnSpotSize(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnRasterFrequency(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnMinimumRectSize(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnAccuracy(MM::PropertyBase* pProp, MM::ActionType eAct);
 
 private:
    bool initialized_;
@@ -75,12 +80,14 @@ private:
    obsROE_Device* UGA_;
    long calibrationMode_;
    std::vector<tPointList> polygons_;
-   int polygonAccuracy_;
-   pointf polygonMinRectSize_;
+   long polygonAccuracy_;
+   double polygonMinRectSize_;
    double currentX_;
    double currentY_;
    std::string sequence_;
-   long ttlTriggered_;
+   std::string ttlTriggered_;
+   long rasterFrequency_;
+   double spotSize_;
 
    // Helper functions
    void RappScanner::RunDummyCalibration();

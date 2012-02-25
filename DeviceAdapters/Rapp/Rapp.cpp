@@ -89,8 +89,8 @@ MM::DeviceDetectionStatus RappScannerDetect(MM::Device& /*device*/, MM::Core& /*
 // RappScanner
 //
 RappScanner::RappScanner() :
-   initialized_(false), port_(""), calibrationMode_(0), polygonAccuracy_(10), polygonMinRectSize_(pointf(10,10)),
-   ttlTriggered_(0)
+   initialized_(false), port_(""), calibrationMode_(0), polygonAccuracy_(10), polygonMinRectSize_(10),
+   ttlTriggered_("Rising Edge"), rasterFrequency_(500), spotSize_(10)
 {
    InitializeDefaultErrorMessages();
 
@@ -116,7 +116,9 @@ RappScanner::RappScanner() :
 
    CreateProperty("VirtualComPort", s.at(0).c_str(), MM::String, false, pAct, true);
 	for (unsigned int i = 0; i < s.size(); i++)
+   {
       AddAllowedValue("VirtualComPort", s.at(i).c_str());
+   }
 
 
 }  
@@ -164,9 +166,22 @@ int RappScanner::Initialize()
    CreateProperty("Sequence", "", MM::String, false, pAct);
 
    pAct = new CPropertyAction(this, &RappScanner::OnTTLTriggered);
-   CreateProperty("TTLTriggered", "0", MM::Integer, false, pAct);
-   AddAllowedValue("TTLTriggered", "0");
-   AddAllowedValue("TTLTriggered", "1");
+   CreateProperty("TTLTriggered", "Rising Edge", MM::String, false, pAct);
+   AddAllowedValue("TTLTriggered", "Rising Edge");
+   AddAllowedValue("TTLTriggered", "Falling Edge");
+
+   pAct = new CPropertyAction(this, &RappScanner::OnSpotSize);
+   CreateProperty("SpotSize", "0", MM::Float, false, pAct);
+
+   pAct = new CPropertyAction(this, &RappScanner::OnRasterFrequency);
+   CreateProperty("RasterFrequency_Hz", "500", MM::Integer, false, pAct);
+
+   pAct = new CPropertyAction(this, &RappScanner::OnAccuracy);
+   CreateProperty("AccuracyPercent", "10", MM::Integer, false, pAct);
+
+   pAct = new CPropertyAction(this, &RappScanner::OnMinimumRectSize);
+   CreateProperty("MinimumRectSize", "250", MM::Integer, false, pAct);
+
 
    return DEVICE_OK;
 }
@@ -255,9 +270,10 @@ int RappScanner::RunSequence()
 {
    tRectList rectangles;
 
+   pointf minRectDimensions((float) polygonMinRectSize_, (float) polygonMinRectSize_);
    for (unsigned polygonIndex=0;polygonIndex<polygons_.size();++polygonIndex)
    {
-      UGA_->CreateA(polygons_.at(polygonIndex), polygonAccuracy_, polygonMinRectSize_, &rectangles, false);
+      UGA_->CreateA(polygons_.at(polygonIndex), polygonAccuracy_, minRectDimensions, &rectangles, false);
    }
 
    if (sequence_.size() > 0)
@@ -275,6 +291,19 @@ int RappScanner::RunSequence()
    {
       return DEVICE_OK;
    } else {
+      return DEVICE_ERR;
+   }
+}
+
+int RappScanner::StopSequence()
+{
+
+   if (UGA_->AbortSequence())
+   {
+      return DEVICE_OK;
+   }
+   else
+   {
       return DEVICE_ERR;
    }
 }
@@ -342,15 +371,84 @@ int RappScanner::OnTTLTriggered(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
    if (eAct == MM::BeforeGet)
    {
-      pProp->Set(ttlTriggered_);
+      pProp->Set(ttlTriggered_.c_str());
    }
    else if (eAct == MM::AfterSet)
    {
       pProp->Get(ttlTriggered_);
+      if (0 == ttlTriggered_.compare("Rising Edge"))
+      {
+         UGA_->SetTriggerBehavior(RisingEdge);
+      }
+      else
+      {
+         UGA_->SetTriggerBehavior(FallingEdge);
+      }
    }
 
    return DEVICE_OK;
 }
+
+int RappScanner::OnSpotSize(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   if (eAct == MM::BeforeGet)
+   {
+      pProp->Set(spotSize_);
+   }
+   else if (eAct == MM::AfterSet)
+   {
+      pProp->Get(spotSize_);
+      UGA_->DefineSpotSize((float) spotSize_, false);
+   }
+
+   return DEVICE_OK;
+}
+
+int RappScanner::OnRasterFrequency(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   if (eAct == MM::BeforeGet)
+   {
+      pProp->Set(rasterFrequency_);
+   }
+   else if (eAct == MM::AfterSet)
+   {
+      pProp->Get(rasterFrequency_);
+      UGA_->SetROIFrequence(rasterFrequency_, false); // [sic]
+   }
+
+   return DEVICE_OK;
+}
+
+int RappScanner::OnAccuracy(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   if (eAct == MM::BeforeGet)
+   {
+      pProp->Set(polygonAccuracy_);
+   }
+   else if (eAct == MM::AfterSet)
+   {
+      pProp->Get(polygonAccuracy_);
+   }
+
+   return DEVICE_OK;
+}
+
+int RappScanner::OnMinimumRectSize(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   if (eAct == MM::BeforeGet)
+   {
+      pProp->Set(polygonMinRectSize_);
+   }
+   else if (eAct == MM::AfterSet)
+   {
+      pProp->Get(polygonMinRectSize_);
+   }
+
+   return DEVICE_OK;
+}
+
+
+
 
 /////////////////////////////
 // Helper Functions
