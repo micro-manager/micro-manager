@@ -23,24 +23,29 @@
 //
 package org.micromanager.conf2;
 
-import java.awt.Container;
+import java.awt.Component;
 import java.awt.Cursor;
+import java.awt.Font;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
+import java.io.IOException;
 import java.util.Hashtable;
 import java.util.Vector;
 import java.util.prefs.Preferences;
 
 import javax.swing.JButton;
+import javax.swing.JCheckBox;
 import javax.swing.JComponent;
+import javax.swing.JLabel;
 import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 import javax.swing.JPopupMenu;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
+import javax.swing.JTree;
 import javax.swing.ListSelectionModel;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
@@ -54,13 +59,8 @@ import mmcorej.CMMCore;
 import mmcorej.MMCoreJ;
 
 import org.micromanager.utils.ReportingUtils;
-import javax.swing.JTree;
-import javax.swing.JLabel;
-import java.awt.Font;
-import java.awt.Component;
-import java.io.IOException;
-
-import javax.swing.JCheckBox;
+import javax.swing.JComboBox;
+import javax.swing.DefaultComboBoxModel;
 
 /**
  * Wizard page to add or remove devices.
@@ -77,10 +77,11 @@ public class DevicesPage extends PagePanel implements ListSelectionListener, Mou
    private boolean listByLib_;
    private TreeWContextMenu theTree_;
    private JScrollPane availableScrollPane_;
-   private JCheckBox cbShowAll_;
-   private JCheckBox cbLibrary_;
    final String documentationURLroot_;
    String libraryDocumentationName_;
+   private JComboBox hubsCombo_;
+
+private JComboBox byLibCombo_;
 
    ///////////////////////////////////////////////////////////
    /**
@@ -304,33 +305,12 @@ public class DevicesPage extends PagePanel implements ListSelectionListener, Mou
       
       JLabel lblNewLabel_1 = new JLabel("Available Devices:");
       lblNewLabel_1.setFont(new Font("Tahoma", Font.BOLD, 11));
-      lblNewLabel_1.setBounds(10, 273, 431, 14);
+      lblNewLabel_1.setBounds(10, 273, 128, 14);
       add(lblNewLabel_1);
       
       availableScrollPane_ = new JScrollPane((Component) null);
-      availableScrollPane_.setBounds(10, 291, 431, 258);
+      availableScrollPane_.setBounds(10, 299, 431, 250);
       add(availableScrollPane_);
-      
-      cbLibrary_ = new JCheckBox("List by library");
-      cbLibrary_.addActionListener(new ActionListener() {
-         public void actionPerformed(ActionEvent e) {
-            listByLib_ = ((JCheckBox) e.getSource()).isSelected();
-            buildTree();
-         }
-      });
-      cbLibrary_.setSelected(true);
-      cbLibrary_.setBounds(446, 507, 133, 23);
-      add(cbLibrary_);
-      
-      cbShowAll_ = new JCheckBox("Show all");
-      cbShowAll_.addActionListener(new ActionListener() {
-         public void actionPerformed(ActionEvent e) {
-            buildTree();
-         }
-      });
-      cbShowAll_.setSelected(false);
-      cbShowAll_.setBounds(446, 530, 99, 23);
-      add(cbShowAll_);
       
       JButton helpButton = new JButton("Help");
       helpButton.addActionListener(new ActionListener() {
@@ -340,6 +320,30 @@ public class DevicesPage extends PagePanel implements ListSelectionListener, Mou
       });
       helpButton.setBounds(451, 319, 99, 23);
       add(helpButton);
+      
+      byLibCombo_ = new JComboBox();
+      byLibCombo_.addActionListener(new ActionListener() {
+      	public void actionPerformed(ActionEvent arg0) {
+      		if (byLibCombo_.getSelectedIndex() == 0)
+      			listByLib_ = true;
+      		else
+      			listByLib_ = false;
+      		buildTree();
+      	}
+      });
+      byLibCombo_.setModel(new DefaultComboBoxModel(new String[] {"list by vendor", "list by type"}));
+      byLibCombo_.setBounds(146, 270, 146, 20);
+      add(byLibCombo_);
+      
+      hubsCombo_ = new JComboBox();
+      hubsCombo_.addActionListener(new ActionListener() {
+      	public void actionPerformed(ActionEvent e) {
+      		buildTree();
+      	}
+      });
+      hubsCombo_.setModel(new DefaultComboBoxModel(new String[] {"compact view", "show all"}));
+      hubsCombo_.setBounds(302, 270, 139, 20);
+      add(hubsCombo_);
       //
 
    }
@@ -729,7 +733,7 @@ public class DevicesPage extends PagePanel implements ListSelectionListener, Mou
    
    private void buildTreeByType(MicroscopeModel model) {
       Device devices_[] = null;
-      if (cbShowAll_.isSelected())
+      if (hubsCombo_.getSelectedIndex() == 1)
          devices_ = model.getAvailableDeviceList();
       else
          devices_ = model.getAvailableDevicesCompact();
@@ -746,8 +750,7 @@ public class DevicesPage extends PagePanel implements ListSelectionListener, Mou
          }
       }
 
-      DefaultMutableTreeNode root = new DefaultMutableTreeNode(
-            "Devices supported by " + "\u00B5" + "Manager");
+      DefaultMutableTreeNode root = new DefaultMutableTreeNode("Devices supported by " + "\u00B5" + "Manager");
 
       DeviceTreeNode node = null;
       Object nodeNames[] = nodes.keySet().toArray();
@@ -777,7 +780,7 @@ public class DevicesPage extends PagePanel implements ListSelectionListener, Mou
 
    private void buildTreeByLib(MicroscopeModel model) {
       Device devices_[] = null;
-      if (cbShowAll_.isSelected())
+      if (hubsCombo_.getSelectedIndex() == 1)
          devices_ = model.getAvailableDeviceList();
       else
          devices_ = model.getAvailableDevicesCompact();

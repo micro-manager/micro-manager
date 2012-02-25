@@ -135,6 +135,10 @@ import org.micromanager.utils.ReportingUtils;
          devType = "Single Axis Stage";    
       } else if (type_ == DeviceType.XYStageDevice) {
          devType = "XY Stage";    
+      } else if (type_ == DeviceType.StateDevice) {
+          devType = "Discrete State Device";    
+      } else if (type_ == DeviceType.MagnifierDevice) {
+          devType = "Magnifier";    
       } else {
          ReportingUtils.logError("Unercongized device type: " + this.adapterName_);
       }
