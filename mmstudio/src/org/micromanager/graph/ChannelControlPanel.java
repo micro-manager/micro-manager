@@ -67,7 +67,7 @@ import org.micromanager.utils.ReportingUtils;
 
 public class ChannelControlPanel extends JPanel implements CursorListener {
 
-   private static final Dimension CONTROLS_SIZE = new Dimension(120, 115);
+   private static final Dimension CONTROLS_SIZE = new Dimension(130, 115);
    private static final int NUM_BINS = 256;
    private static final double BIN_SIZE_MIN = 1.0 / 8;
    private final int BIN_SIZE_MAX;
@@ -215,7 +215,7 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
       this.add(controlsHolderPanel_);
       this.add(histogramPanelHolder_);
 
-      controlsHolderPanel_.add(controls_);
+      controlsHolderPanel_.add(controls_, BorderLayout.CENTER);
       GridBagLayout gbl = new GridBagLayout();
       controls_.setLayout(gbl);
 
@@ -237,7 +237,8 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
       gbc.weightx = 1;
       gbc.weighty = 1;
       gbc.gridwidth = 2;
-      fullButton_.setPreferredSize(new Dimension(50, 20));
+      gbc.anchor = GridBagConstraints.LINE_START;
+      fullButton_.setPreferredSize(new Dimension(45, 20));
       controls_.add(fullButton_, gbc);
 
       gbc = new GridBagConstraints();
@@ -245,9 +246,21 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
       gbc.gridy = 1;
       gbc.weightx = 1;
       gbc.weighty = 1;
-      gbc.gridwidth = 2;
-      autoButton_.setPreferredSize(new Dimension(50, 20));
+      gbc.gridwidth = 1;
+      gbc.anchor = GridBagConstraints.LINE_START;
+      autoButton_.setPreferredSize(new Dimension(45, 20));
       controls_.add(autoButton_, gbc);
+         
+      gbc = new GridBagConstraints();
+      gbc.gridx = 4;
+      gbc.gridy = 1;
+      gbc.weightx = 1;
+      gbc.weighty = 1;
+      gbc.gridwidth = 1;
+      gbc.ipadx = 15;
+      gbc.ipady = 15;
+      gbc.anchor = GridBagConstraints.LINE_START;
+      controls_.add(colorPickerLabel_, gbc);
 
       gbc = new GridBagConstraints();
       gbc.gridx = 0;
@@ -269,22 +282,11 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
       controls_.add(modeComboBox_, gbc);
 
       gbc = new GridBagConstraints();
-      gbc.gridx = 3;
-      gbc.gridy = 3;
-      gbc.weightx = 1;
-      gbc.weighty = 1;
-      gbc.gridwidth = 1;
-      gbc.ipadx = 15;
-      gbc.ipady = 15;
-      gbc.anchor = GridBagConstraints.LINE_END;
-      controls_.add(colorPickerLabel_, gbc);
-
-      gbc = new GridBagConstraints();
       gbc.gridx = 0;
       gbc.gridy = 4;
       gbc.weightx = 1;
       gbc.weighty = 1;
-      gbc.gridwidth = 4;
+      gbc.gridwidth = 5;
       gbc.anchor = GridBagConstraints.LINE_START;
       controls_.add(minMaxLabel_, gbc);
 
