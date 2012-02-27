@@ -1,5 +1,6 @@
 #include "AOIProperty.h"
 #include "AndorSDK3.h"
+#include "SnapShotControl.h"
 #include "atcore++.h"
 #include <vector>
 

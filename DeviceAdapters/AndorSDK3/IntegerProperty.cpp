@@ -1,10 +1,12 @@
-#include "AndorSDK3.h"
 #include "IntegerProperty.h"
+#include "AndorSDK3.h"
+#include "SnapShotControl.h"
 #include "atcore++.h"
 
 using namespace andor;
+using namespace std;
 
-TIntegerProperty::TIntegerProperty(const std::string MM_name, IInteger * integer_feature, CAndorSDK3Camera * camera,
+TIntegerProperty::TIntegerProperty(const string & MM_name, IInteger * integer_feature, CAndorSDK3Camera * camera,
                                    MySequenceThread * thd, SnapShotControl * snapShotController, bool readOnly,
                                    bool limited)
 : MM_name_(MM_name),
@@ -19,15 +21,35 @@ TIntegerProperty::TIntegerProperty(const std::string MM_name, IInteger * integer
 
    try
    {
-      integer_feature_->Attach(this);
+      if (limited)
+      {
+         integer_feature_->Attach(this);
+      }
    }
-   catch (NotImplementedException e)
+   catch (exception & e)
    {
       // Callback not implemented for this feature
+      camera_->LogMessage(e.what());
    }
 }
 
-TIntegerProperty::~TIntegerProperty() {}
+TIntegerProperty::~TIntegerProperty()
+{
+   if (limited_)
+   {
+      try 
+      {
+         integer_feature_->Detach(this);
+      }
+      catch (exception & e)
+      {
+         // Callback not implemented for this feature
+         camera_->LogMessage(e.what());
+      }
+   }
+   //Clean up memory, created as passed in
+   camera_->GetCameraDevice()->Release(integer_feature_);
+}
 
 void TIntegerProperty::Update(ISubject * /*Subject*/)
 {

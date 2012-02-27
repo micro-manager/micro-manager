@@ -14,7 +14,7 @@ class SnapShotControl;
 class TEnumProperty : public andor::IObserver
 {
 public:
-   TEnumProperty(const std::string MM_name, andor::IEnum* enum_feature,
+   TEnumProperty(const std::string & MM_name, andor::IEnum* enum_feature,
                  CAndorSDK3Camera* camera, MySequenceThread* thd,
                  SnapShotControl* snapShotController, bool readOnly, bool needsCallBack);
    ~TEnumProperty();

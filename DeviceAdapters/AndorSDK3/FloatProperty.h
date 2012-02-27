@@ -2,43 +2,42 @@
 #define _FLOATPROPERTY_H_
 
 #include "atcore++.h"
-
-using namespace andor;
+#include "MMDeviceConstants.h"
+#include "Property.h"
+#include "SnapShotControl.h"
 
 class MySequenceThread;
 class CAndorSDK3Camera;
-class SnapShotController;
 
-class TFloatProperty : public IObserver
+class TFloatProperty : public andor::IObserver
 {
 public:
-   TFloatProperty(const std::string MM_name,
-                  IFloat* float_feature,
+   TFloatProperty(const std::string & MM_name,
+                  andor::IFloat* float_feature,
                   CAndorSDK3Camera* camera,
                   MySequenceThread* thd,
                   SnapShotControl* snapShotController,
                   bool readOnly, bool limited);
    ~TFloatProperty();
 
-   void Update(ISubject* Subject);
+   void Update(andor::ISubject* Subject);
    int OnFloat(MM::PropertyBase* pProp, MM::ActionType eAct);
    typedef MM::Action<TFloatProperty> CPropertyAction;
 
 private:
-   IDevice* device_hndl_;
-   IFloat* float_feature_;
+   andor::IDevice* device_hndl_;
+   andor::IFloat* float_feature_;
    CAndorSDK3Camera* camera_;
    std::string MM_name_;
    MySequenceThread * thd_;
    SnapShotControl* snapShotController_;
    bool limited_;
-   bool almostEqual(double val1, double val2, double precision);
 };
 
-class TAndorFloatFilter : public IFloat
+class TAndorFloatFilter : public andor::IFloat
 {
 public:
-   TAndorFloatFilter(IFloat* _float):m_float(_float){}
+   TAndorFloatFilter(andor::IFloat* _float):m_float(_float){}
    virtual ~TAndorFloatFilter() {};
    double Get() {return m_float->Get();}
    void Set(double Value){m_float->Set(Value);}
@@ -48,17 +47,17 @@ public:
    bool IsReadable(){return m_float->IsReadable();}
    bool IsWritable(){return m_float->IsWritable();}
    bool IsReadOnly(){return m_float->IsReadOnly();}
-   void Attach(IObserver* _observer){m_float->Attach(_observer);}
-   void Detach(IObserver* _observer){m_float->Detach(_observer);}
+   void Attach(andor::IObserver* _observer){m_float->Attach(_observer);}
+   void Detach(andor::IObserver* _observer){m_float->Detach(_observer);}
 
 protected:
-   IFloat* m_float;
+   andor::IFloat* m_float;
 };
 
 class TAndorFloatValueMapper : public TAndorFloatFilter
 {
 public:
-   TAndorFloatValueMapper(IFloat* _float, double _factor)
+   TAndorFloatValueMapper(andor::IFloat* _float, double _factor)
       :TAndorFloatFilter(_float), m_factor(_factor)
    {
    }
@@ -76,7 +75,7 @@ protected:
 class TAndorFloatHolder : public TAndorFloatFilter
 {
 public:
-   TAndorFloatHolder(SnapShotControl* snapShotController, IFloat* _float)
+   TAndorFloatHolder(SnapShotControl* snapShotController, andor::IFloat* _float)
       :m_snapShotController(snapShotController), TAndorFloatFilter(_float)
    {
       holding_float = m_float->Get();
@@ -95,7 +94,7 @@ public:
    void Set(double Value)
    {
       holding_float = Value;
-      m_float->Get();
+      m_float->Set(Value);
    }
 
 private:

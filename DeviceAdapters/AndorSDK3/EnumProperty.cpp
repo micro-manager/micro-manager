@@ -1,12 +1,13 @@
 #include "EnumProperty.h"
 #include "AndorSDK3.h"
+#include "SnapShotControl.h"
 #include <vector>
 
 
 using namespace andor;
 using namespace std;
 
-TEnumProperty::TEnumProperty(const string MM_name, IEnum * enum_feature, CAndorSDK3Camera * camera,
+TEnumProperty::TEnumProperty(const string & MM_name, IEnum * enum_feature, CAndorSDK3Camera * camera,
                              MySequenceThread * thd, SnapShotControl * snapShotController, bool readOnly,
                              bool needsCallBack)
 : MM_name_(MM_name),
@@ -51,6 +52,8 @@ TEnumProperty::~TEnumProperty()
          camera_->LogMessage(e.what());
       }
    }
+   //Clean up memory, created as passed in
+   camera_->GetCameraDevice()->Release(enum_feature_);
 }
 
 

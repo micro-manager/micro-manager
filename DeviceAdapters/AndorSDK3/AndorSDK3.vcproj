@@ -431,6 +431,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\AndorSDK3Strings.h"
+				>
+			</File>
+			<File
 				RelativePath=".\AOIProperty.h"
 				>
 			</File>

@@ -1,10 +1,11 @@
-#include "AndorSDK3.h"
 #include "FloatProperty.h"
+#include "AndorSDK3.h"
 #include "atcore++.h"
 
 using namespace andor;
+using namespace std;
 
-TFloatProperty::TFloatProperty(const std::string MM_name, IFloat * float_feature, CAndorSDK3Camera * camera,
+TFloatProperty::TFloatProperty(const string & MM_name, IFloat * float_feature, CAndorSDK3Camera * camera,
                                MySequenceThread * thd, SnapShotControl * snapShotController, bool readOnly,
                                bool limited)
 : MM_name_(MM_name),
@@ -17,26 +18,54 @@ TFloatProperty::TFloatProperty(const std::string MM_name, IFloat * float_feature
    CPropertyAction * pAct = new CPropertyAction (this, &TFloatProperty::OnFloat);
    camera_->CreateProperty(MM_name.c_str(), "", MM::Float, readOnly, pAct);
 
-   try
+   try 
    {
-      float_feature_->Attach(this);
+      if (limited)
+      {
+         float_feature_->Attach(this);
+      }
    }
-   catch (NotImplementedException e)
+   catch (exception & e)
    {
       // Callback not implemented for this feature
+      camera_->LogMessage(e.what());
    }
 }
 
-TFloatProperty::~TFloatProperty() {}
+TFloatProperty::~TFloatProperty()
+{
+   if (limited_)
+   {
+      try 
+      {
+         float_feature_->Detach(this);
+      }
+      catch (exception & e)
+      {
+         // Callback not implemented for this feature
+         camera_->LogMessage(e.what());
+      }
+   }
+   //Clean up memory, created as passed in
+   camera_->GetCameraDevice()->Release(float_feature_);
+}
 
 void TFloatProperty::Update(ISubject * /*Subject*/)
 {
    // This property has been changed in SDK3. The new value will be set by a
-   // call to TIntegerProperty::OnInteger, in here reset the limits
+   // call to TFloatProperty::OnFloat, in here reset the limits
    if (limited_)
    {
       camera_->SetPropertyLimits(MM_name_.c_str(), float_feature_->Min(), float_feature_->Max());
    }
+}
+
+inline bool almostEqual(double val1, double val2, double precisionFactor)
+{
+   const double base = 10.0;
+   double precisionError = 1.0 / pow(base, precisionFactor);
+   // Check if val1 and val2 are within precision decimal places
+   return ( val1 > (val2 - precisionError) && val1 < (val2 + precisionError)) ? true : false;
 }
 
 int TFloatProperty::OnFloat(MM::PropertyBase * pProp, MM::ActionType eAct)
@@ -96,18 +125,4 @@ int TFloatProperty::OnFloat(MM::PropertyBase * pProp, MM::ActionType eAct)
    }
 
    return DEVICE_OK;
-}
-
-bool TFloatProperty::almostEqual(double val1, double val2, double precision)
-{
-   double leeway = 1.0 / pow(10, precision);
-   // Check if val1 and val2 are within precision decimal places
-   if (val1 > (val2 - leeway) && (val1 < val2 + (leeway)))
-   {
-      return true;
-   }
-   else
-   {
-      return false;
-   }
 }

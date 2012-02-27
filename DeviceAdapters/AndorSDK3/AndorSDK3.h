@@ -37,16 +37,9 @@
 #include "../../MMDevice/DeviceThreads.h"
 #include <string>
 #include <map>
-#include "SnapShotControl.h"
-#include "EnumProperty.h"
-#include "IntegerProperty.h"
-#include "FloatProperty.h"
-#include "AOIProperty.h"
-#include "BooleanProperty.h"
 #include "atcore++.h"
-#include "triggerremapper.h"
 
-using namespace andor;
+//using namespace andor;
 
 #define NO_CIRCLE_BUFFER_FRAMES  10
 
@@ -64,7 +57,27 @@ using namespace andor;
 //////////////////////////////////////////////////////////////////////////////
 
 class MySequenceThread;
+namespace andor {
+   class IDevice;
+   class IDeviceManager;
+   class IEnum;
+   class IBool;
+   class IInteger;
+   class IFloat;
+   class IBufferControl;
+   class ICommand;
+};
+
+class TEnumProperty;
+class TIntegerProperty;
+class TFloatProperty;
+class TBooleanProperty;
 class TAOIProperty;
+class SnapShotControl;
+class TAndorFloatValueMapper;
+class TAndorFloatHolder;
+class TAndorEnumValueMapper;
+class TTriggerRemapper;
 
 class CAndorSDK3Camera : public CCameraBase<CAndorSDK3Camera>  
 {
@@ -80,6 +93,7 @@ public:
    void GetName(char* name) const;      
    
    bool GetCameraPresent() { return b_cameraPresent_; };
+   andor::IDevice * GetCameraDevice() { return cameraDevice; };
 
    // MMCamera API
    // ------------
@@ -108,8 +122,6 @@ public:
    int GetBinning() const;
    int SetBinning(int bS);
    int IsExposureSequenceable(bool& isSequenceable) const {isSequenceable = false; return DEVICE_OK;}
-
-   unsigned  GetNumberOfComponents() const { return nComponents_;};
 
    // action interface
    int OnTriggerMode(MM::PropertyBase* pProp, MM::ActionType eAct);
@@ -149,7 +161,6 @@ private:
 
    MMThreadLock* pDemoResourceLock_;
    MMThreadLock imgPixelsLock_;
-   int nComponents_;
    void TestResourceLocking(const bool);
    friend class MySequenceThread;
    friend class TAOIProperty;
@@ -176,40 +187,23 @@ private:
    TFloatProperty* frameRate_property;
 
    // atcore++ objects
-   IDeviceManager* deviceManager;
-   IDevice* systemDevice;
-   IDevice* cameraDevice;
-   IInteger* imageSizeBytes;
-   IEnum* cycleMode;
-   IFloat* exposureTime;
-   IBufferControl* bufferControl;
-   ICommand* startAcquisitionCommand;
-   ICommand* stopAcquisitionCommand;
-   IEnum* triggerMode;
-   ICommand* sendSoftwareTrigger;
-   IInteger* frameCount;
-   IFloat* frameRate;
+   andor::IDeviceManager* deviceManager;
+   andor::IDevice* systemDevice;
+   andor::IDevice* cameraDevice;
+   andor::IInteger* imageSizeBytes;
+   andor::IEnum* cycleMode;
+   andor::IBufferControl* bufferControl;
+   andor::ICommand* startAcquisitionCommand;
+   andor::ICommand* stopAcquisitionCommand;
+   andor::IEnum* triggerMode;
+   andor::ICommand* sendSoftwareTrigger;
+   andor::IInteger* frameCount;
+   andor::IFloat* frameRate;
 
    // Objects used by the properties
-   IEnum* preAmpGain_Enum;
-   IEnum* electronicShutteringMode_Enum;
-   IEnum* temperatureControl_Enum;
-   IEnum* pixelReadoutRate_Enum;
-   IEnum* pixelEncoding_Enum;
-   IEnum* temperatureStatus_Enum;
-   IEnum* fanSpeed_Enum;
-   IEnum* triggerMode_Enum;
-   IFloat* readTemperature_Float;
-   IFloat* exposureTime_Float;
-   TAndorFloatValueMapper* exposureTime_valueMapper;
-   IFloat* frameRate_Float;
-   TAndorFloatHolder* frameRate_floatHolder;
+   andor::IEnum* triggerMode_Enum;
    TAndorEnumValueMapper* triggerMode_valueMapper;
    TTriggerRemapper* triggerMode_remapper;
-   IInteger* accumulationLength_Integer;
-   IBool* spuriousNoiseFilter_Boolean;
-   IBool* sensorCooling_Boolean;
-   IBool* overlap_Boolean;
 };
 
 class MySequenceThread : public MMDeviceThreadBase
