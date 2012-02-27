@@ -198,6 +198,9 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
       modeComboBox_.addActionListener(new ActionListener() {
 
          public void actionPerformed(final ActionEvent e) {
+            if (mccPanel_.syncedChannels()) {
+               mccPanel_.updateOtherDisplayCombos(modeComboBox_.getSelectedIndex());
+            }
             displayComboAction();
          }
       });
@@ -294,8 +297,16 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
       this.setSize(this.getSize().width, height);
       controlsHolderPanel_.setSize(CONTROLS_SIZE);
    }
+   
+   public void setDisplayComboIndex(int index) {
+      modeComboBox_.setSelectedIndex(index);
+   }
+   
+   public int getDisplayComboIndex() {
+      return modeComboBox_.getSelectedIndex();
+   }
 
-   private void displayComboAction() {
+   public void displayComboAction() {
       switch (modeComboBox_.getSelectedIndex() - 1) {
          case -1:
             histMax_ = maxIntensity_;
@@ -323,7 +334,7 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
             break;
          default:
             break;
-      }
+      }    
       binSize_ = ((double)(histMax_ + 1)) / ((double)NUM_BINS);
       histMaxLabel_ = histMax_ + "";
       updateHistogram();

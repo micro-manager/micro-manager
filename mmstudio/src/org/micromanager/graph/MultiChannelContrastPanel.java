@@ -79,6 +79,7 @@ public class MultiChannelContrastPanel extends JPanel implements ContrastPanel {
    private ArrayList<ChannelControlPanel> ccpList_;
    private Preferences prefs_;
    private Color overlayColor_ = Color.white;
+   private boolean updatingCombos_ = false;
 
    public MultiChannelContrastPanel(MetadataPanel md) {
       mdPanel_ = md;
@@ -354,6 +355,7 @@ public class MultiChannelContrastPanel extends JPanel implements ContrastPanel {
          autostretchCheckbox_.setSelected(false);
          autostretchCheckbox_.setEnabled(false);
          setChannelContrastFromFirst();
+         setChannelDisplayModeFromFirst();
       } else {
          autostretchCheckbox_.setEnabled(true);
       }
@@ -386,6 +388,15 @@ public class MultiChannelContrastPanel extends JPanel implements ContrastPanel {
          c.setContrast(min, max, gamma);
       }
       mdPanel_.drawWithoutUpdate();
+   }
+   
+   private void setChannelDisplayModeFromFirst() {
+      if (ccpList_ == null || ccpList_.size() <= 1) {
+         return;
+      }
+      int displayIndex = ccpList_.get(0).getDisplayComboIndex();
+      //automatically syncs other channels
+      ccpList_.get(0).setDisplayComboIndex(displayIndex);
    }
 
    private void setChannelContrastFromFirst() {
@@ -564,5 +575,15 @@ public class MultiChannelContrastPanel extends JPanel implements ContrastPanel {
       }
       return new ContrastSettings(ccpList_.get(channel).getContrastMin(),
               ccpList_.get(channel).getContrastMax(), ccpList_.get(channel).getContrastGamma());
+   }
+
+   void updateOtherDisplayCombos(int selectedIndex) {
+      if (updatingCombos_)
+         return;
+      updatingCombos_ = true;
+      for (int i = 0; i < ccpList_.size(); i++) {
+            ccpList_.get(i).setDisplayComboIndex(selectedIndex);
+      }
+      updatingCombos_ = false;
    }
 }
