@@ -783,22 +783,30 @@ public class SingleChannelContrastPanel extends JPanel implements
             if (modeComboBox_.getSelectedIndex() != -1) {
                pixelMin_ = rawHistogram.length - 1;
             }
-            for (int i = rawHistogram.length -1; i >= 0; i--) {
+            for (int i = rawHistogram.length - 1; i >= 0; i--) {
                if (modeComboBox_.getSelectedIndex() != -1) {
                   if (rawHistogram[i] > 0 && i < pixelMin_) {
                      pixelMin_ = i;
-                  } 
+                  }
                   if (rawHistogram[i] > 0 && i > pixelMax_) {
                      pixelMax_ = i;
                   }
                }
 
-                  for (int j = 0; j < rawHistogram[i]; j++) {
-                     stdDev_ += (i - mean_) * (i - mean_);
+               for (int j = 0; j < rawHistogram[i]; j++) {
+                  stdDev_ += (i - mean_) * (i - mean_);
+               }
+
+               if (pixelMin_ == pixelMax_) {
+                  if (pixelMin_ == 0) {
+                     pixelMax_++;
+                  } else {
+                     pixelMin_--;
                   }
                }
-               stdDev_ = Math.sqrt(stdDev_ / (imgWidth * imgHeight));
-               //Draw histogram and stats
+            }
+            stdDev_ = Math.sqrt(stdDev_ / (imgWidth * imgHeight));
+            //Draw histogram and stats
                histogramData.setData(histogram);
                histogramPanel_.setData(histogramData);
                histogramPanel_.setAutoScale();

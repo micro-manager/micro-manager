@@ -646,13 +646,6 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
             histogram[i] = histogram[i] > 0 ? (int) (1000 * Math.log(histogram[i])) : 0;
          }
       }
-      if (pixelMin_ == pixelMax_) {
-         if (pixelMin_ == 0) {
-            pixelMax_++;
-         } else {
-            pixelMin_--;
-         }
-      }
       //Make sure max has correct value is hist display mode isnt auto
       if (modeComboBox_.getSelectedIndex() != -1) {
          pixelMin_ = rawHistogram.length-1;
@@ -662,7 +655,15 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
             }
             if (rawHistogram[i] > 0 && i < pixelMin_ ) {
                pixelMin_ = i;
-            }            
+            }
+         }
+      }
+
+      if (pixelMin_ == pixelMax_) {
+         if (pixelMin_ == 0) {
+            pixelMax_++;
+         } else {
+            pixelMin_--;
          }
       }
 
