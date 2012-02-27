@@ -1441,14 +1441,14 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
    
    private void zoomToPreferredSize(DisplayWindow win) {
       int prefLength =  prefs_.getInt(PREF_WIN_LENGTH, 512);
-      int winLength = (win.getSize().width + win.getSize().height) / 2;
+      int winLength =  (int) Math.sqrt(win.getSize().width * win.getSize().height);     
       double percentDiff = Math.abs(((double) (winLength - prefLength))/((double) prefLength));
       ImageCanvas canvas = win.getCanvas();
       if (winLength < prefLength) {
          while (winLength < prefLength) {               
             percentDiff = Math.abs(((double) (winLength - prefLength))/((double) prefLength));
             canvas.zoomIn(canvas.getSize().width / 2, canvas.getSize().height / 2);
-            int newWinLength = (win.getSize().width + win.getSize().height) / 2;
+            int newWinLength = (int) Math.sqrt(win.getSize().width * win.getSize().height);
             if (newWinLength == winLength)
                break;
             winLength = newWinLength;
@@ -1461,7 +1461,7 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
          while (winLength > prefLength) {                      
             percentDiff = Math.abs(((double) (winLength - prefLength))/((double) prefLength));
             canvas.zoomOut(canvas.getSize().width / 2, canvas.getSize().height / 2);
-            int newWinLength = (win.getSize().width + win.getSize().height) / 2;
+            int newWinLength = (int) Math.sqrt(win.getSize().width * win.getSize().height);
             if (newWinLength == winLength)
                break;
             winLength = newWinLength;
