@@ -1476,7 +1476,6 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
       if (rect != null) {
          while (rect.width < canvas.getImage().getWidth() || rect.height < canvas.getImage().getHeight()) {
             if (rect.width > 0.9 * canvas.getImage().getWidth() && rect.height > 0.9 * canvas.getImage().getHeight()) {
-//               win.setSize((int) (win.getWidth() / 0.9), (int) (win.getHeight() / 0.9));
                canvas.zoomOut(canvas.getSize().width / 2, canvas.getSize().height / 2);
                canvas.zoomIn(canvas.getSize().width / 2, canvas.getSize().height / 2);
                break;

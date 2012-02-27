@@ -1,14 +1,13 @@
 package org.micromanager.acquisition;
 
-import ij.WindowManager;
-import java.awt.Color;
-import java.io.File;
+import ij.gui.ImageWindow;
+import java.awt.Point;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.util.Enumeration;
 import java.util.Hashtable;
 import java.util.Set;
-
-import java.util.logging.Level;
-import java.util.logging.Logger;
+import java.util.prefs.Preferences;
 import mmcorej.TaggedImage;
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -21,6 +20,9 @@ import org.micromanager.utils.MMScriptException;
 import org.micromanager.utils.ReportingUtils;
 
 public class AcquisitionManager {
+   private static final String ALBUM_WIN_X = "album_x";
+   private static final String ALBUM_WIN_Y = "album_y";
+   
    Hashtable<String, MMAcquisition> acqs_;
    private String album_ = null;
    
@@ -181,6 +183,21 @@ public class AcquisitionManager {
          }
          
          acq.initialize();
+         
+         //Store album window position
+         final ImageWindow win = acq.getAcquisitionWindow().getImagePlus().getWindow();
+         final Preferences prefs = Preferences.userNodeForPackage(this.getClass());
+         win.addWindowListener(new WindowAdapter() {
+            @Override
+            public void windowClosing(WindowEvent e) {
+               Point loc = win.getLocation();
+               prefs.putInt(ALBUM_WIN_X, loc.x);
+               prefs.putInt(ALBUM_WIN_Y, loc.y);
+            }
+         });
+         
+         //Laod window position
+         win.setLocation(prefs.getInt(ALBUM_WIN_X, 0), prefs.getInt(ALBUM_WIN_Y, 0));
       }
 
       int f = 1 + acq.getLastAcquiredFrame();
