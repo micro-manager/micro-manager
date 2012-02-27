@@ -202,7 +202,8 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
          }
       });
       modeComboBox_.setModel(new DefaultComboBoxModel(new String[]{
-                 "Auto", "8bit (0-255)", "10bit (0-1023)", "12bit (0-4095)", "14bit (0-16383)", "16bit (0-65535)"}));
+                 "Auto", "4bit (0-31)", "6bit (0-127)", "8bit (0-255)", "10bit (0-1023)", 
+                 "12bit (0-4095)", "14bit (0-16383)", "16bit (0-65535)"}));
 
 
       this.setLayout(new BoxLayout(this, BoxLayout.X_AXIS));
@@ -259,8 +260,9 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
       gbc.gridy = 3;
       gbc.weightx = 1;
       gbc.weighty = 1;
-      gbc.gridwidth = 3;
-      modeComboBox_.setPreferredSize(new Dimension(60, 20));
+      gbc.gridwidth = 4;
+      gbc.anchor = GridBagConstraints.LINE_START;
+      modeComboBox_.setPreferredSize(new Dimension(80, 20));
       controls_.add(modeComboBox_, gbc);
 
       gbc = new GridBagConstraints();
@@ -283,6 +285,7 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
       gbc.anchor = GridBagConstraints.LINE_START;
       controls_.add(minMaxLabel_, gbc);
 
+      controls_.setPreferredSize(controls_.getMinimumSize());
    }
 
    public void setHeight(int height) {
@@ -298,24 +301,30 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
             histMax_ = maxIntensity_;
             break;
          case 0:
-            histMax_ = 255;
+            histMax_ = 31;
             break;
          case 1:
-            histMax_ = 1023;
+            histMax_ = 127;
             break;
          case 2:
-            histMax_ = 4095;
+            histMax_ = 255;
             break;
          case 3:
-            histMax_ = 16383;
+            histMax_ = 1023;
             break;
          case 4:
+            histMax_ = 4095;
+            break;
+         case 5:
+            histMax_ = 16383;
+            break;
+         case 6:
             histMax_ = 65535;
             break;
          default:
             break;
       }
-      binSize_ = (histMax_ + 1) / NUM_BINS;
+      binSize_ = ((double)(histMax_ + 1)) / ((double)NUM_BINS);
       histMaxLabel_ = histMax_ + "";
       updateHistogram();
       ImagePlus img = mdPanel_.getCurrentImage();

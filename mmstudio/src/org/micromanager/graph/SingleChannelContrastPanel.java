@@ -93,7 +93,7 @@ public class SingleChannelContrastPanel extends JPanel implements
    private double stdDev_;
    private int pixelMin_ = 0;
    private int pixelMax_ = 255;
-   private int binSize_ = 1;
+   private double binSize_ = 1;
    private static final int HIST_BINS = 256;
    private JCheckBox autostretchCheckBox_;
    private JCheckBox rejectOutliersCheckBox_;
@@ -430,7 +430,8 @@ public class SingleChannelContrastPanel extends JPanel implements
          }
       });
       modeComboBox_.setModel(new DefaultComboBoxModel(new String[]{
-                  "Auto", "8bit (0-255)", "10bit (0-1023)", "12bit (0-4095)", "14bit (0-16383)", "16bit (0-65535)"}));
+                  "Auto", "4bit (0-31)", "6bit (0-127)", "8bit (0-255)", "10bit (0-1023)", 
+                  "12bit (0-4095)", "14bit (0-16383)", "16bit (0-65535)"}));
       add(modeComboBox_);
       springLayout.putConstraint(SpringLayout.EAST, modeComboBox_, 0,
               SpringLayout.EAST, maxLabel_);
@@ -603,24 +604,30 @@ public class SingleChannelContrastPanel extends JPanel implements
             histMax_ = maxIntensity_;
             break;
          case 0:
-            histMax_ = 255;
+            histMax_ = 31;
             break;
          case 1:
-            histMax_ = 1023;
+            histMax_ = 127;
             break;
          case 2:
-            histMax_ = 4095;
+            histMax_ = 255;
             break;
          case 3:
-            histMax_ = 16383;
+            histMax_ = 1023;
             break;
          case 4:
+            histMax_ = 4095;
+            break;
+         case 5:
+            histMax_ = 16383;
+            break;
+         case 6:
             histMax_ = 65535;
             break;
          default:
             break;
       }
-      binSize_ = (histMax_ + 1) / HIST_BINS;
+      binSize_ = ((double) (histMax_ + 1)) / ((double)HIST_BINS);
       updateHistogram();
    }
 
@@ -730,13 +737,13 @@ public class SingleChannelContrastPanel extends JPanel implements
          pixelMax_ = 0;
          mean_ = 0;
 
-         int numBins = Math.min(rawHistogram.length / binSize_, HIST_BINS);
+         int numBins = (int) Math.min(rawHistogram.length / binSize_, HIST_BINS);
          int[] histogram = new int[HIST_BINS];
          int total = 0;
          for (int i = 0; i < numBins; i++) {
             histogram[i] = 0;
             for (int j = 0; j < binSize_; j++) {
-               int rawHistIndex = i * binSize_ + j;
+               int rawHistIndex = (int) (i * binSize_ + j);
                int rawHistVal = rawHistogram[rawHistIndex];
                histogram[i] += rawHistVal;
                if (rawHistVal > 0) {
