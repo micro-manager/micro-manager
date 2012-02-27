@@ -82,7 +82,7 @@ public class LiveModeTimer extends javax.swing.Timer {
          // Wait for first image to create ImageWindow, so that we can be sure about image size
          long start = System.currentTimeMillis();
          long now = start;
-         long timeout = Math.min(10000, this.getDelay() * 50);
+         long timeout = Math.min(10000, this.getDelay() * 150);
          while (core_.getRemainingImageCount() == 0 && (now - start < timeout) ) {
             now = System.currentTimeMillis();
          }
