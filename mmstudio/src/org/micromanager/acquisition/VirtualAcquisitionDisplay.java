@@ -42,6 +42,7 @@ import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Point;
+import java.awt.Rectangle;
 import java.awt.event.*;
 import java.io.File;
 import java.io.IOException;
@@ -1471,6 +1472,23 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
             canvas.zoomIn(canvas.getSize().width / 2, canvas.getSize().height / 2);
          }   
       } 
+      Rectangle rect = canvas.getSrcRect();
+      if (rect != null) {
+         while (rect.width < canvas.getImage().getWidth() || rect.height < canvas.getImage().getHeight()) {
+            if (rect.width > 0.9 * canvas.getImage().getWidth() && rect.height > 0.9 * canvas.getImage().getHeight()) {
+//               win.setSize((int) (win.getWidth() / 0.9), (int) (win.getHeight() / 0.9));
+               canvas.zoomOut(canvas.getSize().width / 2, canvas.getSize().height / 2);
+               canvas.zoomIn(canvas.getSize().width / 2, canvas.getSize().height / 2);
+               break;
+            } else {
+               canvas.zoomOut(canvas.getSize().width / 2, canvas.getSize().height / 2);
+            }
+            rect = canvas.getSrcRect();
+            if (rect == null) {
+               break;
+            }
+         }
+      }
    }
 
    private ScrollbarWithLabel getSelector(String label) {
