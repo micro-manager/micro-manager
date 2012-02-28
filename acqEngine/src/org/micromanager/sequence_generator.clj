@@ -382,7 +382,7 @@
       (flatten
         (for [pos-index (range (count positions))]
           (map #(assoc % :position-index pos-index
-                       :position (nth positions pos-index))
+                         :position (nth positions pos-index))
                (generate-simple-burst-sequence
                  num-frames use-autofocus channels default-exposure triggers pos-index))))))
 
