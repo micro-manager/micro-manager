@@ -136,6 +136,8 @@ public class LiveModeTimer extends javax.swing.Timer {
 
          super.start();
          win_.liveModeEnabled(true);
+         
+         win_.getImagePlus().getWindow().toFront();
 
    }
 
@@ -186,7 +188,9 @@ public class LiveModeTimer extends javax.swing.Timer {
 
    private ActionListener singleCameraLiveAction() {
       return new ActionListener() {
-
+         private long startTime_ = System.currentTimeMillis();
+         
+         
          @Override
          public void actionPerformed(ActionEvent e) {
             if (core_.getRemainingImageCount() == 0) {
@@ -202,6 +206,12 @@ public class LiveModeTimer extends javax.swing.Timer {
                   gui_.addImage(ACQ_NAME, ti, true, true);
                   gui_.updateLineProfile();
                   updateFPS();
+                  
+                  long imgTime = Long.parseLong(ti.tags.getString("ElapsedTime-ms"));
+                  long timerTime = System.currentTimeMillis() - startTime_;
+                  
+                  System.out.println(  imgTime - timerTime );
+                  
                   } catch (MMScriptException ex) {
                   ReportingUtils.showError(ex);
                   gui_.enableLiveMode(false);
