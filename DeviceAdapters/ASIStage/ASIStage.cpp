@@ -3149,14 +3149,20 @@ int CRISP::OnFocusCurve(MM::PropertyBase* pProp, MM::ActionType eAct)
          // need at least 4 strings.
          int index = 0;
          focusCurveData_[index] = "";
-         while (ret == DEVICE_OK && index < SIZE_OF_FC_ARRAY)
+         bool done = false;
+         while (ret == DEVICE_OK && !done && index < SIZE_OF_FC_ARRAY)
          {
-            ret = GetSerialAnswer(port_.c_str(), "\r", answer);
-            focusCurveData_[index] += answer + "\r\n";
-            if (focusCurveData_[index].length() > (MM::MaxStrLength - 40))
+            ret = GetSerialAnswer(port_.c_str(), "\r\n", answer);
+            if (answer == "end")
+               done = true;
+            else
             {
-               index++;
-               focusCurveData_[index] = "";
+               focusCurveData_[index] += answer + "\r\n";
+               if (focusCurveData_[index].length() > (MM::MaxStrLength - 40))
+               {
+                  index++;
+                  focusCurveData_[index] = "";
+               }
             }
          }
       }
