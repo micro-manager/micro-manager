@@ -72,31 +72,33 @@ const char* g_Res2 = "340x256";
 const char* g_Res3 = "480x320"; 
 const char* g_Res4 = "640x480";//vga 
 const char* g_Res5 = "680x512"; 
-const char* g_Res6 = "720x480";// 
-const char* g_Res7 = "768x576";//pal 
-const char* g_Res8 = "800x480";//wvga
-const char* g_Res9 = "854x480";//wvga
-const char* g_Res10 = "800x480";//svga
-const char* g_Res11 = "1024x600";//wsvga
-const char* g_Res12 = "1024x768";//xga
-const char* g_Res13 = "1136x768";
-const char* g_Res14 = "1280x720";//hd720
-const char* g_Res15 = "1280x800";//wxga
-const char* g_Res16 = "1280x960";
-const char* g_Res17 = "1280x1024";//sxga
-const char* g_Res18 = "1360x1024";
-const char* g_Res19 = "1400x1050";//sxga+
-const char* g_Res20 = "1440x900";
-const char* g_Res21 = "1440x960";
-const char* g_Res22 = "1600x1200";//uxga
-const char* g_Res23 = "1680x1050";//wsxga+
-const char* g_Res24 = "1920x1080";// are you ready for the hud?
-const char* g_Res25 = "1920x1200";//wuxga
-const char* g_Res26 = "2048x1080";//2k
-const char* g_Res27 = "2048x1536";//qxga
-const char* g_Res28 = "2560x1600";//wqxga
-const char* g_Res29 = "2560x2048";//sqxga
-const char* g_Res30 = "2592x1944";
+const char* g_Res6 = "720x480";
+const char* g_Res7 = "768x512";
+const char* g_Res8 = "768x576";//pal 
+const char* g_Res9 = "800x480";//wvga
+const char* g_Res10 = "800x600";
+const char* g_Res11 = "854x480";//wvga
+const char* g_Res12 = "800x480";//svga
+const char* g_Res13 = "1024x600";//wsvga
+const char* g_Res14 = "1024x768";//xga
+const char* g_Res15 = "1136x768";
+const char* g_Res16 = "1280x720";//hd720
+const char* g_Res17 = "1280x800";//wxga
+const char* g_Res18 = "1280x960";
+const char* g_Res19 = "1280x1024";//sxga
+const char* g_Res20 = "1360x1024";
+const char* g_Res21 = "1400x1050";//sxga+
+const char* g_Res22 = "1440x900";
+const char* g_Res23 = "1440x960";
+const char* g_Res24= "1600x1200";//uxga
+const char* g_Res25 = "1680x1050";//wsxga+
+const char* g_Res26 = "1920x1080";// are you ready for the hud?
+const char* g_Res27 = "1920x1200";//wuxga
+const char* g_Res28 = "2048x1080";//2k
+const char* g_Res29 = "2048x1536";//qxga
+const char* g_Res30 = "2560x1600";//wqxga
+const char* g_Res31 = "2560x2048";//sqxga
+const char* g_Res32 = "2592x1944";
 
 // TODO: linux entry code
 
@@ -358,7 +360,8 @@ int COpenCVgrabber::Initialize()
    ResValues.push_back(g_Res28);
    ResValues.push_back(g_Res29);
    ResValues.push_back(g_Res30);
-
+   ResValues.push_back(g_Res31);
+   ResValues.push_back(g_Res32);
    nRet = SetAllowedValues(g_Keyword_Resolution, ResValues);
    if (nRet != DEVICE_OK)
       return nRet;
