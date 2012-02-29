@@ -188,13 +188,14 @@ public class LiveModeTimer extends javax.swing.Timer {
 
    private ActionListener singleCameraLiveAction() {
       return new ActionListener() {
-         private long startTime_ = System.currentTimeMillis();
-         
+         private long startTime_ = System.currentTimeMillis();         
          
          @Override
          public void actionPerformed(ActionEvent e) {
+            ReportingUtils.logMessage("Live mode timer action firing at:" + (System.currentTimeMillis()-startTime_));
             if (core_.getRemainingImageCount() == 0) {
-               return;
+               ReportingUtils.logMessage("Core image count equals 0");
+                return;
             }
             if (win_.windowClosed()) //check is user closed window             
             {
@@ -202,16 +203,14 @@ public class LiveModeTimer extends javax.swing.Timer {
             } else {
                try {
                   TaggedImage ti = core_.getLastTaggedImage();
+                  ReportingUtils.logMessage("Got tagged img at: "+ (System.currentTimeMillis()-startTime_) );
                   addTags(ti, 0);
+                  ReportingUtils.logMessage("Tags added at: "+ (System.currentTimeMillis()-startTime_));
                   gui_.addImage(ACQ_NAME, ti, true, true);
+                  ReportingUtils.logMessage("Image added at" + (System.currentTimeMillis()-startTime_));
                   gui_.updateLineProfile();
                   updateFPS();
-                  
-                  long imgTime = Long.parseLong(ti.tags.getString("ElapsedTime-ms"));
-                  long timerTime = System.currentTimeMillis() - startTime_;
-                  
-                  System.out.println(  imgTime - timerTime );
-                  
+                                           
                   } catch (MMScriptException ex) {
                   ReportingUtils.showError(ex);
                   gui_.enableLiveMode(false);
@@ -302,7 +301,7 @@ public class LiveModeTimer extends javax.swing.Timer {
       try {
          ti.tags.put("Summary", MMStudioMainFrame.getInstance().getAcquisition(ACQ_NAME).getSummaryMetadata());
       } catch (MMScriptException ex) {
-         ReportingUtils.logError("Error adding summary metadat to tags");
+         ReportingUtils.logError("Error adding summary metadata to tags");
       }
    }
 
