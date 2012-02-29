@@ -38,6 +38,8 @@ import edu.ucsf.tsf.TaggedSpotsProtos.FitMode;
 import edu.ucsf.tsf.TaggedSpotsProtos.SpotList;
 import edu.ucsf.tsf.TaggedSpotsProtos.Spot;
 
+import ij.ImageStack;
+import ij.gui.StackWindow;
 import ij.gui.YesNoCancelDialog;
 import ij.process.ShortProcessor;
 import java.awt.Cursor;
@@ -308,13 +310,13 @@ public class DataCollectionForm extends javax.swing.JFrame {
             }
         });
 
-        plotComboBox_.setFont(new java.awt.Font("Lucida Grande", 0, 10)); // NOI18N
+        plotComboBox_.setFont(new java.awt.Font("Lucida Grande", 0, 10));
         plotComboBox_.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "X-T", "Y-T", "X-Y" }));
 
-        visualizationMagnification_.setFont(new java.awt.Font("Lucida Grande", 0, 10)); // NOI18N
+        visualizationMagnification_.setFont(new java.awt.Font("Lucida Grande", 0, 10));
         visualizationMagnification_.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "1x", "2x", "4x", "8x" }));
 
-        visualizationModel_.setFont(new java.awt.Font("Lucida Grande", 0, 10)); // NOI18N
+        visualizationModel_.setFont(new java.awt.Font("Lucida Grande", 0, 10));
         visualizationModel_.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "Gaussian" }));
 
         saveButton.setFont(new java.awt.Font("Lucida Grande", 0, 10)); // NOI18N
@@ -349,7 +351,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
             }
         });
 
-        pairsButton.setFont(new java.awt.Font("Lucida Grande", 0, 10)); // NOI18N
+        pairsButton.setFont(new java.awt.Font("Lucida Grande", 0, 10));
         pairsButton.setText("Pairs");
         pairsButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -357,7 +359,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
             }
         });
 
-        c2CorrectButton.setFont(new java.awt.Font("Lucida Grande", 0, 10)); // NOI18N
+        c2CorrectButton.setFont(new java.awt.Font("Lucida Grande", 0, 10));
         c2CorrectButton.setText("2C Correct");
         c2CorrectButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -537,6 +539,10 @@ public class DataCollectionForm extends javax.swing.JFrame {
       jScrollPane1.getViewport().setViewSize(d);
    }//GEN-LAST:event_formComponentResized
 
+   /**
+    * Use the selected data set as the reference for 2-channel color correction
+    * @param evt 
+    */
    private void c2StandardButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_c2StandardButtonActionPerformed
       int row = jTable1_.getSelectedRow();
       if (row > -1) {
@@ -576,6 +582,19 @@ public class DataCollectionForm extends javax.swing.JFrame {
       }
    }//GEN-LAST:event_c2StandardButtonActionPerformed
 
+   
+   /**
+    * Cycles through the spots of the selected data set and finds the most nearby 
+    * spot in channel 2.  It will list this as a pair if the two spots are within
+    * MAXMATCHDISTANCE nm of each other.  
+    * In addition, it will list the rms average distance, rms average distance
+    * in x and y for each frame.
+    * 
+    * spots in channel 2
+    * that are within MAXMATCHDISTANCE of 
+    * 
+    * @param evt 
+    */
    private void pairsButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_pairsButtonActionPerformed
       final int row = jTable1_.getSelectedRow();
       if (row > -1) {
@@ -589,10 +608,26 @@ public class DataCollectionForm extends javax.swing.JFrame {
                ResultsTable rt2 = new ResultsTable();
                rt2.reset();
                rt2.setPrecision(2);
-               ij.IJ.showStatus("Creating Pairs");
+               int width = rowData_.get(row).width_;
+               int height = rowData_.get(row).height_;
+               double factor = rowData_.get(row).pixelSizeUm_;
+               ij.ImageStack  stack = new ij.ImageStack(width, height); 
+               
+               ImagePlus sp = new ImagePlus("Errors in pairs");
+               
+               
+               //sp.setStack(stack, 1, 1, stack.getSize());
+              
+                
+                            
+               ij.IJ.showStatus("Creating Pairs...");
  
                for (int frame = 1; frame <= rowData_.get(row).nrFrames_; frame++) {
                   ij.IJ.showProgress(frame, rowData_.get(row).nrFrames_);
+                  ImageProcessor ip = new ShortProcessor(width, height);
+                  short pixels[] = new short[width * height];
+                  ip.setPixels(pixels);
+                  
                   // Get points from both channels in each frame as ArrayLists        
                   ArrayList<Point2D.Double> xyPointsCh1 = new ArrayList<Point2D.Double>();
                   ArrayList<Point2D.Double> xyPointsCh2 = new ArrayList<Point2D.Double>();
@@ -613,7 +648,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
                   Iterator it2 = xyPointsCh1.iterator();
                   NearestPoint2D np = new NearestPoint2D(xyPointsCh2, MAXMATCHDISTANCE);
 
-                  ArrayList<Double> distancesSquared = new ArrayList<Double>();
+                  ArrayList<Double> distances = new ArrayList<Double>();
                   ArrayList<Double> errorX = new ArrayList<Double>();
                   ArrayList<Double> errorY = new ArrayList<Double>();
 
@@ -627,8 +662,11 @@ public class DataCollectionForm extends javax.swing.JFrame {
                         rt.addValue("X2", pCh2.getX());
                         rt.addValue("Y2", pCh2.getY());
                         double d2 = NearestPoint2D.distance2(pCh1, pCh2);
-                        rt.addValue("Distance", Math.sqrt(d2));
-                        distancesSquared.add(d2);
+                        double d = Math.sqrt(d2);
+                        rt.addValue("Distance", d);
+                        distances.add(d);
+                        
+                        ip.putPixel((int) (pCh1.x / factor), (int) (pCh1.y / factor), (int) d);
 
                         double ex = (pCh1.getX() - pCh2.getX()) * (pCh1.getX() - pCh2.getX());
                         ex = Math.sqrt(ex);
@@ -641,22 +679,42 @@ public class DataCollectionForm extends javax.swing.JFrame {
                   }
 
 
-                  Double avg = Math.sqrt(listAvg(distancesSquared));
+                  Double avg = listAvg(distances);
+                  Double stdDev = listStdDev(distances, avg);
 
                   Double avgX = listAvg(errorX);
+                  Double stdDevX = listStdDev(errorX, avgX);
                   Double avgY = listAvg(errorY);
+                  Double stdDevY = listStdDev(errorY, avgY);
 
                   rt2.incrementCounter();
                   rt2.addValue("Frame Nr.", frame);
                   rt2.addValue("Avg. distance", avg);
+                  rt2.addValue("StdDev distance", stdDev);
                   rt2.addValue("X", avgX);
+                  rt2.addValue("StdDev X", stdDevX);
                   rt2.addValue("Y", avgY);
+                  rt2.addValue("StdDevY", stdDevY);  
                   
-                  
-                  rt2.show("Summary of Pairs found in " + rowData_.get(row).name_);
+                  stack.addSlice("frame: " + frame, ip);
 
                }
+               rt2.show("Summary of Pairs found in " + rowData_.get(row).name_);
                rt.show("Pairs found in " + rowData_.get(row).name_);
+               
+               ij.IJ.showStatus("");
+               
+               sp.setOpenAsHyperStack(true);
+               sp.setStack(stack, 1, 1, rowData_.get(row).nrFrames_);
+               sp.setDisplayRange(0, 20);
+               sp.setSlice(1);
+               sp.resetStack();
+               
+               ImageWindow w = new StackWindow(sp);
+
+               w.setImage(sp);
+               w.setVisible(true); 
+               
             }
          };
          
@@ -672,9 +730,32 @@ public class DataCollectionForm extends javax.swing.JFrame {
          total += (Double) it.next();
       }
       
-      return total / list.size();
-      
+      return total / list.size();      
    }
+   
+   private double listStdDev (ArrayList<Double> list, double avg) {
+      ArrayList<Double> errorsSquared = new ArrayList<Double>();
+      
+      Iterator it = list.iterator();
+      while (it.hasNext()) {
+         double error = (Double) it.next() - avg;
+         errorsSquared.add(error * error);
+      }
+      return Math.sqrt(listAvg(errorsSquared));
+   }
+   
+   private double listStdDev (ArrayList<Double> list) {
+      double avg = listAvg(list);
+      ArrayList<Double> errorsSquared = new ArrayList<Double>();
+      
+      Iterator it = list.iterator();
+      while (it.hasNext()) {
+         double error = (Double) it.next() - avg;
+         errorsSquared.add(error * error);
+      }
+      return Math.sqrt(listAvg(errorsSquared));
+   }
+   
    
    private void c2CorrectButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_c2CorrectButtonActionPerformed
       int row = jTable1_.getSelectedRow();
@@ -807,8 +888,8 @@ public class DataCollectionForm extends javax.swing.JFrame {
     *
     * @rowData
     */
-   private void saveData(MyRowData rowData) {
-      File selectedFile;
+   private void saveData(final MyRowData rowData) {
+      //File selectedFile;
       FileDialog fd = new FileDialog(this, "Save Spot Data", FileDialog.SAVE);
       fd.setVisible(true);
       String selectedItem = fd.getFile();
@@ -819,7 +900,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
          if (!fn.contains(".")) {
             fn = fn + extension_;
          }
-         selectedFile = new File(fd.getDirectory() + File.separator + fn);
+         final File selectedFile = new File(fd.getDirectory() + File.separator + fn);
          if (selectedFile.exists()) {
             //JOptionPane.showOptionDialog(this,"File exists.  Overwrite?", "File Exists...", JOptionPane.YES_NO_CANCEL_OPTION);
             YesNoCancelDialog y = new YesNoCancelDialog(this, "File " + fn + "Exists...", "File exists.  Overwrite?");
@@ -833,81 +914,99 @@ public class DataCollectionForm extends javax.swing.JFrame {
          }
 
 
-         SpotList.Builder tspBuilder = SpotList.newBuilder();
-         tspBuilder.setApplicationId(1).
-                 setName(rowData.name_).
-                 setFilepath(rowData.title_).
-                 setNrPixelsX(rowData.width_).
-                 setNrPixelsY(rowData.height_).
-                 setNrSpots(rowData.spotList_.size()).
-                 setPixelSize(160).
-                 setBoxSize(rowData.halfSize_ * 2).
-                 setNrChannels(rowData.nrChannels_).
-                 setNrSlices(rowData.nrSlices_).
-                 setIsTrack(rowData.isTrack_).
-                 setNrPos(rowData.nrPositions_).
-                 setNrFrames(rowData.nrFrames_).
-                 setLocationUnits(LocationUnits.NM).
-                 setIntensityUnits(IntensityUnits.PHOTONS).
-                 setNrSpots(rowData.maxNrSpots_);
-         switch (rowData.shape_) {
-            case (1):
-               tspBuilder.setFitMode(FitMode.ONEAXIS);
-               break;
-            case (2):
-               tspBuilder.setFitMode(FitMode.TWOAXIS);
-               break;
-            case (3):
-               tspBuilder.setFitMode(FitMode.TWOAXISANDTHETA);
-               break;
-         }
+
+         Runnable doWorkRunnable = new Runnable() {
+
+            public void run() {
+
+               SpotList.Builder tspBuilder = SpotList.newBuilder();
+               tspBuilder.setApplicationId(1).
+                       setName(rowData.name_).
+                       setFilepath(rowData.title_).
+                       setNrPixelsX(rowData.width_).
+                       setNrPixelsY(rowData.height_).
+                       setNrSpots(rowData.spotList_.size()).
+                       setPixelSize(160).
+                       setBoxSize(rowData.halfSize_ * 2).
+                       setNrChannels(rowData.nrChannels_).
+                       setNrSlices(rowData.nrSlices_).
+                       setIsTrack(rowData.isTrack_).
+                       setNrPos(rowData.nrPositions_).
+                       setNrFrames(rowData.nrFrames_).
+                       setLocationUnits(LocationUnits.NM).
+                       setIntensityUnits(IntensityUnits.PHOTONS).
+                       setNrSpots(rowData.maxNrSpots_);
+               switch (rowData.shape_) {
+                  case (1):
+                     tspBuilder.setFitMode(FitMode.ONEAXIS);
+                     break;
+                  case (2):
+                     tspBuilder.setFitMode(FitMode.TWOAXIS);
+                     break;
+                  case (3):
+                     tspBuilder.setFitMode(FitMode.TWOAXISANDTHETA);
+                     break;
+               }
 
 
-         SpotList spotList = tspBuilder.build();
-         try {
-            setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+               SpotList spotList = tspBuilder.build();
+               try {
+                  setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
 
-            FileOutputStream fo = new FileOutputStream(selectedFile);
-            spotList.writeDelimitedTo(fo);
+                  FileOutputStream fo = new FileOutputStream(selectedFile);
+                  spotList.writeDelimitedTo(fo);
 
-            int counter = 0;
-            for (GaussianSpotData gd : rowData.spotList_) {
-               if (gd != null) {
-                  Spot.Builder spotBuilder = Spot.newBuilder();
-                  // TODO: precede all these calls with check for presence of member
-                  // or be OK with default values?
-                  spotBuilder.setMolecule(counter).
-                          setFrame(gd.getFrame()).
-                          setChannel(gd.getChannel()).
-                          setPos(gd.getPosition()).
-                          setSlice(gd.getSlice()).
-                          setX((float) gd.getXCenter()).
-                          setY((float) gd.getYCenter()).
-                          setIntensity((float) gd.getIntensity()).
-                          setBackground((float) gd.getBackground()).
-                          setXPosition(gd.getX()).
-                          setYPosition(gd.getY()).
-                          setWidth((float) gd.getWidth()).
-                          setA((float) gd.getA()).
-                          setTheta((float) gd.getTheta()).
-                          setXPrecision((float) gd.getSigma());
+                  int counter = 0;
+                  for (GaussianSpotData gd : rowData.spotList_) {
+                     
+                     if ((counter % 1000) == 0) { 
+                        ij.IJ.showStatus("Saving spotData...");
+                        ij.IJ.showProgress(counter, rowData.spotList_.size());
+                     }
+                     
+                     if (gd != null) {
+                        Spot.Builder spotBuilder = Spot.newBuilder();
+                        // TODO: precede all these calls with check for presence of member
+                        // or be OK with default values?
+                        spotBuilder.setMolecule(counter).
+                                setFrame(gd.getFrame()).
+                                setChannel(gd.getChannel()).
+                                setPos(gd.getPosition()).
+                                setSlice(gd.getSlice()).
+                                setX((float) gd.getXCenter()).
+                                setY((float) gd.getYCenter()).
+                                setIntensity((float) gd.getIntensity()).
+                                setBackground((float) gd.getBackground()).
+                                setXPosition(gd.getX()).
+                                setYPosition(gd.getY()).
+                                setWidth((float) gd.getWidth()).
+                                setA((float) gd.getA()).
+                                setTheta((float) gd.getTheta()).
+                                setXPrecision((float) gd.getSigma());
 
-                  double width = gd.getWidth();
-                  double xPrec = gd.getSigma();
+                        double width = gd.getWidth();
+                        double xPrec = gd.getSigma();
 
-                  Spot spot = spotBuilder.build();
-                  // write message size and message
-                  spot.writeDelimitedTo(fo);
-                  counter++;
+                        Spot spot = spotBuilder.build();
+                        // write message size and message
+                        spot.writeDelimitedTo(fo);
+                        counter++;
+                     }
+                  }
+
+                  fo.close();
+                  ij.IJ.showProgress(1);
+                  ij.IJ.showStatus("Finished saving spotData...");
+               } catch (IOException ex) {
+                  Logger.getLogger(DataCollectionForm.class.getName()).log(Level.SEVERE, null, ex);
+               } finally {
+                  setCursor(Cursor.getDefaultCursor());
                }
             }
-
-            fo.close();
-         } catch (IOException ex) {
-            Logger.getLogger(DataCollectionForm.class.getName()).log(Level.SEVERE, null, ex);
-         } finally {
-            setCursor(Cursor.getDefaultCursor());
-         }
+         };
+         
+         (new Thread(doWorkRunnable)).start();
+         
       }
 
    }
@@ -983,7 +1082,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
                GaussianSpotData gs = (GaussianSpotData) it.next();
                if (gs.getFrame() != frameNr) {
                   frameNr = gs.getFrame();
-                  ij.IJ.showStatus("Executing color correction");
+                  ij.IJ.showStatus("Executing color correction...");
                   ij.IJ.showProgress(frameNr, rowData.nrFrames_);
                }
                if (gs.getChannel() == 1) {
@@ -1110,26 +1209,6 @@ public class DataCollectionForm extends javax.swing.JFrame {
       }
    }
 
-   private Point2D.Double closestPoint() {
-      return new Point2D.Double(0, 0);
-   }
-   
-   private int findMatch(double[][][] imageSpotList, int nr, double cutoff) {
-      int j = 0;
-      while ( (nr - j) >= 0 || (nr + j) < imageSpotList[0].length ) {
-         if (nr - j >= 0) {
-            if (test(imageSpotList, nr, nr - j, cutoff))
-               return nr - j;
-         }
-         if ( (j != 0) && nr + j < imageSpotList[0].length) {
-            if (test(imageSpotList, nr, nr + j, cutoff))
-               return nr + j;
-         }
-         j++;
-      }
-      return -1;
-   }
-
    private boolean test(double[][][] imageSpotList, int source, int target, double cutoff) {
       double xtest = imageSpotList[0][source][2] - imageSpotList[1][target][2];
       if (xtest > cutoff || xtest < -cutoff)
@@ -1164,50 +1243,4 @@ public class DataCollectionForm extends javax.swing.JFrame {
       }
    }
 
-   /*
-   private void displayColorCorrection (String axis) {
-       if (colorCorrection_ == null)
-          // TODO: error message
-          return;
-
-       int arrayOffset = 2;
-       if (axis.equals("Y"))
-          arrayOffset = 3;
-
-       // pixels to be shown
-       short pixels[] = new short[width_ * height_];
-       // scale the difference values to the maximum allowed in a short
-       double max = 0;
-       double min = 0;
-       for (int x = 0; x < xSize_; x++) {
-          for (int y=0; y < ySize_; y++) {
-             if (colorCorrection_[x][y][arrayOffset] > max)
-                max = colorCorrection_[x][y][arrayOffset];
-             if (colorCorrection_[x][y][arrayOffset] < min)
-                min = colorCorrection_[x][y][arrayOffset];
-          }
-       }
-
-       // scale the image so that 1 gray scale value corresponds to 1 nm
-       int factor = (int) (max - min);
-       if (factor > 65535)
-          factor = 65535;
-
-       // populate pixels with scaled values
-       for (int x = 0; x < xSize_; x++) {
-          for (int y=0; y < ySize_; y++) {
-             pixels[(y * xSize_) + x] = (short) (factor * (
-                     (colorCorrection_[x][y][arrayOffset] - min) / (max - min)));
-          }
-       }
-
-       ImageProcessor ip = new ShortProcessor(xSize_, ySize_);
-       ip.setPixels(pixels);
-
-       ImagePlus sp = new ImagePlus("Color Correction " + axis + " Offsets", ip);
-       ImageWindow w = new ImageWindow(sp);
-       w.setVisible(true);
-   }
-
-    */
 }
