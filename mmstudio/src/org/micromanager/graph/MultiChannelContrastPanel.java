@@ -24,9 +24,7 @@ package org.micromanager.graph;
 import ij.CompositeImage;
 import ij.ImagePlus;
 import ij.gui.Overlay;
-import java.awt.Color;
-import java.awt.Dimension;
-import java.awt.Graphics;
+import java.awt.*;
 import java.util.ArrayList;
 import java.util.prefs.Preferences;
 import javax.swing.DefaultComboBoxModel;
@@ -252,46 +250,24 @@ public class MultiChannelContrastPanel extends JPanel implements ContrastPanel {
          nChannels = cache.getNumChannels();
       }
 
-      final SpringLayout layout = new SpringLayout();
-      final JPanel p = new JPanel() {
+      GridLayout layout = new GridLayout(nChannels,1);
+      JPanel p = new JPanel();
+      p.setLayout(layout);
+      p.setMinimumSize(new Dimension(ChannelControlPanel.MINIMUM_SIZE.width,
+              nChannels*ChannelControlPanel.MINIMUM_SIZE.height));
 
-         @Override
-         public void paint(Graphics g) {
-            int channelHeight = Math.max(115, contrastScrollPane_.getViewport().getSize().height / nChannels);
-            this.setPreferredSize(new Dimension(200, channelHeight * nChannels));
-            if (ccpList_ != null) {
-               for (int i = 0; i < ccpList_.size(); i++) {
-                  ccpList_.get(i).setHeight(channelHeight);
-                  ccpList_.get(i).setLocation(0, channelHeight * i);
-               }
-            }
-            super.paint(g);
-         }
-      };
-
-      int hpHeight = Math.max(115, (contrastScrollPane_.getSize().height - 2) / nChannels);
-      p.setPreferredSize(new Dimension(200, nChannels * hpHeight));
+    
       contrastScrollPane_.setViewportView(p);
       contrastScrollPane_.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
 
-      p.setLayout(layout);
       ccpList_ = new ArrayList<ChannelControlPanel>();
       for (int i = 0; i < nChannels; ++i) {
-         ChannelControlPanel ccp = new ChannelControlPanel(i, this, mdPanel_, cache, hpHeight,
+         ChannelControlPanel ccp = new ChannelControlPanel(i, this, mdPanel_, cache,
                  cache.getChannelColor(i), cache.getBitDepth(), getFractionToReject(),
                  logScaleCheckBox_.isSelected());
-         layout.putConstraint(SpringLayout.EAST, ccp, 0, SpringLayout.EAST, p);
-         layout.putConstraint(SpringLayout.WEST, ccp, 0, SpringLayout.WEST, p);
          p.add(ccp);
          ccpList_.add(ccp);
       }
-
-      layout.putConstraint(SpringLayout.NORTH, ccpList_.get(0), 0, SpringLayout.NORTH, p);
-      layout.putConstraint(SpringLayout.SOUTH, ccpList_.get(nChannels - 1), 0, SpringLayout.SOUTH, p);
-      for (int i = 1; i < ccpList_.size(); i++) {
-         layout.putConstraint(SpringLayout.NORTH, ccpList_.get(i), 0, SpringLayout.SOUTH, ccpList_.get(i - 1));
-      }
-
 
    }
 

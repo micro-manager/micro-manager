@@ -25,14 +25,7 @@ import ij.CompositeImage;
 import ij.ImagePlus;
 import ij.process.ImageProcessor;
 import ij.process.LUT;
-import java.awt.BorderLayout;
-import java.awt.Color;
-import java.awt.Dimension;
-import java.awt.Font;
-import java.awt.Graphics;
-import java.awt.GridBagConstraints;
-import java.awt.GridBagLayout;
-import java.awt.Insets;
+import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseWheelEvent;
@@ -68,11 +61,13 @@ import org.micromanager.utils.ReportingUtils;
 public class ChannelControlPanel extends JPanel implements CursorListener {
 
    private static final Dimension CONTROLS_SIZE = new Dimension(130, 115);
+   public static final Dimension MINIMUM_SIZE = new Dimension(400,CONTROLS_SIZE.height);
+   
    private static final int NUM_BINS = 256;
    private static final double BIN_SIZE_MIN = 1.0 / 8;
    private final int BIN_SIZE_MAX;
    private final int channelIndex_;
-   private final HistogramPanel hp_;
+   private HistogramPanel hp_;
    private final MultiChannelContrastPanel mccPanel_;
    private final MetadataPanel mdPanel_;
    private JButton autoButton_;
@@ -101,8 +96,7 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
    private Color color_;
 
    public ChannelControlPanel(int channelIndex, MultiChannelContrastPanel mccPanel, MetadataPanel md, ImageCache cache,
-           int height, Color color, int bitDepth, double fractionToReject, boolean logScale) {
-      height_ = height;
+           Color color, int bitDepth, double fractionToReject, boolean logScale) {
       fractionToReject_ = fractionToReject;
       logScale_ = logScale;
       color_ = color;
@@ -114,11 +108,11 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
       mdPanel_ = md;
       initComponents();
       channelIndex_ = channelIndex;
-      hp_ = addHistogramPanel();
       mccPanel_ = mccPanel;
       loadDisplaySettings(cache);
       updateChannelNameAndColor(cache);
       cache.setChannelColor(channelIndex_, color_.getRGB());
+      
    }
 
    private void initComponents() {
@@ -208,14 +202,21 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
                  "Auto", "4bit (0-31)", "6bit (0-127)", "8bit (0-255)", "10bit (0-1023)", 
                  "12bit (0-4095)", "14bit (0-16383)", "16bit (0-65535)"}));
 
+      
+      this.setMinimumSize(MINIMUM_SIZE);
+      this.setPreferredSize(MINIMUM_SIZE);
+      
+      hp_ = addHistogramPanel();
 
-      this.setLayout(new BoxLayout(this, BoxLayout.X_AXIS));
-      controlsHolderPanel_ = new JPanel();
+      this.setLayout(new BorderLayout());     
+      controlsHolderPanel_ = new JPanel(new BorderLayout());    
+      controlsHolderPanel_.setPreferredSize(CONTROLS_SIZE);
+      
       controls_ = new JPanel();
-      this.add(controlsHolderPanel_);
-      this.add(histogramPanelHolder_);
+      this.add(controlsHolderPanel_, BorderLayout.LINE_START);
+      this.add(histogramPanelHolder_, BorderLayout.CENTER);
 
-      controlsHolderPanel_.add(controls_, BorderLayout.CENTER);
+      controlsHolderPanel_.add(controls_, BorderLayout.PAGE_START);
       GridBagLayout gbl = new GridBagLayout();
       controls_.setLayout(gbl);
 
@@ -225,49 +226,42 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
       GridBagConstraints gbc = new GridBagConstraints();
       gbc.gridx = 0;
       gbc.gridy = 0;
-      gbc.gridwidth = 4;
+      gbc.gridwidth = 5;
       gbc.weightx = 1;
       gbc.weighty = 1;
-      gbc.anchor = GridBagConstraints.NORTHWEST;
-      controls_.add(channelNameCheckbox_, gbc);
-
-      gbc = new GridBagConstraints();
-      gbc.gridx = 2;
-      gbc.gridy = 1;
-      gbc.weightx = 1;
-      gbc.weighty = 1;
-      gbc.gridwidth = 2;
       gbc.anchor = GridBagConstraints.LINE_START;
+      controls_.add(channelNameCheckbox_, gbc);      
+      
       fullButton_.setPreferredSize(new Dimension(45, 20));
-      controls_.add(fullButton_, gbc);
-
+      autoButton_.setPreferredSize(new Dimension(45, 20));
+      colorPickerLabel_.setPreferredSize(new Dimension(20,20));
+      colorPickerLabel_.setMaximumSize(new Dimension(20,20));
+      FlowLayout flow = new FlowLayout();
+      flow.setHgap(4);
+      flow.setVgap(0);
+      JPanel line2 = new JPanel(flow);
+      line2.setPreferredSize(CONTROLS_SIZE);
+      line2.add(fullButton_);
+      line2.add(autoButton_);
+      line2.add(colorPickerLabel_);
+      line2.setPreferredSize(new Dimension(CONTROLS_SIZE.width,20));
+      
+      
       gbc = new GridBagConstraints();
       gbc.gridx = 0;
       gbc.gridy = 1;
       gbc.weightx = 1;
       gbc.weighty = 1;
-      gbc.gridwidth = 1;
+      gbc.gridwidth = 4;
       gbc.anchor = GridBagConstraints.LINE_START;
-      autoButton_.setPreferredSize(new Dimension(45, 20));
-      controls_.add(autoButton_, gbc);
-         
-      gbc = new GridBagConstraints();
-      gbc.gridx = 4;
-      gbc.gridy = 1;
-      gbc.weightx = 1;
-      gbc.weighty = 1;
-      gbc.gridwidth = 1;
-      gbc.ipadx = 15;
-      gbc.ipady = 15;
-      gbc.anchor = GridBagConstraints.LINE_START;
-      controls_.add(colorPickerLabel_, gbc);
-
+      controls_.add(line2,gbc);
+      
       gbc = new GridBagConstraints();
       gbc.gridx = 0;
       gbc.gridy = 2;
       gbc.weightx = 1;
       gbc.weighty = 1;
-      gbc.gridwidth = 4;
+      gbc.gridwidth = 5;
       gbc.anchor = GridBagConstraints.LINE_START;
       controls_.add(comboLabel, gbc);
 
@@ -276,9 +270,9 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
       gbc.gridy = 3;
       gbc.weightx = 1;
       gbc.weighty = 1;
-      gbc.gridwidth = 4;
+      gbc.gridwidth = 5;
       gbc.anchor = GridBagConstraints.LINE_START;
-      modeComboBox_.setPreferredSize(new Dimension(80, 20));
+      modeComboBox_.setPreferredSize(new Dimension(CONTROLS_SIZE.width, 20));
       controls_.add(modeComboBox_, gbc);
 
       gbc = new GridBagConstraints();
@@ -293,12 +287,6 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
       controls_.setPreferredSize(controls_.getMinimumSize());
    }
 
-   public void setHeight(int height) {
-      hp_.setSize(hp_.getWidth(), height);
-      histogramPanelHolder_.setSize(hp_.getSize());
-      this.setSize(this.getSize().width, height);
-      controlsHolderPanel_.setSize(CONTROLS_SIZE);
-   }
    
    public void setDisplayComboIndex(int index) {
       modeComboBox_.setSelectedIndex(index);
@@ -307,7 +295,7 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
    public int getDisplayComboIndex() {
       return modeComboBox_.getSelectedIndex();
    }
-
+   
    public void displayComboAction() {
       switch (modeComboBox_.getSelectedIndex() - 1) {
          case -1:
@@ -496,7 +484,7 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
       calcAndDisplayHistAndStats(mdPanel_.getCurrentImage(), true);
    }
 
-   private final HistogramPanel addHistogramPanel() {
+   private HistogramPanel addHistogramPanel() {
       HistogramPanel hp = new HistogramPanel() {
 
          @Override
