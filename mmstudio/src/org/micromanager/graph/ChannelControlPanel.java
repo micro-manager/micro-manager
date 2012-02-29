@@ -452,6 +452,13 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
    public void autostretch() {
       contrastMin_ = pixelMin_;
       contrastMax_ = pixelMax_;
+      if (pixelMin_ == pixelMax_) {
+          if (pixelMax_ > 0) {
+              contrastMin_--;
+          } else {
+              contrastMax_++;
+          }
+      }
       if (mccPanel_.rejectOutliersCB_.isSelected()) {
          if (contrastMin_ < minAfterRejectingOutliers_) {
             if (0 < minAfterRejectingOutliers_) {
@@ -460,6 +467,13 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
          }
          if (maxAfterRejectingOutliers_ < contrastMax_) {
             contrastMax_ = maxAfterRejectingOutliers_;
+         }
+         if (contrastMax_ <= contrastMin_) {
+             if (contrastMax_ > 0) {
+                 contrastMin_ = contrastMax_ - 1;
+             } else {
+                 contrastMax_ = contrastMin_ + 1;
+             }
          }
       }
    }
@@ -681,14 +695,6 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
          }
       }
 
-      if (pixelMin_ == pixelMax_) {
-         if (pixelMin_ == 0) {
-            pixelMax_++;
-         } else {
-            pixelMin_--;
-         }
-      }
-
       // work around what is apparently a bug in ImageJ
       if (total == 0) {
          if (img.getProcessor().getMin() == 0) {
@@ -722,8 +728,10 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
    public void onLeftCursor(double pos) {
       mccPanel_.autostretchCheckbox_.setSelected(false);
       contrastMin_ = (int) (Math.max(0, pos) * binSize_);
+      if (contrastMin_ >= maxIntensity_)
+          contrastMin_ = maxIntensity_ - 1;
       if (contrastMax_ < contrastMin_) {
-         contrastMax_ = contrastMin_;
+         contrastMax_ = contrastMin_ + 1;
       }
       if (mccPanel_.syncedChannels()) {
          mccPanel_.applyContrastToAllChannels(contrastMin_, contrastMax_, gamma_);

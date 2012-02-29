@@ -648,7 +648,13 @@ public class SingleChannelContrastPanel extends JPanel implements
    public void autostretch() {
       contrastMin_ = pixelMin_;
       contrastMax_ = pixelMax_;
-
+      if (pixelMin_ == pixelMax_) {
+          if (pixelMax_ > 0) {
+              contrastMin_--;
+          } else {
+              contrastMax_++;
+          }
+      }
       if (rejectOutliersCheckBox_.isSelected()) {
          if (contrastMin_ < minAfterRejectingOutliers_) {
             if (0 < minAfterRejectingOutliers_) {
@@ -657,6 +663,13 @@ public class SingleChannelContrastPanel extends JPanel implements
          }
          if (maxAfterRejectingOutliers_ < contrastMax_) {
             contrastMax_ = (int) maxAfterRejectingOutliers_;
+         }
+         if (contrastMax_ <= contrastMin_) {
+             if (contrastMax_ > 0) {
+                 contrastMin_ = contrastMax_ - 1;
+             } else {
+                 contrastMax_ = contrastMin_ + 1;
+             }
          }
       }
    }
@@ -760,13 +773,6 @@ public class SingleChannelContrastPanel extends JPanel implements
             }
          }
          mean_ /= imgWidth * imgHeight;
-         if (pixelMin_ == pixelMax_) {
-            if (pixelMin_ == 0) {
-               pixelMax_++;
-            } else {
-               pixelMin_--;
-            }
-         }
 
          // work around what is apparently a bug in ImageJ
          if (total == 0) {
@@ -803,14 +809,7 @@ public class SingleChannelContrastPanel extends JPanel implements
                for (int j = 0; j < rawHistogram[i]; j++) {
                   stdDev_ += (i - mean_) * (i - mean_);
                }
-
-               if (pixelMin_ == pixelMax_) {
-                  if (pixelMin_ == 0) {
-                     pixelMax_++;
-                  } else {
-                     pixelMin_--;
-                  }
-               }
+              
             }
             stdDev_ = Math.sqrt(stdDev_ / (imgWidth * imgHeight));
             //Draw histogram and stats
@@ -843,10 +842,12 @@ public class SingleChannelContrastPanel extends JPanel implements
       if (autostretch_) {
          autostretchCheckBox_.setSelected(false);
       }
-
       contrastMin_ = (int) (Math.max(0, pos) * binSize_);
+      if (contrastMin_ >= maxIntensity_) {
+          contrastMin_ = maxIntensity_ - 1;
+      }
       if (contrastMax_ < contrastMin_) {
-         contrastMax_ = contrastMin_;
+         contrastMax_ = contrastMin_ + 1;
       }
       mdPanel_.drawWithoutUpdate();
 
