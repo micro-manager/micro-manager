@@ -214,17 +214,17 @@ bool RappScanner::Busy()
 /////////////////////////////
 int RappScanner::PointAndFire(double x, double y, double pulseTime_us)
 {
-   int result = DEVICE_OK;
+
    pointf xy((float) x,(float) y);
-   UGA_->ClickAndFire(xy, (int) pulseTime_us, laser2_);
-   return result;
+   bool success = UGA_->ClickAndFire(xy, (int) pulseTime_us, laser2_);
+   return success ? DEVICE_OK : DEVICE_ERR;
 }
 
 
 int RappScanner::SetPosition(double x, double y)
 {
-   UGA_->SetDevicePosition((int) x,(int) y);
-   return DEVICE_OK;
+   bool success = UGA_->SetDevicePosition((int) x,(int) y);
+   return success ? DEVICE_OK : DEVICE_ERR;
 }
 
 
@@ -265,7 +265,7 @@ int RappScanner::DeletePolygons()
    return DEVICE_OK;
 }
 
-int RappScanner::RunSequence()
+int RappScanner::LoadPolygons(int repeats)
 {
    tRectList rectangles;
 
@@ -275,6 +275,33 @@ int RappScanner::RunSequence()
       UGA_->CreateA(polygons_.at(polygonIndex), polygonAccuracy_, minRectDimensions, &rectangles, laser2_);
    }
 
+   tStringList sequenceList;
+   int n = polygons_.size();
+   sequenceList.push_back(std::string("on"));
+   for (int i=0; i<n; ++i)
+   {
+      stringstream poly;
+      poly << "poly," << i;
+      sequenceList.push_back(poly.str());
+   }
+   stringstream repeat;
+   repeat << "repeat," << min(1,repeats);
+   sequenceList.push_back(repeat.str());
+   sequenceList.push_back(std::string("off"));
+   if (!UGA_->StoreSequence(sequenceList))
+   {
+      return DEVICE_ERR;
+   }
+   return DEVICE_OK;
+}
+
+int RappScanner::RunPolygons()
+{
+   return UGA_->RunSequence(false) ? DEVICE_OK : DEVICE_ERR; 
+}
+
+int RappScanner::RunSequence()
+{
    if (sequence_.size() > 0)
    {
       std::string sequence2 = replaceChar(sequence_, ':', ',');
@@ -285,15 +312,8 @@ int RappScanner::RunSequence()
          return DEVICE_ERR;
       } 
    }
-
-   if (UGA_->RunSequence(false)) 
-   {
-      return DEVICE_OK;
-   } 
-   else
-   {
-      return DEVICE_ERR;
-   }
+   
+   return UGA_->RunSequence(false) ? DEVICE_OK : DEVICE_ERR; 
 }
 
 int RappScanner::StopSequence()

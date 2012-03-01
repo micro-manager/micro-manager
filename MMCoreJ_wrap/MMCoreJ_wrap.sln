@@ -233,6 +233,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "MP285", "..\DeviceAdapters\
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Mightex", "..\DeviceAdapters\Mightex\Mightex.vcproj", "{22B180B5-9E3C-455A-80D8-00387EE0A274}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Rapp", "..\DeviceAdapters\Rapp\Rapp.vcproj", "{C613608D-C4D0-4FC2-AA44-9D0098AAFDD8}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
@@ -1096,6 +1098,12 @@ Global
 		{22B180B5-9E3C-455A-80D8-00387EE0A274}.Release|Win32.Build.0 = Release|Win32
 		{22B180B5-9E3C-455A-80D8-00387EE0A274}.Release|x64.ActiveCfg = Release|x64
 		{22B180B5-9E3C-455A-80D8-00387EE0A274}.Release|x64.Build.0 = Release|x64
+		{C613608D-C4D0-4FC2-AA44-9D0098AAFDD8}.Debug|Win32.ActiveCfg = Debug|Win32
+		{C613608D-C4D0-4FC2-AA44-9D0098AAFDD8}.Debug|Win32.Build.0 = Debug|Win32
+		{C613608D-C4D0-4FC2-AA44-9D0098AAFDD8}.Debug|x64.ActiveCfg = Debug|Win32
+		{C613608D-C4D0-4FC2-AA44-9D0098AAFDD8}.Release|Win32.ActiveCfg = Release|Win32
+		{C613608D-C4D0-4FC2-AA44-9D0098AAFDD8}.Release|Win32.Build.0 = Release|Win32
+		{C613608D-C4D0-4FC2-AA44-9D0098AAFDD8}.Release|x64.ActiveCfg = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

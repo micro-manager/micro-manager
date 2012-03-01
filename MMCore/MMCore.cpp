@@ -4986,6 +4986,36 @@ void CMMCore::deleteGalvoPolygons(const char* deviceLabel) throw (CMMError)
    }
 }
 
+
+/**
+ * Load a set of galvo polygons to the device
+ */
+void CMMCore::loadGalvoPolygons(const char* deviceLabel, int repetitions) throw (CMMError)
+{
+   MM::Galvo* pGalvo = getSpecificDevice<MM::Galvo>(deviceLabel);
+   int ret =  pGalvo->LoadPolygons(repetitions);
+   
+   if (ret != DEVICE_OK)
+   {
+      logError(deviceLabel, getDeviceErrorText(ret, pGalvo).c_str());
+      throw CMMError(deviceLabel, getDeviceErrorText(ret, pGalvo).c_str(), MMERR_DEVICE_GENERIC);
+   }
+}
+/**
+ * Run a loop of galvo polygons
+ */
+void CMMCore::runGalvoPolygons(const char* deviceLabel) throw (CMMError)
+{
+   MM::Galvo* pGalvo = getSpecificDevice<MM::Galvo>(deviceLabel);
+   int ret =  pGalvo->RunPolygons();
+   
+   if (ret != DEVICE_OK)
+   {
+      logError(deviceLabel, getDeviceErrorText(ret, pGalvo).c_str());
+      throw CMMError(deviceLabel, getDeviceErrorText(ret, pGalvo).c_str(), MMERR_DEVICE_GENERIC);
+   }
+}
+
 /**
  * Run a sequence of galvo positions
  */

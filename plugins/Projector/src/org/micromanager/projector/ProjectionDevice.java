@@ -14,9 +14,11 @@ import java.awt.geom.AffineTransform;
  */
 public interface ProjectionDevice {
    public void displaySpot(double x, double y);
+   public void displaySpot(double x, double y, double intervalUs);
    public double getWidth();
    public double getHeight();
    public void turnOn();
    public void turnOff();
-   public void setRoi(Roi roi, AffineTransform transform);
+   public void setRois(Roi[] rois, AffineTransform transform, int reps);
+   public void runPolygons();
 }

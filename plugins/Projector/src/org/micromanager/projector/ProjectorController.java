@@ -6,9 +6,9 @@ package org.micromanager.projector;
 
 import ij.IJ;
 import ij.gui.ImageCanvas;
-import ij.gui.ImageWindow;
 import ij.gui.Roi;
 import java.awt.geom.AffineTransform;
+import org.micromanager.api.AcquisitionEngine;
 import org.micromanager.utils.ReportingUtils;
 import ij.process.ImageProcessor;
 import java.awt.Point;
@@ -18,11 +18,11 @@ import java.awt.event.MouseListener;
 import java.awt.geom.Point2D;
 import java.util.HashMap;
 import java.util.Map;
-import javax.swing.SwingUtilities;
 import mmcorej.CMMCore;
 import org.micromanager.api.ScriptInterface;
 import org.micromanager.utils.ImageUtils;
 import org.micromanager.utils.MathFunctions;
+import ij.plugin.frame.RoiManager;
 
 /**
  *
@@ -35,8 +35,10 @@ public class ProjectorController {
    private final ScriptInterface gui;
    private AffineTransform affineTransform;
    private boolean imageOn_ = false;
-   private ProjectionDevice dev;
+   final private ProjectionDevice dev;
    private MouseListener pointAndShootMouseListener;
+   private boolean usePointAndShootInterval;
+   private double pointAndShootInterval;
 
    public ProjectorController(ScriptInterface app) {
       gui = app;
@@ -48,6 +50,8 @@ public class ProjectorController {
          dev = new SLM(mmc, 5);
       } else if (galvo.length() > 0) {
          dev = new Galvo(mmc);
+      } else {
+         dev = null;
       }
       pointAndShootMouseListener = setupPointAndShootMouseListener();
    }
@@ -146,16 +150,31 @@ public class ProjectorController {
       }
    }
 
-   public void setRoi() {
-      dev.setRoi(IJ.getImage().getRoi(), affineTransform);
+   public void setRois(int reps) {
+      Roi singleRoi = gui.getImageWin().getImagePlus().getRoi();
+      Roi[] rois = null;
+      final RoiManager mgr = RoiManager.getInstance();
+      if (mgr != null) {
+         rois = mgr.getRoisAsArray();
+      } else if (singleRoi != null) {
+         rois = new Roi[] {singleRoi};
+      } else {
+         ReportingUtils.showError("Please first select ROI(s)");
+      }
+      dev.setRois(rois, affineTransform, reps);
    }
 
    public MouseListener setupPointAndShootMouseListener() {
+      final ProjectorController controller = this;
       return new MouseAdapter() {
          public void mouseClicked(MouseEvent e) {
             Point p = e.getPoint();
             Point2D.Double devP = (Point2D.Double) affineTransform.transform(new Point2D.Double(p.x, p.y), null);
-            dev.displaySpot(devP.x, devP.y);
+            if (controller.usePointAndShootInterval) {
+               dev.displaySpot(devP.x, devP.y, controller.pointAndShootInterval);
+            } else {
+               dev.displaySpot(devP.x, devP.y);
+            }
          }
       };
    }
@@ -167,5 +186,34 @@ public class ProjectorController {
       } else {
          canvas.removeMouseListener(pointAndShootMouseListener);
       }
+   }
+
+   public void attachToMDA(int frameOn, boolean repeat, int repeatInterval) {
+      Runnable runPolygons = new Runnable() {
+         public void run() {
+            runPolygons();
+         }
+      };
+
+      final AcquisitionEngine acq = gui.getAcquisitionEngine();
+      if (repeat) {
+         for (int i = frameOn; i < acq.getNumFrames(); frameOn += repeatInterval) {
+            acq.attachRunnable(frameOn, -1, 0, 0, runPolygons);
+         }
+      } else {
+         acq.attachRunnable(frameOn, -1, 0, 0, runPolygons);
+      }
+   }
+
+   public void setPointAndShootUseInterval(boolean on) {
+      this.usePointAndShootInterval = on;
+   }
+
+   public void setPointAndShootInterval(double intervalUs) {
+      this.pointAndShootInterval = intervalUs;
+   }
+
+   void runPolygons() {
+      dev.runPolygons();
    }
 }

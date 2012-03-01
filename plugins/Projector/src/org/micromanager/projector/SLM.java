@@ -88,7 +88,7 @@ public class SLM implements ProjectionDevice {
       }
    }
 
-   public void setRoi(Roi roi, AffineTransform trans) {
+   public void setRois(Roi[] roi, AffineTransform trans, int reps) {
       throw new UnsupportedOperationException("Not supported yet.");
 /*
       AffineTransformOp cmo = new AffineTransformOp(trans, AffineTransformOp.TYPE_BILINEAR);
@@ -143,4 +143,11 @@ public class SLM implements ProjectionDevice {
  */
    }
 
+   public void displaySpot(double x, double y, double intervalMs) {
+      throw new UnsupportedOperationException("Not supported yet.");
+   }
+
+   public void runPolygons() {
+      
+   }
 }
