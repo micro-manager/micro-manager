@@ -5,11 +5,16 @@
 package org.micromanager.projector;
 
 import ij.IJ;
+import ij.gui.ImageCanvas;
+import ij.gui.ImageWindow;
 import ij.gui.Roi;
 import java.awt.geom.AffineTransform;
 import org.micromanager.utils.ReportingUtils;
 import ij.process.ImageProcessor;
 import java.awt.Point;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
 import java.awt.geom.Point2D;
 import java.util.HashMap;
 import java.util.Map;
@@ -31,6 +36,7 @@ public class ProjectorController {
    private AffineTransform affineTransform;
    private boolean imageOn_ = false;
    private ProjectionDevice dev;
+   private MouseListener pointAndShootMouseListener;
 
    public ProjectorController(ScriptInterface app) {
       gui = app;
@@ -43,7 +49,7 @@ public class ProjectorController {
       } else if (galvo.length() > 0) {
          dev = new Galvo(mmc);
       }
-
+      pointAndShootMouseListener = setupPointAndShootMouseListener();
    }
 
    public void calibrate() {
@@ -57,7 +63,7 @@ public class ProjectorController {
             gui.enableLiveMode(liveModeRunning);
          }
       };
-      th.start(); 
+      th.start();
    }
 
 // then use:
@@ -66,7 +72,7 @@ public class ProjectorController {
    public Point measureSpot(Point dmdPt) {
       dev.displaySpot(dmdPt.x, dmdPt.y);
       mmc.sleep(200);
-     gui.snapSingleImage();
+      gui.snapSingleImage();
 
       mmc.sleep(200);
       ImageProcessor proc = IJ.getImage().getProcessor();
@@ -142,5 +148,24 @@ public class ProjectorController {
 
    public void setRoi() {
       dev.setRoi(IJ.getImage().getRoi(), affineTransform);
+   }
+
+   public MouseListener setupPointAndShootMouseListener() {
+      return new MouseAdapter() {
+         public void mouseClicked(MouseEvent e) {
+            Point p = e.getPoint();
+            Point2D.Double devP = (Point2D.Double) affineTransform.transform(new Point2D.Double(p.x, p.y), null);
+            dev.displaySpot(devP.x, devP.y);
+         }
+      };
+   }
+
+   public void activatePointAndShootMode(boolean on) {
+      final ImageCanvas canvas = gui.getImageWin().getCanvas();
+      if (on) {
+         canvas.addMouseListener(pointAndShootMouseListener);
+      } else {
+         canvas.removeMouseListener(pointAndShootMouseListener);
+      }
    }
 }

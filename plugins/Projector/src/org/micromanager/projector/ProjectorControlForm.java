@@ -43,6 +43,15 @@ public class ProjectorControlForm extends javax.swing.JFrame {
       onButton = new javax.swing.JButton();
       offButton = new javax.swing.JButton();
       allPixelsButton = new javax.swing.JButton();
+      jTabbedPane1 = new javax.swing.JTabbedPane();
+      jPanel1 = new javax.swing.JPanel();
+      pointAndShootToggleButton = new javax.swing.JToggleButton();
+      jLabel1 = new javax.swing.JLabel();
+      jTextField1 = new javax.swing.JTextField();
+      jCheckBox1 = new javax.swing.JCheckBox();
+      jLabel2 = new javax.swing.JLabel();
+      jPanel2 = new javax.swing.JPanel();
+      jPanel3 = new javax.swing.JPanel();
 
       setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
       setTitle("Projector Controls");
@@ -84,6 +93,87 @@ public class ProjectorControlForm extends javax.swing.JFrame {
          }
       });
 
+      pointAndShootToggleButton.setText("Off");
+      pointAndShootToggleButton.addActionListener(new java.awt.event.ActionListener() {
+         public void actionPerformed(java.awt.event.ActionEvent evt) {
+            pointAndShootToggleButtonActionPerformed(evt);
+         }
+      });
+
+      jLabel1.setText("Point and shoot mode:");
+
+      jTextField1.setText("0");
+
+      jCheckBox1.setText("Close shutter after:");
+      jCheckBox1.addActionListener(new java.awt.event.ActionListener() {
+         public void actionPerformed(java.awt.event.ActionEvent evt) {
+            jCheckBox1ActionPerformed(evt);
+         }
+      });
+
+      jLabel2.setText("ms");
+
+      org.jdesktop.layout.GroupLayout jPanel1Layout = new org.jdesktop.layout.GroupLayout(jPanel1);
+      jPanel1.setLayout(jPanel1Layout);
+      jPanel1Layout.setHorizontalGroup(
+         jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+         .add(jPanel1Layout.createSequentialGroup()
+            .add(14, 14, 14)
+            .add(jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.TRAILING)
+               .add(jLabel1)
+               .add(jCheckBox1))
+            .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+            .add(jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+               .add(pointAndShootToggleButton)
+               .add(jPanel1Layout.createSequentialGroup()
+                  .add(jTextField1, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 39, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                  .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                  .add(jLabel2)))
+            .addContainerGap(111, Short.MAX_VALUE))
+      );
+      jPanel1Layout.setVerticalGroup(
+         jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+         .add(jPanel1Layout.createSequentialGroup()
+            .add(6, 6, 6)
+            .add(jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
+               .add(jLabel1)
+               .add(pointAndShootToggleButton))
+            .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
+            .add(jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
+               .add(jTextField1, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+               .add(jLabel2)
+               .add(jCheckBox1))
+            .addContainerGap(120, Short.MAX_VALUE))
+      );
+
+      jTabbedPane1.addTab("Point and Shoot", jPanel1);
+
+      org.jdesktop.layout.GroupLayout jPanel2Layout = new org.jdesktop.layout.GroupLayout(jPanel2);
+      jPanel2.setLayout(jPanel2Layout);
+      jPanel2Layout.setHorizontalGroup(
+         jPanel2Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+         .add(0, 306, Short.MAX_VALUE)
+      );
+      jPanel2Layout.setVerticalGroup(
+         jPanel2Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+         .add(0, 182, Short.MAX_VALUE)
+      );
+
+      jTabbedPane1.addTab("Multi D Acq.", jPanel2);
+
+      org.jdesktop.layout.GroupLayout jPanel3Layout = new org.jdesktop.layout.GroupLayout(jPanel3);
+      jPanel3.setLayout(jPanel3Layout);
+      jPanel3Layout.setHorizontalGroup(
+         jPanel3Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+         .add(0, 306, Short.MAX_VALUE)
+      );
+      jPanel3Layout.setVerticalGroup(
+         jPanel3Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+         .add(0, 182, Short.MAX_VALUE)
+      );
+
+      jTabbedPane1.addTab("ROIs", jPanel3);
+
       org.jdesktop.layout.GroupLayout layout = new org.jdesktop.layout.GroupLayout(getContentPane());
       getContentPane().setLayout(layout);
       layout.setHorizontalGroup(
@@ -101,11 +191,12 @@ public class ProjectorControlForm extends javax.swing.JFrame {
                .add(layout.createSequentialGroup()
                   .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
                   .add(allPixelsButton)
-                  .addContainerGap(123, Short.MAX_VALUE))
+                  .addContainerGap(110, Short.MAX_VALUE))
                .add(org.jdesktop.layout.GroupLayout.TRAILING, layout.createSequentialGroup()
                   .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                   .add(calibrateButton)
                   .addContainerGap())))
+         .add(jTabbedPane1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 311, Short.MAX_VALUE)
       );
       layout.setVerticalGroup(
          layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
@@ -118,7 +209,8 @@ public class ProjectorControlForm extends javax.swing.JFrame {
             .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
                .add(setRoiButton)
                .add(calibrateButton))
-            .addContainerGap(org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+            .add(29, 29, 29)
+            .add(jTabbedPane1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 210, Short.MAX_VALUE))
       );
 
       pack();
@@ -148,6 +240,15 @@ public class ProjectorControlForm extends javax.swing.JFrame {
        controller_.activateAllPixels();
     }//GEN-LAST:event_allPixelsButtonActionPerformed
 
+    private void jCheckBox1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jCheckBox1ActionPerformed
+       // TODO add your handling code here:
+    }//GEN-LAST:event_jCheckBox1ActionPerformed
+
+    private void pointAndShootToggleButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_pointAndShootToggleButtonActionPerformed
+       pointAndShootToggleButton.setText(pointAndShootToggleButton.isSelected() ? "On" : "Off");
+       controller_.activatePointAndShootMode(pointAndShootToggleButton.isSelected());
+    }//GEN-LAST:event_pointAndShootToggleButtonActionPerformed
+
    public void dispose() {
       super.dispose();
    }
@@ -159,8 +260,17 @@ public class ProjectorControlForm extends javax.swing.JFrame {
    // Variables declaration - do not modify//GEN-BEGIN:variables
    private javax.swing.JButton allPixelsButton;
    private javax.swing.JButton calibrateButton;
+   private javax.swing.JCheckBox jCheckBox1;
+   private javax.swing.JLabel jLabel1;
+   private javax.swing.JLabel jLabel2;
+   private javax.swing.JPanel jPanel1;
+   private javax.swing.JPanel jPanel2;
+   private javax.swing.JPanel jPanel3;
+   private javax.swing.JTabbedPane jTabbedPane1;
+   private javax.swing.JTextField jTextField1;
    private javax.swing.JButton offButton;
    private javax.swing.JButton onButton;
+   private javax.swing.JToggleButton pointAndShootToggleButton;
    private javax.swing.JButton setRoiButton;
    // End of variables declaration//GEN-END:variables
 
