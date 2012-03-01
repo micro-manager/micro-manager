@@ -12,6 +12,7 @@ import mmcorej.CMMCore;
 import mmcorej.TaggedImage;
 import org.json.JSONException;
 import org.micromanager.MMStudioMainFrame;
+import org.micromanager.utils.ImageUtils;
 import org.micromanager.utils.MDUtils;
 import org.micromanager.utils.MMScriptException;
 import org.micromanager.utils.ReportingUtils;
@@ -90,23 +91,26 @@ public class LiveModeTimer extends javax.swing.Timer {
             throw new Exception("Camera did not send image within a reasonable time");
          }
                   
-         TaggedImage ti = core_.getLastTaggedImage();
+         Object img = core_.getLastImage();  
 
          // With first image acquired, create the display
          gui_.checkSimpleAcquisition();
          win_ = MMStudioMainFrame.getSimpleDisplay();
          
          // Add first image here so initial autoscale works correctly
-         addTags(ti, multiChannelCameraNrCh_ > 1 ? ti.tags.getInt(
-                 core_.getCameraDevice() + "-" + CCHANNELINDEX) : 0);
+         TaggedImage ti = makeTaggedImage(img);       
          if (multiChannelCameraNrCh_ <= 1) {
             gui_.addImage(ACQ_NAME, ti, true, true);
          }
 
          // Add another image if multicamera
          if (multiChannelCameraNrCh_ > 1) {
+            ti = core_.getLastTaggedImage();
             String camera = core_.getCameraDevice();
+
             int channel = ti.tags.getInt(camera + "-" + CCHANNELINDEX);
+            addTags(ti, channel);
+            
             TaggedImage[] images = new TaggedImage[(int) multiChannelCameraNrCh_];
             images[channel] = ti;
             int numFound = 1;
@@ -188,26 +192,21 @@ public class LiveModeTimer extends javax.swing.Timer {
 
    private ActionListener singleCameraLiveAction() {
       return new ActionListener() {
-         private long startTime_ = System.currentTimeMillis();         
          
          @Override
          public void actionPerformed(ActionEvent e) {
-            ReportingUtils.logMessage("Live mode timer action firing at:" + (System.currentTimeMillis()-startTime_));
             if (core_.getRemainingImageCount() == 0) {
-               ReportingUtils.logMessage("Core image count equals 0");
                 return;
             }
             if (win_.windowClosed()) //check is user closed window             
             {
                gui_.enableLiveMode(false);
             } else {
-               try {
-                  TaggedImage ti = core_.getLastTaggedImage();
-                  ReportingUtils.logMessage("Got tagged img at: "+ (System.currentTimeMillis()-startTime_) );
-                  addTags(ti, 0);
-                  ReportingUtils.logMessage("Tags added at: "+ (System.currentTimeMillis()-startTime_));
+               try {     
+                  Object img = core_.getLastImage();
+                  TaggedImage ti = makeTaggedImage(img);
+                  MDUtils.setChannelIndex(ti.tags, 0);
                   gui_.addImage(ACQ_NAME, ti, true, true);
-                  ReportingUtils.logMessage("Image added at" + (System.currentTimeMillis()-startTime_));
                   gui_.updateLineProfile();
                   updateFPS();
                                            
@@ -303,6 +302,20 @@ public class LiveModeTimer extends javax.swing.Timer {
       } catch (MMScriptException ex) {
          ReportingUtils.logError("Error adding summary metadata to tags");
       }
+   }
+   
+   private TaggedImage makeTaggedImage(Object pixels) throws JSONException, MMScriptException {
+       TaggedImage ti = ImageUtils.makeTaggedImage(pixels,
+                    0, 0, 0, 0,
+                    gui_.getAcquisitionImageWidth(ACQ_NAME),
+                    gui_.getAcquisitionImageHeight(ACQ_NAME),
+                    gui_.getAcquisitionImageByteDepth(ACQ_NAME));
+      try {
+         ti.tags.put("Summary", gui_.getAcquisition(ACQ_NAME).getSummaryMetadata());
+      } catch (MMScriptException ex) {
+         ReportingUtils.logError("Error adding summary metadata to tags");
+      }
+      return ti;
    }
 
    private void manageShutter(boolean enable) throws Exception {
