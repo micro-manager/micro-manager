@@ -11,6 +11,7 @@ import java.awt.Color;
 import java.awt.Shape;
 import java.awt.geom.Ellipse2D;
 import java.awt.geom.Point2D;
+import java.awt.geom.Rectangle2D;
 import java.util.ArrayList;
 
 import org.apache.commons.math.linear.Array2DRowRealMatrix;
@@ -43,7 +44,7 @@ public class GaussianUtils {
    public static final int S2 = 5;
    public static final int S3 = 6;
 
-      /**
+   /**
     * Create a frame with a plot of the data given in XYSeries
     */
    public static void plotData(String title, XYSeries data, String xTitle,
@@ -79,7 +80,47 @@ public class GaussianUtils {
       graphFrame.setVisible(true);
    }
 
-   
+   /**
+    * Create a frame with a plot of the data given in XYSeries
+    */
+   public static void plotData2(String title, XYSeries data1, XYSeries data2, String xTitle,
+           String yTitle, int xLocation, int yLocation) {
+      // JFreeChart code
+      XYSeriesCollection dataset = new XYSeriesCollection();
+      dataset.addSeries(data1);
+      dataset.addSeries(data2);
+      JFreeChart chart = ChartFactory.createScatterPlot(title, // Title
+                xTitle, // x-axis Label
+                yTitle, // y-axis Label
+                dataset, // Dataset
+                PlotOrientation.VERTICAL, // Plot Orientation
+                false, // Show Legend
+                true, // Use tooltips
+                false // Configure chart to generate URLs?
+            );
+      XYPlot plot = (XYPlot) chart.getPlot();
+      plot.setBackgroundPaint(Color.white);
+      plot.setRangeGridlinePaint(Color.lightGray);
+      XYLineAndShapeRenderer renderer = (XYLineAndShapeRenderer) plot.getRenderer();
+      renderer.setBaseShapesVisible(true);
+      renderer.setSeriesPaint(0, Color.blue);
+      renderer.setSeriesFillPaint(0, Color.white);
+      renderer.setSeriesLinesVisible(0, true);
+      renderer.setSeriesPaint(1, Color.red);
+      renderer.setSeriesFillPaint(1, Color.white);
+      renderer.setSeriesLinesVisible(1, true);
+      Shape circle = new Ellipse2D.Float(-2.0f, -2.0f, 4.0f, 4.0f);   
+      renderer.setSeriesShape(0, circle, false);
+      Shape square = new Rectangle2D.Float(-2.0f, -2.0f, 4.0f, 4.0f);
+      renderer.setSeriesShape(1, square, false);
+      renderer.setUseFillPaint(true);
+
+      ChartFrame graphFrame = new ChartFrame(title, chart);
+      graphFrame.getChartPanel().setMouseWheelEnabled(true);
+      graphFrame.pack();
+      graphFrame.setLocation(xLocation, yLocation);
+      graphFrame.setVisible(true);
+   }
 
    /**
     * Create a frame with a plot of the data given in XYSeries

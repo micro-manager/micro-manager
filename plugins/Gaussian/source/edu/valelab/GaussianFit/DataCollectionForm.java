@@ -436,75 +436,84 @@ public class DataCollectionForm extends javax.swing.JFrame {
      * @evt
      */
     private void loadButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_loadButtonActionPerformed
-      File selectedFile;
+      
       FileDialog fd = new FileDialog(this, "Load Spot Data", FileDialog.LOAD);
       fd.setVisible(true);
       String selectedItem = fd.getFile();
       if (selectedItem == null) {
          return;
       } else {
-         selectedFile = new File( fd.getDirectory() + File.separator +
+         final File selectedFile = new File( fd.getDirectory() + File.separator +
 		        fd.getFile());
+         
+          Runnable doWorkRunnable = new Runnable() {
 
-         SpotList psl = null;
-         try {
-            
-            setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
-            
-            FileInputStream fi = new FileInputStream(selectedFile);
+             public void run() {
 
-            psl = SpotList.parseDelimitedFrom(fi);
-       
-            String name = psl.getName();
-            String title = psl.getName();
-            int width = psl.getNrPixelsX();
-            int height = psl.getNrPixelsY();
-            float pixelSizeUm = psl.getPixelSize();
-            int shape = 1;
-            if (psl.getFitMode() == FitMode.TWOAXIS)
-               shape = 2;
-            else if (psl.getFitMode() == FitMode.TWOAXISANDTHETA)
-               shape = 3;
-            int halfSize = psl.getBoxSize() / 2;
-            int nrChannels = psl.getNrChannels();
-            int nrFrames = psl.getNrFrames();
-            int nrSlices = psl.getNrSlices();
-            int nrPositions = psl.getNrPos();
-            boolean isTrack = psl.getIsTrack();
-            int maxNrSpots = 0;
+                SpotList psl = null;
+                try {
 
-            
-            
-            ArrayList<GaussianSpotData> spotList = new ArrayList<GaussianSpotData>();
-            Spot pSpot;
-            while (fi.available() > 0) {
-               pSpot = Spot.parseDelimitedFrom(fi);
+                   setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
 
-               GaussianSpotData gSpot = new GaussianSpotData((ImageProcessor) null, pSpot.getChannel(),
-                       pSpot.getSlice(), pSpot.getFrame(), pSpot.getPos(),
-                       pSpot.getMolecule(), pSpot.getXPosition(), pSpot.getYPosition());
-               gSpot.setData(pSpot.getIntensity(), pSpot.getBackground(), pSpot.getX(),
-                       pSpot.getY(), pSpot.getWidth(), pSpot.getA(), pSpot.getTheta(),
-                       pSpot.getXPrecision());
-               maxNrSpots++;
+                   FileInputStream fi = new FileInputStream(selectedFile);
 
-               spotList.add(gSpot);
-            }
+                   psl = SpotList.parseDelimitedFrom(fi);
 
-            addSpotData(name, title, width, height, pixelSizeUm, shape, halfSize,
-                    nrChannels, nrFrames, nrSlices, nrPositions, maxNrSpots,
-                    spotList, null, isTrack);
+                   String name = psl.getName();
+                   String title = psl.getName();
+                   int width = psl.getNrPixelsX();
+                   int height = psl.getNrPixelsY();
+                   float pixelSizeUm = psl.getPixelSize();
+                   int shape = 1;
+                   if (psl.getFitMode() == FitMode.TWOAXIS) {
+                      shape = 2;
+                   } else if (psl.getFitMode() == FitMode.TWOAXISANDTHETA) {
+                      shape = 3;
+                   }
+                   int halfSize = psl.getBoxSize() / 2;
+                   int nrChannels = psl.getNrChannels();
+                   int nrFrames = psl.getNrFrames();
+                   int nrSlices = psl.getNrSlices();
+                   int nrPositions = psl.getNrPos();
+                   boolean isTrack = psl.getIsTrack();
+                   int maxNrSpots = 0;
 
-         } catch (FileNotFoundException ex) {
-            ex.printStackTrace();
-         } catch (IOException ex) {
-            ex.printStackTrace();
-            return;
-         } finally {
-            setCursor(Cursor.getDefaultCursor());
-         }
-      }
 
+
+                   ArrayList<GaussianSpotData> spotList = new ArrayList<GaussianSpotData>();
+                   Spot pSpot;
+                   while (fi.available() > 0) {
+                      pSpot = Spot.parseDelimitedFrom(fi);
+
+                      GaussianSpotData gSpot = new GaussianSpotData((ImageProcessor) null, pSpot.getChannel(),
+                              pSpot.getSlice(), pSpot.getFrame(), pSpot.getPos(),
+                              pSpot.getMolecule(), pSpot.getXPosition(), pSpot.getYPosition());
+                      gSpot.setData(pSpot.getIntensity(), pSpot.getBackground(), pSpot.getX(),
+                              pSpot.getY(), pSpot.getWidth(), pSpot.getA(), pSpot.getTheta(),
+                              pSpot.getXPrecision());
+                      maxNrSpots++;
+
+                      spotList.add(gSpot);
+                   }
+
+                   addSpotData(name, title, width, height, pixelSizeUm, shape, halfSize,
+                           nrChannels, nrFrames, nrSlices, nrPositions, maxNrSpots,
+                           spotList, null, isTrack);
+
+                } catch (FileNotFoundException ex) {
+                   ex.printStackTrace();
+                } catch (IOException ex) {
+                   ex.printStackTrace();
+                   return;
+                } finally {
+                   setCursor(Cursor.getDefaultCursor());
+                }
+             }
+          };
+          
+          (new Thread(doWorkRunnable)).start();
+       }
+          
     }//GEN-LAST:event_loadButtonActionPerformed
 
     private void saveButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_saveButtonActionPerformed
@@ -587,7 +596,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
     * Cycles through the spots of the selected data set and finds the most nearby 
     * spot in channel 2.  It will list this as a pair if the two spots are within
     * MAXMATCHDISTANCE nm of each other.  
-    * In addition, it will list the rms average distance, rms average distance
+    * In addition, it will list the  average distance, and average distance
     * in x and y for each frame.
     * 
     * spots in channel 2
@@ -614,6 +623,10 @@ public class DataCollectionForm extends javax.swing.JFrame {
                ij.ImageStack  stack = new ij.ImageStack(width, height); 
                
                ImagePlus sp = new ImagePlus("Errors in pairs");
+               
+               XYSeries xData = new XYSeries("XError");
+               XYSeries yData = new XYSeries("YError");
+               
                
                
                //sp.setStack(stack, 1, 1, stack.getSize());
@@ -668,11 +681,13 @@ public class DataCollectionForm extends javax.swing.JFrame {
                         
                         ip.putPixel((int) (pCh1.x / factor), (int) (pCh1.y / factor), (int) d);
 
-                        double ex = (pCh1.getX() - pCh2.getX()) * (pCh1.getX() - pCh2.getX());
-                        ex = Math.sqrt(ex);
+                        double ex = pCh2.getX() - pCh1.getX();
+                        //double ex = (pCh1.getX() - pCh2.getX()) * (pCh1.getX() - pCh2.getX());
+                        //ex = Math.sqrt(ex);
                         errorX.add(ex);
-                        double ey = (pCh1.getY() - pCh2.getY()) * (pCh1.getY() - pCh2.getY());
-                        ey = Math.sqrt(ey);
+                        //double ey = (pCh1.getY() - pCh2.getY()) * (pCh1.getY() - pCh2.getY());
+                        //ey = Math.sqrt(ey);
+                        double ey = pCh2.getY() - pCh1.getY();
                         errorY.add(ey);
 
                      }
@@ -697,18 +712,31 @@ public class DataCollectionForm extends javax.swing.JFrame {
                   rt2.addValue("StdDevY", stdDevY);  
                   
                   stack.addSlice("frame: " + frame, ip);
+                  
+                  double timePoint = frame;
+                  if (rowData_.get(row).timePoints_ != null) {
+                     timePoint = rowData_.get(row).timePoints_.get(frame);
+                  }
+                  xData.add(timePoint, avgX);
+                  yData.add(timePoint, avgY);
 
                }
                rt2.show("Summary of Pairs found in " + rowData_.get(row).name_);
                rt.show("Pairs found in " + rowData_.get(row).name_);
+               
+               String yAxis = "Time (frameNr)";
+               if (rowData_.get(row).timePoints_ != null) {
+                  yAxis = "Time (s)";
+               }
+               GaussianUtils.plotData2("Error", xData, yData, yAxis, "Error(nm)", 0, 400);
                
                ij.IJ.showStatus("");
                
                sp.setOpenAsHyperStack(true);
                sp.setStack(stack, 1, 1, rowData_.get(row).nrFrames_);
                sp.setDisplayRange(0, 20);
-               sp.setSlice(1);
-               sp.resetStack();
+               //sp.setSlice(1);
+               //sp.resetStack();
                
                ImageWindow w = new StackWindow(sp);
 
@@ -723,7 +751,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
       }
    }//GEN-LAST:event_pairsButtonActionPerformed
 
-   private double listAvg (ArrayList<Double> list) {
+   private static double listAvg (ArrayList<Double> list) {
       double total = 0.0;
       Iterator it = list.iterator();
       while (it.hasNext()) {
@@ -733,27 +761,37 @@ public class DataCollectionForm extends javax.swing.JFrame {
       return total / list.size();      
    }
    
-   private double listStdDev (ArrayList<Double> list, double avg) {
-      ArrayList<Double> errorsSquared = new ArrayList<Double>();
+   
+   /**
+    * Returns the Standard Deviation as sqrt( 1/(n-1) sum( square(value - avg)) )
+    * Feeding in parameter avg is just increase performance
+    * 
+    * @param list ArrayList<Double> 
+    * @param avg average of the list
+    * @return standard deviation as defined above
+    */
+   private static double listStdDev (ArrayList<Double> list, double avg) {
       
+      double errorsSquared = 0;
       Iterator it = list.iterator();
       while (it.hasNext()) {
          double error = (Double) it.next() - avg;
-         errorsSquared.add(error * error);
+         errorsSquared += (error * error);
       }
-      return Math.sqrt(listAvg(errorsSquared));
+      return Math.sqrt(errorsSquared / (list.size() - 1) ) ;
    }
    
-   private double listStdDev (ArrayList<Double> list) {
+   
+   /**
+    * Utility function to calculate 
+    * @param list
+    * @return 
+    */
+   private static double listStdDev (ArrayList<Double> list) {
       double avg = listAvg(list);
-      ArrayList<Double> errorsSquared = new ArrayList<Double>();
       
-      Iterator it = list.iterator();
-      while (it.hasNext()) {
-         double error = (Double) it.next() - avg;
-         errorsSquared.add(error * error);
-      }
-      return Math.sqrt(listAvg(errorsSquared));
+      return listStdDev(list, avg);
+
    }
    
    
@@ -1077,7 +1115,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
             List<GaussianSpotData> correctedData =
                     Collections.synchronizedList(new ArrayList<GaussianSpotData>());
             Iterator it = rowData.spotList_.iterator();
-            int frameNr = 1;
+            int frameNr = 0;
             while (it.hasNext()) {
                GaussianSpotData gs = (GaussianSpotData) it.next();
                if (gs.getFrame() != frameNr) {
