@@ -948,9 +948,9 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
 
    public void updateWindowTitleAndStatus() {
       if (simple_) {
-         if (hyperImage_ != null && hyperImage_.getWindow() != null) {
-//            hyperImage_.getWindow().setTitle(name_);
-         }
+          int mag = (int) (100 * hyperImage_.getCanvas().getMagnification());
+         String title = hyperImage_.getTitle() + " ("+mag+"%)";
+         hyperImage_.getWindow().setTitle(title);
          return;
       }
       if (controls_ == null) {
@@ -1004,7 +1004,8 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
               ? new File(imageCache_.getDiskLocation()).getName() : name_;
 
       if (hyperImage_.isVisible()) {
-         hyperImage_.getWindow().setTitle(path + " (" + status + ")");
+         int mag = (int) (100 * hyperImage_.getCanvas().getMagnification());
+         hyperImage_.getWindow().setTitle(path + " (" + status + ") (" + mag + "%)" );
       }
 
    }
@@ -1412,6 +1413,7 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
                   prefs_.putInt(PREF_WIN_LENGTH, Math.max(currentLength, 512));
                }
             }
+            updateWindowTitleAndStatus();
          }
 
          //updates the histogram after an ROI is drawn
