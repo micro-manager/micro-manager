@@ -40,7 +40,6 @@
 #include <sstream>
 
 #include <iostream>
-using namespace std;
 
 const char* g_RappScannerName = "RappScanner";
 
@@ -114,6 +113,7 @@ RappScanner::RappScanner() :
       s.push_back(std::string("Undefined"));
 	}
 
+   // The following line crashes hardware wizard if compiled in a Debug configuration:
    CreateProperty("VirtualComPort", s.at(0).c_str(), MM::String, false, pAct, true);
 	for (unsigned int i = 0; i < s.size(); i++)
    {
