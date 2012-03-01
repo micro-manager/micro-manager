@@ -949,7 +949,7 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
    public void updateWindowTitleAndStatus() {
       if (simple_) {
          if (hyperImage_ != null && hyperImage_.getWindow() != null) {
-            hyperImage_.getWindow().setTitle(name_);
+//            hyperImage_.getWindow().setTitle(name_);
          }
          return;
       }
