@@ -272,7 +272,7 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
       gbc.weighty = 1;
       gbc.gridwidth = 5;
       gbc.anchor = GridBagConstraints.LINE_START;
-      modeComboBox_.setPreferredSize(new Dimension(CONTROLS_SIZE.width, 20));
+      modeComboBox_.setPreferredSize(new Dimension(110, 20));
       controls_.add(modeComboBox_, gbc);
 
       gbc = new GridBagConstraints();
