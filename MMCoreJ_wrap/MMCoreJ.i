@@ -329,15 +329,15 @@
 %}
 
 %typemap(javacode) CMMCore %{
-    private JSONObject metadataToMap(Metadata md) {
+   private JSONObject metadataToMap(Metadata md) {
       JSONObject tags = new JSONObject();
-	  for (String key:md.GetKeys()) {
-	    try {
-			tags.put(key, md.GetSingleTag(key).GetValue());
-	    } catch (Exception e) {} 
-	  }
+      for (String key:md.GetKeys()) {
+         try {
+            tags.put(key, md.GetSingleTag(key).GetValue());
+         } catch (Exception e) {} 
+      }
       return tags;
-    }
+   }
 
    private String getROITag() throws java.lang.Exception {
       String roi = "";
@@ -370,10 +370,10 @@
       PropertySetting setting;
       Configuration config = getSystemStateCache();
       for (int i = 0; i < config.size(); ++i) {
-            setting = config.getSetting(i);
-               String key = setting.getDeviceLabel() + "-" + setting.getPropertyName();
+         setting = config.getSetting(i);
+         String key = setting.getDeviceLabel() + "-" + setting.getPropertyName();
          String value = setting.getPropertyValue();
-            tags.put(key, value);
+          tags.put(key, value);
       }
       tags.put("BitDepth", getImageBitDepth());
       tags.put("PixelSizeUm", getPixelSizeUm());
