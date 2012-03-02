@@ -21,6 +21,7 @@
 //
 package org.micromanager.graph;
 
+import com.swtdesigner.SwingResourceManager;
 import ij.CompositeImage;
 import ij.ImagePlus;
 import ij.process.ImageProcessor;
@@ -28,10 +29,7 @@ import ij.process.LUT;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.event.MouseWheelEvent;
-import java.awt.event.MouseWheelListener;
 import java.util.prefs.Preferences;
-import javax.swing.BoxLayout;
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
@@ -71,6 +69,8 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
    private final MultiChannelContrastPanel mccPanel_;
    private final MetadataPanel mdPanel_;
    private JButton autoButton_;
+   private JButton zoomInButton_;
+   private JButton zoomOutButton_;
    private JCheckBox channelNameCheckbox_;
    private JLabel colorPickerLabel_;
    private JButton fullButton_;
@@ -93,6 +93,7 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
    private int pixelMin_ = 0;
    private int pixelMax_ = 255;
    final private int maxIntensity_;
+   final private int bitDepth_;
    private Color color_;
 
    public ChannelControlPanel(int channelIndex, MultiChannelContrastPanel mccPanel, MetadataPanel md, ImageCache cache,
@@ -101,6 +102,7 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
       logScale_ = logScale;
       color_ = color;
       maxIntensity_ = (int) Math.pow(2, bitDepth) - 1;
+      bitDepth_ = bitDepth;
       histMax_ = maxIntensity_ + 1;
       binSize_ = histMax_ / NUM_BINS;
       BIN_SIZE_MAX = (int) (Math.pow(2, bitDepth) / NUM_BINS);
@@ -199,9 +201,28 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
          }
       });
       modeComboBox_.setModel(new DefaultComboBoxModel(new String[]{
-                 "Auto", "4bit (0-31)", "6bit (0-127)", "8bit (0-255)", "10bit (0-1023)", 
-                 "12bit (0-4095)", "14bit (0-16383)", "16bit (0-65535)"}));
+                 "Auto", "4bit (0-15)", "5bit (0-31)", "6bit (0-63)", "7bit (0-127)", 
+                 "8bit (0-255)", "9bit (0-511)", "10bit (0-1023)", "11bit (0-2047)", 
+                 "12bit (0-4095)", "13bit (0-8191)", "14bit (0-16383)", "15bit (32767)", "16bit (0-65535)"}));
 
+      zoomInButton_ = new JButton();
+      zoomInButton_.setIcon(SwingResourceManager.getIcon(MMStudioMainFrame.class,
+            "/org/micromanager/icons/zoom_in.png"));
+      zoomOutButton_ = new JButton();
+      zoomOutButton_.setIcon(SwingResourceManager.getIcon(MMStudioMainFrame.class,
+            "/org/micromanager/icons/zoom_out.png"));   
+      zoomInButton_.addActionListener(new ActionListener() {
+         public void actionPerformed(ActionEvent e) {
+            zoomInAction();
+         }
+      });
+      zoomOutButton_.addActionListener(new ActionListener() {
+         public void actionPerformed(ActionEvent e) {
+            zoomOutAction();
+         }
+      });
+
+      
       
       this.setMinimumSize(MINIMUM_SIZE);
       this.setPreferredSize(MINIMUM_SIZE);
@@ -219,6 +240,7 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
       controlsHolderPanel_.add(controls_, BorderLayout.PAGE_START);
       GridBagLayout gbl = new GridBagLayout();
       controls_.setLayout(gbl);
+      
 
       JLabel comboLabel = new JLabel("Histogram range:");
       comboLabel.setFont(new Font("Lucida Grande", 0, 11));
@@ -234,8 +256,7 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
       
       fullButton_.setPreferredSize(new Dimension(45, 20));
       autoButton_.setPreferredSize(new Dimension(45, 20));
-      colorPickerLabel_.setPreferredSize(new Dimension(20,20));
-      colorPickerLabel_.setMaximumSize(new Dimension(20,20));
+      colorPickerLabel_.setPreferredSize(new Dimension(18,18));
       FlowLayout flow = new FlowLayout();
       flow.setHgap(4);
       flow.setVgap(0);
@@ -252,7 +273,7 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
       gbc.gridy = 1;
       gbc.weightx = 1;
       gbc.weighty = 1;
-      gbc.gridwidth = 4;
+      gbc.gridwidth = 5;
       gbc.anchor = GridBagConstraints.LINE_START;
       controls_.add(line2,gbc);
       
@@ -261,7 +282,7 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
       gbc.gridy = 2;
       gbc.weightx = 1;
       gbc.weighty = 1;
-      gbc.gridwidth = 5;
+      gbc.gridwidth = 3;
       gbc.anchor = GridBagConstraints.LINE_START;
       controls_.add(comboLabel, gbc);
 
@@ -272,8 +293,30 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
       gbc.weighty = 1;
       gbc.gridwidth = 5;
       gbc.anchor = GridBagConstraints.LINE_START;
-      modeComboBox_.setPreferredSize(new Dimension(110, 20));
+      modeComboBox_.setPreferredSize(new Dimension(115, 20));
       controls_.add(modeComboBox_, gbc);
+      
+      
+      zoomInButton_.setPreferredSize(new Dimension(22, 22));
+      zoomOutButton_.setPreferredSize(new Dimension(22, 22));
+      gbc = new GridBagConstraints();
+      gbc.gridx = 4;
+      gbc.gridy = 2;
+      gbc.weightx = 1;
+      gbc.weighty = 1;
+      gbc.gridwidth = 1;      
+      controls_.add(zoomInButton_, gbc);
+
+      gbc = new GridBagConstraints();
+      gbc.gridx = 3;
+      gbc.gridy = 2;
+      gbc.weightx = 1;
+      gbc.weighty = 1;
+      gbc.gridwidth = 1;
+      controls_.add(zoomOutButton_, gbc);
+      
+      
+      
 
       gbc = new GridBagConstraints();
       gbc.gridx = 0;
@@ -296,33 +339,36 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
       return modeComboBox_.getSelectedIndex();
    }
    
+   private void zoomInAction() {
+      int selected = modeComboBox_.getSelectedIndex();
+      if (selected == 0) {
+         selected = bitDepth_ - 3;
+      }
+      if (selected != 1) {
+         selected--;
+      }
+      modeComboBox_.setSelectedIndex(selected);
+   }
+   
+   private void zoomOutAction() {
+      int selected = modeComboBox_.getSelectedIndex();
+      if (selected == 0) {
+         selected = bitDepth_ - 3;
+      }
+      if (selected < modeComboBox_.getModel().getSize() - 1) {
+         selected++;
+      }
+      modeComboBox_.setSelectedIndex(selected);  
+   }
+   
    public void displayComboAction() {
-      switch (modeComboBox_.getSelectedIndex() - 1) {
-         case -1:
-            histMax_ = maxIntensity_;
-            break;
-         case 0:
-            histMax_ = 31;
-            break;
-         case 1:
-            histMax_ = 127;
-            break;
-         case 2:
-            histMax_ = 255;
-            break;
+      int bits = modeComboBox_.getSelectedIndex() + 3;
+      switch (bits) {
          case 3:
-            histMax_ = 1023;
-            break;
-         case 4:
-            histMax_ = 4095;
-            break;
-         case 5:
-            histMax_ = 16383;
-            break;
-         case 6:
-            histMax_ = 65535;
-            break;
+            histMax_ = maxIntensity_;
+            break;         
          default:
+            histMax_ = (int) (Math.pow(2, bits)-1);
             break;
       }    
       binSize_ = ((double)(histMax_ + 1)) / ((double)NUM_BINS);
