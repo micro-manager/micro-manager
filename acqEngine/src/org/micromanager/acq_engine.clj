@@ -473,7 +473,7 @@
 
 (defn z-stage-needs-adjustment [stage-name]
   (or (not (@state :init-continuous-focus))
-      ;(not (core isContinuousFocusEnabled))
+      (not (core isContinuousFocusEnabled))
       (core isContinuousFocusDrive stage-name)))
 
 (defn update-z-positions [msp-index]
