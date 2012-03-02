@@ -23,9 +23,15 @@
 #ifndef _SPECTRA_H_
 #define _SPECTRA_H_
 
-
+#define MMPATH // define when I move this source to MM Directory
+#ifdef MMPath
 #include "../../MMDevice/MMDevice.h"
 #include "../../MMDevice/DeviceBase.h"
+#else
+#include "../../../MMDevice/MMDevice.h"
+#include "../../../MMDevice/DeviceBase.h"
+#endif
+
 #include <string>
 #include <map>
 
@@ -49,7 +55,7 @@
 #define ERR_OFFSET 10100
 #define ERR_Lumencor_OFFSET 10200
 
-enum ColorNameT {VIOLET,CYAN,GREEN,RED,BLUE,TEAL,ALL,YGFILTER,SHUTTER};
+enum ColorNameT {VIOLET,CYAN,GREEN,RED,BLUE,TEAL,WHITE,ALL,YGFILTER,SHUTTER};
 
 
 class Spectra : public CShutterBase<Spectra>

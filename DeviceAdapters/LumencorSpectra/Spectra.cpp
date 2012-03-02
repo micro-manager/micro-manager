@@ -30,7 +30,12 @@
 #include "Spectra.h"
 #include <string>
 #include <math.h>
+
+#ifdef MMPath
 #include "../../MMDevice/ModuleInterface.h"
+#else
+#include "../../../MMDevice/ModuleInterface.h"
+#endif
 #include <sstream>
 
 const char* g_LumencorController = "Lumencor";
@@ -360,6 +365,7 @@ int Spectra::SendColorLevelCmd(ColorNameT ColorName,int ColorLevel)
 			DACSetupArray[3] = 0x02;
 			break;
 		case ALL:
+		case WHITE:
 			DACSetupArray[4] = (char) ((ColorValue >> 4) & 0x0F) | 0xF0;
 			DACSetupArray[5] = (char) (ColorValue << 4) & 0xF0;
 			DACSetupArray[3] = 0x0F; // setup for RGCV 
@@ -373,7 +379,7 @@ int Spectra::SendColorLevelCmd(ColorNameT ColorName,int ColorLevel)
 		default:
 			break;		
 	}
-	if(ColorName != ALL)
+	if(ColorName != ALL && ColorName != WHITE)
 	{
 		DACSetupArray[4] = (char) ((ColorValue >> 4) & 0x0F) | 0xF0;
 		DACSetupArray[5] = (char) (ColorValue << 4) & 0xF0;
@@ -442,6 +448,7 @@ int Spectra::SendColorEnableCmd(ColorNameT ColorName,bool State, char* EnableMas
 				DACSetupArray[1] = *EnableMask | 0x10;
 			break;
 		case ALL:
+		case WHITE:
 			if(State==ON)
 			{
 				DACSetupArray[1] = ((*EnableMask & 0x40) == 0x40) ? 0x40 : 0x00;
@@ -678,10 +685,8 @@ int Spectra::OnRedValue(MM::PropertyBase* pProp, MM::ActionType eAct)
    long ColorLevel;
    if (eAct == MM::AfterSet)
    {		
-			LogMessage("In OnRedValue ActiveColor Before ");
 			pProp->Get(ColorLevel);
 			SendColorLevelCmd(RED, ColorLevel);
-			//OutputDebugString("In OnRedValue");
    }
    return DEVICE_OK;
 }
@@ -691,10 +696,8 @@ int Spectra::OnGreenValue(MM::PropertyBase* pProp, MM::ActionType eAct)
    long ColorLevel;
    if (eAct == MM::AfterSet)
    {
-		//LogMessage("In OnGreenValue ");
 		pProp->Get(ColorLevel);
 		SendColorLevelCmd(GREEN,ColorLevel);
-		//OutputDebugString("In OnGreenValue");
    }
    return DEVICE_OK;
 }
@@ -704,10 +707,8 @@ int Spectra::OnCyanValue(MM::PropertyBase* pProp, MM::ActionType eAct)
    long ColorLevel;
    if (eAct == MM::AfterSet)
    {
-		//LogMessage("In OnCYANValue ");
 		pProp->Get(ColorLevel);
 		SendColorLevelCmd(CYAN,ColorLevel);
-		//OutputDebugString("In OnGreenValue");
    }
    return DEVICE_OK;
 }
@@ -717,10 +718,8 @@ int Spectra::OnVioletValue(MM::PropertyBase* pProp, MM::ActionType eAct)
    long ColorLevel;
    if (eAct == MM::AfterSet)
    {
-		//LogMessage("In OnVioletValue ");
 		pProp->Get(ColorLevel);
 		SendColorLevelCmd(VIOLET,ColorLevel);
-		//OutputDebugString("In OnVioletValue");
    }
 
    return DEVICE_OK;
@@ -731,10 +730,8 @@ int Spectra::OnTealValue(MM::PropertyBase* pProp, MM::ActionType eAct)
    long ColorLevel;
    if (eAct == MM::AfterSet)
    {
-		//LogMessage("In OnTealValue ");
 		pProp->Get(ColorLevel);
 		SendColorLevelCmd(TEAL,ColorLevel);
-		//OutputDebugString("In OnTealValue");
    }
    return DEVICE_OK;
 }
@@ -744,10 +741,8 @@ int Spectra::OnBlueValue(MM::PropertyBase* pProp, MM::ActionType eAct)
    long ColorLevel;
    if (eAct == MM::AfterSet)
    {
-		//LogMessage("In OnBlueValue ");
 		pProp->Get(ColorLevel);
 		SendColorLevelCmd(BLUE,ColorLevel);
-		//OutputDebugString("In OnBlueValue");
    }
    return DEVICE_OK;
 }
@@ -770,7 +765,7 @@ int Spectra::OnRedEnable(MM::PropertyBase* pProp, MM::ActionType eAct)
 		{
 			SendColorEnableCmd(RED,false,&EnableMask);
 		}
-		LogMessage("In OnRedEnable ");
+		//LogMessage("In OnRedEnable ");
 		//OutputDebugString("In OnRedEnable");
    }
    return DEVICE_OK;
