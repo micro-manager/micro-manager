@@ -239,6 +239,9 @@ int Spectra::Initialize()
 
    pAct = new CPropertyAction(this,&Spectra::OnBlueValue);
    CreateProperty("Blue_Level",   "0", MM::Integer, false, pAct, false);
+
+   pAct = new CPropertyAction(this,&Spectra::OnWhiteValue);
+   CreateProperty("White_Level",   "0", MM::Integer, false, pAct, false);
    //
    // Declare action function for color Enable changes
    //
