@@ -93,6 +93,7 @@ public:
    int OnVioletEnable(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnTealEnable(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnBlueEnable(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnWhiteEnable(MM::PropertyBase* pProp, MM::ActionType eAct);
 
    int OnYGFilterEnable(MM::PropertyBase* pProp, MM::ActionType eAct);
 
@@ -102,6 +103,7 @@ public:
    int OnVioletValue(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnTealValue(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnBlueValue(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnWhiteValue(MM::PropertyBase* pProp, MM::ActionType eAct);
 
 private:
    int SetShutterPosition(bool state);

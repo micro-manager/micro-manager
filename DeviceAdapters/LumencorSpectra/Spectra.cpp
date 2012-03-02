@@ -260,6 +260,9 @@ int Spectra::Initialize()
    pAct = new CPropertyAction(this,&Spectra::OnBlueEnable);
    CreateProperty("Blue_Enable",   "0", MM::Integer, false, pAct, false);
 
+   pAct = new CPropertyAction(this,&Spectra::OnWhiteEnable);
+   CreateProperty("White_Enable",   "0", MM::Integer, false, pAct, false);
+
    // Yellow Green Filter
    pAct = new CPropertyAction(this,&Spectra::OnYGFilterEnable);
    CreateProperty("YG_Filter", "0", MM::Integer, false, pAct, false);
@@ -272,6 +275,7 @@ int Spectra::Initialize()
    SetPropertyLimits("Violet_Level", 0, 100);
    SetPropertyLimits("Teal_Level",   0, 100);
    SetPropertyLimits("Blue_Level",   0, 100);
+   SetPropertyLimits("White_Level",   0, 100);
 	 
    //
    SetPropertyLimits("Init_LE",       0, 1);
@@ -282,6 +286,7 @@ int Spectra::Initialize()
    SetPropertyLimits("Violet_Enable", 0, 1);
    SetPropertyLimits("Teal_Enable",   0, 1);
    SetPropertyLimits("Blue_Enable",   0, 1);
+   SetPropertyLimits("White_Enable",   0, 1);
    //
 
    ret = UpdateStatus();
@@ -746,6 +751,17 @@ int Spectra::OnBlueValue(MM::PropertyBase* pProp, MM::ActionType eAct)
    }
    return DEVICE_OK;
 }
+
+int Spectra::OnWhiteValue(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   long ColorLevel;
+   if (eAct == MM::AfterSet)
+   {
+		pProp->Get(ColorLevel);
+		SendColorLevelCmd(WHITE,ColorLevel);
+   }
+   return DEVICE_OK;
+}
 //
 // *****************************************************************************
 //						Color Enable Change Handlers
@@ -765,8 +781,6 @@ int Spectra::OnRedEnable(MM::PropertyBase* pProp, MM::ActionType eAct)
 		{
 			SendColorEnableCmd(RED,false,&EnableMask);
 		}
-		//LogMessage("In OnRedEnable ");
-		//OutputDebugString("In OnRedEnable");
    }
    return DEVICE_OK;
 }
@@ -785,8 +799,6 @@ int Spectra::OnGreenEnable(MM::PropertyBase* pProp, MM::ActionType eAct)
 		{
 			SendColorEnableCmd(GREEN,false,&EnableMask);
 		}
-//		LogMessage("In OnGreenEnable ");
-//		OutputDebugString("In OnGreenEnable");
    }
    return DEVICE_OK;
 }
@@ -805,8 +817,6 @@ int Spectra::OnCyanEnable(MM::PropertyBase* pProp, MM::ActionType eAct)
 		{
 			SendColorEnableCmd(CYAN,false,&EnableMask);
 		}
-//		LogMessage("In OnCyanEnable ");
-//		OutputDebugString("In OnCyanEnable");
 	}
    return DEVICE_OK;
 }
@@ -825,8 +835,6 @@ int Spectra::OnVioletEnable(MM::PropertyBase* pProp, MM::ActionType eAct)
 		{
 			SendColorEnableCmd(VIOLET,false,&EnableMask);
 		}
-//		LogMessage("In OnVioletEnable ");
-//		OutputDebugString("In OnVioletEnable");
 	}
    return DEVICE_OK;
 }
@@ -845,8 +853,6 @@ int Spectra::OnTealEnable(MM::PropertyBase* pProp, MM::ActionType eAct)
 		{
 			SendColorEnableCmd(TEAL,false,&EnableMask);
 		}
-//		LogMessage("In OnTealEnable ");
-//		OutputDebugString("In OnTealEnable");
 	}
    return DEVICE_OK;
 }
@@ -865,12 +871,27 @@ int Spectra::OnBlueEnable(MM::PropertyBase* pProp, MM::ActionType eAct)
 		{
 			SendColorEnableCmd(BLUE,false,&EnableMask);
 		}
-//		LogMessage("In OnBlueEnable ");
-//		OutputDebugString("In OnBlueEnable");
 	}
    return DEVICE_OK;
 }
 
+int Spectra::OnWhiteEnable(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   string State;
+	if (eAct == MM::AfterSet)
+    {
+	    pProp->Get(State);
+		if (State == "1")
+		{
+			SendColorEnableCmd(WHITE,true,&EnableMask);
+		}
+		else
+		{
+			SendColorEnableCmd(WHITE,false,&EnableMask);
+		}
+	}
+   return DEVICE_OK;
+}
 
 
 int Spectra::OnYGFilterEnable(MM::PropertyBase* pProp, MM::ActionType eAct)
@@ -887,8 +908,6 @@ int Spectra::OnYGFilterEnable(MM::PropertyBase* pProp, MM::ActionType eAct)
 		{
 			SendColorEnableCmd(YGFILTER,false,&EnableMask);
 		}
-//		LogMessage("In OnYGFilterEnable ");
-//		OutputDebugString("In OnYGFilterEnable");
 	}
    return DEVICE_OK;
 }
