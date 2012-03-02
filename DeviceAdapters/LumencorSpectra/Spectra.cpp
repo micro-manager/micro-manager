@@ -31,11 +31,8 @@
 #include <string>
 #include <math.h>
 
-#ifdef MMPath
 #include "../../MMDevice/ModuleInterface.h"
-#else
-#include "../../../MMDevice/ModuleInterface.h"
-#endif
+
 #include <sstream>
 
 const char* g_LumencorController = "Lumencor";

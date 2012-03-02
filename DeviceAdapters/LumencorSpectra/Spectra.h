@@ -23,14 +23,8 @@
 #ifndef _SPECTRA_H_
 #define _SPECTRA_H_
 
-#define MMPATH // define when I move this source to MM Directory
-#ifdef MMPath
 #include "../../MMDevice/MMDevice.h"
 #include "../../MMDevice/DeviceBase.h"
-#else
-#include "../../../MMDevice/MMDevice.h"
-#include "../../../MMDevice/DeviceBase.h"
-#endif
 
 #include <string>
 #include <map>
