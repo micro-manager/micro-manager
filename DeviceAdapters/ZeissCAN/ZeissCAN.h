@@ -121,10 +121,10 @@ class ZeissScope : public HubBase<ZeissScope>
 
    private:
       double answerTimeoutMs_;
-      bool IsMCU28Present();
       bool initialized_;
-      std::map<int,std::string>* pTurretIDMap_;
+      bool IsMCU28Present();
       std::vector<std::string> peripherals_;
+      std::map<int,std::string>* pTurretIDMap_;
 
       // this would better be a static member!!!!
       void CreateAndAddDevice(std::string deviceName);
