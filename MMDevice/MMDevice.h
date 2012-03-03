@@ -1053,7 +1053,6 @@ namespace MM {
       virtual void ClearInstalledDevices() = 0;
       virtual unsigned GetNumberOfInstalledDevices() = 0;
       virtual Device* GetInstalledDevice(int devIdx) = 0;
-      virtual Device* CreatePeripheralDevice(const char* adapterName) = 0;
    };
 
    /**

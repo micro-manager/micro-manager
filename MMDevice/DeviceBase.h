@@ -1933,21 +1933,33 @@ public:
       ClearInstalledDevices();
    }
 
+   /**
+   * To provide automatic child device discovery,
+   * override this method with code to instantiate child devices
+   * and use them to populate "installedDevices" list.
+   * The default behavior is to do nothing.
+   */
+   int DetectInstalledDevices() {return DEVICE_OK;}
+
+   /**
+   * Returns the number of child devices after DetectInstalledDevices was called.
+   */
    unsigned GetNumberOfInstalledDevices() {return (unsigned)installedDevices.size();}
+
+   /**
+   * Returns a pointer to the device with index devIdx. 0 <= devIdx < GetNumberOfInstalledDevices().
+   */
    MM::Device* GetInstalledDevice(int devIdx) {return installedDevices[devIdx];}
 
-   // to provide automatic device discovery override this method with code to
-   // populate "installedDevices" list
-   int DetectInstalledDevices() {return DEVICE_OK;} // default behavior is to do nothing
-
+   /**
+   * Removes all installed devices that were created by DetectInstalledDevices()
+   */
    void ClearInstalledDevices()
    {
       for (unsigned i=0; i<installedDevices.size(); i++)
          delete installedDevices[i];
       installedDevices.clear();
    }
-
-   MM::Device* CreatePeripheralDevice(const char* /*adapterName*/) {return 0;}
 
 protected:
    void AddInstalledDevice(MM::Device* pdev) {installedDevices.push_back(pdev);}

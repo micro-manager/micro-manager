@@ -628,33 +628,6 @@ void CMMCore::loadDevice(const char* label, const char* library, const char* dev
    }
 }
 
-/**
- * Loads a peripheral device attached to a specified Hub.
- * @param label assigned name for the device during the core session
- * @param hubLabel label of the specific hub device (parent label)
- * @param adapterName the name of the adapter class (child type).
- */
-void CMMCore::loadPeripheralDevice(const char* label, const char* hubLabel, const char* adapterName) throw (CMMError)
-{
-   getSpecificDevice<MM::Hub>(hubLabel); // this doesn't do anything, just throws in case the hub does not exist
-   
-   // create the device
-   MM::Device* pDev = pluginManager_.LoadPeripheralDevice(label, hubLabel, adapterName);
-   CORE_LOG3("Peripheral device %s loaded by %s and labeled as %s\n", adapterName, hubLabel, label);
-   
-   if (pDev == 0)
-   {
-      // peripheral creation did not work out
-      throw CMMError(adapterName, MMERR_CreatePeripheralFailed);
-   }
-
-   // establish hub as this device's parent
-   pDev->SetCallback(callback_);
-   pDev->SetParentID(hubLabel);
-
-   assignDefaultRole(pDev);
-}
-
 void CMMCore::assignDefaultRole(MM::Device* pDevice)
 {
    // default special roles for particular devices

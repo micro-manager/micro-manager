@@ -56,7 +56,6 @@ public:
 	virtual ~CPluginManager();
    
    MM::Device* LoadDevice(const char* label, const char* moduleName, const char* deviceName);
-   MM::Device* LoadPeripheralDevice(const char* label, const char* hubLabel, const char* deviceName);
    void UnloadDevice(MM::Device* device);
    void UnloadAllDevices();
    MM::Device* GetDevice(const char* label) const throw (CMMError);

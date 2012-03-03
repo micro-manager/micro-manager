@@ -107,7 +107,6 @@ public:
    */
    //@ {
    void loadDevice(const char* label, const char* library, const char* adapterName) throw (CMMError);
-   void loadPeripheralDevice(const char* label, const char* hubLabel, const char* adapterName) throw (CMMError);
    void unloadDevice(const char* label) throw (CMMError);
    void unloadAllDevices() throw (CMMError);
    void initializeAllDevices() throw (CMMError);
