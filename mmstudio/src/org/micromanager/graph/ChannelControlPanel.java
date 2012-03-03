@@ -203,7 +203,7 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
       modeComboBox_.setModel(new DefaultComboBoxModel(new String[]{
                  "Auto", "4bit (0-15)", "5bit (0-31)", "6bit (0-63)", "7bit (0-127)", 
                  "8bit (0-255)", "9bit (0-511)", "10bit (0-1023)", "11bit (0-2047)", 
-                 "12bit (0-4095)", "13bit (0-8191)", "14bit (0-16383)", "15bit (32767)", "16bit (0-65535)"}));
+                 "12bit (0-4095)", "13bit (0-8191)", "14bit (0-16383)", "15bit (0-32767)", "16bit (0-65535)"}));
 
       zoomInButton_ = new JButton();
       zoomInButton_.setIcon(SwingResourceManager.getIcon(MMStudioMainFrame.class,
@@ -363,15 +363,12 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
    
    public void displayComboAction() {
       int bits = modeComboBox_.getSelectedIndex() + 3;
-      switch (bits) {
-         case 3:
-            histMax_ = maxIntensity_;
-            break;         
-         default:
-            histMax_ = (int) (Math.pow(2, bits)-1);
-            break;
-      }    
-      binSize_ = ((double)(histMax_ + 1)) / ((double)NUM_BINS);
+      if (bits == 3) {
+         histMax_ = maxIntensity_;
+      } else {
+         histMax_ = (int) (Math.pow(2, bits) - 1);
+      }
+      binSize_ = ((double) (histMax_ + 1)) / ((double) NUM_BINS);
       histMaxLabel_ = histMax_ + "";
       updateHistogram();
       ImagePlus img = mdPanel_.getCurrentImage();
