@@ -6141,16 +6141,18 @@ MM::DeviceDetectionStatus CMMCore::detectDevice(char* deviceName)
    return result;
 }
 /**
- * Performs auto-detection of devices installed in the hardware setup.
- * Hardware setup is represented by the Hub device. Typically, a motorized microscope is represented by the
- * Hub device, capable of discovering what specific devices are cuirrently installed. For example, it can
+ * Performs auto-detection and loading of child devices that are attached to a Hub device.
+ * For example, if a motorized microscope is represented by a Hub device, it is capable of
+ * discovering what specific child devices are currently attached. In that case this call might 
  * report that Z-stage, filter changer and objective turrent are currently installed and return three
  * device names in the string list.
+ *
+ * @param hubDeviceLabel - A device of type Hub
  */
-std::vector<std::string> CMMCore::getInstalledDevices(const char* deviceLabel)
+std::vector<std::string> CMMCore::getInstalledDevices(const char* hubDeviceLabel)
 {
    std::vector<std::string> result;
-   MM::Device* pDevice  = pluginManager_.GetDevice(deviceLabel);
+   MM::Device* pDevice  = pluginManager_.GetDevice(hubDeviceLabel);
    if (pDevice && pDevice->GetType() == MM::HubDevice)
    {
       MM::Hub* pHub = static_cast<MM::Hub*>(pDevice);

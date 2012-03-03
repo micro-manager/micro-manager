@@ -1937,22 +1937,26 @@ public:
    * To provide automatic child device discovery,
    * override this method with code to instantiate child devices
    * and use them to populate "installedDevices" list.
-   * The default behavior is to do nothing.
+   * If this method is not overridden, it will do nothing
+   * and return DEVICE_OK.
    */
    int DetectInstalledDevices() {return DEVICE_OK;}
 
    /**
    * Returns the number of child devices after DetectInstalledDevices was called.
+   * (Don't override this method.)
    */
    unsigned GetNumberOfInstalledDevices() {return (unsigned)installedDevices.size();}
 
    /**
    * Returns a pointer to the device with index devIdx. 0 <= devIdx < GetNumberOfInstalledDevices().
+   * (Don't override this method.)
    */
    MM::Device* GetInstalledDevice(int devIdx) {return installedDevices[devIdx];}
 
    /**
    * Removes all installed devices that were created by DetectInstalledDevices()
+   * (Don't override this method.)
    */
    void ClearInstalledDevices()
    {

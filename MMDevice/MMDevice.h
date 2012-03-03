@@ -1049,9 +1049,26 @@ namespace MM {
       virtual DeviceType GetType() const {return HubDevice;}
       static const DeviceType Type = HubDevice;
 
+      /**
+       * Attempts to detect child device hardware by communicating with hub hardware.
+       * If any child hardware is detected, causes module to instantiate
+       * appropriate child Device instance(s).
+       */
       virtual int DetectInstalledDevices() = 0;
+
+      /**
+       * Removes all Device instances that were created by DetectInstalledDevices()
+       */
       virtual void ClearInstalledDevices() = 0;
+
+      /**
+       * Returns the number of child Devices after DetectInstalledDevices was called.
+       */
       virtual unsigned GetNumberOfInstalledDevices() = 0;
+      
+      /**
+       * Returns a pointer to the Device with index devIdx. 0 <= devIdx < GetNumberOfInstalledDevices().
+       */
       virtual Device* GetInstalledDevice(int devIdx) = 0;
    };
 
