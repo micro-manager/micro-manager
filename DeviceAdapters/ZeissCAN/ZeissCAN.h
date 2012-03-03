@@ -124,14 +124,15 @@ class ZeissScope : public HubBase<ZeissScope>
       std::map<int,std::string>* pTurretIDMap_;
       // this would better be a static member!!!!
       std::map<int,std::string>& turretIDMap();
-      void GetPeripheralInventory();
       MM::DeviceDetectionStatus DetectDevice(void);
-      int GetNumberOfDiscoverableDevices();
       void GetDiscoverableDevice(int peripheralNum, char* peripheralName, unsigned int maxNameLen);
       bool initialized_;
       //std::string port_;
       double answerTimeoutMs_;
+      int Query(std::string queryCode, std::string& answer);
+      void CreateAndAddDevice(std::string deviceName);
 };
+
 
 
 class ZeissShutter : public CShutterBase<ZeissShutter>

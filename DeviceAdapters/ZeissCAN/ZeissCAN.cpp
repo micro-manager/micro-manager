@@ -297,6 +297,8 @@ int ZeissHub::ClearPort(MM::Device& device, MM::Core& core)
    return DEVICE_OK;
 } 
 
+
+
 /////////////////////////////////////////////////////////////
 // Utility class to make it easier for 'turret-based' devices
 // 
@@ -430,6 +432,9 @@ int ZeissTurret::GetBusy(MM::Device& device, MM::Core& core, int turretNr, bool&
 
    return DEVICE_OK;
 }
+
+
+
 
 int ZeissTurret::GetPresence(MM::Device& device, MM::Core& core,  int turretNr, bool& present)
 {
@@ -693,74 +698,87 @@ const char* g_ZeissFilterWheel2 = "ZeissFilterWheel2";
 }
 
 
-void ZeissScope::GetPeripheralInventory()
+int ZeissScope::Query(std::string queryCode, std::string& answer)
 {
-   peripherals_.clear();
+   int ret = g_hub.ExecuteCommand(*this, *GetCoreCallback(),  queryCode.c_str());
+   if (ret != DEVICE_OK)
+      return ret;
 
-      if(!initialized_)
-         Initialize();
+   string response;
+   ret = g_hub.GetAnswer(*this, *GetCoreCallback(), response);
+   if (ret != DEVICE_OK)
+      return ret;
+
+   answer = response.substr(2).c_str();
+
+   return DEVICE_OK;
+};
 
 
-      int ret;
-      bool exists;
-
-      std::map<int,std::string>& turrr = turretIDMap();
-      std::map<int, std::string>::iterator iii;
-
-
-      for( iii = turrr.begin(); turrr.end() != iii; ++iii)
-      {
-      
-         ret = g_turret.GetPresence(*this, *GetCoreCallback(), iii->first, exists);
-         if (DEVICE_OK == ret)
-         {
-            if(exists)
-               peripherals_.push_back(iii->second);
-         }
-      }
+void ZeissScope::CreateAndAddDevice(std::string deviceName)
+{
+   MM::Device* pDev = ::CreateDevice(deviceName.c_str());
+   if (pDev)
+   {
+      AddInstalledDevice(pDev);
+   }
 }
 
 int ZeissScope::DetectInstalledDevices()
 {
-      int ret;
-      bool exists;
+   int ret;
+   bool exists;
 
-      std::map<int,std::string>& turrr = turretIDMap();
-      std::map<int, std::string>::iterator iii;
+   std::map<int,std::string>& turrr = turretIDMap();
+   std::map<int, std::string>::iterator iii;
 
 
-      for( iii = turrr.begin(); turrr.end() != iii; ++iii)
+   for( iii = turrr.begin(); turrr.end() != iii; ++iii)
+   {
+      ret = g_turret.GetPresence(*this, *GetCoreCallback(), iii->first, exists);
+      if (DEVICE_OK == ret)
       {
-      
-         ret = g_turret.GetPresence(*this, *GetCoreCallback(), iii->first, exists);
-         if (DEVICE_OK == ret)
+         if(exists)
          {
-            if(exists)
-            {
-               MM::Device* pDev = ::CreateDevice(iii->second.c_str());
-               if (pDev)
-                  AddInstalledDevice(pDev);
-            }
+            MM::Device* pDev = ::CreateDevice(iii->second.c_str());
+            if (pDev)
+               AddInstalledDevice(pDev);
          }
       }
+   }
 
-      // finally check if MCU28 is installed
-      if (IsMCU28Present())
-      {
-         MM::Device* pDev = ::CreateDevice(g_ZeissXYStage);
-         if (pDev)
-            AddInstalledDevice(pDev);
-      }
-      return DEVICE_OK;
+   CreateAndAddDevice(g_ZeissHalogenLamp);
+
+   std::string response;
+   Query("HPCk1,0", response);
+   if (0 != response.compare("0"))
+   {
+      CreateAndAddDevice(g_ZeissShutter);
+   }
+
+   Query("HPCk1,0", response);
+   if (0 != response.compare("1F"))
+   {
+      CreateAndAddDevice(g_ZeissFocusName);
+   }
+
+   Query("HPCm1,0", response);
+   if (!(  (0 == response.compare("0"))
+           ||(0 == response.compare("55"))  ))
+   {
+      CreateAndAddDevice(g_ZeissShutter);
+   }
+
+   // finally check if MCU28 is installed
+   if (IsMCU28Present())
+   {
+      MM::Device* pDev = ::CreateDevice(g_ZeissXYStage);
+      if (pDev)
+         AddInstalledDevice(pDev);
+   }
+   return DEVICE_OK;
 }
 
-
-int ZeissScope::GetNumberOfDiscoverableDevices()
-{
-   GetPeripheralInventory();
-   return (int) peripherals_.size();
-
-}
 
 void ZeissScope::GetDiscoverableDevice(int peripheralNum, char* peripheralName, unsigned int maxNameLen)
 { 
