@@ -120,18 +120,17 @@ class ZeissScope : public HubBase<ZeissScope>
       int DetectInstalledDevices();
 
    private:
-      bool IsMCU28Present();
-      std::vector<std::string> peripherals_;
-      std::map<int,std::string>* pTurretIDMap_;
-      // this would better be a static member!!!!
-      std::map<int,std::string>& turretIDMap();
-
-      void GetDiscoverableDevice(int peripheralNum, char* peripheralName, unsigned int maxNameLen);
-      bool initialized_;
-      //std::string port_;
       double answerTimeoutMs_;
-      int Query(std::string queryCode, std::string& answer);
+      bool IsMCU28Present();
+      bool initialized_;
+      std::map<int,std::string>* pTurretIDMap_;
+      std::vector<std::string> peripherals_;
+
+      // this would better be a static member!!!!
       void CreateAndAddDevice(std::string deviceName);
+      void GetDiscoverableDevice(int peripheralNum, char* peripheralName, unsigned int maxNameLen);
+      int Query(std::string queryCode, std::string& answer);
+      std::map<int,std::string>& turretIDMap();
 };
 
 
