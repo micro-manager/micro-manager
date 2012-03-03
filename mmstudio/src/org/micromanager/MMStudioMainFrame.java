@@ -4064,8 +4064,7 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface, Device
       try {
          Object img;
          if (core_.isSequenceRunning()) {
-            img = core_.getLastImage();
-            core_.getLastImageMD(0, 0, md);
+            img = core_.getLastImageMD(0, 0, md);
          } else {
             core_.snapImage();
             img = core_.getImage();
