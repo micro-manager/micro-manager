@@ -341,6 +341,48 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface, Device
       }
 
    }
+
+
+ public void checkSimpleAcquisition(TaggedImage image) {
+    try {
+       JSONObject tags = image.tags;
+      int width = MDUtils.getWidth(tags);
+      int height = MDUtils.getHeight(tags);
+      int depth = MDUtils.getDepth(tags);
+      int bitDepth = MDUtils.getBitDepth(tags);
+      int numCamChannels = (int) core_.getNumberOfCameraChannels();
+   
+         if (acquisitionExists(SIMPLE_ACQ)) {
+            if ((getAcquisitionImageWidth(SIMPLE_ACQ) != width)
+                    || (getAcquisitionImageHeight(SIMPLE_ACQ) != height)
+                    || (getAcquisitionImageByteDepth(SIMPLE_ACQ) != depth)
+                    || (getAcquisitionImageBitDepth(SIMPLE_ACQ) != bitDepth)
+                    || (getAcquisitionMultiCamNumChannels(SIMPLE_ACQ) != numCamChannels)) {  //Need to close and reopen simple window
+               closeAcquisitionImage5D(SIMPLE_ACQ);
+               closeAcquisition(SIMPLE_ACQ);
+            }
+         }
+         if (!acquisitionExists(SIMPLE_ACQ)) {
+            openAcquisition(SIMPLE_ACQ, "", 1, numCamChannels, 1, true);
+            if (numCamChannels > 1) {
+               for (long i = 0; i < numCamChannels; i++) {
+                  String chName = core_.getCameraChannelName(i);
+                  int defaultColor = multiCameraColors_[(int) i % multiCameraColors_.length].getRGB();
+                  setChannelColor(SIMPLE_ACQ, (int) i,
+                          getChannelColor(chName, defaultColor));
+                  setChannelName(SIMPLE_ACQ, (int) i, chName);
+               }
+            }
+            initializeSimpleAcquisition(SIMPLE_ACQ, width, height, depth, bitDepth, numCamChannels);
+            getAcquisition(SIMPLE_ACQ).promptToSave(false);
+            getAcquisition(SIMPLE_ACQ).toFront();
+         }
+      } catch (Exception ex) {
+         ReportingUtils.showError(ex);
+      }
+
+   }
+
  
    public void saveSimpleContrastSettings(ContrastSettings c, int channel, String pixelType) {
       simpleContrastSettings_.saveSettings(c, channel, pixelType);
@@ -2909,6 +2951,7 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface, Device
       return displayImage(pixels, true);
    }
 
+
    public boolean displayImage(final Object pixels, boolean wait) {
       String[] acqs = acqMgr_.getAcqusitionNames();
       VirtualAcquisitionDisplay virtAcq;
@@ -3027,30 +3070,42 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface, Device
          ReportingUtils.showError("No camera configured");
          return;
       }
+
       try {
          core_.snapImage();
-         checkSimpleAcquisition();
-         setCursor(new Cursor(Cursor.WAIT_CURSOR));
-         getAcquisition(SIMPLE_ACQ).toFront();
          long c = core_.getNumberOfCameraChannels();
-         for (int i = 0; i < c; i++) {
-            TaggedImage ti = ImageUtils.makeTaggedImage(core_.getImage(i),
-                    i, 0, 0, 0,
-                    getAcquisitionImageWidth(SIMPLE_ACQ),
-                    getAcquisitionImageHeight(SIMPLE_ACQ),
-                    getAcquisitionImageByteDepth(SIMPLE_ACQ));
-            ti.tags.put("Summary", getAcquisition(SIMPLE_ACQ).getSummaryMetadata());
-            boolean update = false;
-            if (i == c - 1) {
-               update = true;
-            }
-            addImage(SIMPLE_ACQ, ti, update, true);
+         for (int i = 0; i < c; ++i) {
+            displayImage(core_.getTaggedImage(i), (i == c - 1), i);
          }
       } catch (Exception ex) {
          ReportingUtils.showError(ex);
       }
-      setCursor(new Cursor(Cursor.DEFAULT_CURSOR));
-      updateLineProfile();
+   }
+
+   public boolean displayImage(TaggedImage ti) {
+      return displayImage(ti, true, 0);
+   }
+
+   public boolean displayImage(TaggedImage ti, boolean update, int channel) {
+      try {
+         checkSimpleAcquisition(ti);
+         setCursor(new Cursor(Cursor.WAIT_CURSOR));
+         //getAcquisition(SIMPLE_ACQ).toFront();
+         ti.tags.put("Summary", getAcquisition(SIMPLE_ACQ).getSummaryMetadata());
+         ti.tags.put("ChannelIndex", channel);
+         ti.tags.put("PositionIndex", 0);
+         ti.tags.put("SliceIndex", 0);
+         ti.tags.put("FrameIndex", 0);
+         addImage(SIMPLE_ACQ, ti, update, true);
+      } catch (Exception ex) {
+         ReportingUtils.logError(ex);
+         return false;
+      }
+      if (update) {
+         setCursor(new Cursor(Cursor.DEFAULT_CURSOR));
+         updateLineProfile();
+      }
+      return true;
    }
 
    public void initializeGUI() {

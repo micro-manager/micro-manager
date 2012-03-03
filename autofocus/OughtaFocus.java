@@ -33,6 +33,7 @@ import javax.swing.SwingUtilities;
 
 import mmcorej.CMMCore;
 import mmcorej.Configuration;
+import mmcorej.TaggedImage;
 
 import org.apache.commons.math.FunctionEvaluationException;
 import org.apache.commons.math.analysis.UnivariateRealFunction;
@@ -198,13 +199,13 @@ public class OughtaFocus extends AutofocusBase implements org.micromanager.api.A
          setZPosition(z);
          long tZ =  System.currentTimeMillis() - start;
          
-         Object img = null;
+         TaggedImage img = null;
          if (liveModeOn_) {
-            img = core.getLastImage();
+            img = core.getLastTaggedImage();
          } else {
             core.waitForDevice(core.getCameraDevice());
             core.snapImage();
-            final Object img1 = core.getImage();
+            final TaggedImage img1 = core.getTaggedImage();
             img = img1;
             if (show.contentEquals("Yes")) {
                SwingUtilities.invokeLater(new Runnable() {
@@ -215,7 +216,7 @@ public class OughtaFocus extends AutofocusBase implements org.micromanager.api.A
             }
          }
          long tI = System.currentTimeMillis() - start - tZ;
-         ImageProcessor proc = ImageUtils.makeProcessor(core, img);
+         ImageProcessor proc = ImageUtils.makeProcessor(core, img.pix);
          double score = computeScore(proc);
          long tC = System.currentTimeMillis() - start - tZ - tI;
          ReportingUtils.logMessage("OughtaFocus: image=" + imageCount_++ +

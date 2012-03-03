@@ -32,6 +32,9 @@
   (.add parent child)
   (apply constrain-to-parent child constraints))
 
+(defn context-menu [component & items]
+  (partition 2 items))
+
 ;; main stuff
 
 (load-mm)

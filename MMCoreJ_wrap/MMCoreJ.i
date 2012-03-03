@@ -387,27 +387,40 @@
       return new TaggedImage(pixels, tags);	
    }
 
-   public TaggedImage getTaggedImage() throws java.lang.Exception {
+   public TaggedImage getTaggedImage(int cameraChannelIndex) throws java.lang.Exception {
       Metadata md = new Metadata();
-      Object pixels = getImage();
+      Object pixels = getImage(cameraChannelIndex);
       return createTaggedImage(pixels, md);
    }
 
-   public TaggedImage getLastTaggedImage() throws java.lang.Exception {
+   public TaggedImage getTaggedImage() throws java.lang.Exception {
+      return getTaggedImage(0);
+   }
+
+   public TaggedImage getLastTaggedImage(int cameraChannelIndex) throws java.lang.Exception {
       Metadata md = new Metadata();
-      Object pixels = getLastImageMD(md);
+      Object pixels = getLastImageMD(cameraChannelIndex, 0, md);
       return createTaggedImage(pixels, md);
    }
    
+   public TaggedImage getLastTaggedImage() throws java.lang.Exception {
+      return getLastTaggedImage(0);
+   }
+
    public TaggedImage getNBeforeLastTaggedImage(long n) throws java.lang.Exception {
       Metadata md = new Metadata();
       Object pixels = getNBeforeLastImageMD(n, md);
       return createTaggedImage(pixels, md);
    }
-   public TaggedImage popNextTaggedImage() throws java.lang.Exception {
+
+   public TaggedImage popNextTaggedImage(int cameraChannelIndex) throws java.lang.Exception {
       Metadata md = new Metadata();
-      Object pixels = popNextImageMD(md);
-     return createTaggedImage(pixels, md);
+      Object pixels = popNextImageMD(cameraChannelIndex, 0, md);
+      return createTaggedImage(pixels, md);
+   }
+
+   public TaggedImage popNextTaggedImage() throws java.lang.Exception {
+      return popNextTaggedImage(0);
    }
 
 %}

@@ -693,9 +693,16 @@ public interface ScriptInterface {
     * Show an image with the pixel array pix (uses current camera settings
     * to figure out the shape of the image.
     * @param pix Array with pixel data.  pixeldata should match current camera settings.
-    * @deprecated use addImage instead
+    * @deprecated use displayImage(TaggedImage img) instead
     */
    public boolean displayImage(Object pix);
+
+     /**
+    * Show a TaggedImage in the main acquisition window
+    * to figure out the shape of the image.
+    * @param pix Array with pixel data.  pixeldata should match current camera settings.
+    */
+   public boolean displayImage(TaggedImage image);
 
    /**
     * Determines whether live mode is currently running.
