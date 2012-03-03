@@ -109,7 +109,8 @@ class ZeissScope : public HubBase<ZeissScope>
       int Shutdown();
       void GetName(char* pszName) const;
       bool Busy();
-      
+      MM::DeviceDetectionStatus DetectDevice(void);
+
       // action interface                                                       
       // ----------------                                                       
       int OnPort(MM::PropertyBase* pProp, MM::ActionType eAct); 
@@ -124,7 +125,7 @@ class ZeissScope : public HubBase<ZeissScope>
       std::map<int,std::string>* pTurretIDMap_;
       // this would better be a static member!!!!
       std::map<int,std::string>& turretIDMap();
-      MM::DeviceDetectionStatus DetectDevice(void);
+
       void GetDiscoverableDevice(int peripheralNum, char* peripheralName, unsigned int maxNameLen);
       bool initialized_;
       //std::string port_;
