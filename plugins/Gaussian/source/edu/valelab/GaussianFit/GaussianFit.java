@@ -113,9 +113,11 @@ public class GaussianFit {
          try {
             RealPointValuePair result = nm_.optimize(mGF_, GoalType.MINIMIZE, params0_);
             paramsOut = result.getPoint();
+         } catch (java.lang.OutOfMemoryError e) {
+            throw(e);
          } catch (Exception e) {
             ij.IJ.log(" " + e.toString());
-            e.printStackTrace();
+            //e.printStackTrace();
          }
       }
 
@@ -134,7 +136,7 @@ public class GaussianFit {
          } catch (FunctionEvaluationException ex) {
             Logger.getLogger(GaussianFit.class.getName()).log(Level.SEVERE, null, ex);
          } catch (OptimizationException ex) {
-            Logger.getLogger(GaussianFit.class.getName()).log(Level.SEVERE, null, ex);
+            // Logger.getLogger(GaussianFit.class.getName()).log(Level.SEVERE, null, ex);
          } catch (IllegalArgumentException ex) {
             Logger.getLogger(GaussianFit.class.getName()).log(Level.SEVERE, null, ex);
          } catch(Exception ex) {

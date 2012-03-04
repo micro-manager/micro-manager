@@ -31,10 +31,12 @@ public class FitAllThread extends GaussianInfo implements Runnable  {
    GaussianFitStackThread[] gfsThreads_;
    private volatile Thread t_;
    private static boolean running_ = false;
+   private FindLocalMaxima.FilterType preFilterType_;
 
-   public FitAllThread(int shape, int fitMode) {
+   public FitAllThread(int shape, int fitMode, FindLocalMaxima.FilterType preFilterType) {
       shape_ = shape;
       fitMode_ = fitMode;
+      preFilterType_ = preFilterType;
    }
 
    public synchronized void  init() {
@@ -183,8 +185,8 @@ public class FitAllThread extends GaussianInfo implements Runnable  {
                   siPlus.setRoi(originalRoi, false);
                   siProc = siPlus.getProcessor(); 
 
-                  p = FindLocalMaxima.FindMax(siPlus, 1, 0);
-                  p = FindLocalMaxima.noiseFilter(siProc, p, noiseTolerance_);
+                  p = FindLocalMaxima.FindMax(siPlus, 1, noiseTolerance_, preFilterType_);
+                  //p = FindLocalMaxima.noiseFilter(siProc, p, noiseTolerance_);
                }
 
                   /*

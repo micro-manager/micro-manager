@@ -12,21 +12,57 @@
 package edu.valelab.GaussianFit;
 
 import ij.ImagePlus;
+import ij.plugin.ImageCalculator;
 import ij.process.ImageProcessor;
+import ij.plugin.filter.GaussianBlur;
 import java.awt.Polygon;
 import java.awt.Rectangle;
+
 
 /**
  *
  * @author nico
  */
 public class FindLocalMaxima {
+   
+   public enum FilterType {
+      NONE,
+      GAUSSIAN1_5
+   }
 
-   public static Polygon FindMax(ImagePlus iPlus, int n, int threshold) {
+   /**
+    * Static utility function to find local maxima in an Image
+    * 
+    * 
+    * @param iPlus - ImagePlus object in which to look for local maxima
+    * @param n - size of blocks (in pixels) in which to divide up the image
+    * @param threshold - value below which a maximum will be rejected
+    * @return Polygon with maxima 
+    */
+   public static Polygon FindMax(ImagePlus iPlus, int n, int threshold, FilterType filterType) {
       Polygon maxima = new Polygon();
 
       ImageProcessor iProc = iPlus.getProcessor();
       Rectangle roi = iProc.getRoi();
+      
+      // Prefilter if needed
+      switch (filterType) {
+         case GAUSSIAN1_5 : 
+            // TODO: if there is an ROI, we only need to filter in the ROI
+            ImageProcessor iProcG1 = iProc.duplicate();
+            ImageProcessor iProcG5 = iProc.duplicate();
+            GaussianBlur filter = new GaussianBlur();
+            filter.blur(iProcG1, 1);
+            filter.blur(iProcG5, 5);
+            ImagePlus p1 = new ImagePlus("G1", iProcG1);
+            ImagePlus p5 = new ImagePlus("G5", iProcG5);
+            ImageCalculator ic = new ImageCalculator();
+            ic.run("subtract", p1, p5);
+            iProc = p1.getProcessor();
+             
+          
+            break;
+      }
 
 
       // divide the image up in blocks of size n and find local maxima
@@ -100,7 +136,7 @@ public class FindLocalMaxima {
    }
 
 
-   // Filters local maxima list using the ImageJ indMaxima Threshold algorithm
+   // Filters local maxima list using the ImageJ findMaxima Threshold algorithm
    public static Polygon noiseFilter(ImageProcessor iProc, Polygon inputPoints, int threshold)
    {
       Polygon outputPoints = new Polygon();

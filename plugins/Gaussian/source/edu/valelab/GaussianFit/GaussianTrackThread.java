@@ -49,6 +49,10 @@ public class GaussianTrackThread extends GaussianInfo implements Runnable  {
    static final String YCOLNAME = "Y";
   
    private Thread t;
+   
+   private FindLocalMaxima.FilterType preFilterType_;
+   
+   
 
    public void setWindowClosed() {
       windowOpen_ = false;
@@ -57,12 +61,11 @@ public class GaussianTrackThread extends GaussianInfo implements Runnable  {
 
    /**
     *
-    * @param mode - either TRACK or FIDUCIAL, results in the thread executing either
-    * trackGaussians or trackFiducials
+    * 
     */
-   public GaussianTrackThread(int mode) {
+   public GaussianTrackThread(FindLocalMaxima.FilterType preFilterType) {
       super();
-      mode_ = mode;
+      preFilterType_ = preFilterType;
    }   
 
    public void trackGaussians() {
@@ -143,8 +146,8 @@ public class GaussianTrackThread extends GaussianInfo implements Runnable  {
          siPlus.setRoi(spotRoi, false);
 
          // Find maximum in Roi, might not be needed....
-         Polygon pol = FindLocalMaxima.FindMax(siPlus, 1, 0);
-         pol = FindLocalMaxima.noiseFilter(siPlus.getProcessor(), pol, 800);
+         Polygon pol = FindLocalMaxima.FindMax(siPlus, 1, noiseTolerance_, preFilterType_);
+         //pol = FindLocalMaxima.noiseFilter(siPlus.getProcessor(), pol, 800);
 
          if (pol.npoints >= 1) {
             xc = pol.xpoints[0];
@@ -252,9 +255,7 @@ public class GaussianTrackThread extends GaussianInfo implements Runnable  {
    }
 
    public void run() {
-      if (mode_ == TRACK) {
-         trackGaussians();
-      }
+      trackGaussians();
    }
    
 }
