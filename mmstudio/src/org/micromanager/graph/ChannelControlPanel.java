@@ -107,14 +107,13 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
       binSize_ = histMax_ / NUM_BINS;
       BIN_SIZE_MAX = (int) (Math.pow(2, bitDepth) / NUM_BINS);
       histMaxLabel_ = "" + histMax_;
-      mdPanel_ = md;
-      initComponents();
+      mdPanel_ = md;    
       channelIndex_ = channelIndex;
+      initComponents();
       mccPanel_ = mccPanel;
       loadDisplaySettings(cache);
       updateChannelNameAndColor(cache);
       cache.setChannelColor(channelIndex_, color_.getRGB());
-      
    }
 
    private void initComponents() {
@@ -168,7 +167,6 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
          }
       });
 
-      channelNameCheckbox_.setSelected(true);
       channelNameCheckbox_.setText("Channel");
       channelNameCheckbox_.setToolTipText("Show/hide this channel in the multi-dimensional viewer");
       channelNameCheckbox_.addActionListener(new java.awt.event.ActionListener() {
@@ -468,6 +466,8 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
          } else {
             ci.setPosition(channelIndex_ + 1, ci.getSlice(), ci.getFrame());
          }
+      } else {
+         ci.getActiveChannels()[channelIndex_] = channelNameCheckbox_.isSelected();
       }
 
       cache.setChannelVisibility(channelIndex_, channelNameCheckbox_.isSelected());
@@ -665,7 +665,7 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
 
       boolean[] active = ((CompositeImage) img).getActiveChannels();
       channelNameCheckbox_.setSelected(active[channelIndex_]);
-      if (ip == null) {
+      if (ip == null || !active[channelIndex_]) {
          hp_.setVisible(false);
          return false;
       }

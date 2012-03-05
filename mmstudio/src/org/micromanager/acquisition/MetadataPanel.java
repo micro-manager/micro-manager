@@ -616,7 +616,12 @@ public class MetadataPanel extends JPanel
       if (acq != null && currentContrastPanel_ != null) {
          currentContrastPanel_.setupChannelControls(cache);
          if (acq.getNumChannels() > 1) {
+            boolean[] oldActive = ((CompositeImage) imgp).getActiveChannels();
+            boolean[] active = Arrays.copyOf(oldActive , oldActive.length);
             multiChannelContrastPanel_.setDisplayMode(((CompositeImage) imgp).getMode());
+            for (int i = 0; i < active.length; i++)
+               ((CompositeImage) imgp).getActiveChannels()[i] = active[i];
+            
             multiChannelContrastPanel_.sizeBarCheckBoxActionPerformed();
          }
          //load appropriate contrast settings calc and display hist, apply LUT and draw
