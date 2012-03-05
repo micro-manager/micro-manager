@@ -50,28 +50,35 @@ public:
         MPSTR_XYStgaeDevName    = 1,            // MP285 XY stage device name
         MPSTR_ZStageDevName     = 2,            // MP285 Z stage device name
         MPSTR_MP285Version      = 3,            // MP285 adapter version
-        MPSTR_MP285VerLabel     = 4,            // Adapter version label
-        MPSTR_CommStateLabel    = 5,            // property MP285 COMM. STATUS label
-        MPSTR_FirmwareVerLabel  = 6,            // property FIRMWARE VERSION label
-        MPSTR_ResolutionLabel   = 7,            // property RESOLUION label
-        MPSTR_AccelLabel        = 8,            // Property ACCELERATION label
-        MPSTR_Um2UStepUnit      = 9,            // property um to ustep label
-        MPSTR_UStep2NmUnit      = 10,           // property ustep to nm label
-        MPSTR_SetPositionX      = 11,           // property POSITION X label
-        MPSTR_SetPositionY      = 12,           // property POSITION Y label
-        MPSTR_SetPositionZ      = 13,           // property POSITION Z label
-        MPSTR_GetPositionX      = 14,           // property CURRENT POSITION X label
-        MPSTR_GetPositionY      = 15,           // property CURRENT POSITION Y label
-        MPSTR_GetPositionZ      = 16,           // property CURRENT POSITION Z label
-        MPSTR_VelocityLabel     = 17,           // property VELOCITY label
-        MPSTR_MotionMode        = 18,           // property MODE label
-        MPSTR_PauseMode         = 19,           // property PAUSE label
-        MPSTR_SetOrigin         = 20,           // property ORIGIN label
-        MPSTR_Reset             = 21,           // property RESET label
-        MPSTR_Status            = 22,           // property STATUS label
-        MPSTR_TimeoutInterval   = 23,           // property Timeout Interval label
-        MPSTR_TimeoutTrys       = 24,           // property Timeout Trys label
-        MPSTR_LogFilename       = 25            // MP285 log filename
+        MPSTR_LogFilename       = 4,            // MP285 log filename
+        MPSTR_CtrlDevNameLabel  = 5,            // MP285 controller device name label
+		MPSTR_CtrlDevDescLabel  = 6,			// MP285 controller device decription label
+        MPSTR_FirmwareVerLabel  = 7,            // MP285 FIRMWARE VERSION label
+        MPSTR_MP285VerLabel     = 8,            // MP285 Adapter version label
+        MPSTR_DebugLogFlagLabel = 9,            // MP285 Debug Log Flag label
+        MPSTR_CommStateLabel    = 10,           // MP285 COMM. STATUS label
+        MPSTR_ResolutionLabel   = 11,           // MP285 RESOLUION label
+        MPSTR_AccelLabel        = 12,           // MP285 ACCELERATION label
+        MPSTR_Um2UStepUnit      = 13,           // MP285 um to ustep label
+        MPSTR_UStep2NmUnit      = 14,           // MP285 ustep to nm label
+        MPSTR_VelocityLabel     = 15,           // MP285 VELOCITY label
+        MPSTR_MotionMode        = 16,           // MP285 MODE label
+        MPSTR_SetOrigin         = 17,           // MP285 ORIGIN label
+        MPSTR_TimeoutInterval   = 18,           // MP285 Timeout Interval label
+        MPSTR_TimeoutTrys       = 19,           // MP285 Timeout Trys label
+        MPSTR_XYDevNameLabel    = 20,           // MP285 controller device name label
+		MPSTR_XYDevDescLabel    = 21,			// MP285 controller device decription label
+        MPSTR_SetPositionX      = 22,           // MP285 POSITION X label
+        MPSTR_SetPositionY      = 23,           // MP285 POSITION Y label
+        MPSTR_GetPositionX      = 24,           // MP285 CURRENT POSITION X label
+        MPSTR_GetPositionY      = 25,           // MP285 CURRENT POSITION Y label
+        MPSTR_ZDevNameLabel     = 26,           // MP285 controller device name label
+		MPSTR_ZDevDescLabel     = 27,			// MP285 controller device decription label
+        MPSTR_SetPositionZ      = 28,           // MP285 POSITION Z label
+        MPSTR_GetPositionZ      = 29,           // MP285 CURRENT POSITION Z label
+        MPSTR_PauseMode         = 30,           // property PAUSE label
+        MPSTR_Reset             = 31,           // property RESET label
+        MPSTR_Status            = 32            // property STATUS label
     };
 
     enum
@@ -94,14 +101,16 @@ public:
     std::string GetMPStr(int nMPStrCode) const;                                             // access prdefined strings
     static void SetDeviceAvailable(bool yFlag) { m_yDeviceAvailable = yFlag; }              // set MP285 device availability
     static bool GetDeviceAvailability() { return m_yDeviceAvailable; }                      // get MP285 device availability
+	static int  GetDebugLogFlag() { return m_nDebugLogFlag; }								// get MP285 debug log flag
+	static void SetDebugLogFlag(int nDebugLogFlag) { m_nDebugLogFlag = nDebugLogFlag; }		// set MP285 debug log flag
     static void SetVelocity(long lVelocity) { m_lVelocity = lVelocity; }                    // set MP285 device velocity
     static long GetVelocity() { return m_lVelocity; }                                       // get MP285 device velocity
     static void SetResolution(int nResolution) { m_nResolution = nResolution; }             // set MP285 device resolution
     static int  GetResolution() { return m_nResolution; }                                   // get MP285 resolution
-    static void SetUm2UStep(int nUm2UStep) { m_nUm2UStep = nUm2UStep; }                     // set Um to UStep conversion unit
-    static int  GetUm2UStep() { return m_nUm2UStep; }                                       // get Um to UStep conversion unit
-    static void SetUStep2Nm(int nUStep2Nm) { m_nUStep2Nm = nUStep2Nm; }                     // set UStep to Nm conversion unit
-    static int  GetUStep2Nm() { return m_nUStep2Nm; }                                       // get UStep to NM conversion unit
+    static void SetUm2UStep(int nUm2UStep) { m_nUm2UStep = nUm2UStep; }                     // set MP285 Um to UStep conversion unit
+    static int  GetUm2UStep() { return m_nUm2UStep; }                                       // get MP285 Um to UStep conversion unit
+    static void SetUStep2Nm(int nUStep2Nm) { m_nUStep2Nm = nUStep2Nm; }                     // set MP285 UStep to Nm conversion unit
+    static int  GetUStep2Nm() { return m_nUStep2Nm; }                                       // get MP285 UStep to NM conversion unit
     static void SetMotionMode(int nMotionMode) { m_nMotionMode = nMotionMode; }             // set Motor motion mode
     static int  GetMotionMode() { return m_nMotionMode; }                                   // get Motor motion mode
     static void SetTimeoutInterval(int nInterval) { m_nTimeoutInterval = nInterval; }       // set Timwout Interval
@@ -128,6 +137,7 @@ private:
     static bool                 m_yInstanceFlag;            // singleton flag
     static MP285*               m_pMP285;                   // singleton copy
     static bool                 m_yDeviceAvailable;         // MP285 availability
+	static int					m_nDebugLogFlag;			// MP285 debug log flag
     static int                  m_nResolution;              // MP285 resolution
     static int                  m_nUm2UStep;                // unit to convert um to uStep
     static int                  m_nUStep2Nm;                // unit to convert uStep to nm

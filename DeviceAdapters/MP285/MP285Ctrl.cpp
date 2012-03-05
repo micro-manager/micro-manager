@@ -80,8 +80,13 @@ MP285Ctrl::MP285Ctrl() :
     int ret = CreateProperty(MM::g_Keyword_Port, "Undefined", MM::String, false, pAct, true);
     
     std::ostringstream osMessage;
-    osMessage << "<MP285Ctrl::class-constructor> CreateProperty(" << MM::g_Keyword_Port << " = Undfined), ReturnCode=" << ret;
-    this->LogMessage(osMessage.str().c_str());
+
+    if (MP285::Instance()->GetDebugLogFlag() > 0)
+    {
+		osMessage.str("");
+		osMessage << "<MP285Ctrl::class-constructor> CreateProperty(" << MM::g_Keyword_Port << " = Undfined), ReturnCode=" << ret;
+		this->LogMessage(osMessage.str().c_str());
+	}
 }
 
 //
@@ -110,27 +115,40 @@ int MP285Ctrl::Initialize()
     // empty the Rx serial buffer before sending command
     int ret = ClearPort(*this, *GetCoreCallback(), MP285::Instance()->GetSerialPort().c_str());
 
-    osMessage.str("");
-    osMessage << "<MP285Ctrl::Initialize> ClearPort(Port = " << MP285::Instance()->GetSerialPort().c_str() << "), ReturnCode = " << ret;
-    this->LogMessage(osMessage.str().c_str());
+    if (MP285::Instance()->GetDebugLogFlag() > 0)
+    {
+		osMessage.str("");
+		osMessage << "<MP285Ctrl::Initialize> ClearPort(Port = " << MP285::Instance()->GetSerialPort().c_str() << "), ReturnCode = " << ret;
+		this->LogMessage(osMessage.str().c_str());
+	}
 
     if (ret != DEVICE_OK) return ret;
 
     // Name
-    ret = CreateProperty(MM::g_Keyword_Name, MP285::Instance()->GetMPStr(MP285::MPSTR_CtrlDevName).c_str(), MM::String, true);
+    char sCtrlName[120];
+	sprintf(sCtrlName, "%s%s", MP285::Instance()->GetMPStr(MP285::MPSTR_CtrlDevNameLabel).c_str(), MM::g_Keyword_Name);
+    ret = CreateProperty(sCtrlName, MP285::Instance()->GetMPStr(MP285::MPSTR_CtrlDevName).c_str(), MM::String, true);
 
-    osMessage.str("");
-    osMessage << "<MP285Ctrl::Initialize> CreateProperty(" << MM::g_Keyword_Name << " = " << MP285::Instance()->GetMPStr(MP285::MPSTR_CtrlDevName).c_str() << "), ReturnCode = " << ret;
-    this->LogMessage(osMessage.str().c_str());
+    if (MP285::Instance()->GetDebugLogFlag() > 0)
+    {
+		osMessage.str("");
+		osMessage << "<MP285Ctrl::Initialize> CreateProperty(" << sCtrlName << " = " << MP285::Instance()->GetMPStr(MP285::MPSTR_CtrlDevName).c_str() << "), ReturnCode = " << ret;
+		this->LogMessage(osMessage.str().c_str());
+	}
 
     if (ret != DEVICE_OK) return ret;
 
     // Description
-    ret = CreateProperty(MM::g_Keyword_Description, "Sutter MP-285 Controller", MM::String, true);
+    char sCtrlDesc[120];
+	sprintf(sCtrlDesc, "%s%s", MP285::Instance()->GetMPStr(MP285::MPSTR_CtrlDevDescLabel).c_str(), MM::g_Keyword_Description);
+    ret = CreateProperty(sCtrlDesc, "Sutter MP-285 Controller", MM::String, true);
 
-    osMessage.str("");
-    osMessage << "<MP285Ctrl::Initialize> CreateProperty(" << MM::g_Keyword_Description << " = " << "Sutter MP-285 Controller" << "), ReturnCode = " << ret;
-    this->LogMessage(osMessage.str().c_str());
+    if (MP285::Instance()->GetDebugLogFlag() > 0)
+    {
+		osMessage.str("");
+		osMessage << "<MP285Ctrl::Initialize> CreateProperty(" << sCtrlDesc << " = " << "Sutter MP-285 Controller" << "), ReturnCode = " << ret;
+		this->LogMessage(osMessage.str().c_str());
+	}
 
     if (ret != DEVICE_OK)  return ret;
 
@@ -140,9 +158,12 @@ int MP285Ctrl::Initialize()
     // const char* sVersion = MP285::Instance()->GetMPStr(MP285::MPSTR_MP285Version).c_str();
     ret = CreateProperty(MP285::Instance()->GetMPStr(MP285::MPSTR_MP285VerLabel).c_str(), MP285::Instance()->GetMPStr(MP285::MPSTR_MP285Version).c_str(), MM::String, true);
 
-    osMessage.str("");
-    osMessage << "<MP285Ctrl::Initialize> CreateProperty(" << MP285::Instance()->GetMPStr(MP285::MPSTR_MP285VerLabel).c_str() << " = " << MP285::Instance()->GetMPStr(MP285::MPSTR_MP285Version).c_str() << "), ReturnCode = " << ret;
-    this->LogMessage(osMessage.str().c_str());
+    if (MP285::Instance()->GetDebugLogFlag() > 0)
+    {
+		osMessage.str("");
+		osMessage << "<MP285Ctrl::Initialize> CreateProperty(" << MP285::Instance()->GetMPStr(MP285::MPSTR_MP285VerLabel).c_str() << " = " << MP285::Instance()->GetMPStr(MP285::MPSTR_MP285Version).c_str() << "), ReturnCode = " << ret;
+		this->LogMessage(osMessage.str().c_str());
+	}
 
     if (ret != DEVICE_OK) return ret;
 
@@ -153,9 +174,12 @@ int MP285Ctrl::Initialize()
     CPropertyAction* pActOnTimeoutInterval = new CPropertyAction(this, &MP285Ctrl::OnTimeoutInterval);
     ret = CreateProperty(MP285::Instance()->GetMPStr(MP285::MPSTR_TimeoutInterval).c_str(), sTimeoutInterval, MM::Integer,  false, pActOnTimeoutInterval); 
 
-    osMessage.str("");
-    osMessage << "<MP285Ctrl::Initialize> CreateProperty(" << MP285::Instance()->GetMPStr(MP285::MPSTR_TimeoutInterval).c_str() << " = " << sTimeoutInterval << "), ReturnCode = " << ret;
-    this->LogMessage(osMessage.str().c_str());
+    if (MP285::Instance()->GetDebugLogFlag() > 0)
+    {
+		osMessage.str("");
+		osMessage << "<MP285Ctrl::Initialize> CreateProperty(" << MP285::Instance()->GetMPStr(MP285::MPSTR_TimeoutInterval).c_str() << " = " << sTimeoutInterval << "), ReturnCode = " << ret;
+		this->LogMessage(osMessage.str().c_str());
+	}
 
     if (ret != DEVICE_OK) return ret;
 
@@ -166,9 +190,12 @@ int MP285Ctrl::Initialize()
     CPropertyAction* pActOnTimeoutTrys = new CPropertyAction(this, &MP285Ctrl::OnTimeoutTrys);
     ret = CreateProperty(MP285::Instance()->GetMPStr(MP285::MPSTR_TimeoutTrys).c_str(), sTimeoutTrys, MM::Integer,  false, pActOnTimeoutTrys); 
 
-    osMessage.str("");
-    osMessage << "<MP285Ctrl::Initialize> CreateProperty(" << MP285::Instance()->GetMPStr(MP285::MPSTR_TimeoutTrys).c_str() << " = " << sTimeoutTrys << "), ReturnCode = " << ret;
-    this->LogMessage(osMessage.str().c_str());
+    if (MP285::Instance()->GetDebugLogFlag() > 0)
+    {
+		osMessage.str("");
+		osMessage << "<MP285Ctrl::Initialize> CreateProperty(" << MP285::Instance()->GetMPStr(MP285::MPSTR_TimeoutTrys).c_str() << " = " << sTimeoutTrys << "), ReturnCode = " << ret;
+		this->LogMessage(osMessage.str().c_str());
+	}
 
     if (ret != DEVICE_OK) return ret;
 
@@ -205,9 +232,12 @@ int MP285Ctrl::Initialize()
 
     ret = CreateProperty(MP285::Instance()->GetMPStr(MP285::MPSTR_FirmwareVerLabel).c_str(), sFirmVersion, MM::String, true);
 
-    osMessage.str("");
-    osMessage << "<MP285Ctrl::Initialize> CreateProperty(" << MP285::Instance()->GetMPStr(MP285::MPSTR_FirmwareVerLabel).c_str() << " = " << sFirmVersion << "), ReturnCode = " << ret;
-    this->LogMessage(osMessage.str().c_str());
+    if (MP285::Instance()->GetDebugLogFlag() > 0)
+    {
+		osMessage.str("");
+		osMessage << "<MP285Ctrl::Initialize> CreateProperty(" << MP285::Instance()->GetMPStr(MP285::MPSTR_FirmwareVerLabel).c_str() << " = " << sFirmVersion << "), ReturnCode = " << ret;
+		this->LogMessage(osMessage.str().c_str());
+	}
 
     if (ret != DEVICE_OK) return ret;
 
@@ -225,9 +255,12 @@ int MP285Ctrl::Initialize()
 
     ret = CreateProperty(MP285::Instance()->GetMPStr(MP285::MPSTR_Um2UStepUnit).c_str(), sUm2UStepUnit, MM::Integer, true);
 
-    osMessage.str("");
-    osMessage << "<MP285Ctrl::Initialize> CreateProperty(" << MP285::Instance()->GetMPStr(MP285::MPSTR_Um2UStepUnit).c_str() << " = s[" << sUm2UStepUnit << "] :: n[" << nUm2UStepUnit << "] :: m[" << MP285::GetUm2UStep() << "]), ReturnCode = " << ret;
-    this->LogMessage(osMessage.str().c_str());
+    if (MP285::Instance()->GetDebugLogFlag() > 0)
+    {
+		osMessage.str("");
+		osMessage << "<MP285Ctrl::Initialize> CreateProperty(" << MP285::Instance()->GetMPStr(MP285::MPSTR_Um2UStepUnit).c_str() << " = s[" << sUm2UStepUnit << "] :: n[" << nUm2UStepUnit << "] :: m[" << MP285::GetUm2UStep() << "]), ReturnCode = " << ret;
+		this->LogMessage(osMessage.str().c_str());
+	}
 
     if (ret != DEVICE_OK) return ret;
 
@@ -245,9 +278,12 @@ int MP285Ctrl::Initialize()
 
     ret = CreateProperty(MP285::Instance()->GetMPStr(MP285::MPSTR_UStep2NmUnit).c_str(), sUStep2NmUnit, MM::Integer, true);
 
-    osMessage.str("");
-    osMessage << "<MP285Ctrl::Initialize> CreateProperty(" << MP285::Instance()->GetMPStr(MP285::MPSTR_UStep2NmUnit).c_str() << " = s[" << sUStep2NmUnit << "] :: n[" << nUStep2NmUnit << "] :: m[" << MP285::GetUStep2Nm() << "]), ReturnCode = " << ret;
-    this->LogMessage(osMessage.str().c_str());
+    if (MP285::Instance()->GetDebugLogFlag() > 0)
+    {
+		osMessage.str("");
+		osMessage << "<MP285Ctrl::Initialize> CreateProperty(" << MP285::Instance()->GetMPStr(MP285::MPSTR_UStep2NmUnit).c_str() << " = s[" << sUStep2NmUnit << "] :: n[" << nUStep2NmUnit << "] :: m[" << MP285::GetUStep2Nm() << "]), ReturnCode = " << ret;
+		this->LogMessage(osMessage.str().c_str());
+	}
 
     if (ret != DEVICE_OK) return ret;
 
@@ -269,9 +305,12 @@ int MP285Ctrl::Initialize()
     ret = CreateProperty(MP285::Instance()->GetMPStr(MP285::MPSTR_VelocityLabel).c_str(), sVelocity, MM::Integer,  false, pActOnSpeed); // usteps/step
     //ret = CreateProperty(MP285::Instance()->GetMPStr(MP285::MPSTR_VelocityLabel).c_str(), sVelocity, MM::Integer,  true); // usteps/step
 
-    osMessage.str("");
-    osMessage << "<MP285Ctrl::Initialize> CreateProperty(" << MP285::Instance()->GetMPStr(MP285::MPSTR_VelocityLabel).c_str() << " = s[ << " << sVelocity << "] :: n[" << lVelocity << "] :: m[" << MP285::GetVelocity() << "]), ReturnCode = " << ret;
-    this->LogMessage(osMessage.str().c_str());
+    if (MP285::Instance()->GetDebugLogFlag() > 0)
+    {
+		osMessage.str("");
+		osMessage << "<MP285Ctrl::Initialize> CreateProperty(" << MP285::Instance()->GetMPStr(MP285::MPSTR_VelocityLabel).c_str() << " = s[ << " << sVelocity << "] :: n[" << lVelocity << "] :: m[" << MP285::GetVelocity() << "]), ReturnCode = " << ret;
+		this->LogMessage(osMessage.str().c_str());
+	}
 
     if (ret != DEVICE_OK) return ret;
 
@@ -290,9 +329,12 @@ int MP285Ctrl::Initialize()
 
     ret = CreateProperty(MP285::Instance()->GetMPStr(MP285::MPSTR_ResolutionLabel).c_str(), sResolution, MM::Integer, true);  // 0x0000 = 10 ; 0x8000 = 50
 
-    osMessage.str("");
-    osMessage << "<MP285Ctrl::Initialize> CreateProperty(" << MP285::Instance()->GetMPStr(MP285::MPSTR_ResolutionLabel).c_str() << " = s[" << sResolution << "] :: n[" << nResolution << "] :: m[" << MP285::GetResolution() << "]), ReturnCode = " << ret;
-    this->LogMessage(osMessage.str().c_str());
+    if (MP285::Instance()->GetDebugLogFlag() > 0)
+    {
+		osMessage.str("");
+		osMessage << "<MP285Ctrl::Initialize> CreateProperty(" << MP285::Instance()->GetMPStr(MP285::MPSTR_ResolutionLabel).c_str() << " = s[" << sResolution << "] :: n[" << nResolution << "] :: m[" << MP285::GetResolution() << "]), ReturnCode = " << ret;
+		this->LogMessage(osMessage.str().c_str());
+	}
 
     MP285::Instance()->SetMotionMode(0);
     char sMotionMode[20];
@@ -303,9 +345,12 @@ int MP285Ctrl::Initialize()
     ret = CreateProperty(MP285::Instance()->GetMPStr(MP285::MPSTR_MotionMode).c_str(), "Undefined", MM::Integer, false, pActOnMotionMode);  // Absolute  vs Relative 
     //ret = CreateProperty(MP285::Instance()->GetMPStr(MP285::MPSTR_MotionMode).c_str(), sMotionMode, MM::Integer, true);  // Absolute  vs Relative 
 
-    osMessage.str("");
-    osMessage << "<MP285Ctrl::Initialize> CreateProperty(" << MP285::Instance()->GetMPStr(MP285::MPSTR_MotionMode).c_str() << " = Undefined), ReturnCode = " << ret;
-    this->LogMessage(osMessage.str().c_str());
+    if (MP285::Instance()->GetDebugLogFlag() > 0)
+    {
+		osMessage.str("");
+		osMessage << "<MP285Ctrl::Initialize> CreateProperty(" << MP285::Instance()->GetMPStr(MP285::MPSTR_MotionMode).c_str() << " = Undefined), ReturnCode = " << ret;
+		this->LogMessage(osMessage.str().c_str());
+	}
 
     if (ret != DEVICE_OK)  return ret;
 
@@ -315,7 +360,19 @@ int MP285Ctrl::Initialize()
     ret = UpdateStatus();
     if (ret != DEVICE_OK) return ret;
 
-    m_yInitialized = true;
+    // Create  property for debug log flag
+    int nDebugLogFlag = MP285::Instance()->GetDebugLogFlag();
+    CPropertyAction* pActDebugLogFlag = new CPropertyAction (this, &MP285Ctrl::OnDebugLogFlag);
+	ret = CreateProperty(MP285::Instance()->GetMPStr(MP285::MPSTR_DebugLogFlagLabel).c_str(), CDeviceUtils::ConvertToString(nDebugLogFlag), MM::Integer, false, pActDebugLogFlag);
+
+    if (MP285::Instance()->GetDebugLogFlag() > 0)
+    {
+        osMessage.str("");
+        osMessage << "MP285Ctrl::Initialize> CreateProperty(" << MP285::Instance()->GetMPStr(MP285::MPSTR_DebugLogFlagLabel).c_str() << " = " << nDebugLogFlag << "), ReturnCode = " << ret;
+        this->LogMessage(osMessage.str().c_str());
+    }
+
+	m_yInitialized = true;
     MP285::Instance()->SetDeviceAvailable(true);
 
     return DEVICE_OK;
@@ -336,8 +393,13 @@ int MP285Ctrl::CheckStatus(unsigned char* sResponse, unsigned int nLength)
     //unsigned char sAnswer[256];
     memset(sResponse, 0, nLength);
     ret = ReadMessage(sResponse, 34);
-    osMessage << "<MP285Ctrl::CheckStatus::ReadMessage> (ReturnCode = " << ret << ")";
-    this->LogMessage(osMessage.str().c_str());
+
+	if (MP285::Instance()->GetDebugLogFlag() > 1)
+    {
+		osMessage.str("");
+		osMessage << "<MP285Ctrl::CheckStatus::ReadMessage> (ReturnCode = " << ret << ")";
+		this->LogMessage(osMessage.str().c_str());
+	}
 
     if (ret != DEVICE_OK) return ret;
 
@@ -362,28 +424,82 @@ int MP285Ctrl::Shutdown()
 int MP285Ctrl::OnPort(MM::PropertyBase* pProp, MM::ActionType pAct)
 {
     std::ostringstream osMessage;
+
+	osMessage.str("");
+
     if (pAct == MM::BeforeGet)
     {
-        osMessage << "<MP285Ctrl::OnPort> (BeforeGet::PORT=<" << MP285::Instance()->GetSerialPort().c_str() << ">";
         pProp->Set(MP285::Instance()->GetSerialPort().c_str());
-        osMessage << " PROPSET=<" << MP285::Instance()->GetSerialPort().c_str() << ">)";
-    }
+		if (MP285::Instance()->GetDebugLogFlag() > 1)
+		{
+			osMessage << "<MP285Ctrl::OnPort> (BeforeGet::PORT=<" << MP285::Instance()->GetSerialPort().c_str() << ">";
+			osMessage << " PROPSET=<" << MP285::Instance()->GetSerialPort().c_str() << ">)";
+		}
+	}
     else if (pAct == MM::AfterSet)
     {
-        osMessage << "<MP285Ctrl::OnPort> (AfterSet::PORT=<" << MP285::Instance()->GetSerialPort().c_str() << ">";
+		if (MP285::Instance()->GetDebugLogFlag() > 1)
+		{
+			osMessage << "<MP285Ctrl::OnPort> (AfterSet::PORT=<" << MP285::Instance()->GetSerialPort().c_str() << ">";
+		}
         if (m_yInitialized)
         {
             pProp->Set(MP285::Instance()->GetSerialPort().c_str());
-            osMessage << "Initialized::SET=<" << MP285::Instance()->GetSerialPort().c_str() << ">";
+			if (MP285::Instance()->GetDebugLogFlag() > 1)
+			{
+				osMessage << "Initialized::SET=<" << MP285::Instance()->GetSerialPort().c_str() << ">";
+				this->LogMessage(osMessage.str().c_str());
+			}
             return DEVICE_INVALID_INPUT_PARAM;
         }
         pProp->Get(MP285::Instance()->GetSerialPort());
-        osMessage << " SPROPGET=<" << MP285::Instance()->GetSerialPort().c_str() << ">)";
+		if (MP285::Instance()->GetDebugLogFlag() > 1)
+		{
+			osMessage << " SPROPGET=<" << MP285::Instance()->GetSerialPort().c_str() << ">)";
+		}
     }
-    this->LogMessage(osMessage.str().c_str());
+	if (MP285::Instance()->GetDebugLogFlag() > 1)
+    {
+		this->LogMessage(osMessage.str().c_str());
+	}
     return DEVICE_OK;
 }
 
+//
+// get/set debug log flag
+//
+int MP285Ctrl::OnDebugLogFlag(MM::PropertyBase* pProp, MM::ActionType pAct)
+{
+    long lDebugLogFlag = (long)MP285::Instance()->GetDebugLogFlag();
+    std::ostringstream osMessage;
+
+	osMessage.str("");
+
+    if (pAct == MM::BeforeGet)
+    {
+        pProp->Set(lDebugLogFlag);
+        if (MP285::Instance()->GetDebugLogFlag() > 1)
+        {
+			osMessage << "<MP285Ctrl::OnDebugLogFalg> (BeforeGet::<" << MP285::Instance()->GetMPStr(MP285::MPSTR_DebugLogFlagLabel).c_str() << "> PROPSET=<" << lDebugLogFlag << ">)";
+        }
+    }
+    else if (pAct == MM::AfterSet)
+    {
+        pProp->Get(lDebugLogFlag);
+        MP285::Instance()->SetDebugLogFlag((int)lDebugLogFlag);
+        if (MP285::Instance()->GetDebugLogFlag() > 1)
+        {
+            osMessage << "<MP285Ctrl::OnDebugLogFalg> (AfterSet::<" << MP285::Instance()->GetMPStr(MP285::MPSTR_DebugLogFlagLabel).c_str() << "> PROPSET=<" << lDebugLogFlag << ">)";
+        }
+    }
+
+    if (MP285::Instance()->GetDebugLogFlag() > 1)
+    {
+        this->LogMessage(osMessage.str().c_str());
+    }
+
+    return DEVICE_OK;
+}
 
 //
 // Set current position as origin (0,0) coordinate of the controller.
@@ -394,8 +510,13 @@ int MP285Ctrl::SetOrigin()
     int ret = WriteCommand(sCommand, 3);
 
     std::ostringstream osMessage;
-    osMessage << "<MP285::MP285::SetOrigin> (ReturnCode=" << ret << ")";
-    this->LogMessage(osMessage.str().c_str());
+
+	if (MP285::Instance()->GetDebugLogFlag() > 1)
+    {
+		osMessage.str("");
+		osMessage << "<MP285::MP285::SetOrigin> (ReturnCode=" << ret << ")";
+		this->LogMessage(osMessage.str().c_str());
+	}
 
     if (ret!=DEVICE_OK) return ret;
 
@@ -403,8 +524,13 @@ int MP285Ctrl::SetOrigin()
 
     memset(sResponse, 0, 64);
     ret = ReadMessage(sResponse, 2);
-    osMessage << "<MP285Ctrl::CheckStatus::SetOrigin> (ReturnCode = " << ret << ")";
-    this->LogMessage(osMessage.str().c_str());
+
+    if (MP285::Instance()->GetDebugLogFlag() > 1)
+    {
+		osMessage.str("");
+		osMessage << "<MP285Ctrl::CheckStatus::SetOrigin> (ReturnCode = " << ret << ")";
+		this->LogMessage(osMessage.str().c_str());
+	}
 
     if (ret != DEVICE_OK) return ret;
 
@@ -445,8 +571,12 @@ int MP285Ctrl::SetVelocity(long lVelocity)
         
     ret = WriteCommand(sCmdSet, 5);
 
-    osMessage << "<MP285Ctrl::SetVelocity> = " << lVelocity << ", ReturnCode = " << ret;
-    this->LogMessage(osMessage.str().c_str());
+	if (MP285::Instance()->GetDebugLogFlag() > 1)
+    {
+		osMessage.str("");
+		osMessage << "<MP285Ctrl::SetVelocity> = " << lVelocity << ", ReturnCode = " << ret;
+		this->LogMessage(osMessage.str().c_str());
+	}
 
     if (ret != DEVICE_OK) return ret;
 
@@ -488,8 +618,12 @@ int MP285Ctrl::SetMotionMode(long lMotionMode)
 
     ret = WriteCommand(sCommand, 3);
 
-    osMessage << "<MP285Ctrl::SetMotionMode> = [" << lMotionMode << "," << sCommand[0] << "], Returncode =" << ret;
-    this->LogMessage(osMessage.str().c_str());
+    if (MP285::Instance()->GetDebugLogFlag() > 1)
+    {
+		osMessage.str("");
+		osMessage << "<MP285Ctrl::SetMotionMode> = [" << lMotionMode << "," << sCommand[0] << "], Returncode =" << ret;
+		this->LogMessage(osMessage.str().c_str());
+	}
 
     if (ret != DEVICE_OK) return ret;
 
@@ -522,8 +656,13 @@ int MP285Ctrl::Stop()
     int ret = WriteCommand(sCommand, 3);
 
     ostringstream osMessage;
-    osMessage << "<MP285::MP285Ctrl::Stop> (ReturnCode = " << ret << ")";
-    this->LogMessage(osMessage.str().c_str());
+
+    if (MP285::Instance()->GetDebugLogFlag() > 1)
+    {
+		osMessage.str("");
+		osMessage << "<MP285::MP285Ctrl::Stop> (ReturnCode = " << ret << ")";
+		this->LogMessage(osMessage.str().c_str());
+	}
 
     return ret;
 }
@@ -537,12 +676,16 @@ int MP285Ctrl::OnSpeed(MM::PropertyBase* pProp, MM::ActionType eAct)
     int ret = DEVICE_OK;
     long lVelocity = MP285::Instance()->GetVelocity();
 
+	osMessage.str("");
 
     if (eAct == MM::BeforeGet)
     {
         pProp->Set(lVelocity);
 
-        osMessage << "<MP285Ctrl::OnSpeed> BeforeGet(" << MP285::Instance()->GetMPStr(MP285::MPSTR_VelocityLabel).c_str() << " = [" << lVelocity << "], ReturnCode = " << ret;
+		if (MP285::Instance()->GetDebugLogFlag() > 1)
+		{
+			osMessage << "<MP285Ctrl::OnSpeed> BeforeGet(" << MP285::Instance()->GetMPStr(MP285::MPSTR_VelocityLabel).c_str() << " = [" << lVelocity << "], ReturnCode = " << ret;
+		}
     }
     else if (eAct == MM::AfterSet)
     {
@@ -550,9 +693,16 @@ int MP285Ctrl::OnSpeed(MM::PropertyBase* pProp, MM::ActionType eAct)
 
         ret = SetVelocity(lVelocity);
 
-        osMessage << "<MP285Ctrl::OnSpeed> AfterSet(" << MP285::Instance()->GetMPStr(MP285::MPSTR_VelocityLabel).c_str() << " = [" << lVelocity << "], ReturnCode = " << ret;
+		if (MP285::Instance()->GetDebugLogFlag() > 1)
+		{
+			osMessage << "<MP285Ctrl::OnSpeed> AfterSet(" << MP285::Instance()->GetMPStr(MP285::MPSTR_VelocityLabel).c_str() << " = [" << lVelocity << "], ReturnCode = " << ret;
+		}
     }
-    this->LogMessage(osMessage.str().c_str());
+
+	if (MP285::Instance()->GetDebugLogFlag() > 1)
+    {
+		this->LogMessage(osMessage.str().c_str());
+	}
 
     if (ret != DEVICE_OK) return ret;
 
@@ -569,11 +719,16 @@ int MP285Ctrl::OnMotionMode(MM::PropertyBase* pProp, MM::ActionType eAct)
     long lMotionMode = (long)MP285::Instance()->GetMotionMode();
     int ret = DEVICE_OK;
 
+	osMessage.str("");
+
     if (eAct == MM::BeforeGet)
     {
         pProp->Set(lMotionMode);
 
-        osMessage << "<MP285Ctrl::OnMotionMode> BeforeGet(" << MP285::Instance()->GetMPStr(MP285::MPSTR_MotionMode).c_str() << " = " << lMotionMode << "), ReturnCode = " << ret;
+		if (MP285::Instance()->GetDebugLogFlag() > 1)
+		{
+			osMessage << "<MP285Ctrl::OnMotionMode> BeforeGet(" << MP285::Instance()->GetMPStr(MP285::MPSTR_MotionMode).c_str() << " = " << lMotionMode << "), ReturnCode = " << ret;
+		}
     }
     else if (eAct == MM::AfterSet)
     {
@@ -581,9 +736,16 @@ int MP285Ctrl::OnMotionMode(MM::PropertyBase* pProp, MM::ActionType eAct)
 
         ret = SetMotionMode(lMotionMode);
 
-        osMessage << "<MP285Ctrl::OnSpeed> AfterSet(" << MP285::Instance()->GetMPStr(MP285::MPSTR_ResolutionLabel).c_str() << " = " << lMotionMode <<  "), ReturnCode = " << ret;
-    }
-    this->LogMessage(osMessage.str().c_str());
+		if (MP285::Instance()->GetDebugLogFlag() > 1)
+		{
+			osMessage << "<MP285Ctrl::OnSpeed> AfterSet(" << MP285::Instance()->GetMPStr(MP285::MPSTR_ResolutionLabel).c_str() << " = " << lMotionMode <<  "), ReturnCode = " << ret;
+		}
+    }    
+	
+	if (MP285::Instance()->GetDebugLogFlag() > 1)
+    {
+		this->LogMessage(osMessage.str().c_str());
+	}
 
     if (ret != DEVICE_OK) return ret;
 
@@ -599,20 +761,32 @@ int MP285Ctrl::OnTimeoutInterval(MM::PropertyBase* pProp, MM::ActionType eAct)
     long lTimeoutInterval = (long)MP285::Instance()->GetTimeoutInterval();
     int ret = DEVICE_OK;
 
+	osMessage.str("");
+
     if (eAct == MM::BeforeGet)
     {
         pProp->Set(lTimeoutInterval);
 
-        osMessage << "<MP285Ctrl::OnTimeoutInterval> BeforeGet(" << MP285::Instance()->GetMPStr(MP285::MPSTR_TimeoutInterval).c_str() << " = " << lTimeoutInterval << "), ReturnCode = " << ret;
+		if (MP285::Instance()->GetDebugLogFlag() > 1)
+		{
+			osMessage << "<MP285Ctrl::OnTimeoutInterval> BeforeGet(" << MP285::Instance()->GetMPStr(MP285::MPSTR_TimeoutInterval).c_str() << " = " << lTimeoutInterval << "), ReturnCode = " << ret;
+		}
     }
     else if (eAct == MM::AfterSet)
     {
         pProp->Get(lTimeoutInterval);
         MP285::Instance()->SetTimeoutInterval((int)lTimeoutInterval);
 
-        osMessage << "<MP285Ctrl::OnTimeoutInterval> AfterSet(" << MP285::Instance()->GetMPStr(MP285::MPSTR_TimeoutInterval).c_str() << " = " << MP285::Instance()->GetTimeoutInterval() <<  "), ReturnCode = " << ret;
+		if (MP285::Instance()->GetDebugLogFlag() > 1)
+		{
+			osMessage << "<MP285Ctrl::OnTimeoutInterval> AfterSet(" << MP285::Instance()->GetMPStr(MP285::MPSTR_TimeoutInterval).c_str() << " = " << MP285::Instance()->GetTimeoutInterval() <<  "), ReturnCode = " << ret;
+		}
     }
-    this->LogMessage(osMessage.str().c_str());
+
+    if (MP285::Instance()->GetDebugLogFlag() > 1)
+    {
+		this->LogMessage(osMessage.str().c_str());
+	}
 
     if (ret != DEVICE_OK) return ret;
 
@@ -628,20 +802,32 @@ int MP285Ctrl::OnTimeoutTrys(MM::PropertyBase* pProp, MM::ActionType eAct)
     long lTimeoutTrys = (long)MP285::Instance()->GetTimeoutTrys();
     int ret = DEVICE_OK;
 
+	osMessage.str("");
+
     if (eAct == MM::BeforeGet)
     {
         pProp->Set(lTimeoutTrys);
 
-        osMessage << "<MP285Ctrl::OnTimeoutTrys> BeforeGet(" << MP285::Instance()->GetMPStr(MP285::MPSTR_TimeoutTrys).c_str() << " = " << lTimeoutTrys << "), ReturnCode = " << ret;
+		if (MP285::Instance()->GetDebugLogFlag() > 1)
+		{
+			osMessage << "<MP285Ctrl::OnTimeoutTrys> BeforeGet(" << MP285::Instance()->GetMPStr(MP285::MPSTR_TimeoutTrys).c_str() << " = " << lTimeoutTrys << "), ReturnCode = " << ret;
+		}
     }
     else if (eAct == MM::AfterSet)
     {
         pProp->Get(lTimeoutTrys);
         MP285::Instance()->SetTimeoutTrys((int)lTimeoutTrys);
 
-        osMessage << "<MP285Ctrl::OnTimeoutTrys> AfterSet(" << MP285::Instance()->GetMPStr(MP285::MPSTR_TimeoutTrys).c_str() << " = " << MP285::Instance()->GetTimeoutTrys() <<  "), ReturnCode = " << ret;
+		if (MP285::Instance()->GetDebugLogFlag() > 1)
+		{
+			osMessage << "<MP285Ctrl::OnTimeoutTrys> AfterSet(" << MP285::Instance()->GetMPStr(MP285::MPSTR_TimeoutTrys).c_str() << " = " << MP285::Instance()->GetTimeoutTrys() <<  "), ReturnCode = " << ret;
+		}
     }
-    this->LogMessage(osMessage.str().c_str());
+
+    if (MP285::Instance()->GetDebugLogFlag() > 1)
+    {
+		this->LogMessage(osMessage.str().c_str());
+	}
 
     if (ret != DEVICE_OK) return ret;
 
@@ -659,17 +845,26 @@ int MP285Ctrl::WriteCommand(unsigned char* sCommand, int nLength)
 {
     int ret = DEVICE_OK;
     ostringstream osMessage;
-    osMessage << "<MP285Ctrl::WriteCommand> (Command=";
-    char sHex[4] = { NULL, NULL, NULL, NULL };
+
+    if (MP285::Instance()->GetDebugLogFlag() > 1)
+    {
+		osMessage.str("");
+		osMessage << "<MP285Ctrl::WriteCommand> (Command=";
+		char sHex[4] = { NULL, NULL, NULL, NULL };
+		for (int n=0; n < nLength; n++)
+		{
+			MP285::Instance()->Byte2Hex((const unsigned char)sCommand[n], sHex);
+			osMessage << "[" << n << "]=<" << sHex << ">";
+		}
+		osMessage << ")";
+		this->LogMessage(osMessage.str().c_str());
+	}
+
     for (int nBytes = 0; nBytes < nLength && ret == DEVICE_OK; nBytes++)
     {
         ret = WriteToComPort(MP285::Instance()->GetSerialPort().c_str(), (const unsigned char*)&sCommand[nBytes], 1);
-        MP285::Instance()->Byte2Hex((const unsigned char)sCommand[nBytes], sHex);
-        osMessage << "[" << nBytes << "]=<" << sHex << ">";
         CDeviceUtils::SleepMs(1);
     }
-    osMessage << ")";
-    this->LogMessage(osMessage.str().c_str());
 
     if (ret != DEVICE_OK) return ret;
 
@@ -700,16 +895,20 @@ int MP285Ctrl::ReadMessage(unsigned char* sResponse, int nBytesRead)
         const MM::Device* pDevice = this;
         ret = (GetCoreCallback())->ReadFromSerial(pDevice, MP285::Instance()->GetSerialPort().c_str(), (unsigned char *)&sAnswer[lRead], (unsigned long)nLength-lRead, lByteRead);
        
-        osMessage.str("");
-        osMessage << "<MP285Ctrl::ReadMessage> (ReadFromSerial = (" << nBytesRead << "," << lRead << "," << lByteRead << ")::<";
-        for (unsigned long lIndx=0; lIndx < lByteRead; lIndx++)
-        {
-            // convert to hext format
-            MP285::Instance()->Byte2Hex(sAnswer[lRead+lIndx], sHex);
-            osMessage << "[" << sHex  << "]";
-        }
-        osMessage << ">";
-        this->LogMessage(osMessage.str().c_str());
+		if (MP285::Instance()->GetDebugLogFlag() > 1)
+		{
+			osMessage.str("");
+			osMessage << "<MP285Ctrl::ReadMessage> (ReadFromSerial = (" << nBytesRead << "," << lRead << "," << lByteRead << ")::<";
+		
+			for (unsigned long lIndx=0; lIndx < lByteRead; lIndx++)
+			{
+				// convert to hext format
+				MP285::Instance()->Byte2Hex(sAnswer[lRead+lIndx], sHex);
+				osMessage << "[" << sHex  << "]";
+			}
+			osMessage << ">";
+			this->LogMessage(osMessage.str().c_str());
+		}
 
         // concade new string
         lRead += lByteRead;
@@ -720,19 +919,25 @@ int MP285Ctrl::ReadMessage(unsigned char* sResponse, int nBytesRead)
                     (sAnswer[1] == 0x0D) &&
                     (sAnswer[2] == 0x0D);
         }
+        else if (lRead == 2)
+        {
+            yRead = (sAnswer[0] == 0x0D) && (sAnswer[1] == 0x0D);
+        }
 
         yRead = yRead || (lRead >= (unsigned long)nBytesRead);
 
         if (yRead) break;
         
         // check for timeout
-        yTimeout = ((double)(GetClockTicksUs() - lStartTime) / 1000.) > (double) m_nAnswerTimeoutMs;
+        yTimeout = ((double)(GetClockTicksUs() - lStartTime) / 10000. ) > (double) m_nAnswerTimeoutMs;
         if (!yTimeout) CDeviceUtils::SleepMs(3);
 
-        osMessage.str("");
-        osMessage << "<MP285Ctrl::ReadMessage> (ReadFromSerial = (" << nBytesRead << "," << lRead << "," << yRead << yTimeout << ")";
-        this->LogMessage(osMessage.str().c_str());
-
+		//if (MP285::Instance()->GetDebugLogFlag() > 2)
+		//{
+		//	osMessage.str("");
+		//	osMessage << "<MP285Ctrl::ReadMessage> (ReadFromSerial = (" << nBytesRead << "," << lRead << "," << yRead << yTimeout << ")";
+		//	this->LogMessage(osMessage.str().c_str());
+		//}
     }
 
     // block/wait for acknowledge, or until we time out
@@ -740,18 +945,29 @@ int MP285Ctrl::ReadMessage(unsigned char* sResponse, int nBytesRead)
     // MP285::Instance()->ByteCopy(sResponse, sAnswer, nBytesRead);
     // if (checkError(sAnswer[0])) ret = DEVICE_SERIAL_COMMAND_FAILED;
 
-    osMessage.str("");
-    osMessage << "<MP285Ctrl::ReadMessage> (ReadFromSerial = <";
-    for (unsigned long lIndx=0; lIndx < (unsigned long)nBytesRead; lIndx++)
-    {
-        sResponse[lIndx] = sAnswer[lIndx];
-        MP285::Instance()->Byte2Hex(sResponse[lIndx], sHex);
-        osMessage << "[" << sHex  << ",";
-        MP285::Instance()->Byte2Hex(sAnswer[lIndx], sHex);
-        osMessage << sHex  << "]";
-    }
-    osMessage << ">";
-    this->LogMessage(osMessage.str().c_str());
+	if (MP285::Instance()->GetDebugLogFlag() > 1)
+	{
+		osMessage.str("");
+		osMessage << "<MP285Ctrl::ReadMessage> (ReadFromSerial = <";
+	}
+
+	for (unsigned long lIndx=0; lIndx < (unsigned long)nBytesRead; lIndx++)
+	{
+		sResponse[lIndx] = sAnswer[lIndx];
+		if (MP285::Instance()->GetDebugLogFlag() > 1)
+		{
+			MP285::Instance()->Byte2Hex(sResponse[lIndx], sHex);
+			osMessage << "[" << sHex  << ",";
+			MP285::Instance()->Byte2Hex(sAnswer[lIndx], sHex);
+			osMessage << sHex  << "]";
+		}
+	}
+
+	if (MP285::Instance()->GetDebugLogFlag() > 1)
+	{
+		osMessage << ">";
+		this->LogMessage(osMessage.str().c_str());
+	}
 
     return DEVICE_OK;
 }
@@ -765,45 +981,69 @@ bool MP285Ctrl::CheckError(unsigned char bErrorCode)
     unsigned int nErrorCode = 0;
     ostringstream osMessage;
 
+	osMessage.str("");
+
     // check 4 error code
     if (bErrorCode == MP285::MP285_SP_OVER_RUN)
     {
         // Serial command buffer over run
         nErrorCode = MPError::MPERR_SerialOverRun;       
-        osMessage << "<MP285Ctrl::checkError> ErrorCode=[" << MPError::Instance()->GetErrorText(nErrorCode).c_str() << "])";
+		if (MP285::Instance()->GetDebugLogFlag() > 1)
+		{
+			osMessage << "<MP285Ctrl::checkError> ErrorCode=[" << MPError::Instance()->GetErrorText(nErrorCode).c_str() << "])";
+		}
     }
     else if (bErrorCode == MP285::MP285_FRAME_ERROR)
     {
         // Receiving serial command time out
         nErrorCode = MPError::MPERR_SerialTimeout;       
-        osMessage << "<MP285Ctrl::checkError> ErrorCode=[" << MPError::Instance()->GetErrorText(nErrorCode).c_str() << "])";
+		if (MP285::Instance()->GetDebugLogFlag() > 1)
+		{
+			osMessage << "<MP285Ctrl::checkError> ErrorCode=[" << MPError::Instance()->GetErrorText(nErrorCode).c_str() << "])";
+		}
     }
     else if (bErrorCode == MP285::MP285_BUFFER_OVER_RUN)
     {
         // Serial command buffer full
         nErrorCode = MPError::MPERR_SerialBufferFull;       
-        osMessage << "<MP285Ctrl::checkError> ErrorCode=[" << MPError::Instance()->GetErrorText(nErrorCode).c_str() << "])";
+		if (MP285::Instance()->GetDebugLogFlag() > 1)
+		{
+			osMessage << "<MP285Ctrl::checkError> ErrorCode=[" << MPError::Instance()->GetErrorText(nErrorCode).c_str() << "])";
+		}
     }
     else if (bErrorCode == MP285::MP285_BAD_COMMAND)
     {
         // Invalid serial command
         nErrorCode = MPError::MPERR_SerialInpInvalid;       
-        osMessage << "<MP285Ctrl::checkError> ErrorCode=[" << MPError::Instance()->GetErrorText(nErrorCode).c_str() << "])";
+		if (MP285::Instance()->GetDebugLogFlag() > 1)
+		{
+			osMessage << "<MP285Ctrl::checkError> ErrorCode=[" << MPError::Instance()->GetErrorText(nErrorCode).c_str() << "])";
+		}
     }
     else if (bErrorCode == MP285::MP285_MOVE_INTERRUPTED)
     {
         // Serial command interrupt motion
         nErrorCode = MPError::MPERR_SerialIntrupMove;       
-        osMessage << "<MP285Ctrl::checkError> ErrorCode=[" << MPError::Instance()->GetErrorText(nErrorCode).c_str() << "])";
+		if (MP285::Instance()->GetDebugLogFlag() > 1)
+		{
+			osMessage << "<MP285Ctrl::checkError> ErrorCode=[" << MPError::Instance()->GetErrorText(nErrorCode).c_str() << "])";
+		}
     }
     else if (bErrorCode == 0x00)
     {
         // No response from serial port
         nErrorCode = MPError::MPERR_SerialZeroReturn;
-        osMessage << "<MP285Ctrl::checkError> ErrorCode=[" << MPError::Instance()->GetErrorText(nErrorCode).c_str() << "])";
+		if (MP285::Instance()->GetDebugLogFlag() > 1)
+		{
+			osMessage << "<MP285Ctrl::checkError> ErrorCode=[" << MPError::Instance()->GetErrorText(nErrorCode).c_str() << "])";
+		}
     }
 
-    this->LogMessage(osMessage.str().c_str());
+    if (MP285::Instance()->GetDebugLogFlag() > 1)
+    {
+		this->LogMessage(osMessage.str().c_str());
+	}
+
     return (nErrorCode!=0);
 }
 

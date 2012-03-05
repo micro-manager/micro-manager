@@ -82,18 +82,30 @@ XYStage::XYStage() :
     m_nAnswerTimeoutTrys = MP285::Instance()->GetTimeoutTrys();
 
     // Name, read-only (RO)
-    int ret = CreateProperty(MM::g_Keyword_Name, MP285::Instance()->GetMPStr(MP285::MPSTR_XYStgaeDevName).c_str(), MM::String, true);
+    char sXYName[120];
+	sprintf(sXYName, "%s%s", MP285::Instance()->GetMPStr(MP285::MPSTR_XYDevNameLabel).c_str(), MM::g_Keyword_Name);
+    int ret = CreateProperty(sXYName, MP285::Instance()->GetMPStr(MP285::MPSTR_XYStgaeDevName).c_str(), MM::String, true);
 
     std::ostringstream osMessage;
-    osMessage << "<XYStage::class-constructor> CreateProperty(" << MM::g_Keyword_Name << "=" << MP285::Instance()->GetMPStr(MP285::MPSTR_XYStgaeDevName).c_str() << "), ReturnCode=" << ret;
-    this->LogMessage(osMessage.str().c_str());
+
+    if (MP285::Instance()->GetDebugLogFlag() > 0)
+    {
+		osMessage.str("");
+		osMessage << "<XYStage::class-constructor> CreateProperty(" << sXYName << "=" << MP285::Instance()->GetMPStr(MP285::MPSTR_XYStgaeDevName).c_str() << "), ReturnCode=" << ret;
+		this->LogMessage(osMessage.str().c_str());
+	}
 
     // Description, RO
-    ret = CreateProperty(MM::g_Keyword_Description, "MP-285 XY Stage Driver", MM::String, true);
+    char sXYDesc[120];
+	sprintf(sXYDesc, "%s%s", MP285::Instance()->GetMPStr(MP285::MPSTR_XYDevDescLabel).c_str(), MM::g_Keyword_Description);
+    ret = CreateProperty(sXYDesc, "MP-285 XY Stage Driver", MM::String, true);
 
-    osMessage.clear();
-    osMessage << "<XYStage::class-constructor> CreateProperty(" << MM::g_Keyword_Description << " = MP-285 XY Stage Driver), ReturnCode=" << ret;
-    this->LogMessage(osMessage.str().c_str());
+    if (MP285::Instance()->GetDebugLogFlag() > 0)
+    {
+		osMessage.str("");
+		osMessage << "<XYStage::class-constructor> CreateProperty(" << sXYDesc << " = MP-285 XY Stage Driver), ReturnCode=" << ret;
+		this->LogMessage(osMessage.str().c_str());
+	}
 }
 
 //
@@ -121,17 +133,23 @@ int XYStage::Initialize()
 
     int ret = CreateProperty(MP285::Instance()->GetMPStr(MP285::MPSTR_GetPositionX).c_str(), "Undefined", MM::Float, true);  // Get Position X 
 
-    this->LogMessage(osMessage.str().c_str());
-    osMessage << "<XYStage::Initialize> CreateProperty(" << MP285::Instance()->GetMPStr(MP285::MPSTR_GetPositionX).c_str() << " = " << "Undfined, ReturnCode = " << ret;
-    this->LogMessage(osMessage.str().c_str());
+    if (MP285::Instance()->GetDebugLogFlag() > 0)
+    {
+		osMessage.str("");
+		osMessage << "<XYStage::Initialize> CreateProperty(" << MP285::Instance()->GetMPStr(MP285::MPSTR_GetPositionX).c_str() << " = " << "Undfined, ReturnCode = " << ret;
+		this->LogMessage(osMessage.str().c_str());
+	}
 
     if (ret != DEVICE_OK)  return ret;
 
     ret = CreateProperty(MP285::Instance()->GetMPStr(MP285::MPSTR_GetPositionY).c_str(), "Undefined", MM::Float, true);  // Get Position Y 
  
-    osMessage.str("");
-    osMessage << "<XYStage::Initialize> CreateProperty(" << MP285::Instance()->GetMPStr(MP285::MPSTR_GetPositionY).c_str() << " = " << "Undefined, ReturnCode = " << ret;
-    this->LogMessage(osMessage.str().c_str());
+    if (MP285::Instance()->GetDebugLogFlag() > 0)
+    {
+		osMessage.str("");
+		osMessage << "<XYStage::Initialize> CreateProperty(" << MP285::Instance()->GetMPStr(MP285::MPSTR_GetPositionY).c_str() << " = " << "Undefined, ReturnCode = " << ret;
+		this->LogMessage(osMessage.str().c_str());
+	}
 
     if (ret != DEVICE_OK)  return ret;
 
@@ -140,10 +158,13 @@ int XYStage::Initialize()
 
     ret = GetPositionUm(dPosX, dPosY);
 
-    // osMessage.str("");
-    osMessage << "<XYStage::Initialize> GetPosSteps(" << MP285::Instance()->GetMPStr(MP285::MPSTR_GetPositionX).c_str() << " = " << dPosX << ",";
-    osMessage << MP285::Instance()->GetMPStr(MP285::MPSTR_GetPositionY).c_str() << " = " << dPosY << "), ReturnCode = " << ret;
-    this->LogMessage(osMessage.str().c_str());
+    if (MP285::Instance()->GetDebugLogFlag() > 0)
+    {
+		osMessage.str("");
+		osMessage << "<XYStage::Initialize> GetPosSteps(" << MP285::Instance()->GetMPStr(MP285::MPSTR_GetPositionX).c_str() << " = " << dPosX << ",";
+		osMessage << MP285::Instance()->GetMPStr(MP285::MPSTR_GetPositionY).c_str() << " = " << dPosY << "), ReturnCode = " << ret;
+		this->LogMessage(osMessage.str().c_str());
+	}
 
     if (ret!=DEVICE_OK) return ret;
 
@@ -151,9 +172,12 @@ int XYStage::Initialize()
     ret = CreateProperty(MP285::Instance()->GetMPStr(MP285::MPSTR_SetPositionX).c_str(), "Undefined", MM::Float, false, pActOnSetPosX);  // Set Position X 
     //ret = CreateProperty(MP285::Instance()->GetMPStr(MP285::MPSTR_SetPositionX).c_str(), "Undefined", MM::Integer, true);  // Set Position X 
 
-    osMessage.str("");
-    osMessage << "<XYStage::Initialize> CreateProperty(" << MP285::Instance()->GetMPStr(MP285::MPSTR_SetPositionX).c_str() << " = Undefined), ReturnCode = " << ret;
-    this->LogMessage(osMessage.str().c_str());
+    if (MP285::Instance()->GetDebugLogFlag() > 0)
+    {
+		osMessage.str("");
+		osMessage << "<XYStage::Initialize> CreateProperty(" << MP285::Instance()->GetMPStr(MP285::MPSTR_SetPositionX).c_str() << " = Undefined), ReturnCode = " << ret;
+		this->LogMessage(osMessage.str().c_str());
+	}
 
     if (ret != DEVICE_OK)  return ret;
 
@@ -161,9 +185,12 @@ int XYStage::Initialize()
     ret = CreateProperty(MP285::Instance()->GetMPStr(MP285::MPSTR_SetPositionY).c_str(), "Undefined", MM::Float, false, pActOnSetPosY);  // Set Position Y 
     //ret = CreateProperty(MP285::Instance()->GetMPStr(MP285::MPSTR_SetPositionY).c_str(), "Undefined", MM::Integer, true);  // Set Position Y 
 
-    osMessage.str("");
-    osMessage << "<XYStage::Initialize> CreateProperty(" << MP285::Instance()->GetMPStr(MP285::MPSTR_SetPositionY).c_str() << " = Undefined), ReturnCode = " << ret;
-    this->LogMessage(osMessage.str().c_str());
+    if (MP285::Instance()->GetDebugLogFlag() > 0)
+    {
+		osMessage.str("");
+		osMessage << "<XYStage::Initialize> CreateProperty(" << MP285::Instance()->GetMPStr(MP285::MPSTR_SetPositionY).c_str() << " = Undefined), ReturnCode = " << ret;
+		this->LogMessage(osMessage.str().c_str());
+	}
 
     if (ret != DEVICE_OK)  return ret;
 
@@ -201,8 +228,13 @@ int XYStage::GetPositionUm(double& dXPosUm, double& dYPosUm)
     dYPosUm = (double)lYPosSteps / (double)MP285::Instance()->GetUm2UStep();
 
     ostringstream osMessage;
-    osMessage << "<MP285::XYStage::GetPositionUm> (x=" << dXPosUm << ", y=" << dYPosUm << ")";
-    this->LogMessage(osMessage.str().c_str());
+
+    if (MP285::Instance()->GetDebugLogFlag() > 1)
+    {
+		osMessage.str("");
+		osMessage << "<MP285::XYStage::GetPositionUm> (x=" << dXPosUm << ", y=" << dYPosUm << ")";
+		this->LogMessage(osMessage.str().c_str());
+	}
 
     MP285::Instance()->SetPositionX(dXPosUm);
     MP285::Instance()->SetPositionY(dYPosUm);
@@ -211,18 +243,24 @@ int XYStage::GetPositionUm(double& dXPosUm, double& dYPosUm)
     sprintf(sPosition, "%.2f", dXPosUm);
     ret = SetProperty(MP285::Instance()->GetMPStr(MP285::MPSTR_GetPositionX).c_str(), sPosition);
 
-    osMessage.str("");
-    osMessage << "<XYStage::GetPositionUm> X=[" << dXPosUm << "," << sPosition << "], Returncode=" << ret ;
-    this->LogMessage(osMessage.str().c_str());
+    if (MP285::Instance()->GetDebugLogFlag() > 1)
+    {
+		osMessage.str("");
+		osMessage << "<XYStage::GetPositionUm> X=[" << dXPosUm << "," << sPosition << "], Returncode=" << ret ;
+		this->LogMessage(osMessage.str().c_str());
+	}
 
     if (ret != DEVICE_OK) return ret;
 
     sprintf(sPosition, "%.2f", dYPosUm);
     ret = SetProperty(MP285::Instance()->GetMPStr(MP285::MPSTR_GetPositionY).c_str(), sPosition);
 
-    osMessage.str("");
-    osMessage << "<XYStage::GetPositionUm> Y=[" << dYPosUm << "," << sPosition << "], Returncode=" << ret ;
-    this->LogMessage(osMessage.str().c_str());
+    if (MP285::Instance()->GetDebugLogFlag() > 1)
+    {
+		osMessage.str("");
+		osMessage << "<XYStage::GetPositionUm> Y=[" << dYPosUm << "," << sPosition << "], Returncode=" << ret ;
+		this->LogMessage(osMessage.str().c_str());
+	}
 
     if (ret != DEVICE_OK) return ret;
 
@@ -240,8 +278,13 @@ int XYStage::GetPositionUm(double& dXPosUm, double& dYPosUm)
 int XYStage::SetPositionUm(double dXPosUm, double dYPosUm)
 {
     ostringstream osMessage;
-    osMessage << "<XYStage::SetPositionUm> (x=" << dXPosUm << ", y=" << dYPosUm << ")";
-    this->LogMessage(osMessage.str().c_str());
+
+    if (MP285::Instance()->GetDebugLogFlag() > 1)
+    {
+		osMessage.str("");
+		osMessage << "<XYStage::SetPositionUm> (x=" << dXPosUm << ", y=" << dYPosUm << ")";
+		this->LogMessage(osMessage.str().c_str());
+	}
 
     // convert um to steps 
     long lXPosSteps = (long)(dXPosUm * (double)MP285::Instance()->GetUm2UStep());
@@ -292,9 +335,12 @@ int XYStage::GetPositionSteps(long& lXPosSteps, long& lYPosSteps)
         if (yCommError)
         {
             if (nError == MPError::MPERR_SerialZeroReturn && nTrys < MP285::Instance()->GetTimeoutTrys()) { nTrys++; yCommError = false; }
-            osMessage.str("");
-            osMessage << "<XYStage::GetPositionSteps> Response = (" << nError << "," << nTrys << ")" ;
-            sprintf(sCommStat, "Error Code ==> <%2x>", sResponse[0]);
+			if (MP285::Instance()->GetDebugLogFlag() > 1)
+			{
+				osMessage.str("");
+				osMessage << "<XYStage::GetPositionSteps> Response = (" << nError << "," << nTrys << ")" ;
+			}
+			sprintf(sCommStat, "Error Code ==> <%2x>", sResponse[0]);
         }
         else
         {
@@ -305,14 +351,20 @@ int XYStage::GetPositionSteps(long& lXPosSteps, long& lYPosSteps)
             //MP285::Instance()->SetPositionY(lYPosSteps);
             //MP285::Instance()->SetPositionZ(lZPosSteps);
 
-            osMessage.str("");
-            osMessage << "<XYStage::GetPositionSteps> Response(X = <" << lXPosSteps << ">, Y = <" << lYPosSteps << ">, Z = <"<< lZPosSteps << ">), ReturnCode=" << ret;
+			if (MP285::Instance()->GetDebugLogFlag() > 1)
+			{
+				osMessage.str("");
+				osMessage << "<XYStage::GetPositionSteps> Response(X = <" << lXPosSteps << ">, Y = <" << lYPosSteps << ">, Z = <"<< lZPosSteps << ">), ReturnCode=" << ret;
+			}
             nTrys = MP285::Instance()->GetTimeoutTrys();
             strcpy(sCommStat, "Success");
            
         }
 
-        this->LogMessage(osMessage.str().c_str());
+		if (MP285::Instance()->GetDebugLogFlag() > 1)
+		{
+			this->LogMessage(osMessage.str().c_str());
+		}
 
         //ret = SetProperty(MP285::Instance()->GetMPStr(MP285::MPSTR_CommStateLabel).c_str(), sCommStat);
     }
@@ -336,8 +388,12 @@ int XYStage::SetPositionSteps(long lXPosSteps, long lYPosSteps)
     //long lPosY = 0;
     //int ret = GetPositionSteps(lPosX, lPosY);
 
-    osMessage << "<XYStage::SetPositionSteps> (x=" << lXPosSteps << ", y=" << lYPosSteps << ")";
-    this->LogMessage(osMessage.str().c_str());
+	if (MP285::Instance()->GetDebugLogFlag() > 1)
+	{
+		osMessage.str("");
+		osMessage << "<XYStage::SetPositionSteps> (x=" << lXPosSteps << ", y=" << lYPosSteps << ")";
+		this->LogMessage(osMessage.str().c_str());
+	}
 
     //if (ret != DEVICE_OK) return ret;
 
@@ -360,9 +416,12 @@ int XYStage::SetPositionSteps(long lXPosSteps, long lYPosSteps)
 
     int ret = WriteCommand(sCommand, 15);
 
-    osMessage.str("");
-    osMessage << "<XYStage::SetPositionSteps> Command(<0x6D>, X = <" << *plPositionX << ">,<" << *plPositionY << ">,<" << *plPositionZ << ">), ReturnCode=" << ret;
-    this->LogMessage(osMessage.str().c_str());
+	if (MP285::Instance()->GetDebugLogFlag() > 1)
+	{
+		osMessage.str("");
+		osMessage << "<XYStage::SetPositionSteps> Command(<0x6D>, X = <" << *plPositionX << ">,<" << *plPositionY << ">,<" << *plPositionZ << ">), ReturnCode=" << ret;
+		this->LogMessage(osMessage.str().c_str());
+	}
 
     if (ret != DEVICE_OK)  return ret;
 
@@ -370,9 +429,12 @@ int XYStage::SetPositionSteps(long lXPosSteps, long lYPosSteps)
     unsigned long dwSleep = (unsigned long) (dSteps * 3.0);
     CDeviceUtils::SleepMs(dwSleep);
     
-    osMessage.str("");
-    osMessage << "<XYStage::SetPositionSteps> Sleep..." << dwSleep << " millisec...";
-    this->LogMessage(osMessage.str().c_str());
+	if (MP285::Instance()->GetDebugLogFlag() > 1)
+	{
+		osMessage.str("");
+		osMessage << "<XYStage::SetPositionSteps> Sleep..." << dwSleep << " millisec...";
+		this->LogMessage(osMessage.str().c_str());
+	}
 
     bool yCommError = true;
 
@@ -412,8 +474,13 @@ int XYStage::Stop()
     int ret = WriteCommand(sCommand, 2);
 
     ostringstream osMessage;
-    osMessage << "<XYStage::Stop> (ReturnCode = " << ret << ")";
-    this->LogMessage(osMessage.str().c_str());
+
+	if (MP285::Instance()->GetDebugLogFlag() > 1)
+	{
+		osMessage.str("");
+		osMessage << "<XYStage::Stop> (ReturnCode = " << ret << ")";
+		this->LogMessage(osMessage.str().c_str());
+	}
 
     return ret;
 }
@@ -427,8 +494,13 @@ int XYStage::SetOrigin()
     int ret = WriteCommand(sCommand, 3);
 
     std::ostringstream osMessage;
-    osMessage << "<XYStage::SetOrigin> (ReturnCode=" << ret << ")";
-    this->LogMessage(osMessage.str().c_str());
+
+	if (MP285::Instance()->GetDebugLogFlag() > 1)
+	{
+		osMessage.str("");
+		osMessage << "<XYStage::SetOrigin> (ReturnCode=" << ret << ")";
+		this->LogMessage(osMessage.str().c_str());
+	}
 
     if (ret!=DEVICE_OK) return ret;
 
@@ -436,8 +508,13 @@ int XYStage::SetOrigin()
 
     memset(sResponse, 0, 64);
     ret = ReadMessage(sResponse, 2);
-    osMessage << "<XYStage::CheckStatus::SetOrigin> (ReturnCode = " << ret << ")";
-    this->LogMessage(osMessage.str().c_str());
+
+	if (MP285::Instance()->GetDebugLogFlag() > 1)
+	{
+		osMessage.str("");
+		osMessage << "<XYStage::CheckStatus::SetOrigin> (ReturnCode = " << ret << ")";
+		this->LogMessage(osMessage.str().c_str());
+	}
 
     if (ret != DEVICE_OK) return ret;
 
@@ -475,12 +552,17 @@ int XYStage::OnGetPositionX(MM::PropertyBase* pProp, MM::ActionType eAct)
     double dPosX = MP285::Instance()->GetPositionX();
     double dPosY = MP285::Instance()->GetPositionY();
 
+	osMessage.str("");
+
     if (eAct == MM::BeforeGet)
     {
         pProp->Set(dPosX);
 
-        osMessage << "<MP285Ctrl::OnGetPositionX> BeforeGet(" << MP285::Instance()->GetMPStr(MP285::MPSTR_GetPositionX).c_str() << " = [" << dPosX << "], ReturnCode = " << ret;
-        this->LogMessage(osMessage.str().c_str());
+		if (MP285::Instance()->GetDebugLogFlag() > 1)
+		{
+			osMessage << "<MP285Ctrl::OnGetPositionX> BeforeGet(" << MP285::Instance()->GetMPStr(MP285::MPSTR_GetPositionX).c_str() << " = [" << dPosX << "], ReturnCode = " << ret;
+			//this->LogMessage(osMessage.str().c_str());
+		}
     }
     else if (eAct == MM::AfterSet)
     {
@@ -490,12 +572,19 @@ int XYStage::OnGetPositionX(MM::PropertyBase* pProp, MM::ActionType eAct)
 
         if (ret == DEVICE_OK) pProp->Set(dPosX);
 
-        osMessage << "<MP285Ctrl::OnGetPositionX> AfterSet(" << MP285::Instance()->GetMPStr(MP285::MPSTR_GetPositionX).c_str() << " = [" << dPosX << "], ReturnCode = " << ret;
-        this->LogMessage(osMessage.str().c_str());
+		if (MP285::Instance()->GetDebugLogFlag() > 1)
+		{
+			osMessage << "<MP285Ctrl::OnGetPositionX> AfterSet(" << MP285::Instance()->GetMPStr(MP285::MPSTR_GetPositionX).c_str() << " = [" << dPosX << "], ReturnCode = " << ret;
+			//this->LogMessage(osMessage.str().c_str());
+		}
 
     }
-    osMessage << ")";
-    this->LogMessage(osMessage.str().c_str());
+
+	if (MP285::Instance()->GetDebugLogFlag() > 1)
+	{
+		osMessage << ")";
+		this->LogMessage(osMessage.str().c_str());
+	}
 
     if (ret != DEVICE_OK) return ret;
 
@@ -509,12 +598,17 @@ int XYStage::OnGetPositionY(MM::PropertyBase* pProp, MM::ActionType eAct)
     double dPosX = MP285::Instance()->GetPositionX();
     double dPosY = MP285::Instance()->GetPositionY();
 
+	osMessage.str("");
+
     if (eAct == MM::BeforeGet)
     {        
         pProp->Set(dPosY);
 
-        osMessage << "<MP285Ctrl::OnGetPositionY> BeforeGet(" << MP285::Instance()->GetMPStr(MP285::MPSTR_GetPositionY).c_str() << " = [" << dPosY << "], ReturnCode = " << ret;
-        this->LogMessage(osMessage.str().c_str());
+		if (MP285::Instance()->GetDebugLogFlag() > 1)
+		{
+			osMessage << "<MP285Ctrl::OnGetPositionY> BeforeGet(" << MP285::Instance()->GetMPStr(MP285::MPSTR_GetPositionY).c_str() << " = [" << dPosY << "], ReturnCode = " << ret;
+			//this->LogMessage(osMessage.str().c_str());
+		}
     }
     else if (eAct == MM::AfterSet)
     {
@@ -524,11 +618,18 @@ int XYStage::OnGetPositionY(MM::PropertyBase* pProp, MM::ActionType eAct)
 
         if (ret == DEVICE_OK) pProp->Set(dPosY);
 
-        osMessage << "<MP285Ctrl::OnGetPositionY> AfterSet(" << MP285::Instance()->GetMPStr(MP285::MPSTR_GetPositionY).c_str() << " = [" << dPosY << "], ReturnCode = " << ret;
-        this->LogMessage(osMessage.str().c_str());
+		if (MP285::Instance()->GetDebugLogFlag() > 1)
+		{
+			osMessage << "<MP285Ctrl::OnGetPositionY> AfterSet(" << MP285::Instance()->GetMPStr(MP285::MPSTR_GetPositionY).c_str() << " = [" << dPosY << "], ReturnCode = " << ret;
+			//this->LogMessage(osMessage.str().c_str());
+		}
     }
-    osMessage << ")";
-    this->LogMessage(osMessage.str().c_str());
+
+	if (MP285::Instance()->GetDebugLogFlag() > 1)
+	{
+		osMessage << ")";
+		this->LogMessage(osMessage.str().c_str());
+	}
 
     if (ret != DEVICE_OK) return ret;
 
@@ -542,12 +643,17 @@ int XYStage::OnSetPositionX(MM::PropertyBase* pProp, MM::ActionType eAct)
     double dPosX = MP285::Instance()->GetPositionX();
     double dPosY = MP285::Instance()->GetPositionY();
 
+	osMessage.str("");
+
     if (eAct == MM::BeforeGet)
     {
         pProp->Set(dPosX);
 
-        osMessage << "<MP285Ctrl::OnSetPositionX> BeforeGet(" << MP285::Instance()->GetMPStr(MP285::MPSTR_SetPositionX).c_str() << " = [" << dPosX << "], ReturnCode = " << ret;
-        this->LogMessage(osMessage.str().c_str());
+		if (MP285::Instance()->GetDebugLogFlag() > 1)
+		{
+			osMessage << "<MP285Ctrl::OnSetPositionX> BeforeGet(" << MP285::Instance()->GetMPStr(MP285::MPSTR_SetPositionX).c_str() << " = [" << dPosX << "], ReturnCode = " << ret;
+			//this->LogMessage(osMessage.str().c_str());
+		}
     }
     else if (eAct == MM::AfterSet)
     {
@@ -555,11 +661,18 @@ int XYStage::OnSetPositionX(MM::PropertyBase* pProp, MM::ActionType eAct)
 
         ret = SetPositionUm(dPosX, dPosY);
 
-        osMessage << "<MP285Ctrl::OnSetPositionX> AfterSet(" << MP285::Instance()->GetMPStr(MP285::MPSTR_SetPositionX).c_str() << " = [" << dPosX << "], ReturnCode = " << ret;
-        this->LogMessage(osMessage.str().c_str());
+		if (MP285::Instance()->GetDebugLogFlag() > 1)
+		{
+			osMessage << "<MP285Ctrl::OnSetPositionX> AfterSet(" << MP285::Instance()->GetMPStr(MP285::MPSTR_SetPositionX).c_str() << " = [" << dPosX << "], ReturnCode = " << ret;
+			//this->LogMessage(osMessage.str().c_str());
+		}
     }
-    osMessage << ")";
-    this->LogMessage(osMessage.str().c_str());
+
+	if (MP285::Instance()->GetDebugLogFlag() > 1)
+	{
+		osMessage << ")";
+		this->LogMessage(osMessage.str().c_str());
+	}
 
     if (ret != DEVICE_OK) return ret;
 
@@ -573,12 +686,17 @@ int XYStage::OnSetPositionY(MM::PropertyBase* pProp, MM::ActionType eAct)
     double dPosX = MP285::Instance()->GetPositionX();
     double dPosY = MP285::Instance()->GetPositionY();
 
+	osMessage.str("");
+
     if (eAct == MM::BeforeGet)
     {
         pProp->Set(dPosY);
 
-        osMessage << "<MP285Ctrl::OnSetPositionY> BeforeGet(" << MP285::Instance()->GetMPStr(MP285::MPSTR_SetPositionY).c_str() << " = [" << dPosY << "], ReturnCode = " << ret;
-        this->LogMessage(osMessage.str().c_str());
+		if (MP285::Instance()->GetDebugLogFlag() > 1)
+		{
+			osMessage << "<MP285Ctrl::OnSetPositionY> BeforeGet(" << MP285::Instance()->GetMPStr(MP285::MPSTR_SetPositionY).c_str() << " = [" << dPosY << "], ReturnCode = " << ret;
+			//this->LogMessage(osMessage.str().c_str());
+		}
     }
     else if (eAct == MM::AfterSet)
     {
@@ -586,11 +704,18 @@ int XYStage::OnSetPositionY(MM::PropertyBase* pProp, MM::ActionType eAct)
 
         ret = SetPositionUm(dPosX, dPosY);
 
-        osMessage << "<MP285Ctrl::OnSetPositionY> AfterSet(" << MP285::Instance()->GetMPStr(MP285::MPSTR_SetPositionY).c_str() << " = [" << dPosY << "], ReturnCode = " << ret;
-        this->LogMessage(osMessage.str().c_str());
+		if (MP285::Instance()->GetDebugLogFlag() > 1)
+		{
+			osMessage << "<MP285Ctrl::OnSetPositionY> AfterSet(" << MP285::Instance()->GetMPStr(MP285::MPSTR_SetPositionY).c_str() << " = [" << dPosY << "], ReturnCode = " << ret;
+			//this->LogMessage(osMessage.str().c_str());
+		}
     }
-    osMessage << ")";
-    this->LogMessage(osMessage.str().c_str());
+
+	if (MP285::Instance()->GetDebugLogFlag() > 1)
+	{
+		osMessage << ")";
+		this->LogMessage(osMessage.str().c_str());
+	}
 
     if (ret != DEVICE_OK) return ret;
 
@@ -608,17 +733,26 @@ int XYStage::WriteCommand(unsigned char* sCommand, int nLength)
 {
     int ret = DEVICE_OK;
     ostringstream osMessage;
-    osMessage << "<XYStage::WriteCommand> (Command=";
-    char sHex[4] = { NULL, NULL, NULL, NULL };
-    for (int nBytes = 0; nBytes < nLength && ret == DEVICE_OK; nBytes++)
-    {
-        ret = WriteToComPort(MP285::Instance()->GetSerialPort().c_str(), (const unsigned char*)&sCommand[nBytes], 1);
-        MP285::Instance()->Byte2Hex((const unsigned char)sCommand[nBytes], sHex);
-        osMessage << "[" << nBytes << "]=<" << sHex << ">";
-        CDeviceUtils::SleepMs(1);
-    }
-    osMessage << ")";
-    this->LogMessage(osMessage.str().c_str());
+
+	if (MP285::Instance()->GetDebugLogFlag() > 1)
+	{
+		osMessage.str("");
+		osMessage << "<XYStage::WriteCommand> (Command=";
+		char sHex[4] = { NULL, NULL, NULL, NULL };
+		for (int n=0; n < nLength; n++)
+		{
+			MP285::Instance()->Byte2Hex((const unsigned char)sCommand[n], sHex);
+			osMessage << "[" << n << "]=<" << sHex << ">";
+		}
+		osMessage << ")";
+		this->LogMessage(osMessage.str().c_str());
+	}
+
+	for (int nBytes = 0; nBytes < nLength && ret == DEVICE_OK; nBytes++)
+	{
+		ret = WriteToComPort(MP285::Instance()->GetSerialPort().c_str(), (const unsigned char*)&sCommand[nBytes], 1);
+		CDeviceUtils::SleepMs(1);
+	}
 
     if (ret != DEVICE_OK) return ret;
 
@@ -638,6 +772,7 @@ int XYStage::ReadMessage(unsigned char* sResponse, int nBytesRead)
     unsigned long lStartTime = GetClockTicksUs();
 
     ostringstream osMessage;
+
     char sHex[4] = { NULL, NULL, NULL, NULL };
     int ret = DEVICE_OK;
     bool yRead = false;
@@ -649,16 +784,19 @@ int XYStage::ReadMessage(unsigned char* sResponse, int nBytesRead)
         const MM::Device* pDevice = this;
         ret = (GetCoreCallback())->ReadFromSerial(pDevice, MP285::Instance()->GetSerialPort().c_str(), (unsigned char *)&sAnswer[lRead], (unsigned long)nLength-lRead, lByteRead);
        
-        //osMessage.str("");
-        // osMessage << "<MP285Ctrl::ReadMessage> (ReadFromSerial = (" << lByteRead << ")::<";
-        //for (unsigned long lIndx=0; lIndx < lByteRead; lIndx++)
-        //{
-        //    // convert to hext format
-        //    MP285::Instance()->Byte2Hex(sAnswer[lRead+lIndx], sHex);
-        //    osMessage << "[" << sHex  << "]";
-        //}
-        //osMessage << ">";
-        //this->LogMessage(osMessage.str().c_str());
+		if (MP285::Instance()->GetDebugLogFlag() > 2)
+		{
+			osMessage.str("");
+			osMessage << "<MP285Ctrl::ReadMessage> (ReadFromSerial = (" << lByteRead << ")::<";
+			for (unsigned long lIndx=0; lIndx < lByteRead; lIndx++)
+			{
+				// convert to hext format
+				MP285::Instance()->Byte2Hex(sAnswer[lRead+lIndx], sHex);
+				osMessage << "[" << sHex  << "]";
+			}
+			osMessage << ">";
+			this->LogMessage(osMessage.str().c_str());
+		}
 
         // concade new string
         lRead += lByteRead;
@@ -679,8 +817,8 @@ int XYStage::ReadMessage(unsigned char* sResponse, int nBytesRead)
         if (yRead) break;
         
         // check for timeout
-        yTimeout = ((double)(GetClockTicksUs() - lStartTime) / 1000.) > (double)m_nAnswerTimeoutMs;
-        if (!yTimeout) CDeviceUtils::SleepMs(1);
+        yTimeout = ((double)(GetClockTicksUs() - lStartTime) / 10000. ) > (double)m_nAnswerTimeoutMs;
+        if (!yTimeout) CDeviceUtils::SleepMs(3);
     }
 
     // block/wait for acknowledge, or until we time out
@@ -688,18 +826,29 @@ int XYStage::ReadMessage(unsigned char* sResponse, int nBytesRead)
     // MP285::Instance()->ByteCopy(sResponse, sAnswer, nBytesRead);
     // if (checkError(sAnswer[0]) != 0) ret = DEVICE_SERIAL_COMMAND_FAILED;
 
-    osMessage.str("");
-    osMessage << "<MP285Ctrl::ReadMessage> (ReadFromSerial = <";
-    for (unsigned long lIndx=0; lIndx < (unsigned long)nBytesRead; lIndx++)
-    {
-        sResponse[lIndx] = sAnswer[lIndx];
-        MP285::Instance()->Byte2Hex(sResponse[lIndx], sHex);
-        osMessage << "[" << sHex  << ",";
-        MP285::Instance()->Byte2Hex(sAnswer[lIndx], sHex);
-        osMessage << sHex  << "]";
-    }
-    osMessage << ">";
-    this->LogMessage(osMessage.str().c_str());
+	if (MP285::Instance()->GetDebugLogFlag() > 1)
+	{
+		osMessage.str("");
+		osMessage << "<MP285Ctrl::ReadMessage> (ReadFromSerial = <";
+	}
+
+	for (unsigned long lIndx=0; lIndx < (unsigned long)nBytesRead; lIndx++)
+	{
+		sResponse[lIndx] = sAnswer[lIndx];
+		if (MP285::Instance()->GetDebugLogFlag() > 1)
+		{
+			MP285::Instance()->Byte2Hex(sResponse[lIndx], sHex);
+			osMessage << "[" << sHex  << ",";
+			MP285::Instance()->Byte2Hex(sAnswer[lIndx], sHex);
+			osMessage << sHex  << "]";
+		}
+	}
+
+	if (MP285::Instance()->GetDebugLogFlag() > 1)
+	{
+		osMessage << ">";
+		this->LogMessage(osMessage.str().c_str());
+	}
 
     return DEVICE_OK;
 }
@@ -713,183 +862,78 @@ int XYStage::CheckError(unsigned char bErrorCode)
     unsigned int nErrorCode = 0;
     ostringstream osMessage;
 
+	osMessage.str("");
+
     // check 4 error code
     if (bErrorCode == MP285::MP285_SP_OVER_RUN)
     {
         // Serial command buffer over run
         nErrorCode = MPError::MPERR_SerialOverRun;       
-        osMessage << "<XYStage::checkError> ErrorCode=[" << MPError::Instance()->GetErrorText(nErrorCode).c_str() << "])";
+		if (MP285::Instance()->GetDebugLogFlag() > 1)
+		{
+			osMessage << "<XYStage::checkError> ErrorCode=[" << MPError::Instance()->GetErrorText(nErrorCode).c_str() << "])";
+		}
     }
     else if (bErrorCode == MP285::MP285_FRAME_ERROR)
     {
         // Receiving serial command time out
         nErrorCode = MPError::MPERR_SerialTimeout;       
-        osMessage << "<XYStage::checkError> ErrorCode=[" << MPError::Instance()->GetErrorText(nErrorCode).c_str() << "])";
+		if (MP285::Instance()->GetDebugLogFlag() > 1)
+		{
+			osMessage << "<XYStage::checkError> ErrorCode=[" << MPError::Instance()->GetErrorText(nErrorCode).c_str() << "])";
+		}
     }
     else if (bErrorCode == MP285::MP285_BUFFER_OVER_RUN)
     {
         // Serial command buffer full
         nErrorCode = MPError::MPERR_SerialBufferFull;       
-        osMessage << "<XYStage::checkError> ErrorCode=[" << MPError::Instance()->GetErrorText(nErrorCode).c_str() << "])";
+		if (MP285::Instance()->GetDebugLogFlag() > 1)
+		{
+			osMessage << "<XYStage::checkError> ErrorCode=[" << MPError::Instance()->GetErrorText(nErrorCode).c_str() << "])";
+		}
     }
     else if (bErrorCode == MP285::MP285_BAD_COMMAND)
     {
         // Invalid serial command
         nErrorCode = MPError::MPERR_SerialInpInvalid;       
-        osMessage << "<XYStage::checkError> ErrorCode=[" << MPError::Instance()->GetErrorText(nErrorCode).c_str() << "])";
+		if (MP285::Instance()->GetDebugLogFlag() > 1)
+		{
+			osMessage << "<XYStage::checkError> ErrorCode=[" << MPError::Instance()->GetErrorText(nErrorCode).c_str() << "])";
+		}
     }
     else if (bErrorCode == MP285::MP285_MOVE_INTERRUPTED)
     {
         // Serial command interrupt motion
         nErrorCode = MPError::MPERR_SerialIntrupMove;       
-        osMessage << "<XYStage::checkError> ErrorCode=[" << MPError::Instance()->GetErrorText(nErrorCode).c_str() << "])";
+		if (MP285::Instance()->GetDebugLogFlag() > 1)
+		{
+			osMessage << "<XYStage::checkError> ErrorCode=[" << MPError::Instance()->GetErrorText(nErrorCode).c_str() << "])";
+		}
     }
     else if (bErrorCode == 0x0D)
     {
         // read carriage return
         nErrorCode = MPError::MPERR_OK;
-        osMessage << "<XYStage::checkError> ErrorCode=[" << MPError::Instance()->GetErrorText(nErrorCode).c_str() << "])";
+ 		if (MP285::Instance()->GetDebugLogFlag() > 1)
+		{
+			osMessage << "<XYStage::checkError> ErrorCode=[" << MPError::Instance()->GetErrorText(nErrorCode).c_str() << "])";
+		}
     }
     else if (bErrorCode == 0x00)
     {
         // No response from serial port
         nErrorCode = MPError::MPERR_SerialZeroReturn;
-        osMessage << "<XYStage::checkError> ErrorCode=[" << MPError::Instance()->GetErrorText(nErrorCode).c_str() << "])";
+		if (MP285::Instance()->GetDebugLogFlag() > 1)
+		{
+			osMessage << "<XYStage::checkError> ErrorCode=[" << MPError::Instance()->GetErrorText(nErrorCode).c_str() << "])";
+		}
     }
 
-    this->LogMessage(osMessage.str().c_str());
+	if (MP285::Instance()->GetDebugLogFlag() > 1)
+	{
+		this->LogMessage(osMessage.str().c_str());
+	}
 
     return (nErrorCode);
 }
 
-#if 0
-
-//
-// Sends a specified command to the controller
-//
-int XYStage::GetCommand(const string& sCommand, string& sResponse)
-{
-    // reset serial buffer
-    int ret = ClearPort(*this, *GetCoreCallback(), MP285::Instance()->GetSerialPort().c_str());
-
-    ostringstream osMessage;
-    osMessage << "<MP285::Ctrl::Initialize> ClearPort(Port = " << MP285::Instance()->GetSerialPort().c_str() << "), ReturnCode = " << ret << endl;
-    this->LogMessage(osMessage.str().c_str());
-
-
-    osMessage.str("");
-    osMessage << "<MP285::XYStage::GetCommand> (SndCmd=" << hex << sCommand.c_str() << ")";
-    this->LogMessage(osMessage.str().c_str());
-
-    char sCmd[20];
-    memset(sCmd, 0, 20);
-    strcpy(sCmd, sCommand.c_str());
-    sCmd[strlen(sCmd)] = MP285::MP285_TxTerm;
-
-    // write command out
-    ret = DEVICE_OK;
-    for (unsigned int nByte = 0; nByte < strlen(sCmd) && ret == DEVICE_OK; nByte++)
-    {
-        ret = WriteToComPort(MP285::Instance()->GetSerialPort().c_str(), (const unsigned char*)&sCmd[nByte], 1);
-        CDeviceUtils::SleepMs(1);
-    }
-
-    if (ret != DEVICE_OK) return ret;
-
-    // block/wait for acknowledge, or until we time out;
-    unsigned int nLength = 256;
-    char sAnswer[256];
-    memset(sAnswer, 0, nLength);
-    unsigned long lRead = 0;
-    unsigned long lStartTime = GetClockTicksUs();
-
-    // terminate character
-    char sRxTerm[8];
-    memset(sRxTerm, 0, 8);
-    sRxTerm[0] = MP285::MP285_RxTerm;
-
-    bool yRead = false;
-    bool yTimeout = false;
-    while (!yRead && !yTimeout && ret == DEVICE_OK )
-    {
-        unsigned long lByteRead;
-
-        const MM::Device* pDevice = this;
-        ret = (GetCoreCallback())->ReadFromSerial(pDevice, MP285::Instance()->GetSerialPort().c_str(), (unsigned char *)&sAnswer[lRead], (unsigned long)nLength, lByteRead);
-       
-        osMessage.str("");
-        osMessage << "<MP285::XYStage::ReadFromSerial> (ReadFromSerial = (" << lByteRead << ")::<";
-        for (unsigned long lIndx=0; lIndx < lByteRead; lIndx++)  { osMessage << "[" << hex << sAnswer[lRead+lIndx] << "]"; }
-        osMessage << ">" << endl;
-        this->LogMessage(osMessage.str().c_str());
-
-        if (ret == DEVICE_OK && lByteRead > 0)
-        {
-            lRead += lByteRead;
-            if (strstr(&sAnswer[lRead], sRxTerm)) yRead = true;
-            if (sAnswer[lRead] == 0) yRead = true;
-        }
-
-        yTimeout = ((GetClockTicksUs() - lStartTime) / 1000) > m_nAnswerTimeoutMs;
-
-        // delay 1ms
-        if (!yTimeout) CDeviceUtils::SleepMs(1);
-    }
-
-    if (ret != DEVICE_OK) return ret;
-    if (yTimeout) return DEVICE_SERIAL_TIMEOUT;
-
-    // check error code from returned message
-    osMessage.str("");
-    unsigned int nErrorCode = 0;
-    nLength = strlen(sAnswer);
-    if (nLength > 0)
-    {
-        // check for error code
-        if (sAnswer[0] == '0')
-        {
-            // Serial command buffer over run
-            nErrorCode = MPError::MPERR_SerialOverRun;       
-            osMessage << "<MP285::Ctrl::checkError> ("<< "XYStage Read" << ") ErrorCode=[" << MPError::Instance()->GetErrorText(nErrorCode).c_str() << "])";
-        }
-        else if (sAnswer[0] == '1')
-        {
-            // Receiving serial command time out
-            nErrorCode = MPError::MPERR_SerialTimeout;       
-            osMessage << "<MP285::Ctrl::checkError> ("<< "XYStage Read" << ") ErrorCode=[" << MPError::Instance()->GetErrorText(nErrorCode).c_str() << "])";
-        }
-        else if (sAnswer[0] == '2')
-        {
-            // Serial command buffer full
-            nErrorCode = MPError::MPERR_SerialBufferFull;       
-            osMessage << "<MP285::Ctrl::checkError> ("<< "XYStage Read" << ") ErrorCode=[" << MPError::Instance()->GetErrorText(nErrorCode).c_str() << "])";
-        }
-        else if (sAnswer[0] == '4')
-        {
-            // Invalid serial command
-            nErrorCode = MPError::MPERR_SerialInpInvalid;       
-            osMessage << "<MP285::Ctrl::checkError> ("<< "XYStage Read" << ") ErrorCode=[" << MPError::Instance()->GetErrorText(nErrorCode).c_str() << "])";
-        }
-        else if (sAnswer[0] == '8')
-        {
-            // Serial command interrupt motion
-            nErrorCode = MPError::MPERR_SerialIntrupMove;       
-            osMessage << "<MP285::Ctrl::checkError> ("<< "XYStage Read" << ") ErrorCode=[" << MPError::Instance()->GetErrorText(nErrorCode).c_str() << "])";
-        }
-    }
-    else
-    {
-        // No response from serial port
-        nErrorCode = MPError::MPERR_SerialZeroReturn;
-        osMessage << "<MP285::Ctrl::checkError> (" <<  "XYStage Read" << ") Response=[" << MPError::Instance()->GetErrorText(nErrorCode).c_str() << "])";
-    }
-
-    this->LogMessage(osMessage.str().c_str());
-
-    if (nErrorCode > 0) return DEVICE_SERIAL_INVALID_RESPONSE;
-    
-    sResponse.append(sAnswer, strlen(sAnswer));
-
-    return DEVICE_OK;
-}
-#endif 

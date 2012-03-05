@@ -223,12 +223,13 @@ int ClearPort(MM::Device& device, MM::Core& core, const char* sPort)
 
 bool            MP285::m_yInstanceFlag      = false;        // instance flag
 bool            MP285::m_yDeviceAvailable   = false;        // MP285 devices availability
+int				MP285::m_nDebugLogFlag		= 0;			// MP285 debug log flag
 MP285*          MP285::m_pMP285             = NULL;         // single copy MP285
 int             MP285::m_nResolution        = 10;           // MP285 resolution
 int             MP285::m_nMotionMode        = 0;            // motor motion mode
 int             MP285::m_nUm2UStep          = 25;           // unit to convert um to uStep
 int             MP285::m_nUStep2Nm          = 40;           // unit to convert uStep to nm
-int             MP285::m_nTimeoutInterval   = 1000;         // timeout interval
+int             MP285::m_nTimeoutInterval   = 10000;        // timeout interval
 int             MP285::m_nTimeoutTrys       = 5;            // timeout trys
 long            MP285::m_lVelocity          = 2000;         // velocity
 double          MP285::m_dPositionX         = 0.00;         // X Position
@@ -239,32 +240,39 @@ std::string MP285::m_sPort;                                 // serial port symbo
 
 MP285::MP285()
 {
-    MP285::m_sMPStr[MP285::MPSTR_CtrlDevName]       = "MP285 Controller";               // MP285 Controllet device name
-    MP285::m_sMPStr[MP285::MPSTR_XYStgaeDevName]    = "MP285 XY Stage";                 // MP285 XY Stage device name
-    MP285::m_sMPStr[MP285::MPSTR_ZStageDevName]     = "MP285 Z Stage";                  // MP286 Z Stage device name
-    MP285::m_sMPStr[MP285::MPSTR_MP285Version]      = "2.05.028";                       // MP285 adpater version number
-    MP285::m_sMPStr[MP285::MPSTR_MP285VerLabel]     = "MP285 Adapter Version";          // property MP285 ADAPTER VERSION label
-    MP285::m_sMPStr[MP285::MPSTR_CommStateLabel]    = "MP285 Comm. Status";             // property MP285 COMM. STATUS label
-    MP285::m_sMPStr[MP285::MPSTR_FirmwareVerLabel]  = "Firmware Version";               // property FIRMWARE VERSION label
-    MP285::m_sMPStr[MP285::MPSTR_ResolutionLabel]   = "Resolution (10 or 50)";          // property RESOLUION label
-    MP285::m_sMPStr[MP285::MPSTR_AccelLabel]        = "Acceleration";                   // Property ACCELERATION label
-    MP285::m_sMPStr[MP285::MPSTR_Um2UStepUnit]      = "um to uStep";                    // property um to ustep label
-    MP285::m_sMPStr[MP285::MPSTR_UStep2NmUnit]      = "uStep to nm";                    // property ustep to nm label
-    MP285::m_sMPStr[MP285::MPSTR_SetPositionX]      = "Set Position X (um)";            // property get POSITION X label
-    MP285::m_sMPStr[MP285::MPSTR_SetPositionY]      = "Set Position Y (um)";            // property get POSITION Y label
-    MP285::m_sMPStr[MP285::MPSTR_SetPositionZ]      = "Set Position Z (um)";            // property get POSITION Z label
-    MP285::m_sMPStr[MP285::MPSTR_GetPositionX]      = "Get Position X (um)";            // property set POSITION X label
-    MP285::m_sMPStr[MP285::MPSTR_GetPositionY]      = "Get Position Y (um)";            // property set POSITION Y label
-    MP285::m_sMPStr[MP285::MPSTR_GetPositionZ]      = "Get Position Z (um)";            // property set POSITION Z label
-    MP285::m_sMPStr[MP285::MPSTR_VelocityLabel]     = "Velocity (um/s)";                // property VELOCITY label
-    MP285::m_sMPStr[MP285::MPSTR_MotionMode]        = "Mode (0=absolute/1=relative)";   // property MODE label
-    MP285::m_sMPStr[MP285::MPSTR_PauseMode]         = "Pause (0=continue/1=pause)";     // property PAUSE label
-    MP285::m_sMPStr[MP285::MPSTR_SetOrigin]         = "Origin (1=set)";                 // property ORIGIN label
-    MP285::m_sMPStr[MP285::MPSTR_Reset]             = "Reset (1=reset)";                // property RESET label
-    MP285::m_sMPStr[MP285::MPSTR_Status]            = "Status (1=update)";              // property STATUS label
-    MP285::m_sMPStr[MP285::MPSTR_TimeoutInterval]   = "Timeout Interval (ms)";          // property Timeout Interval
-    MP285::m_sMPStr[MP285::MPSTR_TimeoutTrys]       = "Timeout Trys";                   // property Timeout Trys
-    MP285::m_sMPStr[MP285::MPSTR_LogFilename]       = "MP285Log.txt";                   // MP285 Logfile name
+    MP285::m_sMPStr[MP285::MPSTR_CtrlDevName]       = "MP285 Controller";					// MP285 Controllet device name
+    MP285::m_sMPStr[MP285::MPSTR_XYStgaeDevName]    = "MP285 XY Stage";						// MP285 XY Stage device name
+    MP285::m_sMPStr[MP285::MPSTR_ZStageDevName]     = "MP285 Z Stage";						// MP286 Z Stage device name
+    MP285::m_sMPStr[MP285::MPSTR_MP285Version]      = "2.05.035";							// MP285 adpater version number
+    MP285::m_sMPStr[MP285::MPSTR_LogFilename]       = "MP285Log.txt";						// MP285 Logfile name
+	MP285::m_sMPStr[MP285::MPSTR_CtrlDevNameLabel]  = "M.00 Controller ";					// MP285 Controller device name label
+	MP285::m_sMPStr[MP285::MPSTR_CtrlDevDescLabel]  = "M.01 Controller ";					// MP285 Controller device description label
+    MP285::m_sMPStr[MP285::MPSTR_FirmwareVerLabel]  = "M.02 Firmware Version";				// MP285 FIRMWARE VERSION label
+    MP285::m_sMPStr[MP285::MPSTR_MP285VerLabel]     = "M.03 MP285 Adapter Version";			// MP285 ADAPTER VERSION label
+	MP285::m_sMPStr[MP285::MPSTR_DebugLogFlagLabel] = "M.04 Debug Log Flag";				// MP285 Debug Lg Flag Label
+    MP285::m_sMPStr[MP285::MPSTR_CommStateLabel]    = "M.05 MP285 Comm. Status";			// MP285 COMM. STATUS label
+    MP285::m_sMPStr[MP285::MPSTR_ResolutionLabel]   = "M.06 Resolution (10 or 50)";			// MP285 RESOLUION label
+    MP285::m_sMPStr[MP285::MPSTR_AccelLabel]        = "M.07 Acceleration";					// MP285 ACCELERATION label
+    MP285::m_sMPStr[MP285::MPSTR_Um2UStepUnit]      = "M.08 um to uStep";					// MP285 um to ustep label
+    MP285::m_sMPStr[MP285::MPSTR_UStep2NmUnit]      = "M.09 uStep to nm";					// MP285 ustep to nm label
+    MP285::m_sMPStr[MP285::MPSTR_VelocityLabel]     = "M.10 Velocity (um/s)";				// MP285 VELOCITY label
+    MP285::m_sMPStr[MP285::MPSTR_MotionMode]        = "M.11 Mode (0=ABS/1=REL)";			// MP285 MODE label
+    MP285::m_sMPStr[MP285::MPSTR_SetOrigin]         = "M.12 Origin (1=set)";                // MP285 ORIGIN label
+    MP285::m_sMPStr[MP285::MPSTR_TimeoutInterval]   = "M.13 Timeout Interval (ms)";         // MP285 Timeout Interval
+    MP285::m_sMPStr[MP285::MPSTR_TimeoutTrys]       = "M.14 Timeout Trys";                  // MP285 Timeout Trys
+	MP285::m_sMPStr[MP285::MPSTR_XYDevNameLabel]    = "M.15 XY Stage ";						// MP285 XY stage device name label
+	MP285::m_sMPStr[MP285::MPSTR_XYDevDescLabel]    = "M.16 XY Stage ";						// MP285 XY stage device description label
+    MP285::m_sMPStr[MP285::MPSTR_SetPositionX]      = "M.17 Set Position X (um)";			// MP285 set POSITION X label
+    MP285::m_sMPStr[MP285::MPSTR_SetPositionY]      = "M.18 Set Position Y (um)";			// MP285 set POSITION Y label
+    MP285::m_sMPStr[MP285::MPSTR_GetPositionX]      = "M.19 Get Position X (um)";			// MP285 get POSITION X label
+    MP285::m_sMPStr[MP285::MPSTR_GetPositionY]      = "M.20 Get Position Y (um)";			// MP285 get POSITION Y label
+	MP285::m_sMPStr[MP285::MPSTR_ZDevNameLabel]     = "M.21 Z Stage ";						// MP285 Z stage device name label
+	MP285::m_sMPStr[MP285::MPSTR_ZDevDescLabel]     = "M.22 Z Stage ";						// MP285 Z stage device description label
+    MP285::m_sMPStr[MP285::MPSTR_SetPositionZ]      = "M.23 Set Position Z (um)";			// MP285 set POSITION Z label
+    MP285::m_sMPStr[MP285::MPSTR_GetPositionZ]      = "M.24 Get Position Z (um)";			// MP285 get POSITION Z label
+    MP285::m_sMPStr[MP285::MPSTR_PauseMode]         = "M.25 Pause (0=continue/1=pause)";    // property PAUSE label
+    MP285::m_sMPStr[MP285::MPSTR_Reset]             = "M.26 Reset (1=reset)";               // property RESET label
+    MP285::m_sMPStr[MP285::MPSTR_Status]            = "M.27 Status (1=update)";             // property STATUS label
 }
 
 MP285::~MP285()
