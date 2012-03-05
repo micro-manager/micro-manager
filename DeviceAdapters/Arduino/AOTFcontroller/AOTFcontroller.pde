@@ -164,14 +164,14 @@
             currentPattern_ = currentPattern_ & B00111111;
             if (!blanking_)
               PORTB = currentPattern_;
-            Serial.print(1, BYTE);
+            Serial.write( byte(1));
           }
           break;
           
        // Get digital output
        case 2:
-          Serial.print(2, BYTE);
-          Serial.print(PORTB, BYTE);
+          Serial.write( byte(2));
+          Serial.write( PORTB);
           break;
           
        // Set Analogue output (TODO: save for 'Get Analogue output')
@@ -184,10 +184,10 @@
               if (waitForSerial(timeOut_)) {
                 byte lsb = Serial.read();
                 analogueOut(channel, msb, lsb);
-                Serial.print(3, BYTE);
-                Serial.print(channel, BYTE);
-                Serial.print(msb, BYTE);
-                Serial.print(lsb, BYTE);
+                Serial.write( byte(3));
+                Serial.write( channel);
+                Serial.write(msb);
+                Serial.write(lsb);
               }
            }
          }
@@ -201,14 +201,14 @@
               if (waitForSerial(timeOut_)) {
                 triggerPattern_[patternNumber] = Serial.read();
                 triggerPattern_[patternNumber] = triggerPattern_[patternNumber] & B00111111;
-                Serial.print(5, BYTE);
-                Serial.print(patternNumber, BYTE);
-                Serial.print(triggerPattern_[patternNumber], BYTE);
+                Serial.write( byte(5));
+                Serial.write( patternNumber);
+                Serial.write( triggerPattern_[patternNumber]);
                 break;
               }
             }
           }
-          Serial.print("n:");
+          Serial.write( "n:");//Serial.print("n:");
           break;
           
        // Sets the number of digital patterns that will be used
@@ -217,8 +217,8 @@
            int pL = Serial.read();
            if ( (pL >= 0) && (pL <= 12) ) {
              patternLength_ = pL;
-             Serial.print(6, BYTE);
-             Serial.print(patternLength_, BYTE);
+             Serial.write( byte(6));
+             Serial.write( patternLength_);
            }
          }
          break;
@@ -227,8 +227,8 @@
        case 7:
          if (waitForSerial(timeOut_)) {
            skipTriggers_ = Serial.read();
-           Serial.print(7, BYTE);
-           Serial.print(skipTriggers_, BYTE);
+           Serial.write( byte(7));
+           Serial.write( skipTriggers_);
          }
          break;
          
@@ -239,7 +239,7 @@
            triggerNr_ = -skipTriggers_;
            int state = digitalRead(inPin_);
            PORTB = B00000000;
-           Serial.print(8, BYTE);
+           Serial.write( byte(8));
            while (Serial.available() == 0) {
              int tmp = digitalRead(inPin_);
              if (tmp != state) {
@@ -259,8 +259,8 @@
          
          // return result from last triggermode
        case 9:
-          Serial.print(9, BYTE);
-          Serial.print(triggerNr_, BYTE);
+          Serial.write( byte(9));
+          Serial.write( triggerNr_);
           break;
           
        // Sets time interval for timed trigger mode
@@ -277,8 +277,8 @@
                   lowByte = Serial.read();
                 highByte = highByte << 8;
                 triggerDelay_[patternNumber] = highByte | lowByte;
-                Serial.print(10, BYTE);
-                Serial.print(patternNumber, BYTE);
+                Serial.write( byte(10));
+                Serial.write(patternNumber);
                 break;
               }
             }
@@ -289,8 +289,8 @@
        case 11:
          if (waitForSerial(timeOut_)) {
            repeatPattern_ = Serial.read();
-           Serial.print(11, BYTE);
-           Serial.print(repeatPattern_, BYTE);
+           Serial.write( byte(11));
+           Serial.write( repeatPattern_);
          }
          break;
 
@@ -298,7 +298,7 @@
        case 12: 
          if (patternLength_ > 0) {
            PORTB = B00000000;
-           Serial.print(12, BYTE);
+           Serial.write( byte(12));
            for (byte i = 0; i < repeatPattern_ && (Serial.available() == 0); i++) {
              for (int j = 0; j < patternLength_ && (Serial.available() == 0); j++) {
                PORTB = triggerPattern_[j];
@@ -312,13 +312,13 @@
        // Blanks output based on TTL input
        case 20:
          blanking_ = true;
-         Serial.print(20, BYTE);
+         Serial.write( byte(20));
          break;
          
        // Stops blanking mode
        case 21:
          blanking_ = false;
-         Serial.print(21, BYTE);
+         Serial.write( byte(21));
          break;
          
        // Sets 'polarity' of input TTL for blanking mode
@@ -330,7 +330,7 @@
            else
              blankOnHigh_= false;
          }
-         Serial.print(22, BYTE);
+         Serial.write( byte(22));
          break;
          
        // Gives identification of the device
@@ -344,8 +344,8 @@
          break;
 
        case 40:
-         Serial.print(40, BYTE);
-         Serial.print(PINC, BYTE);
+         Serial.write( byte(40));
+         Serial.write( PINC);
          break;
          
        case 41:
@@ -353,10 +353,10 @@
            int pin = Serial.read();  
            if (pin >= 0 && pin <=5) {
               int val = analogRead(pin);
-              Serial.print(41, BYTE);
-              Serial.print(pin, BYTE);
-              Serial.print(highByte(val), BYTE);
-              Serial.print(lowByte(val), BYTE);
+              Serial.write( byte(41));
+              Serial.write( pin);
+              Serial.write( highByte(val));
+              Serial.write( lowByte(val));
            }
          }
          break;
@@ -366,15 +366,15 @@
            int pin = Serial.read();
            if (waitForSerial(timeOut_)) {
              int state = Serial.read();
-             Serial.print(42, BYTE);
-             Serial.print(pin, BYTE);
+             Serial.write( byte(42));
+             Serial.write( pin);
              if (state == 0) {
                 digitalWrite(14+pin, LOW);
-                Serial.print(0, BYTE);
+                Serial.write( byte(0));
              }
              if (state == 1) {
                 digitalWrite(14+pin, HIGH);
-                Serial.print(1, BYTE);
+                Serial.write( byte(1));
              }
            }
          }
@@ -461,4 +461,5 @@ void blankInverted()
 
 */
   
+
 
