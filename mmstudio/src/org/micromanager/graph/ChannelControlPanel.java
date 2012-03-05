@@ -471,7 +471,7 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
       }
 
       cache.setChannelVisibility(channelIndex_, channelNameCheckbox_.isSelected());
-      mdPanel_.drawWithoutUpdate();
+      ci.updateAndDraw();
    }
 
    public void setFullScale() {
