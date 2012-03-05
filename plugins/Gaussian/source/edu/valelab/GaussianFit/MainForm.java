@@ -279,7 +279,7 @@ public class MainForm extends javax.swing.JFrame implements ij.ImageListener{
         getContentPane().add(jSeparator3);
         jSeparator3.setBounds(20, 310, 220, 10);
 
-        noiseToleranceTextField_.setFont(new java.awt.Font("Lucida Grande", 0, 10)); // NOI18N
+        noiseToleranceTextField_.setFont(new java.awt.Font("Lucida Grande", 0, 10));
         noiseToleranceTextField_.setText("2000");
         noiseToleranceTextField_.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -334,7 +334,7 @@ public class MainForm extends javax.swing.JFrame implements ij.ImageListener{
         getContentPane().add(jLabel11);
         jLabel11.setBounds(20, 140, 147, 16);
 
-        jLabel12.setFont(new java.awt.Font("Lucida Grande", 0, 10)); // NOI18N
+        jLabel12.setFont(new java.awt.Font("Lucida Grande", 0, 10));
         jLabel12.setText("Pre-Filter");
         getContentPane().add(jLabel12);
         jLabel12.setBounds(90, 160, 60, 13);
@@ -344,7 +344,7 @@ public class MainForm extends javax.swing.JFrame implements ij.ImageListener{
         getContentPane().add(jLabel14);
         jLabel14.setBounds(50, 230, 56, 13);
 
-        preFilterComboBox_.setFont(new java.awt.Font("Lucida Grande", 0, 10)); // NOI18N
+        preFilterComboBox_.setFont(new java.awt.Font("Lucida Grande", 0, 10));
         preFilterComboBox_.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "None", "Gaussian1-5" }));
         preFilterComboBox_.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -469,6 +469,8 @@ public class MainForm extends javax.swing.JFrame implements ij.ImageListener{
         });
         getContentPane().add(endTrackCheckBox_);
         endTrackCheckBox_.setBounds(20, 400, 150, 23);
+
+        endTrackSpinner_.setModel(new javax.swing.SpinnerNumberModel(Integer.valueOf(1), Integer.valueOf(1), null, Integer.valueOf(1)));
         getContentPane().add(endTrackSpinner_);
         endTrackSpinner_.setBounds(160, 400, 50, 28);
 
@@ -486,12 +488,12 @@ public class MainForm extends javax.swing.JFrame implements ij.ImageListener{
         getContentPane().add(showOverlay_);
         showOverlay_.setBounds(20, 180, 60, 20);
 
-        jLabel20.setFont(new java.awt.Font("Lucida Grande", 0, 10)); // NOI18N
+        jLabel20.setFont(new java.awt.Font("Lucida Grande", 0, 10));
         jLabel20.setText("Noise tolerance");
         getContentPane().add(jLabel20);
         jLabel20.setBounds(90, 180, 76, 20);
 
-        fitMethodComboBox1.setFont(new java.awt.Font("Lucida Grande", 0, 10)); // NOI18N
+        fitMethodComboBox1.setFont(new java.awt.Font("Lucida Grande", 0, 10));
         fitMethodComboBox1.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "Simplex", "LevenBerg-Marq" }));
         fitMethodComboBox1.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -558,6 +560,7 @@ public class MainForm extends javax.swing.JFrame implements ij.ImageListener{
        prefs_.putInt(FRAMEHEIGHT, this.getHeight());
        prefs_.putBoolean(ENDTRACKBOOL, endTrackCheckBox_.isSelected() );
        prefs_.putInt(ENDTRACKINT, (Integer) endTrackSpinner_.getValue() );
+       prefs_.putInt(FITMODE, fitMethodComboBox1.getSelectedIndex());
               
        this.setVisible(false);
     }//GEN-LAST:event_formWindowClosing

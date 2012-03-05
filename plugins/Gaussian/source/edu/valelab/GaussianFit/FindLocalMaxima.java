@@ -24,6 +24,8 @@ import java.awt.Rectangle;
  * @author nico
  */
 public class FindLocalMaxima {
+   private static GaussianBlur filter_ = new GaussianBlur();
+   private static ImageCalculator ic_ = new ImageCalculator();
    
    public enum FilterType {
       NONE,
@@ -48,19 +50,16 @@ public class FindLocalMaxima {
       // Prefilter if needed
       switch (filterType) {
          case GAUSSIAN1_5 : 
-            // TODO: if there is an ROI, we only need to filter in the ROI
+            // TODO: if there is an ROI, we only need to filter_ in the ROI
             ImageProcessor iProcG1 = iProc.duplicate();
             ImageProcessor iProcG5 = iProc.duplicate();
-            GaussianBlur filter = new GaussianBlur();
-            filter.blur(iProcG1, 1);
-            filter.blur(iProcG5, 5);
+            filter_.blur(iProcG1, 1);
+            filter_.blur(iProcG5, 5);
             ImagePlus p1 = new ImagePlus("G1", iProcG1);
             ImagePlus p5 = new ImagePlus("G5", iProcG5);
-            ImageCalculator ic = new ImageCalculator();
-            ic.run("subtract", p1, p5);
+            ic_.run("subtract", p1, p5);
             iProc = p1.getProcessor();
-             
-          
+                      
             break;
       }
 
