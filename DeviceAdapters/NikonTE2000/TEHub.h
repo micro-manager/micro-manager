@@ -54,6 +54,9 @@ public:
    CommandMode GetCommandMode() {return commandMode_.compare("c") == 0 ? Sync : Async;}
    void SetCommandMode(CommandMode cm) {cm == Sync ? commandMode_ = "c" : commandMode_ = "f";}
 
+   bool IsComponentMounted(MM::Device& device, MM::Core& core, char* deviceCode);
+   bool DetectPerfectFocus(MM::Device& device, MM::Core& core);
+
    int SetNosepiecePosition(MM::Device& device, MM::Core& core, int pos);
    int GetNosepiecePosition(MM::Device& device, MM::Core& core, int& pos);
    int GetNosepieceMountingStatus(MM::Device& device, MM::Core& core, int& status);

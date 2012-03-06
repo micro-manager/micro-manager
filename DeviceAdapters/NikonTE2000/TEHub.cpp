@@ -53,6 +53,29 @@ void TEHub::LogError(int id, MM::Device& device, MM::Core& core, const char* fun
 
 
 ///////////////////////////////////////////////////////////////////////////////
+// Detecting devices
+///////////////////////////////////////////////////////////////////////////////
+
+
+bool TEHub::IsComponentMounted(MM::Device& device, MM::Core& core, char* deviceCode)
+{
+   ExecuteCommand(device, core, "r", deviceCode);
+   string value;
+   ParseResponse(device, core, deviceCode, value);
+
+   int mountingStatus = atoi(value.c_str());
+   return mountingStatus == 1;
+}
+
+bool TEHub::DetectPerfectFocus(MM::Device& device, MM::Core& core)
+{
+   char* command = "TRN1rVEN";
+   ExecuteCommand(device, core, "c", command);
+   string value;
+   return DEVICE_OK == ParseResponse(device, core, "TRN", value);
+}
+
+///////////////////////////////////////////////////////////////////////////////
 // Nosepiece commands
 ///////////////////////////////////////////////////////////////////////////////
 

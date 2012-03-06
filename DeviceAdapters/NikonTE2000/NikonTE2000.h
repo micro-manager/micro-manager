@@ -38,7 +38,7 @@
 #define ERR_PFS_NOT_CONNECTED     10006
 #define ERR_PFS_FOCUS_FAILED      10007
 
-class Hub : public CGenericBase<Hub>
+class Hub : public HubBase<Hub>
 {
 public:
    Hub();
@@ -51,12 +51,14 @@ public:
   
    void GetName(char* pszName) const;
    bool Busy();
+   int DetectInstalledDevices();
 
    // action interface
    // ----------------
    int OnPort(MM::PropertyBase* pProp, MM::ActionType eAct);
 
 private:
+   void InstallIfMounted(std::string deviceName, char* deviceCode);
    bool initialized_;
    std::string name_;
    std::string port_;

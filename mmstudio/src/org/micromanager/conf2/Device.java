@@ -206,10 +206,7 @@ import org.micromanager.utils.ReportingUtils;
          StrVector installed = core.getInstalledDevices(getName());
          // end of discovery
          
-         childDevices_ = new String[(int)installed.size()];
-         for (int i=0; i<installed.size(); i++) {
-            childDevices_[i] = new String(installed.get(i));
-         }
+         childDevices_ = installed.toArray();
       }
    }
    

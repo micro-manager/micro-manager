@@ -259,6 +259,40 @@ int Hub::Initialize()
    return DEVICE_OK;
 }
 
+void Hub::InstallIfMounted(std::string deviceName, char* deviceCode)
+{
+   if (g_hub.IsComponentMounted(*this, *GetCoreCallback(), deviceCode))
+   {
+      MM::Device* pDev = ::CreateDevice(deviceName.c_str());
+      if (pDev)
+      {
+         AddInstalledDevice(pDev);
+      }
+   }
+}
+
+int Hub::DetectInstalledDevices()
+{
+   AddInstalledDevice(CreateDevice(g_LampName));
+
+   InstallIfMounted(g_NosepieceName, "RCR");
+   InstallIfMounted(g_OpticalPathName, "PCR");
+   InstallIfMounted(g_AnalyzerName, "ACR");
+   InstallIfMounted(g_FilterBlockName, "HCR");
+   InstallIfMounted(g_EpiShutterName, "SCR");
+   InstallIfMounted(g_UniblitzShutterName, "DCR");
+   InstallIfMounted(g_FocusName, "SZR");
+   InstallIfMounted(g_ExcitationFilterWheelName, "FCR");
+   
+   if (g_hub.DetectPerfectFocus(*this, *GetCoreCallback()))
+   {
+      AddInstalledDevice(CreateDevice(g_AutoFocusName));
+      AddInstalledDevice(CreateDevice(g_PFSOffsetName));
+   }
+   
+   return DEVICE_OK;
+}
+
 int Hub::Shutdown()
 {
    if (initialized_)
@@ -1664,8 +1698,9 @@ PerfectFocus::~PerfectFocus()
 {
 }
       
-void PerfectFocus::GetName(char* /*pszName*/) const
+void PerfectFocus::GetName(char* Name) const
 {
+   CDeviceUtils::CopyLimitedString(Name, ::g_AutoFocusName);
 }
 
 bool PerfectFocus::Busy()
