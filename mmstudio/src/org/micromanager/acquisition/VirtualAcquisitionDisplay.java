@@ -111,6 +111,7 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
    private double framesPerSec_ = 7;
    private Timer zAnimationTimer_;
    private Timer tAnimationTimer_;
+   private int animatedSliceIndex_ = -1;
    private Component zIcon_, pIcon_, tIcon_, cIcon_;
    private HashMap<Integer, Integer> zStackMins_;
    private HashMap<Integer, Integer> zStackMaxes_;
@@ -1058,12 +1059,6 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
       if (hyperImage_ == null) {
          startup(tags);
       }
-      final boolean framesAnimated = isTAnimated(), slicesAnimated = isZAnimated();
-      final int animatedFrameIndex = hyperImage_.getFrame(), animatedSliceIndex = hyperImage_.getSlice();
-      if (framesAnimated || slicesAnimated) {
-         animateFrames(false);
-         animateSlices(false);
-      }
 
       int channel = 0, frame = 0, slice = 0, position = 0, superChannel = 0;
       try {
@@ -1075,6 +1070,18 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
       } catch (Exception ex) {
          ReportingUtils.logError(ex);
       }
+      
+      //This block allows animation to be reset to where it was before iamges were added
+      final boolean framesAnimated = isTAnimated(), slicesAnimated = isZAnimated();
+      final int animatedFrameIndex = hyperImage_.getFrame();
+      if (slice == 0)
+         animatedSliceIndex_ = hyperImage_.getSlice();
+      if (framesAnimated || slicesAnimated) {
+         animateFrames(false);
+         animateSlices(false);
+      }
+
+     
 
       //make sure pixels get properly set
       if (hyperImage_ != null && frame == 0) {
@@ -1126,7 +1133,7 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
 
          public void run() {
             updateAndDraw();
-            restartAnimationAfterShowing(animatedFrameIndex, animatedSliceIndex, framesAnimated, slicesAnimated);
+            restartAnimationAfterShowing(animatedFrameIndex, animatedSliceIndex_, framesAnimated, slicesAnimated);
          }
       };
 
@@ -1138,7 +1145,7 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
          }
       } else {
          updateAndDraw();
-         restartAnimationAfterShowing(animatedFrameIndex, animatedSliceIndex, framesAnimated, slicesAnimated);
+         restartAnimationAfterShowing(animatedFrameIndex, animatedSliceIndex_, framesAnimated, slicesAnimated);
       }
 
       if (eng_!= null)
@@ -1155,6 +1162,7 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
       } else if (slicesAnimated) {
          hyperImage_.setPosition(hyperImage_.getChannel(), slice+1, hyperImage_.getFrame());
          animateSlices(true);
+         System.out.println(slice);
       }
    }
 
@@ -1212,9 +1220,11 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
       if (preferredPositionTimer_ == null) {
          preferredPositionTimer_ = new Timer(250, new ActionListener() {
             public void actionPerformed(ActionEvent e) {
-               int c = hyperImage_.getChannel(), s = hyperImage_.getSlice(), f = hyperImage_.getFrame();
-               hyperImage_.setPosition(preferredChannel_ == -1 ? c : preferredChannel_,
-                       preferredSlice_ == -1 ? s : preferredSlice_, f);
+               int c = preferredChannel_ == -1 ? hyperImage_.getChannel() : preferredChannel_;
+               int s = preferredSlice_ == -1 ? hyperImage_.getSlice() : preferredSlice_;
+               boolean zAnimated = zAnimationTimer_ != null && zAnimationTimer_.isRunning();
+               
+               hyperImage_.setPosition(c, zAnimated ? hyperImage_.getSlice() : s ,hyperImage_.getFrame());
                if (pSelector_ != null && preferredPosition_ > -1) {
                   if (eng_.getAcqOrderMode() != AcqOrderMode.POS_TIME_CHANNEL_SLICE
                           && eng_.getAcqOrderMode() != AcqOrderMode.POS_TIME_SLICE_CHANNEL) {
