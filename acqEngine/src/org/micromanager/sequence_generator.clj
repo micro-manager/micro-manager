@@ -124,13 +124,12 @@
   (if (pos? (count slices))
     (let [middle-slice (get slices (unchecked-divide-int (count slices) 2))]
       (filter 
-        #(let [x (or 
-                   (= middle-slice (% :slice))
-                   (nil? (% :channel))
-                   (get-in % [:channel :use-z-stack]))]
-           (println x) x)
+        #(or 
+           (= middle-slice (% :slice))
+           (nil? (% :channel))
+           (get-in % [:channel :use-z-stack]))
         events))
-    1))
+    events))
 
 (defn different [e1 e2 selector]
   "Determines where values in two event maps
