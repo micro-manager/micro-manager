@@ -170,14 +170,14 @@ public class FitAllThread extends GaussianInfo implements Runnable  {
 
       int nrImages = siPlus.getNChannels() * siPlus.getNSlices() * siPlus.getNFrames();
       int imageCount = 0;
+      try {
       for (int c = 1; c <= siPlus.getNChannels(); c++) {
          for (int z = 1; z <= siPlus.getNSlices(); z++) {
             for (int f = 1; f <= siPlus.getNFrames(); f++ ) {
 
                ij.IJ.showStatus("Finding Maxima...");
                imageCount++;
-               ij.IJ.showProgress(imageCount, nrImages);
-
+               
                ImageProcessor siProc;
                Polygon p;
                synchronized(GaussianSpotData.lockIP) {
@@ -186,22 +186,10 @@ public class FitAllThread extends GaussianInfo implements Runnable  {
                   siProc = siPlus.getProcessor(); 
 
                   p = FindLocalMaxima.FindMax(siPlus, 1, noiseTolerance_, preFilterType_);
-                  //p = FindLocalMaxima.noiseFilter(siProc, p, noiseTolerance_);
                }
 
-                  /*
-                  IJ.run("Find Maxima...", "noise=" + noiseTolerance_ + " output=List");
-               }
-               ResultsTable rt = ResultsTable.getResultsTable();
+               ij.IJ.showProgress(imageCount, nrImages);
 
-               if (rt.getCounter() > nrSpots)
-                  nrSpots = rt.getCounter();
-               int[][] sC = new int[rt.getCounter()][2];
-               for (int j=0; j < rt.getCounter(); j++) {
-                  sC[j][0] = (int) rt.getValueAsDouble(0, j);
-                  sC[j][1] = (int) rt.getValueAsDouble(1, j);
-               }
-               */
 
                if (p.npoints > nrSpots)
                   nrSpots = p.npoints;
@@ -237,6 +225,11 @@ public class FitAllThread extends GaussianInfo implements Runnable  {
       // start ProgresBar thread
       ProgressThread pt = new ProgressThread(sourceList_);
       pt.init();
+      
+      
+      } catch (OutOfMemoryError ome) {
+         ij.IJ.error("Out Of Memory");
+      }
 
       // Send working threads signal that we are done:
       GaussianSpotData lastSpot = new GaussianSpotData(null, -1, 1, -1, -1, -1, -1, -1);

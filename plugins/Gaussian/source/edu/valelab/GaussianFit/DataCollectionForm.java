@@ -289,6 +289,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
         pairsButton = new javax.swing.JButton();
         c2CorrectButton = new javax.swing.JButton();
         referenceName_ = new javax.swing.JLabel();
+        unjitterButton_ = new javax.swing.JButton();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
         setTitle("Gaussian tracking data");
@@ -302,7 +303,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
         jTable1_.setModel(myTableModel_);
         jScrollPane1.setViewportView(jTable1_);
 
-        loadButton.setFont(new java.awt.Font("Lucida Grande", 0, 10)); // NOI18N
+        loadButton.setFont(new java.awt.Font("Lucida Grande", 0, 10));
         loadButton.setText("Load");
         loadButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -319,7 +320,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
         visualizationModel_.setFont(new java.awt.Font("Lucida Grande", 0, 10));
         visualizationModel_.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "Gaussian" }));
 
-        saveButton.setFont(new java.awt.Font("Lucida Grande", 0, 10)); // NOI18N
+        saveButton.setFont(new java.awt.Font("Lucida Grande", 0, 10));
         saveButton.setText("Save");
         saveButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -327,7 +328,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
             }
         });
 
-        removeButton.setFont(new java.awt.Font("Lucida Grande", 0, 10)); // NOI18N
+        removeButton.setFont(new java.awt.Font("Lucida Grande", 0, 10));
         removeButton.setText("Remove");
         removeButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -335,7 +336,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
             }
         });
 
-        showButton.setFont(new java.awt.Font("Lucida Grande", 0, 10)); // NOI18N
+        showButton.setFont(new java.awt.Font("Lucida Grande", 0, 10));
         showButton.setText("Show");
         showButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -343,7 +344,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
             }
         });
 
-        c2StandardButton.setFont(new java.awt.Font("Lucida Grande", 0, 10)); // NOI18N
+        c2StandardButton.setFont(new java.awt.Font("Lucida Grande", 0, 10));
         c2StandardButton.setText("2C Reference");
         c2StandardButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -351,7 +352,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
             }
         });
 
-        pairsButton.setFont(new java.awt.Font("Lucida Grande", 0, 10));
+        pairsButton.setFont(new java.awt.Font("Lucida Grande", 0, 10)); // NOI18N
         pairsButton.setText("Pairs");
         pairsButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -367,8 +368,16 @@ public class DataCollectionForm extends javax.swing.JFrame {
             }
         });
 
-        referenceName_.setFont(new java.awt.Font("Lucida Grande", 0, 11)); // NOI18N
+        referenceName_.setFont(new java.awt.Font("Lucida Grande", 0, 11));
         referenceName_.setText("jLabel1");
+
+        unjitterButton_.setFont(new java.awt.Font("Lucida Grande", 0, 10)); // NOI18N
+        unjitterButton_.setText("UnJitter");
+        unjitterButton_.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                unjitterButton_ActionPerformed(evt);
+            }
+        });
 
         org.jdesktop.layout.GroupLayout layout = new org.jdesktop.layout.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
@@ -400,7 +409,9 @@ public class DataCollectionForm extends javax.swing.JFrame {
                             .add(referenceName_, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 234, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)))
                     .add(layout.createSequentialGroup()
                         .add(93, 93, 93)
-                        .add(pairsButton)))
+                        .add(pairsButton)
+                        .add(89, 89, 89)
+                        .add(unjitterButton_)))
                 .add(20, 20, 20))
         );
         layout.setVerticalGroup(
@@ -422,7 +433,8 @@ public class DataCollectionForm extends javax.swing.JFrame {
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
                     .add(c2CorrectButton, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 19, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                    .add(pairsButton, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 19, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+                    .add(pairsButton, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 19, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                    .add(unjitterButton_, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 19, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(jScrollPane1, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 401, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
         );
@@ -802,6 +814,13 @@ public class DataCollectionForm extends javax.swing.JFrame {
       }
    }//GEN-LAST:event_c2CorrectButtonActionPerformed
 
+   private void unjitterButton_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_unjitterButton_ActionPerformed
+      int row = jTable1_.getSelectedRow();
+      if (row > -1) {     
+         unJitter(rowData_.get(row));
+      }
+   }//GEN-LAST:event_unjitterButton_ActionPerformed
+
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton c2CorrectButton;
@@ -815,6 +834,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
     private javax.swing.JButton removeButton;
     private javax.swing.JButton saveButton;
     private javax.swing.JButton showButton;
+    private javax.swing.JButton unjitterButton_;
     private javax.swing.JComboBox visualizationMagnification_;
     private javax.swing.JComboBox visualizationModel_;
     // End of variables declaration//GEN-END:variables
@@ -1091,6 +1111,65 @@ public class DataCollectionForm extends javax.swing.JFrame {
               rowData.timePoints_, true);
    }
    
+   
+   /**
+    * Creates a new data set that is corrected for motion blur
+    * Correction is performed by projecting 
+    * 
+    * @param rowData 
+    */
+   private void unJitter(final MyRowData rowData)
+   {
+      if (rowData.spotList_.size() <= 1) {
+         return;
+      }
+      
+      int mag = 4;
+      int width = mag * rowData.width_;
+      int height = mag * rowData.height_;
+      ImageProcessor ipRef = new ShortProcessor(width, height);
+      ImageProcessor ipTest = new ShortProcessor(width, height);
+      int size = width * height;
+      short pixels[] = new short[size];
+      ipRef.setPixels(pixels);
+      short testPixels[] = new short[size];
+      ipTest.setPixels(testPixels);
+      
+      double factor = (double) mag / rowData.pixelSizeUm_;
+
+      for (GaussianSpotData spot : rowData.spotList_) {
+         // for now take the first image as reference
+         if (spot.getFrame() == 1) {
+            int x = (int) (factor * spot.getXCenter());
+            int y = (int) (factor * spot.getYCenter());
+            int index = (y * width) + x;
+            if (index < size && index > 0) {
+               if (pixels[index] != -1) {
+                  pixels[index] += 255;
+               }
+            }
+         }
+         
+         if (spot.getFrame() == 2) {
+            int x = (int) (factor * spot.getXCenter());
+            int y = (int) (factor * spot.getYCenter());
+            int index = (y * width) + x;
+            if (index < size && index > 0) {
+               if (testPixels[index] != -1) {
+                  testPixels[index] += 255;
+               }
+            }
+         }
+      }
+
+      JitterDetector jd = new JitterDetector(ipRef);
+      double x = 0.0;
+      double y = 0.0;
+      jd.getJitter(ipTest, x, y);
+      
+
+   }
+   
    /**
     * Use the 2Channel calibration to create a new, corrected data set
     * 
@@ -1105,6 +1184,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
          ij.IJ.showMessage("No calibration data available.  First Calibrate using 2C Reference");
          return;
       }
+      
       
       ij.IJ.showStatus("Executing color correction");
       
