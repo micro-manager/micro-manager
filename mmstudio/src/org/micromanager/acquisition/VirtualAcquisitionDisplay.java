@@ -1141,7 +1141,8 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
          restartAnimationAfterShowing(animatedFrameIndex, animatedSliceIndex, framesAnimated, slicesAnimated);
       }
 
-      setPreferredScrollbarPositions();
+      if (eng_!= null)
+         setPreferredScrollbarPositions();
    }
    
    /**
@@ -1208,34 +1209,30 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
    }
 
    private void setPreferredScrollbarPositions() {
-      if (this.acquisitionIsRunning()) {
-         long nextImageTime = eng_.getNextWakeTime();
-         if (System.nanoTime() / 1000000 - nextImageTime < -1000) { //1 sec or more until next start
-            if (preferredPositionTimer_ == null) {
-               preferredPositionTimer_ = new Timer(1000, new ActionListener() {
-
-                  @Override
-                  public void actionPerformed(ActionEvent e) {
-                     IMMImagePlus ip = ((IMMImagePlus) hyperImage_);
-                     int c = hyperImage_.getChannel(), s = hyperImage_.getSlice(), f = hyperImage_.getFrame();
-                     hyperImage_.setPosition(preferredChannel_ == -1 ? c : preferredChannel_,
-                             preferredSlice_ == -1 ? s : preferredSlice_, f);
-                     if (pSelector_ != null && preferredPosition_ > -1) {
-                        if (eng_.getAcqOrderMode() != AcqOrderMode.POS_TIME_CHANNEL_SLICE
-                                && eng_.getAcqOrderMode() != AcqOrderMode.POS_TIME_SLICE_CHANNEL) {
-                           setPosition(preferredPosition_);
-                        }
-                     }
-                     preferredPositionTimer_.stop();;
+      if (preferredPositionTimer_ == null) {
+         preferredPositionTimer_ = new Timer(250, new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+               int c = hyperImage_.getChannel(), s = hyperImage_.getSlice(), f = hyperImage_.getFrame();
+               hyperImage_.setPosition(preferredChannel_ == -1 ? c : preferredChannel_,
+                       preferredSlice_ == -1 ? s : preferredSlice_, f);
+               if (pSelector_ != null && preferredPosition_ > -1) {
+                  if (eng_.getAcqOrderMode() != AcqOrderMode.POS_TIME_CHANNEL_SLICE
+                          && eng_.getAcqOrderMode() != AcqOrderMode.POS_TIME_SLICE_CHANNEL) {
+                     setPosition(preferredPosition_);
                   }
-               });
+               }
+               preferredPositionTimer_.stop();
             }
-            if (preferredPositionTimer_.isRunning()) {
-               return;
-            }
-            preferredPositionTimer_.start();
-         }
+         });
       }
+
+      if (preferredPositionTimer_.isRunning()) {
+         preferredPositionTimer_.restart();
+      } else {
+         preferredPositionTimer_.start();
+      }
+
+
    }
 
    private void updatePosition(int p) {
