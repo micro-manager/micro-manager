@@ -171,10 +171,10 @@
           (editingStopped [this e]
             (handle-group-text-changed e))))))
   
-(defn group-table-model
+(defn group-table-model []
   (proxy [AbstractTableModel] []
     (getColumnCount [] 1)
-    (getRowCount [] (count (core getAvailableConfigGroups))))
+    (getRowCount [] (count (core getAvailableConfigGroups)))))
     
 
 (defn show []
