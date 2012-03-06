@@ -129,10 +129,12 @@ public:
    MM::MMTime CurrentTime(void) { return GetCurrentMMTime(); };
 
 private:
-   int ResizeImageBuffer();
+   void PerformReleaseVersionCheck();
    void UnpackDataWithPadding(unsigned char* _pucSrcBuffer);
-   void initialiseDeviceCircularBuffer();
+   void InitialiseDeviceCircularBuffer();
+   void InitialiseSDK3Defaults();
 
+   int ResizeImageBuffer();
    static const double nominalPixelSizeUm_;
 
    ImgBuffer img_;
@@ -190,12 +192,10 @@ private:
    andor::IDeviceManager* deviceManager;
    andor::IDevice* systemDevice;
    andor::IDevice* cameraDevice;
-   andor::IInteger* imageSizeBytes;
    andor::IEnum* cycleMode;
    andor::IBufferControl* bufferControl;
    andor::ICommand* startAcquisitionCommand;
    andor::ICommand* stopAcquisitionCommand;
-   andor::IEnum* triggerMode;
    andor::ICommand* sendSoftwareTrigger;
    andor::IInteger* frameCount;
    andor::IFloat* frameRate;

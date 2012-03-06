@@ -1,6 +1,5 @@
 #include "FloatProperty.h"
 #include "AndorSDK3.h"
-#include "atcore++.h"
 
 using namespace andor;
 using namespace std;

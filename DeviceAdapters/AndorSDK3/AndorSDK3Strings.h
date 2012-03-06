@@ -6,6 +6,7 @@
 class TAndorSDK3Strings
 {
 public:
+   static const std::string ACQUISITION_AOI;
    static const std::string PIXEL_READOUT_RATE;
    static const std::string ELECTRONIC_SHUTTERING_MODE;
    static const std::string TEMPERATURE_CONTROL;
@@ -18,8 +19,12 @@ public:
    static const std::string SENSOR_COOLING;
    static const std::string OVERLAP;
    static const std::string FRAME_RATE;
+   static const std::string TRIGGER_MODE;
+   static const std::string GAIN_TEXT;
 };
 
+
+const std::string TAndorSDK3Strings::ACQUISITION_AOI("AcquisitionWindow");
 const std::string TAndorSDK3Strings::PIXEL_READOUT_RATE("PixelReadoutRate");
 const std::string TAndorSDK3Strings::ELECTRONIC_SHUTTERING_MODE("ElectronicShutteringMode");
 const std::string TAndorSDK3Strings::TEMPERATURE_CONTROL("TemperatureControl");
@@ -32,6 +37,8 @@ const std::string TAndorSDK3Strings::SPURIOUS_NOISE_FILTER("SpuriousNoiseFilter"
 const std::string TAndorSDK3Strings::SENSOR_COOLING("SensorCooling");
 const std::string TAndorSDK3Strings::OVERLAP("Overlap");
 const std::string TAndorSDK3Strings::FRAME_RATE("FrameRate");
+const std::string TAndorSDK3Strings::TRIGGER_MODE("TriggerMode");
+const std::string TAndorSDK3Strings::GAIN_TEXT("Sensitivity/DynamicRange");
 
 #endif //include only once
 

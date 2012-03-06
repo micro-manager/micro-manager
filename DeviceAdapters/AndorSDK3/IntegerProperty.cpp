@@ -1,7 +1,6 @@
 #include "IntegerProperty.h"
 #include "AndorSDK3.h"
 #include "SnapShotControl.h"
-#include "atcore++.h"
 
 using namespace andor;
 using namespace std;
