@@ -10,6 +10,8 @@ import ij.plugin.filter.Analyzer;
 import ij.process.FHT;
 import ij.process.ImageProcessor;
 import ij.process.ImageStatistics;
+import java.awt.Point;
+import java.awt.geom.Point2D;
 
 /**
  *
@@ -25,7 +27,7 @@ public class JitterDetector {
      //new ImagePlus("Ref test", ref_).show();
    }
    
-   public void getJitter(ImageProcessor test, double x, double y) {
+   public void getJitter(ImageProcessor test, Point2D.Double com) {
       FHT t = new FHT(test);
       t.transform();
       t.resetMinAndMax();
@@ -34,20 +36,20 @@ public class JitterDetector {
       FHT m = ref_.conjugateMultiply(t);
             
       m.inverseTransform();
-      m.swapQuadrants();
-      ij.IJ.showStatus("Display image");
-      m.resetMinAndMax();
+      //m.swapQuadrants();
+      //ij.IJ.showStatus("Display image");
+      //m.resetMinAndMax();
       int midx = m.getWidth() / 2;
       int midy = m.getHeight() / 2;
-      int hw = 32;
+      int hw = 16;
       m.setRoi(midx - hw, midy - hw, 2* hw, 2* hw);
       ImagePlus mp = new ImagePlus("JitterTest", m);
       //mp.show();
       
       ImageStatistics stats = mp.getStatistics(ij.measure.Measurements.CENTER_OF_MASS);
 
-      x = stats.xCenterOfMass;
-      y = stats.yCenterOfMass;
+      com.x = stats.xCenterOfMass;
+      com.y = stats.yCenterOfMass;
    }
    
 }

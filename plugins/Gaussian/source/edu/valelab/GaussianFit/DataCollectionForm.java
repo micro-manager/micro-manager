@@ -1144,25 +1144,17 @@ public class DataCollectionForm extends javax.swing.JFrame {
       ImageProcessor[] ip = new ImageProcessor[nrOfTests];
       short[][] pixels = new short[nrOfTests][width * height];
       
-      for (int i = 0; i < ip.length; i++) {
+      for (int i = 0; i < nrOfTests; i++) {
          ip[i] = new ShortProcessor(width, height);
          ip[i].setPixels(pixels[i]);
       }
-      
-      //ImageProcessor ipRef = new ShortProcessor(width, height);
-      //ImageProcessor ipTest = new ShortProcessor(width, height);
-      
-      //short pixels[] = new short[size];
-      //ipRef.setPixels(pixels);
-      //short testPixels[] = new short[size];
-      //ipTest.setPixels(testPixels);
       
       double factor = (double) mag / rowData.pixelSizeUm_;
 
       for (GaussianSpotData spot : rowData.spotList_) {
          // for now take the first image as reference
-         int j = spot.getFrame() / framesToCombine;
-         if (spot.getFrame() == 1) {
+         int j = (spot.getFrame() -1) / framesToCombine;
+         //if (spot.getFrame() == 1) {
             int x = (int) (factor * spot.getXCenter());
             int y = (int) (factor * spot.getYCenter());
             int index = (y * width) + x;
@@ -1171,28 +1163,21 @@ public class DataCollectionForm extends javax.swing.JFrame {
                   pixels[j][index] += 255;
                }
             }
-         }
-         /*
-         if (spot.getFrame() == 2) {
-            int x = (int) (factor * spot.getXCenter());
-            int y = (int) (factor * spot.getYCenter());
-            int index = (y * width) + x;
-            if (index < size && index > 0) {
-               if (testPixels[index] != -1) {
-                  testPixels[index] += 255;
-               }
-            }
-         }
-          
-          */
+
       }
 
       JitterDetector jd = new JitterDetector(ip[0]);
-      double x = 0.0;
-      double y = 0.0;
-      for (ImageProcessor i : ip) {
-         jd.getJitter(i, x, y);
-         System.out.append("X: " + x + " Y: " + y);
+
+      Point2D.Double fp = new Point2D.Double(0.0, 0.0);
+      Point2D.Double com = new Point2D.Double(0.0, 0.0);
+      
+      jd.getJitter(ip[0], fp);
+            
+      for (int i = 1; i < ip.length; i++) {
+         jd.getJitter(ip[i],com);
+         double x = (com.x - fp.x) / factor;
+         double y = (com.y - fp.y) / factor;
+         System.out.println("X: " + x + " Y: " + y);
       }
       
 
