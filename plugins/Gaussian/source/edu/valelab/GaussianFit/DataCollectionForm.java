@@ -543,13 +543,16 @@ public class DataCollectionForm extends javax.swing.JFrame {
              rowData_.remove(rows[row]);
              myTableModel_.fireTableRowsDeleted(rows[row], rows[row]);
           }
-       }
+       } else
+         JOptionPane.showMessageDialog(null, "No dataset selected");
     }//GEN-LAST:event_removeButtonActionPerformed
 
     private void showButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_showButtonActionPerformed
        int row = jTable1_.getSelectedRow();
        if (row > -1)
          showResults(rowData_.get(row));
+       else
+         JOptionPane.showMessageDialog(null, "Please select a dataset to show");
     }//GEN-LAST:event_showButtonActionPerformed
 
    private void formComponentResized(java.awt.event.ComponentEvent evt) {//GEN-FIRST:event_formComponentResized
@@ -811,14 +814,16 @@ public class DataCollectionForm extends javax.swing.JFrame {
       int row = jTable1_.getSelectedRow();
       if (row > -1) {     
          correct2C(rowData_.get(row));
-      }
+      } else
+         JOptionPane.showMessageDialog(null, "Please select a dataset to color correct");
    }//GEN-LAST:event_c2CorrectButtonActionPerformed
 
    private void unjitterButton_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_unjitterButton_ActionPerformed
       int row = jTable1_.getSelectedRow();
       if (row > -1) {     
          unJitter(rowData_.get(row));
-      }
+      } else
+         JOptionPane.showMessageDialog(null, "Please select a dataset to unjitter");
    }//GEN-LAST:event_unjitterButton_ActionPerformed
 
 
@@ -1120,36 +1125,54 @@ public class DataCollectionForm extends javax.swing.JFrame {
     */
    private void unJitter(final MyRowData rowData)
    {
+      final int framesToCombine = 1;
       if (rowData.spotList_.size() <= 1) {
          return;
       }
       
-      int mag = 4;
+      int mag = 1 << visualizationMagnification_.getSelectedIndex();
+      
+      
       int width = mag * rowData.width_;
-      int height = mag * rowData.height_;
-      ImageProcessor ipRef = new ShortProcessor(width, height);
-      ImageProcessor ipTest = new ShortProcessor(width, height);
+      int height = mag * rowData.height_;   
       int size = width * height;
-      short pixels[] = new short[size];
-      ipRef.setPixels(pixels);
-      short testPixels[] = new short[size];
-      ipTest.setPixels(testPixels);
+      
+      // todo: what if we should go through nrSlices instead of nrFrames?
+      int nrOfTests = rowData.nrFrames_ / framesToCombine;
+      
+      // make imageprocessors for all the images that we will generate
+      ImageProcessor[] ip = new ImageProcessor[nrOfTests];
+      short[][] pixels = new short[nrOfTests][width * height];
+      
+      for (int i = 0; i < ip.length; i++) {
+         ip[i] = new ShortProcessor(width, height);
+         ip[i].setPixels(pixels[i]);
+      }
+      
+      //ImageProcessor ipRef = new ShortProcessor(width, height);
+      //ImageProcessor ipTest = new ShortProcessor(width, height);
+      
+      //short pixels[] = new short[size];
+      //ipRef.setPixels(pixels);
+      //short testPixels[] = new short[size];
+      //ipTest.setPixels(testPixels);
       
       double factor = (double) mag / rowData.pixelSizeUm_;
 
       for (GaussianSpotData spot : rowData.spotList_) {
          // for now take the first image as reference
+         int j = spot.getFrame() / framesToCombine;
          if (spot.getFrame() == 1) {
             int x = (int) (factor * spot.getXCenter());
             int y = (int) (factor * spot.getYCenter());
             int index = (y * width) + x;
             if (index < size && index > 0) {
-               if (pixels[index] != -1) {
-                  pixels[index] += 255;
+               if (pixels[j][index] != -1) {
+                  pixels[j][index] += 255;
                }
             }
          }
-         
+         /*
          if (spot.getFrame() == 2) {
             int x = (int) (factor * spot.getXCenter());
             int y = (int) (factor * spot.getYCenter());
@@ -1160,12 +1183,17 @@ public class DataCollectionForm extends javax.swing.JFrame {
                }
             }
          }
+          
+          */
       }
 
-      JitterDetector jd = new JitterDetector(ipRef);
+      JitterDetector jd = new JitterDetector(ip[0]);
       double x = 0.0;
       double y = 0.0;
-      jd.getJitter(ipTest, x, y);
+      for (ImageProcessor i : ip) {
+         jd.getJitter(i, x, y);
+         System.out.append("X: " + x + " Y: " + y);
+      }
       
 
    }
