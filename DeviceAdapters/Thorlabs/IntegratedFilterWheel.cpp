@@ -367,7 +367,8 @@ int IntegratedFilterWheel::Home()
    const int cmdLength = sizeof(homeRsp);
    unsigned char answer[cmdLength];
    memset(answer, 0, cmdLength);
-   ret = GetCommand(answer, cmdLength, answerTimeoutMs_);
+   // NOTE: answer timeout is 30sec for Home command
+   ret = GetCommand(answer, cmdLength, 30000.0);
    if (ret != DEVICE_OK)
    {
       LogMessage("GetCommand() failed");
