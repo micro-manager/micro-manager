@@ -76,7 +76,7 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
    private JButton fullButton_;
    private JPanel histogramPanelHolder_;
    private JLabel minMaxLabel_;
-   private JComboBox modeComboBox_;
+   private JComboBox histRangeComboBox_;
    private double binSize_;
    private boolean logScale_;
    private double fractionToReject_;
@@ -187,18 +187,18 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
 
 
 
-      modeComboBox_ = new JComboBox();
-      modeComboBox_.setFont(new Font("", Font.PLAIN, 10));
-      modeComboBox_.addActionListener(new ActionListener() {
+      histRangeComboBox_ = new JComboBox();
+      histRangeComboBox_.setFont(new Font("", Font.PLAIN, 10));
+      histRangeComboBox_.addActionListener(new ActionListener() {
 
          public void actionPerformed(final ActionEvent e) {
             if (mccPanel_.syncedChannels()) {
-               mccPanel_.updateOtherDisplayCombos(modeComboBox_.getSelectedIndex());
+               mccPanel_.updateOtherDisplayCombos(histRangeComboBox_.getSelectedIndex());
             }
             displayComboAction();
          }
       });
-      modeComboBox_.setModel(new DefaultComboBoxModel(new String[]{
+      histRangeComboBox_.setModel(new DefaultComboBoxModel(new String[]{
                  "Auto", "4bit (0-15)", "5bit (0-31)", "6bit (0-63)", "7bit (0-127)", 
                  "8bit (0-255)", "9bit (0-511)", "10bit (0-1023)", "11bit (0-2047)", 
                  "12bit (0-4095)", "13bit (0-8191)", "14bit (0-16383)", "15bit (0-32767)", "16bit (0-65535)"}));
@@ -291,8 +291,8 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
       gbc.weighty = 1;
       gbc.gridwidth = 5;
       gbc.anchor = GridBagConstraints.LINE_START;
-      modeComboBox_.setPreferredSize(new Dimension(115, 20));
-      controls_.add(modeComboBox_, gbc);
+      histRangeComboBox_.setPreferredSize(new Dimension(115, 20));
+      controls_.add(histRangeComboBox_, gbc);
       
       
       zoomInButton_.setPreferredSize(new Dimension(22, 22));
@@ -330,37 +330,37 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
 
    
    public void setDisplayComboIndex(int index) {
-      modeComboBox_.setSelectedIndex(index);
+      histRangeComboBox_.setSelectedIndex(index);
    }
    
    public int getDisplayComboIndex() {
-      return modeComboBox_.getSelectedIndex();
+      return histRangeComboBox_.getSelectedIndex();
    }
    
    private void zoomInAction() {
-      int selected = modeComboBox_.getSelectedIndex();
+      int selected = histRangeComboBox_.getSelectedIndex();
       if (selected == 0) {
          selected = bitDepth_ - 3;
       }
       if (selected != 1) {
          selected--;
       }
-      modeComboBox_.setSelectedIndex(selected);
+      histRangeComboBox_.setSelectedIndex(selected);
    }
    
    private void zoomOutAction() {
-      int selected = modeComboBox_.getSelectedIndex();
+      int selected = histRangeComboBox_.getSelectedIndex();
       if (selected == 0) {
          selected = bitDepth_ - 3;
       }
-      if (selected < modeComboBox_.getModel().getSize() - 1) {
+      if (selected < histRangeComboBox_.getModel().getSize() - 1) {
          selected++;
       }
-      modeComboBox_.setSelectedIndex(selected);  
+      histRangeComboBox_.setSelectedIndex(selected);  
    }
    
    public void displayComboAction() {
-      int bits = modeComboBox_.getSelectedIndex() + 3;
+      int bits = histRangeComboBox_.getSelectedIndex() + 3;
       if (bits == 3) {
          histMax_ = maxIntensity_;
       } else {
@@ -372,6 +372,7 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
       ImagePlus img = mdPanel_.getCurrentImage();
       if (img != null) {
          calcAndDisplayHistAndStats(img, true);
+         storeDisplaySettings( VirtualAcquisitionDisplay.getDisplay(img).getImageCache() );
       }
    }
 
@@ -520,6 +521,11 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
       }
       contrastMin_ = cache.getChannelMin(channelIndex_);
       gamma_ = cache.getChannelGamma(channelIndex_);
+      int histMax = cache.getChannelHistogramMax(channelIndex_);
+      if (histMax != -1) {
+         int index = (int) (Math.ceil(Math.log(histMax)/Math.log(2)) - 3);
+         histRangeComboBox_.setSelectedIndex(index);
+      }
    }
 
    public void setLogScale(boolean logScale) {
@@ -626,8 +632,7 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
                   ci.updateImage();
                }
             }
-            //store contrast settings
-            cache.storeChannelDisplaySettings(channelIndex_, (int) contrastMin_, (int) contrastMax_, gamma_);
+            storeDisplaySettings(cache);
 
             updateHistogramCursors();
 
@@ -639,6 +644,11 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
          SwingUtilities.invokeLater(run);
       }
    }
+   
+   private void storeDisplaySettings(ImageCache cache) {
+      int histMax = histRangeComboBox_.getSelectedIndex() == 0 ? -1 : histMax_;
+      cache.storeChannelDisplaySettings(channelIndex_, contrastMin_, contrastMax_, gamma_, histMax);
+   }
 
    private void updateHistogramCursors() {
       hp_.setCursors(contrastMin_ / binSize_, (contrastMax_ + 1) / binSize_, gamma_);
@@ -646,7 +656,6 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
    }
 
    /**
-    * 
     * @param img
     * @param drawHist
     * @return true if hist and stats calculated successfully
@@ -714,7 +723,7 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
          }
       }
       //Make sure max has correct value is hist display mode isnt auto
-      if (modeComboBox_.getSelectedIndex() != -1) {
+      if (histRangeComboBox_.getSelectedIndex() != -1) {
          pixelMin_ = rawHistogram.length-1;
          for (int i = rawHistogram.length-1; i > 0; i--) {
             if (rawHistogram[i] > 0 && i > pixelMax_ ) {

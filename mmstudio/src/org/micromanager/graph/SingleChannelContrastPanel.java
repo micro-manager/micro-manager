@@ -84,7 +84,7 @@ public class SingleChannelContrastPanel extends JPanel implements
    private static final int SLOW_HIST_UPDATE_INTERVAL_MS = 1000;
    private long slowHistLastUpdateTime_;
    private static final long serialVersionUID = 1L;
-   private JComboBox modeComboBox_;
+   private JComboBox histRangeComboBox_;
    private HistogramPanel histogramPanel_;
    private JLabel maxLabel_;
    private JLabel minLabel_;
@@ -300,15 +300,15 @@ public class SingleChannelContrastPanel extends JPanel implements
       p.add(zoomInButton);
       p.add(zoomOutButton);
 
-      modeComboBox_ = new JComboBox();
-      modeComboBox_.setFont(new Font("", Font.PLAIN, 10));
-      modeComboBox_.addActionListener(new ActionListener() {
+      histRangeComboBox_ = new JComboBox();
+      histRangeComboBox_.setFont(new Font("", Font.PLAIN, 10));
+      histRangeComboBox_.addActionListener(new ActionListener() {
 
          public void actionPerformed(final ActionEvent e) {
-            pixelTypeAction();
+            histRangeComboAction();
          }
       });
-      modeComboBox_.setModel(new DefaultComboBoxModel(new String[]{
+      histRangeComboBox_.setModel(new DefaultComboBoxModel(new String[]{
                  "Auto", "4bit (0-15)", "5bit (0-31)", "6bit (0-63)", "7bit (0-127)",
                  "8bit (0-255)", "9bit (0-511)", "10bit (0-1023)", "11bit (0-2047)",
                  "12bit (0-4095)", "13bit (0-8191)", "14bit (0-16383)", "15bit (32767)", "16bit (0-65535)"}));
@@ -423,7 +423,7 @@ public class SingleChannelContrastPanel extends JPanel implements
       gbc = new GridBagConstraints();
       gbc.gridy = 9;
       gbc.weightx = 1;
-      controls.add(modeComboBox_, gbc);
+      controls.add(histRangeComboBox_, gbc);
 
       gbc = new GridBagConstraints();
       gbc.gridy = 10;
@@ -459,7 +459,7 @@ public class SingleChannelContrastPanel extends JPanel implements
       saveSettings();
    }
 
-   private void pixelTypeAction() {
+   private void histRangeComboAction() {
       setHistMaxAndBinSize();
       ImagePlus img = mdPanel_.getCurrentImage();
       if (img != null) {
@@ -524,16 +524,24 @@ public class SingleChannelContrastPanel extends JPanel implements
       ip.setColorModel(new LUT(8, 256, r, g, b));    //doesnt explicitly redraw
       ip.setMinAndMax(contrastMin_, contrastMax_);   //doesnt explicitly redraw
 
-      //store contrast settings
-      cache.storeChannelDisplaySettings(0, (int) contrastMin_, (int) contrastMax_, gamma_);
+      saveDisplaySettings(cache);
 
       updateHistogram();
       gammaValue_.setValue(gamma_);
    }
 
    public void saveDisplaySettings(ImageCache cache) {
-      cache.storeChannelDisplaySettings(0, (int) contrastMin_, (int) contrastMax_, gamma_);
+      int histMax = histRangeComboBox_.getSelectedIndex() == 0 ? histMax = -1 : histMax_;
+      cache.storeChannelDisplaySettings(0, (int) contrastMin_, (int) contrastMax_, gamma_,histMax);
    }
+ 
+   public void setChannelHistogramDisplayMax(int channelIndex, int histMax) {
+      if (channelIndex != 0)
+         return;
+      int index = (int) (histMax == -1 ? 0 : Math.ceil(Math.log(histMax) / Math.log(2)) - 3);
+      histRangeComboBox_.setSelectedIndex(index);
+   }
+
 
    private void updateHistogram() {
       histogramPanel_.setCursors(contrastMin_ / binSize_, contrastMax_ / binSize_, gamma_);
@@ -541,29 +549,29 @@ public class SingleChannelContrastPanel extends JPanel implements
    }
 
    private void zoomInAction() {
-      int selected = modeComboBox_.getSelectedIndex();
+      int selected = histRangeComboBox_.getSelectedIndex();
       if (selected == 0) {
          selected = bitDepth_ - 3;
       }
       if (selected != 1) {
          selected--;
       }
-      modeComboBox_.setSelectedIndex(selected);
+      histRangeComboBox_.setSelectedIndex(selected);
    }
 
    private void zoomOutAction() {
-      int selected = modeComboBox_.getSelectedIndex();
+      int selected = histRangeComboBox_.getSelectedIndex();
       if (selected == 0) {
          selected = bitDepth_ - 3;
       }
-      if (selected < modeComboBox_.getModel().getSize() - 1) {
+      if (selected < histRangeComboBox_.getModel().getSize() - 1) {
          selected++;
       }
-      modeComboBox_.setSelectedIndex(selected);
+      histRangeComboBox_.setSelectedIndex(selected);
    }
 
    private void setHistMaxAndBinSize() {
-      int bits = modeComboBox_.getSelectedIndex() + 3;
+      int bits = histRangeComboBox_.getSelectedIndex() + 3;
       if (bits == 3) {
          histMax_ = maxIntensity_;
       } else {
@@ -571,6 +579,9 @@ public class SingleChannelContrastPanel extends JPanel implements
       }
       binSize_ = ((double) (histMax_ + 1)) / ((double) HIST_BINS);
       updateHistogram();
+      
+      ImageCache cache = VirtualAcquisitionDisplay.getDisplay(mdPanel_.getCurrentImage()).getImageCache();      
+      saveDisplaySettings(cache);
    }
 
    // only used for Gamma
@@ -630,6 +641,12 @@ public class SingleChannelContrastPanel extends JPanel implements
       }
       contrastMin_ = cache.getChannelMin(0);
       gamma_ = cache.getChannelGamma(0);
+      
+      int histMax = cache.getChannelHistogramMax(0);
+      if (histMax != -1) {
+         int index = (int) (Math.ceil(Math.log(histMax)/Math.log(2)) - 3);
+         histRangeComboBox_.setSelectedIndex(index);
+      }
    }
 
    public void imageChanged(ImagePlus img, ImageCache cache, boolean drawHist) {
@@ -661,12 +678,10 @@ public class SingleChannelContrastPanel extends JPanel implements
       }
       maxIntensity_ = (int) (Math.pow(2, bitDepth_) - 1);
 
-      setHistMaxAndBinSize();
       calcAndDisplayHistAndStats(img, true);
+      loadContrastSettings(cache);
       if (autostretchCheckBox_.isSelected()) {
          autostretch();
-      } else {
-         loadContrastSettings(cache);
       }
       mdPanel_.drawWithoutUpdate(img);
    }
@@ -726,7 +741,7 @@ public class SingleChannelContrastPanel extends JPanel implements
          }
 
          //need to recalc mean if hist display mode isnt auto
-         if (modeComboBox_.getSelectedIndex() != -1) {
+         if (histRangeComboBox_.getSelectedIndex() != -1) {
             mean_ = 0;
             for (int i = 0; i < rawHistogram.length; i++) {
                mean_ += i * rawHistogram[i];
@@ -735,11 +750,11 @@ public class SingleChannelContrastPanel extends JPanel implements
          }
          if (drawHist) {
             stdDev_ = 0;
-            if (modeComboBox_.getSelectedIndex() != -1) {
+            if (histRangeComboBox_.getSelectedIndex() != -1) {
                pixelMin_ = rawHistogram.length - 1;
             }
             for (int i = rawHistogram.length - 1; i >= 0; i--) {
-               if (modeComboBox_.getSelectedIndex() != -1) {
+               if (histRangeComboBox_.getSelectedIndex() != -1) {
                   if (rawHistogram[i] > 0 && i < pixelMin_) {
                      pixelMin_ = i;
                   }

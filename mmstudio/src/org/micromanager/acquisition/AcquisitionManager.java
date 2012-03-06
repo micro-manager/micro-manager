@@ -264,8 +264,14 @@ public class AcquisitionManager {
             int max = channelSetting.getInt("Max");
             double gamma = channelSetting.getDouble("Gamma");
             String name = channelSetting.getString("Name");
+            int histMax;
+            if (channelSetting.has("HistogramMax"))      
+               histMax = channelSetting.getInt("HistogramMax");
+            else
+               histMax = -1;
 
-            ic.storeChannelDisplaySettings(i, min, max, gamma);
+            ic.storeChannelDisplaySettings(i, min, max, gamma, histMax);
+            acq.getAcquisitionWindow().setChannelHistogramDisplayMax(i,histMax);
             acq.getAcquisitionWindow().setChannelContrast(i, min, max, gamma);
             acq.setChannelColor(i, color);
             acq.setChannelName(i, name);

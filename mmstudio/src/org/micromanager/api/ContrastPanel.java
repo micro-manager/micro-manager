@@ -95,4 +95,6 @@ public interface ContrastPanel {
     */
    public ContrastSettings getChannelContrastSettings(int channel);
 
+   public void setChannelHistogramDisplayMax(int channelIndex, int histMax);
+
 }

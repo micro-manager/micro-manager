@@ -320,12 +320,13 @@ public class MMImageCache implements TaggedImageStorage, ImageCache {
    }
 
    /////////////////////Channels section/////////////////////////
-   public void storeChannelDisplaySettings(int channelIndex, int min, int max, double gamma) {
+   public void storeChannelDisplaySettings(int channelIndex, int min, int max, double gamma, int histMax) {
       try {
          JSONObject settings = getChannelSetting(channelIndex);
          settings.put("Max", max);
          settings.put("Min", min);
          settings.put("Gamma", gamma);
+         settings.put("HistogramMax", histMax);
       } catch (Exception ex) {
          ReportingUtils.logError(ex);
       }
@@ -444,6 +445,14 @@ public class MMImageCache implements TaggedImageStorage, ImageCache {
          return getChannelSetting(channelIndex).getDouble("Gamma");
       } catch (Exception ex) {
          return 1.0;
+      }
+   }
+   
+   public int getChannelHistogramMax(int channelIndex) {
+      try {
+         return getChannelSetting(channelIndex).getInt("HistogramMax");
+      } catch (JSONException ex) {
+         return -1;
       }
    }
 

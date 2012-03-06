@@ -83,10 +83,10 @@ public class MultiChannelContrastPanel extends JPanel implements ContrastPanel {
       mdPanel_ = md;
       initialize();
       prefs_ = Preferences.userNodeForPackage(this.getClass());
-      loadSettings();
+      loadCheckBoxStates();
    }
 
-   private void saveSettings() {
+   private void saveCheckBoxStates() {
       prefs_.putBoolean(PREF_AUTOSTRETCH, autostretchCheckbox_.isSelected());
       prefs_.putBoolean(PREF_LOG_HIST, logScaleCheckBox_.isSelected());
       prefs_.putDouble(PREF_REJECT_FRACTION, (Double) rejectPercentSpinner_.getValue());
@@ -95,7 +95,7 @@ public class MultiChannelContrastPanel extends JPanel implements ContrastPanel {
       prefs_.putBoolean(PREF_SLOW_HIST, slowHistCheckbox_.isSelected());
    }
 
-   private void loadSettings() {
+   private void loadCheckBoxStates() {
       autostretchCheckbox_.setSelected(prefs_.getBoolean(PREF_AUTOSTRETCH, false));
       logScaleCheckBox_.setSelected(prefs_.getBoolean(PREF_LOG_HIST, false));
       rejectOutliersCB_.setSelected(prefs_.getBoolean(PREF_REJECT_OUTLIERS, false));
@@ -250,13 +250,11 @@ public class MultiChannelContrastPanel extends JPanel implements ContrastPanel {
          nChannels = cache.getNumChannels();
       }
 
-      GridLayout layout = new GridLayout(nChannels,1);
+      GridLayout layout = new GridLayout(nChannels, 1);
       JPanel p = new JPanel();
       p.setLayout(layout);
       p.setMinimumSize(new Dimension(ChannelControlPanel.MINIMUM_SIZE.width,
-              nChannels*ChannelControlPanel.MINIMUM_SIZE.height));
-
-    
+              nChannels * ChannelControlPanel.MINIMUM_SIZE.height));
       contrastScrollPane_.setViewportView(p);
       contrastScrollPane_.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
 
@@ -335,11 +333,11 @@ public class MultiChannelContrastPanel extends JPanel implements ContrastPanel {
       } else {
          autostretchCheckbox_.setEnabled(true);
       }
-      saveSettings();
+      saveCheckBoxStates();
    }
 
    private void slowHistCheckboxAction() {
-      saveSettings();
+      saveCheckBoxStates();
    }
 
    public boolean syncedChannels() {
@@ -365,7 +363,7 @@ public class MultiChannelContrastPanel extends JPanel implements ContrastPanel {
       }
       mdPanel_.drawWithoutUpdate();
    }
-   
+
    private void setChannelDisplayModeFromFirst() {
       if (ccpList_ == null || ccpList_.size() <= 1) {
          return;
@@ -414,7 +412,7 @@ public class MultiChannelContrastPanel extends JPanel implements ContrastPanel {
          ci.updateAndDraw();
          mdPanel_.drawWithoutUpdate();
       }
-      saveSettings();
+      saveCheckBoxStates();
    }
 
    private void autostretchCheckBoxStateChanged() {
@@ -428,7 +426,7 @@ public class MultiChannelContrastPanel extends JPanel implements ContrastPanel {
             }
          }
       }
-      saveSettings();
+      saveCheckBoxStates();
    }
 
    private void rejectOutliersCB_ActionPerformed() {
@@ -440,7 +438,7 @@ public class MultiChannelContrastPanel extends JPanel implements ContrastPanel {
             c.autoButtonAction();
          }
       }
-      saveSettings();
+      saveCheckBoxStates();
    }
 
    private void rejectPercentSpinner_StateChanged() {
@@ -451,7 +449,7 @@ public class MultiChannelContrastPanel extends JPanel implements ContrastPanel {
             c.autoButtonAction();
          }
       }
-      saveSettings();
+      saveCheckBoxStates();
    }
 
    private void logScaleCheckBoxActionPerformed() {
@@ -461,7 +459,7 @@ public class MultiChannelContrastPanel extends JPanel implements ContrastPanel {
          }
       }
 
-      saveSettings();
+      saveCheckBoxStates();
    }
 
    public void sizeBarCheckBoxActionPerformed() {
@@ -536,10 +534,9 @@ public class MultiChannelContrastPanel extends JPanel implements ContrastPanel {
    public void displayChanged(ImagePlus img, ImageCache cache) {
       for (ChannelControlPanel c : ccpList_) {
          c.calcAndDisplayHistAndStats(img, true);
+         c.loadDisplaySettings(cache);
          if (autostretchCheckbox_.isSelected()) {
             c.autostretch();
-         } else {
-            c.loadDisplaySettings(cache);
          }
       }
       mdPanel_.drawWithoutUpdate(img);
@@ -554,12 +551,21 @@ public class MultiChannelContrastPanel extends JPanel implements ContrastPanel {
    }
 
    void updateOtherDisplayCombos(int selectedIndex) {
-      if (updatingCombos_)
+      if (updatingCombos_) {
          return;
+      }
       updatingCombos_ = true;
       for (int i = 0; i < ccpList_.size(); i++) {
-            ccpList_.get(i).setDisplayComboIndex(selectedIndex);
+         ccpList_.get(i).setDisplayComboIndex(selectedIndex);
       }
       updatingCombos_ = false;
+   }
+
+   public void setChannelHistogramDisplayMax(int channelIndex, int histMax) {
+      if (ccpList_ == null || ccpList_.size() <= channelIndex) {
+         return;
+      }
+      int index = (int) (histMax == -1 ? 0 : Math.ceil(Math.log(histMax) / Math.log(2)) - 3);
+      ccpList_.get(channelIndex).setDisplayComboIndex(index);
    }
 }

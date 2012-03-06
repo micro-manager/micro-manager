@@ -718,4 +718,10 @@ public class MetadataPanel extends JPanel
          currentContrastPanel_.setChannelContrast(channelIndex, min, max, gamma);
       drawWithoutUpdate();
    }
+   
+   public void setChannelHistogramDisplayMax(int channelIndex, int histMax) {
+      if (currentContrastPanel_ != null) {
+         currentContrastPanel_.setChannelHistogramDisplayMax(channelIndex, histMax);
+      }
+   }  
 }

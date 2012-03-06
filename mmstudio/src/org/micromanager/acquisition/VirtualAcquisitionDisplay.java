@@ -115,6 +115,7 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
    private HashMap<Integer, Integer> zStackMins_;
    private HashMap<Integer, Integer> zStackMaxes_;
 
+
    /* This interface and the following two classes
     * allow us to manipulate the dimensions
     * in an ImagePlus without it throwing conniptions.
@@ -1780,6 +1781,10 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
 
    public void setChannelContrast(int channelIndex, int min, int max, double gamma) {
       mdPanel_.setChannelContrast(channelIndex, min, max, gamma);
+   }
+   
+   public void setChannelHistogramDisplayMax(int channelIndex, int histMax) {
+      mdPanel_.setChannelHistogramDisplayMax(channelIndex, histMax);
    }
 
    private void imageChangedUpdate() {
