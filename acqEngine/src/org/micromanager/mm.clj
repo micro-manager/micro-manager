@@ -62,7 +62,7 @@
           :when (zero? (bit-and
                          (.getModifiers f) java.lang.reflect.Modifier/STATIC))]
       [(keyword (.getName f))
-       (if (= Boolean/TYPE (.getType f))
+       (if (= Boolean (.getType f))
          (.getBoolean f obj)
          (.get f obj))])))
 

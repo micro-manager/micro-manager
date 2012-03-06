@@ -1,9 +1,53 @@
 (ns org.micromanager.config-editor
   (:import [javax.swing DefaultListModel JFrame JList JPanel JTable 
                         JScrollPane JViewport ListSelectionModel SpringLayout]
-           [javax.swing.event ListSelectionListener]
+           [javax.swing.event CellEditorListener ListSelectionListener]
+           [javax.swing.table AbstractTableModel]
            [java.awt Color Dimension])
   (:use [org.micromanager.mm :only [load-mm core edt get-config]]))
+
+(declare update-presets-table)
+
+
+;; editing groups
+
+(defn add-group [components group]
+  (core defineConfigGroup group)
+  (update-groups-table (:groups-table components))
+  )
+
+(defn rename-group [components group-old group-new]
+  (core renameConfigGroup group-old group-new)
+  (update-groups-table (:groups-table components))
+  )
+
+(defn delete-group [components group]
+  (core deleteConfigGroup group)
+  (update-groups-table (:groups-table components))
+  )
+
+;; editing presets
+
+(defn add-property [group]
+  )
+
+(defn remove-property [group property])
+
+(defn add-preset [components group preset]
+  (core defineConfig group preset)
+  (update-presets-table components group))
+
+(defn rename-preset [components group preset-old preset-new]
+  (core renameConfig group preset-old preset-new)
+  (update-presets-table components group))
+
+(defn delete-preset [components group preset]
+  (core deleteConfig group preset)
+  (update-presets-table components group))
+
+(defn set-preset-value [components group preset property value]
+  ; TODO: make this work.
+  )
 
 ;; swing layout
 
@@ -116,6 +160,23 @@
       (.addElement model datum)))
   list)
 
+(defn handle-group-text-changed [e]
+  (println (.getText (.getComponent (.getSource e)))))
+
+(defn allow-group-renaming [table]
+  (.. table
+      (getDefaultEditor String)
+      (addCellEditorListener
+        (reify CellEditorListener 
+          (editingStopped [this e]
+            (handle-group-text-changed e))))))
+  
+(defn group-table-model
+  (proxy [AbstractTableModel] []
+    (getColumnCount [] 1)
+    (getRowCount [] (count (core getAvailableConfigGroups))))
+    
+
 (defn show []
   (let [f (JFrame. "Micro-Manager Configuration Preset Editor")
         cp (.getContentPane f)
@@ -174,45 +235,6 @@
                            (try (.getValueAt (components :groups-table) % 0)
                                 (catch Exception _ nil)))))
 
-;; editing groups
-
-(defn add-group [components group]
-  (core defineConfigGroup group)
-  (update-groups-table (:groups-table components))
-  )
-
-(defn rename-group [components group-old group-new]
-  (core renameConfigGroup group-old group-new)
-  (update-groups-table (:groups-table components))
-  )
-
-(defn delete-group [components group]
-  (core deleteConfigGroup group)
-  (update-groups-table (:groups-table components))
-  )
-
-;; editing presets
-
-(defn add-property [group]
-  )
-
-(defn remove-property [group property])
-
-(defn add-preset [components group preset]
-  (core defineConfig group preset)
-  (update-presets-table components group))
-
-(defn rename-preset [components group preset-old preset-new]
-  (core renameConfig group preset-old preset-new)
-  (update-presets-table components group))
-
-(defn delete-preset [components group preset]
-  (core deleteConfig group preset)
-  (update-presets-table components group))
-
-(defn set-preset-value [components group preset property value]
-  ; TODO: make this work.
-  )
 
 ;; test/run
 
