@@ -2505,6 +2505,12 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface, Device
          ImageCanvas canvas = curWin.getCanvas();
          Rectangle r = canvas.getBounds();
          canvas.zoomOut(r.width / 2, r.height / 2);
+
+         VirtualAcquisitionDisplay vad = VirtualAcquisitionDisplay.getDisplay(curWin.getImagePlus());
+         if (vad != null) {
+            vad.storeWindowSizeAfterZoom(curWin);
+            vad.updateWindowTitleAndStatus();
+         }
       }
    }
 
@@ -2514,6 +2520,12 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface, Device
          ImageCanvas canvas = curWin.getCanvas();
          Rectangle r = canvas.getBounds();
          canvas.zoomIn(r.width / 2, r.height / 2);
+         
+         VirtualAcquisitionDisplay vad = VirtualAcquisitionDisplay.getDisplay(curWin.getImagePlus());
+         if (vad != null) {
+            vad.storeWindowSizeAfterZoom(curWin);
+            vad.updateWindowTitleAndStatus();
+         }        
       }
    }
 

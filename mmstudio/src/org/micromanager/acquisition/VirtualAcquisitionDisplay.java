@@ -1402,6 +1402,11 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
          controls_.acquiringImagesUpdate(enabled);
       }
    }
+   
+   public void storeWindowSizeAfterZoom(ImageWindow win) {
+      int currentLength = (win.getSize().width + win.getSize().height) / 2;
+      prefs_.putInt(PREF_WIN_LENGTH, Math.max(currentLength, 512));
+   }
 
    private void createWindow() {
       final DisplayWindow win = new DisplayWindow(hyperImage_);
@@ -1412,14 +1417,8 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
 
          //used to store preferred zoom
          public void mousePressed(MouseEvent me) {
-            int id = Toolbar.getToolId();
-            int currentLength = (win.getSize().width + win.getSize().height) / 2;
-            if (id == 11) {//zoom tool selected
-               if (me.getButton() == MouseEvent.BUTTON1) { //Zoom in
-                  prefs_.putInt(PREF_WIN_LENGTH, Math.max(currentLength, 512));
-               } else if (me.getButton() == MouseEvent.BUTTON3) { //Zoom out              
-                  prefs_.putInt(PREF_WIN_LENGTH, Math.max(currentLength, 512));
-               }
+            if (Toolbar.getToolId() == 11) {//zoom tool selected
+               storeWindowSizeAfterZoom(win);
             }
             updateWindowTitleAndStatus();
          }
