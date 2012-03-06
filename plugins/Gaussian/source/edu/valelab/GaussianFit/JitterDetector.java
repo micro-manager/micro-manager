@@ -5,8 +5,6 @@
 package edu.valelab.GaussianFit;
 
 import ij.ImagePlus;
-import ij.measure.ResultsTable;
-import ij.plugin.filter.Analyzer;
 import ij.process.FHT;
 import ij.process.ImageProcessor;
 import ij.process.ImageStatistics;
@@ -36,20 +34,53 @@ public class JitterDetector {
       FHT m = ref_.conjugateMultiply(t);
             
       m.inverseTransform();
-      //m.swapQuadrants();
-      //ij.IJ.showStatus("Display image");
+      m.swapQuadrants();
       //m.resetMinAndMax();
       int midx = m.getWidth() / 2;
       int midy = m.getHeight() / 2;
-      int hw = 16;
-      m.setRoi(midx - hw, midy - hw, 2* hw, 2* hw);
-      ImagePlus mp = new ImagePlus("JitterTest", m);
+      
+      // return the position of the brightest pixel     
+      float pixels[] = (float[]) m.getPixels();
+      Point brightPix = new Point(0, 0);
+      int fpi = 0;
+      double max = pixels[fpi];
+      brightPix.x = fpi;
+      brightPix.y = fpi;
+      int height = m.getHeight();
+      int width = m.getWidth();
+      // this could be optimized by only searching in the center
+      for (int y = 0; y < height; y++) {
+         for (int x = 0; x < width; x++) {
+            if (pixels[y*width + x] > max) {
+               max = pixels[y*width + x];
+               brightPix.x = x;
+               brightPix.y = y;
+            }
+         }
+      }
+
+      com.x = brightPix.x;
+      com.y = brightPix.y;
+      
+      //ImagePlus mp = new ImagePlus("JitterTest", m);
       //mp.show();
       
+      // return the centerofMass
+     /*
+      int hw = 4;
+      m.setRoi(brightPix.x - hw, brightPix.y - hw, 2 * hw, 2 * hw);
+      ImagePlus mp = new ImagePlus("JitterTest", m);
+      
+      //ij.IJ.showStatus("Display image");
+      // mp.show();
+      
       ImageStatistics stats = mp.getStatistics(ij.measure.Measurements.CENTER_OF_MASS);
+      
 
       com.x = stats.xCenterOfMass;
       com.y = stats.yCenterOfMass;
+      */
+         
    }
    
 }
