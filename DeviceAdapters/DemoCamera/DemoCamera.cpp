@@ -1778,17 +1778,19 @@ void CDemoCamera::GenerateSyntheticImage(ImgBuffer& img, double exp)
 	// generate an RGB image with bitDepth_ bits in each color
 	else if (pixelType.compare(g_PixelType_64bitRGB) == 0)
 	{
+      double pedestal = maxValue/2 * exp / 100.0 * GetBinning() * GetBinning();
+      double dAmp16 = dAmp * maxValue/255.0; // scale to behave like 8-bit
+      
 		double maxPixelValue = (1<<(bitDepth_))-1;
-      double pedestal = 127 * exp / 100.0;
       unsigned long long * pBuf = (unsigned long long*) img.GetPixelsRW();
       for (j=0; j<img.Height(); j++)
       {
          for (k=0; k<img.Width(); k++)
          {
             long lIndex = img.Width()*j + k;
-            unsigned long long value0 = (unsigned char) min(maxPixelValue, (pedestal + dAmp * sin(dPhase_ + dLinePhase + (2.0 * cPi * k) / lPeriod)));
-            unsigned long long value1 = (unsigned char) min(maxPixelValue, (pedestal + dAmp * sin(dPhase_ + dLinePhase*2 + (2.0 * cPi * k) / lPeriod)));
-            unsigned long long value2 = (unsigned char) min(maxPixelValue, (pedestal + dAmp * sin(dPhase_ + dLinePhase*4 + (2.0 * cPi * k) / lPeriod)));
+            unsigned long long value0 = (unsigned short) min(maxPixelValue, (pedestal + dAmp16 * sin(dPhase_ + dLinePhase + (2.0 * cPi * k) / lPeriod)));
+            unsigned long long value1 = (unsigned short) min(maxPixelValue, (pedestal + dAmp16 * sin(dPhase_ + dLinePhase*2 + (2.0 * cPi * k) / lPeriod)));
+            unsigned long long value2 = (unsigned short) min(maxPixelValue, (pedestal + dAmp16 * sin(dPhase_ + dLinePhase*4 + (2.0 * cPi * k) / lPeriod)));
             unsigned long long tval = value0+(value1<<16)+(value2<<32);
          *(pBuf + lIndex) = tval;
 			}
@@ -1798,6 +1800,8 @@ void CDemoCamera::GenerateSyntheticImage(ImgBuffer& img, double exp)
 
    dPhase_ += cPi / 4.;
 }
+
+
 void CDemoCamera::TestResourceLocking(const bool recurse)
 {
    MMThreadGuard g(*pDemoResourceLock_);
