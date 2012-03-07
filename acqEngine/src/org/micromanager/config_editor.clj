@@ -4,7 +4,7 @@
            [javax.swing.event CellEditorListener ListSelectionListener]
            [javax.swing.table AbstractTableModel]
            [java.awt Color Dimension])
-  (:use [org.micromanager.mm :only [load-mm core edt get-config]]))
+  (:use [org.micromanager.mm :only [load-mm gui core edt get-config]]))
 
 (declare update-presets-table)
 
@@ -13,17 +13,17 @@
 
 (defn add-group [components group]
   (core defineConfigGroup group)
-  (update-groups-table (:groups-table components))
+ ; (update-groups-table (:groups-table components))
   )
 
 (defn rename-group [components group-old group-new]
   (core renameConfigGroup group-old group-new)
-  (update-groups-table (:groups-table components))
+  ;(update-groups-table (:groups-table components))
   )
 
 (defn delete-group [components group]
   (core deleteConfigGroup group)
-  (update-groups-table (:groups-table components))
+  ;(update-groups-table (:groups-table components))
   )
 
 ;; editing presets
@@ -83,21 +83,11 @@
 
 (load-mm)
 
-(defn update-list [list data]
-  (let [model (.getModel list)]
-    (.clear model)
-    (doseq [datum data]
-      (.addElement model datum)))
-  list)
+(def groups (atom nil))
 
-(defn groups []
-  (sort (seq (core getAvailableConfigGroups))))
-
-(defn update-group-list [list]
-  (update-list list (sort (seq (core getAvailableConfigGroups)))))
-
-(defn group-list []
-  (update-group-list (JList. (DefaultListModel.))))
+(defn update-groups []
+  (reset! groups (seq (core getAvailableConfigGroups)))
+  (.refreshGUI gui))
 
 (defn presets [group]
   (when-not (empty? group)
@@ -177,14 +167,15 @@
   
 (defn group-table-model []
   (proxy [AbstractTableModel] []
+    (getColumnName [_] "Groups")
     (getColumnCount [] 1)
-    (getRowCount [] (count (groups)))
+    (getRowCount [] (count @groups))
     (isCellEditable [_ _] true)
-    (getValueAt [row column] (nth (groups) row))
+    (getValueAt [row column] (nth @groups row))
     (setValueAt [val row column]
-      (let [old-val (nth (groups) row)]
-        (println old-val val row column)
-        (core renameConfigGroup old-val val)))))
+      (let [old-val (nth @groups row)]
+        (core renameConfigGroup old-val val)
+        (update-groups)))))
 
 (defn show []
   (let [f (JFrame. "Micro-Manager Configuration Preset Editor")
@@ -250,5 +241,6 @@
     (start nil))
   ([group]
     (let [components (show)]
+      (update-groups)
       (activate-groups-table components)
       components)))
