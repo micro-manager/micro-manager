@@ -14,7 +14,7 @@
 
 (defn get-selected-group []
   (let [row (.getSelectedRow (@widgets :groups-table))]
-    (when (pos? row)
+    (when (<= 0 row)
       (nth @groups row))))
   
 
