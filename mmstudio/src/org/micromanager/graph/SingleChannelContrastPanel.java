@@ -41,7 +41,6 @@ import java.beans.PropertyChangeEvent;
 import java.text.NumberFormat;
 import java.text.ParseException;
 import java.util.prefs.Preferences;
-import javax.swing.BoxLayout;
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
@@ -52,7 +51,6 @@ import javax.swing.JPanel;
 import javax.swing.JSpinner;
 import javax.swing.SpinnerModel;
 import javax.swing.SpinnerNumberModel;
-import javax.swing.SpringLayout;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import org.json.JSONException;
@@ -75,7 +73,6 @@ import org.micromanager.utils.NumberUtils;
 public class SingleChannelContrastPanel extends JPanel implements
         ContrastPanel, PropertyChangeListener, CursorListener {
 
-   private static final double SLOW_HIST_UPDATE_TIME_MS = 2000;
    private static final String PREF_AUTOSTRETCH = "sc_stretch_contrast";
    private static final String PREF_REJECT_OUTLIERS = "sc_reject_outliers";
    private static final String PREF_REJECT_FRACTION = "sc_reject_fraction";
@@ -370,7 +367,8 @@ public class SingleChannelContrastPanel extends JPanel implements
       gbc.weightx = 1;
       gbc.ipadx = 4;
       gbc.ipady = 4;
-      fullScaleButton.setPreferredSize(new Dimension(80, 20));
+      gbc.anchor = GridBagConstraints.LINE_START;
+      fullScaleButton.setPreferredSize(new Dimension(60, 15));
       controls.add(fullScaleButton, gbc);
 
       gbc = new GridBagConstraints();
@@ -378,7 +376,8 @@ public class SingleChannelContrastPanel extends JPanel implements
       gbc.weightx = 1;
       gbc.ipadx = 4;
       gbc.ipady = 4;
-      autoScaleButton.setPreferredSize(new Dimension(80, 20));
+      gbc.anchor = GridBagConstraints.LINE_START;
+      autoScaleButton.setPreferredSize(new Dimension(60, 15));
       controls.add(autoScaleButton, gbc);
 
       gbc = new GridBagConstraints();

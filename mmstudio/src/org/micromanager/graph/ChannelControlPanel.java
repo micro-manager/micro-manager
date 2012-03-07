@@ -46,8 +46,6 @@ import org.micromanager.MMStudioMainFrame;
 import org.micromanager.acquisition.MetadataPanel;
 import org.micromanager.acquisition.VirtualAcquisitionDisplay;
 import org.micromanager.api.ImageCache;
-import org.micromanager.graph.GraphData;
-import org.micromanager.graph.HistogramPanel;
 import org.micromanager.graph.HistogramPanel.CursorListener;
 import org.micromanager.utils.HistogramUtils;
 import org.micromanager.utils.ImageUtils;
@@ -55,6 +53,14 @@ import org.micromanager.utils.JavaUtils;
 import org.micromanager.utils.MDUtils;
 import org.micromanager.utils.NumberUtils;
 import org.micromanager.utils.ReportingUtils;
+
+/**
+ * Draws one histogram of the Multi-Channel control panel
+ * 
+ * 
+ * @author Henry
+ */
+
 
 public class ChannelControlPanel extends JPanel implements CursorListener {
 
@@ -240,7 +246,7 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
       controls_.setLayout(gbl);
       
 
-      JLabel comboLabel = new JLabel("Histogram range:");
+      JLabel comboLabel = new JLabel("Hist. range:");
       comboLabel.setFont(new Font("Lucida Grande", 0, 11));
 
       GridBagConstraints gbc = new GridBagConstraints();
@@ -250,6 +256,7 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
       gbc.weightx = 1;
       gbc.weighty = 1;
       gbc.anchor = GridBagConstraints.LINE_START;
+      gbc.fill = GridBagConstraints.HORIZONTAL;
       controls_.add(channelNameCheckbox_, gbc);      
       
       fullButton_.setPreferredSize(new Dimension(45, 20));
@@ -323,6 +330,7 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
       gbc.weighty = 1;
       gbc.gridwidth = 5;
       gbc.anchor = GridBagConstraints.LINE_START;
+      gbc.fill = GridBagConstraints.HORIZONTAL;
       controls_.add(minMaxLabel_, gbc);
 
       controls_.setPreferredSize(controls_.getMinimumSize());
