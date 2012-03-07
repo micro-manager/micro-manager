@@ -306,18 +306,25 @@ public:
     */
    bool RenameGroup(const char* oldGroupName, const char* newGroupName)
    {
-      // tolerate empty group names
-      if (strlen(oldGroupName) == 0 || strlen(newGroupName)==0)
-         return true;
-
-      std::map<std::string, ConfigGroup>::iterator it = groups_.find(oldGroupName);
-      if (it != groups_.end())
+      if (0 != strcmp(oldGroupName, newGroupName))
       {
-         groups_[newGroupName] = it->second;
-		 groups_.erase(it->first);
+         // tolerate empty group names
+         if (strlen(oldGroupName) == 0 || strlen(newGroupName)==0)
+            return true;
+
+         std::map<std::string, ConfigGroup>::iterator it = groups_.find(oldGroupName);
+         if (it != groups_.end())
+         {
+            groups_[newGroupName] = it->second;
+            groups_.erase(it->first);
+            return true;
+         }
+         return false; //not found
+      }
+      else
+      {
          return true;
       }
-      return false; //not found
    }
 
    /**

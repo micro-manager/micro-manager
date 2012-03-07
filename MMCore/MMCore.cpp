@@ -409,7 +409,7 @@ vector<string> CMMCore::getAvailableDevices(const char* library) throw (CMMError
    {
       return CPluginManager::GetAvailableDevices(library);
    }
-   catch (CMMError& e)
+   catch (CMMError& /*e*/)
    {
       // logError("core", e.getMsg().c_str());
       throw;
