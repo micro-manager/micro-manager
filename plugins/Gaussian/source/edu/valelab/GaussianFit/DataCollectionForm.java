@@ -1329,7 +1329,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
                counter++;
                GaussianSpotData gs = (GaussianSpotData) it.next();
                if (gs.getFrame() != frameNr) {
-                  frameNr = gs.getFrame();
+                  frameNr = gs.getFrame() - 1;
                }
                boolean found = false;
                if (frameNr >= smd.frameRange_.x && frameNr <= smd.frameRange_.y) {
@@ -1364,6 +1364,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
                     rowData.nrSlices_, 1, rowData.maxNrSpots_, correctedData,
                     null,
                     false);
+            ij.IJ.showStatus("Finished jitter correction");
 
          }
       };
