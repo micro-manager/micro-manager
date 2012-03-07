@@ -62,8 +62,9 @@
           :when (zero? (bit-and
                          (.getModifiers f) java.lang.reflect.Modifier/STATIC))]
       [(keyword (.getName f))
-       (if (= Boolean (.getType f))
-         (.getBoolean f obj)
+       (condp = (.getType f)
+         Boolean (.booleanValue (.get f obj))
+         Boolean/TYPE (.getBoolean f obj)
          (.get f obj))])))
 
 (defn log
