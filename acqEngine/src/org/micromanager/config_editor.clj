@@ -8,57 +8,12 @@
 
 (def widgets (atom nil))
 
-(declare update-presets-table)
-(declare update-groups-table)
-
-
 (defn get-selected-group []
   (let [row (.getSelectedRow (@widgets :groups-table))]
     (when (<= 0 row)
       (nth @groups row))))
-  
 
-;; editing groups
-
-(defn add-group [components group]
-  (core defineConfigGroup group)
- ; (update-groups-table (:groups-table components))
-  )
-
-(defn rename-group [components group-old group-new]
-  (core renameConfigGroup group-old group-new)
-  ;(update-groups-table (:groups-table components))
-  )
-
-(defn delete-group [components group]
-  (core deleteConfigGroup group)
-  ;(update-groups-table (:groups-table components))
-  )
-
-;; editing presets
-
-(defn add-property [group]
-  )
-
-(defn remove-property [group property])
-
-(defn add-preset [components group preset]
-  (core defineConfig group preset)
-  (update-presets-table components group))
-
-(defn rename-preset [components group preset-old preset-new]
-  (core renameConfig group preset-old preset-new)
-  (update-presets-table components group))
-
-(defn delete-preset [components group preset]
-  (core deleteConfig group preset)
-  (update-presets-table components group))
-
-(defn set-preset-value [components group preset property value]
-  ; TODO: make this work.
-  )
-
-;; swing layout
+;; swing layout 
 
 (defn put-constraint [comp1 edge1 comp2 edge2 dist]
   (let [edges {:n SpringLayout/NORTH
@@ -86,21 +41,25 @@
   (apply constrain-to-parent child constraints))
 
 (defn context-menu [component & items]
-  (partition 2 items))
+  (partition 2 items)
+  ;;TODO: finish this
+  )
+
+(defn scroll-pane [table]
+   (let [sp (JScrollPane. table)]
+    sp))
 
 ;; main stuff
 
 (load-mm)
 
-
 (defn presets [group]
   (when-not (empty? group)
     (sort (seq (core getAvailableConfigs group)))))
 
-(def group-data (atom nil))
+(def groups (atom nil))
 
-(defn update-tables []
-  (doall (map #(.. % getModel fireTableDataChanged) (vals @widgets))))
+(def group-data (atom nil))
 
 (defn update-group-data []
     (reset! group-data 
@@ -108,8 +67,6 @@
               (into (sorted-map)
                     (map #(vector % (get-config group %))
                          (presets group))))))
-
-(def groups (atom nil))
 
 (defn update-groups []
   (reset! groups (seq (core getAvailableConfigGroups)))
@@ -122,15 +79,6 @@
   (let [[dev prop] prop-vec]
     (str dev "-" prop)))
 
-(defn table []
-  (let [table (JTable.)]
-    (doto table
-      )))
-
-(defn scroll-pane [table]
-   (let [sp (JScrollPane. table)]
-    sp))
-
 (defn attach-selection-listener [table f]
   (-> table .getSelectionModel
       (.addListSelectionListener
@@ -140,24 +88,6 @@
               (try
                 (f (.getSelectedRow table))
                 (catch Exception e (.printStackTrace e)))))))))
-
-(defn populate-list [list data]
-  (let [model (.getModel list)]
-    (.clear model)
-    (doseq [datum data]
-      (.addElement model datum)))
-  list)
-
-(defn handle-group-text-changed [e]
-  (println (.getText (.getComponent (.getSource e)))))
-
-(defn allow-group-renaming [table]
-  (.. table
-      (getDefaultEditor String)
-      (addCellEditorListener
-        (reify CellEditorListener 
-          (editingStopped [this e]
-            (handle-group-text-changed e))))))
 
 (defn group-table-model []
   (proxy [AbstractTableModel] []
@@ -188,16 +118,17 @@
     (getColumnName [column] (property-name (nth (properties @group-data) column)))
     (getColumnCount [] (count (properties @group-data)))
     (getRowCount [] (count (keys @group-data)))
-    (isCellEditable [_ _] true)
+    (isCellEditable [_ _] false) ;; will be true
     (getValueAt [row column] (get (nth (vals @group-data) row)
                                   (nth (properties @group-data) column)))
     (setValueAt [val row column]
-      (let [old-val (.getValueAt this row column)]
-        (core renameConfig (get-selected-group) old-val val)
-        (update-group-data)))))
+      ;(let [old-val (.getValueAt this row column)]
+        ;TODO: finish
+        )))
 
 (defn link-table-row-selection [table-src table-dest]
   (let [model (proxy [DefaultListSelectionModel] [])]
+    ;TODO: Fix!
     (.setListSelectionModel table-src model)
     (.setListSelectionModel table-dest model)))
   
@@ -207,9 +138,9 @@
 (defn show []
   (let [f (JFrame. "Micro-Manager Configuration Preset Editor")
         cp (.getContentPane f)
-        groups-table (table)
-        presets-table (table)
-        preset-names-table (table)
+        groups-table (JTable.)
+        presets-table (JTable.)
+        preset-names-table (JTable.)
         groups-sp (scroll-pane groups-table)
         presets-sp (scroll-pane presets-table)
         ]
