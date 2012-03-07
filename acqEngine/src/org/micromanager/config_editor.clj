@@ -1,13 +1,22 @@
 (ns org.micromanager.config-editor
-  (:import [javax.swing DefaultListModel JFrame JList JPanel JTable 
+  (:import [javax.swing DefaultListModel JFrame JList JPanel JTable DefaultListSelectionModel
                         JScrollPane JViewport ListSelectionModel SpringLayout]
            [javax.swing.event CellEditorListener ListSelectionListener]
            [javax.swing.table AbstractTableModel]
            [java.awt Color Dimension])
   (:use [org.micromanager.mm :only [load-mm gui core edt get-config]]))
 
-(declare update-presets-table)
+(def widgets (atom nil))
 
+(declare update-presets-table)
+(declare update-groups-table)
+
+
+(defn get-selected-group []
+  (let [row (.getSelectedRow (@widgets :groups-table))]
+    (when (pos? row)
+      (nth @groups row))))
+  
 
 ;; editing groups
 
@@ -83,18 +92,28 @@
 
 (load-mm)
 
-(def groups (atom nil))
-
-(defn update-groups []
-  (reset! groups (seq (core getAvailableConfigGroups)))
-  (.refreshGUI gui))
 
 (defn presets [group]
   (when-not (empty? group)
     (sort (seq (core getAvailableConfigs group)))))
 
-(defn group-data [group]
-  (into (sorted-map) (map #(vector % (get-config group %)) (presets group))))
+(def group-data (atom nil))
+
+(defn update-tables []
+  (doall (map #(.. % getModel fireTableDataChanged) (vals @widgets))))
+
+(defn update-group-data []
+    (reset! group-data 
+            (when-let [group (get-selected-group)]
+              (into (sorted-map)
+                    (map #(vector % (get-config group %))
+                         (presets group))))))
+
+(def groups (atom nil))
+
+(defn update-groups []
+  (reset! groups (seq (core getAvailableConfigGroups)))
+  (update-group-data))
 
 (defn properties [group-data]
   (sort (set (apply concat (map keys (vals group-data))))))
@@ -102,31 +121,6 @@
 (defn property-name [prop-vec]
   (let [[dev prop] prop-vec]
     (str dev "-" prop)))
-
-(defn transpose [elements]
-  (apply map list elements))
-
-(defn table-data [group-data]
-  (transpose
-         (for [property (properties group-data)]
-           (for [preset (keys group-data)]
-             (get-in group-data [preset property] "")))))
-    
-(defn into-1d-array
-  ([data]
-    (into-array data))
-  ([type data]
-    (if-not (empty? data)
-      (into-array data)
-      (make-array type 0))))
-
-(defn into-2d-array
-  ([data]
-    (into-array (map into-array data)))
-  ([type data]
-    (if-not (empty? data)
-      (into-array (map #(into-array type %) data))
-      (make-array type 0 0))))
 
 (defn table []
   (let [table (JTable.)]
@@ -164,7 +158,7 @@
         (reify CellEditorListener 
           (editingStopped [this e]
             (handle-group-text-changed e))))))
-  
+
 (defn group-table-model []
   (proxy [AbstractTableModel] []
     (getColumnName [_] "Groups")
@@ -177,6 +171,39 @@
         (core renameConfigGroup old-val val)
         (update-groups)))))
 
+(defn preset-names-table-model []
+  (proxy [AbstractTableModel] []
+    (getColumnName [_] "")
+    (getColumnCount [] 1)
+    (getRowCount [] (count (keys @group-data)))
+    (isCellEditable [_ _] true)
+    (getValueAt [row column] (nth (keys @group-data) row))
+    (setValueAt [val row column]
+      (let [old-val (.getValueAt this row column)]
+        (core renameConfig (get-selected-group) old-val val)
+        (update-group-data)))))
+
+(defn presets-table-model []
+  (proxy [AbstractTableModel] []
+    (getColumnName [column] (property-name (nth (properties @group-data) column)))
+    (getColumnCount [] (count (properties @group-data)))
+    (getRowCount [] (count (keys @group-data)))
+    (isCellEditable [_ _] true)
+    (getValueAt [row column] (get (nth (vals @group-data) row)
+                                  (nth (properties @group-data) column)))
+    (setValueAt [val row column]
+      (let [old-val (.getValueAt this row column)]
+        (core renameConfig (get-selected-group) old-val val)
+        (update-group-data)))))
+
+(defn link-table-row-selection [table-src table-dest]
+  (let [model (proxy [DefaultListSelectionModel] [])]
+    (.setListSelectionModel table-src model)
+    (.setListSelectionModel table-dest model)))
+  
+(defn require-single-selection [table]
+  (.. table getSelectionModel (setSelectionMode ListSelectionModel/SINGLE_SELECTION)))
+
 (defn show []
   (let [f (JFrame. "Micro-Manager Configuration Preset Editor")
         cp (.getContentPane f)
@@ -188,7 +215,7 @@
         ]
     (edt 
       (.setAutoResizeMode presets-table JTable/AUTO_RESIZE_OFF)
-      (.. groups-table getSelectionModel (setSelectionMode ListSelectionModel/SINGLE_SELECTION))
+      (doall (map require-single-selection [groups-table presets-table preset-names-table]))
       (.. presets-table getTableHeader (setReorderingAllowed false))
       (.setRowHeaderView presets-sp preset-names-table)
       (.. preset-names-table getParent (setPreferredSize (Dimension. 150 100)))
@@ -196,6 +223,10 @@
       ;(.setFixedCellHeight preset-names-list (.getRowHeight presets-table))
       (.setBackground preset-names-table (Color. 0xE0 0xE0 0xE0))
       (.setModel groups-table (group-table-model))
+      (.setModel preset-names-table (preset-names-table-model))
+      (.setModel presets-table (presets-table-model))
+      ;(link-table-row-selection presets-table preset-names-table)
+      (.setAutoResizeMode presets-table JTable/AUTO_RESIZE_OFF)
       (doto cp
         (.setLayout (SpringLayout.))
         (add-component presets-sp :n 5 :w 155 :s -5 :e -5)
@@ -206,32 +237,18 @@
      :presets-table presets-table
      :preset-names-table preset-names-table}))
 
-(defn set-table-data [table body header]
-  (.setDataVector
-    (.getModel table)
-    (into-2d-array String body)
-    (into-1d-array String header)))
-
-(defn update-presets-table [components group]
-  (let [preset-names-table (components :preset-names-table)
-        presets-table (components :presets-table)
-        group-data (group-data group)
-        body (table-data group-data)
-        header (map list (keys group-data))
-        prop-names (map property-name (properties group-data))]
-    (edt (set-table-data presets-table body prop-names)
-         (when-let [column-objects (.getColumns (.getColumnModel presets-table))]
-           (doseq [column (enumeration-seq column-objects)]
-             (.setPreferredWidth column 120)))
-         (set-table-data preset-names-table header (list ""))
-         (.. preset-names-table getColumnModel (getColumn 0) (setMaxWidth 150)))))
+(defn set-preferred-column-width [table]
+  (->> table
+       .getColumnModel .getColumns enumeration-seq
+       (map #(.setPreferredWidth % 125)) dorun))
 
 (defn activate-groups-table [components]
   (attach-selection-listener
     (components :groups-table)
-    #(update-presets-table components
-                           (try (.getValueAt (components :groups-table) % 0)
-                                (catch Exception _ nil)))))
+    (fn [_] (update-group-data)
+         (.fireTableDataChanged (.getModel (components :preset-names-table)))
+         (.fireTableStructureChanged (.getModel (components :presets-table)))
+         (set-preferred-column-width (components :presets-table)))))
 
 
 ;; test/run
@@ -240,7 +257,6 @@
   ([]
     (start nil))
   ([group]
-    (let [components (show)]
-      (update-groups)
-      (activate-groups-table components)
-      components)))
+    (reset! widgets (show))
+    (update-groups)
+    (activate-groups-table @widgets)))
