@@ -113,10 +113,14 @@
   (let [[dev prop] prop-vec]
     (str dev "-" prop)))
 
+(defn transpose [elements]
+  (apply map list elements))
+
 (defn table-data [group-data]
-  (for [property (properties group-data)]
-          (for [preset (keys group-data)]
-            (get-in group-data [preset property] ""))))
+  (transpose
+         (for [property (properties group-data)]
+           (for [preset (keys group-data)]
+             (get-in group-data [preset property] "")))))
     
 (defn into-1d-array
   ([data]
@@ -174,8 +178,13 @@
 (defn group-table-model []
   (proxy [AbstractTableModel] []
     (getColumnCount [] 1)
-    (getRowCount [] (count (core getAvailableConfigGroups)))))
-    
+    (getRowCount [] (count (groups)))
+    (isCellEditable [_ _] true)
+    (getValueAt [row column] (nth (groups) row))
+    (setValueAt [val row column]
+      (let [old-val (nth (groups) row)]
+        (println old-val val row column)
+        (core renameConfigGroup old-val val)))))
 
 (defn show []
   (let [f (JFrame. "Micro-Manager Configuration Preset Editor")
@@ -195,6 +204,7 @@
       ;(.setFixedCellWidth preset-names-list 150)
       ;(.setFixedCellHeight preset-names-list (.getRowHeight presets-table))
       (.setBackground preset-names-table (Color. 0xE0 0xE0 0xE0))
+      (.setModel groups-table (group-table-model))
       (doto cp
         (.setLayout (SpringLayout.))
         (add-component presets-sp :n 5 :w 155 :s -5 :e -5)
@@ -216,17 +226,14 @@
         presets-table (components :presets-table)
         group-data (group-data group)
         body (table-data group-data)
-        header (keys group-data)
-        prop-names (map list (map property-name (properties group-data)))]
-    (edt (set-table-data presets-table body header)
+        header (map list (keys group-data))
+        prop-names (map property-name (properties group-data))]
+    (edt (set-table-data presets-table body prop-names)
          (when-let [column-objects (.getColumns (.getColumnModel presets-table))]
            (doseq [column (enumeration-seq column-objects)]
              (.setPreferredWidth column 120)))
-         (set-table-data preset-names-table prop-names (list ""))
+         (set-table-data preset-names-table header (list ""))
          (.. preset-names-table getColumnModel (getColumn 0) (setMaxWidth 150)))))
-
-(defn update-groups-table [t]
-  (edt (set-table-data t (map list (groups)) (list "Groups"))))
 
 (defn activate-groups-table [components]
   (attach-selection-listener
@@ -243,6 +250,5 @@
     (start nil))
   ([group]
     (let [components (show)]
-      (update-groups-table (components :groups-table))
       (activate-groups-table components)
       components)))
