@@ -130,9 +130,9 @@ public class ContrastPanel extends JPanel {
       } else if (label.equals(SINGLE)) {
          displayModeLabel_.setEnabled(false);
          displayModeCombo_.setEnabled(false);
-         sizeBarCheckBox_.setEnabled(false);
-         sizeBarComboBox_.setEnabled(false);
-         overlayColorComboBox_.setEnabled(false);
+         sizeBarCheckBox_.setEnabled(true);
+         sizeBarComboBox_.setEnabled(true);
+         overlayColorComboBox_.setEnabled(true);
          syncChannelsCheckBox_.setEnabled(false);
          logHistCheckBox_.setEnabled(true);
          slowHistCheckBox_.setEnabled(true);
