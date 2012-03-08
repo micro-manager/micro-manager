@@ -258,12 +258,12 @@ bool Omicron::Busy()
 // Read only properties
 //---------------------------------------------------------------------------
 
-int Omicron::OnDevice(MM::PropertyBase* pProp, MM::ActionType /*eAct*/)
+int Omicron::OnDevice(MM::PropertyBase* /* pProp */, MM::ActionType /*eAct*/)
 {
      return DEVICE_OK;
 }
 
-int Omicron::OnPort(MM::PropertyBase* pProp, MM::ActionType eAct)
+int Omicron::OnPort(MM::PropertyBase* pProp , MM::ActionType eAct)
 {
      if (eAct == MM::BeforeGet)
      {
@@ -366,7 +366,7 @@ int Omicron::OnHours(MM::PropertyBase* pProp, MM::ActionType /*eAct*/)
      return DEVICE_OK;
 }
 
-int Omicron::OnPowerSetpoint1(MM::PropertyBase* pProp, MM::ActionType eAct)
+int Omicron::OnPowerSetpoint1(MM::PropertyBase* pProp, MM::ActionType /* eAct */)
 {
      std::string answer;
      std::ostringstream command;
@@ -393,7 +393,7 @@ int Omicron::OnPowerSetpoint1(MM::PropertyBase* pProp, MM::ActionType eAct)
      return DEVICE_OK;
 }
 
-int Omicron::OnPowerSetpoint2(MM::PropertyBase* pProp, MM::ActionType eAct)
+int Omicron::OnPowerSetpoint2(MM::PropertyBase* pProp, MM::ActionType /* eAct */)
 {
      std::string answer;
      std::ostringstream command;
@@ -420,12 +420,12 @@ int Omicron::OnPowerSetpoint2(MM::PropertyBase* pProp, MM::ActionType eAct)
      return DEVICE_OK;
 }
 
-int Omicron::OnPowerStatus(MM::PropertyBase* pProp, MM::ActionType eAct)
+int Omicron::OnPowerStatus(MM::PropertyBase* pProp, MM::ActionType /* eAct */)
 {
      std::string answer;
      std::ostringstream command;
 	                
-	 command << "?MDP";
+	  command << "?MDP";
      int ret = SendSerialCommand(port_.c_str(), command.str().c_str(), "\r");
      if (ret != DEVICE_OK) return ret;
      ret = GetSerialAnswer(port_.c_str(), "\r", answer);
@@ -438,7 +438,7 @@ int Omicron::OnPowerStatus(MM::PropertyBase* pProp, MM::ActionType eAct)
      return DEVICE_OK;
 }
 
-int Omicron::OnSerialNumber(MM::PropertyBase* pProp, MM::ActionType eAct)
+int Omicron::OnSerialNumber(MM::PropertyBase* pProp, MM::ActionType /* eAct */)
 {
      std::ostringstream command;
 
@@ -455,12 +455,12 @@ int Omicron::OnSerialNumber(MM::PropertyBase* pProp, MM::ActionType eAct)
      return DEVICE_OK;
 }
 
-int Omicron::OnSpecPower(MM::PropertyBase* pProp, MM::ActionType eAct)
+int Omicron::OnSpecPower(MM::PropertyBase* pProp, MM::ActionType /* eAct */)
 {
-     std::ostringstream command;
-	 std::string answer;
-	 std::vector<std::string> help3;
-	 std::stringstream help4;
+    std::ostringstream command;
+    std::string answer;
+    std::vector<std::string> help3;
+    std::stringstream help4;
 
      command << "?GSI";
      int ret = SendSerialCommand(port_.c_str(), command.str().c_str(), "\r");
@@ -481,7 +481,7 @@ int Omicron::OnSpecPower(MM::PropertyBase* pProp, MM::ActionType eAct)
      return DEVICE_OK;
 }
 
-int Omicron::OnTemperatureBaseplate(MM::PropertyBase* pProp, MM::ActionType eAct)
+int Omicron::OnTemperatureBaseplate(MM::PropertyBase* pProp, MM::ActionType /* eAct */)
 {
      std::string answer;
      std::ostringstream command;
@@ -499,7 +499,7 @@ int Omicron::OnTemperatureBaseplate(MM::PropertyBase* pProp, MM::ActionType eAct
      return DEVICE_OK;
 }
 
-int Omicron::OnTemperatureDiode(MM::PropertyBase* pProp, MM::ActionType eAct)
+int Omicron::OnTemperatureDiode(MM::PropertyBase* pProp, MM::ActionType /* eAct */)
 {
      std::string answer;
      std::ostringstream command;
@@ -517,7 +517,7 @@ int Omicron::OnTemperatureDiode(MM::PropertyBase* pProp, MM::ActionType eAct)
      return DEVICE_OK;
 }
 
-int Omicron::OnWavelength(MM::PropertyBase* pProp, MM::ActionType eAct)
+int Omicron::OnWavelength(MM::PropertyBase* pProp, MM::ActionType /* eAct */)
 {
      std::ostringstream command;
 	 std::string answer;
@@ -685,7 +685,6 @@ int Omicron::OnOperatingmode(MM::PropertyBase* pProp, MM::ActionType eAct)
 	 std::string answer3;
 	 std::stringstream help2;
 	 static int i;
-	 int b;
 	 int m;
 	 int T;
 	 int A;
@@ -831,8 +830,8 @@ int Omicron::OnPower1(MM::PropertyBase* pProp, MM::ActionType eAct)
 			  power1_ = 0;
 		  }
 
-		  i = ((power1_ / 100.0 * 4095) + 0.5);
-          help << std::setw(3) << std::setfill('0') << std::hex << i; 
+        i = (int) ((power1_ / 100.0 * 4095) + 0.5);
+        help << std::setw(3) << std::setfill('0') << std::hex << i; 
 		  command << "?SLP" << help.str();	
           int ret = SendSerialCommand(port_.c_str(), command.str().c_str(), "\r");
           if (ret != DEVICE_OK) return ret;
@@ -883,9 +882,9 @@ int Omicron::OnPower2(MM::PropertyBase* pProp, MM::ActionType eAct)
 			  power2_ = 0;
 		  }
 
-		  i = ((power2_ / specpower * 4095) + 0.5);
-          help << std::setw(3) << std::setfill('0') << std::hex << i; 
-		  command << "?SLP" << help.str();	
+        i = (int) ((power2_ / specpower * 4095) + 0.5);
+        help << std::setw(3) << std::setfill('0') << std::hex << i; 
+        command << "?SLP" << help.str();	
           int ret = SendSerialCommand(port_.c_str(), command.str().c_str(), "\r");
           if (ret != DEVICE_OK) return ret;
           ret = GetSerialAnswer(port_.c_str(), "\r", answer);
@@ -936,7 +935,7 @@ bool Omicron::PharseAnswerString(std::string &InputBuffer, const std::string &Ko
 {
     std::string Seperator = "§";
 
-    int StrIndex = InputBuffer.find(Kommando);
+    unsigned int StrIndex = InputBuffer.find(Kommando);
     if( StrIndex != std::string::npos )
     {
         InputBuffer = InputBuffer.substr(StrIndex + Kommando.length());  // Erase command
