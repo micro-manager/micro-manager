@@ -1624,7 +1624,7 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface, Device
       configPad_ = new ConfigGroupPad();
       configPadButtonPanel_ = new ConfigPadButtonPanel();
       configPadButtonPanel_.setConfigPad(configPad_);
-      configPadButtonPanel_.setGUI(MMStudioMainFrame.this);
+      configPadButtonPanel_.setGUI(MMStudioMainFrame.getInstance());
       
       configPad_.setFont(new Font("", Font.PLAIN, 10));
       topPanel.add(configPad_);
@@ -3089,6 +3089,8 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface, Device
          for (int i = 0; i < c; ++i) {
             displayImage(core_.getTaggedImage(i), (i == c - 1), i);
          }
+         simpleDisplay_.getImagePlus().getWindow().toFront();
+         
       } catch (Exception ex) {
          ReportingUtils.showError(ex);
       }
