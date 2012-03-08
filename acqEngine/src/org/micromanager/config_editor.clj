@@ -2,16 +2,10 @@
   (:import [javax.swing DefaultListModel JFrame JList JPanel JTable DefaultListSelectionModel
                         JScrollPane JViewport ListSelectionModel SpringLayout]
            [javax.swing.event CellEditorListener ListSelectionListener]
+           [java.awt.event MouseAdapter]
            [javax.swing.table AbstractTableModel]
            [java.awt Color Dimension])
   (:use [org.micromanager.mm :only [load-mm gui core edt get-config]]))
-
-(def widgets (atom nil))
-
-(defn get-selected-group []
-  (let [row (.getSelectedRow (@widgets :groups-table))]
-    (when (<= 0 row)
-      (nth @groups row))))
 
 ;; swing layout 
 
@@ -61,6 +55,14 @@
 
 (def group-data (atom nil))
 
+(def widgets (atom nil))
+
+(defn get-selected-group []
+  (let [row (.getSelectedRow (@widgets :groups-table))]
+    (when (<= 0 row)
+      (nth @groups row))))
+
+
 (defn update-group-data []
     (reset! group-data 
             (when-let [group (get-selected-group)]
@@ -78,16 +80,6 @@
 (defn property-name [prop-vec]
   (let [[dev prop] prop-vec]
     (str dev "-" prop)))
-
-(defn attach-selection-listener [table f]
-  (-> table .getSelectionModel
-      (.addListSelectionListener
-        (reify ListSelectionListener
-          (valueChanged [this event]
-            (when-not (.getValueIsAdjusting event)
-              (try
-                (f (.getSelectedRow table))
-                (catch Exception e (.printStackTrace e)))))))))
 
 (defn group-table-model []
   (proxy [AbstractTableModel] []
@@ -126,14 +118,29 @@
         ;TODO: finish
         )))
 
-(defn link-table-row-selection [table-src table-dest]
-  (let [model (proxy [DefaultListSelectionModel] [])]
-    ;TODO: Fix!
-    (.setListSelectionModel table-src model)
-    (.setListSelectionModel table-dest model)))
-  
+;; table row selection rules
+
 (defn require-single-selection [table]
   (.. table getSelectionModel (setSelectionMode ListSelectionModel/SINGLE_SELECTION)))
+
+(defn attach-selection-listener [table f]
+  (let [list-selection-listener
+        (reify ListSelectionListener
+          (valueChanged [this event]
+            (try
+              (f (.getSelectedRow table))
+              (catch Exception e (.printStackTrace e)))))]
+      (-> table .getSelectionModel
+          (.addListSelectionListener list-selection-listener))))
+  
+(defn set-selected-row [table row]
+  (when (and (< -1 row (.getRowCount table))
+             (not= (first (.getSelectedRows table)) row))   
+    (.setRowSelectionInterval table row row))) 
+
+(defn link-table-row-selection [table1 table2]
+  (attach-selection-listener table1 #(set-selected-row table2 %))
+  (attach-selection-listener table2 #(set-selected-row table1 %)))
 
 (defn show []
   (let [f (JFrame. "Micro-Manager Configuration Preset Editor")
@@ -156,7 +163,7 @@
       (.setModel groups-table (group-table-model))
       (.setModel preset-names-table (preset-names-table-model))
       (.setModel presets-table (presets-table-model))
-      ;(link-table-row-selection presets-table preset-names-table)
+      (link-table-row-selection presets-table preset-names-table)
       (.setAutoResizeMode presets-table JTable/AUTO_RESIZE_OFF)
       (doto cp
         (.setLayout (SpringLayout.))
@@ -164,7 +171,8 @@
         (add-component groups-sp :n 5 :w 5 :s -5 :w 150))
         (.setBounds f 100 100 800 500)
         (.show f))
-    {:groups-table groups-table
+    {:frame f
+     :groups-table groups-table
      :presets-table presets-table
      :preset-names-table preset-names-table}))
 
@@ -188,6 +196,8 @@
   ([]
     (start nil))
   ([group]
+    (when-let [frame (:frame @widgets)]
+      (edt (doto frame .hide .dispose)))
     (reset! widgets (show))
     (update-groups)
     (activate-groups-table @widgets)))
