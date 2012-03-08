@@ -68,12 +68,11 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
    public static final Dimension MINIMUM_SIZE = new Dimension(400,CONTROLS_SIZE.height);
    
    private static final int NUM_BINS = 256;
-   private static final double BIN_SIZE_MIN = 1.0 / 8;
-   private final int BIN_SIZE_MAX;
    private final int channelIndex_;
    private HistogramPanel hp_;
-   private final MultiChannelContrastPanel mccPanel_;
    private final MetadataPanel mdPanel_;
+   private MultiChannelHistograms mcHistograms_;
+   private ContrastPanel contrastPanel_;
    private JButton autoButton_;
    private JButton zoomInButton_;
    private JButton zoomOutButton_;
@@ -102,7 +101,7 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
    final private int bitDepth_;
    private Color color_;
 
-   public ChannelControlPanel(int channelIndex, MultiChannelContrastPanel mccPanel, MetadataPanel md, ImageCache cache,
+   public ChannelControlPanel(int channelIndex, ContrastPanel contrastPanel, MultiChannelHistograms mcHistograms, MetadataPanel md, ImageCache cache,
            Color color, int bitDepth, double fractionToReject, boolean logScale) {
       fractionToReject_ = fractionToReject;
       logScale_ = logScale;
@@ -111,12 +110,12 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
       bitDepth_ = bitDepth;
       histMax_ = maxIntensity_ + 1;
       binSize_ = histMax_ / NUM_BINS;
-      BIN_SIZE_MAX = (int) (Math.pow(2, bitDepth) / NUM_BINS);
       histMaxLabel_ = "" + histMax_;
       mdPanel_ = md;    
+      mcHistograms_ = mcHistograms;
+      contrastPanel_ = contrastPanel;
       channelIndex_ = channelIndex;
       initComponents();
-      mccPanel_ = mccPanel;
       loadDisplaySettings(cache);
       updateChannelNameAndColor(cache);
       cache.setChannelColor(channelIndex_, color_.getRGB());
@@ -198,8 +197,8 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
       histRangeComboBox_.addActionListener(new ActionListener() {
 
          public void actionPerformed(final ActionEvent e) {
-            if (mccPanel_.syncedChannels()) {
-               mccPanel_.updateOtherDisplayCombos(histRangeComboBox_.getSelectedIndex());
+            if (contrastPanel_.getSyncChannels()) {
+               mcHistograms_.updateOtherDisplayCombos(histRangeComboBox_.getSelectedIndex());
             }
             displayComboAction();
          }
@@ -390,8 +389,8 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
    }
 
    private void fullButtonAction() {
-      if (mccPanel_.syncedChannels()) {
-         mccPanel_.fullScaleChannels();
+      if (contrastPanel_.getSyncChannels()) {
+         mcHistograms_.fullScaleChannels();
       } else {
          setFullScale();
          mdPanel_.drawWithoutUpdate();
@@ -399,9 +398,9 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
    }
 
    public void autoButtonAction() {
-      if (mccPanel_.syncedChannels()) {
+      if (contrastPanel_.getSyncChannels()) {
          autostretch();
-         mccPanel_.applyContrastToAllChannels(contrastMin_, contrastMax_, gamma_);
+         mcHistograms_.applyContrastToAllChannels(contrastMin_, contrastMax_, gamma_);
       } else {
          autostretch();
          mdPanel_.drawWithoutUpdate();
@@ -484,7 +483,7 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
    }
 
    public void setFullScale() {
-      mccPanel_.autostretchCheckbox_.setSelected(false);
+      contrastPanel_.disableAutostretch();
       contrastMin_ = 0;
       contrastMax_ = histMax_;
    }
@@ -499,7 +498,7 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
               contrastMax_++;
           }
       }
-      if (mccPanel_.rejectOutliersCB_.isSelected()) {
+      if (contrastPanel_.getRejectOutliers()) {
          if (contrastMin_ < minAfterRejectingOutliers_) {
             if (0 < minAfterRejectingOutliers_) {
                contrastMin_ = minAfterRejectingOutliers_;
@@ -536,8 +535,8 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
       }
    }
 
-   public void setLogScale(boolean logScale) {
-      logScale_ = logScale;
+   public void setLogScale() {
+      logScale_ = contrastPanel_.getLogHist();
       calcAndDisplayHistAndStats(mdPanel_.getCurrentImage(), true);
    }
 
@@ -695,7 +694,7 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
       if (rawHistogram[0] == imgWidth * imgHeight) {
          return false;  //Blank pixels 
       }
-      if (mccPanel_.rejectOutliersCB_.isSelected()) {
+      if (contrastPanel_.getRejectOutliers()) {
          // todo handle negative values
          maxAfterRejectingOutliers_ = rawHistogram.length;
          // specified percent of pixels are ignored in the automatic contrast setting
@@ -774,28 +773,28 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
    }
 
    public void onLeftCursor(double pos) {
-      mccPanel_.autostretchCheckbox_.setSelected(false);
+      contrastPanel_.disableAutostretch();
       contrastMin_ = (int) (Math.max(0, pos) * binSize_);
       if (contrastMin_ >= maxIntensity_)
           contrastMin_ = maxIntensity_ - 1;
       if (contrastMax_ < contrastMin_) {
          contrastMax_ = contrastMin_ + 1;
       }
-      if (mccPanel_.syncedChannels()) {
-         mccPanel_.applyContrastToAllChannels(contrastMin_, contrastMax_, gamma_);
+      if (contrastPanel_.getSyncChannels()) {
+         mcHistograms_.applyContrastToAllChannels(contrastMin_, contrastMax_, gamma_);
       } else {
          mdPanel_.drawWithoutUpdate();
       }
    }
 
    public void onRightCursor(double pos) {
-      mccPanel_.autostretchCheckbox_.setSelected(false);
+      contrastPanel_.disableAutostretch();
       contrastMax_ = (int) (Math.min(NUM_BINS - 1, pos) * binSize_);
       if (contrastMin_ > contrastMax_) {
          contrastMin_ = contrastMax_;
       }
-      if (mccPanel_.syncedChannels()) {
-         mccPanel_.applyContrastToAllChannels(contrastMin_, contrastMax_, gamma_);
+      if (contrastPanel_.getSyncChannels()) {
+         mcHistograms_.applyContrastToAllChannels(contrastMin_, contrastMax_, gamma_);
       } else {
          mdPanel_.drawWithoutUpdate();
       }
@@ -808,8 +807,8 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
          } else {
             gamma_ = gamma;
          }
-         if (mccPanel_.syncedChannels()) {
-            mccPanel_.applyContrastToAllChannels(contrastMin_, contrastMax_, gamma_);
+         if (contrastPanel_.getSyncChannels()) {
+            mcHistograms_.applyContrastToAllChannels(contrastMin_, contrastMax_, gamma_);
          } else {
             mdPanel_.drawWithoutUpdate();
          }

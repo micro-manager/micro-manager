@@ -49,10 +49,10 @@ import mmcorej.TaggedImage;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.micromanager.MMStudioMainFrame;
-import org.micromanager.api.ContrastPanel;
+import org.micromanager.api.Histograms;
 import org.micromanager.api.ImageCache;
-import org.micromanager.graph.MultiChannelContrastPanel;
-import org.micromanager.graph.SingleChannelContrastPanel;
+import org.micromanager.graph.ContrastPanel;
+import org.micromanager.graph.SingleChannelHistogram;
 import org.micromanager.utils.ContrastSettings;
 import org.micromanager.utils.ImageFocusListener;
 import org.micromanager.utils.GUIUtils;
@@ -67,11 +67,7 @@ import org.micromanager.utils.SnapLiveContrastSettings;
 public class MetadataPanel extends JPanel
         implements ImageFocusListener {
 
-   private static final String SINGLE_CHANNEL_CONTRAST_PANEL = "Single Channel";
-   private static final String MULTIPLE_CHANNELS_CONTRAST_PANEL = "Multiple Channels";
-   private static final String BLANK_CONTRAST_PANEL = "Blank";
    private JSplitPane CommentsSplitPane;
-   private JPanel multipleChannelsPanel_;
    private JLabel imageCommentsLabel;
    private JPanel imageCommentsPanel;
    private JScrollPane imageCommentsScrollPane;
@@ -91,12 +87,7 @@ public class MetadataPanel extends JPanel
    private JScrollPane summaryMetadataScrollPane;
    private JTable summaryMetadataTable;
    private JTabbedPane tabbedPane;
-   private JPanel contrastPanelHolder_;
-   private JPanel singleChannelPanel_;
-   private CardLayout contrastPanelLayout_;
-   private SingleChannelContrastPanel singleChannelContrastPanel_;
-   private MultiChannelContrastPanel multiChannelContrastPanel_;
-   private ContrastPanel currentContrastPanel_;
+   private ContrastPanel contrastPanel_;
    private final MetadataTableModel imageMetadataModel_;
    private final MetadataTableModel summaryMetadataModel_;
    private final String[] columnNames_ = {"Property", "Value"};
@@ -105,7 +96,7 @@ public class MetadataPanel extends JPanel
 
    /** Creates new form MetadataPanel */
    public MetadataPanel() {
-      makeContrastPanels();
+      makeContrastPanel();
       initialize();
       imageMetadataModel_ = new MetadataTableModel();
       summaryMetadataModel_ = new MetadataTableModel();
@@ -115,12 +106,9 @@ public class MetadataPanel extends JPanel
       addTextChangeListeners();
    }
 
-   private void makeContrastPanels() {
-      singleChannelContrastPanel_ = new SingleChannelContrastPanel(this);
-      singleChannelContrastPanel_.setFont(new Font("", Font.PLAIN, 10));
-
-      multiChannelContrastPanel_ = new MultiChannelContrastPanel(this);
-      multiChannelContrastPanel_.setFont(new Font("", Font.PLAIN, 10));
+   private void makeContrastPanel() {
+      contrastPanel_ = new ContrastPanel(this);
+      contrastPanel_.setFont(new Font("", Font.PLAIN, 10));
    }
 
    private void initialize() {
@@ -154,20 +142,7 @@ public class MetadataPanel extends JPanel
          }
       });
 
-      singleChannelPanel_ = new JPanel(new BorderLayout());
-      multipleChannelsPanel_ = new JPanel(new BorderLayout());
-
-      multipleChannelsPanel_.setPreferredSize(new java.awt.Dimension(400, 594));
-      multipleChannelsPanel_.add(multiChannelContrastPanel_);
-      singleChannelPanel_.add(singleChannelContrastPanel_);
-      contrastPanelLayout_ = new CardLayout();
-      contrastPanelHolder_ = new JPanel(contrastPanelLayout_);
-      contrastPanelHolder_.add(multipleChannelsPanel_, MULTIPLE_CHANNELS_CONTRAST_PANEL);
-      contrastPanelHolder_.add(singleChannelPanel_, SINGLE_CHANNEL_CONTRAST_PANEL);
-      contrastPanelHolder_.add(new JPanel(new BorderLayout()), BLANK_CONTRAST_PANEL);
-      setContrastPanel(BLANK_CONTRAST_PANEL);
-
-      tabbedPane.addTab("Channels", contrastPanelHolder_);
+      tabbedPane.addTab("Channels", contrastPanel_);
 
       metadataSplitPane.setBorder(null);
       metadataSplitPane.setOrientation(JSplitPane.VERTICAL_SPLIT);
@@ -391,12 +366,14 @@ public class MetadataPanel extends JPanel
       public synchronized Object getValueAt(int rowIndex, int columnIndex) {
          if (data_.size() > rowIndex) {
             Vector<String> row = data_.get(rowIndex);
-            if (row.size() > columnIndex)
+            if (row.size() > columnIndex) {
                return data_.get(rowIndex).get(columnIndex);
-            else
+            } else {
                return "";
-         } else
+            }
+         } else {
             return "";
+         }
       }
 
       public void clear() {
@@ -431,9 +408,9 @@ public class MetadataPanel extends JPanel
    private JSONObject selectChangingTags(ImagePlus imgp, JSONObject md) {
       JSONObject mdChanging = new JSONObject();
       ImageCache cache = getCache(imgp);
-      if (cache != null)
+      if (cache != null) {
          for (String key : cache.getChangingKeys()) {
-            if (md.has(key))
+            if (md.has(key)) {
                try {
                   mdChanging.put(key, md.get(key));
                } catch (JSONException ex) {
@@ -444,50 +421,52 @@ public class MetadataPanel extends JPanel
                      ReportingUtils.logError(ex1);
                   }
                }
+            }
          }
+      }
       return mdChanging;
    }
 
    private AcquisitionVirtualStack getAcquisitionStack(ImagePlus imp) {
       VirtualAcquisitionDisplay display = VirtualAcquisitionDisplay.getDisplay(imp);
-      if (display != null)
+      if (display != null) {
          return display.virtualStack_;
-      else
+      } else {
          return null;
+      }
    }
 
    private void writeSummaryComments(ImagePlus imp) {
       VirtualAcquisitionDisplay acq = getVirtualAcquisitionDisplay(imp);
-      if (acq != null)
+      if (acq != null) {
          acq.setSummaryComment(summaryCommentsTextArea.getText());
+      }
    }
 
    private void writeImageComments(ImagePlus imgp) {
       VirtualAcquisitionDisplay acq = getVirtualAcquisitionDisplay(imgp);
-      if (acq != null)
+      if (acq != null) {
          acq.setImageComment(imageCommentsTextArea.getText());
+      }
    }
 
    private ImageCache getCache(ImagePlus imgp) {
-      if (VirtualAcquisitionDisplay.getDisplay(imgp) != null)
+      if (VirtualAcquisitionDisplay.getDisplay(imgp) != null) {
          return VirtualAcquisitionDisplay.getDisplay(imgp).imageCache_;
-      else
+      } else {
          return null;
+      }
    }
 
    public ImagePlus getCurrentImage() {
-      if (lastWindow_ == null)
+      if (lastWindow_ == null) {
          return null;
+      }
       return lastWindow_.getImagePlus();
    }
 
    public ContrastSettings getChannelContrast(int channel) {
-      ImagePlus img = getCurrentImage();
-      if (img == null)
-         return null;
-      if (currentContrastPanel_ != null)
-         return currentContrastPanel_.getChannelContrastSettings(channel);
-      return null;
+      return contrastPanel_.getChannelContrast(channel);
    }
 
    /*
@@ -508,88 +487,29 @@ public class MetadataPanel extends JPanel
     * Used for applying loaded contrast settings on intial image
     */
    public void loadSimpleWinContrastWithoutDraw(ImageCache cache, ImagePlus img) {
-      if (currentContrastPanel_ != null) {
-         int n = cache.getNumChannels();
-         ContrastSettings c;
-         for (int i = 0; i < n; i++) {
-            c = MMStudioMainFrame.getInstance().loadSimpleContrastSettigns(cache.getPixelType(), i);
-            currentContrastPanel_.setChannelContrast(i, c.min, c.max, c.gamma);
-         }
-         currentContrastPanel_.applyLUTToImage(img, cache);
-      }
+      contrastPanel_.loadSimpleWinContrastWithoutDraw(cache, img);
    }
 
    /*
     * used only for autoscaling on intial image
     */
    public void autoscaleWithoutDraw(ImageCache cache, ImagePlus img) {
-      if (currentContrastPanel_ != null) {
-         currentContrastPanel_.calcAndDisplayHistAndStats(img, true);
-         currentContrastPanel_.autostretch();
-         currentContrastPanel_.applyLUTToImage(img, cache);
-      }
+      contrastPanel_.autoscaleWithoutDraw(cache, img);
    }
 
    public void autoscaleOverStackWithoutDraw(ImageCache cache, ImagePlus img, int channel,
            HashMap<Integer, Integer> mins, HashMap<Integer, Integer> maxes) {
-      int nSlices = ((VirtualAcquisitionDisplay.IMMImagePlus) img).getNSlicesUnverified();
-      int nChannels = ((VirtualAcquisitionDisplay.IMMImagePlus) img).getNChannelsUnverified();
-      int bytes = img.getBytesPerPixel();
-      int pixMin, pixMax;
-      if (mins.containsKey(channel)) {
-         pixMin = mins.get(channel);
-         pixMax = maxes.get(channel);
-      } else {
-         pixMax = 0;
-         pixMin = (int) (Math.pow(2, 8 * bytes) - 1);
-      }
-      int z = img.getSlice() - 1;
-      int flatIndex = 1 + channel + z * nChannels;
-      if (bytes == 2) {
-         short[] pixels = (short[]) img.getStack().getPixels(flatIndex);
-         for (short value : pixels) {
-            if (value < pixMin)
-               pixMin = value;
-            if (value > pixMax)
-               pixMax = value;
-         }
-      } else if (bytes == 1) {
-         byte[] pixels = (byte[]) img.getStack().getPixels(flatIndex);
-         for (byte value : pixels) {
-            if (value < pixMin)
-               pixMin = value;
-            if (value > pixMax)
-               pixMax = value;
-         }
-      }
-
-      //autoscale the channel
-      if (currentContrastPanel_ != null)
-         currentContrastPanel_.setChannelContrast(channel, pixMin, pixMax, 1.0);
-
-      if (currentContrastPanel_ != null)
-         currentContrastPanel_.applyLUTToImage(img, cache);
-      
-      mins.put(channel, pixMin);
-      maxes.put(channel, pixMax);
+      contrastPanel_.autoscaleOverStackWithoutDraw(cache, img, channel, mins, maxes);
    }
 
    public void refresh() {
-      ImagePlus img = getCurrentImage();
-      if (currentContrastPanel_ == null || img == null)
-         return;
-      VirtualAcquisitionDisplay vad = VirtualAcquisitionDisplay.getDisplay(img);
-      if (vad == null)
-         return;
-      ImageCache cache = vad.getImageCache();
-      currentContrastPanel_.setupChannelControls(cache);
-      currentContrastPanel_.displayChanged(img, cache);
-      imageChangedUpdate(img, cache);
+      contrastPanel_.refresh();
    }
 
    public synchronized void setup(ImageWindow win) {
-      if (win == lastWindow_)
+      if (win == lastWindow_) {
          return;
+      }
       lastWindow_ = win;
       if (win == null || !(win instanceof VirtualAcquisitionDisplay.DisplayWindow)) {
          imageChangedUpdate((ImagePlus) null, null);
@@ -598,36 +518,19 @@ public class MetadataPanel extends JPanel
 
       final ImagePlus imgp = win.getImagePlus();
       final ImageCache cache = getCache(imgp);
-      final VirtualAcquisitionDisplay acq = getVirtualAcquisitionDisplay(imgp);
-      if (acq.getNumChannels() > 1)
-         setContrastPanel(MULTIPLE_CHANNELS_CONTRAST_PANEL);
-      else
-         setContrastPanel(SINGLE_CHANNEL_CONTRAST_PANEL);
+      final VirtualAcquisitionDisplay vad = getVirtualAcquisitionDisplay(imgp);     
 
-
-      if (acq != null) {
-         summaryCommentsTextArea.setText(acq.getSummaryComment());
+      if (vad != null) {
+         summaryCommentsTextArea.setText(vad.getSummaryComment());
          JSONObject md = cache.getSummaryMetadata();
          summaryMetadataModel_.setMetadata(md);
-      } else
+      } else {
          summaryCommentsTextArea.setText(null);
+      }
 
 
-      if (acq != null && currentContrastPanel_ != null) {
-         currentContrastPanel_.setupChannelControls(cache);
-         if (acq.getNumChannels() > 1) {
-            boolean[] oldActive = ((CompositeImage) imgp).getActiveChannels();
-            boolean[] active = Arrays.copyOf(oldActive , oldActive.length);
-            multiChannelContrastPanel_.setDisplayMode(((CompositeImage) imgp).getMode());
-            for (int i = 0; i < active.length; i++)
-               ((CompositeImage) imgp).getActiveChannels()[i] = active[i];
-            
-            multiChannelContrastPanel_.sizeBarCheckBoxActionPerformed();
-         }
-         //load appropriate contrast settings calc and display hist, apply LUT and draw
-         currentContrastPanel_.displayChanged(imgp, cache);
-
-         imageChangedUpdate(imgp, cache);
+      if (vad != null ) {
+         contrastPanel_.setup(cache);
       }
    }
 
@@ -636,30 +539,23 @@ public class MetadataPanel extends JPanel
    }
 
    private VirtualAcquisitionDisplay getVirtualAcquisitionDisplay(ImagePlus imgp) {
-      if (imgp == null)
+      if (imgp == null) {
          return null;
+      }
       return VirtualAcquisitionDisplay.getDisplay(imgp);
    }
 
-   private void setContrastPanel(String label) {
-      contrastPanelLayout_.show(contrastPanelHolder_, label);
-      if (label.equals(BLANK_CONTRAST_PANEL))
-         currentContrastPanel_ = null;
-      else if (label.equals(SINGLE_CHANNEL_CONTRAST_PANEL))
-         currentContrastPanel_ = singleChannelContrastPanel_;
-      else if (label.equals(MULTIPLE_CHANNELS_CONTRAST_PANEL))
-         currentContrastPanel_ = multiChannelContrastPanel_;
-   }
 
    /*
     * applies LUT to image and then redraws image
     */
    public void drawWithoutUpdate(ImagePlus img) {
-      if (img == null)
+      if (img == null) {
          return;
+      }
       VirtualAcquisitionDisplay disp = VirtualAcquisitionDisplay.getDisplay(img);
-      if (disp != null && currentContrastPanel_ != null) {
-         currentContrastPanel_.applyLUTToImage(disp.getHyperImage(), disp.imageCache_);
+      if (disp != null ) {
+         contrastPanel_.applyLUTToImage(disp.getHyperImage(), disp.imageCache_);
          disp.drawWithoutUpdate();
       }
    }
@@ -682,46 +578,42 @@ public class MetadataPanel extends JPanel
          imageMetadataModel_.setMetadata(null);
          summaryMetadataModel_.setMetadata(null);
          summaryCommentsTextArea.setText(null);
-         setContrastPanel(BLANK_CONTRAST_PANEL);
+         contrastPanel_.setHistograms(ContrastPanel.BLANK);
       } else if (tabSelected == 1) { //Metadata
          AcquisitionVirtualStack stack = getAcquisitionStack(img);
          if (stack != null) {
             int slice = img.getCurrentSlice();
             TaggedImage taggedImg = stack.getTaggedImage(slice);
-            if (taggedImg == null)
+            if (taggedImg == null) {
                imageMetadataModel_.setMetadata(null);
-            else {
+            } else {
                JSONObject md = stack.getTaggedImage(slice).tags;
-               if (!showUnchangingKeys_)
+               if (!showUnchangingKeys_) {
                   md = selectChangingTags(img, md);
+               }
                imageMetadataModel_.setMetadata(md);
             }
             summaryMetadataModel_.setMetadata(stack.getCache().getSummaryMetadata());
-         } else
+         } else {
             imageMetadataModel_.setMetadata(null);
-         if (currentContrastPanel_ != null)
-            currentContrastPanel_.imageChanged(img, cache, false);
+         }
+         contrastPanel_.imageChanged(img, cache, false);
       } else if (tabSelected == 0) { //Histogram panel
-         if (currentContrastPanel_ != null)
-            currentContrastPanel_.imageChanged(img, cache, true);
+         contrastPanel_.imageChanged(img, cache, true);
       } else if (tabSelected == 2) { //Display and comments
          VirtualAcquisitionDisplay acq = getVirtualAcquisitionDisplay(img);
-         if (acq != null)
+         if (acq != null) {
             imageCommentsTextArea.setText(acq.getImageComment());
-         if (currentContrastPanel_ != null)
-            currentContrastPanel_.imageChanged(img, cache, false);
+         }
+         contrastPanel_.imageChanged(img, cache, false);
       }
    }
 
    public void setChannelContrast(int channelIndex, int min, int max, double gamma) {
-      if (currentContrastPanel_ != null)
-         currentContrastPanel_.setChannelContrast(channelIndex, min, max, gamma);
-      drawWithoutUpdate();
+      contrastPanel_.setChannelContrast(channelIndex, min, max, gamma);
    }
-   
+
    public void setChannelHistogramDisplayMax(int channelIndex, int histMax) {
-      if (currentContrastPanel_ != null) {
-         currentContrastPanel_.setChannelHistogramDisplayMax(channelIndex, histMax);
-      }
-   }  
+      contrastPanel_.setChannelHistogramDisplayMax(channelIndex, histMax);
+   }
 }

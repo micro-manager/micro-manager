@@ -22,13 +22,14 @@
 package org.micromanager.api;
 
 import ij.ImagePlus;
+import javax.swing.JPanel;
 import org.micromanager.utils.ContrastSettings;
 
 /**
  * Interface for contrast panels, which display and control Image contrast
  * @author Henry Pinkard
  */
-public interface ContrastPanel {
+public interface Histograms  {
 
     /**
      * Creates and applies a look up table to the image based on the previously
@@ -37,7 +38,7 @@ public interface ContrastPanel {
      * @param img the image
      * @param cache the ImageCahce corresponding to the image
      */
-   public void applyLUTToImage(ImagePlus img, ImageCache cache);
+   public abstract void applyLUTToImage(ImagePlus img, ImageCache cache);
 
    /**
     * Called when the window corresponding to the contrast panel changes.  Initializes
@@ -46,7 +47,7 @@ public interface ContrastPanel {
     * @param img the image
     * @param cache the ImageCahce corresponding to the image
     */
-   public void displayChanged(ImagePlus img, ImageCache cache);
+   public abstract void displayChanged(ImagePlus img, ImageCache cache);
 
    /**
     * Called just before the image is about to draw itself.  Calls 
@@ -57,7 +58,7 @@ public interface ContrastPanel {
     * @param drawHist flag that gets passed to calcAndDisplayHistAndStats to determine
     * if the histogram and image statistics should be updated
     */
-   public void imageChanged(ImagePlus img, ImageCache cache, boolean drawHist);
+   public abstract void imageChanged(ImagePlus img, ImageCache cache, boolean drawHist, boolean slowHistUpdate);
 
    /**
     * Manually set the contrast min, max and gamma values for this channel (channel = 0)
@@ -67,13 +68,13 @@ public interface ContrastPanel {
     * @param max Contrast max
     * @param gamma Contrast gamma
     */
-   public void setChannelContrast(int channelIndex, int min, int max, double gamma);
+   public abstract void setChannelContrast(int channelIndex, int min, int max, double gamma);
    
    /**
     * Initializes GUI components.  Only needs to be called once per a display
     * @param cache the ImageCahce corresponding to the image
     */
-   public void setupChannelControls(ImageCache cache);
+   public abstract void setupChannelControls(ImageCache cache);
    
    /**
     * Calculates the image histogram and optionally displays image statistics
@@ -81,20 +82,28 @@ public interface ContrastPanel {
     * @param img The image for which to calculate statistics/histogram
     * @param drawHist flag for optional display of statistics and drawing of histogram
     */
-   public void calcAndDisplayHistAndStats(ImagePlus img, boolean drawHist);
+   public abstract void calcAndDisplayHistAndStats(ImagePlus img, boolean drawHist);
    
    /*
     * Sets the contrast min and max to the stored pixel min and max values
     * (or to the appropriate values if reject outliers is selected).  Does
     * not calculate histogram or redraw image
     */
-   public void autostretch();
+   public abstract void autostretch();
       
    /*
     * Returns the contrastSettings associated with the channel of the current image
     */
-   public ContrastSettings getChannelContrastSettings(int channel);
+   public  abstract ContrastSettings getChannelContrastSettings(int channel);
 
-   public void setChannelHistogramDisplayMax(int channelIndex, int histMax);
+   public abstract void setChannelHistogramDisplayMax(int channelIndex, int histMax);
+   
+   public abstract void setLogScale();
+   
+      public abstract void rejectOutliersChangeAction();
+      
+
+   public abstract void autoscaleAllChannels() ;
+
 
 }
