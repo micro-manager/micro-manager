@@ -38,11 +38,7 @@ import ij.gui.StackWindow;
 import ij.gui.Toolbar;
 import ij.io.FileInfo;
 import ij.measure.Calibration;
-import java.awt.BorderLayout;
-import java.awt.Color;
-import java.awt.Component;
-import java.awt.Point;
-import java.awt.Rectangle;
+import java.awt.*;
 import java.awt.event.*;
 import java.io.File;
 import java.io.IOException;
@@ -1473,6 +1469,8 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
    }
    
    private void zoomToPreferredSize(DisplayWindow win) {
+      Point location = win.getLocation();
+      win.setLocation(new Point(0,0));
       int prefLength =  prefs_.getInt(PREF_WIN_LENGTH, 512);
       int winLength = getWinLength(win);   
       double percentDiff = Math.abs(((double) (winLength - prefLength))/((double) prefLength));
@@ -1504,6 +1502,8 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
             canvas.zoomIn(canvas.getSize().width / 2, canvas.getSize().height / 2);
          }   
       } 
+      
+      //Make sure the window initially displays the entire image
       Rectangle rect = canvas.getSrcRect();
       if (rect != null) {
          while (rect.width < canvas.getImage().getWidth() || rect.height < canvas.getImage().getHeight()) {
@@ -1520,6 +1520,18 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
             }
          }
       }
+      
+      //Make sure the window is fully on the screen
+      Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
+      Point newLocation = new Point(location.x,location.y);
+      if (newLocation.x + win.getWidth() > screenSize.width && win.getWidth() < screenSize.width) {
+          newLocation.x = screenSize.width - win.getWidth();
+      }
+      if (newLocation.y + win.getHeight() > screenSize.height && win.getHeight() < screenSize.height) {
+          newLocation.y = screenSize.height - win.getHeight();
+      }
+      
+      win.setLocation(newLocation);
    }
 
    private ScrollbarWithLabel getSelector(String label) {
