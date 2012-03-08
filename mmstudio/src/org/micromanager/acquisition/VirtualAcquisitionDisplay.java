@@ -1421,11 +1421,6 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
          controls_.acquiringImagesUpdate(enabled);
       }
    }
-   
-   public void storeWindowSizeAfterZoom(ImageWindow win) {
-      int currentLength = (win.getSize().width + win.getSize().height) / 2;
-      prefs_.putInt(PREF_WIN_LENGTH, Math.max(currentLength, 512));
-   }
 
    private void createWindow() {
       final DisplayWindow win = new DisplayWindow(hyperImage_);
@@ -1469,16 +1464,24 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
       
    }
    
+   private int getWinLength(ImageWindow win) {
+       return (int) Math.sqrt(win.getSize().width * win.getSize().height);
+   }   
+   
+   public void storeWindowSizeAfterZoom(ImageWindow win) {
+      prefs_.putInt(PREF_WIN_LENGTH, Math.max(getWinLength(win), 512));
+   }
+   
    private void zoomToPreferredSize(DisplayWindow win) {
       int prefLength =  prefs_.getInt(PREF_WIN_LENGTH, 512);
-      int winLength =  (int) Math.sqrt(win.getSize().width * win.getSize().height);     
+      int winLength = getWinLength(win);   
       double percentDiff = Math.abs(((double) (winLength - prefLength))/((double) prefLength));
       ImageCanvas canvas = win.getCanvas();
       if (winLength < prefLength) {
          while (winLength < prefLength) {               
             percentDiff = Math.abs(((double) (winLength - prefLength))/((double) prefLength));
             canvas.zoomIn(canvas.getSize().width / 2, canvas.getSize().height / 2);
-            int newWinLength = (int) Math.sqrt(win.getSize().width * win.getSize().height);
+            int newWinLength = getWinLength(win);
             if (newWinLength == winLength)
                break;
             winLength = newWinLength;
@@ -1491,7 +1494,7 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
          while (winLength > prefLength) {                      
             percentDiff = Math.abs(((double) (winLength - prefLength))/((double) prefLength));
             canvas.zoomOut(canvas.getSize().width / 2, canvas.getSize().height / 2);
-            int newWinLength = (int) Math.sqrt(win.getSize().width * win.getSize().height);
+            int newWinLength = getWinLength(win);
             if (newWinLength == winLength)
                break;
             winLength = newWinLength;
