@@ -204,7 +204,7 @@ int AqController::OnValveOnOff(MM::PropertyBase* pProp, MM::ActionType eAct, lon
    if (eAct == MM::BeforeGet)
    {
       unsigned char t = valveState_;
-      for (unsigned int i = 0; i < valveNr; i++)
+      for (unsigned int i = 0; i < (unsigned int) valveNr; i++)
          t = t >> 1;
       long val = 0;
       if (t & 1)
