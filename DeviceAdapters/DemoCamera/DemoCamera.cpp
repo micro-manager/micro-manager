@@ -347,7 +347,7 @@ int CDemoCamera::Initialize()
    pixelTypeValues.push_back(g_PixelType_16bit); 
 	pixelTypeValues.push_back(g_PixelType_32bitRGB);
 	pixelTypeValues.push_back(g_PixelType_64bitRGB);
-   pixelTypeValues.push_back(::g_PixelType_32bit);
+   //pixelTypeValues.push_back(::g_PixelType_32bit);
 
    nRet = SetAllowedValues(MM::g_Keyword_PixelType, pixelTypeValues);
    if (nRet != DEVICE_OK)
