@@ -204,7 +204,7 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
          }
       });
       histRangeComboBox_.setModel(new DefaultComboBoxModel(new String[]{
-                 "Auto", "4bit (0-15)", "5bit (0-31)", "6bit (0-63)", "7bit (0-127)", 
+                 "Camera Depth", "4bit (0-15)", "5bit (0-31)", "6bit (0-63)", "7bit (0-127)", 
                  "8bit (0-255)", "9bit (0-511)", "10bit (0-1023)", "11bit (0-2047)", 
                  "12bit (0-4095)", "13bit (0-8191)", "14bit (0-16383)", "15bit (0-32767)", "16bit (0-65535)"}));
 
@@ -245,8 +245,8 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
       controls_.setLayout(gbl);
       
 
-      JLabel comboLabel = new JLabel("Hist. range:");
-      comboLabel.setFont(new Font("Lucida Grande", 0, 11));
+      JLabel histRangeLabel = new JLabel("Hist. range:");
+      histRangeLabel.setFont(new Font("Lucida Grande", 0, 11));
 
       GridBagConstraints gbc = new GridBagConstraints();
       gbc.gridx = 0;
@@ -288,7 +288,25 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
       gbc.weighty = 1;
       gbc.gridwidth = 3;
       gbc.anchor = GridBagConstraints.LINE_START;
-      controls_.add(comboLabel, gbc);
+      controls_.add(histRangeLabel, gbc);
+
+      zoomInButton_.setPreferredSize(new Dimension(22, 22));
+      zoomOutButton_.setPreferredSize(new Dimension(22, 22));
+      gbc = new GridBagConstraints();
+      gbc.gridx = 4;
+      gbc.gridy = 2;
+      gbc.weightx = 0;
+      gbc.weighty = 1;
+      gbc.gridwidth = 1;
+      controls_.add(zoomInButton_, gbc);
+
+      gbc = new GridBagConstraints();
+      gbc.gridx = 3;
+      gbc.gridy = 2;
+      gbc.weightx = 0;
+      gbc.weighty = 1;
+      gbc.gridwidth = 1;
+      controls_.add(zoomOutButton_, gbc);
 
       gbc = new GridBagConstraints();
       gbc.gridx = 0;
@@ -297,30 +315,8 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
       gbc.weighty = 1;
       gbc.gridwidth = 5;
       gbc.anchor = GridBagConstraints.LINE_START;
-      histRangeComboBox_.setPreferredSize(new Dimension(115, 20));
+      gbc.fill = GridBagConstraints.HORIZONTAL;
       controls_.add(histRangeComboBox_, gbc);
-      
-      
-      zoomInButton_.setPreferredSize(new Dimension(22, 22));
-      zoomOutButton_.setPreferredSize(new Dimension(22, 22));
-      gbc = new GridBagConstraints();
-      gbc.gridx = 4;
-      gbc.gridy = 2;
-      gbc.weightx = 1;
-      gbc.weighty = 1;
-      gbc.gridwidth = 1;      
-      controls_.add(zoomInButton_, gbc);
-
-      gbc = new GridBagConstraints();
-      gbc.gridx = 3;
-      gbc.gridy = 2;
-      gbc.weightx = 1;
-      gbc.weighty = 1;
-      gbc.gridwidth = 1;
-      controls_.add(zoomOutButton_, gbc);
-      
-      
-      
 
       gbc = new GridBagConstraints();
       gbc.gridx = 0;
