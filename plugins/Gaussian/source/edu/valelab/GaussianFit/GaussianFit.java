@@ -57,7 +57,7 @@ public class GaussianFit {
     * as 1 (circle), 2 (width varies in x and y), or 3 (ellipse) parameters
     * 
     * @param mode - fit circle (1) ellipse(2), or ellipse with varying angle (3)
-    * @param fitmoe - algorithm use: NelderMead (1), or Levenberg Marquard (2)
+    * @param fitmode - algorithm use: NelderMead (1), or Levenberg Marquard (2)
     */
    public GaussianFit(int mode, int fitMode) {
       super();

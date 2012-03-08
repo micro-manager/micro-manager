@@ -5,15 +5,25 @@ import ij.ImagePlus;
 import ij.gui.Roi;
 import ij.process.ImageProcessor;
 
+/**
+ * Data structure to internally store fit data
+ * 
+ * Also contains utility functions to generate an ImageJ ImageProcessor
+ * containing the spot in the image
+ * 
+ * @author Nico Stuurman
+ */
+
+
 public class GaussianSpotData {
 
    // lock to avoid clashes during access to image data
    public static final Object lockIP = new Object();
 
    private ImageProcessor ip_ = null;   // ImageProcessor for given spot
-   private int frame_;        // frame number in the original stack
+   private int frame_;        // frame number in the original stack - 1-based
    private int channel_;      // channel number in the original stack
-   private int slice_;        // slice number in the original stack
+   private int slice_;        // slice number in the original stack - 1-based
    private int position_;     // position number in the original stack
    private int nr_;           // spot index in given image
    private int x_;            // x as found by spotfinder
@@ -28,7 +38,8 @@ public class GaussianSpotData {
    private double sigma_;     // Estimate of error in localization based on Web et al. formula
                               // that uses # of photons, background and width of gaussian
 
-   public GaussianSpotData(ImageProcessor ip, int channel, int slice, int frame, int position, int nr, int x, int y) {
+   public GaussianSpotData(ImageProcessor ip, int channel, int slice, int frame, 
+           int position, int nr, int x, int y) {
       ip_ = ip;
       frame_ = frame;
       channel_ = channel;
@@ -38,6 +49,7 @@ public class GaussianSpotData {
       x_ = x;
       y_ = y;
    }
+   
    
    /**
     * Copy constructor.  Copies frame, slice, channel, position ,  x,  y,

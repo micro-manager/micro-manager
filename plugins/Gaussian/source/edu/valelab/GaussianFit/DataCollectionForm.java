@@ -1,5 +1,16 @@
 /**
  * DataCollectionForm.java
+ * 
+ * This form hold datasets containing results of gaussian fitting
+ * Two types of data sets exists: tracks and "global" spotData
+ * 
+ * Data structure used internally is contained in "MyRowData".
+ * Data are currently stored in RAM, but a caching mechanism could be implemented
+ * 
+ * The form acts as a "workbench" various actions, (such as display, color correction
+ * jitter correction) are available, some of which may generate new datasets
+ * that are stored in this form
+ * 
  *
  * Created on Nov 20, 2010, 8:52:50 AM
  */
@@ -38,9 +49,9 @@ import edu.ucsf.tsf.TaggedSpotsProtos.FitMode;
 import edu.ucsf.tsf.TaggedSpotsProtos.SpotList;
 import edu.ucsf.tsf.TaggedSpotsProtos.Spot;
 
-import ij.ImageStack;
 import ij.gui.StackWindow;
 import ij.gui.YesNoCancelDialog;
+import ij.process.ByteProcessor;
 import ij.process.ShortProcessor;
 import java.awt.Cursor;
 import java.awt.Dimension;
@@ -62,7 +73,7 @@ import valelab.LocalWeightedMean;
 
 /**
  *
- * @author nico
+ * @author Nico Stuurman
  */
 public class DataCollectionForm extends javax.swing.JFrame {
    AbstractTableModel myTableModel_;
@@ -259,9 +270,10 @@ public class DataCollectionForm extends javax.swing.JFrame {
            List<GaussianSpotData> spotList,
            ArrayList<Double> timePoints,
            boolean isTrack) {
-      rowData_.add(new MyRowData(name, title, width, height, pixelSizeUm, shape, halfSize,
-              nrChannels, nrFrames, nrSlices, nrPositions, maxNrSpots, spotList,
-              timePoints, isTrack));
+      MyRowData newRow = new MyRowData(name, title, width, height, pixelSizeUm, 
+              shape, halfSize, nrChannels, nrFrames, nrSlices, nrPositions, 
+              maxNrSpots, spotList, timePoints, isTrack);
+      rowData_.add(newRow);
       myTableModel_.fireTableRowsInserted(rowData_.size()-1, rowData_.size());
    }
 
@@ -1126,7 +1138,8 @@ public class DataCollectionForm extends javax.swing.JFrame {
     * @param rowData 
     */
    private void unJitter(final MyRowData rowData) {
-      final int framesToCombine = 1;
+      final int framesToCombine = 100;
+      
       if (rowData.spotList_.size() <= 1) {
          return;
       }
@@ -1145,15 +1158,16 @@ public class DataCollectionForm extends javax.swing.JFrame {
             int size = width * height;
 
             // TODO: what if we should go through nrSlices instead of nrFrames?
+            boolean useSlices = false;
             int nrOfTests = rowData.nrFrames_ / framesToCombine;
-
-            // to draw a graph at the end
-            // TODO: replace with generating a data series with stage positions
-            XYSeries dataX = new XYSeries("");
-            XYSeries dataY = new XYSeries("");
-            String xAxis = "Time (frameNr)";
-            if (rowData.timePoints_ != null) {
-               xAxis = "Time (s)";
+            if (nrOfTests == 0) {
+               useSlices = true;
+               nrOfTests = rowData.nrSlices_ / framesToCombine;
+               if (rowData.nrSlices_ % framesToCombine > 0)
+                  nrOfTests++;
+            } else {
+               if (rowData.nrFrames_ % framesToCombine > 0)
+                  nrOfTests++;
             }
 
             // storage of stage movement data
@@ -1172,25 +1186,28 @@ public class DataCollectionForm extends javax.swing.JFrame {
             try {
                // make imageprocessors for all the images that we will generate
                ImageProcessor[] ip = new ImageProcessor[nrOfTests];
-               short[][] pixels = new short[nrOfTests][width * height];
+               byte[][] pixels = new byte[nrOfTests][width * height];
 
                for (int i = 0; i < nrOfTests; i++) {
-                  ip[i] = new ShortProcessor(width, height);
+                  ip[i] = new ByteProcessor(width, height);
                   ip[i].setPixels(pixels[i]);
                }
 
                double factor = (double) mag / rowData.pixelSizeUm_;
 
+               // make 2D scattergrams of all pixelData
                for (GaussianSpotData spot : rowData.spotList_) {
-                  // for now take the first image as reference
-                  int j = (spot.getFrame() - 1) / framesToCombine;
-                  //if (spot.getFrame() == 1) {
+                  int j = 0;
+                  if (useSlices)
+                     j = (spot.getSlice() - 1) / framesToCombine;
+                  else
+                     j = (spot.getFrame() - 1) / framesToCombine;
                   int x = (int) (factor * spot.getXCenter());
                   int y = (int) (factor * spot.getYCenter());
                   int index = (y * width) + x;
                   if (index < size && index > 0) {
                      if (pixels[j][index] != -1) {
-                        pixels[j][index] += 255;
+                        pixels[j][index] += 1;
                      }
                   }
 
@@ -1203,14 +1220,9 @@ public class DataCollectionForm extends javax.swing.JFrame {
 
                jd.getJitter(ip[0], fp);
 
-               ResultsTable rt = new ResultsTable();
-               rt.reset();
-               rt.setPrecision(1);
-
                for (int i = 1; i < ip.length; i++) {
-                  ij.IJ.showStatus("Executing jitter correction...");
+                  ij.IJ.showStatus("Executing jitter correction..." + i);
                   ij.IJ.showProgress(i, ip.length);
-                  rt.incrementCounter();
                   jd.getJitter(ip[i], com);
                   double x = (fp.x - com.x) / factor;
                   double y = (fp.y - com.y) / factor;
@@ -1218,39 +1230,36 @@ public class DataCollectionForm extends javax.swing.JFrame {
                   if (rowData.timePoints_ != null) {
                      rowData.timePoints_.get(i);
                   }
-                  dataX.add(timePoint, x);
-                  dataY.add(timePoint, y);
-                  rt.addValue("Time(s)", timePoint);
-                  rt.addValue("X", x);
-                  rt.addValue("Y", y);
                   stagePos.add(new StageMovementData(new Point2D.Double(x, y),
                           new Point(i * framesToCombine, ((i + 1) * framesToCombine - 1))));
                   System.out.println("X: " + x + " Y: " + y);
                }
-               rt.show("Jitter");
-               GaussianUtils.plotData("JitterX", dataX, xAxis, "X(nm)", 0, 400);
-               GaussianUtils.plotData("JitterY", dataY, xAxis, "Y(nm)", 0, 400);
-
+               
             } catch (OutOfMemoryError ex) {
                // not enough memory to allocate all images in one go
                // we need to cycle through all gaussian spots cycle by cycle
 
                double factor = (double) mag / rowData.pixelSizeUm_;
 
-               ImageProcessor ipRef = new ShortProcessor(width, height);
-               short[] pixelsRef = new short[width * height];
+               ImageProcessor ipRef = new ByteProcessor(width, height);
+               byte[] pixelsRef = new byte[width * height];
                ipRef.setPixels(pixelsRef);
 
+               
+               // take the first image as reference
                for (GaussianSpotData spot : rowData.spotList_) {
-                  // for now take the first image as reference
-                  int j = (spot.getFrame() - 1) / framesToCombine;
+                  int j = 0;
+                  if (useSlices)
+                     j = (spot.getSlice() - 1) / framesToCombine;
+                  else
+                     j = (spot.getFrame() - 1) / framesToCombine;
                   if (j == 0) {
                      int x = (int) (factor * spot.getXCenter());
                      int y = (int) (factor * spot.getYCenter());
                      int index = (y * width) + x;
                      if (index < size && index > 0) {
                         if (pixelsRef[index] != -1) {
-                           pixelsRef[index] += 255;
+                           pixelsRef[index] += 1;
                         }
                      }
                   }
@@ -1261,39 +1270,36 @@ public class DataCollectionForm extends javax.swing.JFrame {
                Point2D.Double fp = new Point2D.Double(0.0, 0.0);
                jd.getJitter(ipRef, fp);
 
-               ResultsTable rt = new ResultsTable();
-               rt.reset();
-               rt.setPrecision(1);
-
-
                Point2D.Double com = new Point2D.Double(0.0, 0.0);
-               ImageProcessor ipTest = new ShortProcessor(width, height);
-               short[] pixelsTest = new short[width * height];
+               ImageProcessor ipTest = new ByteProcessor(width, height);
+               byte[] pixelsTest = new byte[width * height];
                ipTest.setPixels(pixelsTest);
 
-
                for (int i = 1; i < nrOfTests; i++) {
-                  rt.incrementCounter();
-                  ij.IJ.showStatus("Executing jitter correction...");
+                  ij.IJ.showStatus("Executing jitter correction..." + i);
                   ij.IJ.showProgress(i, nrOfTests);
                   for (int p = 0; p < size; p++) {
                      ipTest.set(p, 0);
                   }
-
+                  
                   for (GaussianSpotData spot : rowData.spotList_) {
-                     int j = (spot.getFrame() - 1) / framesToCombine;
+                     int j = 0;
+                     if (useSlices) {
+                        j = (spot.getSlice() - 1) / framesToCombine;
+                     } else {
+                        j = (spot.getFrame() - 1) / framesToCombine;
+                     }
                      if (j == i) {
                         int x = (int) (factor * spot.getXCenter());
                         int y = (int) (factor * spot.getYCenter());
                         int index = (y * width) + x;
                         if (index < size && index > 0) {
                            if (pixelsTest[index] != -1) {
-                              pixelsTest[index] += 255;
+                              pixelsTest[index] += 1;
                            }
                         }
                      }
                   }
-
 
                   jd.getJitter(ipTest, com);
                   double x = (fp.x - com.x) / factor;
@@ -1302,43 +1308,78 @@ public class DataCollectionForm extends javax.swing.JFrame {
                   if (rowData.timePoints_ != null) {
                      rowData.timePoints_.get(i);
                   }
-                  dataX.add(timePoint, x);
-                  dataY.add(timePoint, y);
-                  rt.addValue("Frame", i);
-                  rt.addValue("X", x);
-                  rt.addValue("Y", y);
                   stagePos.add(new StageMovementData(new Point2D.Double(x, y),
                           new Point(i * framesToCombine, ((i + 1) * framesToCombine - 1))));
                   System.out.println("X: " + x + " Y: " + y);
                }
 
-               rt.show("Jitter");
-               GaussianUtils.plotData("JitterX", dataX, xAxis, "X(nm)", 0, 400);
-               GaussianUtils.plotData("JitterY", dataY, xAxis, "Y(nm)", 0, 400);
-
             }
+            
+            // Assemble stage movement data into a track
+            List<GaussianSpotData> stageMovementData = new ArrayList<GaussianSpotData>();
+            GaussianSpotData sm = new GaussianSpotData(null, 1, 1, 1, 1, 1, 1, 1);
+            sm.setData(0, 0, 0, 0, 0, 0, 0, 0);
+            stageMovementData.add(sm);
+            for (int i = 0; i < stagePos.size(); i++) {
+               StageMovementData smd = stagePos.get(i);
+               GaussianSpotData s = 
+                       new GaussianSpotData(null, 1, 1, i + 2, 1, 1, 1, 1);
+               s.setData(0, 0, smd.pos_.x, smd.pos_.y, 0, 0, 0, 0); 
+               stageMovementData.add(s);
+            }
+            
+            // Add stage movement data to overview window
+            // First try to copy the time points
+            ArrayList<Double> timePoints = null;
+            if (rowData.timePoints_ != null) {
+               timePoints = new ArrayList<Double>();
+               int tp = framesToCombine;
+               while (tp < rowData.timePoints_.size()) {
+                  timePoints.add(rowData.timePoints_.get(tp));
+                  tp += framesToCombine;
+               }
+            }
+            
+            MyRowData newRow = new MyRowData(rowData.name_ + "-Jitter", rowData.title_, rowData.width_,
+                    rowData.height_, rowData.pixelSizeUm_, rowData.shape_,
+                    rowData.halfSize_, rowData.nrChannels_, stageMovementData.size(),
+                    1, 1, stageMovementData.size(), stageMovementData,
+                    timePoints, true);
+            rowData_.add(newRow);
+ 
+            myTableModel_.fireTableRowsInserted(rowData_.size() - 1, rowData_.size());
+            
 
-            List<GaussianSpotData> correctedData =
-                    Collections.synchronizedList(new ArrayList<GaussianSpotData>());
+ 
+            
+            ij.IJ.showStatus("Assembling jitter corrected dataset...");
+            ij.IJ.showProgress(1);
+
+            List<GaussianSpotData> correctedData = new ArrayList<GaussianSpotData>();
             Iterator it = rowData.spotList_.iterator();
             
-            int frameNr = 0;
+            int testNr = 0;
             StageMovementData smd = stagePos.get(0);
             int counter = 0;
             while (it.hasNext()) {
                counter++;
                GaussianSpotData gs = (GaussianSpotData) it.next();
-               if (gs.getFrame() != frameNr) {
-                  frameNr = gs.getFrame() - 1;
+               int test = 0;
+               if (useSlices)
+                  test = gs.getSlice();
+               else
+                  test = gs.getFrame();
+               if (test != testNr) {
+                  testNr = test - 1;
                }
                boolean found = false;
-               if (frameNr >= smd.frameRange_.x && frameNr <= smd.frameRange_.y) {
+               if (testNr >= smd.frameRange_.x && testNr <= smd.frameRange_.y) {
                   found = true;
                }
                if (!found) {
                   for (int i = 0; i < stagePos.size() && !found; i++) {
                      smd = stagePos.get(i);
-                     if (frameNr >= smd.frameRange_.x && frameNr <= smd.frameRange_.y) {
+                     if (testNr >= smd.frameRange_.x && testNr <= smd.frameRange_.y) {
                         found = true;
                      }
                   }
@@ -1358,12 +1399,11 @@ public class DataCollectionForm extends javax.swing.JFrame {
             }
 
             // Add transformed data to data overview window
-            addSpotData(rowData.name_ + "Jitter-Correct", rowData.title_, rowData.width_,
+            addSpotData(rowData.name_ + "-Jitter-Correct", rowData.title_, rowData.width_,
                     rowData.height_, rowData.pixelSizeUm_, rowData.shape_,
                     rowData.halfSize_, rowData.nrChannels_, rowData.nrFrames_,
                     rowData.nrSlices_, 1, rowData.maxNrSpots_, correctedData,
-                    null,
-                    false);
+                    null, false);
             ij.IJ.showStatus("Finished jitter correction");
 
          }
