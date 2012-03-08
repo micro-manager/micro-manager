@@ -189,9 +189,9 @@ public class SingleChannelHistogram extends JPanel implements Histograms, Cursor
          }
       });
       histRangeComboBox_.setModel(new DefaultComboBoxModel(new String[]{
-                 "Auto", "4bit (0-15)", "5bit (0-31)", "6bit (0-63)", "7bit (0-127)",
+                 "Camera Depth", "4bit (0-15)", "5bit (0-31)", "6bit (0-63)", "7bit (0-127)",
                  "8bit (0-255)", "9bit (0-511)", "10bit (0-1023)", "11bit (0-2047)",
-                 "12bit (0-4095)", "13bit (0-8191)", "14bit (0-16383)", "15bit (32767)", "16bit (0-65535)"}));
+                 "12bit (0-4095)", "13bit (0-8191)", "14bit (0-16383)", "15bit (0-32767)", "16bit (0-65535)"}));
 
 
 
