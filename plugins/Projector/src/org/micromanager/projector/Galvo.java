@@ -12,6 +12,12 @@ import java.awt.Polygon;
 import java.awt.Rectangle;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Point2D;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Executor;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadPoolExecutor;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import mmcorej.CMMCore;
@@ -26,54 +32,80 @@ public class Galvo implements ProjectionDevice {
    String galvo_;
    CMMCore mmc_;
    int side_ = 4096;
+   ExecutorService galvoExecutor_;
 
    public Galvo(CMMCore mmc) {
       mmc_ = mmc;
       galvo_ = mmc_.getGalvoDevice();
+      galvoExecutor_ = Executors.newSingleThreadExecutor();
    }
 
-   public void displaySpot(double x, double y) {
-      try {
-         turnOn();
-         mmc_.setGalvoPosition(galvo_, x, y);
-      } catch (Exception ex) {
-         ReportingUtils.showError(ex);
-      }
+   public void displaySpot(final double x, final double y) {
+      turnOn();
+      galvoExecutor_.execute(new Runnable() {
+
+         public void run() {
+            try {
+               mmc_.setGalvoPosition(galvo_, x, y);
+            } catch (Exception ex) {
+               ReportingUtils.showError(ex);
+            }
+         }
+      });
    }
 
    public void displaySpot(final double x, final double y, final double intervalUs) {
-      try {
-         Thread th = new Thread() {
-
-            public void run() {
-               try {
-                  mmc_.pointGalvoAndFire(galvo_, x, y, intervalUs);
-               } catch (Exception ex) {
-                  ReportingUtils.logError(ex);
-               }
+      galvoExecutor_.execute(new Runnable() {
+         public void run() {
+            try {
+               mmc_.pointGalvoAndFire(galvo_, x, y, intervalUs);
+            } catch (Exception ex) {
+               ReportingUtils.logError(ex);
             }
-         };
-         th.start();
-         th.join();
-      } catch (Exception ex) {
-         ReportingUtils.logError(ex);
-      }
+         }
+      });
    }
 
    public double getWidth() {
       try {
-         return (double) mmc_.getGalvoXRange(galvo_);
+         Double result = galvoExecutor_.submit(new Callable<Double>() {
+
+            public Double call() {
+               try {
+                  return (double) mmc_.getGalvoXRange(galvo_);
+               } catch (Exception ex) {
+                  return 0.0;
+               }
+            }
+         }).get();
+         if (result == 0) {
+            ReportingUtils.logError("Unable to get galvo width");
+         }
+         return result;
       } catch (Exception ex) {
-         ReportingUtils.showError("Unable to get galvo width.");
+         ReportingUtils.logError("Unable to get galvo width");
          return 0;
       }
    }
 
    public double getHeight() {
       try {
-         return (double) mmc_.getGalvoYRange(galvo_);
+         Double result = galvoExecutor_.submit(new Callable<Double>() {
+
+            public Double call() {
+               try {
+                  return (double) mmc_.getGalvoYRange(galvo_);
+               } catch (Exception ex) {
+                  return 0.0;
+               }
+            }
+         }).get();
+         if (result == 0) {
+            ReportingUtils.logError("Unable to get galvo width");
+         }
+         return result;
       } catch (Exception ex) {
-         ReportingUtils.showError("Unable to get galvo height.");
+         ReportingUtils.logError("Unable to get galvo width");
          return 0;
       }
    }
@@ -129,11 +161,11 @@ public class Galvo implements ProjectionDevice {
             ReportingUtils.showError("Not able to handle this type of Roi.");
             return;
          }
-         try {
-            mmc_.loadGalvoPolygons(galvo_, reps);
-         } catch (Exception ex) {
-            ReportingUtils.logError(ex);
-         }
+      }
+      try {
+         mmc_.loadGalvoPolygons(galvo_, reps);
+      } catch (Exception ex) {
+         ReportingUtils.logError(ex);
       }
    }
 
@@ -143,16 +175,18 @@ public class Galvo implements ProjectionDevice {
    }
 
    public void runPolygons() {
-      Thread th = new Thread() {
+
+      Runnable polygonRunner = new Runnable() {
          public void run() {
-      try {
-         mmc_.runGalvoPolygons(galvo_);
-      } catch (Exception ex) {
-         ReportingUtils.logError(ex);
-      }
+         try {
+            mmc_.runGalvoPolygons(galvo_);
+         } catch (Exception ex) {
+            ReportingUtils.logError(ex);
+         }
       }
 
       };
-      th.start();
+      polygonRunner.run();
+      //galvoAgent_.
    }
 }
