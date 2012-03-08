@@ -578,7 +578,7 @@ public class MetadataPanel extends JPanel
          imageMetadataModel_.setMetadata(null);
          summaryMetadataModel_.setMetadata(null);
          summaryCommentsTextArea.setText(null);
-         contrastPanel_.setHistograms(ContrastPanel.BLANK);
+         contrastPanel_.showHistograms(ContrastPanel.BLANK);
       } else if (tabSelected == 1) { //Metadata
          AcquisitionVirtualStack stack = getAcquisitionStack(img);
          if (stack != null) {

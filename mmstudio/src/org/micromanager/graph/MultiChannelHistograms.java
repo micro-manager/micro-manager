@@ -169,7 +169,8 @@ public class MultiChannelHistograms extends JPanel implements Histograms {
    }
 
    public void displayChanged(ImagePlus img, ImageCache cache) {
-      for (ChannelControlPanel c : ccpList_) {
+      setupChannelControls(cache);
+       for (ChannelControlPanel c : ccpList_) {
          c.calcAndDisplayHistAndStats(img, true);
          c.loadDisplaySettings(cache);
          if (contrastPanel_.getAutostretch()) {

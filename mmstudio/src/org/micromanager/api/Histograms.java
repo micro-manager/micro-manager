@@ -71,12 +71,6 @@ public interface Histograms  {
    public abstract void setChannelContrast(int channelIndex, int min, int max, double gamma);
    
    /**
-    * Initializes GUI components.  Only needs to be called once per a display
-    * @param cache the ImageCahce corresponding to the image
-    */
-   public abstract void setupChannelControls(ImageCache cache);
-   
-   /**
     * Calculates the image histogram and optionally displays image statistics
     * (pixel min, max, mean, etc) and draws the histogram)
     * @param img The image for which to calculate statistics/histogram

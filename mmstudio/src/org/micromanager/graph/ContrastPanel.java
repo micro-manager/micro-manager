@@ -110,7 +110,7 @@ public class ContrastPanel extends JPanel {
       histogramHolderPanel_.add(multiChannelScrollPane_, MULTIPLE);
       histogramHolderPanel_.add((JPanel)singleHistogram_, SINGLE);
       histogramHolderPanel_.add(new JPanel(new BorderLayout()), BLANK);
-      setHistograms(BLANK);
+      showHistograms(BLANK);
    }
 
    private void enableAppropriateControls(String label) {
@@ -178,7 +178,7 @@ public class ContrastPanel extends JPanel {
       }
    }
 
-   public void setHistograms(String label) {
+   public void showHistograms(String label) {
       layout_.show(histogramHolderPanel_, label);
       if (label.equals(BLANK)) {
          currentHistograms_ = null;
@@ -187,7 +187,6 @@ public class ContrastPanel extends JPanel {
       } else if (label.equals(MULTIPLE)) {
          currentHistograms_ = multipleHistograms_;
       }
-      enableAppropriateControls(label);
    }
 
    private void saveCheckBoxStates() {
@@ -325,9 +324,14 @@ public class ContrastPanel extends JPanel {
    }
 
    public synchronized void setup(ImageCache cache) {
-      setupCorrectHistograms(cache);
       ImagePlus imgp = cache.getImagePlus();
+      String label = imgp instanceof CompositeImage ? MULTIPLE : SINGLE;
 
+      showHistograms(label);
+      
+      //load appropriate contrast settings calc and display hist, apply LUT and draw
+      displayChanged(imgp, cache);
+      
       if (cache.getNumChannels() > 1) {
          boolean[] oldActive = ((CompositeImage) imgp).getActiveChannels();
          boolean[] active = Arrays.copyOf(oldActive, oldActive.length);
@@ -338,32 +342,9 @@ public class ContrastPanel extends JPanel {
 
          sizeBarCheckBoxActionPerformed();
       }
-      //load appropriate contrast settings calc and display hist, apply LUT and draw
-      displayChanged(imgp, cache);
+      enableAppropriateControls(label);
 
       mdPanel_.imageChangedUpdate(imgp, cache);
-   }
-
-   private void setupCorrectHistograms(ImageCache cache) {
-      boolean multi = false;
-
-      try {
-         if (MDUtils.isRGB(cache.getSummaryMetadata())) {
-            multi = true;
-         }
-      } catch (Exception ex) {
-         ReportingUtils.logError("Unable to find pixel type in summary metadata");
-      }
-      if (cache.getNumChannels() > 1) {
-         multi = true;
-      }
-
-      if (multi) {
-         setHistograms(MULTIPLE);
-      } else {
-         setHistograms(SINGLE);
-      }
-      currentHistograms_.setupChannelControls(cache);
    }
 
    public void setChannelContrast(int channelIndex, int min, int max, double gamma) {
@@ -470,7 +451,9 @@ public class ContrastPanel extends JPanel {
          return;
       }
       ImageCache cache = vad.getImageCache();
-      currentHistograms_.setupChannelControls(cache);
+      if (currentHistograms_ instanceof MultiChannelHistograms) {
+         ((MultiChannelHistograms)currentHistograms_).setupChannelControls(cache);
+      }
       currentHistograms_.displayChanged(img, cache);
       mdPanel_.imageChangedUpdate(img, cache);
    }
