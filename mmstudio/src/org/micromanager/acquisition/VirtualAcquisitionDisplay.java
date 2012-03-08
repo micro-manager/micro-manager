@@ -1460,12 +1460,13 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
       win.add(controls_);
       win.pack();
 
+       if (simple_) {
+           win.setLocation(prefs_.getInt(SIMPLE_WIN_X, 0), prefs_.getInt(SIMPLE_WIN_Y, 0));
+       }
+
       //Set magnification
       zoomToPreferredSize(win);
       
-      if (simple_) {
-         win.setLocation(prefs_.getInt(SIMPLE_WIN_X, 0), prefs_.getInt(SIMPLE_WIN_Y, 0));
-      }
    }
    
    private void zoomToPreferredSize(DisplayWindow win) {
