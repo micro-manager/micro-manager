@@ -263,9 +263,10 @@
 (defn snap-image [open-before close-after]
   (with-core-setting [getAutoShutter setAutoShutter false]
     (let [shutter (core getShutterDevice)]
-      (when open-before
-        (set-shutter-open true))
       (wait-for-pending-devices)
+      (when open-before
+        (set-shutter-open true)
+        (wait-for-device shutter))
       (device-best-effort (core getCameraDevice) (core snapImage))
       (swap! state assoc :last-image-time (elapsed-time @state))
       (when close-after
