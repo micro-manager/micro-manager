@@ -379,14 +379,14 @@ int HexaFluor::Initialize()
    if (nRet != DEVICE_OK)
       return nRet;
 
-   for (int i = 0; i < numPos_; i++) {
+   for (unsigned int i = 0; i < numPos_; i++) {
       std::ostringstream os;
       os << i;
       nRet = AddAllowedValue(MM::g_Keyword_State, os.str().c_str());
    }
 
    // create default positions and labels
-   for (long i=0; i < numPos_; i++)
+   for (unsigned long i=0; i < numPos_; i++)
    {
       std::ostringstream os;
       os << "Position: " << i;
