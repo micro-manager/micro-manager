@@ -94,7 +94,7 @@ public class ContrastPanel extends JPanel {
       mdPanel_ = md;
       initialize();
       prefs_ = Preferences.userNodeForPackage(this.getClass());
-      loadCheckBoxStates();
+      loadControlsStates();
       initializeHistograms();
    }
 
@@ -114,7 +114,7 @@ public class ContrastPanel extends JPanel {
    }
 
    private void enableAppropriateControls(String label) {
-      loadCheckBoxStates();
+      loadControlsStates();
       if (label.equals(BLANK)) {
          displayModeLabel_.setEnabled(false);
          displayModeCombo_.setEnabled(false);
@@ -159,13 +159,23 @@ public class ContrastPanel extends JPanel {
       }
    }
 
-   private void loadCheckBoxStates() {
+   private void loadControlsStates() {
       logHistCheckBox_.setSelected(prefs_.getBoolean(PREF_LOG_HIST, false));
       rejectPercentSpinner_.setValue(prefs_.getDouble(PREF_REJECT_FRACTION, 2));
       autostretchCheckBox_.setSelected(prefs_.getBoolean(PREF_AUTOSTRETCH, false));
       rejectOutliersCheckBox_.setSelected(prefs_.getBoolean(PREF_REJECT_OUTLIERS, false));
       syncChannelsCheckBox_.setSelected(prefs_.getBoolean(PREF_SYNC_CHANNELS, false));
       slowHistCheckBox_.setSelected(prefs_.getBoolean(PREF_SLOW_HIST, false));
+      ImagePlus img = mdPanel_.getCurrentImage();
+      if (img != null) {
+         if (img.getOverlay() != null)
+            sizeBarCheckBox_.setSelected(true);
+         if (img instanceof CompositeImage) {
+            displayModeCombo_.setSelectedIndex( ((CompositeImage) img).getMode() -1  );
+         } else {
+            displayModeCombo_.setSelectedIndex(2);
+         }
+      }
    }
 
    public void setHistograms(String label) {
@@ -642,6 +652,7 @@ public class ContrastPanel extends JPanel {
       if (currentHistograms_ != null) {
          currentHistograms_.displayChanged(img, cache);
       }
+      loadControlsStates();
    }
 
    public boolean getSyncChannels() {
