@@ -94,7 +94,7 @@ public class ContrastPanel extends JPanel {
       mdPanel_ = md;
       initialize();
       prefs_ = Preferences.userNodeForPackage(this.getClass());
-      loadControlsStates();
+      enableAppropriateControls(BLANK);
       initializeHistograms();
    }
 
@@ -113,7 +113,7 @@ public class ContrastPanel extends JPanel {
       showHistograms(BLANK);
    }
 
-   private void enableAppropriateControls(String label) {
+   public void enableAppropriateControls(String label) {
       loadControlsStates();
       if (label.equals(BLANK)) {
          displayModeLabel_.setEnabled(false);
