@@ -43,6 +43,15 @@
    (let [sp (JScrollPane. table)]
     sp))
 
+;; events
+
+(defn attach-double-click-listener [component f]
+  (.addMouseListener component
+    (proxy [MouseAdapter] []
+      (mouseClicked [event]
+        (when (= 2 (.getClickCount event))
+          (f (.getX event) (.getY event)))))))
+
 ;; main stuff
 
 (load-mm)
@@ -142,6 +151,14 @@
   (attach-selection-listener table1 #(set-selected-row table2 %))
   (attach-selection-listener table2 #(set-selected-row table1 %)))
 
+(defn double-click-for-new-row [table f]
+  (attach-double-click-listener
+    (.getParent table)
+    (fn [x y]
+      (let [r (.getBounds table)]
+        (when (> y (+ (.y r) (.height r)))
+          (f))))))
+
 (defn show []
   (let [f (JFrame. "Micro-Manager Configuration Preset Editor")
         cp (.getContentPane f)
@@ -164,6 +181,7 @@
       (.setModel preset-names-table (preset-names-table-model))
       (.setModel presets-table (presets-table-model))
       (link-table-row-selection presets-table preset-names-table)
+      (double-click-for-new-row groups-table #(println "new row!"))
       (.setAutoResizeMode presets-table JTable/AUTO_RESIZE_OFF)
       (doto cp
         (.setLayout (SpringLayout.))
@@ -188,7 +206,6 @@
          (.fireTableDataChanged (.getModel (components :preset-names-table)))
          (.fireTableStructureChanged (.getModel (components :presets-table)))
          (set-preferred-column-width (components :presets-table)))))
-
 
 ;; test/run
 
