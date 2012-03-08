@@ -336,7 +336,7 @@ public class SingleChannelHistogram extends JPanel implements Histograms, Cursor
    }
 
    private void updateHistogram() {
-      histogramPanel_.setCursors(contrastMin_ / binSize_, contrastMax_ / binSize_, gamma_);
+      histogramPanel_.setCursors(contrastMin_ / binSize_, (contrastMax_+1) / binSize_, gamma_);
       histogramPanel_.repaint();
    }
 
@@ -553,7 +553,7 @@ public class SingleChannelHistogram extends JPanel implements Histograms, Cursor
             meanLabel_.setText("Mean: " + NumberUtils.intToDisplayString((int) mean_));
             stdDevLabel_.setText("Std Dev: " + NumberUtils.intToDisplayString((int) stdDev_));
 
-            histogramPanel_.repaint();
+            updateHistogram();
          }
       }
    }

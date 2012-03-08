@@ -380,7 +380,7 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
    }
 
    private void updateHistogram() {
-      hp_.setCursors(contrastMin_ / binSize_, contrastMax_ / binSize_, gamma_);
+      hp_.setCursors(contrastMin_ / binSize_, (contrastMax_+1) / binSize_, gamma_);
       hp_.repaint();
    }
 
@@ -637,7 +637,7 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
             }
             storeDisplaySettings(cache);
 
-            updateHistogramCursors();
+            updateHistogram();
 
          }
       };
@@ -651,11 +651,6 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
    private void storeDisplaySettings(ImageCache cache) {
       int histMax = histRangeComboBox_.getSelectedIndex() == 0 ? -1 : histMax_;
       cache.storeChannelDisplaySettings(channelIndex_, contrastMin_, contrastMax_, gamma_, histMax);
-   }
-
-   private void updateHistogramCursors() {
-      hp_.setCursors(contrastMin_ / binSize_, (contrastMax_ + 1) / binSize_, gamma_);
-      hp_.repaint();
    }
 
    /**
