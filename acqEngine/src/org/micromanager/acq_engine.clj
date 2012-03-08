@@ -352,41 +352,42 @@
    (Thread/sleep 5)))
 
 (defn collect-burst-images [event out-queue]
-  (when (first-trigger-missing?)
-    (pop-burst-image (* 10 (:exposure event)))) ; drop first image if first trigger doesn't happen
-  (swap! state assoc :burst-time-offset nil)
-  (let [burst-events (assign-z-offsets (event :burst-data))
-        camera-index (str (core getCameraDevice) "-CameraChannelIndex")
-        camera-channel-count (core getNumberOfCameraChannels)
-        bursts-per-camera-channel (vec (repeat camera-channel-count burst-events))
-        camera-channel-names (get-camera-channel-names)]
-    (doall
-      (loop [burst-seqs bursts-per-camera-channel i 0]
-        (check-for-serious-error)
-        (when (core isBufferOverflowed)
-          (swap! state assoc :circular-buffer-overflow true))
-        (when (and (not (@state :stop))
-                   (not (apply = nil burst-seqs))
-                   (or (pos? (core getRemainingImageCount))
-                       (and (core isSequenceRunning)
-                            (not (@state :circular-buffer-overflow)))))
-          (let [image (pop-burst-image (* 10 (:exposure event)))
-                cam-chan (if-let [cam-chan-str (get-in image [:tags camera-index])]
-                           (Long/parseLong cam-chan-str)
-                           0)
-                camera-channel-name (nth camera-channel-names cam-chan)
-                event (-> (first (burst-seqs cam-chan))
-                          (update-in [:channel-index] make-multicamera-channel cam-chan)
-                          (update-in [:channel :name] super-channel-name camera-channel-name)
-                          (assoc :camera-channel-index cam-chan))]
-            (when (zero? i)
-              (swap! state assoc
-                     :burst-time-offset (- (elapsed-time @state)
-                                           (core-time-from-tags (image :tags)))))
-            (.put out-queue (make-TaggedImage (annotate-image image event @state
-                                                              (burst-time (:tags image) @state))))
-            (recur (update-in burst-seqs [cam-chan] next) (inc i)))))))
-  (burst-cleanup)) ;; burst is done!
+  (let [pop-timeout-ms (+ 20000 (* 10 (:exposure event)))]
+    (when (first-trigger-missing?)
+      (pop-burst-image pop-timeout-ms)) ; drop first image if first trigger doesn't happen
+    (swap! state assoc :burst-time-offset nil)
+    (let [burst-events (assign-z-offsets (event :burst-data))
+          camera-index (str (core getCameraDevice) "-CameraChannelIndex")
+          camera-channel-count (core getNumberOfCameraChannels)
+          bursts-per-camera-channel (vec (repeat camera-channel-count burst-events))
+          camera-channel-names (get-camera-channel-names)]
+      (doall
+        (loop [burst-seqs bursts-per-camera-channel i 0]
+          (check-for-serious-error)
+          (when (core isBufferOverflowed)
+            (swap! state assoc :circular-buffer-overflow true))
+          (when (and (not (@state :stop))
+                     (not (apply = nil burst-seqs))
+                     (or (pos? (core getRemainingImageCount))
+                         (and (core isSequenceRunning)
+                              (not (@state :circular-buffer-overflow)))))
+            (let [image (pop-burst-image pop-timeout-ms)
+                  cam-chan (if-let [cam-chan-str (get-in image [:tags camera-index])]
+                             (Long/parseLong cam-chan-str)
+                             0)
+                  camera-channel-name (nth camera-channel-names cam-chan)
+                  event (-> (first (burst-seqs cam-chan))
+                            (update-in [:channel-index] make-multicamera-channel cam-chan)
+                            (update-in [:channel :name] super-channel-name camera-channel-name)
+                            (assoc :camera-channel-index cam-chan))]
+              (when (zero? i)
+                (swap! state assoc
+                       :burst-time-offset (- (elapsed-time @state)
+                                             (core-time-from-tags (image :tags)))))
+              (.put out-queue (make-TaggedImage (annotate-image image event @state
+                                                                (burst-time (:tags image) @state))))
+              (recur (update-in burst-seqs [cam-chan] next) (inc i)))))))
+    (burst-cleanup))) ;; burst is done!
 
 (defn collect-snap-image [event out-queue]
   (let [image
