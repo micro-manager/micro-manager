@@ -242,7 +242,7 @@ int Cobolt::OnPower(MM::PropertyBase* pProp, MM::ActionType eAct)
    return DEVICE_OK;
 }
 
-int Cobolt::OnPowerStatus(MM::PropertyBase* pProp, MM::ActionType eAct)
+int Cobolt::OnPowerStatus(MM::PropertyBase* pProp, MM::ActionType /* eAct */)
 {
      std::string answer;
      std::ostringstream command;
@@ -257,7 +257,7 @@ int Cobolt::OnPowerStatus(MM::PropertyBase* pProp, MM::ActionType eAct)
      return DEVICE_OK;
 }
 
-int Cobolt::OnHours(MM::PropertyBase* pProp, MM::ActionType eAct)
+int Cobolt::OnHours(MM::PropertyBase* pProp, MM::ActionType /* eAct */)
 {
      std::ostringstream command;
 
@@ -273,7 +273,7 @@ int Cobolt::OnHours(MM::PropertyBase* pProp, MM::ActionType eAct)
      return DEVICE_OK;
 }
 
-int Cobolt::OnSerialNumber(MM::PropertyBase* pProp, MM::ActionType eAct)
+int Cobolt::OnSerialNumber(MM::PropertyBase* pProp, MM::ActionType /* eAct */)
 {
      std::ostringstream command;
 
@@ -289,7 +289,7 @@ int Cobolt::OnSerialNumber(MM::PropertyBase* pProp, MM::ActionType eAct)
      return DEVICE_OK;
 }
 
-int Cobolt::OnVersion(MM::PropertyBase* pProp, MM::ActionType eAct)
+int Cobolt::OnVersion(MM::PropertyBase* pProp, MM::ActionType /* eAct */)
 {
      std::ostringstream command;
      
@@ -305,7 +305,7 @@ int Cobolt::OnVersion(MM::PropertyBase* pProp, MM::ActionType eAct)
      return DEVICE_OK;
 }
 
-int Cobolt::OnCurrent(MM::PropertyBase* pProp, MM::ActionType eAct)
+int Cobolt::OnCurrent(MM::PropertyBase* pProp, MM::ActionType /* eAct */)
 {
 
           
@@ -323,7 +323,7 @@ int Cobolt::OnCurrent(MM::PropertyBase* pProp, MM::ActionType eAct)
      return DEVICE_OK;
 }
 
-int Cobolt::OnInterlock(MM::PropertyBase* pProp, MM::ActionType eAct)
+int Cobolt::OnInterlock(MM::PropertyBase* pProp, MM::ActionType /* eAct */)
 {
 
     std::ostringstream command;
@@ -346,7 +346,7 @@ int Cobolt::OnInterlock(MM::PropertyBase* pProp, MM::ActionType eAct)
      return DEVICE_OK;
 }
 
-int Cobolt::OnFault(MM::PropertyBase* pProp, MM::ActionType eAct)
+int Cobolt::OnFault(MM::PropertyBase* pProp, MM::ActionType /* eAct */)
 {
 
      std::ostringstream command;
@@ -373,7 +373,7 @@ int Cobolt::OnFault(MM::PropertyBase* pProp, MM::ActionType eAct)
      return DEVICE_OK;
 }
 
-int Cobolt::OnLaserStatus(MM::PropertyBase* pProp, MM::ActionType eAct)
+int Cobolt::OnLaserStatus(MM::PropertyBase* pProp, MM::ActionType /* eAct */)
 {
 
 
