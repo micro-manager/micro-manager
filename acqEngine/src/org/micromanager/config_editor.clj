@@ -67,9 +67,10 @@
 (def widgets (atom nil))
 
 (defn get-selected-group []
-  (let [row (.getSelectedRow (@widgets :groups-table))]
-    (when (<= 0 row)
-      (nth @groups row))))
+  (let [row (.getSelectedRow (@widgets :groups-table))
+        groups @groups]
+    (when (< -1 row (count groups))
+      (nth groups row))))
 
 
 (defn update-group-data []
@@ -110,6 +111,7 @@
     (isCellEditable [_ _] true)
     (getValueAt [row column] (nth (keys @group-data) row))
     (setValueAt [val row column]
+                (println old-val val row column)
       (let [old-val (.getValueAt this row column)]
         (core renameConfig (get-selected-group) old-val val)
         (update-group-data)))))
@@ -123,7 +125,7 @@
     (getValueAt [row column] (get (nth (vals @group-data) row)
                                   (nth (properties @group-data) column)))
     (setValueAt [val row column]
-      ;(let [old-val (.getValueAt this row column)]
+                ;(let [old-val (.getValueAt this row column)]
         ;TODO: finish
         )))
 
