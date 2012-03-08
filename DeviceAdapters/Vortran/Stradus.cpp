@@ -4,7 +4,7 @@
 // SUBSYSTEM:     DeviceAdapters
 //-----------------------------------------------------------------------------
 // DESCRIPTION:   Controls Vortran Stradus Diode Laser Modules
-// COPYRIGHT:     Vortran Laser Technology, 2011, All rights reserved.
+// COPYRIGHT:     Vortran Laser Technology, 2012, All rights reserved.
 //                http://www.vortranlaser.com
 // AUTHOR:        David Sweeney
 // LICENSE:       This file is distributed under the LGPL license.
@@ -50,7 +50,7 @@ MODULE_API MM::Device* CreateDevice(const char* deviceName)
 
     if (strcmp(deviceName, DEVICE_NAME) == 0)
     {
-	   return new Stradus;
+	   return new Stradus();
     }
     return 0;
 }
@@ -216,6 +216,51 @@ bool Stradus::Busy()
 {
    return busy_;
 }
+
+int Stradus::SetOpen(bool open)
+{
+   LaserOnOff((long)open);
+   return DEVICE_OK;
+}
+
+int Stradus::GetOpen(bool& open)
+{
+   long state;
+   std::ostringstream command;
+   std::string answer;
+   std::vector<std::string> tokens;
+   std::string delims="=";
+
+   command << "?le";
+   int ret = SendSerialCommand(port_.c_str(), command.str().c_str(), "\r");
+   if (ret != DEVICE_OK) return ret;
+   CDeviceUtils::SleepMs(50);
+   ret = GetSerialAnswer(port_.c_str(), "\r\n", answer);
+   ret = GetSerialAnswer(port_.c_str(), "\r\n", answer);
+   PurgeComPort(port_.c_str());
+   if (ret != DEVICE_OK) return ret;
+
+   Stradus::Tokenize(answer, tokens, delims);
+   if ( 2 == tokens.size())
+   {
+   		answer=tokens.at(1).c_str();
+   }
+
+   state=atol(answer.c_str());
+   if (state==1)
+      open = true;
+   else if (state==0)
+      open = false;
+
+   return DEVICE_OK;
+}
+
+int Stradus::Fire(double /*deltaT*/)
+{
+   return DEVICE_UNSUPPORTED_COMMAND;
+}
+
+
 
 //Command routines &&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&
 int Stradus::epcOnOff(int onoff)

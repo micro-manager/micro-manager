@@ -4,7 +4,7 @@
 // SUBSYSTEM:     DeviceAdapters
 //-----------------------------------------------------------------------------
 // DESCRIPTION:   Controls Vortran Stradus Diode Laser Modules
-// COPYRIGHT:     Vortran Laser Technology, 2011, All rights reserved.
+// COPYRIGHT:     Vortran Laser Technology, 2012, All rights reserved.
 //                http://www.vortranlaser.com
 // AUTHOR:        David Sweeney
 // LICENSE:       This file is distributed under the LGPL license.
@@ -54,6 +54,11 @@ public:
     int LaserOnOff(int);
     int epcOnOff(int);
     int digModOnOff(int);
+
+	// Shutter API
+    int SetOpen(bool open = true);
+    int GetOpen(bool& open);
+    int Fire(double deltaT);
 
     // action interface
     // ----------------
