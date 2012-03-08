@@ -284,9 +284,12 @@ int RappScanner::LoadPolygons(int repeats)
       poly << "poly," << i;
       sequenceList.push_back(poly.str());
    }
-   stringstream repeat;
-   repeat << "repeat," << min(1,repeats);
-   sequenceList.push_back(repeat.str());
+   if (repeats > 0)
+   {
+      stringstream repeat;
+      repeat << "repeat," << max(0,repeats);
+      sequenceList.push_back(repeat.str());
+   }
    sequenceList.push_back(std::string("off"));
    if (!UGA_->StoreSequence(sequenceList))
    {
