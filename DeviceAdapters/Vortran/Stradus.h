@@ -38,7 +38,7 @@
 
 #define ERR_PORT_CHANGE    102
 
-class Stradus: public CGenericBase<Stradus>
+class Stradus: public CShutterBase<Stradus>
 {
 public:
     Stradus();
