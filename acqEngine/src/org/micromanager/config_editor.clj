@@ -111,7 +111,6 @@
     (isCellEditable [_ _] true)
     (getValueAt [row column] (nth (keys @group-data) row))
     (setValueAt [val row column]
-                (println old-val val row column)
       (let [old-val (.getValueAt this row column)]
         (core renameConfig (get-selected-group) old-val val)
         (update-group-data)))))

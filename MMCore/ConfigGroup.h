@@ -219,23 +219,28 @@ public:
     */
    bool RenameConfig(const char* groupName, const char* oldConfigName, const char* newConfigName)
    {
-      // tolerate empty group names
-      if (strlen(groupName) == 0)
-         return true;
-
-      std::map<std::string, ConfigGroup>::iterator it = groups_.find(groupName);
-      if (it == groups_.end())
-         return false; // group not found
-      if (it->second.Rename(oldConfigName, newConfigName))
+      if (0 != strcmp(oldConfigName, newConfigName))
       {
-         // NOTE: changed to not remove empty groups, N.A. 1.31.2006
-         // check if the config group is empty, and if so remove it
-         //if (it->second.IsEmpty())
+         // tolerate empty group names
+         if (strlen(groupName) == 0)
+            return true;
+
+         std::map<std::string, ConfigGroup>::iterator it = groups_.find(groupName);
+         if (it == groups_.end())
+            return false; // group not found
+         if (it->second.Rename(oldConfigName, newConfigName))
+         {
+            // NOTE: changed to not remove empty groups, N.A. 1.31.2006
+            // check if the config group is empty, and if so remove it
+            //if (it->second.IsEmpty())
             //groups_.erase(it->first);
+            return true;
+         }
+         else
+            return false; // config not found within a group
+      } else {
          return true;
       }
-      else
-         return false; // config not found within a group
    }
 
    /**
