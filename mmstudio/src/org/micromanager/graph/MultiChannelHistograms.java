@@ -189,7 +189,7 @@ public class MultiChannelHistograms extends JPanel implements Histograms {
          for (ChannelControlPanel c : ccpList_) {
             boolean histAndStatsCalculated = c.calcAndDisplayHistAndStats(img, drawHist);
             if (histAndStatsCalculated) {
-               if (contrastPanel_.getSlowHist()) {
+               if (contrastPanel_.getAutostretch()) {
                   c.autostretch();
                }
                c.applyChannelLUTToImage(img, cache);

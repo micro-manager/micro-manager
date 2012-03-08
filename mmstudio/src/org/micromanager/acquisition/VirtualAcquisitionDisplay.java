@@ -141,7 +141,6 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
    public class MMCompositeImage extends CompositeImage implements IMMImagePlus {
 
       public VirtualAcquisitionDisplay display_;
-      private boolean updatingImage_, settingMode_, settingLut_;
 
       MMCompositeImage(ImagePlus imgp, int type, VirtualAcquisitionDisplay disp) {
          super(imgp, type);
@@ -151,6 +150,47 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
       @Override
       public String getTitle() {
          return name_;
+      }
+
+      
+      @Override
+      public int getImageStackSize() {
+         return super.nChannels * super.nSlices * super.nFrames;
+      }
+
+      @Override
+      public int getStackSize() {
+         return getImageStackSize();
+      }
+
+      @Override
+      public int getNChannelsUnverified() {
+         return super.nChannels;
+      }
+
+      @Override
+      public int getNSlicesUnverified() {
+         return super.nSlices;
+      }
+
+      @Override
+      public int getNFramesUnverified() {
+         return super.nFrames;
+      }
+
+      @Override
+      public void setNChannelsUnverified(int nChannels) {
+         super.nChannels = nChannels;
+      }
+
+      @Override
+      public void setNSlicesUnverified(int nSlices) {
+         super.nSlices = nSlices;
+      }
+
+      @Override
+      public void setNFramesUnverified(int nFrames) {
+         super.nFrames = nFrames;
       }
 
       private void superReset() {
@@ -227,45 +267,24 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
       }
 
       @Override
-      public int getImageStackSize() {
-         return super.nChannels * super.nSlices * super.nFrames;
-      }
+      public void updateAndDraw() {
+          Runnable runnable = new Runnable() {
 
-      @Override
-      public int getStackSize() {
-         return getImageStackSize();
-      }
+              @Override
+              public void run() {
+                  imageChangedUpdate();
+                  superUpdateImage();
+                  try { 
+                      JavaUtils.invokeRestrictedMethod(this, ImagePlus.class, "notifyListeners", 2);
+                  } catch (Exception ex) {   }
+                  superDraw();
 
-      @Override
-      public int getNChannelsUnverified() {
-         return super.nChannels;
-      }
+              }
+          };
 
-      @Override
-      public int getNSlicesUnverified() {
-         return super.nSlices;
+         invokeLaterIfNotEDT(runnable);
       }
-
-      @Override
-      public int getNFramesUnverified() {
-         return super.nFrames;
-      }
-
-      @Override
-      public void setNChannelsUnverified(int nChannels) {
-         super.nChannels = nChannels;
-      }
-
-      @Override
-      public void setNSlicesUnverified(int nSlices) {
-         super.nSlices = nSlices;
-      }
-
-      @Override
-      public void setNFramesUnverified(int nFrames) {
-         super.nFrames = nFrames;
-      }
-
+      
       private void superDraw() {
          super.draw();
       }
