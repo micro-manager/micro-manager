@@ -7,6 +7,12 @@
            [java.awt Color Dimension])
   (:use [org.micromanager.mm :only [load-mm gui core edt get-config]]))
 
+;; utils
+
+(defn updater-agent [init-value update-fn]
+  (let [a (agent init-value)]
+    (await a 
+
 ;; swing layout 
 
 (defn put-constraint [comp1 edge1 comp2 edge2 dist]
