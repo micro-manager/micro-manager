@@ -597,6 +597,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
             }
          }
          
+         
          // Find matching points in the two ArrayLists
          Iterator it2 = xyPointsCh1.iterator();
          ArrayList <ArrayList<Point2D.Double>> points = new ArrayList<ArrayList<Point2D.Double>>();
@@ -605,7 +606,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
          while (it2.hasNext()) {
             ArrayList <Point2D.Double> pair = new ArrayList<Point2D.Double> ();
             Point2D.Double pCh1 = (Point2D.Double) it2.next();
-            Point2D.Double pCh2 = np.findBF(pCh1);
+            Point2D.Double pCh2 = np.findKDWSE(pCh1);
             if (pCh2 != null) {
                pair.add(pCh1);
                pair.add(pCh2);
@@ -661,6 +662,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
                 
                             
                ij.IJ.showStatus("Creating Pairs...");
+               
  
                for (int frame = 1; frame <= rowData_.get(row).nrFrames_; frame++) {
                   ij.IJ.showProgress(frame, rowData_.get(row).nrFrames_);
@@ -694,7 +696,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
 
                   while (it2.hasNext()) {
                      Point2D.Double pCh1 = (Point2D.Double) it2.next();
-                     Point2D.Double pCh2 = np.findBF(pCh1);
+                     Point2D.Double pCh2 = np.findKDWSE(pCh1); 
                      if (pCh2 != null) {
                         rt.incrementCounter();
                         rt.addValue("X1", pCh1.getX());
@@ -748,6 +750,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
                   yData.add(timePoint, avgY);
 
                }
+                             
                rt2.show("Summary of Pairs found in " + rowData_.get(row).name_);
                rt.show("Pairs found in " + rowData_.get(row).name_);
                
