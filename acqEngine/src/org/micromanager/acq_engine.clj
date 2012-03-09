@@ -606,7 +606,6 @@
             #(.run runnable))
           #(device-best-effort (core getCameraDevice)
             (wait-for-pending-devices)
-                               (println "ready to expose")
             (expose event)
             (collect event out-queue)
             (stop-trigger)))))))
@@ -620,7 +619,7 @@
 (defn run-acquisition [this settings out-queue]
   (try
     (def acq-settings settings)
-    (log (str "Starting MD Acquisition: " settings))
+    (log "Starting MD Acquisition: " settings)
     (prepare-state this)
     (binding [state (.state this)]
       (def last-state state) ; for debugging
