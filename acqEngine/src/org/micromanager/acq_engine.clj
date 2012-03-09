@@ -430,11 +430,17 @@
   (when (and (@state :init-continuous-focus)
              (not (core isContinuousFocusEnabled)))
     (core enableContinuousFocus true))
+  (when (and (@state :live-mode-on)
+             (not (.isLiveModeOn gui)))    
+    (.enableLiveMode gui true))
   (let [target-time (+ (@state :last-wake-time) interval-ms)
         delta (- target-time (jvm-time-ms))]
     (when (pos? delta)
       (interruptible-sleep delta))
     (await-resume)
+    (swap! state assoc :live-mode-on (.isLiveModeOn gui))
+    (when (.isLiveModeOn gui)
+      (.enableLiveMode gui false))
     (let [now (jvm-time-ms)
           wake-time (if (> now (+ target-time 10)) now target-time)]
       (state-assoc! :last-wake-time wake-time))))
@@ -532,6 +538,7 @@
              :pixel-size-um (core getPixelSizeUm)
              :source (core getCameraDevice)
              :pixel-type (get-pixel-type)
+             :live-mode-on (.isLiveModeOn gui)
       )))
 
 (defn cleanup []
@@ -551,6 +558,9 @@
       (when (and (@state :init-continuous-focus)
                  (not (core isContinuousFocusEnabled)))
         (core enableContinuousFocus true))
+      (when (and (@state :live-mode-on)
+                 (not (.isLiveModeOn gui)))
+        (.enableLiveMode gui true))
       (return-config))
     (catch Throwable t (ReportingUtils/showError t "Acquisition cleanup failed."))))
 
