@@ -9,9 +9,9 @@
 
 ;; utils
 
-(defn updater-agent [init-value update-fn]
-  (let [a (agent init-value)]
-    (await a 
+;(defn updater-agent [init-value update-fn]
+;  (let [a (agent init-value)]
+;    (await a 
 
 ;; swing layout 
 

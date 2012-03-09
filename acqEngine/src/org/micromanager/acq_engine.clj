@@ -57,6 +57,10 @@
   (when (< (rand) prob)
     (throw (Exception. "Simulated error"))))
 
+(defmacro time* [expr]
+ `(do (println "Timing: " '~expr)
+      (time ~expr)))
+
 ;; globals
 
 (def ^:dynamic state (atom {:stop false}))
@@ -454,7 +458,7 @@
            [false false])]
     (condp = (:task event)
       :snap (apply snap-image shutter-states)
-      :burst (init-burst (count (:burst-data event))
+      :burst (init-burst (:burst-length event)
                          (:trigger-sequence event)
                          (:relative-z event))
       nil)))
@@ -573,7 +577,7 @@
                          (or (:autofocus event)
                              (when-let [t (:wait-time-ms event)]
                                (pos? t))))]
-    (filter identity
+    (filter identity ;; removes nil events
       (flatten
         (list
           #(log event)
@@ -602,6 +606,7 @@
             #(.run runnable))
           #(device-best-effort (core getCameraDevice)
             (wait-for-pending-devices)
+                               (println "ready to expose")
             (expose event)
             (collect event out-queue)
             (stop-trigger)))))))
@@ -703,7 +708,7 @@
       "ComputerName" (.. InetAddress getLocalHost getHostName)
       "Depth" (core getBytesPerPixel)
       "Directory" (if (:save settings) (settings :root) "")
-      "Frames" (count (:frames settings))
+      "Frames" (:numFrames settings)
       "GridColumn" 0
       "GridRow" 0
       "Height" (core getImageHeight)

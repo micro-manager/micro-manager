@@ -273,6 +273,7 @@
             (assoc (first burst)
                    :task :burst
                    :burst-data burst
+                   :burst-length (count burst)
                    :trigger-sequence (make-triggers burst))
             (assoc (first burst) :task :snap))
           (when later
@@ -373,6 +374,7 @@
         (assoc (first events)
                :task :burst
                :burst-data events
+               :burst-length (* numFrames numChannels)
                :trigger-sequence triggers)))))
   
 

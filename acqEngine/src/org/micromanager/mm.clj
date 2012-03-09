@@ -70,7 +70,8 @@
 (defn log
   "Log form x to the Micro-Manager log output (debug only)."
   [& x]
-  (.logMessage mmc (apply pr-str x) true))
+  (binding [*print-length* 20]
+    (.logMessage mmc (apply print-str x) true)))
 
 (defmacro log-cmd
   "Log the enclosed expr to the Micro-Manager log output (debug only)."
