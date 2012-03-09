@@ -430,7 +430,6 @@
   (when (and (@state :init-continuous-focus)
              (not (core isContinuousFocusEnabled)))
     (core enableContinuousFocus true))
-  (println (@state :live-mode-on))
   (when (and (@state :live-mode-on)
              (not (.isLiveModeOn gui)))    
     (.enableLiveMode gui true))
