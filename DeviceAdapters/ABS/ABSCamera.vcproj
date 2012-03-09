@@ -310,7 +310,7 @@
 				LinkIncremental="1"
 				AdditionalLibraryDirectories=" ./lib_$(PlatformName)"
 				DelayLoadDLLs="camusb_api64_hal.dll"
-				GenerateDebugInformation="true"
+				GenerateDebugInformation="false"
 				SubSystem="2"
 				OptimizeReferences="2"
 				EnableCOMDATFolding="2"
@@ -353,6 +353,14 @@
 				>
 			</File>
 			<File
+				RelativePath=".\abscommontools.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\CcmFileStd.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\dllmain.cpp"
 				>
 				<FileConfiguration
@@ -392,6 +400,10 @@
 					/>
 				</FileConfiguration>
 			</File>
+			<File
+				RelativePath=".\MemoryIniFile.cpp"
+				>
+			</File>
 		</Filter>
 		<Filter
 			Name="Headerdateien"
@@ -400,6 +412,22 @@
 			>
 			<File
 				RelativePath=".\ABSCamera.h"
+				>
+			</File>
+			<File
+				RelativePath=".\abscommontools.h"
+				>
+			</File>
+			<File
+				RelativePath=".\CcmFileStd.h"
+				>
+			</File>
+			<File
+				RelativePath=".\MemoryIniFile.h"
+				>
+			</File>
+			<File
+				RelativePath=".\include\stringtools.h"
 				>
 			</File>
 		</Filter>

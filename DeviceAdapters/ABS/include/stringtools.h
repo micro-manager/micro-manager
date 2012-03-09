@@ -22,6 +22,8 @@
 #include <stdarg.h>
 #include <string>
 #include <algorithm>
+#include <sstream>
+#include <iostream>
 #include "./SafeUtil.h"
 
 #pragma warning( disable: 4996 )
@@ -131,6 +133,64 @@ namespace str
         if ((First != 0) || (Last != strToTrim.size())) 
             strToTrim = strToTrim.substr( First, Last );
     };
+
+    // case insensitive compare
+    static int compareLowCase( std::string strFirst, std::string strSecond )
+    {
+      ToLower( strFirst );
+      ToLower( strSecond );
+      return strFirst.compare( strSecond );
+    };
+   
+	 template<typename T1>
+	 static T1 hexTo( const std::string & strHexadecimal )
+	 {
+		 T1 value;
+		 std::stringstream ss;
+		 ss << std::hex << strHexadecimal;
+		 ss >> value;
+		 return value;
+	 }
+
+	 template<typename T1>
+	 static T1 decTo( const std::string & strDecimal )
+	 {
+		 T1 value;
+		 std::stringstream ss;
+		 ss << std::dec << strDecimal;
+		 ss >> value;
+		 return value;
+	 }
+
+	 template<typename T1>
+	 static T1 floatTo( const std::string & strFloat )
+	 {
+		 T1 value;
+		 std::stringstream ss;
+		 ss << std::fixed << strFloat;
+		 ss >> value;
+		 return value;
+	 }
+
+   template<typename T1>
+   static std::string asHex( const T1 value )
+   {
+     std::stringstream  ss;
+     std::string        strHex;     
+		 ss << value;
+		 ss >> std::hex >> strHex;
+     return strHex;
+   }
+
+   template<typename T1>
+   static std::string asDec( const T1 value )
+   {
+     std::stringstream  ss;
+     std::string        strDec;     
+		 ss << value;
+		 ss >> std::dec >> strDec;
+     return strDec;
+   }
 }
 #pragma  warning( default: 4996 )
 

@@ -19,64 +19,64 @@
 //!  defines for supported function bitmask (for internal use)
 //!@{
 
-#define FUNC_RESOLUTION				0x0000000000000000	//!< resolution caps (#S_RESOLUTION_CAPS, #S_RESOLUTION_PARAMS)
+#define FUNC_RESOLUTION           0x0000000000000000	//!< resolution caps (#S_RESOLUTION_CAPS, #S_RESOLUTION_PARAMS)
 
-#define FUNC_PIXELTYPE				0x0000000000000001	//!< pixel type caps (#S_PIXELTYPE_CAPS, #S_PIXELTYPE_PARAMS)
-#define FUNC_PREGAIN				0x0000000000000002	//!< pre gain #S_GAIN_CAPS
-#define FUNC_GAIN					0x0000000000000004	//!< gain, brightness #S_GAIN_CAPS
-#define FUNC_EXPOSURE				0x0000000000000008	//!< exposure #S_EXPOSURE_CAPS
+#define FUNC_PIXELTYPE            0x0000000000000001	//!< pixel type caps (#S_PIXELTYPE_CAPS, #S_PIXELTYPE_PARAMS)
+#define FUNC_PREGAIN              0x0000000000000002	//!< pre gain #S_GAIN_CAPS
+#define FUNC_GAIN                 0x0000000000000004	//!< gain, brightness #S_GAIN_CAPS
+#define FUNC_EXPOSURE             0x0000000000000008	//!< exposure #S_EXPOSURE_CAPS
 
-#define FUNC_AUTOEXPOSURE			0x0000000000000010	//!< auto exposure #S_AUTOEXPOSURE_CAPS
-#define FUNC_WHITE_BALANCE			0x0000000000000020	//!< manual white balance #S_WHITE_BALANCE_PARAMS
-#define FUNC_SHADING_CORRECTION		0x0000000000000040	//!< shading correction
-#define FUNC_BITSHIFT				0x0000000000000080	//!< bit shift mode for bpp modes greater 8bpp S_BITSHIFT_PARAMS
+#define FUNC_AUTOEXPOSURE         0x0000000000000010	//!< auto exposure #S_AUTOEXPOSURE_CAPS
+#define FUNC_WHITE_BALANCE        0x0000000000000020	//!< manual white balance #S_WHITE_BALANCE_PARAMS
+#define FUNC_SHADING_CORRECTION   0x0000000000000040	//!< shading correction
+#define FUNC_BITSHIFT             0x0000000000000080	//!< bit shift mode for bpp modes greater 8bpp S_BITSHIFT_PARAMS
 
-#define FUNC_GAMMA					0x0000000000000100	//!< gamma / value for pixel interpration #S_GAMMA_PARAMS
-#define FUNC_LUT					0x0000000000000200	//!< look up table (LUT)
-#define FUNC_BLACKLEVEL				0x0000000000000400	//!< black level compensation
-#define FUNC_TIMESYNC	            0x0000000000000800	//!< time synchronization (#S_TIMESYNC_CAPS, #S_TIMESYNC_PARAMS)
+#define FUNC_GAMMA                0x0000000000000100	//!< gamma / value for pixel interpration #S_GAMMA_PARAMS
+#define FUNC_LUT                  0x0000000000000200	//!< look up table (LUT)
+#define FUNC_BLACKLEVEL           0x0000000000000400	//!< black level compensation
+#define FUNC_TIMESYNC             0x0000000000000800	//!< time synchronization (#S_TIMESYNC_CAPS, #S_TIMESYNC_PARAMS)
 
-#define FUNC_BADPIXEL_CORRECTION	0x0000000000002000	//!< bad pixel correction
-#define FUNC_FLIP					0x0000000000004000	//!< image flip (#S_FLIP_CAPS, #S_FLIP_PARAMS)
-#define FUNC_CLOCK					0x0000000000008000	//!< sensor pixel clock
+#define FUNC_BADPIXEL_CORRECTION  0x0000000000002000	//!< bad pixel correction
+#define FUNC_FLIP                 0x0000000000004000	//!< image flip (#S_FLIP_CAPS, #S_FLIP_PARAMS)
+#define FUNC_CLOCK                0x0000000000008000	//!< sensor pixel clock
 
-#define FUNC_TEMPERATURE 			0x0000000000010000	//!< sensor temperature
-#define FUNC_IO_PORTS				0x0000000000020000	//!< digital I/O ports (#S_IO_PORT_CAPS, #S_IO_PORT_PARAMS)
+#define FUNC_TEMPERATURE          0x0000000000010000	//!< sensor temperature
+#define FUNC_IO_PORTS             0x0000000000020000	//!< digital I/O ports (#S_IO_PORT_CAPS, #S_IO_PORT_PARAMS)
 
-#define FUNC_MEMORY					0x0000000000080000	//!< camera memory (eeprom/flash) access
+#define FUNC_MEMORY               0x0000000000080000	//!< camera memory (eeprom/flash) access
 
-#define FUNC_RESERVED               0x0001200020141000  //!< reserved for further use 
+#define FUNC_RESERVED             0x0001200020141000  //!< reserved for further use 
 
-#define FUNC_LOCK_UPDATE			0x0000000000200000	//!< lock sensor settings update
-#define FUNC_COLOR_CORRECTION		0x0000000000400000	//!< color correction S_COLOR_CORRECTION_PARAMS
-#define FUNC_TIMESTAMP_OVERLAY		0x0000000000800000	//!< time stamp overlay  (#S_TIMESTAMP_OVERLAY_CAPS, S_TIMESTAMP_OVERLAY_PARAMS)
+#define FUNC_LOCK_UPDATE          0x0000000000200000	//!< lock sensor settings update
+#define FUNC_COLOR_CORRECTION     0x0000000000400000	//!< color correction S_COLOR_CORRECTION_PARAMS
+#define FUNC_TIMESTAMP_OVERLAY    0x0000000000800000	//!< time stamp overlay  (#S_TIMESTAMP_OVERLAY_CAPS, S_TIMESTAMP_OVERLAY_PARAMS)
 
-#define FUNC_HUE_SATURATION			0x0000000001000000  //!< hue / saturation S_HUE_SATURATION_PARAMS
+#define FUNC_HUE_SATURATION       0x0000000001000000  //!< hue / saturation S_HUE_SATURATION_PARAMS
 #define FUNC_BRIGHTNESS_CONTRAST	0x0000000002000000  //!< brightness / contrast S_BRIGHTNESS_CONTRAST_PARAMS
-#define FUNC_FRAMERATE				0x0000000004000000  //!< framerate control see #S_FRAMERATE_PARAMS
+#define FUNC_FRAMERATE            0x0000000004000000  //!< framerate control see #S_FRAMERATE_PARAMS
 
-#define FUNC_JPEG					0x0000000010000000  //!< jpeg quqlity control S_JPEG_CAPS
-#define FUNC_TRIGGER_OPTIONS		0x0000000040000000	//!< trigger options control see #S_TRIGGER_OPTION_PARAMS
-#define FUNC_64BIT_FUNCID			0x0000000080000000	//!< set if 64bit FunctionID's are supported
+#define FUNC_JPEG                 0x0000000010000000  //!< jpeg quqlity control S_JPEG_CAPS
+#define FUNC_TRIGGER_OPTIONS      0x0000000040000000	//!< trigger options control see #S_TRIGGER_OPTION_PARAMS
+#define FUNC_64BIT_FUNCID         0x0000000080000000	//!< set if 64bit FunctionID's are supported
 
-#define FUNC_RTC                    0x0000000100000000	//!< to get / set the RTC - values
+#define FUNC_RTC                  0x0000000100000000	//!< to get / set the RTC - values
 
 //! \cond DOXYGEN_INCLUDE_VDL
 // VDL => "Video Data Logger"
-#define FUNC_VDL_STATUS			    0x0000000200000000	//!< to get the current VDL status
-#define FUNC_VDL_SETTINGS		    0x0000000400000000	//!< to get/set the VDL settings
-#define FUNC_VDL_TRIGGER            0x0000000800000000	//!< to trigger the VDL by software
-#define FUNC_VDL_DIR                0x0000001000000000	//!< to read directory informations
-#define FUNC_VDL_FILE               0x0000002000000000	//!< to read image files
+#define FUNC_VDL_STATUS           0x0000000200000000	//!< to get the current VDL status
+#define FUNC_VDL_SETTINGS         0x0000000400000000	//!< to get/set the VDL settings
+#define FUNC_VDL_TRIGGER          0x0000000800000000	//!< to trigger the VDL by software
+#define FUNC_VDL_DIR              0x0000001000000000	//!< to read directory informations
+#define FUNC_VDL_FILE             0x0000002000000000	//!< to read image files
 //! \endcond DOXYGEN_INCLUDE_VDL
 
-#define FUNC_EDGE_ENHANCE           0x0000004000000000	//!< egde enhancement
-#define FUNC_MULTISHOT_CFG          0x0000008000000000	//!< multishot configuration
+#define FUNC_EDGE_ENHANCE         0x0000004000000000	//!< egde enhancement
+#define FUNC_MULTISHOT_CFG        0x0000008000000000	//!< multishot configuration
 
-#define FUNC_MULTI_ROI              0x0000010000000000	//!< multi roi configuration
+#define FUNC_MULTI_ROI            0x0000010000000000	//!< multi roi configuration
 
-#define FUNC_MODE_EVENT_CFG			0x0000020000000000	//!< configuration for capture mode #MODE_EVENT and MODE_EVENT_SYNC
-#define FUNC_MODE_TIME_CFG          0x0000040000000000	//!< configuration for capture mode #MODE_TIME
+#define FUNC_MODE_EVENT_CFG       0x0000020000000000	//!< configuration for capture mode #MODE_EVENT and MODE_EVENT_SYNC
+#define FUNC_MODE_TIME_CFG        0x0000040000000000	//!< configuration for capture mode #MODE_TIME
 
 #define FUNC_LUT_POST               0x0000080000000000	//!< post LUT processing
 #define FUNC_COOLING                0x0000100000000000	//!< image sensor cooling
@@ -128,18 +128,16 @@
 #define ST_MT9V024C				0x400A			//!< Aptina MT9V024 (Wide-VGA, Color)
 #define ST_MT9V024R				0x600A			//!< Aptina MT9V024 (Wide-VGA, RedClear)
 
-#define	ST_EV76C560M            0x000B			//!< E2V Semi EV76C560 (SXGA, Mono)
-#define ST_EV76C560C    		0x400B			//!< E2V Semi EV76C560 (SXGA, Color)
+#define	ST_EV76C560M      0x000B			//!< E2V Semi EV76C560 (SXGA, Mono)
+#define ST_EV76C560C      0x400B			//!< E2V Semi EV76C560 (SXGA, Color)
 
 #define	ST_FPA640x512			0x0010			//!< InGaAs-Sensor 640x512(ShortWave-IR VGA)
-#define	ST_FPA320x256           0x0011			//!< InGaAs-Sensor 320x256(ShortWave-IR QVGA)   
-#define	ST_FPA320x256_K         0x0012		    //!< InGaAs-Sensor 320x256TEC       (ShortWave-IR QVGA)
-#define	ST_FPA320x256_K22       0x0013			//!< InGaAs-Sensor 320x256TEC-2,2µm (ShortWave-IR QVGA)
+#define	ST_FPA320x256     0x0011			//!< InGaAs-Sensor 320x256(ShortWave-IR QVGA)   
+#define	ST_FPA320x256_K   0x0012      //!< InGaAs-Sensor 320x256TEC       (ShortWave-IR QVGA)
+#define	ST_FPA320x256_K22 0x0013			//!< InGaAs-Sensor 320x256TEC-2,2µm (ShortWave-IR QVGA)
 
 #define ST_SIS002A				0x0020			//!< Special Image Sensor SIS002A
 #define ST_SIS002B				0x4021			//!< Special Image Sensor SIS002B
-
-
 #define ST_SIS9010				0x8022			//!< Special Image Sensor SIS9010
 
 #define	ST_ICX267M				0x8000			//!< Sony ICX267AL (CCD, 1,3 MP, Mono)
@@ -184,11 +182,11 @@
 #define	ST_KAI08050C			0xC016			//!< KODAK InterlineCCD KAI-08050 Color
 #define	ST_EX490EP              0xC017			//!< Sony FCB-EX490EP Color
 
-#define	ST_REDCLEAR     		0x2000			//!< if set if bayer mask with only red. Green and blue mask is cleared.
-#define	ST_COLOR				0x4000			//!< if set Color Sensor else Mono
-#define	ST_CCD					0x8000			//!< if set CCD else CMOS
+#define	ST_REDCLEAR       0x2000			//!< if set if bayer mask with only red. Green and blue mask is cleared.
+#define	ST_COLOR          0x4000			//!< if set Color Sensor else Mono
+#define	ST_CCD            0x8000			//!< if set CCD else CMOS
 
-#define ST_UNKNOWN				0x0000			//!< unknown/undefined sensor type
+#define ST_UNKNOWN        0x0000			//!< unknown/undefined sensor type
 
 //!@}
 
@@ -223,7 +221,7 @@
 //! \name Constants: FPGA Types
 //! used by #S_CAMERA_VERSION
 //!@{
-#define FPGA_NONE				0x00			//!< no FPGA present
+#define FPGA_NONE         0x00			//!< no FPGA present
 #define FPGA_XC3S400			0x01			//!< Xilinx XC3S400
 #define FPGA_XC3S1000			0x02			//!< Xilinx XC3S1000
 
@@ -237,8 +235,8 @@
 //! \name Constants: CPLD Types
 //! used by #S_CAMERA_VERSION
 //!@{
-#define CPLD_NONE				0x00			//!< no CPLD present
-#define CPLD_XCR3064XL			0x01			//!< Xilinx XCR3064XL
+#define CPLD_NONE         0x00			//!< no CPLD present
+#define CPLD_XCR3064XL		0x01			//!< Xilinx XCR3064XL
 #define CPLD_XC2C64A			0x02			//!< Xilinx XC2C64A
 #define CPLD_XC2C128			0x03			//!< Xilinx XC2C128
 
@@ -286,11 +284,11 @@
 //! \name Constants: USB Controller Types
 //! used by #S_CAMERA_VERSION
 //!@{
-#define USB_NONE				0x00			//!< no USB controller present
-#define USB_CYPRESS_SX2			0x01			//!< Cypress SX2
+#define USB_NONE          0x00			//!< no USB controller present
+#define USB_CYPRESS_SX2   0x01			//!< Cypress SX2
 #define USB_NET2272				0x02			//!< PLX NET2272
 #define USB_PDIUSB12			0x03			//!< Philips PDIUSBD12
-#define USB_DSP_548_OTG			0x04			//!< AD Blackfin BF548
+#define USB_DSP_548_OTG   0x04			//!< AD Blackfin BF548
 
 //!@}
 
@@ -336,7 +334,7 @@
 //! \name Constants: Camera Platform ID
 //! used by #S_CAMERA_VERSION
 //!@{
-#define CPID_NONE				0x00			//!< no platform id
+#define CPID_NONE         0x00      //!< no platform id
 #define CPID_UK11XX				0x01			//!< platform UK11xx
 #define CPID_UK12XX				0x02			//!< platform UK12xx
 #define CPID_UK13XX				0x03			//!< platform UK13xx
@@ -411,26 +409,52 @@
 //! used by #CamUSB_SetStandardRes and #CamUSB_GetStandardRes
 /////////////////////////////////////////////////////////////////////////////
 //!@{
-#define NO_STDRES			0x0000	//!< no standard resolution (ROI)
-#define STDRES_QSXGA		0x0001	//!< QSXGA     2592 x 1944
-#define STDRES_QXGA			0x0002	//!< QXGA      2048 x 1536
-#define STDRES_UXGA			0x0004	//!< UXGA      1600 x 1200
-#define STDRES_WXGA		    0x0008	//!< WXGA      1360 x 1024
-#define STDRES_SXGA			0x0010	//!< SXGA      1280 x 1024
-#define STDRES_XGA			0x0020	//!< XGA       1024 x 768
-#define STDRES_SVGA			0x0040	//!< SVGA       800 x 600
-#define STDRES_WIDEVGA		0x0080	//!< Wide-VGA   752 x 480
-#define STDRES_VGA			0x0100	//!< VGA        640 x 480
-#define STDRES_CIF			0x0200	//!< CIF        352 x 288
-#define STDRES_QVGA			0x0400	//!< QVGA       320 x 240
-#define STDRES_HDTV_1080	0x0800	//!< HDTV 1080 1920 x 1080
-#define STDRES_HDTV_720		0x1000	//!< HDTV  720 1280 x 720
-
+#define NO_STDRES             0x0000	//!< no standard resolution (ROI)
+#define STDRES_QSXGA          0x0001	//!< QSXGA     2592 x 1944
+#define STDRES_QXGA           0x0002	//!< QXGA      2048 x 1536
+#define STDRES_UXGA           0x0004	//!< UXGA      1600 x 1200
+#define STDRES_WXGA           0x0008	//!< WXGA      1360 x 1024
+#define STDRES_SXGA           0x0010	//!< SXGA      1280 x 1024
+#define STDRES_XGA            0x0020	//!< XGA       1024 x 768
+#define STDRES_SVGA           0x0040	//!< SVGA       800 x 600
+#define STDRES_WIDEVGA        0x0080	//!< Wide-VGA   752 x 480
+#define STDRES_VGA            0x0100	//!< VGA        640 x 480
+#define STDRES_CIF            0x0200	//!< CIF        352 x 288
+#define STDRES_QVGA           0x0400	//!< QVGA       320 x 240
+#define STDRES_HDTV_1080      0x0800	//!< HDTV 1080 1920 x 1080
+#define STDRES_HDTV_720       0x1000	//!< HDTV  720 1280 x 720
+#define STDRES_HDTV_720_SBS   0x2000	//!< HDTV  720  640 x 720 for stereo camera 3D
+#define STDRES_HDTV_720_SBSFV 0x4000	//!< HDTV  720  640 x 720 for stereo camera 3D side by side format
 
 //! full sensor resolution... depends on sensor resolution capabilities
-#define STDRES_FULLSENSOR	0x8000
+#define STDRES_FULLSENSOR	    0x8000
 
+//!@}
 
+/////////////////////////////////////////////////////////////////////////////
+//! \name Constants: Standard Resolution 2
+//! used by #CamUSB_SetStandardRes2, #CamUSB_GetStandardRes2
+/////////////////////////////////////////////////////////////////////////////
+//!@{
+
+#define STDRES2_NONE          0x0000000000000000	//!< no standard resolution (ROI)
+#define STDRES2_QVGA          0x0000000000000001	//!< QVGA       320 x 240
+#define STDRES2_WQVGA         0x0000000000000002	//!< WQVGA      384 x 240
+#define STDRES2_VGA           0x0000000000000004	//!< VGA        640 x 480
+#define STDRES2_WIDEVGA       0x0000000000000008	//!< Wide-VGA   752 x 480
+#define STDRES2_SVGA          0x0000000000000010	//!< SVGA       800 x 600
+#define STDRES2_XGA           0x0000000000000020	//!< XGA       1024 x 768
+#define STDRES2_WXGA          0x0000000000000040	//!< WXGA      1360 x 768
+#define STDRES2_XGA2          0x0000000000000080	//!< XGA-2     1360 x 1024
+#define STDRES2_SXGA          0x0000000000000100	//!< SXGA      1280 x 1024
+#define STDRES2_WSXGAP        0x0000000000000200	//!< WSXGA     1680 x 1050
+#define STDRES2_UXGA          0x0000000000000400	//!< UXGA      1600 x 1200
+#define STDRES2_WUXGA         0x0000000000000800	//!< WUXGA     1920 x 1200
+#define STDRES2_QXGA          0x0000000000001000	//!< QXGA      2048 x 1536
+#define STDRES2_WQXGA         0x0000000000002000	//!< WQXGA     2560 x 1600
+#define STDRES2_QSXGA         0x0000000000004000	//!< QSXGA     2560 x 2048
+#define STDRES2_QUXGA 	      0x0000000000008000	//!< QUXGA     3200 x 2400
+#define STDRES2_FULLSENSOR	  0x8000000000000000  //!< full sensor resolution
 
 //!@}
 
@@ -440,25 +464,31 @@
 /////////////////////////////////////////////////////////////////////////////
 //!@{
 
-#define GAIN_RED				0x0001	//!< gain channel red
-#define GAIN_GREEN1				0x0002  //!< gain channel green1
-#define GAIN_GREEN2				0x0004  //!< gain channel green2
-#define GAIN_GREEN				0x0008  //!< gain channel green
-#define GAIN_BLUE				0x0010  //!< gain channel blue
+#define GAIN_RED            0x0001	//!< gain channel red
+#define GAIN_GREEN1         0x0002  //!< gain channel green1
+#define GAIN_GREEN2         0x0004  //!< gain channel green2
+#define GAIN_GREEN          0x0008  //!< gain channel green
+#define GAIN_BLUE           0x0010  //!< gain channel blue
 
 //! \brief GAIN_GLOBAL represents all gain channels supported by the camera.\n
 //! \brief A monochrome camera has only this channel, if a color camera\n
 //! \brief supports the channel you can use it to set all the \n
 //! \brief other supported channels to the same value.\n
-#define GAIN_GLOBAL				0x0020
+#define GAIN_GLOBAL         0x0020
 
 //! Red-, Green- and Blue-Channel
-#define GAIN_RGB				(GAIN_RED|GAIN_GREEN|GAIN_BLUE)
+#define GAIN_RGB            (GAIN_RED|GAIN_GREEN|GAIN_BLUE)
+
 //! Red-, Green1/2 and Blue-Channel
-#define GAIN_RG12B				(GAIN_RED|GAIN_GREEN1|GAIN_GREEN2|GAIN_BLUE)
+#define GAIN_RG12B          (GAIN_RED|GAIN_GREEN1|GAIN_GREEN2|GAIN_BLUE)
 
 //! generic gain channel mask
-#define GAIN_GENERIC_MASK   	(GAIN_RGB|GAIN_GREEN1|GAIN_GREEN2|GAIN_GLOBAL)
+#define GAIN_GENERIC_MASK   (GAIN_RGB|GAIN_GREEN1|GAIN_GREEN2|GAIN_GLOBAL)
+
+//! \brief GAIN_AUTORANGE is a flag to keep the gain values passed in range\n
+//! \brief of camera gain capabilities. The gain channels have to be valid settings.\n
+//! \brief This gain channel flag is a API feature and not supported by camera firmware.
+#define GAIN_AUTORANGE      0x4000
 
 //! \brief GAIN_LOCKED is a flag to keep the current gain channel ratio. \n
 //! \brief If you modify one of the RGB - channels the other will be adapted \n
@@ -469,10 +499,11 @@
 //! \brief For example you have applied the white balance settings and want to \n
 //! \brief increase the Gain and also want to keep your white balance. So you \n
 //! \brief just modify one channel with the flag GAIN_LOCKED.\n
-//! \brief This gain channel flag is only supported by #CamUSB_SetGain. \n
-//! \brief Calls to #CamUSB_SetFunction or #CamUSB_GetFunction with =>
-//! \brief functionID => #FUNC_GAIN will return #retGAIN_CHANNEL error!
+//! \brief This gain channel flag is a API feature and not supported by camera firmware.
 #define GAIN_LOCKED				0x8000
+
+//! mask of gain flags
+#define GAIN_FLAG_MASK        (GAIN_AUTORANGE | GAIN_LOCKED)
 
 //!@}
 
@@ -537,19 +568,19 @@
 //!  used by #FUNC_IO_PORTS
 /////////////////////////////////////////////////////////////////////////////
 //!@{
-#define PORT_FEATURE_UNCHANGED		0x0000		//!< leave features unchanged
+#define PORT_FEATURE_UNCHANGED		  0x0000		//!< leave features unchanged
 
-#define PORT_FEATURE_POL_ACTHIGH	0x0001		//!< polarity active high
-#define PORT_FEATURE_POL_ACTLOW		0x0002		//!< polarity active low
-#define PORT_FEATURE_POL_NORMAL		0x0004		//!< polarity normal
-#define PORT_FEATURE_POL_INVERTED	0x0008		//!< polarity inverted
-#define PORT_FEATURE_POL_MASK		0x000F		//!< mask for polarity features
+#define PORT_FEATURE_POL_ACTHIGH	  0x0001		//!< polarity active high
+#define PORT_FEATURE_POL_ACTLOW		  0x0002		//!< polarity active low
+#define PORT_FEATURE_POL_NORMAL		  0x0004		//!< polarity normal
+#define PORT_FEATURE_POL_INVERTED	  0x0008		//!< polarity inverted
+#define PORT_FEATURE_POL_MASK		    0x000F		//!< mask for polarity features
 
-#define PORT_FEATURE_TRIG_LEVEL		0x0010		//!< level-triggered
-#define PORT_FEATURE_TRIG_EDGE		0x0020		//!< edge-triggered
-#define PORT_FEATURE_TRIG_MASK		0x00F0		//!< mask for triggered features
+#define PORT_FEATURE_TRIG_LEVEL		  0x0010		//!< level-triggered
+#define PORT_FEATURE_TRIG_EDGE		  0x0020		//!< edge-triggered
+#define PORT_FEATURE_TRIG_MASK		  0x00F0		//!< mask for triggered features
 
-#define PORT_FEATURE_DELAY			0x0100		//!< delay support
+#define PORT_FEATURE_DELAY            0x0100		//!< delay support
 #define PORT_FEATURE_SINGLE_PERIOD    0x0200	    //!< one period clock/timer
 #define PORT_FEATURE_PWM              0x0400	    //!< continuous clock/timer
 #define PORT_FEATURE_COMMON_MASK      0x0700	    //!< mask for common features
@@ -1100,7 +1131,9 @@
 
 #define COMA_MAPPING_08         (0x0000)     //!< 8/16Bit source data will be mapped to 3 *  8Bit BGR
 #define COMA_MAPPING_16         (0x0010)     //!< 8/16Bit source data will be mapped to 3 * 16Bit BGR
-#define COMA_MAPPING_MASK       (0x0010)     //!< mask the source destination mapping
+#define COMA_MAPPING_08_RGB     (0x0020)     //!< 8/16Bit source data will be mapped to 3 *  8Bit RGB
+#define COMA_MAPPING_16_RGB     (0x0030)     //!< 8/16Bit source data will be mapped to 3 * 16Bit RGB
+#define COMA_MAPPING_MASK       (0x0030)     //!< mask the source destination mapping
 
 //! If the flag data is set, the data passed by a #CamUSB_SetFunction call 
 //! (#S_COLOR_MAPPING_DATA_CM, #S_COLOR_MAPPING_DATA_BM) is used to setup the
@@ -1120,11 +1153,18 @@
 
 //! S_AUTOEXPOSURE_CAPS2::iMinBrightnessOffset and S_AUTOEXPOSURE_CAPS2::iMaxBrightnessOffset 
 //! are valid values and have
-#define AEXP_OPTION_BRIGHNESSOFFSET   0x00000001   
+#define AEXP_OPTION_BRIGHNESSOFFSET   0x0001   
 
 //! internal algorithm is used to control the brightness,
 //! which requires #AEXP_FEATURE_FULL to work
-#define AEXP_OPTION_INTERN_ALGORITHM  0x00000002   
+#define AEXP_OPTION_INTERN_ALGORITHM  0x0002   
+
+//! reduce flicker based on light sources operated at 50 Hz
+#define AEXP_OPTION_ANTIFLICKER_50HZ  0x0010   
+
+//! reduce flicker based on light sources operated at 60 Hz
+#define AEXP_OPTION_ANTIFLICKER_60HZ  0x0020
+
 
 #define AEXP_FEATURE_GAIN             0x00000001   //!< auto gain control supported
 #define AEXP_FEATURE_EXPOSURE         0x00000002   //!< auto exposure control supported
@@ -1588,7 +1628,6 @@ enum ECameraType
 //!@}
 
 
-
 /////////////////////////////////////////////////////////////////////////////
 //! \name Constants: API image buffers and camera devices
 /////////////////////////////////////////////////////////////////////////////
@@ -1755,6 +1794,7 @@ enum ECameraType
 #define retBUS_ID				0x000000AB		//!< unsupported bus id
 #define retBUS_PROTOCOL			0x000000AC		//!< unsupported protocol type
 #define retBUS_STATE			0x000000AD		//!< unsupported bus state
+#define retBUS_FLAG			    0x000000AE		//!< unsupported bus flag
 
 #define retFLIP_MODE			0x000000B0		//!< flip mode not supported
 #define retFLIP_HOR_BIN			0x000000B1		//!< horizontal flip mode is not supported in combination with binning
@@ -1925,13 +1965,13 @@ enum ECameraType
 #define	retGAINCHNS				0x00000507		//!< Gain channel not supported
 #define	retGAINVALUEINPOS		0x00000508		//!< Unable to apply the value with gain channels locked
 
-#define	retNOCONTINUOUSMODE		0x00000509		//!< continuous mode not active
-#define	retMULTIPLESTDRES		0x0000050A		//!< Only one standard resolution per call allowed
-#define	retSTDRESNS				0x0000050B		//!< Standard resolution not supported
-#define	retBITSHIFTVALUENS		0x0000050C		//!< bitshift value not supported
-#define	retLUTINDEX_NS			0x0000050D		//!< LUT index not supported
-#define retLUTZERODATA_NA		0x0000050E		//!< data transfer from/to LUT zero not allowed
-#define retDISABLEDBYAE			0x0000050F		//!< disabled by auto exosure
+#define	retNOCONTINUOUSMODE   0x00000509    //!< continuous mode not active
+#define	retMULTIPLESTDRES     0x0000050A    //!< Only one standard resolution per call allowed
+#define	retSTDRESNS           0x0000050B    //!< Standard resolution not supported
+#define	retBITSHIFTVALUENS    0x0000050C    //!< bitshift value not supported
+#define	retLUTINDEX_NS        0x0000050D    //!< LUT index not supported
+#define retLUTZERODATA_NA     0x0000050E    //!< data transfer from/to LUT zero not allowed
+#define retDISABLEDBYAE       0x0000050F    //!< disabled by auto exosure
 
 // VISCA specific return value
 #define retVISCA_ACK          0x00000510    //!< Visca ACK (command understood)
@@ -1945,21 +1985,19 @@ enum ECameraType
 #define retVISCA_ERROR        0x00000517    //!< Visca generic error
 
 
-#define retFILE_OPEN			0x00000600		//!< Unable to open file
-#define retFILE_SIZE			0x00000601		//!< Invalid file size
-#define retFILE_FORMAT			0x00000602		//!< Invalid file format
+#define retFILE_OPEN          0x00000600    //!< Unable to open file
+#define retFILE_SIZE          0x00000601    //!< Invalid file size
+#define retFILE_FORMAT        0x00000602    //!< Invalid file format
 
-#define retCOM_OPEN				0x00000603		//!< failed to open COM port
-#define retCOM_TRANSFER			0x00000604		//!< COM port transfer error
+#define retCOM_OPEN           0x00000603    //!< failed to open COM port
+#define retCOM_TRANSFER       0x00000604    //!< COM port transfer error
 
-#define retUPDATE_DEVNAME		0x00000607		//!< wrong update file for this device
-#define retUSER_ABORT			0x00000608		//!< user abort
+#define retUPDATE_DEVNAME     0x00000607    //!< wrong update file for this device
+#define retUSER_ABORT         0x00000608    //!< user abort
 
-
-#define retINVFIRMWARE			0x00000610		//!< Invalid Firmware no application included
-#define retINV_FW_DEVNAME_NS	0x00000611		//!< Invalid Firmware camera devicename is not supported
-#define retINV_FW_STYPE_NS		0x00000612		//!< Invalid Firmware camera sensortype is not supported
-
+#define retINVFIRMWARE        0x00000610    //!< Invalid Firmware no application included
+#define retINV_FW_DEVNAME_NS  0x00000611    //!< Invalid Firmware camera devicename is not supported
+#define retINV_FW_STYPE_NS    0x00000612    //!< Invalid Firmware camera sensortype is not supported
 
 #define	retUPD_FWP_INV_SIZE		0x00000620		//!< Update invalid FirmwarePacket Size
 #define	retUPD_FWP_INV			0x00000621		//!< Update invalid FirmwarePacket (may be corrupt)

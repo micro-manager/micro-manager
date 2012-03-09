@@ -93,6 +93,22 @@ USBAPI u32 CCONV GetStdResString( u32 dwStdRes,
 
 // ----------------------------------------------------------------------------
 //
+// GetStdRes2String
+//
+//! \brief	return the standard resolution 2 string
+//!
+//! \param	dwStdResID2		standard resolution id
+//! \param	szStdResStr		standard resolution string
+//! \param	dwMaxLen			max size of standard resolution string
+//!
+//! \retval	count string elements
+//!
+USBAPI u32 CCONV GetStdRes2String( const u64 dwStdResID2,
+                                   char *szStdResStr,
+                                   const u32 dwMaxLen );
+
+// ----------------------------------------------------------------------------
+//
 // Sensortype2String
 //
 //! \brief	convert the sensor id to as string value
@@ -295,7 +311,8 @@ USBAPI BOOL CCONV GetVisibleSizeBySensorType(u32 dwSensorType, u16 *pwSizeX, u16
 //!
 //! \retval	SIZE of the standard resolution in pixel
 //!
-USBAPI SIZE CCONV GetStandardResSize(u32 dwStdRes);
+USBAPI SIZE CCONV GetStandardResSize ( u32 dwStdResID  );
+USBAPI SIZE CCONV GetStandardRes2Size( u64 qwStdResID2 );
 
 
 //!@}

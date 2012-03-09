@@ -880,13 +880,13 @@ typedef struct
 typedef struct
 {
   //! 0 => AEC and AGC are only active if both are active \n
-	//! 1 => AEC and AGC can be activated separately
-	u08		bSeparateAEC_AGC;
+  //! 1 => AEC and AGC can be activated separately
+  u08		bSeparateAEC_AGC;
 
-	u08		bMaxFrameSkip;			//!< maximum frame skip (is ignored)
+  u08		bMaxFrameSkip;  //!< maximum frame skip (is ignored)
 
   //! maximum target value (brightness), normally 255\n
-	u16		wMaxTargetBrightness;
+  u16		wMaxTargetBrightness;
 
 } S_AUTOEXPOSURE_CAPS;
 

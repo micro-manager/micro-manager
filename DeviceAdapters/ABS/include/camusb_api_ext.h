@@ -336,8 +336,8 @@ USBAPI BOOL CCONV CamUSB_GetGain( LPDWORD pdwGain,
 //! \retval		TRUE			success
 //!	\retval		FALSE			error
 //!
-USBAPI BOOL CCONV CamUSB_SetStandardRes( DWORD dwStdRes, 
-                                         BYTE nDevNr = 0);
+USBAPI BOOL CCONV CamUSB_SetStandardRes( u32 dwStdResID, 
+                                         u08 nDevNr = 0);
 
 
 // --------------------------------------------------------------------------
@@ -345,29 +345,18 @@ USBAPI BOOL CCONV CamUSB_SetStandardRes( DWORD dwStdRes,
 //! \brief		Get one of the standard camera resolutions or 
 //!	\brief		that an ROI is active
 //!
-//! \param		pdwStdRes			Specifies working mode:
-//! \arg		\c STDRES_QSXGA		= 0x001	- 2592 x 1944
-//! \arg		\c STDRES_QXGA		= 0x002	- 2048 x 1536
-//!	\arg		\c STDRES_UXGA		= 0x004	- 1600 x 1200
-//!	\arg		\c STDRES_SXGA		= 0x008	- 1280 x 1024
-//!	\arg		\c STDRES_XGA		= 0x010	- 1024 x  768
-//!	\arg		\c STDRES_SVGA		= 0x020	-  800 x  600
-//!	\arg		\c STDRES_VGA		= 0x040 -  640 x  480
-//!	\arg		\c STDRES_CIF		= 0x080 -  352 x  288
-//!	\arg		\c STDRES_QVGA		= 0x100 -  320 x  240
-//!	\arg		\c STDRES_HDTV_1080 = 0x200 - 1920 x 1080
-//!	\arg		\c STDRES_HDTV_720  = 0x400 - 1280 x  720
-//! \arg		\c NO_STDRES		= 0x000 => ROI active	
+//! \param		pdwStdRes   Specifies working mode see #CamUSB_SetStandardRes
+//!                       and #NO_STDRES
 //!
 //!	\param		nDevNr			Camera index number, that identifies the 
-//!								camera device which should be used with this
-//!								function
+//!								        camera device which should be used with this
+//!								        function
 //!
-//! \retval		TRUE			success
-//!	\retval		FALSE			error
+//! \retval		TRUE			  success
+//!	\retval		FALSE			  error
 //!
-USBAPI BOOL CCONV CamUSB_GetStandardRes( LPDWORD pdwStdRes, 
-                                         BYTE nDevNr = 0);
+USBAPI BOOL CCONV CamUSB_GetStandardRes( u32* pdwStdResID, 
+                                         u08  nDevNr = 0);
 
 
 // --------------------------------------------------------------------------
@@ -375,7 +364,7 @@ USBAPI BOOL CCONV CamUSB_GetStandardRes( LPDWORD pdwStdRes,
 //! \brief		Returns the mask of the supported standard resolutions
 //!
 //!
-//! \param		pdwStdResMask
+//! \param		pdwStdResMask see standard resolution defines #STDRES_VGA
 //!
 //!	\param		nDevNr			Camera index number, that identifies the 
 //!								camera device which should be used with this
@@ -384,8 +373,77 @@ USBAPI BOOL CCONV CamUSB_GetStandardRes( LPDWORD pdwStdRes,
 //! \retval		TRUE			success
 //!	\retval		FALSE			error
 //!	
-USBAPI BOOL CCONV CamUSB_GetStandardResCaps( LPDWORD pdwStdResMask, 
-											 BYTE nDevNr=0);
+USBAPI BOOL CCONV CamUSB_GetStandardResCaps( u32* pdwStdResMask, 
+											                       u08  nDevNr = 0 );
+
+// --------------------------------------------------------------------------
+// CamUSB_SetStandardRes2
+//! \brief		Set one of the standard camera resolutions
+//!
+//!				Effective as of the next image.
+//!
+//! \param		pdwStdResID2		Specifies working mode:
+//! \arg		\c STDRES2_QUXGA    = 3200 x 2400
+//! \arg		\c STDRES2_QSXGA    = 2560 x 2048
+//!	\arg		\c STDRES2_WQXGA    = 2560 x 1600
+//!	\arg		\c STDRES2_QXGA     = 2048 x 1536
+//!	\arg		\c STDRES2_WUXGA    = 1920 x 1200
+//!	\arg		\c STDRES2_UXGA     = 1600 x 1200
+//!	\arg		\c STDRES2_WSXGAP   = 1680 x 1050
+//!	\arg		\c STDRES2_SXGA     = 1280 x 1024
+//!	\arg		\c STDRES2_XGA2     = 1360 x 1024
+//!	\arg		\c STDRES2_WXGA     = 1360 x 768
+//!	\arg		\c STDRES2_XGA      = 1024 x 768
+//!	\arg		\c STDRES2_SVGA     =  800 x 600
+//!	\arg		\c STDRES2_WIDEVGA  =  752 x 480
+//!	\arg		\c STDRES2_VGA      =  640 x 480
+//!	\arg		\c STDRES2_WQVGA    =  384 x 240
+//!	\arg		\c STDRES2_QVGA     =  320 x 240
+//!
+//!	\param  nDevNr  Camera index number, that identifies the 
+//!								  camera device which should be used with this
+//!								  function
+//!
+//! \retval		TRUE			success
+//!	\retval		FALSE			error
+//!
+USBAPI BOOL CCONV CamUSB_SetStandardRes2( u64 qwStdResID2, 
+                                          u08 nDevNr = 0);
+
+// --------------------------------------------------------------------------
+// CamUSB_GetStandardRes
+//! \brief		Get one of the standard camera resolutions or 
+//!	\brief		that an ROI is active
+//!
+//! \param		pdwStdResID2  Specifies working mode see #CamUSB_SetStandardRes2
+//!                         and #STDRES2_NONE
+//!
+//!	\param		nDevNr			Camera index number, that identifies the 
+//!								        camera device which should be used with this
+//!								        function
+//!
+//! \retval		TRUE			  success
+//!	\retval		FALSE			  error
+//!
+USBAPI BOOL CCONV CamUSB_GetStandardRes2( u64* pdwStdResID2, 
+                                          u08  nDevNr = 0);
+
+// --------------------------------------------------------------------------
+// CamUSB_GetStandardRes2Caps
+//! \brief		Returns the mask of the supported standard resolutions
+//!
+//!
+//! \param		pdwStdResID2Mask see standard resolution defines #STDRES2_VGA
+//!
+//!	\param		nDevNr		Camera index number, that identifies the 
+//!								      camera device which should be used with this
+//!								      function
+//!
+//! \retval		TRUE			success
+//!	\retval		FALSE			error
+//!	
+USBAPI BOOL CCONV CamUSB_GetStandardRes2Caps( u64* pdwStdResID2Mask, 
+                                              u08  nDevNr = 0 );
 
 
 // --------------------------------------------------------------------------

@@ -38,21 +38,19 @@
 
 #ifndef DOXYGEN_SHOULD_SKIP_THIS
   #ifdef CAM_USB_API_EXPORTS	// Import bzw. Export festlegen
-	#define USBAPI extern "C" __declspec(dllexport)
+	  #define USBAPI extern "C" __declspec(dllexport)
   #else
-	#ifdef __cplusplus
-	  #define USBAPI extern "C" __declspec(dllimport)
-	#else
-	  #define USBAPI __declspec(dllimport)
-    #endif
+	  #ifdef __cplusplus
+	    #define USBAPI extern "C" __declspec(dllimport)
+	  #else
+	    #define USBAPI __declspec(dllimport)
+    #endif    
   #endif
 
   #ifndef CCONV
-	#define CCONV	__cdecl		//!< call convention
-  #endif
-
+    #define CCONV	__cdecl		//!< call convention
+   #endif  
 #else
-
 //! \cond DON_T_DOCUMENT
 	#define CCONV               //!< to clear the call convention for documentation
 	#define USBAPI	            //!< to clear DLL import and export defines for documentation
@@ -652,7 +650,7 @@ USBAPI BOOL CCONV CamUSB_GetImage ( u08 **ppImageBuffer,
  *  \param		pImageHeader	Pointer the image  header struct
  *
  *  \param		dwImageBufferSize	Size in Byte of the image buffer, if pImageBuffer
- *								point to a valid buffer
+ *								point to a valid buffer 
  *	\param		nDevNr			Camera index number, that identifies the
  *								camera device which should be used with this
  *								function
