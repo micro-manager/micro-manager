@@ -176,7 +176,7 @@ public class FitAllThread extends GaussianInfo implements Runnable  {
                for (int f = 1; f <= siPlus.getNFrames(); f++) {
                   if (sourceList_.size() > 100000)
                      try {
-                     Thread.sleep(2000l);
+                     Thread.sleep(1000);
                   } catch (InterruptedException ex) {
                      Logger.getLogger(FitAllThread.class.getName()).log(Level.SEVERE, null, ex);
                   }
