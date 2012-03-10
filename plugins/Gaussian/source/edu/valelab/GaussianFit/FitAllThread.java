@@ -174,11 +174,14 @@ public class FitAllThread extends GaussianInfo implements Runnable  {
          for (int c = 1; c <= siPlus.getNChannels(); c++) {
             for (int z = 1; z <= siPlus.getNSlices(); z++) {
                for (int f = 1; f <= siPlus.getNFrames(); f++) {
+                  // to avoid making a gigantic sourceList and running out of memory
+                  // sleep a bit when the sourcesize gets too big
+                  // once we have very fast multi-core computers, this constant can be increased
                   if (sourceList_.size() > 100000)
                      try {
                      Thread.sleep(1000);
                   } catch (InterruptedException ex) {
-                     Logger.getLogger(FitAllThread.class.getName()).log(Level.SEVERE, null, ex);
+                     // not sure what to do
                   }
 
                   ij.IJ.showStatus("Finding Maxima...");
