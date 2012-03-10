@@ -92,8 +92,7 @@ public class MainForm extends javax.swing.JFrame implements ij.ImageListener{
        endTrackCheckBox_.setSelected(prefs_.getBoolean(ENDTRACKBOOL, false));
        endTrackSpinner_.setValue(prefs_.getInt(ENDTRACKINT, 0));
        
-       noiseToleranceTextField_.getDocument().addDocumentListener(
-               new DocumentListener() {
+       DocumentListener updateNoiseOverlay = new DocumentListener() {
 
                   public void changedUpdate(DocumentEvent documentEvent) {
                      updateDisplay();
@@ -111,7 +110,11 @@ public class MainForm extends javax.swing.JFrame implements ij.ImageListener{
                         showNoiseTolerance();
                      }
                   }
-               });
+               };
+       
+       noiseToleranceTextField_.getDocument().addDocumentListener(updateNoiseOverlay);
+       boxSizeTextField.getDocument().addDocumentListener(updateNoiseOverlay);
+               
 
        setTitle("Gaussian Tracking");
        setBounds(prefs_.getInt(FRAMEXPOS, 100), prefs_.getInt(FRAMEYPOS, 100),
@@ -650,14 +653,14 @@ public class MainForm extends javax.swing.JFrame implements ij.ImageListener{
        // Find maximum in Roi, might not be needed....
       try {
          int val = Integer.parseInt(noiseToleranceTextField_.getText());
-         Polygon pol = FindLocalMaxima.FindMax(siPlus, 1, val, preFilterType_);
+         int halfSize = (int) Integer.parseInt(boxSizeTextField.getText()) / 2;
+         Polygon pol = FindLocalMaxima.FindMax(siPlus, halfSize, val, preFilterType_);
          // pol = FindLocalMaxima.noiseFilter(siPlus.getProcessor(), pol, val);
          Overlay ov = new Overlay();
          for (int i = 0; i < pol.npoints; i++) {
             int x = pol.xpoints[i];
             int y = pol.ypoints[i];
-            int hfs = 6;
-            ov.add(new Roi(x - hfs, y - hfs, 2 * hfs, 2 * hfs));
+            ov.add(new Roi(x - halfSize, y - halfSize, 2 * halfSize, 2 * halfSize));
          }
          siPlus.setOverlay(ov);
          siPlus.setHideOverlay(false);

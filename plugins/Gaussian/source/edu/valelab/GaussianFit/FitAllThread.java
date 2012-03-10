@@ -171,56 +171,63 @@ public class FitAllThread extends GaussianInfo implements Runnable  {
       int nrImages = siPlus.getNChannels() * siPlus.getNSlices() * siPlus.getNFrames();
       int imageCount = 0;
       try {
-      for (int c = 1; c <= siPlus.getNChannels(); c++) {
-         for (int z = 1; z <= siPlus.getNSlices(); z++) {
-            for (int f = 1; f <= siPlus.getNFrames(); f++ ) {
-
-               ij.IJ.showStatus("Finding Maxima...");
-               imageCount++;
-               
-               ImageProcessor siProc;
-               Polygon p;
-               synchronized(GaussianSpotData.lockIP) {
-                  siPlus.setPositionWithoutUpdate(c, z, f);
-                  siPlus.setRoi(originalRoi, false);
-                  siProc = siPlus.getProcessor(); 
-
-                  p = FindLocalMaxima.FindMax(siPlus, 1, noiseTolerance_, preFilterType_);
-               }
-
-               ij.IJ.showProgress(imageCount, nrImages);
-
-
-               if (p.npoints > nrSpots)
-                  nrSpots = p.npoints;
-               int[][] sC = new int[p.npoints][2];
-               for (int j=0; j < p.npoints; j++) {
-                  sC[j][0] = p.xpoints[j];
-                  sC[j][1] = p.ypoints[j];
-               }
-                   
-
-               Arrays.sort(sC, new SpotSortComparator());
-               
-               for (int j=0; j<sC.length; j++) {
-                  // filter out spots too close to the edge
-                  if (sC[j][0] > halfSize_ && sC[j][0] < siPlus.getWidth() - halfSize_ &&
-                          sC[j][1] > halfSize_ && sC[j][1] < siPlus.getHeight() - halfSize_) {
-                     ImageProcessor sp = GaussianSpotData.getSpotProcessor(siProc,
-                             halfSize_, sC[j][0], sC[j][1]);
-                     GaussianSpotData thisSpot = new GaussianSpotData(sp, c, z, f,
-                             position, j, sC[j][0], sC[j][1]);
+         for (int c = 1; c <= siPlus.getNChannels(); c++) {
+            for (int z = 1; z <= siPlus.getNSlices(); z++) {
+               for (int f = 1; f <= siPlus.getNFrames(); f++) {
+                  if (sourceList_.size() > 100000)
                      try {
-                        sourceList_.put(thisSpot);
-                     } catch (InterruptedException iex) {
-                        Thread.currentThread().interrupt();
-                        throw new RuntimeException("Unexpected interruption");
+                     Thread.sleep(2000l);
+                  } catch (InterruptedException ex) {
+                     Logger.getLogger(FitAllThread.class.getName()).log(Level.SEVERE, null, ex);
+                  }
+
+                  ij.IJ.showStatus("Finding Maxima...");
+                  imageCount++;
+
+                  ImageProcessor siProc;
+                  Polygon p;
+                  synchronized (GaussianSpotData.lockIP) {
+                     siPlus.setPositionWithoutUpdate(c, z, f);
+                     siPlus.setRoi(originalRoi, false);
+                     siProc = siPlus.getProcessor();
+
+                     p = FindLocalMaxima.FindMax(siPlus, halfSize_, noiseTolerance_, preFilterType_);
+                  }
+
+                  ij.IJ.showProgress(imageCount, nrImages);
+
+
+                  if (p.npoints > nrSpots) {
+                     nrSpots = p.npoints;
+                  }
+                  int[][] sC = new int[p.npoints][2];
+                  for (int j = 0; j < p.npoints; j++) {
+                     sC[j][0] = p.xpoints[j];
+                     sC[j][1] = p.ypoints[j];
+                  }
+
+
+                  Arrays.sort(sC, new SpotSortComparator());
+
+                  for (int j = 0; j < sC.length; j++) {
+                     // filter out spots too close to the edge
+                     if (sC[j][0] > halfSize_ && sC[j][0] < siPlus.getWidth() - halfSize_
+                             && sC[j][1] > halfSize_ && sC[j][1] < siPlus.getHeight() - halfSize_) {
+                        ImageProcessor sp = GaussianSpotData.getSpotProcessor(siProc,
+                                halfSize_, sC[j][0], sC[j][1]);
+                        GaussianSpotData thisSpot = new GaussianSpotData(sp, c, z, f,
+                                position, j, sC[j][0], sC[j][1]);
+                        try {
+                           sourceList_.put(thisSpot);
+                        } catch (InterruptedException iex) {
+                           Thread.currentThread().interrupt();
+                           throw new RuntimeException("Unexpected interruption");
+                        }
                      }
                   }
                }
             }
          }
-      }
 
       // start ProgresBar thread
       ProgressThread pt = new ProgressThread(sourceList_);

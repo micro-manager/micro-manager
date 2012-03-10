@@ -37,7 +37,7 @@ public class FindLocalMaxima {
     * 
     * 
     * @param iPlus - ImagePlus object in which to look for local maxima
-    * @param n - size of blocks (in pixels) in which to divide up the image
+    * @param n - minimum distance to other local maximum
     * @param threshold - value below which a maximum will be rejected
     * @return Polygon with maxima 
     */
@@ -71,8 +71,8 @@ public class FindLocalMaxima {
       int xEnd = xRealEnd - n2;
       int yRealEnd = roi.y + roi.height;
       int yEnd = yRealEnd - n2;
-      for (int i=roi.x; i <= xEnd; i+=n2) {
-         for (int j=roi.y; j <= yEnd; j+=n2) {
+      for (int i=roi.x + n; i <= xEnd; i+=n2) {
+         for (int j=roi.y + n; j <= yEnd; j+=n2) {
             int mi = i;
             int mj = j;
             for (int i2=i; i2 < i + n2 && i2 < xRealEnd; i2++) {
@@ -125,7 +125,11 @@ public class FindLocalMaxima {
                   }
                }
             }
-            if (!stop && (threshold == 0 || iProc.getPixel(mi, mj) > threshold))
+            if (!stop && (threshold == 0 || 
+                    (iProc.getPixel(mi, mj) - 
+                      ( (iProc.getPixel(mi - n , mj - n) + iProc.getPixel(mi -n, mj + n) +
+                       iProc.getPixel(mi + n, mj  - n) + iProc.getPixel(mi + n, mj + n)) / 4) ) 
+                    > threshold))
                maxima.addPoint(mi, mj);
          }
       }

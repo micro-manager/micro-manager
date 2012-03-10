@@ -329,7 +329,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
         visualizationMagnification_.setFont(new java.awt.Font("Lucida Grande", 0, 10));
         visualizationMagnification_.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "1x", "2x", "4x", "8x" }));
 
-        visualizationModel_.setFont(new java.awt.Font("Lucida Grande", 0, 10));
+        visualizationModel_.setFont(new java.awt.Font("Lucida Grande", 0, 10)); // NOI18N
         visualizationModel_.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "Gaussian" }));
 
         saveButton.setFont(new java.awt.Font("Lucida Grande", 0, 10));
@@ -383,7 +383,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
         referenceName_.setFont(new java.awt.Font("Lucida Grande", 0, 11));
         referenceName_.setText("jLabel1");
 
-        unjitterButton_.setFont(new java.awt.Font("Lucida Grande", 0, 10)); // NOI18N
+        unjitterButton_.setFont(new java.awt.Font("Lucida Grande", 0, 10));
         unjitterButton_.setText("UnJitter");
         unjitterButton_.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -412,8 +412,8 @@ public class DataCollectionForm extends javax.swing.JFrame {
                                 .add(removeButton)
                                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                                 .add(showButton)
-                                .add(175, 175, 175)
-                                .add(visualizationModel_, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 90, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                                .add(165, 165, 165)
+                                .add(visualizationModel_, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                                 .add(visualizationMagnification_, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 90, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)

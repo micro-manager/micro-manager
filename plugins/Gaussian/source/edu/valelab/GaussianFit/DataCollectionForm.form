@@ -47,8 +47,8 @@
                               <Component id="removeButton" min="-2" max="-2" attributes="0"/>
                               <EmptySpace max="-2" attributes="0"/>
                               <Component id="showButton" min="-2" max="-2" attributes="1"/>
-                              <EmptySpace min="-2" pref="175" max="-2" attributes="0"/>
-                              <Component id="visualizationModel_" min="-2" pref="90" max="-2" attributes="0"/>
+                              <EmptySpace min="-2" pref="165" max="-2" attributes="0"/>
+                              <Component id="visualizationModel_" min="-2" max="-2" attributes="0"/>
                               <EmptySpace max="-2" attributes="0"/>
                               <Component id="visualizationMagnification_" min="-2" pref="90" max="-2" attributes="0"/>
                               <EmptySpace max="-2" attributes="0"/>
