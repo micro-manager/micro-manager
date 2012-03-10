@@ -36,7 +36,7 @@ public class ProgressThread  implements Runnable {
       while (sourceList_ != null && size > 0) {
          ij.IJ.wait(2000);
          size = sourceList_.size();
-         ij.IJ.showStatus("Fitting Gaussians...");
+         ij.IJ.showStatus("Fitting remaining Gaussians...");
          ij.IJ.showProgress(maxNr - size, maxNr);
       }
       ij.IJ.showStatus("");

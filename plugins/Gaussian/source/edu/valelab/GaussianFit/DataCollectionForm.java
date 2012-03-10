@@ -476,6 +476,8 @@ public class DataCollectionForm extends javax.swing.JFrame {
 
                 SpotList psl = null;
                 try {
+                   
+                   ij.IJ.showStatus("Loading data..");
 
                    setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
 
@@ -500,8 +502,9 @@ public class DataCollectionForm extends javax.swing.JFrame {
                    int nrSlices = psl.getNrSlices();
                    int nrPositions = psl.getNrPos();
                    boolean isTrack = psl.getIsTrack();
-                   int maxNrSpots = 0;
-
+                   long expectedSpots = psl.getNrSpots();
+                   long esf = expectedSpots / 100;
+                   long maxNrSpots = 0;
 
 
                    ArrayList<GaussianSpotData> spotList = new ArrayList<GaussianSpotData>();
@@ -516,12 +519,14 @@ public class DataCollectionForm extends javax.swing.JFrame {
                               pSpot.getY(), pSpot.getWidth(), pSpot.getA(), pSpot.getTheta(),
                               pSpot.getXPrecision());
                       maxNrSpots++;
+                      if ( (esf > 0) &&  ( ( maxNrSpots % esf) == 0) )
+                         ij.IJ.showProgress((double)maxNrSpots / (double) expectedSpots);
 
                       spotList.add(gSpot);
                    }
 
                    addSpotData(name, title, width, height, pixelSizeUm, shape, halfSize,
-                           nrChannels, nrFrames, nrSlices, nrPositions, maxNrSpots,
+                           nrChannels, nrFrames, nrSlices, nrPositions, (int) maxNrSpots,
                            spotList, null, isTrack);
 
                 } catch (FileNotFoundException ex) {
@@ -531,6 +536,8 @@ public class DataCollectionForm extends javax.swing.JFrame {
                    return;
                 } finally {
                    setCursor(Cursor.getDefaultCursor());
+                   ij.IJ.showStatus("");
+                   ij.IJ.showProgress(1.0);
                 }
              }
           };

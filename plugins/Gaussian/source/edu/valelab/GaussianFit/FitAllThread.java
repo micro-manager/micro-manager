@@ -172,8 +172,14 @@ public class FitAllThread extends GaussianInfo implements Runnable  {
       int imageCount = 0;
       try {
          for (int c = 1; c <= siPlus.getNChannels(); c++) {
+            if (!running_)
+               break;
             for (int z = 1; z <= siPlus.getNSlices(); z++) {
+               if (!running_)
+                  break;
                for (int f = 1; f <= siPlus.getNFrames(); f++) {
+                  if (!running_)
+                     break;
                   // to avoid making a gigantic sourceList and running out of memory
                   // sleep a bit when the sourcesize gets too big
                   // once we have very fast multi-core computers, this constant can be increased
@@ -184,8 +190,8 @@ public class FitAllThread extends GaussianInfo implements Runnable  {
                      // not sure what to do
                   }
 
-                  ij.IJ.showStatus("Finding Maxima...");
                   imageCount++;
+                  ij.IJ.showStatus("Processing image " + imageCount);
 
                   ImageProcessor siProc;
                   Polygon p;

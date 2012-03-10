@@ -146,7 +146,7 @@ public class GaussianTrackThread extends GaussianInfo implements Runnable  {
          siPlus.setRoi(spotRoi, false);
 
          // Find maximum in Roi, might not be needed....
-         Polygon pol = FindLocalMaxima.FindMax(siPlus, 1, noiseTolerance_, preFilterType_);
+         Polygon pol = FindLocalMaxima.FindMax(siPlus, halfSize_, noiseTolerance_, preFilterType_);
          //pol = FindLocalMaxima.noiseFilter(siPlus.getProcessor(), pol, 800);
 
          if (pol.npoints >= 1) {
