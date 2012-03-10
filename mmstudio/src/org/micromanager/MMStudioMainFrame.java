@@ -2969,13 +2969,10 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface, Device
       VirtualAcquisitionDisplay virtAcq;
       if (acqs == null || acqs.length == 0) {
          ImagePlus ip = WindowManager.getCurrentImage();
-         if (ip instanceof VirtualAcquisitionDisplay.MMImagePlus) {
-            virtAcq = ((VirtualAcquisitionDisplay.MMImagePlus) ip).display_;
-         } else if (ip instanceof VirtualAcquisitionDisplay.MMCompositeImage) {
-            virtAcq = ((VirtualAcquisitionDisplay.MMCompositeImage) ip).display_;
-         } else {
-            return false;
+         if (!(ip.getWindow() instanceof VirtualAcquisitionDisplay.DisplayWindow )){
+                 return false;
          }
+         virtAcq = VirtualAcquisitionDisplay.getDisplay(ip);       
       } else {
          String acqName = acqs[acqs.length - 1];
          MMAcquisition acq;
@@ -3013,13 +3010,10 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface, Device
       VirtualAcquisitionDisplay virtAcq;
       if (acqs == null || acqs.length == 0) {
          ImagePlus ip = WindowManager.getCurrentImage();
-         if (ip instanceof VirtualAcquisitionDisplay.MMImagePlus) {
-            virtAcq = ((VirtualAcquisitionDisplay.MMImagePlus) ip).display_;
-         } else if (ip instanceof VirtualAcquisitionDisplay.MMCompositeImage) {
-            virtAcq = ((VirtualAcquisitionDisplay.MMCompositeImage) ip).display_;
-         } else {
-            return false;
+         if (!(ip.getWindow() instanceof VirtualAcquisitionDisplay.DisplayWindow )){
+                 return false;
          }
+         virtAcq = VirtualAcquisitionDisplay.getDisplay(ip);     
       } else {
          String acqName = acqs[acqs.length - 1];
          MMAcquisition acq;
@@ -3054,14 +3048,10 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface, Device
 
    public void displayStatusLine(String statusLine) {
       ImagePlus ip = WindowManager.getCurrentImage();
-      VirtualAcquisitionDisplay virtAcq;
-      if (ip instanceof VirtualAcquisitionDisplay.MMImagePlus )
-         virtAcq = ((VirtualAcquisitionDisplay.MMImagePlus) ip).display_;
-      else if (ip instanceof VirtualAcquisitionDisplay.MMCompositeImage)
-         virtAcq = ((VirtualAcquisitionDisplay.MMCompositeImage) ip).display_;
-      else
+      if (!(ip.getWindow() instanceof VirtualAcquisitionDisplay.DisplayWindow)) {
          return;
-      virtAcq.displayStatusLine(statusLine);
+      }
+      VirtualAcquisitionDisplay.getDisplay(ip).displayStatusLine(statusLine);
    }
 
    private boolean isCurrentImageFormatSupported() {
@@ -3502,17 +3492,22 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface, Device
    public void applyContrastSettings(ContrastSettings contrast8,
          ContrastSettings contrast16) {
       ImagePlus img = WindowManager.getCurrentImage();
-      if (img == null)
+      if (img == null|| VirtualAcquisitionDisplay.getDisplay(img) == null )
          return;
       if (img.getBytesPerPixel() == 1)     
-         metadataPanel_.setChannelContrast(0, contrast8.min, contrast8.max, contrast8.gamma);
+         VirtualAcquisitionDisplay.getDisplay(img).setChannelContrast(0,
+                 contrast8.min, contrast8.max, contrast8.gamma);
       else
-         metadataPanel_.setChannelContrast(0, contrast16.min, contrast16.max, contrast16.gamma);
+         VirtualAcquisitionDisplay.getDisplay(img).setChannelContrast(0, 
+                 contrast16.min, contrast16.max, contrast16.gamma);
    }
 
    @Override
    public ContrastSettings getContrastSettings() {
-      return metadataPanel_.getChannelContrast(0);
+      ImagePlus img = WindowManager.getCurrentImage();
+      if (img == null || VirtualAcquisitionDisplay.getDisplay(img) == null )
+         return null;
+      return VirtualAcquisitionDisplay.getDisplay(img).getChannelContrastSettings(0);
    }
 
    public boolean is16bit() {

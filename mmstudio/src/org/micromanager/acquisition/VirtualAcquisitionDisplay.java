@@ -52,14 +52,11 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.micromanager.MMStudioMainFrame;
-import org.micromanager.api.AcquisitionEngine;
-import org.micromanager.api.ImageCache;
-import org.micromanager.utils.AcqOrderMode;
-import org.micromanager.utils.FileDialogs;
-import org.micromanager.utils.JavaUtils;
-import org.micromanager.utils.MDUtils;
-import org.micromanager.utils.MMScriptException;
-import org.micromanager.utils.ReportingUtils;
+import org.micromanager.api.*;
+import org.micromanager.graph.HistogramControlsState;
+import org.micromanager.graph.MultiChannelHistograms;
+import org.micromanager.graph.SingleChannelHistogram;
+import org.micromanager.utils.*;
 
 public final class VirtualAcquisitionDisplay implements ImageCacheListener {
 
@@ -87,7 +84,6 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
    private int lastSliceShown_ = 0;
    private int lastPositionShown_ = 0;
    private boolean updating_ = false;
-   private int[] channelInitiated_;
    private int preferredSlice_ = -1;
    private int preferredPosition_ = -1;
    private int preferredChannel_ = -1;
@@ -111,6 +107,8 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
    private Component zIcon_, pIcon_, tIcon_, cIcon_;
    private HashMap<Integer, Integer> zStackMins_;
    private HashMap<Integer, Integer> zStackMaxes_;
+   private Histograms histograms_;
+   private HistogramControlsState histogramControlsState_;
 
 
    /* This interface and the following two classes
@@ -136,11 +134,8 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
 
    public class MMCompositeImage extends CompositeImage implements IMMImagePlus {
 
-      public VirtualAcquisitionDisplay display_;
-
-      MMCompositeImage(ImagePlus imgp, int type, VirtualAcquisitionDisplay disp) {
+      MMCompositeImage(ImagePlus imgp, int type) {
          super(imgp, type);
-         display_ = disp;
       }
 
       @Override
@@ -470,8 +465,6 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
       numComponents_ = numComponents;
       numGrayChannels = numComponents_ * numChannels;
 
-      channelInitiated_ = new int[numGrayChannels];
-
       if (imageCache_.getDisplayAndComments() == null || imageCache_.getDisplayAndComments().isNull("Channels")) {
          imageCache_.setDisplayAndComments(getDisplaySettingsFromSummary(summaryMetadata));
       }
@@ -505,11 +498,12 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
 
       applyPixelSizeCalibration(hyperImage_);
 
-      mdPanel_.setup(null);
+
+      histogramControlsState_ =  mdPanel_.getContrastPanel().createDefaultControlsState();
+      makeHistograms();
       createWindow();
       //Make sure contrast panel sets up correctly here
       windowToFront();
-      setupMetadataPanel();
 
 
       cSelector_ = getSelector("c");
@@ -539,11 +533,8 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
             setNumFrames(1);
          }
          configureAnimationControls();
-         //cant use these function because of an imageJ bug
-//         setNumSlices(numSlices);
          setNumPositions(numPositions);
       }
-
 
       updateAndDraw();
       updateWindowTitleAndStatus();
@@ -955,7 +946,6 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
    public void updateAndDraw() {
       if (!updating_) {
          updating_ = true;
-         setupMetadataPanel();
          if (hyperImage_ != null && hyperImage_.isVisible()) {
             hyperImage_.updateAndDraw();
          }
@@ -1032,14 +1022,6 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
          return;
       }
       hyperImage_.getWindow().toFront();
-   }
-
-   private void setupMetadataPanel() {
-      if (hyperImage_ == null || hyperImage_.getWindow() == null) {
-         return;
-      }
-      //call this explicitly because it isn't fired immediately
-      mdPanel_.setup(hyperImage_.getWindow());
    }
 
    /**
@@ -1198,16 +1180,16 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
                        && ((MMCompositeImage) hyperImage_).getNChannelsUnverified() - 1 != channel) {
                   return;
                }
-               mdPanel_.loadSimpleWinContrastWithoutDraw(imageCache_, hyperImage_);
+               loadSimpleWinContrastWithoutDraw();
             } else if (mda_) { //Multi D acquisition
                IMMImagePlus immImg = ((IMMImagePlus) hyperImage_);
                if (immImg.getNSlicesUnverified() > 1) {  //Z stacks
-                  mdPanel_.autoscaleOverStackWithoutDraw(imageCache_, hyperImage_, channel, zStackMins_, zStackMaxes_);
+                  autoscaleOverStackWithoutDraw(imageCache_, hyperImage_, channel, zStackMins_, zStackMaxes_);
                   if (channel != immImg.getNChannelsUnverified() - 1 || slice != immImg.getNSlicesUnverified() - 1) {
                      return;  //don't set new display to false until all channels autscaled
                   }
                } else {  //No z stacks
-                  mdPanel_.autoscaleWithoutDraw(imageCache_, hyperImage_);
+                  autoscaleWithoutDraw();
                   if (immImg.getNChannelsUnverified() - 1 != channel) {
                      return;
                   }
@@ -1217,9 +1199,9 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
                if (((MMCompositeImage) hyperImage_).getNChannelsUnverified() - 1 != channel) {
                   return;
                }
-               mdPanel_.autoscaleWithoutDraw(imageCache_, hyperImage_);
+               autoscaleWithoutDraw();
             } else {
-               mdPanel_.autoscaleWithoutDraw(imageCache_, hyperImage_); //               else do nothing because contrast automatically loaded from cache
+               autoscaleWithoutDraw(); // else do nothing because contrast automatically loaded from cache
             }
             newDisplay_ = false;
          }
@@ -1229,6 +1211,71 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
       } else {
          autoscaleOrLoadContrast.run();
       }
+   }
+   
+   private void loadSimpleWinContrastWithoutDraw() {
+      int n = getImageCache().getNumChannels();
+      ContrastSettings c;
+      for (int i = 0; i < n; i++) {
+         c = MMStudioMainFrame.getInstance().loadSimpleContrastSettigns(getImageCache().getPixelType(), i);
+         histograms_.setChannelContrast(i, c.min, c.max, c.gamma);
+      }
+      histograms_.applyLUTToImage();
+      
+   }
+
+   private void autoscaleWithoutDraw() {
+      if (histograms_ != null) {
+         histograms_.calcAndDisplayHistAndStats(true);
+         histograms_.autostretch();
+         histograms_.applyLUTToImage();
+      }
+   }
+   
+   private void autoscaleOverStackWithoutDraw(ImageCache cache, ImagePlus img, int channel,
+           HashMap<Integer, Integer> mins, HashMap<Integer, Integer> maxes) {
+      int nSlices = ((VirtualAcquisitionDisplay.IMMImagePlus) img).getNSlicesUnverified();
+      int nChannels = ((VirtualAcquisitionDisplay.IMMImagePlus) img).getNChannelsUnverified();
+      int bytes = img.getBytesPerPixel();
+      int pixMin, pixMax;
+      if (mins.containsKey(channel)) {
+         pixMin = mins.get(channel);
+         pixMax = maxes.get(channel);
+      } else {
+         pixMax = 0;
+         pixMin = (int) (Math.pow(2, 8 * bytes) - 1);
+      }
+      int z = img.getSlice() - 1;
+      int flatIndex = 1 + channel + z * nChannels;
+      if (bytes == 2) {
+         short[] pixels = (short[]) img.getStack().getPixels(flatIndex);
+         for (short value : pixels) {
+            if (value < pixMin) {
+               pixMin = value;
+            }
+            if (value > pixMax) {
+               pixMax = value;
+            }
+         }
+      } else if (bytes == 1) {
+         byte[] pixels = (byte[]) img.getStack().getPixels(flatIndex);
+         for (byte value : pixels) {
+            if (value < pixMin) {
+               pixMin = value;
+            }
+            if (value > pixMax) {
+               pixMax = value;
+            }
+         }
+      }
+
+      //autoscale the channel
+      histograms_.setChannelContrast(channel, pixMin, pixMax, 1.0);     
+      histograms_.applyLUTToImage();
+      
+
+      mins.put(channel, pixMin);
+      maxes.put(channel, pixMax);
    }
 
    private void setPreferredScrollbarPositions() {
@@ -1403,7 +1450,7 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
       mmIP.setNFramesUnverified(frames);
       mmIP.setNSlicesUnverified(slices);
       if (channels > 1) {
-         hyperImage = new MMCompositeImage(mmIP, CompositeImage.COMPOSITE, this);
+         hyperImage = new MMCompositeImage(mmIP, CompositeImage.COMPOSITE);
          hyperImage.setOpenAsHyperStack(true);
       } else {
          hyperImage = mmIP;
@@ -1435,7 +1482,7 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
 
          //updates the histogram after an ROI is drawn
          public void mouseReleased(MouseEvent me) {
-            mdPanel_.refresh();
+//            mdPanel_.refresh();
          }
 
          public void mouseEntered(MouseEvent me) {
@@ -1695,12 +1742,6 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
 
    public void close() {
       if (hyperImage_ != null) {
-         //call this so when one window closes and is replaced by another
-         //the md panel gets rid of the first before doing stuff with
-         //the second 
-         if (WindowManager.getCurrentImage() == hyperImage_) {
-            mdPanel_.setup(null);
-         }
          hyperImage_.getWindow().windowClosing(null);
          hyperImage_.close();
       }
@@ -1821,20 +1862,36 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
    }
 
    public void setChannelContrast(int channelIndex, int min, int max, double gamma) {
-      mdPanel_.setChannelContrast(channelIndex, min, max, gamma);
+      histograms_.setChannelContrast(channelIndex, min, max, gamma);
+      histograms_.applyLUTToImage();
+      drawWithoutUpdate();
    }
    
    public void setChannelHistogramDisplayMax(int channelIndex, int histMax) {
-      mdPanel_.setChannelHistogramDisplayMax(channelIndex, histMax);
+      histograms_.setChannelHistogramDisplayMax(channelIndex, histMax);
    }
 
+   /*
+    * called just before image is drawn.  Notifies metadata panel to update
+    * metadata or comments if this display is the active window.  Notifies histograms
+    * that image is change to create appropriate LUTs and to draw themselves if this
+    * is the active window
+    */
    private void imageChangedUpdate() {
-      mdPanel_.imageChangedUpdate(hyperImage_, imageCache_);
+      if (isActiveDisplay()) {
+          mdPanel_.imageChangedUpdate(this);
+      }
+      if (histograms_ != null)
+         histograms_.imageChanged();
       imageChangedWindowUpdate(); //used to update status line
    }
-
-   public void refreshContrastPanel() {
-      mdPanel_.refresh();
+   
+   public boolean isActiveDisplay() {
+       if (hyperImage_ == null || hyperImage_.getWindow() == null)
+           return false;
+       if (hyperImage_.getWindow() == WindowManager.getCurrentWindow())
+           return true;
+       return false;
    }
 
    public void drawWithoutUpdate() {
@@ -1842,6 +1899,49 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
          ((IMMImagePlus) hyperImage_).drawWithoutUpdate();
       }
    }
+   
+   private void makeHistograms() {
+      if (getNumChannels() == 1 )
+           histograms_ = new SingleChannelHistogram(this);
+       else
+           histograms_ = new MultiChannelHistograms(this);
+   }
+   
+   public Histograms getHistograms() {
+       return histograms_;
+   }
+   
+   public HistogramControlsState getHistogramControlsState() {
+       return histogramControlsState_;
+   }
+   
+   public void disableAutoStretchCheckBox() {
+       if (isActiveDisplay() ) {
+          mdPanel_.getContrastPanel().disableAutostretch();
+       } else {
+          histogramControlsState_.autostretch = false;
+       }
+   }
+   
+   /*
+    * used to store contrast settings for snap live window
+    */
+   private void saveSimpleWinSettings() {
+      ImageCache cache = getImageCache();
+      String pixelType = cache.getPixelType();
+      int numCh = cache.getNumChannels();
+      for (int i = 0; i < numCh; i++) {
+         int min = cache.getChannelMin(i);
+         int max = cache.getChannelMax(i);
+         double gamma = cache.getChannelGamma(i);
+         MMStudioMainFrame.getInstance().saveSimpleContrastSettings(new ContrastSettings(min, max, gamma), i, pixelType);
+      }
+   }
+   
+   public ContrastSettings getChannelContrastSettings(int channel) {
+      return histograms_.getChannelContrastSettings(channel);
+   }
+           
 
    public class DisplayWindow extends StackWindow {
 
@@ -1886,16 +1986,11 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
             }
          }
 
-         //for some reason window focus listener doesn't always fire, so call
-         //explicitly here
-         mdPanel_.setup(null);
-
-
          if (simple_ && hyperImage_ != null && hyperImage_.getWindow() != null && hyperImage_.getWindow().getLocation() != null) {
             Point loc = hyperImage_.getWindow().getLocation();
             prefs_.putInt(SIMPLE_WIN_X, loc.x);
             prefs_.putInt(SIMPLE_WIN_Y, loc.y);
-            mdPanel_.saveContrastSettings(imageCache_);
+            saveSimpleWinSettings();
          }
 
          if (imageCache_ != null) {
@@ -1910,6 +2005,8 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
             }
          }
 
+         //Call this because for some reason WindowManager doesnt always fire
+         mdPanel_.displayChanged(null);
 
          super.windowClosing(e);
          MMStudioMainFrame.getInstance().removeMMBackgroundListener(this);

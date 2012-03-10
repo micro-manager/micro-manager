@@ -275,7 +275,6 @@ public class AcquisitionManager {
             acq.getAcquisitionWindow().setChannelContrast(i, min, max, gamma);
             acq.setChannelColor(i, color);
             acq.setChannelName(i, name);
-            acq.getAcquisitionWindow().refreshContrastPanel();
 
          } catch (JSONException ex) {
             ReportingUtils.logError("Something wrong with Display and Comments");

@@ -93,6 +93,7 @@ public class MetadataPanel extends JPanel
    private final String[] columnNames_ = {"Property", "Value"};
    private boolean showUnchangingKeys_;
    private ImageWindow lastWindow_;
+   private VirtualAcquisitionDisplay currentDisplay_;
 
    /** Creates new form MetadataPanel */
    public MetadataPanel() {
@@ -287,27 +288,20 @@ public class MetadataPanel extends JPanel
    }
 
    private void showUnchangingPropertiesCheckboxActionPerformed(java.awt.event.ActionEvent evt) {
-      showUnchangingKeys_ = showUnchangingPropertiesCheckbox.isSelected();
-      ImagePlus img = getCurrentImage();
-      if (img != null) {
-         ImageCache cache = VirtualAcquisitionDisplay.getDisplay(img).getImageCache();
-         imageChangedUpdate(img, cache);
-      }
+      showUnchangingKeys_ = showUnchangingPropertiesCheckbox.isSelected();    
+      imageChangedUpdate(currentDisplay_);     
    }
 
-   private void tabbedPaneStateChanged(ChangeEvent evt) {
-      ImagePlus img = getCurrentImage();
-      if (img != null) {
-         ImageCache cache = VirtualAcquisitionDisplay.getDisplay(img).getImageCache();
-         imageChangedUpdate(img, cache);
-      }
+   private void tabbedPaneStateChanged(ChangeEvent evt) {   
+      imageChangedUpdate(currentDisplay_);         
    }
 
    private void addTextChangeListeners() {
       summaryCommentsTextArea.getDocument().addDocumentListener(new DocumentListener() {
 
          private void handleChange() {
-            writeSummaryComments(getCurrentImage());
+            if (currentDisplay_ != null)
+               writeImageComments();
          }
 
          public void insertUpdate(DocumentEvent e) {
@@ -326,7 +320,8 @@ public class MetadataPanel extends JPanel
       imageCommentsTextArea.getDocument().addDocumentListener(new DocumentListener() {
 
          private void handleChange() {
-            writeImageComments(getCurrentImage());
+            if (currentDisplay_ != null)
+               writeImageComments();
          }
 
          public void insertUpdate(DocumentEvent e) {
@@ -427,27 +422,16 @@ public class MetadataPanel extends JPanel
       return mdChanging;
    }
 
-   private AcquisitionVirtualStack getAcquisitionStack(ImagePlus imp) {
-      VirtualAcquisitionDisplay display = VirtualAcquisitionDisplay.getDisplay(imp);
-      if (display != null) {
-         return display.virtualStack_;
-      } else {
-         return null;
-      }
+   private void writeSummaryComments() {
+      if (currentDisplay_ == null)
+         return;
+      currentDisplay_.setSummaryComment(summaryCommentsTextArea.getText());    
    }
 
-   private void writeSummaryComments(ImagePlus imp) {
-      VirtualAcquisitionDisplay acq = getVirtualAcquisitionDisplay(imp);
-      if (acq != null) {
-         acq.setSummaryComment(summaryCommentsTextArea.getText());
-      }
-   }
-
-   private void writeImageComments(ImagePlus imgp) {
-      VirtualAcquisitionDisplay acq = getVirtualAcquisitionDisplay(imgp);
-      if (acq != null) {
-         acq.setImageComment(imageCommentsTextArea.getText());
-      }
+   private void writeImageComments() {
+      if (currentDisplay_ == null)
+         return;
+      currentDisplay_.setImageComment(imageCommentsTextArea.getText());
    }
 
    private ImageCache getCache(ImagePlus imgp) {
@@ -458,84 +442,28 @@ public class MetadataPanel extends JPanel
       }
    }
 
-   public ImagePlus getCurrentImage() {
-      if (lastWindow_ == null) {
-         return null;
-      }
-      return lastWindow_.getImagePlus();
-   }
-
-   public ContrastSettings getChannelContrast(int channel) {
-      return contrastPanel_.getChannelContrast(channel);
-   }
-
-   /*
-    * used to store contrast settings for snap live window
-    */
-   public void saveContrastSettings(ImageCache cache) {
-      String pixelType = cache.getPixelType();
-      int numCh = cache.getNumChannels();
-      for (int i = 0; i < numCh; i++) {
-         int min = cache.getChannelMin(i);
-         int max = cache.getChannelMax(i);
-         double gamma = cache.getChannelGamma(i);
-         MMStudioMainFrame.getInstance().saveSimpleContrastSettings(new ContrastSettings(min, max, gamma), i, pixelType);
-      }
-   }
-
-   /*
-    * Used for applying loaded contrast settings on intial image
-    */
-   public void loadSimpleWinContrastWithoutDraw(ImageCache cache, ImagePlus img) {
-      contrastPanel_.loadSimpleWinContrastWithoutDraw(cache, img);
-   }
-
-   /*
-    * used only for autoscaling on intial image
-    */
-   public void autoscaleWithoutDraw(ImageCache cache, ImagePlus img) {
-      contrastPanel_.autoscaleWithoutDraw(cache, img);
-   }
-
-   public void autoscaleOverStackWithoutDraw(ImageCache cache, ImagePlus img, int channel,
-           HashMap<Integer, Integer> mins, HashMap<Integer, Integer> maxes) {
-      contrastPanel_.autoscaleOverStackWithoutDraw(cache, img, channel, mins, maxes);
-   }
-
-   public void refresh() {
-      contrastPanel_.refresh();
-   }
-
-   public synchronized void setup(ImageWindow win) {
+   public synchronized void displayChanged(ImageWindow win) {
       if (win == lastWindow_) {
          return;
       }
       lastWindow_ = win;
       if (win == null || !(win instanceof VirtualAcquisitionDisplay.DisplayWindow)) {
-         imageChangedUpdate((ImagePlus) null, null);
+         currentDisplay_ = null;
+         contrastPanel_.displayChanged(null);
+         imageChangedUpdate(currentDisplay_);
          return;
       }
-
-      final ImagePlus imgp = win.getImagePlus();
-      final ImageCache cache = getCache(imgp);
-      final VirtualAcquisitionDisplay vad = getVirtualAcquisitionDisplay(imgp);     
-
-      if (vad != null) {
-         summaryCommentsTextArea.setText(vad.getSummaryComment());
-         JSONObject md = cache.getSummaryMetadata();
-         summaryMetadataModel_.setMetadata(md);
-      } else {
-         summaryCommentsTextArea.setText(null);
-      }
-
-
-      if (vad != null ) {
-         contrastPanel_.setup(cache);
-      }
+    
+      currentDisplay_ = getVirtualAcquisitionDisplay(win.getImagePlus()); 
+      summaryCommentsTextArea.setText(currentDisplay_.getSummaryComment());
+      summaryMetadataModel_.setMetadata(currentDisplay_.getSummaryMetadata());
+      contrastPanel_.displayChanged(currentDisplay_);
+      
+      imageChangedUpdate(currentDisplay_);
    }
 
    public void focusReceived(ImageWindow focusedWindow) {
-      setup(focusedWindow);
+      displayChanged(focusedWindow);
    }
 
    private VirtualAcquisitionDisplay getVirtualAcquisitionDisplay(ImagePlus imgp) {
@@ -545,25 +473,6 @@ public class MetadataPanel extends JPanel
       return VirtualAcquisitionDisplay.getDisplay(imgp);
    }
 
-
-   /*
-    * applies LUT to image and then redraws image
-    */
-   public void drawWithoutUpdate(ImagePlus img) {
-      if (img == null) {
-         return;
-      }
-      VirtualAcquisitionDisplay disp = VirtualAcquisitionDisplay.getDisplay(img);
-      if (disp != null ) {
-         contrastPanel_.applyLUTToImage(disp.getHyperImage(), disp.imageCache_);
-         disp.drawWithoutUpdate();
-      }
-   }
-
-   public void drawWithoutUpdate() {
-      drawWithoutUpdate(getCurrentImage());
-   }
-
    /*
     * called just before image is redrawn.  Calcs histogram and stats (and displays
     * if image is in active window), applies LUT to image.  Does NOT explicitly
@@ -571,26 +480,26 @@ public class MetadataPanel extends JPanel
     * ImagePlus.draw or CompositieImage.draw runs as a result of the overriden 
     * methods in MMCompositeImage and MMImagePlus
     */
-   public void imageChangedUpdate(ImagePlus img, ImageCache cache) {
-
+   public void imageChangedUpdate(VirtualAcquisitionDisplay disp) { 
       int tabSelected = tabbedPane.getSelectedIndex();
-      if (img == null) {
+      if (disp == null || !disp.isActiveDisplay())
+         return;
+      if (disp == null) {
          imageMetadataModel_.setMetadata(null);
          summaryMetadataModel_.setMetadata(null);
          summaryCommentsTextArea.setText(null);
-         contrastPanel_.showHistograms(ContrastPanel.BLANK);
-         contrastPanel_.enableAppropriateControls(ContrastPanel.BLANK);
+         contrastPanel_.imageChanged();
       } else if (tabSelected == 1) { //Metadata
-         AcquisitionVirtualStack stack = getAcquisitionStack(img);
+         AcquisitionVirtualStack stack = disp.virtualStack_;
          if (stack != null) {
-            int slice = img.getCurrentSlice();
+            int slice = disp.getHyperImage().getCurrentSlice();
             TaggedImage taggedImg = stack.getTaggedImage(slice);
             if (taggedImg == null) {
                imageMetadataModel_.setMetadata(null);
             } else {
                JSONObject md = stack.getTaggedImage(slice).tags;
                if (!showUnchangingKeys_) {
-                  md = selectChangingTags(img, md);
+                  md = selectChangingTags(disp.getHyperImage(), md);
                }
                imageMetadataModel_.setMetadata(md);
             }
@@ -598,23 +507,14 @@ public class MetadataPanel extends JPanel
          } else {
             imageMetadataModel_.setMetadata(null);
          }
-         contrastPanel_.imageChanged(img, cache, false);
       } else if (tabSelected == 0) { //Histogram panel
-         contrastPanel_.imageChanged(img, cache, true);
+         contrastPanel_.imageChanged();
       } else if (tabSelected == 2) { //Display and comments
-         VirtualAcquisitionDisplay acq = getVirtualAcquisitionDisplay(img);
-         if (acq != null) {
-            imageCommentsTextArea.setText(acq.getImageComment());
-         }
-         contrastPanel_.imageChanged(img, cache, false);
+         imageCommentsTextArea.setText(disp.getImageComment());
       }
    }
-
-   public void setChannelContrast(int channelIndex, int min, int max, double gamma) {
-      contrastPanel_.setChannelContrast(channelIndex, min, max, gamma);
-   }
-
-   public void setChannelHistogramDisplayMax(int channelIndex, int histMax) {
-      contrastPanel_.setChannelHistogramDisplayMax(channelIndex, histMax);
+   
+   public ContrastPanel getContrastPanel() {
+       return contrastPanel_;
    }
 }

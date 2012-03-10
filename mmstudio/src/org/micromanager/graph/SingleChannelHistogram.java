@@ -61,6 +61,9 @@ import org.micromanager.utils.NumberUtils;
 public class SingleChannelHistogram extends JPanel implements Histograms, CursorListener {
 
    private static final long serialVersionUID = 1L;
+   private static final int SLOW_HIST_UPDATE_INTERVAL_MS = 1000;
+   
+   private long lastUpdateTime_;
    private JComboBox histRangeComboBox_;
    private HistogramPanel histogramPanel_;
    private JLabel maxLabel_;
@@ -81,17 +84,30 @@ public class SingleChannelHistogram extends JPanel implements Histograms, Cursor
    private int contrastMax_;
    private double minAfterRejectingOutliers_;
    private double maxAfterRejectingOutliers_;
-   private ContrastPanel contrastPanel_;
-   private MetadataPanel mdPanel_;
+   private VirtualAcquisitionDisplay display_;
+   private ImagePlus img_;
+   private ImageCache cache_;
 
-   public SingleChannelHistogram(MetadataPanel md, ContrastPanel cp) {
+   public SingleChannelHistogram(VirtualAcquisitionDisplay disp) {
       super();
-      mdPanel_ = md;
-      contrastPanel_ = cp;
-      init();
+      display_ = disp;
+      img_ = disp.getImagePlus();
+      cache_ = disp.getImageCache();
+      
+      try {
+         bitDepth_ = MDUtils.getBitDepth(display_.getSummaryMetadata());
+      } catch (JSONException ex) {
+         ReportingUtils.logError("BitDepth not in summary metadata");
+         bitDepth_ = 16;
+      }
+      maxIntensity_ = (int) (Math.pow(2, bitDepth_) - 1);
+      binSize_ = ((double) (histMax_ + 1)) / ((double) HIST_BINS);
+      histMax_ = maxIntensity_;
+
+      initGUI();
    }
 
-   private void init() {
+   private void initGUI() {
       this.setLayout(new BorderLayout());
       this.setFont(new Font("", Font.PLAIN, 10));
 
@@ -262,31 +278,27 @@ public class SingleChannelHistogram extends JPanel implements Histograms, Cursor
 
    private void autoButtonAction() {
       autostretch();
-      mdPanel_.drawWithoutUpdate();
+      applyLUTToImage();
+      display_.drawWithoutUpdate();
    }
 
    private void fullButtonAction() {
       setFullScale();
-      mdPanel_.drawWithoutUpdate();
+      applyLUTToImage();
+      display_.drawWithoutUpdate();
    }
 
    public void setLogScale() {
-      ImagePlus img = mdPanel_.getCurrentImage();
-      if (img != null) {
-         calcAndDisplayHistAndStats(img, true);
-      }
+      calcAndDisplayHistAndStats(true);
    }
 
    private void histRangeComboAction() {
-      setHistMaxAndBinSize();
-      ImagePlus img = mdPanel_.getCurrentImage();
-      if (img != null) {
-         calcAndDisplayHistAndStats(img, true);
-      }
+      setHistMaxAndBinSize();     
+      calcAndDisplayHistAndStats(true);
    }
 
    public void rejectOutliersChangeAction() {
-      calcAndDisplayHistAndStats(mdPanel_.getCurrentImage(), true);
+      calcAndDisplayHistAndStats(true);
       autoButtonAction();
    }
 
@@ -294,11 +306,11 @@ public class SingleChannelHistogram extends JPanel implements Histograms, Cursor
       autoButtonAction();
    }
 
-   public void applyLUTToImage(ImagePlus img, ImageCache cache) {
-      if (img == null) {
+   public void applyLUTToImage() {
+      if (img_ == null) {
          return;
       }
-      ImageProcessor ip = img.getProcessor();
+      ImageProcessor ip = img_.getProcessor();
       if (ip == null) {
          return;
       }
@@ -317,14 +329,14 @@ public class SingleChannelHistogram extends JPanel implements Histograms, Cursor
       ip.setColorModel(new LUT(8, 256, r, g, b));    //doesnt explicitly redraw
       ip.setMinAndMax(contrastMin_, contrastMax_);   //doesnt explicitly redraw
 
-      saveDisplaySettings(cache);
+      saveDisplaySettings();
 
       updateHistogram();
    }
 
-   public void saveDisplaySettings(ImageCache cache) {
+   public void saveDisplaySettings() {
       int histMax = histRangeComboBox_.getSelectedIndex() == 0 ? histMax = -1 : histMax_;
-      cache.storeChannelDisplaySettings(0, (int) contrastMin_, (int) contrastMax_, gamma_, histMax);
+      cache_.storeChannelDisplaySettings(0, (int) contrastMin_, (int) contrastMax_, gamma_, histMax);
    }
 
    public void setChannelHistogramDisplayMax(int channelIndex, int histMax) {
@@ -372,12 +384,7 @@ public class SingleChannelHistogram extends JPanel implements Histograms, Cursor
       binSize_ = ((double) (histMax_ + 1)) / ((double) HIST_BINS);
       updateHistogram();
 
-      ImagePlus img = mdPanel_.getCurrentImage();
-      if (img == null || VirtualAcquisitionDisplay.getDisplay(img) == null) {
-         return;
-      }
-      ImageCache cache = VirtualAcquisitionDisplay.getDisplay(img).getImageCache();
-      saveDisplaySettings(cache);
+      saveDisplaySettings();
    }
 
    //Calculates autostretch, doesnt apply or redraw
@@ -391,7 +398,7 @@ public class SingleChannelHistogram extends JPanel implements Histograms, Cursor
             contrastMax_++;
          }
       }
-      if (contrastPanel_.getRejectOutliers()) {
+      if (display_.getHistogramControlsState().ignoreOutliers) {
          if (contrastMin_ < minAfterRejectingOutliers_) {
             if (0 < minAfterRejectingOutliers_) {
                contrastMin_ = (int) minAfterRejectingOutliers_;
@@ -412,7 +419,7 @@ public class SingleChannelHistogram extends JPanel implements Histograms, Cursor
 
    private void setFullScale() {
       setHistMaxAndBinSize();
-      contrastPanel_.disableAutostretch();
+      display_.disableAutoStretchCheckBox();
       contrastMin_ = 0;
       contrastMax_ = histMax_;
    }
@@ -432,130 +439,122 @@ public class SingleChannelHistogram extends JPanel implements Histograms, Cursor
       }
    }
 
-   public void imageChanged(ImagePlus img, ImageCache cache, boolean drawHist, boolean slowHistUpdate) {
-      if (slowHistUpdate) {
-         calcAndDisplayHistAndStats(img, drawHist);
-         if (contrastPanel_.getAutostretch()) {
+    public void imageChanged() {
+        boolean slowHistUpdate = true;
+        if (display_.getHistogramControlsState().slowHist) {
+            long time = System.currentTimeMillis();
+            if (time - lastUpdateTime_ < SLOW_HIST_UPDATE_INTERVAL_MS)
+                slowHistUpdate = false;
+            else
+                lastUpdateTime_ = time;
+        }
+
+       if (slowHistUpdate) {
+         calcAndDisplayHistAndStats(display_.isActiveDisplay());
+         if (display_.getHistogramControlsState().autostretch) {
             autostretch();
          }
-         applyLUTToImage(img, cache);
+         applyLUTToImage();
       }
    }
 
-   public void displayChanged(ImagePlus img, ImageCache cache) {
-      try {
-         VirtualAcquisitionDisplay vad = VirtualAcquisitionDisplay.getDisplay(mdPanel_.getCurrentImage());
-         bitDepth_ = MDUtils.getBitDepth(vad.getSummaryMetadata());
-      } catch (JSONException ex) {
-         ReportingUtils.logError("BitDepth not in summary metadata");
-         bitDepth_ = 16;
+   public void calcAndDisplayHistAndStats(boolean drawHist) {
+      if (img_ == null || img_.getProcessor() == null) {
+         return;
       }
-      maxIntensity_ = (int) (Math.pow(2, bitDepth_) - 1);
-
-      setHistMaxAndBinSize();
-      calcAndDisplayHistAndStats(img, true);
-      loadContrastSettings(cache);
-      if (contrastPanel_.getAutostretch()) {
-         autostretch();
+      int[] rawHistogram = img_.getProcessor().getHistogram();
+      int imgWidth = img_.getWidth();
+      int imgHeight = img_.getHeight();
+      if (display_.getHistogramControlsState().ignoreOutliers) {
+         // todo handle negative values
+         maxAfterRejectingOutliers_ = rawHistogram.length;
+         // specified percent of pixels are ignored in the automatic contrast setting
+         int totalPoints = imgHeight * imgWidth;
+         HistogramUtils hu = new HistogramUtils(rawHistogram, totalPoints, display_.getHistogramControlsState().percentToIgnore);
+         minAfterRejectingOutliers_ = hu.getMinAfterRejectingOutliers();
+         maxAfterRejectingOutliers_ = hu.getMaxAfterRejectingOutliers();
       }
-      mdPanel_.drawWithoutUpdate(img);
-   }
+      GraphData histogramData = new GraphData();
 
-   public void calcAndDisplayHistAndStats(ImagePlus img, boolean drawHist) {
-      if (img != null && img.getProcessor() != null) {
-         int[] rawHistogram = img.getProcessor().getHistogram();
-         int imgWidth = img.getWidth();
-         int imgHeight = img.getHeight();
-         if (contrastPanel_.getRejectOutliers()) {
-            // todo handle negative values
-            maxAfterRejectingOutliers_ = rawHistogram.length;
-            // specified percent of pixels are ignored in the automatic contrast setting
-            int totalPoints = imgHeight * imgWidth;
-            HistogramUtils hu = new HistogramUtils(rawHistogram, totalPoints, contrastPanel_.getIgnorePercent());
-            minAfterRejectingOutliers_ = hu.getMinAfterRejectingOutliers();
-            maxAfterRejectingOutliers_ = hu.getMaxAfterRejectingOutliers();
-         }
-         GraphData histogramData = new GraphData();
+      pixelMin_ = -1;
+      pixelMax_ = 0;
+      mean_ = 0;
 
-         pixelMin_ = -1;
-         pixelMax_ = 0;
-         mean_ = 0;
-
-         int numBins = (int) Math.min(rawHistogram.length / binSize_, HIST_BINS);
-         int[] histogram = new int[HIST_BINS];
-         int total = 0;
-         for (int i = 0; i < numBins; i++) {
-            histogram[i] = 0;
-            for (int j = 0; j < binSize_; j++) {
-               int rawHistIndex = (int) (i * binSize_ + j);
-               int rawHistVal = rawHistogram[rawHistIndex];
-               histogram[i] += rawHistVal;
-               if (rawHistVal > 0) {
-                  pixelMax_ = rawHistIndex;
-                  if (pixelMin_ == -1) {
-                     pixelMin_ = rawHistIndex;
-                  }
-                  mean_ += rawHistIndex * rawHistVal;
+      int numBins = (int) Math.min(rawHistogram.length / binSize_, HIST_BINS);
+      int[] histogram = new int[HIST_BINS];
+      int total = 0;
+      for (int i = 0; i < numBins; i++) {
+         histogram[i] = 0;
+         for (int j = 0; j < binSize_; j++) {
+            int rawHistIndex = (int) (i * binSize_ + j);
+            int rawHistVal = rawHistogram[rawHistIndex];
+            histogram[i] += rawHistVal;
+            if (rawHistVal > 0) {
+               pixelMax_ = rawHistIndex;
+               if (pixelMin_ == -1) {
+                  pixelMin_ = rawHistIndex;
                }
+               mean_ += rawHistIndex * rawHistVal;
             }
-            total += histogram[i];
-            if (contrastPanel_.getLogHist()) {
-               histogram[i] = histogram[i] > 0 ? (int) (1000 * Math.log(histogram[i])) : 0;
-            }
+         }
+         total += histogram[i];
+         if (display_.getHistogramControlsState().logHist) {
+            histogram[i] = histogram[i] > 0 ? (int) (1000 * Math.log(histogram[i])) : 0;
+         }
+      }
+      mean_ /= imgWidth * imgHeight;
+
+      // work around what is apparently a bug in ImageJ
+      if (total == 0) {
+         if (img_.getProcessor().getMin() == 0) {
+            histogram[0] = imgWidth * imgHeight;
+         } else {
+            histogram[numBins - 1] = imgWidth * imgHeight;
+         }
+      }
+
+      //need to recalc mean if hist display mode isnt auto
+      if (histRangeComboBox_.getSelectedIndex() != -1) {
+         mean_ = 0;
+         for (int i = 0; i < rawHistogram.length; i++) {
+            mean_ += i * rawHistogram[i];
          }
          mean_ /= imgWidth * imgHeight;
-
-         // work around what is apparently a bug in ImageJ
-         if (total == 0) {
-            if (img.getProcessor().getMin() == 0) {
-               histogram[0] = imgWidth * imgHeight;
-            } else {
-               histogram[numBins - 1] = imgWidth * imgHeight;
-            }
-         }
-
-         //need to recalc mean if hist display mode isnt auto
-         if (histRangeComboBox_.getSelectedIndex() != -1) {
-            mean_ = 0;
-            for (int i = 0; i < rawHistogram.length; i++) {
-               mean_ += i * rawHistogram[i];
-            }
-            mean_ /= imgWidth * imgHeight;
-         }
-         if (drawHist) {
-            stdDev_ = 0;
-            if (histRangeComboBox_.getSelectedIndex() != -1) {
-               pixelMin_ = rawHistogram.length - 1;
-            }
-            for (int i = rawHistogram.length - 1; i >= 0; i--) {
-               if (histRangeComboBox_.getSelectedIndex() != -1) {
-                  if (rawHistogram[i] > 0 && i < pixelMin_) {
-                     pixelMin_ = i;
-                  }
-                  if (rawHistogram[i] > 0 && i > pixelMax_) {
-                     pixelMax_ = i;
-                  }
-               }
-
-               for (int j = 0; j < rawHistogram[i]; j++) {
-                  stdDev_ += (i - mean_) * (i - mean_);
-               }
-
-            }
-            stdDev_ = Math.sqrt(stdDev_ / (imgWidth * imgHeight));
-            //Draw histogram and stats
-            histogramData.setData(histogram);
-            histogramPanel_.setData(histogramData);
-            histogramPanel_.setAutoScale();
-
-            maxLabel_.setText("Max: " + NumberUtils.intToDisplayString((int) pixelMax_));
-            minLabel_.setText("Min: " + NumberUtils.intToDisplayString((int) pixelMin_));
-            meanLabel_.setText("Mean: " + NumberUtils.intToDisplayString((int) mean_));
-            stdDevLabel_.setText("Std Dev: " + NumberUtils.intToDisplayString((int) stdDev_));
-
-            updateHistogram();
-         }
       }
+      if (drawHist) {
+         stdDev_ = 0;
+         if (histRangeComboBox_.getSelectedIndex() != -1) {
+            pixelMin_ = rawHistogram.length - 1;
+         }
+         for (int i = rawHistogram.length - 1; i >= 0; i--) {
+            if (histRangeComboBox_.getSelectedIndex() != -1) {
+               if (rawHistogram[i] > 0 && i < pixelMin_) {
+                  pixelMin_ = i;
+               }
+               if (rawHistogram[i] > 0 && i > pixelMax_) {
+                  pixelMax_ = i;
+               }
+            }
+
+            for (int j = 0; j < rawHistogram[i]; j++) {
+               stdDev_ += (i - mean_) * (i - mean_);
+            }
+
+         }
+         stdDev_ = Math.sqrt(stdDev_ / (imgWidth * imgHeight));
+         //Draw histogram and stats
+         histogramData.setData(histogram);
+         histogramPanel_.setData(histogramData);
+         histogramPanel_.setAutoScale();
+
+         maxLabel_.setText("Max: " + NumberUtils.intToDisplayString((int) pixelMax_));
+         minLabel_.setText("Min: " + NumberUtils.intToDisplayString((int) pixelMin_));
+         meanLabel_.setText("Mean: " + NumberUtils.intToDisplayString((int) mean_));
+         stdDevLabel_.setText("Std Dev: " + NumberUtils.intToDisplayString((int) stdDev_));
+
+         updateHistogram();
+      }
+
    }
 
    public void setChannelContrast(int channelIndex, int min, int max, double gamma) {
@@ -568,9 +567,8 @@ public class SingleChannelHistogram extends JPanel implements Histograms, Cursor
    }
 
    public void onLeftCursor(double pos) {
-      if (contrastPanel_.getAutostretch()) {
-         contrastPanel_.disableAutostretch();
-      }
+      display_.disableAutoStretchCheckBox();
+      
       contrastMin_ = (int) (Math.max(0, pos) * binSize_);
       if (contrastMin_ >= maxIntensity_) {
          contrastMin_ = maxIntensity_ - 1;
@@ -578,20 +576,19 @@ public class SingleChannelHistogram extends JPanel implements Histograms, Cursor
       if (contrastMax_ < contrastMin_) {
          contrastMax_ = contrastMin_ + 1;
       }
-      mdPanel_.drawWithoutUpdate();
-
+      applyLUTToImage();
+      display_.drawWithoutUpdate();
    }
 
    public void onRightCursor(double pos) {
-      if (contrastPanel_.getAutostretch()) {
-         contrastPanel_.disableAutostretch();
-      }
+      display_.disableAutoStretchCheckBox();
 
       contrastMax_ = (int) (Math.min(255, pos) * binSize_);
       if (contrastMin_ > contrastMax_) {
          contrastMin_ = contrastMax_;
       }
-      mdPanel_.drawWithoutUpdate();
+      applyLUTToImage();
+      display_.drawWithoutUpdate();
    }
 
    public void onGammaCurve(double gamma) {
@@ -601,7 +598,8 @@ public class SingleChannelHistogram extends JPanel implements Histograms, Cursor
          } else {
             gamma_ = gamma;
          }
-         mdPanel_.drawWithoutUpdate();
+         applyLUTToImage();
+         display_.drawWithoutUpdate();
       }
    }
 

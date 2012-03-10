@@ -38,16 +38,7 @@ public interface Histograms  {
      * @param img the image
      * @param cache the ImageCahce corresponding to the image
      */
-   public abstract void applyLUTToImage(ImagePlus img, ImageCache cache);
-
-   /**
-    * Called when the window corresponding to the contrast panel changes.  Initializes
-    * the relevant fields of this contrast panel to the new image.  May load contrast 
-    * settings from image cache
-    * @param img the image
-    * @param cache the ImageCahce corresponding to the image
-    */
-   public abstract void displayChanged(ImagePlus img, ImageCache cache);
+   public abstract void applyLUTToImage();
 
    /**
     * Called just before the image is about to draw itself.  Calls 
@@ -58,7 +49,7 @@ public interface Histograms  {
     * @param drawHist flag that gets passed to calcAndDisplayHistAndStats to determine
     * if the histogram and image statistics should be updated
     */
-   public abstract void imageChanged(ImagePlus img, ImageCache cache, boolean drawHist, boolean slowHistUpdate);
+   public abstract void imageChanged();
 
    /**
     * Manually set the contrast min, max and gamma values for this channel (channel = 0)
@@ -76,7 +67,7 @@ public interface Histograms  {
     * @param img The image for which to calculate statistics/histogram
     * @param drawHist flag for optional display of statistics and drawing of histogram
     */
-   public abstract void calcAndDisplayHistAndStats(ImagePlus img, boolean drawHist);
+   public abstract void calcAndDisplayHistAndStats(boolean drawHist);
    
    /*
     * Sets the contrast min and max to the stored pixel min and max values
@@ -94,8 +85,7 @@ public interface Histograms  {
    
    public abstract void setLogScale();
    
-      public abstract void rejectOutliersChangeAction();
-      
+   public abstract void rejectOutliersChangeAction();    
 
    public abstract void autoscaleAllChannels() ;
 

@@ -58,19 +58,13 @@ import org.micromanager.utils.ScaleBar;
  */
 public class ContrastPanel extends JPanel {
 
-   private static final String SINGLE = "Single Channel";
-   private static final String MULTIPLE = "Multiple Channels";
-   public static final String BLANK = "Blank";
    private static final String PREF_AUTOSTRETCH = "stretch_contrast";
    private static final String PREF_REJECT_OUTLIERS = "reject_outliers";
    private static final String PREF_REJECT_FRACTION = "reject_fraction";
    private static final String PREF_LOG_HIST = "log_hist";
    private static final String PREF_SYNC_CHANNELS = "sync_channels";
    private static final String PREF_SLOW_HIST = "slow_hist";
-   private static final int SLOW_HIST_UPDATE_INTERVAL_MS = 1000;
-   private long lastUpdateTime_;
-   private JScrollPane multiChannelScrollPane_;
-   private JPanel histogramHolderPanel_;
+   private JScrollPane histDisplayScrollPane_;
    private JComboBox displayModeCombo_;
    private JCheckBox autostretchCheckBox_;
    private JCheckBox rejectOutliersCheckBox_;
@@ -78,7 +72,7 @@ public class ContrastPanel extends JPanel {
    private JCheckBox logHistCheckBox_;
    private JCheckBox sizeBarCheckBox_;
    private JComboBox sizeBarComboBox_;
-   private JComboBox overlayColorComboBox_;
+   private JComboBox sizeBarColorComboBox_;
    private JCheckBox syncChannelsCheckBox_;
    private JCheckBox slowHistCheckBox_;
    private JLabel displayModeLabel_;
@@ -86,53 +80,63 @@ public class ContrastPanel extends JPanel {
    private Preferences prefs_;
    private Color overlayColor_ = Color.white;
    private Histograms currentHistograms_;
-   private Histograms singleHistogram_;
-   private Histograms multipleHistograms_;
-   private CardLayout layout_;
+   private VirtualAcquisitionDisplay currentDisplay_;
 
    public ContrastPanel(MetadataPanel md) {
       mdPanel_ = md;
-      initialize();
+      initializeGUI();
       prefs_ = Preferences.userNodeForPackage(this.getClass());
-      enableAppropriateControls(BLANK);
-      initializeHistograms();
+      initializeHistogramDisplayArea();
    }
 
-   private void initializeHistograms() {
-      singleHistogram_ = new SingleChannelHistogram(mdPanel_, this);
-      multipleHistograms_ = new MultiChannelHistograms(mdPanel_, this);
-
-      multiChannelScrollPane_.setViewportView((JPanel)multipleHistograms_);
-      multiChannelScrollPane_.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
-
-      layout_ = new CardLayout();
-      histogramHolderPanel_.setLayout(layout_);
-      histogramHolderPanel_.add(multiChannelScrollPane_, MULTIPLE);
-      histogramHolderPanel_.add((JPanel)singleHistogram_, SINGLE);
-      histogramHolderPanel_.add(new JPanel(new BorderLayout()), BLANK);
-      showHistograms(BLANK);
+   private void initializeHistogramDisplayArea() {
+      histDisplayScrollPane_.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+      
+      showCurrentHistograms();
+      configureControls();
+   }
+   
+   private void showCurrentHistograms() {
+       histDisplayScrollPane_.setViewportView( currentHistograms_ != null?(JPanel)currentHistograms_ : new JPanel());
+       if (currentDisplay_ != null && currentDisplay_.getImageCache().getNumChannels() > 1) {
+           histDisplayScrollPane_.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);
+       } else {
+           histDisplayScrollPane_.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_NEVER);
+       }
+       this.repaint();
+   }
+   
+   public HistogramControlsState createDefaultControlsState() {      
+      HistogramControlsState state = new HistogramControlsState();
+      state.autostretch = prefs_.getBoolean(PREF_AUTOSTRETCH, false);
+      state.percentToIgnore = prefs_.getDouble(PREF_REJECT_FRACTION, 2);
+      state.logHist = prefs_.getBoolean(PREF_LOG_HIST, false);
+      state.ignoreOutliers = prefs_.getBoolean(PREF_REJECT_OUTLIERS, false);
+      state.syncChannels = prefs_.getBoolean(PREF_SYNC_CHANNELS, false);
+      state.slowHist = prefs_.getBoolean(PREF_SLOW_HIST, false);
+      return state;
    }
 
-   public void enableAppropriateControls(String label) {
+   private void configureControls() {
       loadControlsStates();
-      if (label.equals(BLANK)) {
+      if (currentDisplay_ == null) {
          displayModeLabel_.setEnabled(false);
          displayModeCombo_.setEnabled(false);
          sizeBarCheckBox_.setEnabled(false);
          sizeBarComboBox_.setEnabled(false);
-         overlayColorComboBox_.setEnabled(false);
+         sizeBarColorComboBox_.setEnabled(false);
          autostretchCheckBox_.setEnabled(false);
          slowHistCheckBox_.setEnabled(false);
          logHistCheckBox_.setEnabled(false);
          rejectOutliersCheckBox_.setEnabled(false);
          rejectPercentSpinner_.setEnabled(false);
          syncChannelsCheckBox_.setEnabled(false);
-      } else if (label.equals(SINGLE)) {
+      } else if (currentDisplay_.getImageCache().getNumChannels() == 1) {
          displayModeLabel_.setEnabled(false);
          displayModeCombo_.setEnabled(false);
          sizeBarCheckBox_.setEnabled(true);
          sizeBarComboBox_.setEnabled(true);
-         overlayColorComboBox_.setEnabled(true);
+         sizeBarColorComboBox_.setEnabled(true);
          syncChannelsCheckBox_.setEnabled(false);
          logHistCheckBox_.setEnabled(true);
          slowHistCheckBox_.setEnabled(true);
@@ -144,14 +148,12 @@ public class ContrastPanel extends JPanel {
             rejectOutliersCheckBox_.setEnabled(false);
             rejectPercentSpinner_.setEnabled(false);
          }
-
-
-      } else if (label.equals(MULTIPLE)) {
+      } else {
          displayModeLabel_.setEnabled(true);
          displayModeCombo_.setEnabled(true);
          sizeBarCheckBox_.setEnabled(true);
          sizeBarComboBox_.setEnabled(true);
-         overlayColorComboBox_.setEnabled(true);
+         sizeBarColorComboBox_.setEnabled(true);
          logHistCheckBox_.setEnabled(true);
          slowHistCheckBox_.setEnabled(true);      
          syncChannelsCheckBox_.setEnabled(true);
@@ -160,33 +162,31 @@ public class ContrastPanel extends JPanel {
    }
 
    private void loadControlsStates() {
-      logHistCheckBox_.setSelected(prefs_.getBoolean(PREF_LOG_HIST, false));
-      rejectPercentSpinner_.setValue(prefs_.getDouble(PREF_REJECT_FRACTION, 2));
-      autostretchCheckBox_.setSelected(prefs_.getBoolean(PREF_AUTOSTRETCH, false));
-      rejectOutliersCheckBox_.setSelected(prefs_.getBoolean(PREF_REJECT_OUTLIERS, false));
-      syncChannelsCheckBox_.setSelected(prefs_.getBoolean(PREF_SYNC_CHANNELS, false));
-      slowHistCheckBox_.setSelected(prefs_.getBoolean(PREF_SLOW_HIST, false));
-      ImagePlus img = mdPanel_.getCurrentImage();
-      if (img != null) {
-         if (img.getOverlay() != null)
-            sizeBarCheckBox_.setSelected(true);
-         if (img instanceof CompositeImage) {
-            displayModeCombo_.setSelectedIndex( ((CompositeImage) img).getMode() -1  );
-         } else {
-            displayModeCombo_.setSelectedIndex(2);
-         }
-      }
-   }
+      HistogramControlsState state;
 
-   public void showHistograms(String label) {
-      layout_.show(histogramHolderPanel_, label);
-      if (label.equals(BLANK)) {
-         currentHistograms_ = null;
-      } else if (label.equals(SINGLE)) {
-         currentHistograms_ = singleHistogram_;
-      } else if (label.equals(MULTIPLE)) {
-         currentHistograms_ = multipleHistograms_;
+      if (currentDisplay_ != null) {
+         state = currentDisplay_.getHistogramControlsState();
+      } else {
+         state = createDefaultControlsState();
       }
+
+      logHistCheckBox_.setSelected(state.logHist);
+      rejectPercentSpinner_.setValue(state.percentToIgnore);
+      autostretchCheckBox_.setSelected(state.autostretch);
+      rejectOutliersCheckBox_.setSelected(state.ignoreOutliers);
+      syncChannelsCheckBox_.setSelected(state.syncChannels);
+      slowHistCheckBox_.setSelected(state.slowHist);
+      sizeBarCheckBox_.setSelected(state.scaleBar);
+      sizeBarColorComboBox_.setSelectedIndex(state.scaleBarColorIndex);
+      sizeBarComboBox_.setSelectedIndex(state.scaleBarLocationIndex);
+
+
+      if (currentDisplay_ != null && currentDisplay_.getImagePlus() instanceof CompositeImage) {
+         displayModeCombo_.setSelectedIndex(((CompositeImage) currentDisplay_.getImagePlus()).getMode() - 1);
+      } else {
+         displayModeCombo_.setSelectedIndex(2);
+      }
+
    }
 
    private void saveCheckBoxStates() {
@@ -196,9 +196,19 @@ public class ContrastPanel extends JPanel {
       prefs_.putBoolean(PREF_REJECT_OUTLIERS, rejectOutliersCheckBox_.isSelected());
       prefs_.putBoolean(PREF_SYNC_CHANNELS, syncChannelsCheckBox_.isSelected());
       prefs_.putBoolean(PREF_SLOW_HIST, slowHistCheckBox_.isSelected());
+      
+      if (currentDisplay_ == null)
+         return;
+      HistogramControlsState s = currentDisplay_.getHistogramControlsState();
+      s.autostretch = autostretchCheckBox_.isSelected();
+      s.ignoreOutliers = rejectOutliersCheckBox_.isSelected();
+      s.logHist = logHistCheckBox_.isSelected();
+      s.percentToIgnore = (Double) rejectPercentSpinner_.getValue();
+      s.slowHist = slowHistCheckBox_.isSelected();
+      s.syncChannels = syncChannelsCheckBox_.isSelected();
    }
 
-   private void initialize() {
+   private void initializeGUI() {
       JPanel jPanel1 = new JPanel();
       displayModeLabel_ = new JLabel();
       displayModeCombo_ = new JComboBox();
@@ -208,10 +218,9 @@ public class ContrastPanel extends JPanel {
       logHistCheckBox_ = new JCheckBox();
       sizeBarCheckBox_ = new JCheckBox();
       sizeBarComboBox_ = new JComboBox();
-      overlayColorComboBox_ = new JComboBox();
-
-      multiChannelScrollPane_ = new JScrollPane();
-      histogramHolderPanel_ = new JPanel();
+      sizeBarColorComboBox_ = new JComboBox();
+         
+      histDisplayScrollPane_ = new JScrollPane();
 
 
       this.setPreferredSize(new Dimension(400, 594));
@@ -288,8 +297,8 @@ public class ContrastPanel extends JPanel {
          }
       });
 
-      overlayColorComboBox_.setModel(new DefaultComboBoxModel(new String[]{"White", "Black", "Yellow", "Gray"}));
-      overlayColorComboBox_.addActionListener(new java.awt.event.ActionListener() {
+      sizeBarColorComboBox_.setModel(new DefaultComboBoxModel(new String[]{"White", "Black", "Yellow", "Gray"}));
+      sizeBarColorComboBox_.addActionListener(new java.awt.event.ActionListener() {
 
          public void actionPerformed(java.awt.event.ActionEvent evt) {
             overlayColorComboBox_ActionPerformed();
@@ -317,145 +326,10 @@ public class ContrastPanel extends JPanel {
       org.jdesktop.layout.GroupLayout channelsTablePanel_Layout = new org.jdesktop.layout.GroupLayout(this);
       this.setLayout(channelsTablePanel_Layout);
       channelsTablePanel_Layout.setHorizontalGroup(
-              channelsTablePanel_Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING).add(channelsTablePanel_Layout.createSequentialGroup().add(sizeBarCheckBox_).addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED).add(sizeBarComboBox_, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 134, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE).addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED).add(overlayColorComboBox_, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 105, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE).addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED).add(syncChannelsCheckBox_, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE).add(slowHistCheckBox_, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)).add(jPanel1, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE).add(channelsTablePanel_Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING).add(histogramHolderPanel_, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 620, Short.MAX_VALUE)));
+              channelsTablePanel_Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING).add(channelsTablePanel_Layout.createSequentialGroup().add(sizeBarCheckBox_).addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED).add(sizeBarComboBox_, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 134, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE).addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED).add(sizeBarColorComboBox_, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 105, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE).addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED).add(syncChannelsCheckBox_, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE).add(slowHistCheckBox_, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)).add(jPanel1, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE).add(channelsTablePanel_Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING).add(histDisplayScrollPane_, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 620, Short.MAX_VALUE)));
 
       channelsTablePanel_Layout.setVerticalGroup(
-              channelsTablePanel_Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING).add(channelsTablePanel_Layout.createSequentialGroup().add(channelsTablePanel_Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE).add(sizeBarCheckBox_).add(sizeBarComboBox_, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE).add(overlayColorComboBox_, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE).add(syncChannelsCheckBox_, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE).add(slowHistCheckBox_, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)).addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED).add(jPanel1, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE).addContainerGap(589, Short.MAX_VALUE)).add(channelsTablePanel_Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING).add(channelsTablePanel_Layout.createSequentialGroup().add(79, 79, 79).add(histogramHolderPanel_, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 571, Short.MAX_VALUE))));
-   }
-
-   public synchronized void setup(ImageCache cache) {
-      ImagePlus imgp = cache.getImagePlus();
-      String label = imgp instanceof CompositeImage ? MULTIPLE : SINGLE;
-
-      showHistograms(label);
-      
-      //load appropriate contrast settings calc and display hist, apply LUT and draw
-      displayChanged(imgp, cache);
-      
-      if (cache.getNumChannels() > 1) {
-         boolean[] oldActive = ((CompositeImage) imgp).getActiveChannels();
-         boolean[] active = Arrays.copyOf(oldActive, oldActive.length);
-         this.setDisplayMode(((CompositeImage) imgp).getMode());
-         for (int i = 0; i < active.length; i++) {
-            ((CompositeImage) imgp).getActiveChannels()[i] = active[i];
-         }
-
-         sizeBarCheckBoxActionPerformed();
-      }
-      enableAppropriateControls(label);
-
-      mdPanel_.imageChangedUpdate(imgp, cache);
-   }
-
-   public void setChannelContrast(int channelIndex, int min, int max, double gamma) {
-      if (currentHistograms_ != null) {
-         currentHistograms_.setChannelContrast(channelIndex, min, max, gamma);
-      }
-      mdPanel_.drawWithoutUpdate();
-   }
-
-   public void setChannelHistogramDisplayMax(int channelIndex, int histMax) {
-      if (currentHistograms_ != null) {
-         currentHistograms_.setChannelHistogramDisplayMax(channelIndex, histMax);
-      }
-   }
-
-   public ContrastSettings getChannelContrast(int channel) {
-      ImagePlus img = mdPanel_.getCurrentImage();
-      if (img == null) {
-         return null;
-      }
-      if (currentHistograms_ != null) {
-         return currentHistograms_.getChannelContrastSettings(channel);
-      }
-      return null;
-   }
-
-   public void loadSimpleWinContrastWithoutDraw(ImageCache cache, ImagePlus img) {
-      if (currentHistograms_ != null) {
-         int n = cache.getNumChannels();
-         ContrastSettings c;
-         for (int i = 0; i < n; i++) {
-            c = MMStudioMainFrame.getInstance().loadSimpleContrastSettigns(cache.getPixelType(), i);
-            currentHistograms_.setChannelContrast(i, c.min, c.max, c.gamma);
-         }
-         currentHistograms_.applyLUTToImage(img, cache);
-      }
-   }
-
-   public void autoscaleWithoutDraw(ImageCache cache, ImagePlus img) {
-      if (currentHistograms_ != null) {
-         currentHistograms_.calcAndDisplayHistAndStats(img, true);
-         currentHistograms_.autostretch();
-         currentHistograms_.applyLUTToImage(img, cache);
-      }
-   }
-
-   public void autoscaleOverStackWithoutDraw(ImageCache cache, ImagePlus img, int channel,
-           HashMap<Integer, Integer> mins, HashMap<Integer, Integer> maxes) {
-      int nSlices = ((VirtualAcquisitionDisplay.IMMImagePlus) img).getNSlicesUnverified();
-      int nChannels = ((VirtualAcquisitionDisplay.IMMImagePlus) img).getNChannelsUnverified();
-      int bytes = img.getBytesPerPixel();
-      int pixMin, pixMax;
-      if (mins.containsKey(channel)) {
-         pixMin = mins.get(channel);
-         pixMax = maxes.get(channel);
-      } else {
-         pixMax = 0;
-         pixMin = (int) (Math.pow(2, 8 * bytes) - 1);
-      }
-      int z = img.getSlice() - 1;
-      int flatIndex = 1 + channel + z * nChannels;
-      if (bytes == 2) {
-         short[] pixels = (short[]) img.getStack().getPixels(flatIndex);
-         for (short value : pixels) {
-            if (value < pixMin) {
-               pixMin = value;
-            }
-            if (value > pixMax) {
-               pixMax = value;
-            }
-         }
-      } else if (bytes == 1) {
-         byte[] pixels = (byte[]) img.getStack().getPixels(flatIndex);
-         for (byte value : pixels) {
-            if (value < pixMin) {
-               pixMin = value;
-            }
-            if (value > pixMax) {
-               pixMax = value;
-            }
-         }
-      }
-
-      //autoscale the channel
-      if (currentHistograms_ != null) {
-         currentHistograms_.setChannelContrast(channel, pixMin, pixMax, 1.0);
-      }
-
-      if (currentHistograms_ != null) {
-         currentHistograms_.applyLUTToImage(img, cache);
-      }
-
-      mins.put(channel, pixMin);
-      maxes.put(channel, pixMax);
-   }
-
-   public void refresh() {
-      ImagePlus img = mdPanel_.getCurrentImage();
-      if (currentHistograms_ == null || img == null) {
-         return;
-      }
-      VirtualAcquisitionDisplay vad = VirtualAcquisitionDisplay.getDisplay(img);
-      if (vad == null) {
-         return;
-      }
-      ImageCache cache = vad.getImageCache();
-      if (currentHistograms_ instanceof MultiChannelHistograms) {
-         ((MultiChannelHistograms)currentHistograms_).setupChannelControls(cache);
-      }
-      currentHistograms_.displayChanged(img, cache);
-      mdPanel_.imageChangedUpdate(img, cache);
+              channelsTablePanel_Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING).add(channelsTablePanel_Layout.createSequentialGroup().add(channelsTablePanel_Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE).add(sizeBarCheckBox_).add(sizeBarComboBox_, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE).add(sizeBarColorComboBox_, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE).add(syncChannelsCheckBox_, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE).add(slowHistCheckBox_, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)).addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED).add(jPanel1, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE).addContainerGap(589, Short.MAX_VALUE)).add(channelsTablePanel_Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING).add(channelsTablePanel_Layout.createSequentialGroup().add(79, 79, 79).add(histDisplayScrollPane_, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 571, Short.MAX_VALUE))));
    }
 
    public void setDisplayMode(int mode) {
@@ -470,7 +344,9 @@ public class ContrastPanel extends JPanel {
 
    private void showSizeBar() {
       boolean show = sizeBarCheckBox_.isSelected();
-      ImagePlus ip = mdPanel_.getCurrentImage();
+      if (currentDisplay_ == null)
+         return;
+      ImagePlus ip = currentDisplay_.getHyperImage();
       if (show) {
          ScaleBar sizeBar = new ScaleBar(ip);
 
@@ -500,13 +376,13 @@ public class ContrastPanel extends JPanel {
    }
 
    private void overlayColorComboBox_ActionPerformed() {
-      if ((overlayColorComboBox_.getSelectedItem()).equals("Black")) {
+      if ((sizeBarColorComboBox_.getSelectedItem()).equals("Black")) {
          overlayColor_ = Color.black;
-      } else if ((overlayColorComboBox_.getSelectedItem()).equals("White")) {
+      } else if ((sizeBarColorComboBox_.getSelectedItem()).equals("White")) {
          overlayColor_ = Color.white;
-      } else if ((overlayColorComboBox_.getSelectedItem()).equals("Yellow")) {
+      } else if ((sizeBarColorComboBox_.getSelectedItem()).equals("Yellow")) {
          overlayColor_ = Color.yellow;
-      } else if ((overlayColorComboBox_.getSelectedItem()).equals("Gray")) {
+      } else if ((sizeBarColorComboBox_.getSelectedItem()).equals("Gray")) {
          overlayColor_ = Color.gray;
       }
       showSizeBar();
@@ -532,6 +408,8 @@ public class ContrastPanel extends JPanel {
    }
 
    public void displayModeComboActionPerformed() {
+      if (currentDisplay_ == null || !(currentDisplay_.getHyperImage() instanceof CompositeImage)  )
+         return;
       int mode;
       int state = displayModeCombo_.getSelectedIndex();
       if (state == 0) {
@@ -541,13 +419,11 @@ public class ContrastPanel extends JPanel {
       } else {
          mode = CompositeImage.GRAYSCALE;
       }
-      ImagePlus imgp = mdPanel_.getCurrentImage();
-      if (imgp instanceof CompositeImage) {
-         CompositeImage ci = (CompositeImage) imgp;
-         ci.setMode(mode);
-         ci.updateAndDraw();
-         mdPanel_.drawWithoutUpdate();
-      }
+
+      CompositeImage ci = (CompositeImage) currentDisplay_.getHyperImage();
+      ci.setMode(mode);
+      ci.updateAndDraw();
+      currentDisplay_.updateAndDraw();
       saveCheckBoxStates();
    }
 
@@ -601,70 +477,16 @@ public class ContrastPanel extends JPanel {
       }
    }
 
-   public void calcAndDisplayHistAndStats(ImagePlus img, boolean drawHist) {
-      if (currentHistograms_ != null) {
-         currentHistograms_.calcAndDisplayHistAndStats(img, drawHist);
-      }
+   public void imageChanged() {
+      if (currentHistograms_ != null)
+         ((JPanel)currentHistograms_).repaint();
    }
 
-   public void applyLUTToImage(ImagePlus img, ImageCache cache) {
-      if (currentHistograms_ != null) {
-         currentHistograms_.applyLUTToImage(img, cache);
-      }
-   }
-
-   public void imageChanged(ImagePlus img, ImageCache cache, boolean drawHist) {
-      boolean slowHistUpdate = true;
-      if (slowHistCheckBox_.isSelected()) {
-         long time = System.currentTimeMillis();
-         if (time - lastUpdateTime_ < SLOW_HIST_UPDATE_INTERVAL_MS) {
-            slowHistUpdate = false;
-         } else {
-            lastUpdateTime_ = time;
-         }
-      }
-
-      if (currentHistograms_ != null) {
-         currentHistograms_.imageChanged(img, cache, drawHist, slowHistUpdate);
-      }
-
-
-   }
-
-   public void displayChanged(ImagePlus img, ImageCache cache) {
-      if (currentHistograms_ != null) {
-         currentHistograms_.displayChanged(img, cache);
-      }
-      loadControlsStates();
-   }
-
-   public boolean getSyncChannels() {
-      return syncChannelsCheckBox_.isSelected();
-   }
-
-   public boolean getSlowHist() {
-      return slowHistCheckBox_.isSelected();
-   }
-
-   public boolean getAutostretch() {
-      return autostretchCheckBox_.isSelected();
-   }
-
-   public boolean getRejectOutliers() {
-      return rejectOutliersCheckBox_.isSelected();
-   }
-
-   public double getIgnorePercent() {
-      try {
-         double value = 0.01 * NumberUtils.displayStringToDouble(this.rejectPercentSpinner_.getValue().toString());
-         return value;
-      } catch (Exception e) {
-         return 0;
-      }
-   }
-
-   public boolean getLogHist() {
-      return logHistCheckBox_.isSelected();
+   public synchronized void displayChanged(VirtualAcquisitionDisplay disp) {
+      currentDisplay_ = disp;
+      currentHistograms_ = disp != null ? disp.getHistograms() : null;
+      configureControls();
+      showCurrentHistograms();
    }
 
    public void disableAutostretch() {
