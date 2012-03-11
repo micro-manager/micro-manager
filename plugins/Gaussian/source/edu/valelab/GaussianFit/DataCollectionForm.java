@@ -49,18 +49,25 @@ import edu.ucsf.tsf.TaggedSpotsProtos.FitMode;
 import edu.ucsf.tsf.TaggedSpotsProtos.SpotList;
 import edu.ucsf.tsf.TaggedSpotsProtos.Spot;
 
+import ij.gui.Roi;
 import ij.gui.StackWindow;
 import ij.gui.YesNoCancelDialog;
+import ij.measure.Calibration;
 import ij.process.ByteProcessor;
+import ij.process.FloatProcessor;
+import ij.process.ImageStatistics;
 import ij.process.ShortProcessor;
 import java.awt.Cursor;
 import java.awt.Dimension;
 import java.awt.FileDialog;
 import java.awt.geom.Point2D;
 
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.nio.channels.FileChannel;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
@@ -100,7 +107,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
       public final String title_;
       public final int width_;
       public final int height_;
-      public final float pixelSizeUm_;
+      public final float pixelSizeNm_;
       public final int shape_;
       public final int halfSize_;
       public final int nrChannels_;
@@ -130,7 +137,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
          title_ = title;
          width_ = width;
          height_ = height;
-         pixelSizeUm_ = pixelSizeUm;
+         pixelSizeNm_ = pixelSizeUm;
          spotList_ = spotList;
          shape_ = shape;
          halfSize_ = halfSize;
@@ -482,9 +489,27 @@ public class DataCollectionForm extends javax.swing.JFrame {
                    setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
 
                    FileInputStream fi = new FileInputStream(selectedFile);
-
-                   psl = SpotList.parseDelimitedFrom(fi);
-
+                   DataInputStream di = new DataInputStream(fi);
+                   
+                   // the new file format has an initial 0, then the offset (in long)
+                   // to the position of spotList
+                   int magic = di.readInt();
+                   if (magic != 0) {
+                      // reset and mark do not seem to work on my computer
+                      fi.close();
+                      fi = new FileInputStream(selectedFile);
+                      psl = SpotList.parseDelimitedFrom(fi);
+                   } else {
+                      // TODO: evaluate after creating code writing this formt
+                      long offset = di.readLong();
+                      fi.skip(offset);
+                      psl = SpotList.parseDelimitedFrom(fi);
+                      fi.close();
+                      fi = new FileInputStream(selectedFile);
+                      fi.skip(12); // size of int + size of long
+                   }
+                   
+                   
                    String name = psl.getName();
                    String title = psl.getName();
                    int width = psl.getNrPixelsX();
@@ -509,7 +534,8 @@ public class DataCollectionForm extends javax.swing.JFrame {
 
                    ArrayList<GaussianSpotData> spotList = new ArrayList<GaussianSpotData>();
                    Spot pSpot;
-                   while (fi.available() > 0) {
+                   while (fi.available() > 0 && (expectedSpots == 0 || maxNrSpots < expectedSpots) ) {
+                      
                       pSpot = Spot.parseDelimitedFrom(fi);
 
                       GaussianSpotData gSpot = new GaussianSpotData((ImageProcessor) null, pSpot.getChannel(),
@@ -530,10 +556,9 @@ public class DataCollectionForm extends javax.swing.JFrame {
                            spotList, null, isTrack);
 
                 } catch (FileNotFoundException ex) {
-                   ex.printStackTrace();
+                   ij.IJ.error("File not found");
                 } catch (IOException ex) {
-                   ex.printStackTrace();
-                   return;
+                   ij.IJ.error("Error while reading file");
                 } finally {
                    setCursor(Cursor.getDefaultCursor());
                    ij.IJ.showStatus("");
@@ -654,7 +679,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
                rt2.setPrecision(2);
                int width = rowData_.get(row).width_;
                int height = rowData_.get(row).height_;
-               double factor = rowData_.get(row).pixelSizeUm_;
+               double factor = rowData_.get(row).pixelSizeNm_;
                ij.ImageStack  stack = new ij.ImageStack(width, height); 
                
                ImagePlus sp = new ImagePlus("Errors in pairs");
@@ -971,10 +996,9 @@ public class DataCollectionForm extends javax.swing.JFrame {
    /**
     * Save data set in TSF (Tagged Spot File) format
     *
-    * @rowData
+    * @rowData - row with spot data to be saved
     */
    private void saveData(final MyRowData rowData) {
-      //File selectedFile;
       FileDialog fd = new FileDialog(this, "Save Spot Data", FileDialog.SAVE);
       fd.setVisible(true);
       String selectedItem = fd.getFile();
@@ -987,7 +1011,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
          }
          final File selectedFile = new File(fd.getDirectory() + File.separator + fn);
          if (selectedFile.exists()) {
-            //JOptionPane.showOptionDialog(this,"File exists.  Overwrite?", "File Exists...", JOptionPane.YES_NO_CANCEL_OPTION);
+            // this may be superfluous
             YesNoCancelDialog y = new YesNoCancelDialog(this, "File " + fn + "Exists...", "File exists.  Overwrite?");
             if (y.cancelPressed()) {
                return;
@@ -1039,7 +1063,11 @@ public class DataCollectionForm extends javax.swing.JFrame {
                   setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
 
                   FileOutputStream fo = new FileOutputStream(selectedFile);
-                  spotList.writeDelimitedTo(fo);
+                  // write space for magic nr and offset to spotList
+                  for (int i = 0; i < 12; i++)
+                     fo.write(0);
+                  
+                  
 
                   int counter = 0;
                   for (GaussianSpotData gd : rowData.spotList_) {
@@ -1078,8 +1106,18 @@ public class DataCollectionForm extends javax.swing.JFrame {
                         counter++;
                      }
                   }
+                  
+                  FileChannel fc = fo.getChannel();
+                  long offset = fc.position();
+                  spotList.writeDelimitedTo(fo);
+                  
+                  // now go back to write offset to the stream
+                  fc.position(4);
+                  DataOutputStream dos = new DataOutputStream(fo);
+                  dos.writeLong(offset - 12);
 
                   fo.close();
+                  
                   ij.IJ.showProgress(1);
                   ij.IJ.showStatus("Finished saving spotData...");
                } catch (IOException ex) {
@@ -1132,7 +1170,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
 
       // Add transformed data to data overview window
       addSpotData(rowData.name_ + "Straightened", rowData.title_, rowData.width_,
-              rowData.height_, rowData.pixelSizeUm_, rowData.shape_,
+              rowData.height_, rowData.pixelSizeNm_, rowData.shape_,
               rowData.halfSize_, rowData.nrChannels_, rowData.nrFrames_,
               rowData.nrSlices_, 1, rowData.maxNrSpots_, transformedResultList,
               rowData.timePoints_, true);
@@ -1203,7 +1241,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
                   ip[i].setPixels(pixels[i]);
                }
 
-               double factor = (double) mag / rowData.pixelSizeUm_;
+               double factor = (double) mag / rowData.pixelSizeNm_;
 
                // make 2D scattergrams of all pixelData
                for (GaussianSpotData spot : rowData.spotList_) {
@@ -1249,7 +1287,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
                // not enough memory to allocate all images in one go
                // we need to cycle through all gaussian spots cycle by cycle
 
-               double factor = (double) mag / rowData.pixelSizeUm_;
+               double factor = (double) mag / rowData.pixelSizeNm_;
 
                ImageProcessor ipRef = new ByteProcessor(width, height);
                byte[] pixelsRef = new byte[width * height];
@@ -1351,7 +1389,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
             }
             
             MyRowData newRow = new MyRowData(rowData.name_ + "-Jitter", rowData.title_, rowData.width_,
-                    rowData.height_, rowData.pixelSizeUm_, rowData.shape_,
+                    rowData.height_, rowData.pixelSizeNm_, rowData.shape_,
                     rowData.halfSize_, rowData.nrChannels_, stageMovementData.size(),
                     1, 1, stageMovementData.size(), stageMovementData,
                     timePoints, true);
@@ -1410,7 +1448,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
 
             // Add transformed data to data overview window
             addSpotData(rowData.name_ + "-Jitter-Correct", rowData.title_, rowData.width_,
-                    rowData.height_, rowData.pixelSizeUm_, rowData.shape_,
+                    rowData.height_, rowData.pixelSizeNm_, rowData.shape_,
                     rowData.halfSize_, rowData.nrChannels_, rowData.nrFrames_,
                     rowData.nrSlices_, 1, rowData.maxNrSpots_, correctedData,
                     null, false);
@@ -1475,7 +1513,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
 
             // Add transformed data to data overview window
             addSpotData(rowData.name_ + "Channel-Correct", rowData.title_, rowData.width_,
-                    rowData.height_, rowData.pixelSizeUm_, rowData.shape_,
+                    rowData.height_, rowData.pixelSizeNm_, rowData.shape_,
                     rowData.halfSize_, rowData.nrChannels_, rowData.nrFrames_,
                     rowData.nrSlices_, 1, rowData.maxNrSpots_, correctedData,
                     null, 
@@ -1501,15 +1539,17 @@ public class DataCollectionForm extends javax.swing.JFrame {
       title += renderSizes_[renderSize];
       
       int mag = 1 << renderSize;
+      double renderedPixelInNm = rowData.pixelSizeNm_ / mag;
       int width = mag * rowData.width_;
       int height = mag * rowData.height_;
-      ImageProcessor ip = new ShortProcessor(width, height);
       int size = width * height;
-      short pixels[] = new short[size];
-      ip.setPixels(pixels);
-      double factor = (double) mag / rowData.pixelSizeUm_;
+      double factor = (double) mag / rowData.pixelSizeNm_;
+      ImageProcessor ip = null;
 
       if (renderMode == 0) {
+         ip = new ShortProcessor(width, height);
+         short pixels[] = new short[size];
+         ip.setPixels(pixels);
          for (GaussianSpotData spot : rowData.spotList_) {
             int x = (int) (factor * spot.getXCenter());
             int y = (int) (factor * spot.getYCenter());
@@ -1518,16 +1558,60 @@ public class DataCollectionForm extends javax.swing.JFrame {
                if (pixels[index] != -1)
                   pixels[index] += 1;
          }
-      } else if (renderMode == 2) {  // Gaussian
-
+      } else if (renderMode == 1) {  // Gaussian
+         ip = new FloatProcessor(width, height);
+         float pixels[] = new float[size];
+         ip.setPixels(pixels);
+         
+         setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+         
+         for (GaussianSpotData spot : rowData.spotList_) {
+            // cover 3 * precision
+            int halfWidth = (int) (2 * spot.getSigma() / renderedPixelInNm);
+            if (halfWidth > 3) {
+               halfWidth = 3;
+            }
+            /*
+             * A *  exp(-((x-xc)^2+(y-yc)^2)/(2 sigy^2))+b
+             * A = params[INT]  (total intensity)
+             * b = params[BGR]  (background)
+             * xc = params[XC]
+             * yc = params[YC]
+             * sig = params[S]
+             * 
+             */
+            double xc = spot.getXCenter() / renderedPixelInNm;
+            double yc = spot.getYCenter() / renderedPixelInNm;
+            if (xc > halfWidth && xc < width - halfWidth
+                    && yc > halfWidth && yc < height - halfWidth) {
+               for (int x = (int) xc - halfWidth; x < (int) xc + halfWidth; x++) {
+                  for (int y = (int) yc - halfWidth; y < (int) yc + halfWidth; y++) {
+                     double[] parms = {1.0, 0.0,
+                        spot.getXCenter() / renderedPixelInNm,
+                        spot.getYCenter() / renderedPixelInNm,
+                        spot.getSigma() / renderedPixelInNm};
+                     double val = GaussianUtils.gaussian(parms, x, y);
+                     ip.setf(x, y, ip.getf(x, y) + (float) val);
+                  }
+               }
+            }
+         }
+         
+         setCursor(Cursor.getDefaultCursor());              
       }
 
-      ImagePlus sp = new ImagePlus(title, ip);
-      sp.setDisplayRange(0, 1);
-      ImageWindow w = new ImageWindow(sp);
-      w.setVisible(true);
+      if (ip != null) {
+         ip.resetMinAndMax();
+         ImagePlus sp = new ImagePlus(title, ip);
+         DisplayUtils.AutoStretch(sp);
+         DisplayUtils.SetCalibration(sp, rowData.pixelSizeNm_ / mag);
+
+         ImageWindow w = new ImageWindow(sp);
+         w.setVisible(true);
+      }
 
    }
+   
 
    /**
     * Plots Tracks using JFreeChart
