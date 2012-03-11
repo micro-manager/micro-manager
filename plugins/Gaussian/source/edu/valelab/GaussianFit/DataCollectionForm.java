@@ -49,13 +49,10 @@ import edu.ucsf.tsf.TaggedSpotsProtos.FitMode;
 import edu.ucsf.tsf.TaggedSpotsProtos.SpotList;
 import edu.ucsf.tsf.TaggedSpotsProtos.Spot;
 
-import ij.gui.Roi;
 import ij.gui.StackWindow;
 import ij.gui.YesNoCancelDialog;
-import ij.measure.Calibration;
 import ij.process.ByteProcessor;
 import ij.process.FloatProcessor;
-import ij.process.ImageStatistics;
 import ij.process.ShortProcessor;
 import java.awt.Cursor;
 import java.awt.Dimension;
@@ -154,7 +151,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
    /**
     * Implement this class as a singleton
     *
-    * @return
+    * @return the form
     */
    public static DataCollectionForm getInstance() {
       if (instance_ == null)
@@ -1524,12 +1521,13 @@ public class DataCollectionForm extends javax.swing.JFrame {
       (new Thread(doWorkRunnable)).start();
    }
 
+   
    /**
     * Renders spotdata using various renderModes
     * 
-    * @param rowData
-    * @param renderMode - 
-    * @param renderSize 
+    * @param rowData - MyRowData structure to be rendered
+    * @param renderMode - 0 = 2D scatter, 1 = Gaussians
+    * @param renderSize  - 1, 2, 4, 8 x original size
     */
    private void renderData(MyRowData rowData,int renderMode, int renderSize) {
       String fsep = System.getProperty("file.separator");

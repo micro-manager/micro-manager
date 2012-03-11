@@ -26,13 +26,13 @@ import org.micromanager.api.MMWindow;
  * Works only in conjunction with appropriate column names
  * Up and down keys also work as expected
  */
-public class MyK implements KeyListener, MouseListener{
+public class ResultsTableListener implements KeyListener, MouseListener{
    ImagePlus siPlus_;
    ResultsTable res_;
    TextWindow win_;
    TextPanel tp_;
    int hBS_;
-   public MyK(ImagePlus siPlus, ResultsTable res, TextWindow win, int halfBoxSize) {
+   public ResultsTableListener(ImagePlus siPlus, ResultsTable res, TextWindow win, int halfBoxSize) {
       siPlus_ = siPlus;
       res_ = res;
       win_ = win;
