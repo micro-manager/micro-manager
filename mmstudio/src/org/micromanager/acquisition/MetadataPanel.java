@@ -21,14 +21,10 @@
 //
 package org.micromanager.acquisition;
 
-import ij.CompositeImage;
 import ij.ImagePlus;
 import ij.gui.ImageWindow;
-import java.awt.BorderLayout;
-import java.awt.CardLayout;
 import java.awt.Font;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.Vector;
 import javax.swing.DebugGraphics;
 import javax.swing.JCheckBox;
@@ -48,17 +44,12 @@ import javax.swing.table.DefaultTableModel;
 import mmcorej.TaggedImage;
 import org.json.JSONException;
 import org.json.JSONObject;
-import org.micromanager.MMStudioMainFrame;
-import org.micromanager.api.Histograms;
 import org.micromanager.api.ImageCache;
 import org.micromanager.graph.ContrastPanel;
-import org.micromanager.graph.SingleChannelHistogram;
-import org.micromanager.utils.ContrastSettings;
 import org.micromanager.utils.ImageFocusListener;
 import org.micromanager.utils.GUIUtils;
 import org.micromanager.utils.MDUtils;
 import org.micromanager.utils.ReportingUtils;
-import org.micromanager.utils.SnapLiveContrastSettings;
 
 /**
  *

@@ -374,7 +374,6 @@ public class SingleChannelHistogram extends JPanel implements Histograms, Cursor
          histMax_ = (int) (Math.pow(2, bits) - 1);
       }
       binSize_ = ((double) (histMax_ + 1)) / ((double) HIST_BINS);
-            System.out.println("Bin size new value: " + binSize_);
 
       updateHistogram();
 

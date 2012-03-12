@@ -91,22 +91,22 @@ public class ContrastPanel extends JPanel {
 
    private void initializeHistogramDisplayArea() {
       histDisplayScrollPane_.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
-      
+
       showCurrentHistograms();
       configureControls();
    }
-   
+
    private void showCurrentHistograms() {
-       histDisplayScrollPane_.setViewportView( currentHistograms_ != null?(JPanel)currentHistograms_ : new JPanel());
-       if (currentDisplay_ != null && currentDisplay_.getImageCache().getNumChannels() > 1) {
-           histDisplayScrollPane_.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);
-       } else {
-           histDisplayScrollPane_.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_NEVER);
-       }
-       this.repaint();
+      histDisplayScrollPane_.setViewportView(currentHistograms_ != null ? (JPanel) currentHistograms_ : new JPanel());
+      if (currentDisplay_ != null && currentDisplay_.getImageCache().getNumChannels() > 1) {
+         histDisplayScrollPane_.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);
+      } else {
+         histDisplayScrollPane_.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_NEVER);
+      }
+      this.repaint();
    }
-   
-   public HistogramControlsState createDefaultControlsState() {      
+
+   public HistogramControlsState createDefaultControlsState() {
       HistogramControlsState state = new HistogramControlsState();
       state.autostretch = prefs_.getBoolean(PREF_AUTOSTRETCH, false);
       state.percentToIgnore = prefs_.getDouble(PREF_REJECT_FRACTION, 2);
@@ -155,7 +155,7 @@ public class ContrastPanel extends JPanel {
          sizeBarComboBox_.setEnabled(true);
          sizeBarColorComboBox_.setEnabled(true);
          logHistCheckBox_.setEnabled(true);
-         slowHistCheckBox_.setEnabled(true);      
+         slowHistCheckBox_.setEnabled(true);
          syncChannelsCheckBox_.setEnabled(true);
 
       }
@@ -196,9 +196,10 @@ public class ContrastPanel extends JPanel {
       prefs_.putBoolean(PREF_REJECT_OUTLIERS, rejectOutliersCheckBox_.isSelected());
       prefs_.putBoolean(PREF_SYNC_CHANNELS, syncChannelsCheckBox_.isSelected());
       prefs_.putBoolean(PREF_SLOW_HIST, slowHistCheckBox_.isSelected());
-      
-      if (currentDisplay_ == null)
+
+      if (currentDisplay_ == null) {
          return;
+      }
       HistogramControlsState s = currentDisplay_.getHistogramControlsState();
       s.autostretch = autostretchCheckBox_.isSelected();
       s.ignoreOutliers = rejectOutliersCheckBox_.isSelected();
@@ -219,7 +220,7 @@ public class ContrastPanel extends JPanel {
       sizeBarCheckBox_ = new JCheckBox();
       sizeBarComboBox_ = new JComboBox();
       sizeBarColorComboBox_ = new JComboBox();
-         
+
       histDisplayScrollPane_ = new JScrollPane();
 
 
@@ -344,8 +345,9 @@ public class ContrastPanel extends JPanel {
 
    private void showSizeBar() {
       boolean show = sizeBarCheckBox_.isSelected();
-      if (currentDisplay_ == null)
+      if (currentDisplay_ == null) {
          return;
+      }
       ImagePlus ip = currentDisplay_.getHyperImage();
       if (show) {
          ScaleBar sizeBar = new ScaleBar(ip);
@@ -389,14 +391,17 @@ public class ContrastPanel extends JPanel {
    }
 
    private void syncChannelsCheckboxAction() {
-      if (!syncChannelsCheckBox_.isEnabled())
+      if (!syncChannelsCheckBox_.isEnabled()) {
          return;
+      }
       boolean synced = syncChannelsCheckBox_.isSelected();
       if (synced) {
          autostretchCheckBox_.setSelected(false);
          autostretchCheckBox_.setEnabled(false);
-         ((MultiChannelHistograms) currentHistograms_).setChannelContrastFromFirst();
-         ((MultiChannelHistograms) currentHistograms_).setChannelDisplayModeFromFirst();
+         if (currentHistograms_ != null) {
+            ((MultiChannelHistograms) currentHistograms_).setChannelContrastFromFirst();
+            ((MultiChannelHistograms) currentHistograms_).setChannelDisplayModeFromFirst();
+         }
       } else {
          autostretchCheckBox_.setEnabled(true);
       }
@@ -408,8 +413,9 @@ public class ContrastPanel extends JPanel {
    }
 
    public void displayModeComboActionPerformed() {
-      if (currentDisplay_ == null || !(currentDisplay_.getHyperImage() instanceof CompositeImage)  )
+      if (currentDisplay_ == null || !(currentDisplay_.getHyperImage() instanceof CompositeImage)) {
          return;
+      }
       int mode;
       int state = displayModeCombo_.getSelectedIndex();
       if (state == 0) {
@@ -431,6 +437,7 @@ public class ContrastPanel extends JPanel {
       rejectOutliersCheckBox_.setEnabled(autostretchCheckBox_.isSelected());
       boolean rejectem = rejectOutliersCheckBox_.isSelected() && autostretchCheckBox_.isSelected();
       rejectPercentSpinner_.setEnabled(rejectem);
+      saveCheckBoxStates();
       if (autostretchCheckBox_.isSelected()) {
          if (currentHistograms_ != null) {
             currentHistograms_.autoscaleAllChannels();
@@ -438,29 +445,28 @@ public class ContrastPanel extends JPanel {
       } else {
          rejectOutliersCheckBox_.setSelected(false);
       }
-      saveCheckBoxStates();
    }
 
    private void rejectOutliersCheckBoxAction() {
+      saveCheckBoxStates();
       rejectPercentSpinner_.setEnabled(rejectOutliersCheckBox_.isSelected());
       if (currentHistograms_ != null) {
          currentHistograms_.rejectOutliersChangeAction();
       }
-      saveCheckBoxStates();
    }
 
    private void rejectPercentageChanged() {
+      saveCheckBoxStates();
       if (currentHistograms_ != null) {
          currentHistograms_.rejectOutliersChangeAction();
       }
-      saveCheckBoxStates();
    }
 
    private void logScaleCheckBoxActionPerformed() {
+      saveCheckBoxStates();
       if (currentHistograms_ != null) {
          currentHistograms_.setLogScale();
       }
-      saveCheckBoxStates();
    }
 
    public void sizeBarCheckBoxActionPerformed() {
@@ -478,8 +484,9 @@ public class ContrastPanel extends JPanel {
    }
 
    public void imageChanged() {
-      if (currentHistograms_ != null)
-         ((JPanel)currentHistograms_).repaint();
+      if (currentHistograms_ != null) {
+         ((JPanel) currentHistograms_).repaint();
+      }
    }
 
    public synchronized void displayChanged(VirtualAcquisitionDisplay disp) {
