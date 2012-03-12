@@ -401,7 +401,6 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
       simple_ = true;
       imageCache_ = imageCache;
       name_ = name;
-      System.out.println();
       imageCache_.setDisplay(this);
       mda_ = false;
    }
@@ -697,10 +696,8 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
     * Method required by ImageCacheListener
     */
    @Override
-   public void imageReceived(final TaggedImage taggedImage) {
-      if (eng_ != null) {
-         updateDisplay(taggedImage, false);
-      }
+   public void imageReceived(final TaggedImage taggedImage) {    
+      updateDisplay(taggedImage, false);
    }
 
    /*
@@ -710,7 +707,7 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
    public void imagingFinished(String path) {
       updateDisplay(null, true);
       updateAndDraw();
-      if (eng_ != null && !eng_.abortRequested()) {
+      if (!(eng_ != null && eng_.abortRequested())) {
          updateWindowTitleAndStatus();
       }
    }
@@ -732,10 +729,8 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
          int slice = MDUtils.getSliceIndex(tags);
          int position = MDUtils.getPositionIndex(tags);
          boolean show = finalUpdate || frame == 0 || (Math.abs(t - lastDisplayTime_) > 30)
-                 || (ch == getNumChannels() - 1 && lastFrameShown_ == frame
-                 && lastSliceShown_ == slice && lastPositionShown_ == position)
+                 || (ch == getNumChannels() - 1 && lastFrameShown_ == frame && lastSliceShown_ == slice && lastPositionShown_ == position)
                  || (slice == getNumSlices() - 1 && frame == 0 && position == 0 && ch == getNumChannels() - 1);
-
 
 
          if (show) {
@@ -985,13 +980,13 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
             if (!status.contentEquals("interrupted")) {
                if (eng.isFinished()) {
                   status = "finished";
-                  eng_ = null;
+//                  eng_ = null;
                }
             }
          }
          status += ", ";
          if (eng.isFinished()) {
-            eng_ = null;
+//            eng_ = null;
             finished_ = true;
          }
       } else {
@@ -1067,7 +1062,7 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
       } catch (Exception ex) {
          ReportingUtils.logError(ex);
       }
-      
+            
       //This block allows animation to be reset to where it was before iamges were added
       final boolean framesAnimated = isTAnimated(), slicesAnimated = isZAnimated();
       final int animatedFrameIndex = hyperImage_.getFrame();
@@ -1159,19 +1154,19 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
       } else if (slicesAnimated) {
          hyperImage_.setPosition(hyperImage_.getChannel(), slice+1, hyperImage_.getFrame());
          animateSlices(true);
-         System.out.println(slice);
       }
    }
 
    /*
     * Live/snap should load window contrast settings
-    * MDA should autoscale on frist image
+    * MDA should autoscale on first image
     * Opening dataset should load from disoplay and comments
     */
    private void initializeContrast(final int channel, final int slice) {
       Runnable autoscaleOrLoadContrast = new Runnable() {
 
          public void run() {
+            System.out.println("Channel: " + channel + "   Slice:  " + slice);
             if (!newDisplay_) {
                return;
             }
@@ -1186,7 +1181,7 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
                if (immImg.getNSlicesUnverified() > 1) {  //Z stacks
                   autoscaleOverStackWithoutDraw(imageCache_, hyperImage_, channel, zStackMins_, zStackMaxes_);
                   if (channel != immImg.getNChannelsUnverified() - 1 || slice != immImg.getNSlicesUnverified() - 1) {
-                     return;  //don't set new display to false until all channels autscaled
+                     return;  //don't set new display to false until all channels autoscaled
                   }
                } else {  //No z stacks
                   autoscaleWithoutDraw();

@@ -23,7 +23,6 @@ package org.micromanager.graph;
 
 import com.swtdesigner.SwingResourceManager;
 import ij.CompositeImage;
-import ij.ImagePlus;
 import ij.process.ImageProcessor;
 import ij.process.LUT;
 import java.awt.*;
@@ -43,7 +42,6 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 import org.micromanager.AcqControlDlg;
 import org.micromanager.MMStudioMainFrame;
-import org.micromanager.acquisition.MetadataPanel;
 import org.micromanager.acquisition.VirtualAcquisitionDisplay;
 import org.micromanager.api.ImageCache;
 import org.micromanager.graph.HistogramPanel.CursorListener;
