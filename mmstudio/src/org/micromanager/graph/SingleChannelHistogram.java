@@ -43,7 +43,6 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import org.json.JSONException;
 import org.micromanager.MMStudioMainFrame;
-import org.micromanager.acquisition.MetadataPanel;
 import org.micromanager.acquisition.VirtualAcquisitionDisplay;
 import org.micromanager.api.Histograms;
 import org.micromanager.api.ImageCache;
@@ -100,10 +99,9 @@ public class SingleChannelHistogram extends JPanel implements Histograms, Cursor
          ReportingUtils.logError("BitDepth not in summary metadata");
          bitDepth_ = 16;
       }
-      maxIntensity_ = (int) (Math.pow(2, bitDepth_) - 1);
-      binSize_ = ((double) (histMax_ + 1)) / ((double) HIST_BINS);
+      maxIntensity_ = (int) (Math.pow(2, bitDepth_) - 1);     
       histMax_ = maxIntensity_;
-
+      binSize_ = ((double) (histMax_ + 1)) / ((double) HIST_BINS);
       initGUI();
    }
 
@@ -382,6 +380,8 @@ public class SingleChannelHistogram extends JPanel implements Histograms, Cursor
          histMax_ = (int) (Math.pow(2, bits) - 1);
       }
       binSize_ = ((double) (histMax_ + 1)) / ((double) HIST_BINS);
+            System.out.println("Bin size new value: " + binSize_);
+
       updateHistogram();
 
       saveDisplaySettings();
@@ -522,6 +522,7 @@ public class SingleChannelHistogram extends JPanel implements Histograms, Cursor
          mean_ /= imgWidth * imgHeight;
       }
       if (drawHist) {
+
          stdDev_ = 0;
          if (histRangeComboBox_.getSelectedIndex() != -1) {
             pixelMin_ = rawHistogram.length - 1;

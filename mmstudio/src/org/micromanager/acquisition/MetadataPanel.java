@@ -442,6 +442,10 @@ public class MetadataPanel extends JPanel
       }
    }
 
+   public ImageWindow getCurrentWindow() {
+      return lastWindow_;
+   }
+   
    public synchronized void displayChanged(ImageWindow win) {
       if (win == lastWindow_) {
          return;

@@ -1505,6 +1505,8 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
       //Set magnification
       zoomToPreferredSize(win);
       
+      mdPanel_.displayChanged(win);
+      
    }
    
    private int getWinLength(ImageWindow win) {
@@ -1889,7 +1891,7 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
    public boolean isActiveDisplay() {
        if (hyperImage_ == null || hyperImage_.getWindow() == null)
            return false;
-       if (hyperImage_.getWindow() == WindowManager.getCurrentWindow())
+       if (hyperImage_.getWindow() == mdPanel_.getCurrentWindow()  )
            return true;
        return false;
    }
