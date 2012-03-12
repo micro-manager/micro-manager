@@ -381,7 +381,6 @@
 
 (defn generate-multiposition-bursts [positions num-frames use-autofocus
                                      channels default-exposure triggers]
-  (println "generate-multiposition-bursts")
   (process-new-position
     (flatten
       (for [pos-index (range (count positions))]
