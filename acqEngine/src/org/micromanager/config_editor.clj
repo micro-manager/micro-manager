@@ -6,7 +6,8 @@
            [java.awt.event MouseAdapter]
            [javax.swing.table AbstractTableModel]
            [java.awt Color Dimension])
-  (:use [org.micromanager.mm :only [load-mm gui core edt get-config]]))
+  (:use [org.micromanager.mm :only [config-struct load-mm
+                                    gui core edt get-config]]))
 
 (load-mm)
 
@@ -60,6 +61,12 @@
    (let [sp (JScrollPane. table)]
     sp))
 
+(defn update-table [table]
+  (doto (.getModel table)
+    .fireTableDataChanged
+    .fireTableStructureChanged)
+  table)
+
 ;; events
 
 (defn attach-double-click-listener [component f]
@@ -81,7 +88,7 @@
 
 (def group-data (atom nil))
 
-(def widgets (atom nil))
+(defonce widgets (atom nil))
 
 (defn get-selected-group []
   (let [row (.getSelectedRow (@widgets :groups-table))
@@ -100,7 +107,8 @@
 (defn update-groups []
   (reset! groups (vec (seq (core getAvailableConfigGroups))))
   (update-group-data)
-  @groups)
+  (-> @widgets :groups-table update-table)
+  @group-data)
 
 (defn properties [group-data]
   (sort (set (apply concat (map keys (vals group-data))))))
@@ -123,7 +131,7 @@
 
 (defn preset-names-table-model []
   (proxy [AbstractTableModel] []
-    (getColumnName [_] "")
+    (getColumnName [_] "Presets")
     (getColumnCount [] 1)
     (getRowCount [] (count (keys @group-data)))
     (isCellEditable [_ _] true)
@@ -179,19 +187,75 @@
           (f))))))
 
 (defn start-editing-cell [table row col]
-  (edt (doto table
-         (.setRowSelectionInterval row row)
-         (.setColumnSelectionInterval col col)
-         (.. getCellEditor getComponent requestFocus)
+  (edt 
+    (.toFront (@widgets :frame))
+    (doto table
+         (.changeSelection row col false false)
+         ;.requestFocus
          (.editCellAt row col)
-         )))
+      (.. getEditorComponent requestFocusInWindow))))
 
-(defn create-new-group []
-  (swap! groups conj "New Group")
-  (let [table  (@widgets :groups-table)]
-    (.fireTableStructureChanged (.getModel table))
+
+(defn redraw-data []
+  (update-group-data)
+  (let [preset-names-table (@widgets :preset-names-table)
+        presets-table (@widgets :presets-table)]
+    (update-table preset-names-table)
+         (cancel-cell-editing preset-names-table)
+         (cancel-cell-editing presets-table)
+         (update-table presets-table)
+         (set-preferred-column-width presets-table)))
+
+(defn new-group-name []
+  (loop [index 1]
+    (let [guess (str "New Group " index)]
+      (if ((set @groups) guess)
+        (recur (inc index))
+        guess))))
+
+(defn new-group []
+  (let [table  (@widgets :groups-table)
+        group-name (new-group-name)]
+    (core defineConfigGroup group-name)
+    (swap! groups conj group-name)
+    (update-table table)
     (let [row (dec (.getRowCount table))]
       (start-editing-cell table row 0))))
+
+(defn new-preset-name [group]
+  (loop [index 1]
+    (let [guess (str "New Preset " index)]
+      (if ((set (presets group)) guess)
+        (recur (inc index))
+        guess))))
+
+(defn new-preset [group]
+  (let [preset-name (new-preset-name group)
+        preset (config-struct (core getConfigGroupState group))]
+    (doseq [[[d p] v] preset]
+      (core defineConfig group preset-name d p v))
+    (redraw-data)))
+
+(defn add-property [group dev prop]
+  (when-not ((set (properties @group-data)) [dev prop])
+    (let [val (core getProperty dev prop)]
+      (doseq [preset (presets group)]
+        (core defineConfig group preset dev prop val)))
+    (redraw-data)))
+    
+(defn remove-property [group dev prop]
+  (when ((set (properties @group-data)) [dev prop])
+    (doseq [preset (presets group)]
+      (core deleteConfig group preset dev prop))
+    (redraw-data)))
+
+(defn delete-group [group]
+  (core deleteConfigGroup group)
+  (update-groups))
+
+(defn delete-preset [group preset]
+  (core deleteConfig group preset)
+  (redraw-data))
 
 (defn show-popup-menu [popup-menu mouse-event]
   (when (.isPopupTrigger mouse-event)
@@ -256,15 +320,10 @@
        (map #(.setPreferredWidth % 125)) dorun))
 
 (defn activate-groups-table [components]
-  (let [{:keys [groups-table preset-names-table presets-table]} components]
+  (let [groups-table (components :groups-table)]
     (attach-selection-listener
       groups-table
-    (fn [_] (update-group-data)
-         (.fireTableDataChanged (.getModel preset-names-table))
-         (cancel-cell-editing preset-names-table)
-         (cancel-cell-editing presets-table)
-         (.fireTableStructureChanged (.getModel presets-table))
-         (set-preferred-column-width (components :presets-table))))))
+      (fn [_] (redraw-data)))))
 
 ;; test/run
 
@@ -273,7 +332,7 @@
     (start nil))
   ([group]
     (when-let [frame (:frame @widgets)]
-      (edt (doto frame .hide .dispose)))
+      (edt (try (doto frame .hide .dispose) (catch Throwable _))))
     (reset! widgets (show))
     (update-groups)
     (activate-groups-table @widgets)))
