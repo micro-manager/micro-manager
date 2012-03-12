@@ -232,9 +232,11 @@ public class DataCollectionForm extends javax.swing.JFrame {
          if (column == 3) {
             if (rowData_.get(row).isTrack_)
                plotData(rowData_.get(row), plotComboBox_.getSelectedIndex());
-            else
+            else {
+               int mag = 1 << visualizationMagnification_.getSelectedIndex(); 
                ImageRenderer.renderData(null, rowData_.get(row), visualizationModel_.getSelectedIndex(),
-                       visualizationMagnification_.getSelectedIndex(), null);
+                       mag, null);
+            }
          }
          else if (column == 4) {
             if (rowData_.get(row).isTrack_)

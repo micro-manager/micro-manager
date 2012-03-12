@@ -24,6 +24,7 @@ public class ImageRenderer {
     * @param rowData - MyRowData structure to be rendered
     * @param method - 0 = 2D scatter, 1 = Gaussians
     * @param magnification  - factor x original size
+    * @param rect - roi in the magnified image that should be rendered
     */
       public static void renderData(ImageWindow w, MyRowData rowData, 
               int method, double magnification, Rectangle rect) {
