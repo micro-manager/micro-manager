@@ -109,6 +109,7 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
    private HashMap<Integer, Integer> zStackMaxes_;
    private Histograms histograms_;
    private HistogramControlsState histogramControlsState_;
+   private boolean albumSaved_ = false;
 
 
    /* This interface and the following two classes
@@ -995,7 +996,7 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
          }
          controls_.acquiringImagesUpdate(false);
       }
-      if (isDiskCached()) {
+      if (isDiskCached() || albumSaved_) {
          status += "on disk";
       } else {
          status += "not yet saved";
@@ -1396,6 +1397,10 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
       }
    }
 
+   public void albumChanged() {
+      albumSaved_ = false;
+   }
+   
    boolean saveAs() {
       String prefix;
       String root;
@@ -1419,6 +1424,7 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
 
       TaggedImageStorageDiskDefault newFileManager = new TaggedImageStorageDiskDefault(root + "/" + prefix, true,
               getSummaryMetadata());
+      albumSaved_ = true;
 
       imageCache_.saveAs(newFileManager, mda_);
       MMStudioMainFrame.getInstance().setAcqDirectory(root);
@@ -1967,7 +1973,7 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
             }
          }
 
-         if (imageCache_.getDiskLocation() == null && promptToSave_) {
+         if (imageCache_.getDiskLocation() == null && promptToSave_ && !albumSaved_) {
             int result = JOptionPane.showConfirmDialog(this,
                     "This data set has not yet been saved.\n"
                     + "Do you want to save it?",

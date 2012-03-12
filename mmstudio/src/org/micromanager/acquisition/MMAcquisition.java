@@ -536,6 +536,7 @@ public class MMAcquisition {
       }
       try {
          virtAcq_.imageCache_.putImage(taggedImg);
+         virtAcq_.albumChanged();
       } catch (Exception ex) {
          throw new MMScriptException(ex);
       }
