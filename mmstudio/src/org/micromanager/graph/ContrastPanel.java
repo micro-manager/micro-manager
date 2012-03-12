@@ -114,6 +114,9 @@ public class ContrastPanel extends JPanel {
       state.ignoreOutliers = prefs_.getBoolean(PREF_REJECT_OUTLIERS, false);
       state.syncChannels = prefs_.getBoolean(PREF_SYNC_CHANNELS, false);
       state.slowHist = prefs_.getBoolean(PREF_SLOW_HIST, false);
+      state.scaleBar = false;
+      state.scaleBarColorIndex = 0;
+      state.scaleBarLocationIndex = 0;
       return state;
    }
 
@@ -176,9 +179,14 @@ public class ContrastPanel extends JPanel {
       rejectOutliersCheckBox_.setSelected(state.ignoreOutliers);
       syncChannelsCheckBox_.setSelected(state.syncChannels);
       slowHistCheckBox_.setSelected(state.slowHist);
-      sizeBarCheckBox_.setSelected(state.scaleBar);
-      sizeBarColorComboBox_.setSelectedIndex(state.scaleBarColorIndex);
-      sizeBarComboBox_.setSelectedIndex(state.scaleBarLocationIndex);
+      
+      boolean bar = state.scaleBar;
+      int color = state.scaleBarColorIndex;
+      int location = state.scaleBarLocationIndex;
+      sizeBarCheckBox_.setSelected(bar);
+      sizeBarColorComboBox_.setSelectedIndex(color);
+      sizeBarComboBox_.setSelectedIndex(location);
+
 
 
       if (currentDisplay_ != null && currentDisplay_.getImagePlus() instanceof CompositeImage) {
@@ -207,6 +215,9 @@ public class ContrastPanel extends JPanel {
       s.percentToIgnore = (Double) rejectPercentSpinner_.getValue();
       s.slowHist = slowHistCheckBox_.isSelected();
       s.syncChannels = syncChannelsCheckBox_.isSelected();
+      s.scaleBar = sizeBarCheckBox_.isSelected();
+      s.scaleBarColorIndex = sizeBarColorComboBox_.getSelectedIndex();
+      s.scaleBarLocationIndex = sizeBarComboBox_.getSelectedIndex();
    }
 
    private void initializeGUI() {
@@ -375,6 +386,7 @@ public class ContrastPanel extends JPanel {
          }
       }
       ip.setHideOverlay(!show);
+      saveCheckBoxStates();
    }
 
    private void overlayColorComboBox_ActionPerformed() {
@@ -387,7 +399,8 @@ public class ContrastPanel extends JPanel {
       } else if ((sizeBarColorComboBox_.getSelectedItem()).equals("Gray")) {
          overlayColor_ = Color.gray;
       }
-      showSizeBar();
+      if (sizeBarCheckBox_.isSelected())
+         showSizeBar();
    }
 
    private void syncChannelsCheckboxAction() {
@@ -470,11 +483,15 @@ public class ContrastPanel extends JPanel {
    }
 
    public void sizeBarCheckBoxActionPerformed() {
-      showSizeBar();
+      if (sizeBarCheckBox_.isSelected()) {
+         showSizeBar();
+      }
    }
 
    private void sizeBarComboBoxActionPerformed() {
-      showSizeBar();
+      if (sizeBarCheckBox_.isSelected()) {
+         showSizeBar();
+      }
    }
 
    public void autostretch() {
