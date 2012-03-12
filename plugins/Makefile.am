@@ -92,7 +92,6 @@ Gaussian.jar:  \
 	$(srcdir)/Gaussian/source/edu/valelab/GaussianFit/GaussianUtils.java \
 	$(srcdir)/Gaussian/source/edu/valelab/GaussianFit/MainForm.java \
 	$(srcdir)/Gaussian/source/edu/valelab/GaussianFit/MultiVariateGaussianFunction.java \
-	$(srcdir)/Gaussian/source/edu/valelab/GaussianFit/MyK.java \
 	$(srcdir)/Gaussian/source/edu/valelab/GaussianFit/NearestPoint2D.java \
 	$(srcdir)/Gaussian/source/edu/valelab/GaussianFit/ParametricGaussianFunction.java \
 	$(srcdir)/Gaussian/source/edu/valelab/GaussianFit/ProgressThread.java \
