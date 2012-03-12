@@ -261,7 +261,7 @@
       (swap! state assoc-in [:last-stage-positions (@state :default-z-drive)] z))
     (catch Exception e
            (ReportingUtils/logError e)
-           (set-stage-position :default-z-drive z-drive (+ 1.0e-6 z0)))))
+           (set-stage-position z-drive (+ 1.0e-6 z0)))))
     (log "running autofocus " (.. gui getAutofocusManager getDevice getDeviceName)))
 
 (defn snap-image [open-before close-after]
