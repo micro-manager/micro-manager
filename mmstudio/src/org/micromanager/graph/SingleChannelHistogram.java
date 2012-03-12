@@ -92,13 +92,7 @@ public class SingleChannelHistogram extends JPanel implements Histograms, Cursor
       display_ = disp;
       img_ = disp.getImagePlus();
       cache_ = disp.getImageCache();
-      
-      try {
-         bitDepth_ = MDUtils.getBitDepth(display_.getSummaryMetadata());
-      } catch (JSONException ex) {
-         ReportingUtils.logError("BitDepth not in summary metadata");
-         bitDepth_ = 16;
-      }
+      bitDepth_ = cache_.getBitDepth();
       maxIntensity_ = (int) (Math.pow(2, bitDepth_) - 1);     
       histMax_ = maxIntensity_;
       binSize_ = ((double) (histMax_ + 1)) / ((double) HIST_BINS);
