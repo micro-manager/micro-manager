@@ -126,7 +126,7 @@ public class FitAllThread extends GaussianInfo implements Runnable  {
 
       // Add data to data overview window
       DataCollectionForm dcForm = DataCollectionForm.getInstance();
-      dcForm.addSpotData(siPlus.getWindow().getTitle(), siPlus.getTitle(), 
+      dcForm.addSpotData(siPlus.getWindow().getTitle(), siPlus.getTitle(), "",
               siPlus.getWidth(), siPlus.getHeight(), (float) pixelSize_,
               shape_, halfSize_,
               nrChannels, nrFrames, nrSlices, nrPositions, resultList_.size(), 

@@ -7,7 +7,7 @@
  * Data structure used internally is contained in "MyRowData".
  * Data are currently stored in RAM, but a caching mechanism could be implemented
  * 
- * The form acts as a "workbench" various actions, (such as display, color correction
+ * The form acts as a "workbench".  Various actions, (such as display, color correction
  * jitter correction) are available, some of which may generate new datasets
  * that are stored in this form
  * 
@@ -57,6 +57,7 @@ import ij.process.ShortProcessor;
 import java.awt.Cursor;
 import java.awt.Dimension;
 import java.awt.FileDialog;
+import java.awt.Rectangle;
 import java.awt.geom.Point2D;
 
 import java.io.DataInputStream;
@@ -81,7 +82,7 @@ import valelab.LocalWeightedMean;
  */
 public class DataCollectionForm extends javax.swing.JFrame {
    AbstractTableModel myTableModel_;
-   private final String[] columnNames_ = {"Image", "Nr of spots", "Plot/Render", "Action"};
+   private final String[] columnNames_ = {"Image", "Nr of spots", "2C Reference", "Plot/Render", "Action"};
    private final String[] plotModes_ = {"t-X", "t-Y", "X-Y"};
    private final String[] renderModes_ = {"Points", "Gaussian"};
    private final String[] renderSizes_  = {"1x", "2x", "4x", "8x"};
@@ -97,11 +98,12 @@ public class DataCollectionForm extends javax.swing.JFrame {
    /**
     * Data structure for spotlists
     */
-   private class MyRowData {
+   public class MyRowData {
       public final List<GaussianSpotData> spotList_;
       public final ArrayList<Double> timePoints_;
       public final String name_;
       public final String title_;
+      public final String colCorrRef_;
       public final int width_;
       public final int height_;
       public final float pixelSizeNm_;
@@ -117,6 +119,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
 
       public MyRowData(String name,
               String title,
+              String colCorrRef,
               int width,
               int height,
               float pixelSizeUm,
@@ -132,6 +135,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
               boolean isTrack) {
          name_ = name;
          title_ = title;
+         colCorrRef_ = colCorrRef;
          width_ = width;
          height_ = height;
          pixelSizeNm_ = pixelSizeUm;
@@ -184,6 +188,8 @@ public class DataCollectionForm extends javax.swing.JFrame {
                 return rowData_.get(row).name_;
              else if (col == 1)
                 return rowData_.get(row).spotList_.size();
+             else if (col == 2)
+                return rowData_.get(row).colCorrRef_;
              else
                 return getColumnName(col);
           }
@@ -223,14 +229,14 @@ public class DataCollectionForm extends javax.swing.JFrame {
          int column = jTable1_.columnAtPoint(click);
          int row = jTable1_.rowAtPoint(click);
          
-         if (column == 2) {
+         if (column == 3) {
             if (rowData_.get(row).isTrack_)
                plotData(rowData_.get(row), plotComboBox_.getSelectedIndex());
             else
                renderData(rowData_.get(row), visualizationModel_.getSelectedIndex(),
-                       visualizationMagnification_.getSelectedIndex());
+                       visualizationMagnification_.getSelectedIndex(), null);
          }
-         else if (column == 3) {
+         else if (column == 4) {
             if (rowData_.get(row).isTrack_)
                straightenTrack(rowData_.get(row));
          }
@@ -261,6 +267,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
    public void addSpotData(
            String name,
            String title,
+           String colCorrRef,
            int width,
            int height,
            float pixelSizeUm,
@@ -274,7 +281,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
            List<GaussianSpotData> spotList,
            ArrayList<Double> timePoints,
            boolean isTrack) {
-      MyRowData newRow = new MyRowData(name, title, width, height, pixelSizeUm, 
+      MyRowData newRow = new MyRowData(name, title, colCorrRef, width, height, pixelSizeUm, 
               shape, halfSize, nrChannels, nrFrames, nrSlices, nrPositions, 
               maxNrSpots, spotList, timePoints, isTrack);
       rowData_.add(newRow);
@@ -548,7 +555,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
                       spotList.add(gSpot);
                    }
 
-                   addSpotData(name, title, width, height, pixelSizeUm, shape, halfSize,
+                   addSpotData(name, title, "", width, height, pixelSizeUm, shape, halfSize,
                            nrChannels, nrFrames, nrSlices, nrPositions, (int) maxNrSpots,
                            spotList, null, isTrack);
 
@@ -905,18 +912,18 @@ public class DataCollectionForm extends javax.swing.JFrame {
          setBackground(UIManager.getColor("Button.background"));
 
          if (rowData_.get(row).isTrack_) {
-            if (column == 2)
+            if (column == 3)
                setText((value == null ? "" : "Plot"));
             else {
-               if (column == 3)
+               if (column == 4)
                   setText((value == null ? "" : "Straighten"));
                else
                   setText((value == null ? "" : value.toString()));
             }
          } else {
-            if (column == 2)
-               setText((value == null ? "" : "Render"));
             if (column == 3)
+               setText((value == null ? "" : "Render"));
+            if (column == 4)
                return null;     
          }
              
@@ -982,7 +989,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
             tp.removeKeyListener(ks);
          }
 
-         MyK myk = new MyK(siPlus, rt, win, rowData.halfSize_);
+         ResultsTableListener myk = new ResultsTableListener(siPlus, rt, win, rowData.halfSize_);
          tp.addKeyListener(myk);
          tp.addMouseListener(myk);
          frame.toFront();
@@ -1166,7 +1173,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
       }
 
       // Add transformed data to data overview window
-      addSpotData(rowData.name_ + "Straightened", rowData.title_, rowData.width_,
+      addSpotData(rowData.name_ + "Straightened", rowData.title_, "", rowData.width_,
               rowData.height_, rowData.pixelSizeNm_, rowData.shape_,
               rowData.halfSize_, rowData.nrChannels_, rowData.nrFrames_,
               rowData.nrSlices_, 1, rowData.maxNrSpots_, transformedResultList,
@@ -1385,7 +1392,8 @@ public class DataCollectionForm extends javax.swing.JFrame {
                }
             }
             
-            MyRowData newRow = new MyRowData(rowData.name_ + "-Jitter", rowData.title_, rowData.width_,
+            MyRowData newRow = new MyRowData(rowData.name_ + "-Jitter", rowData.title_, 
+                    "", rowData.width_,
                     rowData.height_, rowData.pixelSizeNm_, rowData.shape_,
                     rowData.halfSize_, rowData.nrChannels_, stageMovementData.size(),
                     1, 1, stageMovementData.size(), stageMovementData,
@@ -1444,7 +1452,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
             }
 
             // Add transformed data to data overview window
-            addSpotData(rowData.name_ + "-Jitter-Correct", rowData.title_, rowData.width_,
+            addSpotData(rowData.name_ + "-Jitter-Correct", rowData.title_, "", rowData.width_,
                     rowData.height_, rowData.pixelSizeNm_, rowData.shape_,
                     rowData.halfSize_, rowData.nrChannels_, rowData.nrFrames_,
                     rowData.nrSlices_, 1, rowData.maxNrSpots_, correctedData,
@@ -1509,7 +1517,8 @@ public class DataCollectionForm extends javax.swing.JFrame {
             }
 
             // Add transformed data to data overview window
-            addSpotData(rowData.name_ + "Channel-Correct", rowData.title_, rowData.width_,
+            addSpotData(rowData.name_ + "Channel-Correct", rowData.title_, 
+                    referenceName_.getText(), rowData.width_,
                     rowData.height_, rowData.pixelSizeNm_, rowData.shape_,
                     rowData.halfSize_, rowData.nrChannels_, rowData.nrFrames_,
                     rowData.nrSlices_, 1, rowData.maxNrSpots_, correctedData,
@@ -1529,17 +1538,25 @@ public class DataCollectionForm extends javax.swing.JFrame {
     * @param renderMode - 0 = 2D scatter, 1 = Gaussians
     * @param renderSize  - 1, 2, 4, 8 x original size
     */
-   private void renderData(MyRowData rowData,int renderMode, int renderSize) {
+   public void renderData(MyRowData rowData,int renderMode, int renderSize, Rectangle rect) {
       String fsep = System.getProperty("file.separator");
       String title = rowData.name_;
       if (rowData.name_.contains(fsep))
          title = rowData.name_.substring(rowData.name_.lastIndexOf(fsep) + 1);
       title += renderSizes_[renderSize];
       
+      
+      
       int mag = 1 << renderSize;
+      
+      if (rect == null) {
+         rect = new Rectangle(0, 0, rowData.width_ * mag, rowData.height_ * mag);
+      }
       double renderedPixelInNm = rowData.pixelSizeNm_ / mag;
-      int width = mag * rowData.width_;
-      int height = mag * rowData.height_;
+      int width = rect.width;
+      int height = rect.height;
+      int endx = rect.x + rect.width;
+      int endy = rect.y + rect.height;
       int size = width * height;
       double factor = (double) mag / rowData.pixelSizeNm_;
       ImageProcessor ip = null;
@@ -1551,10 +1568,14 @@ public class DataCollectionForm extends javax.swing.JFrame {
          for (GaussianSpotData spot : rowData.spotList_) {
             int x = (int) (factor * spot.getXCenter());
             int y = (int) (factor * spot.getYCenter());
-            int index = (y * width) + x;
-            if (index < size && index > 0)
-               if (pixels[index] != -1)
-                  pixels[index] += 1;
+            if (x > rect.x && x < endx && y > rect.y && y < endy) {
+               int index = (y * width) + x;
+               if (index < size && index > 0) {
+                  if (pixels[index] != -1) {
+                     pixels[index] += 1;
+                  }
+               }
+            }
          }
       } else if (renderMode == 1) {  // Gaussian
          ip = new FloatProcessor(width, height);
@@ -1605,6 +1626,21 @@ public class DataCollectionForm extends javax.swing.JFrame {
          DisplayUtils.SetCalibration(sp, rowData.pixelSizeNm_ / mag);
 
          ImageWindow w = new ImageWindow(sp);
+
+         // complicated way to get our listener at the front since ImageJ will consume the event
+         /*
+         MouseListener[] mls = w.getCanvas().getMouseListeners();
+         for (MouseListener ml : mls)
+            w.getCanvas().removeMouseListener(ml);
+          * 
+          */
+         w.getCanvas().addMouseListener(new ImageWindowListener(w, rowData,renderMode));
+         /*
+          * for (MouseListener ml : mls)
+            w.getCanvas().addMouseListener(ml);
+          *
+          */
+                  
          w.setVisible(true);
       }
 
