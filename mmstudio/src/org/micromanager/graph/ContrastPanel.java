@@ -138,8 +138,8 @@ public class ContrastPanel extends JPanel {
          displayModeLabel_.setEnabled(false);
          displayModeCombo_.setEnabled(false);
          sizeBarCheckBox_.setEnabled(true);
-         sizeBarComboBox_.setEnabled(true);
-         sizeBarColorComboBox_.setEnabled(true);
+         sizeBarComboBox_.setEnabled(sizeBarCheckBox_.isSelected());
+         sizeBarColorComboBox_.setEnabled(sizeBarCheckBox_.isSelected());
          syncChannelsCheckBox_.setEnabled(false);
          logHistCheckBox_.setEnabled(true);
          slowHistCheckBox_.setEnabled(true);
@@ -155,8 +155,8 @@ public class ContrastPanel extends JPanel {
          displayModeLabel_.setEnabled(true);
          displayModeCombo_.setEnabled(true);
          sizeBarCheckBox_.setEnabled(true);
-         sizeBarComboBox_.setEnabled(true);
-         sizeBarColorComboBox_.setEnabled(true);
+         sizeBarComboBox_.setEnabled(sizeBarCheckBox_.isSelected());
+         sizeBarColorComboBox_.setEnabled(sizeBarCheckBox_.isSelected());
          logHistCheckBox_.setEnabled(true);
          slowHistCheckBox_.setEnabled(true);
          syncChannelsCheckBox_.setEnabled(true);
@@ -179,7 +179,7 @@ public class ContrastPanel extends JPanel {
       rejectOutliersCheckBox_.setSelected(state.ignoreOutliers);
       syncChannelsCheckBox_.setSelected(state.syncChannels);
       slowHistCheckBox_.setSelected(state.slowHist);
-      
+
       boolean bar = state.scaleBar;
       int color = state.scaleBarColorIndex;
       int location = state.scaleBarLocationIndex;
@@ -399,8 +399,9 @@ public class ContrastPanel extends JPanel {
       } else if ((sizeBarColorComboBox_.getSelectedItem()).equals("Gray")) {
          overlayColor_ = Color.gray;
       }
-      if (sizeBarCheckBox_.isSelected())
+      if (sizeBarCheckBox_.isSelected()) {
          showSizeBar();
+      }
    }
 
    private void syncChannelsCheckboxAction() {
@@ -483,9 +484,11 @@ public class ContrastPanel extends JPanel {
    }
 
    public void sizeBarCheckBoxActionPerformed() {
-      if (sizeBarCheckBox_.isSelected()) {
-         showSizeBar();
-      }
+      boolean checked = sizeBarCheckBox_.isSelected();
+      sizeBarComboBox_.setEnabled(checked);
+      sizeBarColorComboBox_.setEnabled(checked);
+      showSizeBar();
+
    }
 
    private void sizeBarComboBoxActionPerformed() {
