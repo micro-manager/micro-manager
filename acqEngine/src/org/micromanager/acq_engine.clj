@@ -57,10 +57,6 @@
   (when (< (rand) prob)
     (throw (Exception. "Simulated error"))))
 
-(defmacro time* [expr]
- `(do (println "Timing: " '~expr)
-      (time ~expr)))
-
 ;; globals
 
 (def ^:dynamic state (atom {:stop false}))
@@ -257,12 +253,12 @@
   (let [z-drive (@state :default-z-drive)
         z0 (get-z-stage-position z-drive)]
   (try
+    (log "running autofocus " (.. gui getAutofocusManager getDevice getDeviceName))
     (let [z (.. gui getAutofocusManager getDevice fullFocus)]
       (swap! state assoc-in [:last-stage-positions (@state :default-z-drive)] z))
     (catch Exception e
-           (ReportingUtils/logError e)
-           (set-stage-position z-drive (+ 1.0e-6 z0)))))
-    (log "running autofocus " (.. gui getAutofocusManager getDevice getDeviceName)))
+           (ReportingUtils/logError e "Autofocus failed.")
+           (set-stage-position z-drive (+ 1.0e-6 z0))))))
 
 (defn snap-image [open-before close-after]
   (with-core-setting [getAutoShutter setAutoShutter false]
@@ -458,7 +454,7 @@
            [false false])]
     (condp = (:task event)
       :snap (apply snap-image shutter-states)
-      :burst (init-burst (:burst-length event)
+      :burst (init-burst (count (:burst-data event))
                          (:trigger-sequence event)
                          (:relative-z event))
       nil)))
@@ -577,7 +573,7 @@
                          (or (:autofocus event)
                              (when-let [t (:wait-time-ms event)]
                                (pos? t))))]
-    (filter identity ;; removes nil events
+    (filter identity
       (flatten
         (list
           #(log event)
@@ -619,7 +615,7 @@
 (defn run-acquisition [this settings out-queue]
   (try
     (def acq-settings settings)
-    (log "Starting MD Acquisition: " settings)
+    (log (str "Starting MD Acquisition: " settings))
     (prepare-state this)
     (binding [state (.state this)]
       (def last-state state) ; for debugging
@@ -707,7 +703,7 @@
       "ComputerName" (.. InetAddress getLocalHost getHostName)
       "Depth" (core getBytesPerPixel)
       "Directory" (if (:save settings) (settings :root) "")
-      "Frames" (:numFrames settings)
+      "Frames" (count (:frames settings))
       "GridColumn" 0
       "GridRow" 0
       "Height" (core getImageHeight)
