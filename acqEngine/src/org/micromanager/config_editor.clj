@@ -1,17 +1,28 @@
 (ns org.micromanager.config-editor
-  (:import [javax.swing DefaultListModel JFrame JList JPanel JTable DefaultListSelectionModel
-                        JScrollPane JViewport ListSelectionModel SpringLayout]
+  (:import [javax.swing DefaultListModel JFrame JList JPanel JTable
+                        DefaultListSelectionModel JScrollPane JViewport
+                        ListSelectionModel SpringLayout JPopupMenu]
            [javax.swing.event CellEditorListener ListSelectionListener]
            [java.awt.event MouseAdapter]
            [javax.swing.table AbstractTableModel]
            [java.awt Color Dimension])
   (:use [org.micromanager.mm :only [load-mm gui core edt get-config]]))
 
+(load-mm)
+
 ;; utils
 
-;(defn updater-agent [init-value update-fn]
-;  (let [a (agent init-value)]
-;    (await a 
+(defn slow-update [reference update-fn]
+  (let [a (agent nil)
+        update-fn-sender
+        (fn [_ ref _ _]
+          (send-off a
+            #(if (not= % @ref)
+               (update-fn @ref))
+               @ref))]                                
+    (add-watch reference (gensym "slow_update")
+               update-fn-sender)))
+           
 
 ;; swing layout 
 
@@ -87,8 +98,9 @@
                          (presets group))))))
 
 (defn update-groups []
-  (reset! groups (seq (core getAvailableConfigGroups)))
-  (update-group-data))
+  (reset! groups (vec (seq (core getAvailableConfigGroups))))
+  (update-group-data)
+  @groups)
 
 (defn properties [group-data]
   (sort (set (apply concat (map keys (vals group-data))))))
@@ -166,6 +178,43 @@
         (when (> y (+ (.y r) (.height r)))
           (f))))))
 
+(defn start-editing-cell [table row col]
+  (edt (doto table
+         (.setRowSelectionInterval row row)
+         (.setColumnSelectionInterval col col)
+         (.. getCellEditor getComponent requestFocus)
+         (.editCellAt row col)
+         )))
+
+(defn create-new-group []
+  (swap! groups conj "New Group")
+  (let [table  (@widgets :groups-table)]
+    (.fireTableStructureChanged (.getModel table))
+    (let [row (dec (.getRowCount table))]
+      (start-editing-cell table row 0))))
+
+(defn show-popup-menu [popup-menu mouse-event]
+  (when (.isPopupTrigger mouse-event)
+    (def e mouse-event)
+          (let [point (.getPoint mouse-event)
+                source (.getSource mouse-event)
+                row (.rowAtPoint source point)
+                column (.columnAtPoint source point)]
+            (set-selected-row source row)
+            (.show popup-menu source (.x point) (.y point)))))
+
+(defn context-menu-on-table [table popup-menu]
+  (.addMouseListener table
+    (proxy [MouseAdapter] []
+      (mousePressed [e]
+        (show-popup-menu popup-menu e))
+      (mouseReleased [e]
+        (show-popup-menu popup-menu e)))))
+           
+(defn cancel-cell-editing [table]
+  (when-let [editor (.getCellEditor table)]
+    (.cancelCellEditing editor)))
+  
 (defn show []
   (let [f (JFrame. "Micro-Manager Configuration Preset Editor")
         cp (.getContentPane f)
@@ -207,12 +256,15 @@
        (map #(.setPreferredWidth % 125)) dorun))
 
 (defn activate-groups-table [components]
-  (attach-selection-listener
-    (components :groups-table)
+  (let [{:keys [groups-table preset-names-table presets-table]} components]
+    (attach-selection-listener
+      groups-table
     (fn [_] (update-group-data)
-         (.fireTableDataChanged (.getModel (components :preset-names-table)))
-         (.fireTableStructureChanged (.getModel (components :presets-table)))
-         (set-preferred-column-width (components :presets-table)))))
+         (.fireTableDataChanged (.getModel preset-names-table))
+         (cancel-cell-editing preset-names-table)
+         (cancel-cell-editing presets-table)
+         (.fireTableStructureChanged (.getModel presets-table))
+         (set-preferred-column-width (components :presets-table))))))
 
 ;; test/run
 
