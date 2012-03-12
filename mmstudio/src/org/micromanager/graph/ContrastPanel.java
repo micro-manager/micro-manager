@@ -190,7 +190,17 @@ public class ContrastPanel extends JPanel {
 
 
       if (currentDisplay_ != null && currentDisplay_.getImagePlus() instanceof CompositeImage) {
+         //this block keeps all channels from being set to active by the setMode call, so that
+         //deselected channels persist when switching windows
+         CompositeImage ci = (CompositeImage) currentDisplay_.getImagePlus();
+         boolean[] active = ci.getActiveChannels();
+         active = Arrays.copyOf(active, active.length);
          displayModeCombo_.setSelectedIndex(((CompositeImage) currentDisplay_.getImagePlus()).getMode() - 1);
+         for (int i = 0; i < active.length; i++) {
+            ci.getActiveChannels()[i] = active[i];
+         }
+         ci.updateAndDraw();
+         currentDisplay_.updateAndDraw();
       } else {
          displayModeCombo_.setSelectedIndex(2);
       }
