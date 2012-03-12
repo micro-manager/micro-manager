@@ -233,7 +233,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
             if (rowData_.get(row).isTrack_)
                plotData(rowData_.get(row), plotComboBox_.getSelectedIndex());
             else
-               renderData(rowData_.get(row), visualizationModel_.getSelectedIndex(),
+               ImageRenderer.renderData(null, rowData_.get(row), visualizationModel_.getSelectedIndex(),
                        visualizationMagnification_.getSelectedIndex(), null);
          }
          else if (column == 4) {
@@ -1530,122 +1530,6 @@ public class DataCollectionForm extends javax.swing.JFrame {
       (new Thread(doWorkRunnable)).start();
    }
 
-   
-   /**
-    * Renders spotdata using various renderModes
-    * 
-    * @param rowData - MyRowData structure to be rendered
-    * @param renderMode - 0 = 2D scatter, 1 = Gaussians
-    * @param renderSize  - 1, 2, 4, 8 x original size
-    */
-   public void renderData(MyRowData rowData,int renderMode, int renderSize, Rectangle rect) {
-      String fsep = System.getProperty("file.separator");
-      String title = rowData.name_;
-      if (rowData.name_.contains(fsep))
-         title = rowData.name_.substring(rowData.name_.lastIndexOf(fsep) + 1);
-      title += renderSizes_[renderSize];
-      
-      
-      
-      int mag = 1 << renderSize;
-      
-      if (rect == null) {
-         rect = new Rectangle(0, 0, rowData.width_ * mag, rowData.height_ * mag);
-      }
-      double renderedPixelInNm = rowData.pixelSizeNm_ / mag;
-      int width = rect.width;
-      int height = rect.height;
-      int endx = rect.x + rect.width;
-      int endy = rect.y + rect.height;
-      int size = width * height;
-      double factor = (double) mag / rowData.pixelSizeNm_;
-      ImageProcessor ip = null;
-
-      if (renderMode == 0) {
-         ip = new ShortProcessor(width, height);
-         short pixels[] = new short[size];
-         ip.setPixels(pixels);
-         for (GaussianSpotData spot : rowData.spotList_) {
-            int x = (int) (factor * spot.getXCenter());
-            int y = (int) (factor * spot.getYCenter());
-            if (x > rect.x && x < endx && y > rect.y && y < endy) {
-               int index = (y * width) + x;
-               if (index < size && index > 0) {
-                  if (pixels[index] != -1) {
-                     pixels[index] += 1;
-                  }
-               }
-            }
-         }
-      } else if (renderMode == 1) {  // Gaussian
-         ip = new FloatProcessor(width, height);
-         float pixels[] = new float[size];
-         ip.setPixels(pixels);
-         
-         setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
-         
-         for (GaussianSpotData spot : rowData.spotList_) {
-            // cover 3 * precision
-            int halfWidth = (int) (2 * spot.getSigma() / renderedPixelInNm);
-            if (halfWidth > 3) {
-               halfWidth = 3;
-            }
-            /*
-             * A *  exp(-((x-xc)^2+(y-yc)^2)/(2 sigy^2))+b
-             * A = params[INT]  (total intensity)
-             * b = params[BGR]  (background)
-             * xc = params[XC]
-             * yc = params[YC]
-             * sig = params[S]
-             * 
-             */
-            double xc = spot.getXCenter() / renderedPixelInNm;
-            double yc = spot.getYCenter() / renderedPixelInNm;
-            if (xc > halfWidth && xc < width - halfWidth
-                    && yc > halfWidth && yc < height - halfWidth) {
-               for (int x = (int) xc - halfWidth; x < (int) xc + halfWidth; x++) {
-                  for (int y = (int) yc - halfWidth; y < (int) yc + halfWidth; y++) {
-                     double[] parms = {1.0, 0.0,
-                        spot.getXCenter() / renderedPixelInNm,
-                        spot.getYCenter() / renderedPixelInNm,
-                        spot.getSigma() / renderedPixelInNm};
-                     double val = GaussianUtils.gaussian(parms, x, y);
-                     ip.setf(x, y, ip.getf(x, y) + (float) val);
-                  }
-               }
-            }
-         }
-         
-         setCursor(Cursor.getDefaultCursor());              
-      }
-
-      if (ip != null) {
-         ip.resetMinAndMax();
-         ImagePlus sp = new ImagePlus(title, ip);
-         DisplayUtils.AutoStretch(sp);
-         DisplayUtils.SetCalibration(sp, rowData.pixelSizeNm_ / mag);
-
-         ImageWindow w = new ImageWindow(sp);
-
-         // complicated way to get our listener at the front since ImageJ will consume the event
-         /*
-         MouseListener[] mls = w.getCanvas().getMouseListeners();
-         for (MouseListener ml : mls)
-            w.getCanvas().removeMouseListener(ml);
-          * 
-          */
-         w.getCanvas().addMouseListener(new ImageWindowListener(w, rowData,renderMode));
-         /*
-          * for (MouseListener ml : mls)
-            w.getCanvas().addMouseListener(ml);
-          *
-          */
-                  
-         w.setVisible(true);
-      }
-
-   }
-   
 
    /**
     * Plots Tracks using JFreeChart
