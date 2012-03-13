@@ -1483,7 +1483,7 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
 
          //updates the histogram after an ROI is drawn
          public void mouseReleased(MouseEvent me) {
-//            mdPanel_.refresh();
+            hyperImage_.updateAndDraw();
          }
 
          public void mouseEntered(MouseEvent me) {
@@ -1881,11 +1881,10 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
     * is the active window
     */
    private void imageChangedUpdate() {
-      if (isActiveDisplay()) {
-          mdPanel_.imageChangedUpdate(this);
-      }
       if (histograms_ != null)
-         histograms_.imageChanged();
+         histograms_.imageChanged(); 
+      if (isActiveDisplay()) 
+          mdPanel_.imageChangedUpdate(this);
       imageChangedWindowUpdate(); //used to update status line
    }
    

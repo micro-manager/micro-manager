@@ -639,7 +639,9 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
       }
       ImageProcessor ip = null;
       if (img_.getMode() == CompositeImage.COMPOSITE) {
-         ip = img_.getProcessor(channelIndex_ + 1);
+         ip = img_.getProcessor(channelIndex_ + 1);         
+         if (ip != null)
+            ip.setRoi(img_.getRoi());
       } else if (channelIndex_ == img_.getChannel() - 1) {
          ip = img_.getProcessor();
       }
