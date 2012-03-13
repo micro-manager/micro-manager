@@ -280,10 +280,6 @@ public class SingleChannelHistogram extends JPanel implements Histograms, Cursor
       display_.drawWithoutUpdate();
    }
 
-   public void setLogScale() {
-      calcAndDisplayHistAndStats(true);
-   }
-
    private void histRangeComboAction() {
       setHistMaxAndBinSize();     
       calcAndDisplayHistAndStats(true);

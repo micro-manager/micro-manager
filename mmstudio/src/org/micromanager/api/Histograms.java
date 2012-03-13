@@ -1,5 +1,5 @@
 ///////////////////////////////////////////////////////////////////////////////
-//FILE:          ContrastPanel.java
+//FILE:          Histograms.java
 //PROJECT:       Micro-Manager
 //SUBSYSTEM:     mmstudio
 //-----------------------------------------------------------------------------
@@ -21,12 +21,11 @@
 //
 package org.micromanager.api;
 
-import ij.ImagePlus;
-import javax.swing.JPanel;
 import org.micromanager.utils.ContrastSettings;
 
 /**
- * Interface for contrast panels, which display and control Image contrast
+ * Interface for histograms, which control Image contrast and can optionally
+ * draw themselves
  * @author Henry Pinkard
  */
 public interface Histograms  {
@@ -78,15 +77,25 @@ public interface Histograms  {
       
    /*
     * Returns the contrastSettings associated with the channel of the current image
+    * @param channel - index of the channel to get settigns from
     */
    public  abstract ContrastSettings getChannelContrastSettings(int channel);
 
+   /*
+    * sets the histogram display range fropdown box to the option corresponding to the
+    * value histMax or to the "Camera Depth" automatic option if histMax is equal to -1
+    */
    public abstract void setChannelHistogramDisplayMax(int channelIndex, int histMax);
    
-   public abstract void setLogScale();
-   
+   /*
+    * Called when a change in the reject outliers checkbox of reject percent spinner occurs
+    * to redraw the histogram and image appropriately
+    */
    public abstract void rejectOutliersChangeAction();    
 
+   /**
+    * Equivalent to pressing the Auto button for each channel
+    */
    public abstract void autoscaleAllChannels() ;
 
 
