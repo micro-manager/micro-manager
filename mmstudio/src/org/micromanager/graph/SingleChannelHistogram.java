@@ -417,21 +417,6 @@ public class SingleChannelHistogram extends JPanel implements Histograms, Cursor
       contrastMax_ = histMax_;
    }
 
-   private void loadContrastSettings(ImageCache cache) {
-      contrastMax_ = cache.getChannelMax(0);
-      if (contrastMax_ < 0) {
-         contrastMax_ = maxIntensity_;
-      }
-      contrastMin_ = cache.getChannelMin(0);
-      gamma_ = cache.getChannelGamma(0);
-
-      int histMax = cache.getChannelHistogramMax(0);
-      if (histMax != -1) {
-         int index = (int) (Math.ceil(Math.log(histMax) / Math.log(2)) - 3);
-         histRangeComboBox_.setSelectedIndex(index);
-      }
-   }
-
     public void imageChanged() {
         boolean slowHistUpdate = true;
         if (display_.getHistogramControlsState().slowHist) {
