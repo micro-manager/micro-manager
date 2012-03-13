@@ -12,6 +12,8 @@ import java.awt.Polygon;
 import java.awt.Rectangle;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Point2D;
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -28,6 +30,7 @@ public class Galvo implements ProjectionDevice {
    CMMCore mmc_;
    int side_ = 4096;
    ExecutorService galvoExecutor_;
+   HashSet<OnStateListener> onStateListeners_ = new HashSet<OnStateListener>();
 
    public Galvo(CMMCore mmc) {
       mmc_ = mmc;
@@ -115,6 +118,9 @@ public class Galvo implements ProjectionDevice {
             }
          }
       });
+      for (OnStateListener listener:onStateListeners_) {
+        listener.turnedOn();
+      }
    }
 
    public void turnOff() {
@@ -127,9 +133,12 @@ public class Galvo implements ProjectionDevice {
             }
          }
       });
+      for (OnStateListener listener:onStateListeners_) {
+        listener.turnedOff();
+      }
    }
 
-   public void setRois(final Roi[] rois, final AffineTransform trans, final int reps) {
+   public void setRois(final Roi[] rois, final AffineTransform trans) {
       galvoExecutor_.submit(new Runnable() {
          public void run() {
             try {
@@ -168,7 +177,7 @@ public class Galvo implements ProjectionDevice {
                }
             }
             try {
-               mmc_.loadGalvoPolygons(galvo_, reps);
+               mmc_.loadGalvoPolygons(galvo_);
             } catch (Exception ex) {
                ReportingUtils.logError(ex);
             }
@@ -181,17 +190,25 @@ public class Galvo implements ProjectionDevice {
       return new Point(bounds.x, bounds.y);
    }
 
-   public void runPolygons() {
+   public void runPolygons(final int reps) {
       galvoExecutor_.submit(new Runnable() {
          public void run() {
 
             try {
-               mmc_.runGalvoPolygons(galvo_);
+               mmc_.runGalvoPolygons(galvo_, reps);
             } catch (Exception ex) {
                ReportingUtils.logError(ex);
             }
          }
       });
 
+   }
+
+   public void addOnStateListener(OnStateListener listener) {
+      onStateListeners_.add(listener);
+   }
+
+   public void removeOnStateListener(OnStateListener listener) {
+      onStateListeners_.remove(listener);
    }
 }

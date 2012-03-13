@@ -1013,8 +1013,8 @@ namespace MM {
       virtual int AddPolygonVertex(int polygonIndex, double x, double y) = 0;
       virtual int DeletePolygons() = 0;
       virtual int RunSequence() = 0;
-      virtual int LoadPolygons(int repetitions) = 0;
-      virtual int RunPolygons() = 0;
+      virtual int LoadPolygons() = 0;
+      virtual int RunPolygons(int repetitions) = 0;
       virtual int StopSequence() = 0;
    };
 

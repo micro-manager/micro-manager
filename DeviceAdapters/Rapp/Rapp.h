@@ -58,8 +58,8 @@ public:
    int GetPosition(double& x, double& y);
    int AddPolygonVertex(int polygonIndex, double x, double y);
    int DeletePolygons();
-   int LoadPolygons(int repetitions);
-   int RunPolygons();
+   int LoadPolygons();
+   int RunPolygons(int repetitions);
    int RunSequence();
    int StopSequence();
 

@@ -12,13 +12,14 @@
 package org.micromanager.projector;
 
 import javax.swing.JSpinner;
+import javax.swing.SwingUtilities;
 import org.micromanager.utils.GUIUtils;
 
 /**
  *
  * @author arthur
  */
-public class ProjectorControlForm extends javax.swing.JFrame {
+public class ProjectorControlForm extends javax.swing.JFrame implements OnStateListener {
    private final ProjectorController controller_;
    private final ProjectorPlugin plugin_;
 
@@ -61,7 +62,7 @@ public class ProjectorControlForm extends javax.swing.JFrame {
       jLabel6 = new javax.swing.JLabel();
       setRoiButton = new javax.swing.JButton();
       jButton2 = new javax.swing.JButton();
-      jSpinner3 = new javax.swing.JSpinner();
+      roiRepetitionsSpinner = new javax.swing.JSpinner();
       allPixelsButton = new javax.swing.JButton();
 
       setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
@@ -219,6 +220,12 @@ public class ProjectorControlForm extends javax.swing.JFrame {
          }
       });
 
+      roiRepetitionsSpinner.addChangeListener(new javax.swing.event.ChangeListener() {
+         public void stateChanged(javax.swing.event.ChangeEvent evt) {
+            roiRepetitionsSpinnerStateChanged(evt);
+         }
+      });
+
       org.jdesktop.layout.GroupLayout jPanel3Layout = new org.jdesktop.layout.GroupLayout(jPanel3);
       jPanel3.setLayout(jPanel3Layout);
       jPanel3Layout.setHorizontalGroup(
@@ -230,7 +237,7 @@ public class ProjectorControlForm extends javax.swing.JFrame {
                .add(jPanel3Layout.createSequentialGroup()
                   .add(jLabel4)
                   .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
-                  .add(jSpinner3, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 36, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                  .add(roiRepetitionsSpinner, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 36, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                   .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
                   .add(jLabel6))
                .add(jPanel3Layout.createSequentialGroup()
@@ -247,7 +254,7 @@ public class ProjectorControlForm extends javax.swing.JFrame {
             .add(jPanel3Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
                .add(jLabel4)
                .add(jLabel6, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 14, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-               .add(jSpinner3, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+               .add(roiRepetitionsSpinner, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
             .add(18, 18, 18)
             .add(jButton2)
             .addContainerGap(org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
@@ -318,7 +325,7 @@ public class ProjectorControlForm extends javax.swing.JFrame {
     }//GEN-LAST:event_allPixelsButtonActionPerformed
 
     private void setRoiButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_setRoiButtonActionPerformed
-       controller_.setRois(Integer.parseInt(jSpinner3.getValue().toString()));
+       controller_.setRois();
 }//GEN-LAST:event_setRoiButtonActionPerformed
 
     private void pointAndShootIntervalCheckboxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_pointAndShootIntervalCheckboxActionPerformed
@@ -336,12 +343,17 @@ public class ProjectorControlForm extends javax.swing.JFrame {
     private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed
        controller_.attachToMDA(getSpinnerValue(this.startFrameMDA_)-1,
                this.repeatCheckBox.isSelected(),
-               getSpinnerValue(this.repeatFrameMDA_));
+               getSpinnerValue(this.repeatFrameMDA_),
+               getSpinnerValue(roiRepetitionsSpinner));
     }//GEN-LAST:event_jButton1ActionPerformed
 
     private void jButton2ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton2ActionPerformed
-       controller_.runPolygons();
+       controller_.runPolygons(getSpinnerValue(roiRepetitionsSpinner));
     }//GEN-LAST:event_jButton2ActionPerformed
+
+    private void roiRepetitionsSpinnerStateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_roiRepetitionsSpinnerStateChanged
+       updatePointAndShoot();
+    }//GEN-LAST:event_roiRepetitionsSpinnerStateChanged
 
     private int getSpinnerValue(JSpinner spinner) {
        return Integer.parseInt(spinner.getValue().toString());
@@ -362,6 +374,7 @@ public class ProjectorControlForm extends javax.swing.JFrame {
        plugin_.dispose();
     }
 
+
    // Variables declaration - do not modify//GEN-BEGIN:variables
    private javax.swing.JButton allPixelsButton;
    private javax.swing.JButton calibrateButton;
@@ -376,7 +389,6 @@ public class ProjectorControlForm extends javax.swing.JFrame {
    private javax.swing.JPanel jPanel1;
    private javax.swing.JPanel jPanel2;
    private javax.swing.JPanel jPanel3;
-   private javax.swing.JSpinner jSpinner3;
    private javax.swing.JTabbedPane jTabbedPane1;
    private javax.swing.JButton offButton;
    private javax.swing.JButton onButton;
@@ -385,8 +397,26 @@ public class ProjectorControlForm extends javax.swing.JFrame {
    private javax.swing.JToggleButton pointAndShootToggleButton;
    private javax.swing.JCheckBox repeatCheckBox;
    private javax.swing.JSpinner repeatFrameMDA_;
+   private javax.swing.JSpinner roiRepetitionsSpinner;
    private javax.swing.JButton setRoiButton;
    private javax.swing.JSpinner startFrameMDA_;
    // End of variables declaration//GEN-END:variables
 
+   public void turnedOn() {
+      SwingUtilities.invokeLater(new Runnable() {
+         public void run() {
+            onButton.setSelected(true);
+            offButton.setSelected(false);
+         }
+      });
+   }
+
+   public void turnedOff() {
+      SwingUtilities.invokeLater(new Runnable() {
+         public void run() {
+            onButton.setSelected(false);
+            offButton.setSelected(true);
+         }
+      });
+   }
 }

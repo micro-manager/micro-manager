@@ -457,8 +457,8 @@ public:
    double getGalvoYRange(const char* deviceLabel) throw (CMMError);
    void addGalvoPolygonVertex(const char* deviceLabel, int polygonIndex, double x, double y) throw (CMMError);
    void deleteGalvoPolygons(const char* deviceLabel) throw (CMMError);
-   void loadGalvoPolygons(const char* deviceLabel, int reps) throw (CMMError);
-   void runGalvoPolygons(const char* deviceLabel) throw (CMMError);
+   void loadGalvoPolygons(const char* deviceLabel) throw (CMMError);
+   void runGalvoPolygons(const char* deviceLabel, int reps) throw (CMMError);
    void runGalvoSequence(const char* deviceLabel) throw (CMMError);
    //@ }
 

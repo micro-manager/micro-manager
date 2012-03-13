@@ -232,7 +232,8 @@
     (let [wait-time (:wait-time-ms e2)]
       (or (nil? wait-time) (>= (:exposure e2) wait-time)))
     (select-values-match? e1 e2 [:exposure :position])
-    (not (:autofocus e2))))
+    (not (:autofocus e2))
+    (not (:runnables e2))))
 
 (defn make-triggers
   "Make a series of trigger sequences from a set of properties

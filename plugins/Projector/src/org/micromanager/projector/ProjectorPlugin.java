@@ -40,6 +40,7 @@ public class ProjectorPlugin implements MMPlugin {
 
       ProjectorController controller = new ProjectorController(app_);
       ProjectorControlForm form = new ProjectorControlForm(this, controller);
+      controller.addOnStateListener(form);
       form.setVisible(true);
    }
 

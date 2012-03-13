@@ -4963,10 +4963,10 @@ void CMMCore::deleteGalvoPolygons(const char* deviceLabel) throw (CMMError)
 /**
  * Load a set of galvo polygons to the device
  */
-void CMMCore::loadGalvoPolygons(const char* deviceLabel, int repetitions) throw (CMMError)
+void CMMCore::loadGalvoPolygons(const char* deviceLabel) throw (CMMError)
 {
    MM::Galvo* pGalvo = getSpecificDevice<MM::Galvo>(deviceLabel);
-   int ret =  pGalvo->LoadPolygons(repetitions);
+   int ret =  pGalvo->LoadPolygons();
    
    if (ret != DEVICE_OK)
    {
@@ -4977,10 +4977,10 @@ void CMMCore::loadGalvoPolygons(const char* deviceLabel, int repetitions) throw 
 /**
  * Run a loop of galvo polygons
  */
-void CMMCore::runGalvoPolygons(const char* deviceLabel) throw (CMMError)
+void CMMCore::runGalvoPolygons(const char* deviceLabel, int repetitions) throw (CMMError)
 {
    MM::Galvo* pGalvo = getSpecificDevice<MM::Galvo>(deviceLabel);
-   int ret =  pGalvo->RunPolygons();
+   int ret =  pGalvo->RunPolygons(repetitions);
    
    if (ret != DEVICE_OK)
    {

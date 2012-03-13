@@ -11,8 +11,6 @@ import ij.process.ByteProcessor;
 import ij.process.ImageProcessor;
 import java.awt.Color;
 import java.awt.geom.AffineTransform;
-import java.awt.image.AffineTransformOp;
-import java.awt.image.BufferedImage;
 import mmcorej.CMMCore;
 import org.micromanager.utils.ReportingUtils;
 
@@ -88,7 +86,7 @@ public class SLM implements ProjectionDevice {
       }
    }
 
-   public void setRois(Roi[] roi, AffineTransform trans, int reps) {
+   public void setRois(Roi[] roi, AffineTransform trans) {
       throw new UnsupportedOperationException("Not supported yet.");
 /*
       AffineTransformOp cmo = new AffineTransformOp(trans, AffineTransformOp.TYPE_BILINEAR);
@@ -147,7 +145,12 @@ public class SLM implements ProjectionDevice {
       throw new UnsupportedOperationException("Not supported yet.");
    }
 
-   public void runPolygons() {
+   public void runPolygons(int reptitions) {
       
    }
+
+   public void addOnStateListener(OnStateListener listener) {
+      throw new UnsupportedOperationException("Not supported yet.");
+   }
+
 }

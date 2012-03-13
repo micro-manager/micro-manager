@@ -265,7 +265,7 @@ int RappScanner::DeletePolygons()
    return DEVICE_OK;
 }
 
-int RappScanner::LoadPolygons(int repeats)
+int RappScanner::LoadPolygons()
 {
    tRectList rectangles;
 
@@ -275,6 +275,14 @@ int RappScanner::LoadPolygons(int repeats)
       UGA_->CreateA(polygons_.at(polygonIndex), polygonAccuracy_, minRectDimensions, &rectangles, laser2_);
    }
 
+
+   return DEVICE_OK;
+}
+
+
+
+int RappScanner::RunPolygons(int repeats)
+{
    tStringList sequenceList;
    int n = polygons_.size();
    sequenceList.push_back(std::string("on"));
@@ -295,11 +303,7 @@ int RappScanner::LoadPolygons(int repeats)
    {
       return DEVICE_ERR;
    }
-   return DEVICE_OK;
-}
 
-int RappScanner::RunPolygons()
-{
    return UGA_->RunSequence(false) ? DEVICE_OK : DEVICE_ERR; 
 }
 

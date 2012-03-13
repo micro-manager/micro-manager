@@ -62,8 +62,10 @@ public class ProjectorController {
       Thread th = new Thread("Projector calibration thread") {
 
          public void run() {
+
             AffineTransform firstApprox = getFirstApproxTransform();
             affineTransform = getFinalTransform(firstApprox);
+            dev.turnOff();
             gui.enableLiveMode(liveModeRunning);
          }
       };
@@ -150,7 +152,7 @@ public class ProjectorController {
       }
    }
 
-   public void setRois(int reps) {
+   public void setRois() {
       Roi singleRoi = gui.getImageWin().getImagePlus().getRoi();
       Roi[] rois = null;
       final RoiManager mgr = RoiManager.getInstance();
@@ -161,13 +163,14 @@ public class ProjectorController {
       } else {
          ReportingUtils.showError("Please first select ROI(s)");
       }
-      dev.setRois(rois, affineTransform, reps);
+      dev.setRois(rois, affineTransform);
    }
 
    public MouseListener setupPointAndShootMouseListener() {
       final ProjectorController controller = this;
       return new MouseAdapter() {
          public void mouseClicked(MouseEvent e) {
+            System.out.println(e);
             Point p = e.getPoint();
             Point2D.Double devP = (Point2D.Double) affineTransform.transform(new Point2D.Double(p.x, p.y), null);
             if (controller.usePointAndShootInterval) {
@@ -181,24 +184,27 @@ public class ProjectorController {
 
    public void activatePointAndShootMode(boolean on) {
       final ImageCanvas canvas = gui.getImageWin().getCanvas();
+           for (MouseListener listener:canvas.getMouseListeners()) {
+            if (listener == pointAndShootMouseListener) {
+               canvas.removeMouseListener(listener);
+            }
+         }
       if (on) {
          canvas.addMouseListener(pointAndShootMouseListener);
-      } else {
-         canvas.removeMouseListener(pointAndShootMouseListener);
       }
    }
 
-   public void attachToMDA(int frameOn, boolean repeat, int repeatInterval) {
+   public void attachToMDA(int frameOn, boolean repeat, int repeatInterval, final int roiReps) {
       Runnable runPolygons = new Runnable() {
          public void run() {
-            runPolygons();
+            runPolygons(roiReps);
          }
       };
 
       final AcquisitionEngine acq = gui.getAcquisitionEngine();
       if (repeat) {
-         for (int i = frameOn; i < acq.getNumFrames(); frameOn += repeatInterval) {
-            acq.attachRunnable(frameOn, -1, 0, 0, runPolygons);
+         for (int i = frameOn; i < acq.getNumFrames(); i += repeatInterval) {
+            acq.attachRunnable(i, -1, 0, 0, runPolygons);
          }
       } else {
          acq.attachRunnable(frameOn, -1, 0, 0, runPolygons);
@@ -213,7 +219,11 @@ public class ProjectorController {
       this.pointAndShootInterval = intervalUs;
    }
 
-   void runPolygons() {
-      dev.runPolygons();
+   void runPolygons(int reps) {
+      dev.runPolygons(reps);
+   }
+
+   void addOnStateListener(OnStateListener listener) {
+      dev.addOnStateListener(listener);
    }
 }
