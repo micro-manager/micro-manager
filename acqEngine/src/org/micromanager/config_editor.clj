@@ -96,6 +96,11 @@
     (when (< -1 row (count groups))
       (nth groups row))))
 
+(defn get-selected-preset []
+  (let [row (.getSelectedRow (@widgets :preset-names-table))
+        presets (keys @group-data)]
+    (when (< -1 row (count @group-data))
+      (nth presets row))))
 
 (defn update-group-data []
     (reset! group-data 
@@ -234,7 +239,8 @@
         preset (config-struct (core getConfigGroupState group))]
     (doseq [[[d p] v] preset]
       (core defineConfig group preset-name d p v))
-    (redraw-data)))
+    (redraw-data)
+    ))
 
 (defn add-property [group dev prop]
   (when-not ((set (properties @group-data)) [dev prop])
@@ -301,7 +307,9 @@
       (.setModel preset-names-table (preset-names-table-model))
       (.setModel presets-table (presets-table-model))
       (link-table-row-selection presets-table preset-names-table)
-      (double-click-for-new-row groups-table #(println "new row!"))
+      (double-click-for-new-row groups-table new-group)
+      (double-click-for-new-row
+        preset-names-table #(new-preset (get-selected-group)))
       (.setAutoResizeMode presets-table JTable/AUTO_RESIZE_OFF)
       (doto cp
         (.setLayout (SpringLayout.))
