@@ -339,7 +339,7 @@ public class LabelsPage extends PagePanel {
       return true;
   }
 
-   public boolean exitPage(boolean next) {
+   public boolean exitPage(boolean toNextPage) {
       // define labels in hardware and synchronize device data with microscope model
       try {
          if (labelTable_.isEditing())
@@ -348,7 +348,12 @@ public class LabelsPage extends PagePanel {
          model_.loadDeviceDataFromHardware(core_);
       } catch (Exception e) {
          handleError(e.getMessage());
-         return false;
+         
+         // prevent from going to the next page if there is an error
+         if (toNextPage)
+            return false;
+         else
+            return true; // allow going back
       }
       return true;
    }

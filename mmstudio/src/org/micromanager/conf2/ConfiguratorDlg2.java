@@ -141,9 +141,7 @@ public class ConfiguratorDlg2 extends MMDialog {
         helpTextPane_.setContentType("text/html; charset=ISO-8859-1");
 
         nextButton_ = new JButton();
-        nextButton_.addActionListener(new ActionListener() {
-
-           
+        nextButton_.addActionListener(new ActionListener() {          
             public void actionPerformed(ActionEvent arg0) {
                 if (curPage_ == pages_.length - 1) {
                     
@@ -157,8 +155,6 @@ public class ConfiguratorDlg2 extends MMDialog {
         });
 
 
-
-
         nextButton_.setText("Next >");
         nextButton_.setBounds(750, 565, 93, 23);
         getContentPane().add(nextButton_);
@@ -166,7 +162,6 @@ public class ConfiguratorDlg2 extends MMDialog {
 
         backButton_ = new JButton();
         backButton_.addActionListener(new ActionListener() {
-
             public void actionPerformed(ActionEvent arg0) {
                 setPage(curPage_ - 1);
             }

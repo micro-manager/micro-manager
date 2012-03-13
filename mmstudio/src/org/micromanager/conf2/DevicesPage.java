@@ -513,7 +513,7 @@ private JComboBox byLibCombo_;
              JOptionPane.showMessageDialog(this, "Unable to continue: at least one device failed.\n" +
                    "To proceed to next step, either remove failed device(s) from the list,\nor edit settings until the status reads OK.\n" +
                    "To avoid making any changes exit the wizard without saving the configuration.");
-             return false;
+             return toNextPage ? false : true;
           }
           
           // refresh parent ID references (backward compatibility with old config files)
@@ -579,8 +579,7 @@ private JComboBox byLibCombo_;
       if (null != srows) {
          if (0 < srows.length) {
             if (0 < srows[0]) {
-               DeviceTreeNode node = (DeviceTreeNode) theTree_
-                     .getLastSelectedPathComponent();
+               DeviceTreeNode node = (DeviceTreeNode) theTree_.getLastSelectedPathComponent();
                Object uo = node.getUserObject();
                if (uo != null) {
                   if (uo.getClass().isArray()) {
@@ -601,8 +600,7 @@ private JComboBox byLibCombo_;
       }
       if (0 < srows.length) {
          if (0 < srows[0]) {
-            DeviceTreeNode node = (DeviceTreeNode) theTree_
-                  .getLastSelectedPathComponent();
+            DeviceTreeNode node = (DeviceTreeNode) theTree_.getLastSelectedPathComponent();
 
             Object[] userData = node.getUserDataArray();
             if (null == userData) {
@@ -786,8 +784,7 @@ private JComboBox byLibCombo_;
          devices_ = model.getAvailableDevicesCompact();
 
       String thisLibrary = "";
-      DefaultMutableTreeNode root = new DefaultMutableTreeNode(
-            "Devices supported by " + "\u00B5" + "Manager");
+      DefaultMutableTreeNode root = new DefaultMutableTreeNode("Devices supported by " + "\u00B5" + "Manager");
       DeviceTreeNode node = null;
       for (int idd = 0; idd < devices_.length; ++idd) {
          // assume that the first library doesn't have an empty name! (of
@@ -799,8 +796,7 @@ private JComboBox byLibCombo_;
             thisLibrary = devices_[idd].getLibrary(); // remember which library
                                                       // we are processing
          }
-         Object[] userObject = { devices_[idd].getLibrary(),
-               devices_[idd].getAdapterName(), devices_[idd].getDescription() };
+         Object[] userObject = { devices_[idd].getLibrary(), devices_[idd].getAdapterName(), devices_[idd].getDescription() };
          DeviceTreeNode aLeaf = new DeviceTreeNode("", true);
          aLeaf.setUserObject(userObject);
          node.add(aLeaf);

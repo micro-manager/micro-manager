@@ -44,14 +44,18 @@ public class MMDialog extends JDialog {
    
    public MMDialog() {
       super();
-      prefs_ = Preferences.userNodeForPackage(this.getClass());      
-      setBackground(MMStudioMainFrame.getInstance().getBackgroundColor());
+      prefs_ = Preferences.userNodeForPackage(this.getClass());
+      MMStudioMainFrame mfr = MMStudioMainFrame.getInstance();
+      if (mfr != null)
+    	  setBackground(mfr.getBackgroundColor());
       
    }
    public MMDialog(Frame owner) {
       super(owner);
       prefs_ = Preferences.userNodeForPackage(this.getClass());
-      setBackground(MMStudioMainFrame.getInstance().getBackgroundColor());
+      MMStudioMainFrame mfr = MMStudioMainFrame.getInstance();
+      if (mfr != null)
+    	  setBackground(mfr.getBackgroundColor());
    }
    
    protected void loadPosition(int x, int y, int width, int height) {
