@@ -1,11 +1,10 @@
 ///////////////////////////////////////////////////////////////////////////////
-//FILE:          MetadataPanel.java
+//FILE:          SingleChannelHistogram.java
 //PROJECT:       Micro-Manager
 //SUBSYSTEM:     mmstudio
 //-----------------------------------------------------------------------------
 //
 // AUTHOR:       Henry Pinkard, henry.pinkard@gmail.com, 2012
-//                (Based off of a similar class by Nenad Amodaj, 2006)
 //
 // COPYRIGHT:    University of California, San Francisco, 2012
 //
@@ -41,7 +40,6 @@ import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
-import org.json.JSONException;
 import org.micromanager.MMStudioMainFrame;
 import org.micromanager.acquisition.VirtualAcquisitionDisplay;
 import org.micromanager.api.Histograms;
@@ -49,12 +47,11 @@ import org.micromanager.api.ImageCache;
 import org.micromanager.graph.HistogramPanel.CursorListener;
 import org.micromanager.utils.ContrastSettings;
 import org.micromanager.utils.HistogramUtils;
-import org.micromanager.utils.MDUtils;
-import org.micromanager.utils.ReportingUtils;
 import org.micromanager.utils.NumberUtils;
 
 /**
- * Slider and histogram panel for adjusting contrast and brightness.
+ * A single histogram and a few controls for manipulating image contrast 
+ * and histogram display
  * 
  */
 public class SingleChannelHistogram extends JPanel implements Histograms, CursorListener {

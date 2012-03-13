@@ -1,5 +1,5 @@
 ///////////////////////////////////////////////////////////////////////////////
-//FILE:          MultiChannelContrastPanel.java
+//FILE:          ContrastPanel.java
 //PROJECT:       Micro-Manager
 //SUBSYSTEM:     mmstudio
 //-----------------------------------------------------------------------------
@@ -25,9 +25,7 @@ import ij.CompositeImage;
 import ij.ImagePlus;
 import ij.gui.Overlay;
 import java.awt.*;
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.prefs.Preferences;
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.JCheckBox;
@@ -38,23 +36,19 @@ import javax.swing.JScrollPane;
 import javax.swing.JSpinner;
 import javax.swing.ScrollPaneConstants;
 import javax.swing.SpinnerNumberModel;
-import javax.swing.SpringLayout;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
-import org.micromanager.MMStudioMainFrame;
 import org.micromanager.acquisition.MetadataPanel;
 import org.micromanager.acquisition.VirtualAcquisitionDisplay;
 import org.micromanager.api.Histograms;
-import org.micromanager.api.ImageCache;
-import org.micromanager.utils.ContrastSettings;
-import org.micromanager.utils.MDUtils;
-import org.micromanager.utils.NumberUtils;
-import org.micromanager.utils.ReportingUtils;
 import org.micromanager.utils.ScaleBar;
 
 /**
  *
- * @author Henry
+ * @author Henry Pinkard
+ * This class is a singleton instance of the component in the contrast tab of the
+ * metadata panel.  It has a single instance of the controls on top, and changes which histograms 
+ * are displayed based on the frontmost window
  */
 public class ContrastPanel extends JPanel {
 
