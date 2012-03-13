@@ -247,8 +247,7 @@ public class AddDeviceDlg extends MMDialog implements MouseListener,
          root.add(node);
          Vector<Device> devs = nodes.get(nodeName);
          for (int i = 0; i < devs.size(); i++) {
-            Object[] userObject = { devs.get(i).getLibrary(),
-                  devs.get(i).getAdapterName(), devs.get(i).getDescription() };
+            Object[] userObject = { devs.get(i).getLibrary(), devs.get(i).getAdapterName(), devs.get(i).getDescription() , devs.get(i).isHub()};
             DeviceTreeNode aLeaf = new DeviceTreeNode("", false);
             aLeaf.setUserObject(userObject);
             node.add(aLeaf);
@@ -286,8 +285,7 @@ public class AddDeviceDlg extends MMDialog implements MouseListener,
             thisLibrary = devices_[idd].getLibrary(); // remember which library
                                                       // we are processing
          }
-         Object[] userObject = { devices_[idd].getLibrary(),
-               devices_[idd].getAdapterName(), devices_[idd].getDescription() };
+         Object[] userObject = { devices_[idd].getLibrary(), devices_[idd].getAdapterName(), devices_[idd].getDescription(), devices_[idd].isHub() };
          DeviceTreeNode aLeaf = new DeviceTreeNode("", true);
          aLeaf.setUserObject(userObject);
          node.add(aLeaf);

@@ -20,11 +20,9 @@ class DeviceTreeNode extends DefaultMutableTreeNode {
             Object[] userData = (Object[]) uo;
             if (2 < userData.length) {
                if (showLib_)
-                  ret = userData[1].toString() + " | "
-                        + userData[2].toString();
+                  ret = ((Boolean)userData[3] ? "*" : "") + userData[1].toString() + " | " + userData[2].toString();
                else
-                  ret = userData[0].toString() + " | "
-                        + userData[2].toString();
+                  ret = ((Boolean)userData[3] ? "*" : "") + userData[0].toString() + " | " + userData[2].toString();
             }
          } else {
             ret = uo.toString();
