@@ -52,12 +52,10 @@ import edu.ucsf.tsf.TaggedSpotsProtos.Spot;
 import ij.gui.StackWindow;
 import ij.gui.YesNoCancelDialog;
 import ij.process.ByteProcessor;
-import ij.process.FloatProcessor;
 import ij.process.ShortProcessor;
 import java.awt.Cursor;
 import java.awt.Dimension;
 import java.awt.FileDialog;
-import java.awt.Rectangle;
 import java.awt.geom.Point2D;
 
 import java.io.DataInputStream;
@@ -233,9 +231,16 @@ public class DataCollectionForm extends javax.swing.JFrame {
             if (rowData_.get(row).isTrack_)
                plotData(rowData_.get(row), plotComboBox_.getSelectedIndex());
             else {
-               int mag = 1 << visualizationMagnification_.getSelectedIndex(); 
+               int mag = 1 << visualizationMagnification_.getSelectedIndex();
+               SpotDataFilter sf = new SpotDataFilter();
+               if (filterSigmaCheckBox_.isSelected())
+                  sf.setSigma(true, Double.parseDouble(sigmaMin_.getText()), 
+                          Double.parseDouble(sigmaMax_.getText()) );
+               if (filterIntensityCheckBox_.isSelected())
+                  sf.setIntensity(true, Double.parseDouble(intensityMin_.getText()), 
+                          Double.parseDouble(intensityMax_.getText()) );
                ImageRenderer.renderData(null, rowData_.get(row), visualizationModel_.getSelectedIndex(),
-                       mag, null);
+                       mag, null, sf);
             }
          }
          else if (column == 4) {
@@ -315,6 +320,15 @@ public class DataCollectionForm extends javax.swing.JFrame {
         c2CorrectButton = new javax.swing.JButton();
         referenceName_ = new javax.swing.JLabel();
         unjitterButton_ = new javax.swing.JButton();
+        jLabel1 = new javax.swing.JLabel();
+        filterSigmaCheckBox_ = new javax.swing.JCheckBox();
+        filterIntensityCheckBox_ = new javax.swing.JCheckBox();
+        sigmaMin_ = new javax.swing.JTextField();
+        intensityMin_ = new javax.swing.JTextField();
+        sigmaMax_ = new javax.swing.JTextField();
+        intensityMax_ = new javax.swing.JTextField();
+        jLabel2 = new javax.swing.JLabel();
+        jLabel3 = new javax.swing.JLabel();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
         setTitle("Gaussian tracking data");
@@ -342,7 +356,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
         visualizationMagnification_.setFont(new java.awt.Font("Lucida Grande", 0, 10));
         visualizationMagnification_.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "1x", "2x", "4x", "8x" }));
 
-        visualizationModel_.setFont(new java.awt.Font("Lucida Grande", 0, 10)); // NOI18N
+        visualizationModel_.setFont(new java.awt.Font("Lucida Grande", 0, 10));
         visualizationModel_.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "Gaussian" }));
 
         saveButton.setFont(new java.awt.Font("Lucida Grande", 0, 10));
@@ -377,7 +391,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
             }
         });
 
-        pairsButton.setFont(new java.awt.Font("Lucida Grande", 0, 10)); // NOI18N
+        pairsButton.setFont(new java.awt.Font("Lucida Grande", 0, 10));
         pairsButton.setText("Pairs");
         pairsButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -393,7 +407,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
             }
         });
 
-        referenceName_.setFont(new java.awt.Font("Lucida Grande", 0, 11));
+        referenceName_.setFont(new java.awt.Font("Lucida Grande", 0, 11)); // NOI18N
         referenceName_.setText("jLabel1");
 
         unjitterButton_.setFont(new java.awt.Font("Lucida Grande", 0, 10));
@@ -404,11 +418,48 @@ public class DataCollectionForm extends javax.swing.JFrame {
             }
         });
 
+        jLabel1.setFont(new java.awt.Font("Lucida Grande", 0, 11)); // NOI18N
+        jLabel1.setText("Filters:");
+
+        filterSigmaCheckBox_.setFont(new java.awt.Font("Lucida Grande", 0, 11)); // NOI18N
+        filterSigmaCheckBox_.setText("Sigma");
+        filterSigmaCheckBox_.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                filterSigmaCheckBox_ActionPerformed(evt);
+            }
+        });
+
+        filterIntensityCheckBox_.setFont(new java.awt.Font("Lucida Grande", 0, 11)); // NOI18N
+        filterIntensityCheckBox_.setText("Intensity");
+        filterIntensityCheckBox_.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                filterIntensityCheckBox_ActionPerformed(evt);
+            }
+        });
+
+        sigmaMin_.setFont(new java.awt.Font("Lucida Grande", 0, 11)); // NOI18N
+        sigmaMin_.setText("0");
+
+        intensityMin_.setFont(new java.awt.Font("Lucida Grande", 0, 11)); // NOI18N
+        intensityMin_.setText("0");
+
+        sigmaMax_.setFont(new java.awt.Font("Lucida Grande", 0, 11)); // NOI18N
+        sigmaMax_.setText("0");
+
+        intensityMax_.setFont(new java.awt.Font("Lucida Grande", 0, 11)); // NOI18N
+        intensityMax_.setText("0");
+
+        jLabel2.setFont(new java.awt.Font("Lucida Grande", 0, 11)); // NOI18N
+        jLabel2.setText("< spot <");
+
+        jLabel3.setFont(new java.awt.Font("Lucida Grande", 0, 11)); // NOI18N
+        jLabel3.setText("< spot <");
+
         org.jdesktop.layout.GroupLayout layout = new org.jdesktop.layout.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-            .add(jScrollPane1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 812, Short.MAX_VALUE)
+            .add(jScrollPane1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 814, Short.MAX_VALUE)
             .add(org.jdesktop.layout.GroupLayout.TRAILING, layout.createSequentialGroup()
                 .addContainerGap()
                 .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING, false)
@@ -431,7 +482,28 @@ public class DataCollectionForm extends javax.swing.JFrame {
                                 .add(visualizationMagnification_, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 90, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                                 .add(plotComboBox_, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 90, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
-                            .add(referenceName_, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 234, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)))
+                            .add(layout.createSequentialGroup()
+                                .add(referenceName_, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 234, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                                .add(180, 180, 180)
+                                .add(jLabel1)
+                                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                                .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING, false)
+                                    .add(layout.createSequentialGroup()
+                                        .add(filterIntensityCheckBox_, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 78, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                                        .add(intensityMin_))
+                                    .add(layout.createSequentialGroup()
+                                        .add(filterSigmaCheckBox_)
+                                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
+                                        .add(sigmaMin_, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 46, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)))
+                                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, 12, Short.MAX_VALUE)
+                                .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.TRAILING)
+                                    .add(jLabel2)
+                                    .add(jLabel3))
+                                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                                .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.TRAILING)
+                                    .add(sigmaMax_, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 46, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                                    .add(intensityMax_, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 46, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)))))
                     .add(layout.createSequentialGroup()
                         .add(93, 93, 93)
                         .add(pairsButton)
@@ -454,13 +526,25 @@ public class DataCollectionForm extends javax.swing.JFrame {
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.TRAILING)
                     .add(c2StandardButton, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 19, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                    .add(referenceName_))
+                    .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
+                        .add(referenceName_)
+                        .add(jLabel1)
+                        .add(filterSigmaCheckBox_)
+                        .add(sigmaMin_, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 17, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                        .add(sigmaMax_, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 17, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                        .add(jLabel3)))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
-                    .add(c2CorrectButton, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 19, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                    .add(pairsButton, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 19, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                    .add(unjitterButton_, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 19, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
-                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                    .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
+                        .add(c2CorrectButton, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 19, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                        .add(pairsButton, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 19, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                        .add(unjitterButton_, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 19, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+                    .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
+                        .add(filterIntensityCheckBox_)
+                        .add(intensityMin_, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 18, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                        .add(intensityMax_, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 17, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                        .add(jLabel2)))
+                .add(8, 8, 8)
                 .add(jScrollPane1, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 401, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
         );
 
@@ -583,7 +667,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
        if (row > -1)
          saveData(rowData_.get(row));
        else
-          JOptionPane.showMessageDialog(null, "Please select a dataset to save");
+          JOptionPane.showMessageDialog(getInstance(), "Please select a dataset to save");
     }//GEN-LAST:event_saveButtonActionPerformed
 
     private void removeButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_removeButtonActionPerformed
@@ -594,7 +678,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
              myTableModel_.fireTableRowsDeleted(rows[row], rows[row]);
           }
        } else
-         JOptionPane.showMessageDialog(null, "No dataset selected");
+         JOptionPane.showMessageDialog(getInstance(), "No dataset selected");
     }//GEN-LAST:event_removeButtonActionPerformed
 
     private void showButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_showButtonActionPerformed
@@ -602,7 +686,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
        if (row > -1)
          showResults(rowData_.get(row));
        else
-         JOptionPane.showMessageDialog(null, "Please select a dataset to show");
+         JOptionPane.showMessageDialog(getInstance(), "Please select a dataset to show");
     }//GEN-LAST:event_showButtonActionPerformed
 
    private void formComponentResized(java.awt.event.ComponentEvent evt) {//GEN-FIRST:event_formComponentResized
@@ -619,7 +703,9 @@ public class DataCollectionForm extends javax.swing.JFrame {
     */
    private void c2StandardButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_c2StandardButtonActionPerformed
       int row = jTable1_.getSelectedRow();
-      if (row > -1) {
+      if (row < 0)
+         JOptionPane.showMessageDialog(getInstance(), "Please select a dataset as color reference");
+      else {
          // Get points from both channels in first frame as ArrayLists        
          ArrayList<Point2D.Double> xyPointsCh1 = new ArrayList<Point2D.Double>();
          ArrayList<Point2D.Double> xyPointsCh2 = new ArrayList<Point2D.Double>();
@@ -633,6 +719,11 @@ public class DataCollectionForm extends javax.swing.JFrame {
                else if (gs.getChannel() == 2)
                   xyPointsCh2.add(point);
             }
+         }
+         
+         if (xyPointsCh2.size() == 0) {
+            JOptionPane.showMessageDialog(getInstance(), "No points found in second channel.  Is this a dual channel dataset?");
+            return;
          }
          
          
@@ -672,6 +763,12 @@ public class DataCollectionForm extends javax.swing.JFrame {
     */
    private void pairsButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_pairsButtonActionPerformed
       final int row = jTable1_.getSelectedRow();
+      if (row < 0) {
+         JOptionPane.showMessageDialog(getInstance(), "Please select a dataset for the Pair function");
+
+         return;
+      }
+      
       if (row > -1) {
 
          Runnable doWorkRunnable = new Runnable() {
@@ -692,12 +789,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
                
                XYSeries xData = new XYSeries("XError");
                XYSeries yData = new XYSeries("YError");
-               
-               
-               
-               //sp.setStack(stack, 1, 1, stack.getSize());
-              
-                
+    
                             
                ij.IJ.showStatus("Creating Pairs...");
                
@@ -723,11 +815,18 @@ public class DataCollectionForm extends javax.swing.JFrame {
                         }
                      }
                   }
+                  
+                  if (xyPointsCh2.size() == 0) {
+                     JOptionPane.showMessageDialog(getInstance(), "No points found in second channel.  Is this a 2-channel dataset?");
+                     return;
+                  }
+                     
 
                   // Find matching points in the two ArrayLists
                   Iterator it2 = xyPointsCh1.iterator();
                   NearestPoint2D np = new NearestPoint2D(xyPointsCh2, MAXMATCHDISTANCE);
-
+                  
+                  
                   ArrayList<Double> distances = new ArrayList<Double>();
                   ArrayList<Double> errorX = new ArrayList<Double>();
                   ArrayList<Double> errorY = new ArrayList<Double>();
@@ -868,7 +967,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
       if (row > -1) {     
          correct2C(rowData_.get(row));
       } else
-         JOptionPane.showMessageDialog(null, "Please select a dataset to color correct");
+         JOptionPane.showMessageDialog(getInstance(), "Please select a dataset to color correct");
    }//GEN-LAST:event_c2CorrectButtonActionPerformed
 
    private void unjitterButton_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_unjitterButton_ActionPerformed
@@ -876,13 +975,28 @@ public class DataCollectionForm extends javax.swing.JFrame {
       if (row > -1) {     
          unJitter(rowData_.get(row));
       } else
-         JOptionPane.showMessageDialog(null, "Please select a dataset to unjitter");
+         JOptionPane.showMessageDialog(getInstance(), "Please select a dataset to unjitter");
    }//GEN-LAST:event_unjitterButton_ActionPerformed
+
+   private void filterSigmaCheckBox_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_filterSigmaCheckBox_ActionPerformed
+      // TODO add your handling code here:
+   }//GEN-LAST:event_filterSigmaCheckBox_ActionPerformed
+
+   private void filterIntensityCheckBox_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_filterIntensityCheckBox_ActionPerformed
+      // TODO add your handling code here:
+   }//GEN-LAST:event_filterIntensityCheckBox_ActionPerformed
 
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton c2CorrectButton;
     private javax.swing.JButton c2StandardButton;
+    private javax.swing.JCheckBox filterIntensityCheckBox_;
+    private javax.swing.JCheckBox filterSigmaCheckBox_;
+    private javax.swing.JTextField intensityMax_;
+    private javax.swing.JTextField intensityMin_;
+    private javax.swing.JLabel jLabel1;
+    private javax.swing.JLabel jLabel2;
+    private javax.swing.JLabel jLabel3;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JTable jTable1_;
     private javax.swing.JButton loadButton;
@@ -892,6 +1006,8 @@ public class DataCollectionForm extends javax.swing.JFrame {
     private javax.swing.JButton removeButton;
     private javax.swing.JButton saveButton;
     private javax.swing.JButton showButton;
+    private javax.swing.JTextField sigmaMax_;
+    private javax.swing.JTextField sigmaMin_;
     private javax.swing.JButton unjitterButton_;
     private javax.swing.JComboBox visualizationMagnification_;
     private javax.swing.JComboBox visualizationModel_;
@@ -970,17 +1086,17 @@ public class DataCollectionForm extends javax.swing.JFrame {
             rt.addValue(Terms.YPIX, gd.getY());
          }
       }
-
+      
       TextPanel tp;
       TextWindow win;
-
+      
       String name = "Spots from: " + rowData.name_;
       rt.show(name);
       ImagePlus siPlus = ij.WindowManager.getImage(rowData.title_);
       // Attach listener to TextPanel
       Frame frame = WindowManager.getFrame(name);
-      if (frame!=null && frame instanceof TextWindow && siPlus != null) {
-         win = (TextWindow)frame;
+      if (frame != null && frame instanceof TextWindow && siPlus != null) {
+         win = (TextWindow) frame;
          tp = win.getTextPanel();
 
          // TODO: the following does not work, there is some voodoo going on here
@@ -990,13 +1106,13 @@ public class DataCollectionForm extends javax.swing.JFrame {
          for (KeyListener ks : tp.getKeyListeners()) {
             tp.removeKeyListener(ks);
          }
-
+         
          ResultsTableListener myk = new ResultsTableListener(siPlus, rt, win, rowData.halfSize_);
          tp.addKeyListener(myk);
          tp.addMouseListener(myk);
          frame.toFront();
       }
-
+      
    }
 
    /**
@@ -1027,13 +1143,13 @@ public class DataCollectionForm extends javax.swing.JFrame {
                return;
             }
          }
-
-
-
+         
+         
+         
          Runnable doWorkRunnable = new Runnable() {
-
+            
             public void run() {
-
+               
                SpotList.Builder tspBuilder = SpotList.newBuilder();
                tspBuilder.setApplicationId(1).
                        setName(rowData.name_).
@@ -1062,23 +1178,24 @@ public class DataCollectionForm extends javax.swing.JFrame {
                      tspBuilder.setFitMode(FitMode.TWOAXISANDTHETA);
                      break;
                }
-
-
+               
+               
                SpotList spotList = tspBuilder.build();
                try {
                   setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
-
+                  
                   FileOutputStream fo = new FileOutputStream(selectedFile);
                   // write space for magic nr and offset to spotList
-                  for (int i = 0; i < 12; i++)
+                  for (int i = 0; i < 12; i++) {
                      fo.write(0);
+                  }
                   
                   
-
+                  
                   int counter = 0;
                   for (GaussianSpotData gd : rowData.spotList_) {
                      
-                     if ((counter % 1000) == 0) { 
+                     if ((counter % 1000) == 0) {                        
                         ij.IJ.showStatus("Saving spotData...");
                         ij.IJ.showProgress(counter, rowData.spotList_.size());
                      }
@@ -1102,10 +1219,10 @@ public class DataCollectionForm extends javax.swing.JFrame {
                                 setA((float) gd.getA()).
                                 setTheta((float) gd.getTheta()).
                                 setXPrecision((float) gd.getSigma());
-
+                        
                         double width = gd.getWidth();
                         double xPrec = gd.getSigma();
-
+                        
                         Spot spot = spotBuilder.build();
                         // write message size and message
                         spot.writeDelimitedTo(fo);
@@ -1116,12 +1233,12 @@ public class DataCollectionForm extends javax.swing.JFrame {
                   FileChannel fc = fo.getChannel();
                   long offset = fc.position();
                   spotList.writeDelimitedTo(fo);
-                  
+
                   // now go back to write offset to the stream
                   fc.position(4);
                   DataOutputStream dos = new DataOutputStream(fo);
                   dos.writeLong(offset - 12);
-
+                  
                   fo.close();
                   
                   ij.IJ.showProgress(1);
@@ -1137,7 +1254,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
          (new Thread(doWorkRunnable)).start();
          
       }
-
+      
    }
 
    /**
@@ -1147,11 +1264,11 @@ public class DataCollectionForm extends javax.swing.JFrame {
     * @rowData
     */
    private void straightenTrack(MyRowData rowData) {
-
+      
       if (rowData.spotList_.size() <= 1) {
          return;
       }
-
+      
       ArrayList<Point2D.Double> xyPoints = new ArrayList<Point2D.Double>();
       Iterator it = rowData.spotList_.iterator();
       while (it.hasNext()) {
@@ -1164,7 +1281,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
       ArrayList<Point2D.Double> xyCorrPoints = GaussianUtils.pcaRotate(xyPoints);
       List<GaussianSpotData> transformedResultList =
               Collections.synchronizedList(new ArrayList<GaussianSpotData>());
-
+      
       for (int i = 0; i < xyPoints.size(); i++) {
          GaussianSpotData oriSpot = rowData.spotList_.get(i);
          GaussianSpotData spot = new GaussianSpotData(oriSpot);
@@ -1181,8 +1298,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
               rowData.nrSlices_, 1, rowData.maxNrSpots_, transformedResultList,
               rowData.timePoints_, true);
    }
-   
-   
+
    /**
     * Creates a new data set that is corrected for motion blur
     * Correction is performed by projecting a number of images onto a 
@@ -1197,16 +1313,16 @@ public class DataCollectionForm extends javax.swing.JFrame {
       if (rowData.spotList_.size() <= 1) {
          return;
       }
-
+      
       ij.IJ.showStatus("Executing jitter correction");
-
+      
       Runnable doWorkRunnable = new Runnable() {
-
+         
          public void run() {
-
+            
             int mag = 1 << visualizationMagnification_.getSelectedIndex();
-
-
+            
+            
             int width = mag * rowData.width_;
             int height = mag * rowData.height_;
             int size = width * height;
@@ -1217,45 +1333,48 @@ public class DataCollectionForm extends javax.swing.JFrame {
             if (nrOfTests == 0) {
                useSlices = true;
                nrOfTests = rowData.nrSlices_ / framesToCombine;
-               if (rowData.nrSlices_ % framesToCombine > 0)
+               if (rowData.nrSlices_ % framesToCombine > 0) {
                   nrOfTests++;
+               }
             } else {
-               if (rowData.nrFrames_ % framesToCombine > 0)
+               if (rowData.nrFrames_ % framesToCombine > 0) {
                   nrOfTests++;
+               }
             }
 
             // storage of stage movement data
             class StageMovementData {
-
+               
                Point2D.Double pos_;
                Point frameRange_;
-
+               
                StageMovementData(Point2D.Double pos, Point frameRange) {
                   pos_ = pos;
                   frameRange_ = frameRange;
                }
             }
             ArrayList<StageMovementData> stagePos = new ArrayList<StageMovementData>();
-
+            
             try {
                // make imageprocessors for all the images that we will generate
                ImageProcessor[] ip = new ImageProcessor[nrOfTests];
                byte[][] pixels = new byte[nrOfTests][width * height];
-
+               
                for (int i = 0; i < nrOfTests; i++) {
                   ip[i] = new ByteProcessor(width, height);
                   ip[i].setPixels(pixels[i]);
                }
-
+               
                double factor = (double) mag / rowData.pixelSizeNm_;
 
                // make 2D scattergrams of all pixelData
                for (GaussianSpotData spot : rowData.spotList_) {
                   int j = 0;
-                  if (useSlices)
+                  if (useSlices) {
                      j = (spot.getSlice() - 1) / framesToCombine;
-                  else
+                  } else {
                      j = (spot.getFrame() - 1) / framesToCombine;
+                  }
                   int x = (int) (factor * spot.getXCenter());
                   int y = (int) (factor * spot.getYCenter());
                   int index = (y * width) + x;
@@ -1264,16 +1383,16 @@ public class DataCollectionForm extends javax.swing.JFrame {
                         pixels[j][index] += 1;
                      }
                   }
-
+                  
                }
-
+               
                JitterDetector jd = new JitterDetector(ip[0]);
-
+               
                Point2D.Double fp = new Point2D.Double(0.0, 0.0);
                Point2D.Double com = new Point2D.Double(0.0, 0.0);
-
+               
                jd.getJitter(ip[0], fp);
-
+               
                for (int i = 1; i < ip.length; i++) {
                   ij.IJ.showStatus("Executing jitter correction..." + i);
                   ij.IJ.showProgress(i, ip.length);
@@ -1294,19 +1413,20 @@ public class DataCollectionForm extends javax.swing.JFrame {
                // we need to cycle through all gaussian spots cycle by cycle
 
                double factor = (double) mag / rowData.pixelSizeNm_;
-
+               
                ImageProcessor ipRef = new ByteProcessor(width, height);
                byte[] pixelsRef = new byte[width * height];
                ipRef.setPixels(pixelsRef);
 
-               
+
                // take the first image as reference
                for (GaussianSpotData spot : rowData.spotList_) {
                   int j = 0;
-                  if (useSlices)
+                  if (useSlices) {
                      j = (spot.getSlice() - 1) / framesToCombine;
-                  else
+                  } else {
                      j = (spot.getFrame() - 1) / framesToCombine;
+                  }
                   if (j == 0) {
                      int x = (int) (factor * spot.getXCenter());
                      int y = (int) (factor * spot.getYCenter());
@@ -1318,17 +1438,17 @@ public class DataCollectionForm extends javax.swing.JFrame {
                      }
                   }
                }
-
+               
                JitterDetector jd = new JitterDetector(ipRef);
-
+               
                Point2D.Double fp = new Point2D.Double(0.0, 0.0);
                jd.getJitter(ipRef, fp);
-
+               
                Point2D.Double com = new Point2D.Double(0.0, 0.0);
                ImageProcessor ipTest = new ByteProcessor(width, height);
                byte[] pixelsTest = new byte[width * height];
                ipTest.setPixels(pixelsTest);
-
+               
                for (int i = 1; i < nrOfTests; i++) {
                   ij.IJ.showStatus("Executing jitter correction..." + i);
                   ij.IJ.showProgress(i, nrOfTests);
@@ -1354,7 +1474,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
                         }
                      }
                   }
-
+                  
                   jd.getJitter(ipTest, com);
                   double x = (fp.x - com.x) / factor;
                   double y = (fp.y - com.y) / factor;
@@ -1366,101 +1486,106 @@ public class DataCollectionForm extends javax.swing.JFrame {
                           new Point(i * framesToCombine, ((i + 1) * framesToCombine - 1))));
                   System.out.println("X: " + x + " Y: " + y);
                }
-
+               
             }
             
-            // Assemble stage movement data into a track
-            List<GaussianSpotData> stageMovementData = new ArrayList<GaussianSpotData>();
-            GaussianSpotData sm = new GaussianSpotData(null, 1, 1, 1, 1, 1, 1, 1);
-            sm.setData(0, 0, 0, 0, 0, 0, 0, 0);
-            stageMovementData.add(sm);
-            for (int i = 0; i < stagePos.size(); i++) {
-               StageMovementData smd = stagePos.get(i);
-               GaussianSpotData s = 
-                       new GaussianSpotData(null, 1, 1, i + 2, 1, 1, 1, 1);
-               s.setData(0, 0, smd.pos_.x, smd.pos_.y, 0, 0, 0, 0); 
-               stageMovementData.add(s);
-            }
-            
-            // Add stage movement data to overview window
-            // First try to copy the time points
-            ArrayList<Double> timePoints = null;
-            if (rowData.timePoints_ != null) {
-               timePoints = new ArrayList<Double>();
-               int tp = framesToCombine;
-               while (tp < rowData.timePoints_.size()) {
-                  timePoints.add(rowData.timePoints_.get(tp));
-                  tp += framesToCombine;
+            try {
+               // Assemble stage movement data into a track
+               List<GaussianSpotData> stageMovementData = new ArrayList<GaussianSpotData>();
+               GaussianSpotData sm = new GaussianSpotData(null, 1, 1, 1, 1, 1, 1, 1);
+               sm.setData(0, 0, 0, 0, 0, 0, 0, 0);
+               stageMovementData.add(sm);
+               for (int i = 0; i < stagePos.size(); i++) {
+                  StageMovementData smd = stagePos.get(i);
+                  GaussianSpotData s =
+                          new GaussianSpotData(null, 1, 1, i + 2, 1, 1, 1, 1);
+                  s.setData(0, 0, smd.pos_.x, smd.pos_.y, 0, 0, 0, 0);                  
+                  stageMovementData.add(s);
                }
-            }
-            
-            MyRowData newRow = new MyRowData(rowData.name_ + "-Jitter", rowData.title_, 
-                    "", rowData.width_,
-                    rowData.height_, rowData.pixelSizeNm_, rowData.shape_,
-                    rowData.halfSize_, rowData.nrChannels_, stageMovementData.size(),
-                    1, 1, stageMovementData.size(), stageMovementData,
-                    timePoints, true);
-            rowData_.add(newRow);
- 
-            myTableModel_.fireTableRowsInserted(rowData_.size() - 1, rowData_.size());
-            
 
- 
-            
-            ij.IJ.showStatus("Assembling jitter corrected dataset...");
-            ij.IJ.showProgress(1);
-
-            List<GaussianSpotData> correctedData = new ArrayList<GaussianSpotData>();
-            Iterator it = rowData.spotList_.iterator();
-            
-            int testNr = 0;
-            StageMovementData smd = stagePos.get(0);
-            int counter = 0;
-            while (it.hasNext()) {
-               counter++;
-               GaussianSpotData gs = (GaussianSpotData) it.next();
-               int test = 0;
-               if (useSlices)
-                  test = gs.getSlice();
-               else
-                  test = gs.getFrame();
-               if (test != testNr) {
-                  testNr = test - 1;
-               }
-               boolean found = false;
-               if (testNr >= smd.frameRange_.x && testNr <= smd.frameRange_.y) {
-                  found = true;
-               }
-               if (!found) {
-                  for (int i = 0; i < stagePos.size() && !found; i++) {
-                     smd = stagePos.get(i);
-                     if (testNr >= smd.frameRange_.x && testNr <= smd.frameRange_.y) {
-                        found = true;
-                     }
+               // Add stage movement data to overview window
+               // First try to copy the time points
+               ArrayList<Double> timePoints = null;
+               if (rowData.timePoints_ != null) {
+                  timePoints = new ArrayList<Double>();
+                  int tp = framesToCombine;
+                  while (tp < rowData.timePoints_.size()) {
+                     timePoints.add(rowData.timePoints_.get(tp));
+                     tp += framesToCombine;
                   }
                }
-               if (found) {
-                  Point2D.Double point = new Point2D.Double(gs.getXCenter() - smd.pos_.x,
-                          gs.getYCenter() - smd.pos_.y);
-                  GaussianSpotData gsn = new GaussianSpotData(gs);
-                  gsn.setXCenter(point.x);
-                  gsn.setYCenter(point.y);
-                  correctedData.add(gsn);
-               } else {
-                  correctedData.add(gs);
+               
+               MyRowData newRow = new MyRowData(rowData.name_ + "-Jitter", rowData.title_,
+                       "", rowData.width_,
+                       rowData.height_, rowData.pixelSizeNm_, rowData.shape_,
+                       rowData.halfSize_, rowData.nrChannels_, stageMovementData.size(),
+                       1, 1, stageMovementData.size(), stageMovementData,
+                       timePoints, true);
+               rowData_.add(newRow);
+               
+               myTableModel_.fireTableRowsInserted(rowData_.size() - 1, rowData_.size());
+               
+               
+               
+               
+               ij.IJ.showStatus("Assembling jitter corrected dataset...");
+               ij.IJ.showProgress(1);
+               
+               List<GaussianSpotData> correctedData = new ArrayList<GaussianSpotData>();
+               Iterator it = rowData.spotList_.iterator();
+               
+               int testNr = 0;
+               StageMovementData smd = stagePos.get(0);
+               int counter = 0;
+               while (it.hasNext()) {
+                  counter++;
+                  GaussianSpotData gs = (GaussianSpotData) it.next();
+                  int test = 0;
+                  if (useSlices) {
+                     test = gs.getSlice();
+                  } else {
+                     test = gs.getFrame();
+                  }
+                  if (test != testNr) {
+                     testNr = test - 1;
+                  }
+                  boolean found = false;
+                  if (testNr >= smd.frameRange_.x && testNr <= smd.frameRange_.y) {
+                     found = true;
+                  }
+                  if (!found) {
+                     for (int i = 0; i < stagePos.size() && !found; i++) {
+                        smd = stagePos.get(i);
+                        if (testNr >= smd.frameRange_.x && testNr <= smd.frameRange_.y) {
+                           found = true;
+                        }
+                     }
+                  }
+                  if (found) {
+                     Point2D.Double point = new Point2D.Double(gs.getXCenter() - smd.pos_.x,
+                             gs.getYCenter() - smd.pos_.y);
+                     GaussianSpotData gsn = new GaussianSpotData(gs);
+                     gsn.setXCenter(point.x);
+                     gsn.setYCenter(point.y);
+                     correctedData.add(gsn);
+                  } else {
+                     correctedData.add(gs);
+                  }
+                  
+                  
                }
 
-
+               // Add transformed data to data overview window
+               addSpotData(rowData.name_ + "-Jitter-Correct", rowData.title_, "", rowData.width_,
+                       rowData.height_, rowData.pixelSizeNm_, rowData.shape_,
+                       rowData.halfSize_, rowData.nrChannels_, rowData.nrFrames_,
+                       rowData.nrSlices_, 1, rowData.maxNrSpots_, correctedData,
+                       null, false);
+               ij.IJ.showStatus("Finished jitter correction");
+            } catch (OutOfMemoryError oom) {
+              System.gc();
+              ij.IJ.error("Out of Memory");
             }
-
-            // Add transformed data to data overview window
-            addSpotData(rowData.name_ + "-Jitter-Correct", rowData.title_, "", rowData.width_,
-                    rowData.height_, rowData.pixelSizeNm_, rowData.shape_,
-                    rowData.halfSize_, rowData.nrChannels_, rowData.nrFrames_,
-                    rowData.nrSlices_, 1, rowData.maxNrSpots_, correctedData,
-                    null, false);
-            ij.IJ.showStatus("Finished jitter correction");
-
          }
       };
 
@@ -1476,10 +1601,11 @@ public class DataCollectionForm extends javax.swing.JFrame {
    private void correct2C(final MyRowData rowData)
    {
       if (rowData.spotList_.size() <= 1) {
+         JOptionPane.showMessageDialog(getInstance(), "Please select a dataset to Color correct");
          return;
       }
       if (lwm_ == null) {
-         ij.IJ.showMessage("No calibration data available.  First Calibrate using 2C Reference");
+         JOptionPane.showMessageDialog(getInstance(), "No calibration data available.  First Calibrate using 2C Reference");
          return;
       }
       

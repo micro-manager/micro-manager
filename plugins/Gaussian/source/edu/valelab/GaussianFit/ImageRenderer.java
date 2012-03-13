@@ -27,7 +27,7 @@ public class ImageRenderer {
     * @param rect - roi in the magnified image that should be rendered
     */
       public static void renderData(ImageWindow w, MyRowData rowData, 
-              int method, double magnification, Rectangle rect) {
+              int method, double magnification, Rectangle rect, SpotDataFilter sf) {
          
       String fsep = System.getProperty("file.separator");
       String title = rowData.name_;
@@ -75,33 +75,41 @@ public class ImageRenderer {
          
          // setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
          
+         //int updateQuantum = rowData.spotList_.size() / 100;
+         //int counter = 0;
          for (GaussianSpotData spot : rowData.spotList_) {
-            // cover 3 * precision
-            int halfWidth = (int) (2 * spot.getSigma() / renderedPixelInNm);
-            if (halfWidth > 3) {
-               halfWidth = 3;
-            }
-            /*
-             * A *  exp(-((x-xc)^2+(y-yc)^2)/(2 sigy^2))+b
-             * A = params[INT]  (total intensity)
-             * b = params[BGR]  (background)
-             * xc = params[XC]
-             * yc = params[YC]
-             * sig = params[S]
-             * 
-             */
-            double xc = spot.getXCenter() / renderedPixelInNm;
-            double yc = spot.getYCenter() / renderedPixelInNm;
-            if (xc > halfWidth && xc < width - halfWidth
-                    && yc > halfWidth && yc < height - halfWidth) {
-               for (int x = (int) xc - halfWidth; x < (int) xc + halfWidth; x++) {
-                  for (int y = (int) yc - halfWidth; y < (int) yc + halfWidth; y++) {
-                     double[] parms = {1.0, 0.0,
-                        spot.getXCenter() / renderedPixelInNm,
-                        spot.getYCenter() / renderedPixelInNm,
-                        spot.getSigma() / renderedPixelInNm};
-                     double val = GaussianUtils.gaussian(parms, x, y);
-                     ip.setf(x, y, ip.getf(x, y) + (float) val);
+            //if (counter % updateQuantum == 0) {
+            //   ij.IJ.showProgress(counter, rowData.spotList_.size());
+            //}
+            //counter++;
+
+            if (sf.filter(spot)) {
+
+               // cover 3 * precision
+               int halfWidth = (int) (2 * spot.getSigma() / renderedPixelInNm);
+
+               /*
+                * A *  exp(-((x-xc)^2+(y-yc)^2)/(2 sigy^2))+b
+                * A = params[INT]  (total intensity)
+                * b = params[BGR]  (background)
+                * xc = params[XC]
+                * yc = params[YC]
+                * sig = params[S]
+                * 
+                */
+               int xc = (int) Math.round(spot.getXCenter() / renderedPixelInNm);
+               int yc = (int) Math.round(spot.getYCenter() / renderedPixelInNm);
+               if (xc > halfWidth && xc < (width - halfWidth)
+                       && yc > halfWidth && yc < (height - halfWidth)) {
+                  for (int x = (int) xc - halfWidth; x < (int) xc + halfWidth; x++) {
+                     for (int y = (int) yc - halfWidth; y < (int) yc + halfWidth; y++) {
+                        double[] parms = {1.0, 0.0,
+                           spot.getXCenter() / renderedPixelInNm,
+                           spot.getYCenter() / renderedPixelInNm,
+                           spot.getSigma() / renderedPixelInNm};
+                        double val = GaussianUtils.gaussian(parms, x, y);
+                        ip.setf(x, y, ip.getf(x, y) + (float) val);
+                     }
                   }
                }
             }

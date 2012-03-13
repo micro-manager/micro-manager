@@ -17,6 +17,7 @@ import ij.gui.Overlay;
 import ij.gui.Roi;
 import java.awt.Polygon;
 import java.util.prefs.Preferences;
+import javax.swing.JOptionPane;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 
@@ -538,7 +539,7 @@ public class MainForm extends javax.swing.JFrame implements ij.ImageListener{
           updateValues(ft_);
           ft_.init();
        } else {
-          // TODO: show message
+          JOptionPane.showMessageDialog(null, "Already running fitting analysis");
        }
     }//GEN-LAST:event_fitAllButtonActionPerformed
 

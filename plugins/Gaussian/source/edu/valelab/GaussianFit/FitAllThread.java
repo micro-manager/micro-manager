@@ -29,7 +29,7 @@ public class FitAllThread extends GaussianInfo implements Runnable  {
    double[] params0_;
    double[] steps_ = new double[5];
    GaussianFitStackThread[] gfsThreads_;
-   private volatile Thread t_;
+   private volatile Thread t_ = null;
    private static boolean running_ = false;
    private FindLocalMaxima.FilterType preFilterType_;
 
@@ -53,11 +53,12 @@ public class FitAllThread extends GaussianInfo implements Runnable  {
             gfsThreads_[i].stop();
          }
       }
+      t_ = null;
       running_ = false;
    }
 
    public boolean isRunning() {
-      return t_ != null;
+      return running_;
    }
 
    public void run() {
@@ -71,6 +72,7 @@ public class FitAllThread extends GaussianInfo implements Runnable  {
       try {
          siPlus = IJ.getImage();
       } catch (Exception ex) {
+         stop();
          return;
       }
 
@@ -138,7 +140,7 @@ public class FitAllThread extends GaussianInfo implements Runnable  {
       print ("Analyzed " + resultList_.size() + " spots in " + took + " milliseconds");
 
       running_ = false;
-      t_ = null;
+      // t_ = null;
    }
 
 
@@ -260,6 +262,7 @@ public class FitAllThread extends GaussianInfo implements Runnable  {
       for (int i=0; i<nrThreads; i++) {
          try {
             gfsThreads_[i].join();
+            gfsThreads_[i] = null;
          } catch (InterruptedException ie) {
          }
       }

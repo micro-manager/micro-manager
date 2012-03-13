@@ -68,9 +68,9 @@ public class FindLocalMaxima {
       int n2 = 2*n + 1;
       // calculate borders once
       int xRealEnd = roi.x + roi.width;
-      int xEnd = xRealEnd - n2;
+      int xEnd = xRealEnd - n;
       int yRealEnd = roi.y + roi.height;
-      int yEnd = yRealEnd - n2;
+      int yEnd = yRealEnd - n;
       for (int i=roi.x + n; i <= xEnd; i+=n2) {
          for (int j=roi.y + n; j <= yEnd; j+=n2) {
             int mi = i;

@@ -108,9 +108,26 @@ public class GaussianTrackThread extends GaussianInfo implements Runnable  {
       
 
       Rectangle rect = originalRoi.getBounds();
-      int xc = (int) (rect.getX() + 0.5 * rect.getWidth());
-      int yc = (int) (rect.getY() + 0.5 * rect.getHeight());
+      Polygon pol = FindLocalMaxima.FindMax(siPlus, halfSize_, noiseTolerance_, preFilterType_);
+      if (pol.npoints == 0) {
+         ij.IJ.showMessage("No local maxima found in ROI" );
+         return false;
+      }
+      int xc = pol.xpoints[0];
+      int yc = pol.ypoints[0];
+      // not sure if needed, but look for the maximum local maximum
+      int max = siPlus.getProcessor().getPixel(pol.xpoints[0], pol.ypoints[0]);
+      if (pol.npoints > 1) {
+         for (int i=1; i < pol.npoints; i++) {
+            if (siPlus.getProcessor().getPixel(pol.xpoints[i], pol.ypoints[i]) > max) {
+               max = siPlus.getProcessor().getPixel(pol.xpoints[i], pol.ypoints[i]);
+               xc = pol.xpoints[i];
+               yc = pol.ypoints[i];
+            }
+         }     
+      }
 
+      
       long startTime = System.nanoTime();
 
 
@@ -146,8 +163,8 @@ public class GaussianTrackThread extends GaussianInfo implements Runnable  {
          siPlus.setRoi(spotRoi, false);
 
          // Find maximum in Roi, might not be needed....
-         Polygon pol = FindLocalMaxima.FindMax(siPlus, halfSize_, noiseTolerance_, preFilterType_);
-         //pol = FindLocalMaxima.noiseFilter(siPlus.getProcessor(), pol, 800);
+         pol = FindLocalMaxima.FindMax(siPlus, halfSize_, noiseTolerance_, preFilterType_);
+
 
          if (pol.npoints >= 1) {
             xc = pol.xpoints[0];
