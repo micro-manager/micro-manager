@@ -540,6 +540,7 @@ public class SingleChannelHistogram extends JPanel implements Histograms, Cursor
          histogramData.setData(histogram);
          histogramPanel_.setData(histogramData);
          histogramPanel_.setAutoScale();
+         histogramPanel_.setToolTipText("Click and drag curve to adjust gamma");
 
          maxLabel_.setText("Max: " + NumberUtils.intToDisplayString((int) pixelMax_));
          minLabel_.setText("Min: " + NumberUtils.intToDisplayString((int) pixelMin_));

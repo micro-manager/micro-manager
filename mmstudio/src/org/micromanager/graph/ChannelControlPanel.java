@@ -535,16 +535,10 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
       hp.setMargins(8, 12);
       hp.setTextVisible(false);
       hp.setGridVisible(false);
-
-
-      hp.setTraceStyle(true, color_);
-
-
+      hp.setTraceStyle(true, color_);         
+      hp.setToolTipText("Click and drag curve to adjust gamma");
       histogramPanelHolder_.add(hp, BorderLayout.CENTER);
-//      updateBinSize();
-
       hp.addCursorListener(this);
-
       return hp;
    }
 
