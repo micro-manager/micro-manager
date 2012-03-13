@@ -359,19 +359,13 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
 
       @Override
       public void draw() {
-         if (!SwingUtilities.isEventDispatchThread()) {
-            Runnable onEDT = new Runnable() {
-
-               public void run() {
-                  imageChangedUpdate();
-                  superDraw();
-               }
-            };
-            SwingUtilities.invokeLater(onEDT);
-         } else {
-            imageChangedUpdate();
-            super.draw();
-         }
+         Runnable runnable = new Runnable() {
+            public void run() {
+               imageChangedUpdate();
+               superDraw();
+            }
+         };
+         invokeLaterIfNotEDT(runnable);
       }
 
       @Override
@@ -1505,8 +1499,8 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
       //Set magnification
       zoomToPreferredSize(win);
       
+   
       mdPanel_.displayChanged(win);
-      
    }
    
    private int getWinLength(ImageWindow win) {
@@ -1888,7 +1882,7 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
    }
    
    public boolean isActiveDisplay() {
-       if (hyperImage_ == null || hyperImage_.getWindow() == null)
+      if (hyperImage_ == null || hyperImage_.getWindow() == null)
            return false;
        if (hyperImage_.getWindow() == mdPanel_.getCurrentWindow()  )
            return true;
