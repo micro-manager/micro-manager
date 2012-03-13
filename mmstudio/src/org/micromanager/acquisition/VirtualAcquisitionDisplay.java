@@ -1167,7 +1167,6 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
       Runnable autoscaleOrLoadContrast = new Runnable() {
 
          public void run() {
-            System.out.println("Channel: " + channel + "   Slice:  " + slice);
             if (!newDisplay_) {
                return;
             }
