@@ -116,7 +116,7 @@ public class MainForm extends javax.swing.JFrame implements ij.ImageListener{
        boxSizeTextField.getDocument().addDocumentListener(updateNoiseOverlay);
                
 
-       setTitle("Gaussian Tracking");
+       setTitle("Localization Microscopy");
        setBounds(prefs_.getInt(FRAMEXPOS, 100), prefs_.getInt(FRAMEYPOS, 100),
                prefs_.getInt(FRAMEWIDTH, 247), prefs_.getInt(FRAMEHEIGHT, 367));
        setVisible(true);

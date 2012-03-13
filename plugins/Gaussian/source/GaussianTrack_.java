@@ -20,7 +20,7 @@ import org.micromanager.api.ScriptInterface;
  * @author nico
  */
 public class GaussianTrack_ implements PlugIn, MMPlugin {
-    public static String menuName = "GaussianTrack";
+    public static String menuName = "Localization Microscopy";
     public static String tooltipDescription = "Toolbox for analysis of spots using Gaussian Fitting";
     private CMMCore core_;
     private ScriptInterface gui_;
@@ -69,11 +69,11 @@ public class GaussianTrack_ implements PlugIn, MMPlugin {
    }
 
    public String getVersion() {
-      return "0.1";
+      return "0.2";
    }
 
    public String getCopyright() {
-      return "University of California, 2010";
+      return "University of California, 2010-2012";
    }
 
 }
