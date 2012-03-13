@@ -134,7 +134,7 @@ public class MetadataPanel extends JPanel
          }
       });
 
-      tabbedPane.addTab("Channels", contrastPanel_);
+      tabbedPane.addTab("Contrast", contrastPanel_);
 
       metadataSplitPane.setBorder(null);
       metadataSplitPane.setOrientation(JSplitPane.VERTICAL_SPLIT);
