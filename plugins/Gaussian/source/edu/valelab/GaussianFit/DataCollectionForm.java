@@ -67,6 +67,7 @@ import java.nio.channels.FileChannel;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
+import java.util.prefs.Preferences;
 import javax.swing.JOptionPane;
 
 import org.jfree.data.xy.XYSeries;
@@ -85,12 +86,28 @@ public class DataCollectionForm extends javax.swing.JFrame {
    private final String[] renderModes_ = {"Points", "Gaussian"};
    private final String[] renderSizes_  = {"1x", "2x", "4x", "8x"};
    public final static String extension_ = ".tsf";
+   // TODO: make this user-settable
    private final double MAXMATCHDISTANCE = 1000.0;
+   
+   // Prefs
+   private static final String FRAMEXPOS = "DCXPos";
+   private static final String FRAMEYPOS = "DCYPos";
+   private static final String FRAMEWIDTH = "DCWidth";
+   private static final String FRAMEHEIGHT = "DCHeight";
+   private static final String USESIGMA = "DCSigma";
+   private static final String SIGMAMIN = "DCSigmaMin";
+   private static final String SIGMAMAX = "DCSigmaMax";
+   private static final String USEINT = "DCIntensity";
+   private static final String INTMIN = "DCIntMin";
+   private static final String INTMAX = "DCIntMax";
+   
    ArrayList<MyRowData> rowData_;
    double[][][] colorCorrection_; // 2D array (one for each pixel) containing xy coordinates of
                                  // first image (0 and 1) and correction to second image (2 and 3)
    public static DataCollectionForm instance_ = null;
    private static LocalWeightedMean lwm_;
+   
+   Preferences prefs_;
 
 
    /**
@@ -213,7 +230,18 @@ public class DataCollectionForm extends javax.swing.JFrame {
        
        setBackground(MMStudioMainFrame.getInstance().getBackgroundColor());
        MMStudioMainFrame.getInstance().addMMBackgroundListener(this);
-         
+       
+       if (prefs_ == null)
+          prefs_ = Preferences.userNodeForPackage(this.getClass());
+       setBounds(prefs_.getInt(FRAMEXPOS, 50), prefs_.getInt(FRAMEYPOS, 100),
+             prefs_.getInt(FRAMEWIDTH, 800), prefs_.getInt(FRAMEHEIGHT, 250));
+       filterSigmaCheckBox_.setSelected(prefs_.getBoolean(USESIGMA, false));
+       sigmaMin_.setText(prefs_.get(SIGMAMIN, "0.0"));
+       sigmaMax_.setText(prefs_.get(SIGMAMAX, "20.0"));
+       filterIntensityCheckBox_.setSelected(prefs_.getBoolean(USEINT, false));
+       intensityMin_.setText(prefs_.get(INTMIN, "0.0"));
+       intensityMax_.setText(prefs_.get(INTMAX, "20000"));
+             
        setVisible(true);
    }
 
@@ -330,9 +358,14 @@ public class DataCollectionForm extends javax.swing.JFrame {
         jLabel2 = new javax.swing.JLabel();
         jLabel3 = new javax.swing.JLabel();
 
-        setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
+        setDefaultCloseOperation(javax.swing.WindowConstants.DO_NOTHING_ON_CLOSE);
         setTitle("Gaussian tracking data");
         setMinimumSize(new java.awt.Dimension(450, 80));
+        addWindowListener(new java.awt.event.WindowAdapter() {
+            public void windowClosing(java.awt.event.WindowEvent evt) {
+                formWindowClosing(evt);
+            }
+        });
         addComponentListener(new java.awt.event.ComponentAdapter() {
             public void componentResized(java.awt.event.ComponentEvent evt) {
                 formComponentResized(evt);
@@ -407,7 +440,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
             }
         });
 
-        referenceName_.setFont(new java.awt.Font("Lucida Grande", 0, 11)); // NOI18N
+        referenceName_.setFont(new java.awt.Font("Lucida Grande", 0, 11));
         referenceName_.setText("jLabel1");
 
         unjitterButton_.setFont(new java.awt.Font("Lucida Grande", 0, 10));
@@ -418,10 +451,10 @@ public class DataCollectionForm extends javax.swing.JFrame {
             }
         });
 
-        jLabel1.setFont(new java.awt.Font("Lucida Grande", 0, 11)); // NOI18N
+        jLabel1.setFont(new java.awt.Font("Lucida Grande", 0, 11));
         jLabel1.setText("Filters:");
 
-        filterSigmaCheckBox_.setFont(new java.awt.Font("Lucida Grande", 0, 11)); // NOI18N
+        filterSigmaCheckBox_.setFont(new java.awt.Font("Lucida Grande", 0, 11));
         filterSigmaCheckBox_.setText("Sigma");
         filterSigmaCheckBox_.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -429,7 +462,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
             }
         });
 
-        filterIntensityCheckBox_.setFont(new java.awt.Font("Lucida Grande", 0, 11)); // NOI18N
+        filterIntensityCheckBox_.setFont(new java.awt.Font("Lucida Grande", 0, 11));
         filterIntensityCheckBox_.setText("Intensity");
         filterIntensityCheckBox_.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -437,22 +470,22 @@ public class DataCollectionForm extends javax.swing.JFrame {
             }
         });
 
-        sigmaMin_.setFont(new java.awt.Font("Lucida Grande", 0, 11)); // NOI18N
+        sigmaMin_.setFont(new java.awt.Font("Lucida Grande", 0, 11));
         sigmaMin_.setText("0");
 
-        intensityMin_.setFont(new java.awt.Font("Lucida Grande", 0, 11)); // NOI18N
+        intensityMin_.setFont(new java.awt.Font("Lucida Grande", 0, 11));
         intensityMin_.setText("0");
 
-        sigmaMax_.setFont(new java.awt.Font("Lucida Grande", 0, 11)); // NOI18N
+        sigmaMax_.setFont(new java.awt.Font("Lucida Grande", 0, 11));
         sigmaMax_.setText("0");
 
-        intensityMax_.setFont(new java.awt.Font("Lucida Grande", 0, 11)); // NOI18N
+        intensityMax_.setFont(new java.awt.Font("Lucida Grande", 0, 11));
         intensityMax_.setText("0");
 
-        jLabel2.setFont(new java.awt.Font("Lucida Grande", 0, 11)); // NOI18N
+        jLabel2.setFont(new java.awt.Font("Lucida Grande", 0, 11));
         jLabel2.setText("< spot <");
 
-        jLabel3.setFont(new java.awt.Font("Lucida Grande", 0, 11)); // NOI18N
+        jLabel3.setFont(new java.awt.Font("Lucida Grande", 0, 11));
         jLabel3.setText("< spot <");
 
         org.jdesktop.layout.GroupLayout layout = new org.jdesktop.layout.GroupLayout(getContentPane());
@@ -985,6 +1018,22 @@ public class DataCollectionForm extends javax.swing.JFrame {
    private void filterIntensityCheckBox_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_filterIntensityCheckBox_ActionPerformed
       // TODO add your handling code here:
    }//GEN-LAST:event_filterIntensityCheckBox_ActionPerformed
+
+   private void formWindowClosing(java.awt.event.WindowEvent evt) {//GEN-FIRST:event_formWindowClosing
+       prefs_.putInt(FRAMEXPOS, getX());
+       prefs_.putInt(FRAMEYPOS, getY());
+       prefs_.putInt(FRAMEWIDTH, getWidth());
+       prefs_.putInt(FRAMEHEIGHT, getHeight());
+       
+       prefs_.putBoolean(USESIGMA, filterSigmaCheckBox_.isSelected());
+       prefs_.put(SIGMAMIN, sigmaMin_.getText());
+       prefs_.put(SIGMAMAX, sigmaMax_.getText());
+       prefs_.putBoolean(USEINT, filterIntensityCheckBox_.isSelected());
+       prefs_.put(INTMIN, intensityMin_.getText());
+       prefs_.put(INTMAX, intensityMax_.getText());
+       
+       setVisible(false);
+   }//GEN-LAST:event_formWindowClosing
 
 
     // Variables declaration - do not modify//GEN-BEGIN:variables

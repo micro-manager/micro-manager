@@ -53,7 +53,6 @@ public class MainForm extends javax.swing.JFrame implements ij.ImageListener{
    // we are a singleton with only one window
    public static boolean WINDOWOPEN = false;
 
-   //ij.plugin.PlugIn gt_;
    Preferences prefs_;
 
    // Store values of dropdown menus:

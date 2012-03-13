@@ -6,8 +6,10 @@
 package edu.valelab.GaussianFit;
 
 import ij.ImagePlus;
+import ij.gui.ImageCanvas;
 import ij.gui.ImageWindow;
 import ij.gui.Toolbar;
+import ij.plugin.tool.PlugInTool;
 import java.awt.Dimension;
 import java.awt.Point;
 import java.awt.Rectangle;
@@ -18,34 +20,46 @@ import java.awt.event.MouseListener;
  *
  * @author Nico Stuurman
  */
-public class ImageWindowListener implements MouseListener {
-   ImageWindow iw_;
+public class GaussCanvas extends ImageCanvas {
    DataCollectionForm.MyRowData rowData_;
    int renderMode_;
    ImagePlus originalIP_;
+   ImageWindow iw_;
    double myMag_;
    double originalMag_;
+   SpotDataFilter sf_;
+
    
-   public ImageWindowListener(ImageWindow iw, DataCollectionForm.MyRowData rowData,
-           int renderMode, double initialMag) {
-      iw_ = iw;
+   
+   public GaussCanvas(ImagePlus sp, DataCollectionForm.MyRowData rowData, 
+           int renderMode, double initialMag, SpotDataFilter sf) {
+      super (sp);
       rowData_ = rowData;
       renderMode_ = renderMode;
-      originalIP_ = iw_.getImagePlus(); 
+      originalIP_ = sp; 
       originalMag_ = myMag_ = initialMag;
+      sf_ = sf;
+   }
+   
+   public void setImageWindow(ImageWindow iw) {
+      iw_ = iw;
    }
 
-   public void mouseClicked(MouseEvent me) {
+
+   @Override
+   public void mouseReleased(MouseEvent me) {
+      super.mouseReleased(me);
+      
       if (Toolbar.getToolId() == Toolbar.MAGNIFIER) {
 
 
-         double mag = iw_.getCanvas().getMagnification() * myMag_;
+         double mag = this.getMagnification() * myMag_;
          myMag_ = mag;
-         Rectangle vis = iw_.getCanvas().getBounds();
-         Dimension d = iw_.getCanvas().getSize();
-         Rectangle vis2 = iw_.getBounds();
-         Point a = iw_.getCanvas().getLocation();
-         Point c = iw_.getCanvas().getCursorLoc();
+         Rectangle vis = this.getBounds();
+         Dimension d = this.getSize();
+         Rectangle vis2 = this.getBounds();
+         Point a = this.getLocation();
+         Point c = this.getCursorLoc();
          
          System.out.println("mag : " + mag);
          
@@ -72,32 +86,17 @@ public class ImageWindowListener implements MouseListener {
                        d.width, d.height);
                
             }
-            // ImageRenderer.renderData(iw_, rowData_, renderMode_, mag, roi);
+            ImageRenderer.renderData(iw_, rowData_, renderMode_, mag, roi, sf_);
 
          }
          else {
-            //iw_.setImage(originalIP_);
-            //myMag_ = originalMag_;
+            iw_.setImage(originalIP_);
+            myMag_ = originalMag_;
          }
 
       }
          
    }
 
-   public void mousePressed(MouseEvent me) {
-      // throw new UnsupportedOperationException("Not supported yet.");
-   }
-
-   public void mouseReleased(MouseEvent me) {
-      // throw new UnsupportedOperationException("Not supported yet.");
-   }
-
-   public void mouseEntered(MouseEvent me) {
-      // throw new UnsupportedOperationException("Not supported yet.");
-   }
-
-   public void mouseExited(MouseEvent me) {
-      // throw new UnsupportedOperationException("Not supported yet.");
-   }
    
 }
