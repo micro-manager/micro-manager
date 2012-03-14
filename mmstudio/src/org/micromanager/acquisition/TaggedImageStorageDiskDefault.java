@@ -157,6 +157,9 @@ public class TaggedImageStorageDiskDefault implements TaggedImageStorage {
 
    public TaggedImage getImage(int channel, int slice, int frame, int position) {
       String label = MDUtils.generateLabel(channel, slice, frame, position);
+      if (filenameTable_.get(label) == null) {
+         return null;
+      }
       ImagePlus imp = new Opener().openImage(dir_ + "/" + filenameTable_.get(label));
       if (imp != null) {
          try {
