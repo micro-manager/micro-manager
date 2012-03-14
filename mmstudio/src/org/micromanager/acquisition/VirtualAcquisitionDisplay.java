@@ -975,13 +975,13 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
             if (!status.contentEquals("interrupted")) {
                if (eng.isFinished()) {
                   status = "finished";
-//                  eng_ = null;
+                  eng_ = null;
                }
             }
          }
          status += ", ";
          if (eng.isFinished()) {
-//            eng_ = null;
+            eng_ = null;
             finished_ = true;
          }
       } else {
