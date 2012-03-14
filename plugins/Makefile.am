@@ -84,6 +84,7 @@ Gaussian.jar:  \
 	$(srcdir)/Gaussian/source/edu/valelab/GaussianFit/DataCollectionForm.java \
 	$(srcdir)/Gaussian/source/edu/valelab/GaussianFit/FindLocalMaxima.java \
 	$(srcdir)/Gaussian/source/edu/valelab/GaussianFit/FitAllThread.java \
+	$(srcdir)/Gaussian/source/edu/valelab/GaussianFit/GaussCanvas.java \
 	$(srcdir)/Gaussian/source/edu/valelab/GaussianFit/GaussianFit.java \
 	$(srcdir)/Gaussian/source/edu/valelab/GaussianFit/GaussianFitStackThread.java \
 	$(srcdir)/Gaussian/source/edu/valelab/GaussianFit/GaussianInfo.java \

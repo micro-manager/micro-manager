@@ -89,11 +89,11 @@ public class GaussCanvas extends ImageCanvas {
                     d.width, d.height);
 
          }
-         ImageRenderer.renderData(iw_, rowData_, renderMode_, mag, roi, sf_);
+         //ImageRenderer.renderData(iw_, rowData_, renderMode_, mag, roi, sf_);
 
       } else {
-         iw_.setImage(originalIP_);
-         myMag_ = originalMag_;
+         //iw_.setImage(originalIP_);
+         // myMag_ = originalMag_;
       }
 
    }
