@@ -2887,8 +2887,8 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface, Device
    }
 
    public void updateButtonsForLiveMode(boolean enable) {
-      toggleButtonShutter_.setEnabled(!enable);
       autoShutterCheckBox_.setEnabled(!enable);
+      toggleButtonShutter_.setEnabled( ! (autoShutterCheckBox_.isSelected() || enable)  );      
       buttonSnap_.setEnabled(!enable);
       toAlbumButton_.setEnabled(!enable);
       toggleButtonLive_.setIcon(enable ? SwingResourceManager.getIcon(MMStudioMainFrame.class,
@@ -2897,6 +2897,7 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface, Device
               "/org/micromanager/icons/camera_go.png"));
       toggleButtonLive_.setSelected(false);
       toggleButtonLive_.setText(enable ? "Stop Live" : "Live");
+      
    }
 
    private void enableLiveModeListeners(boolean enable) {
