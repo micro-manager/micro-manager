@@ -88,6 +88,11 @@ const char* g_Baud_14400 = "14400";
 const char* g_Baud_19200 = "19200";
 const char* g_Baud_57600 = "57600";
 const char* g_Baud_115200 = "115200";
+const char* g_Baud_230400 = "230400";
+const char* g_Baud_460800 = "460800";
+const char* g_Baud_500000 = "500000";
+const char* g_Baud_576000 = "576000";
+const char* g_Baud_921600 = "921600";
 
 const char* g_Handshaking_Off = "Off";
 const char* g_Handshaking_Hardware = "Hardware";
@@ -419,6 +424,11 @@ SerialPort::SerialPort(const char* portName) :
    AddAllowedValue(MM::g_Keyword_BaudRate, g_Baud_19200, (long)19200);
    AddAllowedValue(MM::g_Keyword_BaudRate, g_Baud_57600, (long)57600);
    AddAllowedValue(MM::g_Keyword_BaudRate, g_Baud_115200, (long)115200);
+   AddAllowedValue(MM::g_Keyword_BaudRate, g_Baud_230400, (long)230400);
+   AddAllowedValue(MM::g_Keyword_BaudRate, g_Baud_460800, (long)460800);
+   AddAllowedValue(MM::g_Keyword_BaudRate, g_Baud_500000, (long)500000);
+   AddAllowedValue(MM::g_Keyword_BaudRate, g_Baud_500000, (long)500000);
+   AddAllowedValue(MM::g_Keyword_BaudRate, g_Baud_921600, (long)921600);
 
    // data bits
    ret = CreateProperty(MM::g_Keyword_DataBits, "8", MM::String, true);
