@@ -114,6 +114,8 @@ const char* g_ZeissDefiniteFocus = "ZeissDefiniteFocus";
 const char* g_ZeissDFOffset = "ZeissDefiniteFocusOffset";
 const char* g_ZeissColibri = "ZeissColibri";
 const char* g_Zeiss2TVTubePrism = "Zeiss2TVTubePrism";
+const char* g_Zeiss2TVTubeSlider = "Zeiss2TVTubeSlider";
+const char* g_Zeiss2TVTubeShutter = "Zeiss2TVTubeShutter";
 
 
 // List of Device numbers (from Zeiss documentation)
@@ -137,6 +139,8 @@ ZeissUByte g_HBOLampServo = 0x28;
 ZeissUByte g_HalogenLampServo = 0x29; 
 ZeissUByte g_LSMPortChanger = 0x2B;  // RearPort, reflected light
 ZeissUByte g_2TVTubePrism = 0x2E;  
+ZeissUByte g_2TVTubeSlider = 0x2F;  
+ZeissUByte g_2TVTubeShutter = 0x30;  
 ZeissUByte g_BasePortChanger = 0x40;
 ZeissUByte g_UniblitzShutter = 0x41;
 ZeissUByte g_FilterWheelChanger = 0x42;
@@ -178,6 +182,8 @@ MODULE_API void InitializeModuleData()
    AddAvailableDeviceName(g_ZeissDFOffset,"Definite Focus Offset-drive"); 
    AddAvailableDeviceName(g_ZeissColibri,"Colibri"); 
    AddAvailableDeviceName(g_Zeiss2TVTubePrism,"g_Zeiss2TVTubePrism"); 
+   AddAvailableDeviceName(g_Zeiss2TVTubeSlider,"g_Zeiss2TVTubeSlider"); 
+   AddAvailableDeviceName(g_Zeiss2TVTubeShutter,"g_Zeiss2TVTubeShutter"); 
 }
 
 using namespace std;
@@ -240,7 +246,11 @@ MODULE_API MM::Device* CreateDevice(const char* deviceName)
    else if (strcmp(deviceName, g_ZeissColibri) == 0)
         return new Colibri();
    else if (strcmp(deviceName, g_Zeiss2TVTubePrism) == 0)
-        return new Turret(g_2TVTubePrism, g_Zeiss2TVTubePrism, "2-TV Tube Prismr");
+        return new Turret(g_2TVTubePrism, g_Zeiss2TVTubePrism, "2-TV Tube Prism");
+   else if (strcmp(deviceName, g_Zeiss2TVTubeSlider) == 0)
+        return new Turret(g_2TVTubeSlider, g_Zeiss2TVTubeSlider, "2-TV Tube Slider");
+   else if (strcmp(deviceName, g_Zeiss2TVTubeShutter) == 0)
+        return new Turret(g_2TVTubeShutter, g_Zeiss2TVTubeShutter, "2-TV Tube Shutter");
 
    return 0;
 }
