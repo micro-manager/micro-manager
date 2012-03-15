@@ -70,6 +70,7 @@ const char* g_ZeissExtFilterWheel = "ZeissExternalFilterWheel";
 const char* g_ZeissFilterWheel1 = "ZeissFilterWheel1";
 const char* g_ZeissFilterWheel2 = "ZeissFilterWheel2";
 const char* g_ZeissXYStage = "XYStage";
+const char* g_ZStage = "ZStage";
 
 // List of Turret numbers (from Zeiss documentation)
 int g_ReflectorTurret = 1;
@@ -109,6 +110,7 @@ MODULE_API void InitializeModuleData()
    AddAvailableDeviceName(g_ZeissFilterWheel1,"FilterWheel 1"); 
    AddAvailableDeviceName(g_ZeissFilterWheel2,"FilterWheel 2"); 
    AddAvailableDeviceName(g_ZeissXYStage,"XY Stage (MCU 28)"); 
+   AddAvailableDeviceName(g_ZStage,"Z Stage on Axioskop 2"); 
 
    // TODO: remove when finished with revision
 /*
@@ -176,6 +178,8 @@ MODULE_API MM::Device* CreateDevice(const char* deviceName)
       return new FilterWheel(3);
    else if (strcmp(deviceName, g_ZeissXYStage) == 0)
       return new XYStage();
+   else if (strcmp(deviceName, g_ZStage) == 0)
+      return new ZStage();
 
    return 0;
 }

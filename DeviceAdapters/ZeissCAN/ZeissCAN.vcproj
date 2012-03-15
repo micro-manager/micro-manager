@@ -370,6 +370,10 @@
 				RelativePath=".\ZeissCAN.cpp"
 				>
 			</File>
+			<File
+				RelativePath=".\ZStage.cpp"
+				>
+			</File>
 		</Filter>
 		<Filter
 			Name="Header Files"

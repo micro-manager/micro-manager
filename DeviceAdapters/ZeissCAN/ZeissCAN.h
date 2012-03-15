@@ -590,4 +590,65 @@ private:
    double stepSizeUm_;
 };
 
+// Axioskope 2 Z stage
+//
+class ZStage : public CStageBase<ZStage>
+{
+public:
+   ZStage();
+   ~ZStage();
+
+   bool Busy();
+   void GetName(char* pszName) const;
+
+   int Initialize();
+   int Shutdown();
+     
+   // Stage API
+   virtual int SetPositionUm(double pos);
+   virtual int GetPositionUm(double& pos);
+   virtual double GetStepSize() const {return stepSize_um_;}
+   virtual int SetPositionSteps(long steps) ;
+   virtual int GetPositionSteps(long& steps);
+   virtual int SetOrigin();
+   virtual int GetLimits(double& lower, double& upper)
+   {
+      lower = lowerLimit_;
+      upper = upperLimit_;
+      return DEVICE_OK;
+   }
+
+   bool IsContinuousFocusDrive() const {return false;}
+
+   // action interface
+   // ----------------
+   int OnPosition(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnLoadSample(MM::PropertyBase* pProp, MM::ActionType eAct);
+
+   // Sequence functions (unimplemented)
+   int IsStageSequenceable(bool& isSequenceable) const {isSequenceable = false; return DEVICE_OK;}
+   int GetStageSequenceMaxLength(long& nrEvents) const  {nrEvents = 0; return DEVICE_OK;}
+   int StartStageSequence() const {return DEVICE_OK;}
+   int StopStageSequence() const {return DEVICE_OK;}
+   int ClearStageSequence() {return DEVICE_OK;}
+   int AddToStageSequence(double /*position*/) {return DEVICE_OK;}
+   int SendStageSequence() const {return DEVICE_OK;}
+
+private:
+   int GetFocusFirmwareVersion();
+   int GetUpperLimit();
+   int GetLowerLimit();
+   double stepSize_um_;
+   std::string focusFirmware_;
+   std::string firmware_;
+   bool busy_;
+   bool initialized_;
+   double lowerLimit_;
+   double upperLimit_;
+   typedef enum {
+      ZMSF_MOVING = 0x0002, // trajectory is in progress
+      ZMSF_SETTLE = 0x0004  // settling after movement
+   } ZmStatFlags;
+
+};
 #endif // _ZeissCAN_H_
