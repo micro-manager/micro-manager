@@ -282,7 +282,8 @@ public class MMAcquisition {
             for (int i = 0; i < camCh; i++)
                this.setChannelName(i, core.getCameraChannelName(i));
          } else {
-            this.setChannelName(0, "Default");
+            for (int i = 0; i < numChannels_; i++)
+               this.setChannelName(i, "Default");
          }
          createDefaultAcqSettings(name, imageCache);
       }
@@ -463,6 +464,7 @@ public class MMAcquisition {
             tags.put("PositionName", "Pos" + position);
          }
          tags.put("Slice", slice);
+         tags.put("SliceIndex", slice);
          tags.put("Width", width_);
          MDUtils.setPixelTypeFromByteDepth(tags, depth_);
 
