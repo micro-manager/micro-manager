@@ -1,12 +1,14 @@
 (ns org.micromanager.config-editor
   (:import [javax.swing DefaultListModel JFrame JList JPanel JTable
                         DefaultListSelectionModel JScrollPane JViewport
-                        ListSelectionModel SpringLayout JPopupMenu]
+                        ListSelectionModel SpringLayout JPopupMenu
+                        JOptionPane JTextField DefaultCellEditor]
            [javax.swing.event CellEditorListener ListSelectionListener]
            [java.awt.event MouseAdapter]
            [javax.swing.table AbstractTableModel]
            [java.awt Color Dimension])
   (:use [org.micromanager.mm :only [config-struct load-mm
+                                    get-system-config-cached
                                     gui core edt get-config]]))
 
 (load-mm)
@@ -27,6 +29,9 @@
 
 ;; swing layout 
 
+(defn error-message [message title]
+  (JOptionPane/showMessageDialog nil message title JOptionPane/ERROR_MESSAGE))
+  
 (defn put-constraint [comp1 edge1 comp2 edge2 dist]
   (let [edges {:n SpringLayout/NORTH
                :w SpringLayout/WEST
@@ -88,6 +93,8 @@
 
 (def group-data (atom nil))
 
+(def all-properties (atom nil))
+
 (defonce widgets (atom nil))
 
 (defn get-selected-group []
@@ -122,6 +129,39 @@
   (let [[dev prop] prop-vec]
     (str dev "-" prop)))
 
+(defn update-all-properties []
+  (reset! all-properties (vec (sort-by first (get-system-config-cached)))))
+
+(defn group-table-cell-editor []
+  (proxy [DefaultCellEditor] [(JTextField.)]
+    (stopCellEditing []
+                     (println "stopCellEditing" (.getText (.getComponent this)))
+                     (if ((set @groups) (.getText (.getComponent this)))
+                       (do (println "duplicate") false)
+                       true))))
+                               
+(defn used-properties-table-model []
+  (proxy [AbstractTableModel] []
+    (getColumnName [col] (["Use?" "Property" "Current Value"] col))
+    (getColumnCount [] 3)
+    (getColumnClass [col] ([Boolean String String] col))
+    (getRowCount [] (count @all-properties))
+    (isCellEditable [_ col] (zero? col))
+    (getValueAt [row column]
+                (let [prop (@all-properties row)]
+                  ([(not (nil? ((set (properties @group-data))
+                          (first (@all-properties row)))))
+                    (property-name (first prop))
+                    (second prop)]
+                    column)))
+    (setValueAt [val row column]
+                (let [[[dev prop] _] (@all-properties row)
+                      group (get-selected-group)]
+                  (println val row column)
+                (if val
+                  (add-property group dev prop)
+                  (remove-property group dev prop))))))
+
 (defn group-table-model []
   (proxy [AbstractTableModel] []
     (getColumnName [_] "Groups")
@@ -132,7 +172,8 @@
     (setValueAt [val row column]
       (let [old-val (nth @groups row)]
         (core renameConfigGroup old-val val)
-        (update-groups)))))
+        (update-groups)
+        ))))
 
 (defn preset-names-table-model []
   (proxy [AbstractTableModel] []
@@ -191,6 +232,10 @@
         (when (> y (+ (.y r) (.height r)))
           (f))))))
 
+(defn cancel-cell-editing [table]
+  (when-let [editor (.getCellEditor table)]
+    (.cancelCellEditing editor)))
+
 (defn start-editing-cell [table row col]
   (edt 
     (.toFront (@widgets :frame))
@@ -199,7 +244,6 @@
          ;.requestFocus
          (.editCellAt row col)
       (.. getEditorComponent requestFocusInWindow))))
-
 
 (defn redraw-data []
   (update-group-data)
@@ -235,12 +279,15 @@
         guess))))
 
 (defn new-preset [group]
-  (let [preset-name (new-preset-name group)
+  (let [table (@widgets :presets-table)
+        preset-name (new-preset-name group)
         preset (config-struct (core getConfigGroupState group))]
     (doseq [[[d p] v] preset]
       (core defineConfig group preset-name d p v))
     (redraw-data)
-    ))
+    (println table)
+    (edt (let [row (dec (.getRowCount table))]
+      (start-editing-cell table row 0)))))
 
 (defn add-property [group dev prop]
   (when-not ((set (properties @group-data)) [dev prop])
@@ -281,18 +328,16 @@
       (mouseReleased [e]
         (show-popup-menu popup-menu e)))))
            
-(defn cancel-cell-editing [table]
-  (when-let [editor (.getCellEditor table)]
-    (.cancelCellEditing editor)))
-  
 (defn show []
   (let [f (JFrame. "Micro-Manager Configuration Preset Editor")
         cp (.getContentPane f)
         groups-table (JTable.)
         presets-table (JTable.)
         preset-names-table (JTable.)
+        used-properties-table (JTable.)
         groups-sp (scroll-pane groups-table)
         presets-sp (scroll-pane presets-table)
+        use-properties-sp (scroll-pane used-properties-table)
         ]
     (edt 
       (.setAutoResizeMode presets-table JTable/AUTO_RESIZE_OFF)
@@ -306,6 +351,7 @@
       (.setModel groups-table (group-table-model))
       (.setModel preset-names-table (preset-names-table-model))
       (.setModel presets-table (presets-table-model))
+      (.setModel used-properties-table (used-properties-table-model))
       (link-table-row-selection presets-table preset-names-table)
       (double-click-for-new-row groups-table new-group)
       (double-click-for-new-row
@@ -313,14 +359,17 @@
       (.setAutoResizeMode presets-table JTable/AUTO_RESIZE_OFF)
       (doto cp
         (.setLayout (SpringLayout.))
-        (add-component presets-sp :n 5 :w 155 :s -5 :e -5)
-        (add-component groups-sp :n 5 :w 5 :s -5 :w 150))
+        (add-component groups-sp :n 5 :w 5 :n 150 :w 150)
+        (add-component use-properties-sp :n 5 :w 155 :n 150 :w 500)
+        (add-component presets-sp :n 155 :w 5 :s -5 :e -5))
         (.setBounds f 100 100 800 500)
         (.show f))
+    (.setCellEditor groups-table (group-table-cell-editor))
     {:frame f
      :groups-table groups-table
      :presets-table presets-table
-     :preset-names-table preset-names-table}))
+     :preset-names-table preset-names-table
+     :used-properties-table used-properties-table}))
 
 (defn set-preferred-column-width [table]
   (->> table
