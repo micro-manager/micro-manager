@@ -45,6 +45,7 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.prefs.Preferences;
 import javax.swing.JOptionPane;
+import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
 import javax.swing.Timer;
 import mmcorej.TaggedImage;
@@ -1861,6 +1862,12 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
       histograms_.setChannelContrast(channelIndex, min, max, gamma);
       histograms_.applyLUTToImage();
       drawWithoutUpdate();
+   }
+   
+   public void updateChannelNamesAndColors() {
+      if (histograms_ != null && histograms_ instanceof MultiChannelHistograms) {
+         ((MultiChannelHistograms) histograms_).updateChannelNamesAndColors();
+      }
    }
    
    public void setChannelHistogramDisplayMax(int channelIndex, int histMax) {

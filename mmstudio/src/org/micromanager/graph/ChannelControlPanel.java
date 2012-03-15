@@ -410,7 +410,7 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
       if (newColor != null) {
          cache_.setChannelColor(channelIndex_, newColor.getRGB());
       }
-      updateChannelNameAndColor(cache_);
+      updateChannelNameAndColorFromCache();
 
       //if multicamera, save color
       saveColorPreference(cache_, newColor.getRGB());
@@ -542,11 +542,11 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
       return hp;
    }
 
-   public void updateChannelNameAndColor(ImageCache cache) {
-      color_ = cache.getChannelColor(channelIndex_);
+   public void updateChannelNameAndColorFromCache() {
+      color_ = cache_.getChannelColor(channelIndex_);
       colorPickerLabel_.setBackground(color_);
       hp_.setTraceStyle(true, color_);
-      String name = cache.getChannelName(channelIndex_);
+      String name = cache_.getChannelName(channelIndex_);
       if (name.length() > 11) {
          name = name.substring(0, 9) + "...";
       }

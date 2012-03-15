@@ -1,17 +1,14 @@
 package org.micromanager.graph;
 
 import ij.CompositeImage;
-import ij.ImagePlus;
 import java.awt.Dimension;
 import java.awt.GridLayout;
 import java.util.ArrayList;
 import javax.swing.JPanel;
-import org.micromanager.acquisition.MetadataPanel;
 import org.micromanager.acquisition.VirtualAcquisitionDisplay;
 import org.micromanager.api.Histograms;
 import org.micromanager.api.ImageCache;
 import org.micromanager.graph.ChannelControlPanel;
-import org.micromanager.graph.ContrastPanel;
 import org.micromanager.utils.ContrastSettings;
 import org.micromanager.utils.MDUtils;
 import org.micromanager.utils.ReportingUtils;
@@ -87,6 +84,15 @@ public class MultiChannelHistograms extends JPanel implements Histograms {
       }
 
       this.validate();
+   }
+   
+   public void updateChannelNamesAndColors() {
+      if (ccpList_ == null) {
+         return;
+      }
+      for (ChannelControlPanel c : ccpList_) {
+         c.updateChannelNameAndColorFromCache();
+      }
    }
 
    public void fullScaleChannels() {
