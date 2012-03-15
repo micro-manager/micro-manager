@@ -5,14 +5,13 @@
 package org.micromanager.projector;
 
 import ij.gui.PointRoi;
-import ij.gui.PolygonRoi;
 import ij.gui.Roi;
+import ij.process.FloatPolygon;
 import java.awt.Point;
 import java.awt.Polygon;
 import java.awt.Rectangle;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Point2D;
-import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
@@ -146,7 +145,7 @@ public class Galvo implements ProjectionDevice {
             } catch (Exception ex) {
                ReportingUtils.logError(ex);
             }
-            int roiCount = 0;
+            FloatPolygon x;
             for (Roi roi : rois) {
                if (roi instanceof PointRoi) {
                   Point p = pointRoiToPoint((PointRoi) roi);
@@ -154,8 +153,11 @@ public class Galvo implements ProjectionDevice {
                   Point2D.Double pOut = new Point2D.Double();
                   trans.transform(pIn, pOut);
                   displaySpot(pOut.x, pOut.y);
-               } else if (roi instanceof PolygonRoi) {
-                  Polygon poly = ((PolygonRoi) roi).getPolygon();
+               } else if ((roi.getType() == Roi.POLYGON)
+                       || (roi.getType() == Roi.RECTANGLE)
+                       || (roi.getType() == Roi.OVAL)) {
+                  int roiCount = 0;
+                  Polygon poly = roi.getPolygon();
                   try {
                      Point2D lastGalvoPoint = null;
                      for (int i = 0; i < poly.npoints; ++i) {
@@ -171,8 +173,9 @@ public class Galvo implements ProjectionDevice {
                      ReportingUtils.showError(ex);
                   }
                   ++roiCount;
+                  
                } else {
-                  ReportingUtils.showError("Not able to handle this type of Roi.");
+                  ReportingUtils.showError("Not able to run the galvo with this type of Roi.");
                   return;
                }
             }
