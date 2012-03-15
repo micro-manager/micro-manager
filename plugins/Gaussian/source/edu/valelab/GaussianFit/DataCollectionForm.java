@@ -65,8 +65,10 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.nio.channels.FileChannel;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.prefs.Preferences;
 import javax.swing.JOptionPane;
 
@@ -769,7 +771,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
             Point2D.Double pCh1 = (Point2D.Double) it2.next();
             Point2D.Double pCh2 = np.findKDWSE(pCh1);
             if (pCh2 != null) {
-               points.put(pCh1, pch@);
+               points.put(pCh1, pCh2);
             }
          }
          lwm_ = new LocalWeightedMean(2, points);
