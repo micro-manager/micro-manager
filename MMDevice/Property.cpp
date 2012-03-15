@@ -411,7 +411,7 @@ int MM::PropertyCollection::CreateProperty(const char* pszName, const char* pszV
    pProp->SetInitStatus(initStatus);
    properties_[pszName] = pProp;
 
-   // asign action functor
+   // assign action functor
    pProp->RegisterAction(pAct);
    return DEVICE_OK;
 }
