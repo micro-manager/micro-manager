@@ -59,7 +59,8 @@ public:
    int AddPolygonVertex(int polygonIndex, double x, double y);
    int DeletePolygons();
    int LoadPolygons();
-   int RunPolygons(int repetitions);
+   int SetPolygonRepetitions(int repetitions);
+   int RunPolygons();
    int RunSequence();
    int StopSequence();
 

@@ -152,7 +152,7 @@ public class ProjectorController {
       }
    }
 
-   public void setRois() {
+   public void setRois(int reps) {
       Roi singleRoi = gui.getImageWin().getImagePlus().getRoi();
       Roi[] rois = null;
       final RoiManager mgr = RoiManager.getInstance();
@@ -164,6 +164,11 @@ public class ProjectorController {
          ReportingUtils.showError("Please first select ROI(s)");
       }
       dev.setRois(rois, affineTransform);
+      dev.setPolygonRepetitions(reps);
+   }
+
+   public void setRoiRepetitions(int reps) {
+      dev.setPolygonRepetitions(reps);
    }
 
    public MouseListener setupPointAndShootMouseListener() {
@@ -194,10 +199,10 @@ public class ProjectorController {
       }
    }
 
-   public void attachToMDA(int frameOn, boolean repeat, int repeatInterval, final int roiReps) {
+   public void attachToMDA(int frameOn, boolean repeat, int repeatInterval) {
       Runnable runPolygons = new Runnable() {
          public void run() {
-            runPolygons(roiReps);
+            runPolygons();
          }
       };
 
@@ -219,8 +224,8 @@ public class ProjectorController {
       this.pointAndShootInterval = intervalUs;
    }
 
-   void runPolygons(int reps) {
-      dev.runPolygons(reps);
+   void runPolygons() {
+      dev.runPolygons();
    }
 
    void addOnStateListener(OnStateListener listener) {

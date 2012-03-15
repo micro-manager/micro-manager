@@ -163,6 +163,9 @@
               <Properties>
                 <Property name="text" type="java.lang.String" value="Repeat every"/>
               </Properties>
+              <Events>
+                <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="repeatCheckBoxActionPerformed"/>
+              </Events>
             </Component>
             <Component class="javax.swing.JSpinner" name="repeatFrameMDA_">
             </Component>

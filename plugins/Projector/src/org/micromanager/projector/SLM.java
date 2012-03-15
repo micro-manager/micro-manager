@@ -153,4 +153,12 @@ public class SLM implements ProjectionDevice {
       throw new UnsupportedOperationException("Not supported yet.");
    }
 
+   public void setPolygonRepetitions(int reps) {
+      throw new UnsupportedOperationException("Not supported yet.");
+   }
+
+   public void runPolygons() {
+      throw new UnsupportedOperationException("Not supported yet.");
+   }
+
 }

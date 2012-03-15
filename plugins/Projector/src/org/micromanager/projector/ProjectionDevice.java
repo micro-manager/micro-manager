@@ -20,6 +20,7 @@ public interface ProjectionDevice {
    public void turnOn();
    public void turnOff();
    public void setRois(Roi[] rois, AffineTransform transform);
-   public void runPolygons(int reps);
+   public void setPolygonRepetitions(int reps);
+   public void runPolygons();
    public void addOnStateListener(OnStateListener listener);
 }

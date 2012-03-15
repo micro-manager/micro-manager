@@ -101,6 +101,11 @@ public class ProjectorControlForm extends javax.swing.JFrame implements OnStateL
       });
 
       repeatCheckBox.setText("Repeat every");
+      repeatCheckBox.addActionListener(new java.awt.event.ActionListener() {
+         public void actionPerformed(java.awt.event.ActionEvent evt) {
+            repeatCheckBoxActionPerformed(evt);
+         }
+      });
 
       jLabel5.setText("frames");
 
@@ -325,7 +330,7 @@ public class ProjectorControlForm extends javax.swing.JFrame implements OnStateL
     }//GEN-LAST:event_allPixelsButtonActionPerformed
 
     private void setRoiButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_setRoiButtonActionPerformed
-       controller_.setRois();
+       controller_.setRois(getRoiRepetitionsSetting());
 }//GEN-LAST:event_setRoiButtonActionPerformed
 
     private void pointAndShootIntervalCheckboxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_pointAndShootIntervalCheckboxActionPerformed
@@ -343,17 +348,24 @@ public class ProjectorControlForm extends javax.swing.JFrame implements OnStateL
     private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed
        controller_.attachToMDA(getSpinnerValue(this.startFrameMDA_)-1,
                this.repeatCheckBox.isSelected(),
-               getSpinnerValue(this.repeatFrameMDA_),
-               getSpinnerValue(roiRepetitionsSpinner));
+               getSpinnerValue(this.repeatFrameMDA_));
     }//GEN-LAST:event_jButton1ActionPerformed
 
     private void jButton2ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton2ActionPerformed
-       controller_.runPolygons(getSpinnerValue(roiRepetitionsSpinner));
+       controller_.runPolygons();
     }//GEN-LAST:event_jButton2ActionPerformed
 
     private void roiRepetitionsSpinnerStateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_roiRepetitionsSpinnerStateChanged
-       updatePointAndShoot();
+       controller_.setRoiRepetitions(getRoiRepetitionsSetting());
     }//GEN-LAST:event_roiRepetitionsSpinnerStateChanged
+
+    private void repeatCheckBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_repeatCheckBoxActionPerformed
+       controller_.setRoiRepetitions(0);
+    }//GEN-LAST:event_repeatCheckBoxActionPerformed
+
+    private int getRoiRepetitionsSetting() {
+          return getSpinnerValue(roiRepetitionsSpinner);
+    }
 
     private int getSpinnerValue(JSpinner spinner) {
        return Integer.parseInt(spinner.getValue().toString());

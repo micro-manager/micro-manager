@@ -193,12 +193,12 @@ public class Galvo implements ProjectionDevice {
       return new Point(bounds.x, bounds.y);
    }
 
-   public void runPolygons(final int reps) {
+   public void runPolygons() {
       galvoExecutor_.submit(new Runnable() {
          public void run() {
 
             try {
-               mmc_.runGalvoPolygons(galvo_, reps);
+               mmc_.runGalvoPolygons(galvo_);
             } catch (Exception ex) {
                ReportingUtils.logError(ex);
             }
@@ -213,5 +213,18 @@ public class Galvo implements ProjectionDevice {
 
    public void removeOnStateListener(OnStateListener listener) {
       onStateListeners_.remove(listener);
+   }
+
+   public void setPolygonRepetitions(final int reps) {
+      galvoExecutor_.submit(new Runnable() {
+         public void run() {
+
+            try {
+               mmc_.setGalvoPolygonRepetitions(galvo_, reps);
+            } catch (Exception ex) {
+               ReportingUtils.logError(ex);
+            }
+         }
+      });
    }
 }

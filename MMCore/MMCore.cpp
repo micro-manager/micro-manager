@@ -4974,13 +4974,30 @@ void CMMCore::loadGalvoPolygons(const char* deviceLabel) throw (CMMError)
       throw CMMError(deviceLabel, getDeviceErrorText(ret, pGalvo).c_str(), MMERR_DEVICE_GENERIC);
    }
 }
+
+/**
+ * Set the number of times to loop galvo polygons
+ */
+void CMMCore::setGalvoPolygonRepetitions(const char* deviceLabel, int repetitions) throw (CMMError)
+{
+   MM::Galvo* pGalvo = getSpecificDevice<MM::Galvo>(deviceLabel);
+   int ret =  pGalvo->SetPolygonRepetitions(repetitions);
+   
+   if (ret != DEVICE_OK)
+   {
+      logError(deviceLabel, getDeviceErrorText(ret, pGalvo).c_str());
+      throw CMMError(deviceLabel, getDeviceErrorText(ret, pGalvo).c_str(), MMERR_DEVICE_GENERIC);
+   }
+}
+
+
 /**
  * Run a loop of galvo polygons
  */
-void CMMCore::runGalvoPolygons(const char* deviceLabel, int repetitions) throw (CMMError)
+void CMMCore::runGalvoPolygons(const char* deviceLabel) throw (CMMError)
 {
    MM::Galvo* pGalvo = getSpecificDevice<MM::Galvo>(deviceLabel);
-   int ret =  pGalvo->RunPolygons(repetitions);
+   int ret =  pGalvo->RunPolygons();
    
    if (ret != DEVICE_OK)
    {

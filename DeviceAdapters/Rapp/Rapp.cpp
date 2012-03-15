@@ -281,7 +281,7 @@ int RappScanner::LoadPolygons()
 
 
 
-int RappScanner::RunPolygons(int repeats)
+int RappScanner::SetPolygonRepetitions(int repetitions)
 {
    tStringList sequenceList;
    int n = polygons_.size();
@@ -292,10 +292,10 @@ int RappScanner::RunPolygons(int repeats)
       poly << "poly," << i;
       sequenceList.push_back(poly.str());
    }
-   if (repeats > 0)
+   if (repetitions > 0)
    {
       stringstream repeat;
-      repeat << "repeat," << max(0,repeats);
+      repeat << "repeat," << repetitions;
       sequenceList.push_back(repeat.str());
    }
    sequenceList.push_back(std::string("off"));
@@ -303,7 +303,14 @@ int RappScanner::RunPolygons(int repeats)
    {
       return DEVICE_ERR;
    }
+   else
+   {
+      return DEVICE_OK;
+   }
+}
 
+int RappScanner::RunPolygons()
+{
    return UGA_->RunSequence(false) ? DEVICE_OK : DEVICE_ERR; 
 }
 
