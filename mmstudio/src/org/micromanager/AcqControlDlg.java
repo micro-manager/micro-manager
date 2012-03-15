@@ -45,6 +45,8 @@ import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.Iterator;
 import java.util.Vector;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import java.util.prefs.BackingStoreException;
 import java.util.prefs.Preferences;
 
@@ -91,15 +93,14 @@ import org.micromanager.utils.DisplayMode;
 import org.micromanager.utils.FileDialogs.FileType;
 import org.micromanager.utils.GUIColors;
 import org.micromanager.utils.MMException;
+import org.micromanager.utils.MMScriptException;
 import org.micromanager.utils.NumberUtils;
 import org.micromanager.utils.TooltipTextMaker;
 
 import com.swtdesigner.SwingResourceManager;
 import java.awt.BorderLayout;
 import java.awt.CardLayout;
-import java.awt.Dimension;
-import java.awt.FlowLayout;
-import java.awt.GridLayout;
+import mmcorej.CMMCore;
 import org.micromanager.acquisition.ComponentTitledBorder;
 import org.micromanager.api.ScriptInterface;
 import org.micromanager.utils.FileDialogs;
@@ -1857,6 +1858,109 @@ public class AcqControlDlg extends JDialog implements PropertyChangeListener {
 
       return false;
    }
+   
+   private boolean enoughMemoryAvailable() {
+      if (savePanel_.isSelected())
+         return true; 
+      
+      Runtime.getRuntime().gc();
+      
+      //Calculate number of images
+      boolean channels = channelsPanel_.isSelected();
+      boolean frames = framesPanel_.isSelected();
+      boolean slices = slicesPanel_.isSelected();
+      boolean positions = positionsPanel_.isSelected();
+      
+      int numFrames = Math.max(1, (Integer) numFrames_.getValue());
+      if (acqEng_.customTimeIntervalsEnabled()) {
+         int h = 0;
+         while (acqPrefs_.getDouble(CUSTOM_INTERVAL_PREFIX + h, -1) >= 0.0) {
+            h++;
+         }
+         numFrames = Math.max(1, h);
+      }
+      
+      double zTop, zBottom, zStep;
+      try {
+         zTop = NumberUtils.displayStringToDouble(zTop_.getText());
+         zBottom = NumberUtils.displayStringToDouble(zBottom_.getText());
+         zStep = NumberUtils.displayStringToDouble(zStep_.getText()); 
+      } catch (ParseException ex) {
+         ReportingUtils.showError("Invalid Z-Stacks input value");
+         return false;
+      }
+      
+      int numSlices = Math.max(1, (int) (1 + Math.floor( 
+              (Math.abs(zTop - zBottom) /  zStep))));
+      int numPositions = 1;
+      try {
+         numPositions = Math.max(1, gui_.getPositionList().getNumberOfPositions());
+      } catch (MMScriptException ex) {}
+      
+      int numImages;
+      
+      if (channels) {
+         ArrayList<ChannelSpec> list = ((ChannelTableModel) channelTable_.getModel() ).getChannels();
+         ArrayList<Integer> imagesPerChannel = new ArrayList<Integer>();
+         for (int i = 0; i < list.size(); i++) {
+            if (!list.get(i).useChannel_ )
+               continue;
+            int num = 1;
+            if (frames) {
+               num *= Math.max(1,numFrames / (list.get(i).skipFactorFrame_ + 1));
+            }
+            if (slices && list.get(i).doZStack_) {
+               num *= numSlices;
+            }
+            if (positions) {
+               num *= numPositions;
+            }
+            imagesPerChannel.add(num);
+         }
+         
+         numImages = 0;
+         for (Integer i : imagesPerChannel) {
+            numImages += i;
+         }
+      } else {
+         numImages = 1;
+         if (slices) {
+            numImages *= numSlices;
+         }
+         if (frames) {
+            numImages *= numFrames;
+         }
+         if (positions) {
+            numImages *= numPositions;
+         }
+         
+         
+         
+      }
+      
+      double free = (double) Runtime.getRuntime().freeMemory();
+      double total = (double) Runtime.getRuntime().totalMemory();
+      double max =  (double) Runtime.getRuntime().maxMemory();
+      double used = total - free;
+      
+      CMMCore core = MMStudioMainFrame.getInstance().getCore();
+      long byteDepth = core.getBytesPerPixel();
+      long width = core.getImageWidth();
+      long height = core.getImageHeight();
+      long bytesPerImage = byteDepth*width*height;
+      
+      long acqTotalBytes = bytesPerImage * numImages;
+      
+      if (used + acqTotalBytes > 0.72*max) {
+         int selection = JOptionPane.showConfirmDialog(this, "Warning: available RAM may "
+                 + "be insufficent for full acquisition. \nSave images to disk or increase "
+                 + "maximum memory by selecting \nEdit--Options--Memory & Threads on ImageJ "
+                 + "toolbar. \n\n Would you like to run acquisition anyway?",
+                 "Insufficient memory warning", JOptionPane.YES_NO_OPTION);
+         return selection == 0 ? true : false;
+      }
+      return true;
+   }
 
    public String runAcquisition() {
       if (acqEng_.isAcquisitionRunning()) {
@@ -1864,6 +1968,9 @@ public class AcqControlDlg extends JDialog implements PropertyChangeListener {
          return null;
       }
 
+      if (!enoughMemoryAvailable()) {
+         return null;
+      }
 
       try {
          applySettings();
@@ -1883,6 +1990,10 @@ public class AcqControlDlg extends JDialog implements PropertyChangeListener {
    public String runAcquisition(String acqName, String acqRoot) {
       if (acqEng_.isAcquisitionRunning()) {
          JOptionPane.showMessageDialog(this, "Unable to start the new acquisition task: previous acquisition still in progress.");
+         return null;
+      }
+
+      if (! enoughMemoryAvailable()) {
          return null;
       }
 
