@@ -278,9 +278,12 @@ public class MMAcquisition {
       CMMCore core = MMStudioMainFrame.getInstance().getCore();
       if (!existing_) {
          int camCh = (int) core.getNumberOfCameraChannels();
-         if (camCh > 1)
+         if (camCh > 1) {
             for (int i = 0; i < camCh; i++)
                this.setChannelName(i, core.getCameraChannelName(i));
+         } else {
+            this.setChannelName(0, "Default");
+         }
          createDefaultAcqSettings(name, imageCache);
       }
 
