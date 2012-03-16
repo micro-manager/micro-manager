@@ -660,6 +660,13 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
       int mins = (int) (remainSec / 60);
       remainSec = remainSec - mins * 60;
 
+      CMMCore core = gui_.getCore();
+      long width = core.getImageWidth();
+      long height = core.getImageHeight();
+      long byteDepth = core.getBytesPerPixel();
+      
+      long totalMB = width*height*byteDepth*((long)totalImages) / 1048576L; 
+      
       Runtime rt = Runtime.getRuntime();
       rt.gc();
 
@@ -671,6 +678,7 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
               + "\nNumber of slices: " + numSlices
               + "\nNumber of channels: " + numChannels
               + "\nTotal images: " + totalImages
+              + "\nTotal memory: " + (totalMB <= 1024 ? totalMB + " MB" : NumberUtils.doubleToDisplayString(totalMB/1024.0) + " GB")
               + "\nDuration: " + hrs + "h " + mins + "m " + NumberUtils.doubleToDisplayString(remainSec) + "s";
 
       if (useFrames_ || useMultiPosition_ || useChannels_ || useSlices_) {
