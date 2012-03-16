@@ -42,6 +42,7 @@ import java.awt.*;
 import java.awt.event.*;
 import java.io.File;
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.prefs.Preferences;
 import javax.swing.JOptionPane;
@@ -111,6 +112,7 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
    private Histograms histograms_;
    private HistogramControlsState histogramControlsState_;
    private boolean albumSaved_ = false;
+   private boolean[] channelContrastInitialized_;
 
 
    /* This interface and the following two classes
@@ -1179,10 +1181,9 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
                      return;  //don't set new display to false until all channels autoscaled
                   }
                } else {  //No z stacks
-                  autoscaleWithoutDraw();
-                  if (immImg.getNChannelsUnverified() - 1 != channel) {
+                  if (channel +1 != getNumChannels())
                      return;
-                  }
+                  autoscaleWithoutDraw();                 
                }
             } else //Acquire button
             if (hyperImage_ instanceof MMCompositeImage) {
