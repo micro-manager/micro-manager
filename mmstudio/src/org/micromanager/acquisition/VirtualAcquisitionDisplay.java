@@ -38,6 +38,7 @@ import ij.gui.StackWindow;
 import ij.gui.Toolbar;
 import ij.io.FileInfo;
 import ij.measure.Calibration;
+import ij.process.ImageProcessor;
 import java.awt.*;
 import java.awt.event.*;
 import java.io.File;
@@ -1310,8 +1311,9 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
          CompositeImage ci = (CompositeImage) hyperImage_;
          if (ci.getMode() == CompositeImage.COMPOSITE) {
             for (int i = 0; i < ((MMCompositeImage) ci).getNChannelsUnverified(); i++) {
-               ci.getProcessor(i + 1).setPixels(virtualStack_.getPixels(
-                       ci.getCurrentSlice() - ci.getChannel() + i + 1));
+               //Dont need to set pixels if processor is null because it will get them from stack automatically  
+               if (ci.getProcessor(i + 1) != null)                
+                  ci.getProcessor(i + 1).setPixels(virtualStack_.getPixels(ci.getCurrentSlice() - ci.getChannel() + i + 1));
             }
          }
          ci.getProcessor().setPixels(virtualStack_.getPixels(hyperImage_.getCurrentSlice()));
