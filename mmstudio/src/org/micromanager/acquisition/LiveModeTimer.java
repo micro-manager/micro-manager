@@ -24,6 +24,8 @@ package org.micromanager.acquisition;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.text.NumberFormat;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.swing.Timer;
 import mmcorej.CMMCore;
 import mmcorej.TaggedImage;
@@ -177,6 +179,11 @@ public class LiveModeTimer extends javax.swing.Timer {
             win_.liveModeEnabled(false);
          }
       } catch (Exception ex) {
+         try {
+            manageShutter(false);
+         } catch (Exception e) {
+            ReportingUtils.showError("Error closing shutter");
+         }
          ReportingUtils.showError(ex);
          //Wait 1 s and try to stop again
          if (firstAttempt) {
@@ -189,7 +196,7 @@ public class LiveModeTimer extends javax.swing.Timer {
             });
             delayStop.start();
          }
-      }
+      } 
    }
 
    private void updateFPS() {
@@ -343,7 +350,7 @@ public class LiveModeTimer extends javax.swing.Timer {
             shutterOriginalState_ = core_.getShutterOpen();
             autoShutterOriginalState_ = core_.getAutoShutter();
             core_.setAutoShutter(false);
-            core_.setShutterOpen(true);
+            core_.setShutterOpen( shutterOriginalState_ || autoShutterOriginalState_);
          } else {
             core_.setShutterOpen(shutterOriginalState_);
             core_.setAutoShutter(autoShutterOriginalState_);
