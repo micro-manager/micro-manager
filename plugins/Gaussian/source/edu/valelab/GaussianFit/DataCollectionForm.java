@@ -84,7 +84,7 @@ import valelab.LocalWeightedMean;
 public class DataCollectionForm extends javax.swing.JFrame {
    AbstractTableModel myTableModel_;
    private final String[] columnNames_ = {"Image", "Nr of spots", "2C Reference", "Plot/Render", "Action"};
-   private final String[] plotModes_ = {"t-X", "t-Y", "X-Y"};
+   private final String[] plotModes_ = {"t-X", "t-Y", "X-Y", "t-Int"};
    private final String[] renderModes_ = {"Points", "Gaussian"};
    private final String[] renderSizes_  = {"1x", "2x", "4x", "8x"};
    public final static String extension_ = ".tsf";
@@ -389,7 +389,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
         });
 
         plotComboBox_.setFont(new java.awt.Font("Lucida Grande", 0, 10)); // NOI18N
-        plotComboBox_.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "X-T", "Y-T", "X-Y", "Int.-T", " " }));
+        plotComboBox_.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "t-X", "t-Y", "X-Y", "t-Int.", " " }));
 
         visualizationMagnification_.setFont(new java.awt.Font("Lucida Grande", 0, 10));
         visualizationMagnification_.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "1x", "2x", "4x", "8x" }));
@@ -1768,7 +1768,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
     * Plots Tracks using JFreeChart
     *
     * @rowData
-    * @plotMode - Index of plotMode in array {"t-X", "t-Y", "X-Y"};
+    * @plotMode - Index of plotMode in array {"t-X", "t-Y", "X-Y", "t-Int"};
     */
    private void plotData(MyRowData rowData, int plotMode) {
       String title = rowData.name_ + " " + plotModes_[plotMode];
@@ -1812,6 +1812,22 @@ public class DataCollectionForm extends javax.swing.JFrame {
             data.add(spot.getXCenter(), spot.getYCenter());
          }
          GaussianUtils.plotData(title, data, "X(nm)", "Y(nm)", 0, 400);
+      } else if (plotComboBox_.getSelectedIndex() == 3) {
+         XYSeries data = new XYSeries("");
+         for (int i = 0; i < rowData.spotList_.size(); i++) {
+            GaussianSpotData spot = rowData.spotList_.get(i);
+            if (rowData.timePoints_ != null) {
+               double timePoint = rowData.timePoints_.get(i);
+               data.add(timePoint, spot.getIntensity());
+            } else {
+               data.add(i, spot.getIntensity());
+            }
+         }
+         String intAxis = "Time (frameNr)";
+         if (rowData.timePoints_ != null) {
+            intAxis = "Time (s)";
+         }
+         GaussianUtils.plotData(title, data, intAxis, "Intensity (#photons)", 0, 400);
       }
    }
 

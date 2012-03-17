@@ -15,11 +15,18 @@ import ij.IJ;
 import ij.ImagePlus;
 import ij.gui.Overlay;
 import ij.gui.Roi;
+import java.awt.Color;
 import java.awt.Polygon;
+import java.util.Iterator;
 import java.util.prefs.Preferences;
 import javax.swing.JOptionPane;
+import javax.swing.JTextField;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
+import org.json.JSONException;
+import org.json.JSONObject;
+import org.micromanager.api.MMWindow;
+import org.micromanager.utils.NumberUtils;
 
 
 
@@ -33,6 +40,7 @@ public class MainForm extends javax.swing.JFrame implements ij.ImageListener{
    private static final String GAIN = "Gain";
    private static final String PIXELSIZE = "PixelSize";
    private static final String TIMEINTERVALMS = "TimeIntervalMs";
+   private static final String BACKGROUNDLEVEL = "BackgroundLevel";
    private static final String SIGMAMAX = "SigmaMax";
    private static final String SIGMAMIN = "SigmaMin";
    private static final String USEFILTER = "UseFilter";
@@ -63,6 +71,9 @@ public class MainForm extends javax.swing.JFrame implements ij.ImageListener{
    private FitAllThread ft_;
 
    private int lastFrame_ = -1;
+   
+   // to keep track of front most window
+   ImagePlus ip_ = null;
 
     /**
      * Creates new form MainForm
@@ -76,9 +87,15 @@ public class MainForm extends javax.swing.JFrame implements ij.ImageListener{
             prefs_ = Preferences.userNodeForPackage(this.getClass());
        noiseToleranceTextField_.setText(Integer.toString(prefs_.getInt(NOISETOLERANCE,100)));
        photonConversionTextField.setText(Double.toString(prefs_.getDouble(PCF, 10.41)));
-       emGainTextField.setText(Double.toString(prefs_.getDouble(GAIN, 50)));
-       pixelSizeTextField.setText(Double.toString(prefs_.getDouble(PIXELSIZE, 107.0)));
-       baseLevelTextField.setText(Double.toString(prefs_.getDouble(TIMEINTERVALMS, 100)));
+       emGainTextField_.setText(Double.toString(prefs_.getDouble(GAIN, 50)));
+       pixelSizeTextField_.setText(Double.toString(prefs_.getDouble(PIXELSIZE, 107.0)));
+       baseLevelTextField.setText(Double.toString(prefs_.getDouble(BACKGROUNDLEVEL, 100)));
+       timeIntervalTextField_.setText(Double.toString(prefs_.getDouble(TIMEINTERVALMS, 1)));
+                          
+       pixelSizeTextField_.getDocument().addDocumentListener(new BackgroundCleaner(pixelSizeTextField_));
+       emGainTextField_.getDocument().addDocumentListener(new BackgroundCleaner(emGainTextField_));      
+       timeIntervalTextField_.getDocument().addDocumentListener(new BackgroundCleaner(timeIntervalTextField_));
+       
        minSigmaTextField.setText(Double.toString(prefs_.getDouble(SIGMAMIN, 100)));
        maxSigmaTextField.setText(Double.toString(prefs_.getDouble(SIGMAMAX, 200)));
        minNrPhotonsTextField.setText(Double.toString(prefs_.getDouble(NRPHOTONSMIN, 500)));
@@ -94,33 +111,61 @@ public class MainForm extends javax.swing.JFrame implements ij.ImageListener{
        
        DocumentListener updateNoiseOverlay = new DocumentListener() {
 
-                  public void changedUpdate(DocumentEvent documentEvent) {
-                     updateDisplay();
-                  }
+          public void changedUpdate(DocumentEvent documentEvent) {
+             updateDisplay();
+          }
 
-                  public void insertUpdate(DocumentEvent documentEvent) {
-                     updateDisplay();
-                  }
+          public void insertUpdate(DocumentEvent documentEvent) {
+             updateDisplay();
+          }
 
-                  public void removeUpdate(DocumentEvent documentEvent) {
-                     updateDisplay();
-                  }
-                  private void updateDisplay() {
-                     if (showOverlay_.isSelected()) {
-                        showNoiseTolerance();
-                     }
-                  }
-               };
-       
+          public void removeUpdate(DocumentEvent documentEvent) {
+             updateDisplay();
+          }
+
+          private void updateDisplay() {
+             if (showOverlay_.isSelected()) {
+                showNoiseTolerance();
+             }
+          }
+       };
+
        noiseToleranceTextField_.getDocument().addDocumentListener(updateNoiseOverlay);
        boxSizeTextField.getDocument().addDocumentListener(updateNoiseOverlay);
-               
+          
 
        setTitle("Localization Microscopy");
        setBounds(prefs_.getInt(FRAMEXPOS, 100), prefs_.getInt(FRAMEYPOS, 100), 250, 550);
-              // prefs_.getInt(FRAMEWIDTH, 247), prefs_.getInt(FRAMEHEIGHT, 367));
+       ImagePlus.addImageListener(this);
        setVisible(true);
     }
+    
+    
+   private class BackgroundCleaner implements DocumentListener {
+
+      JTextField field_;
+
+      public BackgroundCleaner(JTextField field) {
+         field_ = field;
+      }
+
+      private void updateBackground() {
+         field_.setBackground(Color.white);
+      }
+
+      public void changedUpdate(DocumentEvent documentEvent) {
+         updateBackground();
+      }
+
+      public void insertUpdate(DocumentEvent documentEvent) {
+         updateBackground();
+      }
+
+      public void removeUpdate(DocumentEvent documentEvent) {
+         updateBackground();
+      }
+   };
+    
 
     /** This method is called from within the constructor to
      * initialize the form.
@@ -131,6 +176,7 @@ public class MainForm extends javax.swing.JFrame implements ij.ImageListener{
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
+        jButton1 = new javax.swing.JButton();
         jLabel1 = new javax.swing.JLabel();
         jLabel3 = new javax.swing.JLabel();
         jLabel4 = new javax.swing.JLabel();
@@ -138,7 +184,7 @@ public class MainForm extends javax.swing.JFrame implements ij.ImageListener{
         jLabel5 = new javax.swing.JLabel();
         jLabel6 = new javax.swing.JLabel();
         photonConversionTextField = new javax.swing.JTextField();
-        emGainTextField = new javax.swing.JTextField();
+        emGainTextField_ = new javax.swing.JTextField();
         baseLevelTextField = new javax.swing.JTextField();
         jLabel7 = new javax.swing.JLabel();
         jLabel8 = new javax.swing.JLabel();
@@ -150,7 +196,7 @@ public class MainForm extends javax.swing.JFrame implements ij.ImageListener{
         jSeparator2 = new javax.swing.JSeparator();
         jSeparator3 = new javax.swing.JSeparator();
         noiseToleranceTextField_ = new javax.swing.JTextField();
-        pixelSizeTextField = new javax.swing.JTextField();
+        pixelSizeTextField_ = new javax.swing.JTextField();
         jLabel13 = new javax.swing.JLabel();
         fitAllButton = new javax.swing.JButton();
         jLabel10 = new javax.swing.JLabel();
@@ -160,7 +206,7 @@ public class MainForm extends javax.swing.JFrame implements ij.ImageListener{
         jLabel14 = new javax.swing.JLabel();
         preFilterComboBox_ = new javax.swing.JComboBox();
         fitDimensionsComboBox1 = new javax.swing.JComboBox();
-        timeIntervalTextField1 = new javax.swing.JTextField();
+        timeIntervalTextField_ = new javax.swing.JTextField();
         jLabel15 = new javax.swing.JLabel();
         jLabel17 = new javax.swing.JLabel();
         maxIterationsTextField = new javax.swing.JTextField();
@@ -181,6 +227,8 @@ public class MainForm extends javax.swing.JFrame implements ij.ImageListener{
         jLabel20 = new javax.swing.JLabel();
         fitMethodComboBox1 = new javax.swing.JComboBox();
         showOverlay_ = new javax.swing.JToggleButton();
+
+        jButton1.setText("jButton1");
 
         setBounds(new java.awt.Rectangle(0, 22, 250, 550));
         setMinimumSize(new java.awt.Dimension(250, 550));
@@ -227,10 +275,10 @@ public class MainForm extends javax.swing.JFrame implements ij.ImageListener{
         getContentPane().add(photonConversionTextField);
         photonConversionTextField.setBounds(170, 50, 67, 20);
 
-        emGainTextField.setFont(new java.awt.Font("Lucida Grande", 0, 10));
-        emGainTextField.setText("50");
-        getContentPane().add(emGainTextField);
-        emGainTextField.setBounds(170, 70, 67, 19);
+        emGainTextField_.setFont(new java.awt.Font("Lucida Grande", 0, 10)); // NOI18N
+        emGainTextField_.setText("50");
+        getContentPane().add(emGainTextField_);
+        emGainTextField_.setBounds(170, 70, 67, 19);
 
         baseLevelTextField.setFont(new java.awt.Font("Lucida Grande", 0, 10));
         baseLevelTextField.setText("100");
@@ -309,10 +357,15 @@ public class MainForm extends javax.swing.JFrame implements ij.ImageListener{
         getContentPane().add(noiseToleranceTextField_);
         noiseToleranceTextField_.setBounds(180, 200, 60, 20);
 
-        pixelSizeTextField.setFont(new java.awt.Font("Lucida Grande", 0, 10));
-        pixelSizeTextField.setText("0.8");
-        getContentPane().add(pixelSizeTextField);
-        pixelSizeTextField.setBounds(170, 90, 67, 20);
+        pixelSizeTextField_.setFont(new java.awt.Font("Lucida Grande", 0, 10)); // NOI18N
+        pixelSizeTextField_.setText("0.8");
+        pixelSizeTextField_.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                pixelSizeTextField_ActionPerformed(evt);
+            }
+        });
+        getContentPane().add(pixelSizeTextField_);
+        pixelSizeTextField_.setBounds(170, 90, 67, 20);
 
         jLabel13.setFont(new java.awt.Font("Lucida Grande", 0, 10));
         jLabel13.setText("PixelSize(nm)");
@@ -369,10 +422,10 @@ public class MainForm extends javax.swing.JFrame implements ij.ImageListener{
         getContentPane().add(fitDimensionsComboBox1);
         fitDimensionsComboBox1.setBounds(150, 240, 90, 27);
 
-        timeIntervalTextField1.setFont(new java.awt.Font("Lucida Grande", 0, 10));
-        timeIntervalTextField1.setText("0.8");
-        getContentPane().add(timeIntervalTextField1);
-        timeIntervalTextField1.setBounds(170, 110, 67, 20);
+        timeIntervalTextField_.setFont(new java.awt.Font("Lucida Grande", 0, 10)); // NOI18N
+        timeIntervalTextField_.setText("0.8");
+        getContentPane().add(timeIntervalTextField_);
+        timeIntervalTextField_.setBounds(170, 110, 67, 20);
 
         jLabel15.setFont(new java.awt.Font("Lucida Grande", 0, 10));
         jLabel15.setText("Time Interval (ms)");
@@ -556,9 +609,10 @@ public class MainForm extends javax.swing.JFrame implements ij.ImageListener{
     private void formWindowClosing(java.awt.event.WindowEvent evt) {//GEN-FIRST:event_formWindowClosing
        prefs_.put(NOISETOLERANCE, noiseToleranceTextField_.getText());
        prefs_.putDouble(PCF, Double.parseDouble(photonConversionTextField.getText()));
-       prefs_.putDouble(GAIN, Double.parseDouble(emGainTextField.getText()));
-       prefs_.putDouble(PIXELSIZE, Double.parseDouble(pixelSizeTextField.getText()));
-       prefs_.putDouble(TIMEINTERVALMS, Double.parseDouble(baseLevelTextField.getText()));
+       prefs_.putDouble(GAIN, Double.parseDouble(emGainTextField_.getText()));
+       prefs_.putDouble(PIXELSIZE, Double.parseDouble(pixelSizeTextField_.getText()));      
+       //prefs_.putDouble(TIMEINTERVALMS, Double.parseDouble(timeIntervalTextField_.getText()));
+       prefs_.putDouble(BACKGROUNDLEVEL, Double.parseDouble(baseLevelTextField.getText()));
        prefs_.putBoolean(USEFILTER, filterDataCheckBoxWidth.isSelected());
        prefs_.putDouble(SIGMAMIN, Double.parseDouble(minSigmaTextField.getText()));
        prefs_.putDouble(SIGMAMAX, Double.parseDouble(maxSigmaTextField.getText()));
@@ -659,6 +713,8 @@ public class MainForm extends javax.swing.JFrame implements ij.ImageListener{
        } catch (Exception e) {
           return;
        }
+       if (ip_ != siPlus)
+          ip_ = siPlus;
 
        // Roi originalRoi = siPlus.getRoi();
        // Find maximum in Roi, might not be needed....
@@ -675,19 +731,111 @@ public class MainForm extends javax.swing.JFrame implements ij.ImageListener{
          }
          siPlus.setOverlay(ov);
          siPlus.setHideOverlay(false);
-         ImagePlus.addImageListener(this);
       } catch (NumberFormatException nfEx) {
          // nothing to do
       }
    }
    
    private void noiseToleranceTextField_FocusLost(java.awt.event.FocusEvent evt) {//GEN-FIRST:event_noiseToleranceTextField_FocusLost
-      // if (showOverlay_.isSelected())
-      //    showNoiseTolerance();
+
    }//GEN-LAST:event_noiseToleranceTextField_FocusLost
 
    private void readParmsButton_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_readParmsButton_ActionPerformed
-  
+      // should not have made this a push button...
+      readParmsButton_.setSelected(false);
+      // take the active ImageJ image
+      ImagePlus siPlus = null;
+      try {
+         siPlus = IJ.getImage();
+      } catch (Exception ex) {
+         return;
+      }
+      if (ip_ != siPlus)
+          ip_ = siPlus;
+
+      ImagePlus imp = siPlus;
+      MMWindow mw = new MMWindow(siPlus);
+      if (mw.isMMWindow()) {
+         JSONObject summary = mw.getSummaryMetaData();
+         if (summary != null) {
+            // it may be better to read the timestamp of the first and last frame and deduce interval from there
+            if (summary.has("Interval_ms")) {
+               try {
+                  timeIntervalTextField_.setText(NumberUtils.doubleToDisplayString
+                          (summary.getDouble("Interval_ms")) );
+                  timeIntervalTextField_.setBackground(Color.lightGray);
+               } catch (JSONException jex) {
+                  // nothing to do
+               }
+            }
+            if (summary.has("PixelSize_um")) {
+               try {
+                  pixelSizeTextField_.setText(NumberUtils.doubleToDisplayString
+                       (summary.getDouble("PixelSize_um") * 1000.0));
+                  pixelSizeTextField_.setBackground(Color.lightGray);
+               } catch (JSONException jex) {
+                  System.out.println("Error");
+               } 
+            }
+         }
+         JSONObject im = mw.getImageMetadata(0, 0, 0, 0);
+         double emGain = -1.0;
+         boolean conventionalGain = false;
+         boolean emGainFound = false;
+         if (im != null) {
+            Iterator it = im.keys();
+            while (it.hasNext()) {
+               String key = (String) it.next();
+               String shortKey = key;
+               String[] keys = key.split("-");
+               if (keys.length > 0)
+                  shortKey = keys[keys.length - 1];
+               if (shortKey.equals("Output_Amplifier")) {
+                  try {
+                     String amp = im.getString(key);
+                     if (amp.equals("Conventional"))
+                        conventionalGain = true;
+                  } catch (JSONException jex) {
+                     System.out.println("Error");
+                  }
+               }
+               // horrible, the Andor calls emGain gain
+               if (shortKey.equals("Gain") && !emGainFound) {
+                  try {
+                     emGain = im.getDouble(key);
+                  } catch (JSONException jex) {}
+               }
+               if (shortKey.equals("EMGain") ) {
+                  emGainFound = true;
+                  try {
+                     emGain = im.getDouble(key);
+                  } catch (JSONException jex) {}
+               }
+               
+            }
+         }
+         if (conventionalGain) {
+            emGain = 1;
+         }
+         if (emGain > 0) {
+            emGainTextField_.setText(NumberUtils.doubleToDisplayString(emGain));
+            emGainTextField_.setBackground(Color.lightGray);
+         }
+         
+         // Get time stamp from first and last frame
+         try {
+            double firstTimeMs = im.getDouble("ElapsedTime-ms");
+            int lastFrame = summary.getInt("Frames");
+            JSONObject imLast = mw.getImageMetadata(0, 0, lastFrame - 1, 0);
+            double lastTimeMs = imLast.getDouble("ElapsedTime-ms");
+            double intervalMs = (lastTimeMs - firstTimeMs) / lastFrame;
+            timeIntervalTextField_.setText(
+                    NumberUtils.doubleToDisplayString(intervalMs));
+            timeIntervalTextField_.setBackground(Color.lightGray);
+         } catch (JSONException jex) {}
+         
+      }
+
    }//GEN-LAST:event_readParmsButton_ActionPerformed
 
    private void noiseToleranceTextField_KeyTyped(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_noiseToleranceTextField_KeyTyped
@@ -714,12 +862,16 @@ public class MainForm extends javax.swing.JFrame implements ij.ImageListener{
       }
    }//GEN-LAST:event_showOverlay_ActionPerformed
 
+   private void pixelSizeTextField_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_pixelSizeTextField_ActionPerformed
+      // delete
+   }//GEN-LAST:event_pixelSizeTextField_ActionPerformed
+
     public void updateValues(GaussianInfo tT) {
        tT.setNoiseTolerance(Integer.parseInt(noiseToleranceTextField_.getText()));
        tT.setPhotonConversionFactor(Double.parseDouble(photonConversionTextField.getText()));
-       tT.setGain(Double.parseDouble(emGainTextField.getText()));
-       tT.setPixelSize(Float.parseFloat(pixelSizeTextField.getText()));
-       tT.setTimeIntervalMs(Double.parseDouble(timeIntervalTextField1.getText()));
+       tT.setGain(Double.parseDouble(emGainTextField_.getText()));
+       tT.setPixelSize(Float.parseFloat(pixelSizeTextField_.getText()));
+       tT.setTimeIntervalMs(Double.parseDouble(timeIntervalTextField_.getText()));
        tT.setBaseLevel(Double.parseDouble(baseLevelTextField.getText()));
        tT.setUseWidthFilter(filterDataCheckBoxWidth.isSelected());
        tT.setSigmaMin(Double.parseDouble(minSigmaTextField.getText()));
@@ -738,7 +890,7 @@ public class MainForm extends javax.swing.JFrame implements ij.ImageListener{
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JTextField baseLevelTextField;
     private javax.swing.JTextField boxSizeTextField;
-    private javax.swing.JTextField emGainTextField;
+    private javax.swing.JTextField emGainTextField_;
     private javax.swing.JCheckBox endTrackCheckBox_;
     private javax.swing.JSpinner endTrackSpinner_;
     private javax.swing.JCheckBox filterDataCheckBoxNrPhotons;
@@ -746,6 +898,7 @@ public class MainForm extends javax.swing.JFrame implements ij.ImageListener{
     private javax.swing.JButton fitAllButton;
     private javax.swing.JComboBox fitDimensionsComboBox1;
     private javax.swing.JComboBox fitMethodComboBox1;
+    private javax.swing.JButton jButton1;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel10;
     private javax.swing.JLabel jLabel11;
@@ -778,25 +931,37 @@ public class MainForm extends javax.swing.JFrame implements ij.ImageListener{
     private javax.swing.JTextField minSigmaTextField;
     private javax.swing.JTextField noiseToleranceTextField_;
     private javax.swing.JTextField photonConversionTextField;
-    private javax.swing.JTextField pixelSizeTextField;
+    private javax.swing.JTextField pixelSizeTextField_;
     private javax.swing.JComboBox preFilterComboBox_;
     private javax.swing.JToggleButton readParmsButton_;
     private javax.swing.JButton showButton;
     private javax.swing.JToggleButton showOverlay_;
     private javax.swing.JButton stopButton;
-    private javax.swing.JTextField timeIntervalTextField1;
+    private javax.swing.JTextField timeIntervalTextField_;
     private javax.swing.JButton trackButton;
     // End of variables declaration//GEN-END:variables
 
    public void imageOpened(ImagePlus ip) {
-      //throw new UnsupportedOperationException("Not supported yet.");
+      imageUpdated(ip);
    }
 
    public void imageClosed(ImagePlus ip) {
-      //throw new UnsupportedOperationException("Not supported yet.");
+         //   System.out.println("Closed");
    }
 
    public void imageUpdated(ImagePlus ip) {
+      if (ip != ip_) {
+         pixelSizeTextField_.setBackground(Color.white);
+         emGainTextField_.setBackground(Color.white);      
+         timeIntervalTextField_.setBackground(Color.white);
+    
+         if (ip_ != null) {
+            ip_.setOverlay(null);
+            ip_.setHideOverlay(true);
+         }
+         ip_ = ip;
+      }
+         
       if (showOverlay_.isSelected()) {
          
          // note that there is confusion about frames versus slices

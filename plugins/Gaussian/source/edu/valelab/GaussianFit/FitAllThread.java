@@ -92,9 +92,6 @@ public class FitAllThread extends GaussianInfo implements Runnable  {
       int nrFrames = siPlus.getNFrames();
       int nrSlices = siPlus.getNSlices();
       int maxNrSpots = 0;
-      //double elapsedTimeMs0 = 0.0;
-      //ArrayList<Double> timePoints = new ArrayList<Double>();
-
 
       try {
          Class mmw = Class.forName("org.micromanager.api.MMWindow");        
