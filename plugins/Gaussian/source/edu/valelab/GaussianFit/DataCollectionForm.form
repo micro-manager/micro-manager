@@ -44,9 +44,11 @@
                       <Component id="saveButton" min="-2" max="-2" attributes="1"/>
                       <EmptySpace max="-2" attributes="0"/>
                       <Component id="removeButton" min="-2" max="-2" attributes="0"/>
+                      <EmptySpace min="-2" pref="36" max="-2" attributes="0"/>
+                      <Component id="showButton_" min="-2" max="-2" attributes="1"/>
                       <EmptySpace max="-2" attributes="0"/>
-                      <Component id="showButton" min="-2" max="-2" attributes="1"/>
-                      <EmptySpace min="-2" pref="165" max="-2" attributes="0"/>
+                      <Component id="infoButton_" min="-2" max="-2" attributes="1"/>
+                      <EmptySpace min="-2" pref="54" max="-2" attributes="0"/>
                       <Component id="visualizationModel_" min="-2" max="-2" attributes="0"/>
                       <EmptySpace max="-2" attributes="0"/>
                       <Component id="visualizationMagnification_" min="-2" pref="90" max="-2" attributes="0"/>
@@ -54,20 +56,19 @@
                       <Component id="plotComboBox_" min="-2" pref="90" max="-2" attributes="0"/>
                   </Group>
                   <Group type="102" alignment="0" attributes="1">
-                      <Group type="103" groupAlignment="0" max="-2" attributes="0">
+                      <Group type="103" groupAlignment="0" attributes="0">
                           <Group type="102" attributes="0">
                               <Component id="referenceName_" min="-2" pref="234" max="-2" attributes="0"/>
                               <EmptySpace min="-2" pref="180" max="-2" attributes="0"/>
                               <Component id="jLabel1" min="-2" max="-2" attributes="0"/>
-                              <EmptySpace max="-2" attributes="0"/>
                           </Group>
-                          <Group type="102" alignment="1" attributes="1">
+                          <Group type="102" alignment="0" attributes="0">
                               <Component id="pairsButton" min="-2" max="-2" attributes="1"/>
-                              <EmptySpace max="32767" attributes="0"/>
+                              <EmptySpace min="-2" pref="131" max="-2" attributes="0"/>
                               <Component id="unjitterButton_" min="-2" pref="77" max="-2" attributes="1"/>
-                              <EmptySpace min="-2" pref="124" max="-2" attributes="0"/>
                           </Group>
                       </Group>
+                      <EmptySpace max="-2" attributes="0"/>
                       <Group type="103" groupAlignment="0" max="-2" attributes="0">
                           <Group type="102" alignment="0" attributes="1">
                               <Component id="filterIntensityCheckBox_" min="-2" pref="78" max="-2" attributes="0"/>
@@ -114,10 +115,11 @@
                   <Component id="loadButton" alignment="3" min="-2" pref="19" max="-2" attributes="0"/>
                   <Component id="removeButton" alignment="3" min="-2" pref="19" max="-2" attributes="0"/>
                   <Component id="saveButton" alignment="3" min="-2" pref="19" max="-2" attributes="0"/>
-                  <Component id="showButton" alignment="3" min="-2" pref="19" max="-2" attributes="0"/>
                   <Component id="visualizationMagnification_" alignment="3" min="-2" max="-2" attributes="0"/>
                   <Component id="visualizationModel_" alignment="3" min="-2" max="-2" attributes="0"/>
                   <Component id="plotComboBox_" alignment="3" min="-2" max="-2" attributes="0"/>
+                  <Component id="showButton_" alignment="3" min="-2" pref="19" max="-2" attributes="0"/>
+                  <Component id="infoButton_" alignment="3" min="-2" pref="19" max="-2" attributes="0"/>
               </Group>
               <EmptySpace max="-2" attributes="0"/>
               <Group type="103" groupAlignment="1" attributes="0">
@@ -136,8 +138,8 @@
               <Group type="103" groupAlignment="0" attributes="0">
                   <Group type="103" groupAlignment="3" attributes="0">
                       <Component id="c2CorrectButton" alignment="3" min="-2" pref="19" max="-2" attributes="0"/>
-                      <Component id="unjitterButton_" alignment="3" min="-2" pref="19" max="-2" attributes="0"/>
                       <Component id="pairsButton" alignment="3" min="-2" pref="19" max="-2" attributes="0"/>
+                      <Component id="unjitterButton_" alignment="3" min="-2" pref="19" max="-2" attributes="0"/>
                   </Group>
                   <Group type="103" alignment="0" groupAlignment="3" attributes="0">
                       <Component id="filterIntensityCheckBox_" alignment="3" min="-2" max="-2" attributes="0"/>
@@ -184,10 +186,12 @@
           <Font name="Lucida Grande" size="10" style="0"/>
         </Property>
         <Property name="model" type="javax.swing.ComboBoxModel" editor="org.netbeans.modules.form.editors2.ComboBoxModelEditor">
-          <StringArray count="3">
+          <StringArray count="5">
             <StringItem index="0" value="X-T"/>
             <StringItem index="1" value="Y-T"/>
             <StringItem index="2" value="X-Y"/>
+            <StringItem index="3" value="Int.-T"/>
+            <StringItem index="4" value=" "/>
           </StringArray>
         </Property>
       </Properties>
@@ -241,7 +245,7 @@
         <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="removeButtonActionPerformed"/>
       </Events>
     </Component>
-    <Component class="javax.swing.JButton" name="showButton">
+    <Component class="javax.swing.JButton" name="showButton_">
       <Properties>
         <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
           <Font name="Lucida Grande" size="10" style="0"/>
@@ -249,7 +253,7 @@
         <Property name="text" type="java.lang.String" value="Show"/>
       </Properties>
       <Events>
-        <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="showButtonActionPerformed"/>
+        <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="showButton_ActionPerformed"/>
       </Events>
     </Component>
     <Component class="javax.swing.JButton" name="c2StandardButton">
@@ -397,6 +401,17 @@
         </Property>
         <Property name="text" type="java.lang.String" value="#"/>
       </Properties>
+    </Component>
+    <Component class="javax.swing.JButton" name="infoButton_">
+      <Properties>
+        <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
+          <Font name="Lucida Grande" size="10" style="0"/>
+        </Property>
+        <Property name="text" type="java.lang.String" value="Info"/>
+      </Properties>
+      <Events>
+        <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="infoButton_ActionPerformed"/>
+      </Events>
     </Component>
   </SubComponents>
 </Form>

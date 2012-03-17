@@ -344,7 +344,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
         visualizationModel_ = new javax.swing.JComboBox();
         saveButton = new javax.swing.JButton();
         removeButton = new javax.swing.JButton();
-        showButton = new javax.swing.JButton();
+        showButton_ = new javax.swing.JButton();
         c2StandardButton = new javax.swing.JButton();
         pairsButton = new javax.swing.JButton();
         c2CorrectButton = new javax.swing.JButton();
@@ -359,6 +359,9 @@ public class DataCollectionForm extends javax.swing.JFrame {
         intensityMax_ = new javax.swing.JTextField();
         jLabel2 = new javax.swing.JLabel();
         jLabel3 = new javax.swing.JLabel();
+        SigmaLabel2 = new javax.swing.JLabel();
+        IntLabel2 = new javax.swing.JLabel();
+        infoButton_ = new javax.swing.JButton();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DO_NOTHING_ON_CLOSE);
         setTitle("Gaussian tracking data");
@@ -385,8 +388,8 @@ public class DataCollectionForm extends javax.swing.JFrame {
             }
         });
 
-        plotComboBox_.setFont(new java.awt.Font("Lucida Grande", 0, 10));
-        plotComboBox_.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "X-T", "Y-T", "X-Y" }));
+        plotComboBox_.setFont(new java.awt.Font("Lucida Grande", 0, 10)); // NOI18N
+        plotComboBox_.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "X-T", "Y-T", "X-Y", "Int.-T", " " }));
 
         visualizationMagnification_.setFont(new java.awt.Font("Lucida Grande", 0, 10));
         visualizationMagnification_.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "1x", "2x", "4x", "8x" }));
@@ -410,11 +413,11 @@ public class DataCollectionForm extends javax.swing.JFrame {
             }
         });
 
-        showButton.setFont(new java.awt.Font("Lucida Grande", 0, 10));
-        showButton.setText("Show");
-        showButton.addActionListener(new java.awt.event.ActionListener() {
+        showButton_.setFont(new java.awt.Font("Lucida Grande", 0, 10)); // NOI18N
+        showButton_.setText("Show");
+        showButton_.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                showButtonActionPerformed(evt);
+                showButton_ActionPerformed(evt);
             }
         });
 
@@ -445,8 +448,8 @@ public class DataCollectionForm extends javax.swing.JFrame {
         referenceName_.setFont(new java.awt.Font("Lucida Grande", 0, 11));
         referenceName_.setText("jLabel1");
 
-        unjitterButton_.setFont(new java.awt.Font("Lucida Grande", 0, 10));
-        unjitterButton_.setText("UnJitter");
+        unjitterButton_.setFont(new java.awt.Font("Lucida Grande", 0, 10)); // NOI18N
+        unjitterButton_.setText("Drift Correct");
         unjitterButton_.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 unjitterButton_ActionPerformed(evt);
@@ -490,61 +493,83 @@ public class DataCollectionForm extends javax.swing.JFrame {
         jLabel3.setFont(new java.awt.Font("Lucida Grande", 0, 11));
         jLabel3.setText("< spot <");
 
+        SigmaLabel2.setFont(new java.awt.Font("Lucida Grande", 0, 11));
+        SigmaLabel2.setText("nm");
+
+        IntLabel2.setFont(new java.awt.Font("Lucida Grande", 0, 11));
+        IntLabel2.setText("#");
+
+        infoButton_.setFont(new java.awt.Font("Lucida Grande", 0, 10)); // NOI18N
+        infoButton_.setText("Info");
+        infoButton_.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                infoButton_ActionPerformed(evt);
+            }
+        });
+
         org.jdesktop.layout.GroupLayout layout = new org.jdesktop.layout.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-            .add(jScrollPane1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 814, Short.MAX_VALUE)
+            .add(jScrollPane1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 873, Short.MAX_VALUE)
             .add(org.jdesktop.layout.GroupLayout.TRAILING, layout.createSequentialGroup()
                 .addContainerGap()
                 .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING, false)
                     .add(c2CorrectButton, 0, 0, Short.MAX_VALUE)
                     .add(c2StandardButton, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 91, Short.MAX_VALUE)
                     .add(org.jdesktop.layout.GroupLayout.TRAILING, loadButton, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
                 .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
                     .add(layout.createSequentialGroup()
-                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
+                        .add(saveButton)
+                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                        .add(removeButton)
+                        .add(36, 36, 36)
+                        .add(showButton_)
+                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                        .add(infoButton_)
+                        .add(54, 54, 54)
+                        .add(visualizationModel_, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                        .add(visualizationMagnification_, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 90, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                        .add(plotComboBox_, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 90, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+                    .add(layout.createSequentialGroup()
                         .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                            .add(layout.createSequentialGroup()
-                                .add(saveButton)
-                                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                                .add(removeButton)
-                                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                                .add(showButton)
-                                .add(165, 165, 165)
-                                .add(visualizationModel_, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                                .add(visualizationMagnification_, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 90, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                                .add(plotComboBox_, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 90, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
                             .add(layout.createSequentialGroup()
                                 .add(referenceName_, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 234, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                                 .add(180, 180, 180)
-                                .add(jLabel1)
+                                .add(jLabel1))
+                            .add(layout.createSequentialGroup()
+                                .add(pairsButton)
+                                .add(131, 131, 131)
+                                .add(unjitterButton_, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 77, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)))
+                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                        .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING, false)
+                            .add(layout.createSequentialGroup()
+                                .add(filterIntensityCheckBox_, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 78, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                                .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING, false)
-                                    .add(layout.createSequentialGroup()
-                                        .add(filterIntensityCheckBox_, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 78, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                                        .add(intensityMin_))
-                                    .add(layout.createSequentialGroup()
-                                        .add(filterSigmaCheckBox_)
-                                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
-                                        .add(sigmaMin_, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 46, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)))
-                                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, 12, Short.MAX_VALUE)
-                                .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.TRAILING)
-                                    .add(jLabel2)
-                                    .add(jLabel3))
+                                .add(intensityMin_))
+                            .add(layout.createSequentialGroup()
+                                .add(filterSigmaCheckBox_)
+                                .add(18, 18, 18)
+                                .add(sigmaMin_, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 38, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)))
+                        .add(10, 10, 10)
+                        .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.TRAILING)
+                            .add(jLabel3)
+                            .add(jLabel2))
+                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
+                        .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING, false)
+                            .add(intensityMax_)
+                            .add(sigmaMax_, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 49, Short.MAX_VALUE))
+                        .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                            .add(layout.createSequentialGroup()
+                                .add(5, 5, 5)
+                                .add(SigmaLabel2))
+                            .add(layout.createSequentialGroup()
                                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                                .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.TRAILING)
-                                    .add(sigmaMax_, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 46, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                                    .add(intensityMax_, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 46, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)))))
-                    .add(layout.createSequentialGroup()
-                        .add(93, 93, 93)
-                        .add(pairsButton)
-                        .add(89, 89, 89)
-                        .add(unjitterButton_)))
-                .add(20, 20, 20))
+                                .add(IntLabel2)))))
+                .addContainerGap(51, Short.MAX_VALUE))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
@@ -554,10 +579,11 @@ public class DataCollectionForm extends javax.swing.JFrame {
                     .add(loadButton, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 19, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                     .add(removeButton, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 19, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                     .add(saveButton, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 19, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                    .add(showButton, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 19, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                     .add(visualizationMagnification_, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                     .add(visualizationModel_, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                    .add(plotComboBox_, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+                    .add(plotComboBox_, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                    .add(showButton_, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 19, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                    .add(infoButton_, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 19, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.TRAILING)
                     .add(c2StandardButton, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 19, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
@@ -567,7 +593,8 @@ public class DataCollectionForm extends javax.swing.JFrame {
                         .add(filterSigmaCheckBox_)
                         .add(sigmaMin_, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 17, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                         .add(sigmaMax_, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 17, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                        .add(jLabel3)))
+                        .add(jLabel3)
+                        .add(SigmaLabel2)))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
                     .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
@@ -578,7 +605,8 @@ public class DataCollectionForm extends javax.swing.JFrame {
                         .add(filterIntensityCheckBox_)
                         .add(intensityMin_, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 18, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                         .add(intensityMax_, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 17, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                        .add(jLabel2)))
+                        .add(jLabel2)
+                        .add(IntLabel2)))
                 .add(8, 8, 8)
                 .add(jScrollPane1, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 401, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
         );
@@ -716,13 +744,13 @@ public class DataCollectionForm extends javax.swing.JFrame {
          JOptionPane.showMessageDialog(getInstance(), "No dataset selected");
     }//GEN-LAST:event_removeButtonActionPerformed
 
-    private void showButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_showButtonActionPerformed
+    private void showButton_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_showButton_ActionPerformed
        int row = jTable1_.getSelectedRow();
        if (row > -1)
          showResults(rowData_.get(row));
        else
          JOptionPane.showMessageDialog(getInstance(), "Please select a dataset to show");
-    }//GEN-LAST:event_showButtonActionPerformed
+    }//GEN-LAST:event_showButton_ActionPerformed
 
    private void formComponentResized(java.awt.event.ComponentEvent evt) {//GEN-FIRST:event_formComponentResized
       //jScrollPane1.setSize(this.getSize());
@@ -1034,12 +1062,41 @@ public class DataCollectionForm extends javax.swing.JFrame {
        setVisible(false);
    }//GEN-LAST:event_formWindowClosing
 
+   private void infoButton_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_infoButton_ActionPerformed
+      int row = jTable1_.getSelectedRow();
+       if (row > -1) {
+          
+         
+         MyRowData rowData = rowData_.get(row);
+         String data = "Name: " + rowData.name_ + "\n" +
+                 "Title: " + rowData.title_ + "\n" + 
+                 "BoxSize: " + 2*rowData.halfSize_ + "\n" +
+                 "Image Height (pixels): " + rowData.height_ + "\n" + 
+                 "Image Width (pixels): " + rowData.width_ + "\n" +
+                 "Nr. of Spots: " + rowData.maxNrSpots_ + "\n" +
+                 "Pixel Size (nm): " + rowData.pixelSizeNm_ + "\n" +
+                 "Nr. of Channels: " + rowData.nrChannels_ + "\n" +
+                 "Nr. of Frames: " + rowData.nrFrames_ + "\n" + 
+                 "Nr. of Slices: " + rowData.nrSlices_ + "\n" +
+                 "Nr. of Positions: " + rowData.nrPositions_ + "\n" +
+                 "Is a Track: " + rowData.isTrack_;
+         
+         TextWindow tw = new TextWindow("Info for " + rowData.name_, data, 300, 300);
+         tw.setVisible(true);
+       }
+       else
+         JOptionPane.showMessageDialog(getInstance(), "Please select a dataset first");
+   }//GEN-LAST:event_infoButton_ActionPerformed
+
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JLabel IntLabel2;
+    private javax.swing.JLabel SigmaLabel2;
     private javax.swing.JButton c2CorrectButton;
     private javax.swing.JButton c2StandardButton;
     private javax.swing.JCheckBox filterIntensityCheckBox_;
     private javax.swing.JCheckBox filterSigmaCheckBox_;
+    private javax.swing.JButton infoButton_;
     private javax.swing.JTextField intensityMax_;
     private javax.swing.JTextField intensityMin_;
     private javax.swing.JLabel jLabel1;
@@ -1053,7 +1110,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
     private javax.swing.JLabel referenceName_;
     private javax.swing.JButton removeButton;
     private javax.swing.JButton saveButton;
-    private javax.swing.JButton showButton;
+    private javax.swing.JButton showButton_;
     private javax.swing.JTextField sigmaMax_;
     private javax.swing.JTextField sigmaMin_;
     private javax.swing.JButton unjitterButton_;

@@ -43,6 +43,47 @@ public class GaussCanvas extends ImageCanvas {
    public void setImageWindow(ImageWindow iw) {
       iw_ = iw;
    }
+   
+   @Override
+   public void zoomIn(int sx, int sy) {
+		if (magnification>=32) return;
+		double newMag = getHigherZoomLevel(magnification);
+		int newWidth = (int)(imageWidth*newMag);
+		int newHeight = (int)(imageHeight*newMag);
+		Dimension newSize = canEnlarge(newWidth, newHeight);
+		if (newSize!=null) {
+			setDrawingSize(newSize.width, newSize.height);
+			if (newSize.width!=newWidth || newSize.height!=newHeight)
+				adjustSourceRect(newMag, sx, sy);
+			else
+				setMagnification(newMag);
+			imp.getWindow().pack();
+		} else
+			adjustSourceRect(newMag, sx, sy);
+		repaint();
+		//if (srcRect.width<imageWidth || srcRect.height<imageHeight)
+		//	resetMaxBounds();
+	}
+   
+
+   void adjustSourceRect(double newMag, int x, int y) {
+		//IJ.log("adjustSourceRect1: "+newMag+" "+dstWidth+"  "+dstHeight);
+		int w = (int)Math.round(dstWidth/newMag);
+		if (w*newMag<dstWidth) w++;
+		int h = (int)Math.round(dstHeight/newMag);
+		if (h*newMag<dstHeight) h++;
+		x = offScreenX(x);
+		y = offScreenY(y);
+		Rectangle r = new Rectangle(x-w/2, y-h/2, w, h);
+		if (r.x<0) r.x = 0;
+		if (r.y<0) r.y = 0;
+		if (r.x+w>imageWidth) r.x = imageWidth-w;
+		if (r.y+h>imageHeight) r.y = imageHeight-h;
+		srcRect = r;
+		setMagnification(newMag);
+		//IJ.log("adjustSourceRect2: "+srcRect+" "+dstWidth+"  "+dstHeight);
+	}
+   
 
    @Override
    public void mouseReleased(MouseEvent me) {

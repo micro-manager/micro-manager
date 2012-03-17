@@ -106,7 +106,7 @@ public class MainForm extends javax.swing.JFrame implements ij.ImageListener{
                      updateDisplay();
                   }
                   private void updateDisplay() {
-                     if (readParmsButton_.isSelected()) {
+                     if (showOverlay_.isSelected()) {
                         showNoiseTolerance();
                      }
                   }
@@ -180,12 +180,10 @@ public class MainForm extends javax.swing.JFrame implements ij.ImageListener{
         readParmsButton_ = new javax.swing.JToggleButton();
         jLabel20 = new javax.swing.JLabel();
         fitMethodComboBox1 = new javax.swing.JComboBox();
-        showOverlay_1 = new javax.swing.JToggleButton();
+        showOverlay_ = new javax.swing.JToggleButton();
 
         setBounds(new java.awt.Rectangle(0, 22, 250, 550));
-        setMaximumSize(new java.awt.Dimension(250, 550));
         setMinimumSize(new java.awt.Dimension(250, 550));
-        setPreferredSize(new java.awt.Dimension(250, 550));
         setResizable(false);
         addWindowListener(new java.awt.event.WindowAdapter() {
             public void windowClosing(java.awt.event.WindowEvent evt) {
@@ -286,7 +284,7 @@ public class MainForm extends javax.swing.JFrame implements ij.ImageListener{
         getContentPane().add(jSeparator3);
         jSeparator3.setBounds(20, 330, 220, 10);
 
-        noiseToleranceTextField_.setFont(new java.awt.Font("Lucida Grande", 0, 10)); // NOI18N
+        noiseToleranceTextField_.setFont(new java.awt.Font("Lucida Grande", 0, 10));
         noiseToleranceTextField_.setText("2000");
         noiseToleranceTextField_.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -351,7 +349,7 @@ public class MainForm extends javax.swing.JFrame implements ij.ImageListener{
         getContentPane().add(jLabel14);
         jLabel14.setBounds(50, 250, 56, 13);
 
-        preFilterComboBox_.setFont(new java.awt.Font("Lucida Grande", 0, 10)); // NOI18N
+        preFilterComboBox_.setFont(new java.awt.Font("Lucida Grande", 0, 10));
         preFilterComboBox_.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "None", "Gaussian1-5" }));
         preFilterComboBox_.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -361,7 +359,7 @@ public class MainForm extends javax.swing.JFrame implements ij.ImageListener{
         getContentPane().add(preFilterComboBox_);
         preFilterComboBox_.setBounds(150, 180, 90, 20);
 
-        fitDimensionsComboBox1.setFont(new java.awt.Font("Lucida Grande", 0, 10)); // NOI18N
+        fitDimensionsComboBox1.setFont(new java.awt.Font("Lucida Grande", 0, 10));
         fitDimensionsComboBox1.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "1", "2", "3" }));
         fitDimensionsComboBox1.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -500,7 +498,7 @@ public class MainForm extends javax.swing.JFrame implements ij.ImageListener{
         getContentPane().add(jLabel20);
         jLabel20.setBounds(90, 200, 76, 20);
 
-        fitMethodComboBox1.setFont(new java.awt.Font("Lucida Grande", 0, 10)); // NOI18N
+        fitMethodComboBox1.setFont(new java.awt.Font("Lucida Grande", 0, 10));
         fitMethodComboBox1.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "Simplex", "LevenBerg-Marq" }));
         fitMethodComboBox1.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -510,14 +508,14 @@ public class MainForm extends javax.swing.JFrame implements ij.ImageListener{
         getContentPane().add(fitMethodComboBox1);
         fitMethodComboBox1.setBounds(150, 260, 90, 27);
 
-        showOverlay_1.setText("show");
-        showOverlay_1.addActionListener(new java.awt.event.ActionListener() {
+        showOverlay_.setText("show");
+        showOverlay_.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                showOverlay_1ActionPerformed(evt);
+                showOverlay_ActionPerformed(evt);
             }
         });
-        getContentPane().add(showOverlay_1);
-        showOverlay_1.setBounds(20, 200, 60, 20);
+        getContentPane().add(showOverlay_);
+        showOverlay_.setBounds(20, 200, 60, 20);
 
         pack();
     }// </editor-fold>//GEN-END:initComponents
@@ -592,7 +590,7 @@ public class MainForm extends javax.swing.JFrame implements ij.ImageListener{
           preFilterType_ = FindLocalMaxima.FilterType.NONE;
        if (item.equals("Gaussian1-5"))
           preFilterType_ = FindLocalMaxima.FilterType.GAUSSIAN1_5;
-       if (readParmsButton_.isSelected())
+       if (showOverlay_.isSelected())
          showNoiseTolerance();
     }//GEN-LAST:event_preFilterComboBox_ActionPerformed
 
@@ -689,19 +687,7 @@ public class MainForm extends javax.swing.JFrame implements ij.ImageListener{
    }//GEN-LAST:event_noiseToleranceTextField_FocusLost
 
    private void readParmsButton_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_readParmsButton_ActionPerformed
-      if (readParmsButton_.isSelected()) {
-         showNoiseTolerance();
-         readParmsButton_.setText("hide");
-      } else {
-         ImagePlus siPlus;
-       try {
-          siPlus = IJ.getImage();
-       } catch (Exception e) {
-          return;
-       }
-       siPlus.setHideOverlay(true);
-       readParmsButton_.setText("show");
-      }
+  
    }//GEN-LAST:event_readParmsButton_ActionPerformed
 
    private void noiseToleranceTextField_KeyTyped(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_noiseToleranceTextField_KeyTyped
@@ -712,9 +698,21 @@ public class MainForm extends javax.swing.JFrame implements ij.ImageListener{
       // TODO add your handling code here:
    }//GEN-LAST:event_fitMethodComboBox1ActionPerformed
 
-   private void showOverlay_1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_showOverlay_1ActionPerformed
-      // TODO add your handling code here:
-   }//GEN-LAST:event_showOverlay_1ActionPerformed
+   private void showOverlay_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_showOverlay_ActionPerformed
+      if (showOverlay_.isSelected()) {
+         showNoiseTolerance();
+         showOverlay_.setText("hide");
+      } else {
+         ImagePlus siPlus;
+       try {
+          siPlus = IJ.getImage();
+       } catch (Exception e) {
+          return;
+       }
+       siPlus.setHideOverlay(true);
+       showOverlay_.setText("show");
+      }
+   }//GEN-LAST:event_showOverlay_ActionPerformed
 
     public void updateValues(GaussianInfo tT) {
        tT.setNoiseTolerance(Integer.parseInt(noiseToleranceTextField_.getText()));
@@ -784,7 +782,7 @@ public class MainForm extends javax.swing.JFrame implements ij.ImageListener{
     private javax.swing.JComboBox preFilterComboBox_;
     private javax.swing.JToggleButton readParmsButton_;
     private javax.swing.JButton showButton;
-    private javax.swing.JToggleButton showOverlay_1;
+    private javax.swing.JToggleButton showOverlay_;
     private javax.swing.JButton stopButton;
     private javax.swing.JTextField timeIntervalTextField1;
     private javax.swing.JButton trackButton;
@@ -799,7 +797,7 @@ public class MainForm extends javax.swing.JFrame implements ij.ImageListener{
    }
 
    public void imageUpdated(ImagePlus ip) {
-      if (readParmsButton_.isSelected()) {
+      if (showOverlay_.isSelected()) {
          
          // note that there is confusion about frames versus slices
          int frame = 1;
