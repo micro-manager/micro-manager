@@ -174,6 +174,7 @@ public class DeviceSetupDlg extends MMDialog {
    }
 
    protected void onOK() {
+      propTable.editingStopped(null);
       savePosition();
       String oldName = dev.getName();
       String newName = devLabel.getText();
