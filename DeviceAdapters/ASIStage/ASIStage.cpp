@@ -2580,7 +2580,7 @@ int CRISP::Initialize()
    AddAllowedValue(fc, " ");
    AddAllowedValue(fc, "Do it");
 
-   for (long i = 0; i < 4; i++)
+   for (long i = 0; i < SIZE_OF_FC_ARRAY; i++)
    {
       std::ostringstream os("");
       os << "Focus Curve Data" << i;
@@ -3161,7 +3161,8 @@ int CRISP::OnFocusCurve(MM::PropertyBase* pProp, MM::ActionType eAct)
                if (focusCurveData_[index].length() > (MM::MaxStrLength - 40))
                {
                   index++;
-                  focusCurveData_[index] = "";
+                  if (index < SIZE_OF_FC_ARRAY)
+                     focusCurveData_[index] = "";
                }
             }
          }

@@ -315,7 +315,7 @@ private:
    int GetValue(std::string cmd, float& val);
    int SetCommand(std::string cmd);
 
-   static const int SIZE_OF_FC_ARRAY = 8;
+   static const int SIZE_OF_FC_ARRAY = 24;
    std::string focusCurveData_[SIZE_OF_FC_ARRAY];
    bool justCalibrated_;
    long ledIntensity_;
