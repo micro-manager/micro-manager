@@ -21,11 +21,7 @@
 //
 package org.micromanager.acquisition;
 
-import java.util.logging.Level;
-import java.util.logging.Logger;
-import org.micromanager.api.DisplayControls;
 import java.lang.reflect.InvocationTargetException;
-import org.micromanager.api.ImageCacheListener;
 import ij.ImageStack;
 import ij.process.LUT;
 import ij.CompositeImage;
@@ -38,16 +34,16 @@ import ij.gui.StackWindow;
 import ij.gui.Toolbar;
 import ij.io.FileInfo;
 import ij.measure.Calibration;
-import ij.process.ImageProcessor;
+import ij.plugin.frame.ContrastAdjuster;
 import java.awt.*;
 import java.awt.event.*;
 import java.io.File;
 import java.io.IOException;
-import java.util.Arrays;
 import java.util.HashMap;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import java.util.prefs.Preferences;
 import javax.swing.JOptionPane;
-import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
 import javax.swing.Timer;
 import mmcorej.TaggedImage;
@@ -138,7 +134,7 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
    }
 
    public class MMCompositeImage extends CompositeImage implements IMMImagePlus {
-
+      
       MMCompositeImage(ImagePlus imgp, int type) {
          super(imgp, type);
       }
@@ -259,6 +255,17 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
       }
 
       private void superUpdateImage() {
+         //Need to set this field to null, or else an infintie loop can be entered when 
+         //The imageJ contrast adjuster is open
+         ContrastAdjuster ca = (ContrastAdjuster) WindowManager.getFrame("B&C");
+         if (ca != null) {
+            try {
+               JavaUtils.setRestrictedFieldValue(ca, ContrastAdjuster.class, "instance", null);
+            } catch (NoSuchFieldException ex) {
+               ReportingUtils.logError("ImageJ ContrastAdjuster doesn't have field named instance");
+            }
+         }
+         
          super.updateImage();
       }
 
