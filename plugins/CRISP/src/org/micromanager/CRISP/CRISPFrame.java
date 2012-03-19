@@ -519,11 +519,13 @@ public class CRISPFrame extends javax.swing.JFrame {
           setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
 
           core_.setProperty(CRISP_, "Obtain Focus Curve", "Do it");
-          String vals = core_.getProperty(CRISP_, "Focus Curve Data0");
-          vals += core_.getProperty(CRISP_, "Focus Curve Data1");
-          vals += core_.getProperty(CRISP_, "Focus Curve Data2");
-          vals += core_.getProperty(CRISP_, "Focus Curve Data3");
-
+          int index = 0;
+          String vals = "";
+          while (core_.hasProperty(CRISP_, "Focus Curve Data" + index)) {
+            vals += core_.getProperty(CRISP_, "Focus Curve Data" + index);
+            index++;
+         }
+          
           XYSeries data = new XYSeries("");
           String[] valLines = vals.split("\r\n");
           for (int i=0; i < valLines.length; i++) {
