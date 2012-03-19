@@ -30,6 +30,7 @@ package org.micromanager.api;
 import ij.ImagePlus;
 import ij.ImageStack;
 import ij.process.ImageProcessor;
+import org.json.JSONObject;
 import org.micromanager.acquisition.AcquisitionVirtualStack;
 import org.micromanager.acquisition.VirtualAcquisitionDisplay;
 import org.micromanager.utils.MMScriptException;
@@ -119,6 +120,26 @@ public class MMWindow {
          return null;
       ImagePlus hyperImage = virtAcq_.getImagePlus();
       return hyperImage.getImageStack().getProcessor(hyperImage.getStackIndex(channel + 1, slice, frame));
+   }
+   
+   /**
+    * 
+    * @return Summary metadata associated with underling virtual acquistion 
+    */
+   public JSONObject getSummaryMetaData() {
+      return virtAcq_.getSummaryMetadata();
+   }
+   
+   /**
+    * Returns image metadata of specified image
+    * @param channel
+    * @param slice
+    * @param frame
+    * @param position
+    * @return 
+    */
+   public JSONObject getImageMetadata(int channel, int slice, int frame, int position) {
+      return virtAcq_.getImageCache().getImageTags(channel, slice, frame, position);
    }
 
 
