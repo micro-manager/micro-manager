@@ -45,13 +45,9 @@ import java.awt.geom.Point2D;
 import java.io.File;
 import java.io.IOException;
 
-import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import java.util.prefs.Preferences;
-import java.util.Timer;
 
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
@@ -118,23 +114,18 @@ import bsh.Interpreter;
 import com.swtdesigner.SwingResourceManager;
 import ij.gui.ImageCanvas;
 import ij.gui.ImageWindow;
-import ij.process.FloatProcessor;
 import java.awt.Cursor;
-import java.awt.Graphics;
 import java.awt.KeyboardFocusManager;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 import javax.swing.BorderFactory;
 import javax.swing.JPanel;
-import javax.swing.JSeparator;
 import javax.swing.JSplitPane;
 import javax.swing.event.AncestorListener;
 import mmcorej.TaggedImage;
 import org.json.JSONException;
-import org.micromanager.acquisition.AcquisitionVirtualStack;
 
 import org.micromanager.acquisition.AcquisitionWrapperEngine;
 import org.micromanager.acquisition.LiveModeTimer;
@@ -143,7 +134,6 @@ import org.micromanager.acquisition.MetadataPanel;
 import org.micromanager.acquisition.TaggedImageStorageDiskDefault;
 import org.micromanager.acquisition.VirtualAcquisitionDisplay;
 import org.micromanager.api.DeviceControlGUI;
-import org.micromanager.utils.ImageFocusListener;
 import org.micromanager.api.Pipeline;
 import org.micromanager.api.TaggedImageStorage;
 import org.micromanager.utils.FileDialogs;
@@ -2966,39 +2956,14 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface, Device
 
 
    public boolean displayImage(final Object pixels, boolean wait) {
-      String[] acqs = acqMgr_.getAcqusitionNames();
-      VirtualAcquisitionDisplay virtAcq;
-      if (acqs == null || acqs.length == 0) {
-         ImagePlus ip = WindowManager.getCurrentImage();
-         if (!(ip.getWindow() instanceof VirtualAcquisitionDisplay.DisplayWindow )){
-                 return false;
-         }
-         virtAcq = VirtualAcquisitionDisplay.getDisplay(ip);       
-      } else {
-         String acqName = acqs[acqs.length - 1];
-         MMAcquisition acq;
-         try {
-            acq = acqMgr_.getAcquisition(acqName);
-         } catch (MMScriptException ex) {
-            ReportingUtils.showError("Can't locate acquisition");
-            return false;
-         }
-         virtAcq = acq.getAcquisitionWindow();
-      }
-
+      checkSimpleAcquisition();
       try {   
-            JSONObject summary = virtAcq.getImageCache().getSummaryMetadata();
-            int width = MDUtils.getWidth(summary);
-            int height = MDUtils.getHeight(summary);
-            int bitDepth  = MDUtils.getBitDepth(summary);
-            String pixelType = MDUtils.getPixelType(summary);
-            if (height != core_.getImageHeight() || width != core_.getImageWidth() || 
-                    bitDepth != core_.getImageBitDepth()) 
-               return false;
-            TaggedImage ti = ImageUtils.makeTaggedImage(pixels, 0, 0, 0,0, width, height, bitDepth);
-            ti.tags.put("PixelType", pixelType);
-            virtAcq.getImageCache().putImage(ti);
-            virtAcq.showImage(ti, wait);
+            int width = getAcquisition(SIMPLE_ACQ).getWidth();
+            int height = getAcquisition(SIMPLE_ACQ).getHeight();
+            int byteDepth = getAcquisition(SIMPLE_ACQ).getByteDepth();          
+            TaggedImage ti = ImageUtils.makeTaggedImage(pixels, 0, 0, 0,0, width, height, byteDepth);
+            simpleDisplay_.getImageCache().putImage(ti);
+            simpleDisplay_.showImage(ti, wait);
             return true;
       } catch (Exception ex) {
          ReportingUtils.showError(ex);
@@ -3095,7 +3060,7 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface, Device
       try {
          checkSimpleAcquisition(ti);
          setCursor(new Cursor(Cursor.WAIT_CURSOR));
-         //getAcquisition(SIMPLE_ACQ).toFront();
+//         getAcquisition(SIMPLE_ACQ).toFront();
          ti.tags.put("Summary", getAcquisition(SIMPLE_ACQ).getSummaryMetadata());
          ti.tags.put("ChannelIndex", channel);
          ti.tags.put("PositionIndex", 0);
@@ -3968,11 +3933,11 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface, Device
    
    @Override
    public void initializeAcquisition(String name, int width, int height,
-         int depth, int bitDepth) throws MMScriptException {
+         int byteDepth, int bitDepth) throws MMScriptException {
       MMAcquisition acq = acqMgr_.getAcquisition(name);
       //number of multi-cam cameras is set to 1 here for backwards compatibility
       //might want to change this later
-      acq.setImagePhysicalDimensions(width, height, depth, bitDepth,1);
+      acq.setImagePhysicalDimensions(width, height, byteDepth, bitDepth,1);
       acq.initialize();
    }
 
@@ -3997,7 +3962,7 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface, Device
    @Override
    public int getAcquisitionImageByteDepth(String acqName) throws MMScriptException{
       MMAcquisition acq = acqMgr_.getAcquisition(acqName);
-      return acq.getDepth();
+      return acq.getByteDepth();
    }
 
    @Override public int getAcquisitionMultiCamNumChannels(String acqName) throws MMScriptException{

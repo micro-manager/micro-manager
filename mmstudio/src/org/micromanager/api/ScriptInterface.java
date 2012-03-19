@@ -690,17 +690,17 @@ public interface ScriptInterface {
    public Color getBackgroundColor();
 
    /**
-    * Show an image with the pixel array pix (uses current camera settings
-    * to figure out the shape of the image.
+    * Show an image with the pixel array pix in the snap/live window (uses 
+    * current camera settings to figure out the shape of the image)
     * @param pix Array with pixel data.  pixeldata should match current camera settings.
     * @deprecated use displayImage(TaggedImage img) instead
     */
    public boolean displayImage(Object pix);
 
      /**
-    * Show a TaggedImage in the main acquisition window
-    * to figure out the shape of the image.
-    * @param pix Array with pixel data.  pixeldata should match current camera settings.
+    * Show a TaggedImage in the snap/live window (uses current camera settings
+    * to figure out the shape of the image)
+    * @param image TaggedImage (pixel data and metadata tags) to be displayed
     */
    public boolean displayImage(TaggedImage image);
 

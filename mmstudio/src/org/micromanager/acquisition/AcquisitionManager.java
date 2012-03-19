@@ -159,7 +159,7 @@ public class AcquisitionManager {
          try {
          if (acq.getWidth() == imageWidth &&
              acq.getHeight() == imageHeight &&
-             acq.getDepth() == imageDepth  &&
+             acq.getByteDepth() == imageDepth  &&
              acq.getMultiCameraNumChannels() == numChannels &&
                 ! acq.getImageCache().isFinished() )
              newNeeded = false;

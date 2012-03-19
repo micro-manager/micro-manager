@@ -69,7 +69,7 @@ public class MMAcquisition {
    protected String name_;
    protected int width_ = 0;
    protected int height_ = 0;
-   protected int depth_ = 1;
+   protected int byteDepth_ = 1;
    protected int bitDepth_ = 8;    
    protected int multiCamNumCh_ = 1;
    private boolean initialized_ = false;
@@ -164,13 +164,13 @@ public class MMAcquisition {
    }
 
    public void setImagePhysicalDimensions(int width, int height,
-           int depth, int bitDepth, int multiCamNumCh) throws MMScriptException {
+           int byteDepth, int bitDepth, int multiCamNumCh) throws MMScriptException {
       if (initialized_) {
          throw new MMScriptException("Can't image change dimensions - the acquisition is already initialized");
       }
       width_ = width;
       height_ = height;
-      depth_ = depth;
+      byteDepth_ = byteDepth;
       bitDepth_ = bitDepth;
       multiCamNumCh_ = multiCamNumCh;
    }
@@ -183,8 +183,8 @@ public class MMAcquisition {
       return height_;
    }
 
-   public int getDepth() {
-      return depth_;
+   public int getByteDepth() {
+      return byteDepth_;
    }
    
    public int getBitDepth() {
@@ -228,7 +228,7 @@ public class MMAcquisition {
       rootDirectory_ = dir;
    }
 
-   //used to initialize snap and live, which only sotre a single image at a time
+   //used to initialize snap and live, which only store a single image at a time
    public void initializeSimpleAcq() throws MMScriptException {
       if (initialized_) {
          throw new MMScriptException("Acquisition is already initialized");
@@ -339,15 +339,15 @@ public class MMAcquisition {
          summaryMetadata.put("GridRow", 0);
          summaryMetadata.put("Height", height_);
          int ijType = -1;
-         if (depth_ == 1) {
+         if (byteDepth_ == 1) {
             ijType = ImagePlus.GRAY8;
-         } else if (depth_ == 2) {
+         } else if (byteDepth_ == 2) {
             ijType = ImagePlus.GRAY16;
-         } else if (depth_ == 8) {
+         } else if (byteDepth_ == 8) {
             ijType = 64;
-         } else if (depth_ == 4 && core.getNumberOfComponents() == 1) {
+         } else if (byteDepth_ == 4 && core.getNumberOfComponents() == 1) {
             ijType = ImagePlus.GRAY32;
-         } else if (depth_ == 4 && core.getNumberOfComponents() == 4) {
+         } else if (byteDepth_ == 4 && core.getNumberOfComponents() == 4) {
             ijType = ImagePlus.COLOR_RGB;
          }
          summaryMetadata.put("IJType", ijType);
@@ -358,7 +358,7 @@ public class MMAcquisition {
          summaryMetadata.put("Source", "Micro-Manager");
          summaryMetadata.put("PixelAspect", 1.0);
          summaryMetadata.put("PixelSize_um", core.getPixelSizeUm());
-         summaryMetadata.put("PixelType", (core.getNumberOfComponents() == 1 ? "GRAY" : "RGB") + (8 * depth_));
+         summaryMetadata.put("PixelType", (core.getNumberOfComponents() == 1 ? "GRAY" : "RGB") + (8 * byteDepth_));
          summaryMetadata.put("Slices", numSlices_);
          summaryMetadata.put("StartTime", MDUtils.getCurrentTime());
          summaryMetadata.put("Time", Calendar.getInstance().getTime());
@@ -466,7 +466,7 @@ public class MMAcquisition {
          tags.put("Slice", slice);
          tags.put("SliceIndex", slice);
          tags.put("Width", width_);
-         MDUtils.setPixelTypeFromByteDepth(tags, depth_);
+         MDUtils.setPixelTypeFromByteDepth(tags, byteDepth_);
 
          TaggedImage tg = new TaggedImage(pixels, tags);
          insertImage(tg);
@@ -489,7 +489,7 @@ public class MMAcquisition {
          tags.put("Frame", frame);
          tags.put("ChannelIndex", channel);
          tags.put("SliceIndex", slice);
-         MDUtils.setPixelTypeFromByteDepth(tags, depth_);
+         MDUtils.setPixelTypeFromByteDepth(tags, byteDepth_);
          tags.put("PositionIndex", 0);
          insertImage(taggedImg);
       } catch (JSONException e) {
@@ -525,7 +525,7 @@ public class MMAcquisition {
                     height_);
             throw new MMScriptException("Image dimensions do not match MMAcquisition.");
          }
-         if (!MDUtils.getPixelType(tags).contentEquals(getPixelType(depth_))) {
+         if (!MDUtils.getPixelType(tags).contentEquals(getPixelType(byteDepth_))) {
             throw new MMScriptException("Pixel type does not match MMAcquisition.");
          }
 
