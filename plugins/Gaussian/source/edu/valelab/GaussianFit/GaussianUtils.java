@@ -25,6 +25,10 @@ import org.jfree.chart.renderer.xy.XYLineAndShapeRenderer;
 import org.jfree.chart.JFreeChart;
 import org.jfree.chart.ChartFactory;
 import org.jfree.chart.ChartFrame;
+import org.jfree.chart.LegendItemSource;
+import org.jfree.chart.axis.NumberAxis;
+import org.jfree.chart.axis.ValueAxis;
+import org.jfree.chart.title.LegendTitle;
 import org.jfree.data.xy.XYSeries;
 import org.jfree.data.xy.XYSeriesCollection;
 
@@ -122,6 +126,91 @@ public class GaussianUtils {
       graphFrame.setVisible(true);
    }
 
+   /**
+    * Create a frame with a plot of the data given in XYSeries
+    */
+   public static void plotDataN(String title, XYSeries[] data, String xTitle,
+                 String yTitle, int xLocation, int yLocation) {
+      
+      // JFreeChart code
+      XYSeriesCollection dataset = new XYSeriesCollection();
+      // calculate min and max to scale the graph
+      double minX, minY, maxX, maxY;
+      minX = data[0].getMinX();
+      minY = data[0].getMinY();
+      maxX = data[0].getMaxX();
+      maxY = data[0].getMaxY();
+      for (XYSeries d : data) {
+         dataset.addSeries(d);
+         if (d.getMinX() < minX)
+            minX = d.getMinX();
+         if (d.getMaxX() > maxX)
+            maxX = d.getMaxX();
+         if (d.getMinY() < minY)
+            minY = d.getMinY();
+         if (d.getMaxY() > maxY)
+            maxY = d.getMaxY();
+      }
+      
+      JFreeChart chart = ChartFactory.createScatterPlot(title, // Title
+                xTitle, // x-axis Label
+                yTitle, // y-axis Label
+                dataset, // Dataset
+                PlotOrientation.VERTICAL, // Plot Orientation
+                true, // Show Legend
+                true, // Use tooltips
+                false // Configure chart to generate URLs?
+            );
+      XYPlot plot = (XYPlot) chart.getPlot();
+      plot.setBackgroundPaint(Color.white);
+      plot.setRangeGridlinePaint(Color.lightGray);
+      XYLineAndShapeRenderer renderer = (XYLineAndShapeRenderer) plot.getRenderer();
+      renderer.setBaseShapesVisible(true);
+      
+      for (int i = 0; i < data.length; i++) {
+         renderer.setSeriesFillPaint(i, Color.white);
+         renderer.setSeriesLinesVisible(i, true);
+      } 
+      
+      renderer.setSeriesPaint(0, Color.blue);
+      Shape circle = new Ellipse2D.Float(-2.0f, -2.0f, 4.0f, 4.0f);   
+      renderer.setSeriesShape(0, circle, false);
+           
+      if (data.length > 1) {
+         renderer.setSeriesPaint(1, Color.red);
+         Shape square = new Rectangle2D.Float(-2.0f, -2.0f, 4.0f, 4.0f);
+         renderer.setSeriesShape(1, square, false);
+      }
+      if (data.length > 2) {
+         renderer.setSeriesPaint(2, Color.darkGray);
+         Shape rect = new Rectangle2D.Float(-2.0f, -1.0f, 4.0f, 2.0f);
+         renderer.setSeriesShape(2, rect, false);
+      }
+      if (data.length > 3) {
+         renderer.setSeriesPaint(3, Color.magenta);
+         Shape rect = new Rectangle2D.Float(-1.0f, -2.0f, 2.0f, 4.0f);
+         renderer.setSeriesShape(3, rect, false);
+      }
+      
+      renderer.setUseFillPaint(true);
+      
+      
+      // Since the axis autoscale only on the first dataset, we need to scale ourselves
+      NumberAxis yAxis = (NumberAxis) plot.getRangeAxis();
+      yAxis.setAutoRangeIncludesZero(false);
+      yAxis.setRangeWithMargins(minY, maxY);
+      
+      ValueAxis xAxis = (ValueAxis) plot.getDomainAxis();
+      xAxis.setRangeWithMargins(minX, maxX);
+      
+      ChartFrame graphFrame = new ChartFrame(title, chart);
+      graphFrame.getChartPanel().setMouseWheelEnabled(true);
+      graphFrame.pack();
+      graphFrame.setLocation(xLocation, yLocation);
+      graphFrame.setVisible(true);
+   }
+
+   
    /**
     * Create a frame with a plot of the data given in XYSeries
 

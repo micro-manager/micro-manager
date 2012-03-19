@@ -867,25 +867,29 @@ public class MainForm extends javax.swing.JFrame implements ij.ImageListener{
    }//GEN-LAST:event_pixelSizeTextField_ActionPerformed
 
     public void updateValues(GaussianInfo tT) {
-       tT.setNoiseTolerance(Integer.parseInt(noiseToleranceTextField_.getText()));
-       tT.setPhotonConversionFactor(Double.parseDouble(photonConversionTextField.getText()));
-       tT.setGain(Double.parseDouble(emGainTextField_.getText()));
-       tT.setPixelSize(Float.parseFloat(pixelSizeTextField_.getText()));
-       tT.setTimeIntervalMs(Double.parseDouble(timeIntervalTextField_.getText()));
-       tT.setBaseLevel(Double.parseDouble(baseLevelTextField.getText()));
-       tT.setUseWidthFilter(filterDataCheckBoxWidth.isSelected());
-       tT.setSigmaMin(Double.parseDouble(minSigmaTextField.getText()));
-       tT.setSigmaMax(Double.parseDouble(maxSigmaTextField.getText()));
-       tT.setUseNrPhotonsFilter(filterDataCheckBoxNrPhotons.isSelected());
-       tT.setNrPhotonsMin(Double.parseDouble(minNrPhotonsTextField.getText()));
-       tT.setNrPhotonsMax(Double.parseDouble(maxNrPhotonsTextField.getText()));
-       tT.setMaxIterations(Integer.parseInt(maxIterationsTextField.getText()));
-       tT.setBoxSize(Integer.parseInt(boxSizeTextField.getText()));
-       tT.setShape(fitDimensionsComboBox1.getSelectedIndex() + 1);
-       tT.setFitMode(fitMethodComboBox1.getSelectedIndex() + 1);
-       tT.setEndTrackBool(endTrackCheckBox_.isSelected());
-       tT.setEndTrackAfterNFrames((Integer)endTrackSpinner_.getValue());      
-    }
+      try {
+         tT.setNoiseTolerance(Integer.parseInt(noiseToleranceTextField_.getText()));
+         tT.setPhotonConversionFactor(Double.parseDouble(photonConversionTextField.getText()));
+         tT.setGain(Double.parseDouble(emGainTextField_.getText()));
+         tT.setPixelSize(Float.parseFloat(pixelSizeTextField_.getText()));
+         tT.setTimeIntervalMs(Double.parseDouble(timeIntervalTextField_.getText()));
+         tT.setBaseLevel(Double.parseDouble(baseLevelTextField.getText()));
+         tT.setUseWidthFilter(filterDataCheckBoxWidth.isSelected());
+         tT.setSigmaMin(Double.parseDouble(minSigmaTextField.getText()));
+         tT.setSigmaMax(Double.parseDouble(maxSigmaTextField.getText()));
+         tT.setUseNrPhotonsFilter(filterDataCheckBoxNrPhotons.isSelected());
+         tT.setNrPhotonsMin(Double.parseDouble(minNrPhotonsTextField.getText()));
+         tT.setNrPhotonsMax(Double.parseDouble(maxNrPhotonsTextField.getText()));
+         tT.setMaxIterations(Integer.parseInt(maxIterationsTextField.getText()));
+         tT.setBoxSize(Integer.parseInt(boxSizeTextField.getText()));
+         tT.setShape(fitDimensionsComboBox1.getSelectedIndex() + 1);
+         tT.setFitMode(fitMethodComboBox1.getSelectedIndex() + 1);
+         tT.setEndTrackBool(endTrackCheckBox_.isSelected());
+         tT.setEndTrackAfterNFrames((Integer) endTrackSpinner_.getValue());
+      } catch (Exception ex) {
+         JOptionPane.showMessageDialog(null, "Error interpreting input: " + ex.getMessage());
+      }
+   }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JTextField baseLevelTextField;

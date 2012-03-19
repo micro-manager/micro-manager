@@ -83,7 +83,8 @@ import valelab.LocalWeightedMean;
  */
 public class DataCollectionForm extends javax.swing.JFrame {
    AbstractTableModel myTableModel_;
-   private final String[] columnNames_ = {"Image", "Nr of spots", "2C Reference", "Plot/Render", "Action"};
+   private final String[] columnNames_ = {"ID", "Image", "Nr of spots", "2C Reference", 
+      "Action1", "Action2"};
    private final String[] plotModes_ = {"t-X", "t-Y", "X-Y", "t-Int"};
    private final String[] renderModes_ = {"Points", "Gaussian"};
    private final String[] renderSizes_  = {"1x", "2x", "4x", "8x"};
@@ -110,6 +111,9 @@ public class DataCollectionForm extends javax.swing.JFrame {
    private static LocalWeightedMean lwm_;
    
    Preferences prefs_;
+   
+   
+   private static int rowDataID_ = 1;
 
 
    /**
@@ -132,6 +136,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
       public final int nrPositions_;
       public final int maxNrSpots_;
       public final boolean isTrack_;
+      public final int ID_;
 
 
       public MyRowData(String name,
@@ -166,6 +171,8 @@ public class DataCollectionForm extends javax.swing.JFrame {
          maxNrSpots_ = maxNrSpots;
          timePoints_ = timePoints;
          isTrack_ = isTrack;
+         ID_ = rowDataID_;
+         rowDataID_++;
       }
    }
 
@@ -202,10 +209,12 @@ public class DataCollectionForm extends javax.swing.JFrame {
           }
           public Object getValueAt(int row, int col) {
              if (col == 0 && rowData_ != null)
+                return rowData_.get(row).ID_;
+             else if (col == 1 && rowData_ != null)
                 return rowData_.get(row).name_;
-             else if (col == 1)
-                return rowData_.get(row).spotList_.size();
              else if (col == 2)
+                return rowData_.get(row).spotList_.size();
+             else if (col == 3)
                 return rowData_.get(row).colCorrRef_;
              else
                 return getColumnName(col);
@@ -223,8 +232,8 @@ public class DataCollectionForm extends javax.swing.JFrame {
        initComponents();
        referenceName_.setText("");
        jTable1_.addMouseListener(new LocalMouseListener());
-       jTable1_.getColumn("Plot/Render").setCellRenderer(new ButtonRenderer());
-       jTable1_.getColumn("Action").setCellRenderer(new ButtonRenderer());
+       jTable1_.getColumn("Action1").setCellRenderer(new ButtonRenderer());
+       jTable1_.getColumn("Action2").setCellRenderer(new ButtonRenderer());
        plotComboBox_.setModel(new javax.swing.DefaultComboBoxModel(plotModes_));
        visualizationModel_.setModel(new javax.swing.DefaultComboBoxModel(renderModes_));
        visualizationMagnification_.setModel(new javax.swing.DefaultComboBoxModel(renderSizes_));
@@ -257,10 +266,15 @@ public class DataCollectionForm extends javax.swing.JFrame {
          int column = jTable1_.columnAtPoint(click);
          int row = jTable1_.rowAtPoint(click);
          
-         if (column == 3) {
-            if (rowData_.get(row).isTrack_)
-               plotData(rowData_.get(row), plotComboBox_.getSelectedIndex());
+         if (column == 4) {
+            if (rowData_.get(row).isTrack_) {
+               centerTrack(rowData_.get(row));
+               //MyRowData[] myRD = new MyRowData[1];
+               //myRD[0] = rowData_.get(row);
+               //plotData(myRD, plotComboBox_.getSelectedIndex());
+            }
             else {
+               /*
                int mag = 1 << visualizationMagnification_.getSelectedIndex();
                SpotDataFilter sf = new SpotDataFilter();
                if (filterSigmaCheckBox_.isSelected())
@@ -271,9 +285,11 @@ public class DataCollectionForm extends javax.swing.JFrame {
                           Double.parseDouble(intensityMax_.getText()) );
                ImageRenderer.renderData(null, rowData_.get(row), visualizationModel_.getSelectedIndex(),
                        mag, null, sf);
+                * 
+                */
             }
          }
-         else if (column == 4) {
+         else if (column == 5) {
             if (rowData_.get(row).isTrack_)
                straightenTrack(rowData_.get(row));
          }
@@ -362,6 +378,12 @@ public class DataCollectionForm extends javax.swing.JFrame {
         SigmaLabel2 = new javax.swing.JLabel();
         IntLabel2 = new javax.swing.JLabel();
         infoButton_ = new javax.swing.JButton();
+        plotButton_ = new javax.swing.JButton();
+        renderButton_ = new javax.swing.JButton();
+        jSeparator2 = new javax.swing.JSeparator();
+        jSeparator3 = new javax.swing.JSeparator();
+        jComboBox1 = new javax.swing.JComboBox();
+        jSeparator4 = new javax.swing.JSeparator();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DO_NOTHING_ON_CLOSE);
         setTitle("Gaussian tracking data");
@@ -388,7 +410,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
             }
         });
 
-        plotComboBox_.setFont(new java.awt.Font("Lucida Grande", 0, 10)); // NOI18N
+        plotComboBox_.setFont(new java.awt.Font("Lucida Grande", 0, 10));
         plotComboBox_.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "t-X", "t-Y", "X-Y", "t-Int.", " " }));
 
         visualizationMagnification_.setFont(new java.awt.Font("Lucida Grande", 0, 10));
@@ -413,7 +435,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
             }
         });
 
-        showButton_.setFont(new java.awt.Font("Lucida Grande", 0, 10)); // NOI18N
+        showButton_.setFont(new java.awt.Font("Lucida Grande", 0, 10));
         showButton_.setText("Show");
         showButton_.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -475,7 +497,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
             }
         });
 
-        sigmaMin_.setFont(new java.awt.Font("Lucida Grande", 0, 11));
+        sigmaMin_.setFont(new java.awt.Font("Lucida Grande", 0, 11)); // NOI18N
         sigmaMin_.setText("0");
 
         intensityMin_.setFont(new java.awt.Font("Lucida Grande", 0, 11));
@@ -499,7 +521,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
         IntLabel2.setFont(new java.awt.Font("Lucida Grande", 0, 11));
         IntLabel2.setText("#");
 
-        infoButton_.setFont(new java.awt.Font("Lucida Grande", 0, 10)); // NOI18N
+        infoButton_.setFont(new java.awt.Font("Lucida Grande", 0, 10));
         infoButton_.setText("Info");
         infoButton_.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -507,108 +529,157 @@ public class DataCollectionForm extends javax.swing.JFrame {
             }
         });
 
+        plotButton_.setFont(new java.awt.Font("Lucida Grande", 0, 11)); // NOI18N
+        plotButton_.setText("Plot");
+        plotButton_.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                plotButton_ActionPerformed(evt);
+            }
+        });
+
+        renderButton_.setFont(new java.awt.Font("Lucida Grande", 0, 11)); // NOI18N
+        renderButton_.setText("Render");
+        renderButton_.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                renderButton_ActionPerformed(evt);
+            }
+        });
+
+        jSeparator2.setOrientation(javax.swing.SwingConstants.VERTICAL);
+
+        jSeparator3.setOrientation(javax.swing.SwingConstants.VERTICAL);
+
+        jComboBox1.setFont(new java.awt.Font("Lucida Grande", 0, 11)); // NOI18N
+        jComboBox1.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "Binary", "Text" }));
+
+        jSeparator4.setOrientation(javax.swing.SwingConstants.VERTICAL);
+
         org.jdesktop.layout.GroupLayout layout = new org.jdesktop.layout.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-            .add(jScrollPane1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 873, Short.MAX_VALUE)
-            .add(org.jdesktop.layout.GroupLayout.TRAILING, layout.createSequentialGroup()
+            .add(layout.createSequentialGroup()
                 .addContainerGap()
-                .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING, false)
-                    .add(c2CorrectButton, 0, 0, Short.MAX_VALUE)
-                    .add(c2StandardButton, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 91, Short.MAX_VALUE)
-                    .add(org.jdesktop.layout.GroupLayout.TRAILING, loadButton, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
                 .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                    .add(unjitterButton_, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 104, Short.MAX_VALUE)
+                    .add(loadButton, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 104, Short.MAX_VALUE)
+                    .add(showButton_, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 104, Short.MAX_VALUE))
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING, false)
                     .add(layout.createSequentialGroup()
                         .add(saveButton)
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                        .add(removeButton)
-                        .add(36, 36, 36)
-                        .add(showButton_)
-                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                        .add(jComboBox1, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 88, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+                    .add(layout.createSequentialGroup()
                         .add(infoButton_)
-                        .add(54, 54, 54)
-                        .add(visualizationModel_, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .add(removeButton, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 82, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)))
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                .add(jSeparator3, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
+                .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING, false)
+                    .add(c2StandardButton, 0, 0, Short.MAX_VALUE)
+                    .add(c2CorrectButton, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 82, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                    .add(referenceName_, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 60, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                    .add(pairsButton))
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
+                .add(jSeparator2, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.CENTER)
+                    .add(plotButton_, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 67, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                    .add(plotComboBox_, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 90, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+                .add(5, 5, 5)
+                .add(jSeparator4, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                .add(18, 18, 18)
+                .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                    .add(layout.createSequentialGroup()
+                        .add(renderButton_)
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                         .add(visualizationMagnification_, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 90, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                        .add(plotComboBox_, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 90, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+                        .add(visualizationModel_, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
                     .add(layout.createSequentialGroup()
-                        .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                            .add(layout.createSequentialGroup()
-                                .add(referenceName_, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 234, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                                .add(180, 180, 180)
-                                .add(jLabel1))
-                            .add(layout.createSequentialGroup()
-                                .add(pairsButton)
-                                .add(131, 131, 131)
-                                .add(unjitterButton_, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 77, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)))
+                        .add(jLabel1)
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                        .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING, false)
+                        .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
                             .add(layout.createSequentialGroup()
                                 .add(filterIntensityCheckBox_, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 78, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                                .add(intensityMin_))
+                                .add(intensityMin_, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 46, Short.MAX_VALUE))
                             .add(layout.createSequentialGroup()
                                 .add(filterSigmaCheckBox_)
                                 .add(18, 18, 18)
-                                .add(sigmaMin_, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 38, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)))
+                                .add(sigmaMin_, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 47, Short.MAX_VALUE)))
                         .add(10, 10, 10)
                         .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.TRAILING)
                             .add(jLabel3)
                             .add(jLabel2))
-                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
-                        .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING, false)
-                            .add(intensityMax_)
-                            .add(sigmaMax_, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 49, Short.MAX_VALUE))
+                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                         .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                            .add(layout.createSequentialGroup()
+                            .add(org.jdesktop.layout.GroupLayout.TRAILING, layout.createSequentialGroup()
+                                .add(intensityMax_, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 60, Short.MAX_VALUE)
+                                .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
+                                .add(IntLabel2))
+                            .add(org.jdesktop.layout.GroupLayout.TRAILING, layout.createSequentialGroup()
+                                .add(sigmaMax_, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 57, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                                 .add(5, 5, 5)
-                                .add(SigmaLabel2))
-                            .add(layout.createSequentialGroup()
-                                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                                .add(IntLabel2)))))
-                .addContainerGap(51, Short.MAX_VALUE))
+                                .add(SigmaLabel2, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 17, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)))))
+                .add(73, 73, 73))
+            .add(jScrollPane1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 1014, Short.MAX_VALUE)
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-            .add(org.jdesktop.layout.GroupLayout.TRAILING, layout.createSequentialGroup()
-                .addContainerGap()
-                .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
-                    .add(loadButton, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 19, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                    .add(removeButton, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 19, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                    .add(saveButton, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 19, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                    .add(visualizationMagnification_, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                    .add(visualizationModel_, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                    .add(plotComboBox_, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                    .add(showButton_, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 19, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                    .add(infoButton_, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 19, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
-                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.TRAILING)
-                    .add(c2StandardButton, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 19, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                    .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
-                        .add(referenceName_)
-                        .add(jLabel1)
-                        .add(filterSigmaCheckBox_)
-                        .add(sigmaMin_, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 17, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                        .add(sigmaMax_, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 17, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                        .add(jLabel3)
-                        .add(SigmaLabel2)))
-                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+            .add(layout.createSequentialGroup()
                 .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                    .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
-                        .add(c2CorrectButton, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 19, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                        .add(pairsButton, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 19, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                        .add(unjitterButton_, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 19, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
-                    .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
-                        .add(filterIntensityCheckBox_)
-                        .add(intensityMin_, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 18, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                        .add(intensityMax_, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 17, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                        .add(jLabel2)
-                        .add(IntLabel2)))
-                .add(8, 8, 8)
-                .add(jScrollPane1, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 401, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+                    .add(jSeparator3, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 84, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                    .add(layout.createSequentialGroup()
+                        .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                            .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.TRAILING, false)
+                                .add(org.jdesktop.layout.GroupLayout.LEADING, jSeparator2)
+                                .add(org.jdesktop.layout.GroupLayout.LEADING, layout.createSequentialGroup()
+                                    .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.CENTER)
+                                        .add(loadButton, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 19, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                                        .add(saveButton, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 19, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                                        .add(jComboBox1, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 18, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                                        .add(c2StandardButton, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 19, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                                        .add(referenceName_)
+                                        .add(renderButton_, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 19, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                                        .add(visualizationMagnification_, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                                        .add(visualizationModel_, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+                                    .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                                    .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.CENTER)
+                                        .add(showButton_, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 19, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                                        .add(infoButton_, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 19, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                                        .add(removeButton, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 19, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                                        .add(c2CorrectButton, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 19, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                                        .add(pairsButton, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 19, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                                        .add(filterSigmaCheckBox_)
+                                        .add(sigmaMin_, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 26, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                                        .add(jLabel3)
+                                        .add(sigmaMax_, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 17, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                                        .add(SigmaLabel2)
+                                        .add(jLabel1))
+                                    .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
+                                    .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                                        .add(unjitterButton_, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 19, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                                        .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
+                                            .add(filterIntensityCheckBox_)
+                                            .add(intensityMin_, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 18, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                                            .add(jLabel2)
+                                            .add(intensityMax_, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 17, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                                            .add(IntLabel2)))))
+                            .add(layout.createSequentialGroup()
+                                .addContainerGap()
+                                .add(plotButton_, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 20, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                                .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                                    .add(jSeparator4, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 35, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                                    .add(plotComboBox_, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))))
+                        .add(4, 4, 4)
+                        .add(jScrollPane1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 671, Short.MAX_VALUE)))
+                .addContainerGap())
         );
 
         pack();
@@ -1088,6 +1159,39 @@ public class DataCollectionForm extends javax.swing.JFrame {
          JOptionPane.showMessageDialog(getInstance(), "Please select a dataset first");
    }//GEN-LAST:event_infoButton_ActionPerformed
 
+   private void renderButton_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_renderButton_ActionPerformed
+      int row = jTable1_.getSelectedRow();
+      if (row < 0) {
+         JOptionPane.showMessageDialog(getInstance(), "Please select a dataset to render");
+      } else {
+         int mag = 1 << visualizationMagnification_.getSelectedIndex();
+         SpotDataFilter sf = new SpotDataFilter();
+         if (filterSigmaCheckBox_.isSelected()) {
+            sf.setSigma(true, Double.parseDouble(sigmaMin_.getText()),
+                    Double.parseDouble(sigmaMax_.getText()));
+         }
+         if (filterIntensityCheckBox_.isSelected()) {
+            sf.setIntensity(true, Double.parseDouble(intensityMin_.getText()),
+                    Double.parseDouble(intensityMax_.getText()));
+         }
+         ImageRenderer.renderData(null, rowData_.get(row), visualizationModel_.getSelectedIndex(),
+                 mag, null, sf);
+      }
+   }//GEN-LAST:event_renderButton_ActionPerformed
+
+   private void plotButton_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_plotButton_ActionPerformed
+      int rows[] = jTable1_.getSelectedRows();
+      if (rows.length < 1) {
+         JOptionPane.showMessageDialog(getInstance(), "Please select one or more datasets to plot");
+      } else {
+         MyRowData[] myRows = new MyRowData[rows.length];
+         // TODO: check that these are tracks 
+         for (int i = 0; i < rows.length; i++)
+            myRows[i] = rowData_.get(rows[i]);
+         plotData(myRows, plotComboBox_.getSelectedIndex());
+      }
+   }//GEN-LAST:event_plotButton_ActionPerformed
+
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JLabel IntLabel2;
@@ -1099,16 +1203,22 @@ public class DataCollectionForm extends javax.swing.JFrame {
     private javax.swing.JButton infoButton_;
     private javax.swing.JTextField intensityMax_;
     private javax.swing.JTextField intensityMin_;
+    private javax.swing.JComboBox jComboBox1;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel2;
     private javax.swing.JLabel jLabel3;
     private javax.swing.JScrollPane jScrollPane1;
+    private javax.swing.JSeparator jSeparator2;
+    private javax.swing.JSeparator jSeparator3;
+    private javax.swing.JSeparator jSeparator4;
     private javax.swing.JTable jTable1_;
     private javax.swing.JButton loadButton;
     private javax.swing.JButton pairsButton;
+    private javax.swing.JButton plotButton_;
     private javax.swing.JComboBox plotComboBox_;
     private javax.swing.JLabel referenceName_;
     private javax.swing.JButton removeButton;
+    private javax.swing.JButton renderButton_;
     private javax.swing.JButton saveButton;
     private javax.swing.JButton showButton_;
     private javax.swing.JTextField sigmaMax_;
@@ -1135,19 +1245,20 @@ public class DataCollectionForm extends javax.swing.JFrame {
          setBackground(UIManager.getColor("Button.background"));
 
          if (rowData_.get(row).isTrack_) {
-            if (column == 3)
-               setText((value == null ? "" : "Plot"));
+            if (column == 4)
+               setText((value == null ? "" : "Center"));
             else {
-               if (column == 4)
+               if (column == 5)
                   setText((value == null ? "" : "Straighten"));
                else
                   setText((value == null ? "" : value.toString()));
             }
          } else {
-            if (column == 3)
-               setText((value == null ? "" : "Render"));
-            if (column == 4)
-               return null;     
+            return null;
+            //if (column == 4)
+            //   setText((value == null ? "" : "Render"));
+            //if (column == 5)
+            //   return null;     
          }
              
          return this;
@@ -1398,6 +1509,60 @@ public class DataCollectionForm extends javax.swing.JFrame {
 
       // Add transformed data to data overview window
       addSpotData(rowData.name_ + "Straightened", rowData.title_, "", rowData.width_,
+              rowData.height_, rowData.pixelSizeNm_, rowData.shape_,
+              rowData.halfSize_, rowData.nrChannels_, rowData.nrFrames_,
+              rowData.nrSlices_, 1, rowData.maxNrSpots_, transformedResultList,
+              rowData.timePoints_, true);
+   }
+   
+   
+   /**
+    * Creates a new dataset that is centered around the average of the X and Y data.
+    * In other words, the average of both X and Y is calculated and subtracted from each datapoint
+    *
+    * @rowData
+    */
+   private void centerTrack(MyRowData rowData) {
+      
+      if (rowData.spotList_.size() <= 1) {
+         return;
+      }
+      
+      ArrayList<Point2D.Double> xyPoints = new ArrayList<Point2D.Double>();
+      Iterator it = rowData.spotList_.iterator();
+      double totalX = 0.0;
+      double totalY = 0.0;
+      while (it.hasNext()) {
+         GaussianSpotData gs = (GaussianSpotData) it.next();
+         Point2D.Double point = new Point2D.Double(gs.getXCenter(), gs.getYCenter());
+         totalX += gs.getXCenter();
+         totalY += gs.getYCenter();
+         xyPoints.add(point);
+      }
+      
+      double avgX = totalX / rowData.spotList_.size();
+      double avgY = totalY / rowData.spotList_.size();
+      
+      for (Point2D.Double xy : xyPoints) {
+         xy.x = xy.x - avgX;
+         xy.y = xy.y - avgY;
+      }
+
+      // create a copy of the dataset and copy in the corrected data
+      List<GaussianSpotData> transformedResultList =
+              Collections.synchronizedList(new ArrayList<GaussianSpotData>());
+      
+      for (int i = 0; i < xyPoints.size(); i++) {
+         GaussianSpotData oriSpot = rowData.spotList_.get(i);
+         GaussianSpotData spot = new GaussianSpotData(oriSpot);
+         spot.setData(oriSpot.getIntensity(), oriSpot.getBackground(),
+                 xyPoints.get(i).getX(), xyPoints.get(i).getY(), oriSpot.getWidth(),
+                 oriSpot.getA(), oriSpot.getTheta(), oriSpot.getSigma());
+         transformedResultList.add(spot);
+      }
+
+      // Add transformed data to data overview window
+      addSpotData(rowData.name_ + " Centered", rowData.title_, "", rowData.width_,
               rowData.height_, rowData.pixelSizeNm_, rowData.shape_,
               rowData.halfSize_, rowData.nrChannels_, rowData.nrFrames_,
               rowData.nrSlices_, 1, rowData.maxNrSpots_, transformedResultList,
@@ -1770,66 +1935,97 @@ public class DataCollectionForm extends javax.swing.JFrame {
     * @rowData
     * @plotMode - Index of plotMode in array {"t-X", "t-Y", "X-Y", "t-Int"};
     */
-   private void plotData(MyRowData rowData, int plotMode) {
-      String title = rowData.name_ + " " + plotModes_[plotMode];
-      if (plotMode == 0) {
-         XYSeries data = new XYSeries("");
-         for (int i = 0; i < rowData.spotList_.size(); i++) {
-            GaussianSpotData spot = rowData.spotList_.get(i);
-            if (rowData.timePoints_ != null) {
-               double timePoint = rowData.timePoints_.get(i);
-               data.add(timePoint , spot.getXCenter());
-            } else {
-               data.add(i, spot.getXCenter());
+   private void plotData(MyRowData[] rowDatas, int plotMode) {
+      String title = plotModes_[plotMode];
+      if (rowDatas.length == 1)
+         title = rowDatas[0].name_ + " " + plotModes_[plotMode];
+      
+      XYSeries[] datas = new XYSeries[rowDatas.length];
+
+      String xAxis = null;
+      
+      switch (plotMode) {
+
+         case (0): { // t-X
+            for (int index = 0; index < rowDatas.length; index++) {
+               datas[index] = new XYSeries(rowDatas[index].ID_);
+               for (int i = 0; i < rowDatas[index].spotList_.size(); i++) {
+                  GaussianSpotData spot = rowDatas[index].spotList_.get(i);
+                  if (rowDatas[index].timePoints_ != null) {
+                     double timePoint = rowDatas[index].timePoints_.get(i);
+                     datas[index].add(timePoint, spot.getXCenter());
+                  } else {
+                     datas[index].add(i, spot.getXCenter());
+                  }
+               }
+               xAxis = "Time (frameNr)";
+               if (rowDatas[index].timePoints_ != null) {
+                  xAxis = "Time (s)";
+               }
             }
+            GaussianUtils.plotDataN(title, datas, xAxis, "X(nm)", 0, 400);
          }
-         String xAxis = "Time (frameNr)";
-         if (rowData.timePoints_ != null)
-            xAxis = "Time (s)";
-         GaussianUtils.plotData(title, data, xAxis, "X(nm)", 0, 400);
-      }
-      else if (plotComboBox_.getSelectedIndex() == 1) {
-         XYSeries data = new XYSeries("");
-         for (int i = 0; i < rowData.spotList_.size(); i++) {
-            GaussianSpotData spot = rowData.spotList_.get(i);
-            if (rowData.timePoints_ != null) {
-               double timePoint = rowData.timePoints_.get(i);
-               data.add(timePoint, spot.getYCenter());
-            } else {
-               data.add(i, spot.getYCenter());
+         break;
+         
+         case (1): { // t-Y
+            for (int index = 0; index < rowDatas.length; index++) {
+               datas[index] = new XYSeries(rowDatas[index].ID_);
+               for (int i = 0; i < rowDatas[index].spotList_.size(); i++) {
+                  GaussianSpotData spot = rowDatas[index].spotList_.get(i);
+                  if (rowDatas[index].timePoints_ != null) {
+                     double timePoint = rowDatas[index].timePoints_.get(i);
+                     datas[index].add(timePoint, spot.getYCenter());
+                  } else {
+                     datas[index].add(i, spot.getYCenter());
+                  }
+               }
+               xAxis = "Time (frameNr)";
+               if (rowDatas[index].timePoints_ != null) {
+                  xAxis = "Time (s)";
+               }
             }
+            GaussianUtils.plotDataN(title, datas, xAxis, "Y(nm)", 0, 400);
          }
-         String yAxis = "Time (frameNr)";
-         if (rowData.timePoints_ != null) {
-            yAxis = "Time (s)";
-         }
-         GaussianUtils.plotData(title, data, yAxis, "Y(nm)", 0, 400);
-      }
-      else if (plotComboBox_.getSelectedIndex() == 2) {
-         XYSeries data = new XYSeries("", false, true);
-         for (int i = 0; i < rowData.spotList_.size(); i++) {
-            GaussianSpotData spot = rowData.spotList_.get(i);
-            data.add(spot.getXCenter(), spot.getYCenter());
-         }
-         GaussianUtils.plotData(title, data, "X(nm)", "Y(nm)", 0, 400);
-      } else if (plotComboBox_.getSelectedIndex() == 3) {
-         XYSeries data = new XYSeries("");
-         for (int i = 0; i < rowData.spotList_.size(); i++) {
-            GaussianSpotData spot = rowData.spotList_.get(i);
-            if (rowData.timePoints_ != null) {
-               double timePoint = rowData.timePoints_.get(i);
-               data.add(timePoint, spot.getIntensity());
-            } else {
-               data.add(i, spot.getIntensity());
+         break;
+         
+         case (2): { // X-Y
+            for (int index = 0; index < rowDatas.length; index++) {
+               datas[index] = new XYSeries(rowDatas[index].ID_, false, true);
+               for (int i = 0; i < rowDatas[index].spotList_.size(); i++) {
+                  GaussianSpotData spot = rowDatas[index].spotList_.get(i);
+                  datas[index].add(spot.getXCenter(), spot.getYCenter());
+               }
             }
+            GaussianUtils.plotDataN(title, datas, "X(nm)", "Y(nm)", 0, 400);
          }
-         String intAxis = "Time (frameNr)";
-         if (rowData.timePoints_ != null) {
-            intAxis = "Time (s)";
+         break;
+
+
+         case (3): {
+            for (int index = 0; index < rowDatas.length; index++) {
+               datas[index] = new XYSeries(rowDatas[index].ID_);
+               for (int i = 0; i < rowDatas[index].spotList_.size(); i++) {
+                  GaussianSpotData spot = rowDatas[index].spotList_.get(i);
+                  if (rowDatas[index].timePoints_ != null) {
+                     double timePoint = rowDatas[index].timePoints_.get(i);
+                     datas[index].add(timePoint, spot.getIntensity());
+                  } else {
+                     datas[index].add(i, spot.getIntensity());
+                  }
+               }
+               xAxis = "Time (frameNr)";
+               if (rowDatas[index].timePoints_ != null) {
+                  xAxis = "Time (s)";
+               }
+            }
+            GaussianUtils.plotDataN(title, datas, xAxis, "Intensity (#photons)", 0, 400);
          }
-         GaussianUtils.plotData(title, data, intAxis, "Intensity (#photons)", 0, 400);
+         break;
       }
+      
    }
+      
+
 
    private boolean test(double[][][] imageSpotList, int source, int target, double cutoff) {
       double xtest = imageSpotList[0][source][2] - imageSpotList[1][target][2];
