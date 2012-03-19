@@ -214,8 +214,8 @@ public class SingleChannelHistogram extends JPanel implements Histograms, Cursor
 
       JPanel histZoomLine = new JPanel();
       histZoomLine.add(histRangeLabel);
-      histZoomLine.add(zoomInButton);
       histZoomLine.add(zoomOutButton);
+      histZoomLine.add(zoomInButton);
 
       gbc = new GridBagConstraints();
       gbc.gridy = 0;
