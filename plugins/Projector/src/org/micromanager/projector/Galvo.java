@@ -111,7 +111,7 @@ public class Galvo implements ProjectionDevice {
       galvoExecutor_.submit(new Runnable() {
          public void run() {
             try {
-               mmc_.setProperty(galvo_, "CalibrationMode", 1);
+               mmc_.setGalvoIlluminationState(galvo_, true);
             } catch (Exception ex) {
                ReportingUtils.showError(ex);
             }
@@ -126,7 +126,7 @@ public class Galvo implements ProjectionDevice {
       galvoExecutor_.submit(new Runnable() {
          public void run() {
             try {
-               mmc_.setProperty(galvo_, "CalibrationMode", 0);
+               mmc_.setGalvoIlluminationState(galvo_, false);
             } catch (Exception ex) {
                ReportingUtils.showError(ex);
             }

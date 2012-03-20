@@ -344,4 +344,10 @@ public interface AcquisitionEngine {
     * Subject to change.
     */
    public void attachRunnable(int frame, int position, int channel, int slice, Runnable runnable);
+
+
+   /*
+    * Remove runnables from the acquisition engine
+    */
+   public void clearRunnables();
 }

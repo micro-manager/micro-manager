@@ -207,6 +207,7 @@ public class ProjectorController {
       };
 
       final AcquisitionEngine acq = gui.getAcquisitionEngine();
+      acq.clearRunnables();
       if (repeat) {
          for (int i = frameOn; i < acq.getNumFrames(); i += repeatInterval) {
             acq.attachRunnable(i, -1, 0, 0, runPolygons);
@@ -214,6 +215,10 @@ public class ProjectorController {
       } else {
          acq.attachRunnable(frameOn, -1, 0, 0, runPolygons);
       }
+   }
+
+   public void removeFromMDA() {
+      gui.getAcquisitionEngine().clearRunnables();
    }
 
    public void setPointAndShootUseInterval(boolean on) {

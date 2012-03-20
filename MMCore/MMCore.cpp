@@ -4909,6 +4909,23 @@ void CMMCore::getGalvoPosition(const char* deviceLabel, double &x, double &y) th
    }
 }
 
+/**
+ * Set the galvo's illumination state to on or off
+ */
+void CMMCore::setGalvoIlluminationState(const char* deviceLabel, bool on) throw (CMMError)
+{
+   MM::Galvo* pGalvo = getSpecificDevice<MM::Galvo>(deviceLabel);
+
+   int ret = pGalvo->SetIlluminationState(on);
+
+   if (ret != DEVICE_OK)
+   {
+      logError(deviceLabel, getDeviceErrorText(ret, pGalvo).c_str());
+      throw CMMError(deviceLabel, getDeviceErrorText(ret, pGalvo).c_str(), MMERR_DEVICE_GENERIC);
+   }
+}
+
+
 
 /**
  * Get the Galvo x range

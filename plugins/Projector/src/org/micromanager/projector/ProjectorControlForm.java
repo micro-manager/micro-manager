@@ -44,13 +44,6 @@ public class ProjectorControlForm extends javax.swing.JFrame implements OnStateL
       onButton = new javax.swing.JButton();
       offButton = new javax.swing.JButton();
       jTabbedPane1 = new javax.swing.JTabbedPane();
-      jPanel2 = new javax.swing.JPanel();
-      jLabel3 = new javax.swing.JLabel();
-      startFrameMDA_ = new javax.swing.JSpinner();
-      jButton1 = new javax.swing.JButton();
-      repeatCheckBox = new javax.swing.JCheckBox();
-      repeatFrameMDA_ = new javax.swing.JSpinner();
-      jLabel5 = new javax.swing.JLabel();
       jPanel1 = new javax.swing.JPanel();
       pointAndShootToggleButton = new javax.swing.JToggleButton();
       jLabel1 = new javax.swing.JLabel();
@@ -63,6 +56,14 @@ public class ProjectorControlForm extends javax.swing.JFrame implements OnStateL
       setRoiButton = new javax.swing.JButton();
       jButton2 = new javax.swing.JButton();
       roiRepetitionsSpinner = new javax.swing.JSpinner();
+      repeatCheckBox = new javax.swing.JCheckBox();
+      jLabel3 = new javax.swing.JLabel();
+      jButton1 = new javax.swing.JButton();
+      startFrameMDA_ = new javax.swing.JSpinner();
+      repeatFrameMDA_ = new javax.swing.JSpinner();
+      jLabel5 = new javax.swing.JLabel();
+      jButton3 = new javax.swing.JButton();
+      jSeparator1 = new javax.swing.JSeparator();
       allPixelsButton = new javax.swing.JButton();
 
       setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
@@ -90,63 +91,6 @@ public class ProjectorControlForm extends javax.swing.JFrame implements OnStateL
             offButtonActionPerformed(evt);
          }
       });
-
-      jLabel3.setText("Start Frame");
-
-      jButton1.setText("Attach to Acquisition Engine");
-      jButton1.addActionListener(new java.awt.event.ActionListener() {
-         public void actionPerformed(java.awt.event.ActionEvent evt) {
-            jButton1ActionPerformed(evt);
-         }
-      });
-
-      repeatCheckBox.setText("Repeat every");
-      repeatCheckBox.addActionListener(new java.awt.event.ActionListener() {
-         public void actionPerformed(java.awt.event.ActionEvent evt) {
-            repeatCheckBoxActionPerformed(evt);
-         }
-      });
-
-      jLabel5.setText("frames");
-
-      org.jdesktop.layout.GroupLayout jPanel2Layout = new org.jdesktop.layout.GroupLayout(jPanel2);
-      jPanel2.setLayout(jPanel2Layout);
-      jPanel2Layout.setHorizontalGroup(
-         jPanel2Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-         .add(jPanel2Layout.createSequentialGroup()
-            .add(29, 29, 29)
-            .add(jPanel2Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-               .add(jPanel2Layout.createSequentialGroup()
-                  .add(repeatCheckBox)
-                  .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                  .add(repeatFrameMDA_, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 50, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                  .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                  .add(jLabel5))
-               .add(jButton1)
-               .add(jPanel2Layout.createSequentialGroup()
-                  .add(jLabel3)
-                  .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                  .add(startFrameMDA_, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 46, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)))
-            .addContainerGap(70, Short.MAX_VALUE))
-      );
-      jPanel2Layout.setVerticalGroup(
-         jPanel2Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-         .add(jPanel2Layout.createSequentialGroup()
-            .addContainerGap()
-            .add(jPanel2Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
-               .add(jLabel3)
-               .add(startFrameMDA_, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
-            .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
-            .add(jPanel2Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
-               .add(repeatCheckBox)
-               .add(repeatFrameMDA_, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-               .add(jLabel5))
-            .add(13, 13, 13)
-            .add(jButton1)
-            .addContainerGap(24, Short.MAX_VALUE))
-      );
-
-      jTabbedPane1.addTab("Multi D Acq.", jPanel2);
 
       pointAndShootToggleButton.setText("Off");
       pointAndShootToggleButton.addActionListener(new java.awt.event.ActionListener() {
@@ -188,7 +132,7 @@ public class ProjectorControlForm extends javax.swing.JFrame implements OnStateL
                   .add(pointAndShootIntervalSpinner, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 63, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                   .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
                   .add(jLabel2)))
-            .addContainerGap(62, Short.MAX_VALUE))
+            .addContainerGap(111, Short.MAX_VALUE))
       );
       jPanel1Layout.setVerticalGroup(
          jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
@@ -202,7 +146,7 @@ public class ProjectorControlForm extends javax.swing.JFrame implements OnStateL
                .add(jLabel2)
                .add(pointAndShootIntervalSpinner, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                .add(pointAndShootIntervalCheckbox))
-            .addContainerGap(43, Short.MAX_VALUE))
+            .addContainerGap(317, Short.MAX_VALUE))
       );
 
       jTabbedPane1.addTab("Point and Shoot", jPanel1);
@@ -212,6 +156,7 @@ public class ProjectorControlForm extends javax.swing.JFrame implements OnStateL
       jLabel6.setText("times");
 
       setRoiButton.setText("Set ROI(s)");
+      setRoiButton.setToolTipText("Specify an ROI you wish to be phototargeted by using the ImageJ ROI tools (point, rectangle, oval, polygon). Then press Set ROI(s) to send the ROIs to the phototargeting device. To initiate phototargeting, press Go!");
       setRoiButton.addActionListener(new java.awt.event.ActionListener() {
          public void actionPerformed(java.awt.event.ActionEvent evt) {
             setRoiButtonActionPerformed(evt);
@@ -231,38 +176,97 @@ public class ProjectorControlForm extends javax.swing.JFrame implements OnStateL
          }
       });
 
+      repeatCheckBox.setText("Repeat every");
+      repeatCheckBox.addActionListener(new java.awt.event.ActionListener() {
+         public void actionPerformed(java.awt.event.ActionEvent evt) {
+            repeatCheckBoxActionPerformed(evt);
+         }
+      });
+
+      jLabel3.setText("Start Frame");
+
+      jButton1.setText("Attach to Acquisition Engine");
+      jButton1.setToolTipText("ROI phototargeting events can be attached to the acquisition engine. After specifying an ROI, above, enter the start frame (time point) below, and whether you want the ROI(s) to be repeated. The next Multi-Dimensional Acquisition run will then include the phototargeting event.");
+      jButton1.addActionListener(new java.awt.event.ActionListener() {
+         public void actionPerformed(java.awt.event.ActionEvent evt) {
+            jButton1ActionPerformed(evt);
+         }
+      });
+
+      jLabel5.setText("frames");
+
+      jButton3.setText("Remove from Acq. Eng.");
+      jButton3.addActionListener(new java.awt.event.ActionListener() {
+         public void actionPerformed(java.awt.event.ActionEvent evt) {
+            jButton3ActionPerformed(evt);
+         }
+      });
+
       org.jdesktop.layout.GroupLayout jPanel3Layout = new org.jdesktop.layout.GroupLayout(jPanel3);
       jPanel3.setLayout(jPanel3Layout);
       jPanel3Layout.setHorizontalGroup(
          jPanel3Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
          .add(jPanel3Layout.createSequentialGroup()
-            .add(66, 66, 66)
+            .add(25, 25, 25)
             .add(jPanel3Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-               .add(setRoiButton, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 108, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                .add(jPanel3Layout.createSequentialGroup()
                   .add(jLabel4)
                   .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
                   .add(roiRepetitionsSpinner, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 36, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                   .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
-                  .add(jLabel6))
+                  .add(jLabel6)
+                  .add(38, 38, 38)
+                  .add(jButton2))
+               .add(setRoiButton, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 108, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+            .addContainerGap(org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+         .add(jPanel3Layout.createSequentialGroup()
+            .addContainerGap()
+            .add(jSeparator1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 222, Short.MAX_VALUE)
+            .addContainerGap())
+         .add(jPanel3Layout.createSequentialGroup()
+            .add(33, 33, 33)
+            .add(jPanel3Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
                .add(jPanel3Layout.createSequentialGroup()
-                  .add(32, 32, 32)
-                  .add(jButton2)))
-            .addContainerGap(93, Short.MAX_VALUE))
+                  .add(repeatCheckBox)
+                  .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                  .add(repeatFrameMDA_, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 50, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                  .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                  .add(jLabel5))
+               .add(jPanel3Layout.createSequentialGroup()
+                  .add(jLabel3)
+                  .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                  .add(startFrameMDA_, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 46, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+               .add(jButton1)
+               .add(jButton3))
+            .addContainerGap(29, Short.MAX_VALUE))
       );
       jPanel3Layout.setVerticalGroup(
          jPanel3Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
          .add(jPanel3Layout.createSequentialGroup()
-            .addContainerGap()
+            .add(21, 21, 21)
             .add(setRoiButton)
-            .add(18, 18, 18)
+            .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
             .add(jPanel3Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
+               .add(jButton2)
                .add(jLabel4)
                .add(jLabel6, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 14, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                .add(roiRepetitionsSpinner, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
             .add(18, 18, 18)
-            .add(jButton2)
-            .addContainerGap(org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+            .add(jSeparator1, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+            .add(18, 18, 18)
+            .add(jPanel3Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
+               .add(jLabel3)
+               .add(startFrameMDA_, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+            .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
+            .add(jPanel3Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
+               .add(repeatCheckBox)
+               .add(repeatFrameMDA_, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+               .add(jLabel5))
+            .add(13, 13, 13)
+            .add(jButton1)
+            .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+            .add(jButton3)
+            .addContainerGap(24, Short.MAX_VALUE))
       );
 
       jTabbedPane1.addTab("ROIs", jPanel3);
@@ -289,8 +293,8 @@ public class ProjectorControlForm extends javax.swing.JFrame implements OnStateL
                   .add(allPixelsButton)
                   .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                   .add(calibrateButton))
-               .add(jTabbedPane1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 284, Short.MAX_VALUE))
-            .addContainerGap())
+               .add(jTabbedPane1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 307, Short.MAX_VALUE))
+            .add(163, 163, 163))
       );
       layout.setVerticalGroup(
          layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
@@ -301,8 +305,8 @@ public class ProjectorControlForm extends javax.swing.JFrame implements OnStateL
                .add(offButton)
                .add(allPixelsButton)
                .add(calibrateButton))
-            .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, 41, Short.MAX_VALUE)
-            .add(jTabbedPane1, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+            .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, 26, Short.MAX_VALUE)
+            .add(jTabbedPane1, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 335, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
             .addContainerGap())
       );
 
@@ -329,6 +333,28 @@ public class ProjectorControlForm extends javax.swing.JFrame implements OnStateL
        controller_.activateAllPixels();
     }//GEN-LAST:event_allPixelsButtonActionPerformed
 
+    private void jButton3ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton3ActionPerformed
+       controller_.removeFromMDA();
+}//GEN-LAST:event_jButton3ActionPerformed
+
+    private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed
+       controller_.attachToMDA(getSpinnerValue(this.startFrameMDA_)-1,
+               this.repeatCheckBox.isSelected(),
+               getSpinnerValue(this.repeatFrameMDA_));
+}//GEN-LAST:event_jButton1ActionPerformed
+
+    private void repeatCheckBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_repeatCheckBoxActionPerformed
+       controller_.setRoiRepetitions(0);
+}//GEN-LAST:event_repeatCheckBoxActionPerformed
+
+    private void roiRepetitionsSpinnerStateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_roiRepetitionsSpinnerStateChanged
+       controller_.setRoiRepetitions(getRoiRepetitionsSetting());
+}//GEN-LAST:event_roiRepetitionsSpinnerStateChanged
+
+    private void jButton2ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton2ActionPerformed
+       controller_.runPolygons();
+}//GEN-LAST:event_jButton2ActionPerformed
+
     private void setRoiButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_setRoiButtonActionPerformed
        controller_.setRois(getRoiRepetitionsSetting());
 }//GEN-LAST:event_setRoiButtonActionPerformed
@@ -344,24 +370,6 @@ public class ProjectorControlForm extends javax.swing.JFrame implements OnStateL
     private void pointAndShootToggleButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_pointAndShootToggleButtonActionPerformed
        updatePointAndShoot();
 }//GEN-LAST:event_pointAndShootToggleButtonActionPerformed
-
-    private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed
-       controller_.attachToMDA(getSpinnerValue(this.startFrameMDA_)-1,
-               this.repeatCheckBox.isSelected(),
-               getSpinnerValue(this.repeatFrameMDA_));
-    }//GEN-LAST:event_jButton1ActionPerformed
-
-    private void jButton2ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton2ActionPerformed
-       controller_.runPolygons();
-    }//GEN-LAST:event_jButton2ActionPerformed
-
-    private void roiRepetitionsSpinnerStateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_roiRepetitionsSpinnerStateChanged
-       controller_.setRoiRepetitions(getRoiRepetitionsSetting());
-    }//GEN-LAST:event_roiRepetitionsSpinnerStateChanged
-
-    private void repeatCheckBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_repeatCheckBoxActionPerformed
-       controller_.setRoiRepetitions(0);
-    }//GEN-LAST:event_repeatCheckBoxActionPerformed
 
     private int getRoiRepetitionsSetting() {
           return getSpinnerValue(roiRepetitionsSpinner);
@@ -392,6 +400,7 @@ public class ProjectorControlForm extends javax.swing.JFrame implements OnStateL
    private javax.swing.JButton calibrateButton;
    private javax.swing.JButton jButton1;
    private javax.swing.JButton jButton2;
+   private javax.swing.JButton jButton3;
    private javax.swing.JLabel jLabel1;
    private javax.swing.JLabel jLabel2;
    private javax.swing.JLabel jLabel3;
@@ -399,8 +408,8 @@ public class ProjectorControlForm extends javax.swing.JFrame implements OnStateL
    private javax.swing.JLabel jLabel5;
    private javax.swing.JLabel jLabel6;
    private javax.swing.JPanel jPanel1;
-   private javax.swing.JPanel jPanel2;
    private javax.swing.JPanel jPanel3;
+   private javax.swing.JSeparator jSeparator1;
    private javax.swing.JTabbedPane jTabbedPane1;
    private javax.swing.JButton offButton;
    private javax.swing.JButton onButton;
