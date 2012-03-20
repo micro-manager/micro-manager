@@ -136,6 +136,7 @@ private:
    int OnOverShoot(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnWait(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnSpeed(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnMaxSpeed(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnMotorCtrl(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnVersion(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnNrMoveRepetitions(MM::PropertyBase* pProp, MM::ActionType eAct);
@@ -150,6 +151,7 @@ private:
   
    double stepSizeXUm_;
    double stepSizeYUm_;
+   double maxSpeed_;
    // This variable convert the floating point number provided by ASI (expressing 10ths of microns) into a long
    double ASISerialUnit_;
    bool motorOn_;

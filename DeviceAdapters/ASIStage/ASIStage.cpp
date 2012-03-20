@@ -325,6 +325,7 @@ XYStage::XYStage() :
    ASIBase(this, "2H"),
    stepSizeXUm_(0.0), 
    stepSizeYUm_(0.0), 
+   maxSpeed_ (7.5),
    ASISerialUnit_(10.0),
    motorOn_(true),
    joyStickSpeedFast_(60),
@@ -349,6 +350,7 @@ XYStage::XYStage() :
    CPropertyAction* pAct = new CPropertyAction (this, &XYStage::OnPort);
    CreateProperty(MM::g_Keyword_Port, "Undefined", MM::String, false, pAct, true);
    stopSignal_ = false;
+
 }
 
 XYStage::~XYStage()
@@ -411,6 +413,10 @@ int XYStage::Initialize()
    if (hasCommand("S X?")) {
       pAct = new CPropertyAction (this, &XYStage::OnSpeed);
       CreateProperty("Speed-S", "1", MM::Float, false, pAct);
+      // Maximum Speed that can be set in Speed-S property
+      pAct = new CPropertyAction(this, &XYStage::OnMaxSpeed);
+      CreateProperty("Maximum Speed, Do Not Change", "7.5", MM::Float, false, pAct);
+      SetPropertyLimits("Maximum Speed, Do Not Change", 0.1, 25.0);
    }
 
    // Backlash (sets both x and y)
@@ -1217,6 +1223,19 @@ int XYStage::OnError(MM::PropertyBase* pProp, MM::ActionType eAct)
    return DEVICE_OK;
 }
 
+int XYStage::OnMaxSpeed(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   if (eAct == MM::BeforeGet)
+   {
+      pProp->Set(maxSpeed_);
+   }
+   else if (eAct == MM::AfterSet)
+   {
+      pProp->Get(maxSpeed_);
+   }
+   return DEVICE_OK;
+}
+
 int XYStage::OnSpeed(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
    if (eAct == MM::BeforeGet)
@@ -1250,8 +1269,8 @@ int XYStage::OnSpeed(MM::PropertyBase* pProp, MM::ActionType eAct)
       if (speed < 0.0)
          speed = 0.0;
       // Note, max speed may differ depending on pitch screw
-      else if (speed > 7.5)
-         speed = 7.5;
+      else if (speed > maxSpeed_)
+         speed = maxSpeed_;
       ostringstream command;
       command << fixed << "S X=" << speed << " Y=" << speed;
       string answer;
