@@ -161,7 +161,11 @@ public class OughtaFocus extends AutofocusBase implements org.micromanager.api.A
    private double runAutofocusAlgorithm() throws Exception {
       UnivariateRealFunction scoreFun = new UnivariateRealFunction() {
          public double value(double d) throws FunctionEvaluationException {
-            return measureFocusScore(d);
+            try {
+               return measureFocusScore(d);
+            } catch (Exception e) {
+               throw new FunctionEvaluationException(e, d);
+            }
          }
       };
       BrentOptimizer brentOptimizer = new BrentOptimizer();
@@ -171,34 +175,29 @@ public class OughtaFocus extends AutofocusBase implements org.micromanager.api.A
       CMMCore core = app_.getMMCore();
       double z = core.getPosition(core.getFocusDevice());
       startZUm_ = z;
-      getCurrentFocusScore();
+//      getCurrentFocusScore();
       double zResult = brentOptimizer.optimize(scoreFun, GoalType.MAXIMIZE, z - searchRange / 2, z + searchRange / 2);
       ReportingUtils.logMessage("OughtaFocus Iterations: " + brentOptimizer.getIterationCount() +
             ", z=" + TextUtils.FMT2.format(zResult) +
             ", dz=" + TextUtils.FMT2.format(zResult - startZUm_) +
             ", t=" + (System.currentTimeMillis() - startTimeMs_));
       return zResult;
-      
    }
 
-   private void setZPosition(double z) {
-      try {
-         CMMCore core = app_.getMMCore();
-         String focusDevice = core.getFocusDevice();
-         core.setPosition(focusDevice, z);
-         core.waitForDevice(focusDevice);
-      } catch (Exception ex) {
-         ReportingUtils.logError(ex);
-      }
+   private void setZPosition(double z) throws Exception {
+      CMMCore core = app_.getMMCore();
+      String focusDevice = core.getFocusDevice();
+      core.setPosition(focusDevice, z);
+      core.waitForDevice(focusDevice);
    }
 
-   public double measureFocusScore(double z) {
+   public double measureFocusScore(double z) throws Exception {
+      CMMCore core = app_.getMMCore();
+      long start = System.currentTimeMillis();
       try {
-         CMMCore core = app_.getMMCore();
-         long start = System.currentTimeMillis();
          setZPosition(z);
          long tZ =  System.currentTimeMillis() - start;
-         
+
          TaggedImage img = null;
          if (liveModeOn_) {
             img = core.getLastTaggedImage();
@@ -220,14 +219,14 @@ public class OughtaFocus extends AutofocusBase implements org.micromanager.api.A
          double score = computeScore(proc);
          long tC = System.currentTimeMillis() - start - tZ - tI;
          ReportingUtils.logMessage("OughtaFocus: image=" + imageCount_++ +
-                                   ", t=" + (System.currentTimeMillis() - startTimeMs_) +
-                                   ", z=" + TextUtils.FMT2.format(z) + 
-                                   ", score=" + TextUtils.FMT2.format(score) +
-                                   ", Tz=" + tZ + ", Ti=" + tI + ", Tc=" + tC);
+               ", t=" + (System.currentTimeMillis() - startTimeMs_) +
+               ", z=" + TextUtils.FMT2.format(z) + 
+               ", score=" + TextUtils.FMT2.format(score) +
+               ", Tz=" + tZ + ", Ti=" + tI + ", Tc=" + tC);
          return score;
-      } catch (Exception ex) {
-         ReportingUtils.logError(ex);
-         return 0;
+      } catch (Exception e) {
+         ReportingUtils.logError(e);
+         throw e;
       }
    }
 
