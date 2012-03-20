@@ -122,6 +122,7 @@ public class MMWindow {
    }
    
    /**
+    * Note: this function is preliminary.  It is likely to be removed/replaced soon.  Do not use.
     * 
     * @return Summary metadata associated with underling virtual acquistion 
     */
@@ -130,6 +131,8 @@ public class MMWindow {
    }
    
    /**
+    * Note: this function is preliminary.  It is likely to be removed/replaced soon.  Do not use.
+    *
     * Returns image metadata of specified image
     * @param channel
     * @param slice
