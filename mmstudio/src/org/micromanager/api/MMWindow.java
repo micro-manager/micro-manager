@@ -28,7 +28,6 @@
 package org.micromanager.api;
 
 import ij.ImagePlus;
-import ij.ImageStack;
 import ij.process.ImageProcessor;
 import org.json.JSONObject;
 import org.micromanager.acquisition.AcquisitionVirtualStack;

@@ -33,6 +33,7 @@ import org.micromanager.utils.MMScriptException;
 
 /**
  * Interface to execute commands in the main panel.
+ * This interface has been deprecated.  Use ScriptInterface instead
  */
 public interface DeviceControlGUI {
    /**
