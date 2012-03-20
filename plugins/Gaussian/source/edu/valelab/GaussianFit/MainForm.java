@@ -869,17 +869,17 @@ public class MainForm extends javax.swing.JFrame implements ij.ImageListener{
     public void updateValues(GaussianInfo tT) {
       try {
          tT.setNoiseTolerance(Integer.parseInt(noiseToleranceTextField_.getText()));
-         tT.setPhotonConversionFactor(Double.parseDouble(photonConversionTextField.getText()));
-         tT.setGain(Double.parseDouble(emGainTextField_.getText()));
-         tT.setPixelSize(Float.parseFloat(pixelSizeTextField_.getText()));
-         tT.setTimeIntervalMs(Double.parseDouble(timeIntervalTextField_.getText()));
-         tT.setBaseLevel(Double.parseDouble(baseLevelTextField.getText()));
+         tT.setPhotonConversionFactor(NumberUtils.displayStringToDouble(photonConversionTextField.getText()));
+         tT.setGain(NumberUtils.displayStringToDouble(emGainTextField_.getText()));
+         tT.setPixelSize((float) NumberUtils.displayStringToDouble(pixelSizeTextField_.getText()));
+         tT.setTimeIntervalMs(NumberUtils.displayStringToDouble(timeIntervalTextField_.getText()));
+         tT.setBaseLevel(NumberUtils.displayStringToDouble(baseLevelTextField.getText()));
          tT.setUseWidthFilter(filterDataCheckBoxWidth.isSelected());
-         tT.setSigmaMin(Double.parseDouble(minSigmaTextField.getText()));
-         tT.setSigmaMax(Double.parseDouble(maxSigmaTextField.getText()));
+         tT.setSigmaMin(NumberUtils.displayStringToDouble(minSigmaTextField.getText()));
+         tT.setSigmaMax(NumberUtils.displayStringToDouble(maxSigmaTextField.getText()));
          tT.setUseNrPhotonsFilter(filterDataCheckBoxNrPhotons.isSelected());
-         tT.setNrPhotonsMin(Double.parseDouble(minNrPhotonsTextField.getText()));
-         tT.setNrPhotonsMax(Double.parseDouble(maxNrPhotonsTextField.getText()));
+         tT.setNrPhotonsMin(NumberUtils.displayStringToDouble(minNrPhotonsTextField.getText()));
+         tT.setNrPhotonsMax(NumberUtils.displayStringToDouble(maxNrPhotonsTextField.getText()));
          tT.setMaxIterations(Integer.parseInt(maxIterationsTextField.getText()));
          tT.setBoxSize(Integer.parseInt(boxSizeTextField.getText()));
          tT.setShape(fitDimensionsComboBox1.getSelectedIndex() + 1);
