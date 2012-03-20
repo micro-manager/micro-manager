@@ -34,6 +34,8 @@
 #include <sstream>
 using namespace std;
 
+const int g_step5 = 354987;
+const int g_step8 = 221867;
 
 ///////////
 // commands
@@ -144,6 +146,34 @@ const unsigned char getStatusRsp[] = {       0x81, // cmd low
                                              0x00, 0x00, 0x00, 0x00
                                              };
 
+// MGMSG_MOT_REQ_ JOGPARAMS (0x0417)
+const unsigned char reqJogparamsCmd[] = {    0x17, // cmd low
+                                             0x04, // cmd hi
+                                             0x01, // ch id low
+                                             0x00, // ch id hi
+                                             0x50,
+                                             0x01 
+                                             };
+
+// MGMSG_MOT_GET_ JOGPARAMS (0x0418)
+const unsigned char getJogparamsRsp[] = {    0x18, // cmd low
+                                             0x04, // cmd hi
+                                             0x16, // ch id low
+                                             0x00, // ch id hi
+                                             0x81,
+                                             0x50,
+
+											 0x01,
+											 0x00,
+
+										     0x02,
+											 0x00,
+
+											 0xAB, // jog step size
+											 0x62,
+											 0x03,
+											 0x00
+                                             };
 
 //#define DRY_RUN
 using namespace std;
@@ -395,11 +425,11 @@ int IntegratedFilterWheel::DiscoverNumberOfPositions()
 {
    LogMessage("DiscoverNumberOfPositions()");
    ClearPort(*this, *GetCoreCallback(), port_);
-   int ret = SetCommand(reqParamsCmd, sizeof(reqParamsCmd));
+   int ret = SetCommand(reqParamsCmd, sizeof(reqJogparamsCmd));
    if (ret != DEVICE_OK)
       return 0;
 
-   const int answLength = 46;
+   const int answLength = 28;
    unsigned char answer[answLength];
    memset(answer, 0, answLength);
    ret = GetCommand(answer, answLength, answerTimeoutMs_);
@@ -410,17 +440,23 @@ int IntegratedFilterWheel::DiscoverNumberOfPositions()
    }
 
    // check response signature
-   if (memcmp(answer, getParamsRsp, 14) != 0)
+   if (memcmp(answer, getJogparamsRsp, 6) != 0)
    {
       LogMessage("Response signature failed");
       return 0;
    }
 
-   int numpos = (int)*(answer+14);
+   int stepsPerPos = (int)*(answer+10);
    ostringstream os;
-   os << "Found " << numpos << " positions";
+   os << "Found " << stepsPerPos << " steps per position";
    LogMessage(os.str().c_str());
-   return numpos;
+
+   if (stepsPerPos == g_step8)
+	   return 8;
+   else if (stepsPerPos == g_step5)
+	   return 5;
+   else
+	   return 0;
 }
 
 /**
@@ -431,6 +467,13 @@ int IntegratedFilterWheel::GoToPosition(long pos)
    LogMessage("GoToPosition()");
    if (numberOfPositions_ < 1 || pos < 0 || pos >= numberOfPositions_)
       return ERR_INVALID_POSITION;
+
+   int posSize = 0;
+   if (numberOfPositions_ == 5)
+	   posSize = g_step5;
+   else if (numberOfPositions_ == 8)
+	   posSize = g_step8;
+
 #ifdef DRY_RUN
    position_ = pos;
 #else
@@ -439,7 +482,7 @@ int IntegratedFilterWheel::GoToPosition(long pos)
 
    // calculate number of steps to reach specified position
    //unsigned int steps = (unsigned int)(((double)stepsTurn_ / numberOfPositions_) * pos + offset_ + 0.5);
-   unsigned int steps = (unsigned int)(221867.0 * pos + offset_);
+   unsigned int steps = (unsigned int)(posSize * pos + offset_);
 
    ostringstream msg;
    msg << "Attempting to set position:" << pos << ", steps:" << steps;
