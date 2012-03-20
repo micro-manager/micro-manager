@@ -175,7 +175,7 @@ int ZStage::SetPositionSteps(long steps)
    snprintf(tmp, 9, "%08lX", steps);
    string tmp2 = tmp;
    ostringstream cmd;
-   cmd << "HPZP" << tmp2.substr(2,6).c_str();
+   cmd << "HPZT" << tmp2.substr(2,6).c_str();
    int ret = g_hub.ExecuteCommand(*this, *GetCoreCallback(),  cmd.str().c_str());
    if (ret != DEVICE_OK)
       return ret;
