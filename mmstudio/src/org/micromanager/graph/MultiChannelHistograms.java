@@ -6,7 +6,7 @@ import java.awt.GridLayout;
 import java.util.ArrayList;
 import javax.swing.JPanel;
 import org.micromanager.acquisition.VirtualAcquisitionDisplay;
-import org.micromanager.api.Histograms;
+import org.micromanager.internalinterfaces.Histograms;
 import org.micromanager.api.ImageCache;
 import org.micromanager.graph.ChannelControlPanel;
 import org.micromanager.utils.ContrastSettings;

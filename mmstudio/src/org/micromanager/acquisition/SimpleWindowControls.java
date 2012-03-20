@@ -21,7 +21,7 @@
 //
 package org.micromanager.acquisition;
 
-import org.micromanager.api.DisplayControls;
+import org.micromanager.internalinterfaces.DisplayControls;
 import com.swtdesigner.SwingResourceManager;
 import java.awt.BorderLayout;
 import java.awt.Dimension;

@@ -40,7 +40,7 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import org.micromanager.acquisition.MetadataPanel;
 import org.micromanager.acquisition.VirtualAcquisitionDisplay;
-import org.micromanager.api.Histograms;
+import org.micromanager.internalinterfaces.Histograms;
 import org.micromanager.utils.ScaleBar;
 
 /**

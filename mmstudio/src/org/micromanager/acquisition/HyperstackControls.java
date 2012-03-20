@@ -11,7 +11,7 @@
 package org.micromanager.acquisition;
 
 
-import org.micromanager.api.DisplayControls;
+import org.micromanager.internalinterfaces.DisplayControls;
 import java.text.ParseException;
 import java.util.Timer;
 import java.util.TimerTask;

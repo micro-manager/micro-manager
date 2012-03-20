@@ -21,6 +21,8 @@
 //
 package org.micromanager.acquisition;
 
+import org.micromanager.internalinterfaces.DisplayControls;
+import org.micromanager.internalinterfaces.Histograms;
 import java.lang.reflect.InvocationTargetException;
 import ij.ImageStack;
 import ij.process.LUT;
