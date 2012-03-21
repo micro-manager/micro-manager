@@ -248,7 +248,9 @@ public:
    std::string getCurrentConfig(const char* groupName) const throw (CMMError);
    Configuration getConfigData(const char* configGroup, const char* configName) const throw (CMMError);
    std::string getCurrentPixelSizeConfig() const throw (CMMError);
+   std::string getCurrentPixelSizeConfig(bool cached) const throw (CMMError);
    double getPixelSizeUm() const;
+   double getPixelSizeUm(bool cached) const;
    double getPixelSizeUmByID(const char* resolutionID) throw (CMMError);
    double getMagnificationFactor() const;
    void setPixelSizeUm(const char* resolutionID, double pixSize)  throw (CMMError);

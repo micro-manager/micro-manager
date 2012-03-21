@@ -376,7 +376,7 @@
           tags.put(key, value);
       }
       tags.put("BitDepth", getImageBitDepth());
-      tags.put("PixelSizeUm", getPixelSizeUm());
+      tags.put("PixelSizeUm", getPixelSizeUm(true));
       tags.put("ROI", getROITag());
       tags.put("Width", getImageWidth());
       tags.put("Height", getImageHeight());

@@ -4384,11 +4384,18 @@ void CMMCore::deletePixelSizeConfig(const char* configName) const throw (CMMErro
    CORE_LOG1("Pixel Size Configuration %s deleted.\n", os.str().c_str());
 }
 
-
 /**
  * Get the current pixel configuration name
  **/
 string CMMCore::getCurrentPixelSizeConfig() const throw (CMMError)
+{
+	return getCurrentPixelSizeConfig(false);
+}
+
+/**
+ * Get the current pixel configuration name
+ **/
+string CMMCore::getCurrentPixelSizeConfig(bool cached) const throw (CMMError)
 {
    // get a list of configuration names
    vector<string> cfgs = pixelSizeGroup_->GetAvailable();
@@ -4408,7 +4415,15 @@ string CMMCore::getCurrentPixelSizeConfig() const throw (CMMError)
          {
             try
             {
-               string value = getProperty(cs.getDeviceLabel().c_str(), cs.getPropertyName().c_str());
+				string value;
+				if (!cached)
+				{
+                   value = getProperty(cs.getDeviceLabel().c_str(), cs.getPropertyName().c_str());
+				}
+				else
+				{
+				   value = stateCache_.getSetting(cs.getDeviceLabel().c_str(), cs.getPropertyName().c_str()).getPropertyValue();
+				}
                PropertySetting ss(cs.getDeviceLabel().c_str(), cs.getPropertyName().c_str(), value.c_str()); // state setting
                curState.addSetting(ss);
             }
@@ -4441,7 +4456,17 @@ string CMMCore::getCurrentPixelSizeConfig() const throw (CMMError)
  */
 double CMMCore::getPixelSizeUm() const
 {
-	 string resolutionID = getCurrentPixelSizeConfig();
+	 return getPixelSizeUm(false);
+}
+
+/**
+ * Returns the curent pixel size in microns.
+ * This method is based on sensing the current pixel size configuration and adjusting
+ * for the binning.
+ */
+double CMMCore::getPixelSizeUm(bool cached) const
+{
+	 string resolutionID = getCurrentPixelSizeConfig(cached);
 
 	 if (resolutionID.length()>0) {
 		 // check which one matches the current state
