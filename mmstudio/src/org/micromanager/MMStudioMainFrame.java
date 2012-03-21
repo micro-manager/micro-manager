@@ -2231,6 +2231,10 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface, Device
    public boolean getAutoreloadOption() {
       return options_.autoreloadDevices_;
    }
+   
+   public double getPreferredWindowMag() {
+      return options_.windowMag_;
+   }
 
    private void updateTitle() {
       this.setTitle("System: " + sysConfigFile_);

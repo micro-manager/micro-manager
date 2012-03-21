@@ -1530,20 +1530,25 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
       Point location = win.getLocation();
       win.setLocation(new Point(0,0));
       
+      double mag;
       if (simple_) {
-         ImageCanvas canvas = win.getCanvas();
-         if (snapWinZoom_ < canvas.getMagnification()) {
-            while (snapWinZoom_ < canvas.getMagnification()) {
-               canvas.zoomOut(canvas.getWidth() / 2, canvas.getHeight() / 2);
-            } 
-         } else if (snapWinZoom_ > canvas.getMagnification()) {
-            
-            while (snapWinZoom_ > canvas.getMagnification()) {
-               canvas.zoomIn(canvas.getWidth() / 2, canvas.getHeight() / 2);
-            }            
+         mag = snapWinZoom_;
+      } else {
+         mag = MMStudioMainFrame.getInstance().getPreferredWindowMag();
+      }
+
+      ImageCanvas canvas = win.getCanvas();
+      if (mag < canvas.getMagnification()) {
+         while (mag < canvas.getMagnification()) {
+            canvas.zoomOut(canvas.getWidth() / 2, canvas.getHeight() / 2);
+         }
+      } else if (mag > canvas.getMagnification()) {
+
+         while (mag > canvas.getMagnification()) {
+            canvas.zoomIn(canvas.getWidth() / 2, canvas.getHeight() / 2);
          }
       }
-      
+
       //Make sure the window is fully on the screen
       Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
       Point newLocation = new Point(location.x,location.y);

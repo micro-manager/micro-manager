@@ -33,6 +33,7 @@ import java.awt.event.WindowEvent;
 import java.util.prefs.BackingStoreException;
 import java.util.prefs.Preferences;
 
+import javax.swing.DefaultComboBoxModel;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
@@ -65,6 +66,7 @@ public class OptionsDlg extends MMDialog {
    private ScriptInterface parent_;
    private GUIColors guiColors_;
    private String currentCfgPath_;
+   private JComboBox windowZoomCombo_;
 
    /**
     * Create the dialog
@@ -89,7 +91,7 @@ public class OptionsDlg extends MMDialog {
       setTitle("Micro-Manager Options");
       springLayout = new SpringLayout();
       getContentPane().setLayout(springLayout);
-      setBounds(100, 100, 371, 287);
+      setBounds(100, 100, 371, 320);
       guiColors_ = new GUIColors();
       Dimension buttonSize = new Dimension(120, 20);
 
@@ -303,6 +305,77 @@ public class OptionsDlg extends MMDialog {
       closeOnExitCheckBox.setSelected(opts_.closeOnExit_);
 
 
+      final JComboBox prefZoomCombo = new JComboBox();
+      prefZoomCombo.setModel(new DefaultComboBoxModel(new String[]{
+         "25%", "50%", "75%", "100%", "150%","200%","300%","400%","600%"
+      }));
+      
+      double mag = opts_.windowMag_;
+      int index = 0;
+      if (mag == 0.5)
+         index = 1;
+      else if (mag == 0.75)
+         index = 2;
+      else if (mag == 1.0)
+         index = 3;
+      else if (mag == 1.5)
+         index = 4;
+      else if (mag == 2.0)
+         index = 5;
+      else if (mag == 3.0)
+         index = 6;
+      else if (mag == 4.0)
+         index = 7;
+      else if (mag == 6.0)
+         index = 8;
+      prefZoomCombo.setSelectedIndex(index);
+      
+      prefZoomCombo.addActionListener(new ActionListener() {
+         @Override
+         public void actionPerformed(ActionEvent e) {
+            switch (prefZoomCombo.getSelectedIndex()) {
+               case (0):
+                  opts_.windowMag_ = 0.25;
+                  break;
+               case (1):
+                  opts_.windowMag_ = 0.5;
+                  break;
+               case (2):
+                  opts_.windowMag_ = 0.75;
+                  break;
+               case (3):
+                  opts_.windowMag_ = 1.0;
+                  break;
+               case (4):
+                  opts_.windowMag_ = 1.5;
+                  break;
+               case (5):
+                  opts_.windowMag_ = 2.0;
+                  break;
+               case (6):
+                  opts_.windowMag_ = 3.0;
+                  break;
+               case (7):
+                  opts_.windowMag_ = 4.0;
+                  break;
+               case (8):
+                  opts_.windowMag_ = 6.0;
+                  break;
+            }
+         }
+      });
+      getContentPane().add(prefZoomCombo);
+      springLayout.putConstraint(SpringLayout.NORTH, prefZoomCombo, 30, SpringLayout.NORTH, closeOnExitCheckBox);
+      springLayout.putConstraint(SpringLayout.WEST, prefZoomCombo, 90, SpringLayout.WEST, autoreloadDevicesCheckBox);
+      
+      JLabel prefZoomLabel = new JLabel("Preferred image window zoom:");
+      getContentPane().add(prefZoomLabel);
+      
+       springLayout.putConstraint(SpringLayout.EAST, prefZoomLabel, 0, SpringLayout.WEST, prefZoomCombo);
+      springLayout.putConstraint(SpringLayout.WEST, prefZoomLabel, 20, SpringLayout.WEST, getContentPane());
+      springLayout.putConstraint(SpringLayout.NORTH, prefZoomLabel, 0, SpringLayout.NORTH, prefZoomCombo);
+      
+      
    }
 
    private void changeBackground() {

@@ -39,6 +39,7 @@ public class MMOptions {
    private static final String CONSERVE_RAM = "conserveRam";
    private static final String AUTORELOAD_DEVICES = "autoreloadDevices";
    private static final String ENABLE_DEVICE_DISCOVERY = "enableDeviceDiscovery";
+   private static final String PREF_WINDOW_MAG = "windowMag";
    
    public boolean debugLogEnabled_ = false;
    public boolean doNotAskForConfigFile_ = false;
@@ -48,6 +49,7 @@ public class MMOptions {
    public String startupScript_ = "MMStartup.bsh";
    boolean conserveRam_ = false;
    boolean autoreloadDevices_ = false;
+   double windowMag_ = 1.0;
    //public boolean enableDeviceDiscovery_  = false;
    
    public void saveSettings() {
@@ -62,6 +64,7 @@ public class MMOptions {
       prefs.putInt(BUFFSIZE_MB, circularBufferSizeMB_);
       prefs.put(DISPLAY_BACKGROUND, displayBackground_);
       prefs.put(STARTUP_SCRIPT_FILE, startupScript_);
+      prefs.putDouble(PREF_WINDOW_MAG, windowMag_);
       // prefs.putBoolean(ENABLE_DEVICE_DISCOVERY, enableDeviceDiscovery_);
    }
    
@@ -77,6 +80,7 @@ public class MMOptions {
       startupScript_ = prefs.get(STARTUP_SCRIPT_FILE, startupScript_);
       conserveRam_ = prefs.getBoolean(CONSERVE_RAM, conserveRam_);
       autoreloadDevices_ = prefs.getBoolean(AUTORELOAD_DEVICES, autoreloadDevices_);
+      windowMag_ = prefs.getDouble(PREF_WINDOW_MAG, windowMag_);
       // enableDeviceDiscovery_ = prefs.getBoolean(ENABLE_DEVICE_DISCOVERY, enableDeviceDiscovery_);
    }
 }
