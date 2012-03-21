@@ -40,6 +40,7 @@ public:
     virtual double GetStepSize();
     virtual int SetPositionSteps(long x, long y);
     virtual int GetPositionSteps(long &x, long &y);
+	virtual int SetRelativePositionUm(double dx, double dy);
     virtual int Home();
     virtual int Stop();
     virtual int SetOrigin();
@@ -48,8 +49,9 @@ public:
 	virtual int GetStepLimits(long& xMin, long& xMax, long& yMin, long& yMax);
 	virtual double GetStepSizeXUm();
 	virtual double GetStepSizeYUm();
+	virtual int IsXYStageSequenceable(bool& isSequenceable) const;
 	int getHandle(){  return MCLhandle_;}
-   int IsXYStageSequenceable(bool& isSequenceable) const {isSequenceable = false; return DEVICE_OK;}
+
 
 	// Action interface
 	int OnPositionXUm(MM::PropertyBase* pProp, MM::ActionType eAct);

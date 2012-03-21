@@ -26,6 +26,7 @@ MicroDriveXYStage::MicroDriveXYStage():
 	SetErrorText(MCL_ARGUMENT_ERROR, "MCL Error: Argument out of range");
 	SetErrorText(MCL_INVALID_AXIS, "MCL Error: Invalid axis");
 	SetErrorText(MCL_INVALID_HANDLE, "MCL Error: Handle not valid");
+	SetErrorText(MCL_INVALID_DRIVER, "MCL Error: Invalid Driver");
 }
 
 MicroDriveXYStage::~MicroDriveXYStage()
@@ -50,11 +51,15 @@ int MicroDriveXYStage::Initialize()
    if (initialized_)
       return DEVICE_OK;
 
+   if(!MCL_CorrectDriverVersion())
+	   return MCL_INVALID_DRIVER;
+
    MCLhandle_ = MCL_InitHandle();
    if (MCLhandle_ == 0)
 	   return MCL_INVALID_HANDLE;
 
    err = MCL_MicroDriveInformation(&encoderResolution_, &stepSize_mm_, &maxVelocity_, &minVelocity_, MCLhandle_);
+
    if (err != MCL_SUCCESS)
 	   return err;
 
@@ -325,7 +330,6 @@ int MicroDriveXYStage::Home()
 {
 	return MoveToForwardLimits();
 }
-
 
 void MicroDriveXYStage::PauseDevice()
 {
@@ -651,7 +655,7 @@ int MicroDriveXYStage::OnPositionXYmm(MM::PropertyBase* pProp, MM::ActionType eA
 		double x, y;
 		GetPositionMm(x, y);
 		char iToChar[30];
-		sprintf(iToChar, "X = %f, Y = %f", x, y);
+		sprintf(iToChar, "X = %f Y = %f", x, y);
 		pProp->Set(iToChar);
 	}
 	else if (eAct == MM::AfterSet)
@@ -690,5 +694,11 @@ int MicroDriveXYStage::OnVelocity(MM::PropertyBase* pProp, MM::ActionType eAct){
 		velocity_ = vel;
 	}
 	
+	return DEVICE_OK;
+}
+
+int MicroDriveXYStage::IsXYStageSequenceable(bool& isSequenceable) const
+{
+	isSequenceable = false;
 	return DEVICE_OK;
 }

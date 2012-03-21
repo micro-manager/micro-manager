@@ -15,6 +15,7 @@ License:	Distributed under the BSD license.
 #define		MCL_ARGUMENT_ERROR		-6
 #define		MCL_INVALID_AXIS		-7
 #define		MCL_INVALID_HANDLE		-8
+#define		MCL_INVALID_DRIVER      -9
 
 #pragma pack(push, 1)
 struct ProductInformation {
@@ -47,6 +48,8 @@ MADLIB_API	double	MCL_GetCalibration(unsigned int axis, int handle);
 MADLIB_API	int		MCL_GetSerialNumber(int handle);
 MADLIB_API	int		MCL_GetProductInfo(struct ProductInformation *pi, int handle);
 MADLIB_API	bool	MCL_DeviceAttached(int milliseconds, int handle);
+
+MADLIB_API  bool    MCL_CorrectDriverVersion();
 
 #ifdef __cplusplus
 	}

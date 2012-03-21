@@ -44,7 +44,8 @@ public:
    virtual double GetStepSizeXUm();
    virtual double GetStepSizeYUm();
    virtual int SetRelativePositionUm(double dx, double dy);
-   int IsXYStageSequenceable(bool& isSequenceable) const {isSequenceable = false; return DEVICE_OK;}
+   virtual int IsXYStageSequenceable(bool& isSequenceable) const; 
+   
 
    // Action interface
    int OnPositionXmm(MM::PropertyBase* pProp, MM::ActionType eAct);

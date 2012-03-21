@@ -36,15 +36,23 @@ public:
   // Stage API
   virtual int SetPositionUm(double pos);
   virtual int GetPositionUm(double& pos);
+  virtual int SetRelativePositionUm(double d);
   virtual double GetStepSize();
   virtual int SetPositionSteps(long steps);
   virtual int GetPositionSteps(long& steps);
   virtual int SetOrigin();
   virtual int GetLimits(double& lower, double& upper);
-  int getHandle(){ return MCLhandle_;}
+  virtual int IsStageSequenceable(bool& isSequenceable) const;
+  virtual int GetStageSequenceMaxLength(long& nrEvents) const;
+  virtual int StartStageSequence() const;
+  virtual int StopStageSequence() const;
+  virtual int LoadStageSequence(std::vector<double> positions) const;
+  virtual bool IsContinuousFocusDrive() const;
+  virtual int ClearStageSequence();
+  virtual int AddToStageSequence(double position);
+  virtual int SendStageSequence() const; 
 
-  int IsStageSequenceable(bool& isSequenceable) const {isSequenceable = false; return DEVICE_OK;}
-  bool IsContinuousFocusDrive() const {return false;}
+  int getHandle(){ return MCLhandle_;}
 
   // Action interface
   int OnPositionUm(MM::PropertyBase* pProp, MM::ActionType eAct);

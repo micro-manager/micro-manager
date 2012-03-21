@@ -200,7 +200,6 @@ ZSTAGE_INIT_EXIT:
 	return err;
 }
 
-
 int MCL_NanoDrive_ZStage::Shutdown()
 {
 	
@@ -341,7 +340,7 @@ int MCL_NanoDrive_ZStage::SetPositionUm(double pos)
 		return DEVICE_OK;
 
 	// position to write to is pos (position from origin) - lowerLimit (lower bounds)
-	err = MCL_SingleWriteN(pos - lowerLimit_, axis_, MCLhandle_);  
+	err = MCL_SingleWriteN(pos - lowerLimit_, axis_, MCLhandle_);
 	if (err != MCL_SUCCESS)
 		return err;
 
@@ -351,6 +350,8 @@ int MCL_NanoDrive_ZStage::SetPositionUm(double pos)
 
 	firstWrite_ = false;
 
+	this->OnStagePositionChanged(pos);
+	this->UpdateStatus();
 	return DEVICE_OK;
 }
 
@@ -362,6 +363,14 @@ int MCL_NanoDrive_ZStage::GetPositionUm(double& pos)
 		return (int) pos;
 
 	return DEVICE_OK;
+}
+
+int MCL_NanoDrive_ZStage::SetRelativePositionUm(double d)
+{
+	double currPos = 0;
+
+	GetPositionUm(currPos);
+	return SetPositionUm(d + currPos);
 }
 
 double MCL_NanoDrive_ZStage::GetStepSize()
@@ -424,6 +433,48 @@ int MCL_NanoDrive_ZStage::GetLimits(double& lower, double& upper)
 	upper = upperLimit_;
 
 	return DEVICE_OK;
+}
+
+int MCL_NanoDrive_ZStage::IsStageSequenceable(bool& isSequenceable) const
+{
+	isSequenceable = false;
+	return DEVICE_OK;
+}
+int MCL_NanoDrive_ZStage::GetStageSequenceMaxLength(long& /*nrEvents*/)const 
+{
+	return DEVICE_UNSUPPORTED_COMMAND;
+}
+int MCL_NanoDrive_ZStage::StartStageSequence() const
+{
+	return DEVICE_UNSUPPORTED_COMMAND;
+}
+int MCL_NanoDrive_ZStage::StopStageSequence() const 
+{
+	return DEVICE_UNSUPPORTED_COMMAND;
+}
+int MCL_NanoDrive_ZStage::LoadStageSequence(std::vector<double> /*positions*/) const
+{
+	return DEVICE_UNSUPPORTED_COMMAND;
+}
+
+int MCL_NanoDrive_ZStage::ClearStageSequence()
+{
+	return DEVICE_UNSUPPORTED_COMMAND;
+}
+
+int MCL_NanoDrive_ZStage::AddToStageSequence(double /*position*/)
+{
+	return DEVICE_UNSUPPORTED_COMMAND;
+}
+
+int MCL_NanoDrive_ZStage::SendStageSequence() const
+{
+	return DEVICE_UNSUPPORTED_COMMAND;
+}
+
+bool MCL_NanoDrive_ZStage::IsContinuousFocusDrive() const
+{
+	return false;
 }
 
 //////////////////////

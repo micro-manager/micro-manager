@@ -16,6 +16,7 @@ License:	Distributed under the BSD license.
 #define		MCL_INVALID_AXIS		-7
 #define		MCL_INVALID_HANDLE		-8
 
+#define		MCL_INVALID_DRIVER		-9
 #define     INVALID_VELOCITY        -10
 
 #ifdef __cplusplus
@@ -60,7 +61,7 @@ MICRODRIVE_API	int		MCL_MicroDriveInformation(
 							double* minVelocity,
 							int handle);
 MICRODRIVE_API	bool	MCL_DeviceAttached(int milliseconds, int handle);
-
+MICRODRIVE_API  bool	MCL_CorrectDriverVersion();
 
 #ifdef __cplusplus
 	}

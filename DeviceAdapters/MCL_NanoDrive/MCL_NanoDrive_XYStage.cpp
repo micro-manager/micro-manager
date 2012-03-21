@@ -31,6 +31,7 @@ MCL_NanoDrive_XYStage::MCL_NanoDrive_XYStage():
 	SetErrorText(MCL_ARGUMENT_ERROR, "MCL Error: Argument out of range");
 	SetErrorText(MCL_INVALID_AXIS, "MCL Error: Invalid axis");
 	SetErrorText(MCL_INVALID_HANDLE, "MCL Error: Handle not valid");
+	SetErrorText(MCL_INVALID_DRIVER, "MCL Error: Invalid Driver");
 }
 
 MCL_NanoDrive_XYStage::~MCL_NanoDrive_XYStage()
@@ -64,6 +65,12 @@ HandleListLock();
    { 
 	  // If already initialized, no need to continue
 	  goto INIT_ERROR;
+   }
+
+   if(!MCL_CorrectDriverVersion())
+   {
+	   err = MCL_INVALID_DRIVER;
+	   goto INIT_ERROR;
    }
 
    int numHandles = MCL_GrabAllHandles();
@@ -384,10 +391,23 @@ int MCL_NanoDrive_XYStage::SetPositionUm(double x, double y)
 	// otherwise x took longer to move or y didn't move
 	else if (xMoved)
 		PauseDevice(XAXIS);
-	
+
 	// other case is that neither moved
 
+	this->OnXYStagePositionChanged(x, y);
+	
+	this->UpdateStatus();
+
 	return DEVICE_OK;
+}
+
+int MCL_NanoDrive_XYStage::SetRelativePositionUm(double x, double y)
+{
+	double currX = 0;
+	double currY = 0;
+
+	GetPositionUm(currX, currY);
+	return SetPositionUm(x + currX, y + currY);
 }
 
 int MCL_NanoDrive_XYStage::SetPositionXUm(double x)
@@ -560,8 +580,14 @@ double MCL_NanoDrive_XYStage::GetStepSizeYUm()
 	return stepSizeY_um_;
 }
 
+int MCL_NanoDrive_XYStage::IsXYStageSequenceable(bool& isStageSequenceable) const
+{
+	isStageSequenceable = false;
+	return DEVICE_OK;
+}
+
 //////////////////////
-///ActionHandlers
+//  ActionHandlers  //
 //////////////////////
 int MCL_NanoDrive_XYStage::OnPositionXUm(MM::PropertyBase *pProp, MM::ActionType eAct)
 {
@@ -695,6 +721,7 @@ int MCL_NanoDrive_XYStage::OnSetOrigin(MM::PropertyBase* pProp, MM::ActionType e
 		if (message.compare("Yes") == 0)
 		{
 			err = SetOrigin();
+
 		}
 	}
 
