@@ -1,3 +1,28 @@
+///////////////////////////////////////////////////////////////////////////////
+//FILE:           Autofocus_.java
+//PROJECT:        Micro-Manager
+//SUBSYSTEM:      Implementation of Local Weighted Mean algorithm,
+//                as first described by
+//                Ardeshir Goshtasby. (1988). Image registration by local approximation methods.
+//                and used in Matlab by cp2tform
+//-----------------------------------------------------------------------------
+//
+//AUTHOR:         Arthur Edelstein, arthuredelstein@gmail.com, 2012
+//
+//COPYRIGHT:      University of California San Francisco
+//
+//LICENSE:        This file is distributed under the BSD license.
+//                License text is included with the source distribution.
+//
+//                This file is distributed in the hope that it will be useful,
+//                but WITHOUT ANY WARRANTY; without even the implied warranty
+//                of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+//
+//                IN NO EVENT SHALL THE COPYRIGHT OWNER OR
+//                CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+//                INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
+//
+
 package org.micromanager.lwm;
 
 import ags.utils.KdTree;
