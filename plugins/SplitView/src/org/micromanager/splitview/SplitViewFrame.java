@@ -284,7 +284,7 @@ public class SplitViewFrame extends javax.swing.JFrame {
          } else if (gui_.getAcquisitionImageHeight(ACQNAME) != newHeight_
                  || gui_.getAcquisitionImageWidth(ACQNAME) != newWidth_
                  || gui_.getAcquisitionImageByteDepth(ACQNAME) != imgDepth_) {
-            gui_.getAcquisition(ACQNAME).closeImage5D();
+            gui_.getAcquisition(ACQNAME).closeImageWindow();
             gui_.closeAcquisition(ACQNAME);
             openAcq();
          }
