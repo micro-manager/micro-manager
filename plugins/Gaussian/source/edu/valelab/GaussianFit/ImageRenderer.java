@@ -28,6 +28,7 @@ public class ImageRenderer {
    public static void renderData(ImageWindow w, final MyRowData rowData,
            final int method, final double magnification, Rectangle rect, final SpotDataFilter sf) {
 
+          
       String fsep = System.getProperty("file.separator");
       String ttmp = rowData.name_;
       if (rowData.name_.contains(fsep)) {
@@ -89,12 +90,16 @@ public class ImageRenderer {
             w.setVisible(true);
          }
 
-      } else if (method == 1) {  // Gaussian
-
+      } else if (method == 1 || method == 2) {  // Gaussian and normalized Gaussian
 
          Runnable doWorkRunnable = new Runnable() {
 
             public void run() {
+               // determines whether gaussians should be normalized by their total intensity
+               boolean normalize = false; 
+               if (method ==2)
+                  normalize = true;
+               
                ImageProcessor ip = new FloatProcessor(width, height);
                float pixels[] = new float[size];
                ip.setPixels(pixels);
@@ -119,7 +124,7 @@ public class ImageRenderer {
 
                      /*
                       * A *  exp(-((x-xc)^2+(y-yc)^2)/(2 sigy^2))+b
-                      * A = params[INT]  (total intensity)
+                      * A = params[INT]  (amplitude)
                       * b = params[BGR]  (background)
                       * xc = params[XC]
                       * yc = params[YC]
@@ -130,14 +135,38 @@ public class ImageRenderer {
                      int yc = (int) Math.round(spot.getYCenter() / renderedPixelInNm);
                      if (xc > halfWidth && xc < (width - halfWidth)
                              && yc > halfWidth && yc < (height - halfWidth)) {
-                        for (int x = (int) xc - halfWidth; x < (int) xc + halfWidth; x++) {
-                           for (int y = (int) yc - halfWidth; y < (int) yc + halfWidth; y++) {
+                        double totalInt = 0.0;
+                        int xStart = (int) xc - halfWidth;
+                        int xEnd = (int) xc + halfWidth;
+                        int yStart = (int) yc - halfWidth;
+                        int yEnd = (int) yc + halfWidth;
+                        float[][] boxPixels = new float[xEnd - xStart][yEnd - yStart];
+                        for (int x = xStart; x < xEnd; x++) {
+                           for (int y = yStart; y < yEnd; y++) {
                               double[] parms = {1.0, 0.0,
                                  spot.getXCenter() / renderedPixelInNm,
                                  spot.getYCenter() / renderedPixelInNm,
                                  spot.getSigma() / renderedPixelInNm};
                               double val = GaussianUtils.gaussian(parms, x, y);
-                              ip.setf(x, y, ip.getf(x, y) + (float) val);
+                              totalInt += val;
+                              boxPixels[x - xStart][y - yStart] = (float)val;
+                              
+                              //ip.setf(x, y, ip.getf(x, y) + (float) val);
+                           }
+                        }
+                        // normalize if requested
+                        if (normalize) {
+                           for (int x = xStart; x < xEnd; x++) {
+                              for (int y = yStart; y < yEnd; y++) {
+                                 boxPixels[x - xStart][y - yStart] /= totalInt;
+                              }
+                           }
+
+                        }
+                        // now add to the image
+                        for (int x = xStart; x < xEnd; x++) {
+                           for (int y = yStart; y < yEnd; y++) {
+                              ip.setf(x, y, ip.getf(x, y) + boxPixels[x - xStart][y - yStart]);
                            }
                         }
                      }

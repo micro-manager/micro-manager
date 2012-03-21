@@ -9,12 +9,10 @@ import ij.ImagePlus;
 import ij.gui.ImageCanvas;
 import ij.gui.ImageWindow;
 import ij.gui.Toolbar;
-import ij.plugin.tool.PlugInTool;
 import java.awt.Dimension;
 import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.event.MouseEvent;
-import java.awt.event.MouseListener;
 
 /**
  *

@@ -90,7 +90,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
    private final String[] columnNames_ = {"ID", "Image", "Nr of spots", "2C Reference", 
       "Action1", "Action2"};
    private final String[] plotModes_ = {"t-X", "t-Y", "X-Y", "t-Int"};
-   private final String[] renderModes_ = {"Points", "Gaussian"};
+   private final String[] renderModes_ = {"Points", "Gaussian", "Norm. Gaussian"};
    private final String[] renderSizes_  = {"1x", "2x", "4x", "8x"};
    public final static String extension_ = ".tsf";
    // TODO: make this user-settable
@@ -780,7 +780,17 @@ public class DataCollectionForm extends javax.swing.JFrame {
          final File selectedFile = new File( fd.getDirectory() + File.separator +
 		        fd.getFile());
          
-          Runnable doWorkRunnable = new Runnable() {
+         // Text importer
+         Runnable loadTextFile = new Runnable() {
+            
+            public void run() {
+               JOptionPane.showMessageDialog(getInstance(), "Text import has not been implemented yet");
+            }
+         };
+         
+         
+         // Binary importer
+         Runnable loadBinaryFile = new Runnable() {
 
              public void run() {
 
@@ -869,8 +879,13 @@ public class DataCollectionForm extends javax.swing.JFrame {
                 }
              }
           };
-          
-          (new Thread(doWorkRunnable)).start();
+         
+         
+          if (fd.getFile().endsWith(".txt"))
+             (new Thread (loadTextFile)).start();
+          else
+            (new Thread(loadBinaryFile)).start();
+             
        }
           
     }//GEN-LAST:event_loadButtonActionPerformed
@@ -1370,12 +1385,27 @@ public class DataCollectionForm extends javax.swing.JFrame {
          // create a copy of the dataset and copy in the corrected data
          List<GaussianSpotData> transformedResultList =
                  Collections.synchronizedList(new ArrayList<GaussianSpotData>());
-
+         
          for (int i = 0; i < avgPoints.size(); i++) {
             GaussianSpotData oriSpot = myRows[0].spotList_.get(i);
             GaussianSpotData spot = new GaussianSpotData(oriSpot);
-            spot.setData(0.0, 0.0, avgPoints.get(i).getX(), 
-                    avgPoints.get(i).getY(), 0.0, 0.0, 0.0, 0.0 );
+            double nph = 0.0;
+            double bg = 0.0;
+            double s = 0.0;
+            double w = 0.0;
+            for (int j = 0; j < rows.length; j++) {
+               GaussianSpotData thisSpot = rowData_.get(rows[j]).spotList_.get(i);
+               nph += thisSpot.getIntensity();
+               bg += thisSpot.getBackground();
+               s += thisSpot.getSigma();
+               w += thisSpot.getWidth();
+            }
+            nph = nph / rows.length;
+            bg = bg / rows.length;
+            s = s/ rows.length;
+            w = w/ rows.length;                    
+            spot.setData(nph, bg, avgPoints.get(i).getX(), 
+                    avgPoints.get(i).getY(), w, 0.0, 0.0, s );
             transformedResultList.add(spot);
          }
 
@@ -1772,51 +1802,37 @@ public class DataCollectionForm extends javax.swing.JFrame {
          Runnable doWorkRunnable = new Runnable() {
             
             public void run() {
-          /*     
-               SpotList.Builder tspBuilder = SpotList.newBuilder();
-               tspBuilder.setApplicationId(1).
-                       setName(rowData.name_).
-                       setFilepath(rowData.title_).
-                       setNrPixelsX(rowData.width_).
-                       setNrPixelsY(rowData.height_).
-                       setNrSpots(rowData.spotList_.size()).
-                       setPixelSize(160).
-                       setBoxSize(rowData.halfSize_ * 2).
-                       setNrChannels(rowData.nrChannels_).
-                       setNrSlices(rowData.nrSlices_).
-                       setIsTrack(rowData.isTrack_).
-                       setNrPos(rowData.nrPositions_).
-                       setNrFrames(rowData.nrFrames_).
-                       setLocationUnits(LocationUnits.NM).
-                       setIntensityUnits(IntensityUnits.PHOTONS).
-                       setNrSpots(rowData.maxNrSpots_);
-               switch (rowData.shape_) {
-                  case (1):
-                     tspBuilder.setFitMode(FitMode.ONEAXIS);
-                     break;
-                  case (2):
-                     tspBuilder.setFitMode(FitMode.TWOAXIS);
-                     break;
-                  case (3):
-                     tspBuilder.setFitMode(FitMode.TWOAXISANDTHETA);
-                     break;
-               }
-               
-               
-               SpotList spotList = tspBuilder.build();
-                * 
-                */
+
                try {
+                  
+                  String tab = "\t";
                   setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
                   
                   FileWriter fw = new FileWriter(selectedFile);
+                  
+                  fw.write( "" +
+                          "application_id: " + 1 + tab +
+                          "name: " + rowData.name_ + tab +
+                          "filepath: " + rowData.title_ + tab +
+                          "nr_pixels_x: " + rowData.width_ + tab + 
+                          "nr_pixels_y: " + rowData.height_ + tab +
+                          "pixel_size: " + rowData.pixelSizeNm_ + tab + 
+                          "nr_spots: " + rowData.maxNrSpots_ + tab +
+                          "box_size: " + rowData.halfSize_ * 2 + tab + 
+                          "nr_channels: " + rowData.nrChannels_ + tab + 
+                          "nr_frames: " + rowData.nrFrames_ + tab +
+                          "nr_slices: " + rowData.nrSlices_ + tab +
+                          "nr_pos: " + rowData.nrPositions_ + tab +
+                          "location_units: " + LocationUnits.NM + tab +
+                          "intensity_units: " + IntensityUnits.PHOTONS + tab +
+                          "fit_mode: " + rowData.shape_ + tab + 
+                          "is_track: " + rowData.isTrack_ + "\n") ;                                 
                  
                   fw.write("molecule\tchannel\tframe\tslice\tpos\tx\ty\tintensity\t" +
                           "background\twidth\ta\ttheta\tx_position\ty_position\t" +
                           "x_precision\n");
                   
                   int counter = 0;
-                  String tab = "\t";
                   for (GaussianSpotData gd : rowData.spotList_) {
                      
                      if ((counter % 1000) == 0) {                        
@@ -1830,16 +1846,16 @@ public class DataCollectionForm extends javax.swing.JFrame {
                                 gd.getFrame() + tab +
                                 gd.getSlice() + tab + 
                                 gd.getPosition() + tab + 
-                                gd.getXCenter() + tab + 
-                                gd.getYCenter() + tab +
-                                gd.getIntensity() + tab +
-                                gd.getBackground() + tab +
-                                gd.getWidth() + tab +
-                                gd.getA() + tab + 
-                                gd.getTheta() + tab + 
+                                String.format("%.2f", gd.getXCenter()) + tab + 
+                                String.format("%.2f", gd.getYCenter()) + tab +
+                                String.format("%.2f", gd.getIntensity()) + tab +
+                                String.format("%.2f", gd.getBackground()) + tab +
+                                String.format("%.2f",gd.getWidth()) + tab +
+                                String.format("%.3f", gd.getA()) + tab + 
+                                String.format("%.3f",gd.getTheta()) + tab + 
                                 gd.getX() + tab + 
                                 gd.getY() + tab + 
-                                gd.getSigma() + "\n");
+                                String.format("%.3f", gd.getSigma()) + "\n");
 
                         counter++;
                      }

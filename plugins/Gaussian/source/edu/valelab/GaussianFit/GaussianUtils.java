@@ -327,7 +327,7 @@ public class GaussianUtils {
  /**
     * Gaussian function of the form:
     * A *  exp(-((x-xc)^2+(y-yc)^2)/(2 sigy^2))+b
-    * A = params[INT]  (total intensity)
+    * A = params[INT]  (amplitude)
     * b = params[BGR]  (background)
     * xc = params[XC]
     * yc = params[YC]
