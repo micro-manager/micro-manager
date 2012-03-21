@@ -221,7 +221,7 @@ int RappScanner::PointAndFire(double x, double y, double pulseTime_us)
 }
 
 
-int RappScanner::SetIlluminationState(boolean on)
+int RappScanner::SetIlluminationState(bool on)
 {
    bool success = (bool) UGA_->SetCalibrationMode(on, laser2_);
    return success ? DEVICE_OK : DEVICE_ERR;

@@ -56,7 +56,7 @@ public:
    int PointAndFire(double x, double y, double pulseTime_us);
    int SetPosition(double x, double y);
    int GetPosition(double& x, double& y);
-   int SetIlluminationState(boolean on);
+   int SetIlluminationState(bool on);
    int AddPolygonVertex(int polygonIndex, double x, double y);
    int DeletePolygons();
    int LoadPolygons();
