@@ -141,7 +141,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="Madlib.lib"
+				AdditionalDependencies="Madlib64.lib"
 				OutputFile="$(OutDir)\mmgr_dal_MCL_NanoDrive.dll"
 				AdditionalLibraryDirectories=""
 				GenerateDebugInformation="true"
@@ -295,7 +295,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="Madlib.lib"
+				AdditionalDependencies="Madlib64.lib"
 				OutputFile="$(OutDir)/mmgr_dal_$(ProjectName).dll"
 				AdditionalLibraryDirectories=""
 				GenerateDebugInformation="false"
