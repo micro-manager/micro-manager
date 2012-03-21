@@ -498,7 +498,8 @@
     (when (z-stage-needs-adjustment z-drive)
       (set-stage-position z-drive
         (or (get-msp-z-position current-position z-drive)
-            (@state :reference-z))))))
+            (@state :reference-z)))
+      (wait-for-device z-drive))))
 
 (defn store-z-reference [current-position]
   (let [z-drive (@state :default-z-drive)]
