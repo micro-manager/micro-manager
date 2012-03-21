@@ -47,6 +47,8 @@ import java.io.IOException;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import java.util.prefs.Preferences;
 
 import javax.swing.JButton;
@@ -278,6 +280,10 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface, Device
    public static AtomicBoolean seriousErrorReported_ = new AtomicBoolean(false);
 
    public ImageWindow getImageWin() {
+      return getSnapLiveWin();
+   }
+   
+   public ImageWindow getSnapLiveWin() {
       return simpleDisplay_.getHyperImage().getWindow();
    }
 
@@ -307,7 +313,7 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface, Device
                     || (getAcquisitionImageByteDepth(SIMPLE_ACQ) != depth)
                     || (getAcquisitionImageBitDepth(SIMPLE_ACQ) != bitDepth)
                     || (getAcquisitionMultiCamNumChannels(SIMPLE_ACQ) != numCamChannels)) {  //Need to close and reopen simple window
-               closeAcquisitionImage5D(SIMPLE_ACQ);
+               closeAcquisitionWindow(SIMPLE_ACQ);
                closeAcquisition(SIMPLE_ACQ);
             }
          }
@@ -317,8 +323,7 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface, Device
                for (long i = 0; i < numCamChannels; i++) {
                   String chName = core_.getCameraChannelName(i);
                   int defaultColor = multiCameraColors_[(int) i % multiCameraColors_.length].getRGB();
-                  setChannelColor(SIMPLE_ACQ, (int) i,
-                          getChannelColor(chName, defaultColor));
+                  setChannelColor(SIMPLE_ACQ, (int) i, getChannelColor(chName, defaultColor));
                   setChannelName(SIMPLE_ACQ, (int) i, chName);
                }
             }
@@ -348,7 +353,7 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface, Device
                     || (getAcquisitionImageByteDepth(SIMPLE_ACQ) != depth)
                     || (getAcquisitionImageBitDepth(SIMPLE_ACQ) != bitDepth)
                     || (getAcquisitionMultiCamNumChannels(SIMPLE_ACQ) != numCamChannels)) {  //Need to close and reopen simple window
-               closeAcquisitionImage5D(SIMPLE_ACQ);
+               closeAcquisitionWindow(SIMPLE_ACQ);
                closeAcquisition(SIMPLE_ACQ);
             }
          }
@@ -358,8 +363,7 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface, Device
                for (long i = 0; i < numCamChannels; i++) {
                   String chName = core_.getCameraChannelName(i);
                   int defaultColor = multiCameraColors_[(int) i % multiCameraColors_.length].getRGB();
-                  setChannelColor(SIMPLE_ACQ, (int) i,
-                          getChannelColor(chName, defaultColor));
+                  setChannelColor(SIMPLE_ACQ, (int) i, getChannelColor(chName, defaultColor));
                   setChannelName(SIMPLE_ACQ, (int) i, chName);
                }
             }
@@ -619,10 +623,6 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface, Device
          }
       };
       pipelineClassLoadingThread_.start();
-   }
-
-   public void addImageStorageListener(ImageCacheListener listener) {
-      throw new UnsupportedOperationException("Not supported yet.");
    }
 
    public ImageCache getAcquisitionImageCache(String acquisitionName) {
@@ -2972,44 +2972,9 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface, Device
    }
 
    public boolean displayImageWithStatusLine(Object pixels, String statusLine) {
-      String[] acqs = acqMgr_.getAcqusitionNames();
-      VirtualAcquisitionDisplay virtAcq;
-      if (acqs == null || acqs.length == 0) {
-         ImagePlus ip = WindowManager.getCurrentImage();
-         if (!(ip.getWindow() instanceof VirtualAcquisitionDisplay.DisplayWindow )){
-                 return false;
-         }
-         virtAcq = VirtualAcquisitionDisplay.getDisplay(ip);     
-      } else {
-         String acqName = acqs[acqs.length - 1];
-         MMAcquisition acq;
-         try {
-            acq = acqMgr_.getAcquisition(acqName);
-         } catch (MMScriptException ex) {
-            ReportingUtils.showError("Can't locate acquisition");
-            return false;
-         }
-         virtAcq = acq.getAcquisitionWindow();
-      }
-      try {
-         JSONObject tags = virtAcq.getImageCache().getLastImageTags();
-         int width = MDUtils.getWidth(tags);
-         int height = MDUtils.getHeight(tags);
-         int depth = MDUtils.getBitDepth(tags);
-         if (height != core_.getImageHeight() || width != core_.getImageWidth()
-                 || depth != core_.getImageBitDepth()) {
-            return false;
-         }
-
-         TaggedImage ti = ImageUtils.makeTaggedImage(pixels, 0, 0, 0, 0, width, height, depth);
-         virtAcq.getImageCache().putImage(ti);
-         virtAcq.showImage(ti);
-         virtAcq.displayStatusLine(statusLine);
-         return true;
-      } catch (Exception ex) {
-         ReportingUtils.logError(ex);
-         return false;
-      }
+      boolean ret = displayImage(pixels);
+      simpleDisplay_.displayStatusLine(statusLine);
+      return ret;
    }
 
    public void displayStatusLine(String statusLine) {
@@ -3834,22 +3799,13 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface, Device
       return acqMgr_.getUniqueAcquisitionName(stub);
    }
    
-   // TODO:
+   /**
+    * @deprecated -- this function was never implemented. getAcquisition(String name) should
+    * be used instead
+    */
    @Override
    public MMAcquisition getCurrentAcquisition() {
       return null; // if none available
-   }
-
-   public void openAcquisition(String name, String rootDir) throws MMScriptException {
-      openAcquisition(name, rootDir, true);
-   }
-
-   public void openAcquisition(String name, String rootDir, boolean show) throws MMScriptException {
-      //acqMgr_.openAcquisition(name, rootDir, show);
-      TaggedImageStorage imageFileManager = new TaggedImageStorageDiskDefault((new File(rootDir, name)).getAbsolutePath());
-      MMImageCache cache = new MMImageCache(imageFileManager);
-      VirtualAcquisitionDisplay display = new VirtualAcquisitionDisplay(cache, (AcquisitionEngine) null);
-      display.show();
    }
 
    @Override
@@ -3980,14 +3936,17 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface, Device
       acqMgr_.closeAcquisition(name);
    }
 
+   /**
+    * @deprecated  use closeAcquisitionWindow instead
+    */
    @Override
    public void closeAcquisitionImage5D(String acquisitionName) throws MMScriptException {
-      acqMgr_.closeImage5D(acquisitionName);
+      acqMgr_.closeImageWindow(acquisitionName);
    }
 
    @Override
    public void closeAcquisitionWindow(String acquisitionName) throws MMScriptException {
-      acqMgr_.closeImage5D(acquisitionName);
+      acqMgr_.closeImageWindow(acquisitionName);
    }
 
    /**
@@ -4013,7 +3972,8 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface, Device
    }
 
    public void setAcquisitionSystemState(String acqName, JSONObject md) throws MMScriptException {
-      acqMgr_.getAcquisition(acqName).setSystemState(md);
+//      acqMgr_.getAcquisition(acqName).setSystemState(md);
+      setAcquisitionSummary(acqName, md);
    }
 
    public void setAcquisitionSummary(String acqName, JSONObject md) throws MMScriptException {
@@ -4033,110 +3993,36 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface, Device
    }
 
    public void snapAndAddImage(String name, int frame, int channel, int slice, int position)
-         throws MMScriptException {
-
-      Metadata md = new Metadata();
+           throws MMScriptException {
+      TaggedImage ti;
       try {
-         Object img;
          if (core_.isSequenceRunning()) {
-            img = core_.getLastImageMD(0, 0, md);
+            ti = core_.getLastTaggedImage();
          } else {
             core_.snapImage();
-            img = core_.getImage();
+            ti = core_.getTaggedImage();
          }
-
+         ti.tags.put("ChannelIndex", channel);
+         ti.tags.put("FrameIndex", frame);
+         ti.tags.put("SliceIndex", slice);
+         ti.tags.put("PositionIndex", position);
+         
          MMAcquisition acq = acqMgr_.getAcquisition(name);
-
-         long width = core_.getImageWidth();
-         long height = core_.getImageHeight();
-         long depth = core_.getBytesPerPixel();
-         long bitDepth = core_.getImageBitDepth();
-         int multiCamNumCh = (int) core_.getNumberOfCameraChannels();
-
          if (!acq.isInitialized()) {
+            long width = core_.getImageWidth();
+            long height = core_.getImageHeight();
+            long depth = core_.getBytesPerPixel();
+            long bitDepth = core_.getImageBitDepth();
+            int multiCamNumCh = (int) core_.getNumberOfCameraChannels();
 
-            acq.setImagePhysicalDimensions((int) width, (int) height,
-                  (int) depth, (int) bitDepth, multiCamNumCh);
+            acq.setImagePhysicalDimensions((int) width, (int) height, (int) depth, (int) bitDepth, multiCamNumCh);
             acq.initialize();
          }
 
-         acq.insertImage(img, frame, channel, slice, position);
-         // Insert exposure in metadata
-//       acq.setProperty(frame, channel, slice, ImagePropertyKeys.EXPOSURE_MS, NumberUtils.doubleToDisplayString(core_.getExposure()));
-         // Add pixel size calibration
-
-         /*
-          double pixSizeUm = core_.getPixelSizeUm();
-         if (pixSizeUm > 0) {
-            acq.setProperty(frame, channel, slice, ImagePropertyKeys.X_UM, NumberUtils.doubleToDisplayString(pixSizeUm));
-            acq.setProperty(frame, channel, slice, ImagePropertyKeys.Y_UM, NumberUtils.doubleToDisplayString(pixSizeUm));
-         }
-         // generate list with system state
-         JSONObject state = Annotator.generateJSONMetadata(core_.getSystemStateCache());
-         // and insert into metadata
-         acq.setSystemState(frame, channel, slice, state);
-          */
-
-
+         addImage(name, ti, true);
       } catch (Exception e) {
          ReportingUtils.showError(e);
       }
-
-   }
-
-   public void addToSnapSeries(Object img, String acqName) {
-      try {
-         acqMgr_.getCurrentAlbum();
-         if (acqName == null) {
-            acqName = "Snap" + snapCount_;
-         }
-         Boolean newSnap = false;
-
-         core_.setExposure(NumberUtils.displayStringToDouble(textFieldExp_.getText()));
-         long width = core_.getImageWidth();
-         long height = core_.getImageHeight();
-         long depth = core_.getBytesPerPixel();
-         //MMAcquisitionSnap acq = null;
-
-         if (! acqMgr_.hasActiveImage5D(acqName)) {
-            newSnap = true;
-         }
-
-         if (newSnap) {
-            snapCount_++;
-            acqName = "Snap" + snapCount_;
-            this.openAcquisitionSnap(acqName, null, true); // (dir=null) ->
-            // keep in
-            // memory; don't
-            // save to file.
-            initializeAcquisition(acqName, (int) width, (int) height,
-                  (int) depth);
-
-         }
-         setChannelColor(acqName, 0, Color.WHITE);
-         setChannelName(acqName, 0, "Snap");
-
-//         acq = (MMAcquisitionSnap) acqMgr_.getAcquisition(acqName);
- //        acq.appendImage(img);
-         // add exposure to metadata
-//         acq.setProperty(acq.getFrames() - 1, acq.getChannels() - 1, acq.getSlices() - 1, ImagePropertyKeys.EXPOSURE_MS, NumberUtils.doubleToDisplayString(core_.getExposure()));
-         // Add pixel size calibration
-         double pixSizeUm = core_.getPixelSizeUm();
-         if (pixSizeUm > 0) {
-//            acq.setProperty(acq.getFrames() - 1, acq.getChannels() - 1, acq.getSlices() - 1, ImagePropertyKeys.X_UM, NumberUtils.doubleToDisplayString(pixSizeUm));
-//            acq.setProperty(acq.getFrames() - 1, acq.getChannels() - 1, acq.getSlices() - 1, ImagePropertyKeys.Y_UM, NumberUtils.doubleToDisplayString(pixSizeUm));
-         }
-         // generate list with system state
-//         JSONObject state = Annotator.generateJSONMetadata(core_.getSystemStateCache());
-         // and insert into metadata
-//         acq.setSystemState(acq.getFrames() - 1, acq.getChannels() - 1, acq.getSlices() - 1, state);
-
-
-         // closeAcquisition(acqName);
-      } catch (Exception e) {
-         ReportingUtils.showError(e);
-      }
-
    }
 
    public String getCurrentAlbum() {
@@ -4185,6 +4071,34 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface, Device
            boolean waitForDisplay) throws MMScriptException {
    acqMgr_.getAcquisition(name).insertImage(taggedImg, updateDisplay, waitForDisplay);
 }
+   
+   public void addImage(String name, TaggedImage taggedImg, int frame, int channel, 
+           int slice, int position) throws MMScriptException {
+      try {
+         acqMgr_.getAcquisition(name).insertImage(taggedImg, frame, channel, slice, position);
+      } catch (JSONException ex) {
+         ReportingUtils.showError(ex);
+      }
+   }
+
+   public void addImage(String name, TaggedImage taggedImg, int frame, int channel, 
+           int slice, int position, boolean updateDisplay) throws MMScriptException {
+      try {
+         acqMgr_.getAcquisition(name).insertImage(taggedImg, frame, channel, slice, position, updateDisplay);
+      } catch (JSONException ex) {
+         ReportingUtils.showError(ex);
+      }  
+   }
+
+   public void addImage(String name, TaggedImage taggedImg, int frame, int channel,
+           int slice, int position, boolean updateDisplay, boolean waitForDisplay) throws MMScriptException {
+      try {
+         acqMgr_.getAcquisition(name).insertImage(taggedImg, frame, channel, slice, position, updateDisplay, waitForDisplay);
+      } catch (JSONException ex) {
+         ReportingUtils.showError(ex);
+      }
+   }
+
    
    public void closeAllAcquisitions() {
       acqMgr_.closeAll();

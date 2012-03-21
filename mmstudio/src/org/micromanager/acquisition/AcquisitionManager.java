@@ -66,11 +66,11 @@ public class AcquisitionManager {
       }
    }
    
-   public void closeImage5D(String name) throws MMScriptException {
+   public void closeImageWindow(String name) throws MMScriptException {
       if (!acquisitionExists(name))
          throw new MMScriptException("The name does not exist");
       else
-         acqs_.get(name).closeImage5D();
+         acqs_.get(name).closeImageWindow();
    }
    
    public Boolean acquisitionExists(String name) {
@@ -81,13 +81,6 @@ public class AcquisitionManager {
             return false;
          }
          return true;
-      }
-      return false;
-   }
-   
-   public boolean hasActiveImage5D(String name) throws MMScriptException {
-      if (acquisitionExists(name)) {
-         return ! acqs_.get(name).windowClosed();
       }
       return false;
    }

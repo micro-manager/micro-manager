@@ -54,13 +54,13 @@ public interface ScriptInterface {
    public void sleep(long ms) throws MMScriptException;
    
    /**
-    * Displays text in the console output window.
+    * Displays text in the scripting console output window.
     * @throws MMScriptException 
     */
    public void message(String text) throws MMScriptException;
    
    /**
-    * Clears console output window.
+    * Clears scripting console output window.
     * @throws MMScriptException 
     */
    public void clearMessageWindow() throws MMScriptException;
@@ -72,7 +72,9 @@ public interface ScriptInterface {
 
    /**
     * Snaps image and displays in AcqWindow.
-    * Opens a new AcqWindow when current one is not open
+    * Opens a new AcqWindow when current one is not open.
+    * Calling this function is the same as pressing the "Snap" button on the main
+    * Micro-manager GUI
     */
    public void snapSingleImage();
 
@@ -176,15 +178,20 @@ public interface ScriptInterface {
    public String getUniqueAcquisitionName(String stem);
    
    /**
-    * Returns the name of the current album (used by the "Acquire" button).
-    * Albums are acquisitions used by the "Acquire" button in the main window of Micro-Manager.
+    * Returns the name of the current album (i.e. the most recently created one)
+    * In addition to their use through the scripting interface, Albums are used
+    * by the "Camera --> Album" button in the main window of Micro-Manager and 
+    * the "--> Album" button on the snap/live window
     * @return Name of the current Album.
     */
    public String getCurrentAlbum();
 
    /**
-    * Add a TaggedImage to an album; create a new album if necessary.
-    * Albums are used by the "Acquire" button in the main window of Micro-Manager
+    * Add a TaggedImage to an album; creates a new album if the image and current album
+    * do not match in image dimensions, bits per pixel, bytes per pixel, or number of channels.
+    * The current album is the most recently created one
+    * Albums are also used by the "Camera --> Album" button in the main window of Micro-Manager and 
+    * the "--> Album" button on the snap/live window
     */
    public void addToAlbum(TaggedImage image) throws MMScriptException;
 
@@ -196,27 +203,28 @@ public interface ScriptInterface {
     * option in tools-options is checked
     */
    public void initializeSimpleAcquisition(String name, int width, int height, 
-           int depth, int bitDepth, int multiCamNumCh) throws MMScriptException;
+           int byteDepth, int bitDepth, int multiCamNumCh) throws MMScriptException;
    
    /**
     * Set up an acquisition that has already been opened.
     */
-   public void initializeAcquisition(String name, int width, int height, int depth) throws MMScriptException;
+   public void initializeAcquisition(String name, int width, int height, int byteDepth) throws MMScriptException;
    
    /**
     * Set up an acquisition that has already been opened.
     */
-   public void initializeAcquisition(String name, int width, int height, int depth, int bitDepth) throws MMScriptException;
+   public void initializeAcquisition(String name, int width, int height, int byteDepth, int bitDepth) throws MMScriptException;
    
    
    /**
-    * Checks whether an acquisition already exists.
+    * Checks whether an acquisition with the given name already exists.
     */
    public Boolean acquisitionExists(String name);
 
    /**
     * Closes the acquisition.
-    * After this command metadata is complete and all the references to this data set are cleaned-up
+    * After this command metadata is complete, all the references to this data set are cleaned-up,
+    * and no additional images can be added to the acquisition
     * @throws MMScriptException 
     */
    public void closeAcquisition(String name) throws MMScriptException;
@@ -228,6 +236,7 @@ public interface ScriptInterface {
    
    /**
     * Returns the acquisition currently in progress.
+    * @deprecated getAcquisition(String name) should be used instead of this function
     */
    public MMAcquisition getCurrentAcquisition();
    
@@ -238,7 +247,7 @@ public interface ScriptInterface {
    public String[] getAcquisitionNames();
    
    /**
-    * Gets the acquisition object associated with the specified acquisition name.
+    * Gets a reference to the MMAcquisition object associated with the specified acquisition name.
     * @param name name of the requested acquisition
     * @return MMAcquisition object
     */
@@ -274,13 +283,15 @@ public interface ScriptInterface {
     * @param channel Channel number (0-based) in which this image should be inserted.
     * @param z Slice number (0-based) in which this image should be inserted.
     * @throws MMScriptException
+    * @deprecated
     */
    public void addImage(String name, Object img, int frame, int channel, int z) throws MMScriptException;
 
    /**
     * Inserts image into the acquisition handle.
     * @param name Name of the acquisition.
-    * @param taggedImg Tagged Image (image with associated metadata).  The metadata determine where in the acquisition this image will be inserted.
+    * @param taggedImg Tagged Image (image with associated metadata).  The metadata determines where
+    * in the acquisition this image will be inserted (i.e. frame, channel, slice, and position indecies)    
     * @throws MMScriptException
     */
    public void addImage(String name, TaggedImage taggedImg) throws MMScriptException;
@@ -288,36 +299,84 @@ public interface ScriptInterface {
 
    /**
     * Inserts image into the acquisition handle and gives option whether or not to update the display.
-    * This version will wait for the display to finish drawing the image
+    * This version will wait for the display to finish drawing the image before the function returns
     * @param name Name of the acquisition.
-    * @param taggedImg Tagged Image (image with associated metadata).  The metadata determine where in the acquisition this image will be inserted.
-    * @param updateDisplay Flag used to indicate whether or not to update the display.
+    * @param taggedImg Tagged Image (image with associated metadata).  The metadata determines where
+    * in the acquisition this image will be inserted (i.e. frame, channel, slice, and position indecies)    * @param updateDisplay Flag used to indicate whether or not to update the display.
     * @throws MMScriptException
     */
    public void addImage(String name, TaggedImage taggedImg, boolean updateDisplay) throws MMScriptException;
 
    /**
     * Inserts image into the acquisition handle and gives option whether or not to update the display.
-    * Also optionally waits for the display to finish drawing the image
+    * Also optionally waits for the display to finish drawing the image before the function returns
     * @param name Name of the acquisition.
-    * @param taggedImg Tagged Image (image with associated metadata).  The metadata determine where in the acquisition this image will be inserted.
+    * @param taggedImg Tagged Image (image with associated metadata).  The metadata determines where
+    * in the acquisition this image will be inserted (i.e. frame, channel, slice, and position indecies)
     * @param updateDisplay Flag used to indicate whether or not to update the display.
+    * @param waitForDisplay flag that determines if the function should wait for the display to finish
+    * drawing the image before returning
     * @throws MMScriptException
     */
    public void addImage(String name, TaggedImage taggedImg, 
            boolean updateDisplay, boolean waitForDisplay) throws MMScriptException;
 
+  /**
+    * Inserts image into the acquisition handle.
+    * @param name Name of the acquisition.
+    * @param taggedImg Tagged Image (image with associated metadata)
+    * @param frame index of the frame where image should be inserted
+    * @param channel index of the channel where image should be inserted
+    * @param slice index of the slice where image should be inserted
+    * @param position index of the position where image should be inserted
+    * @throws MMScriptException
+    */
+   public void addImage(String name, TaggedImage taggedImg, int frame, int channel, 
+           int slice, int position) throws MMScriptException;
+
+
+   /**
+    * Inserts image into the acquisition handle and gives option whether or not to update the display.
+    * This version will wait for the display to finish drawing the image before the function returns
+    * @param name Name of the acquisition.
+    * @param taggedImg Tagged Image (image with associated metadata)  
+    * @param frame index of the frame where image should be inserted
+    * @param channel index of the channel where image should be inserted
+    * @param slice index of the slice where image should be inserted
+    * @param position index of the position where image should be inserted  
+    * @param updateDisplay Flag used to indicate whether or not to update the display.
+    * @throws MMScriptException
+    */
+   public void addImage(String name, TaggedImage taggedImg, int frame, int channel, 
+           int slice, int position, boolean updateDisplay) throws MMScriptException;
+
+   /**
+    * Inserts image into the acquisition handle and gives option whether or not to update the display.
+    * Also optionally waits for the display to finish drawing the image before the function returns
+    * @param name Name of the acquisition.
+    * @param taggedImg Tagged Image (image with associated metadata) 
+    * @param frame index of the frame where image should be inserted
+    * @param channel index of the channel where image should be inserted
+    * @param slice index of the slice where image should be inserted
+    * @param position index of the position where image should be inserted
+    * @param updateDisplay Flag used to indicate whether or not to update the display.
+    * @param waitForDisplay flag that determines if the function should wait for the display to finish
+    * drawing the image before returning
+    * @throws MMScriptException
+    */
+   public void addImage(String name, TaggedImage taggedImg, int frame, int channel, 
+           int slice, int position, boolean updateDisplay, boolean waitForDisplay) throws MMScriptException;
+   
    
    /**
-    * Returns the width (in pixels) of the viewer attached to this acquisition
+    * Returns the width (in pixels) of images in this acquisition
     */
    public int getAcquisitionImageWidth(String acqName) throws MMScriptException;
 
    /**
-    * Returns the width (in pixels) of the viewer attached to this acquisition
+    * Returns the width (in pixels) of images in this acquisition
     */
    public int getAcquisitionImageHeight(String acqName) throws MMScriptException;
-
    
    /**
     * Returns the number of bits used per pixel
@@ -341,9 +400,9 @@ public interface ScriptInterface {
 
    /**
     * Same as setAcquisitionSummary
+    * @deprecated use setAcquisitionSummary instead
     */
    public void setAcquisitionSystemState(String acqName, JSONObject md) throws MMScriptException;
-
 
    /**
     * Sets the summary metadata for an acquisition (as opposed to metadata for individual planes).
@@ -454,7 +513,8 @@ public interface ScriptInterface {
    public PositionList getPositionList() throws MMScriptException;
    
    /**
-    * Sets the color of the specified channel in the image viewer
+    * Sets the color of the specified channel in the image viewer.  Only has an effect
+    * for images with 2 or more channels
     */
    public void setChannelColor(String title, int channel, Color color) throws MMScriptException;
    
@@ -468,7 +528,7 @@ public interface ScriptInterface {
    public void setChannelName(String title, int channel, String name) throws MMScriptException;
    
    /**
-    * Sets min (black) and max (white or the channel's color) clipping levels for each channel.
+    * Sets min (black) and max (white or the channel's color) pixel value clipping levels for each channel.
     * @param title - acquisition name
     * @param channel - channel index (use 0 if there is only a single channel)
     * @param min - black clipping level
@@ -478,7 +538,8 @@ public interface ScriptInterface {
    public void setChannelContrast(String title, int channel, int min, int max) throws MMScriptException;
    
    /**
-    * Automatically adjusts channel contrast display settings based on the specified frame-slice 
+    * Autoscales contrast for each channel at the current position based on pixel values
+    * at the current slice and frame
     * @param title - acquisition name
     * @param frame - frame number
     * @param slice - slice number
@@ -495,7 +556,8 @@ public interface ScriptInterface {
    public void closeAcquisitionImage5D(String acquisitionName) throws MMScriptException;
 
    /**
-    * Closes Micro-Manager acquisition image window.
+    * Closes the image window corresponding to the acquisition.  If being used along with
+    * closeAcquisitiion, this method should be called first
     * @param acquisitionName - Name of the acquisition
     * @throws MMScriptException
     */
@@ -511,7 +573,7 @@ public interface ScriptInterface {
 
     /**
     * Move default Focus (Z) and block until done
-    * @param z
+    * @param z absolute z position
     * @throws MMScriptException
     */
    public void setStagePosition(double z) throws MMScriptException;
@@ -541,7 +603,7 @@ public interface ScriptInterface {
 
     /**
     * There can be multiple XY stage devices in a system.  This function returns
-    * the currently active one
+    * the name of the currently active one
     * @return Name of the active XYStage device
     */
    public String getXYStageName();
@@ -562,9 +624,15 @@ public interface ScriptInterface {
 
    /**
     * Returns the ImageJ ImageWindow instance that is used for Snap and Live display.
+    * @deprecated use getSnapLiveWin() instead
     */
    public ImageWindow getImageWin();
 
+   /**
+    * Returns the ImageJ ImageWindow instance that is used for Snap and Live display.
+    */
+   public ImageWindow getSnapLiveWin();
+   
    /**
    * Installs a plugin class from the class path.
    */
@@ -594,7 +662,7 @@ public interface ScriptInterface {
    public Autofocus getAutofocus();
 
    /**
-    * Shows the dialog with options for the currenyl active autofocus device.
+    * Shows the dialog with options for the currently active autofocus device.
     */
    public void showAutofocusDialog();
 
@@ -728,15 +796,8 @@ public interface ScriptInterface {
     */
    public void setROI(Rectangle r) throws MMScriptException;
 
-
    /**
-    * Attach a display to the image cache.
-    */
-   public void addImageStorageListener(ImageCacheListener listener);
-
-
-   /**
-    * Get the image cache object associated with the acquisition.
+    * Get a reference to the ImageCache object associated with the acquisition.
     * @param acquisitionName Name of the acquisition
     */
    public ImageCache getAcquisitionImageCache(String acquisitionName);
@@ -766,7 +827,8 @@ public interface ScriptInterface {
    public PositionListDlg getXYPosListDlg();
 
    /**
-    * Returns true when an acquisition is currently running
+    * Returns true when an acquisition is currently running (note: this function will
+    * not return true if live mode, snap, or "Camera --> Album" is currently running
     */
    public boolean isAcquisitionRunning();
 

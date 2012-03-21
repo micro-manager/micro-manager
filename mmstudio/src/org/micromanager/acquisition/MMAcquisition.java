@@ -439,11 +439,17 @@ public class MMAcquisition {
       }
    }
 
+   /**
+    * @deprecated transition towards the use of TaggedImaged rather than raw pixel data
+    */
    public void insertImage(Object pixels, int frame, int channel, int slice)
            throws MMScriptException {
       insertImage(pixels, frame, channel, slice, 0);
    }
 
+   /**
+    * @deprecated transition towards the use of TaggedImaged rather than raw pixel data
+    */
    public void insertImage(Object pixels, int frame, int channel, int slice, int position) throws MMScriptException {
       if (!initialized_) {
          throw new MMScriptException("Acquisition data must be initialized before inserting images");
@@ -495,6 +501,33 @@ public class MMAcquisition {
       } catch (JSONException e) {
          throw new MMScriptException(e);
       }
+   }
+
+   public void insertImage(TaggedImage taggedImg, int frame, int channel, int slice,
+           int position) throws MMScriptException, JSONException {
+      taggedImg.tags.put("FrameIndex", frame);
+      taggedImg.tags.put("ChannelIndex", channel);
+      taggedImg.tags.put("SliceIndex", slice);
+      taggedImg.tags.put("PositionIndex", position);
+      insertImage(taggedImg, show_);
+   }
+
+   public void insertImage(TaggedImage taggedImg, int frame, int channel, int slice,
+           int position, boolean updateDisplay) throws MMScriptException, JSONException {
+      taggedImg.tags.put("FrameIndex", frame);
+      taggedImg.tags.put("ChannelIndex", channel);
+      taggedImg.tags.put("SliceIndex", slice);
+      taggedImg.tags.put("PositionIndex", position);
+      insertImage(taggedImg, updateDisplay, true);
+   }
+
+   public void insertImage(TaggedImage taggedImg, int frame, int channel, int slice,
+           int position, boolean updateDisplay, boolean waitForDisplay) throws MMScriptException, JSONException {
+      taggedImg.tags.put("FrameIndex", frame);
+      taggedImg.tags.put("ChannelIndex", channel);
+      taggedImg.tags.put("SliceIndex", slice);
+      taggedImg.tags.put("PositionIndex", position);
+      insertImage(taggedImg, updateDisplay, waitForDisplay);
    }
 
    public void insertImage(TaggedImage taggedImg) throws MMScriptException {
@@ -573,7 +606,7 @@ public class MMAcquisition {
    /**
     * Same as close(), but also closes the display
     */
-   public void closeImage5D() {
+   public void closeImageWindow() {
       close();
       if (virtAcq_ != null) {
          virtAcq_.close();
@@ -705,32 +738,17 @@ public class MMAcquisition {
          throw new MMScriptException(NOTINITIALIZED);
    }
 
-   /**
-    * @deprecated 
-    * @param frame
-    * @param slice
-    * @throws MMScriptException 
-    */
+
    public void setContrastBasedOnFrame(int frame, int slice) throws MMScriptException {
       if (!isInitialized()) {
          throw new MMScriptException(NOTINITIALIZED);
       }
-
-      ReportingUtils.logError("API call setContrastBasedOnFrame is not implemented!");
-
-      // TODO
-      /*
-      try {
-      DisplaySettings[] settings = acqData_.setChannelContrastBasedOnFrameAndSlice(frame, slice);
-      if (imgWin_ != null) {
-      for (int i=0; i<settings.length; i++)
-      imgWin_.getImage5D().setChannelMinMax(i+1, settings[i].min, settings[i].max);
-      }
-      } catch (MMAcqDataException e) {
-      throw new MMScriptException(e);
-      }
-
-       */
+      int currentFrame = virtAcq_.getHyperImage().getFrame();
+      int currentSlice = virtAcq_.getHyperImage().getSlice();
+      int currentChannel = virtAcq_.getHyperImage().getChannel();
+      virtAcq_.getHyperImage().setPosition(currentChannel, slice, frame);   
+      virtAcq_.getHistograms().autoscaleAllChannels();
+      virtAcq_.getHyperImage().setPosition(currentChannel, currentSlice, currentFrame);         
    }
 
    /**
@@ -865,9 +883,10 @@ public class MMAcquisition {
       return true;
    }
 
-   public void setSystemState(JSONObject md) throws MMScriptException {
-      throw new UnsupportedOperationException("Not supported yet.");
-   }
+   //TODO delete this: corresponds to deprecated ScriptInterface function
+//   public void setSystemState(JSONObject md) throws MMScriptException {
+//      throw new UnsupportedOperationException("Not supported yet.");
+//   }
 
    private static String getPixelType(int depth) {
       switch (depth) {
