@@ -1404,6 +1404,36 @@ public class DataCollectionForm extends javax.swing.JFrame {
 
    }//GEN-LAST:event_averageTrackButton_ActionPerformed
 
+   public void doMathOnRows(MyRowData source, MyRowData operand, int action) {
+      // create a copy of the dataset and copy in the corrected data
+      List<GaussianSpotData> transformedResultList =
+              Collections.synchronizedList(new ArrayList<GaussianSpotData>());
+
+      for (int i = 0; i < source.spotList_.size(); i++) {
+         // TODO: check that this is 
+         GaussianSpotData spotSource = source.spotList_.get(i);
+         GaussianSpotData spotOperand = operand.spotList_.get(i);
+         double x = 0.0;
+         double y = 0.0;
+         if (action == 0) {
+            x = spotSource.getXCenter() - spotOperand.getXCenter();
+            y = spotSource.getYCenter() - spotOperand.getYCenter();
+         }
+         GaussianSpotData newSpot = new GaussianSpotData(spotSource);
+         newSpot.setData(0.0, 0.0, x, y, 0.0, 0.0, 0.0, 0.0);
+         transformedResultList.add(newSpot);
+      }
+      
+      MyRowData rowData = source;
+      addSpotData(rowData.name_ + " Subtracted", rowData.title_, "", rowData.width_,
+                 rowData.height_, rowData.pixelSizeNm_, rowData.shape_,
+                 rowData.halfSize_, rowData.nrChannels_, rowData.nrFrames_,
+                 rowData.nrSlices_, 1, rowData.maxNrSpots_, transformedResultList,
+                 rowData.timePoints_, true);
+      
+   }
+   
+   
    private void mathButton_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mathButton_ActionPerformed
       int[] rows = new int[jTable1_.getRowCount()];
       

@@ -10,8 +10,6 @@
  */
 package edu.valelab.GaussianFit;
 
-import org.micromanager.MMStudioMainFrame;
-
 /**
  *
  * @author nico
@@ -153,7 +151,7 @@ public class MathForm extends javax.swing.JFrame {
       DataCollectionForm.MyRowData rd1 = null;
       DataCollectionForm.MyRowData rd2 = null;
       
-      for (int i = 0; i < df.rowData_.size() && (rd1 == null && rd2 == null); i++) {
+      for (int i = 0; i < df.rowData_.size(); i++) {
          if (id1 == df.rowData_.get(i).ID_) {
             rd1 = df.rowData_.get(i);
          }
@@ -162,8 +160,8 @@ public class MathForm extends javax.swing.JFrame {
          }
       }
       
+      df.doMathOnRows(rd1, rd2, 0);
       
-
    }//GEN-LAST:event_okButton_ActionPerformed
 
    
