@@ -3,7 +3,6 @@ package org.micromanager.lwm;
 import ags.utils.KdTree;
 import ags.utils.KdTree.Entry;
 import java.awt.geom.Point2D;
-import java.awt.geom.Point2D.Double;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -79,7 +78,7 @@ public class LocalWeightedMean {
 
    public static PointMap selectPoints(PointMap points, List<Point2D.Double> srcPoints) {
       PointMap selectPointMap = new PointMap();
-      for (Double srcPoint:srcPoints) {
+      for (Point2D.Double srcPoint:srcPoints) {
          selectPointMap.put(srcPoint, points.get(srcPoint));
       }
       return selectPointMap;
