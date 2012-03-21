@@ -75,7 +75,6 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
    final Preferences prefs_ = Preferences.userNodeForPackage(this.getClass());
    private static final String SIMPLE_WIN_X = "simple_x";
    private static final String SIMPLE_WIN_Y = "simple_y";
-   private static final String PREF_WIN_LENGTH = "preferred_window_max_length";
    private AcquisitionEngine eng_;
    private boolean finished_ = false;
    private boolean promptToSave_ = true;
@@ -112,6 +111,7 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
    private HistogramControlsState histogramControlsState_;
    private boolean albumSaved_ = false;
    private boolean[] channelContrastInitialized_;
+   private static double snapWinZoom_ = 1.0;
 
 
    /* This interface and the following two classes
@@ -1521,59 +1521,26 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
    }   
    
    public void storeWindowSizeAfterZoom(ImageWindow win) {
-      prefs_.putInt(PREF_WIN_LENGTH, Math.max(getWinLength(win), 512));
+      if (simple_) {
+         snapWinZoom_ = win.getCanvas().getMagnification();
+      }
    }
    
    private void zoomToPreferredSize(DisplayWindow win) {
       Point location = win.getLocation();
       win.setLocation(new Point(0,0));
-      int prefLength =  prefs_.getInt(PREF_WIN_LENGTH, 512);
-      int winLength = getWinLength(win);   
-      double percentDiff = Math.abs(((double) (winLength - prefLength))/((double) prefLength));
-      ImageCanvas canvas = win.getCanvas();
-      if (winLength < prefLength) {
-         while (winLength < prefLength) {               
-            percentDiff = Math.abs(((double) (winLength - prefLength))/((double) prefLength));
-            canvas.zoomIn(canvas.getSize().width / 2, canvas.getSize().height / 2);
-            int newWinLength = getWinLength(win);
-            if (newWinLength == winLength)
-               break;
-            winLength = newWinLength;
-         }
-         double newPercentDiff = Math.abs(((double) (winLength - prefLength))/((double) prefLength));
-         if (newPercentDiff > percentDiff) {            
-            canvas.zoomOut(canvas.getSize().width / 2, canvas.getSize().height / 2);
-         }
-      } else if (winLength > prefLength) {
-         while (winLength > prefLength) {                      
-            percentDiff = Math.abs(((double) (winLength - prefLength))/((double) prefLength));
-            canvas.zoomOut(canvas.getSize().width / 2, canvas.getSize().height / 2);
-            int newWinLength = getWinLength(win);
-            if (newWinLength == winLength)
-               break;
-            winLength = newWinLength;
-         }
-         double newPercentDiff = Math.abs(((double) (winLength - prefLength))/((double) prefLength));
-         if (newPercentDiff > percentDiff) {            
-            canvas.zoomIn(canvas.getSize().width / 2, canvas.getSize().height / 2);
-         }   
-      } 
       
-      //Make sure the window initially displays the entire image
-      Rectangle rect = canvas.getSrcRect();
-      if (rect != null) {
-         while (rect.width < canvas.getImage().getWidth() || rect.height < canvas.getImage().getHeight()) {
-            if (rect.width > 0.9 * canvas.getImage().getWidth() && rect.height > 0.9 * canvas.getImage().getHeight()) {
-               canvas.zoomOut(canvas.getSize().width / 2, canvas.getSize().height / 2);
-               canvas.zoomIn(canvas.getSize().width / 2, canvas.getSize().height / 2);
-               break;
-            } else {
-               canvas.zoomOut(canvas.getSize().width / 2, canvas.getSize().height / 2);
-            }
-            rect = canvas.getSrcRect();
-            if (rect == null) {
-               break;
-            }
+      if (simple_) {
+         ImageCanvas canvas = win.getCanvas();
+         if (snapWinZoom_ < canvas.getMagnification()) {
+            while (snapWinZoom_ < canvas.getMagnification()) {
+               canvas.zoomOut(canvas.getWidth() / 2, canvas.getHeight() / 2);
+            } 
+         } else if (snapWinZoom_ > canvas.getMagnification()) {
+            
+            while (snapWinZoom_ > canvas.getMagnification()) {
+               canvas.zoomIn(canvas.getWidth() / 2, canvas.getHeight() / 2);
+            }            
          }
       }
       
