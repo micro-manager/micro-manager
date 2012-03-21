@@ -64,6 +64,8 @@ import java.io.DataOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.io.FileWriter;
+import java.io.FilenameFilter;
 import java.nio.channels.FileChannel;
 import java.util.Collections;
 import java.util.HashMap;
@@ -232,7 +234,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
        };
 
        initComponents();
-       referenceName_.setText("");
+       referenceName_.setText("  ");
        jTable1_.addMouseListener(new LocalMouseListener());
        jTable1_.getColumn("Action1").setCellRenderer(new ButtonRenderer());
        jTable1_.getColumn("Action2").setCellRenderer(new ButtonRenderer());
@@ -343,6 +345,18 @@ public class DataCollectionForm extends javax.swing.JFrame {
       myTableModel_.fireTableRowsInserted(rowData_.size()-1, rowData_.size());
    }
 
+   /**
+    * Return a dataset with requested ID.
+    */
+   public MyRowData getDataSet(int ID) {
+      int i=0;
+      while (i < rowData_.size()) {
+         if (rowData_.get(i).ID_ == ID)
+            return rowData_.get(i);
+      }
+      
+      return null;
+   }
 
     /**
      * This method is called from within the constructor to
@@ -384,7 +398,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
         renderButton_ = new javax.swing.JButton();
         jSeparator2 = new javax.swing.JSeparator();
         jSeparator3 = new javax.swing.JSeparator();
-        jComboBox1 = new javax.swing.JComboBox();
+        saveFormatBox_ = new javax.swing.JComboBox();
         jSeparator4 = new javax.swing.JSeparator();
         averageTrackButton_ = new javax.swing.JButton();
         mathButton_ = new javax.swing.JButton();
@@ -419,10 +433,10 @@ public class DataCollectionForm extends javax.swing.JFrame {
         plotComboBox_.setFont(new java.awt.Font("Lucida Grande", 0, 10));
         plotComboBox_.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "t-X", "t-Y", "X-Y", "t-Int.", " " }));
 
-        visualizationMagnification_.setFont(new java.awt.Font("Lucida Grande", 0, 10));
+        visualizationMagnification_.setFont(new java.awt.Font("Lucida Grande", 0, 10)); // NOI18N
         visualizationMagnification_.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "1x", "2x", "4x", "8x" }));
 
-        visualizationModel_.setFont(new java.awt.Font("Lucida Grande", 0, 10));
+        visualizationModel_.setFont(new java.awt.Font("Lucida Grande", 0, 10)); // NOI18N
         visualizationModel_.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "Gaussian" }));
 
         saveButton.setFont(new java.awt.Font("Lucida Grande", 0, 10));
@@ -473,8 +487,8 @@ public class DataCollectionForm extends javax.swing.JFrame {
             }
         });
 
-        referenceName_.setFont(new java.awt.Font("Lucida Grande", 0, 11));
-        referenceName_.setText("jLabel1");
+        referenceName_.setFont(new java.awt.Font("Lucida Grande", 0, 11)); // NOI18N
+        referenceName_.setText("JLabel1");
 
         unjitterButton_.setFont(new java.awt.Font("Lucida Grande", 0, 10));
         unjitterButton_.setText("Drift Correct");
@@ -555,8 +569,8 @@ public class DataCollectionForm extends javax.swing.JFrame {
 
         jSeparator3.setOrientation(javax.swing.SwingConstants.VERTICAL);
 
-        jComboBox1.setFont(new java.awt.Font("Lucida Grande", 0, 11));
-        jComboBox1.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "Binary", "Text" }));
+        saveFormatBox_.setFont(new java.awt.Font("Lucida Grande", 0, 11)); // NOI18N
+        saveFormatBox_.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "Binary", "Text" }));
 
         jSeparator4.setOrientation(javax.swing.SwingConstants.VERTICAL);
 
@@ -568,8 +582,13 @@ public class DataCollectionForm extends javax.swing.JFrame {
             }
         });
 
-        mathButton_.setFont(new java.awt.Font("Lucida Grande", 0, 11));
+        mathButton_.setFont(new java.awt.Font("Lucida Grande", 0, 11)); // NOI18N
         mathButton_.setText("Math");
+        mathButton_.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                mathButton_ActionPerformed(evt);
+            }
+        });
 
         pairsMaxDistanceField_.setFont(new java.awt.Font("Lucida Grande", 0, 11)); // NOI18N
         pairsMaxDistanceField_.setText("100");
@@ -590,13 +609,14 @@ public class DataCollectionForm extends javax.swing.JFrame {
                 .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
                     .add(saveButton)
                     .add(infoButton_))
-                .add(5, 5, 5)
                 .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                    .add(jComboBox1, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 88, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                     .add(layout.createSequentialGroup()
-                        .add(10, 10, 10)
-                        .add(removeButton, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 70, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)))
-                .add(2, 2, 2)
+                        .add(15, 15, 15)
+                        .add(removeButton, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 70, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+                    .add(layout.createSequentialGroup()
+                        .add(5, 5, 5)
+                        .add(saveFormatBox_, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 88, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)))
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
                     .add(layout.createSequentialGroup()
                         .add(10, 10, 10)
@@ -627,13 +647,8 @@ public class DataCollectionForm extends javax.swing.JFrame {
                     .add(mathButton_, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 60, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
                 .add(10, 10, 10)
                 .add(jSeparator4, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                .add(8, 8, 8)
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                    .add(layout.createSequentialGroup()
-                        .add(renderButton_)
-                        .add(8, 8, 8)
-                        .add(visualizationMagnification_, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 90, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                        .add(visualizationModel_, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
                     .add(layout.createSequentialGroup()
                         .add(jLabel1)
                         .add(4, 4, 4)
@@ -651,12 +666,19 @@ public class DataCollectionForm extends javax.swing.JFrame {
                         .add(2, 2, 2)
                         .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
                             .add(sigmaMax_, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 57, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                            .add(intensityMax_, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 59, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))))
-                .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                            .add(intensityMax_, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 59, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+                        .add(5, 5, 5)
+                        .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                            .add(layout.createSequentialGroup()
+                                .add(7, 7, 7)
+                                .add(SigmaLabel3))
+                            .add(IntLabel2, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 10, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)))
                     .add(layout.createSequentialGroup()
-                        .add(7, 7, 7)
-                        .add(SigmaLabel3))
-                    .add(IntLabel2, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 10, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)))
+                        .add(renderButton_)
+                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
+                        .add(visualizationModel_, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
+                        .add(visualizationMagnification_, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 90, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))))
             .add(jScrollPane1, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 940, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
         );
         layout.setVerticalGroup(
@@ -676,9 +698,9 @@ public class DataCollectionForm extends javax.swing.JFrame {
                         .add(1, 1, 1)
                         .add(infoButton_, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 19, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
                     .add(layout.createSequentialGroup()
-                        .add(10, 10, 10)
-                        .add(jComboBox1, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 18, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                        .add(22, 22, 22)
+                        .addContainerGap()
+                        .add(saveFormatBox_, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 26, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                        .add(18, 18, 18)
                         .add(removeButton, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 19, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
                     .add(layout.createSequentialGroup()
                         .add(10, 10, 10)
@@ -709,10 +731,10 @@ public class DataCollectionForm extends javax.swing.JFrame {
                     .add(jSeparator4, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 84, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                     .add(layout.createSequentialGroup()
                         .add(10, 10, 10)
-                        .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                        .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
                             .add(renderButton_, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 19, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                            .add(visualizationMagnification_, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 20, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                            .add(visualizationModel_, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 20, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+                            .add(visualizationModel_, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 24, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                            .add(visualizationMagnification_, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 22, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
                         .add(10, 10, 10)
                         .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
                             .add(jLabel1)
@@ -854,9 +876,15 @@ public class DataCollectionForm extends javax.swing.JFrame {
     }//GEN-LAST:event_loadButtonActionPerformed
 
     private void saveButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_saveButtonActionPerformed
-       int row = jTable1_.getSelectedRow();
-       if (row > -1)
-         saveData(rowData_.get(row));
+       int rows[] = jTable1_.getSelectedRows();
+       if (rows.length > 0) {
+          for (int row : rows) {
+             if (saveFormatBox_.getSelectedIndex() == 0)
+                saveData(rowData_.get(row));
+             else
+                saveDataAsText(rowData_.get(row));
+          }
+       }
        else
           JOptionPane.showMessageDialog(getInstance(), "Please select a dataset to save");
     }//GEN-LAST:event_saveButtonActionPerformed
@@ -1376,6 +1404,20 @@ public class DataCollectionForm extends javax.swing.JFrame {
 
    }//GEN-LAST:event_averageTrackButton_ActionPerformed
 
+   private void mathButton_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mathButton_ActionPerformed
+      int[] rows = new int[jTable1_.getRowCount()];
+      
+      for (int i = 0; i < rows.length; i++)
+         rows[i] = (Integer) jTable1_.getValueAt(i, 0);
+        
+      MathForm mf = new MathForm(rows, rows);
+      
+      mf.setBackground(MMStudioMainFrame.getInstance().getBackgroundColor());
+      MMStudioMainFrame.getInstance().addMMBackgroundListener(mf);
+      
+      mf.setVisible(true);
+   }//GEN-LAST:event_mathButton_ActionPerformed
+
    
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JLabel IntLabel2;
@@ -1389,7 +1431,6 @@ public class DataCollectionForm extends javax.swing.JFrame {
     private javax.swing.JButton infoButton_;
     private javax.swing.JTextField intensityMax_;
     private javax.swing.JTextField intensityMin_;
-    private javax.swing.JComboBox jComboBox1;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel2;
     private javax.swing.JLabel jLabel3;
@@ -1408,6 +1449,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
     private javax.swing.JButton removeButton;
     private javax.swing.JButton renderButton_;
     private javax.swing.JButton saveButton;
+    private javax.swing.JComboBox saveFormatBox_;
     private javax.swing.JButton showButton_;
     private javax.swing.JTextField sigmaMax_;
     private javax.swing.JTextField sigmaMin_;
@@ -1546,9 +1588,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
                saveData(rowData);
                return;
             }
-         }
-         
-         
+         }       
          
          Runnable doWorkRunnable = new Runnable() {
             
@@ -1561,7 +1601,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
                        setNrPixelsX(rowData.width_).
                        setNrPixelsY(rowData.height_).
                        setNrSpots(rowData.spotList_.size()).
-                       setPixelSize(160).
+                       setPixelSize(rowData.pixelSizeNm_).
                        setBoxSize(rowData.halfSize_ * 2).
                        setNrChannels(rowData.nrChannels_).
                        setNrSlices(rowData.nrSlices_).
@@ -1649,6 +1689,138 @@ public class DataCollectionForm extends javax.swing.JFrame {
                   ij.IJ.showStatus("Finished saving spotData...");
                } catch (IOException ex) {
                   Logger.getLogger(DataCollectionForm.class.getName()).log(Level.SEVERE, null, ex);
+               } finally {
+                  setCursor(Cursor.getDefaultCursor());
+               }
+            }
+         };
+         
+         (new Thread(doWorkRunnable)).start();
+         
+      }
+      
+   }
+   
+   
+     /**
+    * Save data set in as a text file
+    *
+    * @rowData - row with spot data to be saved
+    */
+   private void saveDataAsText(final MyRowData rowData) {
+      FileDialog fd = new FileDialog(this, "Save Spot Data", FileDialog.SAVE);
+      FilenameFilter fnf = new FilenameFilter() {
+         public boolean accept(File file, String string) {
+            if (string.endsWith(".txt"))
+               return true;
+            return false;
+         }
+      };
+      fd.setFilenameFilter(fnf);
+      fd.setVisible(true);
+      String selectedItem = fd.getFile();
+      if (selectedItem == null) {
+         return;
+      } else {
+         String fn = fd.getFile();
+         if (!fn.contains(".")) {
+            fn = fn + ".txt";
+         }
+         final File selectedFile = new File(fd.getDirectory() + File.separator + fn);
+         if (selectedFile.exists()) {
+            // this may be superfluous
+            YesNoCancelDialog y = new YesNoCancelDialog(this, "File " + fn + "Exists...", "File exists.  Overwrite?");
+            if (y.cancelPressed()) {
+               return;
+            }
+            if (!y.yesPressed()) {
+               saveDataAsText(rowData);
+               return;
+            }
+         }
+         
+         Runnable doWorkRunnable = new Runnable() {
+            
+            public void run() {
+          /*     
+               SpotList.Builder tspBuilder = SpotList.newBuilder();
+               tspBuilder.setApplicationId(1).
+                       setName(rowData.name_).
+                       setFilepath(rowData.title_).
+                       setNrPixelsX(rowData.width_).
+                       setNrPixelsY(rowData.height_).
+                       setNrSpots(rowData.spotList_.size()).
+                       setPixelSize(160).
+                       setBoxSize(rowData.halfSize_ * 2).
+                       setNrChannels(rowData.nrChannels_).
+                       setNrSlices(rowData.nrSlices_).
+                       setIsTrack(rowData.isTrack_).
+                       setNrPos(rowData.nrPositions_).
+                       setNrFrames(rowData.nrFrames_).
+                       setLocationUnits(LocationUnits.NM).
+                       setIntensityUnits(IntensityUnits.PHOTONS).
+                       setNrSpots(rowData.maxNrSpots_);
+               switch (rowData.shape_) {
+                  case (1):
+                     tspBuilder.setFitMode(FitMode.ONEAXIS);
+                     break;
+                  case (2):
+                     tspBuilder.setFitMode(FitMode.TWOAXIS);
+                     break;
+                  case (3):
+                     tspBuilder.setFitMode(FitMode.TWOAXISANDTHETA);
+                     break;
+               }
+               
+               
+               SpotList spotList = tspBuilder.build();
+                * 
+                */
+               try {
+                  setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+                  
+                  FileWriter fw = new FileWriter(selectedFile);
+                 
+                  fw.write("molecule\tchannel\tframe\tslice\tpos\tx\ty\tintensity\t" +
+                          "background\twidth\ta\ttheta\tx_position\ty_position\t" +
+                          "x_precision\n");
+                  
+                  int counter = 0;
+                  String tab = "\t";
+                  for (GaussianSpotData gd : rowData.spotList_) {
+                     
+                     if ((counter % 1000) == 0) {                        
+                        ij.IJ.showStatus("Saving spotData...");
+                        ij.IJ.showProgress(counter, rowData.spotList_.size());
+                     }
+                     
+                     if (gd != null) {
+                        fw.write("" + gd.getFrame() + tab +
+                                gd.getChannel() + tab +
+                                gd.getFrame() + tab +
+                                gd.getSlice() + tab + 
+                                gd.getPosition() + tab + 
+                                gd.getXCenter() + tab + 
+                                gd.getYCenter() + tab +
+                                gd.getIntensity() + tab +
+                                gd.getBackground() + tab +
+                                gd.getWidth() + tab +
+                                gd.getA() + tab + 
+                                gd.getTheta() + tab + 
+                                gd.getX() + tab + 
+                                gd.getY() + tab + 
+                                gd.getSigma() + "\n");
+
+                        counter++;
+                     }
+                  }
+                  
+                  fw.close();
+                  
+                  ij.IJ.showProgress(1);
+                  ij.IJ.showStatus("Finished saving spotData to text file...");
+               } catch (IOException ex) {
+                  JOptionPane.showMessageDialog(getInstance(), "Error while saving data in text format");
                } finally {
                   setCursor(Cursor.getDefaultCursor());
                }

@@ -41,15 +41,17 @@
                   <Component id="saveButton" min="-2" max="-2" attributes="0"/>
                   <Component id="infoButton_" min="-2" max="-2" attributes="0"/>
               </Group>
-              <EmptySpace min="5" pref="5" max="5" attributes="0"/>
               <Group type="103" groupAlignment="0" attributes="0">
-                  <Component id="jComboBox1" min="-2" pref="88" max="-2" attributes="0"/>
                   <Group type="102" attributes="0">
-                      <EmptySpace min="10" pref="10" max="10" attributes="0"/>
+                      <EmptySpace min="-2" pref="15" max="-2" attributes="0"/>
                       <Component id="removeButton" min="-2" pref="70" max="-2" attributes="0"/>
                   </Group>
+                  <Group type="102" attributes="0">
+                      <EmptySpace min="-2" pref="5" max="-2" attributes="0"/>
+                      <Component id="saveFormatBox_" min="-2" pref="88" max="-2" attributes="0"/>
+                  </Group>
               </Group>
-              <EmptySpace min="2" pref="2" max="2" attributes="0"/>
+              <EmptySpace max="-2" attributes="0"/>
               <Group type="103" groupAlignment="0" attributes="0">
                   <Group type="102" attributes="0">
                       <EmptySpace min="10" pref="10" max="10" attributes="0"/>
@@ -89,15 +91,9 @@
               </Group>
               <EmptySpace min="10" pref="10" max="10" attributes="0"/>
               <Component id="jSeparator4" min="-2" max="-2" attributes="0"/>
-              <EmptySpace min="8" pref="8" max="8" attributes="0"/>
+              <EmptySpace max="-2" attributes="0"/>
               <Group type="103" groupAlignment="0" attributes="0">
-                  <Group type="102" attributes="0">
-                      <Component id="renderButton_" min="-2" max="-2" attributes="0"/>
-                      <EmptySpace min="8" pref="8" max="8" attributes="0"/>
-                      <Component id="visualizationMagnification_" min="-2" pref="90" max="-2" attributes="0"/>
-                      <Component id="visualizationModel_" min="-2" max="-2" attributes="0"/>
-                  </Group>
-                  <Group type="102" attributes="0">
+                  <Group type="102" alignment="0" attributes="0">
                       <Component id="jLabel1" min="-2" max="-2" attributes="0"/>
                       <EmptySpace min="4" pref="4" max="4" attributes="0"/>
                       <Group type="103" groupAlignment="0" attributes="0">
@@ -119,14 +115,22 @@
                           <Component id="sigmaMax_" min="-2" pref="57" max="-2" attributes="0"/>
                           <Component id="intensityMax_" min="-2" pref="59" max="-2" attributes="0"/>
                       </Group>
+                      <EmptySpace min="-2" pref="5" max="-2" attributes="0"/>
+                      <Group type="103" groupAlignment="0" attributes="0">
+                          <Group type="102" attributes="0">
+                              <EmptySpace min="7" pref="7" max="7" attributes="0"/>
+                              <Component id="SigmaLabel3" min="-2" max="-2" attributes="0"/>
+                          </Group>
+                          <Component id="IntLabel2" min="-2" pref="10" max="-2" attributes="0"/>
+                      </Group>
                   </Group>
-              </Group>
-              <Group type="103" groupAlignment="0" attributes="0">
-                  <Group type="102" attributes="0">
-                      <EmptySpace min="7" pref="7" max="7" attributes="0"/>
-                      <Component id="SigmaLabel3" min="-2" max="-2" attributes="0"/>
+                  <Group type="102" alignment="0" attributes="0">
+                      <Component id="renderButton_" min="-2" max="-2" attributes="0"/>
+                      <EmptySpace type="unrelated" max="-2" attributes="0"/>
+                      <Component id="visualizationModel_" min="-2" max="-2" attributes="0"/>
+                      <EmptySpace type="unrelated" max="-2" attributes="0"/>
+                      <Component id="visualizationMagnification_" min="-2" pref="90" max="-2" attributes="0"/>
                   </Group>
-                  <Component id="IntLabel2" min="-2" pref="10" max="-2" attributes="0"/>
               </Group>
           </Group>
           <Component id="jScrollPane1" min="-2" pref="940" max="-2" attributes="0"/>
@@ -151,9 +155,9 @@
                       <Component id="infoButton_" min="-2" pref="19" max="-2" attributes="0"/>
                   </Group>
                   <Group type="102" attributes="0">
-                      <EmptySpace min="10" pref="10" max="10" attributes="0"/>
-                      <Component id="jComboBox1" min="-2" pref="18" max="-2" attributes="0"/>
-                      <EmptySpace min="22" pref="22" max="22" attributes="0"/>
+                      <EmptySpace max="-2" attributes="0"/>
+                      <Component id="saveFormatBox_" min="-2" pref="26" max="-2" attributes="0"/>
+                      <EmptySpace type="separate" max="-2" attributes="0"/>
                       <Component id="removeButton" min="-2" pref="19" max="-2" attributes="0"/>
                   </Group>
                   <Group type="102" attributes="0">
@@ -191,10 +195,10 @@
                   <Component id="jSeparator4" min="-2" pref="84" max="-2" attributes="0"/>
                   <Group type="102" attributes="0">
                       <EmptySpace min="10" pref="10" max="10" attributes="0"/>
-                      <Group type="103" groupAlignment="0" attributes="0">
-                          <Component id="renderButton_" min="-2" pref="19" max="-2" attributes="0"/>
-                          <Component id="visualizationMagnification_" min="-2" pref="20" max="-2" attributes="0"/>
-                          <Component id="visualizationModel_" min="-2" pref="20" max="-2" attributes="0"/>
+                      <Group type="103" groupAlignment="3" attributes="0">
+                          <Component id="renderButton_" alignment="3" min="-2" pref="19" max="-2" attributes="0"/>
+                          <Component id="visualizationModel_" alignment="3" min="-2" pref="24" max="-2" attributes="0"/>
+                          <Component id="visualizationMagnification_" alignment="3" min="-2" pref="22" max="-2" attributes="0"/>
                       </Group>
                       <EmptySpace min="10" pref="10" max="10" attributes="0"/>
                       <Group type="103" groupAlignment="0" attributes="0">
@@ -371,7 +375,7 @@
         <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
           <Font name="Lucida Grande" size="11" style="0"/>
         </Property>
-        <Property name="text" type="java.lang.String" value="jLabel1"/>
+        <Property name="text" type="java.lang.String" value="JLabel1"/>
       </Properties>
     </Component>
     <Component class="javax.swing.JButton" name="unjitterButton_">
@@ -522,7 +526,7 @@
         <Property name="orientation" type="int" value="1"/>
       </Properties>
     </Component>
-    <Component class="javax.swing.JComboBox" name="jComboBox1">
+    <Component class="javax.swing.JComboBox" name="saveFormatBox_">
       <Properties>
         <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
           <Font name="Lucida Grande" size="11" style="0"/>
@@ -558,6 +562,9 @@
         </Property>
         <Property name="text" type="java.lang.String" value="Math"/>
       </Properties>
+      <Events>
+        <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="mathButton_ActionPerformed"/>
+      </Events>
     </Component>
     <Component class="javax.swing.JTextField" name="pairsMaxDistanceField_">
       <Properties>
