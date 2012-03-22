@@ -425,7 +425,7 @@ int IntegratedFilterWheel::DiscoverNumberOfPositions()
 {
    LogMessage("DiscoverNumberOfPositions()");
    ClearPort(*this, *GetCoreCallback(), port_);
-   int ret = SetCommand(reqParamsCmd, sizeof(reqJogparamsCmd));
+   int ret = SetCommand(reqJogparamsCmd, sizeof(reqJogparamsCmd));
    if (ret != DEVICE_OK)
       return 0;
 
