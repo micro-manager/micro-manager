@@ -99,15 +99,6 @@
     (filter #(.. % getName (endsWith ending))
             (mapcat file-seq parent-dirs))))
 
-(defn uses-serial-port [file]
-  (.contains (slurp file) "g_Keyword_Port"))
-
-(defn devices-using-serial-port []
-       (seq
-         (into (sorted-set)
-               (map #(first (.split (.getName %) "\\."))
-                    (filter uses-serial-port (files-of-type device-adapter-parent-dirs "cpp"))))))
-
 (defn missing-vcproj []
   (let [device-adapter-dirs (device-adapter-dirs)
         directories-without-vcproj
@@ -234,4 +225,27 @@
   (make-full-report (get {"inc" :inc "full" :full} mode) true))
 
     
- 
+;;;; checking mac stuff (manual)
+
+(defn uses-serial-port [file]
+  (.contains (slurp file) "g_Keyword_Port"))
+
+(defn devices-using-serial-port []
+         (into (sorted-set)
+               (map #(.getName (.getParentFile %))
+                    (filter uses-serial-port (files-of-type device-adapter-parent-dirs "cpp")))))
+
+(defn unix-built-devices []
+  (into (sorted-set)
+        (map #(nth (.split % "_") 2)
+             (filter #(.startsWith % "libmmgr")
+                     (map #(.getName %)
+                          (file-seq (File. "/Users/arthur/Programs/ImageJ")))))))
+
+
+(defn missing-unix-adapters []
+  (into (sorted-set)
+        (clojure.set/difference (set (map #(.toLowerCase %) (devices-using-serial-port)))
+                                (set (map #(.toLowerCase %) (unix-built-devices)))
+                                #{"pi_gcs" "pi_gcs_2" "xcite120pc_exacte" "skeleton" "crystal"
+                                  "imic2000" "polychrome5000"})))
