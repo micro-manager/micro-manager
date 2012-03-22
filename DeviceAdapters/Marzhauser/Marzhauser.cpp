@@ -918,7 +918,7 @@ int XYStage::GetStepLimits(long& xMin, long& xMax, long& yMin, long& yMax)
    long lower, upper;
    char iBuf[256];
    strcpy(iBuf,resp.c_str());
-   sscanf(iBuf, "%d %d\r", &lower, &upper);
+   sscanf(iBuf, "%ld %ld\r", &lower, &upper);
    xMin = lower;
    xMax = upper;
 
@@ -934,7 +934,7 @@ int XYStage::GetStepLimits(long& xMin, long& xMax, long& yMin, long& yMax)
    if (resp.length() < 1) return DEVICE_SERIAL_INVALID_RESPONSE;
 
    strcpy(iBuf,resp.c_str());
-   sscanf(iBuf, "%i %i\r", &lower, &upper);
+   sscanf(iBuf, "%ld %ld\r", &lower, &upper);
    yMin = lower;
    yMax = upper;
 
