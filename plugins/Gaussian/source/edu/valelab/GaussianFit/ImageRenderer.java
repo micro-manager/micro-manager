@@ -21,7 +21,7 @@ public class ImageRenderer {
     * Renders spotdata using various renderModes
     * 
     * @param rowData - MyRowData structure to be rendered
-    * @param method - 0 = 2D scatter, 1 = Gaussians
+    * @param method - 0 = 2D scatter, 1 = Gaussians, 2 = Normalized Gaussian
     * @param magnification  - factor x original size
     * @param rect - roi in the magnified image that should be rendered
     */
@@ -183,8 +183,6 @@ public class ImageRenderer {
                      GaussCanvas gs = new GaussCanvas(sp, rowData, method, magnification, sf);
                      ImageWindow w = new ImageWindow(sp, gs);
                      gs.setImageWindow(w);
-                     //w.addMouseListener(new GaussCanvas(w, rowData,
-                     //                     method, magnification, sf));
                      w.setVisible(true);
                   } else {
                      iw.setImage(sp);

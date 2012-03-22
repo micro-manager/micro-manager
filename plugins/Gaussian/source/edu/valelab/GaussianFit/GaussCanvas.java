@@ -20,11 +20,13 @@ import java.awt.event.MouseEvent;
  */
 public class GaussCanvas extends ImageCanvas {
    DataCollectionForm.MyRowData rowData_;
-   int renderMode_;
+   int renderMethod_;
    ImagePlus originalIP_;
    ImageWindow iw_;
    double myMag_;
    double originalMag_;
+   final int orImageWidth_;
+   final int orImageHeight_;
    SpotDataFilter sf_;
    
 
@@ -32,10 +34,12 @@ public class GaussCanvas extends ImageCanvas {
            int renderMode, double initialMag, SpotDataFilter sf) {
       super(sp);
       rowData_ = rowData;
-      renderMode_ = renderMode;
+      renderMethod_ = renderMode;
       originalIP_ = sp;
       originalMag_ = myMag_ = initialMag;
       sf_ = sf;
+      orImageWidth_ = sp.getWidth();
+      orImageHeight_ = sp.getHeight();
    }
 
    public void setImageWindow(ImageWindow iw) {
@@ -58,6 +62,12 @@ public class GaussCanvas extends ImageCanvas {
 			imp.getWindow().pack();
 		} else
 			adjustSourceRect(newMag, sx, sy);
+      if (magnification > 1.0) {
+         Rectangle myR = new Rectangle(0, 0, (int) (newWidth * newMag * originalMag_), 
+                 (int) (newHeight * newMag * originalMag_) );
+         //ImageRenderer.renderData(iw_, rowData_, renderMethod_, 
+         //     originalMag_ * magnification, myR, sf_);
+      }
 		repaint();
 		//if (srcRect.width<imageWidth || srcRect.height<imageHeight)
 		//	resetMaxBounds();
@@ -128,7 +138,7 @@ public class GaussCanvas extends ImageCanvas {
                     d.width, d.height);
 
          }
-         //ImageRenderer.renderData(iw_, rowData_, renderMode_, mag, roi, sf_);
+         //ImageRenderer.renderData(iw_, rowData_, renderMethod_, mag, roi, sf_);
 
       } else {
          //iw_.setImage(originalIP_);
