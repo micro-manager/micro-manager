@@ -1989,6 +1989,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
     * @param rowData 
     */
    private void unJitter(final MyRowData rowData) {
+
       // TODO: instead of a fixed number of frames, go for a certain number of spots
       // Number of frames could be limited as well
       final int framesToCombine = 100;
@@ -2003,7 +2004,9 @@ public class DataCollectionForm extends javax.swing.JFrame {
          
          public void run() {
             
-            int mag = 1 << visualizationMagnification_.getSelectedIndex();
+            int mag = (int) (rowData.pixelSizeNm_ / 40.0);
+            
+            //int mag = 1 << visualizationMagnification_.getSelectedIndex();
             
             
             int width = mag * rowData.width_;

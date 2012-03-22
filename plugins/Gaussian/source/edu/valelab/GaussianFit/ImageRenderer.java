@@ -149,26 +149,29 @@ public class ImageRenderer {
                                  spot.getSigma() / renderedPixelInNm};
                               double val = GaussianUtils.gaussian(parms, x, y);
                               totalInt += val;
-                              boxPixels[x - xStart][y - yStart] = (float)val;
-                              
-                              //ip.setf(x, y, ip.getf(x, y) + (float) val);
+                              if (normalize)
+                                 boxPixels[x - xStart][y - yStart] = (float)val;
+                              else 
+                                 ip.setf(x, y, ip.getf(x, y) + (float) val);
                            }
                         }
                         // normalize if requested
-                        if (normalize) {
+                        if (normalize && totalInt > 0) {
                            for (int x = xStart; x < xEnd; x++) {
                               for (int y = yStart; y < yEnd; y++) {
                                  boxPixels[x - xStart][y - yStart] /= totalInt;
+                                 if (boxPixels[x - xStart][y - yStart] != boxPixels[x - xStart][y - yStart])
+                                    System.out.println("<0");
                               }
                            }
-
-                        }
-                        // now add to the image
-                        for (int x = xStart; x < xEnd; x++) {
-                           for (int y = yStart; y < yEnd; y++) {
-                              ip.setf(x, y, ip.getf(x, y) + boxPixels[x - xStart][y - yStart]);
+                           // now add to the image
+                           for (int x = xStart; x < xEnd; x++) {
+                              for (int y = yStart; y < yEnd; y++) {
+                                 ip.setf(x, y, ip.getf(x, y) + boxPixels[x - xStart][y - yStart]);
+                              }
                            }
                         }
+                        
                      }
                   }
                }

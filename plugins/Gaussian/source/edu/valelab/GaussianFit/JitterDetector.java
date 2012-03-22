@@ -4,10 +4,8 @@
  */
 package edu.valelab.GaussianFit;
 
-import ij.ImagePlus;
 import ij.process.FHT;
 import ij.process.ImageProcessor;
-import ij.process.ImageStatistics;
 import java.awt.Point;
 import java.awt.geom.Point2D;
 
@@ -28,7 +26,6 @@ public class JitterDetector {
       FHT t = new FHT(test);
       t.transform();
       t.resetMinAndMax();
-      //new ImagePlus("Ref Test2", t).show();
       
       FHT m = ref_.conjugateMultiply(t);
             
