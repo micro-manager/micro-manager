@@ -20,10 +20,6 @@
 //&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&
 */
 
-#ifndef WIN32
-#define WIN32
-#endif
-
 #ifndef _STRADUS_H_
 #define _STRADUS_H_
 #endif

@@ -5,4 +5,4 @@ libmmgr_dal_Stradus_la_SOURCES = Stradus.cpp Stradus.h
 libmmgr_dal_Stradus_la_LIBADD = $(MMDEVAPI_LIBADD)
 libmmgr_dal_Stradus_la_LDFLAGS = $(MMDEVAPI_LDFLAGS)
 
-EXTRA_DIST = license.txt
+EXTRA_DIST = Stradus.vcproj license.txt
