@@ -7,7 +7,7 @@
   (:require [clojure.xml])
   (:gen-class))
 
-(def micromanager (file* "../../.."))
+(def micromanager (file* "../.."))
 
 (def MS-PER-HOUR (* 60 60 1000))
 
