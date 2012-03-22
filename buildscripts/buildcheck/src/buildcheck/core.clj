@@ -102,10 +102,10 @@
 (defn uses-serial-port [file]
   (.contains (slurp file) "g_Keyword_Port"))
 
-(defn files-using-serial-port []
+(defn devices-using-serial-port []
        (seq
          (into (sorted-set)
-               (map #(.split (.getName %) "\\.")
+               (map #(first (.split (.getName %) "\\."))
                     (filter uses-serial-port (files-of-type device-adapter-parent-dirs "cpp"))))))
 
 (defn missing-vcproj []
