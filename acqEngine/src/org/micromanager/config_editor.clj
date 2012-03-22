@@ -67,10 +67,10 @@
     sp))
 
 (defn update-table [table]
-  (doto (.getModel table)
-    .fireTableDataChanged
-    .fireTableStructureChanged)
-  table)
+    (doto (.getModel table)
+      ;.fireTableDataChanged
+      .fireTableStructureChanged)
+    table)
 
 ;; events
 
@@ -118,7 +118,8 @@
 
 (defn update-groups []
   (reset! groups (vec (seq (core getAvailableConfigGroups))))
-  (update-group-data)
+  (redraw-data)
+  (update-all-properties)
   (-> @widgets :groups-table update-table)
   @group-data)
 
@@ -140,65 +141,67 @@
                        (do (println "duplicate") false)
                        true))))
                                
-(defn used-properties-table-model []
-  (proxy [AbstractTableModel] []
-    (getColumnName [col] (["Use?" "Property" "Current Value"] col))
-    (getColumnCount [] 3)
-    (getColumnClass [col] ([Boolean String String] col))
-    (getRowCount [] (count @all-properties))
-    (isCellEditable [_ col] (zero? col))
-    (getValueAt [row column]
-                (let [prop (@all-properties row)]
-                  ([(not (nil? ((set (properties @group-data))
-                          (first (@all-properties row)))))
-                    (property-name (first prop))
-                    (second prop)]
-                    column)))
-    (setValueAt [val row column]
-                (let [[[dev prop] _] (@all-properties row)
-                      group (get-selected-group)]
-                  (println val row column)
-                (if val
-                  (add-property group dev prop)
-                  (remove-property group dev prop))))))
+(defn used-properties-table []
+  (JTable.
+    (proxy [AbstractTableModel] []
+      (getColumnName [col] (["Use?" "Property" "Current Value"] col))
+      (getColumnCount [] 3)
+      (getColumnClass [col] ([Boolean String String] col))
+      (getRowCount [] (count @all-properties))
+      (isCellEditable [_ col] (zero? col))
+      (getValueAt [row column]
+                  (let [prop (@all-properties row)]
+                    ([(not (nil? ((set (properties @group-data))
+                                       (first (@all-properties row)))))
+                      (property-name (first prop))
+                      (second prop)]
+                      column)))
+      (setValueAt [val row column]
+                  (let [[[dev prop] _] (@all-properties row)
+                        group (get-selected-group)]
+                    (if val
+                      (add-property group dev prop)
+                      (remove-property group dev prop)))))))
 
-(defn group-table-model []
-  (proxy [AbstractTableModel] []
-    (getColumnName [_] "Groups")
-    (getColumnCount [] 1)
-    (getRowCount [] (count @groups))
-    (isCellEditable [_ _] true)
-    (getValueAt [row column] (nth @groups row))
-    (setValueAt [val row column]
-      (let [old-val (nth @groups row)]
-        (core renameConfigGroup old-val val)
-        (update-groups)
-        ))))
+(defn groups-table []
+  (JTable.
+    (proxy [AbstractTableModel] []
+      (getColumnName [_] "Groups")
+      (getColumnCount [] 1)
+      (getRowCount [] (count @groups))
+      (isCellEditable [_ _] true)
+      (getValueAt [row column] (nth @groups row))
+      (setValueAt [val row column]
+                  (let [old-val (nth @groups row)]
+                    (core renameConfigGroup old-val val)
+                    (update-groups))))))
 
-(defn preset-names-table-model []
-  (proxy [AbstractTableModel] []
-    (getColumnName [_] "Presets")
-    (getColumnCount [] 1)
-    (getRowCount [] (count (keys @group-data)))
-    (isCellEditable [_ _] true)
-    (getValueAt [row column] (nth (keys @group-data) row))
-    (setValueAt [val row column]
-      (let [old-val (.getValueAt this row column)]
-        (core renameConfig (get-selected-group) old-val val)
-        (update-group-data)))))
+(defn preset-names-table []
+  (JTable.
+    (proxy [AbstractTableModel] []
+      (getColumnName [_] "Presets")
+      (getColumnCount [] 1)
+      (getRowCount [] (count (keys @group-data)))
+      (isCellEditable [_ _] true)
+      (getValueAt [row column] (nth (keys @group-data) row))
+      (setValueAt [val row column]
+                  (let [old-val (.getValueAt this row column)]
+                    (core renameConfig (get-selected-group) old-val val)
+                    (update-group-data))))))
 
-(defn presets-table-model []
-  (proxy [AbstractTableModel] []
-    (getColumnName [column] (property-name (nth (properties @group-data) column)))
-    (getColumnCount [] (count (properties @group-data)))
-    (getRowCount [] (count (keys @group-data)))
-    (isCellEditable [_ _] false) ;; will be true
-    (getValueAt [row column] (get (nth (vals @group-data) row)
-                                  (nth (properties @group-data) column)))
-    (setValueAt [val row column]
-                ;(let [old-val (.getValueAt this row column)]
-        ;TODO: finish
-        )))
+(defn presets-table []
+  (JTable.
+    (proxy [AbstractTableModel] []
+      (getColumnName [column] (property-name (nth (properties @group-data) column)))
+      (getColumnCount [] (count (properties @group-data)))
+      (getRowCount [] (count (keys @group-data)))
+      (isCellEditable [_ _] false) ;; will be true
+      (getValueAt [row column] (get (nth (vals @group-data) row)
+                                    (nth (properties @group-data) column)))
+      (setValueAt [val row column]
+                  ;(let [old-val (.getValueAt this row column)]
+                  ;TODO: finish
+                  ))))
 
 ;; table row selection rules
 
@@ -248,12 +251,14 @@
 (defn redraw-data []
   (update-group-data)
   (let [preset-names-table (@widgets :preset-names-table)
-        presets-table (@widgets :presets-table)]
+        presets-table (@widgets :presets-table)
+        used-properties-table (@widgets :used-properties-table)]
     (update-table preset-names-table)
-         (cancel-cell-editing preset-names-table)
-         (cancel-cell-editing presets-table)
-         (update-table presets-table)
-         (set-preferred-column-width presets-table)))
+    (update-table used-properties-table)
+    (cancel-cell-editing preset-names-table)
+    (cancel-cell-editing presets-table)
+    (update-table presets-table)
+    (set-preferred-column-width presets-table)))
 
 (defn new-group-name []
   (loop [index 1]
@@ -331,27 +336,19 @@
 (defn show []
   (let [f (JFrame. "Micro-Manager Configuration Preset Editor")
         cp (.getContentPane f)
-        groups-table (JTable.)
-        presets-table (JTable.)
-        preset-names-table (JTable.)
-        used-properties-table (JTable.)
-        groups-sp (scroll-pane groups-table)
-        presets-sp (scroll-pane presets-table)
-        use-properties-sp (scroll-pane used-properties-table)
-        ]
+        groups-table (groups-table)
+        presets-table (presets-table)
+        preset-names-table (preset-names-table)
+        used-properties-table (used-properties-table)
+        presets-table-sp (scroll-pane presets-table)]
     (edt 
       (.setAutoResizeMode presets-table JTable/AUTO_RESIZE_OFF)
       (doall (map require-single-selection [groups-table presets-table preset-names-table]))
       (.. presets-table getTableHeader (setReorderingAllowed false))
-      (.setRowHeaderView presets-sp preset-names-table)
       (.. preset-names-table getParent (setPreferredSize (Dimension. 150 100)))
       ;(.setFixedCellWidth preset-names-list 150)
       ;(.setFixedCellHeight preset-names-list (.getRowHeight presets-table))
       (.setBackground preset-names-table (Color. 0xE0 0xE0 0xE0))
-      (.setModel groups-table (group-table-model))
-      (.setModel preset-names-table (preset-names-table-model))
-      (.setModel presets-table (presets-table-model))
-      (.setModel used-properties-table (used-properties-table-model))
       (link-table-row-selection presets-table preset-names-table)
       (double-click-for-new-row groups-table new-group)
       (double-click-for-new-row
@@ -359,11 +356,12 @@
       (.setAutoResizeMode presets-table JTable/AUTO_RESIZE_OFF)
       (doto cp
         (.setLayout (SpringLayout.))
-        (add-component groups-sp :n 5 :w 5 :n 150 :w 150)
-        (add-component use-properties-sp :n 5 :w 155 :n 150 :w 500)
-        (add-component presets-sp :n 155 :w 5 :s -5 :e -5))
-        (.setBounds f 100 100 800 500)
-        (.show f))
+        (add-component (scroll-pane groups-table) :n 5 :w 5 :n 150 :w 150)
+        (add-component (scroll-pane used-properties-table) :n 5 :w 155 :n 150 :w 500)
+        (add-component presets-table-sp :n 155 :w 5 :s -5 :e -5))
+      (.setRowHeaderView presets-table-sp preset-names-table)
+      (.setBounds f 100 100 800 500)
+      (.show f))
     (.setCellEditor groups-table (group-table-cell-editor))
     {:frame f
      :groups-table groups-table
