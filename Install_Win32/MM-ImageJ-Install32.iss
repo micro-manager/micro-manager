@@ -61,6 +61,7 @@ Source: ..\..\3rdparty\jre6_32\* ; DestDir: {app}\jre; Flags: ignoreversion recu
 
 ; device libraries
 Source: micro-manager\inpout32.dll; DestDir: {app}; Flags: ignoreversion
+Source: micro-manager\ATMCD32D.dll; DestDir: {app}; Flags: ignoreversion 
 Source: micro-manager\usb_main.bin; DestDir: {app}; Flags: ignoreversion
 Source: ..\drivers\K8061\x86\libusb0_x86.dll; DestDir: {app}; DestName: libusb0.dll; Flags: ignoreversion
 Source: micro-manager\camconj.dll; DestDir: {app}; Flags: ignoreversion
