@@ -7,7 +7,7 @@
   (:require [clojure.xml])
   (:gen-class))
 
-(def micromanager (file* "../.."))
+(def micromanager (file* "../../.."))
 
 (def MS-PER-HOUR (* 60 60 1000))
 
@@ -89,10 +89,27 @@
 
 (def non-windows-device-adapters #{"dc1394" "SimpleCam" "Video4Linux"})
 
+(defn device-adapter-dirs []
+  (filter #(and (.isDirectory %)
+                (not (.. % getName (startsWith "."))))
+          (mapcat #(.listFiles %) device-adapter-parent-dirs)))
+
+(defn files-of-type [parent-dirs suffix]
+  (let [ending (str "." suffix)]
+    (filter #(.. % getName (endsWith ending))
+            (mapcat file-seq parent-dirs))))
+
+(defn uses-serial-port [file]
+  (.contains (slurp file) "g_Keyword_Port"))
+
+(defn files-using-serial-port []
+       (seq
+         (into (sorted-set)
+               (map #(.split (.getName %) "\\.")
+                    (filter uses-serial-port (files-of-type device-adapter-parent-dirs "cpp"))))))
+
 (defn missing-vcproj []
-  (let [device-adapter-dirs (filter #(and (.isDirectory %)
-                                          (not (.. % getName (startsWith "."))))
-                                    (mapcat #(.listFiles %) device-adapter-parent-dirs))
+  (let [device-adapter-dirs (device-adapter-dirs)
         directories-without-vcproj
         (filter identity
                 (for [device-adapter-dir device-adapter-dirs]
