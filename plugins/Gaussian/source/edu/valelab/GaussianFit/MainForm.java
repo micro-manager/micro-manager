@@ -198,7 +198,7 @@ public class MainForm extends javax.swing.JFrame implements ij.ImageListener{
         noiseToleranceTextField_ = new javax.swing.JTextField();
         pixelSizeTextField_ = new javax.swing.JTextField();
         jLabel13 = new javax.swing.JLabel();
-        fitAllButton = new javax.swing.JButton();
+        fitAllButton_ = new javax.swing.JButton();
         jLabel10 = new javax.swing.JLabel();
         jSeparator5 = new javax.swing.JSeparator();
         jLabel11 = new javax.swing.JLabel();
@@ -227,6 +227,7 @@ public class MainForm extends javax.swing.JFrame implements ij.ImageListener{
         jLabel20 = new javax.swing.JLabel();
         fitMethodComboBox1 = new javax.swing.JComboBox();
         showOverlay_ = new javax.swing.JToggleButton();
+        mTrackButton_ = new javax.swing.JButton();
 
         jButton1.setText("jButton1");
 
@@ -275,12 +276,12 @@ public class MainForm extends javax.swing.JFrame implements ij.ImageListener{
         getContentPane().add(photonConversionTextField);
         photonConversionTextField.setBounds(170, 50, 67, 20);
 
-        emGainTextField_.setFont(new java.awt.Font("Lucida Grande", 0, 10)); // NOI18N
+        emGainTextField_.setFont(new java.awt.Font("Lucida Grande", 0, 10));
         emGainTextField_.setText("50");
         getContentPane().add(emGainTextField_);
         emGainTextField_.setBounds(170, 70, 67, 19);
 
-        baseLevelTextField.setFont(new java.awt.Font("Lucida Grande", 0, 10));
+        baseLevelTextField.setFont(new java.awt.Font("Lucida Grande", 0, 10)); // NOI18N
         baseLevelTextField.setText("100");
         baseLevelTextField.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -324,7 +325,7 @@ public class MainForm extends javax.swing.JFrame implements ij.ImageListener{
             }
         });
         getContentPane().add(trackButton);
-        trackButton.setBounds(170, 460, 75, 29);
+        trackButton.setBounds(90, 460, 75, 29);
         getContentPane().add(jSeparator1);
         jSeparator1.setBounds(20, 220, 210, 10);
         getContentPane().add(jSeparator2);
@@ -357,7 +358,7 @@ public class MainForm extends javax.swing.JFrame implements ij.ImageListener{
         getContentPane().add(noiseToleranceTextField_);
         noiseToleranceTextField_.setBounds(180, 200, 60, 20);
 
-        pixelSizeTextField_.setFont(new java.awt.Font("Lucida Grande", 0, 10)); // NOI18N
+        pixelSizeTextField_.setFont(new java.awt.Font("Lucida Grande", 0, 10));
         pixelSizeTextField_.setText("0.8");
         pixelSizeTextField_.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -372,14 +373,14 @@ public class MainForm extends javax.swing.JFrame implements ij.ImageListener{
         getContentPane().add(jLabel13);
         jLabel13.setBounds(40, 90, 122, 13);
 
-        fitAllButton.setText("Fit");
-        fitAllButton.addActionListener(new java.awt.event.ActionListener() {
+        fitAllButton_.setText("Fit");
+        fitAllButton_.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                fitAllButtonActionPerformed(evt);
+                fitAllButton_ActionPerformed(evt);
             }
         });
-        getContentPane().add(fitAllButton);
-        fitAllButton.setBounds(10, 460, 80, 30);
+        getContentPane().add(fitAllButton_);
+        fitAllButton_.setBounds(10, 460, 80, 30);
 
         jLabel10.setFont(new java.awt.Font("Lucida Grande", 0, 10));
         jLabel10.setText("nm < Width <");
@@ -422,7 +423,7 @@ public class MainForm extends javax.swing.JFrame implements ij.ImageListener{
         getContentPane().add(fitDimensionsComboBox1);
         fitDimensionsComboBox1.setBounds(150, 240, 90, 27);
 
-        timeIntervalTextField_.setFont(new java.awt.Font("Lucida Grande", 0, 10)); // NOI18N
+        timeIntervalTextField_.setFont(new java.awt.Font("Lucida Grande", 0, 10));
         timeIntervalTextField_.setText("0.8");
         getContentPane().add(timeIntervalTextField_);
         timeIntervalTextField_.setBounds(170, 110, 67, 20);
@@ -474,7 +475,7 @@ public class MainForm extends javax.swing.JFrame implements ij.ImageListener{
             }
         });
         getContentPane().add(stopButton);
-        stopButton.setBounds(140, 490, 80, 30);
+        stopButton.setBounds(130, 490, 80, 30);
 
         filterDataCheckBoxNrPhotons.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -516,7 +517,7 @@ public class MainForm extends javax.swing.JFrame implements ij.ImageListener{
             }
         });
         getContentPane().add(showButton);
-        showButton.setBounds(50, 490, 80, 30);
+        showButton.setBounds(40, 490, 80, 30);
 
         endTrackCheckBox_.setFont(new java.awt.Font("Lucida Grande", 0, 10));
         endTrackCheckBox_.setText("End track when missing");
@@ -570,6 +571,15 @@ public class MainForm extends javax.swing.JFrame implements ij.ImageListener{
         getContentPane().add(showOverlay_);
         showOverlay_.setBounds(20, 200, 60, 20);
 
+        mTrackButton_.setText("MTrack");
+        mTrackButton_.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                mTrackButton_ActionPerformed(evt);
+            }
+        });
+        getContentPane().add(mTrackButton_);
+        mTrackButton_.setBounds(170, 460, 80, 29);
+
         pack();
     }// </editor-fold>//GEN-END:initComponents
 
@@ -595,7 +605,7 @@ public class MainForm extends javax.swing.JFrame implements ij.ImageListener{
        WINDOWOPEN = false;
     }//GEN-LAST:event_formWindowClosed
 
-    private void fitAllButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_fitAllButtonActionPerformed
+    private void fitAllButton_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_fitAllButton_ActionPerformed
        
        if (ft_ == null || !ft_.isRunning()) {
           ft_ = new FitAllThread(shape_, fitMode_, preFilterType_);
@@ -604,7 +614,7 @@ public class MainForm extends javax.swing.JFrame implements ij.ImageListener{
        } else {
           JOptionPane.showMessageDialog(null, "Already running fitting analysis");
        }
-    }//GEN-LAST:event_fitAllButtonActionPerformed
+    }//GEN-LAST:event_fitAllButton_ActionPerformed
 
     private void formWindowClosing(java.awt.event.WindowEvent evt) {//GEN-FIRST:event_formWindowClosing
        prefs_.put(NOISETOLERANCE, noiseToleranceTextField_.getText());
@@ -866,6 +876,40 @@ public class MainForm extends javax.swing.JFrame implements ij.ImageListener{
       // delete
    }//GEN-LAST:event_pixelSizeTextField_ActionPerformed
 
+   private void mTrackButton_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mTrackButton_ActionPerformed
+       
+      // Poor way of tracking multiple spots by running sequential tracks
+      // TODO: optimize
+      final ImagePlus siPlus;
+       try {
+          siPlus = IJ.getImage();
+       } catch (Exception e) {
+          return;
+       }
+       if (ip_ != siPlus)
+          ip_ = siPlus;
+
+      Runnable MTracker = new Runnable() {
+
+         public void run() {
+               int val = Integer.parseInt(noiseToleranceTextField_.getText());
+               int halfSize = (int) Integer.parseInt(boxSizeTextField.getText()) / 2;
+               Polygon pol = FindLocalMaxima.FindMax(siPlus, halfSize, val, preFilterType_);
+               for (int i = 0; i < pol.npoints; i++) {
+                  int x = pol.xpoints[i];
+                  int y = pol.ypoints[i];
+                  siPlus.setRoi(x - 2 * halfSize, y - 2* halfSize, 4 * halfSize, 4 * halfSize);
+                  GaussianTrackThread tT = new GaussianTrackThread(FindLocalMaxima.FilterType.NONE);
+                  updateValues(tT);
+                  tT.trackGaussians(true);
+               }         
+         }
+      };
+      
+      (new Thread(MTracker)).start() ;
+
+   }//GEN-LAST:event_mTrackButton_ActionPerformed
+
     public void updateValues(GaussianInfo tT) {
       try {
          tT.setNoiseTolerance(Integer.parseInt(noiseToleranceTextField_.getText()));
@@ -899,7 +943,7 @@ public class MainForm extends javax.swing.JFrame implements ij.ImageListener{
     private javax.swing.JSpinner endTrackSpinner_;
     private javax.swing.JCheckBox filterDataCheckBoxNrPhotons;
     private javax.swing.JCheckBox filterDataCheckBoxWidth;
-    private javax.swing.JButton fitAllButton;
+    private javax.swing.JButton fitAllButton_;
     private javax.swing.JComboBox fitDimensionsComboBox1;
     private javax.swing.JComboBox fitMethodComboBox1;
     private javax.swing.JButton jButton1;
@@ -928,6 +972,7 @@ public class MainForm extends javax.swing.JFrame implements ij.ImageListener{
     private javax.swing.JSeparator jSeparator3;
     private javax.swing.JSeparator jSeparator4;
     private javax.swing.JSeparator jSeparator5;
+    private javax.swing.JButton mTrackButton_;
     private javax.swing.JTextField maxIterationsTextField;
     private javax.swing.JTextField maxNrPhotonsTextField;
     private javax.swing.JTextField maxSigmaTextField;

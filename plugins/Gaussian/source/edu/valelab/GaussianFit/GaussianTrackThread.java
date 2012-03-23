@@ -51,7 +51,7 @@ public class GaussianTrackThread extends GaussianInfo implements Runnable  {
    private Thread t;
    
    private FindLocalMaxima.FilterType preFilterType_;
-   
+   private boolean silent_;
    
 
    public void setWindowClosed() {
@@ -66,9 +66,11 @@ public class GaussianTrackThread extends GaussianInfo implements Runnable  {
    public GaussianTrackThread(FindLocalMaxima.FilterType preFilterType) {
       super();
       preFilterType_ = preFilterType;
+
    }   
 
-   public void trackGaussians() {
+   public void trackGaussians(boolean silent) {
+      silent_ = silent;
       ArrayList<Point2D.Double> xyPoints = new ArrayList<Point2D.Double>();
       ArrayList<Double> timePoints = new ArrayList<Double>();
       resultList_ = Collections.synchronizedList(new ArrayList<GaussianSpotData>());
@@ -102,17 +104,19 @@ public class GaussianTrackThread extends GaussianInfo implements Runnable  {
 
       Roi originalRoi = siPlus.getRoi();
       if (null == originalRoi) {
-         IJ.error("Please draw a Roi around the spot you want to track");
+         if (!silent_)
+            IJ.error("Please draw a Roi around the spot you want to track");
          return false;
       }
       
-
       Rectangle rect = originalRoi.getBounds();
       Polygon pol = FindLocalMaxima.FindMax(siPlus, halfSize_, noiseTolerance_, preFilterType_);
       if (pol.npoints == 0) {
-         ij.IJ.showMessage("No local maxima found in ROI" );
+         if (!silent_)
+            ij.IJ.showMessage("No local maxima found in ROI" );
          return false;
       }
+      
       int xc = pol.xpoints[0];
       int yc = pol.ypoints[0];
       // not sure if needed, but look for the maximum local maximum
@@ -272,7 +276,7 @@ public class GaussianTrackThread extends GaussianInfo implements Runnable  {
    }
 
    public void run() {
-      trackGaussians();
+      trackGaussians(false);
    }
    
 }

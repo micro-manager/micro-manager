@@ -126,7 +126,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
    public class MyRowData {
       public final List<GaussianSpotData> spotList_;
       public final ArrayList<Double> timePoints_;
-      public final String name_;
+      public String name_;
       public final String title_;
       public final String colCorrRef_;
       public final int width_;
@@ -225,11 +225,15 @@ public class DataCollectionForm extends javax.swing.JFrame {
           }
          @Override
           public boolean isCellEditable(int row, int col) {
+            if (col == 1)
+               return true;
             return false;
           }
          @Override
           public void setValueAt(Object value, int row, int col) {
-              fireTableCellUpdated(row, col);
+             if (col == 1)
+                rowData_.get(row).name_ = (String) value;
+             fireTableCellUpdated(row, col);
           }
        };
 
@@ -1160,6 +1164,13 @@ public class DataCollectionForm extends javax.swing.JFrame {
       }
    }//GEN-LAST:event_pairsButtonActionPerformed
 
+   
+   /**
+    * Calculates the average of a list of doubles
+    * 
+    * @param list
+    * @return average
+    */
    private static double listAvg (ArrayList<Double> list) {
       double total = 0.0;
       Iterator it = list.iterator();
@@ -1192,7 +1203,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
    
    
    /**
-    * Utility function to calculate 
+    * Utility function to calculate Standard Deviation
     * @param list
     * @return 
     */
@@ -1268,6 +1279,18 @@ public class DataCollectionForm extends javax.swing.JFrame {
                  "Nr. of Positions: " + rowData.nrPositions_ + "\n" +
                  "Is a Track: " + rowData.isTrack_;
          
+         if (rowData.isTrack_) {
+            ArrayList<Point2D.Double> xyList = rowToList(rowData);
+            Point2D.Double avg = DataCollectionForm.avgXYList(xyList);
+            Point2D.Double stdDev = DataCollectionForm.stdDevXYList(xyList, avg);
+            
+            data += "\n" + 
+                    "Average X: " + avg.x + "\n" +
+                    "StdDev X: " + stdDev.x + "\n" + 
+                    "Average Y: " + avg.y + "\n" +
+                    "StdDev Y: " + stdDev.y;           
+         }
+         
          TextWindow tw = new TextWindow("Info for " + rowData.name_, data, 300, 300);
          tw.setVisible(true);
        }
@@ -1313,7 +1336,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
       }
    }//GEN-LAST:event_plotButton_ActionPerformed
 
-   private ArrayList<Point2D.Double> rowToList(MyRowData myRow){
+   public static ArrayList<Point2D.Double> rowToList(MyRowData myRow){
       ArrayList<Point2D.Double> xyPoints = new ArrayList<Point2D.Double>();
       Iterator it = myRow.spotList_.iterator();
       while (it.hasNext()) {
@@ -1324,7 +1347,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
       return xyPoints;
    }
    
-   private Point2D.Double avgXYList(ArrayList<Point2D.Double> xyPoints) {
+   public static Point2D.Double avgXYList(ArrayList<Point2D.Double> xyPoints) {
       Point2D.Double myAvg = new Point2D.Double(0.0, 0.0);
       for (Point2D.Double point : xyPoints) {
          myAvg.x += point.x;
@@ -1336,6 +1359,21 @@ public class DataCollectionForm extends javax.swing.JFrame {
       
       return myAvg;
    }
+   
+   public static Point2D.Double stdDevXYList(ArrayList<Point2D.Double> xyPoints, 
+           Point2D.Double avg) {
+      Point2D.Double myStdDev = new Point2D.Double(0.0, 0.0);
+      for (Point2D.Double point : xyPoints) {
+         myStdDev.x += (point.x - avg.x) * (point.x - avg.x);
+         myStdDev.y += (point.y - avg.y) * (point.y - avg.y);
+      }
+      
+      myStdDev.x = Math.sqrt(myStdDev.x / (xyPoints.size() - 1) ) ;
+      myStdDev.y = Math.sqrt(myStdDev.y / (xyPoints.size() - 1) ) ;
+      
+      return myStdDev;
+   }
+   
    
    
    private void averageTrackButton_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_averageTrackButton_ActionPerformed
@@ -1628,6 +1666,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
     */
    private void saveData(final MyRowData rowData) {
       FileDialog fd = new FileDialog(this, "Save Spot Data", FileDialog.SAVE);
+      fd.setFile(rowData.name_ + ".tsf");
       fd.setVisible(true);
       String selectedItem = fd.getFile();
       if (selectedItem == null) {
@@ -1769,6 +1808,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
     */
    private void saveDataAsText(final MyRowData rowData) {
       FileDialog fd = new FileDialog(this, "Save Spot Data", FileDialog.SAVE);
+      fd.setFile(rowData.name_ + ".txt");
       FilenameFilter fnf = new FilenameFilter() {
          public boolean accept(File file, String string) {
             if (string.endsWith(".txt"))

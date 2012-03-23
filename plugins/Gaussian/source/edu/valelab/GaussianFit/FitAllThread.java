@@ -214,7 +214,6 @@ public class FitAllThread extends GaussianInfo implements Runnable  {
                      sC[j][1] = p.ypoints[j];
                   }
 
-
                   Arrays.sort(sC, new SpotSortComparator());
 
                   for (int j = 0; j < sC.length; j++) {
