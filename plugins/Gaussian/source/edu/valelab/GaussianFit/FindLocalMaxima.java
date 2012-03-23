@@ -1,6 +1,7 @@
-/*
+/**
  * Find local maxima in an Image (or ROI) using the algorithm described in
- * Neubeck and Van Gool. Efficient non-maximum suppression. Pattern Recognition (2006) vol. 3 pp. 850-855
+ * Neubeck and Van Gool. Efficient non-maximum suppression. 
+ * Pattern Recognition (2006) vol. 3 pp. 850-855
  *
  * Jonas Ries brought this to my attention and send me C code implementing one of the
  * described algorithms

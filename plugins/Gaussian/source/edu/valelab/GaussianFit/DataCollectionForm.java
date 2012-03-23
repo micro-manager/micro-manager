@@ -1304,22 +1304,37 @@ public class DataCollectionForm extends javax.swing.JFrame {
     * @param evt 
     */
    private void renderButton_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_renderButton_ActionPerformed
-      int row = jTable1_.getSelectedRow();
+      final int row = jTable1_.getSelectedRow();
       if (row < 0) {
          JOptionPane.showMessageDialog(getInstance(), "Please select a dataset to render");
       } else {
-         int mag = 1 << visualizationMagnification_.getSelectedIndex();
-         SpotDataFilter sf = new SpotDataFilter();
-         if (filterSigmaCheckBox_.isSelected()) {
-            sf.setSigma(true, Double.parseDouble(sigmaMin_.getText()),
-                    Double.parseDouble(sigmaMax_.getText()));
-         }
-         if (filterIntensityCheckBox_.isSelected()) {
-            sf.setIntensity(true, Double.parseDouble(intensityMin_.getText()),
-                    Double.parseDouble(intensityMax_.getText()));
-         }
-         ImageRenderer.renderData(null, rowData_.get(row), visualizationModel_.getSelectedIndex(),
-                 mag, null, sf);
+
+         Runnable doWorkRunnable = new Runnable() {
+
+            public void run() {
+
+               int mag = 1 << visualizationMagnification_.getSelectedIndex();
+               SpotDataFilter sf = new SpotDataFilter();
+               if (filterSigmaCheckBox_.isSelected()) {
+                  sf.setSigma(true, Double.parseDouble(sigmaMin_.getText()),
+                          Double.parseDouble(sigmaMax_.getText()));
+               }
+               if (filterIntensityCheckBox_.isSelected()) {
+                  sf.setIntensity(true, Double.parseDouble(intensityMin_.getText()),
+                          Double.parseDouble(intensityMax_.getText()));
+               }
+               ImagePlus sp = ImageRenderer.renderData(rowData_.get(row), 
+                       visualizationModel_.getSelectedIndex(), mag, null, sf);
+               GaussCanvas gs = new GaussCanvas(sp, rowData_.get(row), 
+                       visualizationModel_.getSelectedIndex(), mag, sf);
+               ImageWindow w = new ImageWindow(sp, gs);
+               // gs.setImageWindow(w);
+
+               w.setVisible(true);
+            }
+         };
+         
+         (new Thread(doWorkRunnable)).start();
       }
    }//GEN-LAST:event_renderButton_ActionPerformed
 

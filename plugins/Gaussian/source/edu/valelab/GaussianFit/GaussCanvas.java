@@ -5,11 +5,15 @@
  */
 package edu.valelab.GaussianFit;
 
+import ij.IJ;
 import ij.ImagePlus;
 import ij.gui.ImageCanvas;
 import ij.gui.ImageWindow;
+import ij.gui.Roi;
 import ij.gui.Toolbar;
 import java.awt.Dimension;
+import java.awt.Graphics;
+import java.awt.Image;
 import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.event.MouseEvent;
@@ -41,7 +45,7 @@ public class GaussCanvas extends ImageCanvas {
       orImageWidth_ = sp.getWidth();
       orImageHeight_ = sp.getHeight();
    }
-
+/*
    public void setImageWindow(ImageWindow iw) {
       iw_ = iw;
    }
@@ -72,6 +76,49 @@ public class GaussCanvas extends ImageCanvas {
 		//if (srcRect.width<imageWidth || srcRect.height<imageHeight)
 		//	resetMaxBounds();
 	}
+    * 
+    */
+   
+    public void paint(Graphics g) {
+		Roi roi = imp.getRoi();
+		if (roi!=null) {
+			//if (roi!=null) 
+          //  roi.updatePaste();
+			//if (!IJ.isMacOSX() && imageWidth!=0) {
+			//	paintDoubleBuffered(g);
+			//	return;
+			//}
+		}
+		try {
+			      if (imageUpdated) {
+            imageUpdated = false;
+            imp.updateImage();
+         }
+         //setInterpolation(g, Prefs.interpolateScaledImages);
+         if (magnification > 1.0) {
+            double f = magnification * originalMag_;
+            Rectangle magRect = new Rectangle((int) (f * srcRect.x), (int) (f * srcRect.y),
+                    imp.getWidth(), imp.getHeight());
+            ImagePlus impTmp = ImageRenderer.renderData(rowData_, renderMethod_,
+                    f, magRect, sf_);
+            Image img = impTmp.getImage();
+            g.drawImage(img, 0, 0, magRect.width, magRect.height, null);
+         } else {
+            Image img = imp.getImage();
+            if (img != null) {
+               g.drawImage(img, 0, 0, (int) (srcRect.width * magnification), (int) (srcRect.height * magnification),
+                       srcRect.x, srcRect.y, srcRect.x + srcRect.width, srcRect.y + srcRect.height, null);
+            }
+         }
+			//if (overlay!=null) drawOverlay(g);
+			//if (showAllROIs) drawAllROIs(g);
+			//if (roi!=null) drawRoi(roi, g);
+			//if (srcRect.width<imageWidth || srcRect.height<imageHeight)
+			//	super.drawZoomIndicator(g);
+			//if (IJ.debugMode) showFrameRate(g);
+		}
+		catch(OutOfMemoryError e) {IJ.outOfMemory("Paint");}
+    }
    
 
    void adjustSourceRect(double newMag, int x, int y) {
@@ -92,7 +139,7 @@ public class GaussCanvas extends ImageCanvas {
 		//IJ.log("adjustSourceRect2: "+srcRect+" "+dstWidth+"  "+dstHeight);
 	}
    
-
+/*
    @Override
    public void mouseReleased(MouseEvent me) {
       if (Toolbar.getToolId() != Toolbar.MAGNIFIER) {
@@ -148,6 +195,6 @@ public class GaussCanvas extends ImageCanvas {
    }
 
    
-
+*/
    
 }
