@@ -46,6 +46,8 @@ public class ImageRenderer {
       final double renderedPixelInNm = rowData.pixelSizeNm_ / magnification;
       final int width = rect.width;
       final int height = rect.height;
+      final int fullWidth = (int) (rowData.width_ * magnification);
+      final int fullHeight = (int) (rowData.height_ * magnification);
       int endx = rect.x + rect.width;
       int endy = rect.y + rect.height;
       final int size = width * height;
@@ -102,7 +104,7 @@ public class ImageRenderer {
                // cover 3 * precision
                int halfWidth = (int) (2 * spot.getSigma() / renderedPixelInNm);
                if (halfWidth == 0) {
-                  halfWidth = 1;
+                  halfWidth = 2;
                }
 
                /*
@@ -120,10 +122,11 @@ public class ImageRenderer {
                //int yc = (int) Math.round(spot.getYCenter() / renderedPixelInNm);
                
                
-               if (xc > rect.x && xc < endx && yc > rect.y && yc < endy) {
+               if (xc > rect.x + halfWidth && xc < endx - halfWidth && 
+                       yc > rect.y + halfWidth && yc < endy - halfWidth) {
                   
-                  if (xc > halfWidth && xc < (width - halfWidth)
-                          && yc > halfWidth && yc < (height - halfWidth)) {
+                  if (xc > halfWidth && xc < (fullWidth - halfWidth)
+                          && yc > halfWidth && yc < (fullHeight - halfWidth)) {
                      counter++;
                      spotsUsed++;
                      double totalInt = 0.0;
@@ -160,8 +163,12 @@ public class ImageRenderer {
                         // now add to the image
                         for (int x = xStart; x < xEnd; x++) {
                            for (int y = yStart; y < yEnd; y++) {
-                              ip.setf(x - rect.x, y - rect.y, 
-                                      ip.getf(x - rect.x, y - rect.y) + boxPixels[x - xStart][y - yStart]);
+                              try {
+                                 ip.setf(x - rect.x, y - rect.y,
+                                         ip.getf(x - rect.x, y - rect.y) + boxPixels[x - xStart][y - yStart]);
+                              } catch (Exception ex) {
+                                 System.out.println("Exception");
+                              }
                            }
                         }
                      }
