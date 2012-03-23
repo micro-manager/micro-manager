@@ -19,10 +19,6 @@
 
 (def MAX-Z-TRIGGER-DIST 5.0)
 
-(defstruct channel :name :exposure :z-offset :use-z-stack :skip-frames)
-
-(defstruct stage-position :stage-device :axes)
-
 (defstruct acq-settings :frames :positions :channels :slices :slices-first
   :time-first :keep-shutter-open-slices :keep-shuftter-open-channels
   :use-autofocus :autofocus-skip :relative-slices :exposure :interval-ms :custom-intervals-ms)
@@ -328,7 +324,7 @@
         (attach-runnables runnables)
         (manage-shutter keep-shutter-open-channels keep-shutter-open-slices)
         (make-bursts)
-        (add-next-task-tags)   
+        (add-next-task-tags)
         )))
 
 (defn make-channel-metadata
@@ -369,8 +365,6 @@
                     :channel (get channels c)
                     :slice-index 0
                     :metadata (make-channel-metadata (get channels c))))))]
-    ;(println "events:" events "channels:" channels)
-    ;(println "default-exposure" default-exposure)
     (lazy-seq
       (list
         (assoc (first events)
@@ -422,7 +416,6 @@
 
 ; Testing:
 
-
 (defn test-z-sequence []
   (let [cam (core getCameraDevice)
         z (core getFocusDevice)]
@@ -431,41 +424,34 @@
     (core startStageSequence z)))
 
 (def my-channels
-  [(struct channel "Cy3" 100 0 true 0)
-   (struct channel "Cy5"  50 0 false 0)
-   (struct channel "DAPI" 50 0 true 0)])
+  [{"Cy3" 100 0 true 0}
+   {"Cy5"  50 0 false 0}
+   {"DAPI" 50 0 true 0}])
 
 (def default-settings
-  (struct-map acq-settings
-    :frames (range 10) :positions [{:name "a" :x 1 :y 2} {:name "b" :x 4 :y 5}]
-    :channels my-channels :slices (range 5)
-    :slices-first true :time-first true
-    :keep-shutter-open-slices false :keep-shutter-open-channels true
-    :use-autofocus true :autofocus-skip 3 :relative-slices true :exposure 100
-    :interval-ms 1000))
+  {:frames (range 10) :positions [{:name "a" :x 1 :y 2} {:name "b" :x 4 :y 5}]
+   :channels my-channels :slices (range 5)
+   :slices-first true :time-first true
+   :keep-shutter-open-slices false :keep-shutter-open-channels true
+   :use-autofocus true :autofocus-skip 3 :relative-slices true :exposure 100
+   :interval-ms 1000})
 
 
 (def test-settings
-  (struct-map acq-settings
-    :frames (range 10) :positions [{:name "a" :x 1 :y 2} {:name "b" :x 4 :y 5}]
-    :channels my-channels :slices (range 5)
-    :slices-first true :time-first true
-    :keep-shutter-open-slices false :keep-shutter-open-channels true
-    :use-autofocus true :autofocus-skip 3 :relative-slices true :exposure 100
-    :interval-ms 100))
+  {:frames (range 10) :positions [{:name "a" :x 1 :y 2} {:name "b" :x 4 :y 5}]
+   :channels my-channels :slices (range 5)
+   :slices-first true :time-first true
+   :keep-shutter-open-slices false :keep-shutter-open-channels true
+   :use-autofocus true :autofocus-skip 3 :relative-slices true :exposure 100
+   :interval-ms 100})
 
 (def null-settings
-  (struct-map acq-settings
-    :frames (range 96)
-    :positions (range 1536)
-    :channels [(struct channel "Cy3" 100 0 true 0)
-               (struct channel "Cy5"  50 0 true 0)]
-    :slices (range 5)
-    :slices-first true :time-first false
-    :keep-shutter-open-slices false :keep-shutter-open-channels true
-    :use-autofocus true :autofocus-skip 3 :relative-slices true :exposure 100
-    :interval-ms 100))
-
-;(def result (generate-acq-sequence null-settings))
-
-;(count result)
+  {:frames (range 96)
+   :positions (range 1536)
+   :channels [(struct channel "Cy3" 100 0 true 0)
+              (struct channel "Cy5"  50 0 true 0)]
+   :slices (range 5)
+   :slices-first true :time-first false
+   :keep-shutter-open-slices false :keep-shutter-open-channels true
+   :use-autofocus true :autofocus-skip 3 :relative-slices true :exposure 100
+   :interval-ms 100})

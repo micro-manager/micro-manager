@@ -1,12 +1,13 @@
 (ns org.micromanager.config-editor
-  (:import [javax.swing DefaultListModel JFrame JList JPanel JTable
-                        DefaultListSelectionModel JScrollPane JViewport
-                        ListSelectionModel SpringLayout JPopupMenu
-                        JOptionPane JTextField DefaultCellEditor]
+  (:import [javax.swing DefaultListModel JFrame JList JPanel JTable AbstractAction
+                        DefaultListSelectionModel JScrollPane JViewport KeyStroke
+                        ListSelectionModel SpringLayout JPopupMenu JPanel
+                        JOptionPane JTextField JTabbedPane DefaultCellEditor]
            [javax.swing.event CellEditorListener ListSelectionListener]
-           [java.awt.event MouseAdapter]
+           [java.awt.event FocusAdapter MouseAdapter]
            [javax.swing.table AbstractTableModel]
-           [java.awt Color Dimension])
+           [java.awt Color Dimension Point]
+           [java.util UUID])
   (:use [org.micromanager.mm :only [config-struct load-mm
                                     get-system-config-cached
                                     gui core edt get-config]]))
@@ -26,6 +27,23 @@
     (add-watch reference (gensym "slow_update")
                update-fn-sender)))
            
+
+
+;; identify OS
+
+(defn get-os []
+  (.. System (getProperty "os.name") toLowerCase))
+
+(def is-win
+  (memoize #(not (neg? (.indexOf (get-os) "win")))))
+
+(def is-mac
+  (memoize #(not (neg? (.indexOf (get-os) "mac")))))
+
+(def is-unix
+  (memoize #(not (and (neg? (.indexOf (get-os) "nix"))
+                     (neg? (.indexOf (get-os) "nux"))))))
+
 
 ;; swing layout 
 
@@ -81,6 +99,53 @@
         (when (= 2 (.getClickCount event))
           (f (.getX event) (.getY event)))))))
 
+
+;; keys
+
+(defn get-keystroke [key-shortcut]
+  (KeyStroke/getKeyStroke
+    (.replace key-shortcut "cmd"
+      (if (is-mac) "meta" "ctrl"))))
+
+;; actions
+
+(defn attach-child-action-key
+  "Maps an input-key on a swing component to an action,
+  such that action-fn is executed when pred function is
+  true, but the parent (default) action when pred returns
+  false."
+  [component input-key pred action-fn]
+  (let [im (.getInputMap component)
+        am (.getActionMap component)
+        input-event (get-keystroke input-key)
+        parent-action (if-let [tag (.get im input-event)]
+                        (.get am tag))
+        child-action
+          (proxy [AbstractAction] []
+            (actionPerformed [e]
+              (if (pred)
+                (action-fn)
+                (when parent-action
+                  (.actionPerformed parent-action e)))))
+        uuid (.. UUID randomUUID toString)]
+    (.put im input-event uuid)
+    (.put am uuid child-action)))
+
+
+(defn attach-child-action-keys [comp & items]
+  (doall (map #(apply attach-child-action-key comp %) items)))
+
+(defn attach-action-key
+  "Maps an input-key on a swing component to an action-fn."
+  [component input-key action-fn]
+  (attach-child-action-key component input-key
+                           (constantly true) action-fn))
+
+(defn attach-action-keys [comp & items]
+  "Maps input keys to action-fns."
+  (doall (map #(apply attach-action-key comp %) items)))
+
+
 ;; main stuff
 
 (load-mm)
@@ -117,11 +182,12 @@
                          (presets group))))))
 
 (defn update-groups []
-  (reset! groups (vec (seq (core getAvailableConfigGroups))))
-  (redraw-data)
-  (update-all-properties)
-  (-> @widgets :groups-table update-table)
-  @group-data)
+  (reset! groups (vec (seq (core getAvailableConfigGroups)))))
+
+;  (redraw-data)
+;  (update-all-properties)
+;  (-> @widgets :groups-table update-table)
+;  @group-data)
 
 (defn properties [group-data]
   (sort (set (apply concat (map keys (vals group-data))))))
@@ -132,14 +198,6 @@
 
 (defn update-all-properties []
   (reset! all-properties (vec (sort-by first (get-system-config-cached)))))
-
-(defn group-table-cell-editor []
-  (proxy [DefaultCellEditor] [(JTextField.)]
-    (stopCellEditing []
-                     (println "stopCellEditing" (.getText (.getComponent this)))
-                     (if ((set @groups) (.getText (.getComponent this)))
-                       (do (println "duplicate") false)
-                       true))))
                                
 (defn used-properties-table []
   (JTable.
@@ -248,6 +306,40 @@
          (.editCellAt row col)
       (.. getEditorComponent requestFocusInWindow))))
 
+(defn add-tab-title-focus-listener [editor stop-fn]
+  (.addFocusListener editor
+                     (proxy [FocusAdapter] []
+                       (focusLost [evt]
+                                  (println evt)
+                                  (stop-fn)
+                                  (.removeFocusListener editor this)))))
+  
+(defn start-editing-tab-title [tabbed-pane]
+  (let [index (.getSelectedIndex tabbed-pane)
+        display-component (.getTabComponentAt tabbed-pane index)
+        editor (JTextField. (.getTitleAt tabbed-pane index))
+        stop #(do (println "stop")
+                  (.setTabComponentAt tabbed-pane index display-component)
+                  (when % (.setTitleAt tabbed-pane index (.getText editor))))
+        valid-title? (constantly true)]
+    (.setTabComponentAt tabbed-pane index editor)
+    (doto editor
+      (.setVisible true)
+      .selectAll
+      .requestFocusInWindow
+      (add-tab-title-focus-listener stop valid-title?)
+            (attach-action-keys
+              ["ENTER" #(stop true)]
+              ["ESCAPE" #(stop false)]))))
+
+(defn handle-tabbed-pane-double-click [tabbed-pane x y]
+  (let [tab-rect (.. tabbed-pane getUI (getTabBounds tabbed-pane (.getSelectedIndex tabbed-pane)))]
+    (when (.contains tab-rect (Point. x y))
+      (start-editing-tab-title tabbed-pane))))
+
+(defn edit-tab-on-double-click [tabbed-pane]
+  (attach-double-click-listener tabbed-pane #(handle-tabbed-pane-double-click tabbed-pane %1 %2)))
+
 (defn redraw-data []
   (update-group-data)
   (let [preset-names-table (@widgets :preset-names-table)
@@ -284,6 +376,7 @@
         guess))))
 
 (defn new-preset [group]
+  (when group
   (let [table (@widgets :presets-table)
         preset-name (new-preset-name group)
         preset (config-struct (core getConfigGroupState group))]
@@ -292,7 +385,7 @@
     (redraw-data)
     (println table)
     (edt (let [row (dec (.getRowCount table))]
-      (start-editing-cell table row 0)))))
+      (start-editing-cell table row 0))))))
 
 (defn add-property [group dev prop]
   (when-not ((set (properties @group-data)) [dev prop])
@@ -333,41 +426,48 @@
       (mouseReleased [e]
         (show-popup-menu popup-menu e)))))
            
+(defn group-panel [group]
+  (let [presets-table (presets-table)
+        preset-names-table (preset-names-table)
+        used-properties-table (used-properties-table)
+        presets-table-sp (scroll-pane presets-table)
+        panel (doto (JPanel.)
+                (.setLayout (SpringLayout.))
+                (add-component (scroll-pane used-properties-table) :n 5 :w 5 :s -5 :w 300)
+                (add-component presets-table-sp :n 5 :w 305 :s -5 :e -5))]
+      (.setAutoResizeMode presets-table JTable/AUTO_RESIZE_OFF)
+      (require-single-selection presets-table)
+      (require-single-selection preset-names-table)
+      (.. presets-table getTableHeader (setReorderingAllowed false))
+      (.setBackground preset-names-table (Color. 0xE0 0xE0 0xE0))
+      (link-table-row-selection presets-table preset-names-table)
+      (.setAutoResizeMode presets-table JTable/AUTO_RESIZE_OFF)
+      (.setRowHeaderView presets-table-sp preset-names-table)
+      (.. preset-names-table getParent (setPreferredSize (Dimension. 150 100)))
+      (double-click-for-new-row
+        preset-names-table #(new-preset (get-selected-group)))
+      panel))
+
+(defn test-group-panel [group]
+  (let [f (JFrame. "test")]
+    (.add (.getContentPane f) (group-panel group))
+    (.show f)))
+
 (defn show []
   (let [f (JFrame. "Micro-Manager Configuration Preset Editor")
         cp (.getContentPane f)
-        groups-table (groups-table)
-        presets-table (presets-table)
-        preset-names-table (preset-names-table)
-        used-properties-table (used-properties-table)
-        presets-table-sp (scroll-pane presets-table)]
+        tp (JTabbedPane.)
+        group-panels-map (into {}
+                               (for [group @groups]
+                                 [group (group-panel group)]))]
+    (doseq [[group group-panel] group-panels-map]
+      (.addTab tp group group-panel))
+    (.add cp tp)
     (edt 
-      (.setAutoResizeMode presets-table JTable/AUTO_RESIZE_OFF)
-      (doall (map require-single-selection [groups-table presets-table preset-names-table]))
-      (.. presets-table getTableHeader (setReorderingAllowed false))
-      (.. preset-names-table getParent (setPreferredSize (Dimension. 150 100)))
-      ;(.setFixedCellWidth preset-names-list 150)
-      ;(.setFixedCellHeight preset-names-list (.getRowHeight presets-table))
-      (.setBackground preset-names-table (Color. 0xE0 0xE0 0xE0))
-      (link-table-row-selection presets-table preset-names-table)
-      (double-click-for-new-row groups-table new-group)
-      (double-click-for-new-row
-        preset-names-table #(new-preset (get-selected-group)))
-      (.setAutoResizeMode presets-table JTable/AUTO_RESIZE_OFF)
-      (doto cp
-        (.setLayout (SpringLayout.))
-        (add-component (scroll-pane groups-table) :n 5 :w 5 :n 150 :w 150)
-        (add-component (scroll-pane used-properties-table) :n 5 :w 155 :n 150 :w 500)
-        (add-component presets-table-sp :n 155 :w 5 :s -5 :e -5))
-      (.setRowHeaderView presets-table-sp preset-names-table)
       (.setBounds f 100 100 800 500)
       (.show f))
-    (.setCellEditor groups-table (group-table-cell-editor))
     {:frame f
-     :groups-table groups-table
-     :presets-table presets-table
-     :preset-names-table preset-names-table
-     :used-properties-table used-properties-table}))
+     :tabbed-pane tp}))
 
 (defn set-preferred-column-width [table]
   (->> table

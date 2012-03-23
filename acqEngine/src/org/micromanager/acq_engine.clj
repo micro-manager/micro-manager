@@ -430,11 +430,12 @@
   (when (and (@state :init-continuous-focus)
              (not (core isContinuousFocusEnabled)))
     (core enableContinuousFocus true))
-  (when (and (@state :live-mode-on)
-             (not (.isLiveModeOn gui)))    
-    (.enableLiveMode gui true))
   (let [target-time (+ (@state :last-wake-time) interval-ms)
         delta (- target-time (jvm-time-ms))]
+     (when (and (< 1000 delta)
+                (@state :live-mode-on)
+                (not (.isLiveModeOn gui)))    
+      (.enableLiveMode gui true))
     (when (pos? delta)
       (interruptible-sleep delta))
     (await-resume)
@@ -539,7 +540,6 @@
              :pixel-size-um (core getPixelSizeUm)
              :source (core getCameraDevice)
              :pixel-type (get-pixel-type)
-             :live-mode-on (.isLiveModeOn gui)
       )))
 
 (defn cleanup []
@@ -559,9 +559,6 @@
       (when (and (@state :init-continuous-focus)
                  (not (core isContinuousFocusEnabled)))
         (core enableContinuousFocus true))
-      (when (and (@state :live-mode-on)
-                 (not (.isLiveModeOn gui)))
-        (.enableLiveMode gui true))
       (return-config))
     (catch Throwable t (ReportingUtils/showError t "Acquisition cleanup failed."))))
 
@@ -617,6 +614,7 @@
   (try
     (def acq-settings settings)
     (log (str "Starting MD Acquisition: " settings))
+    (. gui enableLiveMode false)
     (prepare-state this)
     (binding [state (.state this)]
       (def last-state state) ; for debugging
