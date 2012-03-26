@@ -667,7 +667,7 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
          maxAfterRejectingOutliers_ = rawHistogram.length;
          // specified percent of pixels are ignored in the automatic contrast setting
          int totalPoints = imgHeight * imgWidth;
-         HistogramUtils hu = new HistogramUtils(rawHistogram, totalPoints, display_.getHistogramControlsState().percentToIgnore);
+         HistogramUtils hu = new HistogramUtils(rawHistogram, totalPoints, 0.01*display_.getHistogramControlsState().percentToIgnore);
          minAfterRejectingOutliers_ = hu.getMinAfterRejectingOutliers();
          maxAfterRejectingOutliers_ = hu.getMaxAfterRejectingOutliers();
       }
