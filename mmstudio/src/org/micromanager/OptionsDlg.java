@@ -307,27 +307,38 @@ public class OptionsDlg extends MMDialog {
 
       final JComboBox prefZoomCombo = new JComboBox();
       prefZoomCombo.setModel(new DefaultComboBoxModel(new String[]{
-         "25%", "50%", "75%", "100%", "150%","200%","300%","400%","600%"
+         "8%", "12%", "16%",  "25%",  "33%", "50%", "75%", "100%", "150%","200%","300%","400%","600%"
       }));
-      
+    
       double mag = opts_.windowMag_;
       int index = 0;
-      if (mag == 0.5)
+      if (mag == 0.25 / 3.0) {
+         index = 0;
+      } else if (mag == 0.125) {
          index = 1;
-      else if (mag == 0.75)
+      } else if (mag == 0.16) {
          index = 2;
-      else if (mag == 1.0)
+      } else if (mag == 0.25) {
          index = 3;
-      else if (mag == 1.5)
+      } else if (mag == 0.33) {
          index = 4;
-      else if (mag == 2.0)
+      } else if (mag == 0.5) {
          index = 5;
-      else if (mag == 3.0)
+      } else if (mag == 0.75) {
          index = 6;
-      else if (mag == 4.0)
+      } else if (mag == 1.0) {
          index = 7;
-      else if (mag == 6.0)
+      } else if (mag == 1.5) {
          index = 8;
+      } else if (mag == 2.0) {
+         index = 9;
+      } else if (mag == 3.0) {
+         index = 10;
+      } else if (mag == 4.0) {
+         index = 11;
+      } else if (mag == 6.0) {
+         index = 12;
+      }
       prefZoomCombo.setSelectedIndex(index);
       
       prefZoomCombo.addActionListener(new ActionListener() {
@@ -335,35 +346,48 @@ public class OptionsDlg extends MMDialog {
          public void actionPerformed(ActionEvent e) {
             switch (prefZoomCombo.getSelectedIndex()) {
                case (0):
-                  opts_.windowMag_ = 0.25;
+                  opts_.windowMag_ = 0.25 / 3.0;
                   break;
                case (1):
-                  opts_.windowMag_ = 0.5;
+                  opts_.windowMag_ = 0.125;
                   break;
                case (2):
-                  opts_.windowMag_ = 0.75;
+                  opts_.windowMag_ = 0.16;
                   break;
                case (3):
-                  opts_.windowMag_ = 1.0;
+                  opts_.windowMag_ = 0.25;
                   break;
                case (4):
-                  opts_.windowMag_ = 1.5;
+                  opts_.windowMag_ = 0.33;
                   break;
                case (5):
-                  opts_.windowMag_ = 2.0;
+                  opts_.windowMag_ = 0.5;
                   break;
                case (6):
-                  opts_.windowMag_ = 3.0;
+                  opts_.windowMag_ = 0.75;
                   break;
                case (7):
-                  opts_.windowMag_ = 4.0;
+                  opts_.windowMag_ = 1.0;
                   break;
                case (8):
+                  opts_.windowMag_ = 1.5;
+                  break;
+              case (9):
+                  opts_.windowMag_ = 2.0;
+                  break;
+               case (10):
+                  opts_.windowMag_ = 3.0;
+                  break;
+               case (11):
+                  opts_.windowMag_ = 4.0;
+                  break;
+               case (12):
                   opts_.windowMag_ = 6.0;
                   break;
             }
+            }
          }
-      });
+      );
       getContentPane().add(prefZoomCombo);
       springLayout.putConstraint(SpringLayout.NORTH, prefZoomCombo, 30, SpringLayout.NORTH, closeOnExitCheckBox);
       springLayout.putConstraint(SpringLayout.WEST, prefZoomCombo, 90, SpringLayout.WEST, autoreloadDevicesCheckBox);
