@@ -34,8 +34,8 @@
 #include <sstream>
 using namespace std;
 
-const int g_step5 = 354987;
-const int g_step8 = 221867;
+const unsigned int g_step5 = 354987;
+const unsigned int g_step8 = 221867;
 
 ///////////
 // commands
@@ -446,7 +446,7 @@ int IntegratedFilterWheel::DiscoverNumberOfPositions()
       return 0;
    }
 
-   int stepsPerPos = (int)*(answer+10);
+   unsigned int stepsPerPos = *((unsigned int*)(answer+10));
    ostringstream os;
    os << "Found " << stepsPerPos << " steps per position";
    LogMessage(os.str().c_str());
