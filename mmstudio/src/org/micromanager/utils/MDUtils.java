@@ -100,6 +100,12 @@ public class MDUtils {
    public static void setFrameIndex(JSONObject map, int frameIndex) throws JSONException {
       map.put("Frame", frameIndex);
    }
+   
+   public static int getNumPositions(JSONObject map) throws JSONException {
+      if (map.has("Positions"))
+         return map.getInt("Positions");
+      throw new JSONException("Positions tag not found in summary metadata");
+   }
 
    public static String getPositionName(JSONObject map) throws JSONException {
       if (map.has("PositionName") && !map.isNull("PositionName")) {

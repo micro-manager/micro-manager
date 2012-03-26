@@ -344,6 +344,8 @@ public class TaggedImageStorageDiskDefault implements TaggedImageStorage {
       String posName = getPosition(firstImage);
       if (posName == null)
          posName = "";
+      if (MDUtils.getNumPositions(summaryMetadata_) == 0)
+         posName = "";
 
       if (positionNames_.containsKey(pos)
               && positionNames_.get(pos) != null
