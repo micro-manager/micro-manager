@@ -11,6 +11,7 @@ import ij.gui.ImageCanvas;
 import ij.gui.ImageWindow;
 import ij.gui.Roi;
 import ij.gui.Toolbar;
+import ij.process.ImageProcessor;
 import java.awt.Dimension;
 import java.awt.Graphics;
 import java.awt.Image;
@@ -49,10 +50,42 @@ public class GaussCanvas extends ImageCanvas {
    public void setImageWindow(ImageWindow iw) {
       iw_ = iw;
    }
+   */
+   
+   /**
+    * Transforms the sourceRct Rectangle into a Rectangle in nm coordinates
+    * @param magnification
+    * @return 
+    */
+   Rectangle sourceRectToNmRect(double magnification) {
+      Rectangle resRect = new Rectangle();
+      resRect.x = (int) (srcRect.x * rowData_.pixelSizeNm_ / (originalMag_ * magnification) );      
+      resRect.y = (int) (srcRect.y * rowData_.pixelSizeNm_ / (originalMag_ * magnification) );
+      resRect.width = (int) (srcRect.width * rowData_.pixelSizeNm_ / (originalMag_ * magnification) );
+      resRect.height = (int) (srcRect.height * rowData_.pixelSizeNm_ / (originalMag_ * magnification) );
+      
+      return resRect;
+   }
+   
+      /**
+    * Transforms the sourceRct Rectangle into a Rectangle in nm coordinates
+    * @param magnification
+    * @return 
+    */
+   Rectangle sourceRectToRenderRect(double magnification) {
+      Rectangle resRect = new Rectangle();
+      resRect.x = (int) (srcRect.x / (originalMag_ * magnification) );      
+      resRect.y = (int) (srcRect.y * rowData_.pixelSizeNm_ / (originalMag_ * magnification) );
+      resRect.width = (int) (srcRect.width * rowData_.pixelSizeNm_ / (originalMag_ * magnification) );
+      resRect.height = (int) (srcRect.height * rowData_.pixelSizeNm_ / (originalMag_ * magnification) );
+      
+      return resRect;
+   }
    
    @Override
    public void zoomIn(int sx, int sy) {
-		if (magnification>=32) return;
+		if (magnification>=32) 
+         return;
 		double newMag = getHigherZoomLevel(magnification);
 		int newWidth = (int)(imageWidth*newMag);
 		int newHeight = (int)(imageHeight*newMag);
@@ -66,19 +99,15 @@ public class GaussCanvas extends ImageCanvas {
 			imp.getWindow().pack();
 		} else
 			adjustSourceRect(newMag, sx, sy);
-      if (magnification > 1.0) {
-         Rectangle myR = new Rectangle(0, 0, (int) (newWidth * newMag * originalMag_), 
-                 (int) (newHeight * newMag * originalMag_) );
-         //ImageRenderer.renderData(iw_, rowData_, renderMethod_, 
-         //     originalMag_ * magnification, myR, sf_);
-      }
+
+            
 		repaint();
-		//if (srcRect.width<imageWidth || srcRect.height<imageHeight)
+      //if (srcRect.width<imageWidth || srcRect.height<imageHeight)
 		//	resetMaxBounds();
 	}
-    * 
-    */
-   
+
+   /*
+
     public void paint(Graphics g) {
 		Roi roi = imp.getRoi();
 		if (roi!=null) {
@@ -99,9 +128,11 @@ public class GaussCanvas extends ImageCanvas {
             double f = magnification * originalMag_;
             Rectangle magRect = new Rectangle((int) (f * srcRect.x), (int) (f * srcRect.y),
                     imp.getWidth(), imp.getHeight());
-            ImagePlus impTmp = ImageRenderer.renderData(rowData_, renderMethod_,
+            ImageProcessor ipTmp = ImageRenderer.renderData(rowData_, renderMethod_,
                     f, magRect, sf_);
-            Image img = impTmp.getImage();
+            imp.setProcessor(ipTmp);
+            
+            Image img = imp.getImage();
             g.drawImage(img, 0, 0, magRect.width, magRect.height, null);
          } else {
             Image img = imp.getImage();
@@ -119,6 +150,7 @@ public class GaussCanvas extends ImageCanvas {
 		}
 		catch(OutOfMemoryError e) {IJ.outOfMemory("Paint");}
     }
+*/
    
 
    void adjustSourceRect(double newMag, int x, int y) {

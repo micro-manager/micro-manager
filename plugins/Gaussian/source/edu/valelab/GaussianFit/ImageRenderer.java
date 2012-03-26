@@ -25,17 +25,11 @@ public class ImageRenderer {
     * @param magnification  - factor x original size
     * @param rect - roi in the magnified image that should be rendered
     */
-   public static ImagePlus renderData(final MyRowData rowData,
+   public static ImageProcessor renderData(final MyRowData rowData,
            final int method, final double magnification, Rectangle rect, final SpotDataFilter sf) {
+   
+      ImageProcessor ip = null;
 
-      ImagePlus sp = null;    
-      String fsep = System.getProperty("file.separator");
-      String ttmp = rowData.name_;
-      if (rowData.name_.contains(fsep)) {
-         ttmp = rowData.name_.substring(rowData.name_.lastIndexOf(fsep) + 1);
-      }
-      ttmp += magnification + "x";
-      final String title = ttmp;
 
       //int mag = 1 << renderSize;
 
@@ -52,7 +46,7 @@ public class ImageRenderer {
       int endy = rect.y + rect.height;
       final int size = width * height;
       double factor = (double) magnification / rowData.pixelSizeNm_;
-      ImageProcessor ip = null;
+
 
       if (method == 0) {
          ip = new ShortProcessor(width, height);
@@ -184,15 +178,20 @@ public class ImageRenderer {
 
       }
    
+      
 
       if (ip != null) {
          ip.resetMinAndMax();
+      }
+      /*
          sp = new ImagePlus(title, ip);
          DisplayUtils.AutoStretch(sp);
          DisplayUtils.SetCalibration(sp, (float) (rowData.pixelSizeNm_ / magnification));
       }
+      
+       */
 
-      return sp;    
+      return ip;    
    }
    
    

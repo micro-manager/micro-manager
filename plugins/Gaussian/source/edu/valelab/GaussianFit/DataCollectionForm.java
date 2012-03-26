@@ -1323,12 +1323,24 @@ public class DataCollectionForm extends javax.swing.JFrame {
                   sf.setIntensity(true, Double.parseDouble(intensityMin_.getText()),
                           Double.parseDouble(intensityMax_.getText()));
                }
-               ImagePlus sp = ImageRenderer.renderData(rowData_.get(row), 
+               
+               MyRowData rowData = rowData_.get(row);
+               ImageProcessor ip = ImageRenderer.renderData(rowData,
                        visualizationModel_.getSelectedIndex(), mag, null, sf);
-               GaussCanvas gs = new GaussCanvas(sp, rowData_.get(row), 
+               String fsep = System.getProperty("file.separator");
+               String ttmp = rowData.name_;
+               if (rowData.name_.contains(fsep)) {
+                  ttmp = rowData.name_.substring(rowData.name_.lastIndexOf(fsep) + 1);
+               }
+               ttmp += mag + "x";
+               final String title = ttmp;
+
+               ImagePlus sp = new ImagePlus(title, ip);
+               GaussCanvas gs = new GaussCanvas(sp, rowData_.get(row),
                        visualizationModel_.getSelectedIndex(), mag, sf);
+               DisplayUtils.AutoStretch(sp);
+               DisplayUtils.SetCalibration(sp, (float) (rowData.pixelSizeNm_ / mag));
                ImageWindow w = new ImageWindow(sp, gs);
-               // gs.setImageWindow(w);
 
                w.setVisible(true);
             }
