@@ -88,7 +88,7 @@ import valelab.LocalWeightedMean;
 public class DataCollectionForm extends javax.swing.JFrame {
    AbstractTableModel myTableModel_;
    private final String[] columnNames_ = {"ID", "Image", "Nr of spots", "2C Reference", 
-      "Action1", "Action2"};
+      "Action1", "Action2", "stdX", "stdY",};
    private final String[] plotModes_ = {"t-X", "t-Y", "X-Y", "t-Int"};
    private final String[] renderModes_ = {"Points", "Gaussian", "Norm. Gaussian"};
    private final String[] renderSizes_  = {"1x", "2x", "4x", "8x"};
@@ -140,7 +140,10 @@ public class DataCollectionForm extends javax.swing.JFrame {
       public final int nrPositions_;
       public final int maxNrSpots_;
       public final boolean isTrack_;
+      public final double stdX_;
+      public final double stdY_;
       public final int ID_;
+      
 
 
       public MyRowData(String name,
@@ -175,6 +178,17 @@ public class DataCollectionForm extends javax.swing.JFrame {
          maxNrSpots_ = maxNrSpots;
          timePoints_ = timePoints;
          isTrack_ = isTrack;
+         double stdX = 0.0;
+         double stdY = 0.0;
+         if (isTrack_) {
+            ArrayList<Point2D.Double> xyList = spotListToPointList(spotList_);
+            Point2D.Double avgPoint = avgXYList(xyList);
+            Point2D.Double stdPoint = stdDevXYList(xyList, avgPoint);
+            stdX = stdPoint.x;
+            stdY = stdPoint.y;
+         }
+         stdX_ = stdX;
+         stdY_ = stdY;
          ID_ = rowDataID_;
          rowDataID_++;
       }
@@ -220,8 +234,18 @@ public class DataCollectionForm extends javax.swing.JFrame {
                 return rowData_.get(row).spotList_.size();
              else if (col == 3)
                 return rowData_.get(row).colCorrRef_;
-             else
+             else if (col == 6)
+                if (rowData_.get(row).isTrack_)
+                  return String.format("%.2f", rowData_.get(row).stdX_);
+                else return null;
+             else if (col == 7)
+                if (rowData_.get(row).isTrack_)
+                  return String.format("%.2f", rowData_.get(row).stdY_);
+                else 
+                   return null;
+             else 
                 return getColumnName(col);
+             
           }
          @Override
           public boolean isCellEditable(int row, int col) {
@@ -1280,7 +1304,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
                  "Is a Track: " + rowData.isTrack_;
          
          if (rowData.isTrack_) {
-            ArrayList<Point2D.Double> xyList = rowToList(rowData);
+            ArrayList<Point2D.Double> xyList = spotListToPointList(rowData.spotList_);
             Point2D.Double avg = DataCollectionForm.avgXYList(xyList);
             Point2D.Double stdDev = DataCollectionForm.stdDevXYList(xyList, avg);
             
@@ -1363,9 +1387,9 @@ public class DataCollectionForm extends javax.swing.JFrame {
       }
    }//GEN-LAST:event_plotButton_ActionPerformed
 
-   public static ArrayList<Point2D.Double> rowToList(MyRowData myRow){
+   public static ArrayList<Point2D.Double> spotListToPointList(List<GaussianSpotData> spotList){
       ArrayList<Point2D.Double> xyPoints = new ArrayList<Point2D.Double>();
-      Iterator it = myRow.spotList_.iterator();
+      Iterator it = spotList.iterator();
       while (it.hasNext()) {
          GaussianSpotData gs = (GaussianSpotData) it.next();
          Point2D.Double point = new Point2D.Double(gs.getXCenter(), gs.getYCenter());
@@ -1414,7 +1438,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
          
          for (int i = 0; i < rows.length; i++) {
             myRows[i] = rowData_.get(rows[i]);
-            xyPoints[i] = rowToList(myRows[i]);
+            xyPoints[i] = spotListToPointList(myRows[i].spotList_);
             Point2D.Double listAvg = avgXYList(xyPoints[i]);
             for (Point2D.Double xy : xyPoints[i]) {
                xy.x = xy.x - listAvg.x;
@@ -1828,7 +1852,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
    }
    
    
-     /**
+    /**
     * Save data set in as a text file
     *
     * @rowData - row with spot data to be saved
@@ -2001,7 +2025,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
          return;
       }
       
-      ArrayList<Point2D.Double> xyPoints = rowToList(rowData);
+      ArrayList<Point2D.Double> xyPoints = spotListToPointList(rowData.spotList_);
       Point2D.Double avgPoint = avgXYList(xyPoints);
           
       /*ArrayList<Point2D.Double> xyPoints = new ArrayList<Point2D.Double>();
