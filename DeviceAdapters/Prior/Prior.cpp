@@ -1456,8 +1456,9 @@ int ZStage::Initialize()
    if (ret != DEVICE_OK)
       return ret;
 
-   if (res < 0.0)
-      res = -res;
+   // What to do with negative step sizes?  The controller reports them!
+//   if (res < 0.0)
+//      res = -res;
 
    if (res == 0.0)
       return ERR_INVALID_STEP_SIZE;
