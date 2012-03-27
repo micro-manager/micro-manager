@@ -1422,6 +1422,7 @@ ZStage::ZStage() :
    answerTimeoutMs_(1000)
 {
    InitializeDefaultErrorMessages();
+   SetErrorText(ERR_INVALID_STEP_SIZE, "Controller reports an invalid step size");
 
    // create pre-initialization properties
    // ------------------------------------
@@ -1455,7 +1456,10 @@ int ZStage::Initialize()
    if (ret != DEVICE_OK)
       return ret;
 
-   if (res <= 0.0)
+   if (res < 0.0)
+      res = -res;
+
+   if (res == 0.0)
       return ERR_INVALID_STEP_SIZE;
 
    stepSizeUm_ = res;
