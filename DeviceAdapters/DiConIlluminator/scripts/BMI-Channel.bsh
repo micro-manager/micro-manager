@@ -1,7 +1,7 @@
 import java.lang;
 core = mmc;
 core.unloadAllDevices();
-core.loadDevice("Shutter", "ScopeLED", "ScopeLEDMicroscopeIlluminator");
+core.loadDevice("Shutter", "ScopeLED", "ScopeLED-MSB/MSP");
 core.setProperty("Shutter", "VendorID", "49745");
 core.setProperty("Shutter", "ProductID", "4867");
 core.initializeDevice("Shutter");
