@@ -6,20 +6,14 @@ package org.micromanager.acquisition;
 
 import ij.CompositeImage;
 import ij.ImagePlus;
-import ij.WindowManager;
 import java.awt.Color;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import org.micromanager.api.ImageCache;
 import org.micromanager.api.ImageCacheListener;
-import java.lang.ref.SoftReference;
 import java.util.ArrayList;
 import org.micromanager.api.TaggedImageStorage;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
-import java.util.prefs.Preferences;
 import mmcorej.TaggedImage;
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -41,7 +35,6 @@ public class MMImageCache implements TaggedImageStorage, ImageCache {
    private TaggedImageStorage imageStorage_;
    private Set<String> changingKeys_;
    private JSONObject firstTags_;
-   private HashMap<String, SoftReference<TaggedImage>> softTable_;
    private int lastFrame_ = -1;
    private JSONObject lastTags_;
    private boolean conserveRam_;
@@ -62,7 +55,6 @@ public class MMImageCache implements TaggedImageStorage, ImageCache {
    public MMImageCache(TaggedImageStorage imageStorage) {
       imageStorage_ = imageStorage;
       changingKeys_ = new HashSet<String>();
-      softTable_ = new HashMap<String, SoftReference<TaggedImage>>();
       conserveRam_ = MMStudioMainFrame.getInstance().getConserveRamOption();
    }
 
@@ -99,7 +91,6 @@ public class MMImageCache implements TaggedImageStorage, ImageCache {
    }
 
    public void close() {
-      softTable_ = null;
       imageStorage_.close();
    }
 
@@ -111,6 +102,7 @@ public class MMImageCache implements TaggedImageStorage, ImageCache {
       if (newImageFileManager == null) {
          return;
       }
+      newImageFileManager.setSummaryMetadata(imageStorage_.getSummaryMetadata());
       for (String label : imageStorage_.imageKeys()) {
          int pos[] = MDUtils.getIndices(label);
          try {
@@ -129,7 +121,6 @@ public class MMImageCache implements TaggedImageStorage, ImageCache {
    public void putImage(TaggedImage taggedImg) {
       try {
          if (!conserveRam_) {
-            softTable_.put(MDUtils.getLabel(taggedImg.tags), new SoftReference(taggedImg));
          }
 
          checkForChangingTags(taggedImg);
@@ -156,19 +147,10 @@ public class MMImageCache implements TaggedImageStorage, ImageCache {
    public TaggedImage getImage(int channel, int slice, int frame, int position) {
       String label = MDUtils.generateLabel(channel, slice, frame, position);
       TaggedImage taggedImg = null;
-      if (softTable_ == null) {
-         return null;
-      }
-      if (softTable_.containsKey(label)) {
-         taggedImg = softTable_.get(label).get();
-      }
       if (taggedImg == null) {
          taggedImg = imageStorage_.getImage(channel, slice, frame, position);
          if (taggedImg != null) {
             checkForChangingTags(taggedImg);
-            if (!conserveRam_) {
-               softTable_.put(label, new SoftReference(taggedImg));
-            }
          }
       }
       return taggedImg;
@@ -177,12 +159,6 @@ public class MMImageCache implements TaggedImageStorage, ImageCache {
    public JSONObject getImageTags(int channel, int slice, int frame, int position) {
       String label = MDUtils.generateLabel(channel, slice, frame, position);
       JSONObject tags = null;
-      if (softTable_ == null) {
-         return null;
-      }
-      if (softTable_.containsKey(label)) {
-         tags = softTable_.get(label).get().tags;
-      }
       if (tags == null) {
          tags = imageStorage_.getImageTags(channel, slice, frame, position);
       }

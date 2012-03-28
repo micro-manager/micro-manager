@@ -78,7 +78,7 @@ public class MMAcquisition {
    private String rootDirectory_;
    private VirtualAcquisitionDisplay virtAcq_;
    private final boolean existing_;
-   private final boolean diskCached_;
+   private final boolean virtual_;
    private final boolean show_;
    private JSONArray channelColors_ = new JSONArray();
    private JSONArray channelNames_ = new JSONArray();
@@ -99,38 +99,45 @@ public class MMAcquisition {
       rootDirectory_ = dir;
       show_ = show;
       existing_ = existing;
-      diskCached_ = diskCached;
+      virtual_ = diskCached;
    }
 
    public MMAcquisition(String name, JSONObject summaryMetadata, boolean diskCached, AcquisitionEngine eng) {
       TaggedImageStorage imageFileManager;
+      MMImageCache imageCache;
       name_ = name;
-      diskCached_ = diskCached;
+      virtual_ = diskCached;
       existing_ = false;
       show_ = true;
-      if (diskCached) {
-         try {
-            String acqPath = createAcqPath(summaryMetadata.getString("Directory"),
-                    summaryMetadata.getString("Prefix"));
-            imageFileManager = ImageUtils.newImageStorageInstance(acqPath,
-                    true, (JSONObject) null);
-         } catch (Exception e) {
-            ReportingUtils.showError(e, "Unable to create directory for saving images.");
-            eng.stop(true);
-            imageFileManager = null;
+      try {
+         if (summaryMetadata.has("Directory") && summaryMetadata.get("Directory").toString().length() > 0) {
+            try {
+               String acqPath = createAcqPath(summaryMetadata.getString("Directory"), summaryMetadata.getString("Prefix"));
+               imageFileManager = ImageUtils.newImageStorageInstance(acqPath, true, (JSONObject) null);
+               imageCache = new MMImageCache(imageFileManager);
+               if (!virtual_) {
+                  imageCache.saveAs(new TaggedImageStorageRam(null), true);
+               }
+            } catch (Exception e) {
+               ReportingUtils.showError(e, "Unable to create directory for saving images.");
+               eng.stop(true);
+               imageFileManager = null;
+               imageCache = null;
+            }
+         } else {
+            imageFileManager = new TaggedImageStorageRam(null);
+            imageCache = new MMImageCache(imageFileManager);
          }
-      } else {
-         imageFileManager = new TaggedImageStorageRam(null);
-      }
+  
+      imageCache.setSummaryMetadata(summaryMetadata);
 
-
-      MMImageCache imageCache_ = new MMImageCache(imageFileManager);
-      imageCache_.setSummaryMetadata(summaryMetadata);
-
-      virtAcq_ = new VirtualAcquisitionDisplay(imageCache_, eng);
-      imageCache_.addImageCacheListener(virtAcq_);
+      virtAcq_ = new VirtualAcquisitionDisplay(imageCache, eng);
+      imageCache.addImageCacheListener(virtAcq_);
       this.summary_ = summaryMetadata;
-   }
+      } catch (JSONException ex) {
+         ReportingUtils.showError(ex);
+      }
+  }
 
    private String createAcqPath(String root, String prefix) throws Exception {
       File rootDir = JavaUtils.createDirectory(root);
@@ -256,25 +263,41 @@ public class MMAcquisition {
 
       TaggedImageStorage imageFileManager;
       String name = name_;
+      MMImageCache imageCache = null;
 
-      if (diskCached_) {
+      if (virtual_ && existing_) {
          String dirName = rootDirectory_ + File.separator + name;
-         if (!existing_ && (new File(dirName)).exists()) {
+         imageFileManager = ImageUtils.newImageStorageInstance(dirName, false, null);
+         imageCache = new MMImageCache(imageFileManager);
+      }
+
+      if (virtual_ && !existing_) {
+         String dirName = rootDirectory_ + File.separator + name;
+         if ((new File(dirName)).exists()) {
             try {
                dirName = createAcqPath(rootDirectory_, name_);
             } catch (Exception ex) {
                throw new MMScriptException("Failed to figure out acq saving path.");
             }
          }
-         imageFileManager = new TaggedImageStorageDiskDefault(dirName,
-                 !existing_, new JSONObject());
-      } else {
-         imageFileManager = new TaggedImageStorageRam(null);
+         imageFileManager = ImageUtils.newImageStorageInstance(dirName, true, summary_);
+         imageCache = new MMImageCache(imageFileManager);
       }
 
+      if (!virtual_ && !existing_) {
+         imageFileManager = new TaggedImageStorageRam(null);
+         imageCache = new MMImageCache(imageFileManager);
+      }
 
-      MMImageCache imageCache = new MMImageCache(imageFileManager);
+      if (!virtual_ && existing_) {
+         String dirName = rootDirectory_ + File.separator + name;
+         TaggedImageStorage tempImageFileManager = ImageUtils.newImageStorageInstance(dirName, false, null);
+         imageCache = new MMImageCache(tempImageFileManager);
+         imageFileManager = new TaggedImageStorageRam(null);
+         imageCache.saveAs(imageFileManager,true);
+      }
 
+      
       CMMCore core = MMStudioMainFrame.getInstance().getCore();
       if (!existing_) {
          int camCh = (int) core.getNumberOfCameraChannels();
@@ -290,11 +313,6 @@ public class MMAcquisition {
 
       virtAcq_ = new VirtualAcquisitionDisplay(imageCache, null, name);
 
-      if (show_ && diskCached_ && existing_) {
-         // start loading all other images in a background thread
-         PreLoadDataThread t = new PreLoadDataThread(virtAcq_);
-         new Thread(t, "PreLoadDataThread").start();
-      }
       if (show_) {
          virtAcq_.show();
       }

@@ -349,12 +349,12 @@ public class ImageUtils {
    }
 
    public static TaggedImageStorage newImageStorageInstance
-           (String acqPath, boolean b, JSONObject summaryMetadata) {
+           (String acqPath, boolean newDataSet, JSONObject summaryMetadata) {
       try {
         // return new TaggedImageStorageDiskDefault(acqPath, b, summaryMetadata);
         return (TaggedImageStorage) storageClass_
                  .getConstructor(String.class, Boolean.class, JSONObject.class)
-                 .newInstance(acqPath, b, summaryMetadata);
+                 .newInstance(acqPath, newDataSet, summaryMetadata);
       } catch (Exception ex) {
          ReportingUtils.showError(ex);
       }

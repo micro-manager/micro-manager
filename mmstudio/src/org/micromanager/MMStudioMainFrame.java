@@ -47,8 +47,6 @@ import java.io.IOException;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import java.util.prefs.Preferences;
 
 import javax.swing.JButton;
@@ -74,14 +72,11 @@ import mmcorej.CMMCore;
 import mmcorej.DeviceType;
 import mmcorej.MMCoreJ;
 import mmcorej.MMEventCallback;
-import mmcorej.Metadata;
 import mmcorej.StrVector;
 
 import org.json.JSONObject;
 import org.micromanager.acquisition.AcquisitionManager;
 import org.micromanager.api.ImageCache;
-import org.micromanager.api.ImageCacheListener;
-import org.micromanager.acquisition.MMImageCache;
 import org.micromanager.api.AcquisitionEngine;
 import org.micromanager.api.Autofocus;
 import org.micromanager.api.MMPlugin;
@@ -133,11 +128,9 @@ import org.micromanager.acquisition.AcquisitionWrapperEngine;
 import org.micromanager.acquisition.LiveModeTimer;
 import org.micromanager.acquisition.MMAcquisition;
 import org.micromanager.acquisition.MetadataPanel;
-import org.micromanager.acquisition.TaggedImageStorageDiskDefault;
 import org.micromanager.acquisition.VirtualAcquisitionDisplay;
 import org.micromanager.api.DeviceControlGUI;
 import org.micromanager.api.Pipeline;
-import org.micromanager.api.TaggedImageStorage;
 import org.micromanager.utils.FileDialogs;
 import org.micromanager.utils.FileDialogs.FileType;
 import org.micromanager.utils.HotKeysDialog;
@@ -1112,13 +1105,28 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface, Device
             new Thread() {
                @Override
                public void run() {
-                  openAcquisitionData();
+                  openAcquisitionData(false);
                }
             }.start();
          }
       });
-      openMenuItem.setText("Open Acquisition Data...");
+      openMenuItem.setText("Open Acquisition Data in Virtual Mode (larger datasets)...");
       fileMenu.add(openMenuItem);
+
+      final JMenuItem openInRamMenuItem = new JMenuItem();
+      openInRamMenuItem.addActionListener(new ActionListener() {
+
+         public void actionPerformed(final ActionEvent e) {
+            new Thread() {
+               @Override
+               public void run() {
+                  openAcquisitionData(true);
+               }
+            }.start();
+         }
+      });
+      openInRamMenuItem.setText("Open Acquisition Data in RAM (faster playback)...");
+      fileMenu.add(openInRamMenuItem);
 
       fileMenu.addSeparator();
 
@@ -2462,7 +2470,7 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface, Device
     * Open an existing acquisition directory and build viewer window.
     *
     */
-   public void openAcquisitionData() {
+   public void openAcquisitionData(boolean inRAM) {
 
       // choose the directory
       // --------------------
@@ -2475,17 +2483,17 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface, Device
             openAcqDirectory_ = f.getParent();
          }
 
-         openAcquisitionData(openAcqDirectory_);
+         openAcquisitionData(openAcqDirectory_, inRAM);
          
       }
    }
 
-   public void openAcquisitionData(String dir) {
+   public void openAcquisitionData(String dir, boolean inRAM) {
                String rootDir = new File(dir).getAbsolutePath();
          String name = new File(dir).getName();
          rootDir= rootDir.substring(0, rootDir.length() - (name.length() + 1));
          try {
-            acqMgr_.openAcquisition(name, rootDir, true, true, true);
+            acqMgr_.openAcquisition(name, rootDir, true, !inRAM, true);
             acqMgr_.getAcquisition(name).initialize();
             acqMgr_.closeAcquisition(name);
          } catch (MMScriptException ex) {

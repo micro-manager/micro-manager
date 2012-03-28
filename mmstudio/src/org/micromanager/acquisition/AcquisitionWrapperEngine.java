@@ -236,8 +236,10 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
       acquisitionSettings.keepShutterOpenSlices = keepShutterOpenForStack_;
 
       acquisitionSettings.save = saveFiles_;
-      acquisitionSettings.root = rootName_;
-      acquisitionSettings.prefix = dirName_;
+      if (saveFiles_) {
+         acquisitionSettings.root = rootName_;
+         acquisitionSettings.prefix = dirName_;
+      }
       acquisitionSettings.comment = comment_;
       return acquisitionSettings;
    }
