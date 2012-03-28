@@ -1,6 +1,6 @@
 /*
-DiCon Illuminator Device Adapter for Micro-Manager. 
-Copyright (C) 2011 DiCon Lighting, Inc
+ScopeLED Device Adapters for Micro-Manager. 
+Copyright (C) 2011-2012 ScopeLED
 
 This adapter is free software: you can redistribute it and/or modify
 it under the terms of the GNU Lesser General Public License as
@@ -19,14 +19,14 @@ License along with this software.  If not, see
 */
 
     
-#ifndef DiConBasicIlluminator_h
-#define DiConBasicIlluminator_h
+#ifndef ScopeLEDBasicIlluminator_h
+#define ScopeLEDBasicIlluminator_h
 
 #include "USBCommAdapter.h"
 #include <DeviceBase.h>
 #include <time.h>
 
-template <class T> class DiConBasicIlluminator : public CShutterBase<T>
+template <class T> class ScopeLEDBasicIlluminator : public CShutterBase<T>
 {
 protected:
     bool m_state;
@@ -112,7 +112,7 @@ protected:
         return Transact(pCommand, cbCommand, RxBuffer, &cbRxBuffer);
     }
 public:
-    DiConBasicIlluminator() :
+    ScopeLEDBasicIlluminator() :
         m_state(false), m_hDevice(NULL),
         m_TxnTime(0), m_lastDeviceResult(-1), 
         m_vid(0x24C2), m_pid(0),
@@ -120,7 +120,7 @@ public:
     {
 
     }
-    ~DiConBasicIlluminator()
+    ~ScopeLEDBasicIlluminator()
     {
         CloseHandle(m_evAbortRx);
     }

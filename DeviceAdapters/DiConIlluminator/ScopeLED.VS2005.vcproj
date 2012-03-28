@@ -2,7 +2,7 @@
 <VisualStudioProject
 	ProjectType="Visual C++"
 	Version="8.00"
-	Name="DiConIlluminator"
+	Name="ScopeLED"
 	ProjectGUID="{3366ED2E-3283-4F30-9F77-55391129489C}"
 	Keyword="Win32Proj"
 	>
@@ -42,7 +42,7 @@
 				Name="VCCLCompilerTool"
 				Optimization="0"
 				AdditionalIncludeDirectories="../../MMCore; ../../MMDevice"
-				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_USRDLL;DICONILLUMINATOR_EXPORTS;_USRDLL;MODULE_EXPORTS"
+				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_USRDLL;SCOPELED_EXPORTS;_USRDLL;MODULE_EXPORTS"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="3"
@@ -121,7 +121,7 @@
 				Name="VCCLCompilerTool"
 				Optimization="0"
 				AdditionalIncludeDirectories="../../MMCore; ../../MMDevice"
-				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_USRDLL;DICONILLUMINATOR_EXPORTS;_USRDLL;MODULE_EXPORTS"
+				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_USRDLL;SCOPELED_EXPORTS;_USRDLL;MODULE_EXPORTS"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="3"
@@ -198,7 +198,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				AdditionalIncludeDirectories="../../MMCore; ../../MMDevice"
-				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;DICONILLUMINATOR_EXPORTS;_USRDLL;MODULE_EXPORTS"
+				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;SCOPELED_EXPORTS;_USRDLL;MODULE_EXPORTS"
 				RuntimeLibrary="0"
 				UsePrecompiledHeader="0"
 				WarningLevel="3"
@@ -275,7 +275,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				AdditionalIncludeDirectories="../../MMCore; ../../MMDevice"
-				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;DICONILLUMINATOR_EXPORTS;_USRDLL;MODULE_EXPORTS"
+				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;SCOPELED_EXPORTS;_USRDLL;MODULE_EXPORTS"
 				RuntimeLibrary="0"
 				UsePrecompiledHeader="0"
 				WarningLevel="3"
@@ -337,11 +337,11 @@
 			UniqueIdentifier="{93995380-89BD-4b04-88EB-625FBE52EBFB}"
 			>
 			<File
-				RelativePath=".\DiConBasicIlluminator.h"
+				RelativePath=".\ScopeLEDBasicIlluminator.h"
 				>
 			</File>
 			<File
-				RelativePath=".\DiConIlluminator.h"
+				RelativePath=".\ScopeLEDDevices.h"
 				>
 			</File>
 			<File
@@ -369,7 +369,7 @@
 				>
 			</File>
 			<File
-				RelativePath=".\DiConIlluminator.cpp"
+				RelativePath=".\ScopeLEDDevices.cpp"
 				>
 			</File>
 			<File

@@ -1,6 +1,6 @@
 /*
-DiCon Illuminator Device Adapter for Micro-Manager. 
-Copyright (C) 2011 DiCon Lighting, Inc
+ScopeLED Device Adapters for Micro-Manager. 
+Copyright (C) 2011-2012 ScopeLED
 
 This adapter is free software: you can redistribute it and/or modify
 it under the terms of the GNU Lesser General Public License as
@@ -18,17 +18,17 @@ License along with this software.  If not, see
 
 */
 
-#ifndef DiConIlluminator_h
-#define DiConIlluminator_h
+#ifndef ScopeLEDDevices_h
+#define ScopeLEDDevices_h
 
-#include "DiConBasicIlluminator.h"
+#include "ScopeLEDBasicIlluminator.h"
 
-#define DICON_ILLUMINATOR_CHANNELS_MAX 4
-class DiConBrightfieldIlluminator : public DiConBasicIlluminator<DiConBrightfieldIlluminator>
+#define SCOPELED_ILLUMINATOR_CHANNELS_MAX 4
+class ScopeLEDMicroscopeIlluminator : public ScopeLEDBasicIlluminator<ScopeLEDMicroscopeIlluminator>
 {
 public:
-    DiConBrightfieldIlluminator(); 
-    ~DiConBrightfieldIlluminator();
+    ScopeLEDMicroscopeIlluminator(); 
+    ~ScopeLEDMicroscopeIlluminator();
 
     int Initialize();
 
@@ -45,16 +45,17 @@ public:
     int OnChannel4Brightness(MM::PropertyBase* pProp, MM::ActionType eAct);
     
     static const char* DeviceName;
+    static const char* DeviceDescription;
 
 private:
-    double brightness[DICON_ILLUMINATOR_CHANNELS_MAX];
+    double brightness[SCOPELED_ILLUMINATOR_CHANNELS_MAX];
 };
 
-class DiConFluorescenceIlluminator : public DiConBasicIlluminator<DiConFluorescenceIlluminator>
+class ScopeLEDFluorescenceIlluminator : public ScopeLEDBasicIlluminator<ScopeLEDFluorescenceIlluminator>
 {
 public:
-    DiConFluorescenceIlluminator(); 
-    ~DiConFluorescenceIlluminator();
+    ScopeLEDFluorescenceIlluminator(); 
+    ~ScopeLEDFluorescenceIlluminator();
 
     int Initialize();
 
@@ -71,6 +72,7 @@ public:
     int OnChannel4Brightness(MM::PropertyBase* pProp, MM::ActionType eAct);
 
     static const char* DeviceName;
+    static const char* DeviceDescription;
 
 private:
 

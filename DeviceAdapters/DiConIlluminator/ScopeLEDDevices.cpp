@@ -1,6 +1,6 @@
 /*
-DiCon Illuminator Device Adapter for Micro-Manager. 
-Copyright (C) 2011 DiCon Lighting, Inc
+ScopeLED Device Adapters for Micro-Manager. 
+Copyright (C) 2011-2012 ScopeLED
 
 This adapter is free software: you can redistribute it and/or modify
 it under the terms of the GNU Lesser General Public License as
@@ -18,7 +18,7 @@ License along with this software.  If not, see
 
 */
 
-#include "DiConIlluminator.h"
+#include "ScopeLEDDevices.h"
 #include "../../MMDevice/ModuleInterface.h"
 #include "../../MMCore/Error.h"
 
@@ -49,8 +49,8 @@ BOOL APIENTRY DllMain( HANDLE /*hModule*/,
 
 MODULE_API void InitializeModuleData()
 {
-    AddAvailableDeviceName(DiConBrightfieldIlluminator::DeviceName, "DiCon Brightfield Microscopy Illuminator");
-    AddAvailableDeviceName(DiConFluorescenceIlluminator::DeviceName, "DiCon Fluorescence Microscopy Illuminator");
+    AddAvailableDeviceName(ScopeLEDMicroscopeIlluminator::DeviceName, ScopeLEDMicroscopeIlluminator::DeviceDescription);
+    AddAvailableDeviceName(ScopeLEDFluorescenceIlluminator::DeviceName, ScopeLEDFluorescenceIlluminator::DeviceDescription);
 }
 
 MODULE_API MM::Device* CreateDevice(const char* deviceName)
@@ -58,15 +58,15 @@ MODULE_API MM::Device* CreateDevice(const char* deviceName)
     if (NULL == deviceName)
         return NULL;
 
-    if (strcmp(deviceName, DiConFluorescenceIlluminator::DeviceName) == 0)
+    if (strcmp(deviceName, ScopeLEDFluorescenceIlluminator::DeviceName) == 0)
     {
         if (g_USBCommAdapter.InitializeLibrary())
-            return new DiConFluorescenceIlluminator();
+            return new ScopeLEDFluorescenceIlluminator();
     }
-    else if (strcmp(deviceName, DiConBrightfieldIlluminator::DeviceName) == 0)
+    else if (strcmp(deviceName, ScopeLEDMicroscopeIlluminator::DeviceName) == 0)
     {
         if (g_USBCommAdapter.InitializeLibrary())
-            return new DiConBrightfieldIlluminator();
+            return new ScopeLEDMicroscopeIlluminator();
     }
 
     // ...supplied name not recognized
@@ -79,54 +79,55 @@ MODULE_API void DeleteDevice(MM::Device* pDevice)
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-// DiConBrightfieldIlluminator class implementation
+// ScopeLEDMicroscopeIlluminator class implementation
 ///////////////////////////////////////////////////////////////////////////////
 
-const char* DiConBrightfieldIlluminator::DeviceName = "DiConBrightfieldIlluminator";
+const char* ScopeLEDMicroscopeIlluminator::DeviceName = "ScopeLED-MSB/MSP";
+const char* ScopeLEDMicroscopeIlluminator::DeviceDescription = "ScopeLED MSB/MSP Microscope Illuminator";
 
-DiConBrightfieldIlluminator::DiConBrightfieldIlluminator()
+ScopeLEDMicroscopeIlluminator::ScopeLEDMicroscopeIlluminator()
 {
     m_pid = 0x1303;
-    for (int i=0; i < DICON_ILLUMINATOR_CHANNELS_MAX; i++)
+    for (int i=0; i < SCOPELED_ILLUMINATOR_CHANNELS_MAX; i++)
     {
         brightness[i] = 0.0;
     }
     
-    CPropertyAction* pAct = new CPropertyAction (this, &DiConBrightfieldIlluminator::OnVendorID);
+    CPropertyAction* pAct = new CPropertyAction (this, &ScopeLEDMicroscopeIlluminator::OnVendorID);
     int nRet = CreateProperty("VendorID", "0", MM::Integer, false, pAct, true);
     SetPropertyLimits("VendorID", 0x0, 0xFFFF);
 
-    pAct = new CPropertyAction (this, &DiConBrightfieldIlluminator::OnProductID);
+    pAct = new CPropertyAction (this, &ScopeLEDMicroscopeIlluminator::OnProductID);
     nRet = CreateProperty("ProductID", "0", MM::Integer, false, pAct, true);
     SetPropertyLimits("ProductID", 0x0, 0xFFFF);
 
-    pAct = new CPropertyAction (this, &DiConBrightfieldIlluminator::OnLastError);
+    pAct = new CPropertyAction (this, &ScopeLEDMicroscopeIlluminator::OnLastError);
     nRet = CreateProperty("LastError", "0", MM::Integer, true, pAct);
 
-    pAct = new CPropertyAction (this, &DiConBrightfieldIlluminator::OnLastDeviceResult);
+    pAct = new CPropertyAction (this, &ScopeLEDMicroscopeIlluminator::OnLastDeviceResult);
     nRet = CreateProperty("LastDeviceResult", "0", MM::Integer, true, pAct);
 
-    pAct = new CPropertyAction (this, &DiConBrightfieldIlluminator::OnTransactionTime);
+    pAct = new CPropertyAction (this, &ScopeLEDMicroscopeIlluminator::OnTransactionTime);
     nRet = CreateProperty("TxnTime", "0", MM::Integer, true, pAct);
 
     // state
-    pAct = new CPropertyAction (this, &DiConBrightfieldIlluminator::OnState);
+    pAct = new CPropertyAction (this, &ScopeLEDMicroscopeIlluminator::OnState);
     nRet = CreateProperty(MM::g_Keyword_State, "0", MM::Integer, false, pAct);
     AddAllowedValue(MM::g_Keyword_State, "0"); // Closed
     AddAllowedValue(MM::g_Keyword_State, "1"); // Open
 }
 
-DiConBrightfieldIlluminator::~DiConBrightfieldIlluminator()
+ScopeLEDMicroscopeIlluminator::~ScopeLEDMicroscopeIlluminator()
 {
 
 }
 
-void DiConBrightfieldIlluminator::GetName(char* name) const
+void ScopeLEDMicroscopeIlluminator::GetName(char* name) const
 {
-    CDeviceUtils::CopyLimitedString(name, DiConBrightfieldIlluminator::DeviceName);
+    CDeviceUtils::CopyLimitedString(name, ScopeLEDMicroscopeIlluminator::DeviceName);
 }
 
-int DiConBrightfieldIlluminator::Initialize()
+int ScopeLEDMicroscopeIlluminator::Initialize()
 {
     if (NULL != m_hDevice)
         return DEVICE_OK;
@@ -138,29 +139,29 @@ int DiConBrightfieldIlluminator::Initialize()
     // -----------------
 
     // Name
-    int nRet = CreateProperty(MM::g_Keyword_Name, DiConBrightfieldIlluminator::DeviceName, MM::String, true);
+    int nRet = CreateProperty(MM::g_Keyword_Name, DeviceName, MM::String, true);
     if (nRet != DEVICE_OK) return nRet;
 
     // Description
-    nRet = CreateProperty(MM::g_Keyword_Description, "DiCon LED Brightfield Illuminator", MM::String, true);
+    nRet = CreateProperty(MM::g_Keyword_Description, DeviceDescription, MM::String, true);
     if (nRet != DEVICE_OK) return nRet;
 
-    CPropertyAction* pAct = new CPropertyAction (this, &DiConBrightfieldIlluminator::OnChannel1Brightness);
+    CPropertyAction* pAct = new CPropertyAction (this, &ScopeLEDMicroscopeIlluminator::OnChannel1Brightness);
     nRet = CreateProperty("Channel1Brightness", "0.0", MM::Float, false, pAct);
     if (nRet != DEVICE_OK) return nRet;
     SetPropertyLimits("Channel1Brightness", 0.0, 100.0);
 
-    pAct = new CPropertyAction (this, &DiConBrightfieldIlluminator::OnChannel2Brightness);
+    pAct = new CPropertyAction (this, &ScopeLEDMicroscopeIlluminator::OnChannel2Brightness);
     nRet = CreateProperty("Channel2Brightness", "0.0", MM::Float, false, pAct);
     if (nRet != DEVICE_OK) return nRet;
     SetPropertyLimits("Channel2Brightness", 0.0, 100.0);
 
-    pAct = new CPropertyAction (this, &DiConBrightfieldIlluminator::OnChannel3Brightness);
+    pAct = new CPropertyAction (this, &ScopeLEDMicroscopeIlluminator::OnChannel3Brightness);
     nRet = CreateProperty("Channel3Brightness", "0.0", MM::Float, false, pAct);
     if (nRet != DEVICE_OK) return nRet;
     SetPropertyLimits("Channel3Brightness", 0.0, 100.0);
 
-    pAct = new CPropertyAction (this, &DiConBrightfieldIlluminator::OnChannel4Brightness);
+    pAct = new CPropertyAction (this, &ScopeLEDMicroscopeIlluminator::OnChannel4Brightness);
     nRet = CreateProperty("Channel4Brightness", "0.0", MM::Float, false, pAct);
     if (nRet != DEVICE_OK) return nRet;
     SetPropertyLimits("Channel4Brightness", 0.0, 100.0);
@@ -171,7 +172,7 @@ int DiConBrightfieldIlluminator::Initialize()
     return DEVICE_OK;
 }
 
-int DiConBrightfieldIlluminator::SetOpen (bool open)
+int ScopeLEDMicroscopeIlluminator::SetOpen (bool open)
 {
     m_state = open;
     unsigned char cmdbuf[10];
@@ -187,14 +188,14 @@ int DiConBrightfieldIlluminator::SetOpen (bool open)
 
     if (m_state)
     {
-        for (int i=0; i < DICON_ILLUMINATOR_CHANNELS_MAX; i++)
+        for (int i=0; i < SCOPELED_ILLUMINATOR_CHANNELS_MAX; i++)
         {
             cmdbuf[i+3] = (unsigned char) ((int) ((brightness[i] * (unsigned)0xFF) / 100) + 0.5);
         }
     }
     else
     {
-        for (int i=0; i < DICON_ILLUMINATOR_CHANNELS_MAX; i++)
+        for (int i=0; i < SCOPELED_ILLUMINATOR_CHANNELS_MAX; i++)
         {
             cmdbuf[i+3] = 0;
         }
@@ -209,7 +210,7 @@ int DiConBrightfieldIlluminator::SetOpen (bool open)
 // Action handlers
 ///////////////////////////////////////////////////////////////////////////////
 
-int DiConBrightfieldIlluminator::OnChannelBrightness(int index, MM::PropertyBase* pProp, MM::ActionType eAct)
+int ScopeLEDMicroscopeIlluminator::OnChannelBrightness(int index, MM::PropertyBase* pProp, MM::ActionType eAct)
 {
     if (eAct == MM::BeforeGet)
     {
@@ -222,72 +223,73 @@ int DiConBrightfieldIlluminator::OnChannelBrightness(int index, MM::PropertyBase
     return DEVICE_OK;
 }
 
-int DiConBrightfieldIlluminator::OnChannel1Brightness(MM::PropertyBase* pProp, MM::ActionType eAct)
+int ScopeLEDMicroscopeIlluminator::OnChannel1Brightness(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
     return OnChannelBrightness(0, pProp, eAct);
 }
 
-int DiConBrightfieldIlluminator::OnChannel2Brightness(MM::PropertyBase* pProp, MM::ActionType eAct)
+int ScopeLEDMicroscopeIlluminator::OnChannel2Brightness(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
     return OnChannelBrightness(1, pProp, eAct);
 }
 
-int DiConBrightfieldIlluminator::OnChannel3Brightness(MM::PropertyBase* pProp, MM::ActionType eAct)
+int ScopeLEDMicroscopeIlluminator::OnChannel3Brightness(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
     return OnChannelBrightness(2, pProp, eAct);
 }
 
-int DiConBrightfieldIlluminator::OnChannel4Brightness(MM::PropertyBase* pProp, MM::ActionType eAct)
+int ScopeLEDMicroscopeIlluminator::OnChannel4Brightness(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
     return OnChannelBrightness(3, pProp, eAct);
 }
 
 
 ///////////////////////////////////////////////////////////////////////////////
-// DiConFluorescenceIlluminator class implementation
+// ScopeLEDFluorescenceIlluminator class implementation
 ///////////////////////////////////////////////////////////////////////////////
 
-const char* DiConFluorescenceIlluminator::DeviceName = "DiConFluorescenceIlluminator";
+const char* ScopeLEDFluorescenceIlluminator::DeviceName = "ScopeLED-FMI";
+const char* ScopeLEDFluorescenceIlluminator::DeviceDescription = "ScopeLED Fluorescence Microscope Illuminator";
 
-DiConFluorescenceIlluminator::DiConFluorescenceIlluminator()
+ScopeLEDFluorescenceIlluminator::ScopeLEDFluorescenceIlluminator()
 {
     m_pid = 0x1305;
 
-    CPropertyAction* pAct = new CPropertyAction (this, &DiConFluorescenceIlluminator::OnVendorID);
+    CPropertyAction* pAct = new CPropertyAction (this, &ScopeLEDFluorescenceIlluminator::OnVendorID);
     int nRet = CreateProperty("VendorID", "0", MM::Integer, false, pAct, true);
     SetPropertyLimits("VendorID", 0x0, 0xFFFF);
 
-    pAct = new CPropertyAction (this, &DiConFluorescenceIlluminator::OnProductID);
+    pAct = new CPropertyAction (this, &ScopeLEDFluorescenceIlluminator::OnProductID);
     nRet = CreateProperty("ProductID", "0", MM::Integer, false, pAct, true);
     SetPropertyLimits("ProductID", 0x0, 0xFFFF);
 
-    pAct = new CPropertyAction (this, &DiConFluorescenceIlluminator::OnLastError);
+    pAct = new CPropertyAction (this, &ScopeLEDFluorescenceIlluminator::OnLastError);
     nRet = CreateProperty("LastError", "0", MM::Integer, true, pAct);
 
-    pAct = new CPropertyAction (this, &DiConFluorescenceIlluminator::OnLastDeviceResult);
+    pAct = new CPropertyAction (this, &ScopeLEDFluorescenceIlluminator::OnLastDeviceResult);
     nRet = CreateProperty("LastDeviceResult", "0", MM::Integer, true, pAct);
 
-    pAct = new CPropertyAction (this, &DiConFluorescenceIlluminator::OnTransactionTime);
+    pAct = new CPropertyAction (this, &ScopeLEDFluorescenceIlluminator::OnTransactionTime);
     nRet = CreateProperty("TxnTime", "0", MM::Integer, true, pAct);
 
     // state
-    pAct = new CPropertyAction (this, &DiConFluorescenceIlluminator::OnState);
+    pAct = new CPropertyAction (this, &ScopeLEDFluorescenceIlluminator::OnState);
     nRet = CreateProperty(MM::g_Keyword_State, "0", MM::Integer, false, pAct);
     AddAllowedValue(MM::g_Keyword_State, "0"); // Closed
     AddAllowedValue(MM::g_Keyword_State, "1"); // Open
 }
 
-DiConFluorescenceIlluminator::~DiConFluorescenceIlluminator()
+ScopeLEDFluorescenceIlluminator::~ScopeLEDFluorescenceIlluminator()
 {
 
 }
 
-void DiConFluorescenceIlluminator::GetName(char* name) const
+void ScopeLEDFluorescenceIlluminator::GetName(char* name) const
 {
-    CDeviceUtils::CopyLimitedString(name, DiConFluorescenceIlluminator::DeviceName);
+    CDeviceUtils::CopyLimitedString(name, ScopeLEDFluorescenceIlluminator::DeviceName);
 }
 
-int DiConFluorescenceIlluminator::Initialize()
+int ScopeLEDFluorescenceIlluminator::Initialize()
 {
     if (NULL != m_hDevice)
         return DEVICE_OK;
@@ -299,29 +301,29 @@ int DiConFluorescenceIlluminator::Initialize()
     // -----------------
 
     // Name
-    int nRet = CreateProperty(MM::g_Keyword_Name, DiConFluorescenceIlluminator::DeviceName, MM::String, true);
+    int nRet = CreateProperty(MM::g_Keyword_Name, DeviceName, MM::String, true);
     if (nRet != DEVICE_OK) return nRet;
 
     // Description
-    nRet = CreateProperty(MM::g_Keyword_Description, "DiCon LED Fluorescence Illuminator", MM::String, true);
+    nRet = CreateProperty(MM::g_Keyword_Description, DeviceDescription, MM::String, true);
     if (nRet != DEVICE_OK) return nRet;
 
-    CPropertyAction* pAct = new CPropertyAction (this, &DiConFluorescenceIlluminator::OnChannel1Brightness);
+    CPropertyAction* pAct = new CPropertyAction (this, &ScopeLEDFluorescenceIlluminator::OnChannel1Brightness);
     nRet = CreateProperty("Channel1Brightness", "0.0", MM::Float, false, pAct);
     if (nRet != DEVICE_OK) return nRet;
     SetPropertyLimits("Channel1Brightness", 0.0, 100.0);
 
-    pAct = new CPropertyAction (this, &DiConFluorescenceIlluminator::OnChannel2Brightness);
+    pAct = new CPropertyAction (this, &ScopeLEDFluorescenceIlluminator::OnChannel2Brightness);
     nRet = CreateProperty("Channel2Brightness", "0.0", MM::Float, false, pAct);
     if (nRet != DEVICE_OK) return nRet;
     SetPropertyLimits("Channel2Brightness", 0.0, 100.0);
 
-    pAct = new CPropertyAction (this, &DiConFluorescenceIlluminator::OnChannel3Brightness);
+    pAct = new CPropertyAction (this, &ScopeLEDFluorescenceIlluminator::OnChannel3Brightness);
     nRet = CreateProperty("Channel3Brightness", "0.0", MM::Float, false, pAct);
     if (nRet != DEVICE_OK) return nRet;
     SetPropertyLimits("Channel3Brightness", 0.0, 100.0);
 
-    pAct = new CPropertyAction (this, &DiConFluorescenceIlluminator::OnChannel4Brightness);
+    pAct = new CPropertyAction (this, &ScopeLEDFluorescenceIlluminator::OnChannel4Brightness);
     nRet = CreateProperty("Channel4Brightness", "0.0", MM::Float, false, pAct);
     if (nRet != DEVICE_OK) return nRet;
     SetPropertyLimits("Channel4Brightness", 0.0, 100.0);
@@ -332,7 +334,7 @@ int DiConFluorescenceIlluminator::Initialize()
     return DEVICE_OK;
 }
 
-int DiConFluorescenceIlluminator::SetOpen (bool open)
+int ScopeLEDFluorescenceIlluminator::SetOpen (bool open)
 {
     m_state = open;
     unsigned char cmdbuf[6];
@@ -349,7 +351,7 @@ int DiConFluorescenceIlluminator::SetOpen (bool open)
     return Transact(cmdbuf, sizeof(cmdbuf));
 }
 
-int DiConFluorescenceIlluminator::SetBrightness(int channel, double brightness)
+int ScopeLEDFluorescenceIlluminator::SetBrightness(int channel, double brightness)
 {
     unsigned char cmdbuf[8];
     cmdbuf[0] = 0xA9;  // Start Byte
@@ -370,7 +372,7 @@ int DiConFluorescenceIlluminator::SetBrightness(int channel, double brightness)
     return Transact(cmdbuf, sizeof(cmdbuf));
 }
 
-int DiConFluorescenceIlluminator::GetBrightness(int channel, double& brightness)
+int ScopeLEDFluorescenceIlluminator::GetBrightness(int channel, double& brightness)
 {
     brightness = 0.0;
     
@@ -398,7 +400,7 @@ int DiConFluorescenceIlluminator::GetBrightness(int channel, double& brightness)
     return result;
 }
 
-int DiConFluorescenceIlluminator::OnChannelBrightness(int index, MM::PropertyBase* pProp, MM::ActionType eAct)
+int ScopeLEDFluorescenceIlluminator::OnChannelBrightness(int index, MM::PropertyBase* pProp, MM::ActionType eAct)
 {
     double brightness = 0.0;
     int result = DEVICE_OK;
@@ -418,25 +420,23 @@ int DiConFluorescenceIlluminator::OnChannelBrightness(int index, MM::PropertyBas
     return result;
 }
 
-int DiConFluorescenceIlluminator::OnChannel1Brightness(MM::PropertyBase* pProp, MM::ActionType eAct)
+int ScopeLEDFluorescenceIlluminator::OnChannel1Brightness(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
     return OnChannelBrightness(0, pProp, eAct);
 }
 
-int DiConFluorescenceIlluminator::OnChannel2Brightness(MM::PropertyBase* pProp, MM::ActionType eAct)
+int ScopeLEDFluorescenceIlluminator::OnChannel2Brightness(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
     return OnChannelBrightness(1, pProp, eAct);
 }
 
-int DiConFluorescenceIlluminator::OnChannel3Brightness(MM::PropertyBase* pProp, MM::ActionType eAct)
+int ScopeLEDFluorescenceIlluminator::OnChannel3Brightness(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
     return OnChannelBrightness(2, pProp, eAct);
 }
 
-int DiConFluorescenceIlluminator::OnChannel4Brightness(MM::PropertyBase* pProp, MM::ActionType eAct)
+int ScopeLEDFluorescenceIlluminator::OnChannel4Brightness(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
     return OnChannelBrightness(3, pProp, eAct);
 }
-
-
 

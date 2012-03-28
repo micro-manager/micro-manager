@@ -1,7 +1,7 @@
 import java.lang;
 core = mmc;
 core.unloadAllDevices();
-core.loadDevice("Shutter", "DiConIlluminator", "DiConFluorescenceIlluminator");
+core.loadDevice("Shutter", "ScopeLED", "ScopeLEDFluorescenceIlluminator");
 core.setProperty("Shutter", "VendorID", "9410");
 core.setProperty("Shutter", "ProductID", "4869");
 core.initializeDevice("Shutter");
