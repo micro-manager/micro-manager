@@ -76,7 +76,7 @@ public class MMStudioPlugin implements PlugIn, CommandListener {
             frame_.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
          }
          if (arg.equals("OpenAcq")) {
-            frame_.openAcquisitionData();
+            frame_.openAcquisitionData(true);
          }
       } catch (Exception e) {
          ReportingUtils.logError(e);
