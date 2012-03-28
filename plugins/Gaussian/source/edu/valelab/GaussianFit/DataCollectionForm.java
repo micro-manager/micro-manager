@@ -1539,7 +1539,8 @@ public class DataCollectionForm extends javax.swing.JFrame {
             y = spotSource.getYCenter() - spotOperand.getYCenter();
          }
          GaussianSpotData newSpot = new GaussianSpotData(spotSource);
-         newSpot.setData(0.0, 0.0, x, y, 0.0, 0.0, 0.0, 0.0);
+         newSpot.setXCenter(x);
+         newSpot.setYCenter(y);
          transformedResultList.add(newSpot);
       }
       
@@ -2083,7 +2084,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
 
       // TODO: instead of a fixed number of frames, go for a certain number of spots
       // Number of frames could be limited as well
-      final int framesToCombine = 100;
+      final int framesToCombine = 200;
       
       if (rowData.spotList_.size() <= 1) {
          return;
@@ -2096,10 +2097,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
          public void run() {
             
             int mag = (int) (rowData.pixelSizeNm_ / 40.0);
-            
-            //int mag = 1 << visualizationMagnification_.getSelectedIndex();
-            
-            
+                        
             int width = mag * rowData.width_;
             int height = mag * rowData.height_;
             int size = width * height;
@@ -2173,16 +2171,19 @@ public class DataCollectionForm extends javax.swing.JFrame {
                for (int i = 1; i < ip.length; i++) {
                   ij.IJ.showStatus("Executing jitter correction..." + i);
                   ij.IJ.showProgress(i, ip.length);
+                  int spotCount = 0;
+                  for (int j=0; j < ip[i].getPixelCount(); j++) 
+                     spotCount += ip[i].get(j);
+                  
                   jd.getJitter(ip[i], com);
                   double x = (fp.x - com.x) / factor;
                   double y = (fp.y - com.y) / factor;
-                  double timePoint = i;
                   if (rowData.timePoints_ != null) {
                      rowData.timePoints_.get(i);
                   }
                   stagePos.add(new StageMovementData(new Point2D.Double(x, y),
                           new Point(i * framesToCombine, ((i + 1) * framesToCombine - 1))));
-                  System.out.println("X: " + x + " Y: " + y);
+                  System.out.println("i: " + i + " nSpots: " + spotCount + " X: " + x + " Y: " + y);
                }
                
             } catch (OutOfMemoryError ex) {
