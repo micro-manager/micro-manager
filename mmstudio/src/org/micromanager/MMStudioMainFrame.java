@@ -109,10 +109,13 @@ import bsh.EvalError;
 import bsh.Interpreter;
 
 import com.swtdesigner.SwingResourceManager;
+import ij.Menus;
 import ij.gui.ImageCanvas;
 import ij.gui.ImageWindow;
 import java.awt.Cursor;
 import java.awt.KeyboardFocusManager;
+import java.awt.Menu;
+import java.awt.MenuItem;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.Collections;
@@ -2174,6 +2177,42 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface, Device
       MMKeyDispatcher mmKD = new MMKeyDispatcher(gui_);
       KeyboardFocusManager.getCurrentKeyboardFocusManager().addKeyEventDispatcher(mmKD);
 
+      overrideImageJMenu();
+   }
+   
+   private void overrideImageJMenu() {
+      final Menu colorMenu = ((Menu) Menus.getMenuBar().getMenu(2).getItem(5));
+      MenuItem stackToRGB = colorMenu.getItem(4);
+      final ActionListener ij = stackToRGB.getActionListeners()[0];
+      stackToRGB.removeActionListener(ij);
+      stackToRGB.addActionListener(new ActionListener() {
+         @Override
+         public void actionPerformed(ActionEvent e) {
+            ImagePlus img = WindowManager.getCurrentImage();
+            if (img != null && img instanceof VirtualAcquisitionDisplay.MMCompositeImage) {
+               int selection = JOptionPane.showConfirmDialog(img.getWindow(),
+                       "Because of the way Micro-Manager internally handles Color images, this command may\n"
+                       + "not work correctly.  An RGB Image/Stack can be created by splitting all channels\n"
+                       + "and then merging them.  Would you like Micro-Manager to perform this operation\n"
+                       + "automatically?\n\n"
+                       + "Yes--Split and merge channels to create RGB image/stack\n"
+                       + "No--Proceed with Stack to RGB command (may have unexpected effects on pixel data) ",
+                       "Convert Stack to RGB", JOptionPane.YES_NO_CANCEL_OPTION);
+               if (selection == 0) { //yes
+                  IJ.run("Split Channels");
+                  WindowManager.getCurrentImage().setTitle("BlueChannel");
+                  WindowManager.getImage(WindowManager.getNthImageID(2)).setTitle("GreenChannel");
+                  WindowManager.getImage(WindowManager.getNthImageID(1)).setTitle("RedChannel");
+                  
+                  IJ.run("Merge Channels...", "red=[RedChannel] green=[GreenChannel] blue=[BlueChannel] gray=*None*");
+               } else if (selection == 1) { //no
+                   ij.actionPerformed(e);
+               }
+            } else {
+               //If not an MM CompositImage, do the normal command
+               ij.actionPerformed(e);
+            }           
+         }});
    }
 
    private void handleException(Exception e, String msg) {
