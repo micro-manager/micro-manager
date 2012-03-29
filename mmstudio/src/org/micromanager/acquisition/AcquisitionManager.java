@@ -73,7 +73,7 @@ public class AcquisitionManager {
          acqs_.get(name).closeImageWindow();
    }
    
-   public Boolean acquisitionExists(String name) {
+   public boolean acquisitionExists(String name) {
       if (acqs_.containsKey(name)) {
          if (acqs_.get(name).windowClosed()) {
             acqs_.get(name).close();

@@ -39,4 +39,5 @@ public interface TaggedImageStorage {
    public void close();
    public String getDiskLocation();
    public int lastAcquiredFrame();
+   public long getDataSetSize();
 }

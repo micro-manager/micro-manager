@@ -4,9 +4,6 @@
  */
 package org.micromanager.acquisition;
 
-import ij.io.FileInfo;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import org.micromanager.api.TaggedImageStorage;
 import ij.CompositeImage;
 import ij.ImagePlus;
@@ -20,6 +17,7 @@ import ij.process.ImageProcessor;
 import ij.process.ShortProcessor;
 import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileFilter;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.Writer;
@@ -614,6 +612,17 @@ public class TaggedImageStorageDiskDefault implements TaggedImageStorage {
    public void finalize() throws Throwable {
       close();
       super.finalize();
+   }
+
+   public long getDataSetSize() {
+      File[] files = new File(dir_).listFiles(new FileFilter() {
+         public boolean accept(File pathname) {
+            return pathname.getName().toLowerCase().endsWith(".tif");
+         }
+      });
+      int numTiffFiles = files.length;
+      long tiffSize = (numTiffFiles > 0) ? files[0].length() : 0;
+      return numTiffFiles * tiffSize;
    }
 
 }

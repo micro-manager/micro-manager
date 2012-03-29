@@ -442,4 +442,8 @@ public class MMImageCache implements TaggedImageStorage, ImageCache {
 
       return array.length();
    }
+
+   public long getDataSetSize() {
+      throw new UnsupportedOperationException("Not supported yet.");
+   }
 }

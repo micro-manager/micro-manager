@@ -96,6 +96,10 @@ public class TaggedImageStorageRam implements TaggedImageStorage {
       return lastFrame_;
    }
 
+   public long getDataSetSize() {
+      throw new UnsupportedOperationException("Not supported yet.");
+   }
+
 
 
 }

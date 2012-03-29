@@ -2528,16 +2528,22 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface, Device
    }
 
    public void openAcquisitionData(String dir, boolean inRAM) {
-               String rootDir = new File(dir).getAbsolutePath();
-         String name = new File(dir).getName();
-         rootDir= rootDir.substring(0, rootDir.length() - (name.length() + 1));
+      String rootDir = new File(dir).getAbsolutePath();
+      String name = new File(dir).getName();
+      rootDir = rootDir.substring(0, rootDir.length() - (name.length() + 1));
+      try {
+         acqMgr_.openAcquisition(name, rootDir, true, !inRAM, true);
+         acqMgr_.getAcquisition(name).initialize();
+         //acqMgr_.closeAcquisition(name);
+      } catch (MMScriptException ex) {
+         ReportingUtils.showError(ex);
+      } finally {
          try {
-            acqMgr_.openAcquisition(name, rootDir, true, !inRAM, true);
-            acqMgr_.getAcquisition(name).initialize();
             acqMgr_.closeAcquisition(name);
          } catch (MMScriptException ex) {
             ReportingUtils.showError(ex);
          }
+      }
    }
 
    protected void zoomOut() {

@@ -292,6 +292,9 @@ public class MMAcquisition {
       if (!virtual_ && existing_) {
          String dirName = rootDirectory_ + File.separator + name;
          TaggedImageStorage tempImageFileManager = ImageUtils.newImageStorageInstance(dirName, false, null);
+         if (tempImageFileManager.getDataSetSize() > 0.9 * JavaUtils.getAvailableUnusedMemory()) {
+            throw new MMScriptException("Not enough room in memory for this data set.\nTry opening as a virtual data set instead.");
+         }
          imageCache = new MMImageCache(tempImageFileManager);
          imageFileManager = new TaggedImageStorageRam(null);
          imageCache.saveAs(imageFileManager,true);
