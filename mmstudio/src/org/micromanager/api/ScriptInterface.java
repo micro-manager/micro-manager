@@ -992,4 +992,10 @@ public interface ScriptInterface {
     * @deprecated
     */
    public boolean updateImage();
+
+
+   /*
+    * Open an existing data set
+    */
+   public void openAcquisitionData(String location, boolean inRAM);
 }
