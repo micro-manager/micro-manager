@@ -104,6 +104,7 @@ public class MDUtils {
 
    public static void setFrameIndex(JSONObject map, int frameIndex) throws JSONException {
       map.put("Frame", frameIndex);
+      map.put("FrameIndex", frameIndex);
    }
    
    public static int getNumPositions(JSONObject map) throws JSONException {
