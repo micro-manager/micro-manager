@@ -135,7 +135,7 @@
   (doseq [i (.getSelectedRows table)]
     (let [f (row-index-to-path i)]
       (if (.exists (File. f))
-        (.openAcquisitionData gui f)
+        (.openAcquisitionData gui f false)
         (ReportingUtils/showError "File not found.")))))
 
 (defn listen-to-open [table]
