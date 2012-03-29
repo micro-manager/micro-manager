@@ -88,12 +88,37 @@ void Omicron::GetName(char* Name) const
 int Omicron::Initialize()
 {
 	 std::ostringstream command1;
+	 std::ostringstream command2;
+	 std::ostringstream command3;
 	 std::string answer1;
+	 std::string answer2;
+	 std::string answer3;
 	 std::stringstream help1;
+	 std::stringstream help3;
 	 std::vector<std::string> help2;
+	 static int i;
 	 
+	 command2 << "?GOM";
+     int ret = SendSerialCommand(port_.c_str(), command2.str().c_str(), "\r");
+     if (ret != DEVICE_OK) return ret;
+     ret = GetSerialAnswer(port_.c_str(), "\r", answer2);
+     if (ret != DEVICE_OK) return ret;
+		  
+	 answer2 = answer2.substr(4);
+	 help3 << answer2;
+	 help3 >> std::hex >> i;
+
+	 i &= ~(1<<13);
+
+	 command3 << "?SOM" << std::hex << i;
+	 		
+     ret = SendSerialCommand(port_.c_str(), command3.str().c_str(), "\r");
+     if (ret != DEVICE_OK) return ret;
+     ret = GetSerialAnswer(port_.c_str(), "\r", answer3);
+     if (ret != DEVICE_OK) return ret;  
+
 	 command1 << "?GFw";
-	 int ret = SendSerialCommand(port_.c_str(), command1.str().c_str(), "\r");
+	 ret = SendSerialCommand(port_.c_str(), command1.str().c_str(), "\r");
      if (ret != DEVICE_OK) return ret;
      ret = GetSerialAnswer(port_.c_str(), "\r", answer1);
      if (ret != DEVICE_OK) return ret;
