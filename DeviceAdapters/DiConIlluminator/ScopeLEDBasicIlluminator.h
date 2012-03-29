@@ -111,6 +111,24 @@ protected:
         unsigned long cbRxBuffer = sizeof(RxBuffer);
         return Transact(pCommand, cbCommand, RxBuffer, &cbRxBuffer);
     }
+
+    void QuerySerialNumber()
+    {
+        char* pBuffer = NULL;
+        unsigned long cbBuffer = 0;
+        g_USBCommAdapter.GetSerialNumber(m_hDevice, NULL, &cbBuffer);
+
+        if (cbBuffer > 1)
+        {
+            pBuffer = new char[cbBuffer];
+            int result = g_USBCommAdapter.GetSerialNumber(m_hDevice, pBuffer, &cbBuffer);
+            if (FALSE != result)
+            {
+                SetProperty("SerialNumber", pBuffer);
+            }
+            delete [] pBuffer;
+        }
+    }
 public:
     ScopeLEDBasicIlluminator() :
         m_state(false), m_hDevice(NULL),
@@ -118,7 +136,7 @@ public:
         m_vid(0x24C2), m_pid(0),
         m_evAbortRx(CreateEvent(NULL, TRUE, FALSE, NULL))
     {
-
+        CreateProperty("SerialNumber", "", MM::String, false);
     }
     ~ScopeLEDBasicIlluminator()
     {
@@ -129,6 +147,7 @@ public:
     {
         g_USBCommAdapter.Close(m_hDevice);
         m_hDevice = NULL;
+        SetProperty("SerialNumber", "");
         return DEVICE_OK;
     }
 

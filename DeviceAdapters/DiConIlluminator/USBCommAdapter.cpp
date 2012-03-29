@@ -137,29 +137,31 @@ bool USBCommAdapter::InitializeLibrary()
             ok = NULL != hCommAdapter;
             if (ok)
             {
-                //GetVersion = (pfnFunc0)GetProcAddress(hCommAdapter, "USBComm_GetVersion");
+                GetVersion = (pfnFunc0)GetProcAddress(hCommAdapter, "USBComm_GetVersion");
                 CalculateChecksum = (pfnCalculateChecksum)GetProcAddress(hCommAdapter, "USBComm_CalculateChecksum");
                 GetLastError = (pfnFunc0)GetProcAddress(hCommAdapter, "USBComm_GetLastError");
                 OpenFirstDevice = (pfnOpenFirstDevice)GetProcAddress(hCommAdapter, "USBComm_OpenFirstDevice");
-                //OpenDevice = (pfnOpenDevice)GetProcAddress(hCommAdapter, "USBComm_OpenDevice");
-                //OpenDevicePath = (pfnOpenDevicePath)GetProcAddress(hCommAdapter, "USBComm_OpenDevicePath");
-                //InitDeviceEnumeration = (pfnInitDeviceEnumeration)GetProcAddress(hCommAdapter, "USBComm_InitDeviceEnumeration");
-                //EnumerateDevices = (pfnEnumerateDevices)GetProcAddress(hCommAdapter, "USBComm_EnumerateDevices");
+                OpenDevice = (pfnOpenDevice)GetProcAddress(hCommAdapter, "USBComm_OpenDevice");
+                OpenDevicePath = (pfnOpenDevicePath)GetProcAddress(hCommAdapter, "USBComm_OpenDevicePath");
+                InitDeviceEnumeration = (pfnInitDeviceEnumeration)GetProcAddress(hCommAdapter, "USBComm_InitDeviceEnumeration");
+                EnumerateDevices = (pfnEnumerateDevices)GetProcAddress(hCommAdapter, "USBComm_EnumerateDevices");
                 Close = (pfnClose)GetProcAddress(hCommAdapter, "USBComm_Close");
                 Write = (pfnWrite)GetProcAddress(hCommAdapter, "USBComm_Write");
                 Read = (pfnRead)GetProcAddress(hCommAdapter, "USBComm_Read");
-                //Flush = (pfnFlush)GetProcAddress(hCommAdapter, "USBComm_Flush");
-                //GetSerialNumber = (pfnGetString)GetProcAddress(hCommAdapter, "USBComm_GetSerialNumber");
-                //GetManufacturer = (pfnGetString)GetProcAddress(hCommAdapter, "USBComm_GetManufacturer");
-                //GetDevicePath = (pfnGetString)GetProcAddress(hCommAdapter, "USBComm_GetDevicePath");
-                //GetDeviceIDs = (pfnGetDeviceIDs)GetProcAddress(hCommAdapter, "USBComm_GetDeviceIDs");
+                Flush = (pfnFlush)GetProcAddress(hCommAdapter, "USBComm_Flush");
+                GetSerialNumber = (pfnGetString)GetProcAddress(hCommAdapter, "USBComm_GetSerialNumber");
+                GetManufacturer = (pfnGetString)GetProcAddress(hCommAdapter, "USBComm_GetManufacturer");
+                GetDevicePath = (pfnGetString)GetProcAddress(hCommAdapter, "USBComm_GetDevicePath");
+                GetDeviceIDs = (pfnGetDeviceIDs)GetProcAddress(hCommAdapter, "USBComm_GetDeviceIDs");
 
                 ok = (NULL != CalculateChecksum) &&
                      (NULL != GetLastError) &&
-                     (NULL != OpenFirstDevice)&&
+                     (NULL != OpenFirstDevice) &&
+                     (NULL != OpenDevice) &&
                      (NULL != Close) &&
                      (NULL != Write) &&
-                     (NULL != Read);
+                     (NULL != Read) &&
+                     (NULL != GetSerialNumber);
             }
         }
     }

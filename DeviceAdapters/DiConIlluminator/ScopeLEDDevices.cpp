@@ -132,8 +132,26 @@ int ScopeLEDMicroscopeIlluminator::Initialize()
     if (NULL != m_hDevice)
         return DEVICE_OK;
 
-    m_hDevice = g_USBCommAdapter.OpenFirstDevice((unsigned short)m_vid, (unsigned short)m_pid);
+    char serial[MM::MaxStrLength];
+    memset(serial, '\0', sizeof(serial));
+    GetProperty("SerialNumber", serial);
+    bool no_serial = 0 == strlen(serial);
+
+    if (no_serial)
+    {
+        m_hDevice = g_USBCommAdapter.OpenFirstDevice((unsigned short)m_vid, (unsigned short)m_pid);
+    }
+    else
+    {
+        m_hDevice = g_USBCommAdapter.OpenDevice((unsigned short)m_vid, (unsigned short)m_pid, serial);
+    }
+    
     if (NULL == m_hDevice) return DEVICE_NOT_CONNECTED;
+
+    if (no_serial)
+    {
+        QuerySerialNumber();
+    }
 
     // set property list
     // -----------------
@@ -294,8 +312,26 @@ int ScopeLEDFluorescenceIlluminator::Initialize()
     if (NULL != m_hDevice)
         return DEVICE_OK;
 
-    m_hDevice = g_USBCommAdapter.OpenFirstDevice((unsigned short)m_vid, (unsigned short)m_pid);
+    char serial[MM::MaxStrLength];
+    memset(serial, '\0', sizeof(serial));
+    GetProperty("SerialNumber", serial);
+    bool no_serial = 0 == strlen(serial);
+
+    if (no_serial)
+    {
+        m_hDevice = g_USBCommAdapter.OpenFirstDevice((unsigned short)m_vid, (unsigned short)m_pid);
+    }
+    else
+    {
+        m_hDevice = g_USBCommAdapter.OpenDevice((unsigned short)m_vid, (unsigned short)m_pid, serial);
+    }
+
     if (NULL == m_hDevice) return DEVICE_NOT_CONNECTED;
+
+    if (no_serial)
+    {
+        QuerySerialNumber();
+    }
 
     // set property list
     // -----------------
@@ -338,6 +374,7 @@ int ScopeLEDFluorescenceIlluminator::SetOpen (bool open)
 {
     m_state = open;
     unsigned char cmdbuf[6];
+    memset(cmdbuf, 0, sizeof(cmdbuf));
     cmdbuf[0] = 0xA9;  // Start Byte
     cmdbuf[1] = 0x03;  // Length Byte
     cmdbuf[2] =   41;  // Command Byte - MSG_SET_MASTER_ENABLE
@@ -354,6 +391,7 @@ int ScopeLEDFluorescenceIlluminator::SetOpen (bool open)
 int ScopeLEDFluorescenceIlluminator::SetBrightness(int channel, double brightness)
 {
     unsigned char cmdbuf[8];
+    memset(cmdbuf, 0, sizeof(cmdbuf));
     cmdbuf[0] = 0xA9;  // Start Byte
     cmdbuf[1] = 0x05;  // Length Byte
     cmdbuf[2] =   28;  // Command Byte - MSG_SET_BRIGHTNESS
@@ -377,6 +415,7 @@ int ScopeLEDFluorescenceIlluminator::GetBrightness(int channel, double& brightne
     brightness = 0.0;
     
     unsigned char cmdbuf[6];
+    memset(cmdbuf, 0, sizeof(cmdbuf));
     cmdbuf[0] = 0xA9;  // Start Byte
     cmdbuf[1] = 0x03;  // Length Byte
     cmdbuf[2] =   27;  // Command Byte - MSG_GET_BRIGHTNESS
