@@ -54,6 +54,12 @@ private:
 #define MAX_FMI_LED_GROUPS 9
 class ScopeLEDFluorescenceIlluminator : public ScopeLEDBasicIlluminator<ScopeLEDFluorescenceIlluminator>
 {
+    bool led_group_channels_initialized[MAX_FMI_LED_GROUPS];
+    long led_group_channels[MAX_FMI_LED_GROUPS];
+    
+    bool channel_wavelengths_initialized[4];
+    long channel_wavelengths[4];
+    
 public:
     ScopeLEDFluorescenceIlluminator(); 
     ~ScopeLEDFluorescenceIlluminator();
@@ -84,21 +90,27 @@ public:
     int OnLEDGroup8Channels(MM::PropertyBase* pProp, MM::ActionType eAct);
     int OnLEDGroup9Channels(MM::PropertyBase* pProp, MM::ActionType eAct);
 
+    int OnChannel1Wavelength(MM::PropertyBase* pProp, MM::ActionType eAct);
+    int OnChannel2Wavelength(MM::PropertyBase* pProp, MM::ActionType eAct);
+    int OnChannel3Wavelength(MM::PropertyBase* pProp, MM::ActionType eAct);
+    int OnChannel4Wavelength(MM::PropertyBase* pProp, MM::ActionType eAct);
+
     static const char* DeviceName;
     static const char* DeviceDescription;
 
-    bool led_group_channels_intialized[MAX_FMI_LED_GROUPS];
-
 private:
 
-    int SetBrightness(int channel, double brightness);
-    int GetBrightness(int channel, double& brightness);
+    int GetChannelWavelength(int channel, long& wavelength);
+    
+    int SetChannelBrightness(int channel, double brightness);
+    int GetChannelBrightness(int channel, double& brightness);
 
     int SetLEDGroup(long group);
     int GetLEDGroup(long& group);
 
     int GetLEDGroupChannels(int group, long& channels);
     int OnLEDGroupChannels(int group, MM::PropertyBase* pProp, MM::ActionType eAct);
+    int OnChannelWavelength(int index, MM::PropertyBase* pProp, MM::ActionType eAct);
 };
 
 #endif

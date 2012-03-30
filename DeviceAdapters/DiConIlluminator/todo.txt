@@ -1,4 +1,1 @@
-* Properties for channel wavelengths
-* Property for number of channels
 * Property for control mode
-* Improve error checking

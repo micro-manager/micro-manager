@@ -187,9 +187,7 @@ int ScopeLEDMicroscopeIlluminator::Initialize()
     SetPropertyLimits("Channel4Brightness", 0.0, 100.0);
     
     nRet = UpdateStatus();
-    if (nRet != DEVICE_OK) return nRet;
-
-    return DEVICE_OK;
+    return nRet;
 }
 
 int ScopeLEDMicroscopeIlluminator::SetOpen (bool open)
@@ -341,7 +339,8 @@ int ScopeLEDFluorescenceIlluminator::Initialize()
         QuerySerialNumber();
     }
     
-    memset(led_group_channels_intialized, false, MAX_FMI_LED_GROUPS);
+    memset(led_group_channels_initialized, false, MAX_FMI_LED_GROUPS);
+    memset(channel_wavelengths_initialized, false, 4);    
 
     // set property list
     // -----------------
@@ -410,13 +409,27 @@ int ScopeLEDFluorescenceIlluminator::Initialize()
     nRet = CreateProperty("LEDGroup9Channels", "0", MM::Integer, true, pAct);
     if (nRet != DEVICE_OK) return nRet;
 
-    nRet = UpdateStatus();
+    pAct = new CPropertyAction (this, &ScopeLEDFluorescenceIlluminator::OnChannel1Wavelength);
+    nRet = CreateProperty("Channel1Wavelength", "0", MM::Integer, true, pAct);
     if (nRet != DEVICE_OK) return nRet;
 
-    return DEVICE_OK;
+    pAct = new CPropertyAction (this, &ScopeLEDFluorescenceIlluminator::OnChannel2Wavelength);
+    nRet = CreateProperty("Channel2Wavelength", "0", MM::Integer, true, pAct);
+    if (nRet != DEVICE_OK) return nRet;
+
+    pAct = new CPropertyAction (this, &ScopeLEDFluorescenceIlluminator::OnChannel3Wavelength);
+    nRet = CreateProperty("Channel3Wavelength", "0", MM::Integer, true, pAct);
+    if (nRet != DEVICE_OK) return nRet;
+
+    pAct = new CPropertyAction (this, &ScopeLEDFluorescenceIlluminator::OnChannel4Wavelength);
+    nRet = CreateProperty("Channel4Wavelength", "0", MM::Integer, true, pAct);
+    if (nRet != DEVICE_OK) return nRet;
+
+    nRet = UpdateStatus();
+    return nRet;
 }
 
-int ScopeLEDFluorescenceIlluminator::SetOpen (bool open)
+int ScopeLEDFluorescenceIlluminator::SetOpen(bool open)
 {
     m_state = open;
     unsigned char cmdbuf[6];
@@ -434,7 +447,7 @@ int ScopeLEDFluorescenceIlluminator::SetOpen (bool open)
     return Transact(cmdbuf, sizeof(cmdbuf));
 }
 
-int ScopeLEDFluorescenceIlluminator::SetBrightness(int channel, double brightness)
+int ScopeLEDFluorescenceIlluminator::SetChannelBrightness(int channel, double brightness)
 {
     unsigned char cmdbuf[8];
     memset(cmdbuf, 0, sizeof(cmdbuf));
@@ -456,7 +469,7 @@ int ScopeLEDFluorescenceIlluminator::SetBrightness(int channel, double brightnes
     return Transact(cmdbuf, sizeof(cmdbuf));
 }
 
-int ScopeLEDFluorescenceIlluminator::GetBrightness(int channel, double& brightness)
+int ScopeLEDFluorescenceIlluminator::GetChannelBrightness(int channel, double& brightness)
 {
     brightness = 0.0;
     
@@ -491,7 +504,7 @@ int ScopeLEDFluorescenceIlluminator::OnChannelBrightness(int index, MM::Property
     int result = DEVICE_OK;
     if (eAct == MM::BeforeGet)
     {
-        result = GetBrightness(index, brightness);
+        result = GetChannelBrightness(index, brightness);
         if (DEVICE_OK == result)
         {
             pProp->Set(brightness);
@@ -500,7 +513,7 @@ int ScopeLEDFluorescenceIlluminator::OnChannelBrightness(int index, MM::Property
     else if (eAct == MM::AfterSet)
     {
         pProp->Get(brightness);
-        result = SetBrightness(index, brightness);
+        result = SetChannelBrightness(index, brightness);
     }
     return result;
 }
@@ -540,7 +553,15 @@ int ScopeLEDFluorescenceIlluminator::SetLEDGroup(long group)
 
     *pChecksum = g_USBCommAdapter.CalculateChecksum(pStart, *pStart);
 
-    return Transact(cmdbuf, sizeof(cmdbuf));
+    int result = Transact(cmdbuf, sizeof(cmdbuf));
+    /*
+    UpdateProperty("Channel1Brightness");
+    UpdateProperty("Channel2Brightness");
+    UpdateProperty("Channel3Brightness");
+    UpdateProperty("Channel4Brightness");
+    */
+
+    return result;
 }
 
 int ScopeLEDFluorescenceIlluminator::GetLEDGroup(long& group)
@@ -590,11 +611,9 @@ int ScopeLEDFluorescenceIlluminator::OnLEDGroup(MM::PropertyBase* pProp, MM::Act
 
 int ScopeLEDFluorescenceIlluminator::GetLEDGroupChannels(int group, long& channels)
 {
-    static long led_group_channels[MAX_FMI_LED_GROUPS] = {0};
-
-    int result = DEVICE_OK;
+   int result = DEVICE_OK;
     
-    if (!led_group_channels_intialized[group-1])
+    if (!led_group_channels_initialized[group-1])
     {
         unsigned char cmdbuf[6];
         memset(cmdbuf, 0, sizeof(cmdbuf));
@@ -616,7 +635,11 @@ int ScopeLEDFluorescenceIlluminator::GetLEDGroupChannels(int group, long& channe
         if ((DEVICE_OK == result) && (cbRxBuffer >= 5))
         {
             led_group_channels[group-1] = RxBuffer[4];
-            led_group_channels_intialized[group-1] = true;
+            led_group_channels_initialized[group-1] = true;
+        }
+        else
+        {
+            led_group_channels[group-1] = 0;
         }
     }
     channels = led_group_channels[group-1];
@@ -674,4 +697,72 @@ int ScopeLEDFluorescenceIlluminator::OnLEDGroup8Channels(MM::PropertyBase* pProp
 int ScopeLEDFluorescenceIlluminator::OnLEDGroup9Channels(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
     return OnLEDGroupChannels(9, pProp, eAct);
+}
+
+int ScopeLEDFluorescenceIlluminator::GetChannelWavelength(int channel, long& wavelength)
+{
+    int result = DEVICE_OK;
+
+    if (!channel_wavelengths_initialized[channel])
+    {
+        unsigned char cmdbuf[6];
+        memset(cmdbuf, 0, sizeof(cmdbuf));
+        cmdbuf[0] = 0xA9;  // Start Byte
+        cmdbuf[1] = 0x03;  // Length Byte
+        cmdbuf[2] =   30;  // Command Byte - MSG_GET_CHANNEL_WAVELENGTH
+        cmdbuf[3] = (unsigned char) (channel+1);  // Channel
+        cmdbuf[5] = 0x5C;  // End Byte
+
+        unsigned char* const pChecksum = &cmdbuf[4];
+        unsigned char* const pStart = &cmdbuf[1];    
+
+        *pChecksum = g_USBCommAdapter.CalculateChecksum(pStart, *pStart);
+
+        unsigned char RxBuffer[16];
+        unsigned long cbRxBuffer = sizeof(RxBuffer);
+        int result = Transact(cmdbuf, sizeof(cmdbuf), RxBuffer, &cbRxBuffer);
+
+        if ((DEVICE_OK == result) && (cbRxBuffer >= 6))
+        {
+            channel_wavelengths[channel] = (RxBuffer[4] << 8) | RxBuffer[5];
+        }
+        else
+        {
+            channel_wavelengths[channel] = 0;
+        }
+    }
+    wavelength = channel_wavelengths[channel];
+    return result;
+}
+
+int ScopeLEDFluorescenceIlluminator::OnChannelWavelength(int index, MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+    long wavelength = 0;
+    int result = DEVICE_OK;
+    if (eAct == MM::BeforeGet)
+    {
+        result = GetChannelWavelength(index, wavelength);
+        if (DEVICE_OK == result)
+        {
+            pProp->Set(wavelength);
+        }
+    }
+    return result;
+}
+
+int ScopeLEDFluorescenceIlluminator::OnChannel1Wavelength(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+    return OnChannelWavelength(0, pProp, eAct);
+}
+int ScopeLEDFluorescenceIlluminator::OnChannel2Wavelength(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+    return OnChannelWavelength(1, pProp, eAct);
+}
+int ScopeLEDFluorescenceIlluminator::OnChannel3Wavelength(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+    return OnChannelWavelength(2, pProp, eAct);
+}
+int ScopeLEDFluorescenceIlluminator::OnChannel4Wavelength(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+    return OnChannelWavelength(3, pProp, eAct);
 }
