@@ -28,6 +28,7 @@ License along with this software.  If not, see
 
 template <class T> class ScopeLEDBasicIlluminator : public CShutterBase<T>
 {
+    long m_version;
 protected:
     bool m_state;
     HANDLE m_hDevice;
@@ -129,11 +130,47 @@ protected:
             delete [] pBuffer;
         }
     }
+
+    long GetVersion()
+    {
+        if (0 == m_version)
+        {
+            unsigned char cmdbuf[5];
+            unsigned char reply[32];
+            unsigned long cbTx, cbRx;
+
+            cmdbuf[0] = 0xA9;   // Start Byte
+            cmdbuf[1] = 2;      // Length
+            cmdbuf[2] = 12;     // Command
+            cmdbuf[4] = 0x5C;   // Stop Byte
+
+            unsigned char* const pChecksum = &cmdbuf[3];
+            unsigned char* const pStart = &cmdbuf[1];    
+
+            *pChecksum = g_USBCommAdapter.CalculateChecksum(pStart, *pStart);
+
+            cbTx = sizeof(cmdbuf);
+            cbRx = sizeof(reply);
+
+            int nRet = Transact(cmdbuf, cbTx, reply, &cbRx);
+            // reply[3] = Result code
+            // reply[4]..reply[7] = Version
+            if ((DEVICE_OK == nRet) && (cbRx >= 10) && (0 == reply[3]))
+            {
+                memcpy(&m_version, &reply[4], min(sizeof(m_version), 4));
+            }
+            else
+            {
+                memset(&m_version, 0, sizeof(m_version));
+            }
+        }
+        return m_version;
+    }
 public:
     ScopeLEDBasicIlluminator() :
         m_state(false), m_hDevice(NULL),
         m_TxnTime(0), m_lastDeviceResult(-1), 
-        m_vid(0x24C2), m_pid(0),
+        m_vid(0x24C2), m_pid(0), m_version(0),
         m_evAbortRx(CreateEvent(NULL, TRUE, FALSE, NULL))
     {
         CreateProperty("SerialNumber", "", MM::String, false);
@@ -246,6 +283,19 @@ public:
         if (eAct == MM::BeforeGet)
         {
             pProp->Set(m_TxnTime);
+        }
+        else if (eAct == MM::AfterSet)
+        {
+            // never do anything!!
+        }
+        return DEVICE_OK;
+    }
+
+    int OnVersion(MM::PropertyBase* pProp, MM::ActionType eAct)
+    {
+        if (eAct == MM::BeforeGet)
+        {
+            pProp->Set(GetVersion());
         }
         else if (eAct == MM::AfterSet)
         {

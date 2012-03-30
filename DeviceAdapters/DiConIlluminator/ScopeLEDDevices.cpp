@@ -92,9 +92,15 @@ ScopeLEDMicroscopeIlluminator::ScopeLEDMicroscopeIlluminator()
     {
         brightness[i] = 0.0;
     }
+
+    // Name
+    int nRet = CreateProperty(MM::g_Keyword_Name, DeviceName, MM::String, true);
+
+    // Description
+    nRet = CreateProperty(MM::g_Keyword_Description, DeviceDescription, MM::String, true);
     
     CPropertyAction* pAct = new CPropertyAction (this, &ScopeLEDMicroscopeIlluminator::OnVendorID);
-    int nRet = CreateProperty("VendorID", "0", MM::Integer, false, pAct, true);
+    nRet = CreateProperty("VendorID", "0", MM::Integer, false, pAct, true);
     SetPropertyLimits("VendorID", 0x0, 0xFFFF);
 
     pAct = new CPropertyAction (this, &ScopeLEDMicroscopeIlluminator::OnProductID);
@@ -156,15 +162,11 @@ int ScopeLEDMicroscopeIlluminator::Initialize()
     // set property list
     // -----------------
 
-    // Name
-    int nRet = CreateProperty(MM::g_Keyword_Name, DeviceName, MM::String, true);
+    CPropertyAction* pAct = new CPropertyAction (this, &ScopeLEDMicroscopeIlluminator::OnVersion);
+    int nRet = CreateProperty("Version", "0", MM::Integer, true, pAct);
     if (nRet != DEVICE_OK) return nRet;
 
-    // Description
-    nRet = CreateProperty(MM::g_Keyword_Description, DeviceDescription, MM::String, true);
-    if (nRet != DEVICE_OK) return nRet;
-
-    CPropertyAction* pAct = new CPropertyAction (this, &ScopeLEDMicroscopeIlluminator::OnChannel1Brightness);
+    pAct = new CPropertyAction (this, &ScopeLEDMicroscopeIlluminator::OnChannel1Brightness);
     nRet = CreateProperty("Channel1Brightness", "0.0", MM::Float, false, pAct);
     if (nRet != DEVICE_OK) return nRet;
     SetPropertyLimits("Channel1Brightness", 0.0, 100.0);
@@ -273,8 +275,14 @@ ScopeLEDFluorescenceIlluminator::ScopeLEDFluorescenceIlluminator()
 {
     m_pid = 0x1305;
 
+    // Name
+    int nRet = CreateProperty(MM::g_Keyword_Name, DeviceName, MM::String, true);
+
+    // Description
+    nRet = CreateProperty(MM::g_Keyword_Description, DeviceDescription, MM::String, true);
+
     CPropertyAction* pAct = new CPropertyAction (this, &ScopeLEDFluorescenceIlluminator::OnVendorID);
-    int nRet = CreateProperty("VendorID", "0", MM::Integer, false, pAct, true);
+    nRet = CreateProperty("VendorID", "0", MM::Integer, false, pAct, true);
     SetPropertyLimits("VendorID", 0x0, 0xFFFF);
 
     pAct = new CPropertyAction (this, &ScopeLEDFluorescenceIlluminator::OnProductID);
@@ -337,16 +345,11 @@ int ScopeLEDFluorescenceIlluminator::Initialize()
 
     // set property list
     // -----------------
-
-    // Name
-    int nRet = CreateProperty(MM::g_Keyword_Name, DeviceName, MM::String, true);
+    CPropertyAction* pAct = new CPropertyAction (this, &ScopeLEDFluorescenceIlluminator::OnVersion);
+    int nRet = CreateProperty("Version", "0", MM::Integer, true, pAct);
     if (nRet != DEVICE_OK) return nRet;
 
-    // Description
-    nRet = CreateProperty(MM::g_Keyword_Description, DeviceDescription, MM::String, true);
-    if (nRet != DEVICE_OK) return nRet;
-
-    CPropertyAction* pAct = new CPropertyAction (this, &ScopeLEDFluorescenceIlluminator::OnChannel1Brightness);
+    pAct = new CPropertyAction (this, &ScopeLEDFluorescenceIlluminator::OnChannel1Brightness);
     nRet = CreateProperty("Channel1Brightness", "0.0", MM::Float, false, pAct);
     if (nRet != DEVICE_OK) return nRet;
     SetPropertyLimits("Channel1Brightness", 0.0, 100.0);
