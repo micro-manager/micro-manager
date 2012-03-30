@@ -163,17 +163,42 @@ const unsigned char getJogparamsRsp[] = {    0x18, // cmd low
                                              0x81,
                                              0x50,
 
-											 0x01,
-											 0x00,
+											            0x01,
+											            0x00,
 
-										     0x02,
-											 0x00,
+										               0x02,
+											            0x00,
 
-											 0xAB, // jog step size
-											 0x62,
-											 0x03,
-											 0x00
-                                             };
+											            0xAB, // jog step size
+											            0x62,
+											            0x03,
+											            0x00 };
+
+// MGMSG_MOT_MOVE_COMPLETED (0x0464) (Rx)
+const unsigned char moveCompletedRsp[] = {   0x64, // header
+                                             0x04,
+                                             0x0E,
+                                             0x00,
+                                             0x81,
+                                             0x50,
+
+                                             0x01, // ch header
+                                             0x00,
+                                             
+                                             0xAB, // live position counter
+                                             0x62,
+                                             0x03,
+                                             0x00,
+                                             
+                                             0x00, // encoder position count
+                                             0x00,
+                                             0x00,
+                                             0x00,
+                                             
+                                             0x00, // status
+                                             0x00,
+                                             0x10,
+                                             0x00};
 
 //#define DRY_RUN
 using namespace std;
@@ -186,14 +211,9 @@ IntegratedFilterWheel::IntegratedFilterWheel() :
    initialized_(false), 
    position_(0),
    port_(""),
-   answerTimeoutMs_(1000.0),
-   offset_(0.0)
+   answerTimeoutMs_(1000.0)
 {
    InitializeDefaultErrorMessages();
-
-   // offset in steps for the "0" position
-   // (TODO: possibly make it a property to be set in the calibration process)
-   offset_ = 0.0;
 
    // COM port property
    CPropertyAction* pAct = new CPropertyAction (this, &IntegratedFilterWheel::OnCOMPort);
@@ -476,13 +496,14 @@ int IntegratedFilterWheel::GoToPosition(long pos)
 
 #ifdef DRY_RUN
    position_ = pos;
+   CDeviceUtils::SleepMs(100);
 #else
 
    ClearPort(*this, *GetCoreCallback(), port_);
 
    // calculate number of steps to reach specified position
    //unsigned int steps = (unsigned int)(((double)stepsTurn_ / numberOfPositions_) * pos + offset_ + 0.5);
-   unsigned int steps = (unsigned int)(posSize * pos + offset_);
+   unsigned int steps = (unsigned int)(posSize * pos);
 
    ostringstream msg;
    msg << "Attempting to set position:" << pos << ", steps:" << steps;
@@ -496,8 +517,31 @@ int IntegratedFilterWheel::GoToPosition(long pos)
    int ret = SetCommand(cmd, sizeof(setPosCmd));
    if (ret != DEVICE_OK)
       return ret;
+
+   // obtain response
+   const int answLength(sizeof(moveCompletedRsp));
+   unsigned char answer[answLength];
+   memset(answer, 0, answLength);
+   ret = GetCommand(answer, answLength, answerTimeoutMs_);
+   if (ret != DEVICE_OK)
+      return ret;
+
+   // check response signature
+   if (memcmp(answer, moveCompletedRsp, 8) != 0)
+      return ERR_UNRECOGNIZED_ANSWER;
+
+   unsigned int stepsReported = *((unsigned int*)(answer + 8));
+   long posReported = (long) ((double)stepsReported / posSize + 0.5);
+
+   if (pos != stepsReported) {
+      ostringstream err;
+      err << "GoToPosition() failed: steps requested = " << steps << ", steps reported = " << stepsReported;
+      LogMessage(err.str());
+   }
+
+   position_ = posReported;
+
 #endif
-   CDeviceUtils::SleepMs(100);
  
    return DEVICE_OK;
 }
@@ -513,6 +557,11 @@ int IntegratedFilterWheel::RetrieveCurrentPosition(long& pos)
 #ifdef DRY_RUN
    pos = position_;
 #else
+   int posSize = 0;
+   if (numberOfPositions_ == 5)
+	   posSize = g_step5;
+   else if (numberOfPositions_ == 8)
+	   posSize = g_step8;
 
    ClearPort(*this, *GetCoreCallback(), port_);
 
@@ -536,7 +585,8 @@ int IntegratedFilterWheel::RetrieveCurrentPosition(long& pos)
    unsigned int steps = *((unsigned int*)(answer + 8));
    //double onePos = (double)stepsTurn_ / numberOfPositions_;
    //pos = (long)((steps - offset_) / onePos + 0.5);
-   pos = (long) ((steps - offset_) / 221867.0 + 0.5);
+   pos = (long) ((double)steps/ posSize + 0.5);
+   position_ = pos;
 
    ostringstream msg;
    msg << "Steps:" << steps << ", Position:" << pos;
