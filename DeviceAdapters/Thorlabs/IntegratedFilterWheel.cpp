@@ -530,10 +530,21 @@ int IntegratedFilterWheel::GoToPosition(long pos)
    if (memcmp(answer, moveCompletedRsp, 8) != 0)
       return ERR_UNRECOGNIZED_ANSWER;
 
+   unsigned int status = *((unsigned int*)(answer + 16));
+   int errorBit = status & P_MOT_SB_POSITION_ERR;
+   if (status != 0)
+   {
+      ostringstream err;
+      err << "GoToPosition() failed: status = " << status;
+      LogMessage(err.str());
+      return ERR_MOVE_FAILED;
+   }
+
    unsigned int stepsReported = *((unsigned int*)(answer + 8));
    long posReported = (long) ((double)stepsReported / posSize + 0.5);
 
-   if (pos != stepsReported) {
+   if (pos != stepsReported)
+   {
       ostringstream err;
       err << "GoToPosition() failed: steps requested = " << steps << ", steps reported = " << stepsReported;
       LogMessage(err.str());

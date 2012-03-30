@@ -43,6 +43,7 @@
 #define ERR_STAGE_NOT_ZEROED         10016
 #define ERR_INVALID_POSITION         10017
 #define ERR_INVALID_NUMBER_OF_POS    10018
+#define ERR_MOVE_FAILED              10019
 
 
 // utility functions
@@ -107,6 +108,8 @@ typedef struct _DCMOTSTATUS
 #define P_MOT_SB_HOMED_MASK         0xFFFFFBFF
 #define P_MOT_SB_INTERLOCK          0x00001000        // Interlock state (1 - enabled, 0 - disabled)
 #define P_MOT_SB_INTERLOCKMASK      0xFFFFEFFF
+#define P_MOT_SB_POSITION_ERR       0x00100000         // Position error bit indicated
+#define P_MOT_SB_POSITION_ERRMASK   0xFFEFFFFF         // Position error bit mask
 
 ///////////////////////////////////////////////////////////////////////////////
 // fixed stage parameters
