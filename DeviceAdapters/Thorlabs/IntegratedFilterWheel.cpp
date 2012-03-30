@@ -532,7 +532,7 @@ int IntegratedFilterWheel::GoToPosition(long pos)
 
    unsigned int status = *((unsigned int*)(answer + 16));
    int errorBit = status & P_MOT_SB_POSITION_ERR;
-   if (status != 0)
+   if (errorBit != 0)
    {
       ostringstream err;
       err << "GoToPosition() failed: status = " << status;
