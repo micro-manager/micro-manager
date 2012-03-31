@@ -2090,13 +2090,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
          return;
       }
       
-      // TODO: add 0 padding to deal with aberrant image sizes
-      if ( (rowData.width_ != rowData.height_) || (rowData.width_ %2 != 0) ) {
-         JOptionPane.showMessageDialog(getInstance(), 
-                 "Drift can only be corrected for square images with a size that is a power of 2");
-         return;
-      }
-      
+           
       ij.IJ.showStatus("Executing jitter correction");
       
       Runnable doWorkRunnable = new Runnable() {
@@ -2104,11 +2098,22 @@ public class DataCollectionForm extends javax.swing.JFrame {
          public void run() {
             
             int mag = (int) (rowData.pixelSizeNm_ / 40.0);
+            while (mag % 2 != 0)
+               mag += 1;
                         
             int width = mag * rowData.width_;
             int height = mag * rowData.height_;                        
             
             int size = width * height;
+            
+            
+             // TODO: add 0 padding to deal with aberrant image sizes
+            if ( (width != height) || (width %2 != 0) ) {
+               JOptionPane.showMessageDialog(getInstance(), 
+                 "Magnified image is not a square with a size that is a power of 2");
+               ij.IJ.showStatus(" ");
+               return;
+            }
 
             // TODO: what if we should go through nrSlices instead of nrFrames?
             boolean useSlices = false;
