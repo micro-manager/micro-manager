@@ -1,1 +1,3 @@
+* Read master enable state
 * Property for control mode
+* Split code for FMI and MSB/MSP illuminators intep separate files
