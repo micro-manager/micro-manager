@@ -431,6 +431,11 @@ int ScopeLEDFluorescenceIlluminator::Initialize()
     nRet = CreateProperty("Channel4Wavelength", "0", MM::Integer, true, pAct);
     if (nRet != DEVICE_OK) return nRet;
 
+    pAct = new CPropertyAction (this, &ScopeLEDFluorescenceIlluminator::OnControlMode);
+    nRet = CreateProperty("ControlMode", "1", MM::Integer, false, pAct);
+    if (nRet != DEVICE_OK) return nRet;
+    SetPropertyLimits("ControlMode", 1, 3);
+
     nRet = UpdateStatus();
     return nRet;
 }
@@ -754,7 +759,7 @@ int ScopeLEDFluorescenceIlluminator::GetChannelWavelength(int channel, long& wav
         cmdbuf[5] = 0x5C;  // End Byte
 
         unsigned char* const pChecksum = &cmdbuf[4];
-        unsigned char* const pStart = &cmdbuf[1];    
+        unsigned char* const pStart = &cmdbuf[1];
 
         *pChecksum = g_USBCommAdapter.CalculateChecksum(pStart, *pStart);
 
@@ -806,3 +811,66 @@ int ScopeLEDFluorescenceIlluminator::OnChannel4Wavelength(MM::PropertyBase* pPro
 {
     return OnChannelWavelength(3, pProp, eAct);
 }
+
+int ScopeLEDFluorescenceIlluminator::SetControlMode(long mode)
+{
+    unsigned char cmdbuf[6];
+    memset(cmdbuf, 0, sizeof(cmdbuf));
+    cmdbuf[0] = 0xA9;  // Start Byte
+    cmdbuf[1] = 0x03;  // Length Byte
+    cmdbuf[2] =   39;  // Command Byte - MSG_SET_OPERATING_MODE
+    cmdbuf[3] = (unsigned char) mode;
+    cmdbuf[5] = 0x5C;  // End Byte
+
+    unsigned char* const pChecksum = &cmdbuf[4];
+    unsigned char* const pStart = &cmdbuf[1];
+
+    *pChecksum = g_USBCommAdapter.CalculateChecksum(pStart, *pStart);
+    return Transact(cmdbuf, sizeof(cmdbuf));
+}
+
+int ScopeLEDFluorescenceIlluminator::GetControlMode(long& mode)
+{
+    unsigned char cmdbuf[5];
+    memset(cmdbuf, 0, sizeof(cmdbuf));
+    cmdbuf[0] = 0xA9;  // Start Byte
+    cmdbuf[1] = 0x02;  // Length Byte
+    cmdbuf[2] =   38;  // Command Byte - MSG_GET_OPERATING_MODE
+    cmdbuf[4] = 0x5C;  // End Byte
+
+    unsigned char* const pChecksum = &cmdbuf[3];
+    unsigned char* const pStart = &cmdbuf[1];
+
+    *pChecksum = g_USBCommAdapter.CalculateChecksum(pStart, *pStart);
+
+    unsigned char RxBuffer[16];
+    unsigned long cbRxBuffer = sizeof(RxBuffer);
+    int result = Transact(cmdbuf, sizeof(cmdbuf), RxBuffer, &cbRxBuffer);
+
+    if ((DEVICE_OK == result) && (cbRxBuffer >= 5))
+    {
+        mode = RxBuffer[4];
+    }
+    else
+    {
+        mode = 0;
+    }
+    return result;
+}
+
+int ScopeLEDFluorescenceIlluminator::OnControlMode(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+    long mode = 0;
+    if (eAct == MM::BeforeGet)
+    {
+        GetControlMode(mode);
+        pProp->Set(mode);
+    }
+    else if (eAct == MM::AfterSet)
+    {
+        pProp->Get(mode);
+        SetControlMode(mode);
+    }
+    return DEVICE_OK;
+}
+
