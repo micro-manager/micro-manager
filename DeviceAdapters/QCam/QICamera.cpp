@@ -389,17 +389,17 @@ int QICamera::Initialize()
 {
     const unsigned short		CAMERA_STRING_LENGTH = 256;
 
-    QCam_Err					err;
-    QCam_CamListItem			cameraList[1];
-    unsigned long				numOfCameras;
-    char						cameraStr[CAMERA_STRING_LENGTH];
+    QCam_Err            err;
+    QCam_CamListItem	   cameraList[1];
+    unsigned long	      numOfCameras;
+    char	               cameraStr[CAMERA_STRING_LENGTH];
     char						cameraName[CAMERA_STRING_LENGTH];
-    unsigned short				major, minor, build;
-    char						qcamVersionStr[256];
-    char						cameraIDStr[256];
-    unsigned long				ccdType;
-    unsigned long				cameraType;
-    int                         nRet;
+    unsigned short	   major, minor, build;
+    char	               qcamVersionStr[256];
+    char	               cameraIDStr[256];
+    unsigned long	      ccdType;
+    unsigned long	      cameraType;
+    int                 nRet;
 
     START_METHOD("QICamera::Initialize");
 
@@ -407,8 +407,6 @@ int QICamera::Initialize()
     if (m_isInitialized == true) {
         return DEVICE_OK;
     }
-
-
 
     // try releasing the driver first
     QCam_ReleaseDriver();
@@ -609,6 +607,12 @@ int QICamera::Initialize()
             case qcCameraEXiBlue:
                 strcpy(cameraStr, "EXi Blue");
                 break;
+
+
+            case 34: // TODO get this from header
+               strcpy (cameraStr, "Rolera Bolt");
+               break;
+
 #endif
                 /*		case qcCameraRoleraOne:
                 strcpy(cameraStr, "Rolera One");
@@ -639,6 +643,15 @@ int QICamera::Initialize()
         // if the string is empty, fill it with "N/A"
         if (strcmp(cameraStr, "") == 0) {
             strcpy(cameraStr, "N/A");
+        }
+        // The Bolt sends a string that is terminated with '10' rather than '0':
+        char * pCh;
+        const char ten = 10;
+        const char zero = 0;
+        pCh = strstr (cameraStr, &ten);
+        if (pCh != 0)
+        {
+           strncpy (pCh, &zero, 1);
         }
 
         sprintf(cameraIDStr, "Serial number %s", cameraStr);
@@ -1353,19 +1366,19 @@ int QICamera::SetupReadoutPort()
  */
 int QICamera::SetupBitDepth()
 {
-    QCam_Err					err;
-    unsigned long				maxBitDepth;
-    unsigned long		        imageFormat;
-    CPropertyAction				*propertyAction;
-    int							nRet;
-    vector<string>				pixelTypeValues;
-    const char                        *mono8Str = "8bit";
-    const char                        *initialStr;
-    char						mono16Str[256];
-    unsigned long				formatTable[32];
-    int         				formatTableSize = sizeof(formatTable) / sizeof (unsigned long);
-    int                         counter;
-    bool                        mono8allowed, mono16allowed;
+    QCam_Err            err;
+    unsigned long	      maxBitDepth;
+    unsigned long		   imageFormat;
+    CPropertyAction	   *propertyAction;
+    int                 nRet;
+    vector<string>      pixelTypeValues;
+    const char          *mono8Str = "8bit";
+    const char          *initialStr;
+    char	               mono16Str[256];
+    unsigned long	      formatTable[32];
+    int                 formatTableSize = sizeof(formatTable) / sizeof (unsigned long);
+    int                 counter;
+    bool                mono8allowed, mono16allowed;
 
     START_METHOD("QICamera::SetupBitDepth");
 
@@ -3714,7 +3727,8 @@ int QICamera::InsertImage(int iFrameBuff)
 
     // get the current image buffer
     QCam_Frame* pFrame = m_frameBuffs[iFrameBuff];
-    int bytes = (pFrame->bits / 8) + 1;
+    int bytes = (pFrame->bits > 8) ? 2 : 1;
+
     //if (pFrame->errorCode != qerrSuccess) {
     //    printf("## InsertImage found errorCode = %d\n", pFrame->errorCode);
     //}
