@@ -96,6 +96,10 @@ public class LiveModeTimer extends javax.swing.Timer {
    public void begin() throws Exception {
 
          manageShutter(true);
+         while (core_.getRemainingImageCount() > 0) {
+            core_.popNextImage();
+         }
+            
          core_.startContinuousSequenceAcquisition(0);
          setType();
          setInterval();
@@ -116,7 +120,7 @@ public class LiveModeTimer extends javax.swing.Timer {
          // With first image acquired, create the display
          gui_.checkSimpleAcquisition();
          win_ = MMStudioMainFrame.getSimpleDisplay();
-         
+
          // Add first image here so initial autoscale works correctly
          TaggedImage ti = makeTaggedImage(img);       
          if (multiChannelCameraNrCh_ <= 1) {
@@ -125,6 +129,7 @@ public class LiveModeTimer extends javax.swing.Timer {
 
          // Add another image if multicamera
          if (multiChannelCameraNrCh_ > 1) {
+            try {
             ti = core_.getLastTaggedImage();
             String camera = core_.getCameraDevice();
 
@@ -152,9 +157,11 @@ public class LiveModeTimer extends javax.swing.Timer {
                   gui_.addImage(ACQ_NAME, images[i], i == multiChannelCameraNrCh_ - 1, true);
                }
             }
-
+            } catch (JSONException ex) {
+               ReportingUtils.logError("Missing CamerChannel Tag...");
+            }
          }
-         
+          
          fpsCounter_ = 0;
          fpsTimer_ = System.currentTimeMillis();
 
