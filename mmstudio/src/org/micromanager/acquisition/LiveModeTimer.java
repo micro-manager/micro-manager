@@ -120,48 +120,7 @@ public class LiveModeTimer extends javax.swing.Timer {
          // With first image acquired, create the display
          gui_.checkSimpleAcquisition();
          win_ = MMStudioMainFrame.getSimpleDisplay();
-
-         // Add first image here so initial autoscale works correctly
-         TaggedImage ti = makeTaggedImage(img);       
-         if (multiChannelCameraNrCh_ <= 1) {
-            gui_.addImage(ACQ_NAME, ti, true, true);
-         }
-
-         // Add another image if multicamera
-         if (multiChannelCameraNrCh_ > 1) {
-            try {
-            ti = core_.getLastTaggedImage();
-            String camera = core_.getCameraDevice();
-
-            int channel = ti.tags.getInt(camera + "-" + CCHANNELINDEX);
-            addTags(ti, channel);
-            
-            TaggedImage[] images = new TaggedImage[(int) multiChannelCameraNrCh_];
-            images[channel] = ti;
-            int numFound = 1;
-            while (numFound < multiChannelCameraNrCh_) {
-               for (int n = 0; n < 2 * multiChannelCameraNrCh_; n++) {
-                  TaggedImage t = core_.getNBeforeLastTaggedImage(n);
-                  int ch = t.tags.getInt(camera + "-" + CCHANNELINDEX);
-                  if (images[ch] == null) {
-                     numFound++;
-                     images[ch] = t;
-                     addTags(t, ch);
-                     break;
-                  }
-               }
-            }
-            //need to add in channel order so that autoscale on window opening works properly
-            for (int i = 0; i < multiChannelCameraNrCh_; i++) {
-               if (images[i] != null) {
-                  gui_.addImage(ACQ_NAME, images[i], i == multiChannelCameraNrCh_ - 1, true);
-               }
-            }
-            } catch (JSONException ex) {
-               ReportingUtils.logError("Missing CamerChannel Tag...");
-            }
-         }
-          
+         
          fpsCounter_ = 0;
          fpsTimer_ = System.currentTimeMillis();
 
@@ -172,6 +131,7 @@ public class LiveModeTimer extends javax.swing.Timer {
 
    }
 
+   
    @Override
    public void stop() {
       stop(true);
