@@ -85,7 +85,7 @@ MODULE_API void DeleteDevice(MM::Device* pDevice)
 const char* ScopeLEDMicroscopeIlluminator::DeviceName = "ScopeLED-MSB/MSP";
 const char* ScopeLEDMicroscopeIlluminator::DeviceDescription = "ScopeLED MSB/MSP Microscope Illuminator";
 
-ScopeLEDMicroscopeIlluminator::ScopeLEDMicroscopeIlluminator()
+ScopeLEDMicroscopeIlluminator::ScopeLEDMicroscopeIlluminator() : m_state(false)
 {
     m_pid = 0x1303;
     for (int i=0; i < SCOPELED_ILLUMINATOR_CHANNELS_MAX; i++)
@@ -190,9 +190,14 @@ int ScopeLEDMicroscopeIlluminator::Initialize()
     return nRet;
 }
 
+int ScopeLEDMicroscopeIlluminator::GetOpen(bool& open)
+{
+    open = m_state;
+    return DEVICE_OK;
+}
+
 int ScopeLEDMicroscopeIlluminator::SetOpen (bool open)
 {
-    m_state = open;
     unsigned char cmdbuf[10];
     memset(cmdbuf, 0, sizeof(cmdbuf));
     cmdbuf[0] = 0xA9;  // Start Byte
@@ -204,6 +209,7 @@ int ScopeLEDMicroscopeIlluminator::SetOpen (bool open)
     unsigned char* const pChecksum = &cmdbuf[8];
     unsigned char* const pStart = &cmdbuf[1];
 
+    m_state = open;
     if (m_state)
     {
         for (int i=0; i < SCOPELED_ILLUMINATOR_CHANNELS_MAX; i++)
@@ -431,13 +437,12 @@ int ScopeLEDFluorescenceIlluminator::Initialize()
 
 int ScopeLEDFluorescenceIlluminator::SetOpen(bool open)
 {
-    m_state = open;
     unsigned char cmdbuf[6];
     memset(cmdbuf, 0, sizeof(cmdbuf));
     cmdbuf[0] = 0xA9;  // Start Byte
     cmdbuf[1] = 0x03;  // Length Byte
     cmdbuf[2] =   41;  // Command Byte - MSG_SET_MASTER_ENABLE
-    cmdbuf[3] = m_state;
+    cmdbuf[3] = open;
     cmdbuf[5] = 0x5C;  // End Byte
 
     unsigned char* const pChecksum = &cmdbuf[4];
@@ -445,6 +450,35 @@ int ScopeLEDFluorescenceIlluminator::SetOpen(bool open)
 
     *pChecksum = g_USBCommAdapter.CalculateChecksum(pStart, *pStart);
     return Transact(cmdbuf, sizeof(cmdbuf));
+}
+
+int ScopeLEDFluorescenceIlluminator::GetOpen(bool& open)
+{
+    unsigned char cmdbuf[5];
+    memset(cmdbuf, 0, sizeof(cmdbuf));
+    cmdbuf[0] = 0xA9;  // Start Byte
+    cmdbuf[1] = 0x02;  // Length Byte
+    cmdbuf[2] =   42;  // Command Byte - MSG_GET_MASTER_ENABLE
+    cmdbuf[4] = 0x5C;  // End Byte
+
+    unsigned char* const pChecksum = &cmdbuf[3];
+    unsigned char* const pStart = &cmdbuf[1];
+
+    *pChecksum = g_USBCommAdapter.CalculateChecksum(pStart, *pStart);
+
+    unsigned char RxBuffer[16];
+    unsigned long cbRxBuffer = sizeof(RxBuffer);
+    int result = Transact(cmdbuf, sizeof(cmdbuf), RxBuffer, &cbRxBuffer);
+
+    if ((DEVICE_OK == result) && (cbRxBuffer >= 5))
+    {
+        open = 0 != RxBuffer[4];
+    }
+    else
+    {
+        open = false;
+    }
+    return result;
 }
 
 int ScopeLEDFluorescenceIlluminator::SetChannelBrightness(int channel, double brightness)
@@ -471,8 +505,6 @@ int ScopeLEDFluorescenceIlluminator::SetChannelBrightness(int channel, double br
 
 int ScopeLEDFluorescenceIlluminator::GetChannelBrightness(int channel, double& brightness)
 {
-    brightness = 0.0;
-    
     unsigned char cmdbuf[6];
     memset(cmdbuf, 0, sizeof(cmdbuf));
     cmdbuf[0] = 0xA9;  // Start Byte
@@ -494,6 +526,10 @@ int ScopeLEDFluorescenceIlluminator::GetChannelBrightness(int channel, double& b
     {
         unsigned short b = (RxBuffer[4] << 8) | RxBuffer[5];
         brightness = b / 10.0;
+    }
+    else
+    {
+        brightness = 0.0;
     }
     return result;
 }
@@ -585,6 +621,10 @@ int ScopeLEDFluorescenceIlluminator::GetLEDGroup(long& group)
     if ((DEVICE_OK == result) && (cbRxBuffer >= 5))
     {
         group = RxBuffer[4];
+    }
+    else
+    {
+        group = 0;
     }
     return result;
 }

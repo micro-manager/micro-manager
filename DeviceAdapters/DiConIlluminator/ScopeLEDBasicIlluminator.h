@@ -30,7 +30,6 @@ template <class T> class ScopeLEDBasicIlluminator : public CShutterBase<T>
 {
     long m_version;
 protected:
-    bool m_state;
     HANDLE m_hDevice;
 
     long m_TxnTime;
@@ -166,9 +165,10 @@ protected:
         }
         return m_version;
     }
+
 public:
     ScopeLEDBasicIlluminator() :
-        m_state(false), m_hDevice(NULL),
+        m_hDevice(NULL),
         m_TxnTime(0), m_lastDeviceResult(-1), 
         m_vid(0x24C2), m_pid(0), m_version(0),
         m_evAbortRx(CreateEvent(NULL, TRUE, FALSE, NULL))
@@ -196,11 +196,7 @@ public:
 
 // Shutter API
     //int SetOpen (bool open = true)
-    int GetOpen(bool& open)
-    {
-        open = m_state;
-        return DEVICE_OK;
-    }
+    //int GetOpen(bool& open);
     int Fire(double /*deltaT*/)
     {
         return DEVICE_UNSUPPORTED_COMMAND;
@@ -236,7 +232,9 @@ public:
     {
         if (eAct == MM::BeforeGet)
         {
-            if (m_state)
+            bool open = false;
+            GetOpen(open);
+            if (open)
                 pProp->Set(1L);
             else
                 pProp->Set(0L);

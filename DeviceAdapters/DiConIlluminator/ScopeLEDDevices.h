@@ -26,6 +26,7 @@ License along with this software.  If not, see
 #define SCOPELED_ILLUMINATOR_CHANNELS_MAX 4
 class ScopeLEDMicroscopeIlluminator : public ScopeLEDBasicIlluminator<ScopeLEDMicroscopeIlluminator>
 {
+    bool m_state;
 public:
     ScopeLEDMicroscopeIlluminator(); 
     ~ScopeLEDMicroscopeIlluminator();
@@ -36,6 +37,7 @@ public:
 
     // Shutter API
     int SetOpen (bool open = true);
+    int GetOpen(bool& open);
 
     // action interface
     int OnChannelBrightness(int index, MM::PropertyBase* pProp, MM::ActionType eAct);
@@ -70,6 +72,7 @@ public:
 
     // Shutter API
     int SetOpen (bool open = true);
+    int GetOpen(bool& open);
 
     // action interface
     int OnChannelBrightness(int index, MM::PropertyBase* pProp, MM::ActionType eAct);
