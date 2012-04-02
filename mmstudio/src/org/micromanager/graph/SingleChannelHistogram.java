@@ -411,26 +411,30 @@ public class SingleChannelHistogram extends JPanel implements Histograms, Cursor
    }
 
     public void imageChanged() {
-        boolean slowHistUpdate = true;
-        if (display_.getHistogramControlsState().slowHist) {
-            long time = System.currentTimeMillis();
-            if (time - lastUpdateTime_ < SLOW_HIST_UPDATE_INTERVAL_MS)
-                slowHistUpdate = false;
-            else
-                lastUpdateTime_ = time;
+        boolean update = true;
+        if ( display_.acquisitionIsRunning()
+                || MMStudioMainFrame.getInstance().isLiveModeOn() ) {
+            if (display_.getHistogramControlsState().slowHist) {
+                long time = System.currentTimeMillis();
+                if (time - lastUpdateTime_ < SLOW_HIST_UPDATE_INTERVAL_MS) {
+                    update = false;
+                } else {
+                    lastUpdateTime_ = time;
+                }
+            }
         }
 
-       if (slowHistUpdate) {
-         calcAndDisplayHistAndStats(display_.isActiveDisplay());
-         if (display_.getHistogramControlsState().autostretch) {
-            autostretch();
-         }
-         applyLUTToImage();
-      }
-   }
+        if (update) {
+            calcAndDisplayHistAndStats(display_.isActiveDisplay());
+            if (display_.getHistogramControlsState().autostretch) {
+                autostretch();
+            }
+            applyLUTToImage();
+        }
+    }
 
    public void calcAndDisplayHistAndStats(boolean drawHist) {
-      if (img_ == null || img_.getProcessor() == null) {
+       if (img_ == null || img_.getProcessor() == null) {
          return;
       }
       int[] rawHistogram = img_.getProcessor().getHistogram();

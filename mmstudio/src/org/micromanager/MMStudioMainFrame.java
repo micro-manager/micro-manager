@@ -4,8 +4,8 @@
 //SUBSYSTEM:     mmstudio
 //-----------------------------------------------------------------------------
 //AUTHOR:        Nenad Amodaj, nenad@amodaj.com, Jul 18, 2005
-//               Modifications by Arthur Edelstein, Nico Stuurman
-//COPYRIGHT:     University of California, San Francisco, 2006-2010
+//               Modifications by Arthur Edelstein, Nico Stuurman, Henry Pinkard
+//COPYRIGHT:     University of California, San Francisco, 2006-2012
 //               100X Imaging Inc, www.100ximaging.com, 2008
 //LICENSE:       This file is distributed under the BSD license.
 //               License text is included with the source distribution.

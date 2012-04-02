@@ -1080,26 +1080,27 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
       }
 
      
-
-      //make sure pixels get properly set
-      if (hyperImage_ != null && frame == 0) {
-         IMMImagePlus img = (IMMImagePlus) hyperImage_;
-         if (img.getNChannelsUnverified() == 1) {
-            if (img.getNSlicesUnverified() == 1) {
-               hyperImage_.getProcessor().setPixels(virtualStack_.getPixels(1));
-            }
-         } else if (hyperImage_ instanceof MMCompositeImage) {
-            //reset rebuilds each of the channel ImageProcessors with the correct pixels
-            //from AcquisitionVirtualStack
-            MMCompositeImage ci = ((MMCompositeImage) hyperImage_);
-            ci.reset();
-            //This line is neccessary for image processor to have correct pixels in grayscale mode
-            ci.getProcessor().setPixels(virtualStack_.getPixels(ci.getCurrentSlice()));
-         }
-      } else if (hyperImage_ instanceof MMCompositeImage) {
-         MMCompositeImage ci = ((MMCompositeImage) hyperImage_);
-         ci.reset();
-      }
+       //make sure pixels get properly set
+       if (hyperImage_ != null && frame == 0) {
+           IMMImagePlus img = (IMMImagePlus) hyperImage_;
+           if (img.getNChannelsUnverified() == 1) {
+               if (img.getNSlicesUnverified() == 1) {
+                   hyperImage_.getProcessor().setPixels(virtualStack_.getPixels(1));
+               }
+           } else if (hyperImage_ instanceof MMCompositeImage) {
+               //reset rebuilds each of the channel ImageProcessors with the correct pixels
+               //from AcquisitionVirtualStack
+               MMCompositeImage ci = ((MMCompositeImage) hyperImage_);
+               ci.reset();
+               //This line is neccessary for image processor to have correct pixels in grayscale mode
+               ci.getProcessor().setPixels(virtualStack_.getPixels(ci.getCurrentSlice()));
+           }
+       } else if (hyperImage_ instanceof MMCompositeImage) {
+           MMCompositeImage ci = ((MMCompositeImage) hyperImage_);
+           ci.reset();
+       }
+        
+             
 
       if (cSelector_ != null) {
          if (cSelector_.getMaximum() <= (1 + superChannel)) {
@@ -1512,6 +1513,7 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
       
    
       mdPanel_.displayChanged(win);
+      imageChangedUpdate();
    }
    
    private int getWinLength(ImageWindow win) {
@@ -1863,10 +1865,12 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
     * is the active window
     */
    private void imageChangedUpdate() {
-      if (histograms_ != null)
-         histograms_.imageChanged(); 
-      if (isActiveDisplay()) 
+       if (histograms_ != null) {
+         histograms_.imageChanged();
+       } 
+      if (isActiveDisplay()) { 
           mdPanel_.imageChangedUpdate(this);
+      } 
       imageChangedWindowUpdate(); //used to update status line
    }
    
