@@ -1548,7 +1548,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
 
          }
          rt.show("Averaged Tracks");
-         
+
 
       }
 
@@ -1574,63 +1574,177 @@ public class DataCollectionForm extends javax.swing.JFrame {
          newSpot.setYCenter(y);
          transformedResultList.add(newSpot);
       }
-      
+
       MyRowData rowData = source;
       addSpotData(rowData.name_ + " Subtracted", rowData.title_, "", rowData.width_,
-                 rowData.height_, rowData.pixelSizeNm_, rowData.shape_,
-                 rowData.halfSize_, rowData.nrChannels_, rowData.nrFrames_,
-                 rowData.nrSlices_, 1, rowData.maxNrSpots_, transformedResultList,
-                 rowData.timePoints_, true);
-      
+              rowData.height_, rowData.pixelSizeNm_, rowData.shape_,
+              rowData.halfSize_, rowData.nrChannels_, rowData.nrFrames_,
+              rowData.nrSlices_, 1, rowData.maxNrSpots_, transformedResultList,
+              rowData.timePoints_, true);
+
    }
-   
-   
+
    private void mathButton_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mathButton_ActionPerformed
       int[] rows = new int[jTable1_.getRowCount()];
-      
-      for (int i = 0; i < rows.length; i++)
+
+      for (int i = 0; i < rows.length; i++) {
          rows[i] = (Integer) jTable1_.getValueAt(i, 0);
-        
+      }
+
       MathForm mf = new MathForm(rows, rows);
-      
+
       mf.setBackground(MMStudioMainFrame.getInstance().getBackgroundColor());
       MMStudioMainFrame.getInstance().addMMBackgroundListener(mf);
-      
+
       mf.setVisible(true);
    }//GEN-LAST:event_mathButton_ActionPerformed
 
+   /**
+    * Links spots by checking in consecutive frames whether the spot is still present
+    * If it is, add it to a list
+    * Once a frame has been found in which it is not present, calculate the average spot position
+    * and add this averaged spot to the list with linked spots
+    * The Frame number of the linked spot list will be 0
+    * @param evt - ignored...
+    */
    private void linkButton_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_linkButton_ActionPerformed
       final int row = jTable1_.getSelectedRow();
-      
-      MyRowData rowData = rowData_.get(row);
+
+      final MyRowData rowData = rowData_.get(row);
       if (rowData.frameIndexSpotList_ == null) {
          rowData.index();
       }
 
-      boolean useFrames = rowData.nrFrames_ > rowData.nrSlices_;
-      int nr = rowData.nrSlices_;
-      if (useFrames) {
-         nr = rowData.nrFrames_;
-      }
-    
-      // build a 2D array of lists with gaussian spots
-      List <GaussianSpotData>[][] spotImage = 
-              new ArrayList[rowData.width_][rowData.height_];
-      for (int i = 1; i < nr; i++) {
-         List<GaussianSpotData> frameSpots = rowData.frameIndexSpotList_.get(i);
-         for (GaussianSpotData spot : frameSpots) {
-            if (spotImage[spot.getX()][spot.getY()] == null)
-               spotImage[spot.getX()][spot.getY()] = new ArrayList<GaussianSpotData>();
-            // ToDo: check if last added spot was frame before this one.
-            // if not, finish link
-            spotImage[spot.getX()][spot.getY()].add(spot);
-         }
-      }
-      // ToDo: finish links of all remaining spots
-      
 
+      Runnable doWorkRunnable = new Runnable() {
+
+         public void run() {
+
+            try {
+               ij.IJ.showStatus("Linking spotData...");
+               boolean useFrames = rowData.nrFrames_ > rowData.nrSlices_;
+               int nr = rowData.nrSlices_;
+               if (useFrames) {
+                  nr = rowData.nrFrames_;
+               }
+
+               // linked spots go here:
+               List<GaussianSpotData> destList = new ArrayList<GaussianSpotData>();
+
+               // build a 2D array of lists with gaussian spots
+               List<GaussianSpotData>[][] spotImage =
+                       new ArrayList[rowData.width_][rowData.height_];
+               for (int i = 1; i < nr; i++) {
+                  ij.IJ.showStatus("Linking spotData...");
+                  ij.IJ.showProgress(i, nr);
+                  List<GaussianSpotData> frameSpots = rowData.frameIndexSpotList_.get(i);
+                  if (frameSpots != null) {
+                     for (GaussianSpotData spot : frameSpots) {
+                        if (spotImage[spot.getX()][spot.getY()] == null) {
+                           spotImage[spot.getX()][spot.getY()] = new ArrayList<GaussianSpotData>();
+                        } else {
+                           List<GaussianSpotData> prevSpotList = spotImage[spot.getX()][spot.getY()];
+                           GaussianSpotData lastSpot = prevSpotList.get(prevSpotList.size() - 1);
+                           int lastFrame = lastSpot.getFrame();
+                           if (!useFrames) {
+                              lastFrame = lastSpot.getSlice();
+                           }
+                           if (lastFrame != i - 1) {
+                              linkSpots(prevSpotList, destList, useFrames);
+                              spotImage[spot.getX()][spot.getY()] = new ArrayList<GaussianSpotData>();
+                           }
+                        }
+                        spotImage[spot.getX()][spot.getY()].add(spot);
+                     }
+                  } else {
+                     System.out.println("Empty row: " + i);
+                  }
+               }
+
+               // Finish links of all remaining spots
+               ij.IJ.showStatus("Finishing linking spotData...");
+               for (int w = 0; w < rowData.width_; w++) {
+                  for (int h = 0; h < rowData.height_; h++) {
+                     if (spotImage[w][h] != null) {
+                        linkSpots(spotImage[w][h], destList, useFrames);
+                     }
+                  }
+               }
+               ij.IJ.showStatus("");
+               ij.IJ.showProgress(1);
+
+               // Add destList to rowData
+               addSpotData(rowData.name_ + " Linked", rowData.title_, "", rowData.width_,
+                       rowData.height_, rowData.pixelSizeNm_, rowData.shape_,
+                       rowData.halfSize_, rowData.nrChannels_, 0,
+                       0, 1, rowData.maxNrSpots_, destList,
+                       rowData.timePoints_, false);
+            } catch (OutOfMemoryError oome) {
+               JOptionPane.showMessageDialog(getInstance(), "Out of memory");
+            }
+
+         }
+      };
+
+      (new Thread(doWorkRunnable)).start();
    }//GEN-LAST:event_linkButton_ActionPerformed
 
+   /**
+    * Given a list of linked spots, create a single spot entry that will be added 
+    * to the destination list
+    * @param source - list of spots that all occur around the same pixel and in linked frames
+    * @param dest - list spots in which each entry represents multiple linked spots
+    */
+   
+   private void linkSpots(List<GaussianSpotData> source, List<GaussianSpotData> dest,
+           boolean useFrames) {
+      if (source == null)
+         return;
+      if (dest == null)
+         return;
+      
+      GaussianSpotData sp = new GaussianSpotData(source.get(0));
+      
+      double intensity = 0.0;
+      double background = 0.0;
+      double xCenter = 0.0;
+      double yCenter = 0.0;
+      double width = 0.0;
+      double a = 0.0;
+      double theta = 0.0;
+      double sigma = 0.0;
+      
+      for (GaussianSpotData spot : source) {
+         intensity += spot.getIntensity();
+         background += spot.getBackground();
+         xCenter += spot.getXCenter();
+         yCenter += spot.getYCenter();
+         width += spot.getWidth();
+         a += spot.getA();
+         theta += spot.getTheta();
+         sigma += spot.getSigma();
+      }
+      
+      background /= source.size();
+      xCenter /= source.size();
+      yCenter /= source.size();
+      width /= source.size();
+      a /= source.size();
+      theta /= source.size();
+      sigma /= source.size();
+      
+      // not sure if this is correct:
+      sigma /= Math.sqrt(source.size());
+         
+      sp.setData(intensity, background, xCenter, yCenter, width, a, theta, sigma);
+      sp.originalFrame_ = source.get(0).getFrame();
+      if (!useFrames)
+         sp.originalFrame_ = source.get(0).getSlice();
+      sp.nrLinks_ = source.size();
+      
+      
+      dest.add(sp);   
+   }
    
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JLabel IntLabel2;
