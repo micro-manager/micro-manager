@@ -2,8 +2,8 @@
 <VisualStudioProject
 	ProjectType="Visual C++"
 	Version="9.00"
-	Name="Mightex"
-	ProjectGUID="{22B180B5-9E3C-455A-80D8-00387EE0A274}"
+	Name="Mightex_BLS"
+	ProjectGUID="{992E35D6-47AF-44DC-8A59-1F369BF1836C}"
 	RootNamespace="ThorlabsDCxxxx"
 	Keyword="Win32Proj"
 	TargetFrameworkVersion="131072"
