@@ -37,6 +37,8 @@ public class GaussianSpotData {
    private double theta_;     // shape factor for spot (rotation of assymetric peak)
    private double sigma_;     // Estimate of error in localization based on Web et al. formula
                               // that uses # of photons, background and width of gaussian
+   public int nrLinks_;       // number of frames/slices in which this spot was found
+   public int originalFrame_; // original first frame/slice in which this spot was found
 
    public GaussianSpotData(ImageProcessor ip, int channel, int slice, int frame, 
            int position, int nr, int x, int y) {

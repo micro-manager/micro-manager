@@ -97,9 +97,18 @@ public class GaussCanvas extends ImageCanvas {
 			else
 				setMagnification(newMag);
 			imp.getWindow().pack();
-		} else
-			adjustSourceRect(newMag, sx, sy);
+		} else {
+         /*
+         Rectangle r = getRect(newMag, sx, sy);
+         ImageProcessor ipTmp = ImageRenderer.renderData(rowData_, renderMethod_,
+                    newMag, r, sf_);
 
+         imp.setProcessor(ipTmp);
+         DisplayUtils.AutoStretch(imp);
+         //DisplayUtils.SetCalibration(imp, (float) (rowData.pixelSizeNm_ / mag));
+         */
+			adjustSourceRect(newMag, sx, sy);
+      }
             
 		repaint();
       //if (srcRect.width<imageWidth || srcRect.height<imageHeight)
@@ -152,6 +161,25 @@ public class GaussCanvas extends ImageCanvas {
     }
 */
    
+   Rectangle getRect(double newMag, int x, int y) {
+		//IJ.log("adjustSourceRect1: "+newMag+" "+dstWidth+"  "+dstHeight);
+		int w = (int)Math.round(dstWidth/newMag);
+		if (w*newMag<dstWidth) w++;
+		int h = (int)Math.round(dstHeight/newMag);
+		if (h*newMag<dstHeight) h++;
+		x = offScreenX(x);
+		y = offScreenY(y);
+		Rectangle r = new Rectangle(x-w/2, y-h/2, w, h);
+		if (r.x<0) r.x = 0;
+		if (r.y<0) r.y = 0;
+		if (r.x+w>imageWidth) r.x = imageWidth-w;
+		if (r.y+h>imageHeight) r.y = imageHeight-h;
+      r.x *= newMag;
+      r.y *= newMag;
+      r.width *= newMag;
+      r.height *= newMag;
+		return r;
+   }
 
    void adjustSourceRect(double newMag, int x, int y) {
 		//IJ.log("adjustSourceRect1: "+newMag+" "+dstWidth+"  "+dstHeight);
