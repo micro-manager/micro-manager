@@ -97,12 +97,14 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
    final private int maxIntensity_;
    final private int bitDepth_;
    private Color color_;
+   private String name_;
 
    public ChannelControlPanel(int channelIndex, MultiChannelHistograms mcHistograms, VirtualAcquisitionDisplay disp) {
       display_ = disp;
       img_ = (CompositeImage) disp.getHyperImage();
       cache_ = disp.getImageCache(); 
       color_ = cache_.getChannelColor(channelIndex);
+      name_ = cache_.getChannelName(channelIndex);
       bitDepth_ = cache_.getBitDepth();
       maxIntensity_ = (int) Math.pow(2, bitDepth_) - 1;
       histMax_ = maxIntensity_ + 1;
@@ -112,7 +114,7 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
       channelIndex_ = channelIndex;
       initComponents();
       loadDisplaySettings(cache_);
-//      updateChannelNameAndColor(cache_);
+//      updateChannelNameAndColorFromCache();
 //      cache_.setChannelColor(channelIndex_, color_.getRGB());
    }
 
@@ -167,7 +169,7 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
          }
       });
 
-      channelNameCheckbox_.setText("Channel");
+      channelNameCheckbox_.setText(name_);
       channelNameCheckbox_.setToolTipText("Show/hide this channel in the multi-dimensional viewer");
       channelNameCheckbox_.addActionListener(new java.awt.event.ActionListener() {
 
