@@ -57,7 +57,8 @@ bool CircularBuffer::Initialize(unsigned channels, unsigned slices, unsigned int
          return false; // does not make sense
 
       if (w == width_ && height_ == h && pixDepth_ == pixDepth && channels == numChannels_ && slices == numSlices_)
-         return true; // nothing to change
+         if (frameArray_.size() > 0)
+            return true; // nothing to change
 
       width_ = w;
       height_ = h;
@@ -75,8 +76,11 @@ bool CircularBuffer::Initialize(unsigned channels, unsigned slices, unsigned int
       unsigned long frameSizeBytes = width_ * height_ * pixDepth_ * numChannels_ * numSlices_;
       unsigned long cbSize = (memorySizeMB_ * bytesInMB) / frameSizeBytes;
 
-      if (cbSize == 0)
+      if (cbSize == 0) 
+      {
+         frameArray_.resize(0);
          return false; // memory footprint too small
+      }
 
       // set a reasonable limit to circular buffer capacity 
       if (cbSize > maxCBSize)
@@ -98,6 +102,7 @@ bool CircularBuffer::Initialize(unsigned channels, unsigned slices, unsigned int
 
    catch( ... /* std::bad_alloc& ex */)
    {
+      frameArray_.resize(0);
       ret = false;
    }
    return ret;
