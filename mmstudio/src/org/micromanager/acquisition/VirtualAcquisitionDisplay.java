@@ -861,12 +861,19 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
     */
    private void applyPixelSizeCalibration(final ImagePlus hyperImage) {
       try {
-         double pixSizeUm = getSummaryMetadata().getDouble("PixelSize_um");
+         JSONObject summary = getSummaryMetadata();
+         double pixSizeUm = summary.getDouble("PixelSize_um");
          if (pixSizeUm > 0) {
             Calibration cal = new Calibration();
             cal.setUnit("um");
             cal.pixelWidth = pixSizeUm;
             cal.pixelHeight = pixSizeUm;
+            String intMs = "Interval_ms";
+            if (summary.has(intMs))
+               cal.frameInterval = summary.getDouble(intMs) / 1000.0;
+            String zStepUm = "z-step_um";
+            if (summary.has(zStepUm))
+               cal.pixelDepth = summary.getDouble(zStepUm);
             hyperImage.setCalibration(cal);
          }
       } catch (JSONException ex) {
