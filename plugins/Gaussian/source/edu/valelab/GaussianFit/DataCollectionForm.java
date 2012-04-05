@@ -59,11 +59,13 @@ import java.awt.Dimension;
 import java.awt.FileDialog;
 import java.awt.geom.Point2D;
 
+import java.io.BufferedReader;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.FilenameFilter;
 import java.nio.channels.FileChannel;
@@ -883,98 +885,16 @@ public class DataCollectionForm extends javax.swing.JFrame {
 
              public void run() {
                 for (File selectedFile : selectedFiles) {
+                   loadTSFDir_ = selectedFile.getParent();
                    if (selectedFile.getName().endsWith(".txt")) {
-                      JOptionPane.showMessageDialog(getInstance(), "Text import has not been implemented yet");
+                      loadText(selectedFile);
+                   } else if (selectedFile.getName().endsWith(".tsf")) {
+                      loadTSF(selectedFile);
                    } else {
-                      
-                      loadTSFDir_ = selectedFile.getParent();                  
-                      
-                      SpotList psl = null;
-                      try {
-
-                         ij.IJ.showStatus("Loading data..");
-
-                         setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
-
-                         FileInputStream fi = new FileInputStream(selectedFile);
-                         DataInputStream di = new DataInputStream(fi);
-
-                         // the new file format has an initial 0, then the offset (in long)
-                         // to the position of spotList
-                         int magic = di.readInt();
-                         if (magic != 0) {
-                            // reset and mark do not seem to work on my computer
-                            fi.close();
-                            fi = new FileInputStream(selectedFile);
-                            psl = SpotList.parseDelimitedFrom(fi);
-                         } else {
-                            // TODO: evaluate after creating code writing this formt
-                            long offset = di.readLong();
-                            fi.skip(offset);
-                            psl = SpotList.parseDelimitedFrom(fi);
-                            fi.close();
-                            fi = new FileInputStream(selectedFile);
-                            fi.skip(12); // size of int + size of long
-                         }
-
-
-                         String name = psl.getName();
-                         String title = psl.getName();
-                         int width = psl.getNrPixelsX();
-                         int height = psl.getNrPixelsY();
-                         float pixelSizeUm = psl.getPixelSize();
-                         int shape = 1;
-                         if (psl.getFitMode() == FitMode.TWOAXIS) {
-                            shape = 2;
-                         } else if (psl.getFitMode() == FitMode.TWOAXISANDTHETA) {
-                            shape = 3;
-                         }
-                         int halfSize = psl.getBoxSize() / 2;
-                         int nrChannels = psl.getNrChannels();
-                         int nrFrames = psl.getNrFrames();
-                         int nrSlices = psl.getNrSlices();
-                         int nrPositions = psl.getNrPos();
-                         boolean isTrack = psl.getIsTrack();
-                         long expectedSpots = psl.getNrSpots();
-                         long esf = expectedSpots / 100;
-                         long maxNrSpots = 0;
-
-
-                         ArrayList<GaussianSpotData> spotList = new ArrayList<GaussianSpotData>();
-                         Spot pSpot;
-                         while (fi.available() > 0 && (expectedSpots == 0 || maxNrSpots < expectedSpots)) {
-
-                            pSpot = Spot.parseDelimitedFrom(fi);
-
-                            GaussianSpotData gSpot = new GaussianSpotData((ImageProcessor) null, pSpot.getChannel(),
-                                    pSpot.getSlice(), pSpot.getFrame(), pSpot.getPos(),
-                                    pSpot.getMolecule(), pSpot.getXPosition(), pSpot.getYPosition());
-                            gSpot.setData(pSpot.getIntensity(), pSpot.getBackground(), pSpot.getX(),
-                                    pSpot.getY(), pSpot.getWidth(), pSpot.getA(), pSpot.getTheta(),
-                                    pSpot.getXPrecision());
-                            maxNrSpots++;
-                            if ((esf > 0) && ((maxNrSpots % esf) == 0)) {
-                               ij.IJ.showProgress((double) maxNrSpots / (double) expectedSpots);
-                            }
-
-                            spotList.add(gSpot);
-                         }
-
-                         addSpotData(name, title, "", width, height, pixelSizeUm, shape, halfSize,
-                                 nrChannels, nrFrames, nrSlices, nrPositions, (int) maxNrSpots,
-                                 spotList, null, isTrack);
-
-                      } catch (FileNotFoundException ex) {
-                         ij.IJ.error("File not found");
-                      } catch (IOException ex) {
-                         ij.IJ.error("Error while reading file");
-                      } finally {
-                         setCursor(Cursor.getDefaultCursor());
-                         ij.IJ.showStatus("");
-                         ij.IJ.showProgress(1.0);
-                      }
+                      JOptionPane.showMessageDialog(getInstance(), "Unrecognized file extension");
                    }
                 }
+
              }
           };
 
@@ -985,6 +905,150 @@ public class DataCollectionForm extends javax.swing.JFrame {
 
     }//GEN-LAST:event_loadButtonActionPerformed
 
+    private void loadText(File selectedFile) {
+       SpotList psl = null;
+      try {
+         ij.IJ.showStatus("Loading data..");
+
+         setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+         BufferedReader fr = new BufferedReader( new FileReader(selectedFile));
+         
+         String header = fr.readLine();
+         
+         
+         /*
+         fw.write( "" +
+                          "application_id: " + 1 + tab +
+                          "name: " + rowData.name_ + tab +
+                          "filepath: " + rowData.title_ + tab +
+                          "nr_pixels_x: " + rowData.width_ + tab + 
+                          "nr_pixels_y: " + rowData.height_ + tab +
+                          "pixel_size: " + rowData.pixelSizeNm_ + tab + 
+                          "nr_spots: " + rowData.maxNrSpots_ + tab +
+                          "box_size: " + rowData.halfSize_ * 2 + tab + 
+                          "nr_channels: " + rowData.nrChannels_ + tab + 
+                          "nr_frames: " + rowData.nrFrames_ + tab +
+                          "nr_slices: " + rowData.nrSlices_ + tab +
+                          "nr_pos: " + rowData.nrPositions_ + tab +
+                          "location_units: " + LocationUnits.NM + tab +
+                          "intensity_units: " + IntensityUnits.PHOTONS + tab +
+                          "fit_mode: " + rowData.shape_ + tab + 
+                          "is_track: " + rowData.isTrack_ + "\n") ;                                 
+                 
+                  fw.write("molecule\tchannel\tframe\tslice\tpos\tx\ty\tintensity\t" +
+                          "background\twidth\ta\ttheta\tx_position\ty_position\t" +
+                          "x_precision\n");
+                  
+         */
+         
+         String spot;
+         while ( (spot = fr.readLine()) != null) {
+            
+         }
+         
+      } catch (FileNotFoundException ex) {
+         ij.IJ.error("File not found");
+      } catch (IOException ex) {
+         ij.IJ.error("Error while reading file");
+      } finally {
+         setCursor(Cursor.getDefaultCursor());
+         ij.IJ.showStatus("");
+         ij.IJ.showProgress(1.0);
+      }
+      
+      // TODO: Remove once working
+      JOptionPane.showMessageDialog(getInstance(), "Text import has not been implemented yet");
+    }
+    
+   private void loadTSF(File selectedFile) {
+      SpotList psl = null;
+      try {
+
+         ij.IJ.showStatus("Loading data..");
+
+         setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+
+         FileInputStream fi = new FileInputStream(selectedFile);
+         DataInputStream di = new DataInputStream(fi);
+
+         // the new file format has an initial 0, then the offset (in long)
+         // to the position of spotList
+         int magic = di.readInt();
+         if (magic != 0) {
+            // reset and mark do not seem to work on my computer
+            fi.close();
+            fi = new FileInputStream(selectedFile);
+            psl = SpotList.parseDelimitedFrom(fi);
+         } else {
+            // TODO: evaluate after creating code writing this formt
+            long offset = di.readLong();
+            fi.skip(offset);
+            psl = SpotList.parseDelimitedFrom(fi);
+            fi.close();
+            fi = new FileInputStream(selectedFile);
+            fi.skip(12); // size of int + size of long
+         }
+
+
+         String name = psl.getName();
+         String title = psl.getName();
+         int width = psl.getNrPixelsX();
+         int height = psl.getNrPixelsY();
+         float pixelSizeUm = psl.getPixelSize();
+         int shape = 1;
+         if (psl.getFitMode() == FitMode.TWOAXIS) {
+            shape = 2;
+         } else if (psl.getFitMode() == FitMode.TWOAXISANDTHETA) {
+            shape = 3;
+         }
+         int halfSize = psl.getBoxSize() / 2;
+         int nrChannels = psl.getNrChannels();
+         int nrFrames = psl.getNrFrames();
+         int nrSlices = psl.getNrSlices();
+         int nrPositions = psl.getNrPos();
+         boolean isTrack = psl.getIsTrack();
+         long expectedSpots = psl.getNrSpots();
+         long esf = expectedSpots / 100;
+         long maxNrSpots = 0;
+
+
+         ArrayList<GaussianSpotData> spotList = new ArrayList<GaussianSpotData>();
+         Spot pSpot;
+         while (fi.available() > 0 && (expectedSpots == 0 || maxNrSpots < expectedSpots)) {
+
+            pSpot = Spot.parseDelimitedFrom(fi);
+
+            GaussianSpotData gSpot = new GaussianSpotData((ImageProcessor) null, pSpot.getChannel(),
+                    pSpot.getSlice(), pSpot.getFrame(), pSpot.getPos(),
+                    pSpot.getMolecule(), pSpot.getXPosition(), pSpot.getYPosition());
+            gSpot.setData(pSpot.getIntensity(), pSpot.getBackground(), pSpot.getX(),
+                    pSpot.getY(), pSpot.getWidth(), pSpot.getA(), pSpot.getTheta(),
+                    pSpot.getXPrecision());
+            maxNrSpots++;
+            if ((esf > 0) && ((maxNrSpots % esf) == 0)) {
+               ij.IJ.showProgress((double) maxNrSpots / (double) expectedSpots);
+            }
+
+            spotList.add(gSpot);
+         }
+
+         addSpotData(name, title, "", width, height, pixelSizeUm, shape, halfSize,
+                 nrChannels, nrFrames, nrSlices, nrPositions, (int) maxNrSpots,
+                 spotList, null, isTrack);
+
+      } catch (FileNotFoundException ex) {
+         ij.IJ.error("File not found");
+      } catch (IOException ex) {
+         ij.IJ.error("Error while reading file");
+      } finally {
+         setCursor(Cursor.getDefaultCursor());
+         ij.IJ.showStatus("");
+         ij.IJ.showProgress(1.0);
+      }
+   }
+
+
+                  
     private void saveButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_saveButtonActionPerformed
        int rows[] = jTable1_.getSelectedRows();
        if (rows.length > 0) {
