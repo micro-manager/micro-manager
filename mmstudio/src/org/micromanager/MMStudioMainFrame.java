@@ -1096,6 +1096,9 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface, Device
 
       menuBar_ = new JMenuBar();
       setJMenuBar(menuBar_);
+      
+      
+      // File menu
 
       final JMenu fileMenu = new JMenu();
       fileMenu.setText("File");
@@ -1133,28 +1136,6 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface, Device
 
       fileMenu.addSeparator();
 
-      final JMenuItem loadState = new JMenuItem();
-      loadState.addActionListener(new ActionListener() {
-
-         public void actionPerformed(ActionEvent e) {
-            loadSystemState();
-         }
-      });
-      loadState.setText("Load System State...");
-      fileMenu.add(loadState);
-
-      final JMenuItem saveStateAs = new JMenuItem();
-      fileMenu.add(saveStateAs);
-      saveStateAs.addActionListener(new ActionListener() {
-
-         public void actionPerformed(ActionEvent e) {
-            saveSystemState();
-         }
-      });
-      saveStateAs.setText("Save System State As...");
-
-      fileMenu.addSeparator();
-
       final JMenuItem exitMenuItem = new JMenuItem();
       exitMenuItem.addActionListener(new ActionListener() {
 
@@ -1164,133 +1145,10 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface, Device
       });
       fileMenu.add(exitMenuItem);
       exitMenuItem.setText("Exit");
-/*
-      final JMenu image5dMenu = new JMenu();
-      image5dMenu.setText("Image5D");
-      menuBar_.add(image5dMenu);
 
-      final JMenuItem closeAllMenuItem = new JMenuItem();
-      closeAllMenuItem.addActionListener(new ActionListener() {
-
-         public void actionPerformed(final ActionEvent e) {
-            WindowManager.closeAllWindows();
-         }
-      });
-      closeAllMenuItem.setText("Close All");
-      image5dMenu.add(closeAllMenuItem);
-
-      final JMenuItem duplicateMenuItem = new JMenuItem();
-      duplicateMenuItem.addActionListener(new ActionListener() {
-
-         public void actionPerformed(final ActionEvent e) {
-            Duplicate_Image5D duplicate = new Duplicate_Image5D();
-            duplicate.run("");
-         }
-      });
-      duplicateMenuItem.setText("Duplicate");
-      image5dMenu.add(duplicateMenuItem);
-
-      final JMenuItem cropMenuItem = new JMenuItem();
-      cropMenuItem.addActionListener(new ActionListener() {
-
-         public void actionPerformed(final ActionEvent e) {
-            Crop_Image5D crop = new Crop_Image5D();
-            crop.run("");
-         }
-      });
-      cropMenuItem.setText("Crop");
-      image5dMenu.add(cropMenuItem);
-
-      final JMenuItem makeMontageMenuItem = new JMenuItem();
-      makeMontageMenuItem.addActionListener(new ActionListener() {
-
-         public void actionPerformed(final ActionEvent e) {
-            Make_Montage makeMontage = new Make_Montage();
-            makeMontage.run("");
-         }
-      });
-      makeMontageMenuItem.setText("Make Montage");
-      image5dMenu.add(makeMontageMenuItem);
-
-      final JMenuItem zProjectMenuItem = new JMenuItem();
-      zProjectMenuItem.addActionListener(new ActionListener() {
-
-         public void actionPerformed(final ActionEvent e) {
-            Z_Project projection = new Z_Project();
-            projection.run("");
-         }
-      });
-      zProjectMenuItem.setText("Z Project");
-      image5dMenu.add(zProjectMenuItem);
-
-      final JMenuItem convertToRgbMenuItem = new JMenuItem();
-      convertToRgbMenuItem.addActionListener(new ActionListener() {
-
-         public void actionPerformed(final ActionEvent e) {
-            Image5D_Stack_to_RGB stackToRGB = new Image5D_Stack_to_RGB();
-            stackToRGB.run("");
-         }
-      });
-      convertToRgbMenuItem.setText("Copy to RGB Stack(z)");
-      image5dMenu.add(convertToRgbMenuItem);
-
-      final JMenuItem convertToRgbtMenuItem = new JMenuItem();
-      convertToRgbtMenuItem.addActionListener(new ActionListener() {
-
-         public void actionPerformed(final ActionEvent e) {
-            Image5D_Stack_to_RGB_t stackToRGB_t = new Image5D_Stack_to_RGB_t();
-            stackToRGB_t.run("");
-         }
-      });
-      convertToRgbtMenuItem.setText("Copy to RGB Stack(t)");
-      image5dMenu.add(convertToRgbtMenuItem);
-
-      final JMenuItem convertToStackMenuItem = new JMenuItem();
-      convertToStackMenuItem.addActionListener(new ActionListener() {
-
-         public void actionPerformed(final ActionEvent e) {
-            Image5D_to_Stack image5DToStack = new Image5D_to_Stack();
-            image5DToStack.run("");
-         }
-      });
-      convertToStackMenuItem.setText("Copy to Stack");
-      image5dMenu.add(convertToStackMenuItem);
-
-      final JMenuItem convertToStacksMenuItem = new JMenuItem();
-      convertToStacksMenuItem.addActionListener(new ActionListener() {
-
-         public void actionPerformed(final ActionEvent e) {
-            Image5D_Channels_to_Stacks image5DToStacks = new Image5D_Channels_to_Stacks();
-            image5DToStacks.run("");
-         }
-      });
-      convertToStacksMenuItem.setText("Copy to Stacks (channels)");
-      image5dMenu.add(convertToStacksMenuItem);
-
-      final JMenuItem volumeViewerMenuItem = new JMenuItem();
-      volumeViewerMenuItem.addActionListener(new ActionListener() {
-
-         public void actionPerformed(final ActionEvent e) {
-            Image5D_to_VolumeViewer volumeViewer = new Image5D_to_VolumeViewer();
-            volumeViewer.run("");
-         }
-      });
-      volumeViewerMenuItem.setText("VolumeViewer");
-      image5dMenu.add(volumeViewerMenuItem);
-
-      final JMenuItem splitImageMenuItem = new JMenuItem();
-      splitImageMenuItem.addActionListener(new ActionListener() {
-
-         public void actionPerformed(final ActionEvent e) {
-            Split_Image5D splitImage = new Split_Image5D();
-            splitImage.run("");
-         }
-      });
-      splitImageMenuItem.setText("SplitView");
-      image5dMenu.add(splitImageMenuItem);
-
- */
-
+      
+      // Tools menu
+      
       final JMenu toolsMenu = new JMenu();
       toolsMenu.setText("Tools");
       menuBar_.add(toolsMenu);
@@ -1385,18 +1243,6 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface, Device
       acquisitionMenuItem.setText("Multi-Dimensional Acquisition...");
       toolsMenu.add(acquisitionMenuItem);
       acquisitionMenuItem.setToolTipText("Open multi-dimensional acquisition window");
-
-      /*
-      final JMenuItem splitViewMenuItem = new JMenuItem();
-      splitViewMenuItem.addActionListener(new ActionListener() {
-
-         public void actionPerformed(ActionEvent e) {
-            splitViewDialog();
-         }
-      });
-      splitViewMenuItem.setText("Split View...");
-      toolsMenu.add(splitViewMenuItem);
-      */
       
       centerAndDragMenuItem_ = new JCheckBoxMenuItem();
 
@@ -1507,22 +1353,6 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface, Device
       toolsMenu.add(saveConfigurationPresetsMenuItem);
       saveConfigurationPresetsMenuItem.setToolTipText("Save current configuration settings as new configuration file");
 
-/*
-      final JMenuItem regenerateConfiguratorDeviceListMenuItem = new JMenuItem();
-      regenerateConfiguratorDeviceListMenuItem.addActionListener(new ActionListener() {
-
-         public void actionPerformed(ActionEvent arg0) {
-            Cursor oldc = Cursor.getDefaultCursor();
-            Cursor waitc = new Cursor(Cursor.WAIT_CURSOR);
-            setCursor(waitc);
-            StringBuffer resultFile = new StringBuffer();
-            MicroscopeModel.generateDeviceListFile(options_.enableDeviceDiscovery_, resultFile,core_);
-            setCursor(oldc);
-         }
-      });
-      regenerateConfiguratorDeviceListMenuItem.setText("Regenerate Configurator Device List");
-      toolsMenu.add(regenerateConfiguratorDeviceListMenuItem);
-*/
 
       toolsMenu.addSeparator();
 
@@ -3394,40 +3224,6 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface, Device
       }
    }
 
-   private void loadSystemState() {
-      File f = FileDialogs.openFile(this, "Load a system state file", MM_CONFIG_FILE);
-      if (f != null) {
-         sysStateFile_ = f.getAbsolutePath();
-         try {
-            // WaitDialog waitDlg = new
-            // WaitDialog("Loading saved state, please wait...");
-            // waitDlg.showDialog();
-            core_.loadSystemState(sysStateFile_);
-            GUIUtils.preventDisplayAdapterChangeExceptions();
-            // waitDlg.closeDialog();
-            initializeGUI();
-         } catch (Exception e) {
-            ReportingUtils.showError(e);
-            return;
-         }
-      }
-   }
-
-   private void saveSystemState() {
-      File f = FileDialogs.save(this,
-              "Save the system state to a config file", MM_CONFIG_FILE);
-
-      if (f != null) {
-         sysStateFile_ = f.getAbsolutePath();
-
-         try {
-            core_.saveSystemState(sysStateFile_);
-         } catch (Exception e) {
-            ReportingUtils.showError(e);
-            return;
-         }
-      }
-   }
 
    public void closeSequence() {
 
