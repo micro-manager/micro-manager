@@ -214,6 +214,13 @@ IntegratedFilterWheel::IntegratedFilterWheel() :
    answerTimeoutMs_(1000.0)
 {
    InitializeDefaultErrorMessages();
+   SetErrorText(ERR_UNRECOGNIZED_ANSWER, "Invalid response from the device");
+   SetErrorText(ERR_MOVE_FAILED, "Error occured while moving the filter wheel.\n"
+      "The wheel is either mechanically blocked or overloaded.\n"
+      "Please turn the controller power OFF and then ON and re-start the micro-manager application.");
+   SetErrorText(ERR_INVALID_NUMBER_OF_POS, "Controller reports invalid number of positions\n"
+	                                       "This indicates a problem with the hardware configuration of the conroller.");
+   SetErrorText(ERR_INVALID_POSITION, "Invalid position requested - no action taken.");
 
    // COM port property
    CPropertyAction* pAct = new CPropertyAction (this, &IntegratedFilterWheel::OnCOMPort);
