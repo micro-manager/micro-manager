@@ -163,8 +163,6 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Hamamatsu", "..\SecretDevic
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "HamamatsuHam", "..\SecretDeviceAdapters\HamamatsuHam\HamamatsuHam.vcproj", "{1B4CC156-6C0B-4571-AC6D-E6173512684F}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "DiConIlluminator", "..\DeviceAdapters\DiConIlluminator\DiConIlluminator.VS2008.vcproj", "{3366ED2E-3283-4F30-9F77-55391129489C}"
-EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Stradus", "..\DeviceAdapters\Vortran\Stradus.vcproj", "{3A83E7A0-34A5-4304-8D88-00000572AD05}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ThorlabsDCxxxx", "..\DeviceAdapters\ThorlabsDCxxxx\ThorlabsDCxxxx.vcproj", "{DEE8AF34-2F99-4AA8-AFDA-948DE44F1DB2}"
@@ -238,6 +236,8 @@ EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "MarzhauserLStep", "..\DeviceAdapters\Marzhauser-LStep\LStep.vcproj", "{5D42D76C-B076-4045-A03E-1DF101583C39}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Mightex_BLS", "..\DeviceAdapters\Mightex_BLS\Mightex_BLS.vcproj", "{992E35D6-47AF-44DC-8A59-1F369BF1836C}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ScopeLED", "..\DeviceAdapters\ScopeLED\ScopeLED.VS2008.vcproj", "{3366ED2E-3283-4F30-9F77-55391129489C}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -858,13 +858,6 @@ Global
 		{1B4CC156-6C0B-4571-AC6D-E6173512684F}.Release|Win32.Build.0 = Release|Win32
 		{1B4CC156-6C0B-4571-AC6D-E6173512684F}.Release|x64.ActiveCfg = Release|x64
 		{1B4CC156-6C0B-4571-AC6D-E6173512684F}.Release|x64.Build.0 = Release|x64
-		{3366ED2E-3283-4F30-9F77-55391129489C}.Debug|Win32.ActiveCfg = Debug|Win32
-		{3366ED2E-3283-4F30-9F77-55391129489C}.Debug|Win32.Build.0 = Debug|Win32
-		{3366ED2E-3283-4F30-9F77-55391129489C}.Debug|x64.ActiveCfg = Debug|Win32
-		{3366ED2E-3283-4F30-9F77-55391129489C}.Release|Win32.ActiveCfg = Release|Win32
-		{3366ED2E-3283-4F30-9F77-55391129489C}.Release|Win32.Build.0 = Release|Win32
-		{3366ED2E-3283-4F30-9F77-55391129489C}.Release|x64.ActiveCfg = Release|x64
-		{3366ED2E-3283-4F30-9F77-55391129489C}.Release|x64.Build.0 = Release|x64
 		{3A83E7A0-34A5-4304-8D88-00000572AD05}.Debug|Win32.ActiveCfg = Debug|Win32
 		{3A83E7A0-34A5-4304-8D88-00000572AD05}.Debug|Win32.Build.0 = Debug|Win32
 		{3A83E7A0-34A5-4304-8D88-00000572AD05}.Debug|x64.ActiveCfg = Debug|x64
@@ -1126,6 +1119,14 @@ Global
 		{992E35D6-47AF-44DC-8A59-1F369BF1836C}.Release|Win32.Build.0 = Release|Win32
 		{992E35D6-47AF-44DC-8A59-1F369BF1836C}.Release|x64.ActiveCfg = Release|x64
 		{992E35D6-47AF-44DC-8A59-1F369BF1836C}.Release|x64.Build.0 = Release|x64
+		{3366ED2E-3283-4F30-9F77-55391129489C}.Debug|Win32.ActiveCfg = Debug|Win32
+		{3366ED2E-3283-4F30-9F77-55391129489C}.Debug|Win32.Build.0 = Debug|Win32
+		{3366ED2E-3283-4F30-9F77-55391129489C}.Debug|x64.ActiveCfg = Debug|x64
+		{3366ED2E-3283-4F30-9F77-55391129489C}.Debug|x64.Build.0 = Debug|x64
+		{3366ED2E-3283-4F30-9F77-55391129489C}.Release|Win32.ActiveCfg = Release|Win32
+		{3366ED2E-3283-4F30-9F77-55391129489C}.Release|Win32.Build.0 = Release|Win32
+		{3366ED2E-3283-4F30-9F77-55391129489C}.Release|x64.ActiveCfg = Release|x64
+		{3366ED2E-3283-4F30-9F77-55391129489C}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
