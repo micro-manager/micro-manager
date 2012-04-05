@@ -1,0 +1,40 @@
+import java.lang;
+core = mmc;
+core.unloadAllDevices();
+core.loadDevice("Shutter", "ScopeLED", "ScopeLED-FMI");
+core.setProperty("Shutter", "VendorID", "9410");
+core.setProperty("Shutter", "ProductID", "4869");
+core.initializeDevice("Shutter");
+core.setAutoShutter(false);
+
+gui.message("SerialNumber=" + core.getProperty("Shutter", "SerialNumber") + ".");
+gui.message("Version=" + core.getProperty("Shutter", "Version") + ".");
+
+core.setProperty("Shutter", "State", "1");
+
+core.setProperty("Shutter", "Channel1Brightness", "51.44444444");
+gui.message("Brightness=" + core.getProperty("Shutter", "Channel1Brightness") + ".");
+Thread.currentThread().sleep(250);
+core.setProperty("Shutter", "Channel1Brightness", "0");
+Thread.currentThread().sleep(250);
+
+core.setProperty("Shutter", "Channel2Brightness", "52.44444444");
+gui.message("Brightness=" + core.getProperty("Shutter", "Channel2Brightness") + ".");
+Thread.currentThread().sleep(250);
+core.setProperty("Shutter", "Channel2Brightness", "0");
+Thread.currentThread().sleep(250);
+
+core.setProperty("Shutter", "Channel3Brightness", "53.44444444");
+gui.message("Brightness=" + core.getProperty("Shutter", "Channel3Brightness") + ".");
+Thread.currentThread().sleep(250);
+core.setProperty("Shutter", "Channel3Brightness", "0");
+Thread.currentThread().sleep(250);
+
+core.setProperty("Shutter", "Channel4Brightness", "54.44444444");
+gui.message("Brightness=" + core.getProperty("Shutter", "Channel4Brightness") + ".");
+Thread.currentThread().sleep(250);
+core.setProperty("Shutter", "Channel4Brightness", "0");
+Thread.currentThread().sleep(250);
+
+core.setProperty("Shutter", "State", "0");
+

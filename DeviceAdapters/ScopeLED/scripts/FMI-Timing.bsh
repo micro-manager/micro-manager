@@ -1,0 +1,17 @@
+import java.lang;
+core = mmc;
+core.unloadAllDevices();
+core.loadDevice("Shutter", "ScopeLED", "ScopeLED-FMI");
+core.setProperty("Shutter", "VendorID", "9410");
+core.setProperty("Shutter", "ProductID", "4869");
+core.initializeDevice("Shutter");
+core.setAutoShutter(false);
+gui.clear();
+core.setProperty("Shutter", "Channel1Brightness", "50");
+core.setProperty("Shutter", "State", "1");
+gui.message("On. Time=" + core.getProperty("Shutter", "TxnTime") + ". Last Device Result = " + core.getProperty("Shutter", "LastDeviceResult") + ".");
+Thread.currentThread().sleep(1000);
+core.setProperty("Shutter", "State", "0");
+gui.message("OFF. Time=" + core.getProperty("Shutter", "TxnTime") + ". Last Device Result = " + core.getProperty("Shutter", "LastDeviceResult") + ".");
+gui.message("Done.");
+
