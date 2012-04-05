@@ -357,6 +357,14 @@
 				>
 			</File>
 			<File
+				RelativePath=".\AbsImgBuffer.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\AutoTimeMeasure.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\CcmFileStd.cpp"
 				>
 			</File>
@@ -404,6 +412,10 @@
 				RelativePath=".\MemoryIniFile.cpp"
 				>
 			</File>
+			<File
+				RelativePath=".\TimeSpanPC.cpp"
+				>
+			</File>
 		</Filter>
 		<Filter
 			Name="Headerdateien"
@@ -419,6 +431,14 @@
 				>
 			</File>
 			<File
+				RelativePath=".\AbsImgBuffer.h"
+				>
+			</File>
+			<File
+				RelativePath=".\AutoTimeMeasure.h"
+				>
+			</File>
+			<File
 				RelativePath=".\CcmFileStd.h"
 				>
 			</File>
@@ -428,6 +448,10 @@
 			</File>
 			<File
 				RelativePath=".\include\stringtools.h"
+				>
+			</File>
+			<File
+				RelativePath=".\TimeSpanPC.h"
 				>
 			</File>
 		</Filter>

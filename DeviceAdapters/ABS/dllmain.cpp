@@ -49,7 +49,7 @@ MODULE_API MM::Device* CreateDevice(const char* deviceName)
    if (strcmp(deviceName, g_CameraName) == 0)
    {
       // create camera	  
-      return new CABSCamera();;	  
+      return new CABSCamera();
    }
 
    // ...supplied name not recognized
