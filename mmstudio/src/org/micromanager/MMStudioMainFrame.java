@@ -1113,7 +1113,7 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface, Device
             }.start();
          }
       });
-      openMenuItem.setText("Open Acquisition Data in Virtual Mode (larger datasets)...");
+      openMenuItem.setText("Open (Virtual Mode for larger datasets)...");
       fileMenu.add(openMenuItem);
 
       final JMenuItem openInRamMenuItem = new JMenuItem();
@@ -1128,7 +1128,7 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface, Device
             }.start();
          }
       });
-      openInRamMenuItem.setText("Open Acquisition Data in RAM (faster playback)...");
+      openInRamMenuItem.setText("Open (in RAM for faster playback)...");
       fileMenu.add(openInRamMenuItem);
 
       fileMenu.addSeparator();
@@ -2534,7 +2534,6 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface, Device
       try {
          acqMgr_.openAcquisition(name, rootDir, true, !inRAM, true);
          acqMgr_.getAcquisition(name).initialize();
-         //acqMgr_.closeAcquisition(name);
       } catch (MMScriptException ex) {
          ReportingUtils.showError(ex);
       } finally {

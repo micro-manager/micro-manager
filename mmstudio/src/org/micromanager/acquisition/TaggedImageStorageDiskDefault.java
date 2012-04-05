@@ -55,12 +55,12 @@ public class TaggedImageStorageDiskDefault implements TaggedImageStorage {
    private Thread shutdownHook_;
    private HashMap<Integer, String> positionNames_;
 
-   public TaggedImageStorageDiskDefault(String dir) {
+   public TaggedImageStorageDiskDefault(String dir) throws Exception {
       this(dir, false, null);
    }
 
    public TaggedImageStorageDiskDefault(String dir, Boolean newDataSet,
-           JSONObject summaryMetadata) {
+           JSONObject summaryMetadata) throws Exception {
       summaryMetadata_ = summaryMetadata;
       dir_ = dir;
       newDataSet_ = newDataSet;
@@ -70,14 +70,11 @@ public class TaggedImageStorageDiskDefault implements TaggedImageStorage {
       displaySettings_ = new JSONObject();
       positionNames_ = new HashMap<Integer,String>();
       
-      try {
-         if (!newDataSet_) {
-            openExistingDataSet();
-         }
-      } catch (Exception e) {
-         ReportingUtils.logError(e);
+      // Note: this will throw an error if there is no existing data set
+      if (!newDataSet_) {
+         openExistingDataSet();
       }
-
+      
       shutdownHook_ = new Thread() {
          public void run() {
             writeDisplaySettings();
@@ -386,7 +383,7 @@ public class TaggedImageStorageDiskDefault implements TaggedImageStorage {
       }
    }
 
-   private void openExistingDataSet() {
+   private void openExistingDataSet() throws Exception {
       File metadataFile = new File(dir_ + "/metadata.txt");
       ArrayList<String> positions = new ArrayList<String>();
       if (metadataFile.exists()) {
@@ -437,7 +434,10 @@ public class TaggedImageStorageDiskDefault implements TaggedImageStorage {
             } catch (JSONException ex) {
                ReportingUtils.showError(ex);
             }
+         } else {
+            throw (new Exception("No metadata file found"));
          }
+         
          try {
             summaryMetadata_.put("Positions", positions.size());
          } catch (JSONException ex) {

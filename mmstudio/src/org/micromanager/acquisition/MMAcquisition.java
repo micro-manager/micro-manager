@@ -268,6 +268,8 @@ public class MMAcquisition {
       if (virtual_ && existing_) {
          String dirName = rootDirectory_ + File.separator + name;
          imageFileManager = ImageUtils.newImageStorageInstance(dirName, false, null);
+         if (imageFileManager == null)
+            return;
          imageCache = new MMImageCache(imageFileManager);
       }
 

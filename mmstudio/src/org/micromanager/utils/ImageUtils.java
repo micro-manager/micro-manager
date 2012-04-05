@@ -356,7 +356,7 @@ public class ImageUtils {
                  .getConstructor(String.class, Boolean.class, JSONObject.class)
                  .newInstance(acqPath, newDataSet, summaryMetadata);
       } catch (Exception ex) {
-         ReportingUtils.showError(ex);
+         ReportingUtils.logError(ex);
       }
       return null;
    }
