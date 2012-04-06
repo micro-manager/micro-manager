@@ -10,6 +10,7 @@ import ij.ImagePlus;
 import ij.gui.Roi;
 import ij.process.ImageProcessor;
 import java.awt.Polygon;
+import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -78,8 +79,6 @@ public class FitAllThread extends GaussianInfo implements Runnable  {
 
       ImagePlus imp = siPlus;
 
-      //siPlus = (ImagePlus) siPlus.clone();
-
       int nrThreads = ij.Prefs.getThreads();
          if (nrThreads > 8)
             nrThreads = 8;
@@ -93,33 +92,27 @@ public class FitAllThread extends GaussianInfo implements Runnable  {
       int nrSlices = siPlus.getNSlices();
       int maxNrSpots = 0;
 
-      try {
-         Class mmw = Class.forName("org.micromanager.api.MMWindow");        
-         MMWindow mw = new MMWindow(siPlus);
+      MMWindow mw = new MMWindow(siPlus);
 
-         if (!mw.isMMWindow()) {
-            int nrSpots = analyzeImagePlus(siPlus, 1, nrThreads, originalRoi);
-            if (nrSpots > maxNrSpots)
-               maxNrSpots = nrSpots;
-         } else { // MMImageWindow
-            nrPositions = mw.getNumberOfPositions();
-            for (int p = 1; p <= nrPositions; p++) {
-               try {
-                  mw.setPosition(p);
-                  int nrSpots = analyzeImagePlus(siPlus, p, nrThreads, originalRoi);
-                  if (nrSpots > maxNrSpots)
-                     maxNrSpots = nrSpots;
-               } catch (MMScriptException ex) {
-                  Logger.getLogger(FitAllThread.class.getName()).log(Level.SEVERE, null, ex);
+      if (!mw.isMMWindow()) {
+         int nrSpots = analyzeImagePlus(siPlus, 1, nrThreads, originalRoi);
+         if (nrSpots > maxNrSpots) {
+            maxNrSpots = nrSpots;
+         }
+      } else { // MMImageWindow
+         nrPositions = mw.getNumberOfPositions();
+         for (int p = 1; p <= nrPositions; p++) {
+            try {
+               mw.setPosition(p);
+               int nrSpots = analyzeImagePlus(siPlus, p, nrThreads, originalRoi);
+               if (nrSpots > maxNrSpots) {
+                  maxNrSpots = nrSpots;
                }
+            } catch (MMScriptException ex) {
+               Logger.getLogger(FitAllThread.class.getName()).log(Level.SEVERE, null, ex);
             }
          }
-      } catch (ClassNotFoundException ex) {
-         int nrSpots = analyzeImagePlus(siPlus, 1, nrThreads, originalRoi);
-         if (nrSpots > maxNrSpots)
-            maxNrSpots = nrSpots;
       }
-
 
       long endTime = System.nanoTime();
 
@@ -133,11 +126,14 @@ public class FitAllThread extends GaussianInfo implements Runnable  {
       dcForm.setVisible(true);
 
       // report duration of analysis
-		double took = (endTime - startTime) / 1E6;
-      print ("Analyzed " + resultList_.size() + " spots in " + took + " milliseconds");
+      double took = (endTime - startTime) / 1E9;
+      double rate = resultList_.size() / took;
+      DecimalFormat df2 = new DecimalFormat("#.##");
+      DecimalFormat df0 = new DecimalFormat("#");
+      print ("Analyzed " + resultList_.size() + " spots in " + df2.format(took) + 
+              " seconds (" + df0.format(rate) + " spots/sec.)");
 
       running_ = false;
-      // t_ = null;
    }
 
 

@@ -57,6 +57,9 @@ import ij.process.ShortProcessor;
 import java.awt.Cursor;
 import java.awt.Dimension;
 import java.awt.FileDialog;
+import java.awt.datatransfer.DataFlavor;
+import java.awt.datatransfer.Transferable;
+import java.awt.datatransfer.UnsupportedFlavorException;
 import java.awt.geom.Point2D;
 
 import java.io.BufferedReader;
@@ -78,6 +81,7 @@ import java.util.prefs.Preferences;
 import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
 
+import javax.swing.TransferHandler;
 import org.jfree.data.xy.XYSeries;
 
 import org.micromanager.MMStudioMainFrame;
@@ -217,6 +221,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
       
    }
 
+
    /**
     * Implement this class as a singleton
     *
@@ -308,10 +313,46 @@ public class DataCollectionForm extends javax.swing.JFrame {
        intensityMin_.setText(prefs_.get(INTMIN, "0.0"));
        intensityMax_.setText(prefs_.get(INTMAX, "20000"));
        loadTSFDir_ = prefs_.get(LOADTSFDIR, "");
-             
-       setVisible(true);
-   }
+       
+       // Drag and Drop support for file loading
+       this.setTransferHandler(new TransferHandler() {
 
+         @Override
+         public boolean canImport(TransferHandler.TransferSupport support) {
+            if (!support.isDataFlavorSupported(DataFlavor.javaFileListFlavor)) {
+               return false;
+            }
+
+            return true;
+         }
+
+         @Override
+         public boolean importData(TransferHandler.TransferSupport support) {
+            if (!canImport(support)) {
+               return false;
+            }
+
+            Transferable t = support.getTransferable();
+            try {
+               java.util.List<File> l =
+                       (java.util.List<File>) t.getTransferData(DataFlavor.javaFileListFlavor);
+               loadFiles((File[]) l.toArray());
+
+            } catch (UnsupportedFlavorException e) {
+               return false;
+            } catch (IOException e) {
+               return false;
+            }
+
+            return true;
+         }
+      });
+
+
+      setVisible(true);
+   }
+   
+   
    /**
     * Use a Mouse listener instead of buttons, since buttons in a table are a pain
     */
@@ -863,48 +904,45 @@ public class DataCollectionForm extends javax.swing.JFrame {
 
        final File[] selectedFiles = jfc.getSelectedFiles();
 
-       //JFileChooser fd = new JFileChooser(this, "Load Spot Data", FileDialog.LOAD);
-       //fd.setVisible(true);
        if (selectedFiles == null || selectedFiles.length < 1) {
           return;
        } else {
-          //final File selectedFile = new File( fd.getDirectory() + File.separator +
-          //	        fd.getFile());
 
-          // Text importer
-          Runnable loadTextFile = new Runnable() {
+          // Thread doing file import
+          Runnable loadFile = new Runnable() {
 
              public void run() {
-                JOptionPane.showMessageDialog(getInstance(), "Text import has not been implemented yet");
+                loadFiles(selectedFiles);
              }
           };
 
-
-          // Binary importer
-          Runnable loadBinaryFile = new Runnable() {
-
-             public void run() {
-                for (File selectedFile : selectedFiles) {
-                   loadTSFDir_ = selectedFile.getParent();
-                   if (selectedFile.getName().endsWith(".txt")) {
-                      loadText(selectedFile);
-                   } else if (selectedFile.getName().endsWith(".tsf")) {
-                      loadTSF(selectedFile);
-                   } else {
-                      JOptionPane.showMessageDialog(getInstance(), "Unrecognized file extension");
-                   }
-                }
-
-             }
-          };
-
-          (new Thread(loadBinaryFile)).start();
+          (new Thread(loadFile)).start();
 
        }
-
-
     }//GEN-LAST:event_loadButtonActionPerformed
 
+    /**
+     * Given an array of files, tries to import them all 
+     * Uses .txt import for text files, and tsf importer for .tsf files.
+     * @param selectedFiles - Array of files to be imported
+     */
+    private void loadFiles(File[] selectedFiles) {
+      for (File selectedFile : selectedFiles) {
+         loadTSFDir_ = selectedFile.getParent();
+         if (selectedFile.getName().endsWith(".txt")) {
+            loadText(selectedFile);
+         } else if (selectedFile.getName().endsWith(".tsf")) {
+            loadTSF(selectedFile);
+         } else {
+            JOptionPane.showMessageDialog(getInstance(), "Unrecognized file extension");
+         }
+      }
+   }
+    
+    /**
+     * Loads a text file saved from this application back into memory
+     * @param selectedFile 
+     */
     private void loadText(File selectedFile) {
        try {
          ij.IJ.showStatus("Loading data..");
@@ -915,32 +953,11 @@ public class DataCollectionForm extends javax.swing.JFrame {
          String info = fr.readLine();
          String[] infos = info.split("\t");
          HashMap<String, String> infoMap = new HashMap<String, String>();
-         
-         
-         /*
-         fw.write( "" +
-                          "application_id: " + 1 + tab +
-                          "name: " + rowData.name_ + tab +
-                          "filepath: " + rowData.title_ + tab +
-                          "nr_pixels_x: " + rowData.width_ + tab + 
-                          "nr_pixels_y: " + rowData.height_ + tab +
-                          "pixel_size: " + rowData.pixelSizeNm_ + tab + 
-                          "nr_spots: " + rowData.maxNrSpots_ + tab +
-                          "box_size: " + rowData.halfSize_ * 2 + tab + 
-                          "nr_channels: " + rowData.nrChannels_ + tab + 
-                          "nr_frames: " + rowData.nrFrames_ + tab +
-                          "nr_slices: " + rowData.nrSlices_ + tab +
-                          "nr_pos: " + rowData.nrPositions_ + tab +
-                          "location_units: " + LocationUnits.NM + tab +
-                          "intensity_units: " + IntensityUnits.PHOTONS + tab +
-                          "fit_mode: " + rowData.shape_ + tab + 
-                          "is_track: " + rowData.isTrack_ + "\n") ;                                 
-                 
-                  fw.write("molecule\tchannel\tframe\tslice\tpos\tx\ty\tintensity\t" +
-                          "background\twidth\ta\ttheta\tx_position\ty_position\t" +
-                          "x_precision\n");
-                  
-         */
+         for (int i = 0; i < infos.length; i++) {
+            String[] keyValue = infos[i].split(": ");
+            if (keyValue.length == 2)
+               infoMap.put(keyValue[0], keyValue[1]);
+         }
          
          String head = fr.readLine();
          String[] headers = head.split("\t");        
@@ -958,10 +975,10 @@ public class DataCollectionForm extends javax.swing.JFrame {
                     Integer.parseInt(k.get("channel")), 
                     Integer.parseInt(k.get("slice")), 
                     Integer.parseInt(k.get("frame")),
-                    Integer.parseInt(k.get("position")), 
+                    Integer.parseInt(k.get("pos")), 
                     Integer.parseInt(k.get("molecule")), 
-                    Integer.parseInt(k.get("tx_position")), 
-                    Integer.parseInt(k.get("ty_position")) 
+                    Integer.parseInt(k.get("x_position")), 
+                    Integer.parseInt(k.get("y_position")) 
                     );
             gsd.setData(Double.parseDouble(k.get("intensity")), 
                     Double.parseDouble(k.get("background")),
@@ -970,18 +987,35 @@ public class DataCollectionForm extends javax.swing.JFrame {
                     Double.parseDouble(k.get("width")),
                     Double.parseDouble(k.get("a")),
                     Double.parseDouble(k.get("theta")),
-                    Double.parseDouble(k.get("sigma"))
+                    Double.parseDouble(k.get("x_precision"))
                     );
             spotList.add(gsd);
                         
          }
          
-       //MyRowData rowData = new MyRowData();
-         
+         // Add transformed data to data overview window
+            addSpotData(infoMap.get("name"), infoMap.get("name"), 
+                    referenceName_.getText(), Integer.parseInt(infoMap.get("nr_pixels_x")),
+                    Integer.parseInt(infoMap.get("nr_pixels_y")),
+                    Math.round(Double.parseDouble(infoMap.get("pixel_size"))),
+                    Integer.parseInt(infoMap.get("fit_mode")),
+                    Integer.parseInt(infoMap.get("box_size")),
+                    Integer.parseInt(infoMap.get("nr_channels")),
+                    Integer.parseInt(infoMap.get("nr_frames")),
+                    Integer.parseInt(infoMap.get("nr_slices")),
+                    Integer.parseInt(infoMap.get("nr_pos")),
+                    spotList.size(),
+                    spotList,
+                    null,
+                    Boolean.parseBoolean(infoMap.get("is_track"))
+                    );
+
+      } catch (NumberFormatException ex) {
+         JOptionPane.showMessageDialog(getInstance(), "File format did not meet expectations");
       } catch (FileNotFoundException ex) {
-         ij.IJ.error("File not found");
+         JOptionPane.showMessageDialog(getInstance(), "File not found");
       } catch (IOException ex) {
-         ij.IJ.error("Error while reading file");
+         JOptionPane.showMessageDialog(getInstance(), "Error while reading file");
       } finally {
          setCursor(Cursor.getDefaultCursor());
          ij.IJ.showStatus("");
@@ -989,9 +1023,13 @@ public class DataCollectionForm extends javax.swing.JFrame {
       }
       
       // TODO: Remove once working
-      JOptionPane.showMessageDialog(getInstance(), "Text import has not been implemented yet");
+      // JOptionPane.showMessageDialog(getInstance(), "Text import has not been implemented yet");
     }
     
+    /**
+     * Load a .tsf file
+     * @param selectedFile - File to be loaded
+     */
    private void loadTSF(File selectedFile) {
       SpotList psl = null;
       try {
@@ -1069,9 +1107,9 @@ public class DataCollectionForm extends javax.swing.JFrame {
                  spotList, null, isTrack);
 
       } catch (FileNotFoundException ex) {
-         ij.IJ.error("File not found");
+         JOptionPane.showMessageDialog(getInstance(),"File not found");
       } catch (IOException ex) {
-         ij.IJ.error("Error while reading file");
+         JOptionPane.showMessageDialog(getInstance(),"Error while reading file");
       } finally {
          setCursor(Cursor.getDefaultCursor());
          ij.IJ.showStatus("");
@@ -1149,7 +1187,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
             }
          }
          
-         if (xyPointsCh2.size() == 0) {
+         if (xyPointsCh2.isEmpty()) {
             JOptionPane.showMessageDialog(getInstance(), "No points found in second channel.  Is this a dual channel dataset?");
             return;
          }
@@ -1246,7 +1284,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
                      }
                   }
                   
-                  if (xyPointsCh2.size() == 0) {
+                  if (xyPointsCh2.isEmpty()) {
                      JOptionPane.showMessageDialog(getInstance(), "No points found in second channel.  Is this a 2-channel dataset?");
                      return;
                   }
