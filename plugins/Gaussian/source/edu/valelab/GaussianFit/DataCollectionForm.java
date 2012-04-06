@@ -906,14 +906,15 @@ public class DataCollectionForm extends javax.swing.JFrame {
     }//GEN-LAST:event_loadButtonActionPerformed
 
     private void loadText(File selectedFile) {
-       SpotList psl = null;
-      try {
+       try {
          ij.IJ.showStatus("Loading data..");
 
          setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
          BufferedReader fr = new BufferedReader( new FileReader(selectedFile));
          
-         String header = fr.readLine();
+         String info = fr.readLine();
+         String[] infos = info.split("\t");
+         HashMap<String, String> infoMap = new HashMap<String, String>();
          
          
          /*
@@ -941,10 +942,41 @@ public class DataCollectionForm extends javax.swing.JFrame {
                   
          */
          
+         String head = fr.readLine();
+         String[] headers = head.split("\t");        
          String spot;
+         List<GaussianSpotData> spotList = new ArrayList<GaussianSpotData>();
+         
          while ( (spot = fr.readLine()) != null) {
+            String[] spotTags = spot.split("\t");
+            HashMap<String, String> k = new HashMap<String, String>();
+            for (int i = 0; i < headers.length; i ++) 
+               k.put(headers[i], spotTags[i]);
             
+            
+            GaussianSpotData gsd = new GaussianSpotData(null, 
+                    Integer.parseInt(k.get("channel")), 
+                    Integer.parseInt(k.get("slice")), 
+                    Integer.parseInt(k.get("frame")),
+                    Integer.parseInt(k.get("position")), 
+                    Integer.parseInt(k.get("molecule")), 
+                    Integer.parseInt(k.get("tx_position")), 
+                    Integer.parseInt(k.get("ty_position")) 
+                    );
+            gsd.setData(Double.parseDouble(k.get("intensity")), 
+                    Double.parseDouble(k.get("background")),
+                    Double.parseDouble(k.get("x")),
+                    Double.parseDouble(k.get("y")),
+                    Double.parseDouble(k.get("width")),
+                    Double.parseDouble(k.get("a")),
+                    Double.parseDouble(k.get("theta")),
+                    Double.parseDouble(k.get("sigma"))
+                    );
+            spotList.add(gsd);
+                        
          }
+         
+       //MyRowData rowData = new MyRowData();
          
       } catch (FileNotFoundException ex) {
          ij.IJ.error("File not found");
