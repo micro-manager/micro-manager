@@ -1434,11 +1434,15 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
          }
       }
 
-      TaggedImageStorageDiskDefault newFileManager = new TaggedImageStorageDiskDefault(root + "/" + prefix, true,
-              getSummaryMetadata());
-      albumSaved_ = true;
+      try {
+         TaggedImageStorageDiskDefault newFileManager = new TaggedImageStorageDiskDefault(root + "/" + prefix, true,
+                 getSummaryMetadata());
+         albumSaved_ = true;
 
-      imageCache_.saveAs(newFileManager, mda_);
+         imageCache_.saveAs(newFileManager, mda_);
+      } catch (Exception ex) {
+         ReportingUtils.showError("Failed to save file");
+      }
       MMStudioMainFrame.getInstance().setAcqDirectory(root);
       updateWindowTitleAndStatus();
       return true;
@@ -1727,6 +1731,12 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
    public final JSONObject getSummaryMetadata() {
       return imageCache_.getSummaryMetadata();
    }
+   
+   /*
+   public final JSONObject getImageMetadata(int channel, int slice, int frame, int position) {
+      return imageCache_.getImageTags(channel, slice, frame, position);
+   }
+    */
 
    public void close() {
       if (hyperImage_ != null) {
