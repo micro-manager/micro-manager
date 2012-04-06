@@ -36,7 +36,7 @@
 
 const int bytesInMB = 1048576;
 const long adjustThreshold = LONG_MAX / 2;
-const int maxCBSize = 10000;    //a reasonable limit to circular buffer size
+const unsigned int maxCBSize = 10000;    //a reasonable limit to circular buffer size
 
 static MMThreadLock g_bufferLock;
 
@@ -84,7 +84,7 @@ bool CircularBuffer::Initialize(unsigned channels, unsigned slices, unsigned int
 
       // set a reasonable limit to circular buffer capacity 
       if (cbSize > maxCBSize)
-         cbSize=maxCBSize; 
+         cbSize = maxCBSize; 
 
       // TODO: verify if we have enough RAM to satisfy this request
 
