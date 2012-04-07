@@ -62,7 +62,9 @@ import java.awt.datatransfer.Transferable;
 import java.awt.datatransfer.UnsupportedFlavorException;
 import java.awt.geom.Point2D;
 
+import java.io.BufferedInputStream;
 import java.io.BufferedReader;
+import java.io.DataInput;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.File;
@@ -71,6 +73,8 @@ import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.FilenameFilter;
+import java.nio.ByteBuffer;
+import java.nio.MappedByteBuffer;
 import java.nio.channels.FileChannel;
 import java.util.Collections;
 import java.util.HashMap;
@@ -933,11 +937,95 @@ public class DataCollectionForm extends javax.swing.JFrame {
             loadText(selectedFile);
          } else if (selectedFile.getName().endsWith(".tsf")) {
             loadTSF(selectedFile);
+         } else if (selectedFile.getName().endsWith(".bin")) {
+            loadBin(selectedFile);
          } else {
             JOptionPane.showMessageDialog(getInstance(), "Unrecognized file extension");
          }
       }
    }
+    
+    private void loadBin(File selectedFile) {
+       try {
+          ij.IJ.showStatus ("Loading data..");
+          setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+          
+          LittleEndianDataInputStream   fin = new LittleEndianDataInputStream(
+                  new BufferedInputStream(new FileInputStream(selectedFile)));
+          
+          byte[] m425 = {77, 52, 50, 53};
+          for (int i = 0; i < 4; i++) {
+             if (fin.readByte() != m425[i])
+                throw (new IOException("Not a .bin file"));
+          }
+          
+          boolean nStorm = true;
+          byte[] ns = new byte[4];
+          byte[] guid = {71, 85, 73, 68};
+          for (int i = 0; i < 4; i++) {
+             ns[i] = fin.readByte();
+             if (ns[i] != guid[i])
+                nStorm = false;
+          }
+          
+          if (nStorm) { // read away 57 bytes
+             fin.skipBytes(53);
+          } else {
+             // there may be a more elegant way to go back 4 bytes
+             fin.close();
+             fin = new LittleEndianDataInputStream (
+                  new BufferedInputStream(new FileInputStream(selectedFile)));
+             fin.skipBytes(4);
+          }
+          
+          int nrFrames = fin.readInt();
+          int molType = fin.readInt();
+          
+          for (int i = 0; i <= nrFrames; i++) {
+             int nrMolecules = fin.readInt();
+             for (int j = 0; j < nrMolecules; j++) {
+                // total size of data on disk is 17 bytes
+                float x = fin.readFloat();
+                float y = fin.readFloat();
+                float xc = fin.readFloat();
+                float yc = fin.readFloat();
+                float h = fin.readFloat();
+                float w = fin.readFloat();
+                float phi = fin.readFloat();
+                float ax = fin.readFloat();
+                float b = fin.readFloat();
+                float intensity = fin.readFloat();
+                int c = fin.readInt();
+                int union = fin.readInt();
+                int frame = fin.readInt();
+                int union2 = fin.readInt();
+                int link = fin.readInt();
+                float z = fin.readFloat();
+                float zc = fin.readFloat();
+             }
+             byte[] h = new byte[64];
+             fin.read(h);
+             System.err.print("Reading h");
+             for (int p = 0; p < 64; p++) {
+                System.out.println(String.format ("%02x", (int) h[p]));
+             }
+          }
+                
+
+          
+          System.out.println("So far so good");
+          
+       }  catch (FileNotFoundException ex) {
+          JOptionPane.showMessageDialog(getInstance(), "File not found");
+       }  catch (IOException ex) {
+          JOptionPane.showMessageDialog(getInstance(), "Error while reading file");
+       } finally {
+         setCursor(Cursor.getDefaultCursor());
+         ij.IJ.showStatus("");
+         ij.IJ.showProgress(1.0);
+       }
+    }
+    
     
     /**
      * Loads a text file saved from this application back into memory
@@ -1022,8 +1110,6 @@ public class DataCollectionForm extends javax.swing.JFrame {
          ij.IJ.showProgress(1.0);
       }
       
-      // TODO: Remove once working
-      // JOptionPane.showMessageDialog(getInstance(), "Text import has not been implemented yet");
     }
     
     /**
