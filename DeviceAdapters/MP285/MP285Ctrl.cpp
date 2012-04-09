@@ -327,7 +327,8 @@ int MP285Ctrl::Initialize()
     }
     sprintf(sResolution, "%d", nResolution);
 
-    ret = CreateProperty(MP285::Instance()->GetMPStr(MP285::MPSTR_ResolutionLabel).c_str(), sResolution, MM::Integer, true);  // 0x0000 = 10 ; 0x8000 = 50
+    CPropertyAction* pActOnResolution = new CPropertyAction(this, &MP285Ctrl::OnResolution);
+    ret = CreateProperty(MP285::Instance()->GetMPStr(MP285::MPSTR_ResolutionLabel).c_str(), sResolution, MM::Integer, false, pActOnResolution);  // 0x0000 = 10 ; 0x8000 = 50
 
     if (MP285::Instance()->GetDebugLogFlag() > 0)
     {
@@ -550,6 +551,58 @@ int MP285Ctrl::SetOrigin()
 }
 
 //
+// Set resolution.
+//
+int MP285Ctrl::SetResolution(long lResolution)
+{
+    std::ostringstream osMessage;
+    //unsigned char sCmdSet[6] = { 0x56, 0x00, 0x00, MP285::MP285_TxTerm, 0x0A, 0x00 };
+    //unsigned char sResponse[64];
+    //int ret = DEVICE_OK;
+    //char sCommStat[30];
+    //bool yCommError = false;
+
+    //if (MP285::Instance()->GetResolution() == 50)
+    //    lVelocity = (lVelocity & 0x7FFF) | 0x8000;
+    // else
+    //    lVelocity = lVelocity & 0x7FFF;
+
+    //sCmdSet[1] = (unsigned char)((lVelocity & 0xFF00) / 256);
+    //sCmdSet[2] = (unsigned char)(lVelocity & 0xFF);
+        
+    //ret = WriteCommand(sCmdSet, 5);
+
+	//if (MP285::Instance()->GetDebugLogFlag() > 1)
+    //{
+	//	osMessage.str("");
+	//	osMessage << "<MP285Ctrl::SetVelocity> = " << lVelocity << ", ReturnCode = " << ret;
+	//	this->LogMessage(osMessage.str().c_str());
+	//}
+
+    //if (ret != DEVICE_OK) return ret;
+
+    //ret = ReadMessage(sResponse, 2);
+
+    //if (ret != DEVICE_OK) return ret;
+
+    //MP285::Instance()->SetVelocity(lVelocity);
+
+    //yCommError = CheckError(sResponse[0]);
+    //if (yCommError)
+    //    sprintf((char*)sCommStat, "Error Code ==> <%2x>", sResponse[0]);
+    //else
+    //    strcpy(sCommStat, "Success");
+
+    //ret = SetProperty(MP285::Instance()->GetMPStr(MP285::MPSTR_CommStateLabel).c_str(), sCommStat);
+
+    //if (ret != DEVICE_OK) return ret;
+
+	MP285::Instance()->SetResolution(lResolution);
+
+    return DEVICE_OK;
+}
+
+//
 // Set velocity.
 //
 int MP285Ctrl::SetVelocity(long lVelocity)
@@ -668,6 +721,50 @@ int MP285Ctrl::Stop()
 }
 
 /*
+ * Resolution as returned by device is in 0 or 1 of Bits 15
+ */
+int MP285Ctrl::OnResolution(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+    std::ostringstream osMessage;
+    int ret = DEVICE_OK;
+	long lResolution = (long)MP285::Instance()->GetResolution();
+
+	osMessage.str("");
+
+    if (eAct == MM::BeforeGet)
+    {
+        pProp->Set(lResolution);
+
+		if (MP285::Instance()->GetDebugLogFlag() > 1)
+		{
+			osMessage << "<MP285Ctrl::OnResolution> BeforeGet(" << MP285::Instance()->GetMPStr(MP285::MPSTR_ResolutionLabel).c_str() << " = [" << lResolution << "], ReturnCode = " << ret;
+		}
+    }
+    else if (eAct == MM::AfterSet)
+    {
+        pProp->Get(lResolution);
+
+        ret = SetResolution(lResolution);
+
+		if (MP285::Instance()->GetDebugLogFlag() > 1)
+		{
+			osMessage << "<MP285Ctrl::OnResolution> AfterSet(" << MP285::Instance()->GetMPStr(MP285::MPSTR_ResolutionLabel).c_str() << " = [" << lResolution << "], ReturnCode = " << ret;
+		}
+    }
+
+	if (MP285::Instance()->GetDebugLogFlag() > 1)
+    {
+		this->LogMessage(osMessage.str().c_str());
+	}
+
+    if (ret != DEVICE_OK) return ret;
+
+    return DEVICE_OK;
+}
+
+
+
+/*
  * Speed as returned by device is in um/s
  */
 int MP285Ctrl::OnSpeed(MM::PropertyBase* pProp, MM::ActionType eAct)
@@ -738,7 +835,7 @@ int MP285Ctrl::OnMotionMode(MM::PropertyBase* pProp, MM::ActionType eAct)
 
 		if (MP285::Instance()->GetDebugLogFlag() > 1)
 		{
-			osMessage << "<MP285Ctrl::OnSpeed> AfterSet(" << MP285::Instance()->GetMPStr(MP285::MPSTR_ResolutionLabel).c_str() << " = " << lMotionMode <<  "), ReturnCode = " << ret;
+			osMessage << "<MP285Ctrl::OnSpeed> AfterSet(" << MP285::Instance()->GetMPStr(MP285::MPSTR_MotionMode).c_str() << " = " << lMotionMode <<  "), ReturnCode = " << ret;
 		}
     }    
 	

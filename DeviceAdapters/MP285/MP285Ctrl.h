@@ -56,7 +56,8 @@ class MP285Ctrl : public CGenericBase<MP285Ctrl>
         int DeInitialize() { m_yInitialized = false; return DEVICE_OK; };
         bool Initialized() { return m_yInitialized; };
         int SetOrigin();
-        int SetVelocity(long lVelocity);
+        int SetResolution(long lResolution);
+		int SetVelocity(long lVelocity);
         int SetMotionMode(long lMotionMode);
         int Stop();
         int Home() { return DEVICE_OK/*DEVICE_UNSUPPORTED_COMMAND*/; }
@@ -65,6 +66,7 @@ class MP285Ctrl : public CGenericBase<MP285Ctrl>
         // ---------------
         int OnPort(MM::PropertyBase* pProp, MM::ActionType eAct);
 		int OnDebugLogFlag(MM::PropertyBase* pProp, MM::ActionType eAct);
+        int OnResolution(MM::PropertyBase* pProp, MM::ActionType eAct);
         int OnSpeed(MM::PropertyBase* pProp, MM::ActionType eAct);
         int OnMotionMode(MM::PropertyBase* pProp, MM::ActionType eAct);
         int OnTimeoutInterval(MM::PropertyBase* pProp, MM::ActionType eAct);
