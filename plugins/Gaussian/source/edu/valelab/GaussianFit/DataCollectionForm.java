@@ -64,7 +64,6 @@ import java.awt.geom.Point2D;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedReader;
-import java.io.DataInput;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.File;
@@ -73,8 +72,6 @@ import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.FilenameFilter;
-import java.nio.ByteBuffer;
-import java.nio.MappedByteBuffer;
 import java.nio.channels.FileChannel;
 import java.util.Collections;
 import java.util.HashMap;
@@ -944,20 +941,27 @@ public class DataCollectionForm extends javax.swing.JFrame {
          }
       }
    }
-    
-    private void loadBin(File selectedFile) {
+   
+   
+   private void loadBin(File selectedFile) {
        try {
           ij.IJ.showStatus ("Loading data..");
           setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
           
+          List<GaussianSpotData> spotList = new ArrayList<GaussianSpotData>();
+          
+          float pixelSize = (float) 160.0; // how do we get this from the file?
+          
           LittleEndianDataInputStream   fin = new LittleEndianDataInputStream(
                   new BufferedInputStream(new FileInputStream(selectedFile)));
-          
+          long fileP = 0; // variable to keep track of where the file pointer is
           byte[] m425 = {77, 52, 50, 53};
           for (int i = 0; i < 4; i++) {
              if (fin.readByte() != m425[i])
                 throw (new IOException("Not a .bin file"));
           }
+          fileP += 4;
+          
           
           boolean nStorm = true;
           byte[] ns = new byte[4];
@@ -967,9 +971,11 @@ public class DataCollectionForm extends javax.swing.JFrame {
              if (ns[i] != guid[i])
                 nStorm = false;
           }
+          fileP += 4;
           
           if (nStorm) { // read away 57 bytes
              fin.skipBytes(53);
+             fileP +=53;
           } else {
              // there may be a more elegant way to go back 4 bytes
              fin.close();
@@ -980,9 +986,13 @@ public class DataCollectionForm extends javax.swing.JFrame {
           
           int nrFrames = fin.readInt();
           int molType = fin.readInt();
+          int nr = 0;
+          fileP += 8;
           
           for (int i = 0; i <= nrFrames; i++) {
              int nrMolecules = fin.readInt();
+             // System.out.println(i + ": " + nrMolecules);
+             fileP += 4;
              for (int j = 0; j < nrMolecules; j++) {
                 // total size of data on disk is 17 bytes
                 float x = fin.readFloat();
@@ -990,6 +1000,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
                 float xc = fin.readFloat();
                 float yc = fin.readFloat();
                 float h = fin.readFloat();
+                float a = fin.readFloat(); // integrated dens. based on fitting
                 float w = fin.readFloat();
                 float phi = fin.readFloat();
                 float ax = fin.readFloat();
@@ -1002,18 +1013,20 @@ public class DataCollectionForm extends javax.swing.JFrame {
                 int link = fin.readInt();
                 float z = fin.readFloat();
                 float zc = fin.readFloat();
-             }
-             byte[] h = new byte[64];
-             fin.read(h);
-             System.err.print("Reading h");
-             for (int p = 0; p < 64; p++) {
-                System.out.println(String.format ("%02x", (int) h[p]));
+                fileP += 17 * 4;
+                
+                GaussianSpotData gsd = new GaussianSpotData(null, 0, 0, i,
+                        0, nr, (int) xc, (int) yc);
+                gsd.setData(intensity, b, pixelSize * xc, pixelSize * yc, w, ax, phi, c);
+                spotList.add(gsd);
+                nr++;
              }
           }
-                
-
           
-          System.out.println("So far so good");
+          String name = selectedFile.getName();
+          addSpotData(name, name, "", 256, 256, pixelSize, 3, 2, 1, 1, 1, 1, 
+                  nr, spotList, null, false);
+
           
        }  catch (FileNotFoundException ex) {
           JOptionPane.showMessageDialog(getInstance(), "File not found");
