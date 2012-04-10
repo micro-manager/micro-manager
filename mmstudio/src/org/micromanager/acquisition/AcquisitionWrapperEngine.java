@@ -520,6 +520,14 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
       comment_ = text;
    }
 
+   /*
+    * @deprecated
+    */
+    @Override
+    public boolean addChannel(String config, double exp, Boolean doZStack, double zOffset, ContrastSettings con8, ContrastSettings con16, int skip, Color c, boolean use) {
+        return addChannel(config, exp, doZStack, zOffset, con8, skip, c, use);
+    }
+    
    /**
     * Add new channel if the current state of the hardware permits.
     *
