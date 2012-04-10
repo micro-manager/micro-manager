@@ -5,6 +5,7 @@
 #include <sstream>
 #include <algorithm>
 #include <iostream>
+#include <map>
 #include "../../MMCore/Error.h"
 
 #include "shlwapi.h"
@@ -31,6 +32,11 @@ const char* g_ApiDllName = "CamUsb_Api_hal.dll";
 
 // --------------------------- additional supported features -------------------
 
+// frame rate
+const char* const g_Keyword_Framerate = "Framerate (camera intern)";
+const char* const g_Framerate_FreeRun = "free run";
+
+// bit deep
 const char* const g_Keyword_BitDepth = "BitDepth";
 const char* const g_BitDepth_08 = "8";
 const char* const g_BitDepth_10 = "10";
@@ -316,7 +322,7 @@ int CABSCamera::Initialize()
   if ( FALSE == IsNoError( dwRC ) )
   {
     releaseDeviceNumber( deviceNumber );
-    return convertApiErrorCode( dwRC );
+    return convertApiErrorCode( dwRC, __FUNCTION__ );
   }
   else // remember device number for later access
   {
@@ -329,7 +335,7 @@ int CABSCamera::Initialize()
   cameraVersion_.dwStructSize = sizeof( S_CAMERA_VERSION );
   dwRC = GET_RC( CamUSB_GetCameraVersion( &cameraVersion_, deviceNo() ), deviceNo() );
   if ( FALSE == IsNoError(dwRC) )
-  { nRet = convertApiErrorCode( dwRC ); goto Initialize_Done; }
+  { nRet = convertApiErrorCode( dwRC, __FUNCTION__ ); goto Initialize_Done; }
 
   // disbale heartbeat
   u32 dwValue = 0;
@@ -359,7 +365,9 @@ int CABSCamera::Initialize()
 
       // use full resolution
       CamUSB_SetCameraResolution(0, 0, resolutionCaps->wVisibleSizeX, resolutionCaps->wVisibleSizeY, 0, 0, 1, deviceNo() );
+
       framerate_ = 0.0;
+      UpdateProperty( g_Keyword_Framerate );
 
       // use RGB as default for color camera's
       if ( isColor() )
@@ -430,6 +438,15 @@ int CABSCamera::Initialize()
   nRet = setAllowedExpsoure();
   if (nRet != DEVICE_OK)
   { goto Initialize_Done; }
+
+  // camera framerate
+  pAct = new CPropertyAction (this, &CABSCamera::OnFramerate);
+  nRet = CreateProperty( g_Keyword_Framerate, g_Framerate_FreeRun, MM::String, false, pAct);
+  assert(nRet == DEVICE_OK);
+  if (nRet != DEVICE_OK)
+  { goto Initialize_Done; }
+  else
+    setAllowedFramerates();
 
   // scan mode
   pAct = new CPropertyAction (this, &CABSCamera::OnReadoutMode);
@@ -875,18 +892,23 @@ int CABSCamera::SetROI(unsigned x, unsigned y, unsigned xSize, unsigned ySize)
   rc = GET_RC( CamUSB_GetCameraResolutionInfo( &sResInfo, deviceNo() ), deviceNo());
 
   if ( FALSE == IsNoError( rc ) )
-    return convertApiErrorCode( rc );
+    return convertApiErrorCode( rc, __FUNCTION__ );
 
   // set resolution
   dwSize = sizeof( sResInfo.sResOut );
   rc = GET_RC( CamUSB_SetFunction( FUNC_RESOLUTION, &sResInfo.sResOut, dwSize, 0, 0, 0, 0, deviceNo() ), deviceNo());
   if ( FALSE == IsNoError( rc ) )
   {
-    framerate_ = 0.0;
-    return convertApiErrorCode( rc );
+    return convertApiErrorCode( rc, __FUNCTION__ );
   }
 
   checkForModifiedCameraParameter();
+
+  // update GUI for Exosure and Framerate
+  setAllowedExpsoure();
+  UpdateProperty( MM::g_Keyword_Exposure );
+  setAllowedFramerates();
+  UpdateProperty( g_Keyword_Framerate );
 
   // update std resolution
   UpdateProperty( g_Keyword_StdResolution );
@@ -1001,7 +1023,7 @@ int CABSCamera::SetAllowedBinning()
     return SetAllowedValues(MM::g_Keyword_Binning, binValues);
   }
   else
-    return convertApiErrorCode( dwRC );
+    return convertApiErrorCode( dwRC, __FUNCTION__ );
 }
 
 int CABSCamera::setAllowedPixelTypes( void )
@@ -1030,7 +1052,7 @@ int CABSCamera::setAllowedPixelTypes( void )
     return SetAllowedValues(MM::g_Keyword_PixelType, pixelTypeValues);
   }
   else
-    return convertApiErrorCode( dwRC );
+    return convertApiErrorCode( dwRC, __FUNCTION__ );
 }
 
 int CABSCamera::setAllowedBitDepth( void )
@@ -1062,7 +1084,7 @@ int CABSCamera::setAllowedBitDepth( void )
     return SetAllowedValues( g_Keyword_BitDepth, bitDepths);
   }
   else
-    return convertApiErrorCode( dwRC );
+    return convertApiErrorCode( dwRC, __FUNCTION__ );
 }
 
 int CABSCamera::setAllowedExpsoure( void )
@@ -1084,7 +1106,7 @@ int CABSCamera::setAllowedExpsoure( void )
     return SetPropertyLimits(MM::g_Keyword_Exposure, fMinExposure, fMaxExposure);
   }
   else
-    return convertApiErrorCode( dwRC );
+    return convertApiErrorCode( dwRC, __FUNCTION__ );
 }
 
 int CABSCamera::setAllowedGainExtra( void )
@@ -1110,7 +1132,7 @@ int CABSCamera::setAllowedGainExtra( void )
     return DEVICE_OK;
   }
   else
-    return convertApiErrorCode( rc );
+    return convertApiErrorCode( rc, __FUNCTION__ );
 }
 
 
@@ -1133,7 +1155,7 @@ int CABSCamera::setAllowedGain( const char* szKeyword_GainChannel )
     return SetPropertyLimits( szKeyword_GainChannel, fMinGain, fMaxGain);
   }
   else
-    return convertApiErrorCode( rc );
+    return convertApiErrorCode( rc, __FUNCTION__ );
 }
 
 /**
@@ -1263,15 +1285,16 @@ int CABSCamera::ThreadRun (void)
 
 
   ret = SnapImage();
-  if ( (ret != DEVICE_OK) && (ret != retUSER_ABORT) )
-  {
+  if ( (ret != DEVICE_OK) && 
+       ( mmToApiErrorCode( ret ) != retUSER_ABORT) && 
+       ( mmToApiErrorCode( ret ) != retNOIMGAVAIL) )
     return ret;
-  }
-  ret = InsertImage();
-  if (ret != DEVICE_OK)
-  {
-    return ret;
-  }
+
+  if (ret == DEVICE_OK)
+    ret = InsertImage();
+  else // reset error code => on real errors abort function would already be done 4 lines above (now avoid get image thread to terminated)
+    ret = DEVICE_OK;
+
   return ret;
 };
 
@@ -1376,15 +1399,14 @@ int CABSCamera::OnBinning(MM::PropertyBase* pProp, MM::ActionType eAct)
       rc = GET_RC( CamUSB_GetCameraResolutionInfo( &sResInfo, deviceNo() ), deviceNo());
 
       if ( FALSE == IsNoError( rc ) )
-        return convertApiErrorCode( rc );
+        return convertApiErrorCode( rc, __FUNCTION__ );
 
       // set resolution
       dwSize = sizeof( sResInfo.sResOut );
       rc = GET_RC( CamUSB_SetFunction( FUNC_RESOLUTION, &sResInfo.sResOut, dwSize, 0, 0, 0, 0, deviceNo() ), deviceNo());
       if ( FALSE == IsNoError( rc ) )
       {
-        framerate_ = 0.0;
-        return convertApiErrorCode( rc );
+        return convertApiErrorCode( rc, __FUNCTION__ );
       }
 
       checkForModifiedCameraParameter();
@@ -1477,7 +1499,7 @@ int CABSCamera::OnPixelType(MM::PropertyBase* pProp, MM::ActionType eAct)
       }
 
       u32 rc = GET_RC( CamUSB_SetPixelType( newPixelType, deviceNo()), deviceNo() );
-      ret = convertApiErrorCode( rc );
+      ret = convertApiErrorCode( rc, __FUNCTION__ );
 
       checkForModifiedCameraParameter();
     }
@@ -1761,7 +1783,7 @@ int CABSCamera::OnReadoutMode(MM::PropertyBase* pProp, MM::ActionType eAct)
     if ( IsNoError( rc ) )
       lastCaptureMode_ = captureMode;
 
-    return convertApiErrorCode( rc );
+    return convertApiErrorCode( rc, __FUNCTION__ );
   }
   else if (eAct == MM::BeforeGet)
   {
@@ -1787,7 +1809,7 @@ int CABSCamera::OnReadoutMode(MM::PropertyBase* pProp, MM::ActionType eAct)
 
     pProp->Set( readoutMode );
     readoutMode_ = readoutMode;
-    return convertApiErrorCode( rc );
+    return convertApiErrorCode( rc, __FUNCTION__ );
   }
   return DEVICE_OK;
 }
@@ -1804,7 +1826,7 @@ int CABSCamera::OnExposure(MM::PropertyBase* pProp, MM::ActionType eAct)
       SetDelayMs( exposureUs / (1000.0 * 100.0) ); // based on inner delay handling DelayMs * 150
       pProp->Set( exposureUs / 1000.0);
     }
-    return convertApiErrorCode( rc );
+    return convertApiErrorCode( rc, __FUNCTION__ );
   }
   else if (eAct == MM::AfterSet)
   {
@@ -1813,7 +1835,15 @@ int CABSCamera::OnExposure(MM::PropertyBase* pProp, MM::ActionType eAct)
 
     pProp->Get(value);
     exposureUs = (u32)(value * 1000.0 + 0.5);
-    setFramerate( 0.0 );
+
+    if ( 0.0 != getFramerate() )
+    {
+      if ( exposureUs > ( 1000000.0 / getFramerate() ) )
+      {
+        setFramerate( 0.0 );
+        UpdateProperty( g_Keyword_Framerate );
+      }
+    }
     rc = GET_RC( CamUSB_SetExposureTime( &exposureUs, deviceNo() ), deviceNo());
     if ( IsNoError( rc ) )
     {
@@ -1822,10 +1852,38 @@ int CABSCamera::OnExposure(MM::PropertyBase* pProp, MM::ActionType eAct)
       // update with new settings
       pProp->Set( exposureUs / 1000.0 );
     }
-    return convertApiErrorCode( rc );
+    return convertApiErrorCode( rc, __FUNCTION__ );
   }
 
   UpdateProperty( MM::g_Keyword_ReadoutTime );
+  return DEVICE_OK;
+}
+
+int CABSCamera::OnFramerate(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+  if (eAct == MM::BeforeGet)
+  {
+    pProp->Set( getFramerateString().c_str() );
+  }
+  else if (eAct == MM::AfterSet)
+  {
+    string framerate;
+
+    pProp->Get( framerate );
+
+    if ( g_Framerate_FreeRun == framerate )
+      setFramerate( 0.0 );
+    else
+    {
+      long fps;
+      if (DEVICE_OK == GetPropertyData( g_Keyword_Framerate, framerate.c_str(), fps ) )
+      {
+        setFramerate( fps / 1000.0);
+        setAllowedExpsoure();
+        UpdateProperty( MM::g_Keyword_Exposure );
+      }
+    }
+  }
   return DEVICE_OK;
 }
 
@@ -1866,7 +1924,7 @@ int CABSCamera::OnGainCommon(const char* szKeyword_GainChannel, MM::PropertyBase
     {
       pProp->Set( gain / 1000.0 );
     }
-    return convertApiErrorCode( rc );
+    return convertApiErrorCode( rc, __FUNCTION__ );
   }
   else if (eAct == MM::AfterSet)
   {
@@ -1900,7 +1958,7 @@ int CABSCamera::OnGainCommon(const char* szKeyword_GainChannel, MM::PropertyBase
     if (bAutoExposureOn)
       SetProperty( g_Keyword_AutoExposure, g_AutoExposure_On );
 
-    return convertApiErrorCode( rc );
+    return convertApiErrorCode( rc, __FUNCTION__ );
   }
   return DEVICE_OK;
 }
@@ -1958,7 +2016,7 @@ int CABSCamera::OnGainExtra(MM::PropertyBase* pProp, MM::ActionType eAct)
 
       pProp->Set( szValue );
     }
-    return convertApiErrorCode( rc );
+    return convertApiErrorCode( rc, __FUNCTION__ );
   }
   else if (eAct == MM::AfterSet)
   {
@@ -1972,7 +2030,7 @@ int CABSCamera::OnGainExtra(MM::PropertyBase* pProp, MM::ActionType eAct)
     else if ( strValue == g_Gain_Extra_x16) sBSP.bBitShift = 4;
 
     rc = GET_RC( CamUSB_SetFunction( FUNC_BITSHIFT, &sBSP, dwSize, 0, 0, 0, 0, deviceNo() ), deviceNo());
-    return convertApiErrorCode( rc );
+    return convertApiErrorCode( rc, __FUNCTION__ );
   }
   return DEVICE_OK;
 }
@@ -2001,7 +2059,7 @@ int CABSCamera::OnWhiteBalance(MM::PropertyBase* pProp, MM::ActionType eAct)
       rc = GET_RC( CamUSB_SetFunction( FUNC_WHITE_BALANCE, &sWBP, dwSize, 0, 0, 0, 0, deviceNo() ), deviceNo());
 
       if ( FALSE == IsNoError( rc ) )
-        return convertApiErrorCode( rc );
+        return convertApiErrorCode( rc, __FUNCTION__ );
     }
   }
   return DEVICE_OK;
@@ -2042,7 +2100,7 @@ int CABSCamera::OnAutoExposure(MM::PropertyBase* pProp, MM::ActionType eAct)
     rc = GET_RC( CamUSB_SetFunction( FUNC_AUTOEXPOSURE, &sAExpP, dwSize, 0, 0, 0, 0, deviceNo() ), deviceNo());
 
     if ( FALSE == IsNoError( rc ) )
-      return convertApiErrorCode( rc );
+      return convertApiErrorCode( rc, __FUNCTION__ );
   }
 
   return DEVICE_OK;
@@ -2089,7 +2147,7 @@ int CABSCamera::OnAutoExposureOptions(MM::PropertyBase* pProp, MM::ActionType eA
     rc = GET_RC( CamUSB_SetFunction( FUNC_AUTOEXPOSURE, &sAExpP, dwSize, 0, 0, 0, 0, deviceNo() ), deviceNo());
 
     if ( FALSE == IsNoError( rc ) )
-      return convertApiErrorCode( rc );
+      return convertApiErrorCode( rc, __FUNCTION__ );
   }
   return DEVICE_OK;
 }
@@ -2142,7 +2200,7 @@ int CABSCamera::OnSharpen(MM::PropertyBase* pProp, MM::ActionType eAct)
     rc = GET_RC( CamUSB_SetFunction( FUNC_EDGE_ENHANCE, &sEEP, dwSize, 0, 0, 0, 0, deviceNo() ), deviceNo());
 
     if ( FALSE == IsNoError( rc ) )
-      return convertApiErrorCode( rc );
+      return convertApiErrorCode( rc, __FUNCTION__ );
   }
   return DEVICE_OK;
 }
@@ -2182,7 +2240,7 @@ int CABSCamera::OnBayerDemosaic(MM::PropertyBase* pProp, MM::ActionType eAct)
     rc = GET_RC( CamUSB_SetCaptureMode( captureMode, countImages, deviceNo(), 0, 0), deviceNo() );
 
     if ( FALSE == IsNoError( rc ) )
-      return convertApiErrorCode( rc );
+      return convertApiErrorCode( rc, __FUNCTION__ );
   }
   return DEVICE_OK;
 }
@@ -2225,7 +2283,7 @@ int CABSCamera::OnBlackLevel(MM::PropertyBase* pProp, MM::ActionType eAct)
     rc = GET_RC( CamUSB_SetFunction( FUNC_BLACKLEVEL, &sBLP, dwSize, 0, 0, 0, 0, deviceNo() ), deviceNo());
 
     if ( FALSE == IsNoError( rc ) )
-      return convertApiErrorCode( rc );
+      return convertApiErrorCode( rc, __FUNCTION__ );
   }
   return DEVICE_OK;
 }
@@ -2251,7 +2309,7 @@ int CABSCamera::OnProfileLoad(MM::PropertyBase* pProp, MM::ActionType eAct)
       {
         strProfile_.clear();
         pProp->Set( strProfile_.c_str() );
-        return convertApiErrorCode( rc );
+        return convertApiErrorCode( rc, __FUNCTION__ );
       }
       else // update internal members
       {
@@ -2285,7 +2343,7 @@ int CABSCamera::OnProfileSave(MM::PropertyBase* pProp, MM::ActionType eAct)
       if ( FALSE == IsNoError( rc ) )
       {
         pProp->Set( strProfile.c_str() );
-        return convertApiErrorCode( rc );
+        return convertApiErrorCode( rc, __FUNCTION__ );
       }
       else
       {
@@ -2328,7 +2386,7 @@ int CABSCamera::OnStdResolution(MM::PropertyBase* pProp, MM::ActionType eAct)
       if ( FALSE == IsNoError( rc ) )
       {
         OnStdResolution( pProp, MM::BeforeGet );
-        return convertApiErrorCode( rc );
+        return convertApiErrorCode( rc, __FUNCTION__ );
       }
       else // update internal members
       {
@@ -2418,7 +2476,7 @@ int CABSCamera::OnShadingCorrection(MM::PropertyBase* pProp, MM::ActionType eAct
       if ( FALSE == IsNoError( rc ) )
       {
         OnShadingCorrection( pProp, MM::BeforeGet );
-        return convertApiErrorCode( rc );
+        return convertApiErrorCode( rc, __FUNCTION__ );
       }
     }
   }
@@ -2460,7 +2518,7 @@ int CABSCamera::OnShadingCorrectionSetup(MM::PropertyBase* pProp, MM::ActionType
       rc = GET_RC( CamUSB_SetFunction( FUNC_SHADING_CORRECTION, &sShaCorP, size, 0, 0, 0, 0, deviceNo() ), deviceNo());
 
       if ( FALSE == IsNoError( rc ) )
-        return convertApiErrorCode( rc );
+        return convertApiErrorCode( rc, __FUNCTION__ );
 
       // modify values
       updateShadingCorrectionState();
@@ -2481,7 +2539,7 @@ int CABSCamera::OnGamma(MM::PropertyBase* pProp, MM::ActionType eAct )
     {
       pProp->Set( sGaP.dwGamma / 1000.0 );
     }
-    return convertApiErrorCode( rc );
+    return convertApiErrorCode( rc, __FUNCTION__ );
   }
   else if (eAct == MM::AfterSet)
   {
@@ -2497,7 +2555,7 @@ int CABSCamera::OnGamma(MM::PropertyBase* pProp, MM::ActionType eAct )
       OnGamma( pProp, MM::BeforeGet );
     }
 
-    return convertApiErrorCode( rc );
+    return convertApiErrorCode( rc, __FUNCTION__ );
   }
   return DEVICE_OK;
 }
@@ -2545,7 +2603,7 @@ int CABSCamera::OnHueSaturationCommon(const char* propName, MM::PropertyBase* pP
       pProp->Set( "" );
   }
 
-  return convertApiErrorCode( rc );
+  return convertApiErrorCode( rc, __FUNCTION__ );
 }
 
 int CABSCamera::OnHue(MM::PropertyBase* pProp, MM::ActionType eAct)
@@ -2560,7 +2618,7 @@ int CABSCamera::OnSaturation(MM::PropertyBase* pProp, MM::ActionType eAct)
 
 int CABSCamera::OnColorCorrection(MM::PropertyBase* pProp, MM::ActionType eAct )
 {
-  const char* szValue = 0;
+  const char* szValue = g_CCM_Off;
   u32 rc = retOK;
   u32 size;
   S_COLOR_CORRECTION_PARAMS sCCP = {0};
@@ -2611,7 +2669,7 @@ int CABSCamera::OnColorCorrection(MM::PropertyBase* pProp, MM::ActionType eAct )
     if ( !IsNoError( rc ) )
       pProp->Set( g_CCM_Off );
   }
-  return convertApiErrorCode( rc );
+  return convertApiErrorCode( rc, __FUNCTION__ );
 }
 
 int CABSCamera::OnTriggerCommon(const char* propName, MM::PropertyBase* pProp, MM::ActionType eAct )
@@ -2697,7 +2755,7 @@ int CABSCamera::OnTriggerCommon(const char* propName, MM::PropertyBase* pProp, M
       }
     }
   }
-  return convertApiErrorCode( rc );
+  return convertApiErrorCode( rc, __FUNCTION__ );
 }
 
 int CABSCamera::OnTriggerInport(MM::PropertyBase* pProp, MM::ActionType eAct)
@@ -2782,7 +2840,7 @@ int CABSCamera::OnStrobeCommon(const char* propName, MM::PropertyBase* pProp, MM
       }
     }
   }
-  return convertApiErrorCode( rc );
+  return convertApiErrorCode( rc, __FUNCTION__ );
 }
 
 int CABSCamera::OnStrobeOutport(MM::PropertyBase* pProp, MM::ActionType eAct)
@@ -2812,11 +2870,11 @@ int CABSCamera::OnTemperature(MM::PropertyBase* pProp, MM::ActionType eAct)
       str::sprintf( temperature, "%3.2f °C \0\0", sTR.wSensorValue / temperatureUnit_ );
       pProp->Set( temperature.c_str() );
     }
-    return convertApiErrorCode( rc );
+    return convertApiErrorCode( rc, __FUNCTION__ );
   }
   else if (eAct == MM::AfterSet)
   {
-    return convertApiErrorCode( retFUNCSET );
+    return convertApiErrorCode( retFUNCSET, __FUNCTION__ );
   }
   return DEVICE_OK;
 }
@@ -2868,9 +2926,14 @@ u32 CABSCamera::getCameraImage( CAbsImgBuffer & img )
   // lock image buffer and prepare for writting
   if ( img.getNewImgBuffer( imagePointer, imageHeader, size ) )
   {
+    MM::TimeoutMs timeout( GetCurrentMMTime(), max( 2500, (unsigned long) (0.015 * readoutUs_) ) );
     do
     {
-      rc = GET_RC( CamUSB_GetImage( &imagePointer, &imageHeader, size, deviceNo()), deviceNo() );
+      if ( false == timeout.expired( GetCurrentMMTime() ) )
+        rc = GET_RC( CamUSB_GetImage( &imagePointer, &imageHeader, size, deviceNo()), deviceNo() );
+      else
+        rc = retNOIMGAVAIL;
+
     } while ( (retOK != rc) && (TRUE == IsNoError( rc )) );
 
     if ( IsNoError( rc ) )
@@ -2882,12 +2945,15 @@ u32 CABSCamera::getCameraImage( CAbsImgBuffer & img )
       rc = rc;
       img.abortNewImgBuffer();
     }
+  }
 
-    // release unsused buffers
-    // first read the pointer from CAbsImgBuffer than release it
-    while ( img.getUnusedExternalBuffer( imagePointer, imageHeader ) )
+  // release unsused buffers
+  // first read the pointer from CAbsImgBuffer than release it
+  while ( img.getUnusedExternalBuffer( imagePointer, imageHeader ) )
+  {
+    if (!CamUSB_ReleaseImage( imagePointer, imageHeader, deviceNo()))
     {
-      CamUSB_ReleaseImage( imagePointer, imageHeader, deviceNo());
+      imagePointer = imagePointer;
     }
   }
 
@@ -3017,27 +3083,48 @@ void CABSCamera::releaseDeviceNumber( int deviceNo )
       --staticDeviceNo;
 }
 
-int CABSCamera::convertApiErrorCode( unsigned long errorNumber )
+
+int CABSCamera::apiToMMErrorCode( unsigned long apiErrorNumber ) const
+{
+  if ( retOK == apiErrorNumber )
+    return (DEVICE_OK);
+
+  return (ERR_CAMERA_API_BASE + apiErrorNumber);
+}
+
+int CABSCamera::mmToApiErrorCode( unsigned long mmErrorNumber ) const
+{
+  if (( DEVICE_OK == mmErrorNumber ) || ( mmErrorNumber <= ERR_CAMERA_API_BASE) )
+    return (retOK);
+
+  return ( mmErrorNumber - ERR_CAMERA_API_BASE );
+}
+
+int CABSCamera::convertApiErrorCode( unsigned long apiErrorNumber, const char* functionName )
 {
   string errorMessage;
   errorMessage.resize( 260, 0 );
-  CamUSB_GetErrorString( (char *) errorMessage.c_str(), (u32)errorMessage.size(), errorNumber );
+  CamUSB_GetErrorString( (char *) errorMessage.c_str(), (u32)errorMessage.size(), apiErrorNumber );
 
   str::ResizeByZeroTermination( errorMessage );
 
-  if ( IsNoError( errorNumber ) )
+  if ( IsNoError( apiErrorNumber ) )
   {
-    if ( retOK != errorNumber )
+    if ( retOK != apiErrorNumber )
       errorMessage = "API-DLL Warning: " + errorMessage;
   }
   else
     errorMessage = "API-DLL Error: " + errorMessage;
 
-  SetErrorText(ERR_CAMERA_API_BASE + errorNumber, errorMessage.c_str() );
+  if ( 0 != functionName )
+    errorMessage += string(" (") + string(functionName) + string(")");
 
-  LogMessage(errorMessage);
+  SetErrorText( apiToMMErrorCode( apiErrorNumber ), errorMessage.c_str() );
 
-  return ( retOK == errorNumber ) ? (DEVICE_OK) : (ERR_CAMERA_API_BASE + errorNumber);
+  if (retOK != apiErrorNumber ) // log only for warnings or errors
+    LogMessage(errorMessage);
+
+  return apiToMMErrorCode( apiErrorNumber );
 }
 
 // scan for device
@@ -3402,6 +3489,7 @@ int CABSCamera::checkForModifiedCameraParameter()
   if ( FALSE == IsNoError( rc ) )
   {
     framerate_ = 0.0;
+    UpdateProperty( g_Keyword_Framerate );
     goto checkForModifiedCameraParameter_Done;
   }
 
@@ -3420,7 +3508,7 @@ int CABSCamera::checkForModifiedCameraParameter()
   }
 
 checkForModifiedCameraParameter_Done:
-  return convertApiErrorCode( rc );
+  return convertApiErrorCode( rc, __FUNCTION__ );
 }
 
 // ----------------------------------------------------------------------------
@@ -3590,6 +3678,87 @@ void CABSCamera::setAllowedHueSaturation( )
   SAFE_DELETE_ARRAY( hueSatCaps );
 }
 
+void CABSCamera::setAllowedFramerates( )
+{
+  S_FRAMERATE_CAPS * framerateCaps = 0;
+
+  ClearAllowedValues( g_Keyword_Framerate );
+
+  getCap( FUNC_FRAMERATE, (void* &)framerateCaps );
+
+  if ( 0 != framerateCaps )
+  {
+    AddAllowedValue(g_Keyword_Framerate, g_Framerate_FreeRun );
+
+    if ((framerateCaps->sFramerateRange[0].dwMin != 0) &&
+        (framerateCaps->sFramerateRange[framerateCaps->dwCountRanges-1].dwMax != 0) )
+    {
+      u32 dwLastFps = -1;
+      u32 dwFps;
+      string temp;
+      map<f32, u32>::iterator iter;
+      map<f32, u32> cFpsMap;
+
+      dwFps = framerateCaps->sFramerateRange[0].dwMin;
+
+      for(u32 l=0; l < framerateCaps->dwCountRanges; l++)
+      {
+        if ( framerateCaps->sFramerateRange[l].dwStep != 0)
+        {
+            for (u32 dwFps = framerateCaps->sFramerateRange[l].dwMin; dwFps <= framerateCaps->sFramerateRange[l].dwMax; dwFps += framerateCaps->sFramerateRange[l].dwStep)
+            {
+                u32 dwStep = framerateCaps->sFramerateRange[l].dwStep;
+
+                if ((dwFps <=      (  25 * dwStep)) || (cFpsMap.size() == 0))  // step 1
+                {
+                    cFpsMap.insert( make_pair(dwFps/1000.0f, dwFps));
+                }
+                else if (dwFps <=(  50 * dwStep))  // step 5
+                {
+                    if ((dwFps % (5 * dwStep)) == 0) cFpsMap.insert( make_pair(dwFps/1000.0f, dwFps));
+                }
+                else if (dwFps < ( 100 * dwStep))  // step 10
+                {
+                    if ((dwFps % (10 * dwStep)) == 0) cFpsMap.insert( make_pair(dwFps/1000.0f, dwFps));
+                }
+                else if (dwFps < ( 300 * dwStep))  // step 25
+                {
+                    if ((dwFps % (25 * dwStep)) == 0) cFpsMap.insert( make_pair(dwFps/1000.0f, dwFps));
+                }
+                else                              // step 100
+                {
+                    if ((dwFps % (100 * dwStep)) == 0) cFpsMap.insert( make_pair(dwFps/1000.0f, dwFps));
+                }
+            }
+        }
+        else if ((0 != framerateCaps->sFramerateRange[l].dwMin) &&
+                 (framerateCaps->sFramerateRange[l].dwMin == framerateCaps->sFramerateRange[l].dwMax))
+        {
+          cFpsMap.insert( make_pair(framerateCaps->sFramerateRange[l].dwMin/1000.0f, framerateCaps->sFramerateRange[l].dwMin));
+        }
+      }
+
+      // add the maximum fps
+      dwFps = framerateCaps->sFramerateRange[framerateCaps->dwCountRanges-1].dwMax;
+      cFpsMap.insert( make_pair(dwFps/1000.0f, dwFps) );
+
+      // put fps to combo box
+      for (iter = cFpsMap.begin(); iter != cFpsMap.end(); iter++)
+      {
+        // float formated to string
+        str::sprintf( temp, "%03.1f", iter->first );
+
+        if (iter->second < 10000)
+          temp = "0" + temp;
+
+        AddAllowedValue(g_Keyword_Framerate, temp.c_str(), iter->second );
+      }
+    }
+  }
+
+  SAFE_DELETE_ARRAY( framerateCaps );
+}
+
 u32 CABSCamera::loadProfile( const char * szProfileName, const char * szSettingsName )
 {
   u32 rc = retFILE_OPEN;
@@ -3622,6 +3791,19 @@ u32 CABSCamera::saveProfile( const char * szProfileName, const char * szSettings
     rc = GET_RC(CamUSB_SaveCameraSettingsToFile( (char*)strProfilePath.c_str(), (char *) szSettingsName, deviceNo()), deviceNo());
   }
   return rc;
+}
+
+// ----------------------------------------------------------------------------
+
+string CABSCamera::getFramerateString( void ) const
+{
+  if (0.0 == getFramerate() )
+    return string( g_Framerate_FreeRun );
+
+  string framerate;
+  str::sprintf( framerate, "%1.1f", getFramerate() );
+
+  return framerate;
 }
 
 // ----------------------------------------------------------------------------

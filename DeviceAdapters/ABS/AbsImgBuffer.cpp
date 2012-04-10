@@ -157,11 +157,21 @@ bool CAbsImgBuffer::getUnusedExternalBuffer( u08* & pImg, S_IMAGE_HEADER* & pImg
 
 void CAbsImgBuffer::addUnsedImgBuffers()
 {
-  if ( eExternBuffer == bufferType() )
+  // remember unused buffers
+  if ( (0 != imagePtr_) && (0 != imageHeaderPtr_) )
   {
-    // remember unused buffers
-    if ( (0 != imagePtr_) && (0 != imageHeaderPtr_) )
-      unusedImgBuffers_.push_back( CAbsImgBufferItem( imagePtr_, imageHeaderPtr_ ) );
+    if ( __super::GetPixelsRW() != imagePtr_ )
+    {
+
+      const CAbsImgBufferItem absImgBufferItem( imagePtr_, imageHeaderPtr_ );
+      bool bAllreadyStored = false;
+      for (u32 n=0; n < unusedImgBuffers_.size(); n++)
+      {
+        bAllreadyStored = bAllreadyStored || (unusedImgBuffers_[n] == absImgBufferItem);        
+      }
+      if (!bAllreadyStored)
+        unusedImgBuffers_.push_back( absImgBufferItem );
+    }
   }
 }
 
@@ -212,7 +222,7 @@ void CAbsImgBuffer::Resize(unsigned xSize, unsigned ySize, unsigned pixDepth, un
 
   updateImageHeader();
 
-  imagePtr_       = GetPixelsRW();
+  imagePtr_       = __super::GetPixelsRW();
   imageHeaderPtr_ = &imageHeader_;
 
   prepareHistogramm( usedBit );

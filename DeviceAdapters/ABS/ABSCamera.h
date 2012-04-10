@@ -141,6 +141,7 @@ public:
   int   OnReadoutMode (MM::PropertyBase* pProp, MM::ActionType eAct);
   int   OnDropPixels  (MM::PropertyBase* pProp, MM::ActionType eAct);
   int   OnExposure    (MM::PropertyBase* pProp, MM::ActionType eAct);
+  int   OnFramerate   (MM::PropertyBase* pProp, MM::ActionType eAct);
   int   OnTemperature (MM::PropertyBase* pProp, MM::ActionType eAct);
   int   OnGain        (MM::PropertyBase* pProp, MM::ActionType eAct);
   int   OnGainRed     (MM::PropertyBase* pProp, MM::ActionType eAct);
@@ -219,7 +220,8 @@ protected:
 
   void  updateIOPorts();
   string ioPortNameByIndex( u32 ioPortIndex );
-      
+
+  void  setAllowedFramerates( );
   void  setAllowedHueSaturation( );
   void  setAllowedGamma( );
 
@@ -231,7 +233,7 @@ protected:
   void  setDeviceNo( int deviceNo );
   int   deviceNo( void ) const;
 
-  int convertApiErrorCode( unsigned long errorNumber );	
+  int convertApiErrorCode( unsigned long errorNumber, const char* functionName = 0 );	
 
   unsigned long getCameraImage( CAbsImgBuffer& img );
   unsigned long getCap( unsigned __int64 functionId, void* & capability );
@@ -247,6 +249,10 @@ protected:
 
   
 private:
+  int   apiToMMErrorCode( unsigned long apiErrorNumber ) const;
+  int   mmToApiErrorCode( unsigned long mmErrorNumber ) const;
+  string getFramerateString( void ) const;
+
   static volatile int staticDeviceNo;
   string                    cameraDeviceID_;
   int                       deviceNo_;
@@ -259,11 +265,11 @@ private:
   bool                      bMirrorX_;
   bool                      bMirrorY_;
   bool                      bSwapXY_;
-  std::string               strProfile_;			  // last used profile name	
-  std::vector<std::string>  strProfileLst_;		  // list of available profiles
-  CStandardResolutionList   stdResolutionLst_;	// list of supported standard resolutions with IDs
-  CColorCorrectionList      colCorLst_;	    // list of supported color corrections
-  CIOPortNameToIndexMap     ioPortMap_;	        // map of all io-port names to theire port index
+  std::string               strProfile_;        // last used profile name	
+  std::vector<std::string>  strProfileLst_;     // list of available profiles
+  CStandardResolutionList   stdResolutionLst_;  // list of supported standard resolutions with IDs
+  CColorCorrectionList      colCorLst_;         // list of supported color corrections
+  CIOPortNameToIndexMap     ioPortMap_;         // map of all io-port names to theire port index
 
   std::string               triggerPortName_;
   std::string               triggerPortPolarity_;
@@ -305,7 +311,6 @@ private:
   double        fractionOfPixelsToDropOrSaturate_;
 
   double        testProperty_[10];
-  //MMThreadLock  imgPixelsLock_;
   int           nComponents_;
 };
 

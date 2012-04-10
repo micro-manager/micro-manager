@@ -78,6 +78,14 @@ protected:
       imageHeader_ = cItem.imageHeader_;
     };
 
+    bool operator==(const CAbsImgBufferItem &other) const
+    {
+      if ((image_ == other.image_) && (imageHeader_ == other.imageHeader_))
+         return true;
+      else
+         return false;
+    }
+
     u08* image_;
     S_IMAGE_HEADER* imageHeader_; 
   };
