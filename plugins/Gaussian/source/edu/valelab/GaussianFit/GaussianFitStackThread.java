@@ -85,10 +85,11 @@ public class GaussianFitStackThread extends GaussianInfo implements Runnable {
                double s = paramsOut[GaussianFit.S] * pixelSize_;
                // express background in photons after base level correction
                double bgr = cPCF * (paramsOut[GaussianFit.BGR] - baseLevel_);
-               // calculate error using formular from Thomson et al (2002)
+               // calculate error using formular from Thompson et al (2002)
                // (dx)2 = (s*s + (a*a/12)) / N + (8*pi*s*s*s*s * b*b) / (a*a*N*N)
                double sigma = (s * s + (pixelSize_ * pixelSize_) / 12) / N
-                       + (8 * Math.PI * s * s * s * s * bgr) / (pixelSize_ * pixelSize_ * N * N);
+                       + (8 * Math.PI * s * s * s * s * bgr * bgr) / (pixelSize_ * pixelSize_ * N * N);
+               sigma = Math.sqrt(sigma);
 
                if (paramsOut.length >= 6) {
                   sx = paramsOut[GaussianFit.S1] * pixelSize_;

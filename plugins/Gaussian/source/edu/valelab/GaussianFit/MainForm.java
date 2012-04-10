@@ -281,7 +281,7 @@ public class MainForm extends javax.swing.JFrame implements ij.ImageListener{
         getContentPane().add(emGainTextField_);
         emGainTextField_.setBounds(170, 70, 67, 19);
 
-        baseLevelTextField.setFont(new java.awt.Font("Lucida Grande", 0, 10)); // NOI18N
+        baseLevelTextField.setFont(new java.awt.Font("Lucida Grande", 0, 10));
         baseLevelTextField.setText("100");
         baseLevelTextField.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -301,8 +301,8 @@ public class MainForm extends javax.swing.JFrame implements ij.ImageListener{
         getContentPane().add(jLabel8);
         jLabel8.setBounds(40, 70, 78, 13);
 
-        jLabel9.setFont(new java.awt.Font("Lucida Grande", 0, 10));
-        jLabel9.setText("Base Level(counts)");
+        jLabel9.setFont(new java.awt.Font("Lucida Grande", 0, 10)); // NOI18N
+        jLabel9.setText("Camera Offset (counts)");
         getContentPane().add(jLabel9);
         jLabel9.setBounds(40, 130, 122, 13);
         getContentPane().add(jSeparator4);

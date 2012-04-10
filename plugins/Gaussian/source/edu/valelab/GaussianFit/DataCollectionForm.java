@@ -2559,7 +2559,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
             
             
              // TODO: add 0 padding to deal with aberrant image sizes
-            if ( (width != height) || (width %2 != 0) ) {
+            if ( (width != height) || ( (width & (width - 1)) != 0) ) {
                JOptionPane.showMessageDialog(getInstance(), 
                  "Magnified image is not a square with a size that is a power of 2");
                ij.IJ.showStatus(" ");
