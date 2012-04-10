@@ -288,6 +288,10 @@ public interface AcquisitionEngine {
            ContrastSettings s8, ContrastSettings s16, int skip, Color c);
 
    public boolean addChannel(String name, double exp, Boolean doZStack,
+           double offset, ContrastSettings s8, ContrastSettings s16, int skip, Color c,
+           boolean use);
+   
+   public boolean addChannel(String name, double exp, Boolean doZStack,
            double offset, ContrastSettings con, int skip, Color c,
            boolean use);
    public void setSaveFiles(boolean selected);
