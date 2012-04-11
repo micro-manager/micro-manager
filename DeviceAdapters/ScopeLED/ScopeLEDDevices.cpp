@@ -113,8 +113,8 @@ ScopeLEDMicroscopeIlluminator::ScopeLEDMicroscopeIlluminator() : m_state(false)
     pAct = new CPropertyAction (this, &ScopeLEDMicroscopeIlluminator::OnLastDeviceResult);
     nRet = CreateProperty("LastDeviceResult", "0", MM::Integer, true, pAct);
 
-    pAct = new CPropertyAction (this, &ScopeLEDMicroscopeIlluminator::OnTransactionTime);
-    nRet = CreateProperty("TxnTime", "0", MM::Integer, true, pAct);
+    //pAct = new CPropertyAction (this, &ScopeLEDMicroscopeIlluminator::OnTransactionTime);
+    //nRet = CreateProperty("TxnTime", "0", MM::Integer, true, pAct);
 
     // state
     pAct = new CPropertyAction (this, &ScopeLEDMicroscopeIlluminator::OnState);
@@ -299,8 +299,8 @@ ScopeLEDFluorescenceIlluminator::ScopeLEDFluorescenceIlluminator()
     pAct = new CPropertyAction (this, &ScopeLEDFluorescenceIlluminator::OnLastDeviceResult);
     nRet = CreateProperty("LastDeviceResult", "0", MM::Integer, true, pAct);
 
-    pAct = new CPropertyAction (this, &ScopeLEDFluorescenceIlluminator::OnTransactionTime);
-    nRet = CreateProperty("TxnTime", "0", MM::Integer, true, pAct);
+    //pAct = new CPropertyAction (this, &ScopeLEDFluorescenceIlluminator::OnTransactionTime);
+    //nRet = CreateProperty("TxnTime", "0", MM::Integer, true, pAct);
 
     // state
     pAct = new CPropertyAction (this, &ScopeLEDFluorescenceIlluminator::OnState);
