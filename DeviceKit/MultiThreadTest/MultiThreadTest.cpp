@@ -1,16 +1,14 @@
 ///////////////////////////////////////////////////////////////////////////////
-// FILE:          MMCoreTest.cpp 
+// FILE:          MMultiThreadTest.cpp 
 // PROJECT:       Micro-Manager
 // SUBSYSTEM:     Device driver developer's kit
 //-----------------------------------------------------------------------------
-// DESCRIPTION:   Command-line test program for MMCore and device drivers.
-//                This file is built for Win32 development and may require small
-//                modifications to compile on Mac or Linux.
+// DESCRIPTION:   Command-line test program for MMCore and device drivers under
+//                multiple-threads of execution
 //
 // AUTHOR:        Nenad Amodaj, http://nenad.amodaj.com
-//                Karl Hoover
 //
-// COPYRIGHT:     University of California, San Francisco, 2011
+// COPYRIGHT:     University of California, San Francisco, 2012
 //
 // LICENSE:       This file is distributed under the BSD license.
 //                License text is included with the source distribution.
@@ -48,12 +46,7 @@ void TestHam(CMMCore& core);
 void TestCameraLive(CMMCore& core);
 void TestAF(CMMCore& core);
 
-/**
-* Creates MMCore object, loads configuration, prints the status and performs
-* a couple of basic tests.
-* 
-* Modify to exercise specific devices in more detail.
-*/
+// main routine
 int main(int argc, char* argv[])
 {
    int retval = 0;
