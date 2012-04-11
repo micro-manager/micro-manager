@@ -255,12 +255,9 @@ public:
         {
             long error = g_USBCommAdapter.GetLastError(); 
             pProp->Set(error);
+            return DEVICE_OK;
         }
-        else if (eAct == MM::AfterSet)
-        {
-            // never do anything!!
-        }
-        return DEVICE_OK;
+        return DEVICE_CAN_NOT_SET_PROPERTY;
     }
 
     int OnLastDeviceResult(MM::PropertyBase* pProp, MM::ActionType eAct)
@@ -268,12 +265,9 @@ public:
         if (eAct == MM::BeforeGet)
         {
             pProp->Set(m_lastDeviceResult);
+            return DEVICE_OK;
         }
-        else if (eAct == MM::AfterSet)
-        {
-            // never do anything!!
-        }
-        return DEVICE_OK;
+        return DEVICE_CAN_NOT_SET_PROPERTY;
     }
 
     int OnTransactionTime(MM::PropertyBase* pProp, MM::ActionType eAct)
@@ -281,12 +275,9 @@ public:
         if (eAct == MM::BeforeGet)
         {
             pProp->Set(m_TxnTime);
+            return DEVICE_OK;
         }
-        else if (eAct == MM::AfterSet)
-        {
-            // never do anything!!
-        }
-        return DEVICE_OK;
+        return DEVICE_CAN_NOT_SET_PROPERTY;
     }
 
     int OnVersion(MM::PropertyBase* pProp, MM::ActionType eAct)
@@ -294,12 +285,9 @@ public:
         if (eAct == MM::BeforeGet)
         {
             pProp->Set(GetVersion());
+            return DEVICE_OK;
         }
-        else if (eAct == MM::AfterSet)
-        {
-            // never do anything!!
-        }
-        return DEVICE_OK;
+        return DEVICE_CAN_NOT_SET_PROPERTY;
     }
 };
 
