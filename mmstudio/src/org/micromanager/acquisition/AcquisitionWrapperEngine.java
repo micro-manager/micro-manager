@@ -554,6 +554,7 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
          channels_.add(channel);
          return true;
       } else {
+         ReportingUtils.showError("\"" + config + "\" is not found in the current Channel group.");
          return false;
       }
    }
