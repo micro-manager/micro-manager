@@ -100,9 +100,24 @@ public:
 
     int OnControlMode(MM::PropertyBase* pProp, MM::ActionType eAct);
 
+    int OnActiveChannelString(MM::PropertyBase* pProp, MM::ActionType eAct);
+    int OnActiveWavelengthString(MM::PropertyBase* pProp, MM::ActionType eAct);
+    int OnOptimalPositionString(MM::PropertyBase* pProp, MM::ActionType eAct);
+
     static const char* DeviceName;
     static const char* DeviceDescription;
 
+    long m_CachedLEDGroup;
+    long m_NumChannels;
+
+    std::string StatusDescription;
+
+    struct
+    {
+        long led_group;
+        std::string info;
+    } m_ActiveWavelengths, m_ActiveChannels;
+    
 private:
 
     int GetChannelWavelength(int channel, long& wavelength);
@@ -112,6 +127,7 @@ private:
 
     int SetLEDGroup(long group);
     int GetLEDGroup(long& group);
+    int GetNumChannels(long& count);
 
     int GetLEDGroupChannels(int group, long& channels);
     int OnLEDGroupChannels(int group, MM::PropertyBase* pProp, MM::ActionType eAct);
@@ -119,6 +135,10 @@ private:
 
     int SetControlMode(long mode);
     int GetControlMode(long& mode);
+
+    int UpdateActiveChannelString();
+    int UpdateActiveWavelengthString();
+    int GetOptimalPositionString(std::string& str);
 };
 
 #endif

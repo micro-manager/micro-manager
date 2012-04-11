@@ -275,7 +275,7 @@ int ScopeLEDMicroscopeIlluminator::OnChannel4Brightness(MM::PropertyBase* pProp,
 const char* ScopeLEDFluorescenceIlluminator::DeviceName = "ScopeLED-FMI";
 const char* ScopeLEDFluorescenceIlluminator::DeviceDescription = "ScopeLED Fluorescence Microscope Illuminator";
 
-ScopeLEDFluorescenceIlluminator::ScopeLEDFluorescenceIlluminator()
+ScopeLEDFluorescenceIlluminator::ScopeLEDFluorescenceIlluminator() : m_CachedLEDGroup(0), m_NumChannels(0)
 {
     m_pid = 0x1305;
 
@@ -346,12 +346,18 @@ int ScopeLEDFluorescenceIlluminator::Initialize()
     }
     
     memset(led_group_channels_initialized, false, MAX_FMI_LED_GROUPS);
-    memset(channel_wavelengths_initialized, false, 4);    
+    memset(channel_wavelengths_initialized, false, 4);
+
+    m_CachedLEDGroup = 0;
+    m_NumChannels = 0;
+
+    int nRet = GetNumChannels(m_NumChannels);
+    if (nRet != DEVICE_OK) return nRet;
 
     // set property list
     // -----------------
     CPropertyAction* pAct = new CPropertyAction (this, &ScopeLEDFluorescenceIlluminator::OnVersion);
-    int nRet = CreateProperty("Version", "0", MM::Integer, true, pAct);
+    nRet = CreateProperty("Version", "0", MM::Integer, true, pAct);
     if (nRet != DEVICE_OK) return nRet;
 
     pAct = new CPropertyAction (this, &ScopeLEDFluorescenceIlluminator::OnChannel1Brightness);
@@ -436,6 +442,18 @@ int ScopeLEDFluorescenceIlluminator::Initialize()
     if (nRet != DEVICE_OK) return nRet;
     SetPropertyLimits("ControlMode", 1, 3);
 
+    pAct = new CPropertyAction (this, &ScopeLEDFluorescenceIlluminator::OnActiveChannelString);
+    nRet = CreateProperty("ActiveChannels", "", MM::String, true, pAct);
+    if (nRet != DEVICE_OK) return nRet;
+
+    pAct = new CPropertyAction (this, &ScopeLEDFluorescenceIlluminator::OnActiveWavelengthString);
+    nRet = CreateProperty("ActiveWavelengths", "", MM::String, true, pAct);
+    if (nRet != DEVICE_OK) return nRet;
+
+    pAct = new CPropertyAction (this, &ScopeLEDFluorescenceIlluminator::OnOptimalPositionString);
+    nRet = CreateProperty("OptimalStagePosition", "", MM::String, true, pAct);
+    if (nRet != DEVICE_OK) return nRet;    
+
     nRet = UpdateStatus();
     return nRet;
 }
@@ -485,6 +503,36 @@ int ScopeLEDFluorescenceIlluminator::GetOpen(bool& open)
     }
     return result;
 }
+
+int ScopeLEDFluorescenceIlluminator::GetNumChannels(long& count)
+{
+    unsigned char cmdbuf[5];
+    memset(cmdbuf, 0, sizeof(cmdbuf));
+    cmdbuf[0] = 0xA9;  // Start Byte
+    cmdbuf[1] = 0x02;  // Length Byte
+    cmdbuf[2] = 31;    // Command Byte - MSG_GET_CHANNEL_COUNT
+    cmdbuf[4] = 0x5C;  // End Byte
+
+    unsigned char* const pChecksum = &cmdbuf[3];
+    unsigned char* const pStart = &cmdbuf[1];
+
+    *pChecksum = g_USBCommAdapter.CalculateChecksum(pStart, *pStart);
+
+    unsigned char RxBuffer[16];
+    unsigned long cbRxBuffer = sizeof(RxBuffer);
+    int result = Transact(cmdbuf, sizeof(cmdbuf), RxBuffer, &cbRxBuffer);
+
+    if ((DEVICE_OK == result) && (cbRxBuffer >= 5))
+    {
+        count = RxBuffer[4];
+    }
+    else
+    {
+        count = 0;
+    }
+    return result;
+}
+
 
 int ScopeLEDFluorescenceIlluminator::SetChannelBrightness(int channel, double brightness)
 {
@@ -595,12 +643,11 @@ int ScopeLEDFluorescenceIlluminator::SetLEDGroup(long group)
     *pChecksum = g_USBCommAdapter.CalculateChecksum(pStart, *pStart);
 
     int result = Transact(cmdbuf, sizeof(cmdbuf));
-    /*
-    UpdateProperty("Channel1Brightness");
-    UpdateProperty("Channel2Brightness");
-    UpdateProperty("Channel3Brightness");
-    UpdateProperty("Channel4Brightness");
-    */
+
+    if (DEVICE_OK == result)
+    {
+        m_CachedLEDGroup = group;
+    }
 
     return result;
 }
@@ -626,11 +673,12 @@ int ScopeLEDFluorescenceIlluminator::GetLEDGroup(long& group)
     if ((DEVICE_OK == result) && (cbRxBuffer >= 5))
     {
         group = RxBuffer[4];
+        m_CachedLEDGroup = group;
     }
     else
     {
         group = 0;
-    }
+    }    
     return result;
 }
 
@@ -694,7 +742,7 @@ int ScopeLEDFluorescenceIlluminator::GetLEDGroupChannels(int group, long& channe
 
 int ScopeLEDFluorescenceIlluminator::OnLEDGroupChannels(int group, MM::PropertyBase* pProp, MM::ActionType eAct)
 {
-    int result = DEVICE_OK;
+    int result = DEVICE_CAN_NOT_SET_PROPERTY;
     if (eAct == MM::BeforeGet)
     {
         long channels = 0;
@@ -783,7 +831,7 @@ int ScopeLEDFluorescenceIlluminator::GetChannelWavelength(int channel, long& wav
 int ScopeLEDFluorescenceIlluminator::OnChannelWavelength(int index, MM::PropertyBase* pProp, MM::ActionType eAct)
 {
     long wavelength = 0;
-    int result = DEVICE_OK;
+    int result = DEVICE_CAN_NOT_SET_PROPERTY;
     if (eAct == MM::BeforeGet)
     {
         result = GetChannelWavelength(index, wavelength);
@@ -874,3 +922,249 @@ int ScopeLEDFluorescenceIlluminator::OnControlMode(MM::PropertyBase* pProp, MM::
     return DEVICE_OK;
 }
 
+int ScopeLEDFluorescenceIlluminator::UpdateActiveChannelString()
+{
+    int result = DEVICE_OK;
+    bool ok = m_CachedLEDGroup > 0;
+
+    if (!ok)
+    {
+        long group = 0;
+        result = GetLEDGroup(group);
+    }
+
+    ok = DEVICE_OK == result;
+    if (ok)
+    {
+        ok = m_CachedLEDGroup > 0;
+        if (ok)
+        {
+            if (m_ActiveChannels.led_group != m_CachedLEDGroup)
+            {
+                std::stringstream strm;
+                long channels = 0;
+                result = GetLEDGroupChannels(m_CachedLEDGroup, channels);
+                ok = DEVICE_OK == result;
+                if (ok)
+                {
+                    bool first = true;
+                    int i=1;
+                    while (channels)
+                    {
+                        if (channels & 0x1)
+                        {
+                            if (!first)
+                            {
+                                strm << ",";
+                            }
+                            strm << "Ch" << i;
+                            first = false;
+                        }
+                        channels = channels >> 1;
+                        i++;
+                    }
+                    m_ActiveChannels.led_group = m_CachedLEDGroup;
+                    m_ActiveChannels.info = strm.str();
+                }
+            }
+        }
+        else
+        {
+            result = DEVICE_INTERNAL_INCONSISTENCY;
+        }
+    }
+
+    if (!ok)
+    {
+        m_ActiveChannels.led_group = 0;
+        m_ActiveChannels.info.clear();
+    }
+    return result;
+}
+
+int ScopeLEDFluorescenceIlluminator::OnActiveChannelString(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+    long mode = 0;
+    if (eAct == MM::BeforeGet)
+    {
+        int result = UpdateActiveChannelString();
+        if (DEVICE_OK == result)
+        {
+            pProp->Set(m_ActiveChannels.info.c_str());
+        }
+        return result;                       
+    }                                           
+    return DEVICE_CAN_NOT_SET_PROPERTY;
+}
+
+int ScopeLEDFluorescenceIlluminator::UpdateActiveWavelengthString()
+{
+    int result = DEVICE_OK;
+    bool ok = m_CachedLEDGroup > 0;
+
+    if (!ok)
+    {
+        long group = 0;
+        result = GetLEDGroup(group);
+    }
+
+    ok = DEVICE_OK == result;
+    if (ok)
+    {
+        ok = m_CachedLEDGroup > 0;
+        if (ok)
+        {
+            if (m_ActiveWavelengths.led_group != m_CachedLEDGroup)
+            {
+                std::stringstream strm;
+                long channels = 0;
+                result = GetLEDGroupChannels(m_CachedLEDGroup, channels);
+                ok = DEVICE_OK == result;
+                if (ok)
+                {
+                    bool first = true;
+                    int i=1;
+                    while (channels)
+                    {
+                        if (channels & 0x1)
+                        {
+                            long wavelength = 0;
+                            result = GetChannelWavelength(i-1, wavelength);
+                            if ((DEVICE_OK == result) && (wavelength > 0))
+                            {
+                                if (!first)
+                                {
+                                    strm << ",";
+                                }                        
+                                strm << wavelength << "nm";
+                                first = false;
+                            }
+                        }
+                        channels = channels >> 1;
+                        i++;
+                    }
+                    m_ActiveWavelengths.led_group = m_CachedLEDGroup;
+                    m_ActiveWavelengths.info = strm.str();
+                }
+            }
+        }
+        else
+        {
+            result = DEVICE_INTERNAL_INCONSISTENCY;
+        }
+    }
+
+    if (!ok)
+    {
+        m_ActiveWavelengths.led_group = 0;
+        m_ActiveWavelengths.info.clear();
+    }
+    return result;
+}
+
+int ScopeLEDFluorescenceIlluminator::OnActiveWavelengthString(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+    long mode = 0;
+    if (eAct == MM::BeforeGet)
+    {
+        int result = UpdateActiveWavelengthString();
+        if (DEVICE_OK == result)
+        {
+            pProp->Set(m_ActiveWavelengths.info.c_str());
+        }
+        return result;                       
+    }                                           
+    return DEVICE_CAN_NOT_SET_PROPERTY;
+}
+
+
+int ScopeLEDFluorescenceIlluminator::GetOptimalPositionString(std::string& str)
+{
+    static const char* OptimalPositions_4WL[] =
+    {
+        "X1,Y1",
+        "X3,Y1",
+        "X3,Y3",
+        "X1,Y3",
+        "X2,Y1",
+        "X3,Y2",
+        "X2,Y3",
+        "X1,Y2",
+        "X2,Y2"
+    };
+
+    static const char* OptimalPositions_2WL[] =
+    {
+        "X1",
+        "X3",
+        "X2"
+    };
+    
+    int result = DEVICE_OK;
+    bool ok = m_CachedLEDGroup > 0;
+
+    if (!ok)
+    {
+        long group = 0;
+        result = GetLEDGroup(group);
+    }
+
+    ok = DEVICE_OK == result;
+    if (ok)
+    {
+        ok = m_CachedLEDGroup > 0;
+        if (ok)
+        {
+            switch (m_NumChannels)
+            {
+            case 1:
+                str.clear();
+                break;
+            case 2:
+                ok = m_CachedLEDGroup <= 3;
+                if (ok)
+                {
+                    str = OptimalPositions_2WL[m_CachedLEDGroup-1];
+                }
+                break;
+            case 4:
+                ok = m_CachedLEDGroup <= 9;
+                if (ok)
+                {
+                    str = OptimalPositions_4WL[m_CachedLEDGroup-1];
+                }
+                break;
+            default:
+                ok = false;
+                break;
+            }
+        }
+
+        if (!ok)
+        {
+            result = DEVICE_INTERNAL_INCONSISTENCY;
+        }
+    }
+
+    if (!ok)
+    {
+        str.clear();
+    }
+    return result;
+}
+
+int ScopeLEDFluorescenceIlluminator::OnOptimalPositionString(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+    long mode = 0;
+    if (eAct == MM::BeforeGet)
+    {
+        std::string str;
+        int result = GetOptimalPositionString(str);
+        if (DEVICE_OK == result)
+        {
+            pProp->Set(str.c_str());
+        }
+        return result;                       
+    }                                           
+    return DEVICE_CAN_NOT_SET_PROPERTY;
+}
