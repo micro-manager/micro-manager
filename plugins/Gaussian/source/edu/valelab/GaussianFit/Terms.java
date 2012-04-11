@@ -20,6 +20,9 @@ public class Terms {
    public static final String BACKGROUND = "Background";
    public static final String XNM = "X(nm)";
    public static final String YNM = "Y(nm)";
+   public static final String ZNM = "Z(nm)";
+   public static final String XFITPIX = "Xfit(pix)";
+   public static final String YFITPIX = "Yfit(pix)";
    public static final String SIGMA = "Sigma(nm)";
    public static final String WIDTH = "Width(nm)";
    public static final String A = "Asymmetry";

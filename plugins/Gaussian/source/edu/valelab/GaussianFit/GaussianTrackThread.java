@@ -228,7 +228,7 @@ public class GaussianTrackThread extends GaussianInfo implements Runnable  {
              }
             if (( !useWidthFilter_ || ( width > widthMin_ && width < widthMax_) ) &&
                  (!useNrPhotonsFilter_ || (N > nrPhotonsMin_ && N < nrPhotonsMax_) ) ) {
-               spot.setData(N, bgr, x, y, 2 * s, a, theta, sigma);
+               spot.setData(N, bgr, x, y, 0.0, 2 * s, a, theta, sigma);
                xyPoints.add(new Point2D.Double(x, y));
                timePoints.add(i * timeIntervalMs_);
                resultList_.add(spot);
@@ -267,7 +267,7 @@ public class GaussianTrackThread extends GaussianInfo implements Runnable  {
               siPlus.getHeight(),  pixelSize_, shape_,
               halfSize_, siPlus.getNChannels(), siPlus.getNFrames(),
               siPlus.getNSlices(), 1, resultList.size(), resultList, 
-              timePoints, true);
+              timePoints, true, DataCollectionForm.Coordinates.NM, false);
       dcForm.setVisible(true);
    }
 

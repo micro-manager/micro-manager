@@ -129,11 +129,14 @@ public class DataCollectionForm extends javax.swing.JFrame {
    
    private static int rowDataID_ = 1;
 
-
+   public  enum Coordinates {NM, PIXELS};
+   
    /**
     * Data structure for spotlists
     */
    public class MyRowData {
+     
+      
       public final List<GaussianSpotData> spotList_;
       public Map<Integer, List<GaussianSpotData>> frameIndexSpotList_;
       public final ArrayList<Double> timePoints_;
@@ -154,6 +157,8 @@ public class DataCollectionForm extends javax.swing.JFrame {
       public final double stdX_;
       public final double stdY_;
       public final int ID_;
+      public final Coordinates coordinate_;
+      public final boolean hasZ_;
       
 
 
@@ -172,7 +177,9 @@ public class DataCollectionForm extends javax.swing.JFrame {
               int maxNrSpots, 
               List<GaussianSpotData> spotList,
               ArrayList<Double> timePoints,
-              boolean isTrack) {
+              boolean isTrack, 
+              Coordinates coordinate, 
+              boolean hasZ) {
          name_ = name;
          title_ = title;
          colCorrRef_ = colCorrRef;
@@ -200,10 +207,15 @@ public class DataCollectionForm extends javax.swing.JFrame {
          }
          stdX_ = stdX;
          stdY_ = stdY;
+         coordinate_ = coordinate;
+         hasZ_ = hasZ;
          ID_ = rowDataID_;
          rowDataID_++;
       }
       
+      /**
+       * Populates the list frameIndexSpotList which gives access to spots by frame
+       */
       public void index() {
          boolean useFrames = nrFrames_ > nrSlices_;
          int nr = nrSlices_;
@@ -431,10 +443,12 @@ public class DataCollectionForm extends javax.swing.JFrame {
            int maxNrSpots, 
            List<GaussianSpotData> spotList,
            ArrayList<Double> timePoints,
-           boolean isTrack) {
+           boolean isTrack, 
+           Coordinates coordinate, 
+           boolean hasZ) {
       MyRowData newRow = new MyRowData(name, title, colCorrRef, width, height, pixelSizeUm, 
               shape, halfSize, nrChannels, nrFrames, nrSlices, nrPositions, 
-              maxNrSpots, spotList, timePoints, isTrack);
+              maxNrSpots, spotList, timePoints, isTrack, coordinate, hasZ);
       rowData_.add(newRow);
       myTableModel_.fireTableRowsInserted(rowData_.size()-1, rowData_.size());
    }
@@ -1017,15 +1031,17 @@ public class DataCollectionForm extends javax.swing.JFrame {
                 
                 GaussianSpotData gsd = new GaussianSpotData(null, 0, 0, i,
                         0, nr, (int) xc, (int) yc);
-                gsd.setData(intensity, b, pixelSize * xc, pixelSize * yc, w, ax, phi, c);
+                gsd.setData(intensity, b, pixelSize * xc, pixelSize * yc, 0.0, w, ax, phi, c);
+                gsd.setOriginalPosition(x, y, z);
                 spotList.add(gsd);
                 nr++;
              }
           }
           
           String name = selectedFile.getName();
+          // TODO: how do we know that z was indeed used?
           addSpotData(name, name, "", 256, 256, pixelSize, 3, 2, 1, 1, 1, 1, 
-                  nr, spotList, null, false);
+                  nr, spotList, null, false, Coordinates.PIXELS, true);
 
           
        }  catch (FileNotFoundException ex) {
@@ -1084,7 +1100,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
             gsd.setData(Double.parseDouble(k.get("intensity")), 
                     Double.parseDouble(k.get("background")),
                     Double.parseDouble(k.get("x")),
-                    Double.parseDouble(k.get("y")),
+                    Double.parseDouble(k.get("y")), 0.0,
                     Double.parseDouble(k.get("width")),
                     Double.parseDouble(k.get("a")),
                     Double.parseDouble(k.get("theta")),
@@ -1108,7 +1124,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
                     spotList.size(),
                     spotList,
                     null,
-                    Boolean.parseBoolean(infoMap.get("is_track"))
+                    Boolean.parseBoolean(infoMap.get("is_track")), Coordinates.NM, false
                     );
 
       } catch (NumberFormatException ex) {
@@ -1191,7 +1207,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
                     pSpot.getSlice(), pSpot.getFrame(), pSpot.getPos(),
                     pSpot.getMolecule(), pSpot.getXPosition(), pSpot.getYPosition());
             gSpot.setData(pSpot.getIntensity(), pSpot.getBackground(), pSpot.getX(),
-                    pSpot.getY(), pSpot.getWidth(), pSpot.getA(), pSpot.getTheta(),
+                    pSpot.getY(), 0.0, pSpot.getWidth(), pSpot.getA(), pSpot.getTheta(),
                     pSpot.getXPrecision());
             maxNrSpots++;
             if ((esf > 0) && ((maxNrSpots % esf) == 0)) {
@@ -1203,7 +1219,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
 
          addSpotData(name, title, "", width, height, pixelSizeUm, shape, halfSize,
                  nrChannels, nrFrames, nrSlices, nrPositions, (int) maxNrSpots,
-                 spotList, null, isTrack);
+                 spotList, null, isTrack, Coordinates.NM, false);
 
       } catch (FileNotFoundException ex) {
          JOptionPane.showMessageDialog(getInstance(),"File not found");
@@ -1798,7 +1814,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
             s = s/ rows.length;
             w = w/ rows.length;                    
             spot.setData(nph, bg, avgPoints.get(i).getX(), 
-                    avgPoints.get(i).getY(), w, 0.0, 0.0, s );
+                    avgPoints.get(i).getY(), 0.0, w, 0.0, 0.0, s );
             transformedResultList.add(spot);
          }
 
@@ -1808,7 +1824,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
                  rowData.height_, rowData.pixelSizeNm_, rowData.shape_,
                  rowData.halfSize_, rowData.nrChannels_, rowData.nrFrames_,
                  rowData.nrSlices_, 1, rowData.maxNrSpots_, transformedResultList,
-                 rowData.timePoints_, true);
+                 rowData.timePoints_, true, Coordinates.NM, false);
 
          // Since there is no place for stdev, also show a resultsTable
          ResultsTable rt = new ResultsTable();
@@ -1853,7 +1869,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
               rowData.height_, rowData.pixelSizeNm_, rowData.shape_,
               rowData.halfSize_, rowData.nrChannels_, rowData.nrFrames_,
               rowData.nrSlices_, 1, rowData.maxNrSpots_, transformedResultList,
-              rowData.timePoints_, true);
+              rowData.timePoints_, true, Coordinates.NM, false);
 
    }
 
@@ -1951,7 +1967,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
                        rowData.height_, rowData.pixelSizeNm_, rowData.shape_,
                        rowData.halfSize_, rowData.nrChannels_, 0,
                        0, 1, rowData.maxNrSpots_, destList,
-                       rowData.timePoints_, false);
+                       rowData.timePoints_, false, Coordinates.NM, false);
             } catch (OutOfMemoryError oome) {
                JOptionPane.showMessageDialog(getInstance(), "Out of memory");
             }
@@ -2009,7 +2025,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
       // not sure if this is correct:
       sigma /= Math.sqrt(source.size());
          
-      sp.setData(intensity, background, xCenter, yCenter, width, a, theta, sigma);
+      sp.setData(intensity, background, xCenter, yCenter, 0.0, width, a, theta, sigma);
       sp.originalFrame_ = source.get(0).getFrame();
       if (!useFrames)
          sp.originalFrame_ = source.get(0).getSlice();
@@ -2117,8 +2133,13 @@ public class DataCollectionForm extends javax.swing.JFrame {
             rt.addValue(Terms.POSITION, gd.getPosition());
             rt.addValue(Terms.INT, gd.getIntensity());
             rt.addValue(Terms.BACKGROUND, gd.getBackground());
-            rt.addValue(Terms.XNM, gd.getXCenter());
-            rt.addValue(Terms.YNM, gd.getYCenter());
+            if (rowData.coordinate_ == Coordinates.NM) {
+               rt.addValue(Terms.XNM, gd.getXCenter());
+               rt.addValue(Terms.YNM, gd.getYCenter());
+            } else if (rowData.coordinate_ == Coordinates.PIXELS) {
+               rt.addValue(Terms.XFITPIX, gd.getXCenter());
+               rt.addValue(Terms.YFITPIX, gd.getYCenter());
+            }
             rt.addValue(Terms.SIGMA, gd.getSigma());
             if (shape >= 1) {
                rt.addValue(Terms.WIDTH, gd.getWidth());
@@ -2451,7 +2472,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
          GaussianSpotData oriSpot = rowData.spotList_.get(i);
          GaussianSpotData spot = new GaussianSpotData(oriSpot);
          spot.setData(oriSpot.getIntensity(), oriSpot.getBackground(),
-                 xyCorrPoints.get(i).getX(), xyCorrPoints.get(i).getY(), oriSpot.getWidth(),
+                 xyCorrPoints.get(i).getX(), xyCorrPoints.get(i).getY(), 0.0, oriSpot.getWidth(),
                  oriSpot.getA(), oriSpot.getTheta(), oriSpot.getSigma());
          transformedResultList.add(spot);
       }
@@ -2461,7 +2482,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
               rowData.height_, rowData.pixelSizeNm_, rowData.shape_,
               rowData.halfSize_, rowData.nrChannels_, rowData.nrFrames_,
               rowData.nrSlices_, 1, rowData.maxNrSpots_, transformedResultList,
-              rowData.timePoints_, true);
+              rowData.timePoints_, true, Coordinates.NM, false);
    }
    
    
@@ -2510,7 +2531,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
          GaussianSpotData oriSpot = rowData.spotList_.get(i);
          GaussianSpotData spot = new GaussianSpotData(oriSpot);
          spot.setData(oriSpot.getIntensity(), oriSpot.getBackground(),
-                 xyPoints.get(i).getX(), xyPoints.get(i).getY(), oriSpot.getWidth(),
+                 xyPoints.get(i).getX(), xyPoints.get(i).getY(), 0.0, oriSpot.getWidth(),
                  oriSpot.getA(), oriSpot.getTheta(), oriSpot.getSigma());
          transformedResultList.add(spot);
       }
@@ -2520,7 +2541,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
               rowData.height_, rowData.pixelSizeNm_, rowData.shape_,
               rowData.halfSize_, rowData.nrChannels_, rowData.nrFrames_,
               rowData.nrSlices_, 1, rowData.maxNrSpots_, transformedResultList,
-              rowData.timePoints_, true);
+              rowData.timePoints_, true, Coordinates.NM, false);
    }
 
    /**
@@ -2735,13 +2756,13 @@ public class DataCollectionForm extends javax.swing.JFrame {
                // Assemble stage movement data into a track
                List<GaussianSpotData> stageMovementData = new ArrayList<GaussianSpotData>();
                GaussianSpotData sm = new GaussianSpotData(null, 1, 1, 1, 1, 1, 1, 1);
-               sm.setData(0, 0, 0, 0, 0, 0, 0, 0);
+               sm.setData(0, 0, 0, 0, 0.0, 0, 0, 0, 0);
                stageMovementData.add(sm);
                for (int i = 0; i < stagePos.size(); i++) {
                   StageMovementData smd = stagePos.get(i);
                   GaussianSpotData s =
                           new GaussianSpotData(null, 1, 1, i + 2, 1, 1, 1, 1);
-                  s.setData(0, 0, smd.pos_.x, smd.pos_.y, 0, 0, 0, 0);                  
+                  s.setData(0, 0, smd.pos_.x, smd.pos_.y, 0.0, 0, 0, 0, 0);                  
                   stageMovementData.add(s);
                }
 
@@ -2762,7 +2783,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
                        rowData.height_, rowData.pixelSizeNm_, rowData.shape_,
                        rowData.halfSize_, rowData.nrChannels_, stageMovementData.size(),
                        1, 1, stageMovementData.size(), stageMovementData,
-                       timePoints, true);
+                       timePoints, true, Coordinates.NM, false);
                rowData_.add(newRow);
                
                myTableModel_.fireTableRowsInserted(rowData_.size() - 1, rowData_.size());
@@ -2822,7 +2843,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
                        rowData.height_, rowData.pixelSizeNm_, rowData.shape_,
                        rowData.halfSize_, rowData.nrChannels_, rowData.nrFrames_,
                        rowData.nrSlices_, 1, rowData.maxNrSpots_, correctedData,
-                       null, false);
+                       null, false, Coordinates.NM, false);
                ij.IJ.showStatus("Finished jitter correction");
             } catch (OutOfMemoryError oom) {
               System.gc();
@@ -2893,7 +2914,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
                     rowData.halfSize_, rowData.nrChannels_, rowData.nrFrames_,
                     rowData.nrSlices_, 1, rowData.maxNrSpots_, correctedData,
                     null, 
-                    false);
+                    false, Coordinates.NM, false);
          }
       };
 

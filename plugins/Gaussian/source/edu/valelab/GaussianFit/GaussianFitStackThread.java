@@ -106,7 +106,7 @@ public class GaussianFitStackThread extends GaussianInfo implements Runnable {
                }
 
                double width = 2 * s;
-               spotData.setData(N, bgr, xMax, yMax, width, a, theta, sigma);
+               spotData.setData(N, bgr, xMax, yMax, 0.0, width, a, theta, sigma);
 
                if ((!useWidthFilter_ || (width > widthMin_ && width < widthMax_))
                        && (!useNrPhotonsFilter_ || (N > nrPhotonsMin_ && N < nrPhotonsMax_))) {

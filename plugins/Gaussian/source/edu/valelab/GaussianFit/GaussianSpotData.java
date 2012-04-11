@@ -17,6 +17,7 @@ import ij.process.ImageProcessor;
 
 public class GaussianSpotData {
 
+   
    // lock to avoid clashes during access to image data
    public static final Object lockIP = new Object();
 
@@ -30,8 +31,12 @@ public class GaussianSpotData {
    private int y_;            // y as found by spotfinder
    private double intensity_; // total intensity expressed in photons
    private double background_;// background expressed in photons (may or may not be corrected for baseline)
-   private double xCenter_;      // center of gaussian in nm (image coordinate system)
-   private double yCenter_;      // center of gaussian in nm (image coordinate system)
+   private double xCenter_;      // center of gaussian in Coordinates (image coordinate system)
+   private double yCenter_;      // center of gaussian in Coordinates (image coordinate system)
+   private double zCenter_;   // estimate of z position in nm
+   private double xOri_;      // original position before correction in Coordinates
+   private double yOri_;      // original position before correction in Coordinates
+   private double zOri_;      // original position before correction
    private double width_;         // width of the gaussian (in nm)
    private double a_;         // shape of the peak, defined as width(long axis) / width (short axis)
    private double theta_;     // shape factor for spot (rotation of assymetric peak)
@@ -73,8 +78,15 @@ public class GaussianSpotData {
       sigma_ = spot.sigma_;         
    }
 
-   public void setData(double intensity, double background, double xCenter, double yCenter,
-           double width, double a, double theta, double sigma) {
+   public void setData(double intensity, 
+           double background, 
+           double xCenter, 
+           double yCenter, 
+           double zCenter,
+           double width, 
+           double a, 
+           double theta, 
+           double sigma) {
       intensity_ = intensity;
       background_ = background;
       xCenter_ = xCenter;
@@ -83,6 +95,12 @@ public class GaussianSpotData {
       a_ = a;
       theta_ = theta;
       sigma_ = sigma;
+   }
+   
+   public void setOriginalPosition(double xPos, double yPos, double zPos) {
+      xOri_ = xPos;
+      yOri_ = yPos;
+      zOri_ = zPos;
    }
 
    public ImageProcessor getImageProcessor() {
@@ -129,6 +147,21 @@ public class GaussianSpotData {
    }
    public void setYCenter(double y) {
       yCenter_ = y;
+   }
+   public double getZCenter() {
+      return zCenter_;
+   }
+   public void setZCenter(double z) {
+      zCenter_ = z;
+   }
+   public double getXOri() {
+      return xOri_;
+   }
+   public double geYOri() {
+      return yOri_;
+   }
+   public double getZOri() {
+      return zOri_;
    }
    public double getWidth() {
       return width_;
