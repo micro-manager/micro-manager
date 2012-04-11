@@ -122,7 +122,8 @@ public class FitAllThread extends GaussianInfo implements Runnable  {
               siPlus.getWidth(), siPlus.getHeight(), (float) pixelSize_,
               shape_, halfSize_,
               nrChannels, nrFrames, nrSlices, nrPositions, resultList_.size(), 
-              resultList_, null, false, DataCollectionForm.Coordinates.NM, false);
+              resultList_, null, false, DataCollectionForm.Coordinates.NM, false, 
+              0.0, 0.0);
       dcForm.setVisible(true);
 
       // report duration of analysis

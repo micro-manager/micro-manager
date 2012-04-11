@@ -267,7 +267,8 @@ public class GaussianTrackThread extends GaussianInfo implements Runnable  {
               siPlus.getHeight(),  pixelSize_, shape_,
               halfSize_, siPlus.getNChannels(), siPlus.getNFrames(),
               siPlus.getNSlices(), 1, resultList.size(), resultList, 
-              timePoints, true, DataCollectionForm.Coordinates.NM, false);
+              timePoints, true, DataCollectionForm.Coordinates.NM, false, 
+              0.0, 0.0);
       dcForm.setVisible(true);
    }
 
