@@ -135,7 +135,8 @@ public class MainForm extends javax.swing.JFrame implements ij.ImageListener{
           
 
        setTitle("Localization Microscopy");
-       setBounds(prefs_.getInt(FRAMEXPOS, 100), prefs_.getInt(FRAMEYPOS, 100), 250, 550);
+       // wdith on Mac should be 250, Windows 270
+       setBounds(prefs_.getInt(FRAMEXPOS, 100), prefs_.getInt(FRAMEYPOS, 100), 270, 550);
        ImagePlus.addImageListener(this);
        setVisible(true);
     }
@@ -301,7 +302,7 @@ public class MainForm extends javax.swing.JFrame implements ij.ImageListener{
         getContentPane().add(jLabel8);
         jLabel8.setBounds(40, 70, 78, 13);
 
-        jLabel9.setFont(new java.awt.Font("Lucida Grande", 0, 10)); // NOI18N
+        jLabel9.setFont(new java.awt.Font("Lucida Grande", 0, 10));
         jLabel9.setText("Camera Offset (counts)");
         getContentPane().add(jLabel9);
         jLabel9.setBounds(40, 130, 122, 13);
@@ -327,7 +328,7 @@ public class MainForm extends javax.swing.JFrame implements ij.ImageListener{
         getContentPane().add(trackButton);
         trackButton.setBounds(90, 460, 75, 29);
         getContentPane().add(jSeparator1);
-        jSeparator1.setBounds(20, 220, 210, 10);
+        jSeparator1.setBounds(20, 220, 220, 10);
         getContentPane().add(jSeparator2);
         jSeparator2.setBounds(20, 150, 220, 10);
         getContentPane().add(jSeparator3);
@@ -387,7 +388,7 @@ public class MainForm extends javax.swing.JFrame implements ij.ImageListener{
         getContentPane().add(jLabel10);
         jLabel10.setBounds(90, 370, 80, 10);
         getContentPane().add(jSeparator5);
-        jSeparator5.setBounds(30, 450, 220, 10);
+        jSeparator5.setBounds(20, 450, 220, 10);
 
         jLabel11.setText("Find Maxima Settings...");
         getContentPane().add(jLabel11);
@@ -510,7 +511,7 @@ public class MainForm extends javax.swing.JFrame implements ij.ImageListener{
         getContentPane().add(maxNrPhotonsTextField);
         maxNrPhotonsTextField.setBounds(180, 390, 60, 30);
 
-        showButton.setText("Show");
+        showButton.setText("Data");
         showButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 showButtonActionPerformed(evt);

@@ -221,7 +221,7 @@
     <Component class="javax.swing.JSeparator" name="jSeparator1">
       <Constraints>
         <Constraint layoutClass="org.netbeans.modules.form.compat2.layouts.DesignAbsoluteLayout" value="org.netbeans.modules.form.compat2.layouts.DesignAbsoluteLayout$AbsoluteConstraintsDescription">
-          <AbsoluteConstraints x="20" y="220" width="210" height="10"/>
+          <AbsoluteConstraints x="20" y="220" width="220" height="10"/>
         </Constraint>
       </Constraints>
     </Component>
@@ -316,7 +316,7 @@
     <Component class="javax.swing.JSeparator" name="jSeparator5">
       <Constraints>
         <Constraint layoutClass="org.netbeans.modules.form.compat2.layouts.DesignAbsoluteLayout" value="org.netbeans.modules.form.compat2.layouts.DesignAbsoluteLayout$AbsoluteConstraintsDescription">
-          <AbsoluteConstraints x="30" y="450" width="220" height="10"/>
+          <AbsoluteConstraints x="20" y="450" width="220" height="10"/>
         </Constraint>
       </Constraints>
     </Component>
@@ -576,7 +576,7 @@
     </Component>
     <Component class="javax.swing.JButton" name="showButton">
       <Properties>
-        <Property name="text" type="java.lang.String" value="Show"/>
+        <Property name="text" type="java.lang.String" value="Data"/>
       </Properties>
       <Events>
         <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="showButtonActionPerformed"/>

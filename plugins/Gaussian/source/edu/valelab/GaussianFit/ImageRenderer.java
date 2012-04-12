@@ -19,6 +19,8 @@ import java.io.InputStreamReader;
  * @author Nico Stuurman
  */
 public class ImageRenderer {
+    private int[][] iceLut_ = new int[256][];
+      
 
    
    static int[][] zLut_ = new int[256][];
@@ -282,3 +284,5 @@ public class ImageRenderer {
    
    
 }
+  
+  
