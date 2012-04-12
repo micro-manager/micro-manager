@@ -282,6 +282,7 @@ public:
 
     int OnVersion(MM::PropertyBase* pProp, MM::ActionType eAct)
     {
+        // TODO: Use cached value. 
         if (eAct == MM::BeforeGet)
         {
             pProp->Set(GetVersion());
