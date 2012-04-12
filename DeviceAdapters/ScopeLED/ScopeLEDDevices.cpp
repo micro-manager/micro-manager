@@ -94,31 +94,31 @@ ScopeLEDMicroscopeIlluminator::ScopeLEDMicroscopeIlluminator() : m_state(false)
     }
 
     // Name
-    int nRet = CreateProperty(MM::g_Keyword_Name, DeviceName, MM::String, true);
+    CreateProperty(MM::g_Keyword_Name, DeviceName, MM::String, true);
 
     // Description
-    nRet = CreateProperty(MM::g_Keyword_Description, DeviceDescription, MM::String, true);
+    CreateProperty(MM::g_Keyword_Description, DeviceDescription, MM::String, true);
     
     CPropertyAction* pAct = new CPropertyAction (this, &ScopeLEDMicroscopeIlluminator::OnVendorID);
-    nRet = CreateProperty("VendorID", "0", MM::Integer, false, pAct, true);
+    CreateProperty("VendorID", "0", MM::Integer, false, pAct, true);
     SetPropertyLimits("VendorID", 0x0, 0xFFFF);
 
     pAct = new CPropertyAction (this, &ScopeLEDMicroscopeIlluminator::OnProductID);
-    nRet = CreateProperty("ProductID", "0", MM::Integer, false, pAct, true);
+    CreateProperty("ProductID", "0", MM::Integer, false, pAct, true);
     SetPropertyLimits("ProductID", 0x0, 0xFFFF);
 
     pAct = new CPropertyAction (this, &ScopeLEDMicroscopeIlluminator::OnLastError);
-    nRet = CreateProperty("LastError", "0", MM::Integer, true, pAct);
+    CreateProperty("LastError", "0", MM::Integer, true, pAct);
 
     pAct = new CPropertyAction (this, &ScopeLEDMicroscopeIlluminator::OnLastDeviceResult);
-    nRet = CreateProperty("LastDeviceResult", "0", MM::Integer, true, pAct);
+    CreateProperty("LastDeviceResult", "0", MM::Integer, true, pAct);
 
     //pAct = new CPropertyAction (this, &ScopeLEDMicroscopeIlluminator::OnTransactionTime);
     //nRet = CreateProperty("TxnTime", "0", MM::Integer, true, pAct);
 
     // state
     pAct = new CPropertyAction (this, &ScopeLEDMicroscopeIlluminator::OnState);
-    nRet = CreateProperty(MM::g_Keyword_State, "0", MM::Integer, false, pAct);
+    CreateProperty(MM::g_Keyword_State, "0", MM::Integer, false, pAct);
     AddAllowedValue(MM::g_Keyword_State, "0"); // Closed
     AddAllowedValue(MM::g_Keyword_State, "1"); // Open
 }
@@ -286,25 +286,25 @@ ScopeLEDFluorescenceIlluminator::ScopeLEDFluorescenceIlluminator() : m_CachedLED
     nRet = CreateProperty(MM::g_Keyword_Description, DeviceDescription, MM::String, true);
 
     CPropertyAction* pAct = new CPropertyAction (this, &ScopeLEDFluorescenceIlluminator::OnVendorID);
-    nRet = CreateProperty("VendorID", "0", MM::Integer, false, pAct, true);
+    CreateProperty("VendorID", "0", MM::Integer, false, pAct, true);
     SetPropertyLimits("VendorID", 0x0, 0xFFFF);
 
     pAct = new CPropertyAction (this, &ScopeLEDFluorescenceIlluminator::OnProductID);
-    nRet = CreateProperty("ProductID", "0", MM::Integer, false, pAct, true);
+    CreateProperty("ProductID", "0", MM::Integer, false, pAct, true);
     SetPropertyLimits("ProductID", 0x0, 0xFFFF);
 
     pAct = new CPropertyAction (this, &ScopeLEDFluorescenceIlluminator::OnLastError);
-    nRet = CreateProperty("LastError", "0", MM::Integer, true, pAct);
+    CreateProperty("LastError", "0", MM::Integer, true, pAct);
 
     pAct = new CPropertyAction (this, &ScopeLEDFluorescenceIlluminator::OnLastDeviceResult);
-    nRet = CreateProperty("LastDeviceResult", "0", MM::Integer, true, pAct);
+    CreateProperty("LastDeviceResult", "0", MM::Integer, true, pAct);
 
     //pAct = new CPropertyAction (this, &ScopeLEDFluorescenceIlluminator::OnTransactionTime);
-    //nRet = CreateProperty("TxnTime", "0", MM::Integer, true, pAct);
+    //CreateProperty("TxnTime", "0", MM::Integer, true, pAct);
 
     // state
     pAct = new CPropertyAction (this, &ScopeLEDFluorescenceIlluminator::OnState);
-    nRet = CreateProperty(MM::g_Keyword_State, "0", MM::Integer, false, pAct);
+    CreateProperty(MM::g_Keyword_State, "0", MM::Integer, false, pAct);
     AddAllowedValue(MM::g_Keyword_State, "0"); // Closed
     AddAllowedValue(MM::g_Keyword_State, "1"); // Open
 }
