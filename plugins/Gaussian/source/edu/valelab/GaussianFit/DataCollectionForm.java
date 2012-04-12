@@ -1637,6 +1637,8 @@ public class DataCollectionForm extends javax.swing.JFrame {
                  "Nr. of Slices: " + rowData.nrSlices_ + "\n" +
                  "Nr. of Positions: " + rowData.nrPositions_ + "\n" +
                  "Is a Track: " + rowData.isTrack_;
+         if (!rowData.isTrack_)
+            data += "\nHas Z info: " + rowData.hasZ_;
          if (rowData.hasZ_) {
             data += "\nMinZ: " + String.format("%.2f",rowData.minZ_) + "\n";
             data += "MaxZ: " + String.format("%.2f",rowData.maxZ_);
