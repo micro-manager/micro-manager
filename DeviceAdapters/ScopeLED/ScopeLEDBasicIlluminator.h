@@ -184,6 +184,7 @@ public:
     {
         g_USBCommAdapter.Close(m_hDevice);
         m_hDevice = NULL;
+        m_version = 0;
         SetProperty("SerialNumber", "");
         return DEVICE_OK;
     }
@@ -230,10 +231,11 @@ public:
 
     int OnState(MM::PropertyBase* pProp, MM::ActionType eAct)
     {
+        int result = DEVICE_OK;
         if (eAct == MM::BeforeGet)
         {
             bool open = false;
-            GetOpen(open);
+            result = GetOpen(open);
             if (open)
                 pProp->Set(1L);
             else
@@ -243,11 +245,9 @@ public:
         {
             long state;
             pProp->Get(state);
-
-            // apply the value
-            SetOpen(0 != state);
+            result = SetOpen(0 != state);
         }
-        return DEVICE_OK;
+        return result;
     }
     int OnLastError(MM::PropertyBase* pProp, MM::ActionType eAct)
     {
@@ -282,7 +282,6 @@ public:
 
     int OnVersion(MM::PropertyBase* pProp, MM::ActionType eAct)
     {
-        // TODO: Use cached value. 
         if (eAct == MM::BeforeGet)
         {
             pProp->Set(GetVersion());
