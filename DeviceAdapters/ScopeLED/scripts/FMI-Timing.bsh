@@ -2,8 +2,6 @@ import java.lang;
 core = mmc;
 core.unloadAllDevices();
 core.loadDevice("Shutter", "ScopeLED", "ScopeLED-FMI");
-core.setProperty("Shutter", "VendorID", "9410");
-core.setProperty("Shutter", "ProductID", "4869");
 core.initializeDevice("Shutter");
 core.setAutoShutter(false);
 gui.clear();
