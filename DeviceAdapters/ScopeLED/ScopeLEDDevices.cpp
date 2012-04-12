@@ -1109,6 +1109,8 @@ int ScopeLEDFluorescenceIlluminator::GetOptimalPositionString(std::string& str)
         result = GetLEDGroup(group);
     }
 
+    str.clear();
+
     ok = DEVICE_OK == result;
     if (ok)
     {
@@ -1118,37 +1120,29 @@ int ScopeLEDFluorescenceIlluminator::GetOptimalPositionString(std::string& str)
             switch (m_NumChannels)
             {
             case 1:
-                str.clear();
+                // There is no position adjustment necessary.
                 break;
             case 2:
-                ok = m_CachedLEDGroup <= 3;
-                if (ok)
+                if (m_CachedLEDGroup <= 3)
                 {
                     str = OptimalPositions_2WL[m_CachedLEDGroup-1];
                 }
                 break;
             case 4:
-                ok = m_CachedLEDGroup <= 9;
-                if (ok)
+                if (m_CachedLEDGroup <= 9)
                 {
                     str = OptimalPositions_4WL[m_CachedLEDGroup-1];
                 }
                 break;
             default:
-                ok = false;
+                // Device is probably not configured. Just leave this property blank.
                 break;
             }
         }
-
-        if (!ok)
+        else
         {
             result = DEVICE_INTERNAL_INCONSISTENCY;
         }
-    }
-
-    if (!ok)
-    {
-        str.clear();
     }
     return result;
 }
