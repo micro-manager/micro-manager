@@ -131,23 +131,23 @@ int XYStage::Initialize()
 
     if (!MP285::Instance()->GetDeviceAvailability()) return DEVICE_NOT_CONNECTED;
 
-    int ret = CreateProperty(MP285::Instance()->GetMPStr(MP285::MPSTR_GetPositionX).c_str(), "Undefined", MM::Float, true);  // Get Position X 
+    int ret = CreateProperty(MP285::Instance()->GetMPStr(MP285::MPSTR_GetPositionX).c_str(), "undefined", MM::String, true);  // Get Position X 
 
     if (MP285::Instance()->GetDebugLogFlag() > 0)
     {
 		osMessage.str("");
-		osMessage << "<XYStage::Initialize> CreateProperty(" << MP285::Instance()->GetMPStr(MP285::MPSTR_GetPositionX).c_str() << " = " << "Undfined, ReturnCode = " << ret;
+		osMessage << "<XYStage::Initialize> CreateProperty(" << MP285::Instance()->GetMPStr(MP285::MPSTR_GetPositionX).c_str() << " = " << "undefined" << "), ReturnCode = " << ret;
 		this->LogMessage(osMessage.str().c_str());
 	}
 
     if (ret != DEVICE_OK)  return ret;
 
-    ret = CreateProperty(MP285::Instance()->GetMPStr(MP285::MPSTR_GetPositionY).c_str(), "Undefined", MM::Float, true);  // Get Position Y 
+    ret = CreateProperty(MP285::Instance()->GetMPStr(MP285::MPSTR_GetPositionY).c_str(), "undefined", MM::String, true);  // Get Position Y 
  
     if (MP285::Instance()->GetDebugLogFlag() > 0)
     {
 		osMessage.str("");
-		osMessage << "<XYStage::Initialize> CreateProperty(" << MP285::Instance()->GetMPStr(MP285::MPSTR_GetPositionY).c_str() << " = " << "Undefined, ReturnCode = " << ret;
+		osMessage << "<XYStage::Initialize> CreateProperty(" << MP285::Instance()->GetMPStr(MP285::MPSTR_GetPositionY).c_str() << " = " << "undefined" << "), ReturnCode = " << ret;
 		this->LogMessage(osMessage.str().c_str());
 	}
 
@@ -158,37 +158,44 @@ int XYStage::Initialize()
 
     ret = GetPositionUm(dPosX, dPosY);
 
+	static char sPosX[20];
+	sprintf(sPosX, "%ld", (long)(dPosX*(double)MP285::Instance()->GetUm2UStep()));
+	static char sPosY[20];
+	sprintf(sPosY, "%ld", (long)(dPosY*(double)MP285::Instance()->GetUm2UStep()));
+
     if (MP285::Instance()->GetDebugLogFlag() > 0)
     {
 		osMessage.str("");
-		osMessage << "<XYStage::Initialize> GetPosSteps(" << MP285::Instance()->GetMPStr(MP285::MPSTR_GetPositionX).c_str() << " = " << dPosX << ",";
-		osMessage << MP285::Instance()->GetMPStr(MP285::MPSTR_GetPositionY).c_str() << " = " << dPosY << "), ReturnCode = " << ret;
+		osMessage << "<XYStage::Initialize> GetPosSteps(" << MP285::Instance()->GetMPStr(MP285::MPSTR_GetPositionX).c_str() << " = " << sPosX << ",";
+		osMessage << MP285::Instance()->GetMPStr(MP285::MPSTR_GetPositionY).c_str() << " = " << sPosY << "), ReturnCode = " << ret;
 		this->LogMessage(osMessage.str().c_str());
 	}
 
     if (ret!=DEVICE_OK) return ret;
 
     CPropertyAction* pActOnSetPosX = new CPropertyAction(this, &XYStage::OnSetPositionX);
-    ret = CreateProperty(MP285::Instance()->GetMPStr(MP285::MPSTR_SetPositionX).c_str(), "Undefined", MM::Float, false, pActOnSetPosX);  // Set Position X 
+	sprintf(sPosX, "%.2f", dPosX);
+    ret = CreateProperty(MP285::Instance()->GetMPStr(MP285::MPSTR_SetPositionX).c_str(), sPosX, MM::Float, false, pActOnSetPosX);  // Set Position X 
     //ret = CreateProperty(MP285::Instance()->GetMPStr(MP285::MPSTR_SetPositionX).c_str(), "Undefined", MM::Integer, true);  // Set Position X 
 
     if (MP285::Instance()->GetDebugLogFlag() > 0)
     {
 		osMessage.str("");
-		osMessage << "<XYStage::Initialize> CreateProperty(" << MP285::Instance()->GetMPStr(MP285::MPSTR_SetPositionX).c_str() << " = Undefined), ReturnCode = " << ret;
+		osMessage << "<XYStage::Initialize> CreateProperty(" << MP285::Instance()->GetMPStr(MP285::MPSTR_SetPositionX).c_str() << sPosX << "), ReturnCode = " << ret;
 		this->LogMessage(osMessage.str().c_str());
 	}
 
     if (ret != DEVICE_OK)  return ret;
 
     CPropertyAction* pActOnSetPosY = new CPropertyAction(this, &XYStage::OnSetPositionY);
-    ret = CreateProperty(MP285::Instance()->GetMPStr(MP285::MPSTR_SetPositionY).c_str(), "Undefined", MM::Float, false, pActOnSetPosY);  // Set Position Y 
+	sprintf(sPosY, "%.2f", dPosY);
+    ret = CreateProperty(MP285::Instance()->GetMPStr(MP285::MPSTR_SetPositionY).c_str(), sPosY, MM::Float, false, pActOnSetPosY);  // Set Position Y 
     //ret = CreateProperty(MP285::Instance()->GetMPStr(MP285::MPSTR_SetPositionY).c_str(), "Undefined", MM::Integer, true);  // Set Position Y 
 
     if (MP285::Instance()->GetDebugLogFlag() > 0)
     {
 		osMessage.str("");
-		osMessage << "<XYStage::Initialize> CreateProperty(" << MP285::Instance()->GetMPStr(MP285::MPSTR_SetPositionY).c_str() << " = Undefined), ReturnCode = " << ret;
+		osMessage << "<XYStage::Initialize> CreateProperty(" << MP285::Instance()->GetMPStr(MP285::MPSTR_SetPositionY).c_str() << sPosY << "), ReturnCode = " << ret;
 		this->LogMessage(osMessage.str().c_str());
 	}
 
@@ -240,7 +247,7 @@ int XYStage::GetPositionUm(double& dXPosUm, double& dYPosUm)
     MP285::Instance()->SetPositionY(dYPosUm);
 
     char sPosition[20];
-    sprintf(sPosition, "%.2f", dXPosUm);
+    sprintf(sPosition, "%ld", lXPosSteps);
     ret = SetProperty(MP285::Instance()->GetMPStr(MP285::MPSTR_GetPositionX).c_str(), sPosition);
 
     if (MP285::Instance()->GetDebugLogFlag() > 1)
@@ -252,7 +259,7 @@ int XYStage::GetPositionUm(double& dXPosUm, double& dYPosUm)
 
     if (ret != DEVICE_OK) return ret;
 
-    sprintf(sPosition, "%.2f", dYPosUm);
+    sprintf(sPosition, "%ld", lYPosSteps);
     ret = SetProperty(MP285::Instance()->GetMPStr(MP285::MPSTR_GetPositionY).c_str(), sPosition);
 
     if (MP285::Instance()->GetDebugLogFlag() > 1)
@@ -425,8 +432,13 @@ int XYStage::SetPositionSteps(long lXPosSteps, long lYPosSteps)
 
     if (ret != DEVICE_OK)  return ret;
 
-    double dSteps = labs(lXPosSteps) > labs(lYPosSteps) ? (double)labs(lXPosSteps) : (double)labs(lYPosSteps);
-    unsigned long dwSleep = (unsigned long) (dSteps * 3.0);
+	double dVelocity = (double) (MP285::Instance()->GetVelocity() * (long) MP285::Instance()->GetUm2UStep());
+	long lOldXPosSteps = (long) (MP285::Instance()->GetPositionX() * (double) MP285::Instance()->GetUm2UStep());
+	long lXSteps = labs(lXPosSteps-lOldXPosSteps);
+	long lOldYPosSteps = (long) (MP285::Instance()->GetPositionY() * (double) MP285::Instance()->GetUm2UStep());
+	long lYSteps = labs(lYPosSteps-lOldYPosSteps);
+    double dSteps =  (lXSteps > lYSteps) ? (double) lXSteps / dVelocity : (double)lYSteps / dVelocity;
+    unsigned long dwSleep = (unsigned long) (dSteps * 1.2);
     CDeviceUtils::SleepMs(dwSleep);
     
 	if (MP285::Instance()->GetDebugLogFlag() > 1)
