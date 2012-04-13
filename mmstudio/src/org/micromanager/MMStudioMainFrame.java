@@ -2101,10 +2101,6 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface, Device
       }
    }
 
-   public boolean getConserveRamOption() {
-      return options_.conserveRam_;
-   }
-
    public boolean getAutoreloadOption() {
       return options_.autoreloadDevices_;
    }

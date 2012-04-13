@@ -152,6 +152,7 @@ public class OptionsDlg extends MMDialog {
       getContentPane().add(clearLogFileButton);
       //springLayout.putConstraint(SpringLayout.SOUTH, clearLogFileButton, 166, SpringLayout.NORTH, getContentPane());
       springLayout.putConstraint(SpringLayout.NORTH, clearLogFileButton, 175, SpringLayout.NORTH, getContentPane());
+      springLayout.putConstraint(SpringLayout.WEST, clearLogFileButton, 20, SpringLayout.NORTH, getContentPane());
 
       final JButton clearRegistryButton = new JButton();
       clearRegistryButton.setToolTipText("Clears all persistent settings and returns to defaults");
@@ -176,9 +177,9 @@ public class OptionsDlg extends MMDialog {
       clearRegistryButton.setFont(new Font("", Font.PLAIN, 10));
       clearRegistryButton.setPreferredSize(buttonSize);
       getContentPane().add(clearRegistryButton);
-      springLayout.putConstraint(SpringLayout.EAST, clearLogFileButton, 0, SpringLayout.EAST, clearRegistryButton);
-      springLayout.putConstraint(SpringLayout.WEST, clearLogFileButton, 0, SpringLayout.WEST, clearRegistryButton);
-      springLayout.putConstraint(SpringLayout.NORTH, clearRegistryButton, 210, SpringLayout.NORTH, getContentPane());
+      springLayout.putConstraint(SpringLayout.EAST, clearRegistryButton, 0, SpringLayout.EAST, clearLogFileButton);
+      springLayout.putConstraint(SpringLayout.WEST, clearRegistryButton, 0, SpringLayout.WEST, clearLogFileButton);
+      springLayout.putConstraint(SpringLayout.NORTH, clearRegistryButton, 5, SpringLayout.SOUTH, clearLogFileButton);
       //springLayout.putConstraint(SpringLayout.EAST, clearRegistryButton, 80, SpringLayout.WEST, getContentPane());
 
       final JButton okButton = new JButton();
@@ -249,7 +250,6 @@ public class OptionsDlg extends MMDialog {
       final JLabel startupScriptLabel = new JLabel();
       startupScriptLabel.setText("Startup script");
       getContentPane().add(startupScriptLabel);
-      springLayout.putConstraint(SpringLayout.WEST, clearRegistryButton, 5, SpringLayout.WEST, startupScriptLabel);
       springLayout.putConstraint(SpringLayout.EAST, startupScriptLabel, 115, SpringLayout.WEST, getContentPane());
       springLayout.putConstraint(SpringLayout.WEST, startupScriptLabel, 0, SpringLayout.WEST, displayLabel);
       springLayout.putConstraint(SpringLayout.SOUTH, startupScriptLabel, 135, SpringLayout.NORTH, getContentPane());
@@ -263,18 +263,6 @@ public class OptionsDlg extends MMDialog {
       springLayout.putConstraint(SpringLayout.SOUTH, startupScriptFile_, 137, SpringLayout.NORTH, getContentPane());
       springLayout.putConstraint(SpringLayout.NORTH, startupScriptFile_, 5, SpringLayout.SOUTH, comboDisplayBackground_);
 
-      final JCheckBox conserveRamCheckBox = new JCheckBox();
-      conserveRamCheckBox.addActionListener(new ActionListener() {
-         public void actionPerformed(ActionEvent arg0) {
-            opts_.conserveRam_ = conserveRamCheckBox.isSelected();
-            MMStudioMainFrame.getInstance().setExitStrategy(opts_.closeOnExit_);
-         }
-      });
-      conserveRamCheckBox.setText("Conserve RAM");
-      getContentPane().add(conserveRamCheckBox);
-      springLayout.putConstraint(SpringLayout.NORTH, conserveRamCheckBox, 0, SpringLayout.NORTH, clearLogFileButton);
-      springLayout.putConstraint(SpringLayout.WEST, conserveRamCheckBox, 5, SpringLayout.EAST, clearLogFileButton);
-      conserveRamCheckBox.setSelected(opts_.conserveRam_);
 
       final JCheckBox autoreloadDevicesCheckBox = new JCheckBox();
       autoreloadDevicesCheckBox.addActionListener(new ActionListener() {
@@ -284,8 +272,8 @@ public class OptionsDlg extends MMDialog {
       });
       autoreloadDevicesCheckBox.setText("Auto-reload devices (Danger!)");
       getContentPane().add(autoreloadDevicesCheckBox);
-      springLayout.putConstraint(SpringLayout.NORTH, autoreloadDevicesCheckBox, 20, SpringLayout.NORTH, conserveRamCheckBox);
-      springLayout.putConstraint(SpringLayout.WEST, autoreloadDevicesCheckBox, 0, SpringLayout.WEST, conserveRamCheckBox);
+      springLayout.putConstraint(SpringLayout.NORTH, autoreloadDevicesCheckBox, 0, SpringLayout.NORTH, clearLogFileButton);
+      springLayout.putConstraint(SpringLayout.WEST, autoreloadDevicesCheckBox, 5, SpringLayout.EAST, clearLogFileButton);
       autoreloadDevicesCheckBox.setSelected(opts_.autoreloadDevices_);
 
       final JCheckBox closeOnExitCheckBox = new JCheckBox();
@@ -395,9 +383,8 @@ public class OptionsDlg extends MMDialog {
       JLabel prefZoomLabel = new JLabel("Preferred image window zoom:");
       getContentPane().add(prefZoomLabel);
       
-       springLayout.putConstraint(SpringLayout.EAST, prefZoomLabel, 0, SpringLayout.WEST, prefZoomCombo);
       springLayout.putConstraint(SpringLayout.WEST, prefZoomLabel, 20, SpringLayout.WEST, getContentPane());
-      springLayout.putConstraint(SpringLayout.NORTH, prefZoomLabel, 0, SpringLayout.NORTH, prefZoomCombo);
+      springLayout.putConstraint(SpringLayout.NORTH, prefZoomLabel, 5, SpringLayout.NORTH, prefZoomCombo);
       
       
    }

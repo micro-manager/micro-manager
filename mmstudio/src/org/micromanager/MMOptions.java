@@ -36,7 +36,6 @@ public class MMOptions {
    private static final String BUFFSIZE_MB = "bufsize_mb";
    private static final String DISPLAY_BACKGROUND = "displayBackground";
    private static final String STARTUP_SCRIPT_FILE = "startupScript";
-   private static final String CONSERVE_RAM = "conserveRam";
    private static final String AUTORELOAD_DEVICES = "autoreloadDevices";
    private static final String ENABLE_DEVICE_DISCOVERY = "enableDeviceDiscovery";
    private static final String PREF_WINDOW_MAG = "windowMag";
@@ -47,7 +46,6 @@ public class MMOptions {
    public int circularBufferSizeMB_ = 25;
    public String displayBackground_ = "Day";
    public String startupScript_ = "MMStartup.bsh";
-   boolean conserveRam_ = false;
    boolean autoreloadDevices_ = false;
    double windowMag_ = 1.0;
    //public boolean enableDeviceDiscovery_  = false;
@@ -59,8 +57,7 @@ public class MMOptions {
       prefs.putBoolean(DEBUG_LOG, debugLogEnabled_);
       prefs.putBoolean(SKIP_CONFIG, doNotAskForConfigFile_);
       prefs.putBoolean(CLOSE_ON_EXIT, closeOnExit_);
-      prefs.putBoolean(CONSERVE_RAM, conserveRam_);
-      prefs.putBoolean(AUTORELOAD_DEVICES, conserveRam_);
+      prefs.putBoolean(AUTORELOAD_DEVICES, autoreloadDevices_);
       prefs.putInt(BUFFSIZE_MB, circularBufferSizeMB_);
       prefs.put(DISPLAY_BACKGROUND, displayBackground_);
       prefs.put(STARTUP_SCRIPT_FILE, startupScript_);
@@ -78,7 +75,6 @@ public class MMOptions {
       circularBufferSizeMB_ = prefs.getInt(BUFFSIZE_MB, circularBufferSizeMB_);
       displayBackground_ = prefs.get(DISPLAY_BACKGROUND, displayBackground_);
       startupScript_ = prefs.get(STARTUP_SCRIPT_FILE, startupScript_);
-      conserveRam_ = prefs.getBoolean(CONSERVE_RAM, conserveRam_);
       autoreloadDevices_ = prefs.getBoolean(AUTORELOAD_DEVICES, autoreloadDevices_);
       windowMag_ = prefs.getDouble(PREF_WINDOW_MAG, windowMag_);
       // enableDeviceDiscovery_ = prefs.getBoolean(ENABLE_DEVICE_DISCOVERY, enableDeviceDiscovery_);
