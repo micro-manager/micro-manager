@@ -15,16 +15,16 @@ xmlns="http://www.w3.org/TR/REC-html40">
   <o:Description>http://www.scopeled.com</o:Description>
   <o:LastAuthor>Ryan Clark</o:LastAuthor>
   <o:Revision>2</o:Revision>
-  <o:TotalTime>106</o:TotalTime>
-  <o:Created>2012-04-11T22:05:00Z</o:Created>
-  <o:LastSaved>2012-04-11T22:05:00Z</o:LastSaved>
+  <o:TotalTime>116</o:TotalTime>
+  <o:Created>2012-04-13T21:21:00Z</o:Created>
+  <o:LastSaved>2012-04-13T21:21:00Z</o:LastSaved>
   <o:Pages>3</o:Pages>
-  <o:Words>510</o:Words>
-  <o:Characters>2908</o:Characters>
+  <o:Words>585</o:Words>
+  <o:Characters>3339</o:Characters>
   <o:Company>ScopeLED</o:Company>
-  <o:Lines>24</o:Lines>
-  <o:Paragraphs>5</o:Paragraphs>
-  <o:CharactersWithSpaces>3571</o:CharactersWithSpaces>
+  <o:Lines>27</o:Lines>
+  <o:Paragraphs>6</o:Paragraphs>
+  <o:CharactersWithSpaces>4100</o:CharactersWithSpaces>
   <o:Version>9.6926</o:Version>
  </o:DocumentProperties>
 </xml><![endif]-->
@@ -159,8 +159,11 @@ div.Section1
   <p class=MsoNormal>Prior to initialization, this property sets the Serial
   Number string used to identify the target device. It is optional to set this
   property. </p>
-  <p class=MsoNormal>After initialization, this property contains the Serial
-  Number string of the device.</p>
+  <p class=MsoNormal>During initialization, this property is set to the Serial
+  Number string of the device.<br>
+  After initialization Micro-Manager will make no further use of this property.
+  It is for information purposes only. Changing the value will not make any
+  changes to the device. </p>
   </td>
  </tr>
 </table>
@@ -182,7 +185,7 @@ div.Section1
   <p class=MsoNormal>Type</p>
   </td>
   <td width=547 valign=top style='width:5.7in;padding:0in 5.4pt 0in 5.4pt'>
-  <p class=MsoNormal>Numeric</p>
+  <p class=MsoNormal>Numeric.</p>
   </td>
  </tr>
  <tr>
@@ -260,41 +263,50 @@ div.Section1
 
 <p class=MsoNormal><![if !supportEmptyParas]>&nbsp;<![endif]><o:p></o:p></p>
 
-<h3>ScopeLED-MSB/MSP</h3>
+<h3 style='mso-pagination:widow-orphan lines-together'>ScopeLED-MSB/MSP</h3>
 
-<p class=MsoNormal><![if !supportEmptyParas]>&nbsp;<![endif]><o:p></o:p></p>
+<p class=MsoNormal style='mso-pagination:widow-orphan lines-together;
+page-break-after:avoid'><![if !supportEmptyParas]>&nbsp;<![endif]><o:p></o:p></p>
 
-<p class=MsoNormal>Note: The ProductID for MSB/MSP illuminators is 4867
+<p class=MsoNormal style='mso-pagination:widow-orphan lines-together;
+page-break-after:avoid'>Note: The ProductID for MSB/MSP illuminators is 4867
 (0x1303).</p>
 
-<p class=MsoNormal><![if !supportEmptyParas]>&nbsp;<![endif]><o:p></o:p></p>
+<p class=MsoNormal style='mso-pagination:widow-orphan lines-together;
+page-break-after:avoid'><![if !supportEmptyParas]>&nbsp;<![endif]><o:p></o:p></p>
 
 <table border=0 cellspacing=0 cellpadding=0 style='border-collapse:collapse;
  mso-padding-alt:0in 5.4pt 0in 5.4pt'>
  <tr>
   <td width=91 valign=top style='width:.95in;padding:0in 5.4pt 0in 5.4pt'>
-  <p class=MsoNormal>Property</p>
+  <p class=MsoNormal style='mso-pagination:widow-orphan lines-together;
+  page-break-after:avoid'>Property</p>
   </td>
   <td width=547 valign=top style='width:5.7in;padding:0in 5.4pt 0in 5.4pt'>
-  <p class=MsoNormal>Channel1Brightness, Channel2Brightness,
+  <p class=MsoNormal style='mso-pagination:widow-orphan lines-together;
+  page-break-after:avoid'>Channel1Brightness, Channel2Brightness,
   Channel3Brightness, Channel4Brightness</p>
   </td>
  </tr>
  <tr>
   <td width=91 valign=top style='width:.95in;padding:0in 5.4pt 0in 5.4pt'>
-  <p class=MsoNormal>Type</p>
+  <p class=MsoNormal style='mso-pagination:widow-orphan lines-together;
+  page-break-after:avoid'>Type</p>
   </td>
   <td width=547 valign=top style='width:5.7in;padding:0in 5.4pt 0in 5.4pt'>
-  <p class=MsoNormal>Floating-point value from 0 to 100, representing the
+  <p class=MsoNormal style='mso-pagination:widow-orphan lines-together;
+  page-break-after:avoid'>Floating-point value from 0 to 100, representing the
   percentage. </p>
   </td>
  </tr>
  <tr>
   <td width=91 valign=top style='width:.95in;padding:0in 5.4pt 0in 5.4pt'>
-  <p class=MsoNormal>Function</p>
+  <p class=MsoNormal style='mso-pagination:widow-orphan lines-together;
+  page-break-after:avoid'>Function</p>
   </td>
   <td width=547 valign=top style='width:5.7in;padding:0in 5.4pt 0in 5.4pt'>
-  <p class=MsoNormal>Gets or sets the brightness level of the indicated
+  <p class=MsoNormal style='mso-pagination:widow-orphan lines-together;
+  page-break-after:avoid'>Gets or sets the brightness level of the indicated
   channel. This property changes the cached value. The new value will not take
   effect until the shutter is next opened.</p>
   </td>
@@ -467,7 +479,7 @@ div.Section1
   <p class=MsoNormal>Function</p>
   </td>
   <td width=547 valign=top style='width:5.7in;padding:0in 5.4pt 0in 5.4pt'>
-  <p class=MsoNormal>Gets a comma-separated list of active channels for the
+  <p class=MsoNormal>Read-only comma-separated list of active channels for the
   current active LED group. The channel is in the format “ChX” where X is the
   channel number.<span style="mso-spacerun: yes">  </span></p>
   </td>
@@ -480,27 +492,33 @@ div.Section1
  mso-padding-alt:0in 5.4pt 0in 5.4pt'>
  <tr>
   <td width=91 valign=top style='width:.95in;padding:0in 5.4pt 0in 5.4pt'>
-  <p class=MsoNormal>Property</p>
+  <p class=MsoNormal style='mso-pagination:widow-orphan lines-together;
+  page-break-after:avoid'>Property</p>
   </td>
   <td width=547 valign=top style='width:5.7in;padding:0in 5.4pt 0in 5.4pt'>
-  <p class=MsoNormal>ActiveWavelengths</p>
+  <p class=MsoNormal style='mso-pagination:widow-orphan lines-together;
+  page-break-after:avoid'>ActiveWavelengths</p>
   </td>
  </tr>
  <tr>
   <td width=91 valign=top style='width:.95in;padding:0in 5.4pt 0in 5.4pt'>
-  <p class=MsoNormal>Type</p>
+  <p class=MsoNormal style='mso-pagination:widow-orphan lines-together;
+  page-break-after:avoid'>Type</p>
   </td>
   <td width=547 valign=top style='width:5.7in;padding:0in 5.4pt 0in 5.4pt'>
-  <p class=MsoNormal>String </p>
+  <p class=MsoNormal style='mso-pagination:widow-orphan lines-together;
+  page-break-after:avoid'>String </p>
   </td>
  </tr>
  <tr>
   <td width=91 valign=top style='width:.95in;padding:0in 5.4pt 0in 5.4pt'>
-  <p class=MsoNormal>Function</p>
+  <p class=MsoNormal style='mso-pagination:widow-orphan lines-together;
+  page-break-after:avoid'>Function</p>
   </td>
   <td width=547 valign=top style='width:5.7in;padding:0in 5.4pt 0in 5.4pt'>
-  <p class=MsoNormal>Gets a comma separated list of active wavelengths for the
-  current active LED group. </p>
+  <p class=MsoNormal style='mso-pagination:widow-orphan lines-together;
+  page-break-after:avoid'>Read-only comma separated list of active wavelengths
+  for the current active LED group. </p>
   </td>
  </tr>
 </table>
@@ -530,8 +548,9 @@ div.Section1
   <p class=MsoNormal>Function</p>
   </td>
   <td width=547 valign=top style='width:5.7in;padding:0in 5.4pt 0in 5.4pt'>
-  <p class=MsoNormal>Gets the X and Y stage coordinates that are optimal for
-  the current active LED group.<span style="mso-spacerun: yes">  </span></p>
+  <p class=MsoNormal>Read-only string containing the X and Y stage coordinates
+  that are optimal for the current active LED group.<span style="mso-spacerun:
+  yes">  </span></p>
   </td>
  </tr>
 </table>
@@ -541,6 +560,11 @@ div.Section1
 <p class=MsoNormal><![if !supportEmptyParas]>&nbsp;<![endif]><o:p></o:p></p>
 
 <h3>Appendix A: USB Error Codes</h3>
+
+<p class=MsoNormal><![if !supportEmptyParas]>&nbsp;<![endif]><o:p></o:p></p>
+
+<p class=MsoNormal>The following table lists the error values returned by the <b>LastError</b>
+property. </p>
 
 <p class=MsoNormal><![if !supportEmptyParas]>&nbsp;<![endif]><o:p></o:p></p>
 
@@ -590,6 +614,11 @@ div.Section1
   mso-border-top-alt:solid windowtext .5pt;mso-border-left-alt:solid windowtext .5pt;
   padding:0in 5.4pt 0in 5.4pt'>
   <p class=MsoNormal>Device not found.</p>
+  <p class=MsoNormal><![if !supportEmptyParas]>&nbsp;<![endif]><o:p></o:p></p>
+  <p class=MsoNormal><i>Make sure that the device is properly connected to your
+  computer and powered on. <o:p></o:p></i></p>
+  <p class=MsoNormal><i>Make sure that the VendorID, ProductID and SerialNumber
+  (optional) properties match your device.</i> </p>
   </td>
  </tr>
  <tr>
@@ -637,7 +666,8 @@ div.Section1
   none;border-bottom:solid windowtext .5pt;border-right:solid windowtext .5pt;
   mso-border-top-alt:solid windowtext .5pt;mso-border-left-alt:solid windowtext .5pt;
   padding:0in 5.4pt 0in 5.4pt'>
-  <p class=MsoNormal>Operation aborted. </p>
+  <p class=MsoNormal>Operation aborted. The communication operation was aborted
+  by the user. </p>
   </td>
  </tr>
  <tr>
