@@ -16,9 +16,6 @@ import javax.swing.SwingConstants;
 import mmcorej.CMMCore;
 
 import com.swtdesigner.SwingResourceManager;
-import javax.swing.Icon;
-import javax.swing.JDialog;
-import javax.swing.JWindow;
 import org.micromanager.utils.ReportingUtils;
 
 public final class ConfigPadButtonPanel extends JPanel {
