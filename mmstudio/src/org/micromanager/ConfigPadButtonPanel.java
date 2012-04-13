@@ -227,7 +227,13 @@ public final class ConfigPadButtonPanel extends JPanel {
       } else if (presetName.length() == 0) {
          final String newPresetName = choosePreset(groupName);
          if (newPresetName != null) {
+            try {
+               core_.setConfig(groupName, newPresetName);
+            } catch (Exception ex) {
+               ReportingUtils.logError(ex);
+            }
             new PresetEditor(groupName, newPresetName, gui_, core_, false);
+
          }
       } else {
          new PresetEditor(groupName, presetName, gui_, core_, false);
