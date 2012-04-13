@@ -16,6 +16,9 @@ import javax.swing.SwingConstants;
 import mmcorej.CMMCore;
 
 import com.swtdesigner.SwingResourceManager;
+import javax.swing.Icon;
+import javax.swing.JDialog;
+import javax.swing.JWindow;
 import org.micromanager.utils.ReportingUtils;
 
 public final class ConfigPadButtonPanel extends JPanel {
@@ -206,14 +209,32 @@ public final class ConfigPadButtonPanel extends JPanel {
          
       }
    }
-   
+
+   public String choosePreset(String groupName) {
+      final String [] presets = core_.getAvailableConfigs(groupName).toArray();
+      return (String) JOptionPane.showInputDialog(
+                    null,
+                    "Please choose a preset from the " + groupName + " group for editing.",
+                    "Preset not selected.",
+                    JOptionPane.PLAIN_MESSAGE,
+                    null,
+                    presets,
+                    presets[0]);
+   }
+
    public void editPreset() {
-      String presetName = configPad_.getPreset();
-      String groupName = configPad_.getGroup();
-      if (groupName.length() ==0 || presetName.length() == 0)
+      final String presetName = configPad_.getPreset();
+      final String groupName = configPad_.getGroup();
+      if (groupName.length() ==0) {
          JOptionPane.showMessageDialog(this, "To edit a preset, please select the preset first, then press the edit button.");
-      else
+      } else if (presetName.length() == 0) {
+         final String newPresetName = choosePreset(groupName);
+         if (newPresetName != null) {
+            new PresetEditor(groupName, newPresetName, gui_, core_, false);
+         }
+      } else {
          new PresetEditor(groupName, presetName, gui_, core_, false);
+      }
    }
 
    
