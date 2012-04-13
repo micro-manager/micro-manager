@@ -354,7 +354,7 @@ public class ImageUtils {
         // return new TaggedImageStorageDiskDefault(acqPath, b, summaryMetadata);
         return (TaggedImageStorage) storageClass_
                  .getConstructor(String.class, Boolean.class, JSONObject.class)
-                 .newInstance(acqPath, newDataSet, summaryMetadata);
+                 .newInstance(acqPath, new Boolean(newDataSet), summaryMetadata);
       } catch (Exception ex) {
          ReportingUtils.logError(ex);
       }

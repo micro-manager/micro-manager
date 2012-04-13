@@ -10,6 +10,7 @@ import java.nio.MappedByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.channels.FileLock;
 import java.util.HashMap;
+import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import mmcorej.TaggedImage;
@@ -38,42 +39,71 @@ public class MultipageTiffReader {
    private FileLock lock_;
    private boolean bigEndian_;  
    
-   private long nextIFD_;
+   private long firstIFD_;
    
    private HashMap<String,Long> indexMap_;
    
-   public MultipageTiffReader(String path, String filename) {
+   public MultipageTiffReader(File file) {
       
       try {
-         createInputStream(path,filename);           
-         nextIFD_ = readHeader();
-         loadIndexMap();
+         createFileChannel(file);        
+         firstIFD_ = readHeader();
+         readIndexMap();
       } catch (Exception ex) {
          ex.printStackTrace();
       }
            
    }
    
-   public TaggedImage readNextImage() {
-      try {
-         if (nextIFD_ == 0)
+   public TaggedImage readImage(String label) {
+      if (indexMap_.containsKey(label)) {
+         try {
+            long byteOffset = indexMap_.get(label);
+            IFDData data = readIFD(byteOffset);
+            Object pixels = readPixels(data);
+            JSONObject md = readMMMetadata(data);  
+            return new TaggedImage(pixels,md);
+         } catch (IOException ex) {
+            ReportingUtils.logError(ex);
             return null;
-         IFDData data = readIFD(nextIFD_);
-         Object pixels = readPixels(data);
-         JSONObject md = readMMMetadata(data);  
-         TaggedImage img = new TaggedImage(pixels,md);
-         nextIFD_ = data.nextIFDAdress;
-         return img;      
-      } catch (IOException ex) {
-         ReportingUtils.logError(ex);
-      }   
-      return null;
+         }
+         
+      } else {
+         //label not in map--maybe parse whole file?
+         return null;
+      }
    }
    
-   private void loadIndexMap() throws IOException {
+   public Set<String> getIndexKeys() {
+      if (indexMap_ == null)
+         return null;
+      return indexMap_.keySet();
+   }
+
+   public JSONObject readSummaryMD() throws IOException {
+      MappedByteBuffer mdInfo = makeReadOnlyBuffer(16, 8);
+      if (mdInfo.getInt() != MultipageTiffWriter.SUMMARY_MD_HEADER) {
+         ReportingUtils.logError("Summary Metadata Header Incorrect");
+         return null;
+      }
+      long length = unsignInt(mdInfo.getInt());
+      try {
+         return readJSONObject(24, length);
+      } catch (JSONException ex) {
+         ReportingUtils.showError("Error reading summary metadata");
+         return null;
+      }
+   }
+
+   private void readIndexMap() throws IOException {
       indexMap_ = new HashMap<String,Long>();
       MappedByteBuffer mapOffset = makeReadOnlyBuffer(8,8);
-      long offset = mapOffset.getLong();
+      if (mapOffset.getInt() != MultipageTiffWriter.INDEX_MAP_OFFSET_HEADER) {
+         ReportingUtils.logError("Image map offset header incorrect");
+         indexMap_ = null;
+         return;
+      }  
+      long offset = unsignInt(mapOffset.getInt());
       MappedByteBuffer mapHeader = makeReadOnlyBuffer(offset, 8);
       int headerCode = mapHeader.getInt();
       if (headerCode != MultipageTiffWriter.INDEX_MAP_HEADER) {
@@ -147,18 +177,21 @@ public class MultipageTiffReader {
    }
    
    private JSONObject readMMMetadata(IFDData data) throws IOException {
-      MappedByteBuffer mdBuffer = makeReadOnlyBuffer( data.mdOffset, data.mdLength);      
-      StringBuffer sBuffer = new StringBuffer();
-      for (int i = 0; i < data.mdLength; i++) {
-         sBuffer.append((char) mdBuffer.get(i));
-      }
       try {
-         return new JSONObject(sBuffer.toString());
+         return readJSONObject(data.mdOffset, data.mdLength);
       } catch (JSONException ex) {
          ReportingUtils.showError("Error reading image metadata");
          return new JSONObject();
       }
-      
+   }
+
+   private JSONObject readJSONObject(long offset, long length) throws IOException, JSONException {
+      MappedByteBuffer mdBuffer = makeReadOnlyBuffer(offset, length);
+      StringBuffer sBuffer = new StringBuffer();
+      for (int i = 0; i < length; i++) {
+         sBuffer.append((char) mdBuffer.get(i));
+      }
+      return new JSONObject(sBuffer.toString());
    }
 
    private IFDEntry readDirectoryEntry(long byteOffset) throws IOException {
@@ -190,11 +223,10 @@ public class MultipageTiffReader {
       return unsignInt(buffer.getInt());
    }
    
-   private void createInputStream(String path,String filename) throws FileNotFoundException, IOException {      
-      File file = new File(path + filename);
+   private void createFileChannel(File file) throws FileNotFoundException, IOException {      
       raFile_ = new RandomAccessFile(file,"rw");
       fileChannel_ = raFile_.getChannel();
-      lock_ = fileChannel_.lock();
+//      lock_ = fileChannel_.lock();
    }
    
    private void close() throws IOException {

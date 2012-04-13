@@ -35,7 +35,9 @@ public class MultipageTiffWriter {
    public static final char MM_METADATA_LENGTH = 65122;
    public static final char MM_METADATA = 65123;
    
+   public static final int INDEX_MAP_OFFSET_HEADER = 54773648;
    public static final int INDEX_MAP_HEADER = 3453623;
+   public static final int SUMMARY_MD_HEADER = 2355492;
    
    private File file_;
    private RandomAccessFile raFile_;
@@ -45,10 +47,12 @@ public class MultipageTiffWriter {
    private long valueOffset_;
    private long entryOffset_;
    
-   public MultipageTiffWriter(String path, String filename) {
+   public MultipageTiffWriter(String path, String filename, JSONObject summaryMD) {
       try {
          createFile(path, filename);
-         writeHeader();
+         String summaryMDString = summaryMD.toString();
+         writeHeader(summaryMDString);
+         writeSummaryMD(summaryMDString);
       } catch (IOException e) {
          ReportingUtils.logError(e);
       }     
@@ -94,7 +98,7 @@ public class MultipageTiffWriter {
       indexMap_.put(label, entryOffset_);
    }
 
-   public void writeIndexMap() throws IOException {
+   private void writeIndexMap() throws IOException {
       //Write 4 byte header, 4 byte number of entries, and 24 bytes for each entry
       int numMappings = indexMap_.size();
       MappedByteBuffer buffer = makeBuffer(entryOffset_, numMappings*24 + 8  );
@@ -108,7 +112,16 @@ public class MultipageTiffWriter {
          buffer.putLong(indexMap_.get(label));
       }      
       MappedByteBuffer address = makeBuffer(8, 8 );
-      address.putLong(entryOffset_);
+      address.putInt(INDEX_MAP_OFFSET_HEADER);
+      address.putInt((int)entryOffset_);
+   }
+   
+   private void writeSummaryMD(String md) throws IOException {
+      //4 byte summary md header code, 4 byte length of summary md
+      MappedByteBuffer buffer = makeBuffer(16, md.length() + 8 );
+      buffer.putInt(SUMMARY_MD_HEADER);
+      buffer.putInt(md.length());
+      writeString(md,buffer);
    }
 
    private void writeIFD(TaggedImage img, boolean last) throws IOException {
@@ -187,11 +200,15 @@ public class MultipageTiffWriter {
       writeIFDEntry(MM_METADATA,(char)3,1,valueOffset_);
       
       MappedByteBuffer mdBuffer = makeBuffer(valueOffset_, mdString.length());
-      char[] letters = mdString.toCharArray();
+      writeString(mdString, mdBuffer);
+      valueOffset_ += mdString.length();  
+   }
+   
+   private void writeString(String s, MappedByteBuffer buffer) {
+      char[] letters = s.toCharArray();
       for (int i = 0; i < letters.length; i++) {
-         mdBuffer.put((byte) letters[i]);
+         buffer.put((byte) letters[i]);
       }
-      valueOffset_ += letters.length;  
    }
    
    private void writeXAndYResolution(TaggedImage img) throws IOException {
@@ -231,7 +248,7 @@ public class MultipageTiffWriter {
       entryOffset_ += 12;
    }
 
-   private void writeHeader() throws IOException {
+   private void writeHeader(String summaryMD) throws IOException {
       MappedByteBuffer header = makeBuffer(0, 8);
       if (bigEndian_) {
          header.putChar((char) 0x4d4d);
@@ -239,7 +256,10 @@ public class MultipageTiffWriter {
          header.putChar((char) 0x4949);
       }
       header.putChar((char) 42);
-      int firstImageOffset = 16;
+      //8 bytes for file header + 4 bytes for index map offset header + 
+      //4 bytes for index map offset + 4 bytes for summaryMD header + 
+      //4 bytes for summary md length = 24 + 1 byte for each character of summary md
+      int firstImageOffset = 24 + summaryMD.length();
       header.putInt(firstImageOffset);
       entryOffset_ = firstImageOffset;
       valueOffset_ = firstImageOffset;
