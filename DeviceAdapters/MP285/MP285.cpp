@@ -223,7 +223,7 @@ int ClearPort(MM::Device& device, MM::Core& core, const char* sPort)
 
 bool            MP285::m_yInstanceFlag      = false;        // instance flag
 bool            MP285::m_yDeviceAvailable   = false;        // MP285 devices availability
-int				MP285::m_nDebugLogFlag		= 0;			// MP285 debug log flag
+int				MP285::m_nDebugLogFlag		= 3;			// MP285 debug log flag
 MP285*          MP285::m_pMP285             = NULL;         // single copy MP285
 int             MP285::m_nResolution        = 10;           // MP285 resolution
 int             MP285::m_nMotionMode        = 0;            // motor motion mode
@@ -243,7 +243,7 @@ MP285::MP285()
     MP285::m_sMPStr[MP285::MPSTR_CtrlDevName]       = "MP285 Controller";					// MP285 Controllet device name
     MP285::m_sMPStr[MP285::MPSTR_XYStgaeDevName]    = "MP285 XY Stage";						// MP285 XY Stage device name
     MP285::m_sMPStr[MP285::MPSTR_ZStageDevName]     = "MP285 Z Stage";						// MP286 Z Stage device name
-    MP285::m_sMPStr[MP285::MPSTR_MP285Version]      = "2.05.035";							// MP285 adpater version number
+    MP285::m_sMPStr[MP285::MPSTR_MP285Version]      = "2.05.053";							// MP285 adpater version number
     MP285::m_sMPStr[MP285::MPSTR_LogFilename]       = "MP285Log.txt";						// MP285 Logfile name
 	MP285::m_sMPStr[MP285::MPSTR_CtrlDevNameLabel]  = "M.00 Controller ";					// MP285 Controller device name label
 	MP285::m_sMPStr[MP285::MPSTR_CtrlDevDescLabel]  = "M.01 Controller ";					// MP285 Controller device description label
@@ -264,8 +264,8 @@ MP285::MP285()
 	MP285::m_sMPStr[MP285::MPSTR_XYDevDescLabel]    = "M.16 XY Stage ";						// MP285 XY stage device description label
     MP285::m_sMPStr[MP285::MPSTR_SetPositionX]      = "M.17 Set Position X (um)";			// MP285 set POSITION X label
     MP285::m_sMPStr[MP285::MPSTR_SetPositionY]      = "M.18 Set Position Y (um)";			// MP285 set POSITION Y label
-    MP285::m_sMPStr[MP285::MPSTR_GetPositionX]      = "M.19 Get Position X (um)";			// MP285 get POSITION X label
-    MP285::m_sMPStr[MP285::MPSTR_GetPositionY]      = "M.20 Get Position Y (um)";			// MP285 get POSITION Y label
+    MP285::m_sMPStr[MP285::MPSTR_GetPositionX]      = "M.19 Get Position X (uStep)";	    // MP285 get POSITION X label
+    MP285::m_sMPStr[MP285::MPSTR_GetPositionY]      = "M.20 Get Position Y (uStep)";		// MP285 get POSITION Y label
 	MP285::m_sMPStr[MP285::MPSTR_ZDevNameLabel]     = "M.21 Z Stage ";						// MP285 Z stage device name label
 	MP285::m_sMPStr[MP285::MPSTR_ZDevDescLabel]     = "M.22 Z Stage ";						// MP285 Z stage device description label
     MP285::m_sMPStr[MP285::MPSTR_SetPositionZ]      = "M.23 Set Position Z (um)";			// MP285 set POSITION Z label
