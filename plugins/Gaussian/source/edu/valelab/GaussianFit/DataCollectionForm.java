@@ -1042,7 +1042,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
                 GaussianSpotData gsd = new GaussianSpotData(null, 0, 0, i,
                         0, nr, (int) xc, (int) yc);
                 gsd.setData(intensity, b, pixelSize * xc, pixelSize * yc, 0.0, w, ax, phi, c);
-                gsd.setZCenter(zc * pixelSize);
+                gsd.setZCenter(zc);
                 gsd.setOriginalPosition(x, y, z);
                 spotList.add(gsd);
                 nr++;
@@ -1059,6 +1059,8 @@ public class DataCollectionForm extends javax.swing.JFrame {
           JOptionPane.showMessageDialog(getInstance(), "File not found");
        }  catch (IOException ex) {
           JOptionPane.showMessageDialog(getInstance(), "Error while reading file");
+       } catch (OutOfMemoryError ome) {
+          JOptionPane.showMessageDialog(getInstance(), "Out Of Memory");
        } finally {
          setCursor(Cursor.getDefaultCursor());
          ij.IJ.showStatus("");

@@ -123,7 +123,7 @@ public class ImageRenderer {
             }
             for (int p = 0; p < size; p++) {
                for (int i = 0; i < 3; i++) {
-                  colorPixels[i][p] = (byte) (pixels[i][p] / max);
+                  colorPixels[i][p] = (byte) (256.0 * pixels[i][p] / max);
                }
                
             }
