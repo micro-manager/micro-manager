@@ -317,6 +317,7 @@ public:
    bool isBufferOverflowed() const;
    void setCircularBufferMemoryFootprint(unsigned sizeMB) throw (CMMError);
    void initializeCircularBuffer() throw (CMMError);
+   void clearCircularBuffer() throw (CMMError);
 
    bool isExposureSequenceable(const char* cameraLabel) const throw (CMMError);
    void startExposureSequence(const char* cameraLabel) const throw (CMMError);

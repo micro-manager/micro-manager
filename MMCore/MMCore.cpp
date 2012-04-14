@@ -2410,6 +2410,16 @@ void* CMMCore::popNextImageMD(Metadata& md) throw (CMMError)
    return popNextImageMD(0, 0, md);
 }
 
+/**
+ * Removes all images from the circular buffer
+ * It will rarely be needed to call this directly since starting a sequence
+ * acquisition will call this function.  However, clearig the circular buffer
+ * before requesting images from it can help avoid showing stale images
+ */
+void CMMCore::clearCircularBuffer() throw (CMMError)
+{
+   cbuf_->Clear();
+}
 
 /**
  * Reserve memory for the circular buffer.

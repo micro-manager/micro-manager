@@ -96,9 +96,7 @@ public class LiveModeTimer extends javax.swing.Timer {
    public void begin() throws Exception {
 
          manageShutter(true);
-         while (core_.getRemainingImageCount() > 0) {
-            core_.popNextImage();
-         }
+         core_.clearCircularBuffer();
             
          core_.startContinuousSequenceAcquisition(0);
          setType();
