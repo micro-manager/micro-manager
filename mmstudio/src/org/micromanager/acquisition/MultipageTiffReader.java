@@ -43,18 +43,25 @@ public class MultipageTiffReader {
    
    private HashMap<String,Long> indexMap_;
    
-   public MultipageTiffReader(File file) {
+   public MultipageTiffReader(File file, boolean readIndexMap) {
       
       try {
-         createFileChannel(file);        
+         createFileChannel(file);
          firstIFD_ = readHeader();
-         readIndexMap();
+         indexMap_ = new HashMap<String, Long>();
+         if (readIndexMap) {
+            readIndexMap();
+         }
       } catch (Exception ex) {
          ex.printStackTrace();
       }
            
    }
-   
+
+   public void addToIndexMap(TaggedImage img, long offset) {
+      indexMap_.put(MDUtils.getLabel(img.tags), offset);
+   }
+
    public TaggedImage readImage(String label) {
       if (indexMap_.containsKey(label)) {
          try {
@@ -96,7 +103,6 @@ public class MultipageTiffReader {
    }
 
    private void readIndexMap() throws IOException {
-      indexMap_ = new HashMap<String,Long>();
       MappedByteBuffer mapOffset = makeReadOnlyBuffer(8,8);
       if (mapOffset.getInt() != MultipageTiffWriter.INDEX_MAP_OFFSET_HEADER) {
          ReportingUtils.logError("Image map offset header incorrect");

@@ -19,6 +19,9 @@ import org.micromanager.utils.ReportingUtils;
 
 public class MultipageTiffWriter {
    
+   private static final long BYTES_PER_GIG = 1073741824;
+   private static final long MAX_FILE_SIZE = BYTES_PER_GIG;
+   
    //Required tags
    public static final char WIDTH = 256;
    public static final char HEIGHT = 257;
@@ -39,17 +42,18 @@ public class MultipageTiffWriter {
    public static final int INDEX_MAP_HEADER = 3453623;
    public static final int SUMMARY_MD_HEADER = 2355492;
    
-   private File file_;
    private RandomAccessFile raFile_;
    private FileChannel fileChannel_;     
    private final boolean bigEndian_ = false; 
    private HashMap<String, Long> indexMap_;
    private long valueOffset_;
    private long entryOffset_;
+   private long nextIFDOffsetAddress_ = -1;
+   private long nextIFDOffsetValue_ = -1;
    
-   public MultipageTiffWriter(String path, String filename, JSONObject summaryMD) {
+   public MultipageTiffWriter(File f, JSONObject summaryMD) {
       try {
-         createFile(path, filename);
+         createFileChannel(f);
          String summaryMDString = summaryMD.toString();
          writeHeader(summaryMDString);
          writeSummaryMD(summaryMDString);
@@ -58,44 +62,43 @@ public class MultipageTiffWriter {
       }     
    }
    
-   private void createFile(String path, String filename) throws FileNotFoundException {
-      file_ = new File(path + filename);
-      raFile_ = new RandomAccessFile(file_, "rw");
-      fileChannel_ = raFile_.getChannel();  
-      indexMap_ = new HashMap<String,Long>();
-   }
-   
-   private void close() throws IOException {
+   public void close() throws IOException {
+      writeNullOffsetAfterLastImage();
+      writeIndexMap();
       fileChannel_.close();
       raFile_.close();
-      file_ = null;
       fileChannel_ = null;
       raFile_ = null;
       System.gc();
    }
    
-   public void writeImage(TaggedImage img, boolean last) throws IOException {
-      updateIndexMap(img.tags);
-      writeIFD(img,last);     
-      if(last) {
-         writeIndexMap();
-         close();
+   //TODO: check performance of this function (since it is called before each image is written)
+   public boolean hasSpaceToWrite(TaggedImage img) {
+      int mdLength = img.tags.toString().length();
+      int indexMapSize = indexMap_.size()*24 + 8;
+      int IFDSize = 13*12 + 4 + 16;
+      int pixelSize = getImageByteDepth(img)*getImageHeight(img)*getImageWidth(img);
+      int extraPadding = 1000000;
+      if (mdLength+indexMapSize+IFDSize+pixelSize+extraPadding + entryOffset_ >= MAX_FILE_SIZE) {
+         return false;
       }
+      return true;
    }
    
-   private void updateIndexMap(JSONObject tags) {
-      int channel = 0, slice = 0, frame = 0, position = 0;
-      try {
-         channel = MDUtils.getChannelIndex(tags);
-         slice = MDUtils.getSliceIndex(tags);
-         frame = MDUtils.getFrameIndex(tags);
-         position = MDUtils.getPositionIndex(tags);
-      } catch (JSONException ex) {
-         ReportingUtils.logError("Problem finding channel, slice, frame, or position index in metadata");
-         return;
-      }
-      String label = MDUtils.generateLabel(channel, slice, frame, position);
-      indexMap_.put(label, entryOffset_);
+   public boolean isClosed() {
+      return raFile_ == null;
+   }
+      
+   public long writeImage(TaggedImage img) throws IOException {
+      long offset = entryOffset_;
+      writeIFD(img);
+      updateIndexMap(img.tags,offset);
+      return offset;
+   }
+   
+   private void updateIndexMap(JSONObject tags, long offset) {
+      String label = MDUtils.getLabel(tags);
+      indexMap_.put(label, offset);
    }
 
    private void writeIndexMap() throws IOException {
@@ -124,7 +127,11 @@ public class MultipageTiffWriter {
       writeString(md,buffer);
    }
 
-   private void writeIFD(TaggedImage img, boolean last) throws IOException {
+   private void writeIFD(TaggedImage img) throws IOException {
+     if (nextIFDOffsetAddress_ != -1) {
+        writeThisOffsetIntoPreviousIFD();
+     }
+      
      int imgHeight = getImageHeight(img);
      int imgWidth = getImageWidth(img);   
      int byteDepth = getImageByteDepth(img);
@@ -158,19 +165,21 @@ public class MultipageTiffWriter {
       
       writePixels(img, byteDepth);
 
-      writeNextIFDOffset(last);
-      //Start next IFD at end of pixel value
+      //These are used to write the offset of the next IFD
+      nextIFDOffsetAddress_ = entryOffset_;
+      nextIFDOffsetValue_ = valueOffset_;
+
       entryOffset_ = valueOffset_;
    }
    
-   private void writeNextIFDOffset(boolean last) throws IOException {
-      MappedByteBuffer next = makeBuffer(entryOffset_, 4);
-      if (last) {
-         next.putInt(0);
-      } else {
-         next.putInt((int)valueOffset_);
-      }
-      entryOffset_ += 4;
+   private void writeThisOffsetIntoPreviousIFD() throws IOException {
+      MappedByteBuffer next = makeBuffer(nextIFDOffsetAddress_, 4);
+      next.putInt((int) nextIFDOffsetValue_);
+   }
+   
+   private void writeNullOffsetAfterLastImage() throws IOException {
+      MappedByteBuffer next = makeBuffer(nextIFDOffsetAddress_, 4);
+      next.putInt(0);
    }
 
    private void writePixels(TaggedImage img, int byteDepth) throws IOException {
@@ -266,11 +275,18 @@ public class MultipageTiffWriter {
    }
 
    private MappedByteBuffer makeBuffer(long byteOffset, int numBytes) throws IOException {
-       MappedByteBuffer buffer = fileChannel_.map(FileChannel.MapMode.READ_WRITE, byteOffset, numBytes);
-       buffer.order(bigEndian_ ? ByteOrder.BIG_ENDIAN : ByteOrder.LITTLE_ENDIAN);
-       return buffer;
+      MappedByteBuffer buffer = fileChannel_.map(FileChannel.MapMode.READ_WRITE, byteOffset, numBytes);
+      buffer.order(bigEndian_ ? ByteOrder.BIG_ENDIAN : ByteOrder.LITTLE_ENDIAN);
+      return buffer;
    }
-   
+
+   private void createFileChannel(File f) throws FileNotFoundException, IOException {
+      f.createNewFile();
+      raFile_ = new RandomAccessFile(f, "rw");
+      fileChannel_ = raFile_.getChannel();
+      indexMap_ = new HashMap<String, Long>();
+   }
+
    private int getImageHeight(TaggedImage img) {
       try {
          return MDUtils.getHeight(img.tags);

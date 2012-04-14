@@ -7,6 +7,7 @@ import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import mmcorej.TaggedImage;
+import org.json.JSONException;
 import org.json.JSONObject;
 import org.micromanager.api.TaggedImageStorage;
 import org.micromanager.utils.MDUtils;
@@ -21,12 +22,16 @@ public class TaggedImageStorageMultipageTiff implements TaggedImageStorage {
    private JSONObject summaryMetadata_;
    private JSONObject displaySettings_;
    private boolean newDataSet_;
-   private String filepath_;
+   private String directory_;
+   private String filename_;
+   private int numTifFiles_ = 1;
    private Thread shutdownHook_;
    private int lastFrame_ = -1;
 
+   //current reader corresponds to the file that is currently being written
+   private MultipageTiffReader currentReader_;
+   private MultipageTiffWriter currentWriter_;
    
-//   private MultiPageTiffWriter_
    
    //Map of image labels to file 
    private HashMap<String,MultipageTiffReader> tiffFileReaders_;
@@ -35,12 +40,14 @@ public class TaggedImageStorageMultipageTiff implements TaggedImageStorage {
    //General TODO:
    //set lastFrame_ when getting new images
    
+   //Verify that files dont get written bigger than max file size
    
-   public TaggedImageStorageMultipageTiff(String filepath, Boolean newDataSet, JSONObject summaryMetadata) {
+   
+   public TaggedImageStorageMultipageTiff(String dir, Boolean newDataSet, JSONObject summaryMetadata) {
       summaryMetadata_ = summaryMetadata;
       displaySettings_ = new JSONObject();
       newDataSet_ = newDataSet;
-      filepath_ = filepath;
+      directory_ = dir;
       tiffFileReaders_ = new HashMap<String,MultipageTiffReader>();
       
       // TODO: throw erroe if no existing dataset
@@ -63,8 +70,10 @@ public class TaggedImageStorageMultipageTiff implements TaggedImageStorage {
    private void openExistingDataSet() {
       //Need to throw error if file not found
       
+      //TODO: get filename from variables rather than specifying here
+      
       //For now assume only a single file
-      String pathname = filepath_ + "/" + "testTif2Channel.tif";
+      String pathname = directory_ + "/" + "testTif2Channel.tif";
       if (!new File(pathname).exists()) {
          //TODO: throw some exception
       }
@@ -72,7 +81,7 @@ public class TaggedImageStorageMultipageTiff implements TaggedImageStorage {
               
        
       
-      MultipageTiffReader reader = new MultipageTiffReader(f);
+      MultipageTiffReader reader = new MultipageTiffReader(f,true);
       Set<String> labels = reader.getIndexKeys();
       for (String label : labels) {
          tiffFileReaders_.put(label, reader);
@@ -107,14 +116,65 @@ public class TaggedImageStorageMultipageTiff implements TaggedImageStorage {
       return tiffFileReaders_.get(label).readImage(label).tags;   
    }
 
+   private void createFilename() {
+      try {
+         filename_ = summaryMetadata_.getString("Prefix");
+         if (filename_.equals("")) {
+            filename_ = "ImageData";
+         }
+      } catch (JSONException ex) {
+         ReportingUtils.logError("Can't find Prefix in summary metadata");
+         filename_ = "ImageData";
+      }
+      if (numTifFiles_ > 1) {
+         filename_ += "_" +numTifFiles_;
+      }
+   }
+
    @Override
    public void putImage(TaggedImage taggedImage) throws MMException {
       if (!newDataSet_) {
-            throw new MMException("This ImageFileManager is read-only.");
+         throw new MMException("This ImageFileManager is read-only.");
+      }
+
+      if (currentWriter_ != null && currentWriter_.isClosed()) {
+         numTifFiles_++;
+      }
+      if (currentWriter_ == null || currentWriter_.isClosed()) {
+         //Create new Writer and new Reader corresponding to Writer
+         createFilename();
+         File dir = new File (directory_);
+         if (!dir.exists()) {
+            dir.mkdir();
          }
-      
-      //TODO: add much more for if data is being written
-      
+         File f = new File(directory_ + "/" + filename_ +".tif");
+         currentWriter_ = new MultipageTiffWriter(f, summaryMetadata_);
+         currentReader_ = new MultipageTiffReader(f, false);
+      }
+
+      if (currentWriter_.hasSpaceToWrite(taggedImage)) {
+         try {
+            long offset = currentWriter_.writeImage(taggedImage);
+            currentReader_.addToIndexMap(taggedImage, offset);
+            tiffFileReaders_.put(MDUtils.getLabel(taggedImage.tags), currentReader_);
+
+         } catch (IOException ex) {
+            ReportingUtils.logError(ex);
+         }
+      } else {
+         try {
+            currentWriter_.close();
+         } catch (IOException ex) {
+            ReportingUtils.logError(ex);
+         }
+      }
+      int frame;
+      try {
+         frame = MDUtils.getFrameIndex(taggedImage.tags);
+      } catch (JSONException ex) {
+         frame = 0;
+      }
+      lastFrame_ = Math.max(lastFrame_, frame);
    }
 
    @Override
@@ -130,7 +190,11 @@ public class TaggedImageStorageMultipageTiff implements TaggedImageStorage {
    @Override
    public void finished() {
       newDataSet_ = false;
-      //TODO: maybe other stuff?
+      try {
+         currentWriter_.close();
+      } catch (IOException ex) {
+         ReportingUtils.logError(ex);
+      }
    }
 
    @Override
@@ -167,12 +231,12 @@ public class TaggedImageStorageMultipageTiff implements TaggedImageStorage {
    public void close() {
       shutdownHook_.run();
       Runtime.getRuntime().removeShutdownHook(shutdownHook_);
-      
+      //TODO: come back to this
    }
 
    @Override
    public String getDiskLocation() {
-      return filepath_;
+      return directory_;
    }
 
    @Override
@@ -182,7 +246,7 @@ public class TaggedImageStorageMultipageTiff implements TaggedImageStorage {
 
    public long getDataSetSize() {
       //TODO: verify this is correct
-      return new File(filepath_).getTotalSpace();
+      return new File(directory_).getTotalSpace();
    }
    
    
