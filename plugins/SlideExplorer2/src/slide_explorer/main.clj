@@ -51,11 +51,11 @@
            (sort-by #(distance-squared [location-x location-y] %) arc))))
 
 (defn nearest-tile [[center-x center-y]]
-  [(Math/round center-x) (Math/round center-y)])
+  [(Math/round (double center-x)) (Math/round (double center-y))])
   
 (defn next-tile [[center-x center-y] [location-x location-y] finished-tiles]
   (->> (tile-rings (nearest-tile [center-x center-y]))
-       (tile-arcs [center-x center-y])
+       ;(tile-arcs [center-x center-y])
        (tile-priority-list [location-x location-y])
        (remove #(contains? finished-tiles %))
        first))
