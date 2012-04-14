@@ -857,9 +857,9 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface, Device
       // with the hardware
       int x = mainPrefs_.getInt(MAIN_FRAME_X, 100);
       int y = mainPrefs_.getInt(MAIN_FRAME_Y, 100);
-      int width = mainPrefs_.getInt(MAIN_FRAME_WIDTH, 580);
-      int height = mainPrefs_.getInt(MAIN_FRAME_HEIGHT, 482);
-      int dividerPos = mainPrefs_.getInt(MAIN_FRAME_DIVIDER_POS, 178);
+      int width = mainPrefs_.getInt(MAIN_FRAME_WIDTH, 644);
+      int height = mainPrefs_.getInt(MAIN_FRAME_HEIGHT, 570);
+      int dividerPos = mainPrefs_.getInt(MAIN_FRAME_DIVIDER_POS, 200);    
       openAcqDirectory_ = mainPrefs_.get(OPEN_ACQ_DIR, "");
 
       ToolTipManager ttManager = ToolTipManager.sharedInstance();
