@@ -217,7 +217,7 @@
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
-				AdditionalIncludeDirectories="&quot;..\..\..\3rdparty\Andor\SDK 2.88.30002.0&quot;"
+				AdditionalIncludeDirectories="&quot;..\..\..\3rdparty\Andor\SDK 20120413\Andor SDK&quot;"
 				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;MODULE_EXPORTS"
 				ExceptionHandling="2"
 				RuntimeLibrary="0"
@@ -242,7 +242,7 @@
 				AdditionalDependencies="ATMCD32M.LIB"
 				OutputFile="$(OutDir)/mmgr_dal_$(ProjectName).dll"
 				LinkIncremental="1"
-				AdditionalLibraryDirectories="..\..\..\3rdparty\Andor\SDK"
+				AdditionalLibraryDirectories="&quot;..\..\..\3rdparty\Andor\SDK 20120413\Andor SDK&quot;"
 				GenerateDebugInformation="true"
 				SubSystem="2"
 				OptimizeReferences="2"
@@ -301,7 +301,7 @@
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
-				AdditionalIncludeDirectories="&quot;..\..\..\3rdparty\Andor\SDK 2.88.30002.0&quot;"
+				AdditionalIncludeDirectories="&quot;..\..\..\3rdparty\Andor\SDK 20120413\Andor SDK&quot;"
 				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;MODULE_EXPORTS"
 				ExceptionHandling="2"
 				RuntimeLibrary="0"
@@ -326,7 +326,7 @@
 				AdditionalDependencies="atmcd64m.lib"
 				OutputFile="$(OutDir)/mmgr_dal_$(ProjectName).dll"
 				LinkIncremental="1"
-				AdditionalLibraryDirectories="..\..\..\3rdparty\Andor\SDK"
+				AdditionalLibraryDirectories="&quot;..\..\..\3rdparty\Andor\SDK 20120413\Andor SDK&quot;"
 				GenerateDebugInformation="true"
 				SubSystem="2"
 				OptimizeReferences="2"
