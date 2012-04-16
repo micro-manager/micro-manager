@@ -151,6 +151,29 @@ public class MDUtils {
       map.put("FileName", filename);
    }
 
+   public static int getIJType(JSONObject map) throws JSONException, MMScriptException {
+      try {
+         return map.getInt("IJType");
+      } catch (JSONException e) {
+         try {
+            String pixelType = map.getString("PixelType");
+            if (pixelType.contentEquals("GRAY8")) {
+               return ImagePlus.GRAY8;
+            } else if (pixelType.contentEquals("GRAY16")) {
+               return ImagePlus.GRAY16;
+            } else if (pixelType.contentEquals("GRAY32")) {
+               return ImagePlus.GRAY32;
+            } else if (pixelType.contentEquals("RGB32")) {
+               return ImagePlus.COLOR_RGB;
+            } else {
+               throw new MMScriptException("Can't figure out IJ type.");
+            }
+         } catch (MMScriptException e2) {
+            throw new MMScriptException("Can't figure out IJ type");
+         }
+      }
+   }
+
    public static String getPixelType(JSONObject map)  throws JSONException, MMScriptException {
       try {
          return map.getString("PixelType");

@@ -96,6 +96,17 @@ public class ImageUtils {
       }
    }
 
+   public static ImageProcessor makeProcessor(TaggedImage taggedImage) {
+      final JSONObject tags = taggedImage.tags;
+      try {
+      return makeProcessor(MDUtils.getIJType(tags), MDUtils.getWidth(tags),
+              MDUtils.getHeight(tags), taggedImage.pix);
+      } catch (Exception e) {
+         ReportingUtils.logError(e);
+      }
+      return null;
+   }
+
    public static ImageProcessor makeProcessor(int type, int w, int h) {
       if (type == ImagePlus.GRAY8) {
          return new ByteProcessor(w, h);
