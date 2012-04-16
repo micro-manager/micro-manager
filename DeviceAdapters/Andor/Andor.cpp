@@ -279,7 +279,7 @@ spuriousNoiseFilterDescriptionStr_("")
 #endif
 
    if (GetListOfAvailableCameras() != DRV_SUCCESS) 
-	   //exit(1);
+      //exit(1);
       LogMessage("No Andor camera found!");
 }
 
@@ -378,12 +378,12 @@ int AndorCamera::GetListOfAvailableCameras()
                anStr = chars;
             }
             // mm can't deal with commas!!
-		      size_t ifind = anStr.find(",");
-		      while(std::string::npos != ifind)
-		      {
-			      anStr.replace(ifind,1,"~");
-			      ifind =  anStr.find(",");
-		      }
+            size_t ifind = anStr.find(",");
+            while(std::string::npos != ifind)
+            {
+	           anStr.replace(ifind,1,"~");
+	           ifind =  anStr.find(",");
+            }
 
             int id;
             ret = GetCameraSerialNumber(&id);
@@ -847,11 +847,16 @@ int AndorCamera::GetListOfAvailableCameras()
         PreAmpGains_.clear();
         for (int i=0; i<numPreAmpGain; i++)
         {
-            float pag;
-            ret = GetPreAmpGain(i, &pag); 
+            if(ui_swVersion >= 292) {
+                ret = GetPreAmpGainText(i, PreAmpGainBuf, sizeof(PreAmpGainBuf));
+            }
+            else {
+                float pag;
+                ret = GetPreAmpGain(i, &pag); 
+                sprintf(PreAmpGainBuf, "%.2f", pag);
+            }
             if (ret != DRV_SUCCESS)
                 return ret;
-            sprintf(PreAmpGainBuf, "%.2f", pag);
             PreAmpGains_.push_back(PreAmpGainBuf);
         }
         if (PreAmpGains_.empty())
@@ -923,37 +928,57 @@ int AndorCamera::GetListOfAvailableCameras()
          LogMessage(eMsg.str().c_str(), true);
       }
       VCVoltages_.clear();
-      if(numVCVoltages>5)
-         numVCVoltages = 5;
-      switch(numVCVoltages)
-      {
-      case 1:
-         VCVoltages_.push_back("Normal");
-         break;
-      case 2:
-         VCVoltages_.push_back("Normal");
-         VCVoltages_.push_back("+1");
-         break;
-      case 3:
-         VCVoltages_.push_back("Normal");
-         VCVoltages_.push_back("+1");
-         VCVoltages_.push_back("+2");
-         break;
-      case 4:
-         VCVoltages_.push_back("Normal");
-         VCVoltages_.push_back("+1");
-         VCVoltages_.push_back("+2");
-         VCVoltages_.push_back("+3");
-         break;
-      case 5:
-         VCVoltages_.push_back("Normal");
-         VCVoltages_.push_back("+1");
-         VCVoltages_.push_back("+2");
-         VCVoltages_.push_back("+3");
-         VCVoltages_.push_back("+4");
-         break;
-      default:
-         VCVoltages_.push_back("Normal");
+      if(ui_swVersion >= 292) {
+	      for (int i = 0; i < numVCVoltages; i++)
+	      {
+		      char VCAmp[10];
+		      ret = GetVSAmplitudeString(i, VCAmp);
+
+		      if (ret != DRV_SUCCESS) {
+			     numVCVoltages = 0;
+			     ostringstream eMsg;
+			     eMsg << "Andor driver returned error code: " << ret << " to GetVSAmplitudeString";
+			     LogMessage(eMsg.str().c_str(), true);
+		      }
+		      else
+		      {
+			      VCVoltages_.push_back(VCAmp);
+		      }
+	      }
+      }
+      else {
+	      if(numVCVoltages>5)
+		     numVCVoltages = 5;
+	      switch(numVCVoltages)
+	      {
+	      case 1:
+		     VCVoltages_.push_back("Normal");
+		     break;
+	      case 2:
+		     VCVoltages_.push_back("Normal");
+		     VCVoltages_.push_back("+1");
+		     break;
+	      case 3:
+		     VCVoltages_.push_back("Normal");
+		     VCVoltages_.push_back("+1");
+		     VCVoltages_.push_back("+2");
+		     break;
+	      case 4:
+		     VCVoltages_.push_back("Normal");
+		     VCVoltages_.push_back("+1");
+		     VCVoltages_.push_back("+2");
+		     VCVoltages_.push_back("+3");
+		     break;
+	      case 5:
+		     VCVoltages_.push_back("Normal");
+		     VCVoltages_.push_back("+1");
+		     VCVoltages_.push_back("+2");
+		     VCVoltages_.push_back("+3");
+		     VCVoltages_.push_back("+4");
+		     break;
+	      default:
+		     VCVoltages_.push_back("Normal");
+	      }
       }
       if (numVCVoltages>=1)
       {
@@ -3947,6 +3972,9 @@ int AndorCamera::OnSpuriousNoiseFilter(MM::PropertyBase* pProp, MM::ActionType e
         break;
      case(17):  // Should say AC_CAMERATYPE_CLARA but this only defined in versions > 2.83 [01/04/2009]
         retVal = "Clara";
+        break;
+     case(AC_CAMERATYPE_IXONULTRA):
+        retVal = "iXon Ultra";
         break;
      case(AC_CAMERATYPE_UNPROGRAMMED):
         retVal = "Unprogrammed";
