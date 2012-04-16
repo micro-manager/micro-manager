@@ -2108,6 +2108,10 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface, Device
    public double getPreferredWindowMag() {
       return options_.windowMag_;
    }
+   
+   public boolean getMultipageTiffSaving() {
+      return options_.multipageTiff_;
+   }
 
    private void updateTitle() {
       this.setTitle("System: " + sysConfigFile_);

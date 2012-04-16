@@ -14,11 +14,14 @@ import java.awt.Point;
 import mmcorej.CMMCore;
 import mmcorej.TaggedImage;
 import org.json.JSONObject;
+import org.micromanager.MMStudioMainFrame;
 import org.micromanager.acquisition.TaggedImageStorageDiskDefault;
+import org.micromanager.acquisition.TaggedImageStorageMultipageTiff;
 import org.micromanager.api.TaggedImageStorage;
 
 public class ImageUtils {
-   private static Class storageClass_ = TaggedImageStorageDiskDefault.class;
+   private static Class storageClass_ = MMStudioMainFrame.getInstance().getMultipageTiffSaving() ?
+           TaggedImageStorageMultipageTiff.class : TaggedImageStorageDiskDefault.class;
 
    public static int BppToImageType(long Bpp) {
       int BppInt = (int) Bpp;
@@ -351,7 +354,8 @@ public class ImageUtils {
    public static TaggedImageStorage newImageStorageInstance
            (String acqPath, boolean newDataSet, JSONObject summaryMetadata) {
       try {
-        // return new TaggedImageStorageDiskDefault(acqPath, b, summaryMetadata);
+        storageClass_ = MMStudioMainFrame.getInstance().getMultipageTiffSaving() ?
+           TaggedImageStorageMultipageTiff.class : TaggedImageStorageDiskDefault.class;
         return (TaggedImageStorage) storageClass_
                  .getConstructor(String.class, Boolean.class, JSONObject.class)
                  .newInstance(acqPath, new Boolean(newDataSet), summaryMetadata);

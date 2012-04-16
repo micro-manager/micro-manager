@@ -91,7 +91,7 @@ public class OptionsDlg extends MMDialog {
       setTitle("Micro-Manager Options");
       springLayout = new SpringLayout();
       getContentPane().setLayout(springLayout);
-      setBounds(100, 100, 371, 320);
+      setBounds(100, 100, 371, 340);
       guiColors_ = new GUIColors();
       Dimension buttonSize = new Dimension(120, 20);
 
@@ -385,6 +385,32 @@ public class OptionsDlg extends MMDialog {
       
       springLayout.putConstraint(SpringLayout.WEST, prefZoomLabel, 20, SpringLayout.WEST, getContentPane());
       springLayout.putConstraint(SpringLayout.NORTH, prefZoomLabel, 5, SpringLayout.NORTH, prefZoomCombo);
+
+
+      
+      JLabel savingTypeLabel = new JLabel("Save: ");
+      getContentPane().add(savingTypeLabel);
+      springLayout.putConstraint(SpringLayout.WEST, savingTypeLabel, 20, SpringLayout.WEST, getContentPane());
+      springLayout.putConstraint(SpringLayout.NORTH, savingTypeLabel, 30, SpringLayout.NORTH, prefZoomLabel);
+      
+      final JComboBox savingTypeCombo = new JComboBox();
+       savingTypeCombo.setModel(new DefaultComboBoxModel(new String[]{
+         "One .tif file per an image", "Multiple images per .tif file (coming soon...)"
+      }));
+       getContentPane().add(savingTypeCombo);      
+      springLayout.putConstraint(SpringLayout.NORTH, savingTypeCombo, 0, SpringLayout.NORTH, savingTypeLabel);
+      springLayout.putConstraint(SpringLayout.WEST, savingTypeCombo, 10, SpringLayout.EAST, savingTypeLabel);
+      savingTypeCombo.addActionListener(new ActionListener() {
+         @Override
+         public void actionPerformed(ActionEvent e) {
+            opts_.multipageTiff_ = savingTypeCombo.getSelectedIndex() == 1;
+         }
+      });
+      if (opts_.multipageTiff_) {
+         savingTypeCombo.setSelectedIndex(1);
+      } else {
+         savingTypeCombo.setSelectedIndex(0);
+      }
       
       
    }
