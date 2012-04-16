@@ -108,6 +108,7 @@ public class LiveModeTimer extends javax.swing.Timer {
          long timeout = Math.min(10000, this.getDelay() * 150);
          while (core_.getRemainingImageCount() == 0 && (now - start < timeout) ) {
             now = System.currentTimeMillis();
+            Thread.sleep(5);
          }
          if (now - start >= timeout) {
             throw new Exception("Camera did not send image within a reasonable time");
