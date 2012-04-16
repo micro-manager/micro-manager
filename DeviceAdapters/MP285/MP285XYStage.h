@@ -54,14 +54,20 @@ public:
     // XYStage API
     // -----------
 
+	// setup motion mode (1: relative, 0: relative
+	int SetMotionMode(long lMotionMode);
+
     // Move X-Y stage to position in um
     int SetPositionUm(double dXPosUm, double dYPosUm);
+	int SetRelativePositionUm(double dXPosUm, double dYPosUm);
 
     // Get X-Y stage position in um
     int GetPositionUm(double& dXPosUm, double& dYPosUm);
 
     // Move X-Y stage to position in uSteps
     int SetPositionSteps(long lXPosSteps, long lYPosSteps);
+	int SetRelativePositionSteps(long lXPosSteps, long lYPosSteps);
+	int _SetPositionSteps(long lXPosSteps, long lYPosSteps, long lZPosSteps);
 
     // Get X-Y stage position in uSteps
     int GetPositionSteps(long& lXPosSteps, long& lYPosSteps);
