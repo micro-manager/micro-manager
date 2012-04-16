@@ -123,20 +123,23 @@ int ZStage::Initialize()
     if (!MP285::Instance()->GetDeviceAvailability()) return DEVICE_NOT_CONNECTED;
     //if (MP285::Instance()->GetNumberOfAxes() < 3) return DEVICE_NOT_CONNECTED;
 
-    int ret = CreateProperty(MP285::Instance()->GetMPStr(MP285::MPSTR_GetPositionZ).c_str(), "undefined", MM::String, true);  // get position Z 
+    //int ret = CreateProperty(MP285::Instance()->GetMPStr(MP285::MPSTR_GetPositionZ).c_str(), "undefined", MM::String, true);  // get position Z 
+    CPropertyAction* pActOnGetPosZ = new CPropertyAction(this, &ZStage::OnGetPositionZ);
+	char sPosZ[20];
+    double dPosZ = MP285::Instance()->GetPositionZ();
+	sprintf(sPosZ, "%ld", (long)(dPosZ * (double)MP285::Instance()->GetUm2UStep()));
+	int ret = CreateProperty(MP285::Instance()->GetMPStr(MP285::MPSTR_GetPositionZ).c_str(), sPosZ, MM::Integer, false, pActOnGetPosZ);  // get position Z 
 
 	if (MP285::Instance()->GetDebugLogFlag() > 0)
 	{
 		osMessage.str("");
-		osMessage << "<ZStage::Initialize> CreateProperty(" << MP285::Instance()->GetMPStr(MP285::MPSTR_GetPositionZ).c_str() << " = " << "undefined" << "), ReturnCode = " << ret;
+		osMessage << "<ZStage::Initialize> CreateProperty(" << MP285::Instance()->GetMPStr(MP285::MPSTR_GetPositionZ).c_str() << " = " << sPosZ << "), ReturnCode = " << ret;
 		this->LogMessage(osMessage.str().c_str());
 	}
 
     if (ret != DEVICE_OK)  return ret;
 
-    double dPosZ = MP285::Instance()->GetPositionZ();
     ret = GetPositionUm(dPosZ);
-	char sPosZ[20];
 	sprintf(sPosZ, "%ld", (long)(dPosZ * (double)MP285::Instance()->GetPositionZ()));
 
 	if (MP285::Instance()->GetDebugLogFlag() > 0)
@@ -188,6 +191,41 @@ void ZStage::GetName(char* Name) const
 }
 
 //
+// Set Motion Mode (1: relatice, 0: absolute)
+//
+int ZStage::SetMotionMode(long lMotionMode)
+{
+    std::ostringstream osMessage;
+    unsigned char sCommand[6] = { 0x00, MP285::MP285_TxTerm, 0x0A, 0x00, 0x00, 0x00 };
+    unsigned char sResponse[64];
+    int ret = DEVICE_OK;
+        
+    if (lMotionMode == 0)
+        sCommand[0] = 'a';
+    else
+        sCommand[0] = 'b';
+
+    ret = WriteCommand(sCommand, 3);
+
+    if (MP285::Instance()->GetDebugLogFlag() > 1)
+    {
+		osMessage.str("");
+		osMessage << "<ZStage::SetMotionMode> = [" << lMotionMode << "," << sCommand[0] << "], Returncode =" << ret;
+		this->LogMessage(osMessage.str().c_str());
+	}
+
+    if (ret != DEVICE_OK) return ret;
+
+    ret = ReadMessage(sResponse, 2);
+
+    if (ret != DEVICE_OK) return ret;
+
+    MP285::Instance()->SetMotionMode(lMotionMode);
+
+    return DEVICE_OK;
+}
+
+//
 // Get Z stage position in um
 //
 int ZStage::GetPositionUm(double& dZPosUm)
@@ -210,42 +248,112 @@ int ZStage::GetPositionUm(double& dZPosUm)
 
     MP285::Instance()->SetPositionZ(dZPosUm);
 
-    char sPosition[20];
-    sprintf(sPosition, "%.2f", dZPosUm);
-    ret = SetProperty(MP285::Instance()->GetMPStr(MP285::MPSTR_GetPositionZ).c_str(), sPosition);
+    //char sPosition[20];
+    //sprintf(sPosition, "%.2f", dZPosUm);
+    //ret = SetProperty(MP285::Instance()->GetMPStr(MP285::MPSTR_GetPositionZ).c_str(), sPosition);
 
 	if (MP285::Instance()->GetDebugLogFlag() > 1)
 	{
 		osMessage.str("");
-		osMessage << "<ZStage::GetPositionUm> Z=[" << dZPosUm << "," << sPosition << "], Returncode=" << ret ;
+		osMessage << "<ZStage::GetPositionUm> Z=[" << dZPosUm << /*"," << sPosition <<*/ "], Returncode=" << ret ;
 		this->LogMessage(osMessage.str().c_str());
 	}
 
-    if (ret != DEVICE_OK) return ret;
+    //f (ret != DEVICE_OK) return ret;
 
-
-    ret = UpdateStatus();
-    if (ret != DEVICE_OK) return ret;
+    //ret = UpdateStatus();
+    //if (ret != DEVICE_OK) return ret;
 
     return DEVICE_OK;
 }
+
+//
+// Move to Z stage to relative distance from current position in um
+//
+int ZStage::SetRelativePositionUm(double dZPosUm)
+{
+	int ret = DEVICE_OK;
+    ostringstream osMessage;
+
+	if (MP285::Instance()->GetDebugLogFlag() > 1)
+	{
+		osMessage << "<ZStage::SetRelativePositionUm> (z=" << dZPosUm << ")";
+		this->LogMessage(osMessage.str().c_str());
+	}
+
+	// set relative motion mode
+	if (MP285::Instance()->GetMotionMode() == 0)
+	{
+		ret = SetMotionMode(1);
+
+		if (MP285::Instance()->GetDebugLogFlag() > 1)
+		{
+			osMessage.str("");
+			osMessage << "<ZStage::SetRelativePositionUm> (" << MP285::Instance()->GetMPStr(MP285::MPSTR_MotionMode).c_str() << " = <RELATIVE>), ReturnCode = " << ret;
+			this->LogMessage(osMessage.str().c_str());
+		}
+
+	    if (ret != DEVICE_OK) return ret;
+	}
+
+    // convert um to steps 
+    long lZPosSteps = (long)(dZPosUm * (double)MP285::Instance()->GetUm2UStep());
+
+    // send move command to controller
+	ret = _SetPositionSteps(0L, 0L, lZPosSteps);
+
+    if (ret != DEVICE_OK) return ret;
+
+    MP285::Instance()->SetPositionZ(dZPosUm);
+
+    double dPosZ = 0.;
+
+    ret = GetPositionUm(dPosZ);
+
+    if (ret != DEVICE_OK) return ret;
+
+    return ret;
+}
+
 
 //
 // Move to Z stage position in um
 //
 int ZStage::SetPositionUm(double dZPosUm)
 {
+	int ret = DEVICE_OK;
     ostringstream osMessage;
-    osMessage << "<ZStage::SetPositionUm> (z=" << dZPosUm << ")";
-    this->LogMessage(osMessage.str().c_str());
+
+	if (MP285::Instance()->GetDebugLogFlag() > 1)
+	{
+		osMessage << "<ZStage::SetPositionUm> (z=" << dZPosUm << ")";
+		this->LogMessage(osMessage.str().c_str());
+	}
+
+	// set absolute motion mode
+	if (MP285::Instance()->GetMotionMode() != 0)
+	{
+		ret = SetMotionMode(0);
+
+		if (MP285::Instance()->GetDebugLogFlag() > 1)
+		{
+			osMessage.str("");
+			osMessage << "<ZStage::SetPositionUm> (" << MP285::Instance()->GetMPStr(MP285::MPSTR_MotionMode).c_str() << " = <ABSOLUTE>), ReturnCode = " << ret;
+			this->LogMessage(osMessage.str().c_str());
+		}
+		
+		if (ret != DEVICE_OK) return ret;
+	}
 
     // convert um to steps 
     long lZPosSteps = (long)(dZPosUm * (double)MP285::Instance()->GetUm2UStep());
+	long lXPosSteps = (long)MP285::Instance()->GetPositionX() * (long)MP285::Instance()->GetUm2UStep();
+	long lYPosSteps = (long)MP285::Instance()->GetPositionY() * (long)MP285::Instance()->GetUm2UStep();
 
     // send move command to controller
-    int ret = SetPositionSteps(lZPosSteps);
-
+    ret = _SetPositionSteps(lXPosSteps, lYPosSteps, lZPosSteps);
     if (ret != DEVICE_OK) return ret;
+
 
     MP285::Instance()->SetPositionZ(dZPosUm);
 
@@ -335,64 +443,137 @@ int ZStage::GetPositionSteps(long& lZPosSteps)
 
   
 //
-// move z stage in steps
+// Move x-y stage to a relative distance from current position in uSteps
 //
-int ZStage::SetPositionSteps(long lZPosSteps)
+int ZStage::SetRelativePositionSteps(long lZPosSteps)
 {
-    // clean up COM port
-    // PurgeComPort(MP285::Instance()->GetSerialPort().c_str());
-
+	int ret = DEVICE_OK;
     ostringstream osMessage;
-    
-    //double dPosZ = 0.;
-    //int ret = GetPositionSteps(lPosZ);
 
 	if (MP285::Instance()->GetDebugLogFlag() > 1)
 	{
-		osMessage.str("");
+		//osMessage.str("");
+		osMessage << "<ZStage::SetRelativePositionSteps> (z=" << lZPosSteps << ")";
+		this->LogMessage(osMessage.str().c_str());
+	}
+
+	// set relative motion mode
+	if (MP285::Instance()->GetMotionMode() == 0)
+	{
+		ret = SetMotionMode(1);
+
+		if (MP285::Instance()->GetDebugLogFlag() > 1)
+		{
+			osMessage.str("");
+			osMessage << "<ZStage::SetRelativePositionSteps> (" << MP285::Instance()->GetMPStr(MP285::MPSTR_MotionMode).c_str() << " = <RELATIVE>), ReturnCode = " << ret;
+			this->LogMessage(osMessage.str().c_str());
+		}
+
+	    if (ret != DEVICE_OK) return ret;
+	}
+
+	ret = _SetPositionSteps(0L, 0L, lZPosSteps);
+
+	if (ret != DEVICE_OK) return ret;
+
+	return DEVICE_OK;
+}
+
+//
+// move z stage to absolute position in uSsteps
+//
+int ZStage::SetPositionSteps(long lZPosSteps)
+{
+	int ret = DEVICE_OK;
+    ostringstream osMessage;
+    
+	if (MP285::Instance()->GetDebugLogFlag() > 1)
+	{
+		//osMessage.str("");
 		osMessage << "<ZStage::SetPositionSteps> (z=" << lZPosSteps << ")";
 		this->LogMessage(osMessage.str().c_str());
 	}
 
-    // get current position command
-    // get current position
-    long* plPositionX = NULL;
-    long* plPositionY = NULL;
-    long* plPositionZ = NULL;
+	// set absolute motion mode
+	if (MP285::Instance()->GetMotionMode() != 0)
+	{
+		ret = SetMotionMode(0);
+
+		if (MP285::Instance()->GetDebugLogFlag() > 1)
+		{
+			osMessage.str("");
+			osMessage << "<ZStage::SetPositionSteps> (" << MP285::Instance()->GetMPStr(MP285::MPSTR_MotionMode).c_str() << " = <ABSOLUTE>), ReturnCode = " << ret;
+			this->LogMessage(osMessage.str().c_str());
+		}
+		
+		if (ret != DEVICE_OK) return ret;
+	}
+
+	long lPositionX = (long)MP285::Instance()->GetPositionX() * (long)MP285::Instance()->GetUm2UStep();
+	long lPositionY = (long)MP285::Instance()->GetPositionY() * (long)MP285::Instance()->GetUm2UStep();
+
+	ret = _SetPositionSteps(lPositionX, lPositionY, lZPosSteps);
+
+	if (ret != DEVICE_OK) return ret;
+
+    return DEVICE_OK;
+}
+
+//
+// move x-y-z stage in uSsteps
+//
+int ZStage::_SetPositionSteps(long lXPosSteps, long lYPosSteps, long lZPosSteps)
+{
+	int ret = DEVICE_OK;
+    ostringstream osMessage;
+
+	// get current position X-Y
     unsigned char sCommand[16];
     memset(sCommand, 0, 16);
     sCommand[0]  = 0x6D;
     sCommand[13] = MP285::MP285_TxTerm;
     sCommand[14] = 0x0A;
-    plPositionX  = (long*)(&sCommand[1]);
-    *plPositionX = (long) (MP285::Instance()->GetPositionX() * (double)MP285::Instance()->GetUm2UStep());
-    plPositionY  = (long*)(&sCommand[5]);
-    *plPositionY = (long) (MP285::Instance()->GetPositionY() * (double)MP285::Instance()->GetUm2UStep());
-    plPositionZ  = (long*)(&sCommand[9]);
+
+    long* plPositionX = (long*)(&sCommand[1]);
+	*plPositionX = lXPosSteps;
+
+    long* plPositionY = (long*)(&sCommand[5]);
+	*plPositionY = lYPosSteps;
+
+    long* plPositionZ = (long*)(&sCommand[9]);
     *plPositionZ = lZPosSteps;
 
-    int ret = WriteCommand(sCommand, 15);
+    ret = WriteCommand(sCommand, 15);
 
 	if (MP285::Instance()->GetDebugLogFlag() > 1)
 	{
-		osMessage.str("");
-		osMessage << "<ZStage::SetPositionSteps> Command(<0x6D>, X = <" << *plPositionX << ">,<" << *plPositionY << ">,<" << *plPositionZ << ">), ReturnCode=" << ret;
-		this->LogMessage(osMessage.str().c_str());
+		//osMessage.str("");
+		osMessage << "<ZStage::_SetPositionSteps> Command(<0x6D>, X = <" << *plPositionX << ">,<" << *plPositionY << ">,<" << *plPositionZ << ">), ReturnCode=" << ret;
+		LogMessage(osMessage.str().c_str());
 	}
 
     if (ret != DEVICE_OK)  return ret;
 
-	double dVelocity = (double) (MP285::Instance()->GetVelocity() * (long) MP285::Instance()->GetUm2UStep());
-	long lOldZPosSteps = (long) (MP285::Instance()->GetPositionZ() * (double) MP285::Instance()->GetUm2UStep());
-	double dSteps = (double)labs(lZPosSteps-lOldZPosSteps);
-    unsigned long dwSleep = (unsigned long) ((dSteps / dVelocity) * 1.2);
-    CDeviceUtils::SleepMs(dwSleep);
+	double dVelocity = (double)MP285::Instance()->GetVelocity() * (double)MP285::Instance()->GetUm2UStep();
+	double dSec = 0.;
+	if (MP285::GetMotionMode == 0)
+	{
+		long lOldZPosSteps = (long)MP285::Instance()->GetPositionZ();
+		dSec = (double)labs(lZPosSteps-lOldZPosSteps) / dVelocity;
+	}
+	else
+	{
+		dSec = (double)labs(lZPosSteps) / dVelocity;
+	}
+    long lSleep = (long)(dSec * 120.);
+
+    CDeviceUtils::SleepMs(lSleep);
     
 	if (MP285::Instance()->GetDebugLogFlag() > 1)
 	{
 		osMessage.str("");
-		osMessage << "<ZStage::SetPositionSteps> Sleep..." << dwSleep << " millisec...";
-		this->LogMessage(osMessage.str().c_str());
+		osMessage << "<ZStage::_SetPositionSteps> Sleep..." << lSleep << " millisec...";
+		LogMessage(osMessage.str().c_str());
 	}
 
     bool yCommError = true;
@@ -405,7 +586,7 @@ int ZStage::SetPositionSteps(long lZPosSteps)
         ret = ReadMessage(sResponse, 2);
 
         //char sCommStat[30];
-        yCommError = CheckError(sResponse[0]) !=0;
+		yCommError = CheckError(sResponse[0]) != MPError::MPERR_OK;
         //if (yCommError)
         //{
         //    sprintf(sCommStat, "Error Code ==> <%2x>", sResponse[0]);
@@ -420,7 +601,7 @@ int ZStage::SetPositionSteps(long lZPosSteps)
 
     if (ret != DEVICE_OK) return ret;
 
-    return DEVICE_OK;
+	return DEVICE_OK;
 }
 
 //
@@ -517,39 +698,41 @@ int ZStage::OnGetPositionZ(MM::PropertyBase* pProp, MM::ActionType eAct)
 
 	osMessage.str("");
 
-    if (eAct == MM::BeforeGet)
-    {
+    //if (eAct == MM::BeforeGet)
+    //{
+    //    pProp->Set(dPos);
+	//
+	//	if (MP285::Instance()->GetDebugLogFlag() > 1)
+	//	{
+	//		osMessage << "<MP285Ctrl::OnGetPositionZ> BeforeGet(" << MP285::Instance()->GetMPStr(MP285::MPSTR_SetPositionX).c_str() << " = [" << dPos << "], ReturnCode = " << ret;
+	//		//this->LogMessage(osMessage.str().c_str());
+	//	}
+    //}
+    //if (eAct == MM::AfterSet)
+    //{
+        // pProp->Get(dPos);  // not used
+
+        ret = GetPositionUm(dPos);
+		dPos *= (double)MP285::Instance()->GetUm2UStep();
+		char sPos[20];
+		sprintf(sPos, "%ld", (long)dPos);
+
         pProp->Set(dPos);
 
 		if (MP285::Instance()->GetDebugLogFlag() > 1)
 		{
-			osMessage << "<MP285Ctrl::OnGetPositionZ> BeforeGet(" << MP285::Instance()->GetMPStr(MP285::MPSTR_SetPositionX).c_str() << " = [" << dPos << "], ReturnCode = " << ret;
+			osMessage << "<MP285Ctrl::OnGetPositionZ> AfterSet(" << MP285::Instance()->GetMPStr(MP285::MPSTR_SetPositionX).c_str() << " = [" << dPos << "," << sPos << "], ReturnCode = " << ret;
 			//this->LogMessage(osMessage.str().c_str());
 		}
-    }
-    else if (eAct == MM::AfterSet)
-    {
-        // pProp->Get(dPos);  // not used
-
-        ret = GetPositionUm(dPos);
-
-        if (ret == DEVICE_OK) pProp->Set(dPos);
 
 		if (MP285::Instance()->GetDebugLogFlag() > 1)
 		{
-			osMessage << "<MP285Ctrl::OnGetPositionZ> AfterSet(" << MP285::Instance()->GetMPStr(MP285::MPSTR_SetPositionX).c_str() << " = [" << dPos << "], ReturnCode = " << ret;
-			//this->LogMessage(osMessage.str().c_str());
+			osMessage << ")";
+			this->LogMessage(osMessage.str().c_str());
 		}
 
-    }
-
-	if (MP285::Instance()->GetDebugLogFlag() > 1)
-	{
-		osMessage << ")";
-		this->LogMessage(osMessage.str().c_str());
-	}
-
-    if (ret != DEVICE_OK) return ret;
+		if (ret != DEVICE_OK) return ret;
+    //}
 
     return DEVICE_OK;
 }
@@ -576,7 +759,10 @@ int ZStage::OnSetPositionZ(MM::PropertyBase* pProp, MM::ActionType eAct)
     {
         pProp->Get(dPos);
 
-        ret = SetPositionUm(dPos);
+		if (MP285::Instance()->GetMotionMode() == 0)
+			ret = SetPositionUm(dPos);
+		else
+			ret = SetRelativePositionUm(dPos);
 
 		if (MP285::Instance()->GetDebugLogFlag() > 1)
 		{
