@@ -55,14 +55,20 @@ public:
     // Stage API
     // ---------
 
+	// setup motion mode (1: relative, 0: relative
+	int SetMotionMode(long lMotionMode);
+
     // Move Z stage to position in um
     int SetPositionUm(double dZPosUm);
+	int SetRelativePositionUm(double dZPosUm);
 
     // Get Z stage position in um
     int GetPositionUm(double& dZPosUm);
 
     // Move Z stage to positiion in uSteps
     int SetPositionSteps(long lZPosSteps);
+	int SetRelativePositionSteps(long lZPosSteps);
+	int _SetPositionSteps(long lXPosSteps, long lYPosSteps, long lZPosSteps);
 
     // Get Z stage position in uSteps
     int GetPositionSteps(long& lZPosSteps);
