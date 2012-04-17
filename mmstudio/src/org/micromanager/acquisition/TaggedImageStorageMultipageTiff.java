@@ -50,6 +50,9 @@ public class TaggedImageStorageMultipageTiff implements TaggedImageStorage {
       directory_ = dir;
       tiffFileReaders_ = new HashMap<String,MultipageTiffReader>();
       
+           System.out.println("MP Start: " + System.currentTimeMillis());
+
+      
       // TODO: throw erroe if no existing dataset
       if (!newDataSet_) {
          openExistingDataSet();
@@ -192,6 +195,8 @@ public class TaggedImageStorageMultipageTiff implements TaggedImageStorage {
       newDataSet_ = false;
       try {
          currentWriter_.close();
+         System.out.println("MP End: " + System.currentTimeMillis());
+                 
       } catch (IOException ex) {
          ReportingUtils.logError(ex);
       }
