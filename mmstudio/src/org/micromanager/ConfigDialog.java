@@ -155,6 +155,8 @@ public class ConfigDialog extends MMDialog {
       actionMap.put("enter", new AbstractAction()  {
          public void actionPerformed(ActionEvent e)
          {
+            if (table_.isEditing() && table_.getCellEditor() != null)
+               table_.getCellEditor().stopCellEditing();
             okChosen();
          }
       });
@@ -238,6 +240,8 @@ public class ConfigDialog extends MMDialog {
       springLayout_.putConstraint(SpringLayout.NORTH, okButton_, 5, SpringLayout.NORTH, getContentPane());
       okButton_.addActionListener(new ActionListener() {
          public void actionPerformed(ActionEvent e) {
+            if (table_.isEditing() && table_.getCellEditor() != null)
+               table_.getCellEditor().stopCellEditing();
             okChosen();
          }
       });
