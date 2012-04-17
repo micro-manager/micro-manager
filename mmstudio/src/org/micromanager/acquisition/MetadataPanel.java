@@ -88,10 +88,10 @@ public class MetadataPanel extends JPanel
 
    /** Creates new form MetadataPanel */
    public MetadataPanel() {
-      makeContrastPanel();
-      initialize();
       imageMetadataModel_ = new MetadataTableModel();
       summaryMetadataModel_ = new MetadataTableModel();
+      makeContrastPanel();
+      initialize();
       GUIUtils.registerImageFocusListener(this);
       imageMetadataTable.setModel(imageMetadataModel_);
       summaryMetadataTable.setModel(summaryMetadataModel_);
@@ -292,7 +292,7 @@ public class MetadataPanel extends JPanel
 
          private void handleChange() {
             if (currentDisplay_ != null)
-               writeImageComments();
+               writeSummaryComments();
          }
 
          public void insertUpdate(DocumentEvent e) {
@@ -414,12 +414,14 @@ public class MetadataPanel extends JPanel
    }
 
    private void writeSummaryComments() {
+      System.out.println("Writing summary comments");
       if (currentDisplay_ == null)
          return;
       currentDisplay_.setSummaryComment(summaryCommentsTextArea.getText());    
    }
 
    private void writeImageComments() {
+      System.out.println("Writing image comments");
       if (currentDisplay_ == null)
          return;
       currentDisplay_.setImageComment(imageCommentsTextArea.getText());
@@ -451,7 +453,7 @@ public class MetadataPanel extends JPanel
     
       currentDisplay_ = getVirtualAcquisitionDisplay(win.getImagePlus()); 
       summaryCommentsTextArea.setText(currentDisplay_.getSummaryComment());
-      summaryMetadataModel_.setMetadata(currentDisplay_.getSummaryMetadata());
+      imageCommentsTextArea.setText(currentDisplay_.getImageComment());
       contrastPanel_.displayChanged(currentDisplay_);
       
       imageChangedUpdate(currentDisplay_);
@@ -477,14 +479,19 @@ public class MetadataPanel extends JPanel
     */
    public void imageChangedUpdate(VirtualAcquisitionDisplay disp) { 
       int tabSelected = tabbedPane.getSelectedIndex();
-      if (disp == null || !disp.isActiveDisplay())
-         return;
-      if (disp == null) {
+      if (disp == null || !disp.isActiveDisplay()) {
          imageMetadataModel_.setMetadata(null);
          summaryMetadataModel_.setMetadata(null);
-         summaryCommentsTextArea.setText(null);
+         summaryCommentsTextArea.setText("");
+         imageCommentsTextArea.setText("");
          contrastPanel_.imageChanged();
-      } else if (tabSelected == 1) { //Metadata
+      } else {
+         //Update image comment
+         imageCommentsTextArea.setText(disp.getImageComment());
+         //repaint histograms
+         if (tabSelected == 0) {
+            contrastPanel_.imageChanged();
+         }
          AcquisitionVirtualStack stack = disp.virtualStack_;
          if (stack != null) {
             int slice = disp.getHyperImage().getCurrentSlice();
@@ -498,14 +505,19 @@ public class MetadataPanel extends JPanel
                }
                imageMetadataModel_.setMetadata(md);
             }
-            summaryMetadataModel_.setMetadata(stack.getCache().getSummaryMetadata());
+            summaryMetadataModel_.setMetadata(disp.getSummaryMetadata());
          } else {
             imageMetadataModel_.setMetadata(null);
          }
+      }
+      
+      
+      if (tabSelected == 1) { //Metadata
+         
       } else if (tabSelected == 0) { //Histogram panel
-         contrastPanel_.imageChanged();
+         
       } else if (tabSelected == 2) { //Display and comments
-         imageCommentsTextArea.setText(disp.getImageComment());
+         
       }
    }
    
