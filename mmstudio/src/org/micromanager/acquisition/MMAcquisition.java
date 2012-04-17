@@ -270,7 +270,7 @@ public class MMAcquisition {
          imageFileManager = ImageUtils.newImageStorageInstance(dirName, false, null);
          if (imageFileManager == null)
             return;
-         imageCache = new MMImageCache(imageFileManager, false);
+         imageCache = new MMImageCache(imageFileManager);
       }
 
       if (virtual_ && !existing_) {
@@ -283,21 +283,23 @@ public class MMAcquisition {
             }
          }
          imageFileManager = ImageUtils.newImageStorageInstance(dirName, true, summary_);
-         imageCache = new MMImageCache(imageFileManager, false);
+         imageCache = new MMImageCache(imageFileManager);
       }
 
       if (!virtual_ && !existing_) {
          imageFileManager = new TaggedImageStorageRam(null);
-         imageCache = new MMImageCache(imageFileManager, false);
+         imageCache = new MMImageCache(imageFileManager);
       }
 
       if (!virtual_ && existing_) {
          String dirName = rootDirectory_ + File.separator + name;
-         imageFileManager = ImageUtils.newImageStorageInstance(dirName, false, null);
-         if (imageFileManager.getDataSetSize() > 0.9 * JavaUtils.getAvailableUnusedMemory()) {
+         TaggedImageStorage tempImageFileManager = ImageUtils.newImageStorageInstance(dirName, false, null);
+         imageCache = new MMImageCache(tempImageFileManager);
+         if (tempImageFileManager.getDataSetSize() > 0.9 * JavaUtils.getAvailableUnusedMemory()) {
             throw new MMScriptException("Not enough room in memory for this data set.\nTry opening as a virtual data set instead.");
          }
-         imageCache = new MMImageCache(imageFileManager, true);
+         imageFileManager = new TaggedImageStorageRam(null);
+         imageCache.saveAs(imageFileManager);
       }
 
       

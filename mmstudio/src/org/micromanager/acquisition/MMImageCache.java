@@ -5,6 +5,7 @@
 package org.micromanager.acquisition;
 
 import ij.CompositeImage;
+import ij.IJ;
 import ij.ImagePlus;
 import java.awt.Color;
 import org.micromanager.api.ImageCache;
@@ -14,6 +15,7 @@ import org.micromanager.api.TaggedImageStorage;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
+import javax.swing.SwingUtilities;
 import mmcorej.TaggedImage;
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -37,7 +39,6 @@ public class MMImageCache implements TaggedImageStorage, ImageCache {
    private int lastFrame_ = -1;
    private JSONObject lastTags_;
    private VirtualAcquisitionDisplay display_;
-   private TaggedImageStorage ramCacheStorage_ = null;
 
    public void addImageCacheListener(ImageCacheListener l) {
       imageStorageListeners_.add(l);
@@ -51,13 +52,9 @@ public class MMImageCache implements TaggedImageStorage, ImageCache {
       imageStorageListeners_.remove(l);
    }
 
-   public MMImageCache(TaggedImageStorage imageStorage, boolean ramCache) {
+   public MMImageCache(TaggedImageStorage imageStorage) {
       imageStorage_ = imageStorage;
       changingKeys_ = new HashSet<String>();
-      if (ramCache) {
-         ramCacheStorage_ = new TaggedImageStorageRam(imageStorage.getSummaryMetadata());
-         preloadImages();
-      }
    }
 
    private void preloadImages() {
@@ -65,20 +62,11 @@ public class MMImageCache implements TaggedImageStorage, ImageCache {
          public void run() {
             for (String label : MMImageCache.this.imageKeys()) {
                int pos[] = MDUtils.getIndices(label);
-               try {
-                  ramCacheStorage_.putImage(getImage(pos[0], pos[1], pos[2], pos[3]));
-                  Thread.sleep(10);
-               } catch (Exception ex) {
-                  ReportingUtils.logError(ex);
-               }
             }
          }
       }.start();
    }
 
-   public MMImageCache(TaggedImageStorage imageStorage) {
-      this(imageStorage, false);
-   }
 
    public void finished() {
       imageStorage_.finished();
@@ -124,14 +112,23 @@ public class MMImageCache implements TaggedImageStorage, ImageCache {
       if (newImageFileManager == null) {
          return;
       }
+      
       newImageFileManager.setSummaryMetadata(imageStorage_.getSummaryMetadata());
-      for (String label : this.imageKeys()) {
-         int pos[] = MDUtils.getIndices(label);
+      ArrayList<String> keys = new ArrayList<String>(imageKeys());
+      final int n = keys.size();
+      for (int i = 0; i < n; ++i) {
+         final int i1 = i;
+         int pos[] = MDUtils.getIndices(keys.get(i));
          try {
             newImageFileManager.putImage(getImage(pos[0], pos[1], pos[2], pos[3]));
          } catch (MMException ex) {
             ReportingUtils.logError(ex);
          }
+         SwingUtilities.invokeLater(new Runnable() {
+            public void run() {
+               IJ.showProgress(i1, n);
+            }
+         });
       }
       newImageFileManager.setDisplayAndComments(this.getDisplayAndComments());
 
@@ -143,9 +140,6 @@ public class MMImageCache implements TaggedImageStorage, ImageCache {
    public void putImage(TaggedImage taggedImg) {
       try {
          checkForChangingTags(taggedImg);
-         if (ramCacheStorage_ != null) {
-            ramCacheStorage_.putImage(taggedImg);
-         }
          imageStorage_.putImage(taggedImg);
          synchronized (this) {
             lastFrame_ = Math.max(lastFrame_, MDUtils.getFrameIndex(taggedImg.tags));
@@ -168,9 +162,6 @@ public class MMImageCache implements TaggedImageStorage, ImageCache {
 
    public TaggedImage getImage(int channel, int slice, int frame, int position) {
       TaggedImage taggedImg = null;
-      if (ramCacheStorage_ != null) {
-         taggedImg = ramCacheStorage_.getImage(channel, slice, frame, position);
-      }
       if (taggedImg == null) {
          taggedImg = imageStorage_.getImage(channel, slice, frame, position);
          if (taggedImg != null) {
@@ -183,9 +174,6 @@ public class MMImageCache implements TaggedImageStorage, ImageCache {
    public JSONObject getImageTags(int channel, int slice, int frame, int position) {
       String label = MDUtils.generateLabel(channel, slice, frame, position);
       JSONObject tags = null;
-      if (ramCacheStorage_ != null) {
-         ramCacheStorage_.getImageTags(channel, slice, frame, position);
-      }
       if (tags == null) {
          tags = imageStorage_.getImageTags(channel, slice, frame, position);
       }
@@ -275,9 +263,6 @@ public class MMImageCache implements TaggedImageStorage, ImageCache {
    }
 
    public JSONObject getSummaryMetadata() {
-      if (ramCacheStorage_ != null) {
-         return ramCacheStorage_.getSummaryMetadata();
-      }
       if (imageStorage_ == null) {
          ReportingUtils.logError("imageStorage_ is null in getSummaryMetadata");
          return null;
@@ -298,9 +283,6 @@ public class MMImageCache implements TaggedImageStorage, ImageCache {
    }
 
    public Set<String> imageKeys() {
-     if (ramCacheStorage_ != null) {
-         ramCacheStorage_.imageKeys();
-     }
      return imageStorage_.imageKeys();
    }
 
