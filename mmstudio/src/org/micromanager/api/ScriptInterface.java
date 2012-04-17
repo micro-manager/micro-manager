@@ -998,4 +998,10 @@ public interface ScriptInterface {
     * Open an existing data set
     */
    public void openAcquisitionData(String location, boolean inRAM);
+   
+   /* 
+    * Enabled or disable the ROI buttons on the main window.
+    */
+   public void enableRoiButtons(final boolean enabled);
+
 }

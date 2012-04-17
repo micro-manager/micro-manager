@@ -274,6 +274,8 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface, Device
    private volatile boolean ignorePropertyChanges_; 
 
    public static AtomicBoolean seriousErrorReported_ = new AtomicBoolean(false);
+   private JButton setRoiButton_;
+   private  JButton clearRoiButton_;
 
    public ImageWindow getImageWin() {
       return getSnapLiveWin();
@@ -402,6 +404,15 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface, Device
       return new Color(defaultColor);
    }
   
+   public void enableRoiButtons(final boolean enabled) {
+       SwingUtilities.invokeLater(new Runnable() {
+           public void run() {
+               setRoiButton_.setEnabled(enabled);
+               clearRoiButton_.setEnabled(enabled);
+           }
+       });
+   }
+   
     private void initializeHelpMenu() {
         // add help menu item
         final JMenu helpMenu = new JMenu();
@@ -1752,48 +1763,48 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface, Device
         
       });
 
-      final JButton setRoiButton = new JButton();
-      setRoiButton.setIcon(SwingResourceManager.getIcon(
+      setRoiButton_ = new JButton();
+      setRoiButton_.setIcon(SwingResourceManager.getIcon(
             MMStudioMainFrame.class,
             "/org/micromanager/icons/shape_handles.png"));
-      setRoiButton.setFont(new Font("Arial", Font.PLAIN, 10));
-      setRoiButton.setToolTipText("Set Region Of Interest to selected rectangle");
-      setRoiButton.addActionListener(new ActionListener() {
+      setRoiButton_.setFont(new Font("Arial", Font.PLAIN, 10));
+      setRoiButton_.setToolTipText("Set Region Of Interest to selected rectangle");
+      setRoiButton_.addActionListener(new ActionListener() {
 
          public void actionPerformed(ActionEvent e) {
             setROI();
          }
       });
-      topPanel.add(setRoiButton);
-      topLayout.putConstraint(SpringLayout.EAST, setRoiButton, 37,
+      topPanel.add(setRoiButton_);
+      topLayout.putConstraint(SpringLayout.EAST, setRoiButton_, 37,
             SpringLayout.WEST, topPanel);
-      topLayout.putConstraint(SpringLayout.WEST, setRoiButton, 7,
+      topLayout.putConstraint(SpringLayout.WEST, setRoiButton_, 7,
             SpringLayout.WEST, topPanel);
-      topLayout.putConstraint(SpringLayout.SOUTH, setRoiButton, 174,
+      topLayout.putConstraint(SpringLayout.SOUTH, setRoiButton_, 174,
             SpringLayout.NORTH, topPanel);
-      topLayout.putConstraint(SpringLayout.NORTH, setRoiButton, 154,
+      topLayout.putConstraint(SpringLayout.NORTH, setRoiButton_, 154,
             SpringLayout.NORTH, topPanel);
 
-      final JButton clearRoiButton = new JButton();
-      clearRoiButton.setIcon(SwingResourceManager.getIcon(
+      clearRoiButton_ = new JButton();
+      clearRoiButton_.setIcon(SwingResourceManager.getIcon(
             MMStudioMainFrame.class,
             "/org/micromanager/icons/arrow_out.png"));
-      clearRoiButton.setFont(new Font("Arial", Font.PLAIN, 10));
-      clearRoiButton.setToolTipText("Reset Region of Interest to full frame");
-      clearRoiButton.addActionListener(new ActionListener() {
+      clearRoiButton_.setFont(new Font("Arial", Font.PLAIN, 10));
+      clearRoiButton_.setToolTipText("Reset Region of Interest to full frame");
+      clearRoiButton_.addActionListener(new ActionListener() {
 
          public void actionPerformed(ActionEvent e) {
             clearROI();
          }
       });
-      topPanel.add(clearRoiButton);
-      topLayout.putConstraint(SpringLayout.EAST, clearRoiButton, 70,
+      topPanel.add(clearRoiButton_);
+      topLayout.putConstraint(SpringLayout.EAST, clearRoiButton_, 70,
             SpringLayout.WEST, topPanel);
-      topLayout.putConstraint(SpringLayout.WEST, clearRoiButton, 40,
+      topLayout.putConstraint(SpringLayout.WEST, clearRoiButton_, 40,
             SpringLayout.WEST, topPanel);
-      topLayout.putConstraint(SpringLayout.SOUTH, clearRoiButton, 174,
+      topLayout.putConstraint(SpringLayout.SOUTH, clearRoiButton_, 174,
             SpringLayout.NORTH, topPanel);
-      topLayout.putConstraint(SpringLayout.NORTH, clearRoiButton, 154,
+      topLayout.putConstraint(SpringLayout.NORTH, clearRoiButton_, 154,
             SpringLayout.NORTH, topPanel);
 
       final JLabel regionOfInterestLabel = new JLabel();
@@ -2011,38 +2022,38 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface, Device
    }
    
    private void overrideImageJMenu() {
-      final Menu colorMenu = ((Menu) Menus.getMenuBar().getMenu(2).getItem(5));
-      MenuItem stackToRGB = colorMenu.getItem(4);
-      final ActionListener ij = stackToRGB.getActionListeners()[0];
-      stackToRGB.removeActionListener(ij);
-      stackToRGB.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent e) {
-            ImagePlus img = WindowManager.getCurrentImage();
-            if (img != null && img instanceof VirtualAcquisitionDisplay.MMCompositeImage) {
-               int selection = JOptionPane.showConfirmDialog(img.getWindow(),
-                       "Because of the way Micro-Manager internally handles Color images, this command may\n"
-                       + "not work correctly.  An RGB Image/Stack can be created by splitting all channels\n"
-                       + "and then merging them.  Would you like Micro-Manager to perform this operation\n"
-                       + "automatically?\n\n"
-                       + "Yes--Split and merge channels to create RGB image/stack\n"
-                       + "No--Proceed with Stack to RGB command (may have unexpected effects on pixel data) ",
-                       "Convert Stack to RGB", JOptionPane.YES_NO_CANCEL_OPTION);
-               if (selection == 0) { //yes
-                  IJ.run("Split Channels");
-                  WindowManager.getCurrentImage().setTitle("BlueChannel");
-                  WindowManager.getImage(WindowManager.getNthImageID(2)).setTitle("GreenChannel");
-                  WindowManager.getImage(WindowManager.getNthImageID(1)).setTitle("RedChannel");
-                  
-                  IJ.run("Merge Channels...", "red=[RedChannel] green=[GreenChannel] blue=[BlueChannel] gray=*None*");
-               } else if (selection == 1) { //no
-                   ij.actionPerformed(e);
-               }
-            } else {
-               //If not an MM CompositImage, do the normal command
-               ij.actionPerformed(e);
-            }           
-         }});
+//      final Menu colorMenu = ((Menu) Menus.getMenuBar().getMenu(2).getItem(5));
+//      MenuItem stackToRGB = colorMenu.getItem(4);
+//      final ActionListener ij = stackToRGB.getActionListeners()[0];
+//      stackToRGB.removeActionListener(ij);
+//      stackToRGB.addActionListener(new ActionListener() {
+//         @Override
+//         public void actionPerformed(ActionEvent e) {
+//            ImagePlus img = WindowManager.getCurrentImage();
+//            if (img != null && img instanceof VirtualAcquisitionDisplay.MMCompositeImage) {
+//               int selection = JOptionPane.showConfirmDialog(img.getWindow(),
+//                       "Because of the way Micro-Manager internally handles Color images, this command may\n"
+//                       + "not work correctly.  An RGB Image/Stack can be created by splitting all channels\n"
+//                       + "and then merging them.  Would you like Micro-Manager to perform this operation\n"
+//                       + "automatically?\n\n"
+//                       + "Yes--Split and merge channels to create RGB image/stack\n"
+//                       + "No--Proceed with Stack to RGB command (may have unexpected effects on pixel data) ",
+//                       "Convert Stack to RGB", JOptionPane.YES_NO_CANCEL_OPTION);
+//               if (selection == 0) { //yes
+//                  IJ.run("Split Channels");
+//                  WindowManager.getCurrentImage().setTitle("BlueChannel");
+//                  WindowManager.getImage(WindowManager.getNthImageID(2)).setTitle("GreenChannel");
+//                  WindowManager.getImage(WindowManager.getNthImageID(1)).setTitle("RedChannel");
+//                  
+//                  IJ.run("Merge Channels...", "red=[RedChannel] green=[GreenChannel] blue=[BlueChannel] gray=*None*");
+//               } else if (selection == 1) { //no
+//                   ij.actionPerformed(e);
+//               }
+//            } else {
+//               //If not an MM CompositImage, do the normal command
+//               ij.actionPerformed(e);
+//            }           
+//         }});
    }
 
    private void handleException(Exception e, String msg) {
