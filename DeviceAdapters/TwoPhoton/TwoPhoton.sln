@@ -1,0 +1,44 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 10.00
+# Visual C++ Express 2008
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "TwoPhoton", "TwoPhoton.vcproj", "{CCF70670-40F9-4F6C-B202-0D1A2E0F21BD}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "NI100X", "..\NI100X\NI100X.vcproj", "{A25A294D-A3AC-4349-8EA6-24A83C5CD0B7}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Win32 = Debug|Win32
+		Debug|x64 = Debug|x64
+		Quick|Win32 = Quick|Win32
+		Quick|x64 = Quick|x64
+		Release|Win32 = Release|Win32
+		Release|x64 = Release|x64
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{CCF70670-40F9-4F6C-B202-0D1A2E0F21BD}.Debug|Win32.ActiveCfg = Debug|Win32
+		{CCF70670-40F9-4F6C-B202-0D1A2E0F21BD}.Debug|Win32.Build.0 = Debug|Win32
+		{CCF70670-40F9-4F6C-B202-0D1A2E0F21BD}.Debug|x64.ActiveCfg = Debug|x64
+		{CCF70670-40F9-4F6C-B202-0D1A2E0F21BD}.Debug|x64.Build.0 = Debug|x64
+		{CCF70670-40F9-4F6C-B202-0D1A2E0F21BD}.Quick|Win32.ActiveCfg = Release|x64
+		{CCF70670-40F9-4F6C-B202-0D1A2E0F21BD}.Quick|x64.ActiveCfg = Release|x64
+		{CCF70670-40F9-4F6C-B202-0D1A2E0F21BD}.Quick|x64.Build.0 = Release|x64
+		{CCF70670-40F9-4F6C-B202-0D1A2E0F21BD}.Release|Win32.ActiveCfg = Release|Win32
+		{CCF70670-40F9-4F6C-B202-0D1A2E0F21BD}.Release|Win32.Build.0 = Release|Win32
+		{CCF70670-40F9-4F6C-B202-0D1A2E0F21BD}.Release|x64.ActiveCfg = Release|x64
+		{CCF70670-40F9-4F6C-B202-0D1A2E0F21BD}.Release|x64.Build.0 = Release|x64
+		{A25A294D-A3AC-4349-8EA6-24A83C5CD0B7}.Debug|Win32.ActiveCfg = Debug|Win32
+		{A25A294D-A3AC-4349-8EA6-24A83C5CD0B7}.Debug|Win32.Build.0 = Debug|Win32
+		{A25A294D-A3AC-4349-8EA6-24A83C5CD0B7}.Debug|x64.ActiveCfg = Debug|x64
+		{A25A294D-A3AC-4349-8EA6-24A83C5CD0B7}.Debug|x64.Build.0 = Debug|x64
+		{A25A294D-A3AC-4349-8EA6-24A83C5CD0B7}.Quick|Win32.ActiveCfg = Release|x64
+		{A25A294D-A3AC-4349-8EA6-24A83C5CD0B7}.Quick|x64.ActiveCfg = Release|x64
+		{A25A294D-A3AC-4349-8EA6-24A83C5CD0B7}.Quick|x64.Build.0 = Release|x64
+		{A25A294D-A3AC-4349-8EA6-24A83C5CD0B7}.Release|Win32.ActiveCfg = Release|Win32
+		{A25A294D-A3AC-4349-8EA6-24A83C5CD0B7}.Release|Win32.Build.0 = Release|Win32
+		{A25A294D-A3AC-4349-8EA6-24A83C5CD0B7}.Release|x64.ActiveCfg = Release|x64
+		{A25A294D-A3AC-4349-8EA6-24A83C5CD0B7}.Release|x64.Build.0 = Release|x64
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal

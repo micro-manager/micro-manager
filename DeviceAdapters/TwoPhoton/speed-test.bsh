@@ -1,0 +1,31 @@
+import java.lang.Math;
+import javax.swing.JOptionPane;
+
+int numFrames = 20;
+int integrations = 5;
+int channels = 1;
+
+camera = mmc.getCameraDevice();
+gui.clearMessageWindow();
+
+startTime = System.currentTimeMillis();
+mmc.setExposure(integrations);
+
+gui.message ("Speed test...");
+for (int i=0; i<numFrames; i++)
+{
+	for (int j=0; j<channels; j++)
+	{
+		if (j==0)
+			mmc.setExposure(integrations);
+		else
+			mmc.setExposure(0);
+		mmc.snapImage();
+   	mmc.getImage(j);
+	}
+}
+
+totalTime = System.currentTimeMillis() - startTime;
+frameInterval = (double)totalTime / numFrames;
+gui.message("Done!\nAcquired " + numFrames + "/" + integrations + " frames, " + channels + " ch, at " + frameInterval + " ms per frame");
+gui.message("Average frame rate: " + 1000.0/frameInterval*integrations + " fps");

@@ -1,0 +1,17 @@
+mmc.logMessage("Processing 100x startup script...");
+
+// load HCS module
+response = gui.installPlugin("com.imaging100x.twophoton.TwoPhotonControl");
+mmc.logMessage(response);
+
+response = gui.installPlugin("com.imaging100x.dualcamera.DualCameraControl");
+mmc.logMessage(response);
+
+response = gui.installPlugin("org.micromanager.pixelcalibrator.PixelCalibratorPlugin");
+mmc.logMessage(response);
+
+response = gui.installPlugin("org.micromanager.slideexplorer.SlideExplorerPlugin");
+mmc.logMessage(response);
+
+
+mmc.logMessage("100X startup script finished.");
