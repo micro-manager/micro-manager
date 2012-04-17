@@ -559,7 +559,8 @@
       (when (and (@state :init-continuous-focus)
                  (not (core isContinuousFocusEnabled)))
         (core enableContinuousFocus true))
-      (return-config))
+      (return-config)
+      (. gui enableRoiButtons true))
     (catch Throwable t (ReportingUtils/showError t "Acquisition cleanup failed."))))
 
 ;; running events
@@ -615,6 +616,7 @@
     (def acq-settings settings)
     (log (str "Starting MD Acquisition: " settings))
     (. gui enableLiveMode false)
+    (. gui enableRoiButtons false)
     (prepare-state this)
     (binding [state (.state this)]
       (def last-state state) ; for debugging
