@@ -1,0 +1,50 @@
+<!-- Ant makefile for the TwoPhoton Control plugin  -->
+<!-- This file assumes Micro-Manager project tree structure -->
+
+<project name="twophoton" default="buildTwoPhoton">
+
+	<!-- Specify the system path to the ImageJ root directory -->
+	<property name="ImageJPath" value="C:/Program Files/ImageJ"/>
+	<property name="InstallRoot" value="C:/projects/micromanager1.4/Install_x64/micro-manager"/>
+
+	<!-- Do not modify from this point on -->
+	<property name="IJ" value="../../micromanager1.4/classext/ij.jar"/>
+	<property name="beanshell" value="../../micromanager1.4/classext/bsh-2.0b4.jar"/>
+	<property name="MMCoreJ" value="../../micromanager1.4/bin_x64/MMCoreJ.jar"/>
+	<property name="MMJ" value="../../micromanager1.4/mmstudio/MMJ_.jar"/>
+	<property name="MMPluginDir-inst" value="${InstallRoot}/mmplugins"/>
+	<property name="Runtime" value="../../micromanager1.4/bin_x64"/>
+   <property name="PluginName" value="twophoton100x"/>
+	<property name="installImage" value="${InstallRoot}"/>
+
+	<path id="project.class.path">
+		<pathelement location="${IJ}" />
+		<pathelement location="${beanshell}" />
+		<pathelement location="${MMCoreJ}" />
+		<pathelement location="${MMJ}"/>
+	</path>
+
+	<target name="compileTwoPhoton" description="Compile TwoPhoton plugin">
+		<mkdir dir="build" />
+		<javac srcdir="." destdir="./build" optimize="on" source="1.5" target="1.5" debug="on">
+			<classpath refid="project.class.path" />
+		</javac>
+	</target>
+
+	<target name="buildTwoPhoton" description="Build twophoton100x.jar">
+
+		<jar jarfile="${PluginName}.jar" basedir="build" />
+
+		<mkdir dir="${MMPluginDir-inst}" />
+		<copy file="${PluginName}.jar" todir="${Runtime}" />
+		<copy file="${PluginName}.jar" todir="${MMPluginDir-inst}/" />
+      <copy file="${Runtime}/mmgr_dal_TwoPhoton.dll" todir="${InstallRoot}/" />
+      <copy file="${Runtime}/mmgr_dal_NI100X.dll" todir="${InstallRoot}/" />
+	</target>
+
+	<target name="cleanTwoPhoton" description="Delete the twophoton100x build files.">
+		<delete dir="build" />
+		<delete file="${PluginName}.jar" />
+	</target>
+
+</project>
