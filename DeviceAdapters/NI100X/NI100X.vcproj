@@ -44,7 +44,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="..\..\..\..\micromanager1.4\MMDevice;&quot;..\..\..\3rdparty-100x\NationalInstruments\DAQmx\include&quot;"
+				AdditionalIncludeDirectories="..\..\MMDevice;..\..\..\3rdparty\NationalInstruments\DAQmx_9.2\include"
 				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_USRDLL;MODULE_EXPORTS"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
@@ -67,7 +67,7 @@
 				AdditionalDependencies="nidaqmx.lib"
 				OutputFile="$(OutDir)\mmgr_dal_$(ProjectName).dll"
 				LinkIncremental="2"
-				AdditionalLibraryDirectories="&quot;..\..\..\3rdparty-100x\NationalInstruments\DAQmx\lib\msvc&quot;"
+				AdditionalLibraryDirectories="..\..\..\3rdparty\NationalInstruments\DAQmx_9.2\lib32\msvc"
 				GenerateDebugInformation="true"
 				SubSystem="2"
 				TargetMachine="1"
@@ -92,7 +92,7 @@
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
-				CommandLine="copy &quot;$(TargetPath)&quot; ..\..\..\..\micromanager1.4\bin_win32"
+				CommandLine="copy &quot;$(TargetPath)&quot; ..\..\bin_$(PlatformName)"
 			/>
 		</Configuration>
 		<Configuration
@@ -121,7 +121,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="..\..\..\..\micromanager1.4\MMDevice;&quot;..\..\..\3rdparty-100x\NationalInstruments\DAQmx_9.2\include&quot;"
+				AdditionalIncludeDirectories="..\..\MMDevice;..\..\..\3rdparty\NationalInstruments\DAQmx_9.2\include"
 				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_USRDLL;MODULE_EXPORTS"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
@@ -144,7 +144,7 @@
 				AdditionalDependencies="nidaqmx.lib"
 				OutputFile="$(OutDir)\mmgr_dal_$(ProjectName).dll"
 				LinkIncremental="2"
-				AdditionalLibraryDirectories="&quot;..\..\..\3rdparty-100x\NationalInstruments\DAQmx_9.2\lib64\msvc&quot;"
+				AdditionalLibraryDirectories="..\..\..\3rdparty\NationalInstruments\DAQmx_9.2\lib64\msvc"
 				GenerateDebugInformation="true"
 				SubSystem="2"
 				TargetMachine="17"
@@ -169,7 +169,7 @@
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
-				CommandLine="copy &quot;$(TargetPath)&quot; ..\..\..\..\micromanager1.4\bin_x64"
+				CommandLine="copy &quot;$(TargetPath)&quot; ..\..\bin_$(PlatformName)"
 			/>
 		</Configuration>
 		<Configuration
@@ -199,7 +199,7 @@
 				Name="VCCLCompilerTool"
 				Optimization="2"
 				EnableIntrinsicFunctions="true"
-				AdditionalIncludeDirectories="..\..\..\..\micromanager1.4\MMDevice;&quot;..\..\..\3rdparty-100x\NationalInstruments\DAQmx\include&quot;"
+				AdditionalIncludeDirectories="..\..\MMDevice;..\..\..\3rdparty\NationalInstruments\DAQmx_9.2\include"
 				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;MODULE_EXPORTS"
 				RuntimeLibrary="0"
 				EnableFunctionLevelLinking="true"
@@ -221,7 +221,7 @@
 				AdditionalDependencies="nidaqmx.lib"
 				OutputFile="$(OutDir)\mmgr_dal_$(ProjectName).dll"
 				LinkIncremental="1"
-				AdditionalLibraryDirectories="&quot;..\..\..\3rdparty-100x\NationalInstruments\DAQmx\lib\msvc&quot;"
+				AdditionalLibraryDirectories="..\..\..\3rdparty\NationalInstruments\DAQmx_9.2\lib32\msvc"
 				GenerateDebugInformation="true"
 				SubSystem="2"
 				OptimizeReferences="2"
@@ -248,7 +248,7 @@
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
-				CommandLine="copy &quot;$(TargetPath)&quot; ..\..\..\..\micromanager1.4\bin_win32"
+				CommandLine="copy &quot;$(TargetPath)&quot; ..\..\bin_$(PlatformName)"
 			/>
 		</Configuration>
 		<Configuration
@@ -279,7 +279,7 @@
 				Name="VCCLCompilerTool"
 				Optimization="2"
 				EnableIntrinsicFunctions="true"
-				AdditionalIncludeDirectories="..\..\..\..\micromanager1.4\MMDevice;&quot;..\..\..\3rdparty-100x\NationalInstruments\DAQmx_9.2\include&quot;"
+				AdditionalIncludeDirectories="..\..\MMDevice;..\..\..\3rdparty\NationalInstruments\DAQmx_9.2\include"
 				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;MODULE_EXPORTS"
 				RuntimeLibrary="0"
 				EnableFunctionLevelLinking="true"
@@ -301,7 +301,7 @@
 				AdditionalDependencies="nidaqmx.lib"
 				OutputFile="$(OutDir)\mmgr_dal_$(ProjectName).dll"
 				LinkIncremental="1"
-				AdditionalLibraryDirectories="&quot;..\..\..\3rdparty-100x\NationalInstruments\DAQmx_9.2\lib64\msvc&quot;"
+				AdditionalLibraryDirectories="..\..\..\3rdparty\NationalInstruments\DAQmx_9.2\lib64\msvc"
 				GenerateDebugInformation="true"
 				SubSystem="2"
 				OptimizeReferences="2"
@@ -328,7 +328,7 @@
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
-				CommandLine="copy &quot;$(TargetPath)&quot; ..\..\..\..\micromanager1.4\bin_x64"
+				CommandLine="copy &quot;$(TargetPath)&quot; ..\..\bin_$(PlatformName)"
 			/>
 		</Configuration>
 	</Configurations>
@@ -341,11 +341,11 @@
 			UniqueIdentifier="{52611709-3842-4541-9E12-32CE268308D7}"
 			>
 			<File
-				RelativePath="..\..\..\..\micromanager1.4\MMDevice\DeviceUtils.cpp"
+				RelativePath="..\..\MMDevice\DeviceUtils.cpp"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\..\micromanager1.4\MMDevice\ModuleInterface.cpp"
+				RelativePath="..\..\MMDevice\ModuleInterface.cpp"
 				>
 			</File>
 			<File
@@ -361,7 +361,7 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\..\micromanager1.4\MMDevice\Property.cpp"
+				RelativePath="..\..\MMDevice\Property.cpp"
 				>
 			</File>
 		</Filter>
@@ -371,27 +371,23 @@
 			UniqueIdentifier="{BB3DF98E-3C7C-4994-B4EB-A48FC5F9FE55}"
 			>
 			<File
-				RelativePath="..\..\..\..\micromanager1.4\MMDevice\DeviceBase.h"
+				RelativePath="..\..\MMDevice\DeviceBase.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\..\micromanager1.4\MMDevice\DeviceThreads.h"
+				RelativePath="..\..\MMDevice\DeviceUtils.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\..\micromanager1.4\MMDevice\DeviceUtils.h"
+				RelativePath="..\..\MMDevice\MMDevice.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\..\micromanager1.4\MMDevice\MMDevice.h"
+				RelativePath="..\..\MMDevice\MMDeviceConstants.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\..\micromanager1.4\MMDevice\MMDeviceConstants.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\..\micromanager1.4\MMDevice\ModuleInterface.h"
+				RelativePath="..\..\MMDevice\ModuleInterface.h"
 				>
 			</File>
 			<File
@@ -399,7 +395,7 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\..\micromanager1.4\MMDevice\Property.h"
+				RelativePath="..\..\MMDevice\Property.h"
 				>
 			</File>
 		</Filter>
