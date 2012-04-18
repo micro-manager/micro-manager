@@ -25,22 +25,22 @@
     <AuxValue name="FormSettings_listenerGenerationStyle" type="java.lang.Integer" value="0"/>
     <AuxValue name="FormSettings_variablesLocal" type="java.lang.Boolean" value="false"/>
     <AuxValue name="FormSettings_variablesModifier" type="java.lang.Integer" value="2"/>
-    <AuxValue name="designerSize" type="java.awt.Dimension" value="-84,-19,0,5,115,114,0,18,106,97,118,97,46,97,119,116,46,68,105,109,101,110,115,105,111,110,65,-114,-39,-41,-84,95,68,20,2,0,2,73,0,6,104,101,105,103,104,116,73,0,5,119,105,100,116,104,120,112,0,0,3,-2,0,0,3,-53"/>
   </AuxValues>
 
   <Layout>
     <DimensionLayout dim="0">
       <Group type="103" groupAlignment="0" attributes="0">
-          <Group type="102" attributes="0">
-              <EmptySpace min="10" pref="10" max="10" attributes="0"/>
+          <Group type="102" max="-2" attributes="0">
+              <EmptySpace min="-2" pref="10" max="-2" attributes="0"/>
               <Group type="103" groupAlignment="0" attributes="0">
-                  <Group type="102" attributes="0">
-                      <Component id="saveButton" min="-2" pref="70" max="-2" attributes="0"/>
-                      <Component id="saveFormatBox_" min="-2" pref="90" max="-2" attributes="0"/>
-                  </Group>
                   <Group type="102" attributes="0">
                       <EmptySpace min="50" pref="50" max="50" attributes="0"/>
                       <Component id="jLabel7" min="-2" max="-2" attributes="0"/>
+                  </Group>
+                  <Group type="102" attributes="0">
+                      <Component id="saveButton" min="-2" pref="70" max="-2" attributes="0"/>
+                      <EmptySpace min="6" pref="6" max="6" attributes="0"/>
+                      <Component id="saveFormatBox_" min="-2" pref="90" max="-2" attributes="0"/>
                   </Group>
                   <Group type="102" attributes="0">
                       <Component id="loadButton" min="-2" pref="70" max="-2" attributes="0"/>
@@ -53,39 +53,33 @@
                       <Component id="infoButton_" min="-2" pref="81" max="-2" attributes="0"/>
                   </Group>
               </Group>
-              <EmptySpace min="9" pref="9" max="9" attributes="0"/>
+              <EmptySpace min="-2" pref="9" max="-2" attributes="0"/>
+              <Component id="jSeparator3" min="-2" max="-2" attributes="0"/>
+              <EmptySpace min="-2" pref="8" max="-2" attributes="0"/>
               <Group type="103" groupAlignment="0" attributes="0">
                   <Group type="102" attributes="0">
-                      <EmptySpace min="80" pref="80" max="80" attributes="0"/>
+                      <EmptySpace min="70" pref="70" max="70" attributes="0"/>
                       <Component id="jLabel5" min="-2" max="-2" attributes="0"/>
                   </Group>
                   <Group type="102" attributes="0">
-                      <EmptySpace min="10" pref="10" max="10" attributes="0"/>
+                      <Component id="c2StandardButton" min="-2" pref="82" max="-2" attributes="0"/>
+                      <EmptySpace min="18" pref="18" max="18" attributes="0"/>
+                      <Component id="referenceName_" min="-2" pref="60" max="-2" attributes="0"/>
+                  </Group>
+                  <Group type="102" attributes="0">
                       <Component id="c2CorrectButton" min="-2" pref="82" max="-2" attributes="0"/>
                       <EmptySpace min="8" pref="8" max="8" attributes="0"/>
                       <Component id="pairsButton" min="-2" max="-2" attributes="0"/>
                   </Group>
                   <Group type="102" attributes="0">
-                      <EmptySpace min="110" pref="110" max="110" attributes="0"/>
-                      <Component id="referenceName_" min="-2" pref="60" max="-2" attributes="0"/>
-                  </Group>
-                  <Group type="102" attributes="0">
-                      <EmptySpace min="160" pref="160" max="160" attributes="0"/>
+                      <EmptySpace min="90" pref="90" max="90" attributes="0"/>
+                      <Component id="pairsMaxDistanceField_" min="-2" pref="60" max="-2" attributes="0"/>
                       <Component id="SigmaLabel2" min="-2" pref="20" max="-2" attributes="0"/>
                   </Group>
-                  <Group type="102" attributes="0">
-                      <EmptySpace min="100" pref="100" max="100" attributes="0"/>
-                      <Component id="pairsMaxDistanceField_" min="-2" pref="60" max="-2" attributes="0"/>
-                  </Group>
-                  <Component id="jSeparator3" min="-2" max="-2" attributes="0"/>
-                  <Group type="102" attributes="0">
-                      <EmptySpace min="10" pref="10" max="10" attributes="0"/>
-                      <Component id="c2StandardButton" min="-2" pref="82" max="-2" attributes="0"/>
-                  </Group>
               </Group>
-              <EmptySpace min="14" pref="14" max="14" attributes="0"/>
+              <EmptySpace min="-2" pref="4" max="-2" attributes="0"/>
               <Component id="jSeparator2" min="-2" max="-2" attributes="0"/>
-              <EmptySpace min="4" pref="4" max="4" attributes="0"/>
+              <EmptySpace min="-2" pref="14" max="-2" attributes="0"/>
               <Group type="103" groupAlignment="0" attributes="0">
                   <Group type="102" attributes="0">
                       <EmptySpace min="40" pref="40" max="40" attributes="0"/>
@@ -101,27 +95,29 @@
                       </Group>
                       <EmptySpace min="2" pref="2" max="2" attributes="0"/>
                       <Group type="103" groupAlignment="0" attributes="0">
-                          <Component id="logLogCheckBox_" min="-2" max="-2" attributes="0"/>
                           <Component id="plotComboBox_" min="-2" pref="80" max="-2" attributes="0"/>
+                          <Component id="logLogCheckBox_" min="-2" max="-2" attributes="0"/>
                       </Group>
                   </Group>
                   <Group type="102" attributes="0">
-                      <Component id="averageTrackButton_" min="-2" pref="60" max="-2" attributes="0"/>
-                      <Component id="straightenTrackButton_" min="-2" pref="73" max="-2" attributes="0"/>
+                      <Component id="averageTrackButton_" min="-2" max="-2" attributes="0"/>
+                      <EmptySpace min="6" pref="6" max="6" attributes="0"/>
+                      <Component id="straightenTrackButton_" min="-2" max="-2" attributes="0"/>
                   </Group>
-                  <Group type="102" attributes="0">
-                      <Component id="mathButton_" min="-2" pref="60" max="-2" attributes="0"/>
-                      <Component id="centerTrackButton_" min="-2" pref="73" max="-2" attributes="0"/>
+                  <Group type="102" alignment="1" attributes="0">
+                      <Component id="mathButton_" min="-2" pref="70" max="-2" attributes="0"/>
+                      <EmptySpace type="unrelated" max="-2" attributes="0"/>
+                      <Component id="centerTrackButton_" min="-2" pref="80" max="-2" attributes="0"/>
                   </Group>
               </Group>
-              <EmptySpace min="2" pref="2" max="2" attributes="0"/>
+              <EmptySpace min="-2" max="-2" attributes="0"/>
               <Component id="jSeparator4" min="-2" max="-2" attributes="0"/>
-              <EmptySpace min="7" pref="7" max="7" attributes="0"/>
+              <EmptySpace min="-2" pref="7" max="-2" attributes="0"/>
               <Group type="103" groupAlignment="0" attributes="0">
-                  <Component id="unjitterButton_" min="-2" pref="75" max="-2" attributes="0"/>
-                  <Component id="linkButton_" min="-2" max="-2" attributes="0"/>
+                  <Component id="unjitterButton_" min="-2" max="-2" attributes="0"/>
+                  <Component id="linkButton_" min="-2" pref="89" max="-2" attributes="0"/>
               </Group>
-              <EmptySpace min="24" pref="24" max="24" attributes="0"/>
+              <EmptySpace min="-2" pref="10" max="-2" attributes="0"/>
               <Group type="103" groupAlignment="0" attributes="0">
                   <Group type="102" attributes="0">
                       <EmptySpace min="60" pref="60" max="60" attributes="0"/>
@@ -131,6 +127,7 @@
                       <Component id="renderButton_" min="-2" max="-2" attributes="0"/>
                       <EmptySpace min="3" pref="3" max="3" attributes="0"/>
                       <Component id="visualizationModel_" min="-2" pref="110" max="-2" attributes="0"/>
+                      <EmptySpace min="6" pref="6" max="6" attributes="0"/>
                       <Component id="visualizationMagnification_" min="-2" pref="70" max="-2" attributes="0"/>
                   </Group>
                   <Group type="102" attributes="0">
@@ -156,14 +153,14 @@
                           <Component id="jLabel3" min="-2" max="-2" attributes="0"/>
                           <Component id="jLabel2" min="-2" max="-2" attributes="0"/>
                       </Group>
-                      <EmptySpace min="2" pref="2" max="2" attributes="0"/>
+                      <EmptySpace min="4" pref="4" max="4" attributes="0"/>
                       <Group type="103" groupAlignment="0" attributes="0">
-                          <Component id="sigmaMax_" min="-2" pref="40" max="-2" attributes="0"/>
-                          <Component id="intensityMax_" min="-2" pref="40" max="-2" attributes="0"/>
+                          <Component id="sigmaMax_" min="-2" pref="48" max="-2" attributes="0"/>
+                          <Component id="intensityMax_" min="-2" pref="48" max="-2" attributes="0"/>
                       </Group>
                   </Group>
               </Group>
-              <EmptySpace min="15" pref="15" max="15" attributes="0"/>
+              <EmptySpace min="-2" pref="9" max="-2" attributes="0"/>
               <Group type="103" groupAlignment="0" attributes="0">
                   <Component id="SigmaLabel3" min="-2" max="-2" attributes="0"/>
                   <Group type="102" attributes="0">
@@ -171,28 +168,27 @@
                       <Component id="IntLabel2" min="-2" pref="10" max="-2" attributes="0"/>
                   </Group>
               </Group>
+              <EmptySpace min="-2" pref="8" max="-2" attributes="0"/>
           </Group>
-          <Component id="jScrollPane1" min="-2" pref="971" max="-2" attributes="0"/>
+          <Component id="jScrollPane1" min="-2" pref="940" max="-2" attributes="0"/>
       </Group>
     </DimensionLayout>
     <DimensionLayout dim="1">
       <Group type="103" groupAlignment="0" attributes="0">
-          <Group type="102" attributes="0">
-              <Group type="103" groupAlignment="0" attributes="0">
+          <Group type="102" max="-2" attributes="0">
+              <Group type="103" groupAlignment="0" max="-2" attributes="0">
                   <Group type="102" attributes="0">
                       <EmptySpace min="13" pref="13" max="13" attributes="0"/>
+                      <Component id="jLabel7" min="-2" max="-2" attributes="0"/>
+                      <EmptySpace min="5" pref="5" max="5" attributes="0"/>
                       <Group type="103" groupAlignment="0" attributes="0">
                           <Group type="102" attributes="0">
-                              <EmptySpace min="20" pref="20" max="20" attributes="0"/>
+                              <EmptySpace min="3" pref="3" max="3" attributes="0"/>
                               <Component id="saveButton" min="-2" pref="19" max="-2" attributes="0"/>
                           </Group>
-                          <Group type="102" attributes="0">
-                              <EmptySpace min="10" pref="10" max="10" attributes="0"/>
-                              <Component id="saveFormatBox_" min="-2" pref="40" max="-2" attributes="0"/>
-                          </Group>
-                          <Component id="jLabel7" min="-2" max="-2" attributes="0"/>
+                          <Component id="saveFormatBox_" min="-2" pref="22" max="-2" attributes="0"/>
                       </Group>
-                      <EmptySpace min="10" pref="10" max="10" attributes="0"/>
+                      <EmptySpace min="21" pref="21" max="21" attributes="0"/>
                       <Group type="103" groupAlignment="0" attributes="0">
                           <Component id="loadButton" min="-2" pref="19" max="-2" attributes="0"/>
                           <Component id="removeButton" min="-2" pref="19" max="-2" attributes="0"/>
@@ -205,60 +201,53 @@
                   </Group>
                   <Group type="102" attributes="0">
                       <EmptySpace min="3" pref="3" max="3" attributes="0"/>
-                      <Group type="103" groupAlignment="0" attributes="0">
-                          <Group type="102" attributes="0">
-                              <EmptySpace min="10" pref="10" max="10" attributes="0"/>
-                              <Component id="jLabel5" min="-2" max="-2" attributes="0"/>
-                              <EmptySpace min="46" pref="46" max="46" attributes="0"/>
-                              <Group type="103" groupAlignment="0" attributes="0">
-                                  <Component id="c2CorrectButton" min="-2" pref="19" max="-2" attributes="0"/>
-                                  <Component id="pairsButton" min="-2" pref="19" max="-2" attributes="0"/>
-                              </Group>
-                          </Group>
-                          <Group type="102" attributes="0">
-                              <EmptySpace min="30" pref="30" max="30" attributes="0"/>
-                              <Component id="referenceName_" min="-2" max="-2" attributes="0"/>
-                          </Group>
-                          <Group type="102" attributes="0">
-                              <EmptySpace min="90" pref="90" max="90" attributes="0"/>
-                              <Component id="SigmaLabel2" min="-2" pref="20" max="-2" attributes="0"/>
-                          </Group>
-                          <Group type="102" attributes="0">
-                              <EmptySpace min="90" pref="90" max="90" attributes="0"/>
-                              <Component id="pairsMaxDistanceField_" min="-2" pref="20" max="-2" attributes="0"/>
-                          </Group>
-                          <Component id="jSeparator3" min="-2" pref="120" max="-2" attributes="0"/>
-                          <Group type="102" attributes="0">
-                              <EmptySpace min="30" pref="30" max="30" attributes="0"/>
-                              <Component id="c2StandardButton" min="-2" pref="19" max="-2" attributes="0"/>
-                          </Group>
-                      </Group>
+                      <Component id="jSeparator3" min="-2" pref="120" max="-2" attributes="0"/>
                   </Group>
-                  <Component id="jSeparator2" min="-2" pref="130" max="-2" attributes="0"/>
                   <Group type="102" attributes="0">
                       <EmptySpace min="13" pref="13" max="13" attributes="0"/>
+                      <Component id="jLabel5" min="-2" max="-2" attributes="0"/>
+                      <EmptySpace min="5" pref="5" max="5" attributes="0"/>
+                      <Group type="103" groupAlignment="0" attributes="0">
+                          <Component id="c2StandardButton" min="-2" pref="19" max="-2" attributes="0"/>
+                          <Component id="referenceName_" min="-2" max="-2" attributes="0"/>
+                      </Group>
+                      <EmptySpace min="22" pref="22" max="22" attributes="0"/>
+                      <Group type="103" groupAlignment="0" attributes="0">
+                          <Component id="c2CorrectButton" min="-2" pref="19" max="-2" attributes="0"/>
+                          <Component id="pairsButton" min="-2" pref="19" max="-2" attributes="0"/>
+                      </Group>
+                      <Group type="103" groupAlignment="0" attributes="0">
+                          <Component id="pairsMaxDistanceField_" min="-2" pref="20" max="-2" attributes="0"/>
+                          <Component id="SigmaLabel2" min="-2" pref="20" max="-2" attributes="0"/>
+                      </Group>
+                  </Group>
+                  <Component id="jSeparator2" min="-2" pref="120" max="-2" attributes="0"/>
+                  <Group type="102" max="-2" attributes="0">
+                      <EmptySpace min="-2" pref="13" max="-2" attributes="0"/>
                       <Component id="jLabel6" min="-2" max="-2" attributes="0"/>
-                      <EmptySpace min="6" pref="6" max="6" attributes="0"/>
+                      <EmptySpace min="-2" pref="6" max="-2" attributes="0"/>
                       <Group type="103" groupAlignment="0" attributes="0">
                           <Group type="102" attributes="0">
                               <Component id="plotButton_" min="-2" pref="18" max="-2" attributes="0"/>
                               <EmptySpace min="2" pref="2" max="2" attributes="0"/>
                               <Component id="powerSpectrumCheckBox_" min="-2" pref="20" max="-2" attributes="0"/>
                           </Group>
+                          <Component id="plotComboBox_" min="-2" max="-2" attributes="0"/>
                           <Group type="102" attributes="0">
                               <EmptySpace min="17" pref="17" max="17" attributes="0"/>
                               <Component id="logLogCheckBox_" min="-2" max="-2" attributes="0"/>
                           </Group>
-                          <Component id="plotComboBox_" min="-2" pref="20" max="-2" attributes="0"/>
                       </Group>
                       <Group type="103" groupAlignment="0" attributes="0">
                           <Component id="averageTrackButton_" min="-2" pref="20" max="-2" attributes="0"/>
                           <Component id="straightenTrackButton_" min="-2" pref="20" max="-2" attributes="0"/>
                       </Group>
-                      <Group type="103" groupAlignment="0" attributes="0">
-                          <Component id="mathButton_" min="-2" pref="20" max="-2" attributes="0"/>
-                          <Component id="centerTrackButton_" min="-2" pref="20" max="-2" attributes="0"/>
+                      <EmptySpace min="-2" max="-2" attributes="0"/>
+                      <Group type="103" groupAlignment="3" attributes="0">
+                          <Component id="centerTrackButton_" alignment="3" min="-2" pref="20" max="-2" attributes="0"/>
+                          <Component id="mathButton_" alignment="3" min="-2" pref="20" max="-2" attributes="0"/>
                       </Group>
+                      <EmptySpace min="-2" pref="5" max="-2" attributes="0"/>
                   </Group>
                   <Component id="jSeparator4" min="-2" pref="120" max="-2" attributes="0"/>
                   <Group type="102" attributes="0">
@@ -277,29 +266,23 @@
                               <Component id="renderButton_" min="-2" pref="19" max="-2" attributes="0"/>
                           </Group>
                           <Component id="visualizationModel_" min="-2" pref="24" max="-2" attributes="0"/>
-                          <Group type="102" attributes="0">
-                              <EmptySpace min="1" pref="1" max="1" attributes="0"/>
-                              <Component id="visualizationMagnification_" min="-2" pref="22" max="-2" attributes="0"/>
-                          </Group>
+                          <Component id="visualizationMagnification_" min="-2" pref="24" max="-2" attributes="0"/>
                       </Group>
-                      <EmptySpace min="13" pref="13" max="13" attributes="0"/>
+                      <EmptySpace min="16" pref="16" max="16" attributes="0"/>
                       <Group type="103" groupAlignment="0" attributes="0">
                           <Group type="102" attributes="0">
-                              <EmptySpace min="6" pref="6" max="6" attributes="0"/>
+                              <EmptySpace min="3" pref="3" max="3" attributes="0"/>
                               <Component id="jLabel1" min="-2" max="-2" attributes="0"/>
                           </Group>
                           <Group type="102" attributes="0">
-                              <EmptySpace min="3" pref="3" max="3" attributes="0"/>
                               <Component id="filterSigmaCheckBox_" min="-2" pref="20" max="-2" attributes="0"/>
                               <Component id="filterIntensityCheckBox_" min="-2" max="-2" attributes="0"/>
                           </Group>
                           <Group type="102" attributes="0">
-                              <EmptySpace min="3" pref="3" max="3" attributes="0"/>
                               <Component id="sigmaMin_" min="-2" pref="20" max="-2" attributes="0"/>
                               <Component id="intensityMin_" min="-2" pref="20" max="-2" attributes="0"/>
                           </Group>
                           <Group type="102" attributes="0">
-                              <EmptySpace min="3" pref="3" max="3" attributes="0"/>
                               <Component id="jLabel3" min="-2" max="-2" attributes="0"/>
                               <EmptySpace min="3" pref="3" max="3" attributes="0"/>
                               <Component id="jLabel2" min="-2" max="-2" attributes="0"/>
@@ -318,8 +301,9 @@
                       <Component id="IntLabel2" min="-2" max="-2" attributes="0"/>
                   </Group>
               </Group>
-              <EmptySpace min="2" pref="2" max="2" attributes="0"/>
-              <Component id="jScrollPane1" min="-2" pref="890" max="-2" attributes="0"/>
+              <EmptySpace min="-2" pref="3" max="-2" attributes="0"/>
+              <Component id="jScrollPane1" min="-2" pref="900" max="-2" attributes="0"/>
+              <EmptySpace min="-2" pref="74" max="-2" attributes="0"/>
           </Group>
       </Group>
     </DimensionLayout>
