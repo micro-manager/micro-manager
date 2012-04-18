@@ -32,7 +32,6 @@
 #include <math.h>
 #include "ModuleInterface.h"
 #include "DeviceUtils.h"
-#include "tiffio.h"
 
 using namespace std;
 

@@ -44,7 +44,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="..\..\..\..\micromanager1.4\MMDevice;&quot;..\..\..\3rdparty-100x\bitflow\SDK_5.20\include&quot;;&quot;..\..\..\3rdparty-100x\tifflib&quot;"
+				AdditionalIncludeDirectories="..\..\MMDevice;..\..\..\3rdparty\bitflow\SDK_5.20\include"
 				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_USRDLL;MODULE_EXPORTS"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
@@ -64,10 +64,10 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="Cid.lib BFEr.lib BFD.lib libtiffd.lib"
+				AdditionalDependencies="Cid.lib BFEr.lib BFD.lib"
 				OutputFile="$(OutDir)\mmgr_dal_$(ProjectName).dll"
 				LinkIncremental="2"
-				AdditionalLibraryDirectories="&quot;..\..\..\3rdparty-100x\bitflow\SDK_5.20\lib&quot;;&quot;..\..\..\3rdparty-100x\tifflib&quot;"
+				AdditionalLibraryDirectories="..\..\..\3rdparty\bitflow\SDK_5.20\lib"
 				GenerateDebugInformation="true"
 				SubSystem="2"
 				TargetMachine="1"
@@ -92,7 +92,7 @@
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
-				CommandLine="copy &quot;$(TargetPath)&quot; ..\..\..\..\micromanager1.4\bin_win32"
+				CommandLine="copy &quot;$(TargetPath)&quot; ..\..\bin_$(PlatformName)"
 			/>
 		</Configuration>
 		<Configuration
@@ -121,7 +121,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="..\..\..\..\micromanager1.4\MMDevice;&quot;..\..\..\3rdparty-100x\bitflow\SDK_5.30\include&quot;;&quot;..\..\..\3rdparty-100x\tifflib&quot;"
+				AdditionalIncludeDirectories="..\..\MMDevice;..\..\..\3rdparty\bitflow\SDK_5.20\include"
 				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_USRDLL;MODULE_EXPORTS"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
@@ -141,10 +141,10 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="Cid.lib BFEr.lib BFD.lib libtiffd.lib"
+				AdditionalDependencies="Cid.lib BFEr.lib BFD.lib"
 				OutputFile="$(OutDir)\mmgr_dal_$(ProjectName).dll"
 				LinkIncremental="2"
-				AdditionalLibraryDirectories="&quot;..\..\..\3rdparty-100x\bitflow\SDK_5.30\lib&quot;;&quot;..\..\..\3rdparty-100x\tifflib&quot;"
+				AdditionalLibraryDirectories="..\..\..\3rdparty\bitflow\SDK_5.20\lib"
 				GenerateDebugInformation="true"
 				SubSystem="2"
 				TargetMachine="17"
@@ -169,7 +169,7 @@
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
-				CommandLine="copy &quot;$(TargetPath)&quot; ..\..\..\..\micromanager1.4\bin_x64&#x0D;&#x0A;copy &quot;$(TargetPath)&quot; C:\&quot;Program Files&quot;\Micro-Manager-1.4&#x0D;&#x0A;"
+				CommandLine="copy &quot;$(TargetPath)&quot; ..\..\bin_$(PlatformName)"
 			/>
 		</Configuration>
 		<Configuration
@@ -199,7 +199,7 @@
 				Name="VCCLCompilerTool"
 				Optimization="2"
 				EnableIntrinsicFunctions="true"
-				AdditionalIncludeDirectories="..\..\..\..\micromanager1.4\MMDevice;&quot;..\..\..\3rdparty-100x\bitflow\SDK_5.20\include&quot;;&quot;..\..\..\3rdparty-100x\tifflib&quot;"
+				AdditionalIncludeDirectories="..\..\MMDevice;..\..\..\3rdparty\bitflow\SDK_5.20\include"
 				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;MODULE_EXPORTS"
 				RuntimeLibrary="0"
 				EnableFunctionLevelLinking="true"
@@ -218,10 +218,10 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="Cid.lib BFEr.lib BFD.lib libtiff.lib"
+				AdditionalDependencies="Cid.lib BFEr.lib BFD.lib"
 				OutputFile="$(OutDir)\mmgr_dal_$(ProjectName).dll"
 				LinkIncremental="1"
-				AdditionalLibraryDirectories="&quot;..\..\..\3rdparty-100x\bitflow\SDK_5.20\lib&quot;;&quot;..\..\..\3rdparty-100x\tifflib&quot;"
+				AdditionalLibraryDirectories="..\..\..\3rdparty\bitflow\SDK_5.20\lib"
 				GenerateDebugInformation="true"
 				SubSystem="2"
 				OptimizeReferences="2"
@@ -248,7 +248,7 @@
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
-				CommandLine="copy &quot;$(TargetPath)&quot; ..\..\..\..\micromanager1.4\bin_win32"
+				CommandLine="copy &quot;$(TargetPath)&quot; ..\..\bin_$(PlatformName)"
 			/>
 		</Configuration>
 		<Configuration
@@ -280,7 +280,7 @@
 				Optimization="2"
 				EnableIntrinsicFunctions="true"
 				FavorSizeOrSpeed="1"
-				AdditionalIncludeDirectories="..\..\..\..\micromanager1.4\MMDevice;&quot;..\..\..\3rdparty-100x\bitflow\SDK_5.30\include&quot;;&quot;..\..\..\3rdparty-100x\tifflib&quot;"
+				AdditionalIncludeDirectories="..\..\MMDevice;..\..\..\3rdparty\bitflow\SDK_5.20\include"
 				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;MODULE_EXPORTS"
 				RuntimeLibrary="0"
 				EnableFunctionLevelLinking="true"
@@ -299,10 +299,10 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="Cid.lib BFEr.lib BFD.lib libtiff.lib"
+				AdditionalDependencies="Cid.lib BFEr.lib BFD.lib"
 				OutputFile="$(OutDir)\mmgr_dal_$(ProjectName).dll"
 				LinkIncremental="1"
-				AdditionalLibraryDirectories="&quot;..\..\..\3rdparty-100x\bitflow\SDK_5.30\lib&quot;;&quot;..\..\..\3rdparty-100x\tifflib&quot;"
+				AdditionalLibraryDirectories="..\..\..\3rdparty\bitflow\SDK_5.20\lib"
 				GenerateDebugInformation="true"
 				SubSystem="2"
 				OptimizeReferences="2"
@@ -330,7 +330,7 @@
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
-				CommandLine="copy &quot;$(TargetPath)&quot; ..\..\..\..\micromanager1.4\bin_x64&#x0D;&#x0A;copy &quot;$(TargetPath)&quot; C:\&quot;Program Files&quot;\Micro-Manager-1.4&#x0D;&#x0A;"
+				CommandLine="copy &quot;$(TargetPath)&quot; ..\..\bin_$(PlatformName)"
 			/>
 		</Configuration>
 	</Configurations>
@@ -347,7 +347,7 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\..\micromanager1.4\MMDevice\DeviceUtils.cpp"
+				RelativePath="..\..\MMDevice\DeviceUtils.cpp"
 				>
 			</File>
 			<File
@@ -355,7 +355,7 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\..\micromanager1.4\MMDevice\ImgBuffer.cpp"
+				RelativePath="..\..\MMDevice\ImgBuffer.cpp"
 				>
 			</File>
 			<File
@@ -363,11 +363,11 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\..\micromanager1.4\MMDevice\ModuleInterface.cpp"
+				RelativePath="..\..\MMDevice\ModuleInterface.cpp"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\..\micromanager1.4\MMDevice\Property.cpp"
+				RelativePath="..\..\MMDevice\Property.cpp"
 				>
 			</File>
 			<File
@@ -385,39 +385,43 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\..\micromanager1.4\MMDevice\DeviceBase.h"
+				RelativePath="..\..\MMDevice\DeviceBase.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\..\micromanager1.4\MMDevice\DeviceThreads.h"
+				RelativePath="..\..\MMDevice\DeviceThreads.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\..\micromanager1.4\MMDevice\DeviceUtils.h"
+				RelativePath="..\..\MMDevice\DeviceUtils.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\..\micromanager1.4\MMDevice\ImageMetadata.h"
+				RelativePath="..\..\MMDevice\ImageMetadata.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\..\micromanager1.4\MMDevice\ImgBuffer.h"
+				RelativePath=".\ImgAccumulator.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\..\micromanager1.4\MMDevice\MMDevice.h"
+				RelativePath="..\..\MMDevice\ImgBuffer.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\..\micromanager1.4\MMDevice\MMDeviceConstants.h"
+				RelativePath="..\..\MMDevice\MMDevice.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\..\micromanager1.4\MMDevice\ModuleInterface.h"
+				RelativePath="..\..\MMDevice\MMDeviceConstants.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\..\micromanager1.4\MMDevice\Property.h"
+				RelativePath="..\..\MMDevice\ModuleInterface.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\MMDevice\Property.h"
 				>
 			</File>
 			<File
