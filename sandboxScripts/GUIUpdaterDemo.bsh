@@ -1,0 +1,16 @@
+import org.micromanager.utils.GUIUpdater;
+
+guiUpdater = new GUIUpdater();
+print("Starting...");
+for (i=0;i<100;++i) {
+   Thread.sleep(20);
+   final int i1 = i; 
+   guiUpdater.post(new Runnable() {
+                      public void run() {
+                         Thread.sleep(10);
+                         print("Runnable " + i1);
+                      }
+                   });
+}
+
+
