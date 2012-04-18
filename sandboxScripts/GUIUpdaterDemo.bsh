@@ -1,6 +1,7 @@
 import org.micromanager.utils.GUIUpdater;
 
 guiUpdater = new GUIUpdater();
+t1 = System.currentTimeMillis();
 print("Starting...");
 for (i=0;i<100;++i) {
    Thread.sleep(20);
@@ -12,5 +13,7 @@ for (i=0;i<100;++i) {
                       }
                    });
 }
+dt = System.currentTimeMillis() - t1;
+print(dt);
 
 
