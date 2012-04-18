@@ -42,6 +42,7 @@ import java.awt.event.*;
 import java.io.File;
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.TimerTask;
 import java.util.prefs.Preferences;
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
@@ -99,8 +100,9 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
    private MetadataPanel mdPanel_;
    private boolean newDisplay_ = true; //used for autostretching on window opening
    private double framesPerSec_ = 7;
-   private Timer zAnimationTimer_;
-   private Timer tAnimationTimer_;
+   private  java.util.Timer zAnimationTimer_ = new java.util.Timer();
+   private  java.util.Timer tAnimationTimer_ = new java.util.Timer();
+   private boolean zAnimated_ = false, tAnimated_ = false;
    private int animatedSliceIndex_ = -1;
    private Component zIcon_, pIcon_, tIcon_, cIcon_;
    private HashMap<Integer, Integer> zStackMins_;
@@ -110,6 +112,8 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
    private boolean albumSaved_ = false;
    private boolean[] channelContrastInitialized_;
    private static double snapWinZoom_ = 1.0;
+   private long lastImageUpdate_ = -1;
+   private Timer imageChangedTimer_;
 
 
    /* This interface and the following two classes
@@ -411,20 +415,6 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
       mda_ = false;
    }
 
-   private void invokeAndWaitIfNotEDT(Runnable runnable) {
-      if (SwingUtilities.isEventDispatchThread()) {
-         runnable.run();
-      } else {
-         try {
-            SwingUtilities.invokeAndWait(runnable);
-         } catch (InterruptedException ex) {
-            ReportingUtils.logError(ex);
-         } catch (InvocationTargetException ex) {
-            System.out.println(ex.getCause());
-         }
-      }
-   }
-
    private void invokeLaterIfNotEDT(Runnable runnable) {
       if (SwingUtilities.isEventDispatchThread()) {
          runnable.run();
@@ -580,62 +570,70 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
       }
    }
 
-   private void animateSlices(boolean animate) {
-      if (zAnimationTimer_ == null) {
-         zAnimationTimer_ = new Timer((int) (1000.0 / framesPerSec_), new ActionListener() {
-
-            @Override
-            public void actionPerformed(ActionEvent e) {
+   private void animateSlices(final boolean animate) {
+      if (!animate) {
+         zAnimationTimer_.cancel();
+         zAnimated_ = false;
+         refreshAnimationIcons();
+         return;
+      } else {
+         zAnimationTimer_ = new java.util.Timer();
+         animateFrames(false);
+         final int slicesPerStep;
+         long interval = (long) (1000.0 / framesPerSec_);
+         if (interval < 33) {
+            interval = 33;
+            slicesPerStep = (int) Math.round(framesPerSec_*33.0/1000.0);
+         } else {
+            slicesPerStep = 1;
+         }
+         TimerTask task = new TimerTask() {
+            public void run() {
                int slice = hyperImage_.getSlice();
                if (slice >= zSelector_.getMaximum() - 1) {
                   hyperImage_.setPosition(hyperImage_.getChannel(), 1, hyperImage_.getFrame());
                } else {
-                  hyperImage_.setPosition(hyperImage_.getChannel(), slice + 1, hyperImage_.getFrame());
+                  hyperImage_.setPosition(hyperImage_.getChannel(), slice + slicesPerStep, hyperImage_.getFrame());
                }
             }
-         });
-      }
-      if (!animate) {
-         zAnimationTimer_.stop();
+         };
+         zAnimationTimer_.schedule(task, 0, interval);
+         zAnimated_ = true;
          refreshAnimationIcons();
-         return;
       }
-      if (tAnimationTimer_ != null) {
-         animateFrames(false);
-      }
-      
-      zAnimationTimer_.setDelay((int) (1000.0 / framesPerSec_));
-      zAnimationTimer_.start();
-      refreshAnimationIcons();
    }
 
-   private void animateFrames(boolean animate) {
-      if (tAnimationTimer_ == null) {
-         tAnimationTimer_ = new Timer((int) (1000.0 / framesPerSec_), new ActionListener() {
-
-            @Override
-            public void actionPerformed(ActionEvent e) {
+   private void animateFrames(final boolean animate) {
+      if (!animate) {
+         tAnimationTimer_.cancel();
+         tAnimated_ = false;
+         refreshAnimationIcons();
+         return;
+      } else {
+         tAnimationTimer_ = new java.util.Timer();
+         animateSlices(false);
+         final int framesPerStep;
+         long interval = (long) (1000.0 / framesPerSec_);
+         if (interval < 33) {
+            interval = 33;
+            framesPerStep = (int) Math.round(framesPerSec_*33.0/1000.0);
+         } else {
+            framesPerStep = 1;
+         }
+         TimerTask task = new TimerTask() {
+            public void run() {
                int frame = hyperImage_.getFrame();
                if (frame >= tSelector_.getMaximum() - 1) {
                   hyperImage_.setPosition(hyperImage_.getChannel(), hyperImage_.getSlice(), 1);
                } else {
-                  hyperImage_.setPosition(hyperImage_.getChannel(), hyperImage_.getSlice(), frame + 1);
+                  hyperImage_.setPosition(hyperImage_.getChannel(), hyperImage_.getSlice(), frame + framesPerStep);
                }
             }
-         });
-      }
-      if (!animate) {
-         tAnimationTimer_.stop();
+         };
+         tAnimationTimer_.schedule(task, 0, interval);
+         tAnimated_ = true;
          refreshAnimationIcons();
-         return;
       }
-      if (zAnimationTimer_ != null) {
-         animateSlices(false);
-      }
-    
-      tAnimationTimer_.setDelay((int) (1000.0 / framesPerSec_));
-      tAnimationTimer_.start();
-      refreshAnimationIcons();
    }
 
    private void refreshAnimationIcons() {
@@ -650,42 +648,26 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
    private void configureAnimationControls() {
       if (zIcon_ != null) {
          zIcon_.addMouseListener(new MouseListener() {
-
             public void mousePressed(MouseEvent e) {
-               animateSlices(zAnimationTimer_ == null || !zAnimationTimer_.isRunning());
+               animateSlices(!zAnimated_);
             }
-
-            public void mouseClicked(MouseEvent e) {
-            }
-
-            public void mouseReleased(MouseEvent e) {
-            }
-
-            public void mouseEntered(MouseEvent e) {
-            }
-
-            public void mouseExited(MouseEvent e) {
-            }
+            public void mouseClicked(MouseEvent e) {}
+            public void mouseReleased(MouseEvent e) {}
+            public void mouseEntered(MouseEvent e) {}
+            public void mouseExited(MouseEvent e) {}
          });
       }
       if (tIcon_ != null) {
          tIcon_.addMouseListener(new MouseListener() {
 
             public void mousePressed(MouseEvent e) {
-               animateFrames(tAnimationTimer_ == null || !tAnimationTimer_.isRunning());
+               animateFrames(!tAnimated_);
             }
 
-            public void mouseClicked(MouseEvent e) {
-            }
-
-            public void mouseReleased(MouseEvent e) {
-            }
-
-            public void mouseEntered(MouseEvent e) {
-            }
-
-            public void mouseExited(MouseEvent e) {
-            }
+            public void mouseClicked(MouseEvent e) {}
+            public void mouseReleased(MouseEvent e) {}
+            public void mouseEntered(MouseEvent e) {}
+            public void mouseExited(MouseEvent e) {}
          });
       }
    }
@@ -1291,9 +1273,8 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
             public void actionPerformed(ActionEvent e) {
                int c = preferredChannel_ == -1 ? hyperImage_.getChannel() : preferredChannel_;
                int s = preferredSlice_ == -1 ? hyperImage_.getSlice() : preferredSlice_;
-               boolean zAnimated = zAnimationTimer_ != null && zAnimationTimer_.isRunning();
                
-               hyperImage_.setPosition(c, zAnimated ? hyperImage_.getSlice() : s ,hyperImage_.getFrame());
+               hyperImage_.setPosition(c, zAnimated_ ? hyperImage_.getSlice() : s ,hyperImage_.getFrame());
                if (pSelector_ != null && preferredPosition_ > -1) {
                   if (eng_.getAcqOrderMode() != AcqOrderMode.POS_TIME_CHANNEL_SLICE
                           && eng_.getAcqOrderMode() != AcqOrderMode.POS_TIME_SLICE_CHANNEL) {
@@ -1770,10 +1751,10 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
 
    public void setPlaybackFPS(double fps) {
       framesPerSec_ = fps;
-      if (zAnimationTimer_ != null && zAnimationTimer_.isRunning()) {
+      if (zAnimated_) {
          animateSlices(false);
          animateSlices(true);
-      } else if (tAnimationTimer_ != null && tAnimationTimer_.isRunning()) {
+      } else if (tAnimated_) {
          animateFrames(false);
          animateFrames(true);
       }
@@ -1784,17 +1765,11 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
    }
 
    public boolean isZAnimated() {
-      if (zAnimationTimer_ != null && zAnimationTimer_.isRunning()) {
-         return true;
-      }
-      return false;
+      return zAnimated_;
    }
 
    public boolean isTAnimated() {
-      if (tAnimationTimer_ != null && tAnimationTimer_.isRunning()) {
-         return true;
-      }
-      return false;
+      return tAnimated_;
    }
 
    public boolean isAnimated() {
@@ -1882,13 +1857,33 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
     * is the active window
     */
    private void imageChangedUpdate() {
-       if (histograms_ != null) {
+      if (System.currentTimeMillis() - lastImageUpdate_ < 30) {
+        if (imageChangedTimer_ == null) {
+           imageChangedTimer_ = new Timer (30, new ActionListener() {
+               @Override
+               public void actionPerformed(ActionEvent e) {
+                  imageChangedUpdate();
+               }
+           });
+           imageChangedTimer_.setRepeats(false);
+        }
+        if (imageChangedTimer_.isRunning()) { 
+           imageChangedTimer_.restart();
+        }  else {
+           imageChangedTimer_.start();
+        }
+         return;
+      }
+      
+      if (histograms_ != null) {
          histograms_.imageChanged();
        } 
       if (isActiveDisplay()) { 
           mdPanel_.imageChangedUpdate(this);
       } 
       imageChangedWindowUpdate(); //used to update status line
+      
+      lastImageUpdate_ = System.currentTimeMillis();
    }
    
    public boolean isActiveDisplay() {
