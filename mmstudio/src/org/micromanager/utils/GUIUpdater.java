@@ -31,9 +31,9 @@ public class GUIUpdater {
          SwingUtilities.invokeLater(new Runnable() {
             public void run() {
                readyForNewPost.set(true);
-               final Runnable task = latestTask.getAndSet(null);
-               if (task != null) {
-                  task.run();
+               final Runnable taskToRun = latestTask.getAndSet(null);
+               if (taskToRun != null) {
+                  taskToRun.run();
                } else {
                   System.err.println("Null task in GUIUpdater!");
                }
