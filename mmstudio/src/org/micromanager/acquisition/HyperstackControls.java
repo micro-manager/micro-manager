@@ -188,7 +188,11 @@ public class HyperstackControls extends DisplayControls {
 }//GEN-LAST:event_pauseAndResumeToggleButtonActionPerformed
 
    private void saveButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_saveButtonActionPerformed
-      acq_.saveAs();
+      new Thread() {
+         public void run() {
+            acq_.saveAs();
+         }
+      }.start();
    }//GEN-LAST:event_saveButtonActionPerformed
 
    private void updateFPS() {

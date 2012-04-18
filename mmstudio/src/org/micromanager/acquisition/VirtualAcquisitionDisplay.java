@@ -1420,7 +1420,7 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
                  getSummaryMetadata());
          albumSaved_ = true;
 
-         imageCache_.saveAs(newFileManager, mda_);
+         imageCache_.saveAs(newFileManager);
       } catch (Exception ex) {
          ReportingUtils.showError("Failed to save file");
       }

@@ -55,7 +55,8 @@ public class ProgressBar extends JPanel {
       newContentPane.setOpaque(true);
       frame.setContentPane(newContentPane);
 
-      frame.pack(); 
+      frame.pack();
+      frame.setBounds(0,0,250,100);
       frame.setLocationRelativeTo(null);
       frame.setVisible(true);
    }

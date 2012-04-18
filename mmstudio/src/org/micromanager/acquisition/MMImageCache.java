@@ -15,6 +15,8 @@ import org.micromanager.api.TaggedImageStorage;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import javax.swing.SwingUtilities;
 import mmcorej.TaggedImage;
 import org.json.JSONArray;
@@ -23,6 +25,7 @@ import org.json.JSONObject;
 import org.micromanager.utils.MDUtils;
 import org.micromanager.utils.MMException;
 import org.micromanager.utils.MMScriptException;
+import org.micromanager.utils.ProgressBar;
 import org.micromanager.utils.ReportingUtils;
 
 /**
@@ -39,6 +42,7 @@ public class MMImageCache implements TaggedImageStorage, ImageCache {
    private int lastFrame_ = -1;
    private JSONObject lastTags_;
    private VirtualAcquisitionDisplay display_;
+   private final ExecutorService fileExecutor_;
 
    public void addImageCacheListener(ImageCacheListener l) {
       imageStorageListeners_.add(l);
@@ -55,6 +59,8 @@ public class MMImageCache implements TaggedImageStorage, ImageCache {
    public MMImageCache(TaggedImageStorage imageStorage) {
       imageStorage_ = imageStorage;
       changingKeys_ = new HashSet<String>();
+      fileExecutor_ = Executors.newFixedThreadPool(1);
+
    }
 
    private void preloadImages() {
@@ -108,33 +114,44 @@ public class MMImageCache implements TaggedImageStorage, ImageCache {
       saveAs(newImageFileManager, true);
    }
           
-   public void saveAs(TaggedImageStorage newImageFileManager, boolean useNewStorage) {
+   public void saveAs(final TaggedImageStorage newImageFileManager, final boolean useNewStorage) {
       if (newImageFileManager == null) {
          return;
       }
-      
-      newImageFileManager.setSummaryMetadata(imageStorage_.getSummaryMetadata());
-      ArrayList<String> keys = new ArrayList<String>(imageKeys());
-      final int n = keys.size();
-      for (int i = 0; i < n; ++i) {
-         final int i1 = i;
-         int pos[] = MDUtils.getIndices(keys.get(i));
-         try {
-            newImageFileManager.putImage(getImage(pos[0], pos[1], pos[2], pos[3]));
-         } catch (MMException ex) {
-            ReportingUtils.logError(ex);
-         }
-         SwingUtilities.invokeLater(new Runnable() {
-            public void run() {
-               IJ.showProgress(i1, n);
-            }
-         });
-      }
-      newImageFileManager.setDisplayAndComments(this.getDisplayAndComments());
 
-      if (useNewStorage) {
-         imageStorage_ = newImageFileManager;
-      }
+      newImageFileManager.setSummaryMetadata(imageStorage_.getSummaryMetadata());
+      newImageFileManager.setDisplayAndComments(this.getDisplayAndComments());
+      //Thread th = new Thread(new Runnable() {
+      //   public void run() {
+      final String progressBarTitle = (newImageFileManager instanceof TaggedImageStorageRam) ? "Loading images..." : "Saving images...";
+      final ProgressBar progressBar = new ProgressBar(progressBarTitle, 0, 100);
+            ArrayList<String> keys = new ArrayList<String>(imageKeys());
+            final int n = keys.size();
+            progressBar.setRange(0, n);
+            progressBar.setProgress(0);
+            progressBar.setVisible(true);
+            for (int i = 0; i < n; ++i) {
+               final int i1 = i;
+               int pos[] = MDUtils.getIndices(keys.get(i));
+               try {
+                  newImageFileManager.putImage(getImage(pos[0], pos[1], pos[2], pos[3]));
+               } catch (MMException ex) {
+                  ReportingUtils.logError(ex);
+               }
+                  SwingUtilities.invokeLater(new Runnable() {
+                     public void run() {
+                        progressBar.setProgress(i1);
+                     }
+                  });
+            }
+            progressBar.setVisible(false);
+            if (useNewStorage) {
+               imageStorage_ = newImageFileManager;
+            }
+         //}
+      // });
+      //th.start();
+      
    }
 
    public void putImage(TaggedImage taggedImg) {
