@@ -3073,6 +3073,19 @@ public class DataCollectionForm extends javax.swing.JFrame {
 
 
    /**
+    * simple and bad way to calculate next power of 2
+    * @param n query number
+    * @return first number > n that is a power of 2
+    */
+   private int nextPowerOf2(int n) {
+      int res = 1;
+      while (res < n) {
+         res <<= 1;
+      }
+      return res;
+   }
+
+   /**
     * Plots Tracks using JFreeChart
     *
     * @rowData
@@ -3095,11 +3108,8 @@ public class DataCollectionForm extends javax.swing.JFrame {
                int index = 0;
                datas[index] = new XYSeries(rowDatas[index].ID_);
                int length = rowDatas[index].spotList_.size();
-               if (!fft.isPowerOf2(length)) {
-                  int powof2 = 1;
-                  while(powof2 < length) 
-                     powof2 <<= 1;
-                  length = powof2;
+               if (!FastFourierTransformer.isPowerOf2(length)) {
+                  length = nextPowerOf2(length);
                }                 
                double[] d = new double[length];
 
@@ -3108,8 +3118,17 @@ public class DataCollectionForm extends javax.swing.JFrame {
                   d[i] = spot.getXCenter();
                }
                Complex[] c = fft.transform(d);
-               for (Complex cn : c) {
-                  datas[index].add(cn.getImaginary(), cn.getReal());
+               int size = c.length / 2;
+               double[] e = new double[size];
+               double[] f = new double[size];
+               // calculate the conjugate and normalize
+               for (int i = 1; i < size; i++) {
+                  e[i] =  (c[i].getReal() * c[i].getReal() +  
+                          c[i].getImaginary() * c[i].getImaginary() ) / c.length;
+                  f[i] = (1000.0 / size) * i;
+               }
+               for (int i = 0; i < e.length / 2; i++) {
+                  datas[index].add(f[i], e[i]);
                }
                GaussianUtils.plotDataN(title, datas, xAxis, "Freq", 0, 400);
                

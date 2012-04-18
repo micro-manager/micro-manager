@@ -183,7 +183,7 @@ public class GaussianTrackThread extends GaussianInfo implements Runnable  {
 
          // Set Roi for fitting centered around maximum
          spotRoi = new Roi(xc - halfSize_, yc - halfSize_, 2 * halfSize_, 2*halfSize_);
-         siPlus.setRoi(spotRoi);
+         siPlus.setRoi(spotRoi, false);
          ImageProcessor ip = siPlus.getProcessor().crop();
          spot = new GaussianSpotData(ip, ch, 1, i, 1, i, xc,yc);
          double[] paramsOut = gs.doGaussianFit(ip, maxIterations_);
