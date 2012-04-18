@@ -173,7 +173,7 @@ public:
         m_vid(0x24C2), m_pid(0), m_version(0),
         m_evAbortRx(CreateEvent(NULL, TRUE, FALSE, NULL))
     {
-        CreateProperty("SerialNumber", "", MM::String, false);
+        CreateProperty("SerialNumber", "", MM::String, false, NULL, true);
     }
     ~ScopeLEDBasicIlluminator()
     {
