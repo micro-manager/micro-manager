@@ -239,9 +239,9 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Mightex_BLS", "..\DeviceAda
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ScopeLED", "..\DeviceAdapters\ScopeLED\ScopeLED.VS2008.vcproj", "{3366ED2E-3283-4F30-9F77-55391129489C}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Polychrome5000", "..\SecretDeviceAdapters\Polychrome5000\Polychrome5000.vcproj", "{FDEFF75C-41F4-45CA-A704-05A46D9A2FAB}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "PolychromeV", "..\SecretDeviceAdapters\Polychrome5000\Polychrome5000.vcproj", "{FDEFF75C-41F4-45CA-A704-05A46D9A2FAB}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "iMIC2000", "..\SecretDeviceAdapters\iMIC2000\iMIC2000.vcproj", "{D7070166-419D-4D2D-82E4-ED247A680107}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "iMic", "..\SecretDeviceAdapters\iMIC2000\iMIC2000.vcproj", "{D7070166-419D-4D2D-82E4-ED247A680107}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -1147,7 +1147,6 @@ Global
 		{D7070166-419D-4D2D-82E4-ED247A680107}.Release|Win32.ActiveCfg = Release|Win32
 		{D7070166-419D-4D2D-82E4-ED247A680107}.Release|Win32.Build.0 = Release|Win32
 		{D7070166-419D-4D2D-82E4-ED247A680107}.Release|x64.ActiveCfg = Release|x64
-		{D7070166-419D-4D2D-82E4-ED247A680107}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
