@@ -218,7 +218,8 @@
       (println "Nothing to report."))))
 
 (defn test-report []
-  (println (report-build-errors 32 :full true)))
+  (doseq [bits [32 64]]
+    (println (report-build-errors bits :full true))))
 
 (defn -main [mode]
   (make-full-report (get {"inc" :inc "full" :full} mode) true))
