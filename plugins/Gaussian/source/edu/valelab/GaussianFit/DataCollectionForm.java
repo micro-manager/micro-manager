@@ -3085,6 +3085,15 @@ public class DataCollectionForm extends javax.swing.JFrame {
       return res;
    }
 
+   private int previousPowerOf2(int n) {
+      int res = 1;
+      while (res < n) {
+         res <<= 1;
+      }
+      res >>=1;
+      return res ;
+   }
+   
    /**
     * Plots Tracks using JFreeChart
     *
@@ -3109,11 +3118,11 @@ public class DataCollectionForm extends javax.swing.JFrame {
                datas[index] = new XYSeries(rowDatas[index].ID_);
                int length = rowDatas[index].spotList_.size();
                if (!FastFourierTransformer.isPowerOf2(length)) {
-                  length = nextPowerOf2(length);
+                  length = previousPowerOf2(length);
                }                 
                double[] d = new double[length];
 
-               for (int i = 0; i < rowDatas[index].spotList_.size(); i++) {
+               for (int i = 0; i < length; i++) {
                   GaussianSpotData spot = rowDatas[index].spotList_.get(i);
                   d[i] = spot.getXCenter();
                }
@@ -3121,16 +3130,20 @@ public class DataCollectionForm extends javax.swing.JFrame {
                int size = c.length / 2;
                double[] e = new double[size];
                double[] f = new double[size];
+               double duration = rowDatas[index].timePoints_.get(size) - 
+                       rowDatas[index].timePoints_.get(0);
                // calculate the conjugate and normalize
                for (int i = 1; i < size; i++) {
                   e[i] =  (c[i].getReal() * c[i].getReal() +  
                           c[i].getImaginary() * c[i].getImaginary() ) / c.length;
-                  f[i] = (1000.0 / size) * i;
+                  // TODO: figure out correct formula
+                  f[i] = ((100000 / duration) / size ) * i;
                }
                for (int i = 0; i < e.length / 2; i++) {
                   datas[index].add(f[i], e[i]);
                }
-               GaussianUtils.plotDataN(title, datas, xAxis, "Freq", 0, 400);
+               xAxis = "Freq (Hz)";
+               GaussianUtils.plotDataN(title + " PSD", datas, xAxis, "Strength", 0, 400);
                
             } else {
                for (int index = 0; index < rowDatas.length; index++) {

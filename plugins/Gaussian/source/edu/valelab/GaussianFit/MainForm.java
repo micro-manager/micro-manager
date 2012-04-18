@@ -600,6 +600,7 @@ public class MainForm extends javax.swing.JFrame implements ij.ImageListener{
        // Execute on another thread,
        // use tT.trackGaussians to run it on the same thread
        tT.init();
+       System.out.println("started thread");
     }//GEN-LAST:event_trackButtonActionPerformed
 
     private void formWindowClosed(java.awt.event.WindowEvent evt) {//GEN-FIRST:event_formWindowClosed
