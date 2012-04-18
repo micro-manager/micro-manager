@@ -7,7 +7,7 @@ for (i=0;i<100;++i) {
    final int i1 = i; 
    guiUpdater.post(new Runnable() {
                       public void run() {
-                         Thread.sleep(10);
+                         Thread.sleep(100);
                          print("Runnable " + i1);
                       }
                    });
