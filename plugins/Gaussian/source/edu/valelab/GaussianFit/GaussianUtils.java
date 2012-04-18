@@ -7,6 +7,7 @@
 package edu.valelab.GaussianFit;
 
 
+import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.Shape;
 import java.awt.geom.Ellipse2D;
@@ -26,7 +27,9 @@ import org.jfree.chart.JFreeChart;
 import org.jfree.chart.ChartFactory;
 import org.jfree.chart.ChartFrame;
 import org.jfree.chart.LegendItemSource;
+import org.jfree.chart.axis.LogAxis;
 import org.jfree.chart.axis.NumberAxis;
+import org.jfree.chart.axis.NumberTickUnit;
 import org.jfree.chart.axis.ValueAxis;
 import org.jfree.chart.title.LegendTitle;
 import org.jfree.data.xy.XYSeries;
@@ -130,7 +133,7 @@ public class GaussianUtils {
     * Create a frame with a plot of the data given in XYSeries
     */
    public static void plotDataN(String title, XYSeries[] data, String xTitle,
-                 String yTitle, int xLocation, int yLocation) {
+                 String yTitle, int xLocation, int yLocation, boolean showShapes, Boolean logLog) {
       
       // JFreeChart code
       XYSeriesCollection dataset = new XYSeriesCollection();
@@ -164,6 +167,25 @@ public class GaussianUtils {
       XYPlot plot = (XYPlot) chart.getPlot();
       plot.setBackgroundPaint(Color.white);
       plot.setRangeGridlinePaint(Color.lightGray);
+      if (logLog) {
+         LogAxis xAxis = new LogAxis(xTitle);
+         xAxis.setTickUnit(new NumberTickUnit(1.0, new java.text.DecimalFormat(), 10));
+         plot.setDomainAxis(xAxis);
+         plot.setDomainGridlinePaint(Color.lightGray);
+         plot.setDomainGridlineStroke(new BasicStroke(1.0f));
+         plot.setDomainMinorGridlinePaint(Color.lightGray);
+         plot.setDomainMinorGridlineStroke(new BasicStroke(0.2f));
+         plot.setDomainMinorGridlinesVisible(true);
+         LogAxis yAxis = new LogAxis(yTitle);
+         yAxis.setTickUnit(new NumberTickUnit(1.0, new java.text.DecimalFormat(), 10));
+         plot.setRangeAxis(yAxis);
+         plot.setRangeGridlineStroke(new BasicStroke(1.0f));
+         plot.setRangeMinorGridlinePaint(Color.lightGray);
+         plot.setRangeMinorGridlineStroke(new BasicStroke(0.2f));
+         plot.setRangeMinorGridlinesVisible(true);
+      }
+      
+      
       XYLineAndShapeRenderer renderer = (XYLineAndShapeRenderer) plot.getRenderer();
       renderer.setBaseShapesVisible(true);
       
@@ -192,16 +214,23 @@ public class GaussianUtils {
          renderer.setSeriesShape(3, rect, false);
       }
       
+      if (!showShapes) {
+         for (int i = 0; i < data.length; i++) {
+            renderer.setSeriesShapesVisible(i, false);
+         }
+      }
+      
       renderer.setUseFillPaint(true);
-      
-      
-      // Since the axis autoscale only on the first dataset, we need to scale ourselves
-      NumberAxis yAxis = (NumberAxis) plot.getRangeAxis();
-      yAxis.setAutoRangeIncludesZero(false);
-      yAxis.setRangeWithMargins(minY, maxY);
-      
-      ValueAxis xAxis = (ValueAxis) plot.getDomainAxis();
-      xAxis.setRangeWithMargins(minX, maxX);
+     
+      if (!logLog) {
+         // Since the axis autoscale only on the first dataset, we need to scale ourselves
+         NumberAxis yAxis = (NumberAxis) plot.getRangeAxis();
+         yAxis.setAutoRangeIncludesZero(false);
+         yAxis.setRangeWithMargins(minY, maxY);
+
+         ValueAxis xAxis = (ValueAxis) plot.getDomainAxis();
+         xAxis.setRangeWithMargins(minX, maxX);
+      }
       
       ChartFrame graphFrame = new ChartFrame(title, chart);
       graphFrame.getChartPanel().setMouseWheelEnabled(true);
@@ -210,80 +239,7 @@ public class GaussianUtils {
       graphFrame.setVisible(true);
    }
 
-   
-   /**
-    * Create a frame with a plot of the data given in XYSeries
 
-   public static void plotTrackData(String title, XYSeries data, int xLocation, int yLocation) {
-      // JFreeChart code
-      XYSeriesCollection dataset = new XYSeriesCollection();
-      dataset.addSeries(data);
-      JFreeChart chart = ChartFactory.createScatterPlot(title, // Title
-                "Time (interval)", // x-axis Label
-                "Distance (nm)", // y-axis Label
-                dataset, // Dataset
-                PlotOrientation.VERTICAL, // Plot Orientation
-                false, // Show Legend
-                true, // Use tooltips
-                false // Configure chart to generate URLs?
-            );
-      XYPlot plot = (XYPlot) chart.getPlot();
-      plot.setBackgroundPaint(Color.white);
-      plot.setRangeGridlinePaint(Color.lightGray);
-      XYLineAndShapeRenderer renderer = (XYLineAndShapeRenderer) plot.getRenderer();
-      renderer.setBaseShapesVisible(true);
-      renderer.setSeriesPaint(0, Color.black);
-      renderer.setSeriesFillPaint(0, Color.white);
-      renderer.setSeriesLinesVisible(0, true);
-      Shape circle = new Ellipse2D.Float(-2.0f, -2.0f, 4.0f, 4.0f);
-      renderer.setSeriesShape(0, circle, false);
-      renderer.setUseFillPaint(true);
-
-      ChartFrame graphFrame = new ChartFrame(title, chart);
-      graphFrame.getChartPanel().setMouseWheelEnabled(true);
-      graphFrame.pack();
-      graphFrame.setLocation(xLocation, yLocation);
-      graphFrame.setVisible(true);
-   }
-    */
-
-
-
-    /**
-    * Create a frame with a plot of the data given in XYSeries
-
-   public static void plotFiducialData(String title, XYSeries data, int xLocation, int yLocation) {
-      // JFreeChart code
-      XYSeriesCollection dataset = new XYSeriesCollection();
-      dataset.addSeries(data);
-      JFreeChart chart = ChartFactory.createScatterPlot(title, // Title
-                "X (nm)", // x-axis Label
-                "Y (nm)", // y-axis Label
-                dataset, // Dataset
-                PlotOrientation.VERTICAL, // Plot Orientation
-                false, // Show Legend
-                true, // Use tooltips
-                false // Configure chart to generate URLs?
-            );
-      XYPlot plot = (XYPlot) chart.getPlot();
-      plot.setBackgroundPaint(Color.white);
-      plot.setRangeGridlinePaint(Color.lightGray);
-      XYLineAndShapeRenderer renderer = (XYLineAndShapeRenderer) plot.getRenderer();
-      renderer.setBaseShapesVisible(true);
-      renderer.setSeriesPaint(0, Color.black);
-      renderer.setSeriesFillPaint(0, Color.white);
-      renderer.setSeriesLinesVisible(0, true);
-      Shape circle = new Ellipse2D.Float(-2.0f, -2.0f, 4.0f, 4.0f);
-      renderer.setSeriesShape(0, circle, false);
-      renderer.setUseFillPaint(true);
-
-      ChartFrame graphFrame = new ChartFrame(title, chart);
-      graphFrame.getChartPanel().setMouseWheelEnabled(true);
-      graphFrame.pack();
-      graphFrame.setLocation(xLocation, yLocation);
-      graphFrame.setVisible(true);
-   }
-    */
    
    /**
    * Rotates a set of XY data points such that the direction of largest
