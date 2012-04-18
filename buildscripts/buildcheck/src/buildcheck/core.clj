@@ -2,12 +2,11 @@
   (:import (java.io File)
            (java.text SimpleDateFormat)
            (java.util Calendar Date))
-  (:use [local-file :only (file*)]
-        [clj-mail.core])
+  (:use [clj-mail.core])
   (:require [clojure.xml])
   (:gen-class))
 
-(def micromanager (file* "../.."))
+(def micromanager (File. "../.."))
 
 (def MS-PER-HOUR (* 60 60 1000))
 
