@@ -58,6 +58,11 @@ const char* const g_Gain_Extra_x4 = "x04";
 const char* const g_Gain_Extra_x8 = "x08";
 const char* const g_Gain_Extra_x16 = "x16";
 
+// exposure
+const char* const g_Keyword_Exposure_LongTime = "Exposure (allow longtime)";
+const char* const g_Exposure_LongTime_Off = "Off";
+const char* const g_Exposure_LongTime_On = "On";
+
 // auto exposure
 const char* const g_Keyword_AutoExposure = "Automatic exposure";
 const char* const g_Keyword_AutoExposureOptions = "Automatic exposure options";
@@ -128,9 +133,11 @@ const char* g_PixelType_64bitRGB = " 64bitRGB";
 const char* g_PixelType_32bit = " 32bit"; // floating point greyscale
 
 // readout mode
+const char* g_ReadoutMode_Automatic  = " Automatic";
 const char* g_ReadoutMode_Continuous = " Continuous";
 const char* g_ReadoutMode_TriggeredSW = " Triggered SW";
 const char* g_ReadoutMode_TriggeredHW = " Triggered HW";
+const unsigned char MODE_AUTOMATIC = 0xF0;
 
 // trigger ports
 const char* g_Keyword_TriggerInport = "I/O Trigger inport";
@@ -174,7 +181,7 @@ CCameraBase<CABSCamera> (),
 dPhase_(0),
 initialized_(false),
 readoutUs_(1.0),
-readoutMode_( g_ReadoutMode_TriggeredSW ),
+readoutMode_( g_ReadoutMode_Automatic ),
 bitDepth_(8),
 roiX_(0),
 roiY_(0),
@@ -201,6 +208,7 @@ fractionOfPixelsToDropOrSaturate_(0.002)
 ,strobePortPolarity_( g_Polarity_HighActive )
 ,imageCounter_(0)
 ,framerate_(0.0)
+,exposureLongTime_( g_Exposure_LongTime_Off )
 {
   memset(testProperty_,0,sizeof(testProperty_));
 
@@ -432,6 +440,13 @@ int CABSCamera::Initialize()
 
 
   // camera exposure
+  pAct = new CPropertyAction (this, &CABSCamera::OnExposureLongTime);
+  nRet = CreateProperty(g_Keyword_Exposure_LongTime, g_Exposure_LongTime_Off, MM::String, false, pAct);
+  assert(nRet == DEVICE_OK);
+  AddAllowedValue(g_Keyword_Exposure_LongTime, g_Exposure_LongTime_Off );
+  AddAllowedValue(g_Keyword_Exposure_LongTime, g_Exposure_LongTime_On );
+
+
   pAct = new CPropertyAction (this, &CABSCamera::OnExposure);
   nRet = CreateProperty(MM::g_Keyword_Exposure, "10.0", MM::Float, false, pAct);
   assert(nRet == DEVICE_OK);
@@ -450,8 +465,9 @@ int CABSCamera::Initialize()
 
   // scan mode
   pAct = new CPropertyAction (this, &CABSCamera::OnReadoutMode);
-  nRet = CreateProperty(MM::g_Keyword_ReadoutMode, g_ReadoutMode_TriggeredSW, MM::String, false, pAct);
+  nRet = CreateProperty(MM::g_Keyword_ReadoutMode, g_ReadoutMode_Automatic, MM::String, false, pAct);
   assert(nRet == DEVICE_OK);
+  AddAllowedValue(MM::g_Keyword_ReadoutMode, g_ReadoutMode_Automatic );
   AddAllowedValue(MM::g_Keyword_ReadoutMode, g_ReadoutMode_Continuous );
   AddAllowedValue(MM::g_Keyword_ReadoutMode, g_ReadoutMode_TriggeredSW );
   AddAllowedValue(MM::g_Keyword_ReadoutMode, g_ReadoutMode_TriggeredHW );
@@ -780,7 +796,7 @@ int CABSCamera::SnapImage()
     // read image
     rc = getCameraImage( img_ );
 
-    if ( IsNoError( rc ) )
+    if ( retOK == rc )
       readoutStartTime_ = startTime;
   }
   //TIMEDEBUG_RC(rc)
@@ -1103,6 +1119,10 @@ int CABSCamera::setAllowedExpsoure( void )
       delete [] exposureCaps;
 
     LogMessage("Setting Exposure limits", true);
+
+   if ( exposureLongTime_ != g_Exposure_LongTime_On )
+     fMaxExposure = min( fMaxExposure, 250.0 );
+
     return SetPropertyLimits(MM::g_Keyword_Exposure, fMinExposure, fMaxExposure);
   }
   else
@@ -1167,18 +1187,23 @@ int CABSCamera::StopSequenceAcquisition()
 
   if (!thd_->IsStopped())
   {
-    u32 rc = 0;
     thd_->Stop();
-    rc = GET_RC( CamUSB_AbortGetImage( deviceNo() ), deviceNo());
+
+    // abort current image transfer only for long exposure times
+    if ( exposureLongTime_ == g_Exposure_LongTime_On )
+    {
+      u32 rc = 0;
+      rc = GET_RC( CamUSB_AbortGetImage( deviceNo() ), deviceNo());
+      assert(rc == retOK);
+    }
+
+    thd_->wait();
 
     // restore readout mode
     setLiveReadoutMode( false );
 
     // update image buffer type
     img_.setBufferType( CAbsImgBuffer::eInternBuffer );
-
-    assert(rc == retOK);
-    thd_->wait();
   }
 
   return DEVICE_OK;
@@ -1314,18 +1339,24 @@ int CABSCameraSequenceThread::svc(void) throw()
   {
     CABSCamera* camera = dynamic_cast<CABSCamera*>(camera_);
 
+    // only for live mode
+    if ( ( LONG_MAX == numImages_ ) && ( false == camera->stopOnOverflow_ ) )
     {
-      camera->LogMessage("SeqAcquisition Start => insert last valid or blank image (GUI blocking workaround)\n", true);
-      MMThreadGuard g( camera->img_ ); // lock the image
+      // only if long time expsoure is enabled
+      if ( camera->exposureLongTime_ == g_Exposure_LongTime_On )
+      {
+        camera->LogMessage("SeqAcquisition Start => insert last valid or blank image (GUI blocking workaround)\n", true);
+        MMThreadGuard g( camera->img_ ); // lock the image
 
-      CAbsImgBuffer::EBufferType eType = camera->img_.bufferType();
-      if ( 0 == camera->img_.GetPixels() )
-        camera->img_.setBufferType( CAbsImgBuffer::eInternBuffer );
+        CAbsImgBuffer::EBufferType eType = camera->img_.bufferType();
+        if ( 0 == camera->img_.GetPixels() )
+          camera->img_.setBufferType( CAbsImgBuffer::eInternBuffer );
 
-      camera->InsertImage();
+        camera->InsertImage();
 
-      // restore buffer mode
-      camera->img_.setBufferType( eType );
+        // restore buffer mode
+        camera->img_.setBufferType( eType );
+      }
     }
 
     do
@@ -1721,26 +1752,27 @@ void CABSCamera::setLiveReadoutMode( bool bOverwriteDefault )
   u32 rc;
   u08 captureMode, imageCount;
 
-  rc = GET_RC( CamUSB_GetCaptureMode( &captureMode, &imageCount, deviceNo()), deviceNo() );
-
-  if ( true == bOverwriteDefault )
+  if (  readoutMode_ == g_ReadoutMode_Automatic )
   {
-    if ( IsNoError( rc ) )
-    {
-      lastCaptureMode_ = captureMode; // remember last settings
+    rc = GET_RC( CamUSB_GetCaptureMode( &captureMode, &imageCount, deviceNo()), deviceNo() );
 
-      // set new capture mode
-      if ( ( captureMode != MODE_TRIGGERED_HW ) && ( captureMode != MODE_CONTINUOUS ) )
+    if ( true == bOverwriteDefault )
+    {
+      if ( IsNoError( rc ) )
       {
-        rc = GET_RC( CamUSB_SetCaptureMode( MODE_CONTINUOUS, 0, deviceNo(), 0, 0), deviceNo() );
+        // set new capture mode
+        if ( ( captureMode != MODE_TRIGGERED_HW ) && ( captureMode != MODE_CONTINUOUS ) )
+        {
+          rc = GET_RC( CamUSB_SetCaptureMode( MODE_CONTINUOUS, 0, deviceNo(), 0, 0), deviceNo() );
+        }
       }
     }
-  }
-  else // resore last settings
-  {
-    if ( (IsNoError( rc ) && ( lastCaptureMode_ != captureMode )) || ( FALSE == IsNoError( rc )) )
+    else // resore last settings
     {
-      rc = GET_RC( CamUSB_SetCaptureMode( lastCaptureMode_, 0, deviceNo(), 0, 0), deviceNo() );
+      if ( (IsNoError( rc ) && ( MODE_TRIGGERED_SW != captureMode )) || ( FALSE == IsNoError( rc )) )
+      {
+        rc = GET_RC( CamUSB_SetCaptureMode( MODE_TRIGGERED_SW, 1, deviceNo(), 0, 0), deviceNo() );
+      }
     }
   }
 }
@@ -1758,7 +1790,12 @@ int CABSCamera::OnReadoutMode(MM::PropertyBase* pProp, MM::ActionType eAct)
   {
     pProp->Get( readoutMode_ );
 
-    if ( readoutMode_ == g_ReadoutMode_Continuous )
+    if ( readoutMode_ == g_ReadoutMode_Automatic )
+    {
+      captureMode = MODE_AUTOMATIC;
+      countImages = 1; 
+    }
+    else if ( readoutMode_ == g_ReadoutMode_Continuous )
     {
       captureMode = MODE_CONTINUOUS;
       countImages = 0;
@@ -1778,10 +1815,7 @@ int CABSCamera::OnReadoutMode(MM::PropertyBase* pProp, MM::ActionType eAct)
 
     // set capture mode at camera
     LogMessage("Set property ScanMode", true);
-    rc = GET_RC( CamUSB_SetCaptureMode( captureMode, countImages, deviceNo(), 0, 0), deviceNo() );
-
-    if ( IsNoError( rc ) )
-      lastCaptureMode_ = captureMode;
+    rc = GET_RC( CamUSB_SetCaptureMode( captureMode & MODE_MASK_CAM, countImages, deviceNo(), 0, 0), deviceNo() );
 
     return convertApiErrorCode( rc, __FUNCTION__ );
   }
@@ -1799,17 +1833,40 @@ int CABSCamera::OnReadoutMode(MM::PropertyBase* pProp, MM::ActionType eAct)
 
     switch ( captureMode )
     {
-    case MODE_CONTINUOUS: readoutMode = g_ReadoutMode_Continuous; break;
+    case MODE_CONTINUOUS: 
+      if (  readoutMode_ == g_ReadoutMode_Automatic ) 
+        readoutMode = g_ReadoutMode_Automatic;
+      else
+        readoutMode = g_ReadoutMode_Continuous; 
+      break;
 
     case MODE_TRIGGERED_HW: readoutMode = g_ReadoutMode_TriggeredHW; break;
 
     case MODE_TRIGGERED_SW:
+      if (  readoutMode_ == g_ReadoutMode_Automatic ) 
+      {
+        readoutMode = g_ReadoutMode_Automatic;
+        break; // only break for automatice
+      }
     default: readoutMode = g_ReadoutMode_TriggeredSW; break;
     }
 
     pProp->Set( readoutMode );
     readoutMode_ = readoutMode;
     return convertApiErrorCode( rc, __FUNCTION__ );
+  }
+  return DEVICE_OK;
+}
+int CABSCamera::OnExposureLongTime(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+  if (eAct == MM::BeforeGet)
+  {
+    pProp->Set( exposureLongTime_.c_str() );
+  }
+  else if (eAct == MM::AfterSet)
+  {
+    pProp->Get( exposureLongTime_ );
+    setAllowedExpsoure();
   }
   return DEVICE_OK;
 }
@@ -2957,6 +3014,11 @@ u32 CABSCamera::getCameraImage( CAbsImgBuffer & img )
     }
   }
 
+  // if user stops live mode image aquisition is aborted 
+  // => return retOK because the user requested the abort
+  if ( retUSER_ABORT == rc )
+    rc = retOK;
+
   return rc;
 
 }
@@ -3605,6 +3667,31 @@ u32 CABSCamera::updateCameraTransposeCorrection( void )
     {
       bMirrorX_ = bMirrorX;
       bMirrorY_ = bMirrorY;
+    }
+  }
+
+  if ( bSwap != bSwapXY_ )
+  {
+    // update settings
+    u32 dwSize;
+    S_ROTATE_REMAP_PARAMS sRRP = {0};
+    
+    if ( bSwapXY_ )
+    {
+      sRRP.dwMode = ROTREM_MODE_ROTATE_CENTER;
+      sRRP.dwFlag = ROTREM_FLAG_OPT_IMG_SIZE;
+      sRRP.dwInterpolation = ROTREM_INTER_NN;
+      sRRP.fAngle = -90.0;
+
+    }
+    // set resolution
+    dwSize = sizeof( sRRP );
+    rc = GET_RC( CamUSB_SetFunction( FUNC_ROTATE_REMAP, &sRRP, dwSize, 0, 0, 0, 0, deviceNo() ), deviceNo());
+
+    // remember new settings on success
+    if ( IsNoError( rc ) )
+    {
+      bSwapXY_ = bSwap;
     }
   }
   return rc;

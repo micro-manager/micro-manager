@@ -159,7 +159,7 @@ public:
   int   OnGamma       (MM::PropertyBase* pProp, MM::ActionType eAct);
   int   OnHue         (MM::PropertyBase* pProp, MM::ActionType eAct);
   int   OnSaturation  (MM::PropertyBase* pProp, MM::ActionType eAct);
-
+  int   OnExposureLongTime(MM::PropertyBase* pProp, MM::ActionType eAct);
   int   OnColorCorrection (MM::PropertyBase* pProp, MM::ActionType eAct);
   int   OnBayerDemosaic   (MM::PropertyBase* pProp, MM::ActionType eAct);
   int   OnStdResolution   (MM::PropertyBase* pProp, MM::ActionType eAct);
@@ -276,8 +276,6 @@ private:
   long                      triggerPortDelay_;
   std::string               strobePortName_;
   std::string               strobePortPolarity_;
-  unsigned char             lastCaptureMode_;     // copy of capture mode befor start of sequence aquisition
-
   S_CAMERA_VERSION          cameraVersion_;
 
 private:
@@ -312,6 +310,8 @@ private:
 
   double        testProperty_[10];
   int           nComponents_;
+
+  string        exposureLongTime_;
 };
 
 // image aquisition thread class
