@@ -47,6 +47,8 @@ protected:
     {
         int ok = DEVICE_OK;
 
+        if (NULL == m_hDevice) return DEVICE_NOT_CONNECTED;
+
         /*
         s_LogFile << "<(Tx)";
         for (unsigned long i=0; i < cbCommand; i++)
