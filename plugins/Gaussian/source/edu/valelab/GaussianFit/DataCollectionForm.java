@@ -528,7 +528,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
             }
         });
 
-        plotComboBox_.setFont(new java.awt.Font("Lucida Grande", 0, 10));
+        plotComboBox_.setFont(new java.awt.Font("Lucida Grande", 0, 10)); // NOI18N
         plotComboBox_.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "t-X", "t-Y", "X-Y", "t-Int.", " " }));
 
         visualizationMagnification_.setFont(new java.awt.Font("Lucida Grande", 0, 10));
@@ -911,10 +911,12 @@ public class DataCollectionForm extends javax.swing.JFrame {
                                 .add(plotButton_, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 18, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                                 .add(2, 2, 2)
                                 .add(powerSpectrumCheckBox_, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 20, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
-                            .add(plotComboBox_, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                             .add(layout.createSequentialGroup()
                                 .add(17, 17, 17)
-                                .add(logLogCheckBox_)))
+                                .add(logLogCheckBox_))
+                            .add(org.jdesktop.layout.GroupLayout.TRAILING, layout.createSequentialGroup()
+                                .add(plotComboBox_, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 27, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                                .add(13, 13, 13)))
                         .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
                             .add(averageTrackButton_, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 20, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                             .add(straightenTrackButton_, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 20, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))

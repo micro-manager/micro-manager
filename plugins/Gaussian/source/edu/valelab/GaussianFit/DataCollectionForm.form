@@ -96,7 +96,7 @@
                       <EmptySpace min="2" pref="2" max="2" attributes="0"/>
                       <Group type="103" groupAlignment="0" attributes="0">
                           <Component id="plotComboBox_" min="-2" pref="80" max="-2" attributes="0"/>
-                          <Component id="logLogCheckBox_" min="-2" max="-2" attributes="0"/>
+                          <Component id="logLogCheckBox_" alignment="0" min="-2" max="-2" attributes="0"/>
                       </Group>
                   </Group>
                   <Group type="102" alignment="0" attributes="0">
@@ -238,10 +238,13 @@
                               <EmptySpace min="2" pref="2" max="2" attributes="0"/>
                               <Component id="powerSpectrumCheckBox_" min="-2" pref="20" max="-2" attributes="0"/>
                           </Group>
-                          <Component id="plotComboBox_" min="-2" max="-2" attributes="0"/>
                           <Group type="102" attributes="0">
                               <EmptySpace min="17" pref="17" max="17" attributes="0"/>
                               <Component id="logLogCheckBox_" min="-2" max="-2" attributes="0"/>
+                          </Group>
+                          <Group type="102" alignment="1" attributes="0">
+                              <Component id="plotComboBox_" min="-2" pref="27" max="-2" attributes="0"/>
+                              <EmptySpace min="-2" pref="13" max="-2" attributes="0"/>
                           </Group>
                       </Group>
                       <Group type="103" groupAlignment="0" attributes="0">
