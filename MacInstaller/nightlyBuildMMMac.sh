@@ -9,7 +9,7 @@
 
 # Use "-f" to build a release version, no option will do nightly build (only difference is in the name of the output)
 # Use "-n" to avoid a make clean, i.e. do an incremental only
-while getopts "f:n" optname
+while getopts ":fn" optname
 do
    case "$optname" in
       "f")
