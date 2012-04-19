@@ -28,11 +28,6 @@
       .show))
   reference)
 
-(defn- default-screen-device []
-  (->
-    (java.awt.GraphicsEnvironment/getLocalGraphicsEnvironment)
-    .getDefaultScreenDevice))
-
 (defn bind-key
   "Maps an input-key on a swing component to an action,
   such that action-fn is executed when key is pressed."
@@ -53,6 +48,11 @@
 (defn bind-window-key
   [window input-key action-fn]
   (bind-key (.getContentPane window) input-key action-fn true))
+
+(defn- default-screen-device []
+  (->
+    (java.awt.GraphicsEnvironment/getLocalGraphicsEnvironment)
+    .getDefaultScreenDevice))
 
 (defn full-screen! ; adapted from seesaw
   "Make the given window/frame full-screen. Pass nil to return all windows
