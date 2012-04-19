@@ -453,6 +453,10 @@
    import java.net.URLDecoder;
 %}
 
+// Pull in the device adapter path that micro-manager has been compiled against
+%javaconst(1) DEVICEADAPTERPATH;
+%constant char *DEVICEADAPTERPATH = SWIG_DEVICEADAPTERPATH;
+
 %pragma(java) jniclasscode=%{
 
   private static String URLtoFilePath(URL url) throws Exception {
@@ -509,12 +513,9 @@
     searchPaths.add(directory);
     directoryMM = new File(new File(directory, "mm"), platform);
     searchPaths.add(directoryMM);
-    // on Linux use the LSB-defined library paths
+    // on Linux use the LSB-defined library path (set in configure.common)
     if (platform.startsWith("linux"))
-    {
-        searchPaths.add(new File("/usr/local/lib/micro-manager"));
-        searchPaths.add(new File("/usr/lib/micro-manager"));
-    }
+        searchPaths.add(new File(MMCoreJConstants.DEVICEADAPTERPATH));
     
 	try {
 	    loadLibrary(searchPaths, "MMCoreJ_wrap");

@@ -16,7 +16,9 @@ SWIGLIB_SOURCES = MMCoreJ.i \
 MMCoreJ_wrap.cxx: $(SWIGLIB_SOURCES)
 	test -d mmcorej || mkdir mmcorej
 	touch $(srcdir)/MMCoreJ_wrap.cxx || (chmod +wrx $(srcdir) && touch $(srcdir)/MMCoreJ_wrap.cxx)
-	$(SWIG) -c++ -java -package mmcorej -outdir mmcorej -module MMCoreJ -o $(srcdir)/MMCoreJ_wrap.cxx $(srcdir)/MMCoreJ.i 
+	$(SWIG) -c++ -java -package mmcorej -outdir mmcorej -module MMCoreJ \
+		-DSWIG_DEVICEADAPTERPATH="\"$(DEVICEADAPTERPATH)\"" \
+		-o $(srcdir)/MMCoreJ_wrap.cxx $(srcdir)/MMCoreJ.i 
 	cp $(srcdir)/MMCoreJ_wrap.cxx MMCoreJ_wrap.cxx || echo "No problem"
 	
 INCLUDES = $(JAVAINC)
