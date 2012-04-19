@@ -280,10 +280,10 @@ ScopeLEDFluorescenceIlluminator::ScopeLEDFluorescenceIlluminator() : m_CachedLED
     m_pid = 0x1305;
 
     // Name
-    int nRet = CreateProperty(MM::g_Keyword_Name, DeviceName, MM::String, true);
+    CreateProperty(MM::g_Keyword_Name, DeviceName, MM::String, true);
 
     // Description
-    nRet = CreateProperty(MM::g_Keyword_Description, DeviceDescription, MM::String, true);
+    CreateProperty(MM::g_Keyword_Description, DeviceDescription, MM::String, true);
 
     CPropertyAction* pAct = new CPropertyAction (this, &ScopeLEDFluorescenceIlluminator::OnVendorID);
     CreateProperty("VendorID", "0", MM::Integer, false, pAct, true);
@@ -301,12 +301,6 @@ ScopeLEDFluorescenceIlluminator::ScopeLEDFluorescenceIlluminator() : m_CachedLED
 
     //pAct = new CPropertyAction (this, &ScopeLEDFluorescenceIlluminator::OnTransactionTime);
     //CreateProperty("TxnTime", "0", MM::Integer, true, pAct);
-
-    // state
-    pAct = new CPropertyAction (this, &ScopeLEDFluorescenceIlluminator::OnState);
-    CreateProperty(MM::g_Keyword_State, "0", MM::Integer, false, pAct);
-    AddAllowedValue(MM::g_Keyword_State, "0"); // Closed
-    AddAllowedValue(MM::g_Keyword_State, "1"); // Open
 }
 
 ScopeLEDFluorescenceIlluminator::~ScopeLEDFluorescenceIlluminator()
@@ -452,7 +446,14 @@ int ScopeLEDFluorescenceIlluminator::Initialize()
 
     pAct = new CPropertyAction (this, &ScopeLEDFluorescenceIlluminator::OnOptimalPositionString);
     nRet = CreateProperty("OptimalStagePosition", "", MM::String, true, pAct);
-    if (nRet != DEVICE_OK) return nRet;    
+    if (nRet != DEVICE_OK) return nRet;
+    
+    // state
+    pAct = new CPropertyAction (this, &ScopeLEDFluorescenceIlluminator::OnState);
+    nRet = CreateProperty(MM::g_Keyword_State, "0", MM::Integer, false, pAct);
+    if (nRet != DEVICE_OK) return nRet;
+    AddAllowedValue(MM::g_Keyword_State, "0"); // Closed
+    AddAllowedValue(MM::g_Keyword_State, "1"); // Open
 
     nRet = UpdateStatus();
     return nRet;
