@@ -436,6 +436,10 @@ int ScopeLEDFluorescenceIlluminator::Initialize()
     if (nRet != DEVICE_OK) return nRet;
     SetPropertyLimits("ControlMode", 1, 3);
 
+    pAct = new CPropertyAction (this, &ScopeLEDFluorescenceIlluminator::OnControlModeString);
+    nRet = CreateProperty("ControlModeDescription", "", MM::String, true, pAct);
+    if (nRet != DEVICE_OK) return nRet;
+
     pAct = new CPropertyAction (this, &ScopeLEDFluorescenceIlluminator::OnActiveChannelString);
     nRet = CreateProperty("ActiveChannels", "", MM::String, true, pAct);
     if (nRet != DEVICE_OK) return nRet;
@@ -909,18 +913,56 @@ int ScopeLEDFluorescenceIlluminator::GetControlMode(long& mode)
 
 int ScopeLEDFluorescenceIlluminator::OnControlMode(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
+    int result = DEVICE_OK;
     long mode = 0;
     if (eAct == MM::BeforeGet)
     {
-        GetControlMode(mode);
-        pProp->Set(mode);
+        result = GetControlMode(mode);
+        if (DEVICE_OK == result)
+        {
+            pProp->Set(mode);
+        }
     }
     else if (eAct == MM::AfterSet)
     {
         pProp->Get(mode);
-        SetControlMode(mode);
+        result = SetControlMode(mode);
     }
-    return DEVICE_OK;
+    return result;
+}
+
+int ScopeLEDFluorescenceIlluminator::OnControlModeString(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+    int result = DEVICE_CAN_NOT_SET_PROPERTY;   
+    if (eAct == MM::BeforeGet)
+    {
+        long mode = 0;
+        std::string mode_str;
+        result = GetControlMode(mode);
+        if (DEVICE_OK == result)
+        {
+            switch (mode)
+            {
+                case 0:
+                    mode_str = "";
+                    break;
+                case 1:
+                    mode_str = "Normal Control Mode";
+                    break;
+                case 2:
+                    mode_str = "Analog Control Mode";
+                    break;
+                case 3:
+                    mode_str = "TTL Control Mode";
+                    break;
+                default:
+                    mode_str = "Unrecognized Control Mode";
+                    break;
+            }
+            pProp->Set(mode_str.c_str());
+        }
+    }
+    return result;
 }
 
 int ScopeLEDFluorescenceIlluminator::UpdateActiveChannelString()

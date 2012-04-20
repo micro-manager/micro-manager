@@ -99,6 +99,7 @@ public:
     int OnChannel4Wavelength(MM::PropertyBase* pProp, MM::ActionType eAct);    
 
     int OnControlMode(MM::PropertyBase* pProp, MM::ActionType eAct);
+    int OnControlModeString(MM::PropertyBase* pProp, MM::ActionType eAct);
 
     int OnActiveChannelString(MM::PropertyBase* pProp, MM::ActionType eAct);
     int OnActiveWavelengthString(MM::PropertyBase* pProp, MM::ActionType eAct);
