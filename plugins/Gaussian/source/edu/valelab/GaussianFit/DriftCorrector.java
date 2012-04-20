@@ -33,12 +33,12 @@ public class DriftCorrector {
       }
    }
 
-   public void unJitter(final MyRowData rowData) {
+   public void unJitter(final MyRowData rowData, int maxFrames, int maxSpots) {
 
       // TODO: instead of a fixed number of frames, go for a certain number of spots
       // Number of frames could be limited as well
-      final int maxNrFrames = 500;
-      final int maxNrSpots = 40000;
+      final int maxNrFrames = maxFrames;
+      final int maxNrSpots = maxSpots;
 
       if (rowData.spotList_.size() <= 1) {
          return;

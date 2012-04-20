@@ -17,73 +17,42 @@
 
 package edu.valelab.GaussianFit;
 
+import edu.ucsf.tsf.TaggedSpotsProtos.FitMode;
+import edu.ucsf.tsf.TaggedSpotsProtos.IntensityUnits;
+import edu.ucsf.tsf.TaggedSpotsProtos.LocationUnits;
+import edu.ucsf.tsf.TaggedSpotsProtos.Spot;
+import edu.ucsf.tsf.TaggedSpotsProtos.SpotList;
 import ij.ImagePlus;
 import ij.WindowManager;
 import ij.gui.ImageWindow;
-import ij.measure.ResultsTable;
-import ij.process.ImageProcessor;
-import ij.text.TextPanel;
-import ij.text.TextWindow;
-import java.awt.Component;
-import java.awt.Frame;
-import java.awt.Point;
-import java.awt.event.KeyListener;
-import java.awt.event.MouseListener;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.text.ParseException;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-import javax.swing.JButton;
-import javax.swing.JTable;
-import javax.swing.UIManager;
-import javax.swing.table.AbstractTableModel;
-import javax.swing.table.TableCellRenderer;
-
-import edu.ucsf.tsf.TaggedSpotsProtos.IntensityUnits;
-import edu.ucsf.tsf.TaggedSpotsProtos.LocationUnits;
-import edu.ucsf.tsf.TaggedSpotsProtos.FitMode;
-import edu.ucsf.tsf.TaggedSpotsProtos.SpotList;
-import edu.ucsf.tsf.TaggedSpotsProtos.Spot;
-
 import ij.gui.StackWindow;
 import ij.gui.YesNoCancelDialog;
+import ij.measure.ResultsTable;
 import ij.process.ByteProcessor;
+import ij.process.ImageProcessor;
 import ij.process.ShortProcessor;
-import java.awt.Cursor;
-import java.awt.Dimension;
-import java.awt.FileDialog;
+import ij.text.TextPanel;
+import ij.text.TextWindow;
+import java.awt.*;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.Transferable;
 import java.awt.datatransfer.UnsupportedFlavorException;
+import java.awt.event.KeyListener;
+import java.awt.event.MouseListener;
 import java.awt.geom.Point2D;
-
-import java.io.BufferedInputStream;
-import java.io.BufferedReader;
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.FileReader;
-import java.io.FileWriter;
-import java.io.FilenameFilter;
+import java.io.*;
 import java.nio.channels.FileChannel;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Iterator;
+import java.text.ParseException;
 import java.util.List;
-import java.util.Map;
+import java.util.*;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import java.util.prefs.Preferences;
-import javax.swing.JFileChooser;
-import javax.swing.JOptionPane;
-
-import javax.swing.TransferHandler;
+import javax.swing.*;
+import javax.swing.table.AbstractTableModel;
+import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableColumnModel;
 import org.jfree.data.xy.XYSeries;
-
 import org.micromanager.MMStudioMainFrame;
 import org.micromanager.utils.NumberUtils;
 import valelab.LocalWeightedMean;
@@ -129,12 +98,35 @@ public class DataCollectionForm extends javax.swing.JFrame {
 
    private static int rowDataID_ = 1;
    
-   private int jitterMethod_ = 0;
+   private int jitterMethod_ = 1;
+   private int jitterMaxSpots_ = 40000; 
+   private int jitterMaxFrames_ = 500;
    
+   /**
+    * Method to allow scripts to tune the jitter corrector
+    * @param jm 
+    */
    public void setJitterMethod(int jm) {
       if (jm == 0 || jm == 1)
          jitterMethod_ = jm;
    }
+   /**
+    * Method to allow scripts to tune the jitter corrector
+    * @param jm 
+    */
+   public void setJitterMaxFrames(int jm) {
+         jitterMaxFrames_ = jm;
+   }
+   /**
+    * Method to allow scripts to tune the jitter corrector
+    * @param jm 
+    */
+   public void setJitterMaxSpots(int jm) {
+         jitterMaxSpots_ = jm;
+   }
+   
+   
+  
    
   
    
@@ -275,18 +267,21 @@ public class DataCollectionForm extends javax.swing.JFrame {
       rowData_ = new ArrayList<MyRowData>();
 
       myTableModel_ = new AbstractTableModel() {
-         @Override
+             @Override
           public String getColumnName(int col) {
               return columnNames_[col].toString();
           }
+             @Override
           public int getRowCount() {
              if (rowData_ == null)
                 return 0;
              return rowData_.size();
           }
+            @Override
           public int getColumnCount() { 
              return columnNames_.length;
           }
+            @Override
           public Object getValueAt(int row, int col) {
              if (col == 0 && rowData_ != null)
                 return rowData_.get(row).ID_;
@@ -309,13 +304,13 @@ public class DataCollectionForm extends javax.swing.JFrame {
                 return getColumnName(col);
              
           }
-         @Override
+            @Override
           public boolean isCellEditable(int row, int col) {
             if (col == 1)
                return true;
             return false;
           }
-         @Override
+             @Override
           public void setValueAt(Object value, int row, int col) {
              if (col == 1)
                 rowData_.get(row).name_ = (String) value;
@@ -1000,12 +995,13 @@ public class DataCollectionForm extends javax.swing.JFrame {
        final File[] selectedFiles = jfc.getSelectedFiles();
 
        if (selectedFiles == null || selectedFiles.length < 1) {
-          return;
+           return;
        } else {
 
           // Thread doing file import
           Runnable loadFile = new Runnable() {
 
+                @Override
              public void run() {
                 loadFiles(selectedFiles);
              }
@@ -1445,6 +1441,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
 
          Runnable doWorkRunnable = new Runnable() {
 
+            @Override
             public void run() {
                ResultsTable rt = new ResultsTable();
                rt.reset();
@@ -1663,7 +1660,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
                if (jitterMethod_ == 0)
                   unJitter(rowData_.get(row));
                else
-                  new DriftCorrector().unJitter(rowData_.get(row));
+                  new DriftCorrector().unJitter(rowData_.get(row), jitterMaxFrames_, jitterMaxSpots_);
             }
          };
          (new Thread(doWorkRunnable)).start();
@@ -1767,6 +1764,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
 
          Runnable doWorkRunnable = new Runnable() {
 
+            @Override
             public void run() {
 
                int mag = 1 << visualizationMagnification_.getSelectedIndex();
@@ -2019,6 +2017,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
 
       Runnable doWorkRunnable = new Runnable() {
 
+         @Override
          public void run() {
 
             try {
@@ -2237,6 +2236,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
          setOpaque(true);
       }
 
+      @Override
       public Component getTableCellRendererComponent(JTable table, Object value,
           boolean isSelected, boolean hasFocus, int row, int column) {
 
@@ -2369,6 +2369,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
          
          Runnable doWorkRunnable = new Runnable() {
             
+            @Override
             public void run() {
                
                SpotList.Builder tspBuilder = SpotList.newBuilder();
@@ -2488,6 +2489,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
       FileDialog fd = new FileDialog(this, "Save Spot Data", FileDialog.SAVE);
       fd.setFile(rowData.name_ + ".txt");
       FilenameFilter fnf = new FilenameFilter() {
+         @Override
          public boolean accept(File file, String string) {
             if (string.endsWith(".txt"))
                return true;
@@ -2519,6 +2521,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
          
          Runnable doWorkRunnable = new Runnable() {
             
+            @Override
             public void run() {
 
                try {
@@ -3048,6 +3051,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
       
       Runnable doWorkRunnable = new Runnable() {
 
+         @Override
          public void run() {
 
             List<GaussianSpotData> correctedData =
@@ -3223,40 +3227,5 @@ public class DataCollectionForm extends javax.swing.JFrame {
 
    }
 
-   private boolean test(double[][][] imageSpotList, int source, int target, double cutoff) {
-      double xtest = imageSpotList[0][source][2] - imageSpotList[1][target][2];
-      if (xtest > cutoff || xtest < -cutoff) {
-         return false;
-      }
-      double ytest = imageSpotList[0][source][3] - imageSpotList[1][target][3];
-      if (ytest > cutoff || ytest < -cutoff) {
-         return false;
-      }
-      return true;
-   }
-
-   private class SpotSortComparator implements Comparator {
-
-      // Return the result of comparing the two row arrays
-      public int compare(Object o1, Object o2) {
-         double[] p1 = (double[]) o1;
-         double[] p2 = (double[]) o2;
-         if (p1[0] < p2[0]) {
-            return -1;
-         }
-         if (p1[0] > p2[0]) {
-            return 1;
-         }
-         if (p1[0] == p2[0]) {
-            if (p1[1] < p2[1]) {
-               return -1;
-            }
-            if (p1[1] > p2[1]) {
-               return 1;
-            }
-         }
-         return 0;
-      }
-   }
 
 }
