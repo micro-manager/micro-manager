@@ -47,255 +47,254 @@ public class DriftCorrector {
 
       ij.IJ.showStatus("Executing jitter correction");
 
-      Runnable doWorkRunnable = new Runnable() {
 
-         public void run() {
+      int mag = (int) (rowData.pixelSizeNm_ / 40.0);
+      while (mag % 2 != 0) {
+         mag += 1;
+      }
 
-            int mag = (int) (rowData.pixelSizeNm_ / 40.0);
-            while (mag % 2 != 0) {
-               mag += 1;
+      int width = mag * rowData.width_;
+      int height = mag * rowData.height_;
+
+      int size = width * height;
+
+
+      // TODO: add 0 padding to deal with aberrant image sizes
+      if ((width != height) || ((width & (width - 1)) != 0)) {
+         JOptionPane.showMessageDialog(DataCollectionForm.getInstance(),
+                 "Magnified image is not a square with a size that is a power of 2");
+         ij.IJ.showStatus(" ");
+         return;
+      }
+
+      // TODO: what if we should go through nrSlices instead of nrFrames?
+      boolean useSlices = false;
+      //int nrOfTests = rowData.nrFrames_ / framesToCombine;
+      if (rowData.nrFrames_ == 0) {
+         useSlices = true;
+      }
+      final int nrImages = useSlices ? rowData.nrSlices_ : rowData.nrFrames_;
+
+      /*
+      nrOfTests = rowData.nrSlices_ / framesToCombine;
+      if (rowData.nrSlices_ % framesToCombine > 0) {
+      nrOfTests++;
+      }
+      } else {
+      if (rowData.nrFrames_ % framesToCombine > 0) {
+      nrOfTests++;
+      }
+      }
+      
+       */
+
+
+      ArrayList<StageMovementData> stagePos = new ArrayList<StageMovementData>();
+
+
+      // make imageprocessors for all the images that we will generate
+
+      // not enough memory to allocate all images in one go
+      // we need to cycle through all gaussian spots cycle by cycle
+
+      double factor = (double) mag / rowData.pixelSizeNm_;
+      
+      
+      // Assemble the reference image (the first one)
+      ImageProcessor ipRef = new ByteProcessor(width, height);
+      byte[] pixelsRef = new byte[width * height];
+      ipRef.setPixels(pixelsRef);
+
+      if (rowData.frameIndexSpotList_ == null) {
+         rowData.index();
+      }
+      int spotNr = 0;
+      int frameNr = 0;
+      while (spotNr < maxNrSpots && frameNr < maxNrFrames && frameNr < nrImages) {
+         List<GaussianSpotData> frameSpots = rowData.frameIndexSpotList_.get(frameNr);
+         if (frameSpots != null) {
+            for (GaussianSpotData spot : frameSpots) {
+               int x = (int) (factor * spot.getXCenter());
+               int y = (int) (factor * spot.getYCenter());
+               int index = (y * width) + x;
+               if (index < size && index > 0) {
+                  if (pixelsRef[index] != -1) {
+                     pixelsRef[index] += 1;
+                  }
+               }
+               spotNr++;
             }
+         }
+         frameNr++;
+      }
 
-            int width = mag * rowData.width_;
-            int height = mag * rowData.height_;
+      JitterDetector jd = new JitterDetector(ipRef);
 
-            int size = width * height;
+      Point2D.Double fp = new Point2D.Double(0.0, 0.0);
+      jd.getJitter(ipRef, fp);
 
+      
+      // Assemble images for all subsequent frames and calculate cross-correlation with the first image
+      Point2D.Double com = new Point2D.Double(0.0, 0.0);
+      ImageProcessor ipTest = new ByteProcessor(width, height);
+      byte[] pixelsTest = new byte[width * height];
+      ipTest.setPixels(pixelsTest);
 
-            // TODO: add 0 padding to deal with aberrant image sizes
-            if ((width != height) || ((width & (width - 1)) != 0)) {
-               JOptionPane.showMessageDialog(DataCollectionForm.getInstance(),
-                       "Magnified image is not a square with a size that is a power of 2");
-               ij.IJ.showStatus(" ");
-               return;
+      int estimatedNrTests = 1;
+      int testNr = 1;
+
+      while (frameNr < nrImages) {
+         estimatedNrTests = nrImages / (frameNr / testNr) + 1;
+         ij.IJ.showStatus("Executing jitter correction..." + testNr
+                 + "/" + estimatedNrTests);
+         ij.IJ.showProgress(testNr, estimatedNrTests);
+         for (int p = 0; p < size; p++) {
+            ipTest.set(p, 0);
+         }
+
+         int tmpFrameNr = 0;
+         spotNr = 0;
+
+         while (spotNr < maxNrSpots && tmpFrameNr < maxNrFrames && frameNr < nrImages) {
+            List<GaussianSpotData> frameSpots = rowData.frameIndexSpotList_.get(frameNr);
+            for (GaussianSpotData spot : frameSpots) {
+               int x = (int) (factor * spot.getXCenter());
+               int y = (int) (factor * spot.getYCenter());
+               int index = (y * width) + x;
+               if (index < size && index > 0) {
+                  if (pixelsTest[index] != -1) {
+                     pixelsTest[index] += 1;
+                  }
+               }
+               spotNr++;
             }
+            tmpFrameNr++;
+            frameNr++;
+         }
 
-            // TODO: what if we should go through nrSlices instead of nrFrames?
-            boolean useSlices = false;
-            //int nrOfTests = rowData.nrFrames_ / framesToCombine;
-            if (rowData.nrFrames_ == 0) {
-               useSlices = true;
-            }
-            final int nrImages = useSlices ? rowData.nrSlices_ : rowData.nrFrames_;
+         jd.getJitter(ipTest, com);
+         double x = (fp.x - com.x) / factor;
+         double y = (fp.y - com.y) / factor;
+         double timePoint = frameNr;
+         if (rowData.timePoints_ != null) {
+            rowData.timePoints_.get(frameNr);
+         }
+         stagePos.add(new StageMovementData(new Point2D.Double(x, y),
+                 new Point(tmpFrameNr - frameNr, tmpFrameNr)));
+         System.out.println("X: " + x + " Y: " + y);
+         testNr++;
+      }
 
-            /*
-            nrOfTests = rowData.nrSlices_ / framesToCombine;
-            if (rowData.nrSlices_ % framesToCombine > 0) {
-            nrOfTests++;
-            }
+
+      // Assemble stage movement data into a track
+      try {
+         List<GaussianSpotData> stageMovementData = new ArrayList<GaussianSpotData>();
+         GaussianSpotData sm = new GaussianSpotData(null, 1, 1, 1, 1, 1, 1, 1);
+         sm.setData(0, 0, 0, 0, 0.0, 0, 0, 0, 0);
+         stageMovementData.add(sm);
+
+
+         ArrayList<StageMovementData> stagePosMA = movingAverage(stagePos, 5);
+         //ArrayList<StageMovementData> stagePosMA = stagePos;
+
+         for (int i = 0; i < stagePosMA.size(); i++) {
+            StageMovementData smd = stagePosMA.get(i);
+            GaussianSpotData s =
+                    new GaussianSpotData(null, 1, 1, i + 2, 1, 1, 1, 1);
+            s.setData(0, 0, smd.pos_.x, smd.pos_.y, 0.0, 0, 0, 0, 0);
+            stageMovementData.add(s);
+         }
+
+
+         // Add stage movement data to overview window
+         // First try to copy the time points
+         ArrayList<Double> timePoints = null;
+         /*
+         if (rowData.timePoints_ != null) {
+         timePoints = new ArrayList<Double>();
+         int tp = framesToCombine;
+         while (tp < rowData.timePoints_.size()) {
+         timePoints.add(rowData.timePoints_.get(tp));
+         tp += framesToCombine;
+         }
+         }
+         
+          */
+
+         MyRowData newRow = DataCollectionForm.getInstance().new MyRowData(rowData.name_ + "-Jitter", rowData.title_,
+                 "", rowData.width_,
+                 rowData.height_, rowData.pixelSizeNm_, rowData.shape_,
+                 rowData.halfSize_, rowData.nrChannels_, stageMovementData.size(),
+                 1, 1, stageMovementData.size(), stageMovementData,
+                 timePoints, true, Coordinates.NM, false, 0.0, 0.0);
+         DataCollectionForm.getInstance().rowData_.add(newRow);
+
+         DataCollectionForm.getInstance().myTableModel_.fireTableRowsInserted(DataCollectionForm.getInstance().rowData_.size() - 1, DataCollectionForm.getInstance().rowData_.size());
+
+
+
+
+         ij.IJ.showStatus("Assembling jitter corrected dataset...");
+         ij.IJ.showProgress(1);
+
+         List<GaussianSpotData> correctedData = new ArrayList<GaussianSpotData>();
+         Iterator it = rowData.spotList_.iterator();
+
+         testNr = 0;
+         StageMovementData smd = stagePosMA.get(0);
+         int counter = 0;
+         while (it.hasNext()) {
+            counter++;
+            GaussianSpotData gs = (GaussianSpotData) it.next();
+            int test = 0;
+            if (useSlices) {
+               test = gs.getSlice();
             } else {
-            if (rowData.nrFrames_ % framesToCombine > 0) {
-            nrOfTests++;
+               test = gs.getFrame();
             }
+            if (test != testNr) {
+               testNr = test - 1;
             }
-            
-             */
-
-
-            ArrayList<StageMovementData> stagePos = new ArrayList<StageMovementData>();
-
-
-            // make imageprocessors for all the images that we will generate
-
-            // not enough memory to allocate all images in one go
-            // we need to cycle through all gaussian spots cycle by cycle
-
-            double factor = (double) mag / rowData.pixelSizeNm_;
-
-            ImageProcessor ipRef = new ByteProcessor(width, height);
-            byte[] pixelsRef = new byte[width * height];
-            ipRef.setPixels(pixelsRef);
-
-            if (rowData.frameIndexSpotList_ == null) {
-               rowData.index();
+            boolean found = false;
+            if (testNr >= smd.frameRange_.x && testNr <= smd.frameRange_.y) {
+               found = true;
             }
-            int spotNr = 0;
-            int frameNr = 0;
-            while (spotNr < maxNrSpots && frameNr < maxNrFrames && frameNr < nrImages) {
-               List<GaussianSpotData> frameSpots = rowData.frameIndexSpotList_.get(frameNr);
-               if (frameSpots != null) {
-                  for (GaussianSpotData spot : frameSpots) {
-                     int x = (int) (factor * spot.getXCenter());
-                     int y = (int) (factor * spot.getYCenter());
-                     int index = (y * width) + x;
-                     if (index < size && index > 0) {
-                        if (pixelsRef[index] != -1) {
-                           pixelsRef[index] += 1;
-                        }
-                     }
-                     spotNr++;
-                  }
-               }
-               frameNr++;
-            }
-
-            JitterDetector jd = new JitterDetector(ipRef);
-
-            Point2D.Double fp = new Point2D.Double(0.0, 0.0);
-            jd.getJitter(ipRef, fp);
-
-            Point2D.Double com = new Point2D.Double(0.0, 0.0);
-            ImageProcessor ipTest = new ByteProcessor(width, height);
-            byte[] pixelsTest = new byte[width * height];
-            ipTest.setPixels(pixelsTest);
-
-            final int estimatedNrTests = nrImages / frameNr + 1;
-            int testNr = 1;
-
-            while (frameNr < nrImages) {
-               ij.IJ.showStatus("Executing jitter correction..." + testNr +
-                       "/" + estimatedNrTests);
-               ij.IJ.showProgress(testNr, estimatedNrTests);
-               for (int p = 0; p < size; p++) {
-                  ipTest.set(p, 0);
-               }
-
-               int tmpFrameNr = 0;
-               spotNr = 0;
-
-               while (spotNr < maxNrSpots && tmpFrameNr < maxNrFrames && frameNr < nrImages) {
-                  List<GaussianSpotData> frameSpots = rowData.frameIndexSpotList_.get(frameNr);
-                  for (GaussianSpotData spot : frameSpots) {
-                     int x = (int) (factor * spot.getXCenter());
-                     int y = (int) (factor * spot.getYCenter());
-                     int index = (y * width) + x;
-                     if (index < size && index > 0) {
-                        if (pixelsTest[index] != -1) {
-                           pixelsTest[index] += 1;
-                        }
-                     }
-                     spotNr++;
-                  }
-                  tmpFrameNr++;
-                  frameNr++;
-               }
-
-               jd.getJitter(ipTest, com);
-               double x = (fp.x - com.x) / factor;
-               double y = (fp.y - com.y) / factor;
-               double timePoint = frameNr;
-               if (rowData.timePoints_ != null) {
-                  rowData.timePoints_.get(frameNr);
-               }
-               stagePos.add(new StageMovementData(new Point2D.Double(x, y),
-                       new Point(tmpFrameNr - frameNr, tmpFrameNr)));
-               System.out.println("X: " + x + " Y: " + y);
-               testNr++;
-            }
-
-
-
-            try {
-               // Assemble stage movement data into a track
-               List<GaussianSpotData> stageMovementData = new ArrayList<GaussianSpotData>();
-               GaussianSpotData sm = new GaussianSpotData(null, 1, 1, 1, 1, 1, 1, 1);
-               sm.setData(0, 0, 0, 0, 0.0, 0, 0, 0, 0);
-               stageMovementData.add(sm);
-
-
-               ArrayList<StageMovementData> stagePosMA = movingAverage(stagePos, 5);
-               //ArrayList<StageMovementData> stagePosMA = stagePos;
-               
-               for (int i = 0; i < stagePosMA.size(); i++) {
-                  StageMovementData smd = stagePosMA.get(i);
-                  GaussianSpotData s =
-                          new GaussianSpotData(null, 1, 1, i + 2, 1, 1, 1, 1);
-                  s.setData(0, 0, smd.pos_.x, smd.pos_.y, 0.0, 0, 0, 0, 0);
-                  stageMovementData.add(s);
-               }
-
-
-               // Add stage movement data to overview window
-               // First try to copy the time points
-               ArrayList<Double> timePoints = null;
-               /*
-               if (rowData.timePoints_ != null) {
-               timePoints = new ArrayList<Double>();
-               int tp = framesToCombine;
-               while (tp < rowData.timePoints_.size()) {
-               timePoints.add(rowData.timePoints_.get(tp));
-               tp += framesToCombine;
-               }
-               }
-               
-                */
-
-               MyRowData newRow = DataCollectionForm.getInstance().new MyRowData(rowData.name_ + "-Jitter", rowData.title_,
-                       "", rowData.width_,
-                       rowData.height_, rowData.pixelSizeNm_, rowData.shape_,
-                       rowData.halfSize_, rowData.nrChannels_, stageMovementData.size(),
-                       1, 1, stageMovementData.size(), stageMovementData,
-                       timePoints, true, Coordinates.NM, false, 0.0, 0.0);
-               DataCollectionForm.getInstance().rowData_.add(newRow);
-
-               DataCollectionForm.getInstance().myTableModel_.fireTableRowsInserted(DataCollectionForm.getInstance().rowData_.size() - 1, DataCollectionForm.getInstance().rowData_.size());
-
-
-
-
-               ij.IJ.showStatus("Assembling jitter corrected dataset...");
-               ij.IJ.showProgress(1);
-
-               List<GaussianSpotData> correctedData = new ArrayList<GaussianSpotData>();
-               Iterator it = rowData.spotList_.iterator();
-
-               testNr = 0;
-               StageMovementData smd = stagePosMA.get(0);
-               int counter = 0;
-               while (it.hasNext()) {
-                  counter++;
-                  GaussianSpotData gs = (GaussianSpotData) it.next();
-                  int test = 0;
-                  if (useSlices) {
-                     test = gs.getSlice();
-                  } else {
-                     test = gs.getFrame();
-                  }
-                  if (test != testNr) {
-                     testNr = test - 1;
-                  }
-                  boolean found = false;
+            if (!found) {
+               for (int i = 0; i < stagePosMA.size() && !found; i++) {
+                  smd = stagePosMA.get(i);
                   if (testNr >= smd.frameRange_.x && testNr <= smd.frameRange_.y) {
                      found = true;
                   }
-                  if (!found) {
-                     for (int i = 0; i < stagePosMA.size() && !found; i++) {
-                        smd = stagePosMA.get(i);
-                        if (testNr >= smd.frameRange_.x && testNr <= smd.frameRange_.y) {
-                           found = true;
-                        }
-                     }
-                  }
-                  if (found) {
-                     Point2D.Double point = new Point2D.Double(gs.getXCenter() - smd.pos_.x,
-                             gs.getYCenter() - smd.pos_.y);
-                     GaussianSpotData gsn = new GaussianSpotData(gs);
-                     gsn.setXCenter(point.x);
-                     gsn.setYCenter(point.y);
-                     correctedData.add(gsn);
-                  } else {
-                     correctedData.add(gs);
-                  }
-
-
                }
-
-               // Add transformed data to data overview window
-               DataCollectionForm.getInstance().addSpotData(rowData.name_ + "-Jitter-Correct", rowData.title_, "", rowData.width_,
-                       rowData.height_, rowData.pixelSizeNm_, rowData.shape_,
-                       rowData.halfSize_, rowData.nrChannels_, rowData.nrFrames_,
-                       rowData.nrSlices_, 1, rowData.maxNrSpots_, correctedData,
-                       null, false, Coordinates.NM, false, 0.0, 0.0);
-               ij.IJ.showStatus("Finished jitter correction");
-            } catch (OutOfMemoryError oom) {
-               System.gc();
-               ij.IJ.error("Out of Memory");
             }
-         }
-      };
+            if (found) {
+               Point2D.Double point = new Point2D.Double(gs.getXCenter() - smd.pos_.x,
+                       gs.getYCenter() - smd.pos_.y);
+               GaussianSpotData gsn = new GaussianSpotData(gs);
+               gsn.setXCenter(point.x);
+               gsn.setYCenter(point.y);
+               correctedData.add(gsn);
+            } else {
+               correctedData.add(gs);
+            }
 
-      (new Thread(doWorkRunnable)).start();
+
+         }
+
+         // Add transformed data to data overview window
+         DataCollectionForm.getInstance().addSpotData(rowData.name_ + "-Jitter-Correct", rowData.title_, "", rowData.width_,
+                 rowData.height_, rowData.pixelSizeNm_, rowData.shape_,
+                 rowData.halfSize_, rowData.nrChannels_, rowData.nrFrames_,
+                 rowData.nrSlices_, 1, rowData.maxNrSpots_, correctedData,
+                 null, false, Coordinates.NM, false, 0.0, 0.0);
+         ij.IJ.showStatus("Finished jitter correction");
+      } catch (OutOfMemoryError oom) {
+         System.gc();
+         ij.IJ.error("Out of Memory");
+      }
    }
+
+  
 
    /**
     * Calculates movingAverage for a List of stageMovementData

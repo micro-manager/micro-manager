@@ -116,6 +116,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
    private static final String INTMIN = "DCIntMin";
    private static final String INTMAX = "DCIntMax";
    private static final String LOADTSFDIR = "TSFDir";
+   private static final String RENDERMAG = "VisualizationMagnification";
    private static final String COL0Width = "Col0Width";  
    private static final String COL1Width = "Col1Width";
    private static final String COL2Width = "Col2Width";
@@ -127,6 +128,13 @@ public class DataCollectionForm extends javax.swing.JFrame {
    private static String loadTSFDir_ = "";
 
    private static int rowDataID_ = 1;
+   
+   private int jitterMethod_ = 0;
+   
+   public void setJitterMethod(int jm) {
+      if (jm == 0 || jm == 1)
+         jitterMethod_ = jm;
+   }
    
   
    
@@ -336,6 +344,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
        intensityMin_.setText(prefs_.get(INTMIN, "0.0"));
        intensityMax_.setText(prefs_.get(INTMAX, "20000"));
        loadTSFDir_ = prefs_.get(LOADTSFDIR, "");
+       visualizationMagnification_.setSelectedIndex(prefs_.getInt(RENDERMAG, 0));
        
        jTable1_.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
        TableColumnModel cm = jTable1_.getColumnModel();
@@ -1647,12 +1656,18 @@ public class DataCollectionForm extends javax.swing.JFrame {
    }//GEN-LAST:event_c2CorrectButtonActionPerformed
 
    private void unjitterButton_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_unjitterButton_ActionPerformed
-      int row = jTable1_.getSelectedRow();
-      if (row > -1) { 
-         new DriftCorrector().unJitter(rowData_.get(row));
-         //unJitter(rowData_.get(row));
-      } else
+      final int row = jTable1_.getSelectedRow();
+      if (row > -1) {
+         Runnable doWorkRunnable = new Runnable() {
+            public void run() {
+               //new DriftCorrector().unJitter(rowData_.get(row));
+               unJitter(rowData_.get(row));
+            }
+         };
+         (new Thread(doWorkRunnable)).start();
+      } else {
          JOptionPane.showMessageDialog(getInstance(), "Please select a dataset to unjitter");
+      }
    }//GEN-LAST:event_unjitterButton_ActionPerformed
 
    private void filterSigmaCheckBox_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_filterSigmaCheckBox_ActionPerformed
@@ -1676,6 +1691,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
        prefs_.put(INTMIN, intensityMin_.getText());
        prefs_.put(INTMAX, intensityMax_.getText());
        prefs_.put(LOADTSFDIR, loadTSFDir_);
+       prefs_.putInt(RENDERMAG, visualizationMagnification_.getSelectedIndex());
        
        TableColumnModel cm = jTable1_.getColumnModel();
        prefs_.putInt(COL0Width, cm.getColumn(0).getWidth());
@@ -2692,7 +2708,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
 
       // TODO: instead of a fixed number of frames, go for a certain number of spots
       // Number of frames could be limited as well
-      final int framesToCombine = 500;
+      final int framesToCombine = 200;
       
       if (rowData.spotList_.size() <= 1) {
          return;
