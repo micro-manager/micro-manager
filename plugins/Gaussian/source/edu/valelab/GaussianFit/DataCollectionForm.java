@@ -1660,8 +1660,10 @@ public class DataCollectionForm extends javax.swing.JFrame {
       if (row > -1) {
          Runnable doWorkRunnable = new Runnable() {
             public void run() {
-               //new DriftCorrector().unJitter(rowData_.get(row));
-               unJitter(rowData_.get(row));
+               if (jitterMethod_ == 0)
+                  unJitter(rowData_.get(row));
+               else
+                  new DriftCorrector().unJitter(rowData_.get(row));
             }
          };
          (new Thread(doWorkRunnable)).start();

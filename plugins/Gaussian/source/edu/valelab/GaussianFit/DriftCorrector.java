@@ -38,7 +38,7 @@ public class DriftCorrector {
       // TODO: instead of a fixed number of frames, go for a certain number of spots
       // Number of frames could be limited as well
       final int maxNrFrames = 500;
-      final int maxNrSpots = 10000;
+      final int maxNrSpots = 40000;
 
       if (rowData.spotList_.size() <= 1) {
          return;
@@ -194,11 +194,10 @@ public class DriftCorrector {
          stageMovementData.add(sm);
 
 
-         ArrayList<StageMovementData> stagePosMA = movingAverage(stagePos, 5);
-         //ArrayList<StageMovementData> stagePosMA = stagePos;
+         //stagePos = movingAverage(stagePos, 5);
 
-         for (int i = 0; i < stagePosMA.size(); i++) {
-            StageMovementData smd = stagePosMA.get(i);
+         for (int i = 0; i < stagePos.size(); i++) {
+            StageMovementData smd = stagePos.get(i);
             GaussianSpotData s =
                     new GaussianSpotData(null, 1, 1, i + 2, 1, 1, 1, 1);
             s.setData(0, 0, smd.pos_.x, smd.pos_.y, 0.0, 0, 0, 0, 0);
@@ -241,7 +240,7 @@ public class DriftCorrector {
          Iterator it = rowData.spotList_.iterator();
 
          testNr = 0;
-         StageMovementData smd = stagePosMA.get(0);
+         StageMovementData smd = stagePos.get(0);
          int counter = 0;
          while (it.hasNext()) {
             counter++;
@@ -260,8 +259,8 @@ public class DriftCorrector {
                found = true;
             }
             if (!found) {
-               for (int i = 0; i < stagePosMA.size() && !found; i++) {
-                  smd = stagePosMA.get(i);
+               for (int i = 0; i < stagePos.size() && !found; i++) {
+                  smd = stagePos.get(i);
                   if (testNr >= smd.frameRange_.x && testNr <= smd.frameRange_.y) {
                      found = true;
                   }
