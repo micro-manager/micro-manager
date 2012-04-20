@@ -17,7 +17,6 @@ import ij.gui.Overlay;
 import ij.gui.Roi;
 import java.awt.Color;
 import java.awt.Polygon;
-import java.util.Iterator;
 import java.util.prefs.Preferences;
 import javax.swing.JOptionPane;
 import javax.swing.JTextField;
@@ -108,7 +107,7 @@ public class MainForm extends javax.swing.JFrame implements ij.ImageListener{
        preFilterComboBox_.setSelectedIndex(prefs_.getInt(PREFILTER, 0));
        endTrackCheckBox_.setSelected(prefs_.getBoolean(ENDTRACKBOOL, false));
        endTrackSpinner_.setValue(prefs_.getInt(ENDTRACKINT, 0));
-       
+             
        DocumentListener updateNoiseOverlay = new DocumentListener() {
 
           public void changedUpdate(DocumentEvent documentEvent) {
@@ -733,7 +732,7 @@ public class MainForm extends javax.swing.JFrame implements ij.ImageListener{
       try {
          int val = Integer.parseInt(noiseToleranceTextField_.getText());
          int halfSize = (int) Integer.parseInt(boxSizeTextField.getText()) / 2;
-         Polygon pol = FindLocalMaxima.FindMax(siPlus, halfSize, val, preFilterType_);
+         Polygon pol = FindLocalMaxima.FindMax(siPlus, 2* halfSize, val, preFilterType_);
          // pol = FindLocalMaxima.noiseFilter(siPlus.getProcessor(), pol, val);
          Overlay ov = new Overlay();
          for (int i = 0; i < pol.npoints; i++) {
@@ -795,37 +794,32 @@ public class MainForm extends javax.swing.JFrame implements ij.ImageListener{
          boolean conventionalGain = false;
          boolean emGainFound = false;
          if (im != null) {
-            Iterator it = im.keys();
-            while (it.hasNext()) {
-               String key = (String) it.next();
-               String shortKey = key;
-               String[] keys = key.split("-");
-               if (keys.length > 0)
-                  shortKey = keys[keys.length - 1];
-               if (shortKey.equals("Output_Amplifier")) {
+
+            // find amplifier for Andor camera
+            try {
+               String camera = im.getString("Core-Camera");
+               if (im.getString(camera + "-Output_Amplifier").equals("Conventional")) {
+                  conventionalGain = true;
+               }
+               // TODO: find amplifier for other cameras
+               
+               // find gain for Andor:
+               try {
+                  emGain = im.getDouble(camera + "-Gain");
+               } catch (JSONException jex) {
                   try {
-                     String amp = im.getString(key);
-                     if (amp.equals("Conventional"))
-                        conventionalGain = true;
-                  } catch (JSONException jex) {
-                     System.out.println("Error");
+                     emGain = im.getDouble(camera + "-EMGain");
+                  } catch (JSONException jex2) {
+                     // key not found, nothing to do
                   }
                }
-               // horrible, the Andor calls emGain gain
-               if (shortKey.equals("Gain") && !emGainFound) {
-                  try {
-                     emGain = im.getDouble(key);
-                  } catch (JSONException jex) {}
-               }
-               if (shortKey.equals("EMGain") ) {
-                  emGainFound = true;
-                  try {
-                     emGain = im.getDouble(key);
-                  } catch (JSONException jex) {}
-               }
-               
+
+            } catch (JSONException ex) {
+               // tag not found...
             }
+
          }
+         
          if (conventionalGain) {
             emGain = 1;
          }

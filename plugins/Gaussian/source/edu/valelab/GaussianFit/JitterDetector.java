@@ -31,14 +31,10 @@ public class JitterDetector {
             
       m.inverseTransform();
       m.swapQuadrants();
-      //m.resetMinAndMax();
-      int midx = m.getWidth() / 2;
-      int midy = m.getHeight() / 2;
       
       // return the position of the brightest pixel
       Point brightPix = new Point(0, 0);
-      BrightestPixel(m, brightPix, 32);
-      
+      BrightestPixel(m, brightPix, 32);     
       
       try {
          // Gaussian fit using Nelder Mead and 3D fitting

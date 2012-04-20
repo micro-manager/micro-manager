@@ -1648,8 +1648,9 @@ public class DataCollectionForm extends javax.swing.JFrame {
 
    private void unjitterButton_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_unjitterButton_ActionPerformed
       int row = jTable1_.getSelectedRow();
-      if (row > -1) {     
-         unJitter(rowData_.get(row));
+      if (row > -1) { 
+         new DriftCorrector().unJitter(rowData_.get(row));
+         //unJitter(rowData_.get(row));
       } else
          JOptionPane.showMessageDialog(getInstance(), "Please select a dataset to unjitter");
    }//GEN-LAST:event_unjitterButton_ActionPerformed
@@ -2691,7 +2692,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
 
       // TODO: instead of a fixed number of frames, go for a certain number of spots
       // Number of frames could be limited as well
-      final int framesToCombine = 200;
+      final int framesToCombine = 500;
       
       if (rowData.spotList_.size() <= 1) {
          return;
@@ -2893,8 +2894,25 @@ public class DataCollectionForm extends javax.swing.JFrame {
                GaussianSpotData sm = new GaussianSpotData(null, 1, 1, 1, 1, 1, 1, 1);
                sm.setData(0, 0, 0, 0, 0.0, 0, 0, 0, 0);
                stageMovementData.add(sm);
-               for (int i = 0; i < stagePos.size(); i++) {
-                  StageMovementData smd = stagePos.get(i);
+               
+               // calculate moving average for stageposition
+               ArrayList<StageMovementData> stagePosMA = new ArrayList<StageMovementData>();
+               int windowSize = 5;
+               for (int i = 0; i < stagePos.size() - windowSize; i++) {
+                  Point2D.Double avg = new Point2D.Double(0.0, 0.0);
+                  for (int j = 0; j < windowSize; j++) {
+                     avg.x += stagePos.get(i + j).pos_.x;
+                     avg.y += stagePos.get(i + j).pos_.y;
+                  }
+                  avg.x /= windowSize;
+                  avg.y /= windowSize;
+                  
+                  stagePosMA.add(new StageMovementData(avg, stagePos.get(i).frameRange_));
+               }
+               
+               
+               for (int i = 0; i < stagePosMA.size(); i++) {
+                  StageMovementData smd = stagePosMA.get(i);
                   GaussianSpotData s =
                           new GaussianSpotData(null, 1, 1, i + 2, 1, 1, 1, 1);
                   s.setData(0, 0, smd.pos_.x, smd.pos_.y, 0.0, 0, 0, 0, 0);                  
@@ -2933,7 +2951,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
                Iterator it = rowData.spotList_.iterator();
                
                int testNr = 0;
-               StageMovementData smd = stagePos.get(0);
+               StageMovementData smd = stagePosMA.get(0);
                int counter = 0;
                while (it.hasNext()) {
                   counter++;
@@ -2952,8 +2970,8 @@ public class DataCollectionForm extends javax.swing.JFrame {
                      found = true;
                   }
                   if (!found) {
-                     for (int i = 0; i < stagePos.size() && !found; i++) {
-                        smd = stagePos.get(i);
+                     for (int i = 0; i < stagePosMA.size() && !found; i++) {
+                        smd = stagePosMA.get(i);
                         if (testNr >= smd.frameRange_.x && testNr <= smd.frameRange_.y) {
                            found = true;
                         }

@@ -18,8 +18,7 @@ import java.util.List;
 /**
  * Class that finds the closest by point in a point collection given a single point
  * 
- * Currently, only the method findBF (Brute Force) is implemented
- * This can surely be optimized
+ * The method findKDWSE uses a kd tree approach based written by Rednaxela
  * 
  * 
  * @author nico
