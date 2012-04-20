@@ -91,15 +91,8 @@ public class DriftCorrector {
 
       ArrayList<StageMovementData> stagePos = new ArrayList<StageMovementData>();
 
-
-      // make imageprocessors for all the images that we will generate
-
-      // not enough memory to allocate all images in one go
-      // we need to cycle through all gaussian spots cycle by cycle
-
       double factor = (double) mag / rowData.pixelSizeNm_;
-      
-      
+           
       // Assemble the reference image (the first one)
       ImageProcessor ipRef = new ByteProcessor(width, height);
       byte[] pixelsRef = new byte[width * height];
@@ -180,7 +173,7 @@ public class DriftCorrector {
             rowData.timePoints_.get(frameNr);
          }
          stagePos.add(new StageMovementData(new Point2D.Double(x, y),
-                 new Point(tmpFrameNr - frameNr, tmpFrameNr)));
+                 new Point(frameNr - tmpFrameNr, frameNr - 1)));
          System.out.println("X: " + x + " Y: " + y);
          testNr++;
       }
