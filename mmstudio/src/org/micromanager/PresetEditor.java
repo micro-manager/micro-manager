@@ -109,7 +109,6 @@ public class PresetEditor extends ConfigDialog {
          try {
             core_.renameConfig(groupName_, initName, newName);
          } catch (Exception e1) {
-            // TODO Auto-generated catch block
             ReportingUtils.logError(e1);
          }
 
@@ -119,7 +118,6 @@ public class PresetEditor extends ConfigDialog {
                try {
                   core_.defineConfig(groupName_, newName, item_.device, item_.name, item_.getValueInCoreFormat());
                } catch (Exception e) {
-                  // TODO Auto-generated catch block
                   ReportingUtils.logError(e);
                }
             }

@@ -778,7 +778,6 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
             // NS: make sure we work with the current Focus device
             z = core_.getPosition(core_.getFocusDevice());
          } catch (Exception e) {
-            // TODO Auto-generated catch block
             ReportingUtils.showError(e);
          }
          return z;

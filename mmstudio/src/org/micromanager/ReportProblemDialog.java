@@ -265,7 +265,7 @@ public class ReportProblemDialog extends javax.swing.JDialog {
     }//GEN-LAST:event_name_ActionPerformed
 
     private void name_PropertyChange(java.beans.PropertyChangeEvent evt) {//GEN-FIRST:event_name_PropertyChange
-       // TODO add your handling code here:
+      
     }//GEN-LAST:event_name_PropertyChange
 
     private void clearButton_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_clearButton_ActionPerformed
@@ -322,18 +322,18 @@ public class ReportProblemDialog extends javax.swing.JDialog {
 }//GEN-LAST:event_sendButton_ActionPerformed
 
     private void emailText_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_emailText_ActionPerformed
-       // TODO add your handling code here:
+       
     }//GEN-LAST:event_emailText_ActionPerformed
 
     private void organization_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_organization_ActionPerformed
     }//GEN-LAST:event_organization_ActionPerformed
 
     private void organization_PropertyChange(java.beans.PropertyChangeEvent evt) {//GEN-FIRST:event_organization_PropertyChange
-       // TODO add your handling code here:
+      
     }//GEN-LAST:event_organization_PropertyChange
 
     private void emailText_PropertyChange(java.beans.PropertyChangeEvent evt) {//GEN-FIRST:event_emailText_PropertyChange
-       // TODO add your handling code here:
+       
     }//GEN-LAST:event_emailText_PropertyChange
    void FinishDialog() {
       sendButton_.setEnabled(true);

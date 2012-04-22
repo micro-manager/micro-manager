@@ -906,11 +906,6 @@ public class MMAcquisition {
       return true;
    }
 
-   //TODO delete this: corresponds to deprecated ScriptInterface function
-//   public void setSystemState(JSONObject md) throws MMScriptException {
-//      throw new UnsupportedOperationException("Not supported yet.");
-//   }
-
    private static String getPixelType(int depth) {
       switch (depth) {
          case 1:
