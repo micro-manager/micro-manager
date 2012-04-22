@@ -8,6 +8,7 @@ package edu.valelab.GaussianFit;
 import ij.IJ;
 import ij.ImagePlus;
 import ij.gui.Roi;
+import ij.plugin.frame.RoiManager;
 import ij.process.ImageProcessor;
 import java.awt.Polygon;
 import java.text.DecimalFormat;
@@ -189,14 +190,33 @@ public class FitAllThread extends GaussianInfo implements Runnable  {
                   imageCount++;
                   ij.IJ.showStatus("Processing image " + imageCount);
 
-                  ImageProcessor siProc;
-                  Polygon p;
+                  ImageProcessor siProc = null;
+                  Polygon p = new Polygon();
                   synchronized (GaussianSpotData.lockIP) {
                      siPlus.setPositionWithoutUpdate(c, z, f);
-                     siPlus.setRoi(originalRoi, false);
-                     siProc = siPlus.getProcessor();
-
-                     p = FindLocalMaxima.FindMax(siPlus, halfSize_, noiseTolerance_, preFilterType_);
+                     // If ROI manager is used, use RoiManager Rois
+                     //  may be dangerous if the user is not aware
+                     RoiManager roiM = RoiManager.getInstance();
+                     Roi[] rois = null;
+                     if (roiM != null) {
+                        rois = roiM.getSelectedRoisAsArray();
+                     }
+                     if (rois != null && rois.length > 0) {
+                        for (Roi roi : rois) {
+                           siPlus.setRoi(roi, false);
+                           siProc = siPlus.getProcessor();
+                           Polygon q = FindLocalMaxima.FindMax(siPlus, halfSize_, noiseTolerance_,
+                                   preFilterType_);
+                           for (int i = 0; i < q.npoints; i++) {
+                              p.addPoint(q.xpoints[i], q.ypoints[i]);
+                           }
+                        }
+                     } else {  // no Rois in RoiManager
+                        siPlus.setRoi(originalRoi, false);
+                        siProc = siPlus.getProcessor();
+                        p = FindLocalMaxima.FindMax(siPlus, halfSize_, noiseTolerance_,
+                                preFilterType_);
+                     }
                   }
 
                   ij.IJ.showProgress(imageCount, nrImages);

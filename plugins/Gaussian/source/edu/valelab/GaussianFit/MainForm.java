@@ -1,4 +1,4 @@
-/*
+/**
  * MainForm.java
  *
  * Form showing the UI controlling tracking of single molecules using
