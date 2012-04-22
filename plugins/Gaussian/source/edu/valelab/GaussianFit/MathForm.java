@@ -10,15 +10,25 @@
  */
 package edu.valelab.GaussianFit;
 
+import java.util.prefs.Preferences;
+
 /**
  *
  * @author nico
  */
 public class MathForm extends javax.swing.JFrame {
+   private Preferences prefs_;
+   private static final String FRAMEXPOS = "MathXPos";
+   private static final String FRAMEYPOS = "MathYPos";
 
    /** Creates new form MathForm */
    public MathForm(int[] dataSets1, int[] dataSets2) {
       initComponents();
+      
+      if (prefs_ == null)
+        prefs_ = Preferences.userNodeForPackage(this.getClass());
+      setLocation(prefs_.getInt(FRAMEXPOS, 50), prefs_.getInt(FRAMEYPOS, 100));
+       
       
       dataSet1ComboBox_.removeAllItems();     
       for (int i : dataSets1)
@@ -53,35 +63,40 @@ public class MathForm extends javax.swing.JFrame {
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
         setTitle("Track Math");
         setResizable(false);
+        addWindowListener(new java.awt.event.WindowAdapter() {
+            public void windowClosing(java.awt.event.WindowEvent evt) {
+                formWindowClosing(evt);
+            }
+        });
 
-        dataSet1ComboBox_.setFont(new java.awt.Font("Lucida Grande", 0, 11)); // NOI18N
+        dataSet1ComboBox_.setFont(new java.awt.Font("Lucida Grande", 0, 11));
         dataSet1ComboBox_.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "Item 1", "Item 2", "Item 3", "Item 4" }));
 
-        actionComboBox_.setFont(new java.awt.Font("Lucida Grande", 0, 11)); // NOI18N
+        actionComboBox_.setFont(new java.awt.Font("Lucida Grande", 0, 11));
         actionComboBox_.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "Subtract" }));
 
-        dataSet2ComboBox_.setFont(new java.awt.Font("Lucida Grande", 0, 11)); // NOI18N
+        dataSet2ComboBox_.setFont(new java.awt.Font("Lucida Grande", 0, 11));
         dataSet2ComboBox_.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "Item 1", "Item 2", "Item 3", "Item 4" }));
 
-        jLabel1.setFont(new java.awt.Font("Lucida Grande", 0, 11)); // NOI18N
+        jLabel1.setFont(new java.awt.Font("Lucida Grande", 0, 11));
         jLabel1.setText("DataSet 1");
 
-        jLabel2.setFont(new java.awt.Font("Lucida Grande", 0, 11)); // NOI18N
+        jLabel2.setFont(new java.awt.Font("Lucida Grande", 0, 11));
         jLabel2.setText("Action");
 
-        jLabel3.setFont(new java.awt.Font("Lucida Grande", 0, 11)); // NOI18N
+        jLabel3.setFont(new java.awt.Font("Lucida Grande", 0, 11));
         jLabel3.setText("DataSet 2");
 
-        okButton_.setFont(new java.awt.Font("Lucida Grande", 0, 11)); // NOI18N
-        okButton_.setText("OK");
+        okButton_.setFont(new java.awt.Font("Lucida Grande", 0, 11));
+        okButton_.setText("Do it");
         okButton_.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 okButton_ActionPerformed(evt);
             }
         });
 
-        cancelButton_.setFont(new java.awt.Font("Lucida Grande", 0, 11)); // NOI18N
-        cancelButton_.setText("Cancel");
+        cancelButton_.setFont(new java.awt.Font("Lucida Grande", 0, 11));
+        cancelButton_.setText("Close");
         cancelButton_.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 cancelButton_ActionPerformed(evt);
@@ -163,6 +178,11 @@ public class MathForm extends javax.swing.JFrame {
       df.doMathOnRows(rd1, rd2, 0);
       
    }//GEN-LAST:event_okButton_ActionPerformed
+
+   private void formWindowClosing(java.awt.event.WindowEvent evt) {//GEN-FIRST:event_formWindowClosing
+      prefs_.putInt(FRAMEXPOS, getX());
+      prefs_.putInt(FRAMEYPOS, getY());
+   }//GEN-LAST:event_formWindowClosing
 
    
    
