@@ -13,6 +13,7 @@
 
 (load-mm)
 
+
 (defn reference-viewer [reference key]
   (let [frame (JFrame. key)
         label (JLabel.)]
@@ -120,10 +121,15 @@ to normal size."
               (AffineTransform.) nil))
 
 (defn paint-tiles [canvas screen-state]
-  (let [g (.getGraphics canvas)]
+  (let [g (.getGraphics canvas)
+        image @slide-explorer.image/image]
     (doto g
       enable-anti-aliasing
-      (.setColor Color/YELLOW)
+      (.drawImage image (:x @screen-state) (:y @screen-state) nil)
+      (.drawImage image (+ 512 (:x @screen-state)) (:y @screen-state) nil)
+      (.drawImage image (:x @screen-state) (+ 512 (:y @screen-state)) nil)
+      (.drawImage image (+ 512 (:x @screen-state)) (+ 512 (:y @screen-state)) nil)
+      (.setColor (Color. 0x00A08F))
       (.fillOval (- (+ (/ (:width @screen-state) 2)
                        (:x @screen-state))
                     30)
@@ -131,7 +137,7 @@ to normal size."
                        (:y @screen-state))
                     30)
                  60 60)
-      (.setColor Color/GRAY)
+      (.setColor Color/YELLOW)
       (.drawString (str @screen-state)
                    (int 0)
                    (int (- (:height @screen-state) 10))))))
