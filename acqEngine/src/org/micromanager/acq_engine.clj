@@ -478,11 +478,6 @@
               0))
          z-ref))))
 
-;(defn z-stage-needs-adjustment [stage-name]
-;  (or (not (@state :init-continuous-focus))
-;      (not (core isContinuousFocusEnabled))
-;      (core isContinuousFocusDrive stage-name)))
-
 (defn z-stage-needs-adjustment [stage-name]
   (not (and (@state :init-continuous-focus)
             (core isContinuousFocusEnabled)
@@ -780,21 +775,19 @@
     (.addToAlbum gui (make-TaggedImage img))))
 
 
-(defn run-acquisition-sequence [this settings acq-eng]
+(defn run-acquisition-with-processors [this settings acq-eng]
   (def last-acq this)
   (def eng acq-eng)
   (load-mm)
   (swap! (.state this) assoc :stop false :pause false :finished false)
   (let [out-queue (LinkedBlockingQueue. 10)]
     (reset! (.state this) nil)
+    (def outq out-queue)
     (let [acq-thread (Thread. #(run-acquisition this settings out-queue)
                               "Acquisition Engine Thread (Clojure)")
           processors (ProcessorStack. out-queue (.getTaggedImageProcessors acq-eng))
-          out-queue-2 (.begin processors)
-          ]
-      (swap! (.state this) assoc
-             :acq-thread acq-thread)
-      (def outq out-queue)
+          out-queue-2 (.begin processors)]
+      (swap! (.state this) assoc :acq-thread acq-thread)
       (when-not (:stop @(.state this))
         (.start acq-thread))
       out-queue-2)))  
@@ -807,16 +800,17 @@
 (defn -run [this acq-settings acq-eng]
   (let [settings (convert-settings acq-settings)
         summary-metadata (make-summary-metadata settings)
-        out-queue-2 (run-acquisition-sequence this settings acq-eng)]
-  (when-not (:stop @(.state this))
-    (let [live-acq (LiveAcq. mmc out-queue-2 summary-metadata
-                             (:save settings) acq-eng gui)]
-      (swap! (.state this) assoc 
-             :summary-metadata summary-metadata
-             :display live-acq
-             :image-cache (.getImageCache live-acq))
-      (.start live-acq)
-      (.getAcquisitionName live-acq)))))
+        out-queue-2 (run-acquisition-with-processors this settings acq-eng)]
+    (swap! (.state this) assoc :summary-metadata summary-metadata)
+    (when-not (:stop @(.state this))
+      (let [live-acq (LiveAcq. mmc out-queue-2 summary-metadata
+                               (:save settings) acq-eng gui)]
+        (swap! (.state this) assoc 
+               :summary-metadata summary-metadata
+               :display live-acq
+               :image-cache (.getImageCache live-acq))
+        (.start live-acq)
+        (.getAcquisitionName live-acq)))))
 
 (defn -acquireSingle [this]
   (load-mm)
