@@ -32,6 +32,8 @@ double aim_ = 0.85;
 // When brightest pixel is higher than this fraction of the dynamic range, 
 // consider the image to be saturated
 double saturated_ = 0.95;
+// When the bright pixel is less than 'lowFraction_' of the maximum, try again.
+double lowFraction_ = 0.5;
 // Highest allowed exposure: to avoid extreme exposures, do not go higher than this:
 double maxExposure_ = 10000;
 
