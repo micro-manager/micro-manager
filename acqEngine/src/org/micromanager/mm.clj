@@ -1,4 +1,4 @@
-; FILE:         acq_engine.clj
+; FILE:         mm.clj
 ; PROJECT:      Micro-Manager
 ; SUBSYSTEM:    mmstudio acquisition engine
 ; ----------------------------------------------------------------------------

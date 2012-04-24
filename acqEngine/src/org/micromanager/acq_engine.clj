@@ -61,8 +61,6 @@
 
 (def ^:dynamic state (atom {:stop false}))
 
-(def settings (atom nil))
-
 (defn state-assoc! [& args]
   (apply swap! state assoc args))
    
@@ -480,10 +478,15 @@
               0))
          z-ref))))
 
+;(defn z-stage-needs-adjustment [stage-name]
+;  (or (not (@state :init-continuous-focus))
+;      (not (core isContinuousFocusEnabled))
+;      (core isContinuousFocusDrive stage-name)))
+
 (defn z-stage-needs-adjustment [stage-name]
-  (or (not (@state :init-continuous-focus))
-      (not (core isContinuousFocusEnabled))
-      (core isContinuousFocusDrive stage-name)))
+  (not (and (@state :init-continuous-focus)
+            (core isContinuousFocusEnabled)
+            (not (core isContinuousFocusDrive stage-name)))))
 
 (defn update-z-positions [msp-index]
   (when-let [msp (get-msp msp-index)]
@@ -777,36 +780,43 @@
     (.addToAlbum gui (make-TaggedImage img))))
 
 
+(defn run-acquisition-sequence [this settings acq-eng]
+  (def last-acq this)
+  (def eng acq-eng)
+  (load-mm)
+  (swap! (.state this) assoc :stop false :pause false :finished false)
+  (let [out-queue (LinkedBlockingQueue. 10)]
+    (reset! (.state this) nil)
+    (let [acq-thread (Thread. #(run-acquisition this settings out-queue)
+                              "Acquisition Engine Thread (Clojure)")
+          processors (ProcessorStack. out-queue (.getTaggedImageProcessors acq-eng))
+          out-queue-2 (.begin processors)
+          ]
+      (swap! (.state this) assoc
+             :acq-thread acq-thread)
+      (def outq out-queue)
+      (when-not (:stop @(.state this))
+        (.start acq-thread))
+      out-queue-2)))  
+
 ;; java interop -- implements org.micromanager.api.Pipeline
 
 (defn -init []
   [[] (atom {:stop false})])
 
 (defn -run [this acq-settings acq-eng]
-  (def last-acq this)
-  (def eng acq-eng)
-  (load-mm)
-  (swap! (.state this) assoc :stop false :pause false :finished false)
-  (let [out-queue (LinkedBlockingQueue. 10)
-        settings (convert-settings acq-settings)
-        summary-metadata (make-summary-metadata settings)]
-    (reset! (.state this) nil)
-    (swap! (.state this) assoc :summary-metadata summary-metadata)
-    (let [acq-thread (Thread. #(run-acquisition this settings out-queue)
-                              "Acquisition Engine Thread (Clojure)")
-          processors (ProcessorStack. out-queue (.getTaggedImageProcessors acq-eng))
-          out-queue-2 (.begin processors)
-          live-acq (LiveAcq. mmc out-queue-2 summary-metadata
+  (let [settings (convert-settings acq-settings)
+        summary-metadata (make-summary-metadata settings)
+        out-queue-2 (run-acquisition-sequence this settings acq-eng)]
+  (when-not (:stop @(.state this))
+    (let [live-acq (LiveAcq. mmc out-queue-2 summary-metadata
                              (:save settings) acq-eng gui)]
-      (swap! (.state this) assoc :image-cache (.getImageCache live-acq)
-             :acq-thread acq-thread
-             :summary-metadata summary-metadata)
-      (def outq out-queue)
-      (when-not (:stop @(.state this))
-        (.start acq-thread)
-        (swap! (.state this) assoc :display live-acq)
-        (.start live-acq)
-        (.getAcquisitionName live-acq)))))
+      (swap! (.state this) assoc 
+             :summary-metadata summary-metadata
+             :display live-acq
+             :image-cache (.getImageCache live-acq))
+      (.start live-acq)
+      (.getAcquisitionName live-acq)))))
 
 (defn -acquireSingle [this]
   (load-mm)
