@@ -588,6 +588,7 @@
           #(when-let [wait-time-ms (:wait-time-ms event)]
              (acq-sleep wait-time-ms))
           #(when (get event :autofocus)
+             (wait-for-pending-devices)
              (run-autofocus))
           #(when check-z-ref
              (store-z-reference current-position)
