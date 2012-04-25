@@ -11,6 +11,8 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.UUID;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import mmcorej.CMMCore;
 import mmcorej.Configuration;
 import mmcorej.PropertySetting;
@@ -341,6 +343,17 @@ public class MDUtils {
          } catch (Exception ex) {
             ReportingUtils.showError(ex);
          }
+      }
+   }
+   
+   public static String get3IndexLabel(JSONObject md) {
+      try {
+         return NumberUtils.intToCoreString(getChannelIndex(md)) + "_"
+                + NumberUtils.intToCoreString(getSliceIndex(md)) + "_"
+                + NumberUtils.intToCoreString(getFrameIndex(md));
+      } catch (JSONException ex) {
+         ReportingUtils.logError(ex);
+         return null;
       }
    }
 

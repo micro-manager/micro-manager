@@ -39,6 +39,13 @@ public class MultipageTiffWriter {
    
    public static final char MM_METADATA_LENGTH = 65122;
    public static final char MM_METADATA = 65123;
+   public static final char MM_IMAGE_COMMENT = 65124;
+   
+   //1 MB for now...might have to increase
+   public static final long SPACE_FOR_DISPLAY_SETTINGS = 1048576; 
+   //1 MB for now...might have to increase
+   private static final long SPACE_FOR_COMMENTS = 1048576;
+   
    
    public static final int INDEX_MAP_OFFSET_HEADER = 54773648;
    public static final int INDEX_MAP_HEADER = 3453623;
@@ -88,7 +95,8 @@ public class MultipageTiffWriter {
       int IFDSize = 13*12 + 4 + 16;
       int pixelSize = getImageByteDepth(img)*getImageHeight(img)*getImageWidth(img);
       int extraPadding = 1000000;
-      if (mdLength+indexMapSize+IFDSize+pixelSize+extraPadding + entryOffset_ >= MAX_FILE_SIZE) {
+      if (mdLength+indexMapSize+IFDSize+pixelSize+SPACE_FOR_COMMENTS+
+              SPACE_FOR_DISPLAY_SETTINGS+extraPadding + entryOffset_ >= MAX_FILE_SIZE) {
          return false;
       }
       return true;
@@ -106,12 +114,12 @@ public class MultipageTiffWriter {
    }
    
    private void updateIndexMap(JSONObject tags, long offset) {
-      String label = MDUtils.getLabel(tags);
+      String label = MDUtils.get3IndexLabel(tags);
       indexMap_.put(label, offset);
    }
 
    private void writeIndexMap() throws IOException {
-      //Write 4 byte header, 4 byte number of entries, and 20 bytes for each entry
+      //Write 4 byte header, 4 byte number of entries, and 16 bytes for each entry
       int numMappings = indexMap_.size();
       putInt(INDEX_MAP_HEADER);
       putInt( numMappings );
@@ -344,5 +352,4 @@ public class MultipageTiffWriter {
       }
    }
 
-   
 }

@@ -39,13 +39,16 @@ public class MultipageTiffReader {
    private FileLock lock_;
    private boolean bigEndian_;  
    
+   //Each reader corresponds to one file which corresponds to one position
+   private int positionIndex_;
+   
    private long firstIFD_;
    
    private HashMap<String,Long> indexMap_;
    
-   public MultipageTiffReader(File file, boolean readIndexMap) {
-      
+   public MultipageTiffReader(File file, boolean readIndexMap, int posIndex) {   
       try {
+         positionIndex_ = posIndex;
          createFileChannel(file);
          firstIFD_ = readHeader();
          indexMap_ = new HashMap<String, Long>();
@@ -57,9 +60,13 @@ public class MultipageTiffReader {
       }
            
    }
+   
+   public int getPositionIndex() {
+      return positionIndex_;
+   }
 
    public void addToIndexMap(TaggedImage img, long offset) {
-      indexMap_.put(MDUtils.getLabel(img.tags), offset);
+      indexMap_.put(MDUtils.get3IndexLabel(img.tags), offset);
    }
 
    public TaggedImage readImage(String label) {
@@ -118,14 +125,13 @@ public class MultipageTiffReader {
          return;
       }
       int numMappings = mapHeader.getInt();
-      MappedByteBuffer mapData = makeReadOnlyBuffer(offset+8, 24*numMappings);
+      MappedByteBuffer mapData = makeReadOnlyBuffer(offset+8, 16*numMappings);
       for (int i = 0; i < numMappings; i++) {
          int channel = mapData.getInt();
          int slice = mapData.getInt();
          int frame = mapData.getInt();
-         int position = mapData.getInt();
-         long imageOffset = mapData.getLong();
-         indexMap_.put(MDUtils.generateLabel(channel, slice, frame, position), imageOffset);
+         long imageOffset = unsignInt(mapData.getInt());
+         indexMap_.put(channel+"_"+slice+"_"+frame, imageOffset);
       }
    }
 

@@ -10,6 +10,7 @@ import mmcorej.TaggedImage;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.micromanager.api.TaggedImageStorage;
+import org.micromanager.utils.JavaUtils;
 import org.micromanager.utils.MDUtils;
 import org.micromanager.utils.MMException;
 import org.micromanager.utils.ReportingUtils;
@@ -23,18 +24,17 @@ public class TaggedImageStorageMultipageTiff implements TaggedImageStorage {
    private JSONObject displaySettings_;
    private boolean newDataSet_;
    private String directory_;
-   private String filename_;
-   private int numTifFiles_ = 1;
    private Thread shutdownHook_;
    private int lastFrame_ = -1;
-
-   //current reader corresponds to the file that is currently being written
-   private MultipageTiffReader currentReader_;
-   private MultipageTiffWriter currentWriter_;
-   
-   
+   private int numPositions_;
+      
+   //map of position indecies to number of tiff files written for that position
+   private HashMap<Integer,Integer> numFiles_;
+   //map of position indecies to writers/readers
+   private HashMap<Integer,MultipageTiffWriter> tiffWritersByPosition_;
+   private HashMap<Integer,MultipageTiffReader> tiffReadersByPosition_;
    //Map of image labels to file 
-   private HashMap<String,MultipageTiffReader> tiffFileReaders_;
+   private HashMap<String,MultipageTiffReader> tiffReadersByLabel_;
    
    
    //General TODO:
@@ -48,10 +48,19 @@ public class TaggedImageStorageMultipageTiff implements TaggedImageStorage {
       displaySettings_ = new JSONObject();
       newDataSet_ = newDataSet;
       directory_ = dir;
-      tiffFileReaders_ = new HashMap<String,MultipageTiffReader>();
-      
-           System.out.println("MP Start: " + System.currentTimeMillis());
+      tiffReadersByLabel_ = new HashMap<String,MultipageTiffReader>();
 
+      
+      System.out.println("MP Start: " + System.currentTimeMillis());
+
+      if (summaryMetadata_ != null) {
+         try {
+            numPositions_ = MDUtils.getNumPositions(summaryMetadata);
+         } catch (JSONException ex) {
+            ReportingUtils.logError(ex);
+         }
+      }
+     
       
       // TODO: throw erroe if no existing dataset
       if (!newDataSet_) {
@@ -81,19 +90,24 @@ public class TaggedImageStorageMultipageTiff implements TaggedImageStorage {
          //TODO: throw some exception
       }
       File f = new File(pathname);
+      //Change this
+      int posIndex = 0;
               
        
       
-      MultipageTiffReader reader = new MultipageTiffReader(f,true);
+      MultipageTiffReader reader = new MultipageTiffReader(f,true,posIndex);
       Set<String> labels = reader.getIndexKeys();
       for (String label : labels) {
-         tiffFileReaders_.put(label, reader);
-         int frameIndex = Integer.parseInt(label.substring(4, 5));
+         tiffReadersByLabel_.put(label+"_"+posIndex, reader);
+         int frameIndex = Integer.parseInt(label.split("_")[2]);
          lastFrame_ = Math.max(frameIndex, lastFrame_);
       }
       
       try {
          summaryMetadata_ = reader.readSummaryMD();
+         numPositions_ = MDUtils.getNumPositions(summaryMetadata_);
+      } catch (JSONException ex) {
+         ReportingUtils.logError(ex);
       } catch (IOException ex) {
          ReportingUtils.logError("Error reading summary metadata");
       }
@@ -104,34 +118,43 @@ public class TaggedImageStorageMultipageTiff implements TaggedImageStorage {
    @Override
    public TaggedImage getImage(int channelIndex, int sliceIndex, int frameIndex, int positionIndex) {
       String label = MDUtils.generateLabel(channelIndex, sliceIndex, frameIndex, positionIndex);
-      if (!tiffFileReaders_.containsKey(label)) {
+      if (!tiffReadersByLabel_.containsKey(label)) {
          return null;
       }
-      return tiffFileReaders_.get(label).readImage(label);   
+      return tiffReadersByLabel_.get(label).readImage(channelIndex+"_"+sliceIndex+"_"+frameIndex);   
    }
 
    @Override
    public JSONObject getImageTags(int channelIndex, int sliceIndex, int frameIndex, int positionIndex) {
       String label = MDUtils.generateLabel(channelIndex, sliceIndex, frameIndex, positionIndex);
-      if (!tiffFileReaders_.containsKey(label)) {
+      if (!tiffReadersByLabel_.containsKey(label)) {
          return null;
       }
-      return tiffFileReaders_.get(label).readImage(label).tags;   
+      return tiffReadersByLabel_.get(label).readImage(channelIndex+"_"+sliceIndex+"_"+frameIndex).tags;   
    }
 
-   private void createFilename() {
+   private String createFilename(int positionIndex, int fileIndex) {
+      String filename = "";
       try {
-         filename_ = summaryMetadata_.getString("Prefix");
-         if (filename_.equals("")) {
-            filename_ = "ImageData";
+         String prefix = summaryMetadata_.getString("Prefix");
+         if (prefix.length() == 0) {
+            filename = "images";
+         } else {
+            filename = prefix + "_images";
          }
       } catch (JSONException ex) {
          ReportingUtils.logError("Can't find Prefix in summary metadata");
-         filename_ = "ImageData";
+         filename = "images";
       }
-      if (numTifFiles_ > 1) {
-         filename_ += "_" +numTifFiles_;
+      if (numPositions_ > 0 ) {
+//TODO: put position name if it exists
+         filename += "_" + positionIndex;
       }
+      if (fileIndex > 0) {
+         filename += "_" +fileIndex;
+      }
+      filename += ".tif";
+      return filename;
    }
 
    @Override
@@ -139,38 +162,56 @@ public class TaggedImageStorageMultipageTiff implements TaggedImageStorage {
       if (!newDataSet_) {
          throw new MMException("This ImageFileManager is read-only.");
       }
-
-      if (currentWriter_ != null && currentWriter_.isClosed()) {
-         numTifFiles_++;
+      int positionIndex = 0;
+      try {
+         positionIndex = MDUtils.getPositionIndex(taggedImage.tags);
+      } catch (JSONException ex) {
+         ReportingUtils.logError(ex);
       }
-      if (currentWriter_ == null || currentWriter_.isClosed()) {
-         //Create new Writer and new Reader corresponding to Writer
-         createFilename();
-         File dir = new File (directory_);
-         if (!dir.exists()) {
-            dir.mkdir();
-         }
-         File f = new File(directory_ + "/" + filename_ +".tif");
-         currentWriter_ = new MultipageTiffWriter(f, summaryMetadata_);
-         currentReader_ = new MultipageTiffReader(f, false);
-      }
-
-      if (currentWriter_.hasSpaceToWrite(taggedImage)) {
+      
+      if (tiffWritersByPosition_ == null) {
          try {
-            long offset = currentWriter_.writeImage(taggedImage);
-            currentReader_.addToIndexMap(taggedImage, offset);
-            tiffFileReaders_.put(MDUtils.getLabel(taggedImage.tags), currentReader_);
-
-         } catch (IOException ex) {
-            ReportingUtils.logError(ex);
-         }
-      } else {
-         try {
-            currentWriter_.close();
-         } catch (IOException ex) {
+            tiffWritersByPosition_ = new HashMap<Integer, MultipageTiffWriter>();
+            tiffReadersByPosition_ = new HashMap<Integer, MultipageTiffReader>();
+            numFiles_ = new HashMap<Integer, Integer>();
+            JavaUtils.createDirectory(directory_);
+         } catch (Exception ex) {
             ReportingUtils.logError(ex);
          }
       }
+     
+      //Create new writer if none exists for position or if existing one is full
+      if ( tiffWritersByPosition_.get(positionIndex) != null && !tiffWritersByPosition_.get(positionIndex).hasSpaceToWrite(taggedImage) ) {
+         try {
+            tiffWritersByPosition_.get(positionIndex).close();
+         } catch (IOException ex) {
+            ReportingUtils.logError(ex);
+         }
+      }           
+              
+      int fileIndex = 0;
+      if (tiffWritersByPosition_.containsKey(positionIndex) && tiffWritersByPosition_.get(positionIndex).isClosed()) {
+         fileIndex = numFiles_.get(positionIndex) + 1;
+      }
+      if (tiffWritersByPosition_.get(positionIndex) == null || tiffWritersByPosition_.get(positionIndex).isClosed()) {
+         numFiles_.put(positionIndex, fileIndex);
+         String filename = createFilename(positionIndex, fileIndex);
+         File f = new File(directory_ + "/" + filename);
+         tiffWritersByPosition_.put(positionIndex, new MultipageTiffWriter(f, summaryMetadata_));
+         tiffReadersByPosition_.put(positionIndex, new MultipageTiffReader(f, false, positionIndex));
+      }
+
+
+      try {
+         long offset = tiffWritersByPosition_.get(positionIndex).writeImage(taggedImage);
+         MultipageTiffReader currentReader = tiffReadersByPosition_.get(positionIndex);
+         currentReader.addToIndexMap(taggedImage, offset);
+         tiffReadersByLabel_.put(MDUtils.getLabel(taggedImage.tags), currentReader);
+      } catch (IOException ex) {
+         ReportingUtils.logError(ex);
+      }
+
+         
       int frame;
       try {
          frame = MDUtils.getFrameIndex(taggedImage.tags);
@@ -182,7 +223,7 @@ public class TaggedImageStorageMultipageTiff implements TaggedImageStorage {
 
    @Override
    public Set<String> imageKeys() {
-      return tiffFileReaders_.keySet();
+      return tiffReadersByLabel_.keySet();
    }
 
    /**
@@ -194,7 +235,9 @@ public class TaggedImageStorageMultipageTiff implements TaggedImageStorage {
    public void finished() {
       newDataSet_ = false;
       try {
-         currentWriter_.close();
+         for (MultipageTiffWriter w : tiffWritersByPosition_.values()) {
+            w.close();
+         }
          System.out.println("MP End: " + System.currentTimeMillis());
                  
       } catch (IOException ex) {
@@ -210,7 +253,11 @@ public class TaggedImageStorageMultipageTiff implements TaggedImageStorage {
    @Override
    public void setSummaryMetadata(JSONObject md) {
       summaryMetadata_ = md;
-      //TODO: Does this need to be written to file here?
+      try {
+         numPositions_ = MDUtils.getNumPositions(md);
+      } catch (JSONException ex) {
+        ReportingUtils.logError(ex);
+      }
    }
 
    @Override
