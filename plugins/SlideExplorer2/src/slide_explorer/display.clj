@@ -73,7 +73,7 @@
     [(.x p) (.y p)]))
     
 (defn stage-to-pixels [^AffineTransform transform [x y]]
-  (let [p (.inverseTransform trasnform (Point2D$Double. x y) nil)]
+  (let [p (.inverseTransform transform (Point2D$Double. x y) nil)]
     [(.x p) (.y p)]))
               
 ;; tile image handling
