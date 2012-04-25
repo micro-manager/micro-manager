@@ -345,18 +345,6 @@ public class MDUtils {
          }
       }
    }
-   
-   public static String get3IndexLabel(JSONObject md) {
-      try {
-         return NumberUtils.intToCoreString(getChannelIndex(md)) + "_"
-                + NumberUtils.intToCoreString(getSliceIndex(md)) + "_"
-                + NumberUtils.intToCoreString(getFrameIndex(md));
-      } catch (JSONException ex) {
-         ReportingUtils.logError(ex);
-         return null;
-      }
-   }
-
 
    public static String getLabel(JSONObject md) {
       try {

@@ -85,13 +85,12 @@ public class MultipageTiffWriter {
       raFile_.close();
       fileChannel_ = null;
       raFile_ = null;
-      System.gc();
    }
    
    //TODO: check performance of this function (since it is called before each image is written)
    public boolean hasSpaceToWrite(TaggedImage img) {
       int mdLength = img.tags.toString().length();
-      int indexMapSize = indexMap_.size()*24 + 8;
+      int indexMapSize = indexMap_.size()*20 + 8;
       int IFDSize = 13*12 + 4 + 16;
       int pixelSize = getImageByteDepth(img)*getImageHeight(img)*getImageWidth(img);
       int extraPadding = 1000000;
@@ -114,12 +113,12 @@ public class MultipageTiffWriter {
    }
    
    private void updateIndexMap(JSONObject tags, long offset) {
-      String label = MDUtils.get3IndexLabel(tags);
+      String label = MDUtils.getLabel(tags);
       indexMap_.put(label, offset);
    }
 
    private void writeIndexMap() throws IOException {
-      //Write 4 byte header, 4 byte number of entries, and 16 bytes for each entry
+      //Write 4 byte header, 4 byte number of entries, and 20 bytes for each entry
       int numMappings = indexMap_.size();
       putInt(INDEX_MAP_HEADER);
       putInt( numMappings );

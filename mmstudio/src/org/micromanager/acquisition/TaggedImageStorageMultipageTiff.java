@@ -81,28 +81,25 @@ public class TaggedImageStorageMultipageTiff implements TaggedImageStorage {
    
    private void openExistingDataSet() {
       //Need to throw error if file not found
-      
+
       //TODO: get filename from variables rather than specifying here
-      
-      //For now assume only a single file
-      String pathname = directory_ + "/" + "testTif2Channel.tif";
-      if (!new File(pathname).exists()) {
-         //TODO: throw some exception
+
+
+      MultipageTiffReader reader = null;
+      File dir = new File(directory_);
+      for (File f : dir.listFiles()) {
+         if (f.getName().endsWith(".tif")) {
+            reader = new MultipageTiffReader(f, true);
+            Set<String> labels = reader.getIndexKeys();
+            for (String label : labels) {
+               tiffReadersByLabel_.put(label, reader);
+               int frameIndex = Integer.parseInt(label.split("_")[2]);
+               lastFrame_ = Math.max(frameIndex, lastFrame_);
+            }
+         }
       }
-      File f = new File(pathname);
-      //Change this
-      int posIndex = 0;
-              
-       
-      
-      MultipageTiffReader reader = new MultipageTiffReader(f,true,posIndex);
-      Set<String> labels = reader.getIndexKeys();
-      for (String label : labels) {
-         tiffReadersByLabel_.put(label+"_"+posIndex, reader);
-         int frameIndex = Integer.parseInt(label.split("_")[2]);
-         lastFrame_ = Math.max(frameIndex, lastFrame_);
-      }
-      
+
+
       try {
          summaryMetadata_ = reader.readSummaryMD();
          numPositions_ = MDUtils.getNumPositions(summaryMetadata_);
@@ -121,7 +118,7 @@ public class TaggedImageStorageMultipageTiff implements TaggedImageStorage {
       if (!tiffReadersByLabel_.containsKey(label)) {
          return null;
       }
-      return tiffReadersByLabel_.get(label).readImage(channelIndex+"_"+sliceIndex+"_"+frameIndex);   
+      return tiffReadersByLabel_.get(label).readImage(label);   
    }
 
    @Override
@@ -130,7 +127,7 @@ public class TaggedImageStorageMultipageTiff implements TaggedImageStorage {
       if (!tiffReadersByLabel_.containsKey(label)) {
          return null;
       }
-      return tiffReadersByLabel_.get(label).readImage(channelIndex+"_"+sliceIndex+"_"+frameIndex).tags;   
+      return tiffReadersByLabel_.get(label).readImage(label).tags;   
    }
 
    private String createFilename(int positionIndex, int fileIndex) {
@@ -198,7 +195,7 @@ public class TaggedImageStorageMultipageTiff implements TaggedImageStorage {
          String filename = createFilename(positionIndex, fileIndex);
          File f = new File(directory_ + "/" + filename);
          tiffWritersByPosition_.put(positionIndex, new MultipageTiffWriter(f, summaryMetadata_));
-         tiffReadersByPosition_.put(positionIndex, new MultipageTiffReader(f, false, positionIndex));
+         tiffReadersByPosition_.put(positionIndex, new MultipageTiffReader(f, false));
       }
 
 
@@ -235,8 +232,12 @@ public class TaggedImageStorageMultipageTiff implements TaggedImageStorage {
    public void finished() {
       newDataSet_ = false;
       try {
-         for (MultipageTiffWriter w : tiffWritersByPosition_.values()) {
-            w.close();
+         if (tiffWritersByPosition_ != null) {
+            for (MultipageTiffWriter w : tiffWritersByPosition_.values()) {
+               if (!w.isClosed()) {
+                  w.close();
+               }
+            }
          }
          System.out.println("MP End: " + System.currentTimeMillis());
                  
