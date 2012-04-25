@@ -6,13 +6,69 @@
            (java.awt.geom AffineTransform)
            (java.io ByteArrayInputStream)
            (java.util UUID)
+           (java.util.prefs Preferences)
            (javax.imageio ImageIO)
+           (ij ImagePlus)
            (mmcorej TaggedImage)
-           (org.micromanager.utils GUIUpdater ImageUtils MDUtils))
-  (:use [org.micromanager.mm :only (edt mmc load-mm json-to-data)]))
+           (org.micromanager MMStudioMainFrame)
+           (org.micromanager.utils GUIUpdater ImageUtils JavaUtils MDUtils))
+  (:use [org.micromanager.mm :only (core edt mmc load-mm json-to-data)]))
 
 (load-mm)
 
+;; hardware communications
+
+(defn get-stage-to-pixel-transform []
+  (AffineTransform. 2.0 0.0 0.0 2.0 0.0 0.0))
+;  (let [prefs (Preferences/userNodeForPackage MMStudioMainFrame)]
+;    (JavaUtils/getObjectFromPrefs
+;      prefs (str "affine_transform_" (core getCurrentPixelSizeConfig)) nil)))
+
+
+
+(defn grab-tagged-image
+  "Grab a single image from camera."
+  []
+  (core snapImage)
+  (core getTaggedImage))
+
+(def pixel-size (core getPixelSizeUm true))
+
+(defn get-image-width [^TaggedImage image]
+  (MDUtils/getWidth (.tags image)))
+  
+(defn get-image-height [^TaggedImage image]
+  (MDUtils/getWidth (.tags image)))
+
+(defn tile-dimensions [^TaggedImage image]
+  (let [w (get-image-width image)
+        h (get-image-height image)]
+    [(long (* 3/4 w)) (long (* 3/4 h))]))
+
+;; tile to pixels
+
+(defn tile-
+
+;; tile image handling
+
+(defn main-window []
+  (ImagePlus. "Slide Explorer II"))
+
+(defn awt-image [^TaggedImage tagged-image]
+  (.getImage (ImagePlus. "" (ImageUtils/makeProcessor tagged-image))))
+
+(def visible-tiles (agent {}))
+
+(defn get-tile [[nx ny nz nc nt nzoom]]
+  (grab-tagged-image))
+
+(defn add-tile [tile-map indices]
+  (assoc tile-map indices (get-tile indices)))
+
+(defn add-to-visible-tiles [indices]
+  (send-off visible-tiles add-tile indices))
+
+;; gui utilities
 
 (defn reference-viewer [reference key]
   (let [frame (JFrame. key)
@@ -50,12 +106,12 @@
   [window input-key action-fn]
   (bind-key (.getContentPane window) input-key action-fn true))
 
-(defn- default-screen-device []
+(defn- default-screen-device [] ; borrowed from see-saw
   (->
     (java.awt.GraphicsEnvironment/getLocalGraphicsEnvironment)
     .getDefaultScreenDevice))
 
-(defn full-screen! ; adapted from seesaw
+(defn full-screen!
   "Make the given window/frame full-screen. Pass nil to return all windows
 to normal size."
   ([^java.awt.GraphicsDevice device window]
@@ -126,9 +182,9 @@ to normal size."
     (doto g
       enable-anti-aliasing
       (.drawImage image (:x @screen-state) (:y @screen-state) nil)
-      (.drawImage image (+ 512 (:x @screen-state)) (:y @screen-state) nil)
-      (.drawImage image (:x @screen-state) (+ 512 (:y @screen-state)) nil)
-      (.drawImage image (+ 512 (:x @screen-state)) (+ 512 (:y @screen-state)) nil)
+      (.drawImage image (+ 513 (:x @screen-state)) (:y @screen-state) nil)
+      (.drawImage image (:x @screen-state) (+ 513 (:y @screen-state)) nil)
+      (.drawImage image (+ 513 (:x @screen-state)) (+ 513 (:y @screen-state)) nil)
       (.setColor (Color. 0x00A08F))
       (.fillOval (- (+ (/ (:width @screen-state) 2)
                        (:x @screen-state))
@@ -200,7 +256,6 @@ to normal size."
   (doto (JFrame. "Slide Explorer II")
     .show
     (.setBounds 10 10 500 500)))
-
 
 (defn show []
   (let [screen-state (atom (sorted-map :x 0 :y 0 :z 0))
