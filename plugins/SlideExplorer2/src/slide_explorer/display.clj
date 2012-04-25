@@ -47,7 +47,7 @@
 
 ;; tile/pixels
 
-(defn tile-locations-in-pixels [[nx ny] [tile-width tile-height]]
+(defn tile-to-pixels [[nx ny] [tile-width tile-height]]
   [(* nx tile-width) (* ny tile-height)])
 
 (defn round-int
@@ -68,12 +68,12 @@
 
 ;; pixels/stage
 
-(defn pixels-to-stage [^AffineTransform transform [x y]]
-  (let [p (.transform transform (Point2D$Double. x y) nil)]
+(defn pixels-to-stage [^AffineTransform pixel-to-stage-transform [x y]]
+  (let [p (.transform pixel-to-stage-transform (Point2D$Double. x y) nil)]
     [(.x p) (.y p)]))
     
-(defn stage-to-pixels [^AffineTransform transform [x y]]
-  (let [p (.inverseTransform transform (Point2D$Double. x y) nil)]
+(defn stage-to-pixels [^AffineTransform pixel-to-stage-transform [x y]]
+  (let [p (.inverseTransform pixel-to-stage-transform (Point2D$Double. x y) nil)]
     [(.x p) (.y p)]))
               
 ;; tile image handling
@@ -84,15 +84,13 @@
 (defn awt-image [^TaggedImage tagged-image]
   (.getImage (ImagePlus. "" (ImageUtils/makeProcessor tagged-image))))
 
-(def visible-tiles (agent {}))
-
 (defn get-tile [[nx ny nz nc nt nzoom]]
   (grab-tagged-image))
 
 (defn add-tile [tile-map indices]
   (assoc tile-map indices (get-tile indices)))
 
-(defn add-to-visible-tiles [indices]
+(defn add-to-visible-tiles [visible-tiles indices]
   (send-off visible-tiles add-tile indices))
 
 ;; gui utilities
@@ -147,8 +145,7 @@ to normal size."
         (.dispose window)
         (.setUndecorated window true)
         (.setFullScreenWindow device window)
-        (.show window)
-        )
+        (.show window))
       (let [window (.getFullScreenWindow device)]
         (.setFullScreenWindow device nil)
         (when window
@@ -165,8 +162,6 @@ to normal size."
 
 (defrecord screen-properties [x y z width height zoom])  
 
-(def screen-state (atom nil))
-
 (defn snap-image []
   (. mmc snapImage)
   (. mmc getTaggedImage))
@@ -179,15 +174,6 @@ to normal size."
   [(MDUtils/getWidth (.tags tagged-image))
    (MDUtils/getHeight (.tags tagged-image))])
 
-(defn buffered-image
-  ([[w h] pixels]
-    (let [image (ImageIO/read (ByteArrayInputStream. pixels))
-          raster (cast WritableRaster (.getData image))]
-      (.setPixels raster 0 0 w h pixels)
-      image))
-  ([^TaggedImage tagged-image]
-    (buffered-image (get-image-dimensions tagged-image) (.pix tagged-image))))
-
 (defn enable-anti-aliasing
   ([^Graphics g]
     (enable-anti-aliasing g true))
@@ -199,19 +185,21 @@ to normal size."
                            RenderingHints/VALUE_ANTIALIAS_ON
                            RenderingHints/VALUE_ANTIALIAS_OFF)))))
        
-(defn draw-tile [^Graphics2D g image-data]
-  (.drawImage g (buffered-image [512 512] (:pixels image-data))
-              (AffineTransform.) nil))
+(defn paint-tiles [^Graphics2D g visible-tiles]
+  (doseq [[[nx ny nz nt nc nzoom] tagged-image] visible-tiles]
+    (let [[x y] (tile-to-pixels [nx ny] [512 512])]
+      (when tagged-image
+        (.drawImage g (awt-image tagged-image)
+                    x y nil)))))
 
-(defn paint-tiles [canvas screen-state]
+(defn paint-screen [canvas screen-state visible-tiles]
   (let [g (.getGraphics canvas)
         image @slide-explorer.image/image]
     (doto g
+      (.translate (:x @screen-state) (:y @screen-state))
       enable-anti-aliasing
-      (.drawImage image (:x @screen-state) (:y @screen-state) nil)
-      (.drawImage image (+ 513 (:x @screen-state)) (:y @screen-state) nil)
-      (.drawImage image (:x @screen-state) (+ 513 (:y @screen-state)) nil)
-      (.drawImage image (+ 513 (:x @screen-state)) (+ 513 (:y @screen-state)) nil)
+      (paint-tiles @visible-tiles)
+      (.translate (- (:x @screen-state)) (- (:y @screen-state)))
       (.setColor (Color. 0x00A08F))
       (.fillOval (- (+ (/ (:width @screen-state) 2)
                        (:x @screen-state))
@@ -225,9 +213,6 @@ to normal size."
                    (int 0)
                    (int (- (:height @screen-state) 10))))))
   
-(defn paint-screen [canvas screen-state]
-  (paint-tiles canvas screen-state))
-
 (defn handle-drags [component position-atom]
   (let [drag-origin (atom nil)
         mouse-adapter
@@ -268,15 +253,15 @@ to normal size."
                           (update-size)))))
   size-atom)
 
-(defn reflect-changes [canvas screen-state]
-  (add-watch screen-state "display"
-    (fn [_ _ _ new-state]
-      (.repaint canvas))))     
+(defn display-follow [canvas reference]
+  (add-watch reference "display"
+    (fn [_ _ _ _]
+      (.repaint canvas))))
 
-(defn main-canvas [screen-state]
+(defn main-canvas [screen-state visible-tiles]
   (doto
     (proxy [Canvas] []
-      (paint [^Graphics g] (paint-screen this screen-state)))
+      (paint [^Graphics g] (paint-screen this screen-state visible-tiles)))
     (.setBackground Color/BLACK)))
     
 (defn main-frame []
@@ -286,15 +271,22 @@ to normal size."
 
 (defn show []
   (let [screen-state (atom (sorted-map :x 0 :y 0 :z 0))
-        canvas (main-canvas screen-state)
+        visible-tiles (agent {})
+        canvas (main-canvas screen-state visible-tiles)
         frame (main-frame)]
+    (def vt visible-tiles)
+    (def ss screen-state)
     (.add (.getContentPane frame) canvas)
     (setup-fullscreen frame)
     (handle-drags canvas screen-state)
     (handle-wheel canvas screen-state)
     (handle-resize canvas screen-state)
-    (reflect-changes canvas screen-state)
+    (display-follow canvas screen-state)
+    (display-follow canvas visible-tiles)
     canvas))
+
+(defn test-tile [nx ny]
+  (add-to-visible-tiles vt [nx ny 0 0 0 0]))
 
 ;;;;;;;;
 
