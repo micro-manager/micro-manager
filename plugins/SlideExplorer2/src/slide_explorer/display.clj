@@ -1,9 +1,9 @@
-(ns slide_explorer.display
+(ns slide-explorer.display
   (:import (javax.swing AbstractAction JComponent JFrame JLabel KeyStroke)
            (java.awt Canvas Color Graphics Graphics2D RenderingHints Window)
            (java.awt.event ComponentAdapter KeyAdapter KeyEvent MouseAdapter WindowAdapter)
            (java.awt.image BufferedImage WritableRaster)
-           (java.awt.geom AffineTransform)
+           (java.awt.geom AffineTransform Point2D$Double)
            (java.io ByteArrayInputStream)
            (java.util UUID)
            (java.util.prefs Preferences)
@@ -45,10 +45,37 @@
         h (get-image-height image)]
     [(long (* 3/4 w)) (long (* 3/4 h))]))
 
-;; tile to pixels
+;; tile/pixels
 
-(defn tile-
+(defn tile-locations-in-pixels [[nx ny] [tile-width tile-height]]
+  [(* nx tile-width) (* ny tile-height)])
 
+(defn round-int
+  "Round x to the nearest integer."
+  [x]
+  (Math/round (double x)))
+
+(defn tiles-in-pixel-rectangle
+  "Returns a list of tile indices found in a given pixel rectangle."
+  [[l t b r] [tile-width tile-height]]
+  (let [nl (round-int (/ l tile-width))
+        nr (round-int (/ r tile-width))
+        nt (round-int (/ t tile-height))
+        nb (round-int (/ b tile-height))]
+    (for [nx (range nl (inc nr))
+          ny (range nt (inc nb))]
+      [nx ny])))
+
+;; pixels/stage
+
+(defn pixels-to-stage [^AffineTransform transform [x y]]
+  (let [p (.transform transform (Point2D$Double. x y) nil)]
+    [(.x p) (.y p)]))
+    
+(defn stage-to-pixels [^AffineTransform transform [x y]]
+  (let [p (.inverseTransform trasnform (Point2D$Double. x y) nil)]
+    [(.x p) (.y p)]))
+              
 ;; tile image handling
 
 (defn main-window []
