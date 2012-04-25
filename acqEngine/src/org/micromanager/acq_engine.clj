@@ -778,7 +778,6 @@
 (defn run-acquisition-with-processors [this settings acq-eng]
   (def last-acq this)
   (def eng acq-eng)
-  (load-mm)
   (swap! (.state this) assoc :stop false :pause false :finished false)
   (let [out-queue (LinkedBlockingQueue. 10)]
     (reset! (.state this) nil)
@@ -798,6 +797,7 @@
   [[] (atom {:stop false})])
 
 (defn -run [this acq-settings acq-eng]
+  (load-mm)
   (let [settings (convert-settings acq-settings)
         summary-metadata (make-summary-metadata settings)
         out-queue-2 (run-acquisition-with-processors this settings acq-eng)]
