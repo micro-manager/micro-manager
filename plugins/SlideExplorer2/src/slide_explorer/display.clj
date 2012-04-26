@@ -90,8 +90,8 @@
 (defn add-tile [tile-map indices]
   (assoc tile-map indices (get-tile indices)))
 
-(defn add-to-visible-tiles [visible-tiles indices]
-  (send-off visible-tiles add-tile indices))
+(defn add-to-available-tiles [available-tiles indices]
+  (send-off available-tiles add-tile indices))
 
 ;; gui utilities
 
@@ -185,19 +185,19 @@ to normal size."
                            RenderingHints/VALUE_ANTIALIAS_ON
                            RenderingHints/VALUE_ANTIALIAS_OFF)))))
        
-(defn paint-tiles [^Graphics2D g visible-tiles]
-  (doseq [[[nx ny nz nt nc nzoom] tagged-image] visible-tiles]
+(defn paint-tiles [^Graphics2D g available-tiles]
+  (doseq [[[nx ny nz nt nc nzoom] tagged-image] available-tiles]
     (let [[x y] (tile-to-pixels [nx ny] [512 512])]
       (when tagged-image
         (.drawImage g (awt-image tagged-image)
                     x y nil)))))
 
-(defn paint-screen [canvas screen-state visible-tiles]
+(defn paint-screen [canvas screen-state available-tiles]
   (let [g (.getGraphics canvas)]
     (doto g
       (.translate (:x @screen-state) (:y @screen-state))
       enable-anti-aliasing
-      (paint-tiles @visible-tiles)
+      (paint-tiles @available-tiles)
       (.translate (- (:x @screen-state)) (- (:y @screen-state)))
       (.setColor (Color. 0x00A08F))
       (.fillOval (- (+ (/ (:width @screen-state) 2)
@@ -261,10 +261,10 @@ to normal size."
     (fn [_ _ _ _]
       (.repaint canvas))))
 
-(defn main-canvas [screen-state visible-tiles]
+(defn main-canvas [screen-state available-tiles]
   (doto
     (proxy [Canvas] []
-      (paint [^Graphics g] (paint-screen this screen-state visible-tiles)))
+      (paint [^Graphics g] (paint-screen this screen-state available-tiles)))
     (.setBackground Color/BLACK)))
     
 (defn main-frame []
@@ -274,10 +274,10 @@ to normal size."
 
 (defn show []
   (let [screen-state (atom (sorted-map :x 0 :y 0 :z 0 :zoom 0))
-        visible-tiles (agent {})
-        canvas (main-canvas screen-state visible-tiles)
+        available-tiles (agent {})
+        canvas (main-canvas screen-state available-tiles)
         frame (main-frame)]
-    (def vt visible-tiles)
+    (def at available-tiles)
     (def ss screen-state)
     (def f frame)
     (.add (.getContentPane frame) canvas)
@@ -287,12 +287,12 @@ to normal size."
     (handle-resize canvas screen-state)
     (handle-zoom frame screen-state)
     (display-follow canvas screen-state)
-    (display-follow canvas visible-tiles)
+    (display-follow canvas available-tiles)
     frame))
 
 
 (defn test-tile [nx ny]
-  (add-to-visible-tiles vt [nx ny 0 0 0 0]))
+  (add-to-available-tiles vt [nx ny 0 0 0 0]))
 
 (defn test-tiles [nx ny]
   (doseq [i (range nx) j (range ny)]
