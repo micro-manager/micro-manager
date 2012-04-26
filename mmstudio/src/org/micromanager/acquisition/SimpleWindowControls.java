@@ -195,12 +195,12 @@ public class SimpleWindowControls extends DisplayControls {
     }
     
      private void saveButtonActionPerformed() {
-        virtAcq_.saveAs();
-        showFolderButton_.setEnabled(true);
+        virtAcq_.saveAs(false);
+        //showFolderButton_.setEnabled(true);
    }
      
    public void newImageUpdate(JSONObject tags) {
-      showFolderButton_.setEnabled(false);
+      //showFolderButton_.setEnabled(false);
    }
    
    @Override

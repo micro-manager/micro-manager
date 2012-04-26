@@ -1393,8 +1393,12 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
    public void albumChanged() {
       albumSaved_ = false;
    }
-   
+
    boolean saveAs() {
+      return saveAs(true);
+   }
+
+   boolean saveAs(boolean pointToNewStorage) {
       String prefix;
       String root;
       for (;;) {
@@ -1418,9 +1422,11 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
       try {
          TaggedImageStorageDiskDefault newFileManager = new TaggedImageStorageDiskDefault(root + "/" + prefix, true,
                  getSummaryMetadata());
-         albumSaved_ = true;
+         if (pointToNewStorage) {
+            albumSaved_ = true;
+         }
 
-         imageCache_.saveAs(newFileManager);
+         imageCache_.saveAs(newFileManager, pointToNewStorage);
       } catch (Exception ex) {
          ReportingUtils.showError("Failed to save file");
       }
