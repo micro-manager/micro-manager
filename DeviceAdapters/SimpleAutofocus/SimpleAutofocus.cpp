@@ -364,6 +364,7 @@ int SimpleAutofocus::FullFocus()
          return retval;
    }
    char shutterDeviceName[MM::MaxStrLength];
+   char previousShutterState[MM::MaxStrLength];
    pCore_->GetDeviceProperty(MM::g_Keyword_CoreDevice, MM::g_Keyword_CoreAutoShutter, value);
    std::istringstream iss(value);
    int ivalue ;
@@ -376,9 +377,12 @@ int SimpleAutofocus::FullFocus()
       pCore_->SetDeviceProperty(MM::g_Keyword_CoreDevice, MM::g_Keyword_CoreAutoShutter, "0"); // disable auto-shutter
       currentAutoShutterSetting = false;
    }
+
+   pCore_->GetDeviceProperty(MM::g_Keyword_CoreDevice, MM::g_Keyword_CoreShutter, shutterDeviceName);
+   pCore_->GetDeviceProperty(shutterDeviceName, MM::g_Keyword_State, previousShutterState);
+
    if( !currentAutoShutterSetting)
    {
-      pCore_->GetDeviceProperty(MM::g_Keyword_CoreDevice, MM::g_Keyword_CoreShutter, shutterDeviceName);
       pCore_->SetDeviceProperty(shutterDeviceName, MM::g_Keyword_State, "1"); // open shutter
    }
    //todo - this will be more beautiful using a pointer to the various search method member functions.
@@ -390,7 +394,7 @@ int SimpleAutofocus::FullFocus()
    {
       retval =  BruteForceSearch();
    }
-   int tret = pCore_->SetDeviceProperty(shutterDeviceName, MM::g_Keyword_State, "0"); // always close shutter
+   int tret = pCore_->SetDeviceProperty(shutterDeviceName, MM::g_Keyword_State, previousShutterState); 
    if( DEVICE_OK != tret)
       LogMessage("Error closing shutter upon exiting FullFocus",false);
    // restore system configuration;
@@ -399,10 +403,6 @@ int SimpleAutofocus::FullFocus()
       retval = pCore_->SetConfig(coreChannelGroup.c_str(), previousChannelConfig.c_str());
    }
    // restore auto-shutter setting
-   if( !currentAutoShutterSetting)
-   {
-      pCore_->SetDeviceProperty(shutterDeviceName, MM::g_Keyword_State, "0"); // close
-   }
    pCore_->SetDeviceProperty(MM::g_Keyword_CoreDevice, MM::g_Keyword_CoreAutoShutter, previousAutoShutterSetting?"1":"0"); // restore auto-shutter
    // restore the exposure selected in the mainframe
    tret = pCore_->SetExposure(oldExposure);
