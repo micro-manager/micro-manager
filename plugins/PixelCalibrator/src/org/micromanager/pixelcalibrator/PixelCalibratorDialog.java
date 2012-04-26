@@ -11,11 +11,8 @@
 
 package org.micromanager.pixelcalibrator;
 
-import java.awt.Dimension;
-import java.awt.Point;
-import java.util.prefs.Preferences;
+import org.micromanager.MMStudioMainFrame;
 import org.micromanager.utils.GUIUtils;
-import org.micromanager.utils.JavaUtils;
 
 /**
  *
@@ -30,6 +27,9 @@ public class PixelCalibratorDialog extends javax.swing.JFrame {
       plugin_ = plugin;
       initComponents();
       GUIUtils.recallPosition(this);
+             
+      setBackground(MMStudioMainFrame.getInstance().getBackgroundColor());
+      MMStudioMainFrame.getInstance().addMMBackgroundListener(this);
    }
 
 
