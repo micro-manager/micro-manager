@@ -49,7 +49,6 @@ using namespace std;
 
 CvCapture* capture;
 IplImage* frame; // do not modify, do not release!
-IplImage* temp; // used during conversion
 
 
 const double COpenCVgrabber::nominalPixelSizeUm_ = 1.0;
@@ -487,7 +486,7 @@ int COpenCVgrabber::SnapImage()
 */
 const unsigned char* COpenCVgrabber::GetImageBuffer()
 {
-
+   IplImage* temp; // used during conversion
    MMThreadGuard g(imgPixelsLock_);
    MM::MMTime readoutTime(readoutUs_);
    while (readoutTime > (GetCurrentMMTime() - readoutStartTime_))
@@ -495,6 +494,7 @@ const unsigned char* COpenCVgrabber::GetImageBuffer()
       CDeviceUtils::SleepMs(1);
    }
 
+   cvRetrieveFrame(capture); // throw away old image
    temp = cvRetrieveFrame(capture);
    if(!temp) return 0;
    //Mat temp_mat (temp);
