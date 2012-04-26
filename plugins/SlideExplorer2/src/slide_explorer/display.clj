@@ -47,8 +47,9 @@
 
 ;; tile/pixels
 
-(defn tile-to-pixels [[nx ny] [tile-width tile-height]]
-  [(* nx tile-width) (* ny tile-height)])
+(defn tile-to-pixels [[nx ny] [tile-width tile-height] tile-zoom]
+  [(int (* (Math/pow 2.0 tile-zoom) nx tile-width))
+   (int (* (Math/pow 2.0 tile-zoom) ny tile-height))])
 
 (defn round-int
   "Round x to the nearest integer."
@@ -185,9 +186,10 @@ to normal size."
                            RenderingHints/VALUE_ANTIALIAS_ON
                            RenderingHints/VALUE_ANTIALIAS_OFF)))))
        
-(defn paint-tiles [^Graphics2D g available-tiles]
-  (doseq [[[nx ny nz nt nc nzoom] tagged-image] available-tiles]
-    (let [[x y] (tile-to-pixels [nx ny] [512 512])]
+(defn paint-tiles [^Graphics2D g available-tiles zoom]
+  (doseq [[[nx ny nz nt nc nzoom] tagged-image] available-tiles
+          :when (= nzoom zoom)]
+    (let [[x y] (tile-to-pixels [nx ny] [512 512] zoom)]
       (when tagged-image
         (.drawImage g (awt-image tagged-image)
                     x y nil)))))
@@ -197,7 +199,7 @@ to normal size."
     (doto g
       (.translate (:x @screen-state) (:y @screen-state))
       enable-anti-aliasing
-      (paint-tiles @available-tiles)
+      (paint-tiles @available-tiles (:zoom @screen-state))
       (.translate (- (:x @screen-state)) (- (:y @screen-state)))
       (.setColor (Color. 0x00A08F))
       (.fillOval (- (+ (/ (:width @screen-state) 2)
