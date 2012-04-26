@@ -124,6 +124,7 @@ private:
 
    void GenerateEmptyImage(ImgBuffer& img);
 
+   void RGB3toRGB4(const char* srcPixels, char* destPixels, int width, int height);
 
    int ResizeImageBuffer();
 

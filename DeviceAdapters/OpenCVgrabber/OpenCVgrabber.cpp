@@ -498,7 +498,7 @@ const unsigned char* COpenCVgrabber::GetImageBuffer()
    temp = cvRetrieveFrame(capture);
    if(!temp) return 0;
    //Mat temp_mat (temp);
-   
+
    if(xFlip_ == true){ 
       cvFlip(temp,NULL,1);
    }
@@ -516,67 +516,64 @@ const unsigned char* COpenCVgrabber::GetImageBuffer()
       Mat rgba( img_.Width(), img_.Height(),CV_8UC4, Scalar(255,128,0,0) );
       Mat rgb(img_.Width(), img_.Height(),CV_8UC3, Scalar(0,0,0));
       Mat alpha(  img_.Width(), img_.Height(),CV_8UC1 ,Scalar(0));
-      
-      
+
+
       int from_to[] = {0,0,  1,1,  2,2, 3,3};
-      
+
       Mat in[] = {rgb,alpha};
-      
+
       mixChannels( in, 2, &rgba, 1, from_to, 4);
-      
+
       IplImage ipl_img = rgba;
       memcpy(img_.GetPixelsRW(),ipl_img.imageData,img_.Width() * img_.Height() * 4);
       */
-      
-	   if(roiX_ == 0 && roiY_ == 0){
-         unsigned int srcOffset = 0;
-         unsigned int dstOffset = 0;
-		   for(int i=0; i < temp->width * temp->height; i++){
-				memcpy(img_.GetPixelsRW()+dstOffset, temp->imageData+srcOffset,3);
-            srcOffset += 3;
-            dstOffset += 4;
-			} 
-	   } else {
-			cvSetImageROI(temp,cvRect(roiX_,roiY_,img_.Width(),img_.Height()));
-			IplImage *ROI = cvCreateImage(cvSize(img_.Width(),img_.Height()),
-							   temp->depth,
-                        temp->nChannels);
 
-			
-			if(!ROI) return 0; //failed to create ROI image
-			cvCopy(temp,ROI,NULL);
-			cvResetImageROI(temp);
-			// nasty padding loop
-         unsigned int srcOffset = 0;
-         unsigned int dstOffset = 0;
-			for(int i=0; i < ROI->width * ROI->height; i++){
-				memcpy(img_.GetPixelsRW()+dstOffset, temp->imageData+srcOffset,3);
-            srcOffset += 3;
-            dstOffset += 4;
-			}
-			
+      if(roiX_ == 0 && roiY_ == 0){
+         RGB3toRGB4(temp->imageData, (char *) img_.GetPixelsRW(), temp->width, temp->height);
+      } else {
+         cvSetImageROI(temp,cvRect(roiX_,roiY_,img_.Width(),img_.Height()));
+         IplImage *ROI = cvCreateImage(cvSize(img_.Width(),img_.Height()),
+            temp->depth,
+            temp->nChannels);
+
+
+         if(!ROI) return 0; //failed to create ROI image
+         cvCopy(temp,ROI,NULL);
+         cvResetImageROI(temp);
+         RGB3toRGB4(temp->imageData, (char *) img_.GetPixelsRW(), ROI->width, ROI->height);		
          //cvCvtColor(&ROI,(CvArr *) temp->imageData,CV_RGB2RGBA);// possible alternative to the padding loop - if I can get it not to break!
          cvReleaseImage(&ROI);
-	   }
-      
-   } else {
-		unsigned int srcOffset = 0;
-		for(int i=0; i < temp->width * temp->height; i++){
-			memcpy(img_.GetPixelsRW()+i, temp->imageData+srcOffset,1);
-			srcOffset += 3;
-		} 
-	}
-   
- 
+      }
 
-unsigned char *pB = (unsigned char*)(img_.GetPixels());
+   } else {
+      unsigned int srcOffset = 0;
+      for(int i=0; i < temp->width * temp->height; i++){
+         memcpy(img_.GetPixelsRW()+i, temp->imageData+srcOffset,1);
+         srcOffset += 3;
+      } 
+   }
+
+
+
+   unsigned char *pB = (unsigned char*)(img_.GetPixels());
    return pB;
 }
 
 /**
 * Converts three-byte image to four bytes
 */
-//void COpenCVgrabber::RGB3toRGB4(img3* 
+void COpenCVgrabber::RGB3toRGB4(const char* srcPixels, char* destPixels, int width, int height)
+{
+   // nasty padding loop
+   unsigned int srcOffset = 0;
+   unsigned int dstOffset = 0;
+   int totalSize = width * height;
+   for(int i=0; i < totalSize; i++){
+      memcpy(destPixels+dstOffset, srcPixels+srcOffset,3);
+      srcOffset += 3;
+      dstOffset += 4;
+   }
+}
 
 
 /**
