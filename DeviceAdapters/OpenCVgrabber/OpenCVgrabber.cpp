@@ -574,6 +574,12 @@ unsigned char *pB = (unsigned char*)(img_.GetPixels());
 }
 
 /**
+* Converts three-byte image to four bytes
+*/
+//void COpenCVgrabber::RGB3toRGB4(img3* 
+
+
+/**
 * Returns image buffer X-size in pixels.
 * Required by the MM::Camera API.
 */
@@ -1013,7 +1019,7 @@ int COpenCVgrabber::OnFlipX(MM::PropertyBase* pProp, MM::ActionType eAct)
          
          long val=0;
          pProp->Get(val);
-         xFlip_ = val;
+         xFlip_ = (val != 0);
          
 		   ret=DEVICE_OK;
       }break;
@@ -1037,7 +1043,7 @@ int COpenCVgrabber::OnFlipY(MM::PropertyBase* pProp, MM::ActionType eAct)
          
          long val=0;
          pProp->Get(val);
-         yFlip_ = val;
+         yFlip_ = (val != 0);
          
 		   ret=DEVICE_OK;
       }break;
