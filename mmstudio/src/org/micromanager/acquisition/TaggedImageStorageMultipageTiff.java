@@ -37,12 +37,6 @@ public class TaggedImageStorageMultipageTiff implements TaggedImageStorage {
    private HashMap<String,MultipageTiffReader> tiffReadersByLabel_;
    
    
-   //General TODO:
-   //set lastFrame_ when getting new images
-   
-   //Verify that files dont get written bigger than max file size
-   
-   
    public TaggedImageStorageMultipageTiff(String dir, Boolean newDataSet, JSONObject summaryMetadata) {
       summaryMetadata_ = summaryMetadata;
       displaySettings_ = new JSONObject();
@@ -71,7 +65,7 @@ public class TaggedImageStorageMultipageTiff implements TaggedImageStorage {
       //add shutdown hook --> thread to be run when JVM shuts down
       shutdownHook_ = new Thread() {
          public void run() {
-            //Nothing yet
+            writeDisplaySettings();
          }
       };
       
@@ -103,6 +97,7 @@ public class TaggedImageStorageMultipageTiff implements TaggedImageStorage {
       try {
          summaryMetadata_ = reader.readSummaryMD();
          numPositions_ = MDUtils.getNumPositions(summaryMetadata_);
+         displaySettings_.put("Channels", reader.readDisplaySettings());
       } catch (JSONException ex) {
          ReportingUtils.logError(ex);
       } catch (IOException ex) {
@@ -181,6 +176,7 @@ public class TaggedImageStorageMultipageTiff implements TaggedImageStorage {
       if ( tiffWritersByPosition_.get(positionIndex) != null && !tiffWritersByPosition_.get(positionIndex).hasSpaceToWrite(taggedImage) ) {
          try {
             tiffWritersByPosition_.get(positionIndex).close();
+            tiffReadersByPosition_.get(positionIndex).fileFinished();
          } catch (IOException ex) {
             ReportingUtils.logError(ex);
          }
@@ -233,9 +229,12 @@ public class TaggedImageStorageMultipageTiff implements TaggedImageStorage {
       newDataSet_ = false;
       try {
          if (tiffWritersByPosition_ != null) {
-            for (MultipageTiffWriter w : tiffWritersByPosition_.values()) {
+            for (Integer i : tiffWritersByPosition_.keySet()) {
+               MultipageTiffWriter w = tiffWritersByPosition_.get(i);
                if (!w.isClosed()) {
                   w.close();
+                  tiffReadersByPosition_.get(i).fileFinished();
+
                }
             }
          }
@@ -268,15 +267,26 @@ public class TaggedImageStorageMultipageTiff implements TaggedImageStorage {
 
    @Override
    public void setDisplayAndComments(JSONObject settings) {
-      //TODO: come back to this one...
+      displaySettings_ = settings;
    }
 
    @Override
    public JSONObject getDisplayAndComments() {
-      //TODO: come back to this one...
-      return VirtualAcquisitionDisplay.getDisplaySettingsFromSummary(summaryMetadata_);
+      return displaySettings_;
    }
 
+   private void writeDisplaySettings() {
+      for (String label : tiffReadersByLabel_.keySet()) {
+         try {
+            tiffReadersByLabel_.get(label).rewriteDisplaySettings(displaySettings_.getJSONArray("Channels"));
+         } catch (JSONException ex) {
+            ReportingUtils.logError("Error writing display settings");
+         } catch (IOException ex) {
+            ReportingUtils.logError(ex);
+         }
+      }
+   }
+   
    /**
     * Disposes of the tagged images in the imagestorage
     */

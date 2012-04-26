@@ -12,9 +12,11 @@ import java.util.HashMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import mmcorej.TaggedImage;
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.micromanager.utils.MDUtils;
+import org.micromanager.utils.MMScriptException;
 import org.micromanager.utils.ReportingUtils;
 
 
@@ -50,6 +52,9 @@ public class MultipageTiffWriter {
    public static final int INDEX_MAP_OFFSET_HEADER = 54773648;
    public static final int INDEX_MAP_HEADER = 3453623;
    public static final int SUMMARY_MD_HEADER = 2355492;
+   public static final int DISPLAY_SETTINGS_OFFSET_HEADER = 483765892;
+   public static final int DISPLAY_SETTINGS_HEADER = 347834724;
+   public static final int DISPLAY_SETTINGS_BYTES_PER_CHANNEL = 256;
    
    private MappedByteBuffer currentBuffer_;
    private long bufferStart_ = 0;
@@ -57,30 +62,45 @@ public class MultipageTiffWriter {
    private RandomAccessFile raFile_;
    private FileChannel fileChannel_;     
    private final boolean bigEndian_ = false; 
+   private int numChannels_ = 1;
    private HashMap<String, Long> indexMap_;
    private long valueOffset_;
    private long entryOffset_;
    private long nextIFDOffsetLocation_ = -1;
+   private JSONObject displayAndComments_;
    
    private long resNumerator_, resDenomenator_;
    
    public MultipageTiffWriter(File f, JSONObject summaryMD) {
       try {
+         try {
+            numChannels_ = MDUtils.getNumChannels(summaryMD);
+         } catch (MMScriptException ex) {
+             ReportingUtils.logError(ex);
+         } catch (JSONException ex) {
+            ReportingUtils.logError(ex);
+         }
          createFileChannel(f);
          String summaryMDString = summaryMD.toString();
          writeHeader(summaryMDString);
-         putInt(INDEX_MAP_OFFSET_HEADER);
+         putInt(0);
          //place holder for index map offset
+         putInt(0);
+         putInt(0);
          putInt(0);
          writeSummaryMD(summaryMDString);
       } catch (IOException e) {
          ReportingUtils.logError(e);
-      }     
+      }  
+      
+      //Change this...
+      displayAndComments_ = VirtualAcquisitionDisplay.getDisplaySettingsFromSummary(summaryMD);
    }
    
    public void close() throws IOException {
       writeNullOffsetAfterLastImage();
       writeIndexMap();
+      writeDisplaySettings();
       fileChannel_.close();
       raFile_.close();
       fileChannel_ = null;
@@ -116,6 +136,28 @@ public class MultipageTiffWriter {
       String label = MDUtils.getLabel(tags);
       indexMap_.put(label, offset);
    }
+   
+   private void writeDisplaySettings() throws IOException {
+      //Write 4 byte header, 4 byte number of reserved bytes
+      putInt(DISPLAY_SETTINGS_HEADER);
+      JSONArray displaySettings;
+      try {
+         displaySettings = displayAndComments_.getJSONArray("Channels");
+      } catch (JSONException ex) {
+         displaySettings = new JSONArray();
+      }      
+      int numReservedBytes = numChannels_*DISPLAY_SETTINGS_BYTES_PER_CHANNEL;
+      String displayString = displaySettings.toString();
+      putInt(numReservedBytes);
+      writeString(displayString);
+      for (int i = displayString.length(); i < numReservedBytes; i++) {
+          putByte((byte)0);
+      }
+      MappedByteBuffer address = makeBuffer(16, 8 );
+      address.putInt(DISPLAY_SETTINGS_OFFSET_HEADER);
+      address.putInt((int)entryOffset_);
+      entryOffset_ += numReservedBytes;
+   }
 
    private void writeIndexMap() throws IOException {
       //Write 4 byte header, 4 byte number of entries, and 20 bytes for each entry
@@ -129,8 +171,10 @@ public class MultipageTiffWriter {
          }
          putInt(indexMap_.get(label).intValue());
       }      
-      MappedByteBuffer address = makeBuffer(12, 4 );
+      MappedByteBuffer address = makeBuffer(8, 8 );
+      address.putInt(INDEX_MAP_OFFSET_HEADER);
       address.putInt((int)entryOffset_);
+      entryOffset_ += 8 + 20*numMappings;
    }
    
    private void writeSummaryMD(String md) throws IOException {
@@ -267,9 +311,10 @@ public class MultipageTiffWriter {
       }
       putChar((char) 42);
       //8 bytes for file header + 4 bytes for index map offset header + 
-      //4 bytes for index map offset + 4 bytes for summaryMD header + 
+      //4 bytes for index map offset + 4 bytes for display settings offset header + 
+      //4 bytes for display settings offset+ 4 bytes for summaryMD header + 
       //4 bytes for summary md length = 24 + 1 byte for each character of summary md
-      int firstImageOffset = 24 + summaryMD.length();
+      int firstImageOffset = 32 + summaryMD.length();
       putInt(firstImageOffset);
       entryOffset_ = firstImageOffset;
       valueOffset_ = firstImageOffset;

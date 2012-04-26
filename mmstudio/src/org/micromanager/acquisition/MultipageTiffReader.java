@@ -14,6 +14,7 @@ import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import mmcorej.TaggedImage;
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.micromanager.utils.MDUtils;
@@ -40,21 +41,27 @@ public class MultipageTiffReader {
    private boolean bigEndian_;  
       
    private long firstIFD_;
+   private long displaySettingsStartOffset_ = -1;
+   private long displaySettingsReservedBytes_;
+   private long indexMapOffset_;
+   //This flag keeps the reader from reading things that dont exist until the writer is closed
+   private boolean fileFinished_;
    
    private HashMap<String,Long> indexMap_;
    
-   public MultipageTiffReader(File file, boolean readIndexMap) {   
+   public MultipageTiffReader(File file, boolean fileFinishedWriting) {   
       try {
+         fileFinished_ = fileFinishedWriting;
          createFileChannel(file);
          firstIFD_ = readHeader();
          indexMap_ = new HashMap<String, Long>();
-         if (readIndexMap) {
+         if (fileFinished_) {
             readIndexMap();
+            readDisplaySettings();
          }
       } catch (Exception ex) {
          ex.printStackTrace();
-      }
-           
+      }       
    }
 
 
@@ -62,6 +69,10 @@ public class MultipageTiffReader {
       indexMap_.put(MDUtils.getLabel(img.tags), offset);
    }
 
+   public void fileFinished() {
+      fileFinished_ = true;
+   }
+   
    public TaggedImage readImage(String label) {
       if (indexMap_.containsKey(label)) {
          try {
@@ -88,18 +99,66 @@ public class MultipageTiffReader {
    }
 
    public JSONObject readSummaryMD() throws IOException {
-      MappedByteBuffer mdInfo = makeReadOnlyBuffer(16, 8);
+      MappedByteBuffer mdInfo = makeReadOnlyBuffer(24, 8);
       if (mdInfo.getInt() != MultipageTiffWriter.SUMMARY_MD_HEADER) {
          ReportingUtils.logError("Summary Metadata Header Incorrect");
          return null;
       }
       long length = unsignInt(mdInfo.getInt());
       try {
-         return readJSONObject(24, length);
+         return readJSONObject(32, length);
       } catch (JSONException ex) {
          ReportingUtils.showError("Error reading summary metadata");
          return null;
       }
+   }
+   
+   public void rewriteDisplaySettings(JSONArray settings) throws IOException {
+      if (!fileFinished_ ) {
+         return;
+      }
+      if (displaySettingsStartOffset_ == -1) {
+         MappedByteBuffer buffer = makeReadOnlyBuffer(16,8);
+         if ( buffer.getInt() != MultipageTiffWriter.DISPLAY_SETTINGS_OFFSET_HEADER ) {
+            ReportingUtils.logError("Display settings offset header incorrect");
+            return;
+         }
+         long offset = unsignInt(buffer.getInt());
+         MappedByteBuffer header = makeReadOnlyBuffer(offset,8);
+         if (header.getInt() != MultipageTiffWriter.DISPLAY_SETTINGS_HEADER) {
+            ReportingUtils.logError("Display settigns header incorrect");
+            return;
+         }
+         displaySettingsStartOffset_ = offset + 8;
+         displaySettingsReservedBytes_ = unsignInt(header.getInt()); 
+      }
+      MappedByteBuffer writeBuffer = makeBuffer(FileChannel.MapMode.READ_WRITE, displaySettingsStartOffset_, displaySettingsReservedBytes_);
+      char[] letters = settings.toString().toCharArray();
+      for (int i = 0; i < displaySettingsReservedBytes_; i++) { 
+         writeBuffer.put((byte) (i < letters.length ? letters[i] : 0));        
+      } 
+   }
+   
+   public JSONArray readDisplaySettings() throws IOException, JSONException {
+     MappedByteBuffer dsOffset = makeReadOnlyBuffer(16,8);
+     if (dsOffset.getInt() != MultipageTiffWriter.DISPLAY_SETTINGS_OFFSET_HEADER) {
+        ReportingUtils.logError("Display settings offset header incorrect");
+        return null;
+     }
+     long offset = unsignInt(dsOffset.getInt());        
+     MappedByteBuffer dsHeader = makeReadOnlyBuffer(offset, 8);
+     if (dsHeader.getInt() != MultipageTiffWriter.DISPLAY_SETTINGS_HEADER) {
+        ReportingUtils.logError("Display settings header incorrect");
+        return null;
+     }
+     int reservedBytes = dsHeader.getInt();
+     MappedByteBuffer dsData = makeReadOnlyBuffer(offset+8, reservedBytes);
+     StringBuffer sb = new StringBuffer();
+     for (int k = 0; k < reservedBytes; k++) {
+        sb.append((char) dsData.get() );
+     }
+     String dsString = sb.toString().trim();
+     return new JSONArray(dsString);
    }
 
    private void readIndexMap() throws IOException {
