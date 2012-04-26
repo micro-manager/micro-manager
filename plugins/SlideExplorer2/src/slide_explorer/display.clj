@@ -193,8 +193,7 @@ to normal size."
                     x y nil)))))
 
 (defn paint-screen [canvas screen-state visible-tiles]
-  (let [g (.getGraphics canvas)
-        image @slide-explorer.image/image]
+  (let [g (.getGraphics canvas)]
     (doto g
       (.translate (:x @screen-state) (:y @screen-state))
       enable-anti-aliasing
@@ -253,6 +252,10 @@ to normal size."
                           (update-size)))))
   size-atom)
 
+(defn handle-zoom [window zoom-atom]
+  (bind-window-key window "ADD" #(swap! zoom-atom update-in [:zoom] inc))
+  (bind-window-key window "SUBTRACT" #(swap! zoom-atom update-in [:zoom] dec)))
+  
 (defn display-follow [canvas reference]
   (add-watch reference "display"
     (fn [_ _ _ _]
@@ -270,23 +273,31 @@ to normal size."
     (.setBounds 10 10 500 500)))
 
 (defn show []
-  (let [screen-state (atom (sorted-map :x 0 :y 0 :z 0))
+  (let [screen-state (atom (sorted-map :x 0 :y 0 :z 0 :zoom 0))
         visible-tiles (agent {})
         canvas (main-canvas screen-state visible-tiles)
         frame (main-frame)]
     (def vt visible-tiles)
     (def ss screen-state)
+    (def f frame)
     (.add (.getContentPane frame) canvas)
     (setup-fullscreen frame)
     (handle-drags canvas screen-state)
     (handle-wheel canvas screen-state)
     (handle-resize canvas screen-state)
+    (handle-zoom frame screen-state)
     (display-follow canvas screen-state)
     (display-follow canvas visible-tiles)
-    canvas))
+    frame))
+
 
 (defn test-tile [nx ny]
   (add-to-visible-tiles vt [nx ny 0 0 0 0]))
+
+(defn test-tiles [nx ny]
+  (doseq [i (range nx) j (range ny)]
+    (Thread/sleep 1000)
+    (test-tile i j)))
 
 ;;;;;;;;
 
