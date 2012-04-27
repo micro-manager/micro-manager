@@ -55,6 +55,8 @@ public class MultipageTiffWriter {
    public static final int DISPLAY_SETTINGS_OFFSET_HEADER = 483765892;
    public static final int DISPLAY_SETTINGS_HEADER = 347834724;
    public static final int DISPLAY_SETTINGS_BYTES_PER_CHANNEL = 256;
+   public static final int COMMENTS_OFFSET_HEADER = 99384722;
+   public static final int COMMENTS_HEADER = 84720485;
    
    private MappedByteBuffer currentBuffer_;
    private long bufferStart_ = 0;
@@ -81,26 +83,36 @@ public class MultipageTiffWriter {
             ReportingUtils.logError(ex);
          }
          createFileChannel(f);
-         String summaryMDString = summaryMD.toString();
-         writeHeader(summaryMDString);
-         putInt(0);
-         //place holder for index map offset
-         putInt(0);
-         putInt(0);
-         putInt(0);
-         writeSummaryMD(summaryMDString);
+         writeMMHeaderAndSummaryMD(summaryMD);
       } catch (IOException e) {
          ReportingUtils.logError(e);
-      }  
-      
+      }
+
       //Change this...
       displayAndComments_ = VirtualAcquisitionDisplay.getDisplaySettingsFromSummary(summaryMD);
    }
-   
+
+   private void writeMMHeaderAndSummaryMD(JSONObject summaryMD) throws IOException {
+      if (summaryMD.has("Comment")) {
+         summaryMD.remove("Comment");
+      }
+      String summaryMDString = summaryMD.toString();
+      writeHeader(summaryMDString);
+      //place holders for index map, display settings, and comments offset headers and headers
+      putInt(0);
+      putInt(0);
+      putInt(0);
+      putInt(0);
+      putInt(0);
+      putInt(0);
+      writeSummaryMD(summaryMDString);
+   }
+
    public void close() throws IOException {
       writeNullOffsetAfterLastImage();
       writeIndexMap();
       writeDisplaySettings();
+      writeComments();
       fileChannel_.close();
       raFile_.close();
       fileChannel_ = null;
@@ -115,7 +127,7 @@ public class MultipageTiffWriter {
       int pixelSize = getImageByteDepth(img)*getImageHeight(img)*getImageWidth(img);
       int extraPadding = 1000000;
       if (mdLength+indexMapSize+IFDSize+pixelSize+SPACE_FOR_COMMENTS+
-              SPACE_FOR_DISPLAY_SETTINGS+extraPadding + entryOffset_ >= MAX_FILE_SIZE) {
+              numChannels_*DISPLAY_SETTINGS_BYTES_PER_CHANNEL +extraPadding + entryOffset_ >= MAX_FILE_SIZE) {
          return false;
       }
       return true;
@@ -126,6 +138,9 @@ public class MultipageTiffWriter {
    }
       
    public long writeImage(TaggedImage img) throws IOException {
+      if (img.tags.has("Summary")) {
+         img.tags.remove("Summary");
+      }
       long offset = entryOffset_;
       writeIFD(img);
       updateIndexMap(img.tags,offset);      
@@ -135,6 +150,25 @@ public class MultipageTiffWriter {
    private void updateIndexMap(JSONObject tags, long offset) {
       String label = MDUtils.getLabel(tags);
       indexMap_.put(label, offset);
+   }
+   
+   private void writeComments() throws IOException {
+      //Write 4 byte header, 4 byte number of reserved bytes
+      putInt(COMMENTS_HEADER);
+      JSONObject comments;
+      try {
+         comments = displayAndComments_.getJSONObject("Comments");
+      } catch (JSONException ex) {
+         comments = new JSONObject();
+      }
+      String commentsString = comments.toString();
+      int numBytes = commentsString.length();
+      putInt(numBytes);
+      writeString(commentsString);
+      MappedByteBuffer address = makeBuffer(24, 8 );
+      address.putInt(COMMENTS_OFFSET_HEADER);
+      address.putInt((int)entryOffset_);
+      entryOffset_ += numBytes + 8;
    }
    
    private void writeDisplaySettings() throws IOException {
@@ -156,7 +190,7 @@ public class MultipageTiffWriter {
       MappedByteBuffer address = makeBuffer(16, 8 );
       address.putInt(DISPLAY_SETTINGS_OFFSET_HEADER);
       address.putInt((int)entryOffset_);
-      entryOffset_ += numReservedBytes;
+      entryOffset_ += numReservedBytes + 8;
    }
 
    private void writeIndexMap() throws IOException {
@@ -312,9 +346,10 @@ public class MultipageTiffWriter {
       putChar((char) 42);
       //8 bytes for file header + 4 bytes for index map offset header + 
       //4 bytes for index map offset + 4 bytes for display settings offset header + 
-      //4 bytes for display settings offset+ 4 bytes for summaryMD header + 
+      //4 bytes for display settings offset+ 4 bytes for comments offset header + 
+      //4 bytes for comments offset+4 bytes for summaryMD header + 
       //4 bytes for summary md length = 24 + 1 byte for each character of summary md
-      int firstImageOffset = 32 + summaryMD.length();
+      int firstImageOffset = 40 + summaryMD.length();
       putInt(firstImageOffset);
       entryOffset_ = firstImageOffset;
       valueOffset_ = firstImageOffset;

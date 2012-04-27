@@ -3,6 +3,7 @@ package org.micromanager.acquisition;
 import java.io.File;
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -21,7 +22,7 @@ import org.micromanager.utils.ReportingUtils;
 public class TaggedImageStorageMultipageTiff implements TaggedImageStorage {
 
    private JSONObject summaryMetadata_;
-   private JSONObject displaySettings_;
+   private JSONObject displayAndcomments_;
    private boolean newDataSet_;
    private String directory_;
    private Thread shutdownHook_;
@@ -39,7 +40,7 @@ public class TaggedImageStorageMultipageTiff implements TaggedImageStorage {
    
    public TaggedImageStorageMultipageTiff(String dir, Boolean newDataSet, JSONObject summaryMetadata) {
       summaryMetadata_ = summaryMetadata;
-      displaySettings_ = new JSONObject();
+      displayAndcomments_ = new JSONObject();
       newDataSet_ = newDataSet;
       directory_ = dir;
       tiffReadersByLabel_ = new HashMap<String,MultipageTiffReader>();
@@ -65,7 +66,7 @@ public class TaggedImageStorageMultipageTiff implements TaggedImageStorage {
       //add shutdown hook --> thread to be run when JVM shuts down
       shutdownHook_ = new Thread() {
          public void run() {
-            writeDisplaySettings();
+            writeDisplaySettingsAndComments();
          }
       };
       
@@ -95,14 +96,12 @@ public class TaggedImageStorageMultipageTiff implements TaggedImageStorage {
 
 
       try {
-         summaryMetadata_ = reader.readSummaryMD();
+         summaryMetadata_ = reader.getSummaryMetadata();
          numPositions_ = MDUtils.getNumPositions(summaryMetadata_);
-         displaySettings_.put("Channels", reader.readDisplaySettings());
+         displayAndcomments_ = reader.getDisplayAndComments();
       } catch (JSONException ex) {
          ReportingUtils.logError(ex);
-      } catch (IOException ex) {
-         ReportingUtils.logError("Error reading summary metadata");
-      }
+      } 
    }
    
    
@@ -267,18 +266,19 @@ public class TaggedImageStorageMultipageTiff implements TaggedImageStorage {
 
    @Override
    public void setDisplayAndComments(JSONObject settings) {
-      displaySettings_ = settings;
+      displayAndcomments_ = settings;
    }
 
    @Override
    public JSONObject getDisplayAndComments() {
-      return displaySettings_;
+      return displayAndcomments_;
    }
 
-   private void writeDisplaySettings() {
-      for (String label : tiffReadersByLabel_.keySet()) {
+   private void writeDisplaySettingsAndComments() {
+      for (MultipageTiffReader r : new HashSet<MultipageTiffReader>(tiffReadersByLabel_.values())) {
          try {
-            tiffReadersByLabel_.get(label).rewriteDisplaySettings(displaySettings_.getJSONArray("Channels"));
+            r.rewriteDisplaySettings(displayAndcomments_.getJSONArray("Channels"));
+            r.rewriteComments(displayAndcomments_.getJSONObject("Comments"));
          } catch (JSONException ex) {
             ReportingUtils.logError("Error writing display settings");
          } catch (IOException ex) {
@@ -294,7 +294,13 @@ public class TaggedImageStorageMultipageTiff implements TaggedImageStorage {
    public void close() {
       shutdownHook_.run();
       Runtime.getRuntime().removeShutdownHook(shutdownHook_);
-      //TODO: come back to this
+      for (MultipageTiffReader r : new HashSet<MultipageTiffReader>(tiffReadersByLabel_.values())) {
+         try {
+            r.close();
+         } catch (IOException ex) {
+            Logger.getLogger(TaggedImageStorageMultipageTiff.class.getName()).log(Level.SEVERE, null, ex);
+         }
+      }              
    }
 
    @Override

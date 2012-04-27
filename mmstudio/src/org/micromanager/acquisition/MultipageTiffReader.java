@@ -37,7 +37,6 @@ public class MultipageTiffReader {
    
    private RandomAccessFile raFile_;
    private FileChannel fileChannel_;
-   private FileLock lock_;
    private boolean bigEndian_;  
       
    private long firstIFD_;
@@ -46,19 +45,25 @@ public class MultipageTiffReader {
    private long indexMapOffset_;
    //This flag keeps the reader from reading things that dont exist until the writer is closed
    private boolean fileFinished_;
+   private JSONObject displayAndComments_;
+   private JSONObject summaryMetadata_;
    
    private HashMap<String,Long> indexMap_;
    
    public MultipageTiffReader(File file, boolean fileFinishedWriting) {   
       try {
+         displayAndComments_ = new JSONObject();
          fileFinished_ = fileFinishedWriting;
          createFileChannel(file);
          firstIFD_ = readHeader();
          indexMap_ = new HashMap<String, Long>();
          if (fileFinished_) {
             readIndexMap();
-            readDisplaySettings();
+            displayAndComments_.put("Channels", readDisplaySettings());
+            displayAndComments_.put("Comments", readComments());
+            summaryMetadata_ = readSummaryMD();
          }
+         
       } catch (Exception ex) {
          ex.printStackTrace();
       }       
@@ -71,6 +76,14 @@ public class MultipageTiffReader {
 
    public void fileFinished() {
       fileFinished_ = true;
+   }
+   
+   public JSONObject getSummaryMetadata() {
+      return summaryMetadata_;
+   }
+   
+   public JSONObject getDisplayAndComments() {
+      return displayAndComments_;
    }
    
    public TaggedImage readImage(String label) {
@@ -92,73 +105,106 @@ public class MultipageTiffReader {
       }
    }
    
+   
+   
    public Set<String> getIndexKeys() {
       if (indexMap_ == null)
          return null;
       return indexMap_.keySet();
    }
 
-   public JSONObject readSummaryMD() throws IOException {
-      MappedByteBuffer mdInfo = makeReadOnlyBuffer(24, 8);
+   private JSONObject readSummaryMD() throws IOException {
+      MappedByteBuffer mdInfo = makeReadOnlyBuffer(32, 8);
       if (mdInfo.getInt() != MultipageTiffWriter.SUMMARY_MD_HEADER) {
          ReportingUtils.logError("Summary Metadata Header Incorrect");
          return null;
       }
       long length = unsignInt(mdInfo.getInt());
       try {
-         return readJSONObject(32, length);
+         JSONObject summaryMD = readJSONObject(40, length);
+         if (displayAndComments_.has("Comments") && displayAndComments_.getJSONObject("Comments").has("Summary") ) {
+            summaryMD.put("Comment", displayAndComments_.getJSONObject("Comments").getString("Summary"));
+         }
+         return summaryMD;
       } catch (JSONException ex) {
          ReportingUtils.showError("Error reading summary metadata");
          return null;
       }
    }
    
-   public void rewriteDisplaySettings(JSONArray settings) throws IOException {
+   private JSONObject readComments() throws IOException, JSONException {     
+      long offset = readOffsetHeaderAndHeader(MultipageTiffWriter.COMMENTS_OFFSET_HEADER, MultipageTiffWriter.COMMENTS_HEADER,24);
+      int numBytes = makeReadOnlyBuffer(offset,4).getInt();
+      MappedByteBuffer buffer = makeReadOnlyBuffer(offset+4, numBytes);
+      StringBuffer sb = new StringBuffer();
+      for (int k = 0; k < numBytes; k++) {
+        sb.append((char) buffer.get() );
+     }
+     return new JSONObject( sb.toString());    
+   }
+   
+   public void rewriteComments(JSONObject comments) throws IOException, JSONException {
+      if (!fileFinished_ ) {
+         return;
+      }
+      String commentString = comments.toString();      
+      long offset = readOffsetHeaderAndHeader(MultipageTiffWriter.COMMENTS_OFFSET_HEADER, MultipageTiffWriter.COMMENTS_HEADER,24);
+      MappedByteBuffer writeBuffer = makeBuffer(FileChannel.MapMode.READ_WRITE, offset, 4+commentString.length());
+      char[] letters = commentString.toCharArray();
+      writeBuffer.putInt(letters.length);
+      for (int i = 0; i < letters.length; i++) { 
+         writeBuffer.put((byte) letters[i]);        
+      }   
+      displayAndComments_.put("Comments", comments);
+   }
+   
+   public void rewriteDisplaySettings(JSONArray settings) throws IOException, JSONException {
       if (!fileFinished_ ) {
          return;
       }
       if (displaySettingsStartOffset_ == -1) {
-         MappedByteBuffer buffer = makeReadOnlyBuffer(16,8);
-         if ( buffer.getInt() != MultipageTiffWriter.DISPLAY_SETTINGS_OFFSET_HEADER ) {
-            ReportingUtils.logError("Display settings offset header incorrect");
-            return;
-         }
-         long offset = unsignInt(buffer.getInt());
-         MappedByteBuffer header = makeReadOnlyBuffer(offset,8);
-         if (header.getInt() != MultipageTiffWriter.DISPLAY_SETTINGS_HEADER) {
-            ReportingUtils.logError("Display settigns header incorrect");
-            return;
-         }
-         displaySettingsStartOffset_ = offset + 8;
-         displaySettingsReservedBytes_ = unsignInt(header.getInt()); 
+         long offset = readOffsetHeaderAndHeader(MultipageTiffWriter.DISPLAY_SETTINGS_OFFSET_HEADER, 
+                 MultipageTiffWriter.DISPLAY_SETTINGS_HEADER,16);
+         displaySettingsStartOffset_ = offset + 4;
+         displaySettingsReservedBytes_ = makeReadOnlyBuffer(offset, 4).getInt();
       }
       MappedByteBuffer writeBuffer = makeBuffer(FileChannel.MapMode.READ_WRITE, displaySettingsStartOffset_, displaySettingsReservedBytes_);
       char[] letters = settings.toString().toCharArray();
       for (int i = 0; i < displaySettingsReservedBytes_; i++) { 
          writeBuffer.put((byte) (i < letters.length ? letters[i] : 0));        
       } 
+      displayAndComments_.put("Channels", settings);
    }
    
-   public JSONArray readDisplaySettings() throws IOException, JSONException {
-     MappedByteBuffer dsOffset = makeReadOnlyBuffer(16,8);
-     if (dsOffset.getInt() != MultipageTiffWriter.DISPLAY_SETTINGS_OFFSET_HEADER) {
-        ReportingUtils.logError("Display settings offset header incorrect");
-        return null;
-     }
-     long offset = unsignInt(dsOffset.getInt());        
-     MappedByteBuffer dsHeader = makeReadOnlyBuffer(offset, 8);
-     if (dsHeader.getInt() != MultipageTiffWriter.DISPLAY_SETTINGS_HEADER) {
-        ReportingUtils.logError("Display settings header incorrect");
-        return null;
-     }
-     int reservedBytes = dsHeader.getInt();
-     MappedByteBuffer dsData = makeReadOnlyBuffer(offset+8, reservedBytes);
+   private JSONArray readDisplaySettings() throws IOException, JSONException {
+     long offset = readOffsetHeaderAndHeader(MultipageTiffWriter.DISPLAY_SETTINGS_OFFSET_HEADER, 
+             MultipageTiffWriter.DISPLAY_SETTINGS_HEADER,16);
+     int reservedBytes = makeReadOnlyBuffer(offset, 4).getInt();
+     MappedByteBuffer dsData = makeReadOnlyBuffer(offset+4, reservedBytes);
      StringBuffer sb = new StringBuffer();
      for (int k = 0; k < reservedBytes; k++) {
         sb.append((char) dsData.get() );
      }
      String dsString = sb.toString().trim();
      return new JSONArray(dsString);
+   }
+   
+   //read mmHeader and offset, read header, return offset of first byte after header
+   private long readOffsetHeaderAndHeader(int offsetHeaderVal, int headerVal, int startOffset) throws IOException  {
+      MappedByteBuffer buffer1 = makeReadOnlyBuffer(startOffset, 8);
+      int offsetHeader = buffer1.getInt();
+      if ( offsetHeader != offsetHeaderVal) {
+         ReportingUtils.logError("Offset header incorrect, expected: " + offsetHeaderVal +"   found: " + offsetHeader);
+         return -1;
+      }
+      long offset = unsignInt(buffer1.getInt());
+      MappedByteBuffer buffer2 = makeReadOnlyBuffer(offset, 4);
+      int header = buffer2.getInt();
+      if (header != headerVal) {
+         ReportingUtils.logError("Header incorrect, expected: " + headerVal + "   found: " +header);
+         return -1;
+      }
+      return offset+4;
    }
 
    private void readIndexMap() throws IOException {
@@ -291,12 +337,9 @@ public class MultipageTiffReader {
    private void createFileChannel(File file) throws FileNotFoundException, IOException {      
       raFile_ = new RandomAccessFile(file,"rw");
       fileChannel_ = raFile_.getChannel();
-//      lock_ = fileChannel_.lock();
    }
    
-   private void close() throws IOException {
-      lock_.release();
-      lock_ = null;    
+   public void close() throws IOException {
       fileChannel_.close();
       raFile_.close();
       fileChannel_ = null;
