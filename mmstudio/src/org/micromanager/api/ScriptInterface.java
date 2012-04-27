@@ -800,7 +800,7 @@ public interface ScriptInterface {
     * Get a reference to the ImageCache object associated with the acquisition.
     * @param acquisitionName Name of the acquisition
     */
-   public ImageCache getAcquisitionImageCache(String acquisitionName);
+   public ImageCache getAcquisitionImageCache(String acquisitionName) throws MMScriptException;
 
 
    /**

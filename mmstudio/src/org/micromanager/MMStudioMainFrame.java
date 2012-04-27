@@ -632,12 +632,11 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface, Device
       pipelineClassLoadingThread_.start();
    }
 
-   public ImageCache getAcquisitionImageCache(String acquisitionName) {
-      throw new UnsupportedOperationException("Not supported yet.");
+   public ImageCache getAcquisitionImageCache(String acquisitionName) throws MMScriptException {
+      return getAcquisition(acquisitionName).getImageCache();
    }
 
  
-   
    /**
     * Callback to update GUI when a change happens in the MMCore.
     */
