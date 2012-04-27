@@ -24,8 +24,6 @@
 ;    (JavaUtils/getObjectFromPrefs
 ;      prefs (str "affine_transform_" (core getCurrentPixelSizeConfig)) nil)))
 
-
-
 (defn grab-tagged-image
   "Grab a single image from camera."
   []
@@ -294,7 +292,7 @@ to normal size."
 
 
 (defn test-tile [nx ny]
-  (add-to-available-tiles vt [nx ny 0 0 0 0]))
+  (add-to-available-tiles at [nx ny 0 0 0 0]))
 
 (defn test-tiles [nx ny]
   (doseq [i (range nx) j (range ny)]
