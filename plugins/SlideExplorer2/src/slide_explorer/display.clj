@@ -83,14 +83,14 @@
 (defn awt-image [^TaggedImage tagged-image]
   (.getImage (ImagePlus. "" (ImageUtils/makeProcessor tagged-image))))
 
-(defn get-tile [[nx ny nz nc nt nzoom]]
+(defn get-tile [[nx ny nz nc nt]]
   (grab-tagged-image))
 
-(defn add-tile [tile-map indices]
-  (assoc tile-map indices (get-tile indices)))
+(defn add-tile [tile-map tile-zoom indices]
+  (assoc-in tile-map [tile-zoom indices] (get-tile indices)))
 
-(defn add-to-available-tiles [available-tiles indices]
-  (send-off available-tiles add-tile indices))
+(defn add-to-available-tiles [available-tiles tile-zoom indices]
+  (send-off available-tiles add-tile tile-zoom indices))
 
 ;; gui utilities
 
@@ -185,20 +185,20 @@ to normal size."
                            RenderingHints/VALUE_ANTIALIAS_OFF)))))
        
 (defn paint-tiles [^Graphics2D g available-tiles zoom]
-  (doseq [[[nx ny nz nt nc nzoom] tagged-image] available-tiles
-          :when (= nzoom zoom)]
+  (doseq [[[nx ny nz nt nc] tagged-image] (get available-tiles zoom)]
     (let [[x y] (tile-to-pixels [nx ny] [512 512] zoom)]
       (when tagged-image
         (.drawImage g (awt-image tagged-image)
                     x y nil)))))
 
 (defn paint-screen [canvas screen-state available-tiles]
-  (let [g (.getGraphics canvas)]
+  (let [g (.getGraphics canvas)
+        original-transform (.getTransform g)]
     (doto g
       (.translate (:x @screen-state) (:y @screen-state))
       enable-anti-aliasing
       (paint-tiles @available-tiles (:zoom @screen-state))
-      (.translate (- (:x @screen-state)) (- (:y @screen-state)))
+      (.setTransform original-transform)
       (.setColor (Color. 0x00A08F))
       (.fillOval (- (+ (/ (:width @screen-state) 2)
                        (:x @screen-state))
@@ -280,6 +280,7 @@ to normal size."
     (def at available-tiles)
     (def ss screen-state)
     (def f frame)
+    (def cvs canvas)
     (.add (.getContentPane frame) canvas)
     (setup-fullscreen frame)
     (handle-drags canvas screen-state)
@@ -292,7 +293,7 @@ to normal size."
 
 
 (defn test-tile [nx ny]
-  (add-to-available-tiles at [nx ny 0 0 0 0]))
+  (add-to-available-tiles at 0 [nx ny 0 0 0]))
 
 (defn test-tiles [nx ny]
   (doseq [i (range nx) j (range ny)]
