@@ -27,7 +27,8 @@ public class MultipageTiffReader {
 
    
    public static final char BITS_PER_SAMPLE = 258;
-   public static final char STRIP_OFFSETS = 273;
+   public static final char STRIP_OFFSETS = 273;    
+   public static final char SAMPLES_PER_PIXEL = 277;
    public static final char STRIP_BYTE_COUNTS = 279;
    
    public static final char MM_METADATA_LENGTH = 65122;
@@ -42,7 +43,6 @@ public class MultipageTiffReader {
    private long firstIFD_;
    private long displaySettingsStartOffset_ = -1;
    private long displaySettingsReservedBytes_;
-   private long indexMapOffset_;
    //This flag keeps the reader from reading things that dont exist until the writer is closed
    private boolean fileFinished_;
    private JSONObject displayAndComments_;
@@ -50,7 +50,7 @@ public class MultipageTiffReader {
    
    private HashMap<String,Long> indexMap_;
    
-   public MultipageTiffReader(File file, boolean fileFinishedWriting) {   
+   public MultipageTiffReader(File file, boolean fileFinishedWriting, JSONObject summaryMD) {   
       try {
          displayAndComments_ = new JSONObject();
          fileFinished_ = fileFinishedWriting;
@@ -62,6 +62,8 @@ public class MultipageTiffReader {
             displayAndComments_.put("Channels", readDisplaySettings());
             displayAndComments_.put("Comments", readComments());
             summaryMetadata_ = readSummaryMD();
+         } else {
+            summaryMetadata_ = summaryMD;
          }
          
       } catch (Exception ex) {
@@ -92,7 +94,12 @@ public class MultipageTiffReader {
             long byteOffset = indexMap_.get(label);
             IFDData data = readIFD(byteOffset);
             Object pixels = readPixels(data);
-            JSONObject md = readMMMetadata(data);  
+            JSONObject md = readMMMetadata(data); 
+            try {
+               md.put("Summary", summaryMetadata_);
+            } catch (JSONException ex) {
+               ReportingUtils.logError("Problem adding summary metadata to image metadata");
+            }
             return new TaggedImage(pixels,md);
          } catch (IOException ex) {
             ReportingUtils.logError(ex);
@@ -240,7 +247,7 @@ public class MultipageTiffReader {
       int numEntries = entries.getChar();
       IFDData data = new IFDData();
       for (int i = 0; i < numEntries; i++) {
-         IFDEntry entry = readDirectoryEntry( 12*i + 2 + byteOffset);
+         IFDEntry entry = readDirectoryEntry(12 * i + 2 + byteOffset);
          if (entry.tag == MM_METADATA) {
             data.mdOffset = entry.value;
          } else if (entry.tag == STRIP_OFFSETS) {
@@ -248,45 +255,63 @@ public class MultipageTiffReader {
          } else if (entry.tag == STRIP_BYTE_COUNTS) {
             data.bytesPerImage = entry.value;
          } else if (entry.tag == BITS_PER_SAMPLE) {
-            if (entry.value <= 8) {
-               data.bytesPerPixel = 1;
-            } else if (entry.value <= 16) {
-               data.bytesPerPixel = 2;
+            data.bitsPerSample = entry.value;
+         } else if (entry.tag == SAMPLES_PER_PIXEL) {
+            if (entry.value == 1) {
+               data.rgb = false;
             } else {
-               data.bytesPerPixel = 3;
+               data.bitsPerSample = makeReadOnlyBuffer(data.bitsPerSample,2).getChar();
+               data.rgb = true;
             }
          } else if (entry.tag == MM_METADATA_LENGTH) {
             data.mdLength = entry.value;
          }
       }
-      MappedByteBuffer next = makeReadOnlyBuffer(byteOffset + 2 + 12*numEntries, 4);
+      MappedByteBuffer next = makeReadOnlyBuffer(byteOffset + 2 + 12 * numEntries, 4);
       data.nextIFDAdress = unsignInt(next.getInt());
       return data;
    }
 
    private Object readPixels(IFDData data) throws IOException {
-      MappedByteBuffer pixData = makeReadOnlyBuffer(data.pixelOffset, data.bytesPerImage);
-      if (data.bytesPerPixel == 1) {
-         byte[] pix = new byte[(int)data.bytesPerImage];
-         for (int i = 0; i < pix.length; i++) {
-            pix[i] = pixData.get();
+      if (data.rgb) {
+         MappedByteBuffer pixData = makeReadOnlyBuffer(data.pixelOffset, data.bytesPerImage);
+         if (data.bitsPerSample <= 8) {
+            byte[] pix = new byte[(int) (4*data.bytesPerImage/3)];
+            for (int i = 0; i < pix.length; i++) {
+               pix[i] = (i+1)%4==0?0:pixData.get();
+            }
+            return pix;
+         } else {
+            short[] pix = new short[(int) (4*data.bytesPerImage/3 / 2)];
+            for (int i = 0; i < pix.length; i++) {
+               pix[i] = (i+1)%4==0?0:pixData.getShort();
+            }
+            return pix;
          }
-         return pix;
-      } else if (data.bytesPerPixel == 2) {
-         short[] pix = new short[(int)data.bytesPerImage/2];
-         for (int i = 0; i < pix.length; i++) {
-            pix[i] = pixData.getShort();
-         }
-         return pix;
       } else {
-         int[] pix = new int[(int)data.bytesPerImage/4];
-         for (int i = 0; i < pix.length; i++) {
-            pix[i] = pixData.getInt();
+         MappedByteBuffer pixData = makeReadOnlyBuffer(data.pixelOffset, data.bytesPerImage);
+         if (data.bitsPerSample <= 8) {
+            byte[] pix = new byte[(int) data.bytesPerImage];
+            for (int i = 0; i < pix.length; i++) {
+               pix[i] = pixData.get();
+            }
+            return pix;
+         } else if (data.bitsPerSample <= 16) {
+            short[] pix = new short[(int) data.bytesPerImage / 2];
+            for (int i = 0; i < pix.length; i++) {
+               pix[i] = pixData.getShort();
+            }
+            return pix;
+         } else {
+            int[] pix = new int[(int) data.bytesPerImage / 4];
+            for (int i = 0; i < pix.length; i++) {
+               pix[i] = pixData.getInt();
+            }
+            return pix;
          }
-         return pix;
-      }    
+      }
    }
-   
+
    private JSONObject readMMMetadata(IFDData data) throws IOException {
       try {
          return readJSONObject(data.mdOffset, data.mdLength);
@@ -370,7 +395,8 @@ public class MultipageTiffReader {
       public long mdOffset;
       public long mdLength;
       public long nextIFDAdress;
-      public long bytesPerPixel;
+      public long bitsPerSample;
+      public boolean rgb;
       
       public IFDData() {}
    }

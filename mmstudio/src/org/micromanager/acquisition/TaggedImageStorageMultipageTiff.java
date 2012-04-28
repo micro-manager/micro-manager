@@ -84,7 +84,7 @@ public class TaggedImageStorageMultipageTiff implements TaggedImageStorage {
       File dir = new File(directory_);
       for (File f : dir.listFiles()) {
          if (f.getName().endsWith(".tif")) {
-            reader = new MultipageTiffReader(f, true);
+            reader = new MultipageTiffReader(f, true, null);
             Set<String> labels = reader.getIndexKeys();
             for (String label : labels) {
                tiffReadersByLabel_.put(label, reader);
@@ -190,7 +190,7 @@ public class TaggedImageStorageMultipageTiff implements TaggedImageStorage {
          String filename = createFilename(positionIndex, fileIndex);
          File f = new File(directory_ + "/" + filename);
          tiffWritersByPosition_.put(positionIndex, new MultipageTiffWriter(f, summaryMetadata_));
-         tiffReadersByPosition_.put(positionIndex, new MultipageTiffReader(f, false));
+         tiffReadersByPosition_.put(positionIndex, new MultipageTiffReader(f, false, summaryMetadata_));
       }
 
 
