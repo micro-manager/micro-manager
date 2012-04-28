@@ -24,6 +24,8 @@
 ;    (JavaUtils/getObjectFromPrefs
 ;      prefs (str "affine_transform_" (core getCurrentPixelSizeConfig)) nil)))
 
+(def angle (atom 0))
+
 (defn grab-tagged-image
   "Grab a single image from camera."
   []
@@ -81,7 +83,7 @@
   (ImagePlus. "Slide Explorer II"))
 
 (defn awt-image [^TaggedImage tagged-image]
-  (.getImage (ImagePlus. "" (ImageUtils/makeProcessor tagged-image))))
+  (.createImage (ImageUtils/makeProcessor tagged-image)))
 
 (defn get-tile [[nx ny nz nc nt]]
   (grab-tagged-image))
@@ -196,6 +198,7 @@ to normal size."
         original-transform (.getTransform g)]
     (doto g
       (.translate (:x @screen-state) (:y @screen-state))
+      (.rotate @angle)
       enable-anti-aliasing
       (paint-tiles @available-tiles (:zoom @screen-state))
       (.setTransform original-transform)
@@ -289,6 +292,7 @@ to normal size."
     (handle-zoom frame screen-state)
     (display-follow canvas screen-state)
     (display-follow canvas available-tiles)
+    (display-follow canvas angle)
     frame))
 
 
@@ -296,9 +300,13 @@ to normal size."
   (add-to-available-tiles at 0 [nx ny 0 0 0]))
 
 (defn test-tiles [nx ny]
-  (doseq [i (range nx) j (range ny)]
+  (doseq [i (range (- nx) (inc nx)) j (range (- ny) (inc ny))]
     (Thread/sleep 1000)
     (test-tile i j)))
+
+(defn test-rotate []
+  (.start (Thread. #(do (dorun (repeatedly 1000 (fn [] (Thread/sleep 10) (swap! angle + 0.05))))
+                        (reset! angle 0)))))
 
 ;;;;;;;;
 
