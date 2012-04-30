@@ -31,8 +31,7 @@ public class MultipageTiffReader {
    public static final char SAMPLES_PER_PIXEL = 277;
    public static final char STRIP_BYTE_COUNTS = 279;
    
-   public static final char MM_METADATA_LENGTH = 65122;
-   public static final char MM_METADATA = 65123;
+   public static final char MM_METADATA = MultipageTiffWriter.MM_METADATA;
    
 
    
@@ -250,6 +249,7 @@ public class MultipageTiffReader {
          IFDEntry entry = readDirectoryEntry(12 * i + 2 + byteOffset);
          if (entry.tag == MM_METADATA) {
             data.mdOffset = entry.value;
+            data.mdLength = entry.count;
          } else if (entry.tag == STRIP_OFFSETS) {
             data.pixelOffset = entry.value;
          } else if (entry.tag == STRIP_BYTE_COUNTS) {
@@ -263,9 +263,7 @@ public class MultipageTiffReader {
                data.bitsPerSample = makeReadOnlyBuffer(data.bitsPerSample,2).getChar();
                data.rgb = true;
             }
-         } else if (entry.tag == MM_METADATA_LENGTH) {
-            data.mdLength = entry.value;
-         }
+         } 
       }
       MappedByteBuffer next = makeReadOnlyBuffer(byteOffset + 2 + 12 * numEntries, 4);
       data.nextIFDAdress = unsignInt(next.getInt());

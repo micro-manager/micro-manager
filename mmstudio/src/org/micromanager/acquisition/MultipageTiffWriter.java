@@ -40,9 +40,7 @@ public class MultipageTiffWriter {
    public static final char Y_RESOLUTION = 283;
    public static final char RESOLUTION_UNIT = 296;
    
-   public static final char MM_METADATA_LENGTH = 65122;
-   public static final char MM_METADATA = 65123;
-   public static final char MM_IMAGE_COMMENT = 65124;
+   public static final char MM_METADATA = 51123;
    
    //1 MB for now...might have to increase
    public static final long SPACE_FOR_DISPLAY_SETTINGS = 1048576; 
@@ -224,7 +222,7 @@ public class MultipageTiffWriter {
      int imgHeight = getImageHeight(img);
      int imgWidth = getImageWidth(img);   
      int byteDepth = getImageByteDepth(img);
-     char entryCount = 14;
+     char entryCount = 13;
      if (img.tags.has("Summary")) {
         img.tags.remove("Summary");
      }
@@ -252,8 +250,7 @@ public class MultipageTiffWriter {
       writeIFDEntry(STRIP_BYTE_COUNTS, (char) 4, 1, (rgb_?3:1)*byteDepth*imgHeight*imgWidth );
       writeXAndYResolution(img);
       writeIFDEntry(RESOLUTION_UNIT, (char) 3,1,3);
-      writeIFDEntry(MM_METADATA_LENGTH,(char) 3,1,mdString.length());
-      writeIFDEntry(MM_METADATA,(char)3,1,valueOffset_+(rgb_?6:0)+16);
+      writeIFDEntry(MM_METADATA,(char)2,mdString.length(),valueOffset_+(rgb_?6:0)+16);
       //NextIFDOffset
       putInt((int)(valueOffset_ + 16 + mdString.length() + imgWidth*imgHeight*byteDepth));
 
@@ -341,11 +338,11 @@ public class MultipageTiffWriter {
          } catch (JSONException ex) {}
          double log = Math.log10(cmPerPixel);
          if (log >= 0) {
-            resDenomenator_ = 1;
-            resNumerator_ = (long) cmPerPixel;
+            resDenomenator_ = (long) cmPerPixel;
+            resNumerator_ = 1;
          } else {            
-            resDenomenator_ = (long) Math.pow(10, Math.ceil(Math.abs(log)+4) );
-            resNumerator_ = (long) (cmPerPixel * resDenomenator_);
+            resNumerator_ = (long) (1/cmPerPixel);
+            resDenomenator_ = 1;
          }
       }
       
