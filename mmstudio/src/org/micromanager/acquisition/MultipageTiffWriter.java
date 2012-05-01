@@ -22,7 +22,6 @@ public class MultipageTiffWriter {
    
    private static final long BYTES_PER_GIG = 1073741824;
    private static final long MAX_FILE_SIZE = BYTES_PER_GIG;
-   private static final int BUFFER_SIZE = 1000000000;
    
    //Required tags
    public static final char WIDTH = 256;
@@ -64,18 +63,18 @@ public class MultipageTiffWriter {
    private final boolean bigEndian_ = false; 
    private int numChannels_ = 1, numFrames_ = 1, numSlices_ = 1;
    private HashMap<String, Long> indexMap_;
-   private long tagDataOffset_;
-   private long entryOffset_;
+   private long byteOffset_;
    private long nextIFDOffsetLocation_ = -1;
    private JSONObject displayAndComments_;
    private boolean rgb_ = false;
    private String ijDescription_;
+   private int byteDepth_, imageWidth_, imageHeight_, bytesPerImagePixels_;
    
-   private long resNumerator_, resDenomenator_;
    
    public MultipageTiffWriter(File f, JSONObject summaryMD) {
       try {
          try {
+            byteOffset_ = 0;
             readSummaryMD(summaryMD); 
             displayAndComments_ = VirtualAcquisitionDisplay.getDisplaySettingsFromSummary(summaryMD);
             ijDescription_ = getIJDescriptionString();
@@ -84,8 +83,8 @@ public class MultipageTiffWriter {
          } catch (JSONException ex) {
             ReportingUtils.logError(ex);
          }
-         
-         createFileChannel(f);
+         //TODO: possibly truncate file length at end of writing
+         createFileChannel(f,Math.min(numFrames_*numChannels_*numSlices_*(bytesPerImagePixels_+1500), MAX_FILE_SIZE));
          writeMMHeaderAndSummaryMD(summaryMD);
       } catch (IOException e) {
          ReportingUtils.logError(e);
@@ -97,15 +96,31 @@ public class MultipageTiffWriter {
          summaryMD.remove("Comment");
       }
       String summaryMDString = summaryMD.toString();
-      writeHeader(summaryMDString);
+      int mdLength = summaryMDString.length();
+     
+      MappedByteBuffer buffer = makeBuffer(8 + 32 + mdLength );
+      if (bigEndian_) {
+         buffer.putChar((char) 0x4d4d);
+      } else {
+         buffer.putChar((char) 0x4949);
+      }
+      buffer.putChar((char) 42);
+      //8 bytes for file header + 4 bytes for index map offset header + 
+      //4 bytes for index map offset + 4 bytes for display settings offset header + 
+      //4 bytes for display settings offset+ 4 bytes for comments offset header + 
+      //4 bytes for comments offset+4 bytes for summaryMD header + 
+      //4 bytes for summary md length = 24 + 1 byte for each character of summary md
+      buffer.putInt(40 + mdLength);
       //place holders for index map, display settings, and comments offset headers and headers
-      putInt(0);
-      putInt(0);
-      putInt(0);
-      putInt(0);
-      putInt(0);
-      putInt(0);
-      writeSummaryMD(summaryMDString);
+      buffer.putInt(0);
+      buffer.putInt(0);
+      buffer.putInt(0);
+      buffer.putInt(0);
+      buffer.putInt(0);
+      buffer.putInt(0);
+      buffer.putInt(SUMMARY_MD_HEADER);
+      buffer.putInt(mdLength);
+      writeString(buffer,summaryMDString);
    }
 
    public void close() throws IOException {
@@ -124,10 +139,9 @@ public class MultipageTiffWriter {
       int mdLength = img.tags.toString().length();
       int indexMapSize = indexMap_.size()*20 + 8;
       int IFDSize = 13*12 + 4 + 16;
-      int pixelSize = getImageByteDepth(img)*getImageHeight(img)*getImageWidth(img);
       int extraPadding = 1000000;
-      if (mdLength+indexMapSize+IFDSize+pixelSize+SPACE_FOR_COMMENTS+
-              numChannels_*DISPLAY_SETTINGS_BYTES_PER_CHANNEL +extraPadding + entryOffset_ >= MAX_FILE_SIZE) {
+      if (mdLength+indexMapSize+IFDSize+bytesPerImagePixels_+SPACE_FOR_COMMENTS+
+              numChannels_*DISPLAY_SETTINGS_BYTES_PER_CHANNEL +extraPadding + byteOffset_ >= MAX_FILE_SIZE) {
          return false;
       }
       return true;
@@ -138,10 +152,7 @@ public class MultipageTiffWriter {
    }
       
    public long writeImage(TaggedImage img) throws IOException {
-      if (img.tags.has("Summary")) {
-         img.tags.remove("Summary");
-      }
-      long offset = entryOffset_;
+      long offset = byteOffset_;
       writeIFD(img);
       updateIndexMap(img.tags,offset);      
       return offset;
@@ -154,7 +165,7 @@ public class MultipageTiffWriter {
    
    private void writeComments() throws IOException {
       //Write 4 byte header, 4 byte number of reserved bytes
-      putInt(COMMENTS_HEADER);
+      long commentsOffset = byteOffset_;
       JSONObject comments;
       try {
          comments = displayAndComments_.getJSONObject("Comments");
@@ -162,181 +173,115 @@ public class MultipageTiffWriter {
          comments = new JSONObject();
       }
       String commentsString = comments.toString();
-      int numBytes = commentsString.length();
-      putInt(numBytes);
-      writeString(commentsString);
+      int commentsLength = commentsString.length();
+      MappedByteBuffer buffer = makeBuffer(8 + commentsLength );
+      buffer.putInt(COMMENTS_HEADER);     
+      buffer.putInt(commentsLength);
+      writeString(buffer,commentsString);
+      
       MappedByteBuffer address = makeBuffer(24, 8 );
       address.putInt(COMMENTS_OFFSET_HEADER);
-      address.putInt((int)entryOffset_);
-      entryOffset_ += numBytes + 8;
+      address.putInt((int)commentsOffset);
    }
    
    private void writeDisplaySettings() throws IOException {
-      //Write 4 byte header, 4 byte number of reserved bytes
-      putInt(DISPLAY_SETTINGS_HEADER);
       JSONArray displaySettings;
       try {
          displaySettings = displayAndComments_.getJSONArray("Channels");
       } catch (JSONException ex) {
          displaySettings = new JSONArray();
       }      
-      int numReservedBytes = numChannels_*DISPLAY_SETTINGS_BYTES_PER_CHANNEL;
+      int numReservedBytes =  numChannels_*DISPLAY_SETTINGS_BYTES_PER_CHANNEL; 
       String displayString = displaySettings.toString();
-      putInt(numReservedBytes);
-      writeString(displayString);
-      for (int i = displayString.length(); i < numReservedBytes; i++) {
-          putByte((byte)0);
-      }
+      long displaySettingsOffset = byteOffset_;
+      MappedByteBuffer buffer = makeBuffer(8 + numReservedBytes);
+      //Write 4 byte header, 4 byte number of reserved bytes
+      buffer.putInt(DISPLAY_SETTINGS_HEADER);
+      buffer.putInt(numReservedBytes);
+      writeString(buffer,displayString);
+      
       MappedByteBuffer address = makeBuffer(16, 8 );
       address.putInt(DISPLAY_SETTINGS_OFFSET_HEADER);
-      address.putInt((int)entryOffset_);
-      entryOffset_ += numReservedBytes + 8;
+      address.putInt((int)displaySettingsOffset);
    }
 
    private void writeIndexMap() throws IOException {
       //Write 4 byte header, 4 byte number of entries, and 20 bytes for each entry
       int numMappings = indexMap_.size();
-      putInt(INDEX_MAP_HEADER);
-      putInt( numMappings );
+      long indexMapOffset = byteOffset_;
+      MappedByteBuffer buffer = makeBuffer(8 + 20*numMappings);
+      buffer.putInt(INDEX_MAP_HEADER);
+      buffer.putInt( numMappings );
       for (String label : indexMap_.keySet()) {
          String[] indecies = label.split("_");
          for(String index : indecies) {
-            putInt(Integer.parseInt(index));
+            buffer.putInt(Integer.parseInt(index));
          }
-         putInt(indexMap_.get(label).intValue());
-      }      
+         buffer.putInt(indexMap_.get(label).intValue());
+      }
+      
       MappedByteBuffer address = makeBuffer(8, 8 );
       address.putInt(INDEX_MAP_OFFSET_HEADER);
-      address.putInt((int)entryOffset_);
-      entryOffset_ += 8 + 20*numMappings;
-   }
-   
-   private void writeSummaryMD(String md) throws IOException {
-      //4 byte summary md header code, 4 byte length of summary md
-      putInt(SUMMARY_MD_HEADER);
-      putInt(md.length());
-      writeString(md);
+      address.putInt((int)indexMapOffset);
    }
 
    private void writeIFD(TaggedImage img) throws IOException {     
-     int imgHeight = getImageHeight(img);
-     int imgWidth = getImageWidth(img);   
-     int byteDepth = getImageByteDepth(img);
-     char entryCount = (char) 13;
+
+     char numEntries = (char) 13;
      if (img.tags.has("Summary")) {
         img.tags.remove("Summary");
      }
      String mdString = img.tags.toString() + " ";
       
-      //Write 2 bytes containing number of directory entries (13)
-      putChar(entryCount);     
-      entryOffset_ += 2;
-
-      //Offset of this IFD + # of directory entries (2 bytes--already included in entryOffset_)
-      //+ (12 bytes)*(# of entries)+ address of next IFD or 0 if last (4 bytes)
-      tagDataOffset_ = entryOffset_ + 12*entryCount + 4;
-      nextIFDOffsetLocation_ = entryOffset_ + 12*entryCount;
-      
-      
-      writeIFDEntry(WIDTH,(char)3,1,imgWidth);
-      writeIFDEntry(HEIGHT,(char)3,1,imgHeight);
-      writeIFDEntry(BITS_PER_SAMPLE,(char)3,rgb_?3:1,rgb_? tagDataOffset_ :byteDepth*8);
-      writeIFDEntry(COMPRESSION,(char)3,1,1);
-      writeIFDEntry(PHOTOMETRIC_INTERPRETATION,(char)3,1,rgb_?2:1);
+     //2 bytes for number of directory entries
+     //12 bytes per directory entry
+     //4 byte offset of next IFD
+     //6 bytes for bits per sample if RGB
+     //16 bytes for x and y resolution
+     //1 byte per character of MD string
+     //number of bytes for pixels
+     int numBytes = 2 + numEntries*12 + 4 + (rgb_?6:0) + 16 + mdString.length() + bytesPerImagePixels_;
+     long tagDataOffset = byteOffset_ + 2 + numEntries*12 + 4;
+     MappedByteBuffer buffer = makeBuffer(numBytes);
      
-      //Add 16 for x and y resolution and 1 byte for each metadata character
-      writeIFDEntry(STRIP_OFFSETS,(char)4,1, (int) ( tagDataOffset_ +(rgb_?6:0) + 16 + mdString.length() ) );
-      writeIFDEntry(SAMPLES_PER_PIXEL,(char)3,1,rgb_?3:1);
-      writeIFDEntry(ROWS_PER_STRIP, (char) 3, 1, imgHeight);
-      writeIFDEntry(STRIP_BYTE_COUNTS, (char) 4, 1, (rgb_?3:1)*byteDepth*imgHeight*imgWidth );
-      writeXAndYResolution(img);
-      writeIFDEntry(RESOLUTION_UNIT, (char) 3,1,3);
-      writeIFDEntry(MM_METADATA,(char)2,mdString.length(),tagDataOffset_+(rgb_?6:0)+16);
-      //NextIFDOffset
-      putInt((int)(tagDataOffset_ +(rgb_?6:0) + 16 + mdString.length() + (rgb_?3:1)*imgWidth*imgHeight*byteDepth));
-
+      buffer.putChar(numEntries);
+      writeIFDEntry(buffer,WIDTH,(char)3,1,imageWidth_);
+      writeIFDEntry(buffer,HEIGHT,(char)3,1,imageHeight_);
+      writeIFDEntry(buffer,BITS_PER_SAMPLE,(char)3,rgb_?3:1,  rgb_? tagDataOffset:byteDepth_*8);
       if (rgb_) {
-         writeRGBBitsPerSample((char) (byteDepth*8));
+         tagDataOffset += 6;
       }
-      writeResoltuionValues();
-      writeMMMetadata(mdString);      
-      writePixels(img, byteDepth);
+      writeIFDEntry(buffer,COMPRESSION,(char)3,1,1);
+      writeIFDEntry(buffer,PHOTOMETRIC_INTERPRETATION,(char)3,1,rgb_?2:1);
+      writeIFDEntry(buffer,STRIP_OFFSETS,(char)4,1, tagDataOffset );
+      tagDataOffset += bytesPerImagePixels_;
+      writeIFDEntry(buffer,SAMPLES_PER_PIXEL,(char)3,1,rgb_?3:1);
+      writeIFDEntry(buffer,ROWS_PER_STRIP, (char) 3, 1, imageHeight_);
+      writeIFDEntry(buffer,STRIP_BYTE_COUNTS, (char) 4, 1, bytesPerImagePixels_ );
+      writeIFDEntry(buffer,X_RESOLUTION, (char)5, 1, tagDataOffset);
+      tagDataOffset += 8;
+      writeIFDEntry(buffer,Y_RESOLUTION, (char)5, 1, tagDataOffset);
+      tagDataOffset += 8;
+      writeIFDEntry(buffer,RESOLUTION_UNIT, (char) 3,1,3);
+      writeIFDEntry(buffer,MM_METADATA,(char)2,mdString.length(),tagDataOffset);
+      tagDataOffset += mdString.length();
       
-      entryOffset_ = tagDataOffset_;
-   }
-   
-   private void writeIJDescriptionString() throws IOException {
-      writeString(ijDescription_);
-      tagDataOffset_ += ijDescription_.length();
-   }
-   
-   private void writeNullOffsetAfterLastImage() throws IOException {
-      MappedByteBuffer next = makeBuffer(nextIFDOffsetLocation_, 4);
-      next.putInt(0);
-   }
+      //NextIFDOffset
+      buffer.putInt((int)tagDataOffset);
+      nextIFDOffsetLocation_ = tagDataOffset;
 
-   private void writePixels(TaggedImage img, int byteDepth) throws IOException {
       if (rgb_) {
-         if (byteDepth == 1) {
-            byte[] pixels = (byte[]) img.pix;
-            for (int i = 0; i < pixels.length; i++) {
-               if ((i+1)%4 != 0) {
-                  putByte(pixels[i]);
-               }
-            }
-            tagDataOffset_ += 3 * pixels.length / 4;
-         } else if (byteDepth == 2) {
-            short[] pixels = (short[]) img.pix;
-            for (int i = 0; i < pixels.length; i++) {
-               if ((i+1)%4 != 0) {
-                  putChar((char) pixels[i]);
-               }
-            }
-            tagDataOffset_ += 2 * 3 * pixels.length / 4;
-         }
-      } else {
-         if (byteDepth == 1) {
-            byte[] pixels = (byte[]) img.pix;
-            for (byte b : pixels) {
-               putByte(b);
-            }
-            tagDataOffset_ += pixels.length;
-         } else if (byteDepth == 2) {
-            short[] pixels = (short[]) img.pix;
-            for (short s : pixels) {
-               putChar((char) s);
-            }
-            tagDataOffset_ += pixels.length * 2;
-         } else {
-            int[] pixels = (int[]) img.pix;
-            for (int i : pixels) {
-               putInt(i);
-            }
-            tagDataOffset_ += pixels.length * 4;
-         }
+         buffer.putChar((char) (byteDepth_*8));
+         buffer.putChar((char) (byteDepth_*8));
+         buffer.putChar((char) (byteDepth_*8));
       }
-   }
-
-   private void writeMMMetadata(String mdString) throws IOException {      
-      writeString(mdString);
-      tagDataOffset_ += mdString.length();  
+      writePixels(buffer, img);
+      writeResoltuionValues(buffer, img);
+      writeString(buffer,mdString);    
    }
    
-   private void writeString(String s) throws IOException {
-      char[] letters = s.toCharArray();
-      for (int i = 0; i < letters.length; i++) {
-         putByte((byte) letters[i]);
-      }
-   }
-   
-   private void writeRGBBitsPerSample(char bitDepth) throws IOException {
-      putChar(bitDepth);
-      putChar(bitDepth);
-      putChar(bitDepth);
-      tagDataOffset_+=6;
-   }
-   
-   private void writeXAndYResolution(TaggedImage img) throws IOException {
+   private void writeResoltuionValues(MappedByteBuffer buffer, TaggedImage img) throws IOException {
+      long resNumerator = 1, resDenomenator = 1;
       if (img.tags.has("PixelSizeUm")) {
          double cmPerPixel = 0.0001;
          try {
@@ -344,134 +289,116 @@ public class MultipageTiffWriter {
          } catch (JSONException ex) {}
          double log = Math.log10(cmPerPixel);
          if (log >= 0) {
-            resDenomenator_ = (long) cmPerPixel;
-            resNumerator_ = 1;
-         } else {            
-            resNumerator_ = (long) (1/cmPerPixel);
-            resDenomenator_ = 1;
+            resDenomenator = (long) cmPerPixel;
+            resNumerator = 1;
+         } else {
+            resNumerator = (long) (1 / cmPerPixel);
+            resDenomenator = 1;
          }
       }
-      
-      writeIFDEntry(X_RESOLUTION,(char)5,1,(rgb_?6:0)+tagDataOffset_);
-      writeIFDEntry(Y_RESOLUTION,(char)5,1,(rgb_?6:0)+tagDataOffset_+8);
-   }
-   
-   private void writeResoltuionValues() throws IOException {
-      putInt((int)resNumerator_);
-      putInt((int)resDenomenator_);
-      putInt((int)resNumerator_);
-      putInt((int)resDenomenator_);
-      tagDataOffset_ += 16;
+      buffer.putInt((int)resNumerator);
+      buffer.putInt((int)resDenomenator);
+      buffer.putInt((int)resNumerator);
+      buffer.putInt((int)resDenomenator);
 }
- 
-   //Only use if value fits
-   private void writeIFDEntry(char tag, char type, long count, long value) throws IOException {
-      putChar(tag);
-      putChar(type);
-      putInt((int)count);
-      putInt((int) value);
-      entryOffset_ += 12;
+
+   
+   private void writeIJDescriptionString() throws IOException {
+//      writeString(ijDescription_);
+//      tagDataOffset_ += ijDescription_.length();
+   }
+   
+   private void writeNullOffsetAfterLastImage() throws IOException {
+      MappedByteBuffer next = makeBuffer(nextIFDOffsetLocation_, 4);
+      next.putInt(0);
    }
 
-   private void writeHeader(String summaryMD) throws IOException {
-      if (bigEndian_) {
-         putChar((char) 0x4d4d);
+   private void writePixels(MappedByteBuffer buffer, TaggedImage img) throws IOException {
+      if (rgb_) {
+         if (byteDepth_ == 1) {
+            byte[] pixels = (byte[]) img.pix;
+            for (int i = 0; i < pixels.length; i++) {
+               if ((i+1)%4 != 0) {
+                  buffer.put(pixels[i]);
+               }
+            }
+         } else if (byteDepth_ == 2) {
+            short[] pixels = (short[]) img.pix;
+            for (int i = 0; i < pixels.length; i++) {
+               if ((i+1)%4 != 0) {
+                  buffer.putChar((char) pixels[i]);
+               }
+            }
+         }
       } else {
-         putChar((char) 0x4949);
+         if (byteDepth_ == 1) {
+            byte[] pixels = (byte[]) img.pix;
+            for (byte b : pixels) {
+               buffer.put(b);
+            }
+         } else if (byteDepth_ == 2) {
+            short[] pixels = (short[]) img.pix;
+            for (short s : pixels) {
+               buffer.putChar((char) s);
+            }
+         } 
       }
-      putChar((char) 42);
-      //8 bytes for file header + 4 bytes for index map offset header + 
-      //4 bytes for index map offset + 4 bytes for display settings offset header + 
-      //4 bytes for display settings offset+ 4 bytes for comments offset header + 
-      //4 bytes for comments offset+4 bytes for summaryMD header + 
-      //4 bytes for summary md length = 24 + 1 byte for each character of summary md
-      int firstImageOffset = 40 + summaryMD.length();
-      putInt(firstImageOffset);
-      entryOffset_ = firstImageOffset;
-   }
-
-   private void putInt(int val) throws IOException {
-      if (currentBuffer_.capacity() - currentBuffer_.position() < 4 ) {
-         bufferStart_ +=  currentBuffer_.position();
-         currentBuffer_ = makeBuffer(bufferStart_, BUFFER_SIZE);
-      }
-      currentBuffer_.putInt(val);
    }
    
-   private void putChar(char val) throws IOException {
-      if ( currentBuffer_.capacity() - currentBuffer_.position() < 2  ) {
-         bufferStart_ +=  currentBuffer_.position();
-         currentBuffer_ = makeBuffer(bufferStart_, BUFFER_SIZE);
+   private void writeString(MappedByteBuffer buffer, String s) throws IOException {
+      char[] letters = s.toCharArray();
+      for (int i = 0; i < letters.length; i++) {
+         buffer.put((byte) letters[i]);
       }
-      currentBuffer_.putChar(val);
+   }
+ 
+   private void writeIFDEntry(MappedByteBuffer buffer, char tag, char type, long count, long value) throws IOException {
+      buffer.putChar(tag);
+      buffer.putChar(type);
+      buffer.putInt((int)count);
+      buffer.putInt((int) value);
+   }   
+   
+   private MappedByteBuffer makeBuffer(int numBytes) throws IOException {
+      MappedByteBuffer buffer = fileChannel_.map(FileChannel.MapMode.READ_WRITE, byteOffset_, numBytes);
+      buffer.order(bigEndian_ ? ByteOrder.BIG_ENDIAN : ByteOrder.LITTLE_ENDIAN);
+      byteOffset_ += numBytes;
+      return buffer;
    }
    
-   private void putByte(byte val) throws IOException {
-      if (currentBuffer_.position() == currentBuffer_.capacity() ) {
-         bufferStart_ +=  currentBuffer_.position();
-         currentBuffer_ = makeBuffer(bufferStart_, BUFFER_SIZE);
-      }
-      currentBuffer_.put(val);
-   }
-   
-   private MappedByteBuffer makeBuffer(long byteOffset, int numBytes) throws IOException {
-      MappedByteBuffer buffer = fileChannel_.map(FileChannel.MapMode.READ_WRITE, byteOffset, numBytes);
+   private MappedByteBuffer makeBuffer(long offset, int numBytes) throws IOException {
+      MappedByteBuffer buffer = fileChannel_.map(FileChannel.MapMode.READ_WRITE, offset, numBytes);
       buffer.order(bigEndian_ ? ByteOrder.BIG_ENDIAN : ByteOrder.LITTLE_ENDIAN);
       return buffer;
    }
 
-   private void createFileChannel(File f) throws FileNotFoundException, IOException {
+   private void createFileChannel(File f, long fileSize) throws FileNotFoundException, IOException {
       f.createNewFile();
       raFile_ = new RandomAccessFile(f, "rw");
-      raFile_.setLength(BUFFER_SIZE);
+      raFile_.setLength(fileSize);
       fileChannel_ = raFile_.getChannel();
       fileChannel_.size();
       indexMap_ = new HashMap<String, Long>();
-      currentBuffer_ = makeBuffer(bufferStart_, BUFFER_SIZE);
    }
-
-   private int getImageHeight(TaggedImage img) {
-      try {
-         return MDUtils.getHeight(img.tags);
-      } catch (JSONException ex) {
-         ReportingUtils.showError("Error saving image: Image height not in metadata");
-         return 0;
-      }
-   }
-   
-   private int getImageWidth(TaggedImage img) {
-      try {
-         return MDUtils.getWidth(img.tags);
-      } catch (JSONException ex) {
-         ReportingUtils.showError("Error saving image: Image width not in metadata");
-         return 0;
-      }
-   }
-
-   private int getImageByteDepth(TaggedImage img) {
-      try {
-         String pixelType = MDUtils.getPixelType(img.tags);
-         if (pixelType.equals("GRAY8") || pixelType.equals("RGB32") || pixelType.equals("RGB24")) {
-            return 1;
-         } else if (pixelType.equals("GRAY16") || pixelType.equals("RGB64")) {
-            return 2;
-         } else if (pixelType.equals("GRAY32")) {
-            return 3;
-         } else {
-            return 2;
-         }
-      } catch (Exception ex) {
-         ReportingUtils.showError("Error saving image: Image width not in metadata");
-         return 2;
-      }
-   }
-
    
    private void readSummaryMD(JSONObject summaryMD) throws MMScriptException, JSONException {
       rgb_ = MDUtils.isRGB(summaryMD);
       numChannels_ = MDUtils.getNumChannels(summaryMD);
       numFrames_ = MDUtils.getNumFrames(summaryMD);
-      numSlices_ = MDUtils.getNumSlices(summaryMD);   
+      numSlices_ = MDUtils.getNumSlices(summaryMD);
+      imageWidth_ = MDUtils.getWidth(summaryMD);
+      imageHeight_ = MDUtils.getHeight(summaryMD);
+      String pixelType = MDUtils.getPixelType(summaryMD);
+      if (pixelType.equals("GRAY8") || pixelType.equals("RGB32") || pixelType.equals("RGB24")) {
+            byteDepth_ =  1;
+         } else if (pixelType.equals("GRAY16") || pixelType.equals("RGB64")) {
+            byteDepth_ =  2;
+         } else if (pixelType.equals("GRAY32")) {
+            byteDepth_ =  3;
+         } else {
+            byteDepth_ =  2;
+         }
+      bytesPerImagePixels_ = imageHeight_*imageWidth_*byteDepth_*(rgb_?3:1);
    }
    
    
