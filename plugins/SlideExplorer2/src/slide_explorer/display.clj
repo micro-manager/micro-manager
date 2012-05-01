@@ -1,7 +1,8 @@
 (ns slide-explorer.display
   (:import (javax.swing AbstractAction JComponent JFrame JLabel KeyStroke)
            (java.awt Canvas Color Graphics Graphics2D RenderingHints Window)
-           (java.awt.event ComponentAdapter KeyAdapter KeyEvent MouseAdapter WindowAdapter)
+           (java.awt.event ComponentAdapter KeyAdapter KeyEvent MouseAdapter
+                           WindowAdapter)
            (java.awt.image BufferedImage WritableRaster)
            (java.awt.geom AffineTransform Point2D$Double)
            (java.io ByteArrayInputStream)
@@ -87,6 +88,7 @@
 
 (defn get-tile [[nx ny nz nc nt]]
   (awt-image (grab-tagged-image)))
+  ;(slide-explorer.imagej/try-3-colors false))
 
 (defn add-tile [tile-map tile-zoom indices]
   (assoc-in tile-map [tile-zoom indices] (get-tile indices)))
@@ -142,17 +144,16 @@
 to normal size."
   ([^java.awt.GraphicsDevice device window]
     (if window
-      (do
+      (when (not= (.getFullScreenWindow device) window)
         (.dispose window)
         (.setUndecorated window true)
         (.setFullScreenWindow device window)
         (.show window))
-      (let [window (.getFullScreenWindow device)]
+      (when-let [window (.getFullScreenWindow device)]
+        (.dispose window)
         (.setFullScreenWindow device nil)
-        (when window
-          (.dispose window)
-          (.setUndecorated window false)
-          (.show window))))
+        (.setUndecorated window false)
+        (.show window)))
     window)
   ([window]
     (full-screen! (default-screen-device) window)))
@@ -300,12 +301,14 @@ to normal size."
   (add-to-available-tiles at 0 [nx ny 0 0 0]))
 
 (defn test-tiles [nx ny]
-  (doseq [i (range (- nx) (inc nx)) j (range (- ny) (inc ny))]
-    (Thread/sleep 1000)
-    (test-tile i j)))
+  (.start (Thread.
+            #(doseq [i (range (- nx) (inc nx)) j (range (- ny) (inc ny))]
+               (Thread/sleep 1000)
+               (test-tile i j)))))
 
 (defn test-rotate []
-  (.start (Thread. #(do (dorun (repeatedly 2000 (fn [] (Thread/sleep 10) (swap! angle + 0.02))))
+  (.start (Thread. #(do (dorun (repeatedly 2000 (fn [] (Thread/sleep 10)
+                                                  (swap! angle + 0.02))))
                         (reset! angle 0)))))
 
 
