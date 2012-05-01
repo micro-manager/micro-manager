@@ -88,7 +88,7 @@
 
 (defn get-tile [[nx ny nz nc nt]]
   (awt-image (grab-tagged-image)))
-  ;(slide-explorer.imagej/try-3-colors false))
+  ;(slide-explorer.image/try-3-colors false))
 
 (defn add-tile [tile-map tile-zoom indices]
   (assoc-in tile-map [tile-zoom indices] (get-tile indices)))

@@ -17,20 +17,9 @@
 
 ; (defn getPixels [^BufferedImage image] (-> image .getRaster .getDataBuffer .getData))
 
-(defprotocol Croppable
-  (crop "Crop an image with upper-left corner x,y and dimensions w,h." [this x y w h]))
-
-(extend-type ByteProcessor
-  Croppable
-    (crop [this x y w h]
-      (doto (ByteProcessor. w h)
-        (.insert this (- x) (- y)))))
-
-(extend-type ShortProcessor
-  Croppable
-    (crop [this x y w h]
-      (doto (ShortProcessor. w h)
-        (.insert this (- x) (- y)))))
+(defn crop [^ImageProcessor original x y w h]
+  (doto (.createProcessor original w h)
+    (.insert original (- x) (- y))))
 
 (defn processor-to-image [^ImageProcessor proc]
   (.createImage proc))
@@ -67,5 +56,6 @@
 ;; test
     
 (defn show [img-or-proc]
-  (.show (ImagePlus. "" img-or-proc)))
+  (.show (ImagePlus. "" img-or-proc))
+  img-or-proc)
 
