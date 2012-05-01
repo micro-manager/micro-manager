@@ -1,4 +1,4 @@
-(ns slide-explorer.imagej
+(ns slide-explorer.image
   (:import (ij CompositeImage ImagePlus ImageStack)
            (ij.process ByteProcessor LUT ImageProcessor ShortProcessor)
            (mmcorej TaggedImage)
