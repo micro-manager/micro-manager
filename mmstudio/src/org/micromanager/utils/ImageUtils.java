@@ -344,16 +344,14 @@ public class ImageUtils {
       byte [] gs = new byte[size];
       byte [] bs = new byte[size];
 
-      int x;
       double xn;
       double yn;
-      for (int p=0;p<size;++p) {
-         x = MathFunctions.clip(0, p, size);
-         xn = x / (double) size;
+      for (int x=0;x<size;++x) {
+         xn = x / (double) (size-1);
          yn = Math.pow(xn, gamma);
-         rs[p] = (byte) (yn * r);
-         gs[p] = (byte) (yn * g);
-         bs[p] = (byte) (yn * b);
+         rs[x] = (byte) (yn * r);
+         gs[x] = (byte) (yn * g);
+         bs[x] = (byte) (yn * b);
       }
       return new LUT(8,size,rs,gs,bs);
    }
