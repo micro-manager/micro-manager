@@ -124,6 +124,7 @@ public class MultipageTiffWriter {
    }
 
    public void close() throws IOException {
+     //TODO: truncate empty space at end of file?
       writeNullOffsetAfterLastImage();
       writeIndexMap();
       writeDisplaySettings();
@@ -242,6 +243,7 @@ public class MultipageTiffWriter {
      //number of bytes for pixels
      int numBytes = 2 + numEntries*12 + 4 + (rgb_?6:0) + 16 + mdString.length() + bytesPerImagePixels_;
      long tagDataOffset = byteOffset_ + 2 + numEntries*12 + 4;
+     nextIFDOffsetLocation_ = byteOffset_ + 2 + numEntries*12;
      MappedByteBuffer buffer = makeBuffer(numBytes);
      
       buffer.putChar(numEntries);
@@ -268,7 +270,6 @@ public class MultipageTiffWriter {
       
       //NextIFDOffset
       buffer.putInt((int)tagDataOffset);
-      nextIFDOffsetLocation_ = tagDataOffset;
 
       if (rgb_) {
          buffer.putChar((char) (byteDepth_*8));
