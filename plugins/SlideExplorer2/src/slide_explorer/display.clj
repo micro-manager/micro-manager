@@ -86,7 +86,7 @@
   (.createImage (ImageUtils/makeProcessor tagged-image)))
 
 (defn get-tile [[nx ny nz nc nt]]
-  (grab-tagged-image))
+  (awt-image (grab-tagged-image)))
 
 (defn add-tile [tile-map tile-zoom indices]
   (assoc-in tile-map [tile-zoom indices] (get-tile indices)))
@@ -187,10 +187,10 @@ to normal size."
                            RenderingHints/VALUE_ANTIALIAS_OFF)))))
        
 (defn paint-tiles [^Graphics2D g available-tiles zoom]
-  (doseq [[[nx ny nz nt nc] tagged-image] (get available-tiles zoom)]
+  (doseq [[[nx ny nz nt nc] image] (get available-tiles zoom)]
     (let [[x y] (tile-to-pixels [nx ny] [512 512] zoom)]
-      (when tagged-image
-        (.drawImage g (awt-image tagged-image)
+      (when image
+        (.drawImage g image
                     x y nil)))))
 
 (defn paint-screen [canvas screen-state available-tiles]
@@ -305,8 +305,10 @@ to normal size."
     (test-tile i j)))
 
 (defn test-rotate []
-  (.start (Thread. #(do (dorun (repeatedly 1000 (fn [] (Thread/sleep 10) (swap! angle + 0.05))))
+  (.start (Thread. #(do (dorun (repeatedly 2000 (fn [] (Thread/sleep 10) (swap! angle + 0.02))))
                         (reset! angle 0)))))
+
+
 
 ;;;;;;;;
 
