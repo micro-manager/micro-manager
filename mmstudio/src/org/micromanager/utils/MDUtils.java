@@ -439,14 +439,36 @@ public class MDUtils {
          return 0;
    }
    
+   public static int getNumFrames(JSONObject tags) throws JSONException {
+      if (tags.has("Summary")) {
+         JSONObject summary = tags.getJSONObject("Summary");
+         if (summary.has("Frames"))
+            return Math.max(1,summary.getInt("Frames"));
+      }
+      if (tags.has("Frames"))
+         return Math.max(1,tags.getInt("Frames"));
+      return 1;
+   }  
+   
+   public static int getNumSlices(JSONObject tags) throws JSONException {
+      if (tags.has("Summary")) {
+         JSONObject summary = tags.getJSONObject("Summary");
+         if (summary.has("Slices"))
+            return Math.max(1, summary.getInt("Slices"));
+      }
+      if (tags.has("Slices"))
+         return Math.max(1, tags.getInt("Slices"));
+      return 1;
+   }
+   
    public static int getNumChannels(JSONObject tags) throws MMScriptException, JSONException {
       if (tags.has("Summary")) {
          JSONObject summary = tags.getJSONObject("Summary");
          if (summary.has("Channels"))
-            return summary.getInt("Channels");
+            return Math.max(1, summary.getInt("Channels"));
       }
       if (tags.has("Channels"))
-         return tags.getInt("Channels");
+         return Math.max(1,tags.getInt("Channels"));
       return 1;
       
    }
