@@ -76,7 +76,7 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
 
    public String acquire() throws MMException {
       MMStudioMainFrame.seriousErrorReported_.set(false);
-      return runPipeline(gatherSequenceSettings());
+      return runPipeline(getSequenceSettings());
    }
 
    public Pipeline getPipeline() {
@@ -166,7 +166,7 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
       taggedImageProcessors_.remove(taggedImageProcessor);
    }
 
-   private SequenceSettings gatherSequenceSettings() {
+   public SequenceSettings getSequenceSettings() {
       SequenceSettings acquisitionSettings = new SequenceSettings();
 
       updateChannelCameras();
