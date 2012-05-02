@@ -2007,7 +2007,7 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
             try {
                super.close();
             } catch (NullPointerException ex) {
-               ReportingUtils.logError("Null pointer error in ImageJ code while closing window");
+               ReportingUtils.showError(ex, "Null pointer error in ImageJ code while closing window");
             }
          }
 
