@@ -1,3 +1,24 @@
+///////////////////////////////////////////////////////////////////////////////
+//FILE:          MultipageTiffReader.java
+//PROJECT:       Micro-Manager
+//SUBSYSTEM:     mmstudio
+//-----------------------------------------------------------------------------
+//
+// AUTHOR:       Henry Pinkard, henry.pinkard@gmail.com, 2012
+//
+// COPYRIGHT:    University of California, San Francisco, 2012
+//
+// LICENSE:      This file is distributed under the BSD license.
+//               License text is included with the source distribution.
+//
+//               This file is distributed in the hope that it will be useful,
+//               but WITHOUT ANY WARRANTY; without even the implied warranty
+//               of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+//
+//               IN NO EVENT SHALL THE COPYRIGHT OWNER OR
+//               CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+//               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
+//
 package org.micromanager.acquisition;
 
 import java.io.File;
@@ -39,7 +60,6 @@ public class MultipageTiffReader {
    private FileChannel fileChannel_;
    private boolean bigEndian_;  
       
-   private long firstIFD_;
    private long displaySettingsStartOffset_ = -1;
    private long displaySettingsReservedBytes_;
    //This flag keeps the reader from reading things that dont exist until the writer is closed
@@ -53,10 +73,10 @@ public class MultipageTiffReader {
       try {
          displayAndComments_ = new JSONObject();
          fileFinished_ = fileFinishedWriting;
-         createFileChannel(file);
-         firstIFD_ = readHeader();
+         createFileChannel(file);   
          indexMap_ = new HashMap<String, Long>();
          if (fileFinished_) {
+            readHeader();
             readIndexMap();
             displayAndComments_.put("Channels", readDisplaySettings());
             displayAndComments_.put("Comments", readComments());

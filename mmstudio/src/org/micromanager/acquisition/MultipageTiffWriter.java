@@ -1,3 +1,24 @@
+///////////////////////////////////////////////////////////////////////////////
+//FILE:          MultipageTiffWriter.java
+//PROJECT:       Micro-Manager
+//SUBSYSTEM:     mmstudio
+//-----------------------------------------------------------------------------
+//
+// AUTHOR:       Henry Pinkard, henry.pinkard@gmail.com, 2012
+//
+// COPYRIGHT:    University of California, San Francisco, 2012
+//
+// LICENSE:      This file is distributed under the BSD license.
+//               License text is included with the source distribution.
+//
+//               This file is distributed in the hope that it will be useful,
+//               but WITHOUT ANY WARRANTY; without even the implied warranty
+//               of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+//
+//               IN NO EVENT SHALL THE COPYRIGHT OWNER OR
+//               CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+//               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
+//
 package org.micromanager.acquisition;
 
 import ij.ImageJ;
@@ -21,7 +42,7 @@ import org.micromanager.utils.ReportingUtils;
 public class MultipageTiffWriter {
    
    private static final long BYTES_PER_GIG = 1073741824;
-   private static final long MAX_FILE_SIZE = BYTES_PER_GIG;
+   private static final long MAX_FILE_SIZE = 4*BYTES_PER_GIG;
    
    //Required tags
    public static final char WIDTH = 256;
@@ -37,26 +58,19 @@ public class MultipageTiffWriter {
    public static final char X_RESOLUTION = 282;
    public static final char Y_RESOLUTION = 283;
    public static final char RESOLUTION_UNIT = 296;
-   
    public static final char MM_METADATA = 51123;
    
-   //1 MB for now...might have to increase
-   public static final long SPACE_FOR_DISPLAY_SETTINGS = 1048576; 
+   public static final int DISPLAY_SETTINGS_BYTES_PER_CHANNEL = 256;
    //1 MB for now...might have to increase
    private static final long SPACE_FOR_COMMENTS = 1048576;
-   
    
    public static final int INDEX_MAP_OFFSET_HEADER = 54773648;
    public static final int INDEX_MAP_HEADER = 3453623;
    public static final int SUMMARY_MD_HEADER = 2355492;
    public static final int DISPLAY_SETTINGS_OFFSET_HEADER = 483765892;
    public static final int DISPLAY_SETTINGS_HEADER = 347834724;
-   public static final int DISPLAY_SETTINGS_BYTES_PER_CHANNEL = 256;
    public static final int COMMENTS_OFFSET_HEADER = 99384722;
    public static final int COMMENTS_HEADER = 84720485;
-   
-   private MappedByteBuffer currentBuffer_;
-   private long bufferStart_ = 0;
    
    private RandomAccessFile raFile_;
    private FileChannel fileChannel_;     
@@ -68,6 +82,7 @@ public class MultipageTiffWriter {
    private JSONObject displayAndComments_;
    private boolean rgb_ = false;
    private String ijDescription_;
+   private boolean firstIFD_ = true;
    private int byteDepth_, imageWidth_, imageHeight_, bytesPerImagePixels_;
    
    
@@ -84,7 +99,11 @@ public class MultipageTiffWriter {
             ReportingUtils.logError(ex);
          }
          //TODO: possibly truncate file length at end of writing
-         createFileChannel(f,Math.min(numFrames_*numChannels_*numSlices_*(bytesPerImagePixels_+1500), MAX_FILE_SIZE));
+         long fileSize = numFrames_*numChannels_*numSlices_*((long)bytesPerImagePixels_+1500);
+         if (fileSize > MAX_FILE_SIZE) {
+            fileSize = MAX_FILE_SIZE;
+         }
+         createFileChannel(f,fileSize);
          writeMMHeaderAndSummaryMD(summaryMD);
       } catch (IOException e) {
          ReportingUtils.logError(e);
@@ -227,8 +246,9 @@ public class MultipageTiffWriter {
    }
 
    private void writeIFD(TaggedImage img) throws IOException {     
-
      char numEntries = (char) 13;
+     if (firstIFD_)
+        numEntries++;
      if (img.tags.has("Summary")) {
         img.tags.remove("Summary");
      }
@@ -241,7 +261,8 @@ public class MultipageTiffWriter {
      //16 bytes for x and y resolution
      //1 byte per character of MD string
      //number of bytes for pixels
-     int numBytes = 2 + numEntries*12 + 4 + (rgb_?6:0) + 16 + mdString.length() + bytesPerImagePixels_;
+     int numBytes = 2 + numEntries*12 + 4 + (rgb_?6:0) + 16 + mdString.length() + 
+             bytesPerImagePixels_ + (firstIFD_?ijDescription_.length():0);
      long tagDataOffset = byteOffset_ + 2 + numEntries*12 + 4;
      nextIFDOffsetLocation_ = byteOffset_ + 2 + numEntries*12;
      MappedByteBuffer buffer = makeBuffer(numBytes);
@@ -255,6 +276,12 @@ public class MultipageTiffWriter {
       }
       writeIFDEntry(buffer,COMPRESSION,(char)3,1,1);
       writeIFDEntry(buffer,PHOTOMETRIC_INTERPRETATION,(char)3,1,rgb_?2:1);
+      
+      if (firstIFD_) {
+         writeIFDEntry(buffer,IMAGE_DESCRIPTION,(char)2,ijDescription_.length(),tagDataOffset);
+         tagDataOffset += ijDescription_.length();
+      }
+      
       writeIFDEntry(buffer,STRIP_OFFSETS,(char)4,1, tagDataOffset );
       tagDataOffset += bytesPerImagePixels_;
       writeIFDEntry(buffer,SAMPLES_PER_PIXEL,(char)3,1,rgb_?3:1);
@@ -276,9 +303,13 @@ public class MultipageTiffWriter {
          buffer.putChar((char) (byteDepth_*8));
          buffer.putChar((char) (byteDepth_*8));
       }
+      if (firstIFD_) {
+         writeString(buffer,ijDescription_);
+      }
       writePixels(buffer, img);
       writeResoltuionValues(buffer, img);
       writeString(buffer,mdString);    
+      firstIFD_ = false;
    }
    
    private void writeResoltuionValues(MappedByteBuffer buffer, TaggedImage img) throws IOException {
@@ -303,11 +334,6 @@ public class MultipageTiffWriter {
       buffer.putInt((int)resDenomenator);
 }
 
-   
-   private void writeIJDescriptionString() throws IOException {
-//      writeString(ijDescription_);
-//      tagDataOffset_ += ijDescription_.length();
-   }
    
    private void writeNullOffsetAfterLastImage() throws IOException {
       MappedByteBuffer next = makeBuffer(nextIFDOffsetLocation_, 4);
