@@ -25,6 +25,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -49,6 +50,7 @@ public class TaggedImageStorageMultipageTiff implements TaggedImageStorage {
    private Thread shutdownHook_;
    private int lastFrame_ = -1;
    private int numPositions_;
+   private CachedImages cached_;
       
    //map of position indecies to number of tiff files written for that position
    private HashMap<Integer,Integer> numFiles_;
@@ -65,6 +67,7 @@ public class TaggedImageStorageMultipageTiff implements TaggedImageStorage {
       newDataSet_ = newDataSet;
       directory_ = dir;
       tiffReadersByLabel_ = new HashMap<String,MultipageTiffReader>();
+      cached_ = new CachedImages();
 
       
       System.out.println("MP Start: " + System.currentTimeMillis());
@@ -130,6 +133,10 @@ public class TaggedImageStorageMultipageTiff implements TaggedImageStorage {
    @Override
    public TaggedImage getImage(int channelIndex, int sliceIndex, int frameIndex, int positionIndex) {
       String label = MDUtils.generateLabel(channelIndex, sliceIndex, frameIndex, positionIndex);
+      TaggedImage img = cached_.get(label);
+      if (img != null) {
+         return img;
+      }
       if (!tiffReadersByLabel_.containsKey(label)) {
          return null;
       }
@@ -139,6 +146,10 @@ public class TaggedImageStorageMultipageTiff implements TaggedImageStorage {
    @Override
    public JSONObject getImageTags(int channelIndex, int sliceIndex, int frameIndex, int positionIndex) {
       String label = MDUtils.generateLabel(channelIndex, sliceIndex, frameIndex, positionIndex);
+      TaggedImage img = cached_.get(label);
+      if (img != null) {
+         return img.tags;
+      }
       if (!tiffReadersByLabel_.containsKey(label)) {
          return null;
       }
@@ -180,6 +191,7 @@ public class TaggedImageStorageMultipageTiff implements TaggedImageStorage {
       } catch (JSONException ex) {
          ReportingUtils.logError(ex);
       }
+      String label = MDUtils.getLabel(taggedImage.tags);
       
       if (tiffWritersByPosition_ == null) {
          try {
@@ -219,7 +231,7 @@ public class TaggedImageStorageMultipageTiff implements TaggedImageStorage {
          long offset = tiffWritersByPosition_.get(positionIndex).writeImage(taggedImage);
          MultipageTiffReader currentReader = tiffReadersByPosition_.get(positionIndex);
          currentReader.addToIndexMap(taggedImage, offset);
-         tiffReadersByLabel_.put(MDUtils.getLabel(taggedImage.tags), currentReader);
+         tiffReadersByLabel_.put(label, currentReader);
       } catch (IOException ex) {
          ReportingUtils.logError(ex);
       }
@@ -231,6 +243,7 @@ public class TaggedImageStorageMultipageTiff implements TaggedImageStorage {
       } catch (JSONException ex) {
          frame = 0;
       }
+      cached_.add(taggedImage, label);
       lastFrame_ = Math.max(lastFrame_, frame);
    }
 
@@ -339,6 +352,33 @@ public class TaggedImageStorageMultipageTiff implements TaggedImageStorage {
       return new File(directory_).getTotalSpace();
    }
    
+   
+   private class CachedImages {
+      private static final int NUM_TO_CACHE = 10;
+      
+      private LinkedList<TaggedImage> images;
+      private LinkedList<String> labels;
+      
+      public CachedImages() {
+         images = new LinkedList<TaggedImage>();
+         labels = new LinkedList<String>();
+      }
+      
+      public void add(TaggedImage img, String label) {
+         images.addFirst(img);
+         labels.addFirst(label);
+         while (images.size() > NUM_TO_CACHE) {
+            images.removeLast();
+            labels.removeLast();
+         }
+      }
+
+      public TaggedImage get(String label) {
+         int i = labels.indexOf(label);
+         return i == -1 ? null : images.get(i);
+      }
+      
+   }
    
    
 }
