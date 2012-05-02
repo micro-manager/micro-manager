@@ -12,7 +12,8 @@
            (ij ImagePlus)
            (mmcorej TaggedImage)
            (org.micromanager AcqEngine MMStudioMainFrame)
-           (org.micromanager.utils GUIUpdater ImageUtils JavaUtils MDUtils))
+           (org.micromanager.utils GUIUpdater ImageUtils JavaUtils MDUtils)
+           (org.micromanager.acquisition TaggedImageQueue))
   (:use [org.micromanager.mm :only (core edt mmc load-mm json-to-data)]))
 
 (load-mm)
@@ -37,7 +38,7 @@
 
 (defn image-sequence []
   (let [q (.runSilent (AcqEngine.))]
-    (take-while #(not= % org.micromanager.acquisition.TaggedImageQueue/POISON)
+    (take-while #(not= % TaggedImageQueue/POISON)
                 (repeatedly #(.take q)))))
 
 ;; image properties
