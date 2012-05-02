@@ -49,6 +49,7 @@
      :name org.micromanager.AcqEngine
      :implements [org.micromanager.api.Pipeline]
      :init init
+     :methods [[runSilent [] java.util.Queue]]
      :state state))
 
 ;; test utils
@@ -794,14 +795,17 @@
         (.start acq-thread))
       out-queue-2)))
 
+
 ;; java interop -- implements org.micromanager.api.Pipeline
 
 (defn -init []
   [[] (atom {:stop false})])
 
-(defn -runSilent [this acq-settings acq-eng]
+(defn -runSilent [this]
   (load-mm)
-  (let [settings (convert-settings acq-settings)]
+  (let [acq-eng (.getAcquisitionEngine gui)
+        acq-settings (.getSequenceSettings acq-eng)
+        settings (convert-settings acq-settings)]
     (run-acquisition-with-processors this settings acq-eng)))
 
 (defn -run [this acq-settings acq-eng]

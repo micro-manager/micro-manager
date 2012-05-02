@@ -11,7 +11,7 @@
            (javax.imageio ImageIO)
            (ij ImagePlus)
            (mmcorej TaggedImage)
-           (org.micromanager MMStudioMainFrame)
+           (org.micromanager AcqEngine MMStudioMainFrame)
            (org.micromanager.utils GUIUpdater ImageUtils JavaUtils MDUtils))
   (:use [org.micromanager.mm :only (core edt mmc load-mm json-to-data)]))
 
@@ -34,6 +34,13 @@
   (core getTaggedImage))
 
 (def pixel-size (core getPixelSizeUm true))
+
+(defn image-sequence []
+  (let [q (.runSilent (AcqEngine.))]
+    (take-while #(not= % org.micromanager.acquisition.TaggedImageQueue/POISON)
+                (repeatedly #(.take q)))))
+
+;; image properties
 
 (defn get-image-width [^TaggedImage image]
   (MDUtils/getWidth (.tags image)))
@@ -297,6 +304,9 @@ to normal size."
     frame))
 
 
+
+;; tests
+
 (defn test-tile [nx ny]
   (add-to-available-tiles at 0 [nx ny 0 0 0]))
 
@@ -312,6 +322,4 @@ to normal size."
                         (reset! angle 0)))))
 
 
-
-;;;;;;;;
 
