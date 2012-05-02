@@ -30,6 +30,8 @@
     (set! (. lut max) max)
     lut))
 
+(def black-lut (lut-object Color/BLACK 0 255 1.0))
+
 (defn make-stack
   "Produces an ImageJ ImageStack from a collection
    of ImageProcessors."
@@ -42,11 +44,19 @@
       (.addSlice stack processor))
     stack))
         
-(defn overlay ;; TODO: fix for when n=1
+(defn overlay
   "Takes n ImageProcessors and n lut objects and produces a BufferedImage
-   that is the overlay."
+   containing the overlay."
   [processors luts]
-  (let [stack (make-stack processors)
+  (let [luts (if (= 1 (count luts))
+               (list (first luts) black-lut)
+               luts)
+        processors (if (= 1 (count processors))
+                     (let [proc (first processors)]
+                       (list proc (.createProcessor proc
+                                    (.getWidth proc) (.getHeight proc))))
+                     processors)
+        stack (make-stack processors)
         img+ (ImagePlus. "" stack)]
     (.setDimensions img+ (.getSize stack) 1 1)
     (.getImage
