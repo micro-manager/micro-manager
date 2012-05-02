@@ -787,10 +787,12 @@
                               "Acquisition Engine Thread (Clojure)")
           processors (ProcessorStack. out-queue (.getTaggedImageProcessors acq-eng))
           out-queue-2 (.begin processors)]
-      (swap! (.state this) assoc :acq-thread acq-thread)
+      (swap! (.state this) assoc
+             :acq-thread acq-thread
+             :summary-metadata (make-summary-metadata settings))
       (when-not (:stop @(.state this))
         (.start acq-thread))
-      out-queue-2)))  
+      out-queue-2)))
 
 ;; java interop -- implements org.micromanager.api.Pipeline
 
@@ -800,14 +802,11 @@
 (defn -run [this acq-settings acq-eng]
   (load-mm)
   (let [settings (convert-settings acq-settings)
-        summary-metadata (make-summary-metadata settings)
         out-queue-2 (run-acquisition-with-processors this settings acq-eng)]
-    (swap! (.state this) assoc :summary-metadata summary-metadata)
     (when-not (:stop @(.state this))
-      (let [live-acq (LiveAcq. mmc out-queue-2 summary-metadata
+      (let [live-acq (LiveAcq. mmc out-queue-2 (:summary-metadata @(.state this))
                                (:save settings) acq-eng gui)]
         (swap! (.state this) assoc 
-               :summary-metadata summary-metadata
                :display live-acq
                :image-cache (.getImageCache live-acq))
         (.start live-acq)
