@@ -799,6 +799,11 @@
 (defn -init []
   [[] (atom {:stop false})])
 
+(defn -runSilent [this acq-settings acq-eng]
+  (load-mm)
+  (let [settings (convert-settings acq-settings)]
+    (run-acquisition-with-processors this settings acq-eng)))
+
 (defn -run [this acq-settings acq-eng]
   (load-mm)
   (let [settings (convert-settings acq-settings)
