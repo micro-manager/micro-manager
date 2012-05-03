@@ -26,7 +26,8 @@ import java.awt.event.ActionListener;
 import java.text.NumberFormat;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import javax.swing.Timer;
+import java.util.Timer;
+import java.util.TimerTask;
 import mmcorej.CMMCore;
 import mmcorej.TaggedImage;
 import org.json.JSONException;
@@ -41,7 +42,7 @@ import org.micromanager.utils.ReportingUtils;
  * from the core and displays them in the live window
  * @author Henry Pinkard
  */
-public class LiveModeTimer extends javax.swing.Timer {
+public class LiveModeTimer {
 
    private static final String CCHANNELINDEX = "CameraChannelIndex";
    private static final String ACQ_NAME = MMStudioMainFrame.SIMPLE_ACQ;
@@ -55,10 +56,14 @@ public class LiveModeTimer extends javax.swing.Timer {
    private long fpsCounter_;
    private long fpsInterval_ = 5000;
    private final NumberFormat format_;
+   private int delay_;
+   private boolean running_ = false;
+   private Timer timer_;
+   private TimerTask task_;
    
 
    public LiveModeTimer(int delay) {
-      super(delay, null);
+      delay_ = delay;
       gui_ = MMStudioMainFrame.getInstance();
       core_ = gui_.getCore();
       format_ = NumberFormat.getInstance();
@@ -74,27 +79,28 @@ public class LiveModeTimer extends javax.swing.Timer {
       }
       fpsInterval_ =  (long) (20 *  interval);
       
-      this.setDelay((int) interval);
+      delay_ = (int) interval;
    }
 
    private void setType() {
-      if (!super.isRunning()) {
-         ActionListener[] listeners = super.getActionListeners();
-         for (ActionListener a : listeners) {
-            this.removeActionListener(a);
-         }
-
-         multiChannelCameraNrCh_ = core_.getNumberOfCameraChannels();
-         if (multiChannelCameraNrCh_ == 1) {
-            this.addActionListener(singleCameraLiveAction());
-         } else {
-            this.addActionListener(multiCamLiveAction());
-         }
+      multiChannelCameraNrCh_ = core_.getNumberOfCameraChannels();
+      if (multiChannelCameraNrCh_ == 1) {
+         task_ = singleCameraLiveTask();
+      } else {
+         task_ = multiCamLiveTask();
       }
    }
 
-   public void begin() throws Exception {
+   public boolean isRunning() {
+      return running_;
+   }
 
+   public void begin() throws Exception {
+         if(running_) {
+            return;
+         }
+         timer_ = new Timer("Live mode timer");
+         
          manageShutter(true);
          core_.clearCircularBuffer();
             
@@ -105,7 +111,7 @@ public class LiveModeTimer extends javax.swing.Timer {
          // Wait for first image to create ImageWindow, so that we can be sure about image size
          long start = System.currentTimeMillis();
          long now = start;
-         long timeout = Math.min(10000, this.getDelay() * 150);
+         long timeout = Math.min(10000, delay_ * 150);
          while (core_.getRemainingImageCount() == 0 && (now - start < timeout) ) {
             now = System.currentTimeMillis();
             Thread.sleep(5);
@@ -123,27 +129,28 @@ public class LiveModeTimer extends javax.swing.Timer {
          fpsCounter_ = 0;
          fpsTimer_ = System.currentTimeMillis();
 
-         super.start();
+         timer_.schedule(task_, 0, delay_);
          win_.liveModeEnabled(true);
          
          win_.getImagePlus().getWindow().toFront();
-
+         running_ = true;
    }
 
    
-   @Override
    public void stop() {
       stop(true);
    }
    
    private void stop(boolean firstAttempt) {
-      super.stop();
+     
+      timer_.cancel();
       try {
          core_.stopSequenceAcquisition();
          manageShutter(false);
          if (win_ != null) {
             win_.liveModeEnabled(false);
          }
+         running_ = false;
       } catch (Exception ex) {
          try {
             manageShutter(false);
@@ -153,14 +160,12 @@ public class LiveModeTimer extends javax.swing.Timer {
          ReportingUtils.showError(ex);
          //Wait 1 s and try to stop again
          if (firstAttempt) {
-            final Timer delayStop = new Timer(1000, null);
-            delayStop.addActionListener(new ActionListener() {
-               public void actionPerformed(ActionEvent e) {
+            final Timer delayStop = new Timer();
+            delayStop.schedule( new TimerTask() {
+               @Override
+               public void run() {
                   stop(false);
-                  delayStop.stop();
-               }
-            });
-            delayStop.start();
+               }},1000);   
          }
       } 
    }
@@ -181,27 +186,26 @@ public class LiveModeTimer extends javax.swing.Timer {
       }
    }
 
-   private ActionListener singleCameraLiveAction() {
-      return new ActionListener() {
-         
+   private TimerTask singleCameraLiveTask() {
+      return new TimerTask() {
          @Override
-         public void actionPerformed(ActionEvent e) {
+         public void run() {
             if (core_.getRemainingImageCount() == 0) {
-                return;
+               return;
             }
             if (win_.windowClosed()) //check is user closed window             
             {
                gui_.enableLiveMode(false);
             } else {
-               try {     
+               try {
                   Object img = core_.getLastImage();
                   TaggedImage ti = makeTaggedImage(img);
                   MDUtils.setChannelIndex(ti.tags, 0);
                   gui_.addImage(ACQ_NAME, ti, true, true);
                   gui_.updateLineProfile();
                   updateFPS();
-                                           
-                  } catch (MMScriptException ex) {
+
+               } catch (MMScriptException ex) {
                   ReportingUtils.showError(ex);
                   gui_.enableLiveMode(false);
                } catch (JSONException exc) {
@@ -216,11 +220,10 @@ public class LiveModeTimer extends javax.swing.Timer {
       };
    }
 
-   private ActionListener multiCamLiveAction() {
-      return new ActionListener() {
-
+   private TimerTask multiCamLiveTask() {
+      return new TimerTask() {
          @Override
-         public void actionPerformed(ActionEvent e) {
+         public void run() {
             if (core_.getRemainingImageCount() == 0) {
                return;
             }
