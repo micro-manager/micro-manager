@@ -1,6 +1,7 @@
 (ns slide-explorer.display
-  (:import (javax.swing AbstractAction JComponent JFrame JLabel KeyStroke)
-           (java.awt Canvas Color Graphics Graphics2D RenderingHints Window)
+  (:import (javax.swing AbstractAction JComponent JFrame JPanel JLabel KeyStroke
+                        SwingUtilities)
+           (java.awt Color Graphics Graphics2D RenderingHints Window)
            (java.awt.event ComponentAdapter KeyAdapter KeyEvent MouseAdapter
                            WindowAdapter)
            (java.awt.image BufferedImage WritableRaster)
@@ -9,7 +10,8 @@
            (java.util UUID)
            (java.util.prefs Preferences)
            (javax.imageio ImageIO)
-           (ij ImagePlus ImageProcessor)
+           (ij ImagePlus)
+           (ij.process ImageProcessor)
            (mmcorej TaggedImage)
            (org.micromanager AcqEngine MMStudioMainFrame)
            (org.micromanager.utils GUIUpdater ImageUtils JavaUtils MDUtils)
@@ -242,10 +244,9 @@ to normal size."
         (.drawImage g image
                     x y nil)))))
 
-(defn paint-screen [canvas screen-state available-tiles]
-  (let [g (.getGraphics canvas)
-        original-transform (.getTransform g)]
-    (doto g
+(defn paint-screen [graphics screen-state available-tiles]
+  (let [original-transform (.getTransform graphics)]
+    (doto graphics
       (.translate (+ (:x @screen-state) (/ (:width @screen-state) 2))
                   (+ (:y @screen-state) (/ (:height @screen-state) 2)))
       (.rotate @angle)
@@ -304,16 +305,19 @@ to normal size."
   (bind-window-key window "ADD" #(swap! zoom-atom update-in [:zoom] inc))
   (bind-window-key window "SUBTRACT" #(swap! zoom-atom update-in [:zoom] dec)))
   
-(defn display-follow [canvas reference]
+(defn display-follow [panel reference]
   (add-watch reference "display"
     (fn [_ _ _ _]
-      (.repaint canvas))))
+      (.repaint panel))))
 
-(defn main-canvas [screen-state available-tiles]
+(defn main-panel [screen-state available-tiles]
   (doto
-    (proxy [Canvas] []
-      (paint [^Graphics g] (paint-screen this screen-state available-tiles)))
-    (.setBackground Color/BLACK)))
+    (proxy [JPanel] []
+      (paintComponent [^Graphics graphics]
+                      (proxy-super paintComponent graphics)
+                      (paint-screen graphics screen-state available-tiles)))
+    (.setBackground Color/BLACK)
+    ))
     
 (defn main-frame []
   (doto (JFrame. "Slide Explorer II")
@@ -323,21 +327,21 @@ to normal size."
 (defn show []
   (let [screen-state (atom (sorted-map :x 0 :y 0 :z 0 :zoom 0))
         available-tiles (agent {})
-        canvas (main-canvas screen-state available-tiles)
+        panel (main-panel screen-state available-tiles)
         frame (main-frame)]
     (def at available-tiles)
     (def ss screen-state)
     (def f frame)
-    (def cvs canvas)
-    (.add (.getContentPane frame) canvas)
+    (def pnl panel)
+    (.add (.getContentPane frame) panel)
     (setup-fullscreen frame)
-    (handle-drags canvas screen-state)
-    (handle-wheel canvas screen-state)
-    (handle-resize canvas screen-state)
+    (handle-drags panel screen-state)
+    (handle-wheel panel screen-state)
+    (handle-resize panel screen-state)
     (handle-zoom frame screen-state)
-    (display-follow canvas screen-state)
-    (display-follow canvas available-tiles)
-    (display-follow canvas angle)
+    (display-follow panel screen-state)
+    (display-follow panel available-tiles)
+    (display-follow panel angle)
     frame))
 
 
