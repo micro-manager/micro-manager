@@ -16,34 +16,62 @@
 ; 6. Find stitching vector
 ; 7. Merge and scale the images
 
-; (defn getPixels [^BufferedImage image] (-> image .getRaster .getDataBuffer .getData))
+; ImageProcessor-related utilities
 
-(defn insert-image [proc-host proc-guest x-host y-host]
+(defn insert-image
+  "Insert one ImageProcessor into another."
+  [proc-host proc-guest x-host y-host]
   (when proc-guest
     (.insert proc-host proc-guest x-host y-host)))
 
-(defn crop [^ImageProcessor original x y w h]
+(defn make-stack
+  "Produces an ImageJ ImageStack from a collection
+   of ImageProcessors."
+  [processors]
+  (let [proc1 (first processors)
+        w (.getWidth proc1)
+        h (.getHeight proc1)
+        stack (ImageStack. w h)]
+    (doseq [processor processors]
+      (.addSlice stack processor))
+    stack))
+
+(defn processor-to-image
+  "Converts and ImageJ ImageProcessor to an AWT image."
+  [^ImageProcessor proc]
+  (.createImage proc))
+
+;; Trimming and displacing images
+
+(defn crop
+  "Crops an image, with upper-left corner at position x,y
+   and width and height w,h."
+  [^ImageProcessor original x y w h]
   (doto (.createProcessor original w h)
     (insert-image original (- x) (- y))))
 
-(defn raw-to-tile [raw-processor
-                    [overlap-x overlap-y]
-                    [desired-map-x desired-map-y]
-                    [found-map-x found-map-y]]
-  (let [dx (- found-map-x desired-map-x)
-        dy (- found-map-y desired-map-y)]
-    (crop proc
+(defn raw-to-tile
+  "Takes a raw ImageProcessor and trims edges by amount overlap,
+   offseting the trim to take into account the difference
+   between desired and found positions."
+  [raw-processor
+   [overlap-x overlap-y]
+   [desired-x desired-y]
+   [found-x found-y]]
+  (let [dx (- found-x desired-x)
+        dy (- found-y desired-y)]
+    (crop raw-processor
           (- (/ overlap-x 2) dx)
           (- (/ overlap-y 2) dy)
-          (- (.getWidth proc) overlap-x)
-          (- (.getHeight proc) overlap-y))))
+          (- (.getWidth raw-processor) overlap-x)
+          (- (.getHeight raw-processor) overlap-y))))
 
-(defn processor-to-image [^ImageProcessor proc]
-  (.createImage proc))
+;; Merge and scale the images for Mipmap
 
-;; Merge and scale the images
-
-(defn merge-and-scale [img1 img2 img3 img4]
+(defn merge-and-scale
+  "Takes four ImageProcessors (tiles) and tiles them in a
+   2x2 mosaic with no gaps, then scales pixels to half size."
+  [img1 img2 img3 img4]
   (let [w (.getWidth img1)
         h (.getHeight img1)
         large (.createProcessor img1 (* 2 w) (* 2 h))]
@@ -57,26 +85,18 @@
 
 ;; Channels/LUTs
 
-(defn lut-object [^Color color ^double min max gamma]
+(defn lut-object
+  "Creates an ImageJ LUT object with given parameters."
+  [^Color color ^double min ^double max ^double gamma]
   (let [lut (ImageUtils/makeLUT color gamma)]
     (set! (. lut min) min)
     (set! (. lut max) max)
     lut))
 
-(def black-lut (lut-object Color/BLACK 0 255 1.0))
+(def black-lut
+  "An LUT such that the image is not displayed."
+  (lut-object Color/BLACK 0 255 1.0))
 
-(defn make-stack
-  "Produces an ImageJ ImageStack from a collection
-   of ImageProcessors."
-  [processors]
-  (let [proc1 (first processors)
-        w (.getWidth proc1)
-        h (.getHeight proc1)
-        stack (ImageStack. w h)]
-    (doseq [processor processors]
-      (.addSlice stack processor))
-    stack))
-        
 (defn overlay
   "Takes n ImageProcessors and n lut objects and produces a BufferedImage
    containing the overlay."
@@ -97,9 +117,11 @@
         (.setLuts (into-array luts))))))
 
 
-;; test
+;; testing
     
-(defn show [img-or-proc]
+(defn show
+  "Shows an AWT or ImageProcessor in an ImageJ window."
+  [img-or-proc]
   (.show (ImagePlus. "" img-or-proc))
   img-or-proc)
 
