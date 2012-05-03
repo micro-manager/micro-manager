@@ -1,11 +1,16 @@
 (ns slide-explorer.view
   (:import (javax.swing AbstractAction JComponent JFrame JPanel JLabel KeyStroke)
-           (java.awt Color Graphics Graphics2D RenderingHints Window)
+           (java.awt Color Graphics Graphics2D Rectangle RenderingHints Window)
            (java.util UUID)
            (java.awt.event ComponentAdapter MouseAdapter WindowAdapter)
            (org.micromanager.utils GUIUpdater))
   (:use [org.micromanager.mm :only (edt)]
         [slide-explorer.image :only (crop overlay lut-object)]))
+
+(defmacro timer [expr]
+  `(let [ret# (time ~expr)]
+     (println '~expr)
+     ret#))
 
 ;; tile/pixels
 
@@ -95,8 +100,6 @@ to normal size."
   (bind-window-key window "F" #(full-screen! window))
   (bind-window-key window "ESCAPE" #(full-screen! nil)))
 
-
-
 (defn enable-anti-aliasing
   ([^Graphics g]
     (enable-anti-aliasing g true))
@@ -107,22 +110,36 @@ to normal size."
                          (if on
                            RenderingHints/VALUE_ANTIALIAS_ON
                            RenderingHints/VALUE_ANTIALIAS_OFF)))))
-       
-(defn paint-tiles [^Graphics2D g available-tiles zoom]
+
+(defn draw-image [g image x y clip-bounds]
+  (let [image-rect (Rectangle. x y 512 512)]
+    (if (.intersects image-rect clip-bounds)
+      (do ;(println "drawn")
+          (.drawImage g image x y nil))
+      ;(println "not drawn")
+      )))
+
+(defn paint-tiles [^Graphics2D g available-tiles zoom clip-bounds [tile-width tile-height]]
+  ;(println "paint-tiles")
+  ;(println (System/currentTimeMillis))
+  ;(timer
   (doseq [[{:keys [nx ny nz nt nc]} image] (get available-tiles zoom)]
-    (let [[x y] (tile-to-pixels [nx ny] [512 512] zoom)]
-      (when image
-        (.drawImage g image
-                    x y nil)))))
+    (when image
+      (let [[x y] (tile-to-pixels [nx ny] [tile-width tile-height] zoom)]
+        (draw-image g image x y clip-bounds)
+          ))
+    ;)
+    ))
 
 (defn paint-screen [graphics screen-state available-tiles]
   (let [original-transform (.getTransform graphics)]
     (doto graphics
+      (.setClip 0 0 (:width @screen-state) (:height @screen-state))
       (.translate (+ (:x @screen-state) (/ (:width @screen-state) 2))
                   (+ (:y @screen-state) (/ (:height @screen-state) 2)))
       ;(.rotate @angle)
       enable-anti-aliasing
-      (paint-tiles @available-tiles (:zoom @screen-state))
+      (paint-tiles @available-tiles (:zoom @screen-state) (.getClipBounds graphics) [512 512])
       (.setColor Color/YELLOW)
       (.fillOval -30 -30
                  60 60)
