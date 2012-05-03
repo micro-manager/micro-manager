@@ -46,11 +46,11 @@
 
 (def angle (atom 0))
 
-(defn grab-tagged-image
+(def grab-tagged-image
   "Grab a single image from camera."
-  []
-  (core snapImage)
-  (core getTaggedImage))
+  (memoize (fn []
+             (core snapImage)
+             (core getTaggedImage))))
 
 (def pixel-size (core getPixelSizeUm true))
 
@@ -305,10 +305,12 @@ to normal size."
   (bind-window-key window "ADD" #(swap! zoom-atom update-in [:zoom] inc))
   (bind-window-key window "SUBTRACT" #(swap! zoom-atom update-in [:zoom] dec)))
   
+(def updater (GUIUpdater.))
+
 (defn display-follow [panel reference]
   (add-watch reference "display"
     (fn [_ _ _ _]
-      (.repaint panel))))
+      (.post updater #(.repaint panel)))))
 
 (defn main-panel [screen-state available-tiles]
   (doto
@@ -361,7 +363,7 @@ to normal size."
 (defn test-tiles [nx ny]
   (.start (Thread.
             #(doseq [i (range (- nx) (inc nx)) j (range (- ny) (inc ny))]
-               (Thread/sleep 1000)
+               ;(Thread/sleep 1000)
                (test-tile i j)))))
 
 (defn test-rotate []
