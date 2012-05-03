@@ -14,17 +14,33 @@
            (org.micromanager AcqEngine MMStudioMainFrame)
            (org.micromanager.utils GUIUpdater ImageUtils JavaUtils MDUtils)
            (org.micromanager.acquisition TaggedImageQueue))
-  (:use [org.micromanager.mm :only (core edt mmc load-mm json-to-data)]))
+  (:use [org.micromanager.mm :only (core edt mmc load-mm json-to-data)]
+        [slide-explorer.image :only (overlay lut-object)]))
+
+
+; Order of operations:
+;  Stitch/crop
+;  Flatten fields
+;  Max intensity projection (z)
+;  Rescale
+;  Color Overlay
+
 
 (load-mm)
 
 ;; hardware communications
 
+(defn set-stage-to-pixel-transform []
+  (let [prefs (Preferences/userNodeForPackage MMStudioMainFrame)]
+    (JavaUtils/getObjectFromPrefs
+      prefs (str "affine_transform_" (core getCurrentPixelSizeConfig))
+      (AffineTransform. 2.0 0.0 0.0 2.0 0.0 0.0))))
+
 (defn get-stage-to-pixel-transform []
-  (AffineTransform. 2.0 0.0 0.0 2.0 0.0 0.0))
-;  (let [prefs (Preferences/userNodeForPackage MMStudioMainFrame)]
-;    (JavaUtils/getObjectFromPrefs
-;      prefs (str "affine_transform_" (core getCurrentPixelSizeConfig)) nil)))
+  (let [prefs (Preferences/userNodeForPackage MMStudioMainFrame)]
+    (JavaUtils/getObjectFromPrefs
+      prefs (str "affine_transform_" (core getCurrentPixelSizeConfig))
+      (AffineTransform. 2.0 0.0 0.0 2.0 0.0 0.0))))
 
 (def angle (atom 0))
 
@@ -36,10 +52,34 @@
 
 (def pixel-size (core getPixelSizeUm true))
 
-(defn image-sequence []
+(defn tagged-image-sequence []
   (let [q (.runSilent (AcqEngine.))]
     (take-while #(not= % TaggedImageQueue/POISON)
                 (repeatedly #(.take q)))))
+
+(def rgb (vec (map #(lut-object % 0 50 1.0) [Color/RED Color/GREEN Color/BLUE])))
+
+(defn tagged-image-to-processor [tagged-image]
+  {:proc (ImageUtils/makeProcessor tagged-image)
+   :tags (json-to-data (.tags tagged-image))})
+
+(defn processor-sequence []
+  (map tagged-image-to-processor (tagged-image-sequence)))
+
+(defn get-channel-index [raw]
+  (-> raw :tags (get "ChannelIndex")))
+
+(defn get-frame-index [raw]
+  (-> raw :tags (get "FrameIndex")))
+
+(defn get-slice-index [raw]
+  (-> raw :tags (get "SliceIndex")))
+
+;(defn add-images-here [images [x y]]
+;  (doseq [image images]
+;     (assoc-in [0 [(get-channel-index 
+
+  
 
 ;; image properties
 
@@ -94,7 +134,7 @@
 (defn awt-image [^TaggedImage tagged-image]
   (.createImage (ImageUtils/makeProcessor tagged-image)))
 
-(defn get-tile [[nx ny nz nc nt]]
+(defn get-tile [{:keys [nx ny nz nt nc]}]
   (awt-image (grab-tagged-image)))
   ;(slide-explorer.image/try-3-colors false))
 
@@ -196,7 +236,7 @@ to normal size."
                            RenderingHints/VALUE_ANTIALIAS_OFF)))))
        
 (defn paint-tiles [^Graphics2D g available-tiles zoom]
-  (doseq [[[nx ny nz nt nc] image] (get available-tiles zoom)]
+  (doseq [[{:keys [nx ny nz nt nc]} image] (get available-tiles zoom)]
     (let [[x y] (tile-to-pixels [nx ny] [512 512] zoom)]
       (when image
         (.drawImage g image
@@ -210,15 +250,10 @@ to normal size."
       (.rotate @angle)
       enable-anti-aliasing
       (paint-tiles @available-tiles (:zoom @screen-state))
-      (.setTransform original-transform)
-      (.setColor (Color. 0x00A08F))
-      (.fillOval (- (+ (/ (:width @screen-state) 2)
-                       (:x @screen-state))
-                    30)
-                 (- (+ (/ (:height @screen-state) 2)
-                       (:y @screen-state))
-                    30)
+      (.setColor Color/YELLOW)
+      (.fillOval -30 -30
                  60 60)
+      (.setTransform original-transform)
       (.setColor Color/YELLOW)
       (.drawString (str @screen-state)
                    (int 0)
@@ -308,8 +343,15 @@ to normal size."
 
 ;; tests
 
+(defn set-rgb-luts []
+  (swap! ss assoc :luts rgb))
+
 (defn test-tile [nx ny]
-  (add-to-available-tiles at 0 [nx ny 0 0 0]))
+  (add-to-available-tiles at 0 {:nx nx
+                                :ny ny
+                                :nz 0 
+                                :nt 0
+                                :nc 0}))
 
 (defn test-tiles [nx ny]
   (.start (Thread.
