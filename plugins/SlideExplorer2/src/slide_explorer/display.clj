@@ -246,7 +246,8 @@ to normal size."
   (let [g (.getGraphics canvas)
         original-transform (.getTransform g)]
     (doto g
-      (.translate (:x @screen-state) (:y @screen-state))
+      (.translate (+ (:x @screen-state) (/ (:width @screen-state) 2))
+                  (+ (:y @screen-state) (/ (:height @screen-state) 2)))
       (.rotate @angle)
       enable-anti-aliasing
       (paint-tiles @available-tiles (:zoom @screen-state))
