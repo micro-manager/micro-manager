@@ -9,13 +9,13 @@
            (java.util UUID)
            (java.util.prefs Preferences)
            (javax.imageio ImageIO)
-           (ij ImagePlus)
+           (ij ImagePlus ImageProcessor)
            (mmcorej TaggedImage)
            (org.micromanager AcqEngine MMStudioMainFrame)
            (org.micromanager.utils GUIUpdater ImageUtils JavaUtils MDUtils)
            (org.micromanager.acquisition TaggedImageQueue))
   (:use [org.micromanager.mm :only (core edt mmc load-mm json-to-data)]
-        [slide-explorer.image :only (overlay lut-object)]))
+        [slide-explorer.image :only (crop overlay lut-object)]))
 
 
 ; Order of operations:
@@ -30,17 +30,17 @@
 
 ;; hardware communications
 
-(defn set-stage-to-pixel-transform []
-  (let [prefs (Preferences/userNodeForPackage MMStudioMainFrame)]
-    (JavaUtils/getObjectFromPrefs
-      prefs (str "affine_transform_" (core getCurrentPixelSizeConfig))
-      (AffineTransform. 2.0 0.0 0.0 2.0 0.0 0.0))))
+(def gui-prefs (Preferences/userNodeForPackage MMStudioMainFrame))
+
+(defn set-stage-to-pixel-transform [^AffineTransform affine-transform]
+  (JavaUtils/putObjectInPrefs
+    gui-prefs (str "affine_transform_" (core getCurrentPixelSizeConfig))
+    affine-transform))
 
 (defn get-stage-to-pixel-transform []
-  (let [prefs (Preferences/userNodeForPackage MMStudioMainFrame)]
-    (JavaUtils/getObjectFromPrefs
-      prefs (str "affine_transform_" (core getCurrentPixelSizeConfig))
-      (AffineTransform. 2.0 0.0 0.0 2.0 0.0 0.0))))
+  (JavaUtils/getObjectFromPrefs
+    gui-prefs (str "affine_transform_" (core getCurrentPixelSizeConfig))
+    nil))
 
 (def angle (atom 0))
 
