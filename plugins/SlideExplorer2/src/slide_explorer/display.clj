@@ -304,22 +304,22 @@ to normal size."
 (defn handle-zoom [window zoom-atom]
   (bind-window-key window "ADD" #(swap! zoom-atom update-in [:zoom] inc))
   (bind-window-key window "SUBTRACT" #(swap! zoom-atom update-in [:zoom] dec)))
-  
-(def updater (GUIUpdater.))
 
 (defn display-follow [panel reference]
   (add-watch reference "display"
     (fn [_ _ _ _]
-      (.post updater #(.repaint panel)))))
+      (.repaint panel))))
 
 (defn main-panel [screen-state available-tiles]
   (doto
-    (proxy [JPanel] []
-      (paintComponent [^Graphics graphics]
-                      (proxy-super paintComponent graphics)
-                      (paint-screen graphics screen-state available-tiles)))
-    (.setBackground Color/BLACK)
-    ))
+    (let [updater (GUIUpdater.)]
+      (proxy [JPanel] []
+        (paintComponent [^Graphics graphics]
+                        (proxy-super paintComponent graphics)
+                        (paint-screen graphics screen-state available-tiles))
+        (repaint []
+                 (.post updater #(proxy-super repaint)))))
+    (.setBackground Color/BLACK)))
     
 (defn main-frame []
   (doto (JFrame. "Slide Explorer II")
