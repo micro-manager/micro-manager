@@ -139,6 +139,8 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
 
    public class MMCompositeImage extends CompositeImage implements IMMImagePlus {
       
+      private GUIUpdater updater1 = new GUIUpdater(), updater2 = new GUIUpdater(), updater3 = new GUIUpdater();
+      
       MMCompositeImage(ImagePlus imgp, int type) {
          super(imgp, type);
       }
@@ -276,7 +278,6 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
       @Override
       public void updateAndDraw() {
           Runnable runnable = new Runnable() {
-
               @Override
               public void run() {
                   imageChangedUpdate();
@@ -285,11 +286,9 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
                       JavaUtils.invokeRestrictedMethod(this, ImagePlus.class, "notifyListeners", 2);
                   } catch (Exception ex) {   }
                   superDraw();
-
               }
           };
-
-         invokeLaterIfNotEDT(runnable);
+          updater1.post(runnable);
       }
       
       private void superDraw() {
@@ -304,18 +303,25 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
                superDraw();
             }
          };
-         invokeLaterIfNotEDT(runnable);
+         updater2.post(runnable);
       }
 
       @Override
       public void drawWithoutUpdate() {
-         super.getWindow().getCanvas().setImageUpdated();
-         super.draw();
+         Runnable runnable = new Runnable() {
+            @Override
+            public void run() {
+               getWindow().getCanvas().setImageUpdated();
+               superDraw();
+            }           
+         };
+         updater3.post(runnable);
       }
    }
 
    public class MMImagePlus extends ImagePlus implements IMMImagePlus {
 
+      private GUIUpdater updater1 = new GUIUpdater(), updater2 = new GUIUpdater();
       public VirtualAcquisitionDisplay display_;
 
       MMImagePlus(String title, ImageStack stack, VirtualAcquisitionDisplay disp) {
@@ -374,20 +380,26 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
 
       @Override
       public void draw() {
-         Runnable runnable = new Runnable() {
+          Runnable runnable = new Runnable() {
             public void run() {
                imageChangedUpdate();
                superDraw();
             }
          };
-         invokeLaterIfNotEDT(runnable);
+         updater1.post(runnable);
       }
 
       @Override
       public void drawWithoutUpdate() {
-         //ImageJ requires this
-         super.getWindow().getCanvas().setImageUpdated();
-         super.draw();
+         Runnable runnable = new Runnable() {
+            @Override
+            public void run() {
+               //ImageJ requires this
+               getWindow().getCanvas().setImageUpdated();
+               superDraw();
+            }
+         };
+         updater2.post(runnable);
       }
    }
 
@@ -934,12 +946,8 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
    }
 
    public void updateAndDraw() {
-      if (!updating_) {
-         updating_ = true;
-         if (hyperImage_ != null && hyperImage_.isVisible()) {
-            hyperImage_.updateAndDraw();
-         }
-         updating_ = false;
+      if (hyperImage_ != null && hyperImage_.isVisible()) {
+         hyperImage_.updateAndDraw();
       }
    }
 
@@ -1102,8 +1110,6 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
 
       initializeContrast(channel, slice);
 
-
-
       if (!simple_) {
          if (tSelector_ != null) {
             if (tSelector_.getMaximum() <= (1 + frame)) {
@@ -1117,27 +1123,12 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
          hyperImage_.setPosition(1 + superChannel, 1 + slice, 1 + frame);
       }
 
-      Runnable updateAndDraw = new Runnable() {
+      updateAndDraw();
+      restartAnimationAfterShowing(animatedFrameIndex, animatedSliceIndex_, framesAnimated, slicesAnimated);
 
-         public void run() {
-            updateAndDraw();
-            restartAnimationAfterShowing(animatedFrameIndex, animatedSliceIndex_, framesAnimated, slicesAnimated);
-         }
-      };
-
-      if (!SwingUtilities.isEventDispatchThread()) {
-         if (waitForDisplay) {
-            SwingUtilities.invokeAndWait(updateAndDraw);
-         } else {
-            SwingUtilities.invokeLater(updateAndDraw);
-         }
-      } else {
-         updateAndDraw();
-         restartAnimationAfterShowing(animatedFrameIndex, animatedSliceIndex_, framesAnimated, slicesAnimated);
-      }
-
-      if (eng_!= null)
+      if (eng_ != null) {
          setPreferredScrollbarPositions();
+      }
    }
    
    /**
