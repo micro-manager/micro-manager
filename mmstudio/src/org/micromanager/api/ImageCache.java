@@ -37,7 +37,6 @@ public interface ImageCache extends TaggedImageStorage {
    void setSummaryMetadata(JSONObject tags);
    void setImageComment(String comment, JSONObject tags);
    String getImageComment(JSONObject tags);
-   void setDisplay(VirtualAcquisitionDisplay disp);
    public void storeChannelDisplaySettings(int channelIndex, int min, int max, double gamma, int histMax);
    public JSONObject getChannelSetting(int channel);
    public int getBitDepth();
@@ -46,13 +45,11 @@ public interface ImageCache extends TaggedImageStorage {
    public void setChannelColor(int channel, int rgb);
    public String getChannelName(int channelIndex);
    public void setChannelName(int channel, String channelName) ;
-   public void setChannelVisibility(int channelIndex, boolean visible);
    public int getChannelMin(int channelIndex);
    public int getChannelMax(int channelIndex) ;
    public double getChannelGamma(int channelIndex);
    public int getChannelHistogramMax(int channelIndex);
    public int getNumChannels();
-   public ImagePlus getImagePlus();
 
    public String getPixelType();
   

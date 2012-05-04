@@ -40,7 +40,6 @@ public class MMImageCache implements TaggedImageStorage, ImageCache {
    private JSONObject firstTags_;
    private int lastFrame_ = -1;
    private JSONObject lastTags_;
-   private VirtualAcquisitionDisplay display_;
    private final ExecutorService fileExecutor_;
 
    public void addImageCacheListener(ImageCacheListener l) {
@@ -107,6 +106,8 @@ public class MMImageCache implements TaggedImageStorage, ImageCache {
 
    public void close() {
       imageStorage_.close();
+      imageStorage_ = null;
+      imageStorageListeners_ = null;
    }
 
    public void saveAs(TaggedImageStorage newImageFileManager) {
@@ -302,17 +303,6 @@ public class MMImageCache implements TaggedImageStorage, ImageCache {
      return imageStorage_.imageKeys();
    }
 
-   public void setDisplay(VirtualAcquisitionDisplay disp) {
-      display_ = disp;
-   }
-
-   public ImagePlus getImagePlus() {
-      if (display_ == null) {
-         return null;
-      }
-      return display_.getHyperImage();
-   }
-
    private boolean isRGB() throws JSONException, MMScriptException {
       return MDUtils.isRGB(getSummaryMetadata());
    }
@@ -417,18 +407,6 @@ public class MMImageCache implements TaggedImageStorage, ImageCache {
          ReportingUtils.logError(ex);
       }
 
-   }
-
-   public void setChannelVisibility(int channelIndex, boolean visible) {
-      if (display_ == null) {
-         return;
-      }
-      ImagePlus img = display_.getHyperImage();
-      if (!img.isComposite()) {
-         return;
-      }
-      CompositeImage ci = (CompositeImage) img;
-      ci.getActiveChannels()[channelIndex] = visible;
    }
 
    public int getChannelMin(int channelIndex) {
