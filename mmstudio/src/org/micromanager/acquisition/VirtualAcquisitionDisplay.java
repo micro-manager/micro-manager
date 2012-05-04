@@ -412,7 +412,6 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
       imageCache_ = imageCache;
       eng_ = eng;
       pSelector_ = createPositionScrollbar();
-      imageCache_.setDisplay(this);
       mda_ = eng != null;
       zStackMins_ = new HashMap<Integer, Integer>();
       zStackMaxes_ = new HashMap<Integer, Integer>();
@@ -423,7 +422,6 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
       simple_ = true;
       imageCache_ = imageCache;
       name_ = name;
-      imageCache_.setDisplay(this);
       mda_ = false;
    }
 
