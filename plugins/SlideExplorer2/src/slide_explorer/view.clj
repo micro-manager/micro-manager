@@ -18,18 +18,13 @@
   [(int (* (Math/pow 2.0 tile-zoom) nx tile-width))
    (int (* (Math/pow 2.0 tile-zoom) ny tile-height))])
 
-(defn round-int
-  "Round x to the nearest integer."
-  [x]
-  (Math/round (double x)))
-
 (defn tiles-in-pixel-rectangle
   "Returns a list of tile indices found in a given pixel rectangle."
-  [[l t b r] [tile-width tile-height]]
-  (let [nl (round-int (/ l tile-width))
-        nr (round-int (/ r tile-width))
-        nt (round-int (/ t tile-height))
-        nb (round-int (/ b tile-height))]
+  [rectangle [tile-width tile-height]]
+  (let [nl (Math/floor (/ (.x rectangle) tile-width))
+        nr (Math/floor (/ (+ -1 (.getWidth rectangle) (.x rectangle)) tile-width))
+        nt (Math/floor (/ (.y rectangle) tile-height))
+        nb (Math/floor (/ (+ -1 (.getHeight rectangle) (.y rectangle)) tile-height))]
     (for [nx (range nl (inc nr))
           ny (range nt (inc nb))]
       [nx ny])))
