@@ -12,6 +12,7 @@ import java.util.regex.Pattern;
 import mmcorej.CMMCore;
 import mmcorej.TaggedImage;
 import org.json.JSONObject;
+import org.micromanager.MMStudioMainFrame;
 import org.micromanager.api.AcquisitionEngine;
 import org.micromanager.api.ImageCache;
 import org.micromanager.api.ScriptInterface;
@@ -32,7 +33,6 @@ public class LiveAcq  {
    private boolean diskCached_ = false;
    private BlockingQueue<TaggedImage> imageProducingQueue_;
    private ImageCache imageCache_ = null;
-   private VirtualAcquisitionDisplay display_ = null;
    private String acqName_;
 
    public LiveAcq(CMMCore core,
@@ -93,7 +93,9 @@ public class LiveAcq  {
 
    protected void cleanup() {
       try {
-         imageCache_.finished();
+//         imageCache_.finished();
+         MMStudioMainFrame.getInstance().closeAcquisition(acqName_);
+         imageCache_ = null;
       } catch (Exception e) {
          ReportingUtils.logError(e);
       }

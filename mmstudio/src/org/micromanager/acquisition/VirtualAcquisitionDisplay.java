@@ -114,8 +114,7 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
    private static double snapWinZoom_ = 1.0;
    private long lastImageUpdate_ = -1;
    private Timer imageChangedTimer_;
-
-
+   
    /* This interface and the following two classes
     * allow us to manipulate the dimensions
     * in an ImagePlus without it throwing conniptions.

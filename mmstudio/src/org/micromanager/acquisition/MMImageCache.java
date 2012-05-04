@@ -106,8 +106,6 @@ public class MMImageCache implements TaggedImageStorage, ImageCache {
 
    public void close() {
       imageStorage_.close();
-      imageStorage_ = null;
-      imageStorageListeners_ = null;
    }
 
    public void saveAs(TaggedImageStorage newImageFileManager) {
