@@ -15,8 +15,7 @@
            (org.micromanager.utils GUIUpdater ImageUtils JavaUtils MDUtils)
            (org.micromanager.acquisition TaggedImageQueue))
   (:use [org.micromanager.mm :only (core edt mmc load-mm json-to-data)]
-        [slide-explorer.image :only (merge-and-scale)]
-        [slide-explorer.view :only (floor-int show)]))
+        [slide-explorer.view :only (show add-to-available-tiles)]))
 
 
 (load-mm)
@@ -100,50 +99,10 @@
               
 ;; tile image handling
 
-(defn awt-image [^TaggedImage tagged-image]
-  (.createImage (ImageUtils/makeProcessor tagged-image)))
-
 (defn get-tile [{:keys [nx ny nz nt nc]}]
   (ImageUtils/makeProcessor (grab-tagged-image)))
   ;(slide-explorer.image/try-3-colors false))
 
-(defn add-tile [tile-map tile-zoom indices tile]
-  (assoc-in tile-map [tile-zoom indices] tile))
-
-(defn propagate-tiles [available-tiles zoom {:keys [nx ny nz nt nc] :as indices}]
-  (when-let [parent-layer (available-tiles (inc zoom))]
-    (let [nx- (* 2 nx)
-          ny- (* 2 ny)
-          nx+ (inc nx-)
-          ny+ (inc ny-)
-          a (parent-layer (assoc indices :nx nx- :ny ny-))
-          b (parent-layer (assoc indices :nx nx+ :ny ny-))
-          c (parent-layer (assoc indices :nx nx- :ny ny+))
-          d (parent-layer (assoc indices :nx nx+ :ny ny+))]
-      (add-tile available-tiles zoom
-                (assoc indices :nx nx :ny ny)
-                (merge-and-scale a b c d)))))
-
-(defn child-index [n]
-  (floor-int (/ n 2)))
-
-(defn child-indices [indices]
-  (-> indices
-     (update-in [:nx] child-index)
-     (update-in [:ny] child-index)))
-
-(defn add-and-propagate-tiles [tile-map indices tile min-zoom]
-  (loop [tile-map (add-tile tile-map 0 indices tile)
-         new-indices (child-indices indices)
-         zoom -1]
-    (if (<= min-zoom zoom)
-      (recur (propagate-tiles tile-map zoom new-indices)
-             (child-indices new-indices)
-             (dec zoom))
-      tile-map)))
-
-(defn add-to-available-tiles [available-tiles zoom indices]
-  (send available-tiles add-and-propagate-tiles indices (get-tile indices) -8))
 
 ;; tests
 
@@ -160,7 +119,8 @@
                                 :ny ny
                                 :nz 0 
                                 :nt 0
-                                :nc 0}))
+                                :nc 0}
+                          (get-tile nil)))
 
 (defn test-tiles [nx ny]
   (.start (Thread.

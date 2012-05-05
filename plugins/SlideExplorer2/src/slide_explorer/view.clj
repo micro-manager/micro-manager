@@ -5,7 +5,7 @@
            (java.awt.event ComponentAdapter MouseAdapter WindowAdapter)
            (org.micromanager.utils GUIUpdater))
   (:use [org.micromanager.mm :only (edt)]
-        [slide-explorer.image :only (crop overlay lut-object)]))
+        [slide-explorer.image :only (crop merge-and-scale overlay lut-object)]))
 
 
 ; Order of operations:
@@ -14,6 +14,10 @@
 ;  Max intensity projection (z)
 ;  Rescale
 ;  Color Overlay
+
+(def MIN-ZOOM -8)
+
+(def MAX-ZOOM 0)
 
 ;; TESTING UTILITIES
 
@@ -58,6 +62,46 @@
       [nx ny])))
 
 
+;; TILING
+
+(defn add-tile [tile-map tile-zoom indices tile]
+  (assoc-in tile-map [tile-zoom indices] tile))
+
+(defn propagate-tiles [tile-map zoom {:keys [nx ny nz nt nc] :as indices}]
+  (when-let [parent-layer (tile-map (inc zoom))]
+    (let [nx- (* 2 nx)
+          ny- (* 2 ny)
+          nx+ (inc nx-)
+          ny+ (inc ny-)
+          a (parent-layer (assoc indices :nx nx- :ny ny-))
+          b (parent-layer (assoc indices :nx nx+ :ny ny-))
+          c (parent-layer (assoc indices :nx nx- :ny ny+))
+          d (parent-layer (assoc indices :nx nx+ :ny ny+))]
+      (add-tile tile-map zoom
+                (assoc indices :nx nx :ny ny)
+                (merge-and-scale a b c d)))))
+
+(defn child-index [n]
+  (floor-int (/ n 2)))
+
+(defn child-indices [indices]
+  (-> indices
+     (update-in [:nx] child-index)
+     (update-in [:ny] child-index)))
+
+(defn add-and-propagate-tiles [tile-map indices tile]
+  (loop [tile-map (add-tile tile-map 0 indices tile)
+         new-indices (child-indices indices)
+         zoom -1]
+    (if (<= MIN-ZOOM zoom)
+      (recur (propagate-tiles tile-map zoom new-indices)
+             (child-indices new-indices)
+             (dec zoom))
+      tile-map)))
+
+(defn add-to-available-tiles [tile-map-agent zoom indices tile]
+  (send tile-map-agent add-and-propagate-tiles indices tile))
+
 ;; PAINTING
 
 (defn enable-anti-aliasing
@@ -91,8 +135,8 @@
       enable-anti-aliasing
       (paint-tiles @available-tiles @screen-state [512 512])
       (.setColor Color/YELLOW)
-      (.fillOval -30 -30
-                 60 60)
+      (.fillOval -5 -5
+                 10 10)
       (.setTransform original-transform)
       (.setColor Color/YELLOW)
       (.drawString (str @screen-state)
@@ -212,8 +256,10 @@ to normal size."
   size-atom)
 
 (defn handle-zoom [window zoom-atom]
-  (bind-window-key window "ADD" #(swap! zoom-atom update-in [:zoom] inc))
-  (bind-window-key window "SUBTRACT" #(swap! zoom-atom update-in [:zoom] dec)))
+  (bind-window-key window "ADD"
+                   (fn [] (swap! zoom-atom update-in [:zoom] #(min MAX-ZOOM (inc %)))))
+  (bind-window-key window "SUBTRACT"
+                   (fn [] (swap! zoom-atom update-in [:zoom] #(max MIN-ZOOM (dec %))))))
 
 ;; MAIN WINDOW AND PANEL
 
