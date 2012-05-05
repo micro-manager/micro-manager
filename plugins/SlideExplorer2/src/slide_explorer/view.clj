@@ -14,6 +14,9 @@
 
 ;; tile/pixels
 
+(defn floor-int [x]
+  (long (Math/floor x)))
+
 (defn tile-to-pixels [[nx ny] [tile-width tile-height] tile-zoom]
   [(int (* (Math/pow 2.0 tile-zoom) nx tile-width))
    (int (* (Math/pow 2.0 tile-zoom) ny tile-height))])
@@ -21,10 +24,10 @@
 (defn tiles-in-pixel-rectangle
   "Returns a list of tile indices found in a given pixel rectangle."
   [rectangle [tile-width tile-height]]
-  (let [nl (Math/floor (/ (.x rectangle) tile-width))
-        nr (Math/floor (/ (+ -1 (.getWidth rectangle) (.x rectangle)) tile-width))
-        nt (Math/floor (/ (.y rectangle) tile-height))
-        nb (Math/floor (/ (+ -1 (.getHeight rectangle) (.y rectangle)) tile-height))]
+  (let [nl (floor-int (/ (.x rectangle) tile-width))
+        nr (floor-int (/ (+ -1 (.getWidth rectangle) (.x rectangle)) tile-width))
+        nt (floor-int (/ (.y rectangle) tile-height))
+        nb (floor-int (/ (+ -1 (.getHeight rectangle) (.y rectangle)) tile-height))]
     (for [nx (range nl (inc nr))
           ny (range nt (inc nb))]
       [nx ny])))
@@ -106,35 +109,25 @@ to normal size."
                            RenderingHints/VALUE_ANTIALIAS_ON
                            RenderingHints/VALUE_ANTIALIAS_OFF)))))
 
-(defn draw-image [g image x y clip-bounds]
-  (let [image-rect (Rectangle. x y 512 512)]
-    (if (.intersects image-rect clip-bounds)
-      (do ;(println "drawn")
-          (.drawImage g image x y nil))
-      ;(println "not drawn")
-      )))
-
-(defn paint-tiles [^Graphics2D g available-tiles zoom clip-bounds [tile-width tile-height]]
-  ;(println "paint-tiles")
-  ;(println (System/currentTimeMillis))
-  ;(timer
-  (doseq [[{:keys [nx ny nz nt nc]} image] (get available-tiles zoom)]
-    (when image
-      (let [[x y] (tile-to-pixels [nx ny] [tile-width tile-height] zoom)]
-        (draw-image g image x y clip-bounds)
-          ))
-    ;)
-    ))
+(defn paint-tiles [^Graphics2D g available-tiles screen-state [tile-width tile-height]]
+  (let [pixel-rect (Rectangle. (- (screen-state :x)) (- (screen-state :y))
+                               (screen-state :width) (screen-state :height))]
+    ;(println pixel-rect)
+    (doseq [[nx ny] (tiles-in-pixel-rectangle pixel-rect [tile-width tile-height])]
+      ;(println nx ny)
+      (when-let [image (get-in available-tiles [(screen-state :zoom) {:nx nx :ny ny :nz (screen-state :z) :nt 0 :nc 0}])]
+        (let [[x y] (tile-to-pixels [nx ny] [tile-width tile-height] 0)]
+          (.drawImage g image x y nil))))))
 
 (defn paint-screen [graphics screen-state available-tiles]
   (let [original-transform (.getTransform graphics)]
     (doto graphics
       (.setClip 0 0 (:width @screen-state) (:height @screen-state))
-      (.translate (+ (:x @screen-state) (/ (:width @screen-state) 2))
-                  (+ (:y @screen-state) (/ (:height @screen-state) 2)))
+      (.translate (:x @screen-state)
+                  (:y @screen-state))
       ;(.rotate @angle)
       enable-anti-aliasing
-      (paint-tiles @available-tiles (:zoom @screen-state) (.getClipBounds graphics) [512 512])
+      (paint-tiles @available-tiles @screen-state [512 512])
       (.setColor Color/YELLOW)
       (.fillOval -30 -30
                  60 60)
@@ -163,6 +156,15 @@ to normal size."
       (.addMouseListener mouse-adapter)
       (.addMouseMotionListener mouse-adapter))
     position-atom))
+
+(defn handle-arrow-pan [component position-atom]
+  (let [binder (fn [key axis step]
+                 (bind-key component key
+                           #(swap! position-atom update-in [axis] + step) true))]
+    (binder "UP" :y 50)
+    (binder "DOWN" :y -50)
+    (binder "RIGHT" :x -50)
+    (binder "LEFT" :x 50)))
 
 (defn handle-wheel [component z-atom]
   (.addMouseWheelListener component
@@ -220,6 +222,7 @@ to normal size."
     (.add (.getContentPane frame) panel)
     (setup-fullscreen frame)
     (handle-drags panel screen-state)
+    (handle-arrow-pan panel screen-state)
     (handle-wheel panel screen-state)
     (handle-resize panel screen-state)
     (handle-zoom frame screen-state)
