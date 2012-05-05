@@ -1,4 +1,4 @@
-(ns slide-explorer.display
+(ns slide-explorer.main
   (:import (java.awt Color Graphics Graphics2D RenderingHints Window)
            (java.awt.event ComponentAdapter KeyAdapter KeyEvent MouseAdapter
                            WindowAdapter)
