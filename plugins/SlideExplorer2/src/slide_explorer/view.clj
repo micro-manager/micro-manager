@@ -19,6 +19,8 @@
 
 (def MAX-ZOOM 0)
 
+(def display-updater (GUIUpdater.))
+
 ;; TESTING UTILITIES
 
 (defn reference-viewer [reference key]
@@ -146,8 +148,8 @@
 
 (defn display-follow [panel reference]
   (add-watch reference "display"
-    (fn [_ _ _ _]
-      (.repaint panel))))
+             (fn [_ _ _ _]
+                (.post display-updater #(.repaint panel)))))
 
 ;; key binding
 
@@ -168,9 +170,13 @@
     (.put im input-event uuid)
     (.put am uuid action)))
 
-(defn bind-window-key
-  [window input-key action-fn]
-  (bind-key (.getContentPane window) input-key action-fn true))
+(defn bind-keys
+  [component input-keys action-fn global?]
+  (dorun (map #(bind-key component % action-fn global?) input-keys)))
+
+(defn bind-window-keys
+  [window input-keys action-fn]
+  (bind-keys (.getContentPane window) input-keys action-fn true))
 
 ;; full screen
 
@@ -199,8 +205,8 @@ to normal size."
     (full-screen! (default-screen-device) window)))
 
 (defn setup-fullscreen [window]
-  (bind-window-key window "F" #(full-screen! window))
-  (bind-window-key window "ESCAPE" #(full-screen! nil)))
+  (bind-window-keys window ["F"] #(full-screen! window))
+  (bind-window-keys window ["ESCAPE"] #(full-screen! nil)))
 
 ;; positional controls
 
@@ -254,22 +260,19 @@ to normal size."
   size-atom)
 
 (defn handle-zoom [window zoom-atom]
-  (bind-window-key window "ADD"
+  (bind-window-keys window ["ADD" "CLOSE_BRACKET"]
                    (fn [] (swap! zoom-atom update-in [:zoom] #(min MAX-ZOOM (inc %)))))
-  (bind-window-key window "SUBTRACT"
+  (bind-window-keys window ["SUBTRACT" "OPEN_BRACKET"]
                    (fn [] (swap! zoom-atom update-in [:zoom] #(max MIN-ZOOM (dec %))))))
 
 ;; MAIN WINDOW AND PANEL
 
 (defn main-panel [screen-state available-tiles]
   (doto
-    (let [updater (GUIUpdater.)]
-      (proxy [JPanel] []
-        (paintComponent [^Graphics graphics]
-                        (proxy-super paintComponent graphics)
-                        (paint-screen graphics screen-state available-tiles))
-        (repaint []
-                 (.post updater #(proxy-super repaint)))))
+    (proxy [JPanel] []
+      (paintComponent [^Graphics graphics]
+        (proxy-super paintComponent graphics)
+        (paint-screen graphics screen-state available-tiles)))
     (.setBackground Color/BLACK)))
     
 (defn main-frame []
