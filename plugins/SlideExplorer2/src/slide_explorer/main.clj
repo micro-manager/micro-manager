@@ -122,11 +122,14 @@
                                 :nc 0}
                           (get-tile nil)))
 
-(defn test-tiles [nx ny]
-  (.start (Thread.
-            #(doseq [i (range (- nx) (inc nx)) j (range (- ny) (inc ny))]
-               ;(Thread/sleep 1000)
-               (test-tile i j)))))
+(defn test-tiles
+  ([n] (test-tiles n n))
+  ([nx ny]
+    (.start (Thread.
+              #(doseq [i (range (- nx) (inc nx)) j (range (- ny) (inc ny))]
+                 ;(Thread/sleep 1000)
+                 (test-tile i j))))))
+
 
 (defn test-rotate []
   (.start (Thread. #(do (dorun (repeatedly 2000 (fn [] (Thread/sleep 10)
