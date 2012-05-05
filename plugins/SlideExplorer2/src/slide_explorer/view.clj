@@ -118,9 +118,7 @@
 (defn paint-tiles [^Graphics2D g available-tiles screen-state [tile-width tile-height]]
   (let [pixel-rect (Rectangle. (- (screen-state :x)) (- (screen-state :y))
                                (screen-state :width) (screen-state :height))]
-    ;(println pixel-rect)
     (doseq [[nx ny] (tiles-in-pixel-rectangle pixel-rect [tile-width tile-height])]
-      ;(println nx ny)
       (when-let [proc (get-in available-tiles [(screen-state :zoom) {:nx nx :ny ny :nz (screen-state :z) :nt 0 :nc 0}])]
         (let [[x y] (tile-to-pixels [nx ny] [tile-width tile-height] 0)]
           (.drawImage g (.createImage proc) x y nil))))))
