@@ -15,16 +15,8 @@
            (org.micromanager.utils GUIUpdater ImageUtils JavaUtils MDUtils)
            (org.micromanager.acquisition TaggedImageQueue))
   (:use [org.micromanager.mm :only (core edt mmc load-mm json-to-data)]
-        [slide-explorer.image :only (crop overlay lut-object merge-and-scale)]
+        [slide-explorer.image :only (merge-and-scale)]
         [slide-explorer.view :only (floor-int show)]))
-
-
-; Order of operations:
-;  Stitch/crop
-;  Flatten fields
-;  Max intensity projection (z)
-;  Rescale
-;  Color Overlay
 
 
 (load-mm)
@@ -58,8 +50,6 @@
     (take-while #(not= % TaggedImageQueue/POISON)
                 (repeatedly #(.take q)))))
 
-(def rgb (vec (map #(lut-object % 0 50 1.0) [Color/RED Color/GREEN Color/BLUE])))
-
 (defn tagged-image-to-processor [tagged-image]
   {:proc (ImageUtils/makeProcessor tagged-image)
    :tags (json-to-data (.tags tagged-image))})
@@ -77,7 +67,6 @@
   (-> raw :tags (get "SliceIndex")))
 
   
-
 ;; image properties
 
 (defn get-image-width [^TaggedImage image]
@@ -111,9 +100,6 @@
               
 ;; tile image handling
 
-(defn main-window []
-  (ImagePlus. "Slide Explorer II"))
-
 (defn awt-image [^TaggedImage tagged-image]
   (.createImage (ImageUtils/makeProcessor tagged-image)))
 
@@ -125,7 +111,6 @@
   (assoc-in tile-map [tile-zoom indices] tile))
 
 (defn propagate-tiles [available-tiles zoom {:keys [nx ny nz nt nc] :as indices}]
-  ;(println "propagate")
   (when-let [parent-layer (available-tiles (inc zoom))]
     (let [nx- (* 2 nx)
           ny- (* 2 ny)
@@ -135,7 +120,6 @@
           b (parent-layer (assoc indices :nx nx+ :ny ny-))
           c (parent-layer (assoc indices :nx nx- :ny ny+))
           d (parent-layer (assoc indices :nx nx+ :ny ny+))]
-      ;(edt (println nx ny zoom a b c d))
       (add-tile available-tiles zoom
                 (assoc indices :nx nx :ny ny)
                 (merge-and-scale a b c d)))))
@@ -148,18 +132,18 @@
      (update-in [:nx] child-index)
      (update-in [:ny] child-index)))
 
-(defn add-and-propagate-tiles [tile-map tile-zoom indices tile reps]
-  (loop [tiles (add-tile tile-map tile-zoom indices tile)
+(defn add-and-propagate-tiles [tile-map indices tile min-zoom]
+  (loop [tile-map (add-tile tile-map 0 indices tile)
          new-indices (child-indices indices)
          zoom -1]
-    (if (<= -8 zoom)
-      (recur (propagate-tiles tiles zoom new-indices)
+    (if (<= min-zoom zoom)
+      (recur (propagate-tiles tile-map zoom new-indices)
              (child-indices new-indices)
              (dec zoom))
-      tiles)))
+      tile-map)))
 
 (defn add-to-available-tiles [available-tiles zoom indices]
-  (send available-tiles add-and-propagate-tiles 0 indices (get-tile indices) 5))
+  (send available-tiles add-and-propagate-tiles indices (get-tile indices) -8))
 
 ;; tests
 

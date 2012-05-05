@@ -7,12 +7,37 @@
   (:use [org.micromanager.mm :only (edt)]
         [slide-explorer.image :only (crop overlay lut-object)]))
 
+
+; Order of operations:
+;  Stitch/crop
+;  Flatten fields
+;  Max intensity projection (z)
+;  Rescale
+;  Color Overlay
+
+;; TESTING UTILITIES
+
+(defn reference-viewer [reference key]
+  (let [frame (JFrame. key)
+        label (JLabel.)]
+    (.add (.getContentPane frame) label)
+    (add-watch reference key
+               (fn [key reference old-state new-state]
+                 (edt (.setText label (.toString new-state)))))
+    (doto frame
+      (.addWindowListener
+        (proxy [WindowAdapter] []
+          (windowClosing [e]
+                         (remove-watch reference key))))
+      .show))
+  reference)
+
 (defmacro timer [expr]
   `(let [ret# (time ~expr)]
      (println '~expr)
      ret#))
 
-;; tile/pixels
+;; TILE <--> PIXELS
 
 (defn floor-int [x]
   (long (Math/floor x)))
@@ -32,71 +57,8 @@
           ny (range nt (inc nb))]
       [nx ny])))
 
-;; gui utilities
 
-(defn reference-viewer [reference key]
-  (let [frame (JFrame. key)
-        label (JLabel.)]
-    (.add (.getContentPane frame) label)
-    (add-watch reference key
-               (fn [key reference old-state new-state]
-                 (edt (.setText label (.toString new-state)))))
-    (doto frame
-      (.addWindowListener
-        (proxy [WindowAdapter] []
-          (windowClosing [e]
-                         (remove-watch reference key))))
-      .show))
-  reference)
-
-(defn bind-key
-  "Maps an input-key on a swing component to an action,
-  such that action-fn is executed when key is pressed."
-  [component input-key action-fn global?]
-  (let [im (.getInputMap component (if global?
-                                     JComponent/WHEN_IN_FOCUSED_WINDOW
-                                     JComponent/WHEN_FOCUSED))
-        am (.getActionMap component)
-        input-event (KeyStroke/getKeyStroke input-key)
-        action
-          (proxy [AbstractAction] []
-            (actionPerformed [e]
-                (action-fn)))
-        uuid (.. UUID randomUUID toString)]
-    (.put im input-event uuid)
-    (.put am uuid action)))
-
-(defn bind-window-key
-  [window input-key action-fn]
-  (bind-key (.getContentPane window) input-key action-fn true))
-
-(defn- default-screen-device [] ; borrowed from see-saw
-  (->
-    (java.awt.GraphicsEnvironment/getLocalGraphicsEnvironment)
-    .getDefaultScreenDevice))
-
-(defn full-screen!
-  "Make the given window/frame full-screen. Pass nil to return all windows
-to normal size."
-  ([^java.awt.GraphicsDevice device window]
-    (if window
-      (when (not= (.getFullScreenWindow device) window)
-        (.dispose window)
-        (.setUndecorated window true)
-        (.setFullScreenWindow device window)
-        (.show window))
-      (when-let [window (.getFullScreenWindow device)]
-        (.dispose window)
-        (.setFullScreenWindow device nil)
-        (.setUndecorated window false)
-        (.show window)))
-    window)
-  ([window]
-    (full-screen! (default-screen-device) window)))
-
-(defn setup-fullscreen [window]
-  (bind-window-key window "F" #(full-screen! window))
-  (bind-window-key window "ESCAPE" #(full-screen! nil)))
+;; PAINTING
 
 (defn enable-anti-aliasing
   ([^Graphics g]
@@ -137,6 +99,69 @@ to normal size."
                    (int 0)
                    (int (- (:height @screen-state) 10))))))
   
+
+;; USER INPUT HANDLING
+
+(defn display-follow [panel reference]
+  (add-watch reference "display"
+    (fn [_ _ _ _]
+      (.repaint panel))))
+
+;; key binding
+
+(defn bind-key
+  "Maps an input-key on a swing component to an action,
+  such that action-fn is executed when key is pressed."
+  [component input-key action-fn global?]
+  (let [im (.getInputMap component (if global?
+                                     JComponent/WHEN_IN_FOCUSED_WINDOW
+                                     JComponent/WHEN_FOCUSED))
+        am (.getActionMap component)
+        input-event (KeyStroke/getKeyStroke input-key)
+        action
+          (proxy [AbstractAction] []
+            (actionPerformed [e]
+                (action-fn)))
+        uuid (.. UUID randomUUID toString)]
+    (.put im input-event uuid)
+    (.put am uuid action)))
+
+(defn bind-window-key
+  [window input-key action-fn]
+  (bind-key (.getContentPane window) input-key action-fn true))
+
+;; full screen
+
+(defn- default-screen-device [] ; borrowed from see-saw
+  (->
+    (java.awt.GraphicsEnvironment/getLocalGraphicsEnvironment)
+    .getDefaultScreenDevice))
+
+(defn full-screen!
+  "Make the given window/frame full-screen. Pass nil to return all windows
+to normal size."
+  ([^java.awt.GraphicsDevice device window]
+    (if window
+      (when (not= (.getFullScreenWindow device) window)
+        (.dispose window)
+        (.setUndecorated window true)
+        (.setFullScreenWindow device window)
+        (.show window))
+      (when-let [window (.getFullScreenWindow device)]
+        (.dispose window)
+        (.setFullScreenWindow device nil)
+        (.setUndecorated window false)
+        (.show window)))
+    window)
+  ([window]
+    (full-screen! (default-screen-device) window)))
+
+(defn setup-fullscreen [window]
+  (bind-window-key window "F" #(full-screen! window))
+  (bind-window-key window "ESCAPE" #(full-screen! nil)))
+
+;; positional controls
+
 (defn handle-drags [component position-atom]
   (let [drag-origin (atom nil)
         mouse-adapter
@@ -190,10 +215,7 @@ to normal size."
   (bind-window-key window "ADD" #(swap! zoom-atom update-in [:zoom] inc))
   (bind-window-key window "SUBTRACT" #(swap! zoom-atom update-in [:zoom] dec)))
 
-(defn display-follow [panel reference]
-  (add-watch reference "display"
-    (fn [_ _ _ _]
-      (.repaint panel))))
+;; MAIN WINDOW AND PANEL
 
 (defn main-panel [screen-state available-tiles]
   (doto
