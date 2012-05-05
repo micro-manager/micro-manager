@@ -115,9 +115,9 @@ to normal size."
     ;(println pixel-rect)
     (doseq [[nx ny] (tiles-in-pixel-rectangle pixel-rect [tile-width tile-height])]
       ;(println nx ny)
-      (when-let [image (get-in available-tiles [(screen-state :zoom) {:nx nx :ny ny :nz (screen-state :z) :nt 0 :nc 0}])]
+      (when-let [proc (get-in available-tiles [(screen-state :zoom) {:nx nx :ny ny :nz (screen-state :z) :nt 0 :nc 0}])]
         (let [[x y] (tile-to-pixels [nx ny] [tile-width tile-height] 0)]
-          (.drawImage g image x y nil))))))
+          (.drawImage g (.createImage proc) x y nil))))))
 
 (defn paint-screen [graphics screen-state available-tiles]
   (let [original-transform (.getTransform graphics)]

@@ -15,8 +15,8 @@
            (org.micromanager.utils GUIUpdater ImageUtils JavaUtils MDUtils)
            (org.micromanager.acquisition TaggedImageQueue))
   (:use [org.micromanager.mm :only (core edt mmc load-mm json-to-data)]
-        [slide-explorer.image :only (crop overlay lut-object)]
-        [slide-explorer.view :only (show)]))
+        [slide-explorer.image :only (crop overlay lut-object merge-and-scale)]
+        [slide-explorer.view :only (floor-int show)]))
 
 
 ; Order of operations:
@@ -118,14 +118,48 @@
   (.createImage (ImageUtils/makeProcessor tagged-image)))
 
 (defn get-tile [{:keys [nx ny nz nt nc]}]
-  (awt-image (grab-tagged-image)))
+  (ImageUtils/makeProcessor (grab-tagged-image)))
   ;(slide-explorer.image/try-3-colors false))
 
-(defn add-tile [tile-map tile-zoom indices]
-  (assoc-in tile-map [tile-zoom indices] (get-tile indices)))
+(defn add-tile [tile-map tile-zoom indices tile]
+  (assoc-in tile-map [tile-zoom indices] tile))
 
-(defn add-to-available-tiles [available-tiles tile-zoom indices]
-  (send-off available-tiles add-tile tile-zoom indices))
+(defn propagate-tiles [available-tiles zoom {:keys [nx ny nz nt nc] :as indices}]
+  ;(println "propagate")
+  (when-let [parent-layer (available-tiles (inc zoom))]
+    (let [nx- (* 2 nx)
+          ny- (* 2 ny)
+          nx+ (inc nx-)
+          ny+ (inc ny-)
+          a (parent-layer (assoc indices :nx nx- :ny ny-))
+          b (parent-layer (assoc indices :nx nx+ :ny ny-))
+          c (parent-layer (assoc indices :nx nx- :ny ny+))
+          d (parent-layer (assoc indices :nx nx+ :ny ny+))]
+      ;(edt (println nx ny zoom a b c d))
+      (add-tile available-tiles zoom
+                (assoc indices :nx nx :ny ny)
+                (merge-and-scale a b c d)))))
+
+(defn child-index [n]
+  (floor-int (/ n 2)))
+
+(defn child-indices [indices]
+  (-> indices
+     (update-in [:nx] child-index)
+     (update-in [:ny] child-index)))
+
+(defn add-and-propagate-tiles [tile-map tile-zoom indices tile reps]
+  (loop [tiles (add-tile tile-map tile-zoom indices tile)
+         new-indices (child-indices indices)
+         zoom -1]
+    (if (<= -8 zoom)
+      (recur (propagate-tiles tiles zoom new-indices)
+             (child-indices new-indices)
+             (dec zoom))
+      tiles)))
+
+(defn add-to-available-tiles [available-tiles zoom indices]
+  (send available-tiles add-and-propagate-tiles 0 indices (get-tile indices) 5))
 
 ;; tests
 

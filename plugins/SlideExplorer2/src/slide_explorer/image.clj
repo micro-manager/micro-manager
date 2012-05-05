@@ -72,9 +72,10 @@
   "Takes four ImageProcessors (tiles) and tiles them in a
    2x2 mosaic with no gaps, then scales pixels to half size."
   [img1 img2 img3 img4]
-  (let [w (.getWidth img1)
-        h (.getHeight img1)
-        large (.createProcessor img1 (* 2 w) (* 2 h))]
+  (let [test-img (or img1 img2 img3 img4)
+        w (.getWidth test-img)
+        h (.getHeight test-img)
+        large (.createProcessor test-img (* 2 w) (* 2 h))]
     (doto large
       (insert-image img1 0 0)
       (insert-image img2 w 0)
