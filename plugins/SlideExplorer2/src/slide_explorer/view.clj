@@ -129,7 +129,7 @@
                            RenderingHints/VALUE_ANTIALIAS_OFF)))))
 
 (defn paint-tiles [^Graphics2D g available-tiles screen-state [tile-width tile-height]]
-  (let [pixel-rect (Rectangle. (- (screen-state :x)) (- (screen-state :y))
+  (let [pixel-rect (Rectangle. (screen-state :x) (screen-state :y)
                                (screen-state :width) (screen-state :height))]
     (doseq [[nx ny] (tiles-in-pixel-rectangle pixel-rect [tile-width tile-height])]
       (when-let [proc (get-in available-tiles [(screen-state :zoom) {:nx nx :ny ny :nz (screen-state :z) :nt 0 :nc 0}])]
@@ -139,20 +139,20 @@
 (defn paint-screen [graphics screen-state available-tiles]
   (let [original-transform (.getTransform graphics)]
     (doto graphics
-      (.setClip 0 0 (:width @screen-state) (:height @screen-state))
-      (.translate (:x @screen-state)
-                  (:y @screen-state))
-      ;(.rotate @angle)
+      (.setClip 0 0 (:width screen-state) (:height screen-state))
+      (.translate (- (:x screen-state))
+                  (- (:y screen-state)))
+      ;(do (println (.getClipBounds graphics)))
       enable-anti-aliasing
-      (paint-tiles @available-tiles @screen-state [512 512])
+      (paint-tiles available-tiles screen-state [512 512])
       (.setColor Color/YELLOW)
       (.fillOval -5 -5
                  10 10)
       (.setTransform original-transform)
       (.setColor Color/YELLOW)
-      (.drawString (str @screen-state)
+      (.drawString (str screen-state)
                    (int 0)
-                   (int (- (:height @screen-state) 10))))))
+                   (int (- (:height screen-state) 10))))))
   
 
 ;; USER INPUT HANDLING
@@ -232,9 +232,9 @@ to normal size."
           (mouseDragged [e]
                         (let [x (.getX e) y (.getY e)]
                           (swap! position-atom update-in [:x]
-                                 + (- x (:x @drag-origin)))
+                                 - (- x (:x @drag-origin)))
                           (swap! position-atom update-in [:y]
-                                 + (- y (:y @drag-origin)))
+                                 - (- y (:y @drag-origin)))
                           (reset! drag-origin {:x x :y y}))))]
     (doto component
       (.addMouseListener mouse-adapter)
@@ -245,10 +245,10 @@ to normal size."
   (let [binder (fn [key axis step]
                  (bind-key component key
                            #(swap! position-atom update-in [axis] + step) true))]
-    (binder "UP" :y 50)
-    (binder "DOWN" :y -50)
-    (binder "RIGHT" :x -50)
-    (binder "LEFT" :x 50)))
+    (binder "UP" :y -50)
+    (binder "DOWN" :y 50)
+    (binder "RIGHT" :x 50)
+    (binder "LEFT" :x -50)))
 
 (defn handle-wheel [component z-atom]
   (.addMouseWheelListener component
@@ -270,11 +270,24 @@ to normal size."
                           (update-size)))))
   size-atom)
 
+;(defn calculate-zoom [screen-state new-zoom [center-x center-y]]
+;  (let [old-zoom (screen-state :zoom)
+;        ratio (Math/pow 2.0 (- new-zoom old-zoom))
+;        old-x (screen-state :x)
+;        old-y (screen-state :y)]
+;    (merge
+;      screen-state
+;      {:zoom new-zoom
+;       :x (* (/ new-scale old-scale) old-x)
+;       :y (* (/ newold-y}))
+
 (defn handle-zoom [window zoom-atom]
   (bind-window-keys window ["ADD" "CLOSE_BRACKET"]
-                   (fn [] (swap! zoom-atom update-in [:zoom] #(min MAX-ZOOM (inc %)))))
+                   (fn [] (swap! zoom-atom update-in [:zoom]
+                                 #(min MAX-ZOOM (inc %)))))
   (bind-window-keys window ["SUBTRACT" "OPEN_BRACKET"]
-                   (fn [] (swap! zoom-atom update-in [:zoom] #(max MIN-ZOOM (dec %))))))
+                   (fn [] (swap! zoom-atom update-in [:zoom]
+                                 #(max MIN-ZOOM (dec %))))))
 
 (defn watch-keys [window key-atom]
   (let [key-adapter (proxy [KeyAdapter] []
@@ -294,7 +307,7 @@ to normal size."
     (proxy [JPanel] []
       (paintComponent [^Graphics graphics]
         (proxy-super paintComponent graphics)
-        (paint-screen graphics screen-state available-tiles)))
+        (paint-screen graphics @screen-state @available-tiles)))
     (.setBackground Color/BLACK)))
     
 (defn main-frame []
