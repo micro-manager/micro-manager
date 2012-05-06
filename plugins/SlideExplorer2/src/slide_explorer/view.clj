@@ -2,7 +2,8 @@
   (:import (javax.swing AbstractAction JComponent JFrame JPanel JLabel KeyStroke)
            (java.awt Color Graphics Graphics2D Rectangle RenderingHints Window)
            (java.util UUID)
-           (java.awt.event ComponentAdapter MouseAdapter WindowAdapter)
+           (java.awt.event ComponentAdapter KeyEvent KeyAdapter
+                           MouseAdapter WindowAdapter)
            (org.micromanager.utils GUIUpdater))
   (:use [org.micromanager.mm :only (edt)]
         [slide-explorer.image :only (crop merge-and-scale overlay lut-object)]))
@@ -42,6 +43,16 @@
   `(let [ret# (time ~expr)]
      (println '~expr)
      ret#))
+
+;; GUI UTILITIES
+
+(defn descendants
+  "Returns a depth-first seq of all components contained by window."
+  [window]
+  (tree-seq (constantly true)
+            #(.getComponents %)
+            window))
+
 
 ;; TILE <--> PIXELS
 
@@ -265,6 +276,17 @@ to normal size."
   (bind-window-keys window ["SUBTRACT" "OPEN_BRACKET"]
                    (fn [] (swap! zoom-atom update-in [:zoom] #(max MIN-ZOOM (dec %))))))
 
+(defn watch-keys [window key-atom]
+  (let [key-adapter (proxy [KeyAdapter] []
+                      (keyPressed [e]
+                                  (swap! key-atom update-in [:keys] conj
+                                         (KeyEvent/getKeyText (.getKeyCode e))))
+                      (keyReleased [e]
+                                   (swap! key-atom update-in [:keys] disj
+                                          (KeyEvent/getKeyText (.getKeyCode e)))))]
+    (doseq [component (descendants window)]
+      (.addKeyListener component key-adapter))))
+
 ;; MAIN WINDOW AND PANEL
 
 (defn main-panel [screen-state available-tiles]
@@ -281,7 +303,7 @@ to normal size."
     (.setBounds 10 10 500 500)))
 
 (defn show [available-tiles]
-  (let [screen-state (atom (sorted-map :x 0 :y 0 :z 0 :zoom 0))
+  (let [screen-state (atom (sorted-map :x 0 :y 0 :z 0 :zoom 0 :keys (sorted-set)))
         panel (main-panel screen-state available-tiles)
         frame (main-frame)]
     (def at available-tiles)
@@ -295,6 +317,7 @@ to normal size."
     (handle-wheel panel screen-state)
     (handle-resize panel screen-state)
     (handle-zoom frame screen-state)
+    (watch-keys frame screen-state)
     (display-follow panel screen-state)
     (display-follow panel available-tiles)
     frame))
