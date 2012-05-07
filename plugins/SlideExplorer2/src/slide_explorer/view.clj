@@ -225,7 +225,7 @@ to normal size."
 (defn pan! [position-atom axis distance]
   (let [zoom (@position-atom :zoom)]
     (swap! position-atom update-in [axis]
-           + (/ distance zoom))))
+           - (/ distance zoom))))
 
 (defn handle-drags [component position-atom]
   (let [drag-origin (atom nil)
@@ -238,8 +238,8 @@ to normal size."
           (mouseDragged [e]
                         (let [zoom (@position-atom :zoom)
                               x (.getX e) y (.getY e)]
-                          (pan! position-atom :x (- (:x @drag-origin) x))
-                          (pan! position-atom :y (- (:y @drag-origin) y))
+                          (pan! position-atom :x (- x (:x @drag-origin)))
+                          (pan! position-atom :y (- y (:y @drag-origin)))
                           (reset! drag-origin {:x x :y y}))))]
     (doto component
       (.addMouseListener mouse-adapter)
@@ -250,10 +250,10 @@ to normal size."
   (let [binder (fn [key axis step]
                  (bind-key component key
                            #(pan! position-atom axis step) true))]
-    (binder "UP" :y -50)
-    (binder "DOWN" :y 50)
-    (binder "RIGHT" :x 50)
-    (binder "LEFT" :x -50)))
+    (binder "UP" :y 50)
+    (binder "DOWN" :y -50)
+    (binder "RIGHT" :x -50)
+    (binder "LEFT" :x 50)))
 
 (defn handle-wheel [component z-atom]
   (.addMouseWheelListener component
