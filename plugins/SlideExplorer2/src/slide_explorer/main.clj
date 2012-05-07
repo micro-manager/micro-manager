@@ -115,11 +115,11 @@
 ;  (swap! ss assoc :luts rgb))
 
 (defn test-tile [nx ny]
-  (add-to-available-tiles at 0 {:nx nx
-                                :ny ny
-                                :nz 0 
-                                :nt 0
-                                :nc 0}
+  (add-to-available-tiles at {:nx nx
+                              :ny ny
+                              :nz 0 
+                              :nt 0
+                              :nc 0}
                           (get-tile nil)))
 
 (defn test-tiles
