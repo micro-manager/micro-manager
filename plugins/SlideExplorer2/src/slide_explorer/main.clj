@@ -38,9 +38,11 @@
 
 (def grab-tagged-image
   "Grab a single image from camera."
-  (memoize (fn []
-             (core snapImage)
-             (core getTaggedImage))))
+  ;(memoize 
+    (fn []
+      (core snapImage)
+      (core getTaggedImage)))
+  ;)
 
 (def pixel-size (core getPixelSizeUm true))
 
@@ -122,9 +124,17 @@
                               :nc 0}
                           (get-tile nil)))
 
+(defn test-tile [nx ny nz nc]
+  (add-to-available-tiles at {:nx nx
+                              :ny ny
+                              :nz nz
+                              :nt 0
+                              :nc 0}
+                          (get-tile nil)))
+
 (defn test-tiles
-  ([n] (test-tiles n n))
-  ([nx ny]
+  ([n] (test-tiles n n 0 0))
+  ([nx ny nz nc]
     (.start (Thread.
               #(doseq [i (range (- nx) (inc nx)) j (range (- ny) (inc ny))]
                  ;(Thread/sleep 1000)

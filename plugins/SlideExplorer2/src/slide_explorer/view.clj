@@ -8,7 +8,6 @@
   (:use [org.micromanager.mm :only (edt)]
         [slide-explorer.image :only (crop merge-and-scale overlay lut-object)]))
 
-
 ; Order of operations:
 ;  Stitch/crop
 ;  Flatten fields
@@ -26,11 +25,12 @@
 
 (defn reference-viewer [reference key]
   (let [frame (JFrame. key)
-        label (JLabel.)]
+        label (JLabel.)
+        update-fn #(edt (.setText label (.toString %)))]
     (.add (.getContentPane frame) label)
     (add-watch reference key
-               (fn [key reference old-state new-state]
-                 (edt (.setText label (.toString new-state)))))
+               (fn [_ _ _ new-state] (update-fn new-state)))
+    (update-fn @reference)
     (doto frame
       (.addWindowListener
         (proxy [WindowAdapter] []
@@ -236,8 +236,7 @@ to normal size."
           (mouseReleased [e]
                          (reset! drag-origin nil))
           (mouseDragged [e]
-                        (let [zoom (@position-atom :zoom)
-                              x (.getX e) y (.getY e)]
+                        (let [x (.getX e) y (.getY e)]
                           (pan! position-atom :x (- x (:x @drag-origin)))
                           (pan! position-atom :y (- y (:y @drag-origin)))
                           (reset! drag-origin {:x x :y y}))))]
@@ -275,13 +274,17 @@ to normal size."
                           (update-size)))))
   size-atom)
 
+(defn handle-dive [window dive-atom]
+  (bind-window-keys window ["COMMA"] #(swap! dive-atom update-in [:z] dec))
+  (bind-window-keys window ["PERIOD"] #(swap! dive-atom update-in [:z] inc)))
+
 (defn handle-zoom [window zoom-atom]
   (bind-window-keys window ["ADD" "CLOSE_BRACKET"]
                    (fn [] (swap! zoom-atom update-in [:zoom]
-                                 #(min MAX-ZOOM (* % 2)))))
+                                 #(min (* % 2) MAX-ZOOM))))
   (bind-window-keys window ["SUBTRACT" "OPEN_BRACKET"]
                    (fn [] (swap! zoom-atom update-in [:zoom]
-                                 #(max MIN-ZOOM (/ % 2))))))
+                                 #(max (/ % 2) MIN-ZOOM)))))
 
 (defn watch-keys [window key-atom]
   (let [key-adapter (proxy [KeyAdapter] []
@@ -324,6 +327,7 @@ to normal size."
     (handle-wheel panel screen-state)
     (handle-resize panel screen-state)
     (handle-zoom frame screen-state)
+    (handle-dive frame screen-state)
     (watch-keys frame screen-state)
     (display-follow panel screen-state)
     (display-follow panel available-tiles)
