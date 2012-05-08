@@ -136,9 +136,10 @@
   ([n] (test-tiles n n 0 0))
   ([nx ny nz nc]
     (.start (Thread.
-              #(doseq [i (range (- nx) (inc nx)) j (range (- ny) (inc ny))]
+              #(doseq [i (range (- nx) (inc nx)) j (range (- ny) (inc ny))
+                       k (range (- nz) (inc nz))]
                  ;(Thread/sleep 1000)
-                 (test-tile i j))))))
+                 (test-tile i j k nc))))))
 
 
 (defn test-rotate []
