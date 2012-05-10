@@ -119,6 +119,9 @@
    "GFP"  {:lut (lut-object Color/GREEN 0 255 1.0)}
    "Cy5"  {:lut (lut-object Color/RED 0 255 1.0)}})
 
+(defn test-start []
+  (swap! (start) assoc :channels test-channels))
+
 (defn test-tile [nx ny]
   (add-to-available-tiles at {:nx nx
                               :ny ny
