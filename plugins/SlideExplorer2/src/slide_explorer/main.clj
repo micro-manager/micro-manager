@@ -15,7 +15,8 @@
            (org.micromanager.utils GUIUpdater ImageUtils JavaUtils MDUtils)
            (org.micromanager.acquisition TaggedImageQueue))
   (:use [org.micromanager.mm :only (core edt mmc load-mm json-to-data)]
-        [slide-explorer.view :only (show add-to-available-tiles)]))
+        [slide-explorer.view :only (show add-to-available-tiles)]
+        [slide-explorer.image :only (lut-object)]))
 
 
 (load-mm)
@@ -113,8 +114,10 @@
     (def at available-tiles)
     (show available-tiles)))
 
-;(defn set-rgb-luts []
-;  (swap! ss assoc :luts rgb))
+(def test-channels
+  {"DAPI" {:lut (lut-object Color/BLUE 0 255 1.0)}
+   "GFP"  {:lut (lut-object Color/GREEN 0 255 1.0)}
+   "Cy5"  {:lut (lut-object Color/RED 0 255 1.0)}})
 
 (defn test-tile [nx ny]
   (add-to-available-tiles at {:nx nx
@@ -129,17 +132,18 @@
                               :ny ny
                               :nz nz
                               :nt 0
-                              :nc 0}
+                              :nc nc}
                           (get-tile nil)))
 
 (defn test-tiles
   ([n] (test-tiles n n 0 0))
-  ([nx ny nz nc]
+  ([nx ny nz channels]
     (.start (Thread.
               #(doseq [i (range (- nx) (inc nx)) j (range (- ny) (inc ny))
-                       k (range (- nz) (inc nz))]
+                       k (range (- nz) (inc nz))
+                       chan channels]
                  ;(Thread/sleep 1000)
-                 (test-tile i j k nc))))))
+                 (test-tile i j k chan))))))
 
 
 (defn test-rotate []

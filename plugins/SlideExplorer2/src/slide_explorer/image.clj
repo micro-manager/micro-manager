@@ -7,6 +7,12 @@
            (org.micromanager.utils ImageUtils))
   (:use [org.micromanager.mm :only (core load-mm gui)]))
 
+(defmacro timer [expr]
+  `(let [ret# (time ~expr)]
+     (print '~expr)
+     (println " -->" (pr-str ret#))
+     ret#))
+
 ; Image Processing Needed:
 ; 1. Trim the images
 ; 2. Overlay color channels using a set of LUTs
@@ -24,17 +30,26 @@
   (when proc-guest
     (.insert proc-host proc-guest x-host y-host)))
 
+(defn blank-processor-like [original-processor]
+  (.createProcessor original-processor
+                    (.getWidth original-processor)
+                    (.getHeight original-processor)))
+
 (defn make-stack
   "Produces an ImageJ ImageStack from a collection
    of ImageProcessors."
   [processors]
-  (let [proc1 (first processors)
-        w (.getWidth proc1)
-        h (.getHeight proc1)
-        stack (ImageStack. w h)]
-    (doseq [processor processors]
-      (.addSlice stack processor))
-    stack))
+  (let [proc1 (first (filter identity processors))]
+    (when-not (nil? proc1)
+      (let [w (.getWidth proc1)
+            h (.getHeight proc1)
+            stack (ImageStack. w h)]
+        (doseq [processor processors]
+          (.addSlice stack
+            (if (nil? processor)
+              (blank-processor-like proc1)
+              processor)))
+        stack))))
 
 (defn processor-to-image
   "Converts and ImageJ ImageProcessor to an AWT image."
@@ -102,21 +117,23 @@
   "Takes n ImageProcessors and n lut objects and produces a BufferedImage
    containing the overlay."
   [processors luts]
-  (let [luts (if (= 1 (count luts))
-               (list (first luts) black-lut)
-               luts)
-        processors (if (= 1 (count processors))
-                     (let [proc (first processors)]
-                       (list proc (.createProcessor proc
-                                    (.getWidth proc) (.getHeight proc))))
-                     processors)
-        stack (make-stack processors)
-        img+ (ImagePlus. "" stack)]
-    (.setDimensions img+ (.getSize stack) 1 1)
-    (.getImage
-      (doto (CompositeImage. img+ CompositeImage/COMPOSITE)
-        (.setLuts (into-array luts))))))
+  (when (first (filter identity processors))
+    (let [luts (if (= 1 (count luts))
+                 (list (first luts) black-lut)
+                 luts)
+          processors (if (= 1 (count processors))
+                       (let [proc (first processors)]
+                         (list proc (black-processor-like proc)))
+                       processors)
+          stack (make-stack processors)
+          img+ (ImagePlus. "" stack)]
+      (.setDimensions img+ (.getSize stack) 1 1)
+      (time (.getImage
+        (doto (CompositeImage. img+ CompositeImage/COMPOSITE)
+          (.setLuts (into-array luts))))))))
 
+
+(def overlay-memo (memoize overlay))
 
 ;; testing
     

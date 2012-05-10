@@ -6,7 +6,7 @@
                            MouseAdapter WindowAdapter)
            (org.micromanager.utils GUIUpdater))
   (:use [org.micromanager.mm :only (edt)]
-        [slide-explorer.image :only (crop merge-and-scale overlay lut-object)]))
+        [slide-explorer.image :only (crop merge-and-scale overlay overlay-memo lut-object)]))
 
 ; Order of operations:
 ;  Stitch/crop
@@ -40,8 +40,9 @@
   reference)
 
 (defmacro timer [expr]
-  `(let [ret# (time ~expr)]
-     (println '~expr)
+  `(let [ret# ~expr] ; (time ~expr)]
+    ; (print '~expr)
+    ; (println " -->" (pr-str ret#))
      ret#))
 
 ;; GUI UTILITIES
@@ -128,32 +129,43 @@
                            RenderingHints/VALUE_ANTIALIAS_ON
                            RenderingHints/VALUE_ANTIALIAS_OFF)))))
 
+(defn multi-color-tile [available-tiles zoom tile-indices channels-map]
+  (let [channel-names (keys channels-map)]
+       (overlay-memo
+         (for [chan channel-names]
+           (get-in available-tiles [zoom (assoc tile-indices :nc chan)]))
+         (for [chan channel-names]
+           (get-in channels-map [chan :lut])))))
+
 (defn paint-tiles [^Graphics2D g available-tiles screen-state [tile-width tile-height]]
   (let [pixel-rect (.getClipBounds g)]
     (doseq [[nx ny] (tiles-in-pixel-rectangle pixel-rect [tile-width tile-height])]
-      (when-let [proc (get-in available-tiles [(screen-state :zoom) {:nx nx :ny ny :nz (screen-state :z) :nt 0 :nc 0}])]
+      (when-let [image (timer (multi-color-tile available-tiles
+                                                (screen-state :zoom)
+                                                {:nx nx :ny ny :nz (screen-state :z) :nt 0}
+                                                (:channels screen-state)))]
         (let [[x y] (tile-to-pixels [nx ny] [tile-width tile-height] 1)]
-          (.drawImage g (.createImage proc) x y nil))))))
+          (timer (.drawImage g image x y nil)))))))
 
 (defn paint-screen [graphics screen-state available-tiles]
   (let [original-transform (.getTransform graphics)
         zoom (:zoom screen-state)
         x-center (/ (screen-state :width) 2)
         y-center (/ (screen-state :height) 2)]
-    (doto graphics
+    (timer (doto graphics
       (.setClip 0 0 (:width screen-state) (:height screen-state))
       (.translate (- x-center (int (* (:x screen-state) zoom)))
                   (- y-center (int (* (:y screen-state) zoom))))
       (paint-tiles available-tiles screen-state [512 512])
       enable-anti-aliasing
-      (.setColor Color/YELLOW)
+      (.setColor (Color. 0x0CB397))
       (.fillOval -5 -5
                  10 10)
       (.setTransform original-transform)
-      (.setColor Color/YELLOW)
+      (.setColor (Color. 0xECF2AA))
       (.drawString (str screen-state)
                    (int 0)
-                   (int (- (:height screen-state) 10))))))
+                   (int (- (:height screen-state) 10)))))))
   
 
 ;; USER INPUT HANDLING
@@ -297,6 +309,16 @@ to normal size."
     (doseq [component (descendants window)]
       (.addKeyListener component key-adapter))))
 
+(defn handle-pointing [component pointing-atom]
+  (.addMouseMotionListener component
+                     (proxy [MouseAdapter] []
+                       (mouseMoved [e]
+                                   (swap! pointing-atom merge {:x (.getX e)
+                                                               :y (.getY e)})))))
+
+(defn add-channel [screen-state-atom name color min max gamma]
+  (swap! update-in [:channels name] (lut-object color min max gamma)))
+
 ;; MAIN WINDOW AND PANEL
 
 (defn main-panel [screen-state available-tiles]
@@ -313,11 +335,15 @@ to normal size."
     (.setBounds 10 10 500 500)))
 
 (defn show [available-tiles]
-  (let [screen-state (atom (sorted-map :x 0 :y 0 :z 0 :zoom 1 :keys (sorted-set)))
+  (let [screen-state (atom (sorted-map :x 0 :y 0 :z 0 :zoom 1
+                                       :keys (sorted-set)
+                                       :channels (sorted-map)))
         panel (main-panel screen-state available-tiles)
-        frame (main-frame)]
+        frame (main-frame)
+        mouse-position (atom nil)]
     (def at available-tiles)
     (def ss screen-state)
+    (def mp mouse-position)
     (def f frame)
     (def pnl panel)
     (.add (.getContentPane frame) panel)
@@ -331,5 +357,6 @@ to normal size."
     (watch-keys frame screen-state)
     (display-follow panel screen-state)
     (display-follow panel available-tiles)
-    frame))
+    (handle-pointing panel mouse-position)
+    screen-state))
 
