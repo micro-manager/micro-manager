@@ -5,6 +5,7 @@
            (java.awt.event ComponentAdapter KeyEvent KeyAdapter
                            MouseAdapter WindowAdapter)
            (org.micromanager.utils GUIUpdater))
+  (:require [clojure.pprint :as pprint])
   (:use [org.micromanager.mm :only (edt)]
         [slide-explorer.image :only (crop merge-and-scale overlay overlay-memo lut-object)]))
 
@@ -47,7 +48,7 @@
 
 ;; GUI UTILITIES
 
-(defn descendants
+(defn window-descendants
   "Returns a depth-first seq of all components contained by window."
   [window]
   (tree-seq (constantly true)
@@ -131,28 +132,30 @@
 
 (defn multi-color-tile [available-tiles zoom tile-indices channels-map]
   (let [channel-names (keys channels-map)]
-       (overlay-memo
-         (for [chan channel-names]
-           (get-in available-tiles [zoom (assoc tile-indices :nc chan)]))
-         (for [chan channel-names]
-           (get-in channels-map [chan :lut])))))
+    (overlay-memo
+      (for [chan channel-names]
+        (get-in available-tiles [zoom (assoc tile-indices :nc chan)]))
+      (for [chan channel-names]
+        (get-in channels-map [chan :lut])))))
 
 (defn paint-tiles [^Graphics2D g available-tiles screen-state [tile-width tile-height]]
   (let [pixel-rect (.getClipBounds g)]
-    (doseq [[nx ny] (tiles-in-pixel-rectangle pixel-rect [tile-width tile-height])]
-      (when-let [image (timer (multi-color-tile available-tiles
-                                                (screen-state :zoom)
-                                                {:nx nx :ny ny :nz (screen-state :z) :nt 0}
-                                                (:channels screen-state)))]
+    (doseq [[nx ny] (tiles-in-pixel-rectangle pixel-rect
+                                              [tile-width tile-height])]
+      (when-let [image (multi-color-tile available-tiles
+                                         (screen-state :zoom)
+                                         {:nx nx :ny ny :nt 0
+                                          :nz (screen-state :z)}
+                                         (:channels screen-state))]
         (let [[x y] (tile-to-pixels [nx ny] [tile-width tile-height] 1)]
-          (timer (.drawImage g image x y nil)))))))
+          (.drawImage g image x y nil))))))
 
 (defn paint-screen [graphics screen-state available-tiles]
   (let [original-transform (.getTransform graphics)
         zoom (:zoom screen-state)
         x-center (/ (screen-state :width) 2)
         y-center (/ (screen-state :height) 2)]
-    (timer (doto graphics
+    (doto graphics
       (.setClip 0 0 (:width screen-state) (:height screen-state))
       (.translate (- x-center (int (* (:x screen-state) zoom)))
                   (- y-center (int (* (:y screen-state) zoom))))
@@ -165,7 +168,7 @@
       (.setColor (Color. 0xECF2AA))
       (.drawString (str screen-state)
                    (int 0)
-                   (int (- (:height screen-state) 10)))))))
+                   (int (- (screen-state :height) 12))))))
   
 
 ;; USER INPUT HANDLING
@@ -306,7 +309,7 @@ to normal size."
                       (keyReleased [e]
                                    (swap! key-atom update-in [:keys] disj
                                           (KeyEvent/getKeyText (.getKeyCode e)))))]
-    (doseq [component (descendants window)]
+    (doseq [component (window-descendants window)]
       (.addKeyListener component key-adapter))))
 
 (defn handle-pointing [component pointing-atom]

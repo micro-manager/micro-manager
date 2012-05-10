@@ -30,7 +30,7 @@
   (when proc-guest
     (.insert proc-host proc-guest x-host y-host)))
 
-(defn blank-processor-like [original-processor]
+(defn black-processor-like [original-processor]
   (.createProcessor original-processor
                     (.getWidth original-processor)
                     (.getHeight original-processor)))
@@ -47,7 +47,7 @@
         (doseq [processor processors]
           (.addSlice stack
             (if (nil? processor)
-              (blank-processor-like proc1)
+              (black-processor-like proc1)
               processor)))
         stack))))
 
