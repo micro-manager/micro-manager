@@ -114,8 +114,7 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
    private boolean albumSaved_ = false;
    private boolean[] channelContrastInitialized_;
    private static double snapWinZoom_ = 1.0;
-   private long lastImageUpdate_ = -1;
-   private Timer imageChangedTimer_;
+
    
    /* This interface and the following two classes
     * allow us to manipulate the dimensions
@@ -281,8 +280,9 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
           Runnable runnable = new Runnable() {
               @Override
               public void run() {
+
+                 superUpdateImage();
                   imageChangedUpdate();
-                  superUpdateImage();
                   try { 
                       JavaUtils.invokeRestrictedMethod(this, ImagePlus.class, "notifyListeners", 2);
                   } catch (Exception ex) {   }
@@ -1868,24 +1868,6 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
     * is the active window
     */
    private void imageChangedUpdate() {
-      if (System.currentTimeMillis() - lastImageUpdate_ < 30) {
-        if (imageChangedTimer_ == null) {
-           imageChangedTimer_ = new Timer (30, new ActionListener() {
-               @Override
-               public void actionPerformed(ActionEvent e) {
-                  imageChangedUpdate();
-               }
-           });
-           imageChangedTimer_.setRepeats(false);
-        }
-        if (imageChangedTimer_.isRunning()) { 
-           imageChangedTimer_.restart();
-        }  else {
-           imageChangedTimer_.start();
-        }
-         return;
-      }
-      
       if (histograms_ != null) {
          histograms_.imageChanged();
        } 
@@ -1893,8 +1875,7 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
           mdPanel_.imageChangedUpdate(this);
       } 
       imageChangedWindowUpdate(); //used to update status line
-      
-      lastImageUpdate_ = System.currentTimeMillis();
+
    }
    
    public boolean isActiveDisplay() {
