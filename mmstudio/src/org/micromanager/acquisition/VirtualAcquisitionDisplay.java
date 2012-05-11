@@ -21,6 +21,8 @@
 //
 package org.micromanager.acquisition;
 
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import org.micromanager.internalinterfaces.DisplayControls;
 import org.micromanager.internalinterfaces.Histograms;
 import java.lang.reflect.InvocationTargetException;
@@ -543,7 +545,22 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
       updateAndDraw();
       updateWindowTitleAndStatus();
 
-      forcePainting();
+      Runnable forcePaint = new Runnable() {
+         @Override
+         public void run() {
+             forcePainting();
+         }     
+      };
+     
+      if (SwingUtilities.isEventDispatchThread()) {
+         forcePaint.run();
+      } else {
+         try {
+            SwingUtilities.invokeAndWait(forcePaint);
+         } catch (Exception ex) {
+            ReportingUtils.logError(ex);
+         }
+      }
    }
 
    private void forcePainting() {
