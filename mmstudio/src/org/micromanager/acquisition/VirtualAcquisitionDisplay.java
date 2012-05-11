@@ -289,6 +289,7 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
                   superDraw();
               }
           };
+          
           updater1.post(runnable);
       }
       
@@ -1179,7 +1180,7 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
             } else if (mda_) { //Multi D acquisition
                IMMImagePlus immImg = ((IMMImagePlus) hyperImage_);
                if (immImg.getNSlicesUnverified() > 1) {  //Z stacks
-                  autoscaleOverStackWithoutDraw(imageCache_, hyperImage_, channel, zStackMins_, zStackMaxes_);
+                  autoscaleOverStackWithoutDraw(hyperImage_, channel, slice, zStackMins_, zStackMaxes_);
                   if (channel != immImg.getNChannelsUnverified() - 1 || slice != immImg.getNSlicesUnverified() - 1) {
                      return;  //don't set new display to false until all channels autoscaled
                   }
@@ -1226,9 +1227,8 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
       }
    }
    
-   private void autoscaleOverStackWithoutDraw(ImageCache cache, ImagePlus img, int channel,
+   private void autoscaleOverStackWithoutDraw(ImagePlus img, int channel, int slice,
            HashMap<Integer, Integer> mins, HashMap<Integer, Integer> maxes) {
-      int nSlices = ((VirtualAcquisitionDisplay.IMMImagePlus) img).getNSlicesUnverified();
       int nChannels = ((VirtualAcquisitionDisplay.IMMImagePlus) img).getNChannelsUnverified();
       int bytes = img.getBytesPerPixel();
       int pixMin, pixMax;
@@ -1239,8 +1239,7 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
          pixMax = 0;
          pixMin = (int) (Math.pow(2, 8 * bytes) - 1);
       }
-      int z = img.getSlice() - 1;
-      int flatIndex = 1 + channel + z * nChannels;
+      int flatIndex = 1 + channel + slice * nChannels;
       if (bytes == 2) {
          short[] pixels = (short[]) img.getStack().getPixels(flatIndex);
          for (short value : pixels) {
