@@ -2,24 +2,18 @@
  * To change this template, choose Tools | Templates
  * and open the template in the editor.
  */
-
 package org.micromanager.utils;
 
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import javax.swing.SwingUtilities;
 
 /**
  *
- * @author arthur
+ * @author arthur and henry
  */
 public class GUIUpdater {
-   AtomicBoolean readyForNewPost = new AtomicBoolean();
-   AtomicReference<Runnable> latestTask = new AtomicReference<Runnable>();
 
-   public GUIUpdater() {
-      readyForNewPost.set(true);
-   }
+   AtomicReference<Runnable> latestTask = new AtomicReference<Runnable>();
 
    /*
     * Post a task for running on the EDT thread. If multiple
@@ -27,18 +21,13 @@ public class GUIUpdater {
     */
    public void post(Runnable task) {
       latestTask.set(task);
-      if (readyForNewPost.getAndSet(false)) {
-         SwingUtilities.invokeLater(new Runnable() {
-            public void run() {
-               readyForNewPost.set(true);
-               final Runnable taskToRun = latestTask.getAndSet(null);
-               if (taskToRun != null) {
-                  taskToRun.run();
-               } else {
-                  System.err.println("Null task in GUIUpdater!");
-               }
+      SwingUtilities.invokeLater(new Runnable() {
+         public void run() {
+            final Runnable taskToRun = latestTask.getAndSet(null);
+            if (taskToRun != null) {
+               taskToRun.run();
             }
-         });
-      }
+         }
+      });
    }
 }
