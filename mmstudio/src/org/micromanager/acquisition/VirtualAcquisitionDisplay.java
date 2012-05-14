@@ -113,7 +113,7 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
    private HistogramControlsState histogramControlsState_;
    private boolean albumSaved_ = false;
    private boolean[] channelContrastInitialized_;
-   private static double snapWinZoom_ = 1.0;
+   private static double snapWinMag_ = -1;
 
    
    /* This interface and the following two classes
@@ -1524,7 +1524,7 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
    
    public void storeWindowSizeAfterZoom(ImageWindow win) {
       if (simple_) {
-         snapWinZoom_ = win.getCanvas().getMagnification();
+         snapWinMag_ = win.getCanvas().getMagnification();
       }
    }
    
@@ -1533,8 +1533,8 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
       win.setLocation(new Point(0,0));
       
       double mag;
-      if (simple_) {
-         mag = snapWinZoom_;
+      if (simple_ && snapWinMag_ != -1) {
+         mag = snapWinMag_;
       } else {
          mag = MMStudioMainFrame.getInstance().getPreferredWindowMag();
       }
