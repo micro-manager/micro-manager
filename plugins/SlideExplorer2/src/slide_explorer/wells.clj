@@ -49,7 +49,7 @@
   (doto graphics
     enable-anti-aliasing
     (.translate 30 30)
-    (.scale 1.3 1.3)
+    (.scale 1.5 1.5)
     (.rotate @angle)
     (.setColor Color/WHITE)
     (paint-labels well-state)
@@ -66,7 +66,7 @@
   
 
 (defn test-wells []
-  (let [well-state-atom (atom {:nx 12 :ny 8 :type :rect :width 20 :height 20
+  (let [well-state-atom (atom {:nx 12 :ny 8 :type :circle :width 20 :height 20
                                :x-spacing 25 :y-spacing 25})]
     (doto (JFrame.)
       (.setBounds 30 30 400 400)

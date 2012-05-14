@@ -59,3 +59,11 @@
        (tile-priority-list [location-x location-y])
        (remove #(contains? finished-tiles %))
        first))
+
+(defn simulate-trajectory [[start-x start-y]]
+  (loop [[x y] [start-x start-y] trajectory #{[start-x start-y]}]
+    (println x y trajectory)
+    (let [[x-next y-next] (next-tile [0 0] [x y] trajectory)]
+      (if (< x-next 4)
+        (recur [x-next y-next] (conj trajectory [x-next y-next]))
+        trajectory))))

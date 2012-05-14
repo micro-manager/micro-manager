@@ -132,7 +132,6 @@
         (doto (CompositeImage. img+ CompositeImage/COMPOSITE)
           (.setLuts (into-array luts))))))))
 
-
 (def overlay-memo (memoize overlay))
 
 ;; testing

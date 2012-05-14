@@ -3,6 +3,7 @@
 
 
 (defn enable-anti-aliasing
+  "Turn on (off) anti-aliasing for a graphics context."
   ([^Graphics g]
     (enable-anti-aliasing g true))
   ([^Graphics g on]
@@ -13,9 +14,8 @@
                            RenderingHints/VALUE_ANTIALIAS_ON
                            RenderingHints/VALUE_ANTIALIAS_OFF)))))
 
-
 (defn draw-string-center
-  "Draws a string centered at position x,y."
+  "Draw a string centered at position x,y."
   [^Graphics2D graphics ^String text x y]
   (let [context (.getFontRenderContext graphics)
         height (.. graphics

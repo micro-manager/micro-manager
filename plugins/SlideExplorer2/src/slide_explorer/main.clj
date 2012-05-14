@@ -39,11 +39,9 @@
 
 (def grab-tagged-image
   "Grab a single image from camera."
-  ;(memoize 
     (fn []
       (core snapImage)
       (core getTaggedImage)))
-  ;)
 
 (def pixel-size (core getPixelSizeUm true))
 
@@ -104,8 +102,6 @@
 
 (defn get-tile [{:keys [nx ny nz nt nc]}]
   (ImageUtils/makeProcessor (grab-tagged-image)))
-  ;(slide-explorer.image/try-3-colors false))
-
 
 ;; tests
 
@@ -122,20 +118,12 @@
 (defn test-start []
   (swap! (start) assoc :channels test-channels))
 
-(defn test-tile [nx ny]
-  (add-to-available-tiles at {:nx nx
-                              :ny ny
-                              :nz 0 
-                              :nt 0
-                              :nc 0}
-                          (get-tile nil)))
-
 (defn test-tile [nx ny nz nc]
   (add-to-available-tiles at {:nx nx
                               :ny ny
                               :nz nz
                               :nt 0
-                              :nc 0}
+                              :nc nc}
                           (get-tile nil)))
 
 (defn test-tiles

@@ -156,7 +156,7 @@
                  10 10)
       (.setTransform original-transform)
       (.setColor (Color. 0xECF2AA))
-      (.drawString (str screen-state)
+      (.drawString (str (select-keys screen-state [:x :y :z :zoom :keys]))
                    (int 0)
                    (int (- (screen-state :height) 12))))))
   
