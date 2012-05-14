@@ -135,12 +135,13 @@
                               :ny ny
                               :nz nz
                               :nt 0
-                              :nc nc}
+                              :nc 0}
                           (get-tile nil)))
 
 (defn test-tiles
   ([n] (test-tiles n n 0 0))
   ([nx ny nz channels]
+    (core setExposure 100)
     (.start (Thread.
               #(doseq [i (range (- nx) (inc nx)) j (range (- ny) (inc ny))
                        k (range (- nz) (inc nz))

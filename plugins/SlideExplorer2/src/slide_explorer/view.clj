@@ -7,6 +7,7 @@
            (org.micromanager.utils GUIUpdater))
   (:require [clojure.pprint :as pprint])
   (:use [org.micromanager.mm :only (edt)]
+        [slide-explorer.paint :only (enable-anti-aliasing)]
         [slide-explorer.image :only (crop merge-and-scale overlay overlay-memo lut-object)]))
 
 ; Order of operations:
@@ -118,17 +119,6 @@
   (send tile-map-agent add-and-propagate-tiles indices tile))
 
 ;; PAINTING
-
-(defn enable-anti-aliasing
-  ([^Graphics g]
-    (enable-anti-aliasing g true))
-  ([^Graphics g on]
-    (let [graphics2d (cast Graphics2D g)]
-      (.setRenderingHint graphics2d
-                         RenderingHints/KEY_ANTIALIASING
-                         (if on
-                           RenderingHints/VALUE_ANTIALIAS_ON
-                           RenderingHints/VALUE_ANTIALIAS_OFF)))))
 
 (defn multi-color-tile [available-tiles zoom tile-indices channels-map]
   (let [channel-names (keys channels-map)]
