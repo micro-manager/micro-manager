@@ -1,7 +1,8 @@
 (ns slide-explorer.wells
   (:import (javax.swing JFrame JPanel)
            (java.awt Color Graphics Graphics2D))
-  (:use [slide-explorer.paint :only (enable-anti-aliasing)]))
+  (:use [slide-explorer.paint :only (enable-anti-aliasing
+                                     draw-string-center)]))
 
 
 (defn compute-wells [nx ny diameter spacing-x spacing-y]
@@ -35,22 +36,6 @@
                               20 25 25)]
     (paint-well graphics (assoc well :type type))))
 
-(defn draw-string-center
-  "Draws a string centered at position x,y."
-  [^Graphics2D graphics ^String text x y]
-  (let [context (.getFontRenderContext graphics)
-        height (.. graphics
-                   getFont (createGlyphVector context text)
-                   getVisualBounds
-                   getHeight)
-        width (.. graphics
-                  getFontMetrics
-                  (getStringBounds text graphics)
-                  getWidth)]
-    (.drawString graphics text
-                 (float (- x (/ width 2)))
-                 (float (+ y (/ height 2))))))
-
 (defn paint-labels [graphics well-state]
   (.setColor graphics Color/WHITE)
   (doseq [column (range (:nx well-state))]
@@ -59,6 +44,7 @@
     (draw-string-center graphics (str (char (+ 65 row))) -10 (+ 10 (* 25 row)))))
 
 (def angle (atom 0))
+
 (defn paint-well-panel [^Graphics graphics well-state]
   (doto graphics
     enable-anti-aliasing
