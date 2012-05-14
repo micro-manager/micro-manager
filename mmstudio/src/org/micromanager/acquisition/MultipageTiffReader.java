@@ -266,7 +266,7 @@ public class MultipageTiffReader {
       int numEntries = entries.getChar();
       IFDData data = new IFDData();
       for (int i = 0; i < numEntries; i++) {
-         IFDEntry entry = readDirectoryEntry(12 * i + 2 + byteOffset);
+         IFDEntry entry = readDirectoryEntry(MultipageTiffWriter.ENTRIES_PER_IFD * i + 2 + byteOffset);
          if (entry.tag == MM_METADATA) {
             data.mdOffset = entry.value;
             data.mdLength = entry.count;
@@ -285,8 +285,6 @@ public class MultipageTiffReader {
             }
          } 
       }
-      MappedByteBuffer next = makeReadOnlyBuffer(byteOffset + 2 + 12 * numEntries, 4);
-      data.nextIFDAdress = unsignInt(next.getInt());
       return data;
    }
 
@@ -412,7 +410,6 @@ public class MultipageTiffReader {
       public long bytesPerImage;
       public long mdOffset;
       public long mdLength;
-      public long nextIFDAdress;
       public long bitsPerSample;
       public boolean rgb;
       

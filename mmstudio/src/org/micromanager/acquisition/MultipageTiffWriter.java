@@ -44,6 +44,7 @@ public class MultipageTiffWriter {
    private static final long BYTES_PER_GIG = 1073741824;
    private static final long MAX_FILE_SIZE = 4*BYTES_PER_GIG;
    
+   public static final char ENTRIES_PER_IFD = 13;
    //Required tags
    public static final char WIDTH = 256;
    public static final char HEIGHT = 257;
@@ -246,9 +247,9 @@ public class MultipageTiffWriter {
    }
 
    private void writeIFD(TaggedImage img) throws IOException {     
-     char numEntries = (char) 13;
-     if (firstIFD_)
-        numEntries++;
+     char numEntries = ENTRIES_PER_IFD;
+//     if (firstIFD_)
+//        numEntries++;
      if (img.tags.has("Summary")) {
         img.tags.remove("Summary");
      }
@@ -262,7 +263,8 @@ public class MultipageTiffWriter {
      //1 byte per character of MD string
      //number of bytes for pixels
      int numBytes = 2 + numEntries*12 + 4 + (rgb_?6:0) + 16 + mdString.length() + 
-             bytesPerImagePixels_ + (firstIFD_?ijDescription_.length():0);
+              bytesPerImagePixels_;
+//                          bytesPerImagePixels_ + (firstIFD_?ijDescription_.length():0);
      long tagDataOffset = byteOffset_ + 2 + numEntries*12 + 4;
      nextIFDOffsetLocation_ = byteOffset_ + 2 + numEntries*12;
      MappedByteBuffer buffer = makeBuffer(numBytes);
@@ -277,10 +279,10 @@ public class MultipageTiffWriter {
       writeIFDEntry(buffer,COMPRESSION,(char)3,1,1);
       writeIFDEntry(buffer,PHOTOMETRIC_INTERPRETATION,(char)3,1,rgb_?2:1);
       
-      if (firstIFD_) {
-         writeIFDEntry(buffer,IMAGE_DESCRIPTION,(char)2,ijDescription_.length(),tagDataOffset);
-         tagDataOffset += ijDescription_.length();
-      }
+//      if (firstIFD_) {
+//         writeIFDEntry(buffer,IMAGE_DESCRIPTION,(char)2,ijDescription_.length(),tagDataOffset);
+//         tagDataOffset += ijDescription_.length();
+//      }
       
       writeIFDEntry(buffer,STRIP_OFFSETS,(char)4,1, tagDataOffset );
       tagDataOffset += bytesPerImagePixels_;
@@ -303,9 +305,9 @@ public class MultipageTiffWriter {
          buffer.putChar((char) (byteDepth_*8));
          buffer.putChar((char) (byteDepth_*8));
       }
-      if (firstIFD_) {
-         writeString(buffer,ijDescription_);
-      }
+//      if (firstIFD_) {
+//         writeString(buffer,ijDescription_);
+//      }
       writePixels(buffer, img);
       writeResoltuionValues(buffer, img);
       writeString(buffer,mdString);    
