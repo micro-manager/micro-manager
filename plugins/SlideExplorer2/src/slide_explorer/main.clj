@@ -124,9 +124,9 @@
     (show available-tiles)))
 
 (def test-channels
-  {"DAPI" {:lut (lut-object Color/BLUE 0 255 1.0)}
+  {"DAPI" {:lut (lut-object Color/BLUE  0 255 1.0)}
    "GFP"  {:lut (lut-object Color/GREEN 0 255 1.0)}
-   "Cy5"  {:lut (lut-object Color/RED 0 255 1.0)}})
+   "Cy5"  {:lut (lut-object Color/RED   0 255 1.0)}})
 
 (defn test-start []
   (def ss (start))

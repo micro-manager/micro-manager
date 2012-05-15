@@ -1,5 +1,6 @@
 (ns slide-explorer.image
   (:import (ij CompositeImage ImagePlus ImageStack)
+           (ij.plugin ZProjector)
            (ij.process ByteProcessor LUT ImageProcessor ImageStatistics ShortProcessor)
            (mmcorej TaggedImage)
            (javax.swing JFrame)
@@ -60,6 +61,7 @@
 
 ;; Trimming and displacing images
 
+; 0.466 ms 
 (defn crop
   "Crops an image, with upper-left corner at position x,y
    and width and height w,h."
@@ -85,6 +87,7 @@
 
 ;; Merge and scale the images for Mipmap
 
+; 5.9 ms
 (defn merge-and-scale
   "Takes four ImageProcessors (tiles) and tiles them in a
    2x2 mosaic with no gaps, then scales pixels to half size."
@@ -103,6 +106,7 @@
 
 ;; stats
 
+; 0.335 ms
 (defn statistics
   "Get basic intensity statistics for an image processor."
   [processor]
@@ -124,6 +128,7 @@
   "An LUT such that the image is not displayed."
   (lut-object Color/BLACK 0 255 1.0))
 
+; 3.99 ms
 (defn overlay
   "Takes n ImageProcessors and n lut objects and produces a BufferedImage
    containing the overlay."
@@ -139,11 +144,28 @@
           stack (make-stack processors)
           img+ (ImagePlus. "" stack)]
       (.setDimensions img+ (.getSize stack) 1 1)
-      (time (.getImage
+      (.getImage
         (doto (CompositeImage. img+ CompositeImage/COMPOSITE)
-          (.setLuts (into-array luts))))))))
+          (.setLuts (into-array luts)))))))
 
 (def overlay-memo (memoize overlay))
+
+;; Maximum intensity projection
+
+; 11 ms
+(defn maximum-intensity-projection
+  "Runs a maximum intensity projection across any number of ImageProcessors."
+  [processors]
+  (let [float-processor
+        (->
+          (doto
+            (ZProjector. (ImagePlus. "" (make-stack processors)))
+            .doProjection)
+          .getProjection
+          .getProcessor)]
+    (condp = (type (first processors))
+      ByteProcessor (.convertToByte float-processor false)
+      ShortProcessor (.convertToShort float-processor false))))
 
 ;; testing
     

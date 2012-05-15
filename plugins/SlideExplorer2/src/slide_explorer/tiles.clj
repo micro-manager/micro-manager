@@ -10,7 +10,7 @@
   (* x x))
 
 (defn distance-squared
-  "Get the squared distance between to points in cartesian space."
+  "Get the squared distance between two points in cartesian space."
   [[x1 y1] [x2 y2]]
   (+ (square (- x1 x2))
      (square (- y1 y2))))
@@ -62,7 +62,7 @@
 
 (defn simulate-trajectory [[start-x start-y]]
   (loop [[x y] [start-x start-y] trajectory #{[start-x start-y]}]
-    (println x y trajectory)
+    ;(println x y trajectory)
     (let [[x-next y-next] (next-tile [0 0] [x y] trajectory)]
       (if (< x-next 4)
         (recur [x-next y-next] (conj trajectory [x-next y-next]))
