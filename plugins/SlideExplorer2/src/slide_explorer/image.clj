@@ -1,6 +1,6 @@
 (ns slide-explorer.image
   (:import (ij CompositeImage ImagePlus ImageStack)
-           (ij.process ByteProcessor LUT ImageProcessor ShortProcessor)
+           (ij.process ByteProcessor LUT ImageProcessor ImageStatistics ShortProcessor)
            (mmcorej TaggedImage)
            (javax.swing JFrame)
            (java.awt Color)
@@ -25,12 +25,14 @@
 ; ImageProcessor-related utilities
 
 (defn insert-image
-  "Insert one ImageProcessor into another."
+  "Inserts one ImageProcessor into another."
   [proc-host proc-guest x-host y-host]
   (when proc-guest
     (.insert proc-host proc-guest x-host y-host)))
 
-(defn black-processor-like [original-processor]
+(defn black-processor-like
+  "Creates an empty (black) image processor."
+  [original-processor]
   (.createProcessor original-processor
                     (.getWidth original-processor)
                     (.getHeight original-processor)))
@@ -99,6 +101,15 @@
       (.setInterpolationMethod ImageProcessor/BILINEAR))
     (.resize large w h)))
 
+;; stats
+
+(defn statistics
+  "Get basic intensity statistics for an image processor."
+  [processor]
+  {:min (.getMin processor)
+   :max (.getMax processor)
+   :histogram (.getHistogram processor)})
+  
 ;; Channels/LUTs
 
 (defn lut-object
@@ -136,7 +147,7 @@
 
 ;; testing
     
-(defn show
+(defn show-image
   "Shows an AWT or ImageProcessor in an ImageJ window."
   [img-or-proc]
   (.show (ImagePlus. "" img-or-proc))

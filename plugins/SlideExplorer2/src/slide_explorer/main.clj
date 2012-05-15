@@ -14,9 +14,9 @@
            (org.micromanager AcqEngine MMStudioMainFrame)
            (org.micromanager.utils GUIUpdater ImageUtils JavaUtils MDUtils)
            (org.micromanager.acquisition TaggedImageQueue))
-  (:use [org.micromanager.mm :only (core edt mmc load-mm json-to-data)]
+  (:use [org.micromanager.mm :only (core edt mmc gui load-mm json-to-data)]
         [slide-explorer.view :only (show add-to-available-tiles)]
-        [slide-explorer.image :only (lut-object)]))
+        [slide-explorer.image :only (show-image statistics lut-object)]))
 
 
 (load-mm)
@@ -38,7 +38,7 @@
 (def angle (atom 0))
 
 (def grab-tagged-image
-  "Grab a single image from camera."
+  "Grabs a single image from camera."
     (fn []
       (core snapImage)
       (core getTaggedImage)))
@@ -88,6 +88,12 @@
   [(MDUtils/getWidth (.tags tagged-image))
    (MDUtils/getHeight (.tags tagged-image))])
 
+(defn stack-colors
+  "Gets the channel colors from a tagged-processor-sequence."
+  [tagged-processor-sequence]
+  (let [summary (-> tagged-processor-sequence first :tags (get "Summary"))]
+    (zipmap (summary "ChNames") (map #(Color. %) (summary "ChColors")))))
+
 ;; pixels/stage
 
 (defn pixels-to-stage [^AffineTransform pixel-to-stage-transform [x y]]
@@ -105,8 +111,15 @@
 
 ;; tests
 
+(defn acquire-at [x y]
+  (let [xy-stage (core getXYStageDevice)]
+    (core setXYPosition xy-stage x y)
+    (core waitForDevice xy-stage)
+    (processor-sequence)))
+
 (defn start []
-  (let [available-tiles (agent {})]
+  (let [available-tiles (agent {})
+        xy-stage (core getXYStageDevice)]
     (def at available-tiles)
     (show available-tiles)))
 
@@ -116,7 +129,8 @@
    "Cy5"  {:lut (lut-object Color/RED 0 255 1.0)}})
 
 (defn test-start []
-  (swap! (start) assoc :channels test-channels))
+  (def ss (start))
+  (swap! ss assoc :channels test-channels))
 
 (defn test-tile [nx ny nz nc]
   (add-to-available-tiles at {:nx nx
@@ -128,12 +142,12 @@
 
 (defn test-tiles
   ([n] (test-tiles n n 0 0))
-  ([nx ny nz channels]
+  ([nx ny nz]
     (core setExposure 100)
     (.start (Thread.
               #(doseq [i (range (- nx) (inc nx)) j (range (- ny) (inc ny))
                        k (range (- nz) (inc nz))
-                       chan channels]
+                       chan (keys (@ss :channels))]
                  ;(Thread/sleep 1000)
                  (test-tile i j k chan))))))
 
