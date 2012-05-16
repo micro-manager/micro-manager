@@ -859,7 +859,7 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
          displaySettings.put("Comments", comments);
          return displaySettings;
       } catch (Exception e) {
-         ReportingUtils.showError("Error creating display settigns from summary metadata");
+         ReportingUtils.showError("Summary metadata not found or corrupt.  Is this a Micro-Manager dataset?");
          return null;
       }
    }
