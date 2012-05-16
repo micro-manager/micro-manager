@@ -9,7 +9,7 @@
   (:use [org.micromanager.mm :only (edt)]
         [slide-explorer.paint :only (enable-anti-aliasing)]
         [slide-explorer.image :only (crop merge-and-scale overlay overlay-memo lut-object)]))
-
+ftile
 ; Order of operations:
 ;  Stitch/crop
 ;  Flatten fields
@@ -77,6 +77,17 @@
           ny (range nt (inc nb))]
       [nx ny])))
 
+(defn unzoomed-rectangle
+  [rectangle zoom]
+  (Rectangle. (/ (.x rectangle) zoom)
+              (/ (.y rectangle) zoom)
+              (/ (.width rectangle) zoom)
+              (/ (.height rectangle) zoom)))
+
+(defn tiles-in-unzoomed-pixel-rectangle
+  [rectangle [tile-width tile-height] zoom]
+  (tiles-in-pixel-rectangle (unzoomed-rectangle rectangle zoom)
+                            [tile-width tile-height]))
 
 ;; TILING
 

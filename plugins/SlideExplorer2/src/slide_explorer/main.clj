@@ -102,8 +102,16 @@
     
 (defn stage-to-pixels [^AffineTransform pixel-to-stage-transform [x y]]
   (let [p (.inverseTransform pixel-to-stage-transform (Point2D$Double. x y) nil)]
-    [(.x p) (.y p)]))
-              
+    [(.x p) (.y p)]))      
+
+;; tiles/pixels
+
+(defn tiles-to-pixels [tile-width [x y]]
+  [(* x tile-width) (* y tile-width)])
+
+(defn pixels-to-tiles [tile-width [x y]]
+  [(/ x tile-width) (/ y tile-width)])
+
 ;; tile image handling
 
 (defn get-tile [{:keys [nx ny nz nt nc]}]

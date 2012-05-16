@@ -1,7 +1,9 @@
 (ns slide-explorer.image
-  (:import (ij CompositeImage ImagePlus ImageStack)
+  (:import (ij CompositeImage IJ ImagePlus ImageStack)
+           (ij.io FileSaver)
            (ij.plugin ZProjector)
-           (ij.process ByteProcessor LUT ImageProcessor ImageStatistics ShortProcessor)
+           (ij.process ByteProcessor LUT ImageProcessor
+                       ImageStatistics ShortProcessor)
            (mmcorej TaggedImage)
            (javax.swing JFrame)
            (java.awt Color)
@@ -22,6 +24,7 @@
 ; 5. Flat-field correction
 ; 6. Find stitching vector
 ; 7. Merge and scale the images
+; 8. Reading/writing images to disk
 
 ; ImageProcessor-related utilities
 
@@ -150,11 +153,24 @@
 
 (def overlay-memo (memoize overlay))
 
+;; reading/writing ImageProcessors on disk
+
+(defn write-processor [processor path]
+  (io! (-> (ImagePlus. "" processor)
+           FileSaver.
+           (.saveAsTiff path)))
+  processor)
+
+(defn read-processor [path]
+  (when-let [imgp (io! (IJ/openImage path))]
+    (.getProcessor imgp)))
+
 ;; Maximum intensity projection
 
 ; 11 ms
 (defn maximum-intensity-projection
-  "Runs a maximum intensity projection across any number of ImageProcessors."
+  "Runs a maximum intensity projection across a collection of ImageProcessors,
+   returning an ImageProcessor of the same type."
   [processors]
   (let [float-processor
         (->
@@ -170,7 +186,7 @@
 ;; testing
     
 (defn show-image
-  "Shows an AWT or ImageProcessor in an ImageJ window."
+  "Shows an AWT image or ImageProcessor in an ImageJ window."
   [img-or-proc]
   (.show (ImagePlus. "" img-or-proc))
   img-or-proc)
