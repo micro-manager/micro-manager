@@ -149,6 +149,7 @@ public class GaussianTrackThread extends GaussianInfo implements Runnable  {
       }
       boolean stop = false;
       int missedFrames = 0;
+      int size = 2 * halfSize_;
 
       
       for (int i = n; i <= nMax && !stop; i++) {
@@ -158,22 +159,28 @@ public class GaussianTrackThread extends GaussianInfo implements Runnable  {
          ij.IJ.showStatus("Tracking...");
          ij.IJ.showProgress(i, nMax);
 
-         // Search in next slice in same Roi for local maximum
-         Roi spotRoi = new Roi(xc - halfSize_, yc - halfSize_, 2 * halfSize_, 2*halfSize_);
-         if (useSlices)
-            siPlus.setSliceWithoutUpdate(siPlus.getStackIndex(ch, i, 1));
-         else
-            siPlus.setSliceWithoutUpdate(siPlus.getStackIndex(ch, 1, i));
-         siPlus.setRoi(spotRoi, false);
+         //if (missedFrames == 0) {
+            // Search in next slice in same Roi for local maximum
+            Roi searchRoi = new Roi(xc - size, yc - size, 2 * size + 1, 2 * size + 1);
+            if (useSlices) {
+               siPlus.setSliceWithoutUpdate(siPlus.getStackIndex(ch, i, 1));
+            } else {
+               siPlus.setSliceWithoutUpdate(siPlus.getStackIndex(ch, 1, i));
+            }
+            siPlus.setRoi(searchRoi, false);
 
-         // Find maximum in Roi, might not be needed....
-         pol = FindLocalMaxima.FindMax(siPlus, halfSize_, noiseTolerance_, preFilterType_);
+            // Find maximum in Roi, might not be needed....
+            pol = FindLocalMaxima.FindMax(siPlus, 2 * halfSize_, noiseTolerance_, preFilterType_);
 
-
-         if (pol.npoints >= 1) {
-            xc = pol.xpoints[0];
-            yc = pol.ypoints[0];
-         }
+            // do not stray more than 2 pixels in x or y.  
+            // This velocity maximum parameter should be tunable by the user
+            if (pol.npoints >= 1) {
+               if (Math.abs(xc - pol.xpoints[0]) < 2 && Math.abs(yc - pol.ypoints[0]) < 2) {
+                  xc = pol.xpoints[0];
+                  yc = pol.ypoints[0];
+               }
+            }
+         //}
 
          // Reset ROI to the original
          if (i==n) {
@@ -182,7 +189,7 @@ public class GaussianTrackThread extends GaussianInfo implements Runnable  {
          }
 
          // Set Roi for fitting centered around maximum
-         spotRoi = new Roi(xc - halfSize_, yc - halfSize_, 2 * halfSize_, 2*halfSize_);
+         Roi spotRoi = new Roi(xc - halfSize_, yc - halfSize_, 2 * halfSize_, 2*halfSize_);
          siPlus.setRoi(spotRoi, false);
          ImageProcessor ip = siPlus.getProcessor().crop();
          spot = new GaussianSpotData(ip, ch, 1, i, 1, i, xc,yc);
@@ -198,11 +205,7 @@ public class GaussianTrackThread extends GaussianInfo implements Runnable  {
             double ypc = paramsOut[GaussianFit.YC];
             double x = (xpc - halfSize_ + xc) * pixelSize_;
             double y = (ypc - halfSize_ + yc) * pixelSize_;
-            // If we have a good fit, update position of the box
-            if (xpc > 0 && xpc < (2 * halfSize_) && ypc > 0 && ypc < (2* halfSize_) ){
-               xc += (int) xpc - halfSize_;
-               yc += (int) ypc - halfSize_;
-            }
+
                
             double s = paramsOut[GaussianFit.S] * pixelSize_;
             // express background in photons after base level correction
@@ -226,8 +229,13 @@ public class GaussianTrackThread extends GaussianInfo implements Runnable  {
              if (paramsOut.length >= 7) {
                 theta = paramsOut[GaussianFit.S3];
              }
-            if (( !useWidthFilter_ || ( width > widthMin_ && width < widthMax_) ) &&
-                 (!useNrPhotonsFilter_ || (N > nrPhotonsMin_ && N < nrPhotonsMax_) ) ) {
+            if ((!useWidthFilter_ || (width > widthMin_ && width < widthMax_))
+                    && (!useNrPhotonsFilter_ || (N > nrPhotonsMin_ && N < nrPhotonsMax_))) {
+               // If we have a good fit, update position of the box
+               if (xpc > 0 && xpc < (2 * halfSize_) && ypc > 0 && ypc < (2 * halfSize_)) {
+                  xc += (int) xpc - halfSize_;
+                  yc += (int) ypc - halfSize_;
+               }
                spot.setData(N, bgr, x, y, 0.0, 2 * s, a, theta, sigma);
                xyPoints.add(new Point2D.Double(x, y));
                timePoints.add(i * timeIntervalMs_);

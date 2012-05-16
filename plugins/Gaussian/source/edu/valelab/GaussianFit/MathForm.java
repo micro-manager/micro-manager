@@ -156,6 +156,7 @@ public class MathForm extends javax.swing.JFrame {
     }// </editor-fold>//GEN-END:initComponents
 
    private void cancelButton_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cancelButton_ActionPerformed
+      formWindowClosing(null);
       dispose();
    }//GEN-LAST:event_cancelButton_ActionPerformed
 

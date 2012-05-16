@@ -324,7 +324,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
        plotComboBox_.setModel(new javax.swing.DefaultComboBoxModel(plotModes_));
        visualizationModel_.setModel(new javax.swing.DefaultComboBoxModel(renderModes_));
        visualizationMagnification_.setModel(new javax.swing.DefaultComboBoxModel(renderSizes_));
-       jScrollPane1.setName("Gaussian Spot Fitting Data Sets");
+       jScrollPane1_.setName("Gaussian Spot Fitting Data Sets");
        
        setBackground(MMStudioMainFrame.getInstance().getBackgroundColor());
        MMStudioMainFrame.getInstance().addMMBackgroundListener(this);
@@ -434,6 +434,11 @@ public class DataCollectionForm extends javax.swing.JFrame {
               maxNrSpots, spotList, timePoints, isTrack, coordinate, hasZ, minZ, maxZ);
       rowData_.add(newRow);
       myTableModel_.fireTableRowsInserted(rowData_.size()-1, rowData_.size());
+      SwingUtilities.invokeLater(new Runnable() {
+         public void run() {
+              formComponentResized(null);
+         }
+      } );
    }
 
    /**
@@ -459,9 +464,9 @@ public class DataCollectionForm extends javax.swing.JFrame {
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
-        jScrollPane1 = new javax.swing.JScrollPane();
-        jTable1_ = new javax.swing.JTable();
         loadButton = new javax.swing.JButton();
+        jScrollPane1_ = new javax.swing.JScrollPane();
+        jTable1_ = new javax.swing.JTable();
         plotComboBox_ = new javax.swing.JComboBox();
         visualizationMagnification_ = new javax.swing.JComboBox();
         visualizationModel_ = new javax.swing.JComboBox();
@@ -519,13 +524,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
             }
         });
 
-        jScrollPane1.setHorizontalScrollBarPolicy(javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_ALWAYS);
-        jScrollPane1.setVerticalScrollBarPolicy(javax.swing.ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
-
-        jTable1_.setModel(myTableModel_);
-        jScrollPane1.setViewportView(jTable1_);
-
-        loadButton.setFont(new java.awt.Font("Lucida Grande", 0, 10));
+        loadButton.setFont(new java.awt.Font("Lucida Grande", 0, 10)); // NOI18N
         loadButton.setText("Load");
         loadButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -533,16 +532,22 @@ public class DataCollectionForm extends javax.swing.JFrame {
             }
         });
 
-        plotComboBox_.setFont(new java.awt.Font("Lucida Grande", 0, 10));
+        jScrollPane1_.setHorizontalScrollBarPolicy(javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_ALWAYS);
+        jScrollPane1_.setVerticalScrollBarPolicy(javax.swing.ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
+
+        jTable1_.setModel(myTableModel_);
+        jScrollPane1_.setViewportView(jTable1_);
+
+        plotComboBox_.setFont(new java.awt.Font("Lucida Grande", 0, 10)); // NOI18N
         plotComboBox_.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "t-X", "t-Y", "X-Y", "t-Int.", " " }));
 
-        visualizationMagnification_.setFont(new java.awt.Font("Lucida Grande", 0, 10));
+        visualizationMagnification_.setFont(new java.awt.Font("Lucida Grande", 0, 10)); // NOI18N
         visualizationMagnification_.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "1x", "2x", "4x", "8x" }));
 
-        visualizationModel_.setFont(new java.awt.Font("Lucida Grande", 0, 10));
+        visualizationModel_.setFont(new java.awt.Font("Lucida Grande", 0, 10)); // NOI18N
         visualizationModel_.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "Gaussian" }));
 
-        saveButton.setFont(new java.awt.Font("Lucida Grande", 0, 10));
+        saveButton.setFont(new java.awt.Font("Lucida Grande", 0, 10)); // NOI18N
         saveButton.setText("Save");
         saveButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -550,7 +555,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
             }
         });
 
-        removeButton.setFont(new java.awt.Font("Lucida Grande", 0, 10));
+        removeButton.setFont(new java.awt.Font("Lucida Grande", 0, 10)); // NOI18N
         removeButton.setText("Remove");
         removeButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -558,7 +563,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
             }
         });
 
-        showButton_.setFont(new java.awt.Font("Lucida Grande", 0, 10));
+        showButton_.setFont(new java.awt.Font("Lucida Grande", 0, 10)); // NOI18N
         showButton_.setText("Show");
         showButton_.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -566,7 +571,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
             }
         });
 
-        c2StandardButton.setFont(new java.awt.Font("Lucida Grande", 0, 10));
+        c2StandardButton.setFont(new java.awt.Font("Lucida Grande", 0, 10)); // NOI18N
         c2StandardButton.setText("2C Reference");
         c2StandardButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -574,7 +579,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
             }
         });
 
-        pairsButton.setFont(new java.awt.Font("Lucida Grande", 0, 10));
+        pairsButton.setFont(new java.awt.Font("Lucida Grande", 0, 10)); // NOI18N
         pairsButton.setText("Pairs");
         pairsButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -582,7 +587,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
             }
         });
 
-        c2CorrectButton.setFont(new java.awt.Font("Lucida Grande", 0, 10));
+        c2CorrectButton.setFont(new java.awt.Font("Lucida Grande", 0, 10)); // NOI18N
         c2CorrectButton.setText("2C Correct");
         c2CorrectButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -590,10 +595,10 @@ public class DataCollectionForm extends javax.swing.JFrame {
             }
         });
 
-        referenceName_.setFont(new java.awt.Font("Lucida Grande", 0, 11));
+        referenceName_.setFont(new java.awt.Font("Lucida Grande", 0, 11)); // NOI18N
         referenceName_.setText("JLabel1");
 
-        unjitterButton_.setFont(new java.awt.Font("Lucida Grande", 0, 10));
+        unjitterButton_.setFont(new java.awt.Font("Lucida Grande", 0, 10)); // NOI18N
         unjitterButton_.setText("Drift Correct");
         unjitterButton_.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -601,10 +606,10 @@ public class DataCollectionForm extends javax.swing.JFrame {
             }
         });
 
-        jLabel1.setFont(new java.awt.Font("Lucida Grande", 0, 11));
+        jLabel1.setFont(new java.awt.Font("Lucida Grande", 0, 11)); // NOI18N
         jLabel1.setText("Filters:");
 
-        filterSigmaCheckBox_.setFont(new java.awt.Font("Lucida Grande", 0, 11));
+        filterSigmaCheckBox_.setFont(new java.awt.Font("Lucida Grande", 0, 11)); // NOI18N
         filterSigmaCheckBox_.setText("Sigma");
         filterSigmaCheckBox_.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -612,7 +617,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
             }
         });
 
-        filterIntensityCheckBox_.setFont(new java.awt.Font("Lucida Grande", 0, 11));
+        filterIntensityCheckBox_.setFont(new java.awt.Font("Lucida Grande", 0, 11)); // NOI18N
         filterIntensityCheckBox_.setText("Intensity");
         filterIntensityCheckBox_.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -620,31 +625,31 @@ public class DataCollectionForm extends javax.swing.JFrame {
             }
         });
 
-        sigmaMin_.setFont(new java.awt.Font("Lucida Grande", 0, 11));
+        sigmaMin_.setFont(new java.awt.Font("Lucida Grande", 0, 11)); // NOI18N
         sigmaMin_.setText("0");
 
-        intensityMin_.setFont(new java.awt.Font("Lucida Grande", 0, 11));
+        intensityMin_.setFont(new java.awt.Font("Lucida Grande", 0, 11)); // NOI18N
         intensityMin_.setText("0");
 
-        sigmaMax_.setFont(new java.awt.Font("Lucida Grande", 0, 11));
+        sigmaMax_.setFont(new java.awt.Font("Lucida Grande", 0, 11)); // NOI18N
         sigmaMax_.setText("0");
 
-        intensityMax_.setFont(new java.awt.Font("Lucida Grande", 0, 11));
+        intensityMax_.setFont(new java.awt.Font("Lucida Grande", 0, 11)); // NOI18N
         intensityMax_.setText("0");
 
-        jLabel2.setFont(new java.awt.Font("Lucida Grande", 0, 11));
+        jLabel2.setFont(new java.awt.Font("Lucida Grande", 0, 11)); // NOI18N
         jLabel2.setText("< spot <");
 
-        jLabel3.setFont(new java.awt.Font("Lucida Grande", 0, 11));
+        jLabel3.setFont(new java.awt.Font("Lucida Grande", 0, 11)); // NOI18N
         jLabel3.setText("< spot <");
 
-        SigmaLabel2.setFont(new java.awt.Font("Lucida Grande", 0, 11));
+        SigmaLabel2.setFont(new java.awt.Font("Lucida Grande", 0, 11)); // NOI18N
         SigmaLabel2.setText("nm");
 
-        IntLabel2.setFont(new java.awt.Font("Lucida Grande", 0, 11));
+        IntLabel2.setFont(new java.awt.Font("Lucida Grande", 0, 11)); // NOI18N
         IntLabel2.setText("#");
 
-        infoButton_.setFont(new java.awt.Font("Lucida Grande", 0, 10));
+        infoButton_.setFont(new java.awt.Font("Lucida Grande", 0, 10)); // NOI18N
         infoButton_.setText("Info");
         infoButton_.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -652,7 +657,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
             }
         });
 
-        plotButton_.setFont(new java.awt.Font("Lucida Grande", 0, 11));
+        plotButton_.setFont(new java.awt.Font("Lucida Grande", 0, 11)); // NOI18N
         plotButton_.setText("Plot");
         plotButton_.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -660,7 +665,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
             }
         });
 
-        renderButton_.setFont(new java.awt.Font("Lucida Grande", 0, 11));
+        renderButton_.setFont(new java.awt.Font("Lucida Grande", 0, 11)); // NOI18N
         renderButton_.setText("Render");
         renderButton_.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -672,12 +677,12 @@ public class DataCollectionForm extends javax.swing.JFrame {
 
         jSeparator3.setOrientation(javax.swing.SwingConstants.VERTICAL);
 
-        saveFormatBox_.setFont(new java.awt.Font("Lucida Grande", 0, 11));
+        saveFormatBox_.setFont(new java.awt.Font("Lucida Grande", 0, 11)); // NOI18N
         saveFormatBox_.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "Binary", "Text" }));
 
         jSeparator4.setOrientation(javax.swing.SwingConstants.VERTICAL);
 
-        averageTrackButton_.setFont(new java.awt.Font("Lucida Grande", 0, 11));
+        averageTrackButton_.setFont(new java.awt.Font("Lucida Grande", 0, 11)); // NOI18N
         averageTrackButton_.setText("Average");
         averageTrackButton_.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -685,7 +690,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
             }
         });
 
-        mathButton_.setFont(new java.awt.Font("Lucida Grande", 0, 11));
+        mathButton_.setFont(new java.awt.Font("Lucida Grande", 0, 11)); // NOI18N
         mathButton_.setText("Math");
         mathButton_.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -693,13 +698,13 @@ public class DataCollectionForm extends javax.swing.JFrame {
             }
         });
 
-        pairsMaxDistanceField_.setFont(new java.awt.Font("Lucida Grande", 0, 11));
+        pairsMaxDistanceField_.setFont(new java.awt.Font("Lucida Grande", 0, 11)); // NOI18N
         pairsMaxDistanceField_.setText("100");
 
-        SigmaLabel3.setFont(new java.awt.Font("Lucida Grande", 0, 11));
+        SigmaLabel3.setFont(new java.awt.Font("Lucida Grande", 0, 11)); // NOI18N
         SigmaLabel3.setText("nm");
 
-        linkButton_.setFont(new java.awt.Font("Lucida Grande", 0, 10));
+        linkButton_.setFont(new java.awt.Font("Lucida Grande", 0, 10)); // NOI18N
         linkButton_.setText("Link");
         linkButton_.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -707,7 +712,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
             }
         });
 
-        straightenTrackButton_.setFont(new java.awt.Font("Lucida Grande", 0, 11));
+        straightenTrackButton_.setFont(new java.awt.Font("Lucida Grande", 0, 11)); // NOI18N
         straightenTrackButton_.setText("Straighten");
         straightenTrackButton_.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -715,7 +720,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
             }
         });
 
-        centerTrackButton_.setFont(new java.awt.Font("Lucida Grande", 0, 11));
+        centerTrackButton_.setFont(new java.awt.Font("Lucida Grande", 0, 11)); // NOI18N
         centerTrackButton_.setText("Center");
         centerTrackButton_.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -723,13 +728,13 @@ public class DataCollectionForm extends javax.swing.JFrame {
             }
         });
 
-        jLabel4.setFont(new java.awt.Font("Lucida Grande", 0, 11));
+        jLabel4.setFont(new java.awt.Font("Lucida Grande", 0, 11)); // NOI18N
         jLabel4.setText("Localization Microscopy");
 
-        jLabel5.setFont(new java.awt.Font("Lucida Grande", 0, 11));
+        jLabel5.setFont(new java.awt.Font("Lucida Grande", 0, 11)); // NOI18N
         jLabel5.setText("2-Color");
 
-        powerSpectrumCheckBox_.setFont(new java.awt.Font("Lucida Grande", 0, 11));
+        powerSpectrumCheckBox_.setFont(new java.awt.Font("Lucida Grande", 0, 11)); // NOI18N
         powerSpectrumCheckBox_.setText("PSD");
         powerSpectrumCheckBox_.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -737,13 +742,13 @@ public class DataCollectionForm extends javax.swing.JFrame {
             }
         });
 
-        jLabel6.setFont(new java.awt.Font("Lucida Grande", 0, 11));
+        jLabel6.setFont(new java.awt.Font("Lucida Grande", 0, 11)); // NOI18N
         jLabel6.setText("Tracks");
 
-        jLabel7.setFont(new java.awt.Font("Lucida Grande", 0, 11));
+        jLabel7.setFont(new java.awt.Font("Lucida Grande", 0, 11)); // NOI18N
         jLabel7.setText("General");
 
-        logLogCheckBox_.setFont(new java.awt.Font("Lucida Grande", 0, 11));
+        logLogCheckBox_.setFont(new java.awt.Font("Lucida Grande", 0, 11)); // NOI18N
         logLogCheckBox_.setText("log-log");
         logLogCheckBox_.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -867,7 +872,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
                         .add(1, 1, 1)
                         .add(IntLabel2, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 10, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)))
                 .add(12, 12, 12))
-            .add(jScrollPane1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 1048, Short.MAX_VALUE)
+            .add(jScrollPane1_, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 1048, Short.MAX_VALUE)
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
@@ -971,9 +976,8 @@ public class DataCollectionForm extends javax.swing.JFrame {
                         .add(SigmaLabel3)
                         .add(6, 6, 6)
                         .add(IntLabel2)))
-                .add(3, 3, 3)
-                .add(jScrollPane1, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 900, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                .add(74, 74, 74))
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                .add(jScrollPane1_, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 1167, Short.MAX_VALUE))
         );
 
         pack();
@@ -1361,9 +1365,9 @@ public class DataCollectionForm extends javax.swing.JFrame {
    private void formComponentResized(java.awt.event.ComponentEvent evt) {//GEN-FIRST:event_formComponentResized
       //jScrollPane1.setSize(this.getSize());
       Dimension d = getSize();
-      d.height -= 60;
-      jScrollPane1.setSize(d);
-      jScrollPane1.getViewport().setViewSize(d);
+      d.height -= 155;
+      jScrollPane1_.setSize(d);
+      jScrollPane1_.getViewport().setViewSize(d);
    }//GEN-LAST:event_formComponentResized
 
    /**
@@ -2206,7 +2210,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
     private javax.swing.JLabel jLabel5;
     private javax.swing.JLabel jLabel6;
     private javax.swing.JLabel jLabel7;
-    private javax.swing.JScrollPane jScrollPane1;
+    private javax.swing.JScrollPane jScrollPane1_;
     private javax.swing.JSeparator jSeparator2;
     private javax.swing.JSeparator jSeparator3;
     private javax.swing.JSeparator jSeparator4;
