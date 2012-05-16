@@ -9,7 +9,7 @@
   (:use [org.micromanager.mm :only (edt)]
         [slide-explorer.paint :only (enable-anti-aliasing)]
         [slide-explorer.image :only (crop merge-and-scale overlay overlay-memo lut-object)]))
-ftile
+
 ; Order of operations:
 ;  Stitch/crop
 ;  Flatten fields
