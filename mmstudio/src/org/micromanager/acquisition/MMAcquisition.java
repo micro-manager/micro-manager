@@ -316,13 +316,15 @@ public class MMAcquisition {
          createDefaultAcqSettings(name, imageCache);
       }
 
-      virtAcq_ = new VirtualAcquisitionDisplay(imageCache, null, name);
+      if (imageCache.getSummaryMetadata() != null) {
+         virtAcq_ = new VirtualAcquisitionDisplay(imageCache, null, name);
 
-      if (show_) {
-         virtAcq_.show();
+         if (show_) {
+            virtAcq_.show();
+         }
+
+         initialized_ = true;
       }
-
-      initialized_ = true;
    }
 
    private void createDefaultAcqSettings(String name, ImageCache imageCache) {
