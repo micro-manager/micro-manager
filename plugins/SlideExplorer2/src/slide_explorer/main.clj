@@ -172,12 +172,13 @@
                               {:nx 0 :ny 0 :nz (get-in image [:tags "SliceIndex"]) :nt 0
                                :nc (get-in image [:tags "Channel"])}
                               (image :proc)))
+    (swap! ss assoc :channels (initial-lut-objects first-seq))
     (doseq [image (acquire-at (inverse-transform (Point. 0 -512) affine-stage-to-pixel))]
       (add-to-available-tiles available-tiles
                               {:nx 0 :ny -1 :nz (get-in image [:tags "SliceIndex"]) :nt 0
                                :nc (get-in image [:tags "Channel"])}
                               (image :proc)))
-    (swap! ss assoc :channels (initial-lut-objects first-seq))))
+    ))
 
   
 
