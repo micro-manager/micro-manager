@@ -39,7 +39,7 @@
                   </Group>
                   <Group type="102" attributes="0">
                       <Component id="saveButton" min="-2" pref="70" max="-2" attributes="0"/>
-                      <EmptySpace min="6" pref="6" max="6" attributes="0"/>
+                      <EmptySpace max="-2" attributes="0"/>
                       <Component id="saveFormatBox_" min="-2" pref="90" max="-2" attributes="0"/>
                   </Group>
                   <Group type="102" attributes="0">
@@ -187,15 +187,12 @@
                   <Group type="102" attributes="0">
                       <EmptySpace min="13" pref="13" max="13" attributes="0"/>
                       <Component id="jLabel7" min="-2" max="-2" attributes="0"/>
-                      <EmptySpace min="5" pref="5" max="5" attributes="0"/>
-                      <Group type="103" groupAlignment="0" attributes="0">
-                          <Group type="102" attributes="0">
-                              <EmptySpace min="3" pref="3" max="3" attributes="0"/>
-                              <Component id="saveButton" min="-2" pref="19" max="-2" attributes="0"/>
-                          </Group>
-                          <Component id="saveFormatBox_" min="-2" pref="22" max="-2" attributes="0"/>
+                      <EmptySpace max="-2" attributes="0"/>
+                      <Group type="103" groupAlignment="1" attributes="0">
+                          <Component id="saveButton" min="-2" pref="19" max="-2" attributes="0"/>
+                          <Component id="saveFormatBox_" min="-2" pref="21" max="-2" attributes="0"/>
                       </Group>
-                      <EmptySpace min="21" pref="21" max="21" attributes="0"/>
+                      <EmptySpace min="21" pref="21" max="-2" attributes="0"/>
                       <Group type="103" groupAlignment="0" attributes="0">
                           <Component id="loadButton" min="-2" pref="19" max="-2" attributes="0"/>
                           <Component id="removeButton" min="-2" pref="19" max="-2" attributes="0"/>
@@ -234,16 +231,18 @@
                       <Component id="jLabel6" min="-2" max="-2" attributes="0"/>
                       <EmptySpace max="-2" attributes="0"/>
                       <Group type="103" groupAlignment="0" attributes="0">
-                          <Group type="102" attributes="0">
-                              <Component id="plotButton_" min="-2" pref="18" max="-2" attributes="0"/>
-                              <EmptySpace min="2" pref="2" max="2" attributes="0"/>
-                              <Component id="powerSpectrumCheckBox_" min="-2" pref="20" max="-2" attributes="0"/>
-                          </Group>
                           <Group type="102" alignment="0" attributes="0">
                               <EmptySpace min="17" pref="17" max="17" attributes="0"/>
                               <Component id="logLogCheckBox_" min="-2" max="-2" attributes="0"/>
                           </Group>
-                          <Component id="plotComboBox_" alignment="0" min="-2" pref="24" max="-2" attributes="0"/>
+                          <Group type="102" alignment="0" attributes="0">
+                              <Group type="103" groupAlignment="1" max="-2" attributes="0">
+                                  <Component id="plotComboBox_" alignment="0" min="0" pref="0" max="32767" attributes="1"/>
+                                  <Component id="plotButton_" alignment="0" pref="18" max="32767" attributes="1"/>
+                              </Group>
+                              <EmptySpace min="2" pref="2" max="2" attributes="0"/>
+                              <Component id="powerSpectrumCheckBox_" min="-2" pref="20" max="-2" attributes="0"/>
+                          </Group>
                       </Group>
                       <EmptySpace max="-2" attributes="0"/>
                       <Group type="103" groupAlignment="0" attributes="0">

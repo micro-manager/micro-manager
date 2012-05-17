@@ -524,7 +524,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
             }
         });
 
-        loadButton.setFont(new java.awt.Font("Lucida Grande", 0, 10)); // NOI18N
+        loadButton.setFont(new java.awt.Font("Lucida Grande", 0, 10));
         loadButton.setText("Load");
         loadButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -541,13 +541,13 @@ public class DataCollectionForm extends javax.swing.JFrame {
         plotComboBox_.setFont(new java.awt.Font("Lucida Grande", 0, 10)); // NOI18N
         plotComboBox_.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "t-X", "t-Y", "X-Y", "t-Int.", " " }));
 
-        visualizationMagnification_.setFont(new java.awt.Font("Lucida Grande", 0, 10)); // NOI18N
+        visualizationMagnification_.setFont(new java.awt.Font("Lucida Grande", 0, 10));
         visualizationMagnification_.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "1x", "2x", "4x", "8x" }));
 
-        visualizationModel_.setFont(new java.awt.Font("Lucida Grande", 0, 10)); // NOI18N
+        visualizationModel_.setFont(new java.awt.Font("Lucida Grande", 0, 10));
         visualizationModel_.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "Gaussian" }));
 
-        saveButton.setFont(new java.awt.Font("Lucida Grande", 0, 10)); // NOI18N
+        saveButton.setFont(new java.awt.Font("Lucida Grande", 0, 10));
         saveButton.setText("Save");
         saveButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -555,7 +555,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
             }
         });
 
-        removeButton.setFont(new java.awt.Font("Lucida Grande", 0, 10)); // NOI18N
+        removeButton.setFont(new java.awt.Font("Lucida Grande", 0, 10));
         removeButton.setText("Remove");
         removeButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -563,7 +563,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
             }
         });
 
-        showButton_.setFont(new java.awt.Font("Lucida Grande", 0, 10)); // NOI18N
+        showButton_.setFont(new java.awt.Font("Lucida Grande", 0, 10));
         showButton_.setText("Show");
         showButton_.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -571,7 +571,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
             }
         });
 
-        c2StandardButton.setFont(new java.awt.Font("Lucida Grande", 0, 10)); // NOI18N
+        c2StandardButton.setFont(new java.awt.Font("Lucida Grande", 0, 10));
         c2StandardButton.setText("2C Reference");
         c2StandardButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -579,7 +579,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
             }
         });
 
-        pairsButton.setFont(new java.awt.Font("Lucida Grande", 0, 10)); // NOI18N
+        pairsButton.setFont(new java.awt.Font("Lucida Grande", 0, 10));
         pairsButton.setText("Pairs");
         pairsButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -587,7 +587,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
             }
         });
 
-        c2CorrectButton.setFont(new java.awt.Font("Lucida Grande", 0, 10)); // NOI18N
+        c2CorrectButton.setFont(new java.awt.Font("Lucida Grande", 0, 10));
         c2CorrectButton.setText("2C Correct");
         c2CorrectButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -595,10 +595,10 @@ public class DataCollectionForm extends javax.swing.JFrame {
             }
         });
 
-        referenceName_.setFont(new java.awt.Font("Lucida Grande", 0, 11)); // NOI18N
+        referenceName_.setFont(new java.awt.Font("Lucida Grande", 0, 11));
         referenceName_.setText("JLabel1");
 
-        unjitterButton_.setFont(new java.awt.Font("Lucida Grande", 0, 10)); // NOI18N
+        unjitterButton_.setFont(new java.awt.Font("Lucida Grande", 0, 10));
         unjitterButton_.setText("Drift Correct");
         unjitterButton_.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -606,10 +606,10 @@ public class DataCollectionForm extends javax.swing.JFrame {
             }
         });
 
-        jLabel1.setFont(new java.awt.Font("Lucida Grande", 0, 11)); // NOI18N
+        jLabel1.setFont(new java.awt.Font("Lucida Grande", 0, 11));
         jLabel1.setText("Filters:");
 
-        filterSigmaCheckBox_.setFont(new java.awt.Font("Lucida Grande", 0, 11)); // NOI18N
+        filterSigmaCheckBox_.setFont(new java.awt.Font("Lucida Grande", 0, 11));
         filterSigmaCheckBox_.setText("Sigma");
         filterSigmaCheckBox_.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -617,7 +617,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
             }
         });
 
-        filterIntensityCheckBox_.setFont(new java.awt.Font("Lucida Grande", 0, 11)); // NOI18N
+        filterIntensityCheckBox_.setFont(new java.awt.Font("Lucida Grande", 0, 11));
         filterIntensityCheckBox_.setText("Intensity");
         filterIntensityCheckBox_.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -625,31 +625,31 @@ public class DataCollectionForm extends javax.swing.JFrame {
             }
         });
 
-        sigmaMin_.setFont(new java.awt.Font("Lucida Grande", 0, 11)); // NOI18N
+        sigmaMin_.setFont(new java.awt.Font("Lucida Grande", 0, 11));
         sigmaMin_.setText("0");
 
-        intensityMin_.setFont(new java.awt.Font("Lucida Grande", 0, 11)); // NOI18N
+        intensityMin_.setFont(new java.awt.Font("Lucida Grande", 0, 11));
         intensityMin_.setText("0");
 
-        sigmaMax_.setFont(new java.awt.Font("Lucida Grande", 0, 11)); // NOI18N
+        sigmaMax_.setFont(new java.awt.Font("Lucida Grande", 0, 11));
         sigmaMax_.setText("0");
 
-        intensityMax_.setFont(new java.awt.Font("Lucida Grande", 0, 11)); // NOI18N
+        intensityMax_.setFont(new java.awt.Font("Lucida Grande", 0, 11));
         intensityMax_.setText("0");
 
-        jLabel2.setFont(new java.awt.Font("Lucida Grande", 0, 11)); // NOI18N
+        jLabel2.setFont(new java.awt.Font("Lucida Grande", 0, 11));
         jLabel2.setText("< spot <");
 
-        jLabel3.setFont(new java.awt.Font("Lucida Grande", 0, 11)); // NOI18N
+        jLabel3.setFont(new java.awt.Font("Lucida Grande", 0, 11));
         jLabel3.setText("< spot <");
 
-        SigmaLabel2.setFont(new java.awt.Font("Lucida Grande", 0, 11)); // NOI18N
+        SigmaLabel2.setFont(new java.awt.Font("Lucida Grande", 0, 11));
         SigmaLabel2.setText("nm");
 
-        IntLabel2.setFont(new java.awt.Font("Lucida Grande", 0, 11)); // NOI18N
+        IntLabel2.setFont(new java.awt.Font("Lucida Grande", 0, 11));
         IntLabel2.setText("#");
 
-        infoButton_.setFont(new java.awt.Font("Lucida Grande", 0, 10)); // NOI18N
+        infoButton_.setFont(new java.awt.Font("Lucida Grande", 0, 10));
         infoButton_.setText("Info");
         infoButton_.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -657,7 +657,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
             }
         });
 
-        plotButton_.setFont(new java.awt.Font("Lucida Grande", 0, 11)); // NOI18N
+        plotButton_.setFont(new java.awt.Font("Lucida Grande", 0, 11));
         plotButton_.setText("Plot");
         plotButton_.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -665,7 +665,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
             }
         });
 
-        renderButton_.setFont(new java.awt.Font("Lucida Grande", 0, 11)); // NOI18N
+        renderButton_.setFont(new java.awt.Font("Lucida Grande", 0, 11));
         renderButton_.setText("Render");
         renderButton_.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -682,7 +682,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
 
         jSeparator4.setOrientation(javax.swing.SwingConstants.VERTICAL);
 
-        averageTrackButton_.setFont(new java.awt.Font("Lucida Grande", 0, 11)); // NOI18N
+        averageTrackButton_.setFont(new java.awt.Font("Lucida Grande", 0, 11));
         averageTrackButton_.setText("Average");
         averageTrackButton_.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -690,7 +690,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
             }
         });
 
-        mathButton_.setFont(new java.awt.Font("Lucida Grande", 0, 11)); // NOI18N
+        mathButton_.setFont(new java.awt.Font("Lucida Grande", 0, 11));
         mathButton_.setText("Math");
         mathButton_.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -698,13 +698,13 @@ public class DataCollectionForm extends javax.swing.JFrame {
             }
         });
 
-        pairsMaxDistanceField_.setFont(new java.awt.Font("Lucida Grande", 0, 11)); // NOI18N
+        pairsMaxDistanceField_.setFont(new java.awt.Font("Lucida Grande", 0, 11));
         pairsMaxDistanceField_.setText("100");
 
-        SigmaLabel3.setFont(new java.awt.Font("Lucida Grande", 0, 11)); // NOI18N
+        SigmaLabel3.setFont(new java.awt.Font("Lucida Grande", 0, 11));
         SigmaLabel3.setText("nm");
 
-        linkButton_.setFont(new java.awt.Font("Lucida Grande", 0, 10)); // NOI18N
+        linkButton_.setFont(new java.awt.Font("Lucida Grande", 0, 10));
         linkButton_.setText("Link");
         linkButton_.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -712,7 +712,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
             }
         });
 
-        straightenTrackButton_.setFont(new java.awt.Font("Lucida Grande", 0, 11)); // NOI18N
+        straightenTrackButton_.setFont(new java.awt.Font("Lucida Grande", 0, 11));
         straightenTrackButton_.setText("Straighten");
         straightenTrackButton_.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -720,7 +720,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
             }
         });
 
-        centerTrackButton_.setFont(new java.awt.Font("Lucida Grande", 0, 11)); // NOI18N
+        centerTrackButton_.setFont(new java.awt.Font("Lucida Grande", 0, 11));
         centerTrackButton_.setText("Center");
         centerTrackButton_.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -728,13 +728,13 @@ public class DataCollectionForm extends javax.swing.JFrame {
             }
         });
 
-        jLabel4.setFont(new java.awt.Font("Lucida Grande", 0, 11)); // NOI18N
+        jLabel4.setFont(new java.awt.Font("Lucida Grande", 0, 11));
         jLabel4.setText("Localization Microscopy");
 
-        jLabel5.setFont(new java.awt.Font("Lucida Grande", 0, 11)); // NOI18N
+        jLabel5.setFont(new java.awt.Font("Lucida Grande", 0, 11));
         jLabel5.setText("2-Color");
 
-        powerSpectrumCheckBox_.setFont(new java.awt.Font("Lucida Grande", 0, 11)); // NOI18N
+        powerSpectrumCheckBox_.setFont(new java.awt.Font("Lucida Grande", 0, 11));
         powerSpectrumCheckBox_.setText("PSD");
         powerSpectrumCheckBox_.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -742,13 +742,13 @@ public class DataCollectionForm extends javax.swing.JFrame {
             }
         });
 
-        jLabel6.setFont(new java.awt.Font("Lucida Grande", 0, 11)); // NOI18N
+        jLabel6.setFont(new java.awt.Font("Lucida Grande", 0, 11));
         jLabel6.setText("Tracks");
 
-        jLabel7.setFont(new java.awt.Font("Lucida Grande", 0, 11)); // NOI18N
+        jLabel7.setFont(new java.awt.Font("Lucida Grande", 0, 11));
         jLabel7.setText("General");
 
-        logLogCheckBox_.setFont(new java.awt.Font("Lucida Grande", 0, 11)); // NOI18N
+        logLogCheckBox_.setFont(new java.awt.Font("Lucida Grande", 0, 11));
         logLogCheckBox_.setText("log-log");
         logLogCheckBox_.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -768,7 +768,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
                         .add(jLabel7))
                     .add(layout.createSequentialGroup()
                         .add(saveButton, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 70, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                        .add(6, 6, 6)
+                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                         .add(saveFormatBox_, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 90, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
                     .add(layout.createSequentialGroup()
                         .add(loadButton, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 70, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
@@ -881,12 +881,10 @@ public class DataCollectionForm extends javax.swing.JFrame {
                     .add(layout.createSequentialGroup()
                         .add(13, 13, 13)
                         .add(jLabel7)
-                        .add(5, 5, 5)
-                        .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                            .add(layout.createSequentialGroup()
-                                .add(3, 3, 3)
-                                .add(saveButton, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 19, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
-                            .add(saveFormatBox_, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 22, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                        .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.TRAILING)
+                            .add(saveButton, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 19, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                            .add(saveFormatBox_, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 21, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
                         .add(21, 21, 21)
                         .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
                             .add(loadButton, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 19, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
@@ -919,13 +917,14 @@ public class DataCollectionForm extends javax.swing.JFrame {
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                         .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
                             .add(layout.createSequentialGroup()
-                                .add(plotButton_, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 18, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                                .add(2, 2, 2)
-                                .add(powerSpectrumCheckBox_, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 20, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
-                            .add(layout.createSequentialGroup()
                                 .add(17, 17, 17)
                                 .add(logLogCheckBox_))
-                            .add(plotComboBox_, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 24, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+                            .add(layout.createSequentialGroup()
+                                .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.TRAILING, false)
+                                    .add(org.jdesktop.layout.GroupLayout.LEADING, plotComboBox_, 0, 0, Short.MAX_VALUE)
+                                    .add(org.jdesktop.layout.GroupLayout.LEADING, plotButton_, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 18, Short.MAX_VALUE))
+                                .add(2, 2, 2)
+                                .add(powerSpectrumCheckBox_, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 20, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)))
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                         .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
                             .add(averageTrackButton_, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 20, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
