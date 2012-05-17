@@ -165,7 +165,8 @@
                             {:nx nx :ny ny :nz (get-in image [:tags "SliceIndex"]) :nt 0
                              :nc (get-in image [:tags "Channel"])}
                             (image :proc))))
-  
+
+
 
 (defn go []
   (core waitForDevice (core getXYStageDevice))
@@ -181,7 +182,7 @@
                                :nc (get-in image [:tags "Channel"])}
                               (image :proc)))
     (swap! ss assoc :channels (initial-lut-objects first-seq))
-    (doseq [nx (range -2 3) ny (range -2 3)]
+    (doseq [nx (range -4 5) ny (range -4 5)]
       (add-tiles-at available-tiles [nx ny] affine-stage-to-pixel))))
 
   
