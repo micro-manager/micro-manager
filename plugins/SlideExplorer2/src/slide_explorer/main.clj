@@ -181,8 +181,8 @@
                                :nc (get-in image [:tags "Channel"])}
                               (image :proc)))
     (swap! ss assoc :channels (initial-lut-objects first-seq))
-    (doseq [tile [[-1 -1] [-1 0] [-1 1] [0 -1] [0 1] [1 -1] [1 0] [1 -1]]]
-      (add-tiles-at available-tiles tile affine-stage-to-pixel))))
+    (doseq [nx (range -2 3) ny (range -2 3)]
+      (add-tiles-at available-tiles [nx ny] affine-stage-to-pixel))))
 
   
 
