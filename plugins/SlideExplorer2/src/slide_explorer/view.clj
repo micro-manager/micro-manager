@@ -162,9 +162,9 @@
                   (- y-center (int (* (:y screen-state) zoom))))
       (paint-tiles available-tiles screen-state [512 512])
       enable-anti-aliasing
-      (.setColor (Color. 0x0CB397))
-      (.fillOval -5 -5
-                 10 10)
+      ;(.setColor (Color. 0x0CB397))
+      ;(.fillOval -5 -5
+      ;           10 10)
       (.setTransform original-transform)
       (.setColor (Color. 0xECF2AA))
       (.drawString (str (select-keys screen-state [:x :y :z :zoom :keys]))

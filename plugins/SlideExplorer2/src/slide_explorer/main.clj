@@ -15,7 +15,7 @@
            (org.micromanager.utils GUIUpdater ImageUtils JavaUtils MDUtils)
            (org.micromanager.acquisition TaggedImageQueue))
   (:use [org.micromanager.mm :only (core edt mmc gui load-mm json-to-data)]
-        [slide-explorer.affine :only (transform inverse-transform)]
+        [slide-explorer.affine :only (set-destination-origin transform inverse-transform)]
         [slide-explorer.view :only (show add-to-available-tiles)]
         [slide-explorer.image :only (show-image statistics intensity-range lut-object)]))
 
@@ -29,12 +29,14 @@
 (defn set-stage-to-pixel-transform [^AffineTransform affine-transform]
   (JavaUtils/putObjectInPrefs
     gui-prefs (str "affine_transform_" (core getCurrentPixelSizeConfig))
-    affine-transform))
+    (.createInverse affine-transform)))
 
 (defn get-stage-to-pixel-transform []
-  (JavaUtils/getObjectFromPrefs
-    gui-prefs (str "affine_transform_" (core getCurrentPixelSizeConfig))
-    nil))
+  (when-let [transform
+             (JavaUtils/getObjectFromPrefs
+               gui-prefs (str "affine_transform_" (core getCurrentPixelSizeConfig))
+               nil)]
+    (.createInverse transform)))
 
 (def angle (atom 0))
 
@@ -67,6 +69,14 @@
 (defn get-slice-index [raw]
   (-> raw :tags (get "SliceIndex")))
 
+;; stage communications
+
+(defn get-xy-position []
+  (.getXYStagePosition gui))
+
+(defn set-xy-position [^Point2D$Double position]
+  (println position)
+  (core setXYPosition (core getXYStageDevice) (.x position) (.y position)))
   
 ;; image properties
 
@@ -135,23 +145,36 @@
           [chan {:lut (lut-object lut-map)}])))
 
 (defn acquire-at
-  ([^Point2D$Double stage-pos]
-    (acquire-at (.x stage-pos) (.y stage-pos)))
   ([x y]
+    (acquire-at (Point2D$Double. x y)))
+  ([^Point2D$Double stage-pos]
     (let [xy-stage (core getXYStageDevice)]
-      (core setXYPosition xy-stage x y)
+      (set-xy-position stage-pos)
       (core waitForDevice xy-stage)
       (processor-sequence))))
+
+(defn origin-here-stage-to-pixel-transform []
+  (set-destination-origin
+    (get-stage-to-pixel-transform)
+    (.getXYStagePosition gui)))
 
 (defn go []
   (let [available-tiles (agent {})
         xy-stage (core getXYStageDevice)
-        first-seq (processor-sequence)]
+        _ (core waitForDevice xy-stage)
+        affine-stage-to-pixel (origin-here-stage-to-pixel-transform)
+        first-seq (acquire-at (inverse-transform (Point. 0 0) affine-stage-to-pixel))
+        ]
     (def at available-tiles)
     (def ss (show available-tiles))
     (doseq [image first-seq]
       (add-to-available-tiles available-tiles
                               {:nx 0 :ny 0 :nz (get-in image [:tags "SliceIndex"]) :nt 0
+                               :nc (get-in image [:tags "Channel"])}
+                              (image :proc)))
+    (doseq [image (acquire-at (inverse-transform (Point. 0 -512) affine-stage-to-pixel))]
+      (add-to-available-tiles available-tiles
+                              {:nx 0 :ny -1 :nz (get-in image [:tags "SliceIndex"]) :nt 0
                                :nc (get-in image [:tags "Channel"])}
                               (image :proc)))
     (swap! ss assoc :channels (initial-lut-objects first-seq))))
