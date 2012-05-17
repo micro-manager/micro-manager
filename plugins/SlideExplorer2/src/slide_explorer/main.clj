@@ -150,14 +150,22 @@
     (acquire-at (Point2D$Double. x y)))
   ([^Point2D$Double stage-pos]
     (let [xy-stage (core getXYStageDevice)]
-      (time (set-xy-position stage-pos))
-      (time (core waitForDevice xy-stage))
-      (time (processor-sequence)))))
+      (set-xy-position stage-pos)
+      (core waitForDevice xy-stage)
+      (processor-sequence))))
 
 (defn origin-here-stage-to-pixel-transform []
   (set-destination-origin
     (get-stage-to-pixel-transform)
     (.getXYStagePosition gui)))
+
+(defn add-tiles-at [available-tiles [nx ny] affine-stage-to-pixel]
+  (doseq [image (acquire-at (inverse-transform (Point. (* 512 nx) (* 512 ny)) affine-stage-to-pixel))]
+    (add-to-available-tiles available-tiles
+                            {:nx nx :ny ny :nz (get-in image [:tags "SliceIndex"]) :nt 0
+                             :nc (get-in image [:tags "Channel"])}
+                            (image :proc))))
+  
 
 (defn go []
   (core waitForDevice (core getXYStageDevice))
@@ -173,12 +181,8 @@
                                :nc (get-in image [:tags "Channel"])}
                               (image :proc)))
     (swap! ss assoc :channels (initial-lut-objects first-seq))
-    (doseq [image (time (acquire-at (inverse-transform (Point. 0 -512) affine-stage-to-pixel)))]
-      (add-to-available-tiles available-tiles
-                              {:nx 0 :ny -1 :nz (get-in image [:tags "SliceIndex"]) :nt 0
-                               :nc (get-in image [:tags "Channel"])}
-                              (image :proc)))
-    ))
+    (doseq [tile [[-1 -1] [-1 0] [-1 1] [0 -1] [0 1] [1 -1] [1 0] [1 -1]]]
+      (add-tiles-at available-tiles tile affine-stage-to-pixel))))
 
   
 
