@@ -85,6 +85,17 @@
               (/ width zoom)
               (/ height zoom)))
 
+(defn center-tile [[pixel-center-x pixel-center-y] [tile-width tile-height]]
+  [(floor-int (/ pixel-center-x tile-width))
+   (floor-int (/ pixel-center-y tile-height))])
+
+(defn group-tiles-by-ring [[center-nx center-ny] tiles]
+  (let [abs #(Math/abs %)
+        centered (fn [[nx ny]] [(- nx center-nx) (- ny center-ny)])
+        ring (fn [[nx ny]] (Math/max nx ny))]
+    (group-by #(ring (map abs (centered %))) tiles)))
+
+
 ;; TILING
 
 (defn add-tile [tile-map tile-zoom indices tile]
@@ -163,18 +174,24 @@
       ;(.fillOval -5 -5
       ;           10 10)
       )
-    (let [rect (.getClipBounds graphics)]
-      (doto graphics
-        (.setTransform original-transform)
-        (.setColor (Color. 0xECF2AA))
-        (.drawString (pr-str (tiles-in-pixel-rectangle
-                               (pixel-rectangle screen-state) [tile-width tile-height]))
-                     10 25)
-        (.drawString (pr-str (pixel-rectangle screen-state))
-                     10 40)
-        (.drawString (str (select-keys screen-state [:x :y :z :zoom :keys :width :height]))
+    (when false 
+      (let [rect (.getClipBounds graphics)
+            pixel-rect (pixel-rectangle screen-state)
+            visible-tiles (tiles-in-pixel-rectangle pixel-rect [tile-width tile-height])
+            center-tile (center-tile [(:x screen-state) (:y screen-state)] [tile-width tile-height])
+            sorted-tiles (time (group-tiles-by-ring center-tile visible-tiles))
+            ]
+        (when true
+        (doto graphics
+          (.setTransform original-transform)
+          (.setColor (Color. 0xECF2AA))
+          (.drawString (pr-str visible-tiles) 10 20)
+          (.drawString (pr-str pixel-rect) 10 40)
+          (.drawString (pr-str center-tile) 10 60)
+          (.drawString (pr-str sorted-tiles) 10 80)
+          (.drawString (str (select-keys screen-state [:x :y :z :zoom :keys :width :height]))
                      (int 10)
-                     (int (- (screen-state :height) 12)))))))
+                     (int (- (screen-state :height) 12)))))))))
   
 
 ;; USER INPUT HANDLING
