@@ -1,5 +1,5 @@
 (ns slide-explorer.main
-  (:import (java.awt Color Graphics Graphics2D RenderingHints Window)
+  (:import (java.awt Color Graphics Graphics2D Point RenderingHints Window)
            (java.awt.event ComponentAdapter KeyAdapter KeyEvent MouseAdapter
                            WindowAdapter)
            (java.awt.image BufferedImage WritableRaster)
@@ -72,10 +72,11 @@
 ;; stage communications
 
 (defn get-xy-position []
+  (core waitForDevice (core getXYStageDevice))
   (.getXYStagePosition gui))
 
 (defn set-xy-position [^Point2D$Double position]
-  (println position)
+  (core waitForDevice (core getXYStageDevice))
   (core setXYPosition (core getXYStageDevice) (.x position) (.y position)))
   
 ;; image properties
@@ -149,9 +150,9 @@
     (acquire-at (Point2D$Double. x y)))
   ([^Point2D$Double stage-pos]
     (let [xy-stage (core getXYStageDevice)]
-      (set-xy-position stage-pos)
-      (core waitForDevice xy-stage)
-      (processor-sequence))))
+      (time (set-xy-position stage-pos))
+      (time (core waitForDevice xy-stage))
+      (time (processor-sequence)))))
 
 (defn origin-here-stage-to-pixel-transform []
   (set-destination-origin
@@ -159,12 +160,11 @@
     (.getXYStagePosition gui)))
 
 (defn go []
+  (core waitForDevice (core getXYStageDevice))
   (let [available-tiles (agent {})
         xy-stage (core getXYStageDevice)
-        _ (core waitForDevice xy-stage)
         affine-stage-to-pixel (origin-here-stage-to-pixel-transform)
-        first-seq (acquire-at (inverse-transform (Point. 0 0) affine-stage-to-pixel))
-        ]
+        first-seq (acquire-at (inverse-transform (Point. 0 0) affine-stage-to-pixel))]
     (def at available-tiles)
     (def ss (show available-tiles))
     (doseq [image first-seq]
@@ -173,7 +173,7 @@
                                :nc (get-in image [:tags "Channel"])}
                               (image :proc)))
     (swap! ss assoc :channels (initial-lut-objects first-seq))
-    (doseq [image (acquire-at (inverse-transform (Point. 0 -512) affine-stage-to-pixel))]
+    (doseq [image (time (acquire-at (inverse-transform (Point. 0 -512) affine-stage-to-pixel)))]
       (add-to-available-tiles available-tiles
                               {:nx 0 :ny -1 :nz (get-in image [:tags "SliceIndex"]) :nt 0
                                :nc (get-in image [:tags "Channel"])}

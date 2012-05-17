@@ -339,7 +339,7 @@ to normal size."
     (.setBounds 10 10 500 500)))
 
 (defn show [available-tiles]
-  (let [screen-state (atom (sorted-map :x 0 :y 0 :z 0 :zoom 1
+  (let [screen-state (atom (sorted-map :x 0 :y 0 :z 0 :zoom 1 :width 100 :height 10
                                        :keys (sorted-set)
                                        :channels (sorted-map)))
         panel (main-panel screen-state available-tiles)
