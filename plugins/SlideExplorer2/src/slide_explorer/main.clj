@@ -15,8 +15,9 @@
            (org.micromanager.utils GUIUpdater ImageUtils JavaUtils MDUtils)
            (org.micromanager.acquisition TaggedImageQueue))
   (:use [org.micromanager.mm :only (core edt mmc gui load-mm json-to-data)]
+        [slide-explorer.affine :only (transform inverse-transform)]
         [slide-explorer.view :only (show add-to-available-tiles)]
-        [slide-explorer.image :only (show-image statistics lut-object)]))
+        [slide-explorer.image :only (show-image statistics intensity-range lut-object)]))
 
 
 (load-mm)
@@ -117,19 +118,53 @@
 (defn get-tile [{:keys [nx ny nz nt nc]}]
   (ImageUtils/makeProcessor (grab-tagged-image)))
 
-;; tests
+;; run using acquisitions
 
-(defn acquire-at [x y]
-  (let [xy-stage (core getXYStageDevice)]
-    (core setXYPosition xy-stage x y)
-    (core waitForDevice xy-stage)
-    (processor-sequence)))
+(defn initial-channel-display-settings [tagged-image-processors]
+  (merge-with merge
+              (into {}
+                    (for [[chan color] (stack-colors tagged-image-processors)]
+                      [chan {:color color}]))
+              (into {}
+                    (for [[chan images] (group-by #(get-in % [:tags "Channel"]) tagged-image-processors)]
+                      [chan (assoc (intensity-range (map :proc images)) :gamma 1.0)]))))
+
+(defn initial-lut-objects [tagged-image-processors]
+  (into {}
+        (for [[chan lut-map] (initial-channel-display-settings tagged-image-processors)]
+          [chan {:lut (lut-object lut-map)}])))
+
+(defn acquire-at
+  ([^Point2D$Double stage-pos]
+    (acquire-at (.x stage-pos) (.y stage-pos)))
+  ([x y]
+    (let [xy-stage (core getXYStageDevice)]
+      (core setXYPosition xy-stage x y)
+      (core waitForDevice xy-stage)
+      (processor-sequence))))
+
+(defn go []
+  (let [available-tiles (agent {})
+        xy-stage (core getXYStageDevice)
+        first-seq (processor-sequence)]
+    (def at available-tiles)
+    (def ss (show available-tiles))
+    (doseq [image first-seq]
+      (add-to-available-tiles available-tiles
+                              {:nx 0 :ny 0 :nz (get-in image [:tags "SliceIndex"]) :nt 0
+                               :nc (get-in image [:tags "Channel"])}
+                              (image :proc)))
+    (swap! ss assoc :channels (initial-lut-objects first-seq))))
+
+  
+
+;; tests
 
 (defn start []
   (let [available-tiles (agent {})
         xy-stage (core getXYStageDevice)]
     (def at available-tiles)
-    (show available-tiles)))
+    (def ss (show available-tiles))))
 
 (def test-channels
   {"DAPI" {:lut (lut-object Color/BLUE  0 255 1.0)}

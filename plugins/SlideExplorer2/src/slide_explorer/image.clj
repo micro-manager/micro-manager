@@ -117,15 +117,25 @@
    :max (.getMax processor)
    :histogram (.getHistogram processor)})
   
+
+(defn intensity-range
+  "Get the intensity range over a collection of processors."
+  [processors]
+  {:min (apply min (map #(.getMin %) processors))
+   :max (apply max (map #(.getMax %) processors))})
+
+
 ;; Channels/LUTs
 
 (defn lut-object
   "Creates an ImageJ LUT object with given parameters."
-  [^Color color ^double min ^double max ^double gamma]
+  ([^Color color ^double min ^double max ^double gamma]
   (let [lut (ImageUtils/makeLUT color gamma)]
     (set! (. lut min) min)
     (set! (. lut max) max)
     lut))
+  ([{:keys [color min max gamma]}]
+    (lut-object color min max gamma)))
 
 (def black-lut
   "An LUT such that the image is not displayed."
