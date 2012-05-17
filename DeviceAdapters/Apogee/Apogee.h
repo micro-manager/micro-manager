@@ -97,7 +97,8 @@ public:
     int OnBinning(MM::PropertyBase* pProp, MM::ActionType eAct);
 	int OnXBinning(MM::PropertyBase* pProp, MM::ActionType eAct);
 	int OnYBinning(MM::PropertyBase* pProp, MM::ActionType eAct);
-    int OnPixelType(MM::PropertyBase* pProp, MM::ActionType eAct);
+	int OnPixelType(MM::PropertyBase* pProp, MM::ActionType eAct);
+    int OnCameraSpeed(MM::PropertyBase* pProp, MM::ActionType eAct);
     int OnGain(MM::PropertyBase* pProp, MM::ActionType eAct);
     int OnOffset(MM::PropertyBase* pProp, MM::ActionType eAct);
     int OnLightMode(MM::PropertyBase* pProp, MM::ActionType eAct);
@@ -120,16 +121,38 @@ public:
     int OnLedMode(MM::PropertyBase* pProp, MM::ActionType eAct);
     int OnLedAState(MM::PropertyBase* pProp, MM::ActionType eAct);
     int OnLedBState(MM::PropertyBase* pProp, MM::ActionType eAct);
+    int OnAscentFwType(MM::PropertyBase* pProp, MM::ActionType eAct);
+    int OnAscentFwPos(MM::PropertyBase* pProp, MM::ActionType eAct);
 
 private:
-	ICamera2Ptr AltaCamera;		// Camera interface
+	ICamera2Ptr ApgCam;		// Camera interface
 
     int ResizeImageBuffer();
+
+    int SetAscentAdGain( long gain );
+    int GetAscentAdGain( long & gain );
+
+    int SetAltaAdGain( long gain );
+    int GetAltaAdGain( long & gain );
+
+    int SetAscentAdOffset( long offset );
+    int GetAscentAdOffset( long & offset );
+
+    int SetAltaAdOffset( long offset );
+    int GetAltaAdOffset( long & offset );
 
 	int OnIoPinMode(MM::PropertyBase* pProp, MM::ActionType eAct, long mask, const char *altStr);
 	int OnIoPortDirMode(MM::PropertyBase* pProp, MM::ActionType eAct, long mask);
 
     int OnLedState(MM::PropertyBase* pProp, MM::ActionType eAct, bool IsA);
+
+    int OnSpeed(MM::PropertyBase* pProp, MM::ActionType eAct);
+    int OnDataBits(MM::PropertyBase* pProp, MM::ActionType eAct);
+
+    int SwitchAscentFwType( const Apn_Filter newType );
+
+    void CheckAscentFwStatus();
+    bool IsDriverNew();
 
 	ImgBuffer img_;
 	int pixelDepth_;
@@ -161,6 +184,12 @@ private:
 
 	int InitiateGenericSequence();
 	void SequenceCheckImageBuffer();
+
+    std::map<std::string, int> m_SpeedMap;
+
+    std::map<std::string, Apn_Resolution> m_DigitizeBitsMap;
+
+    std::map<std::string, Apn_Filter> m_AscentFwMap;
 
 };
 

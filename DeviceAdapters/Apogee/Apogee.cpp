@@ -39,7 +39,7 @@
 #include "../../MMDevice/ModuleInterface.h"
 #pragma warning(disable : 4996) // disable warning for deperecated CRT functions on Windows 
 
-#include <string>
+
 #include <sstream>
 #include <cmath>
 
@@ -190,7 +190,7 @@ int CApogeeCamera::Initialize()
     CoInitialize( NULL );           // Initialize COM library
     
     // Create the ICamera2 object
-    hr = AltaCamera.CreateInstance( __uuidof( Camera2 ) );
+    hr = ApgCam.CreateInstance( __uuidof( Camera2 ) );
     if(SUCCEEDED(hr)){
         printf("Successfully created the ICamera2 object\n" );
     }else{
@@ -202,7 +202,7 @@ int CApogeeCamera::Initialize()
     // Try to open the pre-configured device
 	if(m_nInterfaceType!=999 && m_nCamIdOne!=-1){
         // Initialize camera using the ICamDiscover properties
-        hr = AltaCamera->Init((Apn_Interface)m_nInterfaceType, m_nCamIdOne, m_nCamIdTwo, 0x0 );
+        hr = ApgCam->Init((Apn_Interface)m_nInterfaceType, m_nCamIdOne, m_nCamIdTwo, 0x0 );
         if(!SUCCEEDED(hr)){
             assert(!"Failed to connect to pre-configured camera" );
             m_nCamIdOne = -1;
@@ -214,7 +214,7 @@ int CApogeeCamera::Initialize()
 		hr = Discover.CreateInstance( __uuidof( CamDiscover ) );
 		if(!SUCCEEDED(hr)){
 			printf( "Failed to create the ICamDiscover object\n" );
-			AltaCamera = NULL;      // Release ICamera2 COM object
+			ApgCam = NULL;      // Release ICamera2 COM object
 			CoUninitialize();       // Close the COM library
 			return DEVICE_ERR;
 		}
@@ -237,13 +237,13 @@ int CApogeeCamera::Initialize()
         if(!Discover->ValidSelection){
             printf( "No valid camera selection made\n" );
             Discover = NULL;        // Release ICamDiscover COM object
-            AltaCamera = NULL;      // Release ICamera2 COM object
+            ApgCam = NULL;      // Release ICamera2 COM object
             CoUninitialize();       // Close the COM library
             return DEVICE_ERR;
         }
         
         // Initialize camera using the ICamDiscover properties
-        hr = AltaCamera->Init( Discover->SelectedInterface,
+        hr = ApgCam->Init( Discover->SelectedInterface,
                               Discover->SelectedCamIdOne,
                               Discover->SelectedCamIdTwo,
                               0x0 );
@@ -253,7 +253,7 @@ int CApogeeCamera::Initialize()
         }else{
             printf( "Failed to connect to camera" );
             Discover = NULL;        // Release Discover COM object
-            AltaCamera = NULL;      // Release ICamera2 COM object
+            ApgCam = NULL;      // Release ICamera2 COM object
             CoUninitialize();       // Close the COM library
             return DEVICE_ERR;
         }
@@ -262,12 +262,12 @@ int CApogeeCamera::Initialize()
         m_nCamIdTwo = Discover->SelectedCamIdTwo;
     }
     
-    AltaCamera->ResetSystem();
+    ApgCam->ResetSystem();
     
     // Display the camera model and version
-    _bstr_t szCamModel( AltaCamera->CameraModel );
+    _bstr_t szCamModel( ApgCam->CameraModel );
     char *camModelStr = (char*)szCamModel;
-    _bstr_t szDriverVer( AltaCamera->DriverVersion );
+    _bstr_t szDriverVer( ApgCam->DriverVersion );
     char *camVersionStr = (char*)szDriverVer;
 	char camIdStr[64];
 	if(m_nInterfaceType==Apn_Interface_NET)
@@ -301,7 +301,11 @@ int CApogeeCamera::Initialize()
     assert(nRet == DEVICE_OK);
 
 	// name was "MM::g_Keyword_CameraID"
-    nRet = CreateProperty("FirmwareVersion", camVersionStr, MM::String, true);
+    _bstr_t fwVer( ApgCam->FirmwareVersion );
+    nRet = CreateProperty("FirmwareVersion", (char*)fwVer, MM::String, true);
+    assert(nRet == DEVICE_OK);
+
+    nRet = CreateProperty("DllVersion", camVersionStr, MM::String, true);
     assert(nRet == DEVICE_OK);
 	
 	// Shutter Mode
@@ -330,7 +334,7 @@ int CApogeeCamera::Initialize()
     nRet = CreateProperty(MM::g_Keyword_Binning, "1", MM::Integer, false, pAct);
     assert(nRet == DEVICE_OK);
     vector<string> binValues;
-    long maxBin = min(AltaCamera->MaxBinningH, AltaCamera->MaxBinningV);
+    long maxBin = min(ApgCam->MaxBinningH, ApgCam->MaxBinningV);
 	maxBin = min(maxBin, 8);
     char tmp[8];
 	sprintf(tmp, "%d", 1); binValues.push_back(tmp);
@@ -344,23 +348,37 @@ int CApogeeCamera::Initialize()
     pAct = new CPropertyAction (this, &CApogeeCamera::OnXBinning);
     nRet = CreateProperty("BinningX", "1", MM::Integer, false, pAct);
     assert(nRet == DEVICE_OK);
-    SetPropertyLimits("BinningX", 1, AltaCamera->MaxBinningH);
+    SetPropertyLimits("BinningX", 1, ApgCam->MaxBinningH);
 
 	// Y binning (will only show up in Property Browser)
 	// *** Alta supports Y-binning of up to the height of the CCD- should we allow this?
     pAct = new CPropertyAction (this, &CApogeeCamera::OnYBinning);
     nRet = CreateProperty("BinningY", "1", MM::Integer, false, pAct);
     assert(nRet == DEVICE_OK);
-    SetPropertyLimits("BinningY", 1, AltaCamera->MaxBinningV);
+    SetPropertyLimits("BinningY", 1, ApgCam->MaxBinningV);
 
-    // pixel type
+	// pixel type - read only now
     pAct = new CPropertyAction (this, &CApogeeCamera::OnPixelType);
     nRet = CreateProperty(MM::g_Keyword_PixelType, g_PixelType_16bit, MM::String, false, pAct);
+	assert(nRet == DEVICE_OK);
+   
+    // Camera speed
+    std::string fastStr("Fast");
+    std::string normStr("Normal");
+    m_SpeedMap.clear();
+    m_SpeedMap[normStr] = 0;
+    m_SpeedMap[fastStr] = 1;
+    m_DigitizeBitsMap.clear();
+    m_DigitizeBitsMap[normStr] = Apn_Resolution_SixteenBit;
+    m_DigitizeBitsMap[fastStr] = Apn_Resolution_TwelveBit;
+
+    pAct = new CPropertyAction (this, &CApogeeCamera::OnCameraSpeed);
+    nRet = CreateProperty("CameraSpeed", normStr.c_str(), MM::String, false, pAct);
     assert(nRet == DEVICE_OK);
-    vector<string> pixelTypeValues;
-    pixelTypeValues.push_back(g_PixelType_12bit);
-    pixelTypeValues.push_back(g_PixelType_16bit);
-    nRet = SetAllowedValues(MM::g_Keyword_PixelType, pixelTypeValues);
+    vector<string> cameraSpeedValues;
+    cameraSpeedValues.push_back(fastStr);
+    cameraSpeedValues.push_back(normStr);
+    nRet = SetAllowedValues("CameraSpeed", cameraSpeedValues);
     if(nRet != DEVICE_OK) return nRet;
     
     // exposure
@@ -368,7 +386,7 @@ int CApogeeCamera::Initialize()
     pAct = new CPropertyAction (this, &CApogeeCamera::OnExposure);
     nRet = CreateProperty(MM::g_Keyword_Exposure, "100.0", MM::Float, false, pAct);
     assert(nRet == DEVICE_OK);
-    SetPropertyLimits(MM::g_Keyword_Exposure, AltaCamera->MinExposure*1000, AltaCamera->MaxExposure*1000);
+    SetPropertyLimits(MM::g_Keyword_Exposure, ApgCam->MinExposure*1000, ApgCam->MaxExposure*1000);
     //SetPropertyLimits(MM::g_Keyword_Exposure, .1, 100000);
 
     // light/dark image mode
@@ -384,21 +402,34 @@ int CApogeeCamera::Initialize()
 	// *** ADD BIAS
     
     // camera gain
-	// *** Gary prefers "Gain-12bit" 
     pAct = new CPropertyAction (this, &CApogeeCamera::OnGain);
     nRet = CreateProperty(MM::g_Keyword_Gain, "0", MM::Integer, false, pAct);
     assert(nRet == DEVICE_OK);
-    SetPropertyLimits(MM::g_Keyword_Gain, 0, 1023);
+
+    if( Apn_Platform_Alta == ApgCam->PlatformType )
+    {
+        SetPropertyLimits(MM::g_Keyword_Gain, 0, 1023);
+    }
+    else
+    {
+        SetPropertyLimits(MM::g_Keyword_Gain, 0, 63);
+    }
     
     // camera offset
-	// *** Gary prefers "Offset-12bit"
     pAct = new CPropertyAction (this, &CApogeeCamera::OnOffset);
     nRet = CreateProperty(MM::g_Keyword_Offset, "0", MM::Integer, false, pAct);
     assert(nRet == DEVICE_OK);
-    SetPropertyLimits(MM::g_Keyword_Offset, 0, 255);
+    if( Apn_Platform_Alta == ApgCam->PlatformType )
+    {
+        SetPropertyLimits(MM::g_Keyword_Offset, 0, 255);
+    }
+    else
+    {
+        SetPropertyLimits(MM::g_Keyword_Offset, 0, 511);
+    }
 
 	// Only set up cooler properties if the camera supports cooling
-	if(AltaCamera->CoolerControl){
+	if(ApgCam->CoolerControl){
 		// cooler enable
 		pAct = new CPropertyAction (this, &CApogeeCamera::OnCoolerEnable);
 		nRet = CreateProperty("CoolerEnable", "On", MM::String, false, pAct);
@@ -425,7 +456,7 @@ int CApogeeCamera::Initialize()
 		assert(nRet == DEVICE_OK);
         
 		// Only set up these if the camera supports regulated cooling
-		if(AltaCamera->CoolerRegulated){
+		if(ApgCam->CoolerRegulated){
 			pAct = new CPropertyAction(this, &CApogeeCamera::OnCameraTemperatureSetPoint);
 			nRet = CreateProperty(MM::g_Keyword_CCDTemperatureSetPoint, "0", MM::Float, false, pAct);
 			assert(nRet == DEVICE_OK);
@@ -453,7 +484,7 @@ int CApogeeCamera::Initialize()
 		fanModeValues.push_back("High");
 		nRet = SetAllowedValues("FanSpeed", fanModeValues);
 		assert(nRet == DEVICE_OK);
-	} // end if(AltaCamera->CoolerControl){
+	} // end if(ApgCam->CoolerControl){
 
 	// I/O pin 1 assignment
 	pAct = new CPropertyAction (this, &CApogeeCamera::OnIoPin1Mode);
@@ -570,6 +601,35 @@ int CApogeeCamera::Initialize()
     nRet = SetAllowedValues("LedB", ledStateValues);
     assert(nRet == DEVICE_OK);
 
+    //add ascent filter wheel if approperiate
+    if( Apn_Platform_Ascent == ApgCam->PlatformType )
+    {
+        std::string cfwNone("None");
+        std::string cfw6r("CFW25 6R");
+        std::string cfw8r("CFW31 8R");
+
+        m_AscentFwMap.clear();
+        m_AscentFwMap[ cfwNone ] = Apn_Filter_Unknown;
+        m_AscentFwMap[ cfw6r ] = Apn_Filter_CFW25_6R;
+        m_AscentFwMap[ cfw8r ] = Apn_Filter_CFW31_8R;
+
+        pAct = new CPropertyAction (this, &CApogeeCamera::OnAscentFwType);
+        nRet = CreateProperty("AscentFwType", cfwNone.c_str(), MM::String, false, pAct);
+        assert(nRet == DEVICE_OK);
+        vector<string> fwTypeValues;
+        fwTypeValues.push_back( cfwNone );
+        fwTypeValues.push_back( cfw6r );
+        fwTypeValues.push_back( cfw8r );
+        nRet = SetAllowedValues("AscentFwType", fwTypeValues);
+        if(nRet != DEVICE_OK) return nRet;
+
+        pAct = new CPropertyAction (this, &CApogeeCamera::OnAscentFwPos);
+        nRet = CreateProperty("AscentFwPosition", "1", MM::Integer, false, pAct);
+        assert(nRet == DEVICE_OK);
+        SetPropertyLimits("AscentFwPosition", 1, 8);
+
+    }
+
     // synchronize all properties
     // --------------------------
     nRet = UpdateStatus();
@@ -600,7 +660,7 @@ int CApogeeCamera::Shutdown()
 {
     m_bInitialized = false;
     // *** WORK HERE- send proper call to hardware ***
-    AltaCamera	= NULL;		// Release ICamera2 COM object
+    ApgCam	= NULL;		// Release ICamera2 COM object
     CoUninitialize();		// Close the COM library
     return DEVICE_OK;
 }
@@ -713,13 +773,13 @@ int CApogeeCamera::OnCameraIdTwo(MM::PropertyBase* pProp, MM::ActionType eAct)
 int CApogeeCamera::OnCCDPixSizeX(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
     if(eAct == MM::BeforeGet)
-        pProp->Set(AltaCamera->PixelSizeX);
+        pProp->Set(ApgCam->PixelSizeX);
     return DEVICE_OK;
 }
 int CApogeeCamera::OnCCDPixSizeY(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
     if(eAct == MM::BeforeGet)
-        pProp->Set(AltaCamera->PixelSizeY);
+        pProp->Set(ApgCam->PixelSizeY);
     return DEVICE_OK;
 }
 
@@ -729,10 +789,10 @@ int CApogeeCamera::OnCCDPixSizeY(MM::PropertyBase* pProp, MM::ActionType eAct)
 int CApogeeCamera::OnShutterMode(MM::PropertyBase* pProp, MM::ActionType eAct)
 { 
     if(eAct == MM::BeforeGet){
-		bool disableVal = AltaCamera->DisableShutter==1;
-		bool readoutVal = AltaCamera->ExternalIoReadout==1;
-        bool externVal = AltaCamera->ExternalShutter==1;
-		bool openVal = AltaCamera->ForceShutterOpen==1;
+		bool disableVal = ApgCam->DisableShutter==1;
+		bool readoutVal = ApgCam->ExternalIoReadout==1;
+        bool externVal = ApgCam->ExternalShutter==1;
+		bool openVal = ApgCam->ForceShutterOpen==1;
 		if(externVal){
 			// Allow two external modes- one with external shutter readout control
 			// and the other with readout controlled by a separate IO pin.
@@ -753,28 +813,28 @@ int CApogeeCamera::OnShutterMode(MM::PropertyBase* pProp, MM::ActionType eAct)
         string mode;
         pProp->Get(mode);
 		if(mode.compare("External")==0){
-			AltaCamera->ExternalShutter = true;
-			AltaCamera->ExternalIoReadout = false;
-			AltaCamera->ForceShutterOpen = true;
+			ApgCam->ExternalShutter = true;
+			ApgCam->ExternalIoReadout = false;
+			ApgCam->ForceShutterOpen = true;
 		}else if(mode.compare("External IO Readout")==0){
-			AltaCamera->ExternalShutter = true;
-			AltaCamera->ExternalIoReadout = true;
-			AltaCamera->ForceShutterOpen = true;
+			ApgCam->ExternalShutter = true;
+			ApgCam->ExternalIoReadout = true;
+			ApgCam->ForceShutterOpen = true;
 		}else if(mode.compare("Internal Auto")==0){
-			AltaCamera->ExternalShutter = false;
-			AltaCamera->ExternalIoReadout = false;
-			AltaCamera->ForceShutterOpen = false;
-			AltaCamera->DisableShutter = false;
+			ApgCam->ExternalShutter = false;
+			ApgCam->ExternalIoReadout = false;
+			ApgCam->ForceShutterOpen = false;
+			ApgCam->DisableShutter = false;
 		}else if(mode.compare("Internal Open")==0){
-			AltaCamera->ExternalShutter = false;
-			AltaCamera->ExternalIoReadout = false;
-			AltaCamera->ForceShutterOpen = true;
-			AltaCamera->DisableShutter = false;
+			ApgCam->ExternalShutter = false;
+			ApgCam->ExternalIoReadout = false;
+			ApgCam->ForceShutterOpen = true;
+			ApgCam->DisableShutter = false;
 		}else if(mode.compare("Internal Disabled")==0){
-			AltaCamera->ExternalShutter = false;
-			AltaCamera->ExternalIoReadout = false;
-			AltaCamera->ForceShutterOpen = false;
-			AltaCamera->DisableShutter = true;
+			ApgCam->ExternalShutter = false;
+			ApgCam->ExternalIoReadout = false;
+			ApgCam->ForceShutterOpen = false;
+			ApgCam->DisableShutter = true;
 		}else
             assert(!"Unsupported shutter mode");
     }
@@ -787,7 +847,7 @@ int CApogeeCamera::OnShutterMode(MM::PropertyBase* pProp, MM::ActionType eAct)
 int CApogeeCamera::OnCoolerEnable(MM::PropertyBase* pProp, MM::ActionType eAct)
 { 
     if(eAct == MM::BeforeGet){
-        bool modeVal = AltaCamera->CoolerEnable==1;
+        bool modeVal = ApgCam->CoolerEnable==1;
         if(modeVal)
             pProp->Set("On");
         else
@@ -796,9 +856,9 @@ int CApogeeCamera::OnCoolerEnable(MM::PropertyBase* pProp, MM::ActionType eAct)
         string mode;
         pProp->Get(mode);
         if(mode.compare("Off")==0)
-            AltaCamera->CoolerEnable = false;
+            ApgCam->CoolerEnable = false;
         else if(mode.compare("On")==0)
-            AltaCamera->CoolerEnable = true;
+            ApgCam->CoolerEnable = true;
         else
             assert(!"Unsupported cooler enable mode");
     }
@@ -811,13 +871,13 @@ int CApogeeCamera::OnCoolerEnable(MM::PropertyBase* pProp, MM::ActionType eAct)
 int CApogeeCamera::OnCameraTemperatureSetPoint(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
     if(eAct == MM::BeforeGet){
-        pProp->Set(AltaCamera->CoolerSetPoint);
+        pProp->Set(ApgCam->CoolerSetPoint);
     }else if(eAct == MM::AfterSet){
         double temp;
         pProp->Get(temp);
-        AltaCamera->CoolerSetPoint = temp;
+        ApgCam->CoolerSetPoint = temp;
         // Read it back out to get the actual set value
-        pProp->Set(AltaCamera->CoolerSetPoint);
+        pProp->Set(ApgCam->CoolerSetPoint);
     }
     return DEVICE_OK;
 }
@@ -825,13 +885,13 @@ int CApogeeCamera::OnCameraTemperatureSetPoint(MM::PropertyBase* pProp, MM::Acti
 int CApogeeCamera::OnCameraTemperatureBackoffPoint(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
     if(eAct == MM::BeforeGet){
-        pProp->Set(AltaCamera->CoolerBackoffPoint);
+        pProp->Set(ApgCam->CoolerBackoffPoint);
     }else if(eAct == MM::AfterSet){
         double temp;
         pProp->Get(temp);
-        AltaCamera->CoolerBackoffPoint = temp;
+        ApgCam->CoolerBackoffPoint = temp;
         // Read it back out to get the actual set value
-        pProp->Set(AltaCamera->CoolerBackoffPoint);
+        pProp->Set(ApgCam->CoolerBackoffPoint);
     }
     return DEVICE_OK;
 }
@@ -843,7 +903,7 @@ int CApogeeCamera::OnCCDTemperature(MM::PropertyBase* pProp, MM::ActionType eAct
 {
     // Read-only
     if(eAct == MM::BeforeGet)
-        pProp->Set(AltaCamera->TempCCD);
+        pProp->Set(ApgCam->TempCCD);
     return DEVICE_OK;
 }
 
@@ -851,21 +911,21 @@ int CApogeeCamera::OnHeatsinkTemperature(MM::PropertyBase* pProp, MM::ActionType
 {
     // Read-only
     if(eAct == MM::BeforeGet)
-        pProp->Set(AltaCamera->TempHeatsink);
+        pProp->Set(ApgCam->TempHeatsink);
     return DEVICE_OK;
 }
 int CApogeeCamera::OnCoolerDriveLevel(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
     // Read-only
     if(eAct == MM::BeforeGet)
-        pProp->Set(AltaCamera->CoolerDrive);
+        pProp->Set(ApgCam->CoolerDrive);
     return DEVICE_OK;
 }
 int CApogeeCamera::OnCoolerStatus(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
     // Read-only
     if(eAct == MM::BeforeGet){
-        long modeVal = (long)AltaCamera->CoolerStatus;
+        long modeVal = (long)ApgCam->CoolerStatus;
         if(modeVal==Apn_CoolerStatus_Off)
             pProp->Set("Off");
         else if(modeVal==Apn_CoolerStatus_RampingToSetPoint)
@@ -888,7 +948,7 @@ int CApogeeCamera::OnCoolerStatus(MM::PropertyBase* pProp, MM::ActionType eAct)
 int CApogeeCamera::OnCoolerFanMode(MM::PropertyBase* pProp, MM::ActionType eAct)
 { 
     if(eAct == MM::BeforeGet){
-        long modeVal = (long)AltaCamera->FanMode;
+        long modeVal = (long)ApgCam->FanMode;
         if(modeVal==Apn_FanMode_Off)
             pProp->Set("Off");
         else if(modeVal==Apn_FanMode_Low)
@@ -903,13 +963,13 @@ int CApogeeCamera::OnCoolerFanMode(MM::PropertyBase* pProp, MM::ActionType eAct)
         string mode;
         pProp->Get(mode);
         if(mode.compare("Off")==0)
-            AltaCamera->FanMode = Apn_FanMode_Off;
+            ApgCam->FanMode = Apn_FanMode_Off;
         else if(mode.compare("Low")==0)
-            AltaCamera->FanMode = Apn_FanMode_Low;
+            ApgCam->FanMode = Apn_FanMode_Low;
         else if(mode.compare("Medium")==0)
-            AltaCamera->FanMode = Apn_FanMode_Medium;
+            ApgCam->FanMode = Apn_FanMode_Medium;
         else if(mode.compare("High")==0)
-            AltaCamera->FanMode = Apn_FanMode_High;
+            ApgCam->FanMode = Apn_FanMode_High;
         else
             assert(!"Unsupported fan mode");
     }
@@ -937,34 +997,122 @@ int CApogeeCamera::OnExposure(MM::PropertyBase* pProp, MM::ActionType eAct)
  */
 int CApogeeCamera::OnPixelType(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
-    if(eAct == MM::AfterSet){
-        string pixelType;
-        pProp->Get(pixelType);
-        if(pixelType.compare(g_PixelType_12bit)==0){
-            AltaCamera->DataBits = Apn_Resolution_TwelveBit;
-        }else if(pixelType.compare(g_PixelType_16bit)==0){
-            AltaCamera->DataBits = Apn_Resolution_SixteenBit;
-        }else{
-            assert(!"Unsupported pixel type");
-            // on error switch to default pixel type
+   if(eAct == MM::BeforeGet){
+        if(ApgCam->DataBits == Apn_Resolution_TwelveBit)
             pProp->Set(g_PixelType_12bit);
-            return DEVICE_ERR;
-        }
-    }
-    else if(eAct == MM::BeforeGet){
-        if(AltaCamera->DataBits == Apn_Resolution_TwelveBit)
-            pProp->Set(g_PixelType_12bit);
-        else if(AltaCamera->DataBits == Apn_Resolution_SixteenBit)
-            pProp->Set(g_PixelType_16bit);
-        else{
-            assert(!"Unsupported pixel depth");
-            // on error switch to default pixel type
-            pProp->Set(g_PixelType_12bit);
-            return DEVICE_ERR;
-        }
+        else 
+            pProp->Set(g_PixelType_16bit);  //16 is the default
     }
     return DEVICE_OK;
 }
+
+/**
+ * Handles "CameraSpeed" property.
+ */
+int CApogeeCamera::OnCameraSpeed(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+    // use the new interface
+    if( IsDriverNew() )
+    {
+        return OnSpeed( pProp,  eAct);
+    }
+    
+    // use the old one if driver old and camera is an alta
+    if( Apn_Platform_Alta == ApgCam->PlatformType )
+    {
+        return OnDataBits( pProp,  eAct );
+    }
+    
+    //otherwise error out
+     assert(!"Unsupported camera speed, invalid driver camera combination");
+    return DEVICE_ERR;
+
+}
+
+// for newer drivers
+int CApogeeCamera::OnSpeed(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+       if(eAct == MM::AfterSet){
+        string speed;
+        pProp->Get(speed);
+
+        std::map<std::string, int>::iterator iter = m_SpeedMap.find(speed);
+       
+        if( iter != m_SpeedMap.end() )
+        {
+             ApgCam->DigitizationSpeed = (*iter).second;
+             return DEVICE_OK;
+        }
+
+        assert(!"Unsupported camera speed");
+        // on error switch to default speed
+        pProp->Set("Fast");
+        return DEVICE_ERR;
+        
+    }
+    else if(eAct == MM::BeforeGet){
+
+        std::map<std::string, int>::iterator iter;
+        for( iter = m_SpeedMap.begin(); iter != m_SpeedMap.end(); ++iter )
+        {
+            if( (*iter).second == ApgCam->DigitizationSpeed )
+            {
+                pProp->Set( (*iter).first.c_str() );
+                return DEVICE_OK;
+            }
+        }
+
+        assert(!"Unsupported camera speed");
+        // on error switch to default pixel type
+        pProp->Set("Fast");
+        return DEVICE_ERR;
+    }
+
+    return DEVICE_OK;
+}
+
+// backward compatibility support for old drivers
+int CApogeeCamera::OnDataBits(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+       if(eAct == MM::AfterSet){
+        string speed;
+        pProp->Get(speed);
+
+        std::map<std::string, Apn_Resolution>::iterator iter = m_DigitizeBitsMap.find(speed);
+       
+        if( iter != m_DigitizeBitsMap.end() )
+        {
+             ApgCam->DataBits = (*iter).second;
+             return DEVICE_OK;
+        }
+
+        assert(!"Unsupported camera speed");
+        // on error switch to default speed
+        pProp->Set("Fast");
+        return DEVICE_ERR;
+        
+    }
+    else if(eAct == MM::BeforeGet){
+
+        std::map<std::string, Apn_Resolution>::iterator iter;
+        for( iter = m_DigitizeBitsMap.begin(); iter != m_DigitizeBitsMap.end(); ++iter )
+        {
+            if( (*iter).second == ApgCam->DataBits )
+            {
+                pProp->Set( (*iter).first.c_str() );
+                return DEVICE_OK;
+            }
+        }
+
+        assert(!"Unsupported camera speed");
+        // on error switch to default pixel type
+        pProp->Set("Fast");
+        return DEVICE_ERR;
+    }
+
+    return DEVICE_OK;
+}
+
 
 int CApogeeCamera::OnLightMode(MM::PropertyBase* pProp, MM::ActionType eAct)
 { 
@@ -991,26 +1139,187 @@ int CApogeeCamera::OnLightMode(MM::PropertyBase* pProp, MM::ActionType eAct)
  */
 int CApogeeCamera::OnGain(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
+    int result = DEVICE_ERR;
+    long gain = 0;
     if(eAct == MM::AfterSet){
-        long gain;
+        
         pProp->Get(gain);
-        AltaCamera->GainTwelveBit = gain;
+
+        if( Apn_Platform_Ascent == ApgCam->PlatformType  )
+        {
+            result = SetAscentAdGain( gain );
+        }
+        else
+        {
+            result = SetAltaAdGain( gain );
+        }
+
     }else if(eAct == MM::BeforeGet){
-        pProp->Set(AltaCamera->GainTwelveBit);
+
+        if( Apn_Platform_Ascent == ApgCam->PlatformType  )
+        {
+            result = GetAscentAdGain( gain );
+        }
+        else
+        {
+            result = GetAltaAdGain( gain );
+        }
+
+        pProp->Set( gain );
     }
+
+    return result;
+}
+
+int CApogeeCamera::SetAscentAdGain( const long gain )
+{
+    if( !IsDriverNew() )
+    {
+        return DEVICE_ERR;
+    }
+
+    //setting all ad's and channels to the same vaule
+    const int numAds = ApgCam->NumAds;
+    const int numChannels = ApgCam->NumAdChannels;
+    for( int i=0; i < numAds; ++i )
+	{
+        for( int c=0; c < numChannels; ++c )
+        {
+            ApgCam->SetAdGain( gain, i, c);
+        }
+    }
+
     return DEVICE_OK;
 }
 
+int CApogeeCamera::GetAscentAdGain( long & gain )
+{
+    if( !IsDriverNew() )
+    {
+        return DEVICE_ERR;
+    }
+
+    // using ad 0 and channel 0 as default
+    // will have to change this if controlling individual
+    // items is required
+    ApgCam->GetAdGain( &gain, 0, 0);
+
+    return DEVICE_OK;
+}
+
+int CApogeeCamera::SetAltaAdGain( const long gain )
+{
+    if( ApgCam->DataBits == Apn_Resolution_TwelveBit )
+    {
+        ApgCam->GainTwelveBit = gain;
+    }
+
+     return DEVICE_OK;
+}
+
+int CApogeeCamera::GetAltaAdGain( long & gain )
+{
+    if( ApgCam->DataBits == Apn_Resolution_TwelveBit )
+    {
+        gain = ApgCam->GainTwelveBit;
+    }
+    else
+    {
+        gain = ApgCam->GainSixteenBit;
+    }
+
+     return DEVICE_OK;
+}
+//-------------------------------------
 int CApogeeCamera::OnOffset(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
+    int result = DEVICE_ERR;
+    long offset;
     if(eAct == MM::AfterSet){
-        long offset;
         pProp->Get(offset);
-        AltaCamera->OffsetTwelveBit = offset;
+        if( Apn_Platform_Ascent == ApgCam->PlatformType  )
+        {
+            result = SetAscentAdOffset( offset );
+        }
+        else
+        {
+            result = SetAltaAdOffset( offset );
+        }
+
     }else if(eAct == MM::BeforeGet){
-        pProp->Set(AltaCamera->OffsetTwelveBit);
+        if( Apn_Platform_Ascent == ApgCam->PlatformType  )
+        {
+            result = GetAscentAdOffset( offset );
+        }
+        else
+        {
+            result = GetAltaAdOffset( offset );
+        }
+
+        pProp->Set( offset );
     }
+
+    return result;
+}
+
+int CApogeeCamera::SetAscentAdOffset( const long offset )
+{
+    if( !IsDriverNew() )
+    {
+        return DEVICE_ERR;
+    }
+
+    //setting all ad's and channels to the same vaule
+    const int numAds = ApgCam->NumAds;
+    const int numChannels = ApgCam->NumAdChannels;
+    for( int i=0; i < numAds; ++i )
+	{
+        for( int c=0; c < numChannels; ++c )
+        {
+            ApgCam->SetAdOffset( offset, i, c);
+        }
+    }
+
     return DEVICE_OK;
+}
+
+int CApogeeCamera::GetAscentAdOffset( long & offset )
+{
+    if( !IsDriverNew() )
+    {
+        return DEVICE_ERR;
+    }
+
+    // using ad 0 and channel 0 as default
+    // will have to change this if controlling individual
+    // items is required
+    ApgCam->GetAdOffset( &offset, 0, 0);
+
+    return DEVICE_OK;
+}
+
+int CApogeeCamera::SetAltaAdOffset( const long offset )
+{
+    if( ApgCam->DataBits == Apn_Resolution_TwelveBit )
+    {
+        ApgCam->OffsetTwelveBit = offset;
+    }
+
+     return DEVICE_OK;
+}
+
+int CApogeeCamera::GetAltaAdOffset( long & offset )
+{
+    if( ApgCam->DataBits == Apn_Resolution_TwelveBit )
+    {
+        offset = ApgCam->OffsetTwelveBit;
+    }
+    else
+    {
+        offset = 0;
+    }
+
+     return DEVICE_OK;
 }
 
 /*
@@ -1019,8 +1328,8 @@ int CApogeeCamera::OnOffset(MM::PropertyBase* pProp, MM::ActionType eAct)
 int CApogeeCamera::OnIoPinMode(MM::PropertyBase* pProp, MM::ActionType eAct, long mask, const char *altStr)
 {
     if(eAct == MM::BeforeGet){
-        long modeVal = (long)AltaCamera->IoPortAssignment;
-		long dirVal = (long)AltaCamera->IoPortDirection;
+        long modeVal = (long)ApgCam->IoPortAssignment;
+		long dirVal = (long)ApgCam->IoPortDirection;
 		if(modeVal & mask){
             pProp->Set(altStr);
 		}else{
@@ -1033,13 +1342,13 @@ int CApogeeCamera::OnIoPinMode(MM::PropertyBase* pProp, MM::ActionType eAct, lon
         string mode;
         pProp->Get(mode);
         if(mode.compare(altStr)==0)
-            AltaCamera->IoPortAssignment |= mask;
+            ApgCam->IoPortAssignment |= mask;
 		else{
-			AltaCamera->IoPortAssignment &= ~mask;
+			ApgCam->IoPortAssignment &= ~mask;
 			if(mode.compare("User Output")==0)
-				AltaCamera->IoPortDirection |= mask;
+				ApgCam->IoPortDirection |= mask;
 			else if(mode.compare("User Input")==0)
-				AltaCamera->IoPortDirection &= ~mask;
+				ApgCam->IoPortDirection &= ~mask;
 			else
 				assert(!"Unsupported IO port direction mode");
 		}
@@ -1074,8 +1383,8 @@ int CApogeeCamera::OnTriggerMode(MM::PropertyBase* pProp, MM::ActionType eAct){
         const int TK_GROUP = 0x2;
         const int TK_EACH = 0x1;
         const int TRIG_NONE = 0x0;
-        int value = AltaCamera->TriggerNormalGroup << 3 | AltaCamera->TriggerNormalEach << 2 | 
-        AltaCamera->TriggerTdiKineticsGroup << 1 | AltaCamera->TriggerTdiKineticsEach;
+        int value = ApgCam->TriggerNormalGroup << 3 | ApgCam->TriggerNormalEach << 2 | 
+        ApgCam->TriggerTdiKineticsGroup << 1 | ApgCam->TriggerTdiKineticsEach;
         switch(value){
             case TRIG_NONE:
                 pProp->Set("None");
@@ -1106,46 +1415,46 @@ int CApogeeCamera::OnTriggerMode(MM::PropertyBase* pProp, MM::ActionType eAct){
         string mode;
         pProp->Get(mode);
         if(mode.compare("None")==0){
-            AltaCamera->TriggerNormalGroup = FALSE;
-            AltaCamera->TriggerNormalEach = FALSE;
-            AltaCamera->TriggerTdiKineticsGroup = FALSE; 
-            AltaCamera->TriggerTdiKineticsEach = FALSE;
+            ApgCam->TriggerNormalGroup = FALSE;
+            ApgCam->TriggerNormalEach = FALSE;
+            ApgCam->TriggerTdiKineticsGroup = FALSE; 
+            ApgCam->TriggerTdiKineticsEach = FALSE;
         }
         else if(mode.compare("NormalEach")==0){
-            AltaCamera->TriggerNormalGroup = FALSE;
-            AltaCamera->TriggerNormalEach = TRUE;
-            AltaCamera->TriggerTdiKineticsGroup = FALSE; 
-            AltaCamera->TriggerTdiKineticsEach = FALSE;
+            ApgCam->TriggerNormalGroup = FALSE;
+            ApgCam->TriggerNormalEach = TRUE;
+            ApgCam->TriggerTdiKineticsGroup = FALSE; 
+            ApgCam->TriggerTdiKineticsEach = FALSE;
         }
         else if(mode.compare("NormalGroup")==0){
-            AltaCamera->TriggerNormalGroup = TRUE;
-            AltaCamera->TriggerNormalEach = FALSE;
-            AltaCamera->TriggerTdiKineticsGroup = FALSE; 
-            AltaCamera->TriggerTdiKineticsEach = FALSE;
+            ApgCam->TriggerNormalGroup = TRUE;
+            ApgCam->TriggerNormalEach = FALSE;
+            ApgCam->TriggerTdiKineticsGroup = FALSE; 
+            ApgCam->TriggerTdiKineticsEach = FALSE;
         }
         else if(mode.compare("NormalEachGroup")==0){
-            AltaCamera->TriggerNormalGroup = TRUE;
-            AltaCamera->TriggerNormalEach = TRUE;
-            AltaCamera->TriggerTdiKineticsGroup = FALSE; 
-            AltaCamera->TriggerTdiKineticsEach = FALSE;
+            ApgCam->TriggerNormalGroup = TRUE;
+            ApgCam->TriggerNormalEach = TRUE;
+            ApgCam->TriggerTdiKineticsGroup = FALSE; 
+            ApgCam->TriggerTdiKineticsEach = FALSE;
         }
         else if(mode.compare("TdiKineticsEach")==0){
-            AltaCamera->TriggerNormalGroup = FALSE;
-            AltaCamera->TriggerNormalEach = FALSE;
-            AltaCamera->TriggerTdiKineticsGroup = FALSE; 
-            AltaCamera->TriggerTdiKineticsEach = TRUE;
+            ApgCam->TriggerNormalGroup = FALSE;
+            ApgCam->TriggerNormalEach = FALSE;
+            ApgCam->TriggerTdiKineticsGroup = FALSE; 
+            ApgCam->TriggerTdiKineticsEach = TRUE;
         }
         else if(mode.compare("TdiKineticsGroup")==0){
-            AltaCamera->TriggerNormalGroup = FALSE;
-            AltaCamera->TriggerNormalEach = FALSE;
-            AltaCamera->TriggerTdiKineticsGroup = TRUE; 
-            AltaCamera->TriggerTdiKineticsEach = FALSE;
+            ApgCam->TriggerNormalGroup = FALSE;
+            ApgCam->TriggerNormalEach = FALSE;
+            ApgCam->TriggerTdiKineticsGroup = TRUE; 
+            ApgCam->TriggerTdiKineticsEach = FALSE;
         }
         else if(mode.compare("TdiKineticsEachGroup")==0){
-            AltaCamera->TriggerNormalGroup = FALSE;
-            AltaCamera->TriggerNormalEach = FALSE;
-            AltaCamera->TriggerTdiKineticsGroup = TRUE; 
-            AltaCamera->TriggerTdiKineticsEach = TRUE;
+            ApgCam->TriggerNormalGroup = FALSE;
+            ApgCam->TriggerNormalEach = FALSE;
+            ApgCam->TriggerTdiKineticsGroup = TRUE; 
+            ApgCam->TriggerTdiKineticsEach = TRUE;
         }
         else
             assert(!"Unsupported trigger mode");
@@ -1156,7 +1465,7 @@ int CApogeeCamera::OnTriggerMode(MM::PropertyBase* pProp, MM::ActionType eAct){
 int CApogeeCamera::OnLedMode(MM::PropertyBase* pProp, MM::ActionType eAct)
 { 
     if(eAct == MM::BeforeGet){
-        switch( AltaCamera->LedMode ){
+        switch( ApgCam->LedMode ){
             case Apn_LedMode_DisableAll:
                 pProp->Set("DisableAll");
             break;
@@ -1174,13 +1483,13 @@ int CApogeeCamera::OnLedMode(MM::PropertyBase* pProp, MM::ActionType eAct)
         string mode;
         pProp->Get(mode);
         if(mode.compare("DisableAll")==0){
-            AltaCamera->LedMode = Apn_LedMode_DisableAll;
+            ApgCam->LedMode = Apn_LedMode_DisableAll;
         }
         else if(mode.compare("DisableWhileExpose")==0){
-            AltaCamera->LedMode = Apn_LedMode_DisableWhileExpose;
+            ApgCam->LedMode = Apn_LedMode_DisableWhileExpose;
         }
         else if(mode.compare("EnableAll")==0){
-            AltaCamera->LedMode = Apn_LedMode_EnableAll;
+            ApgCam->LedMode = Apn_LedMode_EnableAll;
         }
         else{
             assert(!"Unsupported LED mode");
@@ -1194,10 +1503,10 @@ int CApogeeCamera::OnLedState(MM::PropertyBase* pProp, MM::ActionType eAct, cons
      if(eAct == MM::BeforeGet){
          Apn_LedState state = Apn_LedState_Expose;
          if( IsA ){
-             state = AltaCamera->LedA;
+             state = ApgCam->LedA;
          }
          else{
-             state = AltaCamera->LedB;
+             state = ApgCam->LedB;
          }
         switch( state ){
             case Apn_LedState_Expose:
@@ -1261,10 +1570,10 @@ int CApogeeCamera::OnLedState(MM::PropertyBase* pProp, MM::ActionType eAct, cons
         }
 
          if( IsA ){
-             AltaCamera->LedA = state;
+             ApgCam->LedA = state;
          }
          else{
-             AltaCamera->LedB = state;
+             ApgCam->LedB = state;
          }
     }
     return DEVICE_OK;
@@ -1280,12 +1589,176 @@ int CApogeeCamera::OnLedBState(MM::PropertyBase* pProp, MM::ActionType eAct)
     return OnLedState( pProp, eAct, false );
 }
 
+int CApogeeCamera::OnAscentFwType(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+    if(eAct == MM::AfterSet){
+        string type;
+        pProp->Get(type);
+
+        std::map<std::string, Apn_Filter>::iterator iter = m_AscentFwMap.find(type);
+       
+        if( iter != m_AscentFwMap.end() )
+        {
+            const int result = SwitchAscentFwType( (*iter).second );
+
+            //if we are good exit here,
+            //else fall through to the error handler
+            if( DEVICE_ERR !=  result )
+            {
+                return result;
+            }
+        }
+
+        assert(!"Unsupported filter wheel type");
+        // on error switch to nothing
+        pProp->Set("None");
+        return DEVICE_ERR;
+        
+    }
+    else if(eAct == MM::BeforeGet){
+
+        std::map<std::string, Apn_Filter>::iterator iter;
+        for( iter = m_AscentFwMap.begin(); iter != m_AscentFwMap.end(); ++iter )
+        {
+            if( (*iter).second == ApgCam->FilterType )
+            {
+                pProp->Set( (*iter).first.c_str() );
+                return DEVICE_OK;
+            }
+        }
+
+        assert(!"Unsupported filter wheel type");
+        // on error switch to nothing
+        pProp->Set("None");
+        return DEVICE_ERR;
+    }
+
+    return DEVICE_OK;
+
+}
+
+int CApogeeCamera::SwitchAscentFwType( const Apn_Filter newType )
+{
+    const Apn_Filter curType = ApgCam->FilterType;
+    const Apn_FilterStatus curStatus = ApgCam->FilterStatus;
+
+    if( curType == newType )
+    {
+         return DEVICE_OK;
+    }
+
+    // fw is closed
+    // open it
+    if( Apn_Filter_Unknown != newType && 
+        Apn_FilterStatus_NotConnected == curStatus )
+    {
+        ApgCam->FilterInit( newType );
+        return DEVICE_OK;
+    }
+
+    // fw is open
+    // close it
+    if( Apn_Filter_Unknown == newType && 
+        Apn_FilterStatus_NotConnected != curStatus )
+    {
+        ApgCam->FilterClose();
+        return DEVICE_OK;
+    }
+
+    //allowing fw to fw transition
+    if( Apn_Filter_Unknown != newType && 
+        Apn_FilterStatus_NotConnected != curStatus )
+    {
+        ApgCam->FilterClose();
+        ApgCam->FilterInit( newType );
+        return DEVICE_OK;
+    }
+
+    //we are in never-never land
+    return DEVICE_ERR;
+}
+
+int CApogeeCamera::OnAscentFwPos(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+    if(eAct == MM::AfterSet){
+        long pos;
+        pProp->Get(pos);
+
+        if( Apn_Filter_Unknown != ApgCam->FilterType && 
+            Apn_FilterStatus_Ready == ApgCam->FilterStatus && 
+            pos <= ApgCam->FilterMaxPositions )
+        {
+            //zero based position, 1 based ui
+            ApgCam->FilterPosition = (pos-1);
+        }
+    }else if(eAct == MM::BeforeGet){
+        if(  Apn_FilterStatus_NotConnected != ApgCam->FilterStatus )
+        {
+            //zero based position, 1 based ui
+            pProp->Set( (ApgCam->FilterPosition+1) );
+        }
+    }
+    return DEVICE_OK;
+}
+
+///////////////////////////////////////////////////////////////////////////////
+//  blocking call that prevents an exposure while the
+// fw is moving
+
+void CApogeeCamera::CheckAscentFwStatus()
+{
+    if( Apn_Platform_Ascent != ApgCam->PlatformType )
+    {
+        return;
+    }
+
+    if(  Apn_FilterStatus_NotConnected == ApgCam->FilterStatus )
+    {
+        return;
+    }
+
+    while( Apn_FilterStatus_Ready != ApgCam->FilterStatus )
+    {
+        CDeviceUtils::SleepMs(100);
+    }
+}
+
+bool CApogeeCamera::IsDriverNew()
+{
+    const int MIN_MAJOR = 3;
+    const int MIN_MINOR = 11;
+    bool IsNew = false;
+    
+    _bstr_t driverVersion( ApgCam->DriverVersion );
+
+    int major=0, minor=0, build=0, rev=0;
+    sscanf( driverVersion, "%d.%d.%d.%d", &major, &minor, &build, &rev);
+
+    if( major > MIN_MAJOR )
+    {
+        IsNew = true;
+    }
+    else if( major == MIN_MAJOR )
+    {
+        if( minor >= MIN_MINOR )
+        {
+             IsNew = true;
+        }
+    }
+
+    return IsNew;
+}
+
 ///////////////////////////////////////////////////////////////////////////////
 // Performs exposure and grabs a single image to the camera's internal buffer.
 // Required by the MM::Camera API. 
 //
 int CApogeeCamera::SnapImage()
 {
+
+    // block until fw is ready
+    CheckAscentFwStatus();
+
 	// DEBUG: MM::MMTime startTime = GetCurrentMMTime();
 
 	// We'll sleep for this long after triggering the exposure and
@@ -1295,15 +1768,15 @@ int CApogeeCamera::SnapImage()
 	long sleepMs = (long) (m_dExposure - 1.5);
 	if (sleepMs < 0) sleepMs = 0;
 
-    AltaCamera->Expose(m_dExposure/1000, m_nLightImgMode);
+    ApgCam->Expose(m_dExposure/1000, m_nLightImgMode);
 
-	// DEBUG: LogTimeDiff(startTime, GetCurrentMMTime(), "AltaCamera->Expose time: ", false);
+	// DEBUG: LogTimeDiff(startTime, GetCurrentMMTime(), "ApgCam->Expose time: ", false);
 
 	// Sleep until just before exposure is supposed to end
 	if(sleepMs>0)
 		CDeviceUtils::SleepMs(sleepMs);
 	// Start polling to accurately catch the end of exposure
-    while(AltaCamera->ImagingStatus == Apn_Status_Exposing);
+    while(ApgCam->ImagingStatus == Apn_Status_Exposing);
 
 	// DEBUG: LogTimeDiff(startTime, GetCurrentMMTime(), "SnapImage total time: ", false);
 
@@ -1339,11 +1812,11 @@ const unsigned char* CApogeeCamera::GetImageBuffer()
     // Not sure how to prevent the warning that this generates.
 
     // Make sure the image data are ready:
-    while(AltaCamera->ImagingStatus != Apn_Status_ImageReady)
+    while(ApgCam->ImagingStatus != Apn_Status_ImageReady)
 		CDeviceUtils::SleepMs(1);
 
     // Get the image
-    AltaCamera->GetImage((long)pBuf);
+    ApgCam->GetImage((long)pBuf);
     
     return img_.GetPixels();
 }
@@ -1355,7 +1828,7 @@ const unsigned char* CApogeeCamera::GetImageBuffer()
 unsigned CApogeeCamera::GetImageWidth() const
 {
     
-    return (unsigned)AltaCamera->RoiPixelsH;
+    return (unsigned)ApgCam->RoiPixelsH;
 }
 
 /**
@@ -1364,7 +1837,7 @@ unsigned CApogeeCamera::GetImageWidth() const
  */
 unsigned CApogeeCamera::GetImageHeight() const
 {
-    return (unsigned)AltaCamera->RoiPixelsV;
+    return (unsigned)ApgCam->RoiPixelsV;
 }
 
 /**
@@ -1385,9 +1858,9 @@ unsigned CApogeeCamera::GetImageBytesPerPixel() const
  */
 unsigned CApogeeCamera::GetBitDepth() const
 {
-    if(AltaCamera->DataBits == Apn_Resolution_TwelveBit)
+    if(ApgCam->DataBits == Apn_Resolution_TwelveBit)
         return 12;
-    else if(AltaCamera->DataBits == Apn_Resolution_SixteenBit)
+    else if(ApgCam->DataBits == Apn_Resolution_SixteenBit)
         return 16;
     else{
         assert(!"unsupported bits per pixel count");
@@ -1414,10 +1887,10 @@ int CApogeeCamera::OnBinning(MM::PropertyBase* pProp, MM::ActionType eAct)
         // apply this value to the hardware.
         long bin;
         pProp->Get(bin);
-		double binXDelta = (double)AltaCamera->RoiBinningH/(double)bin;
-		double binYDelta = (double)AltaCamera->RoiBinningV/(double)bin;
-		AltaCamera->RoiBinningH = bin;
-        AltaCamera->RoiBinningV = bin;
+		double binXDelta = (double)ApgCam->RoiBinningH/(double)bin;
+		double binYDelta = (double)ApgCam->RoiBinningV/(double)bin;
+		ApgCam->RoiBinningH = bin;
+        ApgCam->RoiBinningV = bin;
 		// The Alta driver requires us to adjust RoiPixels after a binning change.
 		SetROI(0, 0, (unsigned)(binXDelta*m_roiH+0.5), (unsigned)(binYDelta*m_roiV+0.5));
         return ResizeImageBuffer();
@@ -1425,7 +1898,7 @@ int CApogeeCamera::OnBinning(MM::PropertyBase* pProp, MM::ActionType eAct)
     else if(eAct == MM::BeforeGet){
         // the user is requesting the current value for the property, so
         // ask the hardware for it's current setting. 
-        pProp->Set((long)AltaCamera->RoiBinningH);
+        pProp->Set((long)ApgCam->RoiBinningH);
     }
     return DEVICE_OK;
 }
@@ -1438,14 +1911,14 @@ int CApogeeCamera::OnXBinning(MM::PropertyBase* pProp, MM::ActionType eAct)
     if(eAct == MM::AfterSet){
         long bin;
         pProp->Get(bin);
-		double binXDelta = (double)AltaCamera->RoiBinningH/(double)bin;
-		AltaCamera->RoiBinningH = bin;
+		double binXDelta = (double)ApgCam->RoiBinningH/(double)bin;
+		ApgCam->RoiBinningH = bin;
 		// The Alta driver requires us to adjust RoiPixels after a binning change.
 		SetROI(0, 0, (unsigned)(binXDelta*m_roiH+0.5), (unsigned)m_roiV);
         return ResizeImageBuffer();
     }
     else if(eAct == MM::BeforeGet){
-        pProp->Set((long)AltaCamera->RoiBinningH);
+        pProp->Set((long)ApgCam->RoiBinningH);
     }
     return DEVICE_OK;
 }
@@ -1458,17 +1931,19 @@ int CApogeeCamera::OnYBinning(MM::PropertyBase* pProp, MM::ActionType eAct)
     if(eAct == MM::AfterSet){
         long bin;
         pProp->Get(bin);
-		double binYDelta = (double)AltaCamera->RoiBinningV/(double)bin;
-        AltaCamera->RoiBinningV = bin;
+		double binYDelta = (double)ApgCam->RoiBinningV/(double)bin;
+        ApgCam->RoiBinningV = bin;
 		// The Alta driver requires us to adjust RoiPixels after a binning change.
 		SetROI(0, 0, (unsigned)m_roiH, (unsigned)(binYDelta*m_roiV+0.5));
         return ResizeImageBuffer();
     }
     else if(eAct == MM::BeforeGet){
-        pProp->Set((long)AltaCamera->RoiBinningV);
+        pProp->Set((long)ApgCam->RoiBinningV);
     }
     return DEVICE_OK;
 }
+
+
 
 /**
  * Sets the camera Region Of Interest.
@@ -1488,8 +1963,8 @@ int CApogeeCamera::SetROI(unsigned x, unsigned y, unsigned xSize, unsigned ySize
     // The Alta Camera expects the ROI size to be specified in binned pixels,
     // but the start position to be in unbinned pixels. All inputs are specified
 	// in binned pixels. The start point is relative to the current ROI.
-    unsigned int maxH = (unsigned)(AltaCamera->ImagingColumns/AltaCamera->RoiBinningH);
-    unsigned int maxV = (unsigned)(AltaCamera->ImagingRows/AltaCamera->RoiBinningV);
+    unsigned int maxH = (unsigned)(ApgCam->ImagingColumns/ApgCam->RoiBinningH);
+    unsigned int maxV = (unsigned)(ApgCam->ImagingRows/ApgCam->RoiBinningV);
 	// *** FIXME: When we create an ROI within an ROI, this gets confused. We need something like: 
 	//x = x+m_roiX;
 	//y = y+m_roiY;
@@ -1498,16 +1973,16 @@ int CApogeeCamera::SetROI(unsigned x, unsigned y, unsigned xSize, unsigned ySize
 		ClearROI();
     }else if(x<maxH && y<maxV){
 		// We always save the current ROI start point in unbinned, absolute coordinates: 
-		m_roiX = (long)x * AltaCamera->RoiBinningH + m_roiX;
-		m_roiY = (long)y * AltaCamera->RoiBinningV + m_roiY;
-        AltaCamera->RoiStartX = m_roiX;
-        AltaCamera->RoiStartY = m_roiY;
+		m_roiX = (long)x * ApgCam->RoiBinningH + m_roiX;
+		m_roiY = (long)y * ApgCam->RoiBinningV + m_roiY;
+        ApgCam->RoiStartX = m_roiX;
+        ApgCam->RoiStartY = m_roiY;
 		if(xSize>(maxH-x)) xSize = maxH-x;
         if(ySize>(maxV-y)) ySize = maxV-y;
         m_roiH = (long)xSize;
         m_roiV = (long)ySize;
-		AltaCamera->RoiPixelsH = (long)xSize;
-        AltaCamera->RoiPixelsV = (long)ySize;
+		ApgCam->RoiPixelsH = (long)xSize;
+        ApgCam->RoiPixelsV = (long)ySize;
         ResizeImageBuffer();
 	}else
 		assert(!"ROI start point out-of-range");
@@ -1520,10 +1995,10 @@ int CApogeeCamera::SetROI(unsigned x, unsigned y, unsigned xSize, unsigned ySize
  */
 int CApogeeCamera::GetROI(unsigned& x, unsigned& y, unsigned& xSize, unsigned& ySize)
 {
-    x = (unsigned)AltaCamera->RoiStartX * AltaCamera->RoiBinningH;
-    y = (unsigned)AltaCamera->RoiStartY * AltaCamera->RoiBinningV;
-    xSize = (unsigned)AltaCamera->RoiPixelsH;
-    ySize = (unsigned)AltaCamera->RoiPixelsV;
+    x = (unsigned)ApgCam->RoiStartX * ApgCam->RoiBinningH;
+    y = (unsigned)ApgCam->RoiStartY * ApgCam->RoiBinningV;
+    xSize = (unsigned)ApgCam->RoiPixelsH;
+    ySize = (unsigned)ApgCam->RoiPixelsV;
     return DEVICE_OK;
 }
 
@@ -1535,13 +2010,13 @@ int CApogeeCamera::ClearROI()
 {
 	m_roiX = 0;
 	m_roiY = 0;
-	m_roiH = AltaCamera->ImagingColumns;
-	m_roiV = AltaCamera->ImagingRows;
-    AltaCamera->RoiStartX = m_roiX;
-    AltaCamera->RoiStartY = m_roiY;
+	m_roiH = ApgCam->ImagingColumns;
+	m_roiV = ApgCam->ImagingRows;
+    ApgCam->RoiStartX = m_roiX;
+    ApgCam->RoiStartY = m_roiY;
 	// The ROI is specified in binned pixels
-    AltaCamera->RoiPixelsH = m_roiH/AltaCamera->RoiBinningH;
-    AltaCamera->RoiPixelsV = m_roiV/AltaCamera->RoiBinningV;
+    ApgCam->RoiPixelsH = m_roiH/ApgCam->RoiBinningH;
+    ApgCam->RoiPixelsV = m_roiV/ApgCam->RoiBinningV;
     ResizeImageBuffer();
     return DEVICE_OK;
 }
@@ -1579,10 +2054,10 @@ int CApogeeCamera::StartSequenceAcquisition(long numImages, double interval_ms, 
 	SequenceCheckImageBuffer();
 	m_sequenceLengthRequested = numImages;
    m_stopOnOverflow = stopOnOverflow;
-	AltaCamera->SequenceBulkDownload = false; 
-	AltaCamera->ImageCount = numImages;
-   AltaCamera->SequenceDelay = interval_ms / 1000.0;
-   AltaCamera->Expose(m_dExposure/1000, m_nLightImgMode);
+	ApgCam->SequenceBulkDownload = false; 
+	ApgCam->ImageCount = numImages;
+   ApgCam->SequenceDelay = interval_ms / 1000.0;
+   ApgCam->Expose(m_dExposure/1000, m_nLightImgMode);
 
    m_sequenceCount = 0;
 	m_acqSequenceThread->Start();
@@ -1606,11 +2081,11 @@ int CApogeeCamera::TransferImage()
 	if (m_sequenceCount >= m_sequenceLengthRequested)
 		return -1;
 
-	if (AltaCamera->SequenceCounter >= m_sequenceCount)
+	if (ApgCam->SequenceCounter >= m_sequenceCount)
 	{
       ++m_sequenceCount;
       unsigned short* pBuf = (unsigned short*) const_cast<unsigned char*>(img_.GetPixels());
-	   HRESULT hr = AltaCamera->GetImage((long) pBuf);
+	   HRESULT hr = ApgCam->GetImage((long) pBuf);
 	   if (SUCCEEDED(hr))
 	   {
 	      int ret = GetCoreCallback()->InsertImage(this, (const unsigned char *) pBuf, m_sequenceWidth, m_sequenceHeight, 2);
@@ -1631,8 +2106,8 @@ int CApogeeCamera::TransferImage()
 
 int CApogeeCamera::CleanupAfterSequence()
 {
-   AltaCamera->StopExposure(true); 
-   AltaCamera->ImageCount = 1;
+   ApgCam->StopExposure(true); 
+   ApgCam->ImageCount = 1;
 	return DEVICE_OK;
 }
 
