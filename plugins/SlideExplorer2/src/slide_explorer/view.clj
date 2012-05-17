@@ -77,17 +77,13 @@
           ny (range nt (inc nb))]
       [nx ny])))
 
-(defn unzoomed-rectangle
-  [rectangle zoom]
-  (Rectangle. (/ (.x rectangle) zoom)
-              (/ (.y rectangle) zoom)
-              (/ (.width rectangle) zoom)
-              (/ (.height rectangle) zoom)))
-
-(defn tiles-in-unzoomed-pixel-rectangle
-  [rectangle [tile-width tile-height] zoom]
-  (tiles-in-pixel-rectangle (unzoomed-rectangle rectangle zoom)
-                            [tile-width tile-height]))
+(defn pixel-rectangle
+  "Converts the screen state coordinates to visible camera pixel coordinates."
+  [{:keys [x y width height zoom]}]
+  (Rectangle. (- x (/ width 2 zoom))
+              (- y (/ height 2 zoom))
+              (/ width zoom)
+              (/ height zoom)))
 
 ;; TILING
 
@@ -155,21 +151,30 @@
   (let [original-transform (.getTransform graphics)
         zoom (:zoom screen-state)
         x-center (/ (screen-state :width) 2)
-        y-center (/ (screen-state :height) 2)]
+        y-center (/ (screen-state :height) 2)
+        [tile-width tile-height] [512 512]]
     (doto graphics
       (.setClip 0 0 (:width screen-state) (:height screen-state))
       (.translate (- x-center (int (* (:x screen-state) zoom)))
                   (- y-center (int (* (:y screen-state) zoom))))
-      (paint-tiles available-tiles screen-state [512 512])
+      (paint-tiles available-tiles screen-state [tile-width tile-height])
       enable-anti-aliasing
       ;(.setColor (Color. 0x0CB397))
       ;(.fillOval -5 -5
       ;           10 10)
-      (.setTransform original-transform)
-      (.setColor (Color. 0xECF2AA))
-      (.drawString (str (select-keys screen-state [:x :y :z :zoom :keys]))
-                   (int 0)
-                   (int (- (screen-state :height) 12))))))
+      )
+    (let [rect (.getClipBounds graphics)]
+      (doto graphics
+        (.setTransform original-transform)
+        (.setColor (Color. 0xECF2AA))
+        (.drawString (pr-str (tiles-in-pixel-rectangle
+                               (pixel-rectangle screen-state) [tile-width tile-height]))
+                     10 25)
+        (.drawString (pr-str (pixel-rectangle screen-state))
+                     10 40)
+        (.drawString (str (select-keys screen-state [:x :y :z :zoom :keys :width :height]))
+                     (int 10)
+                     (int (- (screen-state :height) 12)))))))
   
 
 ;; USER INPUT HANDLING
