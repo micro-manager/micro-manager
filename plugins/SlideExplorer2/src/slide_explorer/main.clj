@@ -7,6 +7,7 @@
            (java.io ByteArrayInputStream)
            (java.util UUID)
            (java.util.prefs Preferences)
+           (java.util.concurrent Executors)
            (javax.imageio ImageIO)
            (ij ImagePlus)
            (ij.process ImageProcessor)
@@ -165,7 +166,8 @@
     (add-to-available-tiles available-tiles
                             {:nx nx :ny ny :nz (get-in image [:tags "SliceIndex"]) :nt 0
                              :nc (get-in image [:tags "Channel"])}
-                            (image :proc))))
+                            (image :proc)))
+  (await available-tiles))
 
 (defn available-tile-coords [available-tiles]
   (set (for [{:keys [nx ny]} (keys (get available-tiles 1))]
@@ -175,49 +177,53 @@
   [(floor-int (/ pixel-center-x tile-width))
    (floor-int (/ pixel-center-y tile-height))])
 
-(defn tile-radius [[x y]]
-  (Math/max (Math/abs x) (Math/abs y)))
-
-(defn tile-order [available-tiles screen-state [tile-width tile-height]]
+(defn next-tile [available-tiles screen-state [tile-width tile-height]]
   (let [visible-tiles (set (tiles-in-pixel-rectangle (pixel-rectangle screen-state)
-                                                [tile-width tile-height]))
+                                                     [tile-width tile-height]))
         existing (available-tile-coords available-tiles)
-        tiles-to-acquire (clojure.set/difference visible-tiles existing)
-        ;max-radius (apply max (map tile-radius tiles-to-acquire))
-        center-tile (center-tile [(:x screen-state) (:y screen-state)] [tile-width tile-height])
-        trajectory (take-while #(<= (tile-radius %) 40) (offset-tiles center-tile tile-list))]
-    ;(println max-radius)
-    ;(println trajectory)
-    (filter tiles-to-acquire trajectory)))
+        tiles-to-acquire (clojure.set/difference visible-tiles existing)]
+    (when-not (empty? tiles-to-acquire)
+      (let [center-tile (center-tile [(:x screen-state) (:y screen-state)]
+                                     [tile-width tile-height])
+            trajectory (offset-tiles center-tile tile-list)]
+        (first (filter tiles-to-acquire trajectory))))))
     
-(defn acquire-next-tile [available-tiles-agent screen-state affine [tile-width tile-height]]
-  (let [visible-tiles (set (tiles-in-pixel-rectangle (pixel-rectangle screen-state)
+(defn acquire-next-tile
+  [available-tiles-agent screen-state-atom affine [tile-width tile-height]]
+  (let [screen-state @screen-state-atom
+        visible-tiles (set (tiles-in-pixel-rectangle (pixel-rectangle screen-state)
                                                 [tile-width tile-height]))
-        next-tile (time (first (tile-order @available-tiles-agent
-                                     screen-state [tile-width tile-height])))]
-    ;(println next-tile)
-    ;(println visible-tiles)
-  (if next-tile
-    (add-tiles-at available-tiles-agent next-tile affine)
-    (println "no."))))
+        next-tile (next-tile @available-tiles-agent
+                                     screen-state [tile-width tile-height])]
+    (when next-tile
+      (add-tiles-at available-tiles-agent next-tile affine))
+    next-tile))
+
+(def explore-executor (Executors/newFixedThreadPool 1))
+
+(defn explore [available-tiles-agent screen-state-atom affine [tile-width tile-height]]
+  (.submit explore-executor
+           #(when (acquire-next-tile available-tiles-agent
+                                     screen-state-atom affine
+                                     [tile-width tile-height])
+              (explore available-tiles-agent screen-state-atom
+                       affine [tile-width tile-height]))))
 
 (defn go []
   (core waitForDevice (core getXYStageDevice))
   (let [available-tiles (agent {})
         xy-stage (core getXYStageDevice)
         affine-stage-to-pixel (origin-here-stage-to-pixel-transform)
-        first-seq (acquire-at (inverse-transform (Point. 0 0) affine-stage-to-pixel))]
+        first-seq (acquire-at (inverse-transform (Point. 0 0) affine-stage-to-pixel))
+        screen-state (show available-tiles)
+        explore-fn #(explore available-tiles screen-state affine-stage-to-pixel [512 512])]
     (def at available-tiles)
     (def affine affine-stage-to-pixel)
-    (def ss (show available-tiles))
-    (doseq [image first-seq]
-      (add-to-available-tiles available-tiles
-                              {:nx 0 :ny 0 :nz (get-in image [:tags "SliceIndex"]) :nt 0
-                               :nc (get-in image [:tags "Channel"])}
-                              (image :proc)))
+    (def ss screen-state)
     (swap! ss assoc :channels (initial-lut-objects first-seq))
-    (doseq [nx (range -1 2) ny (range -1 2)]
-      (add-tiles-at available-tiles [nx ny] affine-stage-to-pixel))))
+    (explore-fn)
+    (add-watch ss "explore" (fn [_ _ _ _] (explore-fn)))
+  ))
   
 
 ;; tests

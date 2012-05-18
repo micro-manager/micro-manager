@@ -165,13 +165,17 @@
 
 ;; reading/writing ImageProcessors on disk
 
-(defn write-processor [processor path]
+(defn write-processor
+  "Writes an image processor to disk, in TIFF format, at path."
+  [path processor]
   (io! (-> (ImagePlus. "" processor)
            FileSaver.
            (.saveAsTiff path)))
   processor)
 
-(defn read-processor [path]
+(defn read-processor
+  "Reads a TIFF file found at path into an image processor."
+  [path]
   (when-let [imgp (io! (IJ/openImage path))]
     (.getProcessor imgp)))
 
