@@ -1969,20 +1969,35 @@ public class DataCollectionForm extends javax.swing.JFrame {
          
          for (int i = 0; i < source.spotList_.size(); i++) {
             GaussianSpotData spotSource = source.spotList_.get(i);
-            GaussianSpotData spotOperand = operand.spotList_.get(i);
-            double x = 0.0;
-            double y = 0.0;
-            if (action == 0) {
-               x = spotSource.getXCenter() - spotOperand.getXCenter();
-               y = spotSource.getYCenter() - spotOperand.getYCenter();
+            boolean found = false;
+            int j = 0;
+            GaussianSpotData spotOperand = null;
+            while (!found && j < operand.spotList_.size()) {
+               spotOperand = operand.spotList_.get(j);
+               if (spotSource.getChannel() == spotOperand.getChannel() &&
+                       spotSource.getFrame() == spotOperand.getFrame() &&
+                       spotSource.getPosition() == spotOperand.getPosition() &&
+                       spotSource.getSlice() == spotOperand.getSlice() ) {
+                  found = true;
+               }
+               j++;
             }
-            GaussianSpotData newSpot = new GaussianSpotData(spotSource);
-            newSpot.setXCenter(x);
-            newSpot.setYCenter(y);
-            transformedResultList.add(newSpot);
+            if (found) {
+               double x = 0.0;
+               double y = 0.0;
+               if (action == 0) {
+                  x = spotSource.getXCenter() - spotOperand.getXCenter();
+                  y = spotSource.getYCenter() - spotOperand.getYCenter();
+               }
+               GaussianSpotData newSpot = new GaussianSpotData(spotSource);
+               newSpot.setXCenter(x);
+               newSpot.setYCenter(y);
+               transformedResultList.add(newSpot);
+            }
          }
 
          MyRowData rowData = source;
+         // TODO: feed in better data
          addSpotData(rowData.name_ + " Subtracted", rowData.title_, "", rowData.width_,
                  rowData.height_, rowData.pixelSizeNm_, rowData.shape_,
                  rowData.halfSize_, rowData.nrChannels_, rowData.nrFrames_,
