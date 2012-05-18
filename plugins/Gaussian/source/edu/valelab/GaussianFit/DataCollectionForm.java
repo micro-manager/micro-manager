@@ -25,6 +25,7 @@ import edu.ucsf.tsf.TaggedSpotsProtos.SpotList;
 import ij.ImagePlus;
 import ij.WindowManager;
 import ij.gui.ImageWindow;
+import ij.gui.Roi;
 import ij.gui.StackWindow;
 import ij.gui.YesNoCancelDialog;
 import ij.measure.ResultsTable;
@@ -538,7 +539,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
         jTable1_.setModel(myTableModel_);
         jScrollPane1_.setViewportView(jTable1_);
 
-        plotComboBox_.setFont(new java.awt.Font("Lucida Grande", 0, 10)); // NOI18N
+        plotComboBox_.setFont(new java.awt.Font("Lucida Grande", 0, 10));
         plotComboBox_.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "t-X", "t-Y", "X-Y", "t-Int.", " " }));
 
         visualizationMagnification_.setFont(new java.awt.Font("Lucida Grande", 0, 10));
@@ -677,7 +678,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
 
         jSeparator3.setOrientation(javax.swing.SwingConstants.VERTICAL);
 
-        saveFormatBox_.setFont(new java.awt.Font("Lucida Grande", 0, 11)); // NOI18N
+        saveFormatBox_.setFont(new java.awt.Font("Lucida Grande", 0, 11));
         saveFormatBox_.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "Binary", "Text" }));
 
         jSeparator4.setOrientation(javax.swing.SwingConstants.VERTICAL);
@@ -877,7 +878,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
         layout.setVerticalGroup(
             layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
             .add(layout.createSequentialGroup()
-                .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING, false)
+                .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
                     .add(layout.createSequentialGroup()
                         .add(13, 13, 13)
                         .add(jLabel7)
@@ -2107,7 +2108,20 @@ public class DataCollectionForm extends javax.swing.JFrame {
                  "Please select one or more datasets to straighten");
       } else {
          for (int row : rows) {
-            straightenTrack(rowData_.get(row));
+            MyRowData r = rowData_.get(row);
+            if (evt.getModifiers() > 0) {
+               if (r.title_.equals(ij.IJ.getImage().getTitle()) ) {
+                  ImagePlus ip = ij.IJ.getImage();
+                  Roi roi = ip.getRoi();
+                  if (roi.isLine()) {
+                     Polygon pol = roi.getPolygon();
+                     
+                     
+                  }
+                  
+               }
+            }
+            straightenTrack(r);
          }
       }
    }//GEN-LAST:event_straightenTrackButton_ActionPerformed
