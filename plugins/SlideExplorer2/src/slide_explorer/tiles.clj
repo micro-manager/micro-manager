@@ -1,69 +1,26 @@
 (ns slide-explorer.tiles
   (:import [java.awt.geom AffineTransform]))
 
+(defn next-tile [[x y]]
+  (let [radius (Math/max (Math/abs x) (Math/abs y))]
+    (cond
+      ;; special cases:
+      (== 0 x y) [1 0]
+      (and (== -1 y) (== x radius)) [(inc x) 0]
+      ;; corners:
+      (== x y radius) [(dec x) y]
+      (== (- x) y radius) [x (dec y)]
+      (== (- x) (- y) radius) [(inc x) y]
+      (== x (- y) radius) [x (inc y)]
+      ;; edges:
+      (== x radius) [x (inc y)]
+      (== y radius) [(dec x) y]
+      (== x (- radius)) [x (dec y)]
+      (== y (- radius)) [(inc x) y])))
 
-(defonce tiles-to-stage-transform (atom (AffineTransform.)))
-
-(defn square
-  "Get the square of a number."
-  [x]
-  (* x x))
-
-(defn distance-squared
-  "Get the squared distance between two points in cartesian space."
-  [[x1 y1] [x2 y2]]
-  (+ (square (- x1 x2))
-     (square (- y1 y2))))
-
-(defn tile-ring
-  "Compute the tiles in a square 'ring' of a given radius around an origin tile."
-  [[origin-x origin-y] radius]
-  (if (zero? radius)
-    (list [origin-x origin-y])
-    (let [x-values (range (- origin-x radius) (+ origin-x radius 1))
-          y-values (range (- origin-y radius) (+ origin-y radius 1))
-          trim #(rest (drop-last %))]
-      (concat (map #(vector (apply min x-values) %) y-values)
-              (map #(vector (apply max x-values) %) y-values)
-              (map #(vector % (apply min y-values)) (trim x-values))
-              (map #(vector % (apply max y-values)) (trim x-values))))))
-
-(defn tile-rings
-  "Generate a series of concentric square 'rings' around an origin tile."
-  [[origin-x origin-y]]
-  (map #(tile-ring [origin-x origin-y] %) (range)))
-
-(defn sort-and-partition-by
-  "First sort, then partition a collection by a given keyfn."
-  ([keyfn coll]
-    (partition-by keyfn (sort-by keyfn coll)))
-  ([keyfn comp coll]
-    (partition-by keyfn (sort-by keyfn comp coll))))
-
-(defn tile-arcs [[center-x center-y] tile-rings]
-  (apply concat
-         (for [ring tile-rings]
-           (sort-and-partition-by #(distance-squared [center-x center-y] %) ring))))
-
-(defn tile-priority-list [[location-x location-y] tile-arcs]
-  (apply concat
-         (for [arc tile-arcs]
-           (sort-by #(distance-squared [location-x location-y] %) arc))))
-
-(defn nearest-tile [[center-x center-y]]
-  [(Math/round (double center-x)) (Math/round (double center-y))])
-  
-(defn next-tile [[center-x center-y] [location-x location-y] finished-tiles]
-  (->> (tile-rings (nearest-tile [center-x center-y]))
-       ;(tile-arcs [center-x center-y])
-       (tile-priority-list [location-x location-y])
-       (remove #(contains? finished-tiles %))
-       first))
-
-(defn simulate-trajectory [[start-x start-y]]
-  (loop [[x y] [start-x start-y] trajectory #{[start-x start-y]}]
-    ;(println x y trajectory)
-    (let [[x-next y-next] (next-tile [0 0] [x y] trajectory)]
-      (if (< x-next 4)
-        (recur [x-next y-next] (conj trajectory [x-next y-next]))
-        trajectory))))
+(def tile-list (iterate next-tile [0 0]))
+          
+(defn offset-tiles [[delta-x delta-y] tiles]
+  (map (fn [tile]
+         (let [[x y] tile]
+           [(+ delta-x x) (+ delta-y y)])) tiles))

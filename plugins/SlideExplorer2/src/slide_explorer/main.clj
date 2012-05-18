@@ -16,8 +16,9 @@
            (org.micromanager.acquisition TaggedImageQueue))
   (:use [org.micromanager.mm :only (core edt mmc gui load-mm json-to-data)]
         [slide-explorer.affine :only (set-destination-origin transform inverse-transform)]
-        [slide-explorer.view :only (show add-to-available-tiles)]
-        [slide-explorer.image :only (show-image statistics intensity-range lut-object)]))
+        [slide-explorer.view :only (floor-int show add-to-available-tiles pixel-rectangle tiles-in-pixel-rectangle)]
+        [slide-explorer.image :only (show-image statistics intensity-range lut-object)]
+        [slide-explorer.tiles :only (tile-list offset-tiles)]))
 
 
 (load-mm)
@@ -166,7 +167,39 @@
                              :nc (get-in image [:tags "Channel"])}
                             (image :proc))))
 
+(defn available-tile-coords [available-tiles]
+  (set (for [{:keys [nx ny]} (keys (get available-tiles 1))]
+         [nx ny])))
 
+(defn center-tile [[pixel-center-x pixel-center-y] [tile-width tile-height]]
+  [(floor-int (/ pixel-center-x tile-width))
+   (floor-int (/ pixel-center-y tile-height))])
+
+(defn tile-radius [[x y]]
+  (Math/max (Math/abs x) (Math/abs y)))
+
+(defn tile-order [available-tiles screen-state [tile-width tile-height]]
+  (let [visible-tiles (set (tiles-in-pixel-rectangle (pixel-rectangle screen-state)
+                                                [tile-width tile-height]))
+        existing (available-tile-coords available-tiles)
+        tiles-to-acquire (clojure.set/difference visible-tiles existing)
+        ;max-radius (apply max (map tile-radius tiles-to-acquire))
+        center-tile (center-tile [(:x screen-state) (:y screen-state)] [tile-width tile-height])
+        trajectory (take-while #(<= (tile-radius %) 40) (offset-tiles center-tile tile-list))]
+    ;(println max-radius)
+    ;(println trajectory)
+    (filter tiles-to-acquire trajectory)))
+    
+(defn acquire-next-tile [available-tiles-agent screen-state affine [tile-width tile-height]]
+  (let [visible-tiles (set (tiles-in-pixel-rectangle (pixel-rectangle screen-state)
+                                                [tile-width tile-height]))
+        next-tile (time (first (tile-order @available-tiles-agent
+                                     screen-state [tile-width tile-height])))]
+    ;(println next-tile)
+    ;(println visible-tiles)
+  (if next-tile
+    (add-tiles-at available-tiles-agent next-tile affine)
+    (println "no."))))
 
 (defn go []
   (core waitForDevice (core getXYStageDevice))
@@ -175,6 +208,7 @@
         affine-stage-to-pixel (origin-here-stage-to-pixel-transform)
         first-seq (acquire-at (inverse-transform (Point. 0 0) affine-stage-to-pixel))]
     (def at available-tiles)
+    (def affine affine-stage-to-pixel)
     (def ss (show available-tiles))
     (doseq [image first-seq]
       (add-to-available-tiles available-tiles
@@ -182,9 +216,8 @@
                                :nc (get-in image [:tags "Channel"])}
                               (image :proc)))
     (swap! ss assoc :channels (initial-lut-objects first-seq))
-    (doseq [nx (range -4 5) ny (range -4 5)]
+    (doseq [nx (range -1 2) ny (range -1 2)]
       (add-tiles-at available-tiles [nx ny] affine-stage-to-pixel))))
-
   
 
 ;; tests
