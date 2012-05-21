@@ -180,6 +180,7 @@ public:
 
    // action interface
    int OnBinning(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnMaxReadoutTime(MM::PropertyBase* pProp, MM::ActionType eAct);
    //int OnIdentifier(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnChipName(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnExposure(MM::PropertyBase* pProp, MM::ActionType eAct);
@@ -278,6 +279,7 @@ private:
    uns32 nrPorts_;
    unsigned short* circBuffer_;
    unsigned long bufferSize_; // circular buffer size
+   long maxReadoutTime_;
    bool stopOnOverflow_;
    MMThreadLock imgLock_;
    bool snappingSingleFrame_;

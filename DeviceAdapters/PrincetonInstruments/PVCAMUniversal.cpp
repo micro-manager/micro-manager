@@ -139,6 +139,7 @@ cameraId_(cameraId),
 name_("Undefined"),
 nrPorts_ (1),
 circBuffer_(0),
+maxReadoutTime_(15),
 stopOnOverflow_(true),
 restart_(false),
 snappingSingleFrame_(false),
@@ -429,6 +430,21 @@ int Universal::OnReadoutPort(MM::PropertyBase* pProp, MM::ActionType eAct)
       pProp->Set(portName.c_str());
    }
 
+
+   return DEVICE_OK;
+}
+
+// Gain
+int Universal::OnMaxReadoutTime(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   if (eAct == MM::AfterSet)
+   {
+      pProp->Get(maxReadoutTime_);
+   }
+   else if (eAct == MM::BeforeGet)
+   {
+      pProp->Set(maxReadoutTime_);
+   }
 
    return DEVICE_OK;
 }
@@ -911,6 +927,12 @@ int Universal::Initialize()
    nRet = CreateProperty(MM::g_Keyword_CCDTemperatureSetPoint, "-50", MM::Integer, false, pAct);
    assert(nRet == DEVICE_OK);
 
+   // maximum readout time
+   pAct = new CPropertyAction (this, &Universal::OnMaxReadoutTime);
+   nRet = CreateProperty("Maximum readout time(s)", "15", MM::Integer, false, pAct);
+   assert(nRet == DEVICE_OK);
+
+
    //if the camera supports frame transfer, then set that as default
   	bool bFrameTransfer = false;
 
@@ -1226,7 +1248,7 @@ const unsigned char* Universal::GetImageBuffer()
    // wait for data or error
    void* pixBuffer = const_cast<unsigned char*> (img_.GetPixels());
    MM::MMTime start = GetCurrentMMTime();
-   MM::MMTime maxDuration = (GetExposure() + 15000) * 1000;
+   MM::MMTime maxDuration = (GetExposure() + (maxReadoutTime_ * 1000)) * 1000;
 //   float notscan = GetReadoutTime();
  //  float exptime = GetExposure();
   // MM::MMTime maxDuration = (GetExposure() + GetReadoutTime() + 2000 ) * 1000;
