@@ -31,6 +31,7 @@ import javax.swing.DefaultComboBoxModel;
 import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JSpinner;
@@ -189,14 +190,18 @@ public class ContrastPanel extends JPanel {
          CompositeImage ci = (CompositeImage) currentDisplay_.getImagePlus();
          boolean[] active = ci.getActiveChannels();
          active = Arrays.copyOf(active, active.length);
-         displayModeCombo_.setSelectedIndex(((CompositeImage) currentDisplay_.getImagePlus()).getMode() - 1);
+         int index = ((CompositeImage) currentDisplay_.getImagePlus()).getMode() - 2;
+         if (index == -1) {
+            index = 2;
+         }
+         displayModeCombo_.setSelectedIndex(index);
          for (int i = 0; i < active.length; i++) {
             ci.getActiveChannels()[i] = active[i];
          }
          ci.updateAndDraw();
          currentDisplay_.updateAndDraw();
       } else {
-         displayModeCombo_.setSelectedIndex(2);
+         displayModeCombo_.setSelectedIndex(1);
       }
 
    }
@@ -241,8 +246,9 @@ public class ContrastPanel extends JPanel {
 
       this.setPreferredSize(new Dimension(400, 594));
 
-      displayModeCombo_.setModel(new DefaultComboBoxModel(new String[]{"Composite", "Color", "Grayscale"}));
+      displayModeCombo_.setModel(new DefaultComboBoxModel(new String[]{"Color", "Grayscale", "Composite"}));
       displayModeCombo_.setToolTipText("<html>Choose display mode:<br> - Composite = Multicolor overlay<br> - Color = Single channel color view<br> - Grayscale = Single channel grayscale view</li></ul></html>");
+      displayModeCombo_.setSelectedIndex(2);
       displayModeCombo_.addActionListener(new java.awt.event.ActionListener() {
 
          public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -350,11 +356,11 @@ public class ContrastPanel extends JPanel {
 
    public void setDisplayMode(int mode) {
       if (mode == CompositeImage.COMPOSITE) {
-         displayModeCombo_.setSelectedIndex(0);
-      } else if (mode == CompositeImage.COLOR) {
-         displayModeCombo_.setSelectedIndex(1);
-      } else if (mode == CompositeImage.GRAYSCALE) {
          displayModeCombo_.setSelectedIndex(2);
+      } else if (mode == CompositeImage.COLOR) {
+         displayModeCombo_.setSelectedIndex(0);
+      } else if (mode == CompositeImage.GRAYSCALE) {
+         displayModeCombo_.setSelectedIndex(1);
       }
    }
 
@@ -437,16 +443,23 @@ public class ContrastPanel extends JPanel {
       int mode;
       int state = displayModeCombo_.getSelectedIndex();
       if (state == 0) {
-         mode = CompositeImage.COMPOSITE;
-      } else if (state == 1) {
          mode = CompositeImage.COLOR;
-      } else {
+      } else if (state == 1) {
          mode = CompositeImage.GRAYSCALE;
+      } else {
+         mode = CompositeImage.COMPOSITE;
       }
-
       CompositeImage ci = (CompositeImage) currentDisplay_.getHyperImage();
-      ci.setMode(mode);
-      ci.updateAndDraw();
+      
+
+      if (state == 2 && currentDisplay_.getImageCache().getNumChannels() > 7) {
+         JOptionPane.showMessageDialog(this, "Images cannot be displayed in Composite mode with more than 7 channels");
+         displayModeCombo_.setSelectedIndex(ci.getMode()-2);
+         return;
+      } else {
+         ci.setMode(mode);
+         ci.updateAndDraw();
+      }
       currentDisplay_.updateAndDraw();
       saveCheckBoxStates();
    }

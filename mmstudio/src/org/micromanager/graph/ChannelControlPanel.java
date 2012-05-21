@@ -648,10 +648,12 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
          ip = img_.getProcessor();
       }
 
-
-      boolean[] active = img_.getActiveChannels();
-      channelNameCheckbox_.setSelected(active[channelIndex_]);
-      if (ip == null || !active[channelIndex_]) {
+      boolean active = true;
+      if (channelIndex_ < 7) {
+         active = img_.getActiveChannels()[channelIndex_];
+         channelNameCheckbox_.setSelected(active);
+      }
+      if (ip == null || !active) {
          hp_.setVisible(false);
          return false;
       }
