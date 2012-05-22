@@ -453,7 +453,7 @@ public class ContrastPanel extends JPanel {
       
 
       if (state == 2 && currentDisplay_.getImageCache().getNumChannels() > 7) {
-         JOptionPane.showMessageDialog(this, "Images cannot be displayed in Composite mode with more than 7 channels");
+         JOptionPane.showMessageDialog(this, "Images with more than 7 channels cannot be displayed in Composite mode");
          displayModeCombo_.setSelectedIndex(ci.getMode()-2);
          return;
       } else {
