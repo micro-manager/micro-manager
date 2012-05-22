@@ -24,9 +24,9 @@
   
 (defn- get-image
   [cache-agent dir key]
+  (send-off cache-agent #(.hit %1 %2) key) 
   (or (clojure.core/get @cache-agent key)
       (do
-        (send-off cache-agent #(.hit %1 %2) key) 
         (.submit file-service
                  #(let [image (image/read-processor (key-map-to-file-name dir key))]
                     (send-off cache-agent assoc key image)))
@@ -44,13 +44,19 @@
   (get [this key]
        "Read an image from cache.")
   (has [this key]
-       "Checks if image is available in cache."))
+       "Checks if image is available in cache.")
+  (memory [this]
+       "Returns the current value stored in memory.")
+  (different [this other]
+             "Checks if the memory value is different."))
 
 (deftype ImageCache [cache-agent dir]
   ImageCacheProtocol
     (add [_ key image] (add-image cache-agent dir key image))
     (get [_ key] (get-image cache-agent dir key))
     (has [_ key] (has-image @cache-agent dir key))
+    (memory [_] @cache-agent)
+    (different [this other] (memory this) (.memory other))
   clojure.lang.IRef
     (addWatch [this Object IFn] (do (.addWatch cache-agent Object IFn) this))
     (deref [_] (.deref cache-agent))
@@ -62,6 +68,11 @@
 (defn image-cache
   "Creates an image cache that uses a LRU policy to store memory-cache-size
    images in memory, and also stores all images on disk in TIFF files in the
-   specified directory."
+   specified directory. Calls to .get never block: if the image is not
+   in memory, nil is returned instead, but the image is then loaded
+   into memory in the background, so that the next time .get is called,
+   the image will be returned. The clojure.core function add-watch may
+   be used to provide a callback when the image has been loaded into
+   memory."
   [dir memory-cache-size]
   (ImageCache. (agent (cache/lru-cache-factory memory-cache-size {})) dir))
