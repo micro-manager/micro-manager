@@ -274,6 +274,21 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
          
          super.updateImage();
       }
+      
+      public Runnable getUpdateAndDrawRunnable() {
+         return new Runnable() {
+              @Override
+              public void run() {
+
+                 superUpdateImage();
+                  imageChangedUpdate();
+                  try { 
+                      JavaUtils.invokeRestrictedMethod(this, ImagePlus.class, "notifyListeners", 2);
+                  } catch (Exception ex) {   }
+                  superDraw();
+              }
+          };
+      }
 
       @Override
       public void updateAndDraw() {
@@ -961,8 +976,20 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
    }
 
    public void updateAndDraw() {
+      updateAndDraw(false);
+   }
+   
+   public void updateAndDraw(boolean firstFrame) {
       if (hyperImage_ != null && hyperImage_.isVisible()) {
-         hyperImage_.updateAndDraw();
+         if (firstFrame) {
+            if (hyperImage_ instanceof MMCompositeImage) {
+               MMCompositeImage ci = (MMCompositeImage) hyperImage_;
+               invokeLaterIfNotEDT(ci.getUpdateAndDrawRunnable());
+            }
+            
+         } else {
+            hyperImage_.updateAndDraw();
+         }
       }
    }
 
@@ -1138,7 +1165,7 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
          hyperImage_.setPosition(1 + superChannel, 1 + slice, 1 + frame);
       }
 
-      updateAndDraw();
+      updateAndDraw(frame == 0);
       restartAnimationAfterShowing(animatedFrameIndex, animatedSliceIndex_, framesAnimated, slicesAnimated);
 
       if (eng_ != null) {

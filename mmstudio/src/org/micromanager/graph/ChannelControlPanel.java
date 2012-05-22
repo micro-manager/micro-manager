@@ -43,6 +43,7 @@ import org.json.JSONObject;
 import org.micromanager.AcqControlDlg;
 import org.micromanager.MMStudioMainFrame;
 import org.micromanager.acquisition.VirtualAcquisitionDisplay;
+import org.micromanager.acquisition.VirtualAcquisitionDisplay.MMCompositeImage;
 import org.micromanager.api.ImageCache;
 import org.micromanager.graph.HistogramPanel.CursorListener;
 import org.micromanager.utils.HistogramUtils;
@@ -629,42 +630,57 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
       int histMax = histRangeComboBox_.getSelectedIndex() == 0 ? -1 : histMax_;
       cache_.storeChannelDisplaySettings(channelIndex_, contrastMin_, contrastMax_, gamma_, histMax);
    }
+   
+   public int getChannelIndex() {
+      return channelIndex_;
+   }
 
    /**
     * @param img
     * @param drawHist
     * @return true if hist and stats calculated successfully
     */
-   public boolean calcAndDisplayHistAndStats(boolean drawHist) {
+   public void calcAndDisplayHistAndStats(boolean drawHist) {
       if (img_ == null || img_.getProcessor() == null) {
-         return false;
+         return;
       }
       ImageProcessor ip = null;
       if (img_.getMode() == CompositeImage.COMPOSITE) {
-         ip = img_.getProcessor(channelIndex_ + 1);         
-         if (ip != null)
+         ip = img_.getProcessor(channelIndex_ + 1);
+         if (ip != null) {
             ip.setRoi(img_.getRoi());
-      } else if (channelIndex_ == img_.getChannel() - 1) {
-         ip = img_.getProcessor();
+         }
+      } else {
+         MMCompositeImage ci = (MMCompositeImage) img_;
+         int flatIndex = 1 + channelIndex_ + (img_.getSlice() - 1) * ci.getNChannelsUnverified()
+                 + (img_.getFrame() - 1) * ci.getNSlicesUnverified() * ci.getNChannelsUnverified();
+         ip = img_.getStack().getProcessor(flatIndex);
+
       }
 
-      boolean active = true;
-      if (channelIndex_ < 7) {
-         active = img_.getActiveChannels()[channelIndex_];
+      if (((MMCompositeImage) img_).getNChannelsUnverified() <= 7) {
+         boolean active = img_.getActiveChannels()[channelIndex_];
          channelNameCheckbox_.setSelected(active);
+         if (!active) {
+            drawHist = false;
+         }
       }
-      if (ip == null || !active) {
-         hp_.setVisible(false);
-         return false;
+      if (((MMCompositeImage) img_).getMode() != CompositeImage.COMPOSITE) {
+         if (img_.getChannel() - 1 != channelIndex_) {
+            drawHist = false;
+         }
       }
-      hp_.setVisible(true);
+      
+      if (ip == null ) {
+         return;
+      }
 
       int[] rawHistogram = ip.getHistogram();
       int imgWidth = img_.getWidth();
       int imgHeight = img_.getHeight();
 
       if (rawHistogram[0] == imgWidth * imgHeight) {
-         return false;  //Blank pixels 
+         return;  //Blank pixels 
       }
       if (display_.getHistogramControlsState().ignoreOutliers) {
          // todo handle negative values
@@ -723,7 +739,9 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
          }
       }
 
+      
       if (drawHist) {
+         hp_.setVisible(true);
          //Draw histogram and stats
          histogramData.setData(histogram);
          hp_.setData(histogramData);
@@ -732,8 +750,10 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
 
          minMaxLabel_.setText("Min: " + NumberUtils.intToDisplayString((int) pixelMin_) + "   "
                  + "Max: " + NumberUtils.intToDisplayString((int) pixelMax_));
+      } else {
+          hp_.setVisible(false);        
       }
-      return true;
+      return;
    }
 
    public void onLeftCursor(double pos) {

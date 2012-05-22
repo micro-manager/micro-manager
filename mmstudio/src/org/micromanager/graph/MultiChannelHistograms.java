@@ -193,13 +193,12 @@ public class MultiChannelHistograms extends JPanel implements Histograms {
       
       if (slowHistUpdate) {
          for (ChannelControlPanel c : ccpList_) {
-            boolean histAndStatsCalculated = c.calcAndDisplayHistAndStats(display_.isActiveDisplay());
-            if (histAndStatsCalculated) {
-               if (display_.getHistogramControlsState().autostretch) {
-                  c.autostretch();
-               }
-               c.applyChannelLUTToImage();
+            c.calcAndDisplayHistAndStats(display_.isActiveDisplay());
+            
+            if (display_.getHistogramControlsState().autostretch) {
+               c.autostretch();
             }
+            c.applyChannelLUTToImage();
          }
       }
    }
