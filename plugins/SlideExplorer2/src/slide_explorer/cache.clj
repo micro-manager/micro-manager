@@ -44,6 +44,20 @@
   (has [this key]
        "Checks if image is available in cache."))
 
+(deftype ImageCache [cache-agent dir memory-cache-size]
+  ImageCacheProtocol
+    (add [_ key image] (add-image cache-agent dir key image))
+    (get [_ key] (get-image cache-agent dir key))
+    (has [_ key] (has-image @cache-agent dir key))
+  clojure.lang.IRef
+    (addWatch [_ Object IFn] (.addWatch cache-agent Object IFn))
+    (deref [_] (.deref cache-agent))
+    (getValidator [_] (.getValidator cache-agent))
+    (getWatches [_] (.getWatches cache-agent))
+    (removeWatch [_ Object] (.removeWatch cache-agent Object))
+    (setValidator [_ IFn] (.setValidator cache-agent IFn))
+  )
+
 (defn image-cache
   "Creates an image cache that uses a LRU policy to store memory-cache-size images in memory,
    and also stores all images on disk in TIFF files in the specified directory."
@@ -53,6 +67,7 @@
       (add [key image] (add-image this dir key image))
       (get [key] (get-image this dir key))
       (has [key] (has-image this dir key))
+      (ADD
       (toString [] (str t ". On disk: " dir)))
 
 ;; test
