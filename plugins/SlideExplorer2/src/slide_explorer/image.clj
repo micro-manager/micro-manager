@@ -7,6 +7,7 @@
            (mmcorej TaggedImage)
            (javax.swing JFrame)
            (java.awt Color)
+           (java.io File)
            (org.micromanager.utils ImageUtils))
   (:use [org.micromanager.mm :only (core load-mm gui)]))
 
@@ -176,8 +177,10 @@
 (defn read-processor
   "Reads a TIFF file found at path into an image processor."
   [path]
-  (when-let [imgp (io! (IJ/openImage path))]
-    (.getProcessor imgp)))
+  (let [full-path (.getAbsolutePath (File. path))]
+    (when (.exists (File. full-path))
+      (when-let [imgp (io! (IJ/openImage full-path))]
+        (.getProcessor imgp)))))
 
 ;; Maximum intensity projection
 
@@ -204,4 +207,6 @@
   [img-or-proc]
   (.show (ImagePlus. "" img-or-proc))
   img-or-proc)
+
+
 
