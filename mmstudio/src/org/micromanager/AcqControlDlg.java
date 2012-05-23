@@ -283,6 +283,7 @@ public class AcqControlDlg extends JFrame implements PropertyChangeListener {
          repaint();
       }
 
+      @Override
       public boolean isCellEditable(int nRow, int nCol) {
          if (nCol == 4) {
             if (!acqEng_.isZSliceSettingEnabled()) {
@@ -445,14 +446,14 @@ public class AcqControlDlg extends JFrame implements PropertyChangeListener {
             return checkBox_;
          } else if (colIndex == 2 || colIndex == 3) {
             // exposure and z offset
-            text_.setText(((Double) value).toString());
+            text_.setText(NumberUtils.doubleToDisplayString((Double)value));
             return text_;
          } else if (colIndex == 4) {
             checkBox_.setSelected((Boolean) value);
             return checkBox_;
          } else if (colIndex == 5) {
             // skip
-            text_.setText(((Integer) value).toString());
+            text_.setText(NumberUtils.intToDisplayString((Integer) value));
             return text_;
          } else if (colIndex == 1) {
             // channel
@@ -503,20 +504,20 @@ public class AcqControlDlg extends JFrame implements PropertyChangeListener {
             } else if (editCol_ == 2 || editCol_ == 3) {
                return new Double(NumberUtils.displayStringToDouble(text_.getText()));
             } else if (editCol_ == 4) {
-               return new Boolean(checkBox_.isSelected());
+               return checkBox_.isSelected();
             } else if (editCol_ == 5) {
                return new Integer(NumberUtils.displayStringToInt(text_.getText()));
             } else if (editCol_ == 6) {
                Color c = colorLabel_.getBackground();
                return c;
             } else {
-               String err = new String("Internal error: unknown column");
+               String err = "Internal error: unknown column";
                return err;
             }
          } catch (ParseException p) {
             ReportingUtils.showError(p);
          }
-         String err = new String("Internal error: unknown column");
+         String err = "Internal error: unknown column";
          return err;
       }
    }
@@ -619,11 +620,12 @@ public class AcqControlDlg extends JFrame implements PropertyChangeListener {
       }
    }
 
-   public void createChannelTable() {
+   public final void createChannelTable() {
       model_ = new ChannelTableModel(acqEng_);
 
       channelTable_ = new JTable() {
 
+         @Override
          protected JTableHeader createDefaultTableHeader() {
             return new JTableHeader(columnModel) {
 
@@ -702,7 +704,7 @@ public class AcqControlDlg extends JFrame implements PropertyChangeListener {
       }
    }
 
-   public void createEmptyPanels() {
+   public final void createEmptyPanels() {
       panelList_ = new Vector<JPanel>();
 
       framesPanel_ = (CheckBoxPanel) createPanel("Time points", 5, 5, 220, 91, true); // (text, left, top, right, bottom)
@@ -1444,9 +1446,6 @@ public class AcqControlDlg extends JFrame implements PropertyChangeListener {
       });
 
 
-
-
-
       // load acquistion settings
       loadAcqSettings();
 
@@ -1463,7 +1462,10 @@ public class AcqControlDlg extends JFrame implements PropertyChangeListener {
 
    }
 
-   /** Called when a field's "value" property changes. Causes the Summary to be updated*/
+   /** 
+    * Called when a field's "value" property changes. 
+    * Causes the Summary to be updated
+    */
    public void propertyChange(PropertyChangeEvent e) {
       // update summary
       applySettings();
@@ -1511,7 +1513,7 @@ public class AcqControlDlg extends JFrame implements PropertyChangeListener {
       }
    }
 
-   public void updateGroupsCombo() {
+   public final void updateGroupsCombo() {
       String groups[] = acqEng_.getAvailableGroups();
       if (groups.length != 0) {
          channelGroupCombo_.setModel(new DefaultComboBoxModel(groups));
@@ -1528,7 +1530,7 @@ public class AcqControlDlg extends JFrame implements PropertyChangeListener {
       model_.cleanUpConfigurationList();
    }
 
-   public synchronized void loadAcqSettings() {
+   public final synchronized void loadAcqSettings() {
       disableGUItoSettings_ = true;
 
       // load acquisition engine preferences
@@ -1985,7 +1987,7 @@ public class AcqControlDlg extends JFrame implements PropertyChangeListener {
       }
    }
 
-   public void updateGUIContents() {
+   public final void updateGUIContents() {
       if (disableGUItoSettings_) {
          return;
       }

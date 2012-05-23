@@ -28,9 +28,9 @@ import java.text.ParseException;
 import java.util.Locale;
 
 public class NumberUtils {
-	private static NumberFormat format_;
-	private static DecimalFormat coreDoubleFormat_;
-	private static DecimalFormat coreIntegerFormat_;
+	private static final NumberFormat format_;
+	private static final DecimalFormat coreDoubleFormat_;
+	private static final DecimalFormat coreIntegerFormat_;
 
 	static {
 		// The display is supposed to use local formating (e.g., switch commas with periods in Locale.GERMANY).
