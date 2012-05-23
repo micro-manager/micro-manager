@@ -4,19 +4,19 @@
     (java.awt.geom AffineTransform Point2D$Double)))
 
 (defprotocol AffineTransformable
-  (transform [object affine] "Apply affine transform to object.")
-  (inverse-transform [object affine] "Apply inverse transform to object."))
-              
+  (transform [this aff] "Apply affine transform to object.")
+  (inverse-transform [this aff] "Apply inverse transform to object."))
+   
 (extend-protocol AffineTransformable
   Point2D$Double
-    (transform [object affine] (.transform affine object nil))
-    (inverse-transform [object affine] (.inverseTransform affine object nil))
+    (transform [object aff] (.transform aff object nil))
+    (inverse-transform [object aff] (.inverseTransform aff object nil))
   Point
-    (transform [object affine] (transform (Point2D$Double. (.x object) (.y object)) affine))
-    (inverse-transform [object affine] (inverse-transform (Point2D$Double. (.x object) (.y object)) affine))
+    (transform [object aff] (transform (Point2D$Double. (.x object) (.y object)) aff))
+    (inverse-transform [object aff] (inverse-transform (Point2D$Double. (.x object) (.y object)) aff))
   Shape
-    (transform [object affine] (.createTransformedShape affine object))
-    (inverse-transform [object affine] (transform object (.createInverse affine))))
+    (transform [object aff] (.createTransformedShape aff object))
+    (inverse-transform [object aff] (transform object (.createInverse aff))))
 
 (defn point-to-vector [point]
   [(.x point) (.y point)])
@@ -25,11 +25,9 @@
   "Produces an affine transform which is same as the original except that
    the offsets have been modifed such that source-point maps to the
    origin (0,0) in the destination coordinate space."
-  [^AffineTransform affine ^Point2D$Double source-point]
-  (let [[x y] (point-to-vector (transform source-point affine))
-        new-affine (.clone affine)]
+  [^AffineTransform aff ^Point2D$Double source-point]
+  (let [[x y] (point-to-vector (transform source-point aff))
+        new-affine (.clone aff)]
     (doto new-affine
       (.preConcatenate (AffineTransform/getTranslateInstance (- x) (- y))))))
-  
-  
   
