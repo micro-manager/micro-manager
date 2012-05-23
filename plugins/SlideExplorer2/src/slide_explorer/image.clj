@@ -2,7 +2,7 @@
   (:import (ij CompositeImage IJ ImagePlus ImageStack)
            (ij.io FileSaver)
            (ij.plugin ZProjector)
-           (ij.process ByteProcessor LUT ImageProcessor
+           (ij.process ByteProcessor LUT ImageProcessor ColorProcessor
                        ImageStatistics ShortProcessor)
            (mmcorej TaggedImage)
            (javax.swing JFrame)
@@ -158,9 +158,10 @@
           stack (make-stack processors)
           img+ (ImagePlus. "" stack)]
       (.setDimensions img+ (.getSize stack) 1 1)
+      (ColorProcessor.
       (.getImage
         (doto (CompositeImage. img+ CompositeImage/COMPOSITE)
-          (.setLuts (into-array luts)))))))
+          (.setLuts (into-array luts))))))))
 
 (def overlay-memo (memoize overlay))
 

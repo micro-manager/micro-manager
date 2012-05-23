@@ -223,7 +223,8 @@
     (def ss screen-state)
     (swap! ss assoc :channels (initial-lut-objects first-seq))
     (explore-fn)
-    (add-watch ss "explore" (fn [_ _ _ _] (explore-fn)))
+    (add-watch ss "explore" (fn [_ _ old new] (when-not (= old new)
+                                                (explore-fn))))
   ))
   
 

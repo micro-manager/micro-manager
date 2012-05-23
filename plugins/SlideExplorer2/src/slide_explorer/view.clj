@@ -144,7 +144,7 @@
                                           :nz (screen-state :z)}
                                          (:channels screen-state))]
         (let [[x y] (tile-to-pixels [nx ny] [tile-width tile-height] 1)]
-          (.drawImage g image x y nil))))))
+          (.drawImage g (.createImage image) x y nil))))))
 
 (defn paint-screen [graphics screen-state available-tiles]
   (let [original-transform (.getTransform graphics)
@@ -185,8 +185,9 @@
 
 (defn display-follow [panel reference]
   (add-watch reference "display"
-             (fn [_ _ _ _]
-                (.post display-updater #(.repaint panel)))))
+             (fn [_ _ old new]
+               (when-not (= old new)
+                 (.post display-updater #(.repaint panel))))))
 
 ;; key binding
 
