@@ -180,7 +180,7 @@
   (let [full-path (.getAbsolutePath (File. path))]
     (when (.exists (File. full-path))
       (when-let [imgp (io! (IJ/openImage full-path))]
-        (.getProcessor imgp)))))
+        (.getProcessor imgp)))))       
 
 ;; Maximum intensity projection
 

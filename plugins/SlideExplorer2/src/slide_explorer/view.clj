@@ -88,22 +88,20 @@
 
 ;; TILING
 
-(defn add-tile [tile-map tile-zoom indices tile]
-  (assoc-in tile-map [tile-zoom indices] tile))
+(defn add-tile [tile-map indices tile]
+  (assoc-in tile-map [indices] tile))
 
-(defn propagate-tiles [tile-map zoom {:keys [nx ny nz nt nc] :as indices}]
-  (when-let [parent-layer (tile-map (* zoom 2))]
+(defn propagate-tiles [tile-map {:keys [zoom nx ny nz nt nc] :as indices}]
     (let [nx- (* 2 nx)
           ny- (* 2 ny)
           nx+ (inc nx-)
           ny+ (inc ny-)
-          a (parent-layer (assoc indices :nx nx- :ny ny-))
-          b (parent-layer (assoc indices :nx nx+ :ny ny-))
-          c (parent-layer (assoc indices :nx nx- :ny ny+))
-          d (parent-layer (assoc indices :nx nx+ :ny ny+))]
-      (add-tile tile-map zoom
-                (assoc indices :nx nx :ny ny)
-                (merge-and-scale a b c d)))))
+          zoom-parent (* zoom 2)
+          a (tile-map (assoc indices :zoom zoom-parent :nx nx- :ny ny-))
+          b (tile-map (assoc indices :zoom zoom-parent :nx nx+ :ny ny-))
+          c (tile-map (assoc indices :zoom zoom-parent :nx nx- :ny ny+))
+          d (tile-map (assoc indices :zoom zoom-parent :nx nx+ :ny ny+))]
+      (add-tile tile-map indices (merge-and-scale a b c d))))
 
 (defn child-index [n]
   (floor-int (/ n 2)))
@@ -111,28 +109,28 @@
 (defn child-indices [indices]
   (-> indices
      (update-in [:nx] child-index)
-     (update-in [:ny] child-index)))
+     (update-in [:ny] child-index)
+     (update-in [:zoom] / 2)))
 
 (defn add-and-propagate-tiles [tile-map indices tile]
-  (loop [tile-map (add-tile tile-map 1 indices tile)
-         new-indices (child-indices indices)
-         zoom 1/2]
-    (if (<= MIN-ZOOM zoom)
-      (recur (propagate-tiles tile-map zoom new-indices)
-             (child-indices new-indices)
-             (/ zoom 2))
-      tile-map)))
+  (let [full-indices (assoc indices :zoom 1)]
+    (loop [tile-map (add-tile tile-map full-indices tile)
+           new-indices (child-indices full-indices)]
+      (if (<= MIN-ZOOM (:zoom new-indices))
+        (recur (propagate-tiles tile-map new-indices)
+               (child-indices new-indices))
+        tile-map))))
 
 (defn add-to-available-tiles [tile-map-agent indices tile]
-  (send tile-map-agent add-and-propagate-tiles indices tile))
+    (send tile-map-agent add-and-propagate-tiles indices tile))
 
 ;; PAINTING
 
-(defn multi-color-tile [available-tiles zoom tile-indices channels-map]
+(defn multi-color-tile [available-tiles tile-indices channels-map]
   (let [channel-names (keys channels-map)]
     (overlay-memo
       (for [chan channel-names]
-        (get-in available-tiles [zoom (assoc tile-indices :nc chan)]))
+        (get available-tiles (assoc tile-indices :nc chan)))
       (for [chan channel-names]
         (get-in channels-map [chan :lut])))))
 
@@ -141,8 +139,8 @@
     (doseq [[nx ny] (tiles-in-pixel-rectangle pixel-rect
                                               [tile-width tile-height])]
       (when-let [image (multi-color-tile available-tiles
-                                         (screen-state :zoom)
-                                         {:nx nx :ny ny :nt 0
+                                         {:zoom (screen-state :zoom)
+                                          :nx nx :ny ny :nt 0
                                           :nz (screen-state :z)}
                                          (:channels screen-state))]
         (let [[x y] (tile-to-pixels [nx ny] [tile-width tile-height] 1)]

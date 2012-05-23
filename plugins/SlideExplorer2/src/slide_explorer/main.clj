@@ -170,8 +170,9 @@
   (await available-tiles))
 
 (defn available-tile-coords [available-tiles]
-  (set (for [{:keys [nx ny]} (keys (get available-tiles 1))]
-         [nx ny])))
+  (set (for [{:keys [nx ny zoom]} (keys available-tiles)]
+         (when (= 1 zoom)
+           [nx ny]))))
 
 (defn center-tile [[pixel-center-x pixel-center-y] [tile-width tile-height]]
   [(floor-int (/ pixel-center-x tile-width))
