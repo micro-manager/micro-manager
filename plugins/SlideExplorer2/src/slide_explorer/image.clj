@@ -118,13 +118,11 @@
    :max (.getMax processor)
    :histogram (.getHistogram processor)})
   
-
 (defn intensity-range
   "Get the intensity range over a collection of processors."
   [processors]
   {:min (apply min (map #(.getMin %) processors))
    :max (apply max (map #(.getMax %) processors))})
-
 
 ;; Channels/LUTs
 
@@ -144,7 +142,7 @@
 
 ; 3.99 ms
 (defn overlay
-  "Takes n ImageProcessors and n lut objects and produces a BufferedImage
+  "Takes n ImageProcessors and n lut objects and produces a ColorProcessor
    containing the overlay."
   [processors luts]
   (when (first (filter identity processors))
@@ -159,9 +157,9 @@
           img+ (ImagePlus. "" stack)]
       (.setDimensions img+ (.getSize stack) 1 1)
       (ColorProcessor.
-      (.getImage
-        (doto (CompositeImage. img+ CompositeImage/COMPOSITE)
-          (.setLuts (into-array luts))))))))
+        (.getImage
+          (doto (CompositeImage. img+ CompositeImage/COMPOSITE)
+            (.setLuts (into-array luts))))))))
 
 (def overlay-memo (memoize overlay))
 

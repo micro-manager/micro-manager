@@ -4,7 +4,8 @@
            (java.util UUID)
            (java.awt.event ComponentAdapter KeyEvent KeyAdapter
                            MouseAdapter WindowAdapter)
-           (org.micromanager.utils GUIUpdater))
+           (org.micromanager.utils GUIUpdater)
+           (ij.process ImageProcessor))
   (:require [clojure.pprint :as pprint])
   (:use [org.micromanager.mm :only (edt)]
         [slide-explorer.paint :only (enable-anti-aliasing)]
@@ -134,17 +135,20 @@
       (for [chan channel-names]
         (get-in channels-map [chan :lut])))))
 
+(defn draw-processor [^Graphics2D g ^ImageProcessor processor x y]
+  (.drawImage g (.createImage processor) x y nil))
+
 (defn paint-tiles [^Graphics2D g available-tiles screen-state [tile-width tile-height]]
   (let [pixel-rect (.getClipBounds g)]
     (doseq [[nx ny] (tiles-in-pixel-rectangle pixel-rect
                                               [tile-width tile-height])]
-      (when-let [image (multi-color-tile available-tiles
+      (when-let [proc (multi-color-tile available-tiles
                                          {:zoom (screen-state :zoom)
                                           :nx nx :ny ny :nt 0
                                           :nz (screen-state :z)}
                                          (:channels screen-state))]
         (let [[x y] (tile-to-pixels [nx ny] [tile-width tile-height] 1)]
-          (.drawImage g (.createImage image) x y nil))))))
+          (draw-processor g proc x y))))))
 
 (defn paint-screen [graphics screen-state available-tiles]
   (let [original-transform (.getTransform graphics)
