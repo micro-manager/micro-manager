@@ -326,8 +326,11 @@ public class MultipageTiffReader {
          if (byteDepth_ == 1) {
             return new TaggedImage(pixelBuffer.array(), md);
          } else {
-            //Verify that this actually works
-            return new TaggedImage(pixelBuffer.asShortBuffer().array(), md);
+            short[] pix = new short[pixelBuffer.capacity()/2];
+            for (int i = 0; i < pix.length; i++ ) {
+               pix[i] = pixelBuffer.getShort(i*2);
+            }
+            return new TaggedImage(pix, md);
          }
       }
    }
