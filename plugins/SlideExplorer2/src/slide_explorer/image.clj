@@ -84,8 +84,8 @@
   (let [dx (- found-x desired-x)
         dy (- found-y desired-y)]
     (crop raw-processor
-          (- (/ overlap-x 2) dx)
-          (- (/ overlap-y 2) dy)
+          (- (int (/ overlap-x 2)) dx)
+          (- (int (/ overlap-y 2)) dy)
           (- (.getWidth raw-processor) overlap-x)
           (- (.getHeight raw-processor) overlap-y))))
 
@@ -109,15 +109,7 @@
     (.resize large w h)))
 
 ;; stats
-
-; 0.335 ms
-(defn statistics
-  "Get basic intensity statistics for an image processor."
-  [processor]
-  {:min (.getMin processor)
-   :max (.getMax processor)
-   :histogram (.getHistogram processor)})
-  
+ 
 (defn intensity-range
   "Get the intensity range for one or more processors."
   ([processor]
