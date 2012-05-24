@@ -26,10 +26,17 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.RandomAccessFile;
+import java.io.UnsupportedEncodingException;
+import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
+import java.nio.CharBuffer;
 import java.nio.MappedByteBuffer;
+import java.nio.ShortBuffer;
 import java.nio.channels.FileChannel;
 import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import mmcorej.TaggedImage;
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -73,96 +80,106 @@ public class MultipageTiffWriter {
    public static final int COMMENTS_OFFSET_HEADER = 99384722;
    public static final int COMMENTS_HEADER = 84720485;
    
+   public static final ByteOrder BYTE_ORDER = ByteOrder.BIG_ENDIAN;
+   
    private RandomAccessFile raFile_;
-   private FileChannel fileChannel_;     
-   private final boolean bigEndian_ = false; 
+   private FileChannel fileChannel_; 
+   private long filePosition_ = 0;
    private int numChannels_ = 1, numFrames_ = 1, numSlices_ = 1;
    private HashMap<String, Long> indexMap_;
-   private long byteOffset_;
    private long nextIFDOffsetLocation_ = -1;
    private JSONObject displayAndComments_;
    private boolean rgb_ = false;
-   private String ijDescription_;
-   private boolean firstIFD_ = true;
    private int byteDepth_, imageWidth_, imageHeight_, bytesPerImagePixels_;
-   
-   
-   public MultipageTiffWriter(File f, JSONObject summaryMD) {
+   private LinkedList<ByteBuffer> buffers_;
+
+   public MultipageTiffWriter(File f, JSONObject summaryMD, TaggedImage firstImage) {
       try {
-         try {
-            byteOffset_ = 0;
-            readSummaryMD(summaryMD); 
-            displayAndComments_ = VirtualAcquisitionDisplay.getDisplaySettingsFromSummary(summaryMD);
-            ijDescription_ = getIJDescriptionString();
-         } catch (MMScriptException ex) {
-             ReportingUtils.logError(ex);
-         } catch (JSONException ex) {
-            ReportingUtils.logError(ex);
-         }
-         //TODO: possibly truncate file length at end of writing
-         long fileSize = numFrames_*numChannels_*numSlices_*((long)bytesPerImagePixels_+1500);
-         if (fileSize > MAX_FILE_SIZE) {
-            fileSize = MAX_FILE_SIZE;
-         }
-         createFileChannel(f,fileSize);
+         readSummaryMD(summaryMD);
+         displayAndComments_ = VirtualAcquisitionDisplay.getDisplaySettingsFromSummary(summaryMD);
+      } catch (MMScriptException ex) {
+         ReportingUtils.logError(ex);
+      } catch (JSONException ex) {
+         ReportingUtils.logError(ex);
+      }
+      
+      //This is an overestimate of file size because file gets truncated at end
+      long fileSize = Math.min(MAX_FILE_SIZE, summaryMD.toString().length() + 2000000
+              + numFrames_ * numChannels_ * numSlices_ * ((long) bytesPerImagePixels_ + 2000));
+      
+      try {
+         f.createNewFile();
+         raFile_ = new RandomAccessFile(f, "rw");
+         raFile_.setLength(fileSize);
+         fileChannel_ = raFile_.getChannel();
+         indexMap_ = new HashMap<String, Long>();
+         buffers_ = new LinkedList<ByteBuffer>();
+
          writeMMHeaderAndSummaryMD(summaryMD);
-      } catch (IOException e) {
-         ReportingUtils.logError(e);
+      } catch (IOException ex) {
+         ReportingUtils.logError(ex);
       }
    }
-
-   private void writeMMHeaderAndSummaryMD(JSONObject summaryMD) throws IOException {
+   
+   public FileChannel getFileChannel() {
+      return fileChannel_;
+   }
+   
+   public HashMap<String, Long> getIndexMap() {
+      return indexMap_;
+   }
+   
+   private void writeMMHeaderAndSummaryMD(JSONObject summaryMD) throws IOException {      
       if (summaryMD.has("Comment")) {
          summaryMD.remove("Comment");
       }
       String summaryMDString = summaryMD.toString();
       int mdLength = summaryMDString.length();
-     
-      MappedByteBuffer buffer = makeBuffer(8 + 32 + mdLength );
-      if (bigEndian_) {
-         buffer.putChar((char) 0x4d4d);
+      ByteBuffer buffer = ByteBuffer.allocate(40).order(BYTE_ORDER);
+      if (BYTE_ORDER.equals(ByteOrder.BIG_ENDIAN)) {
+         buffer.asCharBuffer().put(0,(char) 0x4d4d);
       } else {
-         buffer.putChar((char) 0x4949);
+         buffer.asCharBuffer().put(0,(char) 0x4949);
       }
-      buffer.putChar((char) 42);
-      //8 bytes for file header + 4 bytes for index map offset header + 
-      //4 bytes for index map offset + 4 bytes for display settings offset header + 
-      //4 bytes for display settings offset+ 4 bytes for comments offset header + 
-      //4 bytes for comments offset+4 bytes for summaryMD header + 
-      //4 bytes for summary md length = 24 + 1 byte for each character of summary md
-      buffer.putInt(40 + mdLength);
-      //place holders for index map, display settings, and comments offset headers and headers
-      buffer.putInt(0);
-      buffer.putInt(0);
-      buffer.putInt(0);
-      buffer.putInt(0);
-      buffer.putInt(0);
-      buffer.putInt(0);
-      buffer.putInt(SUMMARY_MD_HEADER);
-      buffer.putInt(mdLength);
-      writeString(buffer,summaryMDString);
+      buffer.asCharBuffer().put(1,(char) 42);
+      buffer.putInt(4,40 + mdLength);
+      //8 bytes for file header +
+      //8 bytes for index map offset header and offset +
+      //8 bytes for display settings offset header and display settings offset
+      //8 bytes for comments offset header and comments offset
+      //8 bytes for summaryMD header  summary md length + 
+      //1 byte for each character of summary md
+      buffer.putInt(32,SUMMARY_MD_HEADER);
+      buffer.putInt(36,mdLength);
+      ByteBuffer[] buffers = new ByteBuffer[2];
+      buffers[0] = buffer;
+      buffers[1] = ByteBuffer.wrap(getBytesFromString(summaryMDString));
+      fileChannel_.write(buffers);
+      filePosition_ += buffer.position() + mdLength;
    }
 
    public void close() throws IOException {
-     //TODO: truncate empty space at end of file?
       writeNullOffsetAfterLastImage();
       writeIndexMap();
       writeDisplaySettings();
       writeComments();
-      fileChannel_.close();
-      raFile_.close();
+     //TODO: truncate empty space at end of file?
+
+      raFile_.setLength(filePosition_ + 8);
+      //Dont close file channel and random access file becase Tiff reader still using them
       fileChannel_ = null;
-      raFile_ = null;
+      raFile_ = null;    
    }
    
    //TODO: check performance of this function (since it is called before each image is written)
    public boolean hasSpaceToWrite(TaggedImage img) {
       int mdLength = img.tags.toString().length();
       int indexMapSize = indexMap_.size()*20 + 8;
-      int IFDSize = 13*12 + 4 + 16;
-      int extraPadding = 1000000;
-      if (mdLength+indexMapSize+IFDSize+bytesPerImagePixels_+SPACE_FOR_COMMENTS+
-              numChannels_*DISPLAY_SETTINGS_BYTES_PER_CHANNEL +extraPadding + byteOffset_ >= MAX_FILE_SIZE) {
+      int IFDSize = ENTRIES_PER_IFD*12 + 4 + 16;
+      int extraPadding = 1000000; 
+      long size = mdLength+indexMapSize+IFDSize+bytesPerImagePixels_+SPACE_FOR_COMMENTS+
+              numChannels_*DISPLAY_SETTINGS_BYTES_PER_CHANNEL +extraPadding + filePosition_;
+      if ( size >= MAX_FILE_SIZE) {
          return false;
       }
       return true;
@@ -172,84 +189,30 @@ public class MultipageTiffWriter {
       return raFile_ == null;
    }
       
+   
    public long writeImage(TaggedImage img) throws IOException {
-      long offset = byteOffset_;
+      long offset = filePosition_;
       writeIFD(img);
-      updateIndexMap(img.tags,offset);      
+      updateIndexMap(img.tags,offset);
+      writeBuffers();  
       return offset;
+   }
+   
+   private void writeBuffers() throws IOException {
+      ByteBuffer[] buffs = new ByteBuffer[buffers_.size()];
+      for (int i = 0; i < buffs.length; i++) {
+         buffs[i] = buffers_.removeFirst();
+      }
+      fileChannel_.write(buffs);
    }
    
    private void updateIndexMap(JSONObject tags, long offset) {
       String label = MDUtils.getLabel(tags);
       indexMap_.put(label, offset);
    }
-   
-   private void writeComments() throws IOException {
-      //Write 4 byte header, 4 byte number of reserved bytes
-      long commentsOffset = byteOffset_;
-      JSONObject comments;
-      try {
-         comments = displayAndComments_.getJSONObject("Comments");
-      } catch (JSONException ex) {
-         comments = new JSONObject();
-      }
-      String commentsString = comments.toString();
-      int commentsLength = commentsString.length();
-      MappedByteBuffer buffer = makeBuffer(8 + commentsLength );
-      buffer.putInt(COMMENTS_HEADER);     
-      buffer.putInt(commentsLength);
-      writeString(buffer,commentsString);
-      
-      MappedByteBuffer address = makeBuffer(24, 8 );
-      address.putInt(COMMENTS_OFFSET_HEADER);
-      address.putInt((int)commentsOffset);
-   }
-   
-   private void writeDisplaySettings() throws IOException {
-      JSONArray displaySettings;
-      try {
-         displaySettings = displayAndComments_.getJSONArray("Channels");
-      } catch (JSONException ex) {
-         displaySettings = new JSONArray();
-      }      
-      int numReservedBytes =  numChannels_*DISPLAY_SETTINGS_BYTES_PER_CHANNEL; 
-      String displayString = displaySettings.toString();
-      long displaySettingsOffset = byteOffset_;
-      MappedByteBuffer buffer = makeBuffer(8 + numReservedBytes);
-      //Write 4 byte header, 4 byte number of reserved bytes
-      buffer.putInt(DISPLAY_SETTINGS_HEADER);
-      buffer.putInt(numReservedBytes);
-      writeString(buffer,displayString);
-      
-      MappedByteBuffer address = makeBuffer(16, 8 );
-      address.putInt(DISPLAY_SETTINGS_OFFSET_HEADER);
-      address.putInt((int)displaySettingsOffset);
-   }
-
-   private void writeIndexMap() throws IOException {
-      //Write 4 byte header, 4 byte number of entries, and 20 bytes for each entry
-      int numMappings = indexMap_.size();
-      long indexMapOffset = byteOffset_;
-      MappedByteBuffer buffer = makeBuffer(8 + 20*numMappings);
-      buffer.putInt(INDEX_MAP_HEADER);
-      buffer.putInt( numMappings );
-      for (String label : indexMap_.keySet()) {
-         String[] indecies = label.split("_");
-         for(String index : indecies) {
-            buffer.putInt(Integer.parseInt(index));
-         }
-         buffer.putInt(indexMap_.get(label).intValue());
-      }
-      
-      MappedByteBuffer address = makeBuffer(8, 8 );
-      address.putInt(INDEX_MAP_OFFSET_HEADER);
-      address.putInt((int)indexMapOffset);
-   }
 
    private void writeIFD(TaggedImage img) throws IOException {     
      char numEntries = ENTRIES_PER_IFD;
-//     if (firstIFD_)
-//        numEntries++;
      if (img.tags.has("Summary")) {
         img.tags.remove("Summary");
      }
@@ -262,59 +225,66 @@ public class MultipageTiffWriter {
      //16 bytes for x and y resolution
      //1 byte per character of MD string
      //number of bytes for pixels
-     int numBytes = 2 + numEntries*12 + 4 + (rgb_?6:0) + 16 + mdString.length() + 
-              bytesPerImagePixels_;
-//                          bytesPerImagePixels_ + (firstIFD_?ijDescription_.length():0);
-     long tagDataOffset = byteOffset_ + 2 + numEntries*12 + 4;
-     nextIFDOffsetLocation_ = byteOffset_ + 2 + numEntries*12;
-     MappedByteBuffer buffer = makeBuffer(numBytes);
+     int totalBytes = 2 + numEntries*12 + 4 + (rgb_?6:0) + 16 + mdString.length() + bytesPerImagePixels_;
+     int IFDandBitDepthBytes = 2+ numEntries*12 + 4 + (rgb_?6:0);
      
-      buffer.putChar(numEntries);
-      writeIFDEntry(buffer,WIDTH,(char)3,1,imageWidth_);
-      writeIFDEntry(buffer,HEIGHT,(char)3,1,imageHeight_);
-      writeIFDEntry(buffer,BITS_PER_SAMPLE,(char)3,rgb_?3:1,  rgb_? tagDataOffset:byteDepth_*8);
+     ByteBuffer ifdBuffer = ByteBuffer.allocate(IFDandBitDepthBytes).order(BYTE_ORDER);
+     CharBuffer charView = ifdBuffer.asCharBuffer();
+     
+     
+     long tagDataOffset = filePosition_ + 2 + numEntries*12 + 4;
+     nextIFDOffsetLocation_ = filePosition_ + 2 + numEntries*12;
+     
+      charView.put(0,numEntries);
+      writeIFDEntry(2,ifdBuffer,charView, WIDTH,(char)4,1,imageWidth_);
+      writeIFDEntry(14,ifdBuffer,charView,HEIGHT,(char)4,1,imageHeight_);
+      writeIFDEntry(26,ifdBuffer,charView,BITS_PER_SAMPLE,(char)3,rgb_?3:1,  rgb_? tagDataOffset:byteDepth_*8);
       if (rgb_) {
          tagDataOffset += 6;
       }
-      writeIFDEntry(buffer,COMPRESSION,(char)3,1,1);
-      writeIFDEntry(buffer,PHOTOMETRIC_INTERPRETATION,(char)3,1,rgb_?2:1);
-      
-//      if (firstIFD_) {
-//         writeIFDEntry(buffer,IMAGE_DESCRIPTION,(char)2,ijDescription_.length(),tagDataOffset);
-//         tagDataOffset += ijDescription_.length();
-//      }
-      
-      writeIFDEntry(buffer,STRIP_OFFSETS,(char)4,1, tagDataOffset );
+      writeIFDEntry(38,ifdBuffer,charView,COMPRESSION,(char)3,1,1);
+      writeIFDEntry(50,ifdBuffer,charView,PHOTOMETRIC_INTERPRETATION,(char)3,1,rgb_?2:1);
+      writeIFDEntry(62,ifdBuffer,charView,STRIP_OFFSETS,(char)4,1, tagDataOffset );
       tagDataOffset += bytesPerImagePixels_;
-      writeIFDEntry(buffer,SAMPLES_PER_PIXEL,(char)3,1,rgb_?3:1);
-      writeIFDEntry(buffer,ROWS_PER_STRIP, (char) 3, 1, imageHeight_);
-      writeIFDEntry(buffer,STRIP_BYTE_COUNTS, (char) 4, 1, bytesPerImagePixels_ );
-      writeIFDEntry(buffer,X_RESOLUTION, (char)5, 1, tagDataOffset);
+      writeIFDEntry(74,ifdBuffer,charView,SAMPLES_PER_PIXEL,(char)3,1,(rgb_?3:1));
+      writeIFDEntry(86,ifdBuffer,charView,ROWS_PER_STRIP, (char) 3, 1, imageHeight_);
+      writeIFDEntry(98,ifdBuffer,charView,STRIP_BYTE_COUNTS, (char) 4, 1, bytesPerImagePixels_ );
+      writeIFDEntry(110,ifdBuffer,charView,X_RESOLUTION, (char)5, 1, tagDataOffset);
       tagDataOffset += 8;
-      writeIFDEntry(buffer,Y_RESOLUTION, (char)5, 1, tagDataOffset);
+      writeIFDEntry(122,ifdBuffer,charView,Y_RESOLUTION, (char)5, 1, tagDataOffset);
       tagDataOffset += 8;
-      writeIFDEntry(buffer,RESOLUTION_UNIT, (char) 3,1,3);
-      writeIFDEntry(buffer,MM_METADATA,(char)2,mdString.length(),tagDataOffset);
+      writeIFDEntry(134,ifdBuffer,charView,RESOLUTION_UNIT, (char) 3,1,3);
+      writeIFDEntry(146,ifdBuffer,charView,MM_METADATA,(char)2,mdString.length(),tagDataOffset);
       tagDataOffset += mdString.length();
-      
       //NextIFDOffset
-      buffer.putInt((int)tagDataOffset);
+      ifdBuffer.putInt(158, (int)tagDataOffset);
 
       if (rgb_) {
-         buffer.putChar((char) (byteDepth_*8));
-         buffer.putChar((char) (byteDepth_*8));
-         buffer.putChar((char) (byteDepth_*8));
+         charView.put(131,(char) (byteDepth_*8));
+         charView.put(132,(char) (byteDepth_*8));
+         charView.put(133,(char) (byteDepth_*8));
       }
-//      if (firstIFD_) {
-//         writeString(buffer,ijDescription_);
-//      }
-      writePixels(buffer, img);
-      writeResoltuionValues(buffer, img);
-      writeString(buffer,mdString);    
-      firstIFD_ = false;
+      buffers_.add(ifdBuffer);
+      buffers_.add(getPixelBuffer(img));
+      buffers_.add(getResolutionValuesBuffer(img));   
+      buffers_.add(ByteBuffer.wrap(getBytesFromString(mdString)));
+      
+      filePosition_ += totalBytes;
    }
-   
-   private void writeResoltuionValues(MappedByteBuffer buffer, TaggedImage img) throws IOException {
+
+   private void writeIFDEntry(int position, ByteBuffer buffer, CharBuffer cBuffer, char tag, char type, long count, long value) throws IOException {
+      cBuffer.put(position / 2, tag);
+      cBuffer.put(position / 2 + 1, type);
+      buffer.putInt(position + 4, (int) count);
+      if (type ==3 && count == 1) {  //Left justify in 4 byte value field
+         cBuffer.put(position/2 + 4, (char) value);
+         cBuffer.put(position/2 + 5,(char) 0);
+      } else {
+         buffer.putInt(position + 8, (int) value);
+      }      
+   }
+
+   private ByteBuffer getResolutionValuesBuffer(TaggedImage img) throws IOException {
       long resNumerator = 1, resDenomenator = 1;
       if (img.tags.has("PixelSizeUm")) {
          double cmPerPixel = 0.0001;
@@ -330,86 +300,140 @@ public class MultipageTiffWriter {
             resDenomenator = 1;
          }
       }
-      buffer.putInt((int)resNumerator);
-      buffer.putInt((int)resDenomenator);
-      buffer.putInt((int)resNumerator);
-      buffer.putInt((int)resDenomenator);
+      ByteBuffer buffer = ByteBuffer.allocate(16).order(BYTE_ORDER);
+      buffer.putInt(0,(int)resNumerator);
+      buffer.putInt(4,(int)resDenomenator);
+      buffer.putInt(8,(int)resNumerator);
+      buffer.putInt(12,(int)resDenomenator);
+      return buffer;
 }
 
    
    private void writeNullOffsetAfterLastImage() throws IOException {
-      MappedByteBuffer next = makeBuffer(nextIFDOffsetLocation_, 4);
-      next.putInt(0);
+      ByteBuffer buffer = ByteBuffer.allocate(4);
+      buffer.order(BYTE_ORDER);
+      buffer.putInt(0,0);
+      fileChannel_.write(buffer, nextIFDOffsetLocation_);
    }
 
-   private void writePixels(MappedByteBuffer buffer, TaggedImage img) throws IOException {
+   private ByteBuffer getPixelBuffer(TaggedImage img) throws IOException {
       if (rgb_) {
          if (byteDepth_ == 1) {
-            byte[] pixels = (byte[]) img.pix;
-            for (int i = 0; i < pixels.length; i++) {
-               if ((i+1)%4 != 0) {
-                  buffer.put(pixels[i]);
+            byte[] originalPix = (byte[]) img.pix;
+            byte[] pix = new byte[ originalPix.length * 3 / 4 ];
+            int count = 0;
+            for (int i = 0; i < originalPix.length; i++) {
+               if ( (i +1) % 4 != 0 ) {
+                  pix[count] = originalPix[i];
+                  count++;
                }
             }
          } else if (byteDepth_ == 2) {
-            short[] pixels = (short[]) img.pix;
-            for (int i = 0; i < pixels.length; i++) {
-               if ((i+1)%4 != 0) {
-                  buffer.putChar((char) pixels[i]);
+            short[] originalPix = (short[]) img.pix;
+            short[] pix = new short[ originalPix.length * 3 / 4 ];
+            int count = 0;
+            for (int i = 0; i < originalPix.length; i++) {
+               if ( (i +1) % 4 != 0 ) {
+                  pix[count] = originalPix[i];
+                  count++;
                }
             }
          }
       } else {
          if (byteDepth_ == 1) {
-            byte[] pixels = (byte[]) img.pix;
-            for (byte b : pixels) {
-               buffer.put(b);
-            }
+            return ByteBuffer.wrap((byte[]) img.pix);
          } else if (byteDepth_ == 2) {
-            short[] pixels = (short[]) img.pix;
-            for (short s : pixels) {
-               buffer.putChar((char) s);
-            }
-         } 
+            short[] pix = (short[]) img.pix;
+            ByteBuffer buffer = ByteBuffer.allocate(pix.length*2).order(BYTE_ORDER);
+            buffer.asShortBuffer().put(pix);
+            return buffer;
+         }
       }
-   }
-   
-   private void writeString(MappedByteBuffer buffer, String s) throws IOException {
-      char[] letters = s.toCharArray();
-      for (int i = 0; i < letters.length; i++) {
-         buffer.put((byte) letters[i]);
-      }
-   }
- 
-   private void writeIFDEntry(MappedByteBuffer buffer, char tag, char type, long count, long value) throws IOException {
-      buffer.putChar(tag);
-      buffer.putChar(type);
-      buffer.putInt((int)count);
-      buffer.putInt((int) value);
-   }   
-   
-   private MappedByteBuffer makeBuffer(int numBytes) throws IOException {
-      MappedByteBuffer buffer = fileChannel_.map(FileChannel.MapMode.READ_WRITE, byteOffset_, numBytes);
-      buffer.order(bigEndian_ ? ByteOrder.BIG_ENDIAN : ByteOrder.LITTLE_ENDIAN);
-      byteOffset_ += numBytes;
-      return buffer;
-   }
-   
-   private MappedByteBuffer makeBuffer(long offset, int numBytes) throws IOException {
-      MappedByteBuffer buffer = fileChannel_.map(FileChannel.MapMode.READ_WRITE, offset, numBytes);
-      buffer.order(bigEndian_ ? ByteOrder.BIG_ENDIAN : ByteOrder.LITTLE_ENDIAN);
-      return buffer;
+      return null;
    }
 
-   private void createFileChannel(File f, long fileSize) throws FileNotFoundException, IOException {
-      f.createNewFile();
-      raFile_ = new RandomAccessFile(f, "rw");
-      raFile_.setLength(fileSize);
-      fileChannel_ = raFile_.getChannel();
-      fileChannel_.size();
-      indexMap_ = new HashMap<String, Long>();
+   private byte[] getBytesFromString(String s) {
+      try {
+         return s.getBytes("US-ASCII");
+      } catch (UnsupportedEncodingException ex) {
+         ReportingUtils.logError("Error encoding String to bytes");
+         return null;
+      }
+   }
+    
+   private void writeComments() throws IOException {
+      //Write 4 byte header, 4 byte number of reserved bytes
+      long commentsOffset = filePosition_;
+      JSONObject comments;
+      try {
+         comments = displayAndComments_.getJSONObject("Comments");
+      } catch (JSONException ex) {
+         comments = new JSONObject();
+      }
+      String commentsString = comments.toString();
+      ByteBuffer header = ByteBuffer.allocate(8).order(BYTE_ORDER);
+      header.putInt(0,COMMENTS_HEADER);     
+      header.putInt(4,commentsString.length());
+      ByteBuffer buffer = ByteBuffer.wrap(getBytesFromString(commentsString));
+      fileChannel_.write(header, filePosition_);
+      fileChannel_.write(buffer, filePosition_+8);
+      filePosition_ += 8 + commentsString.length();
+      
+      ByteBuffer offsetHeader = ByteBuffer.allocate(8).order(BYTE_ORDER);
+      offsetHeader.putInt(0,COMMENTS_OFFSET_HEADER);
+      offsetHeader.putInt(4,(int)commentsOffset);
+      fileChannel_.write(offsetHeader, 24);
    }
    
+   private void writeDisplaySettings() throws IOException {
+      long displaySettingsOffset = filePosition_;
+      JSONArray displaySettings;
+      try {
+         displaySettings = displayAndComments_.getJSONArray("Channels");
+      } catch (JSONException ex) {
+         displaySettings = new JSONArray();
+      }      
+      int numReservedBytes =  numChannels_*DISPLAY_SETTINGS_BYTES_PER_CHANNEL;
+      ByteBuffer header = ByteBuffer.allocate(8).order(BYTE_ORDER);
+      ByteBuffer buffer = ByteBuffer.wrap(getBytesFromString(displaySettings.toString()));
+      header.putInt(0,DISPLAY_SETTINGS_HEADER);
+      header.putInt(4,numReservedBytes);
+      fileChannel_.write(header,filePosition_);
+      fileChannel_.write(buffer, filePosition_ + 8);
+      filePosition_ += numReservedBytes + 8;
+        
+      ByteBuffer offsetHeader = ByteBuffer.allocate(8).order(BYTE_ORDER);
+      offsetHeader.putInt(0,DISPLAY_SETTINGS_OFFSET_HEADER);
+      offsetHeader.putInt(4,(int)displaySettingsOffset);        
+      fileChannel_.write(offsetHeader, 16);
+   }
+
+   private void writeIndexMap() throws IOException {
+      //Write 4 byte header, 4 byte number of entries, and 20 bytes for each entry
+      int numMappings = indexMap_.size();
+      long indexMapOffset = filePosition_;
+      ByteBuffer buffer = ByteBuffer.allocate(8 + 20*numMappings).order(BYTE_ORDER);
+      buffer.putInt(0,INDEX_MAP_HEADER);
+      buffer.putInt(4, numMappings );
+      int position = 2;
+      for (String label : indexMap_.keySet()) {
+         String[] indecies = label.split("_");
+         for(String index : indecies) {
+            buffer.putInt(4*position,Integer.parseInt(index));
+            position++;
+         }
+         buffer.putInt(4*position,indexMap_.get(label).intValue());
+         position++;
+      }
+      fileChannel_.write(buffer, filePosition_);
+      filePosition_ += buffer.capacity();
+      
+      ByteBuffer header = ByteBuffer.allocate(8).order(BYTE_ORDER);
+      header.putInt(0,INDEX_MAP_OFFSET_HEADER);
+      header.putInt(4,(int)indexMapOffset);
+      fileChannel_.write(header, 8);
+   }
+
    private void readSummaryMD(JSONObject summaryMD) throws MMScriptException, JSONException {
       rgb_ = MDUtils.isRGB(summaryMD);
       numChannels_ = MDUtils.getNumChannels(summaryMD);

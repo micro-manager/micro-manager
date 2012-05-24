@@ -30,6 +30,7 @@ import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import mmcorej.TaggedImage;
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.micromanager.api.TaggedImageStorage;
@@ -44,7 +45,7 @@ import org.micromanager.utils.ReportingUtils;
 public class TaggedImageStorageMultipageTiff implements TaggedImageStorage {
 
    private JSONObject summaryMetadata_;
-   private JSONObject displayAndcomments_;
+   private JSONObject displayAndComments_;
    private boolean newDataSet_;
    private String directory_;
    private Thread shutdownHook_;
@@ -55,24 +56,23 @@ public class TaggedImageStorageMultipageTiff implements TaggedImageStorage {
    //map of position indecies to number of tiff files written for that position
    private HashMap<Integer,Integer> numFiles_;
    //map of position indecies to writers/readers
-   private HashMap<Integer,MultipageTiffWriter> tiffWritersByPosition_;
-   private HashMap<Integer,MultipageTiffReader> tiffReadersByPosition_;
+   private HashMap<Integer, MultipageTiffWriter> tiffWritersByPosition_;
+   private HashMap<Integer, MultipageTiffReader> tiffReadersByPosition_;
    //Map of image labels to file 
-   private HashMap<String,MultipageTiffReader> tiffReadersByLabel_;
-   
-   
+   private HashMap<String, MultipageTiffReader> tiffReadersByLabel_;
+
    public TaggedImageStorageMultipageTiff(String dir, Boolean newDataSet, JSONObject summaryMetadata) {
       summaryMetadata_ = summaryMetadata;
-      displayAndcomments_ = new JSONObject();
+
       newDataSet_ = newDataSet;
       directory_ = dir;
-      tiffReadersByLabel_ = new HashMap<String,MultipageTiffReader>();
+      tiffReadersByLabel_ = new HashMap<String, MultipageTiffReader>();
       cached_ = new CachedImages();
 
-      
       System.out.println("MP Start: " + System.currentTimeMillis());
 
-      if (summaryMetadata_ != null) {
+      if (summaryMetadata_ != null) {  
+         displayAndComments_ = VirtualAcquisitionDisplay.getDisplaySettingsFromSummary(summaryMetadata);
          try {
             numPositions_ = MDUtils.getNumPositions(summaryMetadata);
          } catch (JSONException ex) {
@@ -80,35 +80,28 @@ public class TaggedImageStorageMultipageTiff implements TaggedImageStorage {
          }
       }
      
-      
-      // TODO: throw erroe if no existing dataset
+      // TODO: throw error if no existing dataset
       if (!newDataSet_) {
          openExistingDataSet();
-      } 
-      
+      }    
       
       //add shutdown hook --> thread to be run when JVM shuts down
       shutdownHook_ = new Thread() {
          public void run() {
             writeDisplaySettingsAndComments();
          }
-      };
-      
-      Runtime.getRuntime().addShutdownHook(this.shutdownHook_);
-      
+      };    
+      Runtime.getRuntime().addShutdownHook(this.shutdownHook_); 
    }
    
    private void openExistingDataSet() {
       //Need to throw error if file not found
 
-      //TODO: get filename from variables rather than specifying here
-
-
       MultipageTiffReader reader = null;
       File dir = new File(directory_);
       for (File f : dir.listFiles()) {
          if (f.getName().endsWith(".tif")) {
-            reader = new MultipageTiffReader(f, true, null);
+            reader = new MultipageTiffReader(f);
             Set<String> labels = reader.getIndexKeys();
             for (String label : labels) {
                tiffReadersByLabel_.put(label, reader);
@@ -122,7 +115,7 @@ public class TaggedImageStorageMultipageTiff implements TaggedImageStorage {
       try {
          summaryMetadata_ = reader.getSummaryMetadata();
          numPositions_ = MDUtils.getNumPositions(summaryMetadata_);
-         displayAndcomments_ = reader.getDisplayAndComments();
+         displayAndComments_ = reader.getDisplayAndComments();
       } catch (JSONException ex) {
          ReportingUtils.logError(ex);
       } 
@@ -208,7 +201,7 @@ public class TaggedImageStorageMultipageTiff implements TaggedImageStorage {
       if ( tiffWritersByPosition_.get(positionIndex) != null && !tiffWritersByPosition_.get(positionIndex).hasSpaceToWrite(taggedImage) ) {
          try {
             tiffWritersByPosition_.get(positionIndex).close();
-            tiffReadersByPosition_.get(positionIndex).fileFinished();
+            tiffReadersByPosition_.get(positionIndex).finishedWriting();
          } catch (IOException ex) {
             ReportingUtils.logError(ex);
          }
@@ -222,8 +215,10 @@ public class TaggedImageStorageMultipageTiff implements TaggedImageStorage {
          numFiles_.put(positionIndex, fileIndex);
          String filename = createFilename(positionIndex, fileIndex);
          File f = new File(directory_ + "/" + filename);
-         tiffWritersByPosition_.put(positionIndex, new MultipageTiffWriter(f, summaryMetadata_));
-         tiffReadersByPosition_.put(positionIndex, new MultipageTiffReader(f, false, summaryMetadata_));
+
+         MultipageTiffWriter writer = new MultipageTiffWriter(f, summaryMetadata_, taggedImage);    
+         tiffWritersByPosition_.put(positionIndex, writer);
+         tiffReadersByPosition_.put(positionIndex, new MultipageTiffReader(summaryMetadata_, writer));
       }
 
 
@@ -266,7 +261,7 @@ public class TaggedImageStorageMultipageTiff implements TaggedImageStorage {
                MultipageTiffWriter w = tiffWritersByPosition_.get(i);
                if (!w.isClosed()) {
                   w.close();
-                  tiffReadersByPosition_.get(i).fileFinished();
+                  tiffReadersByPosition_.get(i).finishedWriting();
 
                }
             }
@@ -286,6 +281,7 @@ public class TaggedImageStorageMultipageTiff implements TaggedImageStorage {
    @Override
    public void setSummaryMetadata(JSONObject md) {
       summaryMetadata_ = md;
+      displayAndComments_ = VirtualAcquisitionDisplay.getDisplaySettingsFromSummary(summaryMetadata_);
       try {
          numPositions_ = MDUtils.getNumPositions(md);
       } catch (JSONException ex) {
@@ -300,19 +296,19 @@ public class TaggedImageStorageMultipageTiff implements TaggedImageStorage {
 
    @Override
    public void setDisplayAndComments(JSONObject settings) {
-      displayAndcomments_ = settings;
+      displayAndComments_ = settings;
    }
 
    @Override
    public JSONObject getDisplayAndComments() {
-      return displayAndcomments_;
+      return displayAndComments_;
    }
 
    private void writeDisplaySettingsAndComments() {
       for (MultipageTiffReader r : new HashSet<MultipageTiffReader>(tiffReadersByLabel_.values())) {
          try {
-            r.rewriteDisplaySettings(displayAndcomments_.getJSONArray("Channels"));
-            r.rewriteComments(displayAndcomments_.getJSONObject("Comments"));
+            r.rewriteDisplaySettings(displayAndComments_.getJSONArray("Channels"));
+            r.rewriteComments(displayAndComments_.getJSONObject("Comments"));
          } catch (JSONException ex) {
             ReportingUtils.logError("Error writing display settings");
          } catch (IOException ex) {
