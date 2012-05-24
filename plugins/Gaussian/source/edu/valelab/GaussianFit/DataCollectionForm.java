@@ -23,6 +23,7 @@ import edu.ucsf.tsf.TaggedSpotsProtos.LocationUnits;
 import edu.ucsf.tsf.TaggedSpotsProtos.Spot;
 import edu.ucsf.tsf.TaggedSpotsProtos.SpotList;
 import ij.ImagePlus;
+import ij.ImageStack;
 import ij.WindowManager;
 import ij.gui.ImageWindow;
 import ij.gui.Roi;
@@ -1786,8 +1787,6 @@ public class DataCollectionForm extends javax.swing.JFrame {
                }
                
                MyRowData rowData = rowData_.get(row);
-               ImageProcessor ip = ImageRenderer.renderData(rowData,
-                       visualizationModel_.getSelectedIndex(), mag, null, sf);
                String fsep = System.getProperty("file.separator");
                String ttmp = rowData.name_;
                if (rowData.name_.contains(fsep)) {
@@ -1795,8 +1794,17 @@ public class DataCollectionForm extends javax.swing.JFrame {
                }
                ttmp += mag + "x";
                final String title = ttmp;
-
-               ImagePlus sp = new ImagePlus(title, ip);
+               ImagePlus sp = null;
+               if (rowData.hasZ_) {
+                  ImageStack is = ImageRenderer.renderData3D(rowData,
+                       visualizationModel_.getSelectedIndex(), mag, null, sf);
+                  sp = new ImagePlus(title, is);
+                  
+               } else {
+                  ImageProcessor ip = ImageRenderer.renderData(rowData,
+                       visualizationModel_.getSelectedIndex(), mag, null, sf);
+                  sp = new ImagePlus(title, ip);
+               }
                GaussCanvas gs = new GaussCanvas(sp, rowData_.get(row),
                        visualizationModel_.getSelectedIndex(), mag, sf);
                DisplayUtils.AutoStretch(sp);

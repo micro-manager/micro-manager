@@ -4,6 +4,7 @@
 package edu.valelab.GaussianFit;
 
 import edu.valelab.GaussianFit.DataCollectionForm.MyRowData;
+import ij.ImageStack;
 import ij.process.ColorProcessor;
 import ij.process.FloatProcessor;
 import ij.process.ImageProcessor;
@@ -23,7 +24,8 @@ public class ImageRenderer {
       
 
    
-   static int[][] zLut_ = new int[256][];
+    static int[][] zLut_ = new int[256][];
+   
       
    /*
     * Renders spotdata using various renderModes
@@ -256,6 +258,72 @@ public class ImageRenderer {
       return ip;    
    }
    
+   
+      /*
+    * Renders spotdata using various renderModes
+    * 
+    * @param rowData - MyRowData structure to be rendered
+    * @param method - 0 = 2D scatter, 1 = Gaussians, 2 = Normalized Gaussian
+    * @param magnification  - factor x original size
+    * @param rect - roi in the magnified image that should be rendered
+    */
+   public static ImageStack renderData3D(final MyRowData rowData,
+           final int method, final double magnification, Rectangle rect, final SpotDataFilter sf) {
+   
+      
+      //int mag = 1 << renderSize;
+
+      if (rect == null) {
+         rect = new Rectangle(0, 0, (int) (rowData.width_ * magnification),
+                 (int) (rowData.height_ * magnification));
+      }
+      final double renderedPixelInNm = rowData.pixelSizeNm_ / magnification;
+      final int width = rect.width;
+      final int height = rect.height;
+      final int fullWidth = (int) (rowData.width_ * magnification);
+      final int fullHeight = (int) (rowData.height_ * magnification);
+      double tmp =  1000.0 * (rowData.maxZ_ - rowData.minZ_ ) / (2* renderedPixelInNm);
+      final int nrZs = (int) tmp;
+      int endx = rect.x + rect.width;
+      int endy = rect.y + rect.height;
+      final int size = width * height;
+      double factor = (double) magnification / rowData.pixelSizeNm_;
+
+      ImageStack is = new ImageStack(width, height);
+      ImageProcessor[] ip = new ImageProcessor[nrZs];
+      
+      if (method == 0) {
+         
+         short pixels[][] = new short[nrZs][size];
+         for (int i = 0; i < nrZs; i++) {
+            ip[i] = new ShortProcessor(width, height);
+            ip[i].setPixels(pixels[i]);
+            is.addSlice(ip[i]);
+         }
+
+         for (GaussianSpotData spot : rowData.spotList_) {
+            if (sf.filter(spot)) {
+               int x = (int) (factor * spot.getXCenter());
+               int y = (int) (factor * spot.getYCenter());
+               int z = (int) (factor * (spot.getZCenter() - rowData.minZ_) * 500.0);
+               if (x > rect.x && x < endx && y > rect.y && y < endy) {
+                  x -= rect.x;
+                  y -= rect.y;
+                  int index = (y * width) + x;
+                  if (index < size && index > 0 && z < nrZs) {
+                     if (pixels[z][index] != -1) {
+                        pixels[z][index] += 1;
+                     }
+                  }
+               }
+            }
+         }
+      }
+ 
+      
+      return is;
+   }
+
    /**
     * Reads a file enclosed in this jar that is created by copying the output of
     * the List command in ImageJ (Image>Color>ShowLut).
@@ -263,8 +331,9 @@ public class ImageRenderer {
     */
    static private void readLut(String lutName) {
       InputStream fin = ImageRenderer.class.getResourceAsStream(lutName);
-      if (fin == null)
+      if (fin == null) {
          return;
+      }
       BufferedReader br = new BufferedReader(new InputStreamReader(fin));
       String line;
       try {
@@ -272,9 +341,9 @@ public class ImageRenderer {
             String[] tokens = line.split("\t");
             int index = Integer.parseInt(tokens[0]);
             if (index < zLut_.length) {
-               zLut_[index] = new int[] {Integer.parseInt(tokens[1]),
+               zLut_[index] = new int[]{Integer.parseInt(tokens[1]),
                   Integer.parseInt(tokens[2]),
-                  Integer.parseInt(tokens[3]) };
+                  Integer.parseInt(tokens[3])};
             }
          }
       } catch (IOException ioex) {
