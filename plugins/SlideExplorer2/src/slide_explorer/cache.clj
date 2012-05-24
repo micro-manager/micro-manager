@@ -52,8 +52,8 @@
 (defn add-item
   "Add an item to the LRU persistent map. Like assoc."
   ([lru-map key val overwrite?]
-  (if (or (not (lru-map key))
-          overwrite?)
+  (if (or overwrite?
+          (not (lru-map key)))
     (-> lru-map
         (assoc key val)
         (hit-item key)
