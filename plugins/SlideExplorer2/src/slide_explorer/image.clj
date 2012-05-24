@@ -143,7 +143,22 @@
   "An LUT such that the image is not displayed."
   (lut-object Color/BLACK 0 255 1.0))
 
-; 3.99 ms
+(def composite-image
+  "Takes n ImageProcessors and produces a CompositeImage."
+  (memoize
+    (fn
+      [processors]
+      (when (first (filter identity processors))
+        (let [processors (if (= 1 (count processors))
+                           (let [proc (first processors)]
+                             (list proc (black-processor-like proc)))
+                           processors)
+              stack (make-stack processors)
+              img+ (ImagePlus. "" stack)]
+          (.setDimensions img+ (.getSize stack) 1 1)
+          (CompositeImage. img+ CompositeImage/COMPOSITE))))))
+                    
+; ~4 ms (first time only, then < 0.1 ms)
 (defn overlay
   "Takes n ImageProcessors and n lut objects and produces a ColorProcessor
    containing the overlay."
@@ -151,18 +166,10 @@
   (when (first (filter identity processors))
     (let [luts (if (= 1 (count luts))
                  (list (first luts) black-lut)
-                 luts)
-          processors (if (= 1 (count processors))
-                       (let [proc (first processors)]
-                         (list proc (black-processor-like proc)))
-                       processors)
-          stack (make-stack processors)
-          img+ (ImagePlus. "" stack)]
-      (.setDimensions img+ (.getSize stack) 1 1)
-      (ColorProcessor.
-        (.getImage
-          (doto (CompositeImage. img+ CompositeImage/COMPOSITE)
-            (.setLuts (into-array luts))))))))
+                 luts)]
+      (time (.getImage
+        (doto (composite-image processors)
+          (.setLuts (into-array luts))))))))
 
 (def overlay-memo (memoize overlay))
 

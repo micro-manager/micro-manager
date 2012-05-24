@@ -10,11 +10,11 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 
-(defn lru-map
+(defn empty-lru-map
   "Factory method for producing a persistent map,
    with metadata that allows LRU policy."
-  [base limit]
-  (with-meta base
+  [limit]
+  (with-meta {}
              {::lru {:limit limit
                      :tick 0
                      :priority {}}}))
@@ -121,7 +121,7 @@
    images in memory, and also stores all images on disk in TIFF files in the
    specified directory."
   [dir memory-cache-size]
-  (doto (agent (lru-map {} memory-cache-size))
+  (doto (agent (empty-lru-map memory-cache-size))
     (reset-meta! {::cache {:directory dir}})))
 
 ;; test

@@ -129,14 +129,14 @@
 
 (defn multi-color-tile [available-tiles tile-indices channels-map]
   (let [channel-names (keys channels-map)]
-    (overlay-memo
+    (overlay
       (for [chan channel-names]
         (get available-tiles (assoc tile-indices :nc chan)))
       (for [chan channel-names]
         (get-in channels-map [chan :lut])))))
 
-(defn draw-processor [^Graphics2D g ^ImageProcessor processor x y]
-  (.drawImage g (.createImage processor) x y nil))
+(defn draw-image [^Graphics2D g image x y]
+  (.drawImage g image x y nil))
 
 (defn paint-tiles [^Graphics2D g available-tiles screen-state [tile-width tile-height]]
   (let [pixel-rect (.getClipBounds g)]
@@ -148,7 +148,7 @@
                                           :nz (screen-state :z)}
                                          (:channels screen-state))]
         (let [[x y] (tile-to-pixels [nx ny] [tile-width tile-height] 1)]
-          (draw-processor g proc x y))))))
+          (draw-image g proc x y))))))
 
 (defn paint-screen [graphics screen-state available-tiles]
   (let [original-transform (.getTransform graphics)
