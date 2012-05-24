@@ -611,7 +611,7 @@
     (event-fn)
     (await-resume)))
 
-(defn run-acquisition [this settings out-queue]
+(defn run-acquisition [this settings out-queue cleanup?]
   (try
     (def acq-settings settings)
     (log (str "Starting MD Acquisition: " settings))
@@ -623,7 +623,8 @@
       (let [acq-seq (generate-acq-sequence settings @attached-runnables)]
         (def acq-sequence acq-seq)
         (execute (mapcat #(make-event-fns % out-queue) acq-seq))
-        (cleanup)
+        (when cleanup?
+          (cleanup))
         (.put out-queue TaggedImageQueue/POISON)
         ))
     (catch Throwable t (do (ReportingUtils/showError t "Acquisition failed.")
@@ -777,14 +778,14 @@
     (.addToAlbum gui (make-TaggedImage img))))
 
 
-(defn run-acquisition-with-processors [this settings acq-eng]
+(defn run-acquisition-with-processors [this settings acq-eng cleanup?]
   (def last-acq this)
   (def eng acq-eng)
   (swap! (.state this) assoc :stop false :pause false :finished false)
   (let [out-queue (LinkedBlockingQueue. 10)]
     (reset! (.state this) nil)
     (def outq out-queue)
-    (let [acq-thread (Thread. #(run-acquisition this settings out-queue)
+    (let [acq-thread (Thread. #(run-acquisition this settings out-queue cleanup?)
                               "Acquisition Engine Thread (Clojure)")
           processors (ProcessorStack. out-queue (.getTaggedImageProcessors acq-eng))
           out-queue-2 (.begin processors)]
@@ -806,12 +807,12 @@
   (let [acq-eng (.getAcquisitionEngine gui)
         acq-settings (.getSequenceSettings acq-eng)
         settings (convert-settings acq-settings)]
-    (run-acquisition-with-processors this settings acq-eng)))
+    (run-acquisition-with-processors this settings acq-eng true)))
 
 (defn -run [this acq-settings acq-eng]
   (load-mm)
   (let [settings (convert-settings acq-settings)
-        out-queue-2 (run-acquisition-with-processors this settings acq-eng)]
+        out-queue-2 (run-acquisition-with-processors this settings acq-eng true)]
     (when-not (:stop @(.state this))
       (let [live-acq (LiveAcq. mmc out-queue-2 (:summary-metadata @(.state this))
                                (:save settings) acq-eng gui)]
