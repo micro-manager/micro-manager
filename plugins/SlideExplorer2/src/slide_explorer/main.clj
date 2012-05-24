@@ -18,7 +18,7 @@
   (:use [org.micromanager.mm :only (core edt mmc gui load-mm json-to-data)]
         [slide-explorer.affine :only (set-destination-origin transform inverse-transform)]
         [slide-explorer.view :only (floor-int show add-to-available-tiles pixel-rectangle tiles-in-pixel-rectangle)]
-        [slide-explorer.image :only (show-image statistics intensity-range lut-object)]
+        [slide-explorer.image :only (show-image intensity-range lut-object)]
         [slide-explorer.tiles :only (tile-list offset-tiles)]))
 
 
@@ -140,7 +140,7 @@
                       [chan {:color color}]))
               (into {}
                     (for [[chan images] (group-by #(get-in % [:tags "Channel"]) tagged-image-processors)]
-                      [chan (assoc (apply intensity-range (map :proc images)) :gamma 1.0)]))))
+                      [(or chan "Default") (assoc (apply intensity-range (map :proc images)) :gamma 1.0)]))))
 
 (defn initial-lut-objects [tagged-image-processors]
   (into {}
@@ -165,7 +165,7 @@
   (doseq [image (acquire-at (inverse-transform (Point. (* 512 nx) (* 512 ny)) affine-stage-to-pixel))]
     (add-to-available-tiles available-tiles
                             {:nx nx :ny ny :nz (get-in image [:tags "SliceIndex"]) :nt 0
-                             :nc (get-in image [:tags "Channel"])}
+                             :nc (or (get-in image [:tags "Channel"]) "Default")}
                             (image :proc)))
   (await available-tiles))
 
