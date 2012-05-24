@@ -51,11 +51,16 @@
 
 (defn add-item
   "Add an item to the LRU persistent map. Like assoc."
-  [lru-map key val]
-  (-> lru-map
-      (assoc key val)
-      (hit-item key)
-      remove-lru-excess))
+  ([lru-map key val overwrite?]
+  (if (or (not lru-map key)
+          overwrite?)
+    (-> lru-map
+        (assoc key val)
+        (hit-item key)
+        remove-lru-excess)
+    lru-map))
+  ([lru-map key val]
+    (add-item lru-map key val true)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; image-cache consists of an agent
@@ -95,7 +100,7 @@
         mem-val)
     (do (.submit file-service
                  #(let [image (image/read-processor (key-map-to-file-name cache-agent key))]
-                    (send-off cache-agent add-item key image)))
+                    (send-off cache-agent add-item key image false)))
         nil)))
 
 (defn has-image
