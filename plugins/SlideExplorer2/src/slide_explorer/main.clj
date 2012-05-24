@@ -140,7 +140,7 @@
                       [chan {:color color}]))
               (into {}
                     (for [[chan images] (group-by #(get-in % [:tags "Channel"]) tagged-image-processors)]
-                      [chan (assoc (intensity-range (map :proc images)) :gamma 1.0)]))))
+                      [chan (assoc (apply intensity-range (map :proc images)) :gamma 1.0)]))))
 
 (defn initial-lut-objects [tagged-image-processors]
   (into {}

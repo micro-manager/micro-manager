@@ -1,6 +1,6 @@
 (ns slide-explorer.view
   (:import (javax.swing AbstractAction JComponent JFrame JPanel JLabel KeyStroke)
-           (java.awt Color Graphics Graphics2D Rectangle RenderingHints Window)
+           (java.awt AlphaComposite Color Graphics Graphics2D Rectangle RenderingHints Window)
            (java.util UUID)
            (java.awt.event ComponentAdapter KeyEvent KeyAdapter
                            MouseAdapter WindowAdapter)

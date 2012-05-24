@@ -3,7 +3,7 @@
            (ij.io FileSaver)
            (ij.plugin ZProjector)
            (ij.process ByteProcessor LUT ImageProcessor ColorProcessor
-                       ImageStatistics ShortProcessor)
+                       ImageStatistics ByteStatistics ShortProcessor)
            (mmcorej TaggedImage)
            (javax.swing JFrame)
            (java.awt Color)
@@ -119,10 +119,21 @@
    :histogram (.getHistogram processor)})
   
 (defn intensity-range
-  "Get the intensity range over a collection of processors."
-  [processors]
-  {:min (apply min (map #(.getMin %) processors))
-   :max (apply max (map #(.getMax %) processors))})
+  "Get the intensity range for one or more processors."
+  ([processor]
+    (condp instance? processor
+      ByteProcessor
+      (let [stat (ImageStatistics/getStatistics
+                   processor ImageStatistics/MIN_MAX nil)]
+        {:min (.min stat)
+         :max (.max stat)})
+      ShortProcessor
+      {:min (.getMin processor)
+       :max (.getMax processor)}))
+  ([processor & processors]
+    (let [min-maxes (map intensity-range (cons processor processors))]
+      {:min (apply min (map :min min-maxes))
+       :max (apply max (map :max min-maxes))})))
 
 ;; Channels/LUTs
 
