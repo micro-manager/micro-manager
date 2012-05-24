@@ -981,12 +981,11 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
    
    public void updateAndDraw(boolean firstFrame) {
       if (hyperImage_ != null && hyperImage_.isVisible()) {
-         if (firstFrame) {
-            if (hyperImage_ instanceof MMCompositeImage) {
-               MMCompositeImage ci = (MMCompositeImage) hyperImage_;
-               invokeLaterIfNotEDT(ci.getUpdateAndDrawRunnable());
-            }
-            
+         if (firstFrame && hyperImage_ instanceof MMCompositeImage) {
+            MMCompositeImage ci = (MMCompositeImage) hyperImage_;
+            invokeLaterIfNotEDT(ci.getUpdateAndDrawRunnable());
+
+
          } else {
             hyperImage_.updateAndDraw();
          }
