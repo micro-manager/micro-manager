@@ -67,7 +67,7 @@ import valelab.LocalWeightedMean;
 public class DataCollectionForm extends javax.swing.JFrame {
    AbstractTableModel myTableModel_;
    private final String[] columnNames_ = {"ID", "Image", "Nr of spots", 
-      "2C Reference", "stdX", "stdY",};
+      "2C Reference", "stdX", "stdY", "nrPhotons"};
    private final String[] plotModes_ = {"t-X", "t-Y", "X-Y", "t-Int"};
    private final String[] renderModes_ = {"Points", "Gaussian", "Norm. Gaussian"};
    private final String[] renderSizes_  = {"1x", "2x", "4x", "8x"};
@@ -93,6 +93,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
    private static final String COL2Width = "Col2Width";
    private static final String COL3Width = "Col3Width";
    private static final String COL4Width = "Col4Width";
+   private static final String COL5Width = "Col5Width";
    private Preferences prefs_;
    
    private static LocalWeightedMean lwm_;
@@ -126,10 +127,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
    public void setJitterMaxSpots(int jm) {
          jitterMaxSpots_ = jm;
    }
-   
-   
   
-   
   
    
    public static DataCollectionForm instance_ = null;
@@ -171,6 +169,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
       public final boolean hasZ_;
       public final double minZ_;
       public final double maxZ_;
+      public final double totalNrPhotons_;
       
 
 
@@ -212,15 +211,20 @@ public class DataCollectionForm extends javax.swing.JFrame {
          isTrack_ = isTrack;
          double stdX = 0.0;
          double stdY = 0.0;
+         double nrPhotons = 0.0;
          if (isTrack_) {
             ArrayList<Point2D.Double> xyList = spotListToPointList(spotList_);
             Point2D.Double avgPoint = avgXYList(xyList);
             Point2D.Double stdPoint = stdDevXYList(xyList, avgPoint);
             stdX = stdPoint.x;
             stdY = stdPoint.y;
+            for (GaussianSpotData spot : spotList_) {
+               nrPhotons += spot.getIntensity();
+            }
          }
          stdX_ = stdX;
          stdY_ = stdY;
+         totalNrPhotons_ = nrPhotons;
          coordinate_ = coordinate;
          hasZ_ = hasZ;
          minZ_ = minZ;
@@ -303,6 +307,11 @@ public class DataCollectionForm extends javax.swing.JFrame {
                   return String.format("%.2f", rowData_.get(row).stdY_);
                 else 
                    return null;
+             else if (col == 6)
+                if (rowData_.get(row).isTrack_)
+                  return String.format("%.2f", rowData_.get(row).totalNrPhotons_);
+                else 
+                   return null;
              else 
                 return getColumnName(col);
              
@@ -351,6 +360,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
        cm.getColumn(2).setPreferredWidth(prefs_.getInt(COL2Width, 150));
        cm.getColumn(3).setPreferredWidth(prefs_.getInt(COL3Width, 75));
        cm.getColumn(4).setPreferredWidth(prefs_.getInt(COL4Width, 75));
+       cm.getColumn(5).setPreferredWidth(prefs_.getInt(COL5Width, 75));
        
        // Drag and Drop support for file loading
        this.setTransferHandler(new TransferHandler() {
