@@ -4,11 +4,10 @@
            (java.util UUID)
            (java.awt.event ComponentAdapter KeyEvent KeyAdapter
                            MouseAdapter WindowAdapter)
-           (org.micromanager.utils GUIUpdater)
            (ij.process ImageProcessor))
   (:require [clojure.pprint :as pprint])
   (:use [org.micromanager.mm :only (edt)]
-        [slide-explorer.paint :only (enable-anti-aliasing)]
+        [slide-explorer.paint :only (enable-anti-aliasing repaint-on-change)]
         [slide-explorer.image :only (crop merge-and-scale overlay overlay-memo lut-object)]))
 
 ; Order of operations:
@@ -21,8 +20,6 @@
 (def MIN-ZOOM 1/256)
 
 (def MAX-ZOOM 1)
-
-(def display-updater (GUIUpdater.))
 
 ;; TESTING UTILITIES
 
@@ -187,12 +184,6 @@
 
 ;; USER INPUT HANDLING
 
-(defn display-follow [panel reference]
-  (add-watch reference "display"
-             (fn [_ _ old new]
-               (when-not (= old new)
-                 (.post display-updater #(.repaint panel))))))
-
 ;; key binding
 
 (defn bind-key
@@ -356,6 +347,7 @@ to normal size."
   (let [screen-state (atom (sorted-map :x 0 :y 0 :z 0 :zoom 1 :width 100 :height 10
                                        :keys (sorted-set)
                                        :channels (sorted-map)))
+        display-tiles (atom {})
         panel (main-panel screen-state available-tiles)
         frame (main-frame)
         mouse-position (atom nil)]
@@ -373,8 +365,8 @@ to normal size."
     (handle-zoom frame screen-state)
     (handle-dive frame screen-state)
     (watch-keys frame screen-state)
-    (display-follow panel screen-state)
-    (display-follow panel available-tiles)
+    (repaint-on-change panel screen-state)
+    (repaint-on-change panel available-tiles)
     (handle-pointing panel mouse-position)
     screen-state))
 
