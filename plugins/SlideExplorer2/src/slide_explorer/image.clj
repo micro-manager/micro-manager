@@ -132,33 +132,33 @@
 (defn lut-object
   "Creates an ImageJ LUT object with given parameters."
   ([^Color color ^double min ^double max ^double gamma]
-  (let [lut (ImageUtils/makeLUT color gamma)]
-    (set! (. lut min) min)
-    (set! (. lut max) max)
-    lut))
+    (let [lut (ImageUtils/makeLUT color gamma)]
+      (set! (. lut min) min)
+      (set! (. lut max) max)
+      lut))
   ([{:keys [color min max gamma]}]
-    (lut-object color min max gamma)))
+    (lut-object color min max gamma))
+  ([color min max]
+    (lut-object color min max 1.0)))
 
 (def black-lut
   "An LUT such that the image is not displayed."
   (lut-object Color/BLACK 0 255 1.0))
 
-(def composite-image
+(defn composite-image
   "Takes n ImageProcessors and produces a CompositeImage."
-  (memoize
-    (fn
-      [processors]
-      (when (first (filter identity processors))
-        (let [processors (if (= 1 (count processors))
-                           (let [proc (first processors)]
-                             (list proc (black-processor-like proc)))
-                           processors)
-              stack (make-stack processors)
-              img+ (ImagePlus. "" stack)]
-          (.setDimensions img+ (.getSize stack) 1 1)
-          (CompositeImage. img+ CompositeImage/COMPOSITE))))))
+  [processors]
+  (when (first (filter identity processors))
+    (let [processors (if (= 1 (count processors))
+                       (let [proc (first processors)]
+                         (list proc (black-processor-like proc)))
+                       processors)
+          stack (make-stack processors)
+          img+ (ImagePlus. "" stack)]
+      (.setDimensions img+ (.getSize stack) 1 1)
+      (CompositeImage. img+ CompositeImage/COMPOSITE))))
                     
-; ~4 ms (first time only, then < 0.1 ms)
+; ~4 ms
 (defn overlay
   "Takes n ImageProcessors and n lut objects and produces a ColorProcessor
    containing the overlay."
@@ -167,9 +167,9 @@
     (let [luts (if (= 1 (count luts))
                  (list (first luts) black-lut)
                  luts)]
-      (time (.getImage
+      (.getImage
         (doto (composite-image processors)
-          (.setLuts (into-array luts))))))))
+          (.setLuts (into-array luts)))))))
 
 (def overlay-memo (memoize overlay))
 

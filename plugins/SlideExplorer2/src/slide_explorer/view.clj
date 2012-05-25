@@ -129,7 +129,7 @@
 
 (defn multi-color-tile [available-tiles tile-indices channels-map]
   (let [channel-names (keys channels-map)]
-    (overlay
+    (overlay-memo
       (for [chan channel-names]
         (get available-tiles (assoc tile-indices :nc chan)))
       (for [chan channel-names]
