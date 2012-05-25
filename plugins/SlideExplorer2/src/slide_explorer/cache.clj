@@ -91,9 +91,9 @@
   
 (defn get-image
   "Get the image located at key. If image is in memory, will return it. If image
-   is not in memory, nil will be returned, but the image will be added to
-   the map asynchronously so that the next get-image request will return the image
-   in memory."
+   is not in memory, nil will be returned, but the image will be read from file and
+   added to the map asynchronously so that a future get-image request will return
+   the image in memory."
   [cache-agent key]
   (if-let [mem-val (clojure.core/get @cache-agent key)]
     (do (send-off cache-agent hit-item key)
@@ -108,13 +108,6 @@
   [cache-agent key]
   (or (not (nil? (@cache-agent key)))
       (.exists (File. (key-map-to-file-name cache-agent key)))))
-
-(defn add-images-changed-watch
-  "Adds a watch that is only triggered when images have changed."
-  [cache-agent key fun]
-  (add-watch cache-agent key (fn [key reference old new]
-                               (when (not= old new)
-                                 (fun key reference old new)))))
                  
 (defn image-cache
   "Creates an image cache that uses a LRU policy to store memory-cache-size
