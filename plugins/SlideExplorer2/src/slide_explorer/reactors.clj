@@ -13,6 +13,26 @@
                (fn [_ _ old-state new-state]
                  (function old-state new-state)))))
 
+(defn remove-watches
+  "Removes all watches from a reference (ref/atom/agent)."
+  ([^IRef reference]
+    (doseq [key (keys (.getWatches reference))]
+      (remove-watch reference key)))
+  ([^IRef reference & more-references]
+    (doseq [each-ref (cons reference more-references)]
+      (remove-watches each-ref))))
+
+(defn diff-coll
+  "Returns the set of all items in coll1 but not in coll2."
+  [coll1 coll2]
+  (when-not (identical? coll1 coll2)
+    (let [diff
+          (clojure.set/difference
+            (set coll1)
+            (set coll2))]
+      (when-not (empty? diff)
+        diff))))
+
 (defn single-threaded-executor []
   "A single-threaded Executor. Call .submit to add Runnables or Callables."
   (Executors/newFixedThreadPool 1))
@@ -29,26 +49,6 @@
                           (.submit executor #(function old-state new-state))))))
   ([reference function]
     (add-reactor-watch reference function (single-threaded-executor))))
-
-(defn remove-watches
-  "Removes all watches from a reference (ref/atom/agent)."
-  ([^IRef reference]
-    (doseq [key (keys (.getWatches reference))]
-      (remove-watch reference key)))
-  ([^IRef reference & more-references]
-    (doseq [each-ref (cons reference more-references)]
-      (remove-watches each-ref))))
-  
-(defn diff-coll
-  "Returns the set of all items in coll1 but not in coll2."
-  [coll1 coll2]
-  (when-not (identical? coll1 coll2)
-    (let [diff
-          (clojure.set/difference
-            (set coll1)
-            (set coll2))]
-      (when-not (empty? diff)
-        diff))))
 
 (defn added-items-reactor
   "Attaches a single-threaded reactive watch that applies a function to
