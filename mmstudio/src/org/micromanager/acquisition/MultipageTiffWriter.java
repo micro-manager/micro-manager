@@ -260,9 +260,9 @@ public class MultipageTiffWriter {
       ifdBuffer.putInt(158, (int)tagDataOffset);
 
       if (rgb_) {
-         charView.put(131,(char) (byteDepth_*8));
-         charView.put(132,(char) (byteDepth_*8));
-         charView.put(133,(char) (byteDepth_*8));
+         charView.put(81,(char) (byteDepth_*8));
+         charView.put(82,(char) (byteDepth_*8));
+         charView.put(83,(char) (byteDepth_*8));
       }
       buffers_.add(ifdBuffer);
       buffers_.add(getPixelBuffer(img));
@@ -328,7 +328,8 @@ public class MultipageTiffWriter {
                   count++;
                }
             }
-         } else if (byteDepth_ == 2) {
+            return ByteBuffer.wrap(pix);
+         } else  {
             short[] originalPix = (short[]) img.pix;
             short[] pix = new short[ originalPix.length * 3 / 4 ];
             int count = 0;
@@ -338,18 +339,20 @@ public class MultipageTiffWriter {
                   count++;
                }
             }
+            ByteBuffer buffer = ByteBuffer.allocate(pix.length*2).order(BYTE_ORDER);
+            buffer.asShortBuffer().put(pix);
+            return buffer;
          }
       } else {
          if (byteDepth_ == 1) {
             return ByteBuffer.wrap((byte[]) img.pix);
-         } else if (byteDepth_ == 2) {
+         } else {
             short[] pix = (short[]) img.pix;
             ByteBuffer buffer = ByteBuffer.allocate(pix.length*2).order(BYTE_ORDER);
             buffer.asShortBuffer().put(pix);
             return buffer;
          }
       }
-      return null;
    }
 
    private byte[] getBytesFromString(String s) {
