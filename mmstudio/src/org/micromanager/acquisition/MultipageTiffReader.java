@@ -190,8 +190,8 @@ public class MultipageTiffReader {
          ByteBuffer byteCount = ByteBuffer.allocate(4).order(byteOrder_).putInt(bytes.length);
          ByteBuffer buffer = ByteBuffer.wrap(bytes);
          long offset = readOffsetHeaderAndOffset(MultipageTiffWriter.COMMENTS_OFFSET_HEADER, 24);
-         fileChannel_.write(byteCount,offset);
-         fileChannel_.write(buffer, offset +4);
+         fileChannel_.write(byteCount,offset + 4);
+         fileChannel_.write(buffer, offset +8);
       }
       displayAndComments_.put("Comments", comments);
    }
@@ -247,11 +247,11 @@ public class MultipageTiffReader {
       indexMap_ = new HashMap<String, Long>();
       ByteBuffer mapBuffer = readIntoBuffer(offset+8, 20*numMappings);     
       for (int i = 0; i < numMappings; i++) {
-         int channel = mapBuffer.getInt();
-         int slice = mapBuffer.getInt();
-         int frame = mapBuffer.getInt();
-         int position = mapBuffer.getInt();
-         long imageOffset = unsignInt(mapBuffer.getInt());
+         int channel = mapBuffer.getInt(i*20);
+         int slice = mapBuffer.getInt(i*20+4);
+         int frame = mapBuffer.getInt(i*20+8);
+         int position = mapBuffer.getInt(i*20+12);
+         long imageOffset = unsignInt(mapBuffer.getInt(i*20+16));
          indexMap_.put(MDUtils.generateLabel(channel, slice, frame, position), imageOffset);
       }
    }
@@ -286,7 +286,7 @@ public class MultipageTiffReader {
    }
    
    private TaggedImage readTaggedImage(IFDData data) throws IOException {
-      ByteBuffer pixelBuffer = ByteBuffer.allocate((int) data.bytesPerImage);
+      ByteBuffer pixelBuffer = ByteBuffer.allocate( (int) data.bytesPerImage);
       ByteBuffer mdBuffer = ByteBuffer.allocate((int) data.mdLength);
       fileChannel_.read(pixelBuffer, data.pixelOffset);
       fileChannel_.read(mdBuffer, data.mdOffset);
@@ -310,10 +310,10 @@ public class MultipageTiffReader {
             }
             return new TaggedImage(pixels, md);
          } else {
-            short[] pixels = new short[(int) (4 * data.bytesPerImage / 3)];
-            int i = 0;
-            for (short s : pixelBuffer.asShortBuffer().array()) {
-               pixels[i] = s;
+             short[] pixels = new short[(int) (2 * (data.bytesPerImage/3))];
+            int i = 0;           
+            while ( i < pixels.length) {                
+               pixels[i] = pixelBuffer.getShort( 2*((i/4)*3 + (i%4)) );        
                i++;
                if ((i + 1) % 4 == 0) {
                   pixels[i] = 0;
@@ -351,7 +351,8 @@ public class MultipageTiffReader {
    //returns byteoffset of first IFD
    private void readHeader() throws IOException {           
       ByteBuffer tiffHeader = ByteBuffer.allocate(40);
-      char zeroOne = tiffHeader.asCharBuffer().get();
+      fileChannel_.read(tiffHeader,0);
+      char zeroOne = tiffHeader.getChar(0);
       if (zeroOne == 0x4949 ) {
          byteOrder_ = ByteOrder.LITTLE_ENDIAN;
       } else if (zeroOne == 0x4d4d ) {
