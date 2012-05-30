@@ -2033,8 +2033,12 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
 
       @Override
       public void windowClosed(WindowEvent E) {
-         this.windowClosing(E);
-         super.windowClosed(E);
+         try {
+            this.windowClosing(E);
+            super.windowClosed(E);
+         } catch (NullPointerException ex) {
+               ReportingUtils.showError(ex, "Null pointer error in ImageJ code while closing window");
+         }
       }
 
       @Override
