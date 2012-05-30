@@ -178,7 +178,8 @@ public class MDUtils {
 
    public static String getPixelType(JSONObject map)  throws JSONException, MMScriptException {
       try {
-         return map.getString("PixelType");
+         if (map != null)
+            return map.getString("PixelType");
       } catch (JSONException e) {
          try {
             int ijType = map.getInt("IJType");
@@ -196,6 +197,7 @@ public class MDUtils {
             throw new MMScriptException ("Can't figure out pixel type");
          }
       }
+      return "";
    }
 
    public static void addRandomUUID(JSONObject map) throws JSONException {

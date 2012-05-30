@@ -796,8 +796,11 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
 
    public int grayToRGBChannel(int grayIndex) {
       try {
-         if (MDUtils.getNumberOfComponents(imageCache_.getSummaryMetadata()) == 3) {
-            return grayIndex / 3;
+         if (imageCache_ != null) {
+            if (imageCache_.getSummaryMetadata() != null)
+            if (MDUtils.getNumberOfComponents(imageCache_.getSummaryMetadata()) == 3) {
+               return grayIndex / 3;
+            }
          }
          return grayIndex;
       } catch (Exception ex) {
