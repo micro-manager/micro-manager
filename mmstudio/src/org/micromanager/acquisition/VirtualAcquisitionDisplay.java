@@ -2039,7 +2039,9 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
       @Override
       public void windowClosed(WindowEvent E) {
          try {
-            this.windowClosing(E);
+            // NS: I do not know why this line was here.  It causes problems since the windowClosing
+            // function now will often run twice 
+            //this.windowClosing(E);
             super.windowClosed(E);
          } catch (NullPointerException ex) {
                ReportingUtils.showError(ex, "Null pointer error in ImageJ code while closing window");
