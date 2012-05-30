@@ -503,9 +503,10 @@
 
 (defn store-z-reference [current-position]
   (let [z-drive (@state :default-z-drive)]
-    (when (z-stage-needs-adjustment z-drive)
-      (let [z (get-z-stage-position z-drive)]
-        (state-assoc! :reference-z z)))))
+    (when-not (empty? z-drive)
+      (when (z-stage-needs-adjustment z-drive)
+        (let [z (get-z-stage-position z-drive)]
+          (state-assoc! :reference-z z))))))
 
 ;; startup and shutdown
 
