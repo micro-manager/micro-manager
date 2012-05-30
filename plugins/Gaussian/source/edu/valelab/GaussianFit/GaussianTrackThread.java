@@ -87,7 +87,8 @@ public class GaussianTrackThread extends GaussianInfo implements Runnable  {
 
 
       String name = siPlus.getWindow().getTitle() + "-" + firstX_ + "-" + firstY_;
-      addListToForm(name, resultList_, siPlus, timePoints);
+      if (resultList_.size() > 0)
+         addListToForm(name, resultList_, siPlus, timePoints);
    }
 
 
