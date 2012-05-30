@@ -110,6 +110,7 @@ public class MMImageCache implements TaggedImageStorage, ImageCache {
 
    public void saveAs(TaggedImageStorage newImageFileManager) {
       saveAs(newImageFileManager, true);
+      this.finished();
    }
           
    public void saveAs(final TaggedImageStorage newImageFileManager, final boolean useNewStorage) {
