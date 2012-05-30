@@ -432,6 +432,7 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
       mda_ = eng != null;
       zStackMins_ = new HashMap<Integer, Integer>();
       zStackMaxes_ = new HashMap<Integer, Integer>();
+      this.albumSaved_ = imageCache.isFinished();
    }
 
    //used for snap and live
@@ -440,6 +441,7 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
       imageCache_ = imageCache;
       name_ = name;
       mda_ = false;
+      this.albumSaved_ = imageCache.isFinished();
    }
 
    private void invokeLaterIfNotEDT(Runnable runnable) {
