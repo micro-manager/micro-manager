@@ -27,6 +27,7 @@ package org.micromanager.acquisition;
 import ij.ImagePlus;
 import java.awt.Color;
 import java.io.File;
+import java.io.IOException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.text.SimpleDateFormat;
@@ -256,6 +257,8 @@ public class MMAcquisition {
       initialized_ = true;
    }
 
+   
+   
    public void initialize() throws MMScriptException {
       if (initialized_) {
          throw new MMScriptException("Acquisition is already initialized");
@@ -267,9 +270,18 @@ public class MMAcquisition {
 
       if (virtual_ && existing_) {
          String dirName = rootDirectory_ + File.separator + name;
-         imageFileManager = ImageUtils.newImageStorageInstance(dirName, false, null);
-         if (imageFileManager == null)
-            return;
+         boolean multipageTiff = false;
+         try {
+            multipageTiff = MultipageTiffReader.isMMMultipageTiff(dirName);
+            if (multipageTiff) {
+               imageFileManager = new TaggedImageStorageMultipageTiff(dirName, false, null);
+            } else {
+               imageFileManager = new TaggedImageStorageDiskDefault(dirName, false, null);
+            }
+         } catch (Exception ex) {
+            throw new MMScriptException(ex);
+         }
+
          imageCache = new MMImageCache(imageFileManager);
       }
 
@@ -293,7 +305,19 @@ public class MMAcquisition {
 
       if (!virtual_ && existing_) {
          String dirName = rootDirectory_ + File.separator + name;
-         TaggedImageStorage tempImageFileManager = ImageUtils.newImageStorageInstance(dirName, false, null);
+         TaggedImageStorage tempImageFileManager;
+         boolean multipageTiff;
+         try {
+            multipageTiff = MultipageTiffReader.isMMMultipageTiff(dirName);
+            if (multipageTiff) {
+               tempImageFileManager = new TaggedImageStorageMultipageTiff(dirName, false, null);
+            } else {
+               tempImageFileManager = new TaggedImageStorageDiskDefault(dirName, false, null);
+            }
+         } catch (Exception ex) {
+            throw new MMScriptException(ex);
+         }
+
          imageCache = new MMImageCache(tempImageFileManager);
          if (tempImageFileManager.getDataSetSize() > 0.9 * JavaUtils.getAvailableUnusedMemory()) {
             throw new MMScriptException("Not enough room in memory for this data set.\nTry opening as a virtual data set instead.");

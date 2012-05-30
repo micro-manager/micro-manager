@@ -344,8 +344,22 @@ public class TaggedImageStorageMultipageTiff implements TaggedImageStorage {
    }
 
    public long getDataSetSize() {
-      //TODO: verify this is correct
-      return new File(directory_).getTotalSpace();
+      File dir = new File (directory_);
+      LinkedList<File> list = new LinkedList<File>();
+      for (File f : dir.listFiles()) {
+         if (f.isDirectory()) {
+            for (File fi : f.listFiles()) {
+               list.add(f);
+            }
+         } else {
+            list.add(f);
+         }
+      }
+      long size = 0;
+      for (File f : list) {
+         size += f.length();
+      }
+      return size;
    }
    
    

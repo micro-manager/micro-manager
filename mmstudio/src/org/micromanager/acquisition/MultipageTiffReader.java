@@ -28,13 +28,9 @@ import java.io.RandomAccessFile;
 import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
-import java.nio.CharBuffer;
-import java.nio.MappedByteBuffer;
 import java.nio.channels.FileChannel;
 import java.util.HashMap;
 import java.util.Set;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import mmcorej.TaggedImage;
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -49,10 +45,10 @@ public class MultipageTiffReader {
    private static final long BIGGEST_INT_BIT = (long) Math.pow(2, 31);
 
    
-   public static final char BITS_PER_SAMPLE = 258;
-   public static final char STRIP_OFFSETS = 273;    
-   public static final char SAMPLES_PER_PIXEL = 277;
-   public static final char STRIP_BYTE_COUNTS = 279;
+   public static final char BITS_PER_SAMPLE = MultipageTiffWriter.BITS_PER_SAMPLE;
+   public static final char STRIP_OFFSETS = MultipageTiffWriter.STRIP_OFFSETS;    
+   public static final char SAMPLES_PER_PIXEL = MultipageTiffWriter.SAMPLES_PER_PIXEL;
+   public static final char STRIP_BYTE_COUNTS = MultipageTiffWriter.STRIP_BYTE_COUNTS;
    
    public static final char MM_METADATA = MultipageTiffWriter.MM_METADATA;
    
@@ -102,6 +98,58 @@ public class MultipageTiffReader {
       }
    }
    
+   public static boolean isMMMultipageTiff(String directory) throws IOException {
+      File dir = new File(directory);
+      File[] children = dir.listFiles();
+      File testFile = null;
+      for (File child : children) {
+         if (child.isDirectory()) {
+            File[] grandchildren = child.listFiles();
+            for (File grandchild : grandchildren) {
+               if (grandchild.getName().endsWith(".tif")) {
+                  testFile = grandchild;
+                  break;
+               }
+               break;
+            }
+         } else if (child.getName().endsWith(".tif")) {
+            testFile = child;
+            break;
+         }
+      }
+      if (testFile == null) {
+         throw new IOException("Unexpected file structure: is this an MM dataset?");
+      }
+      RandomAccessFile ra;
+      try {
+         ra = new RandomAccessFile(testFile,"r");
+      } catch (FileNotFoundException ex) {
+        ReportingUtils.logError(ex);
+        return false;
+      }
+      FileChannel channel = ra.getChannel();
+      ByteBuffer tiffHeader = ByteBuffer.allocate(36);
+      ByteOrder bo;
+      channel.read(tiffHeader,0);
+      char zeroOne = tiffHeader.getChar(0);
+      if (zeroOne == 0x4949 ) {
+         bo = ByteOrder.LITTLE_ENDIAN;
+      } else if (zeroOne == 0x4d4d ) {
+         bo = ByteOrder.BIG_ENDIAN;
+      } else {
+         throw new IOException("Error reading Tiff header");
+      }
+      tiffHeader.order(bo);
+      int summaryMDHeader = tiffHeader.getInt(32);
+      channel.close();
+      ra.close();
+      if (summaryMDHeader == MultipageTiffWriter.SUMMARY_MD_HEADER) {
+         return true;
+      }
+      return false;
+   }
+
+
    public void finishedWriting() {
       writingFinished_ = true;
    }
