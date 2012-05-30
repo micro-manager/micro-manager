@@ -70,7 +70,7 @@ public class DriftCorrector {
       // TODO: what if we should go through nrSlices instead of nrFrames?
       boolean useSlices = false;
       //int nrOfTests = rowData.nrFrames_ / framesToCombine;
-      if (rowData.nrFrames_ == 0) {
+      if (rowData.nrFrames_ <= 1) {
          useSlices = true;
       }
       final int nrImages = useSlices ? rowData.nrSlices_ : rowData.nrFrames_;
