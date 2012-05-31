@@ -19,7 +19,7 @@
         [slide-explorer.affine :only (set-destination-origin transform inverse-transform)]
         [slide-explorer.view :only (floor-int show add-to-available-tiles pixel-rectangle tiles-in-pixel-rectangle)]
         [slide-explorer.image :only (show-image intensity-range lut-object)]
-        [slide-explorer.tiles :only (tile-list offset-tiles)]))
+        [slide-explorer.tiles :only (center-tile tile-list offset-tiles)]))
 
 (load-mm)
 
@@ -85,14 +85,6 @@
   (core waitForDevice (core getXYStageDevice))
   (core setXYPosition (core getXYStageDevice) (.x position) (.y position)))
   
-;; tiles/pixels
-
-(defn tiles-to-pixels [tile-width [x y]]
-  [(* x tile-width) (* y tile-width)])
-
-(defn pixels-to-tiles [tile-width [x y]]
-  [(/ x tile-width) (/ y tile-width)])
-
 ;; run using acquisitions
 
 (defn initial-channel-display-settings [tagged-image-processors]
@@ -135,12 +127,6 @@
   (set (for [{:keys [nx ny zoom]} (keys available-tiles)]
          (when (= 1 zoom)
            [nx ny]))))
-
-(defn center-tile
-  "Computes the center tile in a view, given tile dimensions and pixel center."
-  [[pixel-center-x pixel-center-y] [tile-width tile-height]]
-  [(floor-int (/ pixel-center-x tile-width))
-   (floor-int (/ pixel-center-y tile-height))])
 
 (defn next-tile [available-tiles screen-state [tile-width tile-height]]
   (let [visible-tiles (set (tiles-in-pixel-rectangle (pixel-rectangle screen-state)

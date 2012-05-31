@@ -1,6 +1,10 @@
 (ns slide-explorer.tiles
   (:import [java.awt.geom AffineTransform]))
 
+(defn floor-int
+  [x]
+  (long (Math/floor x)))
+
 (defn next-tile [[x y]]
   (let [radius (Math/max (Math/abs x) (Math/abs y))]
     (cond
@@ -24,3 +28,9 @@
   (map (fn [tile]
          (let [[x y] tile]
            [(+ delta-x x) (+ delta-y y)])) tiles))
+
+(defn center-tile
+  "Computes the center tile in a view, given tile dimensions and pixel center."
+  [[pixel-center-x pixel-center-y] [tile-width tile-height]]
+  [(floor-int (/ pixel-center-x tile-width))
+   (floor-int (/ pixel-center-y tile-height))])

@@ -8,6 +8,7 @@
   (:require [clojure.pprint :as pprint])
   (:use [org.micromanager.mm :only (edt)]
         [slide-explorer.paint :only (enable-anti-aliasing repaint-on-change)]
+        [slide-explorer.tiles :only (center-tile)]
         [slide-explorer.image :only (crop merge-and-scale overlay overlay-memo lut-object)]))
 
 ; Order of operations:
@@ -23,7 +24,10 @@
 
 ;; TESTING UTILITIES
 
-(defn reference-viewer [reference key]
+(defn reference-viewer
+  "Creates a small window that shows the value of a reference
+   and upates as that value changes."
+  [reference key]
   (let [frame (JFrame. key)
         label (JLabel.)
         update-fn #(edt (.setText label (.toString %)))]
@@ -56,9 +60,6 @@
 
 
 ;; TILE <--> PIXELS
-
-(defn floor-int [x]
-  (long (Math/floor x)))
 
 (defn tile-to-pixels [[nx ny] [tile-width tile-height] tile-zoom]
   [(int (* tile-zoom nx tile-width))
