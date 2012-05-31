@@ -147,6 +147,7 @@ public class MMImageCache implements TaggedImageStorage, ImageCache {
             if (useNewStorage) {
                imageStorage_ = newImageFileManager;
             }
+            newImageFileManager.finished();
          //}
       // });
       //th.start();

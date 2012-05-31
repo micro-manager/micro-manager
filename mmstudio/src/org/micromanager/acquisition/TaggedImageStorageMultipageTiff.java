@@ -328,7 +328,7 @@ public class TaggedImageStorageMultipageTiff implements TaggedImageStorage {
          try {
             r.close();
          } catch (IOException ex) {
-            Logger.getLogger(TaggedImageStorageMultipageTiff.class.getName()).log(Level.SEVERE, null, ex);
+            ReportingUtils.logError(ex);
          }
       }              
    }
