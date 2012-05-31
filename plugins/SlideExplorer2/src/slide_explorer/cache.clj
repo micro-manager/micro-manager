@@ -79,7 +79,8 @@
     (str dir "/"
          (apply str 
                 (for [[k v] key-map]
-                  (str (name k) "_" v "_")))
+                  (let [val-str (.replace (str v) "/" "by")]
+                    (str (name k) "_" val-str "_"))))
          ".tif")))
 
 (defn add-image

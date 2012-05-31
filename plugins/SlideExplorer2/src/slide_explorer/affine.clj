@@ -18,7 +18,9 @@
     (transform [object aff] (.createTransformedShape aff object))
     (inverse-transform [object aff] (transform object (.createInverse aff))))
 
-(defn point-to-vector [point]
+(defn point-to-vector
+  "Converts a point to a clojure vector [x y]."
+  [point]
   [(.x point) (.y point)])
 
 (defn set-destination-origin
