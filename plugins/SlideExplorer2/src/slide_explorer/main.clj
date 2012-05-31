@@ -47,6 +47,14 @@
   (let [p (.inverseTransform pixel-to-stage-transform (Point2D$Double. x y) nil)]
     [(.x p) (.y p)]))      
 
+(defn origin-here-stage-to-pixel-transform
+  "Set the current location to the origin of the 
+   stage to pixel transform."
+  []
+  (set-destination-origin
+    (get-stage-to-pixel-transform)
+    (.getXYStagePosition gui)))
+
 ;; tagged image stuff
 
 (defn stack-colors
@@ -75,6 +83,17 @@
 (defn acquire-processor-sequence []
   (map tagged-image-to-processor (acquire-tagged-image-sequence)))
 
+(defn acquire-at
+  "Move the stage to position x,y and acquire a multi-dimensional
+   sequence of images using the acquisition engine."
+  ([x y]
+    (acquire-at (Point2D$Double. x y)))
+  ([^Point2D$Double stage-pos]
+    (let [xy-stage (core getXYStageDevice)]
+      (set-xy-position stage-pos)
+      (core waitForDevice xy-stage)
+      (acquire-processor-sequence))))
+
 ;; stage communications
 
 (defn get-xy-position []
@@ -86,6 +105,8 @@
   (core setXYPosition (core getXYStageDevice) (.x position) (.y position)))
   
 ;; run using acquisitions
+
+;;; channel setup
 
 (defn initial-channel-display-settings [tagged-image-processors]
   (merge-with merge
@@ -101,26 +122,18 @@
         (for [[chan lut-map] (initial-channel-display-settings tagged-image-processors)]
           [chan {:lut (lut-object lut-map)}])))
 
-(defn acquire-at
-  ([x y]
-    (acquire-at (Point2D$Double. x y)))
-  ([^Point2D$Double stage-pos]
-    (let [xy-stage (core getXYStageDevice)]
-      (set-xy-position stage-pos)
-      (core waitForDevice xy-stage)
-      (acquire-processor-sequence))))
-
-(defn origin-here-stage-to-pixel-transform []
-  (set-destination-origin
-    (get-stage-to-pixel-transform)
-    (.getXYStagePosition gui)))
+;; tile acquisition management
 
 (defn add-tiles-at [available-tiles [nx ny] affine-stage-to-pixel]
   (doseq [image (acquire-at (inverse-transform (Point. (* 512 nx) (* 512 ny)) affine-stage-to-pixel))]
-    (add-to-available-tiles available-tiles
-                            {:nx nx :ny ny :nz (get-in image [:tags "SliceIndex"]) :nt 0
-                             :nc (or (get-in image [:tags "Channel"]) "Default")}
-                            (image :proc)))
+    (add-to-available-tiles 
+      available-tiles
+      {:nx nx
+       :ny ny
+       :nz (get-in image [:tags "SliceIndex"])
+       :nt 0
+       :nc (or (get-in image [:tags "Channel"]) "Default")}
+      (image :proc)))
   (await available-tiles))
 
 (defn available-tile-coords [available-tiles]
@@ -141,14 +154,11 @@
     
 (defn acquire-next-tile
   [available-tiles-agent screen-state-atom affine [tile-width tile-height]]
-  (let [screen-state @screen-state-atom
-        visible-tiles (set (tiles-in-pixel-rectangle (pixel-rectangle screen-state)
-                                                [tile-width tile-height]))
-        next-tile (next-tile @available-tiles-agent
-                                     screen-state [tile-width tile-height])]
-    (when next-tile
-      (add-tiles-at available-tiles-agent next-tile affine))
-    next-tile))
+  (when-let [next-tile (next-tile @available-tiles-agent
+                                  @screen-state-atom
+                                  [tile-width tile-height])]
+    (add-tiles-at available-tiles-agent next-tile affine))
+  next-tile)
 
 (def explore-executor (Executors/newFixedThreadPool 1))
 
