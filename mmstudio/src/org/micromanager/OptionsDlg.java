@@ -395,7 +395,7 @@ public class OptionsDlg extends MMDialog {
       
       final JComboBox savingTypeCombo = new JComboBox();
        savingTypeCombo.setModel(new DefaultComboBoxModel(new String[]{
-         "One .tif file per an image", "Multiple images per .tif file (coming soon...)"
+         "One .tif file per an image", "Multiple images per .tif file (BETA)"
       }));
        getContentPane().add(savingTypeCombo);      
       springLayout.putConstraint(SpringLayout.NORTH, savingTypeCombo, 0, SpringLayout.NORTH, savingTypeLabel);
