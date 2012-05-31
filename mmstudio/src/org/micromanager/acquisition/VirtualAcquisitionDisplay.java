@@ -1455,8 +1455,8 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
       }
 
       try {
-         TaggedImageStorageDiskDefault newFileManager = new TaggedImageStorageDiskDefault(root + "/" + prefix, true,
-                 getSummaryMetadata());
+         TaggedImageStorage newFileManager = ImageUtils.newImageStorageInstance(
+                 root + "/" + prefix, true, getSummaryMetadata());
          if (pointToNewStorage) {
             albumSaved_ = true;
          }
