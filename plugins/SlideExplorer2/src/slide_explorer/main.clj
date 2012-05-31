@@ -17,9 +17,9 @@
            (org.micromanager.acquisition TaggedImageQueue))
   (:use [org.micromanager.mm :only (core edt mmc gui load-mm json-to-data)]
         [slide-explorer.affine :only (set-destination-origin transform inverse-transform)]
-        [slide-explorer.view :only (floor-int show add-to-available-tiles pixel-rectangle tiles-in-pixel-rectangle)]
+        [slide-explorer.view :only (show add-to-available-tiles pixel-rectangle tiles-in-pixel-rectangle)]
         [slide-explorer.image :only (show-image intensity-range lut-object)]
-        [slide-explorer.tiles :only (center-tile tile-list offset-tiles)]))
+        [slide-explorer.tiles :only (floor-int center-tile tile-list offset-tiles)]))
 
 (load-mm)
 
@@ -67,6 +67,16 @@
   {:proc (ImageUtils/makeProcessor tagged-image)
    :tags (json-to-data (.tags tagged-image))})
 
+;; stage communications
+
+(defn get-xy-position []
+  (core waitForDevice (core getXYStageDevice))
+  (.getXYStagePosition gui))
+
+(defn set-xy-position [^Point2D$Double position]
+  (core waitForDevice (core getXYStageDevice))
+  (core setXYPosition (core getXYStageDevice) (.x position) (.y position)))
+
 ;; image acquisition
 
 (def grab-tagged-image
@@ -93,17 +103,7 @@
       (set-xy-position stage-pos)
       (core waitForDevice xy-stage)
       (acquire-processor-sequence))))
-
-;; stage communications
-
-(defn get-xy-position []
-  (core waitForDevice (core getXYStageDevice))
-  (.getXYStagePosition gui))
-
-(defn set-xy-position [^Point2D$Double position]
-  (core waitForDevice (core getXYStageDevice))
-  (core setXYPosition (core getXYStageDevice) (.x position) (.y position)))
-  
+ 
 ;; run using acquisitions
 
 ;;; channel setup
@@ -122,19 +122,7 @@
         (for [[chan lut-map] (initial-channel-display-settings tagged-image-processors)]
           [chan {:lut (lut-object lut-map)}])))
 
-;; tile acquisition management
-
-(defn add-tiles-at [available-tiles [nx ny] affine-stage-to-pixel]
-  (doseq [image (acquire-at (inverse-transform (Point. (* 512 nx) (* 512 ny)) affine-stage-to-pixel))]
-    (add-to-available-tiles 
-      available-tiles
-      {:nx nx
-       :ny ny
-       :nz (get-in image [:tags "SliceIndex"])
-       :nt 0
-       :nc (or (get-in image [:tags "Channel"]) "Default")}
-      (image :proc)))
-  (await available-tiles))
+;; tile arrangement
 
 (defn available-tile-coords [available-tiles]
   (set (for [{:keys [nx ny zoom]} (keys available-tiles)]
@@ -151,18 +139,35 @@
                                      [tile-width tile-height])
             trajectory (offset-tiles center-tile tile-list)]
         (first (filter tiles-to-acquire trajectory))))))
+
+;; tile acquisition management
+
+(defn add-tiles-at [available-tiles [nx ny] affine-stage-to-pixel]
+  (doseq [image (acquire-at (inverse-transform
+                              (Point. (* 512 nx) (* 512 ny))
+                              affine-stage-to-pixel))]
+    (add-to-available-tiles 
+      available-tiles
+      {:nx nx
+       :ny ny
+       :nz (get-in image [:tags "SliceIndex"])
+       :nt 0
+       :nc (or (get-in image [:tags "Channel"]) "Default")}
+      (image :proc)))
+  (await available-tiles))
     
 (defn acquire-next-tile
   [available-tiles-agent screen-state-atom affine [tile-width tile-height]]
   (when-let [next-tile (next-tile @available-tiles-agent
                                   @screen-state-atom
                                   [tile-width tile-height])]
-    (add-tiles-at available-tiles-agent next-tile affine))
-  next-tile)
+    (add-tiles-at available-tiles-agent next-tile affine)
+    next-tile))
 
 (def explore-executor (Executors/newFixedThreadPool 1))
 
-(defn explore [available-tiles-agent screen-state-atom affine [tile-width tile-height]]
+(defn explore [available-tiles-agent screen-state-atom
+               affine [tile-width tile-height]]
   (.submit explore-executor
            #(when (acquire-next-tile available-tiles-agent
                                      screen-state-atom affine
@@ -170,14 +175,17 @@
               (explore available-tiles-agent screen-state-atom
                        affine [tile-width tile-height]))))
 
-(defn go []
+(defn go
+  "The main function that starts a slide explorer window."
+  []
   (core waitForDevice (core getXYStageDevice))
   (let [available-tiles (agent {})
         xy-stage (core getXYStageDevice)
         affine-stage-to-pixel (origin-here-stage-to-pixel-transform)
         first-seq (acquire-at (inverse-transform (Point. 0 0) affine-stage-to-pixel))
         screen-state (show available-tiles)
-        explore-fn #(explore available-tiles screen-state affine-stage-to-pixel [512 512])]
+        explore-fn #(explore available-tiles screen-state
+                             affine-stage-to-pixel [512 512])]
     (def at available-tiles)
     (def affine affine-stage-to-pixel)
     (def ss screen-state)

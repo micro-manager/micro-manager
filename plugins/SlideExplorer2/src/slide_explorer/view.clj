@@ -8,7 +8,7 @@
   (:require [clojure.pprint :as pprint])
   (:use [org.micromanager.mm :only (edt)]
         [slide-explorer.paint :only (enable-anti-aliasing repaint-on-change)]
-        [slide-explorer.tiles :only (center-tile)]
+        [slide-explorer.tiles :only (center-tile floor-int)]
         [slide-explorer.image :only (crop merge-and-scale overlay overlay-memo lut-object)]))
 
 ; Order of operations:
@@ -166,16 +166,18 @@
       )
     (when true 
       (let [pixel-rect (pixel-rectangle screen-state)
-            visible-tiles (tiles-in-pixel-rectangle pixel-rect [tile-width tile-height])
-            ;center-tile (center-tile [(:x screen-state) (:y screen-state)] [tile-width tile-height])
+            visible-tiles (tiles-in-pixel-rectangle pixel-rect
+                                                    [tile-width tile-height])
+            ;center-tile (center-tile [(:x screen-state) (:y screen-state)]
+            ;                         [tile-width tile-height])
             ;sorted-tiles (time (group-tiles-by-ring center-tile visible-tiles))
             ]
         (when true
         (doto graphics
           (.setTransform original-transform)
           (.setColor (Color. 0xECF2AA))
-          (.drawString (pr-str visible-tiles) 10 20)
-          (.drawString (pr-str pixel-rect) 10 40)
+          (.drawString (pr-str pixel-rect) 10 20)
+          ;(.drawString (pr-str visible-tiles) 10 40)
           ;(.drawString (pr-str center-tile) 10 60)
           ;(.drawString (pr-str sorted-tiles) 10 80)
           (.drawString (str (select-keys screen-state [:x :y :z :zoom :keys :width :height]))
