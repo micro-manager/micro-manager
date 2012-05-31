@@ -241,7 +241,7 @@ to normal size."
   (bind-window-keys window ["F"] #(full-screen! window))
   (bind-window-keys window ["ESCAPE"] #(full-screen! nil)))
 
-;; positional controls
+;; other user controls
 
 (defn pan! [position-atom axis distance]
   (let [zoom (@position-atom :zoom)]
@@ -325,9 +325,6 @@ to normal size."
                                    (swap! pointing-atom merge {:x (.getX e)
                                                                :y (.getY e)})))))
 
-(defn add-channel [screen-state-atom name color min max gamma]
-  (swap! update-in [:channels name] (lut-object color min max gamma)))
-
 ;; MAIN WINDOW AND PANEL
 
 (defn main-panel [screen-state available-tiles]
@@ -366,3 +363,7 @@ to normal size."
     (handle-pointing panel mouse-position)
     screen-state))
 
+;; testing
+
+(defn add-channel [screen-state-atom name color min max gamma]
+  (swap! update-in [:channels name] (lut-object color min max gamma)))

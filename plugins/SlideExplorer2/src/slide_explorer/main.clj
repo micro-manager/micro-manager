@@ -136,7 +136,9 @@
          (when (= 1 zoom)
            [nx ny]))))
 
-(defn center-tile [[pixel-center-x pixel-center-y] [tile-width tile-height]]
+(defn center-tile
+  "Computes the center tile in a view, given tile dimensions and pixel center."
+  [[pixel-center-x pixel-center-y] [tile-width tile-height]]
   [(floor-int (/ pixel-center-x tile-width))
    (floor-int (/ pixel-center-y tile-height))])
 
@@ -189,15 +191,14 @@
                                                 (explore-fn))))
   ))
   
-
 ;; tests
-
 
 (defn get-tile [{:keys [nx ny nz nt nc]}]
   (ImageUtils/makeProcessor (grab-tagged-image)))
 
 (defn start []
   (let [available-tiles (agent {})
+        display-tiles (agent {})
         xy-stage (core getXYStageDevice)]
     (def at available-tiles)
     (def ss (show available-tiles))))
