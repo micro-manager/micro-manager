@@ -13,7 +13,6 @@
      :size-x diameter
      :size-y diameter}))
   
-
 (defn paint-well [graphics {:keys [x y size-x size-y type]}]
   (condp = type
     :circle
@@ -21,15 +20,13 @@
       (.setColor Color/DARK_GRAY)
       (.fillOval x y size-x size-y)
       (.setColor Color/WHITE)
-      (.drawOval x y size-x size-y)
-      )
+      (.drawOval x y size-x size-y))
     :rect
     (doto graphics
       (.setColor Color/DARK_GRAY)
       (.fillRect x y size-x size-y)
       (.setColor Color/WHITE)
-      (.drawRect x y size-x size-y)
-      )))
+      (.drawRect x y size-x size-y))))
 
 (defn paint-wells [graphics {:keys [nx ny type]}]
   (doseq [well (compute-wells nx ny
@@ -53,8 +50,7 @@
     (.rotate @angle)
     (.setColor Color/WHITE)
     (paint-labels well-state)
-    (paint-wells well-state)
-    ))
+    (paint-wells well-state)))
 
 (defn well-panel [well-state-atom]
   (doto
