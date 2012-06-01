@@ -182,14 +182,16 @@
 ; disk-tiles (set of indices)
 ; overlay-tiles (indices -> pixels)
 ; view-state
-; Whenever an image is acquired, it is added to memory-tiles. Tiles
+;
+; Whenever an image is acquired, it is processed, mipmapped and each
+; resulting tile is added to memory-tiles. Tiles
 ; added are automatically asynchronously saved to disk, and the indices
 ; are added to disk-tiles.
 ; memory-tiles and overlay-tiles are limited to 100 images each,
 ; using an LRU eviction policy.
 ; When view-state viewing area is adjusted, tiles needed for the
 ; new viewing area are loaded back into memory-tiles. If we are
-; in explore mode, then images not available in memory-tiles and
+; in explore mode, then images not available in memory-tiles or
 ; disk tiles are acquired according to the spiral trajectory.
 ; Overlay tiles are generated whenever memory tiles are added
 ; or the contrast is changed.
