@@ -453,6 +453,7 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
    }
 
    private void startup(JSONObject firstImageMetadata) {
+//      EDTProfiler edtp = new EDTProfiler();
       mdPanel_ = MMStudioMainFrame.getInstance().getMetadataPanel();
       JSONObject summaryMetadata = getSummaryMetadata();
       int numSlices = 1;
