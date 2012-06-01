@@ -180,7 +180,7 @@
 ; the GUI is generally reactive.
 ; vars:
 ; memory-tiles (indices -> pixels)
-; disk-tiles (set of indices)
+; disk-tile-index (set of tile indices)
 ; overlay-tiles (indices -> pixels)
 ; view-state
 ;
@@ -205,6 +205,7 @@
   []
   (core waitForDevice (core getXYStageDevice))
   (let [memory-tiles (agent {})
+        disk-tile-index (atom #{})
         xy-stage (core getXYStageDevice)
         affine-stage-to-pixel (origin-here-stage-to-pixel-transform)
         first-seq (acquire-at (inverse-transform (Point. 0 0) affine-stage-to-pixel))
