@@ -120,27 +120,27 @@
                (child-indices new-indices))
         tile-map))))
 
-(defn add-to-available-tiles [tile-map-agent indices tile]
+(defn add-to-memory-tiles [tile-map-agent indices tile]
     (send tile-map-agent add-and-propagate-tiles indices tile))
 
 ;; PAINTING
 
-(defn multi-color-tile [available-tiles tile-indices channels-map]
+(defn multi-color-tile [memory-tiles tile-indices channels-map]
   (let [channel-names (keys channels-map)]
     (overlay-memo
       (for [chan channel-names]
-        (get available-tiles (assoc tile-indices :nc chan)))
+        (get memory-tiles (assoc tile-indices :nc chan)))
       (for [chan channel-names]
         (get-in channels-map [chan :lut])))))
 
 (defn draw-image [^Graphics2D g image x y]
   (.drawImage g image x y nil))
 
-(defn paint-tiles [^Graphics2D g available-tiles screen-state [tile-width tile-height]]
+(defn paint-tiles [^Graphics2D g memory-tiles screen-state [tile-width tile-height]]
   (let [pixel-rect (.getClipBounds g)]
     (doseq [[nx ny] (tiles-in-pixel-rectangle pixel-rect
                                               [tile-width tile-height])]
-      (when-let [proc (multi-color-tile available-tiles
+      (when-let [proc (multi-color-tile memory-tiles
                                          {:zoom (screen-state :zoom)
                                           :nx nx :ny ny :nt 0
                                           :nz (screen-state :z)}
@@ -148,7 +148,7 @@
         (let [[x y] (tile-to-pixels [nx ny] [tile-width tile-height] 1)]
           (draw-image g proc x y))))))
 
-(defn paint-screen [graphics screen-state available-tiles]
+(defn paint-screen [graphics screen-state memory-tiles]
   (let [original-transform (.getTransform graphics)
         zoom (:zoom screen-state)
         x-center (/ (screen-state :width) 2)
@@ -158,7 +158,7 @@
       (.setClip 0 0 (:width screen-state) (:height screen-state))
       (.translate (- x-center (int (* (:x screen-state) zoom)))
                   (- y-center (int (* (:y screen-state) zoom))))
-      (paint-tiles available-tiles screen-state [tile-width tile-height])
+      (paint-tiles memory-tiles screen-state [tile-width tile-height])
       enable-anti-aliasing
       ;(.setColor (Color. 0x0CB397))
       ;(.fillOval -5 -5
@@ -330,12 +330,12 @@ to normal size."
 
 ;; MAIN WINDOW AND PANEL
 
-(defn main-panel [screen-state available-tiles]
+(defn main-panel [screen-state memory-tiles]
   (doto
     (proxy [JPanel] []
       (paintComponent [^Graphics graphics]
         (proxy-super paintComponent graphics)
-        (paint-screen graphics @screen-state @available-tiles)))
+        (paint-screen graphics @screen-state @memory-tiles)))
     (.setBackground Color/BLACK)))
     
 (defn main-frame []
@@ -343,15 +343,15 @@ to normal size."
     .show
     (.setBounds 10 10 500 500)))
 
-(defn show [available-tiles]
+(defn show [memory-tiles]
   (let [screen-state (atom (sorted-map :x 0 :y 0 :z 0 :zoom 1 :width 100 :height 10
                                        :keys (sorted-set)
                                        :channels (sorted-map)))
         display-tiles (atom {})
-        panel (main-panel screen-state available-tiles)
+        panel (main-panel screen-state memory-tiles)
         frame (main-frame)
         mouse-position (atom nil)]
-    (def at available-tiles)
+    (def mt memory-tiles)
     (def ss screen-state)
     (def mp mouse-position)
     (def f frame)
@@ -362,7 +362,7 @@ to normal size."
       panel screen-state)
     ((juxt handle-zoom handle-dive watch-keys) frame screen-state)
     (repaint-on-change panel screen-state)
-    (repaint-on-change panel available-tiles)
+    (repaint-on-change panel memory-tiles)
     (handle-pointing panel mouse-position)
     screen-state))
 
