@@ -175,6 +175,28 @@
               (explore available-tiles-agent screen-state-atom
                        affine [tile-width tile-height]))))
 
+; Overall scheme
+; the GUI is generally reactive.
+; vars:
+; memory-tiles (indices -> pixels)
+; disk-tiles (set of indices)
+; overlay-tiles (indices -> pixels)
+; view-state
+; Whenever an image is acquired, it is added to memory-tiles. Tiles
+; added are automatically asynchronously saved to disk, and the indices
+; are added to disk-tiles.
+; memory-tiles and overlay-tiles are limited to 100 images each,
+; using an LRU eviction policy.
+; When view-state viewing area is adjusted, tiles needed for the
+; new viewing area are loaded back into memory-tiles. If we are
+; in explore mode, then images not available in memory-tiles and
+; disk tiles are acquired according to the spiral trajectory.
+; Overlay tiles are generated whenever memory tiles are added
+; or the contrast is changed.
+; The view redraws tiles inside viewing area whenever view-state
+; has been adjusted or a new image appears in overlay-tiles.
+
+
 (defn go
   "The main function that starts a slide explorer window."
   []
