@@ -22,10 +22,10 @@ y0 = new double[1];
 xystage = mmc.getXYStageDevice();
 zstage = mmc.getFocusDevice();
 Autofocus a2 = gui.getAutofocus();
-Integer[] xyposition = new Integer[2];
-xyposition[0] = 0;
-xyposition[1] = 0;
-int [] ipos  = new int[2]; 
+Double[] xyposition = new Double[2];
+xyposition[0] = 0.0;
+xyposition[1] = 0.0;
+double [] ipos  = new double[2]; 
 
 JOptionPane.showMessageDialog(null, "Please position stage at center of Well A1, then press OK");
 mmc.getXYPosition (xystage, x0, y0);
