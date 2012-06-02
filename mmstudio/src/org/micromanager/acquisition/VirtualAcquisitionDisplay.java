@@ -309,7 +309,9 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
       }
       
       private void superDraw() {
-         super.draw();
+        if (super.win != null ) {
+            super.getCanvas().paint(super.getCanvas().getGraphics());
+         }
       }
 
       @Override
@@ -392,7 +394,9 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
       }
 
       private void superDraw() {
-         super.draw();
+         if (super.win != null ) {
+            super.getCanvas().paint(super.getCanvas().getGraphics());
+         }
       }
 
       @Override
