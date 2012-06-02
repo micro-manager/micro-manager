@@ -20,7 +20,8 @@
         [slide-explorer.view :only (show add-to-memory-tiles
                                     pixel-rectangle tiles-in-pixel-rectangle)]
         [slide-explorer.image :only (show-image intensity-range lut-object)]
-        [slide-explorer.tiles :only (floor-int center-tile tile-list offset-tiles)]))
+        [slide-explorer.tiles :only (floor-int center-tile tile-list offset-tiles)])
+  (:require [slide-explorer.disk :as disk]))
 
 (load-mm)
 
@@ -198,6 +199,10 @@
 ; or the contrast is changed.
 ; The view redraws tiles inside viewing area whenever view-state
 ; has been adjusted or a new image appears in overlay-tiles.
+
+(defn backup-new-tiles-to-disk
+  [memory-agent dir]
+  (add-
 
 
 (defn go
