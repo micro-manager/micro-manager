@@ -52,7 +52,8 @@
 (defn handle-added-items
   "Adds a watch that applies a function to each item added to
    a coll inside reference (a ref/atom/agent/var). The function executes
-   repeatedly on a single-threaded executor, once for each item." 
+   repeatedly on an executor, once for each item. If executor arg is omitted,
+   a new single-threaded executor is created."
   ([reference function executor]
     (handle-change reference
                  (fn [old-state new-state]
@@ -66,7 +67,8 @@
 (defn handle-removed-items
   "Adds a watch that applies a function to each item removed from
    a coll inside reference (a ref/atom/agent/var). The function executes
-   repeatedly on a single-threaded executor, once for each item." 
+   repeatedly on an executor, once for each item. If executor arg is omitted,
+   a new single-threaded executor is created." 
   ([reference function executor]
     (handle-change reference 
                  (fn [old-state new-state]

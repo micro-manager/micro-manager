@@ -21,7 +21,8 @@
                                     pixel-rectangle tiles-in-pixel-rectangle)]
         [slide-explorer.image :only (show-image intensity-range lut-object)]
         [slide-explorer.tiles :only (floor-int center-tile tile-list offset-tiles)])
-  (:require [slide-explorer.disk :as disk]))
+  (:require [slide-explorer.disk :as disk]
+            [slide-explorer.reactive :as reactive]))
 
 (load-mm)
 
@@ -200,10 +201,19 @@
 ; The view redraws tiles inside viewing area whenever view-state
 ; has been adjusted or a new image appears in overlay-tiles.
 
-;(defn backup-new-tiles-to-disk
-;  [memory-agent dir]
-;  (add-
+(def file-executor (reactive/single-threaded-executor))
 
+(defn backup-new-tiles-to-disk
+  "Attaches a handler to memory-tiles-agent, so that whenever
+   a tile image is added, the image is backed up to disk."
+  [dir memory-tiles-agent disk-tile-index]
+  (reactive/handle-added-items
+    memory-tiles-agent
+    (fn [[key processor]]
+      (when-not (@disk-tile-index key)
+        (disk/write-tile dir key processor)
+        (swap! disk-tile-index conj key)))
+    file-executor))
 
 (defn go
   "The main function that starts a slide explorer window."
@@ -216,11 +226,14 @@
         first-seq (acquire-at (inverse-transform (Point. 0 0) affine-stage-to-pixel))
         screen-state (show memory-tiles)
         explore-fn #(explore memory-tiles screen-state
-                             affine-stage-to-pixel [512 512])]
+                             affine-stage-to-pixel [512 512])
+        dir (str "tmp" (rand-int 10000000))]
+    (.mkdirs (java.io.File. dir))
     (def mt memory-tiles)
     (def affine affine-stage-to-pixel)
     (def ss screen-state)
     (swap! ss assoc :channels (initial-lut-objects first-seq))
+    (backup-new-tiles-to-disk dir memory-tiles disk-tile-index)
     (explore-fn)
     (add-watch ss "explore" (fn [_ _ old new] (when-not (= old new)
                                                 (explore-fn))))
