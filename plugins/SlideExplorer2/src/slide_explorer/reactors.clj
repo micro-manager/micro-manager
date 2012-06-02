@@ -36,7 +36,7 @@
   "A single-threaded Executor. Call .submit to add Runnables or Callables."
   (Executors/newFixedThreadPool 1))
 
-(defn add-reactor
+(defn handle-change
   "Adds a watch that submits a function to run on a java executor
    whenever the value of a reference changes. The function's arguments
    should be [old-state new-state]. If executor arg is omitted, a new
@@ -49,20 +49,28 @@
   ([reference function]
     (add-reactor reference function (single-threaded-executor))))
 
-(defn added-items-reactor
-  "Attaches a single-threaded reactor that applies a function to
-   the set of all items added to a coll inside reference (a ref/atom/agent/var)." 
-  [reference function]
-  (add-reactor reference
-               (fn [old-state new-state]
-                 (when-let [diff (diff-coll new-state old-state)]
-                   (function diff)))))
+(defn handle-added-items
+  "Adds a watch that applies a function to each item added to
+   a coll inside reference (a ref/atom/agent/var). The function executes
+   repeatedly on a single-threaded executor, once for each item." 
+  ([reference function executor]
+    (add-reactor reference
+                 (fn [old-state new-state]
+                   (when-let [diff (diff-coll new-state old-state)]
+                     (dorun (map function diff))))
+                 executor))
+  ([reference function]
+    (handle-added-items reference function (single-threaded-executor))))
 
-(defn removed-items-reactor
-  "Attaches a single-threaded reactor that applies a function to
-   the set of all items removed from a coll inside reference (a ref/atom/agent/var)." 
-  [reference function]
-  (add-reactor reference 
-               (fn [old-state new-state]
-                 (when-let [diff (diff-coll old-state new-state)]
-                   (function diff)))))
+
+(defn handle-removed-items
+  "Adds a watch that applies a function to each item removed from
+   a coll inside reference (a ref/atom/agent/var). The function executes
+   repeatedly on a single-threaded executor, once for each item." 
+  ([reference function executor]
+    (add-reactor reference 
+                 (fn [old-state new-state]
+                   (when-let [diff (diff-coll old-state new-state)]
+                     (dorun (map function diff))))))
+  ([reference function]
+    (handle-removed-items reference function (single-threaded-executor))))
