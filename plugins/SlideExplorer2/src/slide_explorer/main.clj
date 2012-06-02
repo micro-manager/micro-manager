@@ -200,9 +200,9 @@
 ; The view redraws tiles inside viewing area whenever view-state
 ; has been adjusted or a new image appears in overlay-tiles.
 
-(defn backup-new-tiles-to-disk
-  [memory-agent dir]
-  (add-
+;(defn backup-new-tiles-to-disk
+;  [memory-agent dir]
+;  (add-
 
 
 (defn go

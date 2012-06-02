@@ -1,4 +1,4 @@
-(ns slide-explorer.reactors
+(ns slide-explorer.reactive
   (:import (java.util.concurrent Executors)
            (java.util UUID)
            (clojure.lang IRef)))
@@ -47,14 +47,14 @@
                         (when (not= old-state new-state)
                           (.submit executor #(function old-state new-state))))))
   ([reference function]
-    (add-reactor reference function (single-threaded-executor))))
+    (handle-change reference function (single-threaded-executor))))
 
 (defn handle-added-items
   "Adds a watch that applies a function to each item added to
    a coll inside reference (a ref/atom/agent/var). The function executes
    repeatedly on a single-threaded executor, once for each item." 
   ([reference function executor]
-    (add-reactor reference
+    (handle-change reference
                  (fn [old-state new-state]
                    (when-let [diff (diff-coll new-state old-state)]
                      (dorun (map function diff))))
@@ -68,7 +68,7 @@
    a coll inside reference (a ref/atom/agent/var). The function executes
    repeatedly on a single-threaded executor, once for each item." 
   ([reference function executor]
-    (add-reactor reference 
+    (handle-change reference 
                  (fn [old-state new-state]
                    (when-let [diff (diff-coll old-state new-state)]
                      (dorun (map function diff))))))
