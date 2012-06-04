@@ -188,11 +188,8 @@ public class ContrastPanel extends JPanel {
          //this block keeps all channels from being set to active by the setMode call, so that
          //deselected channels persist when switching windows
          CompositeImage ci = (CompositeImage) currentDisplay_.getImagePlus();
-         boolean[] active = ci.getActiveChannels();
-         // NS: I don't know why this array is copied onto itself
-         // In any case, Arrays.copyOf does not work in Java 1.4
-         System.arraycopy( active, 0, active, 0, active.length );
-         // active = Arrays.copyOf(active, active.length);
+         boolean[] active = new boolean[ci.getActiveChannels().length]; 
+         System.arraycopy( ci.getActiveChannels(), 0, active, 0, active.length );
          int index = ((CompositeImage) currentDisplay_.getImagePlus()).getMode() - 2;
          if (index == -1) {
             index = 2;
