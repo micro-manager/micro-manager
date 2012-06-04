@@ -115,8 +115,7 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
       channelIndex_ = channelIndex;
       initComponents();
       loadDisplaySettings(cache_);
-//      updateChannelNameAndColorFromCache();
-//      cache_.setChannelColor(channelIndex_, color_.getRGB());
+      updateHistogram();
    }
 
    private void initComponents() {
@@ -509,7 +508,7 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
    }
 
 
-   public void loadDisplaySettings(ImageCache cache) {
+   private void loadDisplaySettings(ImageCache cache) {
       contrastMax_ = cache.getChannelMax(channelIndex_);
       if (contrastMax_ < 0) {
          contrastMax_ = maxIntensity_;

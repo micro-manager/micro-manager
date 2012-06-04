@@ -94,6 +94,7 @@ public class SingleChannelHistogram extends JPanel implements Histograms, Cursor
       histMax_ = maxIntensity_;
       binSize_ = ((double) (histMax_ + 1)) / ((double) HIST_BINS);
       initGUI();
+      loadDisplaySettings();
    }
 
    private void initGUI() {
@@ -264,7 +265,21 @@ public class SingleChannelHistogram extends JPanel implements Histograms, Cursor
       gbc.fill = GridBagConstraints.HORIZONTAL;
       controls.add(statsPanel, gbc);
    }
-
+      
+   private void loadDisplaySettings() {
+      contrastMax_ = cache_.getChannelMax(0);
+      if (contrastMax_ < 0) {
+         contrastMax_ = maxIntensity_;
+      }
+      contrastMin_ = cache_.getChannelMin(0);
+      gamma_ = cache_.getChannelGamma(0);
+      int histMax = cache_.getChannelHistogramMax(0);
+      if (histMax != -1) {
+         int index = (int) (Math.ceil(Math.log(histMax) / Math.log(2)) - 3);
+         histRangeComboBox_.setSelectedIndex(index);
+      }
+   }
+   
    private void autoButtonAction() {
       autostretch();
       applyLUTToImage();
@@ -413,7 +428,7 @@ public class SingleChannelHistogram extends JPanel implements Histograms, Cursor
     public void imageChanged() {
         boolean update = true;
         if ( display_.acquisitionIsRunning()
-                || MMStudioMainFrame.getInstance().isLiveModeOn() ) {
+                || (MMStudioMainFrame.getInstance().isLiveModeOn() && display_.isSimpleDisplay()) ) {
             if (display_.getHistogramControlsState().slowHist) {
                 long time = System.currentTimeMillis();
                 if (time - lastUpdateTime_ < SLOW_HIST_UPDATE_INTERVAL_MS) {

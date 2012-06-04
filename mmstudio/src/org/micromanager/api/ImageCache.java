@@ -52,6 +52,7 @@ public interface ImageCache extends TaggedImageStorage {
    public int getNumChannels();
 
    public String getPixelType();
+   public void writeDisplaySettings();
   
 
 }

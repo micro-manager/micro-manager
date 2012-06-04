@@ -360,7 +360,7 @@ public class MultipageTiffWriter {
    }
     
    private void writeComments() throws IOException {
-      //Write 4 byte header, 4 byte number of reserved bytes
+      //Write 4 byte header, 4 byte number of bytes
       long commentsOffset = filePosition_;
       JSONObject comments;
       try {

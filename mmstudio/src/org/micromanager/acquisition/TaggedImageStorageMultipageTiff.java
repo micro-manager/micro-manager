@@ -88,7 +88,7 @@ public class TaggedImageStorageMultipageTiff implements TaggedImageStorage {
       //add shutdown hook --> thread to be run when JVM shuts down
       shutdownHook_ = new Thread() {
          public void run() {
-            writeDisplaySettingsAndComments();
+            writeDisplaySettings();
          }
       };    
       Runtime.getRuntime().addShutdownHook(this.shutdownHook_); 
@@ -293,18 +293,19 @@ public class TaggedImageStorageMultipageTiff implements TaggedImageStorage {
    public JSONObject getSummaryMetadata() {
       return summaryMetadata_;
    }
-
-   @Override
-   public void setDisplayAndComments(JSONObject settings) {
-      displayAndComments_ = settings;
-   }
-
+   
    @Override
    public JSONObject getDisplayAndComments() {
       return displayAndComments_;
    }
 
-   private void writeDisplaySettingsAndComments() {
+   @Override
+   public void setDisplayAndComments(JSONObject settings) {
+      displayAndComments_ = settings;
+   }
+          
+   @Override   
+   public void writeDisplaySettings() {
       for (MultipageTiffReader r : new HashSet<MultipageTiffReader>(tiffReadersByLabel_.values())) {
          try {
             r.rewriteDisplaySettings(displayAndComments_.getJSONArray("Channels"));

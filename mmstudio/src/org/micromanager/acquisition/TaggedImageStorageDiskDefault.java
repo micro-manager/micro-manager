@@ -445,9 +445,6 @@ public class TaggedImageStorageDiskDefault implements TaggedImageStorage {
          }
       }
       readDisplaySettings();
-      if(displaySettings_ == null) {
-         displaySettings_ = VirtualAcquisitionDisplay.getDisplaySettingsFromSummary(summaryMetadata_);
-      }     
    }
 
    private int getChannelIndex(String channelName) {
@@ -537,21 +534,14 @@ public class TaggedImageStorageDiskDefault implements TaggedImageStorage {
    }
 
    public void setDisplayAndComments(JSONObject settings) {
-      boolean newSettings
-               = (displaySettings_ == null)
-              || displaySettings_.isNull("Channels")
-              || displaySettings_.isNull("Comments");
       displaySettings_ = settings;
-      if (newSettings) {
-         this.writeDisplaySettings();
-      }
    }
 
    public JSONObject getDisplayAndComments() {
       return displaySettings_;
    }
 
-   private void writeDisplaySettings() {
+   public void writeDisplaySettings() {
       if (displaySettings_ == null)
          return;
       if (! new File(dir_).exists()) {

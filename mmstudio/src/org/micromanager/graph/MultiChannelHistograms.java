@@ -5,6 +5,7 @@ import java.awt.Dimension;
 import java.awt.GridLayout;
 import java.util.ArrayList;
 import javax.swing.JPanel;
+import org.micromanager.MMStudioMainFrame;
 import org.micromanager.acquisition.VirtualAcquisitionDisplay;
 import org.micromanager.internalinterfaces.Histograms;
 import org.micromanager.api.ImageCache;
@@ -179,19 +180,22 @@ public class MultiChannelHistograms extends JPanel implements Histograms {
 
    @Override
    public void imageChanged() {
-      boolean slowHistUpdate = true;
-      if (display_.getHistogramControlsState().slowHist) {
-         long time = System.currentTimeMillis();
-         if (time - lastUpdateTime_ < SLOW_HIST_UPDATE_INTERVAL_MS) {
-            slowHistUpdate = false;
-         } else {
-            lastUpdateTime_ = time;
-         }
-      }
+     boolean update = true;
+        if ( display_.acquisitionIsRunning()
+                || (MMStudioMainFrame.getInstance().isLiveModeOn() && display_.isSimpleDisplay()) ) {
+            if (display_.getHistogramControlsState().slowHist) {
+                long time = System.currentTimeMillis();
+                if (time - lastUpdateTime_ < SLOW_HIST_UPDATE_INTERVAL_MS) {
+                    update = false;
+                } else {
+                    lastUpdateTime_ = time;
+                }
+            }
+        }
  
       updateActiveChannels();
       
-      if (slowHistUpdate) {
+      if (update) {
          for (ChannelControlPanel c : ccpList_) {
             c.calcAndDisplayHistAndStats(display_.isActiveDisplay());
             

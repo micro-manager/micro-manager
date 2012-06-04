@@ -24,6 +24,8 @@ package org.micromanager.acquisition;
 import ij.ImagePlus;
 import ij.gui.ImageWindow;
 import java.awt.Font;
+import java.awt.event.FocusEvent;
+import java.awt.event.FocusListener;
 import java.util.Arrays;
 import java.util.Vector;
 import javax.swing.DebugGraphics;
@@ -96,6 +98,7 @@ public class MetadataPanel extends JPanel
       imageMetadataTable.setModel(imageMetadataModel_);
       summaryMetadataTable.setModel(summaryMetadataModel_);
       addTextChangeListeners();
+      addFocusListeners();
    }
 
    private void makeContrastPanel() {
@@ -287,6 +290,21 @@ public class MetadataPanel extends JPanel
       imageChangedUpdate(currentDisplay_);         
    }
 
+   private void addFocusListeners() {
+      FocusListener listener = new FocusListener() {
+         @Override
+         public void focusGained(FocusEvent e) { }
+         @Override
+         public void focusLost(FocusEvent e) {
+            if (currentDisplay_ != null) {
+               currentDisplay_.imageCache_.writeDisplaySettings();
+            }
+         }        
+      };
+      summaryCommentsTextArea.addFocusListener(listener);
+      imageCommentsTextArea.addFocusListener(listener);
+   }
+   
    private void addTextChangeListeners() {
       summaryCommentsTextArea.getDocument().addDocumentListener(new DocumentListener() {
 
@@ -414,14 +432,12 @@ public class MetadataPanel extends JPanel
    }
 
    private void writeSummaryComments() {
-      System.out.println("Writing summary comments");
       if (currentDisplay_ == null)
          return;
       currentDisplay_.setSummaryComment(summaryCommentsTextArea.getText());    
    }
 
    private void writeImageComments() {
-      System.out.println("Writing image comments");
       if (currentDisplay_ == null)
          return;
       currentDisplay_.setImageComment(imageCommentsTextArea.getText());

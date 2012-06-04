@@ -101,7 +101,10 @@ public class MMImageCache implements TaggedImageStorage, ImageCache {
 
    public JSONObject getDisplayAndComments() {
       return imageStorage_.getDisplayAndComments();
-
+   }
+   
+   public void writeDisplaySettings() {
+      imageStorage_.writeDisplaySettings();
    }
 
    public void close() {

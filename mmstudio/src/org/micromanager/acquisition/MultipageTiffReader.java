@@ -241,7 +241,7 @@ public class MultipageTiffReader {
    public void rewriteComments(JSONObject comments) throws IOException, JSONException {
       if (writingFinished_) {
          byte[] bytes = getBytesFromString(comments.toString());
-         ByteBuffer byteCount = ByteBuffer.allocate(4).order(byteOrder_).putInt(bytes.length);
+         ByteBuffer byteCount = ByteBuffer.wrap(new byte[4]).order(byteOrder_).putInt(0,bytes.length);
          ByteBuffer buffer = ByteBuffer.wrap(bytes);
          long offset = readOffsetHeaderAndOffset(MultipageTiffWriter.COMMENTS_OFFSET_HEADER, 24);
          fileChannel_.write(byteCount,offset + 4);
@@ -254,12 +254,13 @@ public class MultipageTiffReader {
       if (writingFinished_) {
          long offset = readOffsetHeaderAndOffset(MultipageTiffWriter.DISPLAY_SETTINGS_OFFSET_HEADER, 16);        
          int numReservedBytes = readIntoBuffer(offset + 4, 4).getInt(0);
-         byte[] bytes = getBytesFromString(settings.toString());
-         ByteBuffer buffer = ByteBuffer.allocate(numReservedBytes);
-         buffer.put(bytes);
-         while (buffer.position() < buffer.capacity()) {
-            buffer.put((byte) 0);
+         byte[] blank = new byte[numReservedBytes];
+         for (int i = 0; i < blank.length; i++) {
+            blank[i] = 0;
          }
+         fileChannel_.write(ByteBuffer.wrap(blank), offset+8);
+         byte[] bytes = getBytesFromString(settings.toString());
+         ByteBuffer buffer = ByteBuffer.wrap(bytes);
          fileChannel_.write(buffer, offset+8);
       }
       displayAndComments_.put("Channels", settings);

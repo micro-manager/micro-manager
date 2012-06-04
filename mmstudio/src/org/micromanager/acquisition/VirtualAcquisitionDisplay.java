@@ -135,6 +135,9 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
       public void setNFramesUnverified(int nFrames);
 
       public void drawWithoutUpdate();
+      
+      public void updateAndDrawWithoutGUIUpdater();
+
    }
 
    public class MMCompositeImage extends CompositeImage implements IMMImagePlus {
@@ -274,12 +277,13 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
          
          super.updateImage();
       }
-      
-      public Runnable getUpdateAndDrawRunnable() {
+     
+
+
+      private Runnable updateAndDrawRunnable() {
          return new Runnable() {
               @Override
               public void run() {
-
                  superUpdateImage();
                   imageChangedUpdate();
                   try { 
@@ -289,23 +293,14 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
               }
           };
       }
-
+      
+      public void updateAndDrawWithoutGUIUpdater() {
+         invokeLaterIfNotEDT(updateAndDrawRunnable());
+      }
+      
       @Override
-      public void updateAndDraw() {
-          Runnable runnable = new Runnable() {
-              @Override
-              public void run() {
-
-                 superUpdateImage();
-                  imageChangedUpdate();
-                  try { 
-                      JavaUtils.invokeRestrictedMethod(this, ImagePlus.class, "notifyListeners", 2);
-                  } catch (Exception ex) {   }
-                  superDraw();
-              }
-          };
-          
-          updater1.post(runnable);
+      public void updateAndDraw() {         
+          updater1.post(updateAndDrawRunnable());
       }
       
       private void superDraw() {
@@ -398,16 +393,24 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
             super.getCanvas().paint(super.getCanvas().getGraphics());
          }
       }
-
-      @Override
-      public void draw() {
-          Runnable runnable = new Runnable() {
+      
+      private Runnable drawRunnable() {
+         return new Runnable() {
+            @Override
             public void run() {
                imageChangedUpdate();
                superDraw();
-            }
+            }       
          };
-         updater1.post(runnable);
+      }
+      
+      public void updateAndDrawWithoutGUIUpdater() {
+         invokeLaterIfNotEDT(drawRunnable());
+      }
+
+      @Override
+      public void draw() {        
+         updater1.post(drawRunnable());
       }
 
       @Override
@@ -564,26 +567,16 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
          configureAnimationControls();
          setNumPositions(numPositions);
       }
+      
+      //Load contrast settigns if opening datset
+      if (imageCache_.isFinished()) {
+         
+      }
 
-      updateAndDraw();
+      updateAndDraw(false);
       updateWindowTitleAndStatus();
 
-      Runnable forcePaint = new Runnable() {
-         @Override
-         public void run() {
-             forcePainting();
-         }     
-      };
-     
-      if (SwingUtilities.isEventDispatchThread()) {
-         forcePaint.run();
-      } else {
-         try {
-            SwingUtilities.invokeAndWait(forcePaint);
-         } catch (Exception ex) {
-            ReportingUtils.logError(ex);
-         }
-      }
+      forcePainting();
    }
 
    private void forcePainting() {
@@ -986,16 +979,13 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
    }
 
    public void updateAndDraw() {
-      updateAndDraw(false);
+      updateAndDraw(true);
    }
    
-   public void updateAndDraw(boolean firstFrame) {
+   public void updateAndDraw(boolean useGUIUpdater) {
       if (hyperImage_ != null && hyperImage_.isVisible()) {
-         if (firstFrame && hyperImage_ instanceof MMCompositeImage) {
-            MMCompositeImage ci = (MMCompositeImage) hyperImage_;
-            invokeLaterIfNotEDT(ci.getUpdateAndDrawRunnable());
-
-
+         if (!useGUIUpdater) {
+            ((IMMImagePlus) hyperImage_).updateAndDrawWithoutGUIUpdater(); 
          } else {
             hyperImage_.updateAndDraw();
          }
@@ -1174,7 +1164,7 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
          hyperImage_.setPosition(1 + superChannel, 1 + slice, 1 + frame);
       }
 
-      updateAndDraw(frame == 0);
+      updateAndDraw(frame != 0);
       restartAnimationAfterShowing(animatedFrameIndex, animatedSliceIndex_, framesAnimated, slicesAnimated);
 
       if (eng_ != null) {
@@ -1198,7 +1188,7 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
    /*
     * Live/snap should load window contrast settings
     * MDA should autoscale on first image
-    * Opening dataset should load from disoplay and comments
+    * Not called when opening a dataset because stored settings are loaded automatically
     */
    private void initializeContrast(final int channel, final int slice) {
       Runnable autoscaleOrLoadContrast = new Runnable() {
