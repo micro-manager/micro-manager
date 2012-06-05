@@ -45,8 +45,11 @@ import java.io.File;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.TimerTask;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.prefs.Preferences;
+import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
+import javax.swing.JPopupMenu;
 import javax.swing.SwingUtilities;
 import javax.swing.Timer;
 import mmcorej.TaggedImage;
@@ -1424,11 +1427,70 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
       albumSaved_ = false;
    }
 
+   private Class createSaveTypePopup() {
+      final JPopupMenu menu = new JPopupMenu();
+      JMenuItem single = new JMenuItem("1 image per a file");
+      JMenuItem multi = new JMenuItem("Multiple images per file (faster)");
+      JMenuItem cancel = new JMenuItem("Cancel");
+      menu.add(single);
+      menu.add(multi);
+      menu.addSeparator();
+      menu.add(cancel);
+      final AtomicInteger ai = new AtomicInteger(-1);
+      cancel.addActionListener(new ActionListener() {
+         public void actionPerformed(ActionEvent e) {
+            ai.set(0);
+         }
+      });
+      single.addActionListener(new ActionListener() {
+         public void actionPerformed(ActionEvent e) {
+            ai.set(1);
+         }
+      });
+      multi.addActionListener(new ActionListener() {
+         public void actionPerformed(ActionEvent e) {
+            ai.set(2);
+         }
+      });
+      MouseListener highlighter = new MouseListener() {
+         public void mouseClicked(MouseEvent e) {
+         }
+         public void mousePressed(MouseEvent e) {}
+         public void mouseReleased(MouseEvent e) {}
+         public void mouseEntered(MouseEvent e) {
+            ((JMenuItem) e.getComponent()).setArmed(true);
+         }
+         public void mouseExited(MouseEvent e) {
+            ((JMenuItem) e.getComponent()).setArmed(false);
+         }       
+      };
+      System.out.println("here");
+
+      single.addMouseListener(highlighter);
+      multi.addMouseListener(highlighter);
+      cancel.addMouseListener(highlighter);  
+      Point mouseLocation = MouseInfo.getPointerInfo().getLocation();
+      menu.show(null, mouseLocation.x, mouseLocation.y);
+      while (ai.get() == -1) {}
+      menu.setVisible(false);
+      if (ai.get() == 0) {
+         return null;
+      } else if (ai.get() == 1) {
+         return TaggedImageStorageDiskDefault.class;
+      } else {
+         return TaggedImageStorageMultipageTiff.class;
+      }  
+   }
+
    boolean saveAs() {
       return saveAs(true);
    }
 
-   boolean saveAs(boolean pointToNewStorage) {
+   private boolean saveAs(boolean pointToNewStorage) {
+      Class storageClass = createSaveTypePopup();
+      if (storageClass == null) {
+         return false;
+      }
       String prefix;
       String root;
       for (;;) {
@@ -1450,7 +1512,8 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
       }
 
       try {
-         TaggedImageStorage newFileManager = ImageUtils.newImageStorageInstance(
+         TaggedImageStorage newFileManager = (TaggedImageStorage) storageClass.getConstructor(
+                 String.class, Boolean.class, JSONObject.class).newInstance(
                  root + "/" + prefix, true, getSummaryMetadata());
          if (pointToNewStorage) {
             albumSaved_ = true;
@@ -1996,7 +2059,7 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
 
             if (result == JOptionPane.YES_OPTION) {
                if (!saveAs()) {
-                  return;
+                  return;           
                }
             } else if (result == JOptionPane.CANCEL_OPTION) {
                return;

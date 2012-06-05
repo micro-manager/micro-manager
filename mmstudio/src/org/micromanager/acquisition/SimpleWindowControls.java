@@ -195,7 +195,11 @@ public class SimpleWindowControls extends DisplayControls {
     }
     
      private void saveButtonActionPerformed() {
-        virtAcq_.saveAs(false);
+        new Thread() {
+           public void run() {
+              virtAcq_.saveAs();
+           }
+        }.start();
         //showFolderButton_.setEnabled(true);
    }
      
