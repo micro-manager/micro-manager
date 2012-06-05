@@ -1164,7 +1164,7 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
          hyperImage_.setPosition(1 + superChannel, 1 + slice, 1 + frame);
       }
 
-      updateAndDraw(frame != 0);
+      updateAndDraw(simple_ || frame != 0);
       restartAnimationAfterShowing(animatedFrameIndex, animatedSliceIndex_, framesAnimated, slicesAnimated);
 
       if (eng_ != null) {
