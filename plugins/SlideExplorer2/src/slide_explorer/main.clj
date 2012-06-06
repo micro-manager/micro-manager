@@ -267,11 +267,11 @@
 (defn load-visible-only
   "Runs visible-loader whenever screen-state-atom changes."
   [screen-state-atom memory-tile-atom disk-tile-index]
-  (let [react-fn (fn [_ _] (visible-loader screen-state-atom memory-tile-atom disk-tile-index))]
-    (reactive/handle-change
+  (let [react-fn (fn [] (visible-loader screen-state-atom memory-tile-atom disk-tile-index))]
+    (reactive/handle-update
       screen-state-atom
       react-fn)
-    (reactive/handle-change
+    (reactive/handle-update
       disk-tile-index
       react-fn)))
       

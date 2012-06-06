@@ -51,6 +51,22 @@
   ([reference function]
     (handle-change reference function (single-threaded-executor))))
 
+(defn handle-update
+  "Attempts to run a function whenever there is a new value in reference.
+   If the value changes too rapidly, then some values may be skipped. The
+   function is always run on the latest value once."
+  ([reference function executor]
+    (let [last-val (atom @reference)]
+      (add-watch-simple reference
+                        (fn [_ _]
+                          (.submit executor
+                                   #(let [current-val @reference]
+                                      (when (not= @last-val current-val)
+                                        (reset! last-val current-val)
+                                        (function))))))))
+  ([reference function]
+    (handle-update reference function (single-threaded-executor))))
+
 (defn handle-added-items
   "Adds a watch that applies a function to each item added to
    a coll inside reference (a ref/atom/agent/var). The function executes
