@@ -261,7 +261,8 @@
               (disk/load-tile memory-tile-atom tile))
             (do
               ;(println "no")
-              (disk/unload-tile memory-tile-atom tile))))))
+              ;(disk/unload-tile memory-tile-atom tile)
+              )))))
 
 (defn load-visible-only
   "Runs visible-loader whenever screen-state-atom changes."
@@ -303,7 +304,7 @@
     (def dti disk-tile-index)
     (def ai acquired-images)
     (swap! ss assoc :channels (initial-lut-objects first-seq))
-    ;(evict-oldest memory-tiles 300)
+    (evict-oldest memory-tiles 300)
     (record-added-tiles memory-tiles disk-tile-index)
     (load-visible-only screen-state memory-tiles disk-tile-index)
     (explore-fn)
