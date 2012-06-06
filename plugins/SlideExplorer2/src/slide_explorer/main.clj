@@ -266,9 +266,13 @@
 (defn load-visible-only
   "Runs visible-loader whenever screen-state-atom changes."
   [screen-state-atom memory-tile-atom disk-tile-index]
-  (reactive/handle-change
-    screen-state-atom
-    (fn [_ _] (visible-loader screen-state-atom memory-tile-atom disk-tile-index))))
+  (let [react-fn (fn [_ _] (visible-loader screen-state-atom memory-tile-atom disk-tile-index))]
+    (reactive/handle-change
+      screen-state-atom
+      react-fn)
+    (reactive/handle-change
+      disk-tile-index
+      react-fn)))
       
 (defn record-added-tiles
   "Record in disk-tile-index what images have been acquired."

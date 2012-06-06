@@ -133,6 +133,7 @@
 
 ;; PAINTING
 
+
 (defn multi-color-tile [memory-tiles-atom tile-indices channels-map]
   (let [channel-names (keys channels-map)]
     (overlay
