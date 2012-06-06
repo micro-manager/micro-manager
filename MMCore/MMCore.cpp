@@ -4783,7 +4783,8 @@ vector<char> CMMCore::readFromSerialPort(const char* name) throw (CMMError)
 
    vector<char> data;
    data.resize(read, 0);
-   memcpy(&(data[0]), answerBuf, read);
+   if (read > 0)
+      memcpy(&(data[0]), answerBuf, read);
 
    return data;
 }
