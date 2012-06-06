@@ -6,7 +6,8 @@
                            MouseAdapter WindowAdapter)
            (ij.process ImageProcessor))
   (:require [clojure.pprint :as pprint]
-            [slide-explorer.disk :as disk])
+            [slide-explorer.disk :as disk]
+            [slide-explorer.reactive :as reactive])
   (:use [org.micromanager.mm :only (edt)]
         [slide-explorer.paint :only (enable-anti-aliasing repaint-on-change)]
         [slide-explorer.tiles :only (center-tile floor-int)]
@@ -131,7 +132,7 @@
         (propagate-tiles tile-map-atom new-indices)
         (recur (child-indices new-indices))))))
 
-;; PAINTING
+;; OVERLAY
 
 
 (defn multi-color-tile [memory-tiles-atom tile-indices channels-map]
@@ -142,22 +143,32 @@
       (for [chan channel-names]
         (get-in channels-map [chan :lut])))))
 
+(defn run-background-overlay [memory-tiles-atom screen-state-atom overlay-tiles-atom]
+  (reactive/handle-added-items
+    memory-tiles-atom
+    (fn [[indices _]]
+      (swap! overlay-tiles-atom
+             assoc (assoc indices :nc :overlay)
+             (multi-color-tile memory-tiles-atom indices (:channels @screen-state-atom))))))
+
+;; PAINTING
+
 (defn draw-image [^Graphics2D g image x y]
   (.drawImage g image x y nil))
 
-(defn paint-tiles [^Graphics2D g memory-tiles-atom screen-state [tile-width tile-height]]
+(defn paint-tiles [^Graphics2D g overlay-tiles-atom screen-state [tile-width tile-height]]
   (let [pixel-rect (.getClipBounds g)]
     (doseq [[nx ny] (tiles-in-pixel-rectangle pixel-rect
                                               [tile-width tile-height])]
-      (when-let [proc (multi-color-tile memory-tiles-atom
-                                         {:zoom (screen-state :zoom)
-                                          :nx nx :ny ny :nt 0
-                                          :nz (screen-state :z)}
-                                         (:channels screen-state))]
+      (when-let [proc (@overlay-tiles-atom
+                        {:nc :overlay
+                         :zoom (screen-state :zoom)
+                         :nx nx :ny ny :nt 0
+                         :nz (screen-state :z)})]
         (let [[x y] (tile-to-pixels [nx ny] [tile-width tile-height] 1)]
           (draw-image g proc x y))))))
 
-(defn paint-screen [graphics screen-state memory-tiles-atom]
+(defn paint-screen [graphics screen-state overlay-tiles-atom]
   (let [original-transform (.getTransform graphics)
         zoom (:zoom screen-state)
         x-center (/ (screen-state :width) 2)
@@ -167,7 +178,7 @@
       (.setClip 0 0 (:width screen-state) (:height screen-state))
       (.translate (- x-center (int (* (:x screen-state) zoom)))
                   (- y-center (int (* (:y screen-state) zoom))))
-      (paint-tiles memory-tiles-atom screen-state [tile-width tile-height])
+      (paint-tiles overlay-tiles-atom screen-state [tile-width tile-height])
       enable-anti-aliasing
       ;(.setColor (Color. 0x0CB397))
       ;(.fillOval -5 -5
@@ -339,12 +350,12 @@ to normal size."
 
 ;; MAIN WINDOW AND PANEL
 
-(defn main-panel [screen-state memory-tiles]
+(defn main-panel [screen-state overlay-tiles]
   (doto
     (proxy [JPanel] []
       (paintComponent [^Graphics graphics]
         (proxy-super paintComponent graphics)
-        (paint-screen graphics @screen-state memory-tiles)))
+        (paint-screen graphics @screen-state overlay-tiles)))
     (.setBackground Color/BLACK)))
     
 (defn main-frame []
@@ -357,7 +368,8 @@ to normal size."
                                        :keys (sorted-set)
                                        :channels (sorted-map)))
         display-tiles (atom {})
-        panel (main-panel screen-state memory-tiles)
+        overlay-tiles (atom {})
+        panel (main-panel screen-state overlay-tiles)
         frame (main-frame)
         mouse-position (atom nil)]
     (def mt memory-tiles)
@@ -365,11 +377,13 @@ to normal size."
     (def mp mouse-position)
     (def f frame)
     (def pnl panel)
+    (def ot overlay-tiles)
     (.add (.getContentPane frame) panel)
     (setup-fullscreen frame)
     ((juxt handle-drags handle-arrow-pan handle-wheel handle-resize)
       panel screen-state)
     ((juxt handle-zoom handle-dive watch-keys) frame screen-state)
+    (run-background-overlay memory-tiles screen-state overlay-tiles)
     (repaint-on-change panel screen-state)
     (repaint-on-change panel memory-tiles)
     (handle-pointing panel mouse-position)
