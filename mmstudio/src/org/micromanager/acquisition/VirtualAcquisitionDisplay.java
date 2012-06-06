@@ -117,6 +117,8 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
    private boolean albumSaved_ = false;
    private boolean[] channelContrastInitialized_;
    private static double snapWinMag_ = -1;
+   private JPopupMenu saveTypePopup_;
+
 
    
    /* This interface and the following two classes
@@ -1426,9 +1428,14 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
    public void albumChanged() {
       albumSaved_ = false;
    }
-
+   
    private Class createSaveTypePopup() {
+      if (saveTypePopup_ != null) {
+         saveTypePopup_.setVisible(false);
+         saveTypePopup_ = null;
+      }
       final JPopupMenu menu = new JPopupMenu();
+      saveTypePopup_ = menu;
       JMenuItem single = new JMenuItem("1 image per a file");
       JMenuItem multi = new JMenuItem("Multiple images per file (faster)");
       JMenuItem cancel = new JMenuItem("Cancel");
@@ -1464,15 +1471,21 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
             ((JMenuItem) e.getComponent()).setArmed(false);
          }       
       };
-      System.out.println("here");
-
       single.addMouseListener(highlighter);
       multi.addMouseListener(highlighter);
       cancel.addMouseListener(highlighter);  
       Point mouseLocation = MouseInfo.getPointerInfo().getLocation();
       menu.show(null, mouseLocation.x, mouseLocation.y);
-      while (ai.get() == -1) {}
+      while (ai.get() == -1) {
+         try {
+            Thread.sleep(10);
+         } catch (InterruptedException ex) {}
+         if (!menu.isVisible()) {
+            return null;
+         }
+      }
       menu.setVisible(false);
+      saveTypePopup_ = null;
       if (ai.get() == 0) {
          return null;
       } else if (ai.get() == 1) {
@@ -1483,11 +1496,13 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
    }
 
    boolean saveAs() {
-      return saveAs(true);
+      return saveAs(null,true);
    }
 
-   private boolean saveAs(boolean pointToNewStorage) {
-      Class storageClass = createSaveTypePopup();
+   private boolean saveAs(Class storageClass, boolean pointToNewStorage) {
+      if (storageClass == null) {
+         storageClass = createSaveTypePopup();
+      }
       if (storageClass == null) {
          return false;
       }
@@ -2051,17 +2066,21 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
          }
 
          if (imageCache_.getDiskLocation() == null && promptToSave_ && !albumSaved_) {
-            int result = JOptionPane.showConfirmDialog(this,
-                    "This data set has not yet been saved.\n"
-                    + "Do you want to save it?",
-                    "Micro-Manager",
-                    JOptionPane.YES_NO_CANCEL_OPTION);
+            String[] options = {"Save individually","Save grouped","No","Cancel"};
+            int result = JOptionPane.showOptionDialog(this, "This data set has not yet been saved.  "
+                    + "Do you want to save it?\nImages can be saved as individual files or grouped together (faster)",
+                    "Micro-Manager",JOptionPane.DEFAULT_OPTION, JOptionPane.QUESTION_MESSAGE, null,
+                    options, options[0]);
 
-            if (result == JOptionPane.YES_OPTION) {
-               if (!saveAs()) {
+            if (result == 0) {                          
+               if (!saveAs(TaggedImageStorageDiskDefault.class, true)) {
                   return;           
                }
-            } else if (result == JOptionPane.CANCEL_OPTION) {
+            } else if (result == 1) {
+               if (!saveAs(TaggedImageStorageMultipageTiff.class, true)) {
+                  return;           
+               }
+            } else if (result == 3) {
                return;
             }
          }
