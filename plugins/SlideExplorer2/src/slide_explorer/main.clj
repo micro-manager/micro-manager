@@ -18,7 +18,7 @@
   (:use [org.micromanager.mm :only (core edt mmc gui load-mm json-to-data)]
         [slide-explorer.affine :only (set-destination-origin transform inverse-transform)]
         [slide-explorer.view :only (show add-to-memory-tiles
-                                    pixel-rectangle tiles-in-pixel-rectangle)]
+                                    pixel-rectangle screen-rectangle tiles-in-pixel-rectangle)]
         [slide-explorer.image :only (show-image intensity-range lut-object)]
         [slide-explorer.tiles :only (floor-int center-tile tile-list offset-tiles)])
   (:require [slide-explorer.disk :as disk]
@@ -127,16 +127,15 @@
 
 ;; tile arrangement
 
-(defn unzoomed-tile-coords [memory-tiles]
-  (set (for [{:keys [nx ny zoom]} (keys memory-tiles)]
-         (when (= 1 zoom)
-           [nx ny]))))
+(defn unzoomed-tile-coords [acquired-tiles]
+  (set (for [{:keys [nx ny]} acquired-tiles]
+         [nx ny])))
 
-(defn next-tile [memory-tiles screen-state [tile-width tile-height]]
+(defn next-tile [disk-tiles-index screen-state acquired-images [tile-width tile-height]]
   (let [visible-tiles (set (tiles-in-pixel-rectangle (pixel-rectangle screen-state)
                                                      [tile-width tile-height]))
-        in-memory (unzoomed-tile-coords memory-tiles)
-        tiles-to-acquire (clojure.set/difference visible-tiles in-memory)]
+        already-acquired (unzoomed-tile-coords @acquired-images)
+        tiles-to-acquire (clojure.set/difference visible-tiles already-acquired)]
     (when-not (empty? tiles-to-acquire)
       (let [center-tile (center-tile [(:x screen-state) (:y screen-state)]
                                      [tile-width tile-height])
@@ -145,45 +144,61 @@
 
 ;; tile acquisition management
 
-(defn add-tiles-at [memory-tiles [nx ny] affine-stage-to-pixel]
+(def image-processing-executor (Executors/newFixedThreadPool 1))
+
+(defn add-tiles-at [memory-tiles [nx ny] affine-stage-to-pixel acquired-images]
   (doseq [image (acquire-at (inverse-transform
                               (Point. (* 512 nx) (* 512 ny))
                               affine-stage-to-pixel))]
-    (add-to-memory-tiles 
-      memory-tiles
-      {:nx nx
-       :ny ny
-       :nz (get-in image [:tags "SliceIndex"])
-       :nt 0
-       :nc (or (get-in image [:tags "Channel"]) "Default")}
-      (image :proc)))
-  (await memory-tiles))
+    (let [indices {:nx nx
+                   :ny ny
+                   :nz (get-in image [:tags "SliceIndex"])
+                   :nt 0
+                   :nc (or (get-in image [:tags "Channel"]) "Default")}]
+      ;(println indices @acquired-images)
+      (swap! acquired-images conj indices)
+      (.submit image-processing-executor
+               #(add-to-memory-tiles 
+                  memory-tiles
+                  indices
+                  (image :proc))))))
     
 (defn acquire-next-tile
-  [memory-tiles-agent screen-state-atom affine [tile-width tile-height]]
-  (when-let [next-tile (next-tile @memory-tiles-agent
+  [memory-tiles-atom disk-tiles-index
+   screen-state-atom acquired-images
+   affine [tile-width tile-height]]
+  (when-let [next-tile (next-tile @disk-tiles-index
                                   @screen-state-atom
+                                  acquired-images
                                   [tile-width tile-height])]
-    (add-tiles-at memory-tiles-agent next-tile affine)
+    (add-tiles-at memory-tiles-atom next-tile affine acquired-images)
     next-tile))
+
+(defn handle-error [e]
+  (def q e))
 
 (def explore-executor (Executors/newFixedThreadPool 1))
 
-(defn explore [memory-tiles-agent screen-state-atom
-               affine [tile-width tile-height]]
+(defn explore [memory-tiles-atom disk-tiles-index screen-state-atom acquired-images
+               affine [tile-width tile-height]]  
   (.submit explore-executor
-           #(when (acquire-next-tile memory-tiles-agent
-                                     screen-state-atom affine
-                                     [tile-width tile-height])
-              (explore memory-tiles-agent screen-state-atom
-                       affine [tile-width tile-height]))))
+           #(try
+              (when (acquire-next-tile memory-tiles-atom
+                                       disk-tiles-index
+                                       screen-state-atom
+                                       acquired-images
+                                       affine
+                                       [tile-width tile-height])
+                (explore memory-tiles-atom disk-tiles-index screen-state-atom
+                         acquired-images affine [tile-width tile-height]))
+              (catch Exception e (handle-error e)))))
 
 ; Overall scheme
 ; the GUI is generally reactive.
 ; vars:
 ; memory-tiles (indices -> pixels)
 ; disk-tile-index (set of tile indices)
-; overlay-tiles (indices -> pixels)
+; display-tiles (indices -> pixels)
 ; view-state
 ;
 ; Whenever an image is acquired, it is processed, mipmapped and each
@@ -201,43 +216,96 @@
 ; The view redraws tiles inside viewing area whenever view-state
 ; has been adjusted or a new image appears in overlay-tiles.
 
-(def file-executor (reactive/single-threaded-executor))
 
-(defn backup-new-tiles-to-disk
-  "Attaches a handler to memory-tiles-agent, so that whenever
-   a tile image is added, the image is backed up to disk."
-  [dir memory-tiles-agent disk-tile-index]
-  (reactive/handle-added-items
-    memory-tiles-agent
-    (fn [[key processor]]
-      (when-not (@disk-tile-index key)
-        (disk/write-tile dir key processor)
-        (swap! disk-tile-index conj key)))
-    file-executor))
+(defn evict-oldest
+  "Takes an atom containing a map and removes the oldest
+   items to keep the number of items less than or equal to limit."
+  [atom limit]
+  (let [tick (ref 0)
+        priority (ref {})]
+    (def t tick)
+    (def p priority)
+    (reactive/handle-added-items
+      atom
+      (fn [[key val]]
+        (swap! atom dissoc
+                  (dosync
+                    (alter tick inc)
+                    (alter priority assoc key @tick)
+                    (when (> (count @priority) limit)
+                      (let [oldest (apply min-key @priority (keys @priority))]
+                        (alter priority dissoc oldest)
+                        oldest))))))))
+  
+(defn map-subset?
+  "Is map1 a \"subset\" of map2?"
+  [map1 map2]
+  (= map1 (select-keys map2 (keys map1))))
+
+(defn visible-loader
+  "Loads tiles needed for drawing; unloads the reset."
+    [screen-state-atom memory-tile-atom disk-tile-index]
+      (let [visible-tile-positions
+            (set (map (fn [[nx ny]]
+                        (hash-map
+                          :nx nx :ny ny
+                          :zoom (@screen-state-atom :zoom)
+                          :nz (@screen-state-atom :z)))
+                      (tiles-in-pixel-rectangle (screen-rectangle @screen-state-atom)
+                                                [512 512])))
+            relevant-keys (keys (first visible-tile-positions))]
+        (doseq [tile @disk-tile-index]
+          (if (visible-tile-positions (select-keys tile relevant-keys))
+            (do 
+              ;(println tile)
+              (disk/load-tile memory-tile-atom tile))
+            (do
+              ;(println "no")
+              (disk/unload-tile memory-tile-atom tile))))))
+
+(defn load-visible-only
+  "Runs visible-loader whenever screen-state-atom changes."
+  [screen-state-atom memory-tile-atom disk-tile-index]
+  (reactive/handle-change
+    screen-state-atom
+    (fn [_ _] (visible-loader screen-state-atom memory-tile-atom disk-tile-index))))
+      
+(defn record-added-tiles
+  "Record in disk-tile-index what images have been acquired."
+  [memory-tiles-atom disk-tile-index]
+  (reactive/handle-added-items memory-tiles-atom
+                               (fn [[k v]]
+                                 (swap! disk-tile-index conj k))))
 
 (defn go
   "The main function that starts a slide explorer window."
   []
   (core waitForDevice (core getXYStageDevice))
-  (let [memory-tiles (agent {})
+  (let [dir (str "tmp" (rand-int 10000000))
+        memory-tiles (doto (atom {}) (alter-meta! assoc ::directory dir))
+        display-tiles (atom {})
         disk-tile-index (atom #{})
+        acquired-images (atom #{})
         xy-stage (core getXYStageDevice)
         affine-stage-to-pixel (origin-here-stage-to-pixel-transform)
         first-seq (acquire-at (inverse-transform (Point. 0 0) affine-stage-to-pixel))
         screen-state (show memory-tiles)
-        explore-fn #(explore memory-tiles screen-state
-                             affine-stage-to-pixel [512 512])
-        dir (str "tmp" (rand-int 10000000))]
+        explore-fn #(explore memory-tiles disk-tile-index screen-state acquired-images
+                             affine-stage-to-pixel [512 512])]
     (.mkdirs (java.io.File. dir))
     (def mt memory-tiles)
     (def affine affine-stage-to-pixel)
     (def ss screen-state)
+    (def dti disk-tile-index)
+    (def ai acquired-images)
     (swap! ss assoc :channels (initial-lut-objects first-seq))
-    (backup-new-tiles-to-disk dir memory-tiles disk-tile-index)
+    ;(evict-oldest memory-tiles 300)
+    (record-added-tiles memory-tiles disk-tile-index)
+    (load-visible-only screen-state memory-tiles disk-tile-index)
     (explore-fn)
     (add-watch ss "explore" (fn [_ _ old new] (when-not (= old new)
                                                 (explore-fn))))
-  ))
+    ))
   
 ;; tests
 
@@ -245,7 +313,7 @@
   (ImageUtils/makeProcessor (grab-tagged-image)))
 
 (defn start []
-  (let [memory-tiles (agent {})
+  (let [memory-tiles (atom {})
         display-tiles (agent {})
         xy-stage (core getXYStageDevice)]
     (def mt memory-tiles)
@@ -261,7 +329,7 @@
   (swap! ss assoc :channels test-channels))
 
 (defn test-tile [nx ny nz nc]
-  (add-to-memory-tiles at {:nx nx
+  (add-to-memory-tiles mt {:nx nx
                               :ny ny
                               :nz nz
                               :nt 0

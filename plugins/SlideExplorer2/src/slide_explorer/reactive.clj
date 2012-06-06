@@ -45,7 +45,9 @@
     (add-watch-simple reference
                       (fn [old-state new-state]
                         (when (not= old-state new-state)
-                          (.submit executor #(function old-state new-state))))))
+                          (try
+                            (.submit executor #(function old-state new-state))
+                            (catch Throwable e (println e)))))))
   ([reference function]
     (handle-change reference function (single-threaded-executor))))
 

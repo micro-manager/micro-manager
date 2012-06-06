@@ -86,7 +86,7 @@
 (defn add-image
   "Add an image to the cache at key. Will be held in memory and saved to disk."
   [cache-agent key image]
-  (send-off cache-agent add-item key image)
+  (swap! cache-agent add-item key image)
   (.submit file-service #(image/write-processor (key-map-to-file-name cache-agent key) image))
   nil)
   
@@ -95,14 +95,19 @@
    is not in memory, nil will be returned, but the image will be read from file and
    added to the map asynchronously so that a future get-image request will return
    the image in memory."
-  [cache-agent key]
+  [cache-agent key block?]
   (if-let [mem-val (clojure.core/get @cache-agent key)]
-    (do (send-off cache-agent hit-item key)
+    (do (swap! cache-agent hit-item key)
         mem-val)
-    (do (.submit file-service
-                 #(let [image (image/read-processor (key-map-to-file-name cache-agent key))]
-                    (send-off cache-agent add-item key image false)))
-        nil)))
+    (let [loaded-image-future
+          (.submit file-service
+                   #(let [image (image/read-processor (key-map-to-file-name cache-agent key))]
+                      (swap! cache-agent add-item key image false)
+                      image))]
+      (when block?
+        (let [img (.get loaded-image-future)]
+          ;(println img)
+          img)))))
 
 (defn has-image
   "Checks if the cache-agent has an image in memory or on disk."
@@ -115,7 +120,7 @@
    images in memory, and also stores all images on disk in TIFF files in the
    specified directory."
   [dir memory-cache-size]
-  (doto (agent (empty-lru-map memory-cache-size))
+  (doto (atom (empty-lru-map memory-cache-size))
     (reset-meta! {::cache {:directory dir}})))
 
 ;; test

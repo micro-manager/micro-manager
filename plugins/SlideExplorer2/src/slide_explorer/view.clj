@@ -5,7 +5,8 @@
            (java.awt.event ComponentAdapter KeyEvent KeyAdapter
                            MouseAdapter WindowAdapter)
            (ij.process ImageProcessor))
-  (:require [clojure.pprint :as pprint])
+  (:require [clojure.pprint :as pprint]
+            [slide-explorer.disk :as disk])
   (:use [org.micromanager.mm :only (edt)]
         [slide-explorer.paint :only (enable-anti-aliasing repaint-on-change)]
         [slide-explorer.tiles :only (center-tile floor-int)]
@@ -77,30 +78,40 @@
       [nx ny])))
 
 (defn pixel-rectangle
-  "Converts the screen state coordinates to visible camera pixel coordinates."
-  [{:keys [x y width height zoom]}]
-  (Rectangle. (- x (/ width 2 zoom))
-              (- y (/ height 2 zoom))
-              (/ width zoom)
-              (/ height zoom)))
+  	  "Converts the screen state coordinates to visible camera pixel coordinates."
+  	  [{:keys [x y width height zoom]}]
+  	  (Rectangle. (- x (/ width 2 zoom))
+                 	              (- y (/ height 2 zoom))
+                 	              (/ width zoom)
+                 	              (/ height zoom)))
 
+
+(defn screen-rectangle
+  	  [{:keys [x y width height zoom]}]
+  	  (Rectangle. (- (* x zoom) (/ width 2))
+                 	    (- (* y zoom) (/ height 2))
+                 	    width
+                 	    height))
 
 ;; TILING
 
-(defn add-tile [tile-map indices tile]
-  (assoc-in tile-map [indices] tile))
-
-(defn propagate-tiles [tile-map {:keys [zoom nx ny nz nt nc] :as indices}]
-    (let [nx- (* 2 nx)
-          ny- (* 2 ny)
-          nx+ (inc nx-)
-          ny+ (inc ny-)
-          zoom-parent (* zoom 2)
-          a (tile-map (assoc indices :zoom zoom-parent :nx nx- :ny ny-))
-          b (tile-map (assoc indices :zoom zoom-parent :nx nx+ :ny ny-))
-          c (tile-map (assoc indices :zoom zoom-parent :nx nx- :ny ny+))
-          d (tile-map (assoc indices :zoom zoom-parent :nx nx+ :ny ny+))]
-      (add-tile tile-map indices (merge-and-scale a b c d))))
+(defn propagate-tiles [tile-map-atom {:keys [zoom nx ny nz nt nc] :as indices}]
+  (let [nx- (* 2 nx)
+        ny- (* 2 ny)
+        nx+ (inc nx-)
+        ny+ (inc ny-)
+        zoom-parent (* zoom 2)
+        get-parent-tile (fn [[nx ny]]
+                          (let [dir ((meta tile-map-atom) :slide-explorer.main/directory)
+                                tile-index (assoc indices :zoom zoom-parent :nx nx :ny ny)]
+                            ;(println tile-index)
+                            (or (@tile-map-atom tile-index) 
+                                (disk/read-tile dir tile-index))))
+        abcd (map get-parent-tile [[nx- ny-]
+                                   [nx+ ny-]
+                                   [nx- ny+]
+                                   [nx+ ny+]])]
+    (disk/add-tile tile-map-atom indices (apply merge-and-scale abcd))))
 
 (defn child-index [n]
   (floor-int (/ n 2)))
@@ -111,36 +122,33 @@
      (update-in [:ny] child-index)
      (update-in [:zoom] / 2)))
 
-(defn add-and-propagate-tiles [tile-map indices tile]
+(defn add-to-memory-tiles [tile-map-atom indices tile]
+  ;(println "asdf")
   (let [full-indices (assoc indices :zoom 1)]
-    (loop [tile-map (add-tile tile-map full-indices tile)
-           new-indices (child-indices full-indices)]
-      (if (<= MIN-ZOOM (:zoom new-indices))
-        (recur (propagate-tiles tile-map new-indices)
-               (child-indices new-indices))
-        tile-map))))
-
-(defn add-to-memory-tiles [tile-map-agent indices tile]
-    (send tile-map-agent add-and-propagate-tiles indices tile))
+    (disk/add-tile tile-map-atom full-indices tile)
+    (loop [new-indices (child-indices full-indices)]
+      (when (<= MIN-ZOOM (:zoom new-indices))
+        (propagate-tiles tile-map-atom new-indices)
+        (recur (child-indices new-indices))))))
 
 ;; PAINTING
 
-(defn multi-color-tile [memory-tiles tile-indices channels-map]
+(defn multi-color-tile [memory-tiles-atom tile-indices channels-map]
   (let [channel-names (keys channels-map)]
-    (overlay-memo
+    (overlay
       (for [chan channel-names]
-        (get memory-tiles (assoc tile-indices :nc chan)))
+        (@memory-tiles-atom (assoc tile-indices :nc chan)))
       (for [chan channel-names]
         (get-in channels-map [chan :lut])))))
 
 (defn draw-image [^Graphics2D g image x y]
   (.drawImage g image x y nil))
 
-(defn paint-tiles [^Graphics2D g memory-tiles screen-state [tile-width tile-height]]
+(defn paint-tiles [^Graphics2D g memory-tiles-atom screen-state [tile-width tile-height]]
   (let [pixel-rect (.getClipBounds g)]
     (doseq [[nx ny] (tiles-in-pixel-rectangle pixel-rect
                                               [tile-width tile-height])]
-      (when-let [proc (multi-color-tile memory-tiles
+      (when-let [proc (multi-color-tile memory-tiles-atom
                                          {:zoom (screen-state :zoom)
                                           :nx nx :ny ny :nt 0
                                           :nz (screen-state :z)}
@@ -148,7 +156,7 @@
         (let [[x y] (tile-to-pixels [nx ny] [tile-width tile-height] 1)]
           (draw-image g proc x y))))))
 
-(defn paint-screen [graphics screen-state memory-tiles]
+(defn paint-screen [graphics screen-state memory-tiles-atom]
   (let [original-transform (.getTransform graphics)
         zoom (:zoom screen-state)
         x-center (/ (screen-state :width) 2)
@@ -158,7 +166,7 @@
       (.setClip 0 0 (:width screen-state) (:height screen-state))
       (.translate (- x-center (int (* (:x screen-state) zoom)))
                   (- y-center (int (* (:y screen-state) zoom))))
-      (paint-tiles memory-tiles screen-state [tile-width tile-height])
+      (paint-tiles memory-tiles-atom screen-state [tile-width tile-height])
       enable-anti-aliasing
       ;(.setColor (Color. 0x0CB397))
       ;(.fillOval -5 -5
@@ -175,8 +183,8 @@
         (when true
         (doto graphics
           (.setTransform original-transform)
-          (.setColor (Color. 0xECF2AA))
-          (.drawString (pr-str pixel-rect) 10 20)
+          (.setColor Color/GREEN)
+          ;(.drawString (pr-str pixel-rect) 10 20)
           ;(.drawString (pr-str visible-tiles) 10 40)
           ;(.drawString (pr-str center-tile) 10 60)
           ;(.drawString (pr-str sorted-tiles) 10 80)
@@ -335,7 +343,7 @@ to normal size."
     (proxy [JPanel] []
       (paintComponent [^Graphics graphics]
         (proxy-super paintComponent graphics)
-        (paint-screen graphics @screen-state @memory-tiles)))
+        (paint-screen graphics @screen-state memory-tiles)))
     (.setBackground Color/BLACK)))
     
 (defn main-frame []
