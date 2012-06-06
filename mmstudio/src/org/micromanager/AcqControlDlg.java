@@ -97,8 +97,8 @@ public class AcqControlDlg extends JFrame implements PropertyChangeListener {
    private GUIColors guiColors_;
    private NumberFormat numberFormat_;
    private JLabel namePrefixLabel_;
+   private JLabel saveTypeLabel_;
    private JLabel rootLabel_;
-   private JLabel commentLabel_;
    private JButton browseRootButton_;
    private JLabel displayMode_;
    private JCheckBox stackKeepShutterOpenCheckBox_;
@@ -717,8 +717,8 @@ public class AcqControlDlg extends JFrame implements PropertyChangeListener {
       afPanel_ = (CheckBoxPanel) createPanel("Autofocus", 226, 65, 427, 154, true);
 
       channelsPanel_ = (CheckBoxPanel) createPanel("Channels", 5, 308, 510, 451, true);
-      savePanel_ = (CheckBoxPanel) createPanel("Save images", 5, 453, 510, 540, true);
-      commentsPanel_ = (ComponentTitledPanel) createPanel("Acquisition Comments",5, 544, 510,630,false);
+      savePanel_ = (CheckBoxPanel) createPanel("Save images", 5, 453, 510, 560, true);
+      commentsPanel_ = (ComponentTitledPanel) createPanel("Acquisition Comments",5, 564, 530,650,false);
 
    }
 
@@ -1302,6 +1302,13 @@ public class AcqControlDlg extends JFrame implements PropertyChangeListener {
       nameField_.setFont(new Font("Arial", Font.PLAIN, 10));
       nameField_.setBounds(90, 55, 354, 22);
       savePanel_.add(nameField_);
+      
+      saveTypeLabel_ = new JLabel("Test text");         
+      saveTypeLabel_.setFont(new Font("Arial", Font.PLAIN, 10));
+      saveTypeLabel_.setBounds(10,80, 500,22);
+      savePanel_.add(saveTypeLabel_);
+      updateSaveTypeLabel();
+
 
       JScrollPane commentScrollPane = new JScrollPane();
       commentScrollPane.setBounds(10, 28, 485, 50);
@@ -1413,7 +1420,7 @@ public class AcqControlDlg extends JFrame implements PropertyChangeListener {
       // load window settings
       int x = 100;
       int y = 100;
-      this.setBounds(x, y, 521, 670);
+      this.setBounds(x, y, 521, 690);
 
       if (prefs_ != null) {
          x = prefs_.getInt(ACQ_CONTROL_X, x);
@@ -1478,6 +1485,13 @@ public class AcqControlDlg extends JFrame implements PropertyChangeListener {
       }
    }
 
+   public void updateSaveTypeLabel() {
+      if (MMStudioMainFrame.getInstance().getMultipageTiffSaving()) {
+         saveTypeLabel_.setText("Save type: multiple images per file (change in Tools--Options)");
+      } else {
+         saveTypeLabel_.setText("Save type: 1 image per file (change in Tools--Options)");
+      }
+   }
 
    public boolean inArray(String member, String[] group) {
       for (int i = 0; i < group.length; i++) {

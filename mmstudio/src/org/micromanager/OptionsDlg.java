@@ -404,6 +404,10 @@ public class OptionsDlg extends MMDialog {
          @Override
          public void actionPerformed(ActionEvent e) {
             opts_.multipageTiff_ = savingTypeCombo.getSelectedIndex() == 1;
+            AcqControlDlg dlg = MMStudioMainFrame.getInstance().getAcqDlg();
+            if (dlg != null) {
+               dlg.updateSaveTypeLabel();
+            }
          }
       });
       if (opts_.multipageTiff_) {
