@@ -21,12 +21,14 @@
 
 package org.micromanager;
 
-import org.micromanager.utils.PropertyItem;
-import org.micromanager.utils.PropertyTableData;
 
 import mmcorej.CMMCore;
 import mmcorej.Configuration;
 import mmcorej.StrVector;
+
+import org.micromanager.api.ScriptInterface;
+import org.micromanager.utils.PropertyItem;
+import org.micromanager.utils.PropertyTableData;
 import org.micromanager.utils.ReportingUtils;
 
 public class PresetEditor extends ConfigDialog {
@@ -36,7 +38,7 @@ public class PresetEditor extends ConfigDialog {
     */
    private static final long serialVersionUID = 8281144157746745260L;
 
-   public PresetEditor(String groupName, String presetName, MMStudioMainFrame gui, CMMCore core, boolean newItem) {
+   public PresetEditor(String groupName, String presetName, ScriptInterface gui, CMMCore core, boolean newItem) {
       super(groupName, presetName, gui, core, newItem);
       instructionsText_ = "Here you can specifiy the property values\nin a configuration preset.";
       nameFieldLabelText_ = "Preset name:";

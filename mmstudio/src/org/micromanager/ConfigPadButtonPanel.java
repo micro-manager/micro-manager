@@ -16,6 +16,7 @@ import javax.swing.SwingConstants;
 import mmcorej.CMMCore;
 
 import com.swtdesigner.SwingResourceManager;
+import org.micromanager.api.ScriptInterface;
 import org.micromanager.utils.ReportingUtils;
 
 public final class ConfigPadButtonPanel extends JPanel {
@@ -36,7 +37,7 @@ public final class ConfigPadButtonPanel extends JPanel {
 
    private CMMCore core_;
 
-   private MMStudioMainFrame gui_;
+   private ScriptInterface gui_;
 
    
    

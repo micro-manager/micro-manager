@@ -28,6 +28,7 @@ import mmcorej.Configuration;
 import mmcorej.PropertyType;
 import mmcorej.StrVector;
 
+import org.micromanager.api.ScriptInterface;
 import org.micromanager.utils.PropertyItem;
 import org.micromanager.utils.PropertyTableData;
 import org.micromanager.utils.ReportingUtils;
@@ -40,9 +41,9 @@ public class GroupEditor extends ConfigDialog {
     */
    private static final long serialVersionUID = 8281144157746745260L;
 
-   public GroupEditor(String groupName, String presetName, MMStudioMainFrame gui, CMMCore core, boolean newItem) {
+   public GroupEditor(String groupName, String presetName, ScriptInterface gui, CMMCore core, boolean newItem) {
       super(groupName, presetName, gui, core, newItem);
-      instructionsText_ = "Here you can specifiy the properties included\nin a configuration group.";
+      instructionsText_ = "Here you can specify the properties included\nin a configuration group.";
       nameFieldLabelText_ = "Group name:";
       initName_ = groupName_;
       TITLE = "Group Editor";

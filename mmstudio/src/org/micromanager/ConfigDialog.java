@@ -55,6 +55,7 @@ import javax.swing.table.TableColumn;
 import mmcorej.CMMCore;
 import mmcorej.Configuration;
 
+import org.micromanager.api.ScriptInterface;
 import org.micromanager.utils.MMDialog;
 import org.micromanager.utils.PropertyNameCellRenderer;
 import org.micromanager.utils.PropertyValueCellEditor;
@@ -71,7 +72,7 @@ public class ConfigDialog extends MMDialog {
    private static final long serialVersionUID = 5819669941239786807L;
 
    protected CMMCore core_;
-   protected MMStudioMainFrame gui_;
+   protected ScriptInterface gui_;
 
    private JTable table_;
    protected PropertyTableData data_;
@@ -106,7 +107,7 @@ public class ConfigDialog extends MMDialog {
 
    protected int scrollPaneTop_;
 
-   public ConfigDialog(String groupName, String presetName, MMStudioMainFrame gui, CMMCore core, boolean newItem) {
+   public ConfigDialog(String groupName, String presetName, ScriptInterface gui, CMMCore core, boolean newItem) {
       super();
       addWindowListener(new WindowAdapter() {
          public void windowClosing(WindowEvent arg0) {
@@ -319,11 +320,13 @@ public class ConfigDialog extends MMDialog {
       this.dispose();
    }
 
+   @Override
    public void dispose() {
       super.dispose();
       savePosition();
       gui_.refreshGUI();
-      gui_.selectConfigGroup(groupName_);
+      // NS: Can this really be removed?
+      // gui_.selectConfigGroup(groupName_);
    }
 
    public void update() {

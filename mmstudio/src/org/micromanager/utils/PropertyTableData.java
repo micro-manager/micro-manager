@@ -1,7 +1,6 @@
 package org.micromanager.utils;
 
 import java.util.ArrayList;
-import java.awt.Component;
 
 import javax.swing.table.AbstractTableModel;
 
@@ -11,7 +10,7 @@ import mmcorej.DeviceType;
 import mmcorej.PropertySetting;
 import mmcorej.StrVector;
 
-import org.micromanager.MMStudioMainFrame;
+import org.micromanager.api.ScriptInterface;
 
 /**
  * Property table data model, representing MMCore data
@@ -25,7 +24,7 @@ public class PropertyTableData extends AbstractTableModel implements MMPropertyT
 	public String groupName_;
 	public String presetName_;
 	public ShowFlags flags_;
-	public MMStudioMainFrame gui_;
+	public ScriptInterface gui_;
 	public boolean showUnused_;
 	protected boolean showReadOnly_;
 	String[] columnNames_ = new String[3];
@@ -246,7 +245,8 @@ public class PropertyTableData extends AbstractTableModel implements MMPropertyT
 
 			Configuration cfg = core_.getConfigGroupState(groupName);
 
-			gui_.suspendLiveMode();
+         boolean liveMode = gui_.isLiveModeOn();
+			gui_.enableLiveMode(false);
          
          setUpdating(true);
 
@@ -279,7 +279,7 @@ public class PropertyTableData extends AbstractTableModel implements MMPropertyT
 
 			updateRowVisibility(flags); 
 
-			gui_.resumeLiveMode();
+			gui_.enableLiveMode(liveMode);
 		} catch (Exception e) {
 			handleException(e);
 		}
@@ -346,7 +346,7 @@ public class PropertyTableData extends AbstractTableModel implements MMPropertyT
       ReportingUtils.showError(e);
 	}
 
-	public void setGUI(MMStudioMainFrame gui) {
+	public void setGUI(ScriptInterface gui) {
 		gui_ = gui;
 	}
 
