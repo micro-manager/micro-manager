@@ -39,7 +39,8 @@
   "Adds a tile to the atom in memory and saves a .tif image to the associated directory."
   [memory-tile-atom key processor]
   (swap! memory-tile-atom assoc key processor)
-  (write-tile (tile-dir memory-tile-atom) key processor))
+  (.submit file-executor
+           #(write-tile (tile-dir memory-tile-atom) key processor)))
 
 (defn load-tile
   [memory-tile-atom key]

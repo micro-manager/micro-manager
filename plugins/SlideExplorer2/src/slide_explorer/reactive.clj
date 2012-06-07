@@ -54,7 +54,7 @@
 (defn handle-update
   "Attempts to run a function whenever there is a new value in reference.
    If the value changes too rapidly, then some values may be skipped. The
-   function is always run on the latest value once."
+   function arguments should be [last-val current-val]."
   ([reference function executor]
     (let [last-val (atom @reference)]
       (add-watch-simple reference
@@ -62,8 +62,8 @@
                           (.submit executor
                                    #(let [current-val @reference]
                                       (when (not= @last-val current-val)
-                                        (reset! last-val current-val)
-                                        (function))))))))
+                                        (function last-val current-val)
+                                        (reset! last-val current-val))))))))
   ([reference function]
     (handle-update reference function (single-threaded-executor))))
 

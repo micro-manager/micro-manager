@@ -386,6 +386,7 @@ to normal size."
     (run-background-overlay memory-tiles screen-state overlay-tiles)
     (repaint-on-change panel screen-state)
     (repaint-on-change panel memory-tiles)
+    (repaint-on-change panel overlay-tiles)
     (handle-pointing panel mouse-position)
     screen-state))
 

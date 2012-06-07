@@ -171,6 +171,7 @@
                                   @screen-state-atom
                                   acquired-images
                                   [tile-width tile-height])]
+    (println next-tile)
     (add-tiles-at memory-tiles-atom next-tile affine acquired-images)
     next-tile))
 
@@ -267,13 +268,16 @@
 (defn load-visible-only
   "Runs visible-loader whenever screen-state-atom changes."
   [screen-state-atom memory-tile-atom disk-tile-index]
-  (let [react-fn (fn [] (visible-loader screen-state-atom memory-tile-atom disk-tile-index))]
+  (let [react-fn (fn [_ _] (visible-loader screen-state-atom memory-tile-atom disk-tile-index))
+        executor (reactive/single-threaded-executor)]
     (reactive/handle-update
       screen-state-atom
-      react-fn)
+      react-fn
+      executor)
     (reactive/handle-update
       disk-tile-index
-      react-fn)))
+      react-fn
+      executor)))
       
 (defn record-added-tiles
   "Record in disk-tile-index what images have been acquired."
