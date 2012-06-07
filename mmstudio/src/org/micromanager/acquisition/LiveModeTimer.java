@@ -21,11 +21,7 @@
 //
 package org.micromanager.acquisition;
 
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.text.NumberFormat;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import java.util.Timer;
 import java.util.TimerTask;
 import mmcorej.CMMCore;
@@ -306,9 +302,11 @@ public class LiveModeTimer {
                     gui_.getAcquisitionImageByteDepth(ACQ_NAME));
       try {
          ti.tags.put("Summary", gui_.getAcquisition(ACQ_NAME).getSummaryMetadata());
+
       } catch (MMScriptException ex) {
          ReportingUtils.logError("Error adding summary metadata to tags");
       }
+      gui_.addStagePositionToTags(ti);
       return ti;
    }
 

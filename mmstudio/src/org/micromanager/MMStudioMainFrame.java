@@ -2917,16 +2917,16 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface, Device
       return displayImage(ti, true, 0);
    }
 
-   public boolean displayImage(TaggedImage ti, boolean update, int channel) {
+   private boolean displayImage(TaggedImage ti, boolean update, int channel) {
       try {
          checkSimpleAcquisition(ti);
          setCursor(new Cursor(Cursor.WAIT_CURSOR));
-//         getAcquisition(SIMPLE_ACQ).toFront();
          ti.tags.put("Summary", getAcquisition(SIMPLE_ACQ).getSummaryMetadata());
          ti.tags.put("ChannelIndex", channel);
          ti.tags.put("PositionIndex", 0);
          ti.tags.put("SliceIndex", 0);
          ti.tags.put("FrameIndex", 0);
+         addStagePositionToTags(ti);
          addImage(SIMPLE_ACQ, ti, update, true);
       } catch (Exception ex) {
          ReportingUtils.logError(ex);
@@ -2937,6 +2937,16 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface, Device
          updateLineProfile();
       }
       return true;
+   }
+   
+   public void addStagePositionToTags(TaggedImage ti) throws JSONException {
+      if (gui_.xyStageLabel_.length() > 0) {
+         ti.tags.put("XPositionUm", gui_.staticInfo_.x_);
+         ti.tags.put("YPositionUm", gui_.staticInfo_.y_);
+      }
+      if (gui_.zStageLabel_.length() > 0) {
+         ti.tags.put("ZPositionUm", gui_.staticInfo_.zPos_);
+      }
    }
 
    public void initializeGUI() {
