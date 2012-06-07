@@ -29,10 +29,13 @@ import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.channels.FileChannel;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javax.swing.JOptionPane;
+import javax.swing.SwingUtilities;
 import mmcorej.TaggedImage;
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -40,6 +43,7 @@ import org.json.JSONObject;
 import org.micromanager.utils.MDUtils;
 import org.micromanager.utils.MMException;
 import org.micromanager.utils.MMScriptException;
+import org.micromanager.utils.ProgressBar;
 import org.micromanager.utils.ReportingUtils;
 
 
@@ -107,23 +111,41 @@ public class MultipageTiffReader {
    }
    
    private void fixInterruptedFile(long firstIFD) throws IOException, JSONException {  
+      int choice = JOptionPane.showConfirmDialog(null, "This dataset cannot be opened bcause it appears to have \n"
+              + "been improperly saved.  Would you like Micro-Manger to attempt to fix it?"
+              , "Micro-Manager", JOptionPane.YES_NO_OPTION);
+      if (choice == JOptionPane.NO_OPTION) {
+         return;
+      }
       summaryMetadata_ = readSummaryMD();
       long nextIFD = firstIFD;
-      indexMap_ = new HashMap<String,Long>();
+      indexMap_ = new HashMap<String, Long>();
+       final ProgressBar progressBar = new ProgressBar("Fixing dataset", 0, (int)(fileChannel_.size()/2L) );
+            progressBar.setRange(0, (int)(fileChannel_.size()/2L));
+            progressBar.setProgress(0);
+            progressBar.setVisible(true);
       while (nextIFD > 0) {
          try {
             IFDData data = readIFD(nextIFD);
             TaggedImage ti = readTaggedImage(data);
-            String label = MDUtils.getLabel(ti.tags);
+            String label = null;
+            label = MDUtils.getLabel(ti.tags);
             if (label == null) {
-               break;  
+               break;
             }
-            indexMap_.put(label, nextIFD); 
+            indexMap_.put(label, nextIFD);
+            final int progress = (int) (nextIFD/2L);
+            SwingUtilities.invokeLater(new Runnable() {
+               public void run() {
+                  progressBar.setProgress(progress);
+               }
+            });
             nextIFD = data.nextIFD;
-         } catch (IOException e) {
+         } catch (Exception e) {
             break;
          }
       }
+      progressBar.setVisible(false);
       long position = writeIndexMap(nextIFD);
       JSONObject displayAndComments = VirtualAcquisitionDisplay.getDisplaySettingsFromSummary(summaryMetadata_);
       JSONArray channels = displayAndComments.getJSONArray("Channels");
@@ -321,8 +343,7 @@ public class MultipageTiffReader {
       ByteBuffer buffer1 = readIntoBuffer(startOffset,8);
       int offsetHeader = buffer1.getInt(0);
       if ( offsetHeader != offsetHeaderVal) {
-         ReportingUtils.logError("Offset header incorrect, expected: " + offsetHeaderVal +"   found: " + offsetHeader);
-         return -1;
+         throw new IOException("Offset header incorrect, expected: " + offsetHeaderVal +"   found: " + offsetHeader);
       }
       return unsignInt(buffer1.getInt(4));     
    }

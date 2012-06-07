@@ -158,8 +158,7 @@ public class MultipageTiffWriter {
       writeIndexMap();
       writeDisplaySettings();
       writeComments();
-     //TODO: truncate empty space at end of file?
-
+              
       raFile_.setLength(filePosition_ + 8);
       //Dont close file channel and random access file becase Tiff reader still using them
       fileChannel_ = null;
