@@ -269,12 +269,11 @@ public class MicroscopeModel {
       for (int i = 0; i < availableDevices_.length; i++) {
          boolean include = true;
          for (int j = 0; j < availableHubs_.length; j++) {
-            if (availableHubs_[j].getLibrary().compareTo(
-                  availableDevices_[i].getLibrary()) == 0
-                  && !availableDevices_[i].isHub()) {
+            if (availableHubs_[j].getLibrary().compareTo(availableDevices_[i].getLibrary()) == 0 && !availableDevices_[i].isHub()) {
                include = false; // exclude devices that belong to hubs
             }
          }
+         
          if (include)
             compactList.add(availableDevices_[i]);
       }

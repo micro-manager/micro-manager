@@ -83,9 +83,8 @@ import org.micromanager.api.MMPlugin;
 import org.micromanager.api.ScriptInterface;
 import org.micromanager.api.MMListenerInterface;
 import org.micromanager.conf2.ConfiguratorDlg2;
-import org.micromanager.conf.ConfiguratorDlg;
-import org.micromanager.conf.MMConfigFileException;
-import org.micromanager.conf.MicroscopeModel;
+import org.micromanager.conf2.MMConfigFileException;
+import org.micromanager.conf2.MicroscopeModel;
 import org.micromanager.graph.GraphData;
 import org.micromanager.graph.GraphFrame;
 import org.micromanager.navigation.CenterAndDragListener;
@@ -1307,9 +1306,7 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface, Device
       configuratorMenuItem.addActionListener(new ActionListener() {
 
          public void actionPerformed(ActionEvent arg0) {
-            // true - new wizard
-            // false - old wizard
-            runHardwareWizard(true);
+            runHardwareWizard();
          }
       });
       
@@ -4384,7 +4381,7 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface, Device
       ReportingUtils.showError(msg);
    }
 
-   private void runHardwareWizard(boolean v2) {
+   private void runHardwareWizard() {
       try {
          if (configChanged_) {
             Object[] options = {"Yes", "No"};
@@ -4410,29 +4407,20 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface, Device
          GUIUtils.preventDisplayAdapterChangeExceptions();
 
          // run Configurator
-         if (v2) {
-        	 ConfiguratorDlg2 cfg2 = null;
-        	 try {
-        		 setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
-        		 cfg2 = new ConfiguratorDlg2(core_, sysConfigFile_);
-        	 } finally {
-        		 setCursor(Cursor.getDefaultCursor());        		 
-        	 }
-        	 
-            cfg2.setVisible(true);
-            GUIUtils.preventDisplayAdapterChangeExceptions();
-
-            // re-initialize the system with the new configuration file
-            sysConfigFile_ = cfg2.getFileName();
-         } else {
-            ConfiguratorDlg configurator = new ConfiguratorDlg(core_, sysConfigFile_);
-            configurator.setVisible(true);
-            GUIUtils.preventDisplayAdapterChangeExceptions();
-            
-            // re-initialize the system with the new configuration file
-            sysConfigFile_ = configurator.getFileName();
+         ConfiguratorDlg2 cfg2 = null;
+         try {
+            setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+            cfg2 = new ConfiguratorDlg2(core_, sysConfigFile_);
+         } finally {
+            setCursor(Cursor.getDefaultCursor());        		 
          }
-         
+
+         cfg2.setVisible(true);
+         GUIUtils.preventDisplayAdapterChangeExceptions();
+
+         // re-initialize the system with the new configuration file
+         sysConfigFile_ = cfg2.getFileName();
+
          mainPrefs_.put(SYSTEM_CONFIG_FILE, sysConfigFile_);
          loadSystemConfiguration();
          GUIUtils.preventDisplayAdapterChangeExceptions();

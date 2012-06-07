@@ -57,11 +57,6 @@
 				<include name="**/*.gif"/>
 			</fileset>
 		</copy>
-		<copy todir="./build/org/micromanager/conf">
-			<fileset dir="./src/org/micromanager/conf" casesensitive="no">
-				<include name="**/*.html"/>
-			</fileset>
-		</copy>
 		<copy todir="./build/org/micromanager/conf2">
 			<fileset dir="./src/org/micromanager/conf2" casesensitive="no">
 				<include name="**/*.html"/>
