@@ -39,12 +39,14 @@ import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.lang.reflect.InvocationTargetException;
 import java.util.prefs.Preferences;
 import javax.swing.DefaultCellEditor;
 import javax.swing.JComboBox;
 import javax.swing.JFrame;
 
 import javax.swing.JTable;
+import javax.swing.SwingUtilities;
 
 
 
@@ -166,5 +168,17 @@ public class GUIUtils {
 
       Toolkit.getDefaultToolkit().addAWTEventListener(awtEventListener,
               AWTEvent.WINDOW_FOCUS_EVENT_MASK);
+   }
+
+   /*
+    * Wraps SwingUtilities.invokeAndWait so that if it is being called
+    * from the EDT, then the runnable is simply run.
+    */
+   public static void invokeAndWait(Runnable r) throws InterruptedException, InvocationTargetException {
+      if (SwingUtilities.isEventDispatchThread()) {
+         r.run();
+      } else {
+         SwingUtilities.invokeAndWait(r);
+      }
    }
 }
