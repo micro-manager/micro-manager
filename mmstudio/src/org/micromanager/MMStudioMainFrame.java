@@ -429,7 +429,7 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface, Device
                 }
             }
         });
-        usersGuideMenuItem.setText("User's Guide...");
+        usersGuideMenuItem.setText("User's Guide");
         helpMenu.add(usersGuideMenuItem);
         final JMenuItem configGuideMenuItem = new JMenuItem();
         configGuideMenuItem.addActionListener(new ActionListener() {
@@ -443,7 +443,7 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface, Device
                 }
             }
         });
-        configGuideMenuItem.setText("Configuration Guide...");
+        configGuideMenuItem.setText("Configuration Guide");
         helpMenu.add(configGuideMenuItem);
         if (!systemPrefs_.getBoolean(RegistrationDlg.REGISTRATION, false)) {
             final JMenuItem registerMenuItem = new JMenuItem();
@@ -474,7 +474,7 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface, Device
                 reportProblemDialog_.setVisible(true);
             }
         });
-        reportProblemMenuItem.setText("Report Problem");
+        reportProblemMenuItem.setText("Report Problem...");
         helpMenu.add(reportProblemMenuItem);
         final JMenuItem aboutMenuItem = new JMenuItem();
         aboutMenuItem.addActionListener(new ActionListener() {
@@ -490,7 +490,7 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface, Device
                 dlg.setVisible(true);
             }
         });
-        aboutMenuItem.setText("About Micromanager...");
+        aboutMenuItem.setText("About Micromanager");
         helpMenu.add(aboutMenuItem);
         menuBar_.validate();
     }
@@ -1125,7 +1125,7 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface, Device
             }.start();
          }
       });
-      openMenuItem.setText("Open (Virtual Mode for larger datasets)...");
+      openMenuItem.setText("Open (Virtual)...");
       fileMenu.add(openMenuItem);
 
       final JMenuItem openInRamMenuItem = new JMenuItem();
@@ -1140,7 +1140,7 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface, Device
             }.start();
          }
       });
-      openInRamMenuItem.setText("Open (in RAM for faster playback)...");
+      openInRamMenuItem.setText("Open (RAM)...");
       fileMenu.add(openInRamMenuItem);
 
       fileMenu.addSeparator();
