@@ -31,9 +31,9 @@
   (:import [org.micromanager AcqControlDlg MMStudioMainFrame]
            [org.micromanager.api AcquisitionEngine TaggedImageAnalyzer]
            [org.micromanager.acquisition AcquisitionWrapperEngine LiveAcq TaggedImageQueue
-                                         ProcessorStack SequenceSettings MMImageCache
+                                         ProcessorStack SequenceSettings
                                          MMAcquisition
-                                         TaggedImageStorageRam VirtualAcquisitionDisplay]
+                                         TaggedImageStorageRam]
            [org.micromanager.utils ReportingUtils]
            [mmcorej TaggedImage Configuration Metadata]
            [java.util.prefs Preferences]
@@ -818,8 +818,7 @@
       (let [live-acq (LiveAcq. mmc out-queue-2 (:summary-metadata @(.state this))
                                (:save settings) acq-eng gui)]
         (swap! (.state this) assoc 
-               :display live-acq
-               :image-cache (.getImageCache live-acq))
+               :display live-acq)
         (.start live-acq)
         (.getAcquisitionName live-acq)))))
 
@@ -872,10 +871,6 @@
   
 (defn -clearRunnables [this]
   (reset! attached-runnables (vec nil)))
-
-
-(defn -getImageCache [this]
-  (:image-cache @(.state this)))
 
 ;; testing
 
