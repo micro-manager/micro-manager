@@ -14,7 +14,7 @@
 
 (ns org.micromanager.browser.core
   (:import [javax.swing BorderFactory JButton JComboBox JFrame JLabel JOptionPane
-                        JList JPanel JScrollPane JSplitPane SortOrder
+                        JList JPanel JScrollPane JSplitPane SortOrder JCheckBox
                         JTable JTextField RowFilter RowSorter$SortKey SpringLayout]
            [javax.swing.table AbstractTableModel DefaultTableModel
                               TableColumn TableRowSorter]
@@ -56,6 +56,8 @@
 (def pending-data-sets (LinkedBlockingQueue.))
 
 (def stop (atom false))
+
+(def open-in-ram (atom false))
 
 (def prefs (.. Preferences userRoot
       (node "MMDataBrowser") (node "b3d184b1-c580-4f06-a1d9-b9cc00f12641")))
@@ -135,7 +137,7 @@
   (doseq [i (.getSelectedRows table)]
     (let [f (row-index-to-path i)]
       (if (.exists (File. f))
-        (.openAcquisitionData gui f false)
+        (.openAcquisitionData gui f @open-in-ram)
         (ReportingUtils/showError "File not found.")))))
 
 (defn listen-to-open [table]
@@ -635,6 +637,15 @@ inside an existing location in your collection."
   (close-window (@settings-window :frame))
   true)
 
+(defn create-checkbox
+  "Creats a checkbox and binds the value of an atom to the checkbox's selection state."
+  [text value-atom]
+  (let [cb (JCheckBox. text)]
+    (doto cb
+      (.addItemListener
+        (proxy [ItemListener] []
+          (itemStateChanged [_] (reset! value-atom (.isSelected cb))))))))
+
 (defn create-browser []
   (let [frame (JFrame.)
         panel (.getContentPane frame)
@@ -645,11 +656,13 @@ inside an existing location in your collection."
         refresh-button (create-button "Refresh" refresh-collection)
         settings-button (create-button "Settings..."
                           #(.show (:frame @settings-window)))
+        open-in-ram-checkbox (create-checkbox "Open in RAM" open-in-ram)
         collection-label (JLabel. "Collection:")
         collection-menu (JComboBox.)]
     (doto panel
        (.add scroll-pane) (.add search-field) (.add refresh-button)
        (.add settings-button) (.add search-label)
+       (.add open-in-ram-checkbox)
        (.add collection-label) (.add collection-menu))
     (doto table
       (.setAutoCreateRowSorter true)
@@ -663,6 +676,7 @@ inside an existing location in your collection."
     (constrain-to-parent scroll-pane :n 32 :w 5 :s -5 :e -5
                          search-field :n 5 :w 25 :n 28 :w 200
                          settings-button :n 5 :w 500 :n 28 :w 600
+                         open-in-ram-checkbox :n 5 :w 600 :n 28 :w 720
                          refresh-button :n 5 :w 405 :n 28 :w 500
                          search-label :n 5 :w 5 :n 28 :w 25
                          collection-label :n 5 :w 205 :n 28 :w 275
@@ -700,9 +714,9 @@ inside an existing location in your collection."
   ;(MMImageCache/addImageCacheListener (create-image-storage-listener))
   (awt-event
     (.show (@browser :frame))
-    (.setModel (:table @browser) (create-browser-table-model tags))
+    (.setModel (:table @browser) (create-browser-table-model ["Loading..."]))
     (let [collection-name (get-last-collection-name)]
-      (apply-data-and-settings collection-name (load-data-and-settings collection-name))))
+      (future (apply-data-and-settings collection-name (load-data-and-settings collection-name)))))
   browser)
 
 (defn show-browser []
