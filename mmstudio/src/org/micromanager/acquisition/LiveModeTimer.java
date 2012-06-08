@@ -268,14 +268,14 @@ public class LiveModeTimer {
                   }
 
                } catch (MMScriptException ex) {
+                  gui_.enableLiveMode(false);
                   ReportingUtils.showError(ex);
-                  gui_.enableLiveMode(false);
                } catch (JSONException exc) {
+                  gui_.enableLiveMode(false);
                   ReportingUtils.showError("Problem with image tags");
-                  gui_.enableLiveMode(false);
                } catch (Exception excp) {
-                  ReportingUtils.showError("Couldn't get tagged image from core");
                   gui_.enableLiveMode(false);
+                  ReportingUtils.showError("Couldn't get tagged image from core");
                }
             }
          }
