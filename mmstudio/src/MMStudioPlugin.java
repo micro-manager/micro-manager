@@ -40,9 +40,6 @@ import org.micromanager.acquisition.AcquisitionVirtualStack;
 import org.micromanager.utils.AutofocusManager;
 import org.micromanager.utils.JavaUtils;
 import org.micromanager.utils.ReportingUtils;
-import org.pushingpixels.substance.api.SubstanceLookAndFeel;
-import org.pushingpixels.substance.api.skin.GraphiteGlassSkin;
-import org.pushingpixels.substance.api.skin.RavenSkin;
 
 /**
  * ImageJ plugin wrapper for Micro-Manager.
