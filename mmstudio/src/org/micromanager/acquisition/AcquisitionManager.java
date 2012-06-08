@@ -14,6 +14,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 import org.micromanager.api.AcquisitionEngine;
 import org.micromanager.api.ImageCache;
+import org.micromanager.utils.GUIUtils;
 import org.micromanager.utils.MDUtils;
 
 import org.micromanager.utils.MMScriptException;
@@ -57,12 +58,23 @@ public class AcquisitionManager {
    }
    
   
-   public void closeAcquisition(String name) throws MMScriptException {
-      if (!acqs_.containsKey(name))
-         throw new MMScriptException("The name does not exist");
-      else {
-         acqs_.get(name).close();
-         acqs_.remove(name);
+   public void closeAcquisition(final String name) throws MMScriptException {
+      final MMScriptException ex[] = {null};
+      try {
+         GUIUtils.invokeAndWait(new Runnable() {
+            public void run() {
+               if (!acqs_.containsKey(name)) {
+                 ex[0] = new MMScriptException("The name does not exist");
+               } else {
+                  acqs_.get(name).close();
+                  acqs_.remove(name);
+               }
+            }
+         });
+         if (ex[0] != null)
+            throw ex[0];
+      } catch (Exception e) {
+         ReportingUtils.showError(e);
       }
    }
    

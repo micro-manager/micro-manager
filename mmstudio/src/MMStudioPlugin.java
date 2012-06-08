@@ -29,7 +29,9 @@ import ij.plugin.PlugIn;
 
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
+import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
+import javax.swing.plaf.MenuBarUI;
 
 import mmcorej.CMMCore;
 
@@ -38,49 +40,51 @@ import org.micromanager.acquisition.AcquisitionVirtualStack;
 import org.micromanager.utils.AutofocusManager;
 import org.micromanager.utils.JavaUtils;
 import org.micromanager.utils.ReportingUtils;
+import org.pushingpixels.substance.api.SubstanceLookAndFeel;
+import org.pushingpixels.substance.api.skin.GraphiteGlassSkin;
+import org.pushingpixels.substance.api.skin.RavenSkin;
 
 /**
  * ImageJ plugin wrapper for Micro-Manager.
  */
 public class MMStudioPlugin implements PlugIn, CommandListener {
+
    static MMStudioMainFrame frame_;
-    
+
    @SuppressWarnings("unchecked")
-   public void run(String arg) {
+   public void run(final String arg) {
+
+      SwingUtilities.invokeLater(new Runnable() {
+         public void run() {
+            try {
+               if (frame_ == null || !frame_.isRunning()) {
+                  // OS-specific stuff
+                  if (JavaUtils.isMac()) {
+                     System.setProperty("apple.laf.useScreenMenuBar", "true");
+                  }
+                  try {
+                     UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+                  } catch (Exception e) {
+                     ReportingUtils.logError(e);
+                  }
 
 
-      try {
-         if (frame_ == null || !frame_.isRunning()) {
-
-            // OS-specific stuff
-            if (JavaUtils.isMac()) {
-               System.setProperty("apple.laf.useScreenMenuBar", "true");
-
-               // TODO: this code looks bad!!
-               try {
-                  UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
-               } catch (Exception e) {
-                  ReportingUtils.logError(e);
-                  UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+                  // create and display control panel frame
+                  if (!IJ.versionLessThan("1.46e")) {
+                     Executer.addCommandListener(MMStudioPlugin.this);
+                  }
+                  frame_ = new MMStudioMainFrame(true);
+                  frame_.setVisible(true);
+                  frame_.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
                }
-            } else {
-               UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+               if (arg.equals("OpenAcq")) {
+                  frame_.openAcquisitionData(true);
+               }
+            } catch (Exception e) {
+               ReportingUtils.logError(e);
             }
-
-            // create and display control panel frame
-            if (!IJ.versionLessThan("1.46e")){
-               Executer.addCommandListener(this);
-            }
-            frame_ = new MMStudioMainFrame(true);
-            frame_.setVisible(true);
-            frame_.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
          }
-         if (arg.equals("OpenAcq")) {
-            frame_.openAcquisitionData(true);
-         }
-      } catch (Exception e) {
-         ReportingUtils.logError(e);
-      }
+      });
    }
     
    public String commandExecuting(String command) { 
