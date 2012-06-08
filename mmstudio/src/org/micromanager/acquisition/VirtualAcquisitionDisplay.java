@@ -423,7 +423,7 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
          Runnable runnable = new Runnable() {
             @Override
             public void run() {
-               //ImageJ requires this
+               //ImageJ requires (this
                getWindow().getCanvas().setImageUpdated();
                superDraw();
             }
@@ -606,14 +606,11 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
 
          }
       };
-      if (SwingUtilities.isEventDispatchThread()) {
-         forcePaint.run();
-      } else {
-         try {
-            SwingUtilities.invokeAndWait(forcePaint);
-         } catch (Exception ex) {
-            ReportingUtils.logError(ex);
-         }
+
+      try {
+         GUIUtils.invokeAndWait(forcePaint);
+      } catch (Exception ex) {
+         ReportingUtils.logError(ex);
       }
    }
 
@@ -1090,7 +1087,7 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
       showImage(taggedImg.tags, waitForDisplay);
    }
 
-   public void showImage(JSONObject tags, boolean waitForDisplay) throws InterruptedException, InvocationTargetException {
+   public void showImage(final JSONObject tags, boolean waitForDisplay) throws InterruptedException, InvocationTargetException {
       updateWindowTitleAndStatus();
 
       if (tags == null) {
@@ -1098,7 +1095,15 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
       }
 
       if (hyperImage_ == null) {
-         startup(tags);
+         GUIUtils.invokeAndWait(new Runnable() {
+            public void run() {
+               try {
+                  startup(tags);
+               } catch (Exception e) {
+                  ReportingUtils.logError(e);
+               }
+            }
+         });
       }
 
       int channel = 0, frame = 0, slice = 0, position = 0, superChannel = 0;
@@ -1921,7 +1926,17 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
 
    public void show() {
       if (hyperImage_ == null) {
-         startup(null);
+         try {
+            GUIUtils.invokeAndWait(new Runnable() {
+
+               public void run() {
+                  startup(null);
+               }
+            });
+         } catch (Exception ex) {
+            ReportingUtils.logError(ex);
+         }
+
       }
       hyperImage_.show();
       hyperImage_.getWindow().toFront();
