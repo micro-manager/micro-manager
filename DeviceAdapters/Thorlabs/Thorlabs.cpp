@@ -87,6 +87,10 @@ const unsigned char getVelocityProfileXSgn = 0x15;
 // set velocity profile X
 const unsigned char setVelocityProfileXCmd[cmdLength] = {0x13, 0x04, 0x0E, 0x00, 0xA1, 0x01};
 
+// server alive
+const unsigned char serverAliveX[cmdLength] = {0x92, 0x04, 0x00, 0x00, 0x21, 0x01};
+const unsigned char serverAliveY[cmdLength] = {0x92, 0x04, 0x00, 0x00, 0x22, 0x01};
+
 using namespace std;
 ///////////////////////////////////////////////////////////////////////////////
 // Utility
@@ -938,6 +942,7 @@ int XYStage::MoveBlocking(long x, long y, bool relative)
 
    // send command to X axis
    ClearPort(*this, *GetCoreCallback(), port_);
+   SetCommand(serverAliveX, cmdLength);
    int ret = SetCommand(relative ? setRelPositionXCmd : setPositionXCmd, cmdLength);
    if (ret != DEVICE_OK)
       return ret;
@@ -952,6 +957,7 @@ int XYStage::MoveBlocking(long x, long y, bool relative)
       return ret;
 
    //...and then to y axis
+   SetCommand(serverAliveY, cmdLength);
    ret = SetCommand(GenerateYCommand(relative ? setRelPositionXCmd : setPositionXCmd), cmdLength);
    if (ret != DEVICE_OK)
       return ret;
