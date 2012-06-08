@@ -336,8 +336,6 @@ public interface AcquisitionEngine {
 
    public long getNextWakeTime();
    public boolean isFinished();
-   public ImageCache getImageCache();
-
    
    /*
     * Attach a runnable to the acquisition engine. Each index (f, p, c, s) can

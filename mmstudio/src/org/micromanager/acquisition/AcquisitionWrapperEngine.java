@@ -311,9 +311,6 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
       return pipeline_.nextWakeTime();
    }
 
-   public ImageCache getImageCache() {
-      return pipeline_.getImageCache();
-   }
 
 //////////////////// Setters and Getters ///////////////////////////////
    public void setCore(CMMCore core_, AutofocusManager afMgr) {

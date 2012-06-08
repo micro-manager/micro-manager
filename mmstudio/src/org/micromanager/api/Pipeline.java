@@ -25,5 +25,4 @@ public interface Pipeline {
    public void attachRunnable(int frame, int position,
                               int slice, int channel, Runnable runnable);
    public void clearRunnables();
-   public ImageCache getImageCache();
 }
