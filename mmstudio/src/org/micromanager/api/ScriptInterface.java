@@ -1004,4 +1004,13 @@ public interface ScriptInterface {
     */
    public void enableRoiButtons(final boolean enabled);
 
+   /**
+    * Set the format for saving images to disk.  Images can be written to disk one per a file
+    * or multiple images per file.  Using multiple images per file should be faster on most systems
+    * @param imageSavingClass use either org.micromanager.acquisition.TaggedImageStorageDiskDefault.class
+    * for single-image files of org.micromanager.acquisition.TaggedImageStorageMultipageTiff.class for 
+    * multi-image files
+    */
+   public void setImageSavingFormat(Class imageSavingClass) throws MMScriptException;
+   
 }

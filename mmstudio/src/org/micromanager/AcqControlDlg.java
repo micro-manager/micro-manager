@@ -47,6 +47,8 @@ import javax.swing.event.TableModelListener;
 import javax.swing.table.*;
 import mmcorej.CMMCore;
 import org.micromanager.acquisition.ComponentTitledBorder;
+import org.micromanager.acquisition.TaggedImageStorageDiskDefault;
+import org.micromanager.acquisition.TaggedImageStorageMultipageTiff;
 import org.micromanager.api.AcquisitionEngine;
 import org.micromanager.api.ScriptInterface;
 import org.micromanager.utils.DisplayMode;
@@ -98,6 +100,8 @@ public class AcqControlDlg extends JFrame implements PropertyChangeListener {
    private NumberFormat numberFormat_;
    private JLabel namePrefixLabel_;
    private JLabel saveTypeLabel_;
+   private JRadioButton singleButton_;
+   private JRadioButton multiButton_;
    private JLabel rootLabel_;
    private JButton browseRootButton_;
    private JLabel displayMode_;
@@ -1303,12 +1307,36 @@ public class AcqControlDlg extends JFrame implements PropertyChangeListener {
       nameField_.setBounds(90, 55, 354, 22);
       savePanel_.add(nameField_);
       
-      saveTypeLabel_ = new JLabel("Test text");         
+      saveTypeLabel_ = new JLabel("Saving format: ");         
       saveTypeLabel_.setFont(new Font("Arial", Font.PLAIN, 10));
-      saveTypeLabel_.setBounds(10,80, 500,22);
+      saveTypeLabel_.setBounds(10,80, 100,22);
       savePanel_.add(saveTypeLabel_);
-      updateSaveTypeLabel();
 
+      
+      singleButton_ = new JRadioButton("Single-image files");
+      singleButton_.setFont(new Font("Arial", Font.PLAIN, 10));
+      singleButton_.setBounds(110,80,150,22);
+      savePanel_.add(singleButton_);
+      singleButton_.addActionListener(new ActionListener() {
+         @Override
+         public void actionPerformed(ActionEvent e) {
+            ImageUtils.setImageStorageClass(TaggedImageStorageDiskDefault.class);
+         }});
+
+      multiButton_ = new JRadioButton("Multi-image files");
+      multiButton_.setFont(new Font("Arial", Font.PLAIN, 10));      
+      multiButton_.setBounds(260,80,200,22);
+      savePanel_.add(multiButton_);
+      multiButton_.addActionListener(new ActionListener() {
+         @Override
+         public void actionPerformed(ActionEvent e) {
+            ImageUtils.setImageStorageClass(TaggedImageStorageMultipageTiff.class);
+         }});
+      
+      ButtonGroup buttonGroup = new ButtonGroup();
+      buttonGroup.add(singleButton_);
+      buttonGroup.add(multiButton_);
+      updateSavingTypeButtons();
 
       JScrollPane commentScrollPane = new JScrollPane();
       commentScrollPane.setBounds(10, 28, 485, 50);
@@ -1485,14 +1513,6 @@ public class AcqControlDlg extends JFrame implements PropertyChangeListener {
       }
    }
 
-   public void updateSaveTypeLabel() {
-      if (MMStudioMainFrame.getInstance().getMultipageTiffSaving()) {
-         saveTypeLabel_.setText("Save type: multiple images per file (change in Tools--Options)");
-      } else {
-         saveTypeLabel_.setText("Save type: 1 image per file (change in Tools--Options)");
-      }
-   }
-
    public boolean inArray(String member, String[] group) {
       for (int i = 0; i < group.length; i++) {
          if (member.equals(group[i])) {
@@ -1500,6 +1520,14 @@ public class AcqControlDlg extends JFrame implements PropertyChangeListener {
          }
       }
       return false;
+   }
+   
+   public void updateSavingTypeButtons() {
+      if (ImageUtils.getImageStorageClass().equals(TaggedImageStorageDiskDefault.class)) {
+         singleButton_.setSelected(true);
+      } else if (ImageUtils.getImageStorageClass().equals(TaggedImageStorageMultipageTiff.class)) {
+         multiButton_.setSelected(true);
+      }
    }
 
    public void close() {
@@ -2103,6 +2131,7 @@ public class AcqControlDlg extends JFrame implements PropertyChangeListener {
       channelTable_.setEnabled(selected);
       channelTable_.getTableHeader().setForeground(selected ? Color.black : Color.gray);
 
+      updateSavingTypeButtons();
 
       // update summary
       summaryTextArea_.setText(acqEng_.getVerboseSummary());

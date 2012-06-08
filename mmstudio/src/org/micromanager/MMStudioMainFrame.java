@@ -130,6 +130,8 @@ import org.micromanager.acquisition.AcquisitionWrapperEngine;
 import org.micromanager.acquisition.LiveModeTimer;
 import org.micromanager.acquisition.MMAcquisition;
 import org.micromanager.acquisition.MetadataPanel;
+import org.micromanager.acquisition.TaggedImageStorageDiskDefault;
+import org.micromanager.acquisition.TaggedImageStorageMultipageTiff;
 import org.micromanager.acquisition.VirtualAcquisitionDisplay;
 import org.micromanager.api.DeviceControlGUI;
 import org.micromanager.api.Pipeline;
@@ -2114,10 +2116,6 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface, Device
    
    public double getPreferredWindowMag() {
       return options_.windowMag_;
-   }
-   
-   public boolean getMultipageTiffSaving() {
-      return options_.multipageTiff_;
    }
 
    private void updateTitle() {
@@ -4288,6 +4286,17 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface, Device
             //MicroscopeModel.generateDeviceListFile();
             setCursor(oldc);
             return resultFile.toString();
+   }
+   
+   public void setImageSavingFormat(Class imageSavingClass) throws MMScriptException {
+      if (! (imageSavingClass.equals(TaggedImageStorageDiskDefault.class) || 
+              imageSavingClass.equals(TaggedImageStorageMultipageTiff.class))) {
+         throw new MMScriptException("Unrecognized saving class");
+      }
+      ImageUtils.setImageStorageClass(imageSavingClass);
+      if (acqControlWin_ != null) {
+         acqControlWin_.updateSavingTypeButtons();
+      }
    }
 
 

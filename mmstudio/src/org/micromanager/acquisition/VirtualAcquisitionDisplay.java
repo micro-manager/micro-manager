@@ -1441,8 +1441,8 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
       }
       final JPopupMenu menu = new JPopupMenu();
       saveTypePopup_ = menu;
-      JMenuItem single = new JMenuItem("1 image per a file");
-      JMenuItem multi = new JMenuItem("Multiple images per file (faster)");
+      JMenuItem single = new JMenuItem("Save as single-image files");
+      JMenuItem multi = new JMenuItem("Save as multi-image files");
       JMenuItem cancel = new JMenuItem("Cancel");
       menu.add(single);
       menu.add(multi);
@@ -2081,9 +2081,9 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
          }
 
          if (imageCache_.getDiskLocation() == null && promptToSave_ && !albumSaved_) {
-            String[] options = {"Save individually","Save grouped","No","Cancel"};
+            String[] options = {"Save single","Save multi","No","Cancel"};
             int result = JOptionPane.showOptionDialog(this, "This data set has not yet been saved.  "
-                    + "Do you want to save it?\nImages can be saved as individual files or grouped together (faster)",
+                    + "Do you want to save it?\nData can be saved as single-image files or multi-image files.",
                     "Micro-Manager",JOptionPane.DEFAULT_OPTION, JOptionPane.QUESTION_MESSAGE, null,
                     options, options[0]);
 
