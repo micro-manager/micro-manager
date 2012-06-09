@@ -405,35 +405,37 @@ public:
       return os.str();
    }
 
+   std::string readLine(std::istringstream &is)
+   {
+		char str[MM::MaxStrLength];
+		is.getline(str, MM::MaxStrLength);
+		return std::string(str);
+   }
+
    bool Restore(const char* stream)
    {
+	   
       tags_.clear();
       std::istringstream is(stream);
       size_t sz;
       is >> sz;
-
+      
       for (size_t i=0; i<sz; i++)
       {
          std::string id;
-         std::string stream;
          is >> id;
 
          if (id.compare("s") == 0)
          {
+			 
             MetadataSingleTag ms;
-            char str[MM::MaxStrLength];
-            // Read away empty line feed
-            is.getline(str, MM::MaxStrLength);
-            is.getline(str, MM::MaxStrLength);
-            ms.SetName(str);
-            is.getline(str, MM::MaxStrLength);
-            ms.SetDevice(str);
-            int ro;
-            is >> ro;
-            ms.SetReadOnly(ro == 1 ? true : false);
-            std::string strVal;
-            is >> strVal;
-            ms.SetValue(strVal.c_str());
+
+            readLine(is); // Read away empty line feed
+			
+			ms.SetName(readLine(is).c_str());
+            ms.SetDevice(readLine(is).c_str());
+            ms.SetReadOnly(atoi(readLine(is).c_str()) == 1 ? true : false);
+            ms.SetValue(readLine(is).c_str());
 
             MetadataTag* newTag = ms.Clone();
             tags_[ms.GetQualifiedName()] = newTag;
@@ -441,22 +443,15 @@ public:
          else if (id.compare("a") == 0)
          {
             MetadataArrayTag as;
-            std::string strVal;
-            is >> strVal;
-            as.SetName(strVal.c_str());
-            is >> strVal;
-            as.SetDevice(strVal.c_str());
-            int ro;
-            is >> ro;
-            as.SetReadOnly(ro == 1 ? true : false);
 
-            long sizea;
-            is >> sizea;
+            as.SetName(readLine(is).c_str());
+            as.SetDevice(readLine(is).c_str());
+			as.SetReadOnly(atoi(readLine(is).c_str()) == 1 ? true : false);
 
+            long sizea = atol(readLine(is).c_str());
             for (long i=0; i<sizea; i++)
             {
-               is >> strVal;
-               as.AddValue(strVal.c_str());
+               as.AddValue(readLine(is).c_str());
             }
 
             MetadataTag* newTag = as.Clone();
