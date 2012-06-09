@@ -414,12 +414,11 @@ public:
 
    bool Restore(const char* stream)
    {
-	   
       tags_.clear();
       std::istringstream is(stream);
       size_t sz;
       is >> sz;
-      
+
       for (size_t i=0; i<sz; i++)
       {
          std::string id;
@@ -427,12 +426,12 @@ public:
 
          if (id.compare("s") == 0)
          {
-			 
+
             MetadataSingleTag ms;
 
             readLine(is); // Read away empty line feed
-			
-			ms.SetName(readLine(is).c_str());
+
+            ms.SetName(readLine(is).c_str());
             ms.SetDevice(readLine(is).c_str());
             ms.SetReadOnly(atoi(readLine(is).c_str()) == 1 ? true : false);
             ms.SetValue(readLine(is).c_str());
@@ -446,7 +445,7 @@ public:
 
             as.SetName(readLine(is).c_str());
             as.SetDevice(readLine(is).c_str());
-			as.SetReadOnly(atoi(readLine(is).c_str()) == 1 ? true : false);
+            as.SetReadOnly(atoi(readLine(is).c_str()) == 1 ? true : false);
 
             long sizea = atol(readLine(is).c_str());
             for (long i=0; i<sizea; i++)
