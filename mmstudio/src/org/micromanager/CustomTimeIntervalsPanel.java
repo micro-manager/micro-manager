@@ -40,6 +40,7 @@ import javax.swing.table.AbstractTableModel;
 import javax.swing.table.DefaultTableCellRenderer;
 
 import org.micromanager.api.AcquisitionEngine;
+import org.micromanager.api.ScriptInterface;
 import org.micromanager.utils.MMDialog;
 import org.micromanager.utils.TooltipTextMaker;
 
@@ -56,7 +57,7 @@ public class CustomTimeIntervalsPanel extends JPanel {
     private JCheckBox useIntervalsCheckBox_;
     private JTabbedPane window_;
 
-    public CustomTimeIntervalsPanel(AcquisitionEngine acqEng, JTabbedPane window) {
+    public CustomTimeIntervalsPanel(AcquisitionEngine acqEng, JTabbedPane window, ScriptInterface gui) {
         super();
         window_ = window;
         acqEng_ = acqEng;
@@ -64,9 +65,10 @@ public class CustomTimeIntervalsPanel extends JPanel {
         createButtons();
         createInfoPanel();
         configureLayout();
-        MMStudioMainFrame gui = MMStudioMainFrame.getInstance();
-        setBackground(gui.getBackgroundColor());
-        gui.addMMBackgroundListener(this);
+        if (gui != null) {
+        	setBackground(gui.getBackgroundColor());
+        	gui.addMMBackgroundListener(this);
+        }
 
     }
 

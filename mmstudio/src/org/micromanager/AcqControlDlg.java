@@ -2287,7 +2287,7 @@ public class AcqControlDlg extends JFrame implements PropertyChangeListener {
 
    private void showAdvancedDialog() {
       if (advancedOptionsWindow_ == null) {
-         advancedOptionsWindow_ = new AdvancedOptionsDialog(acqEng_);
+         advancedOptionsWindow_ = new AdvancedOptionsDialog(acqEng_,gui_);
       }
       advancedOptionsWindow_.setVisible(true);
    }

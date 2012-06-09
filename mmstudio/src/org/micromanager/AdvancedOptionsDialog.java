@@ -13,6 +13,7 @@ import javax.swing.JTabbedPane;
 
 
 import org.micromanager.api.AcquisitionEngine;
+import org.micromanager.api.ScriptInterface;
 import org.micromanager.utils.MMDialog;
 
 public class AdvancedOptionsDialog extends MMDialog {
@@ -23,7 +24,7 @@ public class AdvancedOptionsDialog extends MMDialog {
     private JPanel closeButtonPanel_;
     private CustomTimeIntervalsPanel customTimeIntervalsPanel_;
 
-    public AdvancedOptionsDialog(AcquisitionEngine acqEng) {
+    public AdvancedOptionsDialog(AcquisitionEngine acqEng, ScriptInterface gui) {
         super();
         this.setModal(true);
         acqEng_ = acqEng;
@@ -37,7 +38,7 @@ public class AdvancedOptionsDialog extends MMDialog {
         this.setMinimumSize(new Dimension(600,400));
 
         tabbedPane_ = new JTabbedPane();
-        customTimeIntervalsPanel_ = new CustomTimeIntervalsPanel(acqEng_,tabbedPane_);
+        customTimeIntervalsPanel_ = new CustomTimeIntervalsPanel(acqEng_,tabbedPane_, gui);
 
         tabbedPane_.add("Custom time intervals", customTimeIntervalsPanel_);
 //        tabbedPane_.add("More coming soon", new JLabel());
