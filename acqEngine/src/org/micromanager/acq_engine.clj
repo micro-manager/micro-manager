@@ -2,7 +2,7 @@
 ; PROJECT:      Micro-Manager
 ; SUBSYSTEM:    mmstudio acquisition engine
 ; ----------------------------------------------------------------------------
-; AUTHOR:       Arthur Edelstein, arthuredelstein@gmail.com, 2010-2011
+; AUTHOR:       Arthur Edelstein, arthuredelstein@gmail.com, 2010-2012
 ;               Developed from the acq eng by Nenad Amodaj and Nico Stuurman
 ; COPYRIGHT:    University of California, San Francisco, 2006-2011
 ; LICENSE:      This file is distributed under the BSD license.
@@ -46,10 +46,11 @@
            [javax.swing SwingUtilities]
            [ij ImagePlus])
    (:gen-class
-     :name org.micromanager.AcqEngine
-     :implements [org.micromanager.api.Pipeline]
+     :name org.micromanager.AcquisitionEngine2010
+     :implements [org.micromanager.api.IAcquisitionEngine2010]
      :init init
-     :methods [[runSilent [] java.util.Queue]]
+     :constructors {[org.micromanager.api.ScriptInterface] []}
+     :methods [[runSilent [] java.util.concurrent.BlockingQueue]]
      :state state))
 
 ;; test utils
@@ -778,52 +779,34 @@
     (def x img)
     (.addToAlbum gui (make-TaggedImage img))))
 
-
-(defn run-acquisition-with-processors [this settings acq-eng cleanup?]
-  (def last-acq this)
-  (def eng acq-eng)
-  (swap! (.state this) assoc :stop false :pause false :finished false)
-  (let [out-queue (LinkedBlockingQueue. 10)]
-    (reset! (.state this) nil)
-    (def outq out-queue)
-    (let [acq-thread (Thread. #(run-acquisition this settings out-queue cleanup?)
-                              "Acquisition Engine Thread (Clojure)")
-          processors (ProcessorStack. out-queue (.getTaggedImageProcessors acq-eng))
-          out-queue-2 (.begin processors)]
-      (swap! (.state this) assoc
-             :acq-thread acq-thread
-             :summary-metadata (make-summary-metadata settings))
-      (when-not (:stop @(.state this))
-        (.start acq-thread))
-      out-queue-2)))
-
-
 ;; java interop -- implements org.micromanager.api.Pipeline
 
-(defn -init []
-  [[] (atom {:stop false})])
+(defn -init [script-gui]
+  [[] (do (load-mm script-gui)
+          (atom {:stop false}))])
 
-(defn -runSilent [this]
-  (load-mm)
-  (let [acq-eng (.getAcquisitionEngine gui)
-        acq-settings (.getSequenceSettings acq-eng)
-        settings (convert-settings acq-settings)]
-    (run-acquisition-with-processors this settings acq-eng true)))
-
-(defn -run [this acq-settings acq-eng]
-  (load-mm)
+(defn -run [this acq-settings]
+  (def last-acq this)
+  (reset! (.state this) {:stop false :pause false :finished false})
   (let [settings (convert-settings acq-settings)
-        out-queue-2 (run-acquisition-with-processors this settings acq-eng true)]
+        out-queue (LinkedBlockingQueue. 10)
+        acq-thread (Thread. #(run-acquisition this settings out-queue true)
+                            "AcquisitionSequence2010 Thread (Clojure)")]
+    (reset! (.state this)
+            {:stop false
+             :pause false
+             :finished false
+             :acq-thread acq-thread
+             :summary-metadata (make-summary-metadata settings)})
+    (def outq out-queue)
     (when-not (:stop @(.state this))
-      (let [live-acq (LiveAcq. mmc out-queue-2 (:summary-metadata @(.state this))
-                               (:save settings) acq-eng gui)]
-        (swap! (.state this) assoc 
-               :display live-acq)
-        (.start live-acq)
-        (.getAcquisitionName live-acq)))))
+      (.start acq-thread)
+      out-queue)))
+
+(defn -getSummaryMetadata [this]
+  (:summary-metadata @(.state this)))
 
 (defn -acquireSingle [this]
-  (load-mm)
   (add-to-album))
 
 (defn -pause [this]

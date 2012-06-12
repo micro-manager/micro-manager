@@ -134,7 +134,7 @@ import org.micromanager.acquisition.TaggedImageStorageDiskDefault;
 import org.micromanager.acquisition.TaggedImageStorageMultipageTiff;
 import org.micromanager.acquisition.VirtualAcquisitionDisplay;
 import org.micromanager.api.DeviceControlGUI;
-import org.micromanager.api.Pipeline;
+import org.micromanager.api.IAcquisitionEngine2010;
 import org.micromanager.utils.FileDialogs;
 import org.micromanager.utils.FileDialogs.FileType;
 import org.micromanager.utils.HotKeysDialog;
@@ -268,9 +268,9 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface, Device
                  "Micro-Manager Image Location",
                  System.getProperty("user.home") + "/Untitled",
                  false, (String[]) null);
-   private Thread pipelineClassLoadingThread_ = null;
-   private Class pipelineClass_ = null;
-   private Pipeline acquirePipeline_ = null;
+   private Thread acquisitionEngine2010LoadingThread = null;
+   private Class acquisitionEngine2010Class = null;
+   private IAcquisitionEngine2010 acquisitionEngine2010 = null;
    private final JSplitPane splitPane_;
    private volatile boolean ignorePropertyChanges_; 
 
@@ -619,18 +619,18 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface, Device
 
    private void startLoadingPipelineClass() {
       Thread.currentThread().setContextClassLoader(this.getClass().getClassLoader());
-      pipelineClassLoadingThread_ = new Thread("Pipeline Class loading thread") {
+      acquisitionEngine2010LoadingThread = new Thread("Pipeline Class loading thread") {
          @Override
          public void run() {
             try {
-               pipelineClass_  = Class.forName("org.micromanager.AcqEngine");
+               acquisitionEngine2010Class  = Class.forName("org.micromanager.AcquisitionEngine2010");
             } catch (Exception ex) {
                ReportingUtils.logError(ex);
-               pipelineClass_ = null;
+               acquisitionEngine2010Class = null;
             }
          }
       };
-      pipelineClassLoadingThread_.start();
+      acquisitionEngine2010LoadingThread.start();
    }
 
    public ImageCache getAcquisitionImageCache(String acquisitionName) throws MMScriptException {
@@ -4219,13 +4219,13 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface, Device
       return core_;
    }
 
-   public Pipeline getPipeline() {
+   public IAcquisitionEngine2010 getPipeline() {
       try {
-         pipelineClassLoadingThread_.join();
-         if (acquirePipeline_ == null) {
-            acquirePipeline_ = (Pipeline) pipelineClass_.newInstance();
+         acquisitionEngine2010LoadingThread.join();
+         if (acquisitionEngine2010 == null) {
+            acquisitionEngine2010 = (IAcquisitionEngine2010) acquisitionEngine2010Class.getConstructors()[0].newInstance(this);
          }
-         return acquirePipeline_;
+         return acquisitionEngine2010;
       } catch (Exception e) {
          ReportingUtils.logError(e);
          return null;

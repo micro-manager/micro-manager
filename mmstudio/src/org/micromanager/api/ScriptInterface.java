@@ -1012,5 +1012,11 @@ public interface ScriptInterface {
     * multi-image files
     */
    public void setImageSavingFormat(Class imageSavingClass) throws MMScriptException;
+
+   /*
+    * Returns true if the user has chosen to allow MM to autoreload devices
+    * that throw an error.
+    */
+   public boolean getAutoreloadOption();
    
 }

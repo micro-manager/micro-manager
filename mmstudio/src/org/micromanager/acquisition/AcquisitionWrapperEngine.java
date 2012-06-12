@@ -19,7 +19,7 @@ import org.micromanager.MMStudioMainFrame;
 import org.micromanager.api.AcquisitionEngine;
 import org.micromanager.api.DataProcessor;
 import org.micromanager.api.ImageCache;
-import org.micromanager.api.Pipeline;
+import org.micromanager.api.IAcquisitionEngine2010;
 import org.micromanager.api.ScriptInterface;
 import org.micromanager.navigation.PositionList;
 import org.micromanager.utils.AcqOrderMode;
@@ -64,7 +64,7 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
    private List<DataProcessor<TaggedImage>> taggedImageProcessors_;
    private List<Class> imageRequestProcessors_;
    private boolean absoluteZ_;
-   private Pipeline pipeline_;
+   private IAcquisitionEngine2010 pipeline_;
    private ArrayList<Double> customTimeIntervalsMs_;
    private boolean useCustomIntervals_;
 
@@ -79,7 +79,7 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
       return runPipeline(getSequenceSettings());
    }
 
-   public Pipeline getPipeline() {
+   public IAcquisitionEngine2010 getPipeline() {
       if (pipeline_ == null) {
          pipeline_ = gui_.getPipeline();
       }
@@ -88,7 +88,13 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
 
    public String runPipeline(SequenceSettings acquisitionSettings) {
       try {
-         return getPipeline().run(acquisitionSettings, this);
+         DefaultTaggedImagePipeline taggedImagePipeline = new DefaultTaggedImagePipeline(
+                 getPipeline(),
+                 acquisitionSettings,
+                 taggedImageProcessors_,
+                 gui_,
+                 acquisitionSettings.save);
+         return taggedImagePipeline.acqName_;
       } catch (Throwable ex) {
          ReportingUtils.showError(ex);
          return null;

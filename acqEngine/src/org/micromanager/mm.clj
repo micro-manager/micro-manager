@@ -35,7 +35,9 @@
 
 (defn load-mm
   "Load Micro-Manager gui and mmc objects."
-  ([gui] (def mmc (.getMMCore gui)))
+  ([gui]
+    (def gui gui)
+    (def mmc (.getMMCore gui)))
   ([] (def gui (MMStudioMainFrame/getInstance))
       (load-mm gui)))
 

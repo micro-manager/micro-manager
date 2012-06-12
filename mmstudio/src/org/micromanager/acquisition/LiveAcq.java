@@ -4,21 +4,13 @@
  */
 package org.micromanager.acquisition;
 
-import java.io.File;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.TimeUnit;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-import mmcorej.CMMCore;
 import mmcorej.TaggedImage;
 import org.json.JSONObject;
 import org.micromanager.MMStudioMainFrame;
-import org.micromanager.api.AcquisitionEngine;
 import org.micromanager.api.ImageCache;
 import org.micromanager.api.ScriptInterface;
-import org.micromanager.api.TaggedImageStorage;
-import org.micromanager.utils.ImageUtils;
-import org.micromanager.utils.JavaUtils;
 import org.micromanager.utils.MMScriptException;
 import org.micromanager.utils.ReportingUtils;
 
@@ -29,22 +21,15 @@ import org.micromanager.utils.ReportingUtils;
 public class LiveAcq  {
 
    private static int untitledID_ = 0;
-   protected final CMMCore core_;
-   private boolean diskCached_ = false;
    private BlockingQueue<TaggedImage> imageProducingQueue_;
    private ImageCache imageCache_ = null;
    private String acqName_;
 
-   public LiveAcq(CMMCore core,
-           BlockingQueue<TaggedImage> imageProducingQueue,
-           JSONObject summaryMetadata,
-           boolean diskCached,
-           AcquisitionEngine eng,
-           ScriptInterface gui) {
-      core_ = core;
-      diskCached_ = diskCached;
+   public LiveAcq(BlockingQueue<TaggedImage> imageProducingQueue,
+                  JSONObject summaryMetadata,
+                  ScriptInterface gui,
+                  boolean diskCached) {
       imageProducingQueue_ = imageProducingQueue;
-
       acqName_ = gui.createAcquisition(summaryMetadata, diskCached);
       try {
          imageCache_ = gui.getAcquisition(acqName_).getImageCache();

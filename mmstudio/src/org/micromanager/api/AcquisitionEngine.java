@@ -38,7 +38,11 @@ import org.micromanager.utils.ContrastSettings;
 import org.micromanager.utils.MMException;
 
 /**
- * Acquisition engine interface.
+ * The original Acquisition engine interface. This interface is still used
+ * by scripts and the AcqDialog and should be retained. The current
+ * implementation of the interface is the AcquisitionWrapperEngine,
+ * which simply adapters the old interface to an object implementing the
+ * new interface, IAcquisitionEngine2010.
  */
 public interface AcquisitionEngine {
    
