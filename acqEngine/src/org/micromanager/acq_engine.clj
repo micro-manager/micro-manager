@@ -28,7 +28,7 @@
         [org.micromanager.sequence-generator :only [generate-acq-sequence
                                                     make-property-sequences]])
   (:require [clojure.set])
-  (:import [org.micromanager AcqControlDlg MMStudioMainFrame]
+  (:import [org.micromanager AcqControlDlg]
            [org.micromanager.api AcquisitionEngine TaggedImageAnalyzer]
            [org.micromanager.acquisition AcquisitionWrapperEngine LiveAcq TaggedImageQueue
                                          ProcessorStack SequenceSettings
@@ -80,7 +80,7 @@
 (def pixel-type-depths {"GRAY8" 1 "GRAY16" 2 "RGB32" 4 "RGB64" 8})
 
 (defn check-for-serious-error []
-  (when (.. MMStudioMainFrame seriousErrorReported_ get)
+  (when (. gui isSeriousErrorReported)
     (swap! state assoc :stop true)))
 
 ;; time

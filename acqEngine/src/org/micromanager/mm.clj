@@ -14,8 +14,7 @@
 ;               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 
 (ns org.micromanager.mm
-  (:import [org.micromanager MMStudioMainFrame]
-           [org.micromanager.navigation MultiStagePosition]
+  (:import [org.micromanager.navigation MultiStagePosition]
            [mmcorej Configuration DoubleVector Metadata StrVector]
            [org.json JSONArray JSONObject]
            [java.text SimpleDateFormat]
@@ -37,9 +36,7 @@
   "Load Micro-Manager gui and mmc objects."
   ([gui]
     (def gui gui)
-    (def mmc (.getMMCore gui)))
-  ([] (def gui (MMStudioMainFrame/getInstance))
-      (load-mm gui)))
+    (def mmc (.getMMCore gui))))
 
 (defn rekey
   "Change the name of key kold to knew."

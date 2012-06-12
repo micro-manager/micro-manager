@@ -1018,5 +1018,10 @@ public interface ScriptInterface {
     * that throw an error.
     */
    public boolean getAutoreloadOption();
-   
+
+   /*
+    * Returns true if a serious error has been reported. Periodically
+    * called by the acquisition engine.
+    */
+   public boolean isSeriousErrorReported();
 }

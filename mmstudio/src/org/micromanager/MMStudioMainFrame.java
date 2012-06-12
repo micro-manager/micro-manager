@@ -281,7 +281,11 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface, Device
    public ImageWindow getImageWin() {
       return getSnapLiveWin();
    }
-   
+
+   public boolean isSeriousErrorReported() {
+      return seriousErrorReported_.get();
+   }
+
    public ImageWindow getSnapLiveWin() {
       return simpleDisplay_.getHyperImage().getWindow();
    }
