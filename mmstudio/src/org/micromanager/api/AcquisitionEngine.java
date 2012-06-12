@@ -30,6 +30,7 @@ import java.util.prefs.Preferences;
 
 import mmcorej.CMMCore;
 import mmcorej.TaggedImage;
+import org.json.JSONObject;
 
 import org.micromanager.navigation.PositionList;
 import org.micromanager.utils.AutofocusManager;
@@ -356,4 +357,8 @@ public interface AcquisitionEngine {
     * Remove runnables from the acquisition engine
     */
    public void clearRunnables();
+
+   public JSONObject getSummaryMetadata();
+
+   public ImageCache getImageCache();
 }

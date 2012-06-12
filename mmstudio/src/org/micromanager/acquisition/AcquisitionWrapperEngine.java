@@ -15,6 +15,7 @@ import mmcorej.Configuration;
 import mmcorej.PropertySetting;
 import mmcorej.StrVector;
 import mmcorej.TaggedImage;
+import org.json.JSONObject;
 import org.micromanager.MMStudioMainFrame;
 import org.micromanager.api.AcquisitionEngine;
 import org.micromanager.api.DataProcessor;
@@ -67,6 +68,8 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
    private IAcquisitionEngine2010 pipeline_;
    private ArrayList<Double> customTimeIntervalsMs_;
    private boolean useCustomIntervals_;
+   private JSONObject summaryMetadata_;
+   private ImageCache imageCache_;
 
    public AcquisitionWrapperEngine() {
       imageRequestProcessors_ = new ArrayList<Class>();
@@ -94,6 +97,8 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
                  taggedImageProcessors_,
                  gui_,
                  acquisitionSettings.save);
+         summaryMetadata_ = taggedImagePipeline.summaryMetadata_;
+         imageCache_ = taggedImagePipeline.imageCache_;
          return taggedImagePipeline.acqName_;
       } catch (Throwable ex) {
          ReportingUtils.showError(ex);
@@ -865,5 +870,13 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
 
    public boolean customTimeIntervalsEnabled() {
       return useCustomIntervals_;
+   }
+
+   public JSONObject getSummaryMetadata() {
+      return summaryMetadata_;
+   }
+
+   public ImageCache getImageCache() {
+      return imageCache_;
    }
 }

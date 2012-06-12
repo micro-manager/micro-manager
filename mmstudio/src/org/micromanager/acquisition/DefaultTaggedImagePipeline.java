@@ -10,6 +10,7 @@ import mmcorej.TaggedImage;
 import org.json.JSONObject;
 import org.micromanager.api.DataProcessor;
 import org.micromanager.api.IAcquisitionEngine2010;
+import org.micromanager.api.ImageCache;
 import org.micromanager.api.ScriptInterface;
 
 /**
@@ -23,6 +24,7 @@ public class DefaultTaggedImagePipeline {
 
    final String acqName_;
    final JSONObject summaryMetadata_;
+   final ImageCache imageCache_;
 
    public DefaultTaggedImagePipeline(
            IAcquisitionEngine2010 acqEngine,
@@ -39,6 +41,7 @@ public class DefaultTaggedImagePipeline {
               gui,
               diskCached);
       liveAcq.start();
+      imageCache_ = liveAcq.getImageCache();
       acqName_ = liveAcq.getAcquisitionName();
    }
 }
