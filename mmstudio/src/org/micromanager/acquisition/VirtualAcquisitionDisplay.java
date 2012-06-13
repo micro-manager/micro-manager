@@ -584,6 +584,16 @@ public final class VirtualAcquisitionDisplay implements ImageCacheListener {
       forcePainting();
    }
 
+   /*
+    * Set display to one of three modes:
+    * ij.CompositeImage.COMPOSITE
+    * ij.CompositeImage.GRAYSCALE
+    * ij.CompositeImage.COLOR
+    */
+   public void setDisplayMode(int displayMode) {
+      mdPanel_.getContrastPanel().setDisplayMode(displayMode);
+   }
+
    private void forcePainting() {
       Runnable forcePaint = new Runnable() {
 
