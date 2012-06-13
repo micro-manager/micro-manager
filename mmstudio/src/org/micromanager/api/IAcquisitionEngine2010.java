@@ -15,11 +15,22 @@ import org.micromanager.acquisition.SequenceSettings;
  * the clojure code in micromanager/acqEngine).
  */
 public interface IAcquisitionEngine2010 {
+
    /*
     * When run is called, the implementing class should run a multi-dimensional
     * acquisition according to the specifications in the argument sequenceSettings.
+    * Everything is returned to initial state after the acquisition is run (cleanup = true).
     */
    public BlockingQueue<TaggedImage> run(SequenceSettings sequenceSettings);
+
+   /*
+    * When run is called, the implementing class should run a multi-dimensional
+    * acquisition according to the specifications in the argument sequenceSettings.
+    * If cleanup is true, everything is returned to initial state after
+    * the acquisition is run.
+    */
+   public BlockingQueue<TaggedImage> run(SequenceSettings sequenceSettings, boolean cleanup);
+
 
 
    /*

@@ -784,23 +784,26 @@
   [[] (do (load-mm script-gui)
           (atom {:stop false}))])
 
-(defn -run [this acq-settings]
-  (def last-acq this)
-  (reset! (.state this) {:stop false :pause false :finished false})
-  (let [settings (convert-settings acq-settings)
-        out-queue (LinkedBlockingQueue. 10)
-        acq-thread (Thread. #(run-acquisition this settings out-queue true)
-                            "AcquisitionSequence2010 Thread (Clojure)")]
-    (reset! (.state this)
-            {:stop false
-             :pause false
-             :finished false
-             :acq-thread acq-thread
-             :summary-metadata (make-summary-metadata settings)})
-    (def outq out-queue)
-    (when-not (:stop @(.state this))
-      (.start acq-thread)
-      out-queue)))
+(defn -run
+  ([this acq-settings cleanup?]
+    (def last-acq this)
+    (reset! (.state this) {:stop false :pause false :finished false})
+    (let [settings (convert-settings acq-settings)
+          out-queue (LinkedBlockingQueue. 10)
+          acq-thread (Thread. #(run-acquisition this settings out-queue cleanup?)
+                              "AcquisitionSequence2010 Thread (Clojure)")]
+      (reset! (.state this)
+              {:stop false
+               :pause false
+               :finished false
+               :acq-thread acq-thread
+               :summary-metadata (make-summary-metadata settings)})
+      (def outq out-queue)
+      (when-not (:stop @(.state this))
+        (.start acq-thread)
+        out-queue)))
+  ([this acq-settings]
+    (-run this acq-settings true)))
 
 (defn -getSummaryMetadata [this]
   (:summary-metadata @(.state this)))

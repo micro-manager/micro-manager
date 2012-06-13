@@ -12,9 +12,10 @@
            (ij ImagePlus)
            (ij.process ImageProcessor)
            (mmcorej TaggedImage)
-           (org.micromanager AcqEngine MMStudioMainFrame)
+           (org.micromanager AcquisitionEngine2010 MMStudioMainFrame)
            (org.micromanager.utils GUIUpdater ImageUtils JavaUtils)
-           (org.micromanager.acquisition TaggedImageQueue))
+           (org.micromanager.acquisition TaggedImageQueue)
+           (org.micromanager.MMStudioMainFrame))
   (:use [org.micromanager.mm :only (core edt mmc gui load-mm json-to-data)]
         [slide-explorer.affine :only (set-destination-origin transform inverse-transform)]
         [slide-explorer.view :only (show add-to-memory-tiles
@@ -24,7 +25,7 @@
   (:require [slide-explorer.disk :as disk]
             [slide-explorer.reactive :as reactive]))
 
-(load-mm)
+(load-mm (MMStudioMainFrame/getInstance))
 
 ;; affine transforms
 
@@ -89,7 +90,7 @@
       (core getTaggedImage)))
 
 (defn acquire-tagged-image-sequence []
-  (let [q (.runSilent (AcqEngine.))]
+  (let [q (.run (AcquisitionEngine2010. gui) (.. gui getAcquisitionEngine getSequenceSettings) false)]
     (take-while #(not= % TaggedImageQueue/POISON)
                 (repeatedly #(.take q)))))
 
