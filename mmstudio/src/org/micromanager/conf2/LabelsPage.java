@@ -39,7 +39,6 @@ import javax.swing.ListSelectionModel;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.table.AbstractTableModel;
-import javax.swing.table.TableCellEditor;
 import javax.swing.table.TableModel;
 
 import org.micromanager.utils.GUIUtils;
@@ -115,10 +114,12 @@ public class LabelsPage extends PagePanel {
          
          for (int i=0; i<curDevice_.getNumberOfSetupLabels(); i++) {
             Label lab = curDevice_.getSetupLabel(i);
-            newLabels[lab.state_] = lab.label_;
-            if (labels_.length > lab.state_) {
-               model_.updateLabelsInPreset(curDevice_.getName(), labels_[lab.state_], 
-                       newLabels[lab.state_]);
+            if (lab != null) {
+               newLabels[lab.state_] = lab.label_;
+               if (labels_.length > lab.state_) {
+                   model_.updateLabelsInPreset(curDevice_.getName(), labels_[lab.state_],
+                           newLabels[lab.state_]);
+               }
             }
          }
          labels_ = newLabels;
@@ -285,7 +286,7 @@ public class LabelsPage extends PagePanel {
                if (orgLabs != null) {
                   for (int k=0; k<labels_.length; k++) {
                      selectedDevice.setSetupLabel(k, orgLabs[k]);
-                     labels_[k] = new String(orgLabs[k]);
+                     labels_[k] = orgLabs[k];
                   }
                   labelTableModel.fireTableStructureChanged();
                }
@@ -306,7 +307,7 @@ public class LabelsPage extends PagePanel {
                if (lab != null)
                   labels[i] = lab.label_;
                else
-                  labels[i] = new String("State-" + i);
+                  labels[i] = "State-" + i;
             }
             originalLabels_.put(dev.getName(), labels);
          }

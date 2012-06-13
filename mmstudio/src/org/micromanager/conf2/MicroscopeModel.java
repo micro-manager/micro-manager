@@ -26,7 +26,6 @@ package org.micromanager.conf2;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -122,7 +121,7 @@ public class MicroscopeModel {
 
    public MicroscopeModel() {
       devices_ = new ArrayList<Device>();
-      fileName_ = new String("");
+      fileName_ = "";
       availableDevices_ = new Device[0];
       availableHubs_ = new Device[0];
       configGroups_ = new Hashtable<String, ConfigGroup>();
@@ -188,7 +187,7 @@ public class MicroscopeModel {
     * directory Then assemble a list with DeviceLibraries on all these paths
     */
    public static StrVector getDeviceLibraries(CMMCore core) throws Exception {
-      return core.getDeviceLibraries();
+      return CMMCore.getDeviceLibraries();
    }
 
    /**
@@ -349,7 +348,9 @@ public class MicroscopeModel {
          Device dev = devices_.get(i);
          for (int j = 0; j < dev.getNumberOfSetupLabels(); j++) {
             Label l = dev.getSetupLabel(j);
-            core.defineStateLabel(dev.getName(), l.state_, l.label_);
+            if (l != null) {
+               core.defineStateLabel(dev.getName(), l.state_, l.label_);
+            }
          }
       }
    }
@@ -580,7 +581,7 @@ public class MicroscopeModel {
                      extTokens[i] = tokens[i];
 
                   }
-                  extTokens[3] = new String("");
+                  extTokens[3] = "";
                   tokens = extTokens;
                }
 
@@ -657,8 +658,7 @@ public class MicroscopeModel {
                         tokens[5]);
 
                } else {
-                  cg.addConfigSetting(tokens[2], tokens[3], tokens[4],
-                        new String(""));
+                  cg.addConfigSetting(tokens[2], tokens[3], tokens[4], "");
 
                }
             } else if (tokens[0].contentEquals(new StringBuffer()
@@ -981,9 +981,12 @@ public class MicroscopeModel {
             }
             for (int j = 0; j < dev.getNumberOfSetupLabels(); j++) {
                Label l = dev.getSetupLabel(j);
-               out.write(MMCoreJ.getG_CFGCommand_Label() + "," + dev.getName()
-                     + "," + l.state_ + "," + l.label_);
-               out.newLine();
+               // TODO: why is l sometimes null?  Should we worry?
+               if (l != null) {
+                  out.write(MMCoreJ.getG_CFGCommand_Label() + "," + dev.getName()
+                          + "," + l.state_ + "," + l.label_);
+                  out.newLine();
+               }
             }
          }
          out.newLine();
@@ -1198,7 +1201,7 @@ public class MicroscopeModel {
                core.unloadDevice(toRemove.get(i));
             } catch (Exception e) {
                // TODO Auto-generated catch block
-               e.printStackTrace();
+               ReportingUtils.logError(e);
             }
          }
       }
@@ -1280,7 +1283,7 @@ public class MicroscopeModel {
    String[] getSynchroList() {
       String synchro[] = new String[synchroDevices_.size()];
       for (int i = 0; i < synchroDevices_.size(); i++) {
-         synchro[i] = new String(synchroDevices_.get(i));
+         synchro[i] = synchroDevices_.get(i);
 
       }
       return synchro;
