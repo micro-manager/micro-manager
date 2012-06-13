@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.concurrent.BlockingQueue;
 import mmcorej.TaggedImage;
 import org.json.JSONObject;
+import org.micromanager.api.AcquisitionDisplay;
 import org.micromanager.api.DataProcessor;
 import org.micromanager.api.IAcquisitionEngine2010;
 import org.micromanager.api.ImageCache;
@@ -49,7 +50,7 @@ public class DefaultTaggedImagePipeline {
       // Set up the DataProcessor<TaggedImage> sequence
       ProcessorStack processorStack = new ProcessorStack((BlockingQueue) taggedImageQueue, imageProcessors);
       BlockingQueue<TaggedImage> taggedImageQueue2 = processorStack.begin();
-      
+
       // Create the default display
       acqName_ = gui.createAcquisition(summaryMetadata_, diskCached);
       MMAcquisition acq = gui.getAcquisition(acqName_);
@@ -60,4 +61,5 @@ public class DefaultTaggedImagePipeline {
       LiveAcq liveAcq = new LiveAcq(taggedImageQueue2, imageCache_);
       liveAcq.start();
    }
+
 }
