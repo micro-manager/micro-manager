@@ -50,7 +50,6 @@
      :implements [org.micromanager.api.IAcquisitionEngine2010]
      :init init
      :constructors {[org.micromanager.api.ScriptInterface] []}
-     :methods [[runSilent [] java.util.concurrent.BlockingQueue]]
      :state state))
 
 ;; test utils
