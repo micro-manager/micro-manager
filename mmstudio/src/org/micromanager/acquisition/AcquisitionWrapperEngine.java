@@ -873,14 +873,23 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
       return useCustomIntervals_;
    }
 
+   /*
+    * Returns the summary metadata associated with the most recent acquisition.
+    */
    public JSONObject getSummaryMetadata() {
       return summaryMetadata_;
    }
 
+   /*
+    * Returns the image cache associated with the most recent acquisition.
+    */
    public ImageCache getImageCache() {
       return imageCache_;
    }
 
+   /*
+    * Returns the display associated with the most recent acquisition.
+    */
    public VirtualAcquisitionDisplay getDisplay() {
       return display_;
    }

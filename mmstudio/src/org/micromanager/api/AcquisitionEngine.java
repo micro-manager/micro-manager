@@ -359,9 +359,18 @@ public interface AcquisitionEngine {
     */
    public void clearRunnables();
 
+   /*
+    * Get the summary metadata for the most recent acquisition.
+    */
    public JSONObject getSummaryMetadata();
 
+   /*
+    * Get the image cache for the most recent acquisition.
+    */
    public ImageCache getImageCache();
 
+   /*
+    * Get the display for the most recent acquisition.
+    */
    public VirtualAcquisitionDisplay getDisplay();
 }
