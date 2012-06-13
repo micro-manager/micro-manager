@@ -21,25 +21,28 @@ import org.micromanager.utils.ReportingUtils;
 public class LiveAcq  {
 
    private static int untitledID_ = 0;
-   private BlockingQueue<TaggedImage> imageProducingQueue_;
+   private final BlockingQueue<TaggedImage> imageProducingQueue_;
    private ImageCache imageCache_ = null;
-   private String acqName_;
+   private final String acqName_;
+   private final VirtualAcquisitionDisplay display_;
 
    public LiveAcq(BlockingQueue<TaggedImage> imageProducingQueue,
                   JSONObject summaryMetadata,
                   ScriptInterface gui,
-                  boolean diskCached) {
+                  boolean diskCached) throws MMScriptException {
       imageProducingQueue_ = imageProducingQueue;
       acqName_ = gui.createAcquisition(summaryMetadata, diskCached);
-      try {
-         imageCache_ = gui.getAcquisition(acqName_).getImageCache();
-      } catch (MMScriptException ex) {
-         ReportingUtils.showError(ex);
-      }
+         MMAcquisition acq = gui.getAcquisition(acqName_);
+         display_ = acq.getAcquisitionWindow();
+         imageCache_ = acq.getImageCache();
    }
 
    public String getAcquisitionName() {
       return acqName_;
+   }
+
+   public VirtualAcquisitionDisplay getDisplay() {
+      return display_;
    }
 
    public void start() {

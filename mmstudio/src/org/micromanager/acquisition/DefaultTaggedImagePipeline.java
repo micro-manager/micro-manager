@@ -12,6 +12,7 @@ import org.micromanager.api.DataProcessor;
 import org.micromanager.api.IAcquisitionEngine2010;
 import org.micromanager.api.ImageCache;
 import org.micromanager.api.ScriptInterface;
+import org.micromanager.utils.MMScriptException;
 
 /**
  * This is the default setup for the acquisition engine pipeline.
@@ -25,13 +26,14 @@ public class DefaultTaggedImagePipeline {
    final String acqName_;
    final JSONObject summaryMetadata_;
    final ImageCache imageCache_;
+   final VirtualAcquisitionDisplay display_;
 
    public DefaultTaggedImagePipeline(
            IAcquisitionEngine2010 acqEngine,
            SequenceSettings sequenceSettings,
            List<DataProcessor<TaggedImage>> imageProcessors,
            ScriptInterface gui,
-           boolean diskCached) throws ClassNotFoundException, InstantiationException, IllegalAccessException {
+           boolean diskCached) throws ClassNotFoundException, InstantiationException, IllegalAccessException, MMScriptException {
       BlockingQueue<TaggedImage> taggedImageQueue = acqEngine.run(sequenceSettings);
       ProcessorStack processorStack = new ProcessorStack((BlockingQueue) taggedImageQueue, imageProcessors);
       BlockingQueue<TaggedImage> taggedImageQueue2 = processorStack.begin();
@@ -42,6 +44,8 @@ public class DefaultTaggedImagePipeline {
               diskCached);
       liveAcq.start();
       imageCache_ = liveAcq.getImageCache();
+      display_ = liveAcq.getDisplay();
       acqName_ = liveAcq.getAcquisitionName();
+
    }
 }

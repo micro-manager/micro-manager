@@ -31,6 +31,7 @@ import java.util.prefs.Preferences;
 import mmcorej.CMMCore;
 import mmcorej.TaggedImage;
 import org.json.JSONObject;
+import org.micromanager.acquisition.VirtualAcquisitionDisplay;
 
 import org.micromanager.navigation.PositionList;
 import org.micromanager.utils.AutofocusManager;
@@ -361,4 +362,6 @@ public interface AcquisitionEngine {
    public JSONObject getSummaryMetadata();
 
    public ImageCache getImageCache();
+
+   public VirtualAcquisitionDisplay getDisplay();
 }

@@ -55,7 +55,7 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
    private String dirName_;
    private int numFrames_;
    private double interval_;
-   private LiveAcq display_;
+   private VirtualAcquisitionDisplay display_;
    private double minZStepUm_;
    private String comment_;
    private boolean saveFiles_;
@@ -99,6 +99,7 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
                  acquisitionSettings.save);
          summaryMetadata_ = taggedImagePipeline.summaryMetadata_;
          imageCache_ = taggedImagePipeline.imageCache_;
+         display_ = taggedImagePipeline.display_;
          return taggedImagePipeline.acqName_;
       } catch (Throwable ex) {
          ReportingUtils.showError(ex);
@@ -878,5 +879,9 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
 
    public ImageCache getImageCache() {
       return imageCache_;
+   }
+
+   public VirtualAcquisitionDisplay getAcquisitionDisplay() {
+      return display_;
    }
 }
