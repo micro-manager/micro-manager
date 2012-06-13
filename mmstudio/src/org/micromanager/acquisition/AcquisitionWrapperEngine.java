@@ -881,7 +881,7 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
       return imageCache_;
    }
 
-   public VirtualAcquisitionDisplay getAcquisitionDisplay() {
+   public VirtualAcquisitionDisplay getDisplay() {
       return display_;
    }
 }
