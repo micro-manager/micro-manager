@@ -28,24 +28,36 @@ public class DefaultTaggedImagePipeline {
    final ImageCache imageCache_;
    final VirtualAcquisitionDisplay display_;
 
+   /*
+    * This class creates the default sequence of modules
+    * that digest a TaggedImage. They are
+    * AcquisitionEngine2010 -> ProcessorStack -> LiveAcq -> ImageCache
+    *   -> VirtualAcquisitionDisplay
+    * Other kinds of pipelines can be set up in this way.
+    */
    public DefaultTaggedImagePipeline(
            IAcquisitionEngine2010 acqEngine,
            SequenceSettings sequenceSettings,
            List<DataProcessor<TaggedImage>> imageProcessors,
            ScriptInterface gui,
            boolean diskCached) throws ClassNotFoundException, InstantiationException, IllegalAccessException, MMScriptException {
+
+      // Start up the acquisition engine
       BlockingQueue<TaggedImage> taggedImageQueue = acqEngine.run(sequenceSettings);
+      summaryMetadata_ = acqEngine.getSummaryMetadata();
+
+      // Set up the DataProcessor<TaggedImage> sequence
       ProcessorStack processorStack = new ProcessorStack((BlockingQueue) taggedImageQueue, imageProcessors);
       BlockingQueue<TaggedImage> taggedImageQueue2 = processorStack.begin();
-      summaryMetadata_ = acqEngine.getSummaryMetadata();
-      LiveAcq liveAcq = new LiveAcq(taggedImageQueue2,
-              summaryMetadata_,
-              gui,
-              diskCached);
-      liveAcq.start();
-      imageCache_ = liveAcq.getImageCache();
-      display_ = liveAcq.getDisplay();
-      acqName_ = liveAcq.getAcquisitionName();
+      
+      // Create the default display
+      acqName_ = gui.createAcquisition(summaryMetadata_, diskCached);
+      MMAcquisition acq = gui.getAcquisition(acqName_);
+      display_ = acq.getAcquisitionWindow();
+      imageCache_ = acq.getImageCache();
 
+      // Start pumping images into the ImageCache
+      LiveAcq liveAcq = new LiveAcq(taggedImageQueue2, imageCache_);
+      liveAcq.start();
    }
 }

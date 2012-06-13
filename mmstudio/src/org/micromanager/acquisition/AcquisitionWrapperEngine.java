@@ -17,6 +17,7 @@ import mmcorej.StrVector;
 import mmcorej.TaggedImage;
 import org.json.JSONObject;
 import org.micromanager.MMStudioMainFrame;
+import org.micromanager.api.AcquisitionDisplay;
 import org.micromanager.api.AcquisitionEngine;
 import org.micromanager.api.DataProcessor;
 import org.micromanager.api.ImageCache;
@@ -890,7 +891,7 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
    /*
     * Returns the display associated with the most recent acquisition.
     */
-   public VirtualAcquisitionDisplay getDisplay() {
+   public AcquisitionDisplay getDisplay() {
       return display_;
    }
 }

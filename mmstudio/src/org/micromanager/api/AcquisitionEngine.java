@@ -372,5 +372,5 @@ public interface AcquisitionEngine {
    /*
     * Get the display for the most recent acquisition.
     */
-   public VirtualAcquisitionDisplay getDisplay();
+   public AcquisitionDisplay getDisplay();
 }

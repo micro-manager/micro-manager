@@ -6,7 +6,6 @@
 package org.micromanager.api;
 
 import mmcorej.TaggedImage;
-import org.micromanager.api.TaggedImageStorage;
 
 /**
  *

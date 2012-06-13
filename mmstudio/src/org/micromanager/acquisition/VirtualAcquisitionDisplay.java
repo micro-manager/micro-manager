@@ -21,6 +21,7 @@
 //
 package org.micromanager.acquisition;
 
+import org.micromanager.api.AcquisitionDisplay;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.micromanager.internalinterfaces.DisplayControls;
@@ -63,7 +64,7 @@ import org.micromanager.graph.MultiChannelHistograms;
 import org.micromanager.graph.SingleChannelHistogram;
 import org.micromanager.utils.*;
 
-public final class VirtualAcquisitionDisplay implements ImageCacheListener {
+public final class VirtualAcquisitionDisplay implements AcquisitionDisplay, ImageCacheListener {
 
    public static VirtualAcquisitionDisplay getDisplay(ImagePlus imgp) {
       ImageStack stack = imgp.getStack();
