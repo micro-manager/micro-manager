@@ -28,6 +28,8 @@
 (defn write-tile
   "Save a tile image to disk for the given key."
   [dir key processor]
+  (println "writing tile" key)
+  ;(try (throw (Exception.)) (catch Exception e (.printStackTrace e)))
   (image/write-processor (key-map-to-file-name dir key) processor))
 
 (def file-executor (reactive/single-threaded-executor))

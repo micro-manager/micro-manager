@@ -67,6 +67,15 @@
   [(int (* tile-zoom nx tile-width))
    (int (* tile-zoom ny tile-height))])
 
+(defn tile-in-pixel-rectangle?
+  [[nx ny] rectangle [tile-width tile-height]]
+  (let [nl (floor-int (/ (.x rectangle) tile-width))
+        nr (floor-int (/ (+ -1 (.getWidth rectangle) (.x rectangle)) tile-width))
+        nt (floor-int (/ (.y rectangle) tile-height))
+        nb (floor-int (/ (+ -1 (.getHeight rectangle) (.y rectangle)) tile-height))]
+    (and (<= nl nx nr)
+         (<= nt ny nb))))   
+
 (defn tiles-in-pixel-rectangle
   "Returns a list of tile indices found in a given pixel rectangle."
   [rectangle [tile-width tile-height]]
@@ -82,19 +91,41 @@
   	  "Converts the screen state coordinates to visible camera pixel coordinates."
   	  [{:keys [x y width height zoom]}]
   	  (Rectangle. (- x (/ width 2 zoom))
-                 	              (- y (/ height 2 zoom))
-                 	              (/ width zoom)
-                 	              (/ height zoom)))
+                 	    (- y (/ height 2 zoom))
+                 	    (/ width zoom)
+                 	    (/ height zoom)))
 
 
 (defn screen-rectangle
-  	  [{:keys [x y width height zoom]}]
-  	  (Rectangle. (- (* x zoom) (/ width 2))
-                 	    (- (* y zoom) (/ height 2))
-                 	    width
-                 	    height))
+  [{:keys [x y width height zoom]}]
+  (Rectangle. (- (* x zoom) (/ width 2))
+              (- (* y zoom) (/ height 2))
+              width
+              height))
 
 ;; TILING
+
+(defn evict-oldest
+  "Takes an atom containing a map and adds a watch such that whenever an item is added,
+   the oldest item is removed to keep the number of items less than or equal to limit."
+  [atom limit save?]
+  (let [tick (ref 0)
+        priority (ref {})]
+    (reactive/handle-added-items
+      atom
+      (fn [[key val]]
+        (when-let [oldest-item
+              (dosync
+                (alter tick inc)
+                (alter priority assoc key @tick)
+                (when (> (count @priority) limit)
+                  (let [oldest (apply min-key @priority (keys @priority))]
+                    (alter priority dissoc oldest)
+                    oldest)))]
+          (when save?
+            (disk/write-tile (disk/tile-dir atom) oldest-item (@atom oldest-item)))
+          (println "removing" oldest-item)
+          (swap! atom dissoc oldest-item))))))
 
 (defn propagate-tiles [tile-map-atom {:keys [zoom nx ny nz nt nc] :as indices}]
   (let [nx- (* 2 nx)
@@ -105,14 +136,13 @@
         get-parent-tile (fn [[nx ny]]
                           (let [dir ((meta tile-map-atom) :slide-explorer.main/directory)
                                 tile-index (assoc indices :zoom zoom-parent :nx nx :ny ny)]
-                            ;(println tile-index)
                             (or (@tile-map-atom tile-index) 
                                 (disk/read-tile dir tile-index))))
         abcd (map get-parent-tile [[nx- ny-]
                                    [nx+ ny-]
                                    [nx- ny+]
                                    [nx+ ny+]])]
-    (disk/add-tile tile-map-atom indices (apply merge-and-scale abcd))))
+    (swap! tile-map-atom assoc indices (apply merge-and-scale abcd))))
 
 (defn child-index [n]
   (floor-int (/ n 2)))
@@ -124,9 +154,10 @@
      (update-in [:zoom] / 2)))
 
 (defn add-to-memory-tiles [tile-map-atom indices tile]
-  ;(println "asdf")
+  ;(println "add-to-memory" indices)
+  ;(println (System/currentTimeMillis))
   (let [full-indices (assoc indices :zoom 1)]
-    (disk/add-tile tile-map-atom full-indices tile)
+   (swap! tile-map-atom assoc full-indices tile)
     (loop [new-indices (child-indices full-indices)]
       (when (<= MIN-ZOOM (:zoom new-indices))
         (propagate-tiles tile-map-atom new-indices)
@@ -384,6 +415,7 @@ to normal size."
       panel screen-state)
     ((juxt handle-zoom handle-dive watch-keys) frame screen-state)
     (run-background-overlay memory-tiles screen-state overlay-tiles)
+    ;(evict-oldest overlay-tiles 100 false)
     (repaint-on-change panel screen-state)
     (repaint-on-change panel memory-tiles)
     (repaint-on-change panel overlay-tiles)

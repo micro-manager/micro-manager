@@ -29,11 +29,19 @@
 
 ; ImageProcessor-related utilities
 
-(defn insert-image
+(defn insert-image!
   "Inserts one ImageProcessor into another."
   [proc-host proc-guest x-host y-host]
   (when proc-guest
-    (.insert proc-host proc-guest x-host y-host)))
+    (doto proc-host
+      (.insert proc-guest x-host y-host))))
+
+(defn half-size
+  [proc]
+  (when proc
+    (.resize proc
+             (/ (.getWidth proc) 2)
+             (/ (.getHeight proc) 2))))
 
 (defn black-processor-like
   "Creates an empty (black) image processor."
@@ -71,7 +79,7 @@
    and width and height w,h."
   [^ImageProcessor original x y w h]
   (doto (.createProcessor original w h)
-    (insert-image original (- x) (- y))))
+    (insert-image! original (- x) (- y))))
 
 (defn raw-to-tile
   "Takes a raw ImageProcessor and trims edges by amount overlap,
@@ -94,19 +102,19 @@
 ; 5.9 ms
 (defn merge-and-scale
   "Takes four ImageProcessors (tiles) and tiles them in a
-   2x2 mosaic with no gaps, then scales pixels to half size."
+   2x2 mosaic with no gaps, scaled to half size."
   [img1 img2 img3 img4]
   (let [test-img (or img1 img2 img3 img4)
         w (.getWidth test-img)
         h (.getHeight test-img)
-        large (.createProcessor test-img (* 2 w) (* 2 h))]
-    (doto large
-      (insert-image img1 0 0)
-      (insert-image img2 w 0)
-      (insert-image img3 0 h)
-      (insert-image img4 w h)
-      (.setInterpolationMethod ImageProcessor/BILINEAR))
-    (.resize large w h)))
+        dest (.createProcessor test-img w h)]
+    (doto dest
+      (.setInterpolationMethod ImageProcessor/BILINEAR)
+      (insert-image! (half-size img1) 0 0)
+      (insert-image! (half-size img2) (/ w 2) 0)
+      (insert-image! (half-size img3) 0 (/ h 2))
+      (insert-image! (half-size img4) (/ w 2) (/ h 2)))))
+
 
 ;; stats
  

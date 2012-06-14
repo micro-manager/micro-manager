@@ -18,8 +18,9 @@
            (org.micromanager.MMStudioMainFrame))
   (:use [org.micromanager.mm :only (core edt mmc gui load-mm json-to-data)]
         [slide-explorer.affine :only (set-destination-origin transform inverse-transform)]
-        [slide-explorer.view :only (show add-to-memory-tiles
-                                    pixel-rectangle screen-rectangle tiles-in-pixel-rectangle)]
+        [slide-explorer.view :only (show add-to-memory-tiles tile-in-pixel-rectangle?
+                                    pixel-rectangle screen-rectangle tiles-in-pixel-rectangle
+                                    evict-oldest)]
         [slide-explorer.image :only (show-image intensity-range lut-object)]
         [slide-explorer.tiles :only (floor-int center-tile tile-list offset-tiles)])
   (:require [slide-explorer.disk :as disk]
@@ -133,15 +134,11 @@
          [nx ny])))
 
 (defn next-tile [disk-tiles-index screen-state acquired-images [tile-width tile-height]]
-  (let [visible-tiles (set (tiles-in-pixel-rectangle (pixel-rectangle screen-state)
-                                                     [tile-width tile-height]))
-        already-acquired (unzoomed-tile-coords @acquired-images)
-        tiles-to-acquire (clojure.set/difference visible-tiles already-acquired)]
-    (when-not (empty? tiles-to-acquire)
-      (let [center-tile (center-tile [(:x screen-state) (:y screen-state)]
-                                     [tile-width tile-height])
-            trajectory (offset-tiles center-tile tile-list)]
-        (first (filter tiles-to-acquire trajectory))))))
+  (let [already-acquired (unzoomed-tile-coords @acquired-images)
+        center-tile (center-tile [(:x screen-state) (:y screen-state)]
+                                 [tile-width tile-height])
+        trajectory (offset-tiles center-tile tile-list)]
+    (first (remove already-acquired trajectory))))
 
 ;; tile acquisition management
 
@@ -172,9 +169,10 @@
                                   @screen-state-atom
                                   acquired-images
                                   [tile-width tile-height])]
-    (println next-tile)
-    (add-tiles-at memory-tiles-atom next-tile affine acquired-images)
-    next-tile))
+    (when (tile-in-pixel-rectangle? next-tile (pixel-rectangle @screen-state-atom)
+                                    [tile-width tile-height])
+      (add-tiles-at memory-tiles-atom next-tile affine acquired-images)
+      next-tile)))
 
 (defn handle-error [e]
   (def q e))
@@ -185,13 +183,13 @@
                affine [tile-width tile-height]]  
   (.submit explore-executor
            #(try
-              (when (acquire-next-tile memory-tiles-atom
+               (when (acquire-next-tile memory-tiles-atom
                                        disk-tiles-index
                                        screen-state-atom
                                        acquired-images
                                        affine
                                        [tile-width tile-height])
-                (explore memory-tiles-atom disk-tiles-index screen-state-atom
+                  (explore memory-tiles-atom disk-tiles-index screen-state-atom
                          acquired-images affine [tile-width tile-height]))
               (catch Exception e (handle-error e)))))
 
@@ -219,25 +217,13 @@
 ; has been adjusted or a new image appears in overlay-tiles.
 
 
-(defn evict-oldest
-  "Takes an atom containing a map and removes the oldest
-   items to keep the number of items less than or equal to limit."
-  [atom limit]
-  (let [tick (ref 0)
-        priority (ref {})]
-    (def t tick)
-    (def p priority)
-    (reactive/handle-added-items
-      atom
-      (fn [[key val]]
-        (swap! atom dissoc
-                  (dosync
-                    (alter tick inc)
-                    (alter priority assoc key @tick)
-                    (when (> (count @priority) limit)
-                      (let [oldest (apply min-key @priority (keys @priority))]
-                        (alter priority dissoc oldest)
-                        oldest))))))))
+(defn save-evicted
+  [atom]
+  (reactive/handle-removed-items
+    atom
+    (fn [[key val]]
+      (when-not (@atom key)
+        (disk/write-tile (disk/tile-dir atom) key val)))))
   
 (defn map-subset?
   "Is map1 a \"subset\" of map2?"
@@ -280,7 +266,7 @@
       react-fn
       executor)))
       
-(defn record-added-tiles
+(defn index-added-tiles
   "Record in disk-tile-index what images have been acquired."
   [memory-tiles-atom disk-tile-index]
   (reactive/handle-added-items memory-tiles-atom
@@ -309,8 +295,9 @@
     (def dti disk-tile-index)
     (def ai acquired-images)
     (swap! ss assoc :channels (initial-lut-objects first-seq))
-    (evict-oldest memory-tiles 300)
-    (record-added-tiles memory-tiles disk-tile-index)
+    (evict-oldest memory-tiles 300 true)
+    ;(save-evicted memory-tiles)
+    (index-added-tiles memory-tiles disk-tile-index)
     (load-visible-only screen-state memory-tiles disk-tile-index)
     (explore-fn)
     (add-watch ss "explore" (fn [_ _ old new] (when-not (= old new)

@@ -59,6 +59,8 @@
     (let [last-val (atom @reference)]
       (add-watch-simple reference
                         (fn [_ _]
+                          ;(println "remaining tasks:" (- (.getTaskCount executor)
+                          ;                     (.getCompletedTaskCount executor)))
                           (.submit executor
                                    #(let [current-val @reference]
                                       (when (not= @last-val current-val)
@@ -94,3 +96,4 @@
                      (dorun (map function diff))))))
   ([reference function]
     (handle-removed-items reference function (single-threaded-executor))))
+
