@@ -1165,6 +1165,9 @@ public final class VirtualAcquisitionDisplay implements AcquisitionDisplay, Imag
          if (cSelector_.getMaximum() <= (1 + superChannel)) {
             this.setNumChannels(1 + superChannel);
             ((CompositeImage) hyperImage_).reset();
+            if (histograms_ != null) {
+               histograms_.setupChannelControls(imageCache_);
+            }
             //JavaUtils.invokeRestrictedMethod(hyperImage_, CompositeImage.class,
             //       "setupLuts", 1 + superChannel, Integer.TYPE);
          }
