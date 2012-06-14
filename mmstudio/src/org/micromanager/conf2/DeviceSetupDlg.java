@@ -106,6 +106,7 @@ public class DeviceSetupDlg extends MMDialog {
       }
       
       addWindowListener(new WindowAdapter() {
+         @Override
          public void windowClosing(final WindowEvent e) {
             savePosition();
          }
@@ -209,8 +210,7 @@ public class DeviceSetupDlg extends MMDialog {
             core.unloadDevice(d.getName());
             core.loadDevice(d.getName(), d.getLibrary(), d.getAdapterName());
          } catch (Exception e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
+            ReportingUtils.logError(e);
          }
       }
       
@@ -357,8 +357,7 @@ public class DeviceSetupDlg extends MMDialog {
       try {
          System.out.println("rebuild " + portDev.getPropertyValue("BaudRate"));
       } catch (MMConfigFileException e1) {
-         // TODO Auto-generated catch block
-         e1.printStackTrace();
+         ReportingUtils.logError(e1);
       }
       
       ComPropTableModel tm = new ComPropTableModel(model, portDev);
@@ -416,8 +415,7 @@ public class DeviceSetupDlg extends MMDialog {
             core.unloadDevice(dev.getName());
             core.loadDevice(dev.getName(), dev.getLibrary(), dev.getAdapterName());
          } catch (Exception e1) {
-            // TODO Auto-generated catch block
-            e1.printStackTrace();
+            ReportingUtils.logError(e1);
          }
          return false;
       }
@@ -474,6 +472,7 @@ public class DeviceSetupDlg extends MMDialog {
          selectedPort = new String();
       }
 
+      @Override
       public void run() {
          boolean currentDebugLogSetting = core.debugLogEnabled();
          try {
@@ -591,8 +590,7 @@ public class DeviceSetupDlg extends MMDialog {
                   try {
                      pd.loadDataFromHardware(core);
                   } catch (Exception e) {
-                     // TODO Auto-generated catch block
-                     e.printStackTrace();
+                     ReportingUtils.logError(e);
                   }
                rebuildComTable(selectedPort);
             }
