@@ -50,6 +50,7 @@ public class LiveModeTimer {
    private boolean autoShutterOriginalState_;
    private long fpsTimer_;
    private long fpsCounter_;
+   private long imageNumber_;
    private long fpsInterval_ = 5000;
    private final NumberFormat format_;
    private int delay_;
@@ -115,8 +116,8 @@ public class LiveModeTimer {
          if (now - start >= timeout) {
             throw new Exception("Camera did not send image within a reasonable time");
          }
-                  
-         Object img = core_.getLastImage();  
+                    
+         TaggedImage timg = core_.getLastTaggedImage();
 
          // With first image acquired, create the display
          gui_.checkSimpleAcquisition();
@@ -124,6 +125,7 @@ public class LiveModeTimer {
          
          fpsCounter_ = 0;
          fpsTimer_ = System.currentTimeMillis();
+         imageNumber_ = timg.tags.getLong("ImageNumber");
 
          timer_.schedule(task_, 0, delay_);
          win_.liveModeEnabled(true);
@@ -166,17 +168,21 @@ public class LiveModeTimer {
       } 
    }
 
-   private void updateFPS() {
+   private void updateFPS(long imageNumber) {
       try {
-      fpsCounter_++;
-      long now = System.currentTimeMillis();
-      long diff = now - fpsTimer_;
-      if (diff > fpsInterval_) {
-         double fps = fpsCounter_ / (diff / 1000.0);
-         ij.IJ.showStatus("fps: " + format_.format(fps));
-         fpsCounter_ = 0;
-         fpsTimer_ = now;
-      }
+         fpsCounter_++;
+         long now = System.currentTimeMillis();
+         long diff = now - fpsTimer_;
+         if (diff > fpsInterval_) {
+            double d = diff/ 1000.0;
+            double fps = fpsCounter_ / d;
+            double dfps = (imageNumber - imageNumber_) / d;
+            ij.IJ.showStatus("fps: " + format_.format(dfps) +
+                    ", display fps: " + format_.format(fps));
+            fpsCounter_ = 0;
+            fpsTimer_ = now;
+            imageNumber_ = imageNumber;
+         }
       } catch (Exception ex) {
          ReportingUtils.logError(ex);
       }
@@ -194,12 +200,11 @@ public class LiveModeTimer {
                gui_.enableLiveMode(false);
             } else {
                try {
-                  Object img = core_.getLastImage();
-                  TaggedImage ti = makeTaggedImage(img);
-                  MDUtils.setChannelIndex(ti.tags, 0);
+                  TaggedImage ti = core_.getLastTaggedImage();
+                  addTags(ti, 0);
                   gui_.addImage(ACQ_NAME, ti, true, true);
                   gui_.updateLineProfile();
-                  updateFPS();
+                  updateFPS(ti.tags.getLong("ImageNumber"));
 
                } catch (MMScriptException ex) {
                   ReportingUtils.showError(ex);
@@ -264,7 +269,7 @@ public class LiveModeTimer {
                      }
                      gui_.addImage(MMStudioMainFrame.SIMPLE_ACQ, images[lastChannelToAdd], true, true);
                      gui_.updateLineProfile();
-                     updateFPS();
+                     updateFPS(ti.tags.getLong("ImageNumber"));
                   }
 
                } catch (MMScriptException ex) {
@@ -292,6 +297,7 @@ public class LiveModeTimer {
       } catch (MMScriptException ex) {
          ReportingUtils.logError("Error adding summary metadata to tags");
       }
+      gui_.addStagePositionToTags(ti);
    }
    
    private TaggedImage makeTaggedImage(Object pixels) throws JSONException, MMScriptException {
@@ -309,6 +315,7 @@ public class LiveModeTimer {
       gui_.addStagePositionToTags(ti);
       return ti;
    }
+   
 
    private void manageShutter(boolean enable) throws Exception {
       String shutterLabel = core_.getShutterDevice();
