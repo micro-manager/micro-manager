@@ -346,11 +346,9 @@ public class MicroscopeModel {
    public void applySetupLabelsToHardware(CMMCore core) throws Exception {
       for (int i = 0; i < devices_.size(); i++) {
          Device dev = devices_.get(i);
-         for (int j = 0; j < dev.getNumberOfSetupLabels(); j++) {
-            Label l = dev.getSetupLabel(j);
-            if (l != null) {
-               core.defineStateLabel(dev.getName(), l.state_, l.label_);
-            }
+         Label setupLabels[] = dev.getAllSetupLabels();
+         for (int j = 0; j < setupLabels.length; j++) {
+            core.defineStateLabel(dev.getName(), setupLabels[j].state_, setupLabels[j].label_);
          }
       }
    }
@@ -979,14 +977,10 @@ public class MicroscopeModel {
                out.write("# " + dev.getName());
                out.newLine();
             }
-            for (int j = 0; j < dev.getNumberOfSetupLabels(); j++) {
-               Label l = dev.getSetupLabel(j);
-               // TODO: why is l sometimes null?  Should we worry?
-               if (l != null) {
-                  out.write(MMCoreJ.getG_CFGCommand_Label() + "," + dev.getName()
-                          + "," + l.state_ + "," + l.label_);
-                  out.newLine();
-               }
+            Label labels[] = dev.getAllSetupLabels();
+            for (int j = 0; j < labels.length; j++) {
+               out.write(MMCoreJ.getG_CFGCommand_Label() + "," + dev.getName() + "," + labels[j].state_ + "," + labels[j].label_);
+               out.newLine();
             }
          }
          out.newLine();
@@ -1081,7 +1075,7 @@ public class MicroscopeModel {
          Device dev = devices_.get(i);
          ReportingUtils.logMessage(dev.getName() + " labels:");
          for (int j = 0; j < dev.getNumberOfSetupLabels(); j++) {
-            Label lab = dev.getSetupLabel(j);
+            Label lab = dev.getSetupLabelByState(j);
             ReportingUtils.logMessage("    State " + lab.state_ + "="
                   + lab.label_);
          }

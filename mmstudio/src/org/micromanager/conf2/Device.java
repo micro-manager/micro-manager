@@ -331,12 +331,8 @@ import org.micromanager.utils.ReportingUtils;
 
       return setupLabels_.size();
    }
-
-//   public String[] getLabels() {
-//      return labels_;
-//    }
    
-   public Label getSetupLabel(int j) {
+   public Label getSetupLabelByState(int j) {
       return (Label) setupLabels_.get(new Integer(j));
    }
    
@@ -420,6 +416,15 @@ import org.micromanager.utils.ReportingUtils;
          }
       }
       return new String("");
+   }
+
+   public Label[] getAllSetupLabels() {
+//      Vector<Label> labels = new Vector<Label>();
+//      for (Integer state : setupLabels_.keySet()) {
+//         labels.add(setupLabels_.get(state));
+//      }
+      Label lblArray[] = new Label[setupLabels_.size()];
+      return setupLabels_.values().toArray(lblArray);
    }
    
  }

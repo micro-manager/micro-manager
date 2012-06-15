@@ -112,14 +112,11 @@ public class LabelsPage extends PagePanel {
          for (int i= 0; i<newLabels.length; i++)
             newLabels[i] = "State-" + i;
          
-         for (int i=0; i<curDevice_.getNumberOfSetupLabels(); i++) {
-            Label lab = curDevice_.getSetupLabel(i);
-            if (lab != null) {
-               newLabels[lab.state_] = lab.label_;
-               if (labels_.length > lab.state_) {
-                   model_.updateLabelsInPreset(curDevice_.getName(), labels_[lab.state_],
-                           newLabels[lab.state_]);
-               }
+         Label sLabels[] = curDevice_.getAllSetupLabels();
+         for (int i=0; i<sLabels.length; i++) {
+            newLabels[sLabels[i].state_] = sLabels[i].label_;
+            if (labels_.length > sLabels[i].state_) {
+               model_.updateLabelsInPreset(curDevice_.getName(), labels_[sLabels[i].state_], newLabels[sLabels[i].state_]);
             }
          }
          labels_ = newLabels;
@@ -303,7 +300,7 @@ public class LabelsPage extends PagePanel {
          if (!originalLabels_.containsKey(dev.getName())) {
             String labels[] = new String[dev.getNumberOfStates()];
             for (int i=0; i<dev.getNumberOfStates(); i++) {
-               Label lab = dev.getSetupLabel(i);
+               Label lab = dev.getSetupLabelByState(i);
                if (lab != null)
                   labels[i] = lab.label_;
                else
