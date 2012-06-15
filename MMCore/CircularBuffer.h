@@ -69,6 +69,7 @@ private:
    unsigned int width_;
    unsigned int height_;
    unsigned int pixDepth_;
+   long imageCounter_;
    long insertIndex_;
    long saveIndex_;
    unsigned int memorySizeMB_;

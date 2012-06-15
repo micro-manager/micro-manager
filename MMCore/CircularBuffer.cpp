@@ -41,7 +41,15 @@ const unsigned int maxCBSize = 10000;    //a reasonable limit to circular buffer
 static MMThreadLock g_bufferLock;
 
 CircularBuffer::CircularBuffer(unsigned int memorySizeMB) :
-width_(0), height_(0), pixDepth_(0), insertIndex_(0), saveIndex_(0), memorySizeMB_(memorySizeMB), overflow_(false), estimatedIntervalMs_(0)
+   width_(0), 
+   height_(0), 
+   pixDepth_(0), 
+   imageCounter_(0), 
+   insertIndex_(0), 
+   saveIndex_(0), 
+   memorySizeMB_(memorySizeMB), 
+   overflow_(false), 
+   estimatedIntervalMs_(0)
 {
 }
 
@@ -174,6 +182,9 @@ bool CircularBuffer::InsertMultiChannel(const unsigned char* pixArray, unsigned 
             md = *pMd;
          }
 
+         // insert image number. 
+         md.put(MM::g_Keyword_Metadata_ImageNumber, CDeviceUtils::ConvertToString(imageCounter_));
+
          if (!md.HasTag(MM::g_Keyword_Elapsed_Time_ms))
          {
             // if time tag was not supplied by the camera insert current timestamp
@@ -198,6 +209,7 @@ bool CircularBuffer::InsertMultiChannel(const unsigned char* pixArray, unsigned 
          pImg->SetPixels(pixArray + i*singleChannelSize);
       }
 
+      imageCounter_++;
       insertIndex_++;
       if ((insertIndex_ - (long)frameArray_.size()) > adjustThreshold && (saveIndex_- (long)frameArray_.size()) > adjustThreshold)
       {
