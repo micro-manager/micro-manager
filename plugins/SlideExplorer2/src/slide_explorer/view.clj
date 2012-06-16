@@ -124,7 +124,7 @@
                     oldest)))]
           (when save?
             (disk/write-tile (disk/tile-dir atom) oldest-item (@atom oldest-item)))
-          (println "removing" oldest-item)
+          ;(println "removing" oldest-item)
           (swap! atom dissoc oldest-item))))))
 
 (defn propagate-tiles [tile-map-atom {:keys [zoom nx ny nz nt nc] :as indices}]
@@ -154,14 +154,27 @@
      (update-in [:zoom] / 2)))
 
 (defn add-to-memory-tiles [tile-map-atom indices tile]
-  ;(println "add-to-memory" indices)
-  ;(println (System/currentTimeMillis))
   (let [full-indices (assoc indices :zoom 1)]
-   (swap! tile-map-atom assoc full-indices tile)
-    (loop [new-indices (child-indices full-indices)]
-      (when (<= MIN-ZOOM (:zoom new-indices))
-        (propagate-tiles tile-map-atom new-indices)
-        (recur (child-indices new-indices))))))
+   (swap! tile-map-atom assoc full-indices tile)))
+
+(defn tiles-for-updating [tile-index-coll]
+  (->> tile-index-coll
+       (map child-indices)
+       set
+       (sort-by #(- (% :zoom)))))
+
+(defn handle-new-tiles [tile-map-atom]
+  (println "handling new tiles")
+  (def q1 (agent nil))
+  (reactive/handle-update-added-items
+    tile-map-atom
+    (fn [new-tiles] 
+      (println (count new-tiles))
+      (let [tiles (tiles-for-updating (keys new-tiles))]
+        (doseq [tile tiles :when (<= MIN-ZOOM (:zoom tile))]
+          (propagate-tiles tile-map-atom tile)
+          )))
+    q1))
 
 ;; OVERLAY
 
@@ -414,7 +427,8 @@ to normal size."
     ((juxt handle-drags handle-arrow-pan handle-wheel handle-resize)
       panel screen-state)
     ((juxt handle-zoom handle-dive watch-keys) frame screen-state)
-    (run-background-overlay memory-tiles screen-state overlay-tiles)
+    ;(run-background-overlay memory-tiles screen-state overlay-tiles)
+    ;(handle-new-tiles memory-tiles)
     ;(evict-oldest overlay-tiles 100 false)
     (repaint-on-change panel screen-state)
     (repaint-on-change panel memory-tiles)

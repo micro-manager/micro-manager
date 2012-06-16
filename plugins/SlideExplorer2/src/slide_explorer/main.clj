@@ -95,8 +95,11 @@
     (take-while #(not= % TaggedImageQueue/POISON)
                 (repeatedly #(.take q)))))
 
+(def acquire-tagged-image-sequence-memo
+  (memoize acquire-tagged-image-sequence))
+
 (defn acquire-processor-sequence []
-  (map tagged-image-to-processor (acquire-tagged-image-sequence)))
+  (map tagged-image-to-processor (acquire-tagged-image-sequence-memo)))
 
 (defn acquire-at
   "Move the stage to position x,y and acquire a multi-dimensional
@@ -129,32 +132,27 @@
 
 ;; tile arrangement
 
-(defn unzoomed-tile-coords [acquired-tiles]
-  (set (for [{:keys [nx ny]} acquired-tiles]
-         [nx ny])))
-
 (defn next-tile [disk-tiles-index screen-state acquired-images [tile-width tile-height]]
-  (let [already-acquired (unzoomed-tile-coords @acquired-images)
-        center-tile (center-tile [(:x screen-state) (:y screen-state)]
+  (let [center-tile (center-tile [(:x screen-state) (:y screen-state)]
                                  [tile-width tile-height])
         trajectory (offset-tiles center-tile tile-list)]
-    (first (remove already-acquired trajectory))))
+    (first (remove @acquired-images trajectory))))
 
 ;; tile acquisition management
 
 (def image-processing-executor (Executors/newFixedThreadPool 1))
 
 (defn add-tiles-at [memory-tiles [nx ny] affine-stage-to-pixel acquired-images]
-  (doseq [image (acquire-at (inverse-transform
+  (doseq [image (time (doall (acquire-at (inverse-transform
                               (Point. (* 512 nx) (* 512 ny))
-                              affine-stage-to-pixel))]
+                              affine-stage-to-pixel))))]
     (let [indices {:nx nx
                    :ny ny
                    :nz (get-in image [:tags "SliceIndex"])
                    :nt 0
                    :nc (or (get-in image [:tags "Channel"]) "Default")}]
       ;(println indices @acquired-images)
-      (swap! acquired-images conj indices)
+      (swap! acquired-images conj [nx ny])
       (.submit image-processing-executor
                #(add-to-memory-tiles 
                   memory-tiles
@@ -256,15 +254,16 @@
   "Runs visible-loader whenever screen-state-atom changes."
   [screen-state-atom memory-tile-atom disk-tile-index]
   (let [react-fn (fn [_ _] (visible-loader screen-state-atom memory-tile-atom disk-tile-index))
-        executor (reactive/single-threaded-executor)]
+        agent (agent {})]
+    (def agent1 agent)
     (reactive/handle-update
       screen-state-atom
       react-fn
-      executor)
+      agent)
     (reactive/handle-update
       disk-tile-index
       react-fn
-      executor)))
+      agent)))
       
 (defn index-added-tiles
   "Record in disk-tile-index what images have been acquired."
@@ -295,10 +294,10 @@
     (def dti disk-tile-index)
     (def ai acquired-images)
     (swap! ss assoc :channels (initial-lut-objects first-seq))
-    (evict-oldest memory-tiles 300 true)
+    ;(evict-oldest memory-tiles 300 true)
     ;(save-evicted memory-tiles)
-    (index-added-tiles memory-tiles disk-tile-index)
-    (load-visible-only screen-state memory-tiles disk-tile-index)
+    ;(index-added-tiles memory-tiles disk-tile-index)
+    ;(load-visible-only screen-state memory-tiles disk-tile-index)
     (explore-fn)
     (add-watch ss "explore" (fn [_ _ old new] (when-not (= old new)
                                                 (explore-fn))))

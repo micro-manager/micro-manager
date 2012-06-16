@@ -10,7 +10,9 @@
   (let [key (UUID/randomUUID)]
     (add-watch reference key 
                (fn [_ _ old-state new-state]
-                 (function old-state new-state)))))
+                 (try
+                   (function old-state new-state)
+                   (catch Throwable e (println e)))))))
 
 (defn remove-watches
   "Removes all watches from a reference (ref/atom/agent)."
@@ -55,20 +57,32 @@
   "Attempts to run a function whenever there is a new value in reference.
    If the value changes too rapidly, then some values may be skipped. The
    function arguments should be [last-val current-val]."
-  ([reference function executor]
-    (let [last-val (atom @reference)]
+  ([reference function agent]
+    (let [last-val-agent agent]
       (add-watch-simple reference
                         (fn [_ _]
-                          ;(println "remaining tasks:" (- (.getTaskCount executor)
-                          ;                     (.getCompletedTaskCount executor)))
-                          (.submit executor
-                                   #(let [current-val @reference]
-                                      (when (not= @last-val current-val)
-                                        (function last-val current-val)
-                                        (reset! last-val current-val))))))))
+                          (send-off last-val-agent
+                                    (fn [last-val]
+                                      (let [current-val @reference]
+                                        (when (not= last-val current-val)
+                                          (function last-val current-val))
+                                        current-val)))))))
   ([reference function]
-    (handle-update reference function (single-threaded-executor))))
+    (handle-update reference function (agent @reference))))
 
+(defn handle-update-added-items
+  "Attempts to run a function whenever there are new items in reference.
+   If the value changes too rapidly, then some values may be skipped. The
+   function should expect a set of new values."
+  ([reference function agent]
+    (handle-update
+      reference
+      (fn [last-val current-val]
+        (function (diff-coll current-val last-val)))
+      agent))
+  ([reference function]
+    (handle-update-added-items reference function (agent @reference))))
+  
 (defn handle-added-items
   "Adds a watch that applies a function to each item added to
    a coll inside reference (a ref/atom/agent/var). The function executes
