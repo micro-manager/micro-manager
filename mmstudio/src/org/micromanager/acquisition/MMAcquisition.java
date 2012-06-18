@@ -329,11 +329,17 @@ public class MMAcquisition {
       if (!existing_) {
          int camCh = (int) core.getNumberOfCameraChannels();
          if (camCh > 1) {
-            for (int i = 0; i < camCh; i++)
-               this.setChannelName(i, core.getCameraChannelName(i));
+            for (int i = 0; i < camCh; i++) {
+               if (channelNames_.length() < (1+i)) {
+                  this.setChannelName(i, core.getCameraChannelName(i));
+               }
+            }
          } else {
-            for (int i = 0; i < numChannels_; i++)
-               this.setChannelName(i, "Default");
+            for (int i = 0; i < numChannels_; i++) {
+               if (channelNames_.length() < (1+i)) {
+                  this.setChannelName(i, "Default");
+               }
+            }
          }
          createDefaultAcqSettings(name, imageCache);
       }
@@ -440,7 +446,7 @@ public class MMAcquisition {
 
       // Both channelColors_ and channelNames_ may, or may not yet contain values
       // Since we don't know the size in the constructor, we can not pre-initialize
-      // the data.  Therefore, fill in the blanks with deafults here:
+      // the data.  Therefore, fill in the blanks with defaults here:
       channelColors_ = new JSONArray();
       
       if (numChannels_ == 1)
