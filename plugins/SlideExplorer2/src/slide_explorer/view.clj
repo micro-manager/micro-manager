@@ -131,7 +131,7 @@
           (apply swap! atom dissoc oldies))))))
 
 (defn propagate-tile [tile-map-atom {:keys [zoom nx ny nz nt nc] :as indices}]
-  (println indices)
+  ;(println indices)
   (let [nx- (* 2 nx)
         ny- (* 2 ny)
         nx+ (inc nx-)
@@ -258,7 +258,7 @@
   (let [visible-tile-positions (tiles-in-pixel-rectangle
                                  (screen-rectangle @screen-state-atom)
                                  [512 512])]
-    (println (count visible-tile-positions))
+    ;(println (count visible-tile-positions))
     (doseq [[nx ny] visible-tile-positions
             channel (keys (:channels @screen-state-atom))]
       (let [tile {:nx nx
