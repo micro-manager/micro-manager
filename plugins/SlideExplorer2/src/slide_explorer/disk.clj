@@ -1,6 +1,7 @@
 (ns slide-explorer.disk
   (:require [slide-explorer.image :as image]
-            [slide-explorer.reactive :as reactive])
+            [slide-explorer.reactive :as reactive]
+            [slide-explorer.cache :as cache])
   (:import (java.util.concurrent Executors)
            (java.io File)))
 
@@ -40,7 +41,7 @@
 (defn add-tile
   "Adds a tile to the atom in memory and saves a .tif image to the associated directory."
   [memory-tile-atom key processor]
-  (swap! memory-tile-atom assoc key processor)
+  (swap! memory-tile-atom cache/add-item key processor)
   ;(println (count @memory-tile-atom))
   (.submit file-executor
            #(write-tile (tile-dir memory-tile-atom) key processor)))
@@ -50,11 +51,12 @@
   "Loads the tile into memory-tile-atom, if tile is not already present."
   (.submit file-executor
            (fn []
-             (when-let [tile (read-tile (tile-dir memory-tile-atom) key)]
+             (when-not (get @memory-tile-atom key)
+               (when-let [tile (read-tile (tile-dir memory-tile-atom) key)]
                  (swap! memory-tile-atom
-                    #(if-not (% key)
-                       (assoc % key tile)
-                       %))))))
+                        #(if-not (get % key)
+                           (cache/add-item % key tile)
+                           %)))))))
 
 (defn unload-tile
   [memory-tile-atom key]

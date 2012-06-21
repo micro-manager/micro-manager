@@ -7,7 +7,9 @@
            (ij.process ByteProcessor ImageProcessor))
   (:require [clojure.pprint :as pprint]
             [slide-explorer.disk :as disk]
-            [slide-explorer.reactive :as reactive])
+            [slide-explorer.reactive :as reactive]
+            [slide-explorer.cache :as cache]
+            [clojure.core.memoize :as memo])
   (:use [org.micromanager.mm :only (edt)]
         [slide-explorer.paint :only (enable-anti-aliasing repaint-on-change)]
         [slide-explorer.tiles :only (center-tile floor-int)]
@@ -97,7 +99,6 @@
                  	    (/ width zoom)
                  	    (/ height zoom)))
 
-
 (defn screen-rectangle
   [{:keys [x y width height zoom]}]
   (Rectangle. (- (* x zoom) (/ width 2))
@@ -108,6 +109,10 @@
 ;; TILING
 
 (def q (agent nil))
+
+(defn cache-assoc [m k v]
+  (-> m (dissoc k)
+        (assoc k v)))
 
 (defn evict-oldest
   "Takes an atom containing a map and adds a watch such that whenever an item is added,
@@ -140,7 +145,7 @@
         get-parent-tile (fn [[nx ny]]
                           (let [dir (disk/tile-dir tile-map-atom)
                                 tile-index (assoc indices :zoom zoom-parent :nx nx :ny ny)]
-                            (or (@tile-map-atom tile-index) 
+                            (or (get @tile-map-atom tile-index) 
                                 (disk/read-tile dir tile-index)
                                 )))
         abcd (map get-parent-tile [[nx- ny-]
@@ -175,24 +180,15 @@
 
 ;; OVERLAY
 
-
-(defn overlay-future [processors luts]
-  (future (overlay processors luts)))
-
-(def overlay-future-memo (memoize overlay-future))
-
-(defn overlay-smart [processors luts]
-  (let [fut (overlay-future-memo processors luts)]
-    (when (future-done? fut)
-      @fut)))
-
-(def overlay-memo (memoize overlay))
+(def overlay-memo (memoize overlay)) ;(memo/memo-lru overlay 300))
 
 (defn multi-color-tile [memory-tiles-atom tile-indices channels-map]
   (let [channel-names (keys channels-map)]
     (overlay-memo
       (for [chan channel-names]
-        (@memory-tiles-atom (assoc tile-indices :nc chan)))
+        (let [tile-index (assoc tile-indices :nc chan)]
+          (swap! memory-tiles-atom cache/hit-item tile-index)
+          (get @memory-tiles-atom tile-index)))
       (for [chan channel-names]
         (get-in channels-map [chan :lut])))))
 
@@ -205,13 +201,16 @@
   (let [pixel-rect (.getClipBounds g)]
     (doseq [[nx ny] (tiles-in-pixel-rectangle pixel-rect
                                               [tile-width tile-height])]
-      (when-let [image (@overlay-tiles-atom
-                        {:nc :overlay
+      (let [tile-index {:nc :overlay
                          :zoom (screen-state :zoom)
                          :nx nx :ny ny :nt 0
-                         :nz (screen-state :z)})]
+                         :nz (screen-state :z)}]
+      (when-let [image (get
+                         @overlay-tiles-atom
+                         tile-index)]
+        (swap! overlay-tiles-atom cache/hit-item tile-index)
         (let [[x y] (tile-to-pixels [nx ny] [tile-width tile-height] 1)]
-          (draw-image g image x y))))))
+          (draw-image g image x y)))))))
 	
 
 (defn paint-screen [graphics screen-state overlay-tiles-atom]
@@ -268,9 +267,12 @@
                   :nz (@screen-state-atom :z)
                   :nt 0}]
         (disk/load-tile memory-tile-atom tile)
+        ;(println (str @overlay-tiles-atom))
         (swap! overlay-tiles-atom
-               assoc (assoc tile :nc :overlay)
-               (multi-color-tile memory-tile-atom tile (:channels @screen-state-atom)))))))
+               cache/add-item (assoc tile :nc :overlay)
+               (multi-color-tile memory-tile-atom tile
+                                           (:channels @screen-state-atom)))
+        ))))
 
 (defn load-visible-only
   "Runs visible-loader whenever screen-state-atom changes."
@@ -453,23 +455,24 @@ to normal size."
                                        :keys (sorted-set)
                                        :channels (sorted-map))
                                        :update 0)
-        display-tiles (atom {})
-        overlay-tiles (atom {})
+        ;overlay-tiles (atom {})
+        overlay-tiles (atom (cache/empty-lru-map 300))
         panel (main-panel screen-state overlay-tiles)
         frame (main-frame)
         mouse-position (atom nil)]
+   ; (edt (println (str @overlay-tiles)))
     (def mt memory-tiles)
     (def ss screen-state)
     (def mp mouse-position)
     (def f frame)
     (def pnl panel)
     (def ot overlay-tiles)
+    (def ai acquired-images)
     (.add (.getContentPane frame) panel)
     (setup-fullscreen frame)
     ((juxt handle-drags handle-arrow-pan handle-wheel handle-resize)
       panel screen-state)
     ((juxt handle-zoom handle-dive watch-keys) frame screen-state)
-    ;(evict-oldest overlay-tiles 100)
     (load-visible-only screen-state memory-tiles
                        overlay-tiles acquired-images)
     (repaint-on-change panel screen-state)

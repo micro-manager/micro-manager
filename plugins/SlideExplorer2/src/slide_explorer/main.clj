@@ -24,7 +24,8 @@
         [slide-explorer.image :only (show-image intensity-range lut-object)]
         [slide-explorer.tiles :only (floor-int center-tile tile-list offset-tiles)])
   (:require [slide-explorer.disk :as disk]
-            [slide-explorer.reactive :as reactive]))
+            [slide-explorer.reactive :as reactive]
+            [slide-explorer.cache :as cache]))
 
 (load-mm (MMStudioMainFrame/getInstance))
 
@@ -222,7 +223,8 @@
   []
   (core waitForDevice (core getXYStageDevice))
   (let [dir (str "tmp" (rand-int 10000000))
-        memory-tiles (doto (atom {}) (alter-meta! assoc ::directory dir))
+        memory-tiles (doto (atom (cache/empty-lru-map 300))
+                                 (alter-meta! assoc ::directory dir))
         display-tiles (atom {})
         acquired-images (atom #{})
         xy-stage (core getXYStageDevice)
@@ -236,9 +238,7 @@
     (def affine affine-stage-to-pixel)
     (def ss screen-state)
     (def ai acquired-images)
-    ;(reactive/handle-removed-items memory-tiles #(do (println "removed:" %))) 
     (swap! ss assoc :channels (initial-lut-objects first-seq))
-    ;(evict-oldest memory-tiles 300)
     (explore-fn)
     (add-watch ss "explore" (fn [_ _ old new] (when-not (= old new)
                                                 (explore-fn))))

@@ -62,6 +62,11 @@
   ([lru-map key val]
     (add-item lru-map key val true)))
 
+(defn get-item
+  "Get an item from the LRU persistent map."
+  [lru-map key]
+  (-> lru-map (hit-item key) key))
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; image-cache consists of an agent
 ;; that contains a map
