@@ -107,7 +107,6 @@
     (handle-change reference 
                  (fn [old-state new-state]
                    (when-let [diff (diff-coll old-state new-state)]
-                     (println (count @reference))
                      (dorun (map function diff))))
                    executor))
   ([reference function]

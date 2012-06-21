@@ -41,7 +41,7 @@
   "Adds a tile to the atom in memory and saves a .tif image to the associated directory."
   [memory-tile-atom key processor]
   (swap! memory-tile-atom assoc key processor)
-  (println (count @memory-tile-atom))
+  ;(println (count @memory-tile-atom))
   (.submit file-executor
            #(write-tile (tile-dir memory-tile-atom) key processor)))
 

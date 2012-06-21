@@ -38,7 +38,6 @@
   "Adds a watch such that panel is repainted
    if the value in reference has changed."
   [panel reference]
-  (println reference)
   (add-watch-simple reference
              (fn [old-state new-state]
                (when-not (= old-state new-state)
