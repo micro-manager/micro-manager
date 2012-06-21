@@ -41,6 +41,7 @@
   "Adds a tile to the atom in memory and saves a .tif image to the associated directory."
   [memory-tile-atom key processor]
   (swap! memory-tile-atom assoc key processor)
+  (println (count @memory-tile-atom))
   (.submit file-executor
            #(write-tile (tile-dir memory-tile-atom) key processor)))
 
@@ -48,10 +49,14 @@
   [memory-tile-atom key]
   "Loads the tile into memory-tile-atom, if tile is not already present."
   (.submit file-executor
-           #(when-not (@memory-tile-atom key)
-              (swap! memory-tile-atom
-                     assoc key (read-tile (tile-dir memory-tile-atom) key)))))
+           (fn []
+             (when-let [tile (read-tile (tile-dir memory-tile-atom) key)]
+                 (swap! memory-tile-atom
+                    #(if-not (% key)
+                       (assoc % key tile)
+                       %))))))
 
 (defn unload-tile
   [memory-tile-atom key]
+  (println "unloading")
   (swap! memory-tile-atom dissoc key))

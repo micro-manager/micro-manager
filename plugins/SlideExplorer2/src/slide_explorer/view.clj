@@ -1,17 +1,17 @@
 (ns slide-explorer.view
-  (:import (javax.swing AbstractAction JComponent JFrame JPanel JLabel KeyStroke)
+  (:import (javax.swing AbstractAction JComponent JFrame JPanel JLabel JTextArea KeyStroke)
            (java.awt AlphaComposite Color Graphics Graphics2D Rectangle RenderingHints Window)
            (java.util UUID)
            (java.awt.event ComponentAdapter KeyEvent KeyAdapter
                            MouseAdapter WindowAdapter)
-           (ij.process ImageProcessor))
+           (ij.process ByteProcessor ImageProcessor))
   (:require [clojure.pprint :as pprint]
             [slide-explorer.disk :as disk]
             [slide-explorer.reactive :as reactive])
   (:use [org.micromanager.mm :only (edt)]
         [slide-explorer.paint :only (enable-anti-aliasing repaint-on-change)]
         [slide-explorer.tiles :only (center-tile floor-int)]
-        [slide-explorer.image :only (crop merge-and-scale overlay overlay-memo lut-object)]))
+        [slide-explorer.image :only (crop merge-and-scale overlay lut-object)]))
 
 ; Order of operations:
 ;  Stitch/crop
@@ -32,7 +32,9 @@
   [reference key]
   (let [frame (JFrame. key)
         label (JLabel.)
-        update-fn #(edt (.setText label (.toString %)))]
+        update-fn #(edt (.setText label (str "<html><pre>" 
+                                             (with-out-str (pprint/pprint %)
+                                                       ) "</pre></html>")))]
     (.add (.getContentPane frame) label)
     (add-watch reference key
                (fn [_ _ _ new-state] (update-fn new-state)))
@@ -105,44 +107,47 @@
 
 ;; TILING
 
+(def q (agent nil))
+
 (defn evict-oldest
   "Takes an atom containing a map and adds a watch such that whenever an item is added,
    the oldest item is removed to keep the number of items less than or equal to limit."
-  [atom limit save?]
+  [atom limit]
   (let [tick (ref 0)
         priority (ref {})]
     (reactive/handle-added-items
       atom
-      (fn [[key val]]
-        (when-let [oldest-item
-              (dosync
-                (alter tick inc)
-                (alter priority assoc key @tick)
-                (when (> (count @priority) limit)
-                  (let [oldest (apply min-key @priority (keys @priority))]
-                    (alter priority dissoc oldest)
-                    oldest)))]
-          (when save?
-            (disk/write-tile (disk/tile-dir atom) oldest-item (@atom oldest-item)))
-          ;(println "removing" oldest-item)
-          (swap! atom dissoc oldest-item))))))
+      (fn react [[key val]]
+        (when-let [oldies
+                   (dosync
+                     (alter tick inc)
+                     (alter priority assoc key @tick)
+                     (loop [oldies nil]
+                       (if (> (count @priority) limit)
+                         (let [oldest (apply min-key @priority (keys @priority))]
+                           (alter priority dissoc oldest)
+                           (recur (conj oldies oldest)))
+                         oldies)))]
+          (apply swap! atom dissoc oldies))))))
 
-(defn propagate-tiles [tile-map-atom {:keys [zoom nx ny nz nt nc] :as indices}]
+(defn propagate-tile [tile-map-atom {:keys [zoom nx ny nz nt nc] :as indices}]
+  (println indices)
   (let [nx- (* 2 nx)
         ny- (* 2 ny)
         nx+ (inc nx-)
         ny+ (inc ny-)
         zoom-parent (* zoom 2)
         get-parent-tile (fn [[nx ny]]
-                          (let [dir ((meta tile-map-atom) :slide-explorer.main/directory)
+                          (let [dir (disk/tile-dir tile-map-atom)
                                 tile-index (assoc indices :zoom zoom-parent :nx nx :ny ny)]
                             (or (@tile-map-atom tile-index) 
-                                (disk/read-tile dir tile-index))))
+                                (disk/read-tile dir tile-index)
+                                )))
         abcd (map get-parent-tile [[nx- ny-]
                                    [nx+ ny-]
                                    [nx- ny+]
                                    [nx+ ny+]])]
-    (swap! tile-map-atom assoc indices (apply merge-and-scale abcd))))
+    (disk/add-tile tile-map-atom indices (apply merge-and-scale abcd))))
 
 (defn child-index [n]
   (floor-int (/ n 2)))
@@ -153,47 +158,43 @@
      (update-in [:ny] child-index)
      (update-in [:zoom] / 2)))
 
-(defn add-to-memory-tiles [tile-map-atom indices tile]
-  (let [full-indices (assoc indices :zoom 1)]
-   (swap! tile-map-atom assoc full-indices tile)))
-
 (defn tiles-for-updating [tile-index-coll]
   (->> tile-index-coll
        (map child-indices)
        set
        (sort-by #(- (% :zoom)))))
 
-(defn handle-new-tiles [tile-map-atom]
-  (println "handling new tiles")
-  (def q1 (agent nil))
-  (reactive/handle-update-added-items
-    tile-map-atom
-    (fn [new-tiles] 
-      (println (count new-tiles))
-      (let [tiles (tiles-for-updating (keys new-tiles))]
-        (doseq [tile tiles :when (<= MIN-ZOOM (:zoom tile))]
-          (propagate-tiles tile-map-atom tile)
-          )))
-    q1))
+(defn add-to-memory-tiles [tile-map-atom indices tile]
+  ;(println "asdf")
+  (let [full-indices (assoc indices :zoom 1)]
+    (disk/add-tile tile-map-atom full-indices tile)
+    (loop [new-indices (child-indices full-indices)]
+      (when (<= MIN-ZOOM (:zoom new-indices))
+        (propagate-tile tile-map-atom new-indices)
+        (recur (child-indices new-indices))))))
 
 ;; OVERLAY
 
 
+(defn overlay-future [processors luts]
+  (future (overlay processors luts)))
+
+(def overlay-future-memo (memoize overlay-future))
+
+(defn overlay-smart [processors luts]
+  (let [fut (overlay-future-memo processors luts)]
+    (when (future-done? fut)
+      @fut)))
+
+(def overlay-memo (memoize overlay))
+
 (defn multi-color-tile [memory-tiles-atom tile-indices channels-map]
   (let [channel-names (keys channels-map)]
-    (overlay
+    (overlay-memo
       (for [chan channel-names]
         (@memory-tiles-atom (assoc tile-indices :nc chan)))
       (for [chan channel-names]
         (get-in channels-map [chan :lut])))))
-
-(defn run-background-overlay [memory-tiles-atom screen-state-atom overlay-tiles-atom]
-  (reactive/handle-added-items
-    memory-tiles-atom
-    (fn [[indices _]]
-      (swap! overlay-tiles-atom
-             assoc (assoc indices :nc :overlay)
-             (multi-color-tile memory-tiles-atom indices (:channels @screen-state-atom))))))
 
 ;; PAINTING
 
@@ -204,13 +205,14 @@
   (let [pixel-rect (.getClipBounds g)]
     (doseq [[nx ny] (tiles-in-pixel-rectangle pixel-rect
                                               [tile-width tile-height])]
-      (when-let [proc (@overlay-tiles-atom
+      (when-let [image (@overlay-tiles-atom
                         {:nc :overlay
                          :zoom (screen-state :zoom)
                          :nx nx :ny ny :nt 0
                          :nz (screen-state :z)})]
         (let [[x y] (tile-to-pixels [nx ny] [tile-width tile-height] 1)]
-          (draw-image g proc x y))))))
+          (draw-image g image x y))))))
+	
 
 (defn paint-screen [graphics screen-state overlay-tiles-atom]
   (let [original-transform (.getTransform graphics)
@@ -228,7 +230,7 @@
       ;(.fillOval -5 -5
       ;           10 10)
       )
-    (when true 
+    (when false 
       (let [pixel-rect (pixel-rectangle screen-state)
             visible-tiles (tiles-in-pixel-rectangle pixel-rect
                                                     [tile-width tile-height])
@@ -240,13 +242,52 @@
         (doto graphics
           (.setTransform original-transform)
           (.setColor Color/GREEN)
-          ;(.drawString (pr-str pixel-rect) 10 20)
+          (.drawString (pr-str pixel-rect) 10 20)
           ;(.drawString (pr-str visible-tiles) 10 40)
           ;(.drawString (pr-str center-tile) 10 60)
           ;(.drawString (pr-str sorted-tiles) 10 80)
           (.drawString (str (select-keys screen-state [:x :y :z :zoom :keys :width :height]))
                      (int 10)
                      (int (- (screen-state :height) 12)))))))))
+
+;; Loading visible tiles
+
+(defn visible-loader
+  "Loads tiles needed for drawing."
+  [screen-state-atom memory-tile-atom overlay-tiles-atom acquired-images]
+  (let [visible-tile-positions (tiles-in-pixel-rectangle
+                                 (screen-rectangle @screen-state-atom)
+                                 [512 512])]
+    (println (count visible-tile-positions))
+    (doseq [[nx ny] visible-tile-positions
+            channel (keys (:channels @screen-state-atom))]
+      (let [tile {:nx nx
+                  :ny ny
+                  :zoom (@screen-state-atom :zoom)
+                  :nc channel
+                  :nz (@screen-state-atom :z)
+                  :nt 0}]
+        (disk/load-tile memory-tile-atom tile)
+        (swap! overlay-tiles-atom
+               assoc (assoc tile :nc :overlay)
+               (multi-color-tile memory-tile-atom tile (:channels @screen-state-atom)))))))
+
+(defn load-visible-only
+  "Runs visible-loader whenever screen-state-atom changes."
+  [screen-state-atom memory-tile-atom
+   overlay-tiles-atom acquired-images]
+  (let [react-fn (fn [_ _] (visible-loader screen-state-atom memory-tile-atom
+                                           overlay-tiles-atom acquired-images))
+        agent (agent {})]
+    (def agent1 agent)
+    (reactive/handle-update
+      screen-state-atom
+      react-fn
+      agent)
+    (reactive/handle-update
+      acquired-images
+      react-fn
+      agent)))
   
 
 ;; USER INPUT HANDLING
@@ -394,12 +435,12 @@ to normal size."
 
 ;; MAIN WINDOW AND PANEL
 
-(defn main-panel [screen-state overlay-tiles]
+(defn main-panel [screen-state overlay-tiles-atom]
   (doto
     (proxy [JPanel] []
       (paintComponent [^Graphics graphics]
         (proxy-super paintComponent graphics)
-        (paint-screen graphics @screen-state overlay-tiles)))
+        (paint-screen graphics @screen-state overlay-tiles-atom)))
     (.setBackground Color/BLACK)))
     
 (defn main-frame []
@@ -407,10 +448,11 @@ to normal size."
     .show
     (.setBounds 10 10 500 500)))
 
-(defn show [memory-tiles]
+(defn show [memory-tiles acquired-images]
   (let [screen-state (atom (sorted-map :x 0 :y 0 :z 0 :zoom 1 :width 100 :height 10
                                        :keys (sorted-set)
-                                       :channels (sorted-map)))
+                                       :channels (sorted-map))
+                                       :update 0)
         display-tiles (atom {})
         overlay-tiles (atom {})
         panel (main-panel screen-state overlay-tiles)
@@ -427,9 +469,9 @@ to normal size."
     ((juxt handle-drags handle-arrow-pan handle-wheel handle-resize)
       panel screen-state)
     ((juxt handle-zoom handle-dive watch-keys) frame screen-state)
-    ;(run-background-overlay memory-tiles screen-state overlay-tiles)
-    ;(handle-new-tiles memory-tiles)
-    ;(evict-oldest overlay-tiles 100 false)
+    ;(evict-oldest overlay-tiles 100)
+    (load-visible-only screen-state memory-tiles
+                       overlay-tiles acquired-images)
     (repaint-on-change panel screen-state)
     (repaint-on-change panel memory-tiles)
     (repaint-on-change panel overlay-tiles)

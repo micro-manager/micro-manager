@@ -64,7 +64,7 @@
                           (send-off last-val-agent
                                     (fn [last-val]
                                       (let [current-val @reference]
-                                        (when (not= last-val current-val)
+                                        (when-not (identical? last-val current-val)
                                           (function last-val current-val))
                                         current-val)))))))
   ([reference function]
@@ -91,7 +91,7 @@
   ([reference function executor]
     (handle-change reference
                  (fn [old-state new-state]
-                   (when-let [diff (diff-coll new-state old-state)]
+                   (when-let [diff (time (diff-coll new-state old-state))]
                      (dorun (map function diff))))
                  executor))
   ([reference function]
@@ -107,7 +107,9 @@
     (handle-change reference 
                  (fn [old-state new-state]
                    (when-let [diff (diff-coll old-state new-state)]
-                     (dorun (map function diff))))))
+                     (println (count @reference))
+                     (dorun (map function diff))))
+                   executor))
   ([reference function]
     (handle-removed-items reference function (single-threaded-executor))))
 

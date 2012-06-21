@@ -43,6 +43,15 @@
              (/ (.getWidth proc) 2)
              (/ (.getHeight proc) 2))))
 
+(defn random-byte-image
+  "Produces an ByteProcessor with random values."
+  [width height]
+  (let [pixels (byte-array
+                 (map byte (repeatedly (* width height)
+                                       #(- (rand-int 256) 128))))]
+    (doto (ByteProcessor. width height)
+      (.setPixels pixels))))
+
 (defn black-processor-like
   "Creates an empty (black) image processor."
   [original-processor]
@@ -178,8 +187,6 @@
       (.getImage
         (doto (composite-image processors)
           (.setLuts (into-array luts)))))))
-
-(def overlay-memo (memoize overlay))
 
 ;; reading/writing ImageProcessors on disk
 
