@@ -28,7 +28,7 @@
 #include "../../MMDevice/MMDevice.h"
 #include "../../MMDevice/DeviceBase.h"
 #include "MP285.h"
-	
+
 //
 // define XY stage class that is atached to the MP285 controller
 //
