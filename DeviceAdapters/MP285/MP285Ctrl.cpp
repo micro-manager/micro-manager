@@ -296,7 +296,7 @@ int MP285Ctrl::Initialize()
     long lVelocity = MP285::Instance()->GetVelocity();
     if (!yCommError)
     {
-        lVelocity = (sResponse[29] & 0x7F) * 256 + sResponse[28];
+        //lVelocity = (sResponse[29] & 0x7F) * 256 + sResponse[28];
         MP285::Instance()->SetVelocity(lVelocity);
     }
     sprintf(sVelocity, "%ld", lVelocity);
