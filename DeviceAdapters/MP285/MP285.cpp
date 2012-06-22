@@ -223,7 +223,7 @@ int ClearPort(MM::Device& device, MM::Core& core, const char* sPort)
 
 bool            MP285::m_yInstanceFlag      = false;        // instance flag
 bool            MP285::m_yDeviceAvailable   = false;        // MP285 devices availability
-int				MP285::m_nDebugLogFlag		= 3;			// MP285 debug log flag
+int				MP285::m_nDebugLogFlag		= 0;			// MP285 debug log flag
 MP285*          MP285::m_pMP285             = NULL;         // single copy MP285
 int             MP285::m_nResolution        = 10;           // MP285 resolution
 int             MP285::m_nMotionMode        = 0;            // motor motion mode
@@ -231,7 +231,7 @@ int             MP285::m_nUm2UStep          = 25;           // unit to convert u
 int             MP285::m_nUStep2Nm          = 40;           // unit to convert uStep to nm
 int             MP285::m_nTimeoutInterval   = 10000;        // timeout interval
 int             MP285::m_nTimeoutTrys       = 5;            // timeout trys
-long            MP285::m_lVelocity          = 2000;         // velocity
+long            MP285::m_lVelocity          = 18000;         // velocity
 double          MP285::m_dPositionX         = 0.00;         // X Position
 double          MP285::m_dPositionY         = 0.00;         // Y Position
 double          MP285::m_dPositionZ         = 0.00;         // Z Position
@@ -243,7 +243,7 @@ MP285::MP285()
     MP285::m_sMPStr[MP285::MPSTR_CtrlDevName]       = "MP285 Controller";					// MP285 Controllet device name
     MP285::m_sMPStr[MP285::MPSTR_XYStgaeDevName]    = "MP285 XY Stage";						// MP285 XY Stage device name
     MP285::m_sMPStr[MP285::MPSTR_ZStageDevName]     = "MP285 Z Stage";						// MP286 Z Stage device name
-    MP285::m_sMPStr[MP285::MPSTR_MP285Version]      = "2.05.053";							// MP285 adpater version number
+    MP285::m_sMPStr[MP285::MPSTR_MP285Version]      = "2.05.056";							// MP285 adpater version number
     MP285::m_sMPStr[MP285::MPSTR_LogFilename]       = "MP285Log.txt";						// MP285 Logfile name
 	MP285::m_sMPStr[MP285::MPSTR_CtrlDevNameLabel]  = "M.00 Controller ";					// MP285 Controller device name label
 	MP285::m_sMPStr[MP285::MPSTR_CtrlDevDescLabel]  = "M.01 Controller ";					// MP285 Controller device description label
@@ -255,7 +255,7 @@ MP285::MP285()
     MP285::m_sMPStr[MP285::MPSTR_AccelLabel]        = "M.07 Acceleration";					// MP285 ACCELERATION label
     MP285::m_sMPStr[MP285::MPSTR_Um2UStepUnit]      = "M.08 um to uStep";					// MP285 um to ustep label
     MP285::m_sMPStr[MP285::MPSTR_UStep2NmUnit]      = "M.09 uStep to nm";					// MP285 ustep to nm label
-    MP285::m_sMPStr[MP285::MPSTR_VelocityLabel]     = "M.10 Velocity (um/s)";				// MP285 VELOCITY label
+    MP285::m_sMPStr[MP285::MPSTR_VelocityLabel]     = "M.10 Velocity (uStep/s)";			// MP285 VELOCITY label
     MP285::m_sMPStr[MP285::MPSTR_MotionMode]        = "M.11 Mode (0=ABS/1=REL)";			// MP285 MODE label
     MP285::m_sMPStr[MP285::MPSTR_SetOrigin]         = "M.12 Origin (1=set)";                // MP285 ORIGIN label
     MP285::m_sMPStr[MP285::MPSTR_TimeoutInterval]   = "M.13 Timeout Interval (ms)";         // MP285 Timeout Interval
@@ -269,7 +269,7 @@ MP285::MP285()
 	MP285::m_sMPStr[MP285::MPSTR_ZDevNameLabel]     = "M.21 Z Stage ";						// MP285 Z stage device name label
 	MP285::m_sMPStr[MP285::MPSTR_ZDevDescLabel]     = "M.22 Z Stage ";						// MP285 Z stage device description label
     MP285::m_sMPStr[MP285::MPSTR_SetPositionZ]      = "M.23 Set Position Z (um)";			// MP285 set POSITION Z label
-    MP285::m_sMPStr[MP285::MPSTR_GetPositionZ]      = "M.24 Get Position Z (um)";			// MP285 get POSITION Z label
+    MP285::m_sMPStr[MP285::MPSTR_GetPositionZ]      = "M.24 Get Position Z (uStep)";		// MP285 get POSITION Z label
     MP285::m_sMPStr[MP285::MPSTR_PauseMode]         = "M.25 Pause (0=continue/1=pause)";    // property PAUSE label
     MP285::m_sMPStr[MP285::MPSTR_Reset]             = "M.26 Reset (1=reset)";               // property RESET label
     MP285::m_sMPStr[MP285::MPSTR_Status]            = "M.27 Status (1=update)";             // property STATUS label
