@@ -11,9 +11,9 @@
             [slide-explorer.cache :as cache]
             [clojure.core.memoize :as memo])
   (:use [org.micromanager.mm :only (edt)]
-        [slide-explorer.paint :only (enable-anti-aliasing repaint-on-change)]
+        [slide-explorer.paint :only (enable-anti-aliasing repaint repaint-on-change)]
         [slide-explorer.tiles :only (center-tile floor-int)]
-        [slide-explorer.image :only (crop merge-and-scale overlay lut-object)]))
+        [slide-explorer.image :only (crop merge-and-scale overlay)]))
 
 ; Order of operations:
 ;  Stitch/crop
@@ -180,17 +180,20 @@
 
 ;; OVERLAY
 
-(def overlay-memo (memoize overlay)) ;(memo/memo-lru overlay 300))
+(def overlay-memo (memo/memo-lru overlay 300))
 
 (defn multi-color-tile [memory-tiles-atom tile-indices channels-map]
-  (let [channel-names (keys channels-map)]
-    (overlay-memo
-      (for [chan channel-names]
-        (let [tile-index (assoc tile-indices :nc chan)]
-          (swap! memory-tiles-atom cache/hit-item tile-index)
-          (get @memory-tiles-atom tile-index)))
-      (for [chan channel-names]
-        (get-in channels-map [chan :lut])))))
+  #_(clojure.pprint/pprint channels-map)
+  (let [channel-names (keys channels-map)
+        procs (for [chan channel-names]
+                (let [tile-index (assoc tile-indices :nc chan)]
+                  (swap! memory-tiles-atom cache/hit-item tile-index)
+                  (get @memory-tiles-atom tile-index)))
+        lut-maps (map channels-map channel-names)]
+    #_(println procs lut-maps)
+    #_(println (map #(.hashCode %) procs)
+              (map #(.hashCode %) lut-maps))
+    (overlay-memo procs lut-maps)))
 
 ;; PAINTING
 
@@ -257,22 +260,20 @@
   (let [visible-tile-positions (tiles-in-pixel-rectangle
                                  (screen-rectangle @screen-state-atom)
                                  [512 512])]
-    ;(println (count visible-tile-positions))
     (doseq [[nx ny] visible-tile-positions
             channel (keys (:channels @screen-state-atom))]
-      (let [tile {:nx nx
+     (let [tile {:nx nx
                   :ny ny
                   :zoom (@screen-state-atom :zoom)
                   :nc channel
                   :nz (@screen-state-atom :z)
                   :nt 0}]
         (disk/load-tile memory-tile-atom tile)
-        ;(println (str @overlay-tiles-atom))
         (swap! overlay-tiles-atom
-               cache/add-item (assoc tile :nc :overlay)
+               cache/add-item 
+               (assoc tile :nc :overlay)
                (multi-color-tile memory-tile-atom tile
-                                           (:channels @screen-state-atom)))
-        ))))
+                                 (:channels @screen-state-atom)))))))
 
 (defn load-visible-only
   "Runs visible-loader whenever screen-state-atom changes."
@@ -481,7 +482,3 @@ to normal size."
     (handle-pointing panel mouse-position)
     screen-state))
 
-;; testing
-
-(defn add-channel [screen-state-atom name color min max gamma]
-  (swap! update-in [:channels name] (lut-object color min max gamma)))

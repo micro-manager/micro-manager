@@ -34,6 +34,12 @@
 
 (def display-updater (GUIUpdater.))
 
+
+(defn repaint
+  "Repaint the panel on the GUI Updater thread."
+  [panel]
+  (.post display-updater #(.repaint panel)))
+
 (defn repaint-on-change
   "Adds a watch such that panel is repainted
    if the value in reference has changed."
@@ -41,4 +47,4 @@
   (add-watch-simple reference
              (fn [old-state new-state]
                (when-not (= old-state new-state)
-                 (.post display-updater #(.repaint panel))))))
+                 (repaint panel)))))

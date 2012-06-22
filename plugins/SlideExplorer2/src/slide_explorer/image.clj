@@ -160,7 +160,7 @@
 
 (def black-lut
   "An LUT such that the image is not displayed."
-  (lut-object Color/BLACK 0 255 1.0))
+  {:color Color/BLACK :min 0 :max 255 :gamma 1.0})
 
 (defn composite-image
   "Takes n ImageProcessors and produces a CompositeImage."
@@ -177,13 +177,14 @@
                     
 ; ~4 ms
 (defn overlay
-  "Takes n ImageProcessors and n lut objects and produces a ColorProcessor
-   containing the overlay."
-  [processors luts]
+  "Takes n ImageProcessors and n lut-maps [:color :min :max :gamma] and
+   produces a BufferedImage containing the overlay."
+  [processors lut-maps]
   (when (first (filter identity processors))
-    (let [luts (if (= 1 (count luts))
-                 (list (first luts) black-lut)
-                 luts)]
+    (let [luts (map lut-object
+                    (if (= 1 (count lut-maps))
+                      (list (first lut-maps) black-lut)
+                      lut-maps))]
       (.getImage
         (doto (composite-image processors)
           (.setLuts (into-array luts)))))))

@@ -119,9 +119,9 @@
  
 ;; run using acquisitions
 
-;;; channel setup
+;;; channel display settings
 
-(defn initial-channel-display-settings [tagged-image-processors]
+(defn initial-lut-maps [tagged-image-processors]
   (merge-with merge
               (into {}
                     (for [[chan color] (stack-colors tagged-image-processors)]
@@ -129,11 +129,6 @@
               (into {}
                     (for [[chan images] (group-by #(get-in % [:tags "Channel"]) tagged-image-processors)]
                       [(or chan "Default") (assoc (apply intensity-range (map :proc images)) :gamma 1.0)]))))
-
-(defn initial-lut-objects [tagged-image-processors]
-  (into {}
-        (for [[chan lut-map] (initial-channel-display-settings tagged-image-processors)]
-          [chan {:lut (lut-object lut-map)}])))
 
 ;; tile arrangement
 
@@ -238,7 +233,7 @@
     (def affine affine-stage-to-pixel)
     (def ss screen-state)
     (def ai acquired-images)
-    (swap! ss assoc :channels (initial-lut-objects first-seq))
+    (swap! ss assoc :channels (initial-lut-maps first-seq))
     (explore-fn)
     (add-watch ss "explore" (fn [_ _ old new] (when-not (= old new)
                                                 (explore-fn))))
