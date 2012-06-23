@@ -112,3 +112,11 @@
   ([reference function]
     (handle-removed-items reference function (single-threaded-executor))))
 
+;; tests
+
+(defn test-handle-update []
+  (let [q (atom 0)]
+    (handle-update q (fn [_ v] (println v)))
+    (doseq [_ (range 10000)] (swap! q inc))))
+  
+

@@ -180,7 +180,7 @@
 
 ;; OVERLAY
 
-(def overlay-memo (memo/memo-lru overlay 300))
+(def overlay-memo (memo/memo-lru overlay 100))
 
 (defn multi-color-tile [memory-tiles-atom tile-indices channels-map]
   #_(clojure.pprint/pprint channels-map)
@@ -457,7 +457,7 @@ to normal size."
                                        :channels (sorted-map))
                                        :update 0)
         ;overlay-tiles (atom {})
-        overlay-tiles (atom (cache/empty-lru-map 300))
+        overlay-tiles (atom (cache/empty-lru-map 100))
         panel (main-panel screen-state overlay-tiles)
         frame (main-frame)
         mouse-position (atom nil)]

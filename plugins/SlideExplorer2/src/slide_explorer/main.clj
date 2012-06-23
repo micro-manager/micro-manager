@@ -218,7 +218,7 @@
   []
   (core waitForDevice (core getXYStageDevice))
   (let [dir (str "tmp" (rand-int 10000000))
-        memory-tiles (doto (atom (cache/empty-lru-map 300))
+        memory-tiles (doto (atom (cache/empty-lru-map 100))
                                  (alter-meta! assoc ::directory dir))
         display-tiles (atom {})
         acquired-images (atom #{})
