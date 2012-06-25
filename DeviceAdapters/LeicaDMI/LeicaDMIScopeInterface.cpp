@@ -2168,8 +2168,14 @@ int LeicaMonitoringThread::svc()
                             break;
                          }
                       case (22) : // Completion of Position Absolute
-                         scopeModel_->ZDrive_.SetBusy(false);
+                         {
+                            int pos = -100000;
+                            os >> pos;
+                            if (pos != -100000)
+                               scopeModel_->ZDrive_.SetPosition(pos);
+                            scopeModel_->ZDrive_.SetBusy(false);
                          break;
+                         }
                       case (29) : // Focus position
                          {
                             int focusPos;
