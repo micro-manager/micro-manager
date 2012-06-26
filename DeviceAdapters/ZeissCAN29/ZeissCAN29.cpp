@@ -116,6 +116,7 @@ const char* g_ZeissColibri = "ZeissColibri";
 const char* g_Zeiss2TVTubePrism = "Zeiss2TVTubePrism";
 const char* g_Zeiss2TVTubeSlider = "Zeiss2TVTubeSlider";
 const char* g_Zeiss2TVTubeShutter = "Zeiss2TVTubeShutter";
+const char* g_ZeissHXPShutter = "ZeissHXPShutter";
 
 
 // List of Device numbers (from Zeiss documentation)
@@ -141,6 +142,7 @@ ZeissUByte g_LSMPortChanger = 0x2B;  // RearPort, reflected light
 ZeissUByte g_2TVTubePrism = 0x2E;  
 ZeissUByte g_2TVTubeSlider = 0x2F;  
 ZeissUByte g_2TVTubeShutter = 0x30;  
+ZeissUByte g_HXPShutter = 0x36;
 ZeissUByte g_BasePortChanger = 0x40;
 ZeissUByte g_UniblitzShutter = 0x41;
 ZeissUByte g_FilterWheelChanger = 0x42;
@@ -184,6 +186,7 @@ MODULE_API void InitializeModuleData()
    AddAvailableDeviceName(g_Zeiss2TVTubePrism,"g_Zeiss2TVTubePrism"); 
    AddAvailableDeviceName(g_Zeiss2TVTubeSlider,"g_Zeiss2TVTubeSlider"); 
    AddAvailableDeviceName(g_Zeiss2TVTubeShutter,"g_Zeiss2TVTubeShutter"); 
+   AddAvailableDeviceName(g_ZeissHXPShutter,"g_ZeissHXPShutter"); 
 }
 
 using namespace std;
@@ -251,6 +254,8 @@ MODULE_API MM::Device* CreateDevice(const char* deviceName)
         return new Turret(g_2TVTubeSlider, g_Zeiss2TVTubeSlider, "2-TV Tube Slider");
    else if (strcmp(deviceName, g_Zeiss2TVTubeShutter) == 0)
         return new Turret(g_2TVTubeShutter, g_Zeiss2TVTubeShutter, "2-TV Tube Shutter");
+   else if (strcmp(deviceName, g_ZeissHXPShutter) == 0)
+        return new Shutter(g_HXPShutter, g_ZeissHXPShutter, "HXP Shutter");
 
    return 0;
 }
