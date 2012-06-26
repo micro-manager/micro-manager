@@ -39,7 +39,7 @@ import org.micromanager.utils.ReportingUtils;
 public class AcquisitionWrapperEngine implements AcquisitionEngine {
 
    private CMMCore core_;
-   private MMStudioMainFrame gui_;
+   protected MMStudioMainFrame gui_;
    private PositionList posList_;
    private String zstage_;
    private double sliceZStepUm_;
@@ -63,14 +63,14 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
    private int acqOrderMode_;
    private boolean useAutoFocus_;
    private int afSkipInterval_;
-   private List<DataProcessor<TaggedImage>> taggedImageProcessors_;
+   protected List<DataProcessor<TaggedImage>> taggedImageProcessors_;
    private List<Class> imageRequestProcessors_;
    private boolean absoluteZ_;
-   private IAcquisitionEngine2010 pipeline_;
+   private IAcquisitionEngine2010 acquisitionEngine2010;
    private ArrayList<Double> customTimeIntervalsMs_;
    private boolean useCustomIntervals_;
-   private JSONObject summaryMetadata_;
-   private ImageCache imageCache_;
+   protected JSONObject summaryMetadata_;
+   protected ImageCache imageCache_;
 
    public AcquisitionWrapperEngine() {
       imageRequestProcessors_ = new ArrayList<Class>();
@@ -80,20 +80,20 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
 
    public String acquire() throws MMException {
       MMStudioMainFrame.seriousErrorReported_.set(false);
-      return runPipeline(getSequenceSettings());
+      return runAcquisition(getSequenceSettings());
    }
 
-   public IAcquisitionEngine2010 getPipeline() {
-      if (pipeline_ == null) {
-         pipeline_ = gui_.getPipeline();
+   public IAcquisitionEngine2010 getAcquisitionEngine2010() {
+      if (acquisitionEngine2010 == null) {
+         acquisitionEngine2010 = gui_.getAcquisitionEngine2010();
       }
-      return pipeline_;
+      return acquisitionEngine2010;
    }
 
-   public String runPipeline(SequenceSettings acquisitionSettings) {
+   public String runAcquisition(SequenceSettings acquisitionSettings) {
       try {
          DefaultTaggedImagePipeline taggedImagePipeline = new DefaultTaggedImagePipeline(
-                 getPipeline(),
+                 getAcquisitionEngine2010(),
                  acquisitionSettings,
                  taggedImageProcessors_,
                  gui_,
@@ -121,14 +121,14 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
     * then the runnable will execute at every frame.
     */
    public void attachRunnable(int frame, int position, int channel, int slice, Runnable runnable) {
-      getPipeline().attachRunnable(frame, position, slice, channel, runnable);
+      getAcquisitionEngine2010().attachRunnable(frame, position, slice, channel, runnable);
    }
    /*
     * Clear all attached runnables from the acquisition engine.
     */
 
    public void clearRunnables() {
-      getPipeline().clearRunnables();
+      getAcquisitionEngine2010().clearRunnables();
    }
 
    private String getSource(ChannelSpec channel) {
@@ -260,8 +260,8 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
 //////////////////// Actions ///////////////////////////////////////////
    public void stop(boolean interrupted) {
       try {
-         if (pipeline_ != null) {
-            pipeline_.stop();
+         if (acquisitionEngine2010 != null) {
+            acquisitionEngine2010.stop();
          }
       } catch (Exception ex) {
          ReportingUtils.showError(ex, "Acquisition engine stop request failed");
@@ -284,7 +284,7 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
    }
 
    public boolean abortRequested() {
-      return pipeline_.stopHasBeenRequested();
+      return acquisitionEngine2010.stopHasBeenRequested();
    }
 
    public void shutdown() {
@@ -293,24 +293,24 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
 
    public void setPause(boolean state) {
       if (state) {
-         pipeline_.pause();
+         acquisitionEngine2010.pause();
       } else {
-         pipeline_.resume();
+         acquisitionEngine2010.resume();
       }
    }
 
 //// State Queries /////////////////////////////////////////////////////
    public boolean isAcquisitionRunning() {
-      if (pipeline_ != null) {
-         return pipeline_.isRunning();
+      if (acquisitionEngine2010 != null) {
+         return acquisitionEngine2010.isRunning();
       } else {
          return false;
       }
    }
 
    public boolean isFinished() {
-      if (pipeline_ != null) {
-         return pipeline_.isFinished();
+      if (acquisitionEngine2010 != null) {
+         return acquisitionEngine2010.isFinished();
       } else {
          return false;
       }
@@ -321,7 +321,7 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
    }
 
    public long getNextWakeTime() {
-      return pipeline_.nextWakeTime();
+      return acquisitionEngine2010.nextWakeTime();
    }
 
 
@@ -796,7 +796,7 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
    }
 
    public boolean isPaused() {
-      return pipeline_.isPaused();
+      return acquisitionEngine2010.isPaused();
    }
 
    public void restoreSystem() {

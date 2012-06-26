@@ -4223,7 +4223,7 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface, Device
       return core_;
    }
 
-   public IAcquisitionEngine2010 getPipeline() {
+   public IAcquisitionEngine2010 getAcquisitionEngine2010() {
       try {
          acquisitionEngine2010LoadingThread.join();
          if (acquisitionEngine2010 == null) {
@@ -4242,7 +4242,7 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface, Device
          return;
       }
       try {
-         getPipeline().acquireSingle();
+         getAcquisitionEngine2010().acquireSingle();
       } catch (Exception ex) {
          ReportingUtils.logError(ex);
       }

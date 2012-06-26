@@ -23,6 +23,7 @@
 package org.micromanager.api;
 
 import ij.gui.ImageWindow;
+
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Rectangle;
@@ -30,8 +31,8 @@ import java.awt.geom.Point2D;
 
 import mmcorej.CMMCore;
 import mmcorej.TaggedImage;
-import org.json.JSONObject;
 
+import org.json.JSONObject;
 import org.micromanager.AcqControlDlg;
 import org.micromanager.PositionListDlg;
 import org.micromanager.acquisition.MMAcquisition;
@@ -1024,4 +1025,9 @@ public interface ScriptInterface {
     * called by the acquisition engine.
     */
    public boolean isSeriousErrorReported();
+
+   /*
+    * Returns the pipeline
+    */
+   public IAcquisitionEngine2010 getAcquisitionEngine2010();
 }
