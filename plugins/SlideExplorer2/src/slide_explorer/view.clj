@@ -135,25 +135,6 @@
                          oldies)))]
           (apply swap! atom dissoc oldies))))))
 
-(defn propagate-tile [tile-map-atom {:keys [zoom nx ny nz nt nc] :as indices}]
-  ;(println indices)
-  (let [nx- (* 2 nx)
-        ny- (* 2 ny)
-        nx+ (inc nx-)
-        ny+ (inc ny-)
-        zoom-parent (* zoom 2)
-        get-parent-tile (fn [[nx ny]]
-                          (let [dir (disk/tile-dir tile-map-atom)
-                                tile-index (assoc indices :zoom zoom-parent :nx nx :ny ny)]
-                            (or (get @tile-map-atom tile-index) 
-                                (disk/read-tile dir tile-index)
-                                )))
-        abcd (map get-parent-tile [[nx- ny-]
-                                   [nx+ ny-]
-                                   [nx- ny+]
-                                   [nx+ ny+]])]
-    (disk/add-tile tile-map-atom indices (apply merge-and-scale abcd))))
-
 (defn child-index [n]
   (floor-int (/ n 2)))
 
@@ -163,14 +144,25 @@
      (update-in [:ny] child-index)
      (update-in [:zoom] / 2)))
 
-(defn tiles-for-updating [tile-index-coll]
-  (->> tile-index-coll
-       (map child-indices)
-       set
-       (sort-by #(- (% :zoom)))))
+(defn propagate-tile [tile-map-atom {:keys [zoom nx ny nz nt nc] :as indices}]
+  ;(println "propagate" indices)
+  (let [nx- (* 2 nx)
+        ny- (* 2 ny)
+        nx+ (inc nx-)
+        ny+ (inc ny-)
+        zoom-parent (* zoom 2)
+        get-parent-tile (fn [[nx ny]]
+                          (let [dir (disk/tile-dir tile-map-atom)
+                                tile-index (assoc indices :zoom zoom-parent :nx nx :ny ny)]
+                            ;(println (def qq (disk/load-tile dir tile-index)) dir tile-index)
+                            (.get (disk/load-tile tile-map-atom tile-index))))
+        abcd (map get-parent-tile [[nx- ny-]
+                                   [nx+ ny-]
+                                   [nx- ny+]
+                                   [nx+ ny+]])]
+    (disk/add-tile tile-map-atom indices (apply merge-and-scale abcd))))
 
 (defn add-to-memory-tiles [tile-map-atom indices tile]
-  ;(println "asdf")
   (let [full-indices (assoc indices :zoom 1)]
     (disk/add-tile tile-map-atom full-indices tile)
     (loop [new-indices (child-indices full-indices)]
