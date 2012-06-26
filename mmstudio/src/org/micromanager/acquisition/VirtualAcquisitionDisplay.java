@@ -21,9 +21,6 @@
 //
 package org.micromanager.acquisition;
 
-import org.micromanager.api.AcquisitionDisplay;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import org.micromanager.internalinterfaces.DisplayControls;
 import org.micromanager.internalinterfaces.Histograms;
 import java.lang.reflect.InvocationTargetException;
@@ -1860,8 +1857,11 @@ public final class VirtualAcquisitionDisplay implements AcquisitionDisplay, Imag
    }
 
    public synchronized boolean windowClosed() {
-      ImageWindow win = hyperImage_.getWindow();
-      return (win == null || win.isClosed());
+      if (hyperImage_ != null) {
+         ImageWindow win = hyperImage_.getWindow();
+         return (win == null || win.isClosed());
+      }
+      return true;
    }
 
    public void showFolder() {
