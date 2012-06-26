@@ -2164,7 +2164,7 @@ int LeicaMonitoringThread::svc()
                             int pos;
                             os >> pos;
                             scopeModel_->ZDrive_.SetPosition(pos);
-                            scopeModel_->ZDrive_.SetBusy(false);
+                            //scopeModel_->ZDrive_.SetBusy(false);
                             break;
                          }
                       case (22) : // Completion of Position Absolute
@@ -2173,7 +2173,7 @@ int LeicaMonitoringThread::svc()
                             os >> pos;
                             if (pos != -100000)
                                scopeModel_->ZDrive_.SetPosition(pos);
-                            scopeModel_->ZDrive_.SetBusy(false);
+                            //scopeModel_->ZDrive_.SetBusy(false);
                          break;
                          }
                       case (29) : // Focus position
