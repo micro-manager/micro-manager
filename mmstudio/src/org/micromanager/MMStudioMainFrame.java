@@ -159,6 +159,7 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface, Device
    private static final String MAIN_FRAME_HEIGHT = "height";
    private static final String MAIN_FRAME_DIVIDER_POS = "divider_pos";
    private static final String MAIN_EXPOSURE = "exposure";
+   private static final String MAIN_SAVE_METHOD = "saveMethod";
    private static final String SYSTEM_CONFIG_FILE = "sysconfig_file";
    private static final String OPEN_ACQ_DIR = "openDataDir";
    private static final String SCRIPT_CORE_OBJECT = "mmc";
@@ -876,6 +877,12 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface, Device
       int height = mainPrefs_.getInt(MAIN_FRAME_HEIGHT, 570);
       int dividerPos = mainPrefs_.getInt(MAIN_FRAME_DIVIDER_POS, 200);    
       openAcqDirectory_ = mainPrefs_.get(OPEN_ACQ_DIR, "");
+      try {
+         ImageUtils.setImageStorageClass(Class.forName (mainPrefs_.get(MAIN_SAVE_METHOD,
+                 ImageUtils.getImageStorageClass().getName()) ) );
+      } catch (ClassNotFoundException ex) {
+         ReportingUtils.logError(ex, "Class not found error.  Should never happen");
+      }
 
       ToolTipManager ttManager = ToolTipManager.sharedInstance();
       ttManager.setDismissDelay(TOOLTIP_DISPLAY_DURATION_MILLISECONDS);
@@ -3219,6 +3226,8 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface, Device
       mainPrefs_.putInt(MAIN_FRAME_DIVIDER_POS, this.splitPane_.getDividerLocation());
       
       mainPrefs_.put(OPEN_ACQ_DIR, openAcqDirectory_);
+      mainPrefs_.put(MAIN_SAVE_METHOD, 
+              ImageUtils.getImageStorageClass().getName());
 
       // save field values from the main window
       // NOTE: automatically restoring these values on startup may cause
