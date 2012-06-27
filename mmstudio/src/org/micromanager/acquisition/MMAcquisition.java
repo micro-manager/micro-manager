@@ -588,7 +588,7 @@ public class MMAcquisition {
    }
 
    public void insertImage(TaggedImage taggedImg, boolean updateDisplay) throws MMScriptException {
-      insertImage(taggedImg, updateDisplay, true);
+      insertImage(taggedImg, updateDisplay && show_ , true);
    }
 
    /*
@@ -934,6 +934,10 @@ public class MMAcquisition {
          return false;
       }
       return true;
+   }
+   
+   public boolean getShow() {
+      return show_;
    }
 
    private static String getPixelType(int depth) {
