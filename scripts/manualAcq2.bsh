@@ -1,0 +1,41 @@
+// Manual acquisition using Runnables
+// Nico Stuurman, UCSF, June 2012.
+// nico@cmp.ucsf.edu
+
+
+import ij.gui.GenericDialog;
+
+
+acq.clearRunnables();
+
+runnable = new Runnable() {
+   int count = 0;
+   public void run() {
+	   channels = acq.getChannels();
+		channel = channels.get(count);
+		// deal with useChannel_ flag
+	   round = 0;
+		while (!channel.useChannel_ && round < 2) {
+			count++;
+			if (count == channels.size) {
+				count = 0;
+				round++;
+			}
+			channel = channels.get(count);
+		}
+		// show message and wzit for response
+		GenericDialog dlg = new GenericDialog("Manual Acquisition", null);
+      dlg.addMessage("Move filters for channel " + channel.config_ + " in place");
+      dlg.showDialog();
+      print("Move channel " + channel.config_ + " in place");
+      ++count;
+		if (count >= channels.size)
+			count = 0;
+   }
+};
+
+// Run the runnable on all frames and channels,
+// but only when slize and position  are 0.
+// -1 --> attach to all planes along given dimension
+
+acq.attachRunnable(-1,0,0,-1,runnable); // f, p, s, c 
