@@ -87,11 +87,13 @@ public class AcquisitionManager {
    
    public boolean acquisitionExists(String name) {
       if (acqs_.containsKey(name)) {
+         // The following code makes it impossible to do acquisitions without a display:
          if (acqs_.get(name).windowClosed()) {
             acqs_.get(name).close();
             acqs_.remove(name);
             return false;
          }
+          
          return true;
       }
       return false;
