@@ -221,10 +221,7 @@ public class GaussianTrackThread extends GaussianInfo implements Runnable  {
             if (paramsOut.length >= 6) {
                 sx = paramsOut[GaussianFit.S1] * pixelSize_;
                 sy = paramsOut[GaussianFit.S2] * pixelSize_;
-                if (sx > sy)
-                   a = sx/sy;
-                else
-                   a = sy/sx;
+                a = sx/sy;
              }
 
              if (paramsOut.length >= 7) {

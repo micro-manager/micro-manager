@@ -54,6 +54,7 @@ import javax.swing.*;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableColumnModel;
+import org.apache.commons.math.stat.StatUtils;
 import org.jfree.data.xy.XYSeries;
 import org.micromanager.MMStudioMainFrame;
 import org.micromanager.utils.NumberUtils;
@@ -3283,6 +3284,71 @@ public class DataCollectionForm extends javax.swing.JFrame {
          break;
       }
 
+   }
+   
+   public void zCalibrate(int rowNr) {
+      final double widthCutoff = 1000.0;
+      final double maxVariance = 10000.0;
+      final int minNrSpots = 5;
+      
+      ZCalibrator zc = new ZCalibrator();
+      MyRowData rd = rowData_.get(rowNr);
+
+      
+      List<GaussianSpotData> sl = rd.spotList_;
+      
+      for (GaussianSpotData gsd : sl) {
+         double xw = gsd.getWidth();
+         double xy = xw / gsd.getA();
+         if (xw < widthCutoff && xy < widthCutoff) {
+            zc.addDataPoint(gsd.getWidth(), gsd.getWidth() / gsd.getA(),
+               gsd.getSlice() );
+         }
+      }
+      zc.plotDataPoints();
+       
+      zc.clearDataPoints();
+      
+      // calculate average and stdev per frame
+      if (rd.frameIndexSpotList_ == null) {
+         rd.index();
+      }  
+      
+      final int nrImages = rd.nrSlices_;
+     
+      int frameNr = 0;
+      while (frameNr < nrImages) {
+         List<GaussianSpotData> frameSpots = rd.frameIndexSpotList_.get(frameNr);
+         if (frameSpots != null) {
+            double[] xws = new double[frameSpots.size()];
+            double[] yws = new double[frameSpots.size()];
+            int i = 0;
+            for (GaussianSpotData gsd : frameSpots) {
+               xws[i] = gsd.getWidth();
+               yws[i] = (gsd.getWidth() / gsd.getA());
+               i++;
+            }
+            double meanX = StatUtils.mean(xws);
+            double meanY = StatUtils.mean(yws);
+            double varX = StatUtils.variance(xws, meanX);
+            double varY = StatUtils.variance(yws, meanY);
+            
+            System.out.println("Frame: " + frameNr + ", X: " + (int) meanX + ", " + (int) varX + 
+                    ", Y: " + (int) meanY + ", " + (int) varY);
+            
+            if (frameSpots.size() >= minNrSpots && 
+                    varX < maxVariance && 
+                    varY < maxVariance) {
+               zc.addDataPoint(meanX, meanY, frameNr);
+            }
+            
+         }
+         frameNr++;
+      }
+      
+      zc.plotDataPoints();
+
+      
    }
 
 
