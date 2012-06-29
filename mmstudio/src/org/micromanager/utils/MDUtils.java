@@ -277,7 +277,7 @@ public class MDUtils {
       else if (pixelType.contentEquals("RGB64"))
            return 3;
       else {
-         throw new MMScriptException("Pixel type not recognized!");
+         throw new MMScriptException("Pixel type \"" + pixelType + "\"not recognized!");
       }
    }
 
