@@ -24,7 +24,9 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.jar.JarEntry;
 import java.util.jar.JarInputStream;
 import java.util.prefs.Preferences;
@@ -421,5 +423,19 @@ public class JavaUtils {
       }
       return null;
    }
+
+   public static void printAllStackTraces() {
+      System.err.println("\n\nDumping all stack traces:");
+      Map<Thread, StackTraceElement[]> liveThreads = Thread.getAllStackTraces();
+      for (Thread key : liveThreads.keySet()) {
+         System.err.println("Thread " + key.getName());
+         StackTraceElement[] trace = (StackTraceElement[]) liveThreads.get(key);
+         for (int j = 0; j < trace.length; j++) {
+            System.err.println("\tat " + trace[j]);
+         }
+      }
+      System.err.println("End all stack traces. =============");
+   }
+
 
 }

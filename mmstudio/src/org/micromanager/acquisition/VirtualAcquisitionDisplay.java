@@ -216,21 +216,9 @@ public final class VirtualAcquisitionDisplay implements AcquisitionDisplay, Imag
          }
       }
 
-      /*
-       * ImageJ workaround: the following two functions set the currentChannel field to -1, which can lead to a null 
-       * pointer exception if the function is called while CompositeImage.updateImage is also running on a different 
-       * Thread.  So we make sure they are all on the EDT so this never happens
-       */
       @Override
       public synchronized void setMode(final int mode) {
-         Runnable runnable = new Runnable() {
-
-            @Override
-            public void run() {
                superSetMode(mode);
-            }
-         };
-         invokeLaterIfNotEDT(runnable);
       }
 
       private void superSetMode(int mode) {
@@ -239,14 +227,7 @@ public final class VirtualAcquisitionDisplay implements AcquisitionDisplay, Imag
 
       @Override
       public synchronized void setChannelLut(final LUT lut) {
-         Runnable runnable = new Runnable() {
-
-            @Override
-            public void run() {
-               superSetLut(lut);
-            }
-         };
-         invokeLaterIfNotEDT(runnable);
+         superSetLut(lut);
       }
 
       private void superSetLut(LUT lut) {
@@ -255,15 +236,7 @@ public final class VirtualAcquisitionDisplay implements AcquisitionDisplay, Imag
 
       @Override
       public synchronized void updateImage() {
-         Runnable runnable = new Runnable() {
-
-            @Override
-            public void run() {
-               superUpdateImage();
-            }
-         };
-
-         invokeLaterIfNotEDT(runnable);
+           superUpdateImage();
       }
 
       private void superUpdateImage() {
@@ -289,16 +262,30 @@ public final class VirtualAcquisitionDisplay implements AcquisitionDisplay, Imag
               public void run() {
                  superUpdateImage();
                   imageChangedUpdate();
-                  try { 
-                      JavaUtils.invokeRestrictedMethod(this, ImagePlus.class, "notifyListeners", 2);
-                  } catch (Exception ex) {   }
-                  superDraw();
+               try {
+                  GUIUtils.invokeLater(new Runnable() {
+
+                     public void run() {
+                        try {
+                           JavaUtils.invokeRestrictedMethod(this, ImagePlus.class, "notifyListeners", 2);
+                        } catch (Exception ex) {
+                        }
+                        superDraw();
+                     }
+                  });
+               } catch (Exception e) {
+                  ReportingUtils.logError(e);
+               }
               }
           };
       }
       
       public void updateAndDrawWithoutGUIUpdater() {
-         invokeLaterIfNotEDT(updateAndDrawRunnable());
+         try {
+            GUIUtils.invokeLater(updateAndDrawRunnable());
+         } catch (Exception e) {
+            ReportingUtils.logError(e);
+         }
       }
       
       @Override
@@ -408,7 +395,11 @@ public final class VirtualAcquisitionDisplay implements AcquisitionDisplay, Imag
       }
       
       public void updateAndDrawWithoutGUIUpdater() {
-         invokeLaterIfNotEDT(drawRunnable());
+         try {
+            GUIUtils.invokeLater(drawRunnable());
+         } catch (Exception e) {
+            ReportingUtils.logError(e);
+         }
       }
 
       @Override
@@ -452,14 +443,6 @@ public final class VirtualAcquisitionDisplay implements AcquisitionDisplay, Imag
       name_ = name;
       mda_ = false;
       this.albumSaved_ = imageCache.isFinished();
-   }
-
-   private void invokeLaterIfNotEDT(Runnable runnable) {
-      if (SwingUtilities.isEventDispatchThread()) {
-         runnable.run();
-      } else {
-         SwingUtilities.invokeLater(runnable);
-      }
    }
 
    private void startup(JSONObject firstImageMetadata) {

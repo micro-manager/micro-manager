@@ -181,4 +181,16 @@ public class GUIUtils {
          SwingUtilities.invokeAndWait(r);
       }
    }
+
+      /*
+    * Wraps SwingUtilities.invokeLater so that if it is being called
+    * from the EDT, then the runnable is simply run.
+    */
+   public static void invokeLater(Runnable r) throws InterruptedException, InvocationTargetException {
+      if (SwingUtilities.isEventDispatchThread()) {
+         r.run();
+      } else {
+         SwingUtilities.invokeLater(r);
+      }
+   }
 }
