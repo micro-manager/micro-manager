@@ -132,11 +132,20 @@
 
 ;; tile arrangement
 
+(defn number-of-tiles [{:keys [width height zoom]} [tile-width tile-height]]
+  (* (+ 2 (Math/max 1 (floor-int (/ width tile-width zoom))))
+     (+ 2 (Math/max 1 (floor-int (/ height tile-height zoom))))))
+
 (defn next-tile [screen-state acquired-images [tile-width tile-height]]
   (let [center-tile (center-tile [(:x screen-state) (:y screen-state)]
                                  [tile-width tile-height])
-        trajectory (offset-tiles center-tile tile-list)]
-    (first (remove @acquired-images trajectory))))
+        pixel-rect (pixel-rectangle screen-state)
+        number-tiles (number-of-tiles screen-state [tile-width tile-height])
+        trajectory (take number-tiles (offset-tiles center-tile tile-list))
+        allowed (filter #(tile-in-pixel-rectangle?
+                           % pixel-rect [tile-width tile-height])
+                        trajectory)]
+    (first (remove @acquired-images allowed))))
 
 ;; tile acquisition management
 
@@ -166,11 +175,8 @@
   (when-let [next-tile (next-tile @screen-state-atom
                                   acquired-images
                                   [tile-width tile-height])]
-    (when (tile-in-pixel-rectangle?
-            next-tile (pixel-rectangle @screen-state-atom)
-            [tile-width tile-height])
-      (add-tiles-at memory-tiles-atom next-tile affine acquired-images)
-      next-tile)))
+    (add-tiles-at memory-tiles-atom next-tile affine acquired-images)
+    next-tile))
 
 (defn handle-error [e]
   (def q e))
