@@ -121,7 +121,7 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
     * then the runnable will execute at every frame.
     */
    public void attachRunnable(int frame, int position, int channel, int slice, Runnable runnable) {
-      getAcquisitionEngine2010().attachRunnable(frame, position, slice, channel, runnable);
+      getAcquisitionEngine2010().attachRunnable(frame, position, channel, slice, runnable);
    }
    /*
     * Clear all attached runnables from the acquisition engine.

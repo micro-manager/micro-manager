@@ -90,12 +90,12 @@ public interface IAcquisitionEngine2010 {
     * multi-dimensional sequence. If -1 (negative one) is used for
     * any of the dimensions (frame, position, slice, channel), then
     * the runnable is invoked for every possible value of that dimension.
-    * For example, passing arguments (-1, 0, 2, -1, theRunnable) would result
-    * in theRunnable being executed at every frame, position 0, slice 2,
-    * and every channel.
+    * For example, passing arguments (-1, 0, -1, 2, theRunnable) would result
+    * in theRunnable being executed at every frame, position 0, every channel,
+    * and slice 2.
     */
    public void attachRunnable(int frame, int position,
-                              int slice, int channel, Runnable runnable);
+                              int channel, int slice, Runnable runnable);
 
    /*
     * Removes all runnables that have been attached to this
