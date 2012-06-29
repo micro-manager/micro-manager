@@ -46,8 +46,6 @@ public class LiveModeTimer {
    private CMMCore core_;
    private MMStudioMainFrame gui_;
    private long multiChannelCameraNrCh_;
-   private boolean shutterOriginalState_;
-   private boolean autoShutterOriginalState_;
    private long fpsTimer_;
    private long fpsCounter_;
    private long imageNumber_;
@@ -98,7 +96,6 @@ public class LiveModeTimer {
          }
          timer_ = new Timer("Live mode timer");
          
-         manageShutter(true);
          core_.clearCircularBuffer();
             
          core_.startContinuousSequenceAcquisition(0);
@@ -144,14 +141,12 @@ public class LiveModeTimer {
       timer_.cancel();
       try {
          core_.stopSequenceAcquisition();
-         manageShutter(false);
          if (win_ != null) {
             win_.liveModeEnabled(false);
          }
          running_ = false;
       } catch (Exception ex) {
          try {
-            manageShutter(false);
          } catch (Exception e) {
             ReportingUtils.showError("Error closing shutter");
          }
@@ -314,21 +309,5 @@ public class LiveModeTimer {
       }
       gui_.addStagePositionToTags(ti);
       return ti;
-   }
-   
-
-   private void manageShutter(boolean enable) throws Exception {
-      String shutterLabel = core_.getShutterDevice();
-      if (shutterLabel.length() > 0) {
-         if (enable) {
-            shutterOriginalState_ = core_.getShutterOpen();
-            autoShutterOriginalState_ = core_.getAutoShutter();
-            core_.setAutoShutter(false);
-            core_.setShutterOpen( shutterOriginalState_ || autoShutterOriginalState_);
-         } else {
-            core_.setShutterOpen(shutterOriginalState_);
-            core_.setAutoShutter(autoShutterOriginalState_);
-         }
-      }
    }
 }
