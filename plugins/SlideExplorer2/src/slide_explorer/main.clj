@@ -19,8 +19,7 @@
   (:use [org.micromanager.mm :only (core edt mmc gui load-mm json-to-data)]
         [slide-explorer.affine :only (set-destination-origin transform inverse-transform)]
         [slide-explorer.view :only (show add-to-memory-tiles tile-in-pixel-rectangle?
-                                    pixel-rectangle screen-rectangle tiles-in-pixel-rectangle
-                                    evict-oldest)]
+                                    pixel-rectangle screen-rectangle tiles-in-pixel-rectangle)]
         [slide-explorer.image :only (show-image intensity-range lut-object)]
         [slide-explorer.tiles :only (floor-int center-tile tile-list offset-tiles)])
   (:require [slide-explorer.disk :as disk]

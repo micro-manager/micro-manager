@@ -111,31 +111,6 @@
 
 (def q (agent nil))
 
-(defn cache-assoc [m k v]
-  (-> m (dissoc k)
-        (assoc k v)))
-
-(defn evict-oldest
-  "Takes an atom containing a map and adds a watch such that whenever an item is added,
-   the oldest item is removed to keep the number of items less than or equal to limit."
-  [atom limit]
-  (let [tick (ref 0)
-        priority (ref {})]
-    (reactive/handle-added-items
-      atom
-      (fn react [[key val]]
-        (when-let [oldies
-                   (dosync
-                     (alter tick inc)
-                     (alter priority assoc key @tick)
-                     (loop [oldies nil]
-                       (if (> (count @priority) limit)
-                         (let [oldest (apply min-key @priority (keys @priority))]
-                           (alter priority dissoc oldest)
-                           (recur (conj oldies oldest)))
-                         oldies)))]
-          (apply swap! atom dissoc oldies))))))
-
 (defn child-index [n]
   (floor-int (/ n 2)))
 
@@ -213,11 +188,7 @@
       (.translate (- x-center (int (* (:x screen-state) zoom)))
                   (- y-center (int (* (:y screen-state) zoom))))
       (paint-tiles overlay-tiles-atom screen-state [tile-width tile-height])
-      enable-anti-aliasing
-      ;(.setColor (Color. 0x0CB397))
-      ;(.fillOval -5 -5
-      ;           10 10)
-      )
+      enable-anti-aliasing)
     (when false 
       (let [pixel-rect (pixel-rectangle screen-state)
             visible-tiles (tiles-in-pixel-rectangle pixel-rect
