@@ -13,14 +13,15 @@
   (:use [org.micromanager.mm :only (edt)]
         [slide-explorer.paint :only (enable-anti-aliasing repaint repaint-on-change)]
         [slide-explorer.tiles :only (center-tile floor-int)]
-        [slide-explorer.image :only (crop merge-and-scale overlay)]))
+        [slide-explorer.image :only (crop insert-half-tile overlay)]))
 
 ; Order of operations:
-;  Stitch/crop
-;  Flatten fields
-;  Max intensity projection (z)
-;  Rescale
-;  Color Overlay
+;  Stitch (not done)
+;  Crop (not done)
+;  Flatten fields (not done)
+;  Max intensity projection (z) (not done)
+;  Rescale (working)
+;  Color Overlay (working)
 
 (def MIN-ZOOM 1/256)
 
@@ -144,29 +145,24 @@
      (update-in [:ny] child-index)
      (update-in [:zoom] / 2)))
 
-(defn propagate-tile [tile-map-atom {:keys [zoom nx ny nz nt nc] :as indices}]
-  (let [nx- (* 2 nx)
-        ny- (* 2 ny)
-        nx+ (inc nx-)
-        ny+ (inc ny-)
-        zoom-parent (* zoom 2)
-        get-parent-tile (fn [[nx ny]]
-                          (let [dir (disk/tile-dir tile-map-atom)
-                                tile-index (assoc indices :zoom zoom-parent :nx nx :ny ny)]
-                            (.get (disk/load-tile tile-map-atom tile-index))))
-        abcd (map get-parent-tile [[nx- ny-]
-                                   [nx+ ny-]
-                                   [nx- ny+]
-                                   [nx+ ny+]])]
-    (disk/add-tile tile-map-atom indices (apply merge-and-scale abcd))))
+(defn propagate-tile [tile-map-atom child parent]
+  (let [child-tile (.get (disk/load-tile tile-map-atom child))
+        parent-tile (.get (disk/load-tile tile-map-atom parent))
+        new-child-tile (insert-half-tile
+                         parent-tile
+                         [(even? (:nx parent))
+                          (even? (:ny parent))]
+                         child-tile)]
+    (disk/add-tile tile-map-atom child new-child-tile)))
 
 (defn add-to-memory-tiles [tile-map-atom indices tile]
   (let [full-indices (assoc indices :zoom 1)]
     (disk/add-tile tile-map-atom full-indices tile)
-    (loop [new-indices (child-indices full-indices)]
-      (when (<= MIN-ZOOM (:zoom new-indices))
-        (propagate-tile tile-map-atom new-indices)
-        (recur (child-indices new-indices))))))
+    (loop [child (child-indices full-indices)
+           parent full-indices]
+      (when (<= MIN-ZOOM (:zoom child))
+        (propagate-tile tile-map-atom child parent)
+        (recur (child-indices child) child)))))
 
 ;; OVERLAY
 

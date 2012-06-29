@@ -109,21 +109,20 @@
 ;; Merge and scale the images for Mipmap
 
 ; 5.9 ms
-(defn merge-and-scale
-  "Takes four ImageProcessors (tiles) and tiles them in a
-   2x2 mosaic with no gaps, scaled to half size."
-  [img1 img2 img3 img4]
-  (let [test-img (or img1 img2 img3 img4)
+
+(defn insert-half-tile
+  [tile [left? upper?] mosaic]
+  (let [test-img (or mosaic tile)
         w (.getWidth test-img)
         h (.getHeight test-img)
-        dest (.createProcessor test-img w h)]
+        x (if left? 0 (/ w 2))
+        y (if upper? 0 (/ h 2))
+        dest (if mosaic
+               (.duplicate mosaic)
+               (.createProcessor test-img w h))]
     (doto dest
       (.setInterpolationMethod ImageProcessor/BILINEAR)
-      (insert-image! (half-size img1) 0 0)
-      (insert-image! (half-size img2) (/ w 2) 0)
-      (insert-image! (half-size img3) 0 (/ h 2))
-      (insert-image! (half-size img4) (/ w 2) (/ h 2)))))
-
+      (insert-image! (half-size tile) x y))))
 
 ;; stats
  
