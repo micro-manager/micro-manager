@@ -114,7 +114,7 @@
       (set-xy-position stage-pos)
       (core waitForDevice xy-stage)
       (Thread/sleep 300)
-      ((memoize acquire-processor-sequence-memo))
+      (acquire-processor-sequence-memo)
       )))
  
 ;; run using acquisitions

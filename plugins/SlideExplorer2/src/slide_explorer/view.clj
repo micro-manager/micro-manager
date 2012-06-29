@@ -280,6 +280,10 @@
       react-fn
       agent)
     (reactive/handle-update
+      memory-tile-atom
+      react-fn
+      agent)
+    (reactive/handle-update
       acquired-images
       react-fn
       agent)))
