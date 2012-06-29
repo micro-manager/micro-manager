@@ -3288,7 +3288,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
    
    public void zCalibrate(int rowNr) {
       final double widthCutoff = 1000.0;
-      final double maxVariance = 10000.0;
+      final double maxVariance = 5000.0;
       final int minNrSpots = 5;
       
       ZCalibrator zc = new ZCalibrator();
@@ -3347,6 +3347,8 @@ public class DataCollectionForm extends javax.swing.JFrame {
       }
       
       zc.plotDataPoints();
+      
+      zc.fitFunction();
 
       
    }

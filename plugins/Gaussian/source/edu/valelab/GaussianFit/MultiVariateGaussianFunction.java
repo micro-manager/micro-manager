@@ -28,7 +28,6 @@ public class MultiVariateGaussianFunction implements MultivariateRealFunction {
    /**
     * Gaussian fit can be run by estimating parameter c (width of Gaussian)
     * as 1 (circle), 2 (width varies in x and y), or 3 (ellipse) parameters
-    * So far, this code only implements dim = 1
     *
     * @param dim
     */
