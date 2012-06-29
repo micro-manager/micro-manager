@@ -145,7 +145,6 @@
      (update-in [:zoom] / 2)))
 
 (defn propagate-tile [tile-map-atom {:keys [zoom nx ny nz nt nc] :as indices}]
-  ;(println "propagate" indices)
   (let [nx- (* 2 nx)
         ny- (* 2 ny)
         nx+ (inc nx-)
@@ -154,7 +153,6 @@
         get-parent-tile (fn [[nx ny]]
                           (let [dir (disk/tile-dir tile-map-atom)
                                 tile-index (assoc indices :zoom zoom-parent :nx nx :ny ny)]
-                            ;(println (def qq (disk/load-tile dir tile-index)) dir tile-index)
                             (.get (disk/load-tile tile-map-atom tile-index))))
         abcd (map get-parent-tile [[nx- ny-]
                                    [nx+ ny-]
@@ -277,10 +275,6 @@
     (def agent1 agent)
     (reactive/handle-update
       screen-state-atom
-      react-fn
-      agent)
-    (reactive/handle-update
-      memory-tile-atom
       react-fn
       agent)
     (reactive/handle-update

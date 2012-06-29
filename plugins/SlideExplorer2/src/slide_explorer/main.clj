@@ -150,23 +150,24 @@
 ;; tile acquisition management
 
 (def image-processing-executor (Executors/newFixedThreadPool 1))
-
+ 
 (defn add-tiles-at [memory-tiles [nx ny] affine-stage-to-pixel acquired-images]
   (doseq [image (doall (acquire-at (inverse-transform
-                              (Point. (* 512 nx) (* 512 ny))
-                              affine-stage-to-pixel)))]
+                                     (Point. (* 512 nx) (* 512 ny))
+                                     affine-stage-to-pixel)))]
     (let [indices {:nx nx
                    :ny ny
                    :nz (get-in image [:tags "SliceIndex"])
                    :nt 0
                    :nc (or (get-in image [:tags "Channel"]) "Default")}]
       ;(println indices @acquired-images)
-      (swap! acquired-images conj [nx ny])
       (.submit image-processing-executor
                #(add-to-memory-tiles 
                   memory-tiles
                   indices
-                  (image :proc))))))
+                  (image :proc)))))
+  (.submit image-processing-executor
+           #(swap! acquired-images conj [nx ny])))
     
 (defn acquire-next-tile
   [memory-tiles-atom
