@@ -3333,8 +3333,8 @@ public class DataCollectionForm extends javax.swing.JFrame {
             double varX = StatUtils.variance(xws, meanX);
             double varY = StatUtils.variance(yws, meanY);
             
-            System.out.println("Frame: " + frameNr + ", X: " + (int) meanX + ", " + (int) varX + 
-                    ", Y: " + (int) meanY + ", " + (int) varY);
+            //System.out.println("Frame: " + frameNr + ", X: " + (int) meanX + ", " + (int) varX + 
+            //        ", Y: " + (int) meanY + ", " + (int) varY);
             
             if (frameSpots.size() >= minNrSpots && 
                     varX < maxVariance && 

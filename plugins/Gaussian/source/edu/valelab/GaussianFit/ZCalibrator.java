@@ -27,13 +27,20 @@ import org.jfree.data.xy.XYSeries;
  */
 public class ZCalibrator {
    
-   public static class FitFunctionParameters {
-      public double c_; // center z position (in microns)
-      public double w0_; // PSF width at center position
-      public double d_; // focus depth of the microscope (not sure what this means)
-      public double A_; // higher order factor
-      public double B_; // second higher order factor
-   }
+   /*
+    * 
+    Structure of arrays "fitFunction";
+    * 0: c_;  // center z position 
+    * 1: w0_; // PSF width at center position
+    * 2: d_;  // focus depth of the microscope (not sure what this means)
+    * 3: A    // higher order factor
+    * 4: B_;  // second higher order factor   
+   */
+   
+   private double[] fitFunctionWx_;
+   private double[] fitFunctionWy_;
+   
+   public boolean hasFitFunctions_ = fitFunctionWx_ != null && fitFunctionWy_ != null;
    
    public class DataPoint {
       public double wx_; // width in x
@@ -70,7 +77,7 @@ public class ZCalibrator {
     * either z - wx ( dim == 0)
     * or z - wy (dim == 1)
     * 
-    * @param dim 0-returns array z-wx, 1 retunr array w-wy
+    * @param dim 0-returns array z-wx, 1 return array w-wy
     * @return 2D array, z values in D0, w value in D2
     */
    public double[][] getDataAsArray (int dim) {
@@ -105,31 +112,51 @@ public class ZCalibrator {
            
    }
    
+   private void plotFitFunctions() {
+      String xAxis = "Z (um)";
+      
+      XYSeries[] plotData = new XYSeries[2];
+      plotData[0] = new XYSeries("wx");
+      plotData[1] = new XYSeries("wy");
+            
+      for (int i = 0; i < data_.size(); i++) {
+         DataPoint d = data_.get(i);
+         plotData[0].add(d.z_, MultiVariateZCalibrationFunction.funcval(fitFunctionWx_, d.z_));
+         plotData[1].add(d.z_, MultiVariateZCalibrationFunction.funcval(fitFunctionWy_, d.z_));
+      }
+      
+      GaussianUtils.plotDataN("", plotData, xAxis, "Width(nm)", 0, 400, true, false);      
+   }
+   
+   /**
+    * Creates fitFunctionWx_ and fitFunctionWy_ based on data in data_
+    * 
+    * 
+    */
    public void fitFunction() {
       final int maxIterations = 10000;
       
-      NelderMead nm = new NelderMead();
+      NelderMead nmx = new NelderMead();
       SimpleScalarValueChecker convergedChecker_ = new SimpleScalarValueChecker(1e-6,-1);
       
       double[][] wxData = getDataAsArray(0);
       MultiVariateZCalibrationFunction mvcx = new MultiVariateZCalibrationFunction(wxData);
       
-      double[] steps = new double[5];
       double[] params0_ = new double[5]; // initial estimates:
-      params0_[0] = 25; // TODO: better estimate for c
-      params0_[1] = 300; // Estimate for w0
-      params0_[2] = 1000; // TODO: better estimate for d
+      params0_[0] = 37; // TODO: better estimate for c
+      params0_[1] = 200; // Estimate for w0
+      params0_[2] = 10; // TODO: better estimate for d
       params0_[3] = 1; // TODO: better estimate for A
       params0_[4] = 1; // TODO: better estimate for B
       
-      nm.setStartConfiguration(steps);
-      nm.setConvergenceChecker(convergedChecker_);
-      nm.setMaxIterations(maxIterations);
+      nmx.setStartConfiguration(params0_);
+      nmx.setConvergenceChecker(convergedChecker_);
+      nmx.setMaxIterations(maxIterations);
       
       double[] paramsOut = {0.0};
       
       try {
-         RealPointValuePair result = nm.optimize(mvcx, GoalType.MINIMIZE, params0_);
+         RealPointValuePair result = nmx.optimize(mvcx, GoalType.MINIMIZE, params0_);
          paramsOut = result.getPoint();
       } catch (java.lang.OutOfMemoryError e) {
          throw (e);
@@ -138,10 +165,41 @@ public class ZCalibrator {
       }
       
       for (int i = 0; i < paramsOut.length; i++) {
-         System.out.append("Result " + i + " value: " + paramsOut[i]);
+         System.out.println("Result " + i + " value: " + (int) paramsOut[i]);
       }
+      
+      fitFunctionWx_ = paramsOut;
+      
+       
+      double[][] yxData = getDataAsArray(1);
+      MultiVariateZCalibrationFunction yvcx = new MultiVariateZCalibrationFunction(yxData);
+      
+      nmx.setStartConfiguration(params0_);
+      
+      try {
+         RealPointValuePair result = nmx.optimize(yvcx, GoalType.MINIMIZE, params0_);
+         paramsOut = result.getPoint();
+      } catch (java.lang.OutOfMemoryError e) {
+         throw (e);
+      } catch (Exception e) {
+         ij.IJ.log(" " + e.toString());
+      }
+      
+      System.out.println("Y:");
+      
+      for (int i = 0; i < paramsOut.length; i++) {
+         System.out.println("Result " + i + " value: " + (int) paramsOut[i]);
+      }
+      
+      fitFunctionWy_ = paramsOut;
+      
+      
+      plotFitFunctions();
+      
+      
 
    }
+   
    
    
 }
