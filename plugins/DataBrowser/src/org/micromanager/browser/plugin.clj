@@ -16,12 +16,15 @@
 (ns org.micromanager.browser.plugin
   (:use [org.micromanager.browser.core :only (show-browser handle-exit)])
   (:gen-class
-   :name org.micromanager.browser.Data_Browser
-   :implements [org.micromanager.api.MMPlugin]))
+    :init init
+    :name org.micromanager.browser.Data_Browser
+    :implements [org.micromanager.api.MMPlugin]
+    :state state))
 
+(defn -init [] [[] (atom nil)])
 (defn -dispose [this] (handle-exit))
-(defn -setApp [this app] )
-(defn -show [this] (show-browser))
+(defn -setApp [this app] (swap! (.state this) assoc :app app))
+(defn -show [this] (show-browser (:app @(.state this))))
 
 
 ;; Do nothing:

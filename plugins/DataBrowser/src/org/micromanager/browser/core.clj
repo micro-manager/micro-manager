@@ -704,7 +704,6 @@ inside an existing location in your collection."
   (vec (map #(vec (list % false)) tags)))
 
 (defn start-browser []
-  (load-mm)
   (read-collection-map)
   (reset! settings-window (create-settings-window))
   (reset! browser (create-browser))
@@ -719,7 +718,8 @@ inside an existing location in your collection."
       (future (apply-data-and-settings collection-name (load-data-and-settings collection-name)))))
   browser)
 
-(defn show-browser []
+(defn show-browser [app]
+  (load-mm app)
   (if-not @browser
     (start-browser)
     (.show (@browser :frame))))
