@@ -102,14 +102,20 @@
 
 (defn set-filter [table text]
   (let [chunks (.split text "\\s")
-        sorter (.getRowSorter table)
-        column-indices
-          (int-array (map #(.getModelIndex %) (get-table-columns table)))
-        filters
-          (map #(RowFilter/regexFilter (str "(?i)\\Q" % "\\E") column-indices)
-               chunks)]
-    (do (.setRowFilter sorter   
-          (RowFilter/andFilter filters)))))
+        ;_ (dorun (map println chunks))
+        filter
+        (when-not (empty? (remove empty? chunks))
+          (let [column-indices (int-array
+                                 (map #(.getModelIndex %)
+                                      (get-table-columns table)))
+                filters (map #(RowFilter/regexFilter
+                                (str "(?i)\\Q" % "\\E")
+                                column-indices) chunks)]
+            ;(println (seq column-indices) (map #(str "(?i)\\Q" % "\\E") chunks))
+            ;(println (count filters))
+            (RowFilter/andFilter filters)))]
+    ;(println filter)
+    (.setRowFilter (.getRowSorter table) filter)))
 
 (def filter-agent (agent nil))
 
@@ -502,16 +508,15 @@ inside an existing location in your collection."
   (update-collection-menu collection-name)
   (set-last-collection-name collection-name)
   (let [table (@browser :table)
-        model (.getModel table)
         {:keys [browser-model-data
                 browser-model-headings
                 window-size display-columns
-                locations sorted-column]} settings]
+                locations sorted-column]} settings
+        model (create-browser-table-model browser-model-headings)]
+    (.setModel table model)
     (dosync
       (ref-set current-data (vec (map (fn [r] (vec (map #(get r (keyword %)) tags))) browser-model-data)))
       (ref-set current-locations (apply sorted-set locations)))
-    (when (pos? (count @current-data))
-      (set-default-comparator table))
     (.fireTableDataChanged model)
     (-> @settings-window :locations :table .getModel .fireTableDataChanged)
     (remove-all-columns table)
@@ -520,15 +525,17 @@ inside an existing location in your collection."
         (doto (add-browser-column (:title col))
           (.setPreferredWidth (* total-width (:width col))))))
     ;(println "sorted-column" sorted-column :model-column)
+    (when (pos? (count @current-data))
+      (set-default-comparator table))
     (when sorted-column
-    (try
-      (.. table getRowSorter
-          (setSortKeys (list (RowSorter$SortKey.
-                               (.indexOf tags (sorted-column :model-column))
-                               (nth (SortOrder/values) (sorted-column :order))))))
-      (catch Exception e nil)))
+      (try
+        (.. table getRowSorter
+            (setSortKeys (list (RowSorter$SortKey.
+                                 (.indexOf tags (sorted-column :model-column))
+                                 (nth (SortOrder/values) (sorted-column :order))))))
+        (catch Exception e nil)))
     (-> @settings-window :columns :table
-                         .getModel .fireTableDataChanged))
+        .getModel .fireTableDataChanged))
   (update-browser-status))
 
 ;; creating a new collection
