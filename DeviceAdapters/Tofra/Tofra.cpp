@@ -122,13 +122,13 @@ TofraFilterWheel::TofraFilterWheel() :
 	CreateProperty(MM::g_Keyword_Port, "", MM::String, false, pAct, true);
 	// State
 	pAct = new CPropertyAction (this, &TofraFilterWheel::OnState);
-	CreateProperty(MM::g_Keyword_State, "0", MM::Integer, false, pAct);
+	CreateProperty(MM::g_Keyword_State, "0", MM::Integer, false, pAct, true);
 	// Label
 	pAct = new CPropertyAction (this, &CStateBase::OnLabel);
-	CreateProperty(MM::g_Keyword_Label, "", MM::String, false, pAct);
+	CreateProperty(MM::g_Keyword_Label, "", MM::String, false, pAct, true);
 	// Number of positions
 	pAct = new CPropertyAction (this, &TofraFilterWheel::OnNumPos);
-	CreateProperty("NumPos", "10", MM::Integer, false, pAct);
+	CreateProperty("NumPos", "10", MM::Integer, false, pAct, true);
 	// Create default positions and labels
 	const int bufSize = 1024;
 	char buf[bufSize];
@@ -139,25 +139,25 @@ TofraFilterWheel::TofraFilterWheel() :
 	}
 	// ControllerName - Name (number) of the motor controller on the serial line
 	pAct = new CPropertyAction (this, &TofraFilterWheel::OnControllerName);
-	CreateProperty("ControllerName", "1", MM::String, false, pAct);
+	CreateProperty("ControllerName", "1", MM::String, false, pAct, true);
 	// HomeOffset
 	pAct = new CPropertyAction (this, &TofraFilterWheel::OnHomeOffset);
-	CreateProperty("HomeOffset", "0", MM::Integer, false, pAct);
+	CreateProperty("HomeOffset", "0", MM::Integer, false, pAct, true);
 	// SlewVelocity
 	pAct = new CPropertyAction (this, &TofraFilterWheel::OnSlewVelocity);
-	CreateProperty("SlewVelocity", "5000", MM::Integer, false, pAct);
+	CreateProperty("SlewVelocity", "5000", MM::Integer, false, pAct, true);
 	// InitVelocity
 	pAct = new CPropertyAction (this, &TofraFilterWheel::OnInitVelocity);
-	CreateProperty("InitVelocity", "500", MM::Integer, false, pAct);
+	CreateProperty("InitVelocity", "500", MM::Integer, false, pAct, true);
 	// Acceleration
 	pAct = new CPropertyAction (this, &TofraFilterWheel::OnAcceleration);
-	CreateProperty("Acceleration", "10", MM::Integer, false, pAct);
+	CreateProperty("Acceleration", "10", MM::Integer, false, pAct, true);
 	// HoldCurrent
 	pAct = new CPropertyAction (this, &TofraFilterWheel::OnHoldCurrent);
-	CreateProperty("HoldCurrent", "5", MM::Integer, false, pAct);
+	CreateProperty("HoldCurrent", "5", MM::Integer, false, pAct, true);
 	// RunCurrent
 	pAct = new CPropertyAction (this, &TofraFilterWheel::OnRunCurrent);
-	CreateProperty("RunCurrent", "60", MM::Integer, false, pAct);
+	CreateProperty("RunCurrent", "60", MM::Integer, false, pAct, true);
 
 	EnableDelay(); // signals that the delay setting will be used
 }
@@ -549,46 +549,31 @@ ZStage::ZStage() :
 	CreateProperty(MM::g_Keyword_Port, "", MM::String, false, pAct, true);
 	// ControllerName - Name (number) of the motor controller on the serial line
 	pAct = new CPropertyAction (this, &ZStage::OnControllerName);
-	CreateProperty("ControllerName", "2", MM::String, false, pAct);
+	CreateProperty("ControllerName", "2", MM::String, false, pAct, true);
 	// SlewVelocity
 	pAct = new CPropertyAction (this, &ZStage::OnSlewVelocity);
-	CreateProperty("SlewVelocity", "40", MM::Float, false, pAct);
+	CreateProperty("SlewVelocity", "40", MM::Float, false, pAct, true);
 	// InitVelocity
 	pAct = new CPropertyAction (this, &ZStage::OnInitVelocity);
-	CreateProperty("InitVelocity", "4", MM::Float, false, pAct);
+	CreateProperty("InitVelocity", "4", MM::Float, false, pAct, true);
 	// Acceleration
 	pAct = new CPropertyAction (this, &ZStage::OnAcceleration);
-	CreateProperty("Acceleration", "1", MM::Float, false, pAct);
+	CreateProperty("Acceleration", "1", MM::Float, false, pAct, true);
 	// HoldCurrent
 	pAct = new CPropertyAction (this, &ZStage::OnHoldCurrent);
-	CreateProperty("HoldCurrent", "5", MM::Integer, false, pAct); // set to 0 for easy manual operation of the fine focus
+	CreateProperty("HoldCurrent", "5", MM::Integer, false, pAct, true); // set to 0 for easy manual operation of the fine focus
 	// RunCurrent
 	pAct = new CPropertyAction (this, &ZStage::OnRunCurrent);
-	CreateProperty("RunCurrent", "25", MM::Integer, false, pAct);
+	CreateProperty("RunCurrent", "25", MM::Integer, false, pAct, true);
 	// MotorSteps
 	pAct = new CPropertyAction (this, &ZStage::OnMotorSteps);
-	CreateProperty("MotorSteps", "400", MM::Integer, false, pAct);
+	CreateProperty("MotorSteps", "400", MM::Integer, false, pAct, true);
 	// FullTurnUm
 	pAct = new CPropertyAction (this, &ZStage::OnFullTurnUm);
-	CreateProperty("FullTurnUm", "100", MM::Integer, false, pAct);
+	CreateProperty("FullTurnUm", "100", MM::Integer, false, pAct, true);
 	// WithLimits
 	pAct = new CPropertyAction (this, &ZStage::OnWithLimits);
-	CreateProperty("WithLimits", "0", MM::Integer, false, pAct);
-	// Position - Numeric or symbolic value of position
-	pAct = new CPropertyAction (this, &ZStage::OnPosition);
-	CreateProperty("Position", "", MM::String, false, pAct);
-	// Speed for continuous move
-	pAct = new CPropertyAction (this, &ZStage::OnSpeed);
-	CreateProperty("Speed", "", MM::Float, false, pAct);
-	// Out1 - Digital output 1 
-	pAct = new CPropertyAction (this, &ZStage::OnOut1);
-	CreateProperty("Out1", "", MM::Integer, false, pAct);
-	// Out2 - Digital output 2 
-	pAct = new CPropertyAction (this, &ZStage::OnOut2);
-	CreateProperty("Out2", "", MM::Integer, false, pAct);
-	// Execute
-	pAct = new CPropertyAction (this, &ZStage::OnExecute);
-	CreateProperty("Execute", "", MM::String, false, pAct);
+	CreateProperty("WithLimits", "0", MM::Integer, false, pAct, true);
 
 	//EnableDelay(); // signals that the delay setting will be used ????
 }
@@ -605,6 +590,25 @@ void ZStage::GetName(char* Name) const
 
 int ZStage::Initialize()
 {
+	// create pre-initialization properties
+	CPropertyAction* pAct;
+
+   // Position - Numeric or symbolic value of position
+	pAct = new CPropertyAction (this, &ZStage::OnPosition);
+	CreateProperty("Position", "", MM::String, false, pAct);
+   // Out1 - Digital output 1 
+	pAct = new CPropertyAction (this, &ZStage::OnOut1);
+	CreateProperty("Out1", "", MM::Integer, false, pAct);
+	// Out2 - Digital output 2 
+	pAct = new CPropertyAction (this, &ZStage::OnOut2);
+	CreateProperty("Out2", "", MM::Integer, false, pAct);
+	// Execute
+	pAct = new CPropertyAction (this, &ZStage::OnExecute);
+	CreateProperty("Execute", "", MM::String, false, pAct);
+	// Speed for continuous move
+	pAct = new CPropertyAction (this, &ZStage::OnSpeed);
+	CreateProperty("Speed", "", MM::Float, false, pAct);
+
 	int ret = UpdateStatus();
 	if (ret != DEVICE_OK) return ret;
 
@@ -1142,6 +1146,7 @@ XYStage::XYStage() :
 	changedTime_(0.0),   
 	port_("")
 {
+
 	InitializeDefaultErrorMessages();
 
 	// create pre-initialization properties
@@ -1155,55 +1160,79 @@ XYStage::XYStage() :
 	CreateProperty(MM::g_Keyword_Port, "", MM::String, false, pAct, true);
 	// ControllerName - Name (number) of the motor controller on the serial line
 	pAct = new CPropertyAction (this, &XYStage::OnControllerNameX);
-	CreateProperty("ControllerNameX", "3", MM::String, false, pAct);
+	CreateProperty("ControllerNameX", "3", MM::String, false, pAct, true);
 	pAct = new CPropertyAction (this, &XYStage::OnControllerNameY);
-	CreateProperty("ControllerNameY", "4", MM::String, false, pAct);
+	CreateProperty("ControllerNameY", "4", MM::String, false, pAct, true);
 	// StepDivide
 	pAct = new CPropertyAction (this, &XYStage::OnStepDivideX);
-	CreateProperty("StepDivideX", "256", MM::Integer, false, pAct);
+	CreateProperty("StepDivideX", "256", MM::Integer, false, pAct, true);
 	pAct = new CPropertyAction (this, &XYStage::OnStepDivideY);
-	CreateProperty("StepDivideY", "256", MM::Integer, false, pAct);
+	CreateProperty("StepDivideY", "256", MM::Integer, false, pAct, true);
 	// SlewVelocity
 	pAct = new CPropertyAction (this, &XYStage::OnSlewVelocityX);
-	CreateProperty("SlewVelocityX", "1000", MM::Float, false, pAct);
+	CreateProperty("SlewVelocityX", "1000", MM::Float, false, pAct, true);
 	pAct = new CPropertyAction (this, &XYStage::OnSlewVelocityY);
-	CreateProperty("SlewVelocityY", "1000", MM::Float, false, pAct);
+	CreateProperty("SlewVelocityY", "1000", MM::Float, false, pAct, true);
 	// InitVelocity
 	pAct = new CPropertyAction (this, &XYStage::OnInitVelocityX);
-	CreateProperty("InitVelocityX", "100", MM::Float, false, pAct);
+	CreateProperty("InitVelocityX", "100", MM::Float, false, pAct, true);
 	pAct = new CPropertyAction (this, &XYStage::OnInitVelocityY);
-	CreateProperty("InitVelocityY", "100", MM::Float, false, pAct);
+	CreateProperty("InitVelocityY", "100", MM::Float, false, pAct, true);
 	// Acceleration
 	pAct = new CPropertyAction (this, &XYStage::OnAccelerationX);
-	CreateProperty("AccelerationX", "10", MM::Float, false, pAct);
+	CreateProperty("AccelerationX", "10", MM::Float, false, pAct, true);
 	pAct = new CPropertyAction (this, &XYStage::OnAccelerationY);
-	CreateProperty("AccelerationY", "10", MM::Float, false, pAct);
+	CreateProperty("AccelerationY", "10", MM::Float, false, pAct, true);
 	// HoldCurrent
 	pAct = new CPropertyAction (this, &XYStage::OnHoldCurrentX);
-	CreateProperty("HoldCurrentX", "5", MM::Integer, false, pAct); 
+	CreateProperty("HoldCurrentX", "5", MM::Integer, false, pAct, true); 
 	pAct = new CPropertyAction (this, &XYStage::OnHoldCurrentY);
-	CreateProperty("HoldCurrentY", "5", MM::Integer, false, pAct); 
+	CreateProperty("HoldCurrentY", "5", MM::Integer, false, pAct, true); 
 	// RunCurrent
 	pAct = new CPropertyAction (this, &XYStage::OnRunCurrentX);
-	CreateProperty("RunCurrentX", "50", MM::Integer, false, pAct);
+	CreateProperty("RunCurrentX", "50", MM::Integer, false, pAct, true);
 	pAct = new CPropertyAction (this, &XYStage::OnRunCurrentY);
-	CreateProperty("RunCurrentY", "50", MM::Integer, false, pAct);
+	CreateProperty("RunCurrentY", "50", MM::Integer, false, pAct, true);
 	// MotorSteps
 	pAct = new CPropertyAction (this, &XYStage::OnMotorStepsX);
-	CreateProperty("MotorStepsX", "200", MM::Integer, false, pAct);
+	CreateProperty("MotorStepsX", "200", MM::Integer, false, pAct, true);
 	pAct = new CPropertyAction (this, &XYStage::OnMotorStepsY);
-	CreateProperty("MotorStepsY", "200", MM::Integer, false, pAct);
+	CreateProperty("MotorStepsY", "200", MM::Integer, false, pAct, true);
 	// LeadUm
 	pAct = new CPropertyAction (this, &XYStage::OnLeadUmX);
-	CreateProperty("LeadUmX", "1000", MM::Integer, false, pAct);
+	CreateProperty("LeadUmX", "1000", MM::Integer, false, pAct, true);
 	pAct = new CPropertyAction (this, &XYStage::OnLeadUmY);
-	CreateProperty("LeadUmY", "1000", MM::Integer, false, pAct);
+	CreateProperty("LeadUmY", "1000", MM::Integer, false, pAct, true);
+	// Limit polarity
+	pAct = new CPropertyAction (this, &XYStage::OnLimitPolarityX);
+	CreateProperty("LimitPolarityX", "", MM::Integer, false, pAct, true);
+	pAct = new CPropertyAction (this, &XYStage::OnLimitPolarityY);
+	CreateProperty("LimitPolarityY", "", MM::Integer, false, pAct, true);
+
+	//EnableDelay(); // signals that the delay setting will be used ????
+}
+XYStage::~XYStage()
+{
+   Shutdown();
+}
+void XYStage::GetName(char* Name) const
+{
+   CDeviceUtils::CopyLimitedString(Name, g_XYStageDeviceName);
+}
+int XYStage::Initialize()
+{
+   CPropertyAction* pAct;
 	// Position - Numeric or symbolic value of position
 	pAct = new CPropertyAction (this, &XYStage::OnPositionX);
 	CreateProperty("PositionX", "", MM::String, false, pAct);
 	pAct = new CPropertyAction (this, &XYStage::OnPositionY);
 	CreateProperty("PositionY", "", MM::String, false, pAct);
-	// Speed - for continuous move
+	// Execute string
+	pAct = new CPropertyAction (this, &XYStage::OnExecuteX);
+	CreateProperty("ExecuteX", "", MM::String, false, pAct);
+	pAct = new CPropertyAction (this, &XYStage::OnExecuteY);
+	CreateProperty("ExecuteY", "", MM::String, false, pAct);
+   // Speed - for continuous move
 	pAct = new CPropertyAction (this, &XYStage::OnSpeedX);
 	CreateProperty("SpeedX", "", MM::Float, false, pAct);
 	pAct = new CPropertyAction (this, &XYStage::OnSpeedY);
@@ -1218,29 +1247,7 @@ XYStage::XYStage() :
 	CreateProperty("Out2X", "", MM::Integer, false, pAct);
 	pAct = new CPropertyAction (this, &XYStage::OnOut2Y);
 	CreateProperty("Out2Y", "", MM::Integer, false, pAct);
-	// Limit polarity
-	pAct = new CPropertyAction (this, &XYStage::OnLimitPolarityX);
-	CreateProperty("LimitPolarityX", "", MM::Integer, false, pAct);
-	pAct = new CPropertyAction (this, &XYStage::OnLimitPolarityY);
-	CreateProperty("LimitPolarityY", "", MM::Integer, false, pAct);
-	// Execute string
-	pAct = new CPropertyAction (this, &XYStage::OnExecuteX);
-	CreateProperty("ExecuteX", "", MM::String, false, pAct);
-	pAct = new CPropertyAction (this, &XYStage::OnExecuteY);
-	CreateProperty("ExecuteY", "", MM::String, false, pAct);
 
-	//EnableDelay(); // signals that the delay setting will be used ????
-}
-XYStage::~XYStage()
-{
-   Shutdown();
-}
-void XYStage::GetName(char* Name) const
-{
-   CDeviceUtils::CopyLimitedString(Name, g_XYStageDeviceName);
-}
-int XYStage::Initialize()
-{
 	int ret = UpdateStatus();
 	if (ret != DEVICE_OK) return ret;
 
@@ -2296,13 +2303,13 @@ CubeSlider::CubeSlider() :
 	CreateProperty(MM::g_Keyword_Port, "", MM::String, false, pAct, true);
 	// State
 	pAct = new CPropertyAction (this, &CubeSlider::OnState);
-	CreateProperty(MM::g_Keyword_State, "0", MM::Integer, false, pAct);
+	CreateProperty(MM::g_Keyword_State, "0", MM::Integer, false, pAct, true);
 	// Label
 	pAct = new CPropertyAction (this, &CStateBase::OnLabel);
-	CreateProperty(MM::g_Keyword_Label, "", MM::String, false, pAct);
+	CreateProperty(MM::g_Keyword_Label, "", MM::String, false, pAct, true);
 	// Number of positions
 	pAct = new CPropertyAction (this, &CubeSlider::OnNumPos);
-	CreateProperty("NumPos", "6", MM::Integer, false, pAct);
+	CreateProperty("NumPos", "6", MM::Integer, false, pAct, true);
 	// Create default positions and labels
 	const int bufSize = 1024;
 	char buf[bufSize];
@@ -2313,46 +2320,46 @@ CubeSlider::CubeSlider() :
 	}
 	// ControllerName - Name (number) of the motor controller on the serial line
 	pAct = new CPropertyAction (this, &CubeSlider::OnControllerName);
-	CreateProperty("ControllerName", "6", MM::String, false, pAct);
+	CreateProperty("ControllerName", "6", MM::String, false, pAct, true);
 	// SlewVelocity
 	pAct = new CPropertyAction (this, &CubeSlider::OnSlewVelocity);
-	CreateProperty("SlewVelocity", "400000", MM::Float, false, pAct);
+	CreateProperty("SlewVelocity", "400000", MM::Float, false, pAct, true);
 	// InitVelocity
 	pAct = new CPropertyAction (this, &CubeSlider::OnInitVelocity);
-	CreateProperty("InitVelocity", "200000", MM::Float, false, pAct);
+	CreateProperty("InitVelocity", "200000", MM::Float, false, pAct, true);
 	// Acceleration
 	pAct = new CPropertyAction (this, &CubeSlider::OnAcceleration);
-	CreateProperty("Acceleration", "1000", MM::Float, false, pAct);
+	CreateProperty("Acceleration", "1000", MM::Float, false, pAct, true);
 	// HomeSlewVel
 	pAct = new CPropertyAction (this, &CubeSlider::OnHomeSlewVel);
-	CreateProperty("HomeSlewVel", "50000", MM::Float, false, pAct);
+	CreateProperty("HomeSlewVel", "50000", MM::Float, false, pAct, true);
 	// HomeInitVel
 	pAct = new CPropertyAction (this, &CubeSlider::OnHomeInitVel);
-	CreateProperty("HomeInitVel", "5000", MM::Float, false, pAct);
+	CreateProperty("HomeInitVel", "5000", MM::Float, false, pAct, true);
 	// HomeAccel
 	pAct = new CPropertyAction (this, &CubeSlider::OnHomeAccel);
-	CreateProperty("HomeAccel", "100", MM::Float, false, pAct);
+	CreateProperty("HomeAccel", "100", MM::Float, false, pAct, true);
 	// HoldCurrent
 	pAct = new CPropertyAction (this, &CubeSlider::OnHoldCurrent);
-	CreateProperty("HoldCurrent", "5", MM::Integer, false, pAct);
+	CreateProperty("HoldCurrent", "5", MM::Integer, false, pAct, true);
 	// RunCurrent
 	pAct = new CPropertyAction (this, &CubeSlider::OnRunCurrent);
-	CreateProperty("RunCurrent", "70", MM::Integer, false, pAct);
+	CreateProperty("RunCurrent", "70", MM::Integer, false, pAct, true);
 	// HomeOffsetUm
 	pAct = new CPropertyAction (this, &CubeSlider::OnHomeOffsetUm);
-	CreateProperty("HomeOffsetUm", "700", MM::Integer, false, pAct);
+	CreateProperty("HomeOffsetUm", "700", MM::Integer, false, pAct, true);
 	// BetweenPosUm
 	pAct = new CPropertyAction (this, &CubeSlider::OnBetweenPosUm);
-	CreateProperty("BetweenPosUm", "40000", MM::Integer, false, pAct);
+	CreateProperty("BetweenPosUm", "40000", MM::Integer, false, pAct, true);
 	// LeadUm
 	pAct = new CPropertyAction (this, &CubeSlider::OnLeadUm);
-	CreateProperty("LeadUm", "25400", MM::Integer, false, pAct);
+	CreateProperty("LeadUm", "25400", MM::Integer, false, pAct, true);
 	// MotorSteps
 	pAct = new CPropertyAction (this, &CubeSlider::OnMotorSteps);
-	CreateProperty("MotorSteps", "200", MM::Integer, false, pAct);
+	CreateProperty("MotorSteps", "200", MM::Integer, false, pAct, true);
 	// StepDivide
 	pAct = new CPropertyAction (this, &CubeSlider::OnStepDivide);
-	CreateProperty("StepDivide", "16", MM::Integer, false, pAct);
+	CreateProperty("StepDivide", "16", MM::Integer, false, pAct, true);
 
 	EnableDelay(); // signals that the delay setting will be used
 }
@@ -2729,13 +2736,13 @@ rgbLED::rgbLED() :
 	CreateProperty(MM::g_Keyword_Port, "", MM::String, false, pAct, true);
 	// State
 	pAct = new CPropertyAction (this, &rgbLED::OnState);
-	CreateProperty(MM::g_Keyword_State, "0", MM::Integer, false, pAct);
+	CreateProperty(MM::g_Keyword_State, "0", MM::Integer, false, pAct, true);
 	// Label
 	pAct = new CPropertyAction (this, &CStateBase::OnLabel);
-	CreateProperty(MM::g_Keyword_Label, "", MM::String, false, pAct);
+	CreateProperty(MM::g_Keyword_Label, "", MM::String, false, pAct, true);
 	// Number of positions
 	pAct = new CPropertyAction (this, &rgbLED::OnNumPos);
-	CreateProperty("NumPos", "5", MM::Integer, false, pAct);
+	CreateProperty("NumPos", "5", MM::Integer, false, pAct, true);
 	// Create default positions and labels
 	SetPositionLabel(0, "Off");
 	SetPositionLabel(1, "R");
@@ -2744,16 +2751,16 @@ rgbLED::rgbLED() :
 	SetPositionLabel(4, "A");
 	// Channel1Intensity
 	pAct = new CPropertyAction (this, &rgbLED::OnChannel1Intensity);
-	CreateProperty("Channel1Intensity", "0", MM::Float, false, pAct);
+	CreateProperty("Channel1Intensity", "0", MM::Float, false, pAct, true);
 	// Channel2Intensity
 	pAct = new CPropertyAction (this, &rgbLED::OnChannel2Intensity);
-	CreateProperty("Channel2Intensity", "0", MM::Float, false, pAct);
+	CreateProperty("Channel2Intensity", "0", MM::Float, false, pAct, true);
 	// Channel3Intensity
 	pAct = new CPropertyAction (this, &rgbLED::OnChannel3Intensity);
-	CreateProperty("Channel3Intensity", "0", MM::Float, false, pAct);
+	CreateProperty("Channel3Intensity", "0", MM::Float, false, pAct, true);
 	// Channel4Intensity
 	pAct = new CPropertyAction (this, &rgbLED::OnChannel4Intensity);
-	CreateProperty("Channel4Intensity", "0", MM::Float, false, pAct);
+	CreateProperty("Channel4Intensity", "0", MM::Float, false, pAct, true);
 
 	EnableDelay(); // signals that the delay setting will be used
 }
