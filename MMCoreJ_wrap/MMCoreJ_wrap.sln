@@ -1,5 +1,5 @@
 Microsoft Visual Studio Solution File, Format Version 10.00
-# Visual Studio 2008
+# Visual C++ Express 2008
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "MMCore", "..\MMCore\MMCore.vcproj", "{36571628-728C-4ACD-A47F-503BA91C5D43}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "MMCoreJ_wrap", "MMCoreJ_wrap.vcproj", "{EFA68887-8A97-49D7-BAB4-768E15A4E597}"
@@ -242,6 +242,8 @@ EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "PolychromeV", "..\SecretDeviceAdapters\Polychrome5000\Polychrome5000.vcproj", "{FDEFF75C-41F4-45CA-A704-05A46D9A2FAB}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "NI100X", "..\DeviceAdapters\NI100X\NI100X.vcproj", "{A25A294D-A3AC-4349-8EA6-24A83C5CD0B7}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Tofra", "..\DeviceAdapters\Tofra\Tofra.vcproj", "{8D1E58FA-AD04-43A1-8BDF-0457103F8DE1}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -1148,6 +1150,14 @@ Global
 		{A25A294D-A3AC-4349-8EA6-24A83C5CD0B7}.Release|Win32.Build.0 = Release|Win32
 		{A25A294D-A3AC-4349-8EA6-24A83C5CD0B7}.Release|x64.ActiveCfg = Release|x64
 		{A25A294D-A3AC-4349-8EA6-24A83C5CD0B7}.Release|x64.Build.0 = Release|x64
+		{8D1E58FA-AD04-43A1-8BDF-0457103F8DE1}.Debug|Win32.ActiveCfg = Debug|Win32
+		{8D1E58FA-AD04-43A1-8BDF-0457103F8DE1}.Debug|Win32.Build.0 = Debug|Win32
+		{8D1E58FA-AD04-43A1-8BDF-0457103F8DE1}.Debug|x64.ActiveCfg = Debug|x64
+		{8D1E58FA-AD04-43A1-8BDF-0457103F8DE1}.Debug|x64.Build.0 = Debug|x64
+		{8D1E58FA-AD04-43A1-8BDF-0457103F8DE1}.Release|Win32.ActiveCfg = Release|Win32
+		{8D1E58FA-AD04-43A1-8BDF-0457103F8DE1}.Release|Win32.Build.0 = Release|Win32
+		{8D1E58FA-AD04-43A1-8BDF-0457103F8DE1}.Release|x64.ActiveCfg = Release|x64
+		{8D1E58FA-AD04-43A1-8BDF-0457103F8DE1}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
