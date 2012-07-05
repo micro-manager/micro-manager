@@ -49,15 +49,15 @@
 (defn load-tile
   [memory-tile-atom key]
   "Loads the tile into memory-tile-atom, if tile is not already present."
-  (.submit file-executor
-           (fn []
-             (or (get @memory-tile-atom key)
-                 (when-let [tile (read-tile (tile-dir memory-tile-atom) key)]
-                   (swap! memory-tile-atom
-                          #(if-not (get % key)
-                             (cache/add-item % key tile)
-                             %))
-                   tile)))))
+  (reactive/submit file-executor
+                   (fn []
+                     (or (get @memory-tile-atom key)
+                         (when-let [tile (read-tile (tile-dir memory-tile-atom) key)]
+                           (swap! memory-tile-atom
+                                  #(if-not (get % key)
+                                     (cache/add-item % key tile)
+                                     %))
+                           tile)))))
 
 (defn unload-tile
   [memory-tile-atom key]

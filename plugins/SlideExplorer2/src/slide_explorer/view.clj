@@ -123,7 +123,6 @@
 (defn propagate-tile [tile-map-atom child parent]
   (let [child-tile (.get (disk/load-tile tile-map-atom child))
         parent-tile (.get (disk/load-tile tile-map-atom parent))
-        _ (println parent-tile)
         new-child-tile (insert-half-tile
                          parent-tile
                          [(even? (:nx parent))
@@ -137,6 +136,7 @@
     (loop [child (child-indices full-indices)
            parent full-indices]
       (when (<= MIN-ZOOM (:zoom child))
+        (println (:zoom child))
         (propagate-tile tile-map-atom child parent)
         (recur (child-indices child) child)))))
 

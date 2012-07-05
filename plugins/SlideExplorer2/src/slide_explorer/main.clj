@@ -95,13 +95,8 @@
     (take-while #(not= % TaggedImageQueue/POISON)
                 (repeatedly #(.take q)))))
 
-(def acquire-tagged-image-sequence-memo
-  (memoize acquire-tagged-image-sequence))
-
 (defn acquire-processor-sequence []
-  (map tagged-image-to-processor (acquire-tagged-image-sequence-memo)))
-
-(def acquire-processor-sequence-memo (memoize acquire-processor-sequence))
+  (map tagged-image-to-processor (acquire-tagged-image-sequence)))
 
 (defn acquire-at
   "Move the stage to position x,y and acquire a multi-dimensional
@@ -109,10 +104,10 @@
   ([x y]
     (acquire-at (Point2D$Double. x y)))
   ([^Point2D$Double stage-pos]
+    (println stage-pos)
     (let [xy-stage (core getXYStageDevice)]
       (set-xy-position stage-pos)
       (core waitForDevice xy-stage)
-      (Thread/sleep 300)
       (acquire-processor-sequence)
       )))
  
@@ -160,11 +155,12 @@
                    :nt 0
                    :nc (or (get-in image [:tags "Channel"]) "Default")}]
       ;(println indices @acquired-images)
-      (reactive/submit image-processing-executor
-               #(add-to-memory-tiles 
-                  memory-tiles
-                  indices
-                  (image :proc)))))
+      (reactive/submit
+        image-processing-executor
+        #(add-to-memory-tiles 
+           memory-tiles
+           indices
+           (image :proc)))))
   (reactive/submit image-processing-executor
            #(swap! acquired-images conj [nx ny])))
     
@@ -178,23 +174,18 @@
     (add-tiles-at memory-tiles-atom next-tile affine acquired-images)
     next-tile))
 
-(defn handle-error [e]
-  (def q e))
-
 (def explore-executor (Executors/newFixedThreadPool 1))
 
 (defn explore [memory-tiles-atom screen-state-atom acquired-images
                affine [tile-width tile-height]]  
   (reactive/submit explore-executor
-           #(try
-               (when (acquire-next-tile memory-tiles-atom
-                                       screen-state-atom
-                                       acquired-images
-                                       affine
-                                       [tile-width tile-height])
-                  (explore memory-tiles-atom screen-state-atom
-                         acquired-images affine [tile-width tile-height]))
-              (catch Exception e (handle-error e)))))
+                   #(when (acquire-next-tile memory-tiles-atom
+                                             screen-state-atom
+                                             acquired-images
+                                             affine
+                                             [tile-width tile-height])
+                      (explore memory-tiles-atom screen-state-atom
+                           acquired-images affine [tile-width tile-height]))))
 
 ; Overall scheme
 ; the GUI is generally reactive.

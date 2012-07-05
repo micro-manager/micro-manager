@@ -1,5 +1,5 @@
 (ns slide-explorer.reactive
-  (:import (java.util.concurrent Executors)
+  (:import (java.util.concurrent Executors ExecutorService)
            (java.util UUID)
            (clojure.lang IRef)))
 
@@ -37,10 +37,10 @@
 (defn submit
   "Add a zero-arg function to an executor queue."
   [executor function]
-  (.submit executor #(try
-                       (function)
-                       (catch Throwable t (.printStackTrace t)))))
-  
+      (.submit ^ExecutorService executor
+               ^Callable (identity ; avoid type-hinting the return value of fn
+                           (fn [] (try (function)
+                                       (catch Throwable t (.printStackTrace t)))))))
 
 (defn single-threaded-executor
   "A single-threaded Executor. Call submit to add Runnables or Callables."
