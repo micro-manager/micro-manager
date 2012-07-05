@@ -146,6 +146,8 @@
 (def image-processing-executor (Executors/newFixedThreadPool 1))
  
 (defn add-tiles-at [memory-tiles [nx ny] affine-stage-to-pixel acquired-images]
+  (reactive/submit image-processing-executor
+                   #(swap! acquired-images conj [nx ny]))
   (doseq [image (doall (acquire-at (inverse-transform
                                      (Point. (* 512 nx) (* 512 ny))
                                      affine-stage-to-pixel)))]
@@ -154,15 +156,14 @@
                    :nz (get-in image [:tags "SliceIndex"])
                    :nt 0
                    :nc (or (get-in image [:tags "Channel"]) "Default")}]
+      (println indices)
       ;(println indices @acquired-images)
       (reactive/submit
         image-processing-executor
         #(add-to-memory-tiles 
            memory-tiles
            indices
-           (image :proc)))))
-  (reactive/submit image-processing-executor
-           #(swap! acquired-images conj [nx ny])))
+           (image :proc))))))
     
 (defn acquire-next-tile
   [memory-tiles-atom
@@ -171,6 +172,7 @@
   (when-let [next-tile (next-tile @screen-state-atom
                                   acquired-images
                                   [tile-width tile-height])]
+    (println "acquire-next-tile" next-tile)
     (add-tiles-at memory-tiles-atom next-tile affine acquired-images)
     next-tile))
 
