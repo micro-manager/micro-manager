@@ -34,8 +34,17 @@
       (when-not (empty? diff)
         diff))))
 
-(defn single-threaded-executor []
-  "A single-threaded Executor. Call .submit to add Runnables or Callables."
+(defn submit
+  "Add a zero-arg function to an executor queue."
+  [executor function]
+  (.submit executor #(try
+                       (function)
+                       (catch Throwable t (.printStackTrace t)))))
+  
+
+(defn single-threaded-executor
+  "A single-threaded Executor. Call submit to add Runnables or Callables."
+  []
   (Executors/newFixedThreadPool 1))
 
 (defn handle-change
@@ -47,9 +56,7 @@
     (add-watch-simple reference
                       (fn [old-state new-state]
                         (when (not= old-state new-state)
-                          (try
-                            (.submit executor #(function old-state new-state))
-                            (catch Throwable e (println e)))))))
+                            (submit executor #(function old-state new-state))))))
   ([reference function]
     (handle-change reference function (single-threaded-executor))))
 

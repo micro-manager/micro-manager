@@ -113,7 +113,7 @@
       (set-xy-position stage-pos)
       (core waitForDevice xy-stage)
       (Thread/sleep 300)
-      (acquire-processor-sequence-memo)
+      (acquire-processor-sequence)
       )))
  
 ;; run using acquisitions
@@ -160,12 +160,12 @@
                    :nt 0
                    :nc (or (get-in image [:tags "Channel"]) "Default")}]
       ;(println indices @acquired-images)
-      (.submit image-processing-executor
+      (reactive/submit image-processing-executor
                #(add-to-memory-tiles 
                   memory-tiles
                   indices
                   (image :proc)))))
-  (.submit image-processing-executor
+  (reactive/submit image-processing-executor
            #(swap! acquired-images conj [nx ny])))
     
 (defn acquire-next-tile
@@ -185,7 +185,7 @@
 
 (defn explore [memory-tiles-atom screen-state-atom acquired-images
                affine [tile-width tile-height]]  
-  (.submit explore-executor
+  (reactive/submit explore-executor
            #(try
                (when (acquire-next-tile memory-tiles-atom
                                        screen-state-atom

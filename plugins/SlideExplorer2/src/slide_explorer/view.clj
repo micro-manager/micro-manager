@@ -123,6 +123,7 @@
 (defn propagate-tile [tile-map-atom child parent]
   (let [child-tile (.get (disk/load-tile tile-map-atom child))
         parent-tile (.get (disk/load-tile tile-map-atom parent))
+        _ (println parent-tile)
         new-child-tile (insert-half-tile
                          parent-tile
                          [(even? (:nx parent))
