@@ -38,7 +38,8 @@
                    awt-event persist-window-shape close-window
                    create-alphanumeric-comparator
                    super-location? get-file-parent)]
-        [clojure.data.json :only (read-json json-str)]
+        [clojure.data.json :only (read-json)]
+        [clojure.java.io :only (file)]
         [org.micromanager.mm :only (load-mm gui json-to-data)]))
 
 (def browser (atom nil))
@@ -102,7 +103,6 @@
 
 (defn set-filter [table text]
   (let [chunks (.split text "\\s")
-        ;_ (dorun (map println chunks))
         filter
         (when-not (empty? (remove empty? chunks))
           (let [column-indices (int-array
@@ -111,8 +111,6 @@
                 filters (map #(RowFilter/regexFilter
                                 (str "(?i)\\Q" % "\\E")
                                 column-indices) chunks)]
-            ;(println (seq column-indices) (map #(str "(?i)\\Q" % "\\E") chunks))
-            ;(println (count filters))
             (RowFilter/andFilter filters)))]
     ;(println filter)
     (.setRowFilter (.getRowSorter table) filter)))
@@ -142,7 +140,7 @@
 (defn open-selected-files [table]
   (doseq [i (.getSelectedRows table)]
     (let [f (row-index-to-path i)]
-      (if (.exists (File. f))
+      (if (.exists (file f))
         (.openAcquisitionData gui f @open-in-ram)
         (ReportingUtils/showError "File not found.")))))
 
@@ -231,11 +229,21 @@
   (remove-location "")
   (awt-event (update-browser-status)))
 
+(defn image-set-dir? [path]
+  (let [f (file path)]
+    (and (.exists f)
+         (.isDirectory f)
+         (or (.exists (file f "display_and_comments.txt"))
+             (->> (.listFiles f)
+                  (filter #(not (.isDirectory %)))
+                  (map #(.getName %))
+                  (filter #(.contains % "_images"))
+                  seq)))))
+       
 (defn find-data-sets [root-dir]
-    (->> (File. root-dir)
-         file-seq
-         (filter #(= (.getName %) "display_and_comments.txt"))
-         (map #(.getParent %))))
+  (->> (file root-dir)
+       file-seq
+       (filter image-set-dir?)))
 
 (defn get-frame-index [file-name]
   (try (Integer/parseInt (second (.split file-name "_")))
@@ -246,47 +254,43 @@
     (apply max -1
       (filter identity
         (map #(get-frame-index (.getName %))
-             (.listFiles (File. data-set)))))))
+             (.listFiles (file data-set)))))))
 
 (defn get-display-and-comments [data-set]
-  (let [f (File. data-set "display_and_comments.txt")]
+  (let [f (file data-set "display_and_comments.txt")]
     (if (.exists f) (read-json (slurp f) false) nil)))
 
-;(defn read-summary-map [data-set]
-;  (-> (->> (File. data-set "metadata.txt")
-;           FileReader. BufferedReader. line-seq
-;           (take-while #(not (.startsWith % "},")))
-;           (apply str))
-;      (.concat "}}") (read-json false) (get "Summary"))) 
+(defn as-path [f]
+  (.getAbsolutePath (file f)))
 
 (defn read-summary-map [path]
-  (try
-  (-> gui
-      (.openAcquisitionData path false false)
-      .getImageCache
-      .getSummaryMetadata
-      json-to-data)
-  (catch Exception e nil)))
+    (try  
+    (let [name (.openAcquisitionData gui (as-path path) false false)]
+     (try
+      (let [cache (.getAcquisitionImageCache gui name)
+            data (-> cache .getSummaryMetadata json-to-data)]
+        (.closeAcquisition gui name)
+        data)
+      (catch Exception e (do (try (.closeAcquisition gui name)
+                                  (catch Exception _ nil))
+                             (.printStackTrace e)))))
+      (catch Exception e nil)))
 
 (defn get-summary-map [data-set location]
   (println data-set)
   (when-let [raw-summary-map (read-summary-map data-set)]
     (merge raw-summary-map
-      (if-let [frames (count-frames data-set)]
-        {"Frames" frames})
+      ;(if-let [frames (count-frames data-set)]
+      ;  {"Frames" frames})
       (if-let [d+c (get-display-and-comments data-set)]
         {"Comment" (get-in d+c ["Comments" "Summary"])
          "FrameComments" (dissoc (get d+c "Comments") "Summary")})
-      (let [data-dir (File. data-set)
+      (let [data-dir (file data-set)
             position-count (get raw-summary-map "Positions")
             position (get raw-summary-map "Position")
-            path (if (or (.. data-dir getName (startsWith "Snap"))
-                         (not (empty? position))
-                         (and position-count (< 1 position-count)))
-                   (get-file-parent data-dir)
-                   (.getAbsolutePath data-dir))]
+            path (.getAbsolutePath data-dir)]
         {"Path"     path
-         "Name"      (.getName (File. path))
+         "Name"      (.getName (file path))
          "Location" location}))))
 
 (defn remove-sibling-positions [summary-map]
@@ -315,6 +319,17 @@
           "data browser scanning thread") .start))
 
 
+(defn read-iteration []
+  (let [data-set (.take pending-data-sets)]
+    (if (= data-set pending-data-sets) ;; poison
+      (update-browser-status)
+      (let [loc (second data-set)]
+        (when (or (= loc "") (contains? @current-locations loc))
+          (when-let [m (apply get-summary-map data-set)]
+            (add-data (map #(get m %) tags))
+            ;(remove-sibling-positions m)
+            (awt-event (update-browser-status))))))))
+
 (defn start-reading-thread []
   (doto (Thread.
           (fn []
@@ -322,19 +337,9 @@
               (dorun
                 (loop []
                   (Thread/sleep 5)
-                  (let [data-set (.take pending-data-sets)]
-                    ;(println @current-locations (second data-set) (contains? @current-locations (second data-set)))
-                    (if (= data-set pending-data-sets) ;; poison
-                      (update-browser-status)
-                      (let [loc (second data-set)]
-                        (when (or (= loc "") (contains? @current-locations loc))
-                          (let [m (apply get-summary-map data-set)]
-                            (add-data (map #(get m %) tags))
-                            ;(remove-sibling-positions m)
-                            (awt-event (update-browser-status))))
-                        (recur))))))
-              (catch Exception e (.printStackTrace e))
-              ))
+                  (read-iteration)
+                        (recur)))
+              (catch Exception e (.printStackTrace e))))
           "data browser reading thread") .start))
 
 (defn scan-location [location]
@@ -352,7 +357,7 @@
         (do (doseq [old-loc @current-locations]
               (if (super-location? old-loc location)
                 (remove-location old-loc)))
-              (alter current-locations conj location))))
+            (alter current-locations conj location))))
     (do (scan-location location) true)
     false))
 
@@ -454,8 +459,8 @@ inside an existing location in your collection."
   (reset! collections
     (or (read-value-from-prefs prefs "collection-files")
         (let [name (System/getProperty "user.name")]
-          {name (.getAbsolutePath (File. (JavaUtils/getApplicationDataPath)
-                                         (str name ".mmdb.txt")))}))))
+          {name (.getAbsolutePath (file (JavaUtils/getApplicationDataPath)
+                                        (str name ".mmdb.txt")))}))))
 
 (defn save-collection-map []
   (write-value-to-prefs prefs "collection-files" @collections))
@@ -476,15 +481,15 @@ inside an existing location in your collection."
 
 (defn save-data-and-settings [collection-name settings]
   (let [data-path (get @collections collection-name)]
-    (-> (File. data-path) .getParent (File.) .mkdirs)
-    (with-open [pr (PrintWriter. data-path)]
-      (.print pr (json-str settings)))))
+    (-> (file data-path) .getParent file .mkdirs)
+    (with-open [pw (PrintWriter. data-path)]
+      (.print pw (pr-str settings)))))
 
 (defn load-data-and-settings [name]
   (or 
-    (when-let [f (get @collections name)]
-      (when (.exists (File. f))
-        (read-json (slurp f))))
+    (time (when-let [f (get @collections name)]
+            (when (.exists (file f))
+              (read-string (slurp f)))))
     (fresh-data-and-settings)))
 
 ;; data and settings <--> gui
@@ -520,7 +525,7 @@ inside an existing location in your collection."
         model (create-browser-table-model browser-model-headings)]
     (.setModel table model)
     (dosync
-      (ref-set current-data (vec (map (fn [r] (vec (map #(get r (keyword %)) tags))) browser-model-data)))
+      (ref-set current-data (vec (map (fn [r] (vec (map #(get r %) tags))) browser-model-data)))
       (ref-set current-locations (apply sorted-set locations)))
     (.fireTableDataChanged model)
     (-> @settings-window :locations :table .getModel .fireTableDataChanged)
@@ -565,8 +570,8 @@ inside an existing location in your collection."
     (if collection-name
       (do
         (swap! collections assoc collection-name
-          (.getAbsolutePath (File. (JavaUtils/getApplicationDataPath)
-                                   (str collection-name ".mmdb.txt"))))
+          (.getAbsolutePath (file (JavaUtils/getApplicationDataPath)
+                                  (str collection-name ".mmdb.txt"))))
         (save-collection-map)
         (awt-event
           (apply-data-and-settings collection-name (fresh-data-and-settings))))
@@ -667,15 +672,15 @@ inside an existing location in your collection."
         search-label (JLabel. (get-icon "zoom.png"))
         refresh-button (create-button "Refresh" refresh-collection)
         settings-button (create-button "Settings..."
-                          #(.show (:frame @settings-window)))
+                                       #(.show (:frame @settings-window)))
         open-in-ram-checkbox (create-checkbox "Open in RAM" open-in-ram)
         collection-label (JLabel. "Collection:")
         collection-menu (JComboBox.)]
     (doto panel
-       (.add scroll-pane) (.add search-field) (.add refresh-button)
-       (.add settings-button) (.add search-label)
-       (.add open-in-ram-checkbox)
-       (.add collection-label) (.add collection-menu))
+      (.add scroll-pane) (.add search-field) (.add refresh-button)
+      (.add settings-button) (.add search-label)
+      (.add open-in-ram-checkbox)
+      (.add collection-label) (.add collection-menu))
     (doto table
       (.setAutoCreateRowSorter true)
       (.setShowGrid false)
@@ -702,12 +707,12 @@ inside an existing location in your collection."
       (.addWindowListener
         (proxy [WindowAdapter] []
           (windowClosing [e]
-            (clear-queues)
-              (save-data-and-settings
-                (get-last-collection-name)
-                  (get-current-data-and-settings))
-            (close-window (@settings-window :frame))
-            (.setVisible frame false)))))
+                         (clear-queues)
+                         (save-data-and-settings
+                           (get-last-collection-name)
+                           (get-current-data-and-settings))
+                         (close-window (@settings-window :frame))
+                         (.setVisible frame false)))))
     (persist-window-shape prefs "browser-shape" frame)
     (add-watch current-data "updater" (fn [_ _ old new]
                                         (when (not= old new)
@@ -728,7 +733,7 @@ inside an existing location in your collection."
   ;(MMImageCache/addImageCacheListener (create-image-storage-listener))
   (awt-event
     (.show (@browser :frame))
-    (.setModel (:table @browser) (create-browser-table-model ["Loading..."]))
+   ; (.setModel (:table @browser) (create-browser-table-model ["Loading..."]))
     (let [collection-name (get-last-collection-name)]
       (future (apply-data-and-settings collection-name (load-data-and-settings collection-name)))))
   browser)
@@ -740,5 +745,6 @@ inside an existing location in your collection."
     (.show (@browser :frame))))
 
 (defn test-browser []
+  (reset! browser nil)
   (load-mm (org.micromanager.MMStudioMainFrame/getInstance))
   (start-browser))
