@@ -2360,35 +2360,35 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface, Device
       // choose the directory
       // --------------------
       File f = FileDialogs.openDir(this, "Please select an image data set", MM_DATA_SET);
-
+      MMAcquisition acquisition = null;
       if (f != null) {
          if (f.isDirectory()) {
             openAcqDirectory_ = f.getAbsolutePath();
          } else {
             openAcqDirectory_ = f.getParent();
          }
-
-         openAcquisitionData(openAcqDirectory_, inRAM);
-         
+         try {
+            acquisition = openAcquisitionData(openAcqDirectory_, inRAM);
+         } catch (MMScriptException ex) {
+            ReportingUtils.showError(ex);
+         } 
       }
    }
 
-   public void openAcquisitionData(String dir, boolean inRAM) {
+   public MMAcquisition openAcquisitionData(String dir, boolean inRAM, boolean show) throws MMScriptException {
       String rootDir = new File(dir).getAbsolutePath();
       String name = new File(dir).getName();
       rootDir = rootDir.substring(0, rootDir.length() - (name.length() + 1));
-      try {
-         acqMgr_.openAcquisition(name, rootDir, true, !inRAM, true);
+      MMAcquisition acquisition = null;
+         acqMgr_.openAcquisition(name, rootDir, show, !inRAM, true);
+         acquisition = getAcquisition(name);
          acqMgr_.getAcquisition(name).initialize();
-      } catch (MMScriptException ex) {
-         ReportingUtils.showError(ex);
-      } finally {
-         try {
-            acqMgr_.closeAcquisition(name);
-         } catch (MMScriptException ex) {
-            ReportingUtils.showError(ex);
-         }
-      }
+     
+      return acquisition;
+   }
+
+   public MMAcquisition openAcquisitionData(String dir, boolean inRam) throws MMScriptException {
+      return openAcquisitionData(dir, inRam, true);
    }
 
    protected void zoomOut() {

@@ -996,10 +996,18 @@ public interface ScriptInterface {
 
 
    /*
-    * Open an existing data set
+    * Open an existing data set. Shows the acquisition in a window.
+    * @return The acquisition object.
     */
-   public void openAcquisitionData(String location, boolean inRAM);
-   
+   public MMAcquisition openAcquisitionData(String location, boolean inRAM) throws MMScriptException;
+
+
+   /*
+    * Open an existing data set.
+    * @return The name of the acquisition object.
+    */
+   public MMAcquisition openAcquisitionData(String location, boolean inRAM, boolean show) throws MMScriptException;
+
    /* 
     * Enabled or disable the ROI buttons on the main window.
     */
