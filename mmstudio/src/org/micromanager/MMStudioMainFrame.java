@@ -119,6 +119,8 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.Collections;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.swing.BorderFactory;
 import javax.swing.JPanel;
 import javax.swing.JSplitPane;
@@ -2360,22 +2362,28 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface, Device
       // choose the directory
       // --------------------
       File f = FileDialogs.openDir(this, "Please select an image data set", MM_DATA_SET);
-      MMAcquisition acquisition = null;
       if (f != null) {
          if (f.isDirectory()) {
             openAcqDirectory_ = f.getAbsolutePath();
          } else {
             openAcqDirectory_ = f.getParent();
          }
+         String acq = null;
          try {
-            acquisition = openAcquisitionData(openAcqDirectory_, inRAM);
+            acq = openAcquisitionData(openAcqDirectory_, inRAM);
          } catch (MMScriptException ex) {
             ReportingUtils.showError(ex);
-         } 
+         } finally {
+            try {
+               acqMgr_.closeAcquisition(acq);
+            } catch (MMScriptException ex) {
+               ReportingUtils.logError(ex);
+            }
+         }
       }
    }
 
-   public MMAcquisition openAcquisitionData(String dir, boolean inRAM, boolean show) throws MMScriptException {
+   public String openAcquisitionData(String dir, boolean inRAM, boolean show) throws MMScriptException {
       String rootDir = new File(dir).getAbsolutePath();
       String name = new File(dir).getName();
       rootDir = rootDir.substring(0, rootDir.length() - (name.length() + 1));
@@ -2384,10 +2392,10 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface, Device
          acquisition = getAcquisition(name);
          acqMgr_.getAcquisition(name).initialize();
      
-      return acquisition;
+      return name;
    }
 
-   public MMAcquisition openAcquisitionData(String dir, boolean inRam) throws MMScriptException {
+   public String openAcquisitionData(String dir, boolean inRam) throws MMScriptException {
       return openAcquisitionData(dir, inRam, true);
    }
 
