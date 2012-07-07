@@ -39,7 +39,7 @@
                    create-alphanumeric-comparator
                    super-location? get-file-parent)]
         [clojure.data.json :only (read-json json-str)]
-        [org.micromanager.mm :only (load-mm gui)]))
+        [org.micromanager.mm :only (load-mm gui json-to-data)]))
 
 (def browser (atom nil))
 
@@ -196,19 +196,14 @@
         selected-paths (set (map row-index-to-path selected-rows))]
     (.. table getModel fireTableDataChanged)
     (doseq [selected-row selected-rows]
-      (.addRowSelectionInterval table selected-row selected-row))
-;    (doseq [row (range (.getRowCount table))]
-;      (when (selected-paths (row-index-to-path row))
-;        (.addRowSelectionInterval table row row)))))
-))
+      (.addRowSelectionInterval table selected-row selected-row))))
 
-(defn add-browser-table-row [new-row]
+(defn add-data [new-row]
   (let [row-vec (vec new-row)
         location (row-vec (.indexOf tags "Location"))]
     (dosync
       (if (or (contains? @current-locations location) (= location ""))
-        (alter current-data refresh-row row-vec))))
-  (awt-event (update-browser-table)))
+        (alter current-data refresh-row row-vec)))))
     
 (defn remove-location [loc]
   (dosync
@@ -216,8 +211,7 @@
     (let [location-column (.indexOf tags "Location")]
       (alter current-data
              (fn [coll] (vec (remove #(= (nth % location-column) loc) coll))))))
-  (awt-event (update-browser-table)
-             (-> @settings-window :locations :table .getModel .fireTableDataChanged)
+  (awt-event (-> @settings-window :locations :table .getModel .fireTableDataChanged)
 ))
 
 (defn remove-selected-locations [] 
@@ -238,10 +232,10 @@
   (awt-event (update-browser-status)))
 
 (defn find-data-sets [root-dir]
-  (map #(.getParent %)
     (->> (File. root-dir)
-      file-seq
-      (filter #(= (.getName %) "metadata.txt")))))
+         file-seq
+         (filter #(= (.getName %) "display_and_comments.txt"))
+         (map #(.getParent %))))
 
 (defn get-frame-index [file-name]
   (try (Integer/parseInt (second (.split file-name "_")))
@@ -258,15 +252,25 @@
   (let [f (File. data-set "display_and_comments.txt")]
     (if (.exists f) (read-json (slurp f) false) nil)))
 
-(defn read-summary-map [data-set]
-  (-> (->> (File. data-set "metadata.txt")
-           FileReader. BufferedReader. line-seq
-           (take-while #(not (.startsWith % "},")))
-           (apply str))
-      (.concat "}}") (read-json false) (get "Summary"))) 
+;(defn read-summary-map [data-set]
+;  (-> (->> (File. data-set "metadata.txt")
+;           FileReader. BufferedReader. line-seq
+;           (take-while #(not (.startsWith % "},")))
+;           (apply str))
+;      (.concat "}}") (read-json false) (get "Summary"))) 
+
+(defn read-summary-map [path]
+  (try
+  (-> gui
+      (.openAcquisitionData path false false)
+      .getImageCache
+      .getSummaryMetadata
+      json-to-data)
+  (catch Exception e nil)))
 
 (defn get-summary-map [data-set location]
-  (let [raw-summary-map (read-summary-map data-set)]
+  (println data-set)
+  (when-let [raw-summary-map (read-summary-map data-set)]
     (merge raw-summary-map
       (if-let [frames (count-frames data-set)]
         {"Frames" frames})
@@ -278,7 +282,7 @@
             position (get raw-summary-map "Position")
             path (if (or (.. data-dir getName (startsWith "Snap"))
                          (not (empty? position))
-                         (and position-count (pos? position-count)))
+                         (and position-count (< 1 position-count)))
                    (get-file-parent data-dir)
                    (.getAbsolutePath data-dir))]
         {"Path"     path
@@ -289,7 +293,8 @@
   (doseq [pending-data-set pending-data-sets]
     (when (super-location? (first pending-data-set) (get summary-map "Path"))
       (.remove pending-data-sets pending-data-set)
-      (println "removed " pending-data-set))))
+      (println "removed " pending-data-set)
+      )))
 
 (def default-headings ["Path" "Time" "Frames" "Comment" "Location"])
 
@@ -324,8 +329,8 @@
                       (let [loc (second data-set)]
                         (when (or (= loc "") (contains? @current-locations loc))
                           (let [m (apply get-summary-map data-set)]
-                            (add-browser-table-row (map #(get m %) tags))
-                            (remove-sibling-positions m)
+                            (add-data (map #(get m %) tags))
+                            ;(remove-sibling-positions m)
                             (awt-event (update-browser-status))))
                         (recur))))))
               (catch Exception e (.printStackTrace e))
@@ -704,6 +709,9 @@ inside an existing location in your collection."
             (close-window (@settings-window :frame))
             (.setVisible frame false)))))
     (persist-window-shape prefs "browser-shape" frame)
+    (add-watch current-data "updater" (fn [_ _ old new]
+                                        (when (not= old new)
+                                          (awt-event (update-browser-table)))))
     (gen-map frame table scroll-pane settings-button search-field
              collection-menu refresh-button)))
 
@@ -731,4 +739,6 @@ inside an existing location in your collection."
     (start-browser)
     (.show (@browser :frame))))
 
-
+(defn test-browser []
+  (load-mm (org.micromanager.MMStudioMainFrame/getInstance))
+  (start-browser))
