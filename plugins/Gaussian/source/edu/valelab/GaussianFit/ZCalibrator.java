@@ -43,7 +43,12 @@ public class ZCalibrator {
    private double[] fitFunctionWx_;
    private double[] fitFunctionWy_;
    
-   public boolean hasFitFunctions_ = fitFunctionWx_ != null && fitFunctionWy_ != null;
+   
+   final int maxIterations_ = 10000;
+   
+   public boolean hasFitFunctions() {
+      return fitFunctionWx_ != null && fitFunctionWy_ != null;
+   }
    
    public class DataPoint {
       public double wx_; // width in x
@@ -137,7 +142,6 @@ public class ZCalibrator {
     * 
     */
    public void fitFunction() {
-      final int maxIterations = 10000;
       
       NelderMead nmx = new NelderMead();
       SimpleScalarValueChecker convergedChecker_ = new SimpleScalarValueChecker(1e-6,-1);
@@ -146,15 +150,15 @@ public class ZCalibrator {
       MultiVariateZCalibrationFunction mvcx = new MultiVariateZCalibrationFunction(wxData);
       
       double[] params0_ = new double[5]; // initial estimates:
-      params0_[0] = 37; // TODO: better estimate for c
+      params0_[0] = 37;  // TODO: better estimate for c
       params0_[1] = 200; // Estimate for w0
-      params0_[2] = 10; // TODO: better estimate for d
-      params0_[3] = 1; // TODO: better estimate for A
-      params0_[4] = 1; // TODO: better estimate for B
+      params0_[2] = 10;  // TODO: better estimate for d
+      params0_[3] = 1;   // TODO: better estimate for A
+      params0_[4] = 1;   // TODO: better estimate for B
       
       nmx.setStartConfiguration(params0_);
       nmx.setConvergenceChecker(convergedChecker_);
-      nmx.setMaxIterations(maxIterations);
+      nmx.setMaxIterations(maxIterations_);
       
       double[] paramsOut = {0.0};
       
@@ -219,6 +223,50 @@ public class ZCalibrator {
       
       
 
+   }
+   
+   
+   /**
+    * Use the fitfunction to estimate the z position given width in x and y
+    * 
+    * minimize the distance D in sqrt wx and sqrt wy space
+    * D = sqrt (  square (sqrt wx - sqrt wx, calib) + sqr(sqrt wy - sqrt w, calib) )
+    * 
+    * 
+    */
+   
+   public double getZ(double wx, double wy) {  
+      if (!hasFitFunctions())
+         return 0.0;
+      
+      NelderMead nmx = new NelderMead();
+      SimpleScalarValueChecker convergedChecker_ = new SimpleScalarValueChecker(1e-6,-1);
+      
+      MultiVariateZFunction mz = new MultiVariateZFunction(fitFunctionWx_, fitFunctionWy_,
+              wx, wy);
+      
+      double[] params0_ = new double[1]; // initial estimates:
+      params0_[0] = 15;  // TODO: Need the middle z value of the stack here!!!
+
+      
+      nmx.setStartConfiguration(params0_);
+      nmx.setConvergenceChecker(convergedChecker_);
+      nmx.setMaxIterations(maxIterations_);
+      
+      double[] paramsOut = {0.0};
+      
+      try {
+         RealPointValuePair result = nmx.optimize(mz, GoalType.MINIMIZE, params0_);
+         paramsOut = result.getPoint();
+      } catch (java.lang.OutOfMemoryError e) {
+         throw (e);
+      } catch (Exception e) {
+         ij.IJ.log(" " + e.toString());
+      }
+      
+      
+      
+      return paramsOut[0]; 
    }
    
    

@@ -95,6 +95,15 @@ public class GaussianFitStackThread extends GaussianInfo implements Runnable {
                   sx = paramsOut[GaussianFit.S1] * pixelSize_;
                   sy = paramsOut[GaussianFit.S2] * pixelSize_;
                   a = sx / sy;
+                  
+                  double z = 0.0;
+                  ZCalibrator zc = DataCollectionForm.zc_;
+               
+                  if (zc.hasFitFunctions()) {
+                     z = zc.getZ(2 * sx, 2 * sy);
+                     spotData.setZCenter(z);
+                  }
+                  
                }
 
                if (paramsOut.length >= 7) {
@@ -102,6 +111,9 @@ public class GaussianFitStackThread extends GaussianInfo implements Runnable {
                }
 
                double width = 2 * s;
+               
+               
+               
                spotData.setData(N, bgr, xMax, yMax, 0.0, width, a, theta, sigma);
 
                if ((!useWidthFilter_ || (width > widthMin_ && width < widthMax_))

@@ -78,7 +78,7 @@ public class FitAllThread extends GaussianInfo implements Runnable  {
          return;
       }
 
-      ImagePlus imp = siPlus;
+      //ImagePlus imp = siPlus;
 
       int nrThreads = ij.Prefs.getThreads();
          if (nrThreads > 8)
@@ -123,7 +123,7 @@ public class FitAllThread extends GaussianInfo implements Runnable  {
               siPlus.getWidth(), siPlus.getHeight(), (float) pixelSize_,
               shape_, halfSize_,
               nrChannels, nrFrames, nrSlices, nrPositions, resultList_.size(), 
-              resultList_, null, false, DataCollectionForm.Coordinates.NM, false, 
+              resultList_, null, false, DataCollectionForm.Coordinates.NM, true, 
               0.0, 0.0);
       dcForm.setVisible(true);
 

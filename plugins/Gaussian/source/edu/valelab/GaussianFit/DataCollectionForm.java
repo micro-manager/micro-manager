@@ -106,6 +106,9 @@ public class DataCollectionForm extends javax.swing.JFrame {
    private int jitterMaxSpots_ = 40000; 
    private int jitterMaxFrames_ = 500;
    
+   public static ZCalibrator zc_ = new ZCalibrator();
+      
+   
    /**
     * Method to allow scripts to tune the jitter corrector
     * @param jm 
@@ -3288,10 +3291,12 @@ public class DataCollectionForm extends javax.swing.JFrame {
    
    public void zCalibrate(int rowNr) {
       final double widthCutoff = 1000.0;
-      final double maxVariance = 5000.0;
+      final double maxVariance = 20000.0;
       final int minNrSpots = 5;
       
-      ZCalibrator zc = new ZCalibrator();
+      
+      zc_.clearDataPoints();
+      
       MyRowData rd = rowData_.get(rowNr);
 
       
@@ -3301,13 +3306,13 @@ public class DataCollectionForm extends javax.swing.JFrame {
          double xw = gsd.getWidth();
          double xy = xw / gsd.getA();
          if (xw < widthCutoff && xy < widthCutoff) {
-            zc.addDataPoint(gsd.getWidth(), gsd.getWidth() / gsd.getA(),
+            zc_.addDataPoint(gsd.getWidth(), gsd.getWidth() / gsd.getA(),
                gsd.getSlice() );
          }
       }
-      zc.plotDataPoints();
+      zc_.plotDataPoints();
        
-      zc.clearDataPoints();
+      zc_.clearDataPoints();
       
       // calculate average and stdev per frame
       if (rd.frameIndexSpotList_ == null) {
@@ -3339,16 +3344,16 @@ public class DataCollectionForm extends javax.swing.JFrame {
             if (frameSpots.size() >= minNrSpots && 
                     varX < maxVariance && 
                     varY < maxVariance) {
-               zc.addDataPoint(meanX, meanY, frameNr);
+               zc_.addDataPoint(meanX, meanY, frameNr);
             }
             
          }
          frameNr++;
       }
       
-      zc.plotDataPoints();
+      zc_.plotDataPoints();
       
-      zc.fitFunction();
+      zc_.fitFunction();
 
       
    }
