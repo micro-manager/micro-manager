@@ -21,6 +21,9 @@ import org.apache.commons.math.optimization.SimpleScalarValueChecker;
 import org.apache.commons.math.optimization.direct.NelderMead;
 import org.jfree.data.xy.XYSeries;
 
+
+import ij.measure.ResultsTable;
+
 /**
  *
  * @author Nico Stuurman
@@ -168,6 +171,15 @@ public class ZCalibrator {
          System.out.println("Result " + i + " value: " + (int) paramsOut[i]);
       }
       
+      // write fit result to Results Table:
+      ResultsTable res = new ResultsTable();
+      res.incrementCounter();
+      res.addValue("c", paramsOut[0]);
+      res.addValue("w0", paramsOut[1]);
+      res.addValue("d", paramsOut[2]);
+      res.addValue("A", paramsOut[3]);
+      res.addValue("B", paramsOut[4]);
+               
       fitFunctionWx_ = paramsOut;
       
        
@@ -190,6 +202,15 @@ public class ZCalibrator {
       for (int i = 0; i < paramsOut.length; i++) {
          System.out.println("Result " + i + " value: " + (int) paramsOut[i]);
       }
+      
+      res.incrementCounter();
+      res.addValue("c", paramsOut[0]);
+      res.addValue("w0", paramsOut[1]);
+      res.addValue("d", paramsOut[2]);
+      res.addValue("A", paramsOut[3]);
+      res.addValue("B", paramsOut[4]);
+      
+      res.show("Fit Parameters");
       
       fitFunctionWy_ = paramsOut;
       
