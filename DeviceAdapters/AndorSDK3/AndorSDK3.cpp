@@ -449,7 +449,7 @@ int CAndorSDK3Camera::Shutdown()
       delete temperatureStatus_property;
       delete sensorCooling_property;
       delete overlap_property;
-      delete frameRate_property;
+      //delete frameRate_property;
       delete fanSpeed_property;
       delete spuriousNoiseFilter_property;
       delete aoi_property_;
@@ -770,8 +770,6 @@ int CAndorSDK3Camera::GetBinning() const
 /**
 * Sets binning factor.
 * Required by the MM::Camera API.
-* Because SDK3 cannot perform binning this function will not be called. However
-* it is a virtual function in MMDevice and so must be overloaded
 */
 int CAndorSDK3Camera::SetBinning(int binF)
 {
@@ -880,6 +878,7 @@ int CAndorSDK3Camera::StartSequenceAcquisition(long numImages, double interval_m
          cycleMode->Set(L"Continuous");
       }
 
+      ResizeImageBuffer();
       //// Set the frame rate to that held by the frame rate holder. Check the limits
       //double held_fr = 0.0;
       //if (frameRate->IsWritable())
@@ -956,9 +955,9 @@ int CAndorSDK3Camera::InsertImage()
 
 
    const unsigned char * pData = img_.GetPixels();
-   unsigned int w = GetImageWidth();
-   unsigned int h = GetImageHeight();
-   unsigned int b = GetImageBytesPerPixel();
+   unsigned int w = img_.Width();
+   unsigned int h = img_.Height();
+   unsigned int b = img_.Depth();
 
    int ret = GetCoreCallback()->InsertImage(this, pData, w, h, b);
    if (!stopOnOverflow_ && ret == DEVICE_BUFFER_OVERFLOW)

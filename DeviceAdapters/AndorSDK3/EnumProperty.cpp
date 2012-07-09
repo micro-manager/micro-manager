@@ -123,6 +123,11 @@ int TEnumProperty::OnEnum(MM::PropertyBase * pProp, MM::ActionType eAct)
          pProp->Get(temp_s);
          enum_feature_->Set(convertToWString(temp_s, buf, MAX_CHARS_ENUM_VALUE_BUFFER));
       }
+      camera_->UpdateProperty(MM_name_.c_str());
+
+      if ( 0 == MM_name_.compare(MM::g_Keyword_Binning) ) {
+         camera_->ResizeImageBuffer();
+      }
 
       if (was_poised)
       {

@@ -104,6 +104,7 @@ public:
    unsigned GetImageBytesPerPixel() const;
    unsigned GetBitDepth() const;
    long GetImageBufferSize() const;
+   int ResizeImageBuffer();
    double GetExposure() const;
    void SetExposure(double exp);
    int SetROI(unsigned x, unsigned y, unsigned xSize, unsigned ySize); 
@@ -134,7 +135,6 @@ private:
    void InitialiseDeviceCircularBuffer();
    void InitialiseSDK3Defaults();
 
-   int ResizeImageBuffer();
    static const double nominalPixelSizeUm_;
 
    ImgBuffer img_;
