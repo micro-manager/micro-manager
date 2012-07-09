@@ -102,6 +102,7 @@ public class FitAllThread extends GaussianInfo implements Runnable  {
          }
       } else { // MMImageWindow
          nrPositions = mw.getNumberOfPositions();
+     
          for (int p = 1; p <= nrPositions; p++) {
             try {
                mw.setPosition(p);
@@ -119,12 +120,15 @@ public class FitAllThread extends GaussianInfo implements Runnable  {
 
       // Add data to data overview window
       DataCollectionForm dcForm = DataCollectionForm.getInstance();
+
       dcForm.addSpotData(siPlus.getWindow().getTitle(), siPlus.getTitle(), "",
-              siPlus.getWidth(), siPlus.getHeight(), (float) pixelSize_,
-              shape_, halfSize_,
+              siPlus.getWidth(), siPlus.getHeight(), (float) pixelSize_, 
+              (float) zStackStepSize_, shape_, halfSize_,
               nrChannels, nrFrames, nrSlices, nrPositions, resultList_.size(), 
-              resultList_, null, false, DataCollectionForm.Coordinates.NM, true, 
+              resultList_, null, false, DataCollectionForm.Coordinates.NM, 
+              DataCollectionForm.zc_.hasFitFunctions(), 
               0.0, 0.0);
+      
       dcForm.setVisible(true);
 
       // report duration of analysis
@@ -152,6 +156,7 @@ public class FitAllThread extends GaussianInfo implements Runnable  {
          gfsThreads_[i].setPhotonConversionFactor(photonConversionFactor_);
          gfsThreads_[i].setGain(gain_);
          gfsThreads_[i].setPixelSize(pixelSize_);
+         gfsThreads_[i].setZStackStepSize(zStackStepSize_);
          gfsThreads_[i].setTimeIntervalMs(timeIntervalMs_);
          gfsThreads_[i].setBaseLevel(baseLevel_);
          gfsThreads_[i].setNoiseTolerance(noiseTolerance_);

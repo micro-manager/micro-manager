@@ -135,8 +135,9 @@ public class MainForm extends javax.swing.JFrame implements ij.ImageListener{
           
 
        setTitle("Localization Microscopy");
+       
        // wdith on Mac should be 250, Windows 270
-       setBounds(prefs_.getInt(FRAMEXPOS, 100), prefs_.getInt(FRAMEYPOS, 100), 270, 550);
+       setBounds(prefs_.getInt(FRAMEXPOS, 100), prefs_.getInt(FRAMEYPOS, 100), 270, 575);
        ImagePlus.addImageListener(this);
        setVisible(true);
     }
@@ -926,6 +927,7 @@ public class MainForm extends javax.swing.JFrame implements ij.ImageListener{
          tT.setPhotonConversionFactor(NumberUtils.displayStringToDouble(photonConversionTextField.getText()));
          tT.setGain(NumberUtils.displayStringToDouble(emGainTextField_.getText()));
          tT.setPixelSize((float) NumberUtils.displayStringToDouble(pixelSizeTextField_.getText()));
+         tT.setZStackStepSize((float) NumberUtils.displayStringToDouble(zStepTextField_.getText()));
          tT.setTimeIntervalMs(NumberUtils.displayStringToDouble(timeIntervalTextField_.getText()));
          tT.setBaseLevel(NumberUtils.displayStringToDouble(baseLevelTextField.getText()));
          tT.setUseWidthFilter(filterDataCheckBoxWidth.isSelected());

@@ -34,6 +34,7 @@ public class GaussianInfo {
    protected double photonConversionFactor_ = 10.41;
    protected double gain_ = 50;
    protected float pixelSize_ = 107; // nm/pixel
+   protected float zStackStepSize_ = 50;  // step size of Z-stack in nm
    protected double timeIntervalMs_ = 100;
 
    // Filters for results of Gaussian fit
@@ -87,6 +88,12 @@ public class GaussianInfo {
    }
    public double getPixelSize() {
       return pixelSize_;
+   }
+   public void setZStackStepSize(float f) {
+      zStackStepSize_ = f;
+   }
+   public double getZStackStepSize() {
+      return zStackStepSize_;
    }
    public void setTimeIntervalMs (double f) {
       timeIntervalMs_ = f;

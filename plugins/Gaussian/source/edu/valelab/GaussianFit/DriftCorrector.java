@@ -215,7 +215,8 @@ public class DriftCorrector {
 
          MyRowData newRow = DataCollectionForm.getInstance().new MyRowData(rowData.name_ + "-Jitter", rowData.title_,
                  "", rowData.width_,
-                 rowData.height_, rowData.pixelSizeNm_, rowData.shape_,
+                 rowData.height_, rowData.pixelSizeNm_, rowData.zStackStepSizeNm_, 
+                 rowData.shape_,
                  rowData.halfSize_, rowData.nrChannels_, stageMovementData.size(),
                  1, 1, stageMovementData.size(), stageMovementData,
                  timePoints, true, Coordinates.NM, false, 0.0, 0.0);
@@ -275,8 +276,9 @@ public class DriftCorrector {
 
          // Add transformed data to data overview window
          DataCollectionForm.getInstance().addSpotData(rowData.name_ + "-Jitter-Correct", rowData.title_, "", rowData.width_,
-                 rowData.height_, rowData.pixelSizeNm_, rowData.shape_,
-                 rowData.halfSize_, rowData.nrChannels_, rowData.nrFrames_,
+                 rowData.height_, rowData.pixelSizeNm_, rowData.zStackStepSizeNm_, 
+                 rowData.shape_, rowData.halfSize_, rowData.nrChannels_, 
+                 rowData.nrFrames_,
                  rowData.nrSlices_, 1, rowData.maxNrSpots_, correctedData,
                  null, false, Coordinates.NM, false, 0.0, 0.0);
          ij.IJ.showStatus("Finished jitter correction");

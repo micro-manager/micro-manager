@@ -158,6 +158,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
       public final int width_;
       public final int height_;
       public final float pixelSizeNm_;
+      public final float zStackStepSizeNm_;
       public final int shape_;
       public final int halfSize_;
       public final int nrChannels_;
@@ -182,7 +183,8 @@ public class DataCollectionForm extends javax.swing.JFrame {
               String colCorrRef,
               int width,
               int height,
-              float pixelSizeUm,
+              float pixelSizeUm, 
+              float zStackStepSizeNm,
               int shape,
               int halfSize, 
               int nrChannels,
@@ -203,6 +205,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
          width_ = width;
          height_ = height;
          pixelSizeNm_ = pixelSizeUm;
+         zStackStepSizeNm_ = zStackStepSizeNm;
          spotList_ = spotList;
          shape_ = shape;
          halfSize_ = halfSize;
@@ -430,7 +433,8 @@ public class DataCollectionForm extends javax.swing.JFrame {
            String colCorrRef,
            int width,
            int height,
-           float pixelSizeUm,
+           float pixelSizeUm, 
+           float zStackStepSizeNm,
            int shape,
            int halfSize,
            int nrChannels,
@@ -445,9 +449,11 @@ public class DataCollectionForm extends javax.swing.JFrame {
            boolean hasZ, 
            double minZ, 
            double maxZ) {
-      MyRowData newRow = new MyRowData(name, title, colCorrRef, width, height, pixelSizeUm, 
+      MyRowData newRow = new MyRowData(name, title, colCorrRef, width, height, 
+              pixelSizeUm, zStackStepSizeNm, 
               shape, halfSize, nrChannels, nrFrames, nrSlices, nrPositions, 
-              maxNrSpots, spotList, timePoints, isTrack, coordinate, hasZ, minZ, maxZ);
+              maxNrSpots, spotList, timePoints, isTrack, coordinate, 
+              hasZ, minZ, maxZ);
       rowData_.add(newRow);
       myTableModel_.fireTableRowsInserted(rowData_.size()-1, rowData_.size());
       SwingUtilities.invokeLater(new Runnable() {
@@ -525,6 +531,8 @@ public class DataCollectionForm extends javax.swing.JFrame {
         jLabel6 = new javax.swing.JLabel();
         jLabel7 = new javax.swing.JLabel();
         logLogCheckBox_ = new javax.swing.JCheckBox();
+        zCalibrateButton_ = new javax.swing.JButton();
+        zCalibrationLabel_ = new javax.swing.JLabel();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DO_NOTHING_ON_CLOSE);
         setTitle("Gaussian tracking data");
@@ -614,7 +622,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
         referenceName_.setFont(new java.awt.Font("Lucida Grande", 0, 11));
         referenceName_.setText("JLabel1");
 
-        unjitterButton_.setFont(new java.awt.Font("Lucida Grande", 0, 10));
+        unjitterButton_.setFont(new java.awt.Font("Lucida Grande", 0, 10)); // NOI18N
         unjitterButton_.setText("Drift Correct");
         unjitterButton_.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -772,6 +780,17 @@ public class DataCollectionForm extends javax.swing.JFrame {
             }
         });
 
+        zCalibrateButton_.setFont(new java.awt.Font("Lucida Grande", 0, 10)); // NOI18N
+        zCalibrateButton_.setText("Z Calibration");
+        zCalibrateButton_.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                zCalibrateButton_ActionPerformed(evt);
+            }
+        });
+
+        zCalibrationLabel_.setFont(new java.awt.Font("Lucida Grande", 0, 10)); // NOI18N
+        zCalibrationLabel_.setText("UnCalibrated");
+
         org.jdesktop.layout.GroupLayout layout = new org.jdesktop.layout.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
@@ -844,11 +863,24 @@ public class DataCollectionForm extends javax.swing.JFrame {
                         .add(jLabel6)
                         .add(87, 87, 87)))
                 .add(jSeparator4, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                .add(7, 7, 7)
-                .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING, false)
-                    .add(linkButton_, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .add(unjitterButton_, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                .add(10, 10, 10)
+                .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                    .add(layout.createSequentialGroup()
+                        .add(7, 7, 7)
+                        .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                            .add(layout.createSequentialGroup()
+                                .add(unjitterButton_, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 110, Short.MAX_VALUE)
+                                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED))
+                            .add(layout.createSequentialGroup()
+                                .add(linkButton_, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 110, Short.MAX_VALUE)
+                                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED))))
+                    .add(layout.createSequentialGroup()
+                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                        .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                            .add(layout.createSequentialGroup()
+                                .add(20, 20, 20)
+                                .add(zCalibrationLabel_, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 75, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+                            .add(zCalibrateButton_, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 110, Short.MAX_VALUE))
+                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)))
                 .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
                     .add(layout.createSequentialGroup()
                         .add(60, 60, 60)
@@ -952,9 +984,9 @@ public class DataCollectionForm extends javax.swing.JFrame {
                     .add(jSeparator4, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 120, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                     .add(layout.createSequentialGroup()
                         .add(73, 73, 73)
-                        .add(unjitterButton_, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 19, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                        .add(linkButton_, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 19, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+                        .add(SigmaLabel3)
+                        .add(6, 6, 6)
+                        .add(IntLabel2))
                     .add(layout.createSequentialGroup()
                         .add(13, 13, 13)
                         .add(jLabel4)
@@ -962,18 +994,24 @@ public class DataCollectionForm extends javax.swing.JFrame {
                         .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
                             .add(layout.createSequentialGroup()
                                 .add(3, 3, 3)
-                                .add(renderButton_, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 19, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+                                .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
+                                    .add(renderButton_, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 19, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                                    .add(zCalibrateButton_, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 19, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)))
                             .add(visualizationModel_, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 24, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                             .add(visualizationMagnification_, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 24, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
                         .add(16, 16, 16)
                         .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
                             .add(layout.createSequentialGroup()
                                 .add(3, 3, 3)
-                                .add(jLabel1))
+                                .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
+                                    .add(jLabel1)
+                                    .add(unjitterButton_, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 19, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)))
                             .add(layout.createSequentialGroup()
                                 .add(filterSigmaCheckBox_, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 20, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                                 .add(0, 0, 0)
-                                .add(filterIntensityCheckBox_))
+                                .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
+                                    .add(filterIntensityCheckBox_)
+                                    .add(linkButton_, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 19, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)))
                             .add(layout.createSequentialGroup()
                                 .add(sigmaMin_, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 20, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                                 .add(0, 0, 0)
@@ -985,14 +1023,13 @@ public class DataCollectionForm extends javax.swing.JFrame {
                             .add(layout.createSequentialGroup()
                                 .add(sigmaMax_, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 17, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                                 .add(3, 3, 3)
-                                .add(intensityMax_, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 17, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))))
-                    .add(layout.createSequentialGroup()
-                        .add(73, 73, 73)
-                        .add(SigmaLabel3)
-                        .add(6, 6, 6)
-                        .add(IntLabel2)))
+                                .add(intensityMax_, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 17, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)))))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(jScrollPane1_, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 1167, Short.MAX_VALUE))
+            .add(layout.createSequentialGroup()
+                .add(62, 62, 62)
+                .add(zCalibrationLabel_, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 13, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                .add(1227, 1227, 1227))
         );
 
         pack();
@@ -1141,7 +1178,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
           
           String name = selectedFile.getName();
           
-          addSpotData(name, name, "", 256, 256, pixelSize, 3, 2, 1, 1, 1, 1, 
+          addSpotData(name, name, "", 256, 256, pixelSize, (float) 0.0, 3, 2, 1, 1, 1, 1, 
                   nr, spotList, null, false, Coordinates.NM, hasZ, minZ, maxZ);
 
           
@@ -1214,10 +1251,14 @@ public class DataCollectionForm extends javax.swing.JFrame {
          }
          
          // Add transformed data to data overview window
+         float zStepSize = (float) 0.0;
+         if (infoMap.containsKey("z_step_size"))
+            zStepSize = (float) (Double.parseDouble(infoMap.get("z_step_size")));
          addSpotData(infoMap.get("name"), infoMap.get("name"), 
                     referenceName_.getText(), Integer.parseInt(infoMap.get("nr_pixels_x")),
                     Integer.parseInt(infoMap.get("nr_pixels_y")),
-                    Math.round(Double.parseDouble(infoMap.get("pixel_size"))),
+                    Math.round(Double.parseDouble(infoMap.get("pixel_size"))), 
+                    zStepSize,
                     Integer.parseInt(infoMap.get("fit_mode")),
                     Integer.parseInt(infoMap.get("box_size")),
                     Integer.parseInt(infoMap.get("nr_channels")),
@@ -1227,7 +1268,8 @@ public class DataCollectionForm extends javax.swing.JFrame {
                     spotList.size(),
                     spotList,
                     null,
-                    Boolean.parseBoolean(infoMap.get("is_track")), Coordinates.NM, false, 0.0, 0.0
+                    Boolean.parseBoolean(infoMap.get("is_track")), 
+                    Coordinates.NM, false, 0.0, 0.0
                     );
 
       } catch (NumberFormatException ex) {
@@ -1320,7 +1362,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
             spotList.add(gSpot);
          }
 
-         addSpotData(name, title, "", width, height, pixelSizeUm, shape, halfSize,
+         addSpotData(name, title, "", width, height, pixelSizeUm, (float) 0.0, shape, halfSize,
                  nrChannels, nrFrames, nrSlices, nrPositions, (int) maxNrSpots,
                  spotList, null, isTrack, Coordinates.NM, false, 0.0, 0.0);
 
@@ -1742,6 +1784,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
                  "Image Width (pixels): " + rowData.width_ + "\n" +
                  "Nr. of Spots: " + rowData.maxNrSpots_ + "\n" +
                  "Pixel Size (nm): " + rowData.pixelSizeNm_ + "\n" +
+                 "Z Stack Step Size (nm): " + rowData.zStackStepSizeNm_ + "\n" +
                  "Nr. of Channels: " + rowData.nrChannels_ + "\n" +
                  "Nr. of Frames: " + rowData.nrFrames_ + "\n" + 
                  "Nr. of Slices: " + rowData.nrSlices_ + "\n" +
@@ -1960,7 +2003,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
          // Add transformed data to data overview window
          MyRowData rowData = myRows[0];
          addSpotData(rowData.name_ + " Average", rowData.title_, "", rowData.width_,
-                 rowData.height_, rowData.pixelSizeNm_, rowData.shape_,
+                 rowData.height_, rowData.pixelSizeNm_, rowData.zStackStepSizeNm_, rowData.shape_,
                  rowData.halfSize_, rowData.nrChannels_, rowData.nrFrames_,
                  rowData.nrSlices_, 1, rowData.maxNrSpots_, transformedResultList,
                  rowData.timePoints_, true, Coordinates.NM, false, 0.0, 0.0);
@@ -2021,9 +2064,10 @@ public class DataCollectionForm extends javax.swing.JFrame {
          MyRowData rowData = source;
          // TODO: feed in better data
          addSpotData(rowData.name_ + " Subtracted", rowData.title_, "", rowData.width_,
-                 rowData.height_, rowData.pixelSizeNm_, rowData.shape_,
-                 rowData.halfSize_, rowData.nrChannels_, rowData.nrFrames_,
-                 rowData.nrSlices_, 1, rowData.maxNrSpots_, transformedResultList,
+                 rowData.height_, rowData.pixelSizeNm_, rowData.zStackStepSizeNm_, 
+                 rowData.shape_, rowData.halfSize_, rowData.nrChannels_, 
+                 rowData.nrFrames_, rowData.nrSlices_, 1, rowData.maxNrSpots_, 
+                 transformedResultList,
                  rowData.timePoints_, true, Coordinates.NM, false, 0.0, 0.0);
          
       } catch (IndexOutOfBoundsException iobe) {
@@ -2124,8 +2168,8 @@ public class DataCollectionForm extends javax.swing.JFrame {
 
                // Add destList to rowData
                addSpotData(rowData.name_ + " Linked", rowData.title_, "", rowData.width_,
-                       rowData.height_, rowData.pixelSizeNm_, rowData.shape_,
-                       rowData.halfSize_, rowData.nrChannels_, 0,
+                       rowData.height_, rowData.pixelSizeNm_, rowData.zStackStepSizeNm_, 
+                       rowData.shape_, rowData.halfSize_, rowData.nrChannels_, 0,
                        0, 1, rowData.maxNrSpots_, destList,
                        rowData.timePoints_, false, Coordinates.NM, false, 0.0, 0.0);
             } catch (OutOfMemoryError oome) {
@@ -2164,7 +2208,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
    }//GEN-LAST:event_straightenTrackButton_ActionPerformed
 
    private void centerTrackButton_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_centerTrackButton_ActionPerformed
-            int rows[] = jTable1_.getSelectedRows();
+      int rows[] = jTable1_.getSelectedRows();
       if (rows.length < 1) {
          JOptionPane.showMessageDialog(getInstance(), 
                  "Please select one or more datasets to center");
@@ -2182,6 +2226,17 @@ public class DataCollectionForm extends javax.swing.JFrame {
    private void logLogCheckBox_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_logLogCheckBox_ActionPerformed
       // TODO add your handling code here:
    }//GEN-LAST:event_logLogCheckBox_ActionPerformed
+
+   private void zCalibrateButton_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_zCalibrateButton_ActionPerformed
+      int rows[] = jTable1_.getSelectedRows();
+      if (rows.length != 1) {
+         JOptionPane.showMessageDialog(getInstance(), 
+                 "Please select one datasets for Z Calibration");
+      } else {
+         zCalibrate(rows[0]);
+         zCalibrationLabel_.setText("Calibrated");
+      }
+   }//GEN-LAST:event_zCalibrateButton_ActionPerformed
 
    /**
     * Given a list of linked spots, create a single spot entry that will be added 
@@ -2286,6 +2341,8 @@ public class DataCollectionForm extends javax.swing.JFrame {
     private javax.swing.JButton unjitterButton_;
     private javax.swing.JComboBox visualizationMagnification_;
     private javax.swing.JComboBox visualizationModel_;
+    private javax.swing.JButton zCalibrateButton_;
+    private javax.swing.JLabel zCalibrationLabel_;
     // End of variables declaration//GEN-END:variables
 
 
@@ -2698,8 +2755,8 @@ public class DataCollectionForm extends javax.swing.JFrame {
 
       // Add transformed data to data overview window
       addSpotData(rowData.name_ + "Straightened", rowData.title_, "", rowData.width_,
-              rowData.height_, rowData.pixelSizeNm_, rowData.shape_,
-              rowData.halfSize_, rowData.nrChannels_, rowData.nrFrames_,
+              rowData.height_, rowData.pixelSizeNm_, rowData.zStackStepSizeNm_, 
+              rowData.shape_, rowData.halfSize_, rowData.nrChannels_, rowData.nrFrames_,
               rowData.nrSlices_, 1, rowData.maxNrSpots_, transformedResultList,
               rowData.timePoints_, true, Coordinates.NM, false, 0.0, 0.0);
    }
@@ -2757,10 +2814,11 @@ public class DataCollectionForm extends javax.swing.JFrame {
 
       // Add transformed data to data overview window
       addSpotData(rowData.name_ + " Centered", rowData.title_, "", rowData.width_,
-              rowData.height_, rowData.pixelSizeNm_, rowData.shape_,
-              rowData.halfSize_, rowData.nrChannels_, rowData.nrFrames_,
-              rowData.nrSlices_, 1, rowData.maxNrSpots_, transformedResultList,
-              rowData.timePoints_, true, Coordinates.NM, false, 0.0, 0.0);
+              rowData.height_, rowData.pixelSizeNm_, rowData.zStackStepSizeNm_, 
+              rowData.shape_, rowData.halfSize_, rowData.nrChannels_, 
+              rowData.nrFrames_, rowData.nrSlices_, 1, rowData.maxNrSpots_, 
+              transformedResultList, rowData.timePoints_, true, Coordinates.NM, 
+              false, 0.0, 0.0);
    }
 
    /**
@@ -3014,19 +3072,19 @@ public class DataCollectionForm extends javax.swing.JFrame {
                   }
                }
                
-               MyRowData newRow = new MyRowData(rowData.name_ + "-Jitter", rowData.title_,
-                       "", rowData.width_,
-                       rowData.height_, rowData.pixelSizeNm_, rowData.shape_,
-                       rowData.halfSize_, rowData.nrChannels_, stageMovementData.size(),
-                       1, 1, stageMovementData.size(), stageMovementData,
-                       timePoints, true, Coordinates.NM, false, 0.0, 0.0);
+               MyRowData newRow = new MyRowData(rowData.name_ + "-Jitter", 
+                       rowData.title_, "", rowData.width_,rowData.height_, 
+                       rowData.pixelSizeNm_, rowData.zStackStepSizeNm_, 
+                       rowData.shape_, rowData.halfSize_, rowData.nrChannels_, 
+                       stageMovementData.size(),1, 1, stageMovementData.size(), 
+                       stageMovementData, timePoints, true, Coordinates.NM, 
+                       false, 0.0, 0.0);
+               
                rowData_.add(newRow);
                
                myTableModel_.fireTableRowsInserted(rowData_.size() - 1, rowData_.size());
                
-               
-               
-               
+                                           
                ij.IJ.showStatus("Assembling jitter corrected dataset...");
                ij.IJ.showProgress(1);
                
@@ -3075,11 +3133,13 @@ public class DataCollectionForm extends javax.swing.JFrame {
                }
 
                // Add transformed data to data overview window
-               addSpotData(rowData.name_ + "-Jitter-Correct", rowData.title_, "", rowData.width_,
-                       rowData.height_, rowData.pixelSizeNm_, rowData.shape_,
+               addSpotData(rowData.name_ + "-Jitter-Correct", rowData.title_, "", 
+                       rowData.width_, rowData.height_, rowData.pixelSizeNm_, 
+                       rowData.zStackStepSizeNm_, rowData.shape_, 
                        rowData.halfSize_, rowData.nrChannels_, rowData.nrFrames_,
                        rowData.nrSlices_, 1, rowData.maxNrSpots_, correctedData,
                        null, false, Coordinates.NM, false, 0.0, 0.0);
+               
                ij.IJ.showStatus("Finished jitter correction");
             } catch (OutOfMemoryError oom) {
               System.gc();
@@ -3147,7 +3207,8 @@ public class DataCollectionForm extends javax.swing.JFrame {
             // Add transformed data to data overview window
             addSpotData(rowData.name_ + "Channel-Correct", rowData.title_, 
                     referenceName_.getText(), rowData.width_,
-                    rowData.height_, rowData.pixelSizeNm_, rowData.shape_,
+                    rowData.height_, rowData.pixelSizeNm_, 
+                    rowData.zStackStepSizeNm_, rowData.shape_,
                     rowData.halfSize_, rowData.nrChannels_, rowData.nrFrames_,
                     rowData.nrSlices_, 1, rowData.maxNrSpots_, correctedData,
                     null, 
