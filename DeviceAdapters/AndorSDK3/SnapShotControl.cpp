@@ -5,6 +5,8 @@ using namespace andor;
 
 SnapShotControl::SnapShotControl(IDevice * cameraDevice_)
 : cameraDevice(cameraDevice_),
+  first_image_buffer(NULL),
+  second_image_buffer(NULL),
   is_poised_(false),
   mono12PackedMode_(true)
 {
@@ -54,10 +56,19 @@ void SnapShotControl::poiseForSnapShot()
       in_software_ = false;
       in_external_ = true;
    }
-   first_image_buffer = new unsigned char[(int)imageSizeBytes->Get()];
-   second_image_buffer = new unsigned char[(int)imageSizeBytes->Get()];
-   bufferControl->Queue(first_image_buffer, (int)imageSizeBytes->Get());
-   bufferControl->Queue(second_image_buffer, (int)imageSizeBytes->Get());
+
+   AT_64 ImageSize = imageSizeBytes->Get();
+   if (NULL == first_image_buffer) {
+      first_image_buffer = new unsigned char[static_cast<int>(ImageSize+7)];
+      unsigned char* pucAlignedBuffer = reinterpret_cast<unsigned char*>(
+                                          (reinterpret_cast<unsigned long>( first_image_buffer ) + 7 ) & ~0x7);
+      bufferControl->Queue(pucAlignedBuffer, static_cast<int>(ImageSize));
+      
+      second_image_buffer = new unsigned char[static_cast<int>(ImageSize+7)];
+      pucAlignedBuffer = reinterpret_cast<unsigned char*>(
+                                          (reinterpret_cast<unsigned long>( second_image_buffer ) + 7 ) & ~0x7);
+      bufferControl->Queue(pucAlignedBuffer, static_cast<int>(ImageSize));
+   }
    startAcquisitionCommand->Do();
    is_poised_ = true;
    mono12PackedMode_ = false;

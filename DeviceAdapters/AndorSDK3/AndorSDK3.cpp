@@ -54,9 +54,9 @@ double g_IntensityFactor_ = 1.0;
 
 // External names used used by the rest of the system
 // to load particular device from the "AndorSDK3Camera.dll" library
-const char * const g_CameraName = "Neo";
-const char * const g_CameraDeviceName = "Andor Neo";
-const char * const g_CameraDeviceDescription = "Andor sCMOS Camera Device Adapter";
+const char * const g_CameraName = "Andor sCMOS Camera";
+const char * const g_CameraDeviceName = "Andor sCMOS";
+const char * const g_CameraDeviceDescription = "Andor SDK3 Device Adapter";
 
 const char * const g_CameraDefaultBinning = "1x1";
 
@@ -188,11 +188,10 @@ CAndorSDK3Camera::CAndorSDK3Camera()
       for (int i = 0; i < GetNumberOfDevicesPresent(); i++)
       {
          cameraDevice = deviceManager->OpenDevice(i);
-         IString * cameraModelString = cameraDevice->GetString(L"CameraModel");
-         std::wstring temp_ws = cameraModelString->Get();
-         temp_ws.erase(3);
-         cameraDevice->Release(cameraModelString);
-         if (temp_ws.compare(L"DC-") == 0)
+         IString * cameraFamilyString = cameraDevice->GetString(L"CameraFamily");
+         std::wstring temp_ws = cameraFamilyString->Get();
+         cameraDevice->Release(cameraFamilyString);
+         if (temp_ws.compare(L"Andor sCMOS") == 0)
          {
             b_cameraPresent_ = true;
             break;
@@ -339,7 +338,7 @@ int CAndorSDK3Camera::Initialize()
    SetProperty(MM::g_Keyword_Binning, g_CameraDefaultBinning);
 
    preAmpGain_property = new TEnumProperty(TAndorSDK3Strings::GAIN_TEXT, 
-                                           cameraDevice->GetEnum(L"PreAmpGainControl"),
+                                           cameraDevice->GetEnum(L"SimplePreAmpGainControl"),
                                            this, thd_, snapShotController_, false, true);
 
    electronicShutteringMode_property = new TEnumProperty(TAndorSDK3Strings::ELECTRONIC_SHUTTERING_MODE,
@@ -351,7 +350,7 @@ int CAndorSDK3Camera::Initialize()
                                                    snapShotController_, false, false);
 
    pixelReadoutRate_property = new TEnumProperty(TAndorSDK3Strings::PIXEL_READOUT_RATE,
-                                                 cameraDevice->GetEnum(L"PixelReadoutRate"),
+                                                 cameraDevice->GetEnum(L"PixelReadoutRateMapper"),
                                                  this, thd_, snapShotController_, false, false);
 
    pixelEncoding_property = new TEnumProperty(TAndorSDK3Strings::PIXEL_ENCODING,
@@ -394,9 +393,9 @@ int CAndorSDK3Camera::Initialize()
                                                  cameraDevice->GetFloat(L"SensorTemperature"), 
                                                  this, thd_, snapShotController_, true, false);
 
-   frameRate_property = new TFloatProperty(TAndorSDK3Strings::FRAME_RATE, 
-                                           new TAndorFloatHolder(snapShotController_, frameRate),
-                                           this, thd_, snapShotController_, false, true);
+   //frameRate_property = new TFloatProperty(TAndorSDK3Strings::FRAME_RATE, 
+   //                                        new TAndorFloatHolder(snapShotController_, frameRate),
+   //                                        this, thd_, snapShotController_, false, true);
 
    exposureTime_property = new TFloatProperty(MM::g_Keyword_Exposure,
                                              new TAndorFloatValueMapper(cameraDevice->GetFloat(L"ExposureTime"), 1000),
@@ -476,7 +475,7 @@ void CAndorSDK3Camera::InitialiseSDK3Defaults()
       f_feature = NULL;
       
       e_feature = cameraDevice->GetEnum(L"TriggerMode");
-      e_feature->Set(L"InternalTrigger");
+      e_feature->Set(L"Internal");
       cameraDevice->Release(e_feature);
       e_feature = NULL;
 
@@ -485,12 +484,13 @@ void CAndorSDK3Camera::InitialiseSDK3Defaults()
       cameraDevice->Release(e_feature);
       e_feature = NULL;
 
-      e_feature = cameraDevice->GetEnum(L"PreAmpGainControl");
-      e_feature->Set(L"Gain 4 (11 bit)");
-   }
-   catch (EnumIndexNotAvailableException &)
-   {
-      e_feature->Set(L"Gain 3 (11 bit)");
+      e_feature = cameraDevice->GetEnum(L"ElectronicShutteringMode");
+      e_feature->Set(L"Rolling");
+      cameraDevice->Release(e_feature);
+      e_feature = NULL;
+
+      e_feature = cameraDevice->GetEnum(L"SimplePreAmpGainControl");
+      e_feature->Set(L"11-bit (low noise)");
    }
    catch (exception & e)
    {
@@ -818,11 +818,14 @@ void CAndorSDK3Camera::InitialiseDeviceCircularBuffer()
    try
    {
       imageSizeBytes = cameraDevice->GetInteger(L"ImageSizeBytes");
+      AT_64 ImageSize = imageSizeBytes->Get();
       image_buffers_ = new unsigned char * [NO_CIRCLE_BUFFER_FRAMES];
       for (int i = 0; i < NO_CIRCLE_BUFFER_FRAMES; i++)
       {
-         image_buffers_[i] = new unsigned char[(unsigned int)imageSizeBytes->Get()];
-         bufferControl->Queue(image_buffers_[i], (int)imageSizeBytes->Get());
+         image_buffers_[i] = new unsigned char[static_cast<int>(ImageSize+7)];
+         unsigned char* pucAlignedBuffer = reinterpret_cast<unsigned char*>(
+                                             (reinterpret_cast<unsigned long>( image_buffers_[i] ) + 7 ) & ~0x7);
+         bufferControl->Queue(pucAlignedBuffer, static_cast<int>(ImageSize));
       }
       cameraDevice->Release(imageSizeBytes);
    }
