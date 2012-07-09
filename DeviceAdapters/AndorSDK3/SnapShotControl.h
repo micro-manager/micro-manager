@@ -15,6 +15,8 @@ public:
    SnapShotControl(andor::IDevice* cameraDevice);
    ~SnapShotControl();
 
+   void setupTriggerModeSilently();
+   void resetTriggerMode();
    void poiseForSnapShot();
    void leavePoisedMode();
    void takeSnapShot(unsigned char*& image_buffers);

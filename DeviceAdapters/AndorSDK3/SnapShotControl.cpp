@@ -32,10 +32,8 @@ SnapShotControl::~SnapShotControl()
    cameraDevice->Release(pixelEncoding);
 }
 
-
-void SnapShotControl::poiseForSnapShot()
+void SnapShotControl::setupTriggerModeSilently()
 {
-   cycleMode->Set(L"Continuous");
    std::wstring temp_ws = triggerMode->GetStringByIndex(triggerMode->GetIndex());
    if (temp_ws.compare(L"Internal") == 0)
    {
@@ -56,9 +54,24 @@ void SnapShotControl::poiseForSnapShot()
       in_software_ = false;
       in_external_ = true;
    }
+}
+
+void SnapShotControl::resetTriggerMode()
+{
+   if (set_internal_)
+   {
+      triggerMode->Set(L"Internal");
+   }
+}
+
+void SnapShotControl::poiseForSnapShot()
+{
+   cycleMode->Set(L"Continuous");
+   setupTriggerModeSilently();
 
    AT_64 ImageSize = imageSizeBytes->Get();
-   if (NULL == first_image_buffer) {
+   if (NULL == first_image_buffer)
+   {
       first_image_buffer = new unsigned char[static_cast<int>(ImageSize+7)];
       unsigned char* pucAlignedBuffer = reinterpret_cast<unsigned char*>(
                                           (reinterpret_cast<unsigned long>( first_image_buffer ) + 7 ) & ~0x7);
@@ -101,10 +114,7 @@ void SnapShotControl::leavePoisedMode()
    delete [] second_image_buffer;
    second_image_buffer = NULL;
 
-   if (set_internal_)
-   {
-      triggerMode->Set(L"Internal");
-   }
+   resetTriggerMode();
 }
 
 void SnapShotControl::prepareCamera()

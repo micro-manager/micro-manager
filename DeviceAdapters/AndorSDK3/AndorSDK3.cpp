@@ -876,6 +876,7 @@ int CAndorSDK3Camera::StartSequenceAcquisition(long numImages, double interval_m
       {
          // When using the Micro-Manager GUI, this code is executed when entering live mode
          cycleMode->Set(L"Continuous");
+         snapShotController_->setupTriggerModeSilently();
       }
 
       ResizeImageBuffer();
@@ -981,8 +982,6 @@ int CAndorSDK3Camera::ThreadRun(void)
    int buffer_size = 0;
 
    bool got_image = false;
-   //TAndorTime T0, T1;
-   //T0.GetCurrentSystemTime();
    while (!got_image && keep_trying_)
    {
       try
@@ -991,9 +990,6 @@ int CAndorSDK3Camera::ThreadRun(void)
       }
       catch (exception & e)
       {
-         //if (snapShotController_->isSoftware()) {
-         //   sendSoftwareTrigger->Do();
-         //}
          string s("[ThreadRun] Exception caught with Message: ");
          s += e.what();
          LogMessage(s);
@@ -1003,12 +999,6 @@ int CAndorSDK3Camera::ThreadRun(void)
          LogMessage("[ThreadRun] Unrecognised Exception caught!");
       }
 
-      //T1.GetCurrentSystemTime();
-      //if (!snapShotController_->isExternal() &&
-      //   (T1.GetTimeMs() - T0.GetTimeMs()) > static_cast<unsigned int>(timeout_)) {
-      //   // Assume we timed out because the camera has filled up
-      //   return DEVICE_ERR;
-      //}
    }
 
    if (snapShotController_->isSoftware())
