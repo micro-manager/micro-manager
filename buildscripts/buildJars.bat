@@ -50,7 +50,7 @@ call ant -buildfile build.xml %cleantarget% compile build
 popd
 
 pushd plugins\CRISP
-call build
+call build.bat
 popd
 
 rem pushd plugins\Bleach
