@@ -32,10 +32,12 @@
 (defn update-lru-metadata
   "Update a LRU metadata map to make key the most recent item."
   [lru-meta key]
-  (let [tick+ (inc (get-in lru-meta [::lru :tick]))]
-    (-> lru-meta
-        (assoc-in [::lru :tick] tick+)
-        (update-in [::lru :priority] assoc key tick+))))
+  (let [tick (get-in lru-meta [::lru :tick])]
+    (when (not= tick (get-in lru-meta [::lru :priority key]))
+      (let [tick+ (inc tick)]
+        (-> lru-meta
+            (assoc-in [::lru :tick] tick+)
+            (update-in [::lru :priority] assoc key tick+))))))
 
 (defn hit-item
   "Updates lru-map's metadata so that key is the most recently used item."

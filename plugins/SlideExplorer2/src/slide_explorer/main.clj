@@ -104,7 +104,6 @@
   ([x y]
     (acquire-at (Point2D$Double. x y)))
   ([^Point2D$Double stage-pos]
-    (println stage-pos)
     (let [xy-stage (core getXYStageDevice)]
       (set-xy-position stage-pos)
       (core waitForDevice xy-stage)
@@ -156,8 +155,6 @@
                    :nz (get-in image [:tags "SliceIndex"])
                    :nt 0
                    :nc (or (get-in image [:tags "Channel"]) "Default")}]
-      (println indices)
-      ;(println indices @acquired-images)
       (reactive/submit
         image-processing-executor
         #(add-to-memory-tiles 
@@ -172,7 +169,6 @@
   (when-let [next-tile (next-tile @screen-state-atom
                                   acquired-images
                                   [tile-width tile-height])]
-    (println "acquire-next-tile" next-tile)
     (add-tiles-at memory-tiles-atom next-tile affine acquired-images)
     next-tile))
 
@@ -219,7 +215,6 @@
   (let [dir (str "tmp" (rand-int 10000000))
         memory-tiles (doto (atom (cache/empty-lru-map 100))
                                  (alter-meta! assoc ::directory dir))
-        display-tiles (atom {})
         acquired-images (atom #{})
         xy-stage (core getXYStageDevice)
         affine-stage-to-pixel (origin-here-stage-to-pixel-transform)

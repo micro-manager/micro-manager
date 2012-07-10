@@ -145,16 +145,12 @@
 (def overlay-memo (memo/memo-lru overlay 100))
 
 (defn multi-color-tile [memory-tiles-atom tile-indices channels-map]
-  #_(clojure.pprint/pprint channels-map)
   (let [channel-names (keys channels-map)
         procs (for [chan channel-names]
                 (let [tile-index (assoc tile-indices :nc chan)]
                   (swap! memory-tiles-atom cache/hit-item tile-index)
                   (get @memory-tiles-atom tile-index)))
         lut-maps (map channels-map channel-names)]
-    #_(println procs lut-maps)
-    #_(println (map #(.hashCode %) procs)
-              (map #(.hashCode %) lut-maps))
     (overlay-memo procs lut-maps)))
 
 ;; PAINTING
@@ -189,26 +185,7 @@
       (.translate (- x-center (int (* (:x screen-state) zoom)))
                   (- y-center (int (* (:y screen-state) zoom))))
       (paint-tiles overlay-tiles-atom screen-state [tile-width tile-height])
-      enable-anti-aliasing)
-    (when false 
-      (let [pixel-rect (pixel-rectangle screen-state)
-            visible-tiles (tiles-in-pixel-rectangle pixel-rect
-                                                    [tile-width tile-height])
-            ;center-tile (center-tile [(:x screen-state) (:y screen-state)]
-            ;                         [tile-width tile-height])
-            ;sorted-tiles (time (group-tiles-by-ring center-tile visible-tiles))
-            ]
-        (when true
-        (doto graphics
-          (.setTransform original-transform)
-          (.setColor Color/GREEN)
-          (.drawString (pr-str pixel-rect) 10 20)
-          ;(.drawString (pr-str visible-tiles) 10 40)
-          ;(.drawString (pr-str center-tile) 10 60)
-          ;(.drawString (pr-str sorted-tiles) 10 80)
-          (.drawString (str (select-keys screen-state [:x :y :z :zoom :keys :width :height]))
-                     (int 10)
-                     (int (- (screen-state :height) 12)))))))))
+      enable-anti-aliasing)))
 
 ;; Loading visible tiles
 
@@ -218,6 +195,7 @@
   (let [visible-tile-positions (tiles-in-pixel-rectangle
                                  (screen-rectangle @screen-state-atom)
                                  [512 512])]
+    ;(println "x")
     (doseq [[nx ny] visible-tile-positions
             channel (keys (:channels @screen-state-atom))]
      (let [tile {:nx nx
@@ -241,6 +219,10 @@
                                            overlay-tiles-atom acquired-images))
         agent (agent {})]
     (def agent1 agent)
+    (reactive/handle-update
+      memory-tile-atom
+      react-fn
+      agent)
     (reactive/handle-update
       screen-state-atom
       react-fn
@@ -432,6 +414,7 @@ to normal size."
     ((juxt handle-drags handle-arrow-pan handle-wheel handle-resize)
       panel screen-state)
     ((juxt handle-zoom handle-dive watch-keys) frame screen-state)
+    (println (meta @overlay-tiles))
     (load-visible-only screen-state memory-tiles
                        overlay-tiles acquired-images)
     (repaint-on-change panel screen-state)
