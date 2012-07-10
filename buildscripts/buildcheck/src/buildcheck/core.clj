@@ -49,7 +49,7 @@
 
 (defn javac-errors [result-text]
   (map first
-    (re-seq #"\[javac\]\s\b([1-9]|[0-9][1-9]|[0-9][0-9][1-9])\b\serrors?" result-text)))
+    (re-seq #"([0-9]*[1-9])\serrors?" result-text)))
 
 (defn device-adapter-dlls [dir]
   (filter
