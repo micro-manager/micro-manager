@@ -154,19 +154,6 @@
 	</target>
 
 
-	<target name="makeDeviceList" description="Run DeviceListBuilder to generate MMDeviceList.txt">
-
-
-		<exec dir="${InstallRoot}" executable="java">
-			<arg line="-cp plugins\Micro-Manager\MMJ_.jar;plugins\Micro-Manager\MMCoreJ.jar DeviceListBuilder NotdeviceDiscoveryEnabled"/>
-		</exec>
-		<exec dir="${InstallRoot}" executable="java">
-			<arg line="-cp plugins\Micro-Manager\MMJ_.jar;plugins\Micro-Manager\MMCoreJ.jar DeviceListBuilder deviceDiscoveryEnabled"/>
-		</exec>
-
-
-	</target>
-
 	<target name="packInstaller" description="Create installation package">
 		<exec dir="${InstallRoot}" executable="/projects/3rdparty/Inno_Setup_5/iscc.exe">
 			<arg line="/F${InstallerName} ../MM-ImageJ-Install32.iss"/>

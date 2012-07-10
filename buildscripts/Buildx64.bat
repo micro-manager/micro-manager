@@ -112,16 +112,14 @@ pushd buildscripts
 call buildJars %1
 popd
 
-set DEVICELISTBUILDER=1
 pushd mmStudio\src
 if "%PROCESSOR_ARCHITECTURE%" == "AMD64" GOTO AMD64BUILDMACHINE
 call ant -buildfile ../build64.xml install packInstaller
 GOTO NOTAMD64
 :AMD64BUILDMACHINE
-call ant -buildfile ../build64.xml install makeDeviceList packInstaller
+call ant -buildfile ../build64.xml install packInstaller
 :NOTAMD64
 popd
-set DEVICELISTBUILDER=""
 
 pushd \Projects\micromanager\Install_x64\Output
 rename MMSetup_.exe  %TARGETNAME%

@@ -116,11 +116,9 @@ pushd buildscripts
 call buildJars %1
 popd
 
-set DEVICELISTBUILDER=1
 cd mmStudio\src
-call ant -buildfile ../build32.xml install makeDeviceList packInstaller
+call ant -buildfile ../build32.xml install packInstaller
 popd
-set DEVICELISTBUILDER=""
 
 pushd \Projects\micromanager\Install_Win32\Output
 rename MMSetup_.exe  %TARGETNAME%
