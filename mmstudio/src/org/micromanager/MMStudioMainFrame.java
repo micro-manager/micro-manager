@@ -2963,6 +2963,37 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface, Device
       }
    }
 
+    private void configureBinningCombo() throws Exception {
+        if (cameraLabel_.length() > 0) {
+            ActionListener[] listeners;
+
+            // binning combo
+            if (comboBinning_.getItemCount() > 0) {
+                comboBinning_.removeAllItems();
+            }
+            StrVector binSizes = core_.getAllowedPropertyValues(
+                    cameraLabel_, MMCoreJ.getG_Keyword_Binning());
+            listeners = comboBinning_.getActionListeners();
+            for (int i = 0; i < listeners.length; i++) {
+                comboBinning_.removeActionListener(listeners[i]);
+            }
+            for (int i = 0; i < binSizes.size(); i++) {
+                comboBinning_.addItem(binSizes.get(i));
+            }
+
+            comboBinning_.setMaximumRowCount((int) binSizes.size());
+            if (binSizes.size() == 0) {
+                comboBinning_.setEditable(true);
+            } else {
+                comboBinning_.setEditable(false);
+            }
+
+            for (int i = 0; i < listeners.length; i++) {
+                comboBinning_.addActionListener(listeners[i]);
+            }
+        }
+    }
+
    public void initializeGUI() {
       try {
 
@@ -2971,37 +3002,9 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface, Device
          shutterLabel_ = core_.getShutterDevice();
          zStageLabel_ = core_.getFocusDevice();
          xyStageLabel_ = core_.getXYStageDevice();
-         engine_.setZStageDevice(zStageLabel_);
-
-         if (cameraLabel_.length() > 0) {
-            ActionListener[] listeners;
-
-            // binning combo
-            if (comboBinning_.getItemCount() > 0) {
-               comboBinning_.removeAllItems();
-            }
-            StrVector binSizes = core_.getAllowedPropertyValues(
-                  cameraLabel_, MMCoreJ.getG_Keyword_Binning());
-            listeners = comboBinning_.getActionListeners();
-            for (int i = 0; i < listeners.length; i++) {
-               comboBinning_.removeActionListener(listeners[i]);
-            }
-            for (int i = 0; i < binSizes.size(); i++) {
-               comboBinning_.addItem(binSizes.get(i));
-            }
-
-            comboBinning_.setMaximumRowCount((int) binSizes.size());
-            if (binSizes.size() == 0) {
-               comboBinning_.setEditable(true);
-            } else {
-               comboBinning_.setEditable(false);
-            }
-
-            for (int i = 0; i < listeners.length; i++) {
-               comboBinning_.addActionListener(listeners[i]);
-            }
-
-         }
+         engine_.setZStageDevice(zStageLabel_);  
+  
+         configureBinningCombo();
 
          // active shutter combo
          try {
@@ -3103,6 +3106,7 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface, Device
          if (isCameraAvailable()) {
             double exp = core_.getExposure();
             textFieldExp_.setText(NumberUtils.doubleToDisplayString(exp));
+            configureBinningCombo();
             String binSize = core_.getProperty(cameraLabel_, MMCoreJ.getG_Keyword_Binning());
             GUIUtils.setComboSelection(comboBinning_, binSize);
          }
