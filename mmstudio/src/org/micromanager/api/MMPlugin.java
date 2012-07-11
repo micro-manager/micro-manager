@@ -22,13 +22,23 @@
 
 package org.micromanager.api;
 
+   /**
+    * Implement this interface to create Micro-Manager plugins. Compiled jars
+    * may be dropped into Micro-Manager's mmplugin directory, and if correctly
+    * implemented, will appear in the Micro-Manager plugins meniu.
+    */
    public interface MMPlugin {
    
    /**
-	*  The menu name is stored in a static string, so Micro-Manager
-	*  can obtain it without instantiating the plugin
-	*/
+	 * The menu name is stored in a static string, so Micro-Manager
+	 * can obtain it without instantiating the plugin
+	 */
    public static String menuName = null;
+
+   /*
+    * A tool-tip description can also be in a static string. This tool-tip
+    * will appear on the Micro-Manager plugin menu item.
+    */
    public static String tooltipDescription = null;
 	
    /**

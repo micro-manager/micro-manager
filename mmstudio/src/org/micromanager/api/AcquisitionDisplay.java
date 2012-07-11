@@ -7,6 +7,7 @@ package org.micromanager.api;
 
 /**
  *
- * @author arthur
+ * The interface for displaying image data sets. Implemented
+ * by VirtualAcquisitionDisplay
  */
 public interface AcquisitionDisplay {}

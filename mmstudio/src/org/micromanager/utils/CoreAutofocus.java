@@ -215,10 +215,6 @@ public class CoreAutofocus implements Autofocus {
       }
    }
 
-   public AcquisitionData getFocusingSequence() throws MMException {
-      throw new UnsupportedOperationException("Not supported yet.");
-   }
-
    public void setApp(ScriptInterface app) {
       core_ = app.getMMCore();
       devName_ = core_.getAutoFocusDevice();      

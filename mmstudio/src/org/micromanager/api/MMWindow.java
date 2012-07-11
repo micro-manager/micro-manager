@@ -20,10 +20,7 @@
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 
 
-/*
- * Goal of this class is to give easy programmatic access to pixels and metadata
- * shown in a Micro-Manager Image viewer
- */
+
 
 package org.micromanager.api;
 
@@ -34,39 +31,66 @@ import org.micromanager.acquisition.AcquisitionVirtualStack;
 import org.micromanager.acquisition.VirtualAcquisitionDisplay;
 import org.micromanager.utils.MMScriptException;
 
-
+/*
+ * The goal of this class is to give easy programmatic access to pixels and
+ * metadata shown in a Micro-Manager Image viewer.
+ */
 public class MMWindow {
    private final VirtualAcquisitionDisplay virtAcq_;
    private final ImagePlus imp_;
-   
+
+   /*
+    * Create an MMWindow reference to a particular Micro-Manager image window,
+    * as represented by its ImagePlus reference (from ImageJ).
+    */
    public MMWindow(ImagePlus imp) {
       AcquisitionVirtualStack acqStack;
       imp_ = imp;
       virtAcq_ = VirtualAcquisitionDisplay.getDisplay(imp);
    }
 
+   /*
+    * Determines whether we have a good reference to a Micro-Manager
+    * image window (and not some other window).
+    */
    public boolean isMMWindow() {
       return virtAcq_ != null;
    }
-   
+
+   /*
+    * Returns the number of positions on the MM image window, as shown
+    * by the "p" slider.
+    */
    public int getNumberOfPositions() {
       if (virtAcq_ == null)
          return 0;
       return virtAcq_.getNumPositions();
    }
 
+   /*
+    * Returns the number of channels on the MM image window, as shown by
+    * the "c" slider.
+    */
    public int getNumberOfChannels() {
       if (virtAcq_ == null)
          return 0;
       return virtAcq_.getNumGrayChannels();
    }
 
+   /*
+    * Returns the number of slices on the MM image window, as shown by
+    * the "z" slider.
+    */
    public int getNumberOfSlices() {
       if (virtAcq_ == null)
          return 0;
       return virtAcq_.getImagePlus().getNSlices();
    }
 
+   /*
+    * Returns the number of frames on the MM image window, as shown by
+    * the "t" slider.
+    */
    public int getNumberOfFrames() {
       if (virtAcq_ == null)
          return 0;
@@ -109,6 +133,10 @@ public class MMWindow {
       return virtAcq_.getImagePlus(position);
    }
 
+   /*
+    * Returns the ImageJ ImageProcessor object associated with a particular
+    * channel, slice, frame, position index.
+    */
    public ImageProcessor getImageProcessor(int channel, int slice, int frame, int position)
       throws MMScriptException {
       setPosition(position);

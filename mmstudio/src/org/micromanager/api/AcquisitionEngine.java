@@ -56,8 +56,14 @@ public interface AcquisitionEngine {
    // initialization
    public void setCore(CMMCore core_, AutofocusManager afMgr);
 
-   
+   /**
+    * Sets the global position list attached to the parent Micro-Manager gui.
+    */
    public void setPositionList(PositionList posList);
+
+   /**
+    * Provides the acquisition engine with the parent Micro-Manager gui.
+    */
    public void setParentGUI(ScriptInterface parent);
 
    /**
@@ -197,22 +203,60 @@ public interface AcquisitionEngine {
     * Resets the engine
     */
    public void clear();
+
+   /**
+    * Sets the number of frames and the time interval in milliseconds
+    * between frames.
+    */
    public void setFrames(int numFrames, double interval);
+
+   /*
+    * This value is not used.
+    * @deprecated
+    */
    public double getMinZStepUm();
+
+   /*
+    * Sets up a z-stack of equally-spaced slices.
+    * @param bottom - The first slice position, in microns.
+    * @param top - The last slice position, in microns.
+    * @param step - The distance between slices in microns.
+    * @param absolute - Whether the provided positions are in absolute z-drive coordinates or coordinates relative to the current position.
+    */
    public void setSlices(double bottom, double top, double step, boolean absolute);
 
+   /*
+    * Returns whether time points have been included in the settings.
+    */
    public boolean isFramesSettingEnabled();
 
+   /*
+    * Sets whether time points are to be included in the settings. If this
+    * value is set to false, then only a single time point is carried out.
+    */
    public void enableFramesSetting(boolean enable);
 
+   /*
+    * Returns whether channels will be included in the acquired dimensions.
+    */
    public boolean isChannelsSettingEnabled();
 
+   /*
+    * Sets whether channels are to be included in the settings. If this
+    * value is set to false, then only a single channel is acquired, with
+    * whatever the current device settings are.
+    */
    public void enableChannelsSetting(boolean enable);
 
+   /*
+    * Sets whether z slices are to be included in the settings. If this
+    * value is set to false, the only a single z position is acquired,
+    * at whatever the current z position is.
+    */
    public boolean isZSliceSettingEnabled();
 
    /**
-    * returns Z slice top position set by user in Multi-Dimensional Acquistion Windows
+    * returns Z slice top position set by user in Multi-Dimensional Acquisition Window
     */
    public double getZTopUm();
 
@@ -267,7 +311,7 @@ public interface AcquisitionEngine {
    public ArrayList<ChannelSpec> getChannels();
 
    /**
-    * Setss the channels to be used in this acquistion
+    * Sets the channels to be used in this acquisition
     * @param channels
     */
    public void setChannels(ArrayList<ChannelSpec> channels);
@@ -286,7 +330,14 @@ public interface AcquisitionEngine {
    public void setRootName(String absolutePath);
    public void setCameraConfig(String config);
    public void setDirName(String text);
+
+   /*
+    * Sets the default comment to be included in the acquisition's summary metadata.
+    * Equivalent to the comment box in the Multi-Dimensional Acquisition setup window.
+    */
    public void setComment(String text);
+
+   
    /**
     * @deprecated
     */
@@ -323,7 +374,7 @@ public interface AcquisitionEngine {
    public String[] getAvailableGroups();
    public double getCurrentZPos();
    public boolean isPaused();
-   public void restoreSystem();
+
 
    /**
     * @deprecated
@@ -334,13 +385,33 @@ public interface AcquisitionEngine {
     */
    public void removeImageProcessor(Class processor);
    
-   
+
+   /*
+    * Adds an image processor to the DataProcessor pipeline.
+    */
    public void addImageProcessor(DataProcessor<TaggedImage> processor);
+
+   /*
+    * Removes an image processor from the DataProcessor pipeline.
+    */
    public void removeImageProcessor(DataProcessor<TaggedImage> taggedImageProcessor);
-   
+
+   /*
+    * Returns true if abortRequest() has been called -- the acquisition may
+    * still be running.
+    */
    public boolean abortRequested();
 
+   /*
+    * Returns a time (in milliseconds) indicating when the next image is
+    * expected to be acquired.
+    */
    public long getNextWakeTime();
+
+   /*
+    * Returns true if the acquisition has finished running and no more hardware
+    * events will be run.
+    */
    public boolean isFinished();
    
    /*

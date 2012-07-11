@@ -31,8 +31,6 @@ public interface IAcquisitionEngine2010 {
     */
    public BlockingQueue<TaggedImage> run(SequenceSettings sequenceSettings, boolean cleanup);
 
-
-
    /*
     * Returns the summaryMetadata for the most recently started acquisition
     * sequence.
@@ -81,7 +79,9 @@ public interface IAcquisitionEngine2010 {
     */
    public long nextWakeTime();
 
-
+   /*
+    * Acquires a single image to an album.
+    */
    public void acquireSingle();
 
    /*

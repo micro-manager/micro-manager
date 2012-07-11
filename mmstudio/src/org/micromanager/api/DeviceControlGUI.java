@@ -26,12 +26,10 @@ package org.micromanager.api;
 import java.awt.Color;
 import java.awt.Component;
 
-import org.micromanager.navigation.PositionList;
-import org.micromanager.utils.AutofocusManager;
 import org.micromanager.utils.ContrastSettings;
-import org.micromanager.utils.MMScriptException;
 
 /**
+ * @deprecated
  * Interface to execute commands in the main panel.
  * This interface has been deprecated.  Use ScriptInterface instead
  */

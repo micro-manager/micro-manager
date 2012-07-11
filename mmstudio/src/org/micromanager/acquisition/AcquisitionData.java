@@ -5,12 +5,8 @@
 
 package org.micromanager.acquisition;
 
-import org.json.JSONObject;
-
 /**
- *
- * @author arthur
+ * Deprecated. Do not use.
+ * @deprecated
  */
-public class AcquisitionData extends JSONObject {
-
-}
+public class AcquisitionData {}
