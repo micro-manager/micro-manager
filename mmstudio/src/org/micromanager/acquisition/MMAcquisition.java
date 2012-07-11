@@ -57,8 +57,8 @@ import org.micromanager.utils.ReportingUtils;
 
 public class MMAcquisition {
    
-   public static final Color[] DEFAULT_COLORS = {Color.red, Color.green, Color.blue,
-      Color.orange, Color.pink, Color.yellow};
+   public static final Color[] DEFAULT_COLORS = {Color.blue, Color.green, Color.red,
+      Color.pink, Color.orange, Color.yellow};
    
    private int numFrames_ = 0;
    private int numChannels_ = 0;
