@@ -60,7 +60,7 @@ import org.micromanager.utils.*;
  * This dialog specifies all parameters for the Image5D acquisition. 
  *
  */
-public class AcqControlDlg extends JFrame implements PropertyChangeListener {
+public class AcqControlDlg extends JFrame implements PropertyChangeListener { 
 
    private static final long serialVersionUID = 1L;
    protected JButton listButton_;
