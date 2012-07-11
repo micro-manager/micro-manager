@@ -697,7 +697,7 @@
         ch-names (vec (map :name super-channels))]
      (JSONObject. {
       "BitDepth" (core getImageBitDepth)
-      "Channels" (count super-channels)
+      "Channels" (max 1 (count super-channels))
       "ChNames" (JSONArray. ch-names)
       "ChColors" (JSONArray. (channel-colors simple-channels super-channels ch-names))
       "ChContrastMax" (JSONArray. (repeat (count super-channels) Integer/MIN_VALUE))
@@ -706,7 +706,7 @@
       "ComputerName" (.. InetAddress getLocalHost getHostName)
       "Depth" (core getBytesPerPixel)
       "Directory" (if (:save settings) (settings :root) "")
-      "Frames" (count (:frames settings))
+      "Frames" (max 1 (count (:frames settings)))
       "GridColumn" 0
       "GridRow" 0
       "Height" (core getImageHeight)
@@ -720,10 +720,10 @@
       "PixelAspect" 1.0
       "PixelSize_um" (core getPixelSizeUm)
       "PixelType" (get-pixel-type)
-      "Positions" (count (:positions settings))
+      "Positions" (max 1 (count (:positions settings)))
       "Prefix" (if (:save settings) (:prefix settings) "")
       "ROI" (JSONArray. (get-camera-roi))
-      "Slices" (count (:slices settings))
+      "Slices" (max 1 (count (:slices settings)))
       "SlicesFirst" (:slices-first settings)
       "Source" "Micro-Manager"
       "TimeFirst" (:time-first settings)

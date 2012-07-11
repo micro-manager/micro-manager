@@ -95,11 +95,12 @@ public class TaggedImageStorageDiskDefault implements TaggedImageStorage {
    
    private String getPosition(JSONObject tags) {
       try {
-         String pos =  MDUtils.getPositionName(tags);
-         if (pos == null)
+         String pos;
+         if (tags.has("PositionName") && !tags.isNull("PositionName")) {
+            return MDUtils.getPositionName(tags);
+         } else {
             return "";
-         else
-            return pos;
+         }
       } catch (Exception e) {
          return "";
       }
@@ -331,16 +332,14 @@ public class TaggedImageStorageDiskDefault implements TaggedImageStorage {
    private void openNewDataSet(TaggedImage firstImage) throws Exception, IOException {
       String time = firstImage.tags.getString("Time");
       int pos;
+      String posName = getPosition(firstImage);
+      
       try {
          pos = MDUtils.getPositionIndex(firstImage.tags);
       } catch (JSONException e) {
          pos = 0;
+         posName = "";
       }
-      String posName = getPosition(firstImage);
-      if (posName == null)
-         posName = "";
-      if (MDUtils.getNumPositions(summaryMetadata_) == 0)
-         posName = "";
 
       if (positionNames_.containsKey(pos)
               && positionNames_.get(pos) != null
@@ -437,12 +436,7 @@ public class TaggedImageStorageDiskDefault implements TaggedImageStorage {
          } else {
             throw (new Exception("No metadata file found"));
          }
-         
-         try {
-            summaryMetadata_.put("Positions", positions.size());
-         } catch (JSONException ex) {
-            ReportingUtils.logError(ex);
-         }
+        
       }
       readDisplaySettings();
    }

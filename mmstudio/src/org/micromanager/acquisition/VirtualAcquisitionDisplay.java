@@ -453,7 +453,7 @@ public final class VirtualAcquisitionDisplay implements AcquisitionDisplay, Imag
       int numFrames = 1;
       int numChannels = 1;
       int numGrayChannels;
-      int numPositions = 0;
+      int numPositions = 1;
       int width = 0;
       int height = 0;
       int numComponents = 1;
@@ -475,7 +475,7 @@ public final class VirtualAcquisitionDisplay implements AcquisitionDisplay, Imag
          }
          numChannels = Math.max(1 + imageChannelIndex,
                  Math.max(summaryMetadata.getInt("Channels"), 1));
-         numPositions = Math.max(summaryMetadata.getInt("Positions"), 0);
+         numPositions = Math.max(summaryMetadata.getInt("Positions"), 1);
          numComponents = Math.max(MDUtils.getNumberOfComponents(summaryMetadata), 1);
       } catch (Exception e) {
          ReportingUtils.showError(e);
