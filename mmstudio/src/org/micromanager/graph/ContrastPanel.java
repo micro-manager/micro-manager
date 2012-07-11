@@ -103,7 +103,7 @@ public class ContrastPanel extends JPanel {
 
    public HistogramControlsState createDefaultControlsState() {
       HistogramControlsState state = new HistogramControlsState();
-      state.autostretch = prefs_.getBoolean(PREF_AUTOSTRETCH, false);
+      state.autostretch = prefs_.getBoolean(PREF_AUTOSTRETCH, true);
       state.percentToIgnore = prefs_.getDouble(PREF_REJECT_FRACTION, 2);
       state.logHist = prefs_.getBoolean(PREF_LOG_HIST, false);
       state.ignoreOutliers = prefs_.getBoolean(PREF_REJECT_OUTLIERS, false);
