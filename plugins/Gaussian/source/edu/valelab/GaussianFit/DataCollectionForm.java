@@ -3359,6 +3359,10 @@ public class DataCollectionForm extends javax.swing.JFrame {
       zc_.clearDataPoints();
       
       MyRowData rd = rowData_.get(rowNr);
+      if (rd.shape_ < 2) {
+         JOptionPane.showMessageDialog(getInstance(), "Use Fit Parameters Dimension 2 or 3 for Z-calibration");
+         return;
+      }
 
       
       List<GaussianSpotData> sl = rd.spotList_;
