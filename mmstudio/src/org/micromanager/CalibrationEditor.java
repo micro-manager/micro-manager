@@ -72,11 +72,7 @@ import org.micromanager.utils.SliderPanel;
 import org.micromanager.utils.SortFunctionObjects;
 
 /**
- * Dialog based GUI component for generic editing of device properties.
- * Represents the entire system state as a list of triplets:
- * device - property - value
- * 
- * Specifically targeted for editing configuration presets.
+ * Dialog for editing of a pixel size configuration preset.
  */
 public class CalibrationEditor extends MMDialog {
    private static final long serialVersionUID = 1L;

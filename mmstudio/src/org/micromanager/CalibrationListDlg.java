@@ -30,8 +30,6 @@ import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import java.util.prefs.Preferences;
 
 import javax.swing.JButton;
@@ -51,6 +49,10 @@ import org.micromanager.utils.CalibrationList;
 import org.micromanager.utils.MMDialog;
 import org.micromanager.utils.ReportingUtils;
 
+/*
+ * Dialog for listing pixel size configuration presets and the corresponding
+ * pixel size for each.
+ */
 public class CalibrationListDlg extends MMDialog {
    private static final long serialVersionUID = 1L;
    private static final String TITLE = "Calibration Editor";

@@ -1,13 +1,3 @@
-/**
- * DataProcessor thread allows for on-the-fly modification of image
- * data during acquisition.  
- * 
- * Inherit from this class and use the AcquisitionEngine functions 
- * addImageProcessor and removeImageProcessor to insert your code into the
- * acquisition pipeline
- * 
- */
-
 package org.micromanager.api;
 
 import java.util.Collection;
@@ -16,8 +6,13 @@ import java.util.concurrent.TimeUnit;
 import org.micromanager.utils.ReportingUtils;
 
 /**
+ * A DataProcessor thread allows for on-the-fly modification of image
+ * data during acquisition.
  *
- * @author arthur
+ * Inherit from this class and use the AcquisitionEngine functions
+ * addImageProcessor and removeImageProcessor to insert your code into the
+ * acquisition pipeline
+ *
  */
 public abstract class DataProcessor<E> extends Thread {
    private BlockingQueue<E> input_;

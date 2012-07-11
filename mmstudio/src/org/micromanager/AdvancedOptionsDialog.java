@@ -16,6 +16,12 @@ import org.micromanager.api.AcquisitionEngine;
 import org.micromanager.api.ScriptInterface;
 import org.micromanager.utils.MMDialog;
 
+/*
+ * This class provides a dialog available from the "Advanced" button
+ * on the AcqConrolDlg (MDA setup window). It allows users to set custom
+ * time intervals: i.e., nonuniform timing for a series of frames.
+ */
+
 public class AdvancedOptionsDialog extends MMDialog {
 
     private static final long serialVersionUID = 1L;

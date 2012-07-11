@@ -57,7 +57,6 @@ import org.micromanager.utils.ReportingUtils;
  * Draws one histogram of the Multi-Channel control panel
  * 
  * 
- * @author Henry
  */
 
 
