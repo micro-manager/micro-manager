@@ -2186,8 +2186,6 @@ public class AcqControlDlg extends JFrame implements PropertyChangeListener {
 
       acqEng_.enableAutoFocus(afPanel_.isSelected());
 
-
-      acqEng_.setParameterPreferences(acqPrefs_);
       disableGUItoSettings_ = false;
       updateGUIContents();
    }
