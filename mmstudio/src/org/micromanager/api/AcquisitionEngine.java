@@ -26,12 +26,10 @@ package org.micromanager.api;
 import java.awt.Color;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
-import java.util.prefs.Preferences;
 
 import mmcorej.CMMCore;
 import mmcorej.TaggedImage;
 import org.json.JSONObject;
-import org.micromanager.acquisition.VirtualAcquisitionDisplay;
 
 import org.micromanager.navigation.PositionList;
 import org.micromanager.utils.AutofocusManager;
@@ -319,16 +317,26 @@ public interface AcquisitionEngine {
    /**
     * Returns path to the location where the acquisitions will be stored on
     * disk
-    * @return path to the storage place on disk
     */
    public String getRootName();
 
    /**
-    *
+    * Sets the absolute path for where the acquisitions will be stored on disk.
     * @param absolutePath
     */
    public void setRootName(String absolutePath);
+
+
+   /**
+    * @deprecated
+    */
    public void setCameraConfig(String config);
+
+   /**
+    * Sets the name for the directory in which the images and data are
+    * contained. Also known as the "prefix". This dir will be nested inside the root
+    * directory specified by setRootName.
+    */
    public void setDirName(String text);
 
    /*
@@ -344,35 +352,139 @@ public interface AcquisitionEngine {
    public boolean addChannel(String name, double exp, double offset, 
            ContrastSettings s8, ContrastSettings s16, int skip, Color c);
 
+
+   /*
+    * Adds a channel to the acquisition settings.
+    * @param name - The name of the channel, matching a configuration preset in the channel group.
+    * @param exp - The exposure time for this channel
+    * @param doZStack - If false, then z stacks will be skipped for this channel
+    * @param offset - If nonzero, offsets z positions for this channel by the provided amount, in microns.
+    * @param s8 - Provides contrast settings for this channel for 8-bit images.
+    * @param s16 - Provides contrast settings for this channel for 16-bit images.
+    * @param skip - If nonzero, this channel is skipped for some frames.
+    * @param c - Provides the preferred color for this channel
+    * @param use - If false, this channel will not be included in the acquisition.
+    */
    public boolean addChannel(String name, double exp, Boolean doZStack,
            double offset, ContrastSettings s8, ContrastSettings s16, int skip, Color c,
            boolean use);
-   
+
+   /*
+    * Adds a channel to the acquisition settings.
+    * @param name - The name of the channel, matching a configuration preset in the channel group.
+    * @param exp - The exposure time for this channel
+    * @param doZStack - If false, then z stacks will be skipped for this channel
+    * @param offset - If nonzero, offsets z positions for this channel by the provided amount, in microns.
+    * @param con - Provides contrast settings for this channel.
+    * @param skip - If nonzero, this channel is skipped for some frames.
+    * @param c - Provides the preferred color for this channel
+    * @param use - If false, this channel will not be included in the acquisition.
+    */
    public boolean addChannel(String name, double exp, Boolean doZStack,
            double offset, ContrastSettings con, int skip, Color c,
            boolean use);
-   public void setSaveFiles(boolean selected);
-   public boolean getSaveFiles();
-   public int getDisplayMode();
-   public void setDisplayMode(int mode);
-   public int getAcqOrderMode();
-   public void setAcqOrderMode(int mode);
-   public void enableAutoFocus(boolean enabled);
-   public boolean isAutoFocusEnabled();
-   public int getAfSkipInterval();
-   public void setAfSkipInterval (int interval);
-   public void setParameterPreferences(Preferences prefs);
 
-   public void setSingleFrame(boolean selected); // @deprecated
-   public void setSingleWindow(boolean selected); // @deprecated
-   public String installAutofocusPlugin(String className); // @deprecated
+   /*
+    * Sets whether image data should be stored to disk or to RAM during
+    * acquisition.
+    * @param selected - If true, image data will be saved to disk during acquisition.
+    *
+    */
+   public void setSaveFiles(boolean selected);
+
+   /*
+    * Returns the settings that if true, indicates images will be saved
+    * to disk during acquisition.
+    */
+   public boolean getSaveFiles();
+
+   /**
+    * @deprecated
+    */
+   public int getDisplayMode();
+
+   /**
+    * @deprecated
+    */
+   public void setDisplayMode(int mode);
+
+   /**
+    * Returns the setting for the order of the four dimensions (P, T, C, Z).
+    * Possible values are enumerated in org.micromanager.utils.AcqOrderMode
+    */
+   public int getAcqOrderMode();
+
+   /**
+    * Sets the value for the order of the four dimensions (P, T, C, Z).
+    * Possible values are enumerated in org.micromanager.utils.AcqOrderMode
+    */
+   public void setAcqOrderMode(int mode);
+
+   /*
+    * If set to true, autofocus will be used during the acquisition.
+    */
+   public void enableAutoFocus(boolean enabled);
+
+   /*
+    * Returns true if autofocus is requested for the acquisition.
+    */
+   public boolean isAutoFocusEnabled();
+
+   /*
+    * Returns the number of frames acquired between autofocusing frames.
+    * For example, if the interval is 1, then autofocus is run every other
+    * frame, including the first frame.
+    */
+   public int getAfSkipInterval();
+
+   /*
+    * Sets the number of frames acquired when autofocusing is skipped. For
+    * example, if the interval is set to 1, then autofocus is run for every
+    * other frame, including the first frame.
+    */
+   public void setAfSkipInterval (int interval);
+
+   /*
+    * @deprecated
+    */
+   public void setSingleFrame(boolean selected);
+
+   /*
+    * @deprecated
+    */
+   public void setSingleWindow(boolean selected);
+
+   /*
+    * @deprecated
+    */
+   public String installAutofocusPlugin(String className);
    
    // utility
    public String getVerboseSummary();
+
+   
    public boolean isConfigAvailable(String config_);
+
+   /*
+    * @deprecated
+    * Returns available configurations for the camera group.
+    */
    public String[] getCameraConfigs();
+
+   /*
+    * Returns the available groups in Micro-Manager's configuration settings.
+    */
    public String[] getAvailableGroups();
+
+   /*
+    * Returns the current z position for the focus drive used by the
+    * acquisition engine.
+    */
    public double getCurrentZPos();
+
+   /*
+    * Returns true if the acquisition is currently paused.
+    */
    public boolean isPaused();
 
 
