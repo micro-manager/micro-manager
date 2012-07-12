@@ -205,7 +205,7 @@ public class LiveModeTimer {
                   ReportingUtils.showError(ex);
                   gui_.enableLiveMode(false);
                } catch (JSONException exc) {
-                  ReportingUtils.showError("Problem with image tags");
+                  ReportingUtils.showError(exc, "Problem with image tags");
                   gui_.enableLiveMode(false);
                } catch (Exception excp) {
                   ReportingUtils.showError("Couldn't get tagged image from core");
@@ -239,10 +239,12 @@ public class LiveModeTimer {
                   while (numFound < images.length && index <= 2 * images.length) {      //play with this number
                      try {
                         ti = core_.getNBeforeLastTaggedImage(index);
+                        // If we only just started live mode, this tag may not
+                        // be available, so throw an error and exit loop.
+                        channel = ti.tags.getInt(camera + "-" + CCHANNELINDEX);
                      } catch (Exception ex) {
                         break;
                      }
-                     channel = ti.tags.getInt(camera + "-" + CCHANNELINDEX);
                      if (images[channel] == null) {
                         numFound++;
                      }
@@ -272,7 +274,7 @@ public class LiveModeTimer {
                   ReportingUtils.showError(ex);
                } catch (JSONException exc) {
                   gui_.enableLiveMode(false);
-                  ReportingUtils.showError("Problem with image tags");
+                  ReportingUtils.showError(exc, "Problem with image tags");
                } catch (Exception excp) {
                   gui_.enableLiveMode(false);
                   ReportingUtils.showError("Couldn't get tagged image from core");
