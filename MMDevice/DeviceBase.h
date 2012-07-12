@@ -1317,6 +1317,15 @@ public:
       metadata_.RemoveTag(key);
    }
 
+   /*
+    * Fills serializedMetadata with the device's metadata tags.
+    */
+   virtual void GetTags(char* serializedMetadata)
+   {
+      std::string data = metadata_.Serialize();
+      data.copy(serializedMetadata, data.size(), 0);
+   }
+
    // temporary debug methods
    virtual int PrepareSequenceAcqusition() {return DEVICE_OK;}
 

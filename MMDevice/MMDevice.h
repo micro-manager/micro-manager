@@ -493,10 +493,13 @@ namespace MM {
        */
       virtual void AddTag(const char* key, std::string deviceLabel, const char* value) = 0;
       /**
-       * Remove the tage with the given key from the metadata that will be added during sequence acquisition
+       * Remove the tag with the given key from the metadata that will be added during sequence acquisition
        */
       virtual void RemoveTag(const char* key) = 0;
-
+      /**
+       * Get the tags stored in this device.
+       */
+      virtual void GetTags(char* serializedMetadata) = 0;
       /*
        * Returns whether a camera's exposure time can be sequenced.
        * If returning true, then a Camera adapter class should also inherit

@@ -319,7 +319,7 @@ public:
       // delete existing tag with the same key (if any)
       tags_.erase(tag.GetQualifiedName());
 
-      // assing a new tag
+      // adding a new tag
       tags_[tag.GetQualifiedName()] = newTag;
    }
 
@@ -369,6 +369,14 @@ public:
       }
 
       return *this;
+   }
+
+   void Merge(const Metadata& newTags)
+   {     
+      for (TagIterator it=newTags.tags_.begin(); it != newTags.tags_.end(); it++)
+      {
+         SetTag(*it->second);
+      }
    }
 
    std::string Serialize() const

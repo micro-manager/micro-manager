@@ -50,6 +50,11 @@ int CoreCallback::InsertImage(const MM::Device* caller, const unsigned char* buf
       char label[MM::MaxStrLength];
       caller->GetLabel(label);
       
+      char serializedMD[MM::MaxStrLength];
+      ((MM::Camera*) caller)->GetTags(serializedMD);
+      Metadata devMD;
+      devMD.Restore(serializedMD);
+
       // Copy the metadata
       Metadata md;
       if (pMd)
@@ -58,6 +63,7 @@ int CoreCallback::InsertImage(const MM::Device* caller, const unsigned char* buf
       }
       // Add the source Camera as a tag.
       md.put("Camera",label);
+      md.Merge(devMD);
 
       if(doProcess)
       {
