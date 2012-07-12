@@ -66,11 +66,12 @@ public:
    int OnState(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnChannel(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnIntensity(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnMaxintensity(MM::PropertyBase* pProp, MM::ActionType eAct);
    //int OnVersion(MM::PropertyBase* pProp, MM::ActionType eAct);
 
 private:
 
-   int SetIntensity(int intensity);
+   int SetIntensity(double intensity);
 	
    int SetShutterPosition(bool state);
    //int GetVersion();
@@ -92,7 +93,63 @@ private:
    //std::string version_;
    double answerTimeoutMs_;
    //intensity
-   int intensity_;
+   double intensity_;
+   int maxintensity_; 
+   
+};
+
+class multiAOTF : public CShutterBase<multiAOTF>
+{
+public:
+   multiAOTF();
+   ~multiAOTF();
+  
+   // Device API
+   // ----------
+   int Initialize();
+   int Shutdown();
+  
+   void GetName(char* pszName) const;
+   bool Busy();
+
+   // Shutter API
+   // ---------
+   int SetOpen(bool open);
+   int GetOpen(bool& open);
+   int Fire(double /*interval*/) {return DEVICE_UNSUPPORTED_COMMAND; }
+
+
+   // action interface
+   // ----------------
+   int OnPort(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnState(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnChannel(MM::PropertyBase* pProp, MM::ActionType eAct);
+   //int OnIntensity(MM::PropertyBase* pProp, MM::ActionType eAct);
+   //int OnVersion(MM::PropertyBase* pProp, MM::ActionType eAct);
+
+private:
+
+   //int SetIntensity(int intensity);
+	
+   int SetShutterPosition(bool state);
+   //int GetVersion();
+
+   // MMCore name of serial port
+   std::string port_;
+   // Time it takes after issuing Close command to close the shutter         
+   double closingTimeMs_;                                                    
+   // Time it takes after issuing Open command to open the shutter           
+   double openingTimeMs_;                                                    
+   // Command exchange with MMCore                                           
+   std::string command_;           
+   // close (0) or open (1)
+   int state_;
+   bool initialized_;
+   // channels that we are currently working on 
+   int activeMultiChannels_;
+   // version string returned by device
+   //std::string version_;
+   double answerTimeoutMs_;
    
 };
 
