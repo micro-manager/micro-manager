@@ -47,6 +47,17 @@ int CoreCallback::InsertImage(const MM::Device* caller, const unsigned char* buf
 {
    try 
    {
+      char label[MM::MaxStrLength];
+      caller->GetLabel(label);
+      
+      // Copy the metadata
+      Metadata md;
+      if (pMd)
+      {
+        md = *pMd;
+      }
+      // Add the source Camera as a tag.
+      md.put("Camera",label);
 
       if(doProcess)
       {
@@ -57,7 +68,7 @@ int CoreCallback::InsertImage(const MM::Device* caller, const unsigned char* buf
          }
       }
 
-      if (core_->cbuf_->InsertImage(buf, width, height, byteDepth, pMd))
+      if (core_->cbuf_->InsertImage(buf, width, height, byteDepth, &md))
          return DEVICE_OK;
       else
          return DEVICE_BUFFER_OVERFLOW;
