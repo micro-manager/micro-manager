@@ -62,7 +62,7 @@
 (def open-in-ram (atom false))
 
 (def prefs (.. Preferences userRoot
-      (node "MMDataBrowser") (node "b3d184b1-c580-4f06-a1d9-b9cc00f12641")))
+      (node "MMDataBrowser2") (node "70db64a1-2fd5-4438-812d-5c668b036659")))
 
 (def tags [
   "ChColors" "ChContrastMax" "ChContrastMin" "ChNames" "Channels" "Comment"
@@ -462,7 +462,7 @@ inside an existing location in your collection."
     (or (read-value-from-prefs prefs "collection-files")
         (let [name (System/getProperty "user.name")]
           {name (.getAbsolutePath (file (JavaUtils/getApplicationDataPath)
-                                        (str name ".mmdb.txt")))}))))
+                                        (str name ".mmdb2.txt")))}))))
 
 (defn save-collection-map []
   (write-value-to-prefs prefs "collection-files" @collections))
