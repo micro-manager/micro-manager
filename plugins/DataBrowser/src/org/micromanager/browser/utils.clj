@@ -289,8 +289,8 @@
 (def alternate-re #"\d+|\D+")
 
 (defn compare-alphanumeric [val1 val2]
-  (let [str1 (str val1)
-        str2 (str val2)]
+  (let [str1 (.toLowerCase (str val1))
+        str2 (.toLowerCase (str val2))]
     (if
       (and (re-matches floating-point-re str1)
            (re-matches floating-point-re str2))

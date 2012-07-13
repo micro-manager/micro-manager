@@ -15,6 +15,7 @@
 (ns org.micromanager.browser.core
   (:import [javax.swing BorderFactory JButton JComboBox JFrame JLabel JOptionPane
                         JList JPanel JScrollPane JSplitPane SortOrder JCheckBox
+                        JPopupMenu
                         JTable JTextField RowFilter RowSorter$SortKey SpringLayout]
            [javax.swing.table AbstractTableModel DefaultTableModel
                               TableColumn TableRowSorter]
@@ -277,7 +278,7 @@
       (catch Exception e nil)))
 
 (defn get-summary-map [data-set location]
-  (println data-set)
+  ;(println data-set)
   (when-let [raw-summary-map (read-summary-map data-set)]
     (merge raw-summary-map
       ;(if-let [frames (count-frames data-set)]
@@ -442,7 +443,8 @@ inside an existing location in your collection."
       (.removeAllItems menu)
       (dorun (map #(.addItem menu %) names))
       (.addItem menu "New...")
-      (.setSelectedItem (@browser :collection-menu) name)
+      (when name
+        (.setSelectedItem (@browser :collection-menu) name))
       (dorun (map #(.addItemListener menu %) listeners)))))
 
 ;; collection files
