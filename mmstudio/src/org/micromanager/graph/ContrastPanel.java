@@ -25,7 +25,6 @@ import ij.CompositeImage;
 import ij.ImagePlus;
 import ij.gui.Overlay;
 import java.awt.*;
-import java.util.Arrays;
 import java.util.prefs.Preferences;
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.JCheckBox;
