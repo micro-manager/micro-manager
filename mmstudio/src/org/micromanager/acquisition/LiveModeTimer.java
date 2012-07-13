@@ -36,6 +36,7 @@ import org.micromanager.utils.ReportingUtils;
 /**
  * This class extends the java swing timer.  It periodically retrieves images
  * from the core and displays them in the live window
+ * 
  * @author Henry Pinkard
  */
 public class LiveModeTimer {
@@ -49,34 +50,42 @@ public class LiveModeTimer {
    private long fpsTimer_;
    private long fpsCounter_;
    private long imageNumber_;
+   private long lastImageNumber_;
    private long fpsInterval_ = 5000;
    private final NumberFormat format_;
-   private int delay_;
    private boolean running_ = false;
    private Timer timer_;
    private TimerTask task_;
    
 
-   public LiveModeTimer(int delay) {
-      delay_ = delay;
+   public LiveModeTimer() {
       gui_ = MMStudioMainFrame.getInstance();
       core_ = gui_.getCore();
       format_ = NumberFormat.getInstance();
       format_.setMaximumFractionDigits(0x1);
    }
 
-   private void setInterval() {
-      double interval = 33;
+   /**
+    * Determines the optimum interval for the live mode timer task to happen
+    * As a side effect, also sets variable fpsInterval_
+    */
+   private long getInterval() {
+      double interval = 20;
       try {
-         interval = Math.max(core_.getExposure(), 33);
+         interval = Math.max(core_.getExposure(), interval);
       } catch (Exception e) {
          ReportingUtils.logError("Unable to get exposure from core");
       }
       fpsInterval_ =  (long) (20 *  interval);
+      if (fpsInterval_ < 1000)
+         fpsInterval_ = 1000;
       
-      delay_ = (int) interval;
+      return (int) interval;
    }
 
+   /**
+    * Determines whether we are dealing with multiple cameras
+    */
    private void setType() {
       multiChannelCameraNrCh_ = core_.getNumberOfCameraChannels();
       if (multiChannelCameraNrCh_ == 1) {
@@ -100,12 +109,12 @@ public class LiveModeTimer {
             
          core_.startContinuousSequenceAcquisition(0);
          setType();
-         setInterval();
+         long delay = getInterval();
 
          // Wait for first image to create ImageWindow, so that we can be sure about image size
          long start = System.currentTimeMillis();
          long now = start;
-         long timeout = Math.min(10000, delay_ * 150);
+         long timeout = Math.min(10000, delay * 150);
          while (core_.getRemainingImageCount() == 0 && (now - start < timeout) ) {
             now = System.currentTimeMillis();
             Thread.sleep(5);
@@ -123,8 +132,9 @@ public class LiveModeTimer {
          fpsCounter_ = 0;
          fpsTimer_ = System.currentTimeMillis();
          imageNumber_ = timg.tags.getLong("ImageNumber");
+         lastImageNumber_ = imageNumber_ - 1;
 
-         timer_.schedule(task_, 0, delay_);
+         timer_.schedule(task_, 0, delay);
          win_.liveModeEnabled(true);
          
          win_.getImagePlus().getWindow().toFront();
@@ -163,6 +173,12 @@ public class LiveModeTimer {
       } 
    }
 
+   /**
+    * Updates the fps timer (how fast does the camera pump images into the 
+    * circular buffer) and display fps (how fast do we display the images)
+    * 
+    * @param imageNumber - sequential number added in the circular buffer
+    */
    private void updateFPS(long imageNumber) {
       try {
          fpsCounter_++;
@@ -196,6 +212,11 @@ public class LiveModeTimer {
             } else {
                try {
                   TaggedImage ti = core_.getLastTaggedImage();
+                  // if we have already shown this image, do not do it again.
+                  long imageNumber = ti.tags.getLong("ImageNumber");
+                  if (imageNumber == lastImageNumber_)
+                     return;
+                  lastImageNumber_ = imageNumber;
                   addTags(ti, 0);
                   gui_.addImage(ACQ_NAME, ti, true, true);
                   gui_.updateLineProfile();
@@ -228,10 +249,16 @@ public class LiveModeTimer {
             } else {
                try {
                   TaggedImage[] images = new TaggedImage[(int) multiChannelCameraNrCh_];
+                  
                   String camera = core_.getCameraDevice();
 
                   TaggedImage ti = core_.getLastTaggedImage();
 
+                  long imageNumber = ti.tags.getLong("ImageNumber");
+                  if (imageNumber == lastImageNumber_)
+                     return;
+                  lastImageNumber_ = imageNumber;
+                  
                   int channel = ti.tags.getInt(camera + "-" + CCHANNELINDEX);
                   images[channel] = ti;
                   int numFound = 1;
@@ -275,7 +302,7 @@ public class LiveModeTimer {
                } catch (JSONException exc) {
                   gui_.enableLiveMode(false);
                   ReportingUtils.showError(exc, "Problem with image tags");
-               } catch (Exception excp) {
+               } catch (Exception exc) {
                   gui_.enableLiveMode(false);
                   ReportingUtils.showError("Couldn't get tagged image from core");
                }
@@ -297,6 +324,7 @@ public class LiveModeTimer {
       gui_.addStagePositionToTags(ti);
    }
    
+   /*
    private TaggedImage makeTaggedImage(Object pixels) throws JSONException, MMScriptException {
        TaggedImage ti = ImageUtils.makeTaggedImage(pixels,
                     0, 0, 0, 0,
@@ -312,4 +340,6 @@ public class LiveModeTimer {
       gui_.addStagePositionToTags(ti);
       return ti;
    }
+    * 
+    */
 }
