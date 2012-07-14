@@ -199,6 +199,11 @@ public class LiveModeTimer {
       }
    }
 
+   /**
+    * Task executed to display live images when using a single camera
+    * 
+    * @return 
+    */
    private TimerTask singleCameraLiveTask() {
       return new TimerTask() {
          @Override
@@ -217,6 +222,7 @@ public class LiveModeTimer {
                   if (imageNumber == lastImageNumber_)
                      return;
                   lastImageNumber_ = imageNumber;
+                  
                   addTags(ti, 0);
                   gui_.addImage(ACQ_NAME, ti, true, true);
                   gui_.updateLineProfile();

@@ -844,9 +844,15 @@ public final class VirtualAcquisitionDisplay implements AcquisitionDisplay, Imag
          } else {
             for (int k = 0; k < chNames.length(); ++k) {
                String name = (String) chNames.get(k);
-               int color = chColors.getInt(k);
-               int min = chMins.getInt(k);
-               int max = chMaxes.getInt(k);
+               int color = 0;
+               if (k < chColors.length())
+                  color = chColors.getInt(k);
+               int min = 0;
+               if (k < chMins.length())
+                  min = chMins.getInt(k);
+               int max = chMaxes.getInt(0);
+               if (k < chMaxes.length())
+                  max = chMaxes.getInt(k);
                JSONObject channelObject = new JSONObject();
                channelObject.put("Color", color);
                channelObject.put("Name", name);
