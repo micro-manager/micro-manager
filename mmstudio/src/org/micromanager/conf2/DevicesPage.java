@@ -802,6 +802,13 @@ private JComboBox byLibCombo_;
          aLeaf.setUserObject(userObject);
          node.add(aLeaf);
       }
+      String badLibs[] = model.getBadLibraries();
+      for (String lib : badLibs) {
+         DeviceTreeNode nd = new DeviceTreeNode(lib + " (unavailable)", true);
+         root.add(nd);
+      }
+      
+      
       // try building a tree
       theTree_ = new TreeWContextMenu(root, this);
       theTree_.addTreeSelectionListener(this);

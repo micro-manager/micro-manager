@@ -56,6 +56,7 @@ public class MicroscopeModel {
    Device availableDevices_[];
    Device availableComPorts_[];
    Device availableHubs_[];
+   Vector<String> badLibraries_;
    Hashtable<String, Device> comPortInUse_;
    boolean modified_ = false;
    String fileName_;
@@ -68,8 +69,7 @@ public class MicroscopeModel {
 
    boolean sendConfiguration_;
 
-   public static boolean generateDeviceListFile(
-         StringBuffer deviceListFileName, CMMCore c) {
+   public static boolean generateDeviceListFile(StringBuffer deviceListFileName, CMMCore c) {
       try {
          deviceListFileName.delete(0, deviceListFileName.length());
          deviceListFileName.append(DEVLIST_FILE_NAME);
@@ -123,6 +123,7 @@ public class MicroscopeModel {
       devices_ = new ArrayList<Device>();
       fileName_ = "";
       availableDevices_ = new Device[0];
+      badLibraries_ = new Vector<String>();
       availableHubs_ = new Device[0];
       configGroups_ = new Hashtable<String, ConfigGroup>();
       synchroDevices_ = new ArrayList<String>();
@@ -202,10 +203,12 @@ public class MicroscopeModel {
          // assign available devices
          availableDevices_ = new Device[0];
          ArrayList<Device> hubs = new ArrayList<Device>();
+         badLibraries_ = new Vector<String>();
 
          StrVector libs = getDeviceLibraries(core);
 
          for (int i = 0; i < libs.size(); i++) {
+            boolean good = false;
             if (!isLibraryAvailable(libs.get(i))) {
                // log each loaded device name
                ReportingUtils.logMessage(libs.get(i));
@@ -214,7 +217,7 @@ public class MicroscopeModel {
                try {
                   devs = Device.getLibraryContents(libs.get(i), core);
                   for (int j = 0; j < devs.length; j++) {
-                      ReportingUtils.logMessage("   " + devs[j].getAdapterName() + ", " + devs[j].getDescription());
+                     ReportingUtils.logMessage("   " + devs[j].getAdapterName() + ", " + devs[j].getDescription());
                      if (!devs[j].isSerialPort()) {
                     	// regular device
                         devsTotal.add(devs[j]);
@@ -224,12 +227,15 @@ public class MicroscopeModel {
                         if (!ports.contains(devs[j]))
                            ports.add(devs[j]);                    	
                      }
+                     good = true;
                   }
                } catch (Exception e) {
             	   // This usually happens when vendor's drivers are not installed
             	   ReportingUtils.logError(null, "Unable to load " + libs.get(i) + " library.");
                }
             }
+            if (!good)
+               badLibraries_.add(libs.get(i));
          }
 
          // re-assign remaining available devices
@@ -282,6 +288,10 @@ public class MicroscopeModel {
 
    public Device[] getAvailableSerialPorts() {
       return availableComPorts_;
+   }
+   
+   public String[] getBadLibraries() {
+      return badLibraries_.toArray(new String[badLibraries_.size()]);
    }
 
    public boolean isPortInUse(int index) {
