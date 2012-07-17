@@ -215,7 +215,7 @@ int PIGCSZStage::SetPositionUm(double pos)
    if (ret != DEVICE_OK)
       return ret;
 
-   CDeviceUtils::SleepMs(20);
+   CDeviceUtils::SleepMs(40);
 
    if (waitForResponse())
    {
