@@ -952,9 +952,9 @@ public:
       {
          for( unsigned long ix = 0; ix <  (width>>1) ; ++ix)
          {
-            tmp = pI[ ix + iy*height];
-            pI[ ix + iy*height] = pI[ width - 1 - ix + iy*height];
-            pI[ width -1 - ix + iy*height] = tmp;
+            tmp = pI[ ix + iy*width];
+            pI[ ix + iy*width] = pI[ width - 1 - ix + iy*width];
+            pI[ width -1 - ix + iy*width] = tmp;
          }
       }
       return ret;
@@ -995,9 +995,9 @@ public:
       {
          for( unsigned long iy = 0; iy < (height>>1); ++iy)
          {
-            tmp = pI[ ix + iy*height];
-            pI[ ix + iy*height] = pI[ ix + (height - 1 - iy)*height];
-            pI[ ix + (height - 1 - iy)*height] = tmp;
+            tmp = pI[ ix + iy*width];
+            pI[ ix + iy*width] = pI[ ix + (height - 1 - iy)*width];
+            pI[ ix + (height - 1 - iy)*width] = tmp;
          }
       }
       return ret;
