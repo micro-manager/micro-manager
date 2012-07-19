@@ -1,5 +1,5 @@
 ///////////////////////////////////////////////////////////////////////////////
-//FILE:          MetadataPanel.java
+//FILE:          SimpleWindowControls.java
 //PROJECT:       Micro-Manager
 //SUBSYSTEM:     mmstudio
 //-----------------------------------------------------------------------------
@@ -46,7 +46,11 @@ public class SimpleWindowControls extends DisplayControls {
    private JButton liveButton_;
    private JLabel statusLabel_;
    
-   
+   /**
+    * Draws buttons at the bottom of the live/snap window
+    * 
+    * @param virtAcq - acquisition displayed in the live/snap window
+    */
    public SimpleWindowControls(VirtualAcquisitionDisplay virtAcq) {
      virtAcq_ = virtAcq;
       initComponents();

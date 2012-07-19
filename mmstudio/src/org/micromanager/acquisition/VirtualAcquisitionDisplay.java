@@ -119,7 +119,8 @@ public final class VirtualAcquisitionDisplay implements AcquisitionDisplay, Imag
 
 
    
-   /* This interface and the following two classes
+   /**
+    * This interface and the following two classes
     * allow us to manipulate the dimensions
     * in an ImagePlus without it throwing conniptions.
     */
@@ -1505,6 +1506,11 @@ public final class VirtualAcquisitionDisplay implements AcquisitionDisplay, Imag
    }
 
    private boolean saveAs(Class storageClass, boolean pointToNewStorage) {
+      if (eng_ != null && eng_.isAcquisitionRunning()) {
+         JOptionPane.showMessageDialog(null, 
+                 "Data can not be saved while acquisition is running.");
+         return false;
+      }
       if (storageClass == null) {
          storageClass = createSaveTypePopup();
       }
@@ -1532,7 +1538,8 @@ public final class VirtualAcquisitionDisplay implements AcquisitionDisplay, Imag
       }
 
       try {
-         TaggedImageStorage newFileManager = (TaggedImageStorage) storageClass.getConstructor(
+         TaggedImageStorage newFileManager = 
+                 (TaggedImageStorage) storageClass.getConstructor(
                  String.class, Boolean.class, JSONObject.class).newInstance(
                  root + "/" + prefix, true, getSummaryMetadata());
          if (pointToNewStorage) {
