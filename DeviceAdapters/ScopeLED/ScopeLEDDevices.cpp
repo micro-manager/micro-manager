@@ -359,25 +359,40 @@ int ScopeLEDFluorescenceIlluminator::Initialize()
     if (nRet != DEVICE_OK) return nRet;
     SetPropertyLimits("Channel1Brightness", 0.0, 100.0);
 
-    pAct = new CPropertyAction (this, &ScopeLEDFluorescenceIlluminator::OnChannel2Brightness);
-    nRet = CreateProperty("Channel2Brightness", "0.0", MM::Float, false, pAct);
-    if (nRet != DEVICE_OK) return nRet;
-    SetPropertyLimits("Channel2Brightness", 0.0, 100.0);
+    if (m_NumChannels > 1)
+    {
+        pAct = new CPropertyAction (this, &ScopeLEDFluorescenceIlluminator::OnChannel2Brightness);
+        nRet = CreateProperty("Channel2Brightness", "0.0", MM::Float, false, pAct);
+        if (nRet != DEVICE_OK) return nRet;
+        SetPropertyLimits("Channel2Brightness", 0.0, 100.0);
 
-    pAct = new CPropertyAction (this, &ScopeLEDFluorescenceIlluminator::OnChannel3Brightness);
-    nRet = CreateProperty("Channel3Brightness", "0.0", MM::Float, false, pAct);
-    if (nRet != DEVICE_OK) return nRet;
-    SetPropertyLimits("Channel3Brightness", 0.0, 100.0);
+        if (m_NumChannels > 2)
+        {
+            pAct = new CPropertyAction (this, &ScopeLEDFluorescenceIlluminator::OnChannel3Brightness);
+            nRet = CreateProperty("Channel3Brightness", "0.0", MM::Float, false, pAct);
+            if (nRet != DEVICE_OK) return nRet;
+            SetPropertyLimits("Channel3Brightness", 0.0, 100.0);
 
-    pAct = new CPropertyAction (this, &ScopeLEDFluorescenceIlluminator::OnChannel4Brightness);
-    nRet = CreateProperty("Channel4Brightness", "0.0", MM::Float, false, pAct);
-    if (nRet != DEVICE_OK) return nRet;
-    SetPropertyLimits("Channel4Brightness", 0.0, 100.0);
+            pAct = new CPropertyAction (this, &ScopeLEDFluorescenceIlluminator::OnChannel4Brightness);
+            nRet = CreateProperty("Channel4Brightness", "0.0", MM::Float, false, pAct);
+            if (nRet != DEVICE_OK) return nRet;
+            SetPropertyLimits("Channel4Brightness", 0.0, 100.0);
+        }
 
-    pAct = new CPropertyAction (this, &ScopeLEDFluorescenceIlluminator::OnLEDGroup);
-    nRet = CreateProperty("LEDGroup", "1", MM::Integer, false, pAct);
-    if (nRet != DEVICE_OK) return nRet;
-    SetPropertyLimits("LEDGroup", 1, MAX_FMI_LED_GROUPS);
+        pAct = new CPropertyAction (this, &ScopeLEDFluorescenceIlluminator::OnLEDGroup);
+        nRet = CreateProperty("LEDGroup", "1", MM::Integer, false, pAct);
+        if (nRet != DEVICE_OK) return nRet;
+        if (m_NumChannels == 2)
+        {
+            AddAllowedValue("LEDGroup", "1"); // WL1
+            AddAllowedValue("LEDGroup", "2"); // WL2
+            AddAllowedValue("LEDGroup", "5"); // WL1+WL2
+        }
+        else
+        {
+            SetPropertyLimits("LEDGroup", 1, MAX_FMI_LED_GROUPS);
+        }
+    }
 
     pAct = new CPropertyAction (this, &ScopeLEDFluorescenceIlluminator::OnLEDGroup1Channels);
     nRet = CreateProperty("LEDGroup1Channels", "0", MM::Integer, true, pAct);
@@ -1140,6 +1155,8 @@ int ScopeLEDFluorescenceIlluminator::GetOptimalPositionString(std::string& str)
     {
         "X1",
         "X3",
+        "",
+        "",
         "X2"
     };
     
@@ -1166,7 +1183,7 @@ int ScopeLEDFluorescenceIlluminator::GetOptimalPositionString(std::string& str)
                 // There is no position adjustment necessary.
                 break;
             case 2:
-                if (m_CachedLEDGroup <= 3)
+                if (m_CachedLEDGroup <= 5)
                 {
                     str = OptimalPositions_2WL[m_CachedLEDGroup-1];
                 }
