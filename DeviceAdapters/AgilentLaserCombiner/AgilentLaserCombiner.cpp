@@ -59,6 +59,7 @@ bool APIENTRY DllMain( HANDLE /*hModule*/,
 MODULE_API void InitializeModuleData()
 {
    AddAvailableDeviceName(g_DeviceNameLCShutter, "Shutter");
+   AddAvailableDeviceName(g_DeviceNameLCSafetyShutter, "SafetyShutter");
    AddAvailableDeviceName(g_DeviceNameLCDA, "DA");
 }
 
@@ -69,7 +70,11 @@ MODULE_API MM::Device* CreateDevice(const char* deviceName)
 
    if (strcmp(deviceName, g_DeviceNameLCShutter) == 0)
    {
-      return new LCShutter;
+      return new LCShutter();
+   }
+   else if (strcmp(deviceName, g_DeviceNameLCSafetyShutter) == 0)
+   {
+      return new LCSafetyShutter();
    }
    else if (strcmp(deviceName, g_DeviceNameLCDA) == 0)
    {
