@@ -31,11 +31,20 @@ vector<string> avail_devs;
 
 /////////////////////////////////////////////////////
 
+const char* g_API_Version      = "API Version";
+const char* g_Driver_version  = "Driver Version";
+
+/////////////////////////////////////////////////////
+
 const char* g_Data_Format      = "Data format";
 const char* g_PixelType_Mono8  = "Mono 8";
+const char* g_PixelType_Raw8   = "RAW 8";
 const char* g_PixelType_Mono10 = "Mono 10";
+const char* g_PixelType_Raw10  = "RAW 10";
 const char* g_PixelType_Mono12 = "Mono 12";
+const char* g_PixelType_Raw12  = "RAW 12";
 const char* g_PixelType_Mono14 = "Mono 14";
+const char* g_PixelType_Raw14  = "RAW 14";
 const char* g_PixelType_RGB32  = "RGB 32";
 
 /////////////////////////////////////////////////////
@@ -68,10 +77,6 @@ const char* g_Gpo_ExpActive      = "Exposure active";
 const char* g_Gpo_ExpActiveNeg   = "Exposure active neg.";
 
 /////////////////////////////////////////////////////
-
-const char* g_ICC                = "Apply ICC profile";
-const char* g_ICC_On             = "On";
-const char* g_ICC_Off            = "Off";
 
 const char* g_Wb_Red             = "White ballance red";
 const char* g_Wb_Green           = "White ballance green";
@@ -116,13 +121,6 @@ const char* g_House_Temp         = "Cooling - Housing temperature";
 
 /////////////////////////////////////////////////////
 
-const char* g_Hdr                = "High Dynamic Range";
-const char* g_Hdr_On             = "On";
-const char* g_Hdr_Off            = "Off";
-const char* g_Hdr_Ratio          = "High Dynamic Range ratio";
-
-/////////////////////////////////////////////////////
-
 // windows DLL entry code
 #ifdef WIN32
 BOOL APIENTRY DllMain(  HANDLE /*hModule*/, 
@@ -153,7 +151,7 @@ void UpdateDevList()
 {
 	avail_devs.clear();
 	xiGetNumberDevices( &numDevices);
-	for(int i = 0; i < numDevices; i++){
+	for(DWORD i = 0; i < numDevices; i++){
 		char buf[256] = "";
 		DWORD deviceId = 0;
 		mmGetDevice(i, &deviceId);
@@ -185,7 +183,7 @@ MODULE_API MM::Device* CreateDevice(const char* deviceName)
 	if(avail_devs.size() == 0)
 		UpdateDevList();
 
-	for(int i = 0; i < numDevices; i++){
+	for(DWORD i = 0; i < numDevices; i++){
 		if (strcmp(deviceName, avail_devs[i].c_str()) == 0)
 			return new XIMEACamera();
 	}
@@ -219,9 +217,11 @@ XIMEACamera::XIMEACamera() :
 	acqTout_(0),
 	bytesPerPixel_(1),
 	gain_(0.8),
+	adc_(8),
 	exposureMs_(10.0),
 	nComponents_(1),
 	initialized_(false),
+	isTrg_(false),
 	roiX_(0),
 	roiY_(0),
 	readoutStartTime_(0),
@@ -292,6 +292,14 @@ int XIMEACamera::Initialize()
 	ret = CreateProperty(MM::g_Keyword_Description, buf, MM::String, true);
 	assert(ret == DEVICE_OK);
 
+	xiGetParamString( handle, XI_PRM_API_VERSION, buf, 256);
+	ret = CreateProperty(g_API_Version, buf, MM::String, true);
+	assert(ret == DEVICE_OK);
+
+	xiGetParamString( handle, XI_PRM_DRV_VERSION, buf, 256);
+	ret = CreateProperty(g_Driver_version, buf, MM::String, true);
+	assert(ret == DEVICE_OK);
+
 	// -------------------------------------------------------------------------------------
 	// binning
 	CPropertyAction *pAct = new CPropertyAction (this, &XIMEACamera::OnBinning);
@@ -319,7 +327,9 @@ int XIMEACamera::Initialize()
 	// -------------------------------------------------------------------------------------
 	// data format
 	int isColor  = 0;
+	DWORD family=0;
 	xiGetParamInt( handle, XI_PRM_IMAGE_IS_COLOR, &isColor);
+	mmGetModelFamily( handle, &family);
 
 	pAct = new CPropertyAction (this, &XIMEACamera::OnDataFormat);
 	ret = CreateProperty(g_Data_Format, g_PixelType_Mono8, MM::String, false, pAct);
@@ -329,8 +339,12 @@ int XIMEACamera::Initialize()
 	pixelTypeValues.push_back(g_PixelType_Mono8);
 	pixelTypeValues.push_back(g_PixelType_Mono10);
 	pixelTypeValues.push_back(g_PixelType_Mono12);
-	pixelTypeValues.push_back(g_PixelType_Mono14); 
+	if(family==FAMILY_MR) pixelTypeValues.push_back(g_PixelType_Mono14); 
 	if(isColor){
+		pixelTypeValues.push_back(g_PixelType_Raw8);
+		pixelTypeValues.push_back(g_PixelType_Raw10);
+		pixelTypeValues.push_back(g_PixelType_Raw12);
+		if(family==FAMILY_MR) pixelTypeValues.push_back(g_PixelType_Raw14); 
 		pixelTypeValues.push_back(g_PixelType_RGB32); 
 	}
 
@@ -394,6 +408,30 @@ int XIMEACamera::Initialize()
 		xiSetParamInt( handle, XI_PRM_GPO_SELECTOR, 1);
 		xiSetParamInt( handle, XI_PRM_GPO_MODE, XI_GPO_FRAME_ACTIVE);
 		assert(ret == DEVICE_OK);
+	} else if(strcmp(buf, "USB3.0") == 0){
+		vector<string> gpoTypeValues;
+		gpoTypeValues.push_back(g_Gpo_Off);
+		gpoTypeValues.push_back(g_Gpo_On);
+		gpoTypeValues.push_back(g_Gpo_FrameActive);
+		gpoTypeValues.push_back(g_Gpo_FrameActiveNeg);
+		gpoTypeValues.push_back(g_Gpo_ExpActive);
+		gpoTypeValues.push_back(g_Gpo_ExpActiveNeg);
+		// init GPI1
+		pAct = new CPropertyAction (this, &XIMEACamera::OnGpi1);
+		ret = CreateProperty(g_Gpi_1, g_Gpi_Off, MM::String, false, pAct);
+		assert(ret == DEVICE_OK);
+		ret = SetAllowedValues(g_Gpi_1, gpiTypeValues);
+		assert(ret == DEVICE_OK);
+		xiSetParamInt( handle, XI_PRM_GPI_SELECTOR, 1);
+		xiSetParamInt( handle, XI_PRM_GPI_MODE, XI_GPI_OFF);
+		// init GPO1
+		pAct = new CPropertyAction (this, &XIMEACamera::OnGpo1);
+		ret = CreateProperty(g_Gpo_1, g_Gpo_FrameActive, MM::String, false, pAct);
+		assert(ret == DEVICE_OK);
+		ret = SetAllowedValues(g_Gpo_1, gpoTypeValues);
+		assert(ret == DEVICE_OK);
+		xiSetParamInt( handle, XI_PRM_GPO_SELECTOR, 1);
+		xiSetParamInt( handle, XI_PRM_GPO_MODE, XI_GPO_FRAME_ACTIVE);
 	} else if((strcmp(buf, "USB2.0") == 0) || strcmp(buf, "CURRERA") == 0){
 		vector<string> gpoTypeValues;
 		if((strcmp(buf, "USB2.0") == 0)){
@@ -463,17 +501,6 @@ int XIMEACamera::Initialize()
 	//-------------------------------------------------------------------------------------
 	// Color correction
 	if(isColor){
-		pAct = new CPropertyAction (this, &XIMEACamera::OnICC);
-		ret = CreateProperty(g_ICC, g_ICC_Off, MM::String, false, pAct);
-		assert(ret == DEVICE_OK);
-
-		vector<string> iccTypeValues;
-		iccTypeValues.push_back(g_ICC_On);
-		iccTypeValues.push_back(g_ICC_Off); 
-
-		ret = SetAllowedValues(g_ICC, iccTypeValues);
-		assert(ret == DEVICE_OK);
-		///////////////////////////////////////////////////////////////
 		pAct = new CPropertyAction (this, &XIMEACamera::OnWbRed);
 		ret = CreateProperty(g_Wb_Red, "0.0", MM::Float, false, pAct);
 		assert(ret == DEVICE_OK);
@@ -646,28 +673,6 @@ int XIMEACamera::Initialize()
 	}
 
 	//-------------------------------------------------------------------------------------
-	// HDR
-	pAct = new CPropertyAction (this, &XIMEACamera::OnHdr);
-	ret = CreateProperty(g_Hdr, g_Hdr_Off, MM::String, false, pAct);
-	assert(ret == DEVICE_OK);
-
-	vector<string> hdrTypeValues;
-	hdrTypeValues.push_back(g_Hdr_On);
-	hdrTypeValues.push_back(g_Hdr_Off); 
-
-	ret = SetAllowedValues(g_Hdr, hdrTypeValues);
-	assert(ret == DEVICE_OK);
-	///////////////////////////////////////////////////////////////
-	int minh = 0, maxh = 0;
-	pAct = new CPropertyAction (this, &XIMEACamera::OnHdrRatio);
-	ret = CreateProperty(g_Hdr_Ratio, "0.0", MM::Integer, false, pAct);
-	assert(ret == DEVICE_OK);
-
-	xiGetParamInt( handle, XI_PRM_HDR_RATIO XI_PRM_INFO_MIN, &minh);
-	xiGetParamInt( handle, XI_PRM_HDR_RATIO XI_PRM_INFO_MAX, &maxh);
-	SetPropertyLimits(g_Hdr_Ratio, min, max);
-
-	//-------------------------------------------------------------------------------------
 	// start image acquisition
 	ret = xiStartAcquisition(handle);
 	if(ret != XI_OK) return ret;
@@ -690,6 +695,11 @@ int XIMEACamera::Initialize()
 	if (ret != DEVICE_OK)
 		return ret;
 	
+	// set default exposure
+	ret = xiSetParamInt( handle, XI_PRM_EXPOSURE, (int)exposureMs_*1000);
+	if (ret != DEVICE_OK)
+		return ret;
+
 	memset(&image, 0, sizeof(XI_IMG));
 	numOpenDevs++;
 	initialized_ = true;
@@ -725,8 +735,8 @@ int XIMEACamera::SnapImage()
 	MM::MMTime startTime = GetCurrentMMTime();
 	image.size = sizeof(XI_IMG);
 	int ret = DEVICE_OK;
-	xiSetParamInt( handle, XI_PRM_TRG_SOFTWARE, 0);
-	ret = xiGetImage( handle, acqTout_, &image);
+	if(!isTrg_)	xiSetParamInt( handle, XI_PRM_TRG_SOFTWARE, 0); // use SW trigger only in trg_off mode
+	ret = xiGetImage( handle, (DWORD)acqTout_, &image);
 	readoutStartTime_ = GetCurrentMMTime();
 	return ret;
 }
@@ -775,10 +785,16 @@ unsigned XIMEACamera::GetImageBytesPerPixel() const
 	xiGetParamInt( handle, XI_PRM_IMAGE_DATA_FORMAT, &frm);
 	switch(frm)
 	{
-	case XI_MONO8  : bpp = 1; break;
-	case XI_MONO16 : bpp = 2; break;
-	case XI_RGB24  : bpp = 3; break;
-	case XI_RGB32  : bpp = 4; break;
+	case XI_MONO8      : 
+	case XI_RAW8       :
+		bpp = 1; break;
+	case XI_MONO16     : 
+	case XI_RAW16      :
+		bpp = 2; break;
+	case XI_RGB32      : 
+		bpp = 4; break;
+	default:
+		assert(false); // this should never happen
 	}
 	return bpp;
 } 
@@ -870,6 +886,7 @@ int XIMEACamera::SetROI(unsigned x, unsigned y, unsigned xSize, unsigned ySize)
 int XIMEACamera::GetROI(unsigned& x, unsigned& y, unsigned& xSize, unsigned& ySize)
 {
 	int width = 0, height = 0, offx = 0, offy = 0;
+	int ret = DEVICE_ERR;
 	xiGetParamInt( handle, XI_PRM_WIDTH, &width);
 	xiGetParamInt( handle, XI_PRM_HEIGHT, &height);
 	xiGetParamInt( handle, XI_PRM_OFFSET_X, &offx);
@@ -1115,60 +1132,104 @@ int XIMEACamera::OnDataFormat(MM::PropertyBase* pProp, MM::ActionType eAct)
 	if (eAct == MM::AfterSet)
 	{
 		string val;
+		int img_format=0;
 		pProp->Get(val);
-		int ret = DEVICE_OK;
-		if (val.compare(g_PixelType_Mono8) == 0){
-			ret = xiSetParamInt( handle, XI_PRM_IMAGE_DATA_FORMAT, XI_MONO8);
-			if(ret != XI_OK) return ret;
-			mmSetExtention( handle, EXT_ADCBPP, 8);
+		int ret = DEVICE_ERR;
+		//MONO8
+		if (val.compare(g_PixelType_Mono8) == 0){ 
+			img_format=XI_MONO8;
+			adc_=8;
 			bytesPerPixel_ = 1;
 			nComponents_ = 1;
+		//RAW8
+		}else if (val.compare(g_PixelType_Raw8) == 0){ 
+			img_format=XI_RAW8;
+			adc_=8;
+			bytesPerPixel_ = 1;
+			nComponents_ = 1;
+		//MONO10
 		}else if (val.compare(g_PixelType_Mono10) == 0){
-			ret = xiSetParamInt( handle, XI_PRM_IMAGE_DATA_FORMAT, XI_MONO16);
-			if(ret != XI_OK) return ret;
-			ret = mmSetExtention( handle, EXT_ADCBPP, 10);
+			img_format=XI_MONO16;
+			adc_=10;
 			bytesPerPixel_ = 2;
 			nComponents_ = 1;
+		//RAW10
+		}else if (val.compare(g_PixelType_Raw10) == 0){
+			img_format=XI_RAW16;
+			adc_=10;
+			bytesPerPixel_ = 2;
+			nComponents_ = 1;
+		//MONO12
 		}else if (val.compare(g_PixelType_Mono12) == 0){
-			ret = xiSetParamInt( handle, XI_PRM_IMAGE_DATA_FORMAT, XI_MONO16);
-			if(ret != XI_OK) return ret;
-			ret = mmSetExtention( handle, EXT_ADCBPP, 12);
+			img_format=XI_MONO16;
+			adc_=12;
 			bytesPerPixel_ = 2;
 			nComponents_ = 1;
+		//RAW12
+		}else if (val.compare(g_PixelType_Raw12) == 0){
+			img_format=XI_RAW16;
+			adc_=12;
+			bytesPerPixel_ = 2;
+			nComponents_ = 1;
+		//MONO14
 		}else if (val.compare(g_PixelType_Mono14) == 0){
-			ret = xiSetParamInt( handle, XI_PRM_IMAGE_DATA_FORMAT, XI_MONO16);
-			if(ret != XI_OK) return ret;
-			ret = mmSetExtention( handle, EXT_ADCBPP, 14);
+			img_format=XI_MONO16;
+			adc_=14;
 			bytesPerPixel_ = 2;
 			nComponents_ = 1;
+		//RAW14
+		}else if (val.compare(g_PixelType_Raw14) == 0){
+			img_format=XI_RAW16;
+			adc_=14;
+			bytesPerPixel_ = 2;
+			nComponents_ = 1;
+		//RGB32
 		}else if (val.compare(g_PixelType_RGB32) == 0){
-			ret = xiSetParamInt( handle, XI_PRM_IMAGE_DATA_FORMAT, XI_RGB32);
-			mmSetExtention( handle, EXT_ADCBPP, 8);
+			img_format=XI_RGB32;
+			adc_=8;
 			bytesPerPixel_ = 4;
 			nComponents_ = 4;
 		}else
 			assert(false);
-
+		
+		ret = xiSetParamInt( handle, XI_PRM_IMAGE_DATA_FORMAT, img_format);
+		if(ret != XI_OK) return ret;
+		mmSetExtention( handle, EXT_ADCBPP, adc_);
+		if(ret != XI_OK) return ret;
 		ResizeImageBuffer();
 		return ret;
 	}
 	else if (eAct == MM::BeforeGet)
 	{
-		if (bytesPerPixel_ == 1)
-			pProp->Set(g_PixelType_Mono8);
-		else if (bytesPerPixel_ == 2){
-			DWORD adcVal = 0;
-			mmGetExtention( handle, EXT_ADCBPP, &adcVal);
-			switch(adcVal)
+		int frm = 0;
+		xiGetParamInt( handle, XI_PRM_IMAGE_DATA_FORMAT, &frm);
+		switch(frm)
+		{
+		case XI_MONO8:
+			pProp->Set(g_PixelType_Mono8); break;
+		case XI_RAW8:
+			pProp->Set(g_PixelType_Raw8); break;
+		case XI_MONO16:
+			switch(adc_)
 			{
 				case 10 : pProp->Set(g_PixelType_Mono10); break;
 				case 12 : pProp->Set(g_PixelType_Mono12); break;
 				case 14 : pProp->Set(g_PixelType_Mono14); break;
 			}
-		}else if (bytesPerPixel_ == 4)
-			pProp->Set(g_PixelType_RGB32);
-		else
+			break;
+		case XI_RAW16:
+			switch(adc_)
+			{
+				case 10 : pProp->Set(g_PixelType_Raw10); break;
+				case 12 : pProp->Set(g_PixelType_Raw12); break;
+				case 14 : pProp->Set(g_PixelType_Raw14); break;
+			}
+			break;
+		case XI_RGB32:
+			pProp->Set(g_PixelType_RGB32); break;
+		default:
 			assert(false); // this should never happen
+		}		
 	}
 
 	return DEVICE_OK;
@@ -1216,13 +1277,16 @@ int XIMEACamera::OnTrigger(MM::PropertyBase* pProp, MM::ActionType eAct)
 		int ret = DEVICE_OK;
 		string val;
 		pProp->Get(val);
-		if (val.compare(g_Trigger_Off) == 0)
+		if (val.compare(g_Trigger_Off) == 0){
 			ret = xiSetParamInt( handle, XI_PRM_TRG_SOURCE, XI_TRG_SOFTWARE);
-		else if (val.compare(g_HW_Rising) == 0)
+			isTrg_=false;
+		}else if (val.compare(g_HW_Rising) == 0){
 			ret = xiSetParamInt( handle, XI_PRM_TRG_SOURCE, XI_TRG_EDGE_RISING);
-		else if (val.compare(g_HW_Falling) == 0)
+			isTrg_=true;
+		}else if (val.compare(g_HW_Falling) == 0){
 			ret = xiSetParamInt( handle, XI_PRM_TRG_SOURCE, XI_TRG_EDGE_FALLING);
-		else
+			isTrg_=true;
+		}else
 			assert(false);
 
 		return ret;
@@ -1454,34 +1518,6 @@ int XIMEACamera::OnGpo4(MM::PropertyBase* pProp, MM::ActionType eAct)
 }
 
 /***********************************************************************
-* Handles "ICC profile" property.
-*/
-int XIMEACamera::OnICC(MM::PropertyBase* pProp, MM::ActionType eAct)
-{
-	int ret = DEVICE_OK;
-	string val;
-	if (eAct == MM::AfterSet)
-	{
-		pProp->Get(val);
-		if(strcmp(val.c_str(), g_ICC_On) == 0){
-			ret = xiSetParamInt( handle, XI_PRM_APPLY_ICC_PROFILE, 1);
-		} else if(strcmp(val.c_str(), g_ICC_Off) == 0){
-			ret = xiSetParamInt( handle, XI_PRM_APPLY_ICC_PROFILE, 0);
-		} else
-			assert(false);
-	}
-	else if (eAct == MM::BeforeGet)
-	{
-		int awb = 0;
-		xiGetParamInt( handle, XI_PRM_APPLY_ICC_PROFILE, &awb);
-		if(awb) val = g_ICC_On;
-		else    val = g_ICC_Off;
-		pProp->Set(val.c_str());
-	}
-	return ret;
-}
-
-/***********************************************************************
 * Handles "WB red" property.
 */
 int XIMEACamera::OnWbRed(MM::PropertyBase* pProp, MM::ActionType eAct)
@@ -1491,7 +1527,7 @@ int XIMEACamera::OnWbRed(MM::PropertyBase* pProp, MM::ActionType eAct)
 	{
 		double val;
 		pProp->Get(val);
-		ret = xiSetParamFloat(handle, XI_PRM_WB_KR, val);
+		ret = xiSetParamFloat(handle, XI_PRM_WB_KR, (float)val);
 	}
 	else if (eAct == MM::BeforeGet)
 	{
@@ -1512,7 +1548,7 @@ int XIMEACamera::OnWbGreen(MM::PropertyBase* pProp, MM::ActionType eAct)
 	{
 		double val;
 		pProp->Get(val);
-		ret = xiSetParamFloat(handle, XI_PRM_WB_KG, val);
+		ret = xiSetParamFloat(handle, XI_PRM_WB_KG, (float)val);
 	}
 	else if (eAct == MM::BeforeGet)
 	{
@@ -1533,7 +1569,7 @@ int XIMEACamera::OnWbBlue(MM::PropertyBase* pProp, MM::ActionType eAct)
 	{
 		double val;
 		pProp->Get(val);
-		ret = xiSetParamFloat(handle, XI_PRM_WB_KB, val);
+		ret = xiSetParamFloat(handle, XI_PRM_WB_KB, (float)val);
 	}
 	else if (eAct == MM::BeforeGet)
 	{
@@ -1583,7 +1619,7 @@ int XIMEACamera::OnGammaY(MM::PropertyBase* pProp, MM::ActionType eAct)
 	{
 		double val = 0;
 		pProp->Get(val);
-		ret = xiSetParamFloat( handle, XI_PRM_GAMMAY, val);
+		ret = xiSetParamFloat( handle, XI_PRM_GAMMAY, (float)val);
 	}
 	else if (eAct == MM::BeforeGet)
 	{
@@ -1605,7 +1641,7 @@ int XIMEACamera::OnGammaC(MM::PropertyBase* pProp, MM::ActionType eAct)
 	{
 		double val = 0;
 		pProp->Get(val);
-		ret = xiSetParamFloat( handle, XI_PRM_GAMMAC, val);
+		ret = xiSetParamFloat( handle, XI_PRM_GAMMAC, (float)val);
 	}
 	else if (eAct == MM::BeforeGet)
 	{
@@ -1627,7 +1663,7 @@ int XIMEACamera::OnSharpness(MM::PropertyBase* pProp, MM::ActionType eAct)
 	{
 		double val = 0;
 		pProp->Get(val);
-		ret = xiSetParamFloat( handle, XI_PRM_SHARPNESS, val);
+		ret = xiSetParamFloat( handle, XI_PRM_SHARPNESS, (float)val);
 	}
 	else if (eAct == MM::BeforeGet)
 	{
@@ -1660,7 +1696,7 @@ int XIMEACamera::OnCcMatrix(MM::PropertyBase* pProp, MM::ActionType eAct)
 				else 		 pch = strtok (NULL, "|");
 				if(pch == NULL) return DEVICE_INVALID_PROPERTY_VALUE;
 				sprintf( buf, "ccMTX%d%d", i, j);
-				ret = xiSetParamFloat( handle, buf,atof(pch)); 
+				ret = xiSetParamFloat( handle, buf,(float)atof(pch)); 
 				if(ret != XI_OK) break;
 			}
 		}
@@ -1724,7 +1760,7 @@ int XIMEACamera::OnExpPrio(MM::PropertyBase* pProp, MM::ActionType eAct)
 	{
 		double val;
 		pProp->Get(val);
-		ret = xiSetParamFloat( handle, XI_PRM_EXP_PRIORITY, val);
+		ret = xiSetParamFloat( handle, XI_PRM_EXP_PRIORITY, (float)val);
 	}
 	else if (eAct == MM::BeforeGet)
 	{
@@ -1746,7 +1782,7 @@ int XIMEACamera::OnExpLim(MM::PropertyBase* pProp, MM::ActionType eAct)
 	{
 		double val;
 		pProp->Get(val);
-		ret = xiSetParamFloat( handle, XI_PRM_AE_MAX_LIMIT, val*1000);
+		ret = xiSetParamFloat( handle, XI_PRM_AE_MAX_LIMIT, (float)(val*1000));
 	}
 	else if (eAct == MM::BeforeGet)
 	{
@@ -1768,7 +1804,7 @@ int XIMEACamera::OnGainLim(MM::PropertyBase* pProp, MM::ActionType eAct)
 	{
 		double val;
 		pProp->Get(val);
-		ret = xiSetParamFloat( handle, XI_PRM_AG_MAX_LIMIT, val);
+		ret = xiSetParamFloat( handle, XI_PRM_AG_MAX_LIMIT, (float)val);
 	}
 	else if (eAct == MM::BeforeGet)
 	{
@@ -1790,7 +1826,7 @@ int XIMEACamera::OnLevel(MM::PropertyBase* pProp, MM::ActionType eAct)
 	{
 		double val;
 		pProp->Get(val);
-		ret = xiSetParamFloat( handle, XI_PRM_AEAG_LEVEL, val);
+		ret = xiSetParamFloat( handle, XI_PRM_AEAG_LEVEL, (float)val);
 	}
 	else if (eAct == MM::BeforeGet)
 	{
@@ -1868,7 +1904,7 @@ int XIMEACamera::OnTargetTemp(MM::PropertyBase* pProp, MM::ActionType eAct)
 	{
 		double val;
 		pProp->Get(val);
-		ret = xiSetParamFloat( handle, XI_PRM_TARGET_TEMP, val);
+		ret = xiSetParamFloat( handle, XI_PRM_TARGET_TEMP, (float)val);
 	}
 	else if (eAct == MM::BeforeGet)
 	{
@@ -1907,54 +1943,6 @@ int XIMEACamera::OnHousTemp(MM::PropertyBase* pProp, MM::ActionType eAct)
 		float val = 0;
 		xiGetParamFloat(handle, XI_PRM_HOUS_TEMP, &val);
 		pProp->Set(val);
-	}
-	return ret;
-}
-
-/***********************************************************************
-* Handles "HDR" property.
-*/
-int XIMEACamera::OnHdr(MM::PropertyBase* pProp, MM::ActionType eAct)
-{
-	int ret = DEVICE_OK;
-	if (eAct == MM::AfterSet)
-	{
-		string val;
-		pProp->Get(val);
-		if(strcmp(val.c_str(), g_Hdr_On) == 0)
-			ret = xiSetParamInt( handle, XI_PRM_HDR, 1);
-		else if(strcmp(val.c_str(), g_Hdr_Off) == 0)
-			ret = xiSetParamInt( handle, XI_PRM_HDR, 0);
-		else
-			assert(false);
-	}
-	else if (eAct == MM::BeforeGet)
-	{
-		int val = 0;
-		xiGetParamInt( handle, XI_PRM_HDR, &val);
-		if(val) pProp->Set(g_Hdr_On);
-		else    pProp->Set(g_Hdr_Off);
-	}
-	return ret;	
-}
-
-/***********************************************************************
-* Handles "HDR ratio" property.
-*/
-int XIMEACamera::OnHdrRatio(MM::PropertyBase* pProp, MM::ActionType eAct)
-{
-	int ret = DEVICE_OK;
-	if (eAct == MM::AfterSet)
-	{
-		double val;
-		pProp->Get(val);
-		ret = xiSetParamInt( handle, XI_PRM_HDR_RATIO, val);
-	}
-	else if (eAct == MM::BeforeGet)
-	{
-		int val = 0;
-		xiGetParamInt(handle, XI_PRM_HDR_RATIO, &val);
-		pProp->Set((double)val);
 	}
 	return ret;
 }

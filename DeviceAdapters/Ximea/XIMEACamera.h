@@ -96,7 +96,6 @@ public:
    int OnGpo3(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnGpo4(MM::PropertyBase* pProp, MM::ActionType eAct);
 
-   int OnICC(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnWbRed(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnWbGreen(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnWbBlue(MM::PropertyBase* pProp, MM::ActionType eAct);
@@ -119,10 +118,6 @@ public:
    int OnChipTemp(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnHousTemp(MM::PropertyBase* pProp, MM::ActionType eAct);
 
-   int OnHdr(MM::PropertyBase* pProp, MM::ActionType eAct);
-   int OnHdrRatio(MM::PropertyBase* pProp, MM::ActionType eAct);
-
-
 private:
 	void* handle;
 	XI_IMG image;
@@ -130,9 +125,11 @@ private:
 	double acqTout_;
 	int bytesPerPixel_;
 	double gain_;
+	int adc_;
 	double exposureMs_;
 	int nComponents_;   
 	bool initialized_;
+	bool isTrg_;
 	ImgBuffer* img_;
 	int roiX_, roiY_;
 	MM::MMTime readoutStartTime_;
