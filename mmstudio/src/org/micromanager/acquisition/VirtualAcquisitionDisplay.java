@@ -832,7 +832,12 @@ public final class VirtualAcquisitionDisplay implements AcquisitionDisplay, Imag
          JSONArray channels = new JSONArray();
          if (numComponents > 1) //RGB
          {
-            int rgbChannelBitDepth = summaryMetadata.getString("PixelType").endsWith("32") ? 8 : 16;
+            int rgbChannelBitDepth;
+            try {
+               rgbChannelBitDepth = MDUtils.getBitDepth(summaryMetadata);
+            } catch (Exception e) {
+                rgbChannelBitDepth = summaryMetadata.getString("PixelType").endsWith("32") ? 8 : 16;
+            }
             for (int k = 0; k < 3; k++) {
                JSONObject channelObject = new JSONObject();
                channelObject.put("Color", rgb[k].getRGB());
