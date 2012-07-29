@@ -100,9 +100,9 @@ public class ConfigGroupPad extends JScrollPane{
       parentGUI_ = parentGUI;
    }
 
-   public void refreshStructure() {
+   public void refreshStructure(boolean fromCache) {
       if (data_ != null) {
-         data_.updateStatus();
+         data_.updateStatus(fromCache);
          data_.fireTableStructureChanged();
          table_.repaint();
       }
@@ -166,7 +166,7 @@ public class ConfigGroupPad extends JScrollPane{
 
       public StateTableData(CMMCore core) {
          core_ = core;
-         updateStatus();
+         updateStatus(false);
          configDirty_ = false;
       }
       public int getRowCount() {
@@ -277,105 +277,102 @@ public class ConfigGroupPad extends JScrollPane{
          return true;
       }
 
-      private boolean containsValue(String strs[], String theValue) {
-          for (String str:strs) {
-              if (theValue.equals(str))
-                  return true;
-          }
-          return false;
+      public void updateStatus(boolean fromCache) {
+         try {
+            StrVector groups = core_.getAvailableConfigGroups();
+            HashMap<String, String> oldGroupHash = new HashMap<String, String>();
+            for (StateItem group : groupList_) {
+               oldGroupHash.put(group.group, group.config);
+            }
+            groupList_.clear();
+
+            for (String group : groups) {
+               StateItem item = new StateItem();
+               item.group = group;
+               if (fromCache) {
+                  item.config = core_.getCurrentConfigFromCache(item.group);
+               } else {
+                  item.config = core_.getCurrentConfig(item.group);
+               }
+               item.allowed = core_.getAvailableConfigs(item.group).toArray();
+
+
+               if (item.config.length() > 0) {
+                  Configuration curCfg = core_.getConfigData(item.group, item.config);
+                  item.descr = curCfg.getVerbose();
+               } else {
+                  item.descr = "";
+               }
+
+               if (item.allowed.length == 1) {
+                  Configuration cfg = core_.getConfigData(item.group, item.allowed[0]);
+                  if (cfg.size() == 1) {
+                     item.device = cfg.getSetting(0).getDeviceLabel();
+                     item.name = cfg.getSetting(0).getPropertyName();
+                     item.hasLimits = core_.hasPropertyLimits(item.device, item.name);
+                     boolean itemHasAllowedValues = (0 < core_.getAllowedPropertyValues(item.device, item.name).size());
+                     if (item.hasLimits || !itemHasAllowedValues) {
+                        item.singleProp = true;
+                        item.type = core_.getPropertyType(item.device, item.name);
+                        if (fromCache) {
+                           item.setValueFromCoreString(core_.getPropertyFromCache(item.device, item.name));
+                        } else {
+                           item.setValueFromCoreString(core_.getProperty(item.device, item.name));
+                        }
+                        item.config = item.value;
+                        item.lowerLimit = core_.getPropertyLowerLimit(item.device, item.name);
+                        item.upperLimit = core_.getPropertyUpperLimit(item.device, item.name);
+                        item.singlePropAllowed = core_.getAllowedPropertyValues(item.device, item.name).toArray();
+                     }
+
+                  }
+               }
+
+
+               groupList_.add(item);
+            }
+         } catch (Exception e) {
+            handleException(e);
+         }
       }
 
-       public void updateStatus() {
-           try {
-               StrVector groups = core_.getAvailableConfigGroups();
-               HashMap<String,String> oldGroupHash = new HashMap<String,String>();
-               for (StateItem group : groupList_) {
-                   oldGroupHash.put(group.group, group.config);
+      public void refreshStatus() {
+         try {
+            for (int i = 0; i < groupList_.size(); i++) {
+               StateItem item = groupList_.get(i);
+               if (item.singleProp) {
+                  item.config = core_.getProperty(item.device, item.name);
+               } else {
+                  item.config = core_.getCurrentConfig(item.group);
+                  // set descr to current situation so that Tooltips get updated
+                  if (item.config.length() > 0) {
+                     Configuration curCfg = core_.getConfigData(item.group, item.config);
+                     item.descr = curCfg.getVerbose();
+                  } else {
+                     item.descr = "";
+                  }
                }
-               groupList_.clear();
+            }
+         } catch (Exception e) {
+            handleException(e);
+         }
+      }
 
-               for (String group:groups) {
-                   StateItem item = new StateItem();
-                   item.group = group;
-                   item.config = core_.getCurrentConfig(item.group);
-                   item.allowed = core_.getAvailableConfigs(item.group).toArray();
-
-
-                   if (item.config.length() > 0) {
-                       Configuration curCfg = core_.getConfigData(item.group, item.config);
-                       item.descr = curCfg.getVerbose();
-                   } else {
-                       item.descr = "";
-                   }
-
-                   if (item.allowed.length == 1) {
-                       Configuration cfg = core_.getConfigData(item.group, item.allowed[0]);
-                       if (cfg.size() == 1) {
-                           item.device = cfg.getSetting(0).getDeviceLabel();
-                           item.name = cfg.getSetting(0).getPropertyName();
-                           item.hasLimits = core_.hasPropertyLimits(item.device, item.name);
-                           boolean itemHasAllowedValues = (0 < core_.getAllowedPropertyValues(item.device, item.name).size());
-                           if (item.hasLimits || !itemHasAllowedValues) {
-                               item.singleProp = true;
-                               item.type = core_.getPropertyType(item.device, item.name);
-                               item.setValueFromCoreString(core_.getProperty(item.device, item.name));
-                               item.config = item.value;
-                               item.lowerLimit = core_.getPropertyLowerLimit(item.device, item.name);
-                               item.upperLimit = core_.getPropertyUpperLimit(item.device, item.name);
-                               item.singlePropAllowed = core_.getAllowedPropertyValues(item.device, item.name).toArray();
-                           }
-
-                       }
-                   }
-
-
-                   groupList_.add(item);
+      public void refreshGroup(String groupName, String configName) {
+         try {
+            for (int i = 0; i < groupList_.size(); i++) {
+               StateItem item = groupList_.get(i);
+               if (item.group.equals(groupName)) {
+                  item.config = configName;
                }
-           } catch (Exception e) {
-               handleException(e);
-           }
-       }
+            }
+         } catch (Exception e) {
+            handleException(e);
+         }
+      }
 
-
-       public void refreshStatus() {
-          try {
-             for (int i=0; i<groupList_.size(); i++){
-                StateItem item = groupList_.get(i);
-                if (item.singleProp) {
-                   item.config = core_.getProperty(item.device, item.name); 
-                } else {
-                   item.config = core_.getCurrentConfig(item.group);
-                   // set descr to current situation so that Tooltips get updated
-                   if (item.config.length() > 0) {
-                       Configuration curCfg = core_.getConfigData(item.group, item.config);
-                       item.descr = curCfg.getVerbose();
-                   } else {
-                       item.descr = "";
-                   }
-                }
-             }
-          } catch (Exception e) {
-             handleException(e);
-          }
-       }
-
-       public void refreshGroup(String groupName, String configName) {
-          try {
-             for (int i=0; i<groupList_.size(); i++) {
-                StateItem item = groupList_.get(i);
-                if (item.group.equals(groupName))
-                   item.config = configName;
-             }
-          } catch (Exception e) {
-             handleException(e);
-          }
-       }
-
-       public boolean isConfigDirty() {
-          return configDirty_;
-       }
-
+      public boolean isConfigDirty() {
+         return configDirty_;
+      }
    }
-
-
 }

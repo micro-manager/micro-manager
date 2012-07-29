@@ -3090,8 +3090,12 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface, Device
       pluginMenu_.validate();
       menuBar_.validate();
    }
-
+   
    public void updateGUI(boolean updateConfigPadStructure) {
+      updateGUI(updateConfigPadStructure, false);
+   }
+
+   public void updateGUI(boolean updateConfigPadStructure, boolean fromCache) {
 
       try {
          // establish device roles
@@ -3107,7 +3111,12 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface, Device
             double exp = core_.getExposure();
             textFieldExp_.setText(NumberUtils.doubleToDisplayString(exp));
             configureBinningCombo();
-            String binSize = core_.getProperty(cameraLabel_, MMCoreJ.getG_Keyword_Binning());
+            String binSize = "";
+            if (fromCache) {
+               binSize = core_.getPropertyFromCache(cameraLabel_, MMCoreJ.getG_Keyword_Binning());
+            } else {
+               binSize = core_.getProperty(cameraLabel_, MMCoreJ.getG_Keyword_Binning());
+            }
             GUIUtils.setComboSelection(comboBinning_, binSize);
          }
 
@@ -3134,9 +3143,10 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface, Device
 
          // state devices
          if (updateConfigPadStructure && (configPad_ != null)) {
-            configPad_.refreshStructure();
+            configPad_.refreshStructure(fromCache);
             // Needed to update read-only properties.  May slow things down...
-            core_.updateSystemStateCache();
+            if (!fromCache)
+               core_.updateSystemStateCache();
          }
 
          // update Channel menus in Multi-dimensional acquisition dialog
@@ -3855,6 +3865,11 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface, Device
    @Override
    public void refreshGUI() {
       updateGUI(true);
+   }
+   
+   @Override
+   public void refreshGUIFromCache() {
+      updateGUI(true, true);
    }
 
    public void setAcquisitionProperty(String acqName, String propertyName,

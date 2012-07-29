@@ -81,7 +81,8 @@ public class PropertyItem {
 	   }
    }
 
-   public void readFromCore(CMMCore core, String deviceName, String propertyName) {
+   public void readFromCore(CMMCore core, String deviceName, String propertyName, 
+           boolean cached) {
 		device = deviceName;
 		name = propertyName;
 		try {
@@ -99,7 +100,11 @@ public class PropertyItem {
 
          sort();
 
-         String coreVal = core.getProperty(deviceName,propertyName);
+         String coreVal = "";
+         if (cached)
+            coreVal = core.getPropertyFromCache(deviceName,propertyName);
+         else
+            coreVal = core.getProperty(deviceName,propertyName);
          setValueFromCoreString(coreVal);
  		 } catch (Exception e) {
 			ReportingUtils.logError(e);

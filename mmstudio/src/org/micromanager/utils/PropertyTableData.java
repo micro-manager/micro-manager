@@ -171,8 +171,9 @@ public class PropertyTableData extends AbstractTableModel implements MMPropertyT
 		if (col == PropertyValueColumn_) {
 			if (item.confInclude) {
 				setValueInCore(item,value);
-            refresh();
-            gui_.refreshGUI();
+            core_.updateSystemStateCache();
+            refresh(true);
+            gui_.refreshGUIFromCache();
 			}
 		}  else if (col == PropertyUsedColumn_)  {
 			item.confInclude = ((Boolean)value).booleanValue();
@@ -206,23 +207,9 @@ public class PropertyTableData extends AbstractTableModel implements MMPropertyT
 		return core_.getAvailableConfigs(group);
 	}
 
-	public void refresh() {
+	public void refresh(boolean fromCache) {
 		try {            
-         update();
-         
-         
-			/*
-          * Not sure why this was here, it cause the properties to be read twice!
-          * gui_.suspendLiveMode();
-			for (int i=0; i<propList_.size(); i++){
-				PropertyItem item = propList_.get(i);
-            if (showDevice(flags_, item.device)) {
-               item.setValueFromCoreString(core_.getProperty(item.device, item.name));
-            }
-			}
-			gui_.resumeLiveMode();
-          
-          */
+         update(fromCache);
 			this.fireTableDataChanged();
 		} catch (Exception e) {
 			handleException(e);
@@ -230,15 +217,16 @@ public class PropertyTableData extends AbstractTableModel implements MMPropertyT
 	}
 
 
-	public void update() {
-		update(flags_, groupName_,presetName_);
+	public void update(boolean fromCache) {
+		update(flags_, groupName_,presetName_, fromCache);
 	}
 
 	public void setShowReadOnly(boolean showReadOnly) {
 		showReadOnly_ = showReadOnly;
 	}
 
-	public void update(ShowFlags flags, String groupName, String presetName) {  
+	public void update(ShowFlags flags, String groupName, String presetName, 
+           boolean fromCache) {  
 		try {
 			StrVector devices = core_.getLoadedDevices();
 			propList_.clear();
@@ -258,7 +246,7 @@ public class PropertyTableData extends AbstractTableModel implements MMPropertyT
                for (int j=0; j<properties.size(); j++) {
                   PropertyItem item = new PropertyItem();
                   if (!groupOnly_ || cfg.isPropertyIncluded(devices.get(i), properties.get(j))) {
-                     item.readFromCore(core_, devices.get(i), properties.get(j));
+                     item.readFromCore(core_, devices.get(i), properties.get(j), false);
                      if ((!item.readOnly || showReadOnly_) && !item.preInit) {
                         if (cfg.isPropertyIncluded(item.device, item.name)) {
                            item.confInclude = true;

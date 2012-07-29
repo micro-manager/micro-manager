@@ -73,6 +73,12 @@ public interface ScriptInterface {
     * Brings GUI up to date with the recent changes in the mmcore.
     */
    public void refreshGUI();
+   
+    /**
+    * Brings GUI up to date with the recent changes in the mmcore.
+    * Does not communicate with hardware, only checks Cache
+    */
+   public void refreshGUIFromCache();
 
    /**
     * Snaps image and displays in AcqWindow.

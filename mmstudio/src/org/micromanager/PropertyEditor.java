@@ -138,7 +138,7 @@ public class PropertyEditor extends MMFrame{
             // restore values from the previous session
             Preferences prefs = getPrefsNode();
             showReadonlyCheckBox_.setSelected(prefs.getBoolean(PREF_SHOW_READONLY, true));
-            data_.update();
+            data_.update(false);
             data_.fireTableStructureChanged();
         }
       });
@@ -178,7 +178,7 @@ public class PropertyEditor extends MMFrame{
          public void actionPerformed(ActionEvent e) {
             // show/hide read-only properties
             data_.setShowReadOnly(showReadonlyCheckBox_.isSelected());
-            data_.update();
+            data_.update(false);
             data_.fireTableStructureChanged();
           }
       });
@@ -198,7 +198,7 @@ public class PropertyEditor extends MMFrame{
       showCamerasCheckBox_.addActionListener(new ActionListener() {
          public void actionPerformed(ActionEvent arg0) {
             flags_.cameras_ = showCamerasCheckBox_.isSelected();
-            data_.update();
+            data_.update(false);
          }
       });
       showCamerasCheckBox_.setText("Show cameras");
@@ -212,7 +212,7 @@ public class PropertyEditor extends MMFrame{
       showShuttersCheckBox_.addActionListener(new ActionListener() {
          public void actionPerformed(ActionEvent arg0) {
             flags_.shutters_ = showShuttersCheckBox_.isSelected();
-            data_.update();
+            data_.update(false);
          }
       });
       showShuttersCheckBox_.setText("Show shutters");
@@ -226,7 +226,7 @@ public class PropertyEditor extends MMFrame{
       showStagesCheckBox_.addActionListener(new ActionListener() {
          public void actionPerformed(ActionEvent arg0) {
             flags_.stages_ = showStagesCheckBox_.isSelected();
-            data_.update();
+            data_.update(false);
          }
       });
       showStagesCheckBox_.setText("Show stages");
@@ -241,7 +241,7 @@ public class PropertyEditor extends MMFrame{
       showStateDevicesCheckBox_.addActionListener(new ActionListener() {
          public void actionPerformed(ActionEvent arg0) {
             flags_.state_ = showStateDevicesCheckBox_.isSelected();
-            data_.update();
+            data_.update(false);
          }
       });
       showStateDevicesCheckBox_.setText("Show discrete changers");
@@ -256,7 +256,7 @@ public class PropertyEditor extends MMFrame{
       showOtherCheckBox_.addActionListener(new ActionListener() {
          public void actionPerformed(ActionEvent arg0) {
             flags_.other_ = showOtherCheckBox_.isSelected();
-            data_.update();
+            data_.update(false);
          }
       });
       showOtherCheckBox_.setText("Show other devices");
@@ -274,12 +274,12 @@ public class PropertyEditor extends MMFrame{
       data_.gui_ = gui_;
       data_.flags_ = flags_;
       data_.showUnused_ = true;
-      data_.refresh();
+      data_.refresh(false);
    }
 
    public void updateStatus() {
       if (data_ != null)
-         data_.update();
+         data_.update(false);
    }
 
     public void setCore(CMMCore core) {
@@ -322,8 +322,9 @@ public class PropertyEditor extends MMFrame{
          if (col == PropertyValueColumn_) {
             setValueInCore(item,value);
          }
-         refresh();
-         gui_.refreshGUI();
+         core_.updateSystemStateCache();
+         refresh(true);
+         gui_.refreshGUIFromCache();
          fireTableCellUpdated(row, col);
       }
 
@@ -337,7 +338,7 @@ public class PropertyEditor extends MMFrame{
       }
       
       @Override
-      public void update(ShowFlags flags, String groupName, String presetName) {  
+      public void update(ShowFlags flags, String groupName, String presetName, boolean fromCache) {  
          try {
             StrVector devices = core_.getLoadedDevices();
             propList_.clear();
@@ -349,7 +350,7 @@ public class PropertyEditor extends MMFrame{
                   StrVector properties = core_.getDevicePropertyNames(devices.get(i));
                   for (int j=0; j<properties.size(); j++){
                      PropertyItem item = new PropertyItem();
-                     item.readFromCore(core_, devices.get(i), properties.get(j));
+                     item.readFromCore(core_, devices.get(i), properties.get(j), fromCache);
 
                      if ((!item.readOnly || showReadOnly_) && !item.preInit) {
                         propList_.add(item);

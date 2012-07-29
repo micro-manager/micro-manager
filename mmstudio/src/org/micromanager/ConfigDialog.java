@@ -200,7 +200,7 @@ public class ConfigDialog extends MMDialog {
             public void actionPerformed(ActionEvent e) {
                // show/hide read-only properties
                data_.setShowReadOnly(showReadonlyCheckBox_.isSelected());
-               data_.update();
+               data_.update(false);
                data_.fireTableStructureChanged();
              }
          });
@@ -330,7 +330,7 @@ public class ConfigDialog extends MMDialog {
    }
 
    public void update() {
-      data_.update();
+      data_.update(false);
    }
 
    
