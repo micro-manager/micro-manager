@@ -44,7 +44,6 @@ import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
-import javax.swing.JOptionPane;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.JTextField;
@@ -187,7 +186,7 @@ public class AutofocusPropertyEditor extends MMDialog {
          }
          if (afMgr_.getDevice() != null) {
             methodCombo_.setSelectedItem(afMgr_.getDevice().getDeviceName());
-         }
+         } 
          methodCombo_.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent arg0) {
                changeAFMethod((String)methodCombo_.getSelectedItem());
