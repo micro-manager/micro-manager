@@ -564,7 +564,7 @@ private:
    int applyProperties(std::vector<PropertySetting>& props, std::string& lastError);
    MM::Device* getDevice(const char* label) const throw (CMMError);
    void waitForDevice(MM::Device* pDev) throw (CMMError);
-   Configuration getConfigGroupState(const char* group, bool fromCache = false) const throw (CMMError);
+   Configuration getConfigGroupState(const char* group, bool fromCache) const throw (CMMError);
    std::string getDeviceErrorText(int deviceCode, MM::Device* pDevice) const;
    std::string getDeviceName(MM::Device* pDev);
    void logError(const char* device, const char* msg, const char* file=0, int line=0) const;
