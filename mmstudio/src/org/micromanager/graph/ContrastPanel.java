@@ -42,7 +42,7 @@ import javax.swing.event.ChangeListener;
 import org.micromanager.acquisition.MetadataPanel;
 import org.micromanager.acquisition.VirtualAcquisitionDisplay;
 import org.micromanager.internalinterfaces.Histograms;
-import org.micromanager.utils.ScaleBar;
+import org.micromanager.utils.MMScaleBar;
 
 /**
  *
@@ -371,7 +371,7 @@ public class ContrastPanel extends JPanel {
       }
       ImagePlus ip = currentDisplay_.getHyperImage();
       if (show) {
-         ScaleBar sizeBar = new ScaleBar(ip);
+         MMScaleBar sizeBar = new MMScaleBar(ip);
 
          if (sizeBar != null) {
             Overlay ol = new Overlay();
@@ -379,16 +379,16 @@ public class ContrastPanel extends JPanel {
             ol.setStrokeColor(overlayColor_);
             String selected = (String) sizeBarComboBox_.getSelectedItem();
             if (selected.equals("Top-Right")) {
-               sizeBar.setPosition(ScaleBar.Position.TOPRIGHT);
+               sizeBar.setPosition(MMScaleBar.Position.TOPRIGHT);
             }
             if (selected.equals("Top-Left")) {
-               sizeBar.setPosition(ScaleBar.Position.TOPLEFT);
+               sizeBar.setPosition(MMScaleBar.Position.TOPLEFT);
             }
             if (selected.equals("Bottom-Right")) {
-               sizeBar.setPosition(ScaleBar.Position.BOTTOMRIGHT);
+               sizeBar.setPosition(MMScaleBar.Position.BOTTOMRIGHT);
             }
             if (selected.equals("Bottom-Left")) {
-               sizeBar.setPosition(ScaleBar.Position.BOTTOMLEFT);
+               sizeBar.setPosition(MMScaleBar.Position.BOTTOMLEFT);
             }
             sizeBar.addToOverlay(ol);
             ol.setStrokeColor(overlayColor_);
