@@ -135,6 +135,7 @@ public:
    void setSystemState(const Configuration& conf);
    Configuration getConfigState(const char* group, const char* config) const throw (CMMError);
    Configuration getConfigGroupState(const char* group) const throw (CMMError);
+   Configuration getConfigGroupStateFromCache(const char* group) const throw (CMMError);
    void saveSystemState(const char* fileName) throw (CMMError);
    void loadSystemState(const char* fileName) throw (CMMError);
    void saveSystemConfiguration(const char* fileName) throw (CMMError);
@@ -158,6 +159,7 @@ public:
    std::vector<std::string> getLoadedDevicesOfType(MM::DeviceType devType) const;
    std::vector<std::string> getDevicePropertyNames(const char* label) const throw (CMMError);
    std::string getProperty(const char* label, const char* propName) const throw (CMMError);
+   std::string getPropertyFromCache(const char* label, const char* propName) const throw (CMMError);
    void setProperty(const char* label, const char* propName, const char* propValue) throw (CMMError);
 
    void setProperty(const char* label, const char* propName, const bool propValue) throw (CMMError);
@@ -246,6 +248,7 @@ public:
    std::vector<std::string> getAvailableConfigGroups() const;
    std::vector<std::string> getAvailableConfigs(const char* configGroup) const;
    std::string getCurrentConfig(const char* groupName) const throw (CMMError);
+   std::string getCurrentConfigFromCache(const char* groupName) const throw (CMMError);
    Configuration getConfigData(const char* configGroup, const char* configName) const throw (CMMError);
    std::string getCurrentPixelSizeConfig() const throw (CMMError);
    std::string getCurrentPixelSizeConfig(bool cached) const throw (CMMError);
@@ -561,6 +564,7 @@ private:
    int applyProperties(std::vector<PropertySetting>& props, std::string& lastError);
    MM::Device* getDevice(const char* label) const throw (CMMError);
    void waitForDevice(MM::Device* pDev) throw (CMMError);
+   Configuration getConfigGroupState(const char* group, bool fromCache = false) const throw (CMMError);
    std::string getDeviceErrorText(int deviceCode, MM::Device* pDevice) const;
    std::string getDeviceName(MM::Device* pDev);
    void logError(const char* device, const char* msg, const char* file=0, int line=0) const;

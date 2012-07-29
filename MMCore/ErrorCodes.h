@@ -73,7 +73,8 @@
 #define MMERR_CircularBufferIncompatibleImage  45
 #define MMERR_NotAllowedDuringSequenceAcquisition  46
 #define MMERR_OutOfMemory					47
-#define MMERR_InvalidImageSequence 48
-#define MMERR_NullPointerException 49
-#define MMERR_CreatePeripheralFailed 50
+#define MMERR_InvalidImageSequence     48
+#define MMERR_NullPointerException     49
+#define MMERR_CreatePeripheralFailed   50
+#define MMERR_PropertyNotInCache       51
 #endif //_ERRORCODES_H_

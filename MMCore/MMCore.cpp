@@ -522,10 +522,28 @@ Configuration CMMCore::getConfigState(const char* group, const char* config) con
 
 
 /**
- * Returns the parital state of the system, only for the devices included in the
+ * Returns the partial state of the system, only for the devices included in the
  * specified group. It will create a union of all devices referenced in a group.
  */
 Configuration CMMCore::getConfigGroupState(const char* group) const throw (CMMError)
+{
+   return getConfigGroupState(group, false);
+}
+
+/**
+ * Returns the partial state of the system cache, only for the devices included in the
+ * specified group. It will create a union of all devices referenced in a group.
+ */
+Configuration CMMCore::getConfigGroupStateFromCache(const char* group) const throw (CMMError)
+{
+   return getConfigGroupState(group, true);
+}
+
+/**
+ * Returns the partial state of the system, only for the devices included in the
+ * specified group. It will create a union of all devices referenced in a group.
+ */
+Configuration CMMCore::getConfigGroupState(const char* group, bool fromCache) const throw (CMMError)
 {
 
    vector<string> configs = configGroups_->GetAvailableConfigs(group);
@@ -537,7 +555,11 @@ Configuration CMMCore::getConfigGroupState(const char* group) const throw (CMMEr
          PropertySetting cs = cfgData.getSetting(i); // config setting
          if (!state.isPropertyIncluded(cs.getDeviceLabel().c_str(), cs.getPropertyName().c_str()))
          {
-            string value = getProperty(cs.getDeviceLabel().c_str(), cs.getPropertyName().c_str());
+            string value = "";
+            if (fromCache)
+               value = getPropertyFromCache(cs.getDeviceLabel().c_str(), cs.getPropertyName().c_str());
+            else
+               value = getProperty(cs.getDeviceLabel().c_str(), cs.getPropertyName().c_str());
             PropertySetting ss(cs.getDeviceLabel().c_str(), cs.getPropertyName().c_str(), value.c_str()); // state setting
             state.addSetting(ss);
          }
@@ -2991,6 +3013,43 @@ string CMMCore::getProperty(const char* label, const char* propName) const throw
 
    return string(value);
 }
+
+/**
+ * Returns the cached property value for the specified device. 
+
+ * @return string property value
+ * @param const char* label device label
+ * @param const char* propName property name
+ */
+string CMMCore::getPropertyFromCache(const char* label, const char* propName) const throw (CMMError)
+{
+
+   if (label == NULL || propName == NULL)
+      throw CMMError(MMERR_NullPointerException);
+
+   // in case we requested Core device
+   if (strcmp(label, MM::g_Keyword_CoreDevice) == 0)
+   {
+      return properties_->Get(propName);
+   }
+
+
+   if (!stateCache_.isPropertyIncluded(label, propName))
+      throw CMMError(label, "Property not found in the cache", MMERR_PropertyNotInCache);
+
+   PropertySetting s = stateCache_.getSetting(label, propName);
+
+   return s.getPropertyValue();
+}
+
+/**
+ * Changes the value of the device property.
+ *
+ * @return void 
+ * @param const char* label device label
+ * @param const char* propName property name
+ * @param const char* propValue the new property value
+ */
 /**
  * Changes the value of the device property.
  *
@@ -4292,7 +4351,7 @@ vector<string> CMMCore::getAvailablePixelSizeConfigs() const
 
 /**
  * Returns the current configuration for a given group.
- * An empty string as a valid return value, since the system state will not
+ * An empty string is a valid return value, since the system state will not
  * always correspond to any of the defined configurations.
  * Also, in general it is possible that the system state fits multiple configurations.
  * This method will return only the first matching configuration, if any.
@@ -4311,7 +4370,40 @@ string CMMCore::getCurrentConfig(const char* groupName) const throw (CMMError)
    if (cfgs.empty())
       return empty;
 
-   Configuration curState = getConfigGroupState(groupName);
+   Configuration curState = getConfigGroupState(groupName, false);
+
+   for (size_t i=0; i<cfgs.size(); i++)
+   {
+      Configuration* pCfg = configGroups_->Find(groupName, cfgs[i].c_str());
+      if (pCfg && curState.isConfigurationIncluded(*pCfg))
+         return cfgs[i];
+   }
+
+   // no match
+   return empty;
+}
+
+/**
+ * Returns the configuration for a given group based on the data in the cache.
+ * An empty string is a valid return value, since the system state will not
+ * always correspond to any of the defined configurations.
+ * Also, in general it is possible that the system state fits multiple configurations.
+ * This method will return only the first matching configuration, if any.
+ *
+ * @return string configuration name
+ */
+string CMMCore::getCurrentConfigFromCache(const char* groupName) const throw (CMMError)
+{
+
+   string empty("");
+   if (groupName == NULL)
+      throw CMMError(MMERR_NullPointerException);
+
+   vector<string> cfgs = configGroups_->GetAvailableConfigs(groupName);
+   if (cfgs.empty())
+      return empty;
+
+   Configuration curState = getConfigGroupState(groupName, true);
 
    for (size_t i=0; i<cfgs.size(); i++)
    {
