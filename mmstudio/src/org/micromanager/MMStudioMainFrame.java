@@ -3925,6 +3925,10 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface, Device
             acq.setImagePhysicalDimensions((int) width, (int) height, (int) depth, (int) bitDepth, multiCamNumCh);
             acq.initialize();
          }
+         
+         if (acq.getPositions() > 1) {
+            ti.tags.put("PositionName", "Pos" + position);
+         }
 
          addImage(name, ti, true);
       } catch (Exception e) {

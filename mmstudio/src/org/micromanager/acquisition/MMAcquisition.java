@@ -212,6 +212,10 @@ public class MMAcquisition {
       return numSlices_;
    }
 
+   public int getPositions() {
+      return numPositions_;
+   }
+   
    public void setDimensions(int frames, int channels, int slices) throws MMScriptException {
       setDimensions(frames, channels, slices, 0);
    }
