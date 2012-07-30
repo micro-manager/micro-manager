@@ -81,6 +81,7 @@ ZeissHub::ZeissHub() :
    // Set Servos
    commandGroup_[0x08]=0xA2; 
    commandGroup_[0x09]=0xA2; 
+   commandGroup_[0x23]=0xA2; 
    commandGroup_[0x28]=0xA2; 
    commandGroup_[0x29]=0xA2; 
    commandGroup_[0x2D]=0xA2;
