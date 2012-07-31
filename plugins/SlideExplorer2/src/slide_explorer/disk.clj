@@ -40,10 +40,10 @@
 
 (defn add-tile
   "Adds a tile to the atom in memory and saves a .tif image to the associated directory."
-  [memory-tile-atom key processor]
-  (swap! memory-tile-atom cache/add-item key processor)
+  [memory-tile-atom key image-processor]
+  (swap! memory-tile-atom cache/add-item key image-processor)
   (.submit file-executor
-           #(write-tile (tile-dir memory-tile-atom) key processor)))
+           #(write-tile (tile-dir memory-tile-atom) key image-processor)))
 
 (defn load-tile
   [memory-tile-atom key]

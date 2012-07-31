@@ -35,13 +35,14 @@
   [reference key]
   (let [frame (JFrame. key)
         label (JLabel.)
-        update-fn #(edt (.setText label (str "<html><pre>" 
-                                             (with-out-str (pprint/pprint %)
-                                                       ) "</pre></html>")))]
+        update-fn (fn [_ new-state]
+                    (edt (.setText label
+                                   (str "<html><pre>" 
+                                        (with-out-str (pprint/pprint new-state))
+                                        "</pre></html>"))))]
     (.add (.getContentPane frame) label)
-    (add-watch reference key
-               (fn [_ _ _ new-state] (update-fn new-state)))
-    (update-fn @reference)
+    (reactive/handle-update reference update-fn)
+    (update-fn nil @reference)
     (doto frame
       (.addWindowListener
         (proxy [WindowAdapter] []
@@ -136,7 +137,6 @@
     (loop [child (child-indices full-indices)
            parent full-indices]
       (when (<= MIN-ZOOM (:zoom child))
-        (println (:zoom child))
         (propagate-tile tile-map-atom child parent)
         (recur (child-indices child) child)))))
 
@@ -392,7 +392,8 @@ to normal size."
     (.setBounds 10 10 500 500)))
 
 (defn show [memory-tiles acquired-images]
-  (let [screen-state (atom (sorted-map :x 0 :y 0 :z 0 :zoom 1 :width 100 :height 10
+  (let [screen-state (atom (sorted-map :x 0 :y 0 :z 0 :zoom 1
+                                       :width 100 :height 10
                                        :keys (sorted-set)
                                        :channels (sorted-map))
                                        :update 0)
@@ -414,7 +415,6 @@ to normal size."
     ((juxt handle-drags handle-arrow-pan handle-wheel handle-resize)
       panel screen-state)
     ((juxt handle-zoom handle-dive watch-keys) frame screen-state)
-    (println (meta @overlay-tiles))
     (load-visible-only screen-state memory-tiles
                        overlay-tiles acquired-images)
     (repaint-on-change panel screen-state)

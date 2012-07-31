@@ -33,11 +33,12 @@
   "Update a LRU metadata map to make key the most recent item."
   [lru-meta key]
   (let [tick (get-in lru-meta [::lru :tick])]
-    (when (not= tick (get-in lru-meta [::lru :priority key]))
+    (if (not= tick (get-in lru-meta [::lru :priority key]))
       (let [tick+ (inc tick)]
         (-> lru-meta
             (assoc-in [::lru :tick] tick+)
-            (update-in [::lru :priority] assoc key tick+))))))
+            (update-in [::lru :priority] assoc key tick+)))
+      lru-meta)))
 
 (defn hit-item
   "Updates lru-map's metadata so that key is the most recently used item."
@@ -68,70 +69,3 @@
   "Get an item from the LRU persistent map."
   [lru-map key]
   (-> lru-map (hit-item key) key))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; image-cache consists of an agent
-;; that contains a map
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-(def file-service 
-  "All file i/o runs on this thread."
-  (Executors/newFixedThreadPool 1))
-  
-(defn- key-map-to-file-name
-  "Convert the map used as a key in image cache to a file name. Uses
-   the directory stored in the agent's metadata."
-  [cache-agent key-map]
-  (let [dir (-> cache-agent meta ::cache :directory)]
-    (str dir "/"
-         (apply str 
-                (for [[k v] key-map]
-                  (let [val-str (.replace (str v) "/" "by")]
-                    (str (name k) "_" val-str "_"))))
-         ".tif")))
-
-(defn add-image
-  "Add an image to the cache at key. Will be held in memory and saved to disk."
-  [cache-agent key image]
-  (swap! cache-agent add-item key image)
-  (.submit file-service #(image/write-processor (key-map-to-file-name cache-agent key) image))
-  nil)
-  
-(defn get-image
-  "Get the image located at key. If image is in memory, will return it. If image
-   is not in memory, nil will be returned, but the image will be read from file and
-   added to the map asynchronously so that a future get-image request will return
-   the image in memory."
-  [cache-agent key block?]
-  (if-let [mem-val (clojure.core/get @cache-agent key)]
-    (do (swap! cache-agent hit-item key)
-        mem-val)
-    (let [loaded-image-future
-          (.submit file-service
-                   #(let [image (image/read-processor (key-map-to-file-name cache-agent key))]
-                      (swap! cache-agent add-item key image false)
-                      image))]
-      (when block?
-        (let [img (.get loaded-image-future)]
-          ;(println img)
-          img)))))
-
-(defn has-image
-  "Checks if the cache-agent has an image in memory or on disk."
-  [cache-agent key]
-  (or (not (nil? (@cache-agent key)))
-      (.exists (File. (key-map-to-file-name cache-agent key)))))
-                 
-(defn image-cache
-  "Creates an image cache that uses a LRU policy to store memory-cache-size
-   images in memory, and also stores all images on disk in TIFF files in the
-   specified directory."
-  [dir memory-cache-size]
-  (doto (atom (empty-lru-map memory-cache-size))
-    (reset-meta! {::cache {:directory dir}})))
-
-;; test
-
-(import ij.ImageJ)
-
-(import ij.process.ByteProcessor)

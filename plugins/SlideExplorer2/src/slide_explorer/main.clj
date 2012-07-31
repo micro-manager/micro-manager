@@ -145,8 +145,7 @@
 (def image-processing-executor (Executors/newFixedThreadPool 1))
  
 (defn add-tiles-at [memory-tiles [nx ny] affine-stage-to-pixel acquired-images]
-  (reactive/submit image-processing-executor
-                   #(swap! acquired-images conj [nx ny]))
+  (swap! acquired-images conj [nx ny])
   (doseq [image (doall (acquire-at (inverse-transform
                                      (Point. (* 512 nx) (* 512 ny))
                                      affine-stage-to-pixel)))]
@@ -155,12 +154,10 @@
                    :nz (get-in image [:tags "SliceIndex"])
                    :nt 0
                    :nc (or (get-in image [:tags "Channel"]) "Default")}]
-      (reactive/submit
-        image-processing-executor
-        #(add-to-memory-tiles 
+      (add-to-memory-tiles 
            memory-tiles
            indices
-           (image :proc))))))
+           (image :proc)))))
     
 (defn acquire-next-tile
   [memory-tiles-atom
@@ -184,6 +181,8 @@
                                              [tile-width tile-height])
                       (explore memory-tiles-atom screen-state-atom
                            acquired-images affine [tile-width tile-height]))))
+                      
+
 
 ; Overall scheme
 ; the GUI is generally reactive.
@@ -214,7 +213,7 @@
   (core waitForDevice (core getXYStageDevice))
   (let [dir (str "tmp" (rand-int 10000000))
         memory-tiles (doto (atom (cache/empty-lru-map 100))
-                                 (alter-meta! assoc ::directory dir))
+                       (alter-meta! assoc ::directory dir))
         acquired-images (atom #{})
         xy-stage (core getXYStageDevice)
         affine-stage-to-pixel (origin-here-stage-to-pixel-transform)
@@ -230,8 +229,7 @@
     (swap! ss assoc :channels (initial-lut-maps first-seq))
     (explore-fn)
     (add-watch ss "explore" (fn [_ _ old new] (when-not (= old new)
-                                                (explore-fn))))
-    ))
+                                                (explore-fn))))))
   
 ;; tests
 
