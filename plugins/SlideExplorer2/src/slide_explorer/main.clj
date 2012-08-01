@@ -9,6 +9,7 @@
            (java.util.prefs Preferences)
            (java.util.concurrent Executors)
            (javax.imageio ImageIO)
+           (javax.swing JFileChooser)
            (ij ImagePlus)
            (ij.process ImageProcessor)
            (mmcorej TaggedImage)
@@ -21,10 +22,13 @@
         [slide-explorer.view :only (show add-to-memory-tiles tile-in-pixel-rectangle?
                                     pixel-rectangle screen-rectangle tiles-in-pixel-rectangle)]
         [slide-explorer.image :only (show-image intensity-range lut-object)]
-        [slide-explorer.tiles :only (floor-int center-tile tile-list offset-tiles)])
+        [slide-explorer.tiles :only (floor-int center-tile tile-list offset-tiles)]
+        [slide-explorer.persist :only (save-as)]
+        [clojure.java.io :only (file)])
   (:require [slide-explorer.disk :as disk]
             [slide-explorer.reactive :as reactive]
-            [slide-explorer.cache :as cache]))
+            [slide-explorer.cache :as cache]
+            [slide-explorer.persist :as persist]))
 
 (load-mm (MMStudioMainFrame/getInstance))
 
@@ -172,7 +176,8 @@
 (def explore-executor (Executors/newFixedThreadPool 1))
 
 (defn explore [memory-tiles-atom screen-state-atom acquired-images
-               affine [tile-width tile-height]]  
+               affine [tile-width tile-height]]
+  ;(println "explore")
   (reactive/submit explore-executor
                    #(when (acquire-next-tile memory-tiles-atom
                                              screen-state-atom
@@ -182,8 +187,6 @@
                       (explore memory-tiles-atom screen-state-atom
                            acquired-images affine [tile-width tile-height]))))
                       
-
-
 ; Overall scheme
 ; the GUI is generally reactive.
 ; vars:
@@ -205,32 +208,44 @@
 ; Overlay tiles are generated whenever memory tiles are added
 ; or the contrast is changed.
 ; The view redraws tiles inside viewing area whenever view-state
-; has been adjusted or a new image appears in overlay-tiles.
-      
+  ; has been adjusted or a new image appears in overlay-tiles.
+
 (defn go
   "The main function that starts a slide explorer window."
-  []
-  (core waitForDevice (core getXYStageDevice))
-  (let [dir (str "tmp" (rand-int 10000000))
-        memory-tiles (doto (atom (cache/empty-lru-map 100))
-                       (alter-meta! assoc ::directory dir))
-        acquired-images (atom #{})
-        xy-stage (core getXYStageDevice)
-        affine-stage-to-pixel (origin-here-stage-to-pixel-transform)
-        first-seq (acquire-at (inverse-transform (Point. 0 0) affine-stage-to-pixel))
-        screen-state (show memory-tiles acquired-images)
-        explore-fn #(explore memory-tiles screen-state acquired-images
-                             affine-stage-to-pixel [512 512])]
-    (.mkdirs (java.io.File. dir))
-    (def mt memory-tiles)
-    (def affine affine-stage-to-pixel)
-    (def ss screen-state)
-    (def ai acquired-images)
-    (swap! ss assoc :channels (initial-lut-maps first-seq))
-    (explore-fn)
-    (add-watch ss "explore" (fn [_ _ old new] (when-not (= old new)
-                                                (explore-fn))))))
+  ([dir new?]
+    (core waitForDevice (core getXYStageDevice))
+    (let [memory-tiles (doto (atom (cache/empty-lru-map 100))
+                         (alter-meta! assoc ::directory dir))
+          acquired-images (atom #{})
+          affine-stage-to-pixel (origin-here-stage-to-pixel-transform)
+          first-seq (acquire-at (inverse-transform (Point. 0 0) affine-stage-to-pixel))
+          screen-state (show memory-tiles acquired-images)
+          explore-fn #(explore memory-tiles screen-state acquired-images
+                               affine-stage-to-pixel [512 512])]
+      (.mkdirs dir)
+      (def mt memory-tiles)
+      (def affine affine-stage-to-pixel)
+      (def ss screen-state)
+      (def ai acquired-images)
+      (swap! ss assoc :channels (initial-lut-maps first-seq))
+      (when new?
+        (explore-fn)
+        (add-watch ss "explore" (fn [_ _ old new] (when-not (= old new)
+                                                    (explore-fn)))))))
+  ([]
+    (go (file (str "tmp" (rand-int 10000000))) true)))
   
+
+(defn save-data-set
+  [memory-tile-atom]
+  (let [new-location (persist/save-as (::directory (meta memory-tile-atom)))]
+    (alter-meta! memory-tile-atom assoc ::directory new-location)))
+
+(defn load-data-set
+  []
+  (when-let [dir (persist/open-dir-dialog)]
+    (go (file dir) false)))
+
 ;; tests
 
 (defn get-tile [{:keys [nx ny nz nt nc]}]

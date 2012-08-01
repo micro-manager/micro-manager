@@ -27,6 +27,7 @@
 
 (def MAX-ZOOM 1)
 
+
 ;; TESTING UTILITIES
 
 (defn reference-viewer
@@ -148,7 +149,7 @@
   (let [channel-names (keys channels-map)
         procs (for [chan channel-names]
                 (let [tile-index (assoc tile-indices :nc chan)]
-                  (swap! memory-tiles-atom cache/hit-item tile-index)
+                  ;(swap! memory-tiles-atom cache/hit-item tile-index)
                   (get @memory-tiles-atom tile-index)))
         lut-maps (map channels-map channel-names)]
     (overlay-memo procs lut-maps)))
@@ -221,7 +222,8 @@
     (def agent1 agent)
     (reactive/handle-update
       memory-tile-atom
-      react-fn
+      (fn [old new] (when-not (identical? (with-meta old nil) (with-meta new nil)))
+                      (react-fn old new))
       agent)
     (reactive/handle-update
       screen-state-atom
@@ -376,6 +378,9 @@ to normal size."
                                    (swap! pointing-atom merge {:x (.getX e)
                                                                :y (.getY e)})))))
 
+(defn handle-open [window]
+  (bind-window-keys window ["S"] create-dir-dialog))
+
 ;; MAIN WINDOW AND PANEL
 
 (defn main-panel [screen-state overlay-tiles-atom]
@@ -421,5 +426,6 @@ to normal size."
     (repaint-on-change panel memory-tiles)
     (repaint-on-change panel overlay-tiles)
     (handle-pointing panel mouse-position)
+    (handle-open frame)
     screen-state))
 

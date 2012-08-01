@@ -13,7 +13,7 @@
   "Convert the map used as a key in image cache to a file name. Uses
    the directory stored in the agent's metadata."
   [dir key-map]
-  (str dir "/"
+  (str (.getAbsolutePath (clojure.java.io/file dir)) "/"
        (apply str 
               (for [[k v] (into (sorted-map) key-map)]
                 (let [val-str (.replace (str v) "/" "by")]
@@ -50,7 +50,9 @@
   "Loads the tile into memory-tile-atom, if tile is not already present."
   (reactive/submit file-executor
                    (fn []
-                     (or (get @memory-tile-atom key)
+                     (or ;(println "loading tile")
+                         (get @memory-tile-atom key)
+                         ;(println "key not found")
                          (when-let [tile (read-tile (tile-dir memory-tile-atom) key)]
                            (swap! memory-tile-atom
                                   #(if-not (get % key)
