@@ -141,21 +141,23 @@
         trajectory (take number-tiles (offset-tiles center-tile tile-list))
         allowed (filter #(tile-in-pixel-rectangle?
                            % pixel-rect [tile-width tile-height])
-                        trajectory)]
-    (first (remove @acquired-images allowed))))
+                        trajectory)
+        z (:z screen-state)
+        acquired-images-on-slice (get @acquired-images z)]
+    (first (remove acquired-images-on-slice allowed))))
 
 ;; tile acquisition management
 
 (def image-processing-executor (Executors/newFixedThreadPool 1))
  
-(defn add-tiles-at [memory-tiles [nx ny] affine-stage-to-pixel acquired-images]
-  (swap! acquired-images conj [nx ny])
+(defn add-tiles-at [memory-tiles {:keys [nx ny nz] :as tile-key} affine-stage-to-pixel acquired-images]
+  (swap! acquired-images update-in nz conj tile-key)
   (doseq [image (doall (acquire-at (inverse-transform
                                      (Point. (* 512 nx) (* 512 ny))
                                      affine-stage-to-pixel)))]
     (let [indices {:nx nx
                    :ny ny
-                   :nz (get-in image [:tags "SliceIndex"])
+                   :nz (+ nz (get-in image [:tags "SliceIndex"]))
                    :nt 0
                    :nc (or (get-in image [:tags "Channel"]) "Default")}]
       (add-to-memory-tiles 
@@ -218,22 +220,25 @@
                          (alter-meta! assoc ::directory dir))
           acquired-images (atom #{})
           affine-stage-to-pixel (origin-here-stage-to-pixel-transform)
-          first-seq (acquire-at (inverse-transform (Point. 0 0) affine-stage-to-pixel))
           screen-state (show memory-tiles acquired-images)
           explore-fn #(explore memory-tiles screen-state acquired-images
                                affine-stage-to-pixel [512 512])]
-      (.mkdirs dir)
       (def mt memory-tiles)
       (def affine affine-stage-to-pixel)
       (def ss screen-state)
       (def ai acquired-images)
-      (swap! ss assoc :channels (initial-lut-maps first-seq))
+      ; move this code to the viewer
+      (let [first-seq (acquire-at (inverse-transform (Point. 0 0)
+                                                     affine-stage-to-pixel))]
+        (swap! screen-state assoc :channels (initial-lut-maps first-seq)))
       (when new?
         (explore-fn)
         (add-watch ss "explore" (fn [_ _ old new] (when-not (= old new)
                                                     (explore-fn)))))))
   ([]
-    (go (file (str "tmp" (rand-int 10000000))) true)))
+    (let [dir (file (str "tmp" (rand-int 10000000)))]
+      (.mkdirs dir)
+      (go dir true))))
   
 
 (defn save-data-set
