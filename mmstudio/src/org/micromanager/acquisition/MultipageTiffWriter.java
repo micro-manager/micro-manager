@@ -32,11 +32,15 @@ import java.nio.CharBuffer;
 import java.nio.channels.FileChannel;
 import java.util.HashMap;
 import java.util.LinkedList;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import mmcorej.TaggedImage;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.micromanager.MMStudioMainFrame;
 import org.micromanager.utils.MDUtils;
+import org.micromanager.utils.MMException;
 import org.micromanager.utils.MMScriptException;
 import org.micromanager.utils.ReportingUtils;
 
@@ -105,7 +109,19 @@ public class MultipageTiffWriter {
       try {
          f.createNewFile();
          raFile_ = new RandomAccessFile(f, "rw");
-         raFile_.setLength(fileSize);
+         try {
+            raFile_.setLength(fileSize);
+         } catch (IOException e) {       
+          new Thread(new Runnable() {
+                public void run() {
+                    try {
+                        Thread.sleep(1000);
+                    } catch (InterruptedException ex) {}
+                    MMStudioMainFrame.getInstance().getAcquisitionEngine().abortRequest();
+                } }).start();
+
+                ReportingUtils.showError("Insufficent space on disk: no room to write data");
+         }
          fileChannel_ = raFile_.getChannel();
          indexMap_ = new HashMap<String, Long>();
          buffers_ = new LinkedList<ByteBuffer>();
