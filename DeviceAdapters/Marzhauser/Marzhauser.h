@@ -41,53 +41,43 @@
 #define MAX_ADCHANNELS 16
 #define MAX_DACHANNELS 3
 
-
-// MMCore name of serial port
-std::string port_;
-
-int ClearPort(MM::Device& device, MM::Core& core, const char* port);
+#define ERR_PORT_CHANGE_FORBIDDEN    10004
 
 
-class Hub : public CGenericBase<Hub>
+class TangoBase;
+
+class TangoDeviceBase : public CDeviceBase<MM::Device, TangoDeviceBase>
 {
-   public:
-      Hub();
-      ~Hub();
+public:
+   TangoDeviceBase() { }
+   ~TangoDeviceBase() { }
 
-      // Device API
-      // ---------
-      int Initialize();
-      int Shutdown();
+   friend class TangoBase;
+};
 
-      void GetName(char* pszName) const;
-      bool Busy();
+class TangoBase
+{
+public:
+   TangoBase(MM::Device *device);
+   ~TangoBase();
 
-//      int Initialize(MM::Device& device, MM::Core& core);
-      int DeInitialize() {initialized_ = false; return DEVICE_OK;};
-      bool Initialized() {return initialized_;};
+   int ClearPort(void);
+   int CheckDeviceStatus(void);
+   int SendCommand(const char *command) const;
+   int QueryCommandACK(const char *command);
+   int QueryCommand(const char *command, std::string &answer) const;
 
-      int ClearPort(void);
-      int SendCommand (const char *command) const;
-      int QueryCommand(const char *command, std::string &answer) const;
-
-
-      // action interface
-      // ---------------
-      int OnPort    (MM::PropertyBase* pProp, MM::ActionType eAct);
-
-   private:
-      // Command exchange with MMCore
-      std::string command_;
-      bool initialized_;
-      double answerTimeoutMs_;
-
-   protected:
-
+protected:
+   MM::Core *core_;
+   bool initialized_;
+   int  Configuration_;
+   std::string port_;
+   TangoDeviceBase *device_;
 };
 
 
 
-class XYStage : public CXYStageBase<XYStage>
+class XYStage : public CXYStageBase<XYStage>, public TangoBase
 {
 public:
    XYStage();
@@ -98,7 +88,6 @@ public:
    // ----------
    int Initialize();
    int Shutdown();
-  
    void GetName(char* pszName) const;
    bool Busy();
 
@@ -126,6 +115,7 @@ int Move(double vx, double vy);
 
    // action interface
    // ----------------
+   int OnPort      (MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnStepSizeX (MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnStepSizeY (MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnSpeedX    (MM::PropertyBase* pProp, MM::ActionType eAct);
@@ -136,9 +126,6 @@ int Move(double vx, double vy);
    int OnBacklashY (MM::PropertyBase* pProp, MM::ActionType eAct);
 
 private:
-   int GetCommand(const std::string& cmd, std::string& response);
-
-   bool initialized_;
    bool range_measured_;
    double answerTimeoutMs_;
    double stepSizeXUm_;
@@ -152,7 +139,7 @@ private:
 };
 
 
-class ZStage : public CStageBase<ZStage>
+class ZStage : public CStageBase<ZStage>, public TangoBase
 {
 public:
    ZStage();
@@ -162,7 +149,6 @@ public:
    // ----------
    int Initialize();
    int Shutdown();
-  
    void GetName(char* pszName) const;
    bool Busy();
 
@@ -181,31 +167,43 @@ public:
    int Stop();
    int GetLimits(double& min, double& max);
 
-   int IsStageSequenceable(bool& isSequenceable) const {isSequenceable = false; return DEVICE_OK;}
+   // Sequence functions
+   int IsStageSequenceable(bool& isSequenceable) const {isSequenceable = sequenceable_; return DEVICE_OK;}
+   int GetStageSequenceMaxLength(long& nrEvents) const {nrEvents = nrEvents_; return DEVICE_OK;}
+   int StartStageSequence();
+   int StopStageSequence();
+   int ClearStageSequence();
+   int AddToStageSequence(double position);
+   int SendStageSequence();
+
    bool IsContinuousFocusDrive() const {return false;}
 
    // action interface
    // ----------------
+   int OnPort     (MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnStepSize (MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnSpeed    (MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnAccel    (MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnBacklash (MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnSequence (MM::PropertyBase* pProp, MM::ActionType eAct);
 
 
 private:
-   int GetCommand(const std::string& cmd, std::string& response);
-
-   bool initialized_;
    bool range_measured_;
    double answerTimeoutMs_;
    double stepSizeUm_;
    double speedZ_;
    double accelZ_;
    double originZ_;
+
+   bool sequenceable_;
+   long nrEvents_;
+   long curSteps_;
+   std::vector<double> sequence_;
 };
 
 
-class AStage : public CStageBase<AStage>
+class AStage : public CStageBase<AStage>, public TangoBase
 {
 public:
    AStage();
@@ -215,7 +213,6 @@ public:
    // ----------
    int Initialize();
    int Shutdown();
-  
    void GetName(char* pszName) const;
    bool Busy();
 
@@ -238,6 +235,7 @@ public:
 
    // action interface
    // ----------------
+   int OnPort     (MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnStepSize (MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnSpeed    (MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnAccel    (MM::PropertyBase* pProp, MM::ActionType eAct);
@@ -245,9 +243,6 @@ public:
 
 
 private:
-   int GetCommand(const std::string& cmd, std::string& response);
-
-   bool initialized_;
    bool range_measured_;
    double answerTimeoutMs_;
    double stepSizeUm_;
@@ -257,7 +252,7 @@ private:
 };
 
 
-class Shutter : public CShutterBase<Shutter>
+class Shutter : public CShutterBase<Shutter>, public TangoBase
 {
 public:
    Shutter();
@@ -270,62 +265,59 @@ public:
    void GetName(char* pszName) const;
       
    // Shutter API
-   int SetOpen(bool open = true);
+   int SetOpen(bool open);
    int GetOpen(bool& open);
    int Fire(double deltaT);
 
    // action interface
-   int OnState(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnPort     (MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnState    (MM::PropertyBase* pProp, MM::ActionType eAct);
 
 private:
-   int GetCommand(const std::string& cmd, std::string& response);
    int SetShutterPosition(bool state);
    int GetShutterPosition(bool& state);
    std::string name_;
-   bool initialized_;
    double answerTimeoutMs_;
 };
 
 
-class Lamp : public CShutterBase<Lamp>
+class LED100 : public CShutterBase<LED100>, public TangoBase
 {
 public:
-   Lamp(const char* name, int id);
-   ~Lamp();
+   LED100(const char* name, int id);
+   ~LED100();
 
    // Device API
    int Initialize();
    int Shutdown();
-   bool Busy();
    void GetName(char* pszName) const;
+   bool Busy();
 
    // Shutter API
-   int SetOpen (bool open = true);
+   int SetOpen (bool open);
    int GetOpen(bool& open);
    int Fire(double deltaT);
 
    // action interface
-   int OnState    (MM::PropertyBase* pProp, MM::ActionType eAct);
-   int OnIntensity(MM::PropertyBase* pProp, MM::ActionType eAct);
-   int OnFire     (MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnPort      (MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnState     (MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnIntensity (MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnFire      (MM::PropertyBase* pProp, MM::ActionType eAct);
 
 private:
-   bool initialized_;
-   bool open_;
    double intensity_;
    double fireT_;
    int usec_;
-   int GetCommand(const std::string& cmd, std::string& response);
-   int GetLampIntensity(double& intensity);
-   int SetLampIntensity(double  intensity);
+   int GetIntensity(double& intensity);
+   int SetIntensity(double  intensity);
    const int id_;
    std::string name_;  
    double answerTimeoutMs_;
-   Lamp& operator=(Lamp&) {assert(false); return *this;} 
+   LED100& operator=(LED100&) {assert(false); return *this;} 
 };
 
 
-class DAC : public CSignalIOBase<DAC>
+class DAC : public CSignalIOBase<DAC>, public TangoBase
 {
 public:
    DAC();
@@ -334,11 +326,11 @@ public:
    // Device API
    int Initialize();
    int Shutdown();
-   bool Busy();
    void GetName(char* pszName) const;
+   bool Busy();
 
    // SignalIO API
-   int SetGateOpen(bool open = true);
+   int SetGateOpen(bool open);
    int GetGateOpen(bool& open);
    int SetSignal(double volts);
    int GetSignal(double& volts);
@@ -347,22 +339,21 @@ public:
    int IsDASequenceable(bool& isSequenceable) const {isSequenceable = false; return DEVICE_OK;}
 
    // action interface
-   int OnState  (MM::PropertyBase* pProp, MM::ActionType eAct);
-   int OnVoltage(MM::PropertyBase* pProp, MM::ActionType eAct);
-   int OnDACPort(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnPort      (MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnState     (MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnVoltage   (MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnDACPort   (MM::PropertyBase* pProp, MM::ActionType eAct);
 
 private:
-   bool initialized_;
    int  DACPort_;
    bool open_;
    double volts_;
-   int GetCommand(const std::string& cmd, std::string& response);
    std::string name_;  
    double answerTimeoutMs_;
 };
 
 
-class ADC : public CSignalIOBase<ADC>
+class ADC : public CSignalIOBase<ADC>, public TangoBase
 {
 public:
    ADC();
@@ -371,9 +362,9 @@ public:
    // Device API
    int Initialize();
    int Shutdown();
-
    void GetName(char* pszName) const;
    bool Busy(){return false;};
+   
 
    // ADC API
    int SetGateOpen(bool open);
@@ -385,16 +376,16 @@ public:
    int IsDASequenceable(bool& isSequenceable) const {isSequenceable = false; return DEVICE_OK;}
 
    // action interface
-   int OnVolts  (MM::PropertyBase* pProp, MM::ActionType eAct);
-   int OnADCPort(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnPort    (MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnVolts   (MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnADCPort (MM::PropertyBase* pProp, MM::ActionType eAct);
 
 private:
    int ADCPort_;
-   bool initialized_;
    double volts_;
-   int GetCommand(const std::string& cmd, std::string& response);
    std::string name_;  
    double answerTimeoutMs_;
 };
+
 
 #endif //_TANGO_H_
