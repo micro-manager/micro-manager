@@ -145,13 +145,15 @@ public class Hub {
       // Keep ASI stages from being too slow.
       String stage = core_.getXYStageDevice();
       try {
-         String stageDescription = core_.getProperty(stage, "Description");
-         if (stageDescription.contains("ASI XY")) {
-            if (core_.hasProperty(stage, "Error-E(nm)")) {
-               core_.setProperty(stage, "Error-E(nm)", "500");
-            }
-            if (core_.hasProperty(stage, "FinishError-PCROS(nm)")) {
-               core_.setProperty(stage, "FinishError-PCROS(nm)", "500");
+         if (core_.hasProperty(stage, "Description")) {
+            String stageDescription = core_.getProperty(stage, "Description");
+            if (stageDescription.contains("ASI XY")) {
+               if (core_.hasProperty(stage, "Error-E(nm)")) {
+                  core_.setProperty(stage, "Error-E(nm)", "500");
+               }
+               if (core_.hasProperty(stage, "FinishError-PCROS(nm)")) {
+                  core_.setProperty(stage, "FinishError-PCROS(nm)", "500");
+               }
             }
          }
       } catch (Exception e) {
