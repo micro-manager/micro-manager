@@ -3073,7 +3073,7 @@ int LED100::Fire(double deltaT) //assume unit is [ms]
     int ret;
     string resp;
 
-	double dT = - abs(deltaT); 	//LED100 hardware uses negative polarity to open shutter (see Tango reference manual). 
+	double dT = - fabs(deltaT); 	//LED100 hardware uses negative polarity to open shutter (see Tango reference manual). 
 
     cmd << "!flash " << dT;
     ret = SendCommand(cmd.str().c_str());
