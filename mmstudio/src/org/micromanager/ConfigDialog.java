@@ -67,6 +67,9 @@ import org.micromanager.utils.ReportingUtils;
 import org.micromanager.utils.ShowFlags;
 import org.micromanager.utils.ShowFlagsPanel;
 
+/*
+ * A base class from which GroupEditor and PresetEditor are derived.
+ */
 public class ConfigDialog extends MMDialog {
 
    private static final long serialVersionUID = 5819669941239786807L;

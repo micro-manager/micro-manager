@@ -36,9 +36,9 @@ public interface ImageCache extends TaggedImageStorage {
    String getComment();
 
    /*
-    * Gets a list of image storage listeners.
+    * Gets a list of image cache listeners.
     */
-   ImageCacheListener[] getImageStorageListeners();
+   ImageCacheListener[] getImageCacheListeners();
 
    /*
     * Returns the image tags for the last received image.
@@ -49,7 +49,7 @@ public interface ImageCache extends TaggedImageStorage {
     * Removes an imageCacheListener so that it will no longer be notified
     * of relevant events.
     */
-   void removeImageStorageListener(ImageCacheListener l);
+   void removeCacheStorageListener(ImageCacheListener l);
 
    /*
     * Save a new copy of a TaggedImage data set, stored in a TaggedImageStorage

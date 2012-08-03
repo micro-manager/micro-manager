@@ -46,11 +46,11 @@ public class MMImageCache implements ImageCache {
       imageStorageListeners_.add(l);
    }
 
-   public ImageCacheListener[] getImageStorageListeners() {
+   public ImageCacheListener[] getImageCacheListeners() {
       return (ImageCacheListener[]) imageStorageListeners_.toArray();
    }
 
-   public void removeImageStorageListener(ImageCacheListener l) {
+   public void removeCacheStorageListener(ImageCacheListener l) {
       imageStorageListeners_.remove(l);
    }
 
