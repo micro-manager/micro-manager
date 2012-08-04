@@ -50,7 +50,7 @@ public class MMImageCache implements ImageCache {
       return (ImageCacheListener[]) imageStorageListeners_.toArray();
    }
 
-   public void removeCacheStorageListener(ImageCacheListener l) {
+   public void removeCacheListener(ImageCacheListener l) {
       imageStorageListeners_.remove(l);
    }
 
