@@ -1,10 +1,28 @@
+///////////////////////////////////////////////////////////////////////////////
+//FILE:          SplitViewFrame.java
+//PROJECT:       Micro-Manager
+//SUBSYSTEM:     mmstudio
+//-----------------------------------------------------------------------------
+//
+// AUTHOR:       Nico Stuurman
+//
+// COPYRIGHT:    University of California, San Francisco, 2011, 2012
+//
+// LICENSE:      This file is distributed under the BSD license.
+//               License text is included with the source distribution.
+//
+//               This file is distributed in the hope that it will be useful,
+//               but WITHOUT ANY WARRANTY; without even the implied warranty
+//               of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+//
+//               IN NO EVENT SHALL THE COPYRIGHT OWNER OR
+//               CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+//               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
+
+
+
 /**
- * SplitViewFrame.java
- * 
- * Micro-Manager plugin that can split the acquired image top-down or left-right
- * and display the split image as a two channel image
- * Work is in progress to apply this transform also during acquisition
- *
+
  * Created on Aug 28, 2011, 9:41:57 PM
  */
 package org.micromanager.splitview;
@@ -31,14 +49,16 @@ import org.micromanager.api.DeviceControlGUI;
 import org.micromanager.utils.MMScriptException;
 import org.micromanager.utils.ReportingUtils;
 
-/**
+/** 
+ * Micro-Manager plugin that can split the acquired image top-down or left-right
+ * and display the split image as a two channel image
+ * Work is in progress to apply this transform also during acquisition
  *
  * @author nico
  */
 public class SplitViewFrame extends javax.swing.JFrame {
 
    private final ScriptInterface gui_;
-   private final DeviceControlGUI dGui_;
    private final CMMCore core_;
    private Preferences prefs_;
    private NumberFormat nf_;
@@ -72,7 +92,6 @@ public class SplitViewFrame extends javax.swing.JFrame {
 
    public SplitViewFrame(ScriptInterface gui) throws Exception {
       gui_ = gui;
-      dGui_ = (DeviceControlGUI) gui_;
       core_ = gui_.getMMCore();
       nf_ = NumberFormat.getInstance();
       prefs_ = Preferences.userNodeForPackage(this.getClass());

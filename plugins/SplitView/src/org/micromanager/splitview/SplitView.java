@@ -1,10 +1,36 @@
+///////////////////////////////////////////////////////////////////////////////
+//FILE:          SplitView.java
+//PROJECT:       Micro-Manager
+//SUBSYSTEM:     mmstudio
+//-----------------------------------------------------------------------------
+//
+// AUTHOR:       Nico Stuurman
+//
+// COPYRIGHT:    University of California, San Francisco, 2011, 2012
+//
+// LICENSE:      This file is distributed under the BSD license.
+//               License text is included with the source distribution.
+//
+//               This file is distributed in the hope that it will be useful,
+//               but WITHOUT ANY WARRANTY; without even the implied warranty
+//               of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+//
+//               IN NO EVENT SHALL THE COPYRIGHT OWNER OR
+//               CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+//               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
+
 package org.micromanager.splitview;
 
 import mmcorej.CMMCore;
 import org.micromanager.api.MMPlugin;
 import org.micromanager.api.ScriptInterface;
 
-
+/** 
+ * Micro-Manager plugin that can split the acquired image top-down or left-right
+ * and display the split image as a two channel image.
+ *
+ * @author nico
+ */
 public class SplitView implements MMPlugin {
    public static String menuName = "SplitView";
    public static String tooltipDescription = "Used with Dual View or Optosplit microscopes, which" +
