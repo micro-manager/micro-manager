@@ -161,6 +161,7 @@ public class SplitViewFrame extends javax.swing.JFrame {
             }
             if (!gui_.acquisitionExists(ACQNAME)) {
                try {
+                  calculateSize();
                   openAcq();
                } catch (MMScriptException ex) {
                   ReportingUtils.showError(ex, "Failed to open acquisition Window");
