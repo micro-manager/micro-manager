@@ -69,7 +69,7 @@ pushd plugins\Gaussian
 call build.bat
 popd
 
-pushd plugins\ImageFlipper
+pushd plugins\NewImageFlipper
 call build.bat
 popd
 
