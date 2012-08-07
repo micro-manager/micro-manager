@@ -14,6 +14,12 @@
   (when (.tags image)
     (edt (println prefix (.get (.tags image) "Channel")))))
 
+(defn produce-results [data-processor results]
+  (if (counted? results)
+    (doseq [result results]
+      (.produce data-processor result))
+    (.produce data-processor results)))
+      
 (defn simple-data-processor
   "Make a DataProcessor whose process method is implemented by
    process-function, which should accept a single image and return
@@ -22,16 +28,10 @@
   [process-function]
   (proxy [DataProcessor] []
     (process []
-             (let [img (.poll this)]
-               (if (.tags img)
-                 (let [result (process-function img)]
-                   (if (counted? result)
-                     (doseq [image result]
-                       (.produce this image))
-                     (.produce this result)))
-                 (.produce this img))))))
+             (let [img (.poll this)
+                   result (if (.tags img) (process-function img) img)]
+               (produce-results this result)))))
                    
-
 ;A list of image processors that have been attached to
 ;the acquisition engine.
 (defonce image-processors (atom #{}))
@@ -76,7 +76,7 @@
         (let [tags (json-clone (.tags img))]
           (update-tag! tags "ChannelIndex" #(+ 2 %))            
           (update-tag! tags "Channel" #(str % "-2"))
-          [img (TaggedImage. (.pix img) tags)]))))
+          [(TaggedImage. (.pix img) tags) img]))))
 
 (defn restart-test []
   (remove-all-image-processors!)
