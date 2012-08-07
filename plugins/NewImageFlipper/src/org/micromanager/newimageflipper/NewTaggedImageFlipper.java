@@ -67,19 +67,19 @@ public class NewTaggedImageFlipper implements MMPlugin {
    }
 
    public String getDescription() {
-      throw new UnsupportedOperationException("Not supported yet.");
+      return "Rotates and/or mirrors images coming from the selected camera";
    }
 
    public String getInfo() {
-      throw new UnsupportedOperationException("Not supported yet.");
+      return "Not supported yet.";
    }
 
    public String getVersion() {
-      throw new UnsupportedOperationException("Not supported yet.");
+      return "Version 0.1";
    }
 
    public String getCopyright() {
-      throw new UnsupportedOperationException("Not supported yet.");
+      return "Copyright University of California San Francisco, 2012";
    }
 
 }

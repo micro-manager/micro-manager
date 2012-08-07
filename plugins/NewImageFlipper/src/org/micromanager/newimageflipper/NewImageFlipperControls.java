@@ -4,9 +4,9 @@
  *
  * Created on Feb 18, 2011, 9:57:34 PM
  */
-
 package org.micromanager.newimageflipper;
 
+import ij.ImagePlus;
 import ij.process.ByteProcessor;
 import java.util.Iterator;
 import java.util.logging.Level;
@@ -15,28 +15,31 @@ import java.util.prefs.Preferences;
 import javax.swing.ImageIcon;
 import mmcorej.StrVector;
 import mmcorej.TaggedImage;
+import org.json.JSONException;
+import org.json.JSONObject;
 import org.micromanager.MMStudioMainFrame;
 import org.micromanager.api.DataProcessor;
+import org.micromanager.utils.ImageUtils;
+import org.micromanager.utils.MDUtils;
+import org.micromanager.utils.ReportingUtils;
 
 /**
  *
  * @author arthur
  */
 public class NewImageFlipperControls extends javax.swing.JFrame {
+
    private final NewImageFlippingProcessor processor_;
    private String selectedCamera_;
    private final String FRAMEXPOS = "NewImageFlipperXPos";
    private final String FRAMEYPOS = "NewImageFlipperYPos";
-   
    private Preferences prefs_;
-   
    private int frameXPos_ = 300;
    private int frameYPos_ = 300;
 
-   
-    /** 
-     * Creates form NewImageFlipperControls 
-     */
+   /** 
+    * Creates form NewImageFlipperControls 
+    */
    public NewImageFlipperControls() {
 
       prefs_ = Preferences.userNodeForPackage(this.getClass());
@@ -57,7 +60,7 @@ public class NewImageFlipperControls extends javax.swing.JFrame {
    public DataProcessor<TaggedImage> getProcessor() {
       return processor_;
    }
-   
+
    public void safePrefs() {
       prefs_.putInt(FRAMEXPOS, this.getX());
       prefs_.putInt(FRAMEYPOS, this.getY());
@@ -212,38 +215,47 @@ public class NewImageFlipperControls extends javax.swing.JFrame {
     * 
     * @return coded rotation
     */
-   public int getRotate() {
-      if ("90˚".equals((String) rotateComboBox_.getSelectedItem()))
-         return 1;
-      if ("180˚".equals((String) rotateComboBox_.getSelectedItem()))
-         return 2;
-      if ("270˚".equals((String) rotateComboBox_.getSelectedItem()))
-         return 3;
-      return 0;
+   public NewImageFlippingProcessor.Rotation getRotate() {
+      if ("90˚".equals((String) rotateComboBox_.getSelectedItem())) {
+         return NewImageFlippingProcessor.Rotation.R90;
+      }
+      if ("180˚".equals((String) rotateComboBox_.getSelectedItem())) {
+         return NewImageFlippingProcessor.Rotation.R180;
+      }
+      if ("270˚".equals((String) rotateComboBox_.getSelectedItem())) {
+         return NewImageFlippingProcessor.Rotation.R270;
+      }
+      return NewImageFlippingProcessor.Rotation.R0;
    }
-   
+
    public String getCamera() {
       return (String) cameraComboBox_.getSelectedItem();
    }
-   
+
    private void processExample() {
+
       ImageIcon exampleIcon = (ImageIcon) exampleImageSource_.getIcon();
 
       ByteProcessor proc = new ByteProcessor(exampleIcon.getImage());
+
+
+      try {
+         JSONObject newTags = new JSONObject();
+         MDUtils.setWidth(newTags, proc.getWidth());
+         MDUtils.setHeight(newTags, proc.getHeight());
+         MDUtils.setPixelType(newTags, ImagePlus.GRAY8);
+         TaggedImage result = NewImageFlippingProcessor.proccessTaggedImage(
+                 new TaggedImage(proc.getPixels(), newTags), getMirror(), getRotate() );
+         exampleImageTarget_.setIcon(
+                 new ImageIcon(ImageUtils.makeProcessor(result).createImage()));
+      } catch (Exception ex) {
+         ReportingUtils.logError(ex);
+      }
       
-      if (getMirror()) {
-         proc.flipHorizontal();
-      }
-      if (getRotate() == 1) {
-         proc = (ByteProcessor) proc.rotateRight();
-      }
-      if (getRotate() == 2) {
-         proc.rotate(180);
-      }
-      if (getRotate() == 3) {
-         proc = (ByteProcessor) proc.rotateLeft();
-      }
       
-      exampleImageTarget_.setIcon(new ImageIcon(proc.createImage()));
+      
+
+      
+
    }
 }
