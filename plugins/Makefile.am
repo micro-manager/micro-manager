@@ -57,12 +57,12 @@ SplitView.jar:  \
 	$(JAVAC) -source 1.5 -target 1.5 -sourcepath $(srcdir):. -classpath $(srcdir)/SplitView.jar:$(IJJARPATH):$(BSHJARPATH):$(COMMONSMATHJARPATH):$(SWINGLAYOUTJARPATH):../bin/MMCoreJ.jar:../mmstudio/MMJ_.jar:. $(srcdir)/SplitView/src/org/micromanager/splitview/*.java -d build
 	cd build && jar cf ../SplitView.jar * 
 
-ImageFlipper.jar:  \
-	$(srcdir)/ImageFlipper/src/org/micromanager/imageflipper/*.java
+NewImageFlipper.jar:  \
+	$(srcdir)/NewImageFlipper/src/org/micromanager/newimageflipper/*.java
 	test -d build || mkdir build
 	rm -rf build/*
-	$(JAVAC) -source 1.5 -target 1.5 -sourcepath $(srcdir):. -classpath $(srcdir)/ImageFlipper.jar:$(IJJARPATH):$(BSHJARPATH):$(COMMONSMATHJARPATH):$(SWINGLAYOUTJARPATH):../bin/MMCoreJ.jar:../mmstudio/MMJ_.jar:. $(srcdir)/ImageFlipper/src/org/micromanager/imageflipper/*.java -d build
-	cd build && jar cf ../ImageFlipper.jar * 
+	$(JAVAC) -source 1.5 -target 1.5 -sourcepath $(srcdir):. -classpath $(srcdir)/NewImageFlipper.jar:$(IJJARPATH):$(BSHJARPATH):$(COMMONSMATHJARPATH):$(SWINGLAYOUTJARPATH):../bin/MMCoreJ.jar:../mmstudio/MMJ_.jar:. $(srcdir)/NewImageFlipper/src/org/micromanager/newimageflipper/*.java -d build
+	cd build && jar cf ../NewImageFlipper.jar * 
 
 Big.jar:  \
 	$(srcdir)/Big/src/edu/umassmed/big/*.java
@@ -121,7 +121,7 @@ ClojureEditor.jar:  \
 	## Work around bug in 'jar': jar cf MM_.jar -C bin/ bin/* does not work
 	cd build && jar cf ../ClojureEditor.jar * 
 
-all: PixelCalibrator.jar RecallPlugin.jar StageControl.jar MultiCamera.jar CRISP.jar Big.jar ImageFlipper.jar SlideExplorer.jar DataBrowser.jar ClojureEditor.jar SplitView.jar Gaussian.jar
+all: PixelCalibrator.jar RecallPlugin.jar StageControl.jar MultiCamera.jar CRISP.jar Big.jar NewImageFlipper.jar SlideExplorer.jar DataBrowser.jar ClojureEditor.jar SplitView.jar Gaussian.jar
 
 install: 
 	test -d $(DESTDIR)$(IJPATH)/mmplugins || mkdir $(DESTDIR)$(IJPATH)/mmplugins
@@ -136,7 +136,7 @@ install:
 	cp DataBrowser.jar $(DESTDIR)$(IJPATH)/mmplugins
 	cp ClojureEditor.jar $(DESTDIR)$(IJPATH)/mmplugins
 	cp SplitView.jar $(DESTDIR)$(IJPATH)/mmplugins
-	cp ImageFlipper.jar $(DESTDIR)$(IJPATH)/mmplugins
+	cp NewImageFlipper.jar $(DESTDIR)$(IJPATH)/mmplugins
 	cp Gaussian.jar $(DESTDIR)$(IJPATH)/mmplugins
 	
 clean:
@@ -150,6 +150,7 @@ clean:
 	test -f RecallPlugin.jar && rm RecallPlugin.jar || echo "RecallPlugin.jar not found"
 	test -f Big.jar && rm Big.jar || echo "Big.jar not found"
 	test -f ImageFlipper.jar && rm ImageFlipper.jar || echo "ImageFlipper.jar not found"
+	test -f NewImageFlipper.jar && rm NewImageFlipper.jar || echo "NewImageFlipper.jar not found"
 	test -f Gaussian.jar && rm Gaussian.jar || echo "Gaussian.jar not found"
 	
 EXTRA_DIST = src build.xml
