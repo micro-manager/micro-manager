@@ -4,11 +4,15 @@
            (org.json JSONObject)
            (org.micromanager MMStudioMainFrame)
            (org.micromanager.api DataProcessor))
-  (:use [org.micromanager.mm :only (load-mm gui mmc)]))
+  (:use [org.micromanager.mm :only (edt load-mm gui mmc)]))
 
 (load-mm (MMStudioMainFrame/getInstance))
 
 (def acq (.getAcquisitionEngine gui))
+
+(defn print-chan [prefix image]
+  (when (.tags image)
+    (edt (println prefix (.get (.tags image) "Channel")))))
 
 (defn simple-data-processor
   "Make a DataProcessor whose process method is implemented by
@@ -22,7 +26,7 @@
                (if (.tags img)
                  (let [result (process-function img)]
                    (if (counted? result)
-                     (doseq [image (process-function (.poll this))]
+                     (doseq [image result]
                        (.produce this image))
                      (.produce this result)))
                  (.produce this img))))))
@@ -69,14 +73,10 @@
   "Duplicates channels"
   (simple-data-processor
     (fn [img]
-      (if (= 0 (.get (.tags img) "ChannelIndex"))
         (let [tags (json-clone (.tags img))]
-          (println (.get tags "Channel"))
           (update-tag! tags "ChannelIndex" #(+ 2 %))            
           (update-tag! tags "Channel" #(str % "-2"))
-          (println (.get tags "Channel"))
-          [img (TaggedImage. (.pix img) tags)])
-        img))))
+          [img (TaggedImage. (.pix img) tags)]))))
 
 (defn restart-test []
   (remove-all-image-processors!)
