@@ -35,9 +35,9 @@
               <Group type="103" groupAlignment="0" attributes="0">
                   <Group type="102" attributes="0">
                       <Group type="103" groupAlignment="1" attributes="0">
-                          <Component id="cameraComboBox_" alignment="0" pref="147" max="32767" attributes="0"/>
+                          <Component id="cameraComboBox_" alignment="0" pref="153" max="32767" attributes="0"/>
                           <Group type="102" alignment="1" attributes="0">
-                              <Component id="exampleImageSource_" pref="64" max="32767" attributes="0"/>
+                              <Component id="exampleImageSource_" pref="70" max="32767" attributes="0"/>
                               <EmptySpace type="separate" max="-2" attributes="0"/>
                               <Component id="exampleImageTarget_" min="-2" pref="65" max="-2" attributes="0"/>
                           </Group>
@@ -91,14 +91,14 @@
     <Component class="javax.swing.JLabel" name="exampleImageSource_">
       <Properties>
         <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
-          <Image iconType="3" name="/org/micromanager/icons/C.png"/>
+          <Image iconType="3" name="/org/micromanager/icons/R.png"/>
         </Property>
       </Properties>
     </Component>
     <Component class="javax.swing.JLabel" name="exampleImageTarget_">
       <Properties>
         <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
-          <Image iconType="3" name="/org/micromanager/icons/C.png"/>
+          <Image iconType="3" name="/org/micromanager/icons/R.png"/>
         </Property>
       </Properties>
     </Component>
@@ -113,10 +113,10 @@
       <Properties>
         <Property name="model" type="javax.swing.ComboBoxModel" editor="org.netbeans.modules.form.editors2.ComboBoxModelEditor">
           <StringArray count="4">
-            <StringItem index="0" value="0&#x2da;"/>
-            <StringItem index="1" value="90&#x2da;"/>
-            <StringItem index="2" value="180&#x2da;"/>
-            <StringItem index="3" value="270&#x2da;"/>
+            <StringItem index="0" value="0"/>
+            <StringItem index="1" value="90"/>
+            <StringItem index="2" value="180"/>
+            <StringItem index="3" value="270"/>
           </StringArray>
         </Property>
       </Properties>

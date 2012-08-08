@@ -1,9 +1,25 @@
+///////////////////////////////////////////////////////////////////////////////
+//FILE:          NewImageFlipperControls.java
+//PROJECT:       Micro-Manager
+//SUBSYSTEM:     mmstudio
+//-----------------------------------------------------------------------------
+//
+// AUTHOR:       Arthur Edelstein, Nico Stuurman
+//
+// COPYRIGHT:    University of California, San Francisco, 2011, 2012
+//
+// LICENSE:      This file is distributed under the BSD license.
+//               License text is included with the source distribution.
+//
+//               This file is distributed in the hope that it will be useful,
+//               but WITHOUT ANY WARRANTY; without even the implied warranty
+//               of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+//
+//               IN NO EVENT SHALL THE COPYRIGHT OWNER OR
+//               CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+//               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 
-/*
- * NewImageFlipperControls.java
- *
- * Created on Feb 18, 2011, 9:57:34 PM
- */
+
 package org.micromanager.newimageflipper;
 
 import ij.ImagePlus;
@@ -15,7 +31,6 @@ import java.util.prefs.Preferences;
 import javax.swing.ImageIcon;
 import mmcorej.StrVector;
 import mmcorej.TaggedImage;
-import org.json.JSONException;
 import org.json.JSONObject;
 import org.micromanager.MMStudioMainFrame;
 import org.micromanager.api.DataProcessor;
@@ -33,6 +48,11 @@ public class NewImageFlipperControls extends javax.swing.JFrame {
    private String selectedCamera_;
    private final String FRAMEXPOS = "NewImageFlipperXPos";
    private final String FRAMEYPOS = "NewImageFlipperYPos";
+   private final String R0 = "0" + "\u00B0";
+   private final String R90 = "90" + "\u00B0";
+   private final String R180 = "180" + "\u00B0";
+   private final String R270 = "270" + "\u00B0";
+   private final String[] RS = {R0, R90, R180, R270};
    private Preferences prefs_;
    private int frameXPos_ = 300;
    private int frameYPos_ = 300;
@@ -48,6 +68,10 @@ public class NewImageFlipperControls extends javax.swing.JFrame {
       frameYPos_ = prefs_.getInt(FRAMEYPOS, frameYPos_);
 
       initComponents();
+      
+      rotateComboBox_.removeAllItems();
+      for (String item: RS)
+         rotateComboBox_.addItem(item);
 
       setLocation(frameXPos_, frameYPos_);
 
@@ -116,11 +140,11 @@ public class NewImageFlipperControls extends javax.swing.JFrame {
             }
         });
 
-        exampleImageSource_.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/micromanager/icons/C.png"))); // NOI18N
+        exampleImageSource_.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/micromanager/icons/R.png"))); // NOI18N
 
-        exampleImageTarget_.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/micromanager/icons/C.png"))); // NOI18N
+        exampleImageTarget_.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/micromanager/icons/R.png"))); // NOI18N
 
-        rotateComboBox_.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "0˚", "90˚", "180˚", "270˚" }));
+        rotateComboBox_.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "0", "90", "180", "270" }));
         rotateComboBox_.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 rotateComboBox_ActionPerformed(evt);
@@ -138,9 +162,9 @@ public class NewImageFlipperControls extends javax.swing.JFrame {
                 .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
                     .add(layout.createSequentialGroup()
                         .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.TRAILING)
-                            .add(org.jdesktop.layout.GroupLayout.LEADING, cameraComboBox_, 0, 147, Short.MAX_VALUE)
+                            .add(org.jdesktop.layout.GroupLayout.LEADING, cameraComboBox_, 0, 153, Short.MAX_VALUE)
                             .add(layout.createSequentialGroup()
-                                .add(exampleImageSource_, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 64, Short.MAX_VALUE)
+                                .add(exampleImageSource_, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 70, Short.MAX_VALUE)
                                 .add(18, 18, 18)
                                 .add(exampleImageTarget_, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 65, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
                             .add(layout.createSequentialGroup()
@@ -216,13 +240,13 @@ public class NewImageFlipperControls extends javax.swing.JFrame {
     * @return coded rotation
     */
    public NewImageFlippingProcessor.Rotation getRotate() {
-      if ("90˚".equals((String) rotateComboBox_.getSelectedItem())) {
+      if (R90.equals((String) rotateComboBox_.getSelectedItem())) {
          return NewImageFlippingProcessor.Rotation.R90;
       }
-      if ("180˚".equals((String) rotateComboBox_.getSelectedItem())) {
+      if (R180.equals((String) rotateComboBox_.getSelectedItem())) {
          return NewImageFlippingProcessor.Rotation.R180;
       }
-      if ("270˚".equals((String) rotateComboBox_.getSelectedItem())) {
+      if (R270.equals((String) rotateComboBox_.getSelectedItem())) {
          return NewImageFlippingProcessor.Rotation.R270;
       }
       return NewImageFlippingProcessor.Rotation.R0;
@@ -251,11 +275,5 @@ public class NewImageFlipperControls extends javax.swing.JFrame {
       } catch (Exception ex) {
          ReportingUtils.logError(ex);
       }
-      
-      
-      
-
-      
-
    }
 }

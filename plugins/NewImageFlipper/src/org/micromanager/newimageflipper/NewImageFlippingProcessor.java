@@ -1,3 +1,24 @@
+///////////////////////////////////////////////////////////////////////////////
+//FILE:          NewImageFlippingProcessor.java
+//PROJECT:       Micro-Manager
+//SUBSYSTEM:     mmstudio
+//-----------------------------------------------------------------------------
+//
+// AUTHOR:       Arthur Edelstein, Nico Stuurman
+//
+// COPYRIGHT:    University of California, San Francisco, 2011, 2012
+//
+// LICENSE:      This file is distributed under the BSD license.
+//               License text is included with the source distribution.
+//
+//               This file is distributed in the hope that it will be useful,
+//               but WITHOUT ANY WARRANTY; without even the implied warranty
+//               of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+//
+//               IN NO EVENT SHALL THE COPYRIGHT OWNER OR
+//               CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+//               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
+
 package org.micromanager.newimageflipper;
 
 import ij.ImagePlus;
@@ -21,6 +42,11 @@ public class NewImageFlippingProcessor extends DataProcessor<TaggedImage> {
       this.controls_ = controls;
    }
 
+   /**
+    * Polls for tagged images, and processes them if they are from the selected 
+    * camera.
+    * 
+    */
    @Override
    public void process() {
       try {
@@ -40,21 +66,7 @@ public class NewImageFlippingProcessor extends DataProcessor<TaggedImage> {
             
             produce(proccessTaggedImage(nextImage, controls_.getMirror(), 
                     controls_.getRotate()));
-            int width = MDUtils.getWidth(nextImage.tags);
-            int height = MDUtils.getHeight(nextImage.tags);
-            String type = MDUtils.getPixelType(nextImage.tags);
-            int ijType = ImagePlus.GRAY8;
-            if (type.equals("GRAY16")) {
-               ijType = ImagePlus.GRAY16;
-            }
 
-            ImageProcessor proc = ImageUtils.makeProcessor(ijType, width, height, nextImage.pix);
-
-            JSONObject newTags = nextImage.tags;
-            MDUtils.setWidth(newTags, proc.getWidth());
-            MDUtils.setHeight(newTags, proc.getHeight());
-
-            produce(new TaggedImage(proc.getPixels(), newTags));
          } catch (Exception ex) {
             produce(nextImage);
             ReportingUtils.logError(ex);
@@ -64,7 +76,17 @@ public class NewImageFlippingProcessor extends DataProcessor<TaggedImage> {
       }
    }
    
-   
+   /**
+    * Executes image transformation
+    * First mirror the image if requested, than rotate as requested
+    * 
+    * @param nextImage - TaggedImage to be transformed
+    * @param mirror - Whether or not to mirror
+    * @param rotation - Rotation (R0, R90, R180, R270)
+    * @return - Transformed tagged image, otherwise a copy of the input
+    * @throws JSONException
+    * @throws MMScriptException 
+    */
    public static TaggedImage proccessTaggedImage(TaggedImage nextImage, 
            boolean mirror, Rotation rotation) throws JSONException, MMScriptException {
 
