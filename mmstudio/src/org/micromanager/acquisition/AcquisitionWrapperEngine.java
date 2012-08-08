@@ -93,7 +93,7 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
    }
 
    public String runAcquisition(SequenceSettings acquisitionSettings) {
-      if (this.enoughDiskSpace() && saveFiles_) {
+      if (!saveFiles_ || this.enoughDiskSpace()) {
          try {
             DefaultTaggedImagePipeline taggedImagePipeline = new DefaultTaggedImagePipeline(
                     getAcquisitionEngine2010(),
