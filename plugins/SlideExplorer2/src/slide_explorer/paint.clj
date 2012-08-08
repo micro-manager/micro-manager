@@ -40,11 +40,12 @@
   [panel]
   (.post display-updater #(.repaint panel)))
 
-(defn repaint-on-change
+(defn repaint-on-change 
   "Adds a watch such that panel is repainted
-   if the value in reference has changed."
-  [panel reference]
-  (add-watch-simple reference
-             (fn [old-state new-state]
-               (when-not (= old-state new-state)
-                 (repaint panel)))))
+   if any of the values in references have changed."
+  [panel references]
+  (doseq [reference references]
+    (add-watch-simple reference
+      (fn [old-state new-state]
+        (when-not (= old-state new-state)
+          (repaint panel))))))

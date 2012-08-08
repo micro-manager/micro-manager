@@ -264,9 +264,7 @@
     (setup-fullscreen frame)
     (load-visible-only screen-state memory-tiles
                        overlay-tiles acquired-images)
-    (repaint-on-change panel screen-state)
-    (repaint-on-change panel memory-tiles)
-    (repaint-on-change panel overlay-tiles)
+    (repaint-on-change panel [screen-state memory-tiles overlay-tiles])
     (make-view-controllable panel screen-state)
     ;(handle-open frame)
     screen-state))
