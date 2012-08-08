@@ -245,27 +245,34 @@
     .show
     (.setBounds 10 10 500 500)))
 
-(defn show [memory-tiles acquired-images]
+(defn view-panel [memory-tiles acquired-images]
   (let [screen-state (atom (sorted-map :x 0 :y 0 :z 0 :zoom 1
                                        :width 100 :height 10
                                        :keys (sorted-set)
                                        :channels (sorted-map))
                                        :update 0)
         overlay-tiles (atom (cache/empty-lru-map 100))
-        panel (main-panel screen-state overlay-tiles)
-        frame (main-frame)]
-    (def mt memory-tiles)
-    (def ss screen-state)
-    (def f frame)
-    (def pnl panel)
-    (def ot overlay-tiles)
-    (def ai acquired-images)
-    (.add (.getContentPane frame) panel)
-    (setup-fullscreen frame)
+        panel (main-panel screen-state overlay-tiles)]
     (load-visible-only screen-state memory-tiles
                        overlay-tiles acquired-images)
     (repaint-on-change panel [screen-state memory-tiles overlay-tiles])
+    [panel screen-state]))
+
+(defn show [memory-tiles acquired-images]
+  (let [frame (main-frame)
+        frame2 (doto (JFrame. "test") .show)
+        [panel screen-state] (view-panel memory-tiles acquired-images)
+        [panel2 screen-state2] (view-panel memory-tiles acquired-images)]
+    (def ss screen-state)
+    (def pnl panel)
+    (def mt memory-tiles)
+    (def f frame)
+    (def ai acquired-images)
+    (.add (.getContentPane frame) panel)
+    (.add (.getContentPane frame2) panel2)
+    (setup-fullscreen frame)
     (make-view-controllable panel screen-state)
+    (make-view-controllable panel2 screen-state2)
     ;(handle-open frame)
     screen-state))
 
