@@ -150,12 +150,16 @@ to normal size."
     (doseq [component (window-descendants window)]
       (.addKeyListener component key-adapter))))
 
+(defn update-mouse-position [e screen-state-atom]
+  (swap! screen-state-atom update-in [:mouse]
+         merge {:x (.getX e) :y (.getY e)}))
+
 (defn handle-pointing [component screen-state-atom]
   (.addMouseMotionListener component
                      (proxy [MouseAdapter] []
-                       (mouseMoved [e]
-                                   (swap! screen-state-atom update-in [:mouse]
-                                          merge {:x (.getX e) :y (.getY e)})))))
+                       (mouseMoved [e] (update-mouse-position e screen-state-atom))
+                       (mouseDragged [e] (update-mouse-position e screen-state-atom)))))
+                                   
 
 ;(defn handle-open [window]
 ;  (bind-window-keys window ["S"] create-dir-dialog))

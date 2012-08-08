@@ -251,7 +251,6 @@
                                        :keys (sorted-set)
                                        :channels (sorted-map))
                                        :update 0)
-        ;overlay-tiles (atom {})
         overlay-tiles (atom (cache/empty-lru-map 100))
         panel (main-panel screen-state overlay-tiles)
         frame (main-frame)]
