@@ -25,8 +25,7 @@
         [slide-explorer.tiles :only (floor-int center-tile tile-list offset-tiles)]
         [slide-explorer.persist :only (save-as)]
         [clojure.java.io :only (file)])
-  (:require [slide-explorer.disk :as disk]
-            [slide-explorer.reactive :as reactive]
+  (:require [slide-explorer.reactive :as reactive]
             [slide-explorer.cache :as cache]
             [slide-explorer.persist :as persist]))
 

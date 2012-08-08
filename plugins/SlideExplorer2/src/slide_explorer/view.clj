@@ -264,6 +264,7 @@
         [panel screen-state] (view-panel memory-tiles acquired-images)
         [panel2 screen-state2] (view-panel memory-tiles acquired-images)]
     (def ss screen-state)
+    (def ss2 screen-state2)
     (def pnl panel)
     (def mt memory-tiles)
     (def f frame)
@@ -272,7 +273,7 @@
     (.add (.getContentPane frame2) panel2)
     (setup-fullscreen frame)
     (make-view-controllable panel screen-state)
-    (make-view-controllable panel2 screen-state2)
+    ;(make-view-controllable panel2 screen-state2)
     ;(handle-open frame)
     screen-state))
 
