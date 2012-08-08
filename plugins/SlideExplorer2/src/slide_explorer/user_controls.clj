@@ -150,12 +150,20 @@ to normal size."
     (doseq [component (window-descendants window)]
       (.addKeyListener component key-adapter))))
 
-(defn handle-pointing [component pointing-atom]
+(defn handle-pointing [component screen-state-atom]
   (.addMouseMotionListener component
                      (proxy [MouseAdapter] []
                        (mouseMoved [e]
-                                   (swap! pointing-atom merge {:x (.getX e)
-                                                               :y (.getY e)})))))
+                                   (swap! screen-state-atom update-in [:mouse]
+                                          merge {:x (.getX e) :y (.getY e)})))))
 
 ;(defn handle-open [window]
 ;  (bind-window-keys window ["S"] create-dir-dialog))
+
+(defn make-view-controllable [panel screen-state-atom]
+  (let [handle-arrow-pan-50 #(handle-arrow-pan %1 %2 50)]
+    ((juxt handle-drags handle-arrow-pan-50 handle-wheel handle-resize handle-pointing)
+           panel screen-state-atom)
+    ((juxt handle-zoom handle-dive watch-keys) (.getTopLevelAncestor panel) screen-state-atom)))
+    
+  

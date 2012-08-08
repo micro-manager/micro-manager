@@ -13,7 +13,13 @@
         [slide-explorer.paint :only (enable-anti-aliasing repaint repaint-on-change)]
         [slide-explorer.tiles :only (center-tile floor-int)]
         [slide-explorer.image :only (crop insert-half-tile overlay)]
-        [slide-explorer.user-controls]))
+        [slide-explorer.user-controls :only (make-view-controllable
+                                              setup-fullscreen)]))
+
+
+(def MIN-ZOOM 1/256)
+
+(def MAX-ZOOM 1)
 
 ; Order of operations:
 ;  Stitch (not done)
@@ -179,7 +185,6 @@
   (let [visible-tile-positions (tiles-in-pixel-rectangle
                                  (screen-rectangle @screen-state-atom)
                                  [512 512])]
-    ;(println "x")
     (doseq [[nx ny] visible-tile-positions
             channel (keys (:channels @screen-state-atom))]
      (let [tile {:nx nx
@@ -189,7 +194,6 @@
                   :nz (@screen-state-atom :z)
                   :nt 0}]
         (disk/load-tile memory-tile-atom tile)
-       ;(println "ota:" @overlay-tiles-atom)
        (let [overlay-tile-coords (assoc tile :nc :overlay)]
         (swap! overlay-tiles-atom
                cache/add-item 
@@ -250,28 +254,21 @@
         ;overlay-tiles (atom {})
         overlay-tiles (atom (cache/empty-lru-map 100))
         panel (main-panel screen-state overlay-tiles)
-        frame (main-frame)
-        mouse-position (atom nil)
-        handle-arrow-pan-50 #(handle-arrow-pan %1 %2 50)]
-   ; (edt (println (str @overlay-tiles)))
+        frame (main-frame)]
     (def mt memory-tiles)
     (def ss screen-state)
-    (def mp mouse-position)
     (def f frame)
     (def pnl panel)
     (def ot overlay-tiles)
     (def ai acquired-images)
     (.add (.getContentPane frame) panel)
     (setup-fullscreen frame)
-    ((juxt handle-drags handle-arrow-pan-50 handle-wheel handle-resize)
-      panel screen-state)
-    ((juxt handle-zoom handle-dive watch-keys) frame screen-state)
     (load-visible-only screen-state memory-tiles
                        overlay-tiles acquired-images)
     (repaint-on-change panel screen-state)
     (repaint-on-change panel memory-tiles)
     (repaint-on-change panel overlay-tiles)
-    (handle-pointing panel mouse-position)
+    (make-view-controllable panel screen-state)
     ;(handle-open frame)
     screen-state))
 
