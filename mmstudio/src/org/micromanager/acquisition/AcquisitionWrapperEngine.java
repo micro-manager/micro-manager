@@ -5,6 +5,7 @@
 package org.micromanager.acquisition;
 
 import java.awt.Color;
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -80,6 +81,7 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
 
    public String acquire() throws MMException {
       MMStudioMainFrame.seriousErrorReported_.set(false);
+
       return runAcquisition(getSequenceSettings());
    }
 
@@ -91,21 +93,76 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
    }
 
    public String runAcquisition(SequenceSettings acquisitionSettings) {
-      try {
-         DefaultTaggedImagePipeline taggedImagePipeline = new DefaultTaggedImagePipeline(
-                 getAcquisitionEngine2010(),
-                 acquisitionSettings,
-                 taggedImageProcessors_,
-                 gui_,
-                 acquisitionSettings.save);
-         summaryMetadata_ = taggedImagePipeline.summaryMetadata_;
-         imageCache_ = taggedImagePipeline.imageCache_;
-         display_ = taggedImagePipeline.display_;
-         return taggedImagePipeline.acqName_;
-      } catch (Throwable ex) {
-         ReportingUtils.showError(ex);
+      if (this.enoughDiskSpace() && saveFiles_) {
+         try {
+            DefaultTaggedImagePipeline taggedImagePipeline = new DefaultTaggedImagePipeline(
+                    getAcquisitionEngine2010(),
+                    acquisitionSettings,
+                    taggedImageProcessors_,
+                    gui_,
+                    acquisitionSettings.save);
+            summaryMetadata_ = taggedImagePipeline.summaryMetadata_;
+            imageCache_ = taggedImagePipeline.imageCache_;
+            display_ = taggedImagePipeline.display_;
+            return taggedImagePipeline.acqName_;
+         } catch (Throwable ex) {
+            ReportingUtils.showError(ex);
+            return null;
+         }
+      } else {
+         ReportingUtils.showError("Not enough space on disk to save the requested image set; acquisition canceled.");
          return null;
       }
+
+   }
+
+   private int getNumChannels() {
+      int numChannels = 0;
+      if (useChannels_) {
+         for (ChannelSpec channel : channels_) {
+            if (channel.useChannel_) {
+               ++numChannels;
+            }
+         }
+      } else {
+         numChannels = 1;
+      }
+      return numChannels;
+   }
+
+   public int getNumFrames() {
+      int numFrames = numFrames_;
+      if (!useFrames_) {
+         numFrames = 1;
+      }
+      return numFrames;
+   }
+
+   private int getNumPositions() {
+      int numPositions = Math.max(1, posList_.getNumberOfPositions());
+      if (!useMultiPosition_) {
+         numPositions = 1;
+      }
+      return numPositions;
+   }
+
+   private int getNumSlices() {
+      int numSlices = useSlices_ ? (int) (1 + Math.abs(sliceZTopUm_ - sliceZBottomUm_) / sliceZStepUm_) : 1;
+      if (!useSlices_) {
+         numSlices = 1;
+      }
+      return numSlices;
+   }
+
+   private int getTotalImages() {
+      int totalImages = getNumFrames() * getNumSlices() * getNumChannels() * getNumPositions();
+      return totalImages;
+   }
+
+   private long getTotalMB() {
+      CMMCore core = gui_.getCore();
+      long totalMB = core.getImageWidth() * core.getImageHeight() * core.getBytesPerPixel() * ((long) getTotalImages()) / 1048576L;
+      return totalMB;
    }
 
    private void updateChannelCameras() {
@@ -398,10 +455,6 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
       return core_.getAvailableConfigs(core_.getChannelGroup()).toArray();
    }
 
-   public int getNumFrames() {
-      return numFrames_;
-   }
-
    public String getChannelGroup() {
       return core_.getChannelGroup();
    }
@@ -641,33 +694,21 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
       throw new UnsupportedOperationException("Not supported yet.");
    }
 
+   public boolean enoughDiskSpace() {
+      File root = new File(rootName_);
+      long usableMB = root.getUsableSpace() / (1024 * 1024);
+      return (1.25 * getTotalMB()) < usableMB;
+   }
+
    public String getVerboseSummary() {
-      int numFrames = numFrames_;
-      if (!useFrames_) {
-         numFrames = 1;
-      }
-      int numSlices = useSlices_ ? (int) (1 + Math.abs(sliceZTopUm_ - sliceZBottomUm_) / sliceZStepUm_) : 1;
-      if (!useSlices_) {
-         numSlices = 1;
-      }
-      int numPositions = Math.max(1, posList_.getNumberOfPositions());
-      if (!useMultiPosition_) {
-         numPositions = 1;
-      }
+      int numFrames = getNumFrames();
+      int numSlices = getNumSlices();
+      int numPositions = getNumPositions();
+      int numChannels = getNumChannels();
 
+      int totalImages = getTotalImages();
+      long totalMB = getTotalMB();
 
-      int numChannels = 0;
-      if (useChannels_) {
-         for (ChannelSpec channel : channels_) {
-            if (channel.useChannel_) {
-               ++numChannels;
-            }
-         }
-      } else {
-         numChannels = 1;
-      }
-
-      int totalImages = numFrames * numSlices * numChannels * numPositions;
       double totalDurationSec = 0;
       if (!useCustomIntervals_) {
          totalDurationSec = interval_ * numFrames / 1000.0;
@@ -681,13 +722,6 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
       int mins = (int) (remainSec / 60);
       remainSec = remainSec - mins * 60;
 
-      CMMCore core = gui_.getCore();
-      long width = core.getImageWidth();
-      long height = core.getImageHeight();
-      long byteDepth = core.getBytesPerPixel();
-      
-      long totalMB = width*height*byteDepth*((long)totalImages) / 1048576L; 
-      
       Runtime rt = Runtime.getRuntime();
       rt.gc();
 
