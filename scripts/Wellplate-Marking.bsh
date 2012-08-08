@@ -1,0 +1,135 @@
+////////////////////////////////////////////////////////////////////////////////////////////////
+//
+// Karl Bellve
+// Biomedical Imaging Group
+// University of Massachusetts Medical School
+// Karl.Bellve@umassmed.edu
+// 
+// Ben Czech 
+// czechben@gmail.com
+//
+////////////////////////////////////////////////////////////////////////////////////////////////
+//********************************************************************************************//
+// Edit below
+                              //           {column,row}
+int[] firstWell = {1,1};      // 1 indexed {min 1,1}
+int[] lastWell = {12,8};      // 1 indexed {max 12,8}
+int plateType = 96;           // could be 24, 96, 384, 1536, must conform to SBS standard
+
+// Edit above
+//********************************************************************************************//
+////////////////////////////////////////////////////////////////////////////////////////////////
+
+import edu.umassmed.big.SBSPlate;
+import ij.gui.*;
+import java.lang.Math;
+import org.micromanager.navigation.PositionList;
+import org.micromanager.api.Autofocus;
+import org.micromanager.api.AcquisitionOptions;
+import org.micromanager.PositionListDlg;
+
+/////////////////////////////////////////////////////////////////////////////////////
+
+move(double x, double y, double z)
+{
+	print("Moving to " + (x - startX) + "," + (y - startY) + "," + (z - startZ));
+
+	mmc.setXYPosition(xystage,x,y);
+  	mmc.waitForDevice(xystage);
+
+	mmc.setPosition(zstage,z); 
+	mmc.waitForDevice(zstage);
+	// add an extra second...
+	mmc.sleep(1000);
+}
+
+gui.clearMessageWindow();
+gui.closeAllAcquisitions();
+
+/////////////////////////////////////////////////////////////////////////////////////
+// Variables
+// 0 indexed in microns
+// X, Y and Z
+double[] position = {0.0,0.0,0.0}; 
+double x0,y0,z0,z1,startX,startY,startZ;
+// End Variables
+/////////////////////////////////////////////////////////////////////////////////////
+
+//sets starting position
+startX = mmc.getXPosition(xystage);
+startY = mmc.getYPosition(xystage);
+startZ = mmc.getPosition(zstage);
+
+// Plate and position list setup
+PositionListDlg plg=gui.getXYPosListDlg();
+PositionList pl=new PositionList();
+gui.setPositionList(pl);
+plg.setVisible(true);
+SBSPlate plate = new SBSPlate(plateType,startX,startY);
+plate.setFirstWell(firstWell[0],firstWell[1]);
+plate.setLastWell(lastWell[0],lastWell[1]);
+numberOfWells = plate.getNumberOfWells();
+
+// if first well is not {1,1}, move to that position
+position = plate.getPlatePosition(firstWell[0],firstWell[1]);
+x0 = position[0];
+y0 = position[1];
+z1 = z0 = mmc.getPosition(zstage);
+
+move(x0,y0,z0);
+
+// This loop cycles through all the wells so you can set multiple X, Y and Z positions
+// within each well
+
+int index=0;
+int countPositions=0;
+
+for (well = 0; well < numberOfWells;) {
+   GenericDialog dialog = new GenericDialog("Mark Positions");
+   dialog.addMessage(plate.getWellLabel(well));
+   dialog.enableYesNoCancel("Mark","Next Well");
+   dialog.showDialog();
+   if (dialog.wasOKed()) {
+      // set a position within this well
+      gui.markCurrentPosition();
+      print("Position has been marked at "+plate.getWellLabel(well)+"_"+index);
+      pl=gui.getPositionList();
+      pl.setLabel(countPositions,plate.getWellLabel(well)+"_"+index);
+      countPositions++;
+      gui.setPositionList(pl);
+      index++;
+   } else if (dialog.wasCanceled()) {
+      //ends the script	
+      GenericDialog dialog2 = new GenericDialog("Cancel?");
+      dialog2.addMessage("Select OK if you really want to cancel");
+      dialog2.showDialog();
+      if (dialog2.wasOKed()) {
+         done();
+         print("User cancelled, exiting script");
+         return false;
+      }
+   } else {
+      // Move to next well
+      print("Next Well: " + (well + 1));
+      if (dialog.getNextBoolean() != true) {		
+         print("Skipping well " + well + " with label " + plate.getWellLabel(well));
+      }
+      // move the stage to the next well
+      position = plate.getNextPlatePosition(); // 0 indexed in microns
+      x0 = position[0];
+      y0 = position[1];
+      z0 = position[2];
+      // using last Z and not the default Z
+      move(x0,y0,z1);
+      index=0;
+      well++;
+   }
+}
+
+pl=gui.getPositionList();
+gui.setPositionList(pl);
+print("Positions have been marked... Moving back to start position");
+move (startX, startY, startZ);
+print("Finished");
+
+
