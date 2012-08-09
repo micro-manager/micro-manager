@@ -175,6 +175,9 @@ public class SplitViewFrame extends javax.swing.JFrame {
    private void enableLiveMode(boolean enable) {
       try {
          if (enable) {
+            if (gui_.isLiveModeOn()) {
+               gui_.enableLiveMode(false);
+            }
             if (timer_.isRunning()) {
                return;
             }
@@ -321,7 +324,10 @@ public class SplitViewFrame extends javax.swing.JFrame {
          gui_.addImage(ACQNAME, tmpImg.crop().getPixels(), 0, 1, 0);
 
       } catch (Exception e) {
-         ReportingUtils.showError(e);
+         if (gui_.isLiveModeOn())
+            enableLiveMode(false);
+         else
+            ReportingUtils.showError(e);
       }
    }
 
