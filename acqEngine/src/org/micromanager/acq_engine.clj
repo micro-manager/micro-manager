@@ -571,7 +571,7 @@
         check-z-ref (and z-drive
                          (or (:autofocus event)
                              (when-let [t (:wait-time-ms event)]
-                               (pos? t))))]
+                               (< 1000 t))))]
     (filter identity
       (flatten
         (list
