@@ -1,8 +1,8 @@
 (ns slide-explorer.tile-cache
-  (:use [slide-explorer.cache :as cache]
-        [slide-explorer.disk :as disk]
-        [slide-explorer.persist :as persist]
-        [slide-explorer.reactive :as reactive]))
+  (:require [slide-explorer.cache :as cache]
+            [slide-explorer.disk :as disk]
+            [slide-explorer.persist :as persist]
+            [slide-explorer.reactive :as reactive]))
 
 (def file-executor (reactive/single-threaded-executor))
 
