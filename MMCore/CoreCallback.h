@@ -294,6 +294,7 @@ private:
    CMMCore* core_;
    MMThreadLock* pValueChangeLock_;
 
+   Metadata AddCameraMetadata(const MM::Device* caller, const Metadata* pMd);
 };
 
 #endif // _CORECALLBACK_H_

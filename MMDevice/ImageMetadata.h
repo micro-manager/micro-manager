@@ -265,11 +265,19 @@ class Metadata
 {
 public:
 
-   Metadata() {}
+   Metadata() {} // empty constructor
 
-   ~Metadata()
+   ~Metadata() // destructor
    {
       Clear();
+   }
+
+   Metadata(const Metadata& original) // copy constructor
+   {
+      for (TagIterator it = original.tags_.begin(); it != original.tags_.end(); it++)
+      {
+         SetTag(*it->second);
+      }
    }
 
    void Clear() {

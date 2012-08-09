@@ -34,19 +34,12 @@
 #include "../MMDevice/DeviceThreads.h"
 #include "boost/date_time/posix_time/posix_time.hpp"
 
-
-int CoreCallback::InsertImage(const MM::Device* caller, const unsigned char* buf, unsigned width, unsigned height, unsigned byteDepth, const char* serializedMetadata, const bool doProcess)
+/**
+* Get the metadata tags attached to device caller, and merge them with metadata
+* stored in pMd. Returns a metadata object (by value).
+*/
+Metadata CoreCallback::AddCameraMetadata(const MM::Device* caller, const Metadata* pMd)
 {
-   Metadata md;
-   md.Restore(serializedMetadata);
-   return InsertImage(caller, buf, width, height, byteDepth, &md, doProcess);
-}
-
-
-int CoreCallback::InsertImage(const MM::Device* caller, const unsigned char* buf, unsigned width, unsigned height, unsigned byteDepth, const Metadata* pMd, bool doProcess)
-{
-   try 
-   {
       char label[MM::MaxStrLength];
       caller->GetLabel(label);
       
@@ -64,6 +57,21 @@ int CoreCallback::InsertImage(const MM::Device* caller, const unsigned char* buf
       // Add the source Camera as a tag.
       md.put("Camera",label);
       md.Merge(devMD);
+      return md;
+}
+
+int CoreCallback::InsertImage(const MM::Device* caller, const unsigned char* buf, unsigned width, unsigned height, unsigned byteDepth, const char* serializedMetadata, const bool doProcess)
+{
+   Metadata md;
+   md.Restore(serializedMetadata);
+   return InsertImage(caller, buf, width, height, byteDepth, &md, doProcess);
+}
+
+int CoreCallback::InsertImage(const MM::Device* caller, const unsigned char* buf, unsigned width, unsigned height, unsigned byteDepth, const Metadata* pMd, bool doProcess)
+{
+   try 
+   {
+      Metadata md = AddCameraMetadata(caller, pMd);
 
       if(doProcess)
       {
@@ -73,7 +81,6 @@ int CoreCallback::InsertImage(const MM::Device* caller, const unsigned char* buf
             ip->Process(const_cast<unsigned char*>(buf), width, height, byteDepth);
          }
       }
-
       if (core_->cbuf_->InsertImage(buf, width, height, byteDepth, &md))
          return DEVICE_OK;
       else
@@ -83,7 +90,6 @@ int CoreCallback::InsertImage(const MM::Device* caller, const unsigned char* buf
    {
       return DEVICE_INCOMPATIBLE_IMAGE;
    }
-
 }
 
 int CoreCallback::InsertImage(const MM::Device* caller, const ImgBuffer & imgBuf)
@@ -120,13 +126,14 @@ int CoreCallback::InsertMultiChannel(const MM::Device* caller,
 {
    try
    {
+      Metadata md = AddCameraMetadata(caller, pMd);
 
       MM::ImageProcessor* ip = GetImageProcessor(caller);
       if( NULL != ip)
       {
          ip->Process( const_cast<unsigned char*>(buf), width, height, byteDepth);
       }
-      if (core_->cbuf_->InsertMultiChannel(buf, numChannels, width, height, byteDepth, pMd))
+      if (core_->cbuf_->InsertMultiChannel(buf, numChannels, width, height, byteDepth, &md))
          return DEVICE_OK;
       else
          return DEVICE_BUFFER_OVERFLOW;
