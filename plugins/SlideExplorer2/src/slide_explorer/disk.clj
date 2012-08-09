@@ -38,29 +38,3 @@
 (defn tile-dir [memory-tile-atom]
   (:slide-explorer.main/directory (meta memory-tile-atom)))
 
-(defn add-tile
-  "Adds a tile to the atom in memory and saves a .tif image to the associated directory."
-  [memory-tile-atom key image-processor]
-  (swap! memory-tile-atom cache/add-item key image-processor)
-  (.submit file-executor
-           #(write-tile (tile-dir memory-tile-atom) key image-processor)))
-
-(defn load-tile
-  [memory-tile-atom key]
-  "Loads the tile into memory-tile-atom, if tile is not already present."
-  (reactive/submit file-executor
-                   (fn []
-                     (or ;(println "loading tile")
-                         (get @memory-tile-atom key)
-                         ;(println "key not found")
-                         (when-let [tile (read-tile (tile-dir memory-tile-atom) key)]
-                           (swap! memory-tile-atom
-                                  #(if-not (get % key)
-                                     (cache/add-item % key tile)
-                                     %))
-                           tile)))))
-
-(defn unload-tile
-  [memory-tile-atom key]
-  ;(println "unloading")
-  (swap! memory-tile-atom dissoc key))

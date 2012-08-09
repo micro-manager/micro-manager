@@ -70,10 +70,12 @@
                         (fn [_ _]
                           (send-off last-val-agent
                                     (fn [last-val]
-                                      (let [current-val @reference]
-                                        (when-not (identical? last-val current-val)
-                                          (function last-val current-val))
-                                        current-val)))))))
+                                      (try
+                                        (let [current-val @reference]
+                                          (when-not (identical? last-val current-val)
+                                            (function last-val current-val))
+                                          current-val)
+                                        (catch Throwable t (do (def t1 t) (println t) (throw t))))))))))
   ([reference function]
     (handle-update reference function (agent @reference))))
 

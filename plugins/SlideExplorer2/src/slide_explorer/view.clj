@@ -5,9 +5,9 @@
                             WindowAdapter)
            (ij.process ByteProcessor ImageProcessor))
   (:require [clojure.pprint :as pprint]
-            [slide-explorer.disk :as disk]
             [slide-explorer.reactive :as reactive]
             [slide-explorer.cache :as cache]
+            [slide-explorer.tile-cache :as tile-cache]
             [clojure.core.memoize :as memo])
   (:use [org.micromanager.mm :only (edt)]
         [slide-explorer.paint :only (enable-anti-aliasing repaint repaint-on-change)]
@@ -112,18 +112,18 @@
      (update-in [:zoom] / 2)))
 
 (defn propagate-tile [tile-map-atom child parent]
-  (let [child-tile (.get (disk/load-tile tile-map-atom child))
-        parent-tile (.get (disk/load-tile tile-map-atom parent))
+  (let [child-tile (.get (tile-cache/load-tile tile-map-atom child))
+        parent-tile (.get (tile-cache/load-tile tile-map-atom parent))
         new-child-tile (insert-half-tile
                          parent-tile
                          [(even? (:nx parent))
                           (even? (:ny parent))]
                          child-tile)]
-    (disk/add-tile tile-map-atom child new-child-tile)))
+    (tile-cache/add-tile tile-map-atom child new-child-tile)))
 
 (defn add-to-memory-tiles [tile-map-atom indices tile]
   (let [full-indices (assoc indices :zoom 1)]
-    (disk/add-tile tile-map-atom full-indices tile)
+    (tile-cache/add-tile tile-map-atom full-indices tile)
     (loop [child (child-indices full-indices)
            parent full-indices]
       (when (<= MIN-ZOOM (:zoom child))
@@ -138,8 +138,7 @@
   (let [channel-names (keys channels-map)
         procs (for [chan channel-names]
                 (let [tile-index (assoc tile-indices :nc chan)]
-                  ;(swap! memory-tiles-atom cache/hit-item tile-index)
-                  (get @memory-tiles-atom tile-index)))
+                  (tile-cache/get-tile memory-tiles-atom tile-index)))
         lut-maps (map channels-map channel-names)]
     (overlay-memo procs lut-maps)))
 
@@ -156,10 +155,9 @@
                          :zoom (screen-state :zoom)
                          :nx nx :ny ny :nt 0
                          :nz (screen-state :z)}]
-      (when-let [image (get
-                         @overlay-tiles-atom
+      (when-let [image (tile-cache/get-tile
+                         overlay-tiles-atom
                          tile-index)]
-        (swap! overlay-tiles-atom cache/hit-item tile-index)
         (let [[x y] (tile-to-pixels [nx ny] [tile-width tile-height] 1)]
           (draw-image g image x y)))))))
 	
@@ -187,19 +185,18 @@
                                  [512 512])]
     (doseq [[nx ny] visible-tile-positions
             channel (keys (:channels @screen-state-atom))]
-     (let [tile {:nx nx
+      (let [tile {:nx nx
                   :ny ny
                   :zoom (@screen-state-atom :zoom)
                   :nc channel
                   :nz (@screen-state-atom :z)
                   :nt 0}]
-        (disk/load-tile memory-tile-atom tile)
-       (let [overlay-tile-coords (assoc tile :nc :overlay)]
-        (swap! overlay-tiles-atom
-               cache/add-item 
-               overlay-tile-coords
-               (multi-color-tile memory-tile-atom tile
-                                 (:channels @screen-state-atom))))))))
+        (tile-cache/load-tile memory-tile-atom tile)
+        (let [overlay-tile-coords (assoc tile :nc :overlay)]
+          (tile-cache/add-tile overlay-tiles-atom
+                 overlay-tile-coords
+                 (multi-color-tile memory-tile-atom tile
+                                   (:channels @screen-state-atom))))))))
 
 (defn load-visible-only
   "Runs visible-loader whenever screen-state-atom changes."

@@ -4,7 +4,6 @@
            (javax.swing AbstractAction JComponent KeyStroke)
            (java.util UUID)))
 
-
 (def MIN-ZOOM 1/256)
 
 (def MAX-ZOOM 1)
