@@ -32,6 +32,11 @@
                  (float (+ y (/ height 2))))))
 
 
+(defn draw-image
+  "Draw an image with upper-left corner at position x,y."
+  [^Graphics2D g image x y]
+  (.drawImage g image x y nil))
+
 (def display-updater (GUIUpdater.))
 
 

@@ -9,7 +9,8 @@
             [slide-explorer.tile-cache :as tile-cache]
             [clojure.core.memoize :as memo])
   (:use [org.micromanager.mm :only (edt)]
-        [slide-explorer.paint :only (enable-anti-aliasing repaint repaint-on-change)]
+        [slide-explorer.paint :only (enable-anti-aliasing repaint
+                                     draw-image repaint-on-change)]
         [slide-explorer.tiles :only (center-tile floor-int)]
         [slide-explorer.image :only (crop insert-half-tile overlay)]
         [slide-explorer.user-controls :only (make-view-controllable
@@ -142,9 +143,6 @@
     (overlay-memo procs lut-maps)))
 
 ;; PAINTING
-
-(defn draw-image [^Graphics2D g image x y]
-  (.drawImage g image x y nil))
 
 (defn paint-tiles [^Graphics2D g overlay-tiles-atom screen-state [tile-width tile-height]]
   (let [pixel-rect (.getClipBounds g)]
