@@ -861,14 +861,6 @@ int CDemoCamera::InsertImage()
  
    // Important:  metadata about the image are generated here:
    Metadata md;
-   // Copy the metadata inserted by other processes:
-   std::vector<std::string> keys = metadata_.GetKeys();
-   for (unsigned int i= 0; i < keys.size(); i++) {
-      MetadataSingleTag mst = metadata_.GetSingleTag(keys[i].c_str());
-      md.PutTag(mst.GetName(), mst.GetDevice(), mst.GetValue());
-   }
-
-   // Add our own metadata
    md.put("Camera", label);
    md.put(MM::g_Keyword_Metadata_StartTime, CDeviceUtils::ConvertToString(sequenceStartTime_.getMsec()));
    md.put(MM::g_Keyword_Elapsed_Time_ms, CDeviceUtils::ConvertToString((timeStamp - sequenceStartTime_).getMsec()));
