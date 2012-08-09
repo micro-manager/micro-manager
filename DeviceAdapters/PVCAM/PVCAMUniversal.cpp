@@ -1382,14 +1382,14 @@ int Universal::SnapImage()
 
    snappingSingleFrame_=true;
 
-//   g_pvcamLock.Lock();
+   g_pvcamLock.Lock();
    if (!pl_exp_start_seq(hPVCAM_, pixBuffer))
    {
-//      g_pvcamLock.Unlock();
+      g_pvcamLock.Unlock();
       return LogCamError(__LINE__);
    } else 
    {
-//       g_pvcamLock.Unlock();
+       g_pvcamLock.Unlock();
    }
    MM::MMTime end = GetCurrentMMTime();
 
