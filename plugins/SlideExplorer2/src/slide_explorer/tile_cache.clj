@@ -17,7 +17,7 @@
   [memory-tile-atom key image-processor]
   (swap! memory-tile-atom cache/add-item key image-processor)
   (when-let [dir (tile-dir memory-tile-atom)]
-    (.submit file-executor #(disk/write-tile dir key image-processor))))
+    (reactive/submit file-executor #(disk/write-tile dir key image-processor))))
 
 (defn load-tile
   [memory-tile-atom key]
