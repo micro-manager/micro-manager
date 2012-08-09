@@ -297,7 +297,7 @@ public class ReportProblemDialog extends javax.swing.JDialog {
        // simpler, and seems to work:
        //String EMAIL_REGEX = "[\\w-]+@([\\w-]+\\.)+[\\w-]+";
        // this one deals with dots in name (from http://www.regular-expressions.info/email.html)
-       String EMAIL_REGEX = "[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?";
+       String EMAIL_REGEX = "(?i)[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?";
        if (emailText_.getText().matches(EMAIL_REGEX)) {
           if (0 < name_.getText().length()) {
              if (0 < organization_.getText().length()) {
