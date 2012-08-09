@@ -26,7 +26,7 @@
         [slide-explorer.persist :only (save-as)]
         [clojure.java.io :only (file)])
   (:require [slide-explorer.reactive :as reactive]
-            [slide-explorer.cache :as cache]
+            [slide-explorer.tile-cache :as tile-cache]
             [slide-explorer.persist :as persist]))
 
 (load-mm (MMStudioMainFrame/getInstance))
@@ -213,8 +213,7 @@
   "The main function that starts a slide explorer window."
   ([dir new?]
     (core waitForDevice (core getXYStageDevice))
-    (let [memory-tiles (doto (atom (cache/empty-lru-map 100))
-                         (alter-meta! assoc ::directory dir))
+    (let [memory-tiles (tile-cache/create-tile-cache 100 dir)
           acquired-images (atom #{})
           affine-stage-to-pixel (origin-here-stage-to-pixel-transform)
           first-seq (acquire-at (inverse-transform (Point. 0 0) affine-stage-to-pixel))

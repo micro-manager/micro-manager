@@ -6,7 +6,7 @@
 (def file-executor (reactive/single-threaded-executor))
 
 (defn tile-dir [memory-tile-atom]
-  (:slide-explorer.main/directory (meta memory-tile-atom)))
+  (::directory (meta memory-tile-atom)))
 
 (defn add-tile
   "Adds a tile to the atom in memory and saves a .tif image to the associated directory."
@@ -20,22 +20,24 @@
   "Loads the tile into memory-tile-atom, if tile is not already present."
   (reactive/submit file-executor
                    (fn []
-                     (or ;(println "loading tile")
-                         (get @memory-tile-atom key)
-                         ;(println "key not found")
-                         (when-let [tile (disk/read-tile (tile-dir memory-tile-atom) key)]
-                           (swap! memory-tile-atom
-                                  #(if-not (get % key)
-                                     (cache/add-item % key tile)
-                                     %))
-                           tile)))))
+                     (or (get @memory-tile-atom key)
+                         (when-let [dir (tile-dir memory-tile-atom)]
+                           (when-let [tile (disk/read-tile dir key)]
+                             (swap! memory-tile-atom
+                                    #(if-not (get % key)
+                                       (cache/add-item % key tile)
+                                       %))
+                             tile))))))
 
 (defn get-tile
   [memory-tile-atom key]
   (swap! memory-tile-atom cache/hit-item key)
   (get @memory-tile-atom key))
 
-(defn unload-tile
-  [memory-tile-atom key]
-  ;(println "unloading")
-  (swap! memory-tile-atom dissoc key))
+(defn create-tile-cache
+  ([lru-cache-limit directory]
+    (doto (atom (cache/empty-lru-map lru-cache-limit))
+      (alter-meta! assoc ::directory directory)))
+  ([lru-cache-limit]
+    (create-tile-cache lru-cache-limit nil)))
+    

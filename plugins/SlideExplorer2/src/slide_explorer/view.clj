@@ -6,7 +6,6 @@
            (ij.process ByteProcessor ImageProcessor))
   (:require [clojure.pprint :as pprint]
             [slide-explorer.reactive :as reactive]
-            [slide-explorer.cache :as cache]
             [slide-explorer.tile-cache :as tile-cache]
             [clojure.core.memoize :as memo])
   (:use [org.micromanager.mm :only (edt)]
@@ -248,7 +247,7 @@
                                        :keys (sorted-set)
                                        :channels (sorted-map))
                                        :update 0)
-        overlay-tiles (atom (cache/empty-lru-map 100))
+        overlay-tiles (tile-cache/create-tile-cache 100)
         panel (main-panel screen-state overlay-tiles)]
     (load-visible-only screen-state memory-tiles
                        overlay-tiles acquired-images)

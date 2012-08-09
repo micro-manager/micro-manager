@@ -22,7 +22,7 @@
   (FileDialogs/openDir nil "Choose a Slide Explorer data set" DATA-SET))
 
 (defn save-as
-  "Ask the user to choose a new  data set location and move an existing
+  "Ask the user to choose a new data set location and move an existing
    data set there."
   [old-location]
   (when-let [new-location (create-dir-dialog)]
