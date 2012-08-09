@@ -234,17 +234,12 @@
     (go (file (str "tmp" (rand-int 10000000))) true)))
   
 
-(defn save-data-set
-  [memory-tile-atom]
-  (let [new-location (persist/save-as (::directory (meta memory-tile-atom)))]
-    (alter-meta! memory-tile-atom assoc ::directory new-location)))
+;; save data set: tile-cache/move-cache
 
 (defn load-data-set
   []
   (when-let [dir (persist/open-dir-dialog)]
     (go (file dir) false)))
-
-
 
 ;; tests
 

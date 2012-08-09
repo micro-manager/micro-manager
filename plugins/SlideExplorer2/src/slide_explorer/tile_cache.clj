@@ -1,12 +1,16 @@
 (ns slide-explorer.tile-cache
   (:use [slide-explorer.cache :as cache]
         [slide-explorer.disk :as disk]
+        [slide-explorer.persist :as persist]
         [slide-explorer.reactive :as reactive]))
 
 (def file-executor (reactive/single-threaded-executor))
 
 (defn tile-dir [memory-tile-atom]
   (::directory (meta memory-tile-atom)))
+
+(defn tile-dir! [memory-tile-atom dir]
+  (alter-meta! memory-tile-atom assoc ::directory dir))
 
 (defn add-tile
   "Adds a tile to the atom in memory and saves a .tif image to the associated directory."
@@ -37,7 +41,11 @@
 (defn create-tile-cache
   ([lru-cache-limit directory]
     (doto (atom (cache/empty-lru-map lru-cache-limit))
-      (alter-meta! assoc ::directory directory)))
+      (tile-dir! directory)))
   ([lru-cache-limit]
     (create-tile-cache lru-cache-limit nil)))
     
+(defn move-cache
+  [memory-tile-atom]
+  (let [new-location (persist/save-as (tile-dir memory-tile-atom))]
+    (tile-dir! memory-tile-atom new-location)))
