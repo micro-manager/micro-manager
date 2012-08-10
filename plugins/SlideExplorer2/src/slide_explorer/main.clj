@@ -270,4 +270,6 @@
                  ;(Thread/sleep 1000)
                  (test-tile i j k chan))))))
 
-
+(defn big-region-contrast []
+  (swap! ss assoc
+         :channels {"Default" {:min 200 :max 800 :gamma 1.0 :color Color/WHITE}}))

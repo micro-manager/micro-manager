@@ -14,6 +14,7 @@
         [slide-explorer.tiles :only (center-tile floor-int)]
         [slide-explorer.image :only (crop insert-half-tile overlay)]
         [slide-explorer.user-controls :only (make-view-controllable
+                                              handle-resize
                                               setup-fullscreen)]))
 
 
@@ -144,6 +145,14 @@
 
 ;; PAINTING
 
+(defn absolute-mouse-position [screen-state]
+  (let [{:keys [x y mouse zoom width height]} screen-state]
+    (when mouse
+      (let [mouse-x-centered (- (mouse :x) (/ width 2))
+            mouse-y-centered (- (mouse :y) (/ height 2))]
+        {:x (long (+ x (/ mouse-x-centered zoom)))
+         :y (long (+ y (/ mouse-y-centered zoom)))}))))
+
 (defn paint-tiles [^Graphics2D g overlay-tiles-atom screen-state [tile-width tile-height]]
   (let [pixel-rect (.getClipBounds g)]
     (doseq [[nx ny] (tiles-in-pixel-rectangle pixel-rect
@@ -158,7 +167,6 @@
         (let [[x y] (tile-to-pixels [nx ny] [tile-width tile-height] 1)]
           (draw-image g image x y)))))))
 	
-
 (defn paint-screen [graphics screen-state overlay-tiles-atom]
   (let [original-transform (.getTransform graphics)
         zoom (:zoom screen-state)
@@ -170,7 +178,11 @@
       (.translate (- x-center (int (* (:x screen-state) zoom)))
                   (- y-center (int (* (:y screen-state) zoom))))
       (paint-tiles overlay-tiles-atom screen-state [tile-width tile-height])
-      enable-anti-aliasing)))
+      enable-anti-aliasing
+      (.setTransform original-transform)
+      (.setColor Color/WHITE)
+      (.drawString (str (select-keys screen-state [:mouse :x :y :zoom])) 10 20)
+      (.drawString (str (absolute-mouse-position screen-state)) 10 40))))
 
 ;; Loading visible tiles
 
@@ -252,6 +264,21 @@
     (repaint-on-change panel [screen-state memory-tiles overlay-tiles])
     [panel screen-state]))
 
+(defn set-position! [screen-state-atom position-map]
+  (swap! screen-state-atom
+         merge position-map))
+
+(defn show-where-pointing! [pointing-screen-atom showing-screen-atom]
+  (set-position! showing-screen-atom
+                 (absolute-mouse-position @pointing-screen-atom)))
+
+(defn handle-point-and-show [pointing-screen-atom showing-screen-atom]
+  (reactive/handle-update
+    pointing-screen-atom
+    (fn [_ _]
+      (show-where-pointing!
+        pointing-screen-atom showing-screen-atom))))
+
 (defn show [memory-tiles acquired-images]
   (let [frame (main-frame)
         frame2 (doto (JFrame. "test") .show)
@@ -267,6 +294,8 @@
     (.add (.getContentPane frame2) panel2)
     (setup-fullscreen frame)
     (make-view-controllable panel screen-state)
+    (handle-resize panel2 screen-state2)
+    (handle-point-and-show screen-state screen-state2)
     ;(make-view-controllable panel2 screen-state2)
     ;(handle-open frame)
     screen-state))
