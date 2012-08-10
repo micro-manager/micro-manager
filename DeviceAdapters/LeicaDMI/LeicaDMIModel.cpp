@@ -84,6 +84,26 @@ int LeicaDeviceModel::GetBusy(bool& busy)
    return DEVICE_OK;
 }
 
+/**
+ * Transmitted light manual/computer control
+ */
+int LeicaTransmittedLightModel::SetManual(int manual)
+{
+   MM_THREAD_GUARD_LOCK(&mutex_);
+   manual_ = manual;
+   MM_THREAD_GUARD_UNLOCK(&mutex_);
+   return DEVICE_OK;
+}
+
+int LeicaTransmittedLightModel::GetManual(int & manual)
+{
+   MM_THREAD_GUARD_LOCK(&mutex_);
+   manual = manual_;
+   MM_THREAD_GUARD_UNLOCK(&mutex_);
+   return DEVICE_OK;
+}
+
+
 /*
  * Holds information about individual reflector cubes
  */
@@ -96,6 +116,17 @@ bool LeicaCubeModel::IsMethodAvailable(int methodId)
 {
    return cubeMethods_[methodId];
 }
+
+/*
+ * Transmitted Light model. Inherits from LeicaDeviceModel
+ */
+LeicaTransmittedLightModel::LeicaTransmittedLightModel() :
+   LeicaDeviceModel(),
+   manual_(0)
+{
+   
+}
+
 
 /*
  * IL model. Inherits from LeicaDeviceModel
@@ -143,6 +174,21 @@ LeicaObjectiveTurretModel::LeicaObjectiveTurretModel() :
    position_ = 1;
 }
 
+int LeicaObjectiveTurretModel::SetImmersion(char method)
+{
+   MM_THREAD_GUARD_LOCK(&mutex_);
+   method_ = method;
+   MM_THREAD_GUARD_UNLOCK(&mutex_);
+   return DEVICE_OK;
+}
+
+int LeicaObjectiveTurretModel::GetImmersion(char & method)
+{
+   MM_THREAD_GUARD_LOCK(&mutex_);
+   method = method_;
+   MM_THREAD_GUARD_UNLOCK(&mutex_);
+   return DEVICE_OK;
+}
 
 /*
  * DIC Turret model

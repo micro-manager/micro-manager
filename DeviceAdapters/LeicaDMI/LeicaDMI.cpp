@@ -1076,9 +1076,18 @@ int ObjectiveTurret::Initialize()
    if (ret != DEVICE_OK)
       return ret;
 
-   ret = UpdateStatus();
-   if (ret!= DEVICE_OK)
+   // Immersion medium
+   pAct = new CPropertyAction(this, &ObjectiveTurret::OnImmersion);
+   ret = CreateProperty("Immersion Medium", "Dry", MM::String, false, pAct);
+   if (ret != DEVICE_OK)
       return ret;
+
+   AddAllowedValue("Immersion Medium", "Dry");
+   AddAllowedValue("Immersion Medium", "Immersion");
+
+   //ret = UpdateStatus();
+   //if (ret!= DEVICE_OK)
+   //   return ret;
 
    initialized_ = true;
 
@@ -1168,6 +1177,35 @@ int ObjectiveTurret::OnArticleNumber(MM::PropertyBase* pProp, MM::ActionType eAc
    }
    return DEVICE_OK;
 }
+
+int ObjectiveTurret::OnImmersion(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   if (eAct == MM::BeforeGet)
+   {
+      char method;
+      int ret = g_ScopeModel.ObjectiveTurret_.GetImmersion(method);
+      if (ret != DEVICE_OK)
+         return ret;
+      std::string message = "Dry";
+      if (method == 'I')
+         message = "Immersion";
+      pProp->Set(message.c_str());
+   }
+   else if (eAct == MM::AfterSet)
+   {
+      std::string message;
+      pProp->Get(message);
+      char method = 'I';
+      if (message == "Dry")
+         method = 'D';
+      int ret = g_ScopeInterface.SetObjectiveImmersion(*this, *GetCoreCallback(), method);
+      if (ret != DEVICE_OK)
+         return ret;
+   }
+   return DEVICE_OK;
+}
+
+
 
 /*
  * LeicaFocusStage: Micro-Manager implementation of focus drive
@@ -2524,9 +2562,18 @@ int TransmittedLight::Initialize()
 
    SetPropertyLimits(g_LevelProp, 0.0, 255.0);
 
-   ret = UpdateStatus();
-   if (ret != DEVICE_OK) 
-      return ret; 
+   // Manual control
+   pAct = new CPropertyAction(this, &TransmittedLight::OnManual);
+   ret = CreateProperty("Control", "Manual", MM::String, false, pAct);
+   if (ret != DEVICE_OK)
+      return ret;
+
+   AddAllowedValue("Control", "Computer");
+   AddAllowedValue("Control", "Manual");
+
+   //ret = UpdateStatus();
+   //if (ret != DEVICE_OK) 
+   //  return ret; 
 
    // set TL to known initial state: shutter=closed, level = 0
    level_ = 0;
@@ -2614,6 +2661,36 @@ int TransmittedLight::OnLevel(MM::PropertyBase *pProp, MM::ActionType eAct)
          if (ret != DEVICE_OK)
             return ret;
       }
+   }
+	return DEVICE_OK;
+}
+
+int TransmittedLight::OnManual(MM::PropertyBase *pProp, MM::ActionType eAct)
+{
+   if (eAct == MM::BeforeGet)
+   {
+      int manual = 0;
+      int ret = g_ScopeInterface.GetTransmittedLightManual(*this, *GetCoreCallback(), manual);
+      if (manual == 0)
+      {
+         pProp->Set("Computer");
+      }
+      else
+      {
+         pProp->Set("Manual");
+      }
+   }
+   else if (eAct == MM::AfterSet)
+   {
+      std::string tmp = "";
+      pProp->Get(tmp);
+
+      int manual = 0;
+      if (tmp == "Manual")
+         manual = 1;
+      int ret = g_ScopeInterface.SetTransmittedLightManual(*this, *GetCoreCallback(), manual);
+      if (ret != DEVICE_OK)
+         return ret;
    }
 	return DEVICE_OK;
 }

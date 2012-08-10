@@ -360,7 +360,7 @@ int LeicaScopeInterface::Initialize(MM::Device& device, MM::Core& core)
 
    // Start event reporting for Objective Turret
    if (scopeModel_->IsDeviceAvailable(g_Revolver)) {
-      command << g_Revolver << "003 1 0 1 0 0 0 0 0 1";
+      command << g_Revolver << "003 1 0 1 0 0 0 1 0 1";
       ret = GetAnswer(device, core, command.str().c_str(), answer);
       if (ret != DEVICE_OK)
          return ret;
@@ -1568,8 +1568,6 @@ int LeicaScopeInterface::SetCondensorPosition(MM::Device& device, MM::Core& core
 
 /**
  * Sets state of objective Turret
-/**
- * Sets state of objective Turret
  */
 int LeicaScopeInterface::SetRevolverPosition(MM::Device& device, MM::Core& core, int position)
 {
@@ -1577,6 +1575,21 @@ int LeicaScopeInterface::SetRevolverPosition(MM::Device& device, MM::Core& core,
    std::ostringstream os;
    os << g_Revolver << "022" << " " << position;
    return core.SetSerialCommand(&device, port_.c_str(), os.str().c_str(), "\r");
+}
+
+/**
+ * Switches between dry and oil
+ */
+int LeicaScopeInterface::SetObjectiveImmersion(MM::Device& device, MM::Core& core, char method)
+{
+   if (method == 'I' || method == 'D') 
+   {
+      scopeModel_->ObjectiveTurret_.SetBusy(true);
+      std::ostringstream os;
+      os << g_Revolver << "027" << " " << method;
+      return core.SetSerialCommand(&device, port_.c_str(), os.str().c_str(), "\r");
+   } 
+   return ERR_UNKNOWN_POSITION;
 }
 
 /**
@@ -1810,6 +1823,36 @@ int LeicaScopeInterface::SetTransmittedLightShutterPosition(MM::Device &device, 
 	return DEVICE_OK;
 }
 
+/**
+ * 0 - manual operation off
+ * 1 - manual operation on
+ */
+int LeicaScopeInterface::SetTransmittedLightManual(MM::Device &device, MM::Core &core, int position)
+{
+	if(position > 1 || position < 0)
+	{
+		return DEVICE_UNKNOWN_POSITION;
+	}
+	std::stringstream os;
+	os<<g_Lamp<<"005"<<" "<<position;
+	int ret = core.SetSerialCommand(&device, port_.c_str(), os.str().c_str(), "\r");
+	if(ret != DEVICE_OK)
+		return ret;	
+	return DEVICE_OK;
+}
+
+int LeicaScopeInterface::GetTransmittedLightManual(MM::Device& device, MM::Core& core, int & position)
+{
+   std::stringstream os;
+	os << g_Lamp << "006";
+	int ret = core.SetSerialCommand(&device, port_.c_str(), os.str().c_str(), "\r");
+	if(ret != DEVICE_OK)
+		return ret;	
+
+   return scopeModel_->TransmittedLight_.GetManual(position);
+}
+
+
 int LeicaScopeInterface::GetTransmittedLightShutterPosition(MM::Device &device, MM::Core &core, int & position)
 {
 	return scopeModel_->TransmittedLight_.GetPosition(position);
@@ -2013,6 +2056,11 @@ int LeicaMonitoringThread::svc()
                    break;
                 case (g_Lamp) :
                    switch (commandId) {
+                      case (6) :
+                         int manual;
+                         os >> manual;
+                         scopeModel_->TransmittedLight_.SetManual(manual);
+                         break;
                       case (32) :
                          scopeModel_->TLShutter_.SetBusy(false);
                          scopeModel_->ILShutter_.SetBusy(false);
@@ -2133,6 +2181,14 @@ int LeicaMonitoringThread::svc()
                             int pos;
                             os >> pos;
                             scopeModel_->ObjectiveTurret_.SetPosition(pos);
+                            scopeModel_->ObjectiveTurret_.SetBusy(false);
+                            break;
+                         }
+                      case (28) : //Immersion method
+                         {
+                            char method;
+                            os >> method;
+                            scopeModel_->ObjectiveTurret_.SetImmersion(method);
                             scopeModel_->ObjectiveTurret_.SetBusy(false);
                             break;
                          }

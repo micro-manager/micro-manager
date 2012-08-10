@@ -142,6 +142,13 @@ public:
    std::vector<LeicaObjectiveModel> objective_;
 
    static const int maxNrObjectives_ = 7;
+
+   // Thread safe
+   int GetImmersion(char& method);
+   int SetImmersion(char method);
+
+protected:
+   char method_;
 };
 
 /*
@@ -253,6 +260,22 @@ private:
 
 
 /*
+ * Model for Leica Transmitted Light lamp
+ */
+class LeicaTransmittedLightModel : public LeicaDeviceModel
+{
+public:
+   LeicaTransmittedLightModel();
+
+      // Thread safe
+   int GetManual(int& position);
+   int SetManual(int position);
+
+protected:
+   int manual_;
+};
+
+/*
  * Abstract model of the Lecia DMI microscope
  * All get and set methods refer to the model, not to the actual microscope
  * No communication with the microscope takes place in the model, this is merely
@@ -291,7 +314,7 @@ public:
    LeicaDeviceModel method_;   
    LeicaDeviceModel TLShutter_;
    LeicaDeviceModel ILShutter_;
-   LeicaDeviceModel TransmittedLight_;
+   LeicaTransmittedLightModel TransmittedLight_;
    LeicaILTurretModel ILTurret_;
    LeicaCondensorModel Condensor_;
    LeicaObjectiveTurretModel ObjectiveTurret_;

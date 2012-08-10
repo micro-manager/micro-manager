@@ -179,6 +179,7 @@ public:
    // action interface
    int OnState(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnArticleNumber(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnImmersion(MM::PropertyBase* pProp, MM::ActionType eAct);
 
 protected:
    unsigned int numPos_;
@@ -437,6 +438,7 @@ public:
    // action interface
    int OnState(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnLevel(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnManual(MM::PropertyBase* pProp, MM::ActionType eAct);
 
 private:
    bool initialized_;

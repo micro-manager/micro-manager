@@ -56,7 +56,7 @@ class LeicaScopeInterface
       // Utility function
       int GetAnswer(MM::Device& device, MM::Core& core, const char* command, std::string& answer);
       int GetStandInfo(MM::Device& device, MM::Core& core);
-	  int GetDevicesPresent(MM::Device& device, MM::Core& core);
+	   int GetDevicesPresent(MM::Device& device, MM::Core& core);
       int GetILTurretInfo(MM::Device& device, MM::Core& core);
       int GetCondensorInfo(MM::Device& device, MM::Core& core);
       int GetRevolverInfo(MM::Device& device, MM::Core& core);
@@ -68,6 +68,7 @@ class LeicaScopeInterface
       int GetMagChangerInfo(MM::Device& device, MM::Core& core);
       int GetDriveParameters(MM::Device& device, MM::Core& core, int deviceID);
 	   int GetTransmittedLightState(MM::Device& device, MM::Core& core, int & position);
+      int GetTransmittedLightManual(MM::Device& device, MM::Core& core, int & position);
 	   int GetTransmittedLightShutterPosition(MM::Device& device, MM::Core& core, int & position);
 
 		int GetSidePortInfo(MM::Device& device, MM::Core& core);
@@ -79,6 +80,7 @@ class LeicaScopeInterface
       int SetILTurretPosition(MM::Device& device, MM::Core& core, int position);
       int SetCondensorPosition(MM::Device& device, MM::Core& core, int position);
       int SetRevolverPosition(MM::Device& device, MM::Core& core, int position);
+      int SetObjectiveImmersion(MM::Device& device, MM::Core& core, char method);
       int SetDrivePosition(MM::Device& device, MM::Core& core, LeicaDriveModel& drive, int deviceID, int position);
       int SetDrivePositionRelative(MM::Device& device, MM::Core& core, LeicaDriveModel& drive, int deviceID, int position);
       int SetDriveAcceleration(MM::Device& device, MM::Core& core, LeicaDriveModel& drive, int deviceID, int position);
@@ -91,6 +93,7 @@ class LeicaScopeInterface
       int SetDICPrismTurretPosition(MM::Device& device, MM::Core& core, int position);
       int SetDICPrismFinePosition(MM::Device& device, MM::Core& core, int position);
 	   int SetTransmittedLightState(MM::Device& device, MM::Core& core, int position);
+      int SetTransmittedLightManual(MM::Device& device, MM::Core& core, int position);
 	   int SetTransmittedLightShutterPosition(MM::Device& device, MM::Core& core, int position);
       int SetAFCMode(MM::Device& device, MM::Core& core, bool on);
       int SetAFCOffset(MM::Device &device, MM::Core &core, double offset);
