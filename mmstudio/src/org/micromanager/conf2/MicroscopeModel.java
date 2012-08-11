@@ -1215,13 +1215,25 @@ public class MicroscopeModel {
       Device dev = findDevice(devName);
       if (dev != null) {
          
-         // first remove ports if any
+         // find port associated with this device
          String port = dev.getPort();
-         if (! (port.length() == 0))
-            comPortInUse_.remove(port);
          
-         // then device itself
+         // remove device
          devices_.remove(dev);
+         
+         // if there is a port, check if it is in use by other devices
+         if (! (port.length() == 0)) {
+            boolean inUse = false;
+            for (Device device: devices_) {
+               String port2 = device.getPort();
+               if (port.equals(port2)) {
+                  inUse = true;
+               }
+            }
+            if (!inUse)
+               comPortInUse_.remove(port);
+         }
+         
          modified_ = true;
       }
    }
