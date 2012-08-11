@@ -188,7 +188,7 @@ public class LiveModeTimer {
             double d = diff/ 1000.0;
             double fps = fpsCounter_ / d;
             double dfps = (imageNumber - imageNumber_) / d;
-            ij.IJ.showStatus("fps: " + format_.format(dfps) +
+            win_.displayStatusLine("fps: " + format_.format(dfps) +
                     ", display fps: " + format_.format(fps));
             fpsCounter_ = 0;
             fpsTimer_ = now;

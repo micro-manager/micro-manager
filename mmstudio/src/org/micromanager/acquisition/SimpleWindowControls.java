@@ -52,7 +52,7 @@ public class SimpleWindowControls extends DisplayControls {
     * @param virtAcq - acquisition displayed in the live/snap window
     */
    public SimpleWindowControls(VirtualAcquisitionDisplay virtAcq) {
-     virtAcq_ = virtAcq;
+      virtAcq_ = virtAcq;
       initComponents();
       showFolderButton_.setEnabled(false);
    }
@@ -132,44 +132,48 @@ public class SimpleWindowControls extends DisplayControls {
          }
       });
      
-
-
       JButton addToSeriesButton = new JButton("Album");
       addToSeriesButton.setIcon(SwingResourceManager.getIcon(MMStudioMainFrame.class,
               "/org/micromanager/icons/arrow_right.png"));
+      addToSeriesButton.setIconTextGap(6);
       addToSeriesButton.setToolTipText("Add current image to album");
       addToSeriesButton.setFocusable(false);
-      addToSeriesButton.setMaximumSize(new Dimension(90, 25));
-      addToSeriesButton.setMinimumSize(new Dimension(90, 25));
-      addToSeriesButton.setPreferredSize(new Dimension(110, 25));
+      addToSeriesButton.setMaximumSize(new Dimension(90, 28));
+      addToSeriesButton.setMinimumSize(new Dimension(90, 28));
+      addToSeriesButton.setPreferredSize(new Dimension(90, 28));
+      addToSeriesButton.setFont(new Font("Arial", Font.PLAIN, 10));
       addToSeriesButton.addActionListener(new ActionListener() {
          public void actionPerformed(ActionEvent evt) {
             addToSeriesButtonActionPerformed();
          }});
 
-      statusLabel_ = new JLabel("");
+      statusLabel_ = new JLabel("                                            ");     
       statusLabel_.setFocusable(false);
       statusLabel_.setFont(new java.awt.Font("Lucida Grande", 0, 10));
       
       this.setLayout(new BorderLayout());
 
-      JPanel buttonPanel = new JPanel();
-      JPanel textPanel = new JPanel();
+      JPanel buttonPanel = new JPanel();     
       buttonPanel.setLayout(new BoxLayout(buttonPanel, BoxLayout.X_AXIS));
-
+      
+      JPanel textPanel = new JPanel();
       textPanel.setLayout(new BorderLayout());
+      
       this.add(buttonPanel, BorderLayout.CENTER);
       this.add(textPanel,BorderLayout.SOUTH); 
       
       buttonPanel.add(showFolderButton_);
       buttonPanel.add(new JLabel(" "));
       buttonPanel.add(saveButton);
-      buttonPanel.add(new JLabel("   "));
+      buttonPanel.add(new JLabel(" "));
       buttonPanel.add(snapButton_);
-      buttonPanel.add(new JLabel("   "));
+      buttonPanel.add(new JLabel(" "));
       buttonPanel.add(liveButton_);
-      buttonPanel.add(new JLabel("    "));
+      buttonPanel.add(new JLabel(" "));
       buttonPanel.add(addToSeriesButton);
+      buttonPanel.add(new JLabel(" "));
+      
+      textPanel.add(new JLabel(" "));
       textPanel.add(statusLabel_, BorderLayout.CENTER);      
    }
    
@@ -200,6 +204,7 @@ public class SimpleWindowControls extends DisplayControls {
     
      private void saveButtonActionPerformed() {
         new Thread() {
+         @Override
            public void run() {
               virtAcq_.saveAs();
            }
@@ -216,7 +221,7 @@ public class SimpleWindowControls extends DisplayControls {
 
    }
 
-   //called when live mode activated
+   // called when live mode activated or deactivated
    @Override
    public void acquiringImagesUpdate(boolean acquiring) {
       snapButton_.setEnabled(!acquiring);
@@ -226,6 +231,9 @@ public class SimpleWindowControls extends DisplayControls {
               "/org/micromanager/icons/camera_go.png"));
       liveButton_.setSelected(acquiring);
       liveButton_.setText(acquiring ? "Stop Live" : "Live");
+      if (!acquiring) {
+         statusLabel_.setText("");
+      }
 
    }
 
