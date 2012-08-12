@@ -3519,7 +3519,7 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface, Device
    }
    
    /**
-    * /** Opens a dialog to record stage positions
+    * Opens a dialog to record stage positions
     */
    @Override
    public void showXYPositionList() {

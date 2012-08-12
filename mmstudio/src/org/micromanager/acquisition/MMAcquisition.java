@@ -18,10 +18,7 @@
 //               IN NO EVENT SHALL THE COPYRIGHT OWNER OR
 //               CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
-/**
- * This class is used to execute most of the acquisition and image display
- * functionality in the ScriptInterface
- */
+
 package org.micromanager.acquisition;
 
 import ij.ImagePlus;
@@ -55,6 +52,10 @@ import org.micromanager.utils.MDUtils;
 import org.micromanager.utils.MMScriptException;
 import org.micromanager.utils.ReportingUtils;
 
+/**
+ * This class is used to execute most of the acquisition and image display
+ * functionality in the ScriptInterface
+ */
 public class MMAcquisition {
    
    public static final Color[] DEFAULT_COLORS = {Color.blue, Color.green, Color.red,

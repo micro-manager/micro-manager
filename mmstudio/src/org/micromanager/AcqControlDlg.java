@@ -51,13 +51,25 @@ import org.micromanager.acquisition.TaggedImageStorageDiskDefault;
 import org.micromanager.acquisition.TaggedImageStorageMultipageTiff;
 import org.micromanager.api.AcquisitionEngine;
 import org.micromanager.api.ScriptInterface;
+import org.micromanager.utils.AcqOrderMode;
+import org.micromanager.utils.ChannelSpec;
+import org.micromanager.utils.ColorEditor;
+import org.micromanager.utils.ColorRenderer;
+import org.micromanager.utils.ContrastSettings;
 import org.micromanager.utils.DisplayMode;
+import org.micromanager.utils.FileDialogs;
 import org.micromanager.utils.FileDialogs.FileType;
-import org.micromanager.utils.*;
+import org.micromanager.utils.GUIColors;
+import org.micromanager.utils.ImageUtils;
+import org.micromanager.utils.MMException;
+import org.micromanager.utils.MMScriptException;
+import org.micromanager.utils.NumberUtils;
+import org.micromanager.utils.ReportingUtils;
+import org.micromanager.utils.TooltipTextMaker;
 
 /**
  * Time-lapse, channel and z-stack acquisition setup dialog.
- * This dialog specifies all parameters for the Image5D acquisition. 
+ * This dialog specifies all parameters for the MDA acquisition. 
  *
  */
 public class AcqControlDlg extends JFrame implements PropertyChangeListener { 
@@ -70,6 +82,7 @@ public class AcqControlDlg extends JFrame implements PropertyChangeListener {
    public static final String NEW_ACQFILE_NAME = "MMAcquistion.xml";
    public static final String ACQ_SETTINGS_NODE = "AcquistionSettings";
    public static final String COLOR_SETTINGS_NODE = "ColorSettings";
+   public static final String EXPOSURE_SETTINGS_NODE = "ExposureSettings";
    private JComboBox channelGroupCombo_;
    private JTextArea commentTextArea_;
    private JComboBox zValCombo_;
@@ -89,6 +102,7 @@ public class AcqControlDlg extends JFrame implements PropertyChangeListener {
    private Preferences prefs_;
    private Preferences acqPrefs_;
    private Preferences colorPrefs_;
+   private Preferences exposurePrefs_;
    private File acqFile_;
    private String acqDir_;
    private int zVals_ = 0;
@@ -271,8 +285,13 @@ public class AcqControlDlg extends JFrame implements PropertyChangeListener {
             channel.useChannel_ = ((Boolean) value).booleanValue();
          } else if (col == 1) {
             channel.config_ = value.toString();
+            channel.exposure_ = exposurePrefs_.getDouble(
+                    "Exposure_" + acqEng_.getChannelGroup() + "_" + 
+                    channel.config_, 10.0);
          } else if (col == 2) {
             channel.exposure_ = ((Double) value).doubleValue();
+            exposurePrefs_.putDouble("Exposure_" + acqEng_.getChannelGroup() 
+                    + "_" + channel.config_,channel.exposure_);
          } else if (col == 3) {
             channel.zOffset_ = ((Double) value).doubleValue();
          } else if (col == 4) {
@@ -327,6 +346,9 @@ public class AcqControlDlg extends JFrame implements PropertyChangeListener {
          return channels_;
       }
 
+      /**
+       * Adds a new channel to the list in the MDA window
+       */
       public void addNewChannel() {
          ChannelSpec channel = new ChannelSpec();
          channel.config_ = "";
@@ -346,7 +368,12 @@ public class AcqControlDlg extends JFrame implements PropertyChangeListener {
             if (channel.config_.length() == 0) {
                ReportingUtils.showMessage("No more channels are available\nin this channel group.");
             } else {
-               channel.color_ = new Color(colorPrefs_.getInt("Color_" + acqEng_.getChannelGroup() + "_" + channel.config_, Color.white.getRGB()));
+               channel.color_ = new Color(colorPrefs_.getInt(
+                       "Color_" + acqEng_.getChannelGroup() + "_" + 
+                       channel.config_, Color.white.getRGB()));
+               channel.exposure_ = exposurePrefs_.getDouble(
+                       "Exposure_" + acqEng_.getChannelGroup() + "_" + 
+                       channel.config_, 10.0);
                channels_.add(channel);
             }
          }
@@ -358,6 +385,9 @@ public class AcqControlDlg extends JFrame implements PropertyChangeListener {
          }
       }
 
+      /**
+       * Used to change the order of the channels in the MDA window
+       */
       public int rowDown(int rowIdx) {
          if (rowIdx >= 0 && rowIdx < channels_.size() - 1) {
             ChannelSpec channel = channels_.get(rowIdx);
@@ -368,6 +398,9 @@ public class AcqControlDlg extends JFrame implements PropertyChangeListener {
          return rowIdx;
       }
 
+      /**
+       * Used to change the order of the channels in the MDA window
+       */
       public int rowUp(int rowIdx) {
          if (rowIdx >= 1 && rowIdx < channels_.size()) {
             ChannelSpec channel = channels_.get(rowIdx);
@@ -475,13 +508,25 @@ public class AcqControlDlg extends JFrame implements PropertyChangeListener {
                combo_.addItem(configs[i]);
             }
             combo_.setSelectedItem(channel.config_);
-            channel.color_ = new Color(colorPrefs_.getInt("Color_" + acqEng_.getChannelGroup() + "_" + channel.config_, Color.white.getRGB()));
-
+            /*
+            channel.color_ = new Color(colorPrefs_.getInt(
+                    "Color_" + acqEng_.getChannelGroup() + "_" + channel.config_, 
+                    Color.white.getRGB()));
+            channel.exposure_ = exposurePrefs_.getDouble(
+                       "Exposure_" + acqEng_.getChannelGroup() + "_" + 
+                       channel.config_, 10.0);
+             */
+            
             // end editing on selection change
             combo_.addActionListener(new ActionListener() {
 
                public void actionPerformed(ActionEvent e) {
-                  channel.color_ = new Color(colorPrefs_.getInt("Color_" + acqEng_.getChannelGroup() + "_" + channel.config_, Color.white.getRGB()));
+                  channel_.color_ = new Color(colorPrefs_.getInt(
+                          "Color_" + acqEng_.getChannelGroup() + "_" + 
+                          (String) combo_.getSelectedItem(), Color.white.getRGB()));
+                  channel_.exposure_ = exposurePrefs_.getDouble(
+                       "Exposure_" + acqEng_.getChannelGroup() + "_" + 
+                       (String) combo_.getSelectedItem(), 10.0);
                   fireEditingStopped();
                }
             });
@@ -502,8 +547,11 @@ public class AcqControlDlg extends JFrame implements PropertyChangeListener {
             if (editCol_ == 0) {
                return checkBox_.isSelected();
             } else if (editCol_ == 1) {
-               // As a side effect, change to the color of the new channel
+               // As a side effect, change to the color and exposure of the new channel
                channel_.color_ = new Color(colorPrefs_.getInt("Color_" + acqEng_.getChannelGroup() + "_" + combo_.getSelectedItem(), Color.white.getRGB()));
+               channel_.exposure_ = exposurePrefs_.getDouble(
+                       "Exposure_" + acqEng_.getChannelGroup() + "_" + 
+                       channel_.config_, 10.0);
                return combo_.getSelectedItem();
             } else if (editCol_ == 2 || editCol_ == 3) {
                return new Double(NumberUtils.displayStringToDouble(text_.getText()));
@@ -784,7 +832,7 @@ public class AcqControlDlg extends JFrame implements PropertyChangeListener {
       Preferences root = Preferences.userNodeForPackage(this.getClass());
       acqPrefs_ = root.node(root.absolutePath() + "/" + ACQ_SETTINGS_NODE);
       colorPrefs_ = root.node(root.absolutePath() + "/" + COLOR_SETTINGS_NODE);
-
+      exposurePrefs_ = root.node(root.absolutePath() + "/" + EXPOSURE_SETTINGS_NODE);
       setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
 
       numberFormat_ = NumberFormat.getNumberInstance();
