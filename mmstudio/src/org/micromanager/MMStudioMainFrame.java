@@ -2109,10 +2109,12 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface, Device
    private void setExposure() {
       try {
          if (!isLiveModeOn()) {
-            core_.setExposure(NumberUtils.displayStringToDouble(textFieldExp_.getText()));
+            core_.setExposure(NumberUtils.displayStringToDouble(
+                    textFieldExp_.getText()));
          } else {
             liveModeTimer_.stop();
-            core_.setExposure(NumberUtils.displayStringToDouble(textFieldExp_.getText()));
+            core_.setExposure(NumberUtils.displayStringToDouble(
+                    textFieldExp_.getText()));
             try {
                liveModeTimer_.begin();
             } catch (Exception e) {
@@ -2125,6 +2127,13 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface, Device
          // Display the new exposure time
          double exposure = core_.getExposure();
          textFieldExp_.setText(NumberUtils.doubleToDisplayString(exposure));
+         
+         // update current channel in MDA window with this exposure
+         String channelGroup = core_.getChannelGroup();
+         String channel = core_.getCurrentConfigFromCache(channelGroup);
+         if (!channel.equals(""))
+            getAcqDlg().setChannelExposureTime(channelGroup, channel, exposure);
+         
 
       } catch (Exception exp) {
          // Do nothing.

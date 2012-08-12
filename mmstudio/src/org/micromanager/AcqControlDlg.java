@@ -447,7 +447,9 @@ public class AcqControlDlg extends JFrame implements PropertyChangeListener {
       /**
        * Updates the exposure time in the given preset 
        * 
-       * @param channelGroup - if it does not match current channelGroup no actio will be taken
+       * @param channelGroup - if it does not match current channelGroup, 
+       * no action will be taken
+       * 
        * @param channel - preset for which to change exposire time
        * @param exposure - desired exposure time
        */
@@ -463,6 +465,8 @@ public class AcqControlDlg extends JFrame implements PropertyChangeListener {
 
          }
       }
+      
+      
    }
 
    /**
@@ -1595,6 +1599,21 @@ public class AcqControlDlg extends JFrame implements PropertyChangeListener {
             }
          }
       }
+   }
+   
+   /**
+    * Returns exposure time for the desired preset in the given channelgroup
+    * Acquires its info from the preferences
+    * 
+    * @param channelGroup
+    * @param channel - 
+    * @param defaultExp - default value
+    * @return exposure time
+    */
+   public double getChannelExposureTime(String channelGroup, String channel,
+           double defaultExp) {
+      return exposurePrefs_.getDouble("Exposure_" + channelGroup
+                          + "_" + channel, defaultExp);       
    }
 
    protected void afOptions() {

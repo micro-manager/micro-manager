@@ -5,8 +5,9 @@
 //-----------------------------------------------------------------------------
 
 //AUTHOR:       Nenad Amodaj, nenad@amodaj.com, Dec 1, 2005
+//              modified by Nico Stuurman, 2012
 
-//COPYRIGHT:    University of California, San Francisco, 2006
+//COPYRIGHT:    University of California, San Francisco, 2006, 2012
 
 //LICENSE:      This file is distributed under the BSD license.
 //License text is included with the source distribution.
@@ -35,7 +36,6 @@ import javax.swing.table.TableColumn;
 
 import mmcorej.CMMCore;
 import mmcorej.Configuration;
-import mmcorej.MMCoreJ;
 import mmcorej.StrVector;
 
 import org.micromanager.api.ScriptInterface;
@@ -53,7 +53,6 @@ public class ConfigGroupPad extends JScrollPane{
    private JTable table_;
    private StateTableData data_;
    private ScriptInterface parentGUI_;
-   private ArrayList<ChannelSpec> channels_;
    Preferences prefs_;
    private String COLUMN_WIDTH = "group_col_width";
    public PresetEditor presetEditor_ = null;
@@ -64,7 +63,6 @@ public class ConfigGroupPad extends JScrollPane{
       super();
       Preferences root = Preferences.userNodeForPackage(this.getClass());
       prefs_ = root.node(root.absolutePath() + "/PresetPad");
-      channels_ = new ArrayList<ChannelSpec>();
    }
 
    private void handleException (Exception e) {
@@ -215,46 +213,20 @@ public class ConfigGroupPad extends JScrollPane{
                   } else {
                      core_.setConfig(item.group, value.toString());
                      core_.waitForConfig(item.group, value.toString());
+                     
                   }
+                  
+                  // Associate exposure time with presets in current channel group
+                  if (item.group.equals(core_.getChannelGroup())) {
+                     core_.setExposure(parentGUI_.getAcqDlg().getChannelExposureTime(
+                             item.group, value.toString(), core_.getExposure()) );
+                  }
+                  
                   refreshStatus();
                   repaint();
                   if (parentGUI_ != null)
                      parentGUI_.updateGUI(false);
-
-                  // if the channel was changed, adjust the exposure and contrast settings
-                  if (item.group.equals(MMCoreJ.getG_Keyword_Channel())) {
-                     ChannelSpec csFound = null;
-                     // >>>> this should be a hash table
-                     for (int i=0; i<channels_.size(); i++) {
-                        ChannelSpec cs = channels_.get(i);
-                        if (cs != null) {
-                           if (cs.name_.equals(item.config)) {
-                              csFound = cs;
-                              break;
-                           }
-                        }
-                     }
-
-                     if (csFound == null) {
-                        // channel was not found -> add it to the list
-                        csFound = new ChannelSpec();
-                        csFound.name_ = item.config;
-                        csFound.exposure_ = core_.getExposure();
-                        if (parentGUI_ != null) {
-                           ContrastSettings ctr = parentGUI_.getContrastSettings();
-                           if (ctr != null) 
-                              csFound.contrast_ = ctr;
-
-                           channels_.add(csFound);
-                        }
-                     } else {
-                        // channel was found - apply settings
-                        // >>> DISABLED - not working properly
-//                      core_.setExposure(csFound.exposure_);
-//                      if (parentGUI_ != null)
-//                      parentGUI_.applyContrastSettings(csFound.contrast8_, csFound.contrast16_);
-                     }
-                  }
+                  
                   if (restartLive)
                        parentGUI_.enableLiveMode(true);
                }
