@@ -7,8 +7,13 @@ import mmcorej.StrVector;
 
 import org.micromanager.api.Autofocus;
 import org.micromanager.api.ScriptInterface;
-import org.micromanager.acquisition.AcquisitionData;
 
+/**
+ * Makes C++ autofocus devices appear similarly to autofocus devices implemented
+ * in Java
+ * 
+ * 
+ */
 public class CoreAutofocus implements Autofocus {
 
    private CMMCore core_;
@@ -43,7 +48,7 @@ public class CoreAutofocus implements Autofocus {
    }
 
    public String getVerboseStatus() {
-      return new String("No message at this time!");
+      return "No message at this time!";
    }
 
    public double incrementalFocus() throws MMException {
