@@ -82,7 +82,7 @@ public class AcqControlDlg extends JFrame implements PropertyChangeListener {
    public static final String NEW_ACQFILE_NAME = "MMAcquistion.xml";
    public static final String ACQ_SETTINGS_NODE = "AcquistionSettings";
    public static final String COLOR_SETTINGS_NODE = "ColorSettings";
-   public static final String EXPOSURE_SETTINGS_NODE = "ExposureSettings";
+   private static final String EXPOSURE_SETTINGS_NODE = "ExposureSettings";
    private JComboBox channelGroupCombo_;
    private JTextArea commentTextArea_;
    private JComboBox zValCombo_;
@@ -443,6 +443,26 @@ public class AcqControlDlg extends JFrame implements PropertyChangeListener {
          }
          return false;
       }
+      
+      /**
+       * Updates the exposure time in the given preset 
+       * 
+       * @param channelGroup - if it does not match current channelGroup no actio will be taken
+       * @param channel - preset for which to change exposire time
+       * @param exposure - desired exposure time
+       */
+      public void setChannelExposureTime(String channelGroup, String channel, 
+              double exposure) {
+         if (!channelGroup.equals(acqEng_.getChannelGroup()))
+            return;
+         for (ChannelSpec ch : channels_) {
+            if (ch.config_.equals(channel)) {
+               ch.exposure_ = exposure;
+               this.fireTableDataChanged();
+            }
+
+         }
+      }
    }
 
    /**
@@ -508,14 +528,6 @@ public class AcqControlDlg extends JFrame implements PropertyChangeListener {
                combo_.addItem(configs[i]);
             }
             combo_.setSelectedItem(channel.config_);
-            /*
-            channel.color_ = new Color(colorPrefs_.getInt(
-                    "Color_" + acqEng_.getChannelGroup() + "_" + channel.config_, 
-                    Color.white.getRGB()));
-            channel.exposure_ = exposurePrefs_.getDouble(
-                       "Exposure_" + acqEng_.getChannelGroup() + "_" + 
-                       channel.config_, 10.0);
-             */
             
             // end editing on selection change
             combo_.addActionListener(new ActionListener() {
@@ -539,8 +551,10 @@ public class AcqControlDlg extends JFrame implements PropertyChangeListener {
          }
       }
 
-      // This method is called when editing is completed.
-      // It must return the new value to be stored in the cell.
+      /** 
+       * This method is called when editing is completed.
+       * It must return the new value to be stored in the cell.
+       */
       public Object getCellEditorValue() {
          // TODO: if content of column does not match type we get an exception
          try {
@@ -819,7 +833,8 @@ public class AcqControlDlg extends JFrame implements PropertyChangeListener {
     * @param acqEng - acquisition engine
     * @param prefs - application preferences node
     */
-   public AcqControlDlg(AcquisitionEngine acqEng, Preferences prefs, ScriptInterface gui) {
+   public AcqControlDlg(AcquisitionEngine acqEng, Preferences prefs, 
+           ScriptInterface gui) {
       super();
 
       prefs_ = prefs;
@@ -1553,6 +1568,33 @@ public class AcqControlDlg extends JFrame implements PropertyChangeListener {
       // update summary
       applySettings();
       summaryTextArea_.setText(acqEng_.getVerboseSummary());
+   }
+   
+   /**
+    * Sets the exposure time of a given channel
+    * The channel has to be preset in the current channel group
+    * Will also update the exposure associated with this channel in the preferences,
+    * i.e. even if the preset is not shown, this exposure time will be used
+    * next time it is shown
+    * 
+    * @param chanelGroup - name of the channelgroup.  If it does not match the current
+    * channel group, no action will be taken
+    * @param channel - name of the preset in the current channel group
+    * @param exposure  - new exposure time
+    */
+   public void setChannelExposureTime(String channelGroup, String channel, 
+           double exposure) {
+      if (channelGroup.equals(acqEng_.getChannelGroup())) {
+         if (acqEng_.getChannelConfigs().length > 0) {
+            for (String config : acqEng_.getChannelConfigs()) {
+               if (channel.equals(config)) {
+                  exposurePrefs_.putDouble("Exposure_" + acqEng_.getChannelGroup()
+                          + "_" + channel, exposure);
+                  model_.setChannelExposureTime(channelGroup, channel, exposure);
+               }
+            }
+         }
+      }
    }
 
    protected void afOptions() {
