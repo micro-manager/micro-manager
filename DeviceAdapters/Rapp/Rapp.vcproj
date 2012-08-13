@@ -300,7 +300,7 @@
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
-				AdditionalIncludeDirectories="&quot;C:\projects\3rdparty\Rapp\UGA 40 Control SDK 64\UGA40Example\&quot;;&quot;..\..\..\3rdparty\Rapp\UGA 40 Control SDK 64\inc&quot;"
+				AdditionalIncludeDirectories="&quot;..\..\..\3rdparty\Rapp\UGA 40 Control SDK 64\UGA40Example\&quot;;&quot;..\..\..\3rdparty\Rapp\UGA 40 Control SDK 64\inc&quot;"
 				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;MODULE_EXPORTS"
 				ExceptionHandling="2"
 				RuntimeLibrary="0"
