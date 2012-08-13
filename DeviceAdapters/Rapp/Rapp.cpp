@@ -120,7 +120,7 @@ RappScanner::RappScanner() :
       AddAllowedValue("VirtualComPort", s.at(i).c_str());
    }
 
-
+   delete dev;
 }  
 
 RappScanner::~RappScanner()
