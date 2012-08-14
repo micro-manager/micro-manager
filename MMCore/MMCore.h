@@ -114,8 +114,6 @@ public:
    void updateCoreProperties() throw (CMMError);
    void reset() throw (CMMError);
    void clearLog();
-   void initializeLogging();
-   void shutdownLogging();
    void enableDebugLog(bool enable);
    bool debugLogEnabled(void) { return debugLog_;};
    void enableStderrLog(bool enable);
@@ -528,8 +526,6 @@ private:
 
    static MMThreadLock deviceLock_;
 
-   char* pathBuf_; // cached version of current working directoy
-
    MM::Camera* camera_;
    bool everSnapped_;
    MM::Shutter* shutter_;
@@ -572,7 +568,8 @@ private:
    void updateAllowedChannelGroups();
    void assignDefaultRole(MM::Device* pDev);
    void updateCoreProperty(const char* propName, MM::DeviceType devType) throw (CMMError);
-
+   void initializeLogging();
+   void shutdownLogging();
 
    // >>>>> OBSOLETE >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
    void defineConfiguration(const char* configName, const char* deviceName, const char* propName, const char* value);
@@ -583,12 +580,8 @@ private:
    std::string getConfiguration() const;
    Configuration getConfigurationData(const char* config) const throw (CMMError);
 
-
    MMThreadLock* pPostedErrorsLock_;
    mutable std::deque<std::pair< int, std::string> > postedErrors_;
-   //bool enableDeviceDiscovery_;
-
-
 };
 
 #endif //_MMCORE_H_

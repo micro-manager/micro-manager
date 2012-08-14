@@ -345,6 +345,8 @@ int CoreCallback::SetSerialProperties(const char* portName,
    {
       return e.getCode();
    }
+
+   return DEVICE_OK;
 }
 
 /**

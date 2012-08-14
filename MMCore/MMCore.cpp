@@ -112,13 +112,6 @@ CMMCore::CMMCore() :
    camera_(0), everSnapped_(false), shutter_(0), focusStage_(0), xyStage_(0), autoFocus_(0), slm_(0), galvo_(0), imageProcessor_(0), pollingIntervalMs_(10), timeoutMs_(5000),
    logStream_(0), autoShutter_(true), callback_(0), configGroups_(0), properties_(0), externalCallback_(0), pixelSizeGroup_(0), cbuf_(0), pPostedErrorsLock_(NULL)
 {
-   // get current working directory
-#ifdef _WINDOWS
-   pathBuf_ = _getcwd(NULL, 0);
-#else
-   pathBuf_ = getcwd(NULL,0);
-#endif
-
    configGroups_ = new ConfigGroupCollection();
    pixelSizeGroup_ = new PixelSizeConfigGroup();
    pPostedErrorsLock_ = new MMThreadLock();
@@ -293,10 +286,6 @@ CMMCore::~CMMCore()
    delete cbuf_;
    delete pixelSizeGroup_;
    delete pPostedErrorsLock_;
-
-
-	if(NULL!= pathBuf_) 
-		free (pathBuf_); // kh
 }
 
 /**
