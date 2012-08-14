@@ -94,7 +94,7 @@ const char* g_CoreName = "MMCore";
 // version info
 const int MMCore_versionMajor = 2;
 const int MMCore_versionMinor = 3;
-const int MMCore_versionBuild = 1;
+const int MMCore_versionBuild = 2;
 
 // mutex
 MMThreadLock CMMCore::deviceLock_;
@@ -289,7 +289,7 @@ CMMCore::~CMMCore()
 }
 
 /**
- * Delete an exisiting log file and start a new one.
+ * Delete an exisisting log file and start a new one.
  */
 void CMMCore::clearLog()
 {

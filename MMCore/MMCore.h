@@ -524,8 +524,6 @@ private:
    typedef std::map<std::string, Configuration*> CConfigMap;
    typedef std::map<std::string, PropertyBlock*> CPropBlockMap;
 
-   static MMThreadLock deviceLock_;
-
    MM::Camera* camera_;
    bool everSnapped_;
    MM::Shutter* shutter_;
@@ -571,6 +569,12 @@ private:
    void initializeLogging();
    void shutdownLogging();
 
+   MMThreadLock* pPostedErrorsLock_;
+   mutable std::deque<std::pair< int, std::string> > postedErrors_;
+
+   // global data
+   static MMThreadLock deviceLock_;
+
    // >>>>> OBSOLETE >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
    void defineConfiguration(const char* configName, const char* deviceName, const char* propName, const char* value);
    bool isConfigurationDefined(const char* configName);
@@ -579,9 +583,6 @@ private:
    std::vector<std::string> getAvailableConfigurations() const;
    std::string getConfiguration() const;
    Configuration getConfigurationData(const char* config) const throw (CMMError);
-
-   MMThreadLock* pPostedErrorsLock_;
-   mutable std::deque<std::pair< int, std::string> > postedErrors_;
 };
 
 #endif //_MMCORE_H_
