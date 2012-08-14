@@ -1647,12 +1647,14 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface, Device
       });
 
       // add a listener to the main ImageJ window to catch it quitting out on us
-      ij.IJ.getInstance().addWindowListener(new WindowAdapter() {
-         @Override
-         public void windowClosing(WindowEvent e) {
-            closeSequence();
-         };
-      });
+      if (ij.IJ.getInstance() != null) {
+         ij.IJ.getInstance().addWindowListener(new WindowAdapter() {
+            @Override
+            public void windowClosing(WindowEvent e) {
+               closeSequence();
+            };
+         });
+      }
 
 
       // add window listeners
