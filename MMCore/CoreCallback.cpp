@@ -336,9 +336,15 @@ int CoreCallback::SetSerialProperties(const char* portName,
                                       const char* parity,
                                       const char* stopBits)
 {
-   return core_->setSerialProperties(portName, answerTimeout, baudRate,
-      delayBetweenCharsMs, handshaking, parity, stopBits);
-
+   try
+   {
+      core_->setSerialProperties(portName, answerTimeout, baudRate,
+         delayBetweenCharsMs, handshaking, parity, stopBits);
+   }
+   catch (CMMError& e)
+   {
+      return e.getCode();
+   }
 }
 
 /**

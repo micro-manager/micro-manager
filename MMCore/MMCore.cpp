@@ -4782,29 +4782,24 @@ PropertyBlock CMMCore::getData(const char* deviceLabel) const
    return blk;
 }
 
-int CMMCore::setSerialProperties(const char* portName,
-                                 const char* answerTimeout,
-                                 const char* baudRate,
-                                 const char* delayBetweenCharsMs,
-                                 const char* handshaking,
-                                 const char* parity,
-                                 const char* stopBits) {
-   MM::Serial* pSerial = getSpecificDevice<MM::Serial>(portName);
-   int ret;
-   ret = pSerial->SetProperty(MM::g_Keyword_AnswerTimeout, answerTimeout);
-   if (ret != DEVICE_OK) return ret;
-   ret = pSerial->SetProperty(MM::g_Keyword_BaudRate, baudRate);
-   if (ret != DEVICE_OK) return ret;
-   ret = pSerial->SetProperty(MM::g_Keyword_DelayBetweenCharsMs, delayBetweenCharsMs);
-   if (ret != DEVICE_OK) return ret;
-   ret = pSerial->SetProperty(MM::g_Keyword_Handshaking, handshaking);
-   if (ret != DEVICE_OK) return ret;
-   pSerial->SetProperty(MM::g_Keyword_Parity, parity);
-   if (ret != DEVICE_OK) return ret;
-   ret = pSerial->SetProperty(MM::g_Keyword_StopBits, stopBits);
-   return ret;
+/**
+ * Sets all com port properties in a single call 
+ */
+void CMMCore::setSerialProperties(const char* portName,
+                                  const char* answerTimeout,
+                                  const char* baudRate,
+                                  const char* delayBetweenCharsMs,
+                                  const char* handshaking,
+                                  const char* parity,
+                                  const char* stopBits) throw (CMMError)
+{
+   setProperty(portName, MM::g_Keyword_AnswerTimeout, answerTimeout);
+   setProperty(portName, MM::g_Keyword_BaudRate, baudRate);
+   setProperty(portName, MM::g_Keyword_DelayBetweenCharsMs, delayBetweenCharsMs);
+   setProperty(portName, MM::g_Keyword_Handshaking, handshaking);
+   setProperty(portName, MM::g_Keyword_Parity, parity);
+   setProperty(portName, MM::g_Keyword_StopBits, stopBits);
 }
-
 
 /**
  * Send string to the serial device and return an answer.
