@@ -165,6 +165,19 @@ public class MMImageCache implements ImageCache {
             lastFrame_ = Math.max(lastFrame_, MDUtils.getFrameIndex(taggedImg.tags));
             lastTags_ = taggedImg.tags;
          }
+         JSONObject displayAndComments = imageStorage_.getDisplayAndComments();
+         if (displayAndComments.length() > 0) {
+            JSONArray channelSettings = imageStorage_.getDisplayAndComments().getJSONArray("Channels");
+            JSONObject imageTags = taggedImg.tags;
+            int chanIndex = MDUtils.getChannelIndex(imageTags);
+            if (chanIndex >= channelSettings.length()) {
+               JSONObject newChanObject = new JSONObject();
+               newChanObject.put("Name", MDUtils.getChannelName(imageTags));
+               newChanObject.put("Color", MDUtils.getChannelColor(imageTags));
+               channelSettings.put(chanIndex, newChanObject);
+            }
+         }
+
 
          for (ImageCacheListener l : imageStorageListeners_) {
             l.imageReceived(taggedImg);

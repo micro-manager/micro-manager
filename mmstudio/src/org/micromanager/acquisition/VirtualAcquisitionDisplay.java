@@ -1157,9 +1157,6 @@ public final class VirtualAcquisitionDisplay implements AcquisitionDisplay, Imag
          if (cSelector_.getMaximum() <= (1 + superChannel)) {
             this.setNumChannels(1 + superChannel);
             ((CompositeImage) hyperImage_).reset();
-            if (histograms_ != null) {
-               histograms_.setupChannelControls(imageCache_);
-            }
             //JavaUtils.invokeRestrictedMethod(hyperImage_, CompositeImage.class,
             //       "setupLuts", 1 + superChannel, Integer.TYPE);
          }
@@ -1185,6 +1182,14 @@ public final class VirtualAcquisitionDisplay implements AcquisitionDisplay, Imag
 
       if (eng_ != null) {
          setPreferredScrollbarPositions();
+      }
+
+      if (cSelector_ != null) {
+         if (histograms_.getNumberOfChannels() < (1 + superChannel)) {
+                  if (histograms_ != null) {
+               histograms_.setupChannelControls(imageCache_);
+            }
+      }
       }
    }
    

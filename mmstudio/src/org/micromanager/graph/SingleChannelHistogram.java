@@ -604,4 +604,8 @@ public class SingleChannelHistogram extends JPanel implements Histograms, Cursor
       }
       return new ContrastSettings(contrastMin_, contrastMax_, gamma_);
    }
+
+   public int getNumberOfChannels() {
+      return 1;
+   }
 }

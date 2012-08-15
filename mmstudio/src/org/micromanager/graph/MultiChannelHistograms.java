@@ -62,7 +62,7 @@ public class MultiChannelHistograms extends JPanel implements Histograms {
       final int nChannels;
       boolean rgb;
       try {
-         rgb = MDUtils.isRGB(cache.getSummaryMetadata());
+         rgb = MDUtils.isRGB(display_.getSummaryMetadata());
       } catch (Exception ex) {
          ReportingUtils.logError(ex);
          rgb = false;
@@ -70,7 +70,7 @@ public class MultiChannelHistograms extends JPanel implements Histograms {
       if (rgb) {
          nChannels = 3;
       } else {
-         nChannels = cache.getNumChannels();
+         nChannels = display_.getNumChannels();
       }
 
       GridLayout layout = new GridLayout(nChannels, 1);
@@ -257,5 +257,9 @@ public class MultiChannelHistograms extends JPanel implements Histograms {
             c.autostretch();
          }
       }
+   }
+
+   public int getNumberOfChannels() {
+      return ccpList_.size();
    }
 }

@@ -104,4 +104,6 @@ public interface Histograms  {
     */
    public void setupChannelControls(ImageCache cache);
 
+   public int getNumberOfChannels();
+
 }
