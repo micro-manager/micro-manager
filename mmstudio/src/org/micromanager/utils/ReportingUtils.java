@@ -137,7 +137,7 @@ public class ReportingUtils {
       }
       Throwable cause = aThrowable.getCause();
       if (cause != null) {
-         return result + "Caused by\n" + getStackTraceAsString(cause);
+         return result + "Caused by: " + cause.toString() + "\n" + getStackTraceAsString(cause);
       } else {
          return result;
       }
