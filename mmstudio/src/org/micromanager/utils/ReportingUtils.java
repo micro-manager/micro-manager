@@ -135,7 +135,12 @@ public class ReportingUtils {
       for (StackTraceElement line : aThrowable.getStackTrace()) {
          result += "  at " + line.toString() + "\n";
       }
-      return result;
+      Throwable cause = aThrowable.getCause();
+      if (cause != null) {
+         return result + "Caused by\n" + getStackTraceAsString(cause);
+      } else {
+         return result;
+      }
    }
 
    public static void showError(ActionEvent e) {
