@@ -1782,7 +1782,7 @@ public final class VirtualAcquisitionDisplay implements AcquisitionDisplay, Imag
    public JSONObject getCurrentMetadata() {
       try {
          if (hyperImage_ != null) {
-            TaggedImage image = virtualStack_.getTaggedImage(hyperImage_.getCurrentSlice());
+            TaggedImage image = virtualStack_.getTaggedImage(hyperImage_.getChannel()-1, hyperImage_.getSlice()-1, hyperImage_.getFrame()-1);
             if (image != null) {
                return image.tags;
             } else {

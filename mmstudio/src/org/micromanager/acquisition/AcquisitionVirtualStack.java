@@ -60,24 +60,32 @@ public class AcquisitionVirtualStack extends ij.VirtualStack {
    }
 
    public TaggedImage getTaggedImage(int flatIndex) {
-      try {
-         int[] pos;
-         // If we don't have the ImagePlus yet, then we need to assume
-         // we are on the very first image.
-         ImagePlus imagePlus = acq_.getImagePlus();
-         int nSlices;
-         if (imagePlus == null) {
-            pos = new int[]{1, 1, 1};
-            nSlices = 1;
-         } else {
-            pos = imagePlus.convertIndexToPosition(flatIndex);
-            nSlices = imagePlus.getNSlices();
-         }
-         TaggedImage img;
-         int chanIndex = acq_.grayToRGBChannel(pos[0] - 1);
-         int frame = pos[2] - 1;
-         int slice = pos[1] - 1;
+      int[] pos;
+      // If we don't have the ImagePlus yet, then we need to assume
+      // we are on the very first image.
+      ImagePlus imagePlus = acq_.getImagePlus();
+      if (imagePlus == null) {
+         return getTaggedImage(1,1,1);
+      } else {
+         pos = imagePlus.convertIndexToPosition(flatIndex);
+      }
+      int chanIndex = acq_.grayToRGBChannel(pos[0] - 1);
+      int frame = pos[2] - 1;
+      int slice = pos[1] - 1;
 
+      return getTaggedImage(chanIndex, slice, frame);
+   }
+
+   public TaggedImage getTaggedImage(int chanIndex, int slice, int frame) {
+      int nSlices;
+      ImagePlus imagePlus = acq_.getImagePlus();
+      if (imagePlus == null) {
+         nSlices = 1;
+      } else {
+         nSlices = imagePlus.getNSlices();
+      }
+      try {
+         TaggedImage img;
          img = imageCache_.getImage(chanIndex, slice, frame, positionIndex_);
          int backIndex = slice - 1, forwardIndex = slice + 1;
          int frameSearchIndex = frame;
