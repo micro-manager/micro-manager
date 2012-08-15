@@ -32,6 +32,7 @@
 #include "CoreUtils.h"
 #include "MMCore.h"
 #include "MMEventCallback.h"
+#include "FastLogger.h"
 #include "../MMDevice/DeviceUtils.h"
 
 

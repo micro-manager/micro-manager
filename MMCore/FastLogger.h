@@ -23,6 +23,8 @@
 #pragma once
 
 #include "IMMLogger.h"
+#include "../MMDevice/DeviceThreads.h"
+
 enum Fast_Log_Priorities
 {
   // = Note, this first argument *must* start at 1!
@@ -102,6 +104,7 @@ enum Fast_Log_Priorities
 * class FastLogger 
 * Implements interface IMMLogger with ACE logging facility
 */
+class LoggerThread;
 
 class FastLogger: public IMMLogger
 {
@@ -110,6 +113,7 @@ public:
    FastLogger();
    virtual ~FastLogger();
 
+   friend class LoggerThread;
    /**
    * methods declared in IMMLogger as pure virtual
    * refere to IMMLogger declaration
@@ -147,7 +151,6 @@ private:
 
 	Fast_Log_Priorities MatchACEPriority(IMMLogger::priority p);
 
-
 private:
    priority       level_;
    priority       timestamp_level_;
@@ -156,5 +159,8 @@ private:
    std::ofstream * plogFile_;
    bool           failureReported;
    std::string    logInstanceName_;
-
+   MMThreadLock logFileLock_g;
+   MMThreadLock logStringLock_g;
+   std::string stringToWrite_g;
+   std::ofstream * plogFile_g;
 };

@@ -30,7 +30,6 @@
 
 #include "FastLogger.h"
 #include "CoreUtils.h"
-#include "../MMDevice/DeviceThreads.h"
 #include "../MMDevice/DeviceUtils.h"
 #include "boost/thread/thread.hpp"
 
@@ -42,24 +41,12 @@
 #include "boost/interprocess/detail/os_thread_functions.hpp" 
 
 using namespace std;
-//single instance 
-FastLogger * _MMLogger_g = NULL;
-
 const char* g_textLogIniFiled = "Logging initialization failed\n";
-MMThreadLock logFileLock_g;
-MMThreadLock logStringLock_g;
-std::string stringToWrite_g; // yuck global...
-std::ofstream * plogFile_g; //  "      "
-
-
-
-
 
 class LoggerThread : public MMDeviceThreadBase
 {
    public:
-      LoggerThread() : 
-      busy_(false), stop_(false) {}
+      LoggerThread(FastLogger* l) : log_(l), busy_(false), stop_(false) {}
       ~LoggerThread() {}
       int svc (void);
 
@@ -69,6 +56,7 @@ class LoggerThread : public MMDeviceThreadBase
    private:
       bool busy_;
       bool stop_;
+      FastLogger* log_;
 };
 
 
@@ -81,19 +69,19 @@ int LoggerThread::svc(void)
 		// the do...while is just a scope for the guard
 		do
 		{
-			MMThreadGuard stringGuard(logStringLock_g);
-			stmp = stringToWrite_g;
-			stringToWrite_g.clear();
+			MMThreadGuard stringGuard(log_->logStringLock_g);
+			stmp = log_->stringToWrite_g;
+			log_->stringToWrite_g.clear();
 		}while(bfalse);
 
 		if (0 < stmp.length())
 		{
-			if( 0 != (_MMLogger_g->flags() & STDERR))
+			if( 0 != (log_->flags() & STDERR))
 				std::cerr << stmp << '\n' << flush;
                                 
-			MMThreadGuard fileGuard(logFileLock_g);
-			if( NULL != plogFile_g)
-				*plogFile_g << stmp << '\n' << flush;
+			MMThreadGuard fileGuard(log_->logFileLock_g);
+			if( NULL != log_->plogFile_g)
+				*log_->plogFile_g << stmp << '\n' << flush;
 		}
 		CDeviceUtils::SleepMs(30);
    } while (!stop_ );
@@ -110,18 +98,14 @@ FastLogger::FastLogger()
 ,timestamp_level_(any)
 ,fast_log_flags_(any)
 ,plogFile_(NULL)
-,failureReported(false)
+,failureReported(false),
+plogFile_g(0)
 {
 }
 
 FastLogger::~FastLogger()
 {
    Shutdown();
-   if(NULL != _MMLogger_g)
-   {
-      delete _MMLogger_g;
-      _MMLogger_g = NULL;
-   }
 	if( NULL != pLogThread_g)
 	{
 		pLogThread_g->Stop();
@@ -129,23 +113,6 @@ FastLogger::~FastLogger()
 	}
 
 }
-
-//static 
-IMMLogger * IMMLogger::Instance()throw(IMMLogger::runtime_exception)
-{
-   if(NULL == _MMLogger_g)
-   {
-      try
-      {
-         _MMLogger_g = new FastLogger();
-      }
-      catch(...)
-      {
-         throw(IMMLogger::runtime_exception(g_textLogIniFiled));
-      }
-   }
-   return _MMLogger_g;
-};
 
 /**
 * methods declared in IMMLogger as pure virtual
@@ -183,7 +150,7 @@ bool FastLogger::Initialize(std::string logFileName, std::string logInstanceName
 
       if( NULL == pLogThread_g)
       {
-		   pLogThread_g = new LoggerThread();
+		   pLogThread_g = new LoggerThread(this);
 		   pLogThread_g->Start();
       }
 

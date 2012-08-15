@@ -98,6 +98,7 @@ const int MMCore_versionBuild = 2;
 
 // mutex
 MMThreadLock CMMCore::deviceLock_;
+FastLogger* CMMCore::logger_ = 0;
 
 ///////////////////////////////////////////////////////////////////////////////
 // CMMcore class
@@ -110,11 +111,12 @@ MMThreadLock CMMCore::deviceLock_;
  */
 CMMCore::CMMCore() :
    camera_(0), everSnapped_(false), shutter_(0), focusStage_(0), xyStage_(0), autoFocus_(0), slm_(0), galvo_(0), imageProcessor_(0), pollingIntervalMs_(10), timeoutMs_(5000),
-   logStream_(0), autoShutter_(true), callback_(0), configGroups_(0), properties_(0), externalCallback_(0), pixelSizeGroup_(0), cbuf_(0), pPostedErrorsLock_(NULL)
+   autoShutter_(true), callback_(0), configGroups_(0), properties_(0), externalCallback_(0), pixelSizeGroup_(0), cbuf_(0), pPostedErrorsLock_(NULL)
 {
    configGroups_ = new ConfigGroupCollection();
    pixelSizeGroup_ = new PixelSizeConfigGroup();
    pPostedErrorsLock_ = new MMThreadLock();
+   logger_ = new FastLogger();
 
    // build list of error strings
    errorText_[MMERR_OK] = "No errors.";
@@ -279,7 +281,7 @@ CMMCore::~CMMCore()
 
    shutdownLogging();
 
-   delete logStream_;
+   delete logger_;
    delete callback_;
    delete configGroups_;
    delete properties_;
@@ -293,7 +295,7 @@ CMMCore::~CMMCore()
  */
 void CMMCore::clearLog()
 {
-   IMMLogger::Instance()->Reset();
+   getLoggerInstance()->Reset();
    CORE_LOG("-------->>\n");
    CORE_LOG2("\nLog cleared and re-started on %D by %s on %s\n", getUserId().c_str(), getHostName().c_str());
 }
@@ -328,7 +330,7 @@ void CMMCore::logMessage(const char* msg, bool debugOnly)
 void CMMCore::enableDebugLog(bool enable)
 {
    debugLog_ = enable;
-   IMMLogger::Instance()->SetPriorityLevel(debugLog_?IMMLogger::debug:IMMLogger::info);
+   getLoggerInstance()->SetPriorityLevel(debugLog_?IMMLogger::debug:IMMLogger::info);
 
    CORE_LOG1("Debug logging %s\n", enable ? "enabled" : "disabled");
 }
@@ -339,7 +341,7 @@ void CMMCore::enableDebugLog(bool enable)
  */
 void CMMCore::enableStderrLog(bool enable)
 {
-   IMMLogger::Instance()->EnableLogToStderr(enable);
+   getLoggerInstance()->EnableLogToStderr(enable);
 }
 
 /*!
@@ -6012,16 +6014,15 @@ void CMMCore::initializeLogging()
   
    std::string logName = g_logFileName + sout.str() + std::string(".txt");
 
-
-   IMMLogger::Instance()->Initialize(logName, g_CoreName);
-   IMMLogger::Instance()->EnableLogToStderr(true);
+   getLoggerInstance()->Initialize(logName, g_CoreName);
+   getLoggerInstance()->EnableLogToStderr(true);
    //only "debug" priority messages will have time stamp
    //- requested feature
 }
 
 void CMMCore::shutdownLogging()
 {
-   IMMLogger::Instance()->Shutdown();
+   getLoggerInstance()->Shutdown();
 }
 
 void CMMCore::logError(const char* device, const char* msg, const char* fileName, int line) const
@@ -6051,7 +6052,7 @@ std::string CMMCore::saveLogArchive(void)
 {
    char* pLogContents = 0;
    unsigned long logLength = 0;
-   IMMLogger::Instance()->LogContents(&pLogContents, logLength);
+   getLoggerInstance()->LogContents(&pLogContents, logLength);
    if( 0 == pLogContents) // file reading failed
    {
       const char* pWarning =
@@ -6070,7 +6071,7 @@ std::string CMMCore::saveLogArchive(void)
    delete [] pLogContents;
    pLogContents = 0;
 
-   std::string payLoadPath = IMMLogger::Instance()->LogPath() + ".gz";
+   std::string payLoadPath = getLoggerInstance()->LogPath() + ".gz";
 
    std::ofstream ofile( payLoadPath.c_str(), ios::out|ios::binary);
    if (ofile.is_open())
@@ -6100,7 +6101,7 @@ std::string CMMCore::saveLogArchiveWithPreamble(char* preamble, ///< beginning o
 
    char* pLogContents = 0;
    unsigned long logLength = 0;
-   IMMLogger::Instance()->LogContents(&pLogContents, logLength);
+   getLoggerInstance()->LogContents(&pLogContents, logLength);
    if( 0 == pLogContents) // file reading failed
    {
       const char* pWarning =
@@ -6126,7 +6127,7 @@ std::string CMMCore::saveLogArchiveWithPreamble(char* preamble, ///< beginning o
    // prepare a gz archive
    Compressor::CompressData(pEntireMessage, preambleLength + logLength, &pCompressedContents, compressedLength);
 
-   std::string payLoadPath = IMMLogger::Instance()->LogPath() + ".gz";
+   std::string payLoadPath = getLoggerInstance()->LogPath() + ".gz";
 
    std::ofstream ofile( payLoadPath.c_str(), ios::out|ios::binary);
    if (ofile.is_open())

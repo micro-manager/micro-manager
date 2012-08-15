@@ -81,6 +81,7 @@ class CoreCallback;
 class PixelSizeConfigGroup;
 class Metadata;
 class MMEventCallback;
+class FastLogger;
 
 typedef unsigned int* imgRGB32;
 
@@ -537,7 +538,6 @@ private:
    MM::ImageProcessor* imageProcessor_;
    long pollingIntervalMs_;
    long timeoutMs_;
-   std::ofstream* logStream_;
    bool autoShutter_;
    MM::Core* callback_;                 // core services for devices
    ConfigGroupCollection* configGroups_;
@@ -574,6 +574,8 @@ private:
 
    // global data
    static MMThreadLock deviceLock_;
+   static FastLogger* logger_;
+   static FastLogger* getLoggerInstance() {return logger_;}
 
    // >>>>> OBSOLETE >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
    void defineConfiguration(const char* configName, const char* deviceName, const char* propName, const char* value);

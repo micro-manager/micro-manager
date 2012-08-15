@@ -43,14 +43,6 @@ public:
    public:
       runtime_exception(std::string msg) : runtime_error(msg) {}
    };
-   /**
-   * Instance
-   * returns pointer to single instance of IMMLogger object
-   * Can return NULL when IsValid() returns false
-   * Reentrance from multiple threads is not guarded 
-   * Throws: IMMLogger::runtime_exception
-   */
-   static IMMLogger * Instance()throw(runtime_exception);
 
    /**
    * IsValid
@@ -185,16 +177,16 @@ public:
 /**
 * Legacy macros used on MMCore
 */
-#define CORE_DEBUG(FMT)                         IMMLogger::Instance()->Log(IMMLogger::debug, FMT)
-#define CORE_DEBUG1(FMT, arg1)                  IMMLogger::Instance()->Log(IMMLogger::debug, FMT, arg1)
-#define CORE_DEBUG2(FMT, arg1, arg2)            IMMLogger::Instance()->Log(IMMLogger::debug, FMT, arg1, arg2)
-#define CORE_DEBUG3(FMT, arg1, arg2, arg3)      IMMLogger::Instance()->Log(IMMLogger::debug, FMT, arg1, arg2, arg3)
-#define CORE_DEBUG4(FMT, arg1, arg2, arg3, arg4) IMMLogger::Instance()->Log(IMMLogger::debug, FMT, arg1, arg2, arg3, arg4)
+#define CORE_DEBUG(FMT)                         CMMCore::getLoggerInstance()->Log(IMMLogger::debug, FMT)
+#define CORE_DEBUG1(FMT, arg1)                  CMMCore::getLoggerInstance()->Log(IMMLogger::debug, FMT, arg1)
+#define CORE_DEBUG2(FMT, arg1, arg2)            CMMCore::getLoggerInstance()->Log(IMMLogger::debug, FMT, arg1, arg2)
+#define CORE_DEBUG3(FMT, arg1, arg2, arg3)      CMMCore::getLoggerInstance()->Log(IMMLogger::debug, FMT, arg1, arg2, arg3)
+#define CORE_DEBUG4(FMT, arg1, arg2, arg3, arg4) CMMCore::getLoggerInstance()->Log(IMMLogger::debug, FMT, arg1, arg2, arg3, arg4)
 
-#define CORE_LOG(FMT)                           IMMLogger::Instance()->Log(IMMLogger::info, FMT)
-#define CORE_LOG1(FMT, arg1)                    IMMLogger::Instance()->Log(IMMLogger::info, FMT, arg1)
-#define CORE_LOG2(FMT, arg1, arg2)              IMMLogger::Instance()->Log(IMMLogger::info, FMT, arg1, arg2)
-#define CORE_LOG3(FMT, arg1, arg2, arg3)        IMMLogger::Instance()->Log(IMMLogger::info, FMT, arg1, arg2, arg3)
-#define CORE_LOG4(FMT, arg1, arg2, arg3, arg4)  IMMLogger::Instance()->Log(IMMLogger::info, FMT, arg1, arg2, arg3, arg4)
-#define CORE_LOG5(FMT, arg1, arg2, arg3, arg4, arg5)  IMMLogger::Instance()->Log(IMMLogger::info, FMT, arg1, arg2, arg3, arg4, arg5)
-#define CORE_TIMESTAMP                          IMMLogger::Instance()->TimeStamp()
+#define CORE_LOG(FMT)                           CMMCore::getLoggerInstance()->Log(IMMLogger::info, FMT)
+#define CORE_LOG1(FMT, arg1)                    CMMCore::getLoggerInstance()->Log(IMMLogger::info, FMT, arg1)
+#define CORE_LOG2(FMT, arg1, arg2)              CMMCore::getLoggerInstance()->Log(IMMLogger::info, FMT, arg1, arg2)
+#define CORE_LOG3(FMT, arg1, arg2, arg3)        CMMCore::getLoggerInstance()->Log(IMMLogger::info, FMT, arg1, arg2, arg3)
+#define CORE_LOG4(FMT, arg1, arg2, arg3, arg4)  CMMCore::getLoggerInstance()->Log(IMMLogger::info, FMT, arg1, arg2, arg3, arg4)
+#define CORE_LOG5(FMT, arg1, arg2, arg3, arg4, arg5)  CMMCore::getLoggerInstance()->Log(IMMLogger::info, FMT, arg1, arg2, arg3, arg4, arg5)
+#define CORE_TIMESTAMP                          CMMCore::getLoggerInstance()->TimeStamp()
