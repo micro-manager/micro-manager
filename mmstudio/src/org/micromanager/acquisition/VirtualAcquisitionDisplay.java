@@ -953,7 +953,7 @@ public final class VirtualAcquisitionDisplay implements AcquisitionDisplay, Imag
    private void setNumChannels(int n) {
       if (cSelector_ != null) {
          ((IMMImagePlus) hyperImage_).setNChannelsUnverified(n);
-         cSelector_.setMaximum(n);
+         cSelector_.setMaximum(1 + n);
       }
    }
 
