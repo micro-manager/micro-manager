@@ -75,8 +75,10 @@ public class MultiChannelHistograms extends JPanel implements Histograms {
 
       GridLayout layout = new GridLayout(nChannels, 1);
       this.setLayout(layout);
-      this.setMinimumSize(new Dimension(ChannelControlPanel.MINIMUM_SIZE.width,
-              nChannels * ChannelControlPanel.MINIMUM_SIZE.height));
+      Dimension dim = new Dimension(ChannelControlPanel.MINIMUM_SIZE.width,
+              nChannels * ChannelControlPanel.MINIMUM_SIZE.height);
+      this.setMinimumSize(dim);
+      this.setSize(dim);
       ccpList_ = new ArrayList<ChannelControlPanel>();
       for (int i = 0; i < nChannels; ++i) {
          ChannelControlPanel ccp = new ChannelControlPanel(i, this, display_);
