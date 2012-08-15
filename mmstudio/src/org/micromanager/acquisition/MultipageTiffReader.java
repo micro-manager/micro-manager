@@ -166,7 +166,6 @@ public class MultipageTiffReader {
                   testFile = grandchild;
                   break;
                }
-               break;
             }
          } else if (child.getName().endsWith(".tif")) {
             testFile = child;
