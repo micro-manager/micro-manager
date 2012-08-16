@@ -62,17 +62,14 @@ class LoggerThread : public MMDeviceThreadBase
 
 int LoggerThread::svc(void)
 {
-	bool bfalse = false;
    do
    {
 		std::string stmp;
-		// the do...while is just a scope for the guard
-		do
 		{
 			MMThreadGuard stringGuard(log_->logStringLock_g);
 			stmp = log_->stringToWrite_g;
 			log_->stringToWrite_g.clear();
-		}while(bfalse);
+		}
 
 		if (0 < stmp.length())
 		{
@@ -105,13 +102,12 @@ plogFile_g(0)
 
 FastLogger::~FastLogger()
 {
+   if( NULL != pLogThread_g)
+   {
+      pLogThread_g->Stop();
+      delete pLogThread_g;
+   }
    Shutdown();
-	if( NULL != pLogThread_g)
-	{
-		pLogThread_g->Stop();
-		delete pLogThread_g;
-	}
-
 }
 
 /**
@@ -130,12 +126,10 @@ bool FastLogger::IsValid()throw()
 bool FastLogger::Initialize(std::string logFileName, std::string logInstanceName)throw(IMMLogger::runtime_exception)
 {
    bool bRet =false;
-	bool bfalse = false;
    try
    {
       failureReported=false;
       logInstanceName_=logInstanceName;
-		do // scope for the file lock
 		{
 			MMThreadGuard guard(logFileLock_g);
          bRet = Open(logFileName);
@@ -146,14 +140,13 @@ bool FastLogger::Initialize(std::string logFileName, std::string logInstanceName
 			}
 			fast_log_flags_ |= STDERR;
 			set_flags (fast_log_flags_);
-		}while(bfalse);
+		}
 
       if( NULL == pLogThread_g)
       {
 		   pLogThread_g = new LoggerThread(this);
 		   pLogThread_g->Start();
       }
-
 
    }
    catch(...)
