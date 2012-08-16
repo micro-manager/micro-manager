@@ -11,9 +11,9 @@ public class HotKeyAction {
       public static final int SNAP = 0;
       public static final int TOGGLELIVE = 1;
       public static final int TOGGLESHUTTER = 2;
-      public static final int ACQUIRE = 3;
+      public static final int ADD_TO_ALBUM = 3;
       public static final int MARK = 4;
-      public static final String[] guiItems_ = {"Snap", "Toggle Live", "Toggle Shutter", "Acquire", "Mark Position"};
+      public static final String[] guiItems_ = {"Snap", "Toggle Live", "Toggle Shutter", "->Album", "Mark Position"};
       public static final int NRGUICOMMANDS = guiItems_.length;
 
       public int type_;  // either GUICOMMAND or BEANSHELLSCRIPT
@@ -47,7 +47,7 @@ public class HotKeyAction {
                case TOGGLESHUTTER:
                   gui_.toggleShutter();
                   return true;
-               case ACQUIRE:
+               case ADD_TO_ALBUM:
                   gui_.snapAndAddToImage5D();
                   return true;
                case MARK:

@@ -2809,7 +2809,7 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface, Device
       autoShutterCheckBox_.setEnabled(!enable);
       toggleButtonShutter_.setText(enable ? "Close" : "Open" );
       buttonSnap_.setEnabled(!enable);
-      toAlbumButton_.setEnabled(!enable);
+      //toAlbumButton_.setEnabled(!enable);
       toggleButtonLive_.setIcon(enable ? SwingResourceManager.getIcon(MMStudioMainFrame.class,
               "/org/micromanager/icons/cancel.png")
               : SwingResourceManager.getIcon(MMStudioMainFrame.class,
