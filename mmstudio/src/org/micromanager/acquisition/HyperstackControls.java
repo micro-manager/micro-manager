@@ -273,7 +273,7 @@ public class HyperstackControls extends DisplayControls {
          if (acq_.acquisitionIsRunning() && acq_.getNextWakeTime() > 0) {
             final long nextImageTime = acq_.getNextWakeTime();
             if (System.nanoTime() / 1000000 < nextImageTime) {
-               final Timer timer = new Timer();
+               final Timer timer = new Timer("Next frame display");
                TimerTask task = new TimerTask() {
 
                   public void run() {
