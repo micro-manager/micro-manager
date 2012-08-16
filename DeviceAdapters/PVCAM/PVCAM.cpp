@@ -59,6 +59,8 @@ using namespace std;
 const char* g_DeviceCascade = "Cascade";
 const char* g_DeviceUniversal_1 = "Camera-1";
 const char* g_DeviceUniversal_2 = "Camera-2";
+const char* g_DeviceUniversal_3 = "Camera-3";
+const char* g_DeviceUniversal_4 = "Camera-4";
 
 const char* g_PixelType_8bit = "8bit";
 const char* g_PixelType_10bit = "10bit";
@@ -104,6 +106,8 @@ MODULE_API void InitializeModuleData()
 {
    AddAvailableDeviceName(g_DeviceUniversal_1, "Universal PVCAM interface - camera slot 1");
    AddAvailableDeviceName(g_DeviceUniversal_2, "Universal PVCAM interface - camera slot 2");
+   AddAvailableDeviceName(g_DeviceUniversal_3, "Universal PVCAM interface - camera slot 3");
+   AddAvailableDeviceName(g_DeviceUniversal_4, "Universal PVCAM interface - camera slot 4");
 }
 
 MODULE_API void DeleteDevice(MM::Device* pDevice)
@@ -120,6 +124,10 @@ MODULE_API MM::Device* CreateDevice(const char* deviceName)
       return new Universal(0);
    else if (strcmp(deviceName, g_DeviceUniversal_2) == 0)
       return new Universal(1);
-   
+   else if (strcmp(deviceName, g_DeviceUniversal_3) == 0)
+      return new Universal(2);
+   else if (strcmp(deviceName, g_DeviceUniversal_4) == 0)
+      return new Universal(3);
+
    return 0;
 }
