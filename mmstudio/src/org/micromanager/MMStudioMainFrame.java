@@ -420,6 +420,20 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface, Device
            }
        });
    }
+
+   public void copyFromLiveModeToAlbum(VirtualAcquisitionDisplay display) throws MMScriptException, JSONException {
+      ImageCache ic = display.getImageCache();
+      int channels = ic.getSummaryMetadata().getInt("Channels");
+      if (channels == 1) {
+         //RGB or monchrome
+         addToAlbum(ic.getImage(0, 0, 0, 0), ic.getDisplayAndComments());
+      } else {
+         //multicamera
+         for (int i = 0; i < channels; i++) {
+            addToAlbum(ic.getImage(i, 0, 0, 0), ic.getDisplayAndComments());
+         }
+      }
+   }
    
     private void initializeHelpMenu() {
         // add help menu item
@@ -4301,7 +4315,11 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface, Device
          return;
       }
       try {
-         getAcquisitionEngine2010().acquireSingle();
+         if (this.isLiveModeOn()) {
+            copyFromLiveModeToAlbum(simpleDisplay_);
+         } else {
+            getAcquisitionEngine2010().acquireSingle();
+         }
       } catch (Exception ex) {
          ReportingUtils.logError(ex);
       }
