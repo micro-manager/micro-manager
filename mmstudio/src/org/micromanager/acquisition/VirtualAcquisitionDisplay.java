@@ -1515,6 +1515,10 @@ public final class VirtualAcquisitionDisplay implements AcquisitionDisplay, Imag
       return saveAs(null,true);
    }
 
+   boolean saveAs(boolean pointToNewStorage) {
+      return saveAs(null, pointToNewStorage);
+   }
+
    private boolean saveAs(Class storageClass, boolean pointToNewStorage) {
       if (eng_ != null && eng_.isAcquisitionRunning()) {
          JOptionPane.showMessageDialog(null, 
