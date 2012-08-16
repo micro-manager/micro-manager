@@ -103,8 +103,8 @@ public final class VirtualAcquisitionDisplay implements AcquisitionDisplay, Imag
    private MetadataPanel mdPanel_;
    private boolean newDisplay_ = true; //used for autostretching on window opening
    private double framesPerSec_ = 7;
-   private  java.util.Timer zAnimationTimer_ = new java.util.Timer();
-   private  java.util.Timer tAnimationTimer_ = new java.util.Timer();
+   private java.util.Timer zAnimationTimer_ = new java.util.Timer();
+   private java.util.Timer tAnimationTimer_ = new java.util.Timer();
    private boolean zAnimated_ = false, tAnimated_ = false;
    private int animatedSliceIndex_ = -1;
    private Component zIcon_, pIcon_, tIcon_, cIcon_;
@@ -2145,6 +2145,8 @@ public final class VirtualAcquisitionDisplay implements AcquisitionDisplay, Imag
 
          //Call this because for some reason WindowManager doesnt always fire
          mdPanel_.displayChanged(null);
+         zAnimationTimer_.cancel();
+         tAnimationTimer_.cancel();
 
          super.windowClosing(e);
          MMStudioMainFrame.getInstance().removeMMBackgroundListener(this);
