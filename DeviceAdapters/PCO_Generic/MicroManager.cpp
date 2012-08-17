@@ -1291,7 +1291,17 @@ int CPCOCam::SequenceThread::svc()
   }
 
   camera_->StoppedByThread();
+  camera_->CleanupSequenceAcquisition();
   return err;
+}
+
+int CPCOCam::CleanupSequenceAcquisition()
+{
+   MM::Core* cb = GetCoreCallback();
+   if (cb)
+      return cb->AcqFinished(this, 0);
+
+   return DEVICE_OK;
 }
 
 void CPCOCam::WriteLog(char* message, int nErr)

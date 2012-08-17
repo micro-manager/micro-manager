@@ -139,6 +139,7 @@ private:
    CPCOCam();
    int ResizeImageBuffer();
    int SetupCamera();
+   int CleanupSequenceAcquisition();
 
    class SequenceThread : public MMDeviceThreadBase
    {
