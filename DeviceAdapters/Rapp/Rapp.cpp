@@ -108,9 +108,14 @@ RappScanner::RappScanner() :
    obsROE_Device* dev = new obsROE_Device();
 
 	std::vector<std::string> s = dev->SearchDevices();
+	// Other devices may have send signals to the UGA 40.  If we did not find any, try one more time.
 	if (s.size() <= 0)
 	{
-      s.push_back(std::string("Undefined"));
+       s = dev->SearchDevices();
+	}
+	if (s.size() <= 0)
+	{
+       s.push_back(std::string("Undefined"));
 	}
 
    // The following line crashes hardware wizard if compiled in a Debug configuration:
@@ -144,7 +149,15 @@ int RappScanner::Initialize()
    UGA_ = new obsROE_Device();
    
    UGA_->Connect(port_.c_str());
-   if (UGA_->IsConnected()) {
+
+   // Other devices may have send signals to the UGA 40.  If connection failed, try one more time to clear this up
+   if (!UGA_->IsConnected()) 
+   {
+      UGA_->Connect(port_.c_str());
+   }
+
+   if (UGA_->IsConnected()) 
+   {
       UGA_->UseMaxCalibration(false);
       UGA_->SetCalibrationMode(false, laser2_);
       RunDummyCalibration();
@@ -290,7 +303,7 @@ int RappScanner::LoadPolygons()
 int RappScanner::SetPolygonRepetitions(int repetitions)
 {
    tStringList sequenceList;
-   int n = polygons_.size();
+   int n = (int) polygons_.size();
    sequenceList.push_back(std::string("on"));
    for (int i=0; i<n; ++i)
    {
