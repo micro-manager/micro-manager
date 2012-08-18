@@ -23,6 +23,9 @@
 
 package org.micromanager.utils;
 
+
+import java.awt.Component;
+import java.awt.Container;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Font;
@@ -30,11 +33,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.text.ParseException;
-
-import javax.swing.JPanel;
-import javax.swing.JScrollBar;
-import javax.swing.JTextField;
-import javax.swing.SpringLayout;
+import javax.swing.*;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
@@ -51,6 +50,7 @@ public class SliderPanel extends JPanel {
    private ChangeListener sliderChangeListener_;
 
    private JScrollBar slider_;
+   
    /**
     * Create the panel
     */
@@ -74,6 +74,7 @@ public class SliderPanel extends JPanel {
       springLayout_.putConstraint(SpringLayout.NORTH, textField_, 0, SpringLayout.NORTH, this);
 
       sliderChangeListener_ = new ChangeListener() {
+         @Override
          public void stateChanged(final ChangeEvent arg0) {
             onSliderMove();
          }
@@ -131,8 +132,7 @@ public class SliderPanel extends JPanel {
    }
 
    private void onSliderMove() {
-      double value = 0.0;
-      value = slider_.getValue() * factor_ + lowerLimit_;
+      double value = slider_.getValue() * factor_ + lowerLimit_;
 
       if (integer_) {
          textField_.setText(NumberUtils.intToDisplayString((int)(value)));
@@ -196,6 +196,20 @@ public class SliderPanel extends JPanel {
 
    public void addSliderMouseListener(MouseAdapter md) {
       slider_.addMouseListener(md);
+      // The following code adds listeners to the arrow buttons
+      // It is not needed on Mac, not sure about other platforms, so stick to Windows
+      if (JavaUtils.isWindows()) {
+         Component comp = (Component) slider_;
+         if (comp instanceof Container) {
+            Container cm = (Container) comp;
+            for (int i = 0; i < cm.getComponentCount(); i++) {
+               Component cont = cm.getComponent(i);
+               if (cont instanceof JButton) {
+                  cont.addMouseListener(md);
+               }
+            }
+         }
+      }
    }
 
    @Override
