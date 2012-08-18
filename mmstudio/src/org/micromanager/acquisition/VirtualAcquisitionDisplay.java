@@ -1170,7 +1170,7 @@ public final class VirtualAcquisitionDisplay implements AcquisitionDisplay, Imag
                this.setNumFrames(1 + frame);
             }
          }
-         if (position + 1 >= getNumPositions()) {
+         if (position + 1 > getNumPositions()) {
             setNumPositions(position + 1);
          }
          setPosition(position);
