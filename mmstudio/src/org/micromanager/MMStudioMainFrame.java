@@ -3347,7 +3347,8 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface, Device
          if (core_ != null)
             this.logError(e);
       }
-      this.dispose();
+      // disposing sometimes hangs ImageJ!
+      // this.dispose();
       if (options_.closeOnExit_) {
          if (!runsAsPlugin_) {
             System.exit(0);
