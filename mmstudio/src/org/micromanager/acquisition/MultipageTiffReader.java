@@ -32,8 +32,6 @@ import java.nio.channels.FileChannel;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Set;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
 import mmcorej.TaggedImage;
@@ -42,7 +40,6 @@ import org.json.JSONException;
 import org.json.JSONObject;
 import org.micromanager.utils.MDUtils;
 import org.micromanager.utils.MMException;
-import org.micromanager.utils.MMScriptException;
 import org.micromanager.utils.ProgressBar;
 import org.micromanager.utils.ReportingUtils;
 
@@ -79,7 +76,7 @@ public class MultipageTiffReader {
       fileChannel_ = writer.getFileChannel();
       summaryMetadata_ = summaryMD;
       indexMap_ = writer.getIndexMap();
-      byteOrder_ = writer.BYTE_ORDER;
+      byteOrder_ = MultipageTiffWriter.BYTE_ORDER;
       getRGBAndByteDepth();
       writingFinished_ = false;
    }
@@ -106,7 +103,7 @@ public class MultipageTiffReader {
          getRGBAndByteDepth();
          
       } catch (Exception ex) {
-         ex.printStackTrace();
+         ReportingUtils.logError(ex);
       }
    }
    

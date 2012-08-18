@@ -27,10 +27,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.Set;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import mmcorej.TaggedImage;
-import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.micromanager.api.TaggedImageStorage;
@@ -87,6 +84,7 @@ public class TaggedImageStorageMultipageTiff implements TaggedImageStorage {
       
       //add shutdown hook --> thread to be run when JVM shuts down
       shutdownHook_ = new Thread() {
+         @Override
          public void run() {
             writeDisplaySettings();
          }
