@@ -20,14 +20,14 @@ public class GUIUpdater {
     * tasks pile up, only the most recent will run.
     */
    public void post(Runnable task) {
-      latestTask.set(task);
-      SwingUtilities.invokeLater(new Runnable() {
-         public void run() {
-            final Runnable taskToRun = latestTask.getAndSet(null);
-            if (taskToRun != null) {
+      Runnable oldTask = latestTask.getAndSet(task);
+      if (oldTask == null) {
+         SwingUtilities.invokeLater(new Runnable() {
+            public void run() {
+               final Runnable taskToRun = latestTask.getAndSet(null);
                taskToRun.run();
             }
-         }
-      });
+         });
+      }
    }
 }
