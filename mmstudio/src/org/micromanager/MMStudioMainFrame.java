@@ -2821,7 +2821,9 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface, Device
 
    public void updateButtonsForLiveMode(boolean enable) {
       autoShutterCheckBox_.setEnabled(!enable);
-      toggleButtonShutter_.setText(enable ? "Close" : "Open" );
+      if (core_.getAutoShutter()) {
+         toggleButtonShutter_.setText(enable ? "Close" : "Open" );
+      }
       buttonSnap_.setEnabled(!enable);
       //toAlbumButton_.setEnabled(!enable);
       toggleButtonLive_.setIcon(enable ? SwingResourceManager.getIcon(MMStudioMainFrame.class,
