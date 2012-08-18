@@ -13,19 +13,17 @@ import javax.swing.SwingUtilities;
  */
 public class GUIUpdater {
 
-   AtomicReference<Runnable> latestTask = new AtomicReference<Runnable>();
+   final AtomicReference<Runnable> latestTask = new AtomicReference<Runnable>();
 
    /*
     * Post a task for running on the EDT thread. If multiple
     * tasks pile up, only the most recent will run.
     */
    public void post(Runnable task) {
-      Runnable oldTask = latestTask.getAndSet(task);
-      if (oldTask == null) {
+      if (latestTask.getAndSet(task) == null) {
          SwingUtilities.invokeLater(new Runnable() {
             public void run() {
-               final Runnable taskToRun = latestTask.getAndSet(null);
-               taskToRun.run();
+               latestTask.getAndSet(null).run();
             }
          });
       }
