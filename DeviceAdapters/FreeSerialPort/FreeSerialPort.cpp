@@ -95,7 +95,7 @@ FreeSerialPort::FreeSerialPort() : busy_(false), initialized_(false), detailedLo
 	InitializeDefaultErrorMessages();
 
 	// add custom error messages
-	//SetErrorText(ERR_UNKNOWN_BLAH, "BLAH");
+	SetErrorText(ERR_PORT_NOT_FOUND, "No serial port by this name was found");
 
    // Port
    CPropertyAction* pAct = new CPropertyAction (this, &FreeSerialPort::OnPort);
@@ -137,6 +137,10 @@ int FreeSerialPort::Initialize()
 	// create an extended (i.e. array) of properties
    // get the serial device
    MM::Device* pS = GetCoreCallback()->GetDevice(this, port_.c_str());
+   if (pS == 0) 
+   {
+      return ERR_PORT_NOT_FOUND;
+   }
    // map all the serial device properties to this adapter.
    int numComProperties = pS->GetNumberOfProperties();
 	for(int ip = 0; ip < numComProperties; ++ip)
