@@ -2416,14 +2416,18 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface, Device
       }
    }
 
-   public String openAcquisitionData(String dir, boolean inRAM, boolean show) throws MMScriptException {
+   public String openAcquisitionData(String dir, boolean inRAM, boolean show) 
+           throws MMScriptException {
       String rootDir = new File(dir).getAbsolutePath();
       String name = new File(dir).getName();
       rootDir = rootDir.substring(0, rootDir.length() - (name.length() + 1));
-      MMAcquisition acquisition = null;
-         acqMgr_.openAcquisition(name, rootDir, show, !inRAM, true);
-         acquisition = getAcquisition(name);
-         acqMgr_.getAcquisition(name).initialize();
+      acqMgr_.openAcquisition(name, rootDir, show, !inRAM, true);
+      try {
+         getAcquisition(name).initialize();
+      } catch (MMScriptException mex) {
+         acqMgr_.closeAcquisition(name);
+         throw (mex);
+      }
      
       return name;
    }
