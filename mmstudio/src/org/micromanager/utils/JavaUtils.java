@@ -24,14 +24,12 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.jar.JarEntry;
 import java.util.jar.JarInputStream;
 import java.util.prefs.Preferences;
 import java.util.prefs.BackingStoreException;
-import org.micromanager.MMStudioMainFrame;
 
 public class JavaUtils {
 
@@ -113,17 +111,18 @@ public class JavaUtils {
          return filename;
       }
    }
-// Borrowed from http://forums.sun.com/thread.jspa?threadID=300557
+   
+   // Borrowed from http://forums.sun.com/thread.jspa?threadID=300557
    private static final Class<?>[] parameters = new Class[]{URL.class};
 
    public static void addFile(String s) throws IOException {
       File f = new File(s);
       addFile(f);
-   }//end method
+   }
 
    public static void addFile(File f) throws IOException {
       addURL(f.toURI().toURL());
-   }//end method
+   }
 
    public static void addURL(URL u) throws IOException {
 
@@ -141,14 +140,14 @@ public class JavaUtils {
 
    }//end method
 
-   /*
+   /**
     * Call a private method without arguments.
     */
    public static Object invokeRestrictedMethod(Object obj, Class theClass, String methodName) throws NoSuchMethodException, IllegalAccessException, IllegalArgumentException, InvocationTargetException {
       return invokeRestrictedMethod(obj, theClass, methodName, (Object) null);
    }
 
-   /*
+   /**
     * Call a private method using reflection. Use looks like
     * invokeRestrictedMethod(Object obj, Class theClass, String methodName, Object param1, Class paramType1, Object param2, Class paramType2, ...)
     */
@@ -209,7 +208,7 @@ public class JavaUtils {
       }
    }
 
-   /*
+   /**
     * Test whether preference can be written to disk
     * from:
     * http://java.sun.com/j2se/1.4.2/docs/guide/lang/preferences.html#prefs-usage-backingstore
@@ -225,7 +224,7 @@ public class JavaUtils {
       return true;
    }
 
-   /*
+   /**
     * Serializes an object and stores it in Preferences
     */
    public static void putObjectInPrefs(Preferences prefs, String key, Serializable obj) {
@@ -241,7 +240,7 @@ public class JavaUtils {
       prefs.putByteArray(key, serialBytes);
    }
 
-   /*
+   /**
     * Retrieves an object from Preferences (deserialized).
     */
    public static Object getObjectFromPrefs(Preferences prefs, String key, Object def) {
@@ -332,7 +331,7 @@ public class JavaUtils {
          BufferedReader input = new BufferedReader(new FileReader(filepath));
          try {
             String line = null; //not declared within while loop
-        /*
+             /*
              * readLine is a bit quirky :
              * it returns the content of a line MINUS the newline.
              * it returns null only for the END of the stream.
@@ -352,9 +351,9 @@ public class JavaUtils {
       return contents.toString();
    }
 
-   /*
-    * Find out how much unused memory (in bytes)
-    * is still available for the JVM to use.
+   /**
+    * Find out how much unused memory (in bytes) is still available 
+    * for the JVM to use.
     * On a MacBook Pro this call takes 0.5 usec.
     */
    public static long getAvailableUnusedMemory() {
