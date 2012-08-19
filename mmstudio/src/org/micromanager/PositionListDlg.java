@@ -173,7 +173,8 @@ public class PositionListDlg extends MMDialog implements MouseListener {
    }
 
    /**
-    * List with Axis data.  Currently, we use only a singel global instance of this class
+    * List with Axis data.  Currently, we use only a single global instance 
+    * of this class
     */
    private class AxisList {
       private Vector<AxisData> axisList_ = new Vector<AxisData>();
@@ -222,14 +223,6 @@ public class PositionListDlg extends MMDialog implements MouseListener {
             "Use",
             "Axis"
       };
-
-      /*
-      public AxisData getAxisData(int i) {
-         if (i>=0 && i < getRowCount())
-            return axisList_.get(i);
-         return null;
-      }
-      */
       
       public int getRowCount() {
          return axisList_.getNumberOfPositions();
@@ -707,6 +700,7 @@ public void addPosition(MultiStagePosition msp, String label) {
       PosTableModel ptm = (PosTableModel)posTable_.getModel();
       ptm.getPositionList().clearAllPositions();
       ptm.fireTableDataChanged();
+      gui_.getAcqDlg().updateGUIContents();
    }
 
    
@@ -754,6 +748,7 @@ public void addPosition(MultiStagePosition msp, String label) {
       PosTableModel ptm = (PosTableModel)posTable_.getModel();
       ptm.getPositionList().removePosition(posTable_.getSelectedRow() - 1);
       ptm.fireTableDataChanged();
+      gui_.getAcqDlg().updateGUIContents();
    }
 
    /**
@@ -773,12 +768,14 @@ public void addPosition(MultiStagePosition msp, String label) {
          msp.setLabel(ptm.getPositionList().generateLabel());
          ptm.getPositionList().addPosition(msp);
          ptm.fireTableDataChanged();
+         gui_.getAcqDlg().updateGUIContents();
       } else { // replace instead of add 
          msp.setLabel(ptm.getPositionList().getPosition(posTable_.getSelectedRow() - 1).getLabel() );
          selectedRow = posTable_.getSelectedRow();
          ptm.getPositionList().replacePosition(posTable_.getSelectedRow() -1, msp);
          ptm.fireTableCellUpdated(selectedRow, 1);
-         // Not sure why this is here as we undo the selecion after this functions exits...
+         // Not sure why this is here as we undo the selecion after 
+         // this functions exits...
          posTable_.setRowSelectionInterval(selectedRow, selectedRow);
       }
    }
