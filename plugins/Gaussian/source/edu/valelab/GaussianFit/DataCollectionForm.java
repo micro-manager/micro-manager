@@ -58,6 +58,7 @@ import org.apache.commons.math.stat.StatUtils;
 import org.jfree.data.xy.XYSeries;
 import org.micromanager.MMStudioMainFrame;
 import org.micromanager.utils.NumberUtils;
+import org.micromanager.utils.ReportingUtils;
 import valelab.LocalWeightedMean;
 
 
@@ -73,8 +74,6 @@ public class DataCollectionForm extends javax.swing.JFrame {
    private final String[] renderModes_ = {"Points", "Gaussian", "Norm. Gaussian"};
    private final String[] renderSizes_  = {"1x", "2x", "4x", "8x"};
    public final static String extension_ = ".tsf";
-   // TODO: make this user-settable
-   private final double MAXMATCHDISTANCE = 1000.0;
    
    // Prefs
    private static final String FRAMEXPOS = "DCXPos";
@@ -97,7 +96,14 @@ public class DataCollectionForm extends javax.swing.JFrame {
    private static final String COL5Width = "Col5Width";
    private Preferences prefs_;
    
+   
+   /*
+    * Switch between clojure and Java code here
+    * LWM is Java, LocalWeightedMean is Clojure
+    * Currently, LocalWeightedMean gives great results, LWM does not
+    */
    private static LocalWeightedMean lwm_;
+   //private static LWM lwm_;
    private static String loadTSFDir_ = "";
 
    private static int rowDataID_ = 1;
@@ -1459,8 +1465,16 @@ public class DataCollectionForm extends javax.swing.JFrame {
          
          // Find matching points in the two ArrayLists
          Iterator it2 = xyPointsCh1.iterator();
-         Map points = new HashMap<Point2D.Double,Point2D.Double>();
-         NearestPoint2D np = new NearestPoint2D(xyPointsCh2, MAXMATCHDISTANCE);
+         //LWM.PointMap points = new LWM.PointMap();
+         HashMap<Point2D.Double, Point2D.Double> points = new HashMap<Point2D.Double, Point2D.Double>();
+         NearestPoint2D np;
+         try {
+            np = new NearestPoint2D(xyPointsCh2, 
+               NumberUtils.displayStringToDouble(pairsMaxDistanceField_.getText()));
+         } catch (ParseException ex) {
+            ReportingUtils.showError("Problem parsing Pairs max distance number");
+            return;
+         }
          
          while (it2.hasNext()) {
             Point2D.Double pCh1 = (Point2D.Double) it2.next();
@@ -1469,7 +1483,12 @@ public class DataCollectionForm extends javax.swing.JFrame {
                points.put(pCh1, pCh2);
             }
          }
+         if (points.size() < 4) {
+            ReportingUtils.showError("Fewer than 4 matching points found.  Not enough to set as 2C reference");
+            return;
+         }
          try {
+            //lwm_ = new LWM(2, points);
             lwm_ = new LocalWeightedMean(2, points);
             referenceName_.setText("ID: " + rowData_.get(row).ID_);
          } catch (Exception ex) {
@@ -3196,7 +3215,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
                      gsn.setYCenter(corPoint.y);
                      correctedData.add(gsn);
                   } catch (Exception ex) {
-                     ex.printStackTrace();
+                     ReportingUtils.logError(ex);
                   }
                } else if (gs.getChannel() == 2) {
                   correctedData.add(gs);

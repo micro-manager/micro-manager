@@ -123,14 +123,8 @@
                   <Group type="102" attributes="0">
                       <EmptySpace min="-2" pref="7" max="-2" attributes="0"/>
                       <Group type="103" groupAlignment="0" attributes="0">
-                          <Group type="102" attributes="0">
-                              <Component id="unjitterButton_" pref="110" max="32767" attributes="1"/>
-                              <EmptySpace max="-2" attributes="0"/>
-                          </Group>
-                          <Group type="102" attributes="0">
-                              <Component id="linkButton_" pref="110" max="32767" attributes="1"/>
-                              <EmptySpace max="-2" attributes="0"/>
-                          </Group>
+                          <Component id="unjitterButton_" pref="110" max="32767" attributes="1"/>
+                          <Component id="linkButton_" pref="110" max="32767" attributes="1"/>
                       </Group>
                   </Group>
                   <Group type="102" alignment="0" attributes="0">
@@ -142,9 +136,9 @@
                           </Group>
                           <Component id="zCalibrateButton_" alignment="0" pref="110" max="32767" attributes="1"/>
                       </Group>
-                      <EmptySpace max="-2" attributes="0"/>
                   </Group>
               </Group>
+              <EmptySpace max="-2" attributes="0"/>
               <Group type="103" groupAlignment="0" attributes="0">
                   <Group type="102" attributes="0">
                       <EmptySpace min="60" pref="60" max="60" attributes="0"/>
