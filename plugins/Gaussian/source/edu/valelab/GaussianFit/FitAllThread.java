@@ -169,6 +169,11 @@ public class FitAllThread extends GaussianInfo implements Runnable  {
          gfsThreads_[i].setUseNrPhotonsFilter(useNrPhotonsFilter_);
          gfsThreads_[i].init();
       }
+      
+      // work around strange bug that happens with freshly opened images
+      for (int i = 1; i <= siPlus.getNChannels(); i++) {
+         siPlus.setPosition(i, siPlus.getCurrentSlice(), siPlus.getFrame());
+      }
 
       int nrImages = siPlus.getNChannels() * siPlus.getNSlices() * siPlus.getNFrames();
       int imageCount = 0;
