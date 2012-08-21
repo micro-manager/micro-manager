@@ -85,14 +85,14 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
       return runAcquisition(getSequenceSettings());
    }
 
-   public IAcquisitionEngine2010 getAcquisitionEngine2010() {
+   protected IAcquisitionEngine2010 getAcquisitionEngine2010() {
       if (acquisitionEngine2010 == null) {
          acquisitionEngine2010 = gui_.getAcquisitionEngine2010();
       }
       return acquisitionEngine2010;
    }
 
-   public String runAcquisition(SequenceSettings acquisitionSettings) {
+   protected String runAcquisition(SequenceSettings acquisitionSettings) {
       if (!saveFiles_ || this.enoughDiskSpace()) {
          try {
             DefaultTaggedImagePipeline taggedImagePipeline = new DefaultTaggedImagePipeline(
@@ -694,7 +694,7 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
       throw new UnsupportedOperationException("Not supported yet.");
    }
 
-   public boolean enoughDiskSpace() {
+   protected boolean enoughDiskSpace() {
       File root = new File(rootName_);
       long usableMB = root.getUsableSpace() / (1024 * 1024);
       return (1.25 * getTotalMB()) < usableMB;
@@ -871,7 +871,7 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
    /**
     * @return the taggedImageProcessors_
     */
-   public List<DataProcessor<TaggedImage>> getTaggedImageProcessors() {
+   protected List<DataProcessor<TaggedImage>> getTaggedImageProcessors() {
       return taggedImageProcessors_;
    }
 
