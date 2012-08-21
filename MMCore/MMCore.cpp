@@ -3715,7 +3715,11 @@ void CMMCore::setState(const char* deviceLabel, long state) throw (CMMError)
    }
    if (pStateDev->HasProperty(MM::g_Keyword_Label))
    {
-      stateCache_.addSetting(PropertySetting(deviceLabel, MM::g_Keyword_Label, getStateLabel(deviceLabel).c_str()));
+      char posLbl[MM::MaxStrLength];
+      nRet = pStateDev->GetPositionLabel(state, posLbl);
+      if (nRet != DEVICE_OK)
+         throw CMMError(deviceLabel, getDeviceErrorText(nRet, pStateDev).c_str(), MMERR_DEVICE_GENERIC);
+      stateCache_.addSetting(PropertySetting(deviceLabel, MM::g_Keyword_Label, posLbl));
    }
 
    CORE_DEBUG2("%s set to state %d\n", deviceLabel, (int)state);
