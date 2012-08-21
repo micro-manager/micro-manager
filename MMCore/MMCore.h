@@ -567,7 +567,6 @@ private:
    void assignDefaultRole(MM::Device* pDev);
    void updateCoreProperty(const char* propName, MM::DeviceType devType) throw (CMMError);
    void initializeLogging();
-   void shutdownLogging();
 
    MMThreadLock* pPostedErrorsLock_;
    mutable std::deque<std::pair< int, std::string> > postedErrors_;

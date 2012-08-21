@@ -279,8 +279,6 @@ CMMCore::~CMMCore()
    }
    CORE_LOG("Core session ended on %D\n");
 
-   shutdownLogging();
-
    delete logger_;
    delete callback_;
    delete configGroups_;
@@ -6020,10 +6018,6 @@ void CMMCore::initializeLogging()
    //- requested feature
 }
 
-void CMMCore::shutdownLogging()
-{
-   getLoggerInstance()->Shutdown();
-}
 
 void CMMCore::logError(const char* device, const char* msg, const char* fileName, int line) const
 {
