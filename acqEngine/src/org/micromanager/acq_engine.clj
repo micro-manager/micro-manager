@@ -215,6 +215,11 @@
     (let [xy (.getXYStagePosition gui)]
       [(.x xy) (.y xy)])))
 
+(defn enable-continuous-focus [on?]
+  (let [autofocus (core getAutoFocusDevice)]
+    (device-best-effort autofocus
+                        (core enableContinuousFocus on?))))
+
 (defn set-shutter-open [open?]
   (let [shutter (core getShutterDevice)]
     (device-best-effort shutter
@@ -226,7 +231,7 @@
   (when (and (@state :init-continuous-focus)
              (not (core isContinuousFocusDrive stage))
              (core isContinuousFocusEnabled))
-    (core enableContinuousFocus false))
+    (enable-continuous-focus false))
   (device-best-effort stage (core setPosition stage pos)))
 
 (defn set-stage-position
@@ -428,7 +433,7 @@
   (log "acq-sleep")
   (when (and (@state :init-continuous-focus)
              (not (core isContinuousFocusEnabled)))
-    (core enableContinuousFocus true))
+    (try (core enable-continuous-focus true) (catch Throwable t nil))) ; don't quit if this fails
   (let [target-time (+ (@state :last-wake-time) interval-ms)
         delta (- target-time (jvm-time-ms))]
      (when (and (< 1000 delta)
@@ -558,7 +563,7 @@
         (set-shutter-open state))
       (when (and (@state :init-continuous-focus)
                  (not (core isContinuousFocusEnabled)))
-        (core enableContinuousFocus true))
+        (core enable-continuous-focus true))
       (return-config)
       (. gui enableRoiButtons true))
     (catch Throwable t (ReportingUtils/showError t "Acquisition cleanup failed."))))
