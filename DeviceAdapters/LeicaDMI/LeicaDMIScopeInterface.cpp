@@ -1597,10 +1597,18 @@ int LeicaScopeInterface::SetObjectiveImmersion(MM::Device& device, MM::Core& cor
  */
 int LeicaScopeInterface::SetDrivePosition(MM::Device& device, MM::Core& core, LeicaDriveModel& drive, int deviceID, int position)
 {
-   drive.SetBusy(true);
-   std::ostringstream os;
-   os << deviceID << "022" << " " << position;
-   return core.SetSerialCommand(&device, port_.c_str(), os.str().c_str(), "\r");
+     // There are problems with the Busy signal when sending the ZDrive to a position it already is
+   // therefore, check first where it is and only move if we want to go somewhere else
+   int mySteps;
+   drive.GetPosition( mySteps);
+   if (position != mySteps)
+   {
+      drive.SetBusy(true);
+      std::ostringstream os;
+      os << deviceID << "022" << " " << position;
+      return core.SetSerialCommand(&device, port_.c_str(), os.str().c_str(), "\r");
+   } 
+   return DEVICE_OK;
 }
 
 /**
