@@ -22,7 +22,7 @@
 //                CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 //                INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 //
-
+ 
 package edu.valelab.GaussianFit;
 
 import ags.utils.KdTree;
@@ -60,7 +60,7 @@ public class LWM {
    }
 
    public static double weightFunction(double R) {
-      return (1 + (-3 * R * R) + (2 * R * R * R));
+      return (R < 1) ? (1 + (-3 * R * R) + (2 * R * R * R)) : 0;
    }
 
    public static ExponentPairs polynomialExponents(int order) {
@@ -187,11 +187,13 @@ public class LWM {
          final ControlPoint controlPoint = controlPoints.get(srcPoint);
          final double r = testPoint.distance(controlPoint.point) / controlPoint.Rnormalized;
          final double weight = weightFunction(r);
-         sumWeights += weight;
-         sumWeightedPolyX += weight * evaluatePolynomial(testPoint.x, testPoint.y,
-                 controlPoint.polynomialCoefficients.polyX, exponentPairs);
-         sumWeightedPolyY += weight * evaluatePolynomial(testPoint.x, testPoint.y,
-                 controlPoint.polynomialCoefficients.polyY, exponentPairs);
+         if (weight > 0) {
+            sumWeights += weight;
+            sumWeightedPolyX += weight * evaluatePolynomial(testPoint.x, testPoint.y,
+                    controlPoint.polynomialCoefficients.polyX, exponentPairs);
+            sumWeightedPolyY += weight * evaluatePolynomial(testPoint.x, testPoint.y,
+                    controlPoint.polynomialCoefficients.polyY, exponentPairs);
+         }
       }
       return new Point2D.Double(sumWeightedPolyX / sumWeights,
                                 sumWeightedPolyY / sumWeights);
