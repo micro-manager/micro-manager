@@ -2149,9 +2149,27 @@ public final class VirtualAcquisitionDisplay implements AcquisitionDisplay, Imag
          tAnimationTimer_.cancel();
 
          super.windowClosing(e);
-         MMStudioMainFrame.getInstance().removeMMBackgroundListener(this);
+         MMStudioMainFrame gui = MMStudioMainFrame.getInstance();
+         gui.removeMMBackgroundListener(this);
+         removeMeFromAcquisitionManager(gui);
+
          windowClosingDone_ = true;
          closed_ = true;
+      }
+
+      /*
+       * Removes the VirtualAcquisitionDisplay from the Acquisition Manager.
+       */
+      private void removeMeFromAcquisitionManager(MMStudioMainFrame gui) {
+         for (String name : gui.getAcquisitionNames()) {
+            try {
+               if (gui.getAcquisition(name).getAcquisitionWindow() == VirtualAcquisitionDisplay.this) {
+                  gui.closeAcquisition(name);
+               }
+            } catch (Exception ex) {
+               ReportingUtils.logError(ex);
+            }
+         }
       }
 
       @Override
