@@ -64,7 +64,6 @@ MMJ_.jar:  \
 	$(srcdir)/src/org/micromanager/graph/GraphData.java \
 	$(srcdir)/src/org/micromanager/graph/GraphFrame.java \
 	$(srcdir)/src/org/micromanager/graph/GraphPanel.java \
-	$(srcdir)/src/org/micromanager/graph/HistogramFrame.java \
 	$(srcdir)/src/org/micromanager/graph/HistogramPanel.java \
 	$(srcdir)/src/org/micromanager/navigation/MultiStagePosition.java \
 	$(srcdir)/src/org/micromanager/navigation/PositionList.java \
