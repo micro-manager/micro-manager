@@ -2153,7 +2153,7 @@ public final class VirtualAcquisitionDisplay implements AcquisitionDisplay, Imag
          gui.removeMMBackgroundListener(this);
          removeMeFromAcquisitionManager(gui);
 
-         windowClosingDone_ = true;
+         windowClosingDone_ = true;         
          closed_ = true;
       }
 

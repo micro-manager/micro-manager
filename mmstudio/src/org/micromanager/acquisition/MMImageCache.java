@@ -109,6 +109,7 @@ public class MMImageCache implements ImageCache {
 
    public void close() {
       imageStorage_.close();
+      imageStorageListeners_.clear();
    }
 
    public void saveAs(TaggedImageStorage newImageFileManager) {

@@ -552,8 +552,4 @@ public interface AcquisitionEngine {
     */
    public ImageCache getImageCache();
 
-   /*
-    * Get the display for the most recent acquisition.
-    */
-   public AcquisitionDisplay getDisplay();
 }
