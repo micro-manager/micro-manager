@@ -11,7 +11,7 @@
         [slide-explorer.paint :only (enable-anti-aliasing repaint
                                      draw-image repaint-on-change)]
         [slide-explorer.tiles :only (center-tile floor-int)]
-        [slide-explorer.image :only (crop insert-half-tile overlay)]
+        [slide-explorer.image :only (crop insert-half-tile overlay intensity-range)]
         [slide-explorer.user-controls :only (make-view-controllable
                                               handle-resize
                                               setup-fullscreen)]))
@@ -106,6 +106,16 @@
       (when (<= MIN-ZOOM (:zoom child))
         (propagate-tile tile-map-atom child parent)
         (recur (child-indices child) child)))))
+
+;; CONTRAST
+
+(defn apply-contrast
+  "Setup contrast values by using the min and max of a given tile."
+  [screen-state [tile-index tile-proc]]
+  (update-in screen-state
+             [:channels (:nc tile-index)]
+             merge
+             (intensity-range tile-proc)))
 
 ;; OVERLAY
 
@@ -226,7 +236,7 @@
   (doto (JFrame. "Slide Explorer II")
     .show
     (.setBounds 10 10 500 500)))
-
+    
 (defn view-panel [memory-tiles acquired-images]
   (let [screen-state (atom (sorted-map :x 0 :y 0 :z 0 :zoom 1
                                        :width 100 :height 10
@@ -238,6 +248,7 @@
     (load-visible-only screen-state memory-tiles
                        overlay-tiles acquired-images)
     (repaint-on-change panel [screen-state memory-tiles overlay-tiles])
+    (set-contrast-when-ready screen-state memory-tiles)
     [panel screen-state]))
 
 (defn set-position! [screen-state-atom position-map]
