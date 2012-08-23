@@ -120,7 +120,7 @@ CMMCore::CMMCore() :
 
    // build list of error strings
    errorText_[MMERR_OK] = "No errors.";
-   errorText_[MMERR_GENERIC] = "Core error occured.";
+   errorText_[MMERR_GENERIC] = "Core error occurred.";
    errorText_[MMERR_DEVICE_GENERIC] = "Device error encountered.";
    errorText_[MMERR_NoDevice] = "Device not defined or initialized.";
    errorText_[MMERR_SetPropertyFailed] = "Property does not exist, or value not allowed.";
@@ -274,7 +274,7 @@ CMMCore::~CMMCore()
    try {
       reset();
    } catch (...) {
-      CORE_LOG("Exception occured in MMCore destructor.\n");
+      CORE_LOG("Exception occurred in MMCore destructor.\n");
       ; // don't let any exceptions leak through
    }
    CORE_LOG("Core session ended on %D\n");
@@ -6028,9 +6028,9 @@ void CMMCore::logError(const char* device, const char* msg, const char* fileName
    ostringstream os;
    os << "Device " << device << ". " << msg << endl;
    if (fileName == 0)
-      CORE_LOG1("Error occured. %s\n", os.str().c_str());
+      CORE_LOG1("Error occurred. %s\n", os.str().c_str());
    else
-      CORE_LOG3("Error occured. %s, file %s, line %d\n", os.str().c_str(), fileName, line);
+      CORE_LOG3("Error occurred. %s, file %s, line %d\n", os.str().c_str(), fileName, line);
 }
 
 string CMMCore::getDeviceName(MM::Device* pDev)
