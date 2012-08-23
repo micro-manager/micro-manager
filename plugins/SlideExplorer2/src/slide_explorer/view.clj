@@ -1,5 +1,5 @@
 (ns slide-explorer.view
-  (:import (javax.swing JFrame JPanel)
+  (:import (javax.swing JFrame JPanel JSplitPane)
            (java.awt AlphaComposite Color Graphics Graphics2D Rectangle RenderingHints Window)
            (java.awt.event ComponentAdapter KeyEvent KeyAdapter
                             WindowAdapter)
@@ -282,17 +282,19 @@
 
 (defn show [memory-tiles acquired-images]
   (let [frame (main-frame)
-        frame2 (doto (JFrame. "test") .show)
         [panel screen-state] (view-panel memory-tiles acquired-images)
-        [panel2 screen-state2] (view-panel memory-tiles acquired-images)]
+        [panel2 screen-state2] (view-panel memory-tiles acquired-images)
+        split-pane (JSplitPane. JSplitPane/HORIZONTAL_SPLIT true panel panel2)]
+    (doto split-pane
+      (.setResizeWeight 0.5)
+      (.setDividerLocation 0.7))
     (def ss screen-state)
     (def ss2 screen-state2)
     (def pnl panel)
     (def mt memory-tiles)
     (def f frame)
     (def ai acquired-images)
-    (.add (.getContentPane frame) panel)
-    (.add (.getContentPane frame2) panel2)
+    (.add (.getContentPane frame) split-pane)
     (setup-fullscreen frame)
     (make-view-controllable panel screen-state)
     (handle-resize panel2 screen-state2)
