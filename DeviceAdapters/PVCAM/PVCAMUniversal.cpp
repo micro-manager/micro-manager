@@ -103,29 +103,31 @@ string twoFlux("2 electrons/sec");
 
 SParam param_set[] = {
    //clear
-   //{"ClearMode",      PARAM_CLEAR_MODE},
-   {"ClearCycles",      PARAM_CLEAR_CYCLES},
-   {"ContineousClears", PARAM_CONT_CLEARS},
-   {"MinBlock",         PARAM_MIN_BLOCK},
-   {"NumBlock",         PARAM_NUM_MIN_BLOCK},
+   //{"ClearMode",       PARAM_CLEAR_MODE},
+   {"ClearCycles",       PARAM_CLEAR_CYCLES},
+   {"ContineousClears",  PARAM_CONT_CLEARS},
+   {"MinBlock",          PARAM_MIN_BLOCK},
+   {"NumBlock",          PARAM_NUM_MIN_BLOCK},
    {"NumStripsPerClean", PARAM_NUM_OF_STRIPS_PER_CLR},
-	{"Firmware Version", PARAM_CAM_FW_VERSION},
+	{"Firmware Version",  PARAM_CAM_FW_VERSION},
    // readout
-   {"PMode",            PARAM_PMODE},
-   //{"ADCOffset",      PARAM_ADC_OFFSET},
-   {"FTCapable",        PARAM_FRAME_CAPABLE},
-   {"FullWellCapacity", PARAM_FWELL_CAPACITY},
-   //{"FTDummies",      PARAM_FTSCAN},
-   {"ClearMode",        PARAM_CLEAR_MODE},
-   {"PreampDelay",      PARAM_PREAMP_DELAY},
-   {"PreampOffLimit",   PARAM_PREAMP_OFF_CONTROL}, // preamp is off during exposure if exposure time is less than this
-   {"MaskLines",        PARAM_PREMASK},
-   {"PrescanPixels",    PARAM_PRESCAN},
-   {"PostscanPixels",   PARAM_POSTSCAN},
-   {"X-dimension",      PARAM_SER_SIZE},
-   {"Y-dimension",      PARAM_PAR_SIZE},
-   {"ShutterMode",      PARAM_SHTR_OPEN_MODE},
-   {"LogicOutput",      PARAM_LOGIC_OUTPUT},
+   {"PMode",             PARAM_PMODE},
+   //{"ADCOffset",       PARAM_ADC_OFFSET},
+   {"FTCapable",         PARAM_FRAME_CAPABLE},
+   {"FullWellCapacity",  PARAM_FWELL_CAPACITY},
+   //{"FTDummies",       PARAM_FTSCAN},
+   {"ClearMode",         PARAM_CLEAR_MODE},
+   {"PreampDelay",       PARAM_PREAMP_DELAY},
+   {"PreampOffLimit",    PARAM_PREAMP_OFF_CONTROL}, // preamp is off during exposure if exposure time is less than this
+   {"MaskLines",         PARAM_PREMASK},
+   {"PrescanPixels",     PARAM_PRESCAN},
+   {"PostscanPixels",    PARAM_POSTSCAN},
+   {"X-dimension",       PARAM_SER_SIZE},
+   {"Y-dimension",       PARAM_PAR_SIZE},
+   {"ShutterMode",       PARAM_SHTR_OPEN_MODE},
+   {"ShutterOpenDelay",  PARAM_SHTR_OPEN_DELAY},
+   {"ShutterCloseDelay", PARAM_SHTR_CLOSE_DELAY},
+   {"LogicOutput",       PARAM_LOGIC_OUTPUT},
 };
 const int n_param = sizeof(param_set)/sizeof(SParam);
 
