@@ -90,8 +90,9 @@ public class ConfigGroupPad extends JScrollPane{
    }
    
    public void saveSettings() {
-      if (prefs_ != null && table_ != null)
-         prefs_.putInt(COLUMN_WIDTH, table_.getColumnModel().getColumn(0).getWidth());
+      if (prefs_ != null && table_ != null) {
+           prefs_.putInt(COLUMN_WIDTH, table_.getColumnModel().getColumn(0).getWidth());
+      }
    }
 
    public void setParentGUI(ScriptInterface parentGUI) {
