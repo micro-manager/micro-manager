@@ -39,7 +39,6 @@ import org.apache.commons.math.FunctionEvaluationException;
 import org.apache.commons.math.analysis.UnivariateRealFunction;
 import org.apache.commons.math.optimization.GoalType;
 import org.apache.commons.math.optimization.univariate.BrentOptimizer;
-import org.micromanager.acquisition.AcquisitionData;
 import org.micromanager.api.ScriptInterface;
 import org.micromanager.utils.AutofocusBase;
 import org.micromanager.utils.ImageUtils;
@@ -236,10 +235,6 @@ public class OughtaFocus extends AutofocusBase implements org.micromanager.api.A
 
    public int getNumberOfImages() {
       return imageCount_;
-   }
-
-   public AcquisitionData getFocusingSequence() throws MMException {
-      throw new UnsupportedOperationException("Not supported yet.");
    }
 
    public String getVerboseStatus() {
