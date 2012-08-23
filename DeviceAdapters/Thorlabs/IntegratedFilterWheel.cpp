@@ -215,7 +215,7 @@ IntegratedFilterWheel::IntegratedFilterWheel() :
 {
    InitializeDefaultErrorMessages();
    SetErrorText(ERR_UNRECOGNIZED_ANSWER, "Invalid response from the device");
-   SetErrorText(ERR_MOVE_FAILED, "Error occured while moving the filter wheel.\n"
+   SetErrorText(ERR_MOVE_FAILED, "Error occurred while moving the filter wheel.\n"
       "The wheel is either mechanically blocked or overloaded.\n"
       "Please turn the controller power OFF and then ON and re-start the micro-manager application.");
    SetErrorText(ERR_INVALID_NUMBER_OF_POS, "Controller reports invalid number of positions\n"
