@@ -5997,7 +5997,7 @@ MM::Device* CMMCore::getDevice(const char* label) const throw (CMMError)
       return pluginManager_.GetDevice(label);
    } catch (CMMError& err) {
       err.setCoreMsg(getCoreErrorText(err.getCode()).c_str());
-      logError("core", getCoreErrorText(err.getCode()).c_str());
+      logError(label, getCoreErrorText(err.getCode()).c_str());
       throw;
    }
 }
