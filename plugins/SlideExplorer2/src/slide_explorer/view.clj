@@ -34,7 +34,7 @@
 
 (defn reference-viewer
   "Creates a small window that shows the value of a reference
-   and upates as that value changes."
+   and updates as that value changes."
   [reference key]
   (let [frame (JFrame. key)
         label (JLabel.)
@@ -158,14 +158,14 @@
     (doseq [[nx ny] (tiles-in-pixel-rectangle pixel-rect
                                               [tile-width tile-height])]
       (let [tile-index {:nc :overlay
-                         :zoom (screen-state :zoom)
-                         :nx nx :ny ny :nt 0
-                         :nz (screen-state :z)}]
-      (when-let [image (tile-cache/get-tile
-                         overlay-tiles-atom
-                         tile-index)]
-        (let [[x y] (tile-to-pixels [nx ny] [tile-width tile-height] 1)]
-          (draw-image g image x y)))))))
+                        :zoom (screen-state :zoom)
+                        :nx nx :ny ny :nt 0
+                        :nz (screen-state :z)}]
+        (when-let [image (tile-cache/get-tile
+                           overlay-tiles-atom
+                           tile-index)]
+          (let [[x y] (tile-to-pixels [nx ny] [tile-width tile-height] 1)]
+            (draw-image g image x y)))))))
 	
 (defn paint-screen [graphics screen-state overlay-tiles-atom]
   (let [original-transform (.getTransform graphics)
@@ -215,11 +215,11 @@
                                            overlay-tiles-atom acquired-images))
         agent (agent {})]
     (def agent1 agent)
-    (reactive/handle-update
-      memory-tile-atom
-      (fn [old new] (when-not (identical? (with-meta old nil) (with-meta new nil)))
-                      (react-fn old new))
-      agent)
+;    (reactive/handle-update
+;      memory-tile-atom
+;      (fn [old new] (when-not (identical? (with-meta old nil) (with-meta new nil)))
+;                      (react-fn old new))
+;      agent)
     (reactive/handle-update
       screen-state-atom
       react-fn
@@ -269,6 +269,7 @@
          merge position-map))
 
 (defn show-where-pointing! [pointing-screen-atom showing-screen-atom]
+  ;(println "swp")
   (set-position! showing-screen-atom
                  (absolute-mouse-position @pointing-screen-atom)))
 

@@ -19,9 +19,10 @@
                      :tick 0
                      :priority {}}}))
 
-(defn remove-lru-excess [lru-map]
+(defn remove-lru-excess
   "Updates a LRU metadata map by removing the oldest item,
    if there are too many items."
+  [lru-map]
   (let [{:keys [priority tick limit]} (::lru (meta lru-map))]
     (if (<= (count lru-map) limit)
       lru-map
