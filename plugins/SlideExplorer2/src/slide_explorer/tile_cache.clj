@@ -1,5 +1,5 @@
 (ns slide-explorer.tile-cache
-  (:require [slide-explorer.cache :as cache]
+  (:require [clojure.core.cache :as cache]
             [slide-explorer.disk :as disk]
             [slide-explorer.persist :as persist]
             [slide-explorer.reactive :as reactive]))
@@ -15,7 +15,8 @@
 (defn add-tile
   "Adds a tile to the atom in memory and saves a .tif image to the associated directory."
   [memory-tile-atom key image-processor]
-  (swap! memory-tile-atom cache/add-item key image-processor)
+  (swap! memory-tile-atom assoc key image-processor)
+  ;(println (tile-dir memory-tile-atom) (count @memory-tile-atom))
   (when-let [dir (tile-dir memory-tile-atom)]
     (reactive/submit file-executor #(disk/write-tile dir key image-processor))))
 
@@ -29,18 +30,19 @@
                            (when-let [tile (disk/read-tile dir key)]
                              (swap! memory-tile-atom
                                     #(if-not (get % key)
-                                       (cache/add-item % key tile)
+                                       (assoc % key tile)
                                        %))
                              tile))))))
 
 (defn get-tile
   [memory-tile-atom key]
-  (swap! memory-tile-atom cache/hit-item key)
-  (get @memory-tile-atom key))
+  (when-let [val (get @memory-tile-atom key)]
+    (swap! memory-tile-atom cache/hit key)
+    val))
 
 (defn create-tile-cache
   ([lru-cache-limit directory]
-    (doto (atom (cache/empty-lru-map lru-cache-limit))
+    (doto (atom (cache/lru-cache-factory {} :threshold lru-cache-limit))
       (tile-dir! directory)))
   ([lru-cache-limit]
     (create-tile-cache lru-cache-limit nil)))
