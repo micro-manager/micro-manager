@@ -1,11 +1,10 @@
 (ns slide-explorer.view
-  (:import (javax.swing JFrame JPanel JLabel JTextArea)
+  (:import (javax.swing JFrame JPanel)
            (java.awt AlphaComposite Color Graphics Graphics2D Rectangle RenderingHints Window)
            (java.awt.event ComponentAdapter KeyEvent KeyAdapter
                             WindowAdapter)
            (ij.process ByteProcessor ImageProcessor))
-  (:require [clojure.pprint :as pprint]
-            [slide-explorer.reactive :as reactive]
+  (:require [slide-explorer.reactive :as reactive]
             [slide-explorer.tile-cache :as tile-cache]
             [clojure.core.memoize :as memo])
   (:use [org.micromanager.mm :only (edt)]
@@ -16,7 +15,6 @@
         [slide-explorer.user-controls :only (make-view-controllable
                                               handle-resize
                                               setup-fullscreen)]))
-
 
 (def MIN-ZOOM 1/256)
 
@@ -31,28 +29,6 @@
 ;  Color Overlay (working)
 
 ;; TESTING UTILITIES
-
-(defn reference-viewer
-  "Creates a small window that shows the value of a reference
-   and updates as that value changes."
-  [reference key]
-  (let [frame (JFrame. key)
-        label (JLabel.)
-        update-fn (fn [_ new-state]
-                    (edt (.setText label
-                                   (str "<html><pre>" 
-                                        (with-out-str (pprint/pprint new-state))
-                                        "</pre></html>"))))]
-    (.add (.getContentPane frame) label)
-    (reactive/handle-update reference update-fn)
-    (update-fn nil @reference)
-    (doto frame
-      (.addWindowListener
-        (proxy [WindowAdapter] []
-          (windowClosing [e]
-                         (remove-watch reference key))))
-      .show))
-  reference)
 
 (defmacro timer [expr]
   `(let [ret# ~expr] ; (time ~expr)]

@@ -1,7 +1,10 @@
 (ns slide-explorer.reactive
-  (:import (java.util.concurrent Executors ExecutorService)
+  (:import (java.awt.event WindowAdapter)
+           (java.util.concurrent Executors ExecutorService)
            (java.util UUID)
-           (clojure.lang IRef)))
+           (javax.swing JFrame JLabel SwingUtilities)
+           (clojure.lang IRef))
+  (:require [clojure.pprint :as pprint]))
 
 (defn add-watch-simple
   "Adds a watch (more simple than clojure core/add-watch). The function
@@ -122,6 +125,30 @@
     (handle-removed-items reference function (single-threaded-executor))))
 
 ;; tests
+
+
+(defn reference-viewer
+  "Creates a small window that shows the value of a reference
+   and updates as that value changes."
+  [reference key]
+  (let [frame (JFrame. key)
+        label (JLabel.)
+        update-fn (fn [_ new-state]
+                    (SwingUtilities/invokeLater
+                      #(.setText label
+                                 (str "<html><pre>" 
+                                      (with-out-str (pprint/pprint new-state))
+                                      "</pre></html>"))))]
+    (.add (.getContentPane frame) label)
+    (handle-update reference update-fn)
+    (update-fn nil @reference)
+    (doto frame
+      (.addWindowListener
+        (proxy [WindowAdapter] []
+          (windowClosing [e]
+                         (remove-watch reference key))))
+      .show))
+  reference)
 
 (defn test-handle-update []
   (let [q (atom 0)]

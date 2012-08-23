@@ -47,10 +47,10 @@
 
 (defn repaint-on-change 
   "Adds a watch such that panel is repainted
-   if any of the values in references have changed."
+   the values in reference has changed."
   [panel references]
   (doseq [reference references]
     (add-watch-simple reference
       (fn [old-state new-state]
-        (when-not (= old-state new-state)
+        (when-not (identical? old-state new-state)
           (repaint panel))))))
