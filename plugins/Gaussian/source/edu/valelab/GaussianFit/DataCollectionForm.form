@@ -676,7 +676,7 @@
         <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
           <Font name="Lucida Grande" size="11" style="0"/>
         </Property>
-        <Property name="text" type="java.lang.String" value="100"/>
+        <Property name="text" type="java.lang.String" value="500"/>
       </Properties>
     </Component>
     <Component class="javax.swing.JLabel" name="SigmaLabel3">

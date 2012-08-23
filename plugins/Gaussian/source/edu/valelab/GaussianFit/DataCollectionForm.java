@@ -59,7 +59,6 @@ import org.jfree.data.xy.XYSeries;
 import org.micromanager.MMStudioMainFrame;
 import org.micromanager.utils.NumberUtils;
 import org.micromanager.utils.ReportingUtils;
-import valelab.LocalWeightedMean;
 
 
 /**
@@ -88,6 +87,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
    private static final String INTMAX = "DCIntMax";
    private static final String LOADTSFDIR = "TSFDir";
    private static final String RENDERMAG = "VisualizationMagnification";
+   private static final String PAIRSMAXDISTANCE = "PairsMaxDistance";
    private static final String COL0Width = "Col0Width";  
    private static final String COL1Width = "Col1Width";
    private static final String COL2Width = "Col2Width";
@@ -102,8 +102,8 @@ public class DataCollectionForm extends javax.swing.JFrame {
     * LWM is Java, LocalWeightedMean is Clojure
     * Currently, LocalWeightedMean gives great results, LWM does not
     */
-   private static LocalWeightedMean lwm_;
-   //private static LWM lwm_;
+   //private static LocalWeightedMean lwm_;
+   private static LWM lwm_;
    private static String loadTSFDir_ = "";
 
    private static int rowDataID_ = 1;
@@ -365,6 +365,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
        intensityMax_.setText(prefs_.get(INTMAX, "20000"));
        loadTSFDir_ = prefs_.get(LOADTSFDIR, "");
        visualizationMagnification_.setSelectedIndex(prefs_.getInt(RENDERMAG, 0));
+       pairsMaxDistanceField_.setText(prefs_.get(PAIRSMAXDISTANCE, "500"));
        
        jTable1_.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
        TableColumnModel cm = jTable1_.getColumnModel();
@@ -628,7 +629,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
         referenceName_.setFont(new java.awt.Font("Lucida Grande", 0, 11));
         referenceName_.setText("JLabel1");
 
-        unjitterButton_.setFont(new java.awt.Font("Lucida Grande", 0, 10)); // NOI18N
+        unjitterButton_.setFont(new java.awt.Font("Lucida Grande", 0, 10));
         unjitterButton_.setText("Drift Correct");
         unjitterButton_.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -728,8 +729,8 @@ public class DataCollectionForm extends javax.swing.JFrame {
             }
         });
 
-        pairsMaxDistanceField_.setFont(new java.awt.Font("Lucida Grande", 0, 11));
-        pairsMaxDistanceField_.setText("100");
+        pairsMaxDistanceField_.setFont(new java.awt.Font("Lucida Grande", 0, 11)); // NOI18N
+        pairsMaxDistanceField_.setText("500");
 
         SigmaLabel3.setFont(new java.awt.Font("Lucida Grande", 0, 11));
         SigmaLabel3.setText("nm");
@@ -786,7 +787,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
             }
         });
 
-        zCalibrateButton_.setFont(new java.awt.Font("Lucida Grande", 0, 10)); // NOI18N
+        zCalibrateButton_.setFont(new java.awt.Font("Lucida Grande", 0, 10));
         zCalibrateButton_.setText("Z Calibration");
         zCalibrateButton_.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -794,7 +795,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
             }
         });
 
-        zCalibrationLabel_.setFont(new java.awt.Font("Lucida Grande", 0, 10)); // NOI18N
+        zCalibrationLabel_.setFont(new java.awt.Font("Lucida Grande", 0, 10));
         zCalibrationLabel_.setText("UnCalibrated");
 
         org.jdesktop.layout.GroupLayout layout = new org.jdesktop.layout.GroupLayout(getContentPane());
@@ -873,20 +874,16 @@ public class DataCollectionForm extends javax.swing.JFrame {
                     .add(layout.createSequentialGroup()
                         .add(7, 7, 7)
                         .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                            .add(layout.createSequentialGroup()
-                                .add(unjitterButton_, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 110, Short.MAX_VALUE)
-                                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED))
-                            .add(layout.createSequentialGroup()
-                                .add(linkButton_, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 110, Short.MAX_VALUE)
-                                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED))))
+                            .add(unjitterButton_, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 110, Short.MAX_VALUE)
+                            .add(linkButton_, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 110, Short.MAX_VALUE)))
                     .add(layout.createSequentialGroup()
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                         .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
                             .add(layout.createSequentialGroup()
                                 .add(20, 20, 20)
                                 .add(zCalibrationLabel_, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 75, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
-                            .add(zCalibrateButton_, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 110, Short.MAX_VALUE))
-                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)))
+                            .add(zCalibrateButton_, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 110, Short.MAX_VALUE))))
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
                     .add(layout.createSequentialGroup()
                         .add(60, 60, 60)
@@ -1465,8 +1462,8 @@ public class DataCollectionForm extends javax.swing.JFrame {
          
          // Find matching points in the two ArrayLists
          Iterator it2 = xyPointsCh1.iterator();
-         //LWM.PointMap points = new LWM.PointMap();
-         HashMap<Point2D.Double, Point2D.Double> points = new HashMap<Point2D.Double, Point2D.Double>();
+         LWM.PointMap points = new LWM.PointMap();
+         //HashMap<Point2D.Double, Point2D.Double> points = new HashMap<Point2D.Double, Point2D.Double>();
          NearestPoint2D np;
          try {
             np = new NearestPoint2D(xyPointsCh2, 
@@ -1488,8 +1485,8 @@ public class DataCollectionForm extends javax.swing.JFrame {
             return;
          }
          try {
-            //lwm_ = new LWM(2, points);
-            lwm_ = new LocalWeightedMean(2, points);
+            lwm_ = new LWM(2, points);
+            //lwm_ = new LocalWeightedMean(2, points);
             referenceName_.setText("ID: " + rowData_.get(row).ID_);
          } catch (Exception ex) {
             JOptionPane.showMessageDialog(getInstance(), "Error setting color reference.  Did you have enough input points?");
@@ -1774,6 +1771,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
        prefs_.put(INTMAX, intensityMax_.getText());
        prefs_.put(LOADTSFDIR, loadTSFDir_);
        prefs_.putInt(RENDERMAG, visualizationMagnification_.getSelectedIndex());
+       prefs_.put(PAIRSMAXDISTANCE, pairsMaxDistanceField_.getName());
        
        TableColumnModel cm = jTable1_.getColumnModel();
        prefs_.putInt(COL0Width, cm.getColumn(0).getWidth());
