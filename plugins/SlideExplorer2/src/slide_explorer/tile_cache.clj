@@ -37,7 +37,7 @@
 (defn get-tile
   [memory-tile-atom key]
   (when-let [val (get @memory-tile-atom key)]
-    (swap! memory-tile-atom cache/hit key)
+    ;(swap! memory-tile-atom cache/hit key)
     val))
 
 (defn create-tile-cache

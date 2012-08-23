@@ -172,9 +172,26 @@
 
 ;; Loading visible tiles
 
+(defn overlay-loader
+  [screen-state-atom memory-tile-atom overlay-tiles-atom]
+  (let [visible-tile-positions (tiles-in-pixel-rectangle
+                                 (screen-rectangle @screen-state-atom)
+                                 [512 512])]
+    (doseq [[nx ny] visible-tile-positions]
+      (let [tile {:nx nx
+                  :ny ny
+                  :zoom (@screen-state-atom :zoom)
+                  :nc :overlay
+                  :nz (@screen-state-atom :z)
+                  :nt 0}]
+          (tile-cache/add-tile overlay-tiles-atom
+                               tile
+                               (multi-color-tile memory-tile-atom tile
+                                                 (:channels @screen-state-atom)))))))
+
 (defn visible-loader
   "Loads tiles needed for drawing."
-  [screen-state-atom memory-tile-atom overlay-tiles-atom acquired-images]
+  [screen-state-atom memory-tile-atom acquired-images]
   (let [visible-tile-positions (tiles-in-pixel-rectangle
                                  (screen-rectangle @screen-state-atom)
                                  [512 512])]
@@ -186,33 +203,29 @@
                   :nc channel
                   :nz (@screen-state-atom :z)
                   :nt 0}]
-        (tile-cache/load-tile memory-tile-atom tile)
-        (let [overlay-tile-coords (assoc tile :nc :overlay)]
-          (tile-cache/add-tile overlay-tiles-atom
-                 overlay-tile-coords
-                 (multi-color-tile memory-tile-atom tile
-                                   (:channels @screen-state-atom))))))))
+        (tile-cache/load-tile memory-tile-atom tile)))))
 
 (defn load-visible-only
   "Runs visible-loader whenever screen-state-atom changes."
   [screen-state-atom memory-tile-atom
    overlay-tiles-atom acquired-images]
-  (let [react-fn (fn [_ _] (visible-loader screen-state-atom memory-tile-atom
-                                           overlay-tiles-atom acquired-images))
+  (let [react-mem-fn (fn [_ _] (visible-loader screen-state-atom memory-tile-atom
+                                           acquired-images))
+        react-vis-fn (fn [_ _] (overlay-loader screen-state-atom memory-tile-atom
+                                               overlay-tiles-atom))
         agent (agent {})]
     (def agent1 agent)
-;    (reactive/handle-update
-;      memory-tile-atom
-;      (fn [old new] (when-not (identical? (with-meta old nil) (with-meta new nil)))
-;                      (react-fn old new))
-;      agent)
+    (reactive/handle-update
+      memory-tile-atom
+      react-vis-fn
+      agent)
     (reactive/handle-update
       screen-state-atom
-      react-fn
+      react-mem-fn
       agent)
     (reactive/handle-update
       acquired-images
-      react-fn
+      react-mem-fn
       agent)))
   
 ;; MAIN WINDOW AND PANEL
@@ -248,7 +261,7 @@
     (load-visible-only screen-state memory-tiles
                        overlay-tiles acquired-images)
     (repaint-on-change panel [screen-state memory-tiles overlay-tiles])
-    (set-contrast-when-ready screen-state memory-tiles)
+    ;(set-contrast-when-ready screen-state memory-tiles)
     [panel screen-state]))
 
 (defn set-position! [screen-state-atom position-map]
