@@ -2789,6 +2789,13 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface, Device
     public boolean isLiveModeOn() {
         return liveModeTimer_ != null && liveModeTimer_.isRunning();
    }
+    
+   public LiveModeTimer getLiveModeTimer() {
+      if (liveModeTimer_ == null) {
+         liveModeTimer_ = new LiveModeTimer();
+      }
+      return liveModeTimer_;
+   }
    
    public void enableLiveMode(boolean enable) {
       if (core_ == null) {

@@ -259,10 +259,11 @@ public final class VirtualAcquisitionDisplay implements AcquisitionDisplay, Imag
 
       private Runnable updateAndDrawRunnable() {
          return new Runnable() {
-              @Override
-              public void run() {
-                 superUpdateImage();
-                  imageChangedUpdate();
+
+            @Override
+            public void run() {
+               superUpdateImage();
+               imageChangedUpdate();
                try {
                   GUIUtils.invokeLater(new Runnable() {
 
@@ -272,15 +273,16 @@ public final class VirtualAcquisitionDisplay implements AcquisitionDisplay, Imag
                         } catch (Exception ex) {
                         }
                         superDraw();
+                        MMStudioMainFrame.getInstance().getLiveModeTimer().updateFPS();
                      }
                   });
                } catch (Exception e) {
                   ReportingUtils.logError(e);
                }
-              }
-          };
+            }
+         };
       }
-      
+
       public void updateAndDrawWithoutGUIUpdater() {
          try {
             GUIUtils.invokeLater(updateAndDrawRunnable());
@@ -306,6 +308,7 @@ public final class VirtualAcquisitionDisplay implements AcquisitionDisplay, Imag
             public void run() {
                imageChangedUpdate();
                superDraw();
+               MMStudioMainFrame.getInstance().getLiveModeTimer().updateFPS();
             }
          };
          updater2.post(runnable);
@@ -391,6 +394,7 @@ public final class VirtualAcquisitionDisplay implements AcquisitionDisplay, Imag
             public void run() {
                imageChangedUpdate();
                superDraw();
+               MMStudioMainFrame.getInstance().getLiveModeTimer().updateFPS();
             }       
          };
       }

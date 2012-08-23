@@ -28,7 +28,6 @@ import mmcorej.CMMCore;
 import mmcorej.TaggedImage;
 import org.json.JSONException;
 import org.micromanager.MMStudioMainFrame;
-import org.micromanager.utils.ImageUtils;
 import org.micromanager.utils.MDUtils;
 import org.micromanager.utils.MMScriptException;
 import org.micromanager.utils.ReportingUtils;
@@ -51,6 +50,7 @@ public class LiveModeTimer {
    private long fpsCounter_;
    private long imageNumber_;
    private long lastImageNumber_;
+   private long oldImageNumber_;
    private long fpsInterval_ = 5000;
    private final NumberFormat format_;
    private boolean running_ = false;
@@ -133,6 +133,7 @@ public class LiveModeTimer {
          fpsTimer_ = System.currentTimeMillis();
          imageNumber_ = timg.tags.getLong("ImageNumber");
          lastImageNumber_ = imageNumber_ - 1;
+         oldImageNumber_ = imageNumber_;
 
          timer_.schedule(task_, 0, delay);
          win_.liveModeEnabled(true);
@@ -172,14 +173,27 @@ public class LiveModeTimer {
          }
       } 
    }
+   
+   /**
+    * Keep track of the last imagenumber, added by the circular buffer
+    * that we have seen here
+    * 
+    * @param imageNumber 
+    */
+   private synchronized void setImageNumber(long imageNumber) 
+   {
+      imageNumber_ = imageNumber;
+   }
+           
 
    /**
     * Updates the fps timer (how fast does the camera pump images into the 
     * circular buffer) and display fps (how fast do we display the images)
     * 
-    * @param imageNumber - sequential number added in the circular buffer
     */
-   private void updateFPS(long imageNumber) {
+   public synchronized void updateFPS() {
+      if (!running_)
+         return;
       try {
          fpsCounter_++;
          long now = System.currentTimeMillis();
@@ -187,12 +201,12 @@ public class LiveModeTimer {
          if (diff > fpsInterval_) {
             double d = diff/ 1000.0;
             double fps = fpsCounter_ / d;
-            double dfps = (imageNumber - imageNumber_) / d;
+            double dfps = (imageNumber_ - oldImageNumber_) / d;
             win_.displayStatusLine("fps: " + format_.format(dfps) +
                     ", display fps: " + format_.format(fps));
             fpsCounter_ = 0;
             fpsTimer_ = now;
-            imageNumber_ = imageNumber;
+            oldImageNumber_ = imageNumber_;
          }
       } catch (Exception ex) {
          ReportingUtils.logError(ex);
@@ -224,9 +238,9 @@ public class LiveModeTimer {
                   lastImageNumber_ = imageNumber;
                   
                   addTags(ti, 0);
+                  setImageNumber(ti.tags.getLong("ImageNumber"));
                   gui_.addImage(ACQ_NAME, ti, true, true);
                   gui_.updateLineProfile();
-                  updateFPS(ti.tags.getLong("ImageNumber"));
 
                } catch (MMScriptException ex) {
                   ReportingUtils.showError(ex);
@@ -297,9 +311,9 @@ public class LiveModeTimer {
                            gui_.addImage(MMStudioMainFrame.SIMPLE_ACQ, images[i], false, true);
                         }
                      }
+                     setImageNumber(ti.tags.getLong("ImageNumber"));
                      gui_.addImage(MMStudioMainFrame.SIMPLE_ACQ, images[lastChannelToAdd], true, true);
                      gui_.updateLineProfile();
-                     updateFPS(ti.tags.getLong("ImageNumber"));
                   }
 
                } catch (MMScriptException ex) {
