@@ -44,24 +44,28 @@ public class PropertyValueCellEditor extends AbstractCellEditor implements Table
 
         // end editing on selection change
         combo_.addActionListener(new ActionListener() {
+            @Override
             public void actionPerformed(ActionEvent e) {
                 fireEditingStopped();
             }
         });
 
         slider_.addEditActionListener(new ActionListener() {
+            @Override
             public void actionPerformed(ActionEvent e) {
                 fireEditingStopped();
             }
         });
 
         slider_.addSliderMouseListener(new MouseAdapter() {
+            @Override
             public void mouseReleased(MouseEvent e) {
                 fireEditingStopped();
             }
         });
 
         text_.addKeyListener(new KeyAdapter() {
+            @Override
             public void keyPressed(KeyEvent e) {
                 if (e.getKeyCode() == KeyEvent.VK_ENTER) {
                     fireEditingStopped();                    
@@ -70,6 +74,7 @@ public class PropertyValueCellEditor extends AbstractCellEditor implements Table
         });
 
         text_.addFocusListener(new FocusAdapter() {
+            @Override
             public void focusLost(FocusEvent e) {
                 // fireEditingStopped();
             }
@@ -78,6 +83,7 @@ public class PropertyValueCellEditor extends AbstractCellEditor implements Table
     }
 
     // This method is called when a cell value is edited by the user.
+    @Override
     public Component getTableCellEditorComponent(JTable table, Object value,
             boolean isSelected, int rowIndex, int colIndex) {
 
@@ -113,6 +119,7 @@ public class PropertyValueCellEditor extends AbstractCellEditor implements Table
                 // end editing on selection change
                 combo_.addActionListener(new ActionListener() {
 
+                    @Override
                     public void actionPerformed(ActionEvent e) {
                         fireEditingStopped();
                     }
@@ -128,6 +135,7 @@ public class PropertyValueCellEditor extends AbstractCellEditor implements Table
 
     // This method is called when editing is completed.
     // It must return the new value to be stored in the cell.
+    @Override
     public Object getCellEditorValue() {
         if (item_.allowed.length == 0) {
             if (item_.hasRange) {
