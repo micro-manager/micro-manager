@@ -129,15 +129,10 @@
 (defn intensity-range
   "Get the intensity range for one or more processors."
   ([processor]
-    (condp instance? processor
-      ByteProcessor
       (let [stat (ImageStatistics/getStatistics
                    processor ImageStatistics/MIN_MAX nil)]
         {:min (.min stat)
-         :max (.max stat)})
-      ShortProcessor
-      {:min (.getMin processor)
-       :max (.getMax processor)}))
+         :max (.max stat)}))
   ([processor & processors]
     (let [min-maxes (map intensity-range (cons processor processors))]
       {:min (apply min (map :min min-maxes))
