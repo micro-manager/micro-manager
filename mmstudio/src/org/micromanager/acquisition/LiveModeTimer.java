@@ -189,6 +189,7 @@ public class LiveModeTimer {
    /**
     * Updates the fps timer (how fast does the camera pump images into the 
     * circular buffer) and display fps (how fast do we display the images)
+    * It is called from tasks that are doing the actual image drawing
     * 
     */
    public synchronized void updateFPS() {
