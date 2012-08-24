@@ -269,7 +269,7 @@ LCShutter::LCShutter() :
    state_(0),
    name_(g_DeviceNameLCShutter),
    sequenceOn_(true),
-   maxSequenceSize_(100)
+   maxSequenceSize_(255)
 {
    InitializeDefaultErrorMessages();
    
@@ -569,7 +569,7 @@ int LCShutter::OnState(MM::PropertyBase *pProp, MM::ActionType eAct)
    }
    else if (eAct == MM::StartSequence)
    {
-      unsigned char mode = 1;  // what are the various modes???
+      unsigned char mode = 0;  // modes > 0 also run DA outputs
       return LaserBoardStartSequence(mode);;
    }
    else if (eAct == MM::StopSequence)
