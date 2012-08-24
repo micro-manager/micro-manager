@@ -267,7 +267,9 @@ LCShutter::LCShutter() :
    initialized_(false), 
    nrLines_(4),
    state_(0),
-   name_(g_DeviceNameLCShutter)
+   name_(g_DeviceNameLCShutter),
+   sequenceOn_(true),
+   maxSequenceSize_(100)
 {
    InitializeDefaultErrorMessages();
    
@@ -371,6 +373,9 @@ int LCShutter::Initialize()
       mw.push_back(maxMW);
    }
  
+   /**
+    * Power per line in mW
+	*/
    for (unsigned int i=0; i<nrLines_; i++) {
       std::string propName;
       std::ostringstream os;
@@ -386,30 +391,30 @@ int LCShutter::Initialize()
       SetPropertyLimits(propName.c_str(), 0.0, mw.at(i));
    }
 
+   /**
+    * State of each line
+	*/
+    for (unsigned int i=0; i<nrLines_; i++) {
+      std::ostringstream os;
+      os << "LaserLineState " << nm.at(i) << "nm";
+      // cheap way of guaranteeing that the propname is unique
+      for (unsigned int j=0; j<i; j++)
+         os << " ";
+      CPropertyActionEx* pActEx = new CPropertyActionEx(this, &LCShutter::OnLineState, (long) i);
+      ret = CreateProperty(os.str().c_str(), "0", MM::Integer, false, pActEx, false);
+      if (ret != DEVICE_OK)
+         return ret;
+      SetPropertyLimits(os.str().c_str(), 0, 2);
+   }
+
+	/**
+	 * State of all lines together.  This is a binary number in which each bit sets the state of a laser line
+	 */
    CPropertyAction* pAct = new CPropertyAction(this, &LCShutter::OnState);
-   ret = CreateProperty("LaserLine", "none", MM::String, false, pAct);
+   ret = CreateProperty("LaserLineState", "0", MM::Integer, false, pAct);
    if (ret != DEVICE_OK)
       return ret;
-
-   laserStateByName_["none"] = 0;
-   laserNameByState_[0] = "none";
-   AddAllowedValue("LaserLine", "none");
-   for (unsigned char i = 0; i < nrLines_; i++) {
-      std::ostringstream os;
-      os << nm.at(i) << "nm";
-      unsigned char state = 1 << i;
-      laserStateByName_[os.str()] = state;
-      laserNameByState_[state] = os.str();
-      AddAllowedValue("LaserLine", os.str().c_str());
-      for (unsigned char j = i + 1; j<nrLines_; j++) {
-         //unsigned char lstate = state;
-         os << " + " << nm.at(j) << "nm";
-         state |= (1 << j);
-         laserStateByName_[os.str()] = state;
-         laserNameByState_[state] = os.str();
-         AddAllowedValue("LaserLine", os.str().c_str());
-      }
-   }
+   SetPropertyLimits("LaserLineState", 0, 1 << nrLines_);
 
    // Blank
    pAct = new CPropertyAction(this, &LCShutter::OnBlank);
@@ -525,19 +530,60 @@ int LCShutter::OnState(MM::PropertyBase *pProp, MM::ActionType eAct)
 {
    if (eAct == MM::BeforeGet) 
    {
-      std::string name = laserNameByState_[state_];
-      pProp->Set(name.c_str());
+      pProp->Set((long)state_);
    }
    else if (eAct == MM::AfterSet)
    {
-      std::string name;
-      pProp->Get(name);
-      state_ = laserStateByName_[name];
+      long state;
+      pProp->Get(state);
+      state_ = (unsigned char) state;
+
       bool open;
       GetOpen(open);
       if (open)
          SetOpen(open);
    }
+   else if (eAct == MM::IsSequenceable)
+   {
+      if (sequenceOn_)
+         pProp->SetSequenceable(maxSequenceSize_);
+      else
+         pProp->SetSequenceable(0);
+   }
+   else if (eAct == MM::AfterLoadSequence)
+   {
+      std::vector<std::string> sequence = pProp->GetSequence();
+      if (sequence.size() > maxSequenceSize_)
+         return DEVICE_SEQUENCE_TOO_LARGE;
+
+      for (unsigned int i=0; i < sequence.size(); i++) 
+      {
+         unsigned char seq;
+         std::stringstream os;
+         os << sequence[i];
+         os >> seq;
+         int ret = LaserBoardSetSequenceState(i, &seq);
+         if (ret != DEVICE_OK)
+            return ret;
+      }
+   }
+   else if (eAct == MM::StartSequence)
+   {
+      unsigned char mode = 1;  // what are the various modes???
+      return LaserBoardStartSequence(mode);;
+   }
+   else if (eAct == MM::StopSequence)
+   {
+      unsigned int nr;
+      int ret =  LaserBoardStopSequence(&nr);
+      if (ret != DEVICE_OK)
+         return ret;
+      std::ostringstream os;
+      os << "MLC Sequence ran for " << nr << " of states";
+      LogMessage(os.str().c_str(), false);
+   }
+
+
    return DEVICE_OK;
 }
 
@@ -616,6 +662,35 @@ int LCShutter::OnSync(MM::PropertyBase* pProp, MM::ActionType eAct)
    }
    return DEVICE_OK;
 }
+
+int LCShutter::OnLineState(MM::PropertyBase* pProp, MM::ActionType eAct, long laserLine)
+{
+   if (eAct == MM::BeforeGet)
+   {
+      long state = state_ & (1 << laserLine); 
+      state = state >> laserLine;
+
+      pProp->Set(state);
+   } 
+   else if (eAct == MM::AfterSet)
+   {
+      long state;
+      pProp->Get(state);
+	   if (state == 1)
+         state_ |= (1 << laserLine);
+      if (state == 0)
+        state_ &= ~(1 << laserLine);
+
+      bool open;
+      GetOpen(open);
+      if (open)
+         SetOpen(open);
+   }
+   
+
+   return DEVICE_OK;
+}
+
 
 int LCShutter::OnPower(MM::PropertyBase* pProp, MM::ActionType eAct, long laserLine)
 {

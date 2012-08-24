@@ -47,6 +47,7 @@ public:
    // action interface
    // ----------------
    int OnState(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnLineState(MM::PropertyBase* pProp, MM::ActionType eAct, long laserLine);
    int OnPower(MM::PropertyBase* pProp, MM::ActionType eAct, long laserLine);
    int OnBlank(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnExternalControl(MM::PropertyBase* pProp, MM::ActionType eAct);   
@@ -67,6 +68,8 @@ private:
    std::string driverVersion_;
    float driverVersionNum_;
    std::string firmwareVersion_;
+   bool sequenceOn_;
+   long maxSequenceSize_;
 };
 
 class LCSafetyShutter : public CShutterBase<LCSafetyShutter>  
