@@ -52,6 +52,7 @@ public:
    int OnBlank(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnExternalControl(MM::PropertyBase* pProp, MM::ActionType eAct);   
    int OnSync(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnSequence(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnND(MM::PropertyBase* pProp, MM::ActionType eAct, long laserLine);
    int OnOutput(MM::PropertyBase* pProp, MM::ActionType eAct);
 

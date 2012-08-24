@@ -373,9 +373,7 @@ int LCShutter::Initialize()
       mw.push_back(maxMW);
    }
  
-   /**
-    * Power per line in mW
-	*/
+   // Power per line in mW
    for (unsigned int i=0; i<nrLines_; i++) {
       std::string propName;
       std::ostringstream os;
@@ -391,10 +389,8 @@ int LCShutter::Initialize()
       SetPropertyLimits(propName.c_str(), 0.0, mw.at(i));
    }
 
-   /**
-    * State of each line
-	*/
-    for (unsigned int i=0; i<nrLines_; i++) {
+   // State of each line
+   for (unsigned int i=0; i<nrLines_; i++) {
       std::ostringstream os;
       os << "LaserLineState " << nm.at(i) << "nm";
       // cheap way of guaranteeing that the propname is unique
@@ -407,9 +403,8 @@ int LCShutter::Initialize()
       SetPropertyLimits(os.str().c_str(), 0, 2);
    }
 
-	/**
-	 * State of all lines together.  This is a binary number in which each bit sets the state of a laser line
-	 */
+	// State of all lines together.  
+   // This is a binary number in which each bit sets the state of a laser line
    CPropertyAction* pAct = new CPropertyAction(this, &LCShutter::OnState);
    ret = CreateProperty("LaserLineState", "0", MM::Integer, false, pAct);
    if (ret != DEVICE_OK)
@@ -439,6 +434,14 @@ int LCShutter::Initialize()
       return ret;
    AddAllowedValue("External Trigger", "Off");
    AddAllowedValue("External Trigger", "On");
+
+   // Sequence switch
+   pAct = new CPropertyAction(this, &LCShutter::OnSequence);
+   ret = CreateProperty("Sequence", "On", MM::String, false, pAct);
+   if (ret != DEVICE_OK)
+      return ret;
+   AddAllowedValue("Sequence", "On");
+   AddAllowedValue("Sequence", "Off");
 
    // Functions that are only in newer Driver versions
    if (driverVersionNum_ >= 0.2) 
@@ -558,11 +561,12 @@ int LCShutter::OnState(MM::PropertyBase *pProp, MM::ActionType eAct)
 
       for (unsigned int i=0; i < sequence.size(); i++) 
       {
-         unsigned char seq;
+         unsigned int seq;
          std::stringstream os;
          os << sequence[i];
          os >> seq;
-         int ret = LaserBoardSetSequenceState(i, &seq);
+         unsigned char c = (unsigned char) seq;
+         int ret = LaserBoardSetSequenceState(i, &c);
          if (ret != DEVICE_OK)
             return ret;
       }
@@ -709,6 +713,27 @@ int LCShutter::OnPower(MM::PropertyBase* pProp, MM::ActionType eAct, long laserL
       return LaserBoardSetPower( (unsigned int) laserLine, (float) mW);
    }
 
+   return DEVICE_OK;
+}
+
+int LCShutter::OnSequence(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   if (eAct == MM::BeforeGet)
+   {
+      if (sequenceOn_)
+         pProp->Set("On");
+      else
+         pProp->Set("Off");
+   }
+   else if (eAct == MM::AfterSet)
+   {
+      std::string state;
+      pProp->Get(state);
+      if (state == "On")
+         sequenceOn_ = true;
+      else
+         sequenceOn_ = false;
+   }
    return DEVICE_OK;
 }
 
