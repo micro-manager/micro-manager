@@ -556,20 +556,22 @@ int LCShutter::OnState(MM::PropertyBase *pProp, MM::ActionType eAct)
    else if (eAct == MM::AfterLoadSequence)
    {
       std::vector<std::string> sequence = pProp->GetSequence();
-      if (sequence.size() > maxSequenceSize_)
+      if (sequence.size() > (unsigned long) maxSequenceSize_)
          return DEVICE_SEQUENCE_TOO_LARGE;
 
+      unsigned char* load = new unsigned char[sequence.size()];
       for (unsigned int i=0; i < sequence.size(); i++) 
       {
          unsigned int seq;
          std::stringstream os;
          os << sequence[i];
          os >> seq;
-         unsigned char c = (unsigned char) seq;
-         int ret = LaserBoardSetSequenceState(i, &c);
+         load[i] = (unsigned char) seq;
+         int ret = LaserBoardSetSequenceState(i, load);
          if (ret != DEVICE_OK)
             return ret;
       }
+      delete(load);
    }
    else if (eAct == MM::StartSequence)
    {
