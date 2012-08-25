@@ -559,7 +559,11 @@ int LCShutter::OnState(MM::PropertyBase *pProp, MM::ActionType eAct)
       if (sequence.size() > (unsigned long) maxSequenceSize_)
          return DEVICE_SEQUENCE_TOO_LARGE;
 
-      unsigned char* load = new unsigned char[sequence.size()];
+      unsigned char* load = new (std::nothrow) unsigned char[sequence.size()];
+      if (load == 0)
+      {
+         return DEVICE_OUT_OF_MEMORY;
+      }
       for (unsigned int i=0; i < sequence.size(); i++) 
       {
          unsigned int seq;
@@ -567,11 +571,10 @@ int LCShutter::OnState(MM::PropertyBase *pProp, MM::ActionType eAct)
          os << sequence[i];
          os >> seq;
          load[i] = (unsigned char) seq;
-         int ret = LaserBoardSetSequenceState(i, load);
-         if (ret != DEVICE_OK)
-            return ret;
       }
+      int ret = LaserBoardSetSequenceState(sequence.size(), load);
       delete(load);
+      return ret;
    }
    else if (eAct == MM::StartSequence)
    {
