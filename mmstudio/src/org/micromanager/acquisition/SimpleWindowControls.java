@@ -222,7 +222,6 @@ public class SimpleWindowControls extends DisplayControls {
               "/org/micromanager/icons/cancel.png")
               : SwingResourceManager.getIcon(MMStudioMainFrame.class,
               "/org/micromanager/icons/camera_go.png"));
-      liveButton_.setSelected(acquiring);
       liveButton_.setText(acquiring ? "Stop Live" : "Live");
       if (!acquiring) {
          statusLabel_.setText("");
