@@ -192,10 +192,6 @@ public class AutofocusDuo extends AutofocusBase implements Autofocus  {
       return 0;
    }
 
-   public AcquisitionData getFocusingSequence() {
-      return new AcquisitionData();
-   }
-
    public int getNumberOfImages() {
       // TODO Auto-generated method stub
       return 0;

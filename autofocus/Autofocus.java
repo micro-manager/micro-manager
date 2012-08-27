@@ -518,10 +518,6 @@ public class Autofocus extends AutofocusBase implements org.micromanager.api.Aut
       return 0;
    }
 
-   public AcquisitionData getFocusingSequence() {
-      return new AcquisitionData();
-   }
-
    public int getNumberOfImages() {
       // TODO Auto-generated method stub
       return 0;
