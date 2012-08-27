@@ -494,7 +494,7 @@ public class MultiCameraFrame extends javax.swing.JFrame implements MMListenerIn
       try {
          gui_.enableLiveMode(false);
          for (String camera : camerasInUse_) {
-            core_.setProperty(camera, EMGAIN, NumberUtils.intToCoreString(val));
+            setPropertyIfPossible(camera, EMGAIN, NumberUtils.intToCoreString(val));
          }
          gui_.enableLiveMode(liveRunning);
          dGui_.updateGUI(false);
@@ -560,7 +560,7 @@ public class MultiCameraFrame extends javax.swing.JFrame implements MMListenerIn
        try {
           gui_.enableLiveMode(false);
           for (String camera : camerasInUse_) {
-             core_.setProperty(camera, EMSWITCH, command);
+             setPropertyIfPossible(camera, EMSWITCH, command);
           }
           gui_.enableLiveMode(liveRunning);
        } catch (Exception ex) {
@@ -923,5 +923,15 @@ public class MultiCameraFrame extends javax.swing.JFrame implements MMListenerIn
 
    @Override
    public void xyStagePositionChanged(String deviceName, double xPos, double yPos) {
+   }
+
+   private void setPropertyIfPossible(String device, String property, String value) {
+      try {
+         if (core_.hasProperty(device, property)) {
+            core_.setProperty(device, property, value);
+         }
+      } catch (Exception ex) {
+         ReportingUtils.logError(ex);
+      }
    }
 }
