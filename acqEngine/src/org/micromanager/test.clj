@@ -76,7 +76,7 @@
         (let [tags (json-clone (.tags img))]
           (update-tag! tags "ChannelIndex" #(+ 2 %))            
           (update-tag! tags "Channel" #(str % "-2"))
-          [(TaggedImage. (.pix img) tags) img]))))
+          [img (TaggedImage. (.pix img) tags)]))))
 
 (defn restart-test []
   (remove-all-image-processors!)
