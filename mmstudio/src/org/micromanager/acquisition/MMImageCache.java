@@ -4,8 +4,6 @@
  */
 package org.micromanager.acquisition;
 
-import ij.CompositeImage;
-import ij.ImagePlus;
 import java.awt.Color;
 import org.micromanager.api.ImageCache;
 import org.micromanager.api.ImageCacheListener;
