@@ -174,8 +174,11 @@ public class Autofocus extends AutofocusBase implements org.micromanager.api.Aut
          //########System setup##########
          if (!CHANNEL.equals(NOCHANNEL))
             core_.setConfig(channelGroup_, CHANNEL);
-         core_.waitForSystem(); 
-         core_.waitForDevice(core_.getShutterDevice()); 
+         core_.waitForSystem();
+         if (core_.getShutterDevice().trim().length() > 0)
+         {
+            core_.waitForDevice(core_.getShutterDevice());
+         }
          //delay_time(3000);
 
 
