@@ -6,6 +6,7 @@ package org.micromanager.projector;
 
 import ij.IJ;
 import ij.gui.ImageCanvas;
+import ij.gui.PointRoi;
 import ij.gui.Roi;
 import ij.plugin.filter.GaussianBlur;
 import java.awt.geom.AffineTransform;
@@ -84,7 +85,7 @@ public class ProjectorController {
       mmc.sleep(200);
       ImageProcessor proc = IJ.getImage().getProcessor();
       Point maxPt = findPeak(proc);
-      IJ.getImage().setRoi(maxPt.x-4, maxPt.y-4, 8, 8);
+      IJ.getImage().setRoi(new PointRoi(maxPt.x, maxPt.y));
       return maxPt;
    }
 
@@ -92,7 +93,7 @@ public class ProjectorController {
       ImageProcessor blurImage = ((ImageProcessor) proc.clone());
       blurImage.setRoi((Roi) null);
       GaussianBlur blur = new GaussianBlur();
-      blur.blurGaussian(blurImage, 10, 10, 0.01);
+      blur.blurGaussian(blurImage, 20, 20, 0.01);
       return ImageUtils.findMaxPixel(blurImage);
    }
    
@@ -185,7 +186,6 @@ public class ProjectorController {
       final ProjectorController controller = this;
       return new MouseAdapter() {
          public void mouseClicked(MouseEvent e) {
-            System.out.println(e);
             Point p = e.getPoint();
             ImageCanvas canvas = (ImageCanvas) e.getSource();
             Point pOffscreen = new Point(canvas.offScreenX(p.x),canvas.offScreenY(p.y));
