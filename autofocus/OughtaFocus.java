@@ -270,9 +270,9 @@ public class OughtaFocus extends AutofocusBase implements org.micromanager.api.A
    private double computeSharpness(ImageProcessor proc) {
       // mean intensity for the original image
       double meanIntensity = proc.getStatistics().mean;
-      
+      ImageProcessor proc1 = proc.duplicate();
       // mean intensity of the edge map
-      proc.findEdges();
+      proc1.findEdges();
       double meanEdge = proc.getStatistics().mean;
       
       return meanEdge/meanIntensity;
