@@ -7,6 +7,7 @@ package org.micromanager.projector;
 import ij.IJ;
 import ij.gui.ImageCanvas;
 import ij.gui.Roi;
+import ij.plugin.filter.GaussianBlur;
 import java.awt.geom.AffineTransform;
 import org.micromanager.api.AcquisitionEngine;
 import org.micromanager.utils.ReportingUtils;
@@ -77,15 +78,24 @@ public class ProjectorController {
 //imgp.getCanvas().repaint();
    public Point measureSpot(Point dmdPt) {
       dev.displaySpot(dmdPt.x, dmdPt.y);
-      mmc.sleep(200);
+      mmc.sleep(2000);
       gui.snapSingleImage();
 
       mmc.sleep(200);
       ImageProcessor proc = IJ.getImage().getProcessor();
-      Point maxPt = ImageUtils.findMaxPixel(proc);
+      Point maxPt = findPeak(proc);
+      IJ.getImage().setRoi(maxPt.x-4, maxPt.y-4, 8, 8);
       return maxPt;
    }
 
+   private Point findPeak(ImageProcessor proc) {
+      ImageProcessor blurImage = ((ImageProcessor) proc.clone());
+      blurImage.setRoi((Roi) null);
+      GaussianBlur blur = new GaussianBlur();
+      blur.blurGaussian(blurImage, 10, 10, 0.01);
+      return ImageUtils.findMaxPixel(blurImage);
+   }
+   
    public void mapSpot(Map spotMap, Point ptSLM) {
       Point2D.Double ptSLMDouble = new Point2D.Double(ptSLM.x, ptSLM.y);
       Point ptCam = measureSpot(ptSLM);
@@ -177,7 +187,10 @@ public class ProjectorController {
          public void mouseClicked(MouseEvent e) {
             System.out.println(e);
             Point p = e.getPoint();
-            Point2D.Double devP = (Point2D.Double) affineTransform.transform(new Point2D.Double(p.x, p.y), null);
+            ImageCanvas canvas = (ImageCanvas) e.getSource();
+            Point pOffscreen = new Point(canvas.offScreenX(p.x),canvas.offScreenY(p.y));
+            Point2D.Double devP = (Point2D.Double) affineTransform.transform(
+                    new Point2D.Double(pOffscreen.x, pOffscreen.y), null);
             if (controller.usePointAndShootInterval) {
                dev.displaySpot(devP.x, devP.y, controller.pointAndShootInterval);
             } else {
@@ -235,5 +248,11 @@ public class ProjectorController {
 
    void addOnStateListener(OnStateListener listener) {
       dev.addOnStateListener(listener);
+   }
+
+   void moveToCenter() {
+      double x = dev.getWidth() / 2;
+      double y = dev.getHeight() / 2;
+      dev.displaySpot(x, y);
    }
 }
