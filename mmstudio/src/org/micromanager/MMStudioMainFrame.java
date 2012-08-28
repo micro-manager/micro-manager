@@ -3323,9 +3323,11 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface, Device
 
    public synchronized void closeSequence() {
 
-      if (!this.isRunning())
+      if (!this.isRunning()) {
+         core_.logMessage("MMStudioMainFrame::closeSequence called while running_ is false");
          return;
-
+      }
+      
       if (engine_ != null && engine_.isAcquisitionRunning()) {
          int result = JOptionPane.showConfirmDialog(
                this,
