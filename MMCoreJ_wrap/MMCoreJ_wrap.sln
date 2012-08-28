@@ -245,6 +245,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Tofra", "..\DeviceAdapters\
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "BaumerOptronic", "..\DeviceAdapters\BaumerOptronic\BaumerOptronic.vcproj", "{B06A629B-7EAA-4265-A4C0-8A0EC03B00B0}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "LeicaDMSTC", "..\DeviceAdapters\LeicaDMSTC\LeicaDMSTC.vcproj", "{A41C689F-E343-4BDA-8132-FE2ADB166249}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
@@ -1162,6 +1164,14 @@ Global
 		{B06A629B-7EAA-4265-A4C0-8A0EC03B00B0}.Release|Win32.Build.0 = Release|Win32
 		{B06A629B-7EAA-4265-A4C0-8A0EC03B00B0}.Release|x64.ActiveCfg = Release|x64
 		{B06A629B-7EAA-4265-A4C0-8A0EC03B00B0}.Release|x64.Build.0 = Release|x64
+		{A41C689F-E343-4BDA-8132-FE2ADB166249}.Debug|Win32.ActiveCfg = Debug|Win32
+		{A41C689F-E343-4BDA-8132-FE2ADB166249}.Debug|Win32.Build.0 = Debug|Win32
+		{A41C689F-E343-4BDA-8132-FE2ADB166249}.Debug|x64.ActiveCfg = Debug|x64
+		{A41C689F-E343-4BDA-8132-FE2ADB166249}.Debug|x64.Build.0 = Debug|x64
+		{A41C689F-E343-4BDA-8132-FE2ADB166249}.Release|Win32.ActiveCfg = Release|Win32
+		{A41C689F-E343-4BDA-8132-FE2ADB166249}.Release|Win32.Build.0 = Release|Win32
+		{A41C689F-E343-4BDA-8132-FE2ADB166249}.Release|x64.ActiveCfg = Release|x64
+		{A41C689F-E343-4BDA-8132-FE2ADB166249}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
