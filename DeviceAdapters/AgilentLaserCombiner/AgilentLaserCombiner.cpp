@@ -467,9 +467,8 @@ int LCShutter::Initialize()
          for (unsigned char i = 0; i < nrLines_; i++) 
          {
             CPropertyActionEx* pActEx = new CPropertyActionEx(this, &LCShutter::OnND, i);
-            unsigned char state = 1 << i;
             std::stringstream propName;
-            propName << "ND" << laserNameByState_[state];
+            propName << "ND " << nm.at(i) << "nm";
             ret = CreateProperty(propName.str().c_str(), "Off", MM::String, false, pActEx);
             if (ret != DEVICE_OK)
                return ret;
