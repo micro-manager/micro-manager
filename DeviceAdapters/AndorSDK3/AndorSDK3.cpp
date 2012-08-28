@@ -421,7 +421,6 @@ int CAndorSDK3Camera::Initialize()
    LogMessage("TestResourceLocking OK",true);
 #endif
 
-   snapShotController_->prepareCamera();
    snapShotController_->poiseForSnapShot();
    return DEVICE_OK;
 }
