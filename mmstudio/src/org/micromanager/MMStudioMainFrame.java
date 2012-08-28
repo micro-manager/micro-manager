@@ -1224,6 +1224,7 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface, Device
       toolsMenu.add(scriptPanelMenuItem);
       scriptPanelMenuItem.addActionListener(new ActionListener() {
 
+         @Override
          public void actionPerformed(ActionEvent e) {
             scriptPanel_.setVisible(true);
          }
@@ -1235,6 +1236,7 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface, Device
       toolsMenu.add(hotKeysMenuItem);
       hotKeysMenuItem.addActionListener(new ActionListener() {
 
+         @Override
          public void actionPerformed(ActionEvent e) {
             HotKeysDialog hk = new HotKeysDialog
                     (guiColors_.background.get((options_.displayBackground_)));
@@ -1248,6 +1250,7 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface, Device
       toolsMenu.add(propertyEditorMenuItem);
       propertyEditorMenuItem.addActionListener(new ActionListener() {
 
+         @Override
          public void actionPerformed(ActionEvent e) {
             createPropertyEditor();
          }
@@ -1260,6 +1263,7 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface, Device
       final JMenuItem xyListMenuItem = new JMenuItem();
       xyListMenuItem.addActionListener(new ActionListener() {
 
+         @Override
          public void actionPerformed(ActionEvent arg0) {
             showXYPositionList();
          }
@@ -1273,6 +1277,7 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface, Device
       final JMenuItem acquisitionMenuItem = new JMenuItem();
       acquisitionMenuItem.addActionListener(new ActionListener() {
 
+         @Override
          public void actionPerformed(ActionEvent e) {
             openAcqControlDialog();
          }
@@ -1312,6 +1317,7 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface, Device
       toolsMenu.add(calibrationMenuItem);
       calibrationMenuItem.addActionListener(new ActionListener() {
 
+         @Override
          public void actionPerformed(ActionEvent e) {
             createCalibrationListDlg();
          }
@@ -1325,16 +1331,18 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface, Device
     		  "calculating metadata";
       
       String mrjProp = System.getProperty("mrj.version");
-      if (mrjProp != null && !mrjProp.equals(null)) // running on a mac
+      if (mrjProp != null && !mrjProp.equals(null)) {// running on a mac
          calibrationMenuItem.setToolTipText(calibrationTooltip);
-      else
+      }
+      else {
          calibrationMenuItem.setToolTipText(TooltipTextMaker.addHTMLBreaksForTooltip(calibrationTooltip));
-
+      }
       toolsMenu.addSeparator();
 
       final JMenuItem configuratorMenuItem = new JMenuItem();
       configuratorMenuItem.addActionListener(new ActionListener() {
 
+         @Override
          public void actionPerformed(ActionEvent arg0) {
             runHardwareWizard();
          }
@@ -1347,6 +1355,7 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface, Device
       final JMenuItem loadSystemConfigMenuItem = new JMenuItem();
       toolsMenu.add(loadSystemConfigMenuItem);
       loadSystemConfigMenuItem.addActionListener(new ActionListener() {
+         @Override
          public void actionPerformed(ActionEvent e) {
             loadConfiguration();
             initializeGUI();
@@ -1366,6 +1375,7 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface, Device
       final JMenuItem reloadConfigMenuItem = new JMenuItem();
       toolsMenu.add(reloadConfigMenuItem);
       reloadConfigMenuItem.addActionListener(new ActionListener() {
+         @Override
          public void actionPerformed(ActionEvent e) {
             loadSystemConfiguration();
             initializeGUI();
@@ -1381,6 +1391,7 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface, Device
       final JMenuItem saveConfigurationPresetsMenuItem = new JMenuItem();
       saveConfigurationPresetsMenuItem.addActionListener(new ActionListener() {
 
+         @Override
          public void actionPerformed(ActionEvent arg0) {
             saveConfigPresets();
             updateChannelCombos();
@@ -1397,6 +1408,7 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface, Device
       final JMenuItem optionsMenuItem = new JMenuItem();
       optionsMenuItem.addActionListener(new ActionListener() {
 
+         @Override
          public void actionPerformed(final ActionEvent e) {
             int oldBufsize = options_.circularBufferSizeMB_;
 
@@ -1448,6 +1460,7 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface, Device
       comboBinning_.setMaximumRowCount(4);
       comboBinning_.addActionListener(new ActionListener() {
 
+         @Override
          public void actionPerformed(ActionEvent e) {
             changeBinning();
          }
@@ -1558,6 +1571,7 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface, Device
       autoShutterCheckBox_ = new JCheckBox();
       autoShutterCheckBox_.setFont(new Font("Arial", Font.PLAIN, 10));
       autoShutterCheckBox_.addActionListener(new ActionListener() {
+         @Override
          public void actionPerformed(ActionEvent e) {
              shutterLabel_ = core_.getShutterDevice();
              if (shutterLabel_.length() == 0) {
@@ -1611,6 +1625,7 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface, Device
       refreshButton.setToolTipText("Refresh all GUI controls directly from the hardware");
       refreshButton.addActionListener(new ActionListener() {
 
+         @Override
          public void actionPerformed(ActionEvent e) {
             core_.updateSystemStateCache(); 
             updateGUI(true);
@@ -1807,6 +1822,7 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface, Device
       setRoiButton_.setToolTipText("Set Region Of Interest to selected rectangle");
       setRoiButton_.addActionListener(new ActionListener() {
 
+         @Override
          public void actionPerformed(ActionEvent e) {
             setROI();
          }
@@ -1829,6 +1845,7 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface, Device
       clearRoiButton_.setToolTipText("Reset Region of Interest to full frame");
       clearRoiButton_.addActionListener(new ActionListener() {
 
+         @Override
          public void actionPerformed(ActionEvent e) {
             clearROI();
          }
@@ -1875,6 +1892,7 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface, Device
       final JButton zoomInButton = new JButton();
       zoomInButton.addActionListener(new ActionListener() {
 
+         @Override
          public void actionPerformed(final ActionEvent e) {
             zoomIn();
          }
@@ -1938,6 +1956,7 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface, Device
       buttonProf.setToolTipText("Open line profile window (requires line selection)");
       buttonProf.addActionListener(new ActionListener() {
 
+         @Override
          public void actionPerformed(ActionEvent e) {
             openLineProfileWindow();
          }
@@ -1976,18 +1995,21 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface, Device
       buttonAutofocus_.setFont(new Font("Arial", Font.PLAIN, 10));
       buttonAutofocus_.setToolTipText("Autofocus now");
       buttonAutofocus_.addActionListener(new ActionListener() {
+         @Override
          public void actionPerformed(ActionEvent e) {
             if (afMgr_.getDevice() != null) {
                new Thread() {
                   @Override
                   public void run() {
                      try {
-                       boolean lmo  = isLiveModeOn();
-                      if(lmo)
+                        boolean lmo = isLiveModeOn();
+                        if (lmo) {
                            enableLiveMode(false);
-                       afMgr_.getDevice().fullFocus();
-                       if(lmo)
+                        }
+                        afMgr_.getDevice().fullFocus();
+                        if (lmo) {
                            enableLiveMode(true);
+                        }
                      } catch (MMException ex) {
                         ReportingUtils.logError(ex);
                      }
@@ -2014,6 +2036,7 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface, Device
       buttonAutofocusTools_.setToolTipText("Set autofocus options");
       buttonAutofocusTools_.addActionListener(new ActionListener() {
 
+         @Override
          public void actionPerformed(ActionEvent e) {
             showAutofocusDialog();
          }
@@ -2033,6 +2056,7 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface, Device
       saveConfigButton_ = new JButton();
       saveConfigButton_.addActionListener(new ActionListener() {
 
+         @Override
          public void actionPerformed(ActionEvent arg0) {
             saveConfigPresets();
          }
@@ -2119,6 +2143,7 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface, Device
       core_.logMessage(message);
    }
 
+   @Override
    public void makeActive() {
       toFront();
    }
@@ -2148,8 +2173,9 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface, Device
          // update current channel in MDA window with this exposure
          String channelGroup = core_.getChannelGroup();
          String channel = core_.getCurrentConfigFromCache(channelGroup);
-         if (!channel.equals(""))
+         if (!channel.equals("")) {
             getAcqDlg().setChannelExposureTime(channelGroup, channel, exposure);
+         }
          
 
       } catch (Exception exp) {
@@ -2157,6 +2183,7 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface, Device
       }
    }
 
+   @Override
    public boolean getAutoreloadOption() {
       return options_.autoreloadDevices_;
    }
@@ -2197,6 +2224,7 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface, Device
       profileWin_.setVisible(true);
    }
 
+   @Override
    public Rectangle getROI() throws MMScriptException {
       // ROI values are given as x,y,w,h in individual one-member arrays (pointers in C++):
       int[][] a = new int[4][1];
@@ -2241,6 +2269,7 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface, Device
       lineProfileData_.setData(line.getPixels());
    }
 
+   @Override
    public void setROI(Rectangle r) throws MMScriptException {
       boolean liveRunning = false;
       if (isLiveModeOn()) {
@@ -2325,6 +2354,7 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface, Device
    /**
     * Returns instance of the core uManager object;
     */
+   @Override
    public CMMCore getMMCore() {
       return core_;
    }
@@ -2341,12 +2371,15 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface, Device
    }
 
    public final void setExitStrategy(boolean closeOnExit) {
-      if (closeOnExit)
+      if (closeOnExit) {
          setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-      else
+      }
+      else {
          setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+      }
    }
 
+   @Override
    public void saveConfigPresets() {
       MicroscopeModel model = new MicroscopeModel();
       try {
