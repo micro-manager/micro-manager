@@ -149,7 +149,10 @@ public class LiveModeTimer {
    
    private void stop(boolean firstAttempt) {
      
-      timer_.cancel();
+      if (timer_ != null) {
+         timer_.cancel();
+      }
+      
       try {
          core_.stopSequenceAcquisition();
          if (win_ != null) {

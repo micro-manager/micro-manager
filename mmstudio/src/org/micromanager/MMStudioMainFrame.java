@@ -360,7 +360,8 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface, Device
                     || (getAcquisitionImageBitDepth(SIMPLE_ACQ) != bitDepth)
                     || (getAcquisitionMultiCamNumChannels(SIMPLE_ACQ) != numCamChannels)) {  //Need to close and reopen simple window
                closeAcquisitionWindow(SIMPLE_ACQ);
-               closeAcquisition(SIMPLE_ACQ);
+               // Seems that closeAcquisitionWindow also closes the acquisition...
+               //closeAcquisition(SIMPLE_ACQ);
             }
          }
          if (!acquisitionExists(SIMPLE_ACQ)) {
@@ -3218,7 +3219,7 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface, Device
    }
 
    private boolean cleanupOnClose() {
-      // NS: Save config presets if they were changed.
+      // Save config presets if they were changed.
       if (configChanged_) {
          Object[] options = {"Yes", "No"};
          int n = JOptionPane.showOptionDialog(null,
@@ -3233,7 +3234,7 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface, Device
          liveModeTimer_.stop();
       
       if (!WindowManager.closeAllWindows())
-         return false;
+         core_.logMessage("Failed to close some windows");
 
       if (profileWin_ != null) {
          removeMMBackgroundListener(profileWin_);

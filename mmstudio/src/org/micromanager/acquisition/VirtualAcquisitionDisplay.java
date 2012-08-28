@@ -2139,6 +2139,9 @@ public final class VirtualAcquisitionDisplay implements AcquisitionDisplay, Imag
             imageCache_.close();
          }
 
+         
+         removeMeFromAcquisitionManager(MMStudioMainFrame.getInstance());
+         
          if (!closed_) {
             try {
                super.close();
@@ -2153,9 +2156,7 @@ public final class VirtualAcquisitionDisplay implements AcquisitionDisplay, Imag
          tAnimationTimer_.cancel();
 
          super.windowClosing(e);
-         MMStudioMainFrame gui = MMStudioMainFrame.getInstance();
-         gui.removeMMBackgroundListener(this);
-         removeMeFromAcquisitionManager(gui);
+         MMStudioMainFrame.getInstance().removeMMBackgroundListener(this);
 
          windowClosingDone_ = true;         
          closed_ = true;
