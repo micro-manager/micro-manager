@@ -355,6 +355,7 @@ AC_CONFIG_FILES(
 	[K8061/Makefile:K8061/Makefile.in:MMDEVAPI.rules]
 	[LeicaDMI/Makefile:LeicaDMI/Makefile.in:MMDEVAPI.rules]
 	[LeicaDMR/Makefile:LeicaDMR/Makefile.in:MMDEVAPI.rules]
+	[LeicaDMSTC/Makefile:LeicaDMSTC/Makefile.in:MMDEVAPI.rules]
 	[Ludl/Makefile:Ludl/Makefile.in:MMDEVAPI.rules]
 	[LudlLow/Makefile:LudlLow/Makefile.in:MMDEVAPI.rules]
 	[LumencorSpectra/Makefile:LumencorSpectra/Makefile.in:MMDEVAPI.rules]
