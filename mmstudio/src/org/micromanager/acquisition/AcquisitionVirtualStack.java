@@ -65,7 +65,7 @@ public class AcquisitionVirtualStack extends ij.VirtualStack {
       // we are on the very first image.
       ImagePlus imagePlus = acq_.getImagePlus();
       if (imagePlus == null) {
-         return getTaggedImage(1,1,1);
+         return getTaggedImage(0,0,0);
       } else {
          pos = imagePlus.convertIndexToPosition(flatIndex);
       }
