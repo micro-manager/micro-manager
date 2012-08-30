@@ -550,7 +550,7 @@ public final class VirtualAcquisitionDisplay implements AcquisitionDisplay, Imag
             });
          }
 
-         if (imageCache_.lastAcquiredFrame() > 1) {
+         if (imageCache_.lastAcquiredFrame() > 0) {
             setNumFrames(1 + imageCache_.lastAcquiredFrame());
          } else {
             setNumFrames(1);
