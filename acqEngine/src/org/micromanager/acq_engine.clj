@@ -433,7 +433,7 @@
   (log "acq-sleep")
   (when (and (@state :init-continuous-focus)
              (not (core isContinuousFocusEnabled)))
-    (try (core enable-continuous-focus true) (catch Throwable t nil))) ; don't quit if this fails
+    (try (enable-continuous-focus true) (catch Throwable t nil))) ; don't quit if this fails
   (let [target-time (+ (@state :last-wake-time) interval-ms)
         delta (- target-time (jvm-time-ms))]
      (when (and (< 1000 delta)
@@ -563,7 +563,7 @@
         (set-shutter-open state))
       (when (and (@state :init-continuous-focus)
                  (not (core isContinuousFocusEnabled)))
-        (core enable-continuous-focus true))
+        (enable-continuous-focus true))
       (return-config)
       (. gui enableRoiButtons true))
     (catch Throwable t (ReportingUtils/showError t "Acquisition cleanup failed."))))
