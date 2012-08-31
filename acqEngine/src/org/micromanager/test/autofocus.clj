@@ -2,10 +2,14 @@
   "Use image stacks to test scoring methods for image-based autofocus."
   (:import (ij IJ)))
 
-(defn diff
-  "Compute the difference of subsequent points"
-  [data]
-  (map (fn [[a b]] (- b a)) (partition 2 1 data)))
+(defn slice-processors
+  "Returns a sequence of ImageProcessors for a given slice in a multislice
+   ImagePlus. Zero-based."
+  [imgp]
+  (for [i (range (.getNSlices imgp))]
+    (.. imgp getStack (getProcessor (inc i)))))
+
+;; scoring methods
 
 (defn mean
   "Compute the mean intensity of a processor."
@@ -27,27 +31,30 @@
 (defn sharp-edges
   "Compute a score based on the intensity of sharpened edges in the image."
   [processor]
-  (-> processor .duplicate (doto .sharpen .findEdges) mean))
+  (/ (-> processor .duplicate (doto .sharpen .findEdges) mean)
+     (mean processor)))
 
-(defn slice-processors
-  "Returns a sequence of ImageProcessors for a given slice in a multislice
-   ImagePlus. Zero-based."
-  [imgp]
-  (for [i (range (.getNSlices imgp))]
-    (.. imgp getStack (getProcessor (inc i)))))
+;; data and printout
+
+(defn diff
+  "Compute the difference of subsequent points."
+  [data]
+  (map (fn [[a b]] (- b a)) (partition 2 1 data)))
 
 (defn print-results
   "Prints each item in a sequence preceded by an index integer.
    If starting-index is specified, then the first item will
    have that index; otherwise the first item will be numbered 0."
   ([starting-index data]
-  (loop [i starting-index
-         data data]
-    (println i (first data))
-    (when (next data)
-      (recur (inc i) (next data)))))
+    (loop [i starting-index
+           data data]
+      (println i (first data))
+      (when (next data)
+        (recur (inc i) (next data)))))
   ([data] (print-results 0 data)))
     
+;; testing
+
 (defn scoring-data
   [scoring-method]
   "Returns the scores using a particular scoring method on the slices
@@ -59,4 +66,4 @@
   [scoring-method]
   (let [data (scoring-data scoring-method)
         diff-data (diff data)]
-  (print-results (map vector data (cons nil diff-data)))))
+    (print-results (map vector data (cons nil diff-data)))))
