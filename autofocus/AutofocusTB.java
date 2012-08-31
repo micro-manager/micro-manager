@@ -186,7 +186,9 @@ public class AutofocusTB extends AutofocusBase implements Autofocus {
          if (!CHANNEL1.equals(NOCHANNEL) && channelGroup_ != null) 
             core_.setConfig(channelGroup_,CHANNEL1); 
          core_.waitForSystem();
-         core_.waitForDevice(core_.getShutterDevice());
+         if (core_.getShutterDevice().trim().length() > 0) {
+            core_.waitForDevice(core_.getShutterDevice());
+         }
          //delay_time(3000);
 
 
@@ -249,8 +251,9 @@ public class AutofocusTB extends AutofocusBase implements Autofocus {
          if (!CHANNEL2.equals(NOCHANNEL) && channelGroup_ != null)
             core_.setConfig(channelGroup_,CHANNEL2); 
          core_.waitForSystem();
-         core_.waitForDevice(core_.getShutterDevice());
-
+         if (core_.getShutterDevice().trim().length() > 0) {
+            core_.waitForDevice(core_.getShutterDevice());
+         }
          //Fine search
          for (int i = 0; i < 2 * NUM_SECOND + 1; i++) {
             tPrev = System.currentTimeMillis();

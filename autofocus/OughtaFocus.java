@@ -60,7 +60,7 @@ public class OughtaFocus extends AutofocusBase implements org.micromanager.api.A
    private static final String SHOW_IMAGES = "ShowImages";
    private static final String SCORING_METHOD = "Maximize";
    private static final String showValues[] = {"Yes", "No"};
-   private final static String scoringMethods[] = {"Edges","StdDev","Mean"};
+   private final static String scoringMethods[] = {"Edges","StdDev","Mean","SharpEdges"};
 
    private double searchRange = 10;
    private double tolerance = 1;
@@ -267,7 +267,7 @@ public class OughtaFocus extends AutofocusBase implements org.micromanager.api.A
       throw new UnsupportedOperationException("Not supported yet.");
    }
 
-   private double computeSharpness(ImageProcessor proc) {
+   private double computeEdges(ImageProcessor proc) {
       // mean intensity for the original image
       double meanIntensity = proc.getStatistics().mean;
       ImageProcessor proc1 = proc.duplicate();
@@ -275,6 +275,18 @@ public class OughtaFocus extends AutofocusBase implements org.micromanager.api.A
       proc1.findEdges();
       double meanEdge = proc.getStatistics().mean;
       
+      return meanEdge/meanIntensity;
+   }
+
+   private double computeSharpEdges(ImageProcessor proc) {
+      // mean intensity for the original image
+      double meanIntensity = proc.getStatistics().mean;
+      ImageProcessor proc1 = proc.duplicate();
+      // mean intensity of the edge map
+      proc1.sharpen();
+      proc1.findEdges();
+      double meanEdge = proc.getStatistics().mean;
+
       return meanEdge/meanIntensity;
    }
 
@@ -294,7 +306,9 @@ public class OughtaFocus extends AutofocusBase implements org.micromanager.api.A
       } else if (scoringMethod.contentEquals("StdDev")) {
          return computeNormalizedStdDev(proc);
       } else if (scoringMethod.contentEquals("Edges")) {
-         return computeSharpness(proc);
+         return computeEdges(proc);
+      } else if (scoringMethod.contentEquals("SharpEdges")) {
+         return computeSharpEdges(proc);
       } else {
          return 0;
       }
