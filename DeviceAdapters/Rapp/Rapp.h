@@ -77,6 +77,7 @@ public:
    int OnRasterFrequency(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnMinimumRectSize(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnAccuracy(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnLaser(MM::PropertyBase* pProp, MM::ActionType eAct);
 
 private:
    bool laser2_;

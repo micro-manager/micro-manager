@@ -195,6 +195,10 @@ int RappScanner::Initialize()
    pAct = new CPropertyAction(this, &RappScanner::OnMinimumRectSize);
    CreateProperty("MinimumRectSize", "250", MM::Integer, false, pAct);
 
+   pAct = new CPropertyAction(this, &RappScanner::OnLaser);
+   CreateProperty("Laser", "1", MM::Integer, false, pAct);
+   AddAllowedValue("Laser", "1");
+   AddAllowedValue("Laser", "2");
 
    return DEVICE_OK;
 }
@@ -484,6 +488,21 @@ int RappScanner::OnAccuracy(MM::PropertyBase* pProp, MM::ActionType eAct)
       pProp->Get(polygonAccuracy_);
    }
 
+   return DEVICE_OK;
+}
+
+int RappScanner::OnLaser(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   long laser;
+   if (eAct == MM::BeforeGet)
+   {
+      pProp->Set((long) (laser2_ ? 2 : 1));
+   }
+   else if (eAct == MM::AfterSet)
+   {
+      pProp->Get(laser);
+      laser2_ = (laser == 2);
+   }
    return DEVICE_OK;
 }
 
