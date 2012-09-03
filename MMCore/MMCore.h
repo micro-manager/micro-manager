@@ -128,13 +128,13 @@ public:
 
    std::string getVersionInfo() const;
    std::string getAPIVersionInfo() const;
-   Configuration getSystemState() const;
+   Configuration getSystemState();
    Configuration getSystemStateCache() const;
    void updateSystemStateCache();
    void setSystemState(const Configuration& conf);
-   Configuration getConfigState(const char* group, const char* config) const throw (CMMError);
-   Configuration getConfigGroupState(const char* group) const throw (CMMError);
-   Configuration getConfigGroupStateFromCache(const char* group) const throw (CMMError);
+   Configuration getConfigState(const char* group, const char* config) throw (CMMError);
+   Configuration getConfigGroupState(const char* group) throw (CMMError);
+   Configuration getConfigGroupStateFromCache(const char* group) throw (CMMError);
    void saveSystemState(const char* fileName) throw (CMMError);
    void loadSystemState(const char* fileName) throw (CMMError);
    void saveSystemConfiguration(const char* fileName) throw (CMMError);
@@ -194,11 +194,11 @@ public:
    bool deviceTypeBusy(MM::DeviceType devType) throw (CMMError);
    void waitForDeviceType(MM::DeviceType devType) throw (CMMError);
    void sleep(double intervalMs) const;
-   double getDeviceDelayMs(const char* label) const throw (CMMError);
+   double getDeviceDelayMs(const char* label) throw (CMMError);
    void setDeviceDelayMs(const char* label, double delayMs) throw (CMMError);
    void setTimeoutMs(long timeoutMs) {if (timeoutMs > 0) timeoutMs_ = timeoutMs;}
    long getTimeoutMs() { return timeoutMs_;}
-   bool usesDeviceDelay(const char* label) const throw (CMMError);
+   bool usesDeviceDelay(const char* label) throw (CMMError);
    std::string getCoreErrorText(int code) const;
 
 
@@ -246,13 +246,13 @@ public:
    void renameConfig(const char* groupName, const char* oldConfigName, const char* newConfigName) throw (CMMError);
    std::vector<std::string> getAvailableConfigGroups() const;
    std::vector<std::string> getAvailableConfigs(const char* configGroup) const;
-   std::string getCurrentConfig(const char* groupName) const throw (CMMError);
-   std::string getCurrentConfigFromCache(const char* groupName) const throw (CMMError);
-   Configuration getConfigData(const char* configGroup, const char* configName) const throw (CMMError);
-   std::string getCurrentPixelSizeConfig() const throw (CMMError);
-   std::string getCurrentPixelSizeConfig(bool cached) const throw (CMMError);
-   double getPixelSizeUm() const;
-   double getPixelSizeUm(bool cached) const;
+   std::string getCurrentConfig(const char* groupName) throw (CMMError);
+   std::string getCurrentConfigFromCache(const char* groupName) throw (CMMError);
+   Configuration getConfigData(const char* configGroup, const char* configName) throw (CMMError);
+   std::string getCurrentPixelSizeConfig() throw (CMMError);
+   std::string getCurrentPixelSizeConfig(bool cached) throw (CMMError);
+   double getPixelSizeUm();
+   double getPixelSizeUm(bool cached);
    double getPixelSizeUmByID(const char* resolutionID) throw (CMMError);
    double getMagnificationFactor() const;
    void setPixelSizeUm(const char* resolutionID, double pixSize)  throw (CMMError);
@@ -262,8 +262,8 @@ public:
    bool isPixelSizeConfigDefined(const char* resolutionID) const;
    void setPixelSizeConfig(const char* resolutionID) throw (CMMError);
    void renamePixelSizeConfig(const char* oldConfigName, const char* newConfigName) throw (CMMError);
-   void deletePixelSizeConfig(const char* configName) const throw (CMMError);
-   Configuration getPixelSizeConfigData(const char* configName) const throw (CMMError);
+   void deletePixelSizeConfig(const char* configName) throw (CMMError);
+   Configuration getPixelSizeConfigData(const char* configName) throw (CMMError);
 
    //@ }
 
@@ -276,8 +276,8 @@ public:
    void clearROI() throw (CMMError);
    void setExposure(double exp) throw (CMMError);
    double getExposure() const throw (CMMError);
-   void* getImage() const throw (CMMError);
-   void* getImage(unsigned numChannel) const throw (CMMError);
+   void* getImage() throw (CMMError);
+   void* getImage(unsigned numChannel) throw (CMMError);
    void snapImage() throw (CMMError);
    unsigned getImageWidth() const;
    unsigned getImageHeight() const;
@@ -303,7 +303,7 @@ public:
    void stopSequenceAcquisition(const char* label) throw (CMMError);
    bool isSequenceRunning() throw ();
    bool isSequenceRunning(const char* label) throw (CMMError);
-   void* getLastImage() const throw (CMMError);
+   void* getLastImage() throw (CMMError);
    void* popNextImage() throw (CMMError);
 
    void* getLastImageMD(unsigned channel, unsigned slice, Metadata& md) const throw (CMMError);
@@ -356,8 +356,8 @@ public:
    void defineStateLabel(const char* deviceLabel, long state, const char* stateLabel) throw (CMMError);
    std::vector<std::string> getStateLabels(const char* deviceLabel) const throw (CMMError);
    long getStateFromLabel(const char* deviceLabel, const char* stateLabel) const throw (CMMError);
-   PropertyBlock getStateLabelData(const char* deviceLabel, const char* stateLabel) const;
-   PropertyBlock getData(const char* deviceLabel) const;
+   PropertyBlock getStateLabelData(const char* deviceLabel, const char* stateLabel);
+   PropertyBlock getData(const char* deviceLabel);
    //@ }
 
    /** @name Property blocks
@@ -366,7 +366,7 @@ public:
    //@ {
    void definePropertyBlock(const char* blockName, const char* propertyName, const char* propertyValue);
    std::vector<std::string> getAvailablePropertyBlocks() const;
-   PropertyBlock getPropertyBlockData(const char* blockName) const;
+   PropertyBlock getPropertyBlockData(const char* blockName);
    //@ }
 
    /** @name Stage control
@@ -374,7 +374,7 @@ public:
    */
    //@ {
    void setPosition(const char* deviceLabel, double position) throw (CMMError);
-   double getPosition(const char* deviceLabel) const throw (CMMError);
+   double getPosition(const char* deviceLabel) throw (CMMError);
    void setRelativePosition(const char* deviceLabel, double d) throw (CMMError);
    void setOrigin(const char* deviceLabel) throw (CMMError);
    void setAdapterOrigin(const char* deviceLabel, double d) throw (CMMError);
@@ -557,12 +557,12 @@ private:
    bool isConfigurationCurrent(const Configuration& config) const;
    void applyConfiguration(const Configuration& config) throw (CMMError);
    int applyProperties(std::vector<PropertySetting>& props, std::string& lastError);
-   MM::Device* getDevice(const char* label) const throw (CMMError);
+   MM::Device* getDevice(const char* label) throw (CMMError);
    void waitForDevice(MM::Device* pDev) throw (CMMError);
-   Configuration getConfigGroupState(const char* group, bool fromCache) const throw (CMMError);
+   Configuration getConfigGroupState(const char* group, bool fromCache) throw (CMMError);
    std::string getDeviceErrorText(int deviceCode, MM::Device* pDevice) const;
    std::string getDeviceName(MM::Device* pDev);
-   void logError(const char* device, const char* msg, const char* file=0, int line=0) const;
+   void logError(const char* device, const char* msg, const char* file=0, int line=0);
    void updateAllowedChannelGroups();
    void assignDefaultRole(MM::Device* pDev);
    void updateCoreProperty(const char* propName, MM::DeviceType devType) throw (CMMError);
@@ -570,11 +570,11 @@ private:
 
    MMThreadLock* pPostedErrorsLock_;
    mutable std::deque<std::pair< int, std::string> > postedErrors_;
+   FastLogger* logger_;
+   FastLogger* getLoggerInstance() {return logger_;}
 
    // global data
    static MMThreadLock deviceLock_;
-   static FastLogger* logger_;
-   static FastLogger* getLoggerInstance() {return logger_;}
 
    // >>>>> OBSOLETE >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
    void defineConfiguration(const char* configName, const char* deviceName, const char* propName, const char* value);

@@ -291,7 +291,7 @@ typedef struct
 } BigBuffer;
 
 
-void FastLogger::Log(IMMLogger::priority p, const char* format, ...)throw()
+void FastLogger::Log(IMMLogger::priority p, const char* format, ...) throw()
 {
 
 #ifdef _WINDOWS

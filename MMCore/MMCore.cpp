@@ -98,7 +98,6 @@ const int MMCore_versionBuild = 2;
 
 // mutex
 MMThreadLock CMMCore::deviceLock_;
-FastLogger* CMMCore::logger_ = 0;
 
 ///////////////////////////////////////////////////////////////////////////////
 // CMMcore class
@@ -449,7 +448,7 @@ string CMMCore::getAPIVersionInfo() const
  * Returns the entire system state, i.e. the collection of all property values from all devices.
  * @return - Configuration object containing a collection of device-property-value triplets
  */
-Configuration CMMCore::getSystemState() const
+Configuration CMMCore::getSystemState()
 {
    Configuration config;
    vector<string> devices = pluginManager_.GetDeviceList();
@@ -495,7 +494,7 @@ Configuration CMMCore::getSystemStateCache() const
  * Returns a partial state of the system, only for devices included in the
  * specified configuration.
  */
-Configuration CMMCore::getConfigState(const char* group, const char* config) const throw (CMMError)
+Configuration CMMCore::getConfigState(const char* group, const char* config) throw (CMMError)
 {
    Configuration cfgData = getConfigData(group, config);
    Configuration state;
@@ -514,7 +513,7 @@ Configuration CMMCore::getConfigState(const char* group, const char* config) con
  * Returns the partial state of the system, only for the devices included in the
  * specified group. It will create a union of all devices referenced in a group.
  */
-Configuration CMMCore::getConfigGroupState(const char* group) const throw (CMMError)
+Configuration CMMCore::getConfigGroupState(const char* group) throw (CMMError)
 {
    return getConfigGroupState(group, false);
 }
@@ -523,7 +522,7 @@ Configuration CMMCore::getConfigGroupState(const char* group) const throw (CMMEr
  * Returns the partial state of the system cache, only for the devices included in the
  * specified group. It will create a union of all devices referenced in a group.
  */
-Configuration CMMCore::getConfigGroupStateFromCache(const char* group) const throw (CMMError)
+Configuration CMMCore::getConfigGroupStateFromCache(const char* group) throw (CMMError)
 {
    return getConfigGroupState(group, true);
 }
@@ -532,7 +531,7 @@ Configuration CMMCore::getConfigGroupStateFromCache(const char* group) const thr
  * Returns the partial state of the system, only for the devices included in the
  * specified group. It will create a union of all devices referenced in a group.
  */
-Configuration CMMCore::getConfigGroupState(const char* group, bool fromCache) const throw (CMMError)
+Configuration CMMCore::getConfigGroupState(const char* group, bool fromCache) throw (CMMError)
 {
 
    vector<string> configs = configGroups_->GetAvailableConfigs(group);
@@ -1036,7 +1035,7 @@ std::string CMMCore::getDeviceDescription(const char* label) throw (CMMError)
  * @return double - delay time
  * @param const char* label
  */
-double CMMCore::getDeviceDelayMs(const char* label) const throw (CMMError)
+double CMMCore::getDeviceDelayMs(const char* label) throw (CMMError)
 {
 
    if (strcmp(label, MM::g_Keyword_CoreDevice) == 0)
@@ -1070,7 +1069,7 @@ void CMMCore::setDeviceDelayMs(const char* label, double delayMs) throw (CMMErro
  *
  * @return bool - uses delay if true
  */
-bool CMMCore::usesDeviceDelay(const char* label) const throw (CMMError)
+bool CMMCore::usesDeviceDelay(const char* label) throw (CMMError)
 {
    if (strcmp(label, MM::g_Keyword_CoreDevice) == 0)
    {
@@ -1280,7 +1279,7 @@ void CMMCore::setRelativePosition(const char* label, double d) throw (CMMError)
  * @return position 
  * @param label
  */
-double CMMCore::getPosition(const char* label) const throw (CMMError)
+double CMMCore::getPosition(const char* label) throw (CMMError)
 {
    MMThreadGuard guard(deviceLock_);
 
@@ -2012,7 +2011,7 @@ bool CMMCore::getShutterOpen() throw (CMMError)
  * @return a pointer to the internal image buffer.
  * @throws CMMError - when the camera returns no data
  */
-void* CMMCore::getImage() const throw (CMMError)
+void* CMMCore::getImage() throw (CMMError)
 {
    if (!camera_)
       throw CMMError(getCoreErrorText(MMERR_CameraNotAvailable).c_str(), MMERR_CameraNotAvailable);
@@ -2072,7 +2071,7 @@ void* CMMCore::getImage() const throw (CMMError)
  * @param channelNr Channel number for which the image buffer is requested
  * @return a pointer to the internal image buffer.
  */
-void* CMMCore::getImage(unsigned channelNr) const throw (CMMError)
+void* CMMCore::getImage(unsigned channelNr) throw (CMMError)
 {
    if (!camera_)
       throw CMMError(getCoreErrorText(MMERR_CameraNotAvailable).c_str(), MMERR_CameraNotAvailable);
@@ -2327,7 +2326,7 @@ bool CMMCore::isSequenceRunning(const char* label) throw (CMMError)
  * Gets the last image from the circular buffer.
  * Returns 0 if the buffer is empty.
  */
-void* CMMCore::getLastImage() const throw (CMMError)
+void* CMMCore::getLastImage() throw (CMMError)
 {
 
    // scope for the thread guard
@@ -4351,7 +4350,7 @@ vector<string> CMMCore::getAvailablePixelSizeConfigs() const
  *
  * @return string configuration name
  */
-string CMMCore::getCurrentConfig(const char* groupName) const throw (CMMError)
+string CMMCore::getCurrentConfig(const char* groupName) throw (CMMError)
 {
 
 
@@ -4385,7 +4384,7 @@ string CMMCore::getCurrentConfig(const char* groupName) const throw (CMMError)
  *
  * @return string configuration name
  */
-string CMMCore::getCurrentConfigFromCache(const char* groupName) const throw (CMMError)
+string CMMCore::getCurrentConfigFromCache(const char* groupName) throw (CMMError)
 {
 
    string empty("");
@@ -4414,7 +4413,7 @@ string CMMCore::getCurrentConfigFromCache(const char* groupName) const throw (CM
  *
  * @return Configuration configuration object
  */
-Configuration CMMCore::getConfigData(const char* groupName, const char* configName) const throw (CMMError)
+Configuration CMMCore::getConfigData(const char* groupName, const char* configName) throw (CMMError)
 {
    Configuration* pCfg = configGroups_->Find(groupName, configName);
    if (!pCfg)
@@ -4432,7 +4431,7 @@ Configuration CMMCore::getConfigData(const char* groupName, const char* configNa
  * Returns the configuration object for a give pixel size preset.
  * @return Configuration configuration object
  */
-Configuration CMMCore::getPixelSizeConfigData(const char* configName) const throw (CMMError)
+Configuration CMMCore::getPixelSizeConfigData(const char* configName) throw (CMMError)
 {
    Configuration* pCfg = pixelSizeGroup_->Find(configName);
    if (!pCfg)
@@ -4468,7 +4467,7 @@ void CMMCore::renamePixelSizeConfig(const char* oldConfigName, const char* newCo
  * configuration was not previously defined.
  *
  */
-void CMMCore::deletePixelSizeConfig(const char* configName) const throw (CMMError)
+void CMMCore::deletePixelSizeConfig(const char* configName) throw (CMMError)
 {
    ostringstream os;
    os << "Pixel size" << "/" << configName;
@@ -4482,7 +4481,7 @@ void CMMCore::deletePixelSizeConfig(const char* configName) const throw (CMMErro
 /**
  * Get the current pixel configuration name
  **/
-string CMMCore::getCurrentPixelSizeConfig() const throw (CMMError)
+string CMMCore::getCurrentPixelSizeConfig() throw (CMMError)
 {
 	return getCurrentPixelSizeConfig(false);
 }
@@ -4490,7 +4489,7 @@ string CMMCore::getCurrentPixelSizeConfig() const throw (CMMError)
 /**
  * Get the current pixel configuration name
  **/
-string CMMCore::getCurrentPixelSizeConfig(bool cached) const throw (CMMError)
+string CMMCore::getCurrentPixelSizeConfig(bool cached) throw (CMMError)
 {
    // get a list of configuration names
    vector<string> cfgs = pixelSizeGroup_->GetAvailable();
@@ -4549,7 +4548,7 @@ string CMMCore::getCurrentPixelSizeConfig(bool cached) const throw (CMMError)
  * This method is based on sensing the current pixel size configuration and adjusting
  * for the binning.
  */
-double CMMCore::getPixelSizeUm() const
+double CMMCore::getPixelSizeUm()
 {
 	 return getPixelSizeUm(false);
 }
@@ -4559,7 +4558,7 @@ double CMMCore::getPixelSizeUm() const
  * This method is based on sensing the current pixel size configuration and adjusting
  * for the binning.
  */
-double CMMCore::getPixelSizeUm(bool cached) const
+double CMMCore::getPixelSizeUm(bool cached)
 {
 	 string resolutionID = getCurrentPixelSizeConfig(cached);
 
@@ -4674,7 +4673,7 @@ std::vector<std::string> CMMCore::getAvailablePropertyBlocks() const
 /**
  * Returns the collection of property-value pairs defined in this block.
  */
-PropertyBlock CMMCore::getPropertyBlockData(const char* blockName) const
+PropertyBlock CMMCore::getPropertyBlockData(const char* blockName)
 {
    CPropBlockMap::const_iterator it = propBlocks_.find(blockName);
    if (it == propBlocks_.end())
@@ -4688,7 +4687,7 @@ PropertyBlock CMMCore::getPropertyBlockData(const char* blockName) const
 /**
  * Returns the collection of property-value pairs defined for the specific device and state label.
  */
-PropertyBlock CMMCore::getStateLabelData(const char* deviceLabel, const char* stateLabel) const
+PropertyBlock CMMCore::getStateLabelData(const char* deviceLabel, const char* stateLabel)
 {
    MM::Device* pDevice;
    try {
@@ -4731,7 +4730,7 @@ PropertyBlock CMMCore::getStateLabelData(const char* deviceLabel, const char* st
 /**
  * Returns the collection of property-value pairs defined for the current state.
  */
-PropertyBlock CMMCore::getData(const char* deviceLabel) const
+PropertyBlock CMMCore::getData(const char* deviceLabel)
 {
    // here we could have written simply: 
    // return getStateLabelData(deviceLabel, getStateLabel(deviceLabel).c_str());
@@ -5991,7 +5990,7 @@ string CMMCore::getCoreErrorText(int code) const
    return txt;
 }
 
-MM::Device* CMMCore::getDevice(const char* label) const throw (CMMError)
+MM::Device* CMMCore::getDevice(const char* label) throw (CMMError)
 {
    try {
       return pluginManager_.GetDevice(label);
@@ -6023,7 +6022,7 @@ void CMMCore::initializeLogging()
 }
 
 
-void CMMCore::logError(const char* device, const char* msg, const char* fileName, int line) const
+void CMMCore::logError(const char* device, const char* msg, const char* fileName, int line)
 {
    ostringstream os;
    os << "Device " << device << ". " << msg << endl;

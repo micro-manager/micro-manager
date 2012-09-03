@@ -156,7 +156,7 @@ public:
    * Must guaranty safe reentrance
    * Must not throw exceptions
    */
-   virtual void Log(IMMLogger::priority p, const char*, ...)throw() = 0;
+   virtual void Log(IMMLogger::priority p, const char*, ...) throw() = 0;
    /**
    * SystemLog
    * Sends message to the log if current priority level is equal or higher than
@@ -175,18 +175,19 @@ public:
 };
 
 /**
-* Legacy macros used on MMCore
-*/
-#define CORE_DEBUG(FMT)                         CMMCore::getLoggerInstance()->Log(IMMLogger::debug, FMT)
-#define CORE_DEBUG1(FMT, arg1)                  CMMCore::getLoggerInstance()->Log(IMMLogger::debug, FMT, arg1)
-#define CORE_DEBUG2(FMT, arg1, arg2)            CMMCore::getLoggerInstance()->Log(IMMLogger::debug, FMT, arg1, arg2)
-#define CORE_DEBUG3(FMT, arg1, arg2, arg3)      CMMCore::getLoggerInstance()->Log(IMMLogger::debug, FMT, arg1, arg2, arg3)
-#define CORE_DEBUG4(FMT, arg1, arg2, arg3, arg4) CMMCore::getLoggerInstance()->Log(IMMLogger::debug, FMT, arg1, arg2, arg3, arg4)
+ * Legacy macros used in MMCore
+ * Work only within MMCore code
+ */
+#define CORE_DEBUG(FMT)                         getLoggerInstance()->Log(IMMLogger::debug, FMT)
+#define CORE_DEBUG1(FMT, arg1)                  getLoggerInstance()->Log(IMMLogger::debug, FMT, arg1)
+#define CORE_DEBUG2(FMT, arg1, arg2)            getLoggerInstance()->Log(IMMLogger::debug, FMT, arg1, arg2)
+#define CORE_DEBUG3(FMT, arg1, arg2, arg3)      getLoggerInstance()->Log(IMMLogger::debug, FMT, arg1, arg2, arg3)
+#define CORE_DEBUG4(FMT, arg1, arg2, arg3, arg4) getLoggerInstance()->Log(IMMLogger::debug, FMT, arg1, arg2, arg3, arg4)
 
-#define CORE_LOG(FMT)                           CMMCore::getLoggerInstance()->Log(IMMLogger::info, FMT)
-#define CORE_LOG1(FMT, arg1)                    CMMCore::getLoggerInstance()->Log(IMMLogger::info, FMT, arg1)
-#define CORE_LOG2(FMT, arg1, arg2)              CMMCore::getLoggerInstance()->Log(IMMLogger::info, FMT, arg1, arg2)
-#define CORE_LOG3(FMT, arg1, arg2, arg3)        CMMCore::getLoggerInstance()->Log(IMMLogger::info, FMT, arg1, arg2, arg3)
-#define CORE_LOG4(FMT, arg1, arg2, arg3, arg4)  CMMCore::getLoggerInstance()->Log(IMMLogger::info, FMT, arg1, arg2, arg3, arg4)
-#define CORE_LOG5(FMT, arg1, arg2, arg3, arg4, arg5)  CMMCore::getLoggerInstance()->Log(IMMLogger::info, FMT, arg1, arg2, arg3, arg4, arg5)
-#define CORE_TIMESTAMP                          CMMCore::getLoggerInstance()->TimeStamp()
+#define CORE_LOG(FMT)                           getLoggerInstance()->Log(IMMLogger::info, FMT)
+#define CORE_LOG1(FMT, arg1)                    getLoggerInstance()->Log(IMMLogger::info, FMT, arg1)
+#define CORE_LOG2(FMT, arg1, arg2)              getLoggerInstance()->Log(IMMLogger::info, FMT, arg1, arg2)
+#define CORE_LOG3(FMT, arg1, arg2, arg3)        getLoggerInstance()->Log(IMMLogger::info, FMT, arg1, arg2, arg3)
+#define CORE_LOG4(FMT, arg1, arg2, arg3, arg4)  getLoggerInstance()->Log(IMMLogger::info, FMT, arg1, arg2, arg3, arg4)
+#define CORE_LOG5(FMT, arg1, arg2, arg3, arg4, arg5)  getLoggerInstance()->Log(IMMLogger::info, FMT, arg1, arg2, arg3, arg4, arg5)
+#define CORE_TIMESTAMP                          getLoggerInstance()->TimeStamp()

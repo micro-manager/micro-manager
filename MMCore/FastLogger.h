@@ -128,7 +128,7 @@ public:
    IMMLogger::priority  EnableTimeStamp(IMMLogger::priority flags)throw();
    void TimeStamp(IMMLogger::priority level = IMMLogger::info)throw();
 	// TODO replace this with boost::format !!!!
-   void Log(IMMLogger::priority p, const char*, ...)throw();
+   void Log(IMMLogger::priority p, const char*, ...) throw();
    void SystemLog(std::string format)throw();
 
    // read the current log into memory ( for automated trouble report )

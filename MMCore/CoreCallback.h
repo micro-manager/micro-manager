@@ -63,9 +63,9 @@ public:
       char label[MM::MaxStrLength];
       caller->GetLabel(label);
       if (debugOnly)
-         CORE_DEBUG2("Device %s debug message: %s\n", label, msg);
+         core_->getLoggerInstance()->Log(IMMLogger::info, "Device %s debug message: %s\n", label, msg);
       else
-         CORE_LOG2("Device %s message: %s\n", label, msg);
+         core_->getLoggerInstance()->Log(IMMLogger::debug, "Device %s message: %s\n", label, msg);
       return DEVICE_OK;
    }
 
