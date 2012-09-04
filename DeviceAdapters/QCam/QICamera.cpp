@@ -3711,6 +3711,10 @@ int QICamera::QISequenceThread::svc()
 
     this->m_isRunning = false;
 
+    MM::Core* cb = m_pCam->GetCoreCallback();
+    if (cb)
+       cb->AcqFinished(m_pCam, 0);
+
     //START_METHOD("QICamera::QISequenceThread::svc EXIT 0");
     return returnError;
 }
