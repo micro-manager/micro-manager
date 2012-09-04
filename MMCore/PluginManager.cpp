@@ -55,8 +55,6 @@ using namespace std;
 // CPluginManager class
 // --------------------
 
-CPluginManager::CPersistentDataMap CPluginManager::persistentDataMap;
-
 CPluginManager::CPluginManager() 
 {
 }

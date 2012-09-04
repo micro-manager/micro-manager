@@ -89,9 +89,6 @@ private:
    typedef std::map<std::string, MM::Device*> CDeviceMap;
    typedef std::vector<MM::Device*> DeviceArray;
 
-   typedef std::vector<std::string>  CPersistentData;
-   typedef std::map<std::string, CPersistentData> CPersistentDataMap;
-   static CPersistentDataMap persistentDataMap;
    // searchPaths_ is static so that the static methods can use them
    static std::vector<std::string> searchPaths_;
    CDeviceMap devices_;
