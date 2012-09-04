@@ -512,10 +512,10 @@ int CoreCallback::SetFocusPosition(double pos)
 
 int CoreCallback::MoveFocus(double velocity)
 {
-   MMThreadGuard guard(CMMCore::deviceLock_);
 
    if (core_->focusStage_)
    {
+      MMThreadGuard guard(core_->pluginManager_.getModuleLock(core_->focusStage_));
       int ret = core_->focusStage_->Move(velocity);
       if (ret != DEVICE_OK)
          return ret;
@@ -551,10 +551,10 @@ int CoreCallback::SetXYPosition(double x, double y)
 
 int CoreCallback::MoveXYStage(double vx, double vy)
 {
-   MMThreadGuard guard(CMMCore::deviceLock_);
 
    if (core_->xyStage_)
    {
+      MMThreadGuard guard(core_->pluginManager_.getModuleLock(core_->xyStage_));
       int ret = core_->xyStage_->Move(vx, vy);
       if (ret != DEVICE_OK)
          return ret;

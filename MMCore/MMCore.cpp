@@ -96,9 +96,6 @@ const int MMCore_versionMajor = 2;
 const int MMCore_versionMinor = 3;
 const int MMCore_versionBuild = 2;
 
-// mutex
-MMThreadLock CMMCore::deviceLock_;
-
 ///////////////////////////////////////////////////////////////////////////////
 // CMMcore class
 // -------------
@@ -1520,11 +1517,11 @@ void CMMCore::setAdapterOriginXY(const char* deviceName, double x, double y) thr
  * Queries camera if exposure can be used in a sequence
  * @param cameraLabel - device label
  */
-bool CMMCore::isExposureSequenceable(const char* cameraLabel) const throw (CMMError)
+bool CMMCore::isExposureSequenceable(const char* cameraLabel) throw (CMMError)
 {
-   MMThreadGuard guard(deviceLock_);
 
    MM::Camera* pCamera = getSpecificDevice<MM::Camera>(cameraLabel);
+   MMThreadGuard guard(pluginManager_.getModuleLock(pCamera));
 
    bool isSequenceable;
    int ret = pCamera->IsExposureSequenceable(isSequenceable);
@@ -1540,15 +1537,14 @@ bool CMMCore::isExposureSequenceable(const char* cameraLabel) const throw (CMMEr
  * This should only be called for cameras where exposure time is sequenceable
  * @param cameraLabel - the camera
  */
-void CMMCore::startExposureSequence(const char* cameraLabel) const throw (CMMError)
+void CMMCore::startExposureSequence(const char* cameraLabel) throw (CMMError)
 {
-   MMThreadGuard guard(deviceLock_);
+   MM::Camera* pCamera = getSpecificDevice<MM::Camera>(cameraLabel);
+   MMThreadGuard guard(pluginManager_.getModuleLock(pCamera));
 
-   MM::Camera* pDevice = getSpecificDevice<MM::Camera>(cameraLabel);
-
-   int ret = pDevice->StartExposureSequence();
+   int ret = pCamera->StartExposureSequence();
    if (ret != DEVICE_OK)
-      throw CMMError(cameraLabel, getDeviceErrorText(ret, pDevice).c_str(), MMERR_DEVICE_GENERIC);
+      throw CMMError(cameraLabel, getDeviceErrorText(ret, pCamera).c_str(), MMERR_DEVICE_GENERIC);
    
 }
 
@@ -1557,15 +1553,14 @@ void CMMCore::startExposureSequence(const char* cameraLabel) const throw (CMMErr
  * This should only be called for cameras where exposure time is sequenceable
  * @param cameraLabel - deviceName
  */
-void CMMCore::stopExposureSequence(const char* cameraLabel) const throw (CMMError)
+void CMMCore::stopExposureSequence(const char* cameraLabel) throw (CMMError)
 {
-   MMThreadGuard guard(deviceLock_);
+   MM::Camera* pCamera = getSpecificDevice<MM::Camera>(cameraLabel);
+   MMThreadGuard guard(pluginManager_.getModuleLock(pCamera));
 
-   MM::Camera* pDevice = getSpecificDevice<MM::Camera>(cameraLabel);
-
-   int ret = pDevice->StopExposureSequence();
+   int ret = pCamera->StopExposureSequence();
    if (ret != DEVICE_OK)
-      throw CMMError(cameraLabel, getDeviceErrorText(ret, pDevice).c_str(), MMERR_DEVICE_GENERIC);
+      throw CMMError(cameraLabel, getDeviceErrorText(ret, pCamera).c_str(), MMERR_DEVICE_GENERIC);
 }
 
 /**
@@ -1573,15 +1568,15 @@ void CMMCore::stopExposureSequence(const char* cameraLabel) const throw (CMMErro
  * This should only be called for cameras where exposure time is sequenceable
  * @param cameraLabel - deviceName
  */
-long CMMCore::getExposureSequenceMaxLength(const char* cameraLabel) const throw (CMMError)
+long CMMCore::getExposureSequenceMaxLength(const char* cameraLabel) throw (CMMError)
 {
-   MMThreadGuard guard(deviceLock_);
 
-   MM::Camera* pDevice = getSpecificDevice<MM::Camera>(cameraLabel);
+   MM::Camera* pCamera = getSpecificDevice<MM::Camera>(cameraLabel);
+   MMThreadGuard guard(pluginManager_.getModuleLock(pCamera));
    long length;
-   int ret = pDevice->GetExposureSequenceMaxLength(length);
+   int ret = pCamera->GetExposureSequenceMaxLength(length);
    if (ret != DEVICE_OK)
-      throw CMMError(cameraLabel, getDeviceErrorText(ret, pDevice).c_str(), MMERR_DEVICE_GENERIC);
+      throw CMMError(cameraLabel, getDeviceErrorText(ret, pCamera).c_str(), MMERR_DEVICE_GENERIC);
 
    return length;
 }
@@ -1592,42 +1587,39 @@ long CMMCore::getExposureSequenceMaxLength(const char* cameraLabel) const throw 
  * @param cameraLabel - deviceName
  * @param exposureTime_ms - sequence of exposure times the camera will use during a sequence acquisition
  */
-void CMMCore::loadExposureSequence(const char* cameraLabel, std::vector<double> exposureTime_ms) const throw (CMMError)
+void CMMCore::loadExposureSequence(const char* cameraLabel, std::vector<double> exposureTime_ms) throw (CMMError)
 {
-   MMThreadGuard guard(deviceLock_);
-
-   MM::Camera* pDevice = getSpecificDevice<MM::Camera>(cameraLabel);
+   MM::Camera* pCamera = getSpecificDevice<MM::Camera>(cameraLabel);
+   MMThreadGuard guard(pluginManager_.getModuleLock(pCamera));
    
    int ret;
-   ret = pDevice->ClearExposureSequence();
+   ret = pCamera->ClearExposureSequence();
    if (ret != DEVICE_OK)
-      throw CMMError(cameraLabel, getDeviceErrorText(ret, pDevice).c_str(), MMERR_DEVICE_GENERIC);
+      throw CMMError(cameraLabel, getDeviceErrorText(ret, pCamera).c_str(), MMERR_DEVICE_GENERIC);
 
    std::vector<double>::iterator it;
    for ( it=exposureTime_ms.begin() ; it < exposureTime_ms.end(); it++ )
    {
-      ret = pDevice->AddToExposureSequence(*it);
+      ret = pCamera->AddToExposureSequence(*it);
       if (ret != DEVICE_OK)
-         throw CMMError(cameraLabel, getDeviceErrorText(ret, pDevice).c_str(), MMERR_DEVICE_GENERIC);
+         throw CMMError(cameraLabel, getDeviceErrorText(ret, pCamera).c_str(), MMERR_DEVICE_GENERIC);
    }
 
-   ret = pDevice->SendExposureSequence();
+   ret = pCamera->SendExposureSequence();
    if (ret != DEVICE_OK)
-      throw CMMError(cameraLabel, getDeviceErrorText(ret, pDevice).c_str(), MMERR_DEVICE_GENERIC);
+      throw CMMError(cameraLabel, getDeviceErrorText(ret, pCamera).c_str(), MMERR_DEVICE_GENERIC);
   
 }
-
 
 
 /**
  * Queries stage if it can be used in a sequence
  * @param deviceName - device label
  */
-bool CMMCore::isStageSequenceable(const char* deviceName) const throw (CMMError)
+bool CMMCore::isStageSequenceable(const char* deviceName) throw (CMMError)
 {
-   MMThreadGuard guard(deviceLock_);
-
    MM::Stage* pStage = getSpecificDevice<MM::Stage>(deviceName);
+   MMThreadGuard guard(pluginManager_.getModuleLock(pStage));
 
    bool isSequenceable;
    int ret = pStage->IsStageSequenceable(isSequenceable);
@@ -1638,21 +1630,19 @@ bool CMMCore::isStageSequenceable(const char* deviceName) const throw (CMMError)
    
 }
 
-
 /**
  * Starts an ongoing sequence of triggered events in a stage
  * This should only be called for stages
  * @param label - deviceName
  */
-void CMMCore::startStageSequence(const char* label) const throw (CMMError)
+void CMMCore::startStageSequence(const char* label) throw (CMMError)
 {
-   MMThreadGuard guard(deviceLock_);
+   MM::Stage* pStage = getSpecificDevice<MM::Stage>(label);
+   MMThreadGuard guard(pluginManager_.getModuleLock(pStage));
 
-   MM::Stage* pDevice = getSpecificDevice<MM::Stage>(label);
-
-   int ret = pDevice->StartStageSequence();
+   int ret = pStage->StartStageSequence();
    if (ret != DEVICE_OK)
-      throw CMMError(label, getDeviceErrorText(ret, pDevice).c_str(), MMERR_DEVICE_GENERIC);
+      throw CMMError(label, getDeviceErrorText(ret, pStage).c_str(), MMERR_DEVICE_GENERIC);
    
 }
 
@@ -1661,15 +1651,14 @@ void CMMCore::startStageSequence(const char* label) const throw (CMMError)
  * This should only be called for stages that are sequenceable
  * @param label - deviceName
  */
-void CMMCore::stopStageSequence(const char* label) const throw (CMMError)
+void CMMCore::stopStageSequence(const char* label) throw (CMMError)
 {
-   MMThreadGuard guard(deviceLock_);
+   MM::Stage* pStage = getSpecificDevice<MM::Stage>(label);
+   MMThreadGuard guard(pluginManager_.getModuleLock(pStage));
 
-   MM::Stage* pDevice = getSpecificDevice<MM::Stage>(label);
-
-   int ret = pDevice->StopStageSequence();
+   int ret = pStage->StopStageSequence();
    if (ret != DEVICE_OK)
-      throw CMMError(label, getDeviceErrorText(ret, pDevice).c_str(), MMERR_DEVICE_GENERIC);
+      throw CMMError(label, getDeviceErrorText(ret, pStage).c_str(), MMERR_DEVICE_GENERIC);
 
 }
 
@@ -1678,15 +1667,14 @@ void CMMCore::stopStageSequence(const char* label) const throw (CMMError)
  * This should only be called for stages that are sequenceable
  * @param label - deviceName
  */
-long CMMCore::getStageSequenceMaxLength(const char* label) const throw (CMMError)
+long CMMCore::getStageSequenceMaxLength(const char* label) throw (CMMError)
 {
-   MMThreadGuard guard(deviceLock_);
-
-   MM::Stage* pDevice = getSpecificDevice<MM::Stage>(label);
+   MM::Stage* pStage = getSpecificDevice<MM::Stage>(label);
+   MMThreadGuard guard(pluginManager_.getModuleLock(pStage));
    long length;
-   int ret = pDevice->GetStageSequenceMaxLength(length);
+   int ret = pStage->GetStageSequenceMaxLength(length);
    if (ret != DEVICE_OK)
-      throw CMMError(label, getDeviceErrorText(ret, pDevice).c_str(), MMERR_DEVICE_GENERIC);
+      throw CMMError(label, getDeviceErrorText(ret, pStage).c_str(), MMERR_DEVICE_GENERIC);
 
    return length;
 }
@@ -1697,41 +1685,38 @@ long CMMCore::getStageSequenceMaxLength(const char* label) const throw (CMMError
  * @param label - deviceName
  * @param positionSequence - sequence of positions that the stage will execute in reponse to external triggers
  */
-void CMMCore::loadStageSequence(const char* label, std::vector<double> positionSequence) const throw (CMMError)
+void CMMCore::loadStageSequence(const char* label, std::vector<double> positionSequence) throw (CMMError)
 {
-   MMThreadGuard guard(deviceLock_);
-
-   MM::Stage* pDevice = getSpecificDevice<MM::Stage>(label);
+   MM::Stage* pStage = getSpecificDevice<MM::Stage>(label);
+   MMThreadGuard guard(pluginManager_.getModuleLock(pStage));
    
    int ret;
-   ret = pDevice->ClearStageSequence();
+   ret = pStage->ClearStageSequence();
    if (ret != DEVICE_OK)
-      throw CMMError(label, getDeviceErrorText(ret, pDevice).c_str(), MMERR_DEVICE_GENERIC);
+      throw CMMError(label, getDeviceErrorText(ret, pStage).c_str(), MMERR_DEVICE_GENERIC);
 
    std::vector<double>::iterator it;
    for ( it=positionSequence.begin() ; it < positionSequence.end(); it++ )
    {
-      ret = pDevice->AddToStageSequence(*it);
+      ret = pStage->AddToStageSequence(*it);
       if (ret != DEVICE_OK)
-         throw CMMError(label, getDeviceErrorText(ret, pDevice).c_str(), MMERR_DEVICE_GENERIC);
+         throw CMMError(label, getDeviceErrorText(ret, pStage).c_str(), MMERR_DEVICE_GENERIC);
    }
 
-   ret = pDevice->SendStageSequence();
+   ret = pStage->SendStageSequence();
    if (ret != DEVICE_OK)
-      throw CMMError(label, getDeviceErrorText(ret, pDevice).c_str(), MMERR_DEVICE_GENERIC);
+      throw CMMError(label, getDeviceErrorText(ret, pStage).c_str(), MMERR_DEVICE_GENERIC);
   
 }
-
 
 /**
  * Queries XY stage if it can be used in a sequence
  * @param deviceName - device label
  */
-bool CMMCore::isXYStageSequenceable(const char* deviceName) const throw (CMMError)
+bool CMMCore::isXYStageSequenceable(const char* deviceName) throw (CMMError)
 {
-   MMThreadGuard guard(deviceLock_);
-
    MM::XYStage* pStage = getSpecificDevice<MM::XYStage>(deviceName);
+   MMThreadGuard guard(pluginManager_.getModuleLock(pStage));
 
    bool isSequenceable;
    int ret = pStage->IsXYStageSequenceable(isSequenceable);
@@ -1748,15 +1733,15 @@ bool CMMCore::isXYStageSequenceable(const char* deviceName) const throw (CMMErro
  * This should only be called for stages
  * @param label - deviceName
  */
-void CMMCore::startXYStageSequence(const char* label) const throw (CMMError)
+void CMMCore::startXYStageSequence(const char* label) throw (CMMError)
 {
-   MMThreadGuard guard(deviceLock_);
 
-   MM::XYStage* pDevice = getSpecificDevice<MM::XYStage>(label);
+   MM::XYStage* pStage = getSpecificDevice<MM::XYStage>(label);
+   MMThreadGuard guard(pluginManager_.getModuleLock(pStage));
 
-   int ret = pDevice->StartXYStageSequence();
+   int ret = pStage->StartXYStageSequence();
    if (ret != DEVICE_OK)
-      throw CMMError(label, getDeviceErrorText(ret, pDevice).c_str(), MMERR_DEVICE_GENERIC);
+      throw CMMError(label, getDeviceErrorText(ret, pStage).c_str(), MMERR_DEVICE_GENERIC);
    
 }
 
@@ -1765,16 +1750,14 @@ void CMMCore::startXYStageSequence(const char* label) const throw (CMMError)
  * This should only be called for stages that are sequenceable
  * @param label - deviceName
  */
-void CMMCore::stopXYStageSequence(const char* label) const throw (CMMError)
+void CMMCore::stopXYStageSequence(const char* label) throw (CMMError)
 {
-   MMThreadGuard guard(deviceLock_);
+   MM::XYStage* pStage = getSpecificDevice<MM::XYStage>(label);
+   MMThreadGuard guard(pluginManager_.getModuleLock(pStage));
 
-   MM::XYStage* pDevice = getSpecificDevice<MM::XYStage>(label);
-
-   int ret = pDevice->StopXYStageSequence();
+   int ret = pStage->StopXYStageSequence();
    if (ret != DEVICE_OK)
-      throw CMMError(label, getDeviceErrorText(ret, pDevice).c_str(), MMERR_DEVICE_GENERIC);
-
+      throw CMMError(label, getDeviceErrorText(ret, pStage).c_str(), MMERR_DEVICE_GENERIC);
 }
 
 /**
@@ -1782,15 +1765,14 @@ void CMMCore::stopXYStageSequence(const char* label) const throw (CMMError)
  * This should only be called for XY stages that are sequenceable
  * @param label - deviceName
  */
-long CMMCore::getXYStageSequenceMaxLength(const char* label) const throw (CMMError)
+long CMMCore::getXYStageSequenceMaxLength(const char* label) throw (CMMError)
 {
-   MMThreadGuard guard(deviceLock_);
-
-   MM::XYStage* pDevice = getSpecificDevice<MM::XYStage>(label);
+   MM::XYStage* pStage = getSpecificDevice<MM::XYStage>(label);
+   MMThreadGuard guard(pluginManager_.getModuleLock(pStage));
    long length;
-   int ret = pDevice->GetXYStageSequenceMaxLength(length);
+   int ret = pStage->GetXYStageSequenceMaxLength(length);
    if (ret != DEVICE_OK)
-      throw CMMError(label, getDeviceErrorText(ret, pDevice).c_str(), MMERR_DEVICE_GENERIC);
+      throw CMMError(label, getDeviceErrorText(ret, pStage).c_str(), MMERR_DEVICE_GENERIC);
 
    return length;
 }
@@ -1805,29 +1787,28 @@ long CMMCore::getXYStageSequenceMaxLength(const char* label) const throw (CMMErr
  */
 void CMMCore::loadXYStageSequence(const char* label,
                                   std::vector<double> xSequence,
-                                  std::vector<double> ySequence) const throw (CMMError)
+                                  std::vector<double> ySequence) throw (CMMError)
 {
-   MMThreadGuard guard(deviceLock_);
-
-   MM::XYStage* pDevice = getSpecificDevice<MM::XYStage>(label);
+   MM::XYStage* pStage = getSpecificDevice<MM::XYStage>(label);
+   MMThreadGuard guard(pluginManager_.getModuleLock(pStage));
    
    int ret;
-   ret = pDevice->ClearXYStageSequence();
+   ret = pStage->ClearXYStageSequence();
    if (ret != DEVICE_OK)
-      throw CMMError(label, getDeviceErrorText(ret, pDevice).c_str(), MMERR_DEVICE_GENERIC);
+      throw CMMError(label, getDeviceErrorText(ret, pStage).c_str(), MMERR_DEVICE_GENERIC);
 
    std::vector<double>::iterator itx, ity;
    for ( itx=xSequence.begin(), ity=ySequence.begin() ;
          (itx < xSequence.end()) && (ity < ySequence.end()); itx++, ity++)
    {
-      ret = pDevice->AddToXYStageSequence(*itx, *ity);
+      ret = pStage->AddToXYStageSequence(*itx, *ity);
       if (ret != DEVICE_OK)
-         throw CMMError(label, getDeviceErrorText(ret, pDevice).c_str(), MMERR_DEVICE_GENERIC);
+         throw CMMError(label, getDeviceErrorText(ret, pStage).c_str(), MMERR_DEVICE_GENERIC);
    }
 
-   ret = pDevice->SendXYStageSequence();
+   ret = pStage->SendXYStageSequence();
    if (ret != DEVICE_OK)
-      throw CMMError(label, getDeviceErrorText(ret, pDevice).c_str(), MMERR_DEVICE_GENERIC);
+      throw CMMError(label, getDeviceErrorText(ret, pStage).c_str(), MMERR_DEVICE_GENERIC);
   
 }
 
@@ -5736,8 +5717,8 @@ bool CMMCore::isContinuousFocusLocked() throw (CMMError)
  */
 bool CMMCore::isContinuousFocusDrive(const char* stageLabel) throw (CMMError)
 {
-   MMThreadGuard guard(deviceLock_);
    MM::Stage* pStage = getSpecificDevice<MM::Stage>(stageLabel);
+   MMThreadGuard guard(pluginManager_.getModuleLock(pStage));
    return pStage->IsContinuousFocusDrive();
 }
 

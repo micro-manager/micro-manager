@@ -321,11 +321,11 @@ public:
    void initializeCircularBuffer() throw (CMMError);
    void clearCircularBuffer() throw (CMMError);
 
-   bool isExposureSequenceable(const char* cameraLabel) const throw (CMMError);
-   void startExposureSequence(const char* cameraLabel) const throw (CMMError);
-   void stopExposureSequence(const char* cameraLabel) const throw (CMMError);
-   long getExposureSequenceMaxLength(const char* cameraLabel) const throw (CMMError);
-   void loadExposureSequence(const char* cameraLabel, std::vector<double> exposureSequence_ms) const throw (CMMError);
+   bool isExposureSequenceable(const char* cameraLabel) throw (CMMError);
+   void startExposureSequence(const char* cameraLabel) throw (CMMError);
+   void stopExposureSequence(const char* cameraLabel) throw (CMMError);
+   long getExposureSequenceMaxLength(const char* cameraLabel) throw (CMMError);
+   void loadExposureSequence(const char* cameraLabel, std::vector<double> exposureSequence_ms) throw (CMMError);
    //@ }
 
    /** @name Auto-focusing
@@ -399,24 +399,24 @@ public:
    * API for loading sequences onto single-axis stages
    */
    //@ {
-   bool isStageSequenceable(const char* label) const throw (CMMError);
-   void startStageSequence(const char* label) const throw (CMMError);
-   void stopStageSequence(const char* label) const throw (CMMError);
-   long getStageSequenceMaxLength(const char* label) const throw (CMMError);
-   void loadStageSequence(const char* label, std::vector<double> positionSequence) const throw (CMMError);
+   bool isStageSequenceable(const char* label) throw (CMMError);
+   void startStageSequence(const char* label) throw (CMMError);
+   void stopStageSequence(const char* label) throw (CMMError);
+   long getStageSequenceMaxLength(const char* label) throw (CMMError);
+   void loadStageSequence(const char* label, std::vector<double> positionSequence) throw (CMMError);
    //@ }
 
    /** @name XY Stage sequencing
    * API for loading sequences onto XY stages
    */
    //@ {
-   bool isXYStageSequenceable(const char* label) const throw (CMMError);
-   void startXYStageSequence(const char* label) const throw (CMMError);
-   void stopXYStageSequence(const char* label) const throw (CMMError);
-   long getXYStageSequenceMaxLength(const char* label) const throw (CMMError);
+   bool isXYStageSequenceable(const char* label) throw (CMMError);
+   void startXYStageSequence(const char* label) throw (CMMError);
+   void stopXYStageSequence(const char* label) throw (CMMError);
+   long getXYStageSequenceMaxLength(const char* label) throw (CMMError);
    void loadXYStageSequence(const char* label,
                             std::vector<double> xSequence,
-                            std::vector<double> ySequence) const throw (CMMError);
+                            std::vector<double> ySequence) throw (CMMError);
    //@ }
 
    /** @name Serial port control
@@ -572,9 +572,6 @@ private:
    mutable std::deque<std::pair< int, std::string> > postedErrors_;
    FastLogger* logger_;
    FastLogger* getLoggerInstance() {return logger_;}
-
-   // global data
-   static MMThreadLock deviceLock_;
 
    // >>>>> OBSOLETE >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
    void defineConfiguration(const char* configName, const char* deviceName, const char* propName, const char* value);
