@@ -44,6 +44,7 @@
 #include "MMDeviceConstants.h"
 #include "DeviceUtils.h"
 #include "ImageMetadata.h"
+#include "DeviceThreads.h"
 #include <string>
 #include <cstring>
 #include <climits>
@@ -1158,7 +1159,6 @@ namespace MM {
       virtual int GetCurrentConfig(const char* group, int bufLen, char* name) = 0;
       virtual int GetChannelConfig(char* channelConfigName, const unsigned int channelConfigIterator) = 0;
 
-
       // direct access to specific device types
       virtual MM::ImageProcessor* GetImageProcessor(const MM::Device* caller) = 0;
       virtual MM::AutoFocus* GetAutoFocus(const MM::Device* caller) = 0;
@@ -1173,6 +1173,10 @@ namespace MM {
       virtual void NextPostedError(int& /*errorCode*/, char* /*pMessage*/, int /*maxlen*/, int& /*messageLength*/) = 0;
       virtual void PostError(const int, const char* ) = 0;
       virtual void ClearPostedErrors( void) = 0;
+
+      // thread locking
+      virtual MMThreadLock* getModuleLock(const MM::Device* caller) = 0;
+      virtual void removeModuleLock(const MM::Device* caller) = 0;
    
    };
 

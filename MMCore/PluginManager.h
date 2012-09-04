@@ -41,6 +41,7 @@
 #include <map>
 #include "../MMDevice/MMDeviceConstants.h"
 #include "../MMDevice/MMDevice.h"
+#include "../MMDevice/DeviceThreads.h"
 #include "ErrorCodes.h"
 #include "Error.h"
 
@@ -75,7 +76,13 @@ public:
    static void SetPersistentData(HDEVMODULE hLib, const char* moduleName);
    std::string Serialize();
    void Restore(const std::string& data);
-  
+
+   // module level thread locking
+   void CreateModuleLocks();
+   void DeleteModuleLocks();
+   MMThreadLock* getModuleLock(const MM::Device* pDev);
+   bool removeModuleLock(const char* moduleName);
+ 
 private:
    static void GetModules(std::vector<std::string> &modules, const char *path);
    static void GetSystemError(std::string& errorText);
@@ -84,8 +91,7 @@ private:
    static void* GetModuleFunction(HDEVMODULE hLib, const char* funcName);
    static void CheckVersion(HDEVMODULE libHandle);
    static std::string FindInSearchPath(std::string filename);
-
-   typedef std::map<std::string, HDEVMODULE> CModuleMap;
+   typedef std::map<std::string, MMThreadLock*> CModuleLockMap;
    typedef std::map<std::string, MM::Device*> CDeviceMap;
    typedef std::vector<MM::Device*> DeviceArray;
 
@@ -93,6 +99,7 @@ private:
    static std::vector<std::string> searchPaths_;
    CDeviceMap devices_;
    DeviceArray devArray_;
+   CModuleLockMap moduleLocks_;
 };
 
 #endif //_PLUGIN_MANAGER_H_

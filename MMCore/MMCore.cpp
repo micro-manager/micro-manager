@@ -278,6 +278,8 @@ CMMCore::~CMMCore()
    }
    CORE_LOG("Core session ended on %D\n");
 
+   pluginManager_.DeleteModuleLocks();
+
    delete logger_;
    delete callback_;
    delete configGroups_;
@@ -876,6 +878,8 @@ void CMMCore::initializeAllDevices() throw (CMMError)
    }
 
    updateCoreProperties();
+
+   pluginManager_.CreateModuleLocks();
 }
 
 void CMMCore::updateCoreProperties() throw (CMMError)
@@ -1236,11 +1240,12 @@ void CMMCore::waitForImageSynchro() throw (CMMError)
  */
 void CMMCore::setPosition(const char* label, double position) throw (CMMError)
 {
-
-   MMThreadGuard guard(deviceLock_);
+   // TODO: insert system lock
 
    MM::Stage* pStage = getSpecificDevice<MM::Stage>(label);
    CORE_DEBUG2("attempt to set %s  to %.5g um\n", label, position);
+
+   MMThreadGuard guard(pluginManager_.getModuleLock(pStage));
    int ret = pStage->SetPositionUm(position);
    if (ret != DEVICE_OK)
    {
@@ -1259,10 +1264,10 @@ void CMMCore::setPosition(const char* label, double position) throw (CMMError)
  */
 void CMMCore::setRelativePosition(const char* label, double d) throw (CMMError)
 {
-   MMThreadGuard guard(deviceLock_);
 
    MM::Stage* pStage = getSpecificDevice<MM::Stage>(label);
    CORE_DEBUG2("attempt to move %s relative %.5g um\n", label, d);
+   MMThreadGuard guard(pluginManager_.getModuleLock(pStage));
 
    int ret = pStage->SetRelativePositionUm(d);
    if (ret != DEVICE_OK)
@@ -1281,9 +1286,8 @@ void CMMCore::setRelativePosition(const char* label, double d) throw (CMMError)
  */
 double CMMCore::getPosition(const char* label) throw (CMMError)
 {
-   MMThreadGuard guard(deviceLock_);
-
    MM::Stage* pStage = getSpecificDevice<MM::Stage>(label);
+   MMThreadGuard guard(pluginManager_.getModuleLock(pStage));
    double pos;
    int ret = pStage->GetPositionUm(pos);
    if (ret != DEVICE_OK)
@@ -1306,6 +1310,7 @@ void CMMCore::setXYPosition(const char* deviceName, double x, double y) throw (C
 {
 
    MM::XYStage* pXYStage = getSpecificDevice<MM::XYStage>(deviceName);
+   MMThreadGuard guard(pluginManager_.getModuleLock(pXYStage));
    int ret = pXYStage->SetPositionUm(x, y);
    if (ret != DEVICE_OK)
    {
@@ -1325,10 +1330,10 @@ void CMMCore::setXYPosition(const char* deviceName, double x, double y) throw (C
  */
 void CMMCore::setRelativeXYPosition(const char* deviceName, double dx, double dy) throw (CMMError)
 {
-   MMThreadGuard guard(deviceLock_);
    CORE_DEBUG3("Attempt relative move of %s to %g ,  %g um\n", deviceName, dx, dy);
 
    MM::XYStage* pXYStage = getSpecificDevice<MM::XYStage>(deviceName);
+   MMThreadGuard guard(pluginManager_.getModuleLock(pXYStage));
    int ret = pXYStage->SetRelativePositionUm(dx, dy);
    if (ret != DEVICE_OK)
    {
@@ -1347,9 +1352,8 @@ void CMMCore::setRelativeXYPosition(const char* deviceName, double dx, double dy
  */
 void CMMCore::getXYPosition(const char* deviceName, double& x, double& y) throw (CMMError)
 {
-   MMThreadGuard guard(deviceLock_);
-
    MM::XYStage* pXYStage = getSpecificDevice<MM::XYStage>(deviceName);
+   MMThreadGuard guard(pluginManager_.getModuleLock(pXYStage));
    int ret = pXYStage->GetPositionUm(x, y);
    if (ret != DEVICE_OK)
    {
@@ -1367,9 +1371,8 @@ void CMMCore::getXYPosition(const char* deviceName, double& x, double& y) throw 
  */
 double CMMCore::getXPosition(const char* deviceName) throw (CMMError)
 {
-   MMThreadGuard guard(deviceLock_);
-
    MM::XYStage* pXYStage = getSpecificDevice<MM::XYStage>(deviceName);
+   MMThreadGuard guard(pluginManager_.getModuleLock(pXYStage));
    double x, y;
    int ret = pXYStage->GetPositionUm(x, y);
    if (ret != DEVICE_OK)
@@ -1390,9 +1393,8 @@ double CMMCore::getXPosition(const char* deviceName) throw (CMMError)
  */
 double CMMCore::getYPosition(const char* deviceName) throw (CMMError)
 {
-   MMThreadGuard guard(deviceLock_);
-
    MM::XYStage* pXYStage = getSpecificDevice<MM::XYStage>(deviceName);
+   MMThreadGuard guard(pluginManager_.getModuleLock(pXYStage));
    double x, y;
    int ret = pXYStage->GetPositionUm(x, y);
    if (ret != DEVICE_OK)
@@ -1416,8 +1418,8 @@ double CMMCore::getYPosition(const char* deviceName) throw (CMMError)
 // */
 void CMMCore::stop(const char* deviceName) throw (CMMError)
 {
-   MMThreadGuard guard(deviceLock_);
    MM::XYStage* pXYStage = getSpecificDevice<MM::XYStage>(deviceName);
+   MMThreadGuard guard(pluginManager_.getModuleLock(pXYStage));
    int ret = pXYStage->Stop();
    if (ret != DEVICE_OK)
    {
@@ -1432,8 +1434,8 @@ void CMMCore::stop(const char* deviceName) throw (CMMError)
  */
 void CMMCore::home(const char* deviceName) throw (CMMError)
 {
-   MMThreadGuard guard(deviceLock_);
    MM::XYStage* pXYStage = getSpecificDevice<MM::XYStage>(deviceName);
+   MMThreadGuard guard(pluginManager_.getModuleLock(pXYStage));
    int ret = pXYStage->Home();
    if (ret != DEVICE_OK)
    {
@@ -1451,9 +1453,8 @@ void CMMCore::home(const char* deviceName) throw (CMMError)
  */
 void CMMCore::setOriginXY(const char* deviceName) throw (CMMError)
 {
-   MMThreadGuard guard(deviceLock_);
-
    MM::XYStage* pXYStage = getSpecificDevice<MM::XYStage>(deviceName);
+   MMThreadGuard guard(pluginManager_.getModuleLock(pXYStage));
    int ret = pXYStage->SetOrigin();
    if (ret != DEVICE_OK)
    {
@@ -1470,9 +1471,8 @@ void CMMCore::setOriginXY(const char* deviceName) throw (CMMError)
  */
 void CMMCore::setOrigin(const char* deviceName) throw (CMMError)
 {
-   MMThreadGuard guard(deviceLock_);
-
    MM::Stage* pStage = getSpecificDevice<MM::Stage>(deviceName);
+   MMThreadGuard guard(pluginManager_.getModuleLock(pStage));
    int ret = pStage->SetOrigin();
    if (ret != DEVICE_OK)
    {
@@ -1487,9 +1487,8 @@ void CMMCore::setOrigin(const char* deviceName) throw (CMMError)
  */
 void CMMCore::setAdapterOrigin(const char* deviceName, double d) throw (CMMError)
 {
-   MMThreadGuard guard(deviceLock_);
-
    MM::Stage* pStage = getSpecificDevice<MM::Stage>(deviceName);
+   MMThreadGuard guard(pluginManager_.getModuleLock(pStage));
    int ret = pStage->SetAdapterOriginUm(d);
    if (ret != DEVICE_OK)
    {
@@ -1505,9 +1504,8 @@ void CMMCore::setAdapterOrigin(const char* deviceName, double d) throw (CMMError
  */
 void CMMCore::setAdapterOriginXY(const char* deviceName, double x, double y) throw (CMMError)
 {
-   MMThreadGuard guard(deviceLock_);
-
    MM::XYStage* pXYStage = getSpecificDevice<MM::XYStage>(deviceName);
+   MMThreadGuard guard(pluginManager_.getModuleLock(pXYStage));
    int ret = pXYStage->SetAdapterOriginUm(x, y);
    if (ret != DEVICE_OK)
    {

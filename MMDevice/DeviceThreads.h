@@ -122,10 +122,26 @@ private:
 class MMThreadGuard
 {
 public:
-   MMThreadGuard(MMThreadLock& lock) : lock_(lock) {lock_.Lock();}
-   ~MMThreadGuard() {lock_.Unlock();}
+   MMThreadGuard(MMThreadLock& lock) : lock_(&lock)
+   {
+      lock_->Lock();
+   }
+
+   MMThreadGuard(MMThreadLock* lock) : lock_(lock)
+   {
+      if (lock != 0)
+         lock_->Lock();
+   }
+
+   bool isLocked() {return lock_ == 0 ? false : true;}
+
+   ~MMThreadGuard()
+   {
+      if (lock_ != 0)
+         lock_->Unlock();
+   }
 
 private:
    MMThreadGuard& operator=(MMThreadGuard& /*rhs*/) {assert(false); return *this;}
-   MMThreadLock& lock_;
+   MMThreadLock* lock_;
 };

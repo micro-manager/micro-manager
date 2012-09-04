@@ -266,6 +266,10 @@ public:
          strncpy( deviceName, v.at(deviceIterator).c_str(), MM::MaxStrLength);
       return;
    }
+
+   MMThreadLock* getModuleLock(const MM::Device* caller);
+   void removeModuleLock(const MM::Device* caller);
+
 //#if 0
    // device discovery  -- todo do we need this on the callback??
    MM::DeviceDetectionStatus DetectDevice(const MM::Device* /*pCaller*/, char* deviceName)

@@ -62,6 +62,7 @@ CPluginManager::CPluginManager()
 CPluginManager::~CPluginManager()
 {
    UnloadAllDevices();
+   DeleteModuleLocks();
 }
 
 // disable MSVC warning about unreferenced variable "ret"
@@ -879,4 +880,73 @@ void CPluginManager::Restore(const string& data)
       if (!label.empty() && !moduleName.empty() && !deviceName.empty())
          LoadDevice(label.c_str(), moduleName.c_str(), deviceName.c_str());
    }
+}
+
+/**
+ * Creates a separate thread lock for each module.
+ * Automatically deletes any previous locks that may exist.
+ * Should be called before accessing any devices, i.e. after all devices are loaded.
+ */
+void CPluginManager::CreateModuleLocks()
+{
+   DeleteModuleLocks();
+
+   for (size_t i=0; i<devArray_.size(); i++)
+   {
+      char moduleName[MM::MaxStrLength];
+      devArray_[i]->GetModuleName(moduleName);
+      CModuleLockMap::iterator it = moduleLocks_.find(moduleName);
+      if (it == moduleLocks_.end())
+      {
+         moduleLocks_[moduleName] = new MMThreadLock;
+      }
+   }
+}
+
+/**
+ * Deletes all module locks.
+ * Should be called only on exit, when all devices are inactive
+ */
+void CPluginManager::DeleteModuleLocks()
+{
+   // delete all module locks
+   for (CModuleLockMap::iterator it = moduleLocks_.begin(); it != moduleLocks_.end(); it++)
+      delete(it->second);
+
+   moduleLocks_.clear();
+}
+
+/**
+ * Returns appropriate module-level lock for a given device.
+ * If a lock does not exist for a particular device, returns 0
+ */
+MMThreadLock* CPluginManager::getModuleLock(const MM::Device* pDev)
+{
+   if (pDev == 0)
+      return 0;
+
+   char moduleName[MM::MaxStrLength];
+   pDev->GetModuleName(moduleName);
+   CModuleLockMap::iterator it = moduleLocks_.find(moduleName);
+   if (it == moduleLocks_.end())
+      return 0;
+
+   return it->second;
+}
+
+/**
+ * Removes module lock if it exists.
+ * This method is used by devices to defeat module thread locking in MMCore.
+ * If device implements its own thread safety mechanism, then it makes sense to
+ * defeat the system level locking.
+ */
+bool CPluginManager::removeModuleLock(const char* moduleName)
+{
+   CModuleLockMap::iterator it = moduleLocks_.find(moduleName);
+   if (it == moduleLocks_.end())
+      return false;
+
+   delete moduleLocks_[moduleName];
+   moduleLocks_.erase(it);
+   return true;
 }

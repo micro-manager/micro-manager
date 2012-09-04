@@ -742,3 +742,15 @@ MM::MMTime CoreCallback::GetCurrentMMTime()
 	return GetMMTimeNow();
 }
 
+MMThreadLock* CoreCallback::getModuleLock(const MM::Device* caller)
+{
+   return core_->pluginManager_.getModuleLock(caller);
+}
+
+void CoreCallback::removeModuleLock(const MM::Device* caller)
+{
+   char module[MM::MaxStrLength];
+   caller->GetModuleName(module);
+   core_->pluginManager_.removeModuleLock(module);
+}
+
