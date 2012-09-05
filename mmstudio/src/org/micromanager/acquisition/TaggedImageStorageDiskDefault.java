@@ -577,7 +577,9 @@ public class TaggedImageStorageDiskDefault implements TaggedImageStorage {
    public void close() {
       try {
          writeDisplaySettings();
-         Runtime.getRuntime().removeShutdownHook(shutdownHook_);
+         if (shutdownHook_ != null) {
+            Runtime.getRuntime().removeShutdownHook(shutdownHook_);
+         }
       } catch (Exception e) {
          ReportingUtils.logError(e);
       }
