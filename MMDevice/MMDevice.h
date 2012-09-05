@@ -254,24 +254,37 @@ namespace MM {
       virtual int GetPropertyType(const char* name, MM::PropertyType& pt) const = 0;
       virtual unsigned GetNumberOfPropertyValues(const char* propertyName) const = 0;
       virtual bool GetPropertyValueAt(const char* propertyName, unsigned index, char* value) const = 0;
-      // Sequences can be used for fast acquisitions, sycnchronized by TTLs rather than
-      // computer commands. 
-      // Sequences of states can be uploaded to the device.  The device will cycle through
-      // the uploaded list of states (triggered by an external trigger - most often coming 
-      // from the camera).  If the device is capable (and ready) to do so isSequenceable will
-      // be true
+      /* Sequences can be used for fast acquisitions, sycnchronized by TTLs rather than
+       * computer commands. 
+       * Sequences of states can be uploaded to the device.  The device will cycle through
+       * the uploaded list of states (triggered by an external trigger - most often coming 
+       * from the camera).  If the device is capable (and ready) to do so isSequenceable will
+       * be true
+       */
       virtual int IsPropertySequenceable(const char* name, bool& isSequenceable) const = 0;
-      // The largest sequence that can be stored in the device
+      /*
+       * The largest sequence that can be stored in the device
+       */
       virtual int GetPropertySequenceMaxLength(const char* propertyName, long& nrEvents) const = 0;
-      // Starts execution of the sequence
+      /* 
+       * Starts execution of the sequence
+       */
       virtual int StartPropertySequence(const char* propertyName) const = 0;
-      // Stops execution of the device
+      /*
+       * Stops execution of the device
+       */
       virtual int StopPropertySequence(const char* propertyName) const = 0;
-      // remove previously added sequence
+      /*
+       * remove previously added sequence
+       */
       virtual int ClearPropertySequence(const char* propertyName) const = 0;
-      // Add one value to the sequence
+      /*
+       * Add one value to the sequence
+       */
       virtual int AddToPropertySequence(const char* propertyName, const char* value) const = 0;
-      // Signal that we are done sending sequence values so that the adapter can send the whole sequence to the device
+      /*
+       * Signal that we are done sending sequence values so that the adapter can send the whole sequence to the device
+       */
       virtual int SendPropertySequence(const char* propertyName) const = 0; 
 
       virtual bool GetErrorText(int errorCode, char* errMessage) const = 0;
@@ -280,7 +293,9 @@ namespace MM {
       virtual void SetDelayMs(double delay) = 0;
       virtual bool UsesDelay() = 0;
 
-      // library handle management (for use only in the client code)
+      /*
+       * library handle management (for use only in the client code)
+       */
       virtual HDEVMODULE GetModuleHandle() const = 0;
       virtual void SetModuleHandle(HDEVMODULE hLibraryHandle) = 0;
       virtual void SetLabel(const char* label) = 0;
