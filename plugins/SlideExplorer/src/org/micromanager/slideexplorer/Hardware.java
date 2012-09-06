@@ -5,10 +5,7 @@ import java.awt.geom.Point2D;
 
 import ij.process.ImageProcessor;
 
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import org.micromanager.utils.ImageUtils;
-import org.micromanager.utils.MMScriptException;
 
 import mmcorej.CMMCore;
 import org.micromanager.utils.ReportingUtils;

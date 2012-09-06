@@ -440,8 +440,8 @@ public class Hub {
          controller_.rememberZPosition();
          core_.waitForSystem();
          turnOffContinuousAutofocus();
-         core_.setPixelSizeConfig(pixelConfig);
-         core_.waitForSystem();
+         //core_.setPixelSizeConfig(pixelConfig);
+         //core_.waitForSystem();
          setOffsets(pixelConfig);
          /*try {
             if (core_.hasProperty("PFS-Offset", "Position")) {
@@ -486,11 +486,11 @@ public class Hub {
       try {
          String autofocusDevice = core_.getAutoFocusDevice();
          if (autofocusDevice.length() > 0) {
-            //core_.enableContinuousFocus(true);
+            core_.enableContinuousFocus(true);
 
-            if (autofocusDevice.equals("PerfectFocus")) {
-               core_.setProperty(autofocusDevice, "State", "on");
-            }
+            //if (autofocusDevice.equals("PerfectFocus")) {
+            //   core_.setProperty(autofocusDevice, "State", "on");
+            //}
 
             core_.waitForDevice(autofocusDevice);
          }
