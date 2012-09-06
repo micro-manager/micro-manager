@@ -320,7 +320,6 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface, Device
                     || (getAcquisitionImageBitDepth(SIMPLE_ACQ) != bitDepth)
                     || (getAcquisitionMultiCamNumChannels(SIMPLE_ACQ) != numCamChannels)) {  //Need to close and reopen simple window
                closeAcquisitionWindow(SIMPLE_ACQ);
-               closeAcquisition(SIMPLE_ACQ);
             }
          }
          if (!acquisitionExists(SIMPLE_ACQ)) {
