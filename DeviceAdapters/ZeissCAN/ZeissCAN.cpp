@@ -1366,6 +1366,16 @@ int HalogenLamp::Initialize()
    AddAllowedValue("LightManager", "0"); // Closed
    AddAllowedValue("LightManager",  "1"); // Open
 
+   // Intensity
+   // -----
+   CPropertyAction* pAct2 = new CPropertyAction(this, &HalogenLamp::OnIntensity);
+   ret = CreateProperty("Intensity", "0", MM::Integer, false, pAct2);
+   SetPropertyLimits("Intensity", 0, 256);
+
+   if (ret != DEVICE_OK)
+      return ret;
+
+
    ret = UpdateStatus();
    if (ret != DEVICE_OK) 
       return ret; 
@@ -1496,6 +1506,45 @@ int HalogenLamp::GetLM(bool &on)
    return DEVICE_OK;
 }
 
+int HalogenLamp::SetIntensity(long intensity)
+{
+   const char* prefix = "HPCV1,";
+   std::stringstream command_stream;
+   command_stream << prefix << intensity;
+   command_stream.str().c_str();
+   return g_hub.ExecuteCommand(*this, *GetCoreCallback(), command_stream.str().c_str());
+}
+
+int HalogenLamp::GetIntensity(long &intensity)
+{
+   const char* command = "HPCv1";
+   int ret = g_hub.ExecuteCommand(*this, *GetCoreCallback(), command);
+   if (ret != DEVICE_OK)
+      return ret;
+
+   string response;
+   ret = g_hub.GetAnswer(*this, *GetCoreCallback(), response);
+   if (ret != DEVICE_OK)
+      return ret;
+
+   if (response.substr(0,2) == "PH") 
+   {
+      intensity = atoi(response.substr(2).c_str());
+      if (intensity < 0 || intensity > 255) {
+         return ERR_UNEXPECTED_ANSWER;
+      } else {
+         return DEVICE_OK;
+      }
+   }
+   else
+   {
+      return ERR_UNEXPECTED_ANSWER;
+   }
+
+}
+
+
+
 ///////////////////////////////////////////////////////////////////////////////
 // Action handlers                                                           
 ///////////////////////////////////////////////////////////////////////////////
@@ -1560,9 +1609,22 @@ int HalogenLamp::OnLightManager(MM::PropertyBase* pProp, MM::ActionType eAct)
 }
 
 
-int HalogenLamp::OnIntensity(MM::PropertyBase* /*pProp*/, MM::ActionType /*eAct*/)
+int HalogenLamp::OnIntensity(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
-   // TODO: Implement
+   long intensity;
+   if (eAct == MM::BeforeGet)
+   {
+      // return pos as we know it
+      int ret = GetIntensity(intensity);
+      if (ret != DEVICE_OK)
+         return ret;
+      pProp->Set(intensity);
+   }
+   else if (eAct == MM::AfterSet)
+   {
+      pProp->Get(intensity);
+      return SetIntensity(intensity);
+   }
    return DEVICE_OK;
 }
 

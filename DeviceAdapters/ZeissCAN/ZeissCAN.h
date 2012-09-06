@@ -220,6 +220,8 @@ public:
 private:
    int SetLM(bool on = true);
    int GetLM(bool& on);
+   int SetIntensity(long intensity);
+   int GetIntensity(long &intensity);
    bool initialized_;
    std::string name_;
    MM::MMTime changedTime_;
