@@ -71,7 +71,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
       "2C Reference", "stdX", "stdY", "nrPhotons"};
    private final String[] plotModes_ = {"t-X", "t-Y", "X-Y", "t-Int"};
    private final String[] renderModes_ = {"Points", "Gaussian", "Norm. Gaussian"};
-   private final String[] renderSizes_  = {"1x", "2x", "4x", "8x"};
+   private final String[] renderSizes_  = {"1x", "2x", "4x", "8x", "16x", "32x", "64x", "128x"};
    public final static String extension_ = ".tsf";
    
    // Prefs
@@ -1771,7 +1771,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
        prefs_.put(INTMAX, intensityMax_.getText());
        prefs_.put(LOADTSFDIR, loadTSFDir_);
        prefs_.putInt(RENDERMAG, visualizationMagnification_.getSelectedIndex());
-       prefs_.put(PAIRSMAXDISTANCE, pairsMaxDistanceField_.getName());
+       prefs_.put(PAIRSMAXDISTANCE, pairsMaxDistanceField_.getText());
        
        TableColumnModel cm = jTable1_.getColumnModel();
        prefs_.putInt(COL0Width, cm.getColumn(0).getWidth());
