@@ -154,7 +154,8 @@ public class LiveModeTimer {
       }
       
       try {
-         core_.stopSequenceAcquisition();
+         if (core_.isSequenceRunning())
+            core_.stopSequenceAcquisition();
          if (win_ != null) {
             win_.liveModeEnabled(false);
          }
