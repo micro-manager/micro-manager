@@ -43,8 +43,7 @@ public class DefaultTaggedImagePipeline {
       summaryMetadata_ = acqEngine.getSummaryMetadata();
 
       // Set up the DataProcessor<TaggedImage> sequence
-      ProcessorStack processorStack = new ProcessorStack((BlockingQueue) taggedImageQueue, imageProcessors);
-      BlockingQueue<TaggedImage> taggedImageQueue2 = processorStack.begin();
+      BlockingQueue<TaggedImage> taggedImageQueue2 = ProcessorStack.run(taggedImageQueue, imageProcessors);
 
       // Create the default display
       acqName_ = gui.createAcquisition(summaryMetadata_, diskCached);

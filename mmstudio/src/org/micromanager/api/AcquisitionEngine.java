@@ -26,6 +26,7 @@ package org.micromanager.api;
 import java.awt.Color;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
+import java.util.List;
 
 import mmcorej.CMMCore;
 import mmcorej.TaggedImage;
@@ -551,5 +552,7 @@ public interface AcquisitionEngine {
     * Get the image cache for the most recent acquisition.
     */
    public ImageCache getImageCache();
+   
+   public List<DataProcessor<TaggedImage>> getTaggedImageProcessors();
 
 }

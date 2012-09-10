@@ -55,7 +55,7 @@ public class NewImageFlippingProcessor extends DataProcessor<TaggedImage> {
             String camera = nextImage.tags.getString("Core-Camera");
             if (!camera.equals(controls_.getCamera())) {
                if (nextImage.tags.has("CameraChannelIndex")) {
-                  camera = MDUtils.getChannelName(nextImage.tags);
+                  camera = nextImage.tags.getString("Camera");
                }
             }
             if (!camera.equals(controls_.getCamera())) {

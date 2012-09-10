@@ -365,6 +365,35 @@
      return "";
    }
 
+   private String getMultiCameraChannel(JSONObject tags, int cameraChannelIndex) {
+      try {
+      String camera = tags.getString("Core-Camera");
+      String physCamKey = camera + "-Physical Camera " + (1 + cameraChannelIndex);
+      if (tags.has(physCamKey)) {
+         try {
+            return tags.getString(physCamKey);
+         } catch (Exception e2) {
+            return null;
+         }
+      } else {
+         return null;
+      }
+     } catch (Exception e) {
+       return null;
+     }
+
+   }
+
+   private TaggedImage createTaggedImage(Object pixels, Metadata md, int cameraChannelIndex) throws java.lang.Exception {
+      TaggedImage image = createTaggedImage(pixels, md);
+      image.tags.put("CameraChannelIndex", cameraChannelIndex);
+      String physicalCamera = getMultiCameraChannel(image.tags, cameraChannelIndex);
+      if (physicalCamera != null) {
+         image.tags.put("Camera", physicalCamera);
+      }
+      return image;
+   }
+
    private TaggedImage createTaggedImage(Object pixels, Metadata md) throws java.lang.Exception {
       JSONObject tags = metadataToMap(md);
       PropertySetting setting;
@@ -384,13 +413,14 @@
       try {
          tags.put("Binning", getProperty(getCameraDevice(), "Binning"));
       } catch (Exception ex) {}
+      
       return new TaggedImage(pixels, tags);	
    }
 
    public TaggedImage getTaggedImage(int cameraChannelIndex) throws java.lang.Exception {
       Metadata md = new Metadata();
       Object pixels = getImage(cameraChannelIndex);
-      return createTaggedImage(pixels, md);
+      return createTaggedImage(pixels, md, cameraChannelIndex);
    }
 
    public TaggedImage getTaggedImage() throws java.lang.Exception {
@@ -400,7 +430,7 @@
    public TaggedImage getLastTaggedImage(int cameraChannelIndex) throws java.lang.Exception {
       Metadata md = new Metadata();
       Object pixels = getLastImageMD(cameraChannelIndex, 0, md);
-      return createTaggedImage(pixels, md);
+      return createTaggedImage(pixels, md, cameraChannelIndex);
    }
    
    public TaggedImage getLastTaggedImage() throws java.lang.Exception {
@@ -416,7 +446,7 @@
    public TaggedImage popNextTaggedImage(int cameraChannelIndex) throws java.lang.Exception {
       Metadata md = new Metadata();
       Object pixels = popNextImageMD(cameraChannelIndex, 0, md);
-      return createTaggedImage(pixels, md);
+      return createTaggedImage(pixels, md, cameraChannelIndex);
    }
 
    public TaggedImage popNextTaggedImage() throws java.lang.Exception {

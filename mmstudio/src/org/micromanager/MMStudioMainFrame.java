@@ -118,6 +118,8 @@ import java.awt.MenuItem;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.Collections;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -132,6 +134,8 @@ import org.micromanager.acquisition.AcquisitionWrapperEngine;
 import org.micromanager.acquisition.LiveModeTimer;
 import org.micromanager.acquisition.MMAcquisition;
 import org.micromanager.acquisition.MetadataPanel;
+import org.micromanager.acquisition.ProcessorStack;
+import org.micromanager.acquisition.TaggedImageQueue;
 import org.micromanager.acquisition.TaggedImageStorageDiskDefault;
 import org.micromanager.acquisition.TaggedImageStorageMultipageTiff;
 import org.micromanager.acquisition.VirtualAcquisitionDisplay;
@@ -145,6 +149,7 @@ import org.micromanager.utils.MDUtils;
 import org.micromanager.utils.MMKeyDispatcher;
 import org.micromanager.utils.ReportingUtils;
 import org.micromanager.utils.SnapLiveContrastSettings;
+
 
 
 /*
@@ -657,6 +662,31 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface, Device
    public ImageCache getAcquisitionImageCache(String acquisitionName) throws MMScriptException {
       return getAcquisition(acquisitionName).getImageCache();
    }
+
+   
+   /*
+    * Shows images as they appear in the default display window. Uses
+    * the default processor stack to process images as they arrive on
+    * the rawImageQueue.
+    */
+    private void runDisplayThread(BlockingQueue rawImageQueue) {
+        final BlockingQueue processedImageQueue = ProcessorStack.run(rawImageQueue, getAcquisitionEngine().getTaggedImageProcessors());
+        new Thread("Display thread") {
+            public void run() {
+                TaggedImage image = null;
+                while (true) {
+                    try {
+                        image = (TaggedImage) processedImageQueue.take();
+                    } catch (InterruptedException ex) {
+                        ReportingUtils.logError(ex);
+                    }
+                   if (image == TaggedImageQueue.POISON)
+                       break;
+                   displayImage(image);
+                }
+            }
+        }.start();
+    }
 
  
    /**
@@ -2993,12 +3023,19 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface, Device
          return;
       }
 
+      BlockingQueue snapImageQueue = new LinkedBlockingQueue();
+      
       try {
          core_.snapImage();
          long c = core_.getNumberOfCameraChannels();
+         runDisplayThread(snapImageQueue);
+         
          for (int i = 0; i < c; ++i) {
-            displayImage(core_.getTaggedImage(i), (i == c - 1), i);
+            snapImageQueue.put(core_.getTaggedImage(i));
          }
+         
+         snapImageQueue.put(TaggedImageQueue.POISON);
+         
          simpleDisplay_.getImagePlus().getWindow().toFront();
          
       } catch (Exception ex) {
@@ -3007,7 +3044,12 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface, Device
    }
 
    public boolean displayImage(TaggedImage ti) {
-      return displayImage(ti, true, 0);
+       int channel = 0;
+        try {
+            channel = MDUtils.getChannelIndex(ti.tags);
+        } catch (JSONException ex) {}
+            
+      return displayImage(ti, true, channel);
    }
 
    private boolean displayImage(TaggedImage ti, boolean update, int channel) {
@@ -4574,7 +4616,6 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface, Device
       }
    }
 }
-
 class BooleanLock extends Object {
 
    private boolean value;

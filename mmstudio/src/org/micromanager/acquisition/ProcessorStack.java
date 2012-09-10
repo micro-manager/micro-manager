@@ -56,4 +56,10 @@ public class ProcessorStack<E> {
       }
    }
 
+   public static BlockingQueue run(BlockingQueue inputTaggedImageQueue, List imageProcessors) {
+      // Set up the DataProcessor<TaggedImage> sequence
+      ProcessorStack processorStack = new ProcessorStack((BlockingQueue) inputTaggedImageQueue, imageProcessors);
+      return processorStack.begin();
+   }
+   
 }
