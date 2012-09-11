@@ -3035,9 +3035,16 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface, Device
          }
          
          snapImageQueue.put(TaggedImageQueue.POISON);
-         
-         simpleDisplay_.getImagePlus().getWindow().toFront();
-         
+
+         if (simpleDisplay_ != null) {
+            ImagePlus imgp = simpleDisplay_.getImagePlus();
+            if (imgp != null) {
+               ImageWindow win = imgp.getWindow();
+               if (win != null) {
+                  win.toFront();
+               }
+            }
+         }
       } catch (Exception ex) {
          ReportingUtils.showError(ex);
       }
@@ -3046,7 +3053,11 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface, Device
    public boolean displayImage(TaggedImage ti) {
        int channel = 0;
         try {
-            channel = MDUtils.getChannelIndex(ti.tags);
+           if (ti.tags.has("CameraChannelIndex")) {
+            channel = ti.tags.getInt("CameraChannelIndex");
+           } else {
+               channel = MDUtils.getChannelIndex(ti.tags);
+           }
         } catch (JSONException ex) {}
             
       return displayImage(ti, true, channel);

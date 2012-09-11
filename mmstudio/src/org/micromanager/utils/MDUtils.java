@@ -85,6 +85,7 @@ public class MDUtils {
       map.put("SliceIndex", sliceIndex);
       map.put("Slice", sliceIndex);
    }
+   
 
    public static int getChannelIndex(JSONObject map) throws JSONException {
       return map.getInt("ChannelIndex");
