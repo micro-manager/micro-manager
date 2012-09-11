@@ -669,24 +669,34 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface, Device
     * the default processor stack to process images as they arrive on
     * the rawImageQueue.
     */
-    private void runDisplayThread(BlockingQueue rawImageQueue) {
-        final BlockingQueue processedImageQueue = ProcessorStack.run(rawImageQueue, getAcquisitionEngine().getTaggedImageProcessors());
-        new Thread("Display thread") {
-            public void run() {
-                TaggedImage image = null;
-                while (true) {
-                    try {
-                        image = (TaggedImage) processedImageQueue.take();
-                    } catch (InterruptedException ex) {
-                        ReportingUtils.logError(ex);
-                    }
-                   if (image == TaggedImageQueue.POISON)
-                       break;
-                   displayImage(image);
-                }
+   private void runDisplayThread(BlockingQueue rawImageQueue, final boolean album) {
+      final BlockingQueue processedImageQueue = ProcessorStack.run(rawImageQueue, getAcquisitionEngine().getTaggedImageProcessors());
+      new Thread("Display thread") {
+         public void run() {
+            while (true) {
+               try {
+                  final TaggedImage image = (TaggedImage) processedImageQueue.take();
+                  if (image == TaggedImageQueue.POISON) {
+                     break;
+                  }
+                  normalizeTags(image);
+                  if (album) {
+                     try {
+                        addToAlbum(image);
+                     } catch (MMScriptException ex) {
+                        ReportingUtils.showError(ex);
+                     }
+                  } else {
+                     displayImage(image);
+                  }
+               } catch (InterruptedException ex) {
+                  ReportingUtils.logError(ex);
+               }
+
             }
-        }.start();
-    }
+         }
+      }.start();
+   }
 
  
    /**
@@ -2970,7 +2980,11 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface, Device
    }
 
    public boolean displayImage(final Object pixels) {
-      return displayImage(pixels, true);
+      if (pixels instanceof TaggedImage) {
+         return displayTaggedImage((TaggedImage) pixels, true);
+      } else {
+         return displayImage(pixels, true);
+      }
    }
 
 
@@ -3018,6 +3032,10 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface, Device
    }
 
    public void doSnap() {
+      doSnap(false);
+   }
+
+   public void doSnap(boolean album) {
       if (core_.getCameraDevice().length() == 0) {
          ReportingUtils.showError("No camera configured");
          return;
@@ -3028,7 +3046,7 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface, Device
       try {
          core_.snapImage();
          long c = core_.getNumberOfCameraChannels();
-         runDisplayThread(snapImageQueue);
+         runDisplayThread(snapImageQueue, album);
          
          for (int i = 0; i < c; ++i) {
             snapImageQueue.put(core_.getTaggedImage(i));
@@ -3050,28 +3068,32 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface, Device
       }
    }
 
-   public boolean displayImage(TaggedImage ti) {
-       int channel = 0;
+   public void normalizeTags(TaggedImage ti) {
+         int channel = 0;
         try {
            if (ti.tags.has("CameraChannelIndex")) {
             channel = ti.tags.getInt("CameraChannelIndex");
            } else {
                channel = MDUtils.getChannelIndex(ti.tags);
            }
-        } catch (JSONException ex) {}
-            
-      return displayImage(ti, true, channel);
-   }
-
-   private boolean displayImage(TaggedImage ti, boolean update, int channel) {
-      try {
-         checkSimpleAcquisition(ti);
-         setCursor(new Cursor(Cursor.WAIT_CURSOR));
-         ti.tags.put("Summary", getAcquisition(SIMPLE_ACQ).getSummaryMetadata());
          ti.tags.put("ChannelIndex", channel);
          ti.tags.put("PositionIndex", 0);
          ti.tags.put("SliceIndex", 0);
          ti.tags.put("FrameIndex", 0);
+        } catch (JSONException ex) {}
+   }
+
+
+   public boolean displayImage(TaggedImage ti) {
+      normalizeTags(ti);
+      return displayTaggedImage(ti, true);
+   }
+
+   private boolean displayTaggedImage(TaggedImage ti, boolean update) {
+      try {
+         checkSimpleAcquisition(ti);
+         setCursor(new Cursor(Cursor.WAIT_CURSOR));
+         ti.tags.put("Summary", getAcquisition(SIMPLE_ACQ).getSummaryMetadata());
          addStagePositionToTags(ti);
          addImage(SIMPLE_ACQ, ti, update, true);
       } catch (Exception ex) {
@@ -4420,7 +4442,7 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface, Device
          if (this.isLiveModeOn()) {
             copyFromLiveModeToAlbum(simpleDisplay_);
          } else {
-            getAcquisitionEngine2010().acquireSingle();
+            doSnap(true);
          }
       } catch (Exception ex) {
          ReportingUtils.logError(ex);
