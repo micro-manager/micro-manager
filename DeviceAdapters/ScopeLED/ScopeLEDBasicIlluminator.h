@@ -25,9 +25,15 @@ License along with this software.  If not, see
 #include "USBCommAdapter.h"
 #include <DeviceBase.h>
 #include <time.h>
+#include <fstream>
+
+//#define SCOPELED_DEBUGLOG
 
 template <class T> class ScopeLEDBasicIlluminator : public CShutterBase<T>
 {
+#ifdef SCOPELED_DEBUGLOG
+    std::ofstream m_LogFile;
+#endif
     long m_version;
 protected:
     HANDLE m_hDevice;
@@ -47,15 +53,21 @@ protected:
     {
         int ok = DEVICE_OK;
 
-        if (NULL == m_hDevice) return DEVICE_NOT_CONNECTED;
-
-        /*
-        s_LogFile << "<(Tx)";
+        if (NULL == m_hDevice)
+        {
+#ifdef SCOPELED_DEBUGLOG
+            m_LogFile << "ScopeLEDBasicIlluminator Transact DEVICE_NOT_CONNECTED" << std::endl;
+#endif
+            return DEVICE_NOT_CONNECTED;
+        }
+        
+#ifdef SCOPELED_DEBUGLOG
+        m_LogFile << "<(Tx)";
         for (unsigned long i=0; i < cbCommand; i++)
         {
-            s_LogFile << " 0x" << std::hex << (int) pCommand[i];
+            m_LogFile << " 0x" << std::hex << (int) pCommand[i];
         }
-        */
+#endif
         
         m_lastDeviceResult = -1;
         unsigned long length = cbCommand;
@@ -63,26 +75,30 @@ protected:
         if (FALSE == g_USBCommAdapter.Write(m_hDevice, pCommand, &length))
         {
             ok = DEVICE_ERR;
-            //s_LogFile << " {FAILED!}" << std::endl;
+#ifdef SCOPELED_DEBUGLOG
+            m_LogFile << " {FAILED!}" << std::endl;
+#endif
         }
         else
         {
             bool repeat;
-            //s_LogFile << std::endl;
+#ifdef SCOPELED_DEBUGLOG
+            m_LogFile << std::endl;
+#endif
             do
             {
                 repeat = false;
                 memset(pRxBuffer, 0, *pcbRxBuffer);
                 int result = g_USBCommAdapter.Read(m_hDevice, pRxBuffer, pcbRxBuffer, DefaultTimeoutRx(), m_evAbortRx);
 
-                /*
-                s_LogFile << ">(Rx)";
+#ifdef SCOPELED_DEBUGLOG
+                m_LogFile << ">(Rx)";
                 for (unsigned long i=0; i < *pcbRxBuffer; i++)
                 {
-                    s_LogFile << " 0x" << std::hex << (int) pRxBuffer[i];
+                    m_LogFile << " 0x" << std::hex << (int) pRxBuffer[i];
                 }
-                s_LogFile << std::endl;
-                */
+                m_LogFile << std::endl;
+#endif
                 
                 if (FALSE == result)
                 {
@@ -127,9 +143,24 @@ protected:
             if (FALSE != result)
             {
                 SetProperty("SerialNumber", pBuffer);
+#ifdef SCOPELED_DEBUGLOG
+                m_LogFile << "ScopeLEDBasicIlluminator QuerySerialNumber: " << pBuffer << std::endl;
+#endif
             }
+#ifdef SCOPELED_DEBUGLOG
+            else
+            {
+                m_LogFile << "ScopeLEDBasicIlluminator QuerySerialNumber Failed B, " << result << std::endl;
+            }
+#endif
             delete [] pBuffer;
         }
+#ifdef SCOPELED_DEBUGLOG
+        else
+        {
+            m_LogFile << "ScopeLEDBasicIlluminator QuerySerialNumber Failed A, " << cbBuffer << std::endl;
+        }
+#endif
     }
 
     long GetVersion()
@@ -168,18 +199,80 @@ protected:
         return m_version;
     }
 
+    int SetShutter(bool open)
+    {
+        unsigned char cmdbuf[6];
+        memset(cmdbuf, 0, sizeof(cmdbuf));
+        cmdbuf[0] = 0xA9;  // Start Byte
+        cmdbuf[1] = 0x03;  // Length Byte
+        cmdbuf[2] =   41;  // Command Byte - MSG_SET_MASTER_ENABLE
+        cmdbuf[3] = open;
+        cmdbuf[5] = 0x5C;  // End Byte
+
+        unsigned char* const pChecksum = &cmdbuf[4];
+        unsigned char* const pStart = &cmdbuf[1];
+
+        *pChecksum = g_USBCommAdapter.CalculateChecksum(pStart, *pStart);
+        int result = Transact(cmdbuf, sizeof(cmdbuf));
+#ifdef SCOPELED_DEBUGLOG
+        m_LogFile << "ScopeLEDBasicIlluminator SetShutter, " << result << std::endl;
+#endif
+        return result;
+    }
+
+    int GetShutter(bool& open)
+    {
+        unsigned char cmdbuf[5];
+        memset(cmdbuf, 0, sizeof(cmdbuf));
+        cmdbuf[0] = 0xA9;  // Start Byte
+        cmdbuf[1] = 0x02;  // Length Byte
+        cmdbuf[2] =   42;  // Command Byte - MSG_GET_MASTER_ENABLE
+        cmdbuf[4] = 0x5C;  // End Byte
+
+        unsigned char* const pChecksum = &cmdbuf[3];
+        unsigned char* const pStart = &cmdbuf[1];
+
+        *pChecksum = g_USBCommAdapter.CalculateChecksum(pStart, *pStart);
+
+        unsigned char RxBuffer[16];
+        unsigned long cbRxBuffer = sizeof(RxBuffer);
+        int result = Transact(cmdbuf, sizeof(cmdbuf), RxBuffer, &cbRxBuffer);
+
+        if ((DEVICE_OK == result) && (cbRxBuffer >= 5))
+        {
+            open = 0 != RxBuffer[4];
+        }
+        else
+        {
+            open = false;
+        }
+#ifdef SCOPELED_DEBUGLOG
+        m_LogFile << "ScopeLEDBasicIlluminator GetShutter, " << result << std::endl;
+#endif
+        return result;
+    }
+
 public:
     ScopeLEDBasicIlluminator() :
         m_hDevice(NULL),
         m_TxnTime(0), m_lastDeviceResult(-1), 
         m_vid(0x24C2), m_pid(0), m_version(0),
         m_evAbortRx(CreateEvent(NULL, TRUE, FALSE, NULL))
+#ifdef SCOPELED_DEBUGLOG
+        ,m_LogFile("c:\\mmlog.txt")
+#endif
     {
+#ifdef SCOPELED_DEBUGLOG
+        m_LogFile << "ScopeLEDBasicIlluminator ctor" << std::endl;
+#endif
         CreateProperty("SerialNumber", "", MM::String, false, NULL, true);
     }
     ~ScopeLEDBasicIlluminator()
     {
         CloseHandle(m_evAbortRx);
+#ifdef SCOPELED_DEBUGLOG
+        m_LogFile << "ScopeLEDBasicIlluminator dtor" << std::endl;
+#endif
     }
 
     int Shutdown()
@@ -188,6 +281,9 @@ public:
         m_hDevice = NULL;
         m_version = 0;
         SetProperty("SerialNumber", "");
+#ifdef SCOPELED_DEBUGLOG
+        m_LogFile << "ScopeLEDBasicIlluminator Shutdown" << std::endl;
+#endif
         return DEVICE_OK;
     }
 

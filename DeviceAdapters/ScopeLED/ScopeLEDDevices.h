@@ -24,12 +24,12 @@ License along with this software.  If not, see
 #include "ScopeLEDBasicIlluminator.h"
 
 #define SCOPELED_ILLUMINATOR_CHANNELS_MAX 4
-class ScopeLEDMicroscopeIlluminator : public ScopeLEDBasicIlluminator<ScopeLEDMicroscopeIlluminator>
+class ScopeLEDMSBMicroscopeIlluminator : public ScopeLEDBasicIlluminator<ScopeLEDMSBMicroscopeIlluminator>
 {
     bool m_state;
 public:
-    ScopeLEDMicroscopeIlluminator(); 
-    ~ScopeLEDMicroscopeIlluminator();
+    ScopeLEDMSBMicroscopeIlluminator(); 
+    ~ScopeLEDMSBMicroscopeIlluminator();
 
     int Initialize();
 
@@ -46,6 +46,36 @@ public:
     int OnChannel3Brightness(MM::PropertyBase* pProp, MM::ActionType eAct);
     int OnChannel4Brightness(MM::PropertyBase* pProp, MM::ActionType eAct);
     
+    static const char* DeviceName;
+    static const char* DeviceDescription;
+
+private:
+    double brightness[SCOPELED_ILLUMINATOR_CHANNELS_MAX];
+};
+
+class ScopeLEDMSMMicroscopeIlluminator : public ScopeLEDBasicIlluminator<ScopeLEDMSMMicroscopeIlluminator>
+{
+public:
+    ScopeLEDMSMMicroscopeIlluminator(); 
+    ~ScopeLEDMSMMicroscopeIlluminator();
+
+    int Initialize();
+
+    void GetName (char* pszName) const;
+
+// Shutter API
+    int SetOpen (bool open = true);
+    int GetOpen(bool& open);
+
+// action interface
+    int OnChannelBrightness(int index, MM::PropertyBase* pProp, MM::ActionType eAct);
+    int OnChannel1Brightness(MM::PropertyBase* pProp, MM::ActionType eAct);
+    int OnChannel2Brightness(MM::PropertyBase* pProp, MM::ActionType eAct);
+    int OnChannel3Brightness(MM::PropertyBase* pProp, MM::ActionType eAct);
+    int OnChannel4Brightness(MM::PropertyBase* pProp, MM::ActionType eAct);
+
+    int SetColor(bool on);
+
     static const char* DeviceName;
     static const char* DeviceDescription;
 
