@@ -3051,6 +3051,8 @@ void CMMCore::setProperty(const char* label, const char* propName,
          err.setCoreMsg(getCoreErrorText(err.getCode()).c_str());
          throw;
       }
+      
+      MMThreadGuard guard(pluginManager_.getModuleLock(pDevice));
 
       int nRet = pDevice->SetProperty(propName, propValue);
       if (nRet != DEVICE_OK) {
@@ -3127,10 +3129,6 @@ void CMMCore::setProperty(const char* label, const char* propName,
    ovalue << propValue;
    setProperty(label, propName, ovalue.str().c_str());
 }
-
-
-
-
 
 
 /**
@@ -3682,6 +3680,7 @@ void CMMCore::clearROI() throw (CMMError)
 void CMMCore::setState(const char* deviceLabel, long state) throw (CMMError)
 {
    MM::State* pStateDev = getSpecificDevice<MM::State>(deviceLabel);
+   MMThreadGuard guard(pluginManager_.getModuleLock(pStateDev));
 
    int nRet = pStateDev->SetPosition(state);
    if (nRet != DEVICE_OK)
@@ -3710,9 +3709,10 @@ void CMMCore::setState(const char* deviceLabel, long state) throw (CMMError)
  * @return long current state
  * @param const char* deviceLabel device label
  */
-long CMMCore::getState(const char* deviceLabel) const throw (CMMError)
+long CMMCore::getState(const char* deviceLabel) throw (CMMError)
 {
    MM::State* pStateDev = getSpecificDevice<MM::State>(deviceLabel);
+   MMThreadGuard guard(pluginManager_.getModuleLock(pStateDev));
 
    long state;
    int nRet = pStateDev->GetPosition(state);
@@ -4789,7 +4789,7 @@ void CMMCore::setSerialPortCommand(const char* name, const char* command, const 
 }
 
 /**
- * Continouously read from the serial port until the terminating sequence is encountered.
+ * Continuously read from the serial port until the terminating sequence is encountered.
  */
 std::string CMMCore::getSerialPortAnswer(const char* name, const char* term) throw (CMMError) 
 {

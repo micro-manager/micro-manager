@@ -90,7 +90,6 @@ int main(int argc, char* argv[])
             std::cout.flush();
          }
       }
-      // add any testing routines here...
 
       // clean-up before exiting
       core.unloadAllDevices();

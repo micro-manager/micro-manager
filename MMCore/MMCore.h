@@ -349,7 +349,7 @@ public:
    */
    //@ {
    void setState(const char* deviceLabel, long state) throw (CMMError);
-   long getState(const char* deviceLabel) const throw (CMMError);
+   long getState(const char* deviceLabel) throw (CMMError);
    long getNumberOfStates(const char* deviceLabel);
    void setStateLabel(const char* deviceLabel, const char* stateLabel) throw (CMMError);
    std::string getStateLabel(const char* deviceLabel) const throw (CMMError);
