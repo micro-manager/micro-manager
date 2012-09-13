@@ -31,12 +31,13 @@ License along with this software.  If not, see
 
 template <class T> class ScopeLEDBasicIlluminator : public CShutterBase<T>
 {
-#ifdef SCOPELED_DEBUGLOG
-    std::ofstream m_LogFile;
-#endif
     long m_version;
 protected:
     HANDLE m_hDevice;
+
+#ifdef SCOPELED_DEBUGLOG
+    std::ofstream m_LogFile;
+#endif
 
     long m_TxnTime;
     long m_lastDeviceResult;
@@ -252,6 +253,11 @@ protected:
         return result;
     }
 
+    virtual void ClearOpticalState()
+    {
+
+    }
+
 public:
     ScopeLEDBasicIlluminator() :
         m_hDevice(NULL),
@@ -284,6 +290,7 @@ public:
 #ifdef SCOPELED_DEBUGLOG
         m_LogFile << "ScopeLEDBasicIlluminator Shutdown" << std::endl;
 #endif
+        ClearOpticalState();
         return DEVICE_OK;
     }
 

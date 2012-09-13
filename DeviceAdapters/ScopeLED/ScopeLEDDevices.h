@@ -48,13 +48,15 @@ public:
     
     static const char* DeviceName;
     static const char* DeviceDescription;
-
+protected:
+    void ClearOpticalState();
+    
 private:
     double brightness[SCOPELED_ILLUMINATOR_CHANNELS_MAX];
 };
 
 class ScopeLEDMSMMicroscopeIlluminator : public ScopeLEDBasicIlluminator<ScopeLEDMSMMicroscopeIlluminator>
-{
+{    
 public:
     ScopeLEDMSMMicroscopeIlluminator(); 
     ~ScopeLEDMSMMicroscopeIlluminator();
@@ -74,13 +76,27 @@ public:
     int OnChannel3Brightness(MM::PropertyBase* pProp, MM::ActionType eAct);
     int OnChannel4Brightness(MM::PropertyBase* pProp, MM::ActionType eAct);
 
-    int SetColor(bool on);
+    int OnPresetModeBrightness(int index, MM::PropertyBase* pProp, MM::ActionType eAct);
+    int OnPresetMode1Brightness(MM::PropertyBase* pProp, MM::ActionType eAct);
+    int OnPresetMode2Brightness(MM::PropertyBase* pProp, MM::ActionType eAct);
+    int OnPresetMode3Brightness(MM::PropertyBase* pProp, MM::ActionType eAct);
+    int OnPresetMode4Brightness(MM::PropertyBase* pProp, MM::ActionType eAct);
+    int OnPresetMode5Brightness(MM::PropertyBase* pProp, MM::ActionType eAct);
+    int OnPresetMode6Brightness(MM::PropertyBase* pProp, MM::ActionType eAct);
 
     static const char* DeviceName;
     static const char* DeviceDescription;
+protected:
+    void ClearOpticalState();
 
 private:
-    double brightness[SCOPELED_ILLUMINATOR_CHANNELS_MAX];
+    double brightnessRawChannel[SCOPELED_ILLUMINATOR_CHANNELS_MAX];
+    double activePresetModeBrightness;
+    int activePresetModeIndex;
+
+    int SetColor(bool on);
+    //int GetPresetMode(unsigned char mode);
+    int PlayPresetMode(int mode, double brightness);
 };
 
 #define MAX_FMI_LED_GROUPS 9
@@ -148,6 +164,9 @@ public:
         long led_group;
         std::string info;
     } m_ActiveWavelengths, m_ActiveChannels;
+
+protected:
+    void ClearOpticalState();
     
 private:
 
