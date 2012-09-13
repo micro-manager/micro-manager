@@ -282,6 +282,11 @@ public class MultipageTiffWriter {
      if (img.tags.has("Summary")) {
         img.tags.remove("Summary");
      }
+      try {
+         img.tags.put("FileName",imageFileName_);
+      } catch (JSONException ex) {
+         ReportingUtils.logError("Error adding filename to metadata");
+      }
      String mdString = img.tags.toString() + " ";
       
      //2 bytes for number of directory entries
@@ -609,8 +614,7 @@ public class MultipageTiffWriter {
       sb.append("{" + "\r\n");
       sb.append("\"Summary\": ");
       sb.append(summaryMetadata_.toString(2));
-      for (JSONObject md : allMetadata_) {
-         md.put("FileName",imageFileName_);
+      for (JSONObject md : allMetadata_) {        
          sb.append(",\r\n"); 
          sb.append("\"" + "FrameKey-" + MDUtils.getFrameIndex(md)
                  + "-" + MDUtils.getChannelIndex(md) + "-" + MDUtils.getSliceIndex(md) + "\": ");
