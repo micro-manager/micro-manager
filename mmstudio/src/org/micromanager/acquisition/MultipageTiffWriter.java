@@ -32,14 +32,14 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import loci.common.services.DependencyException;
-import loci.common.services.ServiceException;
-import loci.common.services.ServiceFactory;
-import loci.formats.FormatException;
-import loci.formats.MetadataTools;
-import loci.formats.in.MicromanagerReader;
-import loci.formats.meta.IMetadata;
-import loci.formats.services.OMEXMLService;
+//import loci.common.services.DependencyException;
+//import loci.common.services.ServiceException;
+//import loci.common.services.ServiceFactory;
+//import loci.formats.FormatException;
+//import loci.formats.MetadataTools;
+//import loci.formats.in.MicromanagerReader;
+//import loci.formats.meta.IMetadata;
+//import loci.formats.services.OMEXMLService;
 import mmcorej.TaggedImage;
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -556,7 +556,8 @@ public class MultipageTiffWriter {
       bytesPerImagePixels_ = imageHeight_*imageWidth_*byteDepth_*(rgb_?3:1);
    }
    
-   private String writeOMEMetadata() throws FormatException, IOException {
+   private String writeOMEMetadata() throws IOException {
+   //private String writeOMEMetadata() throws FormatException, IOException {
 
 //      String allMetadata = "";
 //      try {
