@@ -694,6 +694,13 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
 
    protected boolean enoughDiskSpace() {
       File root = new File(rootName_);
+      //Need to find a file that exists to check space
+      while (!root.exists()) {
+         root = root.getParentFile();
+         if (root == null) {
+            return false;
+         }
+      }
       long usableMB = root.getUsableSpace() / (1024 * 1024);
       return (1.25 * getTotalMB()) < usableMB;
    }
