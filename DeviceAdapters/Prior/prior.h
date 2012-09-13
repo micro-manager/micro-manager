@@ -159,7 +159,8 @@ private:
    int GetDblParameter(const char* command, double& param);
    int GetPositionStepsSingle(char axis, long& steps);
    bool HasCommand(std::string command);
-  
+   bool ControllerBusy();
+
    MMThreadLock lock_;
    bool initialized_;
    std::string port_;
@@ -170,6 +171,7 @@ private:
    double originY_;
    bool mirrorX_;
    bool mirrorY_;
+   MM::MMTime changedTime_;
 };
 
 class ZStage : public CStageBase<ZStage>

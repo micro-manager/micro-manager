@@ -747,6 +747,8 @@ XYStage::XYStage() :
    // Port
    CPropertyAction* pAct = new CPropertyAction (this, &XYStage::OnPort);
    CreateProperty(MM::g_Keyword_Port, "Undefined", MM::String, false, pAct, true);
+
+   EnableDelay();
 }
 
 XYStage::~XYStage()
@@ -822,6 +824,9 @@ int XYStage::Initialize()
    if (ret != DEVICE_OK)
       return ret;
 
+   // Needed for Busy flag
+   changedTime_ = GetCurrentMMTime();
+
    initialized_ = true;
    return DEVICE_OK;
 }
@@ -836,6 +841,24 @@ int XYStage::Shutdown()
 }
 
 bool XYStage::Busy()
+{
+   if (ControllerBusy()) {
+      changedTime_ = GetCurrentMMTime();
+      return true;
+   }
+
+   if (GetDelayMs() > 0.0) {
+      MM::MMTime interval = GetCurrentMMTime() - changedTime_;
+      MM::MMTime delay(GetDelayMs()*1000.0);
+      if (interval < delay ) {
+         return true;
+      }
+   }
+
+   return false;
+}
+
+bool XYStage::ControllerBusy()
 {
    MMThreadGuard guard(lock_);
 
