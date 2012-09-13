@@ -272,10 +272,10 @@ public:
    */
    //@ {
    void setROI(int x, int y, int xSize, int ySize) throw (CMMError); 
-   void getROI(int& x, int& y, int& xSize, int& ySize) const throw (CMMError); 
+   void getROI(int& x, int& y, int& xSize, int& ySize) throw (CMMError); 
    void clearROI() throw (CMMError);
    void setExposure(double exp) throw (CMMError);
-   double getExposure() const throw (CMMError);
+   double getExposure() throw (CMMError);
    void* getImage() throw (CMMError);
    void* getImage(unsigned numChannel) throw (CMMError);
    void snapImage() throw (CMMError);

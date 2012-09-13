@@ -1828,6 +1828,8 @@ void CMMCore::snapImage() throw (CMMError)
             ,MMERR_NotAllowedDuringSequenceAcquisition);
       }
 
+      MMThreadGuard guard(pluginManager_.getModuleLock(camera_));
+
       int ret = DEVICE_OK;
       try {
 
@@ -2017,6 +2019,7 @@ void* CMMCore::getImage() throw (CMMError)
 
       void* pBuf(0);
       try {
+         MMThreadGuard guard(pluginManager_.getModuleLock(camera_));
          pBuf = const_cast<unsigned char*> (camera_->GetImageBuffer());
 		
       	if (imageProcessor_)
@@ -2058,6 +2061,7 @@ void* CMMCore::getImage(unsigned channelNr) throw (CMMError)
    {
       void* pBuf(0);
       try {
+         MMThreadGuard guard(pluginManager_.getModuleLock(camera_));
          pBuf = const_cast<unsigned char*> (camera_->GetImageBuffer(channelNr));
 		
       	if (imageProcessor_)
@@ -3582,6 +3586,7 @@ void CMMCore::setExposure(double dExp) throw (CMMError)
 {
    if (camera_)
    {
+      MMThreadGuard guard(pluginManager_.getModuleLock(camera_));
       camera_->SetExposure(dExp);
       if (camera_->HasProperty(MM::g_Keyword_Exposure))
       {
@@ -3600,10 +3605,13 @@ void CMMCore::setExposure(double dExp) throw (CMMError)
  * Returns the current exposure setting of the camera in milliseconds.
  * @return double dExp exposure in milliseconds
  */
-double CMMCore::getExposure() const throw (CMMError)
+double CMMCore::getExposure() throw (CMMError)
 {
    if (camera_)
+   {
+      MMThreadGuard guard(pluginManager_.getModuleLock(camera_));
       return camera_->GetExposure();
+   }
    else
       //throw CMMError(getCoreErrorText(MMERR_CameraNotAvailable).c_str(), MMERR_CameraNotAvailable);
       return 0.0;
@@ -3622,6 +3630,7 @@ void CMMCore::setROI(int x, int y, int xSize, int ySize) throw (CMMError)
 {
    if (camera_)
    {
+      MMThreadGuard guard(pluginManager_.getModuleLock(camera_));
       int nRet = camera_->SetROI(x, y, xSize, ySize);
       if (nRet != DEVICE_OK)
          throw CMMError(getDeviceErrorText(nRet, camera_).c_str(), MMERR_DEVICE_GENERIC);
@@ -3640,11 +3649,12 @@ void CMMCore::setROI(int x, int y, int xSize, int ySize) throw (CMMError)
  * @param int xSize horizontal dimension
  * @param int ySize vertical dimension
  */
-void CMMCore::getROI(int& x, int& y, int& xSize, int& ySize) const throw (CMMError)
+void CMMCore::getROI(int& x, int& y, int& xSize, int& ySize) throw (CMMError)
 {
    unsigned uX(0), uY(0), uXSize(0), uYSize(0);
    if (camera_)
    {
+      MMThreadGuard guard(pluginManager_.getModuleLock(camera_));
       int nRet = camera_->GetROI(uX, uY, uXSize, uYSize);
       if (nRet != DEVICE_OK)
          throw CMMError(getDeviceErrorText(nRet, camera_).c_str(), MMERR_DEVICE_GENERIC);
@@ -3664,6 +3674,7 @@ void CMMCore::clearROI() throw (CMMError)
    if (camera_)
    {
       // effectively clears the current ROI setting
+      MMThreadGuard guard(pluginManager_.getModuleLock(camera_));
       int nRet = camera_->ClearROI();
       if (nRet != DEVICE_OK)
          throw CMMError(getDeviceErrorText(nRet, camera_).c_str(), MMERR_DEVICE_GENERIC);
