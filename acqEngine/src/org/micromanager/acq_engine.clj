@@ -274,7 +274,8 @@
       (device-best-effort (core getCameraDevice) (core snapImage))
       (swap! state assoc :last-image-time (elapsed-time @state))
       (when close-after
-        (set-shutter-open false)))))
+        (set-shutter-open false)
+        (wait-for-device shutter)))))
 
 (defn load-property-sequences [property-sequences]
   (let [new-seq (not= property-sequences @active-property-sequences)]
