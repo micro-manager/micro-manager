@@ -91,7 +91,7 @@ public class OptionsDlg extends MMDialog {
       setTitle("Micro-Manager Options");
       springLayout = new SpringLayout();
       getContentPane().setLayout(springLayout);
-      setBounds(100, 100, 371, 300);
+      setBounds(100, 100, 371, 340);
       guiColors_ = new GUIColors();
       Dimension buttonSize = new Dimension(120, 20);
 
@@ -376,6 +376,7 @@ public class OptionsDlg extends MMDialog {
             }
          }
       );
+      
       getContentPane().add(prefZoomCombo);
       springLayout.putConstraint(SpringLayout.NORTH, prefZoomCombo, 30, SpringLayout.NORTH, closeOnExitCheckBox);
       springLayout.putConstraint(SpringLayout.WEST, prefZoomCombo, 90, SpringLayout.WEST, autoreloadDevicesCheckBox);
@@ -385,6 +386,32 @@ public class OptionsDlg extends MMDialog {
       
       springLayout.putConstraint(SpringLayout.WEST, prefZoomLabel, 20, SpringLayout.WEST, getContentPane());
       springLayout.putConstraint(SpringLayout.NORTH, prefZoomLabel, 5, SpringLayout.NORTH, prefZoomCombo);
+      
+      
+      final JCheckBox metadataFileWithMultipageTiffCheckBox = new JCheckBox();
+      metadataFileWithMultipageTiffCheckBox.addActionListener(new ActionListener() {
+         public void actionPerformed(ActionEvent arg0) {
+            opts_.multipageTiffMetadataFile_ = metadataFileWithMultipageTiffCheckBox.isSelected();
+         }
+      });
+      metadataFileWithMultipageTiffCheckBox.setText("Create metadata txt file with multi-image file saving");
+      getContentPane().add(metadataFileWithMultipageTiffCheckBox);
+      springLayout.putConstraint(SpringLayout.WEST, metadataFileWithMultipageTiffCheckBox, 20, SpringLayout.WEST, getContentPane());
+      springLayout.putConstraint(SpringLayout.NORTH, metadataFileWithMultipageTiffCheckBox, 10, SpringLayout.SOUTH, prefZoomLabel);
+      
+      
+      final JCheckBox omeTiffCheckBox = new JCheckBox();
+      omeTiffCheckBox.addActionListener(new ActionListener() {
+         public void actionPerformed(ActionEvent arg0) {
+            opts_.omeTiff_ = omeTiffCheckBox.isSelected();
+         }
+      });
+      omeTiffCheckBox.setText("Save multi-image files as OME Tiffs (coming soon...)");
+      getContentPane().add(omeTiffCheckBox);
+      springLayout.putConstraint(SpringLayout.WEST, omeTiffCheckBox, 20, SpringLayout.WEST, getContentPane());
+      springLayout.putConstraint(SpringLayout.NORTH, omeTiffCheckBox, 0, SpringLayout.SOUTH, metadataFileWithMultipageTiffCheckBox);
+      
+      
       
    }
 

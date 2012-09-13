@@ -147,30 +147,6 @@ public class TaggedImageStorageMultipageTiff implements TaggedImageStorage {
       return tiffReadersByLabel_.get(label).readImage(label).tags;   
    }
 
-   private String createFilename(int positionIndex, int fileIndex) {
-      String filename = "";
-      try {
-         String prefix = summaryMetadata_.getString("Prefix");
-         if (prefix.length() == 0) {
-            filename = "images";
-         } else {
-            filename = prefix + "_images";
-         }
-      } catch (JSONException ex) {
-         ReportingUtils.logError("Can't find Prefix in summary metadata");
-         filename = "images";
-      }
-      if (numPositions_ > 0 ) {
-//TODO: put position name if it exists
-         filename += "_" + positionIndex;
-      }
-      if (fileIndex > 0) {
-         filename += "_" +fileIndex;
-      }
-      filename += ".tif";
-      return filename;
-   }
-
    @Override
    public void putImage(TaggedImage taggedImage) throws MMException {
       if (!newDataSet_) {
@@ -211,10 +187,8 @@ public class TaggedImageStorageMultipageTiff implements TaggedImageStorage {
       }
       if (tiffWritersByPosition_.get(positionIndex) == null || tiffWritersByPosition_.get(positionIndex).isClosed()) {
          numFiles_.put(positionIndex, fileIndex);
-         String filename = createFilename(positionIndex, fileIndex);
-         File f = new File(directory_ + "/" + filename);
 
-         MultipageTiffWriter writer = new MultipageTiffWriter(f, summaryMetadata_, taggedImage);    
+         MultipageTiffWriter writer = new MultipageTiffWriter(directory_,positionIndex,fileIndex, summaryMetadata_, taggedImage);    
          tiffWritersByPosition_.put(positionIndex, writer);
          tiffReadersByPosition_.put(positionIndex, new MultipageTiffReader(summaryMetadata_, writer));
       }

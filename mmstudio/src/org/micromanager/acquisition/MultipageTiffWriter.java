@@ -22,16 +22,24 @@
 package org.micromanager.acquisition;
 
 import ij.ImageJ;
-import java.io.File;
-import java.io.IOException;
-import java.io.RandomAccessFile;
-import java.io.UnsupportedEncodingException;
+import java.io.*;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.CharBuffer;
 import java.nio.channels.FileChannel;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedList;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import loci.common.services.DependencyException;
+import loci.common.services.ServiceException;
+import loci.common.services.ServiceFactory;
+import loci.formats.FormatException;
+import loci.formats.MetadataTools;
+import loci.formats.in.MicromanagerReader;
+import loci.formats.meta.IMetadata;
+import loci.formats.services.OMEXMLService;
 import mmcorej.TaggedImage;
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -78,8 +86,15 @@ public class MultipageTiffWriter {
    
    public static final ByteOrder BYTE_ORDER = ByteOrder.BIG_ENDIAN;
    
+   
+   final private boolean omeTiff_;
+   final private boolean seperateMetadataFile_;
+   
    private RandomAccessFile raFile_;
    private FileChannel fileChannel_; 
+   private String directory_;  
+   private String imageFileName_;
+   private String metadataFileName_;
    private long filePosition_ = 0;
    private int numChannels_ = 1, numFrames_ = 1, numSlices_ = 1;
    private HashMap<String, Long> indexMap_;
@@ -88,8 +103,21 @@ public class MultipageTiffWriter {
    private boolean rgb_ = false;
    private int byteDepth_, imageWidth_, imageHeight_, bytesPerImagePixels_;
    private LinkedList<ByteBuffer> buffers_;
+   private boolean firstIFD_ = true;
+   private long omeDescriptionTagPosition_;
+   private ArrayList<JSONObject> allMetadata_;
+   private JSONObject summaryMetadata_;
 
-   public MultipageTiffWriter(File f, JSONObject summaryMD, TaggedImage firstImage) {
+   public MultipageTiffWriter(String directory, int positionIndex, int fileIndex, JSONObject summaryMD, TaggedImage firstImage) {
+      omeTiff_ = MMStudioMainFrame.getInstance().getOMETiffEnabled();
+      seperateMetadataFile_ = MMStudioMainFrame.getInstance().getMetadataFileWithMultipageTiff();
+      directory_ = directory;
+             
+      String baseFileName = createBaseFilename(summaryMD, positionIndex, fileIndex);
+      imageFileName_ = baseFileName + (omeTiff_?".ome.tif":".tif");
+      metadataFileName_ = baseFileName + "_metadata.txt";
+      File f = new File(directory_ + "/" +  imageFileName_);     
+      
       try {
          readSummaryMD(summaryMD);
          displayAndComments_ = VirtualAcquisitionDisplay.getDisplaySettingsFromSummary(summaryMD);
@@ -103,6 +131,10 @@ public class MultipageTiffWriter {
       long fileSize = Math.min(MAX_FILE_SIZE, summaryMD.toString().length() + 2000000
               + numFrames_ * numChannels_ * numSlices_ * ((long) bytesPerImagePixels_ + 2000));
       
+      if (omeTiff_ || seperateMetadataFile_) {
+         allMetadata_ = new ArrayList<JSONObject>(); 
+         summaryMetadata_ = summaryMD;
+      }
       try {
          f.createNewFile();
          raFile_ = new RandomAccessFile(f, "rw");
@@ -127,6 +159,32 @@ public class MultipageTiffWriter {
       } catch (IOException ex) {
          ReportingUtils.logError(ex);
       }
+   }
+
+   private String createBaseFilename(JSONObject summaryMetadata, int positionIndex, int fileIndex) {
+      String filename = "";
+      try {
+         String prefix = summaryMetadata.getString("Prefix");
+         if (prefix.length() == 0) {
+            filename = "images";
+         } else {
+            filename = prefix + "_images";
+         }
+      } catch (JSONException ex) {
+         ReportingUtils.logError("Can't find Prefix in summary metadata");
+         filename = "images";
+      }
+      try {
+         if (MDUtils.getNumPositions(summaryMetadata) > 0) {
+            //TODO: put position name if it exists
+            filename += "_" + positionIndex;
+         }
+      } catch (JSONException e) {
+      }
+      if (fileIndex > 0) {
+         filename += "_" + fileIndex;
+      }
+      return filename;
    }
    
    public FileChannel getFileChannel() {
@@ -169,6 +227,8 @@ public class MultipageTiffWriter {
    public void close() throws IOException {
       writeNullOffsetAfterLastImage();
       writeIndexMap();
+      
+      writeOMETiffAndSeperateMetadataFile();
       writeDisplaySettings();
       writeComments();
               
@@ -178,7 +238,6 @@ public class MultipageTiffWriter {
       raFile_ = null;    
    }
    
-   //TODO: check performance of this function (since it is called before each image is written)
    public boolean hasSpaceToWrite(TaggedImage img) {
       int mdLength = img.tags.toString().length();
       int indexMapSize = indexMap_.size()*20 + 8;
@@ -219,7 +278,7 @@ public class MultipageTiffWriter {
    }
 
    private void writeIFD(TaggedImage img) throws IOException {     
-     char numEntries = ENTRIES_PER_IFD;
+     char numEntries = (firstIFD_ && omeTiff_) ? ENTRIES_PER_IFD + 1 : ENTRIES_PER_IFD;
      if (img.tags.has("Summary")) {
         img.tags.remove("Summary");
      }
@@ -242,41 +301,69 @@ public class MultipageTiffWriter {
      long tagDataOffset = filePosition_ + 2 + numEntries*12 + 4;
      nextIFDOffsetLocation_ = filePosition_ + 2 + numEntries*12;
      
-      charView.put(0,numEntries);
-      writeIFDEntry(2,ifdBuffer,charView, WIDTH,(char)4,1,imageWidth_);
-      writeIFDEntry(14,ifdBuffer,charView,HEIGHT,(char)4,1,imageHeight_);
-      writeIFDEntry(26,ifdBuffer,charView,BITS_PER_SAMPLE,(char)3,rgb_?3:1,  rgb_? tagDataOffset:byteDepth_*8);
+     int position = 0;
+      charView.put(position,numEntries);
+      position += 2;
+      writeIFDEntry(position,ifdBuffer,charView, WIDTH,(char)4,1,imageWidth_);
+      position += 12;
+      writeIFDEntry(position,ifdBuffer,charView,HEIGHT,(char)4,1,imageHeight_);
+      position += 12;
+      writeIFDEntry(position,ifdBuffer,charView,BITS_PER_SAMPLE,(char)3,rgb_?3:1,  rgb_? tagDataOffset:byteDepth_*8);
+      position += 12;
       if (rgb_) {
          tagDataOffset += 6;
       }
-      writeIFDEntry(38,ifdBuffer,charView,COMPRESSION,(char)3,1,1);
-      writeIFDEntry(50,ifdBuffer,charView,PHOTOMETRIC_INTERPRETATION,(char)3,1,rgb_?2:1);
-      writeIFDEntry(62,ifdBuffer,charView,STRIP_OFFSETS,(char)4,1, tagDataOffset );
+      writeIFDEntry(position,ifdBuffer,charView,COMPRESSION,(char)3,1,1);
+      position += 12;
+      writeIFDEntry(position,ifdBuffer,charView,PHOTOMETRIC_INTERPRETATION,(char)3,1,rgb_?2:1);
+      position += 12;
+      
+      if (firstIFD_ && omeTiff_) {
+         writeIFDEntry(position,ifdBuffer,charView,IMAGE_DESCRIPTION,(char)2,0,0);
+         omeDescriptionTagPosition_ = filePosition_ + position;
+         position += 12;
+      }
+      
+      writeIFDEntry(position,ifdBuffer,charView,STRIP_OFFSETS,(char)4,1, tagDataOffset );
+      position += 12;
       tagDataOffset += bytesPerImagePixels_;
-      writeIFDEntry(74,ifdBuffer,charView,SAMPLES_PER_PIXEL,(char)3,1,(rgb_?3:1));
-      writeIFDEntry(86,ifdBuffer,charView,ROWS_PER_STRIP, (char) 3, 1, imageHeight_);
-      writeIFDEntry(98,ifdBuffer,charView,STRIP_BYTE_COUNTS, (char) 4, 1, bytesPerImagePixels_ );
-      writeIFDEntry(110,ifdBuffer,charView,X_RESOLUTION, (char)5, 1, tagDataOffset);
+      writeIFDEntry(position,ifdBuffer,charView,SAMPLES_PER_PIXEL,(char)3,1,(rgb_?3:1));
+      position += 12;
+      writeIFDEntry(position,ifdBuffer,charView,ROWS_PER_STRIP, (char) 3, 1, imageHeight_);
+      position += 12;
+      writeIFDEntry(position,ifdBuffer,charView,STRIP_BYTE_COUNTS, (char) 4, 1, bytesPerImagePixels_ );
+      position += 12;
+      writeIFDEntry(position,ifdBuffer,charView,X_RESOLUTION, (char)5, 1, tagDataOffset);
+      position += 12;
       tagDataOffset += 8;
-      writeIFDEntry(122,ifdBuffer,charView,Y_RESOLUTION, (char)5, 1, tagDataOffset);
+      writeIFDEntry(position,ifdBuffer,charView,Y_RESOLUTION, (char)5, 1, tagDataOffset);
+      position += 12;
       tagDataOffset += 8;
-      writeIFDEntry(134,ifdBuffer,charView,RESOLUTION_UNIT, (char) 3,1,3);
-      writeIFDEntry(146,ifdBuffer,charView,MM_METADATA,(char)2,mdString.length(),tagDataOffset);
+      writeIFDEntry(position,ifdBuffer,charView,RESOLUTION_UNIT, (char) 3,1,3);
+      position += 12;
+      writeIFDEntry(position,ifdBuffer,charView,MM_METADATA,(char)2,mdString.length(),tagDataOffset);
+      position += 12;
       tagDataOffset += mdString.length();
       //NextIFDOffset
-      ifdBuffer.putInt(158, (int)tagDataOffset);
-
+      ifdBuffer.putInt(position, (int)tagDataOffset);
+      position += 4;
+      
       if (rgb_) {
-         charView.put(81,(char) (byteDepth_*8));
-         charView.put(82,(char) (byteDepth_*8));
-         charView.put(83,(char) (byteDepth_*8));
+         charView.put(position/2,(char) (byteDepth_*8));
+         charView.put(position/2+1,(char) (byteDepth_*8));
+         charView.put(position/2+2,(char) (byteDepth_*8));
       }
       buffers_.add(ifdBuffer);
       buffers_.add(getPixelBuffer(img));
       buffers_.add(getResolutionValuesBuffer(img));   
       buffers_.add(ByteBuffer.wrap(getBytesFromString(mdString)));
       
+      if (omeTiff_ || seperateMetadataFile_) {      
+         allMetadata_.add(img.tags);
+      }
+      
       filePosition_ += totalBytes;
+      firstIFD_ = false;
    }
 
    private void writeIFDEntry(int position, ByteBuffer buffer, CharBuffer cBuffer, char tag, char type, long count, long value) throws IOException {
@@ -464,41 +551,72 @@ public class MultipageTiffWriter {
       bytesPerImagePixels_ = imageHeight_*imageWidth_*byteDepth_*(rgb_?3:1);
    }
    
-   
-   private String getIJDescriptionString() {
-		StringBuffer sb = new StringBuffer(100);
-		sb.append("ImageJ="+ImageJ.VERSION+"\n");
-		sb.append("images="+numFrames_*numChannels_*numSlices_+"\n");     
-		if (numChannels_>1)
-			sb.append("channels="+numChannels_+"\n");
-		if (numSlices_>1)
-			sb.append("slices="+numSlices_+"\n");
-		if (numFrames_>1)
-			sb.append("frames="+numFrames_+"\n");  
-		if ( numFrames_ > 1 || numSlices_ > 1 || numChannels_ > 1 ) 
-         sb.append("hyperstack=true\n");   
-		if (numChannels_ > 1) 
-			sb.append("mode=composite\n");
-      
-      //May need to change depending on calibtratuon
-      sb.append("unit=um\n");
+   private String writeOMEMetadata() throws FormatException, IOException {
 
-		if (numFrames_*numChannels_*numSlices_>1) {			
-			sb.append("loop=false\n");
-		}
+//      String allMetadata = "";
+//      try {
+//         allMetadata = makeMetadataString();
+//      } catch (JSONException ex) {
+//         ReportingUtils.logError(ex);
+//         return null;
+//      }
+//      
+//      org.micromanager.acquisition.MicromanagerReader reader = new org.micromanager.acquisition.MicromanagerReader();
+//      IMetadata meta = MetadataTools.createOMEXMLMetadata();
+//      reader.setMetadataStore(meta);
+//      String[] metadata = new String[]{allMetadata};
+//      reader.populateMetadataStore(metadata);
+//      String omeXML = "";
+//      try {
+//         OMEXMLService service =  new ServiceFactory().getInstance(OMEXMLService.class);
+//         omeXML = service.getOMEXML(meta);
+//      } catch (Exception ex) {
+//         ReportingUtils.logError(ex);
+//      }
+//      System.out.println(omeXML);
+      return null;
+   }
 
-      try {
-         JSONObject contrast = displayAndComments_.getJSONArray("Channels").getJSONObject(0); 
-         double min = contrast.getInt("Min");
-         double max = contrast.getInt("Max");
-         sb.append("min=" + min + "\n");
-         sb.append("max=" + max + "\n");
-      } catch (JSONException ex) {
+   private void writeOMETiffAndSeperateMetadataFile() {
+      if (!omeTiff_ && !seperateMetadataFile_) {
+         return;
       }
+      String mdString;
+      try {
+         mdString = makeMetadataString();
+      } catch (JSONException ex) {
+         mdString = "Metadata compilation error";
+      }
+      if (seperateMetadataFile_) {
 
-		sb.append((char)0);
-		return new String(sb);
-	}
+         try {
+            FileWriter writer = new FileWriter(directory_ + "/" + metadataFileName_);
+            writer.write(mdString);
+            writer.close();
+         } catch (IOException ex) {
+            ReportingUtils.logError("Error writing metadat file");
+         }
+
+      }
+      
+      
+      
+   }
    
-   
+   private String makeMetadataString() throws JSONException {
+      StringBuffer sb = new StringBuffer();
+      summaryMetadata_.put("PositionIndex", MDUtils.getPositionIndex(allMetadata_.get(0)));
+      sb.append("{" + "\r\n");
+      sb.append("\"Summary\": ");
+      sb.append(summaryMetadata_.toString(2));
+      for (JSONObject md : allMetadata_) {
+         md.put("FileName",imageFileName_);
+         sb.append(",\r\n"); 
+         sb.append("\"" + "FrameKey-" + MDUtils.getFrameIndex(md)
+                 + "-" + MDUtils.getChannelIndex(md) + "-" + MDUtils.getSliceIndex(md) + "\": ");
+         sb.append(md.toString(2));
+      }
+      sb.append("\r\n}\r\n");
+      return sb.toString();
+   }
 }
