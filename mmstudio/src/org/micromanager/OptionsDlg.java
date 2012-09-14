@@ -398,7 +398,7 @@ public class OptionsDlg extends MMDialog {
       getContentPane().add(metadataFileWithMultipageTiffCheckBox);
       springLayout.putConstraint(SpringLayout.WEST, metadataFileWithMultipageTiffCheckBox, 20, SpringLayout.WEST, getContentPane());
       springLayout.putConstraint(SpringLayout.NORTH, metadataFileWithMultipageTiffCheckBox, 10, SpringLayout.SOUTH, prefZoomLabel);
-      
+      metadataFileWithMultipageTiffCheckBox.setSelected(opts_.multipageTiffMetadataFile_);
       
       final JCheckBox omeTiffCheckBox = new JCheckBox();
       omeTiffCheckBox.addActionListener(new ActionListener() {
@@ -410,7 +410,7 @@ public class OptionsDlg extends MMDialog {
       getContentPane().add(omeTiffCheckBox);
       springLayout.putConstraint(SpringLayout.WEST, omeTiffCheckBox, 20, SpringLayout.WEST, getContentPane());
       springLayout.putConstraint(SpringLayout.NORTH, omeTiffCheckBox, 0, SpringLayout.SOUTH, metadataFileWithMultipageTiffCheckBox);
-      
+      omeTiffCheckBox.setSelected(opts_.omeTiff_);
       
       
    }
