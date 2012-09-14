@@ -190,11 +190,10 @@ protected:
             // reply[4]..reply[7] = Version
             if ((DEVICE_OK == nRet) && (cbRx >= 10) && (0 == reply[3]))
             {
-                memcpy(&m_version, &reply[4], min(sizeof(m_version), 4));
-            }
-            else
-            {
-                memset(&m_version, 0, sizeof(m_version));
+                for (int i=0; i<4; i++)
+                {
+                    m_version |= (reply[4+i] << ((3-i)*8));
+                }
             }
         }
         return m_version;
