@@ -27,7 +27,7 @@ License along with this software.  If not, see
 #include <time.h>
 #include <fstream>
 
-#define SCOPELED_DEBUGLOG
+//#define SCOPELED_DEBUGLOG
 
 template <class T> class ScopeLEDBasicIlluminator : public CShutterBase<T>
 {
