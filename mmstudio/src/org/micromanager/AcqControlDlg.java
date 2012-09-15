@@ -2056,7 +2056,7 @@ public class AcqControlDlg extends JFrame implements PropertyChangeListener {
       
       if (used + acqTotalBytes > 0.72*max) {
          int selection = JOptionPane.showConfirmDialog(this, "Warning: available RAM may "
-                 + "be insufficent for full acquisition. \nSave images to disk or increase "
+                 + "be insufficient for full acquisition. \nSave images to disk or increase "
                  + "maximum memory by selecting \nEdit--Options--Memory & Threads on ImageJ "
                  + "toolbar. \n\n Would you like to run acquisition anyway?",
                  "Insufficient memory warning", JOptionPane.YES_NO_OPTION);

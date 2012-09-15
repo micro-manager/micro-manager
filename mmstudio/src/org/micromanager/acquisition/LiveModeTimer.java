@@ -289,10 +289,10 @@ public class LiveModeTimer {
                   BlockingQueue imageQueue = new LinkedBlockingQueue();
                   gui_.runDisplayThread(imageQueue, displayImageRoutine_);
 
-                     for (int i = 0; i < multiChannelCameraNrCh_; i++) {
+                  int chan = 0;
+                     for (int i = 0; i < multiChannelCameraNrCh_; ++i) {
                         try {
-                        TaggedImage ti = core_.getLastTaggedImage(i);
-                        ti.tags.put("Channel", core_.getCameraChannelName(i));
+                        TaggedImage ti = core_.getNBeforeLastTaggedImage(i);
                         imageQueue.put(ti);
                         } catch (Exception e) {
                            ReportingUtils.logError(e);

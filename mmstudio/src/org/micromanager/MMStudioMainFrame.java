@@ -3089,12 +3089,12 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface, Device
       if (ti != TaggedImageQueue.POISON) {
       int channel = 0;
       try {
-         /*
+         
          if (ti.tags.has("Multi Camera-CameraChannelIndex")) {
             channel = ti.tags.getInt("Multi Camera-CameraChannelIndex");
-         } else*/ if (ti.tags.has("CameraChannelIndex")) {
+         } else if (ti.tags.has("CameraChannelIndex")) {
             channel = ti.tags.getInt("CameraChannelIndex");
-         } else {
+         } else if (ti.tags.has("ChannelIndex")) {
             channel = MDUtils.getChannelIndex(ti.tags);
          }
          ti.tags.put("ChannelIndex", channel);
