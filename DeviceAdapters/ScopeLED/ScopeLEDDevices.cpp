@@ -417,6 +417,15 @@ int ScopeLEDMSMMicroscopeIlluminator::Initialize()
     if (nRet != DEVICE_OK) return nRet;
     SetPropertyLimits("PresetMode6Brightness", 0.0, 100.0);
 
+    pAct = new CPropertyAction (this, &ScopeLEDMSMMicroscopeIlluminator::OnControlMode);
+    nRet = CreateProperty("ControlMode", "1", MM::Integer, false, pAct);
+    if (nRet != DEVICE_OK) return nRet;
+    SetPropertyLimits("ControlMode", 1, 3);
+
+    pAct = new CPropertyAction (this, &ScopeLEDMSMMicroscopeIlluminator::OnControlModeString);
+    nRet = CreateProperty("ControlModeDescription", "", MM::String, true, pAct);
+    if (nRet != DEVICE_OK) return nRet;
+
     // state
     pAct = new CPropertyAction (this, &ScopeLEDMSMMicroscopeIlluminator::OnState);
     CreateProperty(MM::g_Keyword_State, "0", MM::Integer, false, pAct);
@@ -1209,106 +1218,6 @@ int ScopeLEDFluorescenceIlluminator::OnChannel3Wavelength(MM::PropertyBase* pPro
 int ScopeLEDFluorescenceIlluminator::OnChannel4Wavelength(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
     return OnChannelWavelength(3, pProp, eAct);
-}
-
-int ScopeLEDFluorescenceIlluminator::SetControlMode(long mode)
-{
-    unsigned char cmdbuf[6];
-    memset(cmdbuf, 0, sizeof(cmdbuf));
-    cmdbuf[0] = 0xA9;  // Start Byte
-    cmdbuf[1] = 0x03;  // Length Byte
-    cmdbuf[2] =   39;  // Command Byte - MSG_SET_OPERATING_MODE
-    cmdbuf[3] = (unsigned char) mode;
-    cmdbuf[5] = 0x5C;  // End Byte
-
-    unsigned char* const pChecksum = &cmdbuf[4];
-    unsigned char* const pStart = &cmdbuf[1];
-
-    *pChecksum = g_USBCommAdapter.CalculateChecksum(pStart, *pStart);
-    return Transact(cmdbuf, sizeof(cmdbuf));
-}
-
-int ScopeLEDFluorescenceIlluminator::GetControlMode(long& mode)
-{
-    unsigned char cmdbuf[5];
-    memset(cmdbuf, 0, sizeof(cmdbuf));
-    cmdbuf[0] = 0xA9;  // Start Byte
-    cmdbuf[1] = 0x02;  // Length Byte
-    cmdbuf[2] =   38;  // Command Byte - MSG_GET_OPERATING_MODE
-    cmdbuf[4] = 0x5C;  // End Byte
-
-    unsigned char* const pChecksum = &cmdbuf[3];
-    unsigned char* const pStart = &cmdbuf[1];
-
-    *pChecksum = g_USBCommAdapter.CalculateChecksum(pStart, *pStart);
-
-    unsigned char RxBuffer[16];
-    unsigned long cbRxBuffer = sizeof(RxBuffer);
-    int result = Transact(cmdbuf, sizeof(cmdbuf), RxBuffer, &cbRxBuffer);
-
-    if ((DEVICE_OK == result) && (cbRxBuffer >= 5))
-    {
-        mode = RxBuffer[4];
-    }
-    else
-    {
-        mode = 0;
-    }
-    return result;
-}
-
-int ScopeLEDFluorescenceIlluminator::OnControlMode(MM::PropertyBase* pProp, MM::ActionType eAct)
-{
-    int result = DEVICE_OK;
-    long mode = 0;
-    if (eAct == MM::BeforeGet)
-    {
-        result = GetControlMode(mode);
-        if (DEVICE_OK == result)
-        {
-            pProp->Set(mode);
-        }
-    }
-    else if (eAct == MM::AfterSet)
-    {
-        pProp->Get(mode);
-        result = SetControlMode(mode);
-    }
-    return result;
-}
-
-int ScopeLEDFluorescenceIlluminator::OnControlModeString(MM::PropertyBase* pProp, MM::ActionType eAct)
-{
-    int result = DEVICE_CAN_NOT_SET_PROPERTY;   
-    if (eAct == MM::BeforeGet)
-    {
-        long mode = 0;
-        std::string mode_str;
-        result = GetControlMode(mode);
-        if (DEVICE_OK == result)
-        {
-            switch (mode)
-            {
-                case 0:
-                    mode_str = "";
-                    break;
-                case 1:
-                    mode_str = "Normal Control Mode";
-                    break;
-                case 2:
-                    mode_str = "Analog Control Mode";
-                    break;
-                case 3:
-                    mode_str = "TTL Control Mode";
-                    break;
-                default:
-                    mode_str = "Unrecognized Control Mode";
-                    break;
-            }
-            pProp->Set(mode_str.c_str());
-        }
-    }
-    return result;
 }
 
 int ScopeLEDFluorescenceIlluminator::UpdateActiveChannelString()

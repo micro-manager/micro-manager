@@ -142,10 +142,7 @@ public:
     int OnChannel1Wavelength(MM::PropertyBase* pProp, MM::ActionType eAct);
     int OnChannel2Wavelength(MM::PropertyBase* pProp, MM::ActionType eAct);
     int OnChannel3Wavelength(MM::PropertyBase* pProp, MM::ActionType eAct);
-    int OnChannel4Wavelength(MM::PropertyBase* pProp, MM::ActionType eAct);    
-
-    int OnControlMode(MM::PropertyBase* pProp, MM::ActionType eAct);
-    int OnControlModeString(MM::PropertyBase* pProp, MM::ActionType eAct);
+    int OnChannel4Wavelength(MM::PropertyBase* pProp, MM::ActionType eAct);
 
     int OnActiveChannelString(MM::PropertyBase* pProp, MM::ActionType eAct);
     int OnActiveWavelengthString(MM::PropertyBase* pProp, MM::ActionType eAct);
@@ -182,9 +179,6 @@ private:
     int GetLEDGroupChannels(int group, long& channels);
     int OnLEDGroupChannels(int group, MM::PropertyBase* pProp, MM::ActionType eAct);
     int OnChannelWavelength(int index, MM::PropertyBase* pProp, MM::ActionType eAct);
-
-    int SetControlMode(long mode);
-    int GetControlMode(long& mode);
 
     int UpdateActiveChannelString();
     int UpdateActiveWavelengthString();

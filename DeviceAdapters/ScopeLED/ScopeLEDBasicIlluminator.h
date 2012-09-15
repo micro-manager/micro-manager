@@ -27,7 +27,7 @@ License along with this software.  If not, see
 #include <time.h>
 #include <fstream>
 
-//#define SCOPELED_DEBUGLOG
+#define SCOPELED_DEBUGLOG
 
 template <class T> class ScopeLEDBasicIlluminator : public CShutterBase<T>
 {
@@ -252,6 +252,52 @@ protected:
         return result;
     }
 
+    int SetControlMode(long mode)
+    {
+        unsigned char cmdbuf[6];
+        memset(cmdbuf, 0, sizeof(cmdbuf));
+        cmdbuf[0] = 0xA9;  // Start Byte
+        cmdbuf[1] = 0x03;  // Length Byte
+        cmdbuf[2] =   39;  // Command Byte - MSG_SET_OPERATING_MODE
+        cmdbuf[3] = (unsigned char) mode;
+        cmdbuf[5] = 0x5C;  // End Byte
+
+        unsigned char* const pChecksum = &cmdbuf[4];
+        unsigned char* const pStart = &cmdbuf[1];
+
+        *pChecksum = g_USBCommAdapter.CalculateChecksum(pStart, *pStart);
+        return Transact(cmdbuf, sizeof(cmdbuf));
+    }
+
+    int GetControlMode(long& mode)
+    {
+        unsigned char cmdbuf[5];
+        memset(cmdbuf, 0, sizeof(cmdbuf));
+        cmdbuf[0] = 0xA9;  // Start Byte
+        cmdbuf[1] = 0x02;  // Length Byte
+        cmdbuf[2] =   38;  // Command Byte - MSG_GET_OPERATING_MODE
+        cmdbuf[4] = 0x5C;  // End Byte
+
+        unsigned char* const pChecksum = &cmdbuf[3];
+        unsigned char* const pStart = &cmdbuf[1];
+
+        *pChecksum = g_USBCommAdapter.CalculateChecksum(pStart, *pStart);
+
+        unsigned char RxBuffer[16];
+        unsigned long cbRxBuffer = sizeof(RxBuffer);
+        int result = Transact(cmdbuf, sizeof(cmdbuf), RxBuffer, &cbRxBuffer);
+
+        if ((DEVICE_OK == result) && (cbRxBuffer >= 5))
+        {
+            mode = RxBuffer[4];
+        }
+        else
+        {
+            mode = 0;
+        }
+        return result;
+    }
+
     virtual void ClearOpticalState()
     {
 
@@ -392,6 +438,60 @@ public:
             return DEVICE_OK;
         }
         return DEVICE_CAN_NOT_SET_PROPERTY;
+    }
+
+    int OnControlMode(MM::PropertyBase* pProp, MM::ActionType eAct)
+    {
+        int result = DEVICE_OK;
+        long mode = 0;
+        if (eAct == MM::BeforeGet)
+        {
+            result = GetControlMode(mode);
+            if (DEVICE_OK == result)
+            {
+                pProp->Set(mode);
+            }
+        }
+        else if (eAct == MM::AfterSet)
+        {
+            pProp->Get(mode);
+            result = SetControlMode(mode);
+        }
+        return result;
+    }
+
+    int OnControlModeString(MM::PropertyBase* pProp, MM::ActionType eAct)
+    {
+        int result = DEVICE_CAN_NOT_SET_PROPERTY;   
+        if (eAct == MM::BeforeGet)
+        {
+            long mode = 0;
+            std::string mode_str;
+            result = GetControlMode(mode);
+            if (DEVICE_OK == result)
+            {
+                switch (mode)
+                {
+                    case 0:
+                        mode_str = "";
+                        break;
+                    case 1:
+                        mode_str = "Normal Control Mode";
+                        break;
+                    case 2:
+                        mode_str = "Analog Control Mode";
+                        break;
+                    case 3:
+                        mode_str = "TTL Control Mode";
+                        break;
+                    default:
+                        mode_str = "Unrecognized Control Mode";
+                        break;
+                }
+                pProp->Set(mode_str.c_str());
+            }
+        }
+        return result;
     }
 };
 
