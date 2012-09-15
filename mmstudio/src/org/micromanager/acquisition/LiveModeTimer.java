@@ -69,19 +69,12 @@ public class LiveModeTimer {
       displayImageRoutine_ =  new MMStudioMainFrame.DisplayImageRoutine() {
 
                      public void show(final TaggedImage ti) {
-                        long imageNumber;
                         try {
-                        imageNumber = ti.tags.getLong("ImageNumber");
-                           if (imageNumber != lastImageNumber_) {
-                              lastImageNumber_ = imageNumber;
-                           }
-                           //addTags(ti, 0);
-                           gui_.normalizeTags(ti);
-                           setImageNumber(ti.tags.getLong("ImageNumber"));
+                          gui_.normalizeTags(ti);
                            gui_.addImage(ACQ_NAME, ti, true, true);
                            gui_.updateLineProfile();
-                        } catch (Exception ex) {
-                           ReportingUtils.logError(ex);
+                        } catch (Exception e) {
+                           ReportingUtils.logError(e);
                         }
                      }
                   };
@@ -262,7 +255,7 @@ public class LiveModeTimer {
                   TaggedImage ti = core_.getLastTaggedImage();
                   // if we have already shown this image, do not do it again.
 
-                  gui_.runDisplayThread(imageQueue,displayImageRoutine_);
+                  gui_.runDisplayThread(imageQueue, displayImageRoutine_);
                   imageQueue.put(ti);
                   imageQueue.put(TaggedImageQueue.POISON);
 
@@ -294,7 +287,7 @@ public class LiveModeTimer {
             } else {
                try {
                   BlockingQueue imageQueue = new LinkedBlockingQueue();
-                  gui_.runDisplayThread(imageQueue,displayImageRoutine_);
+                  gui_.runDisplayThread(imageQueue, displayImageRoutine_);
 
                      for (int i = 0; i < multiChannelCameraNrCh_; i++) {
                         try {

@@ -49,7 +49,7 @@ public interface ImageCache extends TaggedImageStorage {
     * Removes an imageCacheListener so that it will no longer be notified
     * of relevant events.
     */
-   void removeCacheListener(ImageCacheListener l);
+   void removeImageCacheListener(ImageCacheListener l);
 
    /*
     * Save a new copy of a TaggedImage data set, stored in a TaggedImageStorage

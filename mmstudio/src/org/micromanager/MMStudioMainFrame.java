@@ -119,6 +119,7 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.Collections;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.Callable;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.logging.Level;
@@ -669,9 +670,9 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface, Device
     * the default processor stack to process images as they arrive on
     * the rawImageQueue.
     */
-   private void runDisplayThread(BlockingQueue rawImageQueue, final boolean album) {
+   public void runDisplayThread(BlockingQueue rawImageQueue, final DisplayImageRoutine displayImageRoutine) {
       final BlockingQueue processedImageQueue = ProcessorStack.run(rawImageQueue, getAcquisitionEngine().getTaggedImageProcessors());
-      new Thread("Display thread") {
+      new Thread("Snap thread") {
          public void run() {
             while (true) {
                try {
@@ -679,16 +680,7 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface, Device
                   if (image == TaggedImageQueue.POISON) {
                      break;
                   }
-                  normalizeTags(image);
-                  if (album) {
-                     try {
-                        addToAlbum(image);
-                     } catch (MMScriptException ex) {
-                        ReportingUtils.showError(ex);
-                     }
-                  } else {
-                     displayImage(image);
-                  }
+                  displayImageRoutine.show(image);
                } catch (InterruptedException ex) {
                   ReportingUtils.logError(ex);
                }
@@ -698,6 +690,9 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface, Device
       }.start();
    }
 
+   public interface DisplayImageRoutine {
+      public void show(TaggedImage image);
+   }
  
    /**
     * Callback to update GUI when a change happens in the MMCore.
@@ -3043,7 +3038,7 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface, Device
       doSnap(false);
    }
 
-   public void doSnap(boolean album) {
+   public void doSnap(final boolean album) {
       if (core_.getCameraDevice().length() == 0) {
          ReportingUtils.showError("No camera configured");
          return;
@@ -3054,7 +3049,21 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface, Device
       try {
          core_.snapImage();
          long c = core_.getNumberOfCameraChannels();
-         runDisplayThread(snapImageQueue, album);
+         runDisplayThread(snapImageQueue, new DisplayImageRoutine() {
+            public void show(final TaggedImage image) {
+                normalizeTags(image);
+                  if (album) {
+                     try {
+                        addToAlbum(image);
+                     } catch (MMScriptException ex) {
+                        ReportingUtils.showError(ex);
+                     }
+                  } else {
+                     displayImage(image);
+                  }
+            }
+
+         });
          
          for (int i = 0; i < c; ++i) {
             snapImageQueue.put(core_.getTaggedImage(i));
@@ -3077,18 +3086,26 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface, Device
    }
 
    public void normalizeTags(TaggedImage ti) {
-         int channel = 0;
-        try {
-           if (ti.tags.has("CameraChannelIndex")) {
+      if (ti != TaggedImageQueue.POISON) {
+      int channel = 0;
+      try {
+         /*
+         if (ti.tags.has("Multi Camera-CameraChannelIndex")) {
+            channel = ti.tags.getInt("Multi Camera-CameraChannelIndex");
+         } else*/ if (ti.tags.has("CameraChannelIndex")) {
             channel = ti.tags.getInt("CameraChannelIndex");
-           } else {
-               channel = MDUtils.getChannelIndex(ti.tags);
-           }
+         } else {
+            channel = MDUtils.getChannelIndex(ti.tags);
+         }
          ti.tags.put("ChannelIndex", channel);
          ti.tags.put("PositionIndex", 0);
          ti.tags.put("SliceIndex", 0);
          ti.tags.put("FrameIndex", 0);
-        } catch (JSONException ex) {}
+         
+      } catch (JSONException ex) {
+         ReportingUtils.logError(ex);
+      }
+      }
    }
 
 
