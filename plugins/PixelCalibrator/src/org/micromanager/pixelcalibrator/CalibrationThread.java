@@ -106,7 +106,7 @@ public class CalibrationThread extends Thread {
       } else {
          try {
             Point2D.Double p0 = app_.getXYStagePosition();
-            if (p0.distance(x, y) > 2000) { // 1 millimeter
+            if (p0.distance(x, y) > 4000) { // 4 millimeter
                throw new InterruptedException("XY stage safety limit reached.");
             }
             app_.setXYStagePosition(x, y);
