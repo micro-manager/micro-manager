@@ -388,11 +388,15 @@
           <Font name="Lucida Grande" size="10" style="0"/>
         </Property>
         <Property name="model" type="javax.swing.ComboBoxModel" editor="org.netbeans.modules.form.editors2.ComboBoxModelEditor">
-          <StringArray count="4">
+          <StringArray count="8">
             <StringItem index="0" value="1x"/>
             <StringItem index="1" value="2x"/>
             <StringItem index="2" value="4x"/>
             <StringItem index="3" value="8x"/>
+            <StringItem index="4" value="16x"/>
+            <StringItem index="5" value="32x"/>
+            <StringItem index="6" value="64x"/>
+            <StringItem index="7" value="128x"/>
           </StringArray>
         </Property>
       </Properties>
