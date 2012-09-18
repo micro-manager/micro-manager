@@ -246,6 +246,7 @@ private:
    int SetGainLimits();
    void SuspendSequence();
    int ResumeSequence();
+   int WaitForReadoutDone();
    bool WaitForExposureDone() throw();
    int LaunchSequenceAcquisition(long numImages, double interval_ms, bool stopOnOverflow);
    MM::MMTime GetCurrentTime() { return GetCurrentMMTime();}

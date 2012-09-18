@@ -1374,7 +1374,6 @@ int Universal::SnapImage()
       nRet = ResizeImageBufferSingle();
       if (nRet != DEVICE_OK) 
          return LogMMError(nRet, __LINE__);
-      singleFrameModeReady_ = true;
 
       mid = GetCurrentMMTime();
       LogTimeDiff(start, mid, "Exposure took 2: ", true);
@@ -1416,13 +1415,51 @@ int Universal::SnapImage()
    return nRet;
 }
 
+int Universal::WaitForReadoutDone()
+{
+   START_METHOD("Universal::WaitForReadoutDone");
+
+   // make the time out 2 seconds plus twice the exposure
+   MM::MMTime timeout((long)(timeOutBase + 2*GetExposure() * 0.001), (long)(2*GetExposure() * 1000));
+   MM::MMTime startTime = GetCurrentMMTime();
+   MM::MMTime elapsed(0,0);
+   rs_bool rsbRet=0;
+   int16 status = READOUT_IN_PROGRESS;
+   uns32 not_needed;
+
+   try {
+      do 
+      {
+         CDeviceUtils::SleepMs(1);
+         g_pvcamLock.Lock();
+         rsbRet = pl_exp_check_status(hPVCAM_, &status, &not_needed);
+         g_pvcamLock.Unlock();
+         elapsed = GetCurrentMMTime() - startTime;
+      } while (rsbRet && (status == READOUT_IN_PROGRESS) && elapsed < timeout);
+
+      if (rsbRet == TRUE && elapsed < timeout && status != READOUT_FAILED)
+      {
+         return DEVICE_OK;
+      }
+      else
+      {
+         LogCamError(__LINE__, "Readout Failed");
+         g_pvcamLock.Lock();
+         if (!pl_exp_abort(hPVCAM_, CCS_HALT))
+            LogCamError(__LINE__, "");
+         g_pvcamLock.Unlock();
+         return DEVICE_SNAP_IMAGE_FAILED;
+      }
+   }
+   catch (...)
+   {
+      return DEVICE_SNAP_IMAGE_FAILED;
+   }
+}
+
 bool Universal::WaitForExposureDone()throw()
 {
    START_METHOD("Universal::WaitForExposureDone");
-
-   MM::MMTime startTime = GetCurrentMMTime();
-   bool bRet=false;
-   rs_bool rsbRet=0;
 
    //// Karl, you may not need this with the more sophisticated status checking added. 03/08/2010
    //// KH test
@@ -1437,6 +1474,8 @@ bool Universal::WaitForExposureDone()throw()
    {
         int16 status;
         uns32 not_needed;
+        rs_bool rsbRet=0;
+
         //ostringstream txt;
         //txt << "WaitForExposureDone " << GetExposure() << "\n";
         //LogMessage(txt.str(), false);
@@ -1454,35 +1493,13 @@ bool Universal::WaitForExposureDone()throw()
             g_pvcamLock.Unlock();
             elapsed = GetCurrentMMTime()  - startTime;
          } while(rsbRet && (status == EXPOSURE_IN_PROGRESS) && elapsed < timeout); 
-
-         while (rsbRet && (status == READOUT_IN_PROGRESS) && elapsed < timeout)
-         {
-            CDeviceUtils::SleepMs(1);
-            g_pvcamLock.Lock();
-            rsbRet = pl_exp_check_status(hPVCAM_, &status, &not_needed);
-            g_pvcamLock.Unlock();
-            elapsed = GetCurrentMMTime() - startTime;
-        }
-        
-        if (rsbRet == TRUE && elapsed < timeout && status != READOUT_FAILED)
-        {
-            bRet=true;
-        }
-        else {
-            LogCamError(__LINE__, "Readout Failed");
-            g_pvcamLock.Lock();
-            if (!pl_exp_abort(hPVCAM_, CCS_HALT))
-                 LogCamError(__LINE__, "");
-            g_pvcamLock.Unlock();
-        }
-        
-
     }
     catch(...)
     {
         LogMMMessage(__LINE__, "Unknown exception while waiting for exposure to finish", false);
+        return false;
     }
-    return bRet;
+    return true;
 }
 
 
@@ -1491,21 +1508,27 @@ bool Universal::WaitForExposureDone()throw()
 const unsigned char* Universal::GetImageBuffer()
 {  
    START_METHOD("Universal::GetImageBuffer");
-   //int16 status;
-   //uns32 not_needed;
 
    if(!snappingSingleFrame_)
    {
       LogMMMessage(__LINE__, "Warning: GetImageBuffer called before SnapImage()");
       return 0;
    }
+   
+   if (WaitForReadoutDone() == DEVICE_OK) {
+      singleFrameModeReady_ = true;
 
-   // wait for data or error
-   void* pixBuffer = const_cast<unsigned char*> (img_.GetPixels());
+      void* pixBuffer = const_cast<unsigned char*> (img_.GetPixels());
 
-   snappingSingleFrame_=false;
+      snappingSingleFrame_=false;
 
-   return (unsigned char*) pixBuffer;
+      return (unsigned char*) pixBuffer;
+   }
+   else
+   {
+      return 0;
+   }
+
 }
 
 
