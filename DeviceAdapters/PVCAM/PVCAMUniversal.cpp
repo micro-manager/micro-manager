@@ -850,7 +850,7 @@ int Universal::Initialize()
    // Pixel type.  
    // Note that this can change depending on the readoutport and speed.  SettAllowedPixeltypes should be called after changes in any of these
    pAct = new CPropertyAction (this, &Universal::OnPixelType);
-   nRet = CreateProperty(MM::g_Keyword_PixelType, g_PixelType_16bit, MM::String, false, pAct);
+   nRet = CreateProperty(MM::g_Keyword_PixelType, g_PixelType_16bit, MM::String, true, pAct);
    assert(nRet == DEVICE_OK);
    nRet = SetAllowedPixelTypes();
    if (nRet != DEVICE_OK)
