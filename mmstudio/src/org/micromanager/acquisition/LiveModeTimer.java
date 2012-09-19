@@ -22,6 +22,10 @@
 package org.micromanager.acquisition;
 
 import java.text.NumberFormat;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.BlockingQueue;
@@ -47,7 +51,7 @@ public class LiveModeTimer {
    private VirtualAcquisitionDisplay win_;
    private CMMCore core_;
    private MMStudioMainFrame gui_;
-   private long multiChannelCameraNrCh_;
+   private int multiChannelCameraNrCh_;
    private long fpsTimer_;
    private long fpsCounter_;
    private long imageNumber_;
@@ -60,24 +64,22 @@ public class LiveModeTimer {
    private TimerTask task_;
    private MMStudioMainFrame.DisplayImageRoutine displayImageRoutine_;
    
-
    public LiveModeTimer() {
       gui_ = MMStudioMainFrame.getInstance();
       core_ = gui_.getCore();
       format_ = NumberFormat.getInstance();
       format_.setMaximumFractionDigits(0x1);
-      displayImageRoutine_ =  new MMStudioMainFrame.DisplayImageRoutine() {
-
-                     public void show(final TaggedImage ti) {
-                        try {
-                          gui_.normalizeTags(ti);
-                           gui_.addImage(ACQ_NAME, ti, true, true);
-                           gui_.updateLineProfile();
-                        } catch (Exception e) {
-                           ReportingUtils.logError(e);
-                        }
-                     }
-                  };
+      displayImageRoutine_ = new MMStudioMainFrame.DisplayImageRoutine() {
+         public void show(final TaggedImage ti) {
+            try {
+               gui_.normalizeTags(ti);
+               gui_.addImage(ACQ_NAME, ti, true, true);
+               gui_.updateLineProfile();
+            } catch (Exception e) {
+               ReportingUtils.logError(e);
+            }
+         }
+      };
    }
 
    /**
@@ -102,7 +104,7 @@ public class LiveModeTimer {
     * Determines whether we are dealing with multiple cameras
     */
    private void setType() {
-      multiChannelCameraNrCh_ = core_.getNumberOfCameraChannels();
+      multiChannelCameraNrCh_ = (int) core_.getNumberOfCameraChannels();
       if (multiChannelCameraNrCh_ == 1) {
          task_ = singleCameraLiveTask();
       } else {
@@ -286,19 +288,24 @@ public class LiveModeTimer {
                gui_.enableLiveMode(false);  //disable live if user closed window
             } else {
                try {
-                  BlockingQueue imageQueue = new LinkedBlockingQueue();
+                  BlockingQueue imageQueue = new LinkedBlockingQueue(multiChannelCameraNrCh_);
                   gui_.runDisplayThread(imageQueue, displayImageRoutine_);
-
-                  int chan = 0;
-                     for (int i = 0; i < multiChannelCameraNrCh_; ++i) {
-                        try {
-                        TaggedImage ti = core_.getNBeforeLastTaggedImage(i);
+                  String camera = core_.getCameraDevice();
+                  Set<String> cameraChannelsAcquired = new HashSet<String>();
+                  for (int i = 0; i<2*multiChannelCameraNrCh_; ++i) {
+                     TaggedImage ti = core_.getNBeforeLastTaggedImage(i);
+                     String channelName = ti.tags.getString(camera + "-CameraChannelName");
+                     if (!cameraChannelsAcquired.contains(channelName)) {
+                        ti.tags.put("Channel", channelName);
+                        ti.tags.put("ChannelIndex", ti.tags.getInt(camera + "-CameraChannelIndex"));
                         imageQueue.put(ti);
-                        } catch (Exception e) {
-                           ReportingUtils.logError(e);
-                        }
+                        cameraChannelsAcquired.add(channelName);
                      }
-                     imageQueue.put(TaggedImageQueue.POISON);
+                     if (cameraChannelsAcquired.size() == multiChannelCameraNrCh_) {
+                        break;
+                     }
+                  }
+                  imageQueue.put(TaggedImageQueue.POISON);
                } catch (Exception exc) {
                   gui_.enableLiveMode(false);
                   ReportingUtils.showError("Couldn't get tagged image from core");

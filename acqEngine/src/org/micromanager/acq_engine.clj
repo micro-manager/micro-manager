@@ -126,9 +126,10 @@
                          (JSONObject. axes))
        "Binning" (state :binning)
        "BitDepth" (state :bit-depth)
+       "Camera" (:camera event)
+       "CameraChannelIndex" (:camera-channel-index event)
        "Channel" (get-in event [:channel :name])
        "ChannelIndex" (:channel-index event)
-       "CameraChannelIndex" (:camera-channel-index event)
        "Exposure-ms" (:exposure event)
        "Frame" (:frame-index event)
        "FrameIndex" (:frame-index event)
@@ -344,7 +345,8 @@
       (-> event
           (update-in [:channel-index] make-multicamera-channel camera-channel)
           (update-in [:channel :name] super-channel-name (camera-channel-names camera-channel))
-          (assoc :camera-channel-index camera-channel)))))
+          (assoc :camera-channel-index camera-channel)
+          (assoc :camera (camera-channel-names camera-channel))))))
 
 (defn assign-z-offsets [burst-events]
  (if-let [slices (second @active-slice-sequence)]

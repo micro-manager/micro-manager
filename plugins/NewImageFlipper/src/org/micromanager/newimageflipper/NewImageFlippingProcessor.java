@@ -26,6 +26,7 @@ import ij.process.ImageProcessor;
 import mmcorej.TaggedImage;
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.micromanager.acquisition.TaggedImageQueue;
 import org.micromanager.api.DataProcessor;
 import org.micromanager.utils.ImageUtils;
 import org.micromanager.utils.MDUtils;
@@ -51,10 +52,11 @@ public class NewImageFlippingProcessor extends DataProcessor<TaggedImage> {
    public void process() {
       try {
          TaggedImage nextImage = poll();
+         if (nextImage != TaggedImageQueue.POISON) {
          try {
             String camera = nextImage.tags.getString("Core-Camera");
             if (!camera.equals(controls_.getCamera())) {
-               if (nextImage.tags.has("CameraChannelIndex")) {
+               if (nextImage.tags.has("Camera")) {
                   camera = nextImage.tags.getString("Camera");
                }
             }
@@ -70,6 +72,7 @@ public class NewImageFlippingProcessor extends DataProcessor<TaggedImage> {
          } catch (Exception ex) {
             produce(nextImage);
             ReportingUtils.logError(ex);
+         }
          }
       } catch (Exception ex) {
          ReportingUtils.logError(ex);
