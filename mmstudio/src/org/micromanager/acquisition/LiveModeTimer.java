@@ -256,7 +256,7 @@ public class LiveModeTimer {
 
                   TaggedImage ti = core_.getLastTaggedImage();
                   // if we have already shown this image, do not do it again.
-
+                  setImageNumber(ti.tags.getLong("ImageNumber"));
                   gui_.runDisplayThread(imageQueue, displayImageRoutine_);
                   imageQueue.put(ti);
                   imageQueue.put(TaggedImageQueue.POISON);
@@ -294,6 +294,9 @@ public class LiveModeTimer {
                   Set<String> cameraChannelsAcquired = new HashSet<String>();
                   for (int i = 0; i<2*multiChannelCameraNrCh_; ++i) {
                      TaggedImage ti = core_.getNBeforeLastTaggedImage(i);
+                     if (i==0) {
+                         setImageNumber(ti.tags.getLong("ImageNumber"));
+                     }
                      String channelName = ti.tags.getString(camera + "-CameraChannelName");
                      if (!cameraChannelsAcquired.contains(channelName)) {
                         ti.tags.put("Channel", channelName);
