@@ -158,7 +158,7 @@ import org.micromanager.utils.SnapLiveContrastSettings;
  */
 public class MMStudioMainFrame extends JFrame implements ScriptInterface, DeviceControlGUI {
 
-   private static final String MICRO_MANAGER_TITLE = "Micro-Manager 1.4";
+   private static final String MICRO_MANAGER_TITLE = "Micro-Manager";
    private static final String VERSION = "1.4.7  20111110";
    private static final long serialVersionUID = 3556500289598574541L;
    private static final String MAIN_FRAME_X = "x";
@@ -941,7 +941,7 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface, Device
       
       setBounds(x, y, width, height);
       setExitStrategy(options_.closeOnExit_);
-      setTitle(MICRO_MANAGER_TITLE);
+      setTitle(MICRO_MANAGER_TITLE + " " + VERSION);
       setBackground(guiColors_.background.get((options_.displayBackground_)));
       SpringLayout topLayout = new SpringLayout();
       
@@ -2235,7 +2235,7 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface, Device
    }
 
    private void updateTitle() {
-      this.setTitle("System: " + sysConfigFile_);
+      this.setTitle(MICRO_MANAGER_TITLE + " " + VERSION + ": " + sysConfigFile_);
    }
 
    public void updateLineProfile() {
