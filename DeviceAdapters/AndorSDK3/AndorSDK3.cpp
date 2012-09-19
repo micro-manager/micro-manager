@@ -1024,6 +1024,10 @@ bool CAndorSDK3Camera::IsCapturing()
  */
 void CAndorSDK3Camera::OnThreadExiting() throw()
 {
+   stopAcquisitionCommand->Do();
+   bufferControl->Flush();
+   snapShotController_->resetTriggerMode();
+
    if (image_buffers_ != NULL)
    {
       for (int i = 0; i < NO_CIRCLE_BUFFER_FRAMES; i++)
@@ -1038,10 +1042,6 @@ void CAndorSDK3Camera::OnThreadExiting() throw()
    {
       aoi_property_->SetReadOnly(false);
    }
-
-   stopAcquisitionCommand->Do();
-   bufferControl->Flush();
-   snapShotController_->poiseForSnapShot();
 
    try
    {
@@ -1059,6 +1059,8 @@ void CAndorSDK3Camera::OnThreadExiting() throw()
    {
       LogMessage(g_Msg_EXCEPTION_IN_ON_THREAD_EXITING, false);
    }
+   //restart in SW trigger ready to snap
+   snapShotController_->poiseForSnapShot();
 }
 
 
