@@ -300,7 +300,7 @@
     (setup-fullscreen frame)
     (make-view-controllable panel screen-state)
     (handle-resize panel2 screen-state2)
-    (handle-point-and-show screen-state screen-state2)
+    ;(handle-point-and-show screen-state screen-state2)
     ;(make-view-controllable panel2 screen-state2)
     ;(handle-open frame)
     [screen-state memory-tiles]))

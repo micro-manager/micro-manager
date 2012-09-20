@@ -1,6 +1,7 @@
 (ns slide-explorer.reactive
   (:import (java.awt.event WindowAdapter)
            (java.util.concurrent Executors ExecutorService)
+           (java.util.concurrent.atomic AtomicReference)
            (java.util UUID)
            (javax.swing JFrame JLabel SwingUtilities)
            (clojure.lang IRef))
@@ -62,6 +63,22 @@
                             (submit executor #(function old-state new-state))))))
   ([reference function]
     (handle-change reference function (single-threaded-executor))))
+
+(defn assoc-if-lacking
+  [map key val]
+  (update-in map [key] #(or % val))) 
+
+(defn send-off-update
+  "Like send-off, but the function will only be run if the agent
+   is not piled up with tasks."
+  [a f & args]
+  (alter-meta! a assoc-if-lacking ::task-ref (AtomicReference. nil))
+  (let [task-ref (::task-ref (meta a))]
+    (when-not (.getAndSet task-ref [f args])
+      (send-off a
+        #(let [[f1 args1] (.getAndSet task-ref nil)]
+           (when f1
+             (apply f1 % args1)))))))
 
 (defn handle-update
   "Attempts to run a function whenever there is a new value in reference.
