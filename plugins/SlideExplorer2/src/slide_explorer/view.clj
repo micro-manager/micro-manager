@@ -285,7 +285,7 @@
         memory-tiles2 (tile-cache/create-tile-cache 100 dir)
         frame (main-frame)
         [panel screen-state] (view-panel memory-tiles acquired-images)
-        [panel2 screen-state2] (view-panel memory-tiles acquired-images)
+        [panel2 screen-state2] (view-panel memory-tiles2 acquired-images)
         split-pane (JSplitPane. JSplitPane/HORIZONTAL_SPLIT true panel panel2)]
     (doto split-pane
       (.setResizeWeight 0.5)
