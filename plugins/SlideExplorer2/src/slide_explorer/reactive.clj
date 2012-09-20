@@ -65,6 +65,7 @@
     (handle-change reference function (single-threaded-executor))))
 
 (defn assoc-if-lacking
+  "Like assoc, but leave existing key-value pair untouched."
   [map key val]
   (update-in map [key] #(or % val))) 
 
@@ -81,21 +82,22 @@
              (apply f1 % args1)))))))
 
 (defn handle-update
-  "Attempts to run a function whenever there is a new value in reference.
+  "Attempts to run a function asynchronously whenever there is a new value in reference.
    If the value changes too rapidly, then some values may be skipped. The
    function arguments should be [last-val current-val]."
   ([reference function agent]
     (let [last-val-agent agent]
       (add-watch-simple reference
                         (fn [_ _]
-                          (send-off last-val-agent
-                                    (fn [last-val]
-                                      (try
-                                        (let [current-val @reference]
-                                          (when-not (identical? last-val current-val)
-                                            (function last-val current-val))
-                                          current-val)
-                                        (catch Throwable t (do (def t1 t) (println t) (throw t))))))))))
+                          (send-off-update
+                            last-val-agent
+                            (fn [last-val]
+                              (try
+                                (let [current-val @reference]
+                                  (when-not (identical? last-val current-val)
+                                    (function last-val current-val))
+                                  current-val)
+                                (catch Throwable t (do (def t1 t) (println t) (throw t))))))))))
   ([reference function]
     (handle-update reference function (agent @reference))))
 
