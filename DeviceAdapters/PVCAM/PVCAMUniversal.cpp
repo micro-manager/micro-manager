@@ -131,6 +131,28 @@ SParam param_set[] = {
 };
 const int n_param = sizeof(param_set)/sizeof(SParam);
 
+/*
+Camera           Chip                   ChipName         Binning Values
+Cascade II 512   E2V CCD97              E2V CCD 97B      1,2,4,6
+CoolSNAP HQ2     ICX285                 HQ2-ICX285       1,2,3,4,8
+CoolSNAP ES2     ICX285                                  1,2,3,4,8
+CoolSNAP EZ      ICX285                                  1,2,3,4,8
+CoolSNAP KINO    ICX674                                  1,2,3,4
+CoolSNAP MYO     ICX674                                  1,2,3,4
+Evolve 512       CCD97 or CCD97-X                        1,2,4,8
+Evolve 128       e2v CCD60 or CCD60-X                    1,2,4,8
+QuantEM 512SC    e2v CCD97              QUANTEM:512SC    1,2,4,8
+Cascade II 1024  e2v CCD201                              1,2,4,8
+Cascade:1K       TI TC285                                1,2,3,4
+Cascade 128      e2v CCD60                               1,2,3,4
+CoolSNAP cf2     ICX205AL                                1,2,3,4,8
+CoolSNAP cf      ICX205AK                                1,2,3,4,8
+CoolSNAP K4      KAI 4020M                               1,2,3,4
+Rolera Thunder   e2v CCD97              QUANTEM:512SC    1,2,3,4,5,6
+Retiga-4000DC    KAI-4022                                2,4,8
+
+*/
+
 
 ///////////////////////////////////////////////////////////////////////////////
 // &Universal constructor/destructor
@@ -253,7 +275,7 @@ int Universal::OnBinning(MM::PropertyBase* pProp, MM::ActionType eAct)
         ResumeSequence(); 
 
       //}
-   }
+   }f
    else if (eAct == MM::BeforeGet)
    {
       pProp->Set((long)binSize_);
