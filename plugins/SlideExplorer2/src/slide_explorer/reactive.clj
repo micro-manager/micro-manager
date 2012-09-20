@@ -70,8 +70,8 @@
   (update-in map [key] #(or % val))) 
 
 (defn send-off-update
-  "Like send-off, but the function will only be run if the agent
-   is not piled up with tasks."
+  "Like send-off, but if the agent is piled up with tasks, then only
+   the most recent task will run (intermediate tasks will be skipped)."
   [a f & args]
   (alter-meta! a assoc-if-lacking ::task-ref (AtomicReference. nil))
   (let [task-ref (::task-ref (meta a))]
