@@ -3066,7 +3066,9 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface, Device
          });
          
          for (int i = 0; i < c; ++i) {
-            snapImageQueue.put(core_.getTaggedImage(i));
+            TaggedImage img = core_.getTaggedImage(i);
+            img.tags.put("Channels", c);
+            snapImageQueue.put(img);
          }
          
          snapImageQueue.put(TaggedImageQueue.POISON);
