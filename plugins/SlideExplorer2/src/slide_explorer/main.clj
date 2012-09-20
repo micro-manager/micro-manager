@@ -213,11 +213,10 @@
   "The main function that starts a slide explorer window."
   ([dir new?]
     (core waitForDevice (core getXYStageDevice))
-    (let [memory-tiles (tile-cache/create-tile-cache 100 dir)
-          acquired-images (atom #{})
+    (let [acquired-images (atom #{})
           affine-stage-to-pixel (origin-here-stage-to-pixel-transform)
           first-seq (acquire-at (inverse-transform (Point. 0 0) affine-stage-to-pixel))
-          screen-state (show memory-tiles acquired-images)
+          [screen-state memory-tiles] (show dir acquired-images)
           explore-fn #(explore memory-tiles screen-state acquired-images
                                affine-stage-to-pixel [512 512])]
       (.mkdirs dir)
