@@ -275,7 +275,7 @@ int Universal::OnBinning(MM::PropertyBase* pProp, MM::ActionType eAct)
         ResumeSequence(); 
 
       //}
-   }f
+   }
    else if (eAct == MM::BeforeGet)
    {
       pProp->Set((long)binSize_);
