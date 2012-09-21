@@ -1556,7 +1556,10 @@ public final class VirtualAcquisitionDisplay implements AcquisitionDisplay, Imag
       }
 
       try {
-         TaggedImageStorage newFileManager = 
+         if (getSummaryMetadata() != null) {
+            getSummaryMetadata().put("Prefix", prefix);
+         }
+         TaggedImageStorage newFileManager =
                  (TaggedImageStorage) storageClass.getConstructor(
                  String.class, Boolean.class, JSONObject.class).newInstance(
                  root + "/" + prefix, true, getSummaryMetadata());

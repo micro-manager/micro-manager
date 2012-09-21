@@ -66,8 +66,6 @@ public class TaggedImageStorageMultipageTiff implements TaggedImageStorage {
       tiffReadersByLabel_ = new HashMap<String, MultipageTiffReader>();
       cached_ = new CachedImages();
 
-      System.out.println("MP Start: " + System.currentTimeMillis());
-
       if (summaryMetadata_ != null) {  
          displayAndComments_ = VirtualAcquisitionDisplay.getDisplaySettingsFromSummary(summaryMetadata);
          try {
@@ -237,9 +235,7 @@ public class TaggedImageStorageMultipageTiff implements TaggedImageStorage {
 
                }
             }
-         }
-         System.out.println("MP End: " + System.currentTimeMillis());
-                 
+         }                 
       } catch (IOException ex) {
          ReportingUtils.logError(ex);
       }

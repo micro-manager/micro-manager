@@ -125,9 +125,7 @@ public class MultipageTiffWriter {
       try {
          readSummaryMD(summaryMD);
          displayAndComments_ = VirtualAcquisitionDisplay.getDisplaySettingsFromSummary(summaryMD);
-      } catch (MMScriptException ex) {
-         ReportingUtils.logError(ex);
-      } catch (JSONException ex) {
+      } catch (MMScriptException | JSONException ex) {
          ReportingUtils.logError(ex);
       }
       
@@ -159,7 +157,7 @@ public class MultipageTiffWriter {
                     } catch (InterruptedException ex) {}
                     MMStudioMainFrame.getInstance().getAcquisitionEngine().abortRequest();
                 } }).start();
-
+          
                 ReportingUtils.showError("Insufficent space on disk: no room to write data");
          }
          fileChannel_ = raFile_.getChannel();
