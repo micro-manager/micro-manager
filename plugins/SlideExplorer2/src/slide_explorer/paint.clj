@@ -46,8 +46,8 @@
   (.post display-updater #(.repaint panel)))
 
 (defn repaint-on-change 
-  "Adds a watch such that panel is repainted
-   the values in reference has changed."
+  "Adds a watch such that panel is repainted whenever
+   the values in reference have changed."
   [panel references]
   (doseq [reference references]
     (add-watch-simple reference
