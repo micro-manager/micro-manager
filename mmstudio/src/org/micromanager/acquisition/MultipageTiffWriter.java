@@ -125,7 +125,9 @@ public class MultipageTiffWriter {
       try {
          readSummaryMD(summaryMD);
          displayAndComments_ = VirtualAcquisitionDisplay.getDisplaySettingsFromSummary(summaryMD);
-      } catch (MMScriptException | JSONException ex) {
+      } catch (MMScriptException ex1) {
+         ReportingUtils.logError(ex1);
+      } catch (JSONException ex) {
          ReportingUtils.logError(ex);
       }
       
