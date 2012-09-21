@@ -21,7 +21,7 @@
 //
 package org.micromanager.acquisition;
 
-import ij.ImageJ;
+
 import java.io.*;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
@@ -32,19 +32,19 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-//import loci.common.services.DependencyException;
-//import loci.common.services.ServiceException;
-//import loci.common.services.ServiceFactory;
-//import loci.formats.FormatException;
-//import loci.formats.MetadataTools;
-//import loci.formats.in.MicromanagerReader;
-//import loci.formats.meta.IMetadata;
-//import loci.formats.services.OMEXMLService;
+import loci.common.services.ServiceFactory;
+import loci.formats.FormatException;
+import loci.formats.MetadataTools;
+import loci.formats.in.MicromanagerReader;
+import loci.formats.meta.IMetadata;
+import loci.formats.services.OMEXMLService;
 import mmcorej.TaggedImage;
+import ome.xml.model.primitives.NonNegativeInteger;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.micromanager.MMStudioMainFrame;
+import org.micromanager.utils.JavaUtils;
 import org.micromanager.utils.MDUtils;
 import org.micromanager.utils.MMScriptException;
 import org.micromanager.utils.ReportingUtils;
@@ -98,6 +98,7 @@ public class MultipageTiffWriter {
    private long filePosition_ = 0;
    private int numChannels_ = 1, numFrames_ = 1, numSlices_ = 1;
    private HashMap<String, Long> indexMap_;
+   private ArrayList<Integer> planeZIndices_, planeTIndices_, planeCIndices_;
    private long nextIFDOffsetLocation_ = -1;
    private JSONObject displayAndComments_;
    private boolean rgb_ = false;
@@ -105,13 +106,16 @@ public class MultipageTiffWriter {
    private LinkedList<ByteBuffer> buffers_;
    private boolean firstIFD_ = true;
    private long omeDescriptionTagPosition_;
-   private ArrayList<JSONObject> allMetadata_;
-   private JSONObject summaryMetadata_;
+   private StringBuffer mdBuffer_;
+   private FileWriter mdWriter_;
 
    public MultipageTiffWriter(String directory, int positionIndex, int fileIndex, JSONObject summaryMD, TaggedImage firstImage) {
       omeTiff_ = MMStudioMainFrame.getInstance().getOMETiffEnabled();
       seperateMetadataFile_ = MMStudioMainFrame.getInstance().getMetadataFileWithMultipageTiff();
       directory_ = directory;
+      planeZIndices_ = new ArrayList<Integer>();
+      planeCIndices_ = new ArrayList<Integer>();
+      planeTIndices_ = new ArrayList<Integer>();
              
       String baseFileName = createBaseFilename(summaryMD, positionIndex, fileIndex);
       imageFileName_ = baseFileName + (omeTiff_?".ome.tif":".tif");
@@ -132,8 +136,15 @@ public class MultipageTiffWriter {
               + numFrames_ * numChannels_ * numSlices_ * ((long) bytesPerImagePixels_ + 2000));
       
       if (omeTiff_ || seperateMetadataFile_) {
-         allMetadata_ = new ArrayList<JSONObject>(); 
-         summaryMetadata_ = summaryMD;
+         try {
+            startWritingMetadata(summaryMD, positionIndex);
+         } catch (JSONException ex) {
+            ReportingUtils.logError("Error writing summary metadata");
+            ex.printStackTrace();
+         } catch (IOException ex) {
+            ReportingUtils.logError("Error creating metadata file");
+            ex.printStackTrace();
+         }
       }
       try {
          f.createNewFile();
@@ -260,6 +271,7 @@ public class MultipageTiffWriter {
       long offset = filePosition_;
       writeIFD(img);
       updateIndexMap(img.tags,offset);
+      updatePlaneIndices(img.tags);
       writeBuffers();  
       return offset;
    }
@@ -270,6 +282,16 @@ public class MultipageTiffWriter {
          buffs[i] = buffers_.removeFirst();
       }
       fileChannel_.write(buffs);
+   }
+   
+   private void updatePlaneIndices(JSONObject tags) {
+      try {
+         planeZIndices_.add(MDUtils.getSliceIndex(tags));
+         planeCIndices_.add(MDUtils.getChannelIndex(tags));
+         planeTIndices_.add(MDUtils.getFrameIndex(tags));
+      } catch (JSONException ex) {
+         ReportingUtils.showError("Problem with image metadata: channel, slice, or frame index missing");
+      }
    }
    
    private void updateIndexMap(JSONObject tags, long offset) {
@@ -364,7 +386,12 @@ public class MultipageTiffWriter {
       buffers_.add(ByteBuffer.wrap(getBytesFromString(mdString)));
       
       if (omeTiff_ || seperateMetadataFile_) {      
-         allMetadata_.add(img.tags);
+         try {
+            writeImageMetadata(img.tags);
+         } catch (JSONException ex) {
+            ReportingUtils.logError("Error writing image metadata");
+            ex.printStackTrace();
+         }
       }
       
       filePosition_ += totalBytes;
@@ -556,72 +583,112 @@ public class MultipageTiffWriter {
       bytesPerImagePixels_ = imageHeight_*imageWidth_*byteDepth_*(rgb_?3:1);
    }
    
-   private String writeOMEMetadata() throws IOException {
-   //private String writeOMEMetadata() throws FormatException, IOException {
 
-//      String allMetadata = "";
-//      try {
-//         allMetadata = makeMetadataString();
-//      } catch (JSONException ex) {
-//         ReportingUtils.logError(ex);
-//         return null;
-//      }
-//      
-//      org.micromanager.acquisition.MicromanagerReader reader = new org.micromanager.acquisition.MicromanagerReader();
-//      IMetadata meta = MetadataTools.createOMEXMLMetadata();
-//      reader.setMetadataStore(meta);
-//      String[] metadata = new String[]{allMetadata};
-//      reader.populateMetadataStore(metadata);
-//      String omeXML = "";
-//      try {
-//         OMEXMLService service =  new ServiceFactory().getInstance(OMEXMLService.class);
-//         omeXML = service.getOMEXML(meta);
-//      } catch (Exception ex) {
-//         ReportingUtils.logError(ex);
-//      }
-//      System.out.println(omeXML);
-      return null;
+   private void writeOMEMetadata(String mdString) throws FormatException, IOException {   
+      MicromanagerReader reader = new MicromanagerReader();
+      IMetadata meta = MetadataTools.createOMEXMLMetadata();
+      reader.setMetadataStore(meta);
+      String[] metadata = new String[]{mdString};
+      reader.populateMetadataStore(metadata);
+
+      // specify the frame, channel, and slice index for every IFD
+      for (int ifd = 0; ifd < planeTIndices_.size(); ifd++) {
+         //map the Z, C, and T indices to each IFD
+         meta.setTiffDataIFD(new NonNegativeInteger(ifd), 0, ifd);
+         meta.setTiffDataFirstZ(new NonNegativeInteger(planeZIndices_.get(ifd)), 0, ifd);
+         meta.setTiffDataFirstC(new NonNegativeInteger(planeCIndices_.get(ifd)), 0, ifd);
+         meta.setTiffDataFirstT(new NonNegativeInteger(planeTIndices_.get(ifd)), 0, ifd);
+         meta.setTiffDataPlaneCount(new NonNegativeInteger(1), 0, ifd);
+      }
+
+      String omeXML = "";
+      try {
+         OMEXMLService service =  new ServiceFactory().getInstance(OMEXMLService.class);
+         omeXML = service.getOMEXML(meta);
+      } catch (Exception ex) {
+         ReportingUtils.logError(ex);
+      }
+      omeXML += " ";
+
+      
+      //write first image IFD
+      ByteBuffer ifdBuffer = ByteBuffer.allocate(12).order(BYTE_ORDER);
+      CharBuffer charView = ifdBuffer.asCharBuffer();
+      writeIFDEntry(0, ifdBuffer, charView, IMAGE_DESCRIPTION, (char)2, omeXML.length(), filePosition_);
+      fileChannel_.write(ifdBuffer, omeDescriptionTagPosition_); 
+      
+      //write OME XML String
+      ByteBuffer buffer = ByteBuffer.wrap(getBytesFromString(omeXML));
+      fileChannel_.write(buffer, filePosition_);
+      filePosition_ += buffer.capacity();
    }
 
    private void writeOMETiffAndSeperateMetadataFile() {
       if (!omeTiff_ && !seperateMetadataFile_) {
          return;
       }
-      String mdString;
       try {
-         mdString = makeMetadataString();
-      } catch (JSONException ex) {
-         mdString = "Metadata compilation error";
+         finishWritingMetadata();
+      } catch (IOException ex) {
+         ReportingUtils.logError("Error closing metadata file");
+         return;
       }
+      String mdString;
       if (seperateMetadataFile_) {
-
-         try {
-            FileWriter writer = new FileWriter(directory_ + "/" + metadataFileName_);
-            writer.write(mdString);
-            writer.close();
-         } catch (IOException ex) {
-            ReportingUtils.logError("Error writing metadat file");
-         }
-
+         mdString = JavaUtils.readTextFile(directory_ + "/" + metadataFileName_);
+      } else {
+         mdString = mdBuffer_.toString();
       }
       
       
-      
+      if (omeTiff_) {
+         try {
+            writeOMEMetadata(mdString);
+         } catch (FormatException ex) {
+            ReportingUtils.logError(ex);
+         } catch (IOException ex) {
+            ReportingUtils.logError(ex);
+         }
+      }
+
    }
    
-   private String makeMetadataString() throws JSONException {
-      StringBuffer sb = new StringBuffer();
-      summaryMetadata_.put("PositionIndex", MDUtils.getPositionIndex(allMetadata_.get(0)));
-      sb.append("{" + "\r\n");
-      sb.append("\"Summary\": ");
-      sb.append(summaryMetadata_.toString(2));
-      for (JSONObject md : allMetadata_) {        
-         sb.append(",\r\n"); 
-         sb.append("\"" + "FrameKey-" + MDUtils.getFrameIndex(md)
-                 + "-" + MDUtils.getChannelIndex(md) + "-" + MDUtils.getSliceIndex(md) + "\": ");
-         sb.append(md.toString(2));
+   private void startWritingMetadata(JSONObject summaryMD, int positionIndex) throws JSONException, IOException {
+      JSONObject mdCopy = new JSONObject(summaryMD.toString());
+      mdCopy.put("PositionIndex", positionIndex);
+      if (seperateMetadataFile_) {
+         mdWriter_ = new FileWriter(directory_ + "/" + metadataFileName_);
+         mdWriter_.write("{" + "\r\n");
+         mdWriter_.write("\"Summary\": ");
+         mdWriter_.write(mdCopy.toString(2));
+      } else {
+         mdBuffer_ = new StringBuffer();
+         mdBuffer_.append("{" + "\r\n");
+         mdBuffer_.append("\"Summary\": ");
+         mdBuffer_.append(mdCopy.toString(2));
       }
-      sb.append("\r\n}\r\n");
-      return sb.toString();
+   }
+
+   private void writeImageMetadata(JSONObject md) throws JSONException, IOException {
+      if (seperateMetadataFile_) {
+         mdWriter_.write(",\r\n\"FrameKey-" + MDUtils.getFrameIndex(md)
+                 + "-" + MDUtils.getChannelIndex(md) + "-" + MDUtils.getSliceIndex(md) + "\": ");
+         mdWriter_.write(md.toString(2));
+      } else {
+         mdBuffer_.append(",\r\n\"FrameKey-" + MDUtils.getFrameIndex(md)
+                 + "-" + MDUtils.getChannelIndex(md) + "-" + MDUtils.getSliceIndex(md) + "\": ");
+         mdBuffer_.append(md.toString(2));
+      }
+   }
+
+   
+   private void finishWritingMetadata() throws IOException {
+      if (seperateMetadataFile_) {
+         mdWriter_.write("\r\n}\r\n");
+         mdWriter_.close();
+      } else {
+         mdBuffer_.append("\r\n}\r\n");
+      }      
    }
 }
+
