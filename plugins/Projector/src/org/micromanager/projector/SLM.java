@@ -33,6 +33,10 @@ public class SLM implements ProjectionDevice {
       slmHeight_ = (int) mmc.getSLMHeight(slm_);
    }
 
+   public String getName() {
+       return slm_;
+   }
+   
    private void displaySpot(int x, int y) {
       ImageProcessor proc = new ByteProcessor(slmWidth_, slmHeight_);
       proc.setColor(Color.black);

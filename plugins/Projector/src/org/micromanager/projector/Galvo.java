@@ -37,6 +37,10 @@ public class Galvo implements ProjectionDevice {
       galvoExecutor_ = Executors.newSingleThreadExecutor();
    }
 
+   public String getName() {
+       return galvo_;
+   }
+   
    public void displaySpot(final double x, final double y) {
       turnOn();
       galvoExecutor_.execute(new Runnable() {
@@ -196,7 +200,6 @@ public class Galvo implements ProjectionDevice {
    public void runPolygons() {
       galvoExecutor_.submit(new Runnable() {
          public void run() {
-
             try {
                mmc_.runGalvoPolygons(galvo_);
             } catch (Exception ex) {

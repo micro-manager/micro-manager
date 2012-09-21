@@ -26,9 +26,11 @@ public class ProjectorControlForm extends javax.swing.JFrame implements OnStateL
     /** Creates new form ProjectorControlForm */
     public ProjectorControlForm(ProjectorPlugin plugin, ProjectorController controller) {
         initComponents();
-        controller_ = controller;
         plugin_ = plugin;
+        controller_ = controller;
+        allPixelsButton.setEnabled(controller_.isSLM());
         GUIUtils.recallPosition(this);
+        pointAndShootOffButton.setSelected(true);
     }
 
     /** This method is called from within the constructor to
@@ -45,11 +47,13 @@ public class ProjectorControlForm extends javax.swing.JFrame implements OnStateL
         offButton = new javax.swing.JButton();
         jTabbedPane1 = new javax.swing.JTabbedPane();
         jPanel1 = new javax.swing.JPanel();
-        pointAndShootToggleButton = new javax.swing.JToggleButton();
         jLabel1 = new javax.swing.JLabel();
         jLabel2 = new javax.swing.JLabel();
         pointAndShootIntervalSpinner = new javax.swing.JSpinner();
-        pointAndShootIntervalCheckbox = new javax.swing.JCheckBox();
+        pointAndShootOnButton = new javax.swing.JToggleButton();
+        pointAndShootOffButton = new javax.swing.JToggleButton();
+        closeShutterLabel = new javax.swing.JLabel();
+        centerButton = new javax.swing.JButton();
         jPanel3 = new javax.swing.JPanel();
         jLabel4 = new javax.swing.JLabel();
         jLabel6 = new javax.swing.JLabel();
@@ -65,7 +69,6 @@ public class ProjectorControlForm extends javax.swing.JFrame implements OnStateL
         jButton3 = new javax.swing.JButton();
         jSeparator1 = new javax.swing.JSeparator();
         allPixelsButton = new javax.swing.JButton();
-        jButton4 = new javax.swing.JButton();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
         setTitle("Projector Controls");
@@ -93,13 +96,6 @@ public class ProjectorControlForm extends javax.swing.JFrame implements OnStateL
             }
         });
 
-        pointAndShootToggleButton.setText("Off");
-        pointAndShootToggleButton.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                pointAndShootToggleButtonActionPerformed(evt);
-            }
-        });
-
         jLabel1.setText("Point and shoot mode:");
 
         jLabel2.setText("ms");
@@ -115,10 +111,26 @@ public class ProjectorControlForm extends javax.swing.JFrame implements OnStateL
             }
         });
 
-        pointAndShootIntervalCheckbox.setText("Close shutter after:");
-        pointAndShootIntervalCheckbox.addActionListener(new java.awt.event.ActionListener() {
+        pointAndShootOnButton.setText("On");
+        pointAndShootOnButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                pointAndShootIntervalCheckboxActionPerformed(evt);
+                pointAndShootOnButtonActionPerformed(evt);
+            }
+        });
+
+        pointAndShootOffButton.setText("Off");
+        pointAndShootOffButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                pointAndShootOffButtonActionPerformed(evt);
+            }
+        });
+
+        closeShutterLabel.setText("Close shutter after");
+
+        centerButton.setText("Show galvo center");
+        centerButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                centerButtonActionPerformed(evt);
             }
         });
 
@@ -127,18 +139,28 @@ public class ProjectorControlForm extends javax.swing.JFrame implements OnStateL
         jPanel1Layout.setHorizontalGroup(
             jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
             .add(jPanel1Layout.createSequentialGroup()
-                .addContainerGap()
-                .add(jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.TRAILING)
-                    .add(jLabel1)
-                    .add(pointAndShootIntervalCheckbox))
-                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                .add(32, 32, 32)
                 .add(jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                    .add(pointAndShootToggleButton)
                     .add(jPanel1Layout.createSequentialGroup()
-                        .add(pointAndShootIntervalSpinner, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 63, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                        .add(jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.TRAILING)
+                            .add(jLabel1)
+                            .add(closeShutterLabel))
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
-                        .add(jLabel2)))
-                .addContainerGap(85, Short.MAX_VALUE))
+                        .add(jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                            .add(jPanel1Layout.createSequentialGroup()
+                                .add(pointAndShootOnButton, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 62, Short.MAX_VALUE)
+                                .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
+                                .add(pointAndShootOffButton, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                                .addContainerGap())
+                            .add(jPanel1Layout.createSequentialGroup()
+                                .add(pointAndShootIntervalSpinner, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 63, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                                .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
+                                .add(jLabel2)
+                                .add(0, 0, Short.MAX_VALUE))))
+                    .add(jPanel1Layout.createSequentialGroup()
+                        .add(17, 17, 17)
+                        .add(centerButton)
+                        .add(0, 0, Short.MAX_VALUE))))
         );
         jPanel1Layout.setVerticalGroup(
             jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
@@ -146,13 +168,16 @@ public class ProjectorControlForm extends javax.swing.JFrame implements OnStateL
                 .add(25, 25, 25)
                 .add(jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
                     .add(jLabel1)
-                    .add(pointAndShootToggleButton))
+                    .add(pointAndShootOnButton)
+                    .add(pointAndShootOffButton))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
                 .add(jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
                     .add(jLabel2)
                     .add(pointAndShootIntervalSpinner, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                    .add(pointAndShootIntervalCheckbox))
-                .addContainerGap(226, Short.MAX_VALUE))
+                    .add(closeShutterLabel))
+                .add(18, 18, 18)
+                .add(centerButton)
+                .addContainerGap(141, Short.MAX_VALUE))
         );
 
         jTabbedPane1.addTab("Point and Shoot", jPanel1);
@@ -216,7 +241,7 @@ public class ProjectorControlForm extends javax.swing.JFrame implements OnStateL
                 .add(jPanel3Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
                     .add(jPanel3Layout.createSequentialGroup()
                         .addContainerGap()
-                        .add(jSeparator1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 222, Short.MAX_VALUE))
+                        .add(jSeparator1))
                     .add(jPanel3Layout.createSequentialGroup()
                         .add(jPanel3Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
                             .add(jPanel3Layout.createSequentialGroup()
@@ -246,7 +271,7 @@ public class ProjectorControlForm extends javax.swing.JFrame implements OnStateL
                                         .add(startFrameMDA_, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 46, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
                                     .add(jButton1)
                                     .add(jButton3))))
-                        .add(0, 60, Short.MAX_VALUE)))
+                        .add(0, 39, Short.MAX_VALUE)))
                 .addContainerGap())
         );
         jPanel3Layout.setVerticalGroup(
@@ -275,7 +300,7 @@ public class ProjectorControlForm extends javax.swing.JFrame implements OnStateL
                 .add(jButton1)
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(jButton3)
-                .addContainerGap(78, Short.MAX_VALUE))
+                .addContainerGap(32, Short.MAX_VALUE))
         );
 
         jTabbedPane1.addTab("ROIs", jPanel3);
@@ -287,13 +312,6 @@ public class ProjectorControlForm extends javax.swing.JFrame implements OnStateL
             }
         });
 
-        jButton4.setText("Center");
-        jButton4.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                jButton4ActionPerformed(evt);
-            }
-        });
-
         org.jdesktop.layout.GroupLayout layout = new org.jdesktop.layout.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
@@ -301,9 +319,7 @@ public class ProjectorControlForm extends javax.swing.JFrame implements OnStateL
             .add(layout.createSequentialGroup()
                 .addContainerGap()
                 .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                    .add(layout.createSequentialGroup()
-                        .add(jTabbedPane1)
-                        .add(163, 163, 163))
+                    .add(jTabbedPane1, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 286, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                     .add(layout.createSequentialGroup()
                         .add(onButton)
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
@@ -311,10 +327,8 @@ public class ProjectorControlForm extends javax.swing.JFrame implements OnStateL
                         .add(18, 18, 18)
                         .add(allPixelsButton)
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                        .add(calibrateButton)
-                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                        .add(jButton4)
-                        .addContainerGap(org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))))
+                        .add(calibrateButton)))
+                .addContainerGap(70, Short.MAX_VALUE))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
@@ -324,11 +338,10 @@ public class ProjectorControlForm extends javax.swing.JFrame implements OnStateL
                     .add(onButton)
                     .add(offButton)
                     .add(allPixelsButton)
-                    .add(calibrateButton)
-                    .add(jButton4))
-                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, 26, Short.MAX_VALUE)
-                .add(jTabbedPane1, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 335, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap())
+                    .add(calibrateButton))
+                .add(18, 18, 18)
+                .add(jTabbedPane1, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 289, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                .addContainerGap(org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
         pack();
@@ -342,6 +355,7 @@ public class ProjectorControlForm extends javax.swing.JFrame implements OnStateL
        controller_.turnOn();
        offButton.setSelected(false);
        onButton.setSelected(true);
+       pointAndShootOffButtonActionPerformed(null);
     }//GEN-LAST:event_onButtonActionPerformed
 
     private void offButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_offButtonActionPerformed
@@ -380,25 +394,31 @@ public class ProjectorControlForm extends javax.swing.JFrame implements OnStateL
        controller_.setRois(getRoiRepetitionsSetting());
 }//GEN-LAST:event_setRoiButtonActionPerformed
 
-    private void pointAndShootIntervalCheckboxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_pointAndShootIntervalCheckboxActionPerformed
-       updatePointAndShoot();
-}//GEN-LAST:event_pointAndShootIntervalCheckboxActionPerformed
-
     private void pointAndShootIntervalSpinnerVetoableChange(java.beans.PropertyChangeEvent evt)throws java.beans.PropertyVetoException {//GEN-FIRST:event_pointAndShootIntervalSpinnerVetoableChange
        updatePointAndShoot();
 }//GEN-LAST:event_pointAndShootIntervalSpinnerVetoableChange
 
-    private void pointAndShootToggleButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_pointAndShootToggleButtonActionPerformed
-       updatePointAndShoot();
-}//GEN-LAST:event_pointAndShootToggleButtonActionPerformed
-
-   private void jButton4ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton4ActionPerformed
-      controller_.moveToCenter();
-   }//GEN-LAST:event_jButton4ActionPerformed
+   private void centerButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_centerButtonActionPerformed
+      offButtonActionPerformed(null);
+      controller_.moveToCenter();      
+   }//GEN-LAST:event_centerButtonActionPerformed
 
     private void pointAndShootIntervalSpinnerStateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_pointAndShootIntervalSpinnerStateChanged
         updatePointAndShoot();
     }//GEN-LAST:event_pointAndShootIntervalSpinnerStateChanged
+
+    private void pointAndShootOnButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_pointAndShootOnButtonActionPerformed
+        pointAndShootOnButton.setSelected(true);
+        pointAndShootOffButton.setSelected(false);
+        offButtonActionPerformed(null);
+        updatePointAndShoot();
+    }//GEN-LAST:event_pointAndShootOnButtonActionPerformed
+
+    private void pointAndShootOffButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_pointAndShootOffButtonActionPerformed
+        pointAndShootOnButton.setSelected(false);
+        pointAndShootOffButton.setSelected(true);
+        updatePointAndShoot();
+    }//GEN-LAST:event_pointAndShootOffButtonActionPerformed
 
     private int getRoiRepetitionsSetting() {
           return getSpinnerValue(roiRepetitionsSpinner);
@@ -408,11 +428,8 @@ public class ProjectorControlForm extends javax.swing.JFrame implements OnStateL
        return Integer.parseInt(spinner.getValue().toString());
     }
     public void updatePointAndShoot() {
-       pointAndShootToggleButton.setText(pointAndShootToggleButton.isSelected() ? "On" : "Off");
-       controller_.setPointAndShootUseInterval(this.pointAndShootIntervalCheckbox.isSelected());
        controller_.setPointAndShootInterval(1000 * Double.parseDouble(this.pointAndShootIntervalSpinner.getValue().toString()));
-       controller_.activatePointAndShootMode(pointAndShootToggleButton.isSelected());
-
+       controller_.activatePointAndShootMode(pointAndShootOnButton.isSelected());
     }
 
    public void dispose() {
@@ -427,10 +444,11 @@ public class ProjectorControlForm extends javax.swing.JFrame implements OnStateL
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton allPixelsButton;
     private javax.swing.JButton calibrateButton;
+    private javax.swing.JButton centerButton;
+    private javax.swing.JLabel closeShutterLabel;
     private javax.swing.JButton jButton1;
     private javax.swing.JButton jButton2;
     private javax.swing.JButton jButton3;
-    private javax.swing.JButton jButton4;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel2;
     private javax.swing.JLabel jLabel3;
@@ -443,9 +461,9 @@ public class ProjectorControlForm extends javax.swing.JFrame implements OnStateL
     private javax.swing.JTabbedPane jTabbedPane1;
     private javax.swing.JButton offButton;
     private javax.swing.JButton onButton;
-    private javax.swing.JCheckBox pointAndShootIntervalCheckbox;
     private javax.swing.JSpinner pointAndShootIntervalSpinner;
-    private javax.swing.JToggleButton pointAndShootToggleButton;
+    private javax.swing.JToggleButton pointAndShootOffButton;
+    private javax.swing.JToggleButton pointAndShootOnButton;
     private javax.swing.JCheckBox repeatCheckBox;
     private javax.swing.JSpinner repeatFrameMDA_;
     private javax.swing.JSpinner roiRepetitionsSpinner;
