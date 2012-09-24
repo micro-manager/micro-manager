@@ -61,9 +61,10 @@
 		<copy todir="${MMPluginDir}">
 			<fileset dir="../../3rdpartypublic/classext/" casesensitive="no">
 				<include name="*.jar"/>
+				<exclude name="ij.jar">
 			</fileset>
 		</copy>
-		<delete file="${MMPluginDir}/ij.jar" />
+
 
 	</target>
 
@@ -100,9 +101,9 @@
 		<copy todir="${MMPluginDir-inst}">
 			<fileset dir="../../3rdpartypublic/classext/" casesensitive="no">
 				<include name="*.jar"/>
+				<exclude name="ij.jar">
 			</fileset>
 		</copy>
-		<delete file="${MMPluginDir-inst}/ij.jar" />
 		
 <copy file="${BinRoot}/MMCoreJ_wrap.dll" todir="${InstallRoot}" />
 		<copy file="${BinRoot}/LaunchMicroManager.bat" todir="${InstallRoot}" />
