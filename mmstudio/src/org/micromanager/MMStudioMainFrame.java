@@ -159,7 +159,7 @@ import org.micromanager.utils.SnapLiveContrastSettings;
 public class MMStudioMainFrame extends JFrame implements ScriptInterface, DeviceControlGUI {
 
    private static final String MICRO_MANAGER_TITLE = "Micro-Manager";
-   private static final String VERSION = "1.4.11  20120924";
+   private static final String VERSION = "1.4.?  dev";
    private static final long serialVersionUID = 3556500289598574541L;
    private static final String MAIN_FRAME_X = "x";
    private static final String MAIN_FRAME_Y = "y";
