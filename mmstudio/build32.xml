@@ -14,15 +14,7 @@
 	<property name="DriversRoot" value="../drivers"/>
 	<property name="DriversInstall" value="../Install_Win32/micro-manager/drivers"/>
 	<property name="AdaptersRoot" value="../DeviceAdapters"/>
-
-	<!-- Do not modify from this point on -->
 	<property name="IJ" value="../../3rdpartypublic/classext/ij.jar"/>
-	<property name="beanshell" value="../../3rdpartypublic/classext/bsh-2.0b4.jar"/>
-	<property name="swingx" value="../../3rdpartypublic/classext/swingx-0.9.5.jar"/>
-	<property name="swing_layout" value="../../3rdpartypublic/classext/swing-layout-1.0.4.jar"/>
-	<property name="commons_math" value="../../3rdpartypublic/classext/commons-math-2.0.jar"/>
-	<property name="clojure" value="../../3rdpartypublic/classext/clojure.jar"/>
-	<property name="clooj" value="../../3rdpartypublic/classext/clooj.jar"/>
 	<property name="IJLauncher" value="../../3rdpartypublic/JavaLauncher/ImageJ.exe"/>
 	<property name="MMCoreJ" value="../bin_Win32/MMCoreJ.jar"/>
 	<property name="MMPluginDir-inst" value="${InstallRoot}/plugins/Micro-Manager"/>
@@ -65,6 +57,11 @@
 
 		<copy file="./bin/plugins_mmstudio.config" tofile="./build/plugins.config"  overwrite="true" verbose="true" />
 		<jar jarfile="MMJ_.jar" basedir="build" manifest="./src/MANIFEST.MF" />
+		<copy todir="${MMPluginDir}">
+			<fileset dir="../../3rdpartypublic/classext/" casesensitive="no">
+				<include name="*.jar"/>
+			</fileset>
+		</copy>
 	</target>
 
 
@@ -96,17 +93,7 @@
 			</fileset>
 		</copy>
 
-		<copy file="${beanshell}" todir="${MMPluginDir-inst}" /> 
-	 	<copy file="${swingx}" todir="${MMPluginDir-inst}" /> 
 		<copy file="${MMCoreJ}" todir="${MMPluginDir-inst}" /> 
-	 	<copy file="${swing_layout}" todir="${MMPluginDir-inst}" /> 
-	 	<copy file="${commons_math}" todir="${MMPluginDir-inst}" /> 
-	 	<copy file="${clojure}" todir="${MMPluginDir-inst}" /> 
-	 	<copy file="${clooj}" todir="${MMPluginDir-inst}" /> 
-		<copy file="../../3rdpartypublic/classext/data.json.jar" todir="${MMPluginDir-inst}" /> 
-
-
-
 		<copy file="${IJLauncher}" todir="${InstallRoot}" />
 		<copy file="${IJ}" todir="${InstallRoot}" />
 		<copy file="MMJ_.jar" todir="${MMPluginDir-inst}" />
