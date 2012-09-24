@@ -45,22 +45,18 @@
 		<pathelement location="${IJ}"/>
 	</path>
 
-	<path id="project.class.path">
-		<pathelement location="${IJ}" />
-		<pathelement location="${beanshell}" />
-		<pathelement location="${swingx}" />
-		<pathelement location="${MMCoreJ}" />
-		<pathelement location="${swing_layout}" />
-		<pathelement location="${commons_math}" />
-		<pathelement location="${clojure}" />
-		<pathelement location="${MMPluginDir}/MMJ_.jar"/>
-	</path>
 
 	<target name="compile" description="Compile MM Studio.">
 		<mkdir dir="build" />
 		<javac srcdir="./src" destdir="./build" sourcepath="./src/org/micromanager/utils/AutofocusBase.java" optimize="on" source="1.5" target="1.5" debug="on">
-
-			<classpath refid="project.class.path" />
+		<classpath>
+			<fileset dir="../../3rdpartypublic/classext">
+				<include name="*.jar" />
+			</fileset>
+			<fileset dir="../bin_Win32">
+				<include name="MMCoreJ.jar" />
+			</fileset>
+		</classpath>
 			<!-- <compilerarg value="-Xlint"/> -->
 		</javac>
 		<copy file="./src/org/micromanager/icons/splash.gif" todir="./build/org/micromanager/icons" />
@@ -136,8 +132,9 @@
 				<include name="*.jar"/>
 			</fileset>
 		</copy>
-
-		<copy file="${BinRoot}/MMCoreJ_wrap.dll" todir="${InstallRoot}" />
+		<delete file="${MMPluginDir-inst}/ij.jar" />
+		
+<copy file="${BinRoot}/MMCoreJ_wrap.dll" todir="${InstallRoot}" />
 		<copy file="${BinRoot}/LaunchMicroManager.bat" todir="${InstallRoot}" />
 		<copy file="${BinRoot}/MMConfig_demo.cfg" todir="${InstallRoot}" />
 		<copy todir="${InstallRoot}">
