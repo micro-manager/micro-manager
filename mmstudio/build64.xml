@@ -61,7 +61,7 @@
 		<copy todir="${MMPluginDir}">
 			<fileset dir="../../3rdpartypublic/classext/" casesensitive="no">
 				<include name="*.jar"/>
-				<exclude name="ij.jar">
+				<exclude name="ij.jar"/>
 			</fileset>
 		</copy>
 
@@ -101,7 +101,7 @@
 		<copy todir="${MMPluginDir-inst}">
 			<fileset dir="../../3rdpartypublic/classext/" casesensitive="no">
 				<include name="*.jar"/>
-				<exclude name="ij.jar">
+				<exclude name="ij.jar"/>
 			</fileset>
 		</copy>
 		
