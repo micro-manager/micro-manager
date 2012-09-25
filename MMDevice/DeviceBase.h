@@ -382,7 +382,7 @@ public:
     * Should be overridden by the device adapter (when a sequence is implemented)
     * @param  name - property for which the sequence should be started
     */
-   int StartPropertySequence(const char* name) const
+   int StartPropertySequence(const char* name)
    {
       MM::Property* pProp = properties_.Find(name);
       if (!pProp)
@@ -408,7 +408,7 @@ public:
     * Should be overridden by the device adapter (when a sequence is implemented)
     * @param  name - property for which the sequence should be started
     */
-   int StopPropertySequence(const char* name) const
+   int StopPropertySequence(const char* name)
    {
       MM::Property* pProp = properties_.Find(name);
       if (!pProp)
@@ -432,7 +432,7 @@ public:
     * This function is used by the Core to communicate a sequence to the device
     * @param name - name of the sequenceable property
     */
-   int ClearPropertySequence(const char* name) const
+   int ClearPropertySequence(const char* name)
    {
       MM::Property* pProp;
       int ret = GetSequenceableProperty(&pProp, name);
@@ -446,7 +446,7 @@ public:
     * This function is used by the Core to communicate a sequence to the device
     * @param name - name of the sequenceable property
     */
-   int AddToPropertySequence(const char* name, const char* value) const
+   int AddToPropertySequence(const char* name, const char* value)
    {
       MM::Property* pProp;
       int ret = GetSequenceableProperty(&pProp, name);
@@ -461,7 +461,7 @@ public:
     * Sends the sequence to the device by calling the properties functor 
     * @param name - name of the sequenceable property
     */
-   int SendPropertySequence(const char* name) const
+   int SendPropertySequence(const char* name)
    {
       MM::Property* pProp;
       int ret = GetSequenceableProperty(&pProp, name);
@@ -1585,12 +1585,12 @@ class CStageBase : public CDeviceBase<MM::Stage, U>
       return DEVICE_UNSUPPORTED_COMMAND;
    }
 
-   virtual int StartStageSequence() const 
+   virtual int StartStageSequence() 
    {
       return DEVICE_UNSUPPORTED_COMMAND;
    }
 
-   virtual int StopStageSequence() const 
+   virtual int StopStageSequence()
    {
       return DEVICE_UNSUPPORTED_COMMAND;
    }
@@ -1605,7 +1605,7 @@ class CStageBase : public CDeviceBase<MM::Stage, U>
       return DEVICE_UNSUPPORTED_COMMAND;
    }
 
-   virtual int SendStageSequence() const 
+   virtual int SendStageSequence()
    {
       return DEVICE_UNSUPPORTED_COMMAND;
    }
@@ -1766,27 +1766,27 @@ public:
       return DEVICE_UNSUPPORTED_COMMAND;
    }
 
-   virtual int StartXYStageSequence() const 
+   virtual int StartXYStageSequence() 
    {
       return DEVICE_UNSUPPORTED_COMMAND;
    }
 
-   virtual int StopXYStageSequence() const 
+   virtual int StopXYStageSequence()
    {
       return DEVICE_UNSUPPORTED_COMMAND;
    }
 
-   virtual int ClearXYStageSequence() const 
+   virtual int ClearXYStageSequence()
    {
       return DEVICE_UNSUPPORTED_COMMAND;
    }
 
-   virtual int AddToXYStageSequence(double /*positionX*/, double /*positionY*/) const 
+   virtual int AddToXYStageSequence(double /*positionX*/, double /*positionY*/) 
    {
       return DEVICE_UNSUPPORTED_COMMAND;
    }
 
-   virtual int SendXYStageSequence() const 
+   virtual int SendXYStageSequence()
    {
       return DEVICE_UNSUPPORTED_COMMAND;
    }
@@ -1869,12 +1869,12 @@ class CSignalIOBase : public CDeviceBase<MM::SignalIO, U>
       return DEVICE_UNSUPPORTED_COMMAND;
    }
 
-   virtual int StartDASequence() const 
+   virtual int StartDASequence() 
    {
       return DEVICE_UNSUPPORTED_COMMAND;
    }
 
-   virtual int StopDASequence() const {
+   virtual int StopDASequence() {
       return DEVICE_UNSUPPORTED_COMMAND;
    }
 
@@ -1887,7 +1887,7 @@ class CSignalIOBase : public CDeviceBase<MM::SignalIO, U>
       return DEVICE_UNSUPPORTED_COMMAND;
    }
 
-   virtual int SendDASequence() const {
+   virtual int SendDASequence() {
       return DEVICE_UNSUPPORTED_COMMAND;
    }
 };

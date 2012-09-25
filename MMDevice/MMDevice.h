@@ -269,23 +269,23 @@ namespace MM {
       /* 
        * Starts execution of the sequence
        */
-      virtual int StartPropertySequence(const char* propertyName) const = 0;
+      virtual int StartPropertySequence(const char* propertyName) = 0;
       /*
        * Stops execution of the device
        */
-      virtual int StopPropertySequence(const char* propertyName) const = 0;
+      virtual int StopPropertySequence(const char* propertyName) = 0;
       /*
        * remove previously added sequence
        */
-      virtual int ClearPropertySequence(const char* propertyName) const = 0;
+      virtual int ClearPropertySequence(const char* propertyName) = 0;
       /*
        * Add one value to the sequence
        */
-      virtual int AddToPropertySequence(const char* propertyName, const char* value) const = 0;
+      virtual int AddToPropertySequence(const char* propertyName, const char* value) = 0;
       /*
        * Signal that we are done sending sequence values so that the adapter can send the whole sequence to the device
        */
-      virtual int SendPropertySequence(const char* propertyName) const = 0; 
+      virtual int SendPropertySequence(const char* propertyName) = 0; 
 
       virtual bool GetErrorText(int errorCode, char* errMessage) const = 0;
       virtual bool Busy() = 0;
@@ -607,14 +607,14 @@ namespace MM {
       // be true. If your device can not execute this (true for most stages)
       // simply set isSequenceable to false
       virtual int GetStageSequenceMaxLength(long& nrEvents) const = 0;
-      virtual int StartStageSequence() const = 0;
-      virtual int StopStageSequence() const = 0;
+      virtual int StartStageSequence() = 0;
+      virtual int StopStageSequence() = 0;
       // Remove all values in the sequence
       virtual int ClearStageSequence() = 0;
       // Add one value to the sequence
       virtual int AddToStageSequence(double position) = 0;
       // Signal that we are done sending sequence values so that the adapter can send the whole sequence to the device
-      virtual int SendStageSequence() const = 0;
+      virtual int SendStageSequence() = 0;
    };
 
    /** 
@@ -662,14 +662,14 @@ namespace MM {
       // be true. If your device can not execute this (true for most XY stages
       // simply set isSequenceable to false
       virtual int GetXYStageSequenceMaxLength(long& nrEvents) const = 0;
-      virtual int StartXYStageSequence() const = 0;
-      virtual int StopXYStageSequence() const = 0;
+      virtual int StartXYStageSequence() = 0;
+      virtual int StopXYStageSequence() = 0;
       // Remove all values in the sequence
-      virtual int ClearXYStageSequence() const = 0;
+      virtual int ClearXYStageSequence() = 0;
       // Add one value to the sequence
-      virtual int AddToXYStageSequence(double positionX, double positionY) const = 0;
+      virtual int AddToXYStageSequence(double positionX, double positionY) = 0;
       // Signal that we are done sending sequence values so that the adapter can send the whole sequence to the device
-      virtual int SendXYStageSequence() const = 0;
+      virtual int SendXYStageSequence() = 0;
 
    };
 
@@ -901,12 +901,12 @@ namespace MM {
        * send previously, triggered by a TTL
        * @return errorcode (DEVICE_OK if no error)
        */
-      virtual int StartDASequence() const = 0;
+      virtual int StartDASequence() = 0;
       /**
        * Tells the device to stop running the sequence
        * @return errorcode (DEVICE_OK if no error)
        */
-      virtual int StopDASequence() const = 0;
+      virtual int StopDASequence() = 0;
       /**
        * Clears the DA sequnce from the device and the adapter.
        * If this functions is not called in between running 
@@ -930,7 +930,7 @@ namespace MM {
        * nothing to be done.
        * @return errorcode (DEVICE_OK if no error)
        */
-      virtual int SendDASequence() const = 0;
+      virtual int SendDASequence() = 0;
 
    };
 
