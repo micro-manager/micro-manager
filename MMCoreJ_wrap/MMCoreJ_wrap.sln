@@ -249,6 +249,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "LeicaDMSTC", "..\DeviceAdap
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "AxioCamMR", "..\SecretDeviceAdapters\AxioCamMR\AxioCamMR.vcproj", "{91CCB72B-852D-47D8-82FA-0E19A300A125}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "LumencorCIA", "..\DeviceAdapters\LumencorCIA\LumencorCIA.vcproj", "{2C362B1C-80C9-4867-AD96-2482535190D1}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
@@ -1180,6 +1182,14 @@ Global
 		{91CCB72B-852D-47D8-82FA-0E19A300A125}.Release|Win32.Build.0 = Release|Win32
 		{91CCB72B-852D-47D8-82FA-0E19A300A125}.Release|x64.ActiveCfg = Release|x64
 		{91CCB72B-852D-47D8-82FA-0E19A300A125}.Release|x64.Build.0 = Release|x64
+		{2C362B1C-80C9-4867-AD96-2482535190D1}.Debug|Win32.ActiveCfg = Debug|Win32
+		{2C362B1C-80C9-4867-AD96-2482535190D1}.Debug|Win32.Build.0 = Debug|Win32
+		{2C362B1C-80C9-4867-AD96-2482535190D1}.Debug|x64.ActiveCfg = Debug|x64
+		{2C362B1C-80C9-4867-AD96-2482535190D1}.Debug|x64.Build.0 = Debug|x64
+		{2C362B1C-80C9-4867-AD96-2482535190D1}.Release|Win32.ActiveCfg = Release|Win32
+		{2C362B1C-80C9-4867-AD96-2482535190D1}.Release|Win32.Build.0 = Release|Win32
+		{2C362B1C-80C9-4867-AD96-2482535190D1}.Release|x64.ActiveCfg = Release|x64
+		{2C362B1C-80C9-4867-AD96-2482535190D1}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
