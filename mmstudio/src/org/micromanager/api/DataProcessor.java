@@ -31,6 +31,9 @@ public abstract class DataProcessor<E> extends Thread {
     * public void process() {
     *    produce(poll());
     * }
+    * TaggedImageQueue.POISON will be the last object
+    * received by polling -- the process method should pass this
+    * object on unchanged.
     */
    protected abstract void process();
  
