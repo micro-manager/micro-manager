@@ -122,7 +122,6 @@ public class MultipageTiffReader {
          return;
       }
       summaryMetadata_ = readSummaryMD();
-      StringBuffer mdBuffer = MPTiffUtils.startBufferingMetadataFile(summaryMetadata_);
       long nextIFD = firstIFD;
       long firstImageDescriptionOffset = 0;
       indexMap_ = new HashMap<String, Long>();
@@ -132,6 +131,8 @@ public class MultipageTiffReader {
       progressBar.setVisible(true);
       ArrayList<Integer> zIndices = new ArrayList<Integer>(), tIndices = new ArrayList<Integer>(), cIndices = new ArrayList<Integer>();
       long nextIFDOffsetLocation = 0;
+      ArrayList<JSONObject> imgMetadata = new ArrayList<JSONObject>();
+      int tMaxIndex =0, zMaxIndex = 0, cMaxIndex = 0;
       while (nextIFD > 0) {
          try {
             IFDData data = readIFD(nextIFD);
@@ -149,13 +150,17 @@ public class MultipageTiffReader {
             //OME Tiff only
             if (firstImageDescriptionOffset > 0) {
                try {
-                  zIndices.add(MDUtils.getSliceIndex(ti.tags));
-                  cIndices.add(MDUtils.getChannelIndex(ti.tags));
-                  tIndices.add(MDUtils.getFrameIndex(ti.tags));
+                  int z = MDUtils.getSliceIndex(ti.tags), c = MDUtils.getChannelIndex(ti.tags), t = MDUtils.getFrameIndex(ti.tags);
+                  tMaxIndex = Math.max(t, tMaxIndex);
+                  cMaxIndex = Math.max(c, cMaxIndex);
+                  zMaxIndex = Math.max(z, zMaxIndex);
+                  zIndices.add(z);
+                  cIndices.add(c);
+                  tIndices.add(t);
                } catch (JSONException ex) {
                   ReportingUtils.showError("Problem with image metadata: channel, slice, or frame index missing");
                }
-               MPTiffUtils.bufferImageMetadata(ti.tags, mdBuffer);
+               imgMetadata.add(ti.tags);
             }
             
             indexMap_.put(label, nextIFD);
@@ -177,6 +182,15 @@ public class MultipageTiffReader {
       filePosition += MPTiffUtils.writeIndexMap(fileChannel_, indexMap_, filePosition, byteOrder_);
       if (firstImageDescriptionOffset > 0) {
          //This dataset is meant to be an OMETiff, so write it as such
+         summaryMetadata_.put("Frames", tMaxIndex+1);   
+         summaryMetadata_.put("Slices", zMaxIndex+1);    
+         summaryMetadata_.put("Channels", cMaxIndex+1);    
+         StringBuffer mdBuffer = MPTiffUtils.startBufferingMetadataFile(summaryMetadata_);
+         
+         for (JSONObject tags : imgMetadata) {
+            MPTiffUtils.bufferImageMetadata(tags, mdBuffer);
+         }
+               
          MPTiffUtils.finishBufferedMetadata(mdBuffer);
          try {
             filePosition += MPTiffUtils.writeOMEMetadata(fileChannel_, mdBuffer.toString(), filePosition, zIndices, 
