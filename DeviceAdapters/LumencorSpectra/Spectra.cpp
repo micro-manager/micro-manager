@@ -353,21 +353,27 @@ int Spectra::SendColorLevelCmd(ColorNameT ColorName,int ColorLevel)
 	{
 		case  RED:
 			DACSetupArray[3] = 0x08;
+			DACSetupArray[1] = 0x18;
 			break;
 		case  GREEN:
 			DACSetupArray[3] = 0x04;
+			DACSetupArray[1] = 0x18;
 			break;
 		case  VIOLET:
 			DACSetupArray[3] = 0x01;
+			DACSetupArray[1] = 0x18;
 			break;
 		case  CYAN:
 			DACSetupArray[3] = 0x02;
+			DACSetupArray[1] = 0x18;
 			break;
 		case  BLUE:
 			DACSetupArray[3] = 0x01;
+			DACSetupArray[1] = 0x1A;
 			break;
 		case  TEAL:
 			DACSetupArray[3] = 0x02;
+			DACSetupArray[1] = 0x1A;
 			break;
 		case ALL:
 		case WHITE:
@@ -404,6 +410,13 @@ int Spectra::SendColorEnableCmd(ColorNameT ColorName,bool State, char* EnableMas
 {
 	enum StateValue {OFF=0, ON=1};
 	unsigned char DACSetupArray[]= "\x4F\x00\x50\x00";
+	if(LightEngine == Aura_Type)
+	{
+		if(ColorName == BLUE || ColorName == CYAN)
+		{	
+			return DEVICE_OK;  // we exit here as the Aura does not support these colors
+		}
+	}
 	if(LightEngine == Sola_Type)
 	{
 		 ColorName = ALL;
@@ -476,7 +489,13 @@ int Spectra::SendColorEnableCmd(ColorNameT ColorName,bool State, char* EnableMas
 	if (LightEngine == Aura_Type)
 	{
 		// See Aura TTL IF Doc: Front Panel Control/DAC for more detail
-		DACSetupArray[1] = DACSetupArray[1] | 0x20; // Mask for Aura to be sure DACs are Enabled 
+		//DACSetupArray[1] = DACSetupArray[1] | 0x20; // Mask for Aura to be sure DACs are Enabled
+		// Byte 1 bit 5 Selects either DAC or Pot control on the Aura so we want to set this
+		// to a zero for DAC control.
+		// Examples:
+		// 4f 70 50  sets Pot intensity control and all channels ON.
+		// 4F 50 50  sets DAC intensity control and all channels ON.
+		DACSetupArray[1] = DACSetupArray[1] & 0x5F; // Mask for Aura to be sure DACs are Enabled 
 	}
 
 	if(ColorName != SHUTTER) // shutter is a unique case were we dont want to change our mask
@@ -518,7 +537,7 @@ int Spectra::GetVersion()
 {
      int ret;
 	 ret = InitLE();
-     version_ = "1234"; // this is a dummy value for now.. return real version when hardware supports it
+     version_ = "092712"; // this is the software build date for now.. return real version when hardware supports it
      return DEVICE_OK;  // debug only 
 }
 
