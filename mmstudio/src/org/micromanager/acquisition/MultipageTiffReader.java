@@ -75,16 +75,22 @@ public class MultipageTiffReader {
    /**
     * This constructor is used for a file that is currently being written
     */
-   public MultipageTiffReader(JSONObject summaryMD, MultipageTiffWriter writer) {
+   public MultipageTiffReader(JSONObject summaryMD) {
       displayAndComments_ = new JSONObject();
-      fileChannel_ = writer.getFileChannel();
       summaryMetadata_ = summaryMD;
-      indexMap_ = writer.getIndexMap();
       byteOrder_ = MultipageTiffWriter.BYTE_ORDER;
       getRGBAndByteDepth();
       writingFinished_ = false;
    }
-
+   
+   public void setIndexMap(HashMap<String,Long> indexMap) {
+      indexMap_ = indexMap;
+   }
+   
+   public void setFileChannel(FileChannel fc) {
+      fileChannel_ = fc;
+   }
+  
    /**
     * This constructor is used for opening datasets that have already been saved
     */
@@ -123,44 +129,21 @@ public class MultipageTiffReader {
       }
       summaryMetadata_ = readSummaryMD();
       long nextIFD = firstIFD;
-      long firstImageDescriptionOffset = 0;
       indexMap_ = new HashMap<String, Long>();
       final ProgressBar progressBar = new ProgressBar("Fixing dataset", 0, (int) (fileChannel_.size() / 2L));
       progressBar.setRange(0, (int) (fileChannel_.size() / 2L));
       progressBar.setProgress(0);
       progressBar.setVisible(true);
-      ArrayList<Integer> zIndices = new ArrayList<Integer>(), tIndices = new ArrayList<Integer>(), cIndices = new ArrayList<Integer>();
       long nextIFDOffsetLocation = 0;
-      ArrayList<JSONObject> imgMetadata = new ArrayList<JSONObject>();
-      int tMaxIndex =0, zMaxIndex = 0, cMaxIndex = 0;
       while (nextIFD > 0) {
          try {
             IFDData data = readIFD(nextIFD);
-            if (nextIFD == firstIFD) {
-               firstImageDescriptionOffset = data.imageDescriptionOffset;
-            }
             nextIFDOffsetLocation = data.nextIFDOffsetLocation;
             TaggedImage ti = readTaggedImage(data);
             String label = null;
             label = MDUtils.getLabel(ti.tags);
             if (label == null) {
                break;
-            }
-            
-            //OME Tiff only
-            if (firstImageDescriptionOffset > 0) {
-               try {
-                  int z = MDUtils.getSliceIndex(ti.tags), c = MDUtils.getChannelIndex(ti.tags), t = MDUtils.getFrameIndex(ti.tags);
-                  tMaxIndex = Math.max(t, tMaxIndex);
-                  cMaxIndex = Math.max(c, cMaxIndex);
-                  zMaxIndex = Math.max(z, zMaxIndex);
-                  zIndices.add(z);
-                  cIndices.add(c);
-                  tIndices.add(t);
-               } catch (JSONException ex) {
-                  ReportingUtils.showError("Problem with image metadata: channel, slice, or frame index missing");
-               }
-               imgMetadata.add(ti.tags);
             }
             
             indexMap_.put(label, nextIFD);
@@ -180,25 +163,6 @@ public class MultipageTiffReader {
       long filePosition = nextIFD;
       MPTiffUtils.writeNullOffsetAfterLastImage(fileChannel_, nextIFDOffsetLocation, byteOrder_);
       filePosition += MPTiffUtils.writeIndexMap(fileChannel_, indexMap_, filePosition, byteOrder_);
-      if (firstImageDescriptionOffset > 0) {
-         //This dataset is meant to be an OMETiff, so write it as such
-         summaryMetadata_.put("Frames", tMaxIndex+1);   
-         summaryMetadata_.put("Slices", zMaxIndex+1);    
-         summaryMetadata_.put("Channels", cMaxIndex+1);    
-         StringBuffer mdBuffer = MPTiffUtils.startBufferingMetadataFile(summaryMetadata_);
-         
-         for (JSONObject tags : imgMetadata) {
-            MPTiffUtils.bufferImageMetadata(tags, mdBuffer);
-         }
-               
-         MPTiffUtils.finishBufferedMetadata(mdBuffer);
-         try {
-            filePosition += MPTiffUtils.writeOMEMetadata(fileChannel_, mdBuffer.toString(), filePosition, zIndices, 
-                       tIndices, cIndices, firstImageDescriptionOffset, byteOrder_);
-         } catch (FormatException ex) {
-            ReportingUtils.showError("Problem writing OME XML Metadata");
-         }
-      }
       JSONObject displayAndComments = VirtualAcquisitionDisplay.getDisplaySettingsFromSummary(summaryMetadata_);
       int numChannels;
       try {
@@ -209,6 +173,7 @@ public class MultipageTiffReader {
       filePosition += MPTiffUtils.writeDisplaySettings(fileChannel_, displayAndComments, numChannels, filePosition, byteOrder_);
       filePosition += MPTiffUtils.writeComments(fileChannel_, displayAndComments, filePosition, byteOrder_);
       raFile_.setLength(filePosition + 8);
+      ReportingUtils.showMessage("Dataset succcessfully repaired!");
    }
    
    public static boolean isMMMultipageTiff(String directory) throws IOException {
@@ -281,10 +246,6 @@ public class MultipageTiffReader {
       }
    }
 
-   public void addToIndexMap(TaggedImage img, long offset) {
-      indexMap_.put(MDUtils.getLabel(img.tags), offset);
-   }
-   
    public JSONObject getSummaryMetadata() {
       return summaryMetadata_;
    }
@@ -438,8 +399,6 @@ public class MultipageTiffReader {
             data.pixelOffset = entry.value;
          } else if (entry.tag == STRIP_BYTE_COUNTS) {
             data.bytesPerImage = entry.value;
-         } else if (entry.tag == IMAGE_DESCRIPTION) {
-            data.imageDescriptionOffset = byteOffset + 2 + 12*i;
          } 
       }
       data.nextIFD = unsignInt(entries.getInt(numEntries*12));
@@ -579,7 +538,6 @@ public class MultipageTiffReader {
       public long mdLength;
       public long nextIFD;
       public long nextIFDOffsetLocation;
-      public long imageDescriptionOffset;
       
       public IFDData() {}
    }

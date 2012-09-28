@@ -130,38 +130,12 @@ class MPTiffUtils {
       return 8 + commentsString.length();
    }
 
-   static int writeOMEMetadata(FileChannel fileChannel, String mdString, long omeMetadataOffset,
-           ArrayList<Integer> zIndices, ArrayList<Integer> tIndices, ArrayList<Integer> cIndices, 
+   static int writeOMEMetadata(FileChannel fileChannel, String omeXML, long omeMetadataOffset,
            long imageDescriptionOffset, ByteOrder byteOrder) throws FormatException, IOException {
-      MicromanagerReader reader = new MicromanagerReader();
-      IMetadata meta = MetadataTools.createOMEXMLMetadata();
-      reader.setMetadataStore(meta);
-      String[] metadata = new String[]{mdString};
-      reader.populateMetadataStore(metadata);
-
-      //  specify the frame, channel, and slice index for every IFD
-      for (int ifd = 0; ifd < tIndices.size(); ifd++) {
-         //map the Z, C, and T indices to each IFD
-         meta.setTiffDataIFD(new NonNegativeInteger(ifd), 0, ifd);
-         meta.setTiffDataFirstZ(new NonNegativeInteger(zIndices.get(ifd)), 0, ifd);
-         meta.setTiffDataFirstC(new NonNegativeInteger(cIndices.get(ifd)), 0, ifd);
-         meta.setTiffDataFirstT(new NonNegativeInteger(tIndices.get(ifd)), 0, ifd);
-         meta.setTiffDataPlaneCount(new NonNegativeInteger(1), 0, ifd);
-      }
-
-      String omeXML = "";
-      try {
-         OMEXMLService service = new ServiceFactory().getInstance(OMEXMLService.class);
-         omeXML = service.getOMEXML(meta);
-      } catch (Exception ex) {
-         ReportingUtils.logError(ex);
-      }
-      omeXML += " ";
-
       //write first image IFD
       ByteBuffer ifdCountAndValueBuffer = ByteBuffer.allocate(8).order(byteOrder);
       ifdCountAndValueBuffer.putInt(0, omeXML.length());
-      ifdCountAndValueBuffer.putInt(4, (int)omeMetadataOffset);
+      ifdCountAndValueBuffer.putInt(4, (int) omeMetadataOffset);
       fileChannel.write(ifdCountAndValueBuffer, imageDescriptionOffset + 4);
 
       //write OME XML String
@@ -169,51 +143,12 @@ class MPTiffUtils {
       fileChannel.write(buffer, omeMetadataOffset);
       return buffer.capacity();
    }
-    
+
    static void writeNullOffsetAfterLastImage(FileChannel fileChannel, long nexIFDOffsetLocation, ByteOrder byteOrder) throws IOException {
       ByteBuffer buffer = ByteBuffer.allocate(4);
       buffer.order(byteOrder);
       buffer.putInt(0,0);
       fileChannel.write(buffer, nexIFDOffsetLocation);
-   }
-
-   static void startWritingMetadataFile(JSONObject summaryMD, FileWriter writer) throws JSONException, IOException {
-      writer.write("{" + "\r\n");
-      writer.write("\"Summary\": ");
-      JSONObject smdCopy = new JSONObject(summaryMD.toString());
-      smdCopy.put("PositionIndex", 0);
-      writer.write(smdCopy.toString(2));
-   }
-
-   static StringBuffer startBufferingMetadataFile(JSONObject summaryMD) throws JSONException {
-      StringBuffer buffer = new StringBuffer();
-      buffer.append("{" + "\r\n");
-      buffer.append("\"Summary\": ");
-      JSONObject smdCopy = new JSONObject(summaryMD.toString());
-      smdCopy.put("PositionIndex", 0);
-      buffer.append(smdCopy.toString(2));
-      return buffer;
-   }
-
-   static void writeImageMetadata(JSONObject md, FileWriter writer) throws JSONException, IOException {
-      writer.write(",\r\n\"FrameKey-" + MDUtils.getFrameIndex(md)
-              + "-" + MDUtils.getChannelIndex(md) + "-" + MDUtils.getSliceIndex(md) + "\": ");
-      writer.write(md.toString(2));
-   }
-   
-   static void bufferImageMetadata(JSONObject md, StringBuffer buffer) throws JSONException {
-      buffer.append(",\r\n\"FrameKey-" + MDUtils.getFrameIndex(md)
-              + "-" + MDUtils.getChannelIndex(md) + "-" + MDUtils.getSliceIndex(md) + "\": ");
-      buffer.append(md.toString(2));
-   }
-
-   static void finishWritingMetadata(FileWriter writer) throws IOException {
-      writer.write("\r\n}\r\n");
-      writer.close();
-   }
-   
-   static void finishBufferedMetadata(StringBuffer buffer) {
-      buffer.append("\r\n}\r\n");
    }
 
    static byte[] getBytesFromString(String s) {

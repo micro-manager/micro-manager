@@ -32,6 +32,7 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import loci.common.services.DependencyException;
 import loci.common.services.ServiceFactory;
 import loci.formats.FormatException;
 import loci.formats.MetadataTools;
@@ -51,8 +52,11 @@ import org.micromanager.utils.ReportingUtils;
 
 public class MultipageTiffWriter {
    
+//   private static final long BYTES_PER_MEG = 1048576;
+//   private static final long MAX_FILE_SIZE = 5*BYTES_PER_MEG;
    private static final long BYTES_PER_GIG = 1073741824;
    private static final long MAX_FILE_SIZE = 4*BYTES_PER_GIG;
+
    
    public static final char ENTRIES_PER_IFD = 13;
    //Required tags
@@ -77,17 +81,14 @@ public class MultipageTiffWriter {
    
    
    final private boolean omeTiff_;
-   final private boolean seperateMetadataFile_;
    
    private RandomAccessFile raFile_;
    private FileChannel fileChannel_; 
-   private String directory_;  
-   private String imageFileName_;
-   private String metadataFileName_;
    private long filePosition_ = 0;
    private int numChannels_ = 1, numFrames_ = 1, numSlices_ = 1;
    private HashMap<String, Long> indexMap_;
    private ArrayList<Integer> planeZIndices_, planeTIndices_, planeCIndices_;
+   private ArrayList<String> planeUUIDs_;
    private long nextIFDOffsetLocation_ = -1;
    private JSONObject displayAndComments_;
    private boolean rgb_ = false;
@@ -95,25 +96,23 @@ public class MultipageTiffWriter {
    private LinkedList<ByteBuffer> buffers_;
    private boolean firstIFD_ = true;
    private long omeDescriptionTagPosition_;
-   private StringBuffer mdBuffer_;
-   private FileWriter mdWriter_;
+   //Reader associated with this file
+   private MultipageTiffReader reader_;
+   private String filename_;
 
-   public MultipageTiffWriter(String directory, int positionIndex, int fileIndex, JSONObject summaryMD, TaggedImage firstImage) {
-      omeTiff_ = MMStudioMainFrame.getInstance().getOMETiffEnabled();
-      seperateMetadataFile_ = MMStudioMainFrame.getInstance().getMetadataFileWithMultipageTiff();
-      directory_ = directory;
+   public MultipageTiffWriter(String directory, String filename, JSONObject summaryMD, boolean omeTiff) {
+      omeTiff_ = omeTiff;
       planeZIndices_ = new ArrayList<Integer>();
       planeCIndices_ = new ArrayList<Integer>();
       planeTIndices_ = new ArrayList<Integer>();
+      planeUUIDs_ = new ArrayList<String>();
              
-      String baseFileName = createBaseFilename(summaryMD, positionIndex, fileIndex);
-      imageFileName_ = baseFileName + (omeTiff_?".ome.tif":".tif");
-      metadataFileName_ = baseFileName + "_metadata.txt";
-      File f = new File(directory_ + "/" +  imageFileName_);     
+      reader_ = new MultipageTiffReader(summaryMD);
+      File f = new File(directory + "/" + filename); 
+      filename_ = filename;
       
       try {
          processSummaryMD(summaryMD);
-         summaryMD.put("PositionIndex", positionIndex);
          displayAndComments_ = VirtualAcquisitionDisplay.getDisplaySettingsFromSummary(summaryMD);
       } catch (MMScriptException ex1) {
          ReportingUtils.logError(ex1);
@@ -125,23 +124,6 @@ public class MultipageTiffWriter {
       long fileSize = Math.min(MAX_FILE_SIZE, summaryMD.toString().length() + 2000000
               + numFrames_ * numChannels_ * numSlices_ * ((long) bytesPerImagePixels_ + 2000));
       
-      if (omeTiff_ || seperateMetadataFile_) {
-         try {
-            
-            if (seperateMetadataFile_) {
-               mdWriter_ = new FileWriter(directory_ + "/" + metadataFileName_);
-               MPTiffUtils.startWritingMetadataFile(summaryMD, mdWriter_);
-            } else {
-               mdBuffer_ = MPTiffUtils.startBufferingMetadataFile(summaryMD);
-            }
-         } catch (JSONException ex) {
-            ReportingUtils.logError("Error writing summary metadata");
-            ex.printStackTrace();
-         } catch (IOException ex) {
-            ReportingUtils.logError("Error creating metadata file");
-            ex.printStackTrace();
-         }
-      }
       try {
          f.createNewFile();
          raFile_ = new RandomAccessFile(f, "rw");
@@ -160,38 +142,38 @@ public class MultipageTiffWriter {
          }
          fileChannel_ = raFile_.getChannel();
          indexMap_ = new HashMap<String, Long>();
+         reader_.setFileChannel(fileChannel_);
+         reader_.setIndexMap(indexMap_);
          buffers_ = new LinkedList<ByteBuffer>();
-
+         
          writeMMHeaderAndSummaryMD(summaryMD);
       } catch (IOException ex) {
          ReportingUtils.logError(ex);
       }
    }
+   
+   public String getFilename() {
+      return filename_;
+   }
+   
+   public ArrayList<Integer> getZIndices() {
+      return planeZIndices_;
+   }
 
-   private String createBaseFilename(JSONObject summaryMetadata, int positionIndex, int fileIndex) {
-      String filename = "";
-      try {
-         String prefix = summaryMetadata.getString("Prefix");
-         if (prefix.length() == 0) {
-            filename = "images";
-         } else {
-            filename = prefix + "_images";
-         }
-      } catch (JSONException ex) {
-         ReportingUtils.logError("Can't find Prefix in summary metadata");
-         filename = "images";
-      }
-      try {
-         if (MDUtils.getNumPositions(summaryMetadata) > 0) {
-            //TODO: put position name if it exists
-            filename += "_" + positionIndex;
-         }
-      } catch (JSONException e) {
-      }
-      if (fileIndex > 0) {
-         filename += "_" + fileIndex;
-      }
-      return filename;
+   public ArrayList<Integer> getTIndices() {
+      return planeTIndices_;
+   }
+
+   public ArrayList<Integer> getCIndices() {
+      return planeCIndices_;
+   }
+   
+   public ArrayList<String> getUUIDs() {
+      return planeUUIDs_;
+   }
+
+   public MultipageTiffReader getReader() {
+      return reader_;
    }
    
    public FileChannel getFileChannel() {
@@ -231,14 +213,12 @@ public class MultipageTiffWriter {
       filePosition_ += buffer.position() + mdLength;
    }
 
-   public void close() throws IOException {
+   public void close(String omeXML) throws IOException {
       MPTiffUtils.writeNullOffsetAfterLastImage(fileChannel_, nextIFDOffsetLocation_, BYTE_ORDER);
       filePosition_ += MPTiffUtils.writeIndexMap(fileChannel_, indexMap_, filePosition_, BYTE_ORDER);
-      String mdtxt = finishMetadata();
       if (omeTiff_) {
          try {
-            filePosition_ += MPTiffUtils.writeOMEMetadata(fileChannel_, mdtxt, filePosition_, planeZIndices_,
-                    planeTIndices_, planeCIndices_, omeDescriptionTagPosition_, BYTE_ORDER);
+            filePosition_ += MPTiffUtils.writeOMEMetadata(fileChannel_, omeXML, filePosition_, omeDescriptionTagPosition_, BYTE_ORDER);
             filePosition_ += MPTiffUtils.writeDisplaySettings(fileChannel_, displayAndComments_, numChannels_, filePosition_, BYTE_ORDER);
             filePosition_ += MPTiffUtils.writeComments(fileChannel_, displayAndComments_, filePosition_, BYTE_ORDER);
          } catch (FormatException ex) {
@@ -247,18 +227,24 @@ public class MultipageTiffWriter {
       }
 
       raFile_.setLength(filePosition_ + 8);
+      reader_.finishedWriting();
       //Dont close file channel and random access file becase Tiff reader still using them
       fileChannel_ = null;
       raFile_ = null;    
    }
    
-   public boolean hasSpaceToWrite(TaggedImage img) {
+   public boolean hasSpaceToWrite(TaggedImage img, int omeMDLength) {
       int mdLength = img.tags.toString().length();
       int indexMapSize = indexMap_.size()*20 + 8;
       int IFDSize = ENTRIES_PER_IFD*12 + 4 + 16;
-      int extraPadding = 1000000; 
+      //2 MD extra padding
+      int extraPadding = 2000000; 
       long size = mdLength+indexMapSize+IFDSize+bytesPerImagePixels_+MPTiffUtils.SPACE_FOR_COMMENTS+
-              numChannels_*MPTiffUtils.DISPLAY_SETTINGS_BYTES_PER_CHANNEL +extraPadding + filePosition_;
+      numChannels_ * MPTiffUtils.DISPLAY_SETTINGS_BYTES_PER_CHANNEL + extraPadding + filePosition_;
+      if (omeTiff_) {
+         size += omeMDLength;
+      }
+      
       if ( size >= MAX_FILE_SIZE) {
          return false;
       }
@@ -269,13 +255,12 @@ public class MultipageTiffWriter {
       return raFile_ == null;
    }
         
-   public long writeImage(TaggedImage img) throws IOException {
+   public void writeImage(TaggedImage img) throws IOException {
       long offset = filePosition_;
       writeIFD(img);
       updateIndexMap(img.tags,offset);
-      updatePlaneIndices(img.tags);
+      updatePlaneIndicesAndUUIDs(img.tags);
       writeBuffers();  
-      return offset;
    }
    
    private void writeBuffers() throws IOException {
@@ -286,11 +271,12 @@ public class MultipageTiffWriter {
       fileChannel_.write(buffs);
    }
    
-   private void updatePlaneIndices(JSONObject tags) {
+   private void updatePlaneIndicesAndUUIDs(JSONObject tags) {
       try {
          planeZIndices_.add(MDUtils.getSliceIndex(tags));
          planeCIndices_.add(MDUtils.getChannelIndex(tags));
          planeTIndices_.add(MDUtils.getFrameIndex(tags));
+         planeUUIDs_.add(MDUtils.getUUID(tags).toString());
       } catch (JSONException ex) {
          ReportingUtils.showError("Problem with image metadata: channel, slice, or frame index missing");
       }
@@ -306,11 +292,6 @@ public class MultipageTiffWriter {
      if (img.tags.has("Summary")) {
         img.tags.remove("Summary");
      }
-      try {
-         img.tags.put("FileName",imageFileName_);
-      } catch (JSONException ex) {
-         ReportingUtils.logError("Error adding filename to metadata");
-      }
      String mdString = img.tags.toString() + " ";
       
      //2 bytes for number of directory entries
@@ -386,17 +367,6 @@ public class MultipageTiffWriter {
       buffers_.add(getPixelBuffer(img));
       buffers_.add(getResolutionValuesBuffer(img));   
       buffers_.add(ByteBuffer.wrap(MPTiffUtils.getBytesFromString(mdString)));
-
-      try {
-         if (seperateMetadataFile_) {
-            MPTiffUtils.writeImageMetadata(img.tags, mdWriter_);
-         } else if (omeTiff_) {
-            MPTiffUtils.bufferImageMetadata(img.tags, mdBuffer_);
-         }
-      } catch (JSONException ex) {
-         ReportingUtils.logError("Error writing image metadata");
-         ex.printStackTrace();
-      }
       
       filePosition_ += totalBytes;
       firstIFD_ = false;
@@ -495,26 +465,5 @@ public class MultipageTiffWriter {
             byteDepth_ =  2;
          }
       bytesPerImagePixels_ = imageHeight_*imageWidth_*byteDepth_*(rgb_?3:1);
-   }
-
-   private String finishMetadata() {
-      if (!omeTiff_ && !seperateMetadataFile_) {
-         return "";
-      }
-      try {
-         if (seperateMetadataFile_) {
-            MPTiffUtils.finishWritingMetadata(mdWriter_);
-         } else {
-            MPTiffUtils.finishBufferedMetadata(mdBuffer_);
-         }
-      } catch (IOException ex) {
-         ReportingUtils.logError("Error closing metadata file");
-         return "";
-      }
-      if (seperateMetadataFile_) {
-         return JavaUtils.readTextFile(directory_ + "/" + metadataFileName_);
-      } else {
-         return mdBuffer_.toString();
-      }
    }
 }
