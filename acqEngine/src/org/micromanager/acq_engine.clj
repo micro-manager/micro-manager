@@ -524,7 +524,6 @@
         z (get-z-stage-position default-z-drive)
         xy (get-xy-stage-position default-xy-stage)
         exposure (core getExposure)]
-    (println "shutter-open prepare-state" (core getShutterOpen))
     (swap! (.state this) assoc
              :pause false
              :stop false
@@ -556,7 +555,6 @@
   (try
     (attempt-all
       (log "cleanup")
-      (println "cleanup")
       ; (do-when #(.update %) (:display @state))
       (state-assoc! :finished true :display nil)
       (when (core isSequenceRunning)
@@ -566,7 +564,6 @@
       (core setAutoShutter (@state :init-auto-shutter))
       (set-exposure (core getCameraDevice) (@state :init-exposure))
       (set-stage-position (@state :default-z-drive) (@state :init-z-position))
-      (println "blah" (@state :init-shutter-state))
       (set-shutter-open (@state :init-shutter-state))
       (when (and (@state :init-continuous-focus)
                  (not (core isContinuousFocusEnabled)))
