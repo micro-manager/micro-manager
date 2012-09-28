@@ -524,6 +524,7 @@
         z (get-z-stage-position default-z-drive)
         xy (get-xy-stage-position default-xy-stage)
         exposure (core getExposure)]
+    (println "shutter-open prepare-state" (core getShutterOpen))
     (swap! (.state this) assoc
              :pause false
              :stop false
@@ -535,6 +536,7 @@
              :start-time (jvm-time-ms)
              :init-auto-shutter (core getAutoShutter)
              :init-exposure exposure
+             :init-shutter-state (core getShutterOpen)
              :exposure {(core getCameraDevice) exposure}
              :default-z-drive default-z-drive
              :default-xy-stage default-xy-stage
@@ -554,20 +556,21 @@
   (try
     (attempt-all
       (log "cleanup")
+      (println "cleanup")
       ; (do-when #(.update %) (:display @state))
       (state-assoc! :finished true :display nil)
       (when (core isSequenceRunning)
         (core stopSequenceAcquisition))
       (stop-trigger)
+      (return-config)
       (core setAutoShutter (@state :init-auto-shutter))
       (set-exposure (core getCameraDevice) (@state :init-exposure))
       (set-stage-position (@state :default-z-drive) (@state :init-z-position))
-      (when-let [state (@state :init-shutter-state)]
-        (set-shutter-open state))
+      (println "blah" (@state :init-shutter-state))
+      (set-shutter-open (@state :init-shutter-state))
       (when (and (@state :init-continuous-focus)
                  (not (core isContinuousFocusEnabled)))
         (enable-continuous-focus true))
-      (return-config)
       (. gui enableRoiButtons true))
     (catch Throwable t (ReportingUtils/showError t "Acquisition cleanup failed."))))
 
