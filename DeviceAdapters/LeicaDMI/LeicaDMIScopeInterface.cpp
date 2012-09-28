@@ -2081,8 +2081,8 @@ int LeicaMonitoringThread::svc()
                          scopeModel_->TLShutter_.GetMaxPosition(maxPos);
                          if (minPos <= posTL && posTL <= maxPos)
                             scopeModel_->TLShutter_.SetPosition(posTL);
-                         scopeModel_->ILTurret_.GetMinPosition(minPos);
-                         scopeModel_->ILTurret_.GetMaxPosition(maxPos);
+                         scopeModel_->ILShutter_.GetMinPosition(minPos);
+                         scopeModel_->ILShutter_.GetMaxPosition(maxPos);
                          if (minPos <= posIL && posIL <= maxPos)
                             scopeModel_->ILShutter_.SetPosition(posIL);
                          scopeModel_->TLShutter_.SetBusy(false);
