@@ -117,6 +117,7 @@ import java.awt.Menu;
 import java.awt.MenuItem;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.lang.reflect.InvocationTargetException;
 import java.util.Collections;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Callable;
@@ -3844,7 +3845,11 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface, Device
    @Override
    public void loadAcquisition(String path) throws MMScriptException {
       testForAbortRequests();
-      SwingUtilities.invokeLater(new LoadAcq(path));
+      try {
+         GUIUtils.invokeAndWait(new LoadAcq(path));
+      } catch (Exception ex) {
+         throw new MMScriptException(ex.getMessage());
+      }
    }
 
    @Override
