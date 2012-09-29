@@ -1,0 +1,116 @@
+mport ij.ImagePlus;
+import ij.IJ;
+import org.micromanager.api.MMWindow;
+
+// A simple script to run intelligent acquisition 
+
+
+// This script will explore an area of your slide and look for interesting cells
+// The macro identified with "macroName" will analyze images and return
+// the coordinates of the interesting cell through the ImageJ ResultsTable
+
+// You will need to create 2 acquisiton setting files, one for exploration
+// the other for high resolution imaging.
+
+
+// Edit all settings down to the DO NOT EDIT line
+
+// AcqSettings for exploration
+acqSetA = "/Users/nico/AcqSettings-A.xml";
+
+// AcqSettings for high-res time lapse imaging
+acqSetB = "/Users/nico/AcqSettings-B.xml";
+
+// analysis macro name
+macroName = "";
+
+// hard coded x and y width of a single image in microns 
+// could be figured out dynamically
+xWidthMicron = 100;
+yWidthMicron = 100;
+
+// pixel size in microns
+// this could also be figured out dynamically
+pixelSizeMicron = 0.208;
+
+// fraction of the image that will be set as ROI in the time-lapse imaging
+// should be set to a number > 0 and <= 1;
+fractionRoi = 0.5;
+
+// Number of locations in X and Y that will be explored
+nrImagesX = 2;
+nrImagesY = 2;
+
+
+
+// Do not edit below this line
+
+
+imageIndexX = 0;
+imageIndexY = 0;
+acqNumber = 0;
+RoiX = (int) mmc.getImageWidth() * fractionRoi / 2;
+RoiY = (int) mmc.getImageHeight() * fractionRoi / 2;
+RoiWidth = (int) 2 * RoiX;
+RoiHeight = (int) 2 * RoiY;
+
+gui.message ("Roi: " + RoiX + " " + RoiY + " " + RoiWidth + " " + RoiHeight);
+
+xyStage = mmc.getXYStageDevice();
+
+stop = false;
+
+while (!stop) {
+
+   gui.loadAcquisition(acqSetA);
+
+   thisAcq = gui.runAcquisition();
+
+   // get x and y coordinates
+   xPos = mmc.getXPosition(xyStage);
+   yPos = mmc.getYPosition(xyStage);
+
+   gui.message("Acquisition " + acqNumber + " finished at position: " + xPos + ", " + yPos);
+   acqNumber++;
+
+
+   // Now run the macro
+   // ij.IJ.runMacro(macroName);
+
+   gui.closeAcquisitionWindow(thisAcq);
+
+   // determine if an interesting cell was found
+   found = false;
+   res = ij.measure.ResultsTable.getResultsTable();
+   if (res.getCounter() > 0) {
+      // X and Y coordinates of object found in pixels
+      xPos = res.getValue("X", 0);
+      yPos = res.getValue("Y", 0);
+      mmc.setRelativeXYPosition(xyStage, xPos * pixelSizeMicron, yPos * pixelSizeMicron);
+      mmc.setROI((int) RoiX, (int) RoiY, (int) RoiWidth, (int) RoiHeight);
+      gui.message("Imaging interesting cell at position: " + 
+         mmc.getXPosition(xyStage) + ", " + mmc.getYPosition(xyStage) );
+
+      gui.loadAcquisition(acqSetB);
+      goodStuff = gui.runAcquisition();
+      gui.closeAcquisitionWindow(goodStuff);
+      mmc.setRelativeXYPosition(xyStage, - xPos * pixelSizeMicron, - yPos * pixelSizeMicron);
+      mmc.clearROI();
+      org.micromanager.utils.JavaUtils.sleep(200);
+   } 
+
+   if (imageIndexX < nrImagesX - 1) {
+      mmc.setRelativeXYPosition(xyStage, xWidthMicron, 0);
+      imageIndexX++;
+   } else {
+      if (imageIndexY < nrImagesY - 1) {
+         mmc.setRelativeXYPosition(xyStage, - ( (nrImagesX - 1) * xWidthMicron),
+             yWidthMicron);
+         imageIndexY++;
+         imageIndexX = 0;
+      } else {  // done
+         stop = true;
+      }
+   }
+
+}
