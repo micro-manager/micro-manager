@@ -5,7 +5,7 @@
 //-----------------------------------------------------------------------------
 // DESCRIPTION:   Marzhauser L-Step Controller Driver
 //                XY Stage
-//                
+//                Z  Stage
 //
 // AUTHORS:        Original Marzhauser Tango adapter code by Falk Dettmar, falk.dettmar@marzhauser-st.de, 09/04/2009
 //					Modifications for Marzhauser L-Step controller by Gilles Courtand, gilles.courtand@u-bordeaux.fr, 
@@ -41,53 +41,43 @@
 //////////////////////////////////////////////////////////////////////////////
 
 
-
-// MMCore name of serial port
-std::string port_;
-
-int ClearPort(MM::Device& device, MM::Core& core, const char* port);
+#define ERR_PORT_CHANGE_FORBIDDEN    10004
 
 
-class Hub : public CGenericBase<Hub>
+class LStepBase;
+
+class LStepDeviceBase : public CDeviceBase<MM::Device, LStepDeviceBase>
 {
-   public:
-      Hub();
-      ~Hub();
+public:
+   LStepDeviceBase() { }
+   ~LStepDeviceBase() { }
 
-      // Device API
-      // ---------
-      int Initialize();
-      int Shutdown();
+   friend class LStepBase;
+};
 
-      void GetName(char* pszName) const;
-      bool Busy();
+class LStepBase
+{
+public:
+   LStepBase(MM::Device *device);
+   ~LStepBase();
 
-//      int Initialize(MM::Device& device, MM::Core& core);
-      int DeInitialize() {initialized_ = false; return DEVICE_OK;};
-      bool Initialized() {return initialized_;};
+   int ClearPort(void);
+   int CheckDeviceStatus(void);
+   int SendCommand(const char *command) const;
+   int QueryCommandACK(const char *command);
+   int QueryCommand(const char *command, std::string &answer) const;
 
-      int ClearPort(void);
-      int SendCommand (const char *command) const;
-      int QueryCommand(const char *command, std::string &answer) const;
-
-
-      // action interface
-      // ---------------
-      int OnPort    (MM::PropertyBase* pProp, MM::ActionType eAct);
-
-   private:
-      // Command exchange with MMCore
-      std::string command_;
-      bool initialized_;
-      double answerTimeoutMs_;
-
-   protected:
-
+protected:
+   MM::Core *core_;
+   bool initialized_;
+   int  Configuration_;
+   std::string port_;
+   LStepDeviceBase *device_;
 };
 
 
 
-class XYStage : public CXYStageBase<XYStage>
+class XYStage : public CXYStageBase<XYStage>, public LStepBase
 {
 public:
    XYStage();
@@ -98,7 +88,6 @@ public:
    // ----------
    int Initialize();
    int Shutdown();
-  
    void GetName(char* pszName) const;
    bool Busy();
 
@@ -126,19 +115,15 @@ public:
 
    // action interface
    // ----------------
+   int OnPort      (MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnStepSizeX (MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnStepSizeY (MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnSpeedX    (MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnSpeedY    (MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnAccelX    (MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnAccelY    (MM::PropertyBase* pProp, MM::ActionType eAct);
-   int OnBacklashX (MM::PropertyBase* pProp, MM::ActionType eAct);
-   int OnBacklashY (MM::PropertyBase* pProp, MM::ActionType eAct);
 
 private:
-   int GetCommand(const std::string& cmd, std::string& response);
-
-   bool initialized_;
    bool range_measured_;
    double answerTimeoutMs_;
    double stepSizeXUm_;
@@ -151,8 +136,62 @@ private:
    double accelY_;
    double originX_;
    double originY_;
+   double pitchX_;
+   double pitchY_;
 };
 
+
+class ZStage : public CStageBase<ZStage>, public LStepBase
+{
+public:
+   ZStage();
+   ~ZStage();
+  
+   // Device API
+   // ----------
+   int Initialize();
+   int Shutdown();
+   void GetName(char* pszName) const;
+   bool Busy();
+
+   // Stage API
+   // ---------
+   int SetPositionUm(double pos);
+   int SetRelativePositionUm(double d);
+   int Move(double velocity);
+   int SetAdapterOriginUm(double d);
+
+   int GetPositionUm(double& pos);
+   int SetPositionSteps(long steps);
+   int GetPositionSteps(long& steps);
+   int SetOrigin();
+   int SetAdapterOrigin();
+   int Stop();
+   int GetLimits(double& min, double& max);
+
+   int IsStageSequenceable(bool& isSequenceable) const {isSequenceable = false; return DEVICE_OK;}
+
+   bool IsContinuousFocusDrive() const {return false;}
+
+   // action interface
+   // ----------------
+   int OnPort     (MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnStepSize (MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnSpeed    (MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnAccel    (MM::PropertyBase* pProp, MM::ActionType eAct);
+
+
+private:
+   bool range_measured_;
+   double answerTimeoutMs_;
+   double stepSizeUm_;
+   double speedZ_;
+   double accelZ_;
+   double originZ_;
+   double pitchZ_;
+   double velocityZmm_;
+
+};
 
 
 #endif //_LSTEP_H_
