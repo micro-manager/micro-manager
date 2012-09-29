@@ -251,6 +251,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "AxioCamMR", "..\SecretDevic
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "LumencorCIA", "..\DeviceAdapters\LumencorCIA\LumencorCIA.vcproj", "{2C362B1C-80C9-4867-AD96-2482535190D1}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "CSUW1", "..\DeviceAdapters\CSUW1\CSUW1.vcproj", "{7C767DFF-87E6-4FE0-9557-2FF656ED1E57}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
@@ -1190,6 +1192,14 @@ Global
 		{2C362B1C-80C9-4867-AD96-2482535190D1}.Release|Win32.Build.0 = Release|Win32
 		{2C362B1C-80C9-4867-AD96-2482535190D1}.Release|x64.ActiveCfg = Release|x64
 		{2C362B1C-80C9-4867-AD96-2482535190D1}.Release|x64.Build.0 = Release|x64
+		{7C767DFF-87E6-4FE0-9557-2FF656ED1E57}.Debug|Win32.ActiveCfg = Debug|Win32
+		{7C767DFF-87E6-4FE0-9557-2FF656ED1E57}.Debug|Win32.Build.0 = Debug|Win32
+		{7C767DFF-87E6-4FE0-9557-2FF656ED1E57}.Debug|x64.ActiveCfg = Debug|x64
+		{7C767DFF-87E6-4FE0-9557-2FF656ED1E57}.Debug|x64.Build.0 = Debug|x64
+		{7C767DFF-87E6-4FE0-9557-2FF656ED1E57}.Release|Win32.ActiveCfg = Release|Win32
+		{7C767DFF-87E6-4FE0-9557-2FF656ED1E57}.Release|Win32.Build.0 = Release|Win32
+		{7C767DFF-87E6-4FE0-9557-2FF656ED1E57}.Release|x64.ActiveCfg = Release|x64
+		{7C767DFF-87E6-4FE0-9557-2FF656ED1E57}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
