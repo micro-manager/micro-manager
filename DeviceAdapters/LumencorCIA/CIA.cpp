@@ -670,49 +670,44 @@ int CIA::SetColorEnable(ColorNameT ColorName,bool State, char* EnableMask)
 	{	
 		case  RED:
 			if(State==ON)
-				EventByte = *EnableMask & 0x7E;
+				EventByte = *EnableMask & 0x3E;
 			else
 				EventByte = *EnableMask | 0x01;
 			break;
-		case  GREEN:
-			if(State==ON)
-				//EventByte = *EnableMask & 0x7D;
-				EventByte = *EnableMask & 0x7B;
-			else
-				//EventByte = *EnableMask | 0x02;
-				EventByte = *EnableMask | 0x04;
-			break;
-		case  VIOLET:
-			if(State==ON)
-				//EventByte = *EnableMask & 0x77;
-			    EventByte = *EnableMask & 0x5F;
-			else
-				//EventByte = *EnableMask | 0x08;
-				EventByte = *EnableMask | 0x20;
-			break;
-		case  CYAN:
-			if(State==ON)
-				//EventByte = *EnableMask & 0x7B;
-			    EventByte = *EnableMask & 0x6F;
-			else
-				//EventByte = *EnableMask | 0x04;
-				EventByte = *EnableMask | 0x10;
-			break;
-		case  BLUE:
-			if(State==ON)
-				//EventByte = *EnableMask & 0x5F;
-			    EventByte = *EnableMask & 0x77;
-			else
-				//EventByte = *EnableMask | 0x20;
-				EventByte = *EnableMask | 0x08;
-			break;
+
 		case  TEAL:
 			if(State==ON)
-				//EventByte = *EnableMask & 0x3F;
-			    EventByte = *EnableMask & 0x7D;
+			    EventByte = *EnableMask & 0x3D;
 			else
-				//EventByte = *EnableMask | 0x40;
 				EventByte = *EnableMask | 0x02;
+			break;
+
+		case  GREEN:
+			if(State==ON)
+				EventByte = *EnableMask & 0x3B;
+			else
+				EventByte = *EnableMask | 0x04;
+			break;
+
+		case  BLUE:
+			if(State==ON)
+			    EventByte = *EnableMask & 0x37;
+			else
+				EventByte = *EnableMask | 0x08;
+			break;
+
+		case  CYAN:
+			if(State==ON)
+			    EventByte = *EnableMask & 0x2F;
+			else
+				EventByte = *EnableMask | 0x10;
+			break;
+
+		case  VIOLET:
+			if(State==ON)
+			    EventByte = *EnableMask & 0x1F; 
+			else
+				EventByte = *EnableMask | 0x20;
 			break;
 		//case  YGFILTER:
 		//	if(State==ON)
@@ -722,15 +717,13 @@ int CIA::SetColorEnable(ColorNameT ColorName,bool State, char* EnableMask)
 		//	break;
 		case ALL:
 			if(State==ON)
-				EventByte = *EnableMask & 0x7F;
+				EventByte = *EnableMask & 0x00;
 			else
-			    EventByte = ((*EnableMask & 0x40) == 0x40) ? 0x7F : 0xCF; // dont toggle YG filter if not needed
+			    EventByte = 0x3F; // dont toggle YG filter if not needed
 			break;
 		default:
 			break;		
 	}
-	if (LightEngine != Aura)
-		EventByte |= 0x80;
 	*EnableMask = EventByte; // Sets the Mask to current state
 	return DEVICE_OK;  // debug only 
 }
@@ -1507,7 +1500,7 @@ int CIA::ParseSeqData(string data)
     done = false;
 	for(EventIdx = 0; EventIdx < MaxEvents && !done; EventIdx++)
 	{
-		EventByte = 0xFF;
+		EventByte = 0x3F;  // we use only lower 6 bits
 		for(ColorBit = 0; ColorBit < 7 ; ColorBit++)
 		{ 
 			CompString = tokens.at(i + (EventIdx * 7) + ColorBit).c_str();
@@ -1516,25 +1509,31 @@ int CIA::ParseSeqData(string data)
 				switch(ColorBit)
 				{
 					case 0:		// Violet
-						EventByte &= 0xF7;  
+						//EventByte &= 0xF7;
+						EventByte &= 0x1F; 
 						break;
 					case 1:		// Blue
-						EventByte &= 0xDF;  
+						//EventByte &= 0xDF;
+						EventByte &= 0x37; 
 						break;
 					case 2:		// Cyan
-						EventByte &= 0xFB;  
+						//EventByte &= 0xFB;  
+						EventByte &= 0x2F; 
 						break;
 					case 3:		// Teal
-						EventByte &= 0xBF;  
+						//EventByte &= 0xBF;
+						EventByte &= 0x2D;
 						break;
 					case 4:		// Green
-						EventByte &= 0xFD;  
+						//EventByte &= 0xFD; 
+						EventByte &= 0x3B;
 						break;
 					case 5:		// Yellow
-						EventByte &= 0xED;  
+						//EventByte &= 0xED;  <--  Not used
 						break;
 					case 6:		// Red
-						EventByte &= 0xFE;  
+						//EventByte &= 0xFE; 
+						EventByte &= 0x3E;
 						break;
 					default:
 						break;
@@ -1619,7 +1618,7 @@ int CIA::OnRedValue(MM::PropertyBase* pProp, MM::ActionType eAct)
    {		
 			LogMessage("In OnRedValue ActiveColor Before ");
 			pProp->Get(ColorLevel);
-			CIAColorLevels[CL_Red] = (unsigned char) ((ColorLevel == 100) ? 0 : (ColorLevel == 0) ? 0xff : ((100 - ColorLevel) * 2.55));
+			CIAColorLevels[CL_Red] = (unsigned char) (ColorLevel == 100) ? 0 : (ColorLevel == 0) ? 0xff : ((100 - ColorLevel) * 2.55);
 			//OutputDebugString("In OnRedValue");
 			SendColorLevelCmd(RED,ColorLevel);
    }
@@ -1636,7 +1635,7 @@ int CIA::OnGreenValue(MM::PropertyBase* pProp, MM::ActionType eAct)
    {
 		//LogMessage("In OnGreenValue ");
 		pProp->Get(ColorLevel);
-		CIAColorLevels[CL_Green] = (unsigned char) ((ColorLevel == 100) ? 0 : (ColorLevel == 0) ? 0xff : ((100 - ColorLevel) * 2.55));
+		CIAColorLevels[CL_Green] = (unsigned char) (ColorLevel == 100) ? 0 : (ColorLevel == 0) ? 0xff : ((100 - ColorLevel) * 2.55);
 		//OutputDebugString("In OnGreenValue");
 		SendColorLevelCmd(GREEN,ColorLevel);
    }
@@ -1652,7 +1651,7 @@ int CIA::OnCyanValue(MM::PropertyBase* pProp, MM::ActionType eAct)
    {
 		//LogMessage("In OnCYANValue ");
 		pProp->Get(ColorLevel);
-		CIAColorLevels[CL_Cyan] = (unsigned char) ((ColorLevel == 100) ? 0 : (ColorLevel == 0) ? 0xff : ((100 - ColorLevel) * 2.55));
+		CIAColorLevels[CL_Cyan] = (unsigned char) (ColorLevel == 100) ? 0 : (ColorLevel == 0) ? 0xff : ((100 - ColorLevel) * 2.55);
 		//OutputDebugString("In OnGreenValue");
 		SendColorLevelCmd(CYAN,ColorLevel);
    }
@@ -1668,7 +1667,7 @@ int CIA::OnVioletValue(MM::PropertyBase* pProp, MM::ActionType eAct)
    {
 		//LogMessage("In OnVioletValue ");
 		pProp->Get(ColorLevel);
-		CIAColorLevels[CL_Violet] = (unsigned char) ((ColorLevel == 100) ? 0 : (ColorLevel == 0) ? 0xff : ((100 - ColorLevel) * 2.55));
+		CIAColorLevels[CL_Violet] = (unsigned char) (ColorLevel == 100) ? 0 : (ColorLevel == 0) ? 0xff : ((100 - ColorLevel) * 2.55);
 		//OutputDebugString("In OnVioletValue");
         SendColorLevelCmd(VIOLET,ColorLevel);
 
@@ -1686,7 +1685,7 @@ int CIA::OnTealValue(MM::PropertyBase* pProp, MM::ActionType eAct)
    {
 		//LogMessage("In OnTealValue ");
 		pProp->Get(ColorLevel);
-		CIAColorLevels[CL_Teal] = (unsigned char) ((ColorLevel == 100) ? 0 : (ColorLevel == 0) ? 0xff : ((100 - ColorLevel) * 2.55));
+		CIAColorLevels[CL_Teal] = (unsigned char) (ColorLevel == 100) ? 0 : (ColorLevel == 0) ? 0xff : ((100 - ColorLevel) * 2.55);
 		//OutputDebugString("In OnTealValue");
 		SendColorLevelCmd(TEAL,ColorLevel);
    }
@@ -1702,7 +1701,7 @@ int CIA::OnBlueValue(MM::PropertyBase* pProp, MM::ActionType eAct)
    {
 		//LogMessage("In OnBlueValue ");
 		pProp->Get(ColorLevel);
-		CIAColorLevels[CL_Blue] = (unsigned char) ((ColorLevel == 100) ? 0 : (ColorLevel == 0) ? 0xff : ((100 - ColorLevel) * 2.55));
+		CIAColorLevels[CL_Blue] = (unsigned char) (ColorLevel == 100) ? 0 : (ColorLevel == 0) ? 0xff : ((100 - ColorLevel) * 2.55);
 		//OutputDebugString("In OnBlueValue");
 		SendColorLevelCmd(BLUE,ColorLevel);
    }
