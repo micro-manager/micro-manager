@@ -16,7 +16,7 @@
 
 #include "../../MMDevice/DeviceBase.h"
 #include "../../MMDevice/ImgBuffer.h"
-#include "../../../3rdparty/trunk/Canon/EDSDK2.9/Mac/EDSDK/Header/EDSDKTypes.h"
+#include "../../../3rdparty/trunk/Canon/EDSDK2.11/Mac/EDSDK/Header/EDSDKTypes.h"
 
 //////////////////////////////////////////////////////////////////////////////
 // Error codes
@@ -50,6 +50,7 @@ class CanonEDCamera : public CCameraBase<CanonEDCamera>
    int StartSequenceAcquisition(double interval);                            
    int StartSequenceAcquisition(long numImages, double interval_ms, bool stopOnOverflow);   
    int StopSequenceAcquisition();                                            
+   int IsExposureSequenceable(bool& sequenceable) const { sequenceable = false; return DEVICE_OK;};
    int InsertImage();                                                        
   // int ThreadRun();                                                          
    bool IsCapturing();                                                       

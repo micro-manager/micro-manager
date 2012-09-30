@@ -12,13 +12,14 @@
 
 #ifdef __APPLE__
 #define __MACOS__ 1
+#include "/Developer/SDKs/MacOSX10.4u.sdk/Developer/Headers/FlatCarbon/MacTypes.h"
 #endif
 
 #include "CanonEDSDK.h"
 
-#include "../../../3rdparty/trunk/Canon/EDSDK2.9/Mac/EDSDK/Header/EDSDK.h"
-#include "../../../3rdparty/trunk/Canon/EDSDK2.9/Mac/EDSDK/Header/EDSDKErrors.h"
-#include "../../../3rdparty/trunk/Canon/EDSDK2.9/Mac/EDSDK/Header/EDSDKTypes.h"
+#include "../../../3rdparty/trunk/Canon/EDSDK2.11/Mac/EDSDK/Header/EDSDK.h"
+#include "../../../3rdparty/trunk/Canon/EDSDK2.11/Mac/EDSDK/Header/EDSDKErrors.h"
+#include "../../../3rdparty/trunk/Canon/EDSDK2.11/Mac/EDSDK/Header/EDSDKTypes.h"
 
 //////////////////////////////////////////////////////////////////////////////
 // Error codes
