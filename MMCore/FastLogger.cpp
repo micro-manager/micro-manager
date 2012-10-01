@@ -39,6 +39,12 @@
 #else
 #endif
 #include "boost/interprocess/detail/os_thread_functions.hpp" 
+#include "boost/version.hpp"
+#if BOOST_VERSION >= 104800
+#  define BOOST_IPC_DETAIL boost::interprocess::ipcdetail
+#else
+#  define BOOST_IPC_DETAIL boost::interprocess::detail
+#endif
 
 using namespace std;
 const char* g_textLogIniFiled = "Logging initialization failed\n";
@@ -469,7 +475,7 @@ void FastLogger::Log(IMMLogger::priority p, const char* format, ...) throw()
 		}
 
 		// display the process id
-		boost::interprocess::detail::OS_process_id_t pidd = boost::interprocess::detail::get_current_process_id();
+		BOOST_IPC_DETAIL::OS_process_id_t pidd = BOOST_IPC_DETAIL::get_current_process_id();
 
 		std::ostringstream percentPReplacement;
 		percentPReplacement << pidd;
