@@ -2,7 +2,7 @@
   (:import (java.io File)
            (java.text SimpleDateFormat)
            (java.util Calendar Date))
-  (:use [clj-mail.core])
+  (:require [postal.core :as postal])
   (:require [clojure.xml])
   (:gen-class))
 
@@ -206,14 +206,19 @@
 (defn make-full-report [mode send?]
   (let [report
         (str
-          (report-build-errors 32 mode false)
-          (report-build-errors 64 mode false))]
+          (report-build-errors 32 mode true)
+          (report-build-errors 64 mode true))]
     (if-not (empty? report)
       (do 
         (when send?
-          (with-session
-            "mmbuilderrors@gmail.com" (slurp "C:\\pass.txt") "smtp.gmail.com" 465 "smtp" true
-            (send-email (text-email ["info@micro-manager.org"] "mm build errors" report))))
+          (postal/send-message ^{:host "smtp.gmail.com"
+                                 :user "mmbuilderrors"
+                                 :pass (slurp "C:\\pass.txt")
+                                 :ssl :yes}
+                               {:from "mmbuilderrors@gmail.com"
+                                :to "info@micro-manager.org"
+                                :subject "mm build errors!"
+                                :body report}))
         (println report))
       (println "Nothing to report."))))
 

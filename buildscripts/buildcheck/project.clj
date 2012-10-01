@@ -1,5 +1,5 @@
-(defproject buildcheck "1.0.0"
-  :description "FIXME: write description"
-  :dependencies [[org.clojure/clojure "1.2.1"]
-                 [clj-mail "0.1.5"]]
+(defproject buildcheck "0.0.1"
+  :description "checks that the Micro-Manager build succeeded"
+  :dependencies [[org.clojure/clojure "1.4.0"]
+                 [com.draines/postal "1.8.0"]]
   :main buildcheck.core)
