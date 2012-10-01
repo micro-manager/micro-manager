@@ -27,8 +27,8 @@
 //  these IEEE1394 cameras were tested:
 //  DMK 21AF04 , DMK 21BF04 , DMK 31BF03
 //  DFK 21BF04 , DFK 31BF03 , DFK 41BF02
-//  thIS USB camera was tested:
-//  DFK 71UC02
+//  these USB cameras were tested:
+//  DFK 71UC02 , DFK 72BUC02
 //
 // debug with:
 // method 1 = attach to process javaw.exe
@@ -67,37 +67,23 @@ The files VC100*.* shall be reachable from the path specifier.
 
 
 #ifdef WIN32
-   #define WIN32_LEAN_AND_MEAN
-   #include <windows.h>
-	#include <Shlobj.h>
-
+  #define WIN32_LEAN_AND_MEAN
+  #include <windows.h>
+  #include <Shlobj.h>
 #endif
+
 #include "../../MMDevice/ModuleInterface.h"
-
 #include "TIScamera.h"
-
-#pragma warning(disable : 4996) // disable warning for deperecated CRT functions on Windows 
-
 #include <string>
 #include <sstream>
-#include <cmath>	//for ceil
-
-
+#include <iomanip>
+#include <math.h>
+#include <iostream>
 
 // temp
 #include "stdio.h"
 
-// this compiler switch enables an independent active movie window
-// this is e.g. usefull watching the autofocus
-#undef _ACTIVE_MOVIE
-
-// the new IC imaging control version 3.2 requires no license number any more
-// 
-#undef LIB_REQUIRES_LICENSE_NUMBER 
-
-#ifdef LIB_REQUIRES_LICENSE_NUMBER
-#include "DynDialogs.h" //for input box dialogue
-#endif
+#pragma warning(disable : 4996) // disable warning for deperecated CRT functions on Windows 
 
 using namespace std;
 using namespace DShowLib;
@@ -112,13 +98,19 @@ const char* g_Keyword_Brightness   = "Property Brightness";
 const char* g_Keyword_Gain         = "Property Gain";
 const char* g_Keyword_Gain_Auto    = "Property Gain_Auto";
 const char* g_Keyword_WhiteBalance = "Property White_Balance";
-const char* g_Keyword_WhiteBalance_Auto    = "Property White_Balance_Auto";
+const char* g_Keyword_WhiteBalance_Auto = "Property White_Balance_Auto";
 const char* g_On                   = "On";
 const char* g_Off                  = "Off";
 const char* g_Keyword_AutoExposure = "Exposure Auto";
 const char* g_Keyword_DeNoise      = "DeNoise";
 
 
+// singleton instance
+CTIScamera* CTIScamera::instance_ = 0;
+unsigned int CTIScamera::refCount_ = 0;
+
+// global driver thread lock
+MMThreadLock g_DriverLock;
 
 static bool bApiAvailable_s;
 
@@ -177,7 +169,9 @@ MODULE_API MM::Device* CreateDevice(const char* szDeviceName)
    string strName(szDeviceName);
    
    if (strcmp(szDeviceName, g_DeviceName) == 0)
-      return new CTIScamera();
+   {
+      return CTIScamera::GetInstance();
+   }
    
    return 0;
 }
@@ -200,19 +194,28 @@ CTIScamera::CTIScamera() : CCameraBase<CTIScamera> (),
    lCCD_Height(0),
    uiCCD_BitsPerPixel(8),
  
+binSize_(1),
+currentExpMS_(12.34), //ms
+fullFrameBuffer_(0),
+fullFrameX_(0),
+fullFrameY_(0),
+tempFrameX_(0),
+tempFrameY_(0),
+
    busy_(false),
    bColor_(false),
    sequenceRunning_(false),
-   dExp_(30), //ms
+   sequencePaused_(false),
+
+startTime_(0),
+
    flipH_(false),
    flipV_(false),
    FPS_(10),
    Brightness_(10),
    WhiteBalance_(10),
    Gain_(0),
-   DeNoiseLevel_(1),
-
-   bitDepth_(8),
+   DeNoiseLevel_(0),
 
    roiX_(0),
    roiY_(0),
@@ -221,7 +224,6 @@ CTIScamera::CTIScamera() : CCameraBase<CTIScamera> (),
 
    nominalPixelSizeUm_(1.0),
 
-   acquiring_(false),
    interval_ms_ (0),
    seqThread_(0)
 
@@ -236,17 +238,11 @@ CTIScamera::CTIScamera() : CCameraBase<CTIScamera> (),
    // create a pre-initialization property and list all the available cameras
    char szPath[MAX_PATH];
    XMLPath = "";
-#ifdef LIB_REQUIRES_LICENSE_NUMBER
-   INIPath = "";
-#endif
+
    if (SHGetSpecialFolderPath( 0, szPath,CSIDL_APPDATA , 0  ) == TRUE)
    {
       XMLPath = szPath;
       XMLPath += "\\device.xml";
-#ifdef LIB_REQUIRES_LICENSE_NUMBER
-      INIPath = szPath;
-      INIPath += "\\tislib.ini";
-#endif
    }
 }
 
@@ -254,21 +250,37 @@ CTIScamera::CTIScamera() : CCameraBase<CTIScamera> (),
 
 CTIScamera::~CTIScamera()
 {
+   DriverGuard dg(this);
    delete seqThread_;
 
-   if(initialized_)
-   {
-      DShowLib::ExitLibrary();
-      delete pGrabber;
-      pGrabber = 0;
-      Shutdown();
-   }
+   refCount_--;
+   if (refCount_ == 0) {
+     if(initialized_)
+     {
+        DShowLib::ExitLibrary();
+        delete pGrabber;
+        pGrabber = 0;
+        Shutdown();
+     }
 
-   if( m_pSimpleProperties != NULL )
-   {
-      delete m_pSimpleProperties;
+     if( m_pSimpleProperties != NULL )
+     {
+        delete m_pSimpleProperties;
+     }
+     // clear the instance pointer
+     instance_ = 0;
    }
 }
+
+
+CTIScamera* CTIScamera::GetInstance()
+{
+   instance_ = new CTIScamera();
+   refCount_++;
+   return instance_;
+}
+
+
 
 
 /*==============================================================================
@@ -308,10 +320,11 @@ bool CTIScamera::Busy()
 
 int CTIScamera::Initialize()
 {
+   if (initialized_) return DEVICE_OK;
+
    int nRet = DEVICE_OK;
    CPropertyAction *pAct = NULL;
 
-   if (initialized_) return DEVICE_OK;
 
    // Device Adapter Name
 //   nRet = CreateProperty(MM::g_Keyword_Name, g_DeviceName, MM::String, true);
@@ -326,47 +339,7 @@ int CTIScamera::Initialize()
 //   assert(nRet == DEVICE_OK);
 
 
-#ifdef LIB_REQUIRES_LICENSE_NUMBER
-   //read license number from ini file
-   LPCTSTR inifile = INIPath.c_str();
-   LPCTSTR lpAppName = "TIScam";
-   LPCTSTR lpKeyName = "License";
-   char lpLicenseString[MAX_PATH] = "";
-   if (GetPrivateProfileString(lpAppName,lpKeyName,NULL,lpLicenseString,MAX_PATH,inifile) == 0)
-   {
-     // create ini file with user given license
-     nRet = InputBox(NULL, "Enter your License Number:", "TheImagingSource Library", lpLicenseString, MAX_PATH);
-     WritePrivateProfileString(lpAppName,lpKeyName,lpLicenseString,inifile);
-   }
-
-   // Initialize the library.
-   // If you have a trial version, the license key is 0 without quotation marks
-   // Example: if(!DShowLib::InitLibrary( 0 ))
-   //
-   // If you have a licensed version (standard or professional), the license
-   // key is a string in quotation marks. The license key has to be identical to 
-   // the license key entered during the IC Imaging Control setup.
-   // Example: if( !DShowLib::InitLibrary( "XXXXXXX" ))
-
-   if (!DShowLib::InitLibrary(lpLicenseString))
-   {
-      LogMessage("TIScam InitLibrary failed. Wrong license key?", true);
-      MessageBox(
-         NULL,
-         "TIScam InitLibrary failed. Wrong license key?",
-         "Initialisation",
-         MB_ICONSTOP | MB_OK
-      );
-
-	  //chance to correct wrong license key
-      nRet = InputBox(NULL, "Enter your License Number:", "2nd chance", lpLicenseString, MAX_PATH);
-      WritePrivateProfileString(lpAppName,lpKeyName,lpLicenseString,inifile);
-
-	  return DEVICE_ERR;
-   }
-
-#else
-   if (!DShowLib::InitLibrary((DWORD)0))
+   if (!DShowLib::InitLibrary()) //(DWORD)0
    {
       MessageBox(
          NULL,
@@ -376,12 +349,14 @@ int CTIScamera::Initialize()
          );
       return DEVICE_ERR;
    }
-#endif
 
    pGrabber = new DShowLib::Grabber();
    assert(pGrabber);
 
-   pGrabber->loadDeviceStateFromFile(XMLPath);
+   pSink = DShowLib::FrameHandlerSink::create(1);
+   //set the sink.
+   pGrabber->setSinkType(pSink);
+
 
    // Add the ROI Flip Filter. Add ROI filter first, then the RotateFilter has less to do.
    pROIFilter        = FilterLoader::createFilter("ROI");
@@ -403,9 +378,16 @@ int CTIScamera::Initialize()
    {
       filterList.push_back( pDeNoiseFilter.get() );    
    }
-
-
    pGrabber->setDeviceFrameFilters( filterList );
+
+
+   pGrabber->loadDeviceStateFromFile(XMLPath); //last used/stored selected camera device and settings
+
+   DShowLib::Grabber::tFPSListPtr        FPSListPointer    = pGrabber->getAvailableFPS();
+   DShowLib::Grabber::tVidCapDevListPtr  VidCapDevListPtr  = pGrabber->getAvailableVideoCaptureDevices();
+   DShowLib::Grabber::tVidNrmListPtr     VidNrmListPtr     = pGrabber->getAvailableVideoNorms();
+   DShowLib::Grabber::tVidFmtListPtr     VidFmtListPtr     = pGrabber->getAvailableVideoFormats();
+   DShowLib::Grabber::tVidFmtDescListPtr VidFmtDescListPtr = pGrabber->getAvailableVideoFormatDescs();
 
 
    //Create the select of available devices
@@ -513,19 +495,21 @@ int CTIScamera::SetupProperties()
    if( pGrabber->getVideoFormat().toString().substr(0,4) == "Y800")
    {
       bColor_ = false;
-      pSink = DShowLib::FrameHandlerSink::create(DShowLib::eY800,NUMBER_OF_BUFFERS);  // 8 bit grayscale
+      // pSink = DShowLib::FrameHandlerSink::create(DShowLib::eY800,NUMBER_OF_BUFFERS);  // 8 bit grayscale
    }
    else
    {
       bColor_ = true;
-      pSink = DShowLib::FrameHandlerSink::create(DShowLib::eRGB32,NUMBER_OF_BUFFERS); // RGB
+      // pSink = DShowLib::FrameHandlerSink::create(DShowLib::eRGB32,NUMBER_OF_BUFFERS); // RGB
    }
+
+
 
    //we use snap mode
    pSink->setSnapMode(true);
 
    //set the sink.
-   pGrabber->setSinkType(pSink);
+//   pGrabber->setSinkType(pSink);
 
 
    //property PixelSize (read only)
@@ -569,7 +553,7 @@ int CTIScamera::SetupProperties()
       { 
          // Try to find the value and auto elements 
          tIVCDPropertyElementPtr pExposureValueElement = pExposureItem->findElement( VCDElement_Value );
-         tIVCDPropertyElementPtr pExposureAutoElement = pExposureItem->findElement( VCDElement_Auto );
+         tIVCDPropertyElementPtr pExposureAutoElement  = pExposureItem->findElement( VCDElement_Auto );
 
          // If an auto element exists, try to acquire a switch interface 
          if( pExposureAutoElement != 0 )
@@ -577,16 +561,19 @@ int CTIScamera::SetupProperties()
             pExposureAutoElement->getInterfacePtr( pExposureAuto );
          } 
 
-
          // If a value element exists, try to acquire a range interface 
          if( pExposureValueElement != 0 )
          { 
             pExposureValueElement->getInterfacePtr( pExposureRange );
-            SetPropertyLimits(MM::g_Keyword_Exposure,  pExposureRange->getRangeMin(), pExposureRange->getRangeMax());
-            SetPropertyLimits(MM::g_Keyword_Exposure, 0.0001, 1.0);
+			currentExpMS_ = pExposureRange->getValue() * 1000;
+			SetProperty( MM::g_Keyword_Exposure, CDeviceUtils::ConvertToString(currentExpMS_));
+			double dMinExp = pExposureRange->getRangeMin() * 1000; //convert s to ms
+			double dMaxExp = pExposureRange->getRangeMax() * 1000; //convert s to ms
+            SetPropertyLimits( MM::g_Keyword_Exposure, dMinExp, dMaxExp );
          }
       }
    }
+
 
    if (!m_pSimpleProperties->isAvailable(VCDID_Brightness))
       SetProperty(g_Keyword_Brightness, "n/a");
@@ -604,8 +591,8 @@ int CTIScamera::SetupProperties()
       SetProperty(g_Keyword_Gain, "n/a");
    else
    {
-      lMin        = m_pSimpleProperties->getRangeMin(VCDID_Gain);
-      lMax        = m_pSimpleProperties->getRangeMax(VCDID_Gain);
+      lMin  = m_pSimpleProperties->getRangeMin(VCDID_Gain);
+      lMax  = m_pSimpleProperties->getRangeMax(VCDID_Gain);
       Gain_ = m_pSimpleProperties->getValue   (VCDID_Gain);
 
       SetProperty(g_Keyword_Gain, CDeviceUtils::ConvertToString(Gain_));
@@ -623,11 +610,6 @@ int CTIScamera::SetupProperties()
          }
       }
    }
-/*
-      SetProperty(g_Keyword_Gain, CDeviceUtils::ConvertToString(m_pSimpleProperties->getValue(VCDID_Gain)));
-      SetPropertyLimits(g_Keyword_Gain, m_pSimpleProperties->getRangeMin(VCDID_Gain), m_pSimpleProperties->getRangeMax(VCDID_Gain));
-   }
-*/
 
 
    if(!m_pSimpleProperties->isAvailable(VCDID_WhiteBalance))
@@ -660,49 +642,54 @@ int CTIScamera::SetupProperties()
 
 
    // Prepare the live mode, to get the output size of the sink.
-#ifdef _ACTIVEMOVIE
-   if (!pGrabber->prepareLive(true)) return DEVICE_ERR;
-#else
-   if (!pGrabber->prepareLive(false)) return DEVICE_ERR;
-#endif
+   pGrabber->prepareLive(ACTIVEMOVIE);
+
+   
 
 
    // Retrieve the output type and dimension of the handler sink.
    // The dimension of the sink could be different from the VideoFormat, when
    // you use filters.
+#ifdef TRUE
    DShowLib::FrameTypeInfo info;
    pSink->getOutputFrameType(info);
-
    //sink oriented data size
-   lCCD_Width        = info.dim.cx;
-   lCCD_Height       = info.dim.cy;
+   lCCD_Width         = info.dim.cx;
+   lCCD_Height        = info.dim.cy;
    uiCCD_BitsPerPixel = info.getBitsPerPixel();
+#else
+   //Camera oriented data size
+   lCCD_Width         = pGrabber->getAcqSizeMaxX();
+   lCCD_Height        = pGrabber->getAcqSizeMaxY();
+   if (bColor_) uiCCD_BitsPerPixel = 32;
+   else         uiCCD_BitsPerPixel = 8;
    //   tColorformatEnum cf = info.getColorformat();
+#endif
 
    roiX_ = 0;
    roiY_ = 0;
    roiXSize_ = lCCD_Width;
    roiYSize_ = lCCD_Height;
-   img_.Resize(roiXSize_, roiYSize_, uiCCD_BitsPerPixel/8);
+   img_.Resize(roiXSize_, roiYSize_, uiCCD_BitsPerPixel / 8);
 
    // Allocate NUMBER_OF_BUFFERS image buffers of the above (info) buffer size.
    for (int ii = 0; ii < NUMBER_OF_BUFFERS; ++ii)
    {
+	  if (pBuf[ii] != 0)
+      {
+		 delete pBuf[ii];
+		 pBuf[ii] = 0;
+	  }
       pBuf[ii] = new BYTE[info.buffersize];
       assert(pBuf[ii]);
    }
 
-   // Create a new MemBuffer collection that uses our own image buffers.
+// Create a new MemBuffer collection that uses our own image buffers.
    pCollection = DShowLib::MemBufferCollection::create(info, NUMBER_OF_BUFFERS, pBuf);
    if (pCollection == 0) return DEVICE_ERR;
    if (!pSink->setMemBufferCollection(pCollection)) return DEVICE_ERR;
- 
 
-#ifdef _ACTIVEMOVIE
-   if (!pGrabber->startLive(true)) return DEVICE_ERR;
-#else
-   if (!pGrabber->startLive(false)) return DEVICE_ERR;
-#endif
+   pGrabber->startLive(ACTIVEMOVIE);
 
 //#define _WORKAROUND_FOR_PIXEL_CALIBRATOR
 #ifdef _WORKAROUND_FOR_PIXEL_CALIBRATOR
@@ -739,8 +726,17 @@ int CTIScamera::SetupProperties()
    SetAllowedValues(g_Keyword_DeNoise, DeNoiseValues);
    initialized_ = true;
 
+   	if( pDeNoiseFilter != NULL )
+	{
+      string buf;
+      pGrabber->stopLive();
+      pDeNoiseFilter->setParameter( "DeNoise Level", DeNoiseLevel_ );
+      pGrabber->startLive(ACTIVEMOVIE);
+	}
+
    // initialize image buffer
    return SnapImage();
+
 }
 
 
@@ -756,7 +752,7 @@ int CTIScamera::OnSelectDevice(MM::PropertyBase* pProp, MM::ActionType eAct)
 		{
 			string Text = pGrabber->getDev() + " ";
 			Text += pGrabber->getVideoFormat().c_str();
-			pProp->Set(Text.c_str() );
+			pProp->Set(Text.c_str());
 		}
 		else
 		{
@@ -771,23 +767,22 @@ int CTIScamera::OnSelectDevice(MM::PropertyBase* pProp, MM::ActionType eAct)
 			}
 		}
 	}
+
 	else if (eAct == MM::AfterSet)
 	{
 		initialized_ = false;
-
 		pGrabber->stopLive();
-		
+
+/*
+pGrabber->stopLive();
+pGrabber->closeDev();
+*/
 		pGrabber->showDevicePage();
 
 		if( pGrabber->isDevValid() )
 		{
-#ifdef _ACTIVEMOVIE
-			pGrabber->prepareLive(true);
-         pGrabber->startLive(true);
-#else
-			pGrabber->prepareLive(false);
-         pGrabber->startLive(false);
-#endif
+       		pGrabber->openDev(1);
+            pGrabber->startLive(ACTIVEMOVIE);
 			initialized_ = true;
 			pGrabber->saveDeviceStateToFile(XMLPath);
 			SetupProperties();
@@ -824,6 +819,8 @@ int CTIScamera::OnShowPropertyDialog(MM::PropertyBase* pProp, MM::ActionType eAc
 	{
 		if( pGrabber->isDevValid() )
 		{
+			pGrabber->stopLive();
+			pGrabber->closeDev();
 			pGrabber->showVCDPropertyPage();
 			pProp->Set("Click here for Device Property dialog");
 			pGrabber->saveDeviceStateToFile(XMLPath);
@@ -847,6 +844,11 @@ int CTIScamera::OnShowPropertyDialog(MM::PropertyBase* pProp, MM::ActionType eAc
 
 int CTIScamera::Shutdown()
 {
+   DriverGuard dg(this);
+
+   if (initialized_)
+   {
+   }
    initialized_ = false;
 
    // this is called from CPluginManager::UnloadDevice
@@ -878,19 +880,22 @@ Return DEVICE_OK on succes, error code otherwise.
 ==============================================================================*/
 int CTIScamera::SnapImage()
 {
+  busy_ = true;
+
   bool was_off = false;
   if (!pGrabber->isLive())
   {
     was_off = true;
-#ifdef _ACTIVEMOVIE
-    pGrabber->startLive(true);
-#else
-    pGrabber->startLive(false);
-#endif
+    pGrabber->startLive(ACTIVEMOVIE);
   }
+
   pSink->snapImages(1); //,2000);  //this command blocks until exposure is finished or timeout after 2000ms
 
-  if (was_off) pGrabber->stopLive(); 
+  if (was_off)
+	  {
+		  pGrabber->stopLive();
+  }
+  busy_ = false;
 
   return DEVICE_OK;
 }
@@ -913,46 +918,44 @@ unsigned CTIScamera::GetBitDepth() const
 	  bitDepth /= 3;
 	  */
 
-   if( pGrabber->isDevValid())
-	{
-		DShowLib::FrameTypeInfo info;
-		pSink->getOutputFrameType(info);
-		return info.getBitsPerPixel();
-	}
-	return 0;
+  unsigned int bitDepth = 0;
+
+  if( pGrabber->isDevValid())
+  {
+	DShowLib::FrameTypeInfo info;
+	pSink->getOutputFrameType(info);
+	bitDepth = info.getBitsPerPixel();
+  }
+  return bitDepth;
 }
 
 
 /*==============================================================================
 Returns the number of channels in this image.  This is '1' for grayscale cameras,
 and '4' for RGB cameras.
-??? Seems as if MM needs 1 for RGB too
 ==============================================================================*/
 unsigned CTIScamera::GetNumberOfComponents() const
 {
-   // treat any 8 or 16 bit image as monochrome for now
-   unsigned int nc = 1;
-   if( pGrabber->isDevValid())
-	{
-      
-		DShowLib::FrameTypeInfo info;
-		pSink->getOutputFrameType(info);
-      
-      const tColorformatEnum cf = info.getColorformat();
-      if( cf == eRGB32)
-         nc = 4;
-      else if( cf == eRGB24)
-         nc = 3; // user will see a message that this pixel type is not supported
-      else if( cf == eInvalidColorformat)
-         nc = 0; // hope user seels a message the this pixel type is not supported
-      else if (cf == eUYVY)
-         nc = 1;
+  // treat any 8 or 16 bit image as monochrome for now
+  unsigned int nc = 1;
+
+  if( pGrabber->isDevValid())
+  {	
+    DShowLib::FrameTypeInfo info;
+	pSink->getOutputFrameType(info);
+    const tColorformatEnum cf = info.getColorformat();
+
+	if      (cf == eRGB32)
+	  nc = 4;
+    else if (cf == eRGB24)
+	  nc = 3; // user will see a message that this pixel type is not supported
+    else if (cf == eInvalidColorformat)
+	  nc = 0; // user will see a message that this pixel type is not supported
       
       // there are several 32 bit modes?
       //if( 32 == info.getBitsPerPixel())
       //   nc = 4;
-
-	}
+  }
 
   return nc;
 }
@@ -1018,55 +1021,13 @@ int CTIScamera::SetBinning (int binFactor)
 
 
 /*==============================================================================
-Returns the size in bytes of the image buffer.
-Required by the MM::Camera API.
-==============================================================================*/
-long CTIScamera::GetImageBufferSize() const
-{
-   return img_.Width() * img_.Height() * img_.Depth();
-}
-
-
-
-/*==============================================================================
-Returns image buffer X-size in pixels.
-Required by the MM::Camera API.
-==============================================================================*/
-unsigned CTIScamera::GetImageWidth() const 
-{
-   return  img_.Width();
-}
-
-
-
-/*==============================================================================
-Returns image buffer Y-size in pixels.
-Required by the MM::Camera API.
-==============================================================================*/
-unsigned CTIScamera::GetImageHeight() const 
-{
-   return img_.Height();
-}
-
-
-
-/*==============================================================================
-Returns image buffer pixel depth in bytes.
-Required by the MM::Camera API.
-==============================================================================*/
-unsigned CTIScamera::GetImageBytesPerPixel() const
-{
-   return img_.Depth();
-}
-
-
-/*==============================================================================
 Returns the current exposure setting in milliseconds.
 Required by the MM::Camera API.
 ==============================================================================*/
 double CTIScamera::GetExposure() const
 {
    char buf[MM::MaxStrLength];
+   buf[0] = '\0';
    int ret = GetProperty(MM::g_Keyword_Exposure, buf);
    if (ret != DEVICE_OK)
       return 0.0;
@@ -1102,7 +1063,9 @@ const unsigned char* CTIScamera::GetImageBuffer()
 {
    unsigned char* pixBuffer = const_cast<unsigned char*> (img_.GetPixels());
 
-   memcpy(pixBuffer, pBuf[0], GetImageBufferSize());
+   DShowLib::FrameTypeInfo info;
+   pSink->getOutputFrameType(info);
+   memcpy(pixBuffer, pBuf[0], min(GetImageBufferSize(),info.buffersize));
 
    // capture complete
    return (unsigned char*) pixBuffer;
@@ -1112,16 +1075,15 @@ const unsigned char* CTIScamera::GetImageBuffer()
 
 const unsigned int* CTIScamera::GetImageBufferAsRGB32()
 {
-
    void* pixBuffer = const_cast<unsigned char*> (img_.GetPixels());
 
-   memcpy(pixBuffer, pBuf[0], GetImageBufferSize());
+   DShowLib::FrameTypeInfo info;
+   pSink->getOutputFrameType(info);
 
-//   snapInProgress_ = false;
+   memcpy(pixBuffer, pBuf[0], min(GetImageBufferSize(),info.buffersize));
 
    // capture complete
    return (unsigned int*)pixBuffer;
-
 }
 
 
@@ -1192,16 +1154,21 @@ Starts continuous acquisition.
 int CTIScamera::StartSequenceAcquisition(long numImages, double interval_ms, bool stopOnOverflow)
 {
    int ret;
-   sequenceRunning_ = true;
+   DriverGuard dg(this);
+      if (sequenceRunning_)
+         return DEVICE_CAMERA_BUSY_ACQUIRING;
 
-   if (acquiring_)
-      return DEVICE_CAMERA_BUSY_ACQUIRING;
+//   if (acquiring_)
+//      return DEVICE_CAMERA_BUSY_ACQUIRING;
+
+
+
+   sequenceRunning_ = true;
 
    stopOnOverflow_ = stopOnOverflow;
    interval_ms_ = interval_ms;   
 
 
-   frameCount_ = 0;
    lastImage_  = 0;
 
    ostringstream os;
@@ -1225,7 +1192,7 @@ int CTIScamera::StartSequenceAcquisition(long numImages, double interval_ms, boo
    readoutTime = atof(rT);
 
    os.clear();
-   double interval = max(readoutTime, dExp_);
+   double interval = max(readoutTime, currentExpMS_);
    os << interval;
    SetProperty(MM::g_Keyword_ActualInterval_ms, os.str().c_str());
 
@@ -1248,24 +1215,9 @@ int CTIScamera::StartSequenceAcquisition(long numImages, double interval_ms, boo
 
    seqThread_->Start();
 
-   acquiring_ = true;
+//   acquiring_ = true;
 
    LogMessage("Acquisition thread started");
-
-   return DEVICE_OK;
-}
-
-
-
-int CTIScamera::StopSequenceAcquisition()
-{
-   sequenceRunning_ = false;
-   acquiring_ = false;
-
-   seqThread_->Stop();
-   seqThread_->wait();
- 
-//   return RestartSnapMode();
 
    return DEVICE_OK;
 }
@@ -1309,11 +1261,7 @@ void CTIScamera::RecalculateROI()
       pROIFilter->setParameter("Width",lWidth);
       pROIFilter->setParameter("Height",lHeight);
 
-#ifdef _ACTIVEMOVIE
-      pGrabber->startLive(true);
-#else
-      pGrabber->startLive(false);
-#endif
+      pGrabber->startLive(ACTIVEMOVIE);
 
 
       for (int ii = 0; ii < NUMBER_OF_BUFFERS; ++ii)
@@ -1419,32 +1367,40 @@ int CTIScamera::OnBinning(MM::PropertyBase* pProp, MM::ActionType eAct)
 // Exposure Time
 int CTIScamera::OnExposure(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
+	double dExp = 0.0;
 	// exposure property is stored in milliseconds,
 	// while the driver returns the value in seconds
 	if (eAct == MM::BeforeGet)
 	{
-		if( pExposureRange != NULL )
+		if (pExposureRange != NULL)
 		{
-			pProp->Set(pExposureRange->getValue() );
+			dExp = pExposureRange->getValue();
+			dExp = dExp * 1000; //convert s to ms
+			pProp->Set(dExp);
 		}
 	}
 	else if (eAct == MM::AfterSet)
 	{
-      if( pExposureRange != NULL )
-      {
-		   bool bCanBeSet = true;
-		   if( pExposureAuto != NULL )
-		   {
-			   bCanBeSet = !pExposureAuto->getSwitch();
-		   }
+		pProp->Get(dExp); //ms
+		if ( fabs(dExp - currentExpMS_) > 0.1 )
+		{
+			if (pExposureRange != NULL)
+			{
+				bool bCanBeSet = true;
+				if (pExposureAuto != NULL)
+				{
+					bCanBeSet = !pExposureAuto->getSwitch();
+				}
+				if (!bCanBeSet) return DEVICE_CAN_NOT_SET_PROPERTY; //auto exposure is ON
 
-		   if(!bCanBeSet) return DEVICE_CAN_NOT_SET_PROPERTY;
-
-         double dExp;
-		   pProp->Get(dExp);
-		   pExposureRange->setValue(dExp);
-		   dExp_ = dExp;
-      }
+      			if (pExposureRange != NULL)
+				{
+					currentExpMS_ = dExp;
+					dExp = dExp / 1000; //convert ms to s
+					pExposureRange->setValue(dExp);
+				}
+			}
+		}
 	}
 	return DEVICE_OK;
 }
@@ -1544,13 +1500,9 @@ int CTIScamera::OnDeNoise(MM::PropertyBase* pProp, MM::ActionType eAct)
          string buf;
          pProp->Get(buf);
          long lDeNoise = atoi(buf.c_str());
-			pGrabber->stopLive();
-			pDeNoiseFilter->setParameter( "DeNoise Level", lDeNoise );
-#ifdef _ACTIVEMOVIE
-         pGrabber->startLive(true);
-#else
-         pGrabber->startLive(false);
-#endif
+         pGrabber->stopLive();
+		 pDeNoiseFilter->setParameter( "DeNoise Level", lDeNoise );
+         pGrabber->startLive(ACTIVEMOVIE);
 		}
 	}
 	else
@@ -1748,6 +1700,65 @@ int CTIScamera::OnWhiteBalanceAuto(MM::PropertyBase* pProp, MM::ActionType eAct)
 
 
 
+   /**
+   * Stop Seq sequence acquisition
+   * This is the function for internal use and can/should be called from the thread
+   */
+   int CTIScamera::StopCameraAcquisition()
+   {
+/*
+	   {
+         DriverGuard dg(this);
+         if (!sequenceRunning_)
+            return DEVICE_OK;
+
+         LogMessage("Stopped sequence acquisition");
+         AbortAcquisition();
+         int status = DRV_ACQUIRING;
+         int error = DRV_SUCCESS;
+         while (error == DRV_SUCCESS && status == DRV_ACQUIRING) {
+           error = GetStatus(&status); 
+         }
+
+         sequenceRunning_ = false;
+
+         UpdateSnapTriggerMode();
+      }
+*/
+      sequenceRunning_ = false;
+      MM::Core* cb = GetCoreCallback();
+      if (cb)
+         return cb->AcqFinished(this, 0);
+      else
+         return DEVICE_OK;
+   }
+
+
+
+   int CTIScamera::StopSequenceAcquisition(bool temporary)
+   {
+      {
+         DriverGuard dg(this);
+         sequencePaused_ = temporary;
+         StopCameraAcquisition();
+      }
+
+      seqThread_->Stop();
+      seqThread_->wait();
+
+      return DEVICE_OK;
+   }
+
+   // Stops Sequence acquisition
+   // This is for external use only (if called from the sequence acquisition thread, deadlock will ensue!
+   int CTIScamera::StopSequenceAcquisition()
+   {
+      return StopSequenceAcquisition(false);
+   }
+
+
+
+
 /*==============================================================================
 Continuous acquisition
 ==============================================================================*/
@@ -1757,6 +1768,7 @@ int AcqSequenceThread::svc(void)
 
    long lValue;
    double dExp = 1000;  //default in ms
+   std::ostringstream os;
 
    CSimplePropertyAccess prop(pGrabber->getAvailableVCDProperties());
    if (prop.isAvailable(VCDID_Exposure))
@@ -1772,11 +1784,7 @@ int AcqSequenceThread::svc(void)
 	  
       if (!pGrabber->isLive())
       {
-#ifdef _ACTIVEMOVIE
-         pGrabber->startLive(true);
-#else
-         pGrabber->startLive(false);
-#endif
+        pGrabber->startLive(ACTIVEMOVIE);
       }
       pSink->snapImages(1,(DWORD)-1);
 
@@ -1790,22 +1798,27 @@ int AcqSequenceThread::svc(void)
           return 2;
       }
 
-
-
       //printf("Acquired frame %ld.\n", imageCounter);                         
       imageCounter++;
 
-   } while (!stop_ && imageCounter < numImages_);
+      CDeviceUtils::SleepMs(waitTime_);
+
+   } while (!stop_ && (imageCounter < numImages_));
+
 
    if (stop_)
    {
       printf("Acquisition interrupted by the user\n");
-      return 0;
+      camera_->StopCameraAcquisition();
+	  return 0;
    }
 
 
 //   camera_->RestartSnapMode();
    printf("Acquisition completed.\n");
+
+   camera_->StopCameraAcquisition();
+
    return 0;
 }
 
@@ -1815,32 +1828,58 @@ Waits for new image and inserts it into the circular buffer
 ==============================================================================*/
 int CTIScamera::PushImage()
 {
+   DriverGuard dg(this);
 
-   frameCount_++;
+   // create metadata
+   char label[MM::MaxStrLength];
+   this->GetLabel(label);
+
+   MM::MMTime timestamp = this->GetCurrentMMTime();
+   Metadata md;
+   // Copy the metadata inserted by other processes:
+   std::vector<std::string> keys = metadata_.GetKeys();
+   for (unsigned int i= 0; i < keys.size(); i++) {
+      md.put(keys[i], metadata_.GetSingleTag(keys[i].c_str()).GetValue().c_str());
+   }
+
+   md.put("Camera", label);   
+   md.put(MM::g_Keyword_Metadata_StartTime, CDeviceUtils::ConvertToString(startTime_.getMsec()));
+   md.put(MM::g_Keyword_Elapsed_Time_ms, CDeviceUtils::ConvertToString((timestamp - startTime_).getMsec()));
+   md.put(MM::g_Keyword_Metadata_ImageNumber, CDeviceUtils::ConvertToString(imageCounter_));
+   md.put(MM::g_Keyword_Binning, binSize_);
+
+   MetadataSingleTag mstStartTime(MM::g_Keyword_Metadata_StartTime, label, true);
+   mstStartTime.SetValue(CDeviceUtils::ConvertToString(startTime_.getMsec()));
+   md.SetTag(mstStartTime);
+
+   MetadataSingleTag mst(MM::g_Keyword_Elapsed_Time_ms, label, true);
+   mst.SetValue(CDeviceUtils::ConvertToString(timestamp.getMsec()));
+   md.SetTag(mst);
+
+   MetadataSingleTag mstCount(MM::g_Keyword_Metadata_ImageNumber, label, true);
+   mstCount.SetValue(CDeviceUtils::ConvertToString(imageCounter_));      
+   md.SetTag(mstCount);
+
+   MetadataSingleTag mstB(MM::g_Keyword_Binning, label, true);
+   mstB.SetValue(CDeviceUtils::ConvertToString(binSize_));      
+   md.SetTag(mstB);
+
+   imageCounter_++;
 
    // get pixels
    void* imgPtr;
    imgPtr = pBuf[0];
 
    // process image
-   /* NOTE: this is now done automatically in MMCore
-   MM::ImageProcessor* ip = GetCoreCallback()->GetImageProcessor(this);      
-   if (ip)                                                                   
-   {                                                                         
-      int ret = ip->Process((unsigned char*) imgPtr, GetImageWidth(), GetImageHeight(), GetImageBytesPerPixel());
-      if (ret != DEVICE_OK)
-	  {
-         return ret;
-	  }
-   } 
-   */
+   // imageprocesssor now called from core
+
    // This method inserts new image in the circular buffer (residing in MMCore)
    int ret = GetCoreCallback()->InsertImage(this, (unsigned char*) imgPtr,      
                                            GetImageWidth(),                  
                                            GetImageHeight(),                 
                                            GetImageBytesPerPixel());
 
-   if (!stopOnOverflow_ && ret == DEVICE_BUFFER_OVERFLOW)
+   if (!stopOnOverflow_ && (ret == DEVICE_BUFFER_OVERFLOW))
    {
       // do not stop on overflow - just reset the buffer
       GetCoreCallback()->ClearImageBuffer(this);
@@ -1853,6 +1892,37 @@ int CTIScamera::PushImage()
    return ret;
 }
 
+
+
+
+DriverGuard::DriverGuard(const CTIScamera * cam)
+{
+   g_DriverLock.Lock();
+   if (cam != 0)
+   {
+#ifdef UNDERTEST
+	  if (cam->GetNumberOfWorkableCameras() > 1)
+      {
+       // must be defined as 32bit in order to compile on 64bit systems
+	   // since GetCurrentCamera only takes 32bit
+         int32 currentCamera;
+         GetCurrentCamera(&currentCamera);
+         if (currentCamera != cam->GetMyCameraID())
+         {
+            int ret = SetCurrentCamera(cam->GetMyCameraID());
+            if (ret != DRV_SUCCESS)
+               printf("Error switching active camera");
+         }
+	  }
+#endif
+   }
+}
+
+
+DriverGuard::~DriverGuard()
+{
+   g_DriverLock.Unlock();
+}
 
 
 

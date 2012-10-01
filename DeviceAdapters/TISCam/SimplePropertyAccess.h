@@ -32,6 +32,13 @@ public:
 	bool	isOnePushAvailable( const GUID& id );
 	void	push( const GUID& id );
 
+	double	getAbsoluteValue( const GUID& id );
+	void	setAbsoluteValue( const GUID& id, double val );
+	double	getAbsoluteValueRangeMin( const GUID& id );
+	double	getAbsoluteValueRangeMax( const GUID& id );
+	double	getAbsoluteValueDefault ( const GUID& id );
+
+
 protected:
 	_DSHOWLIB_NAMESPACE::tIVCDPropertyItemsPtr	m_pItemContainer;
 };

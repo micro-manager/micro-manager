@@ -32,10 +32,16 @@
 #ifndef _TIS_CAMERA_H_
 #define _TIS_CAMERA_H_
 
+// enable or disable an independent active movie window
+#define ACTIVEMOVIE false
+
 #include "../../MMDevice/DeviceBase.h"
+#include "../../MMDevice/MMDevice.h"
 #include "../../MMDevice/ImgBuffer.h"
 #include "../../MMDevice/DeviceUtils.h"
+#include "../../MMDevice/DeviceThreads.h"
 #include <string>
+#include <sstream>
 #include <map>
 
 #include "..\..\..\3rdparty\TheImagingSource\classlib\include\tisudshl.h"
@@ -57,39 +63,41 @@ class CTIScamera : public CCameraBase<CTIScamera>
 {
 public:
 
-	friend class AcqSequenceThread;
-	CPropertyAction *pSelectDevice;
-	CPropertyAction *pShowProperties;
-	// the only public ctor
-	CTIScamera();
-	~CTIScamera();
+friend class AcqSequenceThread;
+static CTIScamera* GetInstance();
 
-	// MMDevice API
-	// ------------
-	int Initialize();
-	int Shutdown();
+~CTIScamera();
 
-	void GetName(char* name) const;      
-	bool Busy();
+CPropertyAction *pSelectDevice;
+CPropertyAction *pShowProperties;
 
-	// MMCamera API
-	// ------------
-	int SnapImage();
-	unsigned GetImageBytesPerPixel() const;
-	const unsigned char* GetImageBuffer();
+// the only public ctor
+CTIScamera();
+
+// MMDevice API
+int Initialize();
+int Shutdown();
+
+void GetName(char* name) const;      
+bool Busy();
+
+// MMCamera API
+int SnapImage();
+const unsigned char* GetImageBuffer();
+    unsigned GetImageWidth() const {return img_.Width();}
+    unsigned GetImageHeight() const {return img_.Height();}
+    unsigned GetImageBytesPerPixel() const {return img_.Depth();} 
+    long GetImageBufferSize() const {return img_.Width() * img_.Height() * GetImageBytesPerPixel();}
+unsigned GetBitDepth() const;
+
 	const unsigned int* GetImageBufferAsRGB32();
 	unsigned GetNumberOfComponents() const;
 	int GetComponentName(unsigned channel, char* name);
-	long GetImageBufferSize() const;
-	unsigned GetImageWidth()  const;
-	unsigned GetImageHeight() const;
-	unsigned GetBitDepth() const;
-	double GetNominalPixelSizeUm() const {return nominalPixelSizeUm_;}
-	double GetPixelSizeUm() const {return nominalPixelSizeUm_ * GetBinning();}
+	double GetPixelSizeUm() const {return GetBinning();};
 	int GetBinning() const;
 	int SetBinning(int binSize);
    int IsExposureSequenceable(bool& isSequenceable) const {isSequenceable = false; return DEVICE_OK;}
-	void SetExposure(double exp_ms);
+	void SetExposure(double dExp_ms);
 	double GetExposure() const;
 	int SetROI(unsigned  x, unsigned  y, unsigned  xSize, unsigned  ySize);
 	int GetROI(unsigned& x, unsigned& y, unsigned& xSize, unsigned& ySize);
@@ -97,12 +105,23 @@ public:
 
 	int StartSequenceAcquisition(long numImages, double interval_ms, bool stopOnOverflow);
 
+    /*
+    * Continuous sequence acquisition.  
+    * Default to sequence acquisition with a high number of images
+    */
+    int StartSequenceAcquisition(double interval)
+    {
+       return StartSequenceAcquisition(LONG_MAX, interval, false);
+    }
+
 	int StopSequenceAcquisition();
+    int StopSequenceAcquisition(bool temporary);
+
 	int RestartSequenceAcquisition();
 	bool IsCapturing();
 
-	// action interface
-	// ----------------
+	// action interface for the camera
+	// -------------------------------
 	int OnBinning           (MM::PropertyBase* pProp, MM::ActionType eAct);
 	int OnExposure          (MM::PropertyBase* pProp, MM::ActionType eAct);
 	int OnPixelType         (MM::PropertyBase* pProp, MM::ActionType eAct);
@@ -135,18 +154,44 @@ public:
 	// custom interface for the burst thread
 	int PushImage();
 
-
 private:
 
+    static CTIScamera* instance_;
+    static unsigned refCount_;
 
-	bool initialized_;
-	double nominalPixelSizeUm_;
+    bool initialized_;
+
+
+    double nominalPixelSizeUm_;
 	long lCCD_Width, lCCD_Height;
 	unsigned int uiCCD_BitsPerPixel;
 	bool busy_;
+
+   struct ROI {
+      int x;
+      int y;
+      int xSize;
+      int ySize;
+
+      ROI() : x(0), y(0), xSize(0), ySize(0) {}
+      ~ROI() {}
+
+      bool isEmpty() {return x==0 && y==0 && xSize==0 && ySize == 0;}
+   };
+
+   ROI roi_;
+   int binSize_;
+   double currentExpMS_; // value used by camera
+   int fullFrameX_;
+   int fullFrameY_;
+   int tempFrameX_;
+   int tempFrameY_;
+   short* fullFrameBuffer_;
+
+
 	bool bColor_;
 	bool sequenceRunning_;
-	double dExp_;
+    bool sequencePaused_;
 	bool flipH_;
 	bool flipV_;
 	double FPS_;
@@ -155,24 +200,24 @@ private:
 	long Gain_;
 	long DeNoiseLevel_;
 
+
 	ImgBuffer img_;
 
 	void RecalculateROI();
 	int  ResizeImageBuffer();
 
-	int bitDepth_;
+	int StopCameraAcquisition();
 
 	unsigned roiX_;
 	unsigned roiY_;
 	unsigned roiXSize_;
 	unsigned roiYSize_;
 
-	bool acquiring_;
 	double interval_ms_;
-	long frameCount_;
 	long lastImage_;
-	unsigned long imageCounter_;
-	unsigned long sequenceLength_;
+	long imageCounter_;
+    MM::MMTime startTime_;
+ 	unsigned long sequenceLength_;
 
 	AcqSequenceThread* seqThread_; // burst mode thread
 
@@ -183,15 +228,9 @@ private:
 
 	CSimplePropertyAccess *m_pSimpleProperties; // This class handles the camera properties
 	std::string XMLPath;
-#ifdef LIB_REQUIRES_LICENSE_NUMBER
-	std::string INIPath;
-#endif
+
 	DShowLib::tIVCDAbsoluteValuePropertyPtr pExposureRange;
 	DShowLib::tIVCDSwitchPropertyPtr        pExposureAuto;
-
-
-
-
 
 };
 
@@ -201,24 +240,43 @@ private:
 class AcqSequenceThread : public MMDeviceThreadBase
 {
 public:
-	AcqSequenceThread(CTIScamera* camera) : 
-	  intervalMs_(100.0), numImages_(1), busy_(false), stop_(false), camera_(camera) {}
-	  ~AcqSequenceThread() {}
-	  int svc (void);
+   AcqSequenceThread(CTIScamera* pCamera) : 
+	  intervalMs_(100.0),
+      numImages_(1),
+      waitTime_(10),
+	  busy_(false),
+	  stop_(false)
+   {
+      camera_ = pCamera;
+   };
+   ~AcqSequenceThread() {}
 
-	  void SetInterval(double intervalMs) {intervalMs_ = intervalMs;}
-	  void SetLength(long images) {numImages_ = images;}
-	  void Stop() {stop_ = true;}
-	  void Start() {stop_ = false; activate();}
+   int svc(void);
+
+   void SetInterval(double intervalMs) {intervalMs_ = intervalMs;}
+   void SetWaitTime (long waitTime) { waitTime_ = waitTime;}
+   void SetTimeOut (long imageTimeOut) { imageTimeOut_ = imageTimeOut;}
+   void SetLength(long images) {numImages_ = images;}
+   void Stop() {stop_ = true;}
+   void Start() {stop_ = false; activate();}
 
 private:
-	double intervalMs_;
-	long numImages_;
-	bool busy_;
-	bool stop_;
-	CTIScamera* camera_;
+   CTIScamera* camera_;
+   double intervalMs_;
+   long numImages_;
+   long waitTime_;
+   long imageTimeOut_;
+   bool busy_;
+   bool stop_;
 };
 
+
+class DriverGuard
+{
+public:
+   DriverGuard(const CTIScamera * cam);
+   ~DriverGuard();
+};
 
 
 #endif //_TIS_CAMERA_H_

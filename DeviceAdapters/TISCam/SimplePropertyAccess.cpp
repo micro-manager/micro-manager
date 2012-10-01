@@ -57,6 +57,41 @@ tIVCDRangePropertyPtr	getRangeInterface( _DSHOWLIB_NAMESPACE::tIVCDPropertyItems
 	return 0;
 }
 
+tIVCDAbsoluteValuePropertyPtr	getAbsoluteValueInterface( _DSHOWLIB_NAMESPACE::tIVCDPropertyItemsPtr& pItems, const GUID& id )
+{
+	GUID itemID = id;
+	GUID elemID = VCDElement_Value;
+
+	if( itemID == VCDElement_WhiteBalanceRed || itemID == VCDElement_WhiteBalanceBlue )
+	{
+		elemID = itemID;
+		itemID = VCDID_WhiteBalance;
+	}
+
+	if( itemID == VCDElement_GPIOIn || itemID == VCDElement_GPIOOut )
+	{
+		elemID = itemID;
+		itemID = VCDID_GPIO;
+	}
+
+	if( itemID == VCDElement_StrobeDelay || itemID == VCDElement_StrobeDuration )
+	{
+		elemID = itemID;
+		itemID = VCDID_Strobe;
+	}
+
+	tIVCDPropertyElementPtr pFoundElement = pItems->findElement( itemID, elemID );
+	if( pFoundElement != 0 )
+	{
+		tIVCDAbsoluteValuePropertyPtr pAbsVal;
+		if( pFoundElement->getInterfacePtr( pAbsVal ) != 0 )
+		{
+			return pAbsVal;
+		}
+	}
+	return 0;
+}
+
 tIVCDSwitchPropertyPtr	getAutoInterface( _DSHOWLIB_NAMESPACE::tIVCDPropertyItemsPtr& pItems, const GUID& id )
 {
 	tIVCDPropertyElementPtr pFoundElement = pItems->findElement( id, VCDElement_Auto );
@@ -235,3 +270,67 @@ void	CSimplePropertyAccess::setSwitch( const GUID& id, bool b )
 {
 	setAuto( id, b );
 }
+
+double	CSimplePropertyAccess::getAbsoluteValue( const GUID& id )
+{
+	assert( m_pItemContainer != 0 );
+
+	double rval = 0;
+	tIVCDAbsoluteValuePropertyPtr pAbsVal = getAbsoluteValueInterface( m_pItemContainer, id );
+	if( pAbsVal != 0 )
+	{
+		rval = pAbsVal->getValue();
+	}
+	return rval;
+}
+
+void	CSimplePropertyAccess::setAbsoluteValue( const GUID& id, double val )
+{
+	assert( m_pItemContainer != 0 );
+
+	tIVCDAbsoluteValuePropertyPtr pAbsVal = getAbsoluteValueInterface( m_pItemContainer, id );
+	if( pAbsVal != 0 )
+	{
+		pAbsVal->setValue( val );
+	}
+}
+
+double	CSimplePropertyAccess::getAbsoluteValueRangeMin( const GUID& id )
+{
+	assert( m_pItemContainer != 0 );
+
+	double rval = 0;
+	tIVCDAbsoluteValuePropertyPtr pAbsVal = getAbsoluteValueInterface( m_pItemContainer, id );
+	if( pAbsVal != 0 )
+	{
+		rval = pAbsVal->getRangeMin();
+	}
+	return rval;
+}
+
+double	CSimplePropertyAccess::getAbsoluteValueRangeMax( const GUID& id )
+{
+	assert( m_pItemContainer != 0 );
+
+	double rval = 0;
+	tIVCDAbsoluteValuePropertyPtr pAbsVal = getAbsoluteValueInterface( m_pItemContainer, id );
+	if( pAbsVal != 0 )
+	{
+		rval = pAbsVal->getRangeMax();
+	}
+	return rval;
+}
+
+double	CSimplePropertyAccess::getAbsoluteValueDefault( const GUID& id )
+{
+	assert( m_pItemContainer != 0 );
+
+	double rval = 0;
+	tIVCDAbsoluteValuePropertyPtr pAbsVal = getAbsoluteValueInterface( m_pItemContainer, id );
+	if( pAbsVal != 0 )
+	{
+		rval = pAbsVal->getDefault();
+	}
+	return rval;
+}
+
