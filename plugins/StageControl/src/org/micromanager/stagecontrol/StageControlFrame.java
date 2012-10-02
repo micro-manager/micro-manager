@@ -1,10 +1,20 @@
 
-/*
+/**
  * StageControlFrame.java
  *
  * Created on Aug 19, 2010, 10:04:49 PM
  * Nico Stuurman, copyright UCSF, 2010
- * BSD license
+ * 
+ * LICENSE:      This file is distributed under the BSD license.
+ *               License text is included with the source distribution.
+ *
+ *               This file is distributed in the hope that it will be useful,
+ *               but WITHOUT ANY WARRANTY; without even the implied warranty
+ *               of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+ *
+ *               IN NO EVENT SHALL THE COPYRIGHT OWNER OR
+ *               CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+ *               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
  */
 
 package org.micromanager.stagecontrol;
