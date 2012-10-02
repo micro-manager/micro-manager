@@ -51,6 +51,10 @@ public class NumberUtils {
 	public static String intToDisplayString(int number) {
 		return format_.format(number);
 	}
+   
+   public static String longToDisplayString(long number) {
+		return format_.format(number);
+	}
 
 	public static String doubleToDisplayString(double number) {
 		return format_.format(number);
@@ -60,6 +64,10 @@ public class NumberUtils {
 		return format_.parse((String) numberString).intValue();
 	}
 
+   public static long displayStringToLong(Object numberString) throws ParseException {
+		return format_.parse((String) numberString).longValue();
+	}
+   
 	public static double displayStringToDouble(Object numberString) throws ParseException {
 		return format_.parse((String) numberString).doubleValue();
 	}
