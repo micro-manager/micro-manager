@@ -69,7 +69,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="hid.lib setupapi.lib"
-				OutputFile="$(OutDir)/mmgr_dal_Mightex.dll"
+				OutputFile="$(OutDir)/mmgr_dal_$(ProjectName).dll"
 				LinkIncremental="2"
 				AdditionalLibraryDirectories="&quot;..\..\..\3rdparty\Microsoft\WinDDK\$(PlatformName)&quot;;D:\WinDDK\7600.16385.1\lib\win7\i386"
 				GenerateDebugInformation="true"
@@ -154,7 +154,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="hid.lib setupapi.lib"
-				OutputFile="$(OutDir)/mmgr_dal_Mightex.dll"
+				OutputFile="$(OutDir)/mmgr_dal_$(ProjectName).dll"
 				LinkIncremental="2"
 				AdditionalLibraryDirectories="&quot;..\..\..\3rdparty\Microsoft\WinDDK\$(PlatformName)&quot;;D:\WinDDK\7600.16385.1\lib\win7\amd64"
 				GenerateDebugInformation="true"

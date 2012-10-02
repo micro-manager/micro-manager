@@ -70,7 +70,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="inpout32.lib"
-				OutputFile="$(OutDir)/mmgr_dal_ParallelPort.dll"
+				OutputFile="$(OutDir)/mmgr_dal_$(ProjectName).dll"
 				LinkIncremental="2"
 				AdditionalLibraryDirectories="..\..\..\3rdparty\inpout32\lib"
 				GenerateDebugInformation="true"
@@ -156,7 +156,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="inpoutx64.lib"
-				OutputFile="$(OutDir)/mmgr_dal_ParallelPort.dll"
+				OutputFile="$(OutDir)/mmgr_dal_$(ProjectName).dll"
 				LinkIncremental="2"
 				AdditionalLibraryDirectories="..\..\..\3rdparty\inpoutx64\lib"
 				GenerateDebugInformation="true"
@@ -322,7 +322,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="inpoutx64.lib"
-				OutputFile="$(OutDir)/mmgr_dal_ParallelPort.dll"
+				OutputFile="$(OutDir)/mmgr_dal_$(ProjectName).dll"
 				LinkIncremental="1"
 				AdditionalLibraryDirectories="..\..\..\3rdparty\inpoutx64\lib"
 				GenerateDebugInformation="true"

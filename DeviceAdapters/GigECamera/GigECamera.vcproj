@@ -70,7 +70,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="Jai_Factory.lib"
-				OutputFile="$(OutDir)/mmgr_dal_GigECamera.dll"
+				OutputFile="$(OutDir)/mmgr_dal_$(ProjectName).dll"
 				LinkIncremental="2"
 				AdditionalLibraryDirectories="..\..\..\3rdparty\JAI\SDK\library\CPP\lib\Win32_i86"
 				GenerateDebugInformation="true"
@@ -156,7 +156,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="Jai_Factory.lib"
-				OutputFile="$(OutDir)/mmgr_dal_GigECamera.dll"
+				OutputFile="$(OutDir)/mmgr_dal_$(ProjectName).dll"
 				LinkIncremental="2"
 				AdditionalLibraryDirectories="..\..\..\3rdparty\JAI\SDK\library\CPP\lib\Win64_x64"
 				GenerateDebugInformation="true"

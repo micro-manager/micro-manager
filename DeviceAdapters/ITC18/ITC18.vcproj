@@ -68,7 +68,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="itcmm.lib"
-				OutputFile="$(OutDir)/mmgr_dal_ITC18.dll"
+				OutputFile="$(OutDir)/mmgr_dal_$(ProjectName).dll"
 				LinkIncremental="2"
 				AdditionalLibraryDirectories="&quot;..\..\..\3rdparty\ITC18-lib\Debug&quot;"
 				GenerateDebugInformation="true"

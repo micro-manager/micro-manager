@@ -67,7 +67,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				OutputFile="$(OutDir)/mmgr_dal_Apogee.dll"
+				OutputFile="$(OutDir)/mmgr_dal_$(ProjectName).dll"
 				Version="0.1"
 				LinkIncremental="2"
 				AdditionalLibraryDirectories=""
@@ -151,7 +151,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				OutputFile="$(OutDir)/mmgr_dal_Apogee.dll"
+				OutputFile="$(OutDir)/mmgr_dal_$(ProjectName).dll"
 				Version="0.1"
 				LinkIncremental="2"
 				AdditionalLibraryDirectories=""

@@ -68,7 +68,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="sfwlib.lib sfwcore.lib"
-				OutputFile="$(OutDir)/mmgr_dal_ScionCam.dll"
+				OutputFile="$(OutDir)/mmgr_dal_$(ProjectName).dll"
 				LinkIncremental="2"
 				AdditionalLibraryDirectories="../../../3rdparty/RoperScientific/Windows/PvCam/SDK/Libs"
 				GenerateDebugInformation="true"
@@ -152,7 +152,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="sfwlib.lib sfwcore.lib"
-				OutputFile="$(OutDir)/mmgr_dal_ScionCam.dll"
+				OutputFile="$(OutDir)/mmgr_dal_$(ProjectName).dll"
 				LinkIncremental="2"
 				AdditionalLibraryDirectories="../../../3rdparty/RoperScientific/Windows/PvCam/SDK/Libs"
 				GenerateDebugInformation="true"

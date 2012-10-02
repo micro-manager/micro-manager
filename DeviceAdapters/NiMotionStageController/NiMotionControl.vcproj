@@ -65,7 +65,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="FlexMS32.lib"
-				OutputFile="$(OutDir)/mmgr_dal_NIMotionStage.dll"
+				OutputFile="$(OutDir)/mmgr_dal_$(ProjectName).dll"
 				LinkIncremental="2"
 				AdditionalLibraryDirectories="&quot;..\..\..\3rdParty\NationalInstruments\NI-Motion\FlexMotion\lib\Microsoft&quot;;&quot;..\..\..\3rdParty\NationalInstruments\NI-Motion\lib&quot;"
 				GenerateDebugInformation="true"
