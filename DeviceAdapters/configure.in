@@ -395,6 +395,7 @@ AC_CONFIG_FILES(
 	[ThorlabsDCxxxx/Makefile:ThorlabsDCxxxx/Makefile.in:MMDEVAPI.rules]
 	[ThorlabsFilterWheel/Makefile:ThorlabsFilterWheel/Makefile.in:MMDEVAPI.rules]
 	[ThorlabsSC10/Makefile:ThorlabsSC10/Makefile.in:MMDEVAPI.rules]
+	[Tofra/Makefile:Tofra/Makefile.in:MMDEVAPI.rules]
 	[USBManager/Makefile:USBManager/Makefile.in:MMDEVAPI.rules]
    [Utilities/Makefile:Utilities/Makefile.in:MMDEVAPI.rules]
    [VariLC/Makefile:VariLC/Makefile.in:MMDEVAPI.rules]
