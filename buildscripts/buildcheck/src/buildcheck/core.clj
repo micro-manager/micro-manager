@@ -245,6 +245,17 @@
   []
   (dorun (map fix-output-file-tag (device-vcproj-files))))
     
+(defn find-copy-step [vcproj]
+  (re-find #"\"copy .+?\"" (slurp vcproj)))
+
+(defn bad-copy-step [vcproj]
+  (not (.contains (or (find-copy-step vcproj) "PlatformName") "PlatformName")))
+
+(defn all-bad-copy-steps
+  "Find all vcproj files with a bad post-build copy step"
+  []
+  (filter bad-copy-step (device-vcproj-files)))
+
 ;;;; checking mac stuff (manual)
 
 (defn uses-serial-port [file]
