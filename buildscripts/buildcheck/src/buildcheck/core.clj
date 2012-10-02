@@ -206,8 +206,8 @@
 (defn make-full-report [mode send?]
   (let [report
         (str
-          (report-build-errors 32 mode true)
-          (report-build-errors 64 mode true))]
+          (report-build-errors 32 mode false)
+          (report-build-errors 64 mode false))]
     (if-not (empty? report)
       (do 
         (when send?
