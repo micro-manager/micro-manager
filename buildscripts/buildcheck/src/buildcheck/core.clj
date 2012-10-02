@@ -239,17 +239,17 @@
 (defn replace-in-file!
   "Replace a re-pattern in a file with a new value."
   [file pat new-val]
-  (edit-file file #(clojure.string/replace % pat new-val)))
+  (edit-file! file #(clojure.string/replace % pat new-val)))
 
 (defn replace-in-files!
   "Replace a re-pattern in a list of files with a new value."
   [files pat new-val]
-  (dorun (map #(replace-in-file % pat new-val) files)))
+  (dorun (map #(replace-in-file! % pat new-val) files)))
 
 (defn fix-output-file-tags!
   "Fix the dll output path specified in all vcproj files."
   []
-  (replace-in-files (device-vcproj-files)
+  (replace-in-files! (device-vcproj-files)
                     #"\$\(OutDir\)/.+?\.dll" "\\$(OutDir)/mmgr_dal_\\$(ProjectName).dll"))
     
 (defn find-copy-step [vcproj]
