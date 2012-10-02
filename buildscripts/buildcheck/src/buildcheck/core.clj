@@ -2,8 +2,8 @@
   (:import (java.io File)
            (java.text SimpleDateFormat)
            (java.util Calendar Date))
-  (:require [postal.core :as postal])
-  (:require [clojure.xml])
+  (:require [postal.core :as postal]
+            [clojure.xml])
   (:gen-class))
 
 (def micromanager (File. "../.."))
@@ -229,6 +229,21 @@
 (defn -main [mode]
   (make-full-report (get {"inc" :inc "full" :full} mode) true))
 
+;; other windows stuff (manual)
+
+(defn fix-output-file-tag
+  "Fix the dll output path specified in this vc proj."
+  [vcproj-file]
+  (spit vcproj-file
+        (-> vcproj-file
+            slurp
+            (clojure.string/replace #"\$\(OutDir\)/.+?\.dll"
+                                    "\\$(OutDir)/mmgr_dal_\\$(ProjectName).dll"))))
+
+(defn fix-output-file-tags
+  "Fix the dll output path in all vcproj files."
+  []
+  (dorun (map fix-output-file-tag (device-vcproj-files))))
     
 ;;;; checking mac stuff (manual)
 
