@@ -865,7 +865,7 @@ int ZStage::SetPositionSteps(long pos)
 	// form absolute move command
 	const int bufSize = 40;
 	char buf[bufSize];
-	snprintf(buf, bufSize, "/%sA%dR", ControllerName.c_str(), pos);
+	snprintf(buf, bufSize, "/%sA%ldR", ControllerName.c_str(), pos);
 
 	// send command
 	ret = SendSerialCommand(port_.c_str(), buf, "\r");
@@ -985,8 +985,8 @@ int ZStage::SetRelativePositionUm(double d)
 	// Form relative move command
 	const int bufSize = 40;
 	char buf[bufSize];
-	if(steps>0) snprintf(buf, bufSize, "/%sP%dR", ControllerName.c_str(), steps);
-	if(steps<0) snprintf(buf, bufSize, "/%sD%dR", ControllerName.c_str(), -steps);
+	if(steps>0) snprintf(buf, bufSize, "/%sP%ldR", ControllerName.c_str(), steps);
+	if(steps<0) snprintf(buf, bufSize, "/%sD%ldR", ControllerName.c_str(), -steps);
 
 	// Send command
 	int ret = SendSerialCommand(port_.c_str(), buf, "\r");
@@ -1011,8 +1011,8 @@ int ZStage::Move(double speed)
 	// Form constant speed move command
 	const int bufSize = 40;
 	char buf[bufSize];
-	if(stepspeed>0) snprintf(buf, bufSize, "/%sV%dP0R", ControllerName.c_str(), stepspeed);
-	if(stepspeed<0) snprintf(buf, bufSize, "/%sV%dD0R", ControllerName.c_str(), -stepspeed);
+	if(stepspeed>0) snprintf(buf, bufSize, "/%sV%ldP0R", ControllerName.c_str(), stepspeed);
+	if(stepspeed<0) snprintf(buf, bufSize, "/%sV%ldD0R", ControllerName.c_str(), -stepspeed);
 
 	// Send command
 	int ret = SendSerialCommand(port_.c_str(), buf, "\r");
@@ -1032,7 +1032,7 @@ int ZStage::Out()
   	// Two outputs 1 and 2 with values 0 and 1
 	const int bufSize = 40;
 	char buf[bufSize];
-	snprintf(buf, bufSize, "/%sJ%dR", ControllerName.c_str(), Out1+2*Out2);
+	snprintf(buf, bufSize, "/%sJ%ldR", ControllerName.c_str(), Out1+2*Out2);
 
 	// Send command
 	int ret = SendSerialCommand(port_.c_str(), buf, "\r");
@@ -1740,7 +1740,7 @@ int XYStage::SetPositionStepsX(long pos)
 	// form absolute move command
 	const int bufSize = 40;
 	char buf[bufSize];
-	snprintf(buf, bufSize, "/%sA%dR", ControllerNameX.c_str(), pos);
+	snprintf(buf, bufSize, "/%sA%ldR", ControllerNameX.c_str(), pos);
 
 	// send command
 	ret = SendSerialCommand(port_.c_str(), buf, "\r");
@@ -1764,7 +1764,7 @@ int XYStage::SetPositionStepsY(long pos)
 	// form absolute move command
 	const int bufSize = 40;
 	char buf[bufSize];
-	snprintf(buf, bufSize, "/%sA%dR", ControllerNameY.c_str(), pos);
+	snprintf(buf, bufSize, "/%sA%ldR", ControllerNameY.c_str(), pos);
 
 	// send command
 	ret = SendSerialCommand(port_.c_str(), buf, "\r");
@@ -2003,8 +2003,8 @@ int XYStage::SetRelativePositionStepsX(long steps)
 	// Form relative move command
 	const int bufSize = 40;
 	char buf[bufSize];
-	if(steps>0) snprintf(buf, bufSize, "/%sP%dR", ControllerNameX.c_str(), steps);
-	if(steps<0) snprintf(buf, bufSize, "/%sD%dR", ControllerNameX.c_str(), -steps);
+	if(steps>0) snprintf(buf, bufSize, "/%sP%ldR", ControllerNameX.c_str(), steps);
+	if(steps<0) snprintf(buf, bufSize, "/%sD%ldR", ControllerNameX.c_str(), -steps);
 
 	// Send command
 	int ret = SendSerialCommand(port_.c_str(), buf, "\r");
@@ -2026,8 +2026,8 @@ int XYStage::SetRelativePositionStepsY(long steps)
 	// Form relative move command
 	const int bufSize = 40;
 	char buf[bufSize];
-	if(steps>0) snprintf(buf, bufSize, "/%sP%dR", ControllerNameY.c_str(), steps);
-	if(steps<0) snprintf(buf, bufSize, "/%sD%dR", ControllerNameY.c_str(), -steps);
+	if(steps>0) snprintf(buf, bufSize, "/%sP%ldR", ControllerNameY.c_str(), steps);
+	if(steps<0) snprintf(buf, bufSize, "/%sD%ldR", ControllerNameY.c_str(), -steps);
 
 	// Send command
 	int ret = SendSerialCommand(port_.c_str(), buf, "\r");
@@ -2080,8 +2080,8 @@ int XYStage::MoveX(double speed)
 	// Form constant speed move command
 	const int bufSize = 40;
 	char buf[bufSize];
-	if(stepspeed>0) snprintf(buf, bufSize, "/%sV%dP0R", ControllerNameX.c_str(), stepspeed);
-	if(stepspeed<0) snprintf(buf, bufSize, "/%sV%dD0R", ControllerNameX.c_str(), -stepspeed);
+	if(stepspeed>0) snprintf(buf, bufSize, "/%sV%ldP0R", ControllerNameX.c_str(), stepspeed);
+	if(stepspeed<0) snprintf(buf, bufSize, "/%sV%ldD0R", ControllerNameX.c_str(), -stepspeed);
 
 	// Send command
 	int ret = SendSerialCommand(port_.c_str(), buf, "\r");
@@ -2106,8 +2106,8 @@ int XYStage::MoveY(double speed)
 	// Form constant speed move command
 	const int bufSize = 40;
 	char buf[bufSize];
-	if(stepspeed>0) snprintf(buf, bufSize, "/%sV%dP0R", ControllerNameY.c_str(), stepspeed);
-	if(stepspeed<0) snprintf(buf, bufSize, "/%sV%dD0R", ControllerNameY.c_str(), -stepspeed);
+	if(stepspeed>0) snprintf(buf, bufSize, "/%sV%ldP0R", ControllerNameY.c_str(), stepspeed);
+	if(stepspeed<0) snprintf(buf, bufSize, "/%sV%ldD0R", ControllerNameY.c_str(), -stepspeed);
 
 	// Send command
 	int ret = SendSerialCommand(port_.c_str(), buf, "\r");
@@ -2135,7 +2135,7 @@ int XYStage::OutX()
   	// Two outputs 1 and 2 with values 0 and 1
 	const int bufSize = 40;
 	char buf[bufSize];
-	snprintf(buf, bufSize, "/%sJ%dR", ControllerNameX.c_str(), Out1X+2*Out2X);
+	snprintf(buf, bufSize, "/%sJ%ldR", ControllerNameX.c_str(), Out1X+2*Out2X);
 
 	// Send command
 	int ret = SendSerialCommand(port_.c_str(), buf, "\r");
@@ -2155,7 +2155,7 @@ int XYStage::OutY()
   	// Two outputs 1 and 2 with values 0 and 1
 	const int bufSize = 40;
 	char buf[bufSize];
-	snprintf(buf, bufSize, "/%sJ%dR", ControllerNameY.c_str(), Out1Y+2*Out2Y);
+	snprintf(buf, bufSize, "/%sJ%ldR", ControllerNameY.c_str(), Out1Y+2*Out2Y);
 
 	// Send command
 	int ret = SendSerialCommand(port_.c_str(), buf, "\r");
@@ -2974,7 +2974,7 @@ int rgbLED::ChannelIntensity(long channel, double intensity)
 	int val;
 	val = (int) floor(500 - intensity*500);
 	// Form channel letter
-	char* sch;
+	const char* sch;
 	switch(channel)
 	{
 		case 1: sch = "A"; break;
