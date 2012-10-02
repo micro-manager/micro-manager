@@ -290,7 +290,8 @@
                (filter #(.startsWith % "libmmgr")
                        (map #(.getName %)
                             (file-seq (File. "/Users/arthur/Programs/ImageJ"))))))
-    (disj "Stradus") (conj "Vortran")))
+    (disj "Stradus") (conj "Vortran")
+    (disj "MarzhauserLStep") (conj "Marzhauser-LStep")))
 
 
 (defn missing-unix-adapters []
