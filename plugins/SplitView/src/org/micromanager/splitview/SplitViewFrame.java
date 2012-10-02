@@ -20,7 +20,6 @@
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 
 
-
 /**
 
  * Created on Aug 28, 2011, 9:41:57 PM
@@ -45,7 +44,6 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.micromanager.MMStudioMainFrame;
 import org.micromanager.api.ScriptInterface;
-import org.micromanager.api.DeviceControlGUI;
 import org.micromanager.utils.MMScriptException;
 import org.micromanager.utils.ReportingUtils;
 
