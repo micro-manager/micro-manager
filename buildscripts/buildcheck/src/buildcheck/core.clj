@@ -241,11 +241,13 @@
                     (filter uses-serial-port (files-of-type device-adapter-parent-dirs "cpp")))))
 
 (defn unix-built-devices []
-  (into (sorted-set)
-        (map #(nth (.split % "_") 2)
-             (filter #(.startsWith % "libmmgr")
-                     (map #(.getName %)
-                          (file-seq (File. "/Users/arthur/Programs/ImageJ")))))))
+  (->
+    (into (sorted-set)
+          (map #(nth (.split % "_") 2)
+               (filter #(.startsWith % "libmmgr")
+                       (map #(.getName %)
+                            (file-seq (File. "/Users/arthur/Programs/ImageJ"))))))
+    (disj "Stradus") (conj "Vortran")))
 
 
 (defn missing-unix-adapters []
