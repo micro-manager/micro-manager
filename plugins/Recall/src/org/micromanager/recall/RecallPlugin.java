@@ -1,3 +1,33 @@
+/**
+ * Micro-Manager "Live Replay"
+ * 
+ * This plugin will copy all images in the Micro-Manager circular buffer
+ * into a viewer window.  The counter of the circular buffer is set to 0 (i.e.
+ * images in the circular buffer will be destroyed.
+ * 
+ * This is useful when you see something interesting in live mode and want to 
+ * save this data.
+ * 
+ * No attempt is made to interpret the data coming from the circular buffer.
+ * Images and tags currently are not processed by ImageProcessors (this would
+ * be a nice addition)
+ * 
+ * Nico Stuurman, 2009(?)
+ * 
+ * copyright University of California
+ * 
+ * LICENSE:      This file is distributed under the BSD license.
+ *               License text is included with the source distribution.
+ *
+ *               This file is distributed in the hope that it will be useful,
+ *               but WITHOUT ANY WARRANTY; without even the implied warranty
+ *               of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+ *
+ *               IN NO EVENT SHALL THE COPYRIGHT OWNER OR
+ *               CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+ *               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
+ */
+
 package org.micromanager.recall;
 
 import mmcorej.CMMCore;
