@@ -67,7 +67,7 @@
 				LinkIncremental="2"
 				AdditionalLibraryDirectories="..\..\..\3rdparty\ITEX41\lib"
 				GenerateDebugInformation="true"
-				ProgramDatabaseFile="$(OutDir)/StanfordPhotonics.pdb"
+				ProgramDatabaseFile="$(OutDir)/$(ProjectName).pdb"
 				SubSystem="2"
 				RandomizedBaseAddress="1"
 				DataExecutionPrevention="0"

@@ -69,7 +69,7 @@
 				LinkIncremental="2"
 				AdditionalLibraryDirectories="&quot;..\..\..\3rdParty\NationalInstruments\NI-Motion\FlexMotion\lib\Microsoft&quot;;&quot;..\..\..\3rdParty\NationalInstruments\NI-Motion\lib&quot;"
 				GenerateDebugInformation="true"
-				ProgramDatabaseFile="$(OutDir)/NiMotionStage.pdb"
+				ProgramDatabaseFile="$(OutDir)/$(ProjectName).pdb"
 				SubSystem="2"
 				RandomizedBaseAddress="1"
 				DataExecutionPrevention="0"

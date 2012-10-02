@@ -69,7 +69,7 @@
 				LinkIncremental="2"
 				AdditionalLibraryDirectories="..\..\3rdparty\MMC410"
 				GenerateDebugInformation="true"
-				ProgramDatabaseFile="$(OutDir)/PiMotionStage.pdb"
+				ProgramDatabaseFile="$(OutDir)/$(ProjectName).pdb"
 				SubSystem="2"
 				RandomizedBaseAddress="1"
 				DataExecutionPrevention="0"

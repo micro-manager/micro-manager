@@ -72,7 +72,7 @@
 				LinkIncremental="2"
 				AdditionalLibraryDirectories="&quot;..\..\..\3rdparty\ITC18-lib\Debug&quot;"
 				GenerateDebugInformation="true"
-				ProgramDatabaseFile="$(OutDir)/ITC18.pdb"
+				ProgramDatabaseFile="$(OutDir)/$(ProjectName).pdb"
 				SubSystem="2"
 				RandomizedBaseAddress="1"
 				DataExecutionPrevention="0"
