@@ -3609,7 +3609,7 @@ int AndorCamera::OnSpuriousNoiseFilter(MM::PropertyBase* pProp, MM::ActionType e
                //printf("Frame %d captured at %ld ms!\n", ++frameCounter, GetTickCount() - timePrev);
 			   
 
-			   camera_->LogMessage("Aquire Thread: Aquired Frame!", true);
+			   //camera_->LogMessage("Aquire Thread: Aquired Frame!", true);
                seriesPrev = series;
                frmcnt++;
                timePrev = GetTickCount();
