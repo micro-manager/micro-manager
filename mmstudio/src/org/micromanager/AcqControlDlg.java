@@ -60,6 +60,7 @@ import org.micromanager.utils.DisplayMode;
 import org.micromanager.utils.FileDialogs;
 import org.micromanager.utils.FileDialogs.FileType;
 import org.micromanager.utils.GUIColors;
+import org.micromanager.utils.GUIUtils;
 import org.micromanager.utils.ImageUtils;
 import org.micromanager.utils.MMException;
 import org.micromanager.utils.MMScriptException;
@@ -1914,26 +1915,39 @@ public class AcqControlDlg extends JFrame implements PropertyChangeListener {
    protected void loadAcqSettingsFromFile() {
       File f = FileDialogs.openFile(this, "Load acquisition settings", ACQ_SETTINGS_FILE);
       if (f != null) {
-         loadAcqSettingsFromFile(f.getAbsolutePath());
+         try {
+            loadAcqSettingsFromFile(f.getAbsolutePath());
+         } catch (MMScriptException ex) {
+            ReportingUtils.showError("Failed to load Acquisition setting file");
+         }
       }
    }
 
-   public void loadAcqSettingsFromFile(String path) {
+   public void loadAcqSettingsFromFile(String path) throws MMScriptException {
       acqFile_ = new File(path);
       try {
          FileInputStream in = new FileInputStream(acqFile_);
          acqPrefs_.clear();
          Preferences.importPreferences(in);
          loadAcqSettings();
-         updateGUIContents();
-         in.close();
+         GUIUtils.invokeAndWait(new updateGUI());
          acqDir_ = acqFile_.getParent();
          if (acqDir_ != null) {
             prefs_.put(ACQ_FILE_DIR, acqDir_);
          }
       } catch (Exception e) {
-         ReportingUtils.showError(e);
-         return;
+         throw new MMScriptException (e);
+      }
+   }
+   
+   private class updateGUI implements Runnable {
+
+      public updateGUI() {
+      }
+
+      @Override
+      public void run() {
+         updateGUIContents();
       }
    }
 

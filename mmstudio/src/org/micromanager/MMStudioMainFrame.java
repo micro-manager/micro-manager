@@ -3763,26 +3763,6 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface, Device
       }
    }
 
-   private class LoadAcq implements Runnable {
-
-      private String filePath_;
-
-      public LoadAcq(String path) {
-         filePath_ = path;
-      }
-
-      @Override
-      public void run() {
-         // stop current acquisition if any
-         engine_.shutdown();
-
-         // load protocol
-         if (acqControlWin_ != null) {
-            acqControlWin_.loadAcqSettingsFromFile(filePath_);
-         }
-      }
-   }
-
    private void testForAbortRequests() throws MMScriptException {
       if (scriptPanel_ != null) {
          if (scriptPanel_.stopRequestPending()) {
@@ -3845,7 +3825,12 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface, Device
    public void loadAcquisition(String path) throws MMScriptException {
       testForAbortRequests();
       try {
-         GUIUtils.invokeAndWait(new LoadAcq(path));
+         engine_.shutdown();
+
+         // load protocol
+         if (acqControlWin_ != null) {
+            acqControlWin_.loadAcqSettingsFromFile(path);
+         }
       } catch (Exception ex) {
          throw new MMScriptException(ex.getMessage());
       }
