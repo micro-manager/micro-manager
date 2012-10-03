@@ -1700,6 +1700,7 @@ public class AcqControlDlg extends JFrame implements PropertyChangeListener {
       for (Component c: comps)
          for (Component co: ((JPanel)c).getComponents() )
             co.setEnabled(framesEnabled);
+      framesPanel_.repaint();
       
       
       numFrames_.setValue(acqEng_.getNumFrames());
@@ -1718,11 +1719,14 @@ public class AcqControlDlg extends JFrame implements PropertyChangeListener {
       acqEng_.enableZSliceSetting(acqPrefs_.getBoolean(ACQ_ENABLE_SLICE_SETTINGS, acqEng_.isZSliceSettingEnabled()));
       acqEng_.enableMultiPosition(acqPrefs_.getBoolean(ACQ_ENABLE_MULTI_POSITION, acqEng_.isMultiPositionEnabled()));
       positionsPanel_.setSelected(acqEng_.isMultiPositionEnabled());
+      positionsPanel_.repaint();
 
       slicesPanel_.setSelected(acqEng_.isZSliceSettingEnabled());
+      slicesPanel_.repaint();
 
       acqEng_.enableChannelsSetting(acqPrefs_.getBoolean(ACQ_ENABLE_MULTI_CHANNEL, false));
       channelsPanel_.setSelected(acqEng_.isChannelsSettingEnabled());
+      channelsPanel_.repaint();
 
       savePanel_.setSelected(acqPrefs_.getBoolean(ACQ_SAVE_FILES, false));
 
