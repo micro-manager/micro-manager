@@ -437,6 +437,7 @@ int CAndorSDK3Camera::Shutdown()
 {
    if (initialized_)
    {
+      snapShotController_->leavePoisedMode();
       delete binning_property;
       delete preAmpGain_property;
       delete electronicShutteringMode_property;
