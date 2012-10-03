@@ -38,6 +38,7 @@ import org.micromanager.utils.NumberUtils;
 import org.micromanager.utils.ReportingUtils;
 
 import ij.measure.ResultsTable;
+import org.micromanager.utils.GUIUtils;
 
 /**
  *
@@ -489,8 +490,28 @@ public class IntelligentAcquisitionFrame extends javax.swing.JFrame {
       updateROI();
    }//GEN-LAST:event_halfROIButton_ActionPerformed
 
+   
+   private class RunAcq implements Runnable {
+      public RunAcq() {
+      }
+      @Override
+      public void run() {
+         try {
+            gui_.runAcquisition();
+         } catch (MMScriptException ex) {
+            ReportingUtils.showError(ex, "Error during acquisition");
+         }
+      }
+   }
+   
+   /**
+    * Runs the actual intelligent acquisition
+    * @param evt 
+    */
+   
    private void goButton_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_goButton_ActionPerformed
       
+      // Get a number of useful settings from the core
       pixelWidthMicron_ = core_.getPixelSizeUm();
       double imageWidthMicronX = pixelWidthMicron_ * core_.getImageWidth();
       double imageWidthMicronY = pixelWidthMicron_ * core_.getImageHeight();
@@ -499,10 +520,36 @@ public class IntelligentAcquisitionFrame extends javax.swing.JFrame {
       
       xyStage_ = core_.getXYStageDevice();
       
-      // todo: preload acqFileNameB_ to make sure that it works
+      // read settings needed to relate stage movement to camera movement
+      boolean transposeMirorX = false;
+      boolean transposeMirorY = false;
+      boolean transposeXY = false;
       
-      // load the exploration acq settings
+      try{
+         transposeMirorX = core_.getProperty(core_.getCameraDevice(), 
+              "TransposeMirrorX").equals("1");
+         transposeMirorY = core_.getProperty(core_.getCameraDevice(), 
+              "TransposeMirrorY").equals("1");
+         transposeXY = core_.getProperty(core_.getCameraDevice(), 
+              "TransposeXY").equals("1");
+      } catch (Exception ex) {
+         ReportingUtils.showError("Problem reading transpose settings from camera");
+         return;
+      }
+      
+      // Preload acqFileNameB_ to make sure that it works
       try {
+         acqFileNameB_ = acqTextField2_.getText();
+         gui_.loadAcquisition(acqFileNameB_);
+      } catch (MMScriptException ex) {
+         ReportingUtils.showError("Unable to load Imaging Acquisition Settings. " + 
+                 "Please select a valid file and try again");
+         return;
+      }
+      
+      // load the exploration acq settings, give a second chance if it does not work
+      try {
+         acqFileNameA_ = acqTextField1_.getText();
          gui_.loadAcquisition(acqFileNameA_);
       } catch (MMScriptException ex) {
          try {
@@ -521,8 +568,8 @@ public class IntelligentAcquisitionFrame extends javax.swing.JFrame {
          String expAcq = "";
          try {
             expAcq = gui_.runAcquisition();
-         } catch (MMScriptException ex) {
-            ReportingUtils.showError(ex, "Exploration acquisition failed");
+         } catch (MMScriptException e) {
+            ReportingUtils.logError(e, "Exploration acquisition failed");
             continue;
          }
 
@@ -537,7 +584,7 @@ public class IntelligentAcquisitionFrame extends javax.swing.JFrame {
          
          
          ij.IJ.runMacro(scriptFileName_);
-         boolean found = false;
+         
          ResultsTable res = ij.measure.ResultsTable.getResultsTable();
          if (res.getCounter() > 0) {
             try {
