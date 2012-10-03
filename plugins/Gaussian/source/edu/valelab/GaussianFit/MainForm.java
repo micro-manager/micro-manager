@@ -232,6 +232,7 @@ public class MainForm extends javax.swing.JFrame implements ij.ImageListener{
         mTrackButton_ = new javax.swing.JButton();
         jLabel21 = new javax.swing.JLabel();
         zStepTextField_ = new javax.swing.JTextField();
+        labelNPoints_ = new javax.swing.JLabel();
 
         jButton1.setText("jButton1");
 
@@ -372,7 +373,7 @@ public class MainForm extends javax.swing.JFrame implements ij.ImageListener{
         getContentPane().add(pixelSizeTextField_);
         pixelSizeTextField_.setBounds(170, 90, 67, 20);
 
-        jLabel13.setFont(new java.awt.Font("Lucida Grande", 0, 10)); // NOI18N
+        jLabel13.setFont(new java.awt.Font("Lucida Grande", 0, 10));
         jLabel13.setText("PixelSize (nm)");
         getContentPane().add(jLabel13);
         jLabel13.setBounds(40, 90, 122, 13);
@@ -427,12 +428,12 @@ public class MainForm extends javax.swing.JFrame implements ij.ImageListener{
         getContentPane().add(fitDimensionsComboBox1);
         fitDimensionsComboBox1.setBounds(150, 260, 90, 27);
 
-        timeIntervalTextField_.setFont(new java.awt.Font("Lucida Grande", 0, 10)); // NOI18N
+        timeIntervalTextField_.setFont(new java.awt.Font("Lucida Grande", 0, 10));
         timeIntervalTextField_.setText("0.8");
         getContentPane().add(timeIntervalTextField_);
         timeIntervalTextField_.setBounds(170, 110, 67, 20);
 
-        jLabel15.setFont(new java.awt.Font("Lucida Grande", 0, 10)); // NOI18N
+        jLabel15.setFont(new java.awt.Font("Lucida Grande", 0, 10));
         jLabel15.setText("Time Interval (ms)");
         getContentPane().add(jLabel15);
         jLabel15.setBounds(40, 110, 122, 13);
@@ -573,7 +574,7 @@ public class MainForm extends javax.swing.JFrame implements ij.ImageListener{
             }
         });
         getContentPane().add(showOverlay_);
-        showOverlay_.setBounds(20, 220, 70, 20);
+        showOverlay_.setBounds(20, 200, 60, 20);
 
         mTrackButton_.setText("MTrack");
         mTrackButton_.addActionListener(new java.awt.event.ActionListener() {
@@ -584,15 +585,20 @@ public class MainForm extends javax.swing.JFrame implements ij.ImageListener{
         getContentPane().add(mTrackButton_);
         mTrackButton_.setBounds(170, 480, 80, 29);
 
-        jLabel21.setFont(new java.awt.Font("Lucida Grande", 0, 10)); // NOI18N
+        jLabel21.setFont(new java.awt.Font("Lucida Grande", 0, 10));
         jLabel21.setText("Z-step (nm)");
         getContentPane().add(jLabel21);
         jLabel21.setBounds(40, 130, 70, 13);
 
-        zStepTextField_.setFont(new java.awt.Font("Lucida Grande", 0, 10)); // NOI18N
+        zStepTextField_.setFont(new java.awt.Font("Lucida Grande", 0, 10));
         zStepTextField_.setText("50");
         getContentPane().add(zStepTextField_);
         zStepTextField_.setBounds(170, 130, 67, 20);
+
+        labelNPoints_.setFont(new java.awt.Font("Lucida Grande", 0, 10)); // NOI18N
+        labelNPoints_.setText("n:");
+        getContentPane().add(labelNPoints_);
+        labelNPoints_.setBounds(20, 220, 70, 20);
 
         pack();
     }// </editor-fold>//GEN-END:initComponents
@@ -755,6 +761,7 @@ public class MainForm extends javax.swing.JFrame implements ij.ImageListener{
             int y = pol.ypoints[i];
             ov.add(new Roi(x - halfSize, y - halfSize, 2 * halfSize, 2 * halfSize));
          }
+         labelNPoints_.setText("n: " + pol.npoints);
          siPlus.setOverlay(ov);
          siPlus.setHideOverlay(false);
       } catch (NumberFormatException nfEx) {
@@ -985,6 +992,7 @@ public class MainForm extends javax.swing.JFrame implements ij.ImageListener{
     private javax.swing.JSeparator jSeparator3;
     private javax.swing.JSeparator jSeparator4;
     private javax.swing.JSeparator jSeparator5;
+    private javax.swing.JLabel labelNPoints_;
     private javax.swing.JButton mTrackButton_;
     private javax.swing.JTextField maxIterationsTextField;
     private javax.swing.JTextField maxNrPhotonsTextField;
