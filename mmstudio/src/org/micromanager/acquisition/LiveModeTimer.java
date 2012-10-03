@@ -171,7 +171,8 @@ public class LiveModeTimer {
    
    private void stop(boolean firstAttempt) {
         try {
-            imageQueue_.put(TaggedImageQueue.POISON);
+           if (imageQueue_ != null)
+               imageQueue_.put(TaggedImageQueue.POISON);
         } catch (InterruptedException ex) {
            ReportingUtils.logError(ex);
         }
