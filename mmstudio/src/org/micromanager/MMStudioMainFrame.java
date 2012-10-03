@@ -2236,7 +2236,7 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface, Device
    }
 
    private void updateTitle() {
-      this.setTitle(MICRO_MANAGER_TITLE + " " + VERSION + ": " + sysConfigFile_);
+      this.setTitle(MICRO_MANAGER_TITLE + " " + VERSION + " - " + sysConfigFile_);
    }
 
    public void updateLineProfile() {
