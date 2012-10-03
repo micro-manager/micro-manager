@@ -160,7 +160,7 @@ import org.micromanager.utils.SnapLiveContrastSettings;
 public class MMStudioMainFrame extends JFrame implements ScriptInterface, DeviceControlGUI {
 
    private static final String MICRO_MANAGER_TITLE = "Micro-Manager";
-   private static final String VERSION = "1.4.?  dev";
+   private static final String VERSION = "1.4.? dev";
    private static final long serialVersionUID = 3556500289598574541L;
    private static final String MAIN_FRAME_X = "x";
    private static final String MAIN_FRAME_Y = "y";
@@ -671,25 +671,24 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface, Device
     * the default processor stack to process images as they arrive on
     * the rawImageQueue.
     */
-   public void runDisplayThread(BlockingQueue rawImageQueue, final DisplayImageRoutine displayImageRoutine) {
-      final BlockingQueue processedImageQueue = ProcessorStack.run(rawImageQueue, getAcquisitionEngine().getTaggedImageProcessors());
-      new Thread("Snap thread") {
-         public void run() {
-            while (true) {
-               try {
-                  final TaggedImage image = (TaggedImage) processedImageQueue.take();
-                  if (image == TaggedImageQueue.POISON) {
-                     break;
-                  }
-                  displayImageRoutine.show(image);
-               } catch (InterruptedException ex) {
-                  ReportingUtils.logError(ex);
-               }
-
+    public void runDisplayThread(BlockingQueue rawImageQueue, final DisplayImageRoutine displayImageRoutine) {
+        final BlockingQueue processedImageQueue = ProcessorStack.run(rawImageQueue, getAcquisitionEngine().getTaggedImageProcessors());
+        new Thread("Display thread") {
+            public void run() {
+                try {
+                    TaggedImage image = null;
+                    do {
+                        image = (TaggedImage) processedImageQueue.take();
+                        if (image != TaggedImageQueue.POISON) {
+                            displayImageRoutine.show(image);
+                        }
+                    } while (image != TaggedImageQueue.POISON);
+                } catch (InterruptedException ex) {
+                    ReportingUtils.logError(ex);
+                }
             }
-         }
-      }.start();
-   }
+        }.start();
+    }
 
    public interface DisplayImageRoutine {
       public void show(TaggedImage image);

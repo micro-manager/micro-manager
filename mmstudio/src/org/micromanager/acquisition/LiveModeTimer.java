@@ -30,6 +30,8 @@ import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import mmcorej.CMMCore;
 import mmcorej.TaggedImage;
 import org.json.JSONException;
@@ -63,6 +65,7 @@ public class LiveModeTimer {
    private Timer timer_;
    private TimerTask task_;
    private MMStudioMainFrame.DisplayImageRoutine displayImageRoutine_;
+    private LinkedBlockingQueue imageQueue_;
    
    public LiveModeTimer() {
       gui_ = MMStudioMainFrame.getInstance();
@@ -157,6 +160,8 @@ public class LiveModeTimer {
          
          win_.getImagePlus().getWindow().toFront();
          running_ = true;
+         imageQueue_ = new LinkedBlockingQueue();
+         gui_.runDisplayThread(imageQueue_, displayImageRoutine_);
    }
 
    
@@ -165,7 +170,11 @@ public class LiveModeTimer {
    }
    
    private void stop(boolean firstAttempt) {
-     
+        try {
+            imageQueue_.put(TaggedImageQueue.POISON);
+        } catch (InterruptedException ex) {
+           ReportingUtils.logError(ex);
+        }
       if (timer_ != null) {
          timer_.cancel();
       }
@@ -252,14 +261,12 @@ public class LiveModeTimer {
                gui_.enableLiveMode(false);
             } else {
                try {
-                  BlockingQueue imageQueue = new LinkedBlockingQueue();
 
+                  
                   TaggedImage ti = core_.getLastTaggedImage();
                   // if we have already shown this image, do not do it again.
                   setImageNumber(ti.tags.getLong("ImageNumber"));
-                  gui_.runDisplayThread(imageQueue, displayImageRoutine_);
-                  imageQueue.put(ti);
-                  imageQueue.put(TaggedImageQueue.POISON);
+                  imageQueue_.put(ti);
 
                } catch (MMScriptException ex) {
                   ReportingUtils.showError(ex);
@@ -288,8 +295,6 @@ public class LiveModeTimer {
                gui_.enableLiveMode(false);  //disable live if user closed window
             } else {
                try {
-                  BlockingQueue imageQueue = new LinkedBlockingQueue(multiChannelCameraNrCh_);
-                  gui_.runDisplayThread(imageQueue, displayImageRoutine_);
                   String camera = core_.getCameraDevice();
                   Set<String> cameraChannelsAcquired = new HashSet<String>();
                   for (int i = 0; i<2*multiChannelCameraNrCh_; ++i) {
@@ -301,14 +306,13 @@ public class LiveModeTimer {
                      if (!cameraChannelsAcquired.contains(channelName)) {
                         ti.tags.put("Channel", channelName);
                         ti.tags.put("ChannelIndex", ti.tags.getInt(camera + "-CameraChannelIndex"));
-                        imageQueue.put(ti);
+                        imageQueue_.put(ti);
                         cameraChannelsAcquired.add(channelName);
                      }
                      if (cameraChannelsAcquired.size() == multiChannelCameraNrCh_) {
                         break;
                      }
                   }
-                  imageQueue.put(TaggedImageQueue.POISON);
                } catch (Exception exc) {
                   gui_.enableLiveMode(false);
                   ReportingUtils.showError("Couldn't get tagged image from core");
