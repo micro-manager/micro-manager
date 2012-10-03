@@ -298,7 +298,6 @@ int RappScanner::LoadPolygons()
       UGA_->CreateA(polygons_.at(polygonIndex), polygonAccuracy_, minRectDimensions, &rectangles, laser2_);
    }
 
-
    return DEVICE_OK;
 }
 
@@ -308,12 +307,26 @@ int RappScanner::SetPolygonRepetitions(int repetitions)
 {
    tStringList sequenceList;
    int n = (int) polygons_.size();
-   sequenceList.push_back(std::string("on"));
+   sequenceList.push_back(std::string(laser2_ ? "on2" : "on"));
    for (int i=0; i<n; ++i)
    {
-      stringstream poly;
-      poly << "poly," << i;
-      sequenceList.push_back(poly.str());
+	  tPointList polygon = polygons_.at(i);
+	  if (polygon.size() >= 3)
+	  {
+         stringstream cmd;
+         cmd << "poly," << i;
+		 sequenceList.push_back(cmd.str());
+	  }
+	  else
+	  {
+		 stringstream cmd1;
+		 cmd1 << "gotoxy" << (laser2_ ? "2" : "") << "," << polygon.at(0).x << "," << polygon.at(0).y;
+		 sequenceList.push_back(cmd1.str());
+		 stringstream cmd2;
+		 cmd2 << "wait," << 100000;
+		 sequenceList.push_back(cmd2.str());
+	  }
+      
    }
    if (repetitions > 0)
    {
@@ -322,14 +335,7 @@ int RappScanner::SetPolygonRepetitions(int repetitions)
       sequenceList.push_back(repeat.str());
    }
    sequenceList.push_back(std::string("off"));
-   if (!UGA_->StoreSequence(sequenceList))
-   {
-      return DEVICE_ERR;
-   }
-   else
-   {
-      return DEVICE_OK;
-   }
+   return UGA_->StoreSequence(sequenceList) ? DEVICE_OK : DEVICE_ERR;
 }
 
 int RappScanner::RunPolygons()
