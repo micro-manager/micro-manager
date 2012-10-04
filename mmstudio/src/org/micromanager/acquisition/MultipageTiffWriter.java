@@ -36,6 +36,7 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import loci.formats.FormatException;
 import mmcorej.TaggedImage;
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.micromanager.MMStudioMainFrame;
