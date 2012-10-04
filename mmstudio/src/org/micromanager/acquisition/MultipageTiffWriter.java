@@ -22,6 +22,10 @@
 package org.micromanager.acquisition;
 
 
+import ij.WindowManager;
+import ij.io.TiffDecoder;
+import ij.process.LUT;
+import java.awt.Color;
 import java.io.*;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
@@ -35,6 +39,8 @@ import mmcorej.TaggedImage;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.micromanager.MMStudioMainFrame;
+import org.micromanager.utils.ImageUtils;
+import org.micromanager.utils.JavaUtils;
 import org.micromanager.utils.MDUtils;
 import org.micromanager.utils.MMScriptException;
 import org.micromanager.utils.ReportingUtils;
@@ -45,7 +51,6 @@ public class MultipageTiffWriter {
 //   private static final long MAX_FILE_SIZE = 5*BYTES_PER_MEG;
    private static final long BYTES_PER_GIG = 1073741824;
    private static final long MAX_FILE_SIZE = 4*BYTES_PER_GIG;
-
    
    public static final char ENTRIES_PER_IFD = 13;
    //Required tags
@@ -62,6 +67,8 @@ public class MultipageTiffWriter {
    public static final char X_RESOLUTION = 282;
    public static final char Y_RESOLUTION = 283;
    public static final char RESOLUTION_UNIT = 296;
+   public static final char IJ_METADATA_BYTE_COUNTS = TiffDecoder.META_DATA_BYTE_COUNTS;
+   public static final char IJ_METADATA = TiffDecoder.META_DATA;
    public static final char MM_METADATA = 51123;
    
    public static final int SUMMARY_MD_HEADER = 2355492;
@@ -71,38 +78,35 @@ public class MultipageTiffWriter {
    
    final private boolean omeTiff_;
    
+   private TaggedImageStorageMultipageTiff masterMPTiffStorage_;
    private RandomAccessFile raFile_;
    private FileChannel fileChannel_; 
    private long filePosition_ = 0;
    private int numChannels_ = 1, numFrames_ = 1, numSlices_ = 1;
    private HashMap<String, Long> indexMap_;
-   private ArrayList<Integer> planeZIndices_, planeTIndices_, planeCIndices_;
-   private ArrayList<String> planeUUIDs_;
    private long nextIFDOffsetLocation_ = -1;
-   private JSONObject displayAndComments_;
    private boolean rgb_ = false;
    private int byteDepth_, imageWidth_, imageHeight_, bytesPerImagePixels_;
    private LinkedList<ByteBuffer> buffers_;
    private boolean firstIFD_ = true;
    private long omeDescriptionTagPosition_;
+   private long ijDescriptionTagPosition_;
+   private long ijMetadataCountsTagPosition_;
+   private long ijMetadataTagPosition_;
    //Reader associated with this file
    private MultipageTiffReader reader_;
    private String filename_;
 
-   public MultipageTiffWriter(String directory, String filename, JSONObject summaryMD, boolean omeTiff) {
-      omeTiff_ = omeTiff;
-      planeZIndices_ = new ArrayList<Integer>();
-      planeCIndices_ = new ArrayList<Integer>();
-      planeTIndices_ = new ArrayList<Integer>();
-      planeUUIDs_ = new ArrayList<String>();
-             
+   public MultipageTiffWriter(String directory, String filename, 
+           JSONObject summaryMD, TaggedImageStorageMultipageTiff mpTiffStorage) {
+      masterMPTiffStorage_ = mpTiffStorage;
+      omeTiff_ = mpTiffStorage.omeTiff_;        
       reader_ = new MultipageTiffReader(summaryMD);
       File f = new File(directory + "/" + filename); 
       filename_ = filename;
       
       try {
          processSummaryMD(summaryMD);
-         displayAndComments_ = VirtualAcquisitionDisplay.getDisplaySettingsFromSummary(summaryMD);
       } catch (MMScriptException ex1) {
          ReportingUtils.logError(ex1);
       } catch (JSONException ex) {
@@ -141,26 +145,6 @@ public class MultipageTiffWriter {
       }
    }
    
-   public String getFilename() {
-      return filename_;
-   }
-   
-   public ArrayList<Integer> getZIndices() {
-      return planeZIndices_;
-   }
-
-   public ArrayList<Integer> getTIndices() {
-      return planeTIndices_;
-   }
-
-   public ArrayList<Integer> getCIndices() {
-      return planeCIndices_;
-   }
-   
-   public ArrayList<String> getUUIDs() {
-      return planeUUIDs_;
-   }
-
    public MultipageTiffReader getReader() {
       return reader_;
    }
@@ -205,15 +189,22 @@ public class MultipageTiffWriter {
    public void close(String omeXML) throws IOException {
       MPTiffUtils.writeNullOffsetAfterLastImage(fileChannel_, nextIFDOffsetLocation_, BYTE_ORDER);
       filePosition_ += MPTiffUtils.writeIndexMap(fileChannel_, indexMap_, filePosition_, BYTE_ORDER);
+
+      writeImageJMetadata( numChannels_);
+
+
       if (omeTiff_) {
          try {
-            filePosition_ += MPTiffUtils.writeOMEMetadata(fileChannel_, omeXML, filePosition_, omeDescriptionTagPosition_, BYTE_ORDER);
-            filePosition_ += MPTiffUtils.writeDisplaySettings(fileChannel_, displayAndComments_, numChannels_, filePosition_, BYTE_ORDER);
-            filePosition_ += MPTiffUtils.writeComments(fileChannel_, displayAndComments_, filePosition_, BYTE_ORDER);
+            filePosition_ += MPTiffUtils.writeOMEMetadata(fileChannel_, omeXML, filePosition_, omeDescriptionTagPosition_, BYTE_ORDER);         
+            filePosition_ += MPTiffUtils.writeOMEMetadata(fileChannel_, 
+              MPTiffUtils.getIJDescriptionString(numFrames_, numChannels_, numSlices_), filePosition_, ijDescriptionTagPosition_, BYTE_ORDER);         
+
          } catch (FormatException ex) {
             ReportingUtils.showError("Error writing OME metadata");
          }
       }
+      filePosition_ += MPTiffUtils.writeDisplaySettings(fileChannel_, masterMPTiffStorage_.getDisplayAndComments(), numChannels_, filePosition_, BYTE_ORDER);
+      filePosition_ += MPTiffUtils.writeComments(fileChannel_, masterMPTiffStorage_.getDisplayAndComments(), filePosition_, BYTE_ORDER);
 
       raFile_.setLength(filePosition_ + 8);
       reader_.finishedWriting();
@@ -248,7 +239,6 @@ public class MultipageTiffWriter {
       long offset = filePosition_;
       writeIFD(img);
       updateIndexMap(img.tags,offset);
-      updatePlaneIndicesAndUUIDs(img.tags);
       writeBuffers();  
    }
    
@@ -260,30 +250,20 @@ public class MultipageTiffWriter {
       fileChannel_.write(buffs);
    }
    
-   private void updatePlaneIndicesAndUUIDs(JSONObject tags) {
-      try {
-         planeZIndices_.add(MDUtils.getSliceIndex(tags));
-         planeCIndices_.add(MDUtils.getChannelIndex(tags));
-         planeTIndices_.add(MDUtils.getFrameIndex(tags));
-         planeUUIDs_.add(MDUtils.getUUID(tags).toString());
-      } catch (JSONException ex) {
-         ReportingUtils.showError("Problem with image metadata: channel, slice, or frame index missing");
-      }
-   }
-   
    private void updateIndexMap(JSONObject tags, long offset) {
       String label = MDUtils.getLabel(tags);
       indexMap_.put(label, offset);
    }
 
-   private void writeIFD(TaggedImage img) throws IOException {     
-     char numEntries = (firstIFD_ && omeTiff_) ? ENTRIES_PER_IFD + 1 : ENTRIES_PER_IFD;
-     if (img.tags.has("Summary")) {
-        img.tags.remove("Summary");
-     }
-     String mdString = img.tags.toString() + " ";
-      
-     //2 bytes for number of directory entries
+   private void writeIFD(TaggedImage img) throws IOException {
+      char numEntries = (char) (((firstIFD_ && omeTiff_) ? ENTRIES_PER_IFD + 2 : ENTRIES_PER_IFD)
+              + (firstIFD_ ? 2 : 0));
+      if (img.tags.has("Summary")) {
+         img.tags.remove("Summary");
+      }
+      String mdString = img.tags.toString() + " ";
+
+      //2 bytes for number of directory entries
      //12 bytes per directory entry
      //4 byte offset of next IFD
      //6 bytes for bits per sample if RGB
@@ -318,11 +298,16 @@ public class MultipageTiffWriter {
       position += 12;
       
       if (firstIFD_ && omeTiff_) {
-         writeIFDEntry(position,ifdBuffer,charView,IMAGE_DESCRIPTION,(char)2,0,0);
+         writeIFDEntry(position, ifdBuffer, charView, IMAGE_DESCRIPTION, (char) 2, 0, 0);
          omeDescriptionTagPosition_ = filePosition_ + position;
          position += 12;
+      }     
+      if (firstIFD_) {
+         writeIFDEntry(position, ifdBuffer, charView, IMAGE_DESCRIPTION, (char) 2, 0, 0);
+         ijDescriptionTagPosition_ = filePosition_ + position;
+         position += 12;
       }
-      
+           
       writeIFDEntry(position,ifdBuffer,charView,STRIP_OFFSETS,(char)4,1, tagDataOffset );
       position += 12;
       tagDataOffset += bytesPerImagePixels_;
@@ -340,6 +325,14 @@ public class MultipageTiffWriter {
       tagDataOffset += 8;
       writeIFDEntry(position,ifdBuffer,charView,RESOLUTION_UNIT, (char) 3,1,3);
       position += 12;
+      if (firstIFD_) {
+         writeIFDEntry(position,ifdBuffer,charView,IJ_METADATA_BYTE_COUNTS,(char)4,0,0);
+         ijMetadataCountsTagPosition_ = filePosition_ + position;
+         position += 12;
+         writeIFDEntry(position,ifdBuffer,charView,IJ_METADATA,(char)1,0,0);
+         ijMetadataTagPosition_ = filePosition_ + position;
+         position += 12;
+      }
       writeIFDEntry(position,ifdBuffer,charView,MM_METADATA,(char)2,mdString.length(),tagDataOffset);
       position += 12;
       tagDataOffset += mdString.length();
@@ -455,4 +448,102 @@ public class MultipageTiffWriter {
          }
       bytesPerImagePixels_ = imageHeight_*imageWidth_*byteDepth_*(rgb_?3:1);
    }
+
+   void writeImageJMetadata(int numChannels) throws IOException {
+      //size entry (4 bytes) + 4 bytes for channel display 
+      //ranges length + 4 bytes per channel LUT
+      int mdByteCountsBufferSize = 4 + 4 + 4 * numChannels;      
+      int bufferPosition = 0;
+      
+      ByteBuffer mdByteCountsBuffer = ByteBuffer.allocate(mdByteCountsBufferSize).order(BYTE_ORDER);
+
+      //nTypes is number actually written among: fileInfo, slice labels, display ranges, channel LUTS,
+      //slice labels, ROI, overlay, and # of extra metadata entries
+      int nTypes = 2; //slice labels, display ranges, and channel LUTs
+      int mdBufferSize = 4 + nTypes * 8;
+      //4 bytes for magic number 8 bytes for label and count of each type
+
+      mdByteCountsBuffer.putInt(bufferPosition, 4 + nTypes * 8);
+      bufferPosition += 4;
+ 
+      //display ranges written as array of doubles (min, max, min, max, etc)
+      mdByteCountsBuffer.putInt(bufferPosition, numChannels * 2 * 8);
+      bufferPosition += 4;
+      mdBufferSize += numChannels * 2 * 8;
+
+      for (int i = 0; i < numChannels; i++) {
+         //768 bytes per LUT
+         mdByteCountsBuffer.putInt(bufferPosition, 768);
+         bufferPosition += 4;
+         mdBufferSize += 768;
+      }
+
+      ByteBuffer ifdCountAndValueBuffer = ByteBuffer.allocate(8).order(BYTE_ORDER);
+      ifdCountAndValueBuffer.putInt(0, mdByteCountsBufferSize);
+      ifdCountAndValueBuffer.putInt(4, (int) filePosition_ );
+      fileChannel_.write(ifdCountAndValueBuffer, ijMetadataCountsTagPosition_ + 4);
+      
+      fileChannel_.write(mdByteCountsBuffer, filePosition_);
+      filePosition_ += mdByteCountsBufferSize;
+      
+
+      //Write actual metadata
+      ByteBuffer mdBuffer = ByteBuffer.allocate(mdBufferSize).order(BYTE_ORDER);
+      bufferPosition = 0;
+      
+      //All the ints declared below are non public field in TiffDecoder
+      int ijMagicNumber = 0x494a494a;
+      mdBuffer.putInt(bufferPosition, ijMagicNumber); 
+      bufferPosition += 4;
+      
+      //Write ints for each IJ metadata field and its count
+      int displayRanges = 0x72616e67;
+      mdBuffer.putInt(bufferPosition, displayRanges);
+      bufferPosition += 4;
+      mdBuffer.putInt(bufferPosition, 1);
+      bufferPosition += 4;
+      
+      int luts = 0x6c757473;
+      mdBuffer.putInt(bufferPosition, luts);
+      bufferPosition += 4;
+      mdBuffer.putInt(bufferPosition, numChannels);
+      bufferPosition += 4;
+
+
+      try {
+         JSONArray channels = masterMPTiffStorage_.getDisplayAndComments().getJSONArray("Channels");
+         JSONObject channelSetting;
+         for (int i = 0; i < numChannels; i++) {
+            channelSetting = channels.getJSONObject(i);
+            //For each channel, write min then max
+            mdBuffer.putDouble(bufferPosition, channelSetting.getInt("Min"));
+            bufferPosition += 8;
+            mdBuffer.putDouble(bufferPosition, channelSetting.getInt("Max"));
+            bufferPosition += 8;
+         }
+
+         for (int i = 0; i < numChannels; i++) {
+            channelSetting = channels.getJSONObject(i);
+            LUT lut = ImageUtils.makeLUT(new Color(channelSetting.getInt("Color")), channelSetting.getDouble("Gamma"));
+            for (byte b : lut.getBytes()) {
+               mdBuffer.put(bufferPosition, b);
+               bufferPosition++;
+            }
+         }
+
+
+      } catch (JSONException ex) {
+         ReportingUtils.logError("Problem with displayAndComments: Couldn't write ImageJ display settings as a result");
+      }
+         
+      ifdCountAndValueBuffer = ByteBuffer.allocate(8).order(BYTE_ORDER);
+      ifdCountAndValueBuffer.putInt(0, mdBufferSize);
+      ifdCountAndValueBuffer.putInt(4, (int) filePosition_ );
+      fileChannel_.write(ifdCountAndValueBuffer, ijMetadataTagPosition_ + 4);
+   
+      
+      fileChannel_.write(mdBuffer, filePosition_);
+      filePosition_ += mdBufferSize;
+   }
+
 }

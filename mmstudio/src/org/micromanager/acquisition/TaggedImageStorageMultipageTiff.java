@@ -30,6 +30,8 @@ import loci.common.services.ServiceFactory;
 import loci.formats.MetadataTools;
 import loci.formats.meta.IMetadata;
 import loci.formats.services.OMEXMLService;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import mmcorej.TaggedImage;
 import ome.xml.model.primitives.*;
 import org.json.JSONArray;
@@ -52,7 +54,7 @@ public class TaggedImageStorageMultipageTiff implements TaggedImageStorage {
    private int lastFrame_ = -1;
    private int numPositions_;
    private CachedImages cached_;
-   final private boolean omeTiff_;
+   final public boolean omeTiff_;
    final private boolean seperateMetadataFile_;
    private IMetadata omeMD_;
   
@@ -175,6 +177,12 @@ public class TaggedImageStorageMultipageTiff implements TaggedImageStorage {
 
    @Override
    public void putImage(TaggedImage taggedImage) throws MMException {
+      try {
+         System.out.println("Pos: " + MDUtils.getPositionIndex(taggedImage.tags) + "Frame: " + MDUtils.getFrameIndex(taggedImage.tags) + "    Slice: " +
+                 MDUtils.getSliceIndex(taggedImage.tags) + "  Channel: " +MDUtils.getChannelIndex(taggedImage.tags) );
+      } catch (JSONException ex) {
+      }
+      
       if (!newDataSet_) {
          throw new MMException("This ImageFileManager is read-only.");
       }
@@ -203,7 +211,7 @@ public class TaggedImageStorageMultipageTiff implements TaggedImageStorage {
       
       if (positions_.get(positionIndex) == null) {
          //Create new position, which handles all reading and writing for a given position
-         positions_.put(positionIndex, new Position(positionIndex, taggedImage.tags));
+         positions_.put(positionIndex, new Position(positionIndex, taggedImage.tags, this));
       }
       Position pos = positions_.get(positionIndex);
       
@@ -341,10 +349,12 @@ public class TaggedImageStorageMultipageTiff implements TaggedImageStorage {
       private int ifdCount_ = 0;
       private int planeIndex_ = 0;
       private String positionName_;
+      private TaggedImageStorageMultipageTiff mpTiff_;
       
-      public Position(int index, JSONObject firstImageTags) {
+      public Position(int index, JSONObject firstImageTags, TaggedImageStorageMultipageTiff mpt) {
          index_ = index;
-         tiffWriters_ = new LinkedList<MultipageTiffWriter>();                 
+         tiffWriters_ = new LinkedList<MultipageTiffWriter>();  
+         mpTiff_ = mpt;
          try {
             positionName_ = MDUtils.getPositionName(firstImageTags);
          } catch (JSONException ex) {
@@ -356,7 +366,7 @@ public class TaggedImageStorageMultipageTiff implements TaggedImageStorage {
          baseFilename_ = createBaseFilename();
          currentTiffFilename_ = baseFilename_ + (omeTiff_ ? ".ome.tif" : ".tif");
          //make first writer
-         tiffWriters_.add(new MultipageTiffWriter(directory_, currentTiffFilename_, summaryMetadata_, omeTiff_));
+         tiffWriters_.add(new MultipageTiffWriter(directory_, currentTiffFilename_, summaryMetadata_, mpt));
    
          if (omeTiff_) {
             try {
@@ -408,7 +418,7 @@ public class TaggedImageStorageMultipageTiff implements TaggedImageStorage {
          if (!tiffWriters_.getLast().hasSpaceToWrite(img, omeTiff_ ? estimateOMEMDSize(): 0  )) {
             currentTiffFilename_ = baseFilename_ + "_" + tiffWriters_.size() + (omeTiff_ ? ".ome.tif" : ".tif");
             ifdCount_ = 0;
-            tiffWriters_.add(new MultipageTiffWriter(directory_ ,currentTiffFilename_, summaryMetadata_, omeTiff_));
+            tiffWriters_.add(new MultipageTiffWriter(directory_ ,currentTiffFilename_, summaryMetadata_, mpTiff_));
          }      
          
          //Add filename to image tags
