@@ -101,7 +101,7 @@ public class MultipageTiffReader {
       try {
          createFileChannel();
       } catch (Exception ex) {
-         ReportingUtils.showError("Can't open file successfully");
+         ReportingUtils.showError("Can't successfully open file: " +  file_.getName());
       }
       writingFinished_ = true;
       long firstIFD = readHeader();
@@ -109,11 +109,11 @@ public class MultipageTiffReader {
       try {
          readIndexMap();
       } catch (Exception e) {
-         ReportingUtils.showError("Can't read index map");
+         ReportingUtils.showError("Can't read index map in file: " + file_.getName());
          try {
             fixIndexMap(firstIFD);
          } catch (JSONException ex) {
-            ReportingUtils.showError("Fixing of dataset unsuccessful");
+            ReportingUtils.showError("Fixing of dataset unsuccessful for file: " + file_.getName());
          }
       }
       try {
@@ -254,7 +254,7 @@ public class MultipageTiffReader {
          }
          return summaryMD;
       } catch (Exception ex) {
-         ReportingUtils.showError("Couldn't read summary Metadata from file");
+         ReportingUtils.showError("Couldn't read summary Metadata from file: " + file_.getName());
          return null;
       }
    }
@@ -264,13 +264,13 @@ public class MultipageTiffReader {
          long offset = readOffsetHeaderAndOffset(MultipageTiffWriter.COMMENTS_OFFSET_HEADER, 24);
          ByteBuffer header = readIntoBuffer(offset, 8);
          if (header.getInt(0) != MultipageTiffWriter.COMMENTS_HEADER) {
-            ReportingUtils.showError("Can't find image comments in file");
+            ReportingUtils.showError("Can't find image comments in file: " + file_.getName());
             return null;
          }
          ByteBuffer buffer = readIntoBuffer(offset + 8, header.getInt(4));
          return new JSONObject(getString(buffer));
       } catch (Exception ex) {
-         ReportingUtils.showError("Can't find image comments in file");
+         ReportingUtils.showError("Can't find image comments in file: " + file_.getName());
             return null;
       }
    }
@@ -308,13 +308,13 @@ public class MultipageTiffReader {
          long offset = readOffsetHeaderAndOffset(MultipageTiffWriter.DISPLAY_SETTINGS_OFFSET_HEADER,16);
           ByteBuffer header = readIntoBuffer(offset, 8);
           if (header.getInt(0) != MultipageTiffWriter.DISPLAY_SETTINGS_HEADER) {
-             ReportingUtils.showError("Can't find display settings in file");
+             ReportingUtils.showError("Can't find display settings in file: " + file_.getName());
              return null;
           }
           ByteBuffer buffer = readIntoBuffer(offset + 8, header.getInt(4));
          return new JSONArray(getString(buffer));
       } catch (Exception ex) {
-         ReportingUtils.showError("Can't find display settings in file");
+         ReportingUtils.showError("Can't find display settings in file: " + file_.getName());
          return null;
       }
    }
