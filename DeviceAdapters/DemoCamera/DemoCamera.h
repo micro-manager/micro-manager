@@ -768,7 +768,7 @@ public:
       (const_cast<DemoDA *>(this))->SetSequenceStateOff();
       return DEVICE_OK;
    }
-   int SendDASequence() const;
+   int SendDASequence();
    int ClearDASequence();
    int AddToDASequence(double voltage);
 

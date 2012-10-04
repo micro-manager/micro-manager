@@ -306,11 +306,11 @@ public:
    int IsXYStageSequenceable(bool& isSequenceable) const;
    
    int GetXYStageSequenceMaxLength(long& nrEvents) const;
-   int StartXYStageSequence() const;
-   int StopXYStageSequence() const;
+   int StartXYStageSequence();
+   int StopXYStageSequence();
    int ClearXYStageSequence();
    int AddToXYStageSequence(double positionX, double positionY);
-   int SendXYStageSequence() const;
+   int SendXYStageSequence();
    
    // action interface
    // ----------------

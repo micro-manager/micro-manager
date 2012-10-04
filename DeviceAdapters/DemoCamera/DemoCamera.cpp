@@ -3024,7 +3024,7 @@ int DemoDA::GetSignal(double& volts)
    return DEVICE_OK;
 }
 
-int DemoDA::SendDASequence() const
+int DemoDA::SendDASequence() 
 {
    DemoHub* pHub = static_cast<DemoHub*>(GetParentHub());
    if (pHub && pHub->GenerateRandomError())

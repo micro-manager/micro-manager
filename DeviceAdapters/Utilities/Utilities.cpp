@@ -1714,7 +1714,7 @@ int DAXYStage::GetXYStageSequenceMaxLength(long& nrEvents) const
     return ret;
 }
 
-int DAXYStage::StartXYStageSequence() const 
+int DAXYStage::StartXYStageSequence()  
 {
 	int ret = DADeviceX_->StartDASequence();
 	if(ret !=DEVICE_OK) return ret;
@@ -1723,7 +1723,7 @@ int DAXYStage::StartXYStageSequence() const
    return ret;
 }
 
-int DAXYStage::StopXYStageSequence() const 
+int DAXYStage::StopXYStageSequence()  
 {
    int ret = DADeviceX_->StopDASequence();
 	if(ret !=DEVICE_OK) return ret;
@@ -1768,7 +1768,7 @@ int DAXYStage::AddToXYStageSequence(double positionX, double positionY)
    return DEVICE_OK;
 }
 
-int DAXYStage::SendXYStageSequence() const
+int DAXYStage::SendXYStageSequence()
 {
    int ret = DADeviceX_->SendDASequence();
    if(ret != DEVICE_OK) return ret;
