@@ -200,11 +200,11 @@ public:
    // Sequence functions
    int IsStageSequenceable(bool& isSequenceable) const {isSequenceable = sequenceable_; return DEVICE_OK;}
    int GetStageSequenceMaxLength(long& nrEvents) const  {nrEvents = nrEvents_; return DEVICE_OK;}
-   int StartStageSequence() const;
-   int StopStageSequence() const;
+   int StartStageSequence();
+   int StopStageSequence();
    int ClearStageSequence();
    int AddToStageSequence(double position);
-   int SendStageSequence() const;
+   int SendStageSequence();
 
 private:
    bool HasRingBuffer();

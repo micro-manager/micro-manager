@@ -44,13 +44,13 @@ public:
   virtual int GetLimits(double& lower, double& upper);
   virtual int IsStageSequenceable(bool& isSequenceable) const;
   virtual int GetStageSequenceMaxLength(long& nrEvents) const;
-  virtual int StartStageSequence() const;
-  virtual int StopStageSequence() const;
+  virtual int StartStageSequence();
+  virtual int StopStageSequence();
   virtual int LoadStageSequence(std::vector<double> positions) const;
   virtual bool IsContinuousFocusDrive() const;
   virtual int ClearStageSequence();
   virtual int AddToStageSequence(double position);
-  virtual int SendStageSequence() const; 
+  virtual int SendStageSequence(); 
 
   int getHandle(){ return MCLhandle_;}
 

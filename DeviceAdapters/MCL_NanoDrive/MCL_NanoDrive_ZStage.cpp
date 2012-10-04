@@ -444,11 +444,11 @@ int MCL_NanoDrive_ZStage::GetStageSequenceMaxLength(long& /*nrEvents*/)const
 {
 	return DEVICE_UNSUPPORTED_COMMAND;
 }
-int MCL_NanoDrive_ZStage::StartStageSequence() const
+int MCL_NanoDrive_ZStage::StartStageSequence()
 {
 	return DEVICE_UNSUPPORTED_COMMAND;
 }
-int MCL_NanoDrive_ZStage::StopStageSequence() const 
+int MCL_NanoDrive_ZStage::StopStageSequence() 
 {
 	return DEVICE_UNSUPPORTED_COMMAND;
 }
@@ -467,7 +467,7 @@ int MCL_NanoDrive_ZStage::AddToStageSequence(double /*position*/)
 	return DEVICE_UNSUPPORTED_COMMAND;
 }
 
-int MCL_NanoDrive_ZStage::SendStageSequence() const
+int MCL_NanoDrive_ZStage::SendStageSequence() 
 {
 	return DEVICE_UNSUPPORTED_COMMAND;
 }

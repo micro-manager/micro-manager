@@ -1222,12 +1222,12 @@ int DAZStage::GetStageSequenceMaxLength(long& nrEvents) const
    return DADevice_->GetDASequenceMaxLength(nrEvents);
 }
 
-int DAZStage::StartStageSequence() const 
+int DAZStage::StartStageSequence()  
 {
    return DADevice_->StartDASequence();
 }
 
-int DAZStage::StopStageSequence() const 
+int DAZStage::StopStageSequence()  
 {
    return DADevice_->StopDASequence();
 }
@@ -1251,7 +1251,7 @@ int DAZStage::AddToStageSequence(double position)
    return DADevice_->AddToDASequence(voltage);
 }
 
-int DAZStage::SendStageSequence() const
+int DAZStage::SendStageSequence()
 {
    return DADevice_->SendDASequence();
 }

@@ -244,11 +244,11 @@ public:
    // Sequence functions
    int IsStageSequenceable(bool& isSequenceable) const;
    int GetStageSequenceMaxLength(long& nrEvents) const;
-   int StartStageSequence() const;
-   int StopStageSequence() const;
+   int StartStageSequence();
+   int StopStageSequence();
    int ClearStageSequence();
    int AddToStageSequence(double position);
-   int SendStageSequence() const;
+   int SendStageSequence();
 
 private:
    std::vector<std::string> availableDAs_;

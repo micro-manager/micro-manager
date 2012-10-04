@@ -115,12 +115,12 @@ public:
     }
 
     int GetStageSequenceMaxLength(long& /*nrEvents*/) const  {return DEVICE_OK;}
-    int StartStageSequence() const {return DEVICE_OK;}
-    int StopStageSequence() const {return DEVICE_OK;}
+    int StartStageSequence() {return DEVICE_OK;}
+    int StopStageSequence() {return DEVICE_OK;}
     int LoadStageSequence(std::vector<double> /*positions*/) const {return DEVICE_OK;}
     int ClearStageSequence() {return DEVICE_OK;}
     int AddToStageSequence(double /*position*/) {return DEVICE_OK;}
-    int SendStageSequence() const  {return DEVICE_OK;} 
+    int SendStageSequence() {return DEVICE_OK;} 
     bool IsContinuousFocusDrive() const {return true;}
 
 private:

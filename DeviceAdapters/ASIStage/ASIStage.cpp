@@ -1809,7 +1809,7 @@ bool ZStage::HasRingBuffer()
 }
 
 
-int ZStage::StartStageSequence() const
+int ZStage::StartStageSequence()
 {
    string answer;
    std::string command = "RM Y=4 Z=0";
@@ -1832,7 +1832,7 @@ int ZStage::StartStageSequence() const
    return ERR_UNRECOGNIZED_ANSWER;
 }
 
-int ZStage::StopStageSequence() const 
+int ZStage::StopStageSequence() 
 {
    std::string answer;
    int ret = QueryCommand("TTL X=0", answer); // switches off TTL triggering
@@ -1845,7 +1845,7 @@ int ZStage::StopStageSequence() const
    return DEVICE_OK;
 }
 
-int ZStage::SendStageSequence() const
+int ZStage::SendStageSequence()
 {
    // first clear the buffer in the device
    std::string answer;

@@ -167,12 +167,12 @@ public:
   int GetLimits(double& min, double& max);
   int IsStageSequenceable(bool& isSequenceable) const {isSequenceable = false; return DEVICE_OK;}
   int GetStageSequenceMaxLength(long& nrEvents) const {nrEvents = 0; return DEVICE_OK;}
-  int StartStageSequence() const {return DEVICE_UNSUPPORTED_COMMAND;}
-  int StopStageSequence() const {return DEVICE_UNSUPPORTED_COMMAND;}
+  int StartStageSequence() {return DEVICE_UNSUPPORTED_COMMAND;}
+  int StopStageSequence() {return DEVICE_UNSUPPORTED_COMMAND;}
   int LoadStageSequence(std::vector<double> positions) const {return DEVICE_UNSUPPORTED_COMMAND;}
   int ClearStageSequence() {return DEVICE_UNSUPPORTED_COMMAND;}
   int AddToStageSequence(double position) {return DEVICE_UNSUPPORTED_COMMAND;}
-  int SendStageSequence() const {return DEVICE_UNSUPPORTED_COMMAND;}
+  int SendStageSequence() {return DEVICE_UNSUPPORTED_COMMAND;}
   bool IsContinuousFocusDrive() const {return false;}
 
    // action interface
