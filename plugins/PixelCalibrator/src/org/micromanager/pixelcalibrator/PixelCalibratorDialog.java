@@ -11,8 +11,10 @@
 
 package org.micromanager.pixelcalibrator;
 
+import java.lang.reflect.InvocationTargetException;
 import org.micromanager.MMStudioMainFrame;
 import org.micromanager.utils.GUIUtils;
+import org.micromanager.utils.ReportingUtils;
 
 /**
  *
@@ -42,13 +44,17 @@ public class PixelCalibratorDialog extends javax.swing.JFrame {
    // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
    private void initComponents() {
 
+      jPopupMenu1 = new javax.swing.JPopupMenu();
+      jPopupMenu2 = new javax.swing.JPopupMenu();
       explanationLabel = new javax.swing.JLabel();
       calibrationProgressBar = new javax.swing.JProgressBar();
       startButton = new javax.swing.JButton();
       stopButton = new javax.swing.JButton();
+      jLabel1 = new javax.swing.JLabel();
+      safeTravelRadiusComboBox = new javax.swing.JComboBox();
 
       setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
-      setTitle("Pixel Calibrator");
+      setTitle("Pixel Calibrator (BETA)");
       setResizable(false);
       addWindowListener(new java.awt.event.WindowAdapter() {
          public void windowClosing(java.awt.event.WindowEvent evt) {
@@ -75,31 +81,47 @@ public class PixelCalibratorDialog extends javax.swing.JFrame {
          }
       });
 
+      jLabel1.setText("Safe travel radius, um:");
+
+      safeTravelRadiusComboBox.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "1000", "10000" }));
+      safeTravelRadiusComboBox.addActionListener(new java.awt.event.ActionListener() {
+         public void actionPerformed(java.awt.event.ActionEvent evt) {
+            safeTravelRadiusComboBoxActionPerformed(evt);
+         }
+      });
+
       org.jdesktop.layout.GroupLayout layout = new org.jdesktop.layout.GroupLayout(getContentPane());
       getContentPane().setLayout(layout);
       layout.setHorizontalGroup(
          layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-         .add(org.jdesktop.layout.GroupLayout.TRAILING, layout.createSequentialGroup()
-            .addContainerGap(org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-            .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-               .add(layout.createSequentialGroup()
-                  .add(70, 70, 70)
-                  .add(stopButton))
-               .add(startButton))
-            .add(18, 18, 18)
-            .add(calibrationProgressBar, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 190, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-            .add(44, 44, 44))
          .add(layout.createSequentialGroup()
             .addContainerGap()
             .add(explanationLabel, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 363, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
             .addContainerGap(31, Short.MAX_VALUE))
+         .add(org.jdesktop.layout.GroupLayout.TRAILING, layout.createSequentialGroup()
+            .addContainerGap(24, Short.MAX_VALUE)
+            .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+               .add(layout.createSequentialGroup()
+                  .add(70, 70, 70)
+                  .add(stopButton))
+               .add(startButton)
+               .add(jLabel1, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 159, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+            .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+            .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+               .add(calibrationProgressBar, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 190, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+               .add(safeTravelRadiusComboBox, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+            .add(31, 31, 31))
       );
       layout.setVerticalGroup(
          layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
          .add(org.jdesktop.layout.GroupLayout.TRAILING, layout.createSequentialGroup()
             .addContainerGap()
-            .add(explanationLabel)
-            .add(48, 48, 48)
+            .add(explanationLabel, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 183, Short.MAX_VALUE)
+            .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
+            .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
+               .add(jLabel1)
+               .add(safeTravelRadiusComboBox, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+            .add(18, 18, 18)
             .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.TRAILING)
                .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
                   .add(stopButton)
@@ -109,7 +131,7 @@ public class PixelCalibratorDialog extends javax.swing.JFrame {
       );
 
       java.awt.Dimension screenSize = java.awt.Toolkit.getDefaultToolkit().getScreenSize();
-      setBounds((screenSize.width-414)/2, (screenSize.height-316)/2, 414, 316);
+      setBounds((screenSize.width-414)/2, (screenSize.height-328)/2, 414, 328);
    }// </editor-fold>//GEN-END:initComponents
 
     private void stopButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_stopButtonActionPerformed
@@ -124,25 +146,45 @@ public class PixelCalibratorDialog extends javax.swing.JFrame {
        plugin_.dispose();
     }//GEN-LAST:event_formWindowClosing
 
-    public void updateStatus(boolean running, double progress) {
-       if (!running) {
-          startButton.setEnabled(true);
-          stopButton.setEnabled(false);
-          calibrationProgressBar.setEnabled(false);
-       } else {
-          toFront();
-          startButton.setEnabled(false);
-          stopButton.setEnabled(true);
-          calibrationProgressBar.setEnabled(true);
-       }
-       calibrationProgressBar.setValue((int) (progress*100));
-       this.repaint();
+    private void safeTravelRadiusComboBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_safeTravelRadiusComboBoxActionPerformed
+       plugin_.safeTravelRadiusUm_ = Double.parseDouble(safeTravelRadiusComboBox.getSelectedItem().toString());
+    }//GEN-LAST:event_safeTravelRadiusComboBoxActionPerformed
+
+    public void updateStatus(final boolean running, final double progress) {
+      try {
+         GUIUtils.invokeLater(new Runnable() {
+            public void run() {
+               if (!running) {
+                  startButton.setEnabled(true);
+                  stopButton.setEnabled(false);
+                  calibrationProgressBar.setEnabled(false);
+                  safeTravelRadiusComboBox.setEnabled(true);
+               } else {
+                  toFront();
+                  startButton.setEnabled(false);
+                  stopButton.setEnabled(true);
+                  calibrationProgressBar.setEnabled(true);
+                  safeTravelRadiusComboBox.setEnabled(false);
+               }
+               calibrationProgressBar.setValue((int) (progress*100));
+            }
+         });
+      } catch (InterruptedException ex) {
+         ReportingUtils.logError(ex);
+      } catch (InvocationTargetException ex) {
+         ReportingUtils.logError(ex);
+      }
+       //this.repaint();
     }
     
 
    // Variables declaration - do not modify//GEN-BEGIN:variables
    private javax.swing.JProgressBar calibrationProgressBar;
    private javax.swing.JLabel explanationLabel;
+   private javax.swing.JLabel jLabel1;
+   private javax.swing.JPopupMenu jPopupMenu1;
+   private javax.swing.JPopupMenu jPopupMenu2;
+   private javax.swing.JComboBox safeTravelRadiusComboBox;
    private javax.swing.JButton startButton;
    private javax.swing.JButton stopButton;
    // End of variables declaration//GEN-END:variables

@@ -28,6 +28,8 @@ public class PixelCalibratorPlugin implements MMPlugin {
    private CalibrationThread calibrationThread_;
    private PixelCalibratorDialog dialog_;
 
+   public double safeTravelRadiusUm_ = 1000;
+   
    public void configurationChanged() {
       // TODO Auto-generated method stub
    }
@@ -99,6 +101,9 @@ public class PixelCalibratorPlugin implements MMPlugin {
       }
       dialog_.updateStatus(true, 0);
    }
+
+
+
 
    void stopCalibration() {
       if (calibrationThread_ != null && calibrationThread_.isAlive()) {

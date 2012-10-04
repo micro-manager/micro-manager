@@ -106,7 +106,7 @@ public class CalibrationThread extends Thread {
       } else {
          try {
             Point2D.Double p0 = app_.getXYStagePosition();
-            if (p0.distance(x, y) > 4000) { // 4 millimeter
+            if (p0.distance(x, y) > (plugin_.safeTravelRadiusUm_ / 2)) {
                throw new InterruptedException("XY stage safety limit reached.");
             }
             app_.setXYStagePosition(x, y);
@@ -260,7 +260,7 @@ public class CalibrationThread extends Thread {
       try {
          return MathFunctions.generateAffineTransformFromPointPairs(pointPairs_, 2.0, Double.MAX_VALUE);
       } catch (Exception ex) {
-         ReportingUtils.logError(ex);
+         ReportingUtils.showError(ex);
          return null;
       }
    }
