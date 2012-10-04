@@ -6149,13 +6149,6 @@ void CMMCore::updateAllowedChannelGroups()
 // Acqusition context methods
 // experimental implementation works only with image processor devices
 //
-void CMMCore::acqBefore() throw (CMMError)
-{
-}
-
-void CMMCore::acqAfter() throw (CMMError)
-{
-}
 
 void CMMCore::acqBeforeFrame() throw (CMMError)
 {
@@ -6188,15 +6181,18 @@ void CMMCore::acqAfterFrame() throw (CMMError)
    }
 }
 
-void CMMCore::acqBeforeStack() throw (CMMError)
-{
-}
 
-void CMMCore::acqAfterStack() throw (CMMError)
-{
-}
+///////////////////////////////////////////////////////////////////////////////
+//  Automatic device and serial port discovery methods
+//
 
-
+/**
+ * Tries to communicate to a device through a given serial port
+ * Used to automate discovery of correct serial port
+ * Also configures the serial port correctly
+ *
+ * @param deviceName - Name of device for which serial port shoudl be found
+ */
 MM::DeviceDetectionStatus CMMCore::detectDevice(char* deviceName)
 {
    MM::DeviceDetectionStatus result = MM::Unimplemented; 
@@ -6274,6 +6270,7 @@ MM::DeviceDetectionStatus CMMCore::detectDevice(char* deviceName)
 
    return result;
 }
+
 /**
  * Performs auto-detection and loading of child devices that are attached to a Hub device.
  * For example, if a motorized microscope is represented by a Hub device, it is capable of

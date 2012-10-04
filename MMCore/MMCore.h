@@ -475,12 +475,8 @@ public:
    * API notifying core of acquisition context events
    */
    //@ {
-   void acqBefore() throw (CMMError);
-   void acqAfter() throw (CMMError);
    void acqBeforeFrame() throw (CMMError);
    void acqAfterFrame() throw (CMMError);
-   void acqBeforeStack() throw (CMMError);
-   void acqAfterStack() throw (CMMError);
    //@ }
 
    // device discovery
