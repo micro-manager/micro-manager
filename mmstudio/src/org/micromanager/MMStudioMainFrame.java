@@ -673,7 +673,7 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface, Device
     * the rawImageQueue.
     */
     public void runDisplayThread(BlockingQueue rawImageQueue, final DisplayImageRoutine displayImageRoutine) {
-        final BlockingQueue processedImageQueue = ProcessorStack.run(rawImageQueue, getAcquisitionEngine().getTaggedImageProcessors());
+        final BlockingQueue processedImageQueue = ProcessorStack.run(rawImageQueue, getAcquisitionEngine().getImageProcessors());
         new Thread("Display thread") {
             public void run() {
                 try {
