@@ -21,6 +21,7 @@
 //
 package org.micromanager.acquisition;
 
+import ij.ImageJ;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
@@ -158,5 +159,47 @@ class MPTiffUtils {
          ReportingUtils.logError("Error encoding String to bytes");
          return null;
       }
+   }
+
+   public static String getIJDescriptionString(int nFrames, int nChannels, int nSlices) {
+//      return "henry ";
+            StringBuffer sb = new StringBuffer();
+      sb.append("ImageJ=" + ImageJ.VERSION + "\n");
+//      sb.append("images=" + nFrames * nChannels * nSlices + "\n");
+      if (nChannels > 1) {
+         sb.append("channels=" + nChannels + "\n");
+      }
+      if (nSlices > 1) {
+         sb.append("slices=" + nSlices + "\n");
+      }
+      if (nFrames > 1) {
+         sb.append("frames=" + nFrames + "\n");
+      }
+      if (nFrames > 1 || nSlices > 1 || nChannels > 1) {
+         sb.append("hyperstack=true\n");
+      }
+      if (nChannels > 1) {
+         sb.append("mode=composite\n");
+      }
+
+      //May need to change depending on calibtratuon
+      sb.append("unit=um\n");
+
+      if (nFrames * nChannels * nSlices > 1) {
+         sb.append("loop=false\n");
+      }
+
+//      try {
+//         JSONObject contrast = displayAndComments_.getJSONArray("Channels").getJSONObject(0);
+//         double min = contrast.getInt("Min");
+//         double max = contrast.getInt("Max");
+//         double min = 0, max = 10000;
+//         sb.append("min=" + min + "\n");
+//         sb.append("max=" + max + "\n");
+//      } catch (JSONException ex) {
+//      }
+
+      sb.append((char) 0);
+      return new String(sb);
    }
 }
