@@ -67,7 +67,7 @@ public class TaggedImageStorageMultipageTiff implements TaggedImageStorage {
    private HashMap<Integer, Position> positions_;
    
    //Map of image labels to file 
-   private HashMap<String, MultipageTiffReader> tiffReadersByLabel_;
+   private TreeMap<String, MultipageTiffReader> tiffReadersByLabel_;
   
    public TaggedImageStorageMultipageTiff(String dir, Boolean newDataSet, JSONObject summaryMetadata) throws IOException {
       summaryMetadata_ = summaryMetadata;
@@ -77,7 +77,7 @@ public class TaggedImageStorageMultipageTiff implements TaggedImageStorage {
 
       newDataSet_ = newDataSet;
       directory_ = dir;
-      tiffReadersByLabel_ = new HashMap<String, MultipageTiffReader>();
+      tiffReadersByLabel_ = new TreeMap<String, MultipageTiffReader>();
       cached_ = new CachedImages();
 
       if (summaryMetadata_ != null) {  
