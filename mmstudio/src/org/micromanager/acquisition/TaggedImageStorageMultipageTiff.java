@@ -69,7 +69,7 @@ public class TaggedImageStorageMultipageTiff implements TaggedImageStorage {
    //Map of image labels to file 
    private HashMap<String, MultipageTiffReader> tiffReadersByLabel_;
   
-   public TaggedImageStorageMultipageTiff(String dir, Boolean newDataSet, JSONObject summaryMetadata) {
+   public TaggedImageStorageMultipageTiff(String dir, Boolean newDataSet, JSONObject summaryMetadata) throws IOException {
       summaryMetadata_ = summaryMetadata;
             
       omeTiff_ = MMStudioMainFrame.getInstance().getOMETiffEnabled();
@@ -93,6 +93,7 @@ public class TaggedImageStorageMultipageTiff implements TaggedImageStorage {
       shutdownHook_ = new Thread() {
          @Override
          public void run() {
+            finished();
             writeDisplaySettings();
          }
       };    
@@ -120,7 +121,7 @@ public class TaggedImageStorageMultipageTiff implements TaggedImageStorage {
       }
    }
 
-   private void openExistingDataSet() {
+   private void openExistingDataSet() throws IOException {
       //Need to throw error if file not found
 
       MultipageTiffReader reader = null;
@@ -177,12 +178,6 @@ public class TaggedImageStorageMultipageTiff implements TaggedImageStorage {
 
    @Override
    public void putImage(TaggedImage taggedImage) throws MMException {
-      try {
-         System.out.println("Pos: " + MDUtils.getPositionIndex(taggedImage.tags) + "Frame: " + MDUtils.getFrameIndex(taggedImage.tags) + "    Slice: " +
-                 MDUtils.getSliceIndex(taggedImage.tags) + "  Channel: " +MDUtils.getChannelIndex(taggedImage.tags) );
-      } catch (JSONException ex) {
-      }
-      
       if (!newDataSet_) {
          throw new MMException("This ImageFileManager is read-only.");
       }
