@@ -135,6 +135,7 @@ import org.json.JSONException;
 import org.micromanager.acquisition.AcquisitionWrapperEngine;
 import org.micromanager.acquisition.LiveModeTimer;
 import org.micromanager.acquisition.MMAcquisition;
+import org.micromanager.api.ImageCache;
 import org.micromanager.acquisition.MetadataPanel;
 import org.micromanager.acquisition.ProcessorStack;
 import org.micromanager.acquisition.TaggedImageQueue;
@@ -3806,6 +3807,21 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface, Device
             while (acqControlWin_.isAcquisitionRunning()) {
                Thread.sleep(100);
             }
+            // ensure that the acquisition has finished.
+            // This does not seem to work, needs something better
+            MMAcquisition acq = acqMgr_.getAcquisition(acqName);
+            boolean finished = false;
+            while (!finished) {
+               ImageCache imCache = acq.getImageCache();
+               if (imCache != null) {
+                  if (imCache.isFinished()) {
+                     finished = true;
+                  } else {
+                     Thread.sleep(100);
+                  }
+               }
+            }
+
          } catch (InterruptedException e) {
             ReportingUtils.showError(e);
          }
