@@ -149,18 +149,13 @@ public class Galvo implements ProjectionDevice {
             } catch (Exception ex) {
                ReportingUtils.logError(ex);
             }
-            FloatPolygon x;
+            int roiCount = 0;
             for (Roi roi : rois) {
-               if (roi instanceof PointRoi) {
-                  Point p = pointRoiToPoint((PointRoi) roi);
-                  Point2D.Double pIn = new Point2D.Double(p.x, p.y);
-                  Point2D.Double pOut = new Point2D.Double();
-                  trans.transform(pIn, pOut);
-                  displaySpot(pOut.x, pOut.y);
-               } else if ((roi.getType() == Roi.POLYGON)
-                       || (roi.getType() == Roi.RECTANGLE)
-                       || (roi.getType() == Roi.OVAL)) {
-                  int roiCount = 0;
+               if ((roi.getType() == Roi.POINT)
+                   || (roi.getType() == Roi.POLYGON)
+                   || (roi.getType() == Roi.RECTANGLE)
+                   || (roi.getType() == Roi.OVAL)) {
+
                   Polygon poly = roi.getPolygon();
                   try {
                      Point2D lastGalvoPoint = null;
@@ -171,12 +166,17 @@ public class Galvo implements ProjectionDevice {
                            lastGalvoPoint = galvoPoint;
                         }
                         mmc_.addGalvoPolygonVertex(galvo_, roiCount, galvoPoint.getX(), galvoPoint.getY());
+                        if (roi.getType() == Roi.POINT) {
+                            ++roiCount;
+                        }
                      }
-                     mmc_.addGalvoPolygonVertex(galvo_, roiCount, lastGalvoPoint.getX(), lastGalvoPoint.getY());
+                     if (roi.getType() != Roi.POINT) {
+                        mmc_.addGalvoPolygonVertex(galvo_, roiCount, lastGalvoPoint.getX(), lastGalvoPoint.getY());
+                        ++roiCount;
+                     }
                   } catch (Exception ex) {
                      ReportingUtils.showError(ex);
                   }
-                  ++roiCount;
                   
                } else {
                   ReportingUtils.showError("Not able to run the galvo with this type of Roi.");
@@ -192,10 +192,6 @@ public class Galvo implements ProjectionDevice {
       });
    }
 
-   private static Point pointRoiToPoint(PointRoi roi) {
-      final Rectangle bounds = roi.getBounds();
-      return new Point(bounds.x, bounds.y);
-   }
 
    public void runPolygons() {
       galvoExecutor_.submit(new Runnable() {
