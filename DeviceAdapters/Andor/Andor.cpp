@@ -4241,13 +4241,18 @@ int AndorCamera::OnSpuriousNoiseFilter(MM::PropertyBase* pProp, MM::ActionType e
             SetFrameTransferMode(1);
             ret = SetIsolatedCropMode(1, currentCropHeight_, cropWidth, 1, 1);
             SetAcquisitionMode(1);
-            fullFrameX_ = currentCropWidth_;
+            fullFrameX_ = cropWidth; 
 
             if (DRV_SUCCESS != ret)
               return (int)ret;
 
             currentCropWidth_ = cropWidth;            
          }
+
+         if (initialized_) {
+			OnPropertiesChanged();
+			}
+
 
          ROI oldRoi = roi_;
          roi_.xSize = fullFrameX_;
@@ -4314,13 +4319,17 @@ int AndorCamera::OnSpuriousNoiseFilter(MM::PropertyBase* pProp, MM::ActionType e
             SetFrameTransferMode(1);
             ret = SetIsolatedCropMode(1, cropHeight, currentCropWidth_, 1, 1);
             SetAcquisitionMode(1);
-            fullFrameY_ = currentCropHeight_;
+            fullFrameY_ = cropHeight;
 
             if (DRV_SUCCESS != ret)
               return (int)ret;
 
             currentCropHeight_ = cropHeight;  
          }
+
+         if (initialized_) {
+			OnPropertiesChanged();
+			}
 
          ROI oldRoi = roi_;
          roi_.xSize = fullFrameX_;
