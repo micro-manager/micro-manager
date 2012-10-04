@@ -240,9 +240,10 @@ int CoreCallback::OnPropertyChanged(const MM::Device* device, const char* propNa
             }
          }
       }
+      */
           
 
-       * this is prone to thread clashes.  Update from Cache if possible
+      // Check if pixel size was potentially affected.  If so, update from cache
       vector<string> pixelSizeConfigs = core_->getAvailablePixelSizeConfigs();
       bool found = false;
       for (vector<string>::iterator itpsc = pixelSizeConfigs.begin();
@@ -253,7 +254,8 @@ int CoreCallback::OnPropertyChanged(const MM::Device* device, const char* propNa
             found = true;
             double pixSizeUm;
             try {
-               pixSizeUm = core_->getPixelSizeUm();
+               // update pixel size from cache
+               pixSizeUm = core_->getPixelSizeUm(true);
             }
             catch (CMMError ) {
                pixSizeUm = 0.0;
@@ -261,7 +263,6 @@ int CoreCallback::OnPropertyChanged(const MM::Device* device, const char* propNa
             OnPixelSizeChanged(pixSizeUm);
          }
       }
-      */
    }
 
    return DEVICE_OK;
