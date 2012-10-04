@@ -38,6 +38,7 @@ import org.micromanager.utils.NumberUtils;
 import org.micromanager.utils.ReportingUtils;
 
 import ij.measure.ResultsTable;
+import java.util.concurrent.atomic.AtomicBoolean;
 import org.micromanager.utils.GUIUtils;
 
 /**
@@ -79,6 +80,8 @@ public class IntelligentAcquisitionFrame extends javax.swing.JFrame {
    private double pixelWidthMicron_ = 0.1;
   
    private String xyStage_ = "";
+   
+   private AtomicBoolean stop_;
 
 
     /** 
@@ -113,6 +116,8 @@ public class IntelligentAcquisitionFrame extends javax.swing.JFrame {
        expAreaFieldY_.setText(NumberUtils.intToDisplayString(explorationY_));
        roiFieldX_.setText(NumberUtils.longToDisplayString(roiWidthX_));
        roiFieldY_.setText(NumberUtils.longToDisplayString(roiWidthY_));
+       
+       stop_ = new AtomicBoolean();
        
     }
 
@@ -150,6 +155,7 @@ public class IntelligentAcquisitionFrame extends javax.swing.JFrame {
         expAreaFieldY_ = new javax.swing.JTextField();
         expAreaFieldX_ = new javax.swing.JTextField();
         jLabel10 = new javax.swing.JLabel();
+        stopButton_ = new javax.swing.JButton();
 
         setTitle("Intelligent Acquisition");
         setLocationByPlatform(true);
@@ -169,7 +175,7 @@ public class IntelligentAcquisitionFrame extends javax.swing.JFrame {
             }
         });
 
-        acqTextField1_.setFont(new java.awt.Font("Lucida Grande", 0, 10));
+        acqTextField1_.setFont(new java.awt.Font("Lucida Grande", 0, 10)); // NOI18N
 
         jLabel2.setFont(new java.awt.Font("Lucida Grande", 0, 10));
         jLabel2.setText("Exploration");
@@ -177,7 +183,7 @@ public class IntelligentAcquisitionFrame extends javax.swing.JFrame {
         jLabel3.setFont(new java.awt.Font("Lucida Grande", 0, 10));
         jLabel3.setText("Imaging");
 
-        acqTextField2_.setFont(new java.awt.Font("Lucida Grande", 0, 10));
+        acqTextField2_.setFont(new java.awt.Font("Lucida Grande", 0, 10)); // NOI18N
 
         acqSettingsButton1_.setText("...");
         acqSettingsButton1_.addActionListener(new java.awt.event.ActionListener() {
@@ -270,6 +276,13 @@ public class IntelligentAcquisitionFrame extends javax.swing.JFrame {
 
         jLabel10.setText("Exploration Area");
 
+        stopButton_.setText("Stop");
+        stopButton_.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                stopButton_ActionPerformed(evt);
+            }
+        });
+
         org.jdesktop.layout.GroupLayout layout = new org.jdesktop.layout.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
@@ -305,7 +318,9 @@ public class IntelligentAcquisitionFrame extends javax.swing.JFrame {
                                         .add(org.jdesktop.layout.GroupLayout.TRAILING, layout.createSequentialGroup()
                                             .add(28, 28, 28)
                                             .add(helpButton_)
-                                            .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, 166, Short.MAX_VALUE)
+                                            .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, 91, Short.MAX_VALUE)
+                                            .add(stopButton_)
+                                            .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
                                             .add(goButton_)))
                                     .add(18, 18, 18))
                                 .add(jLabel5))
@@ -384,7 +399,8 @@ public class IntelligentAcquisitionFrame extends javax.swing.JFrame {
                         .add(10, 10, 10)
                         .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
                             .add(goButton_)
-                            .add(helpButton_))))
+                            .add(helpButton_)
+                            .add(stopButton_))))
                 .addContainerGap())
         );
 
@@ -504,141 +520,172 @@ public class IntelligentAcquisitionFrame extends javax.swing.JFrame {
       }
    }
    
+    
    /**
     * Runs the actual intelligent acquisition
     * @param evt 
     */
-   
    private void goButton_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_goButton_ActionPerformed
-      
-      // Get a number of useful settings from the core
-      pixelWidthMicron_ = core_.getPixelSizeUm();
-      double imageWidthMicronX = pixelWidthMicron_ * core_.getImageWidth();
-      double imageWidthMicronY = pixelWidthMicron_ * core_.getImageHeight();
-      
-      long imageIndex = 0;
-      
-      xyStage_ = core_.getXYStageDevice();
-      
-      // read settings needed to relate stage movement to camera movement
-      boolean transposeMirorX = false;
-      boolean transposeMirorY = false;
-      boolean transposeXY = false;
-      
-      try{
-         transposeMirorX = core_.getProperty(core_.getCameraDevice(), 
-              "TransposeMirrorX").equals("1");
-         transposeMirorY = core_.getProperty(core_.getCameraDevice(), 
-              "TransposeMirrorY").equals("1");
-         transposeXY = core_.getProperty(core_.getCameraDevice(), 
-              "TransposeXY").equals("1");
-      } catch (Exception ex) {
-         ReportingUtils.showError("Problem reading transpose settings from camera");
-         return;
-      }
-      
-      // Preload acqFileNameB_ to make sure that it works
-      try {
-         acqFileNameB_ = acqTextField2_.getText();
-         gui_.loadAcquisition(acqFileNameB_);
-      } catch (MMScriptException ex) {
-         ReportingUtils.showError("Unable to load Imaging Acquisition Settings. " + 
-                 "Please select a valid file and try again");
-         return;
-      }
-      
-      // load the exploration acq settings, give a second chance if it does not work
-      try {
-         acqFileNameA_ = acqTextField1_.getText();
-         gui_.loadAcquisition(acqFileNameA_);
-      } catch (MMScriptException ex) {
-         try {
-            acqSettingsButton1_ActionPerformed(null);
-            gui_.loadAcquisition(acqFileNameA_);
-         } catch (MMScriptException ex1) {
-            ReportingUtils.showError(ex1, "Failed to load exploration acquisition settings");
-            return;
-         }
-      }
-      
-      boolean stop = false;
-      
-      while (!stop) {
-         // run exploration acquisition
-         String expAcq = "";
-         try {
-            expAcq = gui_.runAcquisition();
-         } catch (MMScriptException e) {
-            ReportingUtils.logError(e, "Exploration acquisition failed");
-            continue;
-         }
 
-         try {
-            // get x and y coordinates, not sure why
-            double xPos = core_.getXPosition(xyStage_);
-            double yPos = core_.getYPosition(xyStage_);
+      // we need to run this code on a seperate thread to keep the EDT 
+      // responsive and to make the acquisition succeed
+      Thread executeGo = new Thread() {
 
-         } catch (Exception ex) {
-            ReportingUtils.showError(ex, "Failed to read XY stage position");
-         }
-         
-         
-         ij.IJ.runMacro(scriptFileName_);
-         
-         ResultsTable res = ij.measure.ResultsTable.getResultsTable();
-         if (res.getCounter() > 0) {
+         @Override
+         public void run() {
+            
+            stop_.set(false);
+            
+            // Get a number of useful settings from the core
+            pixelWidthMicron_ = core_.getPixelSizeUm();
+            double imageWidthMicronX = pixelWidthMicron_ * core_.getImageWidth();
+            double imageWidthMicronY = pixelWidthMicron_ * core_.getImageHeight();
+
+            long imageIndex = 0;
+
+            xyStage_ = core_.getXYStageDevice();
+
+            // read settings needed to relate stage movement to camera movement
+            boolean transposeMirorX = false;
+            boolean transposeMirorY = false;
+            boolean transposeXY = false;
+
             try {
-               // X and Y coordinates of object found in pixels
-               double xPos = res.getValue("X", 0);
-               double yPos = res.getValue("Y", 0);
-               // Todo: take orientation into account!!!
-               core_.setRelativeXYPosition(xyStage_, xPos * pixelWidthMicron_, 
-                       yPos * pixelWidthMicron_);
-               core_.setROI((int) (core_.getImageWidth() / 2 - roiWidthX_ / 2),
-                       (int) (core_.getImageHeight() / 2 - roiWidthY_ / 2),
-                       (int) roiWidthX_, (int) roiWidthY_);
-               ReportingUtils.showMessage("Imaging interesting cell at position: " + 
-                        xPos + ", " + yPos );
-
-               gui_.loadAcquisition(acqFileNameB_);
-               String goodStuff = gui_.runAcquisition();
-               gui_.closeAcquisitionWindow(goodStuff);
-               core_.setRelativeXYPosition(xyStage_, - xPos * pixelWidthMicron_, - yPos * pixelWidthMicron_);
-               core_.clearROI();
-               org.micromanager.utils.JavaUtils.sleep(200);
+               transposeMirorX = core_.getProperty(core_.getCameraDevice(),
+                       "TransposeMirrorX").equals("1");
+               transposeMirorY = core_.getProperty(core_.getCameraDevice(),
+                       "TransposeMirrorY").equals("1");
+               transposeXY = core_.getProperty(core_.getCameraDevice(),
+                       "TransposeXY").equals("1");
             } catch (Exception ex) {
-               ReportingUtils.showError(ex, "Imaging acquisition failed...");
+               ReportingUtils.showError("Problem reading transpose settings from camera");
+               return;
             }
-         } 
-         try {
-            gui_.closeAcquisitionWindow(expAcq);
-         } catch (MMScriptException ex) {
-            ReportingUtils.showError(ex, "Failed to close acquisition window");
-         }
 
-         imageIndex++;
-         int xDirection = 1;
-
-         if (((imageIndex % explorationX_) % 2) == 1) {
-            xDirection = -1;
-         }
-
-         try {
-            if ((imageIndex % explorationX_) == 0) {
-               core_.setRelativeXYPosition(xyStage_, 0, imageWidthMicronY);
-            } else {
-               core_.setRelativeXYPosition(xyStage_, xDirection * imageWidthMicronX, 0);
+            // Preload acqFileNameB_ to make sure that it works
+            try {
+               acqFileNameB_ = acqTextField2_.getText();
+               gui_.loadAcquisition(acqFileNameB_);
+            } catch (MMScriptException ex) {
+               ReportingUtils.showError("Unable to load Imaging Acquisition Settings. "
+                       + "Please select a valid file and try again");
+               return;
             }
-         } catch (Exception ex) {
-            ReportingUtils.showError(ex, "Problem moving XY Stage");
-            // what to do now???
+
+            // load the exploration acq settings, give a second chance if it does not work
+            try {
+               acqFileNameA_ = acqTextField1_.getText();
+               gui_.loadAcquisition(acqFileNameA_);
+            } catch (MMScriptException ex) {
+               try {
+                  acqSettingsButton1_ActionPerformed(null);
+                  gui_.loadAcquisition(acqFileNameA_);
+               } catch (MMScriptException ex1) {
+                  ReportingUtils.showError(ex1, "Failed to load exploration acquisition settings");
+                  return;
+               }
+            }
+            
+            try {
+               explorationX_ = NumberUtils.displayStringToInt(expAreaFieldX_.getText());
+            } catch (ParseException ex) {
+               ReportingUtils.showError("Failed to parse NUmber of fields in X");
+            }
+
+            try {
+               explorationY_ = NumberUtils.displayStringToInt(expAreaFieldY_.getText());
+            } catch (ParseException ex) {
+               ReportingUtils.showError("Failed to parse NUmber of fields in Y");
+            }
+
+            while (!stop_.get()) {
+               // run exploration acquisition
+               String expAcq = "";
+               try {
+                  expAcq = gui_.runAcquisition();
+               } catch (MMScriptException e) {
+                  ReportingUtils.showError(e, "Exploration acquisition failed");
+                  continue;
+               }
+
+               try {
+                  // get x and y coordinates, not sure why
+                  double xPos = core_.getXPosition(xyStage_);
+                  double yPos = core_.getYPosition(xyStage_);
+
+               } catch (Exception ex) {
+                  ReportingUtils.showError(ex, "Failed to read XY stage position");
+               }
+
+
+               ij.IJ.runMacro(scriptFileName_);
+
+               ResultsTable res = ij.measure.ResultsTable.getResultsTable();
+               if (res.getCounter() > 0) {
+                  try {
+                     // X and Y coordinates of object found in pixels
+                     double xPos = res.getValue("X", 0);
+                     double yPos = res.getValue("Y", 0);
+                     // Todo: take orientation into account!!!
+                     core_.setRelativeXYPosition(xyStage_, xPos * pixelWidthMicron_,
+                             yPos * pixelWidthMicron_);
+                     core_.setROI((int) (core_.getImageWidth() / 2 - roiWidthX_ / 2),
+                             (int) (core_.getImageHeight() / 2 - roiWidthY_ / 2),
+                             (int) roiWidthX_, (int) roiWidthY_);
+                     ReportingUtils.showMessage("Imaging interesting cell at position: "
+                             + xPos + ", " + yPos);
+
+                     gui_.loadAcquisition(acqFileNameB_);
+                     String goodStuff = gui_.runAcquisition();
+                     gui_.closeAcquisitionWindow(goodStuff);
+                     core_.setRelativeXYPosition(xyStage_, -xPos * pixelWidthMicron_, -yPos * pixelWidthMicron_);
+                     core_.clearROI();
+                     org.micromanager.utils.JavaUtils.sleep(200);
+                  } catch (Exception ex) {
+                     ReportingUtils.showError(ex, "Imaging acquisition failed...");
+                  }
+               }
+               try {
+                  gui_.closeAcquisitionWindow(expAcq);
+               } catch (MMScriptException ex) {
+                  ReportingUtils.showError(ex, "Failed to close acquisition window");
+               }
+
+               imageIndex++;
+               int xDirection = 1;
+
+               if (((imageIndex % explorationX_) % 2) == 1) {
+                  xDirection = -1;
+               }
+
+               try {
+                  if ((imageIndex % explorationX_) == 0) {
+                     core_.setRelativeXYPosition(xyStage_, 0, imageWidthMicronY);
+                  } else {
+                     core_.setRelativeXYPosition(xyStage_, xDirection * imageWidthMicronX, 0);
+                  }
+               } catch (Exception ex) {
+                  ReportingUtils.showError(ex, "Problem moving XY Stage");
+                  // what to do now???
+               }
+               
+               if (imageIndex >= (explorationX_ * explorationY_) )
+                  stop_.set(true);
+            }
          }
 
-         stop = true;
-      }
-
+      };
+      
+      executeGo.start();
 
    }//GEN-LAST:event_goButton_ActionPerformed
+
+   private void stopButton_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_stopButton_ActionPerformed
+      stop_.set(true);
+      // try to stop ongoing acquisitions here
+   }//GEN-LAST:event_stopButton_ActionPerformed
+
+   
 
    private void updateROI() {
       roiFieldX_.setText(NumberUtils.longToDisplayString(roiWidthX_));
@@ -646,8 +693,6 @@ public class IntelligentAcquisitionFrame extends javax.swing.JFrame {
       prefs_.putLong(ROIWIDTHX, roiWidthX_);
       prefs_.putLong(ROIWIDTHY, roiWidthY_);
    }
-           
- 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton acqSettingsButton1_;
     private javax.swing.JButton acqSettingsButton2_;
@@ -674,6 +719,6 @@ public class IntelligentAcquisitionFrame extends javax.swing.JFrame {
     private javax.swing.JTextField roiFieldY_;
     private javax.swing.JButton scriptButton_;
     private javax.swing.JTextField scriptTextField_;
+    private javax.swing.JButton stopButton_;
     // End of variables declaration//GEN-END:variables
-
 }

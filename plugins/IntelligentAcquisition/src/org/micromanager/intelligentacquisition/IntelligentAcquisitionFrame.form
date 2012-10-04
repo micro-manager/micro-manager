@@ -64,7 +64,9 @@
                                       <Group type="102" alignment="1" attributes="0">
                                           <EmptySpace min="-2" pref="28" max="-2" attributes="0"/>
                                           <Component id="helpButton_" min="-2" max="-2" attributes="0"/>
-                                          <EmptySpace pref="166" max="32767" attributes="0"/>
+                                          <EmptySpace pref="91" max="32767" attributes="0"/>
+                                          <Component id="stopButton_" min="-2" max="-2" attributes="0"/>
+                                          <EmptySpace type="unrelated" max="-2" attributes="0"/>
                                           <Component id="goButton_" min="-2" max="-2" attributes="0"/>
                                       </Group>
                                   </Group>
@@ -164,6 +166,7 @@
                       <Group type="103" groupAlignment="3" attributes="0">
                           <Component id="goButton_" alignment="3" min="-2" max="-2" attributes="0"/>
                           <Component id="helpButton_" alignment="3" min="-2" max="-2" attributes="0"/>
+                          <Component id="stopButton_" alignment="3" min="-2" max="-2" attributes="0"/>
                       </Group>
                   </Group>
               </Group>
@@ -366,6 +369,14 @@
       <Properties>
         <Property name="text" type="java.lang.String" value="Exploration Area"/>
       </Properties>
+    </Component>
+    <Component class="javax.swing.JButton" name="stopButton_">
+      <Properties>
+        <Property name="text" type="java.lang.String" value="Stop"/>
+      </Properties>
+      <Events>
+        <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="stopButton_ActionPerformed"/>
+      </Events>
     </Component>
   </SubComponents>
 </Form>
