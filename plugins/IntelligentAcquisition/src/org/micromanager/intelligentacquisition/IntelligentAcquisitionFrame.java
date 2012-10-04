@@ -617,7 +617,7 @@ public class IntelligentAcquisitionFrame extends javax.swing.JFrame {
                   ReportingUtils.showError(ex, "Failed to read XY stage position");
                }
 
-
+               scriptFileName_ = scriptTextField_.getText();
                ij.IJ.runMacro(scriptFileName_);
 
                ResultsTable res = ij.measure.ResultsTable.getResultsTable();
@@ -626,7 +626,7 @@ public class IntelligentAcquisitionFrame extends javax.swing.JFrame {
                      // X and Y coordinates of object found in pixels
                      double xPos = res.getValue("X", 0);
                      double yPos = res.getValue("Y", 0);
-                     // Todo: take orientation into account!!!
+                     // Todo: use affine transform to position stage
                      core_.setRelativeXYPosition(xyStage_, xPos * pixelWidthMicron_,
                              yPos * pixelWidthMicron_);
                      core_.setROI((int) (core_.getImageWidth() / 2 - roiWidthX_ / 2),
@@ -646,6 +646,8 @@ public class IntelligentAcquisitionFrame extends javax.swing.JFrame {
                   }
                }
                try {
+                  // need sleep to ensure that data have been written to disk
+                  gui_.sleep(100);
                   gui_.closeAcquisitionWindow(expAcq);
                } catch (MMScriptException ex) {
                   ReportingUtils.showError(ex, "Failed to close acquisition window");
@@ -683,6 +685,7 @@ public class IntelligentAcquisitionFrame extends javax.swing.JFrame {
    private void stopButton_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_stopButton_ActionPerformed
       stop_.set(true);
       // try to stop ongoing acquisitions here
+      gui_.getAcquisitionEngine2010().stop();
    }//GEN-LAST:event_stopButton_ActionPerformed
 
    
