@@ -150,7 +150,9 @@ int LStepBase::CheckDeviceStatus(void)
   ret = QueryCommand("?ver",resp);
   if (ret != DEVICE_OK) return ret;
   if (resp.length() < 1) return  DEVICE_NOT_CONNECTED;
-  if (resp.find("Vers:LS") == string::npos) return DEVICE_NOT_CONNECTED;
+  //expected response starts either with "Vers:LS" or "Vers:LP"
+  if (resp.find("Vers:L") == string::npos) return DEVICE_NOT_CONNECTED;
+
 
   ret = SendCommand("!autostatus 0"); //diasable autostatus
   if (ret != DEVICE_OK) return ret;
