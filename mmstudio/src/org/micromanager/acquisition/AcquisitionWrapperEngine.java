@@ -877,7 +877,7 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
     * @return the taggedImageProcessors_
     */
     @Override
-   public List<DataProcessor<TaggedImage>> getTaggedImageProcessors() {
+   public List<DataProcessor<TaggedImage>> getImageProcessors() {
       return taggedImageProcessors_;
    }
 

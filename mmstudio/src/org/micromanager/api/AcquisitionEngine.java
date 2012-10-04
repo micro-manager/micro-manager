@@ -553,6 +553,6 @@ public interface AcquisitionEngine {
     */
    public ImageCache getImageCache();
    
-   public List<DataProcessor<TaggedImage>> getTaggedImageProcessors();
+   public List<DataProcessor<TaggedImage>> getImageProcessors();
 
 }
