@@ -1294,21 +1294,25 @@ public final class VirtualAcquisitionDisplay implements AcquisitionDisplay, Imag
       if (bytes == 2) {
          short[] pixels = (short[]) img.getStack().getPixels(flatIndex);
          for (short value : pixels) {
-            if (value < pixMin) {
-               pixMin = value;
+            //unsign short
+            int val = value & 0xffff;
+            if (val < pixMin) {
+               pixMin = val;
             }
-            if (value > pixMax) {
-               pixMax = value;
+            if (val > pixMax) {
+               pixMax = val;
             }
          }
       } else if (bytes == 1) {
          byte[] pixels = (byte[]) img.getStack().getPixels(flatIndex);
          for (byte value : pixels) {
-            if (value < pixMin) {
-               pixMin = value;
+            //unsign byte
+            int val = value & 0xff;
+            if (val < pixMin) {
+               pixMin = val;
             }
-            if (value > pixMax) {
-               pixMax = value;
+            if (val > pixMax) {
+               pixMax = val;
             }
          }
       }
