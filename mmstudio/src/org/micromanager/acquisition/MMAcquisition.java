@@ -30,6 +30,7 @@ import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Iterator;
 import java.util.UUID;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.prefs.Preferences;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -45,6 +46,7 @@ import org.micromanager.MMStudioMainFrame;
 import org.micromanager.api.AcquisitionEngine;
 import org.micromanager.api.ImageCache;
 
+import org.micromanager.api.ImageCacheListener;
 import org.micromanager.api.TaggedImageStorage;
 import org.micromanager.utils.ImageUtils;
 import org.micromanager.utils.JavaUtils;
@@ -72,6 +74,7 @@ public class MMAcquisition {
    protected int bitDepth_ = 8;    
    protected int multiCamNumCh_ = 1;
    private boolean initialized_ = false;
+   private AtomicBoolean finished_ = new AtomicBoolean();;
    private long startTimeMs_;
    private String comment_ = "";
    private String rootDirectory_;
@@ -357,13 +360,22 @@ public class MMAcquisition {
          }
 
          initialized_ = true;
+         
+         imageCache.addImageCacheListener(new ImageCacheListener () {
+
+            public void imageReceived(TaggedImage taggedImage) {
+               throw new UnsupportedOperationException("Not supported yet.");
+            }
+
+            public void imagingFinished(String path) {
+               finished_.set(true);
+            }
+         });
       }
    }
-
+   
+  
    private void createDefaultAcqSettings(String name, ImageCache imageCache) {
-      //if (new File(rootDirectory_).exists()) {
-      //   name = generateRootName(name, rootDirectory_);
-      //}
 
       String keys[] = new String[summary_.length()];
       Iterator<String> it = summary_.keys();
@@ -652,6 +664,16 @@ public class MMAcquisition {
       if (virtAcq_ != null) {
          if (virtAcq_.acquisitionIsRunning()) {
             virtAcq_.abort();
+         }
+         // wait for 3 s for display to finish
+         long start = System.currentTimeMillis();
+         long timeout = 3000;
+         while (!finished_.get() && (System.currentTimeMillis() - start) < timeout) {
+            try {
+               Thread.sleep(100);
+            } catch (InterruptedException ie) {
+               ReportingUtils.logError(ie);
+            }
          }
          virtAcq_.imageCache_.finished();
       }
