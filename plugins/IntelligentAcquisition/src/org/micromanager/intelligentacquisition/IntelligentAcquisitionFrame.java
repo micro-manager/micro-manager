@@ -38,8 +38,10 @@ import org.micromanager.utils.NumberUtils;
 import org.micromanager.utils.ReportingUtils;
 
 import ij.measure.ResultsTable;
+import java.awt.geom.AffineTransform;
 import java.util.concurrent.atomic.AtomicBoolean;
 import org.micromanager.utils.GUIUtils;
+import org.micromanager.utils.JavaUtils;
 
 /**
  *
@@ -546,10 +548,22 @@ public class IntelligentAcquisitionFrame extends javax.swing.JFrame {
             xyStage_ = core_.getXYStageDevice();
 
             // read settings needed to relate stage movement to camera movement
+
+            
+            AffineTransform af = null;
+            try {
+               af = (AffineTransform) JavaUtils.getObjectFromPrefs
+                    (prefs_, "affine_transform_" + core_.getCurrentPixelSizeConfig(), null);
+            } catch (Exception ex) {
+            }
+            if (af == null) {
+               ReportingUtils.showError("No pixel calibration data found, please run the Pixel Calibrator");
+            }
+            
+            /*
             boolean transposeMirorX = false;
             boolean transposeMirorY = false;
             boolean transposeXY = false;
-
             try {
                transposeMirorX = core_.getProperty(core_.getCameraDevice(),
                        "TransposeMirrorX").equals("1");
@@ -561,6 +575,7 @@ public class IntelligentAcquisitionFrame extends javax.swing.JFrame {
                ReportingUtils.showError("Problem reading transpose settings from camera");
                return;
             }
+             */
 
             // Preload acqFileNameB_ to make sure that it works
             try {
@@ -627,6 +642,8 @@ public class IntelligentAcquisitionFrame extends javax.swing.JFrame {
                      double xPos = res.getValue("X", 0);
                      double yPos = res.getValue("Y", 0);
                      // Todo: use affine transform to position stage
+                     
+                     
                      core_.setRelativeXYPosition(xyStage_, xPos * pixelWidthMicron_,
                              yPos * pixelWidthMicron_);
                      core_.setROI((int) (core_.getImageWidth() / 2 - roiWidthX_ / 2),
