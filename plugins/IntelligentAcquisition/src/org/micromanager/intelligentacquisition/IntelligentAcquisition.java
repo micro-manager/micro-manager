@@ -44,7 +44,7 @@ public class IntelligentAcquisition implements MMPlugin {
    }
 
    public void dispose() {
-      // nothing todo:
+      myFrame_.closeWindow();
    }
 
    public void show() {

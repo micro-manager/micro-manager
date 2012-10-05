@@ -19,10 +19,10 @@
 
 package org.micromanager.intelligentacquisition;
 
+import ij.IJ;
+import ij.ImagePlus;
 import java.io.File;
 import java.text.ParseException;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import mmcorej.CMMCore;
 
 import java.text.NumberFormat;
@@ -40,7 +40,7 @@ import org.micromanager.utils.ReportingUtils;
 import ij.measure.ResultsTable;
 import java.awt.geom.AffineTransform;
 import java.util.concurrent.atomic.AtomicBoolean;
-import org.micromanager.utils.GUIUtils;
+import org.micromanager.api.MMWindow;
 import org.micromanager.utils.JavaUtils;
 
 /**
@@ -68,7 +68,7 @@ public class IntelligentAcquisitionFrame extends javax.swing.JFrame {
    private static final String EXPFIELDSY = "EXPFIELDSY";
    
    private final String[] ACQSUFFIXES = {"xml"};
-   private final String[] SCRIPTSUFFIXES = {"bsh", "txt"};
+   private final String[] SCRIPTSUFFIXES = {"bsh", "txt", "ijm"};
    
    private String acqFileNameA_ = "";
    private String acqFileNameB_ = "";
@@ -158,6 +158,7 @@ public class IntelligentAcquisitionFrame extends javax.swing.JFrame {
         expAreaFieldX_ = new javax.swing.JTextField();
         jLabel10 = new javax.swing.JLabel();
         stopButton_ = new javax.swing.JButton();
+        testButton_ = new javax.swing.JButton();
 
         setTitle("Intelligent Acquisition");
         setLocationByPlatform(true);
@@ -165,6 +166,9 @@ public class IntelligentAcquisitionFrame extends javax.swing.JFrame {
         addWindowListener(new java.awt.event.WindowAdapter() {
             public void windowClosing(java.awt.event.WindowEvent evt) {
                 onWindowClosing(evt);
+            }
+            public void windowClosed(java.awt.event.WindowEvent evt) {
+                formWindowClosed(evt);
             }
         });
 
@@ -177,7 +181,7 @@ public class IntelligentAcquisitionFrame extends javax.swing.JFrame {
             }
         });
 
-        acqTextField1_.setFont(new java.awt.Font("Lucida Grande", 0, 10)); // NOI18N
+        acqTextField1_.setFont(new java.awt.Font("Lucida Grande", 0, 10));
 
         jLabel2.setFont(new java.awt.Font("Lucida Grande", 0, 10));
         jLabel2.setText("Exploration");
@@ -185,7 +189,7 @@ public class IntelligentAcquisitionFrame extends javax.swing.JFrame {
         jLabel3.setFont(new java.awt.Font("Lucida Grande", 0, 10));
         jLabel3.setText("Imaging");
 
-        acqTextField2_.setFont(new java.awt.Font("Lucida Grande", 0, 10)); // NOI18N
+        acqTextField2_.setFont(new java.awt.Font("Lucida Grande", 0, 10));
 
         acqSettingsButton1_.setText("...");
         acqSettingsButton1_.addActionListener(new java.awt.event.ActionListener() {
@@ -285,6 +289,13 @@ public class IntelligentAcquisitionFrame extends javax.swing.JFrame {
             }
         });
 
+        testButton_.setText("Test");
+        testButton_.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                testButton_ActionPerformed(evt);
+            }
+        });
+
         org.jdesktop.layout.GroupLayout layout = new org.jdesktop.layout.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
@@ -320,7 +331,9 @@ public class IntelligentAcquisitionFrame extends javax.swing.JFrame {
                                         .add(org.jdesktop.layout.GroupLayout.TRAILING, layout.createSequentialGroup()
                                             .add(28, 28, 28)
                                             .add(helpButton_)
-                                            .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, 91, Short.MAX_VALUE)
+                                            .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                                            .add(testButton_)
+                                            .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, 10, Short.MAX_VALUE)
                                             .add(stopButton_)
                                             .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
                                             .add(goButton_)))
@@ -402,7 +415,8 @@ public class IntelligentAcquisitionFrame extends javax.swing.JFrame {
                         .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
                             .add(goButton_)
                             .add(helpButton_)
-                            .add(stopButton_))))
+                            .add(stopButton_)
+                            .add(testButton_))))
                 .addContainerGap())
         );
 
@@ -417,11 +431,24 @@ public class IntelligentAcquisitionFrame extends javax.swing.JFrame {
     private void onWindowClosing(java.awt.event.WindowEvent evt) {//GEN-FIRST:event_onWindowClosing
        prefs_.putInt(FRAMEXPOS, (int) getLocation().getX());
        prefs_.putInt(FRAMEYPOS, (int) getLocation().getY());
-       prefs_.putInt(EXPFIELDSX, explorationX_);
-       prefs_.putInt(EXPFIELDSY, explorationY_);
+       try {
+         prefs_.putInt(EXPFIELDSX, 
+               NumberUtils.displayStringToInt(expAreaFieldX_.getText()));
+       } catch (ParseException ex) {}
+       try {
+         prefs_.putInt(EXPFIELDSY, 
+                 NumberUtils.displayStringToInt(expAreaFieldY_.getText()));
+       } catch (ParseException ex) {}
+       prefs_.put(SCRIPTFILENAME, scriptTextField_.getText());
+       prefs_.put(ACQFILENAMEA, acqTextField1_.getText());
+       prefs_.put(ACQFILENAMEB, acqTextField2_.getText());
 
     }//GEN-LAST:event_onWindowClosing
 
+    public void closeWindow() {
+       onWindowClosing(null);
+    }
+    
    private void acqSettingsButton1_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_acqSettingsButton1_ActionPerformed
       File f = FileDialogs.openFile(this, "Exploration acquisition settings", 
               new FileType("MMAcq", "Micro-Manager acquisition settings",
@@ -557,7 +584,7 @@ public class IntelligentAcquisitionFrame extends javax.swing.JFrame {
             } catch (Exception ex) {
             }
             if (af == null) {
-               ReportingUtils.showError("No pixel calibration data found, please run the Pixel Calibrator");
+               ReportingUtils.logError("No pixel calibration data found, please run the Pixel Calibrator");
             }
             
             /*
@@ -604,13 +631,13 @@ public class IntelligentAcquisitionFrame extends javax.swing.JFrame {
             try {
                explorationX_ = NumberUtils.displayStringToInt(expAreaFieldX_.getText());
             } catch (ParseException ex) {
-               ReportingUtils.showError("Failed to parse NUmber of fields in X");
+               ReportingUtils.showError("Failed to parse Number of fields in X");
             }
 
             try {
                explorationY_ = NumberUtils.displayStringToInt(expAreaFieldY_.getText());
             } catch (ParseException ex) {
-               ReportingUtils.showError("Failed to parse NUmber of fields in Y");
+               ReportingUtils.showError("Failed to parse Number of fields in Y");
             }
 
             while (!stop_.get()) {
@@ -643,28 +670,31 @@ public class IntelligentAcquisitionFrame extends javax.swing.JFrame {
                      double yPos = res.getValue("Y", 0);
                      // Todo: use affine transform to position stage
                      
-                     
-                     core_.setRelativeXYPosition(xyStage_, xPos * pixelWidthMicron_,
-                             yPos * pixelWidthMicron_);
-                     core_.setROI((int) (core_.getImageWidth() / 2 - roiWidthX_ / 2),
-                             (int) (core_.getImageHeight() / 2 - roiWidthY_ / 2),
-                             (int) roiWidthX_, (int) roiWidthY_);
+                     if (af != null) {
+                        core_.setRelativeXYPosition(xyStage_, xPos * pixelWidthMicron_,
+                                yPos * pixelWidthMicron_);
+                        core_.setROI((int) (core_.getImageWidth() / 2 - roiWidthX_ / 2),
+                                (int) (core_.getImageHeight() / 2 - roiWidthY_ / 2),
+                                (int) roiWidthX_, (int) roiWidthY_);
+                     }
                      ReportingUtils.showMessage("Imaging interesting cell at position: "
                              + xPos + ", " + yPos);
 
                      gui_.loadAcquisition(acqFileNameB_);
                      String goodStuff = gui_.runAcquisition();
                      gui_.closeAcquisitionWindow(goodStuff);
-                     core_.setRelativeXYPosition(xyStage_, -xPos * pixelWidthMicron_, -yPos * pixelWidthMicron_);
-                     core_.clearROI();
-                     org.micromanager.utils.JavaUtils.sleep(200);
+                     if (af != null) {
+                        core_.setRelativeXYPosition(xyStage_, -xPos * pixelWidthMicron_, -yPos * pixelWidthMicron_);
+                        core_.clearROI();
+                     }
+                     // org.micromanager.utils.JavaUtils.sleep(200);
                   } catch (Exception ex) {
                      ReportingUtils.showError(ex, "Imaging acquisition failed...");
                   }
                }
                try {
                   // need sleep to ensure that data have been written to disk
-                  gui_.sleep(100);
+                  //gui_.sleep(100);
                   gui_.closeAcquisitionWindow(expAcq);
                } catch (MMScriptException ex) {
                   ReportingUtils.showError(ex, "Failed to close acquisition window");
@@ -705,6 +735,42 @@ public class IntelligentAcquisitionFrame extends javax.swing.JFrame {
       gui_.getAcquisitionEngine2010().stop();
    }//GEN-LAST:event_stopButton_ActionPerformed
 
+   private void formWindowClosed(java.awt.event.WindowEvent evt) {//GEN-FIRST:event_formWindowClosed
+       prefs_.putInt(FRAMEXPOS, (int) getLocation().getX());
+       prefs_.putInt(FRAMEYPOS, (int) getLocation().getY());
+       prefs_.putInt(EXPFIELDSX, explorationX_);
+       prefs_.putInt(EXPFIELDSY, explorationY_);
+   }//GEN-LAST:event_formWindowClosed
+
+   private void testButton_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_testButton_ActionPerformed
+      // take the active ImageJ image
+      ImagePlus siPlus = null;
+      try {
+         siPlus = IJ.getImage();
+      } catch (Exception ex) {
+         return;
+      }
+      MMWindow mw = new MMWindow(siPlus);
+
+      if (!mw.isMMWindow()) {
+         // run the script on the current window
+         ij.IJ.runMacro(scriptFileName_);
+         // results should be in results window
+      } else { // MMImageWindow
+         int nrPositions = mw.getNumberOfPositions();
+     
+         for (int p = 1; p <= nrPositions; p++) {
+            try {
+               mw.setPosition(p);
+            } catch (MMScriptException ms) {
+               ReportingUtils.showError(ms, "Error setting position in MMWindow");
+            }
+            ij.IJ.runMacro(scriptFileName_);
+            // Todo: get results out, stick them in new window that has listeners coupling to image window  
+         }
+      }
+   }//GEN-LAST:event_testButton_ActionPerformed
+
    
 
    private void updateROI() {
@@ -740,5 +806,6 @@ public class IntelligentAcquisitionFrame extends javax.swing.JFrame {
     private javax.swing.JButton scriptButton_;
     private javax.swing.JTextField scriptTextField_;
     private javax.swing.JButton stopButton_;
+    private javax.swing.JButton testButton_;
     // End of variables declaration//GEN-END:variables
 }
