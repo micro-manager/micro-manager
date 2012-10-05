@@ -462,7 +462,7 @@ public class MDUtils {
       return 1;
    }
    
-   public static int getNumChannels(JSONObject tags) throws MMScriptException, JSONException {
+   public static int getNumChannels(JSONObject tags) throws JSONException {
       if (tags.has("Summary")) {
          JSONObject summary = tags.getJSONObject("Summary");
          if (summary.has("Channels"))
