@@ -46,7 +46,6 @@ import org.micromanager.MMStudioMainFrame;
 import org.micromanager.api.AcquisitionEngine;
 import org.micromanager.api.ImageCache;
 
-import org.micromanager.api.ImageCacheListener;
 import org.micromanager.api.TaggedImageStorage;
 import org.micromanager.utils.ImageUtils;
 import org.micromanager.utils.JavaUtils;
@@ -74,7 +73,6 @@ public class MMAcquisition {
    protected int bitDepth_ = 8;    
    protected int multiCamNumCh_ = 1;
    private boolean initialized_ = false;
-   private AtomicBoolean finished_ = new AtomicBoolean();;
    private long startTimeMs_;
    private String comment_ = "";
    private String rootDirectory_;
@@ -361,16 +359,6 @@ public class MMAcquisition {
 
          initialized_ = true;
          
-         imageCache.addImageCacheListener(new ImageCacheListener () {
-
-            public void imageReceived(TaggedImage taggedImage) {
-               throw new UnsupportedOperationException("Not supported yet.");
-            }
-
-            public void imagingFinished(String path) {
-               finished_.set(true);
-            }
-         });
       }
    }
    
@@ -668,14 +656,16 @@ public class MMAcquisition {
          // wait for 3 s for display to finish
          long start = System.currentTimeMillis();
          long timeout = 3000;
-         while (!finished_.get() && (System.currentTimeMillis() - start) < timeout) {
+         boolean finished = false;
+         while (!finished && (System.currentTimeMillis() - start) < timeout) {
             try {
+               if (virtAcq_.imageCache_.isFinished())
+                  finished = true;
                Thread.sleep(100);
             } catch (InterruptedException ie) {
                ReportingUtils.logError(ie);
             }
          }
-         virtAcq_.imageCache_.finished();
       }
    }
 
