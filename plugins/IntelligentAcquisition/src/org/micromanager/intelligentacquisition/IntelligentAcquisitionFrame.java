@@ -647,7 +647,7 @@ public class IntelligentAcquisitionFrame extends javax.swing.JFrame {
                   expAcq = gui_.runAcquisition();
                } catch (MMScriptException e) {
                   ReportingUtils.showError(e, "Exploration acquisition failed");
-                  continue;
+                  break;
                }
 
                try {
@@ -660,7 +660,7 @@ public class IntelligentAcquisitionFrame extends javax.swing.JFrame {
                }
 
                scriptFileName_ = scriptTextField_.getText();
-               ij.IJ.runMacro(scriptFileName_);
+               ij.IJ.runMacroFile(scriptFileName_);
 
                ResultsTable res = ij.measure.ResultsTable.getResultsTable();
                if (res.getCounter() > 0) {
@@ -743,32 +743,59 @@ public class IntelligentAcquisitionFrame extends javax.swing.JFrame {
    }//GEN-LAST:event_formWindowClosed
 
    private void testButton_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_testButton_ActionPerformed
-      // take the active ImageJ image
-      ImagePlus siPlus = null;
-      try {
-         siPlus = IJ.getImage();
-      } catch (Exception ex) {
-         return;
-      }
-      MMWindow mw = new MMWindow(siPlus);
+      Thread executeTest = new Thread() {
 
-      if (!mw.isMMWindow()) {
-         // run the script on the current window
-         ij.IJ.runMacro(scriptFileName_);
-         // results should be in results window
-      } else { // MMImageWindow
-         int nrPositions = mw.getNumberOfPositions();
-     
-         for (int p = 1; p <= nrPositions; p++) {
+         @Override
+         public void run() {
+
+            stop_.set(false);
+            // take the active ImageJ image
+            ImagePlus siPlus = null;
             try {
-               mw.setPosition(p);
-            } catch (MMScriptException ms) {
-               ReportingUtils.showError(ms, "Error setting position in MMWindow");
+               siPlus = IJ.getImage();
+            } catch (Exception ex) {
+               return;
             }
-            ij.IJ.runMacro(scriptFileName_);
-            // Todo: get results out, stick them in new window that has listeners coupling to image window  
+            MMWindow mw = new MMWindow(siPlus);
+
+            
+            ResultsTable outTable = new ResultsTable();
+
+
+            if (!mw.isMMWindow()) {
+               // run the script on the current window
+               ij.IJ.runMacroFile(scriptFileName_);
+               // results should be in results window
+            } else { // MMImageWindow
+               int nrPositions = mw.getNumberOfPositions();
+
+               for (int p = 1; p <= nrPositions && !stop_.get(); p++) {
+                  try {
+                     mw.setPosition(p);
+                  } catch (MMScriptException ms) {
+                     ReportingUtils.showError(ms, "Error setting position in MMWindow");
+                  }
+                  ij.IJ.runMacroFile(scriptFileName_);  
+                  ResultsTable res = ij.measure.ResultsTable.getResultsTable();
+                  // get results out, stick them in new window that has listeners coupling to image window 
+                  if (res.getCounter() > 0) {
+                     for (int i=0; i < res.getCounter(); i++) {
+                        double xPos = res.getValue("X", i);
+                        double yPos = res.getValue("Y", i);
+                        outTable.incrementCounter();
+                        outTable.addValue("Position", p);
+                        outTable.addValue("X", xPos);
+                        outTable.addValue("Y", yPos);
+                     }
+                  }
+                  outTable.show("IA Test Results");
+               }
+            }
+            
          }
-      }
+      };
+      executeTest.start();
+
    }//GEN-LAST:event_testButton_ActionPerformed
 
    
