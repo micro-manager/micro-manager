@@ -112,19 +112,16 @@ import ij.Menus;
 import ij.gui.ImageCanvas;
 import ij.gui.ImageWindow;
 import java.awt.Cursor;
+import java.awt.Frame;
 import java.awt.KeyboardFocusManager;
 import java.awt.Menu;
 import java.awt.MenuItem;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.lang.reflect.InvocationTargetException;
 import java.util.Collections;
 import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.Callable;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import javax.swing.BorderFactory;
 import javax.swing.JPanel;
 import javax.swing.JSplitPane;
@@ -3491,7 +3488,7 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface, Device
       } catch (NullPointerException e) {
          if (core_ != null)
             this.logError(e);
-      }
+      }     
       // disposing sometimes hangs ImageJ!
       // this.dispose();
       if (options_.closeOnExit_) {
@@ -3504,6 +3501,7 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface, Device
             }
          }
       }
+     
 
    }
 
@@ -3780,6 +3778,9 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface, Device
 
    @Override
    public String runAcquisition() throws MMScriptException {
+      if (SwingUtilities.isEventDispatchThread()) {
+         throw new MMScriptException("Acquisition can not be run from this (EDT) thread");
+      }
       testForAbortRequests();
       if (acqControlWin_ != null) {
          String name = acqControlWin_.runAcquisition();
@@ -3850,6 +3851,7 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface, Device
       } catch (Exception ex) {
          throw new MMScriptException(ex.getMessage());
       }
+
    }
 
    @Override
