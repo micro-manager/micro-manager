@@ -21,6 +21,7 @@ package org.micromanager.intelligentacquisition;
 
 import ij.IJ;
 import ij.ImagePlus;
+import ij.WindowManager;
 import java.io.File;
 import java.text.ParseException;
 import mmcorej.CMMCore;
@@ -38,6 +39,11 @@ import org.micromanager.utils.NumberUtils;
 import org.micromanager.utils.ReportingUtils;
 
 import ij.measure.ResultsTable;
+import ij.text.TextPanel;
+import ij.text.TextWindow;
+import java.awt.Frame;
+import java.awt.event.KeyListener;
+import java.awt.event.MouseListener;
 import java.awt.geom.AffineTransform;
 import java.util.concurrent.atomic.AtomicBoolean;
 import org.micromanager.api.MMWindow;
@@ -760,7 +766,7 @@ public class IntelligentAcquisitionFrame extends javax.swing.JFrame {
 
             
             ResultsTable outTable = new ResultsTable();
-
+            String outTableName = "IA Test Results";
 
             if (!mw.isMMWindow()) {
                // run the script on the current window
@@ -775,11 +781,11 @@ public class IntelligentAcquisitionFrame extends javax.swing.JFrame {
                   } catch (MMScriptException ms) {
                      ReportingUtils.showError(ms, "Error setting position in MMWindow");
                   }
-                  ij.IJ.runMacroFile(scriptFileName_);  
+                  ij.IJ.runMacroFile(scriptFileName_);
                   ResultsTable res = ij.measure.ResultsTable.getResultsTable();
                   // get results out, stick them in new window that has listeners coupling to image window 
                   if (res.getCounter() > 0) {
-                     for (int i=0; i < res.getCounter(); i++) {
+                     for (int i = 0; i < res.getCounter(); i++) {
                         double xPos = res.getValue("X", i);
                         double yPos = res.getValue("Y", i);
                         outTable.incrementCounter();
@@ -788,10 +794,32 @@ public class IntelligentAcquisitionFrame extends javax.swing.JFrame {
                         outTable.addValue("Y", yPos);
                      }
                   }
-                  outTable.show("IA Test Results");
+                  outTable.show(outTableName);
                }
             }
             
+            // add listeners to our ResultsTable that let user click on row and go to cell that was found
+            TextPanel tp;
+            TextWindow win;
+            Frame frame = WindowManager.getFrame(outTableName);
+            if (frame != null && frame instanceof TextWindow && siPlus != null) {
+               win = (TextWindow) frame;
+               tp = win.getTextPanel();
+
+               // TODO: the following does not work, there is some voodoo going on here
+               for (MouseListener ms : tp.getMouseListeners()) {
+                  tp.removeMouseListener(ms);
+               }
+               for (KeyListener ks : tp.getKeyListeners()) {
+                  tp.removeKeyListener(ks);
+               }
+
+               ResultsTableListener myk = new ResultsTableListener(siPlus, rt, win, rowData.halfSize_);
+               tp.addKeyListener(myk);
+               tp.addMouseListener(myk);
+               frame.toFront();
+            }
+
          }
       };
       executeTest.start();
