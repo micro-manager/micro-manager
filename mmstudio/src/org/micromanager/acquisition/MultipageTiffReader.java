@@ -264,13 +264,13 @@ public class MultipageTiffReader {
          long offset = readOffsetHeaderAndOffset(MultipageTiffWriter.COMMENTS_OFFSET_HEADER, 24);
          ByteBuffer header = readIntoBuffer(offset, 8);
          if (header.getInt(0) != MultipageTiffWriter.COMMENTS_HEADER) {
-            ReportingUtils.showError("Can't find image comments in file: " + file_.getName());
+            ReportingUtils.logError("Can't find image comments in file: " + file_.getName());
             return null;
          }
          ByteBuffer buffer = readIntoBuffer(offset + 8, header.getInt(4));
          return new JSONObject(getString(buffer));
       } catch (Exception ex) {
-         ReportingUtils.showError("Can't find image comments in file: " + file_.getName());
+         ReportingUtils.logError("Can't find image comments in file: " + file_.getName());
             return null;
       }
    }
@@ -308,13 +308,13 @@ public class MultipageTiffReader {
          long offset = readOffsetHeaderAndOffset(MultipageTiffWriter.DISPLAY_SETTINGS_OFFSET_HEADER,16);
           ByteBuffer header = readIntoBuffer(offset, 8);
           if (header.getInt(0) != MultipageTiffWriter.DISPLAY_SETTINGS_HEADER) {
-             ReportingUtils.showError("Can't find display settings in file: " + file_.getName());
+             ReportingUtils.logError("Can't find display settings in file: " + file_.getName());
              return null;
           }
           ByteBuffer buffer = readIntoBuffer(offset + 8, header.getInt(4));
          return new JSONArray(getString(buffer));
       } catch (Exception ex) {
-         ReportingUtils.showError("Can't find display settings in file: " + file_.getName());
+         ReportingUtils.logError("Can't find display settings in file: " + file_.getName());
          return null;
       }
    }

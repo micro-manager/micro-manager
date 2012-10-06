@@ -1573,7 +1573,7 @@ public final class VirtualAcquisitionDisplay implements AcquisitionDisplay, Imag
 
          imageCache_.saveAs(newFileManager, pointToNewStorage);
       } catch (Exception ex) {
-         ReportingUtils.showError("Failed to save file");
+         ReportingUtils.showError(ex, "Failed to save file");
       }
       MMStudioMainFrame.getInstance().setAcqDirectory(root);
       updateWindowTitleAndStatus();
