@@ -22,6 +22,17 @@ public class ImageFlippingProcessor extends DataProcessor<TaggedImage> {
       try {
          TaggedImage nextImage = poll();
          try {
+            String camera = nextImage.tags.getString("Core-Camera");
+            if (!camera.equals(controls_.getCamera())) {
+               if (nextImage.tags.has("CameraChannelIndex")) {
+                  camera = MDUtils.getChannelName(nextImage.tags);
+               }
+            }
+            if (!camera.equals(controls_.getCamera())) {
+               produce(nextImage);
+               return;
+
+            }
             int width = MDUtils.getWidth(nextImage.tags);
             int height = MDUtils.getHeight(nextImage.tags);
             String type = MDUtils.getPixelType(nextImage.tags);
@@ -31,14 +42,18 @@ public class ImageFlippingProcessor extends DataProcessor<TaggedImage> {
             }
 
             ImageProcessor proc = ImageUtils.makeProcessor(ijType, width, height, nextImage.pix);
-            if (controls_.getFlip()) {
-               proc.flipVertical();
-            }
+
             if (controls_.getMirror()) {
                proc.flipHorizontal();
             }
-            if (controls_.getRotate()) {
+            if (controls_.getRotate() == 1) {
                proc = proc.rotateLeft();
+            }
+            if (controls_.getRotate() == 2) {
+               proc.flipVertical();
+            }
+            if (controls_.getRotate() == 3) {
+               proc = proc.rotateRight();
             }
             JSONObject newTags = nextImage.tags;
             MDUtils.setWidth(newTags, proc.getWidth());

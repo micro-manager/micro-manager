@@ -766,7 +766,7 @@ public class IntelligentAcquisitionFrame extends javax.swing.JFrame {
 
             
             ResultsTable outTable = new ResultsTable();
-            String outTableName = "IA Test Results";
+            String outTableName = Terms.RESULTTABLENAME;
 
             if (!mw.isMMWindow()) {
                // run the script on the current window
@@ -786,12 +786,12 @@ public class IntelligentAcquisitionFrame extends javax.swing.JFrame {
                   // get results out, stick them in new window that has listeners coupling to image window 
                   if (res.getCounter() > 0) {
                      for (int i = 0; i < res.getCounter(); i++) {
-                        double xPos = res.getValue("X", i);
-                        double yPos = res.getValue("Y", i);
+                        double xPos = res.getValue(Terms.X, i);
+                        double yPos = res.getValue(Terms.Y, i);
                         outTable.incrementCounter();
-                        outTable.addValue("Position", p);
-                        outTable.addValue("X", xPos);
-                        outTable.addValue("Y", yPos);
+                        outTable.addValue(Terms.POSITION, p);
+                        outTable.addValue(Terms.X, xPos);
+                        outTable.addValue(Terms.Y, yPos);
                      }
                   }
                   outTable.show(outTableName);
@@ -814,7 +814,7 @@ public class IntelligentAcquisitionFrame extends javax.swing.JFrame {
                   tp.removeKeyListener(ks);
                }
 
-               ResultsTableListener myk = new ResultsTableListener(siPlus, rt, win, rowData.halfSize_);
+               ResultsListener myk = new ResultsListener(siPlus, outTable, win);
                tp.addKeyListener(myk);
                tp.addMouseListener(myk);
                frame.toFront();

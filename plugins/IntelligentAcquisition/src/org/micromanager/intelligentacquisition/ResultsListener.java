@@ -3,14 +3,17 @@ package org.micromanager.intelligentacquisition;
 
 import ij.IJ;
 import ij.ImagePlus;
-import ij.gui.Roi;
 import ij.measure.ResultsTable;
 import ij.text.TextPanel;
 import ij.text.TextWindow;
+import java.awt.BasicStroke;
+import java.awt.Color;
+import java.awt.Point;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
+import java.awt.geom.GeneralPath;
 import org.micromanager.api.MMWindow;
 
 
@@ -21,8 +24,9 @@ import org.micromanager.api.MMWindow;
 /**
  * KeyListener and MouseListenerclass for ResultsTable
  * When user selected a line in the ResulsTable and presses a key,
- * the corresponding image will move to the correct slice and draw the ROI
- * that was used to calculate the Gaussian fit
+ * the corresponding image will move to the correct slice and draw a
+ * symbol indicating where the object was found
+ * 
  * Works only in conjunction with appropriate column names
  * Up and down keys also work as expected
  */
@@ -32,13 +36,12 @@ public class ResultsListener implements KeyListener, MouseListener{
    ResultsTable res_;
    TextWindow win_;
    TextPanel tp_;
-   int hBS_;
-   public ResultsListener(ImagePlus siPlus, ResultsTable res, TextWindow win, int halfBoxSize) {
+   
+   public ResultsListener(ImagePlus siPlus, ResultsTable res, TextWindow win) {
       siPlus_ = siPlus;
       res_ = res;
       win_ = win;
       tp_ = win.getTextPanel();
-      hBS_ = halfBoxSize;
    }
    public void keyPressed(KeyEvent e) {
       int key = e.getKeyCode();
@@ -67,6 +70,10 @@ public class ResultsListener implements KeyListener, MouseListener{
    public void mouseEntered(MouseEvent e) {};
    public void mouseExited(MouseEvent e) {};
 
+   /**
+    * Move display to the position in which the object was found
+    * and draw a symbol there
+    */
    private void update() {
       if (siPlus_ == null) {
          return;
@@ -82,34 +89,43 @@ public class ResultsListener implements KeyListener, MouseListener{
             siPlus_ = null;
             return;
          }
-         try {
-            // trick to make thing work also without Micro-Manager
-            Class mmw = Class.forName("org.micromanager.api.MMWindow");
-            MMWindow mw = new MMWindow(siPlus_);
-            if (mw.isMMWindow()) {
-               try {
-                  //int position = (int) res_.getValue(Terms.POSITION, row);
-                  //mw.setPosition(position);
-               } catch (Exception ex) {
-               }
-            }
-         } catch (ClassNotFoundException ex) {
 
+         MMWindow mw = new MMWindow(siPlus_);
+         if (mw.isMMWindow()) {
+            try {
+               int position = (int) res_.getValue(Terms.POSITION, row);
+               mw.setPosition(position);
+            } catch (Exception ex) {
+            }
          }
 
-        // int frame = (int) res_.getValue(Terms.FRAME, row);
-         //int slice = (int) res_.getValue(Terms.SLICE, row);
-         //int channel = (int) res_.getValue(Terms.CHANNEL, row);
-         //int x = (int) res_.getValue(Terms.XPIX, row);
-         //int y = (int) res_.getValue(Terms.YPIX, row);
-         //if (siPlus_.isHyperStack())
-           // siPlus_.setPosition(channel, slice, frame);
-        //else
-           // siPlus_.setPosition(Math.max(frame, slice));
-         //siPlus_.setRoi(new Roi(x - hBS_, y - hBS_, 2 * hBS_, 2 * hBS_));
+         int x = (int) res_.getValue(Terms.X, row);
+         int y = (int) res_.getValue(Terms.Y, row);
+
+         GeneralPath path = new GeneralPath();
+         path = new GeneralPath();
+         drawCross(siPlus_, new Point(x, y), path);
+         siPlus_.setOverlay(path, Color.RED, new BasicStroke(1));
       }
    }
 
+   /** 
+    * Creates the symbols.  Symbol size will be a portion of the image size
+    * (currently 5%)
+    * 
+    * @param imp - ImagePlus in which the symbol will be shown
+    * @param p - Point around which the symbol will be centered
+    * @param path - product of this function, i.e. use path to draw the symbol
+    */
+	void drawCross(ImagePlus imp, Point p, GeneralPath path) {
+		int width=imp.getWidth() / 20;
+		int height=imp.getHeight() / 20;
+		float x = p.x;
+		float y = p.y;
+		path.moveTo(x, y - height);
+		path.lineTo(x, y + height);
+		path.moveTo(x - width, y);
+		path.lineTo(x + width, y);	
+	}
+   
 }
-
-//}
