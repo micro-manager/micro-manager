@@ -23,26 +23,25 @@ package org.micromanager.acquisition;
 
 
 import ij.ImageJ;
-import ij.WindowManager;
 import ij.io.TiffDecoder;
 import ij.process.LUT;
 import java.awt.Color;
-import java.io.*;
+import java.io.File;
+import java.io.IOException;
+import java.io.RandomAccessFile;
+import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.CharBuffer;
 import java.nio.channels.FileChannel;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedList;
-import loci.formats.FormatException;
 import mmcorej.TaggedImage;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.micromanager.MMStudioMainFrame;
 import org.micromanager.utils.ImageUtils;
-import org.micromanager.utils.JavaUtils;
 import org.micromanager.utils.MDUtils;
 import org.micromanager.utils.MMScriptException;
 import org.micromanager.utils.ReportingUtils;
@@ -95,7 +94,6 @@ public class MultipageTiffWriter {
    private long filePosition_ = 0;
    private int bufferPosition_;
    private int numChannels_ = 1, numFrames_ = 1, numSlices_ = 1;
-   private boolean slicesFirst_ = false;
    private HashMap<String, Long> indexMap_;
    private long nextIFDOffsetLocation_ = -1;
    private boolean rgb_ = false;
@@ -425,9 +423,6 @@ public class MultipageTiffWriter {
       numFrames_ = MDUtils.getNumFrames(summaryMD);
       numSlices_ = MDUtils.getNumSlices(summaryMD);
       imageWidth_ = MDUtils.getWidth(summaryMD);
-      if (summaryMD.has("SlicesFirst")) {
-         slicesFirst_ = summaryMD.getBoolean("SlicesFirst");
-      }
       imageHeight_ = MDUtils.getHeight(summaryMD);
       String pixelType = MDUtils.getPixelType(summaryMD);
       if (pixelType.equals("GRAY8") || pixelType.equals("RGB32") || pixelType.equals("RGB24")) {
@@ -556,7 +551,7 @@ public class MultipageTiffWriter {
       if (numFrames_ > 1 || numSlices_ > 1 || numChannels_ > 1) {
          sb.append("hyperstack=true\n");
       }
-      if (numChannels_ > 1 && numSlices_ > 1 && slicesFirst_) {
+      if (numChannels_ > 1 && numSlices_ > 1 && masterMPTiffStorage_.slicesFirst()) {
          sb.append("order=zct\n");
       }
       //cm so calibration unit is consistent with units used in Tiff tags

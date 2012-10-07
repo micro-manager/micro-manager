@@ -30,10 +30,10 @@ import loci.common.services.ServiceFactory;
 import loci.formats.MetadataTools;
 import loci.formats.meta.IMetadata;
 import loci.formats.services.OMEXMLService;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import mmcorej.TaggedImage;
-import ome.xml.model.primitives.*;
+import ome.xml.model.primitives.Color;
+import ome.xml.model.primitives.NonNegativeInteger;
+import ome.xml.model.primitives.PositiveFloat;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -119,6 +119,10 @@ public class TaggedImageStorageMultipageTiff implements TaggedImageStorage {
          ReportingUtils.logError("Error estimating total number of image planes");
          totalNumImagePlanes_ = 1;
       }
+   }
+   
+   boolean slicesFirst() {
+      return ((ImageLabelComparator) tiffReadersByLabel_.comparator()).getSlicesFirst();
    }
 
    private void openExistingDataSet() throws IOException {

@@ -38,6 +38,14 @@ public class ImageLabelComparator implements Comparator<String> {
       slicesFirst_ = slicesFirst;
       timeFirst_ = timeFirst;
    }
+   
+   public boolean getSlicesFirst() {
+      return slicesFirst_;
+   }
+   
+   public boolean getTimeFirst() {
+      return timeFirst_;
+   }
 
    @Override
    public int compare(String s1, String s2) {

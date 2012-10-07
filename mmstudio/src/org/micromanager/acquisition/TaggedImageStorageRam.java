@@ -42,7 +42,6 @@ public class TaggedImageStorageRam implements TaggedImageStorage {
 
    public void putImage(TaggedImage taggedImage) throws MMException {
       String label = MDUtils.getLabel(taggedImage.tags);
-      System.out.println(label);
       imageMap_.put(label, taggedImage);
       try {
          lastFrame_ = Math.max(lastFrame_, MDUtils.getFrameIndex(taggedImage.tags));

@@ -138,7 +138,6 @@ public class TaggedImageStorageDiskDefault implements TaggedImageStorage {
          saveImageFile(img, md, dir_, fileName);
          writeFrameMetadata(md);
          String label = MDUtils.getLabel(md);
-         System.out.println(label);
          filenameTable_.put(label, fileName);
          //metadataTable_.put(label, md);
       } catch (Exception ex) {
