@@ -385,7 +385,7 @@ public final class VirtualAcquisitionDisplay implements AcquisitionDisplay, Imag
       private void superDraw() {
          if (super.win != null ) {
             super.getCanvas().paint(super.getCanvas().getGraphics());
-         }
+         } 
       }
       
       private Runnable drawRunnable() {
@@ -393,6 +393,7 @@ public final class VirtualAcquisitionDisplay implements AcquisitionDisplay, Imag
             @Override
             public void run() {
                imageChangedUpdate();
+               getWindow().getCanvas().setImageUpdated();
                superDraw();
                MMStudioMainFrame.getInstance().getLiveModeTimer().updateFPS();
             }       
