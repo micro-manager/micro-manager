@@ -333,19 +333,19 @@
 			UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A32D752A2FF}"
 			>
 			<File
-				RelativePath="..\..\..\micromanager1.4.10\MMDevice\DeviceUtils.cpp"
+				RelativePath="..\..\MMDevice\DeviceUtils.cpp"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\micromanager1.4.10\MMDevice\ImgBuffer.cpp"
+				RelativePath="..\..\MMDevice\ImgBuffer.cpp"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\micromanager1.4.10\MMDevice\ModuleInterface.cpp"
+				RelativePath="..\..\MMDevice\ModuleInterface.cpp"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\micromanager1.4.10\MMDevice\Property.cpp"
+				RelativePath="..\..\MMDevice\Property.cpp"
 				>
 			</File>
 			<File
@@ -363,39 +363,39 @@
 			UniqueIdentifier="{93995380-89BD-4b04-88EB-625FBE52EBFB}"
 			>
 			<File
-				RelativePath="..\..\..\micromanager1.4.10\MMDevice\DeviceBase.h"
+				RelativePath="..\..\MMDevice\DeviceBase.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\micromanager1.4.10\MMDevice\DeviceThreads.h"
+				RelativePath="..\..\MMDevice\DeviceThreads.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\micromanager1.4.10\MMDevice\DeviceUtils.h"
+				RelativePath="..\..\MMDevice\DeviceUtils.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\micromanager1.4.10\MMDevice\ImageMetadata.h"
+				RelativePath="..\..\MMDevice\ImageMetadata.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\micromanager1.4.10\MMDevice\ImgBuffer.h"
+				RelativePath="..\..\MMDevice\ImgBuffer.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\micromanager1.4.10\MMDevice\MMDevice.h"
+				RelativePath="..\..\MMDevice\MMDevice.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\micromanager1.4.10\MMDevice\MMDeviceConstants.h"
+				RelativePath="..\..\MMDevice\MMDeviceConstants.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\micromanager1.4.10\MMDevice\ModuleInterface.h"
+				RelativePath="..\..\MMDevice\ModuleInterface.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\micromanager1.4.10\MMDevice\Property.h"
+				RelativePath="..\..\MMDevice\Property.h"
 				>
 			</File>
 			<File
