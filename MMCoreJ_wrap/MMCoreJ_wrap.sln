@@ -1,5 +1,5 @@
 Microsoft Visual Studio Solution File, Format Version 10.00
-# Visual C++ Express 2008
+# Visual Studio 2008
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "MMCore", "..\MMCore\MMCore.vcproj", "{36571628-728C-4ACD-A47F-503BA91C5D43}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "MMCoreJ_wrap", "MMCoreJ_wrap.vcproj", "{EFA68887-8A97-49D7-BAB4-768E15A4E597}"
@@ -252,6 +252,8 @@ EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "LumencorCIA", "..\DeviceAdapters\LumencorCIA\LumencorCIA.vcproj", "{2C362B1C-80C9-4867-AD96-2482535190D1}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "CSUW1", "..\DeviceAdapters\CSUW1\CSUW1.vcproj", "{7C767DFF-87E6-4FE0-9557-2FF656ED1E57}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "TSI", "..\DeviceAdapters\TSI\TSI.vcproj", "{98510FB2-2BD3-4A6D-9BB0-48EB5FD4C445}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -1200,6 +1202,14 @@ Global
 		{7C767DFF-87E6-4FE0-9557-2FF656ED1E57}.Release|Win32.Build.0 = Release|Win32
 		{7C767DFF-87E6-4FE0-9557-2FF656ED1E57}.Release|x64.ActiveCfg = Release|x64
 		{7C767DFF-87E6-4FE0-9557-2FF656ED1E57}.Release|x64.Build.0 = Release|x64
+		{98510FB2-2BD3-4A6D-9BB0-48EB5FD4C445}.Debug|Win32.ActiveCfg = Debug|Win32
+		{98510FB2-2BD3-4A6D-9BB0-48EB5FD4C445}.Debug|Win32.Build.0 = Debug|Win32
+		{98510FB2-2BD3-4A6D-9BB0-48EB5FD4C445}.Debug|x64.ActiveCfg = Debug|x64
+		{98510FB2-2BD3-4A6D-9BB0-48EB5FD4C445}.Debug|x64.Build.0 = Debug|x64
+		{98510FB2-2BD3-4A6D-9BB0-48EB5FD4C445}.Release|Win32.ActiveCfg = Release|Win32
+		{98510FB2-2BD3-4A6D-9BB0-48EB5FD4C445}.Release|Win32.Build.0 = Release|Win32
+		{98510FB2-2BD3-4A6D-9BB0-48EB5FD4C445}.Release|x64.ActiveCfg = Release|x64
+		{98510FB2-2BD3-4A6D-9BB0-48EB5FD4C445}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
