@@ -7,9 +7,14 @@ package org.micromanager.acquisition;
 
 import java.util.HashMap;
 import java.util.Set;
+import java.util.TreeMap;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import mmcorej.TaggedImage;
+import org.json.JSONException;
 import org.json.JSONObject;
 import org.micromanager.api.TaggedImageStorage;
+import org.micromanager.utils.ImageLabelComparator;
 import org.micromanager.utils.MDUtils;
 import org.micromanager.utils.MMException;
 import org.micromanager.utils.ReportingUtils;
@@ -24,19 +29,20 @@ public class TaggedImageStorageRam implements TaggedImageStorage {
    public static String menuName_ = null;
    private boolean finished_ = false;
 
-   protected HashMap<String, TaggedImage> imageMap_;
+   protected TreeMap<String, TaggedImage> imageMap_;
    private JSONObject summaryMetadata_;
    private JSONObject displaySettings_;
    private int lastFrame_ = -1;
    
    public TaggedImageStorageRam(JSONObject summaryMetadata) {
-      imageMap_ = new HashMap<String,TaggedImage>();
-      summaryMetadata_ = summaryMetadata;
+      imageMap_ = new TreeMap<String,TaggedImage>(new ImageLabelComparator());
+      setSummaryMetadata(summaryMetadata);
       displaySettings_ = new JSONObject();
    }
 
    public void putImage(TaggedImage taggedImage) throws MMException {
       String label = MDUtils.getLabel(taggedImage.tags);
+      System.out.println(label);
       imageMap_.put(label, taggedImage);
       try {
          lastFrame_ = Math.max(lastFrame_, MDUtils.getFrameIndex(taggedImage.tags));
@@ -69,6 +75,17 @@ public class TaggedImageStorageRam implements TaggedImageStorage {
 
    public void setSummaryMetadata(JSONObject md) {
       summaryMetadata_ = md;
+      if (summaryMetadata_ != null) {
+         try {
+            boolean slicesFirst = summaryMetadata_.getBoolean("SlicesFirst");
+            boolean timeFirst = summaryMetadata_.getBoolean("TimeFirst");
+            TreeMap<String, TaggedImage> oldImageMap = imageMap_;
+            imageMap_ = new TreeMap<String,TaggedImage>(new ImageLabelComparator(slicesFirst,timeFirst));    
+            imageMap_.putAll(oldImageMap);
+         } catch (JSONException ex) {
+            ReportingUtils.logError("Couldn't find SlicesFirst or TimeFirst in summary metadata");
+         }
+      }  
    }
 
    public JSONObject getSummaryMetadata() {

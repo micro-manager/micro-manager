@@ -69,16 +69,16 @@ public class TaggedImageStorageMultipageTiff implements TaggedImageStorage {
    //Map of image labels to file 
    private TreeMap<String, MultipageTiffReader> tiffReadersByLabel_;
   
-   public TaggedImageStorageMultipageTiff(String dir, Boolean newDataSet, JSONObject summaryMetadata) throws IOException {
-      summaryMetadata_ = summaryMetadata;
-            
+   public TaggedImageStorageMultipageTiff(String dir, Boolean newDataSet, JSONObject summaryMetadata) throws IOException {            
       omeTiff_ = MMStudioMainFrame.getInstance().getOMETiffEnabled();
       seperateMetadataFile_ = MMStudioMainFrame.getInstance().getMetadataFileWithMultipageTiff();
 
       newDataSet_ = newDataSet;
       directory_ = dir;
-      tiffReadersByLabel_ = new TreeMap<String, MultipageTiffReader>();
+      tiffReadersByLabel_ = new TreeMap<String, MultipageTiffReader>(new ImageLabelComparator());
       cached_ = new CachedImages();
+      setSummaryMetadata(summaryMetadata);
+      
 
       if (summaryMetadata_ != null) {  
          processSummaryMD();
@@ -187,8 +187,7 @@ public class TaggedImageStorageMultipageTiff implements TaggedImageStorage {
       } catch (JSONException ex) {
          ReportingUtils.logError(ex);
       }
-      String label = MDUtils.getLabel(taggedImage.tags);
-      
+      String label = MDUtils.getLabel(taggedImage.tags);      
       if (positions_ == null) {
          try {
             positions_ = new HashMap<Integer,Position>();       
@@ -255,7 +254,18 @@ public class TaggedImageStorageMultipageTiff implements TaggedImageStorage {
    @Override
    public void setSummaryMetadata(JSONObject md) {
       summaryMetadata_ = md;
+      if (summaryMetadata_ != null) {
+         try {
+            boolean slicesFirst = summaryMetadata_.getBoolean("SlicesFirst");
+            boolean timeFirst = summaryMetadata_.getBoolean("TimeFirst");
+            TreeMap<String, MultipageTiffReader> oldImageMap = tiffReadersByLabel_;
+            tiffReadersByLabel_ = new TreeMap<String, MultipageTiffReader>(new ImageLabelComparator(slicesFirst, timeFirst));
+            tiffReadersByLabel_.putAll(oldImageMap);
+         } catch (JSONException ex) {
+            ReportingUtils.logError("Couldn't find SlicesFirst or TimeFirst in summary metadata");
+         }
       processSummaryMD();
+      }
    }
 
    @Override
