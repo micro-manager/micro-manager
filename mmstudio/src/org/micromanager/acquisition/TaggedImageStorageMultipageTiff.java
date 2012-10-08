@@ -439,7 +439,12 @@ public class TaggedImageStorageMultipageTiff implements TaggedImageStorage {
 
          //write image
          try {
-            tiffWriters_.getLast().writeImage(img);
+            String label = MDUtils.getLabel(img.tags);
+            if (label.split("_")[1].equals("1")) {
+               tiffWriters_.getLast().writeBlankImage(label);
+            } else {
+               tiffWriters_.getLast().writeImage(img);
+            }
          } catch (IOException ex) {
             ReportingUtils.logError(ex);
          }

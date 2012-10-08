@@ -98,6 +98,7 @@ public class MultipageTiffWriter {
    private long nextIFDOffsetLocation_ = -1;
    private boolean rgb_ = false;
    private int byteDepth_, imageWidth_, imageHeight_, bytesPerImagePixels_;
+   private long resNumerator_ = 1, resDenomenator_ = 1;
    private LinkedList<ByteBuffer> buffers_;
    private boolean firstIFD_ = true;
    private long omeDescriptionTagPosition_;
@@ -106,7 +107,7 @@ public class MultipageTiffWriter {
    private long ijMetadataTagPosition_;
    //Reader associated with this file
    private MultipageTiffReader reader_;
-   private String filename_;
+   private long blankPixelsOffset_ = -1;
 
    public MultipageTiffWriter(String directory, String filename, 
            JSONObject summaryMD, TaggedImageStorageMultipageTiff mpTiffStorage) {
@@ -114,7 +115,6 @@ public class MultipageTiffWriter {
       omeTiff_ = mpTiffStorage.omeTiff_;        
       reader_ = new MultipageTiffReader(summaryMD);
       File f = new File(directory + "/" + filename); 
-      filename_ = filename;
       
       try {
          processSummaryMD(summaryMD);
@@ -243,12 +243,19 @@ public class MultipageTiffWriter {
    public boolean isClosed() {
       return raFile_ == null;
    }
+   
+   public void writeBlankImage(String label) throws IOException {
+      long offset = filePosition_;
+      writeBlankIFD();
+      indexMap_.put(label, offset);
+      writeBuffers();
+   }
         
    public void writeImage(TaggedImage img) throws IOException {
       long offset = filePosition_;
       writeIFD(img);
-      updateIndexMap(img.tags,offset);
-      writeBuffers();  
+      indexMap_.put(MDUtils.getLabel(img.tags), offset);
+      writeBuffers();
    }
    
    private void writeBuffers() throws IOException {
@@ -257,11 +264,6 @@ public class MultipageTiffWriter {
          buffs[i] = buffers_.removeFirst();
       }
       fileChannel_.write(buffs);
-   }
-   
-   private void updateIndexMap(JSONObject tags, long offset) {
-      String label = MDUtils.getLabel(tags);
-      indexMap_.put(label, offset);
    }
 
    private void writeIFD(TaggedImage img) throws IOException {
@@ -334,7 +336,7 @@ public class MultipageTiffWriter {
       }
       buffers_.add(ifdBuffer);
       buffers_.add(getPixelBuffer(img));
-      buffers_.add(getResolutionValuesBuffer(img));   
+      buffers_.add(getResolutionValuesBuffer());   
       buffers_.add(ByteBuffer.wrap(getBytesFromString(mdString)));
       
       filePosition_ += totalBytes;
@@ -354,27 +356,12 @@ public class MultipageTiffWriter {
       bufferPosition_ += 12;
    }
 
-   private ByteBuffer getResolutionValuesBuffer(TaggedImage img) throws IOException {
-      long resNumerator = 1, resDenomenator = 1;
-      if (img.tags.has("PixelSizeUm")) {
-         double cmPerPixel = 0.0001;
-         try {
-            cmPerPixel = 0.0001 * img.tags.getDouble("PixelSizeUm");
-         } catch (JSONException ex) {}
-         double log = Math.log10(cmPerPixel);
-         if (log >= 0) {
-            resDenomenator = (long) cmPerPixel;
-            resNumerator = 1;
-         } else {
-            resNumerator = (long) (1 / cmPerPixel);
-            resDenomenator = 1;
-         }
-      }
+   private ByteBuffer getResolutionValuesBuffer() throws IOException {
       ByteBuffer buffer = ByteBuffer.allocate(16).order(BYTE_ORDER);
-      buffer.putInt(0,(int)resNumerator);
-      buffer.putInt(4,(int)resDenomenator);
-      buffer.putInt(8,(int)resNumerator);
-      buffer.putInt(12,(int)resDenomenator);
+      buffer.putInt(0,(int)resNumerator_);
+      buffer.putInt(4,(int)resDenomenator_);
+      buffer.putInt(8,(int)resNumerator_);
+      buffer.putInt(12,(int)resDenomenator_);
       return buffer;
 }
 
@@ -435,6 +422,22 @@ public class MultipageTiffWriter {
          byteDepth_ = 2;
       }
       bytesPerImagePixels_ = imageHeight_ * imageWidth_ * byteDepth_ * (rgb_ ? 3 : 1);
+      //Tiff resolution tag values
+      if (summaryMD.has("PixelSizeUm")) {
+         double cmPerPixel = 0.0001;
+         try {
+            cmPerPixel = 0.0001 * summaryMD.getDouble("PixelSizeUm");
+         } catch (JSONException ex) {
+         }
+         double log = Math.log10(cmPerPixel);
+         if (log >= 0) {
+            resDenomenator_ = (long) cmPerPixel;
+            resNumerator_ = 1;
+         } else {
+            resNumerator_ = (long) (1 / cmPerPixel);
+            resDenomenator_ = 1;
+         }
+      }
    }
 
    /**
@@ -670,5 +673,92 @@ public class MultipageTiffWriter {
       offsetHeader.putInt(4, (int) filePosition_);
       fileChannel_.write(offsetHeader, 16);
       filePosition_ += numReservedBytes + 8;
+   }
+  
+   private void writeBlankIFD() throws IOException {
+//      boolean blankPixelsAlreadyWritten = blankPixelsOffset_ != -1;
+      boolean blankPixelsAlreadyWritten = false;
+
+      char numEntries = (char) (((firstIFD_ && omeTiff_) ? ENTRIES_PER_IFD + 2 : ENTRIES_PER_IFD)
+              + (firstIFD_ ? 2 : 0));
+     
+      String mdString = "BLANK METADATA ";
+
+      //2 bytes for number of directory entries, 12 bytes per directory entry, 4 byte offset of next IFD
+     //6 bytes for bits per sample if RGB, 16 bytes for x and y resolution, 1 byte per character of MD string
+     //number of bytes for pixels
+     int totalBytes = 2 + numEntries*12 + 4 + (rgb_?6:0) + 16 + mdString.length() 
+             + (blankPixelsAlreadyWritten ? 0 : bytesPerImagePixels_);
+     int IFDandBitDepthBytes = 2+ numEntries*12 + 4 + (rgb_?6:0);
+     
+     ByteBuffer ifdBuffer = ByteBuffer.allocate(IFDandBitDepthBytes).order(BYTE_ORDER);
+     CharBuffer charView = ifdBuffer.asCharBuffer();
+         
+     long tagDataOffset = filePosition_ + 2 + numEntries*12 + 4;
+     nextIFDOffsetLocation_ = filePosition_ + 2 + numEntries*12;
+     
+     bufferPosition_ = 0;
+      charView.put(bufferPosition_,numEntries);
+      bufferPosition_ += 2;
+      writeIFDEntry(ifdBuffer,charView, WIDTH,(char)4,1,imageWidth_);
+      writeIFDEntry(ifdBuffer,charView,HEIGHT,(char)4,1,imageHeight_);
+      writeIFDEntry(ifdBuffer,charView,BITS_PER_SAMPLE,(char)3,rgb_?3:1,  rgb_? tagDataOffset:byteDepth_*8);
+      if (rgb_) {
+         tagDataOffset += 6;
+      }
+      writeIFDEntry(ifdBuffer,charView,COMPRESSION,(char)3,1,1);
+      writeIFDEntry(ifdBuffer,charView,PHOTOMETRIC_INTERPRETATION,(char)3,1,rgb_?2:1);
+      
+      if (firstIFD_ && omeTiff_) {
+                  omeDescriptionTagPosition_ = filePosition_ + bufferPosition_;
+         writeIFDEntry(ifdBuffer, charView, IMAGE_DESCRIPTION, (char) 2, 0, 0);
+      }     
+      if (firstIFD_) {
+         ijDescriptionTagPosition_ = filePosition_ + bufferPosition_;
+         writeIFDEntry(ifdBuffer, charView, IMAGE_DESCRIPTION, (char) 2, 0, 0);
+      }
+           
+      if (!blankPixelsAlreadyWritten) { //Write blank pixels
+         writeIFDEntry(ifdBuffer, charView, STRIP_OFFSETS, (char) 4, 1, tagDataOffset);
+         blankPixelsOffset_ = tagDataOffset;
+         tagDataOffset += bytesPerImagePixels_;
+      } else {
+         writeIFDEntry(ifdBuffer, charView, STRIP_OFFSETS, (char) 4, 1, blankPixelsOffset_);
+      }
+      
+      writeIFDEntry(ifdBuffer,charView,SAMPLES_PER_PIXEL,(char)3,1,(rgb_?3:1));
+      writeIFDEntry(ifdBuffer,charView,ROWS_PER_STRIP, (char) 3, 1, imageHeight_);
+      writeIFDEntry(ifdBuffer,charView,STRIP_BYTE_COUNTS, (char) 4, 1, bytesPerImagePixels_ );
+      writeIFDEntry(ifdBuffer,charView,X_RESOLUTION, (char)5, 1, tagDataOffset);
+      tagDataOffset += 8;
+      writeIFDEntry(ifdBuffer,charView,Y_RESOLUTION, (char)5, 1, tagDataOffset);
+      tagDataOffset += 8;
+      writeIFDEntry(ifdBuffer,charView,RESOLUTION_UNIT, (char) 3,1,3);
+      if (firstIFD_) {         
+         ijMetadataCountsTagPosition_ = filePosition_ + bufferPosition_;
+         writeIFDEntry(ifdBuffer,charView,IJ_METADATA_BYTE_COUNTS,(char)4,0,0);
+         ijMetadataTagPosition_ = filePosition_ + bufferPosition_;
+         writeIFDEntry(ifdBuffer,charView,IJ_METADATA,(char)1,0,0);
+      }
+      writeIFDEntry(ifdBuffer,charView,MM_METADATA,(char)2,mdString.length(),tagDataOffset);
+      tagDataOffset += mdString.length();
+      //NextIFDOffset
+      ifdBuffer.putInt(bufferPosition_, (int)tagDataOffset);
+      bufferPosition_ += 4;
+      
+      if (rgb_) {
+         charView.put(bufferPosition_/2,(char) (byteDepth_*8));
+         charView.put(bufferPosition_/2+1,(char) (byteDepth_*8));
+         charView.put(bufferPosition_/2+2,(char) (byteDepth_*8));
+      }
+      buffers_.add(ifdBuffer);
+      if (!blankPixelsAlreadyWritten) {
+         buffers_.add(ByteBuffer.wrap(new byte[bytesPerImagePixels_]));
+      }
+      buffers_.add(getResolutionValuesBuffer());   
+      buffers_.add(ByteBuffer.wrap(getBytesFromString(mdString)));
+      
+      filePosition_ += totalBytes;
+      firstIFD_ = false;
    }
 }
