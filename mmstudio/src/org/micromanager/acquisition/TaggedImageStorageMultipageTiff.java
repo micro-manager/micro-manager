@@ -26,6 +26,8 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.ByteOrder;
 import java.util.*;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import loci.common.services.ServiceFactory;
 import loci.formats.MetadataTools;
 import loci.formats.meta.IMetadata;
@@ -359,11 +361,17 @@ public class TaggedImageStorageMultipageTiff implements TaggedImageStorage {
       private int planeIndex_ = 0;
       private String positionName_;
       private TaggedImageStorageMultipageTiff mpTiff_;
+      private LinkedList<String> expectedLabels_;
       
       public Position(int index, JSONObject firstImageTags, TaggedImageStorageMultipageTiff mpt) {
          index_ = index;
          tiffWriters_ = new LinkedList<MultipageTiffWriter>();  
          mpTiff_ = mpt;
+         try {
+            expectedLabels_ = generateExpectedImageLabels();
+         } catch (JSONException ex) {
+           ReportingUtils.logError("Unable to get number of channels, slices, or frames from summary metadata");
+         }
          try {
             positionName_ = MDUtils.getPositionName(firstImageTags);
          } catch (JSONException ex) {
@@ -391,6 +399,30 @@ public class TaggedImageStorageMultipageTiff implements TaggedImageStorage {
          } catch (JSONException ex) {
             ReportingUtils.showError("Problem with summary metadata");
          }
+      }
+      
+      private LinkedList<String> generateExpectedImageLabels() throws JSONException {
+         LinkedList<String> labels = new LinkedList<String>();
+         int nSlices = MDUtils.getNumSlices(summaryMetadata_);
+         int nFrames = MDUtils.getNumFrames(summaryMetadata_);
+         int nChannels = MDUtils.getNumChannels(summaryMetadata_);
+         
+         for (int t = 0; t < nFrames; t++) {
+            if (slicesFirst()) {
+               for (int z = 0; z < nSlices; z++) {
+                  for (int c = 0; c < nChannels; c++) {
+                     labels.add(MDUtils.generateLabel(c, z, t, index_));
+                  }
+               }
+            } else {
+               for (int c = 0; c < nChannels; c++) {
+                  for (int z = 0; z < nSlices; z++) {
+                     labels.add(MDUtils.generateLabel(c, z, t, index_));
+                  }
+               }
+            }
+         }
+         return labels;
       }
 
       public void finished() throws IOException {
@@ -439,16 +471,11 @@ public class TaggedImageStorageMultipageTiff implements TaggedImageStorage {
 
          //write image
          try {
-            String label = MDUtils.getLabel(img.tags);
-            if (label.split("_")[1].equals("1")) {
-               tiffWriters_.getLast().writeBlankImage(label);
-            } else {
-               tiffWriters_.getLast().writeImage(img);
-            }
+            tiffWriters_.getLast().writeImage(img);
          } catch (IOException ex) {
             ReportingUtils.logError(ex);
          }
-         
+
          //write metadata
          if (omeTiff_) {
             try {
@@ -525,7 +552,7 @@ public class TaggedImageStorageMultipageTiff implements TaggedImageStorage {
       private void startOMEXML() throws JSONException, MMScriptException {
          //Last one is samples per pixel
          MetadataTools.populateMetadata(omeMD_, index_, baseFilename_, MultipageTiffWriter.BYTE_ORDER.equals(ByteOrder.LITTLE_ENDIAN),
-                 "XYZCT", "uint" + (MDUtils.isGRAY8(summaryMetadata_) ? "8" : "16"),
+                 slicesFirst() ? "XYZCT" : "XYCZT", "uint" + (MDUtils.isGRAY8(summaryMetadata_) ? "8" : "16"),
                  MDUtils.getWidth(summaryMetadata_), MDUtils.getHeight(summaryMetadata_),
                  MDUtils.getNumSlices(summaryMetadata_), MDUtils.getNumChannels(summaryMetadata_),
                  MDUtils.getNumFrames(summaryMetadata_), 1);
