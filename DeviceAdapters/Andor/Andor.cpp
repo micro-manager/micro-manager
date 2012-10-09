@@ -1345,13 +1345,13 @@ int AndorCamera::GetListOfAvailableCameras()
 
       //DMA parameters
       //if(caps.ulSetFunctions & AC_SETFUNCTION_DMAPARAMETERS)
-      {
+      { 
          int NumFramesPerDMA = 1;
          float SecondsPerDMA = 0.001f;
          ret = SetDMAParameters(NumFramesPerDMA, SecondsPerDMA);
          if (DRV_SUCCESS != ret)
             return (int)ret;
-      }
+      } 
 
 
       pAct = new CPropertyAction (this, &AndorCamera::OnTimeOut);
@@ -1961,6 +1961,11 @@ int AndorCamera::GetListOfAvailableCameras()
                {
                   HSSpeedIdx_ = i;
                   GetReadoutTime();
+
+                  int retCode = UpdatePreampGains();
+                  if (DRV_SUCCESS != retCode)
+                     return retCode;
+
                   if (acquiring)
                      StartSequenceAcquisition(sequenceLength_ - imageCounter_, intervalMs_, stopOnOverflow_);
                   PrepareSnap();
@@ -2038,6 +2043,10 @@ int AndorCamera::GetListOfAvailableCameras()
 			 if (DRV_SUCCESS != ret)
 				return (int)ret;
 			 currentGain_ = gain;
+
+          int retCode = UpdatePreampGains();
+          if (DRV_SUCCESS != retCode)
+             return retCode;
 
 			 if (acquiring)
 				StartSequenceAcquisition(sequenceLength_ - imageCounter_, intervalMs_, stopOnOverflow_);
@@ -3203,6 +3212,9 @@ int AndorCamera::OnSpuriousNoiseFilter(MM::PropertyBase* pProp, MM::ActionType e
                   }
                }
                UpdateHSSpeeds();
+               ret = UpdatePreampGains();
+               if(DRV_SUCCESS!=ret)
+                  return ret;
             }
 
             if (acquiring)
@@ -3306,6 +3318,9 @@ int AndorCamera::OnSpuriousNoiseFilter(MM::PropertyBase* pProp, MM::ActionType e
             }
 
             UpdateHSSpeeds();
+            int retCode = UpdatePreampGains();
+            if(DRV_SUCCESS!=retCode)
+               return retCode;
 
             if (initialized_) {
                OnPropertiesChanged();
@@ -3366,47 +3381,8 @@ int AndorCamera::OnSpuriousNoiseFilter(MM::PropertyBase* pProp, MM::ActionType e
                return (int)ret;
             }
 
-            int numPreAmpGain;
-            ret = GetNumberPreAmpGains(&numPreAmpGain);
-            if (ret != DRV_SUCCESS) {
-               return ret;
-            }
-            char PreAmpGainBuf[10];
-            PreAmpGains_.clear();
-            for (int i=0; i<numPreAmpGain; i++)
+            if(HasProperty(g_OutputAmplifier)) 
             {
-               float pag;
-               ret = GetPreAmpGain(i, &pag); 
-               if (ret != DRV_SUCCESS) {
-                  return ret;
-               }
-               sprintf(PreAmpGainBuf, "%.2f", pag);
-               PreAmpGains_.push_back(PreAmpGainBuf);
-            }
-            std::vector<std::string>::iterator pagIter, pagIterLast;
-            pagIterLast = PreAmpGains_.end();
-            bool resetGain(true);
-            for(pagIter = PreAmpGains_.begin(); pagIter != pagIterLast; ++pagIter) {
-               if(PreAmpGain_.compare(*pagIter) == 0) {
-                  resetGain = false;
-                  break;
-               }
-            }
-            if(resetGain && PreAmpGains_.size() > 0) {
-               ret = SetPreAmpGain(0);
-               if (ret != DRV_SUCCESS) {
-                  return ret;
-               }
-               PreAmpGain_ = PreAmpGains_[0];
-            }
-            if(HasProperty("Pre-Amp-Gain")) {
-               int rc = SetAllowedValues("Pre-Amp-Gain",PreAmpGains_);
-               if (rc != DEVICE_OK) {
-                  return ret;
-               }
-            }
-
-            if(HasProperty(g_OutputAmplifier)) {
                bool changeAmp(false);
                if(ui_swVersion > 283) {
                   std::map<std::string, int>::iterator iter, iterLast;
@@ -3443,8 +3419,13 @@ int AndorCamera::OnSpuriousNoiseFilter(MM::PropertyBase* pProp, MM::ActionType e
                   }
                }
                UpdateHSSpeeds();
-            }
 
+               
+            }
+            ret = UpdatePreampGains();
+            if(DRV_SUCCESS != ret)
+               return ret;
+            
             if (initialized_) {
                OnPropertiesChanged();
             }
@@ -3495,6 +3476,87 @@ int AndorCamera::OnSpuriousNoiseFilter(MM::PropertyBase* pProp, MM::ActionType e
 
    }
 
+   /*
+      Updates the PreAmpGains List with the allowed preamp gains for the current settings, 
+      if an invalid PAG is selected a valid preamp gain is selected.  
+   */
+   int AndorCamera::UpdatePreampGains()
+   {
+      if(HasProperty("Pre-Amp-Gain"))
+      {
+         int channel = ADChannelIndex_;
+         int amplifier = OutputAmplifierIndex_;
+         int channelSpeedIndex = HSSpeedIdx_;
+         int ret;
+         int numPreAmpGain;
+         
+         ret = GetNumberPreAmpGains(&numPreAmpGain);
+         if (ret != DRV_SUCCESS)
+            return ret; 
+         
+         if (numPreAmpGain > 0 ) 
+         {
+            //check current PAG is valid, otherwise select first valid one for this mode
+            for (int i=0; i<PreAmpGains_.size(); i++)
+            {
+               if (PreAmpGains_[i].compare(PreAmpGain_) == 0)
+               {
+                  int gainAvailable;
+                  ret = IsPreAmpGainAvailable(channel, amplifier, channelSpeedIndex, i, &gainAvailable);
+
+                  if(0== gainAvailable) 
+                  {
+                     for(int j=0; j<numPreAmpGain; j++) //find a valid PAG
+                     {
+                        ret = IsPreAmpGainAvailable(channel, amplifier, channelSpeedIndex, j, &gainAvailable);
+                        if(1== gainAvailable)
+                        {
+                           PreAmpGain_ = PreAmpGains_[j];
+                           SetProperty("Pre-Amp-Gain",PreAmpGain_.c_str());
+                        }
+                     }
+                  }
+               }
+            }
+
+            //update the list of PAGs for these settings
+            char PreAmpGainBuf[10];
+            PreAmpGains_.clear();
+            for (int i=0; i<numPreAmpGain; i++)
+            {
+               int gainAvailable;
+               ret = IsPreAmpGainAvailable(channel, amplifier, channelSpeedIndex, i, &gainAvailable);
+           
+               if(1 == gainAvailable)
+               {
+                  if(ui_swVersion >= 292) 
+                  {
+                     ret = GetPreAmpGainText(i, PreAmpGainBuf, sizeof(PreAmpGainBuf));
+                  }
+                  else 
+                  {
+                      float pag;
+                      ret = GetPreAmpGain(i, &pag); 
+                      sprintf(PreAmpGainBuf, "%.2f", pag);
+                  }
+                  if (ret != DRV_SUCCESS)
+                      return ret;
+               
+                  PreAmpGains_.push_back(PreAmpGainBuf);
+               }
+           }
+           SetAllowedValues("Pre-Amp-Gain", PreAmpGains_);
+
+           if (PreAmpGains_.empty())
+              return ERR_INVALID_PREAMPGAIN;
+      
+         }
+      }
+      return DRV_SUCCESS;
+   }
+
+   
+
 
 
    ///////////////////////////////////////////////////////////////////////////////
@@ -3517,6 +3579,7 @@ int AndorCamera::OnSpuriousNoiseFilter(MM::PropertyBase* pProp, MM::ActionType e
 
       long timePrev = GetTickCount();
       long imageWait = 0;
+
 		std::ostringstream os;
 
       {
@@ -3635,7 +3698,7 @@ int AndorCamera::OnSpuriousNoiseFilter(MM::PropertyBase* pProp, MM::ActionType e
       }
 
       while (ret == DRV_SUCCESS && frmcnt < numImages_ && !stop_);
-
+      
 	   
 
       if (ret != DRV_SUCCESS && series != 0)
@@ -3675,6 +3738,7 @@ int AndorCamera::OnSpuriousNoiseFilter(MM::PropertyBase* pProp, MM::ActionType e
    int AndorCamera::StartSequenceAcquisition(long numImages, double interval_ms, bool stopOnOverflow)
    {
       DriverGuard dg(this);
+
       if (sequenceRunning_)
          return ERR_BUSY_ACQUIRING;
 
@@ -3747,7 +3811,8 @@ int AndorCamera::OnSpuriousNoiseFilter(MM::PropertyBase* pProp, MM::ActionType e
 
       // re-apply the frame transfer mode setting
       char ftMode[MM::MaxStrLength];
-      if(HasProperty(m_str_frameTransferProp.c_str())){
+      if(HasProperty(m_str_frameTransferProp.c_str()))
+      {
          ret = GetProperty(m_str_frameTransferProp.c_str(), ftMode);
          assert(ret == DEVICE_OK);
          int modeIdx = 0;
@@ -3799,7 +3864,6 @@ int AndorCamera::OnSpuriousNoiseFilter(MM::PropertyBase* pProp, MM::ActionType e
          SetAcquisitionMode(1);
          return ret;
       }
-
       LogMessage("Starting acquisition in the camera", true);
       startTime_ = GetCurrentMMTime();
       ret = ::StartAcquisition();
@@ -3893,7 +3957,7 @@ int AndorCamera::OnSpuriousNoiseFilter(MM::PropertyBase* pProp, MM::ActionType e
       unsigned int width;
       unsigned int height;
       unsigned int bytesPerPixel;
-       
+      
       {
          DriverGuard dg(this);
          unsigned ret;
@@ -3904,7 +3968,7 @@ int AndorCamera::OnSpuriousNoiseFilter(MM::PropertyBase* pProp, MM::ActionType e
             ret = GetMostRecentImage16((WORD*)fullFrameBuffer_, roi_.xSize/binSize_ * roi_.ySize/binSize_);
          if (ret != DRV_SUCCESS)
             return (int)ret;
-
+         
          width =  GetImageWidth();
          height = GetImageHeight();
          bytesPerPixel = GetImageBytesPerPixel();
@@ -3914,61 +3978,61 @@ int AndorCamera::OnSpuriousNoiseFilter(MM::PropertyBase* pProp, MM::ActionType e
       // process image
       // imageprocesssor now called from core
 
-      // create metadata
-      char label[MM::MaxStrLength];
-      this->GetLabel(label);
+         // create metadata
+         char label[MM::MaxStrLength];
+         this->GetLabel(label);
 
 
-      MM::MMTime timestamp = this->GetCurrentMMTime();
-      Metadata md;
-      // Copy the metadata inserted by other processes:
-      std::vector<std::string> keys = metadata_.GetKeys();
-      for (unsigned int i= 0; i < keys.size(); i++) {
-         md.put(keys[i], metadata_.GetSingleTag(keys[i].c_str()).GetValue().c_str());
-      }
+         MM::MMTime timestamp = this->GetCurrentMMTime();
+         Metadata md;
+         // Copy the metadata inserted by other processes:
+         std::vector<std::string> keys = metadata_.GetKeys();
+         for (unsigned int i= 0; i < keys.size(); i++) {
+            md.put(keys[i], metadata_.GetSingleTag(keys[i].c_str()).GetValue().c_str());
+         }
 
-      md.put("Camera", label);   
-      md.put(MM::g_Keyword_Metadata_StartTime, CDeviceUtils::ConvertToString(startTime_.getMsec()));
-      md.put(MM::g_Keyword_Elapsed_Time_ms, CDeviceUtils::ConvertToString((timestamp - startTime_).getMsec()));
-      md.put(MM::g_Keyword_Metadata_ImageNumber, CDeviceUtils::ConvertToString(imageCounter_));
-      md.put(MM::g_Keyword_Binning, binSize_);
+         md.put("Camera", label);
+         md.put(MM::g_Keyword_Metadata_StartTime, CDeviceUtils::ConvertToString(startTime_.getMsec()));
+         md.put(MM::g_Keyword_Elapsed_Time_ms, CDeviceUtils::ConvertToString((timestamp - startTime_).getMsec()));
+         md.put(MM::g_Keyword_Metadata_ImageNumber, CDeviceUtils::ConvertToString(imageCounter_));
+         md.put(MM::g_Keyword_Binning, binSize_);
 
-      MetadataSingleTag mstStartTime(MM::g_Keyword_Metadata_StartTime, label, true);
-      mstStartTime.SetValue(CDeviceUtils::ConvertToString(startTime_.getMsec()));
-      md.SetTag(mstStartTime);
+         MetadataSingleTag mstStartTime(MM::g_Keyword_Metadata_StartTime, label, true);
+         mstStartTime.SetValue(CDeviceUtils::ConvertToString(startTime_.getMsec()));
+         md.SetTag(mstStartTime);
 
-      MetadataSingleTag mst(MM::g_Keyword_Elapsed_Time_ms, label, true);
-      mst.SetValue(CDeviceUtils::ConvertToString(timestamp.getMsec()));
-      md.SetTag(mst);
+         MetadataSingleTag mst(MM::g_Keyword_Elapsed_Time_ms, label, true);
+         mst.SetValue(CDeviceUtils::ConvertToString(timestamp.getMsec()));
+         md.SetTag(mst);
 
-      MetadataSingleTag mstCount(MM::g_Keyword_Metadata_ImageNumber, label, true);
-      mstCount.SetValue(CDeviceUtils::ConvertToString(imageCounter_));      
-      md.SetTag(mstCount);
+         MetadataSingleTag mstCount(MM::g_Keyword_Metadata_ImageNumber, label, true);
+         mstCount.SetValue(CDeviceUtils::ConvertToString(imageCounter_));      
+         md.SetTag(mstCount);
 
-      MetadataSingleTag mstB(MM::g_Keyword_Binning, label, true);
-      mstB.SetValue(CDeviceUtils::ConvertToString(binSize_));      
-      md.SetTag(mstB);
+         MetadataSingleTag mstB(MM::g_Keyword_Binning, label, true);
+         mstB.SetValue(CDeviceUtils::ConvertToString(binSize_));      
+         md.SetTag(mstB);
+         
+         imageCounter_++;
 
-      imageCounter_++;
-
-      // This method inserts new image in the circular buffer (residing in MMCore)
+         // This method inserts new image in the circular buffer (residing in MMCore)
       int retCode = GetCoreCallback()->InsertImage(this, (unsigned char*) fullFrameBuffer_,
-         width,
-         height,
-         bytesPerPixel,
-         md.Serialize().c_str());
-
+            width,
+            height,
+            bytesPerPixel,
+            md.Serialize().c_str());
+         
       if (!stopOnOverflow_ && retCode == DEVICE_BUFFER_OVERFLOW)
-      {
-         // do not stop on overflow - just reset the buffer
-         GetCoreCallback()->ClearImageBuffer(this);
+         {
+            // do not stop on overflow - just reset the buffer
+            GetCoreCallback()->ClearImageBuffer(this);
          return GetCoreCallback()->InsertImage(this, (unsigned char*) fullFrameBuffer_,
             GetImageWidth(),
             GetImageHeight(),
             GetImageBytesPerPixel(),
-            md.Serialize().c_str());
+               md.Serialize().c_str());
       } else
-         return DEVICE_OK;
+      return DEVICE_OK;
    }
 
    std::string AndorCamera::getCameraType() {
