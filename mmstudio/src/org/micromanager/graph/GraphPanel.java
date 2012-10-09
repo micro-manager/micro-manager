@@ -249,7 +249,7 @@ public class GraphPanel extends JPanel {
       
       Color oldColor = g.getColor();
       Stroke oldStroke = g.getStroke();
-      g.setColor(Color.yellow);
+      g.setColor(Color.gray);
       g.setStroke(new BasicStroke(1));
       g.draw(box);
       
