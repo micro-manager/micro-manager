@@ -3,7 +3,7 @@
 	ProjectType="Visual C++"
 	Version="9.00"
 	Name="MoticMicroscope"
-	ProjectGUID="{806A629B-7EAA-4265-A4C0-8A0EC03B104F}"
+	ProjectGUID="{F61EE788-E229-43F1-9E05-DAE2AB60B882}"
 	RootNamespace="DemoCamera"
 	Keyword="Win32Proj"
 	TargetFrameworkVersion="131072"
