@@ -527,6 +527,11 @@ public class MultipageTiffReader {
          try {
             data = readIFD(filePosition);
             TaggedImage ti = readTaggedImage(data);
+            if (ti.tags == null) {  //Blank placeholder image, dont add to index map
+               filePosition = data.nextIFD;
+               nextIFDOffsetLocation = data.nextIFDOffsetLocation;
+               continue;
+            }
             String label = null;
             label = MDUtils.getLabel(ti.tags);
             if (label == null) {

@@ -226,8 +226,8 @@ public class MultipageTiffWriter {
       int mdLength = img.tags.toString().length();
       int indexMapSize = indexMap_.size()*20 + 8;
       int IFDSize = ENTRIES_PER_IFD*12 + 4 + 16;
-      //2 MD extra padding
-      int extraPadding = 2000000; 
+      //5 MB extra padding
+      int extraPadding = 5000000; 
       long size = mdLength+indexMapSize+IFDSize+bytesPerImagePixels_+SPACE_FOR_COMMENTS+
       numChannels_ * DISPLAY_SETTINGS_BYTES_PER_CHANNEL + extraPadding + filePosition_;
       if (omeTiff_) {
@@ -245,9 +245,8 @@ public class MultipageTiffWriter {
    }
    
    public void writeBlankImage(String label) throws IOException {
-      long offset = filePosition_;
+      System.out.println("Writing blank: " + label);
       writeBlankIFD();
-      indexMap_.put(label, offset);
       writeBuffers();
    }
         
@@ -363,7 +362,11 @@ public class MultipageTiffWriter {
       buffer.putInt(8,(int)resNumerator_);
       buffer.putInt(12,(int)resDenomenator_);
       return buffer;
-}
+   }
+
+   public void setAbortedNumFrames(int n) {
+      numFrames_ = n;
+   }
 
    private ByteBuffer getPixelBuffer(TaggedImage img) throws IOException {
       if (rgb_) {
@@ -682,7 +685,7 @@ public class MultipageTiffWriter {
       char numEntries = (char) (((firstIFD_ && omeTiff_) ? ENTRIES_PER_IFD + 2 : ENTRIES_PER_IFD)
               + (firstIFD_ ? 2 : 0));
      
-      String mdString = "BLANK METADATA ";
+      String mdString = "NULL ";
 
       //2 bytes for number of directory entries, 12 bytes per directory entry, 4 byte offset of next IFD
      //6 bytes for bits per sample if RGB, 16 bytes for x and y resolution, 1 byte per character of MD string
