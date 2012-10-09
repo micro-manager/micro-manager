@@ -253,6 +253,20 @@ public class GraphPanel extends JPanel {
       g.setStroke(new BasicStroke(1));
       g.draw(box);
       
+     
+      if (gridVisible_) {
+         for (int i=1; i<tickCountX; i++){
+            int x = box.x + tickSizeX * i;
+            g.draw(new Line2D.Float(x, box.y + box.height, x, box.y));
+         }
+         for (int i=1; i<tickCountX; i++){
+            int y = box.y + tickSizeY * i;
+            g.draw(new Line2D.Float(box.x, y, box.x + box.width, y));
+         }
+      }
+
+      g.setColor(Color.black);
+      
       if (textVisible_) {
          // create font
          Font fnt = new Font("Arial", Font.PLAIN, TEXT_SIZE);
@@ -265,17 +279,7 @@ public class GraphPanel extends JPanel {
          g.drawString(fmt.format(bounds_.yMax).toString(), box.x - TEXT_OFFSET_X, box.y);
          g.setFont(oldFont);
       }
-      
-      if (gridVisible_) {
-         for (int i=1; i<tickCountX; i++){
-            int x = box.x + tickSizeX * i;
-            g.draw(new Line2D.Float(x, box.y + box.height, x, box.y));
-         }
-         for (int i=1; i<tickCountX; i++){
-            int y = box.y + tickSizeY * i;
-            g.draw(new Line2D.Float(box.x, y, box.x + box.width, y));
-         }
-      }
+
       g.setColor(oldColor);
       g.setStroke(oldStroke);
    }
