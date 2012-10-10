@@ -245,7 +245,6 @@ public class MultipageTiffWriter {
    }
    
    public void writeBlankImage(String label) throws IOException {
-      System.out.println("Writing blank: " + label);
       writeBlankIFD();
       writeBuffers();
    }

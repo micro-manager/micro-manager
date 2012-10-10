@@ -197,7 +197,7 @@ public class TaggedImageStorageMultipageTiff implements TaggedImageStorage {
       } catch (JSONException ex) {
          ReportingUtils.logError(ex);
       }
-      String label = MDUtils.getLabel(taggedImage.tags);      
+      String label = MDUtils.getLabel(taggedImage.tags);
       if (positions_ == null) {
          try {
             positions_ = new HashMap<Integer,Position>();       
@@ -279,6 +279,7 @@ public class TaggedImageStorageMultipageTiff implements TaggedImageStorage {
       if (summaryMetadata_ != null) {
          try {
             boolean slicesFirst = summaryMetadata_.getBoolean("SlicesFirst");
+//            boolean slicesFirst = false;
             boolean timeFirst = summaryMetadata_.getBoolean("TimeFirst");
             TreeMap<String, MultipageTiffReader> oldImageMap = tiffReadersByLabel_;
             tiffReadersByLabel_ = new TreeMap<String, MultipageTiffReader>(new ImageLabelComparator(slicesFirst, timeFirst));
@@ -470,11 +471,7 @@ public class TaggedImageStorageMultipageTiff implements TaggedImageStorage {
 
          //write metadata
          if (omeTiff_) {
-            try {
-               addToOMEMetadata(img.tags);
-            } catch (Exception ex) {
-               ReportingUtils.logError("Problem making OME metadata");
-            }
+            addToOMEMetadata(img.tags);  
          }
          
          try {
@@ -628,14 +625,18 @@ public class TaggedImageStorageMultipageTiff implements TaggedImageStorage {
             omeMD_.setChannelName(channel.getString("Name"), index_, c);
          }
 
-         if (summaryMetadata_.has("PixelSize_um")) {
+         if (summaryMetadata_.has("PixelSize_um") && !summaryMetadata_.isNull("PixelSize_um")) {
             double pixelSize = summaryMetadata_.getDouble("PixelSize_um");
-            omeMD_.setPixelsPhysicalSizeX(new PositiveFloat(pixelSize), index_);
-            omeMD_.setPixelsPhysicalSizeY(new PositiveFloat(pixelSize), index_);
+            if (pixelSize > 0) {
+               omeMD_.setPixelsPhysicalSizeX(new PositiveFloat(pixelSize), index_);
+               omeMD_.setPixelsPhysicalSizeY(new PositiveFloat(pixelSize), index_);
+            }
          }
-         if (summaryMetadata_.has("z-step_um")) {
+         if (summaryMetadata_.has("z-step_um") && !summaryMetadata_.isNull("z-step_um")) {
             double zStep = summaryMetadata_.getDouble("z-step_um");
-            omeMD_.setPixelsPhysicalSizeZ(new PositiveFloat(zStep), index_);
+            if (zStep > 0) {
+               omeMD_.setPixelsPhysicalSizeZ(new PositiveFloat(zStep), index_);
+            }
          }
 
 //         String instrumentID = MetadataTools.createLSID("Instrument", 0);
@@ -693,31 +694,43 @@ public class TaggedImageStorageMultipageTiff implements TaggedImageStorage {
 //    }   
       }
 
-      private void addToOMEMetadata(JSONObject tags) throws JSONException {
-         omeMD_.setTiffDataIFD(new NonNegativeInteger(ifdCount_), index_, planeIndex_);
-         omeMD_.setTiffDataFirstZ(new NonNegativeInteger(MDUtils.getSliceIndex(tags)), index_, planeIndex_);
-         omeMD_.setTiffDataFirstC(new NonNegativeInteger(MDUtils.getChannelIndex(tags)), index_, planeIndex_);
-         omeMD_.setTiffDataFirstT(new NonNegativeInteger(MDUtils.getFrameIndex(tags)), index_, planeIndex_);
-         omeMD_.setTiffDataPlaneCount(new NonNegativeInteger(1), index_, planeIndex_);
-         omeMD_.setUUIDFileName(currentTiffFilename_, index_, planeIndex_);
-         
-         omeMD_.setPlaneTheZ(new NonNegativeInteger(MDUtils.getChannelIndex(tags)), index_, planeIndex_);
-         omeMD_.setPlaneTheC(new NonNegativeInteger(MDUtils.getSliceIndex(tags)), index_, planeIndex_);
-         omeMD_.setPlaneTheT(new NonNegativeInteger(MDUtils.getFrameIndex(tags)), index_, planeIndex_); 
-         if (tags.has("Exposure-ms")) {
-            omeMD_.setPlaneExposureTime(tags.getDouble("Exposure-ms")/1000.0, index_, planeIndex_);
+      private void addToOMEMetadata(JSONObject tags) {
+         //Required tags: Channel, slice, and frame index
+         try {
+            omeMD_.setTiffDataIFD(new NonNegativeInteger(ifdCount_), index_, planeIndex_);
+            omeMD_.setTiffDataFirstZ(new NonNegativeInteger(MDUtils.getSliceIndex(tags)), index_, planeIndex_);
+            omeMD_.setTiffDataFirstC(new NonNegativeInteger(MDUtils.getChannelIndex(tags)), index_, planeIndex_);
+            omeMD_.setTiffDataFirstT(new NonNegativeInteger(MDUtils.getFrameIndex(tags)), index_, planeIndex_);
+            omeMD_.setTiffDataPlaneCount(new NonNegativeInteger(1), index_, planeIndex_);
+            omeMD_.setUUIDFileName(currentTiffFilename_, index_, planeIndex_);
+
+            omeMD_.setPlaneTheZ(new NonNegativeInteger(MDUtils.getChannelIndex(tags)), index_, planeIndex_);
+            omeMD_.setPlaneTheC(new NonNegativeInteger(MDUtils.getSliceIndex(tags)), index_, planeIndex_);
+            omeMD_.setPlaneTheT(new NonNegativeInteger(MDUtils.getFrameIndex(tags)), index_, planeIndex_);
+         } catch (JSONException ex) {
+            ReportingUtils.showError("Image Metadata missing ChannelIndex, SliceIndex, or FrameIndex");
          }
-         if (tags.has("XPositionUm")) {
-            omeMD_.setPlanePositionX(tags.getDouble("XPositionUm"), index_, planeIndex_);
+
+         //Optional tags
+         try {
+            if (tags.has("Exposure-ms") && !tags.isNull("Exposure-ms")) {
+               omeMD_.setPlaneExposureTime(tags.getDouble("Exposure-ms") / 1000.0, index_, planeIndex_);
+            }
+            if (tags.has("XPositionUm") && !tags.isNull("XPositionUm")) {
+               omeMD_.setPlanePositionX(tags.getDouble("XPositionUm"), index_, planeIndex_);
+            }
+            if (tags.has("YPositionUm") && !tags.isNull("YPositionUm")) {
+               omeMD_.setPlanePositionY(tags.getDouble("YPositionUm"), index_, planeIndex_);
+            }
+            if (tags.has("ZPositionUm") && !tags.isNull("ZPositionUm")) {
+               omeMD_.setPlanePositionZ(tags.getDouble("ZPositionUm"), index_, planeIndex_);
+            }
+            //TODO add in delta T????
+            
+         } catch (JSONException e) {
+            ReportingUtils.logError("Problem adding tags to OME Metadata");
          }
-         if (tags.has("YPositionUm")) {
-            omeMD_.setPlanePositionY(tags.getDouble("YPositionUm"), index_, planeIndex_);
-         }
-         if (tags.has("ZPositionUm")) {
-            omeMD_.setPlanePositionZ(tags.getDouble("ZPositionUm"), index_, planeIndex_);
-         }
-         //TODO add in delta T????
-         
+
          ifdCount_++;
          planeIndex_++;
          
