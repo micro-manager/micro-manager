@@ -8,9 +8,11 @@ import java.awt.Color;
 import org.micromanager.api.ImageCache;
 import org.micromanager.api.ImageCacheListener;
 import java.util.ArrayList;
+import java.util.Collections;
 import org.micromanager.api.TaggedImageStorage;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -32,7 +34,7 @@ import org.micromanager.utils.ReportingUtils;
 public class MMImageCache implements ImageCache {
 
    public static String menuName_ = null;
-   public ArrayList<ImageCacheListener> imageStorageListeners_ = new ArrayList<ImageCacheListener>();
+   public List<ImageCacheListener> imageStorageListeners_ = Collections.synchronizedList(new ArrayList<ImageCacheListener>());
    private TaggedImageStorage imageStorage_;
    private Set<String> changingKeys_;
    private JSONObject firstTags_;
@@ -41,15 +43,21 @@ public class MMImageCache implements ImageCache {
    private final ExecutorService fileExecutor_;
 
    public void addImageCacheListener(ImageCacheListener l) {
-      imageStorageListeners_.add(l);
+      synchronized (imageStorageListeners_) {
+         imageStorageListeners_.add(l);
+      }
    }
 
    public ImageCacheListener[] getImageCacheListeners() {
-      return (ImageCacheListener[]) imageStorageListeners_.toArray();
+      synchronized (imageStorageListeners_) {
+         return (ImageCacheListener[]) imageStorageListeners_.toArray();
+      }
    }
 
    public void removeImageCacheListener(ImageCacheListener l) {
-      imageStorageListeners_.remove(l);
+      synchronized (imageStorageListeners_) {
+         imageStorageListeners_.remove(l);
+      }
    }
 
    public MMImageCache(TaggedImageStorage imageStorage) {
@@ -73,8 +81,10 @@ public class MMImageCache implements ImageCache {
    public void finished() {
       imageStorage_.finished();
       String path = getDiskLocation();
-      for (ImageCacheListener l : imageStorageListeners_) {
-         l.imagingFinished(path);
+      synchronized (imageStorageListeners_) {
+         for (ImageCacheListener l : imageStorageListeners_) {
+            l.imagingFinished(path);
+         }
       }
    }
 
@@ -107,7 +117,9 @@ public class MMImageCache implements ImageCache {
 
    public void close() {
       imageStorage_.close();
-      imageStorageListeners_.clear();
+      synchronized (imageStorageListeners_) {
+         imageStorageListeners_.clear();
+      }
    }
 
    public void saveAs(TaggedImageStorage newImageFileManager) {
@@ -177,9 +189,10 @@ public class MMImageCache implements ImageCache {
             }
          }
 
-
-         for (ImageCacheListener l : imageStorageListeners_) {
-            l.imageReceived(taggedImg);
+         synchronized (imageStorageListeners_) {
+            for (ImageCacheListener l : imageStorageListeners_) {
+               l.imageReceived(taggedImg);
+            }
          }
       } catch (Exception ex) {
          ReportingUtils.logError(ex);

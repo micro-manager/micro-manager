@@ -653,19 +653,6 @@ public class MMAcquisition {
          if (virtAcq_.acquisitionIsRunning()) {
             virtAcq_.abort();
          }
-         // wait for 3 s for display to finish
-         long start = System.currentTimeMillis();
-         long timeout = 3000;
-         boolean finished = false;
-         while (!finished && (System.currentTimeMillis() - start) < timeout) {
-            try {
-               if (virtAcq_.imageCache_.isFinished())
-                  finished = true;
-               Thread.sleep(100);
-            } catch (InterruptedException ie) {
-               ReportingUtils.logError(ie);
-            }
-         }
       }
    }
 
