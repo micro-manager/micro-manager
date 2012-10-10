@@ -3,7 +3,6 @@
            (java.awt Color Font Polygon)
            (javax.swing JFrame JPanel)))
 
-
 (defn enable-anti-aliasing
   "Turn on (off) anti-aliasing for a graphics context."
   ([^Graphics g]
@@ -146,7 +145,7 @@
 
 (defn demo-animation [reference]
   (dotimes [i 200]
-  (Thread/sleep 10)
+  (Thread/sleep 30)
   (swap! reference (fn [data]
                      (-> data
                          (assoc-in [0 :params :w] (+ i 100))
