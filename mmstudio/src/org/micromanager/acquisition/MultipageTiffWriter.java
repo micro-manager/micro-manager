@@ -266,8 +266,7 @@ public class MultipageTiffWriter {
    }
 
    private void writeIFD(TaggedImage img) throws IOException {
-      char numEntries = (char) (((firstIFD_ && omeTiff_) ? ENTRIES_PER_IFD + 2 : ENTRIES_PER_IFD)
-              + (firstIFD_ ? 2 : 0));
+      char numEntries = (char) ((firstIFD_  ? ENTRIES_PER_IFD + 4 : ENTRIES_PER_IFD));
       if (img.tags.has("Summary")) {
          img.tags.remove("Summary");
       }
@@ -297,11 +296,9 @@ public class MultipageTiffWriter {
       writeIFDEntry(ifdBuffer,charView,COMPRESSION,(char)3,1,1);
       writeIFDEntry(ifdBuffer,charView,PHOTOMETRIC_INTERPRETATION,(char)3,1,rgb_?2:1);
       
-      if (firstIFD_ && omeTiff_) {
-                  omeDescriptionTagPosition_ = filePosition_ + bufferPosition_;
+      if (firstIFD_ ) {
+         omeDescriptionTagPosition_ = filePosition_ + bufferPosition_;
          writeIFDEntry(ifdBuffer, charView, IMAGE_DESCRIPTION, (char) 2, 0, 0);
-      }     
-      if (firstIFD_) {
          ijDescriptionTagPosition_ = filePosition_ + bufferPosition_;
          writeIFDEntry(ifdBuffer, charView, IMAGE_DESCRIPTION, (char) 2, 0, 0);
       }
