@@ -157,11 +157,11 @@ public class MMImageCache implements ImageCache {
                      }
                   });
             }
+            newImageFileManager.finished();
             progressBar.setVisible(false);
             if (useNewStorage) {
                imageStorage_ = newImageFileManager;
             }
-            newImageFileManager.finished();
          //}
       // });
       //th.start();
