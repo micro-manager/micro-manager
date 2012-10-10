@@ -89,7 +89,7 @@
       (draw-primitive g2d (:type item) params)))))
 
 (defn paint-canvas-graphics [^Graphics graphics data]
-  (draw-primitives graphics temp-data))
+  (draw-primitives graphics data))
 
 (defn canvas [reference]
   (let [panel (proxy [JPanel] []
@@ -134,10 +134,20 @@
              :filled true}}
    ])
 
-(defn canvas-frame []
-  (let [panel (canvas (var temp-data))]
+(def grafix (atom temp-data))
+
+(defn canvas-frame [reference]
+  (let [panel (canvas reference)]
     (doto (JFrame. "canvas")
       (.. getContentPane (add panel))
       (.setBounds 10 10 500 500)
       .show)
     panel))
+
+(defn demo-animation [reference]
+  (dotimes [i 200]
+  (Thread/sleep 10)
+  (swap! reference assoc-in [0 :params :w] (+ i 100))
+  (swap! reference assoc-in [0 :params :h] (+ i 100))
+  ))
+
