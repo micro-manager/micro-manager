@@ -2,10 +2,10 @@ package org.micromanager.utils;
 
 public class AcqOrderMode {
 
-	public static final int TIME_POS_CHANNEL_SLICE = 0;
-	public static final int TIME_POS_SLICE_CHANNEL = 1;
-	public static final int POS_TIME_CHANNEL_SLICE = 2;
-	public static final int POS_TIME_SLICE_CHANNEL = 3;
+	public static final int TIME_POS_SLICE_CHANNEL = 0;
+	public static final int TIME_POS_CHANNEL_SLICE = 1;
+	public static final int POS_TIME_SLICE_CHANNEL = 2;
+	public static final int POS_TIME_CHANNEL_SLICE = 3;
 
 	private int id_;
 	private boolean timeEnabled_;

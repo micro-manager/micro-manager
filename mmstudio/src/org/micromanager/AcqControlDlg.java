@@ -1097,10 +1097,10 @@ public class AcqControlDlg extends JFrame implements PropertyChangeListener {
       acquisitionOrderPanel_.add(acqOrderBox_);
 
       acqOrderModes_ = new AcqOrderMode[4];
-      acqOrderModes_[0] = new AcqOrderMode(AcqOrderMode.TIME_POS_CHANNEL_SLICE);
-      acqOrderModes_[1] = new AcqOrderMode(AcqOrderMode.TIME_POS_SLICE_CHANNEL);
-      acqOrderModes_[2] = new AcqOrderMode(AcqOrderMode.POS_TIME_CHANNEL_SLICE);
-      acqOrderModes_[3] = new AcqOrderMode(AcqOrderMode.POS_TIME_SLICE_CHANNEL);
+      acqOrderModes_[0] = new AcqOrderMode(AcqOrderMode.TIME_POS_SLICE_CHANNEL);
+      acqOrderModes_[1] = new AcqOrderMode(AcqOrderMode.TIME_POS_CHANNEL_SLICE);
+      acqOrderModes_[2] = new AcqOrderMode(AcqOrderMode.POS_TIME_SLICE_CHANNEL);
+      acqOrderModes_[3] = new AcqOrderMode(AcqOrderMode.POS_TIME_CHANNEL_SLICE);
       acqOrderBox_.addItem(acqOrderModes_[0]);
       acqOrderBox_.addItem(acqOrderModes_[1]);
       acqOrderBox_.addItem(acqOrderModes_[2]);
