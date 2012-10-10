@@ -147,7 +147,9 @@
 (defn demo-animation [reference]
   (dotimes [i 200]
   (Thread/sleep 10)
-  (swap! reference assoc-in [0 :params :w] (+ i 100))
-  (swap! reference assoc-in [0 :params :h] (+ i 100))
-  ))
+  (swap! reference (fn [data]
+                     (-> data
+                         (assoc-in [0 :params :w] (+ i 100))
+                         (assoc-in [0 :params :h] (+ i 100)))
+                     ))))
 
