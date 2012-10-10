@@ -143,6 +143,12 @@
       .show)
     panel))
 
+(defn demo-var []
+  (canvas-frame (var temp-data)))
+
+(defn demo-atom []
+  (canvas-frame grafix))
+
 (defn demo-animation [reference]
   (dotimes [i 200]
   (Thread/sleep 30)
