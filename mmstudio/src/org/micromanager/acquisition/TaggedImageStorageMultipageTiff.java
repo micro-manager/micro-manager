@@ -254,6 +254,7 @@ public class TaggedImageStorageMultipageTiff implements TaggedImageStorage {
       try {
          if (positions_ != null) {
             for (Position p : positions_.values()) {
+               //TODO add in tag to check for standard acquisition
                if (false) {
                   p.finishAbortedAcqIfNeeded();
                }
@@ -384,6 +385,9 @@ public class TaggedImageStorageMultipageTiff implements TaggedImageStorage {
       private boolean finished_ = false;
       private int ifdCount_ = 0;
       private int planeIndex_ = 0;
+      private int tiffDataIndex_ = -1;
+      private int tiffDataPlaneCount_ = 0;
+      private int nextExpectedChannel_ = 0, nextExpectedSlice_ = 0, nextExpectedFrame_ = 0;
       private String positionName_;
       private TaggedImageStorageMultipageTiff mpTiff_;
       private int lastFrame_ = -1;
@@ -639,26 +643,28 @@ public class TaggedImageStorageMultipageTiff implements TaggedImageStorage {
             }
          }
 
-//         String instrumentID = MetadataTools.createLSID("Instrument", 0);
-//         store.setInstrumentID(instrumentID, 0);
+         omeMD_.setStageLabelName(positionName_, index_);
+            
+         
+         String instrumentID = MetadataTools.createLSID("Instrument", 0);
+         omeMD_.setInstrumentID(instrumentID, 0);
+         // link Instrument and Image
+         omeMD_.setImageInstrumentRef(instrumentID, index_);
+
 
 //        String date = DateTools.formatDate(p.time, DATE_FORMAT);
-//        store.setImageAcquisitionDate(new Timestamp(date), i);
+//        omeMD_.setImageAcquisitionDate(new Timestamp(date), i);
 //
-//        store.setImageDescription(p.comment, i);
-//
-//        // link Instrument and Image
-//        store.setImageInstrumentRef(instrumentID, i);
-//      
+//        omeMD_.setImageDescription(p.comment, i);
 //
 //        int nextStamp = 0;
 //        for (int q=0; q<getImageCount(); q++) {
-//          store.setPlaneExposureTime(p.exposureTime, i, q);
+//          omeMD_.setPlaneExposureTime(p.exposureTime, i, q);
 //          String tiff = positions.get(getSeries()).getFile(q);
 //          if (tiff != null && new Location(tiff).exists() &&
 //            nextStamp < p.timestamps.length)
 //          {
-//            store.setPlaneDeltaT(p.timestamps[nextStamp++], i, q);
+//            omeMD_.setPlaneDeltaT(p.timestamps[nextStamp++], i, q);
 //          }
 //        }
 //
@@ -666,66 +672,126 @@ public class TaggedImageStorageMultipageTiff implements TaggedImageStorage {
 //        p.detectorID = MetadataTools.createLSID("Detector", 0, i);
 //
 //        for (int c=0; c<p.channels.length; c++) {
-//          store.setDetectorSettingsBinning(getBinning(p.binning), i, c);
-//          store.setDetectorSettingsGain(new Double(p.gain), i, c);
+//          omeMD_.setDetectorSettingsBinning(getBinning(p.binning), i, c);
+//          omeMD_.setDetectorSettingsGain(new Double(p.gain), i, c);
 //          if (c < p.voltage.size()) {
-//            store.setDetectorSettingsVoltage(p.voltage.get(c), i, c);
+//            omeMD_.setDetectorSettingsVoltage(p.voltage.get(c), i, c);
 //          }
-//          store.setDetectorSettingsID(p.detectorID, i, c);
+//          omeMD_.setDetectorSettingsID(p.detectorID, i, c);
 //        }
 //
-//        store.setDetectorID(p.detectorID, 0, i);
+//        omeMD_.setDetectorID(p.detectorID, 0, i);
 //        if (p.detectorModel != null) {
-//          store.setDetectorModel(p.detectorModel, 0, i);
+//          omeMD_.setDetectorModel(p.detectorModel, 0, i);
 //        }
 //
 //        if (serialNumber != null) {
-//          store.setDetectorSerialNumber(serialNumber, 0, i);
+//          omeMD_.setDetectorSerialNumber(serialNumber, 0, i);
 //        }
 //
 //        if (p.detectorManufacturer != null) {
-//          store.setDetectorManufacturer(p.detectorManufacturer, 0, i);
+//          omeMD_.setDetectorManufacturer(p.detectorManufacturer, 0, i);
 //        }
-//
-//        if (p.cameraMode == null) p.cameraMode = "Other";
-//        store.setDetectorType(getDetectorType(p.cameraMode), 0, i);
-//        store.setImagingEnvironmentTemperature(p.temperature, i);
-//      }
-//    }   
-      }
 
+//        if (p.cameraMode == null) p.cameraMode = "Other";
+//        omeMD_.setDetectorType(getDetectorType(p.cameraMode), 0, i);
+//        omeMD_.setImagingEnvironmentTemperature(p.temperature, i);
+
+      }
+      
       private void addToOMEMetadata(JSONObject tags) {
          //Required tags: Channel, slice, and frame index
          try {
-            omeMD_.setTiffDataIFD(new NonNegativeInteger(ifdCount_), index_, planeIndex_);
-            omeMD_.setTiffDataFirstZ(new NonNegativeInteger(MDUtils.getSliceIndex(tags)), index_, planeIndex_);
-            omeMD_.setTiffDataFirstC(new NonNegativeInteger(MDUtils.getChannelIndex(tags)), index_, planeIndex_);
-            omeMD_.setTiffDataFirstT(new NonNegativeInteger(MDUtils.getFrameIndex(tags)), index_, planeIndex_);
-            omeMD_.setTiffDataPlaneCount(new NonNegativeInteger(1), index_, planeIndex_);
-            omeMD_.setUUIDFileName(currentTiffFilename_, index_, planeIndex_);
+            int slice = MDUtils.getSliceIndex(tags);
+            int frame = MDUtils.getFrameIndex(tags);
+            int channel = MDUtils.getChannelIndex(tags);
+                 
+            //New tiff data if unexpected index, or new file
+            boolean newTiffData = slice != nextExpectedSlice_ || channel != nextExpectedChannel_ ||
+                    frame != nextExpectedFrame_ || ifdCount_ == 0; //ifdCount is 0 when a new file started
+            if (newTiffData) {   //create new tiff data element
+               tiffDataIndex_++;
+               omeMD_.setTiffDataFirstZ(new NonNegativeInteger(slice), index_, tiffDataIndex_);
+               omeMD_.setTiffDataFirstC(new NonNegativeInteger(channel), index_, tiffDataIndex_);
+               omeMD_.setTiffDataFirstT(new NonNegativeInteger(frame), index_, tiffDataIndex_);
+               omeMD_.setTiffDataIFD(new NonNegativeInteger(ifdCount_), index_, tiffDataIndex_);
+               omeMD_.setUUIDFileName(currentTiffFilename_, index_, tiffDataIndex_);
+               tiffDataPlaneCount_ = 1;
+            } else {   //continue adding to previous tiffdata element
+               tiffDataPlaneCount_++;
+            }
+            omeMD_.setTiffDataPlaneCount(new NonNegativeInteger(tiffDataPlaneCount_), index_, tiffDataIndex_);
 
-            omeMD_.setPlaneTheZ(new NonNegativeInteger(MDUtils.getChannelIndex(tags)), index_, planeIndex_);
-            omeMD_.setPlaneTheC(new NonNegativeInteger(MDUtils.getSliceIndex(tags)), index_, planeIndex_);
-            omeMD_.setPlaneTheT(new NonNegativeInteger(MDUtils.getFrameIndex(tags)), index_, planeIndex_);
+            
+            //Determine next expected indices
+            int numChannels = MDUtils.getNumChannels(summaryMetadata_);
+            int numSlices = MDUtils.getNumSlices(summaryMetadata_);
+            if (slicesFirst()) {
+               nextExpectedSlice_ = slice + 1;
+               if (nextExpectedSlice_ == numSlices) {
+                  nextExpectedSlice_ = 0;
+                  nextExpectedChannel_ = channel + 1;
+                  if (nextExpectedChannel_ == numChannels) {
+                     nextExpectedChannel_ = 0;
+                     nextExpectedFrame_ = frame + 1;
+                  }
+               }
+            } else {
+               nextExpectedChannel_ = channel + 1;
+               if (nextExpectedChannel_ == numChannels) {
+                  nextExpectedChannel_ = 0;
+                  nextExpectedSlice_ = slice + 1;
+                  if (nextExpectedSlice_ == numSlices) {
+                     nextExpectedSlice_ = 0;
+                     nextExpectedFrame_ = frame + 1;
+                  }
+               }
+            }
+            
+
+            omeMD_.setPlaneTheZ(new NonNegativeInteger(slice), index_, planeIndex_);
+            omeMD_.setPlaneTheC(new NonNegativeInteger(channel), index_, planeIndex_);
+            omeMD_.setPlaneTheT(new NonNegativeInteger(frame), index_, planeIndex_);
          } catch (JSONException ex) {
             ReportingUtils.showError("Image Metadata missing ChannelIndex, SliceIndex, or FrameIndex");
          }
 
          //Optional tags
          try {
+            
             if (tags.has("Exposure-ms") && !tags.isNull("Exposure-ms")) {
                omeMD_.setPlaneExposureTime(tags.getDouble("Exposure-ms") / 1000.0, index_, planeIndex_);
             }
             if (tags.has("XPositionUm") && !tags.isNull("XPositionUm")) {
                omeMD_.setPlanePositionX(tags.getDouble("XPositionUm"), index_, planeIndex_);
+               if (planeIndex_ == 0) { //should be set at start, but dont have position coordinates then
+                  omeMD_.setStageLabelX(tags.getDouble("XPositionUm"), index_);
+               }
             }
             if (tags.has("YPositionUm") && !tags.isNull("YPositionUm")) {
                omeMD_.setPlanePositionY(tags.getDouble("YPositionUm"), index_, planeIndex_);
+               if (planeIndex_ == 0) {
+                  omeMD_.setStageLabelY(tags.getDouble("YPositionUm"), index_);
+               }
             }
             if (tags.has("ZPositionUm") && !tags.isNull("ZPositionUm")) {
                omeMD_.setPlanePositionZ(tags.getDouble("ZPositionUm"), index_, planeIndex_);
             }
             //TODO add in delta T????
+            
+
+            if (planeIndex_ == 0) {
+               if (tags.has("Core-Camera") && !tags.isNull("Core-Camera")) {
+                  String camera = tags.getString("Core-Camera");
+                  String id = MetadataTools.createLSID(camera);
+                  //Instrument index, detector index
+                  omeMD_.setDetectorID(camera, 0, 0);
+               }
+            }
+
+
+            
+            
             
          } catch (JSONException e) {
             ReportingUtils.logError("Problem adding tags to OME Metadata");
