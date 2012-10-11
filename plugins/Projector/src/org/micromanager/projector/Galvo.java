@@ -204,7 +204,7 @@ public class Galvo implements ProjectionDevice {
             try {
                mmc_.loadGalvoPolygons(galvo_);
             } catch (Exception ex) {
-               ReportingUtils.logError(ex);
+               ReportingUtils.showError(ex);
             }
          }
       });
@@ -217,7 +217,7 @@ public class Galvo implements ProjectionDevice {
             try {
                mmc_.runGalvoPolygons(galvo_);
             } catch (Exception ex) {
-               ReportingUtils.logError(ex);
+               ReportingUtils.showError(ex);
             }
          }
       });
@@ -239,7 +239,7 @@ public class Galvo implements ProjectionDevice {
             try {
                mmc_.setGalvoPolygonRepetitions(galvo_, reps);
             } catch (Exception ex) {
-               ReportingUtils.logError(ex);
+               ReportingUtils.showError(ex);
             }
          }
       });

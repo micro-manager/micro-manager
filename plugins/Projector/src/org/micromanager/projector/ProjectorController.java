@@ -102,9 +102,8 @@ public class ProjectorController {
 //imgp.getCanvas().repaint();
    public Point measureSpot(Point dmdPt) {
       dev.displaySpot(dmdPt.x, dmdPt.y);
-      mmc.sleep(2000);
+      dev.waitForDevice();
       gui.snapSingleImage();
-
       mmc.sleep(200);
       ImageProcessor proc = IJ.getImage().getProcessor();
       Point maxPt = findPeak(proc);

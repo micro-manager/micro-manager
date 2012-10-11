@@ -97,7 +97,8 @@ private:
    double spotSize_;
 
    // Helper functions
-   void RappScanner::RunDummyCalibration(bool laser2);
+   int SafeStoreSequence(tStringList sequenceList);
+   void RunDummyCalibration(bool laser2);
 
 };
 

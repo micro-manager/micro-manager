@@ -337,7 +337,8 @@ int RappScanner::SetPolygonRepetitions(int repetitions)
       sequenceList.push_back(repeat.str());
    }
    sequenceList.push_back(std::string("off"));
-   return UGA_->StoreSequence(sequenceList) ? DEVICE_OK : DEVICE_ERR;
+   
+   return SafeStoreSequence(sequenceList);
 }
 
 int RappScanner::RunPolygons()
@@ -352,10 +353,7 @@ int RappScanner::RunSequence()
       std::string sequence2 = replaceChar(sequence_, ':', ',');
       tStringList sequenceList = split(sequence2, ' ');
    
-      if (!UGA_->StoreSequence(sequenceList))
-      {
-         return DEVICE_ERR;
-      } 
+      return SafeStoreSequence(sequenceList);
    }
    
    return UGA_->RunSequence(false) ? DEVICE_OK : DEVICE_ERR; 
@@ -538,6 +536,16 @@ int RappScanner::OnMinimumRectSize(MM::PropertyBase* pProp, MM::ActionType eAct)
 /////////////////////////////
 // Helper Functions
 /////////////////////////////
+
+int RappScanner::SafeStoreSequence(tStringList sequenceList)
+{
+   double workLoad = UGA_->GetWorkLoad(sequenceList);
+   if (workLoad >= 100) {
+      return DEVICE_OUT_OF_MEMORY;
+   }
+
+   return UGA_->StoreSequence(sequenceList) ? DEVICE_OK : DEVICE_ERR;
+}
 
 void RappScanner::RunDummyCalibration(bool laser2)
 {
