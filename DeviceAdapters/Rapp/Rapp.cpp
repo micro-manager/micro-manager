@@ -330,10 +330,10 @@ int RappScanner::SetPolygonRepetitions(int repetitions)
 	  }
       
    }
-   if (repetitions > 0)
+   if (repetitions > 1)
    {
       stringstream repeat;
-      repeat << "repeat," << repetitions;
+      repeat << "repeat," << (repetitions - 1);
       sequenceList.push_back(repeat.str());
    }
    sequenceList.push_back(std::string("off"));

@@ -9,7 +9,7 @@ package org.micromanager.projector;
  *
  * @author Valelab
  */
-interface OnStateListener {
+public interface OnStateListener {
    public void turnedOn();
    public void turnedOff();
 }

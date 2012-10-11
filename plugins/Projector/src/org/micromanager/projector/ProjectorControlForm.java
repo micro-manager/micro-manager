@@ -12,6 +12,7 @@
 package org.micromanager.projector;
 
 import javax.swing.JSpinner;
+import javax.swing.SpinnerNumberModel;
 import javax.swing.SwingUtilities;
 import org.micromanager.utils.GUIUtils;
 
@@ -182,7 +183,7 @@ public class ProjectorControlForm extends javax.swing.JFrame implements OnStateL
 
         jTabbedPane1.addTab("Point and Shoot", jPanel1);
 
-        jLabel4.setText("Repeat:");
+        jLabel4.setText("Loop:");
 
         jLabel6.setText("times");
 
@@ -201,6 +202,7 @@ public class ProjectorControlForm extends javax.swing.JFrame implements OnStateL
             }
         });
 
+        roiRepetitionsSpinner.setModel(new SpinnerNumberModel(1, 1, 1000000000, 1));
         roiRepetitionsSpinner.addChangeListener(new javax.swing.event.ChangeListener() {
             public void stateChanged(javax.swing.event.ChangeEvent evt) {
                 roiRepetitionsSpinnerStateChanged(evt);
@@ -223,6 +225,10 @@ public class ProjectorControlForm extends javax.swing.JFrame implements OnStateL
                 jButton1ActionPerformed(evt);
             }
         });
+
+        startFrameMDA_.setModel(new SpinnerNumberModel(1, 1, 1000000000, 1));
+
+        repeatFrameMDA_.setModel(new SpinnerNumberModel(1, 1, 1000000000, 1));
 
         jLabel5.setText("frames");
 
@@ -271,7 +277,7 @@ public class ProjectorControlForm extends javax.swing.JFrame implements OnStateL
                                         .add(startFrameMDA_, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 46, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
                                     .add(jButton1)
                                     .add(jButton3))))
-                        .add(0, 39, Short.MAX_VALUE)))
+                        .add(0, 51, Short.MAX_VALUE)))
                 .addContainerGap())
         );
         jPanel3Layout.setVerticalGroup(

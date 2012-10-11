@@ -4,22 +4,15 @@
  */
 package org.micromanager.projector;
 
-import ij.gui.PointRoi;
 import ij.gui.Roi;
-import ij.process.FloatPolygon;
-import java.awt.Point;
 import java.awt.Polygon;
-import java.awt.Rectangle;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Point2D;
 import java.util.HashSet;
 import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import mmcorej.CMMCore;
 import org.micromanager.utils.ReportingUtils;
 
