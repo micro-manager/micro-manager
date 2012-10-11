@@ -1,5 +1,6 @@
 (ns slide-explorer.core
-  (:import (java.awt AlphaComposite Color Font Graphics Graphics2D Polygon RenderingHints)
+  (:import (java.awt AlphaComposite BasicStroke Color Font Graphics Graphics2D
+                     Polygon RenderingHints)
            (java.awt.font TextAttribute)
            (javax.swing JFrame JPanel)))
 
@@ -29,13 +30,34 @@
 (def default-primitive-params
   {:filled false :color Color/BLACK})
 
-(defn set-style [g2d {:keys [alpha color]}]
+(def stroke-caps
+  {:butt BasicStroke/CAP_BUTT
+   :round BasicStroke/CAP_ROUND
+   :square BasicStroke/CAP_SQUARE})
+
+(def stroke-joins
+  {:miter BasicStroke/JOIN_MITER
+   :round BasicStroke/JOIN_ROUND
+   :bevel BasicStroke/JOIN_BEVEL})
+
+(defn set-style [g2d {:keys [alpha color stroke]}]
   (doto g2d
     (.setComposite (if (or (not alpha) 
                            (= alpha 1))
                      AlphaComposite/Src
                      (AlphaComposite/getInstance AlphaComposite/SRC_ATOP alpha)))
-    (.setColor (if color color Color/BLACK))))
+    (.setColor (if color color Color/BLACK))
+    (.setStroke (let [{:keys [width cap join miter-limit dashes dash-phase]
+                       :or {width 1.0 cap :square
+                            join :miter miter-limit 10.0
+                            dashes [] dash-phase 0.0}} stroke
+                      cap-code (stroke-caps cap)
+                      join-code (stroke-joins join)
+                      dashes-array (float-array dashes)]
+                  (if-not (empty? dashes)
+                    (BasicStroke. width cap-code join-code miter-limit
+                                  dashes-array dash-phase)
+                    (BasicStroke. width cap-code join-code miter-limit))))))
 
 (defn- -? [a b]
   (when (and a b)
@@ -156,8 +178,7 @@
   (enable-anti-aliasing g2d)
   (dorun
     (for [item (flatten items)]
-      (let [params (merge default-primitive-params
-                                        (:params item))]
+      (let [params (:params item)]
       (set-style g2d params)
       (draw-primitive g2d (:type item) (complete-coordinates params))))))
 
@@ -187,7 +208,9 @@
    {:type :primitive-round-rect
     :params {:x 90 :y 80 :r 160 :b 150
              :arc-width 20 :arc-height 20
-             :filled false :color Color/BLACK}}
+             :filled false :color Color/DARK_GRAY
+             :stroke {:width 5
+                      :dashes [10 10]}}}
    {:type :primitive-polygon
     :params {:vertices [{:x 100 :y 100}
                         {:x 50 :y 150}
@@ -198,16 +221,18 @@
     :params {:x 180 :y 120 :text "TEST"
              :color Color/BLUE
              :alpha 0.5
-             :font {:name "Courier New"
+             :font {:name "Helvetica"
                     :bold true
                     :italic false
                     :underline true
                     :strikethrough false
                     :size 100}}}
    {:type :primitive-line
-    :params {:x 180 :y 120 :w 0 :h 300 :color Color/RED}}
+    :params {:x 180 :y 120 :w 0 :h 150 :color Color/RED
+             :stroke {:width 15 :cap :round}
+             :alpha 0.7}}
    {:type :primitive-line
-    :params {:x 180 :y 120 :w 10 :h 0 :color Color/RED}}
+    :params {:x 180 :y 120 :w 30 :h 0 :color Color/RED}}
    {:type :primitive-arc
     :params {:l 40 :t 30 :w 100 :h 100
              :start-angle 10 :arc-angle 100 :color Color/GREEN
