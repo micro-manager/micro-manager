@@ -165,4 +165,7 @@ public class SLM implements ProjectionDevice {
       throw new UnsupportedOperationException("Not supported yet.");
    }
 
+   public String getChannel() {
+       return "Default";
+   }
 }

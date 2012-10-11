@@ -5143,6 +5143,23 @@ void CMMCore::runGalvoSequence(const char* deviceLabel) throw (CMMError)
    }
 }
 
+/**
+ * Get the name of the active galvo channel (for a multi-laser galvo device).
+ */
+string CMMCore::getGalvoChannel(const char* deviceLabel) throw (CMMError)
+{
+   MM::Galvo* pGalvo = getSpecificDevice<MM::Galvo>(deviceLabel);
+   char channelName[MM::MaxStrLength];
+   int ret = pGalvo->GetChannel(channelName);
+   
+   if (ret != DEVICE_OK)
+   {
+      logError(deviceLabel, getDeviceErrorText(ret, pGalvo).c_str());
+      throw CMMError(deviceLabel, getDeviceErrorText(ret, pGalvo).c_str(), MMERR_DEVICE_GENERIC);
+   }
+   return string(channelName);
+}
+
 /* SYSTEM STATE */
 
 

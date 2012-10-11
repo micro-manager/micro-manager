@@ -9,25 +9,24 @@ import ij.gui.ImageCanvas;
 import ij.gui.PointRoi;
 import ij.gui.Roi;
 import ij.plugin.filter.GaussianBlur;
-import java.awt.geom.AffineTransform;
-import org.micromanager.api.AcquisitionEngine;
-import org.micromanager.utils.ReportingUtils;
+import ij.plugin.frame.RoiManager;
 import ij.process.ImageProcessor;
 import java.awt.Point;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
+import java.awt.geom.AffineTransform;
 import java.awt.geom.Point2D;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.prefs.Preferences;
 import mmcorej.CMMCore;
+import org.micromanager.api.AcquisitionEngine;
 import org.micromanager.api.ScriptInterface;
 import org.micromanager.utils.ImageUtils;
-import org.micromanager.utils.MathFunctions;
-import ij.plugin.frame.RoiManager;
-import java.util.prefs.Preferences;
-import org.micromanager.MMStudioMainFrame;
 import org.micromanager.utils.JavaUtils;
+import org.micromanager.utils.MathFunctions;
+import org.micromanager.utils.ReportingUtils;
 
 /**
  *
@@ -38,7 +37,6 @@ public class ProjectorController {
    private String slm;
    private CMMCore mmc;
    private final ScriptInterface gui;
-   private AffineTransform affineTransform;
    private boolean imageOn_ = false;
    final private ProjectionDevice dev;
    private MouseListener pointAndShootMouseListener;
@@ -58,7 +56,6 @@ public class ProjectorController {
          dev = null;
       }
       
-      affineTransform = this.loadCalibration();
       pointAndShootMouseListener = setupPointAndShootMouseListener();
    }
 
@@ -74,10 +71,10 @@ public class ProjectorController {
          public void run() {
 
             AffineTransform firstApprox = getFirstApproxTransform();
-            affineTransform = getFinalTransform(firstApprox);
+            AffineTransform affineTransform = getFinalTransform(firstApprox);
             dev.turnOff();
             IJ.getImage().setRoi((Roi) null);
-            saveCalibration(affineTransform);
+            saveAffineTransform(affineTransform);
             gui.enableLiveMode(liveModeRunning);
          }
       };
@@ -86,15 +83,17 @@ public class ProjectorController {
 
    private Preferences getCalibrationNode() {
        return Preferences.userNodeForPackage(ProjectorPlugin.class)
-                .node("calibration").node(mmc.getCameraDevice());
+               .node("calibration")
+               .node(dev.getChannel())
+               .node(mmc.getCameraDevice());
    }
    
-   public void saveCalibration(AffineTransform affineTransform) {
+   public void saveAffineTransform(AffineTransform affineTransform) {
        JavaUtils.putObjectInPrefs(getCalibrationNode(), dev.getName(), affineTransform);
    }
 
    
-   public AffineTransform loadCalibration() {
+   public AffineTransform loadAffineTransform() {
        return (AffineTransform) JavaUtils.getObjectFromPrefs(getCalibrationNode(), dev.getName(), null);
    }
    
@@ -199,7 +198,7 @@ public class ProjectorController {
       } else {
          ReportingUtils.showError("Please first select ROI(s)");
       }
-      dev.setRois(rois, affineTransform);
+      dev.setRois(rois, loadAffineTransform());
       dev.setPolygonRepetitions(reps);
    }
 
@@ -214,7 +213,7 @@ public class ProjectorController {
             Point p = e.getPoint();
             ImageCanvas canvas = (ImageCanvas) e.getSource();
             Point pOffscreen = new Point(canvas.offScreenX(p.x),canvas.offScreenY(p.y));
-            Point2D.Double devP = (Point2D.Double) affineTransform.transform(
+            Point2D.Double devP = (Point2D.Double) loadAffineTransform().transform(
                     new Point2D.Double(pOffscreen.x, pOffscreen.y), null);
             dev.displaySpot(devP.x, devP.y, thisController.getPointAndShootInterval());
          }

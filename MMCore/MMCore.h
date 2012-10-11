@@ -468,6 +468,7 @@ public:
    void setGalvoPolygonRepetitions(const char* deviceLabel, int repetitions) throw (CMMError);
    void runGalvoPolygons(const char* deviceLabel) throw (CMMError);
    void runGalvoSequence(const char* deviceLabel) throw (CMMError);
+   std::string getGalvoChannel(const char* deviceLabel) throw (CMMError);
    //@ }
 
    /** @name Acquisition context API

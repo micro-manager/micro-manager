@@ -16,6 +16,9 @@ import java.util.HashSet;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import mmcorej.CMMCore;
 import org.micromanager.utils.ReportingUtils;
 
@@ -226,4 +229,23 @@ public class Galvo implements ProjectionDevice {
          }
       });
    }
+
+    @Override
+    public String getChannel() {
+        Future<String> channel = galvoExecutor_.submit(new Callable<String>() {
+            public String call() {
+                try {
+                    return mmc_.getGalvoChannel(galvo_);
+                } catch (Exception ex) {
+                    ReportingUtils.logError(ex);
+                    return null;
+                }
+            }
+        });
+        try {
+            return channel.get();
+        } catch (Exception e) {
+            return null;
+        }
+    }
 }

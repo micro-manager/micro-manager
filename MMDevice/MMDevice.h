@@ -1037,6 +1037,7 @@ namespace MM {
       virtual int SetPolygonRepetitions(int repetitions) = 0;
       virtual int RunPolygons() = 0;
       virtual int StopSequence() = 0;
+	  virtual int GetChannel(char* channelName) = 0;
    };
 
    /**

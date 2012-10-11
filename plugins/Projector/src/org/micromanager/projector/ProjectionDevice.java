@@ -23,6 +23,6 @@ public interface ProjectionDevice {
    public void setPolygonRepetitions(int reps);
    public void runPolygons();
    public void addOnStateListener(OnStateListener listener);
-
-    public String getName();
+   public String getChannel();
+   public String getName();
 }

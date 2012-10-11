@@ -64,6 +64,7 @@ public:
    int RunPolygons();
    int RunSequence();
    int StopSequence();
+   int GetChannel(char* channelName);
 
    double GetXRange();
    double GetYRange();
@@ -96,7 +97,7 @@ private:
    double spotSize_;
 
    // Helper functions
-   void RappScanner::RunDummyCalibration();
+   void RappScanner::RunDummyCalibration(bool laser2);
 
 };
 
