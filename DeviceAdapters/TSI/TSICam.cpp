@@ -47,6 +47,7 @@ using namespace std;
 // global constants
 const char* g_DeviceTsiCam = "TSICam";
 const char* g_ReadoutRate = "ReadoutRate";
+const char* g_NumberOfTaps = "Taps";
 
 TsiSDK* TsiCam::tsiSdk = 0;
 
@@ -109,6 +110,8 @@ TsiCam::TsiCam() :
    assert(ret == DEVICE_OK);
    liveAcqThd_ = new AcqSequenceThread(this);
 
+   // TODO
+   // initialize error messages
 }
 
 
@@ -194,13 +197,17 @@ int TsiCam::Initialize()
 
    // readout rate
    // try setting different rates to find out what is available
+   bool bRet = false;
    vector<string> rateValues;
    uint32_t rateIdx(0);
+   uint32_t rateIdxOrg(0);
+   bRet = camHandle_->GetParameter(TSI_PARAM_READOUT_SPEED_INDEX, sizeof(uint32_t), &rateIdxOrg);
+   assert(bRet);
    while (camHandle_->SetParameter(TSI_PARAM_READOUT_SPEED_INDEX, rateIdx))
    {
       ostringstream txt;
       uint32_t speedMHz(0);
-      bool bRet = camHandle_->GetParameter(TSI_PARAM_READOUT_SPEED, sizeof(uint32_t), &speedMHz);
+      bRet = camHandle_->GetParameter(TSI_PARAM_READOUT_SPEED, sizeof(uint32_t), &speedMHz);
       if (bRet)
       {
          txt << speedMHz / (uint32_t)1000000 << "_MHz";
@@ -222,10 +229,45 @@ int TsiCam::Initialize()
       {
          AddAllowedValue(g_ReadoutRate, rateValues[i].c_str(), (long)i);
       }
-      bool bRet = camHandle_->SetParameter(TSI_PARAM_READOUT_SPEED_INDEX, 0);
+      bRet = camHandle_->SetParameter(TSI_PARAM_READOUT_SPEED_INDEX, rateIdxOrg);
       assert(bRet);
    }
 
+   // TAPS
+   // try setting different rates to find out what is available
+   vector<string> tapValues;
+   uint32_t tapIdxOrg(0);
+   camHandle_->GetParameter(TSI_PARAM_READOUT_SPEED_INDEX, sizeof(uint32_t), &tapIdxOrg);
+   uint32_t tapIdx(0);
+   while (camHandle_->SetParameter(TSI_PARAM_TAPS_INDEX, tapIdx))
+   {
+      ostringstream txt;
+      uint32_t taps(0);
+      bRet = camHandle_->GetParameter(TSI_PARAM_TAPS_VALUE, sizeof(uint32_t), &taps);
+      if (bRet)
+      {
+         txt << taps;
+         tapValues.push_back(txt.str().c_str());
+         tapIdx++;
+      }
+      else
+      {
+         LogMessage("Error getting readout speed");
+      }
+   }
+
+   if (tapValues.size() > 0)
+   {
+      pAct = new CPropertyAction (this, &TsiCam::OnTaps);
+      ret = CreateProperty(g_NumberOfTaps, tapValues[0].c_str(), MM::String, false, pAct);
+      assert(ret == DEVICE_OK);
+      for (size_t i=0; i<rateValues.size(); i++)
+      {
+         AddAllowedValue(g_NumberOfTaps, tapValues[i].c_str(), (long)i);
+      }
+      bRet = camHandle_->SetParameter(TSI_PARAM_TAPS_INDEX, tapIdxOrg);
+      assert(bRet);
+   }
 
    ret = ResizeImageBuffer();
    if (ret != DEVICE_OK)
@@ -412,6 +454,7 @@ int TsiCam::StopSequenceAcquisition()
 {
    liveAcqThd_->Stop();
    liveAcqThd_->wait();
+   //CDeviceUtils::SleepMs(50); 
    return DEVICE_OK;
 }
 

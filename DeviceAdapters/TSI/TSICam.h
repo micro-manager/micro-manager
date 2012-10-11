@@ -132,6 +132,7 @@ public:
    int OnBinning(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnExposure(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnReadoutRate(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnTaps(MM::PropertyBase* pProp, MM::ActionType eAct);
 
    // stubs
    int OnTemperature(MM::PropertyBase* pProp, MM::ActionType eAct);

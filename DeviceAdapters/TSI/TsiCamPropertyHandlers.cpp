@@ -21,6 +21,7 @@
 #include "TsiCam.h"
 
 extern const char* g_ReadoutRate;
+extern const char* g_NumberOfTaps;
 
 using namespace std;
 
@@ -35,6 +36,7 @@ int TsiCam::OnBinning(MM::PropertyBase* pProp, MM::ActionType eAct)
    }
    return DEVICE_OK;
 }
+
 int TsiCam::OnReadoutRate(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
    if (eAct == MM::AfterSet)
@@ -55,6 +57,32 @@ int TsiCam::OnReadoutRate(MM::PropertyBase* pProp, MM::ActionType eAct)
          return camHandle_->GetErrorCode();
       char val[MM::MaxStrLength];
       GetPropertyValueAt(g_ReadoutRate, idx, val);
+      pProp->Set(val);
+   }
+   return DEVICE_OK;
+}
+
+
+int TsiCam::OnTaps(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   if (eAct == MM::AfterSet)
+   {
+      long tapIdx(0);
+      int ret = GetCurrentPropertyData(g_NumberOfTaps, tapIdx);
+      if (ret != DEVICE_OK)
+         return ret;
+      bool bRet = camHandle_->SetParameter(TSI_PARAM_TAPS_INDEX, (uint32_t)tapIdx);
+      if (!bRet)
+         return camHandle_->GetErrorCode();
+   }
+   else if (eAct == MM::BeforeGet)
+   {
+      uint32_t idx;
+      bool bRet = camHandle_->GetParameter(TSI_PARAM_TAPS_INDEX, sizeof(uint32_t), &idx);
+      if (!bRet)
+         return camHandle_->GetErrorCode();
+      char val[MM::MaxStrLength];
+      GetPropertyValueAt(g_NumberOfTaps, idx, val);
       pProp->Set(val);
    }
    return DEVICE_OK;
