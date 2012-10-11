@@ -113,7 +113,7 @@ public class ProjectorController {
    }
 
    private Point findPeak(ImageProcessor proc) {
-      ImageProcessor blurImage = ((ImageProcessor) proc.clone());
+      ImageProcessor blurImage = ((ImageProcessor) proc.duplicate());
       blurImage.setRoi((Roi) null);
       GaussianBlur blur = new GaussianBlur();
       blur.blurGaussian(blurImage, 20, 20, 0.01);
