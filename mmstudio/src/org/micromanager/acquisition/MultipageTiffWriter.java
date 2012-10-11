@@ -200,7 +200,17 @@ public class MultipageTiffWriter {
       writeNullOffsetAfterLastImage();
       writeIndexMap();
 
-      writeImageJMetadata( numChannels_);
+      String summaryComment = "";
+      try 
+      {
+         JSONObject comments = masterMPTiffStorage_.getDisplayAndComments().getJSONObject("Comments");;
+         if (comments.has("Summary") && !comments.isNull("Summary")) {
+            summaryComment = comments.getString("Summary");
+         }    
+      } catch (Exception e) {
+         ReportingUtils.logError("Could't get acquisition summary comment from displayAndComments");
+      }
+      writeImageJMetadata( numChannels_, summaryComment);
 
       if (omeTiff_) {
          try {
@@ -438,28 +448,36 @@ public class MultipageTiffWriter {
          }
       }
    }
+   
+   private static final String IMAGEJ_FILE_INFO = "This is a test\n";
 
    /**
     * writes channel LUTs and display ranges for composite mode Could also be
     * expanded to write ROIs, file info, slice labels, and overlays
     */
-   private void writeImageJMetadata(int numChannels) throws IOException {
-      //size entry (4 bytes) + 4 bytes for channel display 
+   private void writeImageJMetadata(int numChannels, String info) throws IOException {
+      info = IMAGEJ_FILE_INFO + info + " ";
+      //size entry (4 bytes) + 4 bytes file info size + 4 bytes for channel display 
       //ranges length + 4 bytes per channel LUT
-      int mdByteCountsBufferSize = 4 + 4 + 4 * numChannels;
+      int mdByteCountsBufferSize = 4 + 4 + 4 + 4 * numChannels;
       int bufferPosition = 0;
 
       ByteBuffer mdByteCountsBuffer = ByteBuffer.allocate(mdByteCountsBufferSize).order(BYTE_ORDER);
 
       //nTypes is number actually written among: fileInfo, slice labels, display ranges, channel LUTS,
       //slice labels, ROI, overlay, and # of extra metadata entries
-      int nTypes = 2; //slice labels, display ranges, and channel LUTs
+      int nTypes = 3; //slice labels, display ranges, and channel LUTs
       int mdBufferSize = 4 + nTypes * 8;
       //4 bytes for magic number 8 bytes for label and count of each type
 
       mdByteCountsBuffer.putInt(bufferPosition, 4 + nTypes * 8);
       bufferPosition += 4;
 
+      //2 bytes per a character of file info
+      mdByteCountsBuffer.putInt(bufferPosition, 2*info.length() );
+      bufferPosition += 4;
+      mdBufferSize += info.length()*2;
+      
       //display ranges written as array of doubles (min, max, min, max, etc)
       mdByteCountsBuffer.putInt(bufferPosition, numChannels * 2 * 8);
       bufferPosition += 4;
@@ -481,41 +499,54 @@ public class MultipageTiffWriter {
       filePosition_ += mdByteCountsBufferSize;
 
 
-      //Write actual metadata
+      //Write metadata types and counts
       ByteBuffer mdBuffer = ByteBuffer.allocate(mdBufferSize).order(BYTE_ORDER);
       bufferPosition = 0;
 
       //All the ints declared below are non public field in TiffDecoder
-      int ijMagicNumber = 0x494a494a;
+      final int ijMagicNumber = 0x494a494a;
       mdBuffer.putInt(bufferPosition, ijMagicNumber);
       bufferPosition += 4;
 
       //Write ints for each IJ metadata field and its count
-      int displayRanges = 0x72616e67;
+      final int fileInfo = 0x696e666f;
+      mdBuffer.putInt(bufferPosition, fileInfo);
+      bufferPosition += 4;
+      mdBuffer.putInt(bufferPosition, 1);
+      bufferPosition += 4;
+      
+      final int displayRanges = 0x72616e67;
       mdBuffer.putInt(bufferPosition, displayRanges);
       bufferPosition += 4;
       mdBuffer.putInt(bufferPosition, 1);
       bufferPosition += 4;
 
-      int luts = 0x6c757473;
+      final int luts = 0x6c757473;
       mdBuffer.putInt(bufferPosition, luts);
       bufferPosition += 4;
       mdBuffer.putInt(bufferPosition, numChannels);
       bufferPosition += 4;
 
 
+      //write actual metadata
+      //FileInfo
+      for (char c : info.toCharArray()) {
+         mdBuffer.putChar(bufferPosition, c);
+         bufferPosition += 2;
+      }
       try {
          JSONArray channels = masterMPTiffStorage_.getDisplayAndComments().getJSONArray("Channels");
          JSONObject channelSetting;
          for (int i = 0; i < numChannels; i++) {
             channelSetting = channels.getJSONObject(i);
-            //For each channel, write min then max
+            //Display Ranges: For each channel, write min then max
             mdBuffer.putDouble(bufferPosition, channelSetting.getInt("Min"));
             bufferPosition += 8;
             mdBuffer.putDouble(bufferPosition, channelSetting.getInt("Max"));
             bufferPosition += 8;
          }
 
+         //LUTs
          for (int i = 0; i < numChannels; i++) {
             channelSetting = channels.getJSONObject(i);
             LUT lut = ImageUtils.makeLUT(new Color(channelSetting.getInt("Color")), channelSetting.getDouble("Gamma"));
