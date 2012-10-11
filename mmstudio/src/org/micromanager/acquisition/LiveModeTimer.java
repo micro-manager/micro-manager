@@ -155,12 +155,12 @@ public class LiveModeTimer {
          lastImageNumber_ = imageNumber_ - 1;
          oldImageNumber_ = imageNumber_;
 
+         imageQueue_ = new LinkedBlockingQueue();
          timer_.schedule(task_, 0, delay);
          win_.liveModeEnabled(true);
          
          win_.getImagePlus().getWindow().toFront();
          running_ = true;
-         imageQueue_ = new LinkedBlockingQueue();
          gui_.runDisplayThread(imageQueue_, displayImageRoutine_);
    }
 
@@ -316,7 +316,10 @@ public class LiveModeTimer {
                   }
                } catch (Exception exc) {
                   gui_.enableLiveMode(false);
+                  exc.printStackTrace();
+                  
                   ReportingUtils.showError("Couldn't get tagged image from core");
+                  
                }
             }
          }
