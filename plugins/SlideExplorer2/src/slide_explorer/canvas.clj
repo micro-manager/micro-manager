@@ -1,5 +1,5 @@
 (ns slide-explorer.core
-  (:import (java.awt Color Font Graphics Graphics2D Polygon RenderingHints)
+  (:import (java.awt AlphaComposite Color Font Graphics Graphics2D Polygon RenderingHints)
            (java.awt.font TextAttribute)
            (javax.swing JFrame JPanel)))
 
@@ -29,9 +29,13 @@
 (def default-primitive-params
   {:filled false :color Color/BLACK})
 
-(defn set-style [g2d params]
+(defn set-style [g2d {:keys [alpha color]}]
   (doto g2d
-    (.setColor (:color params))))
+    (.setComposite (if (or (not alpha) 
+                           (= alpha 1))
+                     AlphaComposite/Src
+                     (AlphaComposite/getInstance AlphaComposite/SRC_ATOP alpha)))
+    (.setColor (if color color Color/BLACK))))
 
 (defn- -? [a b]
   (when (and a b)
@@ -108,10 +112,14 @@
     (.drawRect g2d l t w h)))
 
 (defmethod draw-primitive :primitive-round-rect
-  [g2d shape {:keys [l t w h filled arc-width arc-height]}]
+  [g2d shape {:keys [l t w h filled arc-radius arc-width arc-height]}]
   (if filled
-    (.fillRoundRect g2d l t w h arc-width arc-height)
-    (.drawRoundRect g2d l t w h arc-width arc-height)))
+    (.fillRoundRect g2d l t w h
+                    (or arc-radius arc-width)
+                    (or arc-radius arc-height))
+    (.drawRoundRect g2d l t w h
+                    (or arc-radius arc-width)
+                    (or arc-radius arc-height))))
 
 (defn draw-string-center
   "Draw a string centered at position x,y."
@@ -171,11 +179,10 @@
   [
    {:type :primitive-round-rect
     :params {:l 20 :t 10 :w 140 :h 140
-             :arc-width 20 :arc-height 20
+             :arc-radius 20 :arc-height 20
              :filled true :color Color/RED}}
    {:type :primitive-ellipse
     :params {:l 25 :t 15 :w 110 :h 90
-             :arc-width 20 :arc-height 20
              :filled true :color Color/YELLOW}}
    {:type :primitive-round-rect
     :params {:x 90 :y 80 :r 160 :b 150
@@ -188,8 +195,9 @@
              :filled false
              :closed true}}
    {:type :primitive-text
-    :params {:x 180 :y 280 :text "TEST"
+    :params {:x 180 :y 120 :text "TEST"
              :color Color/BLUE
+             :alpha 0.5
              :font {:name "Courier New"
                     :bold true
                     :italic false
@@ -197,9 +205,9 @@
                     :strikethrough false
                     :size 100}}}
    {:type :primitive-line
-    :params {:x 180 :y 280 :w 0 :h 300 :color Color/RED}}
+    :params {:x 180 :y 120 :w 0 :h 300 :color Color/RED}}
    {:type :primitive-line
-    :params {:x 180 :y 280 :w 10 :h 0 :color Color/RED}}
+    :params {:x 180 :y 120 :w 10 :h 0 :color Color/RED}}
    {:type :primitive-arc
     :params {:l 40 :t 30 :w 100 :h 100
              :start-angle 10 :arc-angle 100 :color Color/GREEN
