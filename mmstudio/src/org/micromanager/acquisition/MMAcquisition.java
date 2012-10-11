@@ -418,8 +418,10 @@ public class MMAcquisition {
          summaryMetadata.put("PixelSize_um", core.getPixelSizeUm());
          summaryMetadata.put("PixelType", (core.getNumberOfComponents() == 1 ? "GRAY" : "RGB") + (8 * byteDepth_));
          summaryMetadata.put("Slices", numSlices_);
+         summaryMetadata.put("SlicesFirst", false);
          summaryMetadata.put("StartTime", MDUtils.getCurrentTime());
          summaryMetadata.put("Time", Calendar.getInstance().getTime());
+         summaryMetadata.put("TimeFirst", true);
          summaryMetadata.put("UserName", System.getProperty("user.name"));
          summaryMetadata.put("UUID", UUID.randomUUID());
          summaryMetadata.put("Width", width_);
