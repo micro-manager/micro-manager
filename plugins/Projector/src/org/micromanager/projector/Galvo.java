@@ -14,6 +14,7 @@ import java.awt.geom.AffineTransform;
 import java.awt.geom.Point2D;
 import java.util.HashSet;
 import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
@@ -68,6 +69,20 @@ public class Galvo implements ProjectionDevice {
             }
          }
       });
+   }
+   
+   public void waitForDevice() {
+       Future result = galvoExecutor_.submit(new Runnable() {
+           @Override
+           public void run() {
+               // do nothing;
+           }
+       });
+        try {
+            result.get();
+        } catch (Exception ex) {
+            ReportingUtils.logError(ex);
+        }
    }
 
    public double getWidth() {

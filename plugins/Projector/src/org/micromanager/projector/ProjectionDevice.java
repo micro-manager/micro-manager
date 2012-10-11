@@ -25,4 +25,5 @@ public interface ProjectionDevice {
    public void addOnStateListener(OnStateListener listener);
    public String getChannel();
    public String getName();
+   public void waitForDevice();
 }

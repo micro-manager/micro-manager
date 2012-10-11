@@ -168,4 +168,12 @@ public class SLM implements ProjectionDevice {
    public String getChannel() {
        return "Default";
    }
+   
+   public void waitForDevice() {
+        try {
+            mmc_.waitForDevice(slm_);
+        } catch (Exception ex) {
+            ReportingUtils.logError(ex);
+        }
+   }
 }
