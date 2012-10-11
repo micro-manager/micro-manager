@@ -261,7 +261,7 @@ int TsiCam::Initialize()
       pAct = new CPropertyAction (this, &TsiCam::OnTaps);
       ret = CreateProperty(g_NumberOfTaps, tapValues[0].c_str(), MM::String, false, pAct);
       assert(ret == DEVICE_OK);
-      for (size_t i=0; i<rateValues.size(); i++)
+      for (size_t i=0; i<tapValues.size(); i++)
       {
          AddAllowedValue(g_NumberOfTaps, tapValues[i].c_str(), (long)i);
       }
