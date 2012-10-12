@@ -200,7 +200,7 @@
   [
    {:type :primitive-round-rect
     :params {:l 20 :t 10 :w 140 :h 140
-             :arc-radius 20 :arc-height 20
+             :arc-radius 20
              :filled true :color Color/RED}}
    {:type :primitive-ellipse
     :params {:l 25 :t 15 :w 110 :h 90
@@ -214,14 +214,22 @@
    {:type :primitive-polygon
     :params {:vertices [{:x 100 :y 100}
                         {:x 50 :y 150}
-                        {:x 160 :y 160}]
+                        {:x 50 :y 220}
+                        {:x 160 :y 250}]
              :filled false
-             :closed true}}
+             :closed false
+             :color Color/ORANGE
+             :alpha 0.8
+             :stroke {:width 25
+                      :dashes [20 3 10 3 5 3]
+                      :cap :butt
+                      :join :bevel
+                      :miter-limit 10.0}}}
    {:type :primitive-text
     :params {:x 180 :y 120 :text "TEST"
              :color Color/BLUE
              :alpha 0.5
-             :font {:name "Helvetica"
+             :font {:name "Arial"
                     :bold true
                     :italic false
                     :underline true
@@ -229,10 +237,12 @@
                     :size 100}}}
    {:type :primitive-line
     :params {:x 180 :y 120 :w 0 :h 150 :color Color/RED
-             :stroke {:width 15 :cap :round}
+             :stroke {:width 10 :cap :round}
              :alpha 0.7}}
    {:type :primitive-line
-    :params {:x 180 :y 120 :w 30 :h 0 :color Color/RED}}
+    :params {:x 180 :y 120 :w 30 :h 0 :color Color/GREEN
+             :alpha 0.6
+             :stroke {:width 4}}}
    {:type :primitive-arc
     :params {:l 40 :t 30 :w 100 :h 100
              :start-angle 10 :arc-angle 100 :color Color/GREEN
