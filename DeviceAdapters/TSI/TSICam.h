@@ -46,21 +46,12 @@
 //////////////////////////////////////////////////////////////////////////////
 // Error codes
 //
-#define ERR_INVALID_BUFFER                10002
-#define ERR_INVALID_PARAMETER_VALUE       10003
-#define ERR_BUSY_ACQUIRING                10004
-#define ERR_STREAM_MODE_NOT_SUPPORTED     10005
-#define ERR_CAMERA_NOT_FOUND              10006
-#define ERR_TRIGGER_DEVICE_NOT_AVAILABLE  10007
-#define ERR_TRIGGER_DEVICE_TYPE           10008
-#define ERR_SINGLE_SNAP_TIMED_OUT         10009
 #define ERR_TSI_DLL_LOAD_FAILED           10010
 #define ERR_TSI_SDK_LOAD_FAILED           10011
 #define ERR_TSI_CAMERA_NOT_FOUND          10012
 #define ERR_TSI_OPEN_FAILED               10013
 #define ERR_CAMERA_OPEN_FAILED            10014
-#define ERR_GET_IMAGE_FAILED              10015
-#define ERR_IMAGE_TIMED_OUT               10016
+#define ERR_IMAGE_TIMED_OUT               10015
 
 //////////////////////////////////////////////////////////////////////////////
 // Region of Interest

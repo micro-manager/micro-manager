@@ -105,13 +105,22 @@ TsiCam::TsiCam() :
    initialized(0), binSize(1), stopOnOverflow(false),
    acquiring(0)
 {
+   // set default error messages
+   InitializeDefaultErrorMessages();
+
+   // set device specific error messages
+   SetErrorText(ERR_TSI_DLL_LOAD_FAILED, "Couldn't find TSI SDK dll.\n"
+      "  Make sure TSI DLLs are installed.");
+   SetErrorText(ERR_TSI_SDK_LOAD_FAILED, "Error loading TSI SDK.");
+   SetErrorText(ERR_TSI_OPEN_FAILED, "Failed opening TSI SDK.");
+   SetErrorText(ERR_TSI_CAMERA_NOT_FOUND, "Couldn't detect any TSI cameras.\n"
+      "  Make sure cameras are attached and the power is ON.");
+   SetErrorText(ERR_IMAGE_TIMED_OUT, "Timed out waiting for the image from the camera.");
+
    // this identifies which camera we want to access
    int ret = CreateProperty(MM::g_Keyword_CameraID, "0", MM::Integer, false, 0, true);
    assert(ret == DEVICE_OK);
    liveAcqThd_ = new AcqSequenceThread(this);
-
-   // TODO
-   // initialize error messages
 }
 
 
@@ -134,7 +143,7 @@ int TsiCam::Initialize()
    if (g_tsiDllHandle == 0)
    {
       // load TSL dll and create api handle
-      g_tsiDllHandle = LoadLibraryA("tsi_sdk.dll");
+      g_tsiDllHandle = LoadLibrary("tsi_sdk.dll");
       if (g_tsiDllHandle)
       {
          TSI_CREATE_SDK tsi_create_sdk = (TSI_CREATE_SDK)GetProcAddress(g_tsiDllHandle, "tsi_create_sdk");
