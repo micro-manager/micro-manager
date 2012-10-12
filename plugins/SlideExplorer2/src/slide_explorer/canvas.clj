@@ -278,7 +278,7 @@
    [:primitive-round-rect
     {:l 20 :t 10 :w 300 :h 300
      :arc-radius 100 :rotate 50
-     :filled false :color (Color. 0xE06060)
+     :filled false :color 0xE06060
      :stroke {:width 5
               :cap :round
               :dashes [10 10] :dash-phase 0}}]
