@@ -361,8 +361,11 @@ int TsiCam::SnapImage()
 
 unsigned TsiCam::GetBitDepth() const
 {
-   // TODO
-   return 12;
+   unsigned bitDepth = 12;
+   if (img.Width() > 1392)
+      bitDepth = 14;
+
+   return bitDepth;
 }
 
 int TsiCam::GetBinning() const
