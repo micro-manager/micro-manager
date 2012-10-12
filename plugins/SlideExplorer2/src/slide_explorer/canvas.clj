@@ -40,7 +40,7 @@
    :round BasicStroke/JOIN_ROUND
    :bevel BasicStroke/JOIN_BEVEL})
 
-(defn set-g2d-state [g2d {:keys [alpha color stroke rotate x y]}]
+(defn set-g2d-state [g2d {:keys [alpha color stroke rotate x y scale]}]
   (doto g2d
     (.setColor (if color color Color/BLACK))
     (.setComposite (if (or (not alpha) 
@@ -58,15 +58,17 @@
                     (BasicStroke. width cap-code join-code miter-limit
                                   dashes-array dash-phase)
                     (BasicStroke. width cap-code join-code miter-limit)))))
-    (when (and x y rotate)
+    (when (and x y (or rotate scale))
       (doto g2d
         (.translate x y)
-        (.rotate rotate)
+        (.rotate (or rotate 0.0))
+        (.scale (or scale 1.0) (or scale 1.0))
         (.translate (- x) (- y)))))
 
 (defn- with-g2d-state-fn [g2d params body-fn]
   (let [color (.getColor g2d)
         composite (.getComposite g2d)
+        paint (.getPaint g2d)
         stroke (.getStroke g2d)
         transform (.getTransform g2d)]
     (set-g2d-state g2d params)
@@ -74,6 +76,7 @@
     (doto g2d
       (.setColor color)
       (.setComposite composite)
+      (.setPaint paint)
       (.setStroke stroke)
       (.setTransform transform))))
 
@@ -274,6 +277,8 @@
     {:x 180 :y 120 :text "Testing..."
      :color Color/BLUE
      :alpha 0.4
+     :rotate 0.2
+     :scale 1.1
      :font {:name "Arial"
             :bold true
             :italic false
