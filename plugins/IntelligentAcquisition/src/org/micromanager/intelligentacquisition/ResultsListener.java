@@ -8,12 +8,12 @@ import ij.text.TextPanel;
 import ij.text.TextWindow;
 import java.awt.BasicStroke;
 import java.awt.Color;
-import java.awt.Point;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.geom.GeneralPath;
+import java.awt.geom.Point2D;
 import org.micromanager.api.MMWindow;
 
 
@@ -99,12 +99,12 @@ public class ResultsListener implements KeyListener, MouseListener{
             }
          }
 
-         int x = (int) res_.getValue(Terms.X, row);
-         int y = (int) res_.getValue(Terms.Y, row);
+         double x = (int) res_.getValue(Terms.X, row);
+         double y = (int) res_.getValue(Terms.Y, row);
 
          GeneralPath path = new GeneralPath();
          path = new GeneralPath();
-         drawCross(siPlus_, new Point(x, y), path);
+         drawCross(siPlus_, new Point2D.Double(x, y), path);
          siPlus_.setOverlay(path, Color.RED, new BasicStroke(1));
       }
    }
@@ -117,11 +117,11 @@ public class ResultsListener implements KeyListener, MouseListener{
     * @param p - Point around which the symbol will be centered
     * @param path - product of this function, i.e. use path to draw the symbol
     */
-	void drawCross(ImagePlus imp, Point p, GeneralPath path) {
+	void drawCross(ImagePlus imp, Point2D.Double p, GeneralPath path) {
+      double x  = imp.getCalibration().getRawX(p.x);
+      double y = imp.getCalibration().getRawY(p.y);
 		int width=imp.getWidth() / 20;
 		int height=imp.getHeight() / 20;
-		float x = p.x;
-		float y = p.y;
 		path.moveTo(x, y - height);
 		path.lineTo(x, y + height);
 		path.moveTo(x - width, y);

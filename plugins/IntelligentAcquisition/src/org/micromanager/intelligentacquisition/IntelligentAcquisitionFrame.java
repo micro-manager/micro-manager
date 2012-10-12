@@ -222,7 +222,7 @@ public class IntelligentAcquisitionFrame extends javax.swing.JFrame {
             }
         });
 
-        jLabel5.setText("Imaging ROI");
+        jLabel5.setText("Imaging ROI (pixels)");
 
         jLabel6.setFont(new java.awt.Font("Lucida Grande", 0, 10));
         jLabel6.setText("X");
@@ -286,7 +286,7 @@ public class IntelligentAcquisitionFrame extends javax.swing.JFrame {
             }
         });
 
-        jLabel10.setText("Exploration Area");
+        jLabel10.setText("Exploration Area (fields)");
 
         stopButton_.setText("Stop");
         stopButton_.addActionListener(new java.awt.event.ActionListener() {
@@ -311,43 +311,38 @@ public class IntelligentAcquisitionFrame extends javax.swing.JFrame {
                 .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
                     .add(layout.createSequentialGroup()
                         .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                            .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                                .add(layout.createSequentialGroup()
-                                    .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                                        .add(layout.createSequentialGroup()
-                                            .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                                                .add(jLabel2)
-                                                .add(jLabel3))
-                                            .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
-                                            .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                                                .add(scriptTextField_, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 223, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                                                .add(acqTextField2_, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 223, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                                                .add(acqTextField1_, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 223, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
-                                            .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
-                                            .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                                                .add(acqSettingsButton1_, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 45, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                                                .add(acqSettingsButton2_, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 45, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                                                .add(scriptButton_, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 45, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)))
-                                        .add(layout.createSequentialGroup()
-                                            .add(jLabel4)
-                                            .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, 249, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
-                                        .add(layout.createSequentialGroup()
-                                            .add(jLabel1)
-                                            .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, 217, Short.MAX_VALUE))
-                                        .add(org.jdesktop.layout.GroupLayout.TRAILING, layout.createSequentialGroup()
-                                            .add(28, 28, 28)
-                                            .add(helpButton_)
-                                            .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                                            .add(testButton_)
-                                            .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, 10, Short.MAX_VALUE)
-                                            .add(stopButton_)
-                                            .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
-                                            .add(goButton_)))
-                                    .add(18, 18, 18))
-                                .add(jLabel5))
                             .add(layout.createSequentialGroup()
-                                .add(jLabel10)
-                                .add(258, 258, 258)))
+                                .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                                    .add(jLabel2)
+                                    .add(jLabel3))
+                                .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
+                                .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                                    .add(scriptTextField_, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 223, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                                    .add(acqTextField2_, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 223, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                                    .add(acqTextField1_, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 223, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+                                .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
+                                .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                                    .add(acqSettingsButton1_, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 45, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                                    .add(acqSettingsButton2_, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 45, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                                    .add(scriptButton_, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 45, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)))
+                            .add(layout.createSequentialGroup()
+                                .add(jLabel4)
+                                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, 249, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+                            .add(layout.createSequentialGroup()
+                                .add(jLabel1)
+                                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, 217, Short.MAX_VALUE))
+                            .add(org.jdesktop.layout.GroupLayout.TRAILING, layout.createSequentialGroup()
+                                .add(28, 28, 28)
+                                .add(helpButton_)
+                                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                                .add(testButton_)
+                                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, 10, Short.MAX_VALUE)
+                                .add(stopButton_)
+                                .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
+                                .add(goButton_))
+                            .add(jLabel10)
+                            .add(jLabel5, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 130, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+                        .add(18, 18, 18)
                         .add(jTextField5, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 0, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
                     .add(org.jdesktop.layout.GroupLayout.TRAILING, layout.createSequentialGroup()
                         .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.TRAILING)
