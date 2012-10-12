@@ -40,13 +40,13 @@
    :round BasicStroke/JOIN_ROUND
    :bevel BasicStroke/JOIN_BEVEL})
 
-(defn set-style [g2d {:keys [alpha color stroke]}]
+(defn set-g2d-state [g2d {:keys [alpha color stroke rotate x y]}]
   (doto g2d
+    (.setColor (if color color Color/BLACK))
     (.setComposite (if (or (not alpha) 
                            (= alpha 1))
                      AlphaComposite/Src
                      (AlphaComposite/getInstance AlphaComposite/SRC_ATOP alpha)))
-    (.setColor (if color color Color/BLACK))
     (.setStroke (let [{:keys [width cap join miter-limit dashes dash-phase]
                        :or {width 1.0 cap :square
                             join :miter miter-limit 10.0
@@ -57,7 +57,28 @@
                   (if-not (empty? dashes)
                     (BasicStroke. width cap-code join-code miter-limit
                                   dashes-array dash-phase)
-                    (BasicStroke. width cap-code join-code miter-limit))))))
+                    (BasicStroke. width cap-code join-code miter-limit)))))
+    (when (and x y rotate)
+      (doto g2d
+        (.translate x y)
+        (.rotate rotate)
+        (.translate (- x) (- y)))))
+
+(defn- with-g2d-state-fn [g2d params body-fn]
+  (let [color (.getColor g2d)
+        composite (.getComposite g2d)
+        stroke (.getStroke g2d)
+        transform (.getTransform g2d)]
+    (set-g2d-state g2d params)
+    (body-fn)
+    (doto g2d
+      (.setColor color)
+      (.setComposite composite)
+      (.setStroke stroke)
+      (.setTransform transform))))
+
+(defmacro with-g2d-state [[g2d params] & body]
+  `(with-g2d-state-fn ~g2d ~params (fn [] ~@body)))
 
 (defn- -? [a b]
   (when (and a b)
@@ -177,10 +198,9 @@
 (defn draw-primitives [g2d items]
   (enable-anti-aliasing g2d)
   (doseq [[type params inner] items]
-    (println type params inner)
-    (set-style g2d params)
-    (draw-primitive g2d type (complete-coordinates params))
-    ))
+    (let [params+ (complete-coordinates params)]
+      (with-g2d-state [g2d params+]
+                      (draw-primitive g2d type params+)))))
 
 (defn paint-canvas-graphics [^Graphics graphics data]
   (draw-primitives graphics data))
@@ -218,58 +238,61 @@
                          (assoc-in [0 :params :h] (+ i 100)))
                      ))))
 
-(reset! grafix 
+(reset!
+  grafix 
   [
    [:primitive-round-rect
     {:l 20 :t 10 :w 300 :h 300
-             :arc-radius 50
-             :filled true :color Color/PINK}]
-   [:primitive-ellipse
-    {:l 25 :t 15 :w 110 :h 90
-             :filled true :color Color/YELLOW}]
+     :arc-radius 100
+     :filled true :color Color/PINK
+     :rotate 50}]
    [:primitive-round-rect
     {:l 20 :t 10 :w 300 :h 300
-             :arc-width 50 :arc-height 50
-             :filled false :color Color/DARK_GRAY
-             :stroke {:width 5
-                      :dashes [10 10] :dash-phase 0}}]
+     :arc-radius 100 :rotate 50
+     :filled false :color Color/DARK_GRAY
+     :stroke {:width 5
+              :cap :round
+              :dashes [11 10] :dash-phase 0}}]
+   [:primitive-ellipse
+    {:l 25 :t 15 :w 110 :h 90
+     :filled true :color Color/YELLOW :alpha 0.5}]
    [:primitive-polygon
     {:vertices [{:x 100 :y 100}
-                        {:x 50 :y 150}
-                        {:x 50 :y 220}
-                        {:x 160 :y 250}]
-             :filled false
-             :closed false
-             :color Color/ORANGE
-             :alpha 0.8
-             :stroke {:width 25
-                      :dashes [20 3 10 3 5 3]
-                      :cap :butt
-                      :join :bevel
-                      :miter-limit 10.0}}]
+                {:x 50 :y 150}
+                {:x 50 :y 220}
+                {:x 160 :y 250}]
+     :filled false
+     :closed false
+     :color Color/ORANGE
+     :alpha 0.8
+     :stroke {:width 25
+              :dashes [20 3 10 3 5 3]
+              :cap :butt
+              :join :bevel
+              :miter-limit 10.0}}]
    [:primitive-text
-    {:x 180 :y 120 :text "TEST"
-             :color Color/BLUE
-             :alpha 0.5
-             :font {:name "Arial"
-                    :bold true
-                    :italic false
-                    :underline true
-                    :strikethrough false
-                    :size 100}}]
+    {:x 180 :y 120 :text "Testing..."
+     :color Color/BLUE
+     :alpha 0.4
+     :font {:name "Arial"
+            :bold true
+            :italic false
+            :underline false
+            :strikethrough false
+            :size 60}}]
    [:primitive-line
-    {:x 180 :y 120 :w 0 :h 150 :color Color/RED
-             :stroke {:width 10 :cap :round}
-             :alpha 0.7}]
+    {:x 180 :y 220 :w 0 :h 50 :color Color/RED
+     :stroke {:width 10 :cap :round}
+     :alpha 0.7}]
    [:primitive-line
-    {:x 180 :y 120 :w 30 :h 0 :color Color/GREEN
-             :alpha 0.6
-             :stroke {:width 4}}]
+    {:x 180 :y 220 :w 30 :h 0 :color Color/GREEN
+     :alpha 0.6
+     :stroke {:width 4}}]
    [:primitive-arc
-    {:l 60 :t 30 :w 100 :h 100
-             :start-angle 30 :arc-angle 100 :color Color/GREEN
-             :filled true
-             :alpha 0.7}]
+    {:l 30 :t 20 :w 150 :h 100
+     :start-angle 30 :arc-angle 100 :color Color/GREEN
+     :filled true
+     :alpha 0.7}]
    ])
 
 
