@@ -1,0 +1,12 @@
+setBatchMode(true);
+rename("A");
+run("Z Project...", "start=1 stop=6 projection=[Max Intensity]");
+run("Gaussian Blur...", "sigma=2");
+rename("MAX_A");
+run("Split Channels");
+selectWindow("C1-MAX_A");
+setAutoThreshold("Otsu dark");
+run("Set Measurements...", "  centroid redirect=None decimal=2");
+run("Analyze Particles...", "size=500-500000 pixel circularity=0.00-1.0 show=Nothing display clear");
+close();
+setBatchMode(false);
