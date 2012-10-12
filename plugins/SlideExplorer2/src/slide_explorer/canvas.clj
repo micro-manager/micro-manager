@@ -331,9 +331,9 @@
               :join :bevel
               :miter-limit 10.0}}]
    [:text
-    {:x 180 :y 120 :text "Testing..."
-     :color :blue
-     :alpha 0.4
+    {:x 180 :y 120 :text "Testing!!!"
+     :color :white
+     :alpha 0.7
      :rotate 0.2
      :scale 1.1
      :fill true
@@ -344,10 +344,23 @@
             :underline false
             :strikethrough false
             :size 60}}]
+   (comment
+   [:ellipse
+    {:x 350 :y 350 :w 40 :h 40 :fill true :color :pink
+     :stroke nil}]
+   [:ellipse
+    {:x 350 :y 350 :w 40 :h 40 :fill false :color :red
+     :stroke {:width 4}}]
+   [:line
+    {:x 350 :y 350 :w 18 :h 18 :fill false :color :white :alpha 0.8
+     :stroke {:width 7 :cap :butt}}]
+   [:line
+    {:x 350 :y 350 :w -18 :h 18 :fill false :color :white :alpha 0.8
+     :stroke {:width 7 :cap :butt}}]
    [:line
     {:x 180 :y 220 :w 0 :h 50 :color :red
      :stroke {:width 10 :cap :round}
-     :alpha 0.7}]
+     :alpha 0.7}])
    [:line
     {:x 180 :y 220 :w 30 :h 0 :color 0x00AA00
      :alpha 0.6
