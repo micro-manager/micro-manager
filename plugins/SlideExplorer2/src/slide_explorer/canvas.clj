@@ -1,7 +1,11 @@
 (ns slide-explorer.core
-  (:import (java.awt AlphaComposite BasicStroke Color Font Graphics Graphics2D
-                     Polygon RenderingHints)
+  (:import (java.awt AlphaComposite BasicStroke Color Font Graphics Graphics2D Image
+                     Polygon RenderingHints Shape)
            (java.awt.font TextAttribute)
+           (java.awt.geom Arc2D Arc2D$Double Ellipse2D$Double
+                          Line2D$Double Path2D$Double
+                          Rectangle2D$Double
+                          RoundRectangle2D$Double)
            (javax.swing JFrame JPanel)))
 
 ;; possible 
@@ -141,57 +145,78 @@
         y (or y (+? t (half? h)))]
     (merge the-map {:w w :h h :l l :t t :r r :b b :x x :y y})))
    
-(defmulti draw-primitive (fn [g2d shape params] shape))
+(defmulti make-obj (fn [obj-keyword params] obj-keyword))
 
-(defmethod draw-primitive :arc
-  [g2d shape {:keys [l t w h filled start-angle arc-angle]}]
-  (if filled
-    (.fillArc g2d l t w h start-angle arc-angle)
-    (.drawArc g2d l t w h start-angle arc-angle)))
+(defmethod make-obj :arc
+  [_ {:keys [l t w h start-angle arc-angle arc-boundary closed]}]
+  (let [type (condp = (or arc-boundary closed)
+                             true Arc2D/PIE
+                             :pie Arc2D/PIE
+                             :chord Arc2D/CHORD
+                             :open Arc2D/OPEN
+                             Arc2D/OPEN)]
+      (Arc2D$Double. l t w h start-angle arc-angle type)))
 
-(defmethod draw-primitive :ellipse
-  [g2d shape {:keys [l t w h filled]}]
-  (if filled
-    (.fillOval g2d l t w h)
-    (.drawOval g2d l t w h)))
+(defmethod make-obj :ellipse
+  [_ {:keys [l t w h]}]
+  (Ellipse2D$Double. l t w h))
 
-(defmethod draw-primitive :image
-  [g2d shape {:keys [image l t w h]}]
+(defmethod make-obj :rect
+  [_ {:keys [l t w h]}]
+  (Rectangle2D$Double. l t w h))
+
+(defmethod make-obj :round-rect
+  [_ {:keys [l t w h arc-radius arc-width arc-height]}]
+  (RoundRectangle2D$Double. l t w h
+                              (or arc-radius arc-width)
+                              (or arc-radius arc-height)))
+
+(defmethod make-obj :line
+  [_ {:keys [l t r b]}]
+  (Line2D$Double. l t r b))
+
+(defmethod make-obj :polygon
+  [_ {:keys [vertices]}]
+  (let [xs (int-array (map :x vertices))
+        ys (int-array (map :y vertices))
+        n (count vertices)]
+    (Polygon. xs ys n)))
+
+(defmethod make-obj :polyline
+  [_ {:keys [vertices]}]
+  (let [path (Path2D$Double.)]
+    (let [{:keys [x y]} (first vertices)]
+      (.moveTo path x y))
+    (doseq [{:keys [x y]} (rest vertices)]
+      (.lineTo path x y))
+    path))
+
+(defmethod make-obj :text
+  [_ {:keys [text]}]
+  text)
+
+(defmethod make-obj :image
+  [_ {:keys [data]}]
+  data)
+
+(defn stroke? [stroke]
+  (and stroke (pos? (:width stroke))))
+
+(defmulti draw-primitive (fn [g2d obj params] (type obj)))
+
+(defmethod draw-primitive Shape
+  [g2d shape {:keys [fill stroke]}]
+  (when fill
+    (.fill g2d shape))
+  (when (stroke? stroke)
+    (.draw g2d shape)))
+
+(defmethod draw-primitive Image
+  [g2d image {:keys [l t w h]}]
   (.drawImage g2d image
               l t
               (or w (.getWidth image))
               (or h (.getHeight image)) nil))
-
-(defmethod draw-primitive :line
-  [g2d shape {:keys [l t r b filled]}]
-  (.drawLine g2d l t r b))
-
-(defmethod draw-primitive :polygon
-  [g2d shape {:keys [vertices filled closed]}]
-  (let [xs (int-array (map :x vertices))
-        ys (int-array (map :y vertices))
-        n (count vertices)]
-    (if filled
-      (.fillPolygon g2d xs ys n)
-      (if closed
-        (.drawPolygon g2d xs ys n)))
-        (.drawPolyline g2d xs ys n)))
-
-(defmethod draw-primitive :rect
-  [g2d shape {:keys [l t w h filled]}]
-  (if filled
-    (.fillRect g2d l t w h)
-    (.drawRect g2d l t w h)))
-
-(defmethod draw-primitive :round-rect
-  [g2d shape {:keys [l t w h filled arc-radius arc-width arc-height]}]
-  (if filled
-    (.fillRoundRect g2d l t w h
-                    (or arc-radius arc-width)
-                    (or arc-radius arc-height))
-    (.drawRoundRect g2d l t w h
-                    (or arc-radius arc-width)
-                    (or arc-radius arc-height))))
 
 (defn draw-string-center
   "Draw a string centered at position x,y."
@@ -209,8 +234,8 @@
                  (float (- x (/ width 2)))
                  (float (+ y (/ height 2))))))
 
-(defmethod draw-primitive :text
-  [g2d shape  {:keys [text x y font]}]
+(defmethod draw-primitive String
+  [g2d text {:keys [x y font fill stroke]}]
   (let [{:keys [name bold italic underline strikethrough size]} font
         style (bit-or (if bold Font/BOLD 0) (if italic Font/ITALIC 0))
         font1 (Font. name style size)
@@ -220,16 +245,23 @@
             (if strikethrough TextAttribute/STRIKETHROUGH_ON false))
       (.put TextAttribute/UNDERLINE
             (if underline TextAttribute/UNDERLINE_ON -1)))
-    (let [font2 (Font. attributes)]
+    (let [font2 (Font. attributes)
+          ;context (.getFontRenderContext g2d)
+          ;obj (.getOutline (.createGlyphVector font2 context text))
+          ]
+      ;(.translate g2d x y)
+      ;(draw-shape g2d obj fill stroke)
+      ;(.translate g2d (- x) (- y))
       (.setFont g2d font2)
-      (draw-string-center g2d text x y))))
+      (draw-string-center g2d text x y)
+      )))
 
 (defn draw-primitives [g2d items]
   (enable-anti-aliasing g2d)
   (doseq [[type params inner] items]
     (let [params+ (complete-coordinates params)]
       (with-g2d-state [g2d params+]
-                      (draw-primitive g2d type params+)))))
+                      (draw-primitive g2d (make-obj type params+) params+)))))
 
 (defn paint-canvas-graphics [^Graphics graphics data]
   (draw-primitives graphics data))
@@ -273,28 +305,27 @@
    [:round-rect
     {:l 20 :t 10 :w 300 :h 300
      :arc-radius 100
-     :filled true :color :pink
+     :fill true :color :pink
      :rotate 50}]
    [:round-rect
     {:l 20 :t 10 :w 300 :h 300
      :arc-radius 100 :rotate 50
-     :filled false :color 0xE06060
+     :fill false :color 0xE06060
      :stroke {:width 5
               :cap :round
               :dashes [10 10] :dash-phase 0}}]
    [:ellipse
     {:l 25 :t 15 :w 110 :h 90
-     :filled true :color :yellow :alpha 0.5}]
-   [:polygon
+     :fill true :color :yellow :alpha 0.5 :stroke nil}]
+   [:polyline
     {:vertices [{:x 100 :y 100}
                 {:x 50 :y 150}
                 {:x 50 :y 220}
                 {:x 160 :y 250}]
-     :filled false
-     :closed false
-     :color :orange
+     :fill false
+     :color :black
      :alpha 0.8
-     :stroke {:width 25
+     :stroke {:width 2
               :dashes [20 3 10 3 5 3]
               :cap :butt
               :join :bevel
@@ -305,6 +336,8 @@
      :alpha 0.4
      :rotate 0.2
      :scale 1.1
+     :fill true
+     :stroke {:width 10 :cap :butt}
      :font {:name "Arial"
             :bold true
             :italic false
@@ -322,7 +355,7 @@
    [:arc
     {:l 30 :t 20 :w 150 :h 100
      :start-angle 30 :arc-angle 100 :color 0x004000
-     :filled false
+     :fill false
      :stroke {:width 10}
      :alpha 0.7}]
    ])
