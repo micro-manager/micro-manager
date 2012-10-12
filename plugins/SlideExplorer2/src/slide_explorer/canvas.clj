@@ -143,30 +143,30 @@
    
 (defmulti draw-primitive (fn [g2d shape params] shape))
 
-(defmethod draw-primitive :primitive-arc
+(defmethod draw-primitive :arc
   [g2d shape {:keys [l t w h filled start-angle arc-angle]}]
   (if filled
     (.fillArc g2d l t w h start-angle arc-angle)
     (.drawArc g2d l t w h start-angle arc-angle)))
 
-(defmethod draw-primitive :primitive-ellipse
+(defmethod draw-primitive :ellipse
   [g2d shape {:keys [l t w h filled]}]
   (if filled
     (.fillOval g2d l t w h)
     (.drawOval g2d l t w h)))
 
-(defmethod draw-primitive :primitive-image
+(defmethod draw-primitive :image
   [g2d shape {:keys [image l t w h]}]
   (.drawImage g2d image
               l t
               (or w (.getWidth image))
               (or h (.getHeight image)) nil))
 
-(defmethod draw-primitive :primitive-line
+(defmethod draw-primitive :line
   [g2d shape {:keys [l t r b filled]}]
   (.drawLine g2d l t r b))
 
-(defmethod draw-primitive :primitive-polygon
+(defmethod draw-primitive :polygon
   [g2d shape {:keys [vertices filled closed]}]
   (let [xs (int-array (map :x vertices))
         ys (int-array (map :y vertices))
@@ -177,13 +177,13 @@
         (.drawPolygon g2d xs ys n)))
         (.drawPolyline g2d xs ys n)))
 
-(defmethod draw-primitive :primitive-rect
+(defmethod draw-primitive :rect
   [g2d shape {:keys [l t w h filled]}]
   (if filled
     (.fillRect g2d l t w h)
     (.drawRect g2d l t w h)))
 
-(defmethod draw-primitive :primitive-round-rect
+(defmethod draw-primitive :round-rect
   [g2d shape {:keys [l t w h filled arc-radius arc-width arc-height]}]
   (if filled
     (.fillRoundRect g2d l t w h
@@ -209,7 +209,7 @@
                  (float (- x (/ width 2)))
                  (float (+ y (/ height 2))))))
 
-(defmethod draw-primitive :primitive-text
+(defmethod draw-primitive :text
   [g2d shape  {:keys [text x y font]}]
   (let [{:keys [name bold italic underline strikethrough size]} font
         style (bit-or (if bold Font/BOLD 0) (if italic Font/ITALIC 0))
@@ -270,22 +270,22 @@
 (reset!
   grafix 
   [
-   [:primitive-round-rect
+   [:round-rect
     {:l 20 :t 10 :w 300 :h 300
      :arc-radius 100
      :filled true :color :pink
      :rotate 50}]
-   [:primitive-round-rect
+   [:round-rect
     {:l 20 :t 10 :w 300 :h 300
      :arc-radius 100 :rotate 50
      :filled false :color 0xE06060
      :stroke {:width 5
               :cap :round
               :dashes [10 10] :dash-phase 0}}]
-   [:primitive-ellipse
+   [:ellipse
     {:l 25 :t 15 :w 110 :h 90
      :filled true :color :yellow :alpha 0.5}]
-   [:primitive-polygon
+   [:polygon
     {:vertices [{:x 100 :y 100}
                 {:x 50 :y 150}
                 {:x 50 :y 220}
@@ -299,7 +299,7 @@
               :cap :butt
               :join :bevel
               :miter-limit 10.0}}]
-   [:primitive-text
+   [:text
     {:x 180 :y 120 :text "Testing..."
      :color :blue
      :alpha 0.4
@@ -311,18 +311,19 @@
             :underline false
             :strikethrough false
             :size 60}}]
-   [:primitive-line
+   [:line
     {:x 180 :y 220 :w 0 :h 50 :color :red
      :stroke {:width 10 :cap :round}
      :alpha 0.7}]
-   [:primitive-line
+   [:line
     {:x 180 :y 220 :w 30 :h 0 :color 0x00AA00
      :alpha 0.6
      :stroke {:width 4}}]
-   [:primitive-arc
+   [:arc
     {:l 30 :t 20 :w 150 :h 100
-     :start-angle 30 :arc-angle 100 :color :green
-     :filled true
+     :start-angle 30 :arc-angle 100 :color 0x004000
+     :filled false
+     :stroke {:width 10}
      :alpha 0.7}]
    ])
 
