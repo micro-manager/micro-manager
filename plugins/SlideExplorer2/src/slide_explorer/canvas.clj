@@ -28,7 +28,7 @@
                            RenderingHints/VALUE_ANTIALIAS_OFF)))))
 
 (def default-primitive-params
-  {:filled false :color Color/BLACK})
+  {:filled false :color :black})
 
 (def stroke-caps
   {:butt BasicStroke/CAP_BUTT
@@ -40,9 +40,35 @@
    :round BasicStroke/JOIN_ROUND
    :bevel BasicStroke/JOIN_BEVEL})
 
+(def colors
+  {:red Color/RED
+   :blue Color/BLUE
+   :green Color/GREEN
+   :cyan Color/CYAN
+   :magenta Color/MAGENTA
+   :yellow Color/YELLOW
+   :pink Color/PINK
+   :orange Color/ORANGE
+   :black Color/BLACK
+   :white Color/WHITE
+   :gray Color/GRAY
+   :grey Color/GRAY
+   :dark-gray Color/DARK_GRAY
+   :dark-grey Color/DARK_GRAY
+   :light-gray Color/LIGHT_GRAY
+   :light-grey Color/LIGHT_GRAY
+   })
+
+(defn color-object [color]
+  (cond
+    (integer? color) (Color. color)
+    (keyword? color) (colors color)
+    (string? color)  (colors (keyword color))
+    :else            color))
+
 (defn set-g2d-state [g2d {:keys [alpha color stroke rotate x y scale]}]
   (doto g2d
-    (.setColor (if color color Color/BLACK))
+    (.setColor (color-object (or color :black)))
     (.setComposite (if (or (not alpha) 
                            (= alpha 1))
                      AlphaComposite/Src
@@ -247,18 +273,18 @@
    [:primitive-round-rect
     {:l 20 :t 10 :w 300 :h 300
      :arc-radius 100
-     :filled true :color Color/PINK
+     :filled true :color :pink
      :rotate 50}]
    [:primitive-round-rect
     {:l 20 :t 10 :w 300 :h 300
      :arc-radius 100 :rotate 50
-     :filled false :color Color/DARK_GRAY
+     :filled false :color (Color. 0xE06060)
      :stroke {:width 5
               :cap :round
-              :dashes [11 10] :dash-phase 0}}]
+              :dashes [10 10] :dash-phase 0}}]
    [:primitive-ellipse
     {:l 25 :t 15 :w 110 :h 90
-     :filled true :color Color/YELLOW :alpha 0.5}]
+     :filled true :color :yellow :alpha 0.5}]
    [:primitive-polygon
     {:vertices [{:x 100 :y 100}
                 {:x 50 :y 150}
@@ -266,7 +292,7 @@
                 {:x 160 :y 250}]
      :filled false
      :closed false
-     :color Color/ORANGE
+     :color :orange
      :alpha 0.8
      :stroke {:width 25
               :dashes [20 3 10 3 5 3]
@@ -275,7 +301,7 @@
               :miter-limit 10.0}}]
    [:primitive-text
     {:x 180 :y 120 :text "Testing..."
-     :color Color/BLUE
+     :color :blue
      :alpha 0.4
      :rotate 0.2
      :scale 1.1
@@ -286,16 +312,16 @@
             :strikethrough false
             :size 60}}]
    [:primitive-line
-    {:x 180 :y 220 :w 0 :h 50 :color Color/RED
+    {:x 180 :y 220 :w 0 :h 50 :color :red
      :stroke {:width 10 :cap :round}
      :alpha 0.7}]
    [:primitive-line
-    {:x 180 :y 220 :w 30 :h 0 :color Color/GREEN
+    {:x 180 :y 220 :w 30 :h 0 :color 0x00AA00
      :alpha 0.6
      :stroke {:width 4}}]
    [:primitive-arc
     {:l 30 :t 20 :w 150 :h 100
-     :start-angle 30 :arc-angle 100 :color Color/GREEN
+     :start-angle 30 :arc-angle 100 :color :green
      :filled true
      :alpha 0.7}]
    ])
