@@ -6,7 +6,8 @@
                           Line2D$Double Path2D$Double
                           Rectangle2D$Double
                           RoundRectangle2D$Double)
-           (javax.swing JFrame JPanel)))
+           (javax.swing JFrame JPanel JScrollPane JTextArea)
+           (javax.swing.event DocumentListener)))
 
 ;; possible 
 ; draggable
@@ -300,6 +301,27 @@
                          (assoc-in [0 :params :h] (+ i 100)))
                      ))))
 
+(defn handle-data-changed [text-area changed-fn]
+  (let [doc (.getDocument text-area)]
+    (.addDocumentListener doc
+      (proxy [DocumentListener] []
+        (changedUpdate [_] (changed-fn))
+        (insertUpdate [_] (changed-fn))
+        (removeUpdate [_] (changed-fn))))))
+        
+
+(defn data-editor [data-atom]
+  (let [text-area (JTextArea.)
+        scroll-pane (JScrollPane. text-area)]
+    (handle-data-changed text-area
+                         #(try (reset! data-atom
+                                 (read-string (.getText text-area)))
+                                    (catch Exception e )))
+    (.setText text-area (with-out-str (clojure.pprint/pprint @data-atom)))
+    (doto (JFrame.)
+      (.. getContentPane (add scroll-pane))
+      .show)))
+
 (reset!
   grafix 
   [
@@ -357,11 +379,11 @@
      :stroke {:width 7 :cap :butt}}]
    [:line
     {:x 350 :y 350 :w -18 :h 18 :fill false :color :white :alpha 0.8
-     :stroke {:width 7 :cap :butt}}]
+     :stroke {:width 7 :cap :butt}}])
    [:line
     {:x 180 :y 220 :w 0 :h 50 :color :red
      :stroke {:width 10 :cap :round}
-     :alpha 0.7}])
+     :alpha 0.7}]
    [:line
     {:x 180 :y 220 :w 30 :h 0 :color 0x00AA00
      :alpha 0.6
