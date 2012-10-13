@@ -347,7 +347,7 @@ int TsiCam::SnapImage()
    camHandle_->Start();
 
    MM::MMTime start = GetCurrentMMTime();
-   MM::MMTime timeout(2, 0); // 2 sec timeout
+   MM::MMTime timeout(4, 0); // 4 sec timeout
    TsiImage* tsiImg = 0;
    do
    {
@@ -555,7 +555,7 @@ int AcqSequenceThread::svc (void)
    InterlockedExchange(&camInstance->acquiring, 1);
    camInstance->camHandle_->Start();
    MM::MMTime start = camInstance->GetCurrentMMTime();
-   MM::MMTime timeout(2, 0); // 2 seconds, 0 micro seconds
+   MM::MMTime timeout(4, 0); // 2 seconds, 0 micro seconds
    while (!stop && (camInstance->GetCurrentMMTime() - start) < timeout)
    {
       TsiImage* tsiImg = camInstance->camHandle_->GetPendingImage();
