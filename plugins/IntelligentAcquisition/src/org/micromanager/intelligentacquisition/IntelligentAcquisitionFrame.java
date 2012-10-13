@@ -45,7 +45,9 @@ import java.awt.Frame;
 import java.awt.event.KeyListener;
 import java.awt.event.MouseListener;
 import java.awt.geom.AffineTransform;
+import java.awt.geom.Point2D;
 import java.util.concurrent.atomic.AtomicBoolean;
+import org.micromanager.MMStudioMainFrame;
 import org.micromanager.api.MMWindow;
 import org.micromanager.utils.JavaUtils;
 
@@ -581,7 +583,7 @@ public class IntelligentAcquisitionFrame extends javax.swing.JFrame {
             AffineTransform af = null;
             try {
                af = (AffineTransform) JavaUtils.getObjectFromPrefs
-                    (prefs_, "affine_transform_" + core_.getCurrentPixelSizeConfig(), null);
+                    (Preferences.userNodeForPackage(MMStudioMainFrame.class), "affine_transform_" + core_.getCurrentPixelSizeConfig(), null);
             } catch (Exception ex) {
             }
             if (af == null) {
@@ -666,14 +668,17 @@ public class IntelligentAcquisitionFrame extends javax.swing.JFrame {
                ResultsTable res = ij.measure.ResultsTable.getResultsTable();
                if (res.getCounter() > 0) {
                   try {
-                     // X and Y coordinates of object found in pixels
+                     // X and Y coordinates of object found in microns
                      double xPos = res.getValue("X", 0);
                      double yPos = res.getValue("Y", 0);
-                     // Todo: use affine transform to position stage
+                     
                      
                      if (af != null) {
-                        core_.setRelativeXYPosition(xyStage_, xPos * pixelWidthMicron_,
-                                yPos * pixelWidthMicron_);
+                        
+                        // TODO: testing!!!
+                        Point2D newStagePos = af.inverseTransform(new Point2D.Double(xPos, yPos), null);
+                        core_.setRelativeXYPosition(xyStage_, newStagePos.getX(),
+                                newStagePos.getY() );
                         core_.setROI((int) (core_.getImageWidth() / 2 - roiWidthX_ / 2),
                                 (int) (core_.getImageHeight() / 2 - roiWidthY_ / 2),
                                 (int) roiWidthX_, (int) roiWidthY_);
