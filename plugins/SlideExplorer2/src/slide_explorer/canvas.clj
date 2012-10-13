@@ -259,9 +259,10 @@
 (defn draw-primitives [g2d items]
   (enable-anti-aliasing g2d)
   (doseq [[type params inner] items]
+    (when type
     (let [params+ (complete-coordinates params)]
       (with-g2d-state [g2d params+]
-                      (draw-primitive g2d (make-obj type params+) params+)))))
+                      (draw-primitive g2d (make-obj type params+) params+))))))
 
 (defn paint-canvas-graphics [^Graphics graphics data]
   (draw-primitives graphics data))
