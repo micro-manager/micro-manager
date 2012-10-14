@@ -103,7 +103,7 @@
     <Link>
       <AdditionalDependencies>version.lib;nafxcwd.lib;Kamlibd.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <ShowProgress>NotSet</ShowProgress>
-      <OutputFile>$(OutDir)mmgr_dal_$(ProjectName).dll</OutputFile>
+      <OutputFile>$(OutDir)$(TargetName)$(TargetExt)</OutputFile>
       <AdditionalLibraryDirectories>..\..\..\3rdparty\Microsoft\VisualC++\atlmfc\lib;..\..\..\3rdparty\PCO\Windows\pco_generic;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <ProgramDatabaseFile>$(OutDir)$(ProjectName).pdb</ProgramDatabaseFile>
@@ -144,7 +144,7 @@
     <Link>
       <AdditionalDependencies>version.lib;nafxcwd.lib;Kamlibd64.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <ShowProgress>NotSet</ShowProgress>
-      <OutputFile>$(OutDir)mmgr_dal_$(ProjectName).dll</OutputFile>
+      <OutputFile>$(OutDir)$(TargetName)$(TargetExt)</OutputFile>
       <AdditionalLibraryDirectories>..\..\..\3rdparty\Microsoft\VisualC++\atlmfc\lib\x64;..\..\..\3rdparty\PCO\Windows\pco_generic;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <ProgramDatabaseFile>$(OutDir)$(ProjectName).pdb</ProgramDatabaseFile>
@@ -174,7 +174,7 @@
     </ClCompile>
     <Link>
       <AdditionalDependencies>version.lib;nafxcw.lib;..\..\..\3rdparty\Pco\windows\pco_generic\Kamlib.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <OutputFile>$(OutDir)mmgr_dal_$(ProjectName).dll</OutputFile>
+      <OutputFile>$(OutDir)$(TargetName)$(TargetExt)</OutputFile>
       <AdditionalLibraryDirectories>..\..\..\3rdparty\Microsoft\VisualC++\atlmfc\lib;..\..\..\3rdparty\PCO\Windows\pco_generic;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Windows</SubSystem>
@@ -208,7 +208,7 @@
     </ClCompile>
     <Link>
       <AdditionalDependencies>version.lib;nafxcw.lib;..\..\..\3rdparty\Pco\windows\pco_generic\Kamlib64.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <OutputFile>$(OutDir)mmgr_dal_$(ProjectName).dll</OutputFile>
+      <OutputFile>$(OutDir)$(TargetName)$(TargetExt)</OutputFile>
       <AdditionalLibraryDirectories>..\..\..\3rdparty\Microsoft\VisualC++\atlmfc\lib\x64;..\..\..\3rdparty\PCO\Windows\pco_generic;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Windows</SubSystem>

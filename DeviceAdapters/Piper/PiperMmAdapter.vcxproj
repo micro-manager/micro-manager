@@ -103,7 +103,7 @@
     </ResourceCompile>
     <Link>
       <AdditionalDependencies>PiperAPI.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <OutputFile>$(OutDir)mmgr_dal_$(ProjectName).dll</OutputFile>
+      <OutputFile>$(OutDir)$(TargetName)$(TargetExt)</OutputFile>
       <AdditionalLibraryDirectories>..\..\..\3rdparty\PiperAPI\Lib\$(Platform);..\..\..\3rdparty\Microsoft\VisualC++\atlmfc\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <UACExecutionLevel>HighestAvailable</UACExecutionLevel>
       <ModuleDefinitionFile>.\PiperMmAdapter.def</ModuleDefinitionFile>
@@ -142,7 +142,7 @@
     </ResourceCompile>
     <Link>
       <AdditionalDependencies>PiperAPI.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <OutputFile>$(OutDir)mmgr_dal_$(ProjectName).dll</OutputFile>
+      <OutputFile>$(OutDir)$(TargetName)$(TargetExt)</OutputFile>
       <AdditionalLibraryDirectories>..\..\..\3rdparty\PiperAPI\Lib\$(Platform);..\..\..\3rdparty\Microsoft\VisualC++\atlmfc\lib\x64;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <UACExecutionLevel>HighestAvailable</UACExecutionLevel>
       <ModuleDefinitionFile>.\PiperMmAdapter.def</ModuleDefinitionFile>
@@ -175,7 +175,7 @@
     </ClCompile>
     <Link>
       <AdditionalDependencies>PiperAPI.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <OutputFile>$(OutDir)mmgr_dal_$(ProjectName).dll</OutputFile>
+      <OutputFile>$(OutDir)$(TargetName)$(TargetExt)</OutputFile>
       <AdditionalLibraryDirectories>..\..\..\3rdparty\PiperAPI\Lib\$(Platform);..\..\..\3rdparty\Microsoft\VisualC++\atlmfc\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <UACExecutionLevel>HighestAvailable</UACExecutionLevel>
       <ModuleDefinitionFile>.\PiperMmAdapter.def</ModuleDefinitionFile>
@@ -211,7 +211,7 @@
     </ClCompile>
     <Link>
       <AdditionalDependencies>PiperAPI.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <OutputFile>$(OutDir)mmgr_dal_$(ProjectName).dll</OutputFile>
+      <OutputFile>$(OutDir)$(TargetName)$(TargetExt)</OutputFile>
       <AdditionalLibraryDirectories>..\..\..\3rdparty\PiperAPI\Lib\$(Platform);..\..\..\3rdparty\Microsoft\VisualC++\atlmfc\lib\x64;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <UACExecutionLevel>HighestAvailable</UACExecutionLevel>
       <ModuleDefinitionFile>.\PiperMmAdapter.def</ModuleDefinitionFile>
