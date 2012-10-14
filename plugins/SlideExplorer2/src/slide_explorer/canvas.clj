@@ -71,6 +71,8 @@
     (string? color)  (colors (keyword color))
     :else            color))
 
+(def degrees-to-radians (/ Math/PI 180))
+
 (defn set-g2d-state [g2d {:keys [alpha color stroke rotate x y scale]}]
   (doto g2d
     (.setColor (color-object (or color :black)))
@@ -92,7 +94,7 @@
     (when (and x y (or rotate scale))
       (doto g2d
         (.translate x y)
-        (.rotate (or rotate 0.0))
+        (.rotate (* degrees-to-radians (or rotate 0.0)))
         (.scale (or scale 1.0) (or scale 1.0))
         (.translate (- x) (- y)))))
 
