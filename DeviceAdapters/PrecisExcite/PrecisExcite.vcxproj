@@ -19,8 +19,8 @@
     </ProjectConfiguration>
   </ItemGroup>
   <PropertyGroup Label="Globals">
-    <ProjectGuid>{E206DB83-E348-4E32-AA0F-B7E05E3D8F51}</ProjectGuid>
-    <RootNamespace>DECamera</RootNamespace>
+    <ProjectGuid>{DCAF2299-3620-40FB-9E55-62A860FD67F2}</ProjectGuid>
+    <RootNamespace>PrecisExcite</RootNamespace>
     <Keyword>Win32Proj</Keyword>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
@@ -46,22 +46,18 @@
   <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="PropertySheets">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
     <Import Project="$(VCTargetsPath)Microsoft.CPP.UpgradeFromVC71.props" />
-    <Import Project="buildProps2008.props" />
   </ImportGroup>
   <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="PropertySheets">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
     <Import Project="$(VCTargetsPath)Microsoft.CPP.UpgradeFromVC71.props" />
-    <Import Project="buildProps2008.props" />
   </ImportGroup>
   <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="PropertySheets">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
     <Import Project="$(VCTargetsPath)Microsoft.CPP.UpgradeFromVC71.props" />
-    <Import Project="buildProps2008.props" />
   </ImportGroup>
   <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="PropertySheets">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
     <Import Project="$(VCTargetsPath)Microsoft.CPP.UpgradeFromVC71.props" />
-    <Import Project="buildProps2008.props" />
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup>
@@ -82,12 +78,12 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
       <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>..\src\DEClientLib;..\src\DEMessaging;..\..\..;$(THIRDPARTYLIBS)\boost\;$(THIRDPARTYLIBS)\google\protocolbuffers\src\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;_USRDLL;MODULE_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <MinimalRebuild>true</MinimalRebuild>
       <ExceptionHandling>Async</ExceptionHandling>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
-      <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
+      <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
       <RuntimeTypeInfo>true</RuntimeTypeInfo>
       <PrecompiledHeader>
       </PrecompiledHeader>
@@ -97,20 +93,18 @@
     </ClCompile>
     <Link>
       <OutputFile>$(OutDir)mmgr_dal_$(ProjectName).dll</OutputFile>
-      <AdditionalLibraryDirectories>$(THIRDPARTYLIBS)\boost\stage_$(Platform)\lib;$(TARGETDIR);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <IgnoreAllDefaultLibraries>false</IgnoreAllDefaultLibraries>
+      <AdditionalLibraryDirectories>%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <ProgramDatabaseFile>$(OutDir)$(ProjectName).pdb</ProgramDatabaseFile>
       <SubSystem>Windows</SubSystem>
       <RandomizedBaseAddress>false</RandomizedBaseAddress>
       <DataExecutionPrevention>
       </DataExecutionPrevention>
-      <ImportLibrary>$(OutDir)DECamera.lib</ImportLibrary>
+      <ImportLibrary>$(OutDir)PrecisExcite.lib</ImportLibrary>
       <TargetMachine>MachineX86</TargetMachine>
     </Link>
     <PostBuildEvent>
-      <Command>
-      </Command>
+      <Command>copy "$(TargetPath)" ..\..\bin_$(Platform)</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -119,12 +113,12 @@
     </Midl>
     <ClCompile>
       <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>..\src\DEClientLib;..\src\DEMessaging;..\..\..;$(THIRDPARTYLIBS)\boost\;$(THIRDPARTYLIBS)\google\protocolbuffers\src\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;_USRDLL;MODULE_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <MinimalRebuild>true</MinimalRebuild>
       <ExceptionHandling>Async</ExceptionHandling>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
-      <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
+      <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
       <RuntimeTypeInfo>true</RuntimeTypeInfo>
       <PrecompiledHeader>
       </PrecompiledHeader>
@@ -134,27 +128,26 @@
     </ClCompile>
     <Link>
       <OutputFile>$(OutDir)mmgr_dal_$(ProjectName).dll</OutputFile>
-      <AdditionalLibraryDirectories>$(THIRDPARTYLIBS)\boost\stage_$(Platform)\lib;$(TARGETDIR);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <ProgramDatabaseFile>$(OutDir)$(ProjectName).pdb</ProgramDatabaseFile>
       <SubSystem>Windows</SubSystem>
       <RandomizedBaseAddress>false</RandomizedBaseAddress>
       <DataExecutionPrevention>
       </DataExecutionPrevention>
-      <ImportLibrary>$(OutDir)DECamera.lib</ImportLibrary>
+      <ImportLibrary>$(OutDir)PrecisExcite.lib</ImportLibrary>
       <TargetMachine>MachineX64</TargetMachine>
     </Link>
     <PostBuildEvent>
-      <Command>
-      </Command>
+      <Command>copy "$(TargetPath)" ..\..\bin_$(Platform)</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
-      <AdditionalIncludeDirectories>..\src\DEClientLib;..\src\DEMessaging;..\..\..;$(THIRDPARTYLIBS)\boost\;$(THIRDPARTYLIBS)\google\protocolbuffers\src\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;_USRDLL;MODULE_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ExceptionHandling>Async</ExceptionHandling>
-      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <RuntimeTypeInfo>true</RuntimeTypeInfo>
       <PrecompiledHeader>
       </PrecompiledHeader>
@@ -164,7 +157,7 @@
     </ClCompile>
     <Link>
       <OutputFile>$(OutDir)mmgr_dal_$(ProjectName).dll</OutputFile>
-      <AdditionalLibraryDirectories>$(THIRDPARTYLIBS)\boost\stage_$(Platform)\lib;$(TARGETDIR);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Windows</SubSystem>
       <OptimizeReferences>true</OptimizeReferences>
@@ -172,11 +165,11 @@
       <RandomizedBaseAddress>false</RandomizedBaseAddress>
       <DataExecutionPrevention>
       </DataExecutionPrevention>
-      <ImportLibrary>$(OutDir)DECamera.lib</ImportLibrary>
+      <ImportLibrary>$(OutDir)PrecisExcite.lib</ImportLibrary>
       <TargetMachine>MachineX86</TargetMachine>
     </Link>
     <PostBuildEvent>
-      <Command>copy "$(TargetPath)" ..\..\..\bin_$(Platform)</Command>
+      <Command>copy "$(TargetPath)" ..\..\bin_$(Platform)</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -184,10 +177,10 @@
       <TargetEnvironment>X64</TargetEnvironment>
     </Midl>
     <ClCompile>
-      <AdditionalIncludeDirectories>..\src\DEClientLib;..\src\DEMessaging;..\..\..;$(THIRDPARTYLIBS)\boost\;$(THIRDPARTYLIBS)\google\protocolbuffers\src\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;_USRDLL;MODULE_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ExceptionHandling>Async</ExceptionHandling>
-      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <RuntimeTypeInfo>true</RuntimeTypeInfo>
       <PrecompiledHeader>
       </PrecompiledHeader>
@@ -197,7 +190,7 @@
     </ClCompile>
     <Link>
       <OutputFile>$(OutDir)mmgr_dal_$(ProjectName).dll</OutputFile>
-      <AdditionalLibraryDirectories>$(THIRDPARTYLIBS)\boost\stage_$(Platform)\lib;$(TARGETDIR);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Windows</SubSystem>
       <OptimizeReferences>true</OptimizeReferences>
@@ -205,34 +198,24 @@
       <RandomizedBaseAddress>false</RandomizedBaseAddress>
       <DataExecutionPrevention>
       </DataExecutionPrevention>
-      <ImportLibrary>$(OutDir)DECamera.lib</ImportLibrary>
+      <ImportLibrary>$(OutDir)PrecisExcite.lib</ImportLibrary>
       <TargetMachine>MachineX64</TargetMachine>
     </Link>
     <PostBuildEvent>
-      <Command>copy "$(TargetPath)" ..\..\..\bin_$(Platform)</Command>
+      <Command>copy "$(TargetPath)" ..\..\bin_$(Platform)</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="..\src\DECamera\DECamera.cpp" />
-    <ClCompile Include="..\..\..\MMDevice\DeviceUtils.cpp" />
-    <ClCompile Include="..\..\..\MMDevice\ImgBuffer.cpp" />
-    <ClCompile Include="..\..\..\MMDevice\ModuleInterface.cpp" />
-    <ClCompile Include="..\..\..\MMDevice\Property.cpp" />
+    <ClCompile Include="..\..\MMDevice\DeviceUtils.cpp" />
+    <ClCompile Include="..\..\MMDevice\ModuleInterface.cpp" />
+    <ClCompile Include="PrecisExcite.cpp" />
+    <ClCompile Include="..\..\MMDevice\Property.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\src\DECamera\DECamera.h" />
-    <ClInclude Include="..\..\..\MMDevice\DeviceBase.h" />
-    <ClInclude Include="..\..\..\MMDevice\DeviceUtils.h" />
-    <ClInclude Include="..\..\..\MMDevice\ImgBuffer.h" />
-    <ClInclude Include="..\..\..\MMDevice\MMDevice.h" />
-    <ClInclude Include="..\..\..\MMDevice\ModuleInterface.h" />
-    <ClInclude Include="..\..\..\MMDevice\Property.h" />
-  </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="DEClientLib.vcxproj">
-      <Project>{823879d7-a915-4cea-8365-09ba70fdaf2c}</Project>
-      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
-    </ProjectReference>
+    <ClInclude Include="..\..\MMDevice\DeviceUtils.h" />
+    <ClInclude Include="..\..\MMDevice\ModuleInterface.h" />
+    <ClInclude Include="PrecisExcite.h" />
+    <ClInclude Include="..\..\MMDevice\Property.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

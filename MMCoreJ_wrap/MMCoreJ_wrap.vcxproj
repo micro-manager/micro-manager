@@ -19,8 +19,8 @@
     </ProjectConfiguration>
   </ItemGroup>
   <PropertyGroup Label="Globals">
-    <ProjectGuid>{E206DB83-E348-4E32-AA0F-B7E05E3D8F51}</ProjectGuid>
-    <RootNamespace>DECamera</RootNamespace>
+    <ProjectGuid>{EFA68887-8A97-49D7-BAB4-768E15A4E597}</ProjectGuid>
+    <RootNamespace>MMCoreJ_wrap</RootNamespace>
     <Keyword>Win32Proj</Keyword>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
@@ -46,22 +46,18 @@
   <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="PropertySheets">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
     <Import Project="$(VCTargetsPath)Microsoft.CPP.UpgradeFromVC71.props" />
-    <Import Project="buildProps2008.props" />
   </ImportGroup>
   <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="PropertySheets">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
     <Import Project="$(VCTargetsPath)Microsoft.CPP.UpgradeFromVC71.props" />
-    <Import Project="buildProps2008.props" />
   </ImportGroup>
   <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="PropertySheets">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
     <Import Project="$(VCTargetsPath)Microsoft.CPP.UpgradeFromVC71.props" />
-    <Import Project="buildProps2008.props" />
   </ImportGroup>
   <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="PropertySheets">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
     <Import Project="$(VCTargetsPath)Microsoft.CPP.UpgradeFromVC71.props" />
-    <Import Project="buildProps2008.props" />
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup>
@@ -80,10 +76,16 @@
     <LinkIncremental Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</LinkIncremental>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <PreBuildEvent>
+      <Command>del $(ProjectDir)\mmcorej\*.java
+copy $(ProjectDir)\TaggedImage.java $(ProjectDir)\mmcorej\
+..\..\3rdpartypublic\swig\swig -c++ -java -package mmcorej -outdir mmcorej -module MMCoreJ MMCoreJ.i
+</Command>
+    </PreBuildEvent>
     <ClCompile>
       <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>..\src\DEClientLib;..\src\DEMessaging;..\..\..;$(THIRDPARTYLIBS)\boost\;$(THIRDPARTYLIBS)\google\protocolbuffers\src\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;_USRDLL;MODULE_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>../../../3rdpartypublic/boost;../../3rdpartypublic/boost/boost;../../3rdpartypublic/boost;$(JAVA_HOME)\include\win32;$(JAVA_HOME)\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;_USRDLL;MMCOREJ_WRAP_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <MinimalRebuild>true</MinimalRebuild>
       <ExceptionHandling>Async</ExceptionHandling>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
@@ -96,31 +98,45 @@
       <DisableSpecificWarnings>4290;%(DisableSpecificWarnings)</DisableSpecificWarnings>
     </ClCompile>
     <Link>
-      <OutputFile>$(OutDir)mmgr_dal_$(ProjectName).dll</OutputFile>
-      <AdditionalLibraryDirectories>$(THIRDPARTYLIBS)\boost\stage_$(Platform)\lib;$(TARGETDIR);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>mmcored.lib;Iphlpapi.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <ShowProgress>NotSet</ShowProgress>
+      <OutputFile>$(OutDir)MMCoreJ_wrap.dll</OutputFile>
+      <AdditionalLibraryDirectories>..\..\3rdpartypublic\boost\stage_$(Platform)\lib;..\lib_$(Platform);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <IgnoreAllDefaultLibraries>false</IgnoreAllDefaultLibraries>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <ProgramDatabaseFile>$(OutDir)$(ProjectName).pdb</ProgramDatabaseFile>
+      <ProgramDatabaseFile>$(OutDir)MMCoreJ_wrap.pdb</ProgramDatabaseFile>
       <SubSystem>Windows</SubSystem>
       <RandomizedBaseAddress>false</RandomizedBaseAddress>
       <DataExecutionPrevention>
       </DataExecutionPrevention>
-      <ImportLibrary>$(OutDir)DECamera.lib</ImportLibrary>
+      <ImportLibrary>$(OutDir)MMCoreJ_wrap.lib</ImportLibrary>
       <TargetMachine>MachineX86</TargetMachine>
     </Link>
     <PostBuildEvent>
-      <Command>
-      </Command>
+      <Command>copy "$(TargetPath)" ..\bin_$(Platform)
+del mmcorej\*.class
+"%JAVA_HOME%\bin\javac" -source 5 mmcorej\*.java ../mmstudio/src/org/json/*.java
+"%JAVA_HOME%\bin\jar" cvf MMCoreJ.jar mmcorej\*.class
+copy *.jar ..\bin_$(Platform)
+rem copy *.jar \"Program Files"\ImageJ\plugins\Micro-Manager
+rem copy ..\bin_$(Platform)\*.dll  \"Program Files"\ImageJ
+</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <PreBuildEvent>
+      <Command>del $(ProjectDir)\mmcorej\*.java
+copy $(ProjectDir)\TaggedImage.java $(ProjectDir)\mmcorej\
+..\..\3rdpartypublic\swig\swig -c++ -java -package mmcorej -outdir mmcorej -module MMCoreJ MMCoreJ.i
+</Command>
+    </PreBuildEvent>
     <Midl>
       <TargetEnvironment>X64</TargetEnvironment>
     </Midl>
     <ClCompile>
       <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>..\src\DEClientLib;..\src\DEMessaging;..\..\..;$(THIRDPARTYLIBS)\boost\;$(THIRDPARTYLIBS)\google\protocolbuffers\src\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;_USRDLL;MODULE_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>../../3rdpartypublic/boost;$(JAVA_HOME)\include\win32;$(JAVA_HOME)\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;_USRDLL;MMCOREJ_WRAP_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <MinimalRebuild>true</MinimalRebuild>
       <ExceptionHandling>Async</ExceptionHandling>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
@@ -133,26 +149,41 @@
       <DisableSpecificWarnings>4290;%(DisableSpecificWarnings)</DisableSpecificWarnings>
     </ClCompile>
     <Link>
-      <OutputFile>$(OutDir)mmgr_dal_$(ProjectName).dll</OutputFile>
-      <AdditionalLibraryDirectories>$(THIRDPARTYLIBS)\boost\stage_$(Platform)\lib;$(TARGETDIR);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>mmcored.lib;Iphlpapi.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <ShowProgress>NotSet</ShowProgress>
+      <OutputFile>$(OutDir)MMCoreJ_wrap.dll</OutputFile>
+      <AdditionalLibraryDirectories>..\..\3rdpartypublic\boost\stage_$(Platform)\lib;..\lib_$(Platform);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <IgnoreAllDefaultLibraries>false</IgnoreAllDefaultLibraries>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <ProgramDatabaseFile>$(OutDir)$(ProjectName).pdb</ProgramDatabaseFile>
+      <ProgramDatabaseFile>$(OutDir)MMCoreJ_wrap.pdb</ProgramDatabaseFile>
       <SubSystem>Windows</SubSystem>
       <RandomizedBaseAddress>false</RandomizedBaseAddress>
       <DataExecutionPrevention>
       </DataExecutionPrevention>
-      <ImportLibrary>$(OutDir)DECamera.lib</ImportLibrary>
+      <ImportLibrary>$(OutDir)MMCoreJ_wrap.lib</ImportLibrary>
       <TargetMachine>MachineX64</TargetMachine>
     </Link>
     <PostBuildEvent>
-      <Command>
-      </Command>
+      <Command>copy "$(TargetPath)" ..\bin_$(Platform)
+del mmcorej\*.class
+"%JAVA_HOME%\bin\javac" -source 5 mmcorej\*.java ../mmstudio/src/org/json/*.java
+"%JAVA_HOME%\bin\jar" cvf MMCoreJ.jar mmcorej\*.class
+copy *.jar ..\bin_$(Platform)
+rem copy *.jar \"Program Files"\ImageJ\plugins\Micro-Manager
+rem copy ..\bin_$(Platform)\*.dll  \"Program Files"\ImageJ
+</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <PreBuildEvent>
+      <Command>del $(ProjectDir)\mmcorej\*.java
+copy $(ProjectDir)\TaggedImage.java $(ProjectDir)\mmcorej\
+..\..\3rdpartypublic\swig\swig -c++ -java -package mmcorej -outdir mmcorej -module MMCoreJ MMCoreJ.i
+</Command>
+    </PreBuildEvent>
     <ClCompile>
-      <AdditionalIncludeDirectories>..\src\DEClientLib;..\src\DEMessaging;..\..\..;$(THIRDPARTYLIBS)\boost\;$(THIRDPARTYLIBS)\google\protocolbuffers\src\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;_USRDLL;MODULE_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>../../../3rdpartypublic/boost;../../3rdpartypublic/boost;$(JAVA_HOME)\include\win32;$(JAVA_HOME)\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;_USRDLL;MMCOREJ_WRAP_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ExceptionHandling>Async</ExceptionHandling>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
       <RuntimeTypeInfo>true</RuntimeTypeInfo>
@@ -163,8 +194,9 @@
       <DisableSpecificWarnings>4290;%(DisableSpecificWarnings)</DisableSpecificWarnings>
     </ClCompile>
     <Link>
-      <OutputFile>$(OutDir)mmgr_dal_$(ProjectName).dll</OutputFile>
-      <AdditionalLibraryDirectories>$(THIRDPARTYLIBS)\boost\stage_$(Platform)\lib;$(TARGETDIR);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>mmcorer.lib;Iphlpapi.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <OutputFile>$(OutDir)MMCoreJ_wrap.dll</OutputFile>
+      <AdditionalLibraryDirectories>..\..\3rdpartypublic\boost\stage_$(Platform)\lib;..\lib_$(Platform);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Windows</SubSystem>
       <OptimizeReferences>true</OptimizeReferences>
@@ -172,20 +204,33 @@
       <RandomizedBaseAddress>false</RandomizedBaseAddress>
       <DataExecutionPrevention>
       </DataExecutionPrevention>
-      <ImportLibrary>$(OutDir)DECamera.lib</ImportLibrary>
+      <ImportLibrary>$(OutDir)MMCoreJ_wrap.lib</ImportLibrary>
       <TargetMachine>MachineX86</TargetMachine>
     </Link>
     <PostBuildEvent>
-      <Command>copy "$(TargetPath)" ..\..\..\bin_$(Platform)</Command>
+      <Command>copy "$(TargetPath)" ..\bin_$(Platform)
+del mmcorej\*.class
+"%JAVA_HOME%\bin\javac" -source 5 mmcorej\*.java ../mmstudio/src/org/json/*.java
+"%JAVA_HOME%\bin\jar" cvf MMCoreJ.jar mmcorej\*.class
+copy *.jar ..\bin_$(Platform)
+rem copy *.jar \"Program Files"\ImageJ\plugins\Micro-Manager
+rem copy ..\bin_$(Platform)\*.dll  \"Program Files"\ImageJ
+</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <PreBuildEvent>
+      <Command>del $(ProjectDir)\mmcorej\*.java
+copy $(ProjectDir)\TaggedImage.java $(ProjectDir)\mmcorej\
+..\..\3rdpartypublic\swig\swig -c++ -java -package mmcorej -outdir mmcorej -module MMCoreJ MMCoreJ.i
+</Command>
+    </PreBuildEvent>
     <Midl>
       <TargetEnvironment>X64</TargetEnvironment>
     </Midl>
     <ClCompile>
-      <AdditionalIncludeDirectories>..\src\DEClientLib;..\src\DEMessaging;..\..\..;$(THIRDPARTYLIBS)\boost\;$(THIRDPARTYLIBS)\google\protocolbuffers\src\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;_USRDLL;MODULE_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>../../3rdpartypublic/boost;$(JAVA_HOME)\include\win32;$(JAVA_HOME)\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;_USRDLL;MMCOREJ_WRAP_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ExceptionHandling>Async</ExceptionHandling>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
       <RuntimeTypeInfo>true</RuntimeTypeInfo>
@@ -196,8 +241,9 @@
       <DisableSpecificWarnings>4290;%(DisableSpecificWarnings)</DisableSpecificWarnings>
     </ClCompile>
     <Link>
-      <OutputFile>$(OutDir)mmgr_dal_$(ProjectName).dll</OutputFile>
-      <AdditionalLibraryDirectories>$(THIRDPARTYLIBS)\boost\stage_$(Platform)\lib;$(TARGETDIR);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>mmcorer.lib;Iphlpapi.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <OutputFile>$(OutDir)MMCoreJ_wrap.dll</OutputFile>
+      <AdditionalLibraryDirectories>..\..\3rdpartypublic\boost\stage_$(Platform)\lib;..\lib_$(Platform);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Windows</SubSystem>
       <OptimizeReferences>true</OptimizeReferences>
@@ -205,32 +251,32 @@
       <RandomizedBaseAddress>false</RandomizedBaseAddress>
       <DataExecutionPrevention>
       </DataExecutionPrevention>
-      <ImportLibrary>$(OutDir)DECamera.lib</ImportLibrary>
+      <ImportLibrary>$(OutDir)MMCoreJ_wrap.lib</ImportLibrary>
       <TargetMachine>MachineX64</TargetMachine>
     </Link>
     <PostBuildEvent>
-      <Command>copy "$(TargetPath)" ..\..\..\bin_$(Platform)</Command>
+      <Command>copy "$(TargetPath)" ..\bin_$(Platform)
+del mmcorej\*.class
+"%JAVA_HOME%\bin\javac" -source 5 mmcorej\*.java ../mmstudio/src/org/json/*.java
+"%JAVA_HOME%\bin\jar" cvf MMCoreJ.jar mmcorej\*.class
+copy *.jar ..\bin_$(Platform)
+rem copy *.jar \"Program Files"\ImageJ\plugins\Micro-Manager
+rem copy ..\bin_$(Platform)\*.dll  \"Program Files"\ImageJ
+</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="..\src\DECamera\DECamera.cpp" />
-    <ClCompile Include="..\..\..\MMDevice\DeviceUtils.cpp" />
-    <ClCompile Include="..\..\..\MMDevice\ImgBuffer.cpp" />
-    <ClCompile Include="..\..\..\MMDevice\ModuleInterface.cpp" />
-    <ClCompile Include="..\..\..\MMDevice\Property.cpp" />
+    <None Include="MMCoreJ.i" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\src\DECamera\DECamera.h" />
-    <ClInclude Include="..\..\..\MMDevice\DeviceBase.h" />
-    <ClInclude Include="..\..\..\MMDevice\DeviceUtils.h" />
-    <ClInclude Include="..\..\..\MMDevice\ImgBuffer.h" />
-    <ClInclude Include="..\..\..\MMDevice\MMDevice.h" />
-    <ClInclude Include="..\..\..\MMDevice\ModuleInterface.h" />
-    <ClInclude Include="..\..\..\MMDevice\Property.h" />
+    <ClCompile Include="MMCoreJ_wrap.cxx">
+      <AdditionalOptions Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">/wd4701 %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">/wd4701 %(AdditionalOptions)</AdditionalOptions>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="DEClientLib.vcxproj">
-      <Project>{823879d7-a915-4cea-8365-09ba70fdaf2c}</Project>
+    <ProjectReference Include="..\MMCore\MMCore.vcxproj">
+      <Project>{36571628-728c-4acd-a47f-503ba91c5d43}</Project>
       <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
     </ProjectReference>
   </ItemGroup>
