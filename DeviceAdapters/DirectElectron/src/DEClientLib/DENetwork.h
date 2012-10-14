@@ -88,7 +88,7 @@ private:
 	tcp::socket* read;
 	tcp::socket* write;
 
-	void setResult(optional<error_code>* a, const error_code& b, std::size_t bytes_transferred);
+	void setResult(optional<boost::system::error_code>* a, const boost::system::error_code& b, std::size_t bytes_transferred);
 	bool connected;
 	boost::system::error_code error;
 	bool debugMode;

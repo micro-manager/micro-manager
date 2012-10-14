@@ -74,7 +74,7 @@ bool DENetwork::close()
 }
 
 
-void DENetwork::setResult(optional<error_code>* a, const error_code& b, std::size_t bytes_transferred)
+void DENetwork::setResult(optional<boost::system::error_code>* a, const boost::system::error_code& b, std::size_t bytes_transferred)
 {
 	if (b != boost::asio::error::operation_aborted)
 		*a = b;
@@ -84,8 +84,8 @@ bool DENetwork::send(void* data, long size, std::size_t timeout)
 {
 	using namespace boost; 
 
-	optional<error_code> timeout_result;
-	optional<error_code> write_result;
+	optional<boost::system::error_code> timeout_result;
+	optional<boost::system::error_code> write_result;
 
 	deadline_timer timer(this->write->io_service());
 
@@ -111,7 +111,7 @@ bool DENetwork::send(void* data, long size, std::size_t timeout)
 		{	 
 			// On Windows xp systems, cancel causes a operation not supported exception
 			// to be thrown.
-			error_code ec;
+			boost::system::error_code ec;
 	 		this->write->cancel(ec);
 			break;
 		}
@@ -131,8 +131,8 @@ bool DENetwork::receive(void* data, long size, std::size_t timeout)
 {
 	using namespace boost; 
 
-	optional<error_code> timeout_result;
-	optional<error_code> read_result;
+	optional<boost::system::error_code> timeout_result;
+	optional<boost::system::error_code> read_result;
 
 	deadline_timer timer(this->read->io_service());
 	timer.expires_from_now(seconds(timeout));
@@ -158,7 +158,7 @@ bool DENetwork::receive(void* data, long size, std::size_t timeout)
 		{	
 			// On Windows xp systems, cancel causes a operation not supported exception
 			// to be thrown.
-			error_code ec;
+			boost::system::error_code ec;
 	 		this->read->cancel(ec);
 			break;
 		}
