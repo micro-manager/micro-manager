@@ -116,6 +116,10 @@
     (filter #(.. % getName (endsWith ".vcproj"))
             (mapcat file-seq device-adapter-parent-dirs)))
 
+(defn device-vcxproj-files []
+    (filter #(.. % getName (endsWith ".vcxproj"))
+            (mapcat file-seq device-adapter-parent-dirs)))
+
 (defn dll-name [file]
   (second (re-find #"mmgr_dal_(.*?).dll" (.getName file))))
 
