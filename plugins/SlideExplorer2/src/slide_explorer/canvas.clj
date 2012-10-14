@@ -73,7 +73,8 @@
 
 (def degrees-to-radians (/ Math/PI 180))
 
-(defn set-g2d-state [g2d {:keys [alpha color stroke rotate x y scale]}]
+(defn set-g2d-state [g2d {:keys [alpha color stroke rotate x y
+                                 scale scale-x scale-y]}]
   (doto g2d
     (.setColor (color-object (or color :black)))
     (.setComposite (if (or (not alpha) 
@@ -91,11 +92,11 @@
                     (BasicStroke. width cap-code join-code miter-limit
                                   dashes-array dash-phase)
                     (BasicStroke. width cap-code join-code miter-limit)))))
-    (when (and x y (or rotate scale))
+    (when (and x y (or rotate scale scale-x scale-y))
       (doto g2d
         (.translate x y)
         (.rotate (* degrees-to-radians (or rotate 0.0)))
-        (.scale (or scale 1.0) (or scale 1.0))
+        (.scale (or scale-x scale 1.0) (or scale-y scale 1.0))
         (.translate (- x) (- y)))))
 
 (defn- with-g2d-state-fn [g2d params body-fn]
