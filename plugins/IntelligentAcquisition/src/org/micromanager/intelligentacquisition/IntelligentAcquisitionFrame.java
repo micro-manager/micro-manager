@@ -46,6 +46,7 @@ import java.awt.event.KeyListener;
 import java.awt.event.MouseListener;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Point2D;
+import java.io.IOException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import org.micromanager.MMStudioMainFrame;
 import org.micromanager.api.MMWindow;
@@ -249,6 +250,11 @@ public class IntelligentAcquisitionFrame extends javax.swing.JFrame {
         });
 
         helpButton_.setText("Help");
+        helpButton_.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                helpButton_ActionPerformed(evt);
+            }
+        });
 
         fullROIButton_.setFont(new java.awt.Font("Lucida Grande", 0, 10));
         fullROIButton_.setText("Full");
@@ -825,6 +831,27 @@ public class IntelligentAcquisitionFrame extends javax.swing.JFrame {
       executeTest.start();
 
    }//GEN-LAST:event_testButton_ActionPerformed
+
+   class Helper extends Thread{
+         Helper(){
+            super("Helper");
+         }
+         @Override
+         public void run(){
+          try {
+               ij.plugin.BrowserLauncher.openURL("http://valelab.ucsf.edu/~MM/MMwiki/index.php/Intelligent_Acquisition");
+            } catch (IOException e1) {
+               ReportingUtils.showError(e1);
+            }
+         }
+
+      }
+   
+   
+   private void helpButton_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_helpButton_ActionPerformed
+      Helper h = new Helper();
+      h.start();
+   }//GEN-LAST:event_helpButton_ActionPerformed
 
    
 
