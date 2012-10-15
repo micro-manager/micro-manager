@@ -2,7 +2,7 @@
   (:import (java.awt AlphaComposite BasicStroke Color Font Graphics Graphics2D Image
                      Polygon RenderingHints Shape)
            (java.awt.font TextAttribute)
-           (java.awt.geom Arc2D Arc2D$Double Ellipse2D$Double
+           (java.awt.geom Arc2D Arc2D$Double Area Ellipse2D$Double
                           Line2D$Double Path2D$Double
                           Rectangle2D$Double
                           RoundRectangle2D$Double)
@@ -19,6 +19,9 @@
 ;
 ; gradients
 ; affine transforms
+
+(defn read-image [file]
+  (javax.imageio.ImageIO/read (clojure.java.io/file file)))
 
 (defn enable-anti-aliasing
   "Turn on (off) anti-aliasing for a graphics context."
@@ -71,6 +74,9 @@
     (string? color)  (colors (keyword color))
     :else            color))
 
+(defn set-color [g2d color]
+  (.setColor g2d (color-object color)))
+
 (def degrees-to-radians (/ Math/PI 180))
 
 (defn set-g2d-state [g2d {:keys [alpha color stroke rotate x y
@@ -94,10 +100,19 @@
                     (BasicStroke. width cap-code join-code miter-limit)))))
     (when (and x y (or rotate scale scale-x scale-y))
       (doto g2d
-        (.translate x y)
+        (.translate (double x) (double y))
         (.rotate (* degrees-to-radians (or rotate 0.0)))
         (.scale (or scale-x scale 1.0) (or scale-y scale 1.0))
-        (.translate (- x) (- y)))))
+        (.translate (double (- x)) (double (- y))))))
+
+(defn intersect-shapes [shape1 shape2]
+  (doto (Area. shape1) (.intersect (Area. shape2))))
+
+(defn- with-g2d-clip-fn [g2d clip body-fn]
+  (let [original-clip (.getClip g2d)]
+    (.setClip g2d (intersect-shapes clip original-clip))
+    (body-fn)
+    (.setClip g2d original-clip)))
 
 (defn- with-g2d-state-fn [g2d params body-fn]
   (let [color (.getColor g2d)
@@ -127,7 +142,7 @@
 
 (defn- half? [a]
   (when a
-    (/ a 2)))
+    (/ a 2.)))
 
 (defn- twice? [a]
   (when a
@@ -139,15 +154,17 @@
            w width h height]
     :as the-map}]
   (let [l (or l left) t (or t top) r (or r right) b (or b bottom)
-        w (or w width (-? r l) (twice? (-? x l)) (twice? (-? r x)))
-        h (or h height (-? b t) (twice? (-? y t)) (twice? (-? b y)))
+        w (or (-? r l) (twice? (-? x l)) (twice? (-? r x)) w width)
+        h (or (-? b t) (twice? (-? y t)) (twice? (-? b y)) h height)
         l (or l (-? r w) (-? x (half? w)))
         t (or t (-? b h) (-? y (half? h)))
         r (or r (+? l w) (+? x (half? w)))
         b (or b (+? t h) (+? y (half? h)))
         x (or x (+? l (half? w)))
         y (or y (+? t (half? h)))]
-    (merge the-map {:w w :h h :l l :t t :r r :b b :x x :y y})))
+    (->> (merge the-map {:w w :h h :l l :t t :r r :b b :x x :y y})
+         (filter second)
+         (into {}))))
    
 (defmulti make-obj (fn [obj-keyword params] obj-keyword))
 
@@ -204,23 +221,32 @@
   data)
 
 (defn stroke? [stroke]
-  (and stroke (pos? (:width stroke))))
+  (let [width (:width stroke)]
+    (or (nil? width) (pos? width))))
 
 (defmulti draw-primitive (fn [g2d obj params] (type obj)))
 
 (defmethod draw-primitive Shape
-  [g2d shape {:keys [fill stroke]}]
-  (when fill
-    (.fill g2d shape))
-  (when (stroke? stroke)
-    (.draw g2d shape)))
+  [g2d shape {:keys [color fill stroke] :as params}]
+  (with-g2d-state [g2d params]
+                  (when fill
+                    (when-let [fill-color (:color fill)]
+                      (doto g2d
+                        (set-color fill-color)
+                        (.fill shape))))
+                  (when (stroke? stroke)
+                    (doto g2d
+                      (set-color (or (:color stroke) color :black))
+                      (.draw shape)))))
 
 (defmethod draw-primitive Image
-  [g2d image {:keys [l t w h]}]
-  (.drawImage g2d image
-              l t
-              (or w (.getWidth image))
-              (or h (.getHeight image)) nil))
+  [g2d image params]
+  (let [w (or (:w params) (.getWidth image))
+        h (or (:h params) (.getHeight image))
+        params+ (complete-coordinates (assoc params :w w :h h))
+        {:keys [l t]} params+]
+    (with-g2d-state [g2d params+]
+                    (.drawImage g2d image l t w h nil))))
 
 (defn draw-string-center
   "Draw a string centered at position x,y."
@@ -239,7 +265,7 @@
                  (float (+ y (/ height 2))))))
 
 (defmethod draw-primitive String
-  [g2d text {:keys [x y font fill stroke]}]
+  [g2d text {:keys [x y font fill stroke] :as params}]
   (let [{:keys [name bold italic underline strikethrough size]} font
         style (bit-or (if bold Font/BOLD 0) (if italic Font/ITALIC 0))
         font1 (Font. name style size)
@@ -257,7 +283,8 @@
       ;(draw-shape g2d obj fill stroke)
       ;(.translate g2d (- x) (- y))
       (.setFont g2d font2)
-      (draw-string-center g2d text x y)
+      (with-g2d-state [g2d params]
+                       (draw-string-center g2d text x y))
       )))
 
 (defn draw-primitives [g2d items]
@@ -265,8 +292,8 @@
   (doseq [[type params inner] items]
     (when type
     (let [params+ (complete-coordinates params)]
-      (with-g2d-state [g2d params+]
-                      (draw-primitive g2d (make-obj type params+) params+))))))
+      (draw-primitive g2d (make-obj type params+) params+)))))
+
 
 (defn paint-canvas-graphics [^Graphics graphics data]
   (draw-primitives graphics data))
@@ -297,12 +324,12 @@
 
 (defn demo-animation [reference]
   (dotimes [i 200]
-  (Thread/sleep 30)
-  (swap! reference (fn [data]
-                     (-> data
-                         (assoc-in [0 :params :w] (+ i 100))
-                         (assoc-in [0 :params :h] (+ i 100)))
-                     ))))
+    (Thread/sleep 30)
+    (swap! reference (fn [data]
+                       (-> data
+                           (assoc-in [6 1 :rotate] (+ i 5))
+                           ))
+           )))
 
 (defn handle-data-changed [text-area changed-fn]
   (let [doc (.getDocument text-area)]
@@ -325,24 +352,25 @@
       (.. getContentPane (add scroll-pane))
       .show)))
 
+(def img (read-image "/Users/arthur/Desktop/flea.png"))
+
+(count
 (reset!
   grafix 
   [
    [:round-rect
     {:l 20 :t 10 :w 300 :h 300
      :arc-radius 100
-     :fill true :color :pink
-     :rotate 50}]
-   [:round-rect
-    {:l 20 :t 10 :w 300 :h 300
-     :arc-radius 100 :rotate 50
-     :fill false :color 0xE06060
-     :stroke {:width 5
+     :fill {:color :pink}
+     :scale 1.3
+     :stroke {:color 0xE06060
               :cap :round
-              :dashes [10 10] :dash-phase 0}}]
+              :width 5
+              :dashes [10 10] :dash-phase 0}
+     :rotate 50}]
    [:ellipse
     {:l 25 :t 15 :w 110 :h 90
-     :fill true :color :yellow :alpha 0.5 :stroke nil}]
+     :fill true :color :yellow :alpha 0.5 :stroke {:width 10 :cap :round :dashes [20 20]}}]
    [:polyline
     {:vertices [{:x 100 :y 100}
                 {:x 50 :y 150}
@@ -360,8 +388,8 @@
     {:x 180 :y 120 :text "Testing!!!"
      :color :white
      :alpha 0.7
-     :rotate 0.2
-     :scale 1.1
+     :rotate 20
+     :scale-x 1.1
      :fill true
      :stroke {:width 10 :cap :butt}
      :font {:name "Arial"
@@ -369,20 +397,18 @@
             :italic false
             :underline false
             :strikethrough false
-            :size 60}}]
-   (comment
+            :size 50}}]
    [:ellipse
-    {:x 350 :y 350 :w 40 :h 40 :fill true :color :pink
-     :stroke nil}]
-   [:ellipse
-    {:x 350 :y 350 :w 40 :h 40 :fill false :color :red
-     :stroke {:width 4}}]
+    {:x 350 :y 350 :w 40 :h 40 :fill {:color :pink}
+     :stroke {:width 4 :color 0xE06060}}]
    [:line
-    {:x 350 :y 350 :w 18 :h 18 :fill false :color :white :alpha 0.8
+    {:x 350 :y 350 :w 18 :h 18 :color :white :alpha 0.8
      :stroke {:width 7 :cap :butt}}]
+   [:image
+    {:x 200 :t 150 :data img :rotate 171}]
    [:line
     {:x 350 :y 350 :w -18 :h 18 :fill false :color :white :alpha 0.8
-     :stroke {:width 7 :cap :butt}}])
+     :stroke {:width 7 :cap :butt}}]
    [:line
     {:x 180 :y 220 :w 0 :h 50 :color :red
      :stroke {:width 10 :cap :round}
@@ -397,6 +423,6 @@
      :fill false
      :stroke {:width 10}
      :alpha 0.7}]
-   ])
+   ]))
 
 
