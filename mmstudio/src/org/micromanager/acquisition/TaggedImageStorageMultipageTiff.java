@@ -646,7 +646,7 @@ public class TaggedImageStorageMultipageTiff implements TaggedImageStorage {
          omeMD_.setStageLabelName(positionName_, index_);
             
          
-         String instrumentID = MetadataTools.createLSID("Instrument", 0);
+         String instrumentID = MetadataTools.createLSID("Microscope");
          omeMD_.setInstrumentID(instrumentID, 0);
          // link Instrument and Image
          omeMD_.setImageInstrumentRef(instrumentID, index_);
@@ -783,9 +783,17 @@ public class TaggedImageStorageMultipageTiff implements TaggedImageStorage {
             if (planeIndex_ == 0) {
                if (tags.has("Core-Camera") && !tags.isNull("Core-Camera")) {
                   String camera = tags.getString("Core-Camera");
-                  String id = MetadataTools.createLSID(camera);
-                  //Instrument index, detector index
-                  omeMD_.setDetectorID(camera, 0, 0);
+                  if (tags.has(camera + "-Physical Camera 1" )) {       //Multicam mode
+                     for (int i = 0; i < 3; i++) {
+                        
+                     }
+                                     
+                  } else { //Single camera mode
+                     String id = MetadataTools.createLSID(camera);
+                     //Instrument index, detector index
+                     omeMD_.setDetectorID(camera, 0, 0);
+                  }
+
                }
             }
 
