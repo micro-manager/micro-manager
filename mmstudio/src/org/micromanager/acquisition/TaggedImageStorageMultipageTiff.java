@@ -61,6 +61,8 @@ public class TaggedImageStorageMultipageTiff implements TaggedImageStorage {
    final private boolean seperateMetadataFile_;
    private IMetadata omeMD_;
    private boolean finished_ = false;
+   private boolean expectedImageOrder_ = true;
+   private int numChannels_, numSlices_;
   
    //used for estimating total length of ome xml
    private int totalNumImagePlanes_ = 0;
@@ -79,7 +81,7 @@ public class TaggedImageStorageMultipageTiff implements TaggedImageStorage {
    }
    
    /*
-    * Constructor that doesnt make reference to MMStudioMainFrame
+    * Constructor that doesnt make reference to MMStudioMainFrame so it can be used independently of MM GUI
     */
    public TaggedImageStorageMultipageTiff(String dir, boolean newDataSet, JSONObject summaryMetadata, 
            boolean omeTiff, boolean seperateMDFile) throws IOException {
@@ -126,8 +128,10 @@ public class TaggedImageStorageMultipageTiff implements TaggedImageStorage {
       }
       try {
          //Estimate of max number of image planes
-         totalNumImagePlanes_ = MDUtils.getNumChannels(summaryMetadata_) * MDUtils.getNumFrames(summaryMetadata_)
-                 * numPositions_ * MDUtils.getNumSlices(summaryMetadata_);
+         numChannels_ = MDUtils.getNumChannels(summaryMetadata_);
+         numSlices_ = MDUtils.getNumSlices(summaryMetadata_);
+         totalNumImagePlanes_ = numChannels_ * MDUtils.getNumFrames(summaryMetadata_)
+                 * numPositions_ * numSlices_;
       } catch (Exception ex) {
          ReportingUtils.logError("Error estimating total number of image planes");
          totalNumImagePlanes_ = 1;
@@ -263,8 +267,7 @@ public class TaggedImageStorageMultipageTiff implements TaggedImageStorage {
       try {
          if (positions_ != null) {
             for (Position p : positions_.values()) {
-               //TODO add in tag to check for standard acquisition
-               if (false) {
+               if (expectedImageOrder_) {
                   p.finishAbortedAcqIfNeeded();
                }
             }
@@ -289,7 +292,6 @@ public class TaggedImageStorageMultipageTiff implements TaggedImageStorage {
       if (summaryMetadata_ != null) {
          try {
             boolean slicesFirst = summaryMetadata_.getBoolean("SlicesFirst");
-//            boolean slicesFirst = false;
             boolean timeFirst = summaryMetadata_.getBoolean("TimeFirst");
             TreeMap<String, MultipageTiffReader> oldImageMap = tiffReadersByLabel_;
             tiffReadersByLabel_ = new TreeMap<String, MultipageTiffReader>(new ImageLabelComparator(slicesFirst, timeFirst));
@@ -487,6 +489,8 @@ public class TaggedImageStorageMultipageTiff implements TaggedImageStorage {
             addToOMEMetadata(img.tags);  
          }
          
+         checkForExpectedImageOrder(img.tags);        
+         
          try {
             int frame = MDUtils.getFrameIndex(img.tags);
             lastFrame_ = Math.max(frame, lastFrame_);
@@ -502,11 +506,50 @@ public class TaggedImageStorageMultipageTiff implements TaggedImageStorage {
             ReportingUtils.logError("Problem with image metadata");
          }
       }
-      
-      private int estimateOMEMDSize() {
-         return totalNumImagePlanes_*omeXMLImageLength_ + numPositions_*omeXMLBaseLength_; 
+   
+      private void checkForExpectedImageOrder(JSONObject tags) {
+         try {
+            //Determine next expected indices
+            
+
+            int channel = MDUtils.getChannelIndex(tags), frame = MDUtils.getFrameIndex(tags),
+                    slice = MDUtils.getSliceIndex(tags);
+            if (slice != nextExpectedSlice_ || channel != nextExpectedChannel_ ||
+                    frame != nextExpectedFrame_) {
+               expectedImageOrder_ = false;
+            }
+            //Figure out next expected indices
+            if (slicesFirst()) {
+               nextExpectedSlice_ = slice + 1;
+               if (nextExpectedSlice_ == numSlices_) {
+                  nextExpectedSlice_ = 0;
+                  nextExpectedChannel_ = channel + 1;
+                  if (nextExpectedChannel_ == numChannels_) {
+                     nextExpectedChannel_ = 0;
+                     nextExpectedFrame_ = frame + 1;
+                  }
+               }
+            } else {
+               nextExpectedChannel_ = channel + 1;
+               if (nextExpectedChannel_ == numChannels_) {
+                  nextExpectedChannel_ = 0;
+                  nextExpectedSlice_ = slice + 1;
+                  if (nextExpectedSlice_ == numSlices_) {
+                     nextExpectedSlice_ = 0;
+                     nextExpectedFrame_ = frame + 1;
+                  }
+               }
+            }
+         } catch (JSONException ex) {
+            ReportingUtils.logError("Couldnt find channel, slice, or frame index in Image tags");
+            expectedImageOrder_ = false;
+         }
       }
-      
+
+      private int estimateOMEMDSize() {
+         return totalNumImagePlanes_ * omeXMLImageLength_ + numPositions_ * omeXMLBaseLength_;
+      }
+
       public int getLastFrame() {
          return lastFrame_;
       }
@@ -730,32 +773,6 @@ public class TaggedImageStorageMultipageTiff implements TaggedImageStorage {
                tiffDataPlaneCount_++;
             }
             omeMD_.setTiffDataPlaneCount(new NonNegativeInteger(tiffDataPlaneCount_), index_, tiffDataIndex_);
-
-            
-            //Determine next expected indices
-            int numChannels = MDUtils.getNumChannels(summaryMetadata_);
-            int numSlices = MDUtils.getNumSlices(summaryMetadata_);
-            if (slicesFirst()) {
-               nextExpectedSlice_ = slice + 1;
-               if (nextExpectedSlice_ == numSlices) {
-                  nextExpectedSlice_ = 0;
-                  nextExpectedChannel_ = channel + 1;
-                  if (nextExpectedChannel_ == numChannels) {
-                     nextExpectedChannel_ = 0;
-                     nextExpectedFrame_ = frame + 1;
-                  }
-               }
-            } else {
-               nextExpectedChannel_ = channel + 1;
-               if (nextExpectedChannel_ == numChannels) {
-                  nextExpectedChannel_ = 0;
-                  nextExpectedSlice_ = slice + 1;
-                  if (nextExpectedSlice_ == numSlices) {
-                     nextExpectedSlice_ = 0;
-                     nextExpectedFrame_ = frame + 1;
-                  }
-               }
-            }
             
 
             omeMD_.setPlaneTheZ(new NonNegativeInteger(slice), index_, planeIndex_);
