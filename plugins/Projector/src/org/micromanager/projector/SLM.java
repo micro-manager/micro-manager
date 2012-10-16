@@ -176,4 +176,9 @@ public class SLM implements ProjectionDevice {
             ReportingUtils.logError(ex);
         }
    }
+
+   @Override
+   public void setSpotInterval(long interval_us) {
+      throw new UnsupportedOperationException("Not supported yet.");
+   }
 }

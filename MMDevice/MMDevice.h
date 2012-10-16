@@ -1025,6 +1025,7 @@ namespace MM {
       
    //Galvo API:
       virtual int PointAndFire(double x, double y, double time_us) = 0;
+	  virtual int SetSpotInterval(double pulseInterval_us) = 0;
       virtual int SetPosition(double x, double y) = 0;
       virtual int GetPosition(double& x, double& y) = 0;
       virtual int SetIlluminationState(bool on) = 0;

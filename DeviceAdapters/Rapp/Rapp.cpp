@@ -89,7 +89,7 @@ MM::DeviceDetectionStatus RappScannerDetect(MM::Device& /*device*/, MM::Core& /*
 //
 RappScanner::RappScanner() :
    initialized_(false), port_(""), calibrationMode_(0), polygonAccuracy_(10), polygonMinRectSize_(10),
-   ttlTriggered_("Rising Edge"), rasterFrequency_(500), spotSize_(10), laser2_(false)
+   ttlTriggered_("Rising Edge"), rasterFrequency_(500), spotSize_(10), laser2_(false), pulseTime_us_(500000)
 {
    InitializeDefaultErrorMessages();
 
@@ -239,6 +239,11 @@ int RappScanner::PointAndFire(double x, double y, double pulseTime_us)
    return success ? DEVICE_OK : DEVICE_ERR;
 }
 
+int RappScanner::SetSpotInterval(double pulseTime_us)
+{
+	pulseTime_us_ = pulseTime_us;
+	return DEVICE_OK;
+}
 
 int RappScanner::SetIlluminationState(bool on)
 {
@@ -324,8 +329,9 @@ int RappScanner::SetPolygonRepetitions(int repetitions)
 		 stringstream cmd1;
 		 cmd1 << "gotoxy" << (laser2_ ? "2" : "") << "," << polygon.at(0).x << "," << polygon.at(0).y;
 		 sequenceList.push_back(cmd1.str());
+		 sequenceList.push_back(std::string(laser2_ ? "on2" : "on"));
 		 stringstream cmd2;
-		 cmd2 << "wait," << 100000;
+		 cmd2 << "wait," << ((long) pulseTime_us_);
 		 sequenceList.push_back(cmd2.str());
 	  }
       

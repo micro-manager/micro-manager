@@ -13,6 +13,8 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import mmcorej.CMMCore;
 import org.micromanager.utils.ReportingUtils;
 
@@ -256,4 +258,13 @@ public class Galvo implements ProjectionDevice {
             return null;
         }
     }
+
+   @Override
+   public void setSpotInterval(long interval_us) {
+      try {
+         mmc_.setGalvoSpotInterval(galvo_, interval_us);
+      } catch (Exception ex) {
+         ReportingUtils.showError(ex);
+      }
+   }
 }

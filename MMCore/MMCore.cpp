@@ -4981,6 +4981,19 @@ void CMMCore::pointGalvoAndFire(const char* deviceLabel, double x, double y, dou
    }
 }
 
+void CMMCore::setGalvoSpotInterval(const char* deviceLabel, double pulseTime_us) throw (CMMError)
+{
+   MM::Galvo* pGalvo = getSpecificDevice<MM::Galvo>(deviceLabel);
+
+   int ret = pGalvo->SetSpotInterval(pulseTime_us);
+
+   if (ret != DEVICE_OK)
+   {
+      logError(deviceLabel, getDeviceErrorText(ret, pGalvo).c_str());
+      throw CMMError(deviceLabel, getDeviceErrorText(ret, pGalvo).c_str(), MMERR_DEVICE_GENERIC);
+   }
+}
+
 
 /**
  * Set the Galvo to an x,y position

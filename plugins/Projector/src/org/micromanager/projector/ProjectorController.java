@@ -12,12 +12,15 @@ import ij.plugin.filter.GaussianBlur;
 import ij.plugin.frame.RoiManager;
 import ij.process.ImageProcessor;
 import java.awt.Point;
+import java.awt.Polygon;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Point2D;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.prefs.Preferences;
 import mmcorej.CMMCore;
@@ -41,6 +44,9 @@ public class ProjectorController {
    final private ProjectionDevice dev;
    private MouseListener pointAndShootMouseListener;
    private double pointAndShootInterval;
+   private Roi[] individualRois_ = {};
+   private int reps_ = 1;
+   private long interval_us_ = 500000;
 
    public ProjectorController(ScriptInterface app) {
       gui = app;
@@ -186,24 +192,54 @@ public class ProjectorController {
      }
    }
 
+   public static Roi[] separateOutPointRois(Roi[] rois) {
+      List<Roi> roiList = new ArrayList<Roi>();
+      for (Roi roi : rois) {
+         if (roi.getType() == Roi.POINT) {
+            Polygon poly = ((PointRoi) roi).getPolygon();
+            for (int i = 0; i < poly.npoints; ++i) {
+               roiList.add(new PointRoi(
+                       poly.xpoints[i],
+                       poly.ypoints[i]));
+            }
+         } else {
+            roiList.add(roi);
+         }
+      }
+      return (Roi[]) roiList.toArray(rois);
+   }
+   
    public int setRois(int reps) {
-      Roi singleRoi = gui.getImageWin().getImagePlus().getRoi();
       Roi[] rois = null;
+      Roi[] roiMgrRois = {};
+      Roi singleRoi = gui.getImageWin().getImagePlus().getRoi();
       final RoiManager mgr = RoiManager.getInstance();
       if (mgr != null) {
-         rois = mgr.getRoisAsArray();
+         roiMgrRois = mgr.getRoisAsArray();
+      }
+      if (roiMgrRois.length > 0) {
+         rois = roiMgrRois;
       } else if (singleRoi != null) {
          rois = new Roi[] {singleRoi};
       } else {
          ReportingUtils.showError("Please first select ROI(s)");
       }
-      dev.setRois(rois, loadAffineTransform());
-      dev.setPolygonRepetitions(reps);
-      return rois.length;
+      individualRois_ = separateOutPointRois(rois);
+      sendRoiData();
+      return individualRois_.length;
    }
 
+   private void sendRoiData() {
+      if (individualRois_.length > 0) {
+         dev.setRois(individualRois_, loadAffineTransform());
+         dev.setPolygonRepetitions(reps_);
+         dev.setSpotInterval(interval_us_);
+      }
+   }
+   
    public void setRoiRepetitions(int reps) {
-      dev.setPolygonRepetitions(reps);
+      reps_ = reps;
+      sendRoiData();
    }
 
    public MouseListener setupPointAndShootMouseListener() {
@@ -274,5 +310,10 @@ public class ProjectorController {
       double x = dev.getWidth() / 2;
       double y = dev.getHeight() / 2;
       dev.displaySpot(x, y);
+   }
+
+   void setSpotInterval(long interval_us) {
+     interval_us_ = interval_us;
+     this.sendRoiData();
    }
 }

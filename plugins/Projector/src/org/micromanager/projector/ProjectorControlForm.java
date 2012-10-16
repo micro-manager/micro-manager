@@ -10,6 +10,7 @@
  */
 package org.micromanager.projector;
 
+import ij.IJ;
 import javax.swing.JSpinner;
 import javax.swing.SpinnerNumberModel;
 import javax.swing.SwingUtilities;
@@ -73,7 +74,11 @@ public class ProjectorControlForm extends javax.swing.JFrame implements OnStateL
       jSeparator1 = new javax.swing.JSeparator();
       useInMDAcheckBox = new javax.swing.JCheckBox();
       roiStatusLabel = new javax.swing.JLabel();
-      jSeparator2 = new javax.swing.JSeparator();
+      jButton1 = new javax.swing.JButton();
+      spotDwellTimeLabel = new javax.swing.JLabel();
+      spotDwellTimeSpinner = new javax.swing.JSpinner();
+      spotDwellTimeUnitsLabel = new javax.swing.JLabel();
+      jSeparator3 = new javax.swing.JSeparator();
       allPixelsButton = new javax.swing.JButton();
 
       setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
@@ -106,6 +111,7 @@ public class ProjectorControlForm extends javax.swing.JFrame implements OnStateL
 
       jLabel2.setText("ms");
 
+      repeatEveryFrameSpinner.setModel(new SpinnerNumberModel(500, 1, 1000000000, 1));
       pointAndShootIntervalSpinner.addChangeListener(new javax.swing.event.ChangeListener() {
          public void stateChanged(javax.swing.event.ChangeEvent evt) {
             pointAndShootIntervalSpinnerStateChanged(evt);
@@ -148,25 +154,21 @@ public class ProjectorControlForm extends javax.swing.JFrame implements OnStateL
             .addContainerGap()
             .add(jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
                .add(jPanel1Layout.createSequentialGroup()
+                  .add(17, 17, 17)
+                  .add(centerButton))
+               .add(jPanel1Layout.createSequentialGroup()
                   .add(jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.TRAILING)
                      .add(jLabel1)
                      .add(closeShutterLabel))
                   .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
+                  .add(jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING, false)
+                     .add(pointAndShootOnButton, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                     .add(pointAndShootIntervalSpinner, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 63, Short.MAX_VALUE))
+                  .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                   .add(jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                     .add(jPanel1Layout.createSequentialGroup()
-                        .add(pointAndShootOnButton, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
-                        .add(pointAndShootOffButton, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                     .add(jPanel1Layout.createSequentialGroup()
-                        .add(pointAndShootIntervalSpinner, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 63, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
-                        .add(jLabel2)
-                        .add(20, 20, 20))))
-               .add(jPanel1Layout.createSequentialGroup()
-                  .add(17, 17, 17)
-                  .add(centerButton)
-                  .add(86, 86, 86)))
-            .add(32, 32, 32))
+                     .add(jLabel2)
+                     .add(pointAndShootOffButton, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 57, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))))
+            .addContainerGap(135, Short.MAX_VALUE))
       );
       jPanel1Layout.setVerticalGroup(
          jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
@@ -183,7 +185,7 @@ public class ProjectorControlForm extends javax.swing.JFrame implements OnStateL
                .add(closeShutterLabel))
             .add(18, 18, 18)
             .add(centerButton)
-            .addContainerGap(176, Short.MAX_VALUE))
+            .addContainerGap(157, Short.MAX_VALUE))
       );
 
       jTabbedPane1.addTab("Point and Shoot", jPanel1);
@@ -238,84 +240,127 @@ public class ProjectorControlForm extends javax.swing.JFrame implements OnStateL
 
       roiStatusLabel.setText("No ROIs submitted yet");
 
+      jButton1.setText("ROI Manager >>");
+      jButton1.addActionListener(new java.awt.event.ActionListener() {
+         public void actionPerformed(java.awt.event.ActionEvent evt) {
+            jButton1ActionPerformed(evt);
+         }
+      });
+
+      spotDwellTimeLabel.setText("Spot dwell time:");
+
+      spotDwellTimeSpinner.setModel(new SpinnerNumberModel(500, 1, 1000000000, 1));
+      spotDwellTimeSpinner.addChangeListener(new javax.swing.event.ChangeListener() {
+         public void stateChanged(javax.swing.event.ChangeEvent evt) {
+            spotDwellTimeSpinnerStateChanged(evt);
+         }
+      });
+
+      spotDwellTimeUnitsLabel.setText("ms");
+
+      jSeparator3.setOrientation(javax.swing.SwingConstants.VERTICAL);
+
       org.jdesktop.layout.GroupLayout jPanel3Layout = new org.jdesktop.layout.GroupLayout(jPanel3);
       jPanel3.setLayout(jPanel3Layout);
       jPanel3Layout.setHorizontalGroup(
          jPanel3Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
          .add(jPanel3Layout.createSequentialGroup()
-            .add(jPanel3Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-               .add(jPanel3Layout.createSequentialGroup()
-                  .add(25, 25, 25)
-                  .add(jPanel3Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                     .add(roiStatusLabel)
-                     .add(setRoiButton, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 108, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                     .add(jPanel3Layout.createSequentialGroup()
-                        .add(roiLoopLabel)
-                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
-                        .add(roiLoopSpinner, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 36, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
-                        .add(roiLoopTimesLabel))))
-               .add(jPanel3Layout.createSequentialGroup()
-                  .add(49, 49, 49)
-                  .add(jPanel3Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                     .add(jPanel3Layout.createSequentialGroup()
-                        .add(startFrameLabel)
-                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
-                        .add(startFrameSpinner, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 46, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
-                     .add(jPanel3Layout.createSequentialGroup()
-                        .add(repeatCheckBox)
-                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
-                        .add(repeatEveryFrameSpinner, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 50, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                        .add(framesLabel)))))
-            .addContainerGap())
-         .add(jPanel3Layout.createSequentialGroup()
             .addContainerGap()
             .add(jPanel3Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
                .add(jPanel3Layout.createSequentialGroup()
-                  .add(10, 10, 10)
-                  .add(useInMDAcheckBox)
-                  .addContainerGap(25, Short.MAX_VALUE))
+                  .add(12, 12, 12)
+                  .add(runROIsNowButton)
+                  .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
+                  .add(jSeparator3, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                  .add(15, 15, 15)
+                  .add(jPanel3Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                     .add(jPanel3Layout.createSequentialGroup()
+                        .add(29, 29, 29)
+                        .add(jPanel3Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                           .add(jPanel3Layout.createSequentialGroup()
+                              .add(startFrameLabel)
+                              .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
+                              .add(startFrameSpinner, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 46, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+                           .add(jPanel3Layout.createSequentialGroup()
+                              .add(repeatCheckBox)
+                              .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
+                              .add(repeatEveryFrameSpinner, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 50, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                              .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                              .add(framesLabel))))
+                     .add(useInMDAcheckBox))
+                  .addContainerGap(14, Short.MAX_VALUE))
                .add(jPanel3Layout.createSequentialGroup()
                   .add(jPanel3Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
                      .add(jSeparator1)
-                     .add(jSeparator2))
+                     .add(jPanel3Layout.createSequentialGroup()
+                        .add(15, 15, 15)
+                        .add(jPanel3Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                           .add(jPanel3Layout.createSequentialGroup()
+                              .add(spotDwellTimeLabel)
+                              .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
+                              .add(spotDwellTimeSpinner, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 64, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                              .add(18, 18, 18)
+                              .add(spotDwellTimeUnitsLabel))
+                           .add(jPanel3Layout.createSequentialGroup()
+                              .add(roiLoopLabel)
+                              .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
+                              .add(roiLoopSpinner, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 36, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                              .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
+                              .add(roiLoopTimesLabel)))))
                   .addContainerGap())))
          .add(jPanel3Layout.createSequentialGroup()
-            .add(22, 22, 22)
-            .add(runROIsNowButton)
-            .add(0, 0, Short.MAX_VALUE))
+            .add(25, 25, 25)
+            .add(jPanel3Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+               .add(jPanel3Layout.createSequentialGroup()
+                  .add(roiStatusLabel)
+                  .addContainerGap(org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+               .add(jPanel3Layout.createSequentialGroup()
+                  .add(setRoiButton, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 108, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                  .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                  .add(jButton1)
+                  .add(24, 24, 24))))
       );
       jPanel3Layout.setVerticalGroup(
          jPanel3Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
          .add(jPanel3Layout.createSequentialGroup()
-            .add(21, 21, 21)
-            .add(setRoiButton)
-            .add(18, 18, 18)
-            .add(roiStatusLabel)
-            .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, 14, Short.MAX_VALUE)
-            .add(jPanel3Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
-               .add(roiLoopLabel)
-               .add(roiLoopTimesLabel, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 14, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-               .add(roiLoopSpinner, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
-            .add(7, 7, 7)
-            .add(jSeparator1, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-            .add(16, 16, 16)
-            .add(runROIsNowButton)
-            .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
-            .add(jSeparator2, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 10, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-            .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
-            .add(useInMDAcheckBox)
-            .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
-            .add(jPanel3Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
-               .add(startFrameLabel)
-               .add(startFrameSpinner, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
-            .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-            .add(jPanel3Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
-               .add(repeatCheckBox)
-               .add(repeatEveryFrameSpinner, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-               .add(framesLabel))
-            .add(32, 32, 32))
+            .add(jPanel3Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.TRAILING)
+               .add(jPanel3Layout.createSequentialGroup()
+                  .addContainerGap()
+                  .add(jSeparator3, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 84, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+               .add(org.jdesktop.layout.GroupLayout.LEADING, jPanel3Layout.createSequentialGroup()
+                  .add(21, 21, 21)
+                  .add(jPanel3Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
+                     .add(setRoiButton)
+                     .add(jButton1))
+                  .add(18, 18, 18)
+                  .add(roiStatusLabel)
+                  .add(18, 18, 18)
+                  .add(jPanel3Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
+                     .add(roiLoopLabel)
+                     .add(roiLoopTimesLabel, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 14, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                     .add(roiLoopSpinner, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+                  .add(9, 9, 9)
+                  .add(jPanel3Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
+                     .add(spotDwellTimeLabel)
+                     .add(spotDwellTimeSpinner, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                     .add(spotDwellTimeUnitsLabel))
+                  .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
+                  .add(jSeparator1, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                  .add(18, 18, 18)
+                  .add(jPanel3Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                     .add(runROIsNowButton)
+                     .add(jPanel3Layout.createSequentialGroup()
+                        .add(useInMDAcheckBox)
+                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
+                        .add(jPanel3Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
+                           .add(startFrameLabel)
+                           .add(startFrameSpinner, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                        .add(jPanel3Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
+                           .add(repeatCheckBox)
+                           .add(repeatEveryFrameSpinner, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                           .add(framesLabel))))))
+            .addContainerGap(25, Short.MAX_VALUE))
       );
 
       jTabbedPane1.addTab("ROIs", jPanel3);
@@ -334,7 +379,7 @@ public class ProjectorControlForm extends javax.swing.JFrame implements OnStateL
          .add(layout.createSequentialGroup()
             .addContainerGap()
             .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-               .add(jTabbedPane1, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+               .add(jTabbedPane1)
                .add(layout.createSequentialGroup()
                   .add(onButton)
                   .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
@@ -342,8 +387,9 @@ public class ProjectorControlForm extends javax.swing.JFrame implements OnStateL
                   .add(18, 18, 18)
                   .add(allPixelsButton)
                   .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                  .add(calibrateButton)))
-            .addContainerGap(org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                  .add(calibrateButton)
+                  .add(0, 0, Short.MAX_VALUE)))
+            .addContainerGap())
       );
       layout.setVerticalGroup(
          layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
@@ -355,8 +401,8 @@ public class ProjectorControlForm extends javax.swing.JFrame implements OnStateL
                .add(allPixelsButton)
                .add(calibrateButton))
             .add(18, 18, 18)
-            .add(jTabbedPane1, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-            .addContainerGap(23, Short.MAX_VALUE))
+            .add(jTabbedPane1, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 305, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+            .addContainerGap(org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
       );
 
       pack();
@@ -439,6 +485,14 @@ public class ProjectorControlForm extends javax.swing.JFrame implements OnStateL
        }
     }//GEN-LAST:event_useInMDAcheckBoxActionPerformed
 
+   private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed
+      IJ.run("ROI Manager...");
+   }//GEN-LAST:event_jButton1ActionPerformed
+
+   private void spotDwellTimeSpinnerStateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_spotDwellTimeSpinnerStateChanged
+      controller_.setSpotInterval(getSpinnerValue(this.spotDwellTimeSpinner) * 1000);
+   }//GEN-LAST:event_spotDwellTimeSpinnerStateChanged
+
    private int getRoiRepetitionsSetting() {
       return getSpinnerValue(roiLoopSpinner);
    }
@@ -459,7 +513,7 @@ public class ProjectorControlForm extends javax.swing.JFrame implements OnStateL
    private void formWindowClosing(java.awt.event.WindowEvent evt) {
       plugin_.dispose();
    }
- 
+  
    public void updateWidgetsEnabledStatus() {
       boolean roisSubmitted = false;
       if (numROIs_ == 0) {
@@ -476,6 +530,9 @@ public class ProjectorControlForm extends javax.swing.JFrame implements OnStateL
       roiLoopLabel.setEnabled(roisSubmitted);
       roiLoopSpinner.setEnabled(roisSubmitted);
       roiLoopTimesLabel.setEnabled(roisSubmitted);
+      spotDwellTimeSpinner.setEnabled(roisSubmitted);
+      spotDwellTimeLabel.setEnabled(roisSubmitted);
+      spotDwellTimeUnitsLabel.setEnabled(roisSubmitted);
       runROIsNowButton.setEnabled(roisSubmitted);
       useInMDAcheckBox.setEnabled(roisSubmitted);
 
@@ -494,12 +551,13 @@ public class ProjectorControlForm extends javax.swing.JFrame implements OnStateL
    private javax.swing.JButton centerButton;
    private javax.swing.JLabel closeShutterLabel;
    private javax.swing.JLabel framesLabel;
+   private javax.swing.JButton jButton1;
    private javax.swing.JLabel jLabel1;
    private javax.swing.JLabel jLabel2;
    private javax.swing.JPanel jPanel1;
    private javax.swing.JPanel jPanel3;
    private javax.swing.JSeparator jSeparator1;
-   private javax.swing.JSeparator jSeparator2;
+   private javax.swing.JSeparator jSeparator3;
    private javax.swing.JTabbedPane jTabbedPane1;
    private javax.swing.JButton offButton;
    private javax.swing.JButton onButton;
@@ -514,6 +572,9 @@ public class ProjectorControlForm extends javax.swing.JFrame implements OnStateL
    private javax.swing.JLabel roiStatusLabel;
    private javax.swing.JButton runROIsNowButton;
    private javax.swing.JButton setRoiButton;
+   private javax.swing.JLabel spotDwellTimeLabel;
+   private javax.swing.JSpinner spotDwellTimeSpinner;
+   private javax.swing.JLabel spotDwellTimeUnitsLabel;
    private javax.swing.JLabel startFrameLabel;
    private javax.swing.JSpinner startFrameSpinner;
    private javax.swing.JCheckBox useInMDAcheckBox;

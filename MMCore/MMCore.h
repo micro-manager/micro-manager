@@ -457,6 +457,7 @@ public:
    */
    //@ {
    void pointGalvoAndFire(const char* deviceLabel, double x, double y, double pulseTime_us) throw (CMMError);
+   void setGalvoSpotInterval(const char* deviceLabel, double pulseTime_us) throw (CMMError);
    void setGalvoPosition(const char* deviceLabel, double x, double y) throw (CMMError);
    void getGalvoPosition(const char* deviceLabel, double &x_stage, double &y_stage) throw (CMMError); // using x_stage to get swig to work
    void setGalvoIlluminationState(const char* deviceLabel, bool on) throw (CMMError);
