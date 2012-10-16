@@ -186,7 +186,7 @@ public class ProjectorController {
      }
    }
 
-   public void setRois(int reps) {
+   public int setRois(int reps) {
       Roi singleRoi = gui.getImageWin().getImagePlus().getRoi();
       Roi[] rois = null;
       final RoiManager mgr = RoiManager.getInstance();
@@ -199,6 +199,7 @@ public class ProjectorController {
       }
       dev.setRois(rois, loadAffineTransform());
       dev.setPolygonRepetitions(reps);
+      return rois.length;
    }
 
    public void setRoiRepetitions(int reps) {
