@@ -288,6 +288,12 @@ public:
      stateTester = new TestState(m_handle, m_feature);
      callbackBooker = new TSubject(m_handle, m_feature, this);
   }
+  virtual ~TInteger()
+  {
+     delete stateTester;
+     delete callbackBooker;
+  }
+
 
   andor64 Get()
   {
@@ -345,7 +351,13 @@ public:
       : m_handle(_handle), m_feature(_feature)
    {
       stateTester = new TestState(m_handle, m_feature);
-     callbackBooker = new TSubject(m_handle, m_feature, this);
+      callbackBooker = new TSubject(m_handle, m_feature, this);
+   }
+
+   virtual ~TFloat()
+   {
+      delete stateTester;
+      delete callbackBooker;
    }
 
    double Get()
@@ -403,9 +415,15 @@ public:
       : m_handle(_handle), m_feature(_feature)
    {
       stateTester = new TestState(m_handle, m_feature);
-     callbackBooker = new TSubject(m_handle, m_feature, this);
+      callbackBooker = new TSubject(m_handle, m_feature, this);
    }
    
+   virtual ~TBool()
+   {
+      delete stateTester;
+      delete callbackBooker;
+   }
+
    bool Get()
    {
       AT_BOOL i_returnBoolean;
@@ -443,7 +461,13 @@ public:
       : m_handle(_handle), m_feature(_feature)
    {
       stateTester = new TestState(m_handle, m_feature);
-     callbackBooker = new TSubject(m_handle, m_feature, this);
+      callbackBooker = new TSubject(m_handle, m_feature, this);
+   }
+
+   virtual ~TCommand()
+   {
+      delete stateTester;
+      delete callbackBooker;
    }
 
    void Do()
@@ -474,7 +498,13 @@ public:
       : m_handle(_handle), m_feature(_feature)
    {
       stateTester = new TestState(m_handle, m_feature);
-     callbackBooker = new TSubject(m_handle, m_feature, this);
+      callbackBooker = new TSubject(m_handle, m_feature, this);
+   }
+
+   virtual ~TString()
+   {
+      delete stateTester;
+      delete callbackBooker;
    }
 
    std::wstring Get()
@@ -527,7 +557,13 @@ public:
       : m_handle(_handle), m_feature(_feature)
    {
       stateTester = new TestState(m_handle, m_feature);
-     callbackBooker = new TSubject(m_handle, m_feature, this);
+      callbackBooker = new TSubject(m_handle, m_feature, this);
+   }
+
+   virtual ~TEnum()
+   {
+      delete stateTester;
+      delete callbackBooker;
    }
 
    int GetIndex()
