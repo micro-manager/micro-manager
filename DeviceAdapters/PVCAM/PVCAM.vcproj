@@ -45,7 +45,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="&quot;..\..\..\3rdparty\Microsoft\VisualC++\include&quot;;../../../3rdparty/RoperScientific/Windows/PvCam/SDK"
+				AdditionalIncludeDirectories="../../../3rdparty/RoperScientific/Windows/PvCam/SDK"
 				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_USRDLL;MODULE_EXPORTS"
 				MinimalRebuild="true"
 				ExceptionHandling="2"
@@ -70,11 +70,11 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="Pvcam32.lib"
-				OutputFile="$(OutDir)/mmgr_dal_$(ProjectName).dll"
+				OutputFile="$(OutDir)/mmgr_dal_PVCAM.dll"
 				LinkIncremental="2"
 				AdditionalLibraryDirectories="&quot;../../../3rdparty/RoperScientific/Windows/PvCam/SDK/Libs/$(PlatformName)&quot;"
 				GenerateDebugInformation="true"
-				ProgramDatabaseFile="$(OutDir)/$(ProjectName).pdb"
+				ProgramDatabaseFile="$(OutDir)/PVCAM.pdb"
 				SubSystem="2"
 				RandomizedBaseAddress="1"
 				DataExecutionPrevention="0"
@@ -101,7 +101,8 @@
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
-				CommandLine="copy &quot;$(TargetPath)&quot; ..\..\bin_$(PlatformName)"
+				CommandLine="copy &quot;$(TargetPath)&quot; ..\..\bin_$(PlatformName)&#x0D;&#x0A;&#x0D;&#x0A;copy /Y &quot;$(TargetPath)&quot; &quot;$(ProjectDir)..\..\..\bin\32\$(TargetFileName)&quot;&#x0D;&#x0A;"
+				ExcludedFromBuild="false"
 			/>
 		</Configuration>
 		<Configuration
@@ -131,7 +132,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="&quot;..\..\..\3rdparty\Microsoft\VisualC++\include&quot;;../../../3rdparty/RoperScientific/Windows/PvCam/SDK"
+				AdditionalIncludeDirectories="../../../3rdparty/RoperScientific/Windows/PvCam/SDK"
 				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_USRDLL;MODULE_EXPORTS"
 				MinimalRebuild="true"
 				ExceptionHandling="2"
@@ -156,11 +157,11 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="pvcam64.lib"
-				OutputFile="$(OutDir)/mmgr_dal_$(ProjectName).dll"
+				OutputFile="$(OutDir)/mmgr_dal_PVCAM.dll"
 				LinkIncremental="2"
 				AdditionalLibraryDirectories="&quot;../../../3rdparty/RoperScientific/Windows/PvCam/SDK/Libs/$(PlatformName)&quot;"
 				GenerateDebugInformation="true"
-				ProgramDatabaseFile="$(OutDir)/$(ProjectName).pdb"
+				ProgramDatabaseFile="$(OutDir)/PVCAM.pdb"
 				SubSystem="2"
 				RandomizedBaseAddress="1"
 				DataExecutionPrevention="0"
@@ -215,7 +216,7 @@
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
-				AdditionalIncludeDirectories="&quot;..\..\..\3rdparty\Microsoft\VisualC++\include&quot;;../../../3rdparty/RoperScientific/Windows/PvCam/SDK"
+				AdditionalIncludeDirectories="../../../3rdparty/RoperScientific/Windows/PvCam/SDK"
 				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;MODULE_EXPORTS"
 				ExceptionHandling="2"
 				RuntimeLibrary="0"
@@ -270,7 +271,7 @@
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
-				CommandLine="copy &quot;$(TargetPath)&quot; ..\..\bin_$(PlatformName)"
+				CommandLine="copy &quot;$(TargetPath)&quot; ..\..\bin_$(PlatformName)&#x0D;&#x0A;&#x0D;&#x0A;copy /Y &quot;$(TargetPath)&quot; &quot;$(ProjectDir)..\..\..\bin\32\$(TargetFileName)&quot;&#x0D;&#x0A;"
 			/>
 		</Configuration>
 		<Configuration
@@ -299,7 +300,7 @@
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
-				AdditionalIncludeDirectories="&quot;..\..\..\3rdparty\Microsoft\VisualC++\include&quot;;../../../3rdparty/RoperScientific/Windows/PvCam/SDK"
+				AdditionalIncludeDirectories="../../../3rdparty/RoperScientific/Windows/PvCam/SDK"
 				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;MODULE_EXPORTS"
 				ExceptionHandling="2"
 				RuntimeLibrary="0"
@@ -322,7 +323,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="pvcam64.lib"
-				OutputFile="$(OutDir)/mmgr_dal_$(ProjectName).dll"
+				OutputFile="$(OutDir)/mmgr_dal_PVCAM.dll"
 				LinkIncremental="1"
 				AdditionalLibraryDirectories="&quot;../../../3rdparty/RoperScientific/Windows/PvCam/SDK/Libs/$(PlatformName)&quot;"
 				GenerateDebugInformation="true"
@@ -354,7 +355,7 @@
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
-				CommandLine="copy &quot;$(TargetPath)&quot; ..\..\bin_$(PlatformName)"
+				CommandLine="copy &quot;$(TargetPath)&quot; ..\..\bin_$(PlatformName)&#x0D;&#x0A;&#x0D;&#x0A;copy /Y &quot;$(TargetPath)&quot; &quot;$(ProjectDir)..\..\..\bin\64\$(TargetFileName)&quot;&#x0D;&#x0A;"
 			/>
 		</Configuration>
 	</Configurations>
@@ -383,15 +384,15 @@
 				>
 			</File>
 			<File
-				RelativePath=".\PVCAM.cpp"
+				RelativePath=".\PVCAMAdapter.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\PVCAMParam.cpp"
 				>
 			</File>
 			<File
 				RelativePath=".\PVCAMUniversal.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\PVCAMUtils.cpp"
 				>
 			</File>
 		</Filter>
@@ -421,11 +422,11 @@
 				>
 			</File>
 			<File
-				RelativePath=".\PVCAM.h"
+				RelativePath=".\PVCAMAdapter.h"
 				>
 			</File>
 			<File
-				RelativePath=".\PVCAMProperty.h"
+				RelativePath=".\PVCAMParam.h"
 				>
 			</File>
 		</Filter>
