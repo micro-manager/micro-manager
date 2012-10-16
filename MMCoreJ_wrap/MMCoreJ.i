@@ -326,6 +326,8 @@
 
 %typemap(javaimports) CMMCore %{
    import org.json.JSONObject;
+   import java.awt.geom.Point2D;
+   import java.awt.Rectangle;
 %}
 
 %typemap(javacode) CMMCore %{
@@ -453,6 +455,37 @@
       return popNextTaggedImage(0);
    }
 
+   // convenience functions follow
+   
+   /*
+    * Convenience function. Returns the ROI of the current camera in a java.awt.Rectangle.
+    */
+   public Rectangle getROI() throws java.lang.Exception {
+      // ROI values are given as x,y,w,h in individual one-member arrays (pointers in C++):
+      int[][] a = new int[4][1];
+      getROI(a[0], a[1], a[2], a[3]);
+      return new Rectangle(a[0][0], a[1][0], a[2][0], a[3][0]);
+   }
+
+   /* 
+    * Convenience function. Returns the current x,y position of the stage in a Point2D.Double.
+    */
+   public Point2D.Double getXYStagePosition(String stage) throws java.lang.Exception {
+      // stage position is given as x,y in individual one-member arrays (pointers in C++):
+      double p[][] = new double[2][1];
+      getXYPosition(stage, p[0], p[1]);
+      return new Point2D.Double(p[0][0], p[1][0]);
+   }
+   
+   /* 
+    * Convenience function. Returns the current x,y position of the galvo in a Point2D.Double.
+    */
+   public Point2D.Double getGalvoPosition(String galvoDevice) throws java.lang.Exception {
+      // stage position is given as x,y in individual one-member arrays (pointers in C++):
+      double p[][] = new double[2][1];
+      getGalvoPosition(galvoDevice, p[0], p[1]);
+      return new Point2D.Double(p[0][0], p[1][0]);
+   }
 %}
 
 
