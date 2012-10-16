@@ -334,10 +334,10 @@ private:
 
    // Camera speed table
    //  usage: SpdTabEntry e = camSpdTable_[port][speed];
-   std::map<uns32, std::map<int16, SpdTabEntry>> camSpdTable_;
+   std::map<uns32, std::map<int16, SpdTabEntry> > camSpdTable_;
    // Reverse speed table to get the speed based on UI selection
    //  usage: SpdTabEntry e = camSpdTableReverse_[port][ui_selected_string];
-   std::map<uns32, std::map<std::string, SpdTabEntry>> camSpdTableReverse_;
+   std::map<uns32, std::map<std::string, SpdTabEntry> > camSpdTableReverse_;
    // Currently selected speed
    SpdTabEntry camCurrentSpeed_;
 

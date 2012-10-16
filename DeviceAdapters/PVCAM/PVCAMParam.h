@@ -6,9 +6,14 @@
 
 #define MAX_ENUM_STR_LEN 100
 
+#ifndef WIN32
+typedef long long long64;
+#endif
+
 /***
 * A base class for PVCAM parameters. This is used for easy access to specific camera parameters.
 */
+
 class PvParamBase
 {
 public:
