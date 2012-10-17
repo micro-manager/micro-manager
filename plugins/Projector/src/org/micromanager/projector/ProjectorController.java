@@ -6,6 +6,7 @@ package org.micromanager.projector;
 
 import ij.IJ;
 import ij.gui.ImageCanvas;
+import ij.gui.ImageWindow;
 import ij.gui.PointRoi;
 import ij.gui.Roi;
 import ij.plugin.filter.GaussianBlur;
@@ -23,6 +24,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.prefs.Preferences;
+import javax.swing.JOptionPane;
 import mmcorej.CMMCore;
 import org.micromanager.api.AcquisitionEngine;
 import org.micromanager.api.ScriptInterface;
@@ -73,15 +75,20 @@ public class ProjectorController {
       final boolean liveModeRunning = gui.isLiveModeOn();
       gui.enableLiveMode(false);
       Thread th = new Thread("Projector calibration thread") {
-
          public void run() {
-
+            Roi originalROI = IJ.getImage().getRoi();
             AffineTransform firstApprox = getFirstApproxTransform();
             AffineTransform affineTransform = getFinalTransform(firstApprox);
             dev.turnOff();
-            IJ.getImage().setRoi((Roi) null);
+            try {
+               Thread.sleep(500);
+            } catch (InterruptedException ex) {
+               ReportingUtils.logError(ex);
+            }
             saveAffineTransform(affineTransform);
             gui.enableLiveMode(liveModeRunning);
+            JOptionPane.showMessageDialog(IJ.getImage().getWindow(), "Calibration finished.");
+            IJ.getImage().setRoi(originalROI);
          }
       };
       th.start();
@@ -256,17 +263,26 @@ public class ProjectorController {
       };
    }
  
-    public void activatePointAndShootMode(boolean on) {
-        final ImageCanvas canvas = IJ.getImage().getWindow().getCanvas();
-        for (MouseListener listener : canvas.getMouseListeners()) {
-            if (listener == pointAndShootMouseListener) {
-                canvas.removeMouseListener(listener);
+   public void activatePointAndShootMode(boolean on) {
+      ImageCanvas canvas = null;
+      if (IJ.getImage() != null) {
+         ImageWindow window = IJ.getImage().getWindow();
+         if (window != null) {
+            canvas = IJ.getImage().getWindow().getCanvas();
+
+            for (MouseListener listener : canvas.getMouseListeners()) {
+               if (listener == pointAndShootMouseListener) {
+                  canvas.removeMouseListener(listener);
+               }
             }
-        }
-        if (on) {
+         }
+      }
+      if (on) {
+         if (canvas != null) {
             canvas.addMouseListener(pointAndShootMouseListener);
-        }
-    }
+         }
+      }
+   }
 
    public void attachToMDA(int frameOn, boolean repeat, int repeatInterval) {
       Runnable runPolygons = new Runnable() {

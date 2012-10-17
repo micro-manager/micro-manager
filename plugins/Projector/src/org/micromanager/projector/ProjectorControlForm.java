@@ -51,7 +51,7 @@ public class ProjectorControlForm extends javax.swing.JFrame implements OnStateL
       calibrateButton = new javax.swing.JButton();
       onButton = new javax.swing.JButton();
       offButton = new javax.swing.JButton();
-      jTabbedPane1 = new javax.swing.JTabbedPane();
+      mainTabbedPane = new javax.swing.JTabbedPane();
       jPanel1 = new javax.swing.JPanel();
       jLabel1 = new javax.swing.JLabel();
       jLabel2 = new javax.swing.JLabel();
@@ -107,11 +107,17 @@ public class ProjectorControlForm extends javax.swing.JFrame implements OnStateL
          }
       });
 
+      mainTabbedPane.addChangeListener(new javax.swing.event.ChangeListener() {
+         public void stateChanged(javax.swing.event.ChangeEvent evt) {
+            mainTabbedPaneStateChanged(evt);
+         }
+      });
+
       jLabel1.setText("Point and shoot mode:");
 
       jLabel2.setText("ms");
 
-      repeatEveryFrameSpinner.setModel(new SpinnerNumberModel(500, 1, 1000000000, 1));
+      pointAndShootIntervalSpinner.setModel(new SpinnerNumberModel(500, 1, 1000000000, 1));
       pointAndShootIntervalSpinner.addChangeListener(new javax.swing.event.ChangeListener() {
          public void stateChanged(javax.swing.event.ChangeEvent evt) {
             pointAndShootIntervalSpinnerStateChanged(evt);
@@ -188,7 +194,7 @@ public class ProjectorControlForm extends javax.swing.JFrame implements OnStateL
             .addContainerGap(157, Short.MAX_VALUE))
       );
 
-      jTabbedPane1.addTab("Point and Shoot", jPanel1);
+      mainTabbedPane.addTab("Point and Shoot", jPanel1);
 
       roiLoopLabel.setText("Loop:");
 
@@ -363,7 +369,7 @@ public class ProjectorControlForm extends javax.swing.JFrame implements OnStateL
             .addContainerGap(25, Short.MAX_VALUE))
       );
 
-      jTabbedPane1.addTab("ROIs", jPanel3);
+      mainTabbedPane.addTab("ROIs", jPanel3);
 
       allPixelsButton.setText("All Pixels");
       allPixelsButton.addActionListener(new java.awt.event.ActionListener() {
@@ -379,7 +385,7 @@ public class ProjectorControlForm extends javax.swing.JFrame implements OnStateL
          .add(layout.createSequentialGroup()
             .addContainerGap()
             .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-               .add(jTabbedPane1)
+               .add(mainTabbedPane)
                .add(layout.createSequentialGroup()
                   .add(onButton)
                   .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
@@ -401,7 +407,7 @@ public class ProjectorControlForm extends javax.swing.JFrame implements OnStateL
                .add(allPixelsButton)
                .add(calibrateButton))
             .add(18, 18, 18)
-            .add(jTabbedPane1, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 305, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+            .add(mainTabbedPane, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 305, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
             .addContainerGap(org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
       );
 
@@ -493,6 +499,14 @@ public class ProjectorControlForm extends javax.swing.JFrame implements OnStateL
       controller_.setSpotInterval(getSpinnerValue(this.spotDwellTimeSpinner) * 1000);
    }//GEN-LAST:event_spotDwellTimeSpinnerStateChanged
 
+   private void mainTabbedPaneStateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_mainTabbedPaneStateChanged
+      if (controller_ != null) {
+       pointAndShootOnButton.setSelected(false);
+       pointAndShootOffButton.setSelected(true);
+       updatePointAndShoot();
+      }
+   }//GEN-LAST:event_mainTabbedPaneStateChanged
+
    private int getRoiRepetitionsSetting() {
       return getSpinnerValue(roiLoopSpinner);
    }
@@ -558,7 +572,7 @@ public class ProjectorControlForm extends javax.swing.JFrame implements OnStateL
    private javax.swing.JPanel jPanel3;
    private javax.swing.JSeparator jSeparator1;
    private javax.swing.JSeparator jSeparator3;
-   private javax.swing.JTabbedPane jTabbedPane1;
+   private javax.swing.JTabbedPane mainTabbedPane;
    private javax.swing.JButton offButton;
    private javax.swing.JButton onButton;
    private javax.swing.JSpinner pointAndShootIntervalSpinner;
