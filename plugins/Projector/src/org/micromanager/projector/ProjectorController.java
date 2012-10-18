@@ -106,11 +106,15 @@ public class ProjectorController {
        JavaUtils.putObjectInPrefs(getCalibrationNode(), dev.getName(), affineTransform);
    }
 
-   
-   public AffineTransform loadAffineTransform() {
-       return (AffineTransform) JavaUtils.getObjectFromPrefs(getCalibrationNode(), dev.getName(), null);
+      public AffineTransform loadAffineTransform() {
+      AffineTransform transform = (AffineTransform) JavaUtils.getObjectFromPrefs(getCalibrationNode(), dev.getName(), null);
+      if (transform == null) {
+         ReportingUtils.showError("The galvo has not been calibrated for the current settings.");
+         return null;
+      } else {
+         return transform;
+      }
    }
-   
 // then use:
 //imgp.updateImage();
 //imgp.getCanvas().repaint();
@@ -218,30 +222,38 @@ public class ProjectorController {
    }
    
    public int setRois(int reps) {
-      Roi[] rois = null;
-      Roi[] roiMgrRois = {};
-      Roi singleRoi = gui.getImageWin().getImagePlus().getRoi();
-      final RoiManager mgr = RoiManager.getInstance();
-      if (mgr != null) {
-         roiMgrRois = mgr.getRoisAsArray();
-      }
-      if (roiMgrRois.length > 0) {
-         rois = roiMgrRois;
-      } else if (singleRoi != null) {
-         rois = new Roi[] {singleRoi};
+      AffineTransform transform = loadAffineTransform();
+      if (transform != null) {
+         Roi[] rois = null;
+         Roi[] roiMgrRois = {};
+         Roi singleRoi = gui.getImageWin().getImagePlus().getRoi();
+         final RoiManager mgr = RoiManager.getInstance();
+         if (mgr != null) {
+            roiMgrRois = mgr.getRoisAsArray();
+         }
+         if (roiMgrRois.length > 0) {
+            rois = roiMgrRois;
+         } else if (singleRoi != null) {
+            rois = new Roi[] {singleRoi};
+         } else {
+            ReportingUtils.showError("Please first select ROI(s)");
+         }
+         individualRois_ = separateOutPointRois(rois);
+         sendRoiData();
+         return individualRois_.length;
       } else {
-         ReportingUtils.showError("Please first select ROI(s)");
+         return 0;
       }
-      individualRois_ = separateOutPointRois(rois);
-      sendRoiData();
-      return individualRois_.length;
    }
 
    private void sendRoiData() {
       if (individualRois_.length > 0) {
-         dev.setRois(individualRois_, loadAffineTransform());
-         dev.setPolygonRepetitions(reps_);
-         dev.setSpotInterval(interval_us_);
+         AffineTransform transform = loadAffineTransform();
+         if (transform != null) {
+            dev.setRois(individualRois_, transform);
+            dev.setPolygonRepetitions(reps_);
+            dev.setSpotInterval(interval_us_);
+         }
       }
    }
    
