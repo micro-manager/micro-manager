@@ -154,6 +154,6 @@ clean:
 javadoc:
 	test -d $(srcdir)/doc || mkdir $(srcdir)/doc
 	rm -rf $(srcdir)/doc/*
-	javadoc -public -classpath $(IJJARPATH):$(BSHJARPATH):$(IJPATH)/plugins/Micro-Manager/MMCoreJ.jar:$(IJPATH)/plugins/Micro-Manager/MMJ_.jar:. -d doc $(srcdir)/src/org/micromanager/*.java $(srcdir)/src/org/micromanager/*/*.java
+	javadoc -public -classpath $(IJJARPATH):$(BSHJARPATH):$(IJPATH)/plugins/Micro-Manager/MMCoreJ.jar:$(IJPATH)/plugins/Micro-Manager/MMJ_.jar:$(CLASSEXT)/scifio.jar:$(CLASSEXT)/commons-math-2.0.jar:. -d doc $(srcdir)/src/org/micromanager/*.java $(srcdir)/src/org/micromanager/*/*.java
 
 EXTRA_DIST = bin src build.xml license.txt
