@@ -432,23 +432,28 @@ public class MultipageTiffWriter {
       }
       bytesPerImagePixels_ = imageHeight_ * imageWidth_ * byteDepth_ * (rgb_ ? 3 : 1);
       //Tiff resolution tag values
+      double cmPerPixel = 0.0001;
       if (summaryMD.has("PixelSizeUm")) {
-         double cmPerPixel = 0.0001;
          try {
             cmPerPixel = 0.0001 * summaryMD.getDouble("PixelSizeUm");
          } catch (JSONException ex) {
          }
-         double log = Math.log10(cmPerPixel);
-         if (log >= 0) {
-            resDenomenator_ = (long) cmPerPixel;
-            resNumerator_ = 1;
-         } else {
-            resNumerator_ = (long) (1 / cmPerPixel);
-            resDenomenator_ = 1;
+      } else if (summaryMD.has("PixelSize_um")) {
+         try {
+            cmPerPixel = 0.0001 * summaryMD.getDouble("PixelSize_um");
+         } catch (JSONException ex) {
          }
       }
+      double log = Math.log10(cmPerPixel);
+      if (log >= 0) {
+         resDenomenator_ = (long) cmPerPixel;
+         resNumerator_ = 1;
+      } else {
+         resNumerator_ = (long) (1 / cmPerPixel);
+         resDenomenator_ = 1;
+      }
    }
-   
+
    private static final String IMAGEJ_FILE_INFO = "This is a test\n";
 
    /**
@@ -466,10 +471,10 @@ public class MultipageTiffWriter {
 
       //nTypes is number actually written among: fileInfo, slice labels, display ranges, channel LUTS,
       //slice labels, ROI, overlay, and # of extra metadata entries
-      int nTypes = 3; //slice labels, display ranges, and channel LUTs
+      int nTypes = 3; //file info, display ranges, and channel LUTs
       int mdBufferSize = 4 + nTypes * 8;
-      //4 bytes for magic number 8 bytes for label and count of each type
-
+      
+      //Header size: 4 bytes for magic number + 8 bytes for label (int) and count (int) of each type
       mdByteCountsBuffer.putInt(bufferPosition, 4 + nTypes * 8);
       bufferPosition += 4;
 
@@ -490,8 +495,10 @@ public class MultipageTiffWriter {
          mdBufferSize += 768;
       }
 
+      //Header (1) File info (1) display ranges (1) LUTS (1 per channel)
+      int numMDEntries = 3 + numChannels;
       ByteBuffer ifdCountAndValueBuffer = ByteBuffer.allocate(8).order(BYTE_ORDER);
-      ifdCountAndValueBuffer.putInt(0, mdByteCountsBufferSize);
+      ifdCountAndValueBuffer.putInt(0, numMDEntries);
       ifdCountAndValueBuffer.putInt(4, (int) filePosition_);
       fileChannel_.write(ifdCountAndValueBuffer, ijMetadataCountsTagPosition_ + 4);
 
