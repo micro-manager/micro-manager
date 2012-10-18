@@ -33,8 +33,8 @@
 #include "PVCAMAdapter.h"
 
 #ifdef WIN32
-#include "Headers/master.h"
-#include "Headers/pvcam.h"
+#include "../../../3rdpartypublic/Photometrics/PVCAM/SDK/Headers/master.h"
+#include "../../../3rdpartypublic/Photometrics/PVCAM/SDK/Headers/pvcam.h"
 #endif
 
 #ifdef __APPLE__
