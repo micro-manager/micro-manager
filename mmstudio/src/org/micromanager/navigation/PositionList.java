@@ -309,7 +309,7 @@ public class PositionList {
    /**
     * Helper method to generate the unique label when inserting a new position.
     * Not recommended for use - planned to become obsolete.
-    * @return
+    * @return Unique label
     */
    public String generateLabel() {
       String label = new String("Pos" + positions_.size());

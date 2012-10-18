@@ -82,7 +82,7 @@ public class CalibrationList {
    /**
     * Returns calibration  based on index
     * @param idx - position index
-    * @return
+    * @return calibration
     */
    public Calibration get(int idx) {
       return calibrationList_.get(idx);

@@ -81,7 +81,7 @@ public class AutofocusManager {
     * Returns the current af device or null if none loaded.
     * Callers should always use this method to obtain the current af device instead
     * of storing the af device reference directly.
-    * @return
+    * @return - current AutoFocus device or null if none was loaded
     */
    public Autofocus getDevice() {
       return currentAfDevice_;

@@ -1582,7 +1582,7 @@ public class AcqControlDlg extends JFrame implements PropertyChangeListener {
     * i.e. even if the preset is not shown, this exposure time will be used
     * next time it is shown
     * 
-    * @param chanelGroup - name of the channelgroup.  If it does not match the current
+    * @param channelGroup - name of the channelgroup.  If it does not match the current
     * channel group, no action will be taken
     * @param channel - name of the preset in the current channel group
     * @param exposure  - new exposure time

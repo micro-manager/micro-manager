@@ -699,7 +699,7 @@ public class MMAcquisition {
 
    /**
     * @deprecated 
-    * @return 
+    * @return AcquisitionData
     */
    public AcquisitionData getAcqData() {
       return null;

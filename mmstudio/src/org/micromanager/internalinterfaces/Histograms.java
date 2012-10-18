@@ -35,8 +35,6 @@ public interface Histograms  {
      * Creates and applies a look up table to the image based on the previously
      * set values of contrast min, max and gamma.  Also stores min max and gamma
      * in the image cache and redraws the histogram contrast cursors
-     * @param img the image
-     * @param cache the ImageCahce corresponding to the image
      */
    public void applyLUTToImage();
 
@@ -44,10 +42,6 @@ public interface Histograms  {
     * Called just before the image is about to draw itself.  Calls 
     * calcAndDisplayHistAndStats and applyLutToImage to make sure that the image has
     * the correct LUT and that the histogram is in sync with the image
-    * @param img the Image
-    * @param cache the ImageCahce corresponding to the image
-    * @param drawHist flag that gets passed to calcAndDisplayHistAndStats to determine
-    * if the histogram and image statistics should be updated
     */
    public void imageChanged();
 
@@ -64,7 +58,6 @@ public interface Histograms  {
    /**
     * Calculates the image histogram and optionally displays image statistics
     * (pixel min, max, mean, etc) and draws the histogram)
-    * @param img The image for which to calculate statistics/histogram
     * @param drawHist flag for optional display of statistics and drawing of histogram
     */
    public void calcAndDisplayHistAndStats(boolean drawHist);

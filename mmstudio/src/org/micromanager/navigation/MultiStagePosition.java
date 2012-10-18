@@ -31,11 +31,10 @@ import java.util.Enumeration;
 import java.util.Hashtable;
 import java.util.Iterator;
 
-import org.micromanager.utils.MMException;
 
 import mmcorej.CMMCore;
 
-public class MultiStagePosition {
+public final class MultiStagePosition {
    private ArrayList<StagePosition> stagePosList_;
    private String label_;
    private String defaultZStage_;
@@ -49,9 +48,9 @@ public class MultiStagePosition {
     */
    public MultiStagePosition() {
       stagePosList_ = new ArrayList<StagePosition>();
-      label_ = new String("Undefined");
-      defaultZStage_ = new String("");
-      defaultXYStage_ = new String("");
+      label_ = "Undefined";
+      defaultZStage_ = "";
+      defaultXYStage_ = "";
       properties_ = new Hashtable<String, String>();
    }
    
@@ -87,16 +86,16 @@ public class MultiStagePosition {
    /**
     * Copy constructor.
     * @param aMps - another instance of the MultiStagePoswition class
-    * @return
+    * @return multistageposition
     */
    public static MultiStagePosition newInstance(MultiStagePosition aMps) {
       MultiStagePosition mps = new MultiStagePosition();
-      mps.label_ = new String(aMps.label_);
-      mps.defaultXYStage_ = new String(aMps.defaultXYStage_);
-      mps.defaultZStage_ = new String(aMps.defaultZStage_);
+      mps.label_ = aMps.label_;
+      mps.defaultXYStage_ = aMps.defaultXYStage_;
+      mps.defaultZStage_ = aMps.defaultZStage_;
       for (Enumeration<String> e = aMps.properties_.keys(); e.hasMoreElements();) {
          String key = e.nextElement();
-         String val = new String(aMps.properties_.get(key));
+         String val = aMps.properties_.get(key);
          mps.properties_.put(key, val);
       }
       
@@ -124,7 +123,7 @@ public class MultiStagePosition {
    /**
     * Return stage position based on index
     * @param idx - position index
-    * @return
+    * @return stageposition
     */
    public StagePosition get(int idx) {
       return stagePosList_.get(idx);

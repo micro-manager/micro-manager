@@ -634,9 +634,8 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
    }
 
    /**
-    * @param img
-    * @param drawHist
-    * @return true if hist and stats calculated successfully
+    * @param drawHist - set true if hist and stats calculated successfully
+    * 
     */
    public void calcAndDisplayHistAndStats(boolean drawHist) {
       if (img_ == null || img_.getProcessor() == null) {

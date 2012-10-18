@@ -853,7 +853,7 @@ public interface ScriptInterface {
     * 1.4.6 20110831
     * When a date is appended to a version number, it will be newer than the same version 
     * without a date
-    * @param minium version neede to run this code
+    * @param version - minimum version needen to run this code
     * @throws MMScriptException
     */
    public boolean versionLessThan(String version) throws MMScriptException;
@@ -998,7 +998,6 @@ public interface ScriptInterface {
 
    /**
     * Sets the pixels of the current window to a newly snapped image
-    * @return 
     * @deprecated
     */
    public boolean updateImage();

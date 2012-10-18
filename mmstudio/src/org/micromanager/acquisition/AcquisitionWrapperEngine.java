@@ -18,7 +18,6 @@ import mmcorej.StrVector;
 import mmcorej.TaggedImage;
 import org.json.JSONObject;
 import org.micromanager.MMStudioMainFrame;
-import org.micromanager.api.AcquisitionDisplay;
 import org.micromanager.api.AcquisitionEngine;
 import org.micromanager.api.DataProcessor;
 import org.micromanager.api.ImageCache;
@@ -430,13 +429,13 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
     */
    public String getFirstConfigGroup() {
       if (core_ == null) {
-         return new String("");
+         return "";
       }
 
       String[] groups = getAvailableGroups();
 
       if (groups == null || groups.length < 1) {
-         return new String("");
+         return "";
       }
 
       return getAvailableGroups()[0];
@@ -594,10 +593,8 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
     *
     * @param config - configuration name
     * @param exp
-    * @param doZOffst
+    * @param doZStack
     * @param zOffset
-    * @param c8
-    * @param c16
     * @param c
     * @return - true if successful
     */

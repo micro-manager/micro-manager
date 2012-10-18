@@ -127,7 +127,7 @@ public class MMWindow {
     * Returns an ImageJ ImagePlus for a given position
     * Does not update the display
     * @param position
-    * @return
+    * @return ImageJ ImagePlus
     */
    public ImagePlus getImagePlus(int position) {
       return virtAcq_.getImagePlus(position);
@@ -166,7 +166,7 @@ public class MMWindow {
     * @param slice
     * @param frame
     * @param position
-    * @return 
+    * @return metadata in JSON format
     */
    public JSONObject getImageMetadata(int channel, int slice, int frame, int position) {
       return virtAcq_.getImageCache().getImageTags(channel, slice, frame, position);

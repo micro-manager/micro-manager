@@ -193,7 +193,7 @@ public interface AcquisitionEngine {
 
    /**
     * Set the channel group if the current hardware configuration permits.
-    * @param group
+    * @param newGroup
     * @return - true if successful
     */
    public boolean setChannelGroup(String newGroup);

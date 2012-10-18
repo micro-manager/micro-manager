@@ -1035,8 +1035,8 @@ public final class ScriptPanel extends MMFrame implements MouseListener, Scripti
 
    /**
     * Displays text string in message window in color red
-    * @param text
-    * @param lineNumber_ 
+    * @param text - text to be displayed
+    * @param lineNumber - line to be highlighted in red
     */
    public void messageException (String text, int lineNumber) {
       // move cursor to the error line number
@@ -1152,7 +1152,7 @@ public final class ScriptPanel extends MMFrame implements MouseListener, Scripti
 
    /**
     * MouseListener implementation
-    * @param MouseEvent e
+    * @param  e MouseEvent to listen to
     */
    public void mouseClicked(MouseEvent e) {
       if (e.getClickCount() >= 2)

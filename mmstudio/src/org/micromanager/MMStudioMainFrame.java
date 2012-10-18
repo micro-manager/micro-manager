@@ -3719,7 +3719,7 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface, Device
 
    /**
     * Returns the current background color
-    * @return
+    * @return current background color
     */
    @Override
    public Color getBackgroundColor() {
