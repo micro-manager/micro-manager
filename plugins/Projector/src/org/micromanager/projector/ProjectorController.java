@@ -5,6 +5,7 @@
 package org.micromanager.projector;
 
 import ij.IJ;
+import ij.WindowManager;
 import ij.gui.ImageCanvas;
 import ij.gui.ImageWindow;
 import ij.gui.PointRoi;
@@ -265,18 +266,16 @@ public class ProjectorController {
  
    public void activatePointAndShootMode(boolean on) {
       ImageCanvas canvas = null;
-      if (IJ.getImage() != null) {
-         ImageWindow window = IJ.getImage().getWindow();
-         if (window != null) {
-            canvas = IJ.getImage().getWindow().getCanvas();
-
-            for (MouseListener listener : canvas.getMouseListeners()) {
-               if (listener == pointAndShootMouseListener) {
-                  canvas.removeMouseListener(listener);
-               }
+      ImageWindow window = WindowManager.getCurrentWindow();
+      if (window != null) {
+         canvas = window.getCanvas();
+         for (MouseListener listener : canvas.getMouseListeners()) {
+            if (listener == pointAndShootMouseListener) {
+               canvas.removeMouseListener(listener);
             }
          }
       }
+
       if (on) {
          if (canvas != null) {
             canvas.addMouseListener(pointAndShootMouseListener);
