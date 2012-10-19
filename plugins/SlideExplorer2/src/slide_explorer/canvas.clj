@@ -100,9 +100,9 @@
                     (BasicStroke. width cap-code join-code miter-limit)))))
     (when (and x y (or rotate scale scale-x scale-y))
       (doto g2d
+        (.scale (or scale-x scale 1.0) (or scale-y scale 1.0))
         (.translate (double x) (double y))
         (.rotate (* degrees-to-radians (or rotate 0.0)))
-        (.scale (or scale-x scale 1.0) (or scale-y scale 1.0))
         (.translate (double (- x)) (double (- y))))))
 
 (defn intersect-shapes [shape1 shape2]
@@ -294,6 +294,7 @@
     (let [params+ (complete-coordinates params)]
       (draw-primitive g2d (make-obj type params+) params+)))))
 
+(defn draw [])
 
 (defn paint-canvas-graphics [^Graphics graphics data]
   (draw-primitives graphics data))
@@ -352,7 +353,7 @@
       (.. getContentPane (add scroll-pane))
       .show)))
 
-(def img (read-image "/Users/arthur/Desktop/flea.png"))
+(def img (read-image "/Users/arthur/Desktop/julianGreenBeans1.png"))
 
 (count
 (reset!
@@ -404,11 +405,11 @@
    [:line
     {:x 350 :y 350 :w 18 :h 18 :color :white :alpha 0.8
      :stroke {:width 7 :cap :butt}}]
-   [:image
-    {:x 200 :t 150 :data img :rotate 171}]
    [:line
     {:x 350 :y 350 :w -18 :h 18 :fill false :color :white :alpha 0.8
      :stroke {:width 7 :cap :butt}}]
+   [:image
+    {:l 10 :t 10 :data img :rotate -5 :alpha 1.0 :scale 0.030}]
    [:line
     {:x 180 :y 220 :w 0 :h 50 :color :red
      :stroke {:width 10 :cap :round}

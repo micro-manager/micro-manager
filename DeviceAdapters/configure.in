@@ -157,29 +157,31 @@ else
 fi
 
 # SimpleCam - GPhoto
-PKG_PROG_PKG_CONFIG
-PKG_CHECK_MODULES([GPHOTO2], [libgphoto2 >= 2.1.10], [have_libgphoto2=yes], [have_libgphoto2=no])
-
-if test x$have_libgphoto2 = xno; then
-   buildsc=false
-   AC_MSG_RESULT([not found])
-else
-   AC_MSG_RESULT([found])
-   GPHOTO2_VERSION=`$PKG_CONFIG --modversion libgphoto2`
-   GPHOTO2_PORT_VERSION=`$PKG_CONFIG --modversion libgphoto2_port`
-   GPHOTO2_LIBDIR=`$PKG_CONFIG --variable=libdir libgphoto2`
-   LIBGPHOTO2LIBDIR=`$PKG_CONFIG --variable=libdir libgphoto2`
-   buildsc=false
-   if test -f "$LIBGPHOTO2LIBDIR/libgphoto2.la"; then
-      LIBGPHOTO2="$LIBGPHOTO2LIBDIR/libgphoto2.la -lltdl"
-      buildsc=true
-   else
-      if test -f "$LIBGPHOTO2LIBDIR/libgphoto2.so"; then
-         LIBGPHOTO2="-lgphoto2"
-         buildsc=true
-      fi
-   fi
-fi
+#
+#PKG_PROG_PKG_CONFIG
+#PKG_CHECK_MODULES([GPHOTO2], [libgphoto2 >= 2.1.10], [have_libgphoto2=yes], [have_libgphoto2=no])
+#
+#if test x$have_libgphoto2 = xno; then
+#   buildsc=false
+#   AC_MSG_RESULT([not found])
+#else
+#   AC_MSG_RESULT([found])
+#   GPHOTO2_VERSION=`$PKG_CONFIG --modversion libgphoto2`
+#   GPHOTO2_PORT_VERSION=`$PKG_CONFIG --modversion libgphoto2_port`
+#   GPHOTO2_LIBDIR=`$PKG_CONFIG --variable=libdir libgphoto2`
+#   LIBGPHOTO2LIBDIR=`$PKG_CONFIG --variable=libdir libgphoto2`
+#   buildsc=false
+#   if test -f "$LIBGPHOTO2LIBDIR/libgphoto2.la"; then
+#      LIBGPHOTO2="$LIBGPHOTO2LIBDIR/libgphoto2.la -lltdl"
+#      buildsc=true
+#   else
+#      if test -f "$LIBGPHOTO2LIBDIR/libgphoto2.so"; then
+#         LIBGPHOTO2="-lgphoto2"
+#         buildsc=true
+#      fi
+#   fi
+#fi
+#fi
 
 # On mac, install dynamic gphoto2 libraries 
 case $host in
