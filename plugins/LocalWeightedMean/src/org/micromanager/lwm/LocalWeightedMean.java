@@ -23,7 +23,7 @@
 //                INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 //
 
-package edu.valelab.GaussianFit;
+package org.micromanager.lwm;
 
 import ags.utils.KdTree;
 import ags.utils.KdTree.Entry;
@@ -201,8 +201,8 @@ public class LocalWeightedMean {
       return computeTransformation(kdTree_, srcTestPoint, controlPoints_, exponentPairs_);
    }
 
-   public LocalWeightedMean(int order, HashMap<Point2D.Double, Point2D.Double> pointMap) {
-      pointMap_ = (PointMap) pointMap;
+   public LocalWeightedMean(int order, PointMap pointMap) {
+      pointMap_ = pointMap;
       order_ = order;
       exponentPairs_ = polynomialExponents(order);
       final ArrayList<Point2D.Double> keys = new ArrayList<Point2D.Double>();
