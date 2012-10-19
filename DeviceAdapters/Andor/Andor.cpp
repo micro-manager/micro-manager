@@ -210,6 +210,7 @@ imageTimeOut_ms_(10000),
 sequenceLength_(0),
 OutputAmplifierIndex_(0),
 HSSpeedIdx_(0),
+PreAmpGainIdx_(0),
 bSoftwareTriggerSupported_(0),
 maxTemp_(0),
 myCameraID_(-1),
@@ -837,50 +838,9 @@ int AndorCamera::GetListOfAvailableCameras()
       HSSpeedIdx_ = 0;
 
       // Pre-Amp-Gain
-      int numPreAmpGain;
-      ret = GetNumberPreAmpGains(&numPreAmpGain);
-      if (ret != DRV_SUCCESS)
+      ret = UpdatePreampGains();
+      if(DRV_SUCCESS != ret)
          return ret;
-      if (numPreAmpGain > 0 ) {
-            
-        char PreAmpGainBuf[10];
-        PreAmpGains_.clear();
-        for (int i=0; i<numPreAmpGain; i++)
-        {
-            if(ui_swVersion >= 292) {
-                ret = GetPreAmpGainText(i, PreAmpGainBuf, sizeof(PreAmpGainBuf));
-            }
-            else {
-                float pag;
-                ret = GetPreAmpGain(i, &pag); 
-                sprintf(PreAmpGainBuf, "%.2f", pag);
-            }
-            if (ret != DRV_SUCCESS)
-                return ret;
-            PreAmpGains_.push_back(PreAmpGainBuf);
-        }
-        if (PreAmpGains_.empty())
-            return ERR_INVALID_PREAMPGAIN;
-
-        if(!HasProperty("Pre-Amp-Gain"))
-        {
-            pAct = new CPropertyAction (this, &AndorCamera::OnPreAmpGain);
-            if(numPreAmpGain>1)
-                nRet = CreateProperty("Pre-Amp-Gain", PreAmpGains_[numPreAmpGain-1].c_str(), MM::String, false, pAct);
-            else
-                nRet = CreateProperty("Pre-Amp-Gain", PreAmpGains_[numPreAmpGain-1].c_str(), MM::String, true, pAct);
-            assert(nRet == DEVICE_OK);
-        }
-        nRet = SetAllowedValues("Pre-Amp-Gain", PreAmpGains_);
-        nRet = SetProperty("Pre-Amp-Gain", PreAmpGains_[PreAmpGains_.size()-1].c_str());
-        PreAmpGain_ = PreAmpGains_[numPreAmpGain-1];
-        if(numPreAmpGain > 1)
-        {
-            ret = SetPreAmpGain(numPreAmpGain-1);
-            if (ret != DRV_SUCCESS)
-                return ret;
-        }
-      }
 
       // Vertical Shift Speed
       int numVSpeed;
@@ -921,81 +881,85 @@ int AndorCamera::GetListOfAvailableCameras()
       // Vertical Clock Voltage 
       int numVCVoltages;
       ret = GetNumberVSAmplitudes(&numVCVoltages);
-      if (ret != DRV_SUCCESS) {
-         numVCVoltages = 0;
-         ostringstream eMsg;
-         eMsg << "Andor driver returned error code: " << ret << " to GetNumberVSAmplitudes";
-         LogMessage(eMsg.str().c_str(), true);
-      }
-      VCVoltages_.clear();
-      if(ui_swVersion >= 292) {
-	      for (int i = 0; i < numVCVoltages; i++)
-	      {
-		      char VCAmp[10];
-		      ret = GetVSAmplitudeString(i, VCAmp);
 
-		      if (ret != DRV_SUCCESS) {
-			     numVCVoltages = 0;
-			     ostringstream eMsg;
-			     eMsg << "Andor driver returned error code: " << ret << " to GetVSAmplitudeString";
-			     LogMessage(eMsg.str().c_str(), true);
-		      }
-		      else
-		      {
-			      VCVoltages_.push_back(VCAmp);
-		      }
-	      }
-      }
-      else {
-	      if(numVCVoltages>5)
-		     numVCVoltages = 5;
-	      switch(numVCVoltages)
-	      {
-	      case 1:
-		     VCVoltages_.push_back("Normal");
-		     break;
-	      case 2:
-		     VCVoltages_.push_back("Normal");
-		     VCVoltages_.push_back("+1");
-		     break;
-	      case 3:
-		     VCVoltages_.push_back("Normal");
-		     VCVoltages_.push_back("+1");
-		     VCVoltages_.push_back("+2");
-		     break;
-	      case 4:
-		     VCVoltages_.push_back("Normal");
-		     VCVoltages_.push_back("+1");
-		     VCVoltages_.push_back("+2");
-		     VCVoltages_.push_back("+3");
-		     break;
-	      case 5:
-		     VCVoltages_.push_back("Normal");
-		     VCVoltages_.push_back("+1");
-		     VCVoltages_.push_back("+2");
-		     VCVoltages_.push_back("+3");
-		     VCVoltages_.push_back("+4");
-		     break;
-	      default:
-		     VCVoltages_.push_back("Normal");
-	      }
-      }
-      if (numVCVoltages>=1)
+      if(DRV_NOT_AVAILABLE != ret) //not available on all cameras (e.g. luca)
       {
-         if(!HasProperty("VerticalClockVoltage"))
+         if (ret != DRV_SUCCESS) {
+            numVCVoltages = 0;
+            ostringstream eMsg;
+            eMsg << "Andor driver returned error code: " << ret << " to GetNumberVSAmplitudes";
+            LogMessage(eMsg.str().c_str(), true);
+         }
+         VCVoltages_.clear();
+         if(ui_swVersion >= 292) {
+	         for (int i = 0; i < numVCVoltages; i++)
+	         {
+		         char VCAmp[10];
+		         ret = GetVSAmplitudeString(i, VCAmp);
+
+		         if (ret != DRV_SUCCESS) {
+			        numVCVoltages = 0;
+			        ostringstream eMsg;
+			        eMsg << "Andor driver returned error code: " << ret << " to GetVSAmplitudeString";
+			        LogMessage(eMsg.str().c_str(), true);
+		         }
+		         else
+		         {
+			         VCVoltages_.push_back(VCAmp);
+		         }
+	         }
+         }
+         else {
+	         if(numVCVoltages>5)
+		        numVCVoltages = 5;
+	         switch(numVCVoltages)
+	         {
+	         case 1:
+		        VCVoltages_.push_back("Normal");
+		        break;
+	         case 2:
+		        VCVoltages_.push_back("Normal");
+		        VCVoltages_.push_back("+1");
+		        break;
+	         case 3:
+		        VCVoltages_.push_back("Normal");
+		        VCVoltages_.push_back("+1");
+		        VCVoltages_.push_back("+2");
+		        break;
+	         case 4:
+		        VCVoltages_.push_back("Normal");
+		        VCVoltages_.push_back("+1");
+		        VCVoltages_.push_back("+2");
+		        VCVoltages_.push_back("+3");
+		        break;
+	         case 5:
+		        VCVoltages_.push_back("Normal");
+		        VCVoltages_.push_back("+1");
+		        VCVoltages_.push_back("+2");
+		        VCVoltages_.push_back("+3");
+		        VCVoltages_.push_back("+4");
+		        break;
+	         default:
+		        VCVoltages_.push_back("Normal");
+	         }
+         }
+         if (numVCVoltages>=1)
          {
-            pAct = new CPropertyAction (this, &AndorCamera::OnVCVoltage);
-            if(numVCVoltages>1)
-               nRet = CreateProperty("VerticalClockVoltage", VCVoltages_[0].c_str(), MM::String, false, pAct);
-            else
-               nRet = CreateProperty("VerticalClockVoltage", VCVoltages_[0].c_str(), MM::String, true, pAct);
+            if(!HasProperty("VerticalClockVoltage"))
+            {
+               pAct = new CPropertyAction (this, &AndorCamera::OnVCVoltage);
+               if(numVCVoltages>1)
+                  nRet = CreateProperty("VerticalClockVoltage", VCVoltages_[0].c_str(), MM::String, false, pAct);
+               else
+                  nRet = CreateProperty("VerticalClockVoltage", VCVoltages_[0].c_str(), MM::String, true, pAct);
+               assert(nRet == DEVICE_OK);
+            }
+            nRet = SetAllowedValues("VerticalClockVoltage", VCVoltages_);
+            assert(nRet == DEVICE_OK);
+            nRet = SetProperty("VerticalClockVoltage", VCVoltages_[0].c_str());
+            VCVoltage_ = VCVoltages_[0];
             assert(nRet == DEVICE_OK);
          }
-         nRet = SetAllowedValues("VerticalClockVoltage", VCVoltages_);
-         assert(nRet == DEVICE_OK);
-         nRet = SetProperty("VerticalClockVoltage", VCVoltages_[0].c_str());
-         VCVoltage_ = VCVoltages_[0];
-         assert(nRet == DEVICE_OK);
       }
 
 
@@ -2230,6 +2194,7 @@ int AndorCamera::GetListOfAvailableCameras()
                      StartSequenceAcquisition(sequenceLength_ - imageCounter_, intervalMs_, stopOnOverflow_);
                   PrepareSnap();
                   PreAmpGain_=PreAmpGain;
+                  PreAmpGainIdx_ = i;
                   return DEVICE_OK;
                }
             }
@@ -3482,76 +3447,115 @@ int AndorCamera::OnSpuriousNoiseFilter(MM::PropertyBase* pProp, MM::ActionType e
    */
    int AndorCamera::UpdatePreampGains()
    {
-      if(HasProperty("Pre-Amp-Gain"))
-      {
-         int channel = ADChannelIndex_;
-         int amplifier = OutputAmplifierIndex_;
-         int channelSpeedIndex = HSSpeedIdx_;
-         int ret;
+         int ret, nRet;
          int numPreAmpGain;
-         
+         int gainAvailable;
+         int numAvailGains;
+
+         bool acquiring = IsAcquiring();
+         if(acquiring) 
+            SetToIdle();
+
          ret = GetNumberPreAmpGains(&numPreAmpGain);
          if (ret != DRV_SUCCESS)
             return ret; 
          
          if (numPreAmpGain > 0 ) 
          {
-            //check current PAG is valid, otherwise select first valid one for this mode
-            for (int i=0; i<PreAmpGains_.size(); i++)
-            {
-               if (PreAmpGains_[i].compare(PreAmpGain_) == 0)
-               {
-                  int gainAvailable;
-                  ret = IsPreAmpGainAvailable(channel, amplifier, channelSpeedIndex, i, &gainAvailable);
-
-                  if(0== gainAvailable) 
-                  {
-                     for(int j=0; j<numPreAmpGain; j++) //find a valid PAG
-                     {
-                        ret = IsPreAmpGainAvailable(channel, amplifier, channelSpeedIndex, j, &gainAvailable);
-                        if(1== gainAvailable)
-                        {
-                           PreAmpGain_ = PreAmpGains_[j];
-                           SetProperty("Pre-Amp-Gain",PreAmpGain_.c_str());
-                        }
-                     }
-                  }
-               }
-            }
-
-            //update the list of PAGs for these settings
-            char PreAmpGainBuf[10];
+            //Repopulate List
+            char PreAmpGainBuf[30];
             PreAmpGains_.clear();
+            numAvailGains = 0;
+        
             for (int i=0; i<numPreAmpGain; i++)
             {
                int gainAvailable;
-               ret = IsPreAmpGainAvailable(channel, amplifier, channelSpeedIndex, i, &gainAvailable);
-           
+               ret = IsPreAmpGainAvailable(ADChannelIndex_, OutputAmplifierIndex_, HSSpeedIdx_, i, &gainAvailable);
+               if(DRV_SUCCESS != ret)
+                  return ret;
+
                if(1 == gainAvailable)
                {
-                  if(ui_swVersion >= 292) 
-                  {
-                     ret = GetPreAmpGainText(i, PreAmpGainBuf, sizeof(PreAmpGainBuf));
-                  }
-                  else 
-                  {
-                      float pag;
-                      ret = GetPreAmpGain(i, &pag); 
-                      sprintf(PreAmpGainBuf, "%.2f", pag);
-                  }
-                  if (ret != DRV_SUCCESS)
-                      return ret;
-               
+                  numAvailGains++;
+                  GetPreAmpGainString(i,PreAmpGainBuf);
                   PreAmpGains_.push_back(PreAmpGainBuf);
                }
-           }
-           SetAllowedValues("Pre-Amp-Gain", PreAmpGains_);
+            }
+            if (PreAmpGains_.empty())
+               return ERR_INVALID_PREAMPGAIN;
 
-           if (PreAmpGains_.empty())
-              return ERR_INVALID_PREAMPGAIN;
-      
+            if(!HasProperty("Pre-Amp-Gain"))
+            {
+               CPropertyAction *pAct = new CPropertyAction (this, &AndorCamera::OnPreAmpGain);
+               if(numPreAmpGain>1)
+                     nRet = CreateProperty("Pre-Amp-Gain", PreAmpGains_[numAvailGains-1].c_str(), MM::String, false, pAct);
+               else
+                     nRet = CreateProperty("Pre-Amp-Gain", PreAmpGains_[numAvailGains-1].c_str(), MM::String, true, pAct);
+               assert(nRet == DEVICE_OK);
+            }
+            nRet = SetAllowedValues("Pre-Amp-Gain", PreAmpGains_);
+            if(DRV_SUCCESS != ret)
+               return ret;
+
+
+            //Check PAG index is valid selection
+            ret = IsPreAmpGainAvailable(ADChannelIndex_, OutputAmplifierIndex_, HSSpeedIdx_, PreAmpGainIdx_, &gainAvailable);
+            if(DRV_P4INVALID == ret) //index out of range
+               gainAvailable = 0;
+            else if(DRV_SUCCESS!=ret)
+               return ret;
+
+            //also check to see that the value of the PAG is still the original value
+            GetPreAmpGainString(PreAmpGainIdx_,PreAmpGainBuf);
+            if(0!=PreAmpGain_.compare( PreAmpGainBuf)) 
+               gainAvailable = 0;
+
+            if(0 == gainAvailable) 
+            {
+               for(int i=numPreAmpGain-1; i>=0; i--) //find a valid PAG
+               {
+                  ret = IsPreAmpGainAvailable(ADChannelIndex_, OutputAmplifierIndex_, HSSpeedIdx_, i, &gainAvailable);
+                  if(1 == gainAvailable)
+                  {
+                     PreAmpGainIdx_ = i;
+
+                     GetPreAmpGainString(i,PreAmpGainBuf);
+                     PreAmpGain_ = PreAmpGainBuf;
+
+                     SetProperty("Pre-Amp-Gain",PreAmpGain_.c_str());
+                     SetPreAmpGain(PreAmpGainIdx_);
+                     break;
+                  }
+               }
+            }
          }
+          if(acquiring) 
+            PrepareSnap();
+      return DRV_SUCCESS;
+   }
+
+   int AndorCamera::GetPreAmpGainString(int PreAmpGainIdx, char * PreAmpGainString )
+   {
+      bool useText = ui_swVersion >= 292;
+      int ret;
+      
+
+      if(useText) 
+      {
+         ret = GetPreAmpGainText(PreAmpGainIdx, PreAmpGainString, sizeof(PreAmpGainString));
+         if(DRV_NOT_SUPPORTED == ret)
+            useText = false;
       }
+                  
+      if(!useText) 
+      {
+         float pag;
+         ret = GetPreAmpGain(PreAmpGainIdx, &pag); 
+         sprintf(PreAmpGainString, "%.2f", pag);
+      }
+      if (ret != DRV_SUCCESS)
+         return ret;
+
       return DRV_SUCCESS;
    }
 
