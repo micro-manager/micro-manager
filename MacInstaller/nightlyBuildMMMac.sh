@@ -191,12 +191,16 @@ fi
 scp Micro-Manager$VERSION.dmg $UPLOADPLACE
 
 # build and upload documentation
-cd $REPOSITORY
+cd $RI386
 make dox
 scp -r doxygen/out/* valelab.ucsf.edu:public_html/doc/
-cd mmstudio
+cd swig-doc-converter
+./convert
+scp javadoc/* valelab.ucsf.edu:public_html/doc/mmcorej/
+cd ../mmstudio
 make javadoc
 scp -r doc/* valelab.ucsf.edu:public_html/doc/mmstudio/
+cd ..
 
 # tag the repository
 if [ "$FULL" == "full" ]; then
