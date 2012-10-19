@@ -196,7 +196,7 @@ make dox
 scp -r doxygen/out/* valelab.ucsf.edu:public_html/doc/
 cd swig-doc-converter
 ./convert
-scp javadoc/* valelab.ucsf.edu:public_html/doc/mmcorej/
+scp -r javadoc/* valelab.ucsf.edu:public_html/doc/mmcorej/
 cd ../mmstudio
 make javadoc
 scp -r doc/* valelab.ucsf.edu:public_html/doc/mmstudio/
