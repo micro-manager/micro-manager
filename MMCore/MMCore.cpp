@@ -445,7 +445,7 @@ string CMMCore::getAPIVersionInfo() const
 
 /**
  * Returns the entire system state, i.e. the collection of all property values from all devices.
- * @return - Configuration object containing a collection of device-property-value triplets
+ * @return Configuration object containing a collection of device-property-value triplets
  */
 Configuration CMMCore::getSystemState()
 {
@@ -482,7 +482,7 @@ Configuration CMMCore::getSystemState()
 /**
  * Returns the entire system state, i.e. the collection of all property values from all devices.
  * This method will return cached values instead of querying each device
- * @return - Configuration object containing a collection of device-property-value triplets
+ * @return  Configuration object containing a collection of device-property-value triplets
  */
 Configuration CMMCore::getSystemStateCache() const
 {
@@ -1033,7 +1033,7 @@ std::string CMMCore::getDeviceDescription(const char* label) throw (CMMError)
  * of device status is required.
  * Some devices ignore this setting.
  *
- * @return delay time in milliseconds
+ * @return the delay time in milliseconds
  * @param label    the device label
  */
 double CMMCore::getDeviceDelayMs(const char* label) throw (CMMError)
@@ -1146,7 +1146,7 @@ void CMMCore::waitForDevice(MM::Device* pDev) throw (CMMError)
 /**
  * Checks the busy status of the entire system. The system will report busy if any
  * of the devices is busy.
- * @return bool status - true on busy
+ * @return status (true on busy)
  */
 bool CMMCore::systemBusy() throw (CMMError)
 {
@@ -2855,7 +2855,7 @@ void CMMCore::setCameraDevice(const char* cameraLabel) throw (CMMError)
 /**
  * Returns all property names supported by the device.
  *
- * @return vector<string> property name array
+ * @return property name array
  * @param label    the device label
  */
 vector<string> CMMCore::getDevicePropertyNames(const char* label) const throw (CMMError)
@@ -2889,7 +2889,7 @@ vector<string> CMMCore::getDevicePropertyNames(const char* label) const throw (C
 
 /**
  * Returns an array of labels for currently loaded devices.
- * @return vector<string> array of labels
+ * @return array of labels
  */
 vector<string> CMMCore::getLoadedDevices() const
 {
@@ -2901,7 +2901,7 @@ vector<string> CMMCore::getLoadedDevices() const
 /**
  * Returns an array of labels for currently loaded devices of specific type.
  * @param devType    the device type identifier
- * @return vector<string> array of labels
+ * @return array of labels
  */
 vector<string> CMMCore::getLoadedDevicesOfType(MM::DeviceType devType) const
 {
@@ -2920,7 +2920,7 @@ vector<string> CMMCore::getLoadedDevicesOfType(MM::DeviceType devType) const
  * However, even if all values are allowed it is not guaranteed that all of them will be
  * acually accepted by the device at run time.
  *
- * @return vector<string> the array of values
+ * @return the array of values
  * @param label     the device label
  * @param propName  the property name
  */
@@ -2954,7 +2954,7 @@ std::vector<std::string> CMMCore::getAllowedPropertyValues(const char* label, co
 /**
  * Returns the property value for the specified device.
 
- * @return string property value
+ * @return the property value
  * @param label      the device label
  * @param propName   the property name
  */
@@ -2994,7 +2994,7 @@ string CMMCore::getProperty(const char* label, const char* propName) const throw
 /**
  * Returns the cached property value for the specified device. 
 
- * @return string property value
+ * @return the property value
  * @param label       the device label
  * @param propName    the property name
  */
@@ -3022,15 +3022,6 @@ string CMMCore::getPropertyFromCache(const char* label, const char* propName) co
 /**
  * Changes the value of the device property.
  *
- * @return void 
- * @param label        the device label
- * @param propName     the property name
- * @param propValue    the new property value
- */
-/**
- * Changes the value of the device property.
- *
- * @return void 
  * @param label       the device label
  * @param propName    the property name
  * @param propValue   the new property value
@@ -3080,7 +3071,6 @@ void CMMCore::setProperty(const char* label, const char* propName,
 /**
  * Changes the value of the device property.
  *
- * @return void 
  * @param label        the device label
  * @param propName     property name
  * @param propValue    the new property value
@@ -3095,7 +3085,6 @@ void CMMCore::setProperty(const char* label, const char* propName,
 /**
  * Changes the value of the device property.
  *
- * @return void 
  * @param label      the device label
  * @param propName   the property name
  * @param propValue  the new property value
@@ -3111,7 +3100,6 @@ void CMMCore::setProperty(const char* label, const char* propName,
 /**
  * Changes the value of the device property.
  *
- * @return void 
  * @param label      the device label
  * @param propName   the property name
  * @param propValue  the new property value
@@ -3127,7 +3115,6 @@ void CMMCore::setProperty(const char* label, const char* propName,
 /**
  * Changes the value of the device property.
  *
- * @return void 
  * @param label          the device label
  * @param propName       the property name
  * @param propValue      the new property value
@@ -3500,8 +3487,8 @@ MM::PropertyType CMMCore::getPropertyType(const char* label, const char* propNam
 
 
 /**
- * Horizontal dimentsion of the image buffer in pixels.
- * @return unsigned X size
+ * Horizontal dimension of the image buffer in pixels.
+ * @return   the width in pixels (an integer)
  */
 unsigned CMMCore::getImageWidth() const
 {
@@ -3513,7 +3500,7 @@ unsigned CMMCore::getImageWidth() const
 
 /**
  * Vertical dimentsion of the image buffer in pixels.
- * @return unsigned Y size
+ * @return   the height in pixels (an integer)
  */
 unsigned CMMCore::getImageHeight() const
 {
@@ -3526,7 +3513,7 @@ unsigned CMMCore::getImageHeight() const
 /**
  * How many bytes for each pixel. This value does not necessarily reflect the
  * capabilities of the particular camera A/D converter.
- * @return unsigned number of bytes
+ * @return the number of bytes
  */
 unsigned CMMCore::getBytesPerPixel() const
 {
@@ -3541,7 +3528,7 @@ unsigned CMMCore::getBytesPerPixel() const
  * be used only as a guideline - it does not guarante that image buffer will contain
  * only values from the returned dynamic range.
  *
- * @return unsigned number of bits
+ * @return the number of bits
  */
 unsigned CMMCore::getImageBitDepth() const
 {
@@ -3609,7 +3596,7 @@ void CMMCore::setExposure(double dExp) throw (CMMError)
 
 /**
  * Returns the current exposure setting of the camera in milliseconds.
- * @return double dExp exposure in milliseconds
+ * @return the exposure time in milliseconds
  */
 double CMMCore::getExposure() throw (CMMError)
 {
@@ -3779,7 +3766,7 @@ void CMMCore::setStateLabel(const char* deviceLabel, const char* stateLabel) thr
 /**
  * Returns the current state as the label (string).
  *
- * @return string state label 
+ * @return   the current state's label 
  * @param deviceLabel     the device label
  */
 string CMMCore::getStateLabel(const char* deviceLabel) const throw (CMMError)
@@ -3850,7 +3837,7 @@ void CMMCore::defineStateLabel(const char* deviceLabel, long state, const char* 
 /**
  * Return labels for all states
  *
- * @return  an array of labels
+ * @return  an array of state labels
  * @param deviceLabel       the device label
  */
 vector<string> CMMCore::getStateLabels(const char* deviceLabel) const throw (CMMError)
@@ -3977,7 +3964,7 @@ void CMMCore::deleteConfiguration(const char* configName) throw (CMMError)
 
 /**
  * Returns all defined configuration names.
- * @return std::vector<string> an array of configuration names
+ * @return an array of configuration names
  */
 std::vector<string> CMMCore::getAvailableConfigurations() const
 {
@@ -3996,7 +3983,7 @@ std::vector<string> CMMCore::getAvailableConfigurations() const
  * Also, in general it is possible that the system state fits multiple configurations.
  * This method will return only the first maching configuration, if any.
  *
- * @return string configuration name
+ * @return the name of the current configuration
  */
 string CMMCore::getConfiguration() const
 {
@@ -4028,7 +4015,7 @@ string CMMCore::getConfiguration() const
 /**
  * Returns the configuration object for a given name.
  *
- * @return Configuration configuration object
+ * @return The configuration object
  * @param configName        the configuration name
  */
 Configuration CMMCore::getConfigurationData(const char* configName) const throw (CMMError)
@@ -4312,7 +4299,7 @@ void CMMCore::deleteConfig(const char* groupName, const char* configName, const 
 
 /**
  * Returns all defined configuration names in a given group
- * @return std::vector<string> an array of configuration names
+ * @return an array of configuration names
  */
 vector<string> CMMCore::getAvailableConfigs(const char* group) const
 {
@@ -4321,7 +4308,7 @@ vector<string> CMMCore::getAvailableConfigs(const char* group) const
 
 /**
  * Returns the names of all defined configuration groups
- * @return std::vector<string> an array of names of configuration groups
+ * @return  an array of names of configuration groups
  */
 vector<string> CMMCore::getAvailableConfigGroups() const
 {
@@ -4330,7 +4317,7 @@ vector<string> CMMCore::getAvailableConfigGroups() const
 
 /**
  * Returns all defined resolution preset names
- * @return std::vector<string> an array of resolution presets
+ * @return an array of resolution presets
  */
 vector<string> CMMCore::getAvailablePixelSizeConfigs() const
 {
@@ -4344,7 +4331,7 @@ vector<string> CMMCore::getAvailablePixelSizeConfigs() const
  * Also, in general it is possible that the system state fits multiple configurations.
  * This method will return only the first matching configuration, if any.
  *
- * @return string configuration name
+ * @return The current configuration preset's name
  */
 string CMMCore::getCurrentConfig(const char* groupName) throw (CMMError)
 {
@@ -4378,7 +4365,7 @@ string CMMCore::getCurrentConfig(const char* groupName) throw (CMMError)
  * Also, in general it is possible that the system state fits multiple configurations.
  * This method will return only the first matching configuration, if any.
  *
- * @return string configuration name
+ * @return The cache's current configuration preset name
  */
 string CMMCore::getCurrentConfigFromCache(const char* groupName) throw (CMMError)
 {
@@ -4407,7 +4394,7 @@ string CMMCore::getCurrentConfigFromCache(const char* groupName) throw (CMMError
 /**
  * Returns the configuration object for a given group and name.
  *
- * @return Configuration configuration object
+ * @return The configuration object
  */
 Configuration CMMCore::getConfigData(const char* groupName, const char* configName) throw (CMMError)
 {
@@ -4425,7 +4412,7 @@ Configuration CMMCore::getConfigData(const char* groupName, const char* configNa
 
 /**
  * Returns the configuration object for a give pixel size preset.
- * @return Configuration configuration object
+ * @return The configuration object
  */
 Configuration CMMCore::getPixelSizeConfigData(const char* configName) throw (CMMError)
 {
