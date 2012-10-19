@@ -1033,8 +1033,8 @@ std::string CMMCore::getDeviceDescription(const char* label) throw (CMMError)
  * of device status is required.
  * Some devices ignore this setting.
  *
- * @return double - delay time
- * @param const char* label
+ * @return delay time in milliseconds
+ * @param label the device label
  */
 double CMMCore::getDeviceDelayMs(const char* label) throw (CMMError)
 {
@@ -1052,9 +1052,8 @@ double CMMCore::getDeviceDelayMs(const char* label) throw (CMMError)
  * Overrides the built-in value for the action delay.
  * Some devices ignore this setting.
  *
- * @return void 
- * @param const char* label
- * @param double delayMs
+ * @param label the device label
+ * @param delayMs
  */
 void CMMCore::setDeviceDelayMs(const char* label, double delayMs) throw (CMMError)
 {
@@ -1068,7 +1067,8 @@ void CMMCore::setDeviceDelayMs(const char* label, double delayMs) throw (CMMErro
 /**
  * Signals if the device will use the delay setting or not.
  *
- * @return bool - uses delay if true
+ * @param label the device label
+ * @return true if the device uses a delay
  */
 bool CMMCore::usesDeviceDelay(const char* label) throw (CMMError)
 {
@@ -1082,7 +1082,8 @@ bool CMMCore::usesDeviceDelay(const char* label) throw (CMMError)
 
 /**
  * Checks the busy status of the specific device.
- * @param label - device label
+ * @param label the device label
+ * @return true if the device is busy
  */
 bool CMMCore::deviceBusy(const char* label) throw (CMMError)
 {
@@ -1093,7 +1094,7 @@ bool CMMCore::deviceBusy(const char* label) throw (CMMError)
 
 /**
  * Waits (blocks the calling thread) for specified time in milliseconds.
- * @param double intervalMs
+ * @param intervalMs the time to sleep in milliseconds
  */
 void CMMCore::sleep(double intervalMs) const
 {
@@ -1104,7 +1105,7 @@ void CMMCore::sleep(double intervalMs) const
 /**
  * Waits (blocks the calling thread) until the specified device becomes
  * non-busy.
- * @param const char* label - device label
+ * @param label   the device label
  */
 void CMMCore::waitForDevice(const char* label) throw (CMMError)
 {
@@ -1118,7 +1119,7 @@ void CMMCore::waitForDevice(const char* label) throw (CMMError)
 
 /**
  * Waits (blocks the calling thread) until the specified device becomes
- * @param const MM::Device* pDev - device
+ * @param device   the device label
  */
 void CMMCore::waitForDevice(MM::Device* pDev) throw (CMMError)
 {
@@ -1166,8 +1167,8 @@ void CMMCore::waitForSystem() throw (CMMError)
  * Checks the busy status for all devices of the specific type.
  * The system will report busy if any of the devices of the spefified type are busy.
  *
- * @return bool - true on busy
- * @param MM::DeviceType devType
+ * @return true on busy
+ * @param devType   a constant specifying the device type
  */
 bool CMMCore::deviceTypeBusy(MM::DeviceType devType) throw (CMMError)
 {
@@ -1191,7 +1192,7 @@ bool CMMCore::deviceTypeBusy(MM::DeviceType devType) throw (CMMError)
 
 /**
  * Blocks until all devices of the specific type become ready (not-busy).
- * @param devType constant specifying the device type
+ * @param devType    a constant specifying the device type
  */
 void CMMCore::waitForDeviceType(MM::DeviceType devType) throw (CMMError)
 {
@@ -1202,8 +1203,8 @@ void CMMCore::waitForDeviceType(MM::DeviceType devType) throw (CMMError)
 
 /**
  * Blocks until all devices included in the configuration become ready.
- * @param group
- * @param config
+ * @param group      the configuration group
+ * @param config     the configuration preset
  */
 void CMMCore::waitForConfig(const char* group, const char* configName) throw (CMMError)
 {
@@ -1232,8 +1233,8 @@ void CMMCore::waitForImageSynchro() throw (CMMError)
 
 /**
  * Sets the position of the stage in microns.
- * @param const char* label
- * @param double position
+ * @param label     the stage device label
+ * @param position  the desired stage position, in microns
  */
 void CMMCore::setPosition(const char* label, double position) throw (CMMError)
 {
@@ -1256,8 +1257,8 @@ void CMMCore::setPosition(const char* label, double position) throw (CMMError)
 
 /**
  * Sets the relative position of the stage in microns.
- * @param const char* label
- * @param double d
+ * @param label    the single-axis drive device label
+ * @param double   the amount to move the stage, in microns (positive or negative)
  */
 void CMMCore::setRelativePosition(const char* label, double d) throw (CMMError)
 {
@@ -1278,8 +1279,8 @@ void CMMCore::setRelativePosition(const char* label, double d) throw (CMMError)
 
 /**
  * Returns the current position of the stage in microns.
- * @return position 
- * @param label
+ * @return the position in microns
+ * @param label     the single-axis drive device label
  */
 double CMMCore::getPosition(const char* label) throw (CMMError)
 {
@@ -1299,9 +1300,9 @@ double CMMCore::getPosition(const char* label) throw (CMMError)
 
 /**
  * Sets the position of the XY stage in microns.
- * @param const char* label
- * @param x
- * @param y
+ * @param label  the XY stage device label
+ * @param x      the X axis position in microns
+ * @param y      the Y axis position in microns
  */
 void CMMCore::setXYPosition(const char* deviceName, double x, double y) throw (CMMError)
 {
@@ -1322,8 +1323,8 @@ void CMMCore::setXYPosition(const char* deviceName, double x, double y) throw (C
 /**
  * Sets the relative position of the XY stage in microns.
  * @param const char* label
- * @param dx
- * @param dy
+ * @param dx    the distance to move in X (positive or negative)
+ * @param dy    the distance to move in Y (positive or negative)
  */
 void CMMCore::setRelativeXYPosition(const char* deviceName, double dx, double dy) throw (CMMError)
 {
@@ -1343,9 +1344,9 @@ void CMMCore::setRelativeXYPosition(const char* deviceName, double dx, double dy
 
 /**
  * Obtains the current position of the XY stage in microns.
- * @param const char* label
- * @param x
- * @param y
+ * @param deviceName   the stage device label
+ * @param x  a return parameter yielding the X position in microns
+ * @param y  a return parameter yielding the Y position in microns
  */
 void CMMCore::getXYPosition(const char* deviceName, double& x, double& y) throw (CMMError)
 {
@@ -1363,8 +1364,8 @@ void CMMCore::getXYPosition(const char* deviceName, double& x, double& y) throw 
 
 /**
  * Obtains the current position of the X axis of the XY stage in microns.
- * @return x position 
- * @param const char* label
+ * @return    the x position 
+ * @param deviceName   the stage device label
  */
 double CMMCore::getXPosition(const char* deviceName) throw (CMMError)
 {
@@ -1385,8 +1386,8 @@ double CMMCore::getXPosition(const char* deviceName) throw (CMMError)
 
 /**
  * Obtains the current position of the Y axis of the XY stage in microns.
- * @return y position 
- * @param const char* label
+ * @return   the y position 
+ * @param   deviceName   the stage device label
  */
 double CMMCore::getYPosition(const char* deviceName) throw (CMMError)
 {
@@ -1406,13 +1407,9 @@ double CMMCore::getYPosition(const char* deviceName) throw (CMMError)
 }
 
 /**
- * stop the XY stage motors.
- * @return void 
- * @param const char* label
+ * stop the XY stage motors
+ * @param deviceName    the stage device label
  */
-///**
-// * Aborts current action.
-// */
 void CMMCore::stop(const char* deviceName) throw (CMMError)
 {
    MM::XYStage* pXYStage = getSpecificDevice<MM::XYStage>(deviceName);
@@ -1428,6 +1425,7 @@ void CMMCore::stop(const char* deviceName) throw (CMMError)
 
 /**
  * Calibrates and homes the XY stage.
+ * @param deviceName    the stage device label
  */
 void CMMCore::home(const char* deviceName) throw (CMMError)
 {
@@ -1445,8 +1443,7 @@ void CMMCore::home(const char* deviceName) throw (CMMError)
 //jizhen, 4/12/2007
 /**
  * zero the current XY position.
- * @return void 
- * @param const char* deviceName
+ * @param deviceName    the stage device label
  */
 void CMMCore::setOriginXY(const char* deviceName) throw (CMMError)
 {
@@ -1463,8 +1460,7 @@ void CMMCore::setOriginXY(const char* deviceName) throw (CMMError)
 
 /**
  * zero the current stage position.
- * @return void 
- * @param const char* deviceName
+ * @param deviceName    the stage device label
  */
 void CMMCore::setOrigin(const char* deviceName) throw (CMMError)
 {
@@ -1480,7 +1476,9 @@ void CMMCore::setOrigin(const char* deviceName) throw (CMMError)
 }
 
 /**
- * Set the current position in um to be 0
+ * Zero the stage at a particular position (in microns)
+ * @param deviceName    the stage device label
+ * @param d             the position in the old coordinate (in microns)
  */
 void CMMCore::setAdapterOrigin(const char* deviceName, double d) throw (CMMError)
 {
@@ -1497,7 +1495,10 @@ void CMMCore::setAdapterOrigin(const char* deviceName, double d) throw (CMMError
 
 
 /**
- * Set the current position to be  x,y in um
+ * Reset a parcitular x,y position to be the origin of the XY stage's coordinate system
+ * @param deviceName    the XY stage device label
+ * @param x             the x position in the old coordinate system
+ * @param y             the y position in the old coordinate system
  */
 void CMMCore::setAdapterOriginXY(const char* deviceName, double x, double y) throw (CMMError)
 {
@@ -1515,7 +1516,8 @@ void CMMCore::setAdapterOriginXY(const char* deviceName, double x, double y) thr
 
 /**
  * Queries camera if exposure can be used in a sequence
- * @param cameraLabel - device label
+ * @param cameraLabel    the camera device label
+ * @return   true if exposure can be sequenced
  */
 bool CMMCore::isExposureSequenceable(const char* cameraLabel) throw (CMMError)
 {
@@ -1535,7 +1537,7 @@ bool CMMCore::isExposureSequenceable(const char* cameraLabel) throw (CMMError)
 /**
  * Starts an ongoing sequence of triggered exposures in a camera
  * This should only be called for cameras where exposure time is sequenceable
- * @param cameraLabel - the camera
+ * @param cameraLabel    the camera device label
  */
 void CMMCore::startExposureSequence(const char* cameraLabel) throw (CMMError)
 {
@@ -1551,7 +1553,7 @@ void CMMCore::startExposureSequence(const char* cameraLabel) throw (CMMError)
 /**
  * Stops an ongoing sequence of triggered exposures in a camera
  * This should only be called for cameras where exposure time is sequenceable
- * @param cameraLabel - deviceName
+ * @param cameraLabel   the camera device label
  */
 void CMMCore::stopExposureSequence(const char* cameraLabel) throw (CMMError)
 {
@@ -1566,7 +1568,7 @@ void CMMCore::stopExposureSequence(const char* cameraLabel) throw (CMMError)
 /**
  * Gets the maximum length of a camera's exposure sequence.
  * This should only be called for cameras where exposure time is sequenceable
- * @param cameraLabel - deviceName
+ * @param cameraLabel    the camera device label
  */
 long CMMCore::getExposureSequenceMaxLength(const char* cameraLabel) throw (CMMError)
 {
@@ -1584,8 +1586,8 @@ long CMMCore::getExposureSequenceMaxLength(const char* cameraLabel) throw (CMMEr
 /**
  * Transfer a sequence of exposure times to the camera.
  * This should only be called for cameras where exposure time is sequenceable
- * @param cameraLabel - deviceName
- * @param exposureTime_ms - sequence of exposure times the camera will use during a sequence acquisition
+ * @param cameraLabel      the camera device label
+ * @param exposureTime_ms  sequence of exposure times the camera will use during a sequence acquisition
  */
 void CMMCore::loadExposureSequence(const char* cameraLabel, std::vector<double> exposureTime_ms) throw (CMMError)
 {
@@ -1614,7 +1616,8 @@ void CMMCore::loadExposureSequence(const char* cameraLabel, std::vector<double> 
 
 /**
  * Queries stage if it can be used in a sequence
- * @param deviceName - device label
+ * @param deviceName   the stage device label
+ * @return   true if the stage can be sequenced
  */
 bool CMMCore::isStageSequenceable(const char* deviceName) throw (CMMError)
 {
@@ -1633,7 +1636,7 @@ bool CMMCore::isStageSequenceable(const char* deviceName) throw (CMMError)
 /**
  * Starts an ongoing sequence of triggered events in a stage
  * This should only be called for stages
- * @param label - deviceName
+ * @param label    the stage device label
  */
 void CMMCore::startStageSequence(const char* label) throw (CMMError)
 {
@@ -1649,7 +1652,7 @@ void CMMCore::startStageSequence(const char* label) throw (CMMError)
 /**
  * Stops an ongoing sequence of triggered events in a stage
  * This should only be called for stages that are sequenceable
- * @param label - deviceName
+ * @param label    the stage device label
  */
 void CMMCore::stopStageSequence(const char* label) throw (CMMError)
 {
@@ -1665,7 +1668,8 @@ void CMMCore::stopStageSequence(const char* label) throw (CMMError)
 /**
  * Gets the maximum length of a stage's position sequence.
  * This should only be called for stages that are sequenceable
- * @param label - deviceName
+ * @param label    the stage device label
+ * @return         the maximum length (integer)
  */
 long CMMCore::getStageSequenceMaxLength(const char* label) throw (CMMError)
 {
@@ -1682,8 +1686,8 @@ long CMMCore::getStageSequenceMaxLength(const char* label) throw (CMMError)
 /**
  * Transfer a sequence of events/states/whatever to the device
  * This should only be called for device-properties that are sequenceable
- * @param label - deviceName
- * @param positionSequence - sequence of positions that the stage will execute in reponse to external triggers
+ * @param label              the device label
+ * @param positionSequence   a sequence of positions that the stage will execute in reponse to external triggers
  */
 void CMMCore::loadStageSequence(const char* label, std::vector<double> positionSequence) throw (CMMError)
 {
@@ -1711,7 +1715,7 @@ void CMMCore::loadStageSequence(const char* label, std::vector<double> positionS
 
 /**
  * Queries XY stage if it can be used in a sequence
- * @param deviceName - device label
+ * @param deviceName    the XY stage device label
  */
 bool CMMCore::isXYStageSequenceable(const char* deviceName) throw (CMMError)
 {
@@ -1731,7 +1735,7 @@ bool CMMCore::isXYStageSequenceable(const char* deviceName) throw (CMMError)
 /**
  * Starts an ongoing sequence of triggered events in an XY stage
  * This should only be called for stages
- * @param label - deviceName
+ * @param label       the XY stage device label
  */
 void CMMCore::startXYStageSequence(const char* label) throw (CMMError)
 {
@@ -1748,7 +1752,7 @@ void CMMCore::startXYStageSequence(const char* label) throw (CMMError)
 /**
  * Stops an ongoing sequence of triggered events in an XY stage
  * This should only be called for stages that are sequenceable
- * @param label - deviceName
+ * @param label     the XY stage device label
  */
 void CMMCore::stopXYStageSequence(const char* label) throw (CMMError)
 {
@@ -1763,7 +1767,8 @@ void CMMCore::stopXYStageSequence(const char* label) throw (CMMError)
 /**
  * Gets the maximum length of an XY stage's position sequence.
  * This should only be called for XY stages that are sequenceable
- * @param label - deviceName
+ * @param label   the XY stage device label
+ * @return        the maximum allowed sequence length
  */
 long CMMCore::getXYStageSequenceMaxLength(const char* label) throw (CMMError)
 {
@@ -1781,9 +1786,9 @@ long CMMCore::getXYStageSequenceMaxLength(const char* label) throw (CMMError)
  * Transfer a sequence of stage positions to the xy stage.
  * xSequence and ySequence must have the same length.
  * This should only be called for XY stages that are sequenceable
- * @param label - deviceName
- * @param xSequence - sequence of x positions that the stage will execute in reponse to external triggers
- * @param ySequence - sequence of y positions that the stage will execute in reponse to external triggers
+ * @param label    the XY stage device label
+ * @param xSequence    the sequence of x positions that the stage will execute in reponse to external triggers
+ * @param ySequence    the sequence of y positions that the stage will execute in reponse to external triggers
  */
 void CMMCore::loadXYStageSequence(const char* label,
                                   std::vector<double> xSequence,
@@ -1885,7 +1890,7 @@ void CMMCore::snapImage() throw (CMMError)
 /**
  * Add device to the image-synchro list. Image acquistion waits for all devices
  * in this list.
- * @param const char* label - device label
+ * @param label   the device label
  */
 void CMMCore::assignImageSynchro(const char* label) throw (CMMError)
 {
@@ -1895,7 +1900,7 @@ void CMMCore::assignImageSynchro(const char* label) throw (CMMError)
 
 /**
  * Removes device from the image-synchro list.
- * @param const char* label - device label
+ * @param label   the device label
  */
 void CMMCore::removeImageSynchro(const char* label) throw (CMMError)
 {
@@ -1923,7 +1928,7 @@ void CMMCore::removeImageSynchroAll()
 /**
  * If this option is enabled Shutter automatically opens and closes when the image
  * is acquired.
- * @param bool state - true for enabled
+ * @param state      true for enabled
  */
 void CMMCore::setAutoShutter(bool state)
 {
@@ -1943,6 +1948,7 @@ bool CMMCore::getAutoShutter()
 
 /**
  * Opens or closes the currently selected shutter.
+ * @param  state     the desired state of the shutter (true for open)
  */
 void CMMCore::setShutterOpen(bool state) throw (CMMError)
 {
@@ -1965,7 +1971,7 @@ void CMMCore::setShutterOpen(bool state) throw (CMMError)
 }
 
 /**
- * Return the state of the currently selected shutter.
+ * Returns the state of the currently selected shutter.
  */
 bool CMMCore::getShutterOpen() throw (CMMError)
 {
