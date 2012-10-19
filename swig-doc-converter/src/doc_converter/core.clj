@@ -1,12 +1,10 @@
 (ns doc-converter.core
-  (:use [clojure.java.io :only (file)])
+  (:use [clojure.java.io :only (file reader)])
   (:import (java.net URL)
            (java.util.regex Pattern))
   (:require [net.cgrand.enlive-html :as enlive]
-            [clojure.string :as string]))
-
-(defn disp [val]
-  (doto val println))
+            [clojure.string :as string])
+  (:gen-class))
 
 (defn trim [s]
   (when s
@@ -38,8 +36,7 @@
    :arg-count (count (enlive/select method-node [:td.paramtype]))
    :returns (-> (select-text method-node [:dl.return :> :dd]))
    :parameters (filter #(and (:doc %) (:name %))
-                       (map param (param-rows method-node)))
-   })
+                       (map param (param-rows method-node)))})
 
 (defn method-nodes [nodes]
   (enlive/select nodes [:div.memitem]))  
@@ -47,9 +44,6 @@
 (defn scrape-doxygen [url]
   (remove #(-> % :name (.contains "~"))
           (map method-properties (method-nodes (enlive/html-resource url)))))
-
-(def cmmcore-java-file
-  "../MMCoreJ_wrap/mmcorej/CMMCore.java")
 
 (defn method-declaration-pattern [{:keys [name arg-count]}]
   (re-pattern (str "\\ \\ public .*?" (Pattern/quote name)
@@ -73,18 +67,25 @@
     (println "   */")))
 
 (defn add-doc [java-file {:keys [name arg-count] :as method}]
-  (println name)
   (string/replace java-file (method-declaration-pattern method)
                   #(str (doc-text method) (first %))))
 
 (defn add-docs [java-file methods]
   (reduce #(add-doc %1 %2) java-file methods))
 
-(def mmcore-doxygen
-  (file "doxygen.html"))
-;  (URL. "https://valelab.ucsf.edu/~MM/doc/MMCore/html/class_c_m_m_core.html"))
+(def cmmcore-java-file
+  "../MMCoreJ_wrap/mmcorej/CMMCore.java")
 
-(defn run []
+(defn -main [mmcore-doxygen]
   (spit "CMMCore.java"
         (add-docs (slurp cmmcore-java-file)
-                  (scrape-doxygen mmcore-doxygen))))
+                  (scrape-doxygen (reader mmcore-doxygen)))))
+
+;; testing
+
+(def mmcore-doxygen-test-file
+  "https://valelab.ucsf.edu/~MM/doc/MMCore/html/class_c_m_m_core.html")
+
+(defn run-test []
+  (-main mmcore-doxygen-test-file))
+  
