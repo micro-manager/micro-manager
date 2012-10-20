@@ -74,10 +74,10 @@
   (reduce #(add-doc %1 %2) java-file methods))
 
 (def cmmcore-java-file
-  "../MMCoreJ_wrap/mmcorej/CMMCore.java")
+  "mmcorej/CMMCore.java")
 
 (defn -main [mmcore-doxygen]
-  (spit "CMMCore.java"
+  (spit cmmcore-java-file
         (add-docs (slurp cmmcore-java-file)
                   (scrape-doxygen (reader mmcore-doxygen)))))
 

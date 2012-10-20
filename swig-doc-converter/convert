@@ -1,3 +1,5 @@
-java -jar swig-doc-converter-0.0.1-standalone.jar https://valelab.ucsf.edu/~MM/doc/MMCore/html/class_c_m_m_core.html
 rm -rf javadoc
-javadoc -classpath ../mmstudio/src:../MMCoreJ_wrap CMMCore.java -d javadoc
+rm -rf mmcorej
+cp -R ../MMCoreJ_wrap/mmcorej ./mmcorej
+java -jar swig-doc-converter-0.0.1-standalone.jar https://valelab.ucsf.edu/~MM/doc/MMCore/html/class_c_m_m_core.html
+javadoc -classpath ../mmstudio/src:../MMCoreJ_wrap mmcorej/*.java -d javadoc
