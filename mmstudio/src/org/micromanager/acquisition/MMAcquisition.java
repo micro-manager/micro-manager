@@ -297,6 +297,7 @@ public class MMAcquisition {
                throw new MMScriptException("Failed to figure out acq saving path.");
             }
          }
+         
          imageFileManager = ImageUtils.newImageStorageInstance(dirName, true, summary_);
          imageCache = new MMImageCache(imageFileManager);
       }

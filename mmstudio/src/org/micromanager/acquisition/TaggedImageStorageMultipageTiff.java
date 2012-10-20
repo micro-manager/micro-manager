@@ -47,7 +47,7 @@ import org.micromanager.utils.*;
 
 
 
-public class TaggedImageStorageMultipageTiff implements TaggedImageStorage {
+public final class TaggedImageStorageMultipageTiff implements TaggedImageStorage {
 
    private JSONObject summaryMetadata_;
    private JSONObject displayAndComments_;
@@ -93,11 +93,6 @@ public class TaggedImageStorageMultipageTiff implements TaggedImageStorage {
       tiffReadersByLabel_ = new TreeMap<String, MultipageTiffReader>(new ImageLabelComparator());
       cached_ = new CachedImages();
       setSummaryMetadata(summaryMetadata);
-      
-
-      if (summaryMetadata_ != null) {  
-         processSummaryMD();
-      }
 
       // TODO: throw error if no existing dataset
       if (!newDataSet_) {
@@ -162,7 +157,6 @@ public class TaggedImageStorageMultipageTiff implements TaggedImageStorage {
             }
          }
       }
-
 
       try {
          setSummaryMetadata(reader.getSummaryMetadata());
@@ -299,7 +293,9 @@ public class TaggedImageStorageMultipageTiff implements TaggedImageStorage {
          } catch (JSONException ex) {
             ReportingUtils.logError("Couldn't find SlicesFirst or TimeFirst in summary metadata");
          }
-      processSummaryMD();
+         if (summaryMetadata_ != null && summaryMetadata_.length() > 0) {
+            processSummaryMD();
+         }
       }
    }
 
