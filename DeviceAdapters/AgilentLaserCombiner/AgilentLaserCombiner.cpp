@@ -400,7 +400,7 @@ int LCShutter::Initialize()
       ret = CreateProperty(os.str().c_str(), "0", MM::Integer, false, pActEx, false);
       if (ret != DEVICE_OK)
          return ret;
-      SetPropertyLimits(os.str().c_str(), 0, 2);
+      SetPropertyLimits(os.str().c_str(), 0, 1);
    }
 
 	// State of all lines together.  
