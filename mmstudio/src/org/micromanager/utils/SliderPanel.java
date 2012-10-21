@@ -117,10 +117,10 @@ public class SliderPanel extends JPanel {
       lowerLimit_ = lowerLimit;
       slider_.setMinimum(0);
       factor_ = 1.0;
-      int maximum = upperLimit;
+      int maximum = upperLimit - lowerLimit + 1;
       if (upperLimit > STEPS) {
-           factor_ = (upperLimit - lowerLimit) / (STEPS);
-           maximum = STEPS;
+           factor_ = ((double) upperLimit - (double) lowerLimit) / (double) (STEPS);
+           maximum = STEPS + 1;
       }
       slider_.setMaximum(maximum);
       slider_.setVisibleAmount(1);

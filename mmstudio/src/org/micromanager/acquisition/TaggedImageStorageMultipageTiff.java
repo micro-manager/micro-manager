@@ -26,8 +26,6 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.ByteOrder;
 import java.util.*;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import loci.common.services.ServiceFactory;
 import loci.formats.MetadataTools;
 import loci.formats.meta.IMetadata;
