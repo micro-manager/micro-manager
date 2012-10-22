@@ -34,6 +34,8 @@ MMJ_.jar:  \
 	$(srcdir)/src/org/micromanager/acquisition/TaggedImageQueue.java \
 	$(srcdir)/src/org/micromanager/acquisition/TaggedImageStorageDiskDefault.java \
 	$(srcdir)/src/org/micromanager/acquisition/TaggedImageStorageRam.java \
+	$(srcdir)/src/org/micromanager/acquisition/TaggedImageStorageMultipageTiff.java \
+	$(srcdir)/src/org/micromanager/acquisition/MultipageTiffReader.java \
 	$(srcdir)/src/org/micromanager/acquisition/ProcessorStack.java \
 	$(srcdir)/src/org/micromanager/acquisition/SequenceSettings.java \
 	$(srcdir)/src/org/micromanager/api/Autofocus.java \
