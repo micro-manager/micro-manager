@@ -488,21 +488,13 @@ public class TaggedImageStorageDiskDefault implements TaggedImageStorage {
 
    }
 
-   private JSONObject readJsonMetadata(String pos) {
+   private JSONObject readJsonMetadata(String pos) throws Exception {
+      String fileStr;
+      fileStr = TextUtils.readTextFile(dir_ + "/" + pos + "/metadata.txt");
       try {
-         String fileStr;
-         fileStr = TextUtils.readTextFile(dir_ + "/" + pos + "/metadata.txt");
-         try {
-            return new JSONObject(fileStr);
-         } catch (JSONException ex) {
-            return new JSONObject(fileStr.concat("}"));
-         }
-      } catch (IOException ex) {
-         ReportingUtils.showError(ex, "Unable to open metadata.txt");
-         return null;
-      } catch (Exception ex) {
-         ReportingUtils.showError(ex, "Unable to read metadata.txt");
-         return null;
+         return new JSONObject(fileStr);
+      } catch (JSONException ex) {
+         return new JSONObject(fileStr.concat("}"));
       }
    }
 

@@ -59,10 +59,13 @@ public class AcquisitionManager {
    
   
    public void closeAcquisition(final String name) throws MMScriptException {
+      if (name == null)
+         return;
       final MMScriptException ex[] = {null};
       try {
          GUIUtils.invokeAndWait(new Runnable() {
             public void run() {
+               
                if (!acqs_.containsKey(name)) {
                  ex[0] = new MMScriptException("The name does not exist");
                } else {
