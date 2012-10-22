@@ -130,6 +130,7 @@ ClojureEditor.jar:  \
 
 all: PixelCalibrator.jar RecallPlugin.jar StageControl.jar MultiCamera.jar CRISP.jar Big.jar NewImageFlipper.jar SlideExplorer.jar DataBrowser.jar ClojureEditor.jar SplitView.jar Gaussian.jar IntelligentAcquisition.jar
 
+
 install: 
 	test -d $(DESTDIR)$(IJPATH)/mmplugins || mkdir $(DESTDIR)$(IJPATH)/mmplugins
 	## cp MMTracker_.jar $(DESTDIR)$(IJPATH)/mmplugins
