@@ -145,7 +145,7 @@ public final class TaggedImageStorageMultipageTiff implements TaggedImageStorage
       MultipageTiffReader reader = null;
       File dir = new File(directory_);
       for (File f : dir.listFiles()) {
-         if (f.getName().endsWith(".tif")) {
+         if (f.getName().endsWith(".tif") || f.getName().endsWith(".TIF")) {
             reader = new MultipageTiffReader(f);
             Set<String> labels = reader.getIndexKeys();
             for (String label : labels) {

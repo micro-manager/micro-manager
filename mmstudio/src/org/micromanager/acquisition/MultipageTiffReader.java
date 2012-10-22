@@ -141,7 +141,7 @@ public class MultipageTiffReader {
                   break;
                }
             }
-         } else if (child.getName().endsWith(".tif")) {
+         } else if (child.getName().endsWith(".tif") || child.getName().endsWith(".TIF")) {
             testFile = child;
             break;
          }
