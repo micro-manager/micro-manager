@@ -40,7 +40,7 @@
                    create-alphanumeric-comparator
                    super-location? get-file-parent)]
         [clojure.data.json :only (read-json)]
-        [clojure.java.io :only (file)]
+        [clojure.java.io :only (file reader)]
         [org.micromanager.mm :only (load-mm gui json-to-data)]))
 
 (def browser (atom nil))
@@ -234,7 +234,8 @@
   (let [f (file path)]
     (and (.exists f)
          (.isDirectory f)
-         (or (.exists (file f "display_and_comments.txt"))
+         (or (.exists (file f "metadata.txt"))
+             (.exists (file f "display_and_comments.txt"))
              (->> (.listFiles f)
                   (filter #(not (.isDirectory %)))
                   (map #(.getName %))
@@ -264,8 +265,15 @@
 (defn as-path [f]
   (.getAbsolutePath (file f)))
 
-(defn read-summary-map [path]
-    (try  
+(defn read-summary-map-from-metadata-txt [dir]
+  (let [metadata-txt (file dir "metadata.txt")]
+    (when (.exists metadata-txt)
+      (let [preamble (apply str (take 1000 (line-seq (reader metadata-txt))))]
+        (read-json (second (re-find #"\"Summary\"\:\s*?(\{.*?})" preamble))
+                   false)))))
+
+(defn read-summary-map-from-mm-api [path]
+  (try  
     (let [name (.openAcquisitionData gui (as-path path) false false)]
      (try
       (let [cache (.getAcquisitionImageCache gui name)
@@ -274,8 +282,11 @@
         data)
       (catch Exception e (do (try (.closeAcquisition gui name)
                                   (catch Exception _ nil))
-                             (.printStackTrace e)))))
-      (catch Exception e nil)))
+                             (ReportingUtils/logError e)))))))
+
+(defn read-summary-map [path]
+  (or (read-summary-map-from-metadata-txt path)
+      (read-summary-map-from-mm-api path)))
 
 (defn get-summary-map [data-set location]
   ;(println data-set)
@@ -313,7 +324,6 @@
                     (let [location (.take pending-locations)]
                       (when-not (= location pending-locations)
                         (doseq [data-set (find-data-sets location)]
-                          ; (println "data-set:" data-set)
                           (.put pending-data-sets [data-set location]))
                         (recur)))))
                   (catch Exception e nil)))
@@ -322,6 +332,7 @@
 
 (defn read-iteration []
   (let [data-set (.take pending-data-sets)]
+    (println "reading" data-set)
     (if (= data-set pending-data-sets) ;; poison
       (update-browser-status)
       (let [loc (second data-set)]
@@ -334,13 +345,12 @@
 (defn start-reading-thread []
   (doto (Thread.
           (fn []
-            (try
-              (dorun
-                (loop []
-                  (Thread/sleep 5)
-                  (read-iteration)
-                        (recur)))
-              (catch Exception e (.printStackTrace e))))
+            (dorun
+              (loop []
+                (Thread/sleep 5)
+                (try (read-iteration)
+                  (catch Exception e (.printStackTrace e)))
+                (recur))))
           "data browser reading thread") .start))
 
 (defn scan-location [location]

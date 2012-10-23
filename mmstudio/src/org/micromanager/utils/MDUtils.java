@@ -145,7 +145,11 @@ public class MDUtils {
    }
 
    public static String getFileName(JSONObject map) throws JSONException {
-      return map.getString("FileName");
+      if (map.has("FileName")) {
+         return map.getString("FileName");
+      } else {
+         return null;
+      }
    }
 
    public static void setFileName(JSONObject map, String filename) throws JSONException {

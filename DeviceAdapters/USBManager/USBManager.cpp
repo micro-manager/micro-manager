@@ -90,6 +90,9 @@ USBManager g_usbManager;
 std::vector<std::string> g_deviceList;
 MM::MMTime g_deviceListLastUpdated = MM::MMTime(0);
 
+/*
+ * Struct containing device name, vendor ID, device ID, ports for sending and receiving and data length
+ */
 USBDeviceInfo g_knownDevices[] = {
    {"Velleman K8055-0", 0x10cf, 0x5500, 0x01, 0x81, 8},
    {"Velleman K8055-1", 0x10cf, 0x5501, 0x01, 0x81, 8},

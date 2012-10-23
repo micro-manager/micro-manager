@@ -413,11 +413,18 @@ public class TaggedImageStorageDiskDefault implements TaggedImageStorage {
                         }
                         lastFrame_ = Math.max(MDUtils.getFrameIndex(md), lastFrame_);
                         String fileName = MDUtils.getFileName(md);
+                        if (fileName == null) {
+                           fileName = "img_" + String.format("%9d", MDUtils.getFrameIndex(md))
+                                   + "_" + MDUtils.getChannelName(md)
+                                   + "_" + String.format("%3d", MDUtils.getSliceIndex(md));
+                        }
                         if (position.length() > 0)
                            fileName = position + "/" + fileName;
+                        
                         filenameTable_.put(MDUtils.getLabel(md), fileName);
                         if (metadataVersion < 10)
                            metadataTable_.put(MDUtils.getLabel(md), md);
+                        
                      } catch (Exception ex) {
                         ReportingUtils.showError(ex);
                      }
