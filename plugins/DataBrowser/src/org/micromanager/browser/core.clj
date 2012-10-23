@@ -125,11 +125,13 @@
 (defn connect-search [search-field table]
   (let [d (.getDocument search-field)
         f #(send-off filter-agent
-            (fn [_]
-              (set-filter table (.getText d 0 (.getLength d)))
-              (.setBackground search-field
-                (if (zero? (.getRowCount table))
-                  Color/PINK Color/WHITE))))]
+                     (fn [_]
+                       (try
+                         (set-filter table (.getText d 0 (.getLength d)))
+                         (.setBackground search-field
+                                         (if (zero? (.getRowCount table))
+                                           Color/PINK Color/WHITE))
+                         (catch Exception _ nil))))]
     (.addDocumentListener d
       (reify DocumentListener
         (insertUpdate [_ _] (f))
