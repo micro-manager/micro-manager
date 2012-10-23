@@ -747,7 +747,9 @@ inside an existing location in your collection."
     (persist-window-shape prefs "browser-shape" frame)
     (add-watch current-data "updater" (fn [_ _ old new]
                                         (when (not= old new)
-                                          (update-no-faster-than update-browser-table 1000))))
+                                          (update-no-faster-than
+                                            #(awt-event (update-browser-table))
+                                            1000))))
     (gen-map frame table scroll-pane settings-button search-field
              collection-menu refresh-button)))
 
