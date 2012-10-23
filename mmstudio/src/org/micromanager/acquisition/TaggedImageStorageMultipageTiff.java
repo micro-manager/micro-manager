@@ -31,6 +31,7 @@ import loci.formats.MetadataTools;
 import loci.formats.meta.IMetadata;
 import loci.formats.services.OMEXMLService;
 import mmcorej.TaggedImage;
+import ome.xml.model.enums.Binning;
 import ome.xml.model.primitives.Color;
 import ome.xml.model.primitives.NonNegativeInteger;
 import ome.xml.model.primitives.PositiveFloat;
@@ -396,6 +397,7 @@ public final class TaggedImageStorageMultipageTiff implements TaggedImageStorage
       private String positionName_;
       private TaggedImageStorageMultipageTiff mpTiff_;
       private int lastFrame_ = -1;
+      private TreeSet<Integer> channelsAdded_;
       
       public Position(int index, JSONObject firstImageTags, TaggedImageStorageMultipageTiff mpt) {
          index_ = index;
@@ -416,6 +418,7 @@ public final class TaggedImageStorageMultipageTiff implements TaggedImageStorage
    
          if (omeTiff_) {
             try {
+               channelsAdded_ = new TreeSet<Integer>();
                startOMEXML();
             } catch (Exception ex) {
                ReportingUtils.logError("Problem writing OME XML");
@@ -667,14 +670,6 @@ public final class TaggedImageStorageMultipageTiff implements TaggedImageStorage
                  MDUtils.getNumSlices(summaryMetadata_), MDUtils.getNumChannels(summaryMetadata_),
                  MDUtils.getNumFrames(summaryMetadata_), 1);
 
-         //Display settings
-         JSONArray channels = displayAndComments_.getJSONArray("Channels");
-         for (int c = 0; c < channels.length(); c++) {
-            JSONObject channel = channels.getJSONObject(c);
-            omeMD_.setChannelColor(new Color(channel.getInt("Color")), index_, c);
-            omeMD_.setChannelName(channel.getString("Name"), index_, c);
-         }
-
          if (summaryMetadata_.has("PixelSize_um") && !summaryMetadata_.isNull("PixelSize_um")) {
             double pixelSize = summaryMetadata_.getDouble("PixelSize_um");
             if (pixelSize > 0) {
@@ -726,7 +721,7 @@ public final class TaggedImageStorageMultipageTiff implements TaggedImageStorage
 //          omeMD_.setDetectorSettingsID(p.detectorID, i, c);
 //        }
 //
-//        omeMD_.setDetectorID(p.detectorID, 0, i);
+
 //        if (p.detectorModel != null) {
 //          omeMD_.setDetectorModel(p.detectorModel, 0, i);
 //        }
@@ -746,6 +741,23 @@ public final class TaggedImageStorageMultipageTiff implements TaggedImageStorage
       }
       
       private void addToOMEMetadata(JSONObject tags) {
+         try {
+            //Add these tags in only once, but need to get them from image rather than summary metadata
+            if (planeIndex_ == 0) {
+               if (tags.has("Core-Camera") && !tags.isNull("Core-Camera")) {
+                  setOMEDetectorMetadata(tags);
+               }
+            }
+            int channelIndex = MDUtils.getChannelIndex(tags);
+            if (!channelsAdded_.contains(channelIndex) ) {
+               channelsAdded_.add(channelIndex);
+               setOMEChannelMetadata(tags,channelIndex);
+            }
+         } catch (Exception e) {
+            ReportingUtils.logError("Problem adding System state cahce metadata to OME Metadata");
+         }
+
+
          //Required tags: Channel, slice, and frame index
          try {
             int slice = MDUtils.getSliceIndex(tags);
@@ -800,27 +812,6 @@ public final class TaggedImageStorageMultipageTiff implements TaggedImageStorage
             //TODO add in delta T????
             
 
-            if (planeIndex_ == 0) {
-               if (tags.has("Core-Camera") && !tags.isNull("Core-Camera")) {
-                  String camera = tags.getString("Core-Camera");
-                  if (tags.has(camera + "-Physical Camera 1" )) {       //Multicam mode
-                     for (int i = 0; i < 3; i++) {
-                        
-                     }
-                                     
-                  } else { //Single camera mode
-                     String id = MetadataTools.createLSID(camera);
-                     //Instrument index, detector index
-                     omeMD_.setDetectorID(camera, 0, 0);
-                  }
-
-               }
-            }
-
-
-            
-            
-            
          } catch (JSONException e) {
             ReportingUtils.logError("Problem adding tags to OME Metadata");
          }
@@ -849,8 +840,99 @@ public final class TaggedImageStorageMultipageTiff implements TaggedImageStorage
             }
          }
       }
-   }
+      
+      private void setOMEChannelMetadata(JSONObject tags, int channelIndex) throws JSONException {                 
+         String camera = tags.getString("Camera");
+         String detectorSettingsID = MetadataTools.createLSID(camera+" settings");
+         //Instrument index, channel index
+         omeMD_.setDetectorSettingsID(detectorSettingsID, 0, channelIndex);
+         
+          //DetectorSettingsBinning
+         if (tags.has(camera + "-Binning") && !tags.isNull(camera + "-Binning")) {
+            int b = tags.getInt(camera + "-Binning");
+            Binning bin;
+            if (b == 1) {
+               bin = Binning.ONEXONE;
+            } else if (b == 2) {
+               bin = Binning.TWOXTWO;
+            } else if (b == 4) {
+               bin = Binning.FOURXFOUR;
+            } else if (b == 8) {
+               bin = Binning.EIGHTXEIGHT;
+            } else {
+               bin = Binning.OTHER;
+            }
+            omeMD_.setDetectorSettingsBinning(bin, 0, channelIndex);
+         }
+         //DetectorSettingsGain
+         if (tags.has(camera + "-Gain") && !tags.isNull(camera + "-Gain")) {
+            omeMD_.setDetectorSettingsGain(tags.getDouble(camera + "-Gain"), 0, channelIndex);
+         }
+         //DetectorSettingsID
+         //DetectorSettingsOffset
+         //DetectorSettingsReadoutRate
+         //DetectorSettingsVoltage
+         
+         JSONObject channel = displayAndComments_.getJSONArray("Channels").getJSONObject(channelIndex);
+         omeMD_.setChannelColor(new Color(channel.getInt("Color")), index_, channelIndex);
+         omeMD_.setChannelName(channel.getString("Name"), index_, channelIndex);
+
+//      setChannelAcquisitionMode(AcquisitionMode acquisitionMode, int imageIndex, int channelIndex)      
+// 	setChannelAnnotationRef(String annotation, int imageIndex, int channelIndex, int annotationRefIndex)     
+// 	setChannelContrastMethod(ContrastMethod contrastMethod, int imageIndex, int channelIndex)     
+// 	setChannelEmissionWavelength(PositiveInteger emissionWavelength, int imageIndex, int channelIndex)      
+// 	setChannelExcitationWavelength(PositiveInteger excitationWavelength, int imageIndex, int channelIndex)       
+// 	setChannelFilterSetRef(String filterSet, int imageIndex, int channelIndex)      
+// 	setChannelFluor(String fluor, int imageIndex, int channelIndex)        
+// 	setChannelID(String id, int imageIndex, int channelIndex)       
+// 	setChannelIlluminationType(IlluminationType illuminationType, int imageIndex, int channelIndex)           
+// 	setChannelLightSourceSettingsAttenuation(PercentFraction attenuation, int imageIndex, int channelIndex)           
+// 	setChannelLightSourceSettingsID(String id, int imageIndex, int channelIndex)            
+// 	setChannelLightSourceSettingsWavelength(PositiveInteger wavelength, int imageIndex, int channelIndex)         
+// 	setChannelNDFilter(Double ndFilter, int imageIndex, int channelIndex) 
+//      setChannelPinholeSize(Double pinholeSize, int imageIndex, int channelIndex) 
+//      setChannelPockelCellSetting(Integer pockelCellSetting, int imageIndex, int channelIndex) 
+//      setChannelSamplesPerPixel(PositiveInteger samplesPerPixel, int imageIndex, int channelIndex)  
+      }
    
+      private void setOMEDetectorMetadata(JSONObject tags) throws JSONException {
+         String coreCam = tags.getString("Core-Camera");
+         String[] cameras;
+         if (tags.has(coreCam + "-Physical Camera 1")) {       //Multicam mode
+            int numCams = 1;
+            if (!tags.getString(coreCam + "-Physical Camera 3").equals("Undefined") ) {
+               numCams = 3;
+            } else if (!tags.getString(coreCam + "-Physical Camera 2").equals("Undefined")) {
+               numCams = 2;
+            }
+            cameras = new String[numCams];
+            for (int i = 0; i < numCams; i++) {
+               cameras[i] = tags.getString(coreCam + "-Physical Camera " + (1+i));
+            }
+         } else { //Single camera mode
+            cameras = new String[1];
+            cameras[0] = coreCam;
+         }
+         
+         for (int detectorIndex = 0; detectorIndex < cameras.length; detectorIndex++) {
+            String camera = cameras[detectorIndex];
+            String detectorID = MetadataTools.createLSID(camera);
+            //Instrument index, detector index
+            omeMD_.setDetectorID(detectorID, 0, detectorIndex);
+//         DetectorAmplificationGain?  
+//         DetectorLotNumber
+//         DetectorManufacturer
+//         DetectorModel
+//         DetectorOffset
+//         DetectorSerialNumber
+//            omeMD_.setDetectorSerialNumber(camera, index_, index_);
+//         DetectorType
+//         DetectorVoltage
+//         DetectorZoom
+         }
+      }
+   }
+
    
    private class CachedImages {
       private static final int NUM_TO_CACHE = 10;
