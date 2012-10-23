@@ -89,7 +89,8 @@
       (.setTitle
         (str "Micro-Manager Data Set Browser ("
              (if (and (empty? pending-data-sets)
-                      (empty? pending-locations))
+                      ;(empty? pending-locations)
+                      )
                "Idle" "Scanning")
              " \u2014 " (count @current-data) " images)"))))
 
@@ -200,8 +201,9 @@
         selected-rows (.getSelectedRows table)
         selected-paths (set (map row-index-to-path selected-rows))]
     (.. table getModel fireTableDataChanged)
-    (doseq [selected-row selected-rows]
-      (.addRowSelectionInterval table selected-row selected-row))))
+    (when (pos? (.getRowCount t))
+      (doseq [selected-row selected-rows]
+        (.addRowSelectionInterval table selected-row selected-row)))))
 
 (defn add-data [new-row]
   (let [row-vec (vec new-row)
@@ -243,9 +245,9 @@
          (or (.exists (file f "metadata.txt"))
              (.exists (file f "display_and_comments.txt"))
              (->> (.listFiles f)
-                  (filter #(not (.isDirectory %)))
+                  (remove #(.isDirectory %))
                   (map #(.getName %))
-                  (filter #(.contains % "_images"))
+                  (filter #(.contains % "_MMImages"))
                   seq)))))
        
 (defn find-data-sets [root-dir]
@@ -338,7 +340,8 @@
   (let [location (.take pending-locations)]
                       (when-not (= location pending-locations)
                         (doseq [data-set (find-data-sets location)]
-                          (.put pending-data-sets [data-set location])))))
+                          (.put pending-data-sets [data-set location]))
+                        )))
 
 (defn start-scanning-thread []
   (start-background-iterating-thread scanning-iteration "DataBrowser scanning thread"))
@@ -356,11 +359,11 @@
             (.post title-bar-updater update-browser-status)))))))
 
 (defn start-reading-thread []
-  (start-background-iterating-thread reading-iteration "DataBrowser reading thread"))
+  (start-background-iterating-thread reading-iteration "DataBrowser reading thread")
+  (awt-event (update-browser-status)))
 
 (defn scan-location [location]
   (.put pending-locations location)
-    (update-browser-status)
     (awt-event (-> @settings-window :locations :table
                    .getModel .fireTableDataChanged)))
 
