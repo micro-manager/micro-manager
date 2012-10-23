@@ -203,7 +203,7 @@
         selected-rows (.getSelectedRows table)
         selected-paths (set (map row-index-to-path selected-rows))]
     (.. table getModel fireTableDataChanged)
-    (when (pos? (.getRowCount t))
+    (when (pos? (.getRowCount table))
       (doseq [selected-row selected-rows]
         (.addRowSelectionInterval table selected-row selected-row)))))
 
