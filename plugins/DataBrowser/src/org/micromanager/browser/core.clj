@@ -23,7 +23,7 @@
            [java.io BufferedReader File FileReader PrintWriter]
            [java.util Comparator Vector]
            [java.util.prefs Preferences]
-           [java.util.concurrent LinkedBlockingQueue]
+           [java.util.concurrent LinkedBlockingQueue ScheduledThreadPoolExecutor]
            [java.awt Color Dimension Font Insets]
            [java.awt.event ItemEvent ItemListener KeyAdapter MouseAdapter
                            WindowAdapter WindowListener]
@@ -89,7 +89,7 @@
       (.setTitle
         (str "Micro-Manager Data Set Browser ("
              (if (and (empty? pending-data-sets)
-                      ;(empty? pending-locations)
+                      (empty? pending-locations)
                       )
                "Idle" "Scanning")
              " \u2014 " (count @current-data) " images)"))))
@@ -196,6 +196,8 @@
       data
       (conj data new-row))))
 
+(def last-table-update (atom 0))
+
 (defn update-browser-table []
   (let [table (@browser :table)
         selected-rows (.getSelectedRows table)
@@ -247,7 +249,8 @@
              (->> (.listFiles f)
                   (remove #(.isDirectory %))
                   (map #(.getName %))
-                  (filter #(.contains % "_MMImages"))
+                  (filter #(or (.contains % "_images")
+                               (.contains % "_MMImages")))
                   seq)))))
        
 (defn find-data-sets [root-dir]
@@ -683,6 +686,14 @@ inside an existing location in your collection."
         (proxy [ItemListener] []
           (itemStateChanged [_] (reset! value-atom (.isSelected cb))))))))
 
+(defn update-no-faster-than [run-function interval]
+  (let [now (System/currentTimeMillis)]
+    (future
+      (Thread/sleep interval)
+      (when (> (- now @last-table-update) interval)
+        (reset! last-table-update now)
+        (run-function)))))
+
 (defn create-browser []
   (let [frame (JFrame.)
         panel (.getContentPane frame)
@@ -736,7 +747,7 @@ inside an existing location in your collection."
     (persist-window-shape prefs "browser-shape" frame)
     (add-watch current-data "updater" (fn [_ _ old new]
                                         (when (not= old new)
-                                          (.post table-updater update-browser-table))))
+                                          (update-no-faster-than update-browser-table 1000))))
     (gen-map frame table scroll-pane settings-button search-field
              collection-menu refresh-button)))
 
