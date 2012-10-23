@@ -30,7 +30,7 @@
            [com.swtdesigner SwingResourceManager]
            [org.micromanager.api ImageCacheListener]
            [org.micromanager.acquisition MMImageCache]
-           [org.micromanager.utils JavaUtils ReportingUtils])
+           [org.micromanager.utils GUIUpdater JavaUtils ReportingUtils])
   (:use [org.micromanager.browser.utils
             :only (gen-map constrain-to-parent create-button create-icon-button
                    attach-action-key remove-borders choose-directory
@@ -42,6 +42,10 @@
         [clojure.data.json :only (read-json)]
         [clojure.java.io :only (file reader)]
         [org.micromanager.mm :only (load-mm gui json-to-data)]))
+
+(def table-updater (GUIUpdater.))
+
+(def title-bar-updater (GUIUpdater.))
 
 (def browser (atom nil))
 
@@ -314,25 +318,32 @@
 
 (def default-headings ["Path" "Time" "Frames" "Comment" "Location"])
 
-(defn start-scanning-thread []
-  (doto (Thread.
-            (fn []
-              (try
-                (dorun
-                  (loop []
-                    (Thread/sleep 5)
-                    (let [location (.take pending-locations)]
+(defn start-background-iterating-thread [iteration-fn thread-name]
+  (doto
+    (Thread.
+      (fn []
+        (dorun
+          (loop []
+            (Thread/sleep 5)
+            (try (iteration-fn)
+                 (catch Exception e (.printStackTrace e)))
+            (recur))))
+      thread-name)
+    (.setPriority Thread/MIN_PRIORITY)
+    .start))
+
+(defn scanning-iteration []
+  (let [location (.take pending-locations)]
                       (when-not (= location pending-locations)
                         (doseq [data-set (find-data-sets location)]
-                          (.put pending-data-sets [data-set location]))
-                        (recur)))))
-                  (catch Exception e nil)))
-          "data browser scanning thread") .start))
+                          (.put pending-data-sets [data-set location])))))
 
+(defn start-scanning-thread []
+  (start-background-iterating-thread scanning-iteration "DataBrowser scanning thread"))
 
-(defn read-iteration []
+(defn reading-iteration []
   (let [data-set (.take pending-data-sets)]
-    (println "reading" data-set)
+    ;(println "reading" data-set)
     (if (= data-set pending-data-sets) ;; poison
       (update-browser-status)
       (let [loc (second data-set)]
@@ -340,18 +351,10 @@
           (when-let [m (apply get-summary-map data-set)]
             (add-data (map #(get m %) tags))
             ;(remove-sibling-positions m)
-            (awt-event (update-browser-status))))))))
+            (.post title-bar-updater update-browser-status)))))))
 
 (defn start-reading-thread []
-  (doto (Thread.
-          (fn []
-            (dorun
-              (loop []
-                (Thread/sleep 5)
-                (try (read-iteration)
-                  (catch Exception e (.printStackTrace e)))
-                (recur))))
-          "data browser reading thread") .start))
+  (start-background-iterating-thread reading-iteration "DataBrowser reading thread"))
 
 (defn scan-location [location]
   (.put pending-locations location)
@@ -728,7 +731,7 @@ inside an existing location in your collection."
     (persist-window-shape prefs "browser-shape" frame)
     (add-watch current-data "updater" (fn [_ _ old new]
                                         (when (not= old new)
-                                          (awt-event (update-browser-table)))))
+                                          (.post table-updater update-browser-table))))
     (gen-map frame table scroll-pane settings-button search-field
              collection-menu refresh-button)))
 
