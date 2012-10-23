@@ -726,10 +726,6 @@ public final class TaggedImageStorageMultipageTiff implements TaggedImageStorage
 //          omeMD_.setDetectorModel(p.detectorModel, 0, i);
 //        }
 //
-//        if (serialNumber != null) {
-//          omeMD_.setDetectorSerialNumber(serialNumber, 0, i);
-//        }
-//
 //        if (p.detectorManufacturer != null) {
 //          omeMD_.setDetectorManufacturer(p.detectorManufacturer, 0, i);
 //        }
@@ -862,11 +858,11 @@ public final class TaggedImageStorageMultipageTiff implements TaggedImageStorage
             } else {
                bin = Binning.OTHER;
             }
-            omeMD_.setDetectorSettingsBinning(bin, 0, channelIndex);
+            omeMD_.setDetectorSettingsBinning(bin, index_, channelIndex);
          }
          //DetectorSettingsGain
          if (tags.has(camera + "-Gain") && !tags.isNull(camera + "-Gain")) {
-            omeMD_.setDetectorSettingsGain(tags.getDouble(camera + "-Gain"), 0, channelIndex);
+            omeMD_.setDetectorSettingsGain(tags.getDouble(camera + "-Gain"), index_, channelIndex);
          }
          //DetectorSettingsID
          //DetectorSettingsOffset
@@ -924,8 +920,9 @@ public final class TaggedImageStorageMultipageTiff implements TaggedImageStorage
 //         DetectorManufacturer
 //         DetectorModel
 //         DetectorOffset
-//         DetectorSerialNumber
-//            omeMD_.setDetectorSerialNumber(camera, index_, index_);
+            if (tags.has(camera + "-CameraID") && !tags.isNull(camera + "-CameraID")) {
+               omeMD_.setDetectorSerialNumber(tags.getString(camera+"-CameraID"), 0, detectorIndex);
+            }
 //         DetectorType
 //         DetectorVoltage
 //         DetectorZoom
