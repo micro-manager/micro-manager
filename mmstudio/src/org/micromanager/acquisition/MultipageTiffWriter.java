@@ -596,19 +596,28 @@ public class MultipageTiffWriter {
       }
       //cm so calibration unit is consistent with units used in Tiff tags
       sb.append("unit=cm\n");
-
-      //write single channel contrast settings
-      if (numChannels_ == 1) {
-         try {
-            JSONObject contrast = masterMPTiffStorage_.getDisplayAndComments().getJSONArray("Channels").getJSONObject(0);
-            double min = contrast.getInt("Min");
-            double max = contrast.getInt("Max");
+      
+      //write single channel contrast settings or display mode if multi channel
+      try {             
+         JSONObject channel0setting = masterMPTiffStorage_.getDisplayAndComments().getJSONArray("Channels").getJSONObject(0);
+         if (numChannels_ == 1) {
+            double min = channel0setting.getInt("Min");
+            double max = channel0setting.getInt("Max");
             sb.append("min=" + min + "\n");
             sb.append("max=" + max + "\n");
-         } catch (JSONException ex) {
+         } else {
+            int displayMode = channel0setting.getInt("DisplayMode");
+            //COMPOSITE=1, COLOR=2, GRAYSCALE=3
+            if (displayMode == 1) {
+               sb.append("mode=composite");
+            } else if (displayMode == 2) {
+               sb.append("mode=color");
+            } else if (displayMode==3) {
+               sb.append("mode=gray");
+            }    
          }
-      }
-
+      } catch (JSONException ex) {}
+             
       sb.append((char) 0);
       return new String(sb);
    }
