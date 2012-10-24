@@ -609,11 +609,11 @@ public class MultipageTiffWriter {
             int displayMode = channel0setting.getInt("DisplayMode");
             //COMPOSITE=1, COLOR=2, GRAYSCALE=3
             if (displayMode == 1) {
-               sb.append("mode=composite");
+               sb.append("mode=composite\n");
             } else if (displayMode == 2) {
-               sb.append("mode=color");
+               sb.append("mode=color\n");
             } else if (displayMode==3) {
-               sb.append("mode=gray");
+               sb.append("mode=gray\n");
             }    
          }
       } catch (JSONException ex) {}
