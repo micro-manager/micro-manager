@@ -336,7 +336,7 @@ public class SingleChannelHistogram extends JPanel implements Histograms, Cursor
 
    public void saveDisplaySettings() {
       int histMax = histRangeComboBox_.getSelectedIndex() == 0 ? histMax = -1 : histMax_;
-      cache_.storeChannelDisplaySettings(0, (int) contrastMin_, (int) contrastMax_, gamma_, histMax);
+      cache_.storeChannelDisplaySettings(0, (int) contrastMin_, (int) contrastMax_, gamma_, histMax, 1);
    }
 
    public void setChannelHistogramDisplayMax(int channelIndex, int histMax) {

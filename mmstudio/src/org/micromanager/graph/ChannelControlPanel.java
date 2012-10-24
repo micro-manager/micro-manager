@@ -518,7 +518,8 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
       if (histMax != -1) {
          int index = (int) (Math.ceil(Math.log(histMax)/Math.log(2)) - 3);
          histRangeComboBox_.setSelectedIndex(index);
-      }
+      }     
+      mcHistograms_.setDisplayMode(cache.getDisplayMode());
    }
 
    private HistogramPanel addHistogramPanel() {
@@ -626,7 +627,8 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
    
    private void storeDisplaySettings() {
       int histMax = histRangeComboBox_.getSelectedIndex() == 0 ? -1 : histMax_;
-      cache_.storeChannelDisplaySettings(channelIndex_, contrastMin_, contrastMax_, gamma_, histMax);
+      cache_.storeChannelDisplaySettings(channelIndex_, contrastMin_, contrastMax_,
+              gamma_, histMax,((MMCompositeImage) img_).getMode());
    }
    
    public int getChannelIndex() {

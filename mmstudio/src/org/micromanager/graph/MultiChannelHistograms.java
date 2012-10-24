@@ -226,6 +226,10 @@ public class MultiChannelHistograms extends JPanel implements Histograms {
       }
       ccpList_.get(channelIndex).setContrast(min, max, gamma);
    }
+   
+   public void setDisplayMode(int mode) {
+      display_.setDisplayMode(mode);
+   }
 
    public void autoscaleAllChannels() {
       if (ccpList_ != null && ccpList_.size() > 0) {

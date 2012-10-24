@@ -1599,8 +1599,8 @@ public final class VirtualAcquisitionDisplay implements AcquisitionDisplay, Imag
       mmIP.setNChannelsUnverified(channels);
       mmIP.setNFramesUnverified(frames);
       mmIP.setNSlicesUnverified(slices);
-      if (channels > 1) {
-         hyperImage = new MMCompositeImage(mmIP, CompositeImage.COMPOSITE);
+      if (channels > 1) {        
+         hyperImage = new MMCompositeImage(mmIP, imageCache_.getDisplayMode());
          hyperImage.setOpenAsHyperStack(true);
       } else {
          hyperImage = mmIP;

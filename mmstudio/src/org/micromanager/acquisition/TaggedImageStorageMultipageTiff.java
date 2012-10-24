@@ -424,7 +424,7 @@ public final class TaggedImageStorageMultipageTiff implements TaggedImageStorage
                channelsAdded_ = new TreeSet<Integer>();
                startOMEXML();
             } catch (Exception ex) {
-               ReportingUtils.logError("Problem writing OME XML");
+               ReportingUtils.logError("Problem starting OME XML");
             }
          }
          try {
@@ -909,8 +909,8 @@ public final class TaggedImageStorageMultipageTiff implements TaggedImageStorage
       }
    
       private void addOtherMetadtaToOME(JSONObject tags) throws JSONException {
-         OMEXMLService service = new OMEXMLServiceImpl();       
-         service.populateOriginalMetadata((OMEXMLMetadata)omeMD_, "Other metadata", tags.toString(2));
+//         OMEXMLService service = new OMEXMLServiceImpl();       
+//         service.populateOriginalMetadata((OMEXMLMetadata)omeMD_, "Other metadata", tags.toString(2));
 //         Iterator<String> keys = tags.keys();
 //         while (keys.hasNext()) {
 //            String key = keys.next();

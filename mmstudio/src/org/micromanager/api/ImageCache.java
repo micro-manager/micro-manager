@@ -88,8 +88,10 @@ public interface ImageCache extends TaggedImageStorage {
     * @max - The maximum display intensity value (shown as full-intensity color)
     * @gamma - The gamma value (curvature of the value-to-display curve)
     * @histMax - The prefered maximum value at which the histogram is displayed.
+    * @displayMode - Composite, Color, or Grayscale
     */
-   public void storeChannelDisplaySettings(int channelIndex, int min, int max, double gamma, int histMax);
+   public void storeChannelDisplaySettings(int channelIndex, int min, int max, 
+           double gamma, int histMax, int displayMode);
 
    /*
     * Returns a JSONObject with channel settings for the channel whose index
@@ -103,6 +105,10 @@ public interface ImageCache extends TaggedImageStorage {
    public int getBitDepth();
    //public int getChannelBitDepth(int channelIndex);
 
+   /*
+    * Returns the display mode used by the CompositeImage (composite, color, or grayscale)
+    */
+   public int getDisplayMode(); 
    /*
     * Returns the preferred display color for a channel, specified by channelIndex.
     */

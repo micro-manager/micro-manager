@@ -4,6 +4,7 @@
  */
 package org.micromanager.acquisition;
 
+import ij.CompositeImage;
 import java.awt.Color;
 import org.micromanager.api.ImageCache;
 import org.micromanager.api.ImageCacheListener;
@@ -16,6 +17,8 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.swing.SwingUtilities;
 import mmcorej.TaggedImage;
 import org.json.JSONArray;
@@ -345,18 +348,20 @@ public class MMImageCache implements ImageCache {
    }
 
    /////////////////////Channels section/////////////////////////
-   public void storeChannelDisplaySettings(int channelIndex, int min, int max, double gamma, int histMax) {
+   public void storeChannelDisplaySettings(int channelIndex, int min, int max, 
+           double gamma, int histMax, int displayMode) {
       try {
          JSONObject settings = getChannelSetting(channelIndex);
          settings.put("Max", max);
          settings.put("Min", min);
          settings.put("Gamma", gamma);
          settings.put("HistogramMax", histMax);
+         settings.put("DisplayMode", displayMode);
       } catch (Exception ex) {
          ReportingUtils.logError(ex);
       }
    }
-
+  
    public JSONObject getChannelSetting(int channel) {
       try {
          JSONArray array = getDisplayAndComments().getJSONArray("Channels");
@@ -435,6 +440,14 @@ public class MMImageCache implements ImageCache {
          ReportingUtils.logError(ex);
       }
 
+   }
+   
+   public int getDisplayMode() {
+      try {
+         return getChannelSetting(0).getInt("DisplayMode");
+      } catch (JSONException ex) {
+         return CompositeImage.COMPOSITE;
+      }
    }
 
    public int getChannelMin(int channelIndex) {
