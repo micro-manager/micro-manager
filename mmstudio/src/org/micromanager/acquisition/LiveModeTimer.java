@@ -268,16 +268,10 @@ public class LiveModeTimer {
                   // if we have already shown this image, do not do it again.
                   setImageNumber(ti.tags.getLong("ImageNumber"));
                   imageQueue_.put(ti);
-
-               } catch (MMScriptException ex) {
+               } catch (Exception ex) {
+                  ReportingUtils.logMessage("Stopping live mode because of error...");
+                  gui_.enableLiveMode(false);
                   ReportingUtils.showError(ex);
-                  gui_.enableLiveMode(false);
-               } catch (JSONException exc) {
-                  ReportingUtils.showError(exc, "Problem with image tags");
-                  gui_.enableLiveMode(false);
-               } catch (Exception excp) {
-                  ReportingUtils.showError("Couldn't get tagged image from core");
-                  gui_.enableLiveMode(false);
                }
             }
          }
@@ -298,28 +292,30 @@ public class LiveModeTimer {
                try {
                   String camera = core_.getCameraDevice();
                   Set<String> cameraChannelsAcquired = new HashSet<String>();
-                  for (int i = 0; i<2*multiChannelCameraNrCh_; ++i) {
+                  for (int i = 0; i < 2 * multiChannelCameraNrCh_; ++i) {
                      TaggedImage ti = core_.getNBeforeLastTaggedImage(i);
-                     if (i==0) {
-                         setImageNumber(ti.tags.getLong("ImageNumber"));
+                     if (i == 0) {
+                        setImageNumber(ti.tags.getLong("ImageNumber"));
                      }
-                     String channelName = ti.tags.getString(camera + "-CameraChannelName");
-                     if (!cameraChannelsAcquired.contains(channelName)) {
-                        ti.tags.put("Channel", channelName);
-                        ti.tags.put("ChannelIndex", ti.tags.getInt(camera + "-CameraChannelIndex"));
-                        imageQueue_.put(ti);
-                        cameraChannelsAcquired.add(channelName);
-                     }
-                     if (cameraChannelsAcquired.size() == multiChannelCameraNrCh_) {
-                        break;
+                     String channelName;
+                     if (ti.tags.has(camera + "-CameraChannelName")) {
+                        channelName = ti.tags.getString(camera + "-CameraChannelName");
+                        if (!cameraChannelsAcquired.contains(channelName)) {
+                           ti.tags.put("Channel", channelName);
+                           ti.tags.put("ChannelIndex", ti.tags.getInt(camera + "-CameraChannelIndex"));
+                           imageQueue_.put(ti);
+                           cameraChannelsAcquired.add(channelName);
+                        }
+                        if (cameraChannelsAcquired.size() == multiChannelCameraNrCh_) {
+                           break;
+                        }
                      }
                   }
                } catch (Exception exc) {
+                  ReportingUtils.logMessage("Stopping live mode because of error...");
                   gui_.enableLiveMode(false);
-                  exc.printStackTrace();
-                  
-                  ReportingUtils.showError("Couldn't get tagged image from core");
-                  
+                  ReportingUtils.showError(exc);
+
                }
             }
          }
