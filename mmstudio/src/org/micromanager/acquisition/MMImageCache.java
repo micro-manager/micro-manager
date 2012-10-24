@@ -365,6 +365,10 @@ public class MMImageCache implements ImageCache {
    public JSONObject getChannelSetting(int channel) {
       try {
          JSONArray array = getDisplayAndComments().getJSONArray("Channels");
+         if (channel >= array.length()) {
+            //expand size
+            array.put(channel, new JSONObject(array.getJSONObject(0).toString()));
+         }
          if (array != null && !array.isNull(channel)) {
             return array.getJSONObject(channel);
          } else {
