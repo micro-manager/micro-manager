@@ -807,7 +807,7 @@ public final class TaggedImageStorageMultipageTiff implements TaggedImageStorage
       }
       
       private void setOMEChannelMetadata(JSONObject tags, int channelIndex) throws JSONException {                 
-         String camera = tags.getString("Camera");
+         String camera = tags.getString("Core-Camera");
          String detectorSettingsID = MetadataTools.createLSID(camera+" settings");
          //Instrument index, channel index
          omeMD_.setDetectorSettingsID(detectorSettingsID, 0, channelIndex);
@@ -887,7 +887,7 @@ public final class TaggedImageStorageMultipageTiff implements TaggedImageStorage
             //Instrument index, detector index
             omeMD_.setDetectorID(detectorID, 0, detectorIndex);
             if (tags.has(camera + "-Name") && !tags.isNull(camera + "-Name")) {
-               omeMD_.setDetectorManufacturer(tags.getString(camera+"-CameraName"), 0, detectorIndex);
+               omeMD_.setDetectorManufacturer(tags.getString(camera+"-Name"), 0, detectorIndex);
             }
             if (tags.has(camera + "-CameraName") && !tags.isNull(camera + "-CameraName")) {
                omeMD_.setDetectorModel(tags.getString(camera+"-CameraName"), 0, detectorIndex);
