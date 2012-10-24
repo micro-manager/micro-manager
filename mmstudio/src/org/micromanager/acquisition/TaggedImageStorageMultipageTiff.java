@@ -26,16 +26,17 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.ByteOrder;
 import java.util.*;
+import loci.common.DateTools;
 import loci.common.services.ServiceFactory;
 import loci.formats.MetadataTools;
 import loci.formats.meta.IMetadata;
+import loci.formats.ome.OMEXMLMetadata;
 import loci.formats.services.OMEXMLService;
+import loci.formats.services.OMEXMLServiceImpl;
 import mmcorej.TaggedImage;
+import ome.xml.model.OME;
 import ome.xml.model.enums.Binning;
-import ome.xml.model.primitives.Color;
-import ome.xml.model.primitives.NonNegativeInteger;
-import ome.xml.model.primitives.PositiveFloat;
-import ome.xml.model.primitives.PositiveInteger;
+import ome.xml.model.primitives.*;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -48,6 +49,8 @@ import org.micromanager.utils.*;
 
 public final class TaggedImageStorageMultipageTiff implements TaggedImageStorage {
 
+   public static final String OME_DATE_FORMAT = "EEE MMM dd HH:mm:ss zzz yyyy";
+   
    private JSONObject summaryMetadata_;
    private JSONObject displayAndComments_;
    private boolean newDataSet_;
@@ -683,66 +686,31 @@ public final class TaggedImageStorageMultipageTiff implements TaggedImageStorage
                omeMD_.setPixelsPhysicalSizeZ(new PositiveFloat(zStep), index_);
             }
          }
-
-         omeMD_.setStageLabelName(positionName_, index_);
-            
+         
+         omeMD_.setStageLabelName(positionName_, index_);  
          
          String instrumentID = MetadataTools.createLSID("Microscope");
          omeMD_.setInstrumentID(instrumentID, 0);
          // link Instrument and Image
          omeMD_.setImageInstrumentRef(instrumentID, index_);
 
-
-//        String date = DateTools.formatDate(p.time, DATE_FORMAT);
-//        omeMD_.setImageAcquisitionDate(new Timestamp(date), i);
-//
-//        omeMD_.setImageDescription(p.comment, i);
-//
-//        int nextStamp = 0;
-//        for (int q=0; q<getImageCount(); q++) {
-//          omeMD_.setPlaneExposureTime(p.exposureTime, i, q);
-//          String tiff = positions.get(getSeries()).getFile(q);
-//          if (tiff != null && new Location(tiff).exists() &&
-//            nextStamp < p.timestamps.length)
-//          {
-//            omeMD_.setPlaneDeltaT(p.timestamps[nextStamp++], i, q);
-//          }
-//        }
-//
-//        String serialNumber = p.detectorID;
-//        p.detectorID = MetadataTools.createLSID("Detector", 0, i);
-//
-//        for (int c=0; c<p.channels.length; c++) {
-//          omeMD_.setDetectorSettingsBinning(getBinning(p.binning), i, c);
-//          omeMD_.setDetectorSettingsGain(new Double(p.gain), i, c);
-//          if (c < p.voltage.size()) {
-//            omeMD_.setDetectorSettingsVoltage(p.voltage.get(c), i, c);
-//          }
-//          omeMD_.setDetectorSettingsID(p.detectorID, i, c);
-//        }
-//
-
-//        if (p.detectorModel != null) {
-//          omeMD_.setDetectorModel(p.detectorModel, 0, i);
-//        }
-//
-//        if (p.detectorManufacturer != null) {
-//          omeMD_.setDetectorManufacturer(p.detectorManufacturer, 0, i);
-//        }
-
-//        if (p.cameraMode == null) p.cameraMode = "Other";
-//        omeMD_.setDetectorType(getDetectorType(p.cameraMode), 0, i);
-//        omeMD_.setImagingEnvironmentTemperature(p.temperature, i);
-
+         JSONObject comments = displayAndComments_.getJSONObject("Comments");;
+         if (comments.has("Summary") && !comments.isNull("Summary")) {
+            omeMD_.setImageDescription(comments.getString("Summary"), index_);
+         }    
+         
+         if (summaryMetadata_.has("Time") && !summaryMetadata_.isNull("Time")) {
+            String date = DateTools.formatDate(summaryMetadata_.getString("Time"), OME_DATE_FORMAT);
+            omeMD_.setImageAcquisitionDate(new Timestamp(date), index_);
+         }
       }
       
       private void addToOMEMetadata(JSONObject tags) {
          try {
             //Add these tags in only once, but need to get them from image rather than summary metadata
             if (planeIndex_ == 0) {
-               if (tags.has("Core-Camera") && !tags.isNull("Core-Camera")) {
-                  setOMEDetectorMetadata(tags);
-               }
+               setOMEDetectorMetadata(tags);
+               addOtherMetadtaToOME(tags);
             }
             int channelIndex = MDUtils.getChannelIndex(tags);
             if (!channelsAdded_.contains(channelIndex) ) {
@@ -805,8 +773,9 @@ public final class TaggedImageStorageMultipageTiff implements TaggedImageStorage
             if (tags.has("ZPositionUm") && !tags.isNull("ZPositionUm")) {
                omeMD_.setPlanePositionZ(tags.getDouble("ZPositionUm"), index_, planeIndex_);
             }
-            //TODO add in delta T????
-            
+            if (tags.has("ElapsedTime-ms") && !tags.isNull("ElapsedTime-ms")) {
+               omeMD_.setPlaneDeltaT(tags.getDouble("ElapsedTime-ms")/1000.0, index_, planeIndex_);
+            }
 
          } catch (JSONException e) {
             ReportingUtils.logError("Problem adding tags to OME Metadata");
@@ -843,7 +812,6 @@ public final class TaggedImageStorageMultipageTiff implements TaggedImageStorage
          //Instrument index, channel index
          omeMD_.setDetectorSettingsID(detectorSettingsID, 0, channelIndex);
          
-          //DetectorSettingsBinning
          if (tags.has(camera + "-Binning") && !tags.isNull(camera + "-Binning")) {
             int b = tags.getInt(camera + "-Binning");
             Binning bin;
@@ -860,10 +828,10 @@ public final class TaggedImageStorageMultipageTiff implements TaggedImageStorage
             }
             omeMD_.setDetectorSettingsBinning(bin, index_, channelIndex);
          }
-         //DetectorSettingsGain
          if (tags.has(camera + "-Gain") && !tags.isNull(camera + "-Gain")) {
             omeMD_.setDetectorSettingsGain(tags.getDouble(camera + "-Gain"), index_, channelIndex);
          }
+         
          //DetectorSettingsID
          //DetectorSettingsOffset
          //DetectorSettingsReadoutRate
@@ -892,6 +860,9 @@ public final class TaggedImageStorageMultipageTiff implements TaggedImageStorage
       }
    
       private void setOMEDetectorMetadata(JSONObject tags) throws JSONException {
+         if (!tags.has("Core-Camera") || tags.isNull("Core-Camera")) {
+            return;
+         }
          String coreCam = tags.getString("Core-Camera");
          String[] cameras;
          if (tags.has(coreCam + "-Physical Camera 1")) {       //Multicam mode
@@ -915,19 +886,41 @@ public final class TaggedImageStorageMultipageTiff implements TaggedImageStorage
             String detectorID = MetadataTools.createLSID(camera);
             //Instrument index, detector index
             omeMD_.setDetectorID(detectorID, 0, detectorIndex);
-//         DetectorAmplificationGain?  
-//         DetectorLotNumber
-//         DetectorManufacturer
-//         DetectorModel
-//         DetectorOffset
+            if (tags.has(camera + "-Name") && !tags.isNull(camera + "-Name")) {
+               omeMD_.setDetectorManufacturer(tags.getString(camera+"-CameraName"), 0, detectorIndex);
+            }
+            if (tags.has(camera + "-CameraName") && !tags.isNull(camera + "-CameraName")) {
+               omeMD_.setDetectorModel(tags.getString(camera+"-CameraName"), 0, detectorIndex);
+            }
+            if (tags.has(camera + "-Offset") && !tags.isNull(camera + "-Offset")) {
+               omeMD_.setDetectorOffset(Double.parseDouble(tags.getString(camera+"-Offset")), 0, detectorIndex);
+            }
             if (tags.has(camera + "-CameraID") && !tags.isNull(camera + "-CameraID")) {
                omeMD_.setDetectorSerialNumber(tags.getString(camera+"-CameraID"), 0, detectorIndex);
             }
+
+            //Unused OME methods
+//         DetectorAmplificationGain  
+//         DetectorLotNumber
 //         DetectorType
 //         DetectorVoltage
 //         DetectorZoom
          }
       }
+   
+      private void addOtherMetadtaToOME(JSONObject tags) throws JSONException {
+         OMEXMLService service = new OMEXMLServiceImpl();       
+         service.populateOriginalMetadata((OMEXMLMetadata)omeMD_, "Other metadata", tags.toString(2));
+//         Iterator<String> keys = tags.keys();
+//         while (keys.hasNext()) {
+//            String key = keys.next();
+//            if (tags.isNull(key)) {
+//               continue;
+//            }
+//            String value = tags.getString(key);
+//            service.populateOriginalMetadata((OMEXMLMetadata)omeMD_, key, value);  
+//         }
+      }  
    }
 
    
