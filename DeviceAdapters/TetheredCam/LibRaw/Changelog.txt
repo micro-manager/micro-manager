@@ -1,3 +1,298 @@
+2012-06-27 Alex Tutubalin <lexa@lexa.ru>
+        * Imported dcraw 9.15 (1.449):
+          - New cameras supported: Canon 5D Mark III, G1 X, 1D X and Powershot SX200;
+            Nikon D4,D800/D800E and D3200; Fuji X-S1 and HS30EXR; Casio EX-Z8;
+            Olympus E-M5; Panasonic GF5; Sony NEX-F3, SLT-A37 and SLT-A57;
+            Samsung NX20 and NX210;
+          - Support for updated Samsung NX200 firmware.
+        * Makefile.msvc: additional compiler flags
+        * LibRaw 0.14.7-Release
+
+2012-04-11 Alex Tutubalin <lexa@lexa.ru>
+        * Fixed thumbnail processing (esp. for Adobe Lightroom DNGs)
+
+2012-04-05 Alex Tutubalin <lexa@lexa.ru>
+        * Casio EX-Z500 support
+        * (possible) I/O exceptions on file open catched in open_datastream
+        * Fixed possible read-after-buffer in Sony ARW2 decoder
+        * Fixed mingw32 errors when compiling LibRaw_windows_datastream
+        * Makefile.msvc: support of OpenMP and LCMS (uncomment to use)
+        * Fixed decoding of some Leaf Aptus II files
+        * LibRaw 0.14.6-Release
+
+2011-12-24 Alex Tutubalin <lexa@lexa.ru>
+        * Fixed bug (uninitialized variable) in SMAL format decoding.
+
+        * Imported new dcraw 9.12 (1.446): support for Leica V-LUX 3, 
+          updated color data for Canon S100, Fujifilm X10, Nikon 1 J1/V1,
+          Panasonic GX1, Samsung NX200, Sony NEX-7
+
+        * LibRaw 0.14.5-Release
+
+2011-12-12 Alex Tutubalin <lexa@lexa.ru>
+
+        * Fixes to Panasonic/Leica file parser to prevent crash
+          on broken jpegs.
+
+        * Fixes to include order in src/libraw_datastream.cpp to
+          better compile with KDEWIN
+
+        * Floating-point DNGs are rejected on early processing stage.
+
+        * Support for new cameras: Canon S100, Fuji X10, Panasonic GX1, 
+          Samsung NX200, Sony NEX-7.
+
+        * LibRaw 0.14.4-Release
+          
+
+2011-10-26 Alex Tutubalin <lexa@lexa.ru>
+        * Bug fixes in black level subtraction code for PhaseOne files
+
+        * New API call LibRaw::get_internal_data_pointer() for developers
+           who need access to libraw_internal_data fields (i.e. 
+           Fuji SuperCCD layout).
+
+        *  doc/API-overview fixes to reflect 0.14 changes
+
+        * LibRaw 0.14.3-Release
+
+2011-10-19 Alex Tutubalin <lexa@lexa.ru>
+        * Fixed bug in Canon 1D and 1Ds files decoding.
+        * New decoder information bit DECODER_HASRAWCURVE 
+        * LibRaw 0.14.2-Release
+
+2011-10-11 Alex Tutubalin <lexa@lexa.ru>
+        * Imported dcraw 9.11/1.445:
+          + Support for new cameras added: Fujifilm F600EXR, Nikon P7100,
+            Olympus E-PL3 and E-PM1, Panasonic DMC-FZ150, Sony NEX-5N, 
+            A65 and A77.
+          + Changed color data for: Olympus E-P3, Panasonic G3 and GF3,
+            PhaseOne H25, P40 and P65, Sony NEX-C3, NEX-5, NEX-3, A35 and A55.
+          + Support for dark frame extraction on Sony cameras.
+
+        * DCB demosaicing: reserving 6 pixels instead of 3 to suppress 
+          colored image frame.
+        * LibRaw 0.14.1-Release
+
+2011-09-21 Alex Tutubalin <lexa@lexa.ru>
+        * Cosmetic changes to make Visual C++/OpenMP more happy
+        * Fix megapixel calculation for postprocessing_benchmark in half mode
+        * Shlib version number increment
+        * LibRaw 0.14.0-Release
+
+2011-09-04 Alex Tutubalin <lexa@lexa.ru>
+        * Fixed bug with Kodak thumbnail extraction
+        * raw2image_ex() always return value
+        * LibRaw 0.14.0-Beta2
+
+2011-09-02 Alex Tutubalin <lexa@lexa.ru>
+        * Cosmetic changes to LibRaw_file_datastream interface
+
+        * OpenMP speedup of postprocessing steps (up to 50% for
+          half mode and 4-core machine)
+
+        * LibRaw 0.14.0-Beta1
+
+2011-08-20 Alex Tutubalin <lexa@lexa.ru>
+
+        * Patch to dcraw_emu for SunStudio compiler compatibility
+
+        * Fixed crash in unprocessed_raw sample due to uninitialized
+          timestamp variable.
+
+        * Fixed crash in raw decoding if raw_width/raw_height is
+          less than resulting image width/height.
+
+        * imgdata.sizes.flip is set from user_flip only on
+          postprocessing and/or adjust_sizes_info_only()
+
+        * Fixed buffer overrun for some LJPEG-compressed files
+
+        * Most of LibRaw_datastream function bodies are moved to
+          separate source file
+
+        * LibRaw_windows_datastream is merged to main sourcetree
+
+        * LibRaw 0.14.0-Alpha5
+
+2011-08-11 Alex Tutubalin <lexa@lexa.ru>
+        * Imported dcraw 9.10 (1.444), support for new cameras added:
+          ARRIRAW format, Canon SX30 IS, Leica D-LUX 5 and V-LUX2,
+          Olympus E-P3, Panasonic G3 and GF3, Sony NEX-C3 and SLT-A35
+          
+        * Support for RedOne digital movie cameras (R3D format). 
+          To enable this support you should:
+           + install libjasper JPEG2000 support library
+
+           + compile LibRaw with -DUSE_JASPER compiler switch (./configure
+             will do it for you)
+
+           + If you use own LibRaw_datastream implementation, you should
+             implement make_jas_stream() call for your datastream. See
+             bottom of src/libraw_cxx.cpp for  implementations in datafile
+             and mem-buffer LibRaw streams.
+
+        * Bugfix: green matching is turned off if output image is shrinked
+          due to wavelet filtering or aberration correction.
+
+        * fixed open_file()/adjust_sizes_info_only() code path
+
+        * Removed imgdata.sizes.bottom_margin and right_margin data fields
+          use imgdata.sizes.raw_width - width - left_margin to get right one,
+          the same with bottom_margin.
+
+        * minor ./configure cleanup
+        
+        * Qmake files and Visual Studio Project files are updated.
+
+        * New version check macros:
+          For use at runtime checks:
+           LIBRAW_RUNTIME_CHECK_VERSION_EXACT() - checks  that runtime 
+            major/minor version numbers are same with compile-time values.
+
+           LIBRAW_RUNTIME_CHECK_VERSION_NOTLESS() - checks that runtime
+            version is not less that compile-time one.
+
+          For use at compile-time in preprocessor directives:
+           LIBRAW_COMPILE_CHECK_VERSION_EXACT(major,minor) - Compile-time
+            check that LibRaw version is exact major.minor.
+
+           LIBRAW_COMPILE_CHECK_VERSION_NOTLESS(major,minor) - Compile-time
+            check that version is not less than major.minor.
+
+        * all client code should be recompiled due to internals change.
+
+        * LibRaw 0.14.0-Alpha4
+
+2011-07-19 Alex Tutubalin <lexa@lexa.ru>
+        * New sample samples/postprocessing_benchmark.cpp
+          This sample measures postprocessing speed.
+          All demosaic methods, averaged white balance, median
+          filtering, wavelet filtration, highlight recovery, and
+          cropping are supported.
+
+        * Removed LibRaw::rotate_fuji_raw() call and corresponding C-API call.
+
+        * The LibRaw::adjust_sizes_info_only() call may be called repeated
+          and mixed with dcraw_process() call.
+
+        * Postprocessing speedup and optimization, especially if cropping set.
+
+        * Cropping works for FujiCCD raws. For the technical reasons, the position
+          of top-left corner of crop area will be rounded to the nearest
+          multiple of 4 (the corner is shifted top-left).
+
+        * LibRaw 0.14.0-Alpha3
+
+2011-07-15 Alex Tutubalin <lexa@lexa.ru>
+        * imported cropping code from 0.13 branch
+
+2011-07-12 Alex Tutubalin <lexa@lexa.ru>
+        * samples/multirender_test - check for different clip settings
+
+2011-07-11 Alex Tutubalin <lexa@lexa.ru>
+        * New call LibRaw::free_image(), deallocates imgdata.image buffer.
+          Use this call if current postprocessing results are not
+          needed, but it is to early to call recycle() because
+          dcraw_process() may be called later.
+
+        * New C-API calls
+          libraw_raw2image() - C API for LibRaw::raw2image()
+          libraw_free_image() - C API for LibRaw::free_image()
+          libraw_get_decoder_info() - C API for LibRaw::get_decoder_info()
+
+        * Bugfix: change of params.user_flip aftee open()/unpack()
+          calls should work.
+
+        * LibRaw 0.14.0-Alpha2
+
+2011-07-10 Alex Tutubalin <lexa@lexa.ru>
+        * Multiple rendering (LibRaw::dcraw_process() calls) allowed
+          without re-opening RAW file thrfough the sequence of open()/unpack()
+          calls.
+          You should be able to change any processing parameters (except
+          shot_select parameter) between dcraw_process() calls.
+
+          + New sample in samples/multirender_test.cpp: renders data 4 times:
+            in half and full modes with different white balance settings.
+
+          + Unprocessed RAW data is stored in separate data buffer:
+            (2 bytes per pixel for all Bayer-pattern images,
+            8 bytes per pixel for Foveon, sRAW, and other full-color raw 
+            formats), so now LibRaw uses 25% more memory for full processing of 
+            most common Bayer images; while for just unpack memory is reduced 
+            4 times.
+
+          + New call LibRaw::raw2image() fills imgdata.image array
+            with fresh copy of data.
+            There is no need to call raw2image() separately if you use 
+            dcraw_process() or dcraw_document_mode_processing() calls.
+
+          + New call LibRaw::get_decoder_info() to determine raw data
+            storage layout. See samples/unprocessed_raw.cpp for an example 
+            of how to use it.
+
+        If your code uses usual open()/unpack()/dcraw_process() call
+        sequence, then NOTHING CHANGED: your program should produce same
+        results. For interactive programs you may skip open()/unpack()
+        calls after adjusting processing parameters, so user should see
+        image refreshed much faster.
+
+        If your code uses raw data (open+unpack calls), you need to call
+        LibRaw::raw2image(), and imgdata.image will contain same bitmap
+        as in LibRaw 0.13.x
+
+        If you code uses access to masked borders data, you need to
+        rewrite it. See samples/unprocessed_raw.cpp as a sample.
+
+        Unfortunately, documentation is untouched yet. This problem will be
+        fixed in next Alpha release.
+
+        Other changes:
+
+        * No separate imgdata.masked_pixels buffers, Bayer raw formats are read
+          to buffer with borders. So, no ugly add_masked_border_to_bitmap()
+          call.
+
+        * No filtering_mode parameter. Raw tone curve is applied 
+          at unpack() stage; zero pixels removed on postprocesing stage.
+
+        * unprocessed_raw and 4colors samples are adjusted to use
+          new RAW data storage layout.
+
+        * all client code should be recompiled due to internals change.
+
+        * LibRaw 0.14.0-Alpha1
+
+2011-07-03 Alex Tutubalin <lexa@lexa.ru>
+        * Cosmetic cleanup in Libraw_memmgr code
+
+        * Permit OpenMP support on MS VS2008
+
+        * More general mem_image interface:
+          + New call get_mem_image_format returns bitmap size and bit depth
+          + New call copy_mem_image can copy bitmap into buffer with 
+            different color order (RGB/BGR) and line stride
+          + dcraw_make_mem_image() uses calls mentioned above
+          + see documentation for info on these function parameters.
+
+        * libraw/librawwindows.h implements LibRaw_datastream class based
+          on Windows memory mapped files.Win32/64-only 
+          Thanks to Linc Brookes.
+
+        * Fixed parallel make errors in configure/Makefile.am
+
+        * LibRaw 0.13.6-Release
+
+        
+2011-05-18 Alex Tutubalin <lexa@lexa.ru>
+        * Imported new dcraw 9.08/1.443:
+           + New color data for Canon 600D and 1100D, Fuji S200EXR
+           + New camera supported: Fuji HS20EXR and F550EXR, Kodak Z990, 
+                                   Nikon D5100, Olympus E-PL1s and XZ-1, 
+                                   Samsung NX11, Sony A230 and 290.
+        * LibRaw 0.13.5-Release
+
 2011-04-02 Alex Tutubalin <lexa@lexa.ru>
         * Imported new dcraw 9.07/1.442:
           + Support for Canon 600D and 1100D, Hasselblad H4D-60,

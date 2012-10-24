@@ -54,3 +54,5 @@ Steps taken to add libraw to the VC++ project:
   and properties>configuration properties>c/c++>code generation>enable c++ exceptions> "Yes (/EHsc)"
 
   This corresponds to the settings in LibRaw/Makefile.msvc for libraw_static (/EHsc /O2 /W0 /DLIBRAW_NODLL)
+
+KDV 20121024 Upgraded to LibRaw-0.14.7

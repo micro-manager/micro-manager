@@ -97,6 +97,8 @@
 #endif
 
 //#include "stdafx.h"
+#define WIN32_LEAN_AND_MEAN
+
 #include "TetheredCamera.h"
 #include <cstdio>
 #include <string>
@@ -1631,7 +1633,6 @@ int CTetheredCamera::LoadRawImage(IWICImagingFactory *factory, const char* filen
    rawProcessor_.set_progress_handler(&LibrawProgressCallback, (void *)this); // log libraw progress messages to micro-manager CoreLog
  
    rawProcessor_.imgdata.params.document_mode = 0; // standard processing (with white balance)
-   rawProcessor_.imgdata.params.filtering_mode = LIBRAW_FILTERING_AUTOMATIC;
    rawProcessor_.imgdata.params.output_bps = 16; // Write 16 bits per color value
    rawProcessor_.imgdata.params.no_auto_bright = 1; // Don't use automatic increase of brightness by histogram.
 

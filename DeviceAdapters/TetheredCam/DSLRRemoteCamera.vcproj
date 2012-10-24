@@ -331,6 +331,29 @@
 				</FileConfiguration>
 			</File>
 			<File
+				RelativePath=".\LibRaw\src\libraw_datastream.cpp"
+				>
+				<FileConfiguration
+					Name="Debug|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						ExceptionHandling="1"
+						WarningLevel="0"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Release|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						Optimization="2"
+						ExceptionHandling="1"
+						WarningLevel="0"
+					/>
+				</FileConfiguration>
+			</File>
+			<File
 				RelativePath="..\..\MMDevice\ModuleInterface.cpp"
 				>
 				<FileConfiguration
