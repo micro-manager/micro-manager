@@ -3646,13 +3646,11 @@ int AndorCamera::OnSpuriousNoiseFilter(MM::PropertyBase* pProp, MM::ActionType e
       os.str("");
 
       at_32 seriesPrev = 0;
-      at_32 frmcnt = 0;
 
       do
       {
          {
             DriverGuard dg(camera_);
-            //GetStatus(&status);
             ret = GetAcquisitionProgress(&acc, &series);
          }
 		
@@ -3678,15 +3676,14 @@ int AndorCamera::OnSpuriousNoiseFilter(MM::PropertyBase* pProp, MM::ActionType e
 
 			   //camera_->LogMessage("Aquire Thread: Aquired Frame!", true);
                seriesPrev = series;
-               frmcnt++;
                timePrev = GetTickCount();
                // kdb 7/30/2009  
             } else 
             {
                imageWait = GetTickCount() - timePrev;
                if (imageWait > imageTimeOut_) {
-                  os << "Time out reached at frame " << frmcnt;
-				   camera_->LogMessage("Time out reached", true);
+                  os << "Time out reached at frame " << camera_->imageCounter_;
+                  camera_->LogMessage("Time out reached", true);
                   printf("%s\n", os.str().c_str());
                   os.str("");
                   camera_->StopCameraAcquisition();
@@ -3701,7 +3698,7 @@ int AndorCamera::OnSpuriousNoiseFilter(MM::PropertyBase* pProp, MM::ActionType e
 
       }
 
-      while (ret == DRV_SUCCESS && frmcnt < numImages_ && !stop_);
+      while (ret == DRV_SUCCESS && camera_->imageCounter_ < numImages_ && !stop_);
       
 	   
 
@@ -3755,6 +3752,13 @@ int AndorCamera::OnSpuriousNoiseFilter(MM::PropertyBase* pProp, MM::ActionType e
       {
          SetToIdle();
       }
+ 
+      // Limit number of images per DMA to sequence length in-case we're using external trig
+      int ret = SetDMAParameters(numImages, 0.001f);
+      if (DRV_SUCCESS != ret)
+         return (int)ret;
+      
+
       LogMessage("Setting Trigger Mode", true);
       int ret0;
       if (iCurrentTriggerMode_ == SOFTWARE)
@@ -3765,7 +3769,7 @@ int AndorCamera::OnSpuriousNoiseFilter(MM::PropertyBase* pProp, MM::ActionType e
       LogMessage(os.str().c_str());
 
       // prepare the camera
-      int ret = SetAcquisitionMode(5); // run till abort
+      ret = SetAcquisitionMode(5); // run till abort
       if (ret != DRV_SUCCESS)
          return ret;
       LogMessage("Set acquisition mode to 5", true);
@@ -3961,26 +3965,60 @@ int AndorCamera::OnSpuriousNoiseFilter(MM::PropertyBase* pProp, MM::ActionType e
       unsigned int width;
       unsigned int height;
       unsigned int bytesPerPixel;
+      unsigned long imagesPerDMA;
+      long validFirst, validLast;
       
       {
          DriverGuard dg(this);
          unsigned ret;
-         // get the top most image from the driver
-         if (stopOnOverflow_)
-            ret = GetOldestImage16((WORD*)fullFrameBuffer_, roi_.xSize/binSize_ * roi_.ySize/binSize_);
-         else
-            ret = GetMostRecentImage16((WORD*)fullFrameBuffer_, roi_.xSize/binSize_ * roi_.ySize/binSize_);
-         if (ret != DRV_SUCCESS)
-            return (int)ret;
+         long imageCountFirst, imageCountLast; 
          
          width =  GetImageWidth();
          height = GetImageHeight();
          bytesPerPixel = GetImageBytesPerPixel();
 
+         ret = GetNumberNewImages(&imageCountFirst, &imageCountLast);
+         if (ret != DRV_SUCCESS)
+            return (int)ret;
+
+         ret = GetImagesPerDMA (&imagesPerDMA);
+         if (ret != DRV_SUCCESS)
+            return (int)ret;
+
+         long imagesAvailable = imageCountLast - imageCountFirst;
+
+         if(imagesAvailable >= imagesPerDMA)
+         {
+            imagesAvailable = imagesPerDMA-1;
+         }
+
+         if(stopOnOverflow_)
+         {
+            imageCountLast = imageCountFirst+imagesAvailable; //get oldest images
+         }
+         else
+         {
+            imageCountFirst = imageCountLast-imagesAvailable; //get newest images
+         }
+
+         
+
+         ret = GetImages16(imageCountFirst,imageCountLast, (WORD*) fullFrameBuffer_, imagesPerDMA*width*height, &validFirst, &validLast);
+         if (ret != DRV_SUCCESS)
+            return (int)ret;
+
       }
 
       // process image
       // imageprocesssor now called from core
+
+     if(validLast > sequenceLength_) 
+            validLast = sequenceLength_; //don't push more images at the circular buffer than are in the sequence.  
+
+      int retCode;
+      short*  imagePtr = fullFrameBuffer_;
+      for(int i=validFirst; i<=validLast; i++)
+      {
 
          // create metadata
          char label[MM::MaxStrLength];
@@ -4020,22 +4058,26 @@ int AndorCamera::OnSpuriousNoiseFilter(MM::PropertyBase* pProp, MM::ActionType e
          imageCounter_++;
 
          // This method inserts new image in the circular buffer (residing in MMCore)
-      int retCode = GetCoreCallback()->InsertImage(this, (unsigned char*) fullFrameBuffer_,
+         retCode = GetCoreCallback()->InsertImage(this, (unsigned char*) imagePtr,
             width,
             height,
             bytesPerPixel,
             md.Serialize().c_str());
-         
-      if (!stopOnOverflow_ && retCode == DEVICE_BUFFER_OVERFLOW)
+
+         if (!stopOnOverflow_ && DEVICE_BUFFER_OVERFLOW == retCode)
          {
             // do not stop on overflow - just reset the buffer
             GetCoreCallback()->ClearImageBuffer(this);
-         return GetCoreCallback()->InsertImage(this, (unsigned char*) fullFrameBuffer_,
-            GetImageWidth(),
-            GetImageHeight(),
-            GetImageBytesPerPixel(),
+            GetCoreCallback()->InsertImage(this, (unsigned char*) imagePtr,
+               width,
+               height,
+               bytesPerPixel,
                md.Serialize().c_str());
-      } else
+         }
+
+         imagePtr += width*height;
+      }
+
       return DEVICE_OK;
    }
 
