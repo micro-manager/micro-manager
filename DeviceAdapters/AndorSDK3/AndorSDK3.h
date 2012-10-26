@@ -136,6 +136,7 @@ private:
    void InitialiseSDK3Defaults();
 
    static const double nominalPixelSizeUm_;
+   static const int CID_FPGA_TICKS = 1;
 
    ImgBuffer img_;
    bool busy_;
@@ -145,8 +146,9 @@ private:
    MM::MMTime readoutStartTime_;
    unsigned roiX_;
    unsigned roiY_;
-   MM::MMTime sequenceStartTime_;
-   long imageCounter_;
+   AT_64 sequenceStartTime_;
+   AT_64 fpgaTSclockFrequency_;
+   AT_64 timeStamp_;
    bool softwareTriggerMode_;
    double d_frameRate_;
    int number_of_devices_;
@@ -160,6 +162,7 @@ private:
 
    int GetNumberOfDevicesPresent() { return number_of_devices_; };
    void SetNumberOfDevicesPresent(int deviceCount) { number_of_devices_ = deviceCount; };
+   AT_64 GetTimeStamp(unsigned char* pBuf);
 
    MMThreadLock* pDemoResourceLock_;
    MMThreadLock imgPixelsLock_;

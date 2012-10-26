@@ -63,6 +63,9 @@ const char * const g_CameraDefaultBinning = "1x1";
 static const wstring g_RELEASE_2_0_FIRMWARE_VERSION = L"11.1.12.0";
 static const wstring g_RELEASE_2_1_FIRMWARE_VERSION = L"11.7.30.0";
 
+static const unsigned int LENGTH_FIELD_SIZE = 4;
+static const unsigned int CID_FIELD_SIZE = 4;
+
 // TODO: linux entry code
 
 // windows DLL entry code
@@ -159,6 +162,8 @@ CAndorSDK3Camera::CAndorSDK3Camera()
   b_cameraPresent_(false),
   number_of_devices_(0),
   sequenceStartTime_(0),
+  fpgaTSclockFrequency_(0),
+  timeStamp_(0),
   pDemoResourceLock_(0),
   image_buffers_(NULL),
   d_frameRate_(0),
@@ -564,9 +569,11 @@ int CAndorSDK3Camera::SnapImage()
 
    snapShotController_->takeSnapShot(return_buffer);
 
-   UnpackDataWithPadding(return_buffer);
+   timeStamp_ = GetTimeStamp(return_buffer);
 
-   readoutStartTime_ = GetCurrentMMTime();
+   UnpackDataWithPadding(return_buffer);
+   // TODO Currently Snap waits until readout completes to unpack - need to revisit
+   //readoutStartTime_ = GetCurrentMMTime();
 
    return DEVICE_OK;
 }
@@ -585,24 +592,13 @@ int CAndorSDK3Camera::SnapImage()
 const unsigned char * CAndorSDK3Camera::GetImageBuffer()
 {
    MMThreadGuard g(imgPixelsLock_);
-   MM::MMTime readoutTime(readoutUs_);
-   while (readoutTime > (GetCurrentMMTime() - readoutStartTime_))
-   {
-   }
+   // TODO Currently Snap waits until readout completes to unpack - need to revisit
+   //MM::MMTime readoutTime(readoutUs_);
+   //while (readoutTime > (GetCurrentMMTime() - readoutStartTime_))
+   //{
+   //}
 
-
-   MM::ImageProcessor * ip = NULL;
-#ifdef PROCESSIMAGEINDEVICEADAPTER
-   ip = GetCoreCallback()->GetImageProcessor(this);
-#endif
-   unsigned char * pB = (unsigned char *)(img_.GetPixels());
-
-   if (ip)
-   {
-      // huh...
-      ip->Process(pB, GetImageWidth(), GetImageHeight(), GetImageBytesPerPixel());
-   }
-   return pB;
+   return img_.GetPixels();
 }
 
 /**
@@ -860,11 +856,55 @@ int CAndorSDK3Camera::StartSequenceAcquisition(long numImages, double interval_m
       retCode = GetCoreCallback()->PrepareForAcq(this);
    }
 
+   //MetaData / TimeStamp enable
+   IBool * metadataEnable = NULL;
+   IBool * mdTimeStampEnable = NULL;
+   try
+   {
+      metadataEnable = cameraDevice->GetBool(L"MetadataEnable");
+      metadataEnable->Set(true);
+      cameraDevice->Release(metadataEnable);
+   }
+   catch (exception & e)
+   {
+      string s("[StartSequenceAcquisition] metadataEnable Caught Exception with message: ");
+      s += e.what();
+      LogMessage(s);
+      cameraDevice->Release(metadataEnable);
+   }
+
+   try
+   {
+      mdTimeStampEnable = cameraDevice->GetBool(L"MetadataTimestamp");
+      mdTimeStampEnable->Set(true);
+      cameraDevice->Release(mdTimeStampEnable);
+   }
+   catch (exception & e)
+   {
+      string s("[StartSequenceAcquisition] metadataEnable TS Caught Exception with message: ");
+      s += e.what();
+      LogMessage(s);
+      cameraDevice->Release(mdTimeStampEnable);
+   }
+
+   //TimestampClockFrequency
+   IInteger* tsClkFrequency = NULL;
+   try
+   {
+      tsClkFrequency = cameraDevice->GetInteger(L"TimestampClockFrequency");
+      fpgaTSclockFrequency_ = tsClkFrequency->Get();
+      cameraDevice->Release(tsClkFrequency);
+   }
+   catch (exception & e)
+   {
+      string s("[StartSequenceAcquisition] TS Clk Frequency Caught Exception with message: ");
+      s += e.what();
+      LogMessage(s);
+      cameraDevice->Release(tsClkFrequency);
+   }
+
    if (DEVICE_OK == retCode)
    {
-      sequenceStartTime_ = GetCurrentMMTime();
-      imageCounter_ = 0;
-
       InitialiseDeviceCircularBuffer();
 
       if (LONG_MAX != numImages)
@@ -928,45 +968,91 @@ int CAndorSDK3Camera::StartSequenceAcquisition(long numImages, double interval_m
    return retCode;
 }
 
+
+AT_64 CAndorSDK3Camera::GetTimeStamp(unsigned char* pBuf)
+{
+   IInteger* imageSizeBytes = NULL;
+   stringstream ss_logTimeStamp;
+   AT_64 imageSize = 0;
+   try
+   {
+      imageSizeBytes = cameraDevice->GetInteger(L"ImageSizeBytes");
+      imageSize = imageSizeBytes->Get();
+      cameraDevice->Release(imageSizeBytes);
+   }
+   catch (exception & e)
+   {
+      string s("[GetTimeStamp] Caught Exception with message: ");
+      s += e.what();
+      LogMessage(s);
+      cameraDevice->Release(imageSizeBytes);
+   }
+   int i_imageSize = static_cast<int>(imageSize);
+   // Move to end of image. This is assuming reading metadata right to left.
+   unsigned char* puc_metadata = pBuf + i_imageSize;
+   AT_64 i64_timestamp = 0;
+   puc_metadata -= LENGTH_FIELD_SIZE;
+   andoru32 timestampSize = *(reinterpret_cast<andoru32*>(puc_metadata));
+   puc_metadata -= CID_FIELD_SIZE;
+   andoru32 cid = *(reinterpret_cast<andoru32*>(puc_metadata));
+   if (CID_FPGA_TICKS == cid) {
+      i64_timestamp = *(reinterpret_cast<AT_64*>(puc_metadata - (timestampSize-CID_FIELD_SIZE)));
+      ss_logTimeStamp << "[GetTimeStamp] found CID, value is: " << i64_timestamp;
+   }
+   else {
+      ss_logTimeStamp << "[GetTimeStamp] No timestamp found in frame: " << thd_->GetImageCounter();
+   }
+   LogMessage(ss_logTimeStamp.str());
+   return i64_timestamp;
+}
+
 /*
  * Inserts Image and MetaData into MMCore circular Buffer
  */
 int CAndorSDK3Camera::InsertImage()
 {
-   MM::MMTime timeStamp = this->GetCurrentMMTime();
-   char label[MM::MaxStrLength];
-   this->GetLabel(label);
-
-   // Important:  metadata about the image are generated here:
+   char deviceName[MM::MaxStrLength];
+   GetProperty(MM::g_Keyword_Name, deviceName);
+   
    Metadata md;
-   md.put("Camera", label);
-   //md.put(MM::g_Keyword_Metadata_StartTime, CDeviceUtils::ConvertToString(sequenceStartTime_.getMsec()));
-   //md.put(MM::g_Keyword_Elapsed_Time_ms, CDeviceUtils::ConvertToString((timeStamp - sequenceStartTime_).getMsec()));
-   //md.put(MM::g_Keyword_Metadata_ImageNumber, CDeviceUtils::ConvertToString(imageCounter_));
-   //md.put(MM::g_Keyword_Metadata_ROI_X, CDeviceUtils::ConvertToString( (long) roiX_)); 
-   //md.put(MM::g_Keyword_Metadata_ROI_Y, CDeviceUtils::ConvertToString( (long) roiY_)); 
 
-   imageCounter_++;
+   MetadataSingleTag mstCount(MM::g_Keyword_Metadata_ImageNumber, deviceName, true);
+   mstCount.SetValue(CDeviceUtils::ConvertToString(thd_->GetImageCounter()));      
+   md.SetTag(mstCount);
 
-   char buf[MM::MaxStrLength];
-   GetProperty(MM::g_Keyword_Binning, buf);
-   md.put(MM::g_Keyword_Binning, buf);
+   if (0 == thd_->GetImageCounter())
+   {
+      sequenceStartTime_ = timeStamp_;
+   }
+
+   stringstream ss;
+   ss << sequenceStartTime_;
+   MetadataSingleTag mstStartTime(MM::g_Keyword_Metadata_StartTime, deviceName, true);
+   mstStartTime.SetValue(ss.str().c_str());
+   md.SetTag(mstStartTime);
+
+   ss.str("");
+   ss.clear();
+   double d_result = (timeStamp_-sequenceStartTime_)/static_cast<double>(fpgaTSclockFrequency_);
+   ss << d_result*1000 << " [" << d_result << " seconds]";
+   MetadataSingleTag mst(MM::g_Keyword_Elapsed_Time_ms, deviceName, true);
+   mst.SetValue(ss.str().c_str());
+   md.SetTag(mst);
 
    MMThreadGuard g(imgPixelsLock_);
-
 
    const unsigned char * pData = img_.GetPixels();
    unsigned int w = img_.Width();
    unsigned int h = img_.Height();
    unsigned int b = img_.Depth();
 
-   int ret = GetCoreCallback()->InsertImage(this, pData, w, h, b);
+   int ret = GetCoreCallback()->InsertImage(this, pData, w, h, b, md.Serialize().c_str(), false);
    if (!stopOnOverflow_ && ret == DEVICE_BUFFER_OVERFLOW)
    {
       // do not stop on overflow - just reset the buffer
       GetCoreCallback()->ClearImageBuffer(this);
       // don't process this same image again...
-      ret = GetCoreCallback()->InsertImage(this, pData, w, h, b);
+      ret = GetCoreCallback()->InsertImage(this, pData, w, h, b, md.Serialize().c_str(), false);
    }
 
    return ret;
@@ -1009,6 +1095,7 @@ int CAndorSDK3Camera::ThreadRun(void)
    if (got_image)
    {
       bufferControl->Queue(return_buffer, buffer_size);
+      timeStamp_ = GetTimeStamp(return_buffer);
       UnpackDataWithPadding(return_buffer);
    }
    return InsertImage();
