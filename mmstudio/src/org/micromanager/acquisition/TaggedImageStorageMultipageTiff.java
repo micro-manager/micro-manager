@@ -30,7 +30,9 @@ import loci.common.DateTools;
 import loci.common.services.ServiceFactory;
 import loci.formats.MetadataTools;
 import loci.formats.meta.IMetadata;
+import loci.formats.ome.OMEXMLMetadata;
 import loci.formats.services.OMEXMLService;
+import loci.formats.services.OMEXMLServiceImpl;
 import mmcorej.TaggedImage;
 import ome.xml.model.enums.Binning;
 import ome.xml.model.primitives.*;
@@ -622,6 +624,10 @@ public final class TaggedImageStorageMultipageTiff implements TaggedImageStorage
          }
       }
 
+      /*
+       * Completes the current time point of an aborted acquisition with blank images, 
+       * so that it can be opened correctly by ImageJ/BioForamts
+       */
       private void completeFrameWithBlankImages(int frame) throws JSONException {
          int numFrames = MDUtils.getNumFrames(summaryMetadata_);
          int numSlices = MDUtils.getNumSlices(summaryMetadata_);
@@ -694,11 +700,6 @@ public final class TaggedImageStorageMultipageTiff implements TaggedImageStorage
          if (comments.has("Summary") && !comments.isNull("Summary")) {
             omeMD_.setImageDescription(comments.getString("Summary"), index_);
          }    
-         
-         if (summaryMetadata_.has("Time") && !summaryMetadata_.isNull("Time")) {
-            String date = DateTools.formatDate(summaryMetadata_.getString("Time"), OME_DATE_FORMAT);
-            omeMD_.setImageAcquisitionDate(new Timestamp(date), index_);
-         }
       }
       
       private void addToOMEMetadata(JSONObject tags) {
@@ -706,7 +707,10 @@ public final class TaggedImageStorageMultipageTiff implements TaggedImageStorage
             //Add these tags in only once, but need to get them from image rather than summary metadata
             if (planeIndex_ == 0) {
                setOMEDetectorMetadata(tags);
-               addOtherMetadtaToOME(tags);
+               if (tags.has("Time") && !tags.isNull("Time")) {
+                  omeMD_.setImageAcquisitionDate( new Timestamp( 
+                          DateTools.formatDate(tags.getString("Time"), "yyyy-MM-dd HH:mm:ss") ),index_);
+               }
             }
             int channelIndex = MDUtils.getChannelIndex(tags);
             if (!channelsAdded_.contains(channelIndex) ) {
@@ -827,32 +831,10 @@ public final class TaggedImageStorageMultipageTiff implements TaggedImageStorage
          if (tags.has(camera + "-Gain") && !tags.isNull(camera + "-Gain")) {
             omeMD_.setDetectorSettingsGain(tags.getDouble(camera + "-Gain"), index_, channelIndex);
          }
-         
-         //DetectorSettingsID
-         //DetectorSettingsOffset
-         //DetectorSettingsReadoutRate
-         //DetectorSettingsVoltage
-         
+           
          JSONObject channel = displayAndComments_.getJSONArray("Channels").getJSONObject(channelIndex);
          omeMD_.setChannelColor(new Color(channel.getInt("Color")), index_, channelIndex);
-         omeMD_.setChannelName(channel.getString("Name"), index_, channelIndex);
-
-//      setChannelAcquisitionMode(AcquisitionMode acquisitionMode, int imageIndex, int channelIndex)      
-// 	setChannelAnnotationRef(String annotation, int imageIndex, int channelIndex, int annotationRefIndex)     
-// 	setChannelContrastMethod(ContrastMethod contrastMethod, int imageIndex, int channelIndex)     
-// 	setChannelEmissionWavelength(PositiveInteger emissionWavelength, int imageIndex, int channelIndex)      
-// 	setChannelExcitationWavelength(PositiveInteger excitationWavelength, int imageIndex, int channelIndex)       
-// 	setChannelFilterSetRef(String filterSet, int imageIndex, int channelIndex)      
-// 	setChannelFluor(String fluor, int imageIndex, int channelIndex)        
-// 	setChannelID(String id, int imageIndex, int channelIndex)       
-// 	setChannelIlluminationType(IlluminationType illuminationType, int imageIndex, int channelIndex)           
-// 	setChannelLightSourceSettingsAttenuation(PercentFraction attenuation, int imageIndex, int channelIndex)           
-// 	setChannelLightSourceSettingsID(String id, int imageIndex, int channelIndex)            
-// 	setChannelLightSourceSettingsWavelength(PositiveInteger wavelength, int imageIndex, int channelIndex)         
-// 	setChannelNDFilter(Double ndFilter, int imageIndex, int channelIndex) 
-//      setChannelPinholeSize(Double pinholeSize, int imageIndex, int channelIndex) 
-//      setChannelPockelCellSetting(Integer pockelCellSetting, int imageIndex, int channelIndex) 
-//      setChannelSamplesPerPixel(PositiveInteger samplesPerPixel, int imageIndex, int channelIndex)  
+         omeMD_.setChannelName(channel.getString("Name"), index_, channelIndex);  
       }
    
       private void setOMEDetectorMetadata(JSONObject tags) throws JSONException {
@@ -895,30 +877,9 @@ public final class TaggedImageStorageMultipageTiff implements TaggedImageStorage
                omeMD_.setDetectorSerialNumber(tags.getString(camera+"-CameraID"), 0, detectorIndex);
             }
 
-            //Unused OME methods
-//         DetectorAmplificationGain  
-//         DetectorLotNumber
-//         DetectorType
-//         DetectorVoltage
-//         DetectorZoom
          }
       }
-   
-      private void addOtherMetadtaToOME(JSONObject tags) throws JSONException {
-//         OMEXMLService service = new OMEXMLServiceImpl();       
-//         service.populateOriginalMetadata((OMEXMLMetadata)omeMD_, "Other metadata", tags.toString(2));
-//         Iterator<String> keys = tags.keys();
-//         while (keys.hasNext()) {
-//            String key = keys.next();
-//            if (tags.isNull(key)) {
-//               continue;
-//            }
-//            String value = tags.getString(key);
-//            service.populateOriginalMetadata((OMEXMLMetadata)omeMD_, key, value);  
-//         }
-      }  
    }
-
    
    private class CachedImages {
       private static final int NUM_TO_CACHE = 10;
