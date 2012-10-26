@@ -16,6 +16,7 @@
 #include "DeviceThreads.h"
 #include <string>
 #include <map>
+#include <vector>
 #include <algorithm>
 using namespace std;
 
@@ -78,6 +79,7 @@ typedef std::vector<CStandardResolutionItem>  CStandardResolutionList;  // camer
 typedef std::vector<CColorCorrectionItem>     CColorCorrectionList;     // color correction item
 typedef std::map<std::string, u16>            CIOPortNameToIndexMap;    // io-port map
 
+typedef std::vector<std::string>                  CStringVector;            // property names to handle transpose functions
 
 //! abs camera class
 class CABSCamera : public CCameraBase<CABSCamera>  
@@ -129,6 +131,8 @@ public:
 
   static bool isApiDllAvailable( void );
 
+
+  int SetProperty(const char* name, const char* value);
 
   // action interface
   // ----------------
@@ -247,6 +251,7 @@ protected:
   int   OnStrobeCommon        (const char* propName, MM::PropertyBase* pProp, MM::ActionType eAct );
   int   OnTriggerCommon       (const char* propName, MM::PropertyBase* pProp, MM::ActionType eAct );
 
+  void  initTransposeFunctions( bool bInitialize );
   
 private:
   int   apiToMMErrorCode( unsigned long apiErrorNumber ) const;
@@ -277,6 +282,8 @@ private:
   std::string               strobePortName_;
   std::string               strobePortPolarity_;
   S_CAMERA_VERSION          cameraVersion_;
+
+  CStringVector             transposePropertyNames_;
 
 private:
   static const double nominalPixelSizeUm_;

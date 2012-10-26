@@ -59,7 +59,7 @@ const char* const g_Gain_Extra_x8 = "x08";
 const char* const g_Gain_Extra_x16 = "x16";
 
 // exposure
-const char* const g_Keyword_Exposure_LongTime = "Exposure (allow longtime)";
+const char* const g_Keyword_Exposure_LongTime = "Exposure (allow long time)";
 const char* const g_Exposure_LongTime_Off = "Off";
 const char* const g_Exposure_LongTime_On = "On";
 
@@ -682,7 +682,6 @@ int CABSCamera::Initialize()
     AddAllowedValue(g_Keyword_ProfilesSave, PROFILE_QUALITITYNAME );
   }
 
-
   // camera temperature
   {
     temperatureUnit_ = 1.0;
@@ -714,6 +713,9 @@ int CABSCamera::Initialize()
 
   // try to load the last used profile profiles and restore it
   loadProfile( PROFILE_DEFAULTNAME, PROFILE_SETTINGSNAME );
+
+  // prepare transpose callbacks => as workaround to be notified on changes like the other functions
+  initTransposeFunctions( true );
 
   // setup the buffer
   // ----------------
@@ -771,6 +773,8 @@ int CABSCamera::Shutdown()
     releaseDeviceNumber( deviceNo() );
   }
 
+  initTransposeFunctions( false );
+
   setInitialized( false );
   return DEVICE_OK;
 }
@@ -786,11 +790,6 @@ int CABSCamera::SnapImage()
   //TIMEDEBUG
   u32 rc;
 
-  // check current transpose settings and apply them at camera if necessary
-  rc = updateCameraTransposeCorrection( );
-
-  if ( IsNoError( rc ) )
-  {
     MM::MMTime startTime = GetCurrentMMTime();
 
     // read image
@@ -798,7 +797,7 @@ int CABSCamera::SnapImage()
 
     if ( retOK == rc )
       readoutStartTime_ = startTime;
-  }
+
   //TIMEDEBUG_RC(rc)
   return convertApiErrorCode( rc );
 }
@@ -2370,6 +2369,7 @@ int CABSCamera::OnProfileLoad(MM::PropertyBase* pProp, MM::ActionType eAct)
       }
       else // update internal members
       {
+        initTransposeFunctions(true);
         checkForModifiedCameraParameter();
         updateShadingCorrectionState();
       }
@@ -3566,7 +3566,11 @@ int CABSCamera::checkForModifiedCameraParameter()
     bitDepth_ = usedBpp;
     roiX_ = sResInfo.sResOut.wOffsetX;
     roiY_ = sResInfo.sResOut.wOffsetY;
-    img_.Resize( sResInfo.wImgWidth, sResInfo.wImgHeight, spp, bitDepth_);
+
+    if ( bSwapXY_ )
+      img_.Resize( sResInfo.wImgHeight, sResInfo.wImgWidth, spp, bitDepth_);
+    else
+      img_.Resize( sResInfo.wImgWidth, sResInfo.wImgHeight, spp, bitDepth_);
   }
 
 checkForModifiedCameraParameter_Done:
@@ -3676,7 +3680,7 @@ u32 CABSCamera::updateCameraTransposeCorrection( void )
     u32 dwSize;
     S_ROTATE_REMAP_PARAMS sRRP = {0};
     
-    if ( bSwapXY_ )
+    if ( bSwap )
     {
       sRRP.dwMode = ROTREM_MODE_ROTATE_CENTER;
       sRRP.dwFlag = ROTREM_FLAG_OPT_IMG_SIZE;
@@ -3692,6 +3696,8 @@ u32 CABSCamera::updateCameraTransposeCorrection( void )
     if ( IsNoError( rc ) )
     {
       bSwapXY_ = bSwap;
+
+      checkForModifiedCameraParameter();
     }
   }
   return rc;
@@ -3923,4 +3929,92 @@ void CABSCamera::setFramerate( double fps )
 }
 
 // ----------------------------------------------------------------------------
+
+int CABSCamera::SetProperty(const char* name, const char* value)
+{
+  int nRet = __super::SetProperty( name, value );
+
+  if ( DEVICE_OK == nRet )
+  {
+    CStringVector::iterator iter = find( transposePropertyNames_.begin(), transposePropertyNames_.end(), name );
+
+    if ( iter != transposePropertyNames_.end() )
+    {
+      // check current transpose settings and apply them at camera if necessary
+      u32 dwRC = updateCameraTransposeCorrection( );
+      nRet = convertApiErrorCode( dwRC, __FUNCTION__ );
+    }
+  }
+
+  return nRet;
+}
+
+
+void CABSCamera::initTransposeFunctions( bool bInitialize )
+{
+  transposePropertyNames_.clear();
+  
+  if ( bInitialize )
+  {
+    u32 rc;
+    u32 dwSize;
+
+    if ( isSupported( FUNC_FLIP ) || isSupported( FUNC_ROTATE_REMAP ) )
+      transposePropertyNames_.push_back( MM::g_Keyword_Transpose_Correction );
+
+    if ( isSupported( FUNC_ROTATE_REMAP ) )
+    {
+      bSwapXY_ = false;
+
+      transposePropertyNames_.push_back( MM::g_Keyword_Transpose_SwapXY );
+
+      // read settings
+      
+      S_ROTATE_REMAP_PARAMS sRRP = {0};
+      
+      dwSize = sizeof( sRRP );
+      rc = GET_RC( CamUSB_GetFunction( FUNC_ROTATE_REMAP, &sRRP, &dwSize, 0, 0, 0, 0, deviceNo() ), deviceNo());
+
+      if ( IsNoError( rc ) )
+      {
+        if ( (sRRP.dwMode == ROTREM_MODE_ROTATE_CENTER) &&
+             (sRRP.dwFlag == ROTREM_FLAG_OPT_IMG_SIZE)  &&
+             (sRRP.dwInterpolation == ROTREM_INTER_NN)  &&
+             (sRRP.fAngle == -90.0f ) )
+        {
+          bSwapXY_ = true;
+        }
+        else
+        {
+          sRRP.dwMode = ROTREM_MODE_OFF;
+          rc = GET_RC( CamUSB_SetFunction( FUNC_ROTATE_REMAP, &sRRP, dwSize, 0, 0, 0, 0, deviceNo() ), deviceNo());
+        }
+      }
+    }
+
+    if ( isSupported( FUNC_FLIP ) )
+    {
+      transposePropertyNames_.push_back( MM::g_Keyword_Transpose_MirrorX );
+      transposePropertyNames_.push_back( MM::g_Keyword_Transpose_MirrorY );
+
+      S_FLIP_PARAMS sFlipP = {0};
+      dwSize = sizeof( sFlipP );
+      rc = GET_RC( CamUSB_GetFunction( FUNC_FLIP, &sFlipP, &dwSize, 0, 0, 0, 0, deviceNo() ), deviceNo());
+
+      if ( IsNoError( rc ) )
+      {
+        bMirrorX_ = ((sFlipP.wFlipMode & FLIP_HORIZONTAL) != FLIP_NONE);
+        bMirrorY_ = ((sFlipP.wFlipMode & FLIP_VERTICAL) != FLIP_NONE);
+      }
+    }
+
+    // show current transpose status
+    __super::SetProperty( MM::g_Keyword_Transpose_Correction, (bSwapXY_ || bMirrorX_ || bMirrorY_ ) ? "1" : "0" );
+    __super::SetProperty( MM::g_Keyword_Transpose_MirrorX,    (bMirrorX_ )                          ? "1" : "0" );
+    __super::SetProperty( MM::g_Keyword_Transpose_MirrorY,    (bMirrorY_ )                          ? "1" : "0" );
+    __super::SetProperty( MM::g_Keyword_Transpose_SwapXY,     (bSwapXY_ )                           ? "1" : "0" );
+
+  }
+
+}
 
