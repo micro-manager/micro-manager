@@ -30,7 +30,6 @@ import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Iterator;
 import java.util.UUID;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.prefs.Preferences;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -59,7 +58,7 @@ import org.micromanager.utils.ReportingUtils;
  */
 public class MMAcquisition {
    
-   public static final Color[] DEFAULT_COLORS = {Color.blue, Color.green, Color.red,
+   public static final Color[] DEFAULT_COLORS = {Color.red, Color.green, Color.blue,
       Color.pink, Color.orange, Color.yellow};
    
    private int numFrames_ = 0;
@@ -480,7 +479,7 @@ public class MMAcquisition {
                try {
                   channelNames_.put(i, String.valueOf(i));
                } catch (JSONException exx) {
-                  ;
+                  
                }
             }
             try {
