@@ -560,9 +560,8 @@ public final class VirtualAcquisitionDisplay implements AcquisitionDisplay, Imag
          setNumPositions(numPositions);
       }
       
-      //Load contrast settigns if opening datset
+      // Load contrast settigns if opening datset
       if (imageCache_.isFinished()) {
-         
       }
 
       updateAndDraw(false);

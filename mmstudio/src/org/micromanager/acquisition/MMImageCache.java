@@ -17,8 +17,6 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import javax.swing.SwingUtilities;
 import mmcorej.TaggedImage;
 import org.json.JSONArray;
@@ -37,7 +35,7 @@ import org.micromanager.utils.ReportingUtils;
 public class MMImageCache implements ImageCache {
 
    public static String menuName_ = null;
-   public List<ImageCacheListener> imageStorageListeners_ = Collections.synchronizedList(new ArrayList<ImageCacheListener>());
+   public final List<ImageCacheListener> imageStorageListeners_ = Collections.synchronizedList(new ArrayList<ImageCacheListener>());
    private TaggedImageStorage imageStorage_;
    private Set<String> changingKeys_;
    private JSONObject firstTags_;
@@ -72,6 +70,7 @@ public class MMImageCache implements ImageCache {
 
    private void preloadImages() {
       new Thread() {
+         @Override
          public void run() {
             for (String label : MMImageCache.this.imageKeys()) {
                int pos[] = MDUtils.getIndices(label);
@@ -137,8 +136,7 @@ public class MMImageCache implements ImageCache {
 
       newImageFileManager.setSummaryMetadata(imageStorage_.getSummaryMetadata());
       newImageFileManager.setDisplayAndComments(this.getDisplayAndComments());
-      //Thread th = new Thread(new Runnable() {
-      //   public void run() {
+
       final String progressBarTitle = (newImageFileManager instanceof TaggedImageStorageRam) ? "Loading images..." : "Saving images...";
       final ProgressBar progressBar = new ProgressBar(progressBarTitle, 0, 100);
             ArrayList<String> keys = new ArrayList<String>(imageKeys());
@@ -165,9 +163,6 @@ public class MMImageCache implements ImageCache {
             if (useNewStorage) {
                imageStorage_ = newImageFileManager;
             }
-         //}
-      // });
-      //th.start();
       
    }
 

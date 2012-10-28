@@ -26,7 +26,6 @@ package org.micromanager.graph;
 
 import java.awt.BasicStroke;
 import java.awt.Color;
-import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Rectangle;
 import java.awt.Stroke;
@@ -78,25 +77,15 @@ public class HistogramPanel extends GraphPanel {
       path.lineTo(ptDevTop.x, ptDevTop.y);
       return path;
    }
-   
-   private void updateBounds(){
-//      GraphData.Bounds bounds = getGraphBounds();
-//      DecimalFormat fmtDec = new DecimalFormat("#0.00");
-//      DecimalFormat fmtInt = new DecimalFormat("#0");
-//      fldXMin.setText(fmtInt.format(bounds.xMin));
-//      fldXMax.setText(fmtInt.format(bounds.xMax));
-//      fldYMin.setText(fmtDec.format(bounds.yMin));
-//      fldYMax.setText(fmtDec.format(bounds.yMax));
-   }
-   
+      
    /**
     * Auto-scales Y axis.
     *
     */
    public void setAutoScale() {
       setAutoBounds();
-      updateBounds();
    }
+   
    public void setDataSource(GraphData data){
       setData(data);
       refresh();
@@ -222,14 +211,6 @@ public class HistogramPanel extends GraphPanel {
 
    public void refresh() {
       GraphData.Bounds bounds = getGraphBounds();
-//      if (fldXMin.getText().length() > 0 && fldYMin.getText().length() > 0 && 
-//          fldXMax.getText().length() > 0 && fldYMax.getText().length() > 0 )
-//      {      
-//         bounds.xMin = Double.parseDouble(fldXMin.getText());
-//         bounds.xMax = Double.parseDouble(fldXMax.getText());
-//         bounds.yMin = Double.parseDouble(fldYMin.getText());
-//         bounds.yMax = Double.parseDouble(fldYMax.getText());
-//      }
       bounds.xMin = xMin_;
       bounds.xMax = xMax_;
       setBounds(bounds);
@@ -274,6 +255,7 @@ public class HistogramPanel extends GraphPanel {
 
    private void setupMouseListeners() {
       addMouseListener(new MouseAdapter() {
+         @Override
          public void mousePressed(MouseEvent e) {
             currentHandle = getClickBand(e.getX(), e.getY());
             int x = e.getX();
@@ -295,12 +277,14 @@ public class HistogramPanel extends GraphPanel {
          }
 
 
+         @Override
          public void mouseReleased(MouseEvent e) {
             currentHandle = 0;
          }
       });
 
       addMouseMotionListener(new MouseMotionAdapter() {
+         @Override
          public void mouseDragged(MouseEvent e) {
             if (currentHandle == 0)
                return;
@@ -360,7 +344,10 @@ public class HistogramPanel extends GraphPanel {
       }
    }
 
-   //Makes histogram background black
+   /**
+    * Makes histogram background black
+    * 
+    */
    @Override
    protected void drawGraph(Graphics2D g, Rectangle box) {
       Color oldColor = g.getColor();

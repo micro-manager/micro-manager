@@ -9,7 +9,6 @@ import org.micromanager.MMStudioMainFrame;
 import org.micromanager.acquisition.VirtualAcquisitionDisplay;
 import org.micromanager.internalinterfaces.Histograms;
 import org.micromanager.api.ImageCache;
-import org.micromanager.graph.ChannelControlPanel;
 import org.micromanager.utils.ContrastSettings;
 import org.micromanager.utils.MDUtils;
 import org.micromanager.utils.ReportingUtils;
@@ -35,7 +34,7 @@ import org.micromanager.utils.ReportingUtils;
 //               CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 //
-public class MultiChannelHistograms extends JPanel implements Histograms {
+public final class MultiChannelHistograms extends JPanel implements Histograms {
 
    private static final int SLOW_HIST_UPDATE_INTERVAL_MS = 1000;
    private long lastUpdateTime_;

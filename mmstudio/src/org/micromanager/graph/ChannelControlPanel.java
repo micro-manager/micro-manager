@@ -163,6 +163,7 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
       colorPickerLabel_.setOpaque(true);
       colorPickerLabel_.addMouseListener(new java.awt.event.MouseAdapter() {
 
+         @Override
          public void mouseClicked(java.awt.event.MouseEvent evt) {
             colorPickerLabelMouseClicked();
          }
