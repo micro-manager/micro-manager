@@ -36,6 +36,7 @@ import loci.formats.services.OMEXMLServiceImpl;
 import mmcorej.TaggedImage;
 import ome.xml.model.enums.Binning;
 import ome.xml.model.primitives.*;
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.micromanager.MMStudioMainFrame;
@@ -398,7 +399,6 @@ public final class TaggedImageStorageMultipageTiff implements TaggedImageStorage
       private String positionName_;
       private TaggedImageStorageMultipageTiff mpTiff_;
       private int lastFrame_ = -1;
-      private TreeSet<Integer> channelsAdded_;
       
       public Position(int index, JSONObject firstImageTags, TaggedImageStorageMultipageTiff mpt) {
          index_ = index;
@@ -419,7 +419,6 @@ public final class TaggedImageStorageMultipageTiff implements TaggedImageStorage
    
          if (omeTiff_) {
             try {
-               channelsAdded_ = new TreeSet<Integer>();
                startOMEXML();
             } catch (Exception ex) {
                ReportingUtils.logError("Problem starting OME XML");
@@ -699,9 +698,16 @@ public final class TaggedImageStorageMultipageTiff implements TaggedImageStorage
          JSONObject comments = displayAndComments_.getJSONObject("Comments");;
          if (comments.has("Summary") && !comments.isNull("Summary")) {
             omeMD_.setImageDescription(comments.getString("Summary"), index_);
-         }    
+         } 
+         
+         JSONArray channels = displayAndComments_.getJSONArray("Channels");
+         for (int channelIndex = 0; channelIndex < channels.length(); channelIndex++) {
+            JSONObject channel = channels.getJSONObject(channelIndex);
+            omeMD_.setChannelColor(new Color(channel.getInt("Color")), index_, channelIndex);
+            omeMD_.setChannelName(channel.getString("Name"), index_, channelIndex);
+         }
       }
-      
+
       private void addToOMEMetadata(JSONObject tags) {
          try {
             //Add these tags in only once, but need to get them from image rather than summary metadata
@@ -711,11 +717,6 @@ public final class TaggedImageStorageMultipageTiff implements TaggedImageStorage
                   omeMD_.setImageAcquisitionDate( new Timestamp( 
                           DateTools.formatDate(tags.getString("Time"), "yyyy-MM-dd HH:mm:ss") ),index_);
                }
-            }
-            int channelIndex = MDUtils.getChannelIndex(tags);
-            if (!channelsAdded_.contains(channelIndex) ) {
-               channelsAdded_.add(channelIndex);
-               setOMEChannelMetadata(tags,channelIndex);
             }
          } catch (Exception e) {
             ReportingUtils.logError("Problem adding System state cahce metadata to OME Metadata");
@@ -805,38 +806,7 @@ public final class TaggedImageStorageMultipageTiff implements TaggedImageStorage
             }
          }
       }
-      
-      private void setOMEChannelMetadata(JSONObject tags, int channelIndex) throws JSONException {                 
-         String camera = tags.getString("Core-Camera");
-         String detectorSettingsID = MetadataTools.createLSID(camera+" settings");
-         //Instrument index, channel index
-         omeMD_.setDetectorSettingsID(detectorSettingsID, 0, channelIndex);
-         
-         if (tags.has(camera + "-Binning") && !tags.isNull(camera + "-Binning")) {
-            int b = tags.getInt(camera + "-Binning");
-            Binning bin;
-            if (b == 1) {
-               bin = Binning.ONEXONE;
-            } else if (b == 2) {
-               bin = Binning.TWOXTWO;
-            } else if (b == 4) {
-               bin = Binning.FOURXFOUR;
-            } else if (b == 8) {
-               bin = Binning.EIGHTXEIGHT;
-            } else {
-               bin = Binning.OTHER;
-            }
-            omeMD_.setDetectorSettingsBinning(bin, index_, channelIndex);
-         }
-         if (tags.has(camera + "-Gain") && !tags.isNull(camera + "-Gain")) {
-            omeMD_.setDetectorSettingsGain(tags.getDouble(camera + "-Gain"), index_, channelIndex);
-         }
-           
-         JSONObject channel = displayAndComments_.getJSONArray("Channels").getJSONObject(channelIndex);
-         omeMD_.setChannelColor(new Color(channel.getInt("Color")), index_, channelIndex);
-         omeMD_.setChannelName(channel.getString("Name"), index_, channelIndex);  
-      }
-   
+
       private void setOMEDetectorMetadata(JSONObject tags) throws JSONException {
          if (!tags.has("Core-Camera") || tags.isNull("Core-Camera")) {
             return;
