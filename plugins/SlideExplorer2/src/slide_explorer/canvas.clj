@@ -166,7 +166,7 @@
          (filter second)
          (into {}))))
    
-(defmulti make-obj (fn [obj-keyword params] obj-keyword))
+(defmulti make-obj (fn [obj-keyword params] obj-keyword) :default :compound)
 
 (defmethod make-obj :arc
   [_ {:keys [l t w h start-angle arc-angle arc-boundary closed]}]
@@ -224,7 +224,7 @@
   (let [width (:width stroke)]
     (or (nil? width) (pos? width))))
 
-(defmulti draw-primitive (fn [g2d obj params] (type obj)))
+(defmulti draw-primitive (fn [g2d obj params & inner-items] (type obj)))
 
 (defmethod draw-primitive Shape
   [g2d shape {:keys [color fill stroke] :as params}]
@@ -287,22 +287,20 @@
                        (draw-string-center g2d text x y))
       )))
 
-(defn draw-primitives [g2d items]
+(defn draw [g2d items]
   (enable-anti-aliasing g2d)
-  (doseq [[type params inner] items]
-    (when type
+  (doseq [[type params & inner-items] items]
     (let [params+ (complete-coordinates params)]
-      (draw-primitive g2d (make-obj type params+) params+)))))
-
-
-(defn paint-canvas-graphics [^Graphics graphics data]
-  (draw-primitives graphics data))
+       (if (= type :compound)
+         (draw g2d inner-items)
+         (draw-primitive g2d (make-obj type params+) params+)
+         ))))
 
 (defn canvas [reference]
   (let [panel (proxy [JPanel] []
                 (paintComponent [^Graphics graphics]
-                                (proxy-super paintComponent graphics)
-                                (paint-canvas-graphics graphics @reference)))]
+                                ;(proxy-super paintComponent graphics)
+                                (draw graphics @reference)))]
     (add-watch reference panel (fn [_ _ _ _]
                                  (.repaint panel)))
     panel))
@@ -319,7 +317,7 @@
       .show)
     panel))
 
-(defn demo-atom []
+(defn demo-canvas []
   (canvas-frame grafix))
 
 (defn demo-animation [reference]
@@ -353,6 +351,16 @@
       .show)))
 
 (def img (read-image "/Users/arthur/Desktop/flea.png"))
+
+; shape
+; stroke color
+; fill color/pattern/image
+; rotate
+; scale
+; font
+; text
+; alpha
+
 
 (count
 (reset!
@@ -398,17 +406,19 @@
             :underline false
             :strikethrough false
             :size 50}}]
-   [:ellipse
-    {:x 350 :y 350 :w 40 :h 40 :fill {:color :pink}
-     :stroke {:width 4 :color 0xE06060}}]
-   [:line
-    {:x 350 :y 350 :w 18 :h 18 :color :white :alpha 0.8
-     :stroke {:width 7 :cap :butt}}]
+   [:compound
+    {:x 350 :y 350 :w 40 :h 40}
+    [:ellipse
+     {:x 350 :y 350 :w 40 :h 40 :fill {:color :pink}
+      :stroke {:width 4 :color 0xE06060}}]
+    [:line
+     {:x 350 :y 350 :w 18 :h 18 :color :white :alpha 0.8
+      :stroke {:width 7 :cap :butt}}]
+    [:line
+     {:x 350 :y 350 :w -18 :h 18 :fill false :color :white :alpha 0.8
+      :stroke {:width 7 :cap :butt}}]]
    [:image
-    {:x 200 :t 150 :data img :rotate 171}]
-   [:line
-    {:x 350 :y 350 :w -18 :h 18 :fill false :color :white :alpha 0.8
-     :stroke {:width 7 :cap :butt}}]
+     {:x 200 :t 150 :data img :rotate 171}]
    [:line
     {:x 180 :y 220 :w 0 :h 50 :color :red
      :stroke {:width 10 :cap :round}
