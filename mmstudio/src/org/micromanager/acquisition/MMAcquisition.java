@@ -437,11 +437,10 @@ public class MMAcquisition {
       Preferences colorPrefs = root.node(root.absolutePath() + "/" + AcqControlDlg.COLOR_SETTINGS_NODE);
       int color = DEFAULT_COLORS[index % DEFAULT_COLORS.length].getRGB();
       String channelGroup = MMStudioMainFrame.getInstance().getCore().getChannelGroup();
-      if (channelGroup.length() == 0) 
-         color = colorPrefs.getInt("Color_Camera_" + channelName, color);
-      else 
-         color = colorPrefs.getInt("Color_" + channelGroup
-                 + "_" + channelName, color);
+      if (channelGroup == null)
+         channelGroup = "";
+      color = colorPrefs.getInt("Color_Camera_" + channelName, colorPrefs.getInt("Color_" + channelGroup
+                 + "_" + channelName, color));
       
       return color;
    }
