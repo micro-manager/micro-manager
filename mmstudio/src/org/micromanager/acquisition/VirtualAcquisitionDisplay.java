@@ -116,6 +116,7 @@ public final class VirtualAcquisitionDisplay implements AcquisitionDisplay, Imag
    private boolean[] channelContrastInitialized_;
    private static double snapWinMag_ = -1;
    private JPopupMenu saveTypePopup_;
+   private int simpleWinImagesReceived_ = 0;
 
 
    
@@ -1181,7 +1182,22 @@ public final class VirtualAcquisitionDisplay implements AcquisitionDisplay, Imag
          hyperImage_.setPosition(1 + superChannel, 1 + slice, 1 + frame);
       }
 
-      updateAndDraw(simple_ || frame != 0);
+      boolean useGUIUpdater = frame != 0 || simple_;
+      if (simple_) {
+         simpleWinImagesReceived_++;
+         //Make sure update and draw gets called without GUI updater to initilze new snap win correctly
+         int numChannels;
+         try {
+            numChannels = MDUtils.getNumChannels(getSummaryMetadata());
+         } catch (Exception e) {
+            numChannels = 7;
+         }
+         if ( simpleWinImagesReceived_ <= numChannels) {
+            useGUIUpdater = false;
+         }
+      }
+      
+      updateAndDraw(useGUIUpdater);
       restartAnimationAfterShowing(animatedFrameIndex, animatedSliceIndex_, framesAnimated, slicesAnimated);
 
       if (eng_ != null) {
