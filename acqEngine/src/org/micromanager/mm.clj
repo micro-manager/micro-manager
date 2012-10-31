@@ -36,7 +36,9 @@
   "Load Micro-Manager gui and mmc objects."
   ([gui]
     (def gui gui)
-    (def mmc (.getMMCore gui))))
+    (def mmc (.getMMCore gui)))
+  ([]
+    (org.micromanager.MMStudioMainFrame/getInstance)))
 
 (defn rekey
   "Change the name of key kold to knew."
