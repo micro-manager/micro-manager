@@ -181,6 +181,7 @@ public:
    MM::PropertyType getPropertyType(const char* label, const char* propName) const throw (CMMError);
    MM::DeviceType getDeviceType(const char* label) throw (CMMError);
    std::string getDeviceLibrary(const char* label) throw (CMMError);
+   void unloadLibrary(const char* moduleName) throw (CMMError);
    std::string getDeviceName(const char* label) throw (CMMError);
    std::string getParentLabel(const char* label) throw (CMMError);
    void setParentLabel(const char* label, const char* parentLabel) throw (CMMError);

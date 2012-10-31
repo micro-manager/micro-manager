@@ -64,6 +64,7 @@ public:
    std::vector<std::string> GetDeviceList(MM::DeviceType t = MM::AnyType) const;
    std::vector<std::string> GetLoadedPeripherals(const char* hubLabel) const;
    MM::Hub* GetParentDevice(const MM::Device& dev) const;
+   void UnloadPluginLibrary(const char* moduleName);
 
    // device browsing support
    static void AddSearchPath(std::string path);
@@ -83,6 +84,8 @@ public:
    MMThreadLock* getModuleLock(const MM::Device* pDev);
    bool removeModuleLock(const char* moduleName);
  
+
+
 private:
    static void GetModules(std::vector<std::string> &modules, const char *path);
    static void GetSystemError(std::string& errorText);

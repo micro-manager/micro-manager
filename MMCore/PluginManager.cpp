@@ -91,6 +91,8 @@ void CPluginManager::ReleasePluginLibrary(HDEVMODULE)
 #pragma warning(default : 4189)
 #endif
 
+
+
 vector<string> CPluginManager::searchPaths_;
 
 /**
@@ -187,6 +189,35 @@ HDEVMODULE CPluginManager::LoadPluginLibrary(const char* shortName)
    errorText += " ";
    errorText += shortName;
    throw CMMError(errorText.c_str(), MMERR_LoadLibraryFailed); // dll load failed
+}
+
+/** 
+ * Unloads the plugin library. Experimental.
+ */
+void CPluginManager::UnloadPluginLibrary(const char* moduleName)
+{
+   string name(LIB_NAME_PREFIX);
+   name += moduleName;
+   name += LIB_NAME_SUFFIX;
+   name = FindInSearchPath(name);
+
+   #ifdef WIN32
+   BOOL freed = false;
+   do {
+      HMODULE hLib = GetModuleHandle(name.c_str());
+      if (hLib != NULL) {
+         freed = FreeLibrary(hLib);
+      } else {
+         freed = false;
+      }
+   } while(freed);
+      //assert(ret);
+   #else
+   // NOT IMPLEMENTED YET
+   // Note that even though we use the RTLD_NODELETE flag, the library still disappears (at least on the Mac) when dlclose is called...
+      //int nRet = dlclose(hLib);
+      //assert(nRet == 0);
+   #endif
 }
 
 /** 

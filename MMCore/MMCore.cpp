@@ -964,6 +964,37 @@ std::string CMMCore::getDeviceLibrary(const char* label) throw (CMMError)
 }
 
 /**
+ * Unload a library with a particular name. Experimental.
+ */
+void CMMCore::unloadLibrary(const char* moduleName) throw (CMMError)
+{
+   try {
+      vector<string> devices = pluginManager_.GetDeviceList();
+      vector<string>::const_iterator it;
+      for (it=devices.begin(); it != devices.end(); it++)
+      {
+         MM::Device* pDev = pluginManager_.GetDevice((*it).c_str());
+         char deviceName[MM::MaxStrLength] = "";
+         char deviceModuleName[MM::MaxStrLength] = "";
+         pDev->GetName(deviceName);
+         pDev->GetModuleName(deviceModuleName);
+         if (0 == strcmp(moduleName, deviceModuleName))
+         {
+            try {
+               unloadDevice(deviceName);
+            } catch (CMMError& ) {} // ignore error; device may already have been unloaded
+         }
+      }
+      pluginManager_.UnloadPluginLibrary(moduleName);
+   }
+   catch (CMMError& /* err */)
+   {
+      logError(moduleName, "Library updating failed.", __FILE__, __LINE__);
+      throw;
+   }
+}
+
+/**
  * Returns device name for a given device label.
  * "Name" is determined by the library and is immutable, while "label" is
  * user assigned and represents a high-level handle to a device.
