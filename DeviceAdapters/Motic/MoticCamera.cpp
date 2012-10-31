@@ -187,7 +187,7 @@ int CMoticCamera::Initialize()
    WideCharToMultiByte(CP_ACP, 0, strName, MAX_PATH, sName, MAX_PATH, NULL, NULL);
    pAct = new CPropertyAction(this, &CMoticCamera::OnDevice);
    ret = CreateProperty(g_Keyword_Cameras,sName, MM::String, false, pAct);
-   assert(ret == DEVICE_OK);
+   //assert(ret == DEVICE_OK);
    /*vector<string> vName*/;
    m_vDevices.clear();
    for(int i = 0; i < m_iDevices; i++)
@@ -237,6 +237,200 @@ int CMoticCamera::Shutdown()
    return DEVICE_OK;
 }
 
+inline void CoverImage8( BYTE* pSour, BYTE* pDest, int sz, int m_iBytesPerPixel ) 
+{
+  switch(m_iBytesPerPixel)
+  {
+  case 1://8->8
+    {
+      memcpy(pDest, pSour, sz);
+    }
+    break;
+  case 2://8->16
+    {
+      unsigned short* pD = (unsigned short*)pDest;
+      for(int i = 0; i <sz; i++)
+      {
+        *pD++  = ((*pSour++)<<8);
+      }
+    }
+    break;
+  case 4://8->32
+    {
+      for(int i = 0; i < sz; i++)
+      {
+        *pDest ++ = *pSour;
+        *pDest ++ = *pSour;
+        *pDest ++ = *pSour;
+        pDest++;
+        pSour++;
+      }
+    }
+    break;
+  case 8://8->64
+    {
+      unsigned short* pD = (unsigned short*)pDest;
+      for(int i = 0; i < sz; i++)
+      {
+        *pD ++ = ((*pSour)<<8);
+        *pD ++ = ((*pSour)<<8);
+        *pD ++ = ((*pSour)<<8);
+        *pD ++;
+        pSour++;
+      }
+    }
+    break;
+  }
+
+}
+
+inline void CoverImage16( BYTE* pSour, BYTE* pDest, int sz, int m_iBytesPerPixel ) 
+{
+  unsigned short*pS = (unsigned short*)pSour;
+  switch(m_iBytesPerPixel)
+  {
+  case 1://16->8
+    {      
+      for(int i = 0; i <sz; i++)
+      {
+        *pDest++  = ((*pS++)>>8);
+      }
+    }
+    break;
+  case 2://16->16
+    {
+      memcpy(pDest, pSour, sz*2);
+    }
+    break;
+  case 4://16->32
+    {      
+      for(int i = 0; i < sz; i++)
+      {
+        BYTE val = ((*pS)>>8);
+        *pDest ++ = val;
+        *pDest ++ = val;
+        *pDest ++ = val;
+        pDest++;
+        pS++;
+      }
+    }
+    break;
+  case 8://16->64
+    {
+      unsigned short* pD = (unsigned short*)pDest;
+      for(int i = 0; i < sz; i++)
+      {
+        *pD ++ = *pS;
+        *pD ++ = *pS;
+        *pD ++ = *pS;
+        pD ++;
+        pS++;
+      }
+    }
+    break;
+  }
+}
+
+inline void CoverImage24( BYTE* pSour, BYTE* pDest, int sz, int m_iBytesPerPixel ) 
+{
+  switch(m_iBytesPerPixel)
+  {
+  case 1://24->8
+    {
+      for(int i = 0; i < sz; i++)
+      {
+        *pDest++ = (pSour[0]*299 + pSour[1]*587 + pSour[3]*114)/1000;
+        pSour += 3;
+      }
+    }
+    break;
+  case 2://24->16
+    {
+      unsigned short* pD = (unsigned short*)pDest;
+      for(int i = 0; i <sz; i++)
+      {
+        *pD++  = (((pSour[0]*299 + pSour[1]*587 + pSour[3]*114)/1000)<<8);
+        pSour += 3;
+      }
+    }
+    break;
+  case 4://24->32
+    {
+      for(int i = 0; i < sz; i++)
+      {
+        *pDest ++ = *pSour++;
+        *pDest ++ = *pSour++;
+        *pDest ++ = *pSour++;
+        pDest++;
+      }
+    }
+    break;
+  case 8://24->64
+    {
+      unsigned short* pD = (unsigned short*)pDest;
+      for(int i = 0; i < sz; i++)
+      {
+        *pD ++ = ((*pSour++)<<8);
+        *pD ++ = ((*pSour++)<<8);
+        *pD ++ = ((*pSour++)<<8);
+        *pD ++;     
+      }
+    }
+    break;
+  }
+}
+
+inline void CoverImage48( BYTE* pSour, BYTE* pDest, int sz, int m_iBytesPerPixel ) 
+{
+  unsigned short* pS = (unsigned short*)pSour;
+  switch(m_iBytesPerPixel)
+  {
+  case 1://48->8
+    {
+      for(int i = 0; i < sz; i++)
+      {
+        *pDest++ = (((pS[0]*299 + pS[1]*587 + pS[3]*114)/1000)>>8);
+        pS += 3;
+      }
+    }
+    break;
+  case 2://48->16
+    {
+      unsigned short* pD = (unsigned short*)pDest;
+      for(int i = 0; i <sz; i++)
+      {
+        *pD++  = (pS[0]*299 + pS[1]*587 + pS[3]*114)/1000;
+        pS += 3;
+      }
+    }
+    break;
+  case 4://48->32
+    {
+      for(int i = 0; i < sz; i++)
+      {
+        *pDest ++ = ((*pS++)>>8);
+        *pDest ++ = ((*pS++)>>8);
+        *pDest ++ = ((*pS++)>>8);
+        pDest++;
+      }
+    }
+    break;
+  case 8://48->64
+    {
+      unsigned short* pD = (unsigned short*)pDest;
+      for(int i = 0; i < sz; i++)
+      {
+        *pD ++ = *pS++;
+        *pD ++ = *pS++;
+        *pD ++ = *pS++;
+        *pD ++;     
+      }
+    }
+    break;
+  }
+}
+
+
 /**
 * Performs exposure and grabs a single image.
 * This function should block during the actual exposure and return immediately afterwards 
@@ -248,75 +442,43 @@ int CMoticCamera::SnapImage()
 #ifdef _LOG_OUT_
   OutputDebugString("SnapImage");
 #endif
+  int w = m_img.Width();
+  int h = m_img.Height();  
   int iTry = 0;
-  while( 0 != MIDP_GetFrameEx((unsigned char*)m_pBuffer, m_iRoiX, m_iRoiY, m_img.Width(), m_img.Height(), m_img.Width()*3, true))
+  while( 0 != MIDP_GetFrameEx((unsigned char*)m_pBuffer, m_iRoiX, m_iRoiY, w, h, w*m_iBitCounts/8, true))
   {
     Sleep(100);
     if(+iTry > 10)
       break;
   }
-  //if(MIDP_GetFrame((unsigned char*)m_pBuffer, m_img.Width(), m_img.Height()) == 0)
+  BYTE* pDest = m_img.GetPixelsRW(); 
+  int size = w*h;
+  switch(m_iBitCounts)
   {
-    if(m_iBytesPerPixel == 1 || m_iBytesPerPixel == 2)
-    {
-      if(m_iBitCounts == 8 || m_iBitCounts == 16)
-      {
-        m_img.SetPixels(m_pBuffer);
-      }
-      else if(m_iBitCounts == 24)
-      {
-        BYTE* pDest = m_img.GetPixelsRW();
-        BYTE* pSour = m_pBuffer;
-        for(int i = 0; i < m_img.Width()*m_img.Height(); i++)
-        {
-          *pDest++ = (pSour[0]*299 + pSour[1]*587 + pSour[3]*114)/1000;
-          pSour += 3;
-        }
-      }
-      else if(m_iBitCounts == 48)
-      {
-        unsigned short* pDest = (unsigned short*)m_img.GetPixelsRW();
-        unsigned short* pSour = (unsigned short*)m_pBuffer;
-        for(int i = 0; i < m_img.Width()*m_img.Height(); i++)
-        {
-          *pDest++ = (pSour[0] + pSour[1] + pSour[3])/3;
-          pSour += 3;
-        }
-      }
-    }
-    else if(m_iBytesPerPixel == 4)
-    {     
-      BYTE* pDest = m_img.GetPixelsRW();
-      BYTE* pSour = m_pBuffer;
-      for(int i = 0; i < m_img.Width()*m_img.Height(); i++)
-      { 
-        *pDest ++ = *pSour ++;
-        *pDest ++ = *pSour ++;
-        *pDest ++ = *pSour ++;
-        *pDest ++;
-      }           
-    }             
-    else if(m_iBytesPerPixel == 8)
-    {
-      unsigned short* pDest = (unsigned short*)m_img.GetPixelsRW();
-      unsigned short* pSour = (unsigned short*)m_pBuffer;
-      for(int i = 0; i < m_img.Width()*m_img.Height(); i++)
-      {
-        *pDest ++ = *pSour ++;
-        *pDest ++ = *pSour++;
-        *pDest ++ = *pSour ++;
-        *pDest ++;
-      }
-    }
+  case 8:
+    CoverImage8(m_pBuffer, pDest, size, m_iBytesPerPixel);
+    break;
+  case 16:
+    CoverImage16(m_pBuffer, pDest, size, m_iBytesPerPixel);
+    break;
+  case 24:
+    CoverImage24(m_pBuffer, pDest, size, m_iBytesPerPixel);
+    break;
+  case 48:
+    CoverImage48(m_pBuffer, pDest, size, m_iBytesPerPixel);
+    break;
+  default:
 #ifdef _LOG_OUT_
-    OutputDebugString("SnapImage OK");
+    OutputDebugString("Error bit counts");
 #endif
-    return DEVICE_OK;
-  }
+    break;
+  } 
+
 #ifdef _LOG_OUT_
-  OutputDebugString("SnapImage BUSY");
+  OutputDebugString("SnapImage OK");
 #endif
-  return ERR_BUSY_ACQUIRING;
+  return DEVICE_OK;
+  
 }
 
 /**
@@ -860,7 +1022,7 @@ void CMoticCamera::InitBinning()
   // binning
   CPropertyAction *pAct = new CPropertyAction (this, &CMoticCamera::OnBinning);
   int ret = CreateProperty(MM::g_Keyword_Binning, itoa(m_iBinning,bin, 10), MM::Integer, false, pAct);
-  assert(ret == DEVICE_OK);
+  //assert(ret == DEVICE_OK);
 
   vector<string> binningValues;
   for(int i = 0; i < c; i++)
@@ -942,13 +1104,15 @@ void CMoticCamera::InitPixelType()
   if(channels == 1)
   {
     ret = CreateProperty(MM::g_Keyword_PixelType, "8bit", MM::String, false, pAct);   
-    pixelTypeValues.push_back(g_PixelType_8bit);   
+    pixelTypeValues.push_back(g_PixelType_8bit); 
+    m_iBytesPerPixel = 1;
   }
   else if(channels == 3)
   {
     ret = CreateProperty(MM::g_Keyword_PixelType, "32bitRGB", MM::String, false, pAct);
     pixelTypeValues.push_back(g_PixelType_8bit);
     pixelTypeValues.push_back(g_PixelType_32bitRGB);
+    m_iBytesPerPixel = 4;
    
   }
   ret = SetAllowedValues(MM::g_Keyword_PixelType, pixelTypeValues);  
@@ -967,7 +1131,7 @@ void CMoticCamera::InitGain()
   MIDP_GetGainRange(&m_dMinGain, &m_dMaxGain);
   CPropertyAction *pAct = new CPropertyAction (this, &CMoticCamera::OnGain);
    int ret = CreateProperty(MM::g_Keyword_Gain, "1.0", MM::Float, false, pAct);
-   assert(ret == DEVICE_OK);
+   //assert(ret == DEVICE_OK);
    SetPropertyLimits(MM::g_Keyword_Gain, m_dMinGain, m_dMaxGain);
    m_dGain = 1.0;
 }
@@ -985,7 +1149,7 @@ void CMoticCamera::InitExposure()
   sprintf(buf, "%0.1f\0", m_dExposurems);
   CPropertyAction *pAct = new CPropertyAction (this, &CMoticCamera::OnExposure);
    int ret = CreateProperty(MM::g_Keyword_Exposure, buf, MM::Float, false, pAct);
-   assert(ret == DEVICE_OK);
+   //assert(ret == DEVICE_OK);
    SetPropertyLimits(MM::g_Keyword_Exposure, (double)m_lMinExposure, (double)m_lMaxExposure);
   // m_dExposurems = 10.0;
 }
