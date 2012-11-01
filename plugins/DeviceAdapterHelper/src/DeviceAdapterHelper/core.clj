@@ -1,3 +1,18 @@
+; FILE:         DeviceAdapterHelper/core.clj
+; PROJECT:      Micro-Manager
+; SUBSYSTEM:    DeviceAdapterHelper plugin
+; ----------------------------------------------------------------------------
+; AUTHOR:       Arthur Edelstein, arthuredelstein@gmail.com, 2012
+; COPYRIGHT:    University of California, San Francisco, 2012
+; LICENSE:      This file is distributed under the BSD license.
+;               License text is included with the source distribution.
+;               This file is distributed in the hope that it will be useful,
+;               but WITHOUT ANY WARRANTY; without even the implied warranty
+;               of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+;               IN NO EVENT SHALL THE COPYRIGHT OWNER OR
+;               CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+;               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
+
 (ns org.micromanager.reloader
   (:use [clojure.java.io :only (file copy)]
         [clojure.data :only (diff)]
@@ -5,7 +20,6 @@
         [clojure.pprint :only (pprint)])
   (:import (javax.swing JLabel JWindow)
            (java.awt Color)))
-
 
 (load-mm (org.micromanager.MMStudioMainFrame/getInstance))
 
@@ -29,7 +43,7 @@
    for a given device."
   [dev]
   (vec (doall (for [prop (pre-init-property-names dev)]
-                [prop (core getProperty prop)]))))
+                [prop (core getProperty dev prop)]))))
 
 (defn apply-property-settings
   "Sets the state of properties 'dev-prop' to value"
@@ -60,11 +74,18 @@
   (dotimes [i (count labels)]
       (core defineStateLabel dev i (get labels i))))
 
+(defn get-port
+  "Get the name of the port connected to a device."
+  [dev]
+  (when (core hasProperty dev "Port")
+    (core getProperty dev "Port")))
+
 (defn read-device-startup-settings
   [dev]
   {:library-location (device-library-location dev)
    :pre-init-settings (pre-init-property-settings dev)
-   :state-labels (state-device-labels dev)})
+   :state-labels (state-device-labels dev)
+   :port (get-port dev)})
 
 (defn startup-device
   "Startup a device given a device startup settings map."
@@ -90,9 +111,11 @@
   [module housekeeping-fn]
   (let [devs (doall (get (devices-in-each-module) module))
         dev-settings-map (zipmap devs
-                                 (doall (map read-device-startup-settings devs)))]
+                                 (doall (map read-device-startup-settings devs)))
+        ports (set (remove nil? (map :port (vals dev-settings-map))))]
     (core unloadLibrary module)
     (housekeeping-fn)
+    (dorun (map reload-device ports))
     (doseq [dev devs]
       (startup-device dev (dev-settings-map dev)))))
 
