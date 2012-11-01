@@ -1,4 +1,4 @@
-; FILE:         DeviceAdapterHelper/plugin.clj
+; FILE:         DLLAutoReloader/plugin.clj
 ; PROJECT:      Micro-Manager DeviceAdapterHelper
 ; ----------------------------------------------------------------------------
 ; AUTHOR:       Arthur Edelstein, arthuredelstein@gmail.com, 2012
@@ -13,11 +13,11 @@
 ;               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 
 
-(ns DeviceAdapterHelper.plugin
-  (:use [DeviceAdapterHelper.core :only (show-plugin handle-exit)])
+(ns DLLAutoReloader.plugin
+  (:use [DLLAutoReloader.core :only (show-plugin handle-exit)])
   (:gen-class
     :init init
-    :name org.micromanager.DeviceAdapterHelper
+    :name org.micromanager.DLLAutoReloader
     :implements [org.micromanager.api.MMPlugin]
     :state state))
 

@@ -1,4 +1,4 @@
-; FILE:         DeviceAdapterHelper/core.clj
+; FILE:         DLLAutoReloader/core.clj
 ; PROJECT:      Micro-Manager
 ; SUBSYSTEM:    DeviceAdapterHelper plugin
 ; ----------------------------------------------------------------------------
@@ -13,7 +13,7 @@
 ;               CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 ;               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 
-(ns DeviceAdapterHelper.core
+(ns DLLAutoReloader.core
   (:use [clojure.java.io :only (file copy)]
         [clojure.data :only (diff)]
         [org.micromanager.mm :only (edt load-mm mmc core gui)]
