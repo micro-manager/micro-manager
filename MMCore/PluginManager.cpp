@@ -355,19 +355,31 @@ void CPluginManager::UnloadDevice(MM::Device* pDevice)
  */
 void CPluginManager::UnloadAllDevices()
 {
-   // do a two pass unloading so that USB ports and com ports unload last
-   CDeviceMap::const_iterator it;
+   DeviceVector unloadingSequence;
+   {
+      DeviceVector::reverse_iterator it;
+      // do a two pass unloading so that USB ports and com ports unload last.
+      // We plan unloading, and then carry it out, so as not to iterate
+      // over a changing collection. Down with mutable collections.
 
-   // first unload all devices but serial ports
-   for (it=devices_.begin(); it != devices_.end(); it++)
-      if (it->second != 0 && it->second->GetType() != MM::SerialDevice)
-         UnloadDevice(it->second);
+      // first plan to unload all devices but serial ports
+      for (it=devVector_.rbegin(); it != devVector_.rend(); it++)
+         if (*it != 0 && (*it)->GetType() != MM::SerialDevice)
+            unloadingSequence.push_back(*it);
 
-   // now unload remaining ports
-   for (it=devices_.begin(); it != devices_.end(); it++)
-      if (it->second != 0)
-         UnloadDevice(it->second);
+      // then plan to unload remaining ports
+      for (it=devVector_.rbegin(); it != devVector_.rend(); it++)
+         if (*it != 0 && (*it)->GetType() == MM::SerialDevice)
+            unloadingSequence.push_back(*it);
+   }
 
+   {
+      DeviceVector::const_iterator it;
+      for (it=unloadingSequence.begin(); it != unloadingSequence.end(); it++)
+      {
+         UnloadDevice(*it);
+      }
+   }
    devices_.clear();
    devVector_.clear();
 }
@@ -474,9 +486,9 @@ string CPluginManager::GetDeviceLabel(const MM::Device& device) const
       }
    }
    
-   char buf[MM::MaxStrLength];
-   device.GetLabel(buf);
-   throw CMMError(buf, MMERR_UnexpectedDevice);
+   //char buf[MM::MaxStrLength];
+   //device.GetLabel(buf);
+   throw CMMError(MMERR_UnexpectedDevice);
 }
 
 /**
