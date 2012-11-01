@@ -1,8 +1,10 @@
 (ns org.micromanager.reloader
   (:use [clojure.java.io :only (file copy)]
         [clojure.data :only (diff)]
-        [org.micromanager.mm :only (load-mm mmc core)]
-        [clojure.pprint :only (pprint)]))
+        [org.micromanager.mm :only (edt load-mm mmc core gui)]
+        [clojure.pprint :only (pprint)])
+  (:import (javax.swing JLabel JWindow)
+           (java.awt Color)))
 
 
 (load-mm (org.micromanager.MMStudioMainFrame/getInstance))
@@ -77,15 +79,14 @@
   (apply-state-device-labels dev state-labels))
 
 (defn reload-device
-  "Reload a single given device."
+  "Reload a single device."
   [dev]
   (let [startup-settings (read-device-startup-settings dev)]
     (core unloadDevice dev)
     (startup-device dev startup-settings)))
 
 (defn reload-module-fn
-  "Unload all devices in a module. Run housekeeping function.
-   Then load and restart again with the original settings."
+  "Function version of reload-module macro."
   [module housekeeping-fn]
   (let [devs (doall (get (devices-in-each-module) module))
         dev-settings-map (zipmap devs
@@ -96,15 +97,16 @@
       (startup-device dev (dev-settings-map dev)))))
 
 (defmacro reload-module
+  "Unload all devices in a module. Run housekeeping code.
+   Then load and restart again with the original settings."
   [module & housekeeping]
   `(reload-module-fn ~module (fn [] ~@housekeeping)))
 
-(defn file-dates [path]
+(defn file-dates
+  "Maps each file in path to its last modification date."
+  [path]
   (let [files (.listFiles (file path))]
     (zipmap files (map #(.lastModified %) files))))
-
-(defn changed-file [path old-dates]
-  (diff old-dates (file-dates path)))
 
 (defn follow-dir-dates
   "Polls a directory and keeps an up-to-date
@@ -120,37 +122,87 @@
     #(reset! keep-following false)))
       
 (defn watch-dates
-  [date-atom handle-new-files-fn]
+  "Watches an atom that keeps an up-to-date map of files
+   to modification dates. Runs handle-new-files-fn on any 
+   files that change."
+  [date-atom handle-new-file-fn]
   (add-watch date-atom "file-date"
              (fn [_ _ old-val new-val]
                (when-let [new-files (keys (second (diff old-val new-val)))]
-                 (println new-files)
-                 (handle-new-files-fn new-files)))))
+                 (doseq [new-file new-files]
+                   (handle-new-file-fn new-file))))))
 
-(defn module-for-dll [dll]
+(defn module-for-dll
+  "Finds the module name for a dll path."
+  [dll]
   (-> dll
       file .getName (.split "\\.")
       first (.replace "mmgr_dal_" "")))
 
-(defn reload-updated-module [new-dll-version]
+(defonce 
+  status-frame
+  (let [l (JLabel.)
+        f (JWindow.)]
+    (edt (doto f
+           (.setAlwaysOnTop true)
+           (.setBounds 0 100 450 50))
+         (.add (.getContentPane f) l)
+         (doto l
+           (.setBackground Color/PINK)
+           (.setOpaque true))
+         )
+    {:label l :frame f}))
+
+(defn label-html
+  "Create the html for a label with 20-point font and internal padding."
+  [& txt]
+  (str "<html><body><p style=\"padding:10; font-size:20\">" (apply str txt) "</body></html>"))
+
+(defn notify-user-reloading-started
+  "Notify the user that reloading has started."
+  [module]
+  (let [{:keys [frame label]} status-frame]
+    (edt
+      (.setText label (label-html "Reloading " module " module..."))
+    (.show frame))))
+
+(defn notify-user-reloading-finished
+  "Notify the user that reloading has finished."
+  [module]
+  (let [{:keys [frame label]} status-frame]
+    (edt
+      (.setText label (label-html "Finished reloading " module "!"))
+      (.show frame))
+    (future (Thread/sleep 3000)
+            (edt (.hide frame)))))
+
+(defn reload-updated-module
+  "Unload a module, copy the new version to the Micro-Manager
+   directory (overwriting the old version), and then load the module again."
+  [new-dll-version]
   (let [dll (file new-dll-version)
         module (module-for-dll dll)
         loaded-modules (keys (devices-in-each-module))]
     (when (some #{module} loaded-modules)
-      (println "Reloading" module "module...")
-      (reload-module module
-        (copy dll
-              (file "." (.getName dll))))
-      (println "...done!"))))
+      (let [live-mode (.isLiveModeOn gui)]
+        (when live-mode
+          (.enableLiveMode gui false))
+        (notify-user-reloading-started module)
+        (reload-module module
+                       (copy dll
+                             (file "." (.getName dll))))
+        (notify-user-reloading-finished module)
+        (when live-mode
+          (.enableLiveMode gui true))))))
 
-(defn reload-updated-modules [new-dll-versions]
-  (doseq [dll new-dll-versions]
-    (reload-updated-module dll)))
-
-(defn reload-modules-on-device-adapter-change [dll-dir-path]
+(defn reload-modules-on-device-adapter-change
+  "Watch the directory where compiled DLLs are placed by Visual
+   Studio. If a device adapter changes, copy it to Micro-Manager
+   directory and reload it."
+  [dll-dir-path]
   (let [date-atom (atom nil)
         stop-fn (follow-dir-dates date-atom dll-dir-path)]
-    (watch-dates date-atom reload-updated-modules)
+    (watch-dates date-atom reload-updated-module)
     stop-fn))
         
 
