@@ -1,5 +1,8 @@
 (ns org.micromanager.reloader
-  (:use [org.micromanager.mm :only (load-mm mmc core get-system-config)]))
+  (:use [clojure.java.io :only (file copy)]
+        [clojure.data :only (diff)]
+        [org.micromanager.mm :only (load-mm mmc core)]
+        [clojure.pprint :only (pprint)]))
 
 
 (load-mm (org.micromanager.MMStudioMainFrame/getInstance))
@@ -19,24 +22,25 @@
   (filter #(core isPropertyPreInit dev %)
           (seq (core getDevicePropertyNames dev))))
 
-(defn property-state-triple
-  "Returns the [dev, prop, value] for a device
-   and a property name."
-  [[dev property-name]]
-  [dev property-name (core getProperty dev property-name)])
+(defn pre-init-property-settings
+  "Returns a vector of [prop value] pre-init property settings
+   for a given device."
+  [dev]
+  (vec (doall (for [prop (pre-init-property-names dev)]
+                [prop (core getProperty prop)]))))
 
-(defn apply-property-state-triple
-  "Sets the state of property 'dev-prop' to value"
-  [[dev prop value]]
-  (when-not (core isPropertyReadOnly dev prop)
-    (core setProperty dev prop value)))
+(defn apply-property-settings
+  "Sets the state of properties 'dev-prop' to value"
+  [dev settings]
+  (doseq [[prop value] settings]
+    (when-not (core isPropertyReadOnly dev prop)
+      (core setProperty dev prop value))))
 
-(defn device-instance-triple
-  "Returns [module, name, label] for a device with dev-label"
+(defn device-library-location
+  "Returns [module name] for a device with dev-label"
   [dev-label]
   [(core getDeviceLibrary dev-label)
-   (core getDeviceName dev-label)
-                dev-label])
+   (core getDeviceName dev-label)])
 
 (defn state-device-labels
   "If dev is a state device, returns its assigned labels in 
@@ -44,58 +48,111 @@
   [dev]
   (when (= mmcorej.DeviceType/StateDevice
            (core getDeviceType dev))
-    (vec (seq (core getStateLabels dev)))))
-
-(defn state-device-labels-map
-  "Maps each device to its labels (nil if not a state device)"
-  [devs]
-  (zipmap devs (map state-device-labels devs)))
+    (vec (doall (seq (core getStateLabels dev))))))
 
 (defn apply-state-device-labels
-  "Takes a map of devices to state labels and applies these
-   labels to the appropriate state device."
-  [dev-state-map]
-  (doseq [[dev labels] dev-state-map]
-    (dotimes [i (count labels)]
-      (core defineStateLabel dev i (get labels i)))))
+  "Takes list of state labels for a state device
+   and applies these labels."
+  [dev labels]
+  ;(println dev labels)
+  (dotimes [i (count labels)]
+      (core defineStateLabel dev i (get labels i))))
 
-(defn reload-module [module]
-  (let [devs (get (devices-in-each-module) module)
-        dev-triples (map device-instance-triple devs)
-        pre-init-vals (zipmap devs (map pre-init-property-names devs))
-        state-dev-labels (state-device-labels-map devs)]
-    (clojure.pprint/pprint [devs dev-triples pre-init-vals state-dev-labels])
-    (core unloadLibrary module)
-    (doseq [[module name dev] dev-triples]
-      (core loadDevice dev module name))
-    (doseq [dev devs]
-       (core initializeDevice dev))))
-  
-
-(comment pasted for inspiration
-(defn reload-device
-  "Unload a device, and reload it, preserving its property settings."
+(defn read-device-startup-settings
   [dev]
-  (when (. gui getAutoreloadOption)
-    (log "Attempting to reload " dev "...")
-    (let [props (filter #(= (first %) dev)
-                        (get-system-config-cached))
-          prop-map (into {} (map #(-> % next vec) props))
-          library (core getDeviceLibrary dev)
-          name-in-library (core getDeviceName dev)
-          state-device (eval 'mmcorej.DeviceType/StateDevice) ; load at runtime
-          state-labels (when (= state-device (core getDeviceType dev))
-                         (vec (core getStateLabels dev)))]
-      (core unloadDevice dev)
-      (core loadDevice dev library name-in-library)
-      (doseq [[prop val] (pre-init-property-names dev)]
-          (core setProperty dev prop val))
-      (core initializeDevice dev)
-      (when state-labels
-        (dotimes [i (count state-labels)]
-          (core defineStateLabel dev i (get state-labels i)))))
-    (log "...reloading of " dev " has apparently succeeded.")))
-   )
+  {:library-location (device-library-location dev)
+   :pre-init-settings (pre-init-property-settings dev)
+   :state-labels (state-device-labels dev)})
+
+(defn startup-device
+  "Startup a device given a device startup settings map."
+  [dev {:keys [library-location
+               pre-init-settings
+               state-labels]
+        :as settings}]
+  (let [[module name] library-location]
+    (core loadDevice dev module name)) 
+  (apply-property-settings dev pre-init-settings)
+  (core initializeDevice dev)
+  (apply-state-device-labels dev state-labels))
+
+(defn reload-device
+  "Reload a single given device."
+  [dev]
+  (let [startup-settings (read-device-startup-settings dev)]
+    (core unloadDevice dev)
+    (startup-device dev startup-settings)))
+
+(defn reload-module-fn
+  "Unload all devices in a module. Run housekeeping function.
+   Then load and restart again with the original settings."
+  [module housekeeping-fn]
+  (let [devs (doall (get (devices-in-each-module) module))
+        dev-settings-map (zipmap devs
+                                 (doall (map read-device-startup-settings devs)))]
+    (core unloadLibrary module)
+    (housekeeping-fn)
+    (doseq [dev devs]
+      (startup-device dev (dev-settings-map dev)))))
+
+(defmacro reload-module
+  [module & housekeeping]
+  `(reload-module-fn ~module (fn [] ~@housekeeping)))
+
+(defn file-dates [path]
+  (let [files (.listFiles (file path))]
+    (zipmap files (map #(.lastModified %) files))))
+
+(defn changed-file [path old-dates]
+  (diff old-dates (file-dates path)))
+
+(defn follow-dir-dates
+  "Polls a directory and keeps an up-to-date
+   map of files to dates in date-atom. Returns a
+   stop-following function." 
+  [date-atom path]
+  (reset! date-atom (file-dates path))
+  (let [keep-following (atom true)]
+    (future
+      (while @keep-following
+        (Thread/sleep 300)
+        (reset! date-atom (file-dates path))))
+    #(reset! keep-following false)))
+      
+(defn watch-dates
+  [date-atom handle-new-files-fn]
+  (add-watch date-atom "file-date"
+             (fn [_ _ old-val new-val]
+               (when-let [new-files (keys (second (diff old-val new-val)))]
+                 (println new-files)
+                 (handle-new-files-fn new-files)))))
+
+(defn module-for-dll [dll]
+  (-> dll
+      file .getName (.split "\\.")
+      first (.replace "mmgr_dal_" "")))
+
+(defn reload-updated-module [new-dll-version]
+  (let [dll (file new-dll-version)
+        module (module-for-dll dll)
+        loaded-modules (keys (devices-in-each-module))]
+    (when (some #{module} loaded-modules)
+      (println "Reloading" module "module...")
+      (reload-module module
+        (copy dll
+              (file "." (.getName dll))))
+      (println "...done!"))))
+
+(defn reload-updated-modules [new-dll-versions]
+  (doseq [dll new-dll-versions]
+    (reload-updated-module dll)))
+
+(defn reload-modules-on-device-adapter-change [dll-dir-path]
+  (let [date-atom (atom nil)
+        stop-fn (follow-dir-dates date-atom dll-dir-path)]
+    (watch-dates date-atom reload-updated-modules)
+    stop-fn))
+        
 
 ;; testing
 
@@ -103,3 +160,13 @@
 
 (defn test-unload []
   (core unloadLibrary test-lib))
+
+(def test-directory "E:\\projects\\micromanager\\bin_x64")
+
+(def test-file (file test-directory "mmgr_dal_DemoCamera.dll"))
+
+(def ^{:dynamic true} stop (fn []))
+
+(defn run-test []
+  (stop)
+  (def stop (reload-modules-on-device-adapter-change test-directory)))
