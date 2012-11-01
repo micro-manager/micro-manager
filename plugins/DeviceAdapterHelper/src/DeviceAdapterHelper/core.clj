@@ -13,7 +13,7 @@
 ;               CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 ;               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 
-(ns org.micromanager.reloader
+(ns DeviceAdapterHelper.core
   (:use [clojure.java.io :only (file copy)]
         [clojure.data :only (diff)]
         [org.micromanager.mm :only (edt load-mm mmc core gui)]
@@ -74,7 +74,7 @@
   (dotimes [i (count labels)]
       (core defineStateLabel dev i (get labels i))))
 
-(defn get-port
+(defn device-port
   "Get the name of the port connected to a device."
   [dev]
   (when (core hasProperty dev "Port")
@@ -85,7 +85,7 @@
   {:library-location (device-library-location dev)
    :pre-init-settings (pre-init-property-settings dev)
    :state-labels (state-device-labels dev)
-   :port (get-port dev)})
+   :port (device-port dev)})
 
 (defn startup-device
   "Startup a device given a device startup settings map."
@@ -199,6 +199,16 @@
     (future (Thread/sleep 3000)
             (edt (.hide frame)))))
 
+(defn notify-user-activated
+  "Notify the user that reloading has finished."
+  []
+  (let [{:keys [frame label]} status-frame]
+    (edt
+      (.setText label (label-html "Ready to autoreload!"))
+      (.show frame))
+    (future (Thread/sleep 3000)
+            (edt (.hide frame)))))
+
 (defn reload-updated-module
   "Unload a module, copy the new version to the Micro-Manager
    directory (overwriting the old version), and then load the module again."
@@ -228,6 +238,15 @@
     (watch-dates date-atom reload-updated-module)
     stop-fn))
         
+(def ^{:dynamic true} stop (fn []))
+
+(def default-directory "E:\\projects\\micromanager\\bin_x64")
+
+(defn show-plugin []
+  (stop)
+  (def stop (reload-modules-on-device-adapter-change default-directory)))
+
+(defn handle-exit [] (notify-user-activated))
 
 ;; testing
 
@@ -236,12 +255,4 @@
 (defn test-unload []
   (core unloadLibrary test-lib))
 
-(def test-directory "E:\\projects\\micromanager\\bin_x64")
-
-(def test-file (file test-directory "mmgr_dal_DemoCamera.dll"))
-
-(def ^{:dynamic true} stop (fn []))
-
-(defn run-test []
-  (stop)
-  (def stop (reload-modules-on-device-adapter-change test-directory)))
+(def test-file (file default-directory "mmgr_dal_DemoCamera.dll"))
