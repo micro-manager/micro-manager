@@ -327,14 +327,17 @@ void CPluginManager::UnloadDevice(MM::Device* pDevice)
    std::map<std::string, MM::Device*>::iterator dd =  devices_.find(label);
    dd->second = NULL;
 
-   // remove the entry from the device array
-   DeviceArray::iterator it;
-   for (it = devArray_.begin(); it != devArray_.end(); it++)
-      if (*it == pDevice)
+   // remove the entry from the device set
+   DeviceSet newDevSet;
+   DeviceSet::const_iterator it;
+   for (it = devSet_.begin(); it != devSet_.end(); it++)
+   {
+      if (*it != pDevice)
       {
-         devArray_.erase(it);
-         break;
+         newDevSet.insert(*it);
       }
+   }
+   devSet_ = newDevSet;
 }
 
 /**
@@ -356,7 +359,7 @@ void CPluginManager::UnloadAllDevices()
          UnloadDevice(it->second);
 
    devices_.clear();
-   devArray_.clear();
+   devSet_.clear();
 }
 
 /**
@@ -423,7 +426,7 @@ MM::Device* CPluginManager::LoadDevice(const char* label, const char* moduleName
 
    // assign label
    devices_[label] = pDevice;
-   devArray_.push_back(pDevice);
+   devSet_.insert(pDevice);
 
    return pDevice;
 }
@@ -462,7 +465,7 @@ string CPluginManager::GetDeviceLabel(const MM::Device& device) const
    }
    
    char buf[MM::MaxStrLength];
-   device.GetName(buf);
+   device.GetLabel(buf);
    throw CMMError(buf, MMERR_UnexpectedDevice);
 }
 
@@ -475,12 +478,13 @@ string CPluginManager::GetDeviceLabel(const MM::Device& device) const
 vector<string> CPluginManager::GetDeviceList(MM::DeviceType type) const
 {
    vector<string> labels;
-   for (size_t i=0; i<devArray_.size(); i++)
+   DeviceSet::const_iterator it;
+   for (it = devSet_.begin(); it != devSet_.end(); ++it)
    {
       char buf[MM::MaxStrLength];
-      if (type == MM::AnyType || type == devArray_[i]->GetType())
+      if (type == MM::AnyType || type == (*it)->GetType())
       {
-         devArray_[i]->GetLabel(buf);
+         (*it)->GetLabel(buf);
          labels.push_back(buf);
       }
    }
@@ -565,14 +569,15 @@ vector<string> CPluginManager::GetLoadedPeripherals(const char* label) const
       return labels;
    }
 
-   for (size_t i=0; i<devArray_.size(); i++)
+   DeviceSet::const_iterator it;
+   for (it = devSet_.begin(); it != devSet_.end(); it++)
    {
       char parentID[MM::MaxStrLength];
-      devArray_[i]->GetParentID(parentID);
+      (*it)->GetParentID(parentID);
       if (strncmp(label, parentID, MM::MaxStrLength) == 0)
       {
          char buf[MM::MaxStrLength];
-         devArray_[i]->GetLabel(buf);
+         (*it)->GetLabel(buf);
          labels.push_back(buf);
       }
    }
@@ -922,12 +927,13 @@ void CPluginManager::CreateModuleLocks()
 {
    DeleteModuleLocks();
 
-   for (size_t i=0; i<devArray_.size(); i++)
+   DeviceSet::const_iterator it;
+   for (it = devSet_.begin(); it != devSet_.end(); it++)
    {
       char moduleName[MM::MaxStrLength];
-      devArray_[i]->GetModuleName(moduleName);
-      CModuleLockMap::iterator it = moduleLocks_.find(moduleName);
-      if (it == moduleLocks_.end())
+      (*it)->GetModuleName(moduleName);
+      CModuleLockMap::iterator it2 = moduleLocks_.find(moduleName);
+      if (it2 == moduleLocks_.end())
       {
          moduleLocks_[moduleName] = new MMThreadLock;
       }

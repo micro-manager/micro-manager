@@ -970,19 +970,19 @@ void CMMCore::unloadLibrary(const char* moduleName) throw (CMMError)
 {
    try {
       vector<string> devices = pluginManager_.GetDeviceList();
-      vector<string>::const_iterator it;
-      for (it=devices.begin(); it != devices.end(); it++)
+      vector<string>::reverse_iterator it;
+      for (it=devices.rbegin(); it != devices.rend(); it++)
       {
          MM::Device* pDev = pluginManager_.GetDevice((*it).c_str());
-         char deviceName[MM::MaxStrLength] = "";
+         char deviceLabel[MM::MaxStrLength] = "";
          char deviceModuleName[MM::MaxStrLength] = "";
-         pDev->GetName(deviceName);
+         pDev->GetLabel(deviceLabel);
          pDev->GetModuleName(deviceModuleName);
          if (0 == strcmp(moduleName, deviceModuleName))
          {
             try {
-               unloadDevice(deviceName);
-            } catch (CMMError& ) {} // ignore error; device may already have been unloaded
+               unloadDevice(deviceLabel);
+            } catch (CMMError& e) {} // ignore error; device may already have been unloaded
          }
       }
       pluginManager_.UnloadPluginLibrary(moduleName);

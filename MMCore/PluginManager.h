@@ -39,6 +39,7 @@
 #include <cstring>
 #include <vector>
 #include <map>
+#include <set>
 #include "../MMDevice/MMDeviceConstants.h"
 #include "../MMDevice/MMDevice.h"
 #include "../MMDevice/DeviceThreads.h"
@@ -96,12 +97,12 @@ private:
    static std::string FindInSearchPath(std::string filename);
    typedef std::map<std::string, MMThreadLock*> CModuleLockMap;
    typedef std::map<std::string, MM::Device*> CDeviceMap;
-   typedef std::vector<MM::Device*> DeviceArray;
+   typedef std::set<MM::Device*> DeviceSet;
 
    // searchPaths_ is static so that the static methods can use them
    static std::vector<std::string> searchPaths_;
    CDeviceMap devices_;
-   DeviceArray devArray_;
+   DeviceSet devSet_;
    CModuleLockMap moduleLocks_;
 };
 
