@@ -255,6 +255,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "TSI", "..\DeviceAdapters\TS
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "MoticMicroscope", "..\DeviceAdapters\MoticMicroscope\MoticMicroscope.vcproj", "{F61EE788-E229-43F1-9E05-DAE2AB60B882}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "RaptorEPIX", "..\SecretDeviceAdapters\RaptorEPIX\RaptorEPIX.vcproj", "{805A53D5-1E00-42D7-96F0-661AC7D042A6}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
@@ -1218,6 +1220,14 @@ Global
 		{F61EE788-E229-43F1-9E05-DAE2AB60B882}.Release|Win32.Build.0 = Release|Win32
 		{F61EE788-E229-43F1-9E05-DAE2AB60B882}.Release|x64.ActiveCfg = Release|x64
 		{F61EE788-E229-43F1-9E05-DAE2AB60B882}.Release|x64.Build.0 = Release|x64
+		{805A53D5-1E00-42D7-96F0-661AC7D042A6}.Debug|Win32.ActiveCfg = Debug|Win32
+		{805A53D5-1E00-42D7-96F0-661AC7D042A6}.Debug|Win32.Build.0 = Debug|Win32
+		{805A53D5-1E00-42D7-96F0-661AC7D042A6}.Debug|x64.ActiveCfg = Debug|x64
+		{805A53D5-1E00-42D7-96F0-661AC7D042A6}.Debug|x64.Build.0 = Debug|x64
+		{805A53D5-1E00-42D7-96F0-661AC7D042A6}.Release|Win32.ActiveCfg = Release|Win32
+		{805A53D5-1E00-42D7-96F0-661AC7D042A6}.Release|Win32.Build.0 = Release|Win32
+		{805A53D5-1E00-42D7-96F0-661AC7D042A6}.Release|x64.ActiveCfg = Release|x64
+		{805A53D5-1E00-42D7-96F0-661AC7D042A6}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
