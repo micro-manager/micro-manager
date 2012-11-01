@@ -321,23 +321,33 @@ void CPluginManager::UnloadDevice(MM::Device* pDevice)
    // delete device
    hDeleteDeviceFunc(pDevice);
 
-   // invalidate the entry in the label-device map
-   string label = GetDeviceLabel(*pDevice);
-
-   std::map<std::string, MM::Device*>::iterator dd =  devices_.find(label);
-   dd->second = NULL;
-
-   // remove the entry from the device set
-   DeviceSet newDevSet;
-   DeviceSet::const_iterator it;
-   for (it = devSet_.begin(); it != devSet_.end(); it++)
    {
-      if (*it != pDevice)
+      // remove the entry from the device map
+      CDeviceMap newDeviceMap;
+      CDeviceMap::const_iterator it;
+      for (it=devices_.begin(); it != devices_.end(); it++)
       {
-         newDevSet.insert(*it);
+         if (it->second != pDevice)
+         {
+            newDeviceMap[it->first] = it->second;
+         }
       }
+      devices_ = newDeviceMap;
    }
-   devSet_ = newDevSet;
+
+   {
+      // remove the entry from the device set
+      DeviceVector newDevVector;
+      DeviceVector::const_iterator it;
+      for (it = devVector_.begin(); it != devVector_.end(); it++)
+      {
+         if (*it != pDevice)
+         {
+            newDevVector.push_back(*it);
+         }
+      }
+      devVector_ = newDevVector;
+   }
 }
 
 /**
@@ -359,7 +369,7 @@ void CPluginManager::UnloadAllDevices()
          UnloadDevice(it->second);
 
    devices_.clear();
-   devSet_.clear();
+   devVector_.clear();
 }
 
 /**
@@ -426,7 +436,7 @@ MM::Device* CPluginManager::LoadDevice(const char* label, const char* moduleName
 
    // assign label
    devices_[label] = pDevice;
-   devSet_.insert(pDevice);
+   devVector_.push_back(pDevice);
 
    return pDevice;
 }
@@ -478,8 +488,8 @@ string CPluginManager::GetDeviceLabel(const MM::Device& device) const
 vector<string> CPluginManager::GetDeviceList(MM::DeviceType type) const
 {
    vector<string> labels;
-   DeviceSet::const_iterator it;
-   for (it = devSet_.begin(); it != devSet_.end(); ++it)
+   DeviceVector::const_iterator it;
+   for (it = devVector_.begin(); it != devVector_.end(); ++it)
    {
       char buf[MM::MaxStrLength];
       if (type == MM::AnyType || type == (*it)->GetType())
@@ -569,8 +579,8 @@ vector<string> CPluginManager::GetLoadedPeripherals(const char* label) const
       return labels;
    }
 
-   DeviceSet::const_iterator it;
-   for (it = devSet_.begin(); it != devSet_.end(); it++)
+   DeviceVector::const_iterator it;
+   for (it = devVector_.begin(); it != devVector_.end(); it++)
    {
       char parentID[MM::MaxStrLength];
       (*it)->GetParentID(parentID);
@@ -927,8 +937,8 @@ void CPluginManager::CreateModuleLocks()
 {
    DeleteModuleLocks();
 
-   DeviceSet::const_iterator it;
-   for (it = devSet_.begin(); it != devSet_.end(); it++)
+   DeviceVector::const_iterator it;
+   for (it = devVector_.begin(); it != devVector_.end(); it++)
    {
       char moduleName[MM::MaxStrLength];
       (*it)->GetModuleName(moduleName);

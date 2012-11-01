@@ -97,12 +97,12 @@ private:
    static std::string FindInSearchPath(std::string filename);
    typedef std::map<std::string, MMThreadLock*> CModuleLockMap;
    typedef std::map<std::string, MM::Device*> CDeviceMap;
-   typedef std::set<MM::Device*> DeviceSet;
+   typedef std::vector<MM::Device*> DeviceVector;
 
    // searchPaths_ is static so that the static methods can use them
    static std::vector<std::string> searchPaths_;
    CDeviceMap devices_;
-   DeviceSet devSet_;
+   DeviceVector devVector_;
    CModuleLockMap moduleLocks_;
 };
 
