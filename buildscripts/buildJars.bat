@@ -65,9 +65,9 @@ pushd plugins\DataBrowser
 call build.bat
 popd
 
-pushd plugins\DLLAutoReloader
-call build.bat
-popd
+rem pushd plugins\DLLAutoReloader
+rem call build.bat
+rem popd
 
 pushd plugins\Gaussian
 call build.bat
