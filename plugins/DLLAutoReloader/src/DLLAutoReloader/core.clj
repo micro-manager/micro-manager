@@ -203,11 +203,11 @@
       (let [live-mode (.isLiveModeOn gui)]
         (when live-mode
           (.enableLiveMode gui false))
-        (notify-user "Reloading " module " module...")
+        (notify-user false "Reloading " module " module...")
         (reload-module module
                        (copy dll
                              (file "." (.getName dll))))
-        (notify-user "Finished reloading " module "!")
+        (notify-user true "Finished reloading " module "!")
         (when live-mode
           (.enableLiveMode gui true))))))
 
@@ -223,12 +223,13 @@
         
 (def ^{:dynamic true} stop (fn []))
 
-(def default-directory "E:\\projects\\micromanager\\bin_x64")
+(def default-directory "C:\\projects\\micromanager\\bin_x64")
 
-(defn show-plugin []
+(defn show-plugin [plugin]
+  (println "starting DLLAutoReloader plugin")
   (stop)
   (def stop (reload-modules-on-device-adapter-change default-directory))
-  (notify-user "Ready to autoreload!"))
+  (notify-user true "Ready to autoreload!"))
 
 (defn handle-exit [] (stop))
 
