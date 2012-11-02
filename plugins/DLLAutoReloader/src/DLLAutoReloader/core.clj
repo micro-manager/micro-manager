@@ -181,33 +181,16 @@
   [& txt]
   (str "<html><body><p style=\"padding:10; font-size:20\">" (apply str txt) "</body></html>"))
 
-(defn notify-user-reloading-started
-  "Notify the user that reloading has started."
-  [module]
+(defn notify-user
+  "Show the user a message."
+  [temporary? & message-parts]
   (let [{:keys [frame label]} status-frame]
     (edt
-      (.setText label (label-html "Reloading " module " module..."))
-    (.show frame))))
-
-(defn notify-user-reloading-finished
-  "Notify the user that reloading has finished."
-  [module]
-  (let [{:keys [frame label]} status-frame]
-    (edt
-      (.setText label (label-html "Finished reloading " module "!"))
+      (.setText label (apply label-html message-parts))
       (.show frame))
+    (when temporary?
     (future (Thread/sleep 3000)
-            (edt (.hide frame)))))
-
-(defn notify-user-activated
-  "Notify the user that reloading has finished."
-  []
-  (let [{:keys [frame label]} status-frame]
-    (edt
-      (.setText label (label-html "Ready to autoreload!"))
-      (.show frame))
-    (future (Thread/sleep 3000)
-            (edt (.hide frame)))))
+            (edt (.hide frame))))))
 
 (defn reload-updated-module
   "Unload a module, copy the new version to the Micro-Manager
@@ -220,11 +203,11 @@
       (let [live-mode (.isLiveModeOn gui)]
         (when live-mode
           (.enableLiveMode gui false))
-        (notify-user-reloading-started module)
+        (notify-user "Reloading " module " module...")
         (reload-module module
                        (copy dll
                              (file "." (.getName dll))))
-        (notify-user-reloading-finished module)
+        (notify-user "Finished reloading " module "!")
         (when live-mode
           (.enableLiveMode gui true))))))
 
@@ -244,9 +227,10 @@
 
 (defn show-plugin []
   (stop)
-  (def stop (reload-modules-on-device-adapter-change default-directory)))
+  (def stop (reload-modules-on-device-adapter-change default-directory))
+  (notify-user "Ready to autoreload!"))
 
-(defn handle-exit [] (notify-user-activated))
+(defn handle-exit [] (stop))
 
 ;; testing
 
