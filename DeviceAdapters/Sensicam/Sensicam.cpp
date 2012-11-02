@@ -683,7 +683,7 @@ int CSensicam::SnapImage()
 	}
 
    if((nPicstat & 0x02) != 0)
-      return ERR_TIMEOUT; // timeout
+      return DEVICE_SNAP_IMAGE_FAILED; // timeout
       //return 0;
 
    return DEVICE_OK;
