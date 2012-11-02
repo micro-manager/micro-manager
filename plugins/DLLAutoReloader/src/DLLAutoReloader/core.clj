@@ -140,7 +140,7 @@
   (let [keep-following (atom true)]
     (future
       (while @keep-following
-        (Thread/sleep 300)
+        (Thread/sleep 500)
         (reset! date-atom (file-dates path))))
     #(reset! keep-following false)))
       
