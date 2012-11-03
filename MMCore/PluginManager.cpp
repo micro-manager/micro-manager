@@ -65,33 +65,6 @@ CPluginManager::~CPluginManager()
    DeleteModuleLocks();
 }
 
-// disable MSVC warning about unreferenced variable "ret"
-#ifdef WIN32
-#pragma warning(disable : 4189)
-#endif
-
-/** 
- * Unloads the plugin library 
- * This function is deprecated.  Unloading the plugin libraries disallows them to maintain information
- * between invocations.  Not releasing the libraries does not seem to have bad consequences.  
- * This function can be removed and the code involved can be refactored
- */
-void CPluginManager::ReleasePluginLibrary(HDEVMODULE)
-{
-   #ifdef WIN32
-      //BOOL ret = FreeLibrary((HMODULE)hLib);
-      //assert(ret);
-   #else
-   // Note that even though we use the RTLD_NODELETE flag, the library still disappears (at least on the Mac) when dlclose is called...
-      //int nRet = dlclose(hLib);
-      //assert(nRet == 0);
-   #endif
-}
-#ifdef WIN32
-#pragma warning(default : 4189)
-#endif
-
-
 
 vector<string> CPluginManager::searchPaths_;
 
@@ -166,25 +139,28 @@ HDEVMODULE CPluginManager::LoadPluginLibrary(const char* shortName)
    name += LIB_NAME_SUFFIX;
    name = FindInSearchPath(name);
 
+   HDEVMODULE hMod;
    string errorText;
    #ifdef WIN32
       int originalErrorMode = SetErrorMode(SEM_NOOPENFILEERRORBOX | SEM_FAILCRITICALERRORS);
-      HMODULE hMod = LoadLibrary(name.c_str());
+      hMod = (HDEVMODULE) LoadLibrary(name.c_str());
       SetErrorMode(originalErrorMode);
-      if (hMod)
-         return (HDEVMODULE) hMod;
    #else
       int mode = RTLD_NOW | RTLD_LOCAL;
       // Hack to make Andor adapter on Linux work
       if (strcmp (shortName, "Andor") == 0)
          mode = RTLD_LAZY | RTLD_LOCAL;
-      HDEVMODULE hMod = dlopen(name.c_str(), RTLD_NOLOAD | mode);
-      if (hMod)
-         return  hMod;
-      hMod = dlopen(name.c_str(), RTLD_NODELETE | mode);
-      if (hMod)
-         return  hMod;
+      hMod = dlopen(name.c_str(), RTLD_NOLOAD | mode);
+      if (!hMod)
+      {
+         hMod = dlopen(name.c_str(), RTLD_NODELETE | mode);
+      }
    #endif // WIN32
+   if (hMod) 
+   {
+      moduleMap_[shortName] = hMod;
+      return hMod;
+   }
    GetSystemError (errorText);
    errorText += " ";
    errorText += shortName;
@@ -202,21 +178,20 @@ void CPluginManager::UnloadPluginLibrary(const char* moduleName)
    name = FindInSearchPath(name);
 
    #ifdef WIN32
-   BOOL freed = false;
-   do {
-      HMODULE hLib = GetModuleHandle(name.c_str());
-      if (hLib != NULL) {
-         freed = FreeLibrary(hLib);
-      } else {
-         freed = false;
-      }
-   } while(freed);
-      //assert(ret);
+      BOOL freed = false;
+      do {
+         HMODULE hLib = GetModuleHandle(name.c_str());
+         if (hLib != NULL) {
+            freed = FreeLibrary(hLib);
+         } else {
+            freed = false;
+         }
+      } while(freed);
    #else
-   // NOT IMPLEMENTED YET
-   // Note that even though we use the RTLD_NODELETE flag, the library still disappears (at least on the Mac) when dlclose is called...
-      //int nRet = dlclose(hLib);
-      //assert(nRet == 0);
+      int ret;
+      do {
+         int ret = dlclose(moduleMap_[moduleName]);
+      } while (ret == 0);
    #endif
 }
 
@@ -428,7 +403,6 @@ MM::Device* CPluginManager::LoadDevice(const char* label, const char* moduleName
       o << label << " module " << moduleName << " device " << deviceName;
 
       CMMError newErr( o.str().c_str(), err.getCoreMsg().c_str(), err.getCode());
-      ReleasePluginLibrary(hLib);
       throw newErr;
    }
    
@@ -767,11 +741,9 @@ vector<string> CPluginManager::GetAvailableDevices(const char* moduleName) throw
       o << " module " << moduleName;
 
       CMMError newErr( o.str().c_str(), err.getCoreMsg().c_str(), err.getCode());
-      ReleasePluginLibrary(hLib);
       throw newErr;
    }
    
-   ReleasePluginLibrary(hLib);
    return devices;
 }
 
@@ -822,11 +794,9 @@ vector<string> CPluginManager::GetAvailableDeviceDescriptions(const char* module
       o << " module " << moduleName ;
 
       CMMError newErr( o.str().c_str(), err.getCoreMsg().c_str(), err.getCode());
-      ReleasePluginLibrary(hLib);
       throw newErr;
    }
    
-   ReleasePluginLibrary(hLib);
    return descriptions;
 }
 
@@ -892,11 +862,9 @@ vector<long> CPluginManager::GetAvailableDeviceTypes(const char* moduleName) thr
       o << " module " << moduleName;
 
       CMMError newErr( o.str().c_str(), err.getCoreMsg().c_str(), err.getCode());
-      ReleasePluginLibrary(hLib);
       throw newErr;
    }
    
-   ReleasePluginLibrary(hLib);
    return types;
 }
 

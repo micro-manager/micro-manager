@@ -104,6 +104,7 @@ private:
    CDeviceMap devices_;
    DeviceVector devVector_;
    CModuleLockMap moduleLocks_;
+   static std::map<std::string, HDEVMODULE> moduleMap_;
 };
 
 #endif //_PLUGIN_MANAGER_H_
