@@ -982,7 +982,7 @@ void CMMCore::unloadLibrary(const char* moduleName) throw (CMMError)
          {
             try {
                unloadDevice(deviceLabel);
-            } catch (CMMError& e) {} // ignore error; device may already have been unloaded
+            } catch (CMMError& /*e*/) {} // ignore error; device may already have been unloaded
          }
       }
       pluginManager_.UnloadPluginLibrary(moduleName);
