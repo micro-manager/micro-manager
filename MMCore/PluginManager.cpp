@@ -66,7 +66,8 @@ CPluginManager::~CPluginManager()
 }
 
 
-vector<string> CPluginManager::searchPaths_;
+std::vector<std::string> CPluginManager::searchPaths_;
+std::map<std::string, HDEVMODULE> CPluginManager::moduleMap_;
 
 /**
  * Add search path.
