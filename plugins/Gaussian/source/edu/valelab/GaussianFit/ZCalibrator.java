@@ -15,7 +15,9 @@
 package edu.valelab.GaussianFit;
 
 import java.util.ArrayList;
+import org.apache.commons.math.FunctionEvaluationException;
 import org.apache.commons.math.optimization.GoalType;
+import org.apache.commons.math.optimization.OptimizationException;
 import org.apache.commons.math.optimization.RealPointValuePair;
 import org.apache.commons.math.optimization.SimpleScalarValueChecker;
 import org.apache.commons.math.optimization.direct.NelderMead;
@@ -116,7 +118,7 @@ public class ZCalibrator {
          plotData[1].add(d.z_, d.wy_);
       }
       
-      GaussianUtils.plotDataN("", plotData, xAxis, "Width(nm)", 0, 400, true, false);
+      GaussianUtils.plotDataN("Z-calibration Data Points", plotData, xAxis, "Width(nm)", 0, 400, true, false);
            
    }
    
@@ -141,7 +143,7 @@ public class ZCalibrator {
     * 
     * 
     */
-   public void fitFunction() {
+   public void fitFunction() throws FunctionEvaluationException, OptimizationException {
       
       NelderMead nmx = new NelderMead();
       SimpleScalarValueChecker convergedChecker_ = new SimpleScalarValueChecker(1e-6,-1);
@@ -162,18 +164,12 @@ public class ZCalibrator {
       
       double[] paramsOut = {0.0};
       
-      try {
-         RealPointValuePair result = nmx.optimize(mvcx, GoalType.MINIMIZE, params0_);
-         paramsOut = result.getPoint();
-      } catch (java.lang.OutOfMemoryError e) {
-         throw (e);
-      } catch (Exception e) {
-         ij.IJ.log(" " + e.toString());
-      }
+      RealPointValuePair result = nmx.optimize(mvcx, GoalType.MINIMIZE, params0_);
+      paramsOut = result.getPoint();
       
-      for (int i = 0; i < paramsOut.length; i++) {
-         System.out.println("Result " + i + " value: " + (int) paramsOut[i]);
-      }
+      //for (int i = 0; i < paramsOut.length; i++) {
+       //  System.out.println("Result " + i + " value: " + (int) paramsOut[i]);
+      //}
       
       // write fit result to Results Table:
       ResultsTable res = new ResultsTable();
@@ -192,20 +188,15 @@ public class ZCalibrator {
       
       nmx.setStartConfiguration(params0_);
       
-      try {
-         RealPointValuePair result = nmx.optimize(yvcx, GoalType.MINIMIZE, params0_);
-         paramsOut = result.getPoint();
-      } catch (java.lang.OutOfMemoryError e) {
-         throw (e);
-      } catch (Exception e) {
-         ij.IJ.log(" " + e.toString());
-      }
+      result = nmx.optimize(yvcx, GoalType.MINIMIZE, params0_);
+      paramsOut = result.getPoint();
+
       
       System.out.println("Y:");
       
-      for (int i = 0; i < paramsOut.length; i++) {
-         System.out.println("Result " + i + " value: " + (int) paramsOut[i]);
-      }
+      //for (int i = 0; i < paramsOut.length; i++) {
+       //  System.out.println("Result " + i + " value: " + (int) paramsOut[i]);
+      //}
       
       res.incrementCounter();
       res.addValue("c", paramsOut[0]);

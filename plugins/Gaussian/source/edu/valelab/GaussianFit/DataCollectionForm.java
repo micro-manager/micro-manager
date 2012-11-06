@@ -94,6 +94,11 @@ public class DataCollectionForm extends javax.swing.JFrame {
    private static final String COL3Width = "Col3Width";
    private static final String COL4Width = "Col4Width";
    private static final String COL5Width = "Col5Width";
+   
+   private static final int OK = 0;
+   private static final int FAILEDDONOTINFORM = 1;
+   private static final int FAILEDDOINFORM = 2;
+   
    private Preferences prefs_;
    
    
@@ -2250,8 +2255,12 @@ public class DataCollectionForm extends javax.swing.JFrame {
          JOptionPane.showMessageDialog(getInstance(), 
                  "Please select one datasets for Z Calibration");
       } else {
-         zCalibrate(rows[0]);
-         zCalibrationLabel_.setText("Calibrated");
+         int result = zCalibrate(rows[0]);
+         if (result == OK ) {
+            zCalibrationLabel_.setText("Calibrated");
+         } else if (result == FAILEDDOINFORM) {
+            ReportingUtils.showError("Z-Calibration failed");
+         }
       }
    }//GEN-LAST:event_zCalibrateButton_ActionPerformed
 
@@ -3367,10 +3376,17 @@ public class DataCollectionForm extends javax.swing.JFrame {
 
    }
    
-   public void zCalibrate(int rowNr) {
+   /**
+    * Performs Z-calibration
+    * 
+    * 
+    * @param rowNr
+    * @return 0 indicates success, 1 indicates failure and calling code should inform user, 2 indicates failure but calling code should not inform user
+    */
+   public int zCalibrate(int rowNr) {
       final double widthCutoff = 1000.0;
       final double maxVariance = 20000.0;
-      final int minNrSpots = 5;
+      final int minNrSpots = 1;
       
       
       zc_.clearDataPoints();
@@ -3378,7 +3394,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
       MyRowData rd = rowData_.get(rowNr);
       if (rd.shape_ < 2) {
          JOptionPane.showMessageDialog(getInstance(), "Use Fit Parameters Dimension 2 or 3 for Z-calibration");
-         return;
+         return FAILEDDONOTINFORM;
       }
 
       
@@ -3432,11 +3448,21 @@ public class DataCollectionForm extends javax.swing.JFrame {
          }
          frameNr++;
       }
+      if (zc_.nrDataPoints() < 6) {
+         ReportingUtils.showError("Not enough particles found for 3D calibration");
+         return FAILEDDONOTINFORM;
+      }
       
       zc_.plotDataPoints();
       
-      zc_.fitFunction();
+      try {
+         zc_.fitFunction();
+      } catch (Exception ex) {
+         ReportingUtils.showError("Error while fitting data");
+         return FAILEDDONOTINFORM;
+      }
 
+      return OK;
       
    }
 
