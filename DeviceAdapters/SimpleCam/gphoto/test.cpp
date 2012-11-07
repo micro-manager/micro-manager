@@ -2,6 +2,7 @@
 
 #include "SimpleCam.h"
 #include <iostream>
+#include <assert.h>
 #include <gphoto2/gphoto2.h>
 
 using namespace std;

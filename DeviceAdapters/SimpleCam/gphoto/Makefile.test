@@ -1,6 +1,6 @@
 # Mac
-CXXFLAGS=-I/opt/local/include
-LDFLAGS=-L/opt/local/lib -lgphoto2 -lgphoto2_port -L/usr/local/lib -lfreeimage -framework CoreFoundation
+CXXFLAGS=-I/opt/local/include -g
+LDFLAGS=-L/opt/local/lib -lgphoto2 -lgphoto2_port -L/usr/local/lib -lfreeimage -lfreeimageplus -framework CoreFoundation
 # Linux
 #CXXFLAGS=-I/usr/local/include
 #LDFLAGS=-L/usr/local/lib -lgphoto2 -lgphoto2_port -lfreeimageplus -lm

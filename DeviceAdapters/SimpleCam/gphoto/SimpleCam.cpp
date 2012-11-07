@@ -120,7 +120,12 @@ return 0;
 }
 
 
-/* returns list of detected cameras */
+/* 
+ * Returns list of detected cameras.
+ * Detected cameras are either a camera model (e.g. "Canon EOS 1100D")
+ * or, if multiple cameras of the same model are connected, 
+ * a camera model at a port (e.g. "Canon EOS 1100D at usb:253,006")
+ */
 bool CSimpleCam::listCameras(vector<string>& detected)
 {
    int rc = GP_OK; // libgphoto2 result code
@@ -167,7 +172,7 @@ bool CSimpleCam::listCameras(vector<string>& detected)
       numberOfCameras = rc;
    }
 
-   // Loop over list of cameras and add the cameras to the vector of detected cameras
+   // Loop over list of cameras and add the cameras to the list of detected cameras
    for (int i = 0; i < numberOfCameras; i++)
    {
       if (rc >= GP_OK)
@@ -175,9 +180,41 @@ bool CSimpleCam::listCameras(vector<string>& detected)
 
       if (rc >= GP_OK)
          rc = gp_list_get_value(cameraList, i, &camPort);
-   
+
+      /* sanity check */
       if (rc >= GP_OK)
-         detected.push_back(camModel);
+         rc = ((camModel != NULL) && (camPort != NULL)) ? GP_OK : GP_ERROR;
+
+      /* count number of cameras of same model */ 
+      int cameraCount = 0;
+      if (rc >= GP_OK)
+      {
+         const char* loopCamModel;
+         for (int j = 0; j < numberOfCameras; j++)
+         {
+            if (rc >= GP_OK)
+               rc = gp_list_get_name(cameraList, j, &loopCamModel);
+
+            if (rc >= GP_OK)
+               rc = (loopCamModel != NULL) ? GP_OK : GP_ERROR; /* sanity check */
+
+            if ((rc >= GP_OK) && (strcmp(camModel, loopCamModel) == 0))
+               cameraCount++;
+         }
+      }
+
+      if (rc >= GP_OK)
+      {
+         /* if more than one camera of the same model exists, add port to tell the difference */ 
+         string cameraName = camModel;
+         if (cameraCount > 1)
+         {
+            cameraName.append(" at ");
+            cameraName.append(camPort);
+         }
+         /* add camera to list of detected cameras */ 
+         detected.push_back(cameraName);
+      }
    }
 
    if (rc >= GP_OK)
@@ -194,7 +231,7 @@ bool CSimpleCam::listCameras(vector<string>& detected)
    return (rc >= GP_OK);
 }
 
-/* attempt to connect to the camera. cameraModelStr is one of the cameras detected by listCameras */
+/* attempt to connect to the camera. cameraName is one of the cameras detected by listCameras */
 bool CSimpleCam::connectCamera(string cameraName)
 {
    int rc = GP_OK; // libgphoto2 result code
@@ -249,8 +286,17 @@ bool CSimpleCam::connectCamera(string cameraName)
       if (rc >= GP_OK)
          rc = gp_list_get_value(cameraList, i, &camPort);
    
+      /* sanity check */
       if (rc >= GP_OK)
-         found = !strcmp(cameraName.c_str(), camModel);
+         rc = ((camModel != NULL) && (camPort != NULL)) ? GP_OK : GP_ERROR;
+
+      if (rc >= GP_OK)
+      {
+         string camModelAtPort = camModel;
+         camModelAtPort.append(" at ");
+         camModelAtPort.append(camPort);
+         found = (cameraName == camModel) || (cameraName == camModelAtPort);
+      }
 
       if (found)
          break;
