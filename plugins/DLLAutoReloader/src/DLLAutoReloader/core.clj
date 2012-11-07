@@ -129,6 +129,10 @@
   [module & housekeeping]
   `(reload-module-fn ~module (fn [] ~@housekeeping)))
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Plugin code.
+;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
 (defn file-dates
   "Maps each file in path to its last modification date."
   [path]
