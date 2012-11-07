@@ -18,8 +18,12 @@
         [clojure.data :only (diff)]
         [org.micromanager.mm :only (edt load-mm mmc core gui)]
         [clojure.pprint :only (pprint)])
-  (:import (javax.swing JLabel JWindow)
-           (java.awt Color)))
+  (:import (javax.swing JButton JFrame JLabel JWindow)
+           (java.awt Color)
+           (java.awt.event ActionListener)
+           (java.util.prefs Preferences)
+           (org.micromanager.utils FileDialogs FileDialogs$FileType
+                                   GUIUtils JavaUtils)))
 
 (load-mm (org.micromanager.MMStudioMainFrame/getInstance))
 
@@ -141,7 +145,8 @@
     (future
       (while @keep-following
         (Thread/sleep 500)
-        (reset! date-atom (file-dates path))))
+        (when-not (.isAcquisitionRunning gui)
+          (reset! date-atom (file-dates path)))))
     #(reset! keep-following false)))
       
 (defn watch-dates
@@ -158,9 +163,9 @@
 (defn module-for-dll
   "Finds the module name for a dll path."
   [dll]
-  (-> dll
-      file .getName (.split "\\.")
-      first (.replace "mmgr_dal_" "")))
+  (let [name (-> dll file .getName (.split "\\.") first)]
+    (when (.contains name "mmgr_dal_") ; else not a lib!
+      (second (.split name "mmgr_dal_")))))
 
 (defonce 
   status-frame
@@ -189,8 +194,26 @@
       (.setText label (apply label-html message-parts))
       (.show frame))
     (when temporary?
-    (future (Thread/sleep 3000)
-            (edt (.hide frame))))))
+      (future (Thread/sleep 3000)
+              (edt (.hide frame))))))
+
+(defmacro pausing-live-mode
+  "Temporarily stop live mode (if it is running), run body code, and then
+   start live mode again (if it was running)."
+  [& body]
+  `(let [live-mode# (.isLiveModeOn gui)]
+    (when live-mode#
+      (.enableLiveMode gui false))
+    ~@body
+    (when live-mode#
+      (.enableLiveMode gui true))))
+
+(defn new-dll-name
+  [dll]
+  (let [name (.getName dll)]
+    (if (JavaUtils/isWindows)
+      name
+      (.replace name ".la" ""))))
 
 (defn reload-updated-module
   "Unload a module, copy the new version to the Micro-Manager
@@ -200,16 +223,12 @@
         module (module-for-dll dll)
         loaded-modules (keys (devices-in-each-module))]
     (when (some #{module} loaded-modules)
-      (let [live-mode (.isLiveModeOn gui)]
-        (when live-mode
-          (.enableLiveMode gui false))
-        (notify-user false "Reloading " module " module...")
+      (notify-user false "Reloading " module " module...")
+      (pausing-live-mode
         (reload-module module
                        (copy dll
-                             (file "." (.getName dll))))
-        (notify-user true "Finished reloading " module "!")
-        (when live-mode
-          (.enableLiveMode gui true))))))
+                             (file "." (new-dll-name dll)))))
+      (notify-user true "Finished reloading " module "!"))))
 
 (defn reload-modules-on-device-adapter-change
   "Watch the directory where compiled DLLs are placed by Visual
@@ -223,15 +242,57 @@
         
 (def ^{:dynamic true} stop (fn []))
 
-(def default-directory "C:\\projects\\micromanager\\bin_x64")
-
-(defn show-plugin [plugin]
-  (println "starting DLLAutoReloader plugin")
+(defn activate
+  "Start device adapter library reloading."
+  [path]
   (stop)
-  (def stop (reload-modules-on-device-adapter-change default-directory))
+  (def stop (reload-modules-on-device-adapter-change path))
   (notify-user true "Ready to autoreload!"))
 
-(defn handle-exit [] (stop))
+(defn deactivate []
+  "Stop device adapter library reloading."
+  []
+  (stop)
+  (notify-user true "Autoreloading deactivated!"))
+
+(def dll-directory-type (FileDialogs$FileType. "DLL Directory" "New DLL location" "" false nil))
+
+(defn choose-dll-dir
+  []
+  (FileDialogs/openDir nil "Please choose a directory where new DLLs will appear"
+                       dll-directory-type))
+
+(def prefs (.. Preferences userRoot (node "DLLAutoReloader")))
+
+(defn startup
+  []
+  (let [frame (proxy [JFrame] []) ; use proxy to get unique JFrame class
+        path (.get prefs "dir" nil)
+        path-button (JButton. (or path "(choose path)"))]
+    (when path
+      (activate path))
+    (doto frame
+      (.setBounds 100 100 700 50)
+      (.setResizable false)
+      (GUIUtils/recallPosition)
+      (.setTitle "DLL Auto Reloading"))
+    (.addActionListener path-button
+                        (proxy [ActionListener] []
+                          (actionPerformed [e]
+                            (when-let [dir (file (choose-dll-dir))]
+                              (let [path (.getAbsolutePath dir)]
+                              (.setText path-button path)
+                              (activate path)
+                              (.put prefs "dir" path))))))
+    (doto (.getContentPane frame)
+      (.add path-button))
+    (.show frame)))
+
+(defn showPlugin [this]
+  (startup))
+
+(defn handle-exit []
+  (stop))
 
 ;; testing
 
@@ -240,4 +301,4 @@
 (defn test-unload []
   (core unloadLibrary test-lib))
 
-(def test-file (file default-directory "mmgr_dal_DemoCamera.dll"))
+;(def test-file (file default-directory "mmgr_dal_DemoCamera.dll"))
