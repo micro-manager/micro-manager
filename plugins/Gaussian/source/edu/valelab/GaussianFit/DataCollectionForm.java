@@ -1592,6 +1592,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
                         Point2D.Double pCh2 = np.findKDWSE(pCh1);
                         if (pCh2 != null) {
                            rt.incrementCounter();
+                           rt.addValue("Frame", frame); 
                            rt.addValue("X1", pCh1.getX());
                            rt.addValue("Y1", pCh1.getY());
                            rt.addValue("X2", pCh2.getX());
@@ -1655,17 +1656,19 @@ public class DataCollectionForm extends javax.swing.JFrame {
                if (rowData_.get(row).timePoints_ != null) {
                   yAxis = "Time (s)";
                }
-               GaussianUtils.plotData2("Error", xData, yData, yAxis, "Error(nm)", 0, 400);
+               GaussianUtils.plotData2("Error in " + rowData_.get(row).name_, xData, yData, yAxis, "Error(nm)", 0, 400);
 
                ij.IJ.showStatus("");
 
                sp.setOpenAsHyperStack(true);
                sp.setStack(stack, 1, 1, rowData_.get(row).nrFrames_);
                sp.setDisplayRange(0, 20);
+               sp.setTitle(rowData_.get(row).title_);
                //sp.setSlice(1);
                //sp.resetStack();
 
                ImageWindow w = new StackWindow(sp);
+               w.setTitle("Error in " + rowData_.get(row).name_);
 
                w.setImage(sp);
                w.setVisible(true);
