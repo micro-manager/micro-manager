@@ -14,7 +14,7 @@
 
 
 (ns DLLAutoReloader.plugin
-  (:use [DLLAutoReloader.core :only (show-plugin handle-exit)])
+  (:require [DLLAutoReloader.core :as core])
   (:gen-class
     :init init
     :name org.micromanager.DLLAutoReloader
@@ -22,9 +22,9 @@
     :state state))
 
 (defn -init [] [[] (atom nil)])
-(defn -dispose [this] (handle-exit))
+(defn -dispose [this] (core/handle-exit))
 (defn -setApp [this app] (swap! (.state this) assoc :app app))
-(defn -show [this] (show-plugin (:app @(.state this))))
+(defn -show [this] (core/show-plugin (:app @(.state this))))
 
 
 ;; Do nothing:

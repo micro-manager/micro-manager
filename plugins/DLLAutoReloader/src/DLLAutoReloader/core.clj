@@ -25,7 +25,6 @@
            (org.micromanager.utils FileDialogs FileDialogs$FileType
                                    GUIUtils JavaUtils)))
 
-
 (defn devices-in-each-module
   "Returns a map of each module to a vector of loaded devices.
    Omits the Core device."
@@ -296,7 +295,7 @@
       (.add path-button))
     frame))
 
-(defn showPlugin [app]
+(defn show-plugin [app]
   (load-mm app)
   (when-not @control-frame
     (reset! control-frame (startup)))
@@ -307,9 +306,9 @@
 
 ;; testing
 
-(defonce test-lib (first (keys (devices-in-each-module))))
+(defn test-lib [] (first (keys (devices-in-each-module))))
 
 (defn test-unload []
-  (core unloadLibrary test-lib))
+  (core unloadLibrary (test-lib)))
 
 ;(def test-file (file default-directory "mmgr_dal_DemoCamera.dll"))
