@@ -25,7 +25,6 @@
            (org.micromanager.utils FileDialogs FileDialogs$FileType
                                    GUIUtils JavaUtils)))
 
-(load-mm (org.micromanager.MMStudioMainFrame/getInstance))
 
 (defn devices-in-each-module
   "Returns a map of each module to a vector of loaded devices.
@@ -268,7 +267,10 @@
 
 (def prefs (.. Preferences userRoot (node "DLLAutoReloader")))
 
+(def control-frame (atom nil))
+
 (defn startup
+  "Create the control frame and activate directory watching."
   []
   (let [frame (proxy [JFrame] []) ; use proxy to get unique JFrame class
         path (.get prefs "dir" nil)
@@ -276,24 +278,29 @@
     (when path
       (activate path))
     (doto frame
-      (.setBounds 100 100 700 50)
+      (.setBounds 100 100 600 50)
       (.setResizable false)
       (GUIUtils/recallPosition)
       (.setTitle "DLL Auto Reloading"))
-    (.addActionListener path-button
-                        (proxy [ActionListener] []
-                          (actionPerformed [e]
-                            (when-let [dir (file (choose-dll-dir))]
-                              (let [path (.getAbsolutePath dir)]
-                              (.setText path-button path)
-                              (activate path)
-                              (.put prefs "dir" path))))))
+    (.addActionListener
+      path-button
+      (proxy [ActionListener] []
+        (actionPerformed
+          [e]
+          (when-let [dir (file (choose-dll-dir))]
+            (let [path (.getAbsolutePath dir)]
+              (.setText path-button path)
+              (activate path)
+              (.put prefs "dir" path))))))
     (doto (.getContentPane frame)
       (.add path-button))
-    (.show frame)))
+    frame))
 
-(defn showPlugin [this]
-  (startup))
+(defn showPlugin [app]
+  (load-mm app)
+  (when-not @control-frame
+    (reset! control-frame (startup)))
+  (.show @control-frame))
 
 (defn handle-exit []
   (stop))
