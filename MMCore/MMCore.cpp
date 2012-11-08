@@ -2022,6 +2022,8 @@ bool CMMCore::getShutterOpen() throw (CMMError)
 /**
  * Exposes the internal image buffer.
  *
+ * Use to get the image acquired by snapImage
+ *
  * Multi-Channel cameras will return the content of the first 
  * channel in this function
  *
@@ -2082,6 +2084,8 @@ void* CMMCore::getImage() throw (CMMError)
 
 /**
  * Returns the internal image buffer for a given Camera Channel
+ *
+ * Use to get the image acquired by snapImage
  *
  * Single channel cameras will return the content of their image buffer
  * irrespective of the channelNr argument
