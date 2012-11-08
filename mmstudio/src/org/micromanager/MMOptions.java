@@ -39,7 +39,6 @@ public class MMOptions {
    private static final String AUTORELOAD_DEVICES = "autoreloadDevices";
    private static final String ENABLE_DEVICE_DISCOVERY = "enableDeviceDiscovery";
    private static final String PREF_WINDOW_MAG = "windowMag";
-   private static final String OME_TIFF = "SaveAsOMETIFF";
    private static final String MULTIPAGE_TIFF_METADATA_FILE = "MakeMetadataFileWithMultipageTiff";
    
    public boolean debugLogEnabled_ = false;
@@ -51,7 +50,6 @@ public class MMOptions {
    boolean autoreloadDevices_ = false;
    public double windowMag_ = 1.0;
    //public boolean enableDeviceDiscovery_  = false;
-   public boolean omeTiff_ = false;
    public boolean multipageTiffMetadataFile_ = false;
    
    public void saveSettings() {
@@ -67,7 +65,6 @@ public class MMOptions {
       prefs.put(STARTUP_SCRIPT_FILE, startupScript_);
       prefs.putDouble(PREF_WINDOW_MAG, windowMag_);
       // prefs.putBoolean(ENABLE_DEVICE_DISCOVERY, enableDeviceDiscovery_);
-      prefs.putBoolean(OME_TIFF, omeTiff_);
       prefs.putBoolean(MULTIPAGE_TIFF_METADATA_FILE, multipageTiffMetadataFile_);
    }
    
@@ -84,7 +81,6 @@ public class MMOptions {
       autoreloadDevices_ = prefs.getBoolean(AUTORELOAD_DEVICES, autoreloadDevices_);
       windowMag_ = prefs.getDouble(PREF_WINDOW_MAG, windowMag_);
       // enableDeviceDiscovery_ = prefs.getBoolean(ENABLE_DEVICE_DISCOVERY, enableDeviceDiscovery_);
-      omeTiff_ = prefs.getBoolean(OME_TIFF, omeTiff_);
       multipageTiffMetadataFile_ = prefs.getBoolean(MULTIPAGE_TIFF_METADATA_FILE, multipageTiffMetadataFile_);
    }
 }

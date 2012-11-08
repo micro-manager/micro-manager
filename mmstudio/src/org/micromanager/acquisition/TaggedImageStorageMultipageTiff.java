@@ -77,7 +77,7 @@ public final class TaggedImageStorageMultipageTiff implements TaggedImageStorage
    private TreeMap<String, MultipageTiffReader> tiffReadersByLabel_;
   
    public TaggedImageStorageMultipageTiff(String dir, Boolean newDataSet, JSONObject summaryMetadata) throws IOException {            
-      this(dir, newDataSet, summaryMetadata, MMStudioMainFrame.getInstance().getOMETiffEnabled(),
+      this(dir, newDataSet, summaryMetadata,
               MMStudioMainFrame.getInstance().getMetadataFileWithMultipageTiff());
    }
    
@@ -85,8 +85,8 @@ public final class TaggedImageStorageMultipageTiff implements TaggedImageStorage
     * Constructor that doesnt make reference to MMStudioMainFrame so it can be used independently of MM GUI
     */
    public TaggedImageStorageMultipageTiff(String dir, boolean newDataSet, JSONObject summaryMetadata, 
-           boolean omeTiff, boolean seperateMDFile) throws IOException {
-      omeTiff_ = omeTiff;
+         boolean seperateMDFile) throws IOException {
+      omeTiff_ = true;
       seperateMetadataFile_ = seperateMDFile;
 
       newDataSet_ = newDataSet;

@@ -399,20 +399,6 @@ public class OptionsDlg extends MMDialog {
       springLayout.putConstraint(SpringLayout.WEST, metadataFileWithMultipageTiffCheckBox, 20, SpringLayout.WEST, getContentPane());
       springLayout.putConstraint(SpringLayout.NORTH, metadataFileWithMultipageTiffCheckBox, 10, SpringLayout.SOUTH, prefZoomLabel);
       metadataFileWithMultipageTiffCheckBox.setSelected(opts_.multipageTiffMetadataFile_);
-      
-      final JCheckBox omeTiffCheckBox = new JCheckBox();
-      omeTiffCheckBox.addActionListener(new ActionListener() {
-         public void actionPerformed(ActionEvent arg0) {
-            opts_.omeTiff_ = omeTiffCheckBox.isSelected();
-         }
-      });
-      omeTiffCheckBox.setText("Save multi-image files as OME Tiffs (coming soon...)");
-      getContentPane().add(omeTiffCheckBox);
-      springLayout.putConstraint(SpringLayout.WEST, omeTiffCheckBox, 20, SpringLayout.WEST, getContentPane());
-      springLayout.putConstraint(SpringLayout.NORTH, omeTiffCheckBox, 0, SpringLayout.SOUTH, metadataFileWithMultipageTiffCheckBox);
-      omeTiffCheckBox.setSelected(opts_.omeTiff_);
-      
-      
    }
 
    private void changeBackground() {

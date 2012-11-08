@@ -2237,10 +2237,6 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface, Device
    public boolean getMetadataFileWithMultipageTiff() {
       return options_.multipageTiffMetadataFile_;
    }
-   
-   public boolean getOMETiffEnabled() {
-      return options_.omeTiff_;
-   }
 
    private void updateTitle() {
       this.setTitle(MICRO_MANAGER_TITLE + " " + VERSION + " - " + sysConfigFile_);
