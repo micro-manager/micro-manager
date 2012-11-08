@@ -781,6 +781,16 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface, Device
          if (deviceName.equals(xyStageLabel_))
             updateXYPosRelative(xPos, yPos);
       }
+      
+      @Override
+      public void onExposureChanged(String deviceName, double exposure) {
+         if (deviceName.equals(cameraLabel_)){
+            // update exposure in gui
+            textFieldExp_.setText(NumberUtils.doubleToDisplayString(exposure));  
+         }
+         // todo: inform listeners
+            
+      }
 
    }
 
