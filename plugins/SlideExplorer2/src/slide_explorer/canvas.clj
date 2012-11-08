@@ -299,7 +299,7 @@
 (defn canvas [reference]
   (let [panel (proxy [JPanel] []
                 (paintComponent [^Graphics graphics]
-                                ;(proxy-super paintComponent graphics)
+                                (proxy-super paintComponent graphics)
                                 (draw graphics @reference)))]
     (add-watch reference panel (fn [_ _ _ _]
                                  (.repaint panel)))
@@ -325,7 +325,7 @@
     (Thread/sleep 30)
     (swap! reference (fn [data]
                        (-> data
-                           (assoc-in [0 1 :rotate] (* i 15))
+                           (assoc-in [1 1 :rotate] (* i 15))
                            ))
            )))
 
