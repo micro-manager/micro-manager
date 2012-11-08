@@ -417,31 +417,42 @@
 ;              :cap :butt
 ;              :join :bevel
 ;              :miter-limit 10.0}}]
-   [:text
-    {:x 180 :y 120 :text "Testing!!"
-     :color :white
-     :alpha 0.7
-     :rotate 20
-     :scale-x 1.1
-     :fill true
-     :stroke {:width 10 :cap :butt}
-     :font {:name "Arial"
-            :bold true
-            :italic false
-            :underline false
-            :strikethrough false
-            :size 50}}]
+   [:rect
+    {:x 200 :y 200 :w 1000 :h 1000 :fill {:color :black}}]
+   [:compound {:x 180 :y 300 :scale 1.0 :alpha 0.5 :rotate 0} 
+    [:round-rect
+     {:y 2 :w 150 :h 30
+      :arc-radius 10
+      :fill {:color 0x4060D0}
+      :scale 1.0
+      :alpha 1.0
+      :stroke {:width 2 :color :white}
+      :rotate 0}]
+    [:text
+     {:text "Navigate!"
+      :color :white
+      :alpha 0.7
+      :rotate 0
+      :scale-x 1.0
+      :fill true
+      :stroke {:width 10 :cap :butt}
+      :font {:name "Arial"
+             :bold true
+             :italic false
+             :underline false
+             :strikethrough false
+             :size 20}}]]
    [:compound
-    {:x 150 :y 150 :rotate 0 :scale 1.0 }
-    [:rect
-     {:w 40 :h 40 :fill {:color :pink}
+    {:x 150 :y 150 :rotate 0 :scale 0.8 }
+    [:ellipse
+     {:w 40 :h 40 :fill {:color :pink} :alpha 0.1
       :stroke {:width 4 :color 0xE06060}}]
     [:line
-     {:w 18 :h 18 :scale 1.0 :color :white :alpha 1.0
+     {:w 18 :h 18 :scale 1.0 :color :red :alpha 1.0
       :stroke {:width 7 :cap :butt}
       }]
     [:line
-     {:x 0 :y 0 :w -18 :h 18 :fill false :color :white :alpha 1.0
+     {:x 0 :y 0 :w -18 :h 18 :fill false :color :red :alpha 1.0
       :stroke {:width 7 :cap :butt}}]]
 ;   [:image
 ;     {:x 200 :t 150 :data img :rotate 171}]
