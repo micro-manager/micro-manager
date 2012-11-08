@@ -4151,6 +4151,7 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface, Device
    }
    
    public void addToAlbum(TaggedImage taggedImg, JSONObject displaySettings) throws MMScriptException {
+      normalizeTags(taggedImg);
       acqMgr_.addToAlbum(taggedImg,displaySettings);
    }
 
