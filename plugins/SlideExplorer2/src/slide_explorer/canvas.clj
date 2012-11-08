@@ -81,8 +81,8 @@
 
 (defn set-g2d-state [g2d {:keys [alpha color stroke rotate x y
                                  scale scale-x scale-y]}]
-  (doto g2d
-    (.setColor (color-object (or color :black)))
+    (doto g2d
+      (.setColor (color-object (or color :black)))
     (.setComposite
       (let [compound-alpha (* (or alpha 1) (.. g2d getComposite getAlpha))]
         (AlphaComposite/getInstance AlphaComposite/SRC_ATOP compound-alpha)))
@@ -227,16 +227,15 @@
 
 (defmethod draw-primitive Shape
   [g2d shape {:keys [color fill stroke] :as params}]
-  (with-g2d-state [g2d params]
-                  (when fill
-                    (when-let [fill-color (:color fill)]
-                      (doto g2d
-                        (set-color fill-color)
-                        (.fill shape))))
-                  (when (stroke? stroke)
-                    (doto g2d
-                      (set-color (or (:color stroke) color :black))
-                      (.draw shape)))))
+  (when fill
+    (when-let [fill-color (:color fill)]
+      (doto g2d
+        (set-color fill-color)
+        (.fill shape))))
+  (when (stroke? stroke)
+    (doto g2d
+      (set-color (or (:color stroke) color :black))
+      (.draw shape))))
 
 (defmethod draw-primitive Image
   [g2d image params]
@@ -244,8 +243,7 @@
         h (or (:h params) (.getHeight image))
         params+ (complete-coordinates (assoc params :w w :h h))
         {:keys [l t]} params+]
-    (with-g2d-state [g2d params+]
-                    (.drawImage g2d image (- (/ w 2)) (- (/ h 2)) w h nil))))
+    (.drawImage g2d image (- (/ w 2)) (- (/ h 2)) w h nil)))
 
 (defn draw-string-center
   "Draw a string centered at position x,y."
@@ -282,19 +280,21 @@
       ;(draw-shape g2d obj fill stroke)
       ;(.translate g2d (- x) (- y))
       (.setFont g2d font2)
-      (with-g2d-state [g2d params]
                        (draw-string-center g2d text x y))
-      )))
+      ))
 
-(defn draw [g2d items]
-  (enable-anti-aliasing g2d)
-  (doseq [[type params & inner-items] items]
-    (let [params+ (complete-coordinates params)]
-       (if (= type :compound)
-         (with-g2d-state [g2d params]
-                         (draw g2d inner-items))
-         (draw-primitive g2d (make-obj type params+) params+)
-         ))))
+;  (enable-anti-aliasing g2d)
+;  (doseq [[type params & inner-items] items]
+
+(defn draw [g2d [type params & inner-items]]
+  (when (= type :graphics)
+        (enable-anti-aliasing g2d))
+  (let [params+ (complete-coordinates params)]
+    (with-g2d-state [g2d params+]
+      (if (#{:compound :graphics} type)
+        (doseq [inner-item inner-items]
+          (draw g2d inner-item))
+        (draw-primitive g2d (make-obj type params+) params+)))))
 
 (defn canvas [reference]
   (let [panel (proxy [JPanel] []
@@ -303,6 +303,7 @@
                                 (draw graphics @reference)))]
     (add-watch reference panel (fn [_ _ _ _]
                                  (.repaint panel)))
+    (.setBackground panel Color/BLACK)
     panel))
 
 ;; test
@@ -314,6 +315,7 @@
     (doto (JFrame. "canvas")
       (.. getContentPane (add panel))
       (.setBounds 10 10 500 500)
+      (slide-explorer.user-controls/setup-fullscreen)
       .show)
     panel))
 
@@ -365,7 +367,7 @@
 (count
 (reset!
   grafix 
-  [
+  [:graphics {}
 ;   [:rect
 ;    {:x 250 :y 250 :w 10 :h 300
 ;     :arc-radius 100
@@ -417,9 +419,7 @@
 ;              :cap :butt
 ;              :join :bevel
 ;              :miter-limit 10.0}}]
-   [:rect
-    {:x 200 :y 200 :w 1000 :h 1000 :fill {:color :black}}]
-   [:compound {:x 180 :y 300 :scale 1.0 :alpha 0.5 :rotate 0} 
+   [:compound {:x 180 :y 300 :scale 1.0 :alpha 0.9 :rotate 0} 
     [:round-rect
      {:y 2 :w 150 :h 30
       :arc-radius 10
@@ -429,7 +429,7 @@
       :stroke {:width 2 :color :white}
       :rotate 0}]
     [:text
-     {:text "Navigate!"
+     {:text "Navigate"
       :color :white
       :alpha 0.7
       :rotate 0
