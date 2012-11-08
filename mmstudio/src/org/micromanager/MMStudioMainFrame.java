@@ -76,7 +76,6 @@ import mmcorej.StrVector;
 
 import org.json.JSONObject;
 import org.micromanager.acquisition.AcquisitionManager;
-import org.micromanager.api.ImageCache;
 import org.micromanager.api.AcquisitionEngine;
 import org.micromanager.api.Autofocus;
 import org.micromanager.api.MMPlugin;
@@ -672,6 +671,7 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface, Device
     public void runDisplayThread(BlockingQueue rawImageQueue, final DisplayImageRoutine displayImageRoutine) {
         final BlockingQueue processedImageQueue = ProcessorStack.run(rawImageQueue, getAcquisitionEngine().getImageProcessors());
         new Thread("Display thread") {
+         @Override
             public void run() {
                 try {
                     TaggedImage image = null;
@@ -1363,7 +1363,7 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface, Device
     		  "calculating metadata";
       
       String mrjProp = System.getProperty("mrj.version");
-      if (mrjProp != null && !mrjProp.equals(null)) {// running on a mac
+      if (mrjProp != null && !mrjProp.equals("")) {// running on a mac
          calibrationMenuItem.setToolTipText(calibrationTooltip);
       }
       else {
@@ -1840,7 +1840,7 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface, Device
                   Thread.currentThread().setContextClassLoader(this.getClass().getClassLoader());
                   loadPlugins();
                }
-            }.run();
+            }.start();
          }
 
         
@@ -3259,7 +3259,7 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface, Device
        }
       
       String mrjProp = System.getProperty("mrj.version");
-      if (mrjProp != null && !mrjProp.equals(null)) // running on a mac
+      if (mrjProp != null) // running on a mac
           newMenuItem.setToolTipText(toolTipDescription);
       else      
           newMenuItem.setToolTipText( TooltipTextMaker.addHTMLBreaksForTooltip(toolTipDescription) );

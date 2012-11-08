@@ -68,6 +68,7 @@ public class TaggedImageStorageDiskDefault implements TaggedImageStorage {
       }
       
       shutdownHook_ = new Thread() {
+         @Override
          public void run() {
             writeDisplaySettings();
          }
@@ -515,7 +516,7 @@ public class TaggedImageStorageDiskDefault implements TaggedImageStorage {
    /**
     * @param summaryMetadata the summaryMetadata to set
     */
-   public void setSummaryMetadata(JSONObject summaryMetadata) {
+   public final void setSummaryMetadata(JSONObject summaryMetadata) {
       summaryMetadata_ = summaryMetadata;
       if (summaryMetadata_ != null) {
          try {
@@ -598,6 +599,7 @@ public class TaggedImageStorageDiskDefault implements TaggedImageStorage {
       return dir_;
    }
 
+   @Override
    public void finalize() throws Throwable {
       close();
       super.finalize();

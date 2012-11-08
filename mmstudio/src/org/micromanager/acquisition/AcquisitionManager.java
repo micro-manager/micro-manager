@@ -157,7 +157,7 @@ public class AcquisitionManager {
          imageHeight = MDUtils.getHeight(tags);
          imageDepth = MDUtils.getDepth(tags);
          imageBitDepth = MDUtils.getBitDepth(tags);
-         //need to check number of channels so that multi cam and single cam
+         // need to check number of channels so that multi cam and single cam
          // acquistions of same size and depth are differentiated
          numChannels = MDUtils.getNumChannels(tags);  
          
@@ -190,7 +190,7 @@ public class AcquisitionManager {
             summary.put("PixelType", tags.get("PixelType"));
             acq.setSummaryProperties(summary);
          } catch (JSONException ex) {
-            ex.printStackTrace();
+            ReportingUtils.logError(ex);
          }
          
          acq.initialize();
@@ -253,11 +253,6 @@ public class AcquisitionManager {
             ReportingUtils.logError(ex);
          }
       }
-                    
-    
-     
-      
-      
       
       return album;
    }

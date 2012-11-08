@@ -83,7 +83,7 @@ public class GraphPanel extends JPanel {
       traceColor_ = color;
    }
  
-   public void setAutoBounds(){
+   public final void setAutoBounds(){
       bounds_ = data_.getBounds();
       AdjustCursors();
    }

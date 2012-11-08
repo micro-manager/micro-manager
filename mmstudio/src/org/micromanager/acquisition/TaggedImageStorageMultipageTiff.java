@@ -695,7 +695,7 @@ public final class TaggedImageStorageMultipageTiff implements TaggedImageStorage
          // link Instrument and Image
          omeMD_.setImageInstrumentRef(instrumentID, index_);
 
-         JSONObject comments = displayAndComments_.getJSONObject("Comments");;
+         JSONObject comments = displayAndComments_.getJSONObject("Comments");
          if (comments.has("Summary") && !comments.isNull("Summary")) {
             omeMD_.setImageDescription(comments.getString("Summary"), index_);
          } 
