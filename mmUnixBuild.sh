@@ -2,6 +2,7 @@
 # enable error handling
 set -e
 
+
 # bootstrap autotools
 mkdir SecretDeviceAdapters || echo "SecretDeviceAdapters present"
 aclocal -I m4
