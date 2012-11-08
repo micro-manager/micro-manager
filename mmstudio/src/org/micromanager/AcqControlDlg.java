@@ -2290,6 +2290,7 @@ public class AcqControlDlg extends JFrame implements PropertyChangeListener, Acq
     
         @Override      
     public void settingsChanged() {
+            /*
         String comment = acqEng_.getComment();
         if (comment != null)
         if (!commentTextArea_.getText().contentEquals(comment)) {
@@ -2310,6 +2311,7 @@ public class AcqControlDlg extends JFrame implements PropertyChangeListener, Acq
        updateCheckBox(acqEng_.isChannelsSettingEnabled(), this.channelsPanel_);
        updateCheckBox(acqEng_.isZSliceSettingEnabled(), this.slicesPanel_);
        updateCheckBox(acqEng_.getSaveFiles(), this.savePanel_);
+       * */
     }
        
     
