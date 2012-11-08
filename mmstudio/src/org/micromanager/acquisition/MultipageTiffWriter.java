@@ -36,6 +36,8 @@ import java.nio.CharBuffer;
 import java.nio.channels.FileChannel;
 import java.util.HashMap;
 import java.util.LinkedList;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import mmcorej.TaggedImage;
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -99,6 +101,7 @@ public class MultipageTiffWriter {
    private boolean rgb_ = false;
    private int byteDepth_, imageWidth_, imageHeight_, bytesPerImagePixels_;
    private long resNumerator_ = 1, resDenomenator_ = 1;
+   private double zStepUm_ = 1;
    private LinkedList<ByteBuffer> buffers_;
    private boolean firstIFD_ = true;
    private long omeDescriptionTagPosition_;
@@ -108,6 +111,7 @@ public class MultipageTiffWriter {
    //Reader associated with this file
    private MultipageTiffReader reader_;
    private long blankPixelsOffset_ = -1;
+   private String summaryMDString_;
 
    public MultipageTiffWriter(String directory, String filename, 
            JSONObject summaryMD, TaggedImageStorageMultipageTiff mpTiffStorage) {
@@ -152,6 +156,11 @@ public class MultipageTiffWriter {
          writeMMHeaderAndSummaryMD(summaryMD);
       } catch (IOException ex) {
          ReportingUtils.logError(ex);
+      }
+      try {
+         summaryMDString_ = summaryMD.toString(2);
+      } catch (JSONException ex) {
+         summaryMDString_ = "";
       }
    }
    
@@ -452,16 +461,21 @@ public class MultipageTiffWriter {
          resNumerator_ = (long) (1 / cmPerPixel);
          resDenomenator_ = 1;
       }
+      
+       if (summaryMD.has("z-step_um") && !summaryMD.isNull("z-step_um")) {
+            zStepUm_ = summaryMD.getDouble("z-step_um");
+       }
    }
-
-   private static final String IMAGEJ_FILE_INFO = "This is a test\n";
 
    /**
     * writes channel LUTs and display ranges for composite mode Could also be
     * expanded to write ROIs, file info, slice labels, and overlays
     */
-   private void writeImageJMetadata(int numChannels, String info) throws IOException {
-      info = IMAGEJ_FILE_INFO + info + " ";
+   private void writeImageJMetadata(int numChannels, String summaryComment) throws IOException {
+      String info = summaryMDString_;
+      if (summaryComment != null && summaryComment.length() > 0) {
+         info = "Acquisition comments: \n" + summaryComment + "\n\n\n" + summaryMDString_;
+      }
       //size entry (4 bytes) + 4 bytes file info size + 4 bytes for channel display 
       //ranges length + 4 bytes per channel LUT
       int mdByteCountsBufferSize = 4 + 4 + 4 + 4 * numChannels;
@@ -595,8 +609,10 @@ public class MultipageTiffWriter {
          sb.append("order=zct\n");
       }
       //cm so calibration unit is consistent with units used in Tiff tags
-      sb.append("unit=cm\n");
-      
+      sb.append("unit=um\n");
+      if (numSlices_ > 1) {
+         sb.append("spacing=" + zStepUm_ + "\n");
+      }
       //write single channel contrast settings or display mode if multi channel
       try {             
          JSONObject channel0setting = masterMPTiffStorage_.getDisplayAndComments().getJSONArray("Channels").getJSONObject(0);
