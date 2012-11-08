@@ -83,10 +83,9 @@
                                  scale scale-x scale-y]}]
   (doto g2d
     (.setColor (color-object (or color :black)))
-    (.setComposite (if (or (not alpha) 
-                           (= alpha 1))
-                     AlphaComposite/Src
-                     (AlphaComposite/getInstance AlphaComposite/SRC_ATOP alpha)))
+    (.setComposite
+      (let [compound-alpha (* (or alpha 1) (.. g2d getComposite getAlpha))]
+        (AlphaComposite/getInstance AlphaComposite/SRC_ATOP compound-alpha)))
     (.setStroke (let [{:keys [width cap join miter-limit dashes dash-phase]
                        :or {width 1.0 cap :square
                             join :miter miter-limit 10.0
@@ -98,12 +97,12 @@
                     (BasicStroke. width cap-code join-code miter-limit
                                   dashes-array dash-phase)
                     (BasicStroke. width cap-code join-code miter-limit)))))
-    (when (and x y (or rotate scale scale-x scale-y))
+    (when (or x y rotate scale scale-x scale-y)
       (doto g2d
-        (.translate (double x) (double y))
+        (.translate (double (or x 0)) (double (or y 0)))
         (.rotate (* degrees-to-radians (or rotate 0.0)))
         (.scale (or scale-x scale 1.0) (or scale-y scale 1.0))
-        (.translate (double (- x)) (double (- y))))))
+        )))
 
 (defn intersect-shapes [shape1 shape2]
   (doto (Area. shape1) (.intersect (Area. shape2))))
@@ -176,25 +175,25 @@
                              :chord Arc2D/CHORD
                              :open Arc2D/OPEN
                              Arc2D/OPEN)]
-      (Arc2D$Double. l t w h start-angle arc-angle type)))
+      (Arc2D$Double. (- (/ w 2)) (- (/ h 2)) w h start-angle arc-angle type)))
 
 (defmethod make-obj :ellipse
-  [_ {:keys [l t w h]}]
-  (Ellipse2D$Double. l t w h))
+  [_ {:keys [w h]}]
+  (Ellipse2D$Double. (- (/ w 2)) (- (/ h 2)) w h))
 
 (defmethod make-obj :rect
-  [_ {:keys [l t w h]}]
-  (Rectangle2D$Double. l t w h))
+  [_ {:keys [w h]}]
+  (Rectangle2D$Double. (- (/ w 2)) (- (/ h 2)) w h))
 
 (defmethod make-obj :round-rect
-  [_ {:keys [l t w h arc-radius arc-width arc-height]}]
-  (RoundRectangle2D$Double. l t w h
+  [_ {:keys [w h arc-radius arc-width arc-height]}]
+  (RoundRectangle2D$Double. (- (/ w 2)) (- (/ h 2)) w h
                               (or arc-radius arc-width)
                               (or arc-radius arc-height)))
 
 (defmethod make-obj :line
-  [_ {:keys [l t r b]}]
-  (Line2D$Double. l t r b))
+  [_ {:keys [w h]}]
+  (Line2D$Double. (- (/ w 2)) (- (/ h 2)) (/ w 2) (/ h 2)))
 
 (defmethod make-obj :polygon
   [_ {:keys [vertices]}]
@@ -246,7 +245,7 @@
         params+ (complete-coordinates (assoc params :w w :h h))
         {:keys [l t]} params+]
     (with-g2d-state [g2d params+]
-                    (.drawImage g2d image l t w h nil))))
+                    (.drawImage g2d image (- (/ w 2)) (- (/ h 2)) w h nil))))
 
 (defn draw-string-center
   "Draw a string centered at position x,y."
@@ -261,8 +260,8 @@
                   (getStringBounds text graphics)
                   getWidth)]
     (.drawString graphics text
-                 (float (- x (/ width 2)))
-                 (float (+ y (/ height 2))))))
+                 (float (- (/ width 2)))
+                 (float (+ (/ height 2))))))
 
 (defmethod draw-primitive String
   [g2d text {:keys [x y font fill stroke] :as params}]
@@ -292,7 +291,8 @@
   (doseq [[type params & inner-items] items]
     (let [params+ (complete-coordinates params)]
        (if (= type :compound)
-         (draw g2d inner-items)
+         (with-g2d-state [g2d params]
+                         (draw g2d inner-items))
          (draw-primitive g2d (make-obj type params+) params+)
          ))))
 
@@ -325,7 +325,7 @@
     (Thread/sleep 30)
     (swap! reference (fn [data]
                        (-> data
-                           (assoc-in [6 1 :rotate] (+ i 5))
+                           (assoc-in [0 1 :rotate] (* i 15))
                            ))
            )))
 
@@ -350,7 +350,7 @@
       (.. getContentPane (add scroll-pane))
       .show)))
 
-(def img (read-image "/Users/arthur/Desktop/flea.png"))
+;(def img (read-image "/Users/arthur/Desktop/flea.png"))
 
 ; shape
 ; stroke color
@@ -366,34 +366,59 @@
 (reset!
   grafix 
   [
-   [:round-rect
-    {:l 20 :t 10 :w 300 :h 300
-     :arc-radius 100
-     :fill {:color :pink}
-     :scale 1.3
-     :stroke {:color 0xE06060
-              :cap :round
-              :width 5
-              :dashes [10 10] :dash-phase 0}
-     :rotate 50}]
-   [:ellipse
-    {:l 25 :t 15 :w 110 :h 90
-     :fill true :color :yellow :alpha 0.5 :stroke {:width 10 :cap :round :dashes [20 20]}}]
-   [:polyline
-    {:vertices [{:x 100 :y 100}
-                {:x 50 :y 150}
-                {:x 50 :y 220}
-                {:x 160 :y 250}]
-     :fill false
-     :color :black
-     :alpha 0.8
-     :stroke {:width 2
-              :dashes [20 3 10 3 5 3]
-              :cap :butt
-              :join :bevel
-              :miter-limit 10.0}}]
+;   [:rect
+;    {:x 250 :y 250 :w 10 :h 300
+;     :arc-radius 100
+;     :fill {:color :light-gray}
+;     :scale 1.0
+;     :stroke {:color :gray
+;              :cap :round
+;              :width 2.0
+;              ;:dashes [10 10] :dash-phase 0
+;              }
+;     :rotate 0}]
+;   [:rect
+;    {:x 250 :y 200 :w 16 :h 6
+;     :arc-radius 100
+;     :fill {:color :cyan}
+;     :scale 1.0
+;     :alpha 1.0
+;     :stroke {:color :blue
+;              :cap :round
+;              :width 2.0
+;              ;:dashes [10 10] :dash-phase 0
+;              }
+;     :rotate 0}]
+;   [:round-rect
+;    {:x 250 :y 500 :w 100 :h 25
+;     :arc-radius 10
+;     :fill {:color :light-gray}
+;     :scale 1.0
+;     :alpha 1.0
+;     :stroke {:color :gray
+;              :cap :round
+;              :width 2.0
+;              ;:dashes [10 10] :dash-phase 0
+;              }
+;     :rotate 0}]
+;   [:ellipse
+;    {:l 25 :t 15 :w 110 :h 90
+;     :fill true :color :yellow :alpha 0.5 :stroke {:width 10 :cap :round :dashes [20 20]}}]
+;   [:polyline
+;    {:vertices [{:x 100 :y 100}
+;                {:x 50 :y 150}
+;                {:x 50 :y 220}
+;                {:x 160 :y 250}]
+;     :fill false
+;     :color :black
+;     :alpha 0.8
+;     :stroke {:width 2
+;              :dashes [20 3 10 3 5 3]
+;              :cap :butt
+;              :join :bevel
+;              :miter-limit 10.0}}]
    [:text
-    {:x 180 :y 120 :text "Testing!!!"
+    {:x 180 :y 120 :text "Testing!!"
      :color :white
      :alpha 0.7
      :rotate 20
@@ -407,32 +432,33 @@
             :strikethrough false
             :size 50}}]
    [:compound
-    {:x 350 :y 350 :w 40 :h 40}
-    [:ellipse
-     {:x 350 :y 350 :w 40 :h 40 :fill {:color :pink}
+    {:x 150 :y 150 :rotate 0 :scale 1.0 }
+    [:rect
+     {:w 40 :h 40 :fill {:color :pink}
       :stroke {:width 4 :color 0xE06060}}]
     [:line
-     {:x 350 :y 350 :w 18 :h 18 :color :white :alpha 0.8
-      :stroke {:width 7 :cap :butt}}]
+     {:w 18 :h 18 :scale 1.0 :color :white :alpha 1.0
+      :stroke {:width 7 :cap :butt}
+      }]
     [:line
-     {:x 350 :y 350 :w -18 :h 18 :fill false :color :white :alpha 0.8
+     {:x 0 :y 0 :w -18 :h 18 :fill false :color :white :alpha 1.0
       :stroke {:width 7 :cap :butt}}]]
-   [:image
-     {:x 200 :t 150 :data img :rotate 171}]
-   [:line
-    {:x 180 :y 220 :w 0 :h 50 :color :red
-     :stroke {:width 10 :cap :round}
-     :alpha 0.7}]
-   [:line
-    {:x 180 :y 220 :w 30 :h 0 :color 0x00AA00
-     :alpha 0.6
-     :stroke {:width 4}}]
-   [:arc
-    {:l 30 :t 20 :w 150 :h 100
-     :start-angle 30 :arc-angle 100 :color 0x004000
-     :fill false
-     :stroke {:width 10}
-     :alpha 0.7}]
+;   [:image
+;     {:x 200 :t 150 :data img :rotate 171}]
+;   [:line
+;    {:x 180 :y 220 :w 0 :h 50 :color :red
+;     :stroke {:width 10 :cap :round}
+;     :alpha 0.7}]
+;   [:line
+;    {:x 180 :y 220 :w 30 :h 0 :color 0x00AA00
+;     :alpha 0.6
+;     :stroke {:width 4}}]
+;   [:arc
+;    {:l 30 :t 20 :w 150 :h 100
+;     :start-angle 30 :arc-angle 100 :color 0x004000
+;     :fill false
+;     :stroke {:width 10}
+;     :alpha 0.7}]
    ]))
 
 
