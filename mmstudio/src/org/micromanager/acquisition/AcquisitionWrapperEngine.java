@@ -8,6 +8,7 @@ import java.awt.Color;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
 import java.util.prefs.Preferences;
 import javax.swing.JOptionPane;
@@ -23,6 +24,7 @@ import org.micromanager.api.DataProcessor;
 import org.micromanager.api.ImageCache;
 import org.micromanager.api.IAcquisitionEngine2010;
 import org.micromanager.api.ScriptInterface;
+import org.micromanager.internalinterfaces.AcqSettingsListener;
 import org.micromanager.navigation.PositionList;
 import org.micromanager.utils.AcqOrderMode;
 import org.micromanager.utils.AutofocusManager;
@@ -70,11 +72,13 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
    private boolean useCustomIntervals_;
    protected JSONObject summaryMetadata_;
    protected ImageCache imageCache_;
+   private ArrayList<AcqSettingsListener> settingsListeners_;
 
    public AcquisitionWrapperEngine() {
       imageRequestProcessors_ = new ArrayList<Class>();
       taggedImageProcessors_ = new ArrayList<DataProcessor<TaggedImage>>();
       useCustomIntervals_ = false;
+      settingsListeners_ = new ArrayList<AcqSettingsListener>();
    }
 
    public String acquire() throws MMException {
@@ -83,6 +87,20 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
       return runAcquisition(getSequenceSettings());
    }
 
+   public void addSettingsListener(AcqSettingsListener listener) {
+       settingsListeners_.add(listener);
+   }
+   
+   public void removeSettingsListener(AcqSettingsListener listener) {
+       settingsListeners_.remove(listener);
+   }
+   
+   public void settingsChanged() {
+       for (AcqSettingsListener listener:settingsListeners_) {
+           listener.settingsChanged();
+       }
+   }
+   
    protected IAcquisitionEngine2010 getAcquisitionEngine2010() {
       if (acquisitionEngine2010 == null) {
          acquisitionEngine2010 = gui_.getAcquisitionEngine2010();
@@ -493,13 +511,18 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
       return minZStepUm_;
    }
 
-   public void setSlices(double bottom, double top, double step, boolean b) {
+   public void setSlices(double bottom, double top, double step, boolean absolute) {
       sliceZBottomUm_ = bottom;
       sliceZTopUm_ = top;
       sliceZStepUm_ = step;
-      absoluteZ_ = b;
+      absoluteZ_ = absolute;
+      this.settingsChanged();
    }
 
+   public boolean getZAbsoluteMode() {
+       return absoluteZ_;
+   }
+   
    public boolean isFramesSettingEnabled() {
       return useFrames_;
    }
@@ -578,6 +601,7 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
 
    public void setComment(String text) {
       comment_ = text;
+      settingsChanged();
    }
 
    /*
@@ -924,5 +948,10 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
    public ImageCache getImageCache() {
       return imageCache_;
    }
+
+    @Override
+    public String getComment() {
+        return this.comment_;
+    }
 
 }

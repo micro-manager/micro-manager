@@ -51,6 +51,7 @@ import org.micromanager.acquisition.TaggedImageStorageDiskDefault;
 import org.micromanager.acquisition.TaggedImageStorageMultipageTiff;
 import org.micromanager.api.AcquisitionEngine;
 import org.micromanager.api.ScriptInterface;
+import org.micromanager.internalinterfaces.AcqSettingsListener;
 import org.micromanager.utils.AcqOrderMode;
 import org.micromanager.utils.ChannelSpec;
 import org.micromanager.utils.ColorEditor;
@@ -73,7 +74,7 @@ import org.micromanager.utils.TooltipTextMaker;
  * This dialog specifies all parameters for the MDA acquisition. 
  *
  */
-public class AcqControlDlg extends JFrame implements PropertyChangeListener { 
+public class AcqControlDlg extends JFrame implements PropertyChangeListener, AcqSettingsListener { 
 
    private static final long serialVersionUID = 1L;
    protected JButton listButton_;
@@ -189,6 +190,8 @@ public class AcqControlDlg extends JFrame implements PropertyChangeListener {
    private Border nightBorder_;
    private Vector<JPanel> panelList_;
    private boolean disableGUItoSettings_ = false;
+
+
 
    /**
     * Data representation class for the channels list
@@ -865,6 +868,7 @@ public class AcqControlDlg extends JFrame implements PropertyChangeListener {
          }
       });
       acqEng_ = acqEng;
+      acqEng.addSettingsListener(this);
 
       getContentPane().setLayout(null);
       setResizable(false);
@@ -2266,6 +2270,50 @@ public class AcqControlDlg extends JFrame implements PropertyChangeListener {
       disableGUItoSettings_ = false;
    }
 
+
+       
+    private void updateDoubleValue(double value, JTextField field) {
+        try {
+            if (NumberUtils.displayStringToDouble(field.getText()) != value) {
+                field.setText(NumberUtils.doubleToDisplayString(value));
+            }
+        } catch (ParseException e) {
+            field.setText(NumberUtils.doubleToDisplayString(value));
+        }
+    }
+       
+    private void updateCheckBox(boolean setting,  CheckBoxPanel panel) {
+       if (panel.isSelected() != setting) {
+           panel.setSelected(setting);
+       }
+    }
+    
+        @Override      
+    public void settingsChanged() {
+        String comment = acqEng_.getComment();
+        if (comment != null)
+        if (!commentTextArea_.getText().contentEquals(comment)) {
+            commentTextArea_.setText(comment);
+        }
+
+       updateDoubleValue(acqEng_.getSliceZBottomUm(), zBottom_);
+       updateDoubleValue(acqEng_.getSliceZStepUm(), zStep_);
+       updateDoubleValue(acqEng_.getZTopUm(), zTop_);
+       
+       boolean absoluteZ = acqEng_.getZAbsoluteMode();
+       if ((zValCombo_.getSelectedIndex() == 1) != absoluteZ) {
+           this.zValCombo_.setSelectedIndex(absoluteZ ? 1 : 0);
+       }
+       
+       updateCheckBox(acqEng_.isFramesSettingEnabled(), this.framesPanel_);
+       updateCheckBox(acqEng_.isMultiPositionEnabled(), this.positionsPanel_);
+       updateCheckBox(acqEng_.isChannelsSettingEnabled(), this.channelsPanel_);
+       updateCheckBox(acqEng_.isZSliceSettingEnabled(), this.slicesPanel_);
+       updateCheckBox(acqEng_.getSaveFiles(), this.savePanel_);
+    }
+       
+    
+
    private void applySettings() {
       if (disableGUItoSettings_) {
          return;
@@ -2383,20 +2431,17 @@ public class AcqControlDlg extends JFrame implements PropertyChangeListener {
 
       double newTop, newBottom;
       if (zVals_ == 0) {
-         setTopButton_.setEnabled(false);
-         setBottomButton_.setEnabled(false);
          // convert from absolute to relative
          newTop = zTopUm - curZ;
          newBottom = zBottomUm - curZ;
       } else {
-         setTopButton_.setEnabled(true);
-         setBottomButton_.setEnabled(true);
          // convert from relative to absolute
          newTop = zTopUm + curZ;
          newBottom = zBottomUm + curZ;
       }
       zBottom_.setText(NumberUtils.doubleToDisplayString(newBottom));
       zTop_.setText(NumberUtils.doubleToDisplayString(newTop));
+      applySettings();
    }
 
    /**

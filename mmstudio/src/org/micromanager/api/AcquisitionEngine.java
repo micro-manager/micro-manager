@@ -31,6 +31,7 @@ import java.util.List;
 import mmcorej.CMMCore;
 import mmcorej.TaggedImage;
 import org.json.JSONObject;
+import org.micromanager.internalinterfaces.AcqSettingsListener;
 
 import org.micromanager.navigation.PositionList;
 import org.micromanager.utils.AutofocusManager;
@@ -548,11 +549,18 @@ public interface AcquisitionEngine {
     */
    public JSONObject getSummaryMetadata();
 
-   /*
-    * Get the image cache for the most recent acquisition.
-    */
-   public ImageCache getImageCache();
-   
-   public List<DataProcessor<TaggedImage>> getImageProcessors();
+    /*
+     * Get the image cache for the most recent acquisition.
+     */
+    public ImageCache getImageCache();
 
+    public List<DataProcessor<TaggedImage>> getImageProcessors();
+
+    public String getComment();
+
+    public void addSettingsListener(AcqSettingsListener listener);
+
+    public void removeSettingsListener(AcqSettingsListener listener);
+    
+    public boolean getZAbsoluteMode();
 }
