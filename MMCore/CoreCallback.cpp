@@ -322,9 +322,25 @@ int CoreCallback::OnXYStagePositionChanged(const MM::Device* device, double xPos
 
 /**
  * Handler for the operation finished event from the device.
+ * 
+ * It looks like this handler does nothing
  */
 int CoreCallback::OnFinished(const MM::Device* /* caller */)
 {
+   return DEVICE_OK;
+}
+
+/**
+ * Handler for exposure update
+ * 
+ */
+int CoreCallback::OnExposureChanged(const MM::Device* device, double newExposure)
+{
+   if (core_->externalCallback_) {
+      char label[MM::MaxStrLength];
+      device->GetLabel(label);
+      core_->externalCallback_->onExposureChanged(label, newExposure);
+   }
    return DEVICE_OK;
 }
 

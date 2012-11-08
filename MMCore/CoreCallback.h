@@ -178,6 +178,7 @@ public:
    int OnStagePositionChanged(const MM::Device* device, double pos);
    int OnXYStagePositionChanged(const MM::Device* device, double xpos, double ypos);
    int OnFinished(const MM::Device* /* caller */);
+   int OnExposureChanged(const MM::Device* device, double newExposure);
 
 
    void NextPostedError(int& /*errorCode*/, char* /*pMessage*/, int /*maxlen*/, int& /*messageLength*/);

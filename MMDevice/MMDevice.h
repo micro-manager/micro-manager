@@ -34,7 +34,7 @@
 // Header version
 // If any of the class declarations changes, the interface version
 // must be incremented
-#define DEVICE_INTERFACE_VERSION 52
+#define DEVICE_INTERFACE_VERSION 53
 ///////////////////////////////////////////////////////////////////////////////
 
 #pragma once
@@ -1142,6 +1142,10 @@ namespace MM {
        * this callback to signal the UI
        */
       virtual int OnXYStagePositionChanged(const Device* caller, double xPos, double yPos) = 0;
+      /**
+       * When the exposure time has changed, use this callback to inform the UI
+       */
+      virtual int OnExposureChanged(const Device* caller, double newExposure) = 0;
 
       virtual unsigned long GetClockTicksUs(const Device* caller) = 0;
       virtual MM::MMTime GetCurrentMMTime() = 0;

@@ -74,4 +74,9 @@ public:
       std::cout << " " <<  ypos << "\n"; 
    }
 
+   virtual void onExposureChanged(char* name, double newExposure)
+   {
+      std::cout << "onExposureChanged()" << name << " " << newExposure << "\n";
+   }
+
 };

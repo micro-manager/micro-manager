@@ -392,6 +392,10 @@ int CDemoCamera::Initialize()
          SetPropertyLimits(propName.c_str(), lowerLimit, upperLimit);
       }
 	}
+
+   //pAct = new CPropertyAction(this, &CDemoCamera::OnSwitch);
+   //nRet = CreateProperty("Switch", "0", MM::Integer, false, pAct);
+   //SetPropertyLimits("Switch", 8, 1004);
 	
 	
 	// scan mode
@@ -731,6 +735,7 @@ double CDemoCamera::GetExposure() const
 void CDemoCamera::SetExposure(double exp)
 {
    SetProperty(MM::g_Keyword_Exposure, CDeviceUtils::ConvertToString(exp));
+   GetCoreCallback()->OnExposureChanged(this, exp);;
 }
 
 /**
@@ -1057,7 +1062,11 @@ int CDemoCamera::OnTestProperty(MM::PropertyBase* pProp, MM::ActionType eAct, lo
 
 }
 
-
+//int CDemoCamera::OnSwitch(MM::PropertyBase* pProp, MM::ActionType eAct)
+//{
+   // use cached values
+//   return DEVICE_OK;
+//}
 
 /**
 * Handles "Binning" property.

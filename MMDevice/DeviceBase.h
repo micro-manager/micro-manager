@@ -1040,6 +1040,15 @@ protected:
       return DEVICE_NO_CALLBACK_REGISTERED;
    }
 
+   /*
+    */
+   int OnExposureChanged(double exposure)
+   {
+      if (callback_)
+         return callback_->OnExposureChanged(this, exposure);
+      return DEVICE_NO_CALLBACK_REGISTERED;
+   }
+
    /**
     * Device finished a task
     * Not implemented in Core and callback
