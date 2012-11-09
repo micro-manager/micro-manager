@@ -261,39 +261,54 @@
 
 (def dll-directory-type (FileDialogs$FileType. "DLL Directory" "New DLL location" "" false nil))
 
-(defn choose-dll-dir
+(defn dll-dir-dialog
   "Presents user with a dialog for choosing the directory from which DLLs will be reloaded."
   []
   (FileDialogs/openDir nil "Please choose a directory where new DLLs will appear"
                        dll-directory-type))
 
+(defn choose-dll-dir
+  "Allows user to choose a directory, and activates that directory
+   for DLL reloading."
+  [path-button]
+  (when-let [dir (file (dll-dir-dialog))]
+         (let [path (.getAbsolutePath dir)]
+           (.setText path-button path)
+           (activate path)
+           (.put prefs "dir" path))))
+
 (def prefs (.. Preferences userRoot (node "DLLAutoReloader")))
 
 (def control-frame (atom nil))
 
+(defn on-button-click
+  "When button is clicked, the no-arg callback-fn will be called. This function
+   returns a function that will remove the button click listener."
+  [^JButton button callback-fn]
+  (let [listener
+        (proxy [ActionListener] []
+          (actionPerformed [e] (callback-fn)))]
+    (.addActionListener button listener)
+    (fn [] (.removeListener listener))))   
+
+(defn setup-frame
+  "Control frame for the plugin."
+  []
+  (doto (proxy [JFrame] [])
+    (.setBounds 100 100 600 50)
+    (.setResizable false)
+    (GUIUtils/recallPosition)
+    (.setTitle "DLL Auto Reloading")))
+
 (defn startup
   "Create the control frame and activate directory watching."
   []
-  (let [frame (proxy [JFrame] []) ; use proxy to get unique JFrame class
+  (let [frame (setup-frame)
         path (.get prefs "dir" nil)
         path-button (JButton. (or path "(choose path)"))]
     (when path
       (activate path))
-    (doto frame
-      (.setBounds 100 100 600 50)
-      (.setResizable false)
-      (GUIUtils/recallPosition)
-      (.setTitle "DLL Auto Reloading"))
-    (.addActionListener
-      path-button
-      (proxy [ActionListener] []
-        (actionPerformed
-          [e]
-          (when-let [dir (file (choose-dll-dir))]
-            (let [path (.getAbsolutePath dir)]
-              (.setText path-button path)
-              (activate path)
-              (.put prefs "dir" path))))))
+    (on-button-click path-button #(choose-dll-dir path-button))
     (doto (.getContentPane frame)
       (.add path-button))
     frame))
