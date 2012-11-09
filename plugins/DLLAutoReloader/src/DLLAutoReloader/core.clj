@@ -16,8 +16,7 @@
 (ns DLLAutoReloader.core
   (:use [clojure.java.io :only (file copy)]
         [clojure.data :only (diff)]
-        [org.micromanager.mm :only (edt load-mm mmc core gui)]
-        [clojure.pprint :only (pprint)])
+        [org.micromanager.mm :only (edt load-mm mmc core gui)])
   (:import (javax.swing JButton JFrame JLabel JWindow)
            (java.awt Color)
            (java.awt.event ActionListener)
@@ -72,7 +71,6 @@
   "Takes list of state labels for a state device
    and applies these labels."
   [dev labels]
-  ;(println dev labels)
   (dotimes [i (count labels)]
       (core defineStateLabel dev i (get labels i))))
 
@@ -83,6 +81,8 @@
     (core getProperty dev "Port")))
 
 (defn read-device-startup-settings
+  "Read all settings that will be necessary for restarting
+   a device."
   [dev]
   {:library-location (device-library-location dev)
    :pre-init-settings (pre-init-property-settings dev)
@@ -211,6 +211,8 @@
       (.enableLiveMode gui true))))
 
 (defn new-dll-name
+  "Get the name of the new dll file that will be created in the
+   MM application directory."
   [dll]
   (let [name (.getName dll)]
     (if (JavaUtils/isWindows)
@@ -260,6 +262,7 @@
 (def dll-directory-type (FileDialogs$FileType. "DLL Directory" "New DLL location" "" false nil))
 
 (defn choose-dll-dir
+  "Presents user with a dialog for choosing the directory from which DLLs will be reloaded."
   []
   (FileDialogs/openDir nil "Please choose a directory where new DLLs will appear"
                        dll-directory-type))
@@ -295,20 +298,27 @@
       (.add path-button))
     frame))
 
-(defn show-plugin [app]
+(defn show-plugin
+  "Show the plugin at a given location."
+  [app]
   (load-mm app)
   (when-not @control-frame
     (reset! control-frame (startup)))
   (.show @control-frame))
 
-(defn handle-exit []
+(defn handle-exit
+  "Runs when application exits."
+  []
   (stop))
 
 ;; testing
 
-(defn test-lib [] (first (keys (devices-in-each-module))))
+(defn test-lib
+  "Get the first module with loaded devices."
+  []
+  (first (keys (devices-in-each-module))))
 
-(defn test-unload []
+(defn test-unload
+  "Attemt to unload a the test library."
+  []
   (core unloadLibrary (test-lib)))
-
-;(def test-file (file default-directory "mmgr_dal_DemoCamera.dll"))
