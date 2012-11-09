@@ -1555,46 +1555,50 @@ public class DataCollectionForm extends javax.swing.JFrame {
                   ip.setPixels(pixels);
                   
                   // Get points from both channels in each frame as ArrayLists        
-                  ArrayList<Point2D.Double> xyPointsCh1 = new ArrayList<Point2D.Double>();
+                  ArrayList<GaussianSpotData> gsCh1 = new ArrayList<GaussianSpotData>();
                   ArrayList<Point2D.Double> xyPointsCh2 = new ArrayList<Point2D.Double>();
                   Iterator it = rowData_.get(row).spotList_.iterator();
                   while (it.hasNext()) {
                      GaussianSpotData gs = (GaussianSpotData) it.next();
                      if (gs.getFrame() == frame) {
-                        Point2D.Double point = new Point2D.Double(gs.getXCenter(), gs.getYCenter());
                         if (gs.getChannel() == 1) {
-                           xyPointsCh1.add(point);
+                           gsCh1.add(gs);
                         } else if (gs.getChannel() == 2) {
+                           Point2D.Double point = new Point2D.Double(gs.getXCenter(), gs.getYCenter());
                            xyPointsCh2.add(point);
                         }
                      }
                   }
                   
                   if (xyPointsCh2.isEmpty()) {
-                     JOptionPane.showMessageDialog(getInstance(), "No points found in second channel.  Is this a 2-channel dataset?");
-                     return;
+                     ReportingUtils.logError("Pairs function in Localization plugin: no points found in second channel in frame " + frame);
+                     continue;
                   }
-                     
-
+                  
                   // Find matching points in the two ArrayLists
-                  Iterator it2 = xyPointsCh1.iterator();
+                  Iterator it2 = gsCh1.iterator();
                   try {
                      NearestPoint2D np = new NearestPoint2D(xyPointsCh2,
                              NumberUtils.displayStringToDouble(pairsMaxDistanceField_.getText()));
-
 
                      ArrayList<Double> distances = new ArrayList<Double>();
                      ArrayList<Double> errorX = new ArrayList<Double>();
                      ArrayList<Double> errorY = new ArrayList<Double>();
 
                      while (it2.hasNext()) {
-                        Point2D.Double pCh1 = (Point2D.Double) it2.next();
+                        GaussianSpotData gs = (GaussianSpotData) it2.next();
+                        Point2D.Double pCh1 = new Point2D.Double(gs.getXCenter(), gs.getYCenter());
                         Point2D.Double pCh2 = np.findKDWSE(pCh1);
                         if (pCh2 != null) {
                            rt.incrementCounter();
-                           rt.addValue("Frame", frame); 
+                           rt.addValue(Terms.POSITION, gs.getPosition());
+                           rt.addValue(Terms.FRAME, gs.getFrame()); 
+                           rt.addValue(Terms.SLICE, gs.getSlice());
+                           rt.addValue(Terms.CHANNEL, gs.getSlice());                        
+                           rt.addValue(Terms.XPIX, gs.getX());
+                           rt.addValue(Terms.YPIX, gs.getY());
                            rt.addValue("X1", pCh1.getX());
-                           rt.addValue("Y1", pCh1.getY());
+                           rt.addValue("X2", pCh1.getY());
                            rt.addValue("X2", pCh2.getX());
                            rt.addValue("Y2", pCh2.getY());
                            double d2 = NearestPoint2D.distance2(pCh1, pCh2);
@@ -1649,8 +1653,38 @@ public class DataCollectionForm extends javax.swing.JFrame {
 
                }
 
+               // show summary in resultstable
                rt2.show("Summary of Pairs found in " + rowData_.get(row).name_);
-               rt.show("Pairs found in " + rowData_.get(row).name_);
+
+
+               //  show Pairs panel and attach listener
+               TextPanel tp;
+               TextWindow win;
+
+               String rtName = "Pairs found in " + rowData_.get(row).name_;
+               rt.show(rtName);
+               ImagePlus siPlus = ij.WindowManager.getImage(rowData_.get(row).title_);
+               Frame frame = WindowManager.getFrame(rtName);
+               if (frame != null && frame instanceof TextWindow && siPlus != null) {
+                  win = (TextWindow) frame;
+                  tp = win.getTextPanel();
+
+                  // TODO: the following does not work, there is some voodoo going on here
+                  for (MouseListener ms : tp.getMouseListeners()) {
+                     tp.removeMouseListener(ms);
+                  }
+                  for (KeyListener ks : tp.getKeyListeners()) {
+                     tp.removeKeyListener(ks);
+                  }
+
+                  ResultsTableListener myk = new ResultsTableListener(siPlus, rt, win, rowData_.get(row).halfSize_);
+                  tp.addKeyListener(myk);
+                  tp.addMouseListener(myk);
+                  frame.toFront();
+               }
+      
+              
+               
 
                String yAxis = "Time (frameNr)";
                if (rowData_.get(row).timePoints_ != null) {
@@ -1664,8 +1698,6 @@ public class DataCollectionForm extends javax.swing.JFrame {
                sp.setStack(stack, 1, 1, rowData_.get(row).nrFrames_);
                sp.setDisplayRange(0, 20);
                sp.setTitle(rowData_.get(row).title_);
-               //sp.setSlice(1);
-               //sp.resetStack();
 
                ImageWindow w = new StackWindow(sp);
                w.setTitle("Error in " + rowData_.get(row).name_);
