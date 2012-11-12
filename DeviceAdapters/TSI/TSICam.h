@@ -141,6 +141,7 @@ public:
 
 private:
    int ResizeImageBuffer();
+   int ResizeImageBuffer(TSI_ROI_BIN& roiBin);
    void SuspendSequence();
    int ResumeSequence();
    int GetImageParameters();
@@ -154,6 +155,7 @@ private:
    bool stopOnOverflow;
    long acquiring;
    TsiCamera* camHandle_;
+   TSI_ROI_BIN roiBinData;
 
    friend class AcqSequenceThread;
    AcqSequenceThread*   liveAcqThd_;

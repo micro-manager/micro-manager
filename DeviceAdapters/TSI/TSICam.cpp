@@ -117,6 +117,14 @@ TsiCam::TsiCam() :
       "  Make sure cameras are attached and the power is ON.");
    SetErrorText(ERR_IMAGE_TIMED_OUT, "Timed out waiting for the image from the camera.");
 
+   // initialize roi-bin structure
+   roiBinData.XBin = 1;
+   roiBinData.YBin = 1;
+   roiBinData.XOrigin = 0;
+   roiBinData.YOrigin = 0;
+   roiBinData.YPixels = 0; // setting number of pixels to 0, signifies that we are not initialized yet
+   roiBinData.XPixels = 0;
+
    // this identifies which camera we want to access
    int ret = CreateProperty(MM::g_Keyword_CameraID, "0", MM::Integer, false, 0, true);
    assert(ret == DEVICE_OK);
@@ -490,11 +498,38 @@ int TsiCam::ResizeImageBuffer()
    // TODO: bits per pixel
    // TODO: bytes per pixel
 
+   // set full frame
+   roiBinData.XBin = 1;
+   roiBinData.YBin = 1;
+   roiBinData.XOrigin = 0;
+   roiBinData.YOrigin = 0;
+   roiBinData.XPixels = width;
+   roiBinData.YPixels = height;
+   if (!camHandle_->GetParameter(TSI_PARAM_ROI_BIN, sizeof(uint32_t), (void*)&roiBinData))
+      return camHandle_->GetErrorCode();
+
    img.Resize(width, height, 2);
 
    return DEVICE_OK;
 }
 
+int TsiCam::ResizeImageBuffer(TSI_ROI_BIN& roiBin)
+{
+   const int byteDepth = 2; // TODO
+
+   bool bret = camHandle_->SetParameter(TSI_PARAM_ROI_BIN, (void*)&roiBin);
+   if (!bret)
+   {
+      // roi-bin failed so return to full frame
+      TSI_ERROR_CODE errCode = camHandle_->GetErrorCode();
+      ResizeImageBuffer();
+      return errCode;
+   }
+
+   img.Resize(roiBin.XPixels, roiBin.YPixels, 2);
+
+   return DEVICE_OK;
+}
 
 void TsiCam::ReadoutComplete(int callback_type_id, TsiImage *tsiImg, void *context)
 {
