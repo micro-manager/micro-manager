@@ -960,7 +960,7 @@ bool Omicron::PharseAnswerString(std::string &InputBuffer, const std::string &Ko
 {
     std::string Seperator = "§";
 
-    unsigned int StrIndex = InputBuffer.find(Kommando);
+    size_t StrIndex = InputBuffer.find(Kommando);
     if( StrIndex != std::string::npos )
     {
         InputBuffer = InputBuffer.substr(StrIndex + Kommando.length());  // Erase command
