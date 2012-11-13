@@ -45,8 +45,8 @@ import java.awt.geom.Point2D;
 import java.io.*;
 import java.nio.channels.FileChannel;
 import java.text.ParseException;
-import java.util.List;
 import java.util.*;
+import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.prefs.Preferences;
@@ -57,6 +57,8 @@ import javax.swing.table.TableColumnModel;
 import org.apache.commons.math.stat.StatUtils;
 import org.jfree.data.xy.XYSeries;
 import org.micromanager.MMStudioMainFrame;
+import org.micromanager.utils.FileDialogs;
+import org.micromanager.utils.FileDialogs.FileType;
 import org.micromanager.utils.NumberUtils;
 import org.micromanager.utils.ReportingUtils;
 
@@ -100,8 +102,11 @@ public class DataCollectionForm extends javax.swing.JFrame {
    private static final int FAILEDDOINFORM = 2;
    
    private Preferences prefs_;
-   
-   
+   private static FileType TSF_FILE = new FileType("TSF File",
+           "Tagged Spot Format file",
+           "./data.tsf",
+           false, new String[]{"txt", "tsf"});
+ 
    /*
     * Switch between clojure and Java code here
     * LWM is Java, LocalWeightedMean is Clojure
@@ -1045,22 +1050,34 @@ public class DataCollectionForm extends javax.swing.JFrame {
 
    /**
     * Loads data saved in TSF format (Tagged Spot File Format)
+    * Opens awt file select dialog which lets you select only a single file
+    * If you want to open multiple files, press the ctrl key while clicking
+    * the button.  This will open the swing file opener.
     *
     * @evt
     */
     private void loadButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_loadButtonActionPerformed
 
-       // The Swing fileopener looks ugly but allows for selection of multiple files
-       final JFileChooser jfc = new JFileChooser(loadTSFDir_);
-       jfc.setMultiSelectionEnabled(true);
-       jfc.setDialogTitle("Load Spot Data");
-       int ret = jfc.showOpenDialog(this);
-       if (ret != JFileChooser.APPROVE_OPTION) {
-          return;
+       int modifiers = evt.getModifiers();
+       
+
+       
+       final File[] selectedFiles;
+       if ((modifiers & java.awt.event.InputEvent.META_MASK) > 0) {
+          // The Swing fileopener looks ugly but allows for selection of multiple files
+          final JFileChooser jfc = new JFileChooser(loadTSFDir_);
+          jfc.setMultiSelectionEnabled(true);
+          jfc.setDialogTitle("Load Spot Data");
+          int ret = jfc.showOpenDialog(this);
+          if (ret != JFileChooser.APPROVE_OPTION) {
+             return;
+          }
+          selectedFiles = jfc.getSelectedFiles();
+       } else {
+          File f = FileDialogs.openFile(this, "Open tsf data set", TSF_FILE);
+          selectedFiles = new File[] {f};
        }
-
-       final File[] selectedFiles = jfc.getSelectedFiles();
-
+       
        if (selectedFiles == null || selectedFiles.length < 1) {
            return;
        } else {
