@@ -3463,7 +3463,9 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface, Device
    public synchronized void closeSequence() {
 
       if (!this.isRunning()) {
-         core_.logMessage("MMStudioMainFrame::closeSequence called while running_ is false");
+         if (core_ != null) {
+            core_.logMessage("MMStudioMainFrame::closeSequence called while running_ is false");
+         }
          return;
       }
       

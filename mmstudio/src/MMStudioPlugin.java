@@ -86,7 +86,11 @@ public class MMStudioPlugin implements PlugIn, CommandListener {
     
    public String commandExecuting(String command) { 
       if (command.equalsIgnoreCase("Quit") && frame_ != null) {
-         frame_.closeSequence();
+         try {
+            frame_.closeSequence();
+         } catch (Exception ex) {
+            // do nothing, just make sure to continue quitting
+         }
          return command;
       }  else if (command.equals("Crop")) {
          if (IJ.getImage().getStack() instanceof AcquisitionVirtualStack) {
