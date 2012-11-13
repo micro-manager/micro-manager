@@ -86,6 +86,13 @@ CRISP.jar:  \
 	$(JAVAC) -source 1.5 -target 1.5 -sourcepath $(srcdir):. -classpath $(IJJARPATH):$(BSHJARPATH):$(COMMONSMATHJARPATH):$(SWINGLAYOUTJARPATH):$(JFREECHARTJARPATH):../bin/MMCoreJ.jar:../mmstudio/MMJ_.jar:. $(srcdir)/CRISP/src/org/micromanager/CRISP/*.java -d build
 	cd build && jar cf ../CRISP.jar * 
 
+BFCorrector.jar:  \
+	$(srcdir)/BFCOrrector/src/org/micromanager/bfcorrector/*.java
+	test -d build || mkdir build
+	rm -rf build/*
+	$(JAVAC) -source 1.5 -target 1.5 -sourcepath $(srcdir):. -classpath $(srcdir)/BFCorrector.jar:$(IJJARPATH):$(BSHJARPATH):$(COMMONSMATHJARPATH):$(SWINGLAYOUTJARPATH):../bin/MMCoreJ.jar:../mmstudio/MMJ_.jar:. $(srcdir)/BFCorrector/src/org/micromanager/bfcorrector/*.java -d build
+	cd build && jar cf ../BFCorrector.jar * 
+
 Gaussian.jar:  \
 	$(srcdir)/Gaussian/source/GaussianTrack_.java \
 	$(srcdir)/Gaussian/source/edu/valelab/GaussianFit/DataCollectionForm.java \
@@ -128,7 +135,7 @@ ClojureEditor.jar:  \
 	## Work around bug in 'jar': jar cf MM_.jar -C bin/ bin/* does not work
 	cd build && jar cf ../ClojureEditor.jar * 
 
-all: PixelCalibrator.jar RecallPlugin.jar StageControl.jar MultiCamera.jar CRISP.jar Big.jar NewImageFlipper.jar SlideExplorer.jar DataBrowser.jar ClojureEditor.jar SplitView.jar Gaussian.jar IntelligentAcquisition.jar
+all: PixelCalibrator.jar RecallPlugin.jar StageControl.jar MultiCamera.jar CRISP.jar Big.jar NewImageFlipper.jar SlideExplorer.jar DataBrowser.jar ClojureEditor.jar SplitView.jar Gaussian.jar IntelligentAcquisition.jar BFCorrector.jar
 
 
 install: 
@@ -147,6 +154,7 @@ install:
 	cp NewImageFlipper.jar $(DESTDIR)$(IJPATH)/mmplugins
 	cp Gaussian.jar $(DESTDIR)$(IJPATH)/mmplugins
 	cp IntelligentAcquisition.jar $(DESTDIR)$(IJPATH)/mmplugins
+	cp BFCorrector.jar $(DESTDIR)$(IJPATH)/mmplugins
 	
 clean:
 	test -f MMTracker_.jar && rm MMTracker_.jar || echo "MMTracker_.jar not found"
@@ -161,5 +169,6 @@ clean:
 	test -f ImageFlipper.jar && rm ImageFlipper.jar || echo "ImageFlipper.jar not found"
 	test -f NewImageFlipper.jar && rm NewImageFlipper.jar || echo "NewImageFlipper.jar not found"
 	test -f Gaussian.jar && rm Gaussian.jar || echo "Gaussian.jar not found"
+	test -f BFCorrector.jar && rm BFCorrector.jar || echo "BFCorrector.jar not found"
 	
 EXTRA_DIST = src build.xml
