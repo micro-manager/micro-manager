@@ -912,6 +912,9 @@ int BitFlowCamera::StartSequenceAcquisition(double interval_ms)
    if (IsCapturing())
       return DEVICE_CAMERA_BUSY_ACQUIRING;
 
+   // this will open the shutter
+   GetCoreCallback()->PrepareForAcq(this);
+
    liveThd_->EnableStreaming(false);
    liveThd_->SetNumImages(-1);
 
@@ -931,6 +934,7 @@ int BitFlowCamera::StopSequenceAcquisition()
 {
    bfDev_.StopContinuousAcq();
    liveThd_->Abort();
+   GetCoreCallback()->AcqFinished(this, 0);
    return DEVICE_OK;
 }
 
