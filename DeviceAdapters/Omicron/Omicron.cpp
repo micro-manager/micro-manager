@@ -102,6 +102,7 @@ int Omicron::Initialize()
      int ret = SendSerialCommand(port_.c_str(), command2.str().c_str(), "\r");
      if (ret != DEVICE_OK) return ret;
      ret = GetSerialAnswer(port_.c_str(), "\r", answer2);
+	 PurgeComPort(port_.c_str());
      if (ret != DEVICE_OK) return ret;
 		  
 	 answer2 = answer2.substr(4);
@@ -114,13 +115,16 @@ int Omicron::Initialize()
 	 		
      ret = SendSerialCommand(port_.c_str(), command3.str().c_str(), "\r");
      if (ret != DEVICE_OK) return ret;
+	 CDeviceUtils::SleepMs(1000);
      ret = GetSerialAnswer(port_.c_str(), "\r", answer3);
+	 PurgeComPort(port_.c_str());
      if (ret != DEVICE_OK) return ret;  
 
 	 command1 << "?GFw";
 	 ret = SendSerialCommand(port_.c_str(), command1.str().c_str(), "\r");
      if (ret != DEVICE_OK) return ret;
      ret = GetSerialAnswer(port_.c_str(), "\r", answer1);
+	 PurgeComPort(port_.c_str());
      if (ret != DEVICE_OK) return ret;
 
 	 PharseAnswerString(answer1, "!GFw", help2);
@@ -321,6 +325,7 @@ int Omicron::OnFault(MM::PropertyBase* pProp, MM::ActionType /*eAct*/)
      int ret = SendSerialCommand(port_.c_str(), command.str().c_str(), "\r");
      if (ret != DEVICE_OK) return ret;
      ret = GetSerialAnswer(port_.c_str(), "\r", answer);
+	 PurgeComPort(port_.c_str());
      if (ret != DEVICE_OK) return ret;
 
 	 answer = answer.substr(4);
@@ -382,6 +387,7 @@ int Omicron::OnHours(MM::PropertyBase* pProp, MM::ActionType /*eAct*/)
      int ret = SendSerialCommand(port_.c_str(), command.str().c_str(), "\r");
      if (ret != DEVICE_OK) return ret;
      ret = GetSerialAnswer(port_.c_str(), "\r", hours_);
+	 PurgeComPort(port_.c_str());
      if (ret != DEVICE_OK) return ret;
 
 	 hours_ = hours_.substr(4) + " h";
@@ -403,6 +409,7 @@ int Omicron::OnPowerSetpoint1(MM::PropertyBase* pProp, MM::ActionType /* eAct */
 	 int ret = SendSerialCommand(port_.c_str(), command.str().c_str(), "\r");
      if (ret != DEVICE_OK) return ret;
      ret = GetSerialAnswer(port_.c_str(), "\r", answer);
+	 PurgeComPort(port_.c_str());
      if (ret != DEVICE_OK) return ret;
      
 	 answer = answer.substr(4);
@@ -430,6 +437,7 @@ int Omicron::OnPowerSetpoint2(MM::PropertyBase* pProp, MM::ActionType /* eAct */
 	 int ret = SendSerialCommand(port_.c_str(), command.str().c_str(), "\r");
      if (ret != DEVICE_OK) return ret;
      ret = GetSerialAnswer(port_.c_str(), "\r", answer);
+	 PurgeComPort(port_.c_str());
      if (ret != DEVICE_OK) return ret;
      
 	 answer = answer.substr(4);
@@ -450,10 +458,11 @@ int Omicron::OnPowerStatus(MM::PropertyBase* pProp, MM::ActionType /* eAct */)
      std::string answer;
      std::ostringstream command;
 	                
-	  command << "?MDP";
+	 command << "?MDP";
      int ret = SendSerialCommand(port_.c_str(), command.str().c_str(), "\r");
      if (ret != DEVICE_OK) return ret;
      ret = GetSerialAnswer(port_.c_str(), "\r", answer);
+	 PurgeComPort(port_.c_str());
      if (ret != DEVICE_OK) return ret;
      
 	 answer = answer.substr(4) + " mW";
@@ -471,6 +480,7 @@ int Omicron::OnSerialNumber(MM::PropertyBase* pProp, MM::ActionType /* eAct */)
      int ret = SendSerialCommand(port_.c_str(), command.str().c_str(), "\r");
      if (ret != DEVICE_OK) return ret;
      ret = GetSerialAnswer(port_.c_str(), "\r", serialNumber_);
+	 PurgeComPort(port_.c_str());
      if (ret != DEVICE_OK) return ret;
 
 	 serialNumber_ = serialNumber_.substr(4);
@@ -491,6 +501,7 @@ int Omicron::OnSpecPower(MM::PropertyBase* pProp, MM::ActionType /* eAct */)
      int ret = SendSerialCommand(port_.c_str(), command.str().c_str(), "\r");
      if (ret != DEVICE_OK) return ret;
      ret = GetSerialAnswer(port_.c_str(), "\r", answer);
+	 PurgeComPort(port_.c_str());
      if (ret != DEVICE_OK) return ret;
 
 	 PharseAnswerString(answer, "!GSI", help3);
@@ -515,6 +526,7 @@ int Omicron::OnTemperatureBaseplate(MM::PropertyBase* pProp, MM::ActionType /* e
      int ret = SendSerialCommand(port_.c_str(), command.str().c_str(), "\r");
      if (ret != DEVICE_OK) return ret;
      ret = GetSerialAnswer(port_.c_str(), "\r", answer);
+	 PurgeComPort(port_.c_str());
      if (ret != DEVICE_OK) return ret;
      
 	 answer = answer.substr(4);
@@ -533,6 +545,7 @@ int Omicron::OnTemperatureDiode(MM::PropertyBase* pProp, MM::ActionType /* eAct 
      int ret = SendSerialCommand(port_.c_str(), command.str().c_str(), "\r");
      if (ret != DEVICE_OK) return ret;
      ret = GetSerialAnswer(port_.c_str(), "\r", answer);
+	 PurgeComPort(port_.c_str());
      if (ret != DEVICE_OK) return ret;
      
 	 answer = answer.substr(4);
@@ -553,6 +566,7 @@ int Omicron::OnWavelength(MM::PropertyBase* pProp, MM::ActionType /* eAct */)
      int ret = SendSerialCommand(port_.c_str(), command.str().c_str(), "\r");
      if (ret != DEVICE_OK) return ret;
      ret = GetSerialAnswer(port_.c_str(), "\r", answer);
+	 PurgeComPort(port_.c_str());
      if (ret != DEVICE_OK) return ret;
 
 	 PharseAnswerString(answer, "!GSI", help3);
@@ -586,6 +600,7 @@ int Omicron::LaserOnOff(int onoff)
      int ret = SendSerialCommand(port_.c_str(), command.str().c_str(), "\r");
      if (ret != DEVICE_OK) return ret;
      ret = GetSerialAnswer(port_.c_str(), "\r", answer);
+	 PurgeComPort(port_.c_str());
      if (ret != DEVICE_OK) return ret;  
 
 	 return DEVICE_OK;
@@ -609,6 +624,7 @@ int Omicron::OnCWSubOperatingmode(MM::PropertyBase* pProp, MM::ActionType eAct)
         int ret = SendSerialCommand(port_.c_str(), command2.str().c_str(), "\r");
         if (ret != DEVICE_OK) return ret;
         ret = GetSerialAnswer(port_.c_str(), "\r", answer2);
+		PurgeComPort(port_.c_str());
         if (ret != DEVICE_OK) return ret;
 		  
 		answer2 = answer2.substr(4);
@@ -653,6 +669,7 @@ int Omicron::OnCWSubOperatingmode(MM::PropertyBase* pProp, MM::ActionType eAct)
      int ret = SendSerialCommand(port_.c_str(), command3.str().c_str(), "\r");
      if (ret != DEVICE_OK) return ret;
      ret = GetSerialAnswer(port_.c_str(), "\r", answer3);
+	 PurgeComPort(port_.c_str());
      if (ret != DEVICE_OK) return ret;  
 
      return DEVICE_OK;
@@ -671,6 +688,7 @@ int Omicron::OnLaserOnOff(MM::PropertyBase* pProp, MM::ActionType eAct)
           int ret = SendSerialCommand(port_.c_str(), command.str().c_str(), "\r");
           if (ret != DEVICE_OK) return ret;
           ret = GetSerialAnswer(port_.c_str(), "\r", answer);
+		  PurgeComPort(port_.c_str());
           if (ret != DEVICE_OK) return ret;
 		  
 		  answer = answer.substr(4);
@@ -722,6 +740,7 @@ int Omicron::OnOperatingmode(MM::PropertyBase* pProp, MM::ActionType eAct)
         int ret = SendSerialCommand(port_.c_str(), command2.str().c_str(), "\r");
         if (ret != DEVICE_OK) return ret;
         ret = GetSerialAnswer(port_.c_str(), "\r", answer2);
+		PurgeComPort(port_.c_str());
         if (ret != DEVICE_OK) return ret;
 		  
 		answer2 = answer2.substr(4);
@@ -810,6 +829,7 @@ int Omicron::OnOperatingmode(MM::PropertyBase* pProp, MM::ActionType eAct)
      int ret = SendSerialCommand(port_.c_str(), command3.str().c_str(), "\r");
      if (ret != DEVICE_OK) return ret;
      ret = GetSerialAnswer(port_.c_str(), "\r", answer3);
+	 PurgeComPort(port_.c_str());
      if (ret != DEVICE_OK) return ret;  
 
      return DEVICE_OK;
@@ -828,6 +848,7 @@ int Omicron::OnPower1(MM::PropertyBase* pProp, MM::ActionType eAct)
 		int ret = SendSerialCommand(port_.c_str(), command.str().c_str(), "\r");
 		if (ret != DEVICE_OK) return ret;
 		ret = GetSerialAnswer(port_.c_str(), "\r", answer);
+		PurgeComPort(port_.c_str());
 		if (ret != DEVICE_OK) return ret;
 
 		answer = answer.substr(4);
@@ -857,11 +878,14 @@ int Omicron::OnPower1(MM::PropertyBase* pProp, MM::ActionType eAct)
 
         i = (int) ((power1_ / 100.0 * 4095) + 0.5);
         help << std::setw(3) << std::setfill('0') << std::hex << i; 
-		  command << "?SLP" << help.str();	
-          int ret = SendSerialCommand(port_.c_str(), command.str().c_str(), "\r");
-          if (ret != DEVICE_OK) return ret;
-          ret = GetSerialAnswer(port_.c_str(), "\r", answer);
-          if (ret != DEVICE_OK) return ret;
+		  
+		command << "?SLP" << help.str();
+
+        int ret = SendSerialCommand(port_.c_str(), command.str().c_str(), "\r");
+        if (ret != DEVICE_OK) return ret;
+        ret = GetSerialAnswer(port_.c_str(), "\r", answer);
+		PurgeComPort(port_.c_str());
+        if (ret != DEVICE_OK) return ret;
      }
 
    return DEVICE_OK;
@@ -880,6 +904,7 @@ int Omicron::OnPower2(MM::PropertyBase* pProp, MM::ActionType eAct)
 		int ret = SendSerialCommand(port_.c_str(), command.str().c_str(), "\r");
 		if (ret != DEVICE_OK) return ret;
 		ret = GetSerialAnswer(port_.c_str(), "\r", answer);
+		PurgeComPort(port_.c_str());
 		if (ret != DEVICE_OK) return ret;
 
 		answer = answer.substr(4);
@@ -909,11 +934,14 @@ int Omicron::OnPower2(MM::PropertyBase* pProp, MM::ActionType eAct)
 
         i = (int) ((power2_ / specpower * 4095) + 0.5);
         help << std::setw(3) << std::setfill('0') << std::hex << i; 
-        command << "?SLP" << help.str();	
-          int ret = SendSerialCommand(port_.c_str(), command.str().c_str(), "\r");
-          if (ret != DEVICE_OK) return ret;
-          ret = GetSerialAnswer(port_.c_str(), "\r", answer);
-          if (ret != DEVICE_OK) return ret;
+        
+		command << "?SLP" << help.str();	
+          
+		int ret = SendSerialCommand(port_.c_str(), command.str().c_str(), "\r");
+        if (ret != DEVICE_OK) return ret;
+        ret = GetSerialAnswer(port_.c_str(), "\r", answer);
+		PurgeComPort(port_.c_str());
+        if (ret != DEVICE_OK) return ret;
      }
 
    return DEVICE_OK;
@@ -942,12 +970,11 @@ int Omicron::OnReset(MM::PropertyBase* pProp, MM::ActionType eAct)
 	
 		 int ret = SendSerialCommand(port_.c_str(), command.str().c_str(), "\r");
 		 if (ret != DEVICE_OK) return ret;
-		 
+		 CDeviceUtils::SleepMs(5000);
 		 ret = GetSerialAnswer(port_.c_str(), "\r", answer);
+		 PurgeComPort(port_.c_str());
 		 if (ret != DEVICE_OK) return ret;
-
-       CDeviceUtils::SleepMs(2000);
-	 }
+       	 }
 
      return DEVICE_OK;
 }
