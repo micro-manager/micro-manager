@@ -912,6 +912,7 @@ public class MainForm extends javax.swing.JFrame implements ij.ImageListener{
          public void run() {
                int val = Integer.parseInt(noiseToleranceTextField_.getText());
                int halfSize = (int) Integer.parseInt(boxSizeTextField.getText()) / 2;
+               
                Polygon pol = FindLocalMaxima.FindMax(siPlus, halfSize, val, preFilterType_);
                for (int i = 0; i < pol.npoints; i++) {
                   int x = pol.xpoints[i];

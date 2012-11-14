@@ -5,19 +5,11 @@
  */
 package edu.valelab.GaussianFit;
 
-import ij.IJ;
 import ij.ImagePlus;
 import ij.gui.ImageCanvas;
 import ij.gui.ImageWindow;
-import ij.gui.Roi;
-import ij.gui.Toolbar;
-import ij.process.ImageProcessor;
 import java.awt.Dimension;
-import java.awt.Graphics;
-import java.awt.Image;
-import java.awt.Point;
 import java.awt.Rectangle;
-import java.awt.event.MouseEvent;
 
 /**
  *
