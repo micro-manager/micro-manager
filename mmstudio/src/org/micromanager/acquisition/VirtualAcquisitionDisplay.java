@@ -268,6 +268,7 @@ public final class VirtualAcquisitionDisplay implements AcquisitionDisplay, Imag
                try {
                   GUIUtils.invokeLater(new Runnable() {
 
+                     @Override
                      public void run() {
                         try {
                            JavaUtils.invokeRestrictedMethod(this, ImagePlus.class, "notifyListeners", 2);
@@ -284,6 +285,7 @@ public final class VirtualAcquisitionDisplay implements AcquisitionDisplay, Imag
          };
       }
 
+      @Override
       public void updateAndDrawWithoutGUIUpdater() {
          try {
             GUIUtils.invokeLater(updateAndDrawRunnable());
@@ -306,6 +308,8 @@ public final class VirtualAcquisitionDisplay implements AcquisitionDisplay, Imag
       @Override
       public void draw() {
          Runnable runnable = new Runnable() {
+             
+            @Override
             public void run() {
                imageChangedUpdate();
                superDraw();
@@ -401,6 +405,7 @@ public final class VirtualAcquisitionDisplay implements AcquisitionDisplay, Imag
          };
       }
       
+      @Override
       public void updateAndDrawWithoutGUIUpdater() {
          try {
             GUIUtils.invokeLater(drawRunnable());
@@ -538,6 +543,7 @@ public final class VirtualAcquisitionDisplay implements AcquisitionDisplay, Imag
          if (zSelector_ != null) {
             zSelector_.addAdjustmentListener(new AdjustmentListener() {
 
+               @Override
                public void adjustmentValueChanged(AdjustmentEvent e) {
                   preferredSlice_ = zSelector_.getValue();
                }
@@ -546,6 +552,7 @@ public final class VirtualAcquisitionDisplay implements AcquisitionDisplay, Imag
          if (cSelector_ != null) {
             cSelector_.addAdjustmentListener(new AdjustmentListener() {
 
+               @Override
                public void adjustmentValueChanged(AdjustmentEvent e) {
                   preferredChannel_ = cSelector_.getValue();
                }
@@ -584,6 +591,7 @@ public final class VirtualAcquisitionDisplay implements AcquisitionDisplay, Imag
    private void forcePainting() {
       Runnable forcePaint = new Runnable() {
 
+         @Override
          public void run() {
             if (zIcon_ != null) {
                zIcon_.paint(zIcon_.getGraphics());
@@ -629,6 +637,7 @@ public final class VirtualAcquisitionDisplay implements AcquisitionDisplay, Imag
             slicesPerStep = 1;
          }
          TimerTask task = new TimerTask() {
+            @Override
             public void run() {
                int slice = hyperImage_.getSlice();
                if (slice >= zSelector_.getMaximum() - 1) {
@@ -662,6 +671,7 @@ public final class VirtualAcquisitionDisplay implements AcquisitionDisplay, Imag
             framesPerStep = 1;
          }
          TimerTask task = new TimerTask() {
+            @Override
             public void run() {
                int frame = hyperImage_.getFrame();
                if (frame >= tSelector_.getMaximum() - 1) {
@@ -689,25 +699,35 @@ public final class VirtualAcquisitionDisplay implements AcquisitionDisplay, Imag
    private void configureAnimationControls() {
       if (zIcon_ != null) {
          zIcon_.addMouseListener(new MouseListener() {
+            @Override
             public void mousePressed(MouseEvent e) {
                animateSlices(!zAnimated_);
             }
+            @Override
             public void mouseClicked(MouseEvent e) {}
+            @Override
             public void mouseReleased(MouseEvent e) {}
+            @Override
             public void mouseEntered(MouseEvent e) {}
+            @Override
             public void mouseExited(MouseEvent e) {}
          });
       }
       if (tIcon_ != null) {
          tIcon_.addMouseListener(new MouseListener() {
 
+            @Override
             public void mousePressed(MouseEvent e) {
                animateFrames(!tAnimated_);
             }
 
+            @Override
             public void mouseClicked(MouseEvent e) {}
+            @Override
             public void mouseReleased(MouseEvent e) {}
+            @Override
             public void mouseEntered(MouseEvent e) {}
+            @Override
             public void mouseExited(MouseEvent e) {}
          });
       }
@@ -1104,6 +1124,7 @@ public final class VirtualAcquisitionDisplay implements AcquisitionDisplay, Imag
 
       if (hyperImage_ == null) {
          GUIUtils.invokeAndWait(new Runnable() {
+            @Override
             public void run() {
                try {
                   startup(tags);
@@ -1234,6 +1255,7 @@ public final class VirtualAcquisitionDisplay implements AcquisitionDisplay, Imag
    private void initializeContrast(final int channel, final int slice) {
       Runnable autoscaleOrLoadContrast = new Runnable() {
 
+         @Override
          public void run() {
             if (!newDisplay_) {
                return;
@@ -1345,6 +1367,7 @@ public final class VirtualAcquisitionDisplay implements AcquisitionDisplay, Imag
    private void setPreferredScrollbarPositions() {
       if (preferredPositionTimer_ == null) {
          preferredPositionTimer_ = new Timer(250, new ActionListener() {
+            @Override
             public void actionPerformed(ActionEvent e) {
                int c = preferredChannel_ == -1 ? hyperImage_.getChannel() : preferredChannel_;
                int s = preferredSlice_ == -1 ? hyperImage_.getSlice() : preferredSlice_;
@@ -1485,28 +1508,36 @@ public final class VirtualAcquisitionDisplay implements AcquisitionDisplay, Imag
       menu.add(cancel);
       final AtomicInteger ai = new AtomicInteger(-1);
       cancel.addActionListener(new ActionListener() {
+         @Override
          public void actionPerformed(ActionEvent e) {
             ai.set(0);
          }
       });
       single.addActionListener(new ActionListener() {
+         @Override
          public void actionPerformed(ActionEvent e) {
             ai.set(1);
          }
       });
       multi.addActionListener(new ActionListener() {
+         @Override
          public void actionPerformed(ActionEvent e) {
             ai.set(2);
          }
       });
       MouseListener highlighter = new MouseListener() {
+         @Override
          public void mouseClicked(MouseEvent e) {
          }
+         @Override
          public void mousePressed(MouseEvent e) {}
+         @Override
          public void mouseReleased(MouseEvent e) {}
+         @Override
          public void mouseEntered(MouseEvent e) {
             ((JMenuItem) e.getComponent()).setArmed(true);
          }
+         @Override
          public void mouseExited(MouseEvent e) {
             ((JMenuItem) e.getComponent()).setArmed(false);
          }       
@@ -1634,10 +1665,12 @@ public final class VirtualAcquisitionDisplay implements AcquisitionDisplay, Imag
       final DisplayWindow win = new DisplayWindow(hyperImage_);
       win.getCanvas().addMouseListener(new MouseListener() {
 
+         @Override
          public void mouseClicked(MouseEvent me) {
          }
 
          //used to store preferred zoom
+         @Override
          public void mousePressed(MouseEvent me) {
             if (Toolbar.getToolId() == 11) {//zoom tool selected
                storeWindowSizeAfterZoom(win);
@@ -1646,13 +1679,16 @@ public final class VirtualAcquisitionDisplay implements AcquisitionDisplay, Imag
          }
 
          //updates the histogram after an ROI is drawn
+         @Override
          public void mouseReleased(MouseEvent me) {
             hyperImage_.updateAndDraw();
          }
 
+         @Override
          public void mouseEntered(MouseEvent me) {
          }
 
+         @Override
          public void mouseExited(MouseEvent me) {
          }
       });
@@ -1980,6 +2016,7 @@ public final class VirtualAcquisitionDisplay implements AcquisitionDisplay, Imag
          try {
             GUIUtils.invokeAndWait(new Runnable() {
 
+               @Override
                public void run() {
                   startup(null);
                }

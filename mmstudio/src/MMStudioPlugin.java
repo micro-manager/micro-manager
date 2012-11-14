@@ -23,15 +23,12 @@
 import ij.CommandListener;
 import ij.Executer;
 import ij.IJ;
-import ij.ImagePlus;
 import ij.plugin.Duplicator;
 import ij.plugin.PlugIn;
 
 import javax.swing.JFrame;
-import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
-import javax.swing.plaf.MenuBarUI;
 
 import mmcorej.CMMCore;
 
@@ -49,9 +46,11 @@ public class MMStudioPlugin implements PlugIn, CommandListener {
    static MMStudioMainFrame frame_;
 
    @SuppressWarnings("unchecked")
+    @Override
    public void run(final String arg) {
 
       SwingUtilities.invokeLater(new Runnable() {
+            @Override
          public void run() {
             try {
                if (frame_ == null || !frame_.isRunning()) {
@@ -84,10 +83,11 @@ public class MMStudioPlugin implements PlugIn, CommandListener {
       });
    }
     
+    @Override
    public String commandExecuting(String command) { 
       if (command.equalsIgnoreCase("Quit") && frame_ != null) {
          try {
-            frame_.closeSequence();
+            frame_.closeSequence(true);
          } catch (Exception ex) {
             // do nothing, just make sure to continue quitting
          }
