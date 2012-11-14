@@ -65,7 +65,9 @@ public class LiveModeTimer {
    private Timer timer_;
    private TimerTask task_;
    private MMStudioMainFrame.DisplayImageRoutine displayImageRoutine_;
-    private LinkedBlockingQueue imageQueue_;
+   private LinkedBlockingQueue imageQueue_;
+   private boolean shutterOriginalState_; 
+   private boolean autoShutterOriginalState_; 
    
    public LiveModeTimer() {
       gui_ = MMStudioMainFrame.getInstance();
@@ -123,6 +125,7 @@ public class LiveModeTimer {
          if(running_) {
             return;
          }
+         manageShutter(true);
          timer_ = new Timer("Live mode timer");
          
          core_.clearCircularBuffer();
@@ -183,12 +186,14 @@ public class LiveModeTimer {
       try {
          if (core_.isSequenceRunning())
             core_.stopSequenceAcquisition();
+            manageShutter(false); 
          if (win_ != null) {
             win_.liveModeEnabled(false);
          }
          running_ = false;
       } catch (Exception ex) {
          try {
+             manageShutter(false); 
          } catch (Exception e) {
             ReportingUtils.showError("Error closing shutter");
          }
@@ -204,6 +209,21 @@ public class LiveModeTimer {
          }
       } 
    }
+
+    private void manageShutter(boolean enable) throws Exception {
+        String shutterLabel = core_.getShutterDevice();
+        if (shutterLabel.length() > 0) {
+            if (enable) {
+                shutterOriginalState_ = core_.getShutterOpen();
+                autoShutterOriginalState_ = core_.getAutoShutter();
+                core_.setAutoShutter(false);
+                core_.setShutterOpen(shutterOriginalState_ || autoShutterOriginalState_);
+            } else {
+                core_.setShutterOpen(shutterOriginalState_);
+                core_.setAutoShutter(autoShutterOriginalState_);
+            }
+        }
+    }
    
    /**
     * Keep track of the last imagenumber, added by the circular buffer
