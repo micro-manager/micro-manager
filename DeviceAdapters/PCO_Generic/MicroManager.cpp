@@ -146,12 +146,12 @@ CPCOCam::CPCOCam() :
   m_nTimesLen = MMSENSICAM_MAX_STRLEN;
   m_pCamera = new CCamera();
   m_bDemoMode = FALSE;
-  m_bStartStopMode = FALSE;
-  m_iSkipImages = 1;
+  m_bStartStopMode = TRUE;
+  m_iSkipImages = 0;
   m_iFpsMode = 0;
   m_dFps = 10.0;
   m_iPixelRate = 0;
-
+  m_iTimestamp = 0;
 
   // DemoMode (pre-initialization property)
   CPropertyAction* pAct = new CPropertyAction (this, &CPCOCam::OnDemoMode);
@@ -218,6 +218,81 @@ int CPCOCam::OnExposure(MM::PropertyBase* pProp, MM::ActionType eAct)
   }
   return DEVICE_OK;
 }
+
+
+int CPCOCam::OnTriggerMode( MM::PropertyBase* pProp, MM::ActionType eAct )
+{
+  if (eAct == MM::BeforeGet)
+  {
+    if(m_pCamera->iCamClass == 3)
+    {
+      if(m_nTrig == 0)
+        pProp->Set("Internal");
+      else
+        if(m_nTrig == 1)
+          pProp->Set("Software");
+        else
+          pProp->Set("External");
+    }
+    if(m_pCamera->iCamClass == 2)
+    {
+      if(m_nTrig == 1)
+        pProp->Set("Internal");
+      else
+        pProp->Set("External");
+    }
+  }
+  else if (eAct == MM::AfterSet)
+  {
+    int nErr = 0;
+    long ihelp;
+    string tmp;
+    pProp->Get(tmp);
+    ((MM::Property *) pProp)->GetData(tmp.c_str(), ihelp);
+    //pProp->Get(ihelp);
+
+    if(ihelp != m_nTrig)
+    {
+      m_nTrig = ihelp;
+      nErr = SetupCamera();
+    }
+
+    if (nErr != 0)
+      return nErr;
+  }
+  return DEVICE_OK;
+}
+
+
+int CPCOCam::OnTimestampMode( MM::PropertyBase* pProp, MM::ActionType eAct )
+{
+  if (eAct == MM::BeforeGet)
+  {
+    if(m_iTimestamp == 0)
+      pProp->Set("No stamp");
+    else
+      if(m_iTimestamp == 1)
+        pProp->Set("Binary");
+      else
+        pProp->Set("Binary + ASCII");
+  }
+  else if (eAct == MM::AfterSet)
+  {
+    int nErr = 0;
+    long ihelp;
+    pProp->Get(ihelp);
+    if(ihelp != m_iTimestamp)
+    {
+      m_iTimestamp = ihelp;
+      nErr = SetupCamera();
+    }
+
+    if (nErr != 0)
+      return nErr;
+  }
+  return DEVICE_OK;
+}
+
 
 int CPCOCam::OnFpsMode(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
@@ -476,11 +551,11 @@ int CPCOCam::SetupCamera()
   if (nErr != 0)
     return nErr;
 
-  uiMode = 0x10000 + 0x0020;//Avoid adding buffers, Preview, Single
+  uiMode = 0x20000 + 0x10000 + 0x0010;//Avoid adding buffers, Preview, Single
   nErr = m_pCamera->PreStartCam(uiMode, 0, 0, 0);            // schaltet automatisch auf internen Trigger
   if (nErr != 0)
     return nErr;
-  nErr = m_pCamera->StartCam();
+  //nErr = m_pCamera->StartCam();
   return nErr;
 
 }
@@ -644,7 +719,7 @@ int CPCOCam::Initialize()
     m_nHBin = m_nVBin = 0;
     m_nMode = 0x20000;//M_LONG;
     m_nSubMode = 0;//NORMALLONG;
-    m_nTrig = 0;
+    m_nTrig = 1;
     sprintf(m_pszTimes, "%f", m_dExposure / 1000.0);
   }
   if(m_pCamera->iCamClass == 1)
@@ -835,6 +910,53 @@ int CPCOCam::Initialize()
   nRet = CreateProperty(MM::g_Keyword_Exposure, "10", MM::Float, false, pAct);
   if (nRet != DEVICE_OK)
     return nRet;
+
+  if(m_pCamera->iCamClass == 2)
+  {
+    pAct = new CPropertyAction (this, &CPCOCam::OnTriggerMode);
+    nRet = CreateProperty("Triggermode", "Internal", MM::String, false, pAct);
+    if (nRet != DEVICE_OK)
+      return nRet;
+    nRet = AddAllowedValue("Triggermode","Internal",1);
+    if (nRet != DEVICE_OK)
+      return nRet;
+    nRet = AddAllowedValue("Triggermode","External",0);
+    if (nRet != DEVICE_OK)
+      return nRet;
+  }
+
+  if(m_pCamera->iCamClass == 3)
+  {
+    pAct = new CPropertyAction (this, &CPCOCam::OnTriggerMode);
+    nRet = CreateProperty("Triggermode", "Internal", MM::String, false, pAct);
+    if (nRet != DEVICE_OK)
+      return nRet;
+    nRet = AddAllowedValue("Triggermode","Internal",0);
+    if (nRet != DEVICE_OK)
+      return nRet;
+    //nRet = AddAllowedValue("Triggermode","Software",1);
+    //if (nRet != DEVICE_OK)
+    //  return nRet;
+    nRet = AddAllowedValue("Triggermode","External",2);
+    if (nRet != DEVICE_OK)
+      return nRet;
+
+    pAct = new CPropertyAction (this, &CPCOCam::OnTimestampMode);
+    nRet = CreateProperty("Timestampmode", "No stamp", MM::String, false, pAct);
+    if (nRet != DEVICE_OK)
+      return nRet;
+    nRet = AddAllowedValue("Timestampmode","No stamp",0);
+    if (nRet != DEVICE_OK)
+      return nRet;
+    nRet = AddAllowedValue("Timestampmode","Binary",1);
+    if (nRet != DEVICE_OK)
+      return nRet;
+    nRet = AddAllowedValue("Timestampmode","Binary + ASCII",2);
+    if (nRet != DEVICE_OK)
+      return nRet;
+
+  }
+
   if((m_nCameraType == 0x1300) ||// fps setting for pco.edge
      (m_nCameraType == 0x1310))
   {
@@ -881,7 +1003,6 @@ int CPCOCam::Initialize()
   m_bInitialized = true;
 
   // set additional properties as read-only for now
-
   return DEVICE_OK;
 }
 
@@ -919,16 +1040,16 @@ int CPCOCam::SnapImage()
 
   if(m_bDemoMode)
     return DEVICE_OK;
-  if(m_bStartStopMode == TRUE)
-  {
-    m_pCamera->StopCam(&nErr);
+  if(sequenceRunning_ == FALSE)
     m_pCamera->StartCam();
-  }
+
   do
   {
     m_pCamera->ResetEvWait();
     nErr = m_pCamera->WaitForImage();
   }while(cnt-- > 0);
+  if(sequenceRunning_ == FALSE)
+    m_pCamera->StopCam(&nErr);
 
   if (nErr != 0)
     return nErr;
@@ -1085,17 +1206,33 @@ int CPCOCam::SetROI(unsigned uX, unsigned uY, unsigned uXSize, unsigned uYSize)
   if(m_pCamera->iCamClass == 1)
   {
     // Liisa: changed these to round up, else uX or uY < 32 rounds to zero, Sensicam needs min 1.
-    m_nRoiXMin = (int) ceil( ( (double) uX * m_nHBin / 32) ) + 1;
-    m_nRoiYMin = (int) ceil( ( (double) uY * m_nHBin / 32) ) + 1;
-    m_nRoiXMax = (int) ceil( ( ( (double) uX + uXSize) * m_nHBin / 32) -1 );
-    m_nRoiYMax = (int) ceil( ( ( (double) uY + uYSize) * m_nHBin / 32) -1 );
+    m_nRoiXMin = (int) ceil( ( (double) uX / 32) ) + 1;
+    m_nRoiYMin = (int) ceil( ( (double) uY / 32) ) + 1;
+    m_nRoiXMax = (int) ceil( ( ( (double) uX + uXSize) / 32) -1 );
+    m_nRoiYMax = (int) ceil( ( ( (double) uY + uYSize) / 32) -1 );
   }
   else
   {
-    m_nRoiXMin = (int) ceil( ( (double) uX * m_nHBin) ) + 1;
-    m_nRoiYMin = (int) ceil( ( (double) uY * m_nHBin) ) + 1;
-    m_nRoiXMax = (int) ceil( ( ( (double) uX + uXSize) * m_nHBin) -1 );
-    m_nRoiYMax = (int) ceil( ( ( (double) uY + uYSize) * m_nHBin) -1 );
+    m_nRoiXMin = (int) ceil( ( (double) uX ) ) + 1;
+    m_nRoiYMin = (int) ceil( ( (double) uY ) ) + 1;
+    m_nRoiXMax = (int) ceil( ( ( (double) uX + uXSize) ) -1 );
+    m_nRoiYMax = (int) ceil( ( ( (double) uY + uYSize) ) -1 );
+  }
+  if(m_nRoiXMin > m_nRoiXMax)
+    m_nRoiXMin = m_nRoiXMax - 1;
+  if(m_nRoiYMin > m_nRoiYMax)
+    m_nRoiYMin = m_nRoiYMax - 1;
+
+  if(m_nRoiXMin < 1)
+    m_nRoiXMin = 1;
+  if(m_nRoiYMin < 1)
+    m_nRoiYMin = 1;
+  if(m_pCamera->iCamClass == 3)
+  {
+    if(m_nRoiXMax > roiXMaxFull_ / m_nHBin)
+      m_nRoiXMax = roiXMaxFull_ / m_nHBin;
+    if(m_nRoiYMax > roiYMaxFull_ / m_nVBin)
+      m_nRoiYMax = roiYMaxFull_ / m_nVBin;
   }
   nErr = SetupCamera();
   if (nErr != 0)
@@ -1148,10 +1285,21 @@ int CPCOCam::ClearROI()
   if(m_bDemoMode)
     return DEVICE_OK;
 
-  m_nRoiXMin = 1;
-  m_nRoiYMin = 1;
-  m_nRoiXMax = roiXMaxFull_;
-  m_nRoiYMax = roiYMaxFull_;
+  if(m_pCamera->iCamClass == 1)
+  {
+    // Liisa: changed these to round up, else uX or uY < 32 rounds to zero, Sensicam needs min 1.
+    m_nRoiXMin = 1;
+    m_nRoiYMin = 1;
+    m_nRoiXMax = roiXMaxFull_ / 32;
+    m_nRoiYMax = roiYMaxFull_ / 32;
+  }
+  else
+  {
+    m_nRoiXMin = 1;
+    m_nRoiYMin = 1;
+    m_nRoiXMax = roiXMaxFull_ / m_nHBin;
+    m_nRoiYMax = roiYMaxFull_ / m_nVBin;
+  }
   nErr = SetupCamera();
 
   if(nErr != 0)
@@ -1218,6 +1366,8 @@ int CPCOCam::PrepareSequenceAcqusition()
 
 int CPCOCam::StartSequenceAcquisition(long numImages, double /*interval_ms*/, bool stopOnOverflow)
 {
+  int nErr;
+
   if (Busy() || sequenceRunning_)
     return DEVICE_CAMERA_BUSY_ACQUIRING;
 
@@ -1225,17 +1375,26 @@ int CPCOCam::StartSequenceAcquisition(long numImages, double /*interval_ms*/, bo
   if (ret != DEVICE_OK)
     return ret;
   sequenceRunning_ = true;
+  nErr = m_pCamera->StartCam();
+
   sthd_->SetLength(numImages);
   sthd_->Start();
   stopOnOverflow_ = stopOnOverflow;
+  if (nErr != 0)
+    return nErr;
   return DEVICE_OK;
 }
 
 int CPCOCam::StopSequenceAcquisition()
 {
+  int nErr;
+
   sthd_->Stop();
   sthd_->wait();
   sequenceRunning_ = false;
+  m_pCamera->StopCam(&nErr);
+  if (nErr != 0)
+    return nErr;
   return DEVICE_OK;
 }
 

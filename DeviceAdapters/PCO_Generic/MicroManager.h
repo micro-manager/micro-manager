@@ -26,6 +26,7 @@
 
 #include "..\..\MMDevice/DeviceBase.h"
 #include "..\..\MMDevice/ImgBuffer.h"
+#include "..\..\MMDevice/DeviceThreads.h"
 #include "..\..\MMDevice/DeviceUtils.h"
 #include "..\..\..\3rdparty\Pco\Windows\pco_generic\Camera.h"
 #include <string>
@@ -96,6 +97,7 @@ public:
    int GetBinning() const;
    int SetBinning(int binSize);
    int IsExposureSequenceable(bool& isSequenceable) const {isSequenceable = false; return DEVICE_OK;}
+
    long GetImageBufferSize() const {return img_.Width() * img_.Height() * GetImageBytesPerPixel();}
    double GetExposure() const {return m_dExposure;}
    void SetExposure(double dExp);
@@ -113,6 +115,7 @@ public:
    int OnCameraType(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnCCDType(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnExposure(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnTriggerMode(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnFpsMode(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnFps(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnPixelRate(MM::PropertyBase* pProp, MM::ActionType eAct);
@@ -122,11 +125,10 @@ public:
    int OnEMGain(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnEMLeftROI(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnDemoMode(MM::PropertyBase* pProp, MM::ActionType eAct);
- 
+   int OnTimestampMode( MM::PropertyBase* pProp, MM::ActionType eAct );
    /*
    int OnMode(CPropertyBase* pProp, ActionType eAct);
    int OnSubMode(CPropertyBase* pProp, ActionType eAct);
-   int OnTrigger(CPropertyBase* pProp, ActionType eAct);
    int OnRoiXMax(CPropertyBase* pProp, ActionType eAct);
    int OnRoiYMax(CPropertyBase* pProp, ActionType eAct);
    int OnRoiYMin(CPropertyBase* pProp, ActionType eAct);
@@ -212,6 +214,7 @@ private:
    int m_iGain;
    int m_iEMGain;
    int m_iOffset;
+   int m_iTimestamp;
    unsigned int m_uiFlags;
 };
 
