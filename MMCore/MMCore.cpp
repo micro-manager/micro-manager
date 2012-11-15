@@ -5737,6 +5737,7 @@ double CMMCore::getLastFocusScore()
 {
    if (autoFocus_ != 0)
    {
+      MMThreadGuard guard(pluginManager_.getModuleLock(autoFocus_));
       double score;
       int ret = autoFocus_->GetLastFocusScore(score);
       if (ret != DEVICE_OK)
@@ -5757,6 +5758,7 @@ double CMMCore::getCurrentFocusScore()
 {
    if (autoFocus_ != 0)
    {
+      MMThreadGuard guard(pluginManager_.getModuleLock(autoFocus_));
       double score;
       int ret = autoFocus_->GetCurrentFocusScore(score);
       if (ret != DEVICE_OK)
@@ -5775,7 +5777,8 @@ void CMMCore::enableContinuousFocus(bool enable) throw (CMMError)
 {
    if (autoFocus_ != 0)
    {
-      int ret = autoFocus_->SetContinuousFocusing(enable);
+      MMThreadGuard guard(pluginManager_.getModuleLock(autoFocus_));
+	  int ret = autoFocus_->SetContinuousFocusing(enable);
       if (ret != DEVICE_OK)
       {
          logError(getDeviceName(autoFocus_).c_str(), getDeviceErrorText(ret, autoFocus_).c_str());
@@ -5804,7 +5807,8 @@ bool CMMCore::isContinuousFocusEnabled() throw (CMMError)
 {
    if (autoFocus_ != 0)
    {
-      bool state;
+      MMThreadGuard guard(pluginManager_.getModuleLock(autoFocus_));
+	  bool state;
       int ret = autoFocus_->GetContinuousFocusing(state);
       if (ret != DEVICE_OK)
       {
@@ -5818,14 +5822,19 @@ bool CMMCore::isContinuousFocusEnabled() throw (CMMError)
 }
 
 /**
- * Returns the lock-in status of the continuous focusing device.
- */
+* Returns the lock-in status of the continuous focusing device.
+*/
 bool CMMCore::isContinuousFocusLocked() throw (CMMError)
 {
-   if (autoFocus_ != 0)
-      return autoFocus_->IsContinuousFocusLocked();
-   else
-      return false; // no auto-focus device
+	if (autoFocus_ != 0)
+	{
+		MMThreadGuard guard(pluginManager_.getModuleLock(autoFocus_));
+		return autoFocus_->IsContinuousFocusLocked();
+	}
+	else
+	{
+		return false; // no auto-focus device
+	}
 }
 
 /**
@@ -5845,7 +5854,8 @@ bool CMMCore::isContinuousFocusDrive(const char* stageLabel) throw (CMMError)
 void CMMCore::fullFocus() throw (CMMError)
 {
    if (autoFocus_)
-   {
+   {  
+	  MMThreadGuard guard(pluginManager_.getModuleLock(autoFocus_));
       int ret = autoFocus_->FullFocus();
       if (ret != DEVICE_OK)
       {
@@ -5866,6 +5876,7 @@ void CMMCore::incrementalFocus() throw (CMMError)
 {
    if (autoFocus_)
    {
+      MMThreadGuard guard(pluginManager_.getModuleLock(autoFocus_));
       int ret = autoFocus_->IncrementalFocus();
       if (ret != DEVICE_OK)
       {
@@ -5887,6 +5898,7 @@ void CMMCore::setAutoFocusOffset(double offset) throw (CMMError)
 {
    if (autoFocus_)
    {
+      MMThreadGuard guard(pluginManager_.getModuleLock(autoFocus_));
       int ret = autoFocus_->SetOffset(offset);
       if (ret != DEVICE_OK)
       {
@@ -5907,6 +5919,7 @@ double CMMCore::getAutoFocusOffset() throw (CMMError)
 {
    if (autoFocus_)
    {
+      MMThreadGuard guard(pluginManager_.getModuleLock(autoFocus_));
       double offset;
       int ret = autoFocus_->GetOffset(offset);
       if (ret != DEVICE_OK)
