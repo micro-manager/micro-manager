@@ -257,6 +257,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "MoticMicroscope", "..\Devic
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "RaptorEPIX", "..\SecretDeviceAdapters\RaptorEPIX\RaptorEPIX.vcproj", "{805A53D5-1E00-42D7-96F0-661AC7D042A6}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "SutterMPC", "..\SecretDeviceAdapters\SutterMPC\SutterMPC.vcproj", "{41F88027-BC30-4949-B407-42C2BCB34C60}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
@@ -1228,6 +1230,14 @@ Global
 		{805A53D5-1E00-42D7-96F0-661AC7D042A6}.Release|Win32.Build.0 = Release|Win32
 		{805A53D5-1E00-42D7-96F0-661AC7D042A6}.Release|x64.ActiveCfg = Release|x64
 		{805A53D5-1E00-42D7-96F0-661AC7D042A6}.Release|x64.Build.0 = Release|x64
+		{41F88027-BC30-4949-B407-42C2BCB34C60}.Debug|Win32.ActiveCfg = Debug|Win32
+		{41F88027-BC30-4949-B407-42C2BCB34C60}.Debug|Win32.Build.0 = Debug|Win32
+		{41F88027-BC30-4949-B407-42C2BCB34C60}.Debug|x64.ActiveCfg = Debug|x64
+		{41F88027-BC30-4949-B407-42C2BCB34C60}.Debug|x64.Build.0 = Debug|x64
+		{41F88027-BC30-4949-B407-42C2BCB34C60}.Release|Win32.ActiveCfg = Release|Win32
+		{41F88027-BC30-4949-B407-42C2BCB34C60}.Release|Win32.Build.0 = Release|Win32
+		{41F88027-BC30-4949-B407-42C2BCB34C60}.Release|x64.ActiveCfg = Release|x64
+		{41F88027-BC30-4949-B407-42C2BCB34C60}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
