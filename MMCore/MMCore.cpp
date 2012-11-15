@@ -3784,7 +3784,7 @@ long CMMCore::getState(const char* deviceLabel) throw (CMMError)
 long CMMCore::getNumberOfStates(const char* deviceLabel)
 {
    MM::State* pStateDev = getSpecificDevice<MM::State>(deviceLabel);
-
+   MMThreadGuard guard(pluginManager_.getModuleLock(pStateDev));
    return pStateDev->GetNumberOfPositions();
 }
 
@@ -3797,7 +3797,7 @@ long CMMCore::getNumberOfStates(const char* deviceLabel)
 void CMMCore::setStateLabel(const char* deviceLabel, const char* stateLabel) throw (CMMError)
 {
    MM::State* pStateDev = getSpecificDevice<MM::State>(deviceLabel);
-
+   MMThreadGuard guard(pluginManager_.getModuleLock(pStateDev));
    int nRet = pStateDev->SetPosition(stateLabel);
    if (nRet != DEVICE_OK)
       throw CMMError(deviceLabel, getDeviceErrorText(nRet, pStateDev).c_str(), MMERR_DEVICE_GENERIC);
@@ -3821,10 +3821,10 @@ void CMMCore::setStateLabel(const char* deviceLabel, const char* stateLabel) thr
  * @return   the current state's label 
  * @param deviceLabel     the device label
  */
-string CMMCore::getStateLabel(const char* deviceLabel) const throw (CMMError)
+string CMMCore::getStateLabel(const char* deviceLabel) throw (CMMError)
 {
    MM::State* pStateDev = getSpecificDevice<MM::State>(deviceLabel);
-
+   MMThreadGuard guard(pluginManager_.getModuleLock(pStateDev));
    char pos[MM::MaxStrLength];
    int nRet = pStateDev->GetPosition(pos);
    if (nRet != DEVICE_OK)
@@ -3843,7 +3843,7 @@ string CMMCore::getStateLabel(const char* deviceLabel) const throw (CMMError)
 void CMMCore::defineStateLabel(const char* deviceLabel, long state, const char* label) throw (CMMError)
 {
    MM::State* pStateDev = getSpecificDevice<MM::State>(deviceLabel);
-
+   MMThreadGuard guard(pluginManager_.getModuleLock(pStateDev));
    // Remember old label so that we can update configurations that use it
    char oldLabel[MM::MaxStrLength];
    int nRet = pStateDev->GetPositionLabel(state, oldLabel);
@@ -3892,9 +3892,10 @@ void CMMCore::defineStateLabel(const char* deviceLabel, long state, const char* 
  * @return  an array of state labels
  * @param deviceLabel       the device label
  */
-vector<string> CMMCore::getStateLabels(const char* deviceLabel) const throw (CMMError)
+vector<string> CMMCore::getStateLabels(const char* deviceLabel) throw (CMMError)
 {
    MM::State* pStateDev = getSpecificDevice<MM::State>(deviceLabel);
+   MMThreadGuard guard(pluginManager_.getModuleLock(pStateDev));
    vector<string> stateLabels;
    char label[MM::MaxStrLength];
    for (unsigned i=0; i<pStateDev->GetNumberOfPositions(); i++)
@@ -3914,9 +3915,10 @@ vector<string> CMMCore::getStateLabels(const char* deviceLabel) const throw (CMM
  * @param deviceLabel     the device label
  * @param stateLabel      the label for which the state is being queried
  */
-long CMMCore::getStateFromLabel(const char* deviceLabel, const char* stateLabel) const throw (CMMError)
+long CMMCore::getStateFromLabel(const char* deviceLabel, const char* stateLabel) throw (CMMError)
 {
    MM::State* pStateDev = getSpecificDevice<MM::State>(deviceLabel);
+   MMThreadGuard guard(pluginManager_.getModuleLock(pStateDev));
    long state;
    int nRet = pStateDev->GetLabelPosition(stateLabel, state);
    if (nRet != DEVICE_OK)
@@ -4740,6 +4742,7 @@ PropertyBlock CMMCore::getStateLabelData(const char* deviceLabel, const char* st
    }
 
    MM::State* pStateDev = static_cast<MM::State*>(pDevice);
+   MMThreadGuard guard(pluginManager_.getModuleLock(pStateDev));
 
    // check if corresponding label exists
    long pos;
@@ -4789,6 +4792,7 @@ PropertyBlock CMMCore::getData(const char* deviceLabel)
    }
 
    MM::State* pStateDev = static_cast<MM::State*>(pDevice);
+   MMThreadGuard guard(pluginManager_.getModuleLock(pStateDev));
 
    // obtain the current state label
    char pos[MM::MaxStrLength];

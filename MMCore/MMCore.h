@@ -353,10 +353,10 @@ public:
    long getState(const char* deviceLabel) throw (CMMError);
    long getNumberOfStates(const char* deviceLabel);
    void setStateLabel(const char* deviceLabel, const char* stateLabel) throw (CMMError);
-   std::string getStateLabel(const char* deviceLabel) const throw (CMMError);
+   std::string getStateLabel(const char* deviceLabel) throw (CMMError);
    void defineStateLabel(const char* deviceLabel, long state, const char* stateLabel) throw (CMMError);
-   std::vector<std::string> getStateLabels(const char* deviceLabel) const throw (CMMError);
-   long getStateFromLabel(const char* deviceLabel, const char* stateLabel) const throw (CMMError);
+   std::vector<std::string> getStateLabels(const char* deviceLabel) throw (CMMError);
+   long getStateFromLabel(const char* deviceLabel, const char* stateLabel) throw (CMMError);
    PropertyBlock getStateLabelData(const char* deviceLabel, const char* stateLabel);
    PropertyBlock getData(const char* deviceLabel);
    //@ }
