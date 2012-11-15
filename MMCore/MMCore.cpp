@@ -5004,6 +5004,7 @@ unsigned CMMCore::getSLMBytesPerPixel(const char* deviceLabel)
 void CMMCore::pointGalvoAndFire(const char* deviceLabel, double x, double y, double pulseTime_us) throw (CMMError)
 {
    MM::Galvo* pGalvo = getSpecificDevice<MM::Galvo>(deviceLabel);
+   MMThreadGuard guard(pluginManager_.getModuleLock(pGalvo));
 
    int ret = pGalvo->PointAndFire(x,y,pulseTime_us);
 
