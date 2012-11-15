@@ -447,10 +447,10 @@ public:
    void setSLMPixelsTo(const char* deviceLabel, unsigned char intensity) throw (CMMError);
    void setSLMPixelsTo(const char* deviceLabel, unsigned char red, unsigned char green, unsigned char blue) throw (CMMError);
    void displaySLMImage(const char* deviceLabel) throw (CMMError);
-   unsigned getSLMWidth(const char* deviceLabel) const;
-   unsigned getSLMHeight(const char* deviceLabel) const;
-   unsigned getSLMNumberOfComponents(const char* deviceLabel) const;
-   unsigned getSLMBytesPerPixel(const char* deviceLabel) const;
+   unsigned getSLMWidth(const char* deviceLabel);
+   unsigned getSLMHeight(const char* deviceLabel);
+   unsigned getSLMNumberOfComponents(const char* deviceLabel);
+   unsigned getSLMBytesPerPixel(const char* deviceLabel);
    //@ }
 
    /** @name Galvo control

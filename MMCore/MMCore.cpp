@@ -2140,7 +2140,7 @@ long CMMCore::getImageBufferSize() const
 }
 
 /**
- * Starts straming camera sequence acquisition.
+ * Starts streaming camera sequence acquisition.
  * This command does not block the calling thread for the duration of the acquisition.
  *
  * @param numImages        Number of images requested from the camera
@@ -2192,7 +2192,7 @@ void CMMCore::startSequenceAcquisition(long numImages, double intervalMs, bool s
 }
 
 /**
- * Starts straming camera sequence acquisition for a specified camera.
+ * Starts streaming camera sequence acquisition for a specified camera.
  * This command does not block the calling thread for the uration of the acquisition.
  * The difference between this method and the one with the same name but operating on the "default"
  * camera is that it does not automatically intitialize the circular buffer.
@@ -2305,7 +2305,7 @@ void CMMCore::startContinuousSequenceAcquisition(double intervalMs) throw (CMMEr
 }
 
 /**
- * Stops straming camera sequence acquisition.
+ * Stops streaming camera sequence acquisition.
  */
 void CMMCore::stopSequenceAcquisition() throw (CMMError)
 {
@@ -4893,6 +4893,7 @@ vector<char> CMMCore::readFromSerialPort(const char* name) throw (CMMError)
 void CMMCore::setSLMImage(const char* deviceLabel, unsigned char* pixels) throw (CMMError)
 {
    MM::SLM* pSLM = getSpecificDevice<MM::SLM>(deviceLabel);
+   MMThreadGuard guard(pluginManager_.getModuleLock(pSLM));
 
    int ret = pSLM->SetImage(pixels);
    if (ret != DEVICE_OK)
@@ -4908,6 +4909,7 @@ void CMMCore::setSLMImage(const char* deviceLabel, unsigned char* pixels) throw 
 void CMMCore::setSLMImage(const char* deviceLabel, imgRGB32 pixels) throw (CMMError)
 {
    MM::SLM* pSLM = getSpecificDevice<MM::SLM>(deviceLabel);
+   MMThreadGuard guard(pluginManager_.getModuleLock(pSLM));
 
    int ret = pSLM->SetImage((unsigned int *) pixels);
    if (ret != DEVICE_OK)
@@ -4923,6 +4925,7 @@ void CMMCore::setSLMImage(const char* deviceLabel, imgRGB32 pixels) throw (CMMEr
 void CMMCore::setSLMPixelsTo(const char* deviceLabel, unsigned char intensity) throw (CMMError)
 {
    MM::SLM* pSLM = getSpecificDevice<MM::SLM>(deviceLabel);
+   MMThreadGuard guard(pluginManager_.getModuleLock(pSLM));
 
    int ret = pSLM->SetPixelsTo(intensity);
    if (ret != DEVICE_OK)
@@ -4938,6 +4941,7 @@ void CMMCore::setSLMPixelsTo(const char* deviceLabel, unsigned char intensity) t
 void CMMCore::setSLMPixelsTo(const char* deviceLabel, unsigned char red, unsigned char green, unsigned char blue) throw (CMMError)
 {
    MM::SLM* pSLM = getSpecificDevice<MM::SLM>(deviceLabel);
+   MMThreadGuard guard(pluginManager_.getModuleLock(pSLM));
 
    int ret = pSLM->SetPixelsTo(red, green, blue);
    if (ret != DEVICE_OK)
@@ -4953,6 +4957,7 @@ void CMMCore::setSLMPixelsTo(const char* deviceLabel, unsigned char red, unsigne
 void CMMCore::displaySLMImage(const char* deviceLabel) throw (CMMError)
 {
    MM::SLM* pSLM = getSpecificDevice<MM::SLM>(deviceLabel);
+   MMThreadGuard guard(pluginManager_.getModuleLock(pSLM));
 
    int ret = pSLM->DisplayImage();
    if (ret != DEVICE_OK)
@@ -4962,31 +4967,31 @@ void CMMCore::displaySLMImage(const char* deviceLabel) throw (CMMError)
    }
 }
 
-unsigned CMMCore::getSLMWidth(const char* deviceLabel) const
+unsigned CMMCore::getSLMWidth(const char* deviceLabel)
 {
    MM::SLM* pSLM = getSpecificDevice<MM::SLM>(deviceLabel);
-
+   MMThreadGuard guard(pluginManager_.getModuleLock(pSLM));
    return pSLM->GetWidth();
 }
 
-unsigned CMMCore::getSLMHeight(const char* deviceLabel) const
+unsigned CMMCore::getSLMHeight(const char* deviceLabel)
 {
    MM::SLM* pSLM = getSpecificDevice<MM::SLM>(deviceLabel);
-
+   MMThreadGuard guard(pluginManager_.getModuleLock(pSLM));
    return pSLM->GetHeight();
 }
 
-unsigned CMMCore::getSLMNumberOfComponents(const char* deviceLabel) const
+unsigned CMMCore::getSLMNumberOfComponents(const char* deviceLabel)
 {
    MM::SLM* pSLM = getSpecificDevice<MM::SLM>(deviceLabel);
-
+   MMThreadGuard guard(pluginManager_.getModuleLock(pSLM));
    return pSLM->GetNumberOfComponents();
 }
 
-unsigned CMMCore::getSLMBytesPerPixel(const char* deviceLabel) const
+unsigned CMMCore::getSLMBytesPerPixel(const char* deviceLabel)
 {
    MM::SLM* pSLM = getSpecificDevice<MM::SLM>(deviceLabel);
-
+   MMThreadGuard guard(pluginManager_.getModuleLock(pSLM));
    return pSLM->GetBytesPerPixel();
 }
 
@@ -5012,6 +5017,7 @@ void CMMCore::pointGalvoAndFire(const char* deviceLabel, double x, double y, dou
 void CMMCore::setGalvoSpotInterval(const char* deviceLabel, double pulseTime_us) throw (CMMError)
 {
    MM::Galvo* pGalvo = getSpecificDevice<MM::Galvo>(deviceLabel);
+   MMThreadGuard guard(pluginManager_.getModuleLock(pGalvo));
 
    int ret = pGalvo->SetSpotInterval(pulseTime_us);
 
@@ -5029,7 +5035,8 @@ void CMMCore::setGalvoSpotInterval(const char* deviceLabel, double pulseTime_us)
 void CMMCore::setGalvoPosition(const char* deviceLabel, double x, double y) throw (CMMError)
 {
    MM::Galvo* pGalvo = getSpecificDevice<MM::Galvo>(deviceLabel);
-
+   MMThreadGuard guard(pluginManager_.getModuleLock(pGalvo));
+   
    int ret = pGalvo->SetPosition(x, y);
 
    if (ret != DEVICE_OK)
@@ -5045,7 +5052,8 @@ void CMMCore::setGalvoPosition(const char* deviceLabel, double x, double y) thro
 void CMMCore::getGalvoPosition(const char* deviceLabel, double &x, double &y) throw (CMMError)
 {
    MM::Galvo* pGalvo = getSpecificDevice<MM::Galvo>(deviceLabel);
-
+   MMThreadGuard guard(pluginManager_.getModuleLock(pGalvo));
+   
    int ret = pGalvo->GetPosition(x, y);
 
    if (ret != DEVICE_OK)
@@ -5061,6 +5069,7 @@ void CMMCore::getGalvoPosition(const char* deviceLabel, double &x, double &y) th
 void CMMCore::setGalvoIlluminationState(const char* deviceLabel, bool on) throw (CMMError)
 {
    MM::Galvo* pGalvo = getSpecificDevice<MM::Galvo>(deviceLabel);
+   MMThreadGuard guard(pluginManager_.getModuleLock(pGalvo));
 
    int ret = pGalvo->SetIlluminationState(on);
 
@@ -5079,6 +5088,7 @@ void CMMCore::setGalvoIlluminationState(const char* deviceLabel, bool on) throw 
 double CMMCore::getGalvoXRange(const char* deviceLabel) throw (CMMError)
 {
    MM::Galvo* pGalvo = getSpecificDevice<MM::Galvo>(deviceLabel);
+   MMThreadGuard guard(pluginManager_.getModuleLock(pGalvo));
    return pGalvo->GetXRange();
 }
 
@@ -5088,6 +5098,7 @@ double CMMCore::getGalvoXRange(const char* deviceLabel) throw (CMMError)
 double CMMCore::getGalvoYRange(const char* deviceLabel) throw (CMMError)
 {
    MM::Galvo* pGalvo = getSpecificDevice<MM::Galvo>(deviceLabel);
+   MMThreadGuard guard(pluginManager_.getModuleLock(pGalvo));
    return pGalvo->GetYRange();
 }
 
@@ -5098,6 +5109,8 @@ double CMMCore::getGalvoYRange(const char* deviceLabel) throw (CMMError)
 void CMMCore::addGalvoPolygonVertex(const char* deviceLabel, int polygonIndex, double x, double y) throw (CMMError)
 {
    MM::Galvo* pGalvo = getSpecificDevice<MM::Galvo>(deviceLabel);
+   MMThreadGuard guard(pluginManager_.getModuleLock(pGalvo));
+
    int ret =  pGalvo->AddPolygonVertex(polygonIndex, x, y);
    
    if (ret != DEVICE_OK)
@@ -5113,6 +5126,8 @@ void CMMCore::addGalvoPolygonVertex(const char* deviceLabel, int polygonIndex, d
 void CMMCore::deleteGalvoPolygons(const char* deviceLabel) throw (CMMError)
 {
    MM::Galvo* pGalvo = getSpecificDevice<MM::Galvo>(deviceLabel);
+   MMThreadGuard guard(pluginManager_.getModuleLock(pGalvo));
+
    int ret = pGalvo->DeletePolygons();
    
    if (ret != DEVICE_OK)
@@ -5129,6 +5144,8 @@ void CMMCore::deleteGalvoPolygons(const char* deviceLabel) throw (CMMError)
 void CMMCore::loadGalvoPolygons(const char* deviceLabel) throw (CMMError)
 {
    MM::Galvo* pGalvo = getSpecificDevice<MM::Galvo>(deviceLabel);
+   MMThreadGuard guard(pluginManager_.getModuleLock(pGalvo));
+
    int ret =  pGalvo->LoadPolygons();
    
    if (ret != DEVICE_OK)
@@ -5144,6 +5161,8 @@ void CMMCore::loadGalvoPolygons(const char* deviceLabel) throw (CMMError)
 void CMMCore::setGalvoPolygonRepetitions(const char* deviceLabel, int repetitions) throw (CMMError)
 {
    MM::Galvo* pGalvo = getSpecificDevice<MM::Galvo>(deviceLabel);
+   MMThreadGuard guard(pluginManager_.getModuleLock(pGalvo));
+
    int ret =  pGalvo->SetPolygonRepetitions(repetitions);
    
    if (ret != DEVICE_OK)
@@ -5160,6 +5179,8 @@ void CMMCore::setGalvoPolygonRepetitions(const char* deviceLabel, int repetition
 void CMMCore::runGalvoPolygons(const char* deviceLabel) throw (CMMError)
 {
    MM::Galvo* pGalvo = getSpecificDevice<MM::Galvo>(deviceLabel);
+   MMThreadGuard guard(pluginManager_.getModuleLock(pGalvo));
+
    int ret =  pGalvo->RunPolygons();
    
    if (ret != DEVICE_OK)
@@ -5175,6 +5196,8 @@ void CMMCore::runGalvoPolygons(const char* deviceLabel) throw (CMMError)
 void CMMCore::runGalvoSequence(const char* deviceLabel) throw (CMMError)
 {
    MM::Galvo* pGalvo = getSpecificDevice<MM::Galvo>(deviceLabel);
+   MMThreadGuard guard(pluginManager_.getModuleLock(pGalvo));
+
    int ret =  pGalvo->RunSequence();
    
    if (ret != DEVICE_OK)
@@ -5190,6 +5213,8 @@ void CMMCore::runGalvoSequence(const char* deviceLabel) throw (CMMError)
 string CMMCore::getGalvoChannel(const char* deviceLabel) throw (CMMError)
 {
    MM::Galvo* pGalvo = getSpecificDevice<MM::Galvo>(deviceLabel);
+   MMThreadGuard guard(pluginManager_.getModuleLock(pGalvo));
+
    char channelName[MM::MaxStrLength];
    int ret = pGalvo->GetChannel(channelName);
    
