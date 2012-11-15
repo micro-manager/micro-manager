@@ -2127,16 +2127,20 @@ void* CMMCore::getImage(unsigned channelNr) throw (CMMError)
 }
 
 /**
- * Returns the size of the internal image buffer.
- *
- * @return buffer size
- */
-long CMMCore::getImageBufferSize() const
+* Returns the size of the internal image buffer.
+*
+* @return buffer size
+*/
+long CMMCore::getImageBufferSize()
 {
-   if (camera_)
-      return camera_->GetImageBufferSize();
-   else
-      return 0;
+	if (camera_) {
+		MMThreadGuard guard(pluginManager_.getModuleLock(camera_));
+		return camera_->GetImageBufferSize();
+	}
+	else
+	{
+		return 0;
+	}
 }
 
 /**
@@ -3542,11 +3546,12 @@ MM::PropertyType CMMCore::getPropertyType(const char* label, const char* propNam
  * Horizontal dimension of the image buffer in pixels.
  * @return   the width in pixels (an integer)
  */
-unsigned CMMCore::getImageWidth() const
+unsigned CMMCore::getImageWidth()
 {
    if (camera_ == 0)
       return 0;
 
+   MMThreadGuard guard(pluginManager_.getModuleLock(camera_));
    return camera_->GetImageWidth();
 }
 
@@ -3554,11 +3559,12 @@ unsigned CMMCore::getImageWidth() const
  * Vertical dimentsion of the image buffer in pixels.
  * @return   the height in pixels (an integer)
  */
-unsigned CMMCore::getImageHeight() const
+unsigned CMMCore::getImageHeight()
 {
    if (camera_ == 0)
       return 0;
 
+   MMThreadGuard guard(pluginManager_.getModuleLock(camera_));
    return camera_->GetImageHeight();
 }
 
@@ -3567,11 +3573,12 @@ unsigned CMMCore::getImageHeight() const
  * capabilities of the particular camera A/D converter.
  * @return the number of bytes
  */
-unsigned CMMCore::getBytesPerPixel() const
+unsigned CMMCore::getBytesPerPixel()
 {
    if (camera_ == 0)
       return 0;
 
+   MMThreadGuard guard(pluginManager_.getModuleLock(camera_));
    return camera_->GetImageBytesPerPixel();
 }
 
@@ -3582,10 +3589,12 @@ unsigned CMMCore::getBytesPerPixel() const
  *
  * @return the number of bits
  */
-unsigned CMMCore::getImageBitDepth() const
+unsigned CMMCore::getImageBitDepth()
 {
    if (camera_)
       return camera_->GetBitDepth();
+
+   MMThreadGuard guard(pluginManager_.getModuleLock(camera_));
    return 0;
 }
 
@@ -3593,29 +3602,32 @@ unsigned CMMCore::getImageBitDepth() const
  * Returns the number of components the default camera is returning.
  * For example color camera will return 4 components (RGBA) on each snap.
  */
-unsigned CMMCore::getNumberOfComponents() const
+unsigned CMMCore::getNumberOfComponents()
 {
    if (camera_)
       return camera_->GetNumberOfComponents();
 
+   MMThreadGuard guard(pluginManager_.getModuleLock(camera_));
    return 0;
 }
 
 /**
  * Returns the number of simultaneous channels the default camera is returning.
  */
-unsigned CMMCore::getNumberOfCameraChannels() const
+unsigned CMMCore::getNumberOfCameraChannels()
 {
    if (camera_)
       return camera_->GetNumberOfChannels();
 
+   MMThreadGuard guard(pluginManager_.getModuleLock(camera_));
    return 0;
 }
 
-string CMMCore::getCameraChannelName(unsigned int channelNr) const
+string CMMCore::getCameraChannelName(unsigned int channelNr)
 {
    if (camera_)
    {
+      MMThreadGuard guard(pluginManager_.getModuleLock(camera_));
       char name[MM::MaxStrLength];
       camera_->GetChannelName(channelNr, name);
       return name;
