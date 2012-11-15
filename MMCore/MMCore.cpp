@@ -2959,7 +2959,7 @@ vector<string> CMMCore::getLoadedDevicesOfType(MM::DeviceType devType) const
  * @param label     the device label
  * @param propName  the property name
  */
-std::vector<std::string> CMMCore::getAllowedPropertyValues(const char* label, const char* propName) const throw (CMMError)
+std::vector<std::string> CMMCore::getAllowedPropertyValues(const char* label, const char* propName) throw (CMMError)
 {
    // in case we requested Core device
    std::vector<std::string> valueList;
@@ -2971,6 +2971,8 @@ std::vector<std::string> CMMCore::getAllowedPropertyValues(const char* label, co
    {
       try {
          MM::Device* pDevice = pluginManager_.GetDevice(label);
+		 MMThreadGuard guard(pluginManager_.getModuleLock(pDevice));
+
          for (unsigned i=0; i<pDevice->GetNumberOfPropertyValues(propName); i++)
          {
             char value[MM::MaxStrLength];
@@ -3167,7 +3169,7 @@ void CMMCore::setProperty(const char* label, const char* propName,
  * Checks if device has a property with a specified name.
  * The exception will be thrown in case device label is not defined.
  */
-bool CMMCore::hasProperty(const char* label, const char* propName) const throw (CMMError)
+bool CMMCore::hasProperty(const char* label, const char* propName) throw (CMMError)
 {
    // in case we requested Core device
    if (strcmp(label, MM::g_Keyword_CoreDevice) == 0)
@@ -3183,6 +3185,7 @@ bool CMMCore::hasProperty(const char* label, const char* propName) const throw (
       throw;
    }
 
+   MMThreadGuard guard(pluginManager_.getModuleLock(pDevice));
    return pDevice->HasProperty(propName);
 }
 
@@ -3193,7 +3196,7 @@ bool CMMCore::hasProperty(const char* label, const char* propName) const throw (
  * @param label    the device label
  * @param propName the property name
  */
-bool CMMCore::isPropertyReadOnly(const char* label, const char* propName) const throw (CMMError)
+bool CMMCore::isPropertyReadOnly(const char* label, const char* propName) throw (CMMError)
 {
    // in case we requested Core device
    if (strcmp(label, MM::g_Keyword_CoreDevice) == 0)
@@ -3209,6 +3212,7 @@ bool CMMCore::isPropertyReadOnly(const char* label, const char* propName) const 
       throw;
    }
 
+   MMThreadGuard guard(pluginManager_.getModuleLock(pDevice));
    bool bReadOnly;
    int nRet = pDevice->GetPropertyReadOnly(propName, bReadOnly);
    if (nRet != DEVICE_OK)
@@ -3224,7 +3228,7 @@ bool CMMCore::isPropertyReadOnly(const char* label, const char* propName) const 
  * @param label      the device label
  * @param propName   the property name
  */
-bool CMMCore::isPropertyPreInit(const char* label, const char* propName) const throw (CMMError)
+bool CMMCore::isPropertyPreInit(const char* label, const char* propName) throw (CMMError)
 {
    // in case we requested Core device
    if (strcmp(label, MM::g_Keyword_CoreDevice) == 0)
@@ -3240,6 +3244,7 @@ bool CMMCore::isPropertyPreInit(const char* label, const char* propName) const t
       throw;
    }
 
+   MMThreadGuard guard(pluginManager_.getModuleLock(pDevice));
    bool preInit;
    int nRet = pDevice->GetPropertyInitStatus(propName, preInit);
    if (nRet != DEVICE_OK)
@@ -3251,7 +3256,7 @@ bool CMMCore::isPropertyPreInit(const char* label, const char* propName) const t
 /**
  * Returns the property lower limit value, if the property has limits - 0 otherwise.
  */
-double CMMCore::getPropertyLowerLimit(const char* label, const char* propName) const throw (CMMError)
+double CMMCore::getPropertyLowerLimit(const char* label, const char* propName) throw (CMMError)
 {
    if (strcmp(label, MM::g_Keyword_CoreDevice) == 0)
    {
@@ -3266,6 +3271,8 @@ double CMMCore::getPropertyLowerLimit(const char* label, const char* propName) c
          err.setCoreMsg(getCoreErrorText(err.getCode()).c_str());
          throw;
       }
+
+	  MMThreadGuard guard(pluginManager_.getModuleLock(pDevice));
       double limit;
       int ret = pDevice->GetPropertyLowerLimit(propName, limit);
       if (ret != DEVICE_OK)
@@ -3278,7 +3285,7 @@ double CMMCore::getPropertyLowerLimit(const char* label, const char* propName) c
 /**
  * Returns the property upper limit value, if the property has limits - 0 otherwise.
  */
-double CMMCore::getPropertyUpperLimit(const char* label, const char* propName) const throw (CMMError)
+double CMMCore::getPropertyUpperLimit(const char* label, const char* propName) throw (CMMError)
 {
    if (strcmp(label, MM::g_Keyword_CoreDevice) == 0)
    {
@@ -3293,6 +3300,8 @@ double CMMCore::getPropertyUpperLimit(const char* label, const char* propName) c
          err.setCoreMsg(getCoreErrorText(err.getCode()).c_str());
          throw;
       }
+
+      MMThreadGuard guard(pluginManager_.getModuleLock(pDevice));
       double limit;
       int ret = pDevice->GetPropertyUpperLimit(propName, limit);
       if (ret != DEVICE_OK)
@@ -3307,7 +3316,7 @@ double CMMCore::getPropertyUpperLimit(const char* label, const char* propName) c
  * @param label      the device name
  * @param propName   the property label
  */
-bool CMMCore::hasPropertyLimits(const char* label, const char* propName) const throw (CMMError)
+bool CMMCore::hasPropertyLimits(const char* label, const char* propName) throw (CMMError)
 {
    if (strcmp(label, MM::g_Keyword_CoreDevice) == 0)
    {
@@ -3323,6 +3332,7 @@ bool CMMCore::hasPropertyLimits(const char* label, const char* propName) const t
          throw;
       }
 
+      MMThreadGuard guard(pluginManager_.getModuleLock(pDevice));
       bool hasLimits;
       int ret = pDevice->HasPropertyLimits(propName, hasLimits);
       if (ret != DEVICE_OK)
@@ -3337,7 +3347,7 @@ bool CMMCore::hasPropertyLimits(const char* label, const char* propName) const t
  * @param label      the device name
  * @param propName   the property label
  */
-bool CMMCore::isPropertySequenceable(const char* label, const char* propName) const throw (CMMError)
+bool CMMCore::isPropertySequenceable(const char* label, const char* propName) throw (CMMError)
 {
    if (strcmp(label, MM::g_Keyword_CoreDevice) == 0)
    {
@@ -3353,6 +3363,7 @@ bool CMMCore::isPropertySequenceable(const char* label, const char* propName) co
          throw;
       }
 
+      MMThreadGuard guard(pluginManager_.getModuleLock(pDevice));
       bool isSequenceable;
       int ret = pDevice->IsPropertySequenceable(propName, isSequenceable);
       if (ret != DEVICE_OK)
@@ -3368,7 +3379,7 @@ bool CMMCore::isPropertySequenceable(const char* label, const char* propName) co
  * @param label      the device name
  * @param propName   the property label
  */
-long CMMCore::getPropertySequenceMaxLength(const char* label, const char* propName) const throw (CMMError)
+long CMMCore::getPropertySequenceMaxLength(const char* label, const char* propName) throw (CMMError)
 {
    if (strcmp(label, MM::g_Keyword_CoreDevice) == 0)
    {
@@ -3384,6 +3395,7 @@ long CMMCore::getPropertySequenceMaxLength(const char* label, const char* propNa
          throw;
       }
 
+      MMThreadGuard guard(pluginManager_.getModuleLock(pDevice));
       long numEvents;
       int ret = pDevice->GetPropertySequenceMaxLength(propName, numEvents);
       if (ret != DEVICE_OK)
@@ -3400,7 +3412,7 @@ long CMMCore::getPropertySequenceMaxLength(const char* label, const char* propNa
  * @param label      the device name
  * @param propName   the property label
  */
-void CMMCore::startPropertySequence(const char* label, const char* propName) const throw (CMMError)
+void CMMCore::startPropertySequence(const char* label, const char* propName) throw (CMMError)
 {
    if (strcmp(label, MM::g_Keyword_CoreDevice) == 0)
    {
@@ -3416,6 +3428,7 @@ void CMMCore::startPropertySequence(const char* label, const char* propName) con
          throw;
       }
 
+      MMThreadGuard guard(pluginManager_.getModuleLock(pDevice));
       int ret = pDevice->StartPropertySequence(propName);
       if (ret != DEVICE_OK)
          throw CMMError(label, getDeviceErrorText(ret, pDevice).c_str(), MMERR_DEVICE_GENERIC);
@@ -3428,7 +3441,7 @@ void CMMCore::startPropertySequence(const char* label, const char* propName) con
  * @param label     the device label
  * @param propName  the property name
  */
-void CMMCore::stopPropertySequence(const char* label, const char* propName) const throw (CMMError)
+void CMMCore::stopPropertySequence(const char* label, const char* propName) throw (CMMError)
 {
    if (strcmp(label, MM::g_Keyword_CoreDevice) == 0)
    {
@@ -3444,6 +3457,7 @@ void CMMCore::stopPropertySequence(const char* label, const char* propName) cons
          throw;
       }
 
+      MMThreadGuard guard(pluginManager_.getModuleLock(pDevice));
       int ret = pDevice->StopPropertySequence(propName);
       if (ret != DEVICE_OK)
          throw CMMError(label, getDeviceErrorText(ret, pDevice).c_str(), MMERR_DEVICE_GENERIC);
@@ -3457,7 +3471,7 @@ void CMMCore::stopPropertySequence(const char* label, const char* propName) cons
  * @param propName        the property label
  * @param eventSequence   the sequence of events/states that the device will execute in reponse to external triggers
  */
-void CMMCore::loadPropertySequence(const char* label, const char* propName, std::vector<std::string> eventSequence) const throw (CMMError)
+void CMMCore::loadPropertySequence(const char* label, const char* propName, std::vector<std::string> eventSequence) throw (CMMError)
 {
    if (strcmp(label, MM::g_Keyword_CoreDevice) == 0)
    {
@@ -3472,7 +3486,8 @@ void CMMCore::loadPropertySequence(const char* label, const char* propName, std:
          err.setCoreMsg(getCoreErrorText(err.getCode()).c_str());
          throw;
       }
-
+   
+	  MMThreadGuard guard(pluginManager_.getModuleLock(pDevice));
       int ret = pDevice->ClearPropertySequence(propName);
       if (ret != DEVICE_OK)
          throw CMMError(label, getDeviceErrorText(ret, pDevice).c_str(), MMERR_DEVICE_GENERIC);
@@ -3495,7 +3510,7 @@ void CMMCore::loadPropertySequence(const char* label, const char* propName, std:
 /**
  * Returns the intrinsic property type.
  */
-MM::PropertyType CMMCore::getPropertyType(const char* label, const char* propName) const throw (CMMError)
+MM::PropertyType CMMCore::getPropertyType(const char* label, const char* propName) throw (CMMError)
 {
    if (strcmp(label, MM::g_Keyword_CoreDevice) == 0)
    {
@@ -3511,6 +3526,8 @@ MM::PropertyType CMMCore::getPropertyType(const char* label, const char* propNam
          err.setCoreMsg(getCoreErrorText(err.getCode()).c_str());
          throw;
       }
+
+      MMThreadGuard guard(pluginManager_.getModuleLock(pDevice));
       MM::PropertyType pt;
       int ret = pDevice->GetPropertyType(propName, pt);
       if (ret != DEVICE_OK)
