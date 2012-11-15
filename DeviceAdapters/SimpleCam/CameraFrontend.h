@@ -40,10 +40,11 @@
 #define ERR_CAM_NOT_CONNECTED     102
 #define ERR_CAM_CONNECT_FAIL      103
 #define ERR_CAM_SHUTTERSPEED_FAIL 104
-#define ERR_CAM_SHUTTER           105
-#define ERR_CAM_NO_IMAGE          106
-#define ERR_CAM_LOAD              107
-#define ERR_CAM_CONVERSION        108
+#define ERR_CAM_ISO_FAIL          105
+#define ERR_CAM_SHUTTER           106
+#define ERR_CAM_NO_IMAGE          107
+#define ERR_CAM_LOAD              108
+#define ERR_CAM_CONVERSION        109
 
 #define ERR_CAM_UNKNOWN           199
 
@@ -54,6 +55,7 @@
 #define g_Keyword_TrackExposure  "ShutterSpeedTracksExposure"
 #define g_Keyword_KeepOriginals  "KeepOriginals"
 #define g_Keyword_BitDepth       "BitDepth"
+#define g_Keyword_ISO            "ISO"
 
 //////////////////////////////////////////////////////////////////////////////
 // CCameraFrontend class
@@ -102,11 +104,13 @@ public:
    int OnPixelType(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnKeepOriginals(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnBitDepth(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnISO(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnCameraName(MM::PropertyBase* pProp, MM::ActionType eAct);
 
 private:
    int SetAllowedBinning();
    int SetAllowedCameraNames(std::string& defaultCameraName);
+   int SetAllowedISOs();
    int SetAllowedShutterSpeeds();
    int SetShutterSpeed(double exposure_ms);
    int SetCameraShutterSpeed();

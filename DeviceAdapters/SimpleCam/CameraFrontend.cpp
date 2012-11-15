@@ -109,6 +109,7 @@ const char* g_PixelType_Color = "Color";
 // constants for camera and shutter speed types
 const char* g_CameraName_NotConnected = "Camera not connected";
 const char* g_ShutterSpeed_NotSet = "Shutter speed not set";
+const char* g_ISO_NotSet = "ISO not set";
 
 // TODO: linux entry code
 
@@ -213,9 +214,10 @@ CCameraFrontend::CCameraFrontend() :
    SetErrorText(ERR_CAM_NOT_CONNECTED, "Camera is not connected");
    SetErrorText(ERR_CAM_CONNECT_FAIL, "Connecting to camera failed");
    SetErrorText(ERR_CAM_SHUTTERSPEED_FAIL, "Setting shutter speed failed");
+   SetErrorText(ERR_CAM_ISO_FAIL, "Setting ISO failed");
    SetErrorText(ERR_CAM_SHUTTER, "Error releasing shutter e.g. AF failure");
    SetErrorText(ERR_CAM_NO_IMAGE, "No image found. Image saved on CF card?");
-   SetErrorText(ERR_CAM_CONVERSION, "Image load failure");
+   SetErrorText(ERR_CAM_LOAD, "Image load failure");
    SetErrorText(ERR_CAM_CONVERSION, "Image conversion failure");
    SetErrorText(ERR_CAM_UNKNOWN, "Unexpected return status");
    // Initialize FreeImage
@@ -363,6 +365,13 @@ int CCameraFrontend::Initialize()
    nRet = CreateProperty(g_Keyword_ShutterSpeed, g_ShutterSpeed_NotSet, MM::String, false);
    assert(nRet == DEVICE_OK);
    nRet = AddAllowedValue(g_Keyword_ShutterSpeed, g_ShutterSpeed_NotSet);
+   assert(nRet == DEVICE_OK);
+
+   // ISO
+   pAct = new CPropertyAction (this, &CCameraFrontend::OnISO);
+   nRet = CreateProperty(g_Keyword_ISO, g_ISO_NotSet, MM::String, false, pAct);
+   assert(nRet == DEVICE_OK);
+   nRet = AddAllowedValue(g_Keyword_ISO, g_ISO_NotSet);
    assert(nRet == DEVICE_OK);
 
    // Keep original images
@@ -827,7 +836,7 @@ int CCameraFrontend::OnKeepOriginals(MM::PropertyBase* pProp, MM::ActionType eAc
    return ret; 
 }
 
-/**
+/*
 * Handles "BitDepth" property.
 */
 int CCameraFrontend::OnBitDepth(MM::PropertyBase* pProp, MM::ActionType eAct)
@@ -872,6 +881,98 @@ int CCameraFrontend::OnBitDepth(MM::PropertyBase* pProp, MM::ActionType eAct)
 }
 
 /*
+* Handles "ISO" property.
+*/
+int CCameraFrontend::OnISO(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   int ret = DEVICE_ERR;
+   /* Log debug info */
+   ostringstream msg; 
+
+   switch(eAct)
+   {
+   case MM::AfterSet:
+      {
+         // The user just set the new value for the property. 
+         // Get the value from the property and apply this value to the hardware. 
+         
+         string iso;
+         bool rc;
+
+         if(IsCapturing())
+            return DEVICE_CAMERA_BUSY_ACQUIRING;
+
+         pProp->Get(iso);
+         UnEscapeValue(iso);
+
+         msg.str("");
+         msg << "OnISO: AfterSet: Setting ISO to " << iso;
+         LogMessage(msg.str(), true);
+
+         if (iso.compare(g_ISO_NotSet) == 0)
+            return DEVICE_OK; // "ISO not set" value. Do nothing.
+       
+         if (!cam_.isConnected())
+         {
+            LogMessage("OnISO: AfterSet: Camera not connected", true);
+            pProp->Set(g_ISO_NotSet);
+            ret = ERR_CAM_NOT_CONNECTED;
+         }
+         else
+         {
+            rc = cam_.setISO(iso);
+            if (rc)
+            {
+               msg.str("");
+               msg << "OnISO: AfterSet: camera ISO set to " << iso;
+               LogMessage(msg.str(), true);
+               ret = DEVICE_OK; 
+            }
+            else
+            {
+               LogMessage("OnISO: AfterSet: setting ISO failed", true);
+               pProp->Set(g_ISO_NotSet);
+               ret = ERR_CAM_ISO_FAIL; 
+            }
+         }
+      }
+      break;
+   case MM::BeforeGet:
+      {
+         // The user is requesting the current value for the property.
+         // Get the value from the hardware and set the value for the property.
+
+         string iso;
+         bool rc;
+
+         if (!cam_.isConnected())
+         {
+            // it's ok not to have a device connected, we'll just report that the iso is not set.
+            LogMessage("OnISO: BeforeGet: Camera not connected", true);
+            iso = g_ISO_NotSet;
+         }
+         else
+         {
+            rc = cam_.getISO(iso);
+            msg.str("");
+            msg << "OnISO: BeforeGet: camera ISO is " << iso;
+            LogMessage(msg.str(), true);
+            if (!rc)
+            {
+               iso = g_ISO_NotSet;
+               LogMessage("OnISO: BeforeGet: camera does not support ISO");
+            }
+         }
+
+         pProp->Set(iso.c_str());
+         ret = DEVICE_OK;
+      }
+      break;
+   }
+   return ret; 
+}
+
+/*
 * Handles "CameraName" property.
 */
 int CCameraFrontend::OnCameraName(MM::PropertyBase* pProp, MM::ActionType eAct)
@@ -890,8 +991,10 @@ int CCameraFrontend::OnCameraName(MM::PropertyBase* pProp, MM::ActionType eAct)
 
          /* Disconnect current camera */
          cam_.disconnectCamera();
-         /* Reset list of shutter speeds */
+         /* Reset list of shutter speeds to "Shutter speed not set" */
          SetAllowedShutterSpeeds();
+         /* Reset list of ISOs to "ISO not set" */
+         SetAllowedISOs();
 
          if (cameraName.compare(g_CameraName_NotConnected) == 0)
          {
@@ -907,6 +1010,8 @@ int CCameraFrontend::OnCameraName(MM::PropertyBase* pProp, MM::ActionType eAct)
                ret = SnapImage();
                /* update shutter speeds */
                SetAllowedShutterSpeeds();
+               /* update ISOs */
+               SetAllowedISOs();
                /* check whether camera supports Live View */
                DetectCameraLiveView();
             }
@@ -979,6 +1084,52 @@ int CCameraFrontend::SetAllowedCameraNames(string& defaultCameraName)
    }
 
    return DEVICE_OK; 
+}
+
+/* Obtain list of available ISOs */
+int CCameraFrontend::SetAllowedISOs()
+{
+   vector<string> isoList;
+   LogMessage("Setting Allowed ISO settings", true);
+   if (cam_.isConnected() && cam_.listISOs(isoList))
+   {
+      EscapeValues(isoList);
+      ClearAllowedValues(g_Keyword_ISO);
+
+      /* Add no-op setting ("ISO not set") */
+      isoList.push_back(g_ISO_NotSet);
+
+      int ret = SetAllowedValues(g_Keyword_ISO, isoList);
+      assert(ret == DEVICE_OK);
+
+      LogMessage("Reloaded ISO", true);
+   }
+   else
+   {
+      ClearAllowedValues(g_Keyword_ISO);
+      isoList.push_back(g_ISO_NotSet);
+      int ret = SetAllowedValues(g_Keyword_ISO, isoList);
+      assert(ret == DEVICE_OK);
+      LogMessage("Could not get list of ISOs", true);
+   }
+
+   // Log list of ISOs
+   ostringstream msg;
+   for (int i = 0; i < GetNumberOfPropertyValues(g_Keyword_ISO); i++)
+   {
+      char value[MM::MaxStrLength];
+      if (GetPropertyValueAt(g_Keyword_ISO, i, value))
+      {
+         msg.str("");
+         msg << "ISO " << i << ": '" << value << "'";
+         LogMessage(msg.str(), true);
+      }
+   }
+
+   if (initialized_)
+      OnPropertiesChanged();
+
+   return DEVICE_OK;
 }
 
 /* Obtain list of available shutter speeds */

@@ -37,11 +37,13 @@ main ()
    bool rc;
    string cameraName;
    cameraName = "Canon PowerShot A80 (PTP)";
+// cameraName = "Canon Digital IXUS 120 IS";
+// cameraName = "Canon PowerShot G9 (PTP mode)";
+// cameraName = "Canon EOS 5D Mark II";
 // cameraName = "Nikon DSC D40x (PTP mode)";
 
 // gp_log_add_func(GP_LOG_DEBUG, errordumper, NULL);
-   gp_log_add_func(GP_LOG_ERROR, errordumper, NULL);
-
+// gp_log_add_func(GP_LOG_ERROR, errordumper, NULL);
 
    vector<string> camList;
    rc = scam.listCameras(camList);  
@@ -55,6 +57,8 @@ main ()
    else
       cout << "not connected" << endl;
 
+   /* test shutter speed */
+
    string shutterSpeed;
    if (scam.getShutterSpeed(shutterSpeed))
       cout << "Current shutter speed " << shutterSpeed << endl;
@@ -66,7 +70,9 @@ main ()
       cout << i << " '" << shutterSpeedList[i] << "'" << endl;
 
 // char *newShutterSpeed = shutterSpeedList[0];
-   char *newShutterSpeed = "1/20";
+// char *newShutterSpeed = "1/20";
+   char *newShutterSpeed = "1/30";
+// char *newShutterSpeed = "1/80";
 
    rc = scam.setShutterSpeed(newShutterSpeed);  
    if (rc) 
@@ -76,6 +82,35 @@ main ()
 
    if (scam.getShutterSpeed(shutterSpeed))
       cout << "Current shutter speed " << shutterSpeed << endl;
+
+   /* test ISO */
+
+   string iso;
+   if (scam.getISO(iso))
+      cout << "Current ISO " << iso << endl;
+   else
+      cout << "ISO read error" << endl;
+
+   vector<string> isoList;
+   rc = scam.listISOs(isoList);
+
+   for (int i = 0; i < isoList.size(); i++)
+      cout << i << " '" << isoList[i] << "'" << endl;
+
+   cout << isoList.size() << endl;
+
+// char newISO[] = "400";
+   char newISO[] = "Auto";
+   rc = scam.setISO(newISO);
+   if (rc)
+      cout << "ISO " << newISO <<" written" << endl;
+   else
+      cout << "ISO " << newISO <<" failed" << endl;
+ 
+   if (scam.getISO(iso))
+      cout << "Current ISO " << iso << endl;
+
+
 
    string fname;
    fname = scam.captureImage();

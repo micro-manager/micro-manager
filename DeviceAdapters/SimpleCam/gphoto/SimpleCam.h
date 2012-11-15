@@ -51,6 +51,9 @@ public:
    bool listShutterSpeeds(std::vector<std::string>& shutterSpeeds);  /* if connected to a camera, returns list of available shutter speeds */
    bool getShutterSpeed(std::string& currentShutterSpeed);           /* if connected to a camera, returns current shutter speed */
    bool setShutterSpeed(std::string newShutterSpeed);                /* if connected to a camera, sets new shutter speed. newShutterSpeed is one of the shutter speeds returned by listShutterSpeeds */
+   bool listISOs(std::vector<std::string>& ISOs);                    /* if connected to a camera, returns list of available ISOs */
+   bool getISO(std::string& currentISO);                             /* if connected to a camera, returns current ISO */
+   bool setISO(std::string newISO);                                  /* if connected to a camera, sets new ISO. newISO is one of the shutter speeds returned by listISO */
    std::string captureImage();                                       /* if connected to a camera, takes a picture, and saves it to disk. return value is the filename of the picture */
    fipImage capturePreview();                                        /* if connected to a camera, returns a viewfinder preview. return value is a FreeImagePlus bitmap */
 
@@ -58,6 +61,7 @@ private:
    GPContext *context_;
    Camera   *camera_;
    int getShutterSpeedWidget(CameraWidget* &rootConfig, CameraWidget* &shutterSpeedWidget);
+   int getISOWidget(CameraWidget* &rootConfig, CameraWidget* &isoWidget);
    int getWidget(CameraWidget* &rootConfig, CameraWidget* &configWidget, const char* configName);
    int setLibPaths();   /* Mac OS X: load gphoto2 camera drivers from libgphoto2/libgphoto2, and i/o drivers from libgphoto2/libgphoto2_port, if these directories exist. */
 };

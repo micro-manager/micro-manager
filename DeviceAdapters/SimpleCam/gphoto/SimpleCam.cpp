@@ -412,6 +412,35 @@ int CSimpleCam::getShutterSpeedWidget(CameraWidget* &rootConfig, CameraWidget* &
    return rc;  
 }
 
+/* utility to access ISO setting */
+int CSimpleCam::getISOWidget(CameraWidget* &rootConfig, CameraWidget* &isoConfig)
+{
+   int rc = GP_OK; 
+
+   if (rc >= GP_OK)
+      rc = getWidget(rootConfig, isoConfig, "main/imgsettings/iso");
+
+   // fallback for some Canon EOS cameras
+   if (rc < GP_OK)
+      rc = getWidget(rootConfig, isoConfig, "main/imgsettings/eos-iso");
+
+   // widget type has to be GP_WIDGET_RADIO; check.
+   CameraWidgetType isoType;
+   if (rc >= GP_OK)
+      rc = gp_widget_get_type(isoConfig, &isoType);
+
+   if (rc >= GP_OK)
+   {  
+      if (isoType != GP_WIDGET_RADIO)
+      {
+         gp_log(GP_LOG_ERROR, "SimpleCam", "Only iso radio widget implemented.");
+         rc = GP_ERROR;
+      }
+   }
+      
+   return rc;  
+}
+
 /* utility to access arbitrary setting.
    e.g. configName "main/capturesettings/shutterspeed" accesses shutter speed; 
    configName "/main/imgsettings/iso" accesses iso speed.  */
@@ -556,6 +585,116 @@ bool CSimpleCam::setShutterSpeed(std::string newShutterSpeed)
 
    if (rc >= GP_OK)
       rc = rc = gp_widget_set_value(shutterSpeedConfig, newShutterSpeed.c_str());
+
+   if (rc >= GP_OK)
+      rc = gp_camera_set_config(camera_, rootConfig, context_);
+
+   if (rc >= GP_OK)
+      rc = gp_widget_free(rootConfig);
+
+   return (rc >= GP_OK);
+}
+
+/* if connected to a camera, returns list of available ISOs */
+bool CSimpleCam::listISOs(std::vector<std::string>& ISOs)
+{
+   CameraWidget *rootConfig;
+   CameraWidget *isoConfig;
+
+   ISOs.clear();
+   
+   if (!(context_ && camera_))
+      return false;
+
+   int rc = GP_OK;
+
+   if (rc >= GP_OK)
+      rc = getISOWidget(rootConfig, isoConfig);
+
+   int numberOfChoices = 0;
+
+   if (rc >= GP_OK)
+   {
+      rc = gp_widget_count_choices(isoConfig);
+      numberOfChoices = rc;
+   }
+
+   const char *widgetChoice;
+
+   if (rc >= GP_OK)
+   {
+      for (int i = 0; i < numberOfChoices; i++)
+      {
+         if (rc >= GP_OK)
+            rc = gp_widget_get_choice(isoConfig, i, &widgetChoice);
+
+         if (rc >= GP_OK)
+            ISOs.push_back(widgetChoice);
+      }
+   }
+   
+   unique(ISOs.begin(), ISOs.end());
+
+   return (rc >= GP_OK);
+}
+
+/* if connected to a camera, returns current ISO */
+bool CSimpleCam::getISO(std::string& currentISO)
+{
+   CameraWidget *rootConfig;
+   CameraWidget *isoConfig;
+   char* currentValue;
+
+   currentISO = "";
+
+   if (!(context_ && camera_))
+      return false;
+
+   int rc = GP_OK;
+
+   if (rc >= GP_OK)
+      rc = getISOWidget(rootConfig, isoConfig);
+
+   if (rc >= GP_OK)
+      rc = gp_widget_get_value(isoConfig, &currentValue);
+
+   if (rc >= GP_OK)
+      currentISO = currentValue;
+
+   if (rc >= GP_OK)
+      rc = gp_widget_free(isoConfig);
+
+   return (rc >= GP_OK);
+}
+
+/* if connected to a camera, sets new ISO. 
+   newISO is one of the ISOs returned by listISOs */
+bool CSimpleCam::setISO(std::string newISO)
+{
+   CameraWidget *rootConfig;
+   CameraWidget *isoConfig;
+
+   if (!(context_ && camera_))
+      return false;
+
+   int rc = GP_OK;
+
+   if (rc >= GP_OK)
+      rc = getISOWidget(rootConfig, isoConfig);
+   
+   if (rc >= GP_OK)
+   {
+      int readOnly;
+      rc = gp_widget_get_readonly(isoConfig, &readOnly);
+      if ((rc >= GP_OK) && readOnly)
+      {
+         gp_log(GP_LOG_ERROR, "SimpleCam", "ISO is read-only. Perhaps wrong camera mode?");
+         rc = GP_ERROR;
+      }
+   }
+
+   if (rc >= GP_OK)
+      rc = rc = gp_widget_set_value(isoConfig, newISO.c_str());
 
    if (rc >= GP_OK)
       rc = gp_camera_set_config(camera_, rootConfig, context_);
