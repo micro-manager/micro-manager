@@ -99,11 +99,11 @@ private:
    typedef std::map<std::string, MM::Device*> CDeviceMap;
    typedef std::vector<MM::Device*> DeviceVector;
 
-   // searchPaths_ is static so that the static methods can use them
+   // some fields are static so that the static methods can use them
    static std::vector<std::string> searchPaths_;
    CDeviceMap devices_;
    DeviceVector devVector_;
-   static CModuleLockMap moduleLocks_;
+   static std::map<std::string, MMThreadLock*> moduleLocks_;
    static std::map<std::string, HDEVMODULE> moduleMap_;
 };
 
