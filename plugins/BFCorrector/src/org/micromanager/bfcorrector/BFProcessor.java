@@ -108,12 +108,25 @@ class BFProcessor extends DataProcessor<TaggedImage> {
       
       ij.plugin.ImageCalculator ic = new ij.plugin.ImageCalculator();
       ImagePlus res = ic.run("divide 32-bit", tip, flatField_);
-      // TODO: better scaling
+      // scale with average of the flatfield image
       ImageProcessor resProc = res.getProcessor();
-      if (ijType == ImagePlus.GRAY8)
-         resProc = resProc.convertToByte(true);
-      else if (ijType == ImagePlus.GRAY16)
-         resProc = resProc.convertToShort(true);
+      if (ijType == ImagePlus.GRAY8) {
+         for (int x = 0; x < resProc.getWidth(); x++) {
+            for (int y = 0; y < resProc.getHeight(); y++) {
+               resProc.set(x, y, (int) (resProc.get(x, y) * flatFieldStats_.mean));
+            }
+         }
+         resProc = resProc.convertToByte(false);
+      }
+      else if (ijType == ImagePlus.GRAY16) {
+         for (int x = 0; x < resProc.getWidth(); x++) {
+            for (int y = 0; y < resProc.getHeight(); y++) {
+               resProc.set(x, y, (short) (resProc.get(x, y) * flatFieldStats_.mean));
+            }
+         }
+         resProc = resProc.convertToShort(false);
+      }
+      
       
       JSONObject newTags = nextImage.tags;
       MDUtils.setWidth(newTags, proc.getWidth());
