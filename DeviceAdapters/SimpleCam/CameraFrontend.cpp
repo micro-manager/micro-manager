@@ -909,6 +909,9 @@ int CCameraFrontend::OnISO(MM::PropertyBase* pProp, MM::ActionType eAct)
          msg << "OnISO: AfterSet: Setting ISO to " << iso;
          LogMessage(msg.str(), true);
 
+         // If the ISO property has the value "ISO not set"
+         // we neither read nor write the camera ISO value.
+
          if (iso.compare(g_ISO_NotSet) == 0)
             return DEVICE_OK; // "ISO not set" value. Do nothing.
        
@@ -945,6 +948,13 @@ int CCameraFrontend::OnISO(MM::PropertyBase* pProp, MM::ActionType eAct)
          string iso;
          bool rc;
 
+         // If the ISO property has the value "ISO not set"
+         // we neither read nor write the camera ISO value.
+
+         pProp->Get(iso);
+         if (iso.compare(g_ISO_NotSet) == 0)
+            return DEVICE_OK; // "ISO not set" value. Do nothing.
+       
          if (!cam_.isConnected())
          {
             // it's ok not to have a device connected, we'll just report that the iso is not set.
