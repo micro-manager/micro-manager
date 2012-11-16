@@ -154,7 +154,7 @@ HDEVMODULE CPluginManager::LoadPluginLibrary(const char* shortName)
       hMod = dlopen(name.c_str(), RTLD_NOLOAD | mode);
       if (!hMod)
       {
-         hMod = dlopen(name.c_str(), RTLD_NODELETE | mode);
+         hMod = dlopen(name.c_str(), mode);
       }
    #endif // WIN32
    if (hMod) 
