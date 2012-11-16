@@ -267,6 +267,8 @@
   (FileDialogs/openDir nil "Please choose a directory where new DLLs will appear"
                        dll-directory-type))
 
+(def prefs (.. Preferences userRoot (node "DLLAutoReloader")))
+
 (defn choose-dll-dir
   "Allows user to choose a directory, and activates that directory
    for DLL reloading."
@@ -276,8 +278,6 @@
            (.setText path-button path)
            (activate path)
            (.put prefs "dir" path))))
-
-(def prefs (.. Preferences userRoot (node "DLLAutoReloader")))
 
 (def control-frame (atom nil))
 
