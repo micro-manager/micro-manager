@@ -896,7 +896,7 @@ int CCameraFrontend::OnISO(MM::PropertyBase* pProp, MM::ActionType eAct)
          // The user just set the new value for the property. 
          // Get the value from the property and apply this value to the hardware. 
          
-         string iso;
+         string iso(g_ISO_NotSet);
          bool rc;
 
          if(IsCapturing())
@@ -933,7 +933,7 @@ int CCameraFrontend::OnISO(MM::PropertyBase* pProp, MM::ActionType eAct)
             }
             else
             {
-               LogMessage("OnISO: AfterSet: setting ISO failed", true);
+               LogMessage("OnISO: AfterSet: setting camera ISO failed", true);
                pProp->Set(g_ISO_NotSet);
                ret = ERR_CAM_ISO_FAIL; 
             }
@@ -945,7 +945,7 @@ int CCameraFrontend::OnISO(MM::PropertyBase* pProp, MM::ActionType eAct)
          // The user is requesting the current value for the property.
          // Get the value from the hardware and set the value for the property.
 
-         string iso;
+         string iso(g_ISO_NotSet);
          bool rc;
 
          // If the ISO property has the value "ISO not set"
@@ -964,13 +964,16 @@ int CCameraFrontend::OnISO(MM::PropertyBase* pProp, MM::ActionType eAct)
          else
          {
             rc = cam_.getISO(iso);
-            msg.str("");
-            msg << "OnISO: BeforeGet: camera ISO is " << iso;
-            LogMessage(msg.str(), true);
-            if (!rc)
+            if (rc)
+            {
+               msg.str("");
+               msg << "OnISO: BeforeGet: camera ISO is " << iso;
+               LogMessage(msg.str(), true);
+            }
+            else
             {
                iso = g_ISO_NotSet;
-               LogMessage("OnISO: BeforeGet: camera does not support ISO");
+               LogMessage("OnISO: BeforeGet: getting camera ISO failed");
             }
          }
 
