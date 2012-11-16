@@ -143,6 +143,7 @@
    stop-following function." 
   [date-atom path]
   (reset! date-atom (file-dates path))
+  (println @date-atom)
   (let [keep-following (atom true)]
     (future
       (while @keep-following
@@ -210,15 +211,6 @@
     (when live-mode#
       (.enableLiveMode gui true))))
 
-(defn new-dll-name
-  "Get the name of the new dll file that will be created in the
-   MM application directory."
-  [dll]
-  (let [name (.getName dll)]
-    (if (JavaUtils/isWindows)
-      name
-      (.replace name ".la" ""))))
-
 (defn reload-updated-module
   "Unload a module, copy the new version to the Micro-Manager
    directory (overwriting the old version), and then load the module again."
@@ -231,7 +223,7 @@
       (pausing-live-mode
         (reload-module module
                        (copy dll
-                             (file "." (new-dll-name dll)))))
+                             (file "." (.getName dll)))))
       (notify-user true "Finished reloading " module "!"))))
 
 (defn reload-modules-on-device-adapter-change
@@ -327,6 +319,11 @@
   (stop))
 
 ;; testing
+
+(defn plugin-test
+  "Test the plugin."
+  []
+  (show-plugin (org.micromanager.MMStudioMainFrame/getInstance)))
 
 (defn test-lib
   "Get the first module with loaded devices."
