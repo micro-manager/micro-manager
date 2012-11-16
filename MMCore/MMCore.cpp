@@ -866,6 +866,7 @@ void CMMCore::initializeAllDevices() throw (CMMError)
          logError(devices[i].c_str(), err.getMsg().c_str(), __FILE__, __LINE__);
          throw;
       }
+      MMThreadGuard guard(pluginManager_.getModuleLock(pDevice));
       int nRet = pDevice->Initialize();
       if (nRet != DEVICE_OK)
       {
@@ -876,8 +877,6 @@ void CMMCore::initializeAllDevices() throw (CMMError)
    }
 
    updateCoreProperties();
-
-   pluginManager_.CreateModuleLocks();
 }
 
 void CMMCore::updateCoreProperties() throw (CMMError)

@@ -160,12 +160,14 @@ HDEVMODULE CPluginManager::LoadPluginLibrary(const char* shortName)
    if (hMod) 
    {
       moduleMap_[shortName] = hMod;
+      CreateModuleLock(shortName);
       return hMod;
    }
    GetSystemError (errorText);
    errorText += " ";
    errorText += shortName;
    throw CMMError(errorText.c_str(), MMERR_LoadLibraryFailed); // dll load failed
+
 }
 
 /** 
@@ -910,26 +912,17 @@ void CPluginManager::Restore(const string& data)
 }
 
 /**
- * Creates a separate thread lock for each module.
- * Automatically deletes any previous locks that may exist.
- * Should be called before accessing any devices, i.e. after all devices are loaded.
- */
-void CPluginManager::CreateModuleLocks()
+* Creates a thread lock for a particular module.
+*/
+void CPluginManager::CreateModuleLock(const char* moduleName)
 {
-   DeleteModuleLocks();
-
-   DeviceVector::const_iterator it;
-   for (it = devVector_.begin(); it != devVector_.end(); it++)
-   {
-      char moduleName[MM::MaxStrLength];
-      (*it)->GetModuleName(moduleName);
-      CModuleLockMap::iterator it2 = moduleLocks_.find(moduleName);
-      if (it2 == moduleLocks_.end())
-      {
-         moduleLocks_[moduleName] = new MMThreadLock;
-      }
-   }
+	CModuleLockMap::iterator it2 = moduleLocks_.find(moduleName);
+	if (it2 == moduleLocks_.end())
+	{
+		moduleLocks_[moduleName] = new MMThreadLock;
+	}
 }
+
 
 /**
  * Deletes all module locks.

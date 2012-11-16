@@ -80,7 +80,7 @@ public:
    void Restore(const std::string& data);
 
    // module level thread locking
-   void CreateModuleLocks();
+   static void CreateModuleLock(const char* moduleName);
    void DeleteModuleLocks();
    MMThreadLock* getModuleLock(const MM::Device* pDev);
    bool removeModuleLock(const char* moduleName);
@@ -103,7 +103,7 @@ private:
    static std::vector<std::string> searchPaths_;
    CDeviceMap devices_;
    DeviceVector devVector_;
-   CModuleLockMap moduleLocks_;
+   static CModuleLockMap moduleLocks_;
    static std::map<std::string, HDEVMODULE> moduleMap_;
 };
 
