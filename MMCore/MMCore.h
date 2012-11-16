@@ -156,8 +156,8 @@ public:
    static std::vector<std::string> getDeviceLibraries() throw (CMMError);
    std::vector<std::string> getLoadedDevices() const;
    std::vector<std::string> getLoadedDevicesOfType(MM::DeviceType devType) const;
-   std::vector<std::string> getDevicePropertyNames(const char* label) const throw (CMMError);
-   std::string getProperty(const char* label, const char* propName) const throw (CMMError);
+   std::vector<std::string> getDevicePropertyNames(const char* label) throw (CMMError);
+   std::string getProperty(const char* label, const char* propName) throw (CMMError);
    std::string getPropertyFromCache(const char* label, const char* propName) const throw (CMMError);
    void setProperty(const char* label, const char* propName, const char* propValue) throw (CMMError);
 
@@ -553,13 +553,13 @@ private:
    bool debugLog_;
    mutable Configuration stateCache_; // system state cache
 
-   bool isConfigurationCurrent(const Configuration& config) const;
+   bool isConfigurationCurrent(const Configuration& config);
    void applyConfiguration(const Configuration& config) throw (CMMError);
    int applyProperties(std::vector<PropertySetting>& props, std::string& lastError);
    MM::Device* getDevice(const char* label) throw (CMMError);
    void waitForDevice(MM::Device* pDev) throw (CMMError);
    Configuration getConfigGroupState(const char* group, bool fromCache) throw (CMMError);
-   std::string getDeviceErrorText(int deviceCode, MM::Device* pDevice) const;
+   std::string getDeviceErrorText(int deviceCode, MM::Device* pDevice);
    std::string getDeviceName(MM::Device* pDev);
    void logError(const char* device, const char* msg, const char* file=0, int line=0);
    void updateAllowedChannelGroups();
@@ -578,7 +578,7 @@ private:
    void setConfiguration(const char* configName) throw (CMMError);
    void deleteConfiguration(const char* configName) throw (CMMError);
    std::vector<std::string> getAvailableConfigurations() const;
-   std::string getConfiguration() const;
+   std::string getConfiguration();
    Configuration getConfigurationData(const char* config) const throw (CMMError);
 };
 
