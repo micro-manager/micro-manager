@@ -287,7 +287,7 @@ CMMCore::~CMMCore()
 }
 
 /**
- * Delete an exisisting log file and start a new one.
+ * Delete an existing log file and start a new one.
  */
 void CMMCore::clearLog()
 {
@@ -643,6 +643,7 @@ void CMMCore::assignDefaultRole(MM::Device* pDevice)
    // The roles which are assigned at the load time will make sense for a simple
    // configuration. More complicated configurations will typically override default settings.
    char label[MM::MaxStrLength];
+   MMThreadGuard guard(pluginManager_.getModuleLock(pDevice));
    pDevice->GetLabel(label);
    switch(pDevice->GetType())
    {
@@ -737,6 +738,7 @@ void CMMCore::unloadDevice(const char* label///< the name of the device to unloa
             // no action on unrecognized device
          break;
       }
+      MMThreadGuard guard(pluginManager_.getModuleLock(pDevice));
       pluginManager_.UnloadDevice(pDevice);
         
       
@@ -864,7 +866,6 @@ void CMMCore::initializeAllDevices() throw (CMMError)
          logError(devices[i].c_str(), err.getMsg().c_str(), __FILE__, __LINE__);
          throw;
       }
-
       int nRet = pDevice->Initialize();
       if (nRet != DEVICE_OK)
       {
@@ -911,7 +912,8 @@ void CMMCore::initializeDevice(const char* label ///< the device to initialize
                                ) throw (CMMError)
 {
    MM::Device* pDevice = getDevice(label);
-   
+   MMThreadGuard guard(pluginManager_.getModuleLock(pDevice));
+
    int nRet = pDevice->Initialize();
    if (nRet != DEVICE_OK)
    {
@@ -944,6 +946,7 @@ MM::DeviceType CMMCore::getDeviceType(const char* label) throw (CMMError)
       return MM::CoreDevice;
 
    MM::Device* pDevice = getDevice(label);
+   MMThreadGuard guard(pluginManager_.getModuleLock(pDevice));
    return pDevice->GetType();
 }
 
@@ -958,6 +961,7 @@ std::string CMMCore::getDeviceLibrary(const char* label) throw (CMMError)
    
    MM::Device* pDevice = getDevice(label);
 
+   MMThreadGuard guard(pluginManager_.getModuleLock(pDevice));
    char moduleName[MM::MaxStrLength];
    pDevice->GetModuleName(moduleName);
    return string(moduleName);
@@ -974,6 +978,8 @@ void CMMCore::unloadLibrary(const char* moduleName) throw (CMMError)
       for (it=devices.rbegin(); it != devices.rend(); it++)
       {
          MM::Device* pDev = pluginManager_.GetDevice((*it).c_str());
+		 MMThreadGuard guard(pluginManager_.getModuleLock(pDev));
+
          char deviceLabel[MM::MaxStrLength] = "";
          char deviceModuleName[MM::MaxStrLength] = "";
          pDev->GetLabel(deviceLabel);
@@ -1006,6 +1012,7 @@ std::string CMMCore::getDeviceName(const char* label) throw (CMMError)
    
    MM::Device* pDevice = getDevice(label);
 
+   MMThreadGuard guard(pluginManager_.getModuleLock(pDevice));
    char name[MM::MaxStrLength];
    pDevice->GetName(name);
    return string(name);
@@ -1020,7 +1027,7 @@ std::string CMMCore::getParentLabel(const char* label) throw (CMMError)
       return "";
    
    MM::Device* pDevice = getDevice(label);
-
+   MMThreadGuard guard(pluginManager_.getModuleLock(pDevice));
    char id[MM::MaxStrLength];
    pDevice->GetParentID(id);
    return string(id);
@@ -1035,6 +1042,7 @@ void CMMCore::setParentLabel(const char* label, const char* parentLabel) throw (
       return; // core can't have parent ID
    
    MM::Device* pDev = getDevice(label);
+   MMThreadGuard guard(pluginManager_.getModuleLock(pDev));
    pDev->SetParentID(parentLabel);
 }
 
@@ -1049,7 +1057,7 @@ std::string CMMCore::getDeviceDescription(const char* label) throw (CMMError)
       return "Core device";
    
    MM::Device* pDevice = getDevice(label);
-
+   MMThreadGuard guard(pluginManager_.getModuleLock(pDevice));
    char name[MM::MaxStrLength];
    pDevice->GetDescription(name);
    return string(name);
@@ -1075,6 +1083,7 @@ double CMMCore::getDeviceDelayMs(const char* label) throw (CMMError)
       return 0.0;
    }
    MM::Device* pDevice = getDevice(label);
+   MMThreadGuard guard(pluginManager_.getModuleLock(pDevice));
    return pDevice->GetDelayMs();
 }
 
@@ -1092,6 +1101,7 @@ void CMMCore::setDeviceDelayMs(const char* label, double delayMs) throw (CMMErro
       return; // ignore
 
    MM::Device* pDevice = getDevice(label);
+   MMThreadGuard guard(pluginManager_.getModuleLock(pDevice));
    pDevice->SetDelayMs(delayMs);
 }
 
@@ -1108,6 +1118,7 @@ bool CMMCore::usesDeviceDelay(const char* label) throw (CMMError)
       return false;
    }
    MM::Device* pDevice = getDevice(label);
+   MMThreadGuard guard(pluginManager_.getModuleLock(pDevice));
    return pDevice->UsesDelay();
 }
 
@@ -1119,6 +1130,7 @@ bool CMMCore::usesDeviceDelay(const char* label) throw (CMMError)
 bool CMMCore::deviceBusy(const char* label) throw (CMMError)
 {
    MM::Device* pDevice = getDevice(label);
+   MMThreadGuard guard(pluginManager_.getModuleLock(pDevice));
    return pDevice->Busy();
 }
 
@@ -1157,7 +1169,7 @@ void CMMCore::waitForDevice(MM::Device* pDev) throw (CMMError)
    CORE_DEBUG1("Waiting for device %s...\n", pluginManager_.GetDeviceLabel(*pDev).c_str());
 
    MM::TimeoutMs timeout(GetMMTimeNow(),timeoutMs_);
-
+   MMThreadGuard guard(pluginManager_.getModuleLock(pDev));
    while (pDev->Busy())
    {
       if (timeout.expired(GetMMTimeNow()))
@@ -1209,6 +1221,7 @@ bool CMMCore::deviceTypeBusy(MM::DeviceType devType) throw (CMMError)
       try {
          MM::Device* pDevice;
          pDevice = pluginManager_.GetDevice(devices[i].c_str());
+         MMThreadGuard guard(pluginManager_.getModuleLock(pDevice));
          if (pDevice->Busy())
             return true;
       }
