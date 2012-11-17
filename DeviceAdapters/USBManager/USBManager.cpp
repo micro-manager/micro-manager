@@ -94,17 +94,17 @@ MM::MMTime g_deviceListLastUpdated = MM::MMTime(0);
  * Struct containing device name, vendor ID, device ID, ports for sending and receiving and data length
  */
 USBDeviceInfo g_knownDevices[] = {
-   {"Velleman K8055-0", 0x10cf, 0x5500, 0x01, 0x81, 8},
-   {"Velleman K8055-1", 0x10cf, 0x5501, 0x01, 0x81, 8},
-   {"Velleman K8055-2", 0x10cf, 0x5502, 0x01, 0x81, 8},
-   {"Velleman K8055-3", 0x10cf, 0x5503, 0x01, 0x81, 8},
-   {"Velleman K8061-0", 0x10cf, 0x8061, 0x01, 0x81, 64},
-   {"Velleman K8061-1", 0x10cf, 0x8062, 0x01, 0x81, 64},
-   {"Ludl Mac 5000", 0x6969, 0x1235, 0x02, 0x82, 64},
-   {"ASI MS-2000", 0x0b54, 0x2000, 0x02, 0x82, 64},
-   {"Spectral LMM5", 0x1bdb, 0x0300, 0x02, 0x81, 64},
-   {"Nikon AZ100m", 0x04b0, 0x7804, 0x05, 0x84, 64},
-   {"Zeiss AxioObserver Z1", 0x0758, 0x1004, 0x02, 0x81, 64}
+   {"Velleman K8055-0", 0x10cf, 0x5500, 0x01, 0x81, 8, false},
+   {"Velleman K8055-1", 0x10cf, 0x5501, 0x01, 0x81, 8, false},
+   {"Velleman K8055-2", 0x10cf, 0x5502, 0x01, 0x81, 8, false},
+   {"Velleman K8055-3", 0x10cf, 0x5503, 0x01, 0x81, 8, false},
+   {"Velleman K8061-0", 0x10cf, 0x8061, 0x01, 0x81, 64, false},
+   {"Velleman K8061-1", 0x10cf, 0x8062, 0x01, 0x81, 64, false},
+   {"Ludl Mac 5000", 0x6969, 0x1235, 0x02, 0x82, 64, false},
+   {"ASI MS-2000", 0x0b54, 0x2000, 0x02, 0x82, 64, false},
+   {"Spectral LMM5", 0x1bdb, 0x0300, 0x02, 0x81, 64, false},
+   {"Nikon AZ100m", 0x04b0, 0x7804, 0x05, 0x84, 64, false},
+   {"Zeiss AxioObserver Z1", 0x0758, 0x1004, 0x02, 0x81, 64, true}
 };
 int g_numberKnownDevices = 10;
 
@@ -300,6 +300,7 @@ int MDUSBDevice::Open(const char* /*portName*/)
                }
                deviceInputEndPoint_ = g_knownDevices[i].inputEndPoint;
                deviceOutputEndPoint_ = g_knownDevices[i].outputEndPoint;
+               deviceUsesBulkEndPoint_ = g_knownDevices[i].bulkEndPoint;
                maxPacketSize_ = g_knownDevices[i].maxPacketSize;
                ostringstream logMsg;
                logMsg << "USB Device " << deviceName_ << " opened."; 
@@ -454,7 +455,13 @@ int MDUSBDevice::Write(const unsigned char* buf, unsigned long bufLen)
                packetLength = maxPacketSize_;
          }
 
-         status = usb_interrupt_write(deviceHandle_, deviceOutputEndPoint_, (char *) buf + (packet * maxPacketSize_), packetLength, (int)answerTimeoutMs_);
+         if (deviceUsesBulkEndPoint_)
+         {
+             status = usb_bulk_write(deviceHandle_, deviceOutputEndPoint_, (char *) buf + (packet * maxPacketSize_), packetLength, (int)answerTimeoutMs_);
+         } else
+         {
+            status = usb_interrupt_write(deviceHandle_, deviceOutputEndPoint_, (char *) buf + (packet * maxPacketSize_), packetLength, (int)answerTimeoutMs_);
+         }
          // printf ("status: %d, bufLen: %lu, packetLength: %d, OutputEndpoint: %d, AnswerTimeout: %f\n", status, bufLen, packetLength, deviceOutputEndPoint_, answerTimeoutMs_);
          if (status != (int) bufLen)
          {
@@ -530,7 +537,13 @@ int MDUSBDevice::Read(unsigned char* buf, unsigned long bufLen, unsigned long& c
    for (packet = 0; (packet < nrPackets) && statusContinue; packet++) 
    {
       memset(internalBuf, 0, maxPacketSize_);
-      charsReceived = usb_interrupt_read(deviceHandle_, deviceInputEndPoint_, (char *) internalBuf, maxPacketSize_, (int)answerTimeoutMs_);
+      if (deviceUsesBulkEndPoint_)
+      {
+         charsReceived = usb_bulk_read(deviceHandle_, deviceInputEndPoint_, (char *) internalBuf, maxPacketSize_, (int)answerTimeoutMs_);
+      } else 
+      {
+         charsReceived = usb_interrupt_read(deviceHandle_, deviceInputEndPoint_, (char *) internalBuf, maxPacketSize_, (int)answerTimeoutMs_);
+      }
       if (charsReceived == 0)
          statusContinue = false;
       else if (charsReceived > 0)
@@ -560,7 +573,7 @@ int MDUSBDevice::Read(unsigned char* buf, unsigned long bufLen, unsigned long& c
 
    free (internalBuf);
 
-   if (charsReceived < 0)
+   if (charsReceived < 0 && charsReceived != -110)
    {
       return DEVICE_ERR;
    }

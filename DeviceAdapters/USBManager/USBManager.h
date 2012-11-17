@@ -63,6 +63,7 @@ struct USBDeviceInfo
    int outputEndPoint;
    int inputEndPoint;
    int maxPacketSize;
+   bool bulkEndPoint;
 
 };
 
@@ -150,6 +151,7 @@ private:
    double answerTimeoutMs_;
    int deviceInputEndPoint_;
    int deviceOutputEndPoint_;
+   bool deviceUsesBulkEndPoint_;
    int maxPacketSize_;
 
    int HandleError(int errorCode);
