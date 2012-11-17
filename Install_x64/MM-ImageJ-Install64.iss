@@ -76,6 +76,7 @@ Source: micro-manager\opencv_core231.dll; DestDir: {app}; Flags: ignoreversion
 Source: micro-manager\mrfw64.dll; DestDir: {app}; Flags: ignoreversion
 Source: micro-manager\mcammr64.dll; DestDir: {app}; Flags: ignoreversion
 Source: micro-manager\XCLIBW64.dll; DestDir: {app}; Flags: ignoreversion
+Source: micro-manager\LaserCombinerSDK64.dll; DestDir: {app}; Flags: ignoreversion
 
 ; device adapters
 Source: micro-manager\mmgr_dal_*.dll; DestDir: {app}; Flags: ignoreversion
