@@ -905,10 +905,6 @@ int CCameraFrontend::OnISO(MM::PropertyBase* pProp, MM::ActionType eAct)
          pProp->Get(iso);
          UnEscapeValue(iso);
 
-         msg.str("");
-         msg << "OnISO: AfterSet: Setting ISO to " << iso;
-         LogMessage(msg.str(), true);
-
          // If the ISO property has the value "ISO not set"
          // we neither read nor write the camera ISO value.
 
