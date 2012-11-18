@@ -395,6 +395,10 @@ int CSimpleCam::getShutterSpeedWidget(CameraWidget* &rootConfig, CameraWidget* &
    if (rc >= GP_OK)
       rc = getWidget(rootConfig, shutterSpeedConfig, "main/capturesettings/shutterspeed");
 
+   // fallback for some Canon EOS cameras
+   if (rc < GP_OK)
+      rc = getWidget(rootConfig, shutterSpeedConfig, "main/capturesettings/eos-shutterspeed");
+
    // widget type has to be GP_WIDGET_RADIO; check.
    CameraWidgetType shutterSpeedType;
    if (rc >= GP_OK)
