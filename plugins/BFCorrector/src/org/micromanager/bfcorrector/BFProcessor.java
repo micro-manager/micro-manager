@@ -2,14 +2,12 @@
 package org.micromanager.bfcorrector;
 
 import ij.ImagePlus;
-import ij.process.ImageProcessor;
 import ij.process.ImageStatistics;
 import mmcorej.TaggedImage;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.micromanager.acquisition.TaggedImageQueue;
 import org.micromanager.api.DataProcessor;
-import org.micromanager.utils.ImageUtils;
 import org.micromanager.utils.MDUtils;
 import org.micromanager.utils.MMScriptException;
 import org.micromanager.utils.ReportingUtils;
@@ -145,41 +143,7 @@ class BFProcessor extends DataProcessor<TaggedImage> {
          }
          newImage = new TaggedImage(newPixels, newTags);
       }
-      /*
-                 
-      ImageProcessor proc = ImageUtils.makeProcessor(ijType, width, height, nextImage.pix);
-      ImagePlus tip = new ImagePlus("MM", proc);
       
-      ij.plugin.ImageCalculator ic = new ij.plugin.ImageCalculator();
-      ImagePlus res = ic.run("divide 32-bit", tip, flatField_);
-      
-      res.show();
-      
-      // scale with average of the flatfield image
-      ImageProcessor resProc = res.getProcessor();
-      if (ijType == ImagePlus.GRAY8) {
-         for (int x = 0; x < resProc.getWidth(); x++) {
-            for (int y = 0; y < resProc.getHeight(); y++) {
-               double value =  (resProc.get(x, y) * flatFieldStats_.mean);
-               
-               resProc.set(x, y, (int) value);
-            }
-         }
-         resProc = resProc.convertToByte(false);
-      }
-      else if (ijType == ImagePlus.GRAY16) {
-         for (int x = 0; x < resProc.getWidth(); x++) {
-            for (int y = 0; y < resProc.getHeight(); y++) {
-               resProc.set(x, y, (short) (resProc.get(x, y) * flatFieldStats_.mean));
-            }
-         }
-         resProc = resProc.convertToShort(false);
-      }
-      
-   */   
-      //JSONObject newTags = nextImage.tags;
-      //MDUtils.setWidth(newTags, proc.getWidth());
-      //MDUtils.setHeight(newTags, proc.getHeight());
 
       return newImage;
    }
