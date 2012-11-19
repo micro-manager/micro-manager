@@ -59,17 +59,9 @@
 //
 // Flow:
 // SnapImage
-//    SetCameraShutterSpeed         [CCameraFrontend, set the camera shutter speed]
-//       setShutterSpeed            [SimpleCam, set the camera shutter speed]
-//          gp_camera_set_config    [GPhoto2, write config to camera]
 //    capture                       [SimpleCam, capture to file]
 //       gp_camera_capture          [GPhoto2, captures an image]
 //       gp_camera_file_get         [GPhoto2, retrieves a file from the camera]
-//    SetAllowedShutterSpeeds       [CCameraFrontend, update shutter speeds]
-//       listShutterSpeeds          [SimpleCam, get available shutter speeds]
-//          gp_widget_count_choices [GPhoto2, counts the number of choices for shutter speed]
-//          gp_widget_get_choice    [GPhoto2, gets the choices for shutter speed]
-//          
 //    LoadImage                     [CCameraFrontend, load image]
 //       load                       [FreeImagePlus, load image]
 //       rescale                    [FreeImagePlus, Binning]
@@ -79,6 +71,28 @@
 //       crop                       [FreeImagePlus, Region of Interest]
 //       convert                    [FreeImagePlus, Grayscale/color, 8/16bpp]
 //       ConvertToRawBits           [FreeImage, copy to micro-manager image buffer]
+//
+// OnCameraName                     [CCameraFrontend, connect to camera]
+//    SetAllowedShutterSpeeds       [CCameraFrontend, update shutter speeds]
+//       listShutterSpeeds          [SimpleCam, get available shutter speeds]
+//          gp_widget_count_choices [GPhoto2, counts the number of choices for shutter speed]
+//          gp_widget_get_choice    [GPhoto2, gets the choices for shutter speed]
+//    SetAllowedISOs                [CCameraFrontend, update ISO values]
+//       listISOs                   [SimpleCam, get available ISO values]
+//          gp_widget_count_choices [GPhoto2, counts the number of choices for ISO]
+//          gp_widget_get_choice    [GPhoto2, gets the choices for ISO value]
+//
+// OnShutterSpeed                   [CCameraFrontend, ShutterSpeed property]
+//    setShutterSpeed               [SimpleCam, set the camera shutter speed]
+//       gp_camera_set_value        [GPhoto2, write to camera]
+//    getShutterSpeed               [SimpleCam, get the camera shutter speed]
+//       gp_camera_get_value        [GPhoto2, read fromo camera]
+//
+// OnISO                            [CCameraFrontend, ISO property]
+//    setISO                        [SimpleCam, set the camera ISO]
+//       gp_camera_set_value        [GPhoto2, write to camera]
+//    getISO                        [SimpleCam, get the camera ISO]
+//       gp_camera_get_value        [GPhoto2, read fromo camera]
 //
          
 #include "CameraFrontend.h"
@@ -362,7 +376,8 @@ int CCameraFrontend::Initialize()
    assert(nRet == DEVICE_OK);
 
    // Shutter Speed
-   nRet = CreateProperty(g_Keyword_ShutterSpeed, g_ShutterSpeed_NotSet, MM::String, false);
+   pAct = new CPropertyAction (this, &CCameraFrontend::OnShutterSpeed);
+   nRet = CreateProperty(g_Keyword_ShutterSpeed, g_ShutterSpeed_NotSet, MM::String, false, pAct);
    assert(nRet == DEVICE_OK);
    nRet = AddAllowedValue(g_Keyword_ShutterSpeed, g_ShutterSpeed_NotSet);
    assert(nRet == DEVICE_OK);
@@ -434,9 +449,6 @@ int CCameraFrontend::SnapImage()
    if (!cam_.isConnected())
       return ERR_CAM_NOT_CONNECTED;
 
-   /* set the shutter speed */
-   SetCameraShutterSpeed();
-   
    /* take a picture and load image into micro-manager buffer */
    int nRet;
    if (UseCameraLiveView())
@@ -881,6 +893,107 @@ int CCameraFrontend::OnBitDepth(MM::PropertyBase* pProp, MM::ActionType eAct)
 }
 
 /*
+* Handles "ShutterSpeed" property.
+*/
+int CCameraFrontend::OnShutterSpeed(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   int ret = DEVICE_ERR;
+   /* Log debug info */
+   ostringstream msg; 
+
+   switch(eAct)
+   {
+   case MM::AfterSet:
+      {
+         // The user just set the new value for the property. 
+         // Get the value from the property and apply this value to the hardware. 
+         
+         string shutterSpeed(g_ShutterSpeed_NotSet);
+         bool rc;
+
+         if(IsCapturing())
+            return DEVICE_CAMERA_BUSY_ACQUIRING;
+
+         pProp->Get(shutterSpeed);
+         UnEscapeValue(shutterSpeed);
+
+         // If the ShutterSpeed property has the value "Shutter speed not set"
+         // we neither read nor write the camera shutter speed value.
+
+         if (shutterSpeed.compare(g_ShutterSpeed_NotSet) == 0)
+            return DEVICE_OK; // "Shutter speed not set" value. Do nothing.
+       
+         if (!cam_.isConnected())
+         {
+            LogMessage("OnShutterSpeed: AfterSet: Camera not connected", true);
+            pProp->Set(g_ShutterSpeed_NotSet);
+            ret = ERR_CAM_NOT_CONNECTED;
+         }
+         else
+         {
+            rc = cam_.setShutterSpeed(shutterSpeed);
+            if (rc)
+            {
+               msg.str("");
+               msg << "OnShutterSpeed: AfterSet: camera shutter speed set to " << shutterSpeed;
+               LogMessage(msg.str(), true);
+               ret = DEVICE_OK; 
+            }
+            else
+            {
+               LogMessage("OnShutterSpeed: AfterSet: setting camera shutter speed failed", true);
+               pProp->Set(g_ShutterSpeed_NotSet);
+               ret = ERR_CAM_SHUTTERSPEED_FAIL; 
+            }
+         }
+      }
+      break;
+   case MM::BeforeGet:
+      {
+         // The user is requesting the current value for the property.
+         // Get the value from the hardware and set the value for the property.
+
+         string shutterSpeed(g_ShutterSpeed_NotSet);
+         bool rc;
+
+         // If the ShutterSpeed property has the value "Shutter speed not set"
+         // we neither read nor write the camera shutter speed value.
+
+         pProp->Get(shutterSpeed);
+         if (shutterSpeed.compare(g_ShutterSpeed_NotSet) == 0)
+            return DEVICE_OK; // "Shutter speed not set" value. Do nothing.
+       
+         if (!cam_.isConnected())
+         {
+            // it's ok not to have a device connected, we'll just report that the shutter speed is not set.
+            LogMessage("OnShutterSpeed: BeforeGet: Camera not connected", true);
+            shutterSpeed = g_ShutterSpeed_NotSet;
+         }
+         else
+         {
+            rc = cam_.getShutterSpeed(shutterSpeed);
+            if (rc)
+            {
+               msg.str("");
+               msg << "OnShutterSpeed: BeforeGet: camera shutter speed is " << shutterSpeed;
+               LogMessage(msg.str(), true);
+            }
+            else
+            {
+               shutterSpeed = g_ShutterSpeed_NotSet;
+               LogMessage("OnShutterSpeed: BeforeGet: getting camera shutter speed failed");
+            }
+         }
+
+         pProp->Set(shutterSpeed.c_str());
+         ret = DEVICE_OK;
+      }
+      break;
+   }
+   return ret; 
+}
+
+/*
 * Handles "ISO" property.
 */
 int CCameraFrontend::OnISO(MM::PropertyBase* pProp, MM::ActionType eAct)
@@ -1235,33 +1348,6 @@ int CCameraFrontend::SetShutterSpeed(double exposure_ms)
    msg << "Exposure " << exposure_ms << " ms. Shutter speed set to '" << bestShutterSpeed << "' ";
    LogMessage(msg.str(), true);
    return DEVICE_OK;
-}
-
-/* set the cameras' shutter speed */
-int CCameraFrontend::SetCameraShutterSpeed()
-{
-   char value[MM::MaxStrLength];
-   GetProperty(g_Keyword_ShutterSpeed, value);
-   string shutterSpeed = value;
-   UnEscapeValue(shutterSpeed);
-   
-   if (shutterSpeed.compare(g_ShutterSpeed_NotSet) == 0)
-      return DEVICE_OK;
-
-   if (!cam_.isConnected())
-      return ERR_CAM_NOT_CONNECTED;
-
-   bool success = cam_.setShutterSpeed(shutterSpeed);
-   // Log shutter speed
-   ostringstream msg;
-   msg.str("");
-   msg << "Set camera shutter speed to '" << shutterSpeed << "' ";
-   if (success)
-      msg << "success";
-   else
-      msg << "fail";
-   LogMessage(msg.str(), true);
-   return success;
 }
 
 /* Convert a shutter speed from text to a value in milliseconds. 

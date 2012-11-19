@@ -104,6 +104,7 @@ public:
    int OnPixelType(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnKeepOriginals(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnBitDepth(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnShutterSpeed(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnISO(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnCameraName(MM::PropertyBase* pProp, MM::ActionType eAct);
 
@@ -113,7 +114,6 @@ private:
    int SetAllowedISOs();
    int SetAllowedShutterSpeeds();
    int SetShutterSpeed(double exposure_ms);
-   int SetCameraShutterSpeed();
    double ShutterSpeedToMs(std::string shutterSpeed);
    bool GetBoolProperty(const char *const propName);
    int LoadImage(std::string imageFilename);
