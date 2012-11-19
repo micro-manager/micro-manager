@@ -87,7 +87,7 @@ CRISP.jar:  \
 	cd build && jar cf ../CRISP.jar * 
 
 BFCorrector.jar:  \
-	$(srcdir)/BFCOrrector/src/org/micromanager/bfcorrector/*.java
+	$(srcdir)/BFCorrector/src/org/micromanager/bfcorrector/*.java
 	test -d build || mkdir build
 	rm -rf build/*
 	$(JAVAC) -source 1.5 -target 1.5 -sourcepath $(srcdir):. -classpath $(srcdir)/BFCorrector.jar:$(IJJARPATH):$(BSHJARPATH):$(COMMONSMATHJARPATH):$(SWINGLAYOUTJARPATH):../bin/MMCoreJ.jar:../mmstudio/MMJ_.jar:. $(srcdir)/BFCorrector/src/org/micromanager/bfcorrector/*.java -d build
