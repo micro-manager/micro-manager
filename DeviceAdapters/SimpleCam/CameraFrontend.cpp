@@ -110,8 +110,8 @@ void FreeImageErrorHandler(FREE_IMAGE_FORMAT fif, const char *message); // FreeI
 
 using namespace std;
 
-// External names used used by the rest of the system
-// to load particular device from the "DemoCamera.dll" library
+// External names used by the rest of the system
+// to load a particular device from the "libmmgr_dal_GPhoto" library
 
 const char* g_CameraDeviceName = SIMPLECAM_DEVICENAME;
 const char* g_CameraDeviceDescription = SIMPLECAM_DESCRIPTION;
