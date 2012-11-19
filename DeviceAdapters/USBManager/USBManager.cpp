@@ -106,7 +106,7 @@ USBDeviceInfo g_knownDevices[] = {
    {"Nikon AZ100m", 0x04b0, 0x7804, 0x05, 0x84, 64, false},
    {"Zeiss AxioObserver Z1", 0x0758, 0x1004, 0x02, 0x81, 64, true}
 };
-int g_numberKnownDevices = 10;
+int g_numberKnownDevices = 11;
 
 ///////////////////////////////////////////////////////////////////////////////
 // Exported MMDevice API
