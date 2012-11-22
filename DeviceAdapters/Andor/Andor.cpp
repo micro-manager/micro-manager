@@ -65,6 +65,8 @@
 #include <iostream>
 using namespace std;
 
+
+
 #pragma warning(disable : 4996) // disable warning for deperecated CRT functions on Windows 
 
 using namespace std;
@@ -3965,13 +3967,13 @@ int AndorCamera::OnSpuriousNoiseFilter(MM::PropertyBase* pProp, MM::ActionType e
       unsigned int width;
       unsigned int height;
       unsigned int bytesPerPixel;
-      unsigned long imagesPerDMA;
-      long validFirst, validLast;
+      at_u32 imagesPerDMA;
+      at_32 validFirst, validLast;
       
       {
          DriverGuard dg(this);
          unsigned ret;
-         long imageCountFirst, imageCountLast; 
+         at_32 imageCountFirst, imageCountLast; 
          
          width =  GetImageWidth();
          height = GetImageHeight();
