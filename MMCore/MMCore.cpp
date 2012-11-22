@@ -2333,7 +2333,9 @@ void CMMCore::stopSequenceAcquisition() throw (CMMError)
 {
    if (camera_)
    {
-      MMThreadGuard guard(pluginManager_.getModuleLock(camera_));
+      // Note: this lock will cause deadlock issues with the DemoCamera
+      // since it will result in the democamera calling itself closing the shutter
+      // MMThreadGuard guard(pluginManager_.getModuleLock(camera_));
       int nRet = camera_->StopSequenceAcquisition();
       if (nRet != DEVICE_OK)
       {
@@ -2359,7 +2361,7 @@ bool CMMCore::isSequenceRunning() throw ()
    if (camera_)
    {
        MMThreadGuard guard(pluginManager_.getModuleLock(camera_));
-	   return camera_->IsCapturing();
+	    return camera_->IsCapturing();
    }
    else
    {
