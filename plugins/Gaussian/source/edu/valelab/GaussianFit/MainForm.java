@@ -15,6 +15,7 @@ import ij.IJ;
 import ij.ImagePlus;
 import ij.gui.Overlay;
 import ij.gui.Roi;
+import ij.plugin.frame.RoiManager;
 import java.awt.Color;
 import java.awt.Polygon;
 import java.util.prefs.Preferences;
@@ -910,18 +911,42 @@ public class MainForm extends javax.swing.JFrame implements ij.ImageListener{
       Runnable MTracker = new Runnable() {
 
          public void run() {
-               int val = Integer.parseInt(noiseToleranceTextField_.getText());
-               int halfSize = (int) Integer.parseInt(boxSizeTextField.getText()) / 2;
-               
+            int val = Integer.parseInt(noiseToleranceTextField_.getText());
+            int halfSize = (int) Integer.parseInt(boxSizeTextField.getText()) / 2;
+
+            // If ROI manager is used, use RoiManager Rois
+            //  may be dangerous if the user is not aware
+            RoiManager roiM = RoiManager.getInstance();
+            Roi[] rois = null;
+            if (roiM != null) {
+               rois = roiM.getSelectedRoisAsArray();
+            }
+            if (rois != null && rois.length > 0) {
+               for (Roi roi : rois) {
+                  siPlus.setRoi(roi, false);
+                  Polygon pol = FindLocalMaxima.FindMax(siPlus, halfSize, val, preFilterType_);
+                  for (int i = 0; i < pol.npoints; i++) {
+                     int x = pol.xpoints[i];
+                     int y = pol.ypoints[i];
+                     siPlus.setRoi(x - 2 * halfSize, y - 2 * halfSize, 4 * halfSize, 4 * halfSize);
+                     GaussianTrackThread tT = new GaussianTrackThread(FindLocalMaxima.FilterType.NONE);
+                     updateValues(tT);
+                     tT.trackGaussians(true);
+                  }
+               }
+            } else {  // no Rois in RoiManager
+               // siPlus.setRoi(originalRoi, false);
+
                Polygon pol = FindLocalMaxima.FindMax(siPlus, halfSize, val, preFilterType_);
                for (int i = 0; i < pol.npoints; i++) {
                   int x = pol.xpoints[i];
                   int y = pol.ypoints[i];
-                  siPlus.setRoi(x - 2 * halfSize, y - 2* halfSize, 4 * halfSize, 4 * halfSize);
+                  siPlus.setRoi(x - 2 * halfSize, y - 2 * halfSize, 4 * halfSize, 4 * halfSize);
                   GaussianTrackThread tT = new GaussianTrackThread(FindLocalMaxima.FilterType.NONE);
                   updateValues(tT);
                   tT.trackGaussians(true);
-               }         
+               }
+            }
          }
       };
       

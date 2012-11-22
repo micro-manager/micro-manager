@@ -1615,7 +1615,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
                            rt.addValue(Terms.XPIX, gs.getX());
                            rt.addValue(Terms.YPIX, gs.getY());
                            rt.addValue("X1", pCh1.getX());
-                           rt.addValue("X2", pCh1.getY());
+                           rt.addValue("Y1", pCh1.getY());
                            rt.addValue("X2", pCh2.getX());
                            rt.addValue("Y2", pCh2.getY());
                            double d2 = NearestPoint2D.distance2(pCh1, pCh2);
@@ -1730,6 +1730,299 @@ public class DataCollectionForm extends javax.swing.JFrame {
       }
    }//GEN-LAST:event_pairsButtonActionPerformed
 
+   /**
+    * Utility class used to hold spotPairs
+    */
+   private class gsSpotPair {
+      private GaussianSpotData fgs_;
+      private  Point2D.Double fp_;
+      private  Point2D.Double sp_;
+      public gsSpotPair(GaussianSpotData fgs, Point2D.Double fp, Point2D.Double sp) {
+         fgs_ = fgs;
+         fp_ = fp;
+         sp_ = sp;
+      }
+      public GaussianSpotData getGSD() {
+         return fgs_;
+      }
+      public Point2D.Double getfp() {
+         return fp_;
+      }
+      public Point2D.Double getsp() {
+         return sp_;
+      }
+   }
+   
+   /**
+    * Helper function for function listParticels
+    * Finds a spot within MAXMAtchDistance in the frame following the frame
+    * of the given spot.
+    * Only looks at Channel 1
+    * 
+    * @param input - look for a spot close to this one
+    * @param spotPairs - List with spotPairs
+    * @return spotPair found or null if none
+    */
+   private gsSpotPair findNextSpotPair(gsSpotPair input, ArrayList<gsSpotPair> spotPairs) {
+      int frame = input.getGSD().getFrame() + 1;
+      final double maxDistance;
+      try {
+         maxDistance = NumberUtils.displayStringToDouble(pairsMaxDistanceField_.getText());
+      } catch (ParseException ex) {
+         ReportingUtils.logError("Error parsing pairs max distance field");
+         return null;
+      }
+      final double maxDistance2 = maxDistance * maxDistance;
+      
+      Iterator<gsSpotPair> it = spotPairs.iterator();
+      
+      while (it.hasNext()) {
+         gsSpotPair nextSpot = it.next();
+         if (nextSpot.getGSD().getFrame() == frame) {
+            if (NearestPoint2D.distance2(input.getfp(), nextSpot.getfp())
+                    < maxDistance2) {
+               return nextSpot;
+            }
+         }
+         // optimization that is only valid if the ArrayList is properly sorted
+         if (nextSpot.getGSD().getFrame() > frame) {
+            return null;
+         }
+      }  
+      
+      return null;
+   }
+   
+   
+    /**
+    * Cycles through the spots of the selected data set and finds the most nearby 
+    * spot in channel 2.  It will list this as a pair if the two spots are within
+    * MAXMATCHDISTANCE nm of each other.  
+    * 
+    * Once all pairs are found, it will go through all frames and try to build up
+    * tracks.  If the spot is within MAXMATCHDISTANCE between frames, the code
+    * will consider the particle to be identical.
+    * 
+    * All "tracks" of particles will be listed
+    * 
+    * In addition, it will list the  average distance, and average distance
+    * in x and y for each frame.
+    * 
+    * spots in channel 2
+    * that are within MAXMATCHDISTANCE of 
+    * 
+    * @param evt 
+    */
+   public void listParticles(java.awt.event.ActionEvent evt) { 
+          
+      final int row = jTable1_.getSelectedRow();
+      if (row < 0) {
+         JOptionPane.showMessageDialog(getInstance(), "Please select a dataset for the Pair function");
+
+         return;
+      }
+      
+      if (row > -1) {
+
+         Runnable doWorkRunnable = new Runnable() {
+
+            @Override
+            public void run() {
+
+               //int width = rowData_.get(row).width_;
+               //int height = rowData_.get(row).height_;
+               //double factor = rowData_.get(row).pixelSizeNm_;
+               
+               XYSeries xData = new XYSeries("XError");
+               XYSeries yData = new XYSeries("YError");
+               ArrayList<gsSpotPair> spotPairs = new ArrayList<gsSpotPair>();
+                            
+               ij.IJ.showStatus("Creating Pairs...");
+               
+ 
+               // First go through all frames to find all pairs
+               for (int frame = 1; frame <= rowData_.get(row).nrFrames_; frame++) {
+                  ij.IJ.showProgress(frame, rowData_.get(row).nrFrames_);
+                  //ImageProcessor ip = new ShortProcessor(width, height);
+                  //short pixels[] = new short[width * height];
+                  //ip.setPixels(pixels);
+                  
+                  // Get points from both channels in each frame as ArrayLists        
+                  ArrayList<GaussianSpotData> gsCh1 = new ArrayList<GaussianSpotData>();
+                  ArrayList<Point2D.Double> xyPointsCh2 = new ArrayList<Point2D.Double>();
+                  Iterator it = rowData_.get(row).spotList_.iterator();
+                  while (it.hasNext()) {
+                     GaussianSpotData gs = (GaussianSpotData) it.next();
+                     if (gs.getFrame() == frame) {
+                        if (gs.getChannel() == 1) {
+                           gsCh1.add(gs);
+                        } else if (gs.getChannel() == 2) {
+                           Point2D.Double point = new Point2D.Double(gs.getXCenter(), gs.getYCenter());
+                           xyPointsCh2.add(point);
+                        }
+                     }
+                  }
+                  
+                  if (xyPointsCh2.isEmpty()) {
+                     ReportingUtils.logError("Pairs function in Localization plugin: no points found in second channel in frame " + frame);
+                     continue;
+                  }
+                  
+                  // Find matching points in the two ArrayLists
+                  Iterator it2 = gsCh1.iterator();
+                  try {
+                     NearestPoint2D np = new NearestPoint2D(xyPointsCh2,
+                             NumberUtils.displayStringToDouble(pairsMaxDistanceField_.getText()));
+
+                     while (it2.hasNext()) {
+                        GaussianSpotData gs = (GaussianSpotData) it2.next();
+                        Point2D.Double pCh1 = new Point2D.Double(gs.getXCenter(), gs.getYCenter());
+                        Point2D.Double pCh2 = np.findKDWSE(pCh1);
+                        if (pCh2 != null) {
+                           spotPairs.add(new gsSpotPair(gs, pCh1, pCh2));
+                        }
+                     }
+
+                  } catch (ParseException ex) {
+                     JOptionPane.showMessageDialog(getInstance(), "Error in Pairs input");
+                     return;
+                  }
+
+               }
+               
+               // We have all pairs, assemble in tracks
+               ArrayList<ArrayList<gsSpotPair>> tracks = new ArrayList<ArrayList<gsSpotPair>>();
+               Iterator<gsSpotPair> iSpotPairs = spotPairs.iterator();
+               while (iSpotPairs.hasNext()) {
+                  gsSpotPair spotPair = iSpotPairs.next();
+                  // for now, we only start tracks at frame number 1
+                  if (spotPair.getGSD().getFrame() == 1) {
+                     ArrayList<gsSpotPair> track = new ArrayList<gsSpotPair>();
+                     while (spotPair != null) {
+                        track.add(spotPair);
+                        spotPair = findNextSpotPair(spotPair, spotPairs);
+                     }
+                     tracks.add(track);
+                  }
+               }
+               
+                 
+               // Show Particle List as linked Results Table
+               ResultsTable rt = new ResultsTable();
+               rt.reset();
+               rt.setPrecision(2);
+               
+               
+               Iterator<ArrayList<gsSpotPair>> itTracks = tracks.iterator();
+               int spotId = 0;
+               while (itTracks.hasNext()) {
+                  ArrayList<gsSpotPair> track = itTracks.next();
+                  Iterator<gsSpotPair> itTrack = track.iterator();
+                  while (itTrack.hasNext()) {
+                     gsSpotPair spot = itTrack.next();
+                     rt.incrementCounter();
+                     rt.addValue("Spot ID", spotId);
+                     rt.addValue(Terms.FRAME, spot.getGSD().getFrame()); 
+                     rt.addValue(Terms.SLICE, spot.getGSD().getSlice());
+                     rt.addValue(Terms.CHANNEL, spot.getGSD().getSlice());  
+                     rt.addValue(Terms.XPIX, spot.getGSD().getX());
+                     rt.addValue(Terms.YPIX, spot.getGSD().getY());
+                     rt.addValue("Distance", Math.sqrt(
+                         NearestPoint2D.distance2(spot.getfp(), spot.getsp())));
+                  }
+                  spotId++;
+               }
+               TextPanel tp;
+               TextWindow win;
+
+               String rtName = rowData_.get(row).name_ + " Particle List";
+               rt.show(rtName);
+               ImagePlus siPlus = ij.WindowManager.getImage(rowData_.get(row).title_);
+               Frame frame = WindowManager.getFrame(rtName);
+               if (frame != null && frame instanceof TextWindow && siPlus != null) {
+                  win = (TextWindow) frame;
+                  tp = win.getTextPanel();
+
+                  // TODO: the following does not work, there is some voodoo going on here
+                  for (MouseListener ms : tp.getMouseListeners()) {
+                     tp.removeMouseListener(ms);
+                  }
+                  for (KeyListener ks : tp.getKeyListeners()) {
+                     tp.removeKeyListener(ks);
+                  }
+
+                  ResultsTableListener myk = new ResultsTableListener(siPlus, rt, win, rowData_.get(row).halfSize_);
+                  tp.addKeyListener(myk);
+                  tp.addMouseListener(myk);
+                  frame.toFront();
+               }
+               
+               // Show Particle Summary as Linked Results Table
+               ResultsTable rt2 = new ResultsTable();
+               rt2.reset();
+               rt2.setPrecision(1); 
+               
+               itTracks = tracks.iterator();
+               spotId = 0;
+               while (itTracks.hasNext()) {
+                  ArrayList<gsSpotPair> track = itTracks.next();
+                  ArrayList<Double> distances = new ArrayList<Double>();
+                  for (gsSpotPair pair : track) {
+                     distances.add(Math.sqrt(
+                             NearestPoint2D.distance2(pair.getfp(), pair.getsp())));
+                  }
+                  gsSpotPair pair = track.get(0);
+                  rt2.incrementCounter();
+                  rt2.addValue("Spot ID", spotId);
+                  rt2.addValue(Terms.FRAME, pair.getGSD().getFrame());
+                  rt2.addValue(Terms.SLICE, pair.getGSD().getSlice());
+                  rt2.addValue(Terms.CHANNEL, pair.getGSD().getSlice());
+                  rt2.addValue(Terms.XPIX, pair.getGSD().getX());
+                  rt2.addValue(Terms.YPIX, pair.getGSD().getY());
+                  double avg = avgList(distances);
+                  rt2.addValue("n", track.size());
+                  rt2.addValue("Distance-Avg", avg);
+                  rt2.addValue("Distance-StdDev", stdDevList(distances, avg));
+
+                  spotId++;
+               }
+               
+               rtName = rowData_.get(row).name_ + " Particle Summary";
+               rt2.show(rtName);
+               siPlus = ij.WindowManager.getImage(rowData_.get(row).title_);
+               frame = WindowManager.getFrame(rtName);
+               if (frame != null && frame instanceof TextWindow && siPlus != null) {
+                  win = (TextWindow) frame;
+                  tp = win.getTextPanel();
+
+                  // TODO: the following does not work, there is some voodoo going on here
+                  for (MouseListener ms : tp.getMouseListeners()) {
+                     tp.removeMouseListener(ms);
+                  }
+                  for (KeyListener ks : tp.getKeyListeners()) {
+                     tp.removeKeyListener(ks);
+                  }
+
+                  ResultsTableListener myk = new ResultsTableListener(siPlus, rt2, win, rowData_.get(row).halfSize_);
+                  tp.addKeyListener(myk);
+                  tp.addMouseListener(myk);
+                  frame.toFront();
+               }
+               
+               
+
+               ij.IJ.showStatus("");
+
+
+            }
+         };
+
+         (new Thread(doWorkRunnable)).start();
+
+      }
+   }                                           
+
+   
    
    /**
     * Calculates the average of a list of doubles
@@ -2001,6 +2294,28 @@ public class DataCollectionForm extends javax.swing.JFrame {
       return myStdDev;
    }
    
+   public static double avgList(ArrayList<Double> vals) {
+      double result = 0;
+      for (Double val : vals) {
+         result += val;
+      }
+      
+      return result / vals.size();
+   }
+   
+   
+   public static double stdDevList(ArrayList<Double> vals, double avg) {
+      double result = 0;
+      for (Double val: vals) {
+         result += (val - avg) * (val - avg);
+      }
+      if (vals.size() < 2)
+         return 0.0;
+      
+      result = result / (vals.size() - 1);
+      
+      return Math.sqrt(result);
+   }
    
    
    private void averageTrackButton_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_averageTrackButton_ActionPerformed

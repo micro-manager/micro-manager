@@ -203,7 +203,11 @@ public class GaussianSpotData {
       synchronized(lockIP) {
          Roi spotRoi = new Roi(x - halfSize, y - halfSize, 2 * halfSize, 2 * halfSize);
          siProc.setRoi(spotRoi);
-         return siProc.crop();
+         try {
+            return siProc.crop();
+         } catch (java.lang.ArrayIndexOutOfBoundsException ex) {
+            return null;
+         }
       }
    }
 }

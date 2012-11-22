@@ -1,6 +1,11 @@
 /**
  * Implementation for the "Fit All" button
  * Fits all spots in the selected stack
+ * 
+ * Part of Micro-Manager's Localization Plugin
+ * 
+ * Nico Stuurman, copyright UCSF (2012)
+ * 
  */
 
 package edu.valelab.GaussianFit;
@@ -249,6 +254,9 @@ public class FitAllThread extends GaussianInfo implements Runnable  {
                              && sC[j][1] > halfSize_ && sC[j][1] < siPlus.getHeight() - halfSize_) {
                         ImageProcessor sp = GaussianSpotData.getSpotProcessor(siProc,
                                 halfSize_, sC[j][0], sC[j][1]);
+                        if (sp == null) {
+                           continue;
+                        }
                         GaussianSpotData thisSpot = new GaussianSpotData(sp, c, z, f,
                                 position, j, sC[j][0], sC[j][1]);
                         try {
