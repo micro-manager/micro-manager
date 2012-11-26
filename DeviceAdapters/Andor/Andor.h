@@ -281,6 +281,7 @@ private:
    bool bShutterIntegrated_;
    int ADChannelIndex_, OutputAmplifierIndex_;
    void UpdateHSSpeeds();
+   int UpdateExposureFromCamera();
    int UpdatePreampGains();
    int GetPreAmpGainString(int PreAmpgainIdx, char * PreAmpGainString);
 

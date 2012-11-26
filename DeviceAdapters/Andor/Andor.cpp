@@ -3536,6 +3536,24 @@ int AndorCamera::OnSpuriousNoiseFilter(MM::PropertyBase* pProp, MM::ActionType e
       return DRV_SUCCESS;
    }
 
+    int AndorCamera::UpdateExposureFromCamera()
+   {
+      float actualExp, actualAccumulate, actualKinetic;
+      unsigned int ret;
+      DriverGuard dg(this);
+      ret = GetAcquisitionTimings(&actualExp, &actualAccumulate, &actualKinetic);
+      if (DRV_SUCCESS != ret)
+			return (int)ret;
+
+      if(fabs(currentExpMS_ - actualExp*1000.0f)>0.01)
+      {
+         currentExpMS_ = actualExp*1000.0f;
+         OnPropertyChanged(MM::g_Keyword_Exposure, CDeviceUtils::ConvertToString(currentExpMS_));
+         GetCoreCallback()->OnExposureChanged(this, currentExpMS_);
+      }
+      return DRV_SUCCESS;
+   }
+
    int AndorCamera::GetPreAmpGainString(int PreAmpGainIdx, char * PreAmpGainString )
    {
       bool useText = ui_swVersion >= 292;
@@ -3864,9 +3882,15 @@ int AndorCamera::OnSpuriousNoiseFilter(MM::PropertyBase* pProp, MM::ActionType e
       os.str("");
       os << "Exposure: " << fExposure << " AcummTime: " << fAccumTime << " KineticTime: " << fKineticTime;
       LogMessage(os.str().c_str());
-      float ActualInterval_ms = fKineticTime * 1000.0f;
-      seqThread_->SetWaitTime((at_32) (ActualInterval_ms / 5));
+
+      seqThread_->SetWaitTime((at_32) (ActualInterval_ms_ / 5));
       seqThread_->SetTimeOut(imageTimeOut_ms_);
+
+      //Notify GUI and Properties of new exposure
+      ret = UpdateExposureFromCamera();
+      if(DRV_SUCCESS!=ret)
+         return ret;
+
       // prepare the core
       ret = GetCoreCallback()->PrepareForAcq(this);
       if (ret != DEVICE_OK)
@@ -3949,7 +3973,12 @@ int AndorCamera::OnSpuriousNoiseFilter(MM::PropertyBase* pProp, MM::ActionType e
       seqThread_->wait();
 
       if (!temporary)
-        PrepareSnap();
+      {
+         PrepareSnap();
+         int ret = UpdateExposureFromCamera();
+         if(ret!=DRV_SUCCESS)
+            return ret;
+      }
 
       return DEVICE_OK;
    }
