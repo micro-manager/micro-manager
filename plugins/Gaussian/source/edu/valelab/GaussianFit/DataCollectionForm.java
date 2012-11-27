@@ -550,6 +550,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
         logLogCheckBox_ = new javax.swing.JCheckBox();
         zCalibrateButton_ = new javax.swing.JButton();
         zCalibrationLabel_ = new javax.swing.JLabel();
+        listButton_ = new javax.swing.JButton();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DO_NOTHING_ON_CLOSE);
         setTitle("Gaussian tracking data");
@@ -582,7 +583,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
         plotComboBox_.setFont(new java.awt.Font("Lucida Grande", 0, 10));
         plotComboBox_.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "t-X", "t-Y", "X-Y", "t-Int.", " " }));
 
-        visualizationMagnification_.setFont(new java.awt.Font("Lucida Grande", 0, 10)); // NOI18N
+        visualizationMagnification_.setFont(new java.awt.Font("Lucida Grande", 0, 10));
         visualizationMagnification_.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "1x", "2x", "4x", "8x", "16x", "32x", "64x", "128x" }));
 
         visualizationModel_.setFont(new java.awt.Font("Lucida Grande", 0, 10));
@@ -620,7 +621,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
             }
         });
 
-        pairsButton.setFont(new java.awt.Font("Lucida Grande", 0, 10));
+        pairsButton.setFont(new java.awt.Font("Lucida Grande", 0, 10)); // NOI18N
         pairsButton.setText("Pairs");
         pairsButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -684,7 +685,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
         jLabel3.setFont(new java.awt.Font("Lucida Grande", 0, 11));
         jLabel3.setText("< spot <");
 
-        SigmaLabel2.setFont(new java.awt.Font("Lucida Grande", 0, 11));
+        SigmaLabel2.setFont(new java.awt.Font("Lucida Grande", 0, 11)); // NOI18N
         SigmaLabel2.setText("nm");
 
         IntLabel2.setFont(new java.awt.Font("Lucida Grande", 0, 11));
@@ -739,7 +740,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
             }
         });
 
-        pairsMaxDistanceField_.setFont(new java.awt.Font("Lucida Grande", 0, 11));
+        pairsMaxDistanceField_.setFont(new java.awt.Font("Lucida Grande", 0, 11)); // NOI18N
         pairsMaxDistanceField_.setText("500");
 
         SigmaLabel3.setFont(new java.awt.Font("Lucida Grande", 0, 11));
@@ -808,6 +809,14 @@ public class DataCollectionForm extends javax.swing.JFrame {
         zCalibrationLabel_.setFont(new java.awt.Font("Lucida Grande", 0, 10));
         zCalibrationLabel_.setText("UnCalibrated");
 
+        listButton_.setFont(new java.awt.Font("Lucida Grande", 0, 10)); // NOI18N
+        listButton_.setText("List");
+        listButton_.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                listButton_ActionPerformed(evt);
+            }
+        });
+
         org.jdesktop.layout.GroupLayout layout = new org.jdesktop.layout.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
@@ -839,17 +848,22 @@ public class DataCollectionForm extends javax.swing.JFrame {
                         .add(jLabel5))
                     .add(layout.createSequentialGroup()
                         .add(c2StandardButton, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 82, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                        .add(18, 18, 18)
-                        .add(referenceName_, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 60, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+                        .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING, false)
+                            .add(layout.createSequentialGroup()
+                                .add(18, 18, 18)
+                                .add(referenceName_, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 60, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+                            .add(layout.createSequentialGroup()
+                                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                                .add(pairsMaxDistanceField_, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 44, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                                .add(SigmaLabel2, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 20, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                                .add(4, 4, 4))))
                     .add(layout.createSequentialGroup()
                         .add(c2CorrectButton, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 82, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                         .add(8, 8, 8)
-                        .add(pairsButton))
-                    .add(layout.createSequentialGroup()
-                        .add(90, 90, 90)
-                        .add(pairsMaxDistanceField_, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 60, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                        .add(0, 0, 0)
-                        .add(SigmaLabel2, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 20, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)))
+                        .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                            .add(org.jdesktop.layout.GroupLayout.TRAILING, listButton_, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .add(pairsButton))))
                 .add(4, 4, 4)
                 .add(jSeparator2, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                 .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING, false)
@@ -884,15 +898,15 @@ public class DataCollectionForm extends javax.swing.JFrame {
                     .add(layout.createSequentialGroup()
                         .add(7, 7, 7)
                         .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                            .add(unjitterButton_, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 110, Short.MAX_VALUE)
-                            .add(linkButton_, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 110, Short.MAX_VALUE)))
+                            .add(unjitterButton_, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 115, Short.MAX_VALUE)
+                            .add(linkButton_, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 115, Short.MAX_VALUE)))
                     .add(layout.createSequentialGroup()
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                         .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
                             .add(layout.createSequentialGroup()
                                 .add(20, 20, 20)
                                 .add(zCalibrationLabel_, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 75, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
-                            .add(zCalibrateButton_, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 110, Short.MAX_VALUE))))
+                            .add(zCalibrateButton_, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 115, Short.MAX_VALUE))))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
                     .add(layout.createSequentialGroup()
@@ -963,14 +977,18 @@ public class DataCollectionForm extends javax.swing.JFrame {
                         .add(5, 5, 5)
                         .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
                             .add(c2StandardButton, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 19, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                            .add(referenceName_))
-                        .add(22, 22, 22)
+                            .add(layout.createSequentialGroup()
+                                .add(referenceName_)
+                                .add(2, 2, 2)
+                                .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
+                                    .add(pairsMaxDistanceField_, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 20, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                                    .add(SigmaLabel2, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 20, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))))
+                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                         .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
                             .add(c2CorrectButton, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 19, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                             .add(pairsButton, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 19, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
-                        .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                            .add(pairsMaxDistanceField_, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 20, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                            .add(SigmaLabel2, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 20, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)))
+                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                        .add(listButton_, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 19, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
                     .add(jSeparator2, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 120, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                     .add(layout.createSequentialGroup()
                         .add(13, 13, 13)
@@ -1763,8 +1781,8 @@ public class DataCollectionForm extends javax.swing.JFrame {
     * @param spotPairs - List with spotPairs
     * @return spotPair found or null if none
     */
-   private gsSpotPair findNextSpotPair(gsSpotPair input, ArrayList<gsSpotPair> spotPairs) {
-      int frame = input.getGSD().getFrame() + 1;
+   private gsSpotPair findNextSpotPair(gsSpotPair input, 
+           ArrayList<gsSpotPair> spotPairs, int frame) {
       final double maxDistance;
       try {
          maxDistance = NumberUtils.displayStringToDouble(pairsMaxDistanceField_.getText());
@@ -1898,9 +1916,16 @@ public class DataCollectionForm extends javax.swing.JFrame {
                   // for now, we only start tracks at frame number 1
                   if (spotPair.getGSD().getFrame() == 1) {
                      ArrayList<gsSpotPair> track = new ArrayList<gsSpotPair>();
-                     while (spotPair != null) {
-                        track.add(spotPair);
-                        spotPair = findNextSpotPair(spotPair, spotPairs);
+                     track.add(spotPair);
+                     int frame = 2;
+                     while (frame <= rowData_.get(row).nrFrames_) {
+                        gsSpotPair newSpotPair = findNextSpotPair(spotPair, spotPairs, 
+                                frame);
+                        if (newSpotPair != null) {
+                           spotPair = newSpotPair;
+                           track.add(spotPair);
+                        }
+                        frame++;
                      }
                      tracks.add(track);
                   }
@@ -2631,6 +2656,10 @@ public class DataCollectionForm extends javax.swing.JFrame {
       }
    }//GEN-LAST:event_zCalibrateButton_ActionPerformed
 
+   private void listButton_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_listButton_ActionPerformed
+      listParticles(evt);
+   }//GEN-LAST:event_listButton_ActionPerformed
+
    /**
     * Given a list of linked spots, create a single spot entry that will be added 
     * to the destination list
@@ -2714,6 +2743,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
     private javax.swing.JSeparator jSeparator4;
     private javax.swing.JTable jTable1_;
     private javax.swing.JButton linkButton_;
+    private javax.swing.JButton listButton_;
     private javax.swing.JButton loadButton;
     private javax.swing.JCheckBox logLogCheckBox_;
     private javax.swing.JButton mathButton_;
