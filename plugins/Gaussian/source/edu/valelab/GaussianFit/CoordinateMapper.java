@@ -1,7 +1,9 @@
 ///////////////////////////////////////////////////////////////////////////////
-//FILE:           LWM.java
+//FILE:           CoordinateMapper.java
 //PROJECT:        Micro-Manager
-//SUBSYSTEM:      Implementation of Local Weighted Mean algorithm,
+//SUBSYSTEM:      Provides facilities for mapping one coordinate system into another
+//                Currently implements LWM and affine transforms
+//                Implementation of Local Weighted Mean algorithm,
 //                as first described by
 //                Ardeshir Goshtasby. (1988). Image registration by local approximation methods.
 //                and used in Matlab by cp2tform
@@ -27,6 +29,7 @@ package edu.valelab.GaussianFit;
 
 import ags.utils.KdTree;
 import ags.utils.KdTree.Entry;
+import java.awt.geom.AffineTransform;
 import java.awt.geom.Point2D;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -36,13 +39,19 @@ import org.apache.commons.math.linear.Array2DRowRealMatrix;
 import org.apache.commons.math.linear.DecompositionSolver;
 import org.apache.commons.math.linear.LUDecompositionImpl;
 import org.apache.commons.math.linear.RealMatrix;
+import org.micromanager.utils.MathFunctions;
 
-public class LWM {
+public class CoordinateMapper {
    final private ExponentPairs exponentPairs_;
    final private ControlPoints controlPoints_;
    final private EnhancedKDTree kdTree_;
    final private int order_;
    final private PointMap pointMap_;
+   final private AffineTransform af_;
+   final public static int LWM = 1;
+   final public static int AFFINE = 2;
+   
+   private int method_ = LWM;
 
    public static class PointMap extends HashMap<Point2D.Double, Point2D.Double> {}
 
@@ -200,17 +209,36 @@ public class LWM {
    }
 
    public Point2D.Double transform(Point2D.Double srcTestPoint) {
-      return computeTransformation(kdTree_, srcTestPoint, controlPoints_, exponentPairs_);
+      if (method_ == LWM)
+         return computeTransformation(kdTree_, srcTestPoint, controlPoints_, exponentPairs_);
+      try {  
+         return (Point2D.Double) af_.transform(srcTestPoint, null);
+      } catch (Exception ex) {
+         return null;
+      }
    }
+   
+   public void setMethod(int method) {
+      method_ = method;
+   }
+   
 
-   public LWM(int order, PointMap pointMap) {
+
+   /**
+    * Feeds control points into this class
+    * Performs initial calculations for lwm and affine transforms
+    * 
+    */
+   public CoordinateMapper(PointMap pointMap, int order, int method) {
       pointMap_ = pointMap;
       order_ = order;
+      method_ = method;
       exponentPairs_ = polynomialExponents(order);
       final ArrayList<Point2D.Double> keys = new ArrayList<Point2D.Double>();
       keys.addAll(pointMap.keySet());
       final Point2D.Double[] keyArray = keys.toArray(new Point2D.Double[]{});
       kdTree_ = new EnhancedKDTree(keyArray);
       controlPoints_ = createControlPoints(kdTree_, order_, pointMap_);
+      af_ = MathFunctions.generateAffineTransformFromPointPairs(pointMap);
    }   
 }
