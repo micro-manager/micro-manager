@@ -391,14 +391,26 @@ public class OptionsDlg extends MMDialog {
       final JCheckBox metadataFileWithMultipageTiffCheckBox = new JCheckBox();
       metadataFileWithMultipageTiffCheckBox.addActionListener(new ActionListener() {
          public void actionPerformed(ActionEvent arg0) {
-            opts_.multipageTiffMetadataFile_ = metadataFileWithMultipageTiffCheckBox.isSelected();
+            opts_.mpTiffMetadataFile_ = metadataFileWithMultipageTiffCheckBox.isSelected();
          }
       });
       metadataFileWithMultipageTiffCheckBox.setText("Create metadata txt file with multi-image file saving");
       getContentPane().add(metadataFileWithMultipageTiffCheckBox);
       springLayout.putConstraint(SpringLayout.WEST, metadataFileWithMultipageTiffCheckBox, 20, SpringLayout.WEST, getContentPane());
       springLayout.putConstraint(SpringLayout.NORTH, metadataFileWithMultipageTiffCheckBox, 10, SpringLayout.SOUTH, prefZoomLabel);
-      metadataFileWithMultipageTiffCheckBox.setSelected(opts_.multipageTiffMetadataFile_);
+      metadataFileWithMultipageTiffCheckBox.setSelected(opts_.mpTiffMetadataFile_);
+      
+      final JCheckBox seperateFilesForPositionsMPTiffCheckBox = new JCheckBox();
+      seperateFilesForPositionsMPTiffCheckBox.addActionListener(new ActionListener() {
+         public void actionPerformed(ActionEvent arg0) {
+            opts_.mpTiffSeperateFilesForPositions_ = seperateFilesForPositionsMPTiffCheckBox.isSelected();
+         }
+      });
+      seperateFilesForPositionsMPTiffCheckBox.setText("Save XY Positions in seperate Multi-Image Files");
+      getContentPane().add(seperateFilesForPositionsMPTiffCheckBox);
+      springLayout.putConstraint(SpringLayout.WEST, seperateFilesForPositionsMPTiffCheckBox, 20, SpringLayout.WEST, getContentPane());
+      springLayout.putConstraint(SpringLayout.NORTH, seperateFilesForPositionsMPTiffCheckBox, 5, SpringLayout.SOUTH, metadataFileWithMultipageTiffCheckBox);
+      seperateFilesForPositionsMPTiffCheckBox.setSelected(opts_.mpTiffSeperateFilesForPositions_);
    }
 
    private void changeBackground() {

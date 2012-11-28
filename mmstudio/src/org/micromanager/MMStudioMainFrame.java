@@ -2236,7 +2236,11 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface, Device
    }
    
    public boolean getMetadataFileWithMultipageTiff() {
-      return options_.multipageTiffMetadataFile_;
+      return options_.mpTiffMetadataFile_;
+   }
+   
+   public boolean getSeperateFilesForPositionsMPTiff() {
+      return options_.mpTiffSeperateFilesForPositions_;
    }
 
    private void updateTitle() {
