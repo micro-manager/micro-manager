@@ -44,7 +44,6 @@ const char* g_PixelType_8bit = "8bit";
 const char* g_PixelType_16bit = "16bit";
 const char* g_PixelType_RGB32bit = "RGB 32bit";
 
-
 #ifdef WIN32
 /////////////////////////////////////////////////////////////////////////////
 // CPCOMicroManagerApp

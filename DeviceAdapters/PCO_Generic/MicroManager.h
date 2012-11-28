@@ -33,10 +33,23 @@
 #include <map>
 
 #if !defined KAMLIBVERSION
-#error Missing current pco 3rdparty library v224 (in camera.h). Please copy pco lib into 3rdparty folder. See pco_generic.zip in DeviceAdapters/pco_generic.
+#pragma message ("*****************************************************************************************")
+#pragma message ("* Please upgrade Kamlib library in ./3rdparty/PCO/Windows/pco_generic to current version!")
+#pragma message ("* Copy the content of the pco_generic.zip file to the corresponding 3rdparty folder.")
+#error Missing current pco 3rdparty library (in camera.h). Please copy pco lib into 3rdparty folder. See pco_generic.zip in DeviceAdapters/pco_generic.
 #endif
-#if KAMLIBVERSION < 224
-#error Old pco library found (< v224 in camera.h). Please update your pco lib in 3rdparty folder. See pco_generic.zip in DeviceAdapters/pco_generic.
+
+#define KAMLIBVERSION_MM 227  // Will be incremented by pco when a new Kamlib is present (do not change)
+#if KAMLIBVERSION != KAMLIBVERSION_MM
+#define STRING2(x) #x
+#define STRING(x) STRING2(x)
+#pragma message ("*****************************************************************************************")
+#pragma message ("* Please upgrade Kamlib library in ./3rdparty/PCO/Windows/pco_generic to current version!")
+#pragma message ("* Copy the content of the pco_generic.zip file to the corresponding 3rdparty folder.")
+#pragma message ("* Current kamblib version:" STRING(KAMLIBVERSION))
+#pragma message ("*    This kamblib version:" STRING(KAMLIBVERSION_MM))
+#pragma message ("*****************************************************************************************")
+#error Wrong Kamlib version
 #endif
 
 #define MMSENSICAM_MAX_STRLEN    400
