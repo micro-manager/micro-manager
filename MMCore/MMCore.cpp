@@ -1169,6 +1169,7 @@ void CMMCore::waitForDevice(MM::Device* pDev) throw (CMMError)
 
    MM::TimeoutMs timeout(GetMMTimeNow(),timeoutMs_);
    MMThreadGuard guard(pluginManager_.getModuleLock(pDev));
+   
    while (pDev->Busy())
    {
       if (timeout.expired(GetMMTimeNow()))
@@ -2333,9 +2334,7 @@ void CMMCore::stopSequenceAcquisition() throw (CMMError)
 {
    if (camera_)
    {
-      // Note: this lock will cause deadlock issues with the DemoCamera
-      // since it will result in the democamera calling itself closing the shutter
-      // MMThreadGuard guard(pluginManager_.getModuleLock(camera_));
+      MMThreadGuard guard(pluginManager_.getModuleLock(camera_));
       int nRet = camera_->StopSequenceAcquisition();
       if (nRet != DEVICE_OK)
       {

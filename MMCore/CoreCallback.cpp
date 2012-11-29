@@ -166,7 +166,10 @@ int CoreCallback::AcqFinished(const MM::Device* /*caller*/, int /*statusCode*/)
    if (core_->autoShutter_ && core_->shutter_)
    {
       core_->shutter_->SetOpen(false);
-      core_->waitForDevice(core_->shutter_);
+      // Don't wait for the shutter, because we typically call waitForDevice from
+      // a sequence thread and can cause a deadlock of shutter and camera
+      // are in the same module.
+      //core_->waitForDevice(core_->shutter_);
    }
    return DEVICE_OK;
 }
