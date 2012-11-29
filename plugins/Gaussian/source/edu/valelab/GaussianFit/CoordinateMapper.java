@@ -38,8 +38,10 @@ import java.util.Map;
 import org.apache.commons.math.linear.Array2DRowRealMatrix;
 import org.apache.commons.math.linear.DecompositionSolver;
 import org.apache.commons.math.linear.LUDecompositionImpl;
+import org.apache.commons.math.linear.QRDecompositionImpl;
 import org.apache.commons.math.linear.RealMatrix;
-import org.micromanager.utils.MathFunctions;
+
+
 
 public class CoordinateMapper {
    final private ExponentPairs exponentPairs_;
@@ -48,8 +50,10 @@ public class CoordinateMapper {
    final private int order_;
    final private PointMap pointMap_;
    final private AffineTransform af_;
+   final private AffineTransform rbAf_;
    final public static int LWM = 1;
    final public static int AFFINE = 2;
+   final public static int RIGIDBODY = 3;
    
    private int method_ = LWM;
 
@@ -207,15 +211,113 @@ public class CoordinateMapper {
       return new Point2D.Double(sumWeightedPolyX / sumWeights,
                                 sumWeightedPolyY / sumWeights);
    }
+   
+   
+   /***  Affine Transform (from Micro-Manager Math utils ***/
+   
+   
+   /**
+    * Helper function for generateAffineTransformFromPointPairs
+    * @param m
+    * @param pt
+    * @param row 
+    */ 
+  private static void insertPoint2DInMatrix(RealMatrix m, Point2D.Double pt, int row) {
+      // Set row to [x,y,1]:
+      m.setEntry(row, 0, pt.x);
+      m.setEntry(row, 1, pt.y);
+      m.setEntry(row, 2, 1);
+   }
+   
+    /**
+    * Creates an AffineTransform object that maps a source planar coordinate system to
+    * a destination planar coordinate system. At least three point pairs are needed.
+    * 
+    * @pointPairs is a Map of points measured in the two coordinates systems (srcPt->destPt)
+    */
+   public static AffineTransform generateAffineTransformFromPointPairs(Map<Point2D.Double, Point2D.Double> pointPairs) {
+      RealMatrix u = new Array2DRowRealMatrix(pointPairs.size(), 3);
+      RealMatrix v = new Array2DRowRealMatrix(pointPairs.size(), 3);
 
+      // Create u (source) and v (dest) matrices whose row vectors
+      // are [x,y,1] for each Point2D.Double:
+
+      int i = 0;
+      for (Map.Entry pair : pointPairs.entrySet()) {
+         Point2D.Double uPt = (Point2D.Double) pair.getKey();
+         Point2D.Double vPt = (Point2D.Double) pair.getValue();
+
+         insertPoint2DInMatrix(u, uPt, i);
+         insertPoint2DInMatrix(v, vPt, i);
+
+         i++;
+      }
+      // Find the 3x3 linear least squares solution to u*m'=v
+      // (the last row should be [0,0,1]):
+      DecompositionSolver solver = (new QRDecompositionImpl(u)).getSolver();
+      double[][] m = solver.solve(v).transpose().getData();
+
+      // Create an AffineTransform object from the elements of m
+      // (the last row is omitted as specified in AffineTransform class):
+      return new AffineTransform(m[0][0], m[1][0], m[0][1], m[1][1], m[0][2], m[1][2]);
+   }
+   
+
+   /*** Rigid body transform (rotation and translation only)
+   
+   
+    /**
+    * Creates an AffineTransform object that uses only rotation and translation
+    * 
+    * @pointPairs is a Map of points measured in the two coordinates systems (srcPt->destPt)
+    */
+   public static AffineTransform generateRigidBodyTransform(Map<Point2D.Double, Point2D.Double> pointPairs) {
+      int number = pointPairs.size();
+      
+     
+      RealMatrix X = new Array2DRowRealMatrix(2 * number, 4);
+      RealMatrix U = new Array2DRowRealMatrix(2 * number, 1);
+      
+      int i= 0;
+      for (Map.Entry<Point2D.Double, Point2D.Double> pair : pointPairs.entrySet()) {
+         double[] thisRow = {pair.getKey().x, pair.getKey().y, 1.0, 0.0};
+         X.setRow(i, thisRow);
+         double[] otherRow = {pair.getKey().y, -pair.getKey().x, 0.0, 1.0};
+         X.setRow(i + number, otherRow);
+            
+         U.setEntry(i, 0, pair.getValue().x);
+         U.setEntry(i + number, 0, pair.getValue().y); 
+         i++;
+      }
+      
+      DecompositionSolver solver = (new QRDecompositionImpl(X)).getSolver();
+      double[][] m = solver.solve(U).getData();
+      
+      
+      return new AffineTransform(m[0][0], m[1][0], - m[1][0], m[0][0], m[2][0], m[3][0]);
+   }
+   
+   
+   /*** General methods ***/
+   
    public Point2D.Double transform(Point2D.Double srcTestPoint) {
       if (method_ == LWM)
          return computeTransformation(kdTree_, srcTestPoint, controlPoints_, exponentPairs_);
-      try {  
-         return (Point2D.Double) af_.transform(srcTestPoint, null);
-      } catch (Exception ex) {
-         return null;
+      if (method_ == AFFINE ) {
+         try {
+            return (Point2D.Double) af_.transform(srcTestPoint, null);
+         } catch (Exception ex) {
+            return null;
+         }
       }
+      if (method_ == RIGIDBODY) {
+         try {
+            return (Point2D.Double) rbAf_.transform(srcTestPoint, null);
+         } catch (Exception ex) {
+            return null;
+         }
+      }
+      return null;
    }
    
    public void setMethod(int method) {
@@ -233,12 +335,21 @@ public class CoordinateMapper {
       pointMap_ = pointMap;
       order_ = order;
       method_ = method;
+      
+      // Set up LWM
       exponentPairs_ = polynomialExponents(order);
       final ArrayList<Point2D.Double> keys = new ArrayList<Point2D.Double>();
       keys.addAll(pointMap.keySet());
       final Point2D.Double[] keyArray = keys.toArray(new Point2D.Double[]{});
       kdTree_ = new EnhancedKDTree(keyArray);
       controlPoints_ = createControlPoints(kdTree_, order_, pointMap_);
-      af_ = MathFunctions.generateAffineTransformFromPointPairs(pointMap);
+      
+      // Set up Affine transform
+      af_ = generateAffineTransformFromPointPairs(pointMap);
+      
+      // set up Rigid Body
+      rbAf_ = generateRigidBodyTransform(pointMap);
+
+      
    }   
 }

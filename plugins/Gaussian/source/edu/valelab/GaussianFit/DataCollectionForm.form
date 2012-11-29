@@ -124,7 +124,6 @@
                       <EmptySpace max="-2" attributes="0"/>
                   </Group>
                   <Group type="102" alignment="1" attributes="1">
-                      <EmptySpace max="32767" attributes="0"/>
                       <Component id="jLabel6" min="-2" max="-2" attributes="0"/>
                       <EmptySpace min="-2" pref="87" max="-2" attributes="0"/>
                   </Group>
@@ -842,9 +841,10 @@
           <Font name="Lucida Grande" size="11" style="0"/>
         </Property>
         <Property name="model" type="javax.swing.ComboBoxModel" editor="org.netbeans.modules.form.editors2.ComboBoxModelEditor">
-          <StringArray count="2">
-            <StringItem index="0" value="LWM"/>
+          <StringArray count="3">
+            <StringItem index="0" value="RigidBody"/>
             <StringItem index="1" value="Affine"/>
+            <StringItem index="2" value="LWM"/>
           </StringArray>
         </Property>
       </Properties>

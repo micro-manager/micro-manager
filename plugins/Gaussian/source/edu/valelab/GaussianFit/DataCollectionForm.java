@@ -622,7 +622,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
             }
         });
 
-        pairsButton.setFont(new java.awt.Font("Lucida Grande", 0, 10)); // NOI18N
+        pairsButton.setFont(new java.awt.Font("Lucida Grande", 0, 10));
         pairsButton.setText("Pairs");
         pairsButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -630,7 +630,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
             }
         });
 
-        c2CorrectButton.setFont(new java.awt.Font("Lucida Grande", 0, 10)); // NOI18N
+        c2CorrectButton.setFont(new java.awt.Font("Lucida Grande", 0, 10));
         c2CorrectButton.setText("2C Correct");
         c2CorrectButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -686,7 +686,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
         jLabel3.setFont(new java.awt.Font("Lucida Grande", 0, 11));
         jLabel3.setText("< spot <");
 
-        SigmaLabel2.setFont(new java.awt.Font("Lucida Grande", 0, 11)); // NOI18N
+        SigmaLabel2.setFont(new java.awt.Font("Lucida Grande", 0, 11));
         SigmaLabel2.setText("nm");
 
         IntLabel2.setFont(new java.awt.Font("Lucida Grande", 0, 11));
@@ -708,7 +708,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
             }
         });
 
-        renderButton_.setFont(new java.awt.Font("Lucida Grande", 0, 11)); // NOI18N
+        renderButton_.setFont(new java.awt.Font("Lucida Grande", 0, 11));
         renderButton_.setText("Render");
         renderButton_.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -720,7 +720,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
 
         jSeparator3.setOrientation(javax.swing.SwingConstants.VERTICAL);
 
-        saveFormatBox_.setFont(new java.awt.Font("Lucida Grande", 0, 11)); // NOI18N
+        saveFormatBox_.setFont(new java.awt.Font("Lucida Grande", 0, 11));
         saveFormatBox_.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "Binary", "Text" }));
 
         jSeparator4.setOrientation(javax.swing.SwingConstants.VERTICAL);
@@ -741,7 +741,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
             }
         });
 
-        pairsMaxDistanceField_.setFont(new java.awt.Font("Lucida Grande", 0, 11)); // NOI18N
+        pairsMaxDistanceField_.setFont(new java.awt.Font("Lucida Grande", 0, 11));
         pairsMaxDistanceField_.setText("500");
 
         SigmaLabel3.setFont(new java.awt.Font("Lucida Grande", 0, 11));
@@ -807,10 +807,10 @@ public class DataCollectionForm extends javax.swing.JFrame {
             }
         });
 
-        zCalibrationLabel_.setFont(new java.awt.Font("Lucida Grande", 0, 10)); // NOI18N
+        zCalibrationLabel_.setFont(new java.awt.Font("Lucida Grande", 0, 10));
         zCalibrationLabel_.setText("UnCalibrated");
 
-        listButton_.setFont(new java.awt.Font("Lucida Grande", 0, 10)); // NOI18N
+        listButton_.setFont(new java.awt.Font("Lucida Grande", 0, 10));
         listButton_.setText("List");
         listButton_.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -819,7 +819,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
         });
 
         method2CBox_.setFont(new java.awt.Font("Lucida Grande", 0, 11)); // NOI18N
-        method2CBox_.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "LWM", "Affine" }));
+        method2CBox_.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "RigidBody", "Affine", "LWM" }));
         method2CBox_.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 method2CBox_ActionPerformed(evt);
@@ -901,7 +901,6 @@ public class DataCollectionForm extends javax.swing.JFrame {
                                             .add(centerTrackButton_, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 101, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))))))
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED))
                     .add(org.jdesktop.layout.GroupLayout.TRAILING, layout.createSequentialGroup()
-                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                         .add(jLabel6)
                         .add(87, 87, 87)))
                 .add(jSeparator4, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
@@ -3618,6 +3617,8 @@ public class DataCollectionForm extends javax.swing.JFrame {
       int method = CoordinateMapper.LWM;
       if (method2CBox_.getSelectedItem().equals("Affine"))
          method = CoordinateMapper.AFFINE;
+      if (method2CBox_.getSelectedItem().equals("RigidBody"))
+         method = CoordinateMapper.RIGIDBODY;
       c2t_.setMethod(method);
       
       ij.IJ.showStatus("Executing color correction");
