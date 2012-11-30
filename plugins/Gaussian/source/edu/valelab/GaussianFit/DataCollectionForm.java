@@ -819,7 +819,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
         });
 
         method2CBox_.setFont(new java.awt.Font("Lucida Grande", 0, 11)); // NOI18N
-        method2CBox_.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "RigidBody", "Affine", "LWM" }));
+        method2CBox_.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "NR-Similarity", "Affine", "LWM" }));
         method2CBox_.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 method2CBox_ActionPerformed(evt);
@@ -3617,8 +3617,8 @@ public class DataCollectionForm extends javax.swing.JFrame {
       int method = CoordinateMapper.LWM;
       if (method2CBox_.getSelectedItem().equals("Affine"))
          method = CoordinateMapper.AFFINE;
-      if (method2CBox_.getSelectedItem().equals("RigidBody"))
-         method = CoordinateMapper.RIGIDBODY;
+      if (method2CBox_.getSelectedItem().equals("NR-Similarity"))
+         method = CoordinateMapper.NONRFEFLECTIVESIMILARITY;
       c2t_.setMethod(method);
       
       ij.IJ.showStatus("Executing color correction");
@@ -3657,7 +3657,8 @@ public class DataCollectionForm extends javax.swing.JFrame {
             }
 
             // Add transformed data to data overview window
-            addSpotData(rowData.name_ + "-CC-" + method2CBox_.getSelectedItem(), 
+            addSpotData(rowData.name_ + "-CC-" +referenceName_.getText() + "-" + 
+                    method2CBox_.getSelectedItem(), 
                     rowData.title_, 
                     referenceName_.getText(), rowData.width_,
                     rowData.height_, rowData.pixelSizeNm_, 

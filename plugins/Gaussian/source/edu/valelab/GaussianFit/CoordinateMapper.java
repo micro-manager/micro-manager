@@ -53,7 +53,7 @@ public class CoordinateMapper {
    final private AffineTransform rbAf_;
    final public static int LWM = 1;
    final public static int AFFINE = 2;
-   final public static int RIGIDBODY = 3;
+   final public static int NONRFEFLECTIVESIMILARITY = 3;
    
    private int method_ = LWM;
 
@@ -310,7 +310,7 @@ public class CoordinateMapper {
             return null;
          }
       }
-      if (method_ == RIGIDBODY) {
+      if (method_ == NONRFEFLECTIVESIMILARITY) {
          try {
             return (Point2D.Double) rbAf_.transform(srcTestPoint, null);
          } catch (Exception ex) {
