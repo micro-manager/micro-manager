@@ -72,7 +72,7 @@ private:
    long imageCounter_;
    long insertIndex_;
    long saveIndex_;
-   unsigned int memorySizeMB_;
+   unsigned long memorySizeMB_;
    unsigned int numChannels_;
    unsigned int numSlices_;
    bool overflow_;

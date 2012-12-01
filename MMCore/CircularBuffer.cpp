@@ -34,9 +34,9 @@
 #undef min // avoid clash with the system defined macros
 #endif
 
-const int bytesInMB = 1048576;
+const long long bytesInMB = 1 << 20;
 const long adjustThreshold = LONG_MAX / 2;
-const unsigned int maxCBSize = 10000;    //a reasonable limit to circular buffer size
+const unsigned long maxCBSize = 100000;    //a reasonable limit to circular buffer size
 
 static MMThreadLock g_bufferLock;
 
@@ -82,7 +82,7 @@ bool CircularBuffer::Initialize(unsigned channels, unsigned slices, unsigned int
       // the actual size at the time of the creation is going to be less, because
       // images are not allocated until pixels become available
       unsigned long frameSizeBytes = width_ * height_ * pixDepth_ * numChannels_ * numSlices_;
-      unsigned long cbSize = (memorySizeMB_ * bytesInMB) / frameSizeBytes;
+      unsigned long cbSize = (unsigned long) ((memorySizeMB_ * bytesInMB) / frameSizeBytes);
 
       if (cbSize == 0) 
       {
