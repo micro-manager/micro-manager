@@ -160,6 +160,7 @@ public:
    int OnCameraCCDYSize(MM::PropertyBase* , MM::ActionType );
    int OnTriggerDevice(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnDropPixels(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnFastImage(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnSaturatePixels(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnFractionOfPixelsToDropOrSaturate(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnCCDTemp(MM::PropertyBase* pProp, MM::ActionType eAct);
@@ -193,6 +194,7 @@ private:
 	std::string triggerDevice_;
 
 	bool dropPixels_;
+   bool fastImage_;
 	bool saturatePixels_;
 	double fractionOfPixelsToDropOrSaturate_;
 

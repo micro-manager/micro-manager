@@ -242,7 +242,8 @@ CDemoCamera::CDemoCamera() :
    pDemoResourceLock_(0),
    triggerDevice_(""),
 	dropPixels_(false),
-	saturatePixels_(false),
+   fastImage_(false),
+   saturatePixels_(false),
 	fractionOfPixelsToDropOrSaturate_(0.002)
 {
    memset(testProperty_,0,sizeof(testProperty_));
@@ -450,6 +451,11 @@ int CDemoCamera::Initialize()
 	CreateProperty("SaturatePixels", "0", MM::Integer, false, pAct);
    AddAllowedValue("SaturatePixels", "0");
    AddAllowedValue("SaturatePixels", "1");
+
+   pAct = new CPropertyAction (this, &CDemoCamera::OnFastImage);
+	CreateProperty("FastImage", "0", MM::Integer, false, pAct);
+   AddAllowedValue("FastImage", "0");
+   AddAllowedValue("FastImage", "1");
 
    pAct = new CPropertyAction (this, &CDemoCamera::OnFractionOfPixelsToDropOrSaturate);
 	CreateProperty("FractionOfPixelsToDropOrSaturate", "0.002", MM::Float, false, pAct);
@@ -880,7 +886,12 @@ int CDemoCamera::InsertImage()
 
    MMThreadGuard g(imgPixelsLock_);
 
-   const unsigned char* pI = GetImageBuffer();
+   const unsigned char* pI;
+   if (!fastImage_) {
+      pI = GetImageBuffer();
+   } else {
+      pI = img_.GetPixels();
+   }
    unsigned int w = GetImageWidth();
    unsigned int h = GetImageHeight();
    unsigned int b = GetImageBytesPerPixel();
@@ -917,7 +928,11 @@ int CDemoCamera::ThreadRun (void)
       }
    }
    
-   ret = SnapImage();
+   if (!fastImage_) {
+      ret = SnapImage();
+   } else {
+      ret = DEVICE_OK;
+   }
    if (ret != DEVICE_OK)
    {
       return ret;
@@ -1344,6 +1359,26 @@ int CDemoCamera::OnDropPixels(MM::PropertyBase* pProp, MM::ActionType eAct)
    else if (eAct == MM::BeforeGet)
    {
       pProp->Set(dropPixels_?1L:0L);
+   }
+
+   return DEVICE_OK;
+}
+
+int CDemoCamera::OnFastImage(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   DemoHub* pHub = static_cast<DemoHub*>(GetParentHub());
+   if (pHub && pHub->GenerateRandomError())
+      return SIMULATED_ERROR;
+
+   if (eAct == MM::AfterSet)
+   {
+      long tvalue = 0;
+      pProp->Get(tvalue);
+		fastImage_ = (0==tvalue)?false:true;
+   }
+   else if (eAct == MM::BeforeGet)
+   {
+      pProp->Set(fastImage_?1L:0L);
    }
 
    return DEVICE_OK;
