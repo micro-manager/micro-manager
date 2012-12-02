@@ -3,8 +3,6 @@
  * BFCorrectorFrame.java
  * 
  *  Plugin for flatfield and background correction
- *  
- *
  * 
  * 
  * Nico Stuurman, copyright UCSF, 2012
@@ -25,10 +23,6 @@ package org.micromanager.bfcorrector;
 
 import ij.ImagePlus;
 import java.io.File;
-import mmcorej.CMMCore;
-
-import java.text.NumberFormat;
-
 import java.util.prefs.Preferences;
 
 import org.micromanager.api.AcquisitionEngine;
@@ -38,15 +32,23 @@ import org.micromanager.utils.FileDialogs.FileType;
 
 
 /**
- *
+ * This plugin can attach a Processor to the acquisition engine
+ * The Processor can execute either a flatfield correction, background subtraction
+ * or both.
+ * Both FlatField and Background images are read in as ImageJ (i.e. not as Micro-Manager)
+ * images
+ * The Flatfield image is normalized by its mean.  If a flatfield image is selected,
+ * the incoming image will be divided (pixel by pixel) by the normalized flatfield image.
+ * Division results in a 32-bit float image that is re-transformed to the original type.
+ * If a background image is selected, it will be subtracted from the original image.
+ * 
+ * 
+ * 
  * @author nico
  */
 public class BFCorrectorFrame extends javax.swing.JFrame {
    private final ScriptInterface gui_;
-   private final CMMCore core_;
    private Preferences prefs_;
-   
-   private NumberFormat nf_;
 
    private int frameXPos_ = 100;
    private int frameYPos_ = 100;
@@ -56,8 +58,11 @@ public class BFCorrectorFrame extends javax.swing.JFrame {
    private static final String FRAMEXPOS = "FRAMEXPOS";
    private static final String FRAMEYPOS = "FRAMEYPOS";
    private static final String FLATFIELDFILENAME = "FlatfieldFileName";
+   private static final String BACKGROUNDFILENAME = "BackgroundFileName";
+   private static final String USECHECKBOX = "UseCheckBox";
    private final String[] IMAGESUFFIXES = {"tif", "tiff", "jpg", "png"};
    private String flatfieldFileName_;
+   private String backgroundFileName_;
 
 
     /** 
@@ -67,40 +72,69 @@ public class BFCorrectorFrame extends javax.swing.JFrame {
     */
     public BFCorrectorFrame(ScriptInterface gui) {
        gui_ = gui;
-       core_ = gui_.getMMCore();
-       nf_ = NumberFormat.getInstance();
        prefs_ = Preferences.userNodeForPackage(this.getClass());
 
        initComponents();
-
-       setLocation(frameXPos_, frameYPos_);
-
        setBackground(gui_.getBackgroundColor());
-       
+          
        processor_ = new BFProcessor();
        
-       AcquisitionEngine eng = gui_.getAcquisitionEngine();
-       eng.addImageProcessor(processor_);
+       // Read preferences and apply to the dialog
+       frameXPos_ = prefs_.getInt(FRAMEXPOS, frameXPos_);
+       frameYPos_ = prefs_.getInt(FRAMEYPOS, frameYPos_);
+       setLocation(frameXPos_, frameYPos_);
+      
+       useCheckBox_.setSelected(prefs_.getBoolean(USECHECKBOX, true));
        
+       String flatFieldFileName = prefs_.get(FLATFIELDFILENAME, "");
+       processFlatFieldImage(flatFieldFileName);
+       flatFieldTextField_.setText(flatFieldFileName);
+       
+       if (useCheckBox_.isSelected()) {
+          attachProcessor();
+       }
 
     }
     
+    
+    private void attachProcessor() {
+       AcquisitionEngine eng = gui_.getAcquisitionEngine();
+       eng.addImageProcessor(processor_);
+    }
+    
+    private void dettachProcessor() {
+       AcquisitionEngine eng = gui_.getAcquisitionEngine();
+       eng.removeImageProcessor(processor_);
+    }
+     
     private void processFlatFieldImage(String fileName) {
        ij.io.Opener opener = new ij.io.Opener();
        
        ImagePlus ip = opener.openImage(fileName);
-       if (ip == null)
-          return;
        
+       // set flat field even if the processor is null
+       // otherwise, the use has no way to only select baground subtraction
        processor_.setFlatField(ip);
        
        
        flatfieldFileName_ = fileName;
        flatFieldTextField_.setText(flatfieldFileName_);
        prefs_.put(FLATFIELDFILENAME, flatfieldFileName_);
+           
+    }
+    
+    private void processBackgroundImage(String fileName) {
+       ij.io.Opener opener = new ij.io.Opener();
        
+       ImagePlus ip = opener.openImage(fileName);
        
-       
+       // set beckground even if the processor is null
+       // otherwise, the uses has no way to only select flatfielding
+       processor_.setBackground(ip);
+             
+       backgroundFileName_ = fileName;
+       backgroundTextField_.setText(backgroundFileName_);
+       prefs_.put(BACKGROUNDFILENAME, backgroundFileName_);
     }
     
 
@@ -118,8 +152,9 @@ public class BFCorrectorFrame extends javax.swing.JFrame {
         jLabel2 = new javax.swing.JLabel();
         flatFieldTextField_ = new javax.swing.JTextField();
         flatFieldButton_ = new javax.swing.JButton();
-        backGroundTextField_ = new javax.swing.JTextField();
+        backgroundTextField_ = new javax.swing.JTextField();
         backGroundButton_ = new javax.swing.JButton();
+        useCheckBox_ = new javax.swing.JCheckBox();
 
         setTitle("BFCorrector Plugin");
         setLocationByPlatform(true);
@@ -139,6 +174,11 @@ public class BFCorrectorFrame extends javax.swing.JFrame {
                 flatFieldTextField_ActionPerformed(evt);
             }
         });
+        flatFieldTextField_.addFocusListener(new java.awt.event.FocusAdapter() {
+            public void focusLost(java.awt.event.FocusEvent evt) {
+                flatFieldTextField_FocusLost(evt);
+            }
+        });
 
         flatFieldButton_.setText("...");
         flatFieldButton_.addActionListener(new java.awt.event.ActionListener() {
@@ -147,9 +187,9 @@ public class BFCorrectorFrame extends javax.swing.JFrame {
             }
         });
 
-        backGroundTextField_.addActionListener(new java.awt.event.ActionListener() {
+        backgroundTextField_.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                backGroundTextField_ActionPerformed(evt);
+                backgroundTextField_ActionPerformed(evt);
             }
         });
 
@@ -160,6 +200,13 @@ public class BFCorrectorFrame extends javax.swing.JFrame {
             }
         });
 
+        useCheckBox_.setText("Use");
+        useCheckBox_.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                useCheckBox_ActionPerformed(evt);
+            }
+        });
+
         org.jdesktop.layout.GroupLayout layout = new org.jdesktop.layout.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
@@ -167,45 +214,46 @@ public class BFCorrectorFrame extends javax.swing.JFrame {
             .add(layout.createSequentialGroup()
                 .addContainerGap()
                 .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                    .add(useCheckBox_)
+                    .add(backgroundTextField_, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 277, Short.MAX_VALUE)
+                    .add(jLabel1)
+                    .add(flatFieldTextField_, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 277, Short.MAX_VALUE)
+                    .add(jLabel2))
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
+                .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
                     .add(org.jdesktop.layout.GroupLayout.TRAILING, layout.createSequentialGroup()
-                        .add(backGroundTextField_, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 235, Short.MAX_VALUE)
-                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                        .add(backGroundButton_, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 45, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                        .add(40, 40, 40)
-                        .add(jTextField5, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 0, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
-                    .add(layout.createSequentialGroup()
-                        .add(jLabel2)
-                        .addContainerGap(278, Short.MAX_VALUE))
-                    .add(org.jdesktop.layout.GroupLayout.TRAILING, layout.createSequentialGroup()
-                        .add(flatFieldTextField_, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 235, Short.MAX_VALUE)
-                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                         .add(flatFieldButton_, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 45, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                        .add(40, 40, 40))
-                    .add(layout.createSequentialGroup()
-                        .add(jLabel1)
-                        .addContainerGap(255, Short.MAX_VALUE))))
+                        .addContainerGap())
+                    .add(org.jdesktop.layout.GroupLayout.TRAILING, layout.createSequentialGroup()
+                        .add(backGroundButton_, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 45, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                        .add(18, 18, 18)
+                        .add(jTextField5, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 0, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
             .add(layout.createSequentialGroup()
                 .addContainerGap()
                 .add(jLabel2)
-                .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
                     .add(flatFieldTextField_, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                     .add(flatFieldButton_))
-                .add(34, 34, 34)
-                .add(jLabel1)
                 .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
                     .add(layout.createSequentialGroup()
-                        .add(5, 5, 5)
+                        .add(61, 61, 61)
                         .add(jTextField5, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
                     .add(layout.createSequentialGroup()
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
+                        .add(jLabel1)
+                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                         .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
-                            .add(backGroundTextField_, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                            .add(backgroundTextField_, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                             .add(backGroundButton_))))
-                .addContainerGap(49, Short.MAX_VALUE))
+                .addContainerGap(32, Short.MAX_VALUE))
+            .add(org.jdesktop.layout.GroupLayout.TRAILING, layout.createSequentialGroup()
+                .addContainerGap(155, Short.MAX_VALUE)
+                .add(useCheckBox_)
+                .addContainerGap())
         );
 
         pack();
@@ -223,37 +271,54 @@ public class BFCorrectorFrame extends javax.swing.JFrame {
     }//GEN-LAST:event_onWindowClosing
 
    private void flatFieldTextField_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_flatFieldTextField_ActionPerformed
-      // TODO add your handling code here:
+      processFlatFieldImage(flatFieldTextField_.getText());
    }//GEN-LAST:event_flatFieldTextField_ActionPerformed
 
-   private void flatFieldButton_ActionPerformed(java.awt.event.ActionEvent evt) {                                                 
-      File f = FileDialogs.openFile(this, "Flatfield image", 
+   private void flatFieldButton_ActionPerformed(java.awt.event.ActionEvent evt) {
+      File f = FileDialogs.openFile(this, "Flatfield image",
               new FileType("MMAcq", "Flatfield image",
-                      flatfieldFileName_, true, IMAGESUFFIXES ) );
+              flatfieldFileName_, true, IMAGESUFFIXES));
       if (f != null) {
          processFlatFieldImage(f.getAbsolutePath());
-         
-      }   
-      
+      }
    }
  
-   private void backGroundTextField_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_backGroundTextField_ActionPerformed
-      // TODO add your handling code here:
-   }//GEN-LAST:event_backGroundTextField_ActionPerformed
+   private void backgroundTextField_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_backgroundTextField_ActionPerformed
+      processBackgroundImage(backgroundTextField_.getText());
+   }//GEN-LAST:event_backgroundTextField_ActionPerformed
 
    private void backGroundButton_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_backGroundButton_ActionPerformed
-      // TODO add your handling code here:
+      File f = FileDialogs.openFile(this, "Background image",
+              new FileType("MMAcq", "Bakcground image",
+              backgroundFileName_, true, IMAGESUFFIXES));
+      if (f != null) {
+         processBackgroundImage(f.getAbsolutePath());
+      }
    }//GEN-LAST:event_backGroundButton_ActionPerformed
+
+   private void useCheckBox_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_useCheckBox_ActionPerformed
+      if (useCheckBox_.isSelected()) {
+         attachProcessor();
+      } else {
+         dettachProcessor();
+      }
+      prefs_.putBoolean(USECHECKBOX, useCheckBox_.isSelected());
+   }//GEN-LAST:event_useCheckBox_ActionPerformed
+
+   private void flatFieldTextField_FocusLost(java.awt.event.FocusEvent evt) {//GEN-FIRST:event_flatFieldTextField_FocusLost
+      processFlatFieldImage(flatFieldTextField_.getText());
+   }//GEN-LAST:event_flatFieldTextField_FocusLost
 
  
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton backGroundButton_;
-    private javax.swing.JTextField backGroundTextField_;
+    private javax.swing.JTextField backgroundTextField_;
     private javax.swing.JButton flatFieldButton_;
     private javax.swing.JTextField flatFieldTextField_;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel2;
     private javax.swing.JTextField jTextField5;
+    private javax.swing.JCheckBox useCheckBox_;
     // End of variables declaration//GEN-END:variables
 
 }
