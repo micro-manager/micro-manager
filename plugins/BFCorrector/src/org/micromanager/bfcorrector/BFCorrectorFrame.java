@@ -113,7 +113,7 @@ public class BFCorrectorFrame extends javax.swing.JFrame {
        ImagePlus ip = opener.openImage(fileName);
        
        // set flat field even if the processor is null
-       // otherwise, the use has no way to only select baground subtraction
+       // otherwise, the user has no way to only select baground subtraction
        processor_.setFlatField(ip);
        
        

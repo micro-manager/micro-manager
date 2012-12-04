@@ -1,4 +1,12 @@
-
+/**
+ * Code for Micro-Manager ImageProcessor that executes flatfielding and 
+ * background subtraction
+ * 
+ * Nico Stuurman.  Copyright UCSF, 2012
+ * 
+ * Released under the BSD license
+ * 
+ */
 package org.micromanager.bfcorrector;
 
 import ij.ImagePlus;
@@ -90,7 +98,7 @@ class BFProcessor extends DataProcessor<TaggedImage> {
    }
 
    /**
-    * Executes flatfielding
+    * Executes flat-fielding
     * 
     * 
     * 
@@ -128,7 +136,28 @@ class BFProcessor extends DataProcessor<TaggedImage> {
                   for (int x = 0; x < width; x++) {
                      for (int y = 0; y < height; y++) {
                         int index = (y * flatFieldWidth_) + x;
-                        newPixels[index] = (byte) (oldPixels[index] - backgroundPixels[index]);
+                        if (backgroundPixels[index] > oldPixels[index]) {
+                           newPixels[index] = 0;
+                        } else {
+                           newPixels[index] = (byte) (oldPixels[index] - backgroundPixels[index]);
+                     
+                        }
+                     }
+                  }
+                  nextImage = new TaggedImage(newPixels, newTags);
+               } else if (ijType == ImagePlus.GRAY16) {
+                  short[] newPixels = new short[width * height];
+                  short[] oldPixels = (short[]) nextImage.pix;
+                  short[] backgroundPixels = (short[]) background_.getProcessor().getPixels();
+                  for (int x = 0; x < width; x++) {
+                     for (int y = 0; y < height; y++) {
+                        int index = (y * flatFieldWidth_) + x;
+                        if (backgroundPixels[index] > oldPixels[index]) {
+                           newPixels[index] = 0;
+                        } else {
+                           newPixels[index] = (short) 
+                                   (oldPixels[index] - backgroundPixels[index]);                   
+                        }
                      }
                   }
                   nextImage = new TaggedImage(newPixels, newTags);
