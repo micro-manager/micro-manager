@@ -281,16 +281,11 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface, Device
    private final JSplitPane splitPane_;
    private volatile boolean ignorePropertyChanges_; 
 
-   public static AtomicBoolean seriousErrorReported_ = new AtomicBoolean(false);
    private JButton setRoiButton_;
    private  JButton clearRoiButton_;
 
    public ImageWindow getImageWin() {
       return getSnapLiveWin();
-   }
-
-   public boolean isSeriousErrorReported() {
-      return seriousErrorReported_.get();
    }
 
    public ImageWindow getSnapLiveWin() {
@@ -3360,6 +3355,7 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface, Device
 
     @Override
    public void stopAllActivity() {
+      this.acquisitionEngine2010.stop();
       enableLiveMode(false);
    }
 

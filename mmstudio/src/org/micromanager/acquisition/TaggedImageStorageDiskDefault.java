@@ -132,7 +132,7 @@ public class TaggedImageStorageDiskDefault implements TaggedImageStorage {
 
          File saveFile = new File(dir_, fileName);
          if (saveFile.exists()) {
-            MMStudioMainFrame.seriousErrorReported_.set(true);
+            MMStudioMainFrame.getInstance().stopAllActivity();
             throw new Exception("Image saving failed: " + saveFile.getAbsolutePath());
          }
          

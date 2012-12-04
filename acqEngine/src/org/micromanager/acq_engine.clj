@@ -78,10 +78,6 @@
 
 (def pixel-type-depths {"GRAY8" 1 "GRAY16" 2 "RGB32" 4 "RGB64" 8})
 
-(defn check-for-serious-error []
-  (when (. gui isSeriousErrorReported)
-    (swap! state assoc :stop true)))
-
 ;; time
 
 (defn jvm-time-ms []
@@ -371,7 +367,6 @@
           camera-channel-names (get-camera-channel-names)]
       (doall
         (loop [burst-seqs bursts-per-camera-channel i 0]
-          (check-for-serious-error)
           (when (core isBufferOverflowed)
             (swap! state assoc :circular-buffer-overflow true))
           (when (and (not (@state :stop))
@@ -616,7 +611,6 @@
 
 (defn execute [event-fns]
   (doseq [event-fn event-fns :while (not (:stop @state))]
-    (check-for-serious-error)
     (event-fn)
     (await-resume)))
 

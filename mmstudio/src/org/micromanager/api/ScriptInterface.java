@@ -1037,12 +1037,6 @@ public interface ScriptInterface {
    public boolean getAutoreloadOption();
 
    /*
-    * Returns true if a serious error has been reported. Periodically
-    * called by the acquisition engine.
-    */
-   public boolean isSeriousErrorReported();
-
-   /*
     * Returns the pipeline
     */
    public IAcquisitionEngine2010 getAcquisitionEngine2010();
