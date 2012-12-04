@@ -152,6 +152,7 @@ CPCOCam::CPCOCam() :
   m_iPixelRate = 0;
   m_iTimestamp = 0;
 
+  m_bSettingsChanged = TRUE;
   // DemoMode (pre-initialization property)
   CPropertyAction* pAct = new CPropertyAction (this, &CPCOCam::OnDemoMode);
   CreateProperty("DemoMode", "Off", MM::String, false, pAct, true);
@@ -410,8 +411,7 @@ int CPCOCam::OnDemoMode(MM::PropertyBase* pProp, MM::ActionType eAct)
 // Binning
 int CPCOCam::OnBinning(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
-  int nMode;
-  int nErr;
+  int nErr = 0;
 
   if(m_bDemoMode)
     return DEVICE_OK;
@@ -462,8 +462,12 @@ int CPCOCam::OnBinning(MM::PropertyBase* pProp, MM::ActionType eAct)
   }
   else if (eAct == MM::BeforeGet)
   {
-    nErr = m_pCamera->getsettings(&nMode, &m_nTrig, &m_nRoiXMin, &m_nRoiXMax, &m_nRoiYMin, &m_nRoiYMax,
-                           &m_nHBin, &m_nVBin, m_pszTimes, &m_iGain, &m_iOffset, &m_uiFlags);
+    if(m_bSettingsChanged)
+    {
+      nErr = m_pCamera->getsettings(&m_nMode, &m_nTrig, &m_nRoiXMin, &m_nRoiXMax, &m_nRoiYMin, &m_nRoiYMax,
+        &m_nHBin, &m_nVBin, m_pszTimes, &m_iGain, &m_iOffset, &m_uiFlags);
+      m_bSettingsChanged = FALSE;
+    }
     if (nErr != 0)
       return nErr;
     pProp->Set((long)m_nHBin);
@@ -473,8 +477,7 @@ int CPCOCam::OnBinning(MM::PropertyBase* pProp, MM::ActionType eAct)
 
 int CPCOCam::OnEMLeftROI(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
-  int nMode;
-  int nErr;
+  int nErr = 0;
 
   if(m_bDemoMode)
     return DEVICE_OK;
@@ -503,8 +506,12 @@ int CPCOCam::OnEMLeftROI(MM::PropertyBase* pProp, MM::ActionType eAct)
   }
   else if (eAct == MM::BeforeGet)
   {
-    nErr = m_pCamera->getsettings(&nMode, &m_nTrig, &m_nRoiXMin, &m_nRoiXMax, &m_nRoiYMin, &m_nRoiYMax,
-                           &m_nHBin, &m_nVBin, m_pszTimes, &m_iGain, &m_iOffset, &m_uiFlags);
+    if(m_bSettingsChanged)
+    {
+      nErr = m_pCamera->getsettings(&m_nMode, &m_nTrig, &m_nRoiXMin, &m_nRoiXMax, &m_nRoiYMin, &m_nRoiYMax,
+        &m_nHBin, &m_nVBin, m_pszTimes, &m_iGain, &m_iOffset, &m_uiFlags);
+      m_bSettingsChanged = FALSE;
+    }
     if (nErr != 0)
       return nErr;
 
@@ -517,7 +524,7 @@ int CPCOCam::OnEMLeftROI(MM::PropertyBase* pProp, MM::ActionType eAct)
 int CPCOCam::SetupCamera()
 {
   unsigned int uiMode;
-  int nErr;
+  int nErr = 0;
   int istopresult;
   int iOffsPxr;
 
@@ -544,6 +551,7 @@ int CPCOCam::SetupCamera()
     iOffsPxr = m_iPixelRate;
   nErr = m_pCamera->setcoc(m_nMode, m_nTrig, m_nRoiXMin, m_nRoiXMax, m_nRoiYMin, m_nRoiYMax,
                            m_nHBin, m_nVBin, m_pszTimes, m_iGain, iOffsPxr, m_uiFlags);
+  m_bSettingsChanged = TRUE;
   if (nErr != 0)
     return nErr;
   nErr = ResizeImageBuffer();
@@ -645,7 +653,7 @@ int CPCOCam::Initialize()
 
   CPropertyAction* pAct;
   // Initialize the camera
-  int nErr;
+  int nErr = 0;
  
   InitLib(MMIJ, NULL, 0, NULL);
 
@@ -1034,7 +1042,7 @@ int CPCOCam::Shutdown()
 
 int CPCOCam::SnapImage()
 {
-  int nErr;
+  int nErr = 0;
   int cnt = m_iSkipImages;
 
   if(m_bDemoMode)
@@ -1190,15 +1198,19 @@ const unsigned char* CPCOCam::GetImageBuffer()
 
 int CPCOCam::SetROI(unsigned uX, unsigned uY, unsigned uXSize, unsigned uYSize)
 {
-  int nErr;
+  int nErr = 0;
 
   if(m_pCamera->iCamClass == 2)
     return DEVICE_OK;
   if(m_bDemoMode)
     return DEVICE_OK;
 
-  nErr = m_pCamera->getsettings(&m_nMode, &m_nTrig, &m_nRoiXMin, &m_nRoiXMax, &m_nRoiYMin, &m_nRoiYMax,
-		&m_nHBin, &m_nVBin, m_pszTimes, &m_iGain, &m_iOffset, &m_uiFlags);
+  if(m_bSettingsChanged)
+  {
+    nErr = m_pCamera->getsettings(&m_nMode, &m_nTrig, &m_nRoiXMin, &m_nRoiXMax, &m_nRoiYMin, &m_nRoiYMax,
+      &m_nHBin, &m_nVBin, m_pszTimes, &m_iGain, &m_iOffset, &m_uiFlags);
+    m_bSettingsChanged = FALSE;
+  }
   if (nErr != 0)
     return nErr;
 
@@ -1245,7 +1257,7 @@ int CPCOCam::SetROI(unsigned uX, unsigned uY, unsigned uXSize, unsigned uYSize)
 
 int CPCOCam::GetROI(unsigned& uX, unsigned& uY, unsigned& uXSize, unsigned& uYSize)
 {
-  int nErr;
+  int nErr = 0;
   if(m_bDemoMode)
   {
     uXSize = uX = 1280;
@@ -1253,8 +1265,12 @@ int CPCOCam::GetROI(unsigned& uX, unsigned& uY, unsigned& uXSize, unsigned& uYSi
 
     return DEVICE_OK;
   }  
-  nErr = m_pCamera->getsettings(&m_nMode, &m_nTrig, &m_nRoiXMin, &m_nRoiXMax, &m_nRoiYMin, &m_nRoiYMax,
-	&m_nHBin, &m_nVBin, m_pszTimes, &m_iGain, &m_iOffset, &m_uiFlags);
+  if(m_bSettingsChanged)
+  {
+    nErr = m_pCamera->getsettings(&m_nMode, &m_nTrig, &m_nRoiXMin, &m_nRoiXMax, &m_nRoiYMin, &m_nRoiYMax,
+      &m_nHBin, &m_nVBin, m_pszTimes, &m_iGain, &m_iOffset, &m_uiFlags);
+    m_bSettingsChanged = FALSE;
+  }
 
   if (nErr != 0)
      return nErr;
@@ -1279,7 +1295,7 @@ int CPCOCam::GetROI(unsigned& uX, unsigned& uY, unsigned& uXSize, unsigned& uYSi
 
 int CPCOCam::ClearROI()
 {
-  int nErr;
+  int nErr = 0;
    
   if(m_bDemoMode)
     return DEVICE_OK;
@@ -1307,8 +1323,12 @@ int CPCOCam::ClearROI()
   // Liisa: read the current ROI to the variables to be used in SnapImage
   // Although the values set by SET_COC are correct here, it goes wrong somewhere later
   // and in SnapImage the old ROI is used
-  nErr = m_pCamera->getsettings(&m_nMode, &m_nTrig, &m_nRoiXMin, &m_nRoiXMax, &m_nRoiYMin, &m_nRoiYMax,
-                                &m_nHBin, &m_nVBin, m_pszTimes, &m_iGain, &m_iOffset, &m_uiFlags);
+  if(m_bSettingsChanged)
+  {
+    nErr = m_pCamera->getsettings(&m_nMode, &m_nTrig, &m_nRoiXMin, &m_nRoiXMax, &m_nRoiYMin, &m_nRoiYMax,
+      &m_nHBin, &m_nVBin, m_pszTimes, &m_iGain, &m_iOffset, &m_uiFlags);
+    m_bSettingsChanged = FALSE;
+  }
   // end Liisa
 
   if(nErr != 0)
@@ -1333,7 +1353,7 @@ int CPCOCam::ResizeImageBuffer()
   int nWidth = 1, nHeight = 1;
   int as;
 
-  int nErr;
+  int nErr = 0;
   if(m_bDemoMode)
   {
     nWidth = 1280;
@@ -1365,7 +1385,7 @@ int CPCOCam::PrepareSequenceAcqusition()
 
 int CPCOCam::StartSequenceAcquisition(long numImages, double /*interval_ms*/, bool stopOnOverflow)
 {
-  int nErr;
+  int nErr = 0;
 
   if (Busy() || sequenceRunning_)
     return DEVICE_CAMERA_BUSY_ACQUIRING;
@@ -1386,7 +1406,7 @@ int CPCOCam::StartSequenceAcquisition(long numImages, double /*interval_ms*/, bo
 
 int CPCOCam::StopSequenceAcquisition()
 {
-  int nErr;
+  int nErr = 0;
 
   sthd_->Stop();
   sthd_->wait();

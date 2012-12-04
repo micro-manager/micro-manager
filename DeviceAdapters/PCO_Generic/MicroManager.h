@@ -229,6 +229,7 @@ private:
    int m_iOffset;
    int m_iTimestamp;
    unsigned int m_uiFlags;
+   bool m_bSettingsChanged;
 };
 
 #endif //_SENSICAM_H_
