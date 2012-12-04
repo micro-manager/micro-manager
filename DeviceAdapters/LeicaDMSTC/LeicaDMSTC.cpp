@@ -7,6 +7,7 @@
 //                                                                                     
 // AUTHOR:        G. Esteban Fernandez, 27-Aug-2012
 //                Based on LeicaDMR adapter by Nico Stuurman.
+//				  Update 31-Oct-2012:  commented out lines 266-271
 //
 // COPYRIGHT:     2012, Children's Hospital Los Angeles
 // LICENSE:       This file is distributed under the BSD license.
@@ -250,16 +251,25 @@ int XYStage::Initialize()
 	if (ret != DEVICE_OK)
 		return ret;
 
+	//wait while stage is moving to origin
 	while(Busy()){
 	}
 
-	//move to bottom right to define x,y limits
-	ret = g_hub.InitRange(*this, *GetCoreCallback());
-	if (ret != DEVICE_OK)
-		return ret;
-
-	while(Busy()){
-	}
+	////////////////////////////////////////////////////////////////////////////
+	//THIS IS NOT NECESSARY FOR NORMAL OPERATION IN Micro-Manager.
+	//COMMENTED OUT TO MINIMIZE POTENTIALLY DANGEROUS & UNNEEDED STAGE MOVEMENT:
+	//
+	//Move to bottom right to define x,y limits, otherwise the commands
+	//GET_LIMIT_X1/Y1 and GET_LIMIT_X2/Y2 (020 - 023) give three
+	//question marks as return values
+	//
+	//ret = g_hub.InitRange(*this, *GetCoreCallback());
+	//if (ret != DEVICE_OK)
+	//	return ret;
+	//
+	//while(Busy()){  
+	//}
+	////////////////////////////////////////////////////////////////////////////
 
 	ret = GetStepLimits(lowerLimitX_, upperLimitX_, lowerLimitY_, upperLimitY_);
 	if (ret != DEVICE_OK)
