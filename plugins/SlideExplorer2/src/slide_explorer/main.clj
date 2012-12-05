@@ -94,12 +94,16 @@
       (core getTaggedImage)))
 
 (defn acquire-tagged-image-sequence []
-  (let [q (.run (AcquisitionEngine2010. gui) (.. gui getAcquisitionEngine getSequenceSettings) false)]
+  (let [engine (AcquisitionEngine2010. gui)
+        settings (.. gui getAcquisitionEngine getSequenceSettings)
+        q (.run engine settings false)]
     (take-while #(not= % TaggedImageQueue/POISON)
                 (repeatedly #(.take q)))))
 
 (defn acquire-processor-sequence []
   (map tagged-image-to-processor (acquire-tagged-image-sequence)))
+
+(def acquire-processor-sequence* (memoize acquire-processor-sequence))
 
 (defn acquire-at
   "Move the stage to position x,y and acquire a multi-dimensional
@@ -112,7 +116,7 @@
       (core waitForDevice xy-stage)
       (acquire-processor-sequence)
       )))
- 
+
 ;; run using acquisitions
 
 ;;; channel display settings

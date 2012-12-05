@@ -71,6 +71,7 @@
                  	    (/ height zoom)))
 
 (defn screen-rectangle
+  "Returns a rectangle centered at x,y."
   [{:keys [x y width height zoom]}]
   (Rectangle. (- (* x zoom) (/ width 2))
               (- (* y zoom) (/ height 2))
@@ -79,7 +80,9 @@
 
 ;; TILING
 
-(defn child-index [n]
+(defn child-index
+  "Converts an x,y index to one in a child (1/2x zoom)."
+  [n]
   (floor-int (/ n 2)))
 
 (defn child-indices [indices]
@@ -306,6 +309,10 @@
     [screen-state memory-tiles]))
 
 
+;; testing
+
+(defn copy-contrast []
+  (swap! ss2 assoc :channels (:channels @ss)))
 
 (defn big-region-contrast []
   (swap! ss assoc
