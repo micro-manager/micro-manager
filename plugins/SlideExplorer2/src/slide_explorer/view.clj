@@ -187,7 +187,7 @@
       (paint-tiles overlay-tiles-atom screen-state [tile-width tile-height])
       enable-anti-aliasing
       (.setTransform original-transform)
-      (show-mouse-pos screen-state)
+      ;(show-mouse-pos screen-state)
       (.setColor Color/WHITE)
       (.drawString (str (select-keys screen-state [:mouse :x :y :zoom])) 10 20)
       (.drawString (str (absolute-mouse-position screen-state)) 10 40))))
@@ -195,6 +195,7 @@
 ;; Loading visible tiles
 
 (defn overlay-loader
+  "Creates overlay tiles for visible monochrome tiles in memory."
   [screen-state-atom memory-tile-atom overlay-tiles-atom]
   (let [visible-tile-positions (tiles-in-pixel-rectangle
                                  (screen-rectangle @screen-state-atom)
@@ -211,8 +212,8 @@
                                (multi-color-tile memory-tile-atom tile
                                                  (:channels @screen-state-atom)))))))
 
-(defn visible-loader
-  "Loads tiles needed for drawing."
+(defn monochrome-loader
+  "Loads monochrome tiles needed for drawing."
   [screen-state-atom memory-tile-atom acquired-images]
   (let [visible-tile-positions (tiles-in-pixel-rectangle
                                  (screen-rectangle @screen-state-atom)
@@ -231,23 +232,23 @@
   "Runs visible-loader whenever screen-state-atom changes."
   [screen-state-atom memory-tile-atom
    overlay-tiles-atom acquired-images]
-  (let [react-mem-fn (fn [_ _] (visible-loader screen-state-atom memory-tile-atom
+  (let [react-monochrome (fn [_ _] (monochrome-loader screen-state-atom memory-tile-atom
                                            acquired-images))
-        react-vis-fn (fn [_ _] (overlay-loader screen-state-atom memory-tile-atom
+        react-overlay (fn [_ _] (overlay-loader screen-state-atom memory-tile-atom
                                                overlay-tiles-atom))
         agent (agent {})]
     (def agent1 agent)
     (reactive/handle-update
       memory-tile-atom
-      react-vis-fn
+      react-overlay
       agent)
     (reactive/handle-update
       screen-state-atom
-      react-mem-fn
+      react-monochrome
       agent)
     (reactive/handle-update
       acquired-images
-      react-mem-fn
+      react-monochrome
       agent)
     ))
   
