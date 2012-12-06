@@ -128,7 +128,7 @@
   (let [channel-names (keys channels-map)
         procs (for [chan channel-names]
                 (let [tile-index (assoc tile-indices :nc chan)]
-                  (tile-cache/get-tile memory-tiles-atom tile-index false)))
+                  (tile-cache/get-tile memory-tiles-atom tile-index)))
         lut-maps (map channels-map channel-names)]
     (overlay-memo procs lut-maps)))
 
@@ -155,13 +155,12 @@
                         :zoom (screen-state :zoom)
                         :nx nx :ny ny :nt 0
                         :nz (screen-state :z)}]
-        (let [[x y] (tile-to-pixels [nx ny] [tile-width tile-height] 1)]
-          ;  (draw-test-tile g x y)
-          )
+;        (let [[x y] (tile-to-pixels [nx ny] [tile-width tile-height] 1)]
+;            (draw-test-tile g x y)
+;          )
         (when-let [image (tile-cache/get-tile
                            overlay-tiles-atom
-                           tile-index
-                           false)]
+                           tile-index)]
           (let [[x y] (tile-to-pixels [nx ny] [tile-width tile-height] 1)]
             (draw-image g image x y)
             ))))))

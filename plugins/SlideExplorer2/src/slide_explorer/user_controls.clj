@@ -44,29 +44,47 @@
 
 ;; full screen
 
-(defn- default-screen-device [] ; borrowed from see-saw
-  (->
-    (java.awt.GraphicsEnvironment/getLocalGraphicsEnvironment)
-    .getDefaultScreenDevice))
+(defn- screen-devices []
+  (seq (.. java.awt.GraphicsEnvironment
+      getLocalGraphicsEnvironment
+      getScreenDevices)))
+
+(defn- screen-bounds [screen]
+  (.. screen getDefaultConfiguration getBounds))
+
+(defn- overlap-area [rect1 rect2]
+  (let [intersection (.intersection rect1 rect2)]
+    (* (.height intersection) (.width intersection))))
+
+(defn- window-screen [window]
+  (when window
+    (let [window-bounds (.getBounds window)
+          screens (screen-devices)]
+      (apply max-key #(overlap-area window-bounds
+                                    (screen-bounds %)) screens))))
+
+(defn full-screen-window []
+  (first (remove nil?
+                 (map #(.getFullScreenWindow %)
+                      (screen-devices)))))
 
 (defn full-screen!
   "Make the given window/frame full-screen. Pass nil to return all windows
 to normal size."
-  ([^java.awt.GraphicsDevice device window]
+  ([window]
     (if window
-      (when (not= (.getFullScreenWindow device) window)
+      (when (not= (full-screen-window) window)
+        (full-screen! nil)
         (.dispose window)
         (.setUndecorated window true)
-        (.setFullScreenWindow device window)
+        (.setFullScreenWindow (window-screen window) window)
         (.show window))
-      (when-let [window (.getFullScreenWindow device)]
+      (when-let [window (full-screen-window)]
         (.dispose window)
-        (.setFullScreenWindow device nil)
+        (.setFullScreenWindow (window-screen window) nil)
         (.setUndecorated window false)
         (.show window)))
-    window)
-  ([window]
-    (full-screen! (default-screen-device) window)))
+    window))
 
 (defn setup-fullscreen [window]
   (bind-window-keys window ["F"] #(full-screen! window))
