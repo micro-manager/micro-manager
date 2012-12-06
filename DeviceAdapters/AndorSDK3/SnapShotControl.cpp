@@ -77,10 +77,11 @@ void SnapShotControl::poiseForSnapShot()
                                           (reinterpret_cast<unsigned long>( first_image_buffer ) + 7 ) & ~0x7);
       bufferControl->Queue(pucAlignedBuffer, static_cast<int>(ImageSize));
       
-      second_image_buffer = new unsigned char[static_cast<int>(ImageSize+7)];
-      pucAlignedBuffer = reinterpret_cast<unsigned char*>(
-                                          (reinterpret_cast<unsigned long>( second_image_buffer ) + 7 ) & ~0x7);
-      bufferControl->Queue(pucAlignedBuffer, static_cast<int>(ImageSize));
+      // TODO Remove at later date once field testing verifies
+      //second_image_buffer = new unsigned char[static_cast<int>(ImageSize+7)];
+      //pucAlignedBuffer = reinterpret_cast<unsigned char*>(
+      //                                    (reinterpret_cast<unsigned long>( second_image_buffer ) + 7 ) & ~0x7);
+      //bufferControl->Queue(pucAlignedBuffer, static_cast<int>(ImageSize));
    }
    startAcquisitionCommand->Do();
    is_poised_ = true;

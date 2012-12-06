@@ -1002,7 +1002,6 @@ AT_64 CAndorSDK3Camera::GetTimeStamp(unsigned char* pBuf)
    else {
       ss_logTimeStamp << "[GetTimeStamp] No timestamp found in frame: " << thd_->GetImageCounter();
    }
-   LogMessage(ss_logTimeStamp.str());
    return i64_timestamp;
 }
 
