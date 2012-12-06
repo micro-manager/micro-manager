@@ -42,14 +42,24 @@
   [(int (* tile-zoom nx tile-width))
    (int (* tile-zoom ny tile-height))])
 
+(defn pixel-rectangle-to-tile-bounds
+  [rectangle [tile-width tile-height]]
+  {:nl (floor-int (/ (.x rectangle) tile-width))
+   :nr (floor-int (/ (+ -1 (.getWidth rectangle) (.x rectangle)) tile-width))
+   :nt (floor-int (/ (.y rectangle) tile-height))
+   :nb (floor-int (/ (+ -1 (.getHeight rectangle) (.y rectangle)) tile-height))})
+
+(defn tile-in-tile-bounds?
+  [[nx ny] bounds]
+  (let [{:keys [nl nr nt nb]} bounds]
+    (and (<= nl nx nr)
+         (<= nt ny nb)))) 
+
 (defn tile-in-pixel-rectangle?
   [[nx ny] rectangle [tile-width tile-height]]
-  (let [nl (floor-int (/ (.x rectangle) tile-width))
-        nr (floor-int (/ (+ -1 (.getWidth rectangle) (.x rectangle)) tile-width))
-        nt (floor-int (/ (.y rectangle) tile-height))
-        nb (floor-int (/ (+ -1 (.getHeight rectangle) (.y rectangle)) tile-height))]
-    (and (<= nl nx nr)
-         (<= nt ny nb))))   
+  (tile-in-tile-bounds? [nx ny]
+                        (pixel-rectangle-to-tile-bounds
+                          rectangle [tile-width tile-height])))
 
 (defn tiles-in-pixel-rectangle
   "Returns a list of tile indices found in a given pixel rectangle."

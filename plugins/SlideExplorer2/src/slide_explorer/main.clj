@@ -19,8 +19,9 @@
            (org.micromanager.MMStudioMainFrame))
   (:use [org.micromanager.mm :only (core edt mmc gui load-mm json-to-data)]
         [slide-explorer.affine :only (set-destination-origin transform inverse-transform)]
-        [slide-explorer.view :only (show add-to-memory-tiles tile-in-pixel-rectangle?
-                                    pixel-rectangle screen-rectangle tiles-in-pixel-rectangle)]
+        [slide-explorer.view :only (show add-to-memory-tiles pixel-rectangle 
+                                         pixel-rectangle-to-tile-bounds
+                                         tile-in-tile-bounds?)]
         [slide-explorer.image :only (show-image intensity-range lut-object)]
         [slide-explorer.tiles :only (floor-int center-tile tile-list offset-tiles)]
         [slide-explorer.persist :only (save-as)]
@@ -133,19 +134,23 @@
 ;; tile arrangement
 
 (defn number-of-tiles [{:keys [width height zoom]} [tile-width tile-height]]
-  (* (+ 2 (Math/max 1 (floor-int (/ width tile-width zoom))))
-     (+ 2 (Math/max 1 (floor-int (/ height tile-height zoom))))))
+  (let [largest-side
+        (+ 3 (max (floor-int (/ width tile-width zoom))
+                  (floor-int (/ height tile-height zoom)) 0))]
+    (* largest-side largest-side)))
 
 (defn next-tile [screen-state acquired-images [tile-width tile-height]]
   (let [center-tile (center-tile [(:x screen-state) (:y screen-state)]
                                  [tile-width tile-height])
         pixel-rect (pixel-rectangle screen-state)
-        number-tiles (number-of-tiles screen-state [tile-width tile-height])
-        trajectory (take number-tiles (offset-tiles center-tile tile-list))
-        allowed (filter #(tile-in-pixel-rectangle?
-                           % pixel-rect [tile-width tile-height])
-                        trajectory)]
-    (first (remove @acquired-images allowed))))
+        bounds (pixel-rectangle-to-tile-bounds pixel-rect [tile-width tile-height])
+        number-tiles (number-of-tiles screen-state [tile-width tile-height])]
+    (->> tile-list
+         (offset-tiles center-tile)
+         (take number-tiles)
+         (filter #(tile-in-tile-bounds? % bounds))
+         (remove @acquired-images)
+         first)))
 
 ;; tile acquisition management
 
