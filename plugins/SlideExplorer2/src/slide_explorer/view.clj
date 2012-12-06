@@ -165,6 +165,13 @@
           (let [[x y] (tile-to-pixels [nx ny] [tile-width tile-height] 1)]
             (draw-image g image x y)
             ))))))
+
+(defn show-mouse-pos [graphics screen-state]
+  (let [{:keys [x y]} (:mouse screen-state)]
+    (when (and x y)
+      (doto graphics
+        (.setColor Color/BLUE)
+        (.drawRect (- x 25) (- y 25) 50 50)))))
 	
 (defn paint-screen [graphics screen-state overlay-tiles-atom]
   (let [original-transform (.getTransform graphics)
@@ -180,6 +187,7 @@
       (paint-tiles overlay-tiles-atom screen-state [tile-width tile-height])
       enable-anti-aliasing
       (.setTransform original-transform)
+      (show-mouse-pos screen-state)
       (.setColor Color/WHITE)
       (.drawString (str (select-keys screen-state [:mouse :x :y :zoom])) 10 20)
       (.drawString (str (absolute-mouse-position screen-state)) 10 40))))
