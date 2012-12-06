@@ -128,7 +128,7 @@
   (let [channel-names (keys channels-map)
         procs (for [chan channel-names]
                 (let [tile-index (assoc tile-indices :nc chan)]
-                  (tile-cache/get-tile memory-tiles-atom tile-index)))
+                  (tile-cache/get-tile memory-tiles-atom tile-index false)))
         lut-maps (map channels-map channel-names)]
     (overlay-memo procs lut-maps)))
 
@@ -142,6 +142,11 @@
         {:x (long (+ x (/ mouse-x-centered zoom)))
          :y (long (+ y (/ mouse-y-centered zoom)))}))))
 
+(defn draw-test-tile [g x y]
+  (doto g
+    (.setColor Color/YELLOW)
+    (.drawRect (+ 2 x) ( + y 2) 508 508)))
+
 (defn paint-tiles [^Graphics2D g overlay-tiles-atom screen-state [tile-width tile-height]]
   (let [pixel-rect (.getClipBounds g)]
     (doseq [[nx ny] (tiles-in-pixel-rectangle pixel-rect
@@ -150,11 +155,16 @@
                         :zoom (screen-state :zoom)
                         :nx nx :ny ny :nt 0
                         :nz (screen-state :z)}]
+        (let [[x y] (tile-to-pixels [nx ny] [tile-width tile-height] 1)]
+          ;  (draw-test-tile g x y)
+          )
         (when-let [image (tile-cache/get-tile
                            overlay-tiles-atom
-                           tile-index)]
+                           tile-index
+                           false)]
           (let [[x y] (tile-to-pixels [nx ny] [tile-width tile-height] 1)]
-            (draw-image g image x y)))))))
+            (draw-image g image x y)
+            ))))))
 	
 (defn paint-screen [graphics screen-state overlay-tiles-atom]
   (let [original-transform (.getTransform graphics)
@@ -162,6 +172,7 @@
         x-center (/ (screen-state :width) 2)
         y-center (/ (screen-state :height) 2)
         [tile-width tile-height] [512 512]]
+    ;(.printStackTrace (Throwable.))
     (doto graphics
       (.setClip 0 0 (:width screen-state) (:height screen-state))
       (.translate (- x-center (int (* (:x screen-state) zoom)))
@@ -229,7 +240,8 @@
     (reactive/handle-update
       acquired-images
       react-mem-fn
-      agent)))
+      agent)
+    ))
   
 ;; MAIN WINDOW AND PANEL
 
@@ -261,6 +273,7 @@
                                        :update 0)
         overlay-tiles (tile-cache/create-tile-cache 100)
         panel (main-panel screen-state overlay-tiles)]
+    ;(println overlay-tiles)
     (load-visible-only screen-state memory-tiles
                        overlay-tiles acquired-images)
     (repaint-on-change panel [screen-state memory-tiles overlay-tiles])
@@ -297,8 +310,10 @@
     (def ss2 screen-state2)
     (def pnl panel)
     (def mt memory-tiles)
+    (def mt2 memory-tiles2)
     (def f frame)
     (def ai acquired-images)
+    (println ss ss2 mt mt2)
     (.add (.getContentPane frame) split-pane)
     (setup-fullscreen frame)
     (make-view-controllable panel screen-state)
