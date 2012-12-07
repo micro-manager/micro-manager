@@ -292,7 +292,7 @@ int Cdc1394::OnFrameRate(MM::PropertyBase* pProp, MM::ActionType eAct)
 
 
 // Binning, not supported yet
-int Cdc1394::OnBinning(MM::PropertyBase* pProp, MM::ActionType eAct)
+int Cdc1394::OnBinning(MM::PropertyBase* /* pProp */, MM::ActionType /* eAct*/)
 {
    return DEVICE_OK;
 }
@@ -315,7 +315,7 @@ int Cdc1394::OnExposure(MM::PropertyBase* pProp, MM::ActionType eAct)
          // AVT has vendor specific code for an extended shutter
          // this accepts shutter times in µs which makes it easier to work with
          // OK, set using extended register, MM exposure is in ms so *1000 -> us
-         exposure_us = (uint32_t) 1000.0*exposure_ms;
+         exposure_us = (uint32_t) 1000.0 * (uint32_t) exposure_ms;
          err_=dc1394_avt_set_extented_shutter(camera_,exposure_us);
          if(err_!=DC1394_SUCCESS) return DEVICE_ERR;
       } else {
@@ -378,7 +378,7 @@ int Cdc1394::OnIntegration(MM::PropertyBase* pProp, MM::ActionType eAct)
 }
 
 
-int Cdc1394::OnPixelType(MM::PropertyBase* pProp, MM::ActionType eAct)
+int Cdc1394::OnPixelType(MM::PropertyBase* /* pProp */, MM::ActionType /* eAct */ )
 {
    /*
    ccDatatype ccDataType;
@@ -430,7 +430,7 @@ int Cdc1394::OnPixelType(MM::PropertyBase* pProp, MM::ActionType eAct)
 }
 
 // ScanMode
-int Cdc1394::OnScanMode(MM::PropertyBase* pProp, MM::ActionType eAct)
+int Cdc1394::OnScanMode(MM::PropertyBase* /* pProp */ , MM::ActionType /* eAct*/ )
 {
    return DEVICE_OK;
 }
@@ -1211,7 +1211,7 @@ bool Cdc1394::InitFeatureMode(dc1394feature_info_t &featureInfo, dc1394feature_t
 		std::cerr << featureLabel << ": Setting power on\n";
 	}
 	// Find out what modes are available, set by default to manual, override to auto if available
-	for (int mod_no = 0; mod_no < featureInfo_.modes.num; mod_no++)  
+	for (unsigned int mod_no = 0; mod_no < featureInfo_.modes.num; mod_no++)  
 	{
 		switch ( featureInfo_.modes.modes[mod_no] ) {
 			case DC1394_FEATURE_MODE_MANUAL:
@@ -1777,7 +1777,8 @@ int Cdc1394::ResizeImageBuffer()
    int i = 0;
    while( status == DC1394_OFF && i < 10 ) 
    {
-     usleep(50000);
+     //usleep(50000);
+     CDeviceUtils::SleepMs(50);
      if (dc1394_video_get_transmission(camera_, &status)!=DC1394_SUCCESS)
         return ERR_GET_TRANSMISSION_FAILED;
      i++;
@@ -1945,7 +1946,8 @@ int Cdc1394::StopTransmission()
    int i = 0;
    while( status == DC1394_ON && i < 50 )
    {       
-      usleep(50000);
+      // usleep(50000);
+      CDeviceUtils::SleepMs(50);
       if (dc1394_video_get_transmission(camera_, &status)!=DC1394_SUCCESS)
          return ERR_GET_TRANSMISSION_FAILED;
       i++;

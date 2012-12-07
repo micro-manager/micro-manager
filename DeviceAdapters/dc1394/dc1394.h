@@ -101,14 +101,14 @@ public:
    int IsExposureSequenceable(bool& isSequenceable) const {isSequenceable = false; return DEVICE_OK;}
 
    // action interface
-   int OnBinning(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnBinning(MM::PropertyBase* /* pProp */ , MM::ActionType /* eAct */);
    int OnBrightness(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnBrightnessMode(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnExposure(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnIntegration(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnFrameRate(MM::PropertyBase* pProp, MM::ActionType eAct);
-   int OnPixelType(MM::PropertyBase* pProp, MM::ActionType eAct);
-   int OnScanMode(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnPixelType(MM::PropertyBase* /* pProp */, MM::ActionType /* eAct */ );
+   int OnScanMode(MM::PropertyBase* /* pProp */, MM::ActionType /* eAct */);
    int OnTimeout(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnGain(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnGainMode(MM::PropertyBase* pProp, MM::ActionType eAct);
