@@ -36,6 +36,8 @@
 
 (def gui-prefs (Preferences/userNodeForPackage MMStudioMainFrame))
 
+(def ^{:dynamic true} tile-dimensions [512 512])
+
 (defn set-stage-to-pixel-transform [^AffineTransform affine-transform]
   (JavaUtils/putObjectInPrefs
     gui-prefs (str "affine_transform_" (core getCurrentPixelSizeConfig))
@@ -139,12 +141,13 @@
                   (floor-int (/ height tile-height zoom)) 0))]
     (* largest-side largest-side)))
 
-(defn next-tile [screen-state acquired-images [tile-width tile-height]]
-  (let [center-tile (center-tile [(:x screen-state) (:y screen-state)]
-                                 [tile-width tile-height])
+(defn next-tile [screen-state acquired-images]
+  (let [tile-dimensions (screen-state :tile-dimensions)
+        center-tile (center-tile [(:x screen-state) (:y screen-state)]
+                                 tile-dimensions)
         pixel-rect (pixel-rectangle screen-state)
-        bounds (pixel-rectangle-to-tile-bounds pixel-rect [tile-width tile-height])
-        number-tiles (number-of-tiles screen-state [tile-width tile-height])]
+        bounds (pixel-rectangle-to-tile-bounds pixel-rect tile-dimensions)
+        number-tiles (number-of-tiles screen-state tile-dimensions)]
     (->> tile-list
          (offset-tiles center-tile)
          (take number-tiles)
@@ -156,44 +159,45 @@
 
 (def image-processing-executor (Executors/newFixedThreadPool 1))
  
-(defn add-tiles-at [memory-tiles [nx ny] affine-stage-to-pixel acquired-images]
+(defn add-tiles-at [memory-tiles [nx ny] affine-stage-to-pixel acquired-images tile-dimensions]
   (swap! acquired-images conj [nx ny])
-  (doseq [image (doall (acquire-at (inverse-transform
-                                     (Point. (* 512 nx) (* 512 ny))
-                                     affine-stage-to-pixel)))]
-    (let [indices {:nx nx
-                   :ny ny
-                   :nz (get-in image [:tags "SliceIndex"])
-                   :nt 0
-                   :nc (or (get-in image [:tags "Channel"]) "Default")}]
-      (add-to-memory-tiles 
-           memory-tiles
-           indices
-           (image :proc)))))
+  (let [[tile-width tile-height] tile-dimensions]
+    (doseq [image (doall (acquire-at (inverse-transform
+                                       (Point. (* tile-width nx)
+                                               (* tile-height ny))
+                                       affine-stage-to-pixel)))]
+      (let [indices {:nx nx
+                     :ny ny
+                     :nz (get-in image [:tags "SliceIndex"])
+                     :nt 0
+                     :nc (or (get-in image [:tags "Channel"]) "Default")}]
+        (add-to-memory-tiles 
+          memory-tiles
+          indices
+          (image :proc))))))
     
 (defn acquire-next-tile
   [memory-tiles-atom
    screen-state-atom acquired-images
-   affine [tile-width tile-height]]
+   affine]
   (when-let [next-tile (next-tile @screen-state-atom
-                                  acquired-images
-                                  [tile-width tile-height])]
-    (add-tiles-at memory-tiles-atom next-tile affine acquired-images)
+                                  acquired-images)]
+    (add-tiles-at memory-tiles-atom next-tile affine acquired-images
+                  (@screen-state-atom :tile-dimensions))
     next-tile))
 
 (def explore-executor (Executors/newFixedThreadPool 1))
 
 (defn explore [memory-tiles-atom screen-state-atom acquired-images
-               affine [tile-width tile-height]]
+               affine]
   ;(println "explore")
   (reactive/submit explore-executor
                    #(when (acquire-next-tile memory-tiles-atom
                                              screen-state-atom
                                              acquired-images
-                                             affine
-                                             [tile-width tile-height])
+                                             affine)
                       (explore memory-tiles-atom screen-state-atom
-                           acquired-images affine [tile-width tile-height]))))
+                           acquired-images affine))))
                       
 ; Overall scheme
 ; the GUI is generally reactive.
@@ -222,22 +226,23 @@
   "The main function that starts a slide explorer window."
   ([dir new?]
     (core waitForDevice (core getXYStageDevice))
-    (let [acquired-images (atom #{})
-          affine-stage-to-pixel (origin-here-stage-to-pixel-transform)
-          first-seq (acquire-at (inverse-transform (Point. 0 0) affine-stage-to-pixel))
-          [screen-state memory-tiles] (show dir acquired-images)
-          explore-fn #(explore memory-tiles screen-state acquired-images
-                               affine-stage-to-pixel [512 512])]
-      (.mkdirs dir)
-      (def mt memory-tiles)
-      (def affine affine-stage-to-pixel)
-      (def ss screen-state)
-      (def ai acquired-images)
-      (swap! ss assoc :channels (initial-lut-maps first-seq))
-      (when new?
-        (explore-fn)
-        (add-watch ss "explore" (fn [_ _ old new] (when-not (= old new)
-                                                    (explore-fn)))))))
+    (binding [tile-dimensions [(core getImageWidth) (core getImageHeight)]]
+      (let [acquired-images (atom #{})
+            affine-stage-to-pixel (origin-here-stage-to-pixel-transform)
+            first-seq (acquire-at (inverse-transform (Point. 0 0) affine-stage-to-pixel))
+            [screen-state memory-tiles] (show dir acquired-images tile-dimensions)
+            explore-fn #(explore memory-tiles screen-state acquired-images
+                                 affine-stage-to-pixel)]
+        (.mkdirs dir)
+        (def mt memory-tiles)
+        (def affine affine-stage-to-pixel)
+        (def ss screen-state)
+        (def ai acquired-images)
+        (swap! ss assoc :channels (initial-lut-maps first-seq))
+        (when new?
+          (explore-fn)
+          (add-watch ss "explore" (fn [_ _ old new] (when-not (= old new)
+                                                      (explore-fn))))))))
   ([]
     (go (file (str "tmp" (rand-int 10000000))) true)))
   

@@ -157,21 +157,21 @@
     (.setColor Color/YELLOW)
     (.drawRect (+ 2 x) ( + y 2) 508 508)))
 
-(defn paint-tiles [^Graphics2D g overlay-tiles-atom screen-state [tile-width tile-height]]
-  (let [pixel-rect (.getClipBounds g)]
-    (doseq [[nx ny] (tiles-in-pixel-rectangle pixel-rect
-                                              [tile-width tile-height])]
+(defn paint-tiles [^Graphics2D g overlay-tiles-atom screen-state]
+  (let [pixel-rect (.getClipBounds g)
+        tile-dimensions (screen-state :tile-dimensions)]
+    (doseq [[nx ny] (tiles-in-pixel-rectangle pixel-rect tile-dimensions)]
       (let [tile-index {:nc :overlay
                         :zoom (screen-state :zoom)
                         :nx nx :ny ny :nt 0
                         :nz (screen-state :z)}]
-;        (let [[x y] (tile-to-pixels [nx ny] [tile-width tile-height] 1)]
+;        (let [[x y] (tile-to-pixels [nx ny] tile-dimensions 1)]
 ;            (draw-test-tile g x y)
 ;          )
         (when-let [image (tile-cache/get-tile
                            overlay-tiles-atom
                            tile-index)]
-          (let [[x y] (tile-to-pixels [nx ny] [tile-width tile-height] 1)]
+          (let [[x y] (tile-to-pixels [nx ny] tile-dimensions 1)]
             (draw-image g image x y)
             ))))))
 
@@ -187,18 +187,18 @@
         zoom (:zoom screen-state)
         x-center (/ (screen-state :width) 2)
         y-center (/ (screen-state :height) 2)
-        [tile-width tile-height] [512 512]]
+        [tile-width tile-height] (:tile-dimensions screen-state)]
     ;(.printStackTrace (Throwable.))
     (doto graphics
       (.setClip 0 0 (:width screen-state) (:height screen-state))
       (.translate (- x-center (int (* (:x screen-state) zoom)))
                   (- y-center (int (* (:y screen-state) zoom))))
-      (paint-tiles overlay-tiles-atom screen-state [tile-width tile-height])
+      (paint-tiles overlay-tiles-atom screen-state)
       enable-anti-aliasing
       (.setTransform original-transform)
       ;(show-mouse-pos screen-state)
       (.setColor Color/WHITE)
-      (.drawString (str (select-keys screen-state [:mouse :x :y :zoom])) 10 20)
+      (.drawString (str (select-keys screen-state [:mouse :x :y :z :zoom])) 10 20)
       (.drawString (str (absolute-mouse-position screen-state)) 10 40))))
 
 ;; Loading visible tiles
@@ -208,7 +208,7 @@
   [screen-state-atom memory-tile-atom overlay-tiles-atom]
   (let [visible-tile-positions (tiles-in-pixel-rectangle
                                  (screen-rectangle @screen-state-atom)
-                                 [512 512])]
+                                 (:tile-dimensions @screen-state-atom))]
     (doseq [[nx ny] visible-tile-positions]
       (let [tile {:nx nx
                   :ny ny
@@ -226,7 +226,7 @@
   [screen-state-atom memory-tile-atom acquired-images]
   (let [visible-tile-positions (tiles-in-pixel-rectangle
                                  (screen-rectangle @screen-state-atom)
-                                 [512 512])]
+                                 (:tile-dimensions @screen-state-atom))]
     (doseq [[nx ny] visible-tile-positions
             channel (keys (:channels @screen-state-atom))]
       (let [tile {:nx nx
@@ -283,12 +283,13 @@
     .show
     (.setBounds 10 10 500 500)))
     
-(defn view-panel [memory-tiles acquired-images]
+(defn view-panel [memory-tiles acquired-images tile-dimensions]
   (let [screen-state (atom (sorted-map :x 0 :y 0 :z 0 :zoom 1
                                        :width 100 :height 10
                                        :keys (sorted-set)
-                                       :channels (sorted-map))
-                                       :update 0)
+                                       :channels (sorted-map)
+                                       :tile-dimensions tile-dimensions
+                                       ))
         overlay-tiles (tile-cache/create-tile-cache 100)
         panel (main-panel screen-state overlay-tiles)]
     ;(println overlay-tiles)
@@ -314,12 +315,12 @@
       (show-where-pointing!
         pointing-screen-atom showing-screen-atom))))
 
-(defn show [dir acquired-images]
+(defn show [dir acquired-images tile-dimensions]
   (let [memory-tiles (tile-cache/create-tile-cache 100 dir)
         memory-tiles2 (tile-cache/create-tile-cache 100 dir)
         frame (main-frame)
-        [panel screen-state] (view-panel memory-tiles acquired-images)
-        [panel2 screen-state2] (view-panel memory-tiles2 acquired-images)
+        [panel screen-state] (view-panel memory-tiles acquired-images tile-dimensions)
+        [panel2 screen-state2] (view-panel memory-tiles2 acquired-images tile-dimensions)
         split-pane (JSplitPane. JSplitPane/HORIZONTAL_SPLIT true panel panel2)]
     (doto split-pane
       (.setResizeWeight 0.5)
