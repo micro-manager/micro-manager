@@ -72,7 +72,7 @@
 				AdditionalDependencies="libdc1394.a lib1394camera.a libgcc.a libsetupapi.a"
 				OutputFile="$(OutDir)/mmgr_dal_$(ProjectName).dll"
 				LinkIncremental="2"
-				AdditionalLibraryDirectories="libdc1394.a lib1394camera.a libgcc.a libsetupapi.a"
+				AdditionalLibraryDirectories="&quot;..\..\..\3rdpartypublic\dc1394-drivers\cmu1394&quot;;&quot;..\..\..\3rdpartypublic\dc1394-drivers\dc1394\lib&quot;"
 				GenerateDebugInformation="true"
 				ProgramDatabaseFile="$(OutDir)/$(ProjectName).pdb"
 				SubSystem="2"
@@ -158,7 +158,7 @@
 				AdditionalDependencies="libdc1394.a lib1394camera.a libgcc.a libsetupapi.a"
 				OutputFile="$(OutDir)/mmgr_dal_$(ProjectName).dll"
 				LinkIncremental="2"
-				AdditionalLibraryDirectories="libdc1394.a lib1394camera.a libgcc.a libsetupapi.a"
+				AdditionalLibraryDirectories="&quot;..\..\..\3rdpartypublic\dc1394-drivers\cmu1394&quot;;&quot;..\..\..\3rdpartypublic\dc1394-drivers\dc1394\lib&quot;"
 				GenerateDebugInformation="true"
 				ProgramDatabaseFile="$(OutDir)/$(ProjectName).pdb"
 				SubSystem="2"
@@ -240,7 +240,7 @@
 				AdditionalDependencies="libdc1394.a lib1394camera.a libgcc.a libsetupapi.a"
 				OutputFile="$(OutDir)/mmgr_dal_$(ProjectName).dll"
 				LinkIncremental="1"
-				AdditionalLibraryDirectories="libdc1394.a lib1394camera.a libgcc.a libsetupapi.a"
+				AdditionalLibraryDirectories="&quot;..\..\..\3rdpartypublic\dc1394-drivers\cmu1394&quot;;&quot;..\..\..\3rdpartypublic\dc1394-drivers\dc1394\lib&quot;"
 				GenerateDebugInformation="true"
 				SubSystem="2"
 				OptimizeReferences="2"
@@ -324,7 +324,7 @@
 				AdditionalDependencies="libdc1394.a lib1394camera.a libgcc.a libsetupapi.a"
 				OutputFile="$(OutDir)/mmgr_dal_$(ProjectName).dll"
 				LinkIncremental="1"
-				AdditionalLibraryDirectories="libdc1394.a lib1394camera.a libgcc.a libsetupapi.a"
+				AdditionalLibraryDirectories="&quot;..\..\..\3rdpartypublic\dc1394-drivers\cmu1394&quot;;&quot;..\..\..\3rdpartypublic\dc1394-drivers\dc1394\lib&quot;"
 				GenerateDebugInformation="true"
 				SubSystem="2"
 				OptimizeReferences="2"
@@ -375,6 +375,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\MMDevice\ImgBuffer.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\..\MMDevice\ModuleInterface.cpp"
 				>
 			</File>
@@ -393,7 +397,19 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\MMDevice\DeviceBase.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\MMDevice\DeviceUtils.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\MMDevice\ImgBuffer.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\MMDevice\MMDevice.h"
 				>
 			</File>
 			<File

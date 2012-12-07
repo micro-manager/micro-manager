@@ -259,6 +259,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "RaptorEPIX", "..\SecretDevi
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "SutterMPC", "..\SecretDeviceAdapters\SutterMPC\SutterMPC.vcproj", "{41F88027-BC30-4949-B407-42C2BCB34C60}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "dc1394", "..\DeviceAdapters\dc1394\dc1394.vcproj", "{D557C94D-4D26-48D0-B522-B314DC28800D}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
@@ -1238,6 +1240,12 @@ Global
 		{41F88027-BC30-4949-B407-42C2BCB34C60}.Release|Win32.Build.0 = Release|Win32
 		{41F88027-BC30-4949-B407-42C2BCB34C60}.Release|x64.ActiveCfg = Release|x64
 		{41F88027-BC30-4949-B407-42C2BCB34C60}.Release|x64.Build.0 = Release|x64
+		{D557C94D-4D26-48D0-B522-B314DC28800D}.Debug|Win32.ActiveCfg = Debug|Win32
+		{D557C94D-4D26-48D0-B522-B314DC28800D}.Debug|Win32.Build.0 = Debug|Win32
+		{D557C94D-4D26-48D0-B522-B314DC28800D}.Debug|x64.ActiveCfg = Debug|x64
+		{D557C94D-4D26-48D0-B522-B314DC28800D}.Release|Win32.ActiveCfg = Release|Win32
+		{D557C94D-4D26-48D0-B522-B314DC28800D}.Release|Win32.Build.0 = Release|Win32
+		{D557C94D-4D26-48D0-B522-B314DC28800D}.Release|x64.ActiveCfg = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
