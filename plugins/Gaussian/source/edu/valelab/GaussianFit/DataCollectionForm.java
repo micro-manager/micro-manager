@@ -1657,6 +1657,8 @@ public class DataCollectionForm extends javax.swing.JFrame {
                            double d2 = NearestPoint2D.distance2(pCh1, pCh2);
                            double d = Math.sqrt(d2);
                            rt.addValue("Distance", d);
+                           rt.addValue("Orientation (sine)", 
+                                   NearestPoint2D.orientation(pCh1, pCh2));
                            distances.add(d);
 
                            ip.putPixel((int) (pCh1.x / factor), (int) (pCh1.y / factor), (int) d);
@@ -1972,6 +1974,8 @@ public class DataCollectionForm extends javax.swing.JFrame {
                      rt.addValue(Terms.YPIX, spot.getGSD().getY());
                      rt.addValue("Distance", Math.sqrt(
                          NearestPoint2D.distance2(spot.getfp(), spot.getsp())));
+                     rt.addValue("Orientation (sine)", 
+                         NearestPoint2D.orientation(spot.getfp(), spot.getsp()));
                   }
                   spotId++;
                }
@@ -2010,9 +2014,12 @@ public class DataCollectionForm extends javax.swing.JFrame {
                while (itTracks.hasNext()) {
                   ArrayList<gsSpotPair> track = itTracks.next();
                   ArrayList<Double> distances = new ArrayList<Double>();
+                  ArrayList<Double>orientations = new ArrayList<Double>();
                   for (gsSpotPair pair : track) {
                      distances.add(Math.sqrt(
                              NearestPoint2D.distance2(pair.getfp(), pair.getsp())));
+                     orientations.add(NearestPoint2D.orientation(pair.getfp(), 
+                             pair.getsp()));
                   }
                   gsSpotPair pair = track.get(0);
                   rt2.incrementCounter();
@@ -2022,10 +2029,15 @@ public class DataCollectionForm extends javax.swing.JFrame {
                   rt2.addValue(Terms.CHANNEL, pair.getGSD().getSlice());
                   rt2.addValue(Terms.XPIX, pair.getGSD().getX());
                   rt2.addValue(Terms.YPIX, pair.getGSD().getY());
-                  double avg = avgList(distances);
                   rt2.addValue("n", track.size());
+                  
+                  double avg = avgList(distances);
                   rt2.addValue("Distance-Avg", avg);
                   rt2.addValue("Distance-StdDev", stdDevList(distances, avg));
+                  double oAvg = avgList(orientations);
+                  rt2.addValue("Orientation-Avg", oAvg);
+                  rt2.addValue("Orientation-StdDev", 
+                          stdDevList(orientations, oAvg));
 
                   spotId++;
                }

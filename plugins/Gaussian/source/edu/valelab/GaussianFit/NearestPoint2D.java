@@ -96,10 +96,39 @@ public class NearestPoint2D {
       return null;
    }
    
+   
+   /**
+    * Calculates the square of the distance between two points as
+    * square(difference in x) + square (difference in y)
+    * 
+    * @param p1 first point
+    * @param p2 second point
+    * @return square of the distance
+    */
    public static double distance2(Point2D.Double p1, Point2D.Double p2) {
       double x = p1.getX() - p2.getX();
       double y = p1.getY() - p2.getY();
       return ( (x * x) + (y * y) );  
+   }
+   
+   /**
+    * Calculates the orientation of these points with respect to each other.
+    * Draw a circle with point 1 at the center, and p2 on the perimeter
+    * Return the sine of the line connecting p1 and p2
+    * 
+    * @return sine of the line connecting p1 and p2 in relation to their shared 
+    * coordinate system
+    */
+   public static double orientation(Point2D.Double p1, Point2D.Double p2) {
+      double x = p2.getX() - p1.getX();
+      double y = p2.getY() - p1.getY();
+      double hyp = Math.sqrt( (x * x) + (y * y));
+      
+      if (hyp > 0.0) {
+       return y /hyp;
+      }
+      
+      return 0.0;
    }
    
 
