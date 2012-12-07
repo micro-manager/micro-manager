@@ -22,7 +22,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
-#include <unistd.h>
 #include <sstream>
 
 #ifdef WIN32
@@ -30,6 +29,8 @@
    #include <windows.h>
    #define snprintf _snprintf 
 #pragma warning(disable : 4996)
+#else
+#include <unistd.h>
 #endif
 
 char CDeviceUtils::m_pszBuffer[MM::MaxStrLength]={""};
