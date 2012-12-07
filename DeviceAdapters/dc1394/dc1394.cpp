@@ -1510,7 +1510,7 @@ int Cdc1394::ProcessImage(dc1394video_frame_t *frame, const unsigned char* desti
       // no integration, straight forward stuff
       if (integrateFrameNumber_ == 1)
       {
-         uint8_t* pixBuffer = const_cast<unsigned uint8_t*> (destination);
+         uint8_t* pixBuffer = const_cast<uint8_t*> (destination);
          rgb8ToBGRA8(pixBuffer, rgb_image, width, height);
       }
       // when integrating we are dealing with 16 bit images
@@ -1576,7 +1576,7 @@ int Cdc1394::ProcessImage(dc1394video_frame_t *frame, const unsigned char* desti
    {
       uint8_t* src;
       src = (uint8_t *) frame->image;
-      uint8_t* pixBuffer = const_cast<unsigned uint8_t*> (destination);
+      uint8_t* pixBuffer = const_cast<uint8_t*> (destination);
       rgb8ToBGRA8 (pixBuffer, src, width, height);
    }
    
