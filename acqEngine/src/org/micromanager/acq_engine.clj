@@ -631,7 +631,8 @@
         (.put out-queue TaggedImageQueue/POISON)
         ))
     (catch Throwable t (do (ReportingUtils/showError t "Acquisition failed.")
-                           (cleanup)))))
+                           (cleanup)
+                           (.put out-queue TaggedImageQueue/POISON)))))
 
 ;; generic metadata
 
