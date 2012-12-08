@@ -29,10 +29,17 @@ int TsiCam::OnBinning(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
    if (eAct == MM::AfterSet)
    {
+      long bin = 1;
+      pProp->Get(bin);
+      roiBinData.XBin = bin;
+      roiBinData.YBin = bin;
+      roiBinData.XPixels = fullFrame.XPixels / bin;
+      roiBinData.YPixels = fullFrame.YPixels / bin;
+      return ResizeImageBuffer(roiBinData);
    }
    else if (eAct == MM::BeforeGet)
    {
-      pProp->Set((long)binSize);
+      pProp->Set((long)roiBinData.XBin);
    }
    return DEVICE_OK;
 }

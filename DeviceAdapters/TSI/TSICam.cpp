@@ -102,7 +102,7 @@ MODULE_API MM::Device* CreateDevice(const char* deviceName)
 }
 
 TsiCam::TsiCam() :
-   initialized(0), binSize(1), stopOnOverflow(false),
+   initialized(0), stopOnOverflow(false),
    acquiring(0)
 {
    // set default error messages
@@ -200,10 +200,9 @@ int TsiCam::Initialize()
 
    vector<string> binValues;
    binValues.push_back("1");
-   // TODO: other bin values
-   //binValues.push_back("2");
-   //binValues.push_back("4");
-   //binValues.push_back("8");
+   binValues.push_back("2");
+   binValues.push_back("4");
+   binValues.push_back("8");
    ret = SetAllowedValues(MM::g_Keyword_Binning, binValues);
    assert(ret == DEVICE_OK);
 
@@ -250,40 +249,45 @@ int TsiCam::Initialize()
       assert(bRet);
    }
 
-   // TAPS
-   // try setting different rates to find out what is available
-   vector<string> tapValues;
-   uint32_t tapIdxOrg(0);
-   camHandle_->GetParameter(TSI_PARAM_READOUT_SPEED_INDEX, sizeof(uint32_t), &tapIdxOrg);
-   uint32_t tapIdx(0);
-   while (camHandle_->SetParameter(TSI_PARAM_TAPS_INDEX, tapIdx))
-   {
-      ostringstream txt;
-      uint32_t taps(0);
-      bRet = camHandle_->GetParameter(TSI_PARAM_TAPS_VALUE, sizeof(uint32_t), &taps);
-      if (bRet)
-      {
-         txt << taps;
-         tapValues.push_back(txt.str().c_str());
-         tapIdx++;
-      }
-      else
-      {
-         LogMessage("Error getting readout speed");
-      }
-   }
 
-   if (tapValues.size() > 0)
-   {
-      pAct = new CPropertyAction (this, &TsiCam::OnTaps);
-      ret = CreateProperty(g_NumberOfTaps, tapValues[0].c_str(), MM::String, false, pAct);
-      assert(ret == DEVICE_OK);
-      for (size_t i=0; i<tapValues.size(); i++)
-      {
-         AddAllowedValue(g_NumberOfTaps, tapValues[i].c_str(), (long)i);
-      }
-      bRet = camHandle_->SetParameter(TSI_PARAM_TAPS_INDEX, tapIdxOrg);
-      assert(bRet);
+   if (ParamSupported (TSI_PARAM_TAPS_INDEX)) {
+
+	   // TAPS
+	   // try setting different rates to find out what is available
+	   vector<string> tapValues;
+	   uint32_t tapIdxOrg(0);
+	   camHandle_->GetParameter(TSI_PARAM_TAPS_INDEX, sizeof(uint32_t), &tapIdxOrg);
+	   uint32_t tapIdx(0);
+	   while (camHandle_->SetParameter(TSI_PARAM_TAPS_INDEX, tapIdx))
+	   {
+		  ostringstream txt;
+		  uint32_t taps(0);
+		  bRet = camHandle_->GetParameter(TSI_PARAM_TAPS_VALUE, sizeof(uint32_t), &taps);
+		  if (bRet)
+		  {
+			 txt << taps;
+			 tapValues.push_back(txt.str().c_str());
+			 tapIdx++;
+		  }
+		  else
+		  {
+			 LogMessage("Error getting readout speed");
+		  }
+	   }
+
+	   if (tapValues.size() > 0)
+	   {
+		  pAct = new CPropertyAction (this, &TsiCam::OnTaps);
+		  ret = CreateProperty(g_NumberOfTaps, tapValues[0].c_str(), MM::String, false, pAct);
+		  assert(ret == DEVICE_OK);
+		  for (size_t i=0; i<tapValues.size(); i++)
+		  {
+			 AddAllowedValue(g_NumberOfTaps, tapValues[i].c_str(), (long)i);
+		  }
+		  bRet = camHandle_->SetParameter(TSI_PARAM_TAPS_INDEX, tapIdxOrg);
+		  assert(bRet);
+	   }
+
    }
 
    ret = ResizeImageBuffer();
@@ -387,7 +391,7 @@ unsigned TsiCam::GetBitDepth() const
 
 int TsiCam::GetBinning() const
 {
-   return binSize;
+   return roiBinData.XBin;
 }
 
 int TsiCam::SetBinning(int binSize)
@@ -413,20 +417,33 @@ void TsiCam::SetExposure(double dExpMs)
 
 int TsiCam::SetROI(unsigned x, unsigned y, unsigned xSize, unsigned ySize)
 {
-   // TODO
-   return DEVICE_UNSUPPORTED_COMMAND;
+   roiBinData.XPixels = xSize;
+   roiBinData.YPixels = ySize;
+   roiBinData.XOrigin = x;
+   roiBinData.YOrigin = y;
+   
+   return ResizeImageBuffer(roiBinData);
 }
 
 int TsiCam::GetROI(unsigned& x, unsigned& y, unsigned& xSize, unsigned& ySize)
 {
-   // TODO
+   x = roiBinData.XOrigin;
+   y = roiBinData.YOrigin;
+   xSize = roiBinData.XPixels;
+   ySize = roiBinData.YPixels;
+
    return DEVICE_OK;
 }
 
 int TsiCam::ClearROI()
 {
-   // TODO
-   return DEVICE_OK;
+   // reset roi
+   roiBinData.XOrigin = 0;
+   roiBinData.YOrigin = 0;
+   roiBinData.XPixels = fullFrame.XPixels / roiBinData.XBin;
+   roiBinData.YPixels = fullFrame.YPixels / roiBinData.YBin;
+
+   return ResizeImageBuffer(roiBinData);
 }
 
 int TsiCam::PrepareSequenceAcqusition()
@@ -509,6 +526,7 @@ int TsiCam::ResizeImageBuffer()
       return camHandle_->GetErrorCode();
 
    img.Resize(width, height, 2);
+   fullFrame = roiBinData; // save full frame info
 
    return DEVICE_OK;
 }
@@ -525,6 +543,9 @@ int TsiCam::ResizeImageBuffer(TSI_ROI_BIN& roiBin)
       ResizeImageBuffer();
       return errCode;
    }
+
+   if (!camHandle_->GetParameter(TSI_PARAM_ROI_BIN, sizeof(uint32_t), (void*)&roiBinData))
+      return camHandle_->GetErrorCode();
 
    img.Resize(roiBin.XPixels, roiBin.YPixels, 2);
 
@@ -580,6 +601,34 @@ int TsiCam::InsertImage()
    }
 
    return retCode;
+}
+
+bool TsiCam::ParamSupported (TSI_PARAM_ID ParamID)
+{
+
+	bool return_value = false;
+
+
+	if (camHandle_) {
+
+		TSI_PARAM_ATTR_ID	ParamAttrID;
+		uint32_t			Flags;
+
+		ParamAttrID.ParamID = ParamID;
+
+		// Get the parameter max
+
+		ParamAttrID.AttrID  = TSI_ATTR_FLAGS;	
+		if (camHandle_->SetParameter(TSI_PARAM_CMD_ID_ATTR_ID, &ParamAttrID)) {
+			if (camHandle_->GetParameter(TSI_PARAM_ATTR, sizeof(Flags), &Flags)) {
+				return_value = ((Flags & TSI_FLAG_UNSUPPORTED) == 0);
+	 		}
+		}
+
+	}
+
+	return return_value;
+
 }
 
 int AcqSequenceThread::svc (void)

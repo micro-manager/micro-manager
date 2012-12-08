@@ -110,7 +110,6 @@ public:
 
    // overrides the same in the base class
    int InsertImage();
-   
    int PrepareSequenceAcqusition();
    int StartSequenceAcquisition(long numImages, double interval_ms, bool stopOnOverflow);
    int StartSequenceAcquisition(double interval);
@@ -140,6 +139,7 @@ public:
    int OnTriggerTimeOut(MM::PropertyBase* pProp, MM::ActionType eAct);
 
 private:
+   bool ParamSupported (TSI_PARAM_ID ParamID);
    int ResizeImageBuffer();
    int ResizeImageBuffer(TSI_ROI_BIN& roiBin);
    void SuspendSequence();
@@ -150,12 +150,11 @@ private:
 
    ImgBuffer img;
    bool initialized;
-   int binSize;
-   ROI roi;
    bool stopOnOverflow;
    long acquiring;
    TsiCamera* camHandle_;
    TSI_ROI_BIN roiBinData;
+   TSI_ROI_BIN fullFrame;
 
    friend class AcqSequenceThread;
    AcqSequenceThread*   liveAcqThd_;
