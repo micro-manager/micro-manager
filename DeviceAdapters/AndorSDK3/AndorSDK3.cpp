@@ -340,6 +340,13 @@ int CAndorSDK3Camera::Initialize()
    assert(nRet == DEVICE_OK);
    delete [] p_cameraSerialNumber;
 
+   temp_ws.erase(4);
+   bool b_zyla = false;
+   if (0 == temp_ws.compare(L"VSC-") )
+   {
+      b_zyla = true;
+   }
+   
    // Properties
    binning_property = new TEnumProperty(MM::g_Keyword_Binning, cameraDevice->GetEnum(L"AOIBinning"),
                                         this, thd_, snapShotController_, false, false);
@@ -356,7 +363,7 @@ int CAndorSDK3Camera::Initialize()
 
    temperatureControl_proptery = new TEnumProperty(TAndorSDK3Strings::TEMPERATURE_CONTROL,
                                                    cameraDevice->GetEnum(L"TemperatureControl"), this, thd_, 
-                                                   snapShotController_, false, false);
+                                                   snapShotController_, b_zyla ? true : false, false);
 
    pixelReadoutRate_property = new TEnumProperty(TAndorSDK3Strings::PIXEL_READOUT_RATE,
                                                  cameraDevice->GetEnum(L"PixelReadoutRateMapper"),
