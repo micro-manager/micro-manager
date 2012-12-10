@@ -66,6 +66,9 @@ static const wstring g_RELEASE_2_1_FIRMWARE_VERSION = L"11.7.30.0";
 static const unsigned int LENGTH_FIELD_SIZE = 4;
 static const unsigned int CID_FIELD_SIZE = 4;
 
+static const unsigned int NUMBER_MDA_BUFFERS = 10;
+static const unsigned int NUMBER_LIVE_BUFFERS = 2;
+
 // TODO: linux entry code
 
 // windows DLL entry code
@@ -166,6 +169,7 @@ CAndorSDK3Camera::CAndorSDK3Camera()
   timeStamp_(0),
   pDemoResourceLock_(0),
   image_buffers_(NULL),
+  numImgBuffersAllocated_(0),
   d_frameRate_(0),
   keep_trying_(false),
   roiX_(0),
@@ -806,32 +810,59 @@ int CAndorSDK3Camera::StopSequenceAcquisition()
    return DEVICE_OK;
 }
 
-void CAndorSDK3Camera::InitialiseDeviceCircularBuffer()
+bool CAndorSDK3Camera::InitialiseDeviceCircularBuffer(const unsigned numBuffers)
 {
+   bool b_ret = false;
    IInteger* imageSizeBytes = NULL;
+   numImgBuffersAllocated_ = 0;
    try
    {
       imageSizeBytes = cameraDevice->GetInteger(L"ImageSizeBytes");
       AT_64 ImageSize = imageSizeBytes->Get();
-      image_buffers_ = new unsigned char * [NO_CIRCLE_BUFFER_FRAMES];
-      for (int i = 0; i < NO_CIRCLE_BUFFER_FRAMES; i++)
+      image_buffers_ = new unsigned char * [numBuffers];
+      for (unsigned int i = 0; i < numBuffers; i++)
       {
          image_buffers_[i] = new unsigned char[static_cast<int>(ImageSize+7)];
          unsigned char* pucAlignedBuffer = reinterpret_cast<unsigned char*>(
                                              (reinterpret_cast<unsigned long>( image_buffers_[i] ) + 7 ) & ~0x7);
+         memset(pucAlignedBuffer, '\0', static_cast<int>(ImageSize));
+         ++numImgBuffersAllocated_;
          bufferControl->Queue(pucAlignedBuffer, static_cast<int>(ImageSize));
       }
       cameraDevice->Release(imageSizeBytes);
+      b_ret = true;
+   }
+   catch (bad_alloc & ba)
+   {
+      string s("[InitialiseDeviceCircularBuffer] Caught Bad Allocation with message: ");
+      s += ba.what();
+      LogMessage(s);
+      b_ret = false;
    }
    catch (exception & e)
    {
-      string s("[InitialiseDeviceCircularBuffer] Caught Exception [Live] with message: ");
+      string s("[InitialiseDeviceCircularBuffer] Caught Exception with message: ");
       s += e.what();
       LogMessage(s);
+      b_ret = false;
       cameraDevice->Release(imageSizeBytes);
    }
+   return b_ret;
 }
 
+bool CAndorSDK3Camera::CleanUpDeviceCircularBuffer()
+{
+   if (image_buffers_ != NULL)
+   {
+      for (unsigned int i = 0; i < numImgBuffersAllocated_; i++)
+      {
+         delete [] image_buffers_[i];
+      }
+      delete [] image_buffers_;
+      image_buffers_ = NULL;
+   }
+   return true;
+}
 
 /**
 * Simple implementation of Sequence Acquisition
@@ -903,23 +934,33 @@ int CAndorSDK3Camera::StartSequenceAcquisition(long numImages, double interval_m
       cameraDevice->Release(tsClkFrequency);
    }
 
+   bool b_memOkRet = false;
    if (DEVICE_OK == retCode)
    {
-      InitialiseDeviceCircularBuffer();
 
       if (LONG_MAX != numImages)
       {
          cycleMode->Set(L"Fixed");
          frameCount->Set(numImages);
+         b_memOkRet = InitialiseDeviceCircularBuffer(NUMBER_MDA_BUFFERS);
       }
       else
       {
          // When using the Micro-Manager GUI, this code is executed when entering live mode
          cycleMode->Set(L"Continuous");
          snapShotController_->setupTriggerModeSilently();
+         b_memOkRet = InitialiseDeviceCircularBuffer(NUMBER_LIVE_BUFFERS);
       }
 
-      ResizeImageBuffer();
+      if (b_memOkRet)
+      {
+         ResizeImageBuffer();
+      }
+      else
+      {
+         CleanUpDeviceCircularBuffer();
+         return DEVICE_OUT_OF_MEMORY;
+      }
       //// Set the frame rate to that held by the frame rate holder. Check the limits
       //double held_fr = 0.0;
       //if (frameRate->IsWritable())
@@ -1115,15 +1156,7 @@ void CAndorSDK3Camera::OnThreadExiting() throw()
    bufferControl->Flush();
    snapShotController_->resetTriggerMode();
 
-   if (image_buffers_ != NULL)
-   {
-      for (int i = 0; i < NO_CIRCLE_BUFFER_FRAMES; i++)
-      {
-         delete [] image_buffers_[i];
-      }
-      delete [] image_buffers_;
-      image_buffers_ = NULL;
-   }
+   CleanUpDeviceCircularBuffer();
 
    if (initialized_)
    {
