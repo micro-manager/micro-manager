@@ -1,6 +1,7 @@
 (ns slide-explorer.user-controls
   (:import (java.awt.event ComponentAdapter KeyEvent KeyAdapter
                            MouseAdapter WindowAdapter)
+           (java.awt Window)
            (javax.swing AbstractAction JComponent KeyStroke)
            (java.util UUID)))
 
@@ -63,32 +64,33 @@
       (apply max-key #(overlap-area window-bounds
                                     (screen-bounds %)) screens))))
 
-(defn full-screen-window []
-  (first (remove nil?
-                 (map #(.getFullScreenWindow %)
-                      (screen-devices)))))
+(def old-bounds (atom {}))
 
 (defn full-screen!
   "Make the given window/frame full-screen. Pass nil to return all windows
 to normal size."
-  ([window]
-    (if window
-      (when (not= (full-screen-window) window)
-        (full-screen! nil)
-        (.dispose window)
-        (.setUndecorated window true)
-        (.setFullScreenWindow (window-screen window) window)
-        (.show window))
-      (when-let [window (full-screen-window)]
-        (.dispose window)
-        (.setFullScreenWindow (window-screen window) nil)
-        (.setUndecorated window false)
-        (.show window)))
-    window))
+  [window]
+  (when window
+    (when-not (@old-bounds window)
+      (swap! old-bounds assoc window (.getBounds window)))
+    (.dispose window)
+    (.setUndecorated window true)
+    (.setBounds window (screen-bounds (window-screen window)))
+    (.show window)))
+
+(defn exit-full-screen!
+  [window]
+  (when window
+    (.dispose window)
+    (.setUndecorated window false)
+    (when-let [bounds (@old-bounds window)]
+      (.setBounds window bounds)
+      (swap! old-bounds assoc window nil))
+    (.show window)))
 
 (defn setup-fullscreen [window]
   (bind-window-keys window ["F"] #(full-screen! window))
-  (bind-window-keys window ["ESCAPE"] #(full-screen! nil)))
+  (bind-window-keys window ["ESCAPE"] #(exit-full-screen! window)))
 
 ;; other user controls
 

@@ -8,6 +8,7 @@
             [slide-explorer.tile-cache :as tile-cache]
             [clojure.core.memoize :as memo])
   (:use [org.micromanager.mm :only (edt)]
+        [slide-explorer.canvas :only (color-object)]
         [slide-explorer.paint :only (enable-anti-aliasing repaint
                                      draw-image repaint-on-change)]
         [slide-explorer.tiles :only (center-tile floor-int)]
@@ -129,6 +130,9 @@
              [:channels (:nc tile-index)]
              merge
              (intensity-range tile-proc)))
+
+(defn copy-contrast [pointing-screen-atom showing-screen-atom]
+  (swap! showing-screen-atom assoc :channels (:channels @pointing-screen-atom)))
 
 ;; OVERLAY
 
@@ -304,7 +308,7 @@
          merge position-map))
 
 (defn show-where-pointing! [pointing-screen-atom showing-screen-atom]
-  ;(println "swp")
+  (copy-contrast pointing-screen-atom showing-screen-atom)
   (set-position! showing-screen-atom
                  (absolute-mouse-position @pointing-screen-atom)))
 
@@ -323,6 +327,7 @@
         [panel2 screen-state2] (view-panel memory-tiles2 acquired-images tile-dimensions)
         split-pane (JSplitPane. JSplitPane/HORIZONTAL_SPLIT true panel panel2)]
     (doto split-pane
+      (.setBorder nil)
       (.setResizeWeight 0.5)
       (.setDividerLocation 0.7))
     (def ss screen-state)
@@ -345,8 +350,7 @@
 
 ;; testing
 
-(defn copy-contrast []
-  (swap! ss2 assoc :channels (:channels @ss)))
+
 
 (defn big-region-contrast []
   (swap! ss assoc

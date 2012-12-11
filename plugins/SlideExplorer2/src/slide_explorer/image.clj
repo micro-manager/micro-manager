@@ -9,6 +9,7 @@
            (java.awt Color)
            (java.io File)
            (org.micromanager.utils ImageUtils))
+  (:require [slide-explorer.canvas :as canvas])
   (:use [org.micromanager.mm :only (core load-mm gui)]))
 
 (defmacro timer [expr]
@@ -142,8 +143,8 @@
 
 (defn lut-object
   "Creates an ImageJ LUT object with given parameters."
-  ([^Color color ^double min ^double max ^double gamma]
-    (let [lut (ImageUtils/makeLUT color gamma)]
+  ([color ^double min ^double max ^double gamma]
+    (let [lut (ImageUtils/makeLUT (canvas/color-object color) gamma)]
       (set! (. lut min) min)
       (set! (. lut max) max)
       lut))
@@ -201,17 +202,26 @@
       (when-let [imgp (io! (IJ/openImage full-path))]
         (.getProcessor imgp)))))       
 
-;; Maximum intensity projection
+;; Intensity projection
 
-; 11 ms
-(defn maximum-intensity-projection
-  "Runs a maximum intensity projection across a collection of ImageProcessors,
-   returning an ImageProcessor of the same type."
-  [processors]
+(def projection-methods
+  {:average ZProjector/AVG_METHOD
+   :max ZProjector/MAX_METHOD
+   :min ZProjector/MIN_METHOD
+   :sum ZProjector/SUM_METHOD
+   :std-dev ZProjector/SD_METHOD
+   :median ZProjector/MEDIAN_METHOD})
+
+(defn intensity-projection
+  "Runs an intensity projection across a collection of ImageProcessors,
+   returning an ImageProcessor of the same type. Methods
+   are :average, :max, :min, :sum, :std-dev, :median."
+  [method processors]
   (let [float-processor
         (->
           (doto
             (ZProjector. (ImagePlus. "" (make-stack processors)))
+            (.setMethod (projection-methods method))
             .doProjection)
           .getProjection
           .getProcessor)]

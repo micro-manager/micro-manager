@@ -1,4 +1,4 @@
-(ns slide-explorer.core
+(ns slide-explorer.canvas
   (:import (java.awt AlphaComposite BasicStroke Color Font Graphics Graphics2D Image
                      Polygon RenderingHints Shape)
            (java.awt.font TextAttribute)
