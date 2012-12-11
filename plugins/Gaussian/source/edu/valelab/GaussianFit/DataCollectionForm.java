@@ -27,6 +27,7 @@ import ij.ImageStack;
 import ij.WindowManager;
 import ij.gui.Arrow;
 import ij.gui.ImageWindow;
+import ij.gui.MessageDialog;
 import ij.gui.Roi;
 import ij.gui.StackWindow;
 import ij.gui.YesNoCancelDialog;
@@ -1711,6 +1712,12 @@ public class DataCollectionForm extends javax.swing.JFrame {
 
                }
 
+               if (rt.getCounter() == 0) {
+                  MessageDialog md = new MessageDialog(DataCollectionForm.getInstance(), 
+                          "No Pairs found", "No Pairs found");
+                  return;
+               }
+               
                // show summary in resultstable
                rt2.show("Summary of Pairs found in " + rowData_.get(row).name_);
 
@@ -1862,6 +1869,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
                
  
                // First go through all frames to find all pairs
+               int nrSpotPairsInFrame1 = 0;
                for (int frame = 1; frame <= rowData_.get(row).nrFrames_; frame++) {
                   ij.IJ.showProgress(frame, rowData_.get(row).nrFrames_);
                   spotPairsByFrame.add(new ArrayList<GsSpotPair>());
@@ -1934,7 +1942,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
                Iterator<GsSpotPair> iSpotPairs = spotPairsByFrame.get(0).iterator();
                int i = 0;
                while (iSpotPairs.hasNext()) {
-                  ij.IJ.showProgress(i++, spotPairs.size());
+                  ij.IJ.showProgress(i++, nrSpotPairsInFrame1);
                   GsSpotPair spotPair = iSpotPairs.next();
                   // for now, we only start tracks at frame number 1
                   if (spotPair.getGSD().getFrame() == 1) {
@@ -1961,6 +1969,13 @@ public class DataCollectionForm extends javax.swing.JFrame {
                ResultsTable rt = new ResultsTable();
                rt.reset();
                rt.setPrecision(2);
+               
+               if (tracks.isEmpty()) {
+                  MessageDialog md = new MessageDialog(DataCollectionForm.getInstance(), 
+                          "No Pairs found", "No Pairs found");
+                  return;
+               }
+                  
                
                
                Iterator<ArrayList<GsSpotPair>> itTracks = tracks.iterator();
