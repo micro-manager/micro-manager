@@ -190,12 +190,15 @@ void SerialPortLister::ListPorts(std::vector<std::string> &availablePorts)
 #endif // WIN32
 
 #ifdef linux 
-   // Look for /dev files with correct signature in their name 
+   // Look for /dev files with correct signature 
    DIR* pdir = opendir("/dev");
    struct dirent *pent;
    if (pdir) {
       while (pent = readdir(pdir)) {
-         if ( (strstr(pent->d_name, "ttyS") != 0) || (strstr(pent->d_name, "ttyUSB") != 0) )  {
+         if ( (strstr(pent->d_name, "ttyS") != 0) || 
+               (strstr(pent->d_name, "ttyUSB") != 0)  || 
+               (strstr(pent->d_name, "ttyACM") != 0))  
+         {
             std::string p = ("/dev/");
             p.append(pent->d_name);
             if (portAccessible(p.c_str()))
