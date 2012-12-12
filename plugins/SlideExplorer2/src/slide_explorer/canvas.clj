@@ -7,7 +7,8 @@
                           Rectangle2D$Double
                           RoundRectangle2D$Double)
            (javax.swing JFrame JPanel JScrollPane JTextArea)
-           (javax.swing.event DocumentListener)))
+           (javax.swing.event DocumentListener))
+  (:require [slide-explorer.user-controls :as user-controls]))
 
 ;; possible 
 ; draggable
@@ -315,7 +316,7 @@
     (doto (JFrame. "canvas")
       (.. getContentPane (add panel))
       (.setBounds 10 10 500 500)
-      (slide-explorer.user-controls/setup-fullscreen)
+      (user-controls/setup-fullscreen)
       .show)
     panel))
 
