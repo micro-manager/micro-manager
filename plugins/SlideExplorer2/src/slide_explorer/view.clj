@@ -6,6 +6,7 @@
            (ij.process ByteProcessor ImageProcessor))
   (:require [slide-explorer.reactive :as reactive]
             [slide-explorer.tile-cache :as tile-cache]
+            [slide-explorer.tiles :as tiles]
             [clojure.core.memoize :as memo])
   (:use [org.micromanager.mm :only (edt)]
         [slide-explorer.canvas :only (color-object)]
@@ -36,42 +37,6 @@
     ; (print '~expr)
     ; (println " -->" (pr-str ret#))
      ret#))
-
-;; TILE <--> PIXELS
-
-(defn tile-to-pixels [[nx ny] [tile-width tile-height] tile-zoom]
-  [(int (* tile-zoom nx tile-width))
-   (int (* tile-zoom ny tile-height))])
-
-(defn pixel-rectangle-to-tile-bounds
-  [rectangle [tile-width tile-height]]
-  {:nl (floor-int (/ (.x rectangle) tile-width))
-   :nr (floor-int (/ (+ -1 (.getWidth rectangle) (.x rectangle)) tile-width))
-   :nt (floor-int (/ (.y rectangle) tile-height))
-   :nb (floor-int (/ (+ -1 (.getHeight rectangle) (.y rectangle)) tile-height))})
-
-(defn tile-in-tile-bounds?
-  [[nx ny] bounds]
-  (let [{:keys [nl nr nt nb]} bounds]
-    (and (<= nl nx nr)
-         (<= nt ny nb)))) 
-
-(defn tile-in-pixel-rectangle?
-  [[nx ny] rectangle [tile-width tile-height]]
-  (tile-in-tile-bounds? [nx ny]
-                        (pixel-rectangle-to-tile-bounds
-                          rectangle [tile-width tile-height])))
-
-(defn tiles-in-pixel-rectangle
-  "Returns a list of tile indices found in a given pixel rectangle."
-  [rectangle [tile-width tile-height]]
-  (let [nl (floor-int (/ (.x rectangle) tile-width))
-        nr (floor-int (/ (+ -1 (.getWidth rectangle) (.x rectangle)) tile-width))
-        nt (floor-int (/ (.y rectangle) tile-height))
-        nb (floor-int (/ (+ -1 (.getHeight rectangle) (.y rectangle)) tile-height))]
-    (for [nx (range nl (inc nr))
-          ny (range nt (inc nb))]
-      [nx ny])))
 
 (defn pixel-rectangle
   	  "Converts the screen state coordinates to visible camera pixel coordinates."
@@ -156,36 +121,38 @@
         {:x (long (+ x (/ mouse-x-centered zoom)))
          :y (long (+ y (/ mouse-y-centered zoom)))}))))
 
+(comment
 (defn draw-test-tile [g x y]
   (doto g
     (.setColor Color/YELLOW)
     (.drawRect (+ 2 x) ( + y 2) 508 508)))
-
-(defn paint-tiles [^Graphics2D g overlay-tiles-atom screen-state]
-  (let [pixel-rect (.getClipBounds g)
-        tile-dimensions (screen-state :tile-dimensions)]
-    (doseq [[nx ny] (tiles-in-pixel-rectangle pixel-rect tile-dimensions)]
-      (let [tile-index {:nc :overlay
-                        :zoom (screen-state :zoom)
-                        :nx nx :ny ny :nt 0
-                        :nz (screen-state :z)}]
-;        (let [[x y] (tile-to-pixels [nx ny] tile-dimensions 1)]
-;            (draw-test-tile g x y)
-;          )
-        (when-let [image (tile-cache/get-tile
-                           overlay-tiles-atom
-                           tile-index)]
-          (let [[x y] (tile-to-pixels [nx ny] tile-dimensions 1)]
-            (draw-image g image x y)
-            ))))))
-
+;
 (defn show-mouse-pos [graphics screen-state]
   (let [{:keys [x y]} (:mouse screen-state)]
     (when (and x y)
       (doto graphics
         (.setColor Color/BLUE)
         (.drawRect (- x 25) (- y 25) 50 50)))))
-	
+)
+  
+(defn paint-tiles [^Graphics2D g overlay-tiles-atom screen-state]
+  (let [pixel-rect (.getClipBounds g)
+        tile-dimensions (screen-state :tile-dimensions)]
+    (doseq [[nx ny] (tiles/tiles-in-pixel-rectangle pixel-rect tile-dimensions)]
+      (let [tile-index {:nc :overlay
+                        :zoom (screen-state :zoom)
+                        :nx nx :ny ny :nt 0
+                        :nz (screen-state :z)}]
+;        (let [[x y] (tiles/tile-to-pixels [nx ny] tile-dimensions 1)]
+;            (draw-test-tile g x y)
+;          )
+        (when-let [image (tile-cache/get-tile
+                           overlay-tiles-atom
+                           tile-index)]
+          (let [[x y] (tiles/tile-to-pixels [nx ny] tile-dimensions 1)]
+            (draw-image g image x y)
+            ))))))
+
 (defn paint-screen [graphics screen-state overlay-tiles-atom]
   (let [original-transform (.getTransform graphics)
         zoom (:zoom screen-state)
@@ -210,7 +177,7 @@
 (defn overlay-loader
   "Creates overlay tiles for visible monochrome tiles in memory."
   [screen-state-atom memory-tile-atom overlay-tiles-atom]
-  (let [visible-tile-positions (tiles-in-pixel-rectangle
+  (let [visible-tile-positions (tiles/tiles-in-pixel-rectangle
                                  (screen-rectangle @screen-state-atom)
                                  (:tile-dimensions @screen-state-atom))]
     (doseq [[nx ny] visible-tile-positions]
@@ -228,7 +195,7 @@
 (defn monochrome-loader
   "Loads monochrome tiles needed for drawing."
   [screen-state-atom memory-tile-atom acquired-images]
-  (let [visible-tile-positions (tiles-in-pixel-rectangle
+  (let [visible-tile-positions (tiles/tiles-in-pixel-rectangle
                                  (screen-rectangle @screen-state-atom)
                                  (:tile-dimensions @screen-state-atom))]
     (doseq [[nx ny] visible-tile-positions

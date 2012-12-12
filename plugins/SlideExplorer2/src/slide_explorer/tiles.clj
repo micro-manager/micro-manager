@@ -1,6 +1,8 @@
 (ns slide-explorer.tiles
   (:import [java.awt.geom AffineTransform]))
 
+;; TILE TRAJECTORY
+
 (defn floor-int
   [x]
   (long (Math/floor x)))
@@ -34,3 +36,47 @@
   [[pixel-center-x pixel-center-y] [tile-width tile-height]]
   [(floor-int (/ pixel-center-x tile-width))
    (floor-int (/ pixel-center-y tile-height))])
+
+(defn number-of-tiles [{:keys [width height zoom]} [tile-width tile-height]]
+  (let [largest-side
+        (+ 3 (max (floor-int (/ width tile-width zoom))
+                  (floor-int (/ height tile-height zoom)) 0))]
+    (* largest-side largest-side)))
+
+
+;; TILE <--> PIXELS
+
+(defn tile-to-pixels [[nx ny] [tile-width tile-height] tile-zoom]
+  [(int (* tile-zoom nx tile-width))
+   (int (* tile-zoom ny tile-height))])
+
+(defn pixel-rectangle-to-tile-bounds
+  [rectangle [tile-width tile-height]]
+  {:nl (floor-int (/ (.x rectangle) tile-width))
+   :nr (floor-int (/ (+ -1 (.getWidth rectangle) (.x rectangle)) tile-width))
+   :nt (floor-int (/ (.y rectangle) tile-height))
+   :nb (floor-int (/ (+ -1 (.getHeight rectangle) (.y rectangle)) tile-height))})
+
+(defn tile-in-tile-bounds?
+  [[nx ny] bounds]
+  (let [{:keys [nl nr nt nb]} bounds]
+    (and (<= nl nx nr)
+         (<= nt ny nb)))) 
+
+; possibly delete?
+(defn- tile-in-pixel-rectangle?
+  [[nx ny] rectangle [tile-width tile-height]]
+  (tile-in-tile-bounds? [nx ny]
+                        (pixel-rectangle-to-tile-bounds
+                          rectangle [tile-width tile-height])))
+
+(defn tiles-in-pixel-rectangle
+  "Returns a list of tile indices found in a given pixel rectangle."
+  [rectangle [tile-width tile-height]]
+  (let [nl (floor-int (/ (.x rectangle) tile-width))
+        nr (floor-int (/ (+ -1 (.getWidth rectangle) (.x rectangle)) tile-width))
+        nt (floor-int (/ (.y rectangle) tile-height))
+        nb (floor-int (/ (+ -1 (.getHeight rectangle) (.y rectangle)) tile-height))]
+    (for [nx (range nl (inc nr))
+          ny (range nt (inc nb))]
+      [nx ny])))

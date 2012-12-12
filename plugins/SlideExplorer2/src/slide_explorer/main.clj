@@ -19,15 +19,13 @@
            (org.micromanager.MMStudioMainFrame))
   (:use [org.micromanager.mm :only (core edt mmc gui load-mm json-to-data)]
         [slide-explorer.affine :only (set-destination-origin transform inverse-transform)]
-        [slide-explorer.view :only (show add-to-memory-tiles pixel-rectangle 
-                                         pixel-rectangle-to-tile-bounds
-                                         tile-in-tile-bounds?)]
+        [slide-explorer.view :only (show add-to-memory-tiles pixel-rectangle)]
         [slide-explorer.image :only (show-image intensity-range lut-object)]
-        [slide-explorer.tiles :only (floor-int center-tile tile-list offset-tiles)]
         [slide-explorer.persist :only (save-as)]
         [clojure.java.io :only (file)])
   (:require [slide-explorer.reactive :as reactive]
             [slide-explorer.tile-cache :as tile-cache]
+            [slide-explorer.tiles :as tiles]
             [slide-explorer.persist :as persist]))
 
 (load-mm (MMStudioMainFrame/getInstance))
@@ -133,23 +131,17 @@
 
 ;; tile arrangement
 
-(defn number-of-tiles [{:keys [width height zoom]} [tile-width tile-height]]
-  (let [largest-side
-        (+ 3 (max (floor-int (/ width tile-width zoom))
-                  (floor-int (/ height tile-height zoom)) 0))]
-    (* largest-side largest-side)))
-
 (defn next-tile [screen-state acquired-images]
   (let [tile-dimensions (screen-state :tile-dimensions)
-        center-tile (center-tile [(:x screen-state) (:y screen-state)]
+        center (tiles/center-tile [(:x screen-state) (:y screen-state)]
                                  tile-dimensions)
         pixel-rect (pixel-rectangle screen-state)
-        bounds (pixel-rectangle-to-tile-bounds pixel-rect tile-dimensions)
-        number-tiles (number-of-tiles screen-state tile-dimensions)]
-    (->> tile-list
-         (offset-tiles center-tile)
+        bounds (tiles/pixel-rectangle-to-tile-bounds pixel-rect tile-dimensions)
+        number-tiles (tiles/number-of-tiles screen-state tile-dimensions)]
+    (->> tiles/tile-list
+         (tiles/offset-tiles center)
          (take number-tiles)
-         (filter #(tile-in-tile-bounds? % bounds))
+         (filter #(tiles/tile-in-tile-bounds? % bounds))
          (remove @acquired-images)
          first)))
 
