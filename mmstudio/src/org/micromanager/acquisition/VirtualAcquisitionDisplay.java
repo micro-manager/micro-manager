@@ -71,6 +71,7 @@ public final class VirtualAcquisitionDisplay implements AcquisitionDisplay, Imag
          return null;
       }
    }
+   private final static int SLOW_UPDATE_TIME = 1500;
    final static Color[] rgb = {Color.red, Color.green, Color.blue};
    final static String[] rgbNames = {"Red", "Blue", "Green"};
    final ImageCache imageCache_;
@@ -85,7 +86,6 @@ public final class VirtualAcquisitionDisplay implements AcquisitionDisplay, Imag
    private int lastFrameShown_ = 0;
    private int lastSliceShown_ = 0;
    private int lastPositionShown_ = 0;
-   private boolean updating_ = false;
    private int preferredSlice_ = -1;
    private int preferredPosition_ = -1;
    private int preferredChannel_ = -1;
@@ -113,11 +113,9 @@ public final class VirtualAcquisitionDisplay implements AcquisitionDisplay, Imag
    private Histograms histograms_;
    private HistogramControlsState histogramControlsState_;
    private boolean albumSaved_ = false;
-   private boolean[] channelContrastInitialized_;
    private static double snapWinMag_ = -1;
    private JPopupMenu saveTypePopup_;
    private int simpleWinImagesReceived_ = 0;
-
 
    
    /**
@@ -777,10 +775,22 @@ public final class VirtualAcquisitionDisplay implements AcquisitionDisplay, Imag
          int ch = MDUtils.getChannelIndex(tags);
          int slice = MDUtils.getSliceIndex(tags);
          int position = MDUtils.getPositionIndex(tags);
-         boolean show = finalUpdate || frame == 0 || (Math.abs(t - lastDisplayTime_) > 30)
-                 || (ch == getNumChannels() - 1 && lastFrameShown_ == frame && lastSliceShown_ == slice && lastPositionShown_ == position)
+         boolean slowUpdates;
+         if (histogramControlsState_ == null) {
+            slowUpdates = false;
+         } else {
+            slowUpdates = histogramControlsState_.slowDisplayUpdates;
+         }
+         int updateTime = slowUpdates ? SLOW_UPDATE_TIME : 30;
+         //update display if: final update, frame is 0, more than 30 ms since last update, 
+         //last channel for given frame/slice/position, or final slice and channel for first frame and position
+         boolean show = finalUpdate || frame == 0 || (Math.abs(t - lastDisplayTime_) > updateTime)
+                 || (!slowUpdates && ch == getNumChannels() - 1 && lastFrameShown_ == frame && lastSliceShown_ == slice && lastPositionShown_ == position)
                  || (slice == getNumSlices() - 1 && frame == 0 && position == 0 && ch == getNumChannels() - 1);
-
+         if (slowUpdates && ch != getNumChannels() - 1) {
+            //only do slowupdates when all channels present
+            show = false;
+         }
 
          if (show) {
             showImage(tags, true);

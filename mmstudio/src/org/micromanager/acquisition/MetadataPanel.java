@@ -102,7 +102,7 @@ public class MetadataPanel extends JPanel
    }
 
    private void makeContrastPanel() {
-      contrastPanel_ = new ContrastPanel(this);
+      contrastPanel_ = new ContrastPanel();
       contrastPanel_.setFont(new Font("", Font.PLAIN, 10));
    }
 

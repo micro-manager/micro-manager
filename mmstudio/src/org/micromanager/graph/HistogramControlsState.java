@@ -7,6 +7,7 @@ package org.micromanager.graph;
  */
 public class HistogramControlsState {
     
+    public boolean slowDisplayUpdates;
     public boolean slowHist;
     public boolean syncChannels;
     public int scaleBarColorIndex;
