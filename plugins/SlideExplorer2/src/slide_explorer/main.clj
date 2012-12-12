@@ -234,7 +234,7 @@
 (defn go
   "The main function that starts a slide explorer window."
   ([dir new?]
-    (let [settings (when-not new? (load-settings dir) {:tile-dimensions [512 512]})
+    (let [settings (if-not new? (load-settings dir) {:tile-dimensions [512 512]})
           acquired-images (atom #{})
           [screen-state memory-tiles] (show dir acquired-images settings)]
       (when new?
