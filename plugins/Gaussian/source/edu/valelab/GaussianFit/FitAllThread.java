@@ -213,7 +213,7 @@ public class FitAllThread extends GaussianInfo implements Runnable  {
                      //  may be dangerous if the user is not aware
                      RoiManager roiM = RoiManager.getInstance();
                      Roi[] rois = null;
-                     if (roiM != null) {
+                     if (roiM != null && roiM.getSelectedIndex() > -1 ) {
                         rois = roiM.getSelectedRoisAsArray();
                      }
                      if (rois != null && rois.length > 0) {
