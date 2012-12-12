@@ -287,13 +287,14 @@
     .show
     (.setBounds 10 10 500 500)))
     
-(defn view-panel [memory-tiles acquired-images tile-dimensions]
-  (let [screen-state (atom (sorted-map :x 0 :y 0 :z 0 :zoom 1
+(defn view-panel [memory-tiles acquired-images settings]
+  (let [screen-state (atom (merge
+                             (sorted-map :x 0 :y 0 :z 0 :zoom 1
                                        :width 100 :height 10
                                        :keys (sorted-set)
                                        :channels (sorted-map)
-                                       :tile-dimensions tile-dimensions
-                                       ))
+                                       )
+                             settings))
         overlay-tiles (tile-cache/create-tile-cache 100)
         panel (main-panel screen-state overlay-tiles)]
     ;(println overlay-tiles)
@@ -319,12 +320,12 @@
       (show-where-pointing!
         pointing-screen-atom showing-screen-atom))))
 
-(defn show [dir acquired-images tile-dimensions]
+(defn show [dir acquired-images settings]
   (let [memory-tiles (tile-cache/create-tile-cache 100 dir)
         memory-tiles2 (tile-cache/create-tile-cache 100 dir)
         frame (main-frame)
-        [panel screen-state] (view-panel memory-tiles acquired-images tile-dimensions)
-        [panel2 screen-state2] (view-panel memory-tiles2 acquired-images tile-dimensions)
+        [panel screen-state] (view-panel memory-tiles acquired-images settings)
+        [panel2 screen-state2] (view-panel memory-tiles2 acquired-images settings)
         split-pane (JSplitPane. JSplitPane/HORIZONTAL_SPLIT true panel panel2)]
     (doto split-pane
       (.setBorder nil)

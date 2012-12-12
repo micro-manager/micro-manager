@@ -36,8 +36,6 @@
 
 (def gui-prefs (Preferences/userNodeForPackage MMStudioMainFrame))
 
-(def ^{:dynamic true} tile-dimensions [512 512])
-
 (defn set-stage-to-pixel-transform [^AffineTransform affine-transform]
   (JavaUtils/putObjectInPrefs
     gui-prefs (str "affine_transform_" (core getCurrentPixelSizeConfig))
@@ -207,10 +205,8 @@
   (spit (file dir "metadata.txt")
         (pr-str (select-keys screen-state [:channels :tile-dimensions]))))
 
-(defn load-settings [dir screen-state-atom]
-  (let [data (read-string (slurp (file dir "metadata.txt")))]
-         (swap! screen-state-atom merge
-                (select-keys data [:channels :tile-dimensions]))))
+(defn load-settings [dir]
+  (read-string (slurp (file dir "metadata.txt"))))
 
 ; Overall scheme
 ; the GUI is generally reactive.
@@ -233,36 +229,34 @@
 ; Overlay tiles are generated whenever memory tiles are added
 ; or the contrast is changed.
 ; The view redraws tiles inside viewing area whenever view-state
-  ; has been adjusted or a new image appears in overlay-tiles.
+; has been adjusted or a new image appears in overlay-tiles.
 
 (defn go
   "The main function that starts a slide explorer window."
   ([dir new?]
-    (binding [tile-dimensions (if new?
-                                [(core getImageWidth) (core getImageHeight)]
-                                [512 512])]
-      (let [acquired-images (atom #{})
-            [screen-state memory-tiles] (show dir acquired-images tile-dimensions)]
-        (when-not new?
-          (load-settings dir screen-state))
-        (when new?
-          (core waitForDevice (core getXYStageDevice))
-          (let [affine-stage-to-pixel (origin-here-stage-to-pixel-transform)
-                first-seq (acquire-at (inverse-transform (Point. 0 0) affine-stage-to-pixel))
-                explore-fn #(explore memory-tiles screen-state acquired-images
-                                     affine-stage-to-pixel)]
-            (.mkdirs dir)
-            (def mt memory-tiles)
-            (def affine affine-stage-to-pixel)
-            (println "about to get channel luts")
-            (swap! screen-state assoc :channels (initial-lut-maps first-seq))
-            (println "finished.")
-            (when new?
-              (explore-fn)
-              (add-watch screen-state "explore" (fn [_ _ old new] (when-not (= old new)
-                                                          (explore-fn)))))))
-        (def ss screen-state)
-        (def ai acquired-images))))
+    (let [settings (when-not new? (load-settings dir) {:tile-dimensions [512 512]})
+          acquired-images (atom #{})
+          [screen-state memory-tiles] (show dir acquired-images settings)]
+      (when new?
+        (core waitForDevice (core getXYStageDevice))
+        (let [affine-stage-to-pixel (origin-here-stage-to-pixel-transform)
+              first-seq (acquire-at (inverse-transform (Point. 0 0) affine-stage-to-pixel))
+              explore-fn #(explore memory-tiles screen-state acquired-images
+                                   affine-stage-to-pixel)]
+          (.mkdirs dir)
+          (def mt memory-tiles)
+          (def affine affine-stage-to-pixel)
+          (println "about to get channel luts")
+          (swap! screen-state merge
+                 {:channels (initial-lut-maps first-seq)
+                  :tile-dimensions [(core getImageWidth)
+                                    (core getImageHeight)]})
+          (when new?
+            (explore-fn)
+            (add-watch screen-state "explore" (fn [_ _ old new] (when-not (= old new)
+                                                                  (explore-fn)))))))
+      (def ss screen-state)
+      (def ai acquired-images)))
   ([]
     (go (file (str "tmp" (rand-int 10000000))) true)))
   
