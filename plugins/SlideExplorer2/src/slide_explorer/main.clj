@@ -238,13 +238,15 @@
 (defn go
   "The main function that starts a slide explorer window."
   ([dir new?]
-    (core waitForDevice (core getXYStageDevice))
-    (binding [tile-dimensions [(core getImageWidth) (core getImageHeight)]]
+    (binding [tile-dimensions (if new?
+                                [(core getImageWidth) (core getImageHeight)]
+                                [512 512])]
       (let [acquired-images (atom #{})
             [screen-state memory-tiles] (show dir acquired-images tile-dimensions)]
         (when-not new?
           (load-settings dir screen-state))
         (when new?
+          (core waitForDevice (core getXYStageDevice))
           (let [affine-stage-to-pixel (origin-here-stage-to-pixel-transform)
                 first-seq (acquire-at (inverse-transform (Point. 0 0) affine-stage-to-pixel))
                 explore-fn #(explore memory-tiles screen-state acquired-images
