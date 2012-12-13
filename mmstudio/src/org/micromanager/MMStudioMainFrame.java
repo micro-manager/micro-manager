@@ -3355,7 +3355,9 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface, Device
 
     @Override
    public void stopAllActivity() {
-      this.acquisitionEngine2010.stop();
+        if (this.acquisitionEngine2010 != null) {
+            this.acquisitionEngine2010.stop();
+        }
       enableLiveMode(false);
    }
 
