@@ -3884,7 +3884,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
     */
    public int zCalibrate(int rowNr) {
       final double widthCutoff = 1000.0;
-      final double maxVariance = 20000.0;
+      final double maxVariance = 100000.0;
       final int minNrSpots = 1;
       
       
@@ -3939,6 +3939,8 @@ public class DataCollectionForm extends javax.swing.JFrame {
             //        ", Y: " + (int) meanY + ", " + (int) varY);
             
             if (frameSpots.size() >= minNrSpots && 
+                    meanX < widthCutoff &&
+                    meanY < widthCutoff &&
                     varX < maxVariance && 
                     varY < maxVariance) {
                zc_.addDataPoint(meanX, meanY, frameNr);
