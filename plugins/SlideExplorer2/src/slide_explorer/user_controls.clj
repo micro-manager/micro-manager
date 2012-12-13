@@ -128,8 +128,13 @@ to normal size."
 
 (defn handle-mode-keys [panel screen-state-atom]
   (let [window (SwingUtilities/getWindowAncestor panel)]
-    (bind-window-keys window ["E" "X"] #(swap! screen-state-atom assoc :mode :explore))
-    (bind-window-keys window ["N"] #(swap! screen-state-atom assoc :mode :navigate))))
+    (bind-window-keys window ["SPACE"]
+                      #(swap! screen-state-atom
+                              (fn [state]
+                                (assoc state :mode
+                                       (condp = (:mode state)
+                                         :explore :navigate
+                                         :navigate :explore)))))))
 
 (defn handle-wheel [component z-atom]
   (.addMouseWheelListener component

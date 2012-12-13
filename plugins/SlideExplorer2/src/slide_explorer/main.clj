@@ -201,7 +201,8 @@
                       
 
 (defn navigate [screen-state-atom affine-transform _ _]
-  (when (= :navigate (:mode @screen-state-atom))
+  (when (#{:navigate :explore} (:mode @screen-state-atom))
+    (swap! screen-state-atom assoc :mode :navigate)
     (let [{:keys [x y]} (absolute-mouse-position @screen-state-atom)
                [w h] (:tile-dimensions @screen-state-atom)]
       (set-xy-position (inverse-transform
