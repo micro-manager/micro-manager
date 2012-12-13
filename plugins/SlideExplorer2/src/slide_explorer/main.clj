@@ -264,6 +264,7 @@
           (user-controls/handle-double-click
             panel
             (partial navigate screen-state affine-stage-to-pixel))
+          (user-controls/handle-mode-keys panel screen-state)
           (reactive/handle-update
             current-xy-positions 
             (fn [_ new-pos-map]

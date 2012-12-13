@@ -2,7 +2,7 @@
   (:import (java.awt.event ComponentAdapter KeyEvent KeyAdapter
                            MouseAdapter MouseEvent WindowAdapter)
            (java.awt Window)
-           (javax.swing AbstractAction JComponent KeyStroke)
+           (javax.swing AbstractAction JComponent KeyStroke SwingUtilities)
            (java.util UUID)))
 
 (def MIN-ZOOM 1/256)
@@ -126,6 +126,11 @@ to normal size."
     (binder "RIGHT" :x (- dist))
     (binder "LEFT" :x dist)))
 
+(defn handle-mode-keys [panel screen-state-atom]
+  (let [window (SwingUtilities/getWindowAncestor panel)]
+    (bind-window-keys window ["E" "X"] #(swap! screen-state-atom assoc :mode :explore))
+    (bind-window-keys window ["N"] #(swap! screen-state-atom assoc :mode :navigate))))
+
 (defn handle-wheel [component z-atom]
   (.addMouseWheelListener component
     (proxy [MouseAdapter] []
@@ -151,10 +156,10 @@ to normal size."
   (bind-window-keys window ["PERIOD"] #(swap! dive-atom update-in [:z] inc)))
 
 (defn handle-zoom [window zoom-atom]
-  (bind-window-keys window ["ADD" "CLOSE_BRACKET"]
+  (bind-window-keys window ["ADD" "CLOSE_BRACKET" "EQUALS"]
                    (fn [] (swap! zoom-atom update-in [:zoom]
                                  #(min (* % 2) MAX-ZOOM))))
-  (bind-window-keys window ["SUBTRACT" "OPEN_BRACKET"]
+  (bind-window-keys window ["SUBTRACT" "OPEN_BRACKET" "MINUS"]
                    (fn [] (swap! zoom-atom update-in [:zoom]
                                  #(max (/ % 2) MIN-ZOOM)))))
 
