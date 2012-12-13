@@ -13,7 +13,7 @@
             [clojure.core.memoize :as memo])
   (:use [org.micromanager.mm :only (edt)]
         [slide-explorer.canvas :only (color-object)]
-        [slide-explorer.paint :only (enable-anti-aliasing repaint
+        [slide-explorer.paint :only (enable-anti-aliasing
                                      draw-image repaint-on-change)]
         [slide-explorer.tiles :only (center-tile floor-int)]
         [slide-explorer.image :only (crop insert-half-tile overlay intensity-range)]

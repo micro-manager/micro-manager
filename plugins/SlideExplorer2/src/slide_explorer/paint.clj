@@ -37,14 +37,6 @@
   [^Graphics2D g image x y]
   (.drawImage g image x y nil))
 
-(def display-updater (GUIUpdater.))
-
-
-(defn repaint
-  "Repaint the panel on the GUI Updater thread."
-  [panel]
-  (.post display-updater #(.repaint panel)))
-
 (defn repaint-on-change 
   "Adds a watch such that panel is repainted whenever
    the values in reference have changed."
@@ -53,4 +45,4 @@
     (add-watch-simple reference
       (fn [old-state new-state]
         (when-not (identical? old-state new-state)
-          (repaint panel))))))
+          (.repaint panel))))))
