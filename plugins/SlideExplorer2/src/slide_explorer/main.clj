@@ -19,11 +19,13 @@
            (org.micromanager.MMStudioMainFrame))
   (:use [org.micromanager.mm :only (core edt mmc gui load-mm json-to-data)]
         [slide-explorer.affine :only (set-destination-origin transform inverse-transform)]
-        [slide-explorer.view :only (show add-to-memory-tiles pixel-rectangle)]
+        [slide-explorer.view :only (show add-to-memory-tiles pixel-rectangle absolute-mouse-position)]
         [slide-explorer.image :only (show-image intensity-range lut-object)]
         [slide-explorer.persist :only (save-as)]
         [clojure.java.io :only (file)])
   (:require [slide-explorer.reactive :as reactive]
+            [slide-explorer.user-controls :as user-controls]
+            [slide-explorer.affine :as affine]
             [slide-explorer.tile-cache :as tile-cache]
             [slide-explorer.tiles :as tiles]
             [slide-explorer.persist :as persist]))
@@ -33,6 +35,8 @@
 ;; affine transforms
 
 (def gui-prefs (Preferences/userNodeForPackage MMStudioMainFrame))
+
+(def current-xy-positions (atom {}))
 
 (defn set-stage-to-pixel-transform [^AffineTransform affine-transform]
   (JavaUtils/putObjectInPrefs
@@ -80,9 +84,15 @@
   (core waitForDevice (core getXYStageDevice))
   (.getXYStagePosition gui))
 
-(defn set-xy-position [^Point2D$Double position]
-  (core waitForDevice (core getXYStageDevice))
-  (core setXYPosition (core getXYStageDevice) (.x position) (.y position)))
+(defn set-xy-position
+  ([^Point2D$Double position]
+    (set-xy-position (.x position) (.y position)))
+  ([x y]
+    (let [stage (core getXYStageDevice)]
+      (core waitForDevice stage)
+      (core setXYPosition stage x y)
+      (core waitForDevice stage)
+      (swap! current-xy-positions assoc stage [x y]))))
 
 ;; image acquisition
 
@@ -112,7 +122,6 @@
   ([^Point2D$Double stage-pos]
     (let [xy-stage (core getXYStageDevice)]
       (set-xy-position stage-pos)
-      (core waitForDevice xy-stage)
       (acquire-processor-sequence)
       )))
 
@@ -180,15 +189,26 @@
 
 (defn explore [memory-tiles-atom screen-state-atom acquired-images
                affine]
-  ;(println "explore")
+  ;(println "explore" (and (= :explore (:mode @screen-state-atom))))
   (reactive/submit explore-executor
-                   #(when (acquire-next-tile memory-tiles-atom
-                                             screen-state-atom
-                                             acquired-images
-                                             affine)
+                   #(when (and (= :explore (:mode @screen-state-atom))
+                               (acquire-next-tile memory-tiles-atom
+                                                  screen-state-atom
+                                                  acquired-images
+                                                  affine))
                       (explore memory-tiles-atom screen-state-atom
-                           acquired-images affine))))
+                               acquired-images affine))))
                       
+
+(defn navigate [screen-state-atom affine-transform _ _]
+  (when (= :navigate (:mode @screen-state-atom))
+    (let [{:keys [x y]} (absolute-mouse-position @screen-state-atom)
+               [w h] (:tile-dimensions @screen-state-atom)]
+      (set-xy-position (inverse-transform
+                         (Point2D$Double. (- x (/ w 2))
+                                          (- y (/ h 2)))
+                         affine-transform)))))
+  
 
 ;; SAVE AND LOAD SETTINGS
 
@@ -228,31 +248,49 @@
   ([dir new?]
     (let [settings (if-not new? (load-settings dir) {:tile-dimensions [512 512]})
           acquired-images (atom #{})
-          [screen-state memory-tiles] (show dir acquired-images settings)]
+          [screen-state memory-tiles panel] (show dir acquired-images settings)]
       (when new?
         (core waitForDevice (core getXYStageDevice))
         (let [affine-stage-to-pixel (origin-here-stage-to-pixel-transform)
               first-seq (acquire-at (inverse-transform (Point. 0 0) affine-stage-to-pixel))
               explore-fn #(explore memory-tiles screen-state acquired-images
-                                   affine-stage-to-pixel)]
+                                   affine-stage-to-pixel)
+              stage (core getXYStageDevice)]
           (.mkdirs dir)
           (def mt memory-tiles)
+          (def pnl panel)
           (def affine affine-stage-to-pixel)
           (println "about to get channel luts")
+          (user-controls/handle-double-click
+            panel
+            (partial navigate screen-state affine-stage-to-pixel))
+          (reactive/handle-update
+            current-xy-positions 
+            (fn [_ new-pos-map]
+              (let [[x y] (new-pos-map (core getXYStageDevice))
+                    pixel (affine/transform (Point2D$Double. x y)
+                                            affine-stage-to-pixel)]
+                (swap! screen-state assoc :xy-stage-position
+                       (affine/point-to-vector pixel)))))
           (swap! screen-state merge
-                 {:channels (initial-lut-maps first-seq)
+                 {:mode :explore
+                  :channels (initial-lut-maps first-seq)
                   :tile-dimensions [(core getImageWidth)
                                     (core getImageHeight)]})
-          (when new?
-            (explore-fn)
-            (add-watch screen-state "explore" (fn [_ _ old new] (when-not (= old new)
-                                                                  (explore-fn)))))))
+          (explore-fn)
+          (add-watch screen-state "explore" (fn [_ _ old new] (when-not (= old new)
+                                                                (explore-fn))))))
       (def ss screen-state)
       (def ai acquired-images)))
   ([]
     (go (file (str "tmp" (rand-int 10000000))) true)))
   
 
+(defn navigate-to-pixel [[pixel-x pixel-y] affine-stage-to-pixel]
+  (set-xy-position (inverse-transform
+                     (Point2D$Double. pixel-x pixel-y)
+                     affine-stage-to-pixel)))                
+  
 (defn load-data-set
   []
   (when-let [dir (persist/open-dir-dialog)]

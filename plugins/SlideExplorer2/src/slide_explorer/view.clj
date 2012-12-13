@@ -1,12 +1,15 @@
 (ns slide-explorer.view
   (:import (javax.swing JFrame JPanel JSplitPane)
-           (java.awt AlphaComposite Color Graphics Graphics2D Rectangle RenderingHints Window)
+           (java.awt AlphaComposite BasicStroke Color Graphics
+                     Graphics2D Rectangle RenderingHints Window)
            (java.awt.event ComponentAdapter KeyEvent KeyAdapter
                             WindowAdapter)
            (ij.process ByteProcessor ImageProcessor))
   (:require [slide-explorer.reactive :as reactive]
             [slide-explorer.tile-cache :as tile-cache]
             [slide-explorer.tiles :as tiles]
+            [slide-explorer.canvas :as canvas]
+            [slide-explorer.user-controls :as user-controls]
             [clojure.core.memoize :as memo])
   (:use [org.micromanager.mm :only (edt)]
         [slide-explorer.canvas :only (color-object)]
@@ -96,8 +99,10 @@
              merge
              (intensity-range tile-proc)))
 
-(defn copy-contrast [pointing-screen-atom showing-screen-atom]
-  (swap! showing-screen-atom assoc :channels (:channels @pointing-screen-atom)))
+(defn copy-settings [pointing-screen-atom showing-screen-atom]
+  (swap! showing-screen-atom merge
+         (select-keys @pointing-screen-atom
+                      [:channels :tile-dimensions :xy-stage-position])))
 
 ;; OVERLAY
 
@@ -153,6 +158,18 @@
             (draw-image g image x y)
             ))))))
 
+(defn paint-stage-position [^Graphics2D g screen-state]
+  (let [[x y] (:xy-stage-position screen-state)
+        [w h] (:tile-dimensions screen-state)
+        zoom (:zoom screen-state)]
+    (when (and x y)
+      (canvas/draw g
+                   [:rect
+                    {:l (inc (* zoom x)) :t (inc (* zoom y)) :w (* zoom w) :h (* zoom h)
+                     :alpha 0.8
+                     :stroke {:color :yellow
+                              :width 10.0}}]))))
+
 (defn paint-screen [graphics screen-state overlay-tiles-atom]
   (let [original-transform (.getTransform graphics)
         zoom (:zoom screen-state)
@@ -165,6 +182,7 @@
       (.translate (- x-center (int (* (:x screen-state) zoom)))
                   (- y-center (int (* (:y screen-state) zoom))))
       (paint-tiles overlay-tiles-atom screen-state)
+      (paint-stage-position screen-state)
       enable-anti-aliasing
       (.setTransform original-transform)
       ;(show-mouse-pos screen-state)
@@ -276,16 +294,17 @@
          merge position-map))
 
 (defn show-where-pointing! [pointing-screen-atom showing-screen-atom]
-  (copy-contrast pointing-screen-atom showing-screen-atom)
+  (copy-settings pointing-screen-atom showing-screen-atom)
   (set-position! showing-screen-atom
                  (absolute-mouse-position @pointing-screen-atom)))
 
 (defn handle-point-and-show [pointing-screen-atom showing-screen-atom]
   (reactive/handle-update
     pointing-screen-atom
-    (fn [_ _]
-      (show-where-pointing!
-        pointing-screen-atom showing-screen-atom))))
+    (fn [old new]
+      (when (not= old new)
+        (show-where-pointing!
+          pointing-screen-atom showing-screen-atom)))))
 
 (defn show [dir acquired-images settings]
   (let [memory-tiles (tile-cache/create-tile-cache 100 dir)
@@ -313,7 +332,7 @@
     (handle-point-and-show screen-state screen-state2)
     ;(make-view-controllable panel2 screen-state2)
     ;(handle-open frame)
-    [screen-state memory-tiles]))
+    [screen-state memory-tiles panel]))
 
 
 ;; testing

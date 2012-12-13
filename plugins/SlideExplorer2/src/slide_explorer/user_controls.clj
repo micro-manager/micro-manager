@@ -1,6 +1,6 @@
 (ns slide-explorer.user-controls
   (:import (java.awt.event ComponentAdapter KeyEvent KeyAdapter
-                           MouseAdapter WindowAdapter)
+                           MouseAdapter MouseEvent WindowAdapter)
            (java.awt Window)
            (javax.swing AbstractAction JComponent KeyStroke)
            (java.util UUID)))
@@ -172,6 +172,14 @@ to normal size."
 (defn update-mouse-position [e screen-state-atom]
   (swap! screen-state-atom update-in [:mouse]
          merge {:x (.getX e) :y (.getY e)}))
+
+(defn handle-double-click [panel response-fn]
+  (.addMouseListener panel
+                     (proxy [MouseAdapter] []
+                       (mouseClicked [e]
+                                     (when (and (= MouseEvent/BUTTON1 (.getButton e))
+                                                (= 2 (.getClickCount e)))
+                                       (response-fn (.getX e) (.getY e)))))))
 
 (defn handle-pointing [component screen-state-atom]
   (.addMouseMotionListener component
