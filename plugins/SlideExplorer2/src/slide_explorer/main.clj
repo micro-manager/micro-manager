@@ -30,8 +30,6 @@
             [slide-explorer.tiles :as tiles]
             [slide-explorer.persist :as persist]))
 
-(load-mm (MMStudioMainFrame/getInstance))
-
 ;; affine transforms
 
 (def gui-prefs (Preferences/userNodeForPackage MMStudioMainFrame))
@@ -247,6 +245,7 @@
 (defn go
   "The main function that starts a slide explorer window."
   ([dir new?]
+    (load-mm (MMStudioMainFrame/getInstance))
     (let [settings (if-not new? (load-settings dir) {:tile-dimensions [512 512]})
           acquired-images (atom #{})
           [screen-state memory-tiles panel] (show dir acquired-images settings)]
