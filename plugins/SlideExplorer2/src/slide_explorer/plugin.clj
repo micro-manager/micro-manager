@@ -17,7 +17,7 @@
   (:require [slide-explorer.main :as main])
   (:gen-class
     :init init
-    :name org.micromanager.SlideExplorer
+    :name org.micromanager.SlideExplorer2
     :implements [org.micromanager.api.MMPlugin]
     :state state))
 
