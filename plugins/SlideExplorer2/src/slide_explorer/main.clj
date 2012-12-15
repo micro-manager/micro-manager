@@ -23,7 +23,9 @@
         [slide-explorer.image :only (show-image intensity-range lut-object)]
         [slide-explorer.persist :only (save-as)]
         [clojure.java.io :only (file)])
-  (:require [slide-explorer.reactive :as reactive]
+  (:require [org.micromanager.mm :as mm]
+            [org.micromanager.acq-engine :as engine]
+            [slide-explorer.reactive :as reactive]
             [slide-explorer.user-controls :as user-controls]
             [slide-explorer.affine :as affine]
             [slide-explorer.tile-cache :as tile-cache]
@@ -31,6 +33,8 @@
             [slide-explorer.persist :as persist]))
 
 ;; affine transforms
+
+(defonce positions-atom (atom []))
 
 (def gui-prefs (Preferences/userNodeForPackage MMStudioMainFrame))
 
@@ -101,9 +105,14 @@
       (core getTaggedImage)))
 
 (defn acquire-tagged-image-sequence []
-  (let [engine (AcquisitionEngine2010. gui)
-        settings (.. gui getAcquisitionEngine getSequenceSettings)
-        q (.run engine settings false)]
+  (let [acq-engine (AcquisitionEngine2010. gui)
+        settings (-> gui .getAcquisitionEngine .getSequenceSettings
+                     engine/convert-settings
+                     (assoc :use-autofocus false
+                            :frames nil
+                            :positions nil
+                            :numFrames 0))
+        q (engine/run acq-engine settings false)]
     (take-while #(not= % TaggedImageQueue/POISON)
                 (repeatedly #(.take q)))))
 
@@ -167,7 +176,7 @@
                      :ny ny
                      :nz (get-in image [:tags "SliceIndex"])
                      :nt 0
-                     :nc (or (get-in image [:tags "Channel"]) "Default")}]
+                      :nc (or (get-in image [:tags "Channel"]) "Default")}]
         (add-to-memory-tiles 
           memory-tiles
           indices
@@ -208,6 +217,28 @@
                                           (- y (/ h 2)))
                          affine-transform)))))
   
+
+;; Position List
+
+
+(defn update-positions-atom! []
+  (let [new-value
+        (map #(-> % bean
+                  (select-keys [:x :y :label]))
+             (mm/get-positions))]
+    (when (not= new-value @positions-atom)
+      (reset! positions-atom new-value))))
+
+(defn follow-positions []
+  (future (loop []
+            (update-positions-atom!)
+            (Thread/sleep 1000)
+            (recur))))
+;
+;(defn share-positions []
+;  (reactive/handle-update positions-atom
+;                          (fn [old new]
+                             
 
 ;; SAVE AND LOAD SETTINGS
 
@@ -261,9 +292,13 @@
           (def pnl panel)
           (def affine affine-stage-to-pixel)
           (println "about to get channel luts")
+          (swap! screen-state assoc :positions positions-atom)
           (user-controls/handle-double-click
             panel
             (partial navigate screen-state affine-stage-to-pixel))
+          (user-controls/handle-alt-click
+            panel
+            println)
           (user-controls/handle-mode-keys panel screen-state)
           (reactive/handle-update
             current-xy-positions 

@@ -183,14 +183,25 @@ to normal size."
   (swap! screen-state-atom update-in [:mouse]
          merge {:x (.getX e) :y (.getY e)}))
 
-(defn handle-double-click [panel response-fn]
+(defn handle-click [panel event-predicate response-fn]
   (.addMouseListener panel
                      (proxy [MouseAdapter] []
                        (mouseClicked [e]
-                                     (when (and (= MouseEvent/BUTTON1 (.getButton e))
-                                                (= 2 (.getClickCount e)))
+                                     (when (event-predicate e)
                                        (response-fn (.getX e) (.getY e)))))))
 
+(defn handle-double-click [panel response-fn]
+  (handle-click panel
+                (fn [e] (and (= MouseEvent/BUTTON1 (.getButton e))
+                             (= 2 (.getClickCount e))))
+                response-fn))
+
+(defn handle-alt-click [panel response-fn]
+  (handle-click panel
+                (fn [e] (and (= MouseEvent/BUTTON1 (.getButton e))
+                             (.isAltDown e)))
+                response-fn))
+                                     
 (defn handle-pointing [component screen-state-atom]
   (.addMouseMotionListener component
                      (proxy [MouseAdapter] []
@@ -207,4 +218,4 @@ to normal size."
            panel screen-state-atom)
     ((juxt handle-zoom handle-dive watch-keys) (.getTopLevelAncestor panel) screen-state-atom)))
     
-  
+ 

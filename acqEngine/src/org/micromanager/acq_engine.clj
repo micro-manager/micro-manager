@@ -781,18 +781,10 @@
     (def x img)
     (.addToAlbum gui (make-TaggedImage img))))
 
-;; java interop -- implements org.micromanager.api.Pipeline
-
-(defn -init [script-gui]
-  [[] (do (load-mm script-gui)
-          (atom {:stop false}))])
-
-(defn -run
-  ([this acq-settings cleanup?]
-    (def last-acq this)
+(defn run [this settings cleanup?]
+  (def last-acq this)
     (reset! (.state this) {:stop false :pause false :finished false})
-    (let [settings (convert-settings acq-settings)
-          out-queue (LinkedBlockingQueue. 10)
+    (let [out-queue (LinkedBlockingQueue. 10)
           acq-thread (Thread. #(run-acquisition this settings out-queue cleanup?)
                               "AcquisitionSequence2010 Thread (Clojure)")]
       (reset! (.state this)
@@ -805,6 +797,17 @@
       (when-not (:stop @(.state this))
         (.start acq-thread)
         out-queue)))
+
+;; java interop -- implements org.micromanager.api.Pipeline
+
+(defn -init [script-gui]
+  [[] (do (load-mm script-gui)
+          (atom {:stop false}))])
+
+(defn -run
+  ([this acq-settings cleanup?]
+    (let [settings (convert-settings acq-settings)]
+      (run this settings cleanup?)))
   ([this acq-settings]
     (-run this acq-settings true)))
 
