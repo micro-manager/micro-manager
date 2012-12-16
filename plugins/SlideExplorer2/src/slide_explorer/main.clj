@@ -309,14 +309,14 @@
             panel
             println)
           (user-controls/handle-mode-keys panel screen-state)
-;          (reactive/handle-update
-;            current-xy-positions 
-;            (fn [_ new-pos-map]
-;              (let [[x y] (new-pos-map (core getXYStageDevice))
-;                    pixel (affine/transform (Point2D$Double. x y)
-;                                            affine-stage-to-pixel)]
-;                (swap! screen-state assoc :xy-stage-position
-;                       (affine/point-to-vector pixel)))))
+          (reactive/handle-update
+            current-xy-positions 
+            (fn [_ new-pos-map]
+              (let [[x y] (new-pos-map (core getXYStageDevice))
+                    pixel (affine/transform (Point2D$Double. x y)
+                                            affine-stage-to-pixel)]
+                (swap! screen-state assoc :xy-stage-position
+                       (affine/point-to-vector pixel)))))
           (swap! screen-state merge
                  {:acq-settings settings
                   :mode :explore

@@ -162,13 +162,15 @@
   (let [[x y] (:xy-stage-position screen-state)
         [w h] (:tile-dimensions screen-state)
         zoom (:zoom screen-state)]
+    (println x y w h zoom)
     (when (and x y)
       (canvas/draw g
                    [:rect
-                    {:l (inc (* zoom x)) :t (inc (* zoom y)) :w (* zoom w) :h (* zoom h)
+                    {:l (inc (* zoom x)) :t (inc (* zoom y))
+                     :w (* zoom w) :h (* zoom h)
                      :alpha 0.8
                      :stroke {:color :yellow
-                              :width 10.0}}]))))
+                              :width (max 2.0 (* zoom 8))}}]))))
 
 (defn paint-screen [graphics screen-state overlay-tiles-atom]
   (let [original-transform (.getTransform graphics)
