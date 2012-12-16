@@ -104,32 +104,26 @@
       (core snapImage)
       (core getTaggedImage)))
 
-(defn acquire-tagged-image-sequence []
+(defn acquire-tagged-image-sequence [settings]
   (let [acq-engine (AcquisitionEngine2010. gui)
-        settings (-> gui .getAcquisitionEngine .getSequenceSettings
-                     engine/convert-settings
-                     (assoc :use-autofocus false
-                            :frames nil
-                            :positions nil
-                            :numFrames 0))
         q (engine/run acq-engine settings false)]
     (take-while #(not= % TaggedImageQueue/POISON)
                 (repeatedly #(.take q)))))
 
-(defn acquire-processor-sequence []
-  (map tagged-image-to-processor (acquire-tagged-image-sequence)))
+(defn acquire-processor-sequence [settings]
+  (map tagged-image-to-processor (acquire-tagged-image-sequence settings)))
 
 (def acquire-processor-sequence* (memoize acquire-processor-sequence))
 
 (defn acquire-at
   "Move the stage to position x,y and acquire a multi-dimensional
    sequence of images using the acquisition engine."
-  ([x y]
-    (acquire-at (Point2D$Double. x y)))
-  ([^Point2D$Double stage-pos]
+  ([x y settings]
+    (acquire-at (Point2D$Double. x y) settings))
+  ([^Point2D$Double stage-pos settings]
     (let [xy-stage (core getXYStageDevice)]
       (set-xy-position stage-pos)
-      (acquire-processor-sequence)
+      (acquire-processor-sequence settings)
       )))
 
 ;; run using acquisitions
@@ -165,13 +159,15 @@
 
 (def image-processing-executor (Executors/newFixedThreadPool 1))
  
-(defn add-tiles-at [memory-tiles [nx ny] affine-stage-to-pixel acquired-images tile-dimensions]
+(defn add-tiles-at [memory-tiles [nx ny] affine-stage-to-pixel acquired-images tile-dimensions
+                    settings]
   (swap! acquired-images conj [nx ny])
   (let [[tile-width tile-height] tile-dimensions]
     (doseq [image (doall (acquire-at (inverse-transform
                                        (Point. (* tile-width nx)
                                                (* tile-height ny))
-                                       affine-stage-to-pixel)))]
+                                       affine-stage-to-pixel)
+                                     settings))]
       (let [indices {:nx nx
                      :ny ny
                      :nz (get-in image [:tags "SliceIndex"])
@@ -189,7 +185,8 @@
   (when-let [next-tile (next-tile @screen-state-atom
                                   acquired-images)]
     (add-tiles-at memory-tiles-atom next-tile affine acquired-images
-                  (@screen-state-atom :tile-dimensions))
+                  (@screen-state-atom :tile-dimensions)
+                  (@screen-state-atom :acq-settings))
     next-tile))
 
 (def explore-executor (Executors/newFixedThreadPool 1))
@@ -238,7 +235,15 @@
 ;(defn share-positions []
 ;  (reactive/handle-update positions-atom
 ;                          (fn [old new]
-                             
+   
+(defn create-acquisition-settings []
+  (-> gui .getAcquisitionEngine .getSequenceSettings
+      engine/convert-settings
+      (assoc :use-autofocus false
+             :frames nil
+             :positions nil
+             :numFrames 0)))
+                          
 
 ;; SAVE AND LOAD SETTINGS
 
@@ -282,8 +287,11 @@
           [screen-state memory-tiles panel] (show dir acquired-images settings)]
       (when new?
         (core waitForDevice (core getXYStageDevice))
-        (let [affine-stage-to-pixel (origin-here-stage-to-pixel-transform)
-              first-seq (acquire-at (inverse-transform (Point. 0 0) affine-stage-to-pixel))
+        (let [settings (create-acquisition-settings)
+              affine-stage-to-pixel (origin-here-stage-to-pixel-transform)
+              first-seq (acquire-at (inverse-transform
+                                      (Point. 0 0) affine-stage-to-pixel)
+                                    settings)
               explore-fn #(explore memory-tiles screen-state acquired-images
                                    affine-stage-to-pixel)
               stage (core getXYStageDevice)]
@@ -309,7 +317,8 @@
                 (swap! screen-state assoc :xy-stage-position
                        (affine/point-to-vector pixel)))))
           (swap! screen-state merge
-                 {:mode :explore
+                 {:acq-settings settings
+                  :mode :explore
                   :channels (initial-lut-maps first-seq)
                   :tile-dimensions [(core getImageWidth)
                                     (core getImageHeight)]})
