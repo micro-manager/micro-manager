@@ -29,6 +29,7 @@
             [slide-explorer.user-controls :as user-controls]
             [slide-explorer.affine :as affine]
             [slide-explorer.tile-cache :as tile-cache]
+            [slide-explorer.canvas :as canvas]
             [slide-explorer.tiles :as tiles]
             [slide-explorer.persist :as persist]))
 
@@ -74,7 +75,7 @@
   "Gets the channel colors from a tagged-processor-sequence."
   [tagged-processor-sequence]
   (let [summary (-> tagged-processor-sequence first :tags (get "Summary"))]
-    (zipmap (summary "ChNames") (map #(Color. %) (summary "ChColors")))))
+    (zipmap (summary "ChNames") (summary "ChColors"))))
 
 (defn tagged-image-to-processor [tagged-image]
   {:proc (ImageUtils/makeProcessor tagged-image)
@@ -308,23 +309,25 @@
             panel
             println)
           (user-controls/handle-mode-keys panel screen-state)
-          (reactive/handle-update
-            current-xy-positions 
-            (fn [_ new-pos-map]
-              (let [[x y] (new-pos-map (core getXYStageDevice))
-                    pixel (affine/transform (Point2D$Double. x y)
-                                            affine-stage-to-pixel)]
-                (swap! screen-state assoc :xy-stage-position
-                       (affine/point-to-vector pixel)))))
+;          (reactive/handle-update
+;            current-xy-positions 
+;            (fn [_ new-pos-map]
+;              (let [[x y] (new-pos-map (core getXYStageDevice))
+;                    pixel (affine/transform (Point2D$Double. x y)
+;                                            affine-stage-to-pixel)]
+;                (swap! screen-state assoc :xy-stage-position
+;                       (affine/point-to-vector pixel)))))
           (swap! screen-state merge
                  {:acq-settings settings
                   :mode :explore
                   :channels (initial-lut-maps first-seq)
                   :tile-dimensions [(core getImageWidth)
                                     (core getImageHeight)]})
-          (explore-fn)
           (add-watch screen-state "explore" (fn [_ _ old new] (when-not (= old new)
-                                                                (explore-fn))))))
+                                                                (explore-fn))))
+          (explore-fn)))
+      (save-settings dir @screen-state)
+      (println dir)
       (def ss screen-state)
       (def ai acquired-images)))
   ([]

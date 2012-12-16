@@ -269,8 +269,8 @@
     
 (defn main-frame []
   (doto (JFrame. "Slide Explorer II")
-    .show
-    (.setBounds 10 10 500 500)))
+    (.setBounds 10 10 500 500)
+    .show))
     
 (defn view-panel [memory-tiles acquired-images settings]
   (let [screen-state (atom (merge
@@ -332,6 +332,7 @@
     (handle-point-and-show screen-state screen-state2)
     ;(make-view-controllable panel2 screen-state2)
     ;(handle-open frame)
+    (.show frame)
     [screen-state memory-tiles panel]))
 
 
