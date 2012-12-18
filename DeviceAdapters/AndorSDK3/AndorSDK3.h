@@ -39,18 +39,6 @@
 #include <map>
 #include "atcore++.h"
 
-/////////////////////////////////////////////////////////////////////////////
-// Error codes
-//
-#define ERR_UNKNOWN_MODE         102
-#define ERR_UNKNOWN_POSITION     103
-#define ERR_IN_SEQUENCE          104
-#define ERR_SEQUENCE_INACTIVE    105
-
-
-//////////////////////////////////////////////////////////////////////////////
-// CAndorSDK3Camera class
-//////////////////////////////////////////////////////////////////////////////
 
 class MySequenceThread;
 namespace andor {
@@ -74,6 +62,12 @@ class TAndorFloatValueMapper;
 class TAndorFloatHolder;
 class TAndorEnumValueMapper;
 class TTriggerRemapper;
+
+
+//////////////////////////////////////////////////////////////////////////////
+// CAndorSDK3Camera class
+//////////////////////////////////////////////////////////////////////////////
+
 
 class CAndorSDK3Camera : public CCameraBase<CAndorSDK3Camera>  
 {
@@ -152,10 +146,12 @@ private:
    bool keep_trying_;
    bool in_external_;
    double timeout_;
+   unsigned int currentSeqExposure_;
 
    unsigned char** image_buffers_;
    unsigned int numImgBuffersAllocated_;
 
+   bool b_eventsSupported_;
    bool b_cameraPresent_;
 
    int GetNumberOfDevicesPresent() { return number_of_devices_; };

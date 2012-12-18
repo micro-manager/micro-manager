@@ -39,8 +39,7 @@ private:
    andor::ICommand* sendSoftwareTrigger;
    andor::IEnum* pixelEncoding;
 
-   unsigned char* first_image_buffer;
-   unsigned char* second_image_buffer;
+   unsigned char* image_buffer_;
 
    bool is_poised_;
    bool set_internal_;

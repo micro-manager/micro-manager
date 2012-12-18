@@ -69,6 +69,8 @@ static const unsigned int CID_FIELD_SIZE = 4;
 static const unsigned int NUMBER_MDA_BUFFERS = 10;
 static const unsigned int NUMBER_LIVE_BUFFERS = 2;
 
+static const unsigned int WAITBUFFER_TIMEOUT_MILLISECONDS = 100;
+
 // TODO: linux entry code
 
 // windows DLL entry code
@@ -171,12 +173,19 @@ CAndorSDK3Camera::CAndorSDK3Camera()
   image_buffers_(NULL),
   numImgBuffersAllocated_(0),
   d_frameRate_(0),
+  currentSeqExposure_(0),
   keep_trying_(false),
+  b_eventsSupported_(false),
   roiX_(0),
   roiY_(0)
 {
    // call the base class method to set-up default error codes/messages
    InitializeDefaultErrorMessages();
+   //Add in some others not currently in base impl, will show in CoreLog/Msgbox on error
+   SetErrorText(DEVICE_BUFFER_OVERFLOW, " Circular Buffer Overflow code from MMCore");
+   SetErrorText(DEVICE_OUT_OF_MEMORY, " Allocation Failure - out of memory");
+   SetErrorText(DEVICE_SNAP_IMAGE_FAILED, " Snap Image Failure");
+   
    readoutStartTime_ = GetCurrentMMTime();
 #ifdef TESTRESOURCELOCKING
    pDemoResourceLock_ = new MMThreadLock();
@@ -333,7 +342,7 @@ int CAndorSDK3Camera::Initialize()
    IString * cameraSerialNumber = cameraDevice->GetString(L"SerialNumber");
    std::wstring temp_ws = cameraSerialNumber->Get();
    char * p_cameraSerialNumber = new char[temp_ws.size() + 1];
-   memset(p_cameraSerialNumber, '\0', temp_ws.size() + 1);
+   memset(p_cameraSerialNumber, 0, temp_ws.size() + 1);
    wcstombs(p_cameraSerialNumber, temp_ws.c_str(), temp_ws.size());
    cameraDevice->Release(cameraSerialNumber);
    nRet = CreateProperty(MM::g_Keyword_CameraID, p_cameraSerialNumber, MM::String, true);
@@ -432,10 +441,52 @@ int CAndorSDK3Camera::Initialize()
 
    ClearROI();
 
-#ifdef TESTRESOURCELOCKING
-   TestResourceLocking(true);
-   LogMessage("TestResourceLocking OK",true);
-#endif
+   //MetaData / TimeStamp enable
+   IBool * metadataEnable = NULL;
+   IBool * mdTimeStampEnable = NULL;
+   try
+   {
+      metadataEnable = cameraDevice->GetBool(L"MetadataEnable");
+      metadataEnable->Set(true);
+      cameraDevice->Release(metadataEnable);
+   }
+   catch (exception & e)
+   {
+      string s("[Initialize] metadataEnable Caught Exception with message: ");
+      s += e.what();
+      LogMessage(s);
+      cameraDevice->Release(metadataEnable);
+   }
+
+   try
+   {
+      mdTimeStampEnable = cameraDevice->GetBool(L"MetadataTimestamp");
+      mdTimeStampEnable->Set(true);
+      cameraDevice->Release(mdTimeStampEnable);
+   }
+   catch (exception & e)
+   {
+      string s("[Initialize] metadataEnable TS Caught Exception with message: ");
+      s += e.what();
+      LogMessage(s);
+      cameraDevice->Release(mdTimeStampEnable);
+   }
+
+   //TimestampClockFrequency
+   IInteger* tsClkFrequency = NULL;
+   try
+   {
+      tsClkFrequency = cameraDevice->GetInteger(L"TimestampClockFrequency");
+      fpgaTSclockFrequency_ = tsClkFrequency->Get();
+      cameraDevice->Release(tsClkFrequency);
+   }
+   catch (exception & e)
+   {
+      string s("[Initialize] TS Clk Frequency Caught Exception with message: ");
+      s += e.what();
+      LogMessage(s);
+      cameraDevice->Release(tsClkFrequency);
+   }
 
    snapShotController_->poiseForSnapShot();
    return DEVICE_OK;
@@ -580,9 +631,17 @@ int CAndorSDK3Camera::SnapImage()
 
    snapShotController_->takeSnapShot(return_buffer);
 
-   timeStamp_ = GetTimeStamp(return_buffer);
+   //temp until TODO completed below:
+   if (return_buffer)
+   {
+      timeStamp_ = GetTimeStamp(return_buffer);
+      UnpackDataWithPadding(return_buffer);
+   }
+   else
+   {
+      return DEVICE_SNAP_IMAGE_FAILED;
+   }
 
-   UnpackDataWithPadding(return_buffer);
    // TODO Currently Snap waits until readout completes to unpack - need to revisit
    //readoutStartTime_ = GetCurrentMMTime();
 
@@ -802,16 +861,8 @@ int CAndorSDK3Camera::StopSequenceAcquisition()
    if (!thd_->IsStopped())
    {
       thd_->Stop();
-      if (snapShotController_->isExternal())
-      {
-         // thd_ will still be waiting for an external trigger. Instruct to
-         // stop waiting
-         keep_trying_ = false;
-      }
-      else
-      {
-         thd_->wait();
-      }
+      keep_trying_ = false;
+      thd_->wait();
    }
 
    return DEVICE_OK;
@@ -829,12 +880,10 @@ bool CAndorSDK3Camera::InitialiseDeviceCircularBuffer(const unsigned numBuffers)
       image_buffers_ = new unsigned char * [numBuffers];
       for (unsigned int i = 0; i < numBuffers; i++)
       {
-         image_buffers_[i] = new unsigned char[static_cast<int>(ImageSize+7)];
-         unsigned char* pucAlignedBuffer = reinterpret_cast<unsigned char*>(
-                                             (reinterpret_cast<unsigned long>( image_buffers_[i] ) + 7 ) & ~0x7);
-         memset(pucAlignedBuffer, '\0', static_cast<int>(ImageSize));
+         image_buffers_[i] = new unsigned char[static_cast<int>(ImageSize)];
+         memset(image_buffers_[i], 0, static_cast<int>(ImageSize));
          ++numImgBuffersAllocated_;
-         bufferControl->Queue(pucAlignedBuffer, static_cast<int>(ImageSize));
+         bufferControl->Queue(image_buffers_[i], static_cast<int>(ImageSize));
       }
       cameraDevice->Release(imageSizeBytes);
       b_ret = true;
@@ -879,11 +928,18 @@ bool CAndorSDK3Camera::CleanUpDeviceCircularBuffer()
 int CAndorSDK3Camera::StartSequenceAcquisition(long numImages, double interval_ms, bool stopOnOverflow)
 {
    int retCode = DEVICE_OK;
+   
    // The camera's default state is in software trigger mode, poised to make an
    // acquisition. Stop acquisition so that properties can be set for the
-   // sequence acquisition. Also release the two buffers that were queued to
-   // to take acquisition
-   snapShotController_->leavePoisedMode();
+   // sequence acquisition. Also release any buffers that were queued to
+   // to take snapshot.
+   // This may be called twice, if e.g. out of memory first time returned 
+   // - a second attmept may be made. Need to ensure no memory issues or exceptions
+
+   if (snapShotController_->isPoised() )
+   {
+      snapShotController_->leavePoisedMode();
+   }
 
    if (IsCapturing())
    {
@@ -892,53 +948,6 @@ int CAndorSDK3Camera::StartSequenceAcquisition(long numImages, double interval_m
    else
    {
       retCode = GetCoreCallback()->PrepareForAcq(this);
-   }
-
-   //MetaData / TimeStamp enable
-   IBool * metadataEnable = NULL;
-   IBool * mdTimeStampEnable = NULL;
-   try
-   {
-      metadataEnable = cameraDevice->GetBool(L"MetadataEnable");
-      metadataEnable->Set(true);
-      cameraDevice->Release(metadataEnable);
-   }
-   catch (exception & e)
-   {
-      string s("[StartSequenceAcquisition] metadataEnable Caught Exception with message: ");
-      s += e.what();
-      LogMessage(s);
-      cameraDevice->Release(metadataEnable);
-   }
-
-   try
-   {
-      mdTimeStampEnable = cameraDevice->GetBool(L"MetadataTimestamp");
-      mdTimeStampEnable->Set(true);
-      cameraDevice->Release(mdTimeStampEnable);
-   }
-   catch (exception & e)
-   {
-      string s("[StartSequenceAcquisition] metadataEnable TS Caught Exception with message: ");
-      s += e.what();
-      LogMessage(s);
-      cameraDevice->Release(mdTimeStampEnable);
-   }
-
-   //TimestampClockFrequency
-   IInteger* tsClkFrequency = NULL;
-   try
-   {
-      tsClkFrequency = cameraDevice->GetInteger(L"TimestampClockFrequency");
-      fpgaTSclockFrequency_ = tsClkFrequency->Get();
-      cameraDevice->Release(tsClkFrequency);
-   }
-   catch (exception & e)
-   {
-      string s("[StartSequenceAcquisition] TS Clk Frequency Caught Exception with message: ");
-      s += e.what();
-      LogMessage(s);
-      cameraDevice->Release(tsClkFrequency);
    }
 
    bool b_memOkRet = false;
@@ -965,9 +974,11 @@ int CAndorSDK3Camera::StartSequenceAcquisition(long numImages, double interval_m
       }
       else
       {
+         bufferControl->Flush();
          CleanUpDeviceCircularBuffer();
-         return DEVICE_OUT_OF_MEMORY;
+         retCode = DEVICE_OUT_OF_MEMORY;
       }
+   }
       //// Set the frame rate to that held by the frame rate holder. Check the limits
       //double held_fr = 0.0;
       //if (frameRate->IsWritable())
@@ -986,6 +997,10 @@ int CAndorSDK3Camera::StartSequenceAcquisition(long numImages, double interval_m
       //   frameRate->Set(held_fr);
       //}
 
+   if (DEVICE_OK == retCode)
+   {
+      double d_exp = GetExposure();
+      currentSeqExposure_ = static_cast<unsigned int>(d_exp);
       try
       {
          startAcquisitionCommand->Do();
@@ -994,14 +1009,26 @@ int CAndorSDK3Camera::StartSequenceAcquisition(long numImages, double interval_m
             sendSoftwareTrigger->Do();
          }
       }
-      catch (exception & e)
+      catch (NoMemoryException & e)
       {
-         string s("[StartSequenceAcquisition] Caught Exception [Live] with message: ");
+         string s("[StartSequenceAcquisition] NoMemoryException: ");
          s += e.what();
          LogMessage(s);
-         return DEVICE_ERR;
+         bufferControl->Flush();
+         CleanUpDeviceCircularBuffer();
+         retCode = DEVICE_OUT_OF_MEMORY;
       }
+      catch (exception & e)
+      {
+         string s("[StartSequenceAcquisition] Caught Exception with message: ");
+         s += e.what();
+         LogMessage(s);
+         retCode = DEVICE_ERR;
+      }
+   }
 
+   if (DEVICE_OK == retCode)
+   {
       keep_trying_ = true;
       thd_->Start(numImages, interval_ms);
       stopOnOverflow_ = stopOnOverflow;
@@ -1010,7 +1037,6 @@ int CAndorSDK3Camera::StartSequenceAcquisition(long numImages, double interval_m
       {
          aoi_property_->SetReadOnly(true);
       }
-
    }
 
    return retCode;
@@ -1111,6 +1137,7 @@ int CAndorSDK3Camera::InsertImage()
  */
 int CAndorSDK3Camera::ThreadRun(void)
 {
+   int ret = DEVICE_ERR;
    unsigned char * return_buffer = NULL;
    int buffer_size = 0;
 
@@ -1119,7 +1146,7 @@ int CAndorSDK3Camera::ThreadRun(void)
    {
       try
       {
-         got_image = bufferControl->Wait(return_buffer, buffer_size, 100);
+         got_image = bufferControl->Wait(return_buffer, buffer_size, WAITBUFFER_TIMEOUT_MILLISECONDS);
       }
       catch (exception & e)
       {
@@ -1132,6 +1159,10 @@ int CAndorSDK3Camera::ThreadRun(void)
          LogMessage("[ThreadRun] Unrecognised Exception caught!");
       }
 
+      if (!got_image && WAITBUFFER_TIMEOUT_MILLISECONDS >= currentSeqExposure_)
+      {
+         LogMessage("[ThreadRun] WaitBuffer returned false, no data!");
+      }
    }
 
    if (snapShotController_->isSoftware())
@@ -1144,8 +1175,9 @@ int CAndorSDK3Camera::ThreadRun(void)
       bufferControl->Queue(return_buffer, buffer_size);
       timeStamp_ = GetTimeStamp(return_buffer);
       UnpackDataWithPadding(return_buffer);
+      ret = InsertImage();
    }
-   return InsertImage();
+   return ret;
 };
 
 
@@ -1261,9 +1293,20 @@ int MySequenceThread::svc(void) throw()
          ret = camera_->ThreadRun();
       } 
       while (DEVICE_OK == ret && !IsStopped() && imageCounter_++ < numImages_ - 1);
-      if (IsStopped())
-         camera_->LogMessage("[svc] SeqAcquisition interrupted by the user");
 
+      if (IsStopped())
+      {
+   	     camera_->LogMessage("[svc] SeqAcquisition interrupted by the user");
+      }
+
+      if (DEVICE_BUFFER_OVERFLOW == ret)
+      {
+         camera_->LogMessage("[MySequenceThread::svc] Circular Buffer Overflow code from MMCore; Thread exiting...");
+      }
+      else if (DEVICE_OK != ret)
+      {
+         camera_->LogMessage("[MySequenceThread::svc] Unknown Error occured");
+      }
    }
    catch (exception & e)
    {

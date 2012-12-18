@@ -5,8 +5,7 @@ using namespace andor;
 
 SnapShotControl::SnapShotControl(IDevice * cameraDevice_)
 : cameraDevice(cameraDevice_),
-  first_image_buffer(NULL),
-  second_image_buffer(NULL),
+  image_buffer_(NULL),
   is_poised_(false),
   mono12PackedMode_(true)
 {
@@ -61,6 +60,7 @@ void SnapShotControl::resetTriggerMode()
    if (set_internal_)
    {
       triggerMode->Set(L"Internal");
+      in_software_ = false;
    }
 }
 
@@ -70,18 +70,11 @@ void SnapShotControl::poiseForSnapShot()
    setupTriggerModeSilently();
 
    AT_64 ImageSize = imageSizeBytes->Get();
-   if (NULL == first_image_buffer)
+   if (NULL == image_buffer_)
    {
-      first_image_buffer = new unsigned char[static_cast<int>(ImageSize+7)];
-      unsigned char* pucAlignedBuffer = reinterpret_cast<unsigned char*>(
-                                          (reinterpret_cast<unsigned long>( first_image_buffer ) + 7 ) & ~0x7);
-      bufferControl->Queue(pucAlignedBuffer, static_cast<int>(ImageSize));
-      
-      // TODO Remove at later date once field testing verifies
-      //second_image_buffer = new unsigned char[static_cast<int>(ImageSize+7)];
-      //pucAlignedBuffer = reinterpret_cast<unsigned char*>(
-      //                                    (reinterpret_cast<unsigned long>( second_image_buffer ) + 7 ) & ~0x7);
-      //bufferControl->Queue(pucAlignedBuffer, static_cast<int>(ImageSize));
+      image_buffer_ = new unsigned char[static_cast<int>(ImageSize)];
+      memset(image_buffer_, 0, static_cast<int>(ImageSize));
+      bufferControl->Queue(image_buffer_, static_cast<int>(ImageSize));
    }
    startAcquisitionCommand->Do();
    is_poised_ = true;
@@ -100,8 +93,11 @@ void SnapShotControl::takeSnapShot(unsigned char *& return_buffer)
    {
       sendSoftwareTrigger->Do();
    }
-   bufferControl->Wait(return_buffer, buffer_size, AT_INFINITE);
-   bufferControl->Queue(return_buffer, buffer_size);
+   bool got_image = bufferControl->Wait(return_buffer, buffer_size, AT_INFINITE);
+   if (got_image)
+   {
+      bufferControl->Queue(return_buffer, buffer_size);
+   }
 }
 
 void SnapShotControl::leavePoisedMode()
@@ -110,10 +106,8 @@ void SnapShotControl::leavePoisedMode()
    bufferControl->Flush();
    is_poised_ = false;
 
-   delete [] first_image_buffer;
-   first_image_buffer = NULL;
-   delete [] second_image_buffer;
-   second_image_buffer = NULL;
+   delete [] image_buffer_;
+   image_buffer_ = NULL;
 
    resetTriggerMode();
 }
