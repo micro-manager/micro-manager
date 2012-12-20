@@ -59,5 +59,13 @@ public interface MMListenerInterface{
     * Implement this callback to be informed when an XY stage has moved.
     */
    public void xyStagePositionChanged(String deviceName, double xPos, double yPos);
+   
+   /**
+    * Implement to be notified that the exposure time given camera has changed
+    * @param cameraName - label of camera whose exposure changed
+    * @param newExposureTime - ne exposure time
+    */
+   public void exposureChanged(String cameraName, double newExposureTime);
+   
 }
 

@@ -38,4 +38,6 @@ public class MMListenerAdapter implements MMListenerInterface {
    };
    public void xyStagePositionChanged(String deviceName, double xPos, double yPos){
    };
+   public void exposureChanged(String cameraName, double newExposure){
+   };
 }
