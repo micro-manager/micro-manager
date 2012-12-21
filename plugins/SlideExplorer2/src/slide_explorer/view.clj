@@ -71,8 +71,8 @@
      (update-in [:zoom] / 2)))
 
 (defn propagate-tile [tile-map-atom child parent]
-  (let [child-tile (.get (tile-cache/load-tile tile-map-atom child))
-        parent-tile (.get (tile-cache/load-tile tile-map-atom parent))
+  (let [child-tile (tile-cache/load-tile tile-map-atom child)
+        parent-tile (tile-cache/load-tile tile-map-atom parent)
         new-child-tile (insert-half-tile
                          parent-tile
                          [(even? (:nx parent))
