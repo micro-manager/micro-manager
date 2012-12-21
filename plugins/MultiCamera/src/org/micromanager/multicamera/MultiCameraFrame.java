@@ -924,6 +924,9 @@ public class MultiCameraFrame extends javax.swing.JFrame implements MMListenerIn
    @Override
    public void xyStagePositionChanged(String deviceName, double xPos, double yPos) {
    }
+   
+   public void exposureChanged(String string, double d) { 
+   }
 
    private void setPropertyIfPossible(String device, String property, String value) {
       try {
@@ -934,4 +937,5 @@ public class MultiCameraFrame extends javax.swing.JFrame implements MMListenerIn
          ReportingUtils.logError(ex);
       }
    }
+
 }
