@@ -50,6 +50,7 @@ public class GaussianFitStackThread extends GaussianInfo implements Runnable {
    public void run() {
       GaussianFit gs_ = new GaussianFit(shape_, fitMode_);
       double cPCF = photonConversionFactor_ / gain_;
+      ZCalibrator zc = DataCollectionForm.zc_;
 
       while (!stopNow_) {
          GaussianSpotData spot;
@@ -96,8 +97,7 @@ public class GaussianFitStackThread extends GaussianInfo implements Runnable {
                   sy = paramsOut[GaussianFit.S2] * pixelSize_;
                   a = sx / sy;
                   
-                  double z = 0.0;
-                  ZCalibrator zc = DataCollectionForm.zc_;
+                  double z = 0.0;              
                
                   if (zc.hasFitFunctions()) {
                      z = zc.getZ(2 * sx, 2 * sy);

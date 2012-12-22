@@ -45,7 +45,6 @@ public class ZCalibrator {
    private double[] fitFunctionWx_;
    private double[] fitFunctionWy_;
    
-   
    final int maxIterations_ = 10000;
    
    public boolean hasFitFunctions() {
@@ -192,7 +191,7 @@ public class ZCalibrator {
       paramsOut = result.getPoint();
 
       
-      System.out.println("Y:");
+      //System.out.println("Y:");
       
       //for (int i = 0; i < paramsOut.length; i++) {
        //  System.out.println("Result " + i + " value: " + (int) paramsOut[i]);
