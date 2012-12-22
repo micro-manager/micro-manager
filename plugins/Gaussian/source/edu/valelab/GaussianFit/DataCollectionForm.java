@@ -2313,43 +2313,47 @@ public class DataCollectionForm extends javax.swing.JFrame {
             @Override
             public void run() {
 
-               int mag = 1 << visualizationMagnification_.getSelectedIndex();
-               SpotDataFilter sf = new SpotDataFilter();
-               if (filterSigmaCheckBox_.isSelected()) {
-                  sf.setSigma(true, Double.parseDouble(sigmaMin_.getText()),
-                          Double.parseDouble(sigmaMax_.getText()));
-               }
-               if (filterIntensityCheckBox_.isSelected()) {
-                  sf.setIntensity(true, Double.parseDouble(intensityMin_.getText()),
-                          Double.parseDouble(intensityMax_.getText()));
-               }
-               
-               MyRowData rowData = rowData_.get(row);
-               String fsep = System.getProperty("file.separator");
-               String ttmp = rowData.name_;
-               if (rowData.name_.contains(fsep)) {
-                  ttmp = rowData.name_.substring(rowData.name_.lastIndexOf(fsep) + 1);
-               }
-               ttmp += mag + "x";
-               final String title = ttmp;
-               ImagePlus sp = null;
-               if (rowData.hasZ_) {
-                  ImageStack is = ImageRenderer.renderData3D(rowData,
-                       visualizationModel_.getSelectedIndex(), mag, null, sf);
-                  sp = new ImagePlus(title, is);
-                  
-               } else {
-                  ImageProcessor ip = ImageRenderer.renderData(rowData,
-                       visualizationModel_.getSelectedIndex(), mag, null, sf);
-                  sp = new ImagePlus(title, ip);
-               }
-               GaussCanvas gs = new GaussCanvas(sp, rowData_.get(row),
-                       visualizationModel_.getSelectedIndex(), mag, sf);
-               DisplayUtils.AutoStretch(sp);
-               DisplayUtils.SetCalibration(sp, (float) (rowData.pixelSizeNm_ / mag));
-               ImageWindow w = new ImageWindow(sp, gs);
+               try {
+                  int mag = 1 << visualizationMagnification_.getSelectedIndex();
+                  SpotDataFilter sf = new SpotDataFilter();
+                  if (filterSigmaCheckBox_.isSelected()) {
+                     sf.setSigma(true, Double.parseDouble(sigmaMin_.getText()),
+                             Double.parseDouble(sigmaMax_.getText()));
+                  }
+                  if (filterIntensityCheckBox_.isSelected()) {
+                     sf.setIntensity(true, Double.parseDouble(intensityMin_.getText()),
+                             Double.parseDouble(intensityMax_.getText()));
+                  }
 
-               w.setVisible(true);
+                  MyRowData rowData = rowData_.get(row);
+                  String fsep = System.getProperty("file.separator");
+                  String ttmp = rowData.name_;
+                  if (rowData.name_.contains(fsep)) {
+                     ttmp = rowData.name_.substring(rowData.name_.lastIndexOf(fsep) + 1);
+                  }
+                  ttmp += mag + "x";
+                  final String title = ttmp;
+                  ImagePlus sp = null;
+                  if (rowData.hasZ_) {
+                     ImageStack is = ImageRenderer.renderData3D(rowData,
+                             visualizationModel_.getSelectedIndex(), mag, null, sf);
+                     sp = new ImagePlus(title, is);
+
+                  } else {
+                     ImageProcessor ip = ImageRenderer.renderData(rowData,
+                             visualizationModel_.getSelectedIndex(), mag, null, sf);
+                     sp = new ImagePlus(title, ip);
+                  }
+                  GaussCanvas gs = new GaussCanvas(sp, rowData_.get(row),
+                          visualizationModel_.getSelectedIndex(), mag, sf);
+                  DisplayUtils.AutoStretch(sp);
+                  DisplayUtils.SetCalibration(sp, (float) (rowData.pixelSizeNm_ / mag));
+                  ImageWindow w = new ImageWindow(sp, gs);
+
+                  w.setVisible(true);
+               } catch (OutOfMemoryError ome) {
+                  ReportingUtils.showError("Out of Memory");
+               }
             }
          };
          
@@ -3902,9 +3906,9 @@ public class DataCollectionForm extends javax.swing.JFrame {
       for (GaussianSpotData gsd : sl) {
          double xw = gsd.getWidth();
          double xy = xw / gsd.getA();
-         if (xw < widthCutoff && xy < widthCutoff) {
+         if (xw < widthCutoff && xy < widthCutoff && xw > 0 && xy > 0) {
             zc_.addDataPoint(gsd.getWidth(), gsd.getWidth() / gsd.getA(),
-               gsd.getSlice() );
+               gsd.getSlice() /* * rd.zStackStepSizeNm_*/);
          }
       }
       zc_.plotDataPoints();
@@ -3942,8 +3946,10 @@ public class DataCollectionForm extends javax.swing.JFrame {
                     meanX < widthCutoff &&
                     meanY < widthCutoff &&
                     varX < maxVariance && 
-                    varY < maxVariance) {
-               zc_.addDataPoint(meanX, meanY, frameNr);
+                    varY < maxVariance &&
+                    meanX > 0 &&
+                    meanY > 0) {
+               zc_.addDataPoint(meanX, meanY, frameNr /* * rd.zStackStepSizeNm_ */);
             }
             
          }

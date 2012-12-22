@@ -320,7 +320,7 @@ public class ImageRenderer {
                   x -= rect.x;
                   y -= rect.y;
                   int index = (y * width) + x;
-                  if (index < size && index > 0 && z < nrZs) {
+                  if (index < size && index > 0 && z < nrZs && z > 0) {
                      if (pixels[z][index] != -1) {
                         pixels[z][index] += 1;
                      }

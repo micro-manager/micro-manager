@@ -83,8 +83,6 @@ public class FitAllThread extends GaussianInfo implements Runnable  {
          return;
       }
 
-      //ImagePlus imp = siPlus;
-
       int nrThreads = ij.Prefs.getThreads();
          if (nrThreads > 8)
             nrThreads = 8;
@@ -125,6 +123,24 @@ public class FitAllThread extends GaussianInfo implements Runnable  {
 
       // Add data to data overview window
       DataCollectionForm dcForm = DataCollectionForm.getInstance();
+      
+      double zMax = resultList_.get(0).getZCenter();
+      if (zMax < 0.0) {
+         zMax = 0.0;
+      }
+      double zMin = zMax;
+      ZCalibrator zc = DataCollectionForm.zc_;
+      if (zc != null) {
+         for (GaussianSpotData spot : resultList_) {
+            double zTmp = spot.getZCenter();
+            if (zMax < zTmp) {
+               zMax = zTmp;
+            }
+            if (zMin > zTmp && zTmp > 0.0) {
+               zMin = zTmp;
+            }  
+         }
+      }
 
       dcForm.addSpotData(siPlus.getWindow().getTitle(), siPlus.getTitle(), "",
               siPlus.getWidth(), siPlus.getHeight(), (float) pixelSize_, 
@@ -132,7 +148,7 @@ public class FitAllThread extends GaussianInfo implements Runnable  {
               nrChannels, nrFrames, nrSlices, nrPositions, resultList_.size(), 
               resultList_, null, false, DataCollectionForm.Coordinates.NM, 
               DataCollectionForm.zc_.hasFitFunctions(), 
-              0.0, 0.0);
+              zMin, zMax);
       
       dcForm.setVisible(true);
 
