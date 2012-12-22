@@ -9,6 +9,7 @@
             [slide-explorer.tile-cache :as tile-cache]
             [slide-explorer.tiles :as tiles]
             [slide-explorer.canvas :as canvas]
+            [slide-explorer.image :as image]
             [slide-explorer.user-controls :as user-controls]
             [clojure.core.memoize :as memo])
   (:use [org.micromanager.mm :only (edt)]
@@ -162,7 +163,7 @@
   (let [[x y] (:xy-stage-position screen-state)
         [w h] (:tile-dimensions screen-state)
         zoom (:zoom screen-state)]
-    (println x y w h zoom)
+    ;(println x y w h zoom)
     (when (and x y)
       (canvas/draw g
                    [:rect
@@ -332,7 +333,6 @@
     (make-view-controllable panel screen-state)
     (handle-resize panel2 screen-state2)
     (handle-point-and-show screen-state screen-state2)
-    ;(make-view-controllable panel2 screen-state2)
     ;(handle-open frame)
     (.show frame)
     [screen-state memory-tiles panel]))

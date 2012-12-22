@@ -2,6 +2,7 @@
   (:import (ij CompositeImage IJ ImagePlus ImageStack)
            (ij.io FileSaver)
            (ij.plugin ZProjector)
+           (ij.plugin.filter GaussianBlur)
            (ij.process ByteProcessor LUT ImageProcessor ColorProcessor
                        ImageStatistics ByteStatistics ShortProcessor)
            (mmcorej TaggedImage)
@@ -228,6 +229,12 @@
     (condp = (type (first processors))
       ByteProcessor (.convertToByte float-processor false)
       ShortProcessor (.convertToShort float-processor false))))
+
+(defn gaussian-blur [processor radius]
+  (let [new-proc (.duplicate processor)]
+    (.blurGaussian (GaussianBlur.) new-proc radius radius 0.0002)
+    new-proc))
+  
 
 ;; testing
     
