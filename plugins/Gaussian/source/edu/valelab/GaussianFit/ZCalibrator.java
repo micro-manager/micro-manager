@@ -3,7 +3,7 @@
  * 
  * Based on Bo Huang et al., DOI: 10.1126/science.1153529
  * 
- * Create 6/28/2012
+ * Created 6/28/2012
  * 
  * Nico Stuurman, nico@cmp.ucsf.edu
  * 
@@ -105,7 +105,7 @@ public class ZCalibrator {
    
    public void plotDataPoints() {
       
-      String xAxis = "Z (um)";
+      String xAxis = "Z (frame nr)";
       
       XYSeries[] plotData = new XYSeries[2];
       plotData[0] = new XYSeries("wx");
@@ -122,7 +122,7 @@ public class ZCalibrator {
    }
    
    private void plotFitFunctions() {
-      String xAxis = "Z (um)";
+      String xAxis = "Z (frame nr)";
       
       XYSeries[] plotData = new XYSeries[2];
       plotData[0] = new XYSeries("wx");
@@ -134,7 +134,7 @@ public class ZCalibrator {
          plotData[1].add(d.z_, MultiVariateZCalibrationFunction.funcval(fitFunctionWy_, d.z_));
       }
       
-      GaussianUtils.plotDataN("", plotData, xAxis, "Width(nm)", 0, 400, true, false);      
+      GaussianUtils.plotDataN("Z- calibraton fitted functions", plotData, xAxis, "Width(nm)", 0, 400, true, false);      
    }
    
    /**
@@ -166,10 +166,6 @@ public class ZCalibrator {
       RealPointValuePair result = nmx.optimize(mvcx, GoalType.MINIMIZE, params0_);
       paramsOut = result.getPoint();
       
-      //for (int i = 0; i < paramsOut.length; i++) {
-       //  System.out.println("Result " + i + " value: " + (int) paramsOut[i]);
-      //}
-      
       // write fit result to Results Table:
       ResultsTable res = new ResultsTable();
       res.incrementCounter();
@@ -190,13 +186,6 @@ public class ZCalibrator {
       result = nmx.optimize(yvcx, GoalType.MINIMIZE, params0_);
       paramsOut = result.getPoint();
 
-      
-      //System.out.println("Y:");
-      
-      //for (int i = 0; i < paramsOut.length; i++) {
-       //  System.out.println("Result " + i + " value: " + (int) paramsOut[i]);
-      //}
-      
       res.incrementCounter();
       res.addValue("c", paramsOut[0]);
       res.addValue("w0", paramsOut[1]);
@@ -210,8 +199,7 @@ public class ZCalibrator {
       
       
       plotFitFunctions();
-      
-      
+            
 
    }
    
