@@ -1,10 +1,11 @@
 (ns slide-explorer.image
   (:import (ij CompositeImage IJ ImagePlus ImageStack)
            (ij.io FileSaver)
-           (ij.plugin ZProjector)
+           (ij.plugin ImageCalculator ZProjector)
            (ij.plugin.filter GaussianBlur)
            (ij.process ByteProcessor LUT ImageProcessor ColorProcessor
-                       ImageStatistics ByteStatistics ShortProcessor)
+                       ImageStatistics ByteStatistics ShortProcessor
+                       FloatProcessor)
            (mmcorej TaggedImage)
            (javax.swing JFrame)
            (java.awt Color)
@@ -81,6 +82,12 @@
   "Converts and ImageJ ImageProcessor to an AWT image."
   [^ImageProcessor proc]
   (.createImage proc))
+
+(defn convert-to-type-like [proc template-proc]
+  (condp = (type template-proc)
+    ByteProcessor (.convertToByte proc false)
+    ShortProcessor (.convertToShort proc false)
+    FloatProcessor (.convertToFloat proc false)))
 
 ;; Trimming and displacing images
 
@@ -226,14 +233,33 @@
             .doProjection)
           .getProjection
           .getProcessor)]
-    (condp = (type (first processors))
-      ByteProcessor (.convertToByte float-processor false)
-      ShortProcessor (.convertToShort float-processor false))))
+    (convert-to-type-like (first processors))))
 
-(defn gaussian-blur [processor radius]
+(defn gaussian-blur
+  "Applys a gaussian blur to ImageProcessor, with given radius."
+  [processor radius]
   (let [new-proc (.duplicate processor)]
     (.blurGaussian (GaussianBlur.) new-proc radius radius 0.0002)
     new-proc))
+
+(defn normalize
+  "Rescale intensities so the max value of processor is 1.0."
+  [processor]
+  (let [max (.max (.getStatistics processor))
+        float-proc (.convertToFloat processor)]
+    (.multiply float-proc (/ 1 max))
+    float-proc))
+
+(defn divide-processors
+  "Divide processor 1 by processor 2."
+  [proc1 proc2]
+  (-> (ImageCalculator.)
+      (.run 
+        "divide float"
+        (ImagePlus. "" proc1)
+        (ImagePlus. "" proc2))
+      .getProcessor
+      (convert-to-type-like proc1)))
   
 
 ;; testing
