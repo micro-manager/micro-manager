@@ -20,6 +20,7 @@
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 //
 // CVS:          $Id$
+
 package org.micromanager;
 
 import com.swtdesigner.SwingResourceManager;
@@ -84,7 +85,7 @@ public class AcqControlDlg extends JFrame implements PropertyChangeListener, Acq
    public static final String NEW_ACQFILE_NAME = "MMAcquistion.xml";
    public static final String ACQ_SETTINGS_NODE = "AcquistionSettings";
    public static final String COLOR_SETTINGS_NODE = "ColorSettings";
-   private static final String EXPOSURE_SETTINGS_NODE = "ExposureSettings";
+   private static final String EXPOSURE_SETTINGS_NODE = "AcqExposureSettings";
    private JComboBox channelGroupCombo_;
    private JTextArea commentTextArea_;
    private JComboBox zValCombo_;
@@ -101,6 +102,7 @@ public class AcqControlDlg extends JFrame implements PropertyChangeListener, Acq
    private JTable channelTable_;
    private JSpinner numFrames_;
    private ChannelTableModel model_;
+   private MMOptions options_;
    private Preferences prefs_;
    private Preferences acqPrefs_;
    private Preferences colorPrefs_;
@@ -296,6 +298,10 @@ public class AcqControlDlg extends JFrame implements PropertyChangeListener, Acq
             channel.exposure_ = ((Double) value).doubleValue();
             exposurePrefs_.putDouble("Exposure_" + acqEng_.getChannelGroup() 
                     + "_" + channel.config_,channel.exposure_);
+            if (options_.syncExposureMainAndMDA_) {
+               gui_.setChannelExposureTime(acqEng_.getChannelGroup(), 
+                       channel.config_, channel.exposure_);
+            }
          } else if (col == 3) {
             channel.zOffset_ = ((Double) value).doubleValue();
          } else if (col == 4) {
@@ -842,12 +848,13 @@ public class AcqControlDlg extends JFrame implements PropertyChangeListener, Acq
     * @param prefs - application preferences node
     */
    public AcqControlDlg(AcquisitionEngine acqEng, Preferences prefs, 
-           ScriptInterface gui) {
+           ScriptInterface gui, MMOptions options) {
       super();
 
       prefs_ = prefs;
       gui_ = gui;
       guiColors_ = new GUIColors();
+      options_ = options;
 
       setIconImage(SwingResourceManager.getImage(MMStudioMainFrame.class,
             "icons/microscope.gif"));

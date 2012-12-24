@@ -41,6 +41,7 @@ public class MMOptions {
    private static final String PREF_WINDOW_MAG = "windowMag";
    private static final String MPTIFF_METADATA_FILE = "MakeMetadataFileWithMultipageTiff";
    private static final String MPTIFF_SEPERATE_FILES_FOR_POSITIONS = "SplitXYPostionsInFilesMPTiff";
+   private static final String SYNCEXPOSUREMAINANDMDA = "SyncExposureBetweenMainAndMDAWindows";
    
    public boolean debugLogEnabled_ = false;
    public boolean doNotAskForConfigFile_ = false;
@@ -50,9 +51,9 @@ public class MMOptions {
    public String startupScript_ = "MMStartup.bsh";
    boolean autoreloadDevices_ = false;
    public double windowMag_ = 1.0;
-   //public boolean enableDeviceDiscovery_  = false;
    public boolean mpTiffMetadataFile_ = false;
    public boolean mpTiffSeperateFilesForPositions_ = true;
+   public boolean syncExposureMainAndMDA_ = false;
    
    public void saveSettings() {
       Preferences root = Preferences.userNodeForPackage( this.getClass());
@@ -66,9 +67,9 @@ public class MMOptions {
       prefs.put(DISPLAY_BACKGROUND, displayBackground_);
       prefs.put(STARTUP_SCRIPT_FILE, startupScript_);
       prefs.putDouble(PREF_WINDOW_MAG, windowMag_);
-      // prefs.putBoolean(ENABLE_DEVICE_DISCOVERY, enableDeviceDiscovery_);
       prefs.putBoolean(MPTIFF_METADATA_FILE, mpTiffMetadataFile_);
       prefs.putBoolean(MPTIFF_SEPERATE_FILES_FOR_POSITIONS, mpTiffSeperateFilesForPositions_);
+      prefs.putBoolean (SYNCEXPOSUREMAINANDMDA, syncExposureMainAndMDA_);
    }
    
    public void loadSettings() {
@@ -86,5 +87,6 @@ public class MMOptions {
       // enableDeviceDiscovery_ = prefs.getBoolean(ENABLE_DEVICE_DISCOVERY, enableDeviceDiscovery_);
       mpTiffMetadataFile_ = prefs.getBoolean(MPTIFF_METADATA_FILE, mpTiffMetadataFile_);
       mpTiffSeperateFilesForPositions_ = prefs.getBoolean(MPTIFF_SEPERATE_FILES_FOR_POSITIONS, mpTiffSeperateFilesForPositions_);
+      syncExposureMainAndMDA_ = prefs.getBoolean(SYNCEXPOSUREMAINANDMDA, syncExposureMainAndMDA_);
    }
 }

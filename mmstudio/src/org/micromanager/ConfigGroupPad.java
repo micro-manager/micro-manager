@@ -219,7 +219,7 @@ public class ConfigGroupPad extends JScrollPane{
                   
                   // Associate exposure time with presets in current channel group
                   if (item.group.equals(core_.getChannelGroup())) {
-                     core_.setExposure(parentGUI_.getAcqDlg().getChannelExposureTime(
+                     core_.setExposure(parentGUI_.getChannelExposureTime(
                              item.group, value.toString(), core_.getExposure()) );
                   }
                   

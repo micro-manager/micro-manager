@@ -91,7 +91,7 @@ public class OptionsDlg extends MMDialog {
       setTitle("Micro-Manager Options");
       springLayout = new SpringLayout();
       getContentPane().setLayout(springLayout);
-      setBounds(100, 100, 371, 340);
+      setBounds(100, 100, 380, 375);
       guiColors_ = new GUIColors();
       Dimension buttonSize = new Dimension(120, 20);
 
@@ -411,6 +411,20 @@ public class OptionsDlg extends MMDialog {
       springLayout.putConstraint(SpringLayout.WEST, seperateFilesForPositionsMPTiffCheckBox, 20, SpringLayout.WEST, getContentPane());
       springLayout.putConstraint(SpringLayout.NORTH, seperateFilesForPositionsMPTiffCheckBox, 5, SpringLayout.SOUTH, metadataFileWithMultipageTiffCheckBox);
       seperateFilesForPositionsMPTiffCheckBox.setSelected(opts_.mpTiffSeperateFilesForPositions_);
+  
+      final JCheckBox syncExposureMainAndMDA = new JCheckBox();
+      syncExposureMainAndMDA.addActionListener(new ActionListener() {
+         public void actionPerformed(ActionEvent arg0) {
+            opts_.syncExposureMainAndMDA_ = syncExposureMainAndMDA.isSelected();
+         }
+      });
+      syncExposureMainAndMDA.setText("Sync exposure between Main and MDA windows");
+      getContentPane().add(syncExposureMainAndMDA);
+      springLayout.putConstraint(SpringLayout.WEST, syncExposureMainAndMDA, 20, SpringLayout.WEST, getContentPane());
+      springLayout.putConstraint(SpringLayout.NORTH, syncExposureMainAndMDA, 5, SpringLayout.SOUTH, seperateFilesForPositionsMPTiffCheckBox);
+      syncExposureMainAndMDA.setSelected(opts_.syncExposureMainAndMDA_);
+  
+   
    }
 
    private void changeBackground() {

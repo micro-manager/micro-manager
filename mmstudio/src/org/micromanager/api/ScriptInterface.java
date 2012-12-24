@@ -538,6 +538,19 @@ public interface ScriptInterface {
    public void setChannelName(String title, int channel, String name) throws MMScriptException;
    
    /**
+    * Updates the exposure time associated with the given preset
+    * If the channelgroup and channel name match the current state
+    * the exposure time will also be updated
+    * 
+    * @param channelGroup - 
+    * 
+    * @param channel - preset for which to change exposure time
+    * @param exposure - desired exposure time
+    */
+   public void setChannelExposureTime(String channelGroup, String channel,
+           double exposure);
+   
+   /**
     * Sets min (black) and max (white or the channel's color) pixel value clipping levels for each channel.
     * @param title - acquisition name
     * @param channel - channel index (use 0 if there is only a single channel)
@@ -556,7 +569,22 @@ public interface ScriptInterface {
     * @throws MMScriptException
     */
    public void setContrastBasedOnFrame(String title, int frame, int slice) throws MMScriptException;
-      
+   
+   
+    /**
+    * Returns exposure time for the desired preset in the given channelgroup
+    * Acquires its info from the preferences
+    * Same thing is used in MDA window, but this class keeps its own copy
+    * 
+    * @param channelGroup
+    * @param channel - 
+    * @param defaultExp - default value
+    * @return exposure time
+    */
+   public double getChannelExposureTime(String channelGroup, String channel,
+           double defaultExp);
+   
+   
    /**
     * Closes Image5D window.
     * @param acquisitionName - Name of the acquisition
@@ -573,6 +601,8 @@ public interface ScriptInterface {
     */
    public void closeAcquisitionWindow(String acquisitionName) throws MMScriptException;
 
+   
+   
 
    /**
     * Obtain the current XY stage position.
