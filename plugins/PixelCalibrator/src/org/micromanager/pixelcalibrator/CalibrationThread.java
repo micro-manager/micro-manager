@@ -284,6 +284,7 @@ public class CalibrationThread extends Thread {
          return secondApprox;
    }
 
+   @Override
    public void run() {
       progress_ = 0;
       result_ = null;
