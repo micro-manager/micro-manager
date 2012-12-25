@@ -215,7 +215,7 @@
 
 (defn monochrome-loader
   "Loads monochrome tiles needed for drawing."
-  [screen-state-atom memory-tile-atom acquired-images]
+  [screen-state-atom memory-tile-atom]
   (let [visible-tile-positions (tiles/tiles-in-pixel-rectangle
                                  (screen-rectangle @screen-state-atom)
                                  (:tile-dimensions @screen-state-atom))]
@@ -236,8 +236,7 @@
   (let [load-monochrome (fn [_ _]
                           (monochrome-loader
                             screen-state-atom
-                            memory-tile-atom
-                            acquired-images))
+                            memory-tile-atom))
         load-overlay (fn [_ _]
                        (overlay-loader
                          screen-state-atom
