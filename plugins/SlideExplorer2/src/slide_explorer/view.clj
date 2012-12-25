@@ -233,25 +233,30 @@
   "Runs visible-loader whenever screen-state-atom changes."
   [screen-state-atom memory-tile-atom
    overlay-tiles-atom acquired-images]
-  (let [react-monochrome (fn [_ _] (monochrome-loader screen-state-atom memory-tile-atom
-                                           acquired-images))
-        react-overlay (fn [_ _] (overlay-loader screen-state-atom memory-tile-atom
-                                               overlay-tiles-atom))
+  (let [load-monochrome (fn [_ _]
+                          (monochrome-loader
+                            screen-state-atom
+                            memory-tile-atom
+                            acquired-images))
+        load-overlay (fn [_ _]
+                       (overlay-loader
+                         screen-state-atom
+                         memory-tile-atom
+                         overlay-tiles-atom))
         agent (agent {})]
     (def agent1 agent)
     (reactive/handle-update
       memory-tile-atom
-      react-overlay
+      load-overlay
       agent)
     (reactive/handle-update
       screen-state-atom
-      react-monochrome
+      load-monochrome
       agent)
     (reactive/handle-update
       acquired-images
-      react-monochrome
-      agent)
-    ))
+      load-monochrome
+      agent)))
   
 ;; MAIN WINDOW AND PANEL
 
