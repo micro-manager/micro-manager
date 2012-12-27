@@ -149,14 +149,12 @@
                        tile-index)]
       (let [[x y] (tiles/tile-to-pixels [(:nx tile-index) (:ny tile-index)]
                                         (screen-state :tile-dimensions) 1)]
-        (paint/draw-image g image x y)
-        ))))
+        (paint/draw-image g image x y)))))
 
 (defn paint-stage-position [^Graphics2D g screen-state]
   (let [[x y] (:xy-stage-position screen-state)
         [w h] (:tile-dimensions screen-state)
         zoom (:zoom screen-state)]
-    ;(println x y w h zoom)
     (when (and x y)
       (canvas/draw g
                    [:rect
@@ -172,7 +170,6 @@
         x-center (/ (screen-state :width) 2)
         y-center (/ (screen-state :height) 2)
         [tile-width tile-height] (:tile-dimensions screen-state)]
-    ;(.printStackTrace (Throwable.))
     (doto graphics
       (.setClip 0 0 (:width screen-state) (:height screen-state))
       (.translate (- x-center (int (* (:x screen-state) zoom)))

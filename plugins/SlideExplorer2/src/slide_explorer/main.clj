@@ -1,22 +1,11 @@
 (ns slide-explorer.main
-  (:import (java.awt Color Graphics Graphics2D Point RenderingHints Window)
-           (java.awt.event ComponentAdapter KeyAdapter KeyEvent MouseAdapter
-                           WindowAdapter)
-           (java.awt.image BufferedImage WritableRaster)
+  (:import (java.awt Color Point)
            (java.awt.geom AffineTransform Point2D$Double)
-           (java.io ByteArrayInputStream)
-           (java.util UUID)
            (java.util.prefs Preferences)
            (java.util.concurrent Executors)
-           (javax.imageio ImageIO)
-           (javax.swing JFileChooser)
-           (ij ImagePlus)
-           (ij.process ImageProcessor)
-           (mmcorej TaggedImage)
            (org.micromanager AcquisitionEngine2010 MMStudioMainFrame)
-           (org.micromanager.utils GUIUpdater ImageUtils JavaUtils)
-           (org.micromanager.acquisition TaggedImageQueue)
-           (org.micromanager.MMStudioMainFrame))
+           (org.micromanager.utils ImageUtils JavaUtils)
+           (org.micromanager.acquisition TaggedImageQueue))
   (:require [clojure.java.io :as io]
             [org.micromanager.mm :as mm]
             [org.micromanager.acq-engine :as engine]
