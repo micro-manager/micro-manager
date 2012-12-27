@@ -1,7 +1,7 @@
 (ns slide-explorer.paint
   (:import (java.awt Graphics Graphics2D RenderingHints)
            (org.micromanager.utils GUIUpdater))
-  (:use [slide-explorer.reactive :only (add-watch-simple)]))
+  (:require [slide-explorer.reactive :as reactive]))
 
 (defn enable-anti-aliasing
   "Turn on (off) anti-aliasing for a graphics context."
@@ -42,7 +42,7 @@
    the values in reference have changed."
   [panel references]
   (doseq [reference references]
-    (add-watch-simple reference
+    (reactive/add-watch-simple reference
       (fn [old-state new-state]
         (when-not (identical? old-state new-state)
           ;(println (meta reference))

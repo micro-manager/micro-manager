@@ -1,6 +1,6 @@
 (ns slide-explorer.persist
   (:import (org.micromanager.utils FileDialogs FileDialogs$FileType))
-  (:use [clojure.java.io :only (file)]))
+  (:require [clojure.java.io :as io]))
 
 ;; file dialogs
 
@@ -26,6 +26,6 @@
    data set there."
   [old-location]
   (when-let [new-location (create-dir-dialog)]
-    (when (.renameTo (file old-location) new-location)
+    (when (.renameTo (io/file old-location) new-location)
       new-location)))
     

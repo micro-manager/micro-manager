@@ -11,16 +11,8 @@
             [slide-explorer.canvas :as canvas]
             [slide-explorer.image :as image]
             [slide-explorer.user-controls :as user-controls]
-            [clojure.core.memoize :as memo])
-  (:use [org.micromanager.mm :only (edt)]
-        [slide-explorer.canvas :only (color-object)]
-        [slide-explorer.paint :only (enable-anti-aliasing
-                                     draw-image repaint-on-change)]
-        [slide-explorer.tiles :only (center-tile floor-int)]
-        [slide-explorer.image :only (crop insert-half-tile overlay intensity-range)]
-        [slide-explorer.user-controls :only (make-view-controllable
-                                              handle-resize
-                                              setup-fullscreen)]))
+            [slide-explorer.paint :as paint]
+            [clojure.core.memoize :as memo]))
 
 (def MIN-ZOOM 1/256)
 
@@ -63,7 +55,7 @@
 (defn child-index
   "Converts an x,y index to one in a child (1/2x zoom)."
   [n]
-  (floor-int (/ n 2)))
+  (tiles/floor-int (/ n 2)))
 
 (defn child-indices [indices]
   (-> indices
@@ -74,7 +66,7 @@
 (defn propagate-tile [tile-map-atom child parent]
   (let [child-tile (tile-cache/load-tile tile-map-atom child)
         parent-tile (tile-cache/load-tile tile-map-atom parent)
-        new-child-tile (insert-half-tile
+        new-child-tile (image/insert-half-tile
                          parent-tile
                          [(even? (:nx parent))
                           (even? (:ny parent))]
@@ -98,7 +90,7 @@
   (update-in screen-state
              [:channels (:nc tile-index)]
              merge
-             (intensity-range tile-proc)))
+             (image/intensity-range tile-proc)))
 
 (defn copy-settings [pointing-screen-atom showing-screen-atom]
   (swap! showing-screen-atom merge
@@ -107,7 +99,7 @@
 
 ;; OVERLAY
 
-(def overlay-memo (memo/memo-lru overlay 100))
+(def overlay-memo (memo/memo-lru image/overlay 100))
 
 (defn multi-color-tile [memory-tiles-atom tile-indices channels-map]
   (let [channel-names (keys channels-map)
@@ -156,7 +148,7 @@
                            overlay-tiles-atom
                            tile-index)]
           (let [[x y] (tiles/tile-to-pixels [nx ny] tile-dimensions 1)]
-            (draw-image g image x y)
+            (paint/draw-image g image x y)
             ))))))
 
 (defn paint-stage-position [^Graphics2D g screen-state]
@@ -186,7 +178,7 @@
                   (- y-center (int (* (:y screen-state) zoom))))
       (paint-tiles overlay-tiles-atom screen-state)
       (paint-stage-position screen-state)
-      enable-anti-aliasing
+      paint/enable-anti-aliasing
       (.setTransform original-transform)
       ;(show-mouse-pos screen-state)
       (.setColor Color/WHITE)
@@ -269,7 +261,7 @@
     ;(println overlay-tiles)
     (load-visible-only screen-state memory-tiles
                        overlay-tiles acquired-images)
-    (repaint-on-change panel [overlay-tiles screen-state]); [memory-tiles])
+    (paint/repaint-on-change panel [overlay-tiles screen-state]); [memory-tiles])
     ;(set-contrast-when-ready screen-state memory-tiles)
     [panel screen-state]))
 
@@ -310,9 +302,9 @@
     (def ai acquired-images)
     (println ss ss2 mt mt2)
     (.add (.getContentPane frame) split-pane)
-    (setup-fullscreen frame)
-    (make-view-controllable panel screen-state)
-    (handle-resize panel2 screen-state2)
+    (user-controls/setup-fullscreen frame)
+    (user-controls/make-view-controllable panel screen-state)
+    (user-controls/handle-resize panel2 screen-state2)
     (handle-point-and-show screen-state screen-state2)
     ;(handle-open frame)
     (.show frame)

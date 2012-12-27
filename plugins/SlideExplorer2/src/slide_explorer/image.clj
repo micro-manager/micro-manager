@@ -11,8 +11,7 @@
            (java.awt Color)
            (java.io File)
            (org.micromanager.utils ImageUtils))
-  (:require [slide-explorer.canvas :as canvas])
-  (:use [org.micromanager.mm :only (core load-mm gui)]))
+  (:require [slide-explorer.canvas :as canvas]))
 
 (defmacro timer [expr]
   `(let [ret# (time ~expr)]
