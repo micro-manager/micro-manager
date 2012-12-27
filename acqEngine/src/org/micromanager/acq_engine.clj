@@ -874,11 +874,11 @@
     (.setParentGUI gui)
     (.setPositionList (.getPositionList gui))))))
 
-(defn test-dialog [eng]
-  (.show (AcqControlDlg. eng (Preferences/userNodeForPackage (.getClass gui)) gui)))
+;(defn test-dialog [eng]
+;  (.show (AcqControlDlg. eng (Preferences/userNodeForPackage (.getClass gui)) gui)))
 
-(defn run-test []
-  (test-dialog (create-acq-eng)))
+;(defn run-test []
+;  (test-dialog (create-acq-eng)))
 
 (defn stop []
   (when-let [acq-thread (:acq-thread (.state last-acq))]
