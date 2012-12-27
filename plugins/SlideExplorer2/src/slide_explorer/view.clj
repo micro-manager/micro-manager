@@ -35,12 +35,12 @@
      ret#))
 
 (defn pixel-rectangle
-  	  "Converts the screen state coordinates to visible camera pixel coordinates."
-  	  [{:keys [x y width height zoom]}]
-  	  (Rectangle. (- x (/ width 2 zoom))
-                 	    (- y (/ height 2 zoom))
-                 	    (/ width zoom)
-                 	    (/ height zoom)))
+  "Converts the screen state coordinates to visible camera pixel coordinates."
+  [{:keys [x y width height zoom]}]
+  (Rectangle. (- x (/ width 2 zoom))
+              (- y (/ height 2 zoom))
+              (/ width zoom)
+              (/ height zoom)))
 
 (defn screen-rectangle
   "Returns a rectangle centered at x,y."
@@ -49,6 +49,16 @@
               (- (* y zoom) (/ height 2))
               width
               height))
+
+(defn visible-tile-indices
+  "Computes visible tile indices for a given channel index."
+  [screen-state channel-index]
+  (let [visible-tile-positions (tiles/tiles-in-pixel-rectangle
+                                 (screen-rectangle screen-state)
+                                 (:tile-dimensions screen-state))]
+    (for [[nx ny] visible-tile-positions]
+      {:nx nx :ny ny :zoom (:zoom screen-state)
+       :nc channel-index :nz (screen-state :z) :nt 0})))
 
 ;; TILING
 
@@ -130,26 +140,17 @@
     (when (and x y)
       (doto graphics
         (.setColor Color/BLUE)
-        (.drawRect (- x 25) (- y 25) 50 50)))))
-)
+        (.drawRect (- x 25) (- y 25) 50 50))))))
   
 (defn paint-tiles [^Graphics2D g overlay-tiles-atom screen-state]
-  (let [pixel-rect (.getClipBounds g)
-        tile-dimensions (screen-state :tile-dimensions)]
-    (doseq [[nx ny] (tiles/tiles-in-pixel-rectangle pixel-rect tile-dimensions)]
-      (let [tile-index {:nc :overlay
-                        :zoom (screen-state :zoom)
-                        :nx nx :ny ny :nt 0
-                        :nz (screen-state :z)}]
-;        (let [[x y] (tiles/tile-to-pixels [nx ny] tile-dimensions 1)]
-;            (draw-test-tile g x y)
-;          )
-        (when-let [image (tile-cache/get-tile
-                           overlay-tiles-atom
-                           tile-index)]
-          (let [[x y] (tiles/tile-to-pixels [nx ny] tile-dimensions 1)]
-            (paint/draw-image g image x y)
-            ))))))
+  (doseq [tile-index (visible-tile-indices screen-state :overlay)] 
+    (when-let [image (tile-cache/get-tile
+                       overlay-tiles-atom
+                       tile-index)]
+      (let [[x y] (tiles/tile-to-pixels [(:nx tile-index) (:ny tile-index)]
+                                        (screen-state :tile-dimensions) 1)]
+        (paint/draw-image g image x y)
+        ))))
 
 (defn paint-stage-position [^Graphics2D g screen-state]
   (let [[x y] (:xy-stage-position screen-state)
@@ -186,16 +187,6 @@
       (.drawString (str (absolute-mouse-position screen-state)) 10 40))))
 
 ;; Loading visible tiles
-
-(defn visible-tile-indices
-  "Computes visible tile indices for a given channel index."
-  [screen-state channel-index]
-  (let [visible-tile-positions (tiles/tiles-in-pixel-rectangle
-                                 (screen-rectangle screen-state)
-                                 (:tile-dimensions screen-state))]
-    (for [[nx ny] visible-tile-positions]
-      {:nx nx :ny ny :zoom (:zoom screen-state)
-       :nc channel-index :nz (screen-state :z) :nt 0})))
 
 (defn overlay-loader
   "Creates overlay tiles needed for drawing."
@@ -312,8 +303,6 @@
 
 
 ;; testing
-
-
 
 (defn big-region-contrast []
   (swap! ss assoc
