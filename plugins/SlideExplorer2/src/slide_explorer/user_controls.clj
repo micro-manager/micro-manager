@@ -209,13 +209,19 @@ to normal size."
                        (mouseDragged [e] (update-mouse-position e screen-state-atom)))))
                                    
 
+(defn handle-refresh [component]
+  (bind-keys component ["R"] #(do (.repaint component) (println "repaint")) true))
+                           
+
 ;(defn handle-open [window]
 ;  (bind-window-keys window ["S"] create-dir-dialog))
 
 (defn make-view-controllable [panel screen-state-atom]
   (let [handle-arrow-pan-50 #(handle-arrow-pan %1 %2 50)]
+    (handle-refresh panel)
     ((juxt handle-drags handle-arrow-pan-50 handle-wheel handle-resize handle-pointing)
            panel screen-state-atom)
-    ((juxt handle-zoom handle-dive watch-keys) (.getTopLevelAncestor panel) screen-state-atom)))
+    ((juxt handle-zoom handle-dive );watch-keys)
+           (.getTopLevelAncestor panel) screen-state-atom)))
     
  

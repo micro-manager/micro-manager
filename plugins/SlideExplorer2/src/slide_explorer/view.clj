@@ -195,39 +195,31 @@
 
 ;; Loading visible tiles
 
+(defn visible-tile-indices
+  "Computes visible tile indices for a given channel index."
+  [screen-state channel-index]
+  (let [visible-tile-positions (tiles/tiles-in-pixel-rectangle
+                                 (screen-rectangle screen-state)
+                                 (:tile-dimensions screen-state))]
+    (for [[nx ny] visible-tile-positions]
+      {:nx nx :ny ny :zoom (:zoom screen-state)
+       :nc channel-index :nz (screen-state :z) :nt 0})))
+
 (defn overlay-loader
   "Creates overlay tiles for visible monochrome tiles in memory."
   [screen-state-atom memory-tile-atom overlay-tiles-atom]
-  (let [visible-tile-positions (tiles/tiles-in-pixel-rectangle
-                                 (screen-rectangle @screen-state-atom)
-                                 (:tile-dimensions @screen-state-atom))]
-    (doseq [[nx ny] visible-tile-positions]
-      (let [tile {:nx nx
-                  :ny ny
-                  :zoom (@screen-state-atom :zoom)
-                  :nc :overlay
-                  :nz (@screen-state-atom :z)
-                  :nt 0}]
-          (tile-cache/add-tile overlay-tiles-atom
-                               tile
-                               (multi-color-tile memory-tile-atom tile
-                                                 (:channels @screen-state-atom)))))))
+  (doseq [tile (visible-tile-indices @screen-state-atom :overlay)]
+    (tile-cache/add-tile overlay-tiles-atom
+                         tile
+                         (multi-color-tile memory-tile-atom tile
+                                           (:channels @screen-state-atom)))))
 
 (defn monochrome-loader
   "Loads monochrome tiles needed for drawing."
   [screen-state-atom memory-tile-atom]
-  (let [visible-tile-positions (tiles/tiles-in-pixel-rectangle
-                                 (screen-rectangle @screen-state-atom)
-                                 (:tile-dimensions @screen-state-atom))]
-    (doseq [[nx ny] visible-tile-positions
-            channel (keys (:channels @screen-state-atom))]
-      (let [tile {:nx nx
-                  :ny ny
-                  :zoom (@screen-state-atom :zoom)
-                  :nc channel
-                  :nz (@screen-state-atom :z)
-                  :nt 0}]
-        (tile-cache/load-tile memory-tile-atom tile)))))
+  (doseq [tile (mapcat #(visible-tile-indices @screen-state-atom %)
+                       (keys (:channels @screen-state-atom)))]
+    (tile-cache/load-tile memory-tile-atom tile)))
 
 (defn load-visible-only
   "Runs visible-loader whenever screen-state-atom changes."
@@ -292,7 +284,7 @@
     ;(println overlay-tiles)
     (load-visible-only screen-state memory-tiles
                        overlay-tiles acquired-images)
-    (repaint-on-change panel [screen-state memory-tiles overlay-tiles])
+    (repaint-on-change panel [overlay-tiles screen-state]); [memory-tiles])
     ;(set-contrast-when-ready screen-state memory-tiles)
     [panel screen-state]))
 

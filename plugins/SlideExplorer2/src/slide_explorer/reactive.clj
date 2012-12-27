@@ -97,7 +97,10 @@
                                   (when-not (identical? last-val current-val)
                                     (function last-val current-val))
                                   current-val)
-                                (catch Throwable t (do (.printStackTrace t) (def t1 t) (println t) (throw t))))))))))
+                                (catch Throwable t (do (.printStackTrace t)
+                                                       (def t1 t)
+                                                       (println t)
+                                                       (throw t))))))))))
   ([reference function]
     (handle-update reference function (agent @reference))))
 
