@@ -113,7 +113,7 @@
   (let [channel-names (keys channels-map)
         procs (for [chan channel-names]
                 (let [tile-index (assoc tile-indices :nc chan)]
-                  (tile-cache/get-tile memory-tiles-atom tile-index)))
+                  (tile-cache/load-tile memory-tiles-atom tile-index)))
         lut-maps (map channels-map channel-names)]
     (overlay-memo procs lut-maps)))
 
@@ -206,7 +206,7 @@
        :nc channel-index :nz (screen-state :z) :nt 0})))
 
 (defn overlay-loader
-  "Creates overlay tiles for visible monochrome tiles in memory."
+  "Creates overlay tiles needed for drawing."
   [screen-state-atom memory-tile-atom overlay-tiles-atom]
   (doseq [tile (visible-tile-indices @screen-state-atom :overlay)]
     (tile-cache/add-tile overlay-tiles-atom
@@ -214,22 +214,11 @@
                          (multi-color-tile memory-tile-atom tile
                                            (:channels @screen-state-atom)))))
 
-(defn monochrome-loader
-  "Loads monochrome tiles needed for drawing."
-  [screen-state-atom memory-tile-atom]
-  (doseq [tile (mapcat #(visible-tile-indices @screen-state-atom %)
-                       (keys (:channels @screen-state-atom)))]
-    (tile-cache/load-tile memory-tile-atom tile)))
-
 (defn load-visible-only
   "Runs visible-loader whenever screen-state-atom changes."
   [screen-state-atom memory-tile-atom
    overlay-tiles-atom acquired-images]
-  (let [load-monochrome (fn [_ _]
-                          (monochrome-loader
-                            screen-state-atom
-                            memory-tile-atom))
-        load-overlay (fn [_ _]
+  (let [load-overlay (fn [_ _]
                        (overlay-loader
                          screen-state-atom
                          memory-tile-atom
@@ -237,16 +226,12 @@
         agent (agent {})]
     (def agent1 agent)
     (reactive/handle-update
-      memory-tile-atom
+      screen-state-atom
       load-overlay
       agent)
     (reactive/handle-update
-      screen-state-atom
-      load-monochrome
-      agent)
-    (reactive/handle-update
       acquired-images
-      load-monochrome
+      load-overlay
       agent)))
   
 ;; MAIN WINDOW AND PANEL
