@@ -392,6 +392,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\EventsManager.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\FloatProperty.cpp"
 				>
 			</File>
@@ -459,6 +463,10 @@
 			</File>
 			<File
 				RelativePath=".\EnumProperty.h"
+				>
+			</File>
+			<File
+				RelativePath=".\EventsManager.h"
 				>
 			</File>
 			<File

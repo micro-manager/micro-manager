@@ -62,6 +62,7 @@ class TAndorFloatValueMapper;
 class TAndorFloatHolder;
 class TAndorEnumValueMapper;
 class TTriggerRemapper;
+class CEventsManager;
 
 
 //////////////////////////////////////////////////////////////////////////////
@@ -201,6 +202,8 @@ private:
    andor::IEnum* triggerMode_Enum;
    TAndorEnumValueMapper* triggerMode_valueMapper;
    TTriggerRemapper* triggerMode_remapper;
+
+   CEventsManager* eventsManager_;
 };
 
 class MySequenceThread : public MMDeviceThreadBase

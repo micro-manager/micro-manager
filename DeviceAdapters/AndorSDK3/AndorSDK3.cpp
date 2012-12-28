@@ -45,6 +45,8 @@
 #include "andorwindowstime.h"
 #include "lineparser.h"
 #include "AndorSDK3Strings.h"
+#include "EventsManager.h"
+
 
 using namespace std;
 using namespace andor;
@@ -488,6 +490,13 @@ int CAndorSDK3Camera::Initialize()
       cameraDevice->Release(tsClkFrequency);
    }
 
+   eventsManager_ = new CEventsManager(cameraDevice);
+   char errorStr[MM::MaxStrLength];
+   if (false == eventsManager_->Initialise(errorStr) )
+   {
+      LogMessage(errorStr);
+   }
+
    snapShotController_->poiseForSnapShot();
    return DEVICE_OK;
 }
@@ -525,6 +534,7 @@ int CAndorSDK3Camera::Shutdown()
 
       // clean up objects used by the property browser
       cameraDevice->Release(triggerMode_Enum);
+      delete eventsManager_;
    }
 
    initialized_ = false;
@@ -1162,6 +1172,23 @@ int CAndorSDK3Camera::ThreadRun(void)
       if (!got_image && WAITBUFFER_TIMEOUT_MILLISECONDS >= currentSeqExposure_)
       {
          LogMessage("[ThreadRun] WaitBuffer returned false, no data!");
+         if (eventsManager_->IsEventRegistered(CEventsManager::EV_BUFFER_OVERFLOW_EVENT) )
+         {
+            if (eventsManager_->HasEventFired(CEventsManager::EV_BUFFER_OVERFLOW_EVENT) )
+            {
+               LogMessage("[ThreadRun] HW Buffer Overflow event, acquisition was aborted, on-head RAM empty");
+               eventsManager_->ResetEvent(CEventsManager::EV_BUFFER_OVERFLOW_EVENT);
+               ret = AT_ERR_HARDWARE_OVERFLOW;
+            }
+            else
+            {
+               //Must wait untill Micro-Manager clears MMCore CB to generate timeout/force error
+               // then will stop sequence and set keep_trying_ to false, break out cleanly.
+               do {
+                  Sleep(1000);
+               } while (keep_trying_);
+            }
+         }
       }
    }
 
@@ -1302,6 +1329,10 @@ int MySequenceThread::svc(void) throw()
       if (DEVICE_BUFFER_OVERFLOW == ret)
       {
          camera_->LogMessage("[MySequenceThread::svc] Circular Buffer Overflow code from MMCore; Thread exiting...");
+      }
+      else if (AT_ERR_HARDWARE_OVERFLOW == ret)
+      {
+         camera_->LogMessage("[MySequenceThread::svc] Internal Hardware Buffer Overflow; Thread exiting...");
       }
       else if (DEVICE_OK != ret)
       {
