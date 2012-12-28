@@ -34,6 +34,26 @@
     ; (println " -->" (pr-str ret#))
      ret#))
 
+;; ZOOMING
+
+(def ln2 (Math/log 2))
+
+(def zoom-levels
+  (zipmap 
+    (map - (range 12))
+    (take 12 (iterate #(/ % 2) 1))))
+
+;(def zoom-lookup nil
+  
+
+(defn log2 [x]
+  (/ (Math/log x) ln2))
+
+;(defn nearby-zoom-levels
+  
+
+;; COORDINATES
+
 (defn pixel-rectangle
   "Converts the screen state coordinates to visible camera pixel coordinates."
   [{:keys [x y width height zoom]}]
@@ -164,16 +184,19 @@
                      :stroke {:color :yellow
                               :width (max 2.0 (* zoom 8))}}]))))
 
+
 (defn paint-screen [graphics screen-state overlay-tiles-atom]
   (let [original-transform (.getTransform graphics)
         zoom (:zoom screen-state)
+        scale (screen-state :scale 1.0)
         x-center (/ (screen-state :width) 2)
         y-center (/ (screen-state :height) 2)
         [tile-width tile-height] (:tile-dimensions screen-state)]
     (doto graphics
       (.setClip 0 0 (:width screen-state) (:height screen-state))
-      (.translate (- x-center (int (* (:x screen-state) zoom)))
-                  (- y-center (int (* (:y screen-state) zoom))))
+      (.translate (- x-center (int (* (:x screen-state) zoom scale)))
+                  (- y-center (int (* (:y screen-state) zoom scale))))
+      (.scale scale scale)
       (paint-tiles overlay-tiles-atom screen-state)
       (paint-stage-position screen-state)
       paint/enable-anti-aliasing
@@ -306,5 +329,16 @@
          :channels {"Default" {:min 200 :max 800 :gamma 1.0 :color Color/WHITE}})
   (swap! ss2 assoc :channels (:channels @ss)))
 
-
+(defn smooth-zoom-test []
+  (swap! ss assoc :scale 1.0 :zoom 1/128)
+  (Thread/sleep 5000)
+  (repeatedly 7
+          (fn []
+  (doseq [x (map #(Math/pow 2 %) (range 0 1.01 0.05))]
+    (Thread/sleep 5)
+    (swap! ss assoc :scale x))
+  (swap! ss update-in [:zoom] * 2)
+  (swap! ss assoc :scale 1)
+  ;(Thread/sleep 1000)
+            )))
 
