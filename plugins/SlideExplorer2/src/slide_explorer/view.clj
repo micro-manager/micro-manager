@@ -34,24 +34,6 @@
     ; (println " -->" (pr-str ret#))
      ret#))
 
-;; ZOOMING
-
-(def ln2 (Math/log 2))
-
-(def zoom-levels
-  (zipmap 
-    (map - (range 12))
-    (take 12 (iterate #(/ % 2) 1))))
-
-;(def zoom-lookup nil
-  
-
-(defn log2 [x]
-  (/ (Math/log x) ln2))
-
-;(defn nearby-zoom-levels
-  
-
 ;; COORDINATES
 
 (defn pixel-rectangle
@@ -79,6 +61,18 @@
     (for [[nx ny] visible-tile-positions]
       {:nx nx :ny ny :zoom (:zoom screen-state)
        :nc channel-index :nz (screen-state :z) :nt 0})))
+
+(defn needed-tile-indices
+  "Computes tile indices that will be needed when a zoom event is finished,
+   to allow pre-loading."
+  [screen-state channel-index]
+  (let [scale (:scale screen-state)]
+    (concat (visible-tile-indices screen-state channel-index)
+            (when (not= scale 1)
+              ;(println scale)
+              (let [factor (if (> scale 1) 2 1/2)
+                    future-state (update-in screen-state [:zoom] * factor)]
+                (visible-tile-indices future-state channel-index))))))
 
 ;; TILING
 
@@ -142,12 +136,12 @@
 ;; PAINTING
 
 (defn absolute-mouse-position [screen-state]
-  (let [{:keys [x y mouse zoom width height]} screen-state]
+  (let [{:keys [x y mouse zoom scale width height]} screen-state]
     (when mouse
       (let [mouse-x-centered (- (mouse :x) (/ width 2))
             mouse-y-centered (- (mouse :y) (/ height 2))]
-        {:x (long (+ x (/ mouse-x-centered zoom)))
-         :y (long (+ y (/ mouse-y-centered zoom)))}))))
+        {:x (long (+ x (/ mouse-x-centered zoom scale)))
+         :y (long (+ y (/ mouse-y-centered zoom scale)))}))))
 
 (comment
 (defn draw-test-tile [g x y]
@@ -211,7 +205,7 @@
 (defn overlay-loader
   "Creates overlay tiles needed for drawing."
   [screen-state-atom memory-tile-atom overlay-tiles-atom]
-  (doseq [tile (visible-tile-indices @screen-state-atom :overlay)]
+  (doseq [tile (needed-tile-indices @screen-state-atom :overlay)]
     (tile-cache/add-tile overlay-tiles-atom
                          tile
                          (multi-color-tile memory-tile-atom tile
@@ -261,7 +255,7 @@
     
 (defn view-panel [memory-tiles acquired-images settings]
   (let [screen-state (atom (merge
-                             (sorted-map :x 0 :y 0 :z 0 :zoom 1
+                             (sorted-map :x 0 :y 0 :z 0 :zoom 1 :scale 1
                                        :width 100 :height 10
                                        :keys (sorted-set)
                                        :channels (sorted-map)
@@ -328,17 +322,3 @@
   (swap! ss assoc
          :channels {"Default" {:min 200 :max 800 :gamma 1.0 :color Color/WHITE}})
   (swap! ss2 assoc :channels (:channels @ss)))
-
-(defn smooth-zoom-test []
-  (swap! ss assoc :scale 1.0 :zoom 1/128)
-  (Thread/sleep 5000)
-  (repeatedly 7
-          (fn []
-  (doseq [x (map #(Math/pow 2 %) (range 0 1.01 0.05))]
-    (Thread/sleep 5)
-    (swap! ss assoc :scale x))
-  (swap! ss update-in [:zoom] * 2)
-  (swap! ss assoc :scale 1)
-  ;(Thread/sleep 1000)
-            )))
-

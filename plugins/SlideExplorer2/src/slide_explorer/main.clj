@@ -218,10 +218,6 @@
             (update-positions-atom!)
             (Thread/sleep 1000)
             (recur))))
-;
-;(defn share-positions []
-;  (reactive/handle-update positions-atom
-;                          (fn [old new]
    
 (defn create-acquisition-settings []
   (-> mm/gui .getAcquisitionEngine .getSequenceSettings
