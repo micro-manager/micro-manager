@@ -125,14 +125,29 @@ to normal size."
       (.addMouseMotionListener mouse-adapter))
     position-atom))
 
-(defn handle-arrow-pan [component position-atom dist]
-  (let [binder (fn [key axis step]
+(def PAN-STEP-COUNT 5)
+(def PAN-DISTANCE 50)
+
+;TODO :: rewrite with a smoother algorithm (don't rely on key repeats)
+(defn run-pan!
+  [position-atom axis direction]
+  (when-not (:panning @position-atom)
+    (future
+      (swap! position-atom assoc :panning true)
+      (let [step-size (direction (/ PAN-DISTANCE PAN-STEP-COUNT))]
+        (dotimes [_ PAN-STEP-COUNT]
+          (pan! position-atom axis step-size)
+          (Thread/sleep 5)))
+      (swap! position-atom assoc :panning false))))  
+
+(defn handle-arrow-pan [component position-atom]
+  (let [binder (fn [key axis direction]
                  (bind-key component key
-                           #(pan! position-atom axis step) true))]
-    (binder "UP" :y dist)
-    (binder "DOWN" :y (- dist))
-    (binder "RIGHT" :x (- dist))
-    (binder "LEFT" :x dist)))
+                           #(run-pan! position-atom axis direction) true))]
+    (binder "UP" :y +)
+    (binder "DOWN" :y -)
+    (binder "RIGHT" :x -)
+    (binder "LEFT" :x +)))
 
 (defn handle-mode-keys [panel screen-state-atom]
   (let [window (SwingUtilities/getWindowAncestor panel)]
@@ -244,11 +259,10 @@ to normal size."
 ;  (bind-window-keys window ["S"] create-dir-dialog))
 
 (defn make-view-controllable [panel screen-state-atom]
-  (let [handle-arrow-pan-50 #(handle-arrow-pan %1 %2 50)]
-    (handle-refresh panel)
-    ((juxt handle-drags handle-arrow-pan-50 handle-wheel handle-resize handle-pointing)
-           panel screen-state-atom)
-    ((juxt handle-zoom handle-dive) ; watch-keys)
-           (.getTopLevelAncestor panel) screen-state-atom)))
+  (handle-refresh panel)
+  ((juxt handle-drags handle-arrow-pan handle-wheel handle-resize handle-pointing)
+         panel screen-state-atom)
+  ((juxt handle-zoom handle-dive) ; watch-keys)
+         (.getTopLevelAncestor panel) screen-state-atom))
     
  
