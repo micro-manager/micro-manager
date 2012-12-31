@@ -9,6 +9,7 @@
             [slide-explorer.tile-cache :as tile-cache]
             [slide-explorer.tiles :as tiles]
             [slide-explorer.canvas :as canvas]
+            [slide-explorer.scale-bar :as scale-bar]
             [slide-explorer.image :as image]
             [slide-explorer.user-controls :as user-controls]
             [slide-explorer.paint :as paint]
@@ -179,6 +180,8 @@
                               :width (max 2.0 (* zoom 8))}}]))))
 
 
+(def bar-widget-memo (memo/memo-lru scale-bar/bar-widget 500))
+
 (defn paint-screen [graphics screen-state overlay-tiles-atom]
   (let [original-transform (.getTransform graphics)
         zoom (:zoom screen-state)
@@ -195,10 +198,14 @@
       (paint-stage-position screen-state)
       paint/enable-anti-aliasing
       (.setTransform original-transform)
-      ;(show-mouse-pos screen-state)
       (.setColor Color/WHITE)
-      (.drawString (str (select-keys screen-state [:mouse :x :y :z :zoom])) 10 20)
-      (.drawString (str (absolute-mouse-position screen-state)) 10 40))))
+      (canvas/draw (bar-widget-memo
+                     (/ (:pixel-size-um screen-state)
+                        zoom scale)))
+      ;(show-mouse-pos screen-state)
+      ;(.drawString (str (select-keys screen-state [:mouse :x :y :z :zoom])) 10 20)
+      ;(.drawString (str (absolute-mouse-position screen-state)) 10 40)
+      )))
 
 ;; Loading visible tiles
 
@@ -256,6 +263,7 @@
 (defn view-panel [memory-tiles acquired-images settings]
   (let [screen-state (atom (merge
                              (sorted-map :x 0 :y 0 :z 0 :zoom 1 :scale 1
+                                         :pixel-size-um 0.3
                                        :width 100 :height 10
                                        :keys (sorted-set)
                                        :channels (sorted-map)
