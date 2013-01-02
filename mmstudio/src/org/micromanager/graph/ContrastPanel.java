@@ -111,10 +111,10 @@ public class ContrastPanel extends JPanel {
       state.ignoreOutliers = prefs_.getBoolean(PREF_REJECT_OUTLIERS, false);
       state.syncChannels = prefs_.getBoolean(PREF_SYNC_CHANNELS, false);
       state.slowHist = prefs_.getBoolean(PREF_SLOW_HIST, false);
+      state.slowDisplayUpdates = prefs_.getBoolean(PREF_SLOW_DISP, false);
       state.scaleBar = false;
       state.scaleBarColorIndex = 0;
       state.scaleBarLocationIndex = 0;
-      state.slowDisplayUpdates = false;
       return state;
    }
 
