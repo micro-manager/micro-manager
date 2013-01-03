@@ -92,7 +92,7 @@
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
-				CommandLine="copy &quot;$(TargetPath)&quot; ..\..\bin_$(PlatformName)&#x0D;&#x0A;copy &quot;$(TargetPath)&quot; &quot;C:\Program Files\Micro-Manager-1.4&quot;"
+				CommandLine="copy &quot;$(TargetPath)&quot; ..\..\bin_$(PlatformName)&#x0D;&#x0A;copy &quot;$(TargetPath)&quot; &quot;C:\Program Files\Micro-Manager-1.4&quot;&#x0D;&#x0A;"
 			/>
 		</Configuration>
 		<Configuration
@@ -171,7 +171,7 @@
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
-				CommandLine="copy &quot;$(TargetPath)&quot; ..\..\bin_$(PlatformName)"
+				CommandLine="copy &quot;$(TargetPath)&quot; ..\..\bin_$(PlatformName)&#x0D;&#x0A;copy &quot;$(TargetPath)&quot; &quot;C:\Program Files\Micro-Manager-1.4&quot;"
 			/>
 		</Configuration>
 		<Configuration

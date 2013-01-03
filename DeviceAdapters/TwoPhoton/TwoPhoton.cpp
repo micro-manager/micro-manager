@@ -1698,9 +1698,7 @@ int BitFlowCamera::LiveThread::svc()
          break;
       }
    }
-   
    running_ = false;
-   cam_->GetCoreCallback()->AcqFinished(cam_, 0); // to close the shutter
    return 0;
 }
 
