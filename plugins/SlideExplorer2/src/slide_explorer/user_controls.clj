@@ -238,18 +238,26 @@ to normal size."
                              (= 2 (.getClickCount e))))
                 response-fn))
 
-(defn handle-alt-click [panel response-fn]
+(defn handle-shift-click [panel response-fn]
   (handle-click panel
                 (fn [e] (and (= MouseEvent/BUTTON1 (.getButton e))
-                             (.isAltDown e)))
+                             (.isShiftDown e)))
                 response-fn))
                                      
 (defn handle-pointing [component screen-state-atom]
   (.addMouseMotionListener component
-                     (proxy [MouseAdapter] []
-                       (mouseMoved [e] (update-mouse-position e screen-state-atom))
-                       (mouseDragged [e] (update-mouse-position e screen-state-atom)))))
+    (proxy [MouseAdapter] []
+      (mouseMoved [e] (update-mouse-position e screen-state-atom))
+      (mouseDragged [e] (update-mouse-position e screen-state-atom)))))
                                    
+(defn absolute-mouse-position [screen-state]
+  (let [{:keys [x y mouse zoom scale width height tile-dimensions]} screen-state]
+    (when mouse
+      (let [mouse-x-centered (- (mouse :x) (/ width 2))
+            mouse-y-centered (- (mouse :y) (/ height 2))
+            [w h] tile-dimensions]
+        {:x (long (+ x (/ mouse-x-centered zoom scale) (/ w -2)))
+         :y (long (+ y (/ mouse-y-centered zoom scale) (/ h -2)))}))))
 
 (defn handle-refresh [component]
   (bind-keys component ["R"] #(do (.repaint component) (println "repaint")) true))

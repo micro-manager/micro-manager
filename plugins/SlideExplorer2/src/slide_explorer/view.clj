@@ -121,7 +121,8 @@
   (swap! showing-screen-atom merge
          (select-keys @pointing-screen-atom
                       [:channels :tile-dimensions
-                       :pixel-size-um :xy-stage-position])))
+                       :pixel-size-um :xy-stage-position
+                       :positions])))
 
 ;; OVERLAY
 
@@ -136,14 +137,6 @@
     (overlay-memo procs lut-maps)))
 
 ;; PAINTING
-
-(defn absolute-mouse-position [screen-state]
-  (let [{:keys [x y mouse zoom scale width height]} screen-state]
-    (when mouse
-      (let [mouse-x-centered (- (mouse :x) (/ width 2))
-            mouse-y-centered (- (mouse :y) (/ height 2))]
-        {:x (long (+ x (/ mouse-x-centered zoom scale)))
-         :y (long (+ y (/ mouse-y-centered zoom scale)))}))))
 
 (comment
 (defn draw-test-tile [g x y]
@@ -163,23 +156,37 @@
     (when-let [image (tile-cache/get-tile
                        overlay-tiles-atom
                        tile-index)]
-      (let [[x y] (tiles/tile-to-pixels [(:nx tile-index) (:ny tile-index)]
-                                        (screen-state :tile-dimensions) 1)]
+      (let [[x y] (tiles/tile-to-pixels
+                    [(:nx tile-index) (:ny tile-index)]
+                    (screen-state :tile-dimensions) 1)]
         (paint/draw-image g image x y)))))
+
+(defn paint-position [^Graphics2D g screen-state x y color]
+  (let [[w h] (:tile-dimensions screen-state)
+        zoom (:zoom screen-state)
+        scale (:scale screen-state)]
+    (when (and x y w h color)
+;      (.drawRect g (* zoom x) (* zoom y)
+;                        (* zoom w) (* zoom h)))))
+      (canvas/draw g
+                   [:rect
+                    {:l (inc (* zoom x)) :t (inc (* zoom y))
+                     :w (* zoom w) :h (* zoom h)
+                     :alpha 1
+                     :stroke {:color color
+                              :width (max 4.0 (* 16 zoom))}}]))))
 
 (defn paint-stage-position [^Graphics2D g screen-state]
   (let [[x y] (:xy-stage-position screen-state)
         [w h] (:tile-dimensions screen-state)
         zoom (:zoom screen-state)]
-    (when (and x y)
-      (canvas/draw g
-                   [:rect
-                    {:l (inc (* zoom x)) :t (inc (* zoom y))
-                     :w (* zoom w) :h (* zoom h)
-                     :alpha 0.8
-                     :stroke {:color :yellow
-                              :width (max 2.0 (* zoom 8))}}]))))
+    (paint-position g screen-state x y :yellow)))
 
+(defn paint-position-list [^Graphics2D g screen-state]
+  (let [[w h] (:tile-dimensions screen-state)
+        zoom (:zoom screen-state)]
+    (doseq [{:keys [x y]} (:positions screen-state)]
+      (paint-position g screen-state x y :red))))
 
 (def bar-widget-memo (memo/memo-lru scale-bar/bar-widget 500))
 
@@ -196,6 +203,7 @@
                   (- y-center (int (* (:y screen-state) zoom scale))))
       (.scale scale scale)
       (paint-tiles overlay-tiles-atom screen-state)
+      (paint-position-list screen-state)
       (paint-stage-position screen-state)
       paint/enable-anti-aliasing
       (.setTransform original-transform)
@@ -204,7 +212,7 @@
                      (bar-widget-memo (/ pixel-size zoom scale))))
       ;(show-mouse-pos screen-state)
       ;(.drawString (str (select-keys screen-state [:mouse :x :y :z :zoom])) 10 20)
-      ;(.drawString (str (absolute-mouse-position screen-state)) 10 40)
+      ;(.drawString (str (user-controls/absolute-mouse-position screen-state)) 10 40)
       )))
 
 ;; Loading visible tiles
@@ -267,6 +275,7 @@
                                        :width 100 :height 10
                                        :keys (sorted-set)
                                        :channels (sorted-map)
+                                         :positions #{}
                                        )
                              settings))
         overlay-tiles (tile-cache/create-tile-cache 100)
@@ -278,14 +287,16 @@
     ;(set-contrast-when-ready screen-state memory-tiles)
     [panel screen-state]))
 
-(defn set-position! [screen-state-atom position-map]
-  (swap! screen-state-atom
-         merge position-map))
+(defn set-position! [screen-state-atom x y]
+  (swap! screen-state-atom assoc :x x :y y))
 
 (defn show-where-pointing! [pointing-screen-atom showing-screen-atom]
   (copy-settings pointing-screen-atom showing-screen-atom)
-  (set-position! showing-screen-atom
-                 (absolute-mouse-position @pointing-screen-atom)))
+  (let [[w h] (:tile-dimensions @pointing-screen-atom)
+        {:keys [x y]} (user-controls/absolute-mouse-position
+                        @pointing-screen-atom)]
+    (when (and x y w h)
+    (set-position! showing-screen-atom (+ x (/ w 2)) (+ y (/ h 2))))))
 
 (defn handle-point-and-show [pointing-screen-atom showing-screen-atom]
   (reactive/handle-update
@@ -293,7 +304,8 @@
     (fn [old new]
       (when (not= old new)
         (show-where-pointing!
-          pointing-screen-atom showing-screen-atom)))))
+          pointing-screen-atom showing-screen-atom)
+        ))))
 
 (defn show [dir acquired-images settings]
   (let [memory-tiles (tile-cache/create-tile-cache 100 dir)

@@ -102,7 +102,9 @@
                                                        (println t)
                                                        (throw t))))))))))
   ([reference function]
-    (handle-update reference function (agent @reference))))
+    (let [agent0 (agent @reference)]
+      (def agent1 agent0)
+      (handle-update reference function agent0))))
 
 (defn handle-update-added-items
   "Attempts to run a function whenever there are new items in reference.

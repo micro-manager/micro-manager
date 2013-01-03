@@ -146,8 +146,8 @@
 
 (def image-processing-executor (Executors/newFixedThreadPool 1))
  
-(defn add-tiles-at [memory-tiles [nx ny] affine-stage-to-pixel acquired-images tile-dimensions
-                    settings]
+(defn add-tiles-at [memory-tiles [nx ny] affine-stage-to-pixel
+                    acquired-images tile-dimensions settings]
   (swap! acquired-images conj [nx ny])
   (let [[tile-width tile-height] tile-dimensions]
     (doseq [image (doall (acquire-at (affine/inverse-transform
@@ -159,7 +159,7 @@
                      :ny ny
                      :nz (get-in image [:tags "SliceIndex"])
                      :nt 0
-                      :nc (or (get-in image [:tags "Channel"]) "Default")}]
+                     :nc (or (get-in image [:tags "Channel"]) "Default")}]
         (view/add-to-memory-tiles 
           memory-tiles
           indices
@@ -189,21 +189,25 @@
                                                   affine))
                       (explore memory-tiles-atom screen-state-atom
                                acquired-images affine))))
-                      
 
 (defn navigate [screen-state-atom affine-transform _ _]
   (when (#{:navigate :explore} (:mode @screen-state-atom))
     (swap! screen-state-atom assoc :mode :navigate)
-    (let [{:keys [x y]} (view/absolute-mouse-position @screen-state-atom)
+    (let [{:keys [x y]} (user-controls/absolute-mouse-position @screen-state-atom)
                [w h] (:tile-dimensions @screen-state-atom)]
       (set-xy-position (affine/inverse-transform
-                         (Point2D$Double. (- x (/ w 2))
-                                          (- y (/ h 2)))
+                         (Point2D$Double. x y)
                          affine-transform)))))
   
+(defn create-acquisition-settings []
+  (-> mm/gui .getAcquisitionEngine .getSequenceSettings
+      engine/convert-settings
+      (assoc :use-autofocus false
+             :frames nil
+             :positions nil
+             :numFrames 0)))
 
 ;; Position List
-
 
 (defn update-positions-atom! []
   (let [new-value
@@ -218,16 +222,35 @@
             (update-positions-atom!)
             (Thread/sleep 1000)
             (recur))))
-   
-(defn create-acquisition-settings []
-  (-> mm/gui .getAcquisitionEngine .getSequenceSettings
-      engine/convert-settings
-      (assoc :use-autofocus false
-             :frames nil
-             :positions nil
-             :numFrames 0)))
-                          
 
+(defn alter-position [screen-state-atom conj-or-disj position-map]
+  (swap! screen-state-atom update-in [:positions]
+         conj-or-disj position-map))
+
+(defn grid-distances [pos0 pos1]
+  (merge-with #(Math/abs (- %1 %2)) pos0 pos1))
+
+(defn tile-distances [grid-distances w h]
+  (merge-with / grid-distances {:x w :y h}))
+
+(defn in-tile [{:keys [x y] :as tile-distances}]
+  (and (>= 1/2 x) (>= 1/2 y)))
+
+(defn position-clicked [available-positions pos w h]
+  (first
+    (filter #(-> %
+                 (grid-distances pos)
+                 (tile-distances w h)
+                 (in-tile))
+            available-positions)))
+
+(defn toggle-position [screen-state-atom _ _]
+  (let [pos (user-controls/absolute-mouse-position @screen-state-atom)
+        [w h] (:tile-dimensions @screen-state-atom)]
+    (if-let [old-pos (position-clicked (:positions @screen-state-atom) pos w h)]
+      (alter-position screen-state-atom disj old-pos)
+      (alter-position screen-state-atom conj pos))))
+    
 ;; SAVE AND LOAD SETTINGS
 
 
@@ -283,13 +306,12 @@
           (def pnl panel)
           (def affine affine-stage-to-pixel)
           (println "about to get channel luts")
-          (swap! screen-state assoc :positions positions-atom)
           (user-controls/handle-double-click
             panel
             (partial navigate screen-state affine-stage-to-pixel))
-          (user-controls/handle-alt-click
+          (user-controls/handle-shift-click
             panel
-            println)
+            (fn [x y] (toggle-position screen-state x y)))
           (user-controls/handle-mode-keys panel screen-state)
           (reactive/handle-update
             current-xy-positions 
@@ -349,7 +371,8 @@
   ([nx ny nz]
     (mm/core setExposure 100)
     (.start (Thread.
-              #(doseq [i (range (- nx) (inc nx)) j (range (- ny) (inc ny))
+              #(doseq [i (range (- nx) (inc nx))
+                       j (range (- ny) (inc ny))
                        k (range (- nz) (inc nz))
                        chan (keys (@ss :channels))]
                  ;(Thread/sleep 1000)
