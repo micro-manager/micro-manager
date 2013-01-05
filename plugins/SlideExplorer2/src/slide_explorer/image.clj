@@ -82,7 +82,10 @@
   [^ImageProcessor proc]
   (.createImage proc))
 
-(defn convert-to-type-like [proc template-proc]
+(defn convert-to-type-like
+  "Converts proc to a processor of the same type
+   as template-proc."
+  [proc template-proc]
   (condp = (type template-proc)
     ByteProcessor (.convertToByte proc false)
     ShortProcessor (.convertToShort proc false)
@@ -145,6 +148,17 @@
     (let [min-maxes (map intensity-range (cons processor processors))]
       {:min (apply min (map :min min-maxes))
        :max (apply max (map :max min-maxes))})))
+
+(defn intensity-distribution
+  "Get the intensity distribution for a processor,
+   suitable for a histogram."
+  [processor]
+  (let [stat (ImageStatistics/getStatistics
+               processor ImageStatistics/MIN_MAX nil)]
+    {:data (.getHistogram stat)
+     :min (.histMin stat)
+     :max (.histMax stat)}))
+    
 
 ;; Channels/LUTs
 
