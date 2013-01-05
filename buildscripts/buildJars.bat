@@ -82,5 +82,9 @@ pushd plugins\NewImageFlipper
 call build.bat
 popd
 
+pudsh plugins\BFCorrector
+call build.bat
+popd
+
 
 POPD
