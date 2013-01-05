@@ -209,7 +209,8 @@
       (.setTransform original-transform)
       (.setColor Color/WHITE)
       (canvas/draw (when-let [pixel-size (:pixel-size-um screen-state)]
-                     (bar-widget-memo (/ pixel-size zoom scale))))
+                     (bar-widget-memo (:height screen-state)
+                                      (/ pixel-size zoom scale))))
       ;(show-mouse-pos screen-state)
       ;(.drawString (str (select-keys screen-state [:mouse :x :y :z :zoom])) 10 20)
       ;(.drawString (str (user-controls/absolute-mouse-position screen-state)) 10 40)

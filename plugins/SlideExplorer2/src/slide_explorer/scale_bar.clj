@@ -36,11 +36,11 @@
      :text (bar-text round-scale-um)}))
 
 (defn bar-widget 
-  [pixel-size-um]
+  [screen-height pixel-size-um]
   (when pixel-size-um
     (let [{:keys [width-pixels text]} (bar-settings pixel-size-um)]
       [:compound
-       {:x 10 :y 30}
+       {:x 10 :y (- screen-height 10)}
        [:text
         {:text text
          :r width-pixels
