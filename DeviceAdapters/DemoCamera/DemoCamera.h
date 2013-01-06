@@ -223,7 +223,6 @@ private:
    bool sequenceRunning_;
    long sequenceIndex_;
    double GetSequenceExposure();
-
    std::vector<double> exposureSequence_;
    long imageCounter_;
 	long binSize_;

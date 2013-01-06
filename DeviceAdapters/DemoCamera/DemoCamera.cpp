@@ -538,7 +538,7 @@ int CDemoCamera::SnapImage()
 
    MM::MMTime startTime = GetCurrentMMTime();
    double exp = GetExposure();
-   if (sequenceRunning_) 
+   if (sequenceRunning_ && IsCapturing()) 
    {
       exp = GetSequenceExposure();
    }
