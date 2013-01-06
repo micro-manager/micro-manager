@@ -142,7 +142,34 @@ public:
    double GetPixelSizeUm() const {return nominalPixelSizeUm_ * GetBinning();}
    int GetBinning() const;
    int SetBinning(int bS);
-   int IsExposureSequenceable(bool& isSequenceable) const {isSequenceable = false; return DEVICE_OK;}
+   int IsExposureSequenceable(bool& isSequenceable) const 
+   {
+      isSequenceable = isSequenceable_;
+      return DEVICE_OK;
+   }
+   int GetExposureSequenceMaxLength(long& nrEvents) 
+   {
+      nrEvents = sequenceMaxLength_;
+      return DEVICE_OK;
+   }
+   int StartExposureSequence() const
+   {
+      const_cast<CDemoCamera *>(this)->SetSequenceStateOn();
+      return DEVICE_OK;
+   }
+   int StopExposureSequence() const
+   {
+      const_cast<CDemoCamera *>(this)->SetSequenceStateOff();
+      return DEVICE_OK;
+   }
+   // Remove all values in the sequence                                   
+   int ClearExposureSequence();
+   // Add one value to the sequence                                       
+   int AddToExposureSequence(double exposureTime_ms);
+   // Signal that we are done sending sequence values so that the adapter can send the whole sequence to the device
+   int SendExposureSequence() const {
+      return DEVICE_OK;
+   }
 
    unsigned  GetNumberOfComponents() const { return nComponents_;};
 
@@ -150,6 +177,7 @@ public:
    // ----------------
 	// floating point read-only properties for testing
 	int OnTestProperty(MM::PropertyBase* pProp, MM::ActionType eAct, long);
+	//int OnSwitch(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnBinning(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnPixelType(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnBitDepth(MM::PropertyBase* pProp, MM::ActionType eAct);
@@ -164,6 +192,7 @@ public:
    int OnSaturatePixels(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnFractionOfPixelsToDropOrSaturate(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnCCDTemp(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnIsSequenceable(MM::PropertyBase* pProp, MM::ActionType eAct);
 
 private:
    int SetAllowedBinning();
@@ -186,6 +215,15 @@ private:
    unsigned roiX_;
    unsigned roiY_;
    MM::MMTime sequenceStartTime_;
+   bool isSequenceable_;
+   long sequenceMaxLength_;
+   bool sequenceRunning_;
+   long sequenceIndex_;
+   void SetSequenceStateOn() { sequenceRunning_ = true; }
+   void SetSequenceStateOff() { sequenceRunning_ = false; sequenceIndex_ = 0; }
+   double GetSequenceExposure();
+
+   std::vector<double> exposureSequence_;
    long imageCounter_;
 	long binSize_;
 	long cameraCCDXSize_;
