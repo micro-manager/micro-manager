@@ -71,6 +71,7 @@ const char* const g_Msg_DEVICE_NOT_CONNECTED="Unable to communicate with the dev
 const char* const g_Msg_DEVICE_COMM_HUB_MISSING= "Parent module (Hub) is not available or defined for this device!";
 const char* const g_Msg_DEVICE_DUPLICATE_LIBRARY="Duplicate Device Library Name";
 const char* const g_Msg_DEVICE_PROPERTY_NOT_SEQUENCEABLE="This property is not sequenceable";
+const char* const g_Msg_DEVICE_SEQUENCE_TOO_LARGE="Sequence is too large for this device";
 
 /**
 * Implements functionality common to all devices.
@@ -881,6 +882,7 @@ protected:
       SetErrorText(DEVICE_COMM_HUB_MISSING, g_Msg_DEVICE_COMM_HUB_MISSING);
       SetErrorText(DEVICE_DUPLICATE_LIBRARY, g_Msg_DEVICE_DUPLICATE_LIBRARY);
       SetErrorText(DEVICE_PROPERTY_NOT_SEQUENCEABLE, g_Msg_DEVICE_PROPERTY_NOT_SEQUENCEABLE);
+      SetErrorText(DEVICE_SEQUENCE_TOO_LARGE, g_Msg_DEVICE_SEQUENCE_TOO_LARGE);
    }
 
    /**
