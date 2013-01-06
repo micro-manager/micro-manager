@@ -152,14 +152,17 @@ public:
       nrEvents = sequenceMaxLength_;
       return DEVICE_OK;
    }
-   int StartExposureSequence() const
+   int StartExposureSequence() 
    {
-      const_cast<CDemoCamera *>(this)->SetSequenceStateOn();
+      // may need thread lock
+      sequenceRunning_ = true;
       return DEVICE_OK;
    }
-   int StopExposureSequence() const
+   int StopExposureSequence() 
    {
-      const_cast<CDemoCamera *>(this)->SetSequenceStateOff();
+      // may need thread lock
+      sequenceRunning_ = false; 
+      sequenceIndex_ = 0;
       return DEVICE_OK;
    }
    // Remove all values in the sequence                                   
@@ -219,8 +222,6 @@ private:
    long sequenceMaxLength_;
    bool sequenceRunning_;
    long sequenceIndex_;
-   void SetSequenceStateOn() { sequenceRunning_ = true; }
-   void SetSequenceStateOff() { sequenceRunning_ = false; sequenceIndex_ = 0; }
    double GetSequenceExposure();
 
    std::vector<double> exposureSequence_;

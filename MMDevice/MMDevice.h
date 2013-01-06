@@ -531,9 +531,9 @@ namespace MM {
       // external trigger).  If the device is capable (and ready) to do so isSequenceable will
       // be true. If your device can not execute this (true for most cameras)
       // simply set IsExposureSequenceable to false
-      virtual int GetExposureSequenceMaxLength(long& nrEvents) const =0;
-      virtual int StartExposureSequence() const = 0;
-      virtual int StopExposureSequence() const = 0;
+      virtual int GetExposureSequenceMaxLength(long& nrEvents) const = 0;
+      virtual int StartExposureSequence() = 0;
+      virtual int StopExposureSequence() = 0;
       // Remove all values in the sequence
       virtual int ClearExposureSequence() = 0;
       // Add one value to the sequence

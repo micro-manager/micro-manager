@@ -1359,12 +1359,12 @@ public:
       return DEVICE_UNSUPPORTED_COMMAND;
    }
 
-   virtual int StartExposureSequence() const 
+   virtual int StartExposureSequence()  
    {
       return DEVICE_UNSUPPORTED_COMMAND;
    }
 
-   virtual int StopExposureSequence() const 
+   virtual int StopExposureSequence() 
    {
       return DEVICE_UNSUPPORTED_COMMAND;
    }
