@@ -291,22 +291,43 @@
 (defn set-position! [screen-state-atom x y]
   (swap! screen-state-atom assoc :x x :y y))
 
-(defn show-where-pointing! [pointing-screen-atom showing-screen-atom]
-  (copy-settings pointing-screen-atom showing-screen-atom)
-  (let [[w h] (:tile-dimensions @pointing-screen-atom)
-        {:keys [x y]} (user-controls/absolute-mouse-position
-                        @pointing-screen-atom)]
+(defn show-position! [showing-screen-atom x y]
+  (let [[w h] (:tile-dimensions @showing-screen-atom)]
     (when (and x y w h)
-    (set-position! showing-screen-atom (+ x (/ w 2)) (+ y (/ h 2))))))
+      (set-position! showing-screen-atom (+ x (/ w 2)) (+ y (/ h 2))))))
 
-(defn handle-point-and-show [pointing-screen-atom showing-screen-atom]
+(defn show-where-pointing! [pointing-screen-atom showing-screen-atom] 
+  (copy-settings pointing-screen-atom showing-screen-atom) 
+  (let [{:keys [x y]} (user-controls/absolute-mouse-position
+                        @pointing-screen-atom)]
+    (show-position! showing-screen-atom x y)))
+
+(defn show-stage-position! [main-screen-atom showing-screen-atom]
+  (copy-settings main-screen-atom showing-screen-atom) 
+  (let [main-screen @main-screen-atom
+        [x y] (:xy-stage-position main-screen)]
+    (show-position! showing-screen-atom x y)))
+
+(defn handle-change-and-show
+  [show-fn! value-to-check-fn
+   main-screen-atom showing-screen-atom]
   (reactive/handle-update
-    pointing-screen-atom
+    main-screen-atom
     (fn [old new]
-      (when (not= old new)
-        (show-where-pointing!
-          pointing-screen-atom showing-screen-atom)
-        ))))
+      (when (not= (value-to-check-fn old)
+                  (value-to-check-fn new))
+        (show-fn!
+          main-screen-atom showing-screen-atom)))))
+
+(def handle-point-and-show 
+  (partial handle-change-and-show
+           show-where-pointing!
+           user-controls/absolute-mouse-position))
+
+(def handle-stage-move-and-show
+  (partial handle-change-and-show
+           show-stage-position!
+           :xy-stage-position))
 
 (defn show [dir acquired-images settings]
   (let [memory-tiles (tile-cache/create-tile-cache 100 dir)
@@ -332,6 +353,8 @@
     (user-controls/make-view-controllable panel screen-state)
     (user-controls/handle-resize panel2 screen-state2)
     (handle-point-and-show screen-state screen-state2)
+    (handle-stage-move-and-show screen-state screen-state2)
+    (copy-settings screen-state screen-state2) ; should apply repeatedly
     ;(handle-open frame)
     (.show frame)
     [screen-state memory-tiles panel]))

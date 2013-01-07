@@ -125,7 +125,7 @@ to normal size."
       (.addMouseMotionListener mouse-adapter))
     position-atom))
 
-(def PAN-STEP-COUNT 5)
+(def PAN-STEP-COUNT 10)
 (def PAN-DISTANCE 50)
 
 ;TODO :: rewrite with a smoother algorithm (don't rely on key repeats)
