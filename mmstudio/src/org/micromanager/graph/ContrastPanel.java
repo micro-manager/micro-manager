@@ -142,7 +142,7 @@ public class ContrastPanel extends JPanel {
          syncChannelsCheckBox_.setEnabled(false);
          logHistCheckBox_.setEnabled(true);
          slowHistCheckBox_.setEnabled(true);
-         slowDispCheckBox_.setEnabled(true);
+         slowDispCheckBox_.setEnabled(!currentDisplay_.isSimpleDisplay());
          autostretchCheckBox_.setEnabled(true);
          if (autostretchCheckBox_.isSelected()) {
             rejectOutliersCheckBox_.setEnabled(true);
@@ -159,7 +159,7 @@ public class ContrastPanel extends JPanel {
          sizeBarColorComboBox_.setEnabled(sizeBarCheckBox_.isSelected());
          logHistCheckBox_.setEnabled(true);
          slowHistCheckBox_.setEnabled(true);
-         slowDispCheckBox_.setEnabled(true);
+         slowDispCheckBox_.setEnabled(!currentDisplay_.isSimpleDisplay());
          syncChannelsCheckBox_.setEnabled(true);
 
       }
