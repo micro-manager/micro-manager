@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 10.00
 # Visual C++ Express 2008
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Rapp", "..\Rapp\Rapp.vcproj", "{C613608D-C4D0-4FC2-AA44-9D0098AAFDD8}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "MicroPoint", "MicroPoint.vcproj", "{C613608D-C4D0-4FC2-AA44-9D0098AAFDD8}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
