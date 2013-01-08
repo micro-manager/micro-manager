@@ -63,6 +63,7 @@ MMJ_.jar:  \
 	$(srcdir)/src/org/micromanager/conf2/PropertyTableModel.java \
 	$(srcdir)/src/org/micromanager/conf2/RolesPage.java \
 	$(srcdir)/src/org/micromanager/conf2/Setting.java \
+	$(srcdir)/src/org/micromanager/graph/ContrastPanel.java \
 	$(srcdir)/src/org/micromanager/graph/GraphData.java \
 	$(srcdir)/src/org/micromanager/graph/GraphFrame.java \
 	$(srcdir)/src/org/micromanager/graph/GraphPanel.java \
