@@ -564,7 +564,8 @@
                  (not (core isContinuousFocusEnabled)))
         (enable-continuous-focus true))
       (. gui enableRoiButtons true))
-    (catch Throwable t (ReportingUtils/showError t "Acquisition cleanup failed."))))
+    (catch Throwable t (do (.printStackTrace t)
+                           (ReportingUtils/showError t "Acquisition cleanup failed.")))))
 
 ;; running events
   
@@ -631,7 +632,9 @@
         (.put out-queue TaggedImageQueue/POISON)
         ))
     (catch Throwable t (do (ReportingUtils/showError t "Acquisition failed.")
-                           (cleanup)
+                           (.printStackTrace t)
+                           (when cleanup?
+                             (cleanup))
                            (.put out-queue TaggedImageQueue/POISON)))))
 
 ;; generic metadata
