@@ -151,7 +151,7 @@ to normal size."
 
 (defn toggle-mode [screen-state]
   (assoc screen-state :mode
-         (condp = (:mode screen-state)++++++
+         (condp = (:mode screen-state)
            :explore :navigate
            :navigate :explore
               :navigate)))

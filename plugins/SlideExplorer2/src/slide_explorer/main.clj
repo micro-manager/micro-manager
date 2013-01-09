@@ -55,6 +55,11 @@
     (get-stage-to-pixel-transform)
     (.getXYStagePosition mm/gui)))
 
+(defn pixel-size-um
+  "Compute the pixel size from a stage-to-pixel transform."
+  [stage-to-pixel-transform]
+  (Math/pow (.getDeterminant stage-to-pixel-transform) -1/2))
+
 ;; tagged image stuff
 
 (defn stack-colors
@@ -209,20 +214,6 @@
 
 ;; Position List
 
-(defn update-positions-atom! []
-  (let [new-value
-        (map #(-> % bean
-                  (select-keys [:x :y :label]))
-             (mm/get-positions))]
-    (when (not= new-value @positions-atom)
-      (reset! positions-atom new-value))))
-
-(defn follow-positions []
-  (future (loop []
-            (update-positions-atom!)
-            (Thread/sleep 1000)
-            (recur))))
-
 (defn alter-position [screen-state-atom conj-or-disj position-map]
   (swap! screen-state-atom update-in [:positions]
          conj-or-disj position-map))
@@ -250,13 +241,31 @@
     (if-let [old-pos (position-clicked (:positions @screen-state-atom) pos w h)]
       (alter-position screen-state-atom disj old-pos)
       (alter-position screen-state-atom conj pos))))
+
+(defn get-position-list-coords []
+  (set
+    (map #(-> % bean
+              (select-keys [:x :y]))
+         (mm/get-positions))))
+
+(defn update-positions-atom! []
+  (let [new-value (get-position-list-coords)]
+    (when (not= new-value @positions-atom)
+      (reset! positions-atom new-value))))
+
+(defn follow-positions []
+  (future (loop []
+            (update-positions-atom!)
+            (Thread/sleep 1000)
+            (recur))))
     
 ;; SAVE AND LOAD SETTINGS
 
 
 (defn save-settings [dir screen-state]
   (spit (io/file dir "metadata.txt")
-        (pr-str (select-keys screen-state [:channels :tile-dimensions]))))
+        (pr-str (select-keys screen-state [:channels :tile-dimensions
+                                           :pixel-size-um]))))
 
 (defn load-settings [dir]
   (read-string (slurp (io/file dir "metadata.txt"))))
@@ -323,6 +332,8 @@
                        (affine/point-to-vector pixel)))))
           (swap! screen-state merge
                  {:acq-settings settings
+                  :pixel-size-um (pixel-size-um affine-stage-to-pixel)
+                  :dir dir
                   :mode :explore
                   :channels (initial-lut-maps first-seq)
                   :tile-dimensions [(mm/core getImageWidth)
