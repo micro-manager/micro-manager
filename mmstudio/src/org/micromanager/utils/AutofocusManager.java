@@ -110,7 +110,7 @@ public class AutofocusManager {
                   currentAfDevice_ = caf;
             }
          } catch (Exception e) {
-            ReportingUtils.showError(e);
+            ReportingUtils.logError(e);
          }
       }
 
