@@ -151,7 +151,7 @@ to normal size."
 
 (defn toggle-mode [screen-state]
   (assoc screen-state :mode
-         (condp = (:mode screen-state)
+         (condp = (:mode screen-state)++++++
            :explore :navigate
            :navigate :explore
               :navigate)))
@@ -238,6 +238,7 @@ to normal size."
 (defn handle-double-click [panel response-fn]
   (handle-click panel
                 (fn [e] (and (= MouseEvent/BUTTON1 (.getButton e))
+                             (not (.isShiftDown e))
                              (= 2 (.getClickCount e))))
                 response-fn))
 

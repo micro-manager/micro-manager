@@ -297,13 +297,11 @@
       (set-position! showing-screen-atom (+ x (/ w 2)) (+ y (/ h 2))))))
 
 (defn show-where-pointing! [pointing-screen-atom showing-screen-atom] 
-  (copy-settings pointing-screen-atom showing-screen-atom) 
   (let [{:keys [x y]} (user-controls/absolute-mouse-position
                         @pointing-screen-atom)]
     (show-position! showing-screen-atom x y)))
 
 (defn show-stage-position! [main-screen-atom showing-screen-atom]
-  (copy-settings main-screen-atom showing-screen-atom) 
   (let [main-screen @main-screen-atom
         [x y] (:xy-stage-position main-screen)]
     (show-position! showing-screen-atom x y)))
@@ -328,6 +326,11 @@
   (partial handle-change-and-show
            show-stage-position!
            :xy-stage-position))
+
+(def handle-display-change-and-show
+  (partial handle-change-and-show
+           copy-settings
+           #(select-keys % [:positions :channels :xy-stage-position])))
 
 (defn show [dir acquired-images settings]
   (let [memory-tiles (tile-cache/create-tile-cache 100 dir)
@@ -354,6 +357,7 @@
     (user-controls/handle-resize panel2 screen-state2)
     (handle-point-and-show screen-state screen-state2)
     (handle-stage-move-and-show screen-state screen-state2)
+    (handle-display-change-and-show screen-state screen-state2)
     (copy-settings screen-state screen-state2) ; should apply repeatedly
     ;(handle-open frame)
     (.show frame)
