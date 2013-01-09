@@ -149,15 +149,18 @@ to normal size."
     (binder "RIGHT" :x -)
     (binder "LEFT" :x +)))
 
+(defn toggle-mode [screen-state]
+  (assoc screen-state :mode
+         (condp = (:mode screen-state)
+           :explore :navigate
+           :navigate :explore
+              :navigate)))
+
 (defn handle-mode-keys [panel screen-state-atom]
   (let [window (SwingUtilities/getWindowAncestor panel)]
-    (bind-window-keys window ["SPACE"]
-                      #(swap! screen-state-atom
-                              (fn [state]
-                                (assoc state :mode
-                                       (condp = (:mode state)
-                                         :explore :navigate
-                                         :navigate :explore)))))))
+    (bind-window-keys window [\ ] ; space bar
+                      #(swap! screen-state-atom toggle-mode))))
+                                
 
 (defn handle-wheel [component z-atom]
   (.addMouseWheelListener component
