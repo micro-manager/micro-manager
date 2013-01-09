@@ -1405,6 +1405,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
          long expectedSpots = psl.getNrSpots();
          long esf = expectedSpots / 100;
          long maxNrSpots = 0;
+         boolean hasZ = false;
 
 
          ArrayList<GaussianSpotData> spotList = new ArrayList<GaussianSpotData>();
@@ -1419,6 +1420,10 @@ public class DataCollectionForm extends javax.swing.JFrame {
             gSpot.setData(pSpot.getIntensity(), pSpot.getBackground(), pSpot.getX(),
                     pSpot.getY(), 0.0, pSpot.getWidth(), pSpot.getA(), pSpot.getTheta(),
                     pSpot.getXPrecision());
+            if (pSpot.hasZ()) {
+               gSpot.setZCenter(pSpot.getZ());
+               hasZ = true;
+            }
             maxNrSpots++;
             if ((esf > 0) && ((maxNrSpots % esf) == 0)) {
                ij.IJ.showProgress((double) maxNrSpots / (double) expectedSpots);
@@ -1429,7 +1434,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
 
          addSpotData(name, title, "", width, height, pixelSizeUm, (float) 0.0, shape, halfSize,
                  nrChannels, nrFrames, nrSlices, nrPositions, (int) maxNrSpots,
-                 spotList, null, isTrack, Coordinates.NM, false, 0.0, 0.0);
+                 spotList, null, isTrack, Coordinates.NM, hasZ, 0.0, 0.0);
 
       } catch (FileNotFoundException ex) {
          JOptionPane.showMessageDialog(getInstance(),"File not found");
@@ -3081,6 +3086,9 @@ public class DataCollectionForm extends javax.swing.JFrame {
                                 setA((float) gd.getA()).
                                 setTheta((float) gd.getTheta()).
                                 setXPrecision((float) gd.getSigma());
+                        if (rowData.hasZ_) {
+                           spotBuilder.setZ((float) gd.getZCenter());
+                        }
                         
                         double width = gd.getWidth();
                         double xPrec = gd.getSigma();
