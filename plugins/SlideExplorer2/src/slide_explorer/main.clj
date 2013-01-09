@@ -258,7 +258,48 @@
             (update-positions-atom!)
             (Thread/sleep 1000)
             (recur))))
+
+
+;; flat field determination
+
+(def flat-field-positions
+  (map #(* 1/8 %) (range -4 5)))
+
+(def flat-field-coords
+  (for [x flat-field-positions
+        y flat-field-positions]
+    [x y]))
+
+(defn flat-field-scaled-coords []
+  (let [width (mm/core getImageWidth)
+        height (mm/core getImageHeight)]
+    (map #(let [[x y] %] (Point. (* width x) (* height y)))
+         flat-field-coords))) 
+
+(defn flat-field-stage-coords [scaled-coords]
+  (let [transform (origin-here-stage-to-pixel-transform)]
+    (map #(affine/inverse-transform % transform)
+         scaled-coords)))
     
+(defn flat-field-acquire []
+  (let [settings (create-acquisition-settings)
+        scaled (flat-field-scaled-coords)
+        to-and-fro (concat scaled (reverse scaled))]
+    (for [coords (flat-field-stage-coords to-and-fro)]
+      (acquire-at coords settings))))
+
+(defn flat-field-save [images]
+  (let [dir (io/file "flatfield")]
+    (.mkdirs dir)
+    (dorun
+      (loop [images0 (map :proc (flatten images))
+             i 0]
+        (println i)
+        (when-let [image (first images0)]
+          (slide-explorer.disk/write-tile dir {:i i} (first images0)))
+        (when-let [more (next images0)]
+          (recur more (inc i)))))))
+
 ;; SAVE AND LOAD SETTINGS
 
 
@@ -300,13 +341,14 @@
     (let [settings (if-not new? (load-settings dir) {:tile-dimensions [512 512]})
           acquired-images (atom #{})
           [screen-state memory-tiles panel] (view/show dir acquired-images settings)]
+      (println settings)
       (when new?
         (mm/core waitForDevice (mm/core getXYStageDevice))
-        (let [settings (create-acquisition-settings)
+        (let [acq-settings (create-acquisition-settings)
               affine-stage-to-pixel (origin-here-stage-to-pixel-transform)
               first-seq (acquire-at (affine/inverse-transform
                                       (Point. 0 0) affine-stage-to-pixel)
-                                    settings)
+                                    acq-settings)
               explore-fn #(explore memory-tiles screen-state acquired-images
                                    affine-stage-to-pixel)
               stage (mm/core getXYStageDevice)]
