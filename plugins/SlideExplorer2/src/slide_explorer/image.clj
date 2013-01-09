@@ -227,6 +227,7 @@
 
 (def projection-methods
   {:average ZProjector/AVG_METHOD
+   :mean ZProjector/AVG_METHOD
    :max ZProjector/MAX_METHOD
    :min ZProjector/MIN_METHOD
    :sum ZProjector/SUM_METHOD
@@ -238,14 +239,13 @@
    returning an ImageProcessor of the same type. Methods
    are :average, :max, :min, :sum, :std-dev, :median."
   [method processors]
-  (let [float-processor
-        (->
-          (doto
-            (ZProjector. (ImagePlus. "" (make-stack processors)))
-            (.setMethod (projection-methods method))
-            .doProjection)
-          .getProjection
-          .getProcessor)]
+  (->
+    (doto
+      (ZProjector. (ImagePlus. "" (make-stack processors)))
+      (.setMethod (projection-methods method))
+      .doProjection)
+    .getProjection
+    .getProcessor
     (convert-to-type-like (first processors))))
 
 (defn gaussian-blur
