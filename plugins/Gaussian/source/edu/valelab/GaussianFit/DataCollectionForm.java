@@ -1280,6 +1280,11 @@ public class DataCollectionForm extends javax.swing.JFrame {
             if (keyValue.length == 2)
                infoMap.put(keyValue[0], keyValue[1]);
          }
+         String test = infoMap.get("has_Z");
+         boolean hasZ = false;
+         if (test != null && test.equals("true")) {
+            hasZ = true;     
+         }
          
          String head = fr.readLine();
          String[] headers = head.split("\t");        
@@ -1311,6 +1316,9 @@ public class DataCollectionForm extends javax.swing.JFrame {
                     Double.parseDouble(k.get("theta")),
                     Double.parseDouble(k.get("x_precision"))
                     );
+            if (hasZ) {
+               gsd.setZCenter(Double.parseDouble(k.get("z")));
+            }
             spotList.add(gsd);
                         
          }
@@ -1334,8 +1342,11 @@ public class DataCollectionForm extends javax.swing.JFrame {
                     spotList,
                     null,
                     Boolean.parseBoolean(infoMap.get("is_track")), 
-                    Coordinates.NM, false, 0.0, 0.0
-                    );
+                    Coordinates.NM, 
+                    hasZ, 
+                    0.0, 
+                    0.0
+                 );
 
       } catch (NumberFormatException ex) {
          JOptionPane.showMessageDialog(getInstance(), "File format did not meet expectations");
@@ -3195,11 +3206,16 @@ public class DataCollectionForm extends javax.swing.JFrame {
                           "location_units: " + LocationUnits.NM + tab +
                           "intensity_units: " + IntensityUnits.PHOTONS + tab +
                           "fit_mode: " + rowData.shape_ + tab + 
-                          "is_track: " + rowData.isTrack_ + "\n") ;                                 
+                          "is_track: " + rowData.isTrack_ + tab + 
+                          "has_Z: " + rowData.hasZ_ + "\n") ;                                 
                  
                   fw.write("molecule\tchannel\tframe\tslice\tpos\tx\ty\tintensity\t" +
                           "background\twidth\ta\ttheta\tx_position\ty_position\t" +
-                          "x_precision\n");
+                          "x_precision");
+                  if (rowData.hasZ_) {
+                     fw.write("\tz");
+                  }
+                  fw.write("\n");
                   
                   int counter = 0;
                   for (GaussianSpotData gd : rowData.spotList_) {
@@ -3224,7 +3240,12 @@ public class DataCollectionForm extends javax.swing.JFrame {
                                 String.format("%.3f",gd.getTheta()) + tab + 
                                 gd.getX() + tab + 
                                 gd.getY() + tab + 
-                                String.format("%.3f", gd.getSigma()) + "\n");
+                                String.format("%.3f", gd.getSigma()) );
+                        
+                        if (rowData.hasZ_) {
+                           fw.write(tab + String.format("%.2f", gd.getZCenter()));
+                        }
+                        fw.write("\n");
 
                         counter++;
                      }
