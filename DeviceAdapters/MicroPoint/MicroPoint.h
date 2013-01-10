@@ -70,6 +70,8 @@ public:
 private:
    bool initialized_;
    std::string port_;
+   double x_;
+   double y_;
 };
 
 #endif //_MicroPoint_H_

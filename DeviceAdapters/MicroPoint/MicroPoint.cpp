@@ -45,7 +45,7 @@ const char* g_MicroPointScannerName = "MicroPoint";
 
 #define ERR_PORT_CHANGE_FORBIDDEN    10004
 
-#define GALVO_RANGE 256
+#define GALVO_RANGE 1.0
 
 ///////////////////////////////////////////////////////////////////////////////
 // Exported MMDevice API
@@ -88,7 +88,7 @@ MM::DeviceDetectionStatus MicroPointDetect(MM::Device& /*device*/, MM::Core& /*c
 // MicroPoint
 //
 MicroPoint::MicroPoint() :
-   initialized_(false)
+   initialized_(false), x_(0), y_(0)
    {
    InitializeDefaultErrorMessages();
 
@@ -145,7 +145,9 @@ bool MicroPoint::Busy()
 /////////////////////////////
 int MicroPoint::PointAndFire(double x, double y, double pulseTime_us)
 {
-   return DEVICE_NOT_YET_IMPLEMENTED;
+   this->SetPosition(x, y);
+   this->SetIlluminationState(true);
+   return DEVICE_OK;
 }
 
 int MicroPoint::SetSpotInterval(double pulseTime_us)
@@ -155,19 +157,36 @@ int MicroPoint::SetSpotInterval(double pulseTime_us)
 
 int MicroPoint::SetIlluminationState(bool on)
 {
-   return DEVICE_NOT_YET_IMPLEMENTED;
+   if (on) // Fire!
+   {
+      unsigned char buf[] = { 'C', 0x02,
+                              'C', 0x00     };
+      this->WriteToComPort(port_.c_str(), buf, 4);
+   }
+   return DEVICE_OK;
 }
 
 int MicroPoint::SetPosition(double x, double y)
 {
-   return DEVICE_NOT_YET_IMPLEMENTED;
+   x_ = x;
+   y_ = y;
+   unsigned char xpos = (unsigned char) (0xFF * x);
+   unsigned char ypos = (unsigned char) (0xFF * y);
+   unsigned char buf[] = { '!', 'A', xpos,
+                           '!', 'B', ypos,
+                           'A', 0x00,
+                           'B', 0x00      };
+
+   this->WriteToComPort(port_.c_str(), buf, 10);
+   CDeviceUtils::SleepMs(50);
+   return DEVICE_OK;
 }
 
 int MicroPoint::GetPosition(double& x, double& y)
 {
-   x = 0;
-   y = 0;
-   return DEVICE_NOT_YET_IMPLEMENTED;
+   x = x_;
+   y = y_;
+   return DEVICE_OK;
 }
 
 double MicroPoint::GetXRange()
