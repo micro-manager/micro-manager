@@ -1,6 +1,7 @@
 package org.micromanager.utils;
 
 import ij.ImagePlus;
+import ij.plugin.ImageCalculator;
 import ij.process.ByteProcessor;
 import ij.process.ColorProcessor;
 import ij.process.FloatProcessor;
@@ -55,6 +56,7 @@ public class ImageUtils {
       return makeProcessor(core, null);
    }
 
+   
    public static ImageProcessor makeProcessor(CMMCore core, Object imgArray) {
       int w = (int) core.getImageWidth();
       int h = (int) core.getImageHeight();
@@ -428,6 +430,11 @@ public class ImageUtils {
       return -1;
    }
 
+   public static ImageProcessor subtractImageProcessors(ImageProcessor proc1, ImageProcessor proc2) {
+       ImageCalculator calc = new ImageCalculator();
+       return calc.run("subtract", new ImagePlus("", proc1), new ImagePlus("", proc2)).getProcessor();
+   }
+   
    public static int[] getMinMax(final Object pixels) {
       int[] result = new int[2];
       int max = Integer.MIN_VALUE;
