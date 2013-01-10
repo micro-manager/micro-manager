@@ -186,7 +186,9 @@ private:
    void LogStatus();
 	int PrepareSnap();
 	unsigned int UpdateSnapTriggerMode();
-
+   std::string GetTriggerModeString(int mode);
+   unsigned int ApplyTriggerMode(int mode);
+   int GetTriggerModeInt(std::string mode);
 
    bool EMSwitch_;
 
@@ -194,7 +196,6 @@ private:
 
    static AndorCamera* instance_;
    static unsigned refCount_;
-   static bool softwareTriggerUsed_;
    ImgBuffer img_;
    bool initialized_;
    bool snapInProgress_;
@@ -227,24 +228,11 @@ private:
 
    long ReadoutTime_, KeepCleanTime_;
 
-   long GetReadoutTime();
+   unsigned int UpdateTimings();
 
-// kdb 2/27/2009
-#ifdef WIN32
-   HMODULE hAndorDll;
-   typedef unsigned int (CALLBACK *FPGetReadOutTime)(float *_fReadoutTime);
-   typedef unsigned int (CALLBACK *FPGetKeepCleanTime)(float *_ftime);
-#else   
+#ifdef __linux__
    HDEVMODULE hAndorDll; 
-   typedef unsigned int (*FPGetReadOutTime)(float *_fReadoutTime);
-   typedef unsigned int (*FPGetKeepCleanTime)(float *_ftime);
 #endif
-// end of kdb
-   FPGetReadOutTime fpGetReadOutTime;
-   //typedef unsigned int (CALLBACK *FPGetKeepCleanTime)(float *_ftime);
-   FPGetKeepCleanTime fpGetKeepCleanTime;
-   //typedef unsigned int (CALLBACK *FPSendSoftwareTrigger)();
-   //FPSendSoftwareTrigger fpSendSoftwareTrigger;
 
    bool busy_;
 
@@ -292,9 +280,12 @@ private:
    int  iCurrentTriggerMode_;
 
    enum {
-	   INTERNAL,
-	   EXTERNAL,
-	   SOFTWARE
+	   INTERNAL=0,
+	   EXTERNAL=1,
+       EXTERNALSTART=6,
+       EXTERNALEXPOSURE=7,
+	   SOFTWARE=10,
+       FASTEXTERNAL=101
    };
 
    at_32 myCameraID_;
@@ -316,7 +307,7 @@ private:
    std::vector<std::string> BaselineClampValues_;
    std::string BaselineClampValue_;
    float ActualInterval_ms_;
-
+   std::string ActualInterval_ms_str_;
    std::string strCurrentTriggerMode_;
    std::vector<std::string> vTriggerModes;
 
@@ -328,6 +319,7 @@ private:
    std::vector<std::string> vChannels;
 
    bool bFrameTransfer_;
+   
 
    std::string m_str_frameTransferProp;
    std::string m_str_camType;
@@ -338,6 +330,7 @@ private:
    std::string getCameraType();
    unsigned int createGainProperty(AndorCapabilities * caps);
    unsigned int createTriggerProperty(AndorCapabilities * caps);
+   unsigned int AddTriggerProperty(int mode);
    unsigned int createIsolatedCropModeProperty(AndorCapabilities * caps);
 
    bool mb_canUseFan;
