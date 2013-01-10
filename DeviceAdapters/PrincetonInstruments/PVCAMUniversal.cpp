@@ -119,8 +119,11 @@ SParam param_set[] = {
    {"Y-dimension", PARAM_PAR_SIZE},
    {"ShutterMode",PARAM_SHTR_OPEN_MODE},
    {"ExposureMode", PARAM_EXPOSURE_MODE},
-   {"LogicOutput", PARAM_LOGIC_OUTPUT},
+   {"LogicOutput", PARAM_LOGIC_OUTPUT}
+#ifdef PARAM_HEAD_COOLING_CTRL
+   ,
    {"CoolingFan", PARAM_HEAD_COOLING_CTRL}
+#endif
 };
 const int n_param = sizeof(param_set)/sizeof(SParam);
 
@@ -579,6 +582,7 @@ int Universal::OnTemperature(MM::PropertyBase* pProp, MM::ActionType eAct)
    return DEVICE_OK;
 }
    
+#ifdef PARAM_COOLING_FAN_CTRL
 int Universal::OnCoolingFan(MM::PropertyBase* pProp, MM::ActionType eAct) {
 	if (eAct == MM::AfterSet) {
 	  long fanState;
@@ -595,18 +599,11 @@ int Universal::OnCoolingFan(MM::PropertyBase* pProp, MM::ActionType eAct) {
 
       if (!SetLongParam_PvCam_safe(hPVCAM_, PARAM_COOLING_FAN_CTRL, fanState))
          return LogCamError(__LINE__);
- //  
    } else if (eAct == MM::BeforeGet) {
- //     long fan;
-
- //     if (!GetLongParam_PvCam_safe(hPVCAM_, PARAM_COOLING_FAN_CTRL, &fan))
- //        return LogCamError(__LINE__);
-	//  fprintf( stderr, "beforeget fan %li\n", fan );
-
- //     pProp->Set(fanOff);
    }
    return DEVICE_OK;
 }
+#endif
 
 int Universal::OnTemperatureSetPoint(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
@@ -1020,6 +1017,7 @@ int Universal::Initialize()
    AddAllowedValue(g_TriggerMode, trigFirst, (long)TRIGGER_FIRST_MODE);
    AddAllowedValue(g_TriggerMode, trigStrobed, (long)STROBED_MODE);
 
+#ifdef PARAM_COOLING_FAN_CTRL
    // cooling fan
    const char* fanOn = "On";
    const char* fanOff = "Off"; 
@@ -1036,6 +1034,7 @@ int Universal::Initialize()
 	   AddAllowedValue(g_CoolingFan, fanOff, (long)COOLING_FAN_CTRL_OFF);
    } else
       LogMessage("This Camera's fan can't be controlled");
+#endif
 
    // readout time is a function of the number of pixels to digitize, the ADC speed, and the overhead which includes
    //   skipping pixels, and all clocking vertical and horizontal
