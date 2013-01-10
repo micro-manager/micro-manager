@@ -35,6 +35,7 @@ AC_SUBST(MMDEVAPI_LDFLAGS)
 # Location of third party public files
 thirdpartypublic="${micromanager_path}/../3rdpartypublic"
 
+
 # Checkfor libUSB 
 AC_MSG_CHECKING(for libusb)
 AC_FIND_FILE([usb.h], [/usr/include /usr/local/$ARCH/include], USBINCDIR)
@@ -379,6 +380,7 @@ AC_CONFIG_FILES(
 	[PI_GCS/Makefile:PI_GCS/Makefile.in:MMDEVAPI.rules]
 	[PI_GCS_2/Makefile:PI_GCS_2/Makefile.in:MMDEVAPI.rules]
 	[PVCAM/Makefile:PVCAM/Makefile.in:MMDEVAPI.rules]
+	[PrincetonInstruments/Makefile:PrincetonInstruments/Makefile.in:MMDEVAPI.rules]
 	[QCam/Makefile:QCam/Makefile.in:MMDEVAPI.rules]
    [Scientifica/Makefile:Scientifica/Makefile.in:MMDEVAPI.rules]
 	[Sapphire/Makefile:Sapphire/Makefile.in:MMDEVAPI.rules]

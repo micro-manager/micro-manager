@@ -2,7 +2,7 @@ AUTOMAKE_OPTIONS = foreign
 ACLOCAL_AMFLAGS = -I ../m4
 
 if BUILD_PVCAM
-   PVCAM = PVCAM
+   PVCAM = PVCAM PrincetonInstruments
 endif
 if BUILD_QCAM
    QCAM = QCam
