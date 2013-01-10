@@ -364,16 +364,24 @@ public:
    // action interface
    // ---------------
    int OnState(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnAperture(MM::PropertyBase *pProp, MM::ActionType eAct);
 
 private:
    int SetPosition(int position);
    int GetPosition(int &position);
    bool GetPresence(bool& present);
+
+   int SetAperture(long aperture);
+   int GetAperture(long &aperture);
+   bool BusyChangingAperture();
+
    bool initialized_;
    std::string name_;
    long pos_;
    int numPos_;
    int turretId_;
+   
+   MM::MMTime apertureChangingTimeout_;
 };
 
 class OptovarTurret : public CStateDeviceBase<OptovarTurret>

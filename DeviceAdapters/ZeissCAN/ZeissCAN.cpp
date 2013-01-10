@@ -2607,7 +2607,8 @@ CondenserTurret::CondenserTurret():
    name_ (g_ZeissCondenser),
    pos_(1),
    numPos_(5),
-   turretId_ (g_CondenserTurret)
+   turretId_ (g_CondenserTurret),
+   apertureChangingTimeout_ (0)
 {
    InitializeDefaultErrorMessages();
 
@@ -2683,6 +2684,15 @@ int CondenserTurret::Initialize()
       SetPositionLabel(i, buf);
    }
 
+   // Aperture
+   // -----
+   pAct = new CPropertyAction(this, &CondenserTurret::OnAperture);
+   ret = CreateProperty("Diaphram Aperture", "0", MM::Float, false, pAct);
+   SetPropertyLimits("Diaphram Aperture", 0.09, 0.55);
+
+   if (ret != DEVICE_OK)
+      return ret;
+
    ret = UpdateStatus();
    if (ret!= DEVICE_OK)
       return ret;
@@ -2700,15 +2710,19 @@ int CondenserTurret::Shutdown()
 
 bool CondenserTurret::Busy()
 {
-   bool busy;
-   int ret = g_turret.GetBusy(*this, *GetCoreCallback(), turretId_, busy);
+   // aperture busy?
+   bool aperture_busy = GetCurrentMMTime() < apertureChangingTimeout_;
+
+   // turret busy?
+   bool turret_busy;
+   int ret = g_turret.GetBusy(*this, *GetCoreCallback(), turretId_, turret_busy);
    if (ret != DEVICE_OK)  // This is bad and should not happen
    {
       this->LogMessage("GetBusy failed in CondenserTurret::Busy");
       return false; // error, so say we're not busy
    }
 
-   return busy;
+   return aperture_busy || turret_busy;
 }
 
 int CondenserTurret::SetPosition(int position)
@@ -2727,6 +2741,52 @@ int CondenserTurret::GetPosition(int& position)
       return ret;
 
    return DEVICE_OK;
+}
+
+int CondenserTurret::SetAperture(long aperture)
+{
+	// set the timeout for the Busy signal.  assume that the aperture takes 4 seconds to go
+	// from full-closed (1) to full-open (395).  get the current aperture and the dest
+	// aperture and calculate how long it will take to effect that change.  add 1/4 sec
+	// for comms delay, too.
+
+	long curr_aperture;
+	GetAperture(curr_aperture);
+	double aperture_timeout_ms = fabs((float)curr_aperture - (float)aperture) / 394.0 * 4000.0 + 250.0;
+	apertureChangingTimeout_ = GetCurrentMMTime() + MM::MMTime(aperture_timeout_ms * 1000.0);
+
+    const char* prefix = "HPCS33,";
+    std::stringstream command_stream;
+    command_stream << prefix << aperture;
+    command_stream.str().c_str();
+    return g_hub.ExecuteCommand(*this, *GetCoreCallback(), command_stream.str().c_str());
+}
+
+int CondenserTurret::GetAperture(long &aperture)
+{
+    const char* command = "HPCs33,1";
+    int ret = g_hub.ExecuteCommand(*this, *GetCoreCallback(), command);
+    if (ret != DEVICE_OK)
+       return ret;
+
+    string response;
+    ret = g_hub.GetAnswer(*this, *GetCoreCallback(), response);
+    if (ret != DEVICE_OK)
+       return ret;
+
+    if (response.substr(0,2) == "PH")
+    {
+        aperture = atoi(response.substr(2).c_str());
+        if (aperture < 1 || aperture > 395) {
+            return ERR_UNEXPECTED_ANSWER;
+        } else {
+            return DEVICE_OK;
+        }
+    }
+    else
+    {
+        return ERR_UNEXPECTED_ANSWER;
+    }
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -2754,6 +2814,29 @@ int CondenserTurret::OnState(MM::PropertyBase* pProp, MM::ActionType eAct)
          return ERR_INVALID_TURRET_POSITION;
    }
    return DEVICE_OK;
+}
+
+int CondenserTurret::OnAperture(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+    double aperture_prop;
+	long aperture_dev;
+
+    if (eAct == MM::BeforeGet)
+    {
+        // return aperture
+        int ret = GetAperture(aperture_dev);
+        if (ret != DEVICE_OK)
+            return ret;
+		aperture_prop = ((double)aperture_dev - 1.0) / 394.0 * 0.46 + 0.09;
+        pProp->Set(aperture_prop);
+    }
+    else if (eAct == MM::AfterSet)
+    {
+        pProp->Get(aperture_prop);
+		aperture_dev = (long)(((aperture_prop - 0.09)) / 0.46 * 394.0 + 1.0);
+        return SetAperture(aperture_dev);
+    }
+	return DEVICE_OK;
 }
 
 ///////////////////////////////////////////////////////////////////////////////
