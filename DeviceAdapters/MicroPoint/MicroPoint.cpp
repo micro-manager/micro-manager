@@ -88,7 +88,7 @@ MM::DeviceDetectionStatus MicroPointDetect(MM::Device& /*device*/, MM::Core& /*c
 // MicroPoint
 //
 MicroPoint::MicroPoint() :
-   initialized_(false), port_("")
+   initialized_(false)
    {
    InitializeDefaultErrorMessages();
 
@@ -103,7 +103,8 @@ MicroPoint::MicroPoint() :
 
    // Port
    CPropertyAction* pAct = new CPropertyAction (this, &MicroPoint::OnPort);
-   
+   CreateProperty(MM::g_Keyword_Port, "Undefined", MM::String, false, pAct, true);
+
 }  
 
 MicroPoint::~MicroPoint()
@@ -124,6 +125,7 @@ MM::DeviceDetectionStatus MicroPoint::DetectDevice(void)
 
 int MicroPoint::Initialize()
 {
+   initialized_ = true;
    return DEVICE_OK;
 }
 
