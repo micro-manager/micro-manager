@@ -163,6 +163,7 @@ int MicroPoint::SetIlluminationState(bool on)
                               'C', 0x00     };
       this->WriteToComPort(port_.c_str(), buf, 4);
    }
+   CDeviceUtils::SleepMs(50);
    return DEVICE_OK;
 }
 

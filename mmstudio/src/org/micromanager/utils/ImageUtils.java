@@ -432,7 +432,8 @@ public class ImageUtils {
 
    public static ImageProcessor subtractImageProcessors(ImageProcessor proc1, ImageProcessor proc2) {
        ImageCalculator calc = new ImageCalculator();
-       return calc.run("subtract", new ImagePlus("", proc1), new ImagePlus("", proc2)).getProcessor();
+       ImagePlus image = calc.run("subtract create 32-bit", new ImagePlus("", proc1), new ImagePlus("", proc2));
+       return image.getProcessor();
    }
    
    public static int[] getMinMax(final Object pixels) {
