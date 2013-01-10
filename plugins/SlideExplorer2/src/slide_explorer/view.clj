@@ -122,7 +122,7 @@
          (select-keys @pointing-screen-atom
                       [:channels :tile-dimensions
                        :pixel-size-um :xy-stage-position
-                       :positions])))
+                       :positions :z])))
 
 ;; OVERLAY
 
@@ -329,7 +329,7 @@
 (def handle-display-change-and-show
   (partial handle-change-and-show
            copy-settings
-           #(select-keys % [:positions :channels :xy-stage-position])))
+           #(select-keys % [:positions :channels :xy-stage-position :z])))
 
 (defn show [dir acquired-images settings]
   (let [memory-tiles (tile-cache/create-tile-cache 100 dir)

@@ -255,13 +255,14 @@ to normal size."
       (mouseDragged [e] (update-mouse-position e screen-state-atom)))))
                                    
 (defn absolute-mouse-position [screen-state]
-  (let [{:keys [x y mouse zoom scale width height tile-dimensions]} screen-state]
+  (let [{:keys [x y z mouse zoom scale width height tile-dimensions]} screen-state]
     (when mouse
       (let [mouse-x-centered (- (mouse :x) (/ width 2))
             mouse-y-centered (- (mouse :y) (/ height 2))
             [w h] tile-dimensions]
         {:x (long (+ x (/ mouse-x-centered zoom scale) (/ w -2)))
-         :y (long (+ y (/ mouse-y-centered zoom scale) (/ h -2)))}))))
+         :y (long (+ y (/ mouse-y-centered zoom scale) (/ h -2)))
+         :z z}))))
 
 (defn handle-refresh [component]
   (bind-keys component ["R"] #(do (.repaint component) (println "repaint")) true))

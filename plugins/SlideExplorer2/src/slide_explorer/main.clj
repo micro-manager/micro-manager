@@ -7,6 +7,7 @@
            (org.micromanager.utils ImageUtils JavaUtils)
            (org.micromanager.acquisition TaggedImageQueue))
   (:require [clojure.java.io :as io]
+            [clojure.set]
             [org.micromanager.mm :as mm]
             [org.micromanager.acq-engine :as engine]
             [slide-explorer.reactive :as reactive]
@@ -26,6 +27,13 @@
 (def gui-prefs (Preferences/userNodeForPackage MMStudioMainFrame))
 
 (def current-xy-positions (atom {}))
+
+(def current-z-positions (atom {}))
+
+(defn match-set
+  "Retains only those items in set where applying key-fn returns val."
+  [key-fn val set]
+  (clojure.set/select #(= (key-fn %) val) set))
 
 (defn set-stage-to-pixel-transform [^AffineTransform affine-transform]
   (JavaUtils/putObjectInPrefs
@@ -88,6 +96,15 @@
       (mm/core waitForDevice stage)
       (swap! current-xy-positions assoc stage [x y]))))
 
+(defn set-z-position
+  [z]
+  (let [stage (mm/core getFocusDevice)]
+    (when (not= z (@current-z-positions stage))
+      (mm/core waitForDevice stage)
+      (mm/core setPosition stage z)
+      (mm/core waitForDevice stage)
+      (swap! current-z-positions assoc stage z))))
+
 ;; image acquisition
 
 (def grab-tagged-image
@@ -110,13 +127,12 @@
 (defn acquire-at
   "Move the stage to position x,y and acquire a multi-dimensional
    sequence of images using the acquisition engine."
-  ([x y settings]
-    (acquire-at (Point2D$Double. x y) settings))
-  ([^Point2D$Double stage-pos settings]
-    (let [xy-stage (mm/core getXYStageDevice)]
+  ([x y z settings]
+    (acquire-at (Point2D$Double. x y) z settings))
+  ([^Point2D$Double stage-pos z-pos settings]
       (set-xy-position stage-pos)
-      (acquire-processor-sequence settings)
-      )))
+      (set-z-position z-pos)
+      (acquire-processor-sequence settings)))
 
 ;; run using acquisitions
 
@@ -133,36 +149,41 @@
 
 ;; tile arrangement
 
-(defn next-tile [screen-state acquired-images]
-  (let [tile-dimensions (screen-state :tile-dimensions)
-        center (tiles/center-tile [(:x screen-state) (:y screen-state)]
-                                 tile-dimensions)
+(defn as-map [[x y] z]
+  {:nx x :ny y :nz z})
+
+(defn next-tile [{:keys [tile-dimensions x y z] :as screen-state} acquired-images]
+  (let [center (tiles/center-tile [x y] tile-dimensions)
         pixel-rect (view/pixel-rectangle screen-state)
         bounds (tiles/pixel-rectangle-to-tile-bounds pixel-rect tile-dimensions)
-        number-tiles (tiles/number-of-tiles screen-state tile-dimensions)]
+        number-tiles (tiles/number-of-tiles screen-state tile-dimensions)
+        acquired-this-slice (match-set :nz z @acquired-images)]
     (->> tiles/tile-list
          (tiles/offset-tiles center)
          (take number-tiles)
          (filter #(tiles/tile-in-tile-bounds? % bounds))
-         (remove @acquired-images)
+         (map #(as-map % z))
+         (remove acquired-this-slice)
          first)))
 
 ;; tile acquisition management
 
 (def image-processing-executor (Executors/newFixedThreadPool 1))
  
-(defn add-tiles-at [memory-tiles [nx ny] affine-stage-to-pixel
-                    acquired-images tile-dimensions settings]
-  (swap! acquired-images conj [nx ny])
+(defn add-tiles-at [memory-tiles {:keys [nx ny nz] :as tile-index}
+                    affine-stage-to-pixel z-origin slice-size-um
+                    acquired-images tile-dimensions acq-settings]
+  (swap! acquired-images conj (select-keys tile-index [:nx :ny :nz :nt]))
   (let [[tile-width tile-height] tile-dimensions]
     (doseq [image (doall (acquire-at (affine/inverse-transform
                                        (Point. (* tile-width nx)
                                                (* tile-height ny))
                                        affine-stage-to-pixel)
-                                     settings))]
+                                     (+ (* nz slice-size-um) z-origin)
+                                     acq-settings))]
       (let [indices {:nx nx
                      :ny ny
-                     :nz (get-in image [:tags "SliceIndex"])
+                     :nz (or nz (get-in image [:tags "SliceIndex"]))
                      :nt 0
                      :nc (or (get-in image [:tags "Channel"]) "Default")}]
         (view/add-to-memory-tiles 
@@ -176,7 +197,10 @@
    affine]
   (when-let [next-tile (next-tile @screen-state-atom
                                   acquired-images)]
-    (add-tiles-at memory-tiles-atom next-tile affine acquired-images
+    (add-tiles-at memory-tiles-atom next-tile affine 
+                  (@screen-state-atom :z-origin)
+                  (@screen-state-atom :slice-size-um)
+                  acquired-images
                   (@screen-state-atom :tile-dimensions)
                   (@screen-state-atom :acq-settings))
     next-tile))
@@ -282,11 +306,11 @@
          scaled-coords)))
     
 (defn flat-field-acquire []
-  (let [settings (create-acquisition-settings)
+  (let [acq-settings (create-acquisition-settings)
         scaled (flat-field-scaled-coords)
         to-and-fro (concat scaled (reverse scaled))]
     (for [coords (flat-field-stage-coords to-and-fro)]
-      (acquire-at coords settings))))
+      (acquire-at coords acq-settings))))
 
 (defn flat-field-save [images]
   (let [dir (io/file "flatfield")]
@@ -346,8 +370,10 @@
         (mm/core waitForDevice (mm/core getXYStageDevice))
         (let [acq-settings (create-acquisition-settings)
               affine-stage-to-pixel (origin-here-stage-to-pixel-transform)
+              z-origin (mm/core getPosition (mm/core getFocusDevice))
               first-seq (acquire-at (affine/inverse-transform
                                       (Point. 0 0) affine-stage-to-pixel)
+                                    z-origin
                                     acq-settings)
               explore-fn #(explore memory-tiles screen-state acquired-images
                                    affine-stage-to-pixel)
@@ -375,6 +401,8 @@
           (swap! screen-state merge
                  {:acq-settings acq-settings
                   :pixel-size-um (pixel-size-um affine-stage-to-pixel)
+                  :z-origin z-origin
+                  :slice-size-um 1.0
                   :dir dir
                   :mode :explore
                   :channels (initial-lut-maps first-seq)
