@@ -272,7 +272,6 @@
 (defn view-panel [memory-tiles acquired-images settings]
   (let [screen-state (atom (merge
                              (sorted-map :x 0 :y 0 :z 0 :zoom 1 :scale 1
-                                         :pixel-size-um 0.3
                                        :width 100 :height 10
                                        :keys (sorted-set)
                                        :channels (sorted-map)

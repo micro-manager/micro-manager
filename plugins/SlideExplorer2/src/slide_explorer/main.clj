@@ -373,7 +373,7 @@
                 (swap! screen-state assoc :xy-stage-position
                        (affine/point-to-vector pixel)))))
           (swap! screen-state merge
-                 {:acq-settings settings
+                 {:acq-settings acq-settings
                   :pixel-size-um (pixel-size-um affine-stage-to-pixel)
                   :dir dir
                   :mode :explore
