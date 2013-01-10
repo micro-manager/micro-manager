@@ -45,7 +45,7 @@ const char* g_MicroPointScannerName = "MicroPoint";
 
 #define ERR_PORT_CHANGE_FORBIDDEN    10004
 
-#define GALVO_RANGE 1.0
+#define GALVO_RANGE 255
 
 ///////////////////////////////////////////////////////////////////////////////
 // Exported MMDevice API
@@ -170,8 +170,8 @@ int MicroPoint::SetPosition(double x, double y)
 {
    x_ = x;
    y_ = y;
-   unsigned char xpos = (unsigned char) (0xFF * x);
-   unsigned char ypos = (unsigned char) (0xFF * y);
+   unsigned char xpos = (unsigned char) x;
+   unsigned char ypos = (unsigned char) y;
    unsigned char buf[] = { '!', 'A', xpos,
                            '!', 'B', ypos,
                            'A', 0x00,
