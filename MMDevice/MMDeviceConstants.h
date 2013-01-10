@@ -77,7 +77,7 @@
 #define DEVICE_PROPERTY_NOT_SEQUENCEABLE 38
 #define DEVICE_SEQUENCE_TOO_LARGE      39
 #define DEVICE_OUT_OF_MEMORY           40
-
+#define DEVICE_NOT_YET_IMPLEMENTED     41
 
 
 namespace MM {
