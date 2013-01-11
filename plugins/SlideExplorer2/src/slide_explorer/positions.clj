@@ -15,16 +15,6 @@
           (select-keys [:x :y])
           (assoc :label label)))))
 
-(defn add-position-to-list [screen-state-atom position-map affine-stage-to-pixel]
-  (let [{:keys [x y]} position-map
-        [x1 y1] (affine/inverse-transform [x y] affine-stage-to-pixel)
-        {:keys [z-origin slice-size-um z]} @screen-state-atom
-        zpos (+ z-origin (* z slice-size-um))
-        label (str "Pos" (int (* 100000 (rand))))
-        labeled-position (assoc position-map :label label)]
-    (mm/add-msp label x1 y1 zpos)
-    (swap! screen-state-atom update-in [:positions] conj labeled-position)))
-
 (defn grid-distances [pos0 pos1]
   (merge-with #(Math/abs (- %1 %2)) pos0 pos1))
 
@@ -41,6 +31,16 @@
                  (tile-distances w h)
                  (in-tile))
             available-positions)))
+
+(defn add-position-to-list [screen-state-atom position-map affine-stage-to-pixel]
+  (let [{:keys [x y]} position-map
+        [x1 y1] (affine/inverse-transform [x y] affine-stage-to-pixel)
+        {:keys [z-origin slice-size-um z]} @screen-state-atom
+        zpos (+ z-origin (* z slice-size-um))
+        label (str "Pos" (int (* 100000 (rand))))
+        labeled-position (assoc position-map :label label)]
+    (mm/add-msp label x1 y1 zpos)
+    (swap! screen-state-atom update-in [:positions] conj labeled-position)))
 
 (defn remove-position-from-list [screen-state-atom position-map affine-stage-to-pixel]
   (let [positions (get-position-list-coords affine-stage-to-pixel)
