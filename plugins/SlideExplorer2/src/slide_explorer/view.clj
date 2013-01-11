@@ -269,22 +269,21 @@
     (.setBounds 10 10 500 500)
     .show))
     
+(def default-settings
+  (sorted-map :x 0 :y 0 :z 0 :zoom 1 :scale 1
+              :width 100 :height 10
+              :keys (sorted-set)
+              :channels (sorted-map)
+              :positions #{}))
+
 (defn view-panel [memory-tiles acquired-images settings]
-  (let [screen-state (atom (merge
-                             (sorted-map :x 0 :y 0 :z 0 :zoom 1 :scale 1
-                                       :width 100 :height 10
-                                       :keys (sorted-set)
-                                       :channels (sorted-map)
-                                         :positions #{}
-                                       )
-                             settings))
+  (let [screen-state (atom (merge default-settings
+                                  settings))
         overlay-tiles (tile-cache/create-tile-cache 100)
         panel (main-panel screen-state overlay-tiles)]
-    ;(println overlay-tiles)
     (load-visible-only screen-state memory-tiles
                        overlay-tiles acquired-images)
     (paint/repaint-on-change panel [overlay-tiles screen-state]); [memory-tiles])
-    ;(set-contrast-when-ready screen-state memory-tiles)
     [panel screen-state]))
 
 (defn set-position! [screen-state-atom x y]

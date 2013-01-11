@@ -171,8 +171,10 @@
 (def image-processing-executor (Executors/newFixedThreadPool 1))
  
 (defn add-tiles-at [memory-tiles {:keys [nx ny nz] :as tile-index}
-                    affine-stage-to-pixel z-origin slice-size-um
-                    acquired-images tile-dimensions acq-settings]
+                    affine-stage-to-pixel
+                    {:keys [z-origin slice-size-um
+                            tile-dimensions acq-settings] :as screen-state}
+                    acquired-images]
   (swap! acquired-images conj (select-keys tile-index [:nx :ny :nz :nt]))
   (let [[tile-width tile-height] tile-dimensions]
     (doseq [image (doall (acquire-at (affine/inverse-transform
@@ -193,16 +195,13 @@
     
 (defn acquire-next-tile
   [memory-tiles-atom
-   screen-state-atom acquired-images
-   affine]
-  (when-let [next-tile (next-tile @screen-state-atom
+   screen-state
+   acquired-images affine]
+  (when-let [next-tile (next-tile screen-state
                                   acquired-images)]
     (add-tiles-at memory-tiles-atom next-tile affine 
-                  (@screen-state-atom :z-origin)
-                  (@screen-state-atom :slice-size-um)
-                  acquired-images
-                  (@screen-state-atom :tile-dimensions)
-                  (@screen-state-atom :acq-settings))
+                  screen-state
+                  acquired-images)
     next-tile))
 
 (def explore-executor (Executors/newFixedThreadPool 1))
@@ -213,7 +212,7 @@
   (reactive/submit explore-executor
                    #(when (and (= :explore (:mode @screen-state-atom))
                                (acquire-next-tile memory-tiles-atom
-                                                  screen-state-atom
+                                                  @screen-state-atom
                                                   acquired-images
                                                   affine))
                       (explore memory-tiles-atom screen-state-atom

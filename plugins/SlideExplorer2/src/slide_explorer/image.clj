@@ -255,7 +255,7 @@
     (.blurGaussian (GaussianBlur.) new-proc radius radius 0.0002)
     new-proc))
 
-(defn normalize
+(defn normalize-to-max
   "Rescale intensities so the max value of processor is 1.0."
   [processor]
   (let [max (.max (.getStatistics processor))
