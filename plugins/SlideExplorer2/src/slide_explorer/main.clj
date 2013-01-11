@@ -228,12 +228,16 @@
                          (Point2D$Double. x y)
                          affine-transform)))))
   
-(defn create-acquisition-settings []
+(defn create-acquisition-settings
+  []
+  "Create acquisition settings from current MDA window. Ignores everything
+   but channels for now."
   (-> mm/gui .getAcquisitionEngine .getSequenceSettings
       engine/convert-settings
       (assoc :use-autofocus false
              :frames nil
              :positions nil
+             :slices nil
              :numFrames 0)))
 
 ;; Position List

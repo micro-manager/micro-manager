@@ -14,7 +14,7 @@
 
 
 (ns slide-explorer.plugin
-  (:require [slide-explorer.main :as main])
+  (:require [slide-explorer.setup :as setup])
   (:gen-class
     :init init
     :name org.micromanager.SlideExplorer2
@@ -24,7 +24,7 @@
 (defn -init [] [[] (atom nil)])
 (defn -dispose [this] )
 (defn -setApp [this app] (swap! (.state this) assoc :app app))
-(defn -show [this] (main/go))
+(defn -show [this] (setup/show-frame (-> this .state :app)))
 
 
 ;; Do nothing:

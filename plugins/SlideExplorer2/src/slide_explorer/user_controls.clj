@@ -1,8 +1,10 @@
 (ns slide-explorer.user-controls
   (:import (java.awt.event ComponentAdapter KeyEvent KeyAdapter
-                           MouseAdapter MouseEvent WindowAdapter)
+                           MouseAdapter MouseEvent WindowAdapter
+                           ActionListener)
            (java.awt Window)
-           (javax.swing AbstractAction JComponent KeyStroke SwingUtilities)
+           (javax.swing AbstractAction JComponent KeyStroke SwingUtilities
+                        JButton)
            (java.util UUID)
            (org.micromanager.utils JavaUtils)))
 
@@ -16,6 +18,15 @@
   (tree-seq (constantly true)
             #(.getComponents %)
             window))
+
+;; widgets
+
+(defn button [text press-fn]
+  (doto (JButton. text)
+    (.addActionListener
+      (proxy [ActionListener] []
+        (actionPerformed [e]
+                         (press-fn))))))
 
 ;; key binding
 
@@ -99,6 +110,21 @@ to normal size."
 (defn setup-fullscreen [window]
   (bind-window-keys window ["F"] #(full-screen! window))
   (bind-window-keys window ["ESCAPE"] #(exit-full-screen! window)))
+
+;; window positioning
+
+(defn show-window-center
+  ([window width height parent-window]
+    (let [bounds (screen-bounds
+                   (or (window-screen parent-window)
+                       (first (screen-devices))))
+          x (+ (.x bounds) (/ (- (.width bounds) width) 2))
+          y (+ (.y bounds) (/ (- (.height bounds) height) 2))]
+      (doto window
+        (.setBounds x y width height)
+        .show)))
+  ([window width height]
+    (show-window-center window width height nil)))
 
 ;; other user controls
 
