@@ -351,7 +351,7 @@
     (user-controls/make-view-controllable panel screen-state)
     (user-controls/handle-resize panel2 screen-state2)
     (handle-point-and-show screen-state screen-state2)
-    (handle-stage-move-and-show screen-state screen-state2)
+    ;(handle-stage-move-and-show screen-state screen-state2) ; make this optional?
     (handle-display-change-and-show screen-state screen-state2)
     (copy-settings screen-state screen-state2)
     ;(handle-open frame)
