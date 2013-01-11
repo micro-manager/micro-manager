@@ -18,7 +18,8 @@
             [slide-explorer.tile-cache :as tile-cache]
             [slide-explorer.canvas :as canvas]
             [slide-explorer.tiles :as tiles]
-            [slide-explorer.persist :as persist]))
+            [slide-explorer.persist :as persist]
+            [slide-explorer.positions :as positions]))
 
 ;; affine transforms
 
@@ -243,53 +244,6 @@
              :slices nil
              :numFrames 0)))
 
-;; Position List
-
-(defn alter-position [screen-state-atom conj-or-disj position-map]
-  (swap! screen-state-atom update-in [:positions]
-         conj-or-disj position-map))
-
-(defn grid-distances [pos0 pos1]
-  (merge-with #(Math/abs (- %1 %2)) pos0 pos1))
-
-(defn tile-distances [grid-distances w h]
-  (merge-with / grid-distances {:x w :y h}))
-
-(defn in-tile [{:keys [x y] :as tile-distances}]
-  (and (>= 1/2 x) (>= 1/2 y)))
-
-(defn position-clicked [available-positions pos w h]
-  (first
-    (filter #(-> %
-                 (grid-distances pos)
-                 (tile-distances w h)
-                 (in-tile))
-            available-positions)))
-
-(defn toggle-position [screen-state-atom _ _]
-  (let [pos (user-controls/absolute-mouse-position @screen-state-atom)
-        [w h] (:tile-dimensions @screen-state-atom)]
-    (if-let [old-pos (position-clicked (:positions @screen-state-atom) pos w h)]
-      (alter-position screen-state-atom disj old-pos)
-      (alter-position screen-state-atom conj pos))))
-
-(defn get-position-list-coords []
-  (set
-    (map #(-> % bean
-              (select-keys [:x :y]))
-         (mm/get-positions))))
-
-(defn update-positions-atom! []
-  (let [new-value (get-position-list-coords)]
-    (when (not= new-value @positions-atom)
-      (reset! positions-atom new-value))))
-
-(defn follow-positions []
-  (future (loop []
-            (update-positions-atom!)
-            (Thread/sleep 1000)
-            (recur))))
-
 
 ;; flat field determination
 
@@ -391,9 +345,7 @@
           (user-controls/handle-double-click
             panel
             (partial navigate screen-state affine-stage-to-pixel))
-          (user-controls/handle-shift-click
-            panel
-            (fn [x y] (toggle-position screen-state x y)))
+          (positions/handle-positions panel screen-state affine-stage-to-pixel)
           (user-controls/handle-mode-keys panel screen-state)
           (reactive/handle-update
             current-xy-positions 

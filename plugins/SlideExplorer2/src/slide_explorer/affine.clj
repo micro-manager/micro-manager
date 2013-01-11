@@ -3,6 +3,11 @@
     (java.awt Point Shape)
     (java.awt.geom AffineTransform Point2D$Double)))
 
+(defn point-to-vector
+  "Converts a point to a clojure vector [x y]."
+  [point]
+  [(.x point) (.y point)])
+
 (defprotocol AffineTransformable
   (transform [this aff] "Apply affine transform to object.")
   (inverse-transform [this aff] "Apply inverse transform to object."))
@@ -14,14 +19,14 @@
   Point
     (transform [object aff] (transform (Point2D$Double. (.x object) (.y object)) aff))
     (inverse-transform [object aff] (inverse-transform (Point2D$Double. (.x object) (.y object)) aff))
+  clojure.lang.PersistentVector
+    (transform [object aff]
+      (let [[x y] object]
+        (point-to-vector (transform (Point2D$Double. x y) aff))))
+    (inverse-transform [object aff] (transform object (.createInverse aff)))
   Shape
     (transform [object aff] (.createTransformedShape aff object))
     (inverse-transform [object aff] (transform object (.createInverse aff))))
-
-(defn point-to-vector
-  "Converts a point to a clojure vector [x y]."
-  [point]
-  [(.x point) (.y point)])
 
 (defn set-destination-origin
   "Produces an affine transform which is same as the original except that
