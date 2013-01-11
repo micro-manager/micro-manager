@@ -242,10 +242,9 @@
       screen-state-atom
       load-overlay
       agent)
-    (reactive/handle-update
-      acquired-images
-      load-overlay
-      agent)))
+    (tile-cache/add-tile-listener!
+      memory-tile-atom
+      #(reactive/send-off-update agent load-overlay nil))))
   
 ;; MAIN WINDOW AND PANEL
 
@@ -331,11 +330,10 @@
            #(select-keys % [:positions :channels :xy-stage-position :z])))
 
 (defn show [dir acquired-images settings]
-  (let [memory-tiles (tile-cache/create-tile-cache 100 dir)
-        memory-tiles2 (tile-cache/create-tile-cache 100 dir)
+  (let [memory-tiles (tile-cache/create-tile-cache 200 dir)
         frame (main-frame)
         [panel screen-state] (view-panel memory-tiles acquired-images settings)
-        [panel2 screen-state2] (view-panel memory-tiles2 acquired-images settings)
+        [panel2 screen-state2] (view-panel memory-tiles acquired-images settings)
         split-pane (JSplitPane. JSplitPane/HORIZONTAL_SPLIT true panel panel2)]
     (doto split-pane
       (.setBorder nil)
@@ -345,10 +343,9 @@
     (def ss2 screen-state2)
     (def pnl panel)
     (def mt memory-tiles)
-    (def mt2 memory-tiles2)
     (def f frame)
     (def ai acquired-images)
-    (println ss ss2 mt mt2)
+    (println ss ss2 mt)
     (.add (.getContentPane frame) split-pane)
     (user-controls/setup-fullscreen frame)
     (user-controls/make-view-controllable panel screen-state)
@@ -356,7 +353,7 @@
     (handle-point-and-show screen-state screen-state2)
     (handle-stage-move-and-show screen-state screen-state2)
     (handle-display-change-and-show screen-state screen-state2)
-    (copy-settings screen-state screen-state2) ; should apply repeatedly
+    (copy-settings screen-state screen-state2)
     ;(handle-open frame)
     (.show frame)
     [screen-state memory-tiles panel]))

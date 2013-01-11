@@ -30,6 +30,11 @@
 
 (def current-z-positions (atom {}))
 
+; prevents sudden navigate request from
+; causing images to be acquired in the 
+; wrong place.
+(def anti-blur (Object.)) 
+
 (defn match-set
   "Retains only those items in set where applying key-fn returns val."
   [key-fn val set]
@@ -91,7 +96,6 @@
     (set-xy-position (.x position) (.y position)))
   ([x y]
     (let [stage (mm/core getXYStageDevice)]
-      (mm/core waitForDevice stage)
       (mm/core setXYPosition stage x y)
       (mm/core waitForDevice stage)
       (swap! current-xy-positions assoc stage [x y]))))
@@ -100,10 +104,9 @@
   [z]
   (let [stage (mm/core getFocusDevice)]
     (when (not= z (@current-z-positions stage))
-      (mm/core waitForDevice stage)
       (mm/core setPosition stage z)
-      (mm/core waitForDevice stage)
-      (swap! current-z-positions assoc stage z))))
+      (mm/core waitForDevice stage))
+    (swap! current-z-positions assoc stage z)))
 
 ;; image acquisition
 
@@ -130,9 +133,10 @@
   ([x y z settings]
     (acquire-at (Point2D$Double. x y) z settings))
   ([^Point2D$Double stage-pos z-pos settings]
-      (set-xy-position stage-pos)
-      (set-z-position z-pos)
-      (acquire-processor-sequence settings)))
+    (locking anti-blur
+             (set-xy-position stage-pos)
+             (set-z-position z-pos)
+             (acquire-processor-sequence settings))))
 
 ;; run using acquisitions
 
@@ -208,7 +212,6 @@
 
 (defn explore [memory-tiles-atom screen-state-atom acquired-images
                affine]
-  ;(println "explore" (and (= :explore (:mode @screen-state-atom))))
   (reactive/submit explore-executor
                    #(when (and (= :explore (:mode @screen-state-atom))
                                (acquire-next-tile memory-tiles-atom
@@ -222,10 +225,11 @@
   (when (#{:navigate :explore} (:mode @screen-state-atom))
     (swap! screen-state-atom assoc :mode :navigate)
     (let [{:keys [x y]} (user-controls/absolute-mouse-position @screen-state-atom)
-               [w h] (:tile-dimensions @screen-state-atom)]
-      (set-xy-position (affine/inverse-transform
-                         (Point2D$Double. x y)
-                         affine-transform)))))
+          [w h] (:tile-dimensions @screen-state-atom)]
+      (locking anti-blur
+               (set-xy-position (affine/inverse-transform
+                                  (Point2D$Double. x y)
+                                  affine-transform))))))
   
 (defn create-acquisition-settings
   []
@@ -368,7 +372,6 @@
     (let [settings (if-not new? (load-settings dir) {:tile-dimensions [512 512]})
           acquired-images (atom #{})
           [screen-state memory-tiles panel] (view/show dir acquired-images settings)]
-      (println settings)
       (when new?
         (mm/core waitForDevice (mm/core getXYStageDevice))
         (let [acq-settings (create-acquisition-settings)
@@ -385,7 +388,6 @@
           (def mt memory-tiles)
           (def pnl panel)
           (def affine affine-stage-to-pixel)
-          (println "about to get channel luts")
           (user-controls/handle-double-click
             panel
             (partial navigate screen-state affine-stage-to-pixel))
@@ -415,7 +417,6 @@
                                                                 (explore-fn))))
           (explore-fn)))
       (save-settings dir @screen-state)
-      (println dir)
       (def ss screen-state)
       (def ai acquired-images)))
   ([]
