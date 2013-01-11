@@ -341,6 +341,21 @@
       (when (pos? (. p-list getNumberOfPositions))
         (.getPosition p-list idx)))))
 
+(defn add-msp
+  [label x y z]
+  (let [p-list (.getPositionList gui)]
+    (.addPosition p-list
+                  (doto
+                    (MultiStagePosition.
+                      (core getXYStageDevice) x y
+                      (core getFocusDevice) z)
+                    (.setLabel label)))))
+
+(defn remove-msp
+  [idx]
+  (let [p-list (.getPositionList gui)]
+    (.removePosition p-list idx)))
+
 (defn get-msp-z-position
   "Get the z position for a given z-stage from the MultiStagePosition
    with the given index in the Position List."
@@ -355,7 +370,7 @@
   [idx z-stage z]
   (when-let [msp (get-msp idx)]
     (when-let [stage-pos (. msp (get z-stage))]
-      (set! (. stage-pos x) z))))
+      (set! (. stage-pos x) z))))  
 
 (defn str-vector
   "Convert a sequence of strings into a Micro-Manager StrVector."
