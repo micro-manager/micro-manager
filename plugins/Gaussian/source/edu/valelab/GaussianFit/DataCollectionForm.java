@@ -1290,6 +1290,8 @@ public class DataCollectionForm extends javax.swing.JFrame {
          String[] headers = head.split("\t");        
          String spot;
          List<GaussianSpotData> spotList = new ArrayList<GaussianSpotData>();
+         double maxZ = Double.NEGATIVE_INFINITY;
+         double minZ = Double.POSITIVE_INFINITY;
          
          while ( (spot = fr.readLine()) != null) {
             String[] spotTags = spot.split("\t");
@@ -1317,7 +1319,12 @@ public class DataCollectionForm extends javax.swing.JFrame {
                     Double.parseDouble(k.get("x_precision"))
                     );
             if (hasZ) {
-               gsd.setZCenter(Double.parseDouble(k.get("z")));
+               double zc = Double.parseDouble(k.get("z"));
+               gsd.setZCenter(zc); 
+               if (zc > maxZ)
+                  maxZ = zc;
+               if (zc < minZ)
+                  minZ = zc;
             }
             spotList.add(gsd);
                         
@@ -1344,8 +1351,8 @@ public class DataCollectionForm extends javax.swing.JFrame {
                     Boolean.parseBoolean(infoMap.get("is_track")), 
                     Coordinates.NM, 
                     hasZ, 
-                    0.0, 
-                    0.0
+                    minZ, 
+                    maxZ
                  );
 
       } catch (NumberFormatException ex) {
@@ -1417,6 +1424,8 @@ public class DataCollectionForm extends javax.swing.JFrame {
          long esf = expectedSpots / 100;
          long maxNrSpots = 0;
          boolean hasZ = false;
+         double maxZ = Double.NEGATIVE_INFINITY;
+         double minZ = Double.POSITIVE_INFINITY;
 
 
          ArrayList<GaussianSpotData> spotList = new ArrayList<GaussianSpotData>();
@@ -1432,8 +1441,13 @@ public class DataCollectionForm extends javax.swing.JFrame {
                     pSpot.getY(), 0.0, pSpot.getWidth(), pSpot.getA(), pSpot.getTheta(),
                     pSpot.getXPrecision());
             if (pSpot.hasZ()) {
-               gSpot.setZCenter(pSpot.getZ());
+               double zc = pSpot.getZ();
+               gSpot.setZCenter(zc);
                hasZ = true;
+               if (zc > maxZ)
+                  maxZ = zc;
+               if (zc < minZ)
+                  minZ = zc;
             }
             maxNrSpots++;
             if ((esf > 0) && ((maxNrSpots % esf) == 0)) {
@@ -1445,7 +1459,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
 
          addSpotData(name, title, "", width, height, pixelSizeUm, (float) 0.0, shape, halfSize,
                  nrChannels, nrFrames, nrSlices, nrPositions, (int) maxNrSpots,
-                 spotList, null, isTrack, Coordinates.NM, hasZ, 0.0, 0.0);
+                 spotList, null, isTrack, Coordinates.NM, hasZ, minZ, maxZ);
 
       } catch (FileNotFoundException ex) {
          JOptionPane.showMessageDialog(getInstance(),"File not found");
@@ -2354,19 +2368,23 @@ public class DataCollectionForm extends javax.swing.JFrame {
                      ImageStack is = ImageRenderer.renderData3D(rowData,
                              visualizationModel_.getSelectedIndex(), mag, null, sf);
                      sp = new ImagePlus(title, is);
+                     DisplayUtils.AutoStretch(sp);
+                     DisplayUtils.SetCalibration(sp, (float) (rowData.pixelSizeNm_ / mag));                     
+                     sp.show();
 
                   } else {
                      ImageProcessor ip = ImageRenderer.renderData(rowData,
                              visualizationModel_.getSelectedIndex(), mag, null, sf);
                      sp = new ImagePlus(title, ip);
-                  }
-                  GaussCanvas gs = new GaussCanvas(sp, rowData_.get(row),
-                          visualizationModel_.getSelectedIndex(), mag, sf);
-                  DisplayUtils.AutoStretch(sp);
-                  DisplayUtils.SetCalibration(sp, (float) (rowData.pixelSizeNm_ / mag));
-                  ImageWindow w = new ImageWindow(sp, gs);
 
-                  w.setVisible(true);
+                     GaussCanvas gs = new GaussCanvas(sp, rowData_.get(row),
+                             visualizationModel_.getSelectedIndex(), mag, sf);
+                     DisplayUtils.AutoStretch(sp);
+                     DisplayUtils.SetCalibration(sp, (float) (rowData.pixelSizeNm_ / mag));
+                     ImageWindow w = new ImageWindow(sp, gs);
+
+                     w.setVisible(true);
+                  }
                } catch (OutOfMemoryError ome) {
                   ReportingUtils.showError("Out of Memory");
                }
