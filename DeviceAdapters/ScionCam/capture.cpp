@@ -360,6 +360,19 @@ else
 }
 
 
+void CScionCamera::OnThreadExiting() throw()
+{
+   try 
+   {
+      LogMessage(g_Msg_SEQUENCE_ACQUISITION_THREAD_EXITING);
+      GetCoreCallback()->AcqFinished(this, 0);
+   }
+   catch (...) 
+   {
+      LogMessage(g_Msg_EXCEPTION_IN_ON_THREAD_EXITING, false);
+   }
+}
+
 //----------------------------------------------------------------------------
 //
 //	svc() - thread routine to perform sequence capture
@@ -378,6 +391,7 @@ while (!stop_ && count < numImages_)
 	if (ret != DEVICE_OK)
 		{
 		camera_->StopSequenceAcquisition();
+      camera_->OnThreadExiting();
 		return(1);
 		}
 
@@ -386,6 +400,7 @@ while (!stop_ && count < numImages_)
 	if (ret != DEVICE_OK)
 		{
 		camera_->StopSequenceAcquisition();
+      camera_->OnThreadExiting();
 		return(1);
 		}
 
@@ -395,6 +410,7 @@ while (!stop_ && count < numImages_)
 
 // sequence complete
 
+camera_->OnThreadExiting();
 camera_->sequenceRunning_ = false;
 
 return(0);

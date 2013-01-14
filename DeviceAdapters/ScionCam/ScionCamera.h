@@ -231,8 +231,9 @@ private:
 	SequenceThread	*ctp;
 	bool			sequenceRunning_;
 	bool			stopOnOverflow_;
-	int				InsertImage();
+	int         InsertImage();
 	bool			IsCapturing();
+   void        OnThreadExiting() throw();
 
 	bool			snap_in_progress;
 	bool			reload_config;
