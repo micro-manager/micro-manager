@@ -24,7 +24,7 @@
 //                CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, 
 //
 // AUTHOR:        Arthur Edelstein, 2013
-//                Special thanks to Michael Mohammadi
+//                Thanks to Sophie Dumont, Mary Elting, and Michael Mohammadi
 
 #ifdef WIN32
 #define snprintf _snprintf 

@@ -123,17 +123,25 @@ public class ProjectorController {
 //imgp.updateImage();
 //imgp.getCanvas().repaint();
    public Point measureSpot(Point dmdPt) {
-      gui.snapSingleImage();
-      ImageProcessor proc1 = IJ.getImage().getProcessor().duplicate();
+       try {
+      mmc.snapImage();
+      ImageProcessor proc1 = ImageUtils.makeProcessor(mmc.getTaggedImage());
+      //ij.ImagePlus imgp1 = (new ij.ImagePlus("", proc1));
+      //imgp1.show();  
       dev.displaySpot(dmdPt.x, dmdPt.y, 50);
-      dev.waitForDevice();
       mmc.sleep(200); 
-      gui.snapSingleImage();
+      mmc.snapImage();
+      ImageProcessor proc2 = ImageUtils.makeProcessor(mmc.getTaggedImage());
+      //ij.ImagePlus imgp2 = (new ij.ImagePlus("", proc2));
+      //imgp2.show();
       mmc.sleep(200);
-      ImageProcessor proc2 = IJ.getImage().getProcessor().duplicate();
       Point maxPt = findPeak(ImageUtils.subtractImageProcessors(proc2, proc1));
       IJ.getImage().setRoi(new PointRoi(maxPt.x, maxPt.y));
       return maxPt;
+       } catch (Exception e) {
+           ReportingUtils.showError(e);
+           return null;
+       }
    }
 
    private Point findPeak(ImageProcessor proc) {
@@ -141,6 +149,8 @@ public class ProjectorController {
       blurImage.setRoi((Roi) null);
       GaussianBlur blur = new GaussianBlur();
       blur.blurGaussian(blurImage, 20, 20, 0.01);
+      ij.ImagePlus imgp = (new ij.ImagePlus("", blurImage));
+      imgp.show();
       return ImageUtils.findMaxPixel(blurImage);
    }
    

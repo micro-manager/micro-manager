@@ -432,7 +432,9 @@ public class ImageUtils {
 
    public static ImageProcessor subtractImageProcessors(ImageProcessor proc1, ImageProcessor proc2) {
        ImageCalculator calc = new ImageCalculator();
-       ImagePlus image = calc.run("subtract create 32-bit", new ImagePlus("", proc1), new ImagePlus("", proc2));
+       ImagePlus imgp1 = new ImagePlus(null, proc1);
+       ImagePlus imgp2 = new ImagePlus(null, proc2);
+       ImagePlus image = calc.run("subtract create 32-bit", imgp1, imgp2);
        return image.getProcessor();
    }
    
