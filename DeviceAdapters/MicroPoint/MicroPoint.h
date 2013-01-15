@@ -66,12 +66,24 @@ public:
 
    // Property action handlers
    int OnPort(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnAttenuator(MM::PropertyBase* pProp, MM::ActionType eAct);
 
 private:
    bool initialized_;
    std::string port_;
    double x_;
    double y_;
+   long attenuatorPosition_;
+   std::string attenuatorText_;
+
+   int WriteBytes(unsigned char* buf, int numBytes);
+
+   double AttenuatorTransmissionFromIndex(long n);
+   int StepAttenuatorPosition(bool positive);
+   int MoveAttenuator(long steps);
+   int CreateAttenuatorProperty();
+   bool IsAttenuatorHome();
+   long FindAttenuatorPosition();
 };
 
 #endif //_MicroPoint_H_

@@ -86,9 +86,9 @@ MM::DeviceDetectionStatus MicroPointDetect(MM::Device& /*device*/, MM::Core& /*c
 
 ///////////////////////////////////////////////////////////////////////////////
 // MicroPoint
-//
+///////////////////////////////////////////////////////////////////////////////
 MicroPoint::MicroPoint() :
-   initialized_(false), x_(0), y_(0)
+   initialized_(false), x_(0), y_(0), attenuatorPosition_(0)
    {
    InitializeDefaultErrorMessages();
 
@@ -123,8 +123,16 @@ MM::DeviceDetectionStatus MicroPoint::DetectDevice(void)
    return MM::Misconfigured;
 }
 
+int MicroPoint::WriteBytes(unsigned char* buf, int numBytes)
+{
+   int ret = WriteToComPort(port_.c_str(), buf, numBytes);
+   CDeviceUtils::SleepMs(50);
+   return ret;
+}
+
 int MicroPoint::Initialize()
 {
+   CreateAttenuatorProperty();
    initialized_ = true;
    return DEVICE_OK;
 }
@@ -139,6 +147,96 @@ bool MicroPoint::Busy()
    return false;
 }
 
+////////////////////////////////
+// Attenuator private functions
+////////////////////////////////
+
+double MicroPoint::AttenuatorTransmissionFromIndex(long n)
+{
+   // Indices go from 0 to 89.
+   // Transmission values of the attenuator go from 0.1% to 100%, on a log scale.
+   return (double) 0.1 * pow((double) (100. / 0.1), (double) n / (double) 89);
+}
+
+int MicroPoint::StepAttenuatorPosition(bool positive)
+{
+   unsigned char buf[] = {'C', (positive ? 0xc0 : 0x80), 'C', 0x00};
+   WriteBytes(buf, 4);
+   return DEVICE_OK;
+}
+
+int MicroPoint::MoveAttenuator(long steps)
+{
+   if (steps != 0)
+   {
+      unsigned char buf[] = {'A', 0, 'B', 0};
+      WriteToComPort(port_.c_str(), buf, 4);
+   
+      for (long i=0; i<labs(steps); ++i)
+      {
+         StepAttenuatorPosition(steps > 0);
+      }
+   }
+   return DEVICE_OK;
+}
+
+bool MicroPoint::IsAttenuatorHome()
+{
+   unsigned char buf[] = {'c'};
+   WriteBytes(buf, 1);
+   unsigned char response[1];
+   unsigned long read;
+   ReadFromComPort(port_.c_str(), response, 1, read);
+   return (response[0] == 0x14);    // When true, step succeeded. 
+}
+
+long MicroPoint::FindAttenuatorPosition()
+{
+   long startingIndex = 0;
+
+   // Go backwards until we hit the 0 position.
+   while(!IsAttenuatorHome())
+   {
+      StepAttenuatorPosition(false);
+      ++startingIndex;
+   }
+
+   // Make sure we are ready to step out of home.
+   if (startingIndex == 0)
+   {
+      // Take one step out of home.
+      while(IsAttenuatorHome())
+      {
+         StepAttenuatorPosition(true);
+      }
+      // Step back home.
+      StepAttenuatorPosition(false);
+   }
+
+   // Now move back to original position.
+   MoveAttenuator(startingIndex);
+   return startingIndex;
+}
+
+int MicroPoint::CreateAttenuatorProperty()
+{
+   attenuatorPosition_ = FindAttenuatorPosition();
+
+   CPropertyAction* pAct = new CPropertyAction (this, &MicroPoint::OnAttenuator);
+   CreateProperty("AttenuatorTransmittance", "0.01", MM::String, false, pAct);
+   for (long i=0;i<90;++i)
+   {
+      char text[32];
+      snprintf(text, 32, "%.2f%%", AttenuatorTransmissionFromIndex(i));
+      AddAllowedValue("AttenuatorTransmittance", text, i);
+      if (i==attenuatorPosition_)
+      {
+         attenuatorText_.assign(text);
+      }
+   }
+
+   return DEVICE_OK;
+}
 
 /////////////////////////////
 // Galvo API
@@ -161,9 +259,8 @@ int MicroPoint::SetIlluminationState(bool on)
    {
       unsigned char buf[] = { 'C', 0x02,
                               'C', 0x00     };
-      this->WriteToComPort(port_.c_str(), buf, 4);
+      WriteBytes(buf, 4);
    }
-   CDeviceUtils::SleepMs(50);
    return DEVICE_OK;
 }
 
@@ -178,8 +275,7 @@ int MicroPoint::SetPosition(double x, double y)
                            'A', 0x00,
                            'B', 0x00      };
 
-   this->WriteToComPort(port_.c_str(), buf, 10);
-   CDeviceUtils::SleepMs(50);
+   WriteBytes(buf, 10);
    return DEVICE_OK;
 }
 
@@ -263,5 +359,22 @@ int MicroPoint::OnPort(MM::PropertyBase* pProp, MM::ActionType eAct)
       pProp->Get(port_);
    }
 
+   return DEVICE_OK;
+}
+
+int MicroPoint::OnAttenuator(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   if (eAct == MM::BeforeGet)
+   {
+      pProp->Set(attenuatorText_.c_str());
+   }
+   else if (eAct == MM::AfterSet)
+   {
+      long desiredPosition;
+      pProp->Get(attenuatorText_);
+      ((MM::Property*) pProp)->GetData(attenuatorText_.c_str(), desiredPosition);
+      MoveAttenuator(desiredPosition - attenuatorPosition_);
+      attenuatorPosition_ = desiredPosition;
+   }
    return DEVICE_OK;
 }
