@@ -27,6 +27,7 @@ import java.util.logging.Logger;
 
 import org.micromanager.api.MMWindow;
 import org.micromanager.utils.MMScriptException;
+import org.micromanager.utils.ReportingUtils;
 
 /**
  *
@@ -57,7 +58,9 @@ public class FitAllThread extends GaussianInfo implements Runnable  {
    public synchronized void stop() {
       if (gfsThreads_ != null) {
          for (int i=0; i<gfsThreads_.length; i++) {
-            gfsThreads_[i].stop();
+            if (gfsThreads_[i] != null) {
+               gfsThreads_[i].stop();
+            }
          }
       }
       t_ = null;
@@ -122,6 +125,11 @@ public class FitAllThread extends GaussianInfo implements Runnable  {
       long endTime = System.nanoTime();
 
       // Add data to data overview window
+      if (resultList_.size() < 1) {
+         ReportingUtils.showError("No spots found");
+         running_ = false;
+         return;
+      }
       DataCollectionForm dcForm = DataCollectionForm.getInstance();
       
       double zMax = resultList_.get(0).getZCenter();
