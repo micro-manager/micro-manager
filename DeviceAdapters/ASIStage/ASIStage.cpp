@@ -1531,8 +1531,9 @@ ZStage::ZStage() :
    // Axis
    pAct = new CPropertyAction (this, &ZStage::OnAxis);
    CreateProperty("Axis", "Z", MM::String, false, pAct, true);
-   AddAllowedValue("Axis", "Z");
    AddAllowedValue("Axis", "F");
+   AddAllowedValue("Axis", "P");
+   AddAllowedValue("Axis", "Z");
 }
 
 ZStage::~ZStage()
