@@ -385,31 +385,31 @@ long count(0);
 
 // capture requested number of images
 while (!stop_ && count < numImages_)
-	{
+{
 	// get next image
 	int ret = camera_->SnapImage();
 	if (ret != DEVICE_OK)
-		{
-		camera_->StopSequenceAcquisition();
+   {
+      camera_->sequenceRunning_ = false;
       camera_->OnThreadExiting();
 		return(1);
-		}
+   }
 
 	// got image - insert image in micro manager buffer pool
 	ret = camera_->InsertImage();
 	if (ret != DEVICE_OK)
-		{
-		camera_->StopSequenceAcquisition();
+   {
+      camera_->sequenceRunning_ = false;
       camera_->OnThreadExiting();
 		return(1);
-		}
+   }
 
 	camera_->image_counter_++;
 	count++;
-	}
+}
 
 // sequence complete
-
+camera_->LogMessage("Exciting svc function");
 camera_->OnThreadExiting();
 camera_->sequenceRunning_ = false;
 
