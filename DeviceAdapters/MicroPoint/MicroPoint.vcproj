@@ -3,7 +3,7 @@
 	ProjectType="Visual C++"
 	Version="9.00"
 	Name="MicroPoint"
-	ProjectGUID="{C613608D-C4D0-4FC2-AA44-9D0098AAFDD8}"
+	ProjectGUID="{36651F00-C01D-461B-A8BA-BE4826D7130E}"
 	RootNamespace="ASIStage"
 	Keyword="Win32Proj"
 	TargetFrameworkVersion="131072"
