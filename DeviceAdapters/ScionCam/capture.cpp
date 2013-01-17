@@ -385,8 +385,9 @@ int CScionCamera::SequenceThread::svc()
 long count(0);
 
 // capture requested number of images
-while (!stop_ && count < numImages_)
+while (!IsStopped() && count < numImages_)
 {
+   camera_->LogMessage("Collecting image in svc function", true);
 	// get next image
 	int ret = camera_->SnapImage();
 	if (ret != DEVICE_OK)
@@ -433,6 +434,8 @@ int CScionCamera::StartSequenceAcquisition(long numImages,
 sLogMessage("start seqquence acquisition\r\n");
 #endif
 
+LogMessage("Starting sequence acquisition");
+
 if (Busy() || sequenceRunning_)
 	{return DEVICE_CAMERA_BUSY_ACQUIRING;}
 
@@ -454,6 +457,8 @@ ctp->SetLength(numImages);
 ctp->Start();
 
 sequenceRunning_ = true;
+
+LogMessage("Sequence acquisition started");
 
 return DEVICE_OK;
 }
@@ -485,9 +490,12 @@ int CScionCamera::StopSequenceAcquisition()
 sLogMessage("stop sequence acquisition\r\n");
 #endif
 
+LogMessage("Requesting sequence acquisition to stop", true);
+
 ctp->Stop();
 ctp->wait();
 sequenceRunning_ = false;
+
 return DEVICE_OK;
 }
 

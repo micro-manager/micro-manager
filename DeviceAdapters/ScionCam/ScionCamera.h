@@ -211,7 +211,17 @@ private:
 		int svc(void);			// capture process
 		
 		// asnyc stop
-		void Stop() {stop_ = true;}
+		void Stop() 
+      {
+         MMThreadGuard(this->stopLock_);
+         stop_ = true;
+      }
+     
+       bool IsStopped()
+       {
+          MMThreadGuard(this->stopLock_);
+          return stop_;
+       }    
 
 		// sequence start
 		void Start()
@@ -223,8 +233,9 @@ private:
 		void SetLength(long images) {numImages_ = images;}
 
 		private:
+         MMThreadLock stopLock_;
 			CScionCamera*	camera_;
-			bool			stop_;
+         bool			stop_;
 			long			numImages_;
 		};
 
