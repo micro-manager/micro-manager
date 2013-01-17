@@ -27,6 +27,7 @@ import java.util.Map;
 import java.util.prefs.Preferences;
 import javax.swing.JOptionPane;
 import mmcorej.CMMCore;
+import mmcorej.TaggedImage;
 import org.micromanager.api.AcquisitionEngine;
 import org.micromanager.api.ScriptInterface;
 import org.micromanager.utils.ImageUtils;
@@ -117,41 +118,38 @@ public class ProjectorController {
       }
    }
       
-   
-      
-// then use:
-//imgp.updateImage();
-//imgp.getCanvas().repaint();
    public Point measureSpot(Point dmdPt) {
-       try {
-      mmc.snapImage();
-      ImageProcessor proc1 = ImageUtils.makeProcessor(mmc.getTaggedImage());
-      //ij.ImagePlus imgp1 = (new ij.ImagePlus("", proc1));
-      //imgp1.show();  
-      dev.displaySpot(dmdPt.x, dmdPt.y, 50);
-      mmc.sleep(200); 
-      mmc.snapImage();
-      ImageProcessor proc2 = ImageUtils.makeProcessor(mmc.getTaggedImage());
-      //ij.ImagePlus imgp2 = (new ij.ImagePlus("", proc2));
-      //imgp2.show();
-      mmc.sleep(200);
-      Point maxPt = findPeak(ImageUtils.subtractImageProcessors(proc2, proc1));
-      IJ.getImage().setRoi(new PointRoi(maxPt.x, maxPt.y));
-      return maxPt;
-       } catch (Exception e) {
-           ReportingUtils.showError(e);
-           return null;
-       }
+      try {
+         mmc.snapImage();
+         ImageProcessor proc1 = ImageUtils.makeProcessor(mmc.getTaggedImage());
+
+         dev.displaySpot(dmdPt.x, dmdPt.y, 500000);
+         Thread.sleep(300);
+
+         mmc.snapImage();
+         TaggedImage taggedImage2 = mmc.getTaggedImage();
+         ImageProcessor proc2 = ImageUtils.makeProcessor(taggedImage2);
+         gui.displayImage(taggedImage2);
+
+         Point maxPt = findPeak(ImageUtils.subtractImageProcessors(proc2, proc1));
+         IJ.getImage().setRoi(new PointRoi(maxPt.x, maxPt.y));
+         mmc.sleep(500);
+         return maxPt;
+      } catch (Exception e) {
+         ReportingUtils.showError(e);
+         return null;
+      }
    }
 
    private Point findPeak(ImageProcessor proc) {
       ImageProcessor blurImage = ((ImageProcessor) proc.duplicate());
       blurImage.setRoi((Roi) null);
       GaussianBlur blur = new GaussianBlur();
-      blur.blurGaussian(blurImage, 20, 20, 0.01);
-      ij.ImagePlus imgp = (new ij.ImagePlus("", blurImage));
-      imgp.show();
-      return ImageUtils.findMaxPixel(blurImage);
+      blur.blurGaussian(blurImage, 10, 10, 0.01);
+      //gui.displayImage(blurImage.getPixels());
+      Point x = ImageUtils.findMaxPixel(blurImage);
+      x.translate(1, 1);
+      return x;
    }
    
    public void mapSpot(Map spotMap, Point ptSLM) {

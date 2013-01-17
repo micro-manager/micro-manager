@@ -122,6 +122,47 @@ public class ImageUtils {
       }
    }
 
+   public static ImageProcessor subtractImageProcessors(ImageProcessor proc1, ImageProcessor proc2) {
+      if (proc1.getBitDepth() == 8) {
+         return subtractByteProcessors((ByteProcessor) proc1, (ByteProcessor) proc2);
+      } else if (proc1.getBitDepth() == 16) {
+         return subtractShortProcessors((ShortProcessor) proc1, (ShortProcessor) proc2);
+      } else {
+         return null;
+      }
+   }
+   
+   private static ByteProcessor subtractByteProcessors(ByteProcessor proc1, ByteProcessor proc2) {
+      return new ByteProcessor(proc1.getWidth(), proc1.getHeight(),
+              subtractPixelArrays((byte []) proc1.getPixels(), (byte []) proc2.getPixels()),
+              null);
+   }
+   
+   private static ShortProcessor subtractShortProcessors(ShortProcessor proc1, ShortProcessor proc2) {
+      return new ShortProcessor(proc1.getWidth(), proc1.getHeight(),
+              subtractPixelArrays((short []) proc1.getPixels(), (short []) proc2.getPixels()),
+              null);
+   }
+   
+   public static byte[] subtractPixelArrays(byte[] array1, byte[] array2) {
+      int l = array1.length;
+      byte[] result = new byte[l];
+      for (int i=0;i<l;++i) {
+         result[i] = (byte) Math.max(0,array1[i] - array2[i]);
+      }
+      return result;
+   }
+   
+   public static short[] subtractPixelArrays(short[] array1, short[] array2) {
+      int l = array1.length;
+      short[] result = new short[l];
+      for (int i=0;i<l;++i) {
+         result[i] = (short) Math.max(0,array1[i] - array2[i]);
+      }
+      return result;
+   }
+   
+   
    /*
     * Finds the position of the maximum pixel value.
     */
@@ -142,6 +183,7 @@ public class ImageUtils {
       return new Point(x, y);
    }
 
+   
    public static Point findMaxPixel(ImageProcessor proc) {
       int width = proc.getWidth();
       int imax = findArrayMax(proc.getPixels());
@@ -428,14 +470,6 @@ public class ImageUtils {
          return min;
       }
       return -1;
-   }
-
-   public static ImageProcessor subtractImageProcessors(ImageProcessor proc1, ImageProcessor proc2) {
-       ImageCalculator calc = new ImageCalculator();
-       ImagePlus imgp1 = new ImagePlus(null, proc1);
-       ImagePlus imgp2 = new ImagePlus(null, proc2);
-       ImagePlus image = calc.run("subtract create 32-bit", imgp1, imgp2);
-       return image.getProcessor();
    }
    
    public static int[] getMinMax(final Object pixels) {
