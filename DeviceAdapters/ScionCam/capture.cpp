@@ -366,6 +366,7 @@ void CScionCamera::OnThreadExiting() throw()
    {
       LogMessage(g_Msg_SEQUENCE_ACQUISITION_THREAD_EXITING);
       GetCoreCallback()->AcqFinished(this, 0);
+      LogMessage ("Finished calling AcqFinished in the Core");
    }
    catch (...) 
    {
