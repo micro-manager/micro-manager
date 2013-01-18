@@ -86,5 +86,8 @@ pushd plugins\BFCorrector
 call build.bat
 popd
 
+pushd plugins\IntelligentAcquisition
+call build.bat
+popd
 
 POPD
