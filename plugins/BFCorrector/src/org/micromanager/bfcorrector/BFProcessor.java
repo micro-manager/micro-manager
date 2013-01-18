@@ -10,12 +10,14 @@
 package org.micromanager.bfcorrector;
 
 import ij.ImagePlus;
+import ij.process.ImageProcessor;
 import ij.process.ImageStatistics;
 import mmcorej.TaggedImage;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.micromanager.acquisition.TaggedImageQueue;
 import org.micromanager.api.DataProcessor;
+import org.micromanager.utils.ImageUtils;
 import org.micromanager.utils.MDUtils;
 import org.micromanager.utils.MMScriptException;
 import org.micromanager.utils.ReportingUtils;
@@ -127,43 +129,10 @@ class BFProcessor extends DataProcessor<TaggedImage> {
       
       // subtract background
       if (background_ != null) {
-         if (ijType == background_.getType()) {
-            if (width == background_.getWidth() && height == background_.getHeight()) {
-               if (ijType == ImagePlus.GRAY8) {
-                  byte[] newPixels = new byte[width * height];
-                  byte[] oldPixels = (byte[]) nextImage.pix;
-                  byte[] backgroundPixels = (byte[]) background_.getProcessor().getPixels();
-                  for (int x = 0; x < width; x++) {
-                     for (int y = 0; y < height; y++) {
-                        int index = (y * flatFieldWidth_) + x;
-                        if (backgroundPixels[index] > oldPixels[index]) {
-                           newPixels[index] = 0;
-                        } else {
-                           newPixels[index] = (byte) (oldPixels[index] - backgroundPixels[index]);
-                     
-                        }
-                     }
-                  }
-                  nextImage = new TaggedImage(newPixels, newTags);
-               } else if (ijType == ImagePlus.GRAY16) {
-                  short[] newPixels = new short[width * height];
-                  short[] oldPixels = (short[]) nextImage.pix;
-                  short[] backgroundPixels = (short[]) background_.getProcessor().getPixels();
-                  for (int x = 0; x < width; x++) {
-                     for (int y = 0; y < height; y++) {
-                        int index = (y * flatFieldWidth_) + x;
-                        if (backgroundPixels[index] > oldPixels[index]) {
-                           newPixels[index] = 0;
-                        } else {
-                           newPixels[index] = (short) 
-                                   (oldPixels[index] - backgroundPixels[index]);                   
-                        }
-                     }
-                  }
-                  nextImage = new TaggedImage(newPixels, newTags);
-               }
-            }
-         }
+         ImageProcessor differenceProcessor =
+                 ImageUtils.subtractImageProcessors(ImageUtils.makeProcessor(nextImage),
+                 background_.getProcessor());        
+         nextImage = new TaggedImage(differenceProcessor.getPixels(), newTags);
       }
       
       
