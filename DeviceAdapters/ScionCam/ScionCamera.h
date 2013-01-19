@@ -80,7 +80,6 @@
 
 #ifdef PRODUCTION_VERSION
 #undef LOG_ENABLED
-#undef ENABLE_SEQUENCE_ACQ
 //#define	LOG_ENABLED			// define LOG_ENABLED to enable log messages
 //#define	ENABLE_SEQUENCE_ACQ		// define ENABLE_SEQUENCE_ACQ to enable threaded acquistion
 #endif
@@ -158,10 +157,8 @@ public:
    int SetROI(unsigned x, unsigned y, unsigned xSize, unsigned ySize); 
    int GetROI(unsigned& x, unsigned& y, unsigned& xSize, unsigned& ySize); 
    int ClearROI();
-#ifdef	ENABLE_SEQUENCE_ACQ
    int StartSequenceAcquisition(long numImages, double interval_ms, bool stopOnOverflow);
    int StopSequenceAcquisition();
-#endif
 
    // action interface
    // ----------------
@@ -254,9 +251,7 @@ private:
 	unsigned long	sequenceLength_;
 	double			interval_ms_;
 
-#ifdef	ENABLE_SEQUENCE_ACQ
 	int				RestartSequenceAcquisition();
-#endif
 	int				SetCameraPropertyList();
 	int				ResizeImageBuffer();
 	

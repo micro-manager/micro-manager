@@ -366,7 +366,6 @@ void CScionCamera::OnThreadExiting() throw()
    {
       LogMessage(g_Msg_SEQUENCE_ACQUISITION_THREAD_EXITING);
       GetCoreCallback()->AcqFinished(this, 0);
-      LogMessage ("Finished calling AcqFinished in the Core");
    }
    catch (...) 
    {
@@ -387,7 +386,6 @@ long count(0);
 // capture requested number of images
 while (!IsStopped() && count < numImages_)
 {
-   camera_->LogMessage("Collecting image in svc function", true);
 	// get next image
 	int ret = camera_->SnapImage();
 	if (ret != DEVICE_OK)
@@ -411,7 +409,6 @@ while (!IsStopped() && count < numImages_)
 }
 
 // sequence complete
-camera_->LogMessage("Exciting svc function");
 camera_->OnThreadExiting();
 camera_->sequenceRunning_ = false;
 
@@ -419,7 +416,6 @@ return(0);
 }
 
 
-#ifdef	ENABLE_SEQUENCE_ACQ
 //----------------------------------------------------------------------------
 //
 //	StartSequenceAcquisition() - initiate sequence capture method
@@ -499,5 +495,4 @@ sequenceRunning_ = false;
 return DEVICE_OK;
 }
 
-#endif
 
