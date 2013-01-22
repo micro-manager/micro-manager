@@ -542,19 +542,16 @@ int CDemoCamera::SnapImage()
    {
       exp = GetSequenceExposure();
    }
-   double expUs = exp * 1000.0;
+
    GenerateSyntheticImage(img_, exp);
 
    MM::MMTime s0(0,0);
-   MM::MMTime t2 = GetCurrentMMTime();
    if( s0 < startTime )
    {
-      // ensure wait time is non-negative
-      long naptime = (long)(0.5 + expUs - (double)(t2-startTime).getUsec());
-      if( naptime < 1)
-         naptime = 1;
-      // longest possible nap is about 38 minutes
-      CDeviceUtils::NapMicros((unsigned long) naptime);
+      while (exp > (GetCurrentMMTime() - startTime).getMsec())
+      {
+         CDeviceUtils::SleepMs(1);
+      }		
    }
    else
    {
@@ -756,7 +753,7 @@ double CDemoCamera::GetExposure() const
 double CDemoCamera::GetSequenceExposure() 
 {
    if (exposureSequence_.size() == 0) 
-      return 0.0;
+      return this->GetExposure();
    if (sequenceIndex_ > exposureSequence_.size() - 1)
       sequenceIndex_ = 0;
    double exposure = exposureSequence_[sequenceIndex_];
@@ -939,11 +936,8 @@ int CDemoCamera::InsertImage()
    MMThreadGuard g(imgPixelsLock_);
 
    const unsigned char* pI;
-   if (!fastImage_) {
-      pI = GetImageBuffer();
-   } else {
-      pI = img_.GetPixels();
-   }
+   pI = GetImageBuffer();
+
    unsigned int w = GetImageWidth();
    unsigned int h = GetImageHeight();
    unsigned int b = GetImageBytesPerPixel();
@@ -963,7 +957,7 @@ int CDemoCamera::InsertImage()
  * Do actual capturing
  * Called from inside the thread  
  */
-int CDemoCamera::ThreadRun (void)
+int CDemoCamera::ThreadRun (MM::MMTime startTime)
 {
    DemoHub* pHub = static_cast<DemoHub*>(GetParentHub());
    if (pHub && pHub->GenerateRandomError())
@@ -980,16 +974,19 @@ int CDemoCamera::ThreadRun (void)
       }
    }
    
-   if (!fastImage_) {
-      ret = SnapImage();
-   } else {
-      ret = DEVICE_OK;
-   }
-   if (ret != DEVICE_OK)
+   if (!fastImage_)
    {
-      return ret;
+      GenerateSyntheticImage(img_, GetSequenceExposure());
    }
+
    ret = InsertImage();
+     
+
+   while (((double) (this->GetCurrentMMTime() - startTime).getMsec() / imageCounter_) < this->GetSequenceExposure())
+   {
+      CDeviceUtils::SleepMs(1);
+   }
+
    if (ret != DEVICE_OK)
    {
       return ret;
@@ -1085,7 +1082,7 @@ int MySequenceThread::svc(void) throw()
    {
       do
       {  
-         ret=camera_->ThreadRun();
+         ret=camera_->ThreadRun(startTime_);
       } while (DEVICE_OK == ret && !IsStopped() && imageCounter_++ < numImages_-1);
       if (IsStopped())
          camera_->LogMessage("SeqAcquisition interrupted by the user\n");
