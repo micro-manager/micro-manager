@@ -1580,7 +1580,7 @@ int AndorCamera::GetListOfAvailableCameras()
       //fReadOutTime is readout+keepclean time, neglect fKeepCleanTime until bug fix
       SetExposureTime(0.f);
       ret = GetAcquisitionTimings(&fExposure,&fAccumTime,&fReadOutTime);
-      SetExposureTime(expMs_/1000.f);
+      SetExposureTime( (float) expMs_/1000.f);
       fKeepCleanTime=0.000f; 
      
 
@@ -2581,7 +2581,7 @@ int AndorCamera::GetListOfAvailableCameras()
 
          string mode;
          pProp->Get(mode);
-         int modeIdx = 0;
+         // int modeIdx = 0;
          if (mode.compare(g_ShutterMode_Auto) == 0)
             iInternalShutterMode_ = AUTO;
          else if (mode.compare(g_ShutterMode_Open) == 0)
@@ -2630,7 +2630,7 @@ int AndorCamera::GetListOfAvailableCameras()
 
          string mode;
          pProp->Get(mode);
-         int modeIdx = 0;
+         // int modeIdx = 0;
          if (mode.compare(g_ShutterMode_Auto) == 0)
             iShutterMode_ = AUTO;
          else if (mode.compare(g_ShutterMode_Open) == 0)
@@ -2721,7 +2721,7 @@ int AndorCamera::GetListOfAvailableCameras()
 
          string mode;
          pProp->Get(mode);
-         int modeIdx = 0;
+         // int modeIdx = 0;
          if (mode.compare(g_ShutterTTLHighToOpen) == 0)
             iShutterTTL_ = 1;
          else if (mode.compare(g_ShutterTTLLowToOpen) == 0)
@@ -4193,7 +4193,7 @@ int AndorCamera::GetListOfAvailableCameras()
 
          long imagesAvailable = imageCountLast - imageCountFirst;
 
-         if(imagesAvailable >= imagesPerDMA)
+         if( (unsigned long) imagesAvailable >= imagesPerDMA)
          {
             imagesAvailable = imagesPerDMA-1;
          }
@@ -5010,6 +5010,11 @@ unsigned int AndorCamera::createIsolatedCropModeProperty(AndorCapabilities * cap
       {
          actualMode = EXTERNAL;
       }
+
+	  if(SOFTWARE==actualMode)
+	  {
+         acqMode = 5;  // run till abort used in software trigger
+	  }
 
       ret = ApplyTriggerMode(actualMode);
       if(DRV_SUCCESS != ret)
