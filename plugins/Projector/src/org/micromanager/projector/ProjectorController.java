@@ -126,7 +126,7 @@ public class ProjectorController {
          mmc.snapImage();
          ImageProcessor proc1 = ImageUtils.makeProcessor(mmc.getTaggedImage());
 
-         dev.displaySpot(dmdPt.x, dmdPt.y, 500000);
+         displaySpot(dmdPt.x, dmdPt.y, 500000);
          Thread.sleep(300);
 
          mmc.snapImage();
@@ -292,6 +292,12 @@ public class ProjectorController {
       sendRoiData();
    }
 
+   public void displaySpot(double x, double y, double intervalUs) {
+      if (x>=0 && x<dev.getWidth() && y>=0 && y<dev.getHeight()) {
+         dev.displaySpot(x, y, intervalUs);
+      }
+   }
+   
    public MouseListener setupPointAndShootMouseListener() {
       final ProjectorController thisController = this;
       return new MouseAdapter() {
@@ -301,7 +307,7 @@ public class ProjectorController {
             Point pOffscreen = new Point(canvas.offScreenX(p.x),canvas.offScreenY(p.y));
             Point2D.Double devP = (Point2D.Double) loadAffineTransform().transform(
                     new Point2D.Double(pOffscreen.x, pOffscreen.y), null);
-            dev.displaySpot(devP.x, devP.y, thisController.getPointAndShootInterval());
+            displaySpot(devP.x, devP.y, thisController.getPointAndShootInterval());
          }
       };
    }
