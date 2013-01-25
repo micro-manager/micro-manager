@@ -219,21 +219,41 @@ int TsiCam::Initialize()
    uint32_t rateIdxOrg(0);
    bRet = camHandle_->GetParameter(TSI_PARAM_READOUT_SPEED_INDEX, sizeof(uint32_t), &rateIdxOrg);
    assert(bRet);
-   while (camHandle_->SetParameter(TSI_PARAM_READOUT_SPEED_INDEX, rateIdx))
+
+   LogMessage("Getting readout speeds");
+
+   while (bRet)
    {
       ostringstream txt;
       uint32_t speedMHz(0);
-      bRet = camHandle_->GetParameter(TSI_PARAM_READOUT_SPEED, sizeof(uint32_t), &speedMHz);
-      if (bRet)
-      {
-         txt << speedMHz / (uint32_t)1000000 << "_MHz";
-         rateValues.push_back(txt.str().c_str());
-         rateIdx++;
-      }
-      else
-      {
-         LogMessage("Error getting readout speed");
-      }
+
+	  char Msg [80];
+	  sprintf (Msg, "Getting speed - Index (%u)", rateIdx);
+	  LogMessage(Msg);
+
+	  bRet = camHandle_->SetParameter(TSI_PARAM_READOUT_SPEED_INDEX, rateIdx);
+	  if (bRet) 
+	  {
+
+		  bRet = camHandle_->GetParameter(TSI_PARAM_READOUT_SPEED, sizeof(uint32_t), &speedMHz);
+		  if (bRet)
+		  {
+			 txt << speedMHz / (uint32_t)1000000 << "_MHz";
+			 rateValues.push_back(txt.str().c_str());
+			 rateIdx++;
+		  }
+		  else
+		  {
+			 LogMessage("Error getting readout speed");
+			 break;
+		  }
+
+	  }
+	  else
+	  {
+		  LogMessage("camHandle_->SetParameter(TSI_PARAM_READOUT_SPEED_INDEX, rateIdx) failed");
+	  }
+
    }
 
    if (rateValues.size() > 0)
@@ -256,23 +276,41 @@ int TsiCam::Initialize()
 	   // try setting different rates to find out what is available
 	   vector<string> tapValues;
 	   uint32_t tapIdxOrg(0);
-	   camHandle_->GetParameter(TSI_PARAM_TAPS_INDEX, sizeof(uint32_t), &tapIdxOrg);
+	   bool bRet;
+
+	   bRet = camHandle_->GetParameter(TSI_PARAM_TAPS_INDEX, sizeof(uint32_t), &tapIdxOrg);
 	   uint32_t tapIdx(0);
-	   while (camHandle_->SetParameter(TSI_PARAM_TAPS_INDEX, tapIdx))
+
+	   while (bRet)
 	   {
 		  ostringstream txt;
 		  uint32_t taps(0);
-		  bRet = camHandle_->GetParameter(TSI_PARAM_TAPS_VALUE, sizeof(uint32_t), &taps);
+
+		  char Msg [80];
+		  sprintf (Msg, "Getting taps value - Index (%u)", tapIdx);
+		  LogMessage(Msg);
+
+		  bRet = camHandle_->SetParameter(TSI_PARAM_TAPS_INDEX, tapIdx);
 		  if (bRet)
 		  {
-			 txt << taps;
-			 tapValues.push_back(txt.str().c_str());
-			 tapIdx++;
+			  bRet = camHandle_->GetParameter(TSI_PARAM_TAPS_VALUE, sizeof(uint32_t), &taps);
+			  if (bRet)
+			  {
+				 txt << taps;
+				 tapValues.push_back(txt.str().c_str());
+				 tapIdx++;
+			  }
+			  else
+			  {
+				 LogMessage("Error getting tap value");
+				 break;
+			  }
 		  }
-		  else
+		  else 
 		  {
-			 LogMessage("Error getting readout speed");
+			 LogMessage("Error setting tap index");
 		  }
+
 	   }
 
 	   if (tapValues.size() > 0)
