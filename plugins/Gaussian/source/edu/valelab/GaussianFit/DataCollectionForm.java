@@ -2468,8 +2468,25 @@ public class DataCollectionForm extends javax.swing.JFrame {
       
       return Math.sqrt(result);
    }
+
    
+   public class TrackAnalysisData {
+
+         public int frame;
+         public int n;
+         public double xAvg;
+         public double xStdDev;
+         public double yAvg;
+         public double yStdDev;   
+   }
    
+   /**
+    * Centers all selected tracks (subtracts the average position)
+    * and then calculates the average position of all tracks.
+    * Can take multiple tracks of varied lengths as input
+    * 
+    * @param evt 
+    */
    private void averageTrackButton_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_averageTrackButton_ActionPerformed
       int rows[] = jTable1_.getSelectedRows();
       if (rows.length < 1) {
@@ -2477,69 +2494,66 @@ public class DataCollectionForm extends javax.swing.JFrame {
                  "Please select one or more datasets to average");
       } else {
          MyRowData[] myRows = new MyRowData[rows.length];
-         ArrayList<Point2D.Double>[] xyPoints = (ArrayList<Point2D.Double>[]) new ArrayList[rows.length];
+         ArrayList<Point2D.Double> listAvgs = new ArrayList<Point2D.Double>();
          
          for (int i = 0; i < rows.length; i++) {
             myRows[i] = rowData_.get(rows[i]);
-            xyPoints[i] = spotListToPointList(myRows[i].spotList_);
-            Point2D.Double listAvg = avgXYList(xyPoints[i]);
-            for (Point2D.Double xy : xyPoints[i]) {
-               xy.x = xy.x - listAvg.x;
-               xy.y = xy.y - listAvg.y;
-            }
-         }
-         
-         // we have all tracks centered, now average them
-         
-         // Make sure that all tracks are the same length (we could deal with 
-         // tracks of different lengths, but it will complicate the code)
-         int trackLength = xyPoints[0].size();
-         for (int i = 1; i < xyPoints.length; i++) {
-            if (xyPoints[i].size() != trackLength) {
-               JOptionPane.showMessageDialog(getInstance(), "Tracks need to be of same length");
-            }             
-         }
-         
-         ArrayList<Point2D.Double> avgPoints = new ArrayList<Point2D.Double>();
-         ArrayList<Point2D.Double> stdDevPoints = new ArrayList<Point2D.Double>();
-         
-         for (int i = 0; i < xyPoints[0].size(); i++) {
-            ArrayList<Double> xp = new ArrayList<Double>();
-            ArrayList<Double> yp = new ArrayList<Double>();
-            for (int j = 0; j < xyPoints.length; j++) {
-               xp.add(xyPoints[j].get(i).x);
-               yp.add(xyPoints[j].get(i).y);
-            }
-            avgPoints.add(new Point2D.Double(listAvg(xp), listAvg(yp)) );
-            stdDevPoints.add(new Point2D.Double(listStdDev(xp), listStdDev(yp)));
+            ArrayList<Point2D.Double> xyPoints = spotListToPointList(myRows[i].spotList_);
+            Point2D.Double listAvg = avgXYList(xyPoints);
+            listAvgs.add(listAvg);
          }
 
-         // create a copy of the dataset and copy in the corrected data
+         // organize all spots in selected rows in a Hashmap keyed by frame number
+         // while doing so, also subtract the average (i.e. center around 0)
+         HashMap<Integer, List<GaussianSpotData>> allData = 
+                 new HashMap<Integer, List<GaussianSpotData>>();
+  
+         
+         for (int i=0; i < myRows.length; i++) {
+            for (GaussianSpotData spotData : myRows[i].spotList_) {
+               GaussianSpotData spotCopy = new GaussianSpotData(spotData);
+               spotCopy.setXCenter(spotData.getXCenter() - listAvgs.get(i).x);
+               spotCopy.setYCenter(spotData.getYCenter() - listAvgs.get(i).y);
+               int frame = spotData.getFrame();
+               if (!allData.containsKey(frame)) {
+                  List<GaussianSpotData> thisFrame = new ArrayList<GaussianSpotData>();
+                  thisFrame.add(spotCopy);
+                  allData.put(frame, thisFrame);
+               } else {
+                  allData.get(frame).add(spotCopy);
+               }
+            }
+         }
+                          
          List<GaussianSpotData> transformedResultList =
                  Collections.synchronizedList(new ArrayList<GaussianSpotData>());
+         List<TrackAnalysisData> avgTrackData = new ArrayList<TrackAnalysisData>();
          
-         for (int i = 0; i < avgPoints.size(); i++) {
-            GaussianSpotData oriSpot = myRows[0].spotList_.get(i);
-            GaussianSpotData spot = new GaussianSpotData(oriSpot);
-            double nph = 0.0;
-            double bg = 0.0;
-            double s = 0.0;
-            double w = 0.0;
-            for (int j = 0; j < rows.length; j++) {
-               GaussianSpotData thisSpot = rowData_.get(rows[j]).spotList_.get(i);
-               nph += thisSpot.getIntensity();
-               bg += thisSpot.getBackground();
-               s += thisSpot.getSigma();
-               w += thisSpot.getWidth();
-            }
-            nph = nph / rows.length;
-            bg = bg / rows.length;
-            s = s/ rows.length;
-            w = w/ rows.length;                    
-            spot.setData(nph, bg, avgPoints.get(i).getX(), 
-                    avgPoints.get(i).getY(), 0.0, w, 0.0, 0.0, s );
-            transformedResultList.add(spot);
+         // for each frame in the collection, calculate the average
+         Iterator it = allData.entrySet().iterator();
+         while (it.hasNext()) {
+            Map.Entry pairs = (Map.Entry) it.next();
+            TrackAnalysisData tad = new TrackAnalysisData();
+            tad.frame = (Integer) pairs.getKey();
+            List<GaussianSpotData> frameList = (List<GaussianSpotData>) pairs.getValue();
+            tad.n = frameList.size();
+            GaussianSpotData avgFrame = new GaussianSpotData(frameList.get(0));
+            
+            ArrayList<Point2D.Double> xyPoints = spotListToPointList(frameList);
+            Point2D.Double listAvg = avgXYList(xyPoints);
+            Point2D.Double stdDev = stdDevXYList(xyPoints, listAvg);
+            tad.xAvg = listAvg.x;
+            tad.yAvg = listAvg.y;
+            tad.xStdDev = stdDev.x;
+            tad.yStdDev = stdDev.y;
+            avgTrackData.add(tad);
+             
+            avgFrame.setXCenter(listAvg.x);
+            avgFrame.setYCenter(listAvg.y);
+            
+            transformedResultList.add(avgFrame);
          }
+         
 
          // Add transformed data to data overview window
          MyRowData rowData = myRows[0];
@@ -2549,15 +2563,17 @@ public class DataCollectionForm extends javax.swing.JFrame {
                  rowData.nrSlices_, 1, rowData.maxNrSpots_, transformedResultList,
                  rowData.timePoints_, true, Coordinates.NM, false, 0.0, 0.0);
 
-         // Since there is no place for stdev, also show a resultsTable
+         // show resultsTable
          ResultsTable rt = new ResultsTable();
-         for (int i = 0; i < avgPoints.size(); i++) {
-                        rt.incrementCounter();
-            rt.addValue("XAvg", avgPoints.get(i).x);
-            rt.addValue("XStdev", stdDevPoints.get(i).x);
-            rt.addValue("YAvg", avgPoints.get(i).y);
-            rt.addValue("YStdev", stdDevPoints.get(i).y);
-
+         for (int i = 0; i < avgTrackData.size(); i++) {
+            rt.incrementCounter();
+            TrackAnalysisData trackData = avgTrackData.get(i);
+            rt.addValue("Frame", trackData.frame);
+            rt.addValue("n", trackData.n);
+            rt.addValue("XAvg", trackData.xAvg);
+            rt.addValue("XStdev", trackData.xStdDev);
+            rt.addValue("YAvg", trackData.yAvg);
+            rt.addValue("YStdev", trackData.yStdDev);
          }
          rt.show("Averaged Tracks");
 
