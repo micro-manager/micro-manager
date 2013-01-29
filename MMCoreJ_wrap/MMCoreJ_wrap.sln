@@ -263,6 +263,10 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "dc1394", "..\DeviceAdapters
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "MicroPoint", "..\DeviceAdapters\MicroPoint\MicroPoint.vcproj", "{36651F00-C01D-461B-A8BA-BE4826D7130E}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ThorlabsUSBCamera", "..\DeviceAdapters\ThorlabsUSBCamera\ThorlabsUSBCamera.vcproj", "{A356B8C0-0897-4BAA-9DD1-8D210988155C}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ThorlabsDCStage", "..\DeviceAdapters\ThorlabsDCStage\ThorlabsDCStage.vcproj", "{9440F1ED-DA8C-48CB-A3AD-42D373D5E4E1}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
@@ -1256,6 +1260,20 @@ Global
 		{36651F00-C01D-461B-A8BA-BE4826D7130E}.Release|Win32.Build.0 = Release|Win32
 		{36651F00-C01D-461B-A8BA-BE4826D7130E}.Release|x64.ActiveCfg = Release|x64
 		{36651F00-C01D-461B-A8BA-BE4826D7130E}.Release|x64.Build.0 = Release|x64
+		{A356B8C0-0897-4BAA-9DD1-8D210988155C}.Debug|Win32.ActiveCfg = Debug|Win32
+		{A356B8C0-0897-4BAA-9DD1-8D210988155C}.Debug|Win32.Build.0 = Debug|Win32
+		{A356B8C0-0897-4BAA-9DD1-8D210988155C}.Debug|x64.ActiveCfg = Debug|x64
+		{A356B8C0-0897-4BAA-9DD1-8D210988155C}.Debug|x64.Build.0 = Debug|x64
+		{A356B8C0-0897-4BAA-9DD1-8D210988155C}.Release|Win32.ActiveCfg = Release|Win32
+		{A356B8C0-0897-4BAA-9DD1-8D210988155C}.Release|Win32.Build.0 = Release|Win32
+		{A356B8C0-0897-4BAA-9DD1-8D210988155C}.Release|x64.ActiveCfg = Release|x64
+		{A356B8C0-0897-4BAA-9DD1-8D210988155C}.Release|x64.Build.0 = Release|x64
+		{9440F1ED-DA8C-48CB-A3AD-42D373D5E4E1}.Debug|Win32.ActiveCfg = Debug|Win32
+		{9440F1ED-DA8C-48CB-A3AD-42D373D5E4E1}.Debug|Win32.Build.0 = Debug|Win32
+		{9440F1ED-DA8C-48CB-A3AD-42D373D5E4E1}.Debug|x64.ActiveCfg = Debug|Win32
+		{9440F1ED-DA8C-48CB-A3AD-42D373D5E4E1}.Release|Win32.ActiveCfg = Release|Win32
+		{9440F1ED-DA8C-48CB-A3AD-42D373D5E4E1}.Release|Win32.Build.0 = Release|Win32
+		{9440F1ED-DA8C-48CB-A3AD-42D373D5E4E1}.Release|x64.ActiveCfg = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
