@@ -67,6 +67,7 @@ public:
    // Property action handlers
    int OnPort(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnAttenuator(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnRepetitions(MM::PropertyBase* pProp, MM::ActionType eAct);
 
 private:
    bool initialized_;
@@ -74,6 +75,7 @@ private:
    double x_;
    double y_;
    long attenuatorPosition_;
+   long repetitions_;
    std::string attenuatorText_;
 
    int WriteBytes(unsigned char* buf, int numBytes);
@@ -82,6 +84,7 @@ private:
    int StepAttenuatorPosition(bool positive);
    int MoveAttenuator(long steps);
    int CreateAttenuatorProperty();
+   int CreateRepetitionsProperty();
    bool IsAttenuatorHome();
    long FindAttenuatorPosition();
 };

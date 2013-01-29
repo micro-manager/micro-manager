@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 10.00
 # Visual C++ Express 2008
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "MicroPoint", "MicroPoint.vcproj", "{C613608D-C4D0-4FC2-AA44-9D0098AAFDD8}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "MicroPoint", "MicroPoint.vcproj", "{36651F00-C01D-461B-A8BA-BE4826D7130E}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -11,14 +11,14 @@ Global
 		Release|x64 = Release|x64
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{C613608D-C4D0-4FC2-AA44-9D0098AAFDD8}.Debug|Win32.ActiveCfg = Debug|Win32
-		{C613608D-C4D0-4FC2-AA44-9D0098AAFDD8}.Debug|Win32.Build.0 = Debug|Win32
-		{C613608D-C4D0-4FC2-AA44-9D0098AAFDD8}.Debug|x64.ActiveCfg = Debug|x64
-		{C613608D-C4D0-4FC2-AA44-9D0098AAFDD8}.Debug|x64.Build.0 = Debug|x64
-		{C613608D-C4D0-4FC2-AA44-9D0098AAFDD8}.Release|Win32.ActiveCfg = Release|Win32
-		{C613608D-C4D0-4FC2-AA44-9D0098AAFDD8}.Release|Win32.Build.0 = Release|Win32
-		{C613608D-C4D0-4FC2-AA44-9D0098AAFDD8}.Release|x64.ActiveCfg = Release|x64
-		{C613608D-C4D0-4FC2-AA44-9D0098AAFDD8}.Release|x64.Build.0 = Release|x64
+		{36651F00-C01D-461B-A8BA-BE4826D7130E}.Debug|Win32.ActiveCfg = Debug|Win32
+		{36651F00-C01D-461B-A8BA-BE4826D7130E}.Debug|Win32.Build.0 = Debug|Win32
+		{36651F00-C01D-461B-A8BA-BE4826D7130E}.Debug|x64.ActiveCfg = Debug|x64
+		{36651F00-C01D-461B-A8BA-BE4826D7130E}.Debug|x64.Build.0 = Debug|x64
+		{36651F00-C01D-461B-A8BA-BE4826D7130E}.Release|Win32.ActiveCfg = Release|Win32
+		{36651F00-C01D-461B-A8BA-BE4826D7130E}.Release|Win32.Build.0 = Release|Win32
+		{36651F00-C01D-461B-A8BA-BE4826D7130E}.Release|x64.ActiveCfg = Release|x64
+		{36651F00-C01D-461B-A8BA-BE4826D7130E}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

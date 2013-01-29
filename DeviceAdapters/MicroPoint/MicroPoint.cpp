@@ -133,6 +133,7 @@ int MicroPoint::WriteBytes(unsigned char* buf, int numBytes)
 int MicroPoint::Initialize()
 {
    CreateAttenuatorProperty();
+   CreateRepetitionsProperty();
    initialized_ = true;
    return DEVICE_OK;
 }
@@ -218,6 +219,15 @@ long MicroPoint::FindAttenuatorPosition()
    return startingIndex;
 }
 
+int MicroPoint::CreateRepetitionsProperty()
+{
+   repetitions_ = 1;
+   CPropertyAction* pAct = new CPropertyAction (this, &MicroPoint::OnRepetitions);
+   CreateProperty("Repetitions", "1", MM::Integer, false, pAct);
+   SetPropertyLimits("Repetitions", 1, 100);
+   return DEVICE_OK;
+}
+
 int MicroPoint::CreateAttenuatorProperty()
 {
    attenuatorPosition_ = FindAttenuatorPosition();
@@ -241,14 +251,17 @@ int MicroPoint::CreateAttenuatorProperty()
 /////////////////////////////
 // Galvo API
 /////////////////////////////
-int MicroPoint::PointAndFire(double x, double y, double pulseTime_us)
+int MicroPoint::PointAndFire(double x, double y, double /*pulseTime_us*/)
 {
    this->SetPosition(x, y);
-   this->SetIlluminationState(true);
+   for (long i=0; i<repetitions_; ++i)
+   {
+      this->SetIlluminationState(true);
+   }
    return DEVICE_OK;
 }
 
-int MicroPoint::SetSpotInterval(double pulseTime_us)
+int MicroPoint::SetSpotInterval(double /*pulseTime_us*/)
 {
    return DEVICE_NOT_YET_IMPLEMENTED;
 }
@@ -375,6 +388,19 @@ int MicroPoint::OnAttenuator(MM::PropertyBase* pProp, MM::ActionType eAct)
       ((MM::Property*) pProp)->GetData(attenuatorText_.c_str(), desiredPosition);
       MoveAttenuator(desiredPosition - attenuatorPosition_);
       attenuatorPosition_ = desiredPosition;
+   }
+   return DEVICE_OK;
+}
+
+int MicroPoint::OnRepetitions(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   if (eAct == MM::BeforeGet)
+   {
+      pProp->Set(repetitions_);
+   }
+   else if (eAct == MM::AfterSet)
+   {
+      pProp->Get(repetitions_);
    }
    return DEVICE_OK;
 }
