@@ -196,18 +196,13 @@ CTIScamera::CTIScamera() : CCameraBase<CTIScamera> (),
  
 binSize_(1),
 currentExpMS_(12.34), //ms
-fullFrameBuffer_(0),
-fullFrameX_(0),
-fullFrameY_(0),
-tempFrameX_(0),
-tempFrameY_(0),
 
    busy_(false),
    bColor_(false),
    sequenceRunning_(false),
    sequencePaused_(false),
 
-startTime_(0),
+//startTime_(0),
 
    flipH_(false),
    flipV_(false),
@@ -222,7 +217,7 @@ startTime_(0),
    roiXSize_(0),
    roiYSize_(0),
 
-   nominalPixelSizeUm_(1.0),
+   sequenceStartTime_(0),
 
    interval_ms_ (0),
    seqThread_(0)
@@ -300,13 +295,14 @@ void CTIScamera::GetName(char* name) const
 Tells us if device is still processing asynchronous command.
 Required by the MM::Device API.
 ==============================================================================*/
+/*
 bool CTIScamera::Busy()
 {
    //camera should be in busy state during exposure
    //IsCapturing() is used for determining if sequence thread is run
    return busy_;
 }
-
+*/
 
 
 
@@ -405,9 +401,6 @@ int CTIScamera::Initialize()
    nRet = CreateProperty(MM::g_Keyword_CameraName, pGrabber->getDev().c_str(), MM::String, true);
    if (nRet != DEVICE_OK) return nRet;
 
-   nRet = CreateProperty(g_Keyword_PixelSize, CDeviceUtils::ConvertToString(nominalPixelSizeUm_), MM::Float, false, pAct);
-   if (nRet != DEVICE_OK) return nRet;
-
    pAct = new CPropertyAction (this, &CTIScamera::OnFlipHorizontal);
    nRet = CreateProperty(g_FlipH, g_Off, MM::String, false, pAct);
    if (nRet != DEVICE_OK) return nRet;
@@ -449,7 +442,7 @@ int CTIScamera::Initialize()
 
 
    pAct = new CPropertyAction (this, &CTIScamera::OnExposure);
-   nRet = CreateProperty(MM::g_Keyword_Exposure, CDeviceUtils::ConvertToString(0.0303), MM::Float, false, pAct);
+   nRet = CreateProperty(MM::g_Keyword_Exposure, "10.0", MM::Float, false, pAct);
    if (nRet != DEVICE_OK) return nRet;
 
    pAct = new CPropertyAction (this, &CTIScamera::OnAutoExposure);
@@ -510,26 +503,6 @@ int CTIScamera::SetupProperties()
 
    //set the sink.
 //   pGrabber->setSinkType(pSink);
-
-
-   //property PixelSize (read only)
-   if ((strstr(pGrabber->getDev().c_str(), "21AF04")) || (strstr(pGrabber->getDev().c_str(), "21BF04")))
-   {
-      nominalPixelSizeUm_ = 5.6; //µm
-   }
-   else
-   if ((strstr(pGrabber->getDev().c_str(), "31AF03")) || (strstr(pGrabber->getDev().c_str(), "31BF03"))
-    || (strstr(pGrabber->getDev().c_str(), "41AF02")) || (strstr(pGrabber->getDev().c_str(), "41BF02")))
-   {
-      nominalPixelSizeUm_ = 4.65; //µm
-   }
-   else if (strstr(pGrabber->getDev().c_str(), "71UC02"))
-   {
-      nominalPixelSizeUm_ = 2.2; //µm
-   }
-   else nominalPixelSizeUm_ = 1.0; //how to handle unknown pixel size ?
-
-   SetProperty(g_Keyword_PixelSize,  CDeviceUtils::ConvertToString(nominalPixelSizeUm_));
 
 
    //property Serial Number (read only)
@@ -596,7 +569,7 @@ int CTIScamera::SetupProperties()
       Gain_ = m_pSimpleProperties->getValue   (VCDID_Gain);
 
       SetProperty(g_Keyword_Gain, CDeviceUtils::ConvertToString(Gain_));
-      SetPropertyLimits(g_Keyword_Gain, lMin, lMax);
+      SetPropertyLimits(g_Keyword_Gain, (double)lMin, (double)lMax);
 
       if( m_pSimpleProperties->isAutoAvailable(VCDID_Gain) )
       {
@@ -622,7 +595,7 @@ int CTIScamera::SetupProperties()
       WhiteBalance_ = m_pSimpleProperties->getValue   (VCDID_WhiteBalance);
 
       SetProperty(g_Keyword_WhiteBalance, CDeviceUtils::ConvertToString(WhiteBalance_));
-      SetPropertyLimits(g_Keyword_WhiteBalance, lMin, lMax);
+      if (lMax != 0) SetPropertyLimits(g_Keyword_WhiteBalance, (double)lMin, (double)lMax);
 
       if( m_pSimpleProperties->isAutoAvailable(VCDID_WhiteBalance) )
       {
@@ -635,6 +608,7 @@ int CTIScamera::SetupProperties()
             SetProperty(g_Keyword_WhiteBalance_Auto,g_Off);
          }
       }
+      else SetProperty(g_Keyword_WhiteBalance_Auto, "n/a");
    }
  
 
@@ -918,13 +892,16 @@ unsigned CTIScamera::GetBitDepth() const
 	  bitDepth /= 3;
 	  */
 
-  unsigned int bitDepth = 0;
+  unsigned int bitDepth = 8; //assume 8 as default
+
 
   if( pGrabber->isDevValid())
   {
 	DShowLib::FrameTypeInfo info;
 	pSink->getOutputFrameType(info);
 	bitDepth = info.getBitsPerPixel();
+	if (info.getColorformat() == eRGB32) bitDepth = bitDepth / 4;
+	else if (info.getColorformat() == eRGB24) bitDepth = bitDepth / 3;
   }
   return bitDepth;
 }
@@ -1027,7 +1004,6 @@ Required by the MM::Camera API.
 double CTIScamera::GetExposure() const
 {
    char buf[MM::MaxStrLength];
-   buf[0] = '\0';
    int ret = GetProperty(MM::g_Keyword_Exposure, buf);
    if (ret != DEVICE_OK)
       return 0.0;
@@ -1043,6 +1019,7 @@ Required by the MM::Camera API.
 void CTIScamera::SetExposure(double dExp_ms)
 {
    SetProperty(MM::g_Keyword_Exposure, CDeviceUtils::ConvertToString(dExp_ms));
+   GetCoreCallback()->OnExposureChanged(this, dExp_ms);
 }
 
 
@@ -1061,32 +1038,56 @@ appropriate properties are set (such as binning, pixel type, etc.)
 ==============================================================================*/
 const unsigned char* CTIScamera::GetImageBuffer()
 {
-   unsigned char* pixBuffer = const_cast<unsigned char*> (img_.GetPixels());
-
+/*
    DShowLib::FrameTypeInfo info;
    pSink->getOutputFrameType(info);
-   memcpy(pixBuffer, pBuf[0], min(GetImageBufferSize(),info.buffersize));
-
+   unsigned char* pixBuffer = const_cast<unsigned char*> (img_.GetPixels());
+   memcpy(pixBuffer, pBuf[0], min(GetImageBufferSize(),(long)info.buffersize));
    // capture complete
    return (unsigned char*) pixBuffer;
+*/
+
+   return (unsigned char*) pBuf[0];
 }
 
 
 
-const unsigned int* CTIScamera::GetImageBufferAsRGB32()
+/*==============================================================================
+Returns image buffer X-size in pixels.
+Required by the MM::Camera API.
+==============================================================================*/
+unsigned CTIScamera::GetImageWidth() const
 {
-   void* pixBuffer = const_cast<unsigned char*> (img_.GetPixels());
-
-   DShowLib::FrameTypeInfo info;
-   pSink->getOutputFrameType(info);
-
-   memcpy(pixBuffer, pBuf[0], min(GetImageBufferSize(),info.buffersize));
-
-   // capture complete
-   return (unsigned int*)pixBuffer;
+   return img_.Width();
 }
 
+/*==============================================================================
+Returns image buffer Y-size in pixels.
+Required by the MM::Camera API.
+==============================================================================*/
+unsigned CTIScamera::GetImageHeight() const
+{
+   return img_.Height();
+}
 
+/*==============================================================================
+Returns image buffer pixel depth in bytes.
+Required by the MM::Camera API.
+==============================================================================*/
+unsigned CTIScamera::GetImageBytesPerPixel() const
+{
+   return img_.Depth();
+} 
+
+
+/*==============================================================================
+Returns the size in bytes of the image buffer.
+Required by the MM::Camera API.
+==============================================================================*/
+long CTIScamera::GetImageBufferSize() const
+{
+   return img_.Width() * img_.Height() * GetImageBytesPerPixel();
+}
 
 
 /*==============================================================================
@@ -1208,6 +1209,7 @@ int CTIScamera::StartSequenceAcquisition(long numImages, double interval_ms, boo
    GetCoreCallback()->InitializeImageBuffer(1, 1, GetImageWidth(), GetImageHeight(), GetImageBytesPerPixel());
 
    // start thread
+   sequenceStartTime_ = GetCurrentMMTime();
    imageCounter_ = 0;
    sequenceLength_ = numImages;
 
@@ -1305,7 +1307,29 @@ int CTIScamera::ResizeImageBuffer()
       return ret;
    long binSize = atol(buf);
 
-   int byteDepth = 1;
+   // Prepare the live mode, to get the output size of the sink.
+   pGrabber->prepareLive(ACTIVEMOVIE);
+
+   // Retrieve the output type and dimension of the handler sink.
+   // The dimension of the sink could be different from the VideoFormat, when
+   // you use filters.
+#ifdef TRUE
+   DShowLib::FrameTypeInfo info;
+   pSink->getOutputFrameType(info);
+   //sink oriented data size
+   lCCD_Width         = info.dim.cx;
+   lCCD_Height        = info.dim.cy;
+   uiCCD_BitsPerPixel = info.getBitsPerPixel();
+#else
+   //Camera oriented data size
+   lCCD_Width         = pGrabber->getAcqSizeMaxX();
+   lCCD_Height        = pGrabber->getAcqSizeMaxY();
+   if (bColor_) uiCCD_BitsPerPixel = 32;
+   else         uiCCD_BitsPerPixel = 8;
+   //   tColorformatEnum cf = info.getColorformat();
+#endif
+
+   int byteDepth = uiCCD_BitsPerPixel >> 4;
 
    img_.Resize(roiXSize_/binSize, roiYSize_/binSize, byteDepth);
 
@@ -1766,18 +1790,6 @@ int AcqSequenceThread::svc(void)
 {
    long imageCounter(0);
 
-   long lValue;
-   double dExp = 1000;  //default in ms
-   std::ostringstream os;
-
-   CSimplePropertyAccess prop(pGrabber->getAvailableVCDProperties());
-   if (prop.isAvailable(VCDID_Exposure))
-   {
-      //range is typical from -13 to 5 (2^-13 = 1/8192 to 2^5 = 32) in seconds
-      lValue = prop.getValue(VCDID_Exposure);
-      dExp = pow((double)2, (double)lValue) * 1000;  //convert s to ms
-   }
-
    do
    {
       // wait until the frame becomes available - waits in PushImage t.b.d.
@@ -1828,32 +1840,26 @@ Waits for new image and inserts it into the circular buffer
 ==============================================================================*/
 int CTIScamera::PushImage()
 {
-   DriverGuard dg(this);
-
-   // create metadata
+   MM::MMTime timeStamp = this->GetCurrentMMTime();
    char label[MM::MaxStrLength];
    this->GetLabel(label);
-
-   MM::MMTime timestamp = this->GetCurrentMMTime();
+ 
+   // Important:  metadata about the image are generated here:
    Metadata md;
-   // Copy the metadata inserted by other processes:
-   std::vector<std::string> keys = metadata_.GetKeys();
-   for (unsigned int i= 0; i < keys.size(); i++) {
-      md.put(keys[i], metadata_.GetSingleTag(keys[i].c_str()).GetValue().c_str());
-   }
-
-   md.put("Camera", label);   
-   md.put(MM::g_Keyword_Metadata_StartTime, CDeviceUtils::ConvertToString(startTime_.getMsec()));
-   md.put(MM::g_Keyword_Elapsed_Time_ms, CDeviceUtils::ConvertToString((timestamp - startTime_).getMsec()));
+   md.put("Camera", label);
+   md.put(MM::g_Keyword_Metadata_StartTime, CDeviceUtils::ConvertToString(sequenceStartTime_.getMsec()));
+   md.put(MM::g_Keyword_Elapsed_Time_ms, CDeviceUtils::ConvertToString((timeStamp - sequenceStartTime_).getMsec()));
    md.put(MM::g_Keyword_Metadata_ImageNumber, CDeviceUtils::ConvertToString(imageCounter_));
    md.put(MM::g_Keyword_Binning, binSize_);
+   md.put(MM::g_Keyword_Metadata_ROI_X, CDeviceUtils::ConvertToString( (long) roiX_)); 
+   md.put(MM::g_Keyword_Metadata_ROI_Y, CDeviceUtils::ConvertToString( (long) roiY_)); 
 
    MetadataSingleTag mstStartTime(MM::g_Keyword_Metadata_StartTime, label, true);
    mstStartTime.SetValue(CDeviceUtils::ConvertToString(startTime_.getMsec()));
    md.SetTag(mstStartTime);
 
    MetadataSingleTag mst(MM::g_Keyword_Elapsed_Time_ms, label, true);
-   mst.SetValue(CDeviceUtils::ConvertToString(timestamp.getMsec()));
+   mst.SetValue(CDeviceUtils::ConvertToString(timeStamp.getMsec()));
    md.SetTag(mst);
 
    MetadataSingleTag mstCount(MM::g_Keyword_Metadata_ImageNumber, label, true);
@@ -1864,32 +1870,47 @@ int CTIScamera::PushImage()
    mstB.SetValue(CDeviceUtils::ConvertToString(binSize_));      
    md.SetTag(mstB);
 
+
+   // Copy the metadata inserted by other processes:
+   std::vector<std::string> keys = metadata_.GetKeys();
+   for (unsigned int i= 0; i < keys.size(); i++) {
+      md.put(keys[i], metadata_.GetSingleTag(keys[i].c_str()).GetValue().c_str());
+   }
+
+   char buf[MM::MaxStrLength];
+   GetProperty(MM::g_Keyword_Binning, buf);
+   md.put(MM::g_Keyword_Binning, buf);
+
    imageCounter_++;
 
+	
+//   MMThreadGuard g(imgPixelsLock_);
+
+//   DriverGuard dg(this);
+
    // get pixels
-   void* imgPtr;
-   imgPtr = pBuf[0];
+   const unsigned char* pI;
+   pI = GetImageBuffer();
 
-   // process image
-   // imageprocesssor now called from core
+   unsigned int w = GetImageWidth();
+   unsigned int h = GetImageHeight();
+   unsigned int b = GetImageBytesPerPixel();
 
-   // This method inserts new image in the circular buffer (residing in MMCore)
-   int ret = GetCoreCallback()->InsertImage(this, (unsigned char*) imgPtr,      
-                                           GetImageWidth(),                  
-                                           GetImageHeight(),                 
-                                           GetImageBytesPerPixel());
-
-   if (!stopOnOverflow_ && (ret == DEVICE_BUFFER_OVERFLOW))
+   int ret = GetCoreCallback()->InsertImage(this, pI, w, h, b, md.Serialize().c_str());
+   if (!stopOnOverflow_ && ret == DEVICE_BUFFER_OVERFLOW)
    {
       // do not stop on overflow - just reset the buffer
       GetCoreCallback()->ClearImageBuffer(this);
-      ret = GetCoreCallback()->InsertImage(this, (unsigned char*) imgPtr,      
-                                           GetImageWidth(),                  
-                                           GetImageHeight(),                 
-                                           GetImageBytesPerPixel());
-   }
+      // don't process this same image again...
+      return GetCoreCallback()->InsertImage(this, pI, w, h, b, md.Serialize().c_str(), false);
+   } else
+      return ret;
 
-   return ret;
+
+
+
+
+
 }
 
 
