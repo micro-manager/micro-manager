@@ -63,7 +63,6 @@ class CTIScamera : public CCameraBase<CTIScamera>
 {
 public:
 
-friend class AcqSequenceThread;
 static CTIScamera* GetInstance();
 
 ~CTIScamera();
@@ -79,21 +78,20 @@ int Initialize();
 int Shutdown();
 
 void GetName(char* name) const;      
-bool Busy();
+//bool Busy();
 
 // MMCamera API
 int SnapImage();
 const unsigned char* GetImageBuffer();
-    unsigned GetImageWidth() const {return img_.Width();}
-    unsigned GetImageHeight() const {return img_.Height();}
-    unsigned GetImageBytesPerPixel() const {return img_.Depth();} 
-    long GetImageBufferSize() const {return img_.Width() * img_.Height() * GetImageBytesPerPixel();}
+unsigned GetImageWidth() const;
+unsigned GetImageHeight() const;
+unsigned GetImageBytesPerPixel() const;
+long     GetImageBufferSize() const;
 unsigned GetBitDepth() const;
 
-	const unsigned int* GetImageBufferAsRGB32();
-	unsigned GetNumberOfComponents() const;
+    unsigned GetNumberOfComponents() const;
 	int GetComponentName(unsigned channel, char* name);
-	double GetPixelSizeUm() const {return GetBinning();};
+	double GetPixelSizeUm() const {return 1.0 * GetBinning();};
 	int GetBinning() const;
 	int SetBinning(int binSize);
    int IsExposureSequenceable(bool& isSequenceable) const {isSequenceable = false; return DEVICE_OK;}
@@ -161,33 +159,11 @@ private:
 
     bool initialized_;
 
-
-    double nominalPixelSizeUm_;
 	long lCCD_Width, lCCD_Height;
 	unsigned int uiCCD_BitsPerPixel;
 	bool busy_;
 
-   struct ROI {
-      int x;
-      int y;
-      int xSize;
-      int ySize;
-
-      ROI() : x(0), y(0), xSize(0), ySize(0) {}
-      ~ROI() {}
-
-      bool isEmpty() {return x==0 && y==0 && xSize==0 && ySize == 0;}
-   };
-
-   ROI roi_;
-   int binSize_;
-   double currentExpMS_; // value used by camera
-   int fullFrameX_;
-   int fullFrameY_;
-   int tempFrameX_;
-   int tempFrameY_;
-   short* fullFrameBuffer_;
-
+    double currentExpMS_; // value used by camera
 
 	bool bColor_;
 	bool sequenceRunning_;
@@ -213,13 +189,16 @@ private:
 	unsigned roiXSize_;
 	unsigned roiYSize_;
 
+	long binSize_;
+
+
+	MM::MMTime sequenceStartTime_;
+
 	double interval_ms_;
 	long lastImage_;
 	long imageCounter_;
     MM::MMTime startTime_;
  	unsigned long sequenceLength_;
-
-	AcqSequenceThread* seqThread_; // burst mode thread
 
 	int SetupProperties();
 	smart_com<DShowLib::IFrameFilter> pROIFilter;
@@ -232,6 +211,8 @@ private:
 	DShowLib::tIVCDAbsoluteValuePropertyPtr pExposureRange;
 	DShowLib::tIVCDSwitchPropertyPtr        pExposureAuto;
 
+	friend class AcqSequenceThread;
+	AcqSequenceThread* seqThread_; // burst mode thread
 };
 
 /*
