@@ -224,9 +224,13 @@
         (core setShutterOpen open?)
         (swap! state assoc-in [:shutter-states shutter] open?)))))
 
+(defn is-continuous-focus-drive [stage]
+  (when-not (empty? stage)
+    (core isContinuousFocusDrive stage)))
+
 (defn set-z-stage-position [stage pos]
   (when (and (@state :init-continuous-focus)
-             (not (core isContinuousFocusDrive stage))
+             (not (is-continuous-focus-drive stage))
              (core isContinuousFocusEnabled))
     (enable-continuous-focus false))
   (device-best-effort stage (core setPosition stage pos)))
@@ -485,7 +489,7 @@
 (defn z-stage-needs-adjustment [stage-name]
   (not (and (@state :init-continuous-focus)
             (core isContinuousFocusEnabled)
-            (not (core isContinuousFocusDrive stage-name)))))
+            (not (is-continuous-focus-drive stage-name)))))
 
 (defn update-z-positions [msp-index]
   (when-let [msp (get-msp msp-index)]
