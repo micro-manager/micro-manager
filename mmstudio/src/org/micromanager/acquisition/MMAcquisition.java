@@ -30,6 +30,8 @@ import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Iterator;
 import java.util.UUID;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import java.util.prefs.Preferences;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -49,6 +51,7 @@ import org.micromanager.api.TaggedImageStorage;
 import org.micromanager.utils.ImageUtils;
 import org.micromanager.utils.JavaUtils;
 import org.micromanager.utils.MDUtils;
+import org.micromanager.utils.MMException;
 import org.micromanager.utils.MMScriptException;
 import org.micromanager.utils.ReportingUtils;
 
@@ -130,9 +133,10 @@ public class MMAcquisition {
          }
   
       imageCache.setSummaryMetadata(summaryMetadata);
-      
-      virtAcq_ = new VirtualAcquisitionDisplay(imageCache, eng);
-      imageCache.addImageCacheListener(virtAcq_);
+      if (show_) {
+         virtAcq_ = new VirtualAcquisitionDisplay(imageCache, eng);
+         imageCache.addImageCacheListener(virtAcq_);
+      }
       this.summary_ = summaryMetadata;
       this.imageCache_ = imageCache;
       } catch (JSONException ex) {
@@ -253,9 +257,9 @@ public class MMAcquisition {
          createDefaultAcqSettings(name_, imageCache);
       }
       MMStudioMainFrame.createSimpleDisplay(name_, imageCache);
-      virtAcq_ = MMStudioMainFrame.getSimpleDisplay();
       if (show_) {
-         virtAcq_.show();
+          virtAcq_ = MMStudioMainFrame.getSimpleDisplay();
+          virtAcq_.show();
       }
 
       initialized_ = true;
@@ -353,9 +357,8 @@ public class MMAcquisition {
       }
 
       if (imageCache.getSummaryMetadata() != null) {
-         virtAcq_ = new VirtualAcquisitionDisplay(imageCache, null, name);
-
          if (show_) {
+            virtAcq_ = new VirtualAcquisitionDisplay(imageCache, null, name);
             virtAcq_.show();
          }
 
@@ -614,9 +617,9 @@ public class MMAcquisition {
 
          if (!(MDUtils.getWidth(tags) == width_
                  && MDUtils.getHeight(tags) == height_)) {
-            ReportingUtils.logError("Metadata width and height: " + MDUtils.getWidth(tags) + "  " +
-                    MDUtils.getHeight(tags) + "   Acquisition Width and height: " + width_ + " "+
-                    height_);
+            ReportingUtils.logError("Metadata width and height: " + MDUtils.getWidth(tags) + "  "
+                    + MDUtils.getHeight(tags) + "   Acquisition Width and height: " + width_ + " "
+                    + height_);
             throw new MMScriptException("Image dimensions do not match MMAcquisition.");
          }
          if (!MDUtils.getPixelType(tags).contentEquals(getPixelType(byteDepth_))) {
@@ -625,28 +628,34 @@ public class MMAcquisition {
 
          int channel = tags.getInt("ChannelIndex");
          int frame = MDUtils.getFrameIndex(tags);
-         if (!MDUtils.getPixelType(tags).startsWith("RGB"))
+         if (!MDUtils.getPixelType(tags).startsWith("RGB")) {
             tags.put("Channel", getChannelName(channel));
+         }
          long elapsedTimeMillis = System.currentTimeMillis() - startTimeMs_;
          tags.put("ElapsedTime-ms", elapsedTimeMillis);
          tags.put("Time", MDUtils.getCurrentTime());
-      } catch (JSONException ex) {
-         throw new MMScriptException(ex);
-      }
-      try {
-         virtAcq_.imageCache_.putImage(taggedImg);
-         virtAcq_.albumChanged();
+         
+         imageCache_.putImage(taggedImg);
       } catch (Exception ex) {
          throw new MMScriptException(ex);
       }
-      if (updateDisplay) {
+      
+
+      if (show_) {
          try {
-            if (virtAcq_ != null) {
-               virtAcq_.showImage(taggedImg.tags, waitForDisplay);
+            virtAcq_.albumChanged();
+         } catch (Exception ex) {
+            throw new MMScriptException(ex);
+         }
+         if (updateDisplay) {
+            try {
+               if (virtAcq_ != null) {
+                  virtAcq_.showImage(taggedImg.tags, waitForDisplay);
+               }
+            } catch (Exception e) {
+               ReportingUtils.logError(e);
+               throw new MMScriptException("Unable to show image");
             }
-         } catch (Exception e) {
-            ReportingUtils.logError(e);
-            throw new MMScriptException("Unable to show image");
          }
       }
    }
@@ -677,7 +686,9 @@ public class MMAcquisition {
     * Brings the window displaying this acquisition to the front
     */
    public void toFront() {
-      virtAcq_.getHyperImage().getWindow().toFront();
+      if (show_) {
+         virtAcq_.getHyperImage().getWindow().toFront();
+      }
    }
 
    /**
@@ -688,7 +699,7 @@ public class MMAcquisition {
    public void setComment(String comment) throws MMScriptException {
       if (isInitialized()) {
          try {
-            virtAcq_.imageCache_.getSummaryMetadata().put("COMMENT", comment);
+            imageCache_.getSummaryMetadata().put("COMMENT", comment);
          } catch (JSONException e) {
             throw new MMScriptException("Failed to set Comment");
          }
@@ -717,7 +728,7 @@ public class MMAcquisition {
     */
    public JSONObject getSummaryMetadata() {
       if (isInitialized()) {
-         return virtAcq_.imageCache_.getSummaryMetadata();
+         return imageCache_.getSummaryMetadata();
       }
       return null;
    }
@@ -748,9 +759,11 @@ public class MMAcquisition {
    public void setChannelName(int channel, String name) throws MMScriptException {
       if (isInitialized()) {
          try {
-            virtAcq_.imageCache_.getDisplayAndComments().getJSONArray("Channels").getJSONObject(channel).put("Name", name);
-            virtAcq_.imageCache_.getSummaryMetadata().getJSONArray("ChNames").put(channel, name);
-            virtAcq_.updateChannelNamesAndColors();
+            imageCache_.getDisplayAndComments().getJSONArray("Channels").getJSONObject(channel).put("Name", name);
+            imageCache_.getSummaryMetadata().getJSONArray("ChNames").put(channel, name);
+            if (show_) {
+               virtAcq_.updateChannelNamesAndColors();
+            }
          } catch (JSONException e) {
             throw new MMScriptException("Problem setting Channel name");
          }
@@ -767,10 +780,12 @@ public class MMAcquisition {
    public void setChannelColor(int channel, int rgb) throws MMScriptException {
       if (isInitialized()) {
          try {
-            virtAcq_.imageCache_.setChannelColor(channel, rgb);
-            virtAcq_.imageCache_.getSummaryMetadata().getJSONArray("ChColors").put(channel, rgb);
-            virtAcq_.updateChannelNamesAndColors();
-            virtAcq_.updateAndDraw();
+            imageCache_.setChannelColor(channel, rgb);
+            imageCache_.getSummaryMetadata().getJSONArray("ChColors").put(channel, rgb);
+            if (show_) {
+               virtAcq_.updateChannelNamesAndColors();
+               virtAcq_.updateAndDraw();
+            }
          } catch (JSONException ex) {
             throw new MMScriptException(ex);
          }
@@ -784,27 +799,34 @@ public class MMAcquisition {
    }
 
    public void promptToSave(boolean promptToSave) {
-      VirtualAcquisitionDisplay.getDisplay(virtAcq_.getHyperImage()).promptToSave(promptToSave);
+      if (show_) {
+         VirtualAcquisitionDisplay.getDisplay(virtAcq_.getHyperImage()).promptToSave(promptToSave);
+      }
    }
 
    public void setChannelContrast(int channel, int min, int max) throws MMScriptException {
-      if (isInitialized()) {
-         virtAcq_.setChannelContrast(channel, min, max,1.0);
-      } else
-         throw new MMScriptException(NOTINITIALIZED);
+      if (show_) {
+         if (isInitialized()) {
+            virtAcq_.setChannelContrast(channel, min, max, 1.0);
+         } else {
+            throw new MMScriptException(NOTINITIALIZED);
+         }
+      }
    }
 
 
    public void setContrastBasedOnFrame(int frame, int slice) throws MMScriptException {
-      if (!isInitialized()) {
-         throw new MMScriptException(NOTINITIALIZED);
+      if (show_) {
+         if (!isInitialized()) {
+            throw new MMScriptException(NOTINITIALIZED);
+         }
+         int currentFrame = virtAcq_.getHyperImage().getFrame();
+         int currentSlice = virtAcq_.getHyperImage().getSlice();
+         int currentChannel = virtAcq_.getHyperImage().getChannel();
+         virtAcq_.getHyperImage().setPosition(currentChannel, slice, frame);
+         virtAcq_.getHistograms().autoscaleAllChannels();
+         virtAcq_.getHyperImage().setPosition(currentChannel, currentSlice, currentFrame);
       }
-      int currentFrame = virtAcq_.getHyperImage().getFrame();
-      int currentSlice = virtAcq_.getHyperImage().getSlice();
-      int currentChannel = virtAcq_.getHyperImage().getChannel();
-      virtAcq_.getHyperImage().setPosition(currentChannel, slice, frame);   
-      virtAcq_.getHistograms().autoscaleAllChannels();
-      virtAcq_.getHyperImage().setPosition(currentChannel, currentSlice, currentFrame);         
    }
 
    /**
@@ -813,7 +835,7 @@ public class MMAcquisition {
    public void setProperty(String propertyName, String value) throws MMScriptException {
       if (isInitialized()) {
          try {
-            virtAcq_.imageCache_.getSummaryMetadata().put(propertyName, value);
+            imageCache_.getSummaryMetadata().put(propertyName, value);
          } catch (JSONException e) {
             throw new MMScriptException("Failed to set property: " + propertyName);
          }
@@ -832,7 +854,7 @@ public class MMAcquisition {
    public String getProperty(String propertyName) throws MMScriptException {
       if (isInitialized()) {
          try {
-            return virtAcq_.imageCache_.getSummaryMetadata().getString(propertyName);
+            return imageCache_.getSummaryMetadata().getString(propertyName);
          } catch (JSONException e) {
             throw new MMScriptException("Failed to get property: " + propertyName);
          }
@@ -859,7 +881,7 @@ public class MMAcquisition {
            String value) throws MMScriptException {
       if (isInitialized()) {
          try {
-            JSONObject tags = virtAcq_.imageCache_.getImage(channel, slice, frame, 0).tags;
+            JSONObject tags = imageCache_.getImage(channel, slice, frame, 0).tags;
             tags.put(propName, value);
          } catch (JSONException e) {
             throw new MMScriptException(e);
@@ -872,7 +894,7 @@ public class MMAcquisition {
    public void setSystemState(int frame, int channel, int slice, JSONObject state) throws MMScriptException {
       if (isInitialized()) {
          try {
-            JSONObject tags = virtAcq_.imageCache_.getImage(channel, slice, frame, 0).tags;
+            JSONObject tags = imageCache_.getImage(channel, slice, frame, 0).tags;
             Iterator<String> iState = state.keys();
             while (iState.hasNext()) {
                String key = iState.next();
@@ -889,7 +911,7 @@ public class MMAcquisition {
    public String getProperty(int frame, int channel, int slice, String propName) throws MMScriptException {
       if (isInitialized()) {
          try {
-            JSONObject tags = virtAcq_.imageCache_.getImage(channel, slice, frame, 0).tags;
+            JSONObject tags = imageCache_.getImage(channel, slice, frame, 0).tags;
             return tags.getString(propName);
          } catch (JSONException ex) {
             throw new MMScriptException(ex);
@@ -901,13 +923,17 @@ public class MMAcquisition {
    }
 
    public boolean hasActiveImage5D() {
-      return virtAcq_.windowClosed();
+      if (show_) {
+         return virtAcq_.windowClosed();
+      } else {
+         return false;
+      }
    }
 
    public void setSummaryProperties(JSONObject md) throws MMScriptException {
       if (isInitialized()) {
          try {
-            JSONObject tags = virtAcq_.imageCache_.getSummaryMetadata();
+            JSONObject tags = imageCache_.getSummaryMetadata();
             Iterator<String> iState = md.keys();
             while (iState.hasNext()) {
                String key = iState.next();
@@ -930,7 +956,7 @@ public class MMAcquisition {
    }
 
    public boolean windowClosed() {
-      if (!initialized_) {
+      if (!show_ || !initialized_) {
          return false;
       }
       if (virtAcq_ != null && !virtAcq_.windowClosed()) {
@@ -958,7 +984,7 @@ public class MMAcquisition {
    }
 
    public int getLastAcquiredFrame() {
-      return virtAcq_.imageCache_.lastAcquiredFrame();
+      return imageCache_.lastAcquiredFrame();
    }
 
    public VirtualAcquisitionDisplay getAcquisitionWindow() {
