@@ -1273,7 +1273,7 @@ Global
 		{9440F1ED-DA8C-48CB-A3AD-42D373D5E4E1}.Debug|x64.ActiveCfg = Debug|Win32
 		{9440F1ED-DA8C-48CB-A3AD-42D373D5E4E1}.Release|Win32.ActiveCfg = Release|Win32
 		{9440F1ED-DA8C-48CB-A3AD-42D373D5E4E1}.Release|Win32.Build.0 = Release|Win32
-		{9440F1ED-DA8C-48CB-A3AD-42D373D5E4E1}.Release|x64.ActiveCfg = Release|Win32
+		{9440F1ED-DA8C-48CB-A3AD-42D373D5E4E1}.Release|x64.ActiveCfg = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
