@@ -76,6 +76,7 @@ public class MMAcquisition {
    private String comment_ = "";
    private String rootDirectory_;
    private VirtualAcquisitionDisplay virtAcq_;
+   private ImageCache imageCache_;
    private final boolean existing_;
    private final boolean virtual_;
    private final boolean show_;
@@ -129,10 +130,11 @@ public class MMAcquisition {
          }
   
       imageCache.setSummaryMetadata(summaryMetadata);
-
+      
       virtAcq_ = new VirtualAcquisitionDisplay(imageCache, eng);
       imageCache.addImageCacheListener(virtAcq_);
       this.summary_ = summaryMetadata;
+      this.imageCache_ = imageCache;
       } catch (JSONException ex) {
          ReportingUtils.showError(ex);
       }
@@ -705,11 +707,7 @@ public class MMAcquisition {
    }
 
    public ImageCache getImageCache() {
-      if (virtAcq_ == null) {
-         return null;
-      } else {
-         return virtAcq_.getImageCache();
-      }
+      return imageCache_;
    }
 
    /*
