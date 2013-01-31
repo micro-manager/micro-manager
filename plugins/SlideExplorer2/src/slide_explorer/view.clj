@@ -15,10 +15,6 @@
             [slide-explorer.paint :as paint]
             [clojure.core.memoize :as memo]))
 
-(def MIN-ZOOM 1/256)
-
-(def MAX-ZOOM 1)
-
 ; Order of operations:
 ;  Stitch (not done)
 ;  Crop (not done)
@@ -75,37 +71,6 @@
                     future-state (update-in screen-state [:zoom] * factor)]
                 (visible-tile-indices future-state channel-index))))))
 
-;; TILING
-
-(defn child-index
-  "Converts an x,y index to one in a child (1/2x zoom)."
-  [n]
-  (tiles/floor-int (/ n 2)))
-
-(defn child-indices [indices]
-  (-> indices
-     (update-in [:nx] child-index)
-     (update-in [:ny] child-index)
-     (update-in [:zoom] / 2)))
-
-(defn propagate-tile [memory-tiles-atom child parent]
-  (let [child-tile (tile-cache/load-tile memory-tiles-atom child)
-        parent-tile (tile-cache/load-tile memory-tiles-atom parent)
-        new-child-tile (image/insert-half-tile
-                         parent-tile
-                         [(even? (:nx parent))
-                          (even? (:ny parent))]
-                         child-tile)]
-    (tile-cache/add-tile memory-tiles-atom child new-child-tile)))
-
-(defn add-to-memory-tiles [memory-tiles-atom indices tile]
-  (let [full-indices (assoc indices :zoom 1)]
-    (tile-cache/add-tile memory-tiles-atom full-indices tile)
-    (loop [child (child-indices full-indices)
-           parent full-indices]
-      (when (<= MIN-ZOOM (:zoom child))
-        (propagate-tile memory-tiles-atom child parent)
-        (recur (child-indices child) child)))))
 
 ;; CONTRAST
 

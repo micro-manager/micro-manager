@@ -19,7 +19,13 @@
             [slide-explorer.canvas :as canvas]
             [slide-explorer.tiles :as tiles]
             [slide-explorer.persist :as persist]
-            [slide-explorer.positions :as positions]))
+            [slide-explorer.positions :as positions]
+            [slide-explorer.store :as store]))
+
+
+(def MIN-ZOOM 1/256)
+
+(def MAX-ZOOM 1)
 
 ;; affine transforms
 
@@ -171,6 +177,7 @@
          (remove acquired-this-slice)
          first)))
 
+
 ;; tile acquisition management
 
 (def image-processing-executor (Executors/newFixedThreadPool 1))
@@ -193,10 +200,8 @@
                      :nz (or nz (get-in image [:tags "SliceIndex"]))
                      :nt 0
                      :nc (or (get-in image [:tags "Channel"]) "Default")}]
-        (view/add-to-memory-tiles 
-          memory-tiles
-          indices
-          (image :proc))))))
+        (store/add-to-memory-tiles 
+          memory-tiles indices (image :proc) MIN-ZOOM)))))
     
 (defn acquire-next-tile
   [memory-tiles-atom
@@ -243,47 +248,6 @@
              :positions nil
              :slices nil
              :numFrames 0)))
-
-
-;; flat field determination
-
-(def flat-field-positions
-  (map #(* 1/8 %) (range -4 5)))
-
-(def flat-field-coords
-  (for [x flat-field-positions
-        y flat-field-positions]
-    [x y]))
-
-(defn flat-field-scaled-coords []
-  (let [width (mm/core getImageWidth)
-        height (mm/core getImageHeight)]
-    (map #(let [[x y] %] (Point. (* width x) (* height y)))
-         flat-field-coords))) 
-
-(defn flat-field-stage-coords [scaled-coords]
-  (let [transform (origin-here-stage-to-pixel-transform)]
-    (map #(affine/inverse-transform % transform)
-         scaled-coords)))
-    
-(defn flat-field-acquire []
-  (let [acq-settings (create-acquisition-settings)
-        scaled (flat-field-scaled-coords)
-        to-and-fro (concat scaled (reverse scaled))]
-    (for [coords (flat-field-stage-coords to-and-fro)]
-      (acquire-at coords acq-settings))))
-
-(defn flat-field-save [images]
-  (let [dir (io/file "flatfield")]
-    (.mkdirs dir)
-    (dorun
-      (loop [images0 (map :proc (flatten images))
-             i 0]
-        (println i)
-        (when-let [image (first images0)]
-          (slide-explorer.disk/write-tile dir {:i i} (first images0)))
-        (when-let [more (next images0)]
-          (recur more (inc i)))))))
 
 ;; SAVE AND LOAD SETTINGS
 
@@ -396,12 +360,13 @@
    "Cy5"  {:lut (image/lut-object Color/RED   0 255 1.0)}})
 
 (defn test-tile [nx ny nz nc]
-  (view/add-to-memory-tiles mt {:nx nx
+  (store/add-to-memory-tiles mt {:nx nx
                               :ny ny
                               :nz nz
                               :nt 0
                               :nc nc}
-                          (get-tile nil)))
+                             (get-tile nil)
+                             MIN-ZOOM))
 
 (defn test-tiles
   ([n] (test-tiles n n 0 0))
