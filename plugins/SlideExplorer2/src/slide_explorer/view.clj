@@ -88,23 +88,23 @@
      (update-in [:ny] child-index)
      (update-in [:zoom] / 2)))
 
-(defn propagate-tile [tile-map-atom child parent]
-  (let [child-tile (tile-cache/load-tile tile-map-atom child)
-        parent-tile (tile-cache/load-tile tile-map-atom parent)
+(defn propagate-tile [memory-tiles-atom child parent]
+  (let [child-tile (tile-cache/load-tile memory-tiles-atom child)
+        parent-tile (tile-cache/load-tile memory-tiles-atom parent)
         new-child-tile (image/insert-half-tile
                          parent-tile
                          [(even? (:nx parent))
                           (even? (:ny parent))]
                          child-tile)]
-    (tile-cache/add-tile tile-map-atom child new-child-tile)))
+    (tile-cache/add-tile memory-tiles-atom child new-child-tile)))
 
-(defn add-to-memory-tiles [tile-map-atom indices tile]
+(defn add-to-memory-tiles [memory-tiles-atom indices tile]
   (let [full-indices (assoc indices :zoom 1)]
-    (tile-cache/add-tile tile-map-atom full-indices tile)
+    (tile-cache/add-tile memory-tiles-atom full-indices tile)
     (loop [child (child-indices full-indices)
            parent full-indices]
       (when (<= MIN-ZOOM (:zoom child))
-        (propagate-tile tile-map-atom child parent)
+        (propagate-tile memory-tiles-atom child parent)
         (recur (child-indices child) child)))))
 
 ;; CONTRAST

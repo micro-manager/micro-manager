@@ -277,7 +277,7 @@
 
 ;; testing
     
-(defn show-image
+(defn show
   "Shows an AWT image or ImageProcessor in an ImageJ window."
   [img-or-proc]
   (.show (ImagePlus. "" img-or-proc))
