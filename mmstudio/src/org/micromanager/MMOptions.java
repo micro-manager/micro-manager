@@ -54,6 +54,7 @@ public class MMOptions {
    public boolean mpTiffMetadataFile_ = false;
    public boolean mpTiffSeperateFilesForPositions_ = true;
    public boolean syncExposureMainAndMDA_ = false;
+   public boolean hideMDADisplay_ = false;
    
    public void saveSettings() {
       Preferences root = Preferences.userNodeForPackage( this.getClass());

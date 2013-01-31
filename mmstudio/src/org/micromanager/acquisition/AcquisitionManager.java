@@ -301,9 +301,9 @@ public class AcquisitionManager {
       return keySet.toArray(keys);
    }
 
-   public String createAcquisition(JSONObject summaryMetadata, boolean diskCached, AcquisitionEngine engine) {
+   public String createAcquisition(JSONObject summaryMetadata, boolean diskCached, AcquisitionEngine engine, boolean displayOff) {
       String name = this.getUniqueAcquisitionName("Acq");
-      acqs_.put(name, new MMAcquisition(name, summaryMetadata, diskCached, engine));
+      acqs_.put(name, new MMAcquisition(name, summaryMetadata, diskCached, engine, !displayOff));
       return name;
    }
 }

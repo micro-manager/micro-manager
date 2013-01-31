@@ -105,13 +105,13 @@ public class MMAcquisition {
       virtual_ = diskCached;
    }
 
-   public MMAcquisition(String name, JSONObject summaryMetadata, boolean diskCached, AcquisitionEngine eng) {
+   public MMAcquisition(String name, JSONObject summaryMetadata, boolean diskCached, AcquisitionEngine eng, boolean show) {
       TaggedImageStorage imageFileManager;
       MMImageCache imageCache;
       name_ = name;
       virtual_ = diskCached;
       existing_ = false;
-      show_ = true;
+      show_ = show;
       try {
          if (summaryMetadata.has("Directory") && summaryMetadata.get("Directory").toString().length() > 0) {
             try {

@@ -91,7 +91,7 @@ public class OptionsDlg extends MMDialog {
       setTitle("Micro-Manager Options");
       springLayout = new SpringLayout();
       getContentPane().setLayout(springLayout);
-      setBounds(100, 100, 380, 375);
+      setBounds(100, 100, 380, 410);
       guiColors_ = new GUIColors();
       Dimension buttonSize = new Dimension(120, 20);
 
@@ -424,7 +424,18 @@ public class OptionsDlg extends MMDialog {
       springLayout.putConstraint(SpringLayout.NORTH, syncExposureMainAndMDA, 5, SpringLayout.SOUTH, seperateFilesForPositionsMPTiffCheckBox);
       syncExposureMainAndMDA.setSelected(opts_.syncExposureMainAndMDA_);
   
-   
+      
+      final JCheckBox hideMDAdisplay = new JCheckBox();
+      hideMDAdisplay.addActionListener(new ActionListener() {
+         public void actionPerformed(ActionEvent arg0) {
+            opts_.hideMDADisplay_ = hideMDAdisplay.isSelected();
+         }
+      });
+      hideMDAdisplay.setText("Hide MDA display");
+      getContentPane().add(hideMDAdisplay);
+      springLayout.putConstraint(SpringLayout.WEST, hideMDAdisplay, 20, SpringLayout.WEST, getContentPane());
+      springLayout.putConstraint(SpringLayout.NORTH, hideMDAdisplay, 5, SpringLayout.SOUTH, syncExposureMainAndMDA);
+      hideMDAdisplay.setSelected(opts_.hideMDADisplay_);
    }
 
    private void changeBackground() {

@@ -46,7 +46,7 @@ public class DefaultTaggedImagePipeline {
       BlockingQueue<TaggedImage> taggedImageQueue2 = ProcessorStack.run(taggedImageQueue, imageProcessors);
 
       // Create the default display
-      acqName_ = gui.createAcquisition(summaryMetadata_, diskCached);
+      acqName_ = gui.createAcquisition(summaryMetadata_, diskCached, gui.getHideMDADisplayOption());
       MMAcquisition acq = gui.getAcquisition(acqName_);
       display_ = acq.getAcquisitionWindow();
       imageCache_ = acq.getImageCache();

@@ -2290,6 +2290,10 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface, Device
    public boolean getSeperateFilesForPositionsMPTiff() {
       return options_.mpTiffSeperateFilesForPositions_;
    }
+   
+   public boolean getHideMDADisplayOption() {
+      return options_.hideMDADisplay_;
+   }
 
    private void updateTitle() {
       this.setTitle(MICRO_MANAGER_TITLE + " " + VERSION + " - " + sysConfigFile_);
@@ -4016,8 +4020,13 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface, Device
    }
 
    public String createAcquisition(JSONObject summaryMetadata, boolean diskCached) {
-      return acqMgr_.createAcquisition(summaryMetadata, diskCached, engine_);
+      return createAcquisition(summaryMetadata, diskCached, false);
    }
+   
+   public String createAcquisition(JSONObject summaryMetadata, boolean diskCached, boolean displayOff) {
+      return acqMgr_.createAcquisition(summaryMetadata, diskCached, engine_, displayOff);
+   }
+
 
    private void openAcquisitionSnap(String name, String rootDir, boolean show)
          throws MMScriptException {
