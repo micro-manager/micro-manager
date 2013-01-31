@@ -325,7 +325,7 @@
     (mm/load-mm (MMStudioMainFrame/getInstance))
     (let [settings (if-not new? (load-settings dir) {:tile-dimensions [512 512]})
           acquired-images (atom #{})
-          [screen-state memory-tiles panel] (view/show dir acquired-images settings)]
+          [screen-state memory-tiles panel] (view/show dir settings)]
       (when new?
         (mm/core waitForDevice (mm/core getXYStageDevice))
         (let [acq-settings (create-acquisition-settings)

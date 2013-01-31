@@ -202,13 +202,13 @@
       (paint-tiles overlay-tiles-atom screen-state)
       (paint-position-list screen-state)
       (paint-stage-position screen-state)
-      paint/enable-anti-aliasing
       (.setTransform original-transform)
-      (.setColor Color/WHITE)
+      paint/enable-anti-aliasing
       (canvas/draw (when-let [pixel-size (:pixel-size-um screen-state)]
                      (bar-widget-memo (:height screen-state)
                                       (/ pixel-size zoom scale))))
       ;(show-mouse-pos screen-state)
+      ;(.setColor Color/WHITE)
       ;(.drawString (str (select-keys screen-state [:mouse :x :y :z :zoom])) 10 20)
       ;(.drawString (str (user-controls/absolute-mouse-position screen-state)) 10 40)
       )))
@@ -226,8 +226,9 @@
 
 (defn load-visible-only
   "Runs visible-loader whenever screen-state-atom changes."
-  [screen-state-atom memory-tile-atom
-   overlay-tiles-atom acquired-images]
+  [screen-state-atom
+   memory-tile-atom
+   overlay-tiles-atom]
   (let [load-overlay (fn [_ _]
                        (overlay-loader
                          screen-state-atom
@@ -272,13 +273,14 @@
               :channels (sorted-map)
               :positions #{}))
 
-(defn view-panel [memory-tiles acquired-images settings]
+(defn view-panel [memory-tiles settings]
   (let [screen-state (atom (merge default-settings
                                   settings))
         overlay-tiles (tile-cache/create-tile-cache 100)
         panel (main-panel screen-state overlay-tiles)]
-    (load-visible-only screen-state memory-tiles
-                       overlay-tiles acquired-images)
+    (load-visible-only screen-state
+                       memory-tiles
+                       overlay-tiles)
     (paint/repaint-on-change panel [overlay-tiles screen-state]); [memory-tiles])
     [panel screen-state]))
 
@@ -326,11 +328,11 @@
            copy-settings
            #(select-keys % [:positions :channels :xy-stage-position :z])))
 
-(defn show [dir acquired-images settings]
+(defn show [dir settings]
   (let [memory-tiles (tile-cache/create-tile-cache 200 dir)
         frame (main-frame)
-        [panel screen-state] (view-panel memory-tiles acquired-images settings)
-        [panel2 screen-state2] (view-panel memory-tiles acquired-images settings)
+        [panel screen-state] (view-panel memory-tiles settings)
+        [panel2 screen-state2] (view-panel memory-tiles settings)
         split-pane (JSplitPane. JSplitPane/HORIZONTAL_SPLIT true panel panel2)]
     (doto split-pane
       (.setBorder nil)
@@ -341,7 +343,6 @@
     (def pnl panel)
     (def mt memory-tiles)
     (def f frame)
-    (def ai acquired-images)
     (println ss ss2 mt)
     (.add (.getContentPane frame) split-pane)
     (user-controls/setup-fullscreen frame)
