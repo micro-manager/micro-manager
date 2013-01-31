@@ -80,3 +80,17 @@
     (for [nx (range nl (inc nr))
           ny (range nt (inc nb))]
       [nx ny])))
+
+;; FINDING EXTENT OF TILES
+
+(defn index-range [indices tag]
+  (let [indices (map tag indices)]
+    {:min (apply min indices)
+     :max (apply max indices)}))
+
+(defn tile-range [acquired-images]
+  (let [tags [:nx :ny :nz]]
+    (zipmap tags (map #(index-range acquired-images %) tags))))
+
+
+        
