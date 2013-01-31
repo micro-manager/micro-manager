@@ -1,6 +1,7 @@
 (ns slide-explorer.flatfield
   (:require [slide-explorer.tile-cache :as tile-cache]
-            [slide-explorer.image :as image]))
+            [slide-explorer.image :as image]
+            [slide-explorer.store :as store]))
 
 
 (defn map-vals [f m]
@@ -22,25 +23,23 @@
       (image/gaussian-blur 50)
       image/normalize-to-max))
 
-(defn flat-field-by-channel [cache-value]
-  (->> cache-value
+(defn flat-field-by-channel [cache]
+  (->> @cache
        (unzoomed-indices-by-channel)
        (map-vals (partial images-in-cache cache))
        (map-vals flat-field)))
 
        
-;(defn run-correction [
+; TODO: (defn re-flatten [in-cache])
+  
 
 ;; testing
 
 (defn test-generate []
-  (->> @slide-explorer.view/mt
+  (->> slide-explorer.view/mt
        flat-field-by-channel
        (map-vals image/show)))
 
-(defn test-select []
-  (images-in-cache-for-flatfielding slide-explorer.view/mt))
-                      
                       
                       
 
@@ -84,4 +83,4 @@
           (slide-explorer.disk/write-tile dir {:i i} (first images0)))
         (when-let [more (next images0)]
           (recur more (inc i)))))))
-  )
+)
