@@ -161,20 +161,17 @@
                     (screen-state :tile-dimensions) 1)]
         (paint/draw-image g image x y)))))
 
-(defn paint-position [^Graphics2D g screen-state x y color]
-  (let [[w h] (:tile-dimensions screen-state)
-        zoom (:zoom screen-state)
-        scale (:scale screen-state)]
+(defn paint-position [^Graphics2D g
+                      {[w h] :tile-dimensions :keys [zoom scale] :as screen-state}
+                      x y color]
     (when (and x y w h color)
-;      (.drawRect g (* zoom x) (* zoom y)
-;                        (* zoom w) (* zoom h)))))
       (canvas/draw g
                    [:rect
                     {:l (inc (* zoom x)) :t (inc (* zoom y))
                      :w (* zoom w) :h (* zoom h)
                      :alpha 1
                      :stroke {:color color
-                              :width (max 4.0 (* 16 zoom))}}]))))
+                              :width (max 4.0 (* 16 zoom))}}])))
 
 (defn paint-stage-position [^Graphics2D g screen-state]
   (let [[x y] (:xy-stage-position screen-state)
