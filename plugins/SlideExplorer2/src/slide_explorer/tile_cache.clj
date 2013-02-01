@@ -1,5 +1,6 @@
 (ns slide-explorer.tile-cache
   (:require [clojure.core.cache :as cache]
+            [clojure.java.io :as io]
             [slide-explorer.disk :as disk]
             [slide-explorer.persist :as persist]
             [slide-explorer.reactive :as reactive]))
@@ -56,15 +57,20 @@
                                          (assoc % key tile)
                                          %))
                                (run-tile-listeners memory-tile-atom)
-                               tile)))))))
+                               tile))))))) 
 
 (defn create-tile-cache
-  ([lru-cache-limit directory]
+  ([lru-cache-limit directory read-only?]
+    (when-let [dir (io/file directory)]   
+      (if read-only?
+        (when-not (.exists dir)
+          (throw (Exception. "Directory not found")))
+        (.mkdirs dir)))
     (doto (atom (cache/lru-cache-factory {} :threshold lru-cache-limit))
       (tile-dir! directory)
       init-tile-listener-set!))
   ([lru-cache-limit]
-    (create-tile-cache lru-cache-limit nil)))
+    (create-tile-cache lru-cache-limit nil nil)))
     
 (defn move-cache
   [memory-tile-atom]

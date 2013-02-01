@@ -238,15 +238,15 @@
               :channels (sorted-map)
               :positions #{}))
 
-(defn view-panel [memory-tiles settings]
+(defn view-panel [memory-tile-atom settings]
   (let [screen-state (atom (merge default-settings
                                   settings))
         overlay-tiles (tile-cache/create-tile-cache 100)
         panel (main-panel screen-state overlay-tiles)]
     (load-visible-only screen-state
-                       memory-tiles
+                       memory-tile-atom
                        overlay-tiles)
-    (paint/repaint-on-change panel [overlay-tiles screen-state]); [memory-tiles])
+    (paint/repaint-on-change panel [overlay-tiles screen-state]); [memory-tile-atom])
     [panel screen-state]))
 
 (defn set-position! [screen-state-atom x y]
@@ -293,11 +293,10 @@
            copy-settings
            #(select-keys % [:positions :channels :xy-stage-position :z])))
 
-(defn show [dir settings]
-  (let [memory-tiles (tile-cache/create-tile-cache 200 dir)
-        frame (main-frame)
-        [panel screen-state] (view-panel memory-tiles settings)
-        [panel2 screen-state2] (view-panel memory-tiles settings)
+(defn show [memory-tile-atom settings]
+  (let [frame (main-frame)
+        [panel screen-state] (view-panel memory-tile-atom settings)
+        [panel2 screen-state2] (view-panel memory-tile-atom settings)
         split-pane (JSplitPane. JSplitPane/HORIZONTAL_SPLIT true panel panel2)]
     (doto split-pane
       (.setBorder nil)
@@ -306,7 +305,7 @@
     (def ss screen-state)
     (def ss2 screen-state2)
     (def pnl panel)
-    (def mt memory-tiles)
+    (def mt memory-tile-atom)
     (def f frame)
     (println ss ss2 mt)
     (.add (.getContentPane frame) split-pane)
@@ -319,7 +318,7 @@
     (copy-settings screen-state screen-state2)
     ;(handle-open frame)
     (.show frame)
-    [screen-state memory-tiles panel]))
+    [screen-state panel]))
 
 
 ;; testing

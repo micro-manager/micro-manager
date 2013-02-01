@@ -50,3 +50,7 @@
        (map file-to-key-map)
        (remove empty?)))
     
+(defn read-tiles
+  "A lazy seq of tiles, returned as [index image], from directory dir."
+  [dir]
+  (map #(vector % (read-tile dir %)) (available-keys dir)))

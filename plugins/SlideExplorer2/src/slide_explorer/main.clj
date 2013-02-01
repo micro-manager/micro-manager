@@ -289,7 +289,8 @@
     (mm/load-mm (MMStudioMainFrame/getInstance))
     (let [settings (if-not new? (load-settings dir) {:tile-dimensions [512 512]})
           acquired-images (atom #{})
-          [screen-state memory-tiles panel] (view/show dir settings)]
+          memory-tiles (tile-cache/create-tile-cache 200 dir (not new?))
+          [screen-state panel] (view/show memory-tiles settings)]
       (when new?
         (mm/core waitForDevice (mm/core getXYStageDevice))
         (let [acq-settings (create-acquisition-settings)

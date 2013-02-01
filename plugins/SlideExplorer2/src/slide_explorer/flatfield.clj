@@ -1,5 +1,7 @@
 (ns slide-explorer.flatfield
-  (:require [slide-explorer.tile-cache :as tile-cache]
+  (:require [clojure.java.io :as io]
+            [slide-explorer.tile-cache :as tile-cache]
+            [slide-explorer.disk :as disk]
             [slide-explorer.image :as image]
             [slide-explorer.store :as store]))
 
@@ -29,8 +31,15 @@
        (map-vals (partial images-in-cache cache))
        (map-vals flat-field)))
 
-       
-; TODO: (defn re-flatten [in-cache])
+(defn flatten-image [[index image] flat-field-by-channel]
+  (let [correction (flat-field-by-channel (:nc index))]
+    (image/divide-processors image correction)))
+
+(defn re-flatten [in-dir out-dir flat-field-by-channel]
+  (let [out-cache (tile-cache/create-tile-cache 200 out-dir false)]
+    (doseq [[index image] (disk/read-tiles in-dir)]
+      (let [flattened (flatten-image [index image] flat-field-by-channel)]
+        (store/add-to-memory-tiles out-cache index image 1/256)))))
   
 
 ;; testing
@@ -40,6 +49,12 @@
        flat-field-by-channel
        (map-vals image/show)))
 
+(defn transfer [in-cache]
+  (let [in-dir (tile-cache/tile-dir in-cache)
+        out-dir (io/file in-dir "flat")]
+    (re-flatten in-dir out-dir (flat-field-by-channel in-cache))))
+        
+        
                       
                       
 
