@@ -33,13 +33,19 @@
 
 (defn flatten-image [[index image] flat-field-by-channel]
   (let [correction (flat-field-by-channel (:nc index))]
-    (image/divide-processors image correction)))
+    [index (image/divide-processors image correction)]))
+
+;; Can I continuously update the flat field correction image for each channel,
+;; create zoomed-out versions, and then apply correction on the fly as
+;; I do with channel overlays? Memoization key here.
+;; Correction image can perhaps be generated using the remedian algorithm.
+;; See http://web.ipac.caltech.edu/staff/fmasci/home/statistics_refs/Remedian.pdf
 
 (defn re-flatten [in-dir out-dir flat-field-by-channel]
   (let [out-cache (tile-cache/create-tile-cache 200 out-dir false)]
     (doseq [[index image] (disk/read-tiles in-dir)]
-      (let [flattened (flatten-image [index image] flat-field-by-channel)]
-        (store/add-to-memory-tiles out-cache index image 1/256)))))
+      (let [[index2 image2] (flatten-image [index image] flat-field-by-channel)]
+        (store/add-to-memory-tiles out-cache index2 image2 1/256)))))
   
 
 ;; testing
