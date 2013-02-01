@@ -68,24 +68,54 @@
          Boolean/TYPE (.getBoolean f obj)
          (.get f obj))])))
 
+(defn very-pretty-print
+  "Standard pretty print, unless we have a string, in which case
+   omit the quotation marks."
+  [x]
+  (binding [*print-length* 20]
+    (if (.contains (str (type x)) "class [")
+      (print x)
+      (clojure.pprint/pprint x))))
+
+(defn send-to-log [s]
+    (.logMessage mmc s true))
+
+(defn handle-multiline [x]
+  (let [x-trimmed (clojure.string/trim x)]
+    (if (< 1 (count (.split x-trimmed "\n")))
+      (str "\n" x-trimmed)
+      x-trimmed)))
+
+(defn form-to-log-string [x]
+  (handle-multiline
+    (with-out-str
+      (very-pretty-print x))))
+
 (defn log
   "Log form x to the Micro-Manager log output (debug only)."
   [& x]
-  (binding [*print-length* 20]
-    (.logMessage mmc (apply print-str x) true)))
+  (let [converted (for [item x]
+                    (if (string? item)
+                      item
+                      (form-to-log-string item)))]
+    (->> converted
+         (interpose " ")
+         (apply str)
+         handle-multiline
+         send-to-log)))
 
 (defmacro log-cmd
   "Log the enclosed expr to the Micro-Manager log output (debug only)."
   ([cmd-count expr]
     (let [[cmd# args#] (split-at cmd-count expr)]
       `(let [expr# (concat '~cmd# (list ~@args#))]
-        (log (.trim (prn-str expr#)))
-        (let [result# ~expr]
-          (log
-            (if (nil? result#)
-              "  --> nil"
-              (str "  --> " result#)))
-            result#))))
+         (log expr#)
+         (let [result# ~expr]
+           (send-to-log
+             (str "--> "
+                  (forms-to-log-string
+                    result#)))
+           result#))))
    ([expr] `(log-cmd 1 ~expr)))
 
 
@@ -305,32 +335,34 @@
   "Convert a Micro-Manager ChannelSpec object to a clojure data map
    with friendly keys."
   [^ChannelSpec chan]
-  (-> chan
-    (data-object-to-map)
-    (select-and-rekey
-      :config_                 :name
-      :exposure_               :exposure
-      :zOffset_                :z-offset
-      :doZStack_               :use-z-stack
-      :skipFactorFrame_        :skip-frames
-      :useChannel_             :use-channel
-      :color_                  :color
-    )
-    (assoc :properties (get-config (core getChannelGroup) (.config_ chan)))))
+  (into (sorted-map)
+        (-> chan
+            (data-object-to-map)
+            (select-and-rekey
+              :config_                 :name
+              :exposure_               :exposure
+              :zOffset_                :z-offset
+              :doZStack_               :use-z-stack
+              :skipFactorFrame_        :skip-frames
+              :useChannel_             :use-channel
+              :color_                  :color
+              )
+            (assoc :properties (get-config (core getChannelGroup) (.config_ chan))))))
 
 (defn MultiStagePosition-to-map
   "Convert a Micro-Manager MultiStagePosition object to a clojure data map."
   [^MultiStagePosition msp]
   (if msp
-    {:label (.getLabel msp)
-     :axes
-        (into {}
-          (for [i (range (.size msp))]
-            (let [stage-pos (.get msp i)]
-              [(.stageName stage-pos)
-                (condp = (.numAxes stage-pos)
-                  1 [(.x stage-pos)]
-                  2 [(.x stage-pos) (.y stage-pos)])])))}))
+    (sorted-map
+      :label (.getLabel msp)
+      :axes
+      (into {}
+            (for [i (range (.size msp))]
+              (let [stage-pos (.get msp i)]
+                [(.stageName stage-pos)
+                 (condp = (.numAxes stage-pos)
+                   1 [(.x stage-pos)]
+                   2 [(.x stage-pos) (.y stage-pos)])]))))))
 
 (defn get-msp
   "Get a MultiStagePosition object from the Position List with the specified

@@ -622,7 +622,7 @@
 (defn run-acquisition [this settings out-queue cleanup?]
   (try
     (def acq-settings settings)
-    (log (str "Starting MD Acquisition: " settings))
+    (log "Starting MD Acquisition: " settings)
     (. gui enableLiveMode false)
     (. gui enableRoiButtons false)
     (prepare-state this)
@@ -645,25 +645,27 @@
 
 (defn convert-settings [^SequenceSettings settings]
   (def seqSettings settings)
-  (-> settings
-    (data-object-to-map)
-    (rekey
-      :slicesFirst             :slices-first
-      :timeFirst               :time-first
-      :keepShutterOpenSlices   :keep-shutter-open-slices
-      :keepShutterOpenChannels :keep-shutter-open-channels
-      :useAutofocus            :use-autofocus
-      :skipAutofocusCount      :autofocus-skip
-      :relativeZSlice          :relative-slices
-      :intervalMs              :interval-ms
-      :customIntervalsMs       :custom-intervals-ms
-    )
-    (assoc :frames (range (.numFrames settings))
-           :channels (vec (filter :use-channel (map ChannelSpec-to-map (.channels settings))))
-           :positions (vec (range (.. settings positions size)))
-           :slices (vec (.slices settings))
-           :default-exposure (core getExposure)
-           :custom-intervals-ms (vec (.customIntervalsMs settings)))))
+  (into (sorted-map)
+        (-> settings
+            (data-object-to-map)
+            (rekey
+              :slicesFirst             :slices-first
+              :timeFirst               :time-first
+              :keepShutterOpenSlices   :keep-shutter-open-slices
+              :keepShutterOpenChannels :keep-shutter-open-channels
+              :useAutofocus            :use-autofocus
+              :skipAutofocusCount      :autofocus-skip
+              :relativeZSlice          :relative-slices
+              :intervalMs              :interval-ms
+              :customIntervalsMs       :custom-intervals-ms
+              )
+            (assoc :frames (range (.numFrames settings))
+                   :channels (vec (filter :use-channel (map ChannelSpec-to-map (.channels settings))))
+                   :positions (vec (range (.. settings positions size)))
+                   :slices (vec (.slices settings))
+                   :default-exposure (core getExposure)
+                   :custom-intervals-ms (vec (.customIntervalsMs settings)))
+            )))
 
 (defn get-IJ-type [depth]
   (get {1 ImagePlus/GRAY8 2 ImagePlus/GRAY16 4 ImagePlus/COLOR_RGB 8 64} depth))
