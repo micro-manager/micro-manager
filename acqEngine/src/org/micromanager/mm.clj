@@ -113,7 +113,7 @@
          (let [result# ~expr]
            (send-to-log
              (str "--> "
-                  (forms-to-log-string
+                  (form-to-log-string
                     result#)))
            result#))))
    ([expr] `(log-cmd 1 ~expr)))
