@@ -40,6 +40,7 @@
 ;; I do with channel overlays? Memoization key here.
 ;; Correction image can perhaps be generated using the remedian algorithm.
 ;; See http://web.ipac.caltech.edu/staff/fmasci/home/statistics_refs/Remedian.pdf
+;; flattening seems to take around 5 ms on my computer.
 
 (defn re-flatten [in-dir out-dir flat-field-by-channel]
   (let [out-cache (tile-cache/create-tile-cache 200 out-dir false)]
