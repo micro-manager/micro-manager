@@ -139,6 +139,7 @@ public:
    int OnTriggerTimeOut(MM::PropertyBase* pProp, MM::ActionType eAct);
 
 private:
+   bool GetAttrValue(TSI_PARAM_ID ParamID, TSI_ATTR_ID AttrID, void *Data, uint32_t DataLength);
    bool ParamSupported (TSI_PARAM_ID ParamID);
    int ResizeImageBuffer();
    int ResizeImageBuffer(TSI_ROI_BIN& roiBin);

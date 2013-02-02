@@ -211,18 +211,36 @@ int TsiCam::Initialize()
    ret = CreateProperty(MM::g_Keyword_Exposure, "2.0", MM::Float, false, pAct);
    assert(ret == DEVICE_OK);
 
+   bool bRet;
+
+   // Unit of measurement for exposures - set to milliseconds
+   //uint32_t exp_unit = (uint32_t) TSI_EXP_UNIT_MILLISECONDS;
+   //bRet = camHandle_->SetParameter(TSI_PARAM_EXPOSURE_UNIT, (void*) &exp_unit);
+   //assert(bRet);
+
    // readout rate
    // try setting different rates to find out what is available
-   bool bRet = false;
+
+   bRet = false;
    vector<string> rateValues;
    uint32_t rateIdx(0);
    uint32_t rateIdxOrg(0);
+   uint32_t rateIdxMin(0);
+   uint32_t rateIdxMax(0);
    bRet = camHandle_->GetParameter(TSI_PARAM_READOUT_SPEED_INDEX, sizeof(uint32_t), &rateIdxOrg);
+   assert(bRet);
+
+   bRet = GetAttrValue(TSI_PARAM_READOUT_SPEED_INDEX, TSI_ATTR_MIN_VALUE, &rateIdxMin, sizeof (rateIdxMin)) ;
+   assert(bRet);
+
+   bRet = GetAttrValue(TSI_PARAM_READOUT_SPEED_INDEX, TSI_ATTR_MAX_VALUE, &rateIdxMax, sizeof (rateIdxMax)) ;
    assert(bRet);
 
    LogMessage("Getting readout speeds");
 
-   while (bRet)
+   rateIdx = rateIdxMin;
+
+   while (bRet && (rateIdx <= rateIdxMax))
    {
       ostringstream txt;
       uint32_t speedMHz(0);
@@ -276,13 +294,26 @@ int TsiCam::Initialize()
 	   // try setting different rates to find out what is available
 	   vector<string> tapValues;
 	   uint32_t tapIdxOrg(0);
+
 	   bool bRet;
+
+	   uint32_t tapsIdxMin(0);
+	   uint32_t tapsIdxMax(0);
 
 	   bRet = camHandle_->GetParameter(TSI_PARAM_TAPS_INDEX, sizeof(uint32_t), &tapIdxOrg);
 	   uint32_t tapIdx(0);
 
-	   while (bRet)
+	   bRet = GetAttrValue(TSI_PARAM_TAPS_INDEX, TSI_ATTR_MIN_VALUE, &tapsIdxMin, sizeof (tapsIdxMin)) ;
+	   assert(bRet);
+
+	   bRet = GetAttrValue(TSI_PARAM_TAPS_INDEX, TSI_ATTR_MAX_VALUE, &tapsIdxMax, sizeof (tapsIdxMax)) ;
+	   assert(bRet);
+
+	   tapIdx = tapsIdxMin;
+
+	   while (bRet && (tapIdx <= tapsIdxMax))
 	   {
+
 		  ostringstream txt;
 		  uint32_t taps(0);
 
@@ -448,7 +479,7 @@ double TsiCam::GetExposure() const
 
 void TsiCam::SetExposure(double dExpMs)
 {
-   uint32_t exp = (uint32_t)(dExpMs + 0.5);
+   uint32_t exp      = (uint32_t)(dExpMs + 0.5);
    bool bret = camHandle_->SetParameter(TSI_PARAM_EXPOSURE_TIME, (void*)&exp);
    assert(bret);
 }
@@ -639,6 +670,36 @@ int TsiCam::InsertImage()
    }
 
    return retCode;
+}
+
+bool TsiCam::GetAttrValue(TSI_PARAM_ID ParamID, TSI_ATTR_ID AttrID, void *Data, uint32_t DataLength) 
+{
+
+	bool return_value = false;
+
+	if (camHandle_) {
+
+		TSI_PARAM_ATTR_ID	ParamAttrID;
+
+		ParamAttrID.ParamID = ParamID;
+		ParamAttrID.AttrID  = AttrID;
+
+		if (camHandle_->SetParameter(TSI_PARAM_CMD_ID_ATTR_ID, &ParamAttrID)) {
+			if (camHandle_->GetParameter(TSI_PARAM_ATTR, DataLength, Data)) {
+				return_value = true;
+			} else {
+				LogMessage("Could not get parameter to acquire parameter attribute");
+	 		}
+		} else {
+			LogMessage("Could not set parameter to acquire parameter attribute");
+		}
+
+	} else {
+		LogMessage("Invalid Camera Handle");
+	}
+
+	return return_value;
+
 }
 
 bool TsiCam::ParamSupported (TSI_PARAM_ID ParamID)
