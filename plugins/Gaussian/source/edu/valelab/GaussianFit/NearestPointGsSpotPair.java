@@ -57,13 +57,16 @@ public class NearestPointGsSpotPair {
       double[] testPoint = {input.x, input.y};
       List<Entry<Integer>> result = we_.nearestNeighbor(testPoint, 1, false);
       
-      Integer index = result.get(0).value;
-      double distance = result.get(0).distance;
-      
-      GsSpotPair ret =  (GsSpotPair) theList_.get(index).copy();
-      
-      if (distance < maxDistanceSquared_)
-         return ret;
+      if (result != null && !result.isEmpty()) {
+         Integer index = result.get(0).value;
+         double distance = result.get(0).distance;
+
+         GsSpotPair ret = (GsSpotPair) theList_.get(index).copy();
+
+         if (distance < maxDistanceSquared_) {
+            return ret;
+         }
+      }
       
       return null;
    }
