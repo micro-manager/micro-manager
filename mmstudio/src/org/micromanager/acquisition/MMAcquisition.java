@@ -260,6 +260,7 @@ public class MMAcquisition {
       if (show_) {
           virtAcq_ = MMStudioMainFrame.getSimpleDisplay();
           virtAcq_.show();
+          imageCache_ = virtAcq_.getImageCache();
       }
 
       initialized_ = true;
