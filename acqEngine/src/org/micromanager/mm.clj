@@ -22,7 +22,8 @@
            [org.micromanager.utils ChannelSpec]
            [java.util Date]
            [ij IJ]
-           [javax.swing SwingUtilities]))
+           [javax.swing SwingUtilities])
+  (:require [clojure.pprint]))
 
 (declare gui)
 (declare mmc)
