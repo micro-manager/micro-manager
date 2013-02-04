@@ -123,9 +123,9 @@ public class ImageUtils {
    }
 
    public static ImageProcessor subtractImageProcessors(ImageProcessor proc1, ImageProcessor proc2) {
-      if (proc1.getBitDepth() == 8) {
+      if (proc1 instanceof ByteProcessor) {
          return subtractByteProcessors((ByteProcessor) proc1, (ByteProcessor) proc2);
-      } else if (proc1.getBitDepth() == 16) {
+      } else if (proc1 instanceof ShortProcessor) {
          return subtractShortProcessors((ShortProcessor) proc1, (ShortProcessor) proc2);
       } else {
          return null;
