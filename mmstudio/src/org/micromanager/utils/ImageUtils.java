@@ -1,7 +1,6 @@
 package org.micromanager.utils;
 
 import ij.ImagePlus;
-import ij.plugin.ImageCalculator;
 import ij.process.ByteProcessor;
 import ij.process.ColorProcessor;
 import ij.process.FloatProcessor;
@@ -15,9 +14,7 @@ import java.awt.Point;
 import mmcorej.CMMCore;
 import mmcorej.TaggedImage;
 import org.json.JSONObject;
-import org.micromanager.MMStudioMainFrame;
 import org.micromanager.acquisition.TaggedImageStorageDiskDefault;
-import org.micromanager.acquisition.TaggedImageStorageMultipageTiff;
 import org.micromanager.api.TaggedImageStorage;
 
 public class ImageUtils {
@@ -127,9 +124,8 @@ public class ImageUtils {
          return subtractByteProcessors((ByteProcessor) proc1, (ByteProcessor) proc2);
       } else if (proc1 instanceof ShortProcessor) {
          return subtractShortProcessors((ShortProcessor) proc1, (ShortProcessor) proc2);
-      } else {
-         return null;
-      }
+      } 
+      return null;
    }
    
    private static ByteProcessor subtractByteProcessors(ByteProcessor proc1, ByteProcessor proc2) {
