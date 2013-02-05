@@ -231,13 +231,13 @@
    :max ZProjector/MAX_METHOD
    :min ZProjector/MIN_METHOD
    :sum ZProjector/SUM_METHOD
-   :std-dev ZProjector/SD_METHOD
+   :standard-deviation ZProjector/SD_METHOD
    :median ZProjector/MEDIAN_METHOD})
 
 (defn intensity-projection
   "Runs an intensity projection across a collection of ImageProcessors,
    returning an ImageProcessor of the same type. Methods
-   are :average, :max, :min, :sum, :std-dev, :median."
+   are :average, :max, :min, :sum, :standard-deviation, :median."
   [method processors]
   (->
     (doto
@@ -255,13 +255,16 @@
     (.blurGaussian (GaussianBlur.) new-proc radius radius 0.0002)
     new-proc))
 
+(defn normalize
+  [processor value]
+  (let [float-proc (.convertToFloat processor)]
+    (.multiply processor (/ 1 value))
+    float-proc))
+
 (defn normalize-to-max
   "Rescale intensities so the max value of processor is 1.0."
   [processor]
-  (let [max (.max (.getStatistics processor))
-        float-proc (.convertToFloat processor)]
-    (.multiply float-proc (/ 1 max))
-    float-proc))
+  (normalize processor (.max (.getStatistics processor))))
 
 (defn divide-processors
   "Divide processor 1 by processor 2."
@@ -273,7 +276,14 @@
         (ImagePlus. "" proc2))
       .getProcessor
       (convert-to-type-like proc1)))
-  
+
+(defn pixel [proc x y]
+  (.getPixelValue proc x y)) 
+
+(defn center-pixel [proc]
+  (let [x (long (/ (.getWidth proc) 2))
+        y (long (/ (.getHeight proc) 2))]
+    (pixel proc x y)))    
 
 ;; testing
     

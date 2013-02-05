@@ -20,6 +20,20 @@
 (defn images-in-cache [cache indices]
   (map #(tile-cache/get-tile cache % false) indices))
 
+(defn gain-image [images]
+  (let [sigma-image (image/intensity-projection
+                      :standard-deviation images)]
+    (image/normalize sigma-image
+                    (image/center-pixel sigma-image))))
+
+(defn offset-image [images gain-image]
+  (let [mean-image (image/intensity-projection
+                        :mean images)
+        uncorrected-pixel (image/center-pixel mean-image)]
+    (doto (image/divide-processors mean-image gain-image)
+      (.multiply -1)
+      (.add uncorrected-pixel))))
+
 (defn flat-field [images]
   (-> (image/intensity-projection :median images)
       (image/gaussian-blur 50)
