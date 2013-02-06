@@ -28,16 +28,17 @@
 
 (defn offset-image [images gain-image]
   (let [mean-image (image/intensity-projection
-                        :mean images)
+                     :mean images)
         uncorrected-pixel (image/center-pixel mean-image)]
+    (println uncorrected-pixel)
     (doto (image/divide-processors mean-image gain-image)
-      (.multiply -1)
-      (.add uncorrected-pixel))))
+      ;(.multiply -1)
+      (.subtract (double uncorrected-pixel)))))
 
 (defn flat-field [images]
-  (-> (image/intensity-projection :median images)
-      (image/gaussian-blur 50)
-      image/normalize-to-max))
+  (let [gain (gain-image images)]
+    {:offset (image/gaussian-blur (offset-image images gain) 50)
+     :gain (image/gaussian-blur gain 50)}))
 
 (defn flat-field-by-channel [cache]
   (->> @cache
