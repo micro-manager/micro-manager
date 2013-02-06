@@ -79,10 +79,9 @@
 (def old-bounds (atom {}))
 
 (defn full-screen!
-  "Make the given window/frame full-screen. Pass nil to return all windows
-to normal size."
+  "Make the given window/frame full-screen."
   [window]
-  (when window
+  (when (and window (not (@old-bounds window)))
     (when-not (@old-bounds window)
       (swap! old-bounds assoc window (.getBounds window)))
     (.dispose window)
@@ -95,15 +94,17 @@ to normal size."
     (.show window)))
 
 (defn exit-full-screen!
+  "Restore the given full-screened window to its previous
+   (non-full-screen) bounds."
   [window]
-  (when window
+  (when (and window (@old-bounds window))
     (.dispose window)
     (.setUndecorated window false)
     (when (JavaUtils/isMac)
       (.setFullScreenWindow (window-screen window) nil))
     (when-let [bounds (@old-bounds window)]
       (.setBounds window bounds)
-      (swap! old-bounds assoc window nil))
+      (swap! old-bounds dissoc window))
     (.repaint window)
     (.show window)))
 
@@ -189,12 +190,17 @@ to normal size."
                                 
 
 (defn handle-wheel [component z-atom]
-  (.addMouseWheelListener component
-    (proxy [MouseAdapter] []
-      (mouseWheelMoved [e]
-                       (swap! z-atom update-in [:z]
-                              + (.getWheelRotation e)))))
-  z-atom)
+  (let [last-move (atom 0)]
+    (def lm last-move)
+    (.addMouseWheelListener component
+      (proxy [MouseAdapter] []
+        (mouseWheelMoved [e]
+          (let [t (System/currentTimeMillis)]
+            (when (< 250 (- t @last-move))
+              (reset! last-move t)
+              (swap! z-atom update-in [:z]
+                     (if (pos? (.getWheelRotation e)) inc dec))))))))
+    z-atom)
 
 (defn handle-resize [component size-atom]
   (let [update-size #(let [bounds (.getBounds component)]
@@ -290,16 +296,18 @@ to normal size."
          :y (long (+ y (/ mouse-y-centered zoom scale) (/ h -2)))
          :z z}))))
 
-(defn handle-refresh [component]
-  (bind-keys component ["R"] #(do (.repaint component) (println "repaint")) true))
-                           
+(defn handle-reset [window screen-state-atom]
+  (bind-window-keys window ["shift R"]
+               #(swap! screen-state-atom
+                       assoc :x 0 :y 0 :z 0 :zoom 1)))
+
 
 ;(defn handle-open [window]
 ;  (bind-window-keys window ["S"] create-dir-dialog))
 
 (defn make-view-controllable [panel screen-state-atom]
-  (handle-refresh panel)
-  ((juxt handle-drags handle-arrow-pan handle-wheel handle-resize handle-pointing)
+  ((juxt handle-reset handle-drags handle-arrow-pan
+         handle-wheel handle-resize handle-pointing)
          panel screen-state-atom)
   ((juxt handle-zoom handle-dive) ; watch-keys)
          (.getTopLevelAncestor panel) screen-state-atom))
