@@ -306,10 +306,10 @@
 ;  (bind-window-keys window ["S"] create-dir-dialog))
 
 (defn make-view-controllable [panel screen-state-atom]
-  ((juxt handle-reset handle-drags handle-arrow-pan
-         handle-wheel handle-resize handle-pointing)
+  ((juxt handle-drags handle-arrow-pan handle-wheel
+         handle-resize handle-pointing)
          panel screen-state-atom)
-  ((juxt handle-zoom handle-dive) ; watch-keys)
+  ((juxt handle-reset handle-zoom handle-dive) ; watch-keys)
          (.getTopLevelAncestor panel) screen-state-atom))
     
  
