@@ -82,14 +82,28 @@
   [^ImageProcessor proc]
   (.createImage proc))
 
+(defn convert-to-type
+  "Converts a processor to a type
+   as :byte, :short or :float"
+  [proc type]
+  (condp = type
+    :byte (.convertToByte proc false)
+    :short (.convertToShort proc false)
+    :float (.convertToFloat proc))) ; note different signature!
+
+(defn get-type
+  "Returns :float, :byte, or :short."
+  [proc]
+  ({ByteProcessor :byte
+    ShortProcessor :short
+    FloatProcessor :float}
+                   (type proc)))
+
 (defn convert-to-type-like
   "Converts proc to a processor of the same type
    as template-proc."
   [proc template-proc]
-  (condp = (type template-proc)
-    ByteProcessor (.convertToByte proc false)
-    ShortProcessor (.convertToShort proc false)
-    FloatProcessor (.convertToFloat proc false)))
+  (convert-to-type proc (get-type template-proc)))
 
 ;; Trimming and displacing images
 
@@ -266,16 +280,16 @@
   [processor]
   (normalize processor (.max (.getStatistics processor))))
 
-(defn divide-processors
-  "Divide processor 1 by processor 2."
-  [proc1 proc2]
+(defn combine-processors
+  "Arithmetically combine processor 1 with processor 2, where op
+   is :add, :subtract, :multiply, :divide."
+  [op proc1 proc2]
   (-> (ImageCalculator.)
       (.run 
-        "divide float"
+        (str (name op) " float")
         (ImagePlus. "" proc1)
         (ImagePlus. "" proc2))
-      .getProcessor
-      (convert-to-type-like proc1)))
+      .getProcessor))
 
 (defn pixel [proc x y]
   (.getPixelValue proc x y)) 
