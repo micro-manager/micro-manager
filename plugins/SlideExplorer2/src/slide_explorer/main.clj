@@ -3,6 +3,7 @@
            (java.awt.geom AffineTransform Point2D$Double)
            (java.util.prefs Preferences)
            (java.util.concurrent Executors)
+           (javax.swing JOptionPane)
            (org.micromanager AcquisitionEngine2010 MMStudioMainFrame)
            (org.micromanager.utils ImageUtils JavaUtils)
            (org.micromanager.acquisition TaggedImageQueue))
@@ -71,9 +72,8 @@
   "Set the current location to the origin of the 
    stage to pixel transform."
   []
-  (affine/set-destination-origin
-    (get-stage-to-pixel-transform)
-    (.getXYStagePosition mm/gui)))
+  (when-let [transform (get-stage-to-pixel-transform)]
+    (affine/set-destination-origin transform (.getXYStagePosition mm/gui))))
 
 (defn pixel-size-um
   "Compute the pixel size from a stage-to-pixel transform."
@@ -260,6 +260,18 @@
 (defn load-settings [dir]
   (read-string (slurp (io/file dir "metadata.txt"))))
 
+(defn pixels-not-calibrated []
+  (let [answer  (JOptionPane/showConfirmDialog
+                  nil
+                  "The current magnification setting needs to be calibrated.
+Would you like to run automatic pixel calibration?"
+                  "Pixel calibration required."
+                  JOptionPane/YES_NO_OPTION)]
+    (when (= answer JOptionPane/YES_OPTION)
+      (doto (eval '(org.micromanager.pixelcalibrator.PixelCalibratorPlugin.))
+        (.setApp (MMStudioMainFrame/getInstance));
+        .show))))
+
 ; Overall scheme
 ; the GUI is generally reactive.
 ; vars:
@@ -287,55 +299,57 @@
   "The main function that starts a slide explorer window."
   ([dir new?]
     (mm/load-mm (MMStudioMainFrame/getInstance))
-    (let [settings (if-not new? (load-settings dir) {:tile-dimensions [512 512]})
-          acquired-images (atom #{})
-          memory-tiles (tile-cache/create-tile-cache 200 dir (not new?))
-          [screen-state panel] (view/show memory-tiles settings)]
-      (when new?
-        (mm/core waitForDevice (mm/core getXYStageDevice))
-        (let [acq-settings (create-acquisition-settings)
-              affine-stage-to-pixel (origin-here-stage-to-pixel-transform)
-              z-origin (mm/core getPosition (mm/core getFocusDevice))
-              first-seq (acquire-at (affine/inverse-transform
-                                      (Point. 0 0) affine-stage-to-pixel)
-                                    z-origin
-                                    acq-settings)
-              explore-fn #(explore memory-tiles screen-state acquired-images
-                                   affine-stage-to-pixel)
-              stage (mm/core getXYStageDevice)]
-          (.mkdirs dir)
-          (def mt memory-tiles)
-          (def pnl panel)
-          (def affine affine-stage-to-pixel)
-          (user-controls/handle-double-click
-            panel
-            (partial navigate screen-state affine-stage-to-pixel))
-          (positions/handle-positions panel screen-state affine-stage-to-pixel)
-          (user-controls/handle-mode-keys panel screen-state)
-          (reactive/handle-update
-            current-xy-positions 
-            (fn [_ new-pos-map]
-              (let [[x y] (new-pos-map (mm/core getXYStageDevice))
-                    pixel (affine/transform (Point2D$Double. x y)
-                                            affine-stage-to-pixel)]
-                (swap! screen-state assoc :xy-stage-position
-                       (affine/point-to-vector pixel)))))
-          (swap! screen-state merge
-                 {:acq-settings acq-settings
-                  :pixel-size-um (pixel-size-um affine-stage-to-pixel)
-                  :z-origin z-origin
-                  :slice-size-um 1.0
-                  :dir dir
-                  :mode :explore
-                  :channels (initial-lut-maps first-seq)
-                  :tile-dimensions [(mm/core getImageWidth)
-                                    (mm/core getImageHeight)]})
-          (add-watch screen-state "explore" (fn [_ _ old new] (when-not (= old new)
-                                                                (explore-fn))))
-          (explore-fn)))
-      (save-settings dir @screen-state)
-      (def ss screen-state)
-      (def ai acquired-images)))
+    (if (and new? (not (origin-here-stage-to-pixel-transform)))
+      (pixels-not-calibrated)
+      (let [settings (if-not new? (load-settings dir) {:tile-dimensions [512 512]})
+            acquired-images (atom #{})
+            memory-tiles (tile-cache/create-tile-cache 200 dir (not new?))
+            [screen-state panel] (view/show memory-tiles settings)]
+        (when new?
+          (mm/core waitForDevice (mm/core getXYStageDevice))
+          (let [acq-settings (create-acquisition-settings)
+                affine-stage-to-pixel (origin-here-stage-to-pixel-transform)
+                z-origin (mm/core getPosition (mm/core getFocusDevice))
+                first-seq (acquire-at (affine/inverse-transform
+                                        (Point. 0 0) affine-stage-to-pixel)
+                                      z-origin
+                                      acq-settings)
+                explore-fn #(explore memory-tiles screen-state acquired-images
+                                     affine-stage-to-pixel)
+                stage (mm/core getXYStageDevice)]
+            (.mkdirs dir)
+            (def mt memory-tiles)
+            (def pnl panel)
+            (def affine affine-stage-to-pixel)
+            (user-controls/handle-double-click
+              panel
+              (partial navigate screen-state affine-stage-to-pixel))
+            (positions/handle-positions panel screen-state affine-stage-to-pixel)
+            (user-controls/handle-mode-keys panel screen-state)
+            (reactive/handle-update
+              current-xy-positions 
+              (fn [_ new-pos-map]
+                (let [[x y] (new-pos-map (mm/core getXYStageDevice))
+                      pixel (affine/transform (Point2D$Double. x y)
+                                              affine-stage-to-pixel)]
+                  (swap! screen-state assoc :xy-stage-position
+                         (affine/point-to-vector pixel)))))
+            (swap! screen-state merge
+                   {:acq-settings acq-settings
+                    :pixel-size-um (pixel-size-um affine-stage-to-pixel)
+                    :z-origin z-origin
+                    :slice-size-um 1.0
+                    :dir dir
+                    :mode :explore
+                    :channels (initial-lut-maps first-seq)
+                    :tile-dimensions [(mm/core getImageWidth)
+                                      (mm/core getImageHeight)]})
+            (add-watch screen-state "explore" (fn [_ _ old new] (when-not (= old new)
+                                                                  (explore-fn))))
+            (explore-fn)))
+        (save-settings dir @screen-state)
+        (def ss screen-state)
+        (def ai acquired-images))))
   ([]
     (go (io/file (str "tmp" (rand-int 10000000))) true)))
   
