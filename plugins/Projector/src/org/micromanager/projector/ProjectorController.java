@@ -15,7 +15,6 @@ import ij.plugin.frame.RoiManager;
 import ij.process.ImageProcessor;
 import java.awt.Point;
 import java.awt.Polygon;
-import java.awt.Rectangle;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
@@ -27,14 +26,12 @@ import java.util.prefs.Preferences;
 import javax.swing.JOptionPane;
 import mmcorej.CMMCore;
 import mmcorej.TaggedImage;
-import org.apache.commons.math.util.MathUtils;
 import org.micromanager.api.AcquisitionEngine;
 import org.micromanager.api.ScriptInterface;
 import org.micromanager.utils.ImageUtils;
 import org.micromanager.utils.JavaUtils;
 import org.micromanager.utils.MathFunctions;
 import org.micromanager.utils.ReportingUtils;
-import org.micromanager.lwm.LocalWeightedMean;
 
 /**
  *
@@ -75,11 +72,6 @@ public class ProjectorController {
        return (dev instanceof SLM);
    }
    
-   public LocalWeightedMean multipleAffineTransforms(Map mapping) {
-      LocalWeightedMean.PointMap map = new LocalWeightedMean.PointMap();
-      map.putAll(mapping);
-      return new LocalWeightedMean(2, map);
-   }
    
    public Point transform(Map<Polygon, AffineTransform> mapping, Point pt) {
        Set<Polygon> set = mapping.keySet();
