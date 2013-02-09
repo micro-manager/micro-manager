@@ -355,7 +355,7 @@
 
 (defn burst-cleanup []
    (when (@state :circular-buffer-overflow)
-   (ReportingUtils/showError "Circular buffer overflowed."))
+   (ReportingUtils/logError "Circular buffer overflowed."))
  (while (and (not (@state :stop)) (. mmc isSequenceRunning))
    (Thread/sleep 5)))
 

@@ -4,7 +4,7 @@
            (org.json JSONObject)
            (org.micromanager MMStudioMainFrame)
            (org.micromanager.api DataProcessor))
-  (:use [org.micromanager.mm :only (edt load-mm gui mmc)]))
+  (:use [org.micromanager.mm :only (edt load-mm core gui mmc)]))
 
 (load-mm (MMStudioMainFrame/getInstance))
 
@@ -82,3 +82,28 @@
   (remove-all-image-processors!)
   (add-image-processor! (duplicator-proc))
   (add-image-processor! (identity-proc)))
+
+
+;; popNextImage speed tests
+
+(def pop-lock (Object.))
+
+(defn pop-next []
+  (locking pop-lock
+           (when (or (core isSequenceRunning)
+                     (pos? (core getRemainingImageCount)))
+             (while (zero? (core getRemainingImageCount))
+               (Thread/sleep 10))
+             (core popNextImage))))
+
+(defn pop-n [n]
+  (repeatedly n pop-next))
+
+(defn pop-n-par [n]
+  (pmap (fn [_] (pop-next)) (range n)))
+
+(defn test-speed [n]
+  (do (core startSequenceAcquisition n 0 true)
+      (time (def q (doall (take-while identity (pop-n n))))))
+  (println (count q) (core isBufferOverflowed)))
+
