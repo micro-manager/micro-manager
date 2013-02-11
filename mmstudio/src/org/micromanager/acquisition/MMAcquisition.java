@@ -114,7 +114,9 @@ public class MMAcquisition {
       try {
          if (summaryMetadata.has("Directory") && summaryMetadata.get("Directory").toString().length() > 0) {
             try {
-               String acqPath = createAcqPath(summaryMetadata.getString("Directory"), summaryMetadata.getString("Prefix"));
+               String acqDirectory = createAcqDirectory(summaryMetadata.getString("Directory"), summaryMetadata.getString("Prefix"));
+               summaryMetadata.put("Prefix", acqDirectory);
+               String acqPath = summaryMetadata.getString("Directory") + File.separator + acqDirectory;
                imageFileManager = ImageUtils.newImageStorageInstance(acqPath, true, (JSONObject) null);
                imageCache_ = new MMImageCache(imageFileManager);
                if (!virtual_) {
@@ -141,12 +143,11 @@ public class MMAcquisition {
          ReportingUtils.showError(ex);
       }
   }
-
-   private String createAcqPath(String root, String prefix) throws Exception {
+   
+   private String createAcqDirectory(String root, String prefix) throws Exception {
       File rootDir = JavaUtils.createDirectory(root);
       int curIndex = getCurrentMaxDirIndex(rootDir, prefix + "_");
-      File acqDir = new File(root + "/" + prefix + "_" + (1 + curIndex));
-      return acqDir.getAbsolutePath();
+      return prefix + "_" + (1 + curIndex);
    }
 
    private int getCurrentMaxDirIndex(File rootDir, String prefix) throws NumberFormatException {
@@ -295,7 +296,11 @@ public class MMAcquisition {
          String dirName = rootDirectory_ + File.separator + name;
          if ((new File(dirName)).exists()) {
             try {
-               dirName = createAcqPath(rootDirectory_, name_);
+               String acqDirectory = createAcqDirectory(rootDirectory_, name_);
+               if (summary_ != null) {
+                  summary_.put("Prefix", acqDirectory);
+               }
+               dirName = rootDirectory_ + File.separator + acqDirectory;
             } catch (Exception ex) {
                throw new MMScriptException("Failed to figure out acq saving path.");
             }

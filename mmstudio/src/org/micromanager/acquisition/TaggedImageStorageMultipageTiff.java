@@ -24,21 +24,8 @@ package org.micromanager.acquisition;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.nio.ByteOrder;
 import java.util.*;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-import loci.common.DateTools;
-import loci.common.services.ServiceFactory;
-import loci.formats.MetadataTools;
-import loci.formats.meta.IMetadata;
-import loci.formats.ome.OMEXMLMetadata;
-import loci.formats.services.OMEXMLService;
-import loci.formats.services.OMEXMLServiceImpl;
 import mmcorej.TaggedImage;
-import ome.xml.model.enums.Binning;
-import ome.xml.model.primitives.*;
-import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.micromanager.MMStudioMainFrame;
@@ -49,8 +36,6 @@ import org.micromanager.utils.*;
 
 
 public final class TaggedImageStorageMultipageTiff implements TaggedImageStorage {
-
-   public static final String OME_DATE_FORMAT = "EEE MMM dd HH:mm:ss zzz yyyy";
    
    private JSONObject summaryMetadata_;
    private JSONObject displayAndComments_;
