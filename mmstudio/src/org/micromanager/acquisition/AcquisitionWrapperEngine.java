@@ -106,26 +106,31 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
    }
 
    protected String runAcquisition(SequenceSettings acquisitionSettings) {
-      if (!saveFiles_ || this.enoughDiskSpace()) {
-         try {
-            DefaultTaggedImagePipeline taggedImagePipeline = new DefaultTaggedImagePipeline(
-                    getAcquisitionEngine2010(),
-                    acquisitionSettings,
-                    taggedImageProcessors_,
-                    gui_,
-                    acquisitionSettings.save);
-            summaryMetadata_ = taggedImagePipeline.summaryMetadata_;
-            imageCache_ = taggedImagePipeline.imageCache_;
-            return taggedImagePipeline.acqName_;
-         } catch (Throwable ex) {
-            ReportingUtils.showError(ex);
+      //Make sure computer can write to selected location and that there is enough space to do so
+      if (saveFiles_) {
+         File root = new File(rootName_);
+         if (!root.canWrite()) {
+            ReportingUtils.showError("Unable to save data to selected location: check that location exists");
+            return null;
+         } else if (!this.enoughDiskSpace()) {
+            ReportingUtils.showError("Not enough space on disk to save the requested image set; acquisition canceled.");
             return null;
          }
-      } else {
-         ReportingUtils.showError("Not enough space on disk to save the requested image set; acquisition canceled.");
+      }
+      try {
+         DefaultTaggedImagePipeline taggedImagePipeline = new DefaultTaggedImagePipeline(
+                 getAcquisitionEngine2010(),
+                 acquisitionSettings,
+                 taggedImageProcessors_,
+                 gui_,
+                 acquisitionSettings.save);
+         summaryMetadata_ = taggedImagePipeline.summaryMetadata_;
+         imageCache_ = taggedImagePipeline.imageCache_;
+         return taggedImagePipeline.acqName_;
+      } catch (Throwable ex) {
+         ReportingUtils.showError(ex);
          return null;
       }
-
    }
 
    private int getNumChannels() {
