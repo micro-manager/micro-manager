@@ -107,3 +107,8 @@
       (time (def q (doall (take-while identity (pop-n n))))))
   (println (count q) (core isBufferOverflowed)))
 
+(defn simple-test [n]
+  (core startSequenceAcquisition n 0 true)
+  (time (dotimes [i n]
+          (core popNextImage))))
+
