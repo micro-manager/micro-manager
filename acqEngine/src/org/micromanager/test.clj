@@ -109,6 +109,7 @@
 
 (defn simple-test [n]
   (core startSequenceAcquisition n 0 true)
+  (while (core isSequenceRunning) (Thread/sleep 10))
   (time (dotimes [i n]
           (core popNextImage))))
 
