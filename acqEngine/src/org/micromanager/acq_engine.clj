@@ -64,7 +64,7 @@
 
 (defn state-assoc! [& args]
   (apply swap! state assoc args))
-   
+
 (def attached-runnables (atom (vec nil)))
 
 (def pending-devices (atom #{}))
@@ -107,7 +107,7 @@
             (= "Default" simple-channel-name))
       camera-channel-name
       (str simple-channel-name "-" camera-channel-name))))
-    
+
 ;; image metadata
 
 (defn generate-metadata [event state]
@@ -150,10 +150,10 @@
        "YPositionUm" y
        "ZPositionUm" (get-in state [:last-stage-positions (state :default-z-drive)])
       })))
-   
+
 (defn annotate-image [img event state elapsed-time-ms]
   {:pix (:pix img)
-   :tags 
+   :tags
    (merge
      (generate-metadata event state)
      (:tags img)
@@ -176,7 +176,7 @@
                        (add-to-pending ~device)
                        ~@body)]
     (when-not
-      (or 
+      (or
         (successful? (attempt#)) ; first attempt
         (do (log "second attempt") (successful? (attempt#)))
         (when false
@@ -206,7 +206,7 @@
 
 (defn get-z-stage-position [stage]
   (if-not (empty? stage) (core getPosition stage) 0))
-  
+
 (defn get-xy-stage-position [stage]
   (if-not (empty? stage)
     (let [xy (.getXYStagePosition gui)]
@@ -285,7 +285,7 @@
       (when new-seq
         (core loadPropertySequence d p (str-vector s))))
     (reset! active-property-sequences property-sequences)))
-  
+
 (defn load-slice-sequence [slice-sequence relative-z]
   (when slice-sequence
     (let [z (core getFocusDevice)
@@ -303,7 +303,7 @@
   (doseq [[[d p] vals] property-sequences]
     (core startPropertySequence d p)
     (swap! state assoc-in [:last-property-settings d p] (last vals))))
-          
+
 (defn start-slice-sequence [slices]
   (let [z-stage (core getFocusDevice)]
     (core startStageSequence z-stage)
@@ -322,19 +322,21 @@
     (core startSequenceAcquisition (if (first-trigger-missing?) (inc length) length) 0 true)
     (swap! state assoc-in [:last-stage-positions (core getFocusDevice)]
            (last absolute-slices))))
-  
-(defn pop-burst-image [timeout-ms]
+
+(defn pop-burst-image
+  "Returns a TaggedImage from the circular buffer -- times out if no
+   image is found in circular buffer after waiting up to timeout-ms."
+  [timeout-ms]
   (let [start-time (System/currentTimeMillis)]
     (while (and (. mmc isSequenceRunning)
                 (zero? (. mmc getRemainingImageCount)))
       (if (< timeout-ms (- (System/currentTimeMillis) start-time))
         (throw (Exception. "Timed out waiting for image to arrive from camera."))
         (Thread/sleep 5))))
-  (let [md (Metadata.)
-        pix (core popNextImageMD md)
-        tags (parse-core-metadata md)]
-    {:pix pix :tags (dissoc tags "StartTime-ms")}))
-    
+  (let [tagged-image (core popNextTaggedImage)]
+    {:pix (.pix tagged-image)
+     :tags (json-to-data (.tags tagged-image))}))
+
 (defn make-multicamera-channel [raw-channel-index camera-channel]
   (+ camera-channel (* (core getNumberOfCameraChannels) (or raw-channel-index 0))))
 
@@ -354,10 +356,60 @@
    burst-events))
 
 (defn burst-cleanup []
-   (when (@state :circular-buffer-overflow)
+ (when (@state :circular-buffer-overflow)
    (ReportingUtils/showError "Circular buffer overflowed."))
  (while (and (not (@state :stop)) (. mmc isSequenceRunning))
    (Thread/sleep 5)))
+
+(defn keep-collecting-from-circular-buffer?
+  "Returns true if there is no reason to stop popping images
+   from the circular buffer."
+  []
+  (when (. mmc isBufferOverflowed)
+    (swap! state assoc :circular-buffer-overflow true))
+  (and (not (@state :stop))
+       (or (pos? (. mmc getRemainingImageCount))
+           (and (. mmc isSequenceRunning)
+                (not (@state :circular-buffer-overflow))))))
+
+(defn assoc-if-nil [m k v]
+  (if (nil? (m k))
+    (assoc m k v)
+    m))
+
+(defn show [x]
+  (do (println x)
+      x))
+
+(defn tag-burst-image [image burst-events camera-channel-names camera-index-tag]
+  (swap! state assoc-if-nil :burst-time-offset
+         (- (elapsed-time @state)
+            (core-time-from-tags (image :tags))))
+  (let [cam-chan (if-let [cam-chan-str (get-in image [:tags camera-index-tag])]
+                   (Long/parseLong cam-chan-str)
+                   0)
+        image-number (Long/parseLong (get-in image [:tags "ImageNumber"]))
+        burst-event (nth burst-events image-number)
+        camera-channel-name (nth camera-channel-names cam-chan)
+        event (-> burst-event
+                  (update-in [:channel-index] make-multicamera-channel cam-chan)
+                  (update-in [:channel :name] super-channel-name camera-channel-name)
+                  (assoc :camera-channel-index cam-chan))
+        time-stamp (burst-time (:tags image) @state)]
+    (annotate-image image event @state time-stamp)))
+
+(defn produce-burst-images
+  "Pops images from circular buffer and sends them to output queue."
+  [burst-events camera-channel-names timeout-ms out-queue]
+  (let [total (* (count burst-events)
+                 (count camera-channel-names))
+        camera-index-tag (str (. mmc getCameraDevice) "-CameraChannelIndex")]
+    (doseq [i (range total) :while (keep-collecting-from-circular-buffer?)]
+      (.put out-queue
+            (-> (pop-burst-image timeout-ms)
+                (tag-burst-image burst-events camera-channel-names camera-index-tag)
+                make-TaggedImage))))
+  (burst-cleanup))
 
 (defn collect-burst-images [event out-queue]
   (let [pop-timeout-ms (+ 20000 (* 10 (:exposure event)))]
@@ -365,36 +417,8 @@
       (pop-burst-image pop-timeout-ms)) ; drop first image if first trigger doesn't happen
     (swap! state assoc :burst-time-offset nil)
     (let [burst-events (assign-z-offsets (event :burst-data))
-          camera-index (str (core getCameraDevice) "-CameraChannelIndex")
-          camera-channel-count (core getNumberOfCameraChannels)
-          bursts-per-camera-channel (vec (repeat camera-channel-count burst-events))
           camera-channel-names (get-camera-channel-names)]
-      (doall
-        (loop [burst-seqs bursts-per-camera-channel i 0]
-          (when (core isBufferOverflowed)
-            (swap! state assoc :circular-buffer-overflow true))
-          (when (and (not (@state :stop))
-                     (not (apply = nil burst-seqs))
-                     (or (pos? (core getRemainingImageCount))
-                         (and (core isSequenceRunning)
-                              (not (@state :circular-buffer-overflow)))))
-            (let [image (pop-burst-image pop-timeout-ms)
-                  cam-chan (if-let [cam-chan-str (get-in image [:tags camera-index])]
-                             (Long/parseLong cam-chan-str)
-                             0)
-                  camera-channel-name (nth camera-channel-names cam-chan)
-                  event (-> (first (burst-seqs cam-chan))
-                            (update-in [:channel-index] make-multicamera-channel cam-chan)
-                            (update-in [:channel :name] super-channel-name camera-channel-name)
-                            (assoc :camera-channel-index cam-chan))]
-              (when (zero? i)
-                (swap! state assoc
-                       :burst-time-offset (- (elapsed-time @state)
-                                             (core-time-from-tags (image :tags)))))
-              (.put out-queue (make-TaggedImage (annotate-image image event @state
-                                                                (burst-time (:tags image) @state))))
-              (recur (update-in burst-seqs [cam-chan] next) (inc i)))))))
-    (burst-cleanup))) ;; burst is done!
+      (produce-burst-images burst-events camera-channel-names pop-timeout-ms out-queue))))
 
 (defn collect-snap-image [event out-queue]
   (let [image
@@ -440,7 +464,7 @@
         delta (- target-time (jvm-time-ms))]
      (when (and (< 1000 delta)
                 (@state :live-mode-on)
-                (not (.isLiveModeOn gui)))    
+                (not (.isLiveModeOn gui)))
       (.enableLiveMode gui true))
     (when (pos? delta)
       (interruptible-sleep delta))
@@ -498,7 +522,8 @@
             stage-name (.stageName stage-pos)]
         (when (= 1 (.numAxes stage-pos))
           (when (z-stage-needs-adjustment stage-name)
-            (set-msp-z-position msp-index stage-name (get-z-stage-position stage-name))))))))
+            (set-msp-z-position msp-index stage-name
+                                (get-z-stage-position stage-name))))))))
 
 (defn recall-z-reference [current-position]
   (let [z-drive (@state :default-z-drive)]
@@ -572,7 +597,7 @@
                            (ReportingUtils/showError t "Acquisition cleanup failed.")))))
 
 ;; running events
-  
+
 (defn make-event-fns [event out-queue]
   (let [current-position (:position event)
         z-drive (@state :default-z-drive)
@@ -585,7 +610,8 @@
         (list
           #(log event)
           (when (:new-position event)
-            (for [[axis pos] (:axes (MultiStagePosition-to-map (get-msp current-position)))
+            (for [[axis pos] (:axes (MultiStagePosition-to-map
+                                      (get-msp current-position)))
                   :when pos]
               #(apply set-stage-position axis pos)))
           (for [prop (get-in event [:channel :properties])]
@@ -660,7 +686,8 @@
               :customIntervalsMs       :custom-intervals-ms
               )
             (assoc :frames (range (.numFrames settings))
-                   :channels (vec (filter :use-channel (map ChannelSpec-to-map (.channels settings))))
+                   :channels (vec (filter :use-channel
+                                          (map ChannelSpec-to-map (.channels settings))))
                    :positions (vec (range (.. settings positions size)))
                    :slices (vec (.slices settings))
                    :default-exposure (core getExposure)
@@ -685,27 +712,31 @@
     (let [n (long (core getNumberOfComponents))]
       (set-property default-cam)
       (get {1 1 , 4 3} n))))
-      
+
 (defn super-channels [simple-channel camera-channel-names]
   (if (< 1 (count camera-channel-names))
-    (map #(update-in simple-channel [:name] super-channel-name %) camera-channel-names)
-    simple-channel)) 
+    (map #(update-in simple-channel [:name] super-channel-name %)
+         camera-channel-names)
+    simple-channel))
 
 (defn all-super-channels [simple-channels camera-channel-names]
   (flatten (map #(super-channels % camera-channel-names) simple-channels)))
 
 (defn channel-colors [simple-channels super-channels channel-names]
   (if (= (count simple-channels) (count super-channels))
-    (map #(.getRGB (:color %)) super-channels) 
+    (map #(.getRGB (:color %)) super-channels)
     (map #(. MMAcquisition getMultiCamDefaultChannelColor % (channel-names %))
-         (range (count super-channels)))))    
-  
+         (range (count super-channels)))))
+
 (defn make-summary-metadata [settings]
   (let [depth (core getBytesPerPixel)
         channels (:channels settings)
         num-camera-channels (core getNumberOfCameraChannels)
-        simple-channels (if-not (empty? channels) channels [{:name "Default" :color java.awt.Color/WHITE}])
-        super-channels (all-super-channels simple-channels (get-camera-channel-names))
+        simple-channels (if-not (empty? channels)
+                          channels
+                          [{:name "Default" :color java.awt.Color/WHITE}])
+        super-channels (all-super-channels simple-channels 
+                                           (get-camera-channel-names))
         ch-names (vec (map :name super-channels))]
      (JSONObject. {
       "BitDepth" (core getImageBitDepth)
@@ -757,9 +788,9 @@
   (select-values-match?
     @current-album-tags
     image-tags
-    ["Width" "Height" "PixelType"]))  
+    ["Width" "Height" "PixelType"]))
 
-(defn initialize-display-ranges [window]  
+(defn initialize-display-ranges [window]
   (do (.setChannelDisplayRange window 0 0 256)
       (.setChannelDisplayRange window 1 0 256)
       (.setChannelDisplayRange window 2 0 256)))
@@ -783,7 +814,8 @@
   (core snapImage)
   (let [events (make-multicamera-events (create-basic-event))]
     (for [event events]
-      (annotate-image (collect-snap-image event nil) event (create-basic-state) nil))))
+      (annotate-image (collect-snap-image event nil) event
+                      (create-basic-state) nil))))
 
 (defn add-to-album []
   (doseq [img (acquire-tagged-images)]
@@ -868,7 +900,7 @@
                  :when (not (neg? v))]
             [k v]))]
     (swap! attached-runnables conj [template runnable])))
-  
+
 (defn -clearRunnables [this]
   (reset! attached-runnables (vec nil)))
 
@@ -892,4 +924,3 @@
 (defn stop []
   (when-let [acq-thread (:acq-thread (.state last-acq))]
     (.stop acq-thread)))
-
