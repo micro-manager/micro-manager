@@ -1,5 +1,6 @@
 (ns org.micromanager.test
   (:import (java.util List)
+           (java.util.concurrent Executors)
            (mmcorej TaggedImage)
            (org.json JSONObject)
            (org.micromanager MMStudioMainFrame)
@@ -104,12 +105,35 @@
 
 (defn test-speed [n]
   (do (core startSequenceAcquisition n 0 true)
-      (time (def q (doall (take-while identity (pop-n n))))))
-  (println (count q) (core isBufferOverflowed)))
+      (time (dotimes [i n] (pop-next))))
+  (println (core isBufferOverflowed)))
 
-(defn simple-test [n]
+(defn fill-circular-buffer [n]
   (core startSequenceAcquisition n 0 true)
-  (while (core isSequenceRunning) (Thread/sleep 10))
+  (while (core isSequenceRunning) (Thread/sleep 10)))
+
+(defn single-thread-pop-test [n]
+  (fill-circular-buffer n)
   (time (dotimes [i n]
           (core popNextImage))))
+
+  
+(defn multithread-pop [nthreads n]
+  (fill-circular-buffer n)
+  (let [pop-service (Executors/newFixedThreadPool nthreads)
+        pop-fn (cast Runnable #(core popNextImage))]
+    (time
+      (do
+        (dotimes [i n]
+          (.submit pop-service pop-fn))
+        (while (pos? (core getRemainingImageCount))
+          (Thread/sleep 1))))))
+
+(defn repeat-with-params [f & more]
+  (doseq [[n args] (partition 2 more)]
+    (println n args)
+    (doall
+      (repeatedly n #(apply f args)))))
+    
+    
 
