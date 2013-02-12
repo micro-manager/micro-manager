@@ -70,6 +70,7 @@ private:
    unsigned int height_;
    unsigned int pixDepth_;
    long imageCounter_;
+   std::map<std::string, long> imageNumbers_;
    long insertIndex_;
    long saveIndex_;
    unsigned long memorySizeMB_;

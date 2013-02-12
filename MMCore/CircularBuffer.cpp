@@ -58,6 +58,8 @@ CircularBuffer::~CircularBuffer() {}
 bool CircularBuffer::Initialize(unsigned channels, unsigned slices, unsigned int w, unsigned int h, unsigned int pixDepth)
 {
 
+   imageNumbers_.clear();
+
    bool ret = true;
    try
    {
@@ -182,8 +184,15 @@ bool CircularBuffer::InsertMultiChannel(const unsigned char* pixArray, unsigned 
             md = *pMd;
          }
 
+         std::string cameraName = md.GetSingleTag("Camera").GetValue();
+         if (imageNumbers_.end() == imageNumbers_.find(cameraName))
+         {
+            imageNumbers_[cameraName] = 0;
+         }
+
          // insert image number. 
-         md.put(MM::g_Keyword_Metadata_ImageNumber, CDeviceUtils::ConvertToString(imageCounter_));
+         md.put(MM::g_Keyword_Metadata_ImageNumber, CDeviceUtils::ConvertToString(imageNumbers_[cameraName]));
+         ++imageNumbers_[cameraName];
 
          if (!md.HasTag(MM::g_Keyword_Elapsed_Time_ms))
          {
