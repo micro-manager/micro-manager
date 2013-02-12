@@ -38,8 +38,6 @@ const long long bytesInMB = 1 << 20;
 const long adjustThreshold = LONG_MAX / 2;
 const unsigned long maxCBSize = 100000;    //a reasonable limit to circular buffer size
 
-static MMThreadLock g_bufferLock;
-
 CircularBuffer::CircularBuffer(unsigned int memorySizeMB) :
    width_(0), 
    height_(0), 
@@ -57,7 +55,7 @@ CircularBuffer::~CircularBuffer() {}
 
 bool CircularBuffer::Initialize(unsigned channels, unsigned slices, unsigned int w, unsigned int h, unsigned int pixDepth)
 {
-
+   MMThreadGuard guard(g_bufferLock);
    imageNumbers_.clear();
 
    bool ret = true;
@@ -120,11 +118,13 @@ bool CircularBuffer::Initialize(unsigned channels, unsigned slices, unsigned int
 
 unsigned long CircularBuffer::GetSize() const
 {
+   MMThreadGuard guard(g_bufferLock);
    return (unsigned long)frameArray_.size();
 }
 
 unsigned long CircularBuffer::GetFreeSize() const
 {
+   MMThreadGuard guard(g_bufferLock);
    long freeSize = (long)frameArray_.size() - (insertIndex_ - saveIndex_);
    if (freeSize < 0)
       return 0;
@@ -134,6 +134,7 @@ unsigned long CircularBuffer::GetFreeSize() const
 
 unsigned long CircularBuffer::GetRemainingImageCount() const
 {
+   MMThreadGuard guard(g_bufferLock);
    return (unsigned long)(insertIndex_ - saveIndex_);
 }
 
