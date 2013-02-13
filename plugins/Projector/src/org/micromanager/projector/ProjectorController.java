@@ -356,13 +356,15 @@ public class ProjectorController {
       final ProjectorController thisController = this;
       return new MouseAdapter() {
          public void mouseClicked(MouseEvent e) {
-            Point p = e.getPoint();
-            ImageCanvas canvas = (ImageCanvas) e.getSource();
-            Point pOffscreen = new Point(canvas.offScreenX(p.x),canvas.offScreenY(p.y));
-            Point devP = transform((Map<Polygon, AffineTransform>) loadMapping(), new Point(pOffscreen.x, pOffscreen.y));
-            if (devP != null) {
-                displaySpot(devP.x, devP.y, thisController.getPointAndShootInterval());
-            }
+              if (e.isControlDown()) {
+                  Point p = e.getPoint();
+                  ImageCanvas canvas = (ImageCanvas) e.getSource();
+                  Point pOffscreen = new Point(canvas.offScreenX(p.x), canvas.offScreenY(p.y));
+                  Point devP = transform((Map<Polygon, AffineTransform>) loadMapping(), new Point(pOffscreen.x, pOffscreen.y));
+                  if (devP != null) {
+                      displaySpot(devP.x, devP.y, thisController.getPointAndShootInterval());
+                  }
+              }
          }
       };
    }
