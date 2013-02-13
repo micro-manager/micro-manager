@@ -78,7 +78,7 @@
 (defn pixel-size-um
   "Compute the pixel size from a stage-to-pixel transform."
   [stage-to-pixel-transform]
-  (Math/pow (.getDeterminant stage-to-pixel-transform) -1/2))
+  (Math/pow (Math/abs (.getDeterminant stage-to-pixel-transform)) -1/2))
 
 ;; tagged image stuff
 
@@ -93,6 +93,12 @@
    :tags (mm/json-to-data (.tags tagged-image))})
 
 ;; stage communications
+
+(defn non-empty [x]
+  (when-not (empty? x) x))
+
+(defn focus-device []
+  (non-empty (mm/core getFocusDevice)))
 
 (defn get-xy-position []
   (mm/core waitForDevice (mm/core getXYStageDevice))
@@ -109,7 +115,7 @@
 
 (defn set-z-position
   [z]
-  (let [stage (mm/core getFocusDevice)]
+  (when-let [stage (focus-device)]
     (when (not= z (@current-z-positions stage))
       (mm/core setPosition stage z)
       (mm/core waitForDevice stage))
@@ -309,7 +315,9 @@ Would you like to run automatic pixel calibration?"
           (mm/core waitForDevice (mm/core getXYStageDevice))
           (let [acq-settings (create-acquisition-settings)
                 affine-stage-to-pixel (origin-here-stage-to-pixel-transform)
-                z-origin (mm/core getPosition (mm/core getFocusDevice))
+                z-origin (if-let [z-drive (focus-device)]
+                           (mm/core getPosition z-drive)
+                           0 )
                 first-seq (acquire-at (affine/inverse-transform
                                         (Point. 0 0) affine-stage-to-pixel)
                                       z-origin
