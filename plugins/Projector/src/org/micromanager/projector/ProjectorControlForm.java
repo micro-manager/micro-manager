@@ -11,9 +11,11 @@
 package org.micromanager.projector;
 
 import ij.IJ;
+import java.util.ArrayList;
 import javax.swing.JSpinner;
 import javax.swing.SpinnerNumberModel;
 import javax.swing.SwingUtilities;
+import mmcorej.CMMCore;
 import org.micromanager.utils.GUIUtils;
 
 /**
@@ -22,6 +24,7 @@ import org.micromanager.utils.GUIUtils;
  */
 public class ProjectorControlForm extends javax.swing.JFrame implements OnStateListener {
 
+   private final CMMCore core_;
    private final ProjectorController controller_;
    private final ProjectorPlugin plugin_;
    private int numROIs_;
@@ -29,14 +32,16 @@ public class ProjectorControlForm extends javax.swing.JFrame implements OnStateL
    /**
     * Creates new form ProjectorControlForm
     */
-   public ProjectorControlForm(ProjectorPlugin plugin, ProjectorController controller) {
+   public ProjectorControlForm(ProjectorPlugin plugin, ProjectorController controller, CMMCore core) {
       initComponents();
       plugin_ = plugin;
       controller_ = controller;
+      core_ = core;
       allPixelsButton.setEnabled(controller_.isSLM());
       GUIUtils.recallPosition(this);
       pointAndShootOffButton.setSelected(true);
       updateROISettings();
+      populateChannelComboBox();
    }
 
    /**
@@ -82,6 +87,8 @@ public class ProjectorControlForm extends javax.swing.JFrame implements OnStateL
         offButton = new javax.swing.JButton();
         allPixelsButton = new javax.swing.JButton();
         centerButton = new javax.swing.JButton();
+        channelComboBox = new javax.swing.JComboBox();
+        jLabel4 = new javax.swing.JLabel();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
         setTitle("Projector Controls");
@@ -154,7 +161,7 @@ public class ProjectorControlForm extends javax.swing.JFrame implements OnStateL
                             .add(pointAndShootOffButton, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                             .add(jLabel2)))
                     .add(jLabel3))
-                .addContainerGap(86, Short.MAX_VALUE))
+                .addContainerGap(103, Short.MAX_VALUE))
         );
         jPanel1Layout.setVerticalGroup(
             jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
@@ -302,7 +309,7 @@ public class ProjectorControlForm extends javax.swing.JFrame implements OnStateL
                                         .add(roiLoopSpinner, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 36, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
                                         .add(roiLoopTimesLabel)))))
-                        .add(0, 4, Short.MAX_VALUE)))
+                        .add(0, 21, Short.MAX_VALUE)))
                 .addContainerGap())
             .add(jPanel3Layout.createSequentialGroup()
                 .add(25, 25, 25)
@@ -397,6 +404,15 @@ public class ProjectorControlForm extends javax.swing.JFrame implements OnStateL
             }
         });
 
+        channelComboBox.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "Item 1", "Item 2", "Item 3", "Item 4" }));
+        channelComboBox.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                channelComboBoxActionPerformed(evt);
+            }
+        });
+
+        jLabel4.setText("Phototargeting channel:");
+
         org.jdesktop.layout.GroupLayout jPanel2Layout = new org.jdesktop.layout.GroupLayout(jPanel2);
         jPanel2.setLayout(jPanel2Layout);
         jPanel2Layout.setHorizontalGroup(
@@ -405,13 +421,17 @@ public class ProjectorControlForm extends javax.swing.JFrame implements OnStateL
                 .addContainerGap()
                 .add(jPanel2Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
                     .add(jPanel2Layout.createSequentialGroup()
+                        .add(jLabel4)
+                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                        .add(channelComboBox, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 126, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+                    .add(jPanel2Layout.createSequentialGroup()
                         .add(onButton)
                         .add(98, 98, 98)
                         .add(calibrateButton))
                     .add(offButton)
                     .add(centerButton)
                     .add(allPixelsButton))
-                .addContainerGap(159, Short.MAX_VALUE))
+                .addContainerGap(150, Short.MAX_VALUE))
         );
         jPanel2Layout.setVerticalGroup(
             jPanel2Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
@@ -426,7 +446,11 @@ public class ProjectorControlForm extends javax.swing.JFrame implements OnStateL
                 .add(centerButton)
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(allPixelsButton)
-                .addContainerGap(183, Short.MAX_VALUE))
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, 38, Short.MAX_VALUE)
+                .add(jPanel2Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
+                    .add(jLabel4)
+                    .add(channelComboBox, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+                .add(125, 125, 125))
         );
 
         mainTabbedPane.addTab("Setup", jPanel2);
@@ -545,6 +569,10 @@ public class ProjectorControlForm extends javax.swing.JFrame implements OnStateL
       updateROISettings();
    }//GEN-LAST:event_startFrameSpinnerStateChanged
 
+    private void channelComboBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_channelComboBoxActionPerformed
+        controller_.setTargetingChannel(channelComboBox.getSelectedItem());
+    }//GEN-LAST:event_channelComboBoxActionPerformed
+
    private int getRoiRepetitionsSetting() {
       return getSpinnerValue(roiLoopSpinner);
    }
@@ -609,12 +637,14 @@ public class ProjectorControlForm extends javax.swing.JFrame implements OnStateL
     private javax.swing.JButton allPixelsButton;
     private javax.swing.JButton calibrateButton;
     private javax.swing.JButton centerButton;
+    private javax.swing.JComboBox channelComboBox;
     private javax.swing.JLabel closeShutterLabel;
     private javax.swing.JLabel framesLabel;
     private javax.swing.JButton jButton1;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel2;
     private javax.swing.JLabel jLabel3;
+    private javax.swing.JLabel jLabel4;
     private javax.swing.JPanel jPanel1;
     private javax.swing.JPanel jPanel2;
     private javax.swing.JPanel jPanel3;
@@ -659,4 +689,14 @@ public class ProjectorControlForm extends javax.swing.JFrame implements OnStateL
          }
       });
    }
+   
+    void populateChannelComboBox() {
+        String selected = (String) channelComboBox.getSelectedItem();
+        channelComboBox.removeAllItems();
+        channelComboBox.addItem("");
+        for (String preset : core_.getAvailableConfigs(core_.getChannelGroup())) {
+            channelComboBox.addItem(preset);
+        }
+        channelComboBox.setSelectedItem(selected);
+    }
 }

@@ -22,9 +22,12 @@ import java.awt.geom.AffineTransform;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 import java.util.*;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import java.util.prefs.Preferences;
 import javax.swing.JOptionPane;
 import mmcorej.CMMCore;
+import mmcorej.Configuration;
 import mmcorej.TaggedImage;
 import org.micromanager.api.AcquisitionEngine;
 import org.micromanager.api.ScriptInterface;
@@ -51,6 +54,7 @@ public class ProjectorController {
    private long interval_us_ = 500000;
    private Map mapping_ = null;
    private String mappingNode_ = null;
+   private String targetingChannel_;
        
    public ProjectorController(ScriptInterface app) {
       gui = app;
@@ -352,22 +356,50 @@ public class ProjectorController {
       }
    }
    
-   public MouseListener setupPointAndShootMouseListener() {
-      final ProjectorController thisController = this;
-      return new MouseAdapter() {
-         public void mouseClicked(MouseEvent e) {
-              if (e.isControlDown()) {
-                  Point p = e.getPoint();
-                  ImageCanvas canvas = (ImageCanvas) e.getSource();
-                  Point pOffscreen = new Point(canvas.offScreenX(p.x), canvas.offScreenY(p.y));
-                  Point devP = transform((Map<Polygon, AffineTransform>) loadMapping(), new Point(pOffscreen.x, pOffscreen.y));
-                  if (devP != null) {
-                      displaySpot(devP.x, devP.y, thisController.getPointAndShootInterval());
-                  }
-              }
-         }
-      };
-   }
+    public MouseListener setupPointAndShootMouseListener() {
+        final ProjectorController thisController = this;
+        return new MouseAdapter() {
+
+            public void mouseClicked(MouseEvent e) {
+                if (e.isControlDown()) {
+                    String originalConfig = null;
+                    String channelGroup = mmc.getChannelGroup();
+                    boolean acqEngineShouldRestart = false;
+                    AcquisitionEngine eng = gui.getAcquisitionEngine();
+                    try {
+                        if (targetingChannel_.length() > 0) {
+                            originalConfig = mmc.getCurrentConfig(channelGroup);
+                            if (!originalConfig.contentEquals(targetingChannel_)) {
+                                acqEngineShouldRestart = eng.isAcquisitionRunning() && !eng.isPaused();
+                                gui.getAcquisitionEngine().setPause(true);
+                                mmc.setConfig(channelGroup, targetingChannel_);
+                            }
+                        }
+                    } catch (Exception ex) {
+                        ReportingUtils.logError(ex);
+                    }
+
+                    Point p = e.getPoint();
+                    ImageCanvas canvas = (ImageCanvas) e.getSource();
+                    Point pOffscreen = new Point(canvas.offScreenX(p.x), canvas.offScreenY(p.y));
+                    Point devP = transform((Map<Polygon, AffineTransform>) loadMapping(), new Point(pOffscreen.x, pOffscreen.y));
+                    if (devP != null) {
+                        displaySpot(devP.x, devP.y, thisController.getPointAndShootInterval());
+                    }
+                    if (originalConfig != null) {
+                        try {
+                            mmc.setConfig(channelGroup, originalConfig);
+                            if (acqEngineShouldRestart) {
+                                eng.setPause(false);
+                            }
+                        } catch (Exception ex) {
+                            ReportingUtils.logError(ex);
+                        }
+                    }
+                }
+            }
+        };
+    }
  
    public void activatePointAndShootMode(boolean on) {
       ImageCanvas canvas = null;
@@ -436,4 +468,10 @@ public class ProjectorController {
      interval_us_ = interval_us;
      this.sendRoiData();
    }
+
+    void setTargetingChannel(Object selectedItem) {
+        targetingChannel_ = (String) selectedItem;
+    }
+   
+
 }
