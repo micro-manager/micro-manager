@@ -50,7 +50,8 @@ public class ProjectorController {
    private int reps_ = 1;
    private long interval_us_ = 500000;
    private Map mapping_ = null;
-
+   private String mappingNode_ = null;
+       
    public ProjectorController(ScriptInterface app) {
       gui = app;
       mmc = app.getMMCore();
@@ -64,7 +65,8 @@ public class ProjectorController {
       } else {
          dev = null;
       }
-      
+
+      loadMapping();
       pointAndShootMouseListener = setupPointAndShootMouseListener();
    }
 
@@ -90,7 +92,7 @@ public class ProjectorController {
          public void run() {
             Roi originalROI = IJ.getImage().getRoi();
             gui.snapSingleImage();
-            mapping_ = getMapping();
+            HashMap<Polygon, AffineTransform> mapping = (HashMap<Polygon, AffineTransform>) getMapping();
             //LocalWeightedMean lwm = multipleAffineTransforms(mapping_);
             //AffineTransform affineTransform = MathFunctions.generateAffineTransformFromPointPairs(mapping_);
             dev.turnOff();
@@ -99,6 +101,7 @@ public class ProjectorController {
             } catch (InterruptedException ex) {
                ReportingUtils.logError(ex);
             }
+            saveMapping((HashMap<Polygon, AffineTransform>) mapping);
             //saveAffineTransform(affineTransform);
             gui.enableLiveMode(liveModeRunning);
             JOptionPane.showMessageDialog(IJ.getImage().getWindow(), "Calibration finished.");
@@ -108,6 +111,22 @@ public class ProjectorController {
       th.start();
    }
 
+   private HashMap<Polygon, AffineTransform> loadMapping() {
+       String nodeStr = getCalibrationNode().toString();
+       if (mappingNode_ == null || !nodeStr.contentEquals(mappingNode_)) {
+           mappingNode_ = nodeStr;
+           mapping_ = (HashMap<Polygon, AffineTransform>) JavaUtils.getObjectFromPrefs(getCalibrationNode(), dev.getName(), new HashMap<Polygon, AffineTransform>());
+       }
+       return (HashMap<Polygon, AffineTransform>) mapping_;
+   }
+   
+   private void saveMapping(HashMap<Polygon, AffineTransform> mapping) {
+       JavaUtils.putObjectInPrefs(getCalibrationNode(), dev.getName(), mapping);
+       mapping_ = mapping;
+       mappingNode_ = getCalibrationNode().toString();
+   }
+   
+   
    private Preferences getCalibrationNode() {
        return Preferences.userNodeForPackage(ProjectorPlugin.class)
                .node("calibration")
@@ -216,7 +235,7 @@ public class ProjectorController {
    public Map getMapping() {
       int w = (int) dev.getWidth()-1;
       int h = (int) dev.getHeight()-1;
-      int n = 6;
+      int n = 8;
       Point2D.Double dmdPoint[][] = new Point2D.Double[1+n][1+n];
       Point2D.Double resultPoint[][] = new Point2D.Double[1+n][1+n];
       for (int i = 0; i <= n; ++i) {
@@ -340,7 +359,7 @@ public class ProjectorController {
             Point p = e.getPoint();
             ImageCanvas canvas = (ImageCanvas) e.getSource();
             Point pOffscreen = new Point(canvas.offScreenX(p.x),canvas.offScreenY(p.y));
-            Point devP = transform((Map<Polygon, AffineTransform>) mapping_, new Point(pOffscreen.x, pOffscreen.y));
+            Point devP = transform((Map<Polygon, AffineTransform>) loadMapping(), new Point(pOffscreen.x, pOffscreen.y));
             if (devP != null) {
                 displaySpot(devP.x, devP.y, thisController.getPointAndShootInterval());
             }

@@ -28,6 +28,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.jar.JarEntry;
 import java.util.jar.JarInputStream;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import java.util.prefs.Preferences;
 import java.util.prefs.BackingStoreException;
 
@@ -236,27 +238,60 @@ public class JavaUtils {
          ReportingUtils.logError(e, "Failed to save object in Preferences.");
          return;
       }
+      int MAX_LENGTH = 3 * Preferences.MAX_VALUE_LENGTH / 4;
       byte[] serialBytes = byteStream.toByteArray();
-      prefs.putByteArray(key, serialBytes);
+      int totalLength = serialBytes.length;
+      long nChunks = (int) Math.ceil(serialBytes.length / (double) MAX_LENGTH);
+        try {
+            if (prefs.nodeExists(key)) {
+              prefs.node(key).removeNode();
+            }
+        } catch (BackingStoreException ex) {
+            ReportingUtils.logError(ex);
+        }
+      for (int i=0;i<nChunks;++i) {
+          int chunkLength = Math.min(MAX_LENGTH, totalLength - i*MAX_LENGTH);
+          byte[] chunk = new byte[chunkLength];
+          System.arraycopy(serialBytes, i*MAX_LENGTH, chunk, 0, chunkLength);
+          prefs.node(key).putByteArray(String.format("%09d",i), chunk);
+      }
    }
 
    /**
     * Retrieves an object from Preferences (deserialized).
     */
-   public static Object getObjectFromPrefs(Preferences prefs, String key, Object def) {
-      byte[] serialBytes = prefs.getByteArray(key, new byte[0]);
-      if (serialBytes.length == 0) {
-         return def;
-      }
-      ByteArrayInputStream byteStream = new ByteArrayInputStream(serialBytes);
-      try {
-         ObjectInputStream objectStream = new ObjectInputStream(byteStream);
-         return objectStream.readObject();
-      } catch (Exception e) {
-         ReportingUtils.logError(e, "Failed to get object from preferences.");
-         return def;
-      }
-   }
+    public static Object getObjectFromPrefs(Preferences prefs, String key, Object def) {
+        ArrayList<byte[]> chunks = new ArrayList<byte[]>();
+        byte[] serialBytes = new byte[0];
+        int totalLength = 0;
+        try {
+            for (String chunkKey:prefs.node(key).keys()) {
+                byte[] chunk = prefs.node(key).getByteArray(chunkKey, new byte[0]);
+                chunks.add(chunk);
+                totalLength += chunk.length;
+            }
+            int pos = 0;
+            serialBytes = new byte[totalLength];
+            for (byte[] chunk : chunks) {
+                System.arraycopy(chunk, 0, serialBytes, pos, chunk.length);
+                pos += chunk.length;
+            }
+        } catch (BackingStoreException ex) {
+            ReportingUtils.logError(ex);
+        }
+
+        if (serialBytes.length == 0) {
+            return def;
+        }
+        ByteArrayInputStream byteStream = new ByteArrayInputStream(serialBytes);
+        try {
+            ObjectInputStream objectStream = new ObjectInputStream(byteStream);
+            return objectStream.readObject();
+        } catch (Exception e) {
+            ReportingUtils.logError(e, "Failed to get object from preferences.");
+            return def;
+        }
+    }
 
    public static Dimension getScreenDimensions() {
       GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
