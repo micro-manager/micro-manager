@@ -426,12 +426,15 @@
   [burst-events camera-channel-names timeout-ms out-queue]
   (let [total (* (count burst-events)
                  (count camera-channel-names))
-        camera-index-tag (str (. mmc getCameraDevice) "-CameraChannelIndex")]
-    (doseq [i (range total) :while (keep-collecting-from-circular-buffer?)]
+        camera-index-tag (str (. mmc getCameraDevice) "-CameraChannelIndex")
+        images (map (fn [_] (pop-burst-image timeout-ms)) (range total))]
+    (time
+    (doseq [image images]
       (.put out-queue
-            (-> (pop-burst-image timeout-ms)
+            (-> image
+                ;(time)
                 (tag-burst-image burst-events camera-channel-names camera-index-tag)
-                make-TaggedImage))))
+                make-TaggedImage)))))
   (burst-cleanup))
 
 (defn collect-burst-images [event out-queue]
