@@ -43,7 +43,9 @@ import java.io.File;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.TimerTask;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.prefs.Preferences;
 import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
@@ -61,7 +63,8 @@ import org.micromanager.graph.MultiChannelHistograms;
 import org.micromanager.graph.SingleChannelHistogram;
 import org.micromanager.utils.*;
 
-public final class VirtualAcquisitionDisplay implements AcquisitionDisplay, ImageCacheListener {
+public final class VirtualAcquisitionDisplay implements AcquisitionDisplay, 
+        ImageCacheListener, MMListenerInterface {
 
    public static VirtualAcquisitionDisplay getDisplay(ImagePlus imgp) {
       ImageStack stack = imgp.getStack();
@@ -116,6 +119,39 @@ public final class VirtualAcquisitionDisplay implements AcquisitionDisplay, Imag
    private static double snapWinMag_ = -1;
    private JPopupMenu saveTypePopup_;
    private int simpleWinImagesReceived_ = 0;
+   private AtomicBoolean updatePixelSize_ = new AtomicBoolean(false);
+   private AtomicLong newPixelSize_ = new AtomicLong();
+
+   public void propertiesChangedAlert() {
+      //throw new UnsupportedOperationException("Not supported yet.");
+   }
+
+   public void propertyChangedAlert(String device, String property, String value) {
+      //throw new UnsupportedOperationException("Not supported yet.");
+   }
+
+   public void configGroupChangedAlert(String groupName, String newConfig) {
+      //throw new UnsupportedOperationException("Not supported yet.");
+   }
+
+   public void pixelSizeChangedAlert(double newPixelSizeUm) {    
+      // Signal that pixel size has changed so that the next image will update
+      // metadata and scale bar
+      newPixelSize_.set(Double.doubleToLongBits(newPixelSizeUm));
+      updatePixelSize_.set(true);
+   }
+
+   public void stagePositionChangedAlert(String deviceName, double pos) {
+      //throw new UnsupportedOperationException("Not supported yet.");
+   }
+
+   public void xyStagePositionChanged(String deviceName, double xPos, double yPos) {
+      //throw new UnsupportedOperationException("Not supported yet.");
+   }
+
+   public void exposureChanged(String cameraName, double newExposureTime) {
+      //throw new UnsupportedOperationException("Not supported yet.");
+   }
 
    
    /**
@@ -453,6 +489,7 @@ public final class VirtualAcquisitionDisplay implements AcquisitionDisplay, Imag
       name_ = name;
       mda_ = false;
       this.albumSaved_ = imageCache.isFinished();
+      MMStudioMainFrame.getInstance().addMMListener(this);
    }
 
    private void startup(JSONObject firstImageMetadata) {
@@ -1156,7 +1193,7 @@ public final class VirtualAcquisitionDisplay implements AcquisitionDisplay, Imag
          ReportingUtils.logError(ex);
       }
             
-      //This block allows animation to be reset to where it was before iamges were added
+      //This block allows animation to be reset to where it was before images were added
       final boolean framesAnimated = isTAnimated(), slicesAnimated = isZAnimated();
       final int animatedFrameIndex = hyperImage_.getFrame();
       if (slice == 0)
@@ -2084,12 +2121,28 @@ public final class VirtualAcquisitionDisplay implements AcquisitionDisplay, Imag
     * is the active window
     */
    private void imageChangedUpdate() {
+      if (updatePixelSize_.get()) {
+         try {
+            JSONObject summary = getSummaryMetadata();
+            if (summary != null) {
+               summary.put("PixelSize_um", Double.longBitsToDouble(newPixelSize_.get()));
+            }
+            if (hyperImage_ != null) {
+               applyPixelSizeCalibration(hyperImage_);
+            }
+            
+         } catch (JSONException ex) {
+            ReportingUtils.logError("Error in imageCHangedUpdate in VirtualAcquisitionDisplay.java");
+         }
+         updatePixelSize_.set(false);
+      }
       if (histograms_ != null) {
          histograms_.imageChanged();
-       } 
-      if (isActiveDisplay()) { 
-          mdPanel_.imageChangedUpdate(this);
-      } 
+      }      
+      if (isActiveDisplay()) {         
+         mdPanel_.imageChangedUpdate(this);
+         mdPanel_.redrawSizeBar();
+      }      
       imageChangedWindowUpdate(); //used to update status line
 
    }

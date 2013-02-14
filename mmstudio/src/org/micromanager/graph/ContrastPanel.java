@@ -25,7 +25,6 @@ import ij.CompositeImage;
 import ij.ImagePlus;
 import ij.gui.Overlay;
 import java.awt.*;
-import java.util.Arrays;
 import java.util.prefs.Preferences;
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.JCheckBox;
@@ -41,7 +40,6 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import org.jdesktop.layout.GroupLayout;
 import org.jdesktop.layout.LayoutStyle;
-import org.micromanager.acquisition.MetadataPanel;
 import org.micromanager.acquisition.VirtualAcquisitionDisplay;
 import org.micromanager.internalinterfaces.Histograms;
 import org.micromanager.utils.MMScaleBar;
@@ -400,6 +398,10 @@ public class ContrastPanel extends JPanel {
       } else if (mode == CompositeImage.GRAYSCALE) {
          displayModeCombo_.setSelectedIndex(1);
       }
+   }
+   
+   public void redrawSizeBar() {
+      showSizeBar();
    }
 
    private void showSizeBar() {

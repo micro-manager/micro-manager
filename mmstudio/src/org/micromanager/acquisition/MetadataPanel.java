@@ -540,4 +540,10 @@ public class MetadataPanel extends JPanel
    public ContrastPanel getContrastPanel() {
        return contrastPanel_;
    }
+   
+   public void redrawSizeBar() {
+      if (contrastPanel_ != null) {
+         contrastPanel_.redrawSizeBar();
+      }
+   }
 }

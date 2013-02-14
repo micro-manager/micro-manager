@@ -2550,6 +2550,7 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface, Device
                ReportingUtils.logError(ex);
             }
          }
+         
       }
    }
 
