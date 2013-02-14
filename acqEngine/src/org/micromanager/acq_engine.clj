@@ -36,6 +36,7 @@
                                          TaggedImageStorageRam]
            [org.micromanager.utils ReportingUtils]
            [mmcorej TaggedImage Configuration Metadata]
+           (java.util.concurrent Executors TimeUnit)
            [java.util.prefs Preferences]
            [java.net InetAddress]
            [java.util.concurrent LinkedBlockingQueue TimeUnit CountDownLatch]
@@ -312,6 +313,17 @@
 (defn first-trigger-missing? []
   (= "1" (get-property-value (core getCameraDevice) "OutputTriggerFirstMissing")))
 
+(defn keep-collecting-from-circular-buffer?
+  "Returns true if there is no reason to stop popping images
+   from the circular buffer."
+  []
+  (when (. mmc isBufferOverflowed)
+    (swap! state assoc :circular-buffer-overflow true))
+  (and (not (@state :stop))
+       (or (pos? (. mmc getRemainingImageCount))
+           (and (. mmc isSequenceRunning)
+                (not (@state :circular-buffer-overflow))))))
+
 (defn init-burst [length trigger-sequence relative-z]
   (core setAutoShutter (@state :init-auto-shutter))
   (load-property-sequences (:properties trigger-sequence))
@@ -323,17 +335,28 @@
     (swap! state assoc-in [:last-stage-positions (core getFocusDevice)]
            (last absolute-slices))))
 
-(defn pop-burst-image
-  "Returns a TaggedImage from the circular buffer -- times out if no
-   image is found in circular buffer after waiting up to timeout-ms."
+(defn pop-tagged-image []
+  (try (core popNextTaggedImage)
+       (catch Exception e nil))) ;(println e))))
+
+(defn pop-tagged-image-timeout
   [timeout-ms]
   (let [start-time (System/currentTimeMillis)]
-    (while (and (. mmc isSequenceRunning)
-                (zero? (. mmc getRemainingImageCount)))
-      (if (< timeout-ms (- (System/currentTimeMillis) start-time))
-        (throw (Exception. "Timed out waiting for image to arrive from camera."))
-        (Thread/sleep 5))))
-  (let [tagged-image (core popNextTaggedImage)]
+    (loop []
+      (when (keep-collecting-from-circular-buffer?)
+        (if-let [image (pop-tagged-image)]
+          image
+          (if (< timeout-ms (- (System/currentTimeMillis) start-time))
+            (do (println "Timed out waiting for image to arrive from camera.")
+                (throw (Exception. "Timed out waiting for image to arrive from camera.")))
+            (do (Thread/sleep 1)
+                (recur))))))))
+
+(defn pop-burst-image
+  [timeout-ms]
+  (let [tagged-image (pop-tagged-image-timeout timeout-ms)]
+    ;(println "pop")
+        ;(println tagged-image)
     {:pix (.pix tagged-image)
      :tags (json-to-data (.tags tagged-image))}))
 
@@ -361,17 +384,6 @@
  (while (and (not (@state :stop)) (. mmc isSequenceRunning))
    (Thread/sleep 5)))
 
-(defn keep-collecting-from-circular-buffer?
-  "Returns true if there is no reason to stop popping images
-   from the circular buffer."
-  []
-  (when (. mmc isBufferOverflowed)
-    (swap! state assoc :circular-buffer-overflow true))
-  (and (not (@state :stop))
-       (or (pos? (. mmc getRemainingImageCount))
-           (and (. mmc isSequenceRunning)
-                (not (@state :circular-buffer-overflow))))))
-
 (defn assoc-if-nil [m k v]
   (if (nil? (m k))
     (assoc m k v)
@@ -397,6 +409,17 @@
                   (assoc :camera-channel-index cam-chan))
         time-stamp (burst-time (:tags image) @state)]
     (annotate-image image event @state time-stamp)))
+
+(defmacro doseq-parallel [seq-exprs & body]
+  `(let [pool# (-> (Runtime/getRuntime) .availableProcessors Executors/newFixedThreadPool)]
+     (println (.getCorePoolSize pool#))
+     (doseq ~seq-exprs
+       (let [body-fn# (cast Runnable (fn []
+                                       ;(println (str (Thread/currentThread)))
+                                       ~@body))]
+         (.submit pool# body-fn#)))
+     (.shutdown pool#)
+     (.awaitTermination pool# 10 TimeUnit/DAYS)))
 
 (defn produce-burst-images
   "Pops images from circular buffer and sends them to output queue."
