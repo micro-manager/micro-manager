@@ -6,6 +6,7 @@
 package org.micromanager.projector;
 
 import ij.gui.Roi;
+import java.awt.Polygon;
 import java.awt.geom.AffineTransform;
 
 /**
@@ -19,7 +20,7 @@ public interface ProjectionDevice {
    public double getHeight();
    public void turnOn();
    public void turnOff();
-   public void setRois(Roi[] rois, AffineTransform transform);
+   public void setRois(Polygon[] rois);
    public void setPolygonRepetitions(int reps);
    public void runPolygons();
    public void addOnStateListener(OnStateListener listener);

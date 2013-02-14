@@ -154,7 +154,7 @@ public class Galvo implements ProjectionDevice {
       }
    }
 
-   public void setRois(final Roi[] rois, final AffineTransform trans) {
+   public void setRois(final Polygon[] rois) {
       galvoExecutor_.submit(new Runnable() {
          public void run() {
             try {
@@ -163,39 +163,28 @@ public class Galvo implements ProjectionDevice {
                ReportingUtils.logError(ex);
             }
             int roiCount = 0;
-            for (Roi roi : rois) {
-               if ((roi.getType() == Roi.POINT)
-                   || (roi.getType() == Roi.POLYGON)
-                   || (roi.getType() == Roi.RECTANGLE)
-                   || (roi.getType() == Roi.OVAL)) {
-
-                  Polygon poly = roi.getPolygon();
-                  try {
-                     Point2D lastGalvoPoint = null;
-                     for (int i = 0; i < poly.npoints; ++i) {
-                        Point2D.Double imagePoint = new Point2D.Double(poly.xpoints[i], poly.ypoints[i]);
-                        Point2D galvoPoint = trans.transform(imagePoint, null);
-                        if (i == 0) {
-                           lastGalvoPoint = galvoPoint;
-                        }
-                        mmc_.addGalvoPolygonVertex(galvo_, roiCount, galvoPoint.getX(), galvoPoint.getY());
-                        if (roi.getType() == Roi.POINT) {
-                            ++roiCount;
-                        }
+            try {
+               for (Polygon poly : rois) {
+                  Point2D lastGalvoPoint = null;
+                  for (int i = 0; i < poly.npoints; ++i) {
+                     Point2D.Double galvoPoint = new Point2D.Double(poly.xpoints[i], poly.ypoints[i]);
+                     if (i == 0) {
+                        lastGalvoPoint = galvoPoint;
                      }
-                     if (roi.getType() != Roi.POINT) {
-                        mmc_.addGalvoPolygonVertex(galvo_, roiCount, lastGalvoPoint.getX(), lastGalvoPoint.getY());
+                     mmc_.addGalvoPolygonVertex(galvo_, roiCount, galvoPoint.getX(), galvoPoint.getY());
+                     if (poly.npoints == 1) {
                         ++roiCount;
                      }
-                  } catch (Exception ex) {
-                     ReportingUtils.showError(ex);
                   }
-                  
-               } else {
-                  ReportingUtils.showError("Not able to run the galvo with this type of Roi.");
-                  return;
+                  if (poly.npoints > 1) {
+                     mmc_.addGalvoPolygonVertex(galvo_, roiCount, lastGalvoPoint.getX(), lastGalvoPoint.getY());
+                     ++roiCount;
+                  }
                }
+            } catch (Exception e) {
+               ReportingUtils.showError(e);
             }
+
             try {
                mmc_.loadGalvoPolygons(galvo_);
             } catch (Exception ex) {

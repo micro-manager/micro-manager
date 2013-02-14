@@ -6,10 +6,10 @@
 package org.micromanager.projector;
 
 import ij.ImagePlus;
-import ij.gui.Roi;
 import ij.process.ByteProcessor;
 import ij.process.ImageProcessor;
 import java.awt.Color;
+import java.awt.Polygon;
 import java.awt.geom.AffineTransform;
 import mmcorej.CMMCore;
 import org.micromanager.utils.ReportingUtils;
@@ -90,7 +90,7 @@ public class SLM implements ProjectionDevice {
       }
    }
 
-   public void setRois(Roi[] roi, AffineTransform trans) {
+   public void setRois(Polygon[] roi) {
       throw new UnsupportedOperationException("Not supported yet.");
 /*
       AffineTransformOp cmo = new AffineTransformOp(trans, AffineTransformOp.TYPE_BILINEAR);

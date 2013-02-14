@@ -333,12 +333,43 @@ public class ProjectorController {
          return 0;
       }
    }
+   
+   private Polygon[] transformROIs(Roi[] rois, Map<Polygon, AffineTransform> mapping) {
+      ArrayList<Polygon> transformedROIs = new ArrayList<Polygon>();
+      for (Roi roi : rois) {
+         if ((roi.getType() == Roi.POINT)
+                 || (roi.getType() == Roi.POLYGON)
+                 || (roi.getType() == Roi.RECTANGLE)
+                 || (roi.getType() == Roi.OVAL)) {
+
+            Polygon poly = roi.getPolygon();
+            Polygon newPoly = new Polygon();
+            try {
+               Point2D galvoPoint;
+               for (int i = 0; i < poly.npoints; ++i) {
+                  Point imagePoint = new Point(poly.xpoints[i], poly.ypoints[i]);
+                  galvoPoint = transform(mapping, imagePoint);
+                  newPoly.addPoint((int) galvoPoint.getX(), (int) galvoPoint.getY());
+               }
+               transformedROIs.add(newPoly);
+            } catch (Exception ex) {
+               ReportingUtils.showError(ex);
+               break;
+            }
+
+         } else {
+            ReportingUtils.showError("Can't use this type of ROI.");
+            break;
+         }
+      }
+      return (Polygon[]) transformedROIs.toArray();
+   }
 
    private void sendRoiData() {
       if (individualRois_.length > 0) {
-         AffineTransform transform = loadAffineTransform();
-         if (transform != null) {
-            dev.setRois(individualRois_, transform);
+         if (mapping_ != null) {
+            Polygon[] galvoROIs = transformROIs(individualRois_,mapping_);
+            dev.setRois(galvoROIs);
             dev.setPolygonRepetitions(reps_);
             dev.setSpotInterval(interval_us_);
          }
