@@ -94,8 +94,8 @@
 
 (defn nav-range [{:keys [nx ny nz]} [tile-width tile-height]]
   {:z nz
-   :x (when nx [(* tile-width (first nx)) (+ 2 (* tile-width (second nx)))])
-   :y (when ny [(* tile-height (first ny)) (+ 2 (* tile-height (second ny)))])})
+   :x (when nx [(* tile-width (first nx)) (* tile-width (inc (second nx)))])
+   :y (when ny [(* tile-height (first ny)) (* tile-height (inc (second ny)))])})
 
 
 

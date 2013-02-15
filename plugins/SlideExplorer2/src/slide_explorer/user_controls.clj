@@ -108,8 +108,16 @@
     (.repaint window)
     (.show window)))
 
+(defn toggle-full-screen!
+  "Turn full screen mode on and off for a given window."
+  [window]
+  (when window
+    (if (@old-bounds window)
+      (exit-full-screen! window)
+      (full-screen! window))))
+
 (defn setup-fullscreen [window]
-  (bind-window-keys window ["F"] #(full-screen! window))
+  (bind-window-keys window ["F"] #(toggle-full-screen! window))
   (bind-window-keys window ["ESCAPE"] #(exit-full-screen! window)))
 
 ;; window positioning
