@@ -315,21 +315,17 @@
   (let [frame (main-frame)
         [panel screen-state] (view-panel memory-tile-atom settings)
         [panel2 screen-state2] (view-panel memory-tile-atom settings)
-        split-pane (JSplitPane. JSplitPane/HORIZONTAL_SPLIT true panel panel2)]
+        split-pane (JSplitPane. JSplitPane/HORIZONTAL_SPLIT true panel panel2)
+        widgets {:frame frame :left-panel panel :right-panel panel2
+                 :split-pane split-pane :content-pane (.getContentPane frame)}]
     (doto split-pane
       (.setBorder nil)
       (.setResizeWeight 0.5)
       (.setDividerLocation 0.7))
-    (def ss screen-state)
-    (def ss2 screen-state2)
-    (def pnl panel)
-    (def mt memory-tile-atom)
-    (def f frame)
-    (println ss ss2 mt)
     (.add (.getContentPane frame) split-pane)
     (user-controls/setup-fullscreen frame)
     (enforce-constraints screen-state)
-    (user-controls/make-view-controllable panel screen-state)
+    (user-controls/make-view-controllable widgets screen-state)
     (user-controls/handle-resize panel2 screen-state2)
     (handle-point-and-show screen-state screen-state2)
     ;(handle-stage-move-and-show screen-state screen-state2) ; make this optional?
@@ -337,6 +333,14 @@
     (copy-settings screen-state screen-state2)
     ;(handle-open frame)
     (.show frame)
+    (def w widgets)
+    (def ss screen-state)
+    (def ss2 screen-state2)
+    (def pnl panel)
+    (def mt memory-tile-atom)
+    (def f frame)
+    (def sp split-pane)
+    (println ss ss2 mt)
     [screen-state panel]))
 
 

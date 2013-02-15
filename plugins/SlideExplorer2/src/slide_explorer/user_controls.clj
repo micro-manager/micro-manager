@@ -313,11 +313,56 @@
 ;(defn handle-open [window]
 ;  (bind-window-keys window ["S"] create-dir-dialog))
 
-(defn make-view-controllable [panel screen-state-atom]
-  ((juxt handle-drags handle-arrow-pan handle-wheel
-         handle-resize handle-pointing)
-         panel screen-state-atom)
-  ((juxt handle-reset handle-zoom handle-dive) ; watch-keys)
-         (.getTopLevelAncestor panel) screen-state-atom))
+(defn redraw-frame [frame]
+  (doto (.getContentPane frame)
+    .revalidate
+    .repaint))  
+
+(def divider-locations (atom {}))
+
+(defn remember-divider-location! [split-pane]
+  (swap! divider-locations assoc split-pane
+         (.getDividerLocation split-pane)))
+
+(defn restore-divider-location! [split-pane]
+  (when-let [divider-loc (@divider-locations split-pane)]
+    (.setDividerLocation split-pane divider-loc)))
+
+(defn hide-1x-view [{:keys [frame content-pane split-pane left-panel right-panel]}]
+  (doto split-pane
+    remember-divider-location!
+    (.remove (.getLeftComponent split-pane))
+    (.remove (.getRightComponent split-pane)))
+  (doto content-pane
+    (.remove split-pane)
+    (.add left-panel))
+  (redraw-frame frame))  
+
+(defn show-1x-view [{:keys [frame content-pane split-pane left-panel right-panel]}]
+  (doto content-pane
+    (.remove left-panel)
+    (.add split-pane))
+  (doto split-pane
+    (.setLeftComponent left-panel)
+    (.setRightComponent right-panel)
+    restore-divider-location!)
+  (redraw-frame frame))  
+
+(defn toggle-1x-view [{:keys [split-pane] :as widgets}]
+  (if (.getParent split-pane)
+    (hide-1x-view widgets)
+    (show-1x-view widgets)))
+
+(defn handle-toggle-split [widgets]
+  (bind-window-keys (:frame widgets) ["1"] #(toggle-1x-view widgets)))
+
+(defn make-view-controllable [widgets screen-state-atom]
+  (let [panel (:left-panel widgets)]
+    ((juxt handle-drags handle-arrow-pan handle-wheel
+           handle-resize handle-pointing)
+           panel screen-state-atom)
+    ((juxt handle-reset handle-zoom handle-dive) ; watch-keys)
+           (.getTopLevelAncestor panel) screen-state-atom)
+    (handle-toggle-split widgets)))
     
  

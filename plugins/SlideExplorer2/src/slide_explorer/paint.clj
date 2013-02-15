@@ -44,7 +44,8 @@
   (doseq [reference references]
     (reactive/add-watch-simple reference
       (fn [old-state new-state]
-        (when-not (identical? old-state new-state)
-          ;(println (meta reference))
-          ;(Thread/sleep 60)
-          (.repaint panel))))))
+        (when (.getParent panel)
+          (when-not (identical? old-state new-state)
+            ;(println (meta reference))
+            ;(Thread/sleep 60)
+            (.repaint panel)))))))
