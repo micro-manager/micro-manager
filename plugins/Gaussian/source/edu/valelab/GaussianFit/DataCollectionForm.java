@@ -2059,7 +2059,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
                rt2.reset();
                rt2.setPrecision(1); 
                siPlus = ij.WindowManager.getImage(rowData_.get(row).title_);
-               if (siPlus.getOverlay() != null) {
+               if (siPlus != null && siPlus.getOverlay() != null) {
                   siPlus.getOverlay().clear();
                }
                Arrow.setDefaultWidth(0.5);
@@ -2121,15 +2121,17 @@ public class DataCollectionForm extends javax.swing.JFrame {
                           yStart + (factor * yDiffAvg) );
                   arrow.setHeadSize(3);
                   arrow.setOutline(false);
-                  if (siPlus.getOverlay() == null) {
+                  if (siPlus != null && siPlus.getOverlay() == null) {
                      siPlus.setOverlay(arrow, Color.yellow, 1, Color.yellow);
-                  } else {
+                  } else if (siPlus != null && siPlus.getOverlay() != null) {
                      siPlus.getOverlay().add(arrow);
                   }
 
                   spotId++;
                }
-               siPlus.setHideOverlay(false);
+               if (siPlus != null) {
+                  siPlus.setHideOverlay(false);
+               }
                
                rtName = rowData_.get(row).name_ + " Particle Summary";
                rt2.show(rtName);
