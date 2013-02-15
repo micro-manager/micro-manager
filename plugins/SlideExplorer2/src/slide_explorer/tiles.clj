@@ -85,12 +85,18 @@
 
 (defn index-range [indices tag]
   (let [indices (map tag indices)]
-    {:min (apply min indices)
-     :max (apply max indices)}))
+   [(apply min indices)
+    (apply max indices)]))
 
 (defn tile-range [acquired-images]
   (let [tags [:nx :ny :nz]]
     (zipmap tags (map #(index-range acquired-images %) tags))))
+
+(defn nav-range [{:keys [nx ny nz]} [tile-width tile-height]]
+  {:z nz
+   :x (when nx [(* tile-width (first nx)) (+ 2 (* tile-width (second nx)))])
+   :y (when ny [(* tile-height (first ny)) (+ 2 (* tile-height (second ny)))])})
+
 
 
         

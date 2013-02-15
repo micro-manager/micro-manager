@@ -293,6 +293,24 @@
            copy-settings
            #(select-keys % [:positions :channels :xy-stage-position :z])))
 
+(defn within? [x [a b]]
+  (<= a x b))
+  
+(defn clip [x [a b]]
+  (-> x (max a) (min b)))
+
+(defn constrain [screen-state-atom axis]
+  (let [pos (get @screen-state-atom axis)
+        range (get-in @screen-state-atom [:range axis])]
+    (when (and pos range (not (within? pos range)))
+      (swap! screen-state-atom update-in [axis] clip range))))
+
+(defn enforce-constraints [screen-state-atom]
+  (reactive/add-watch-simple
+    screen-state-atom
+    (fn [_ _] (dorun (map #(constrain screen-state-atom %)
+                          [:x :y :z])))))
+
 (defn show [memory-tile-atom settings]
   (let [frame (main-frame)
         [panel screen-state] (view-panel memory-tile-atom settings)
@@ -310,6 +328,7 @@
     (println ss ss2 mt)
     (.add (.getContentPane frame) split-pane)
     (user-controls/setup-fullscreen frame)
+    (enforce-constraints screen-state)
     (user-controls/make-view-controllable panel screen-state)
     (user-controls/handle-resize panel2 screen-state2)
     (handle-point-and-show screen-state screen-state2)

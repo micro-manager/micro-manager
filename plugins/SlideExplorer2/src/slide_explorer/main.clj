@@ -20,6 +20,7 @@
             [slide-explorer.canvas :as canvas]
             [slide-explorer.tiles :as tiles]
             [slide-explorer.persist :as persist]
+            [slide-explorer.disk :as disk]
             [slide-explorer.positions :as positions]
             [slide-explorer.store :as store]))
 
@@ -278,6 +279,13 @@ Would you like to run automatic pixel calibration?"
         (.setApp (MMStudioMainFrame/getInstance));
         .show))))
 
+(defn provide-constraints [screen-state-atom dir]
+  (let [available-keys (disk/available-keys dir)
+        tile-range (tiles/tile-range available-keys)
+        nav-range (tiles/nav-range tile-range (@screen-state-atom :tile-dimensions))]
+    (swap! screen-state-atom assoc :range nav-range) ))
+  
+
 ; Overall scheme
 ; the GUI is generally reactive.
 ; vars:
@@ -311,8 +319,7 @@ Would you like to run automatic pixel calibration?"
             acquired-images (atom #{})
             memory-tiles (tile-cache/create-tile-cache 200 dir (not new?))
             [screen-state panel] (view/show memory-tiles settings)]
-        (when new?
-          (mm/core waitForDevice (mm/core getXYStageDevice))
+        (if new?
           (let [acq-settings (create-acquisition-settings)
                 affine-stage-to-pixel (origin-here-stage-to-pixel-transform)
                 z-origin (if-let [z-drive (focus-device)]
@@ -325,8 +332,8 @@ Would you like to run automatic pixel calibration?"
                 explore-fn #(explore memory-tiles screen-state acquired-images
                                      affine-stage-to-pixel)
                 stage (mm/core getXYStageDevice)]
+            (mm/core waitForDevice stage)
             (.mkdirs dir)
-            (def mt memory-tiles)
             (def pnl panel)
             (def affine affine-stage-to-pixel)
             (user-controls/handle-double-click
@@ -354,8 +361,10 @@ Would you like to run automatic pixel calibration?"
                                       (mm/core getImageHeight)]})
             (add-watch screen-state "explore" (fn [_ _ old new] (when-not (= old new)
                                                                   (explore-fn))))
-            (explore-fn)))
+            (explore-fn))
+          (provide-constraints screen-state dir))
         (save-settings dir @screen-state)
+        (def mt memory-tiles)
         (def ss screen-state)
         (def ai acquired-images))))
   ([]
