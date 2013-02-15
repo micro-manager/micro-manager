@@ -264,9 +264,16 @@
     (doseq [component (window-descendants window)]
       (.addKeyListener component key-adapter))))
 
+(defn apply-centered-mouse-position [screen-state screen-x screen-y]
+  (let [{:keys [width height]} screen-state]
+    (update-in screen-state [:mouse] assoc
+               :x (- screen-x (/ width 2))
+               :y (- screen-y (/ height 2)))))
+
 (defn update-mouse-position [e screen-state-atom]
-  (swap! screen-state-atom update-in [:mouse]
-         merge {:x (.getX e) :y (.getY e)}))
+  (swap! screen-state-atom
+         apply-centered-mouse-position
+         (.getX e) (.getY e)))
 
 (defn handle-click [panel event-predicate response-fn]
   (.addMouseListener panel
@@ -297,18 +304,15 @@
 (defn absolute-mouse-position [screen-state]
   (let [{:keys [x y z mouse zoom scale width height tile-dimensions]} screen-state]
     (when mouse
-      (let [mouse-x-centered (- (mouse :x) (/ width 2))
-            mouse-y-centered (- (mouse :y) (/ height 2))
-            [w h] tile-dimensions]
-        {:x (long (+ x (/ mouse-x-centered zoom scale) (/ w -2)))
-         :y (long (+ y (/ mouse-y-centered zoom scale) (/ h -2)))
+      (let [[w h] tile-dimensions]
+        {:x (long (+ x (/ (mouse :x) zoom scale) (/ w -2)))
+         :y (long (+ y (/ (mouse :y) zoom scale) (/ h -2)))
          :z z}))))
 
 (defn handle-reset [window screen-state-atom]
   (bind-window-keys window ["shift R"]
                #(swap! screen-state-atom
                        assoc :x 0 :y 0 :z 0 :zoom 1)))
-
 
 ;(defn handle-open [window]
 ;  (bind-window-keys window ["S"] create-dir-dialog))
