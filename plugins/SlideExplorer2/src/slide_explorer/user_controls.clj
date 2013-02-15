@@ -314,8 +314,7 @@
                #(swap! screen-state-atom
                        assoc :x 0 :y 0 :z 0 :zoom 1)))
 
-;(defn handle-open [window]
-;  (bind-window-keys window ["S"] create-dir-dialog))
+;; toggling split pane
 
 (defn redraw-frame [frame]
   (doto (.getContentPane frame)
@@ -335,11 +334,12 @@
 (defn hide-1x-view [{:keys [frame content-pane split-pane left-panel right-panel]}]
   (doto split-pane
     remember-divider-location!
-    (.remove (.getLeftComponent split-pane))
-    (.remove (.getRightComponent split-pane)))
+    (.remove left-panel)
+    (.remove right-panel))
   (doto content-pane
     (.remove split-pane)
     (.add left-panel))
+  (.setBounds right-panel 0 0 0 0) ; ensures redraw on restoration
   (redraw-frame frame))  
 
 (defn show-1x-view [{:keys [frame content-pane split-pane left-panel right-panel]}]
@@ -350,7 +350,7 @@
     (.setLeftComponent left-panel)
     (.setRightComponent right-panel)
     restore-divider-location!)
-  (redraw-frame frame))  
+  (redraw-frame frame))
 
 (defn toggle-1x-view [{:keys [split-pane] :as widgets}]
   (if (.getParent split-pane)
@@ -359,6 +359,8 @@
 
 (defn handle-toggle-split [widgets]
   (bind-window-keys (:frame widgets) ["1"] #(toggle-1x-view widgets)))
+
+;; main function enabling controls
 
 (defn make-view-controllable [widgets screen-state-atom]
   (let [panel (:left-panel widgets)]
