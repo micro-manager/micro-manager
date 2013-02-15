@@ -362,7 +362,7 @@ Would you like to run automatic pixel calibration?"
             (add-watch screen-state "explore" (fn [_ _ old new] (when-not (= old new)
                                                                   (explore-fn))))
             (explore-fn))
-          (provide-constraints screen-state dir))
+          (future (provide-constraints screen-state dir)))
         (save-settings dir @screen-state)
         (def mt memory-tiles)
         (def ss screen-state)
