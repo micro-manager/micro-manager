@@ -15,6 +15,7 @@ import ij.plugin.frame.RoiManager;
 import ij.process.ImageProcessor;
 import java.awt.Point;
 import java.awt.Polygon;
+import java.awt.Rectangle;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
@@ -96,7 +97,10 @@ public class ProjectorController {
          public void run() {
             Roi originalROI = IJ.getImage().getRoi();
             gui.snapSingleImage();
-            HashMap<Polygon, AffineTransform> mapping = (HashMap<Polygon, AffineTransform>) getMapping();
+            
+            AffineTransform firstApproxAffine = getFirstApproxTransform();
+            
+            HashMap<Polygon, AffineTransform> mapping = (HashMap<Polygon, AffineTransform>) getMapping(firstApproxAffine);
             //LocalWeightedMean lwm = multipleAffineTransforms(mapping_);
             //AffineTransform affineTransform = MathFunctions.generateAffineTransformFromPointPairs(mapping_);
             dev.turnOff();
@@ -236,15 +240,29 @@ public class ProjectorController {
        return new Point2D.Double(pt.x, pt.y);
    }
    
-   public Map getMapping() {
-      int w = (int) dev.getWidth()-1;
-      int h = (int) dev.getHeight()-1;
+   public Map getMapping(AffineTransform firstApprox) {
+      int devWidth = (int) dev.getWidth()-1;
+      int devHeight = (int) dev.getHeight()-1;
+     Point2D.Double camCorner1 = (Point2D.Double) firstApprox.transform(new Point2D.Double(0,0), null);
+     Point2D.Double camCorner2 = (Point2D.Double) firstApprox.transform(new Point2D.Double((int )mmc.getImageWidth(), (int) mmc.getImageHeight()), null);
+     int camLeft = Math.min((int) camCorner1.x, (int) camCorner2.x);
+     int camRight = Math.max((int) camCorner1.x, (int) camCorner2.x);
+     int camTop = Math.min((int) camCorner1.y, (int) camCorner2.y);
+     int camBottom = Math.max((int) camCorner1.y, (int) camCorner2.y);
+     int left = Math.max(camLeft, 0);
+     int right = Math.min(camRight,devWidth);
+     int top = Math.max(camTop, 0);
+     int bottom = Math.min(camBottom,devHeight);
+     int width = right-left;
+     int height = bottom-top;
+   
+     
       int n = 8;
       Point2D.Double dmdPoint[][] = new Point2D.Double[1+n][1+n];
       Point2D.Double resultPoint[][] = new Point2D.Double[1+n][1+n];
       for (int i = 0; i <= n; ++i) {
         for (int j = 0; j <= n; ++j) {
-           dmdPoint[i][j] = new Point2D.Double((int) (i*w/n),(int) (j*h/n));
+           dmdPoint[i][j] = new Point2D.Double((int) left + i*width/n,(int) top + j*height/n);
            resultPoint[i][j] = toDoublePoint(measureSpot(toIntPoint(dmdPoint[i][j])));
         }
       }
@@ -349,6 +367,7 @@ public class ProjectorController {
                for (int i = 0; i < poly.npoints; ++i) {
                   Point imagePoint = new Point(poly.xpoints[i], poly.ypoints[i]);
                   galvoPoint = transform(mapping, imagePoint);
+                  if (galvoPoint == null) throw new Exception();
                   newPoly.addPoint((int) galvoPoint.getX(), (int) galvoPoint.getY());
                }
                transformedROIs.add(newPoly);
@@ -362,7 +381,7 @@ public class ProjectorController {
             break;
          }
       }
-      return (Polygon[]) transformedROIs.toArray();
+      return (Polygon[]) transformedROIs.toArray(new Polygon[0]);
    }
 
    private void sendRoiData() {
