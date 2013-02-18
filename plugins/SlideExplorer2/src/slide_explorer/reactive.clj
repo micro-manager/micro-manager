@@ -7,16 +7,16 @@
            (clojure.lang IRef))
   (:require [clojure.pprint :as pprint]))
 
-(defn add-watch-simple
+(defmacro add-watch-simple
   "Adds a watch (more simple than clojure core/add-watch). The function
    should have arguments [old-state new-state]."
   [reference function]
   (let [key (UUID/randomUUID)]
-    (add-watch reference key 
-               (fn [_ _ old-state new-state]
+    `(add-watch ~reference key 
+               (fn [_# _# old-state# new-state#]
                  (try
-                   (function old-state new-state)
-                   (catch Throwable e (println e)))))))
+                   (~function old-state# new-state#)
+                   (catch Throwable e# (println e#)))))))
 
 (defn remove-watches
   "Removes all watches from a reference (ref/atom/agent)."
