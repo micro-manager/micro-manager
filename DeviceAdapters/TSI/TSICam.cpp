@@ -451,6 +451,7 @@ int TsiCam::SnapImage()
 
 unsigned TsiCam::GetBitDepth() const
 {
+   // TODO: obtain bit depth from the camera API
    unsigned bitDepth = 12;
    if (img.Width() > 1392)
       bitDepth = 14;
@@ -486,20 +487,20 @@ void TsiCam::SetExposure(double dExpMs)
 
 int TsiCam::SetROI(unsigned x, unsigned y, unsigned xSize, unsigned ySize)
 {
-   roiBinData.XPixels = xSize;
-   roiBinData.YPixels = ySize;
-   roiBinData.XOrigin = x;
-   roiBinData.YOrigin = y;
+   roiBinData.XPixels = xSize * roiBinData.XBin;
+   roiBinData.YPixels = ySize * roiBinData.YBin;
+   roiBinData.XOrigin = x * roiBinData.XBin;
+   roiBinData.YOrigin = y * roiBinData.XBin;
    
    return ResizeImageBuffer(roiBinData);
 }
 
 int TsiCam::GetROI(unsigned& x, unsigned& y, unsigned& xSize, unsigned& ySize)
 {
-   x = roiBinData.XOrigin;
-   y = roiBinData.YOrigin;
-   xSize = roiBinData.XPixels;
-   ySize = roiBinData.YPixels;
+   x = roiBinData.XOrigin / roiBinData.XBin;
+   y = roiBinData.YOrigin / roiBinData.YBin;
+   xSize = roiBinData.XPixels / roiBinData.XBin;
+   ySize = roiBinData.YPixels / roiBinData.YBin;
 
    return DEVICE_OK;
 }
@@ -509,8 +510,8 @@ int TsiCam::ClearROI()
    // reset roi
    roiBinData.XOrigin = 0;
    roiBinData.YOrigin = 0;
-   roiBinData.XPixels = fullFrame.XPixels / roiBinData.XBin;
-   roiBinData.YPixels = fullFrame.YPixels / roiBinData.YBin;
+   roiBinData.XPixels = fullFrame.XPixels;
+   roiBinData.YPixels = fullFrame.YPixels;
 
    return ResizeImageBuffer(roiBinData);
 }
@@ -613,10 +614,15 @@ int TsiCam::ResizeImageBuffer(TSI_ROI_BIN& roiBin)
       return errCode;
    }
 
+   // verify settings
    if (!camHandle_->GetParameter(TSI_PARAM_ROI_BIN, sizeof(uint32_t), (void*)&roiBinData))
       return camHandle_->GetErrorCode();
 
-   img.Resize(roiBin.XPixels, roiBin.YPixels, 2);
+   img.Resize(roiBinData.XPixels / roiBinData.XBin, roiBinData.YPixels / roiBinData.YBin, byteDepth);
+   ostringstream os;
+   os << "TSI resized to: " << img.Width() << " X " << img.Height() << ", bin factor: "
+      << roiBinData.XBin;
+   LogMessage(os.str().c_str());
 
    return DEVICE_OK;
 }

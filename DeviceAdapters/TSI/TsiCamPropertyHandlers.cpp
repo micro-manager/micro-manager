@@ -35,6 +35,8 @@ int TsiCam::OnBinning(MM::PropertyBase* pProp, MM::ActionType eAct)
       roiBinData.YBin = bin;
       roiBinData.XPixels = fullFrame.XPixels / bin;
       roiBinData.YPixels = fullFrame.YPixels / bin;
+      roiBinData.XPixels = fullFrame.XPixels;
+      roiBinData.YPixels = fullFrame.YPixels;
       return ResizeImageBuffer(roiBinData);
    }
    else if (eAct == MM::BeforeGet)
