@@ -497,6 +497,10 @@ public class ProjectorController {
             runPolygons();
             returnChannel(originalConfig);
          }
+         
+         public String toString() {
+             return "Phototargeting of ROIs";
+         }
       };
 
       final AcquisitionEngine acq = gui.getAcquisitionEngine();

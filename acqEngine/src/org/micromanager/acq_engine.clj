@@ -150,7 +150,9 @@
        "XPositionUm" x
        "YPositionUm" y
        "ZPositionUm" (get-in state [:last-stage-positions (state :default-z-drive)])
-      })))
+      }
+      (when-let [runnables (event :runnables)]
+        {"AttachedTasks" (JSONArray. (map str runnables))}))))
 
 (defn annotate-image [img event state elapsed-time-ms]
   {:pix (:pix img)
