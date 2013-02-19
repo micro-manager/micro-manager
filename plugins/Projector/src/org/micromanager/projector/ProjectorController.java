@@ -10,22 +10,33 @@ import ij.gui.ImageCanvas;
 import ij.gui.ImageWindow;
 import ij.gui.PointRoi;
 import ij.gui.Roi;
+import ij.io.RoiEncoder;
 import ij.plugin.filter.GaussianBlur;
 import ij.plugin.frame.RoiManager;
 import ij.process.ImageProcessor;
 import java.awt.Point;
 import java.awt.Polygon;
 import java.awt.Rectangle;
+import java.awt.event.ActionEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
+import java.io.BufferedOutputStream;
+import java.io.DataOutputStream;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.Writer;
 import java.util.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.prefs.Preferences;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
 import javax.swing.JOptionPane;
 import mmcorej.CMMCore;
 import mmcorej.Configuration;
@@ -513,6 +524,7 @@ public class ProjectorController {
    
    void runPolygons() {
       dev.runPolygons();
+      recordPolygons();
    }
 
    void addOnStateListener(OnStateListener listener) {
@@ -525,13 +537,53 @@ public class ProjectorController {
       dev.displaySpot(x, y);
    }
 
-   void setSpotInterval(long interval_us) {
-     interval_us_ = interval_us;
-     this.sendRoiData();
-   }
+    void setSpotInterval(long interval_us) {
+        interval_us_ = interval_us;
+        this.sendRoiData();
+    }
 
     void setTargetingChannel(Object selectedItem) {
         targetingChannel_ = (String) selectedItem;
+    }
+
+    private void recordPolygons() {
+        String location = gui.getAcquisitionEngine().getImageCache().getDiskLocation();
+        if (location != null) {
+            try {
+                File f = new File(location, "ProjectorROIs.zip");
+                if (!f.exists()) {
+                    saveROIs(f);
+                }
+            } catch (Exception ex) {
+                ReportingUtils.logError(ex);
+            }
+
+        }
+    }
+    
+    private void saveROIs(File path) {
+        try {
+            ZipOutputStream zos = new ZipOutputStream(new FileOutputStream(path));
+            DataOutputStream out = new DataOutputStream(new BufferedOutputStream(zos));
+            RoiEncoder re = new RoiEncoder(out);
+            int count = 0;
+            for (Roi roi : individualRois_) {
+                String label = roi.getName();
+                if (label == null) {
+                    label = String.valueOf(count);
+                }
+                if (!label.endsWith(".roi")) {
+                    label += ".roi";
+                }
+                zos.putNextEntry(new ZipEntry(label));
+                re.write(roi);
+                out.flush();
+                ++count;
+            }
+            out.close();
+        } catch (Exception e) {
+            ReportingUtils.logError(e);
+        }
     }
    
 
