@@ -1959,7 +1959,14 @@ int PFSOffset::Shutdown()
 
 bool PFSOffset::Busy()
 {
-   // All calls in TEHub for PFSOffset are blocking...
+   int status = 0;
+   g_hub.GetPFocusStatus(*this, *GetCoreCallback(), status);
+
+   if (status == PFS_SEARCHING || status == PFS_SEARCHING_2)
+   {
+      return true;
+   }
+
    return false;
 }
 
