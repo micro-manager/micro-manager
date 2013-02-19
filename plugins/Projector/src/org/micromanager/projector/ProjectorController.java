@@ -406,21 +406,14 @@ public class ProjectorController {
       }
    }
    
-    public MouseListener setupPointAndShootMouseListener() {
-        final ProjectorController thisController = this;
-        return new MouseAdapter() {
-
-            public void mouseClicked(MouseEvent e) {
-                if (e.isControlDown()) {
-                    String originalConfig = null;
+   public String prepareChannel() {
+                           String originalConfig = null;
                     String channelGroup = mmc.getChannelGroup();
-                    boolean acqEngineShouldRestart = false;
                     AcquisitionEngine eng = gui.getAcquisitionEngine();
                     try {
                         if (targetingChannel_.length() > 0) {
                             originalConfig = mmc.getCurrentConfig(channelGroup);
                             if (!originalConfig.contentEquals(targetingChannel_)) {
-                                acqEngineShouldRestart = eng.isAcquisitionRunning() && !eng.isPaused();
                                 gui.getAcquisitionEngine().setPause(true);
                                 mmc.setConfig(channelGroup, targetingChannel_);
                             }
@@ -428,7 +421,32 @@ public class ProjectorController {
                     } catch (Exception ex) {
                         ReportingUtils.logError(ex);
                     }
+                    return originalConfig;
+ 
+   }
+   
+   public void returnChannel(String originalConfig) {
+                           String channelGroup = mmc.getChannelGroup();
+       if (originalConfig != null) {
+                        try {
+                            mmc.setConfig(channelGroup, originalConfig);
+                            final AcquisitionEngine eng = gui.getAcquisitionEngine();
+                            if (eng.isAcquisitionRunning() && eng.isPaused()) {
+                                eng.setPause(false);
+                            }
+                        } catch (Exception ex) {
+                            ReportingUtils.logError(ex);
+                        }
+                    }
+   }
+   
+    public MouseListener setupPointAndShootMouseListener() {
+        final ProjectorController thisController = this;
+        return new MouseAdapter() {
 
+            public void mouseClicked(MouseEvent e) {
+                if (e.isControlDown()) {
+                    String originalConfig = prepareChannel();
                     Point p = e.getPoint();
                     ImageCanvas canvas = (ImageCanvas) e.getSource();
                     Point pOffscreen = new Point(canvas.offScreenX(p.x), canvas.offScreenY(p.y));
@@ -436,17 +454,8 @@ public class ProjectorController {
                     if (devP != null) {
                         displaySpot(devP.x, devP.y, thisController.getPointAndShootInterval());
                     }
-                    if (originalConfig != null) {
-                        try {
-                            mmc.setConfig(channelGroup, originalConfig);
-                            if (acqEngineShouldRestart) {
-                                eng.setPause(false);
-                            }
-                        } catch (Exception ex) {
-                            ReportingUtils.logError(ex);
-                        }
-                    }
-                }
+                    returnChannel(originalConfig);
+                }   
             }
         };
     }
@@ -473,7 +482,9 @@ public class ProjectorController {
    public void attachToMDA(int frameOn, boolean repeat, int repeatInterval) {
       Runnable runPolygons = new Runnable() {
          public void run() {
+            String originalConfig = prepareChannel();
             runPolygons();
+            returnChannel(originalConfig);
          }
       };
 
