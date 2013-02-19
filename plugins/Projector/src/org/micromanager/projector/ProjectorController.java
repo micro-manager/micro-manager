@@ -257,7 +257,7 @@ public class ProjectorController {
      int height = bottom-top;
    
      
-      int n = 8;
+      int n = 7;
       Point2D.Double dmdPoint[][] = new Point2D.Double[1+n][1+n];
       Point2D.Double resultPoint[][] = new Point2D.Double[1+n][1+n];
       for (int i = 0; i <= n; ++i) {
