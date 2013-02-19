@@ -263,7 +263,7 @@ int MicroPoint::PointAndFire(double x, double y, double /*pulseTime_us*/)
 
 int MicroPoint::SetSpotInterval(double /*pulseTime_us*/)
 {
-   return DEVICE_NOT_YET_IMPLEMENTED;
+   return DEVICE_OK; // ignore
 }
 
 int MicroPoint::SetIlluminationState(bool on)
@@ -311,27 +311,45 @@ double MicroPoint::GetYRange()
 
 int MicroPoint::AddPolygonVertex(int polygonIndex, double x, double y)
 {
-   return DEVICE_NOT_YET_IMPLEMENTED;
+   if (polygons_.size() <  (1 + polygonIndex))
+   {
+      polygons_.resize(polygonIndex + 1);
+   }
+   polygons_[polygonIndex].push_back(std::pair<double,double>(x,y));
+   
+   return DEVICE_OK;
 }
 
 int MicroPoint::DeletePolygons()
 {
-   return DEVICE_NOT_YET_IMPLEMENTED;
+   polygons_.clear();
+   return DEVICE_OK;
 }
 
 int MicroPoint::LoadPolygons()
 {
-   return DEVICE_NOT_YET_IMPLEMENTED;
+   // Do nothing -- MicroPoint controller doesn't store polygons.
+   return DEVICE_OK;
 }
 
 int MicroPoint::SetPolygonRepetitions(int repetitions)
 {
-   return DEVICE_NOT_YET_IMPLEMENTED;
+   polygonRepetitions_ = repetitions;
+   return DEVICE_OK;
 }
 
 int MicroPoint::RunPolygons()
 {
-   return DEVICE_NOT_YET_IMPLEMENTED;
+   for (int j=0; j<polygonRepetitions_; ++j)
+   {
+      for (int i=0; i<polygons_.size(); ++i)
+      {
+         double x = polygons_[i][0].first;
+         double y = polygons_[i][0].second;
+         PointAndFire(x,y,0);
+      }
+   }
+   return DEVICE_OK;
 }
 
 int MicroPoint::RunSequence()
