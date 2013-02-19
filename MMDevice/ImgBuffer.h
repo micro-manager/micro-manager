@@ -112,5 +112,27 @@ private:
    unsigned int depth_;
 };
 
+/**
+ * Utility class to build color image from the Bayer grayscale image
+ * Based on the Debayer_Image plugin for ImageJ, by Jennifer West, University of Manitoba
+ */
+class Debayer
+{
+public:
+   Debayer();
+   ~Debayer();
+
+   int Process(ImgBuffer& out, const ImgBuffer& in, int bitDepth);
+
+private:
+   void ReplicateDecode(const unsigned short* input, int* out, int width, int height, int bitDepth, int rowOrder);
+   int Convert(const unsigned short* input, int* output, int width, int height, int bitDepth, int rowOrder, int algorithm);
+   unsigned short GetPixel(const unsigned short* v, int x, int y, int width, int height);
+   void SetPixel(std::vector<unsigned short>& v, unsigned short val, int x, int y, int width, int height);
+
+   std::vector<unsigned short> r;
+   std::vector<unsigned short> g;
+   std::vector<unsigned short> b;
+};
 
 #endif // !defined(_IMG_BUFFER_)
