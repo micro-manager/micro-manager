@@ -11,7 +11,11 @@
 package org.micromanager.projector;
 
 import ij.IJ;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
+import java.awt.event.WindowFocusListener;
 import java.util.ArrayList;
+import java.util.prefs.Preferences;
 import javax.swing.JSpinner;
 import javax.swing.SpinnerNumberModel;
 import javax.swing.SwingUtilities;
@@ -41,7 +45,12 @@ public class ProjectorControlForm extends javax.swing.JFrame implements OnStateL
       GUIUtils.recallPosition(this);
       pointAndShootOffButton.setSelected(true);
       updateROISettings();
-      populateChannelComboBox();
+      populateChannelComboBox(Preferences.userNodeForPackage(this.getClass()).get("channel", ""));
+      this.addWindowFocusListener(new WindowAdapter() {
+          public void windowGainedFocus(WindowEvent e) {
+              populateChannelComboBox(null);
+          }
+      });
    }
 
    /**
@@ -570,7 +579,11 @@ public class ProjectorControlForm extends javax.swing.JFrame implements OnStateL
    }//GEN-LAST:event_startFrameSpinnerStateChanged
 
     private void channelComboBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_channelComboBoxActionPerformed
-        controller_.setTargetingChannel(channelComboBox.getSelectedItem());
+        final String channel = (String) channelComboBox.getSelectedItem();
+        controller_.setTargetingChannel(channel);
+        if (channel != null) {
+            Preferences.userNodeForPackage(this.getClass()).put("channel", channel);
+        }
     }//GEN-LAST:event_channelComboBoxActionPerformed
 
    private int getRoiRepetitionsSetting() {
@@ -690,13 +703,15 @@ public class ProjectorControlForm extends javax.swing.JFrame implements OnStateL
       });
    }
    
-    void populateChannelComboBox() {
-        String selected = (String) channelComboBox.getSelectedItem();
+    void populateChannelComboBox(String initialChannel) {
+        if (initialChannel == null) {
+           initialChannel = (String) channelComboBox.getSelectedItem();
+        }
         channelComboBox.removeAllItems();
         channelComboBox.addItem("");
         for (String preset : core_.getAvailableConfigs(core_.getChannelGroup())) {
             channelComboBox.addItem(preset);
         }
-        channelComboBox.setSelectedItem(selected);
+        channelComboBox.setSelectedItem(initialChannel);
     }
 }
