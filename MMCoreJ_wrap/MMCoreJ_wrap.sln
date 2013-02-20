@@ -267,6 +267,10 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ThorlabsUSBCamera", "..\Dev
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ThorlabsDCStage", "..\DeviceAdapters\ThorlabsDCStage\ThorlabsDCStage.vcproj", "{9440F1ED-DA8C-48CB-A3AD-42D373D5E4E1}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Toptica_iChrome_MLE", "..\SecretDeviceAdapters\Toptica_iChrome_MLE\Toptica_iChrome_MLE.vcproj", "{86BB3621-D40C-4731-8838-842A925E0615}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Toptica_iChrome_MLE_TCP", "..\SecretDeviceAdapters\Toptica_iChrome_MLE\Toptica_iChrome_MLE_TCP.vcproj", "{2A68B908-9C46-4D8D-A5AA-662787137BB0}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
@@ -1274,6 +1278,21 @@ Global
 		{9440F1ED-DA8C-48CB-A3AD-42D373D5E4E1}.Release|Win32.ActiveCfg = Release|Win32
 		{9440F1ED-DA8C-48CB-A3AD-42D373D5E4E1}.Release|Win32.Build.0 = Release|Win32
 		{9440F1ED-DA8C-48CB-A3AD-42D373D5E4E1}.Release|x64.ActiveCfg = Release|x64
+		{86BB3621-D40C-4731-8838-842A925E0615}.Debug|Win32.ActiveCfg = Debug|Win32
+		{86BB3621-D40C-4731-8838-842A925E0615}.Debug|Win32.Build.0 = Debug|Win32
+		{86BB3621-D40C-4731-8838-842A925E0615}.Debug|x64.ActiveCfg = Debug|x64
+		{86BB3621-D40C-4731-8838-842A925E0615}.Debug|x64.Build.0 = Debug|x64
+		{86BB3621-D40C-4731-8838-842A925E0615}.Release|Win32.ActiveCfg = Release|Win32
+		{86BB3621-D40C-4731-8838-842A925E0615}.Release|Win32.Build.0 = Release|Win32
+		{86BB3621-D40C-4731-8838-842A925E0615}.Release|x64.ActiveCfg = Release|x64
+		{86BB3621-D40C-4731-8838-842A925E0615}.Release|x64.Build.0 = Release|x64
+		{2A68B908-9C46-4D8D-A5AA-662787137BB0}.Debug|Win32.ActiveCfg = Debug|x64
+		{2A68B908-9C46-4D8D-A5AA-662787137BB0}.Debug|x64.ActiveCfg = Debug|x64
+		{2A68B908-9C46-4D8D-A5AA-662787137BB0}.Debug|x64.Build.0 = Debug|x64
+		{2A68B908-9C46-4D8D-A5AA-662787137BB0}.Release|Win32.ActiveCfg = Release|Win32
+		{2A68B908-9C46-4D8D-A5AA-662787137BB0}.Release|Win32.Build.0 = Release|Win32
+		{2A68B908-9C46-4D8D-A5AA-662787137BB0}.Release|x64.ActiveCfg = Release|x64
+		{2A68B908-9C46-4D8D-A5AA-662787137BB0}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
