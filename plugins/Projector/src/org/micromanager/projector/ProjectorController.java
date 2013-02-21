@@ -338,30 +338,37 @@ public class ProjectorController {
       return (Roi[]) roiList.toArray(rois);
    }
    
-   public int setRois(int reps) {
-      //AffineTransform transform = loadAffineTransform();
-      if (mapping_ != null) {
-         Roi[] rois = null;
-         Roi[] roiMgrRois = {};
-         Roi singleRoi = gui.getImageWin().getImagePlus().getRoi();
-         final RoiManager mgr = RoiManager.getInstance();
-         if (mgr != null) {
-            roiMgrRois = mgr.getRoisAsArray();
-         }
-         if (roiMgrRois.length > 0) {
-            rois = roiMgrRois;
-         } else if (singleRoi != null) {
-            rois = new Roi[] {singleRoi};
-         } else {
-            ReportingUtils.showError("Please first select ROI(s)");
-         }
-         individualRois_ = separateOutPointRois(rois);
-         sendRoiData();
-         return individualRois_.length;
-      } else {
-         return 0;
-      }
-   }
+    public int setRois(int reps) {
+        //AffineTransform transform = loadAffineTransform();
+        if (mapping_ != null) {
+            Roi[] rois = null;
+            Roi[] roiMgrRois = {};
+            ImageWindow window = WindowManager.getCurrentWindow();
+            if (window != null) {
+                Roi singleRoi = window.getImagePlus().getRoi();
+                final RoiManager mgr = RoiManager.getInstance();
+                if (mgr != null) {
+                    roiMgrRois = mgr.getRoisAsArray();
+                }
+                if (roiMgrRois.length > 0) {
+                    rois = roiMgrRois;
+                } else if (singleRoi != null) {
+                    rois = new Roi[]{singleRoi};
+                } else {
+                    ReportingUtils.showError("Please first select ROI(s)");
+                }
+                individualRois_ = separateOutPointRois(rois);
+                sendRoiData();
+                return individualRois_.length;
+            } else {
+                ReportingUtils.showError("No image window with ROIs is open.");
+                return 0;
+            }
+
+        } else {
+            return 0;
+        }
+    }
    
    private Polygon[] transformROIs(Roi[] rois, Map<Polygon, AffineTransform> mapping) {
       ArrayList<Polygon> transformedROIs = new ArrayList<Polygon>();
