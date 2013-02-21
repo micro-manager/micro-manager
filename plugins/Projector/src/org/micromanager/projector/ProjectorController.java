@@ -5,6 +5,7 @@
 package org.micromanager.projector;
 
 import ij.IJ;
+import ij.ImagePlus;
 import ij.WindowManager;
 import ij.gui.ImageCanvas;
 import ij.gui.ImageWindow;
@@ -32,6 +33,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.Writer;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.prefs.Preferences;
@@ -41,6 +43,7 @@ import javax.swing.JOptionPane;
 import mmcorej.CMMCore;
 import mmcorej.Configuration;
 import mmcorej.TaggedImage;
+import org.micromanager.acquisition.VirtualAcquisitionDisplay;
 import org.micromanager.api.AcquisitionEngine;
 import org.micromanager.api.ScriptInterface;
 import org.micromanager.utils.ImageUtils;
@@ -67,10 +70,15 @@ public class ProjectorController {
    private Map mapping_ = null;
    private String mappingNode_ = null;
    private String targetingChannel_;
+   AtomicReference stopRequested_ = new AtomicReference();
+   AtomicReference isRunning_ = new AtomicReference();
+   
        
    public ProjectorController(ScriptInterface app) {
       gui = app;
       mmc = app.getMMCore();
+      stopRequested_.set(false);
+      isRunning_.set(false);
       String slm = mmc.getSLMDevice();
       String galvo = mmc.getGalvoDevice();
       
@@ -101,11 +109,17 @@ public class ProjectorController {
        return null;
    }
    
+   public Point transformAndFlip(Map<Polygon, AffineTransform> mapping, ImagePlus imgp, Point pt) {
+       Point pOffscreen = mirrorIfNecessary(pt, imgp);
+       return transform(mapping, pOffscreen);
+   }
+   
    public void calibrate() {
       final boolean liveModeRunning = gui.isLiveModeOn();
       gui.enableLiveMode(false);
       Thread th = new Thread("Projector calibration thread") {
          public void run() {
+            isRunning_.set(true);
             Roi originalROI = IJ.getImage().getRoi();
             gui.snapSingleImage();
             
@@ -120,11 +134,17 @@ public class ProjectorController {
             } catch (InterruptedException ex) {
                ReportingUtils.logError(ex);
             }
+            if (!(boolean) stopRequested_.get()) {
             saveMapping((HashMap<Polygon, AffineTransform>) mapping);
+            }
             //saveAffineTransform(affineTransform);
             gui.enableLiveMode(liveModeRunning);
-            JOptionPane.showMessageDialog(IJ.getImage().getWindow(), "Calibration finished.");
+            JOptionPane.showMessageDialog(IJ.getImage().getWindow(), "Calibration " 
+                    + (!(boolean) stopRequested_.get() ? "finished." : "canceled."));
             IJ.getImage().setRoi(originalROI);
+            
+            isRunning_.set(false);
+            stopRequested_.set(false);
          }
       };
       th.start();
@@ -168,6 +188,10 @@ public class ProjectorController {
    }
       
    public Point measureSpot(Point dmdPt) {
+      if ((boolean) stopRequested_.get()) {
+          return null;
+      }
+      
       try {
          mmc.snapImage();
          ImageProcessor proc1 = ImageUtils.makeProcessor(mmc.getTaggedImage());
@@ -180,7 +204,8 @@ public class ProjectorController {
          ImageProcessor proc2 = ImageUtils.makeProcessor(taggedImage2);
          gui.displayImage(taggedImage2);
 
-         Point maxPt = findPeak(ImageUtils.subtractImageProcessors(proc2, proc1));
+         Point peak = findPeak(ImageUtils.subtractImageProcessors(proc2, proc1));
+         Point maxPt = peak;
          IJ.getImage().setRoi(new PointRoi(maxPt.x, maxPt.y));
          mmc.sleep(500);
          return maxPt;
@@ -209,7 +234,9 @@ public class ProjectorController {
    }
 
    public void mapSpot(Map spotMap, Point2D.Double ptSLM) {
-      mapSpot(spotMap, new Point((int) ptSLM.x, (int) ptSLM.y));
+       if (! (boolean) stopRequested_.get()) {
+            mapSpot(spotMap, new Point((int) ptSLM.x, (int) ptSLM.y));
+       }
    }
 
    public AffineTransform getFirstApproxTransform() {
@@ -224,7 +251,9 @@ public class ProjectorController {
       mapSpot(spotMap, new Point2D.Double(x + s, y));
       mapSpot(spotMap, new Point2D.Double(x, y - s));
       mapSpot(spotMap, new Point2D.Double(x - s, y));
-
+      if ((boolean) stopRequested_.get()) {
+          return null;
+      }
       return MathFunctions.generateAffineTransformFromPointPairs(spotMap);
    }
 
@@ -252,6 +281,9 @@ public class ProjectorController {
    }
    
    public Map getMapping(AffineTransform firstApprox) {
+       if (firstApprox == null) {
+           return null;
+       }
       int devWidth = (int) dev.getWidth()-1;
       int devHeight = (int) dev.getHeight()-1;
      Point2D.Double camCorner1 = (Point2D.Double) firstApprox.transform(new Point2D.Double(0,0), null);
@@ -274,8 +306,15 @@ public class ProjectorController {
       for (int i = 0; i <= n; ++i) {
         for (int j = 0; j <= n; ++j) {
            dmdPoint[i][j] = new Point2D.Double((int) left + i*width/n,(int) top + j*height/n);
-           resultPoint[i][j] = toDoublePoint(measureSpot(toIntPoint(dmdPoint[i][j])));
+                Point spot = measureSpot(toIntPoint(dmdPoint[i][j]));
+           if (spot != null) {
+                resultPoint[i][j] = toDoublePoint(spot);           
+           }
         }
+      }
+      
+      if ((boolean) stopRequested_.get()) {
+          return null;
       }
       
       Map bigMap = new HashMap();
@@ -338,7 +377,7 @@ public class ProjectorController {
       return (Roi[]) roiList.toArray(rois);
    }
    
-    public int setRois(int reps) {
+    public int setRois(int reps, ImagePlus imgp) {
         //AffineTransform transform = loadAffineTransform();
         if (mapping_ != null) {
             Roi[] rois = null;
@@ -358,7 +397,7 @@ public class ProjectorController {
                     ReportingUtils.showError("Please first select ROI(s)");
                 }
                 individualRois_ = separateOutPointRois(rois);
-                sendRoiData();
+                sendRoiData(imgp);
                 return individualRois_.length;
             } else {
                 ReportingUtils.showError("No image window with ROIs is open.");
@@ -370,7 +409,7 @@ public class ProjectorController {
         }
     }
    
-   private Polygon[] transformROIs(Roi[] rois, Map<Polygon, AffineTransform> mapping) {
+   private Polygon[] transformROIs(ImagePlus imgp, Roi[] rois, Map<Polygon, AffineTransform> mapping) {
       ArrayList<Polygon> transformedROIs = new ArrayList<Polygon>();
       for (Roi roi : rois) {
          if ((roi.getType() == Roi.POINT)
@@ -384,7 +423,7 @@ public class ProjectorController {
                Point2D galvoPoint;
                for (int i = 0; i < poly.npoints; ++i) {
                   Point imagePoint = new Point(poly.xpoints[i], poly.ypoints[i]);
-                  galvoPoint = transform(mapping, imagePoint);
+                  galvoPoint = transformAndFlip(mapping, imgp, imagePoint);
                   if (galvoPoint == null) throw new Exception();
                   newPoly.addPoint((int) galvoPoint.getX(), (int) galvoPoint.getY());
                }
@@ -402,10 +441,10 @@ public class ProjectorController {
       return (Polygon[]) transformedROIs.toArray(new Polygon[0]);
    }
 
-   private void sendRoiData() {
+   private void sendRoiData(ImagePlus imgp) {
       if (individualRois_.length > 0) {
          if (mapping_ != null) {
-            Polygon[] galvoROIs = transformROIs(individualRois_,mapping_);
+            Polygon[] galvoROIs = transformROIs(imgp, individualRois_,mapping_);
             dev.setRois(galvoROIs);
             dev.setPolygonRepetitions(reps_);
             dev.setSpotInterval(interval_us_);
@@ -415,7 +454,7 @@ public class ProjectorController {
    
    public void setRoiRepetitions(int reps) {
       reps_ = reps;
-      sendRoiData();
+      sendRoiData(IJ.getImage());
    }
 
    public void displaySpot(double x, double y, double intervalUs) {
@@ -458,6 +497,24 @@ public class ProjectorController {
                     }
    }
    
+   public boolean isMirrored(ImagePlus imgp) {
+       try {
+       String mirrorString = VirtualAcquisitionDisplay.getDisplay(imgp)
+               .getCurrentMetadata().getString("ImageFlipper-Mirror");
+       return (mirrorString.contentEquals("On"));
+       } catch (Exception e) {
+           return false;
+       }
+   }
+   
+   public Point mirrorIfNecessary(Point pOffscreen, ImagePlus imgp) {
+       if (isMirrored(imgp)) {
+           return new Point(imgp.getWidth() - pOffscreen.x, pOffscreen.y);
+       } else {
+           return pOffscreen;
+       }
+   }
+   
     public MouseListener setupPointAndShootMouseListener() {
         final ProjectorController thisController = this;
         return new MouseAdapter() {
@@ -468,7 +525,7 @@ public class ProjectorController {
                     Point p = e.getPoint();
                     ImageCanvas canvas = (ImageCanvas) e.getSource();
                     Point pOffscreen = new Point(canvas.offScreenX(p.x), canvas.offScreenY(p.y));
-                    Point devP = transform((Map<Polygon, AffineTransform>) loadMapping(), new Point(pOffscreen.x, pOffscreen.y));
+                    Point devP = transformAndFlip((Map<Polygon, AffineTransform>) loadMapping(), canvas.getImage(), new Point(pOffscreen.x, pOffscreen.y));
                     if (devP != null) {
                         displaySpot(devP.x, devP.y, thisController.getPointAndShootInterval());
                     }
@@ -550,7 +607,7 @@ public class ProjectorController {
 
     void setSpotInterval(long interval_us) {
         interval_us_ = interval_us;
-        this.sendRoiData();
+        this.sendRoiData(IJ.getImage());
     }
 
     void setTargetingChannel(Object selectedItem) {
@@ -595,6 +652,14 @@ public class ProjectorController {
         } catch (Exception e) {
             ReportingUtils.logError(e);
         }
+    }
+
+    boolean isCalibrating() {
+        return (boolean) isRunning_.get();
+    }
+
+    void stopCalibration() {
+        stopRequested_.set(true);
     }
    
 

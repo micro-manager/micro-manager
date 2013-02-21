@@ -485,7 +485,14 @@ public class ProjectorControlForm extends javax.swing.JFrame implements OnStateL
     }// </editor-fold>//GEN-END:initComponents
 
     private void calibrateButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_calibrateButtonActionPerformed
-       controller_.calibrate();
+       boolean running = controller_.isCalibrating();
+       if (running) {
+           controller_.stopCalibration();
+           calibrateButton.setText("Calibrate");
+       } else {
+           controller_.calibrate();
+           calibrateButton.setText("Stop calibration");
+       }
     }//GEN-LAST:event_calibrateButtonActionPerformed
 
     private void onButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_onButtonActionPerformed
@@ -540,7 +547,7 @@ public class ProjectorControlForm extends javax.swing.JFrame implements OnStateL
    }//GEN-LAST:event_runROIsNowButtonActionPerformed
 
    private void setRoiButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_setRoiButtonActionPerformed
-      numROIs_ = controller_.setRois(getRoiRepetitionsSetting());
+      numROIs_ = controller_.setRois(getRoiRepetitionsSetting(), IJ.getImage());
       this.updateROISettings();
    }//GEN-LAST:event_setRoiButtonActionPerformed
 
