@@ -110,20 +110,24 @@ public class NewImageFlippingProcessor extends DataProcessor<TaggedImage> {
       if (mirror) {
          proc.flipHorizontal();
       }
+      int rotationTag = 0;
       if (rotation == Rotation.R90) {
          proc = proc.rotateRight();
+         rotationTag = 90;
       }
       if (rotation == Rotation.R180) {
          proc = proc.rotateRight();
          proc = proc.rotateRight();
+         rotationTag = 180;
       }
       if (rotation == Rotation.R270) {
          proc = proc.rotateLeft();
+         rotationTag = 270;
       }
       JSONObject newTags = nextImage.tags;
-      newTags.put("ImageFlipper-Rotation", rotation);
-      newTags.put("ImageFlipper-Mirror", mirror);
-      MDUtils.setWidth(newTags, proc.getWidth());
+      newTags.put("ImageFlipper-Rotation", rotationTag);
+      newTags.put("ImageFlipper-Mirror", mirror ? "On" : "Off");
+      MDUtils.setWidth(newTags, proc.getWidth()); 
       MDUtils.setHeight(newTags, proc.getHeight());
 
       return new TaggedImage(proc.getPixels(), newTags);
