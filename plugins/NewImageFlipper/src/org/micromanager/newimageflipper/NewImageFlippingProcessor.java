@@ -121,6 +121,8 @@ public class NewImageFlippingProcessor extends DataProcessor<TaggedImage> {
          proc = proc.rotateLeft();
       }
       JSONObject newTags = nextImage.tags;
+      newTags.put("ImageFlipper-Rotation", rotation);
+      newTags.put("ImageFlipper-Mirror", mirror);
       MDUtils.setWidth(newTags, proc.getWidth());
       MDUtils.setHeight(newTags, proc.getHeight());
 
