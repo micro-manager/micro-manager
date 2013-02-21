@@ -33,6 +33,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.Writer;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -70,15 +71,13 @@ public class ProjectorController {
    private Map mapping_ = null;
    private String mappingNode_ = null;
    private String targetingChannel_;
-   AtomicReference stopRequested_ = new AtomicReference();
-   AtomicReference isRunning_ = new AtomicReference();
+   AtomicBoolean stopRequested_ = new AtomicBoolean(false);
+   AtomicBoolean isRunning_ = new AtomicBoolean(false);
    
        
    public ProjectorController(ScriptInterface app) {
       gui = app;
       mmc = app.getMMCore();
-      stopRequested_.set(false);
-      isRunning_.set(false);
       String slm = mmc.getSLMDevice();
       String galvo = mmc.getGalvoDevice();
       
@@ -134,13 +133,13 @@ public class ProjectorController {
             } catch (InterruptedException ex) {
                ReportingUtils.logError(ex);
             }
-            if (!(boolean) stopRequested_.get()) {
+            if (!stopRequested_.get()) {
             saveMapping((HashMap<Polygon, AffineTransform>) mapping);
             }
             //saveAffineTransform(affineTransform);
             gui.enableLiveMode(liveModeRunning);
             JOptionPane.showMessageDialog(IJ.getImage().getWindow(), "Calibration " 
-                    + (!(boolean) stopRequested_.get() ? "finished." : "canceled."));
+                    + (!stopRequested_.get() ? "finished." : "canceled."));
             IJ.getImage().setRoi(originalROI);
             
             isRunning_.set(false);
@@ -234,7 +233,7 @@ public class ProjectorController {
    }
 
    public void mapSpot(Map spotMap, Point2D.Double ptSLM) {
-       if (! (boolean) stopRequested_.get()) {
+       if (!stopRequested_.get()) {
             mapSpot(spotMap, new Point((int) ptSLM.x, (int) ptSLM.y));
        }
    }
@@ -313,7 +312,7 @@ public class ProjectorController {
         }
       }
       
-      if ((boolean) stopRequested_.get()) {
+      if (stopRequested_.get()) {
           return null;
       }
       
@@ -655,7 +654,7 @@ public class ProjectorController {
     }
 
     boolean isCalibrating() {
-        return (boolean) isRunning_.get();
+        return isRunning_.get();
     }
 
     void stopCalibration() {
