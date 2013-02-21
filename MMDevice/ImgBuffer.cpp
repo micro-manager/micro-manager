@@ -322,6 +322,17 @@ int Debayer::Process(ImgBuffer& out, const ImgBuffer& input, int bitDepth)
    return Convert(inBuf, outBuf, input.Width(), input.Height(), bitDepth, 0, 0);
 }
 
+int Debayer::Process(ImgBuffer& out, const unsigned short* in, int width, int height, int bitDepth)
+{
+   out.Resize(width, height, 4);
+   assert(sizeof(int) == 4);
+   const unsigned short* inBuf = reinterpret_cast<const unsigned short*>(in);
+   int* outBuf = reinterpret_cast<int*>(out.GetPixelsRW());
+
+   return Convert(inBuf, outBuf, width, height, bitDepth, 0, 0);
+}
+
+
 int Debayer::Convert(const unsigned short* input, int* output, int width, int height, int bitDepth, int rowOrder, int algorithm)
 {
    //const char* orders[] = {"R-G-R-G", "B-G-B-G", "G-R-G-R", "G-B-G-B"};

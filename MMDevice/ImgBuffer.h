@@ -123,6 +123,7 @@ public:
    ~Debayer();
 
    int Process(ImgBuffer& out, const ImgBuffer& in, int bitDepth);
+   int Process(ImgBuffer& out, const unsigned short* in, int width, int height, int bitDepth);
 
 private:
    void ReplicateDecode(const unsigned short* input, int* out, int width, int height, int bitDepth, int rowOrder);
