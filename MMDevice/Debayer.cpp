@@ -30,11 +30,23 @@ using namespace std;
 
 ///////////////////////////////////////////////////////////////////////////////
 // Debayer class implementation
-//
 ///////////////////////////////////////////////////////////////////////////////
+
+
 Debayer::Debayer()
 {
+   orders.push_back("R-G-R-G");
+   orders.push_back("B-G-B-G");
+   orders.push_back("G-R-G-R");
+   orders.push_back("G-B-G-B");
 
+   algorithms.push_back("Replication");
+   algorithms.push_back("Bilinear");
+   algorithms.push_back("Smooth-Hue");
+   algorithms.push_back("Adaptive-Smooth-Hue");
+
+   orderIndex = 0;
+   algoIndex = 0;
 }
 
 Debayer::~Debayer()
@@ -52,7 +64,7 @@ int Debayer::Process(ImgBuffer& out, const ImgBuffer& input, int bitDepth)
    const unsigned short* inBuf = reinterpret_cast<const unsigned short*>(input.GetPixels());
    int* outBuf = reinterpret_cast<int*>(out.GetPixelsRW());
 
-   return Convert(inBuf, outBuf, input.Width(), input.Height(), bitDepth, 0, 0);
+   return Convert(inBuf, outBuf, input.Width(), input.Height(), bitDepth, orderIndex, algoIndex);
 }
 
 int Debayer::Process(ImgBuffer& out, const unsigned short* in, int width, int height, int bitDepth)
@@ -62,20 +74,23 @@ int Debayer::Process(ImgBuffer& out, const unsigned short* in, int width, int he
    const unsigned short* inBuf = reinterpret_cast<const unsigned short*>(in);
    int* outBuf = reinterpret_cast<int*>(out.GetPixelsRW());
 
-   return Convert(inBuf, outBuf, width, height, bitDepth, 0, 0);
+   return Convert(inBuf, outBuf, width, height, bitDepth, orderIndex, algoIndex);
 }
 
 
 int Debayer::Convert(const unsigned short* input, int* output, int width, int height, int bitDepth, int rowOrder, int algorithm)
-{
-   //const char* orders[] = {"R-G-R-G", "B-G-B-G", "G-R-G-R", "G-B-G-B"};
-	//const char* algorithms[] = {"Replication", "Bilinear", "Smooth-Hue", "Adaptive-Smooth-Hue"};
-				
+{				
 	if (algorithm == 0)
       ReplicateDecode(input, output, width, height, bitDepth, rowOrder);
-	//else if (algorithm == 1) return average_decode(input, output, width, height, rowOrder);
-	//else if (algorithm == 2) return smooth_decode(input, output, width, height, rowOrder);
-	//else if (algorithm == 3) return adaptive_decode(input, output, width, height, rowOrder);
+	else if (algorithm == 1)
+      return DEVICE_NOT_SUPPORTED;
+	else if (algorithm == 2)
+      SmoothDecode(input, output, width, height, bitDepth, rowOrder);
+	else if (algorithm == 3)
+      return DEVICE_NOT_SUPPORTED;
+   else
+      return DEVICE_NOT_SUPPORTED;
+
 
    return DEVICE_OK;
 }

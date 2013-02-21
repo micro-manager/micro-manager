@@ -41,6 +41,12 @@ public:
    int Process(ImgBuffer& out, const ImgBuffer& in, int bitDepth);
    int Process(ImgBuffer& out, const unsigned short* in, int width, int height, int bitDepth);
 
+   const std::vector<std::string> GetOrders() const {return orders;}
+   const std::vector<std::string> GetAlgorithms() const {return algorithms;}
+
+   void SetOrderIndex(int idx) {orderIndex = idx;}
+   void SetAlgorithmIndex(int idx) {algoIndex = idx;}
+
 private:
    void ReplicateDecode(const unsigned short* input, int* out, int width, int height, int bitDepth, int rowOrder);
    void SmoothDecode(const unsigned short* input, int* output, int width, int height, int bitDepth, int rowOrder);
@@ -48,9 +54,15 @@ private:
    unsigned short GetPixel(const unsigned short* v, int x, int y, int width, int height);
    void SetPixel(std::vector<unsigned short>& v, unsigned short val, int x, int y, int width, int height);
 
-   std::vector<unsigned short> r;
-   std::vector<unsigned short> g;
-   std::vector<unsigned short> b;
+   std::vector<unsigned short> r; // red scratch buffer
+   std::vector<unsigned short> g; // green scratch buffer
+   std::vector<unsigned short> b; // blue scratch buffer
+
+   std::vector<std::string> orders;
+   std::vector<std::string> algorithms;
+
+   int orderIndex;
+   int algoIndex;
 };
 
 #endif // !defined(_DEBAYER_)
