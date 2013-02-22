@@ -165,9 +165,9 @@ void Debayer::ReplicateDecode(const unsigned short* input, int* output, int widt
          {
             output[i] = 0;
             unsigned char* bytePix = (unsigned char*)(output+i);
-            *bytePix = (unsigned char)(b[i] >> bitShift);
+            *bytePix = (unsigned char)(r[i] >> bitShift);
             *(bytePix+1) = (unsigned char)(g[i] >> bitShift);
-            *(bytePix+2) = (unsigned char)(r[i] >> bitShift);
+            *(bytePix+2) = (unsigned char)(b[i] >> bitShift);
 
 			   //rgb.addSlice("red",b);	
 			   //rgb.addSlice("green",g);
@@ -179,9 +179,9 @@ void Debayer::ReplicateDecode(const unsigned short* input, int* output, int widt
          {
             output[i] = 0;
             unsigned char* bytePix = (unsigned char*)(output+i);
-            *bytePix = (unsigned char)(r[i] >> bitShift);
+            *bytePix = (unsigned char)(b[i] >> bitShift);
             *(bytePix+1) = (unsigned char)(g[i] >> bitShift);
-            *(bytePix+2) = (unsigned char)(b[i] >> bitShift);
+            *(bytePix+2) = (unsigned char)(r[i] >> bitShift);
 
 			   //rgb.addSlice("red",r);	
 			   //rgb.addSlice("green",g);
@@ -232,9 +232,9 @@ void Debayer::ReplicateDecode(const unsigned short* input, int* output, int widt
          {
             output[i] = 0;
             unsigned char* bytePix = (unsigned char*)(output+i);
-            *bytePix = (unsigned char)(b[i] >> bitShift);
+            *bytePix = (unsigned char)(r[i] >> bitShift);
             *(bytePix+1) = (unsigned char)(g[i] >> bitShift);
-            *(bytePix+2) = (unsigned char)(r[i] >> bitShift);
+            *(bytePix+2) = (unsigned char)(b[i] >> bitShift);
 
             //rgb.addSlice("red",b);	
 			   //rgb.addSlice("green",g);
@@ -246,9 +246,9 @@ void Debayer::ReplicateDecode(const unsigned short* input, int* output, int widt
          {
             output[i] = 0;
             unsigned char* bytePix = (unsigned char*)(output+i);
-            *bytePix = (unsigned char)(r[i] >> bitShift);
+            *bytePix = (unsigned char)(b[i] >> bitShift);
             *(bytePix+1) = (unsigned char)(g[i] >> bitShift);
-            *(bytePix+2) = (unsigned char)(b[i] >> bitShift);
+            *(bytePix+2) = (unsigned char)(r[i] >> bitShift);
 
             //rgb.addSlice("red",r);	
 			   //rgb.addSlice("green",g);
@@ -390,9 +390,9 @@ void Debayer::SmoothDecode(const unsigned short* input, int* output, int width, 
          {
             output[i] = 0;
             unsigned char* bytePix = (unsigned char*)(output+i);
-            *bytePix = (unsigned char)(b[i] >> bitShift);
+            *bytePix = (unsigned char)(r[i] >> bitShift);
             *(bytePix+1) = (unsigned char)(g[i] >> bitShift);
-            *(bytePix+2) = (unsigned char)(r[i] >> bitShift);
+            *(bytePix+2) = (unsigned char)(b[i] >> bitShift);
 
             //rgb.addSlice("red",b);	
             //rgb.addSlice("green",g);
@@ -404,9 +404,9 @@ void Debayer::SmoothDecode(const unsigned short* input, int* output, int width, 
          {
             output[i] = 0;
             unsigned char* bytePix = (unsigned char*)(output+i);
-            *bytePix = (unsigned char)(r[i] >> bitShift);
+            *bytePix = (unsigned char)(b[i] >> bitShift);
             *(bytePix+1) = (unsigned char)(g[i] >> bitShift);
-            *(bytePix+2) = (unsigned char)(b[i] >> bitShift);
+            *(bytePix+2) = (unsigned char)(r[i] >> bitShift);
 
             //rgb.addSlice("red",r);	
             //rgb.addSlice("green",g);
@@ -513,9 +513,9 @@ void Debayer::SmoothDecode(const unsigned short* input, int* output, int width, 
          {
             output[i] = 0;
             unsigned char* bytePix = (unsigned char*)(output+i);
-            *bytePix = (unsigned char)(b[i] >> bitShift);
+            *bytePix = (unsigned char)(r[i] >> bitShift);
             *(bytePix+1) = (unsigned char)(g[i] >> bitShift);
-            *(bytePix+2) = (unsigned char)(r[i] >> bitShift);
+            *(bytePix+2) = (unsigned char)(b[i] >> bitShift);
 
             //rgb.addSlice("red",b);	
             //rgb.addSlice("green",g);
@@ -527,9 +527,9 @@ void Debayer::SmoothDecode(const unsigned short* input, int* output, int width, 
          {
             output[i] = 0;
             unsigned char* bytePix = (unsigned char*)(output+i);
-            *bytePix = (unsigned char)(r[i] >> bitShift);
+            *bytePix = (unsigned char)(b[i] >> bitShift);
             *(bytePix+1) = (unsigned char)(g[i] >> bitShift);
-            *(bytePix+2) = (unsigned char)(b[i] >> bitShift);
+            *(bytePix+2) = (unsigned char)(r[i] >> bitShift);
 
             //rgb.addSlice("red",r);	
             //rgb.addSlice("green",g);
