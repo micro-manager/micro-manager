@@ -293,8 +293,8 @@ private:
    static int      refCount_;             // This class reference counter
    static bool     PVCAM_initialized_;    // Global PVCAM initialization status
    ImgBuffer       img_;                  // Single image buffer
-   ImgBuffer       colorImg_;             // color image buffer (debayer)
-   Debayer         debayer_;
+   ImgBuffer       colorImg_;             // color image buffer
+   Debayer         debayer_;              // debayer processor
 
    MM::MMTime      startTime_;            // Acquisition start time
 
