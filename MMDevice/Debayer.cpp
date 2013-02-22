@@ -74,7 +74,6 @@ int Debayer::Process(ImgBuffer& out, const ImgBuffer& input, int bitDepth)
    else if (input.Depth() == 2)
    {
       const unsigned short* inBuf = reinterpret_cast<const unsigned short*>(input.GetPixels());
-      int* outBuf = reinterpret_cast<int*>(out.GetPixelsRW());
       return Process(out, inBuf, input.Width(), input.Height(), bitDepth);
    }
    else
@@ -290,8 +289,8 @@ void Debayer::SmoothDecode(const T* input, int* output, int width, int height, i
    double G4 = 0;
    double G5 = 0;
    double G6 = 0;
-   double G7 = 0;
-   double G8 = 0;
+   //double G7 = 0;
+   //double G8 = 0;
    double G9 = 0;
    double B1 = 0;
    double B2 = 0;
@@ -321,14 +320,14 @@ void Debayer::SmoothDecode(const T* input, int* output, int width, int height, i
             G3 = GetPixel(input, x+1, y+1, width, height);
             G4 = GetPixel(input, x+1, y-1, width, height);
 
-            SetPixel(g, (int)G1, x, y, width, height);
+            SetPixel(g, (unsigned short)G1, x, y, width, height);
             if (y==0)
-               SetPixel(g, (int)((G1+G2+G3)/3.0), x+1, y, width, height);
+               SetPixel(g, (unsigned short)((G1+G2+G3)/3.0), x+1, y, width, height);
             else
-               SetPixel(g, (int)((G1+G2+G3+G4)/4.0), x+1, y, width, height);
+               SetPixel(g, (unsigned short)((G1+G2+G3+G4)/4.0), x+1, y, width, height);
 
             if (x==1)
-               SetPixel(g, (int)((G1 + G4 + GetPixel(input, x-1, y+1, width, height))/3.0), x-1, y, width, height);
+               SetPixel(g, (unsigned short)((G1 + G4 + GetPixel(input, x-1, y+1, width, height))/3.0), x-1, y, width, height);
          }
       }	
 
@@ -340,15 +339,15 @@ void Debayer::SmoothDecode(const T* input, int* output, int width, int height, i
             G3 = GetPixel(input, x+1, y+1, width, height);
             G4 = GetPixel(input, x+1, y-1, width, height);
 
-            SetPixel(g, (int)G1, x, y, width, height);
+            SetPixel(g, (unsigned short)G1, x, y, width, height);
             if (x==0)
-               SetPixel(g, (int)((G1+G2+G3)/3.0), x+1, y, width, height);
+               SetPixel(g, (unsigned short)((G1+G2+G3)/3.0), x+1, y, width, height);
             else
-               SetPixel(g, (int)((G1+G2+G3+G4)/4.0), x+1, y, width, height);
+               SetPixel(g, (unsigned short)((G1+G2+G3+G4)/4.0), x+1, y, width, height);
          }
       }	
 
-      SetPixel(g, (int)((GetPixel(input, 0, 1, width, height) + GetPixel(input, 1, 0, width, height))/2.0), 0, 0, width, height);
+      SetPixel(g, (unsigned short)((GetPixel(input, 0, 1, width, height) + GetPixel(input, 1, 0, width, height))/2.0), 0, 0, width, height);
 
       for (int y=0; y<height; y+=2) {
          for (int x=0; x<width; x+=2) {
@@ -368,13 +367,13 @@ void Debayer::SmoothDecode(const T* input, int* output, int width, int height, i
             if (G3==0) G3=1;
             if (G4==0) G4=1;
 
-            SetPixel(b, (int)B1, x, y, width, height);
+            SetPixel(b, (unsigned short)B1, x, y, width, height);
             //b.putPixel(x+1,y,(int)((G5/2 * ((B1/G1) + (B2/G2)) )) );
-            SetPixel(b, (int)((G5/2 * ((B1/G1) + (B2/G2)) )), x+1, y, width, height);
+            SetPixel(b, (unsigned short)((G5/2 * ((B1/G1) + (B2/G2)) )), x+1, y, width, height);
             //b.putPixel(x,y+1,(int)(( G6/2 * ((B1/G1) + (B3/G3)) )) );
-            SetPixel(b, (int)((G6/2 * ((B1/G1) + (B3/G3)) )), x, y+1, width, height);
+            SetPixel(b, (unsigned short)((G6/2 * ((B1/G1) + (B3/G3)) )), x, y+1, width, height);
             //b.putPixel(x+1,y+1, (int)((G9/4 *  ((B1/G1) + (B3/G3) + (B2/G2) + (B4/G4)) )) );
-            SetPixel(b, (int)((G9/4 * ((B1/G1) + (B3/G3) + (B2/G2) + (B4/G4)) )), x+1, y+1, width, height);
+            SetPixel(b, (unsigned short)((G9/4 * ((B1/G1) + (B3/G3) + (B2/G2) + (B4/G4)) )), x+1, y+1, width, height);
          }
       }
 
@@ -397,13 +396,13 @@ void Debayer::SmoothDecode(const T* input, int* output, int width, int height, i
             if(G4==0) G4=1;
 
             //r.putPixel(x,y,(int)(R1));
-            SetPixel(r, (int)R1, x, y, width, height);
+            SetPixel(r, (unsigned short)R1, x, y, width, height);
             //r.putPixel(x+1,y,(int)((G5/2 * ((R1/G1) + (R2/G2) )) ));
-            SetPixel(r, (int)((G5/2 * ((R1/G1) + (R2/G2) )) ), x+1, y, width, height);
+            SetPixel(r, (unsigned short)((G5/2 * ((R1/G1) + (R2/G2) )) ), x+1, y, width, height);
             //r.putPixel(x,y+1,(int)(( G6/2 * ((R1/G1) + (R3/G3) )) ));
-            SetPixel(r, (int)(( G6/2 * ((R1/G1) + (R3/G3) )) ), x, y+1, width, height);
+            SetPixel(r, (unsigned short)(( G6/2 * ((R1/G1) + (R3/G3) )) ), x, y+1, width, height);
             //r.putPixel(x+1,y+1, (int)((G9/4 *  ((R1/G1) + (R3/G3) + (R2/G2) + (R4/G4)) ) ));
-            SetPixel(r, (int)((G9/4 *  ((R1/G1) + (R3/G3) + (R2/G2) + (R4/G4)) ) ), x+1, y+1, width, height);
+            SetPixel(r, (unsigned short)((G9/4 *  ((R1/G1) + (R3/G3) + (R2/G2) + (R4/G4)) ) ), x+1, y+1, width, height);
          }
       }
 
@@ -447,14 +446,14 @@ void Debayer::SmoothDecode(const T* input, int* output, int width, int height, i
             G3 = GetPixel(input, x+1, y+1, width, height);
             G4 = GetPixel(input, x+1, y-1, width, height);
 
-            SetPixel(g, (int)G1, x, y, width, height);
+            SetPixel(g, (unsigned short)G1, x, y, width, height);
             if (y==0)
-               SetPixel(g, (int)((G1+G2+G3)/3.0), x+1, y, width, height);
+               SetPixel(g, (unsigned short)((G1+G2+G3)/3.0), x+1, y, width, height);
             else
-               SetPixel(g, (int)((G1+G2+G3+G4)/4.0), x+1, y, width, height);
+               SetPixel(g, (unsigned short)((G1+G2+G3+G4)/4.0), x+1, y, width, height);
 
             if (x==1)
-               SetPixel(g, (int)((G1+G4+GetPixel(input, x-1, y+1, width, height))/3.0), x-1, y, width, height);
+               SetPixel(g, (unsigned short)((G1+G4+GetPixel(input, x-1, y+1, width, height))/3.0), x-1, y, width, height);
          }
       }	
 
@@ -465,15 +464,15 @@ void Debayer::SmoothDecode(const T* input, int* output, int width, int height, i
             G3 = GetPixel(input, x+1, y+1, width, height);
             G4 = GetPixel(input, x+1, y-1, width, height);
 
-            SetPixel(g, (int)G1, x, y, width, height);
+            SetPixel(g, (unsigned short)G1, x, y, width, height);
             if (x==0)
-               SetPixel(g, (int)((G1+G2+G3)/3.0), x+1, y, width, height);
+               SetPixel(g, (unsigned short)((G1+G2+G3)/3.0), x+1, y, width, height);
             else
-               SetPixel(g, (int)((G1+G2+G3+G4)/4.0), x+1, y, width, height);
+               SetPixel(g, (unsigned short)((G1+G2+G3+G4)/4.0), x+1, y, width, height);
          }
       }
 
-      SetPixel(g, (int)((GetPixel(input, 0, 1, width, height) + GetPixel(input, 1, 0, width, height))/2.0), 0, 0, width, height);
+      SetPixel(g, (unsigned short)((GetPixel(input, 0, 1, width, height) + GetPixel(input, 1, 0, width, height))/2.0), 0, 0, width, height);
 
       for (int y=1; y<height; y+=2) {
          for (int x=0; x<width; x+=2) {
@@ -493,10 +492,10 @@ void Debayer::SmoothDecode(const T* input, int* output, int width, int height, i
             if (G3==0) G3=1;
             if (G4==0) G4=1;
 
-            SetPixel(b, (int)B1, x, y, width, height);
-            SetPixel(b, (int)((G5/2 * ((B1/G1) + (B2/G2)) )), x+1, y, width, height);
-            SetPixel(b, (int)((G6/2 * ((B1/G1) + (B3/G3)) )), x, y+1, width, height);
-            SetPixel(b, (int)((G9/4 * ((B1/G1) + (B3/G3) + (B2/G2) + (B4/G4)) )), x+1, y+1, width, height);
+            SetPixel(b, (unsigned short)B1, x, y, width, height);
+            SetPixel(b, (unsigned short)((G5/2 * ((B1/G1) + (B2/G2)) )), x+1, y, width, height);
+            SetPixel(b, (unsigned short)((G6/2 * ((B1/G1) + (B3/G3)) )), x, y+1, width, height);
+            SetPixel(b, (unsigned short)((G9/4 * ((B1/G1) + (B3/G3) + (B2/G2) + (B4/G4)) )), x+1, y+1, width, height);
          }
       }
 
@@ -519,13 +518,13 @@ void Debayer::SmoothDecode(const T* input, int* output, int width, int height, i
             if(G4==0) G4=1;
 
             //r.putPixel(x,y,(int)(R1));
-            SetPixel(r, (int)R1, x, y, width, height);
+            SetPixel(r, (unsigned short)R1, x, y, width, height);
             //r.putPixel(x+1,y,(int)((G5/2 * ((R1/G1) + (R2/G2) )) ));
-            SetPixel(r, (int)((G5/2 * ((R1/G1) + (R2/G2) )) ), x+1, y, width, height);
+            SetPixel(r, (unsigned short)((G5/2 * ((R1/G1) + (R2/G2) )) ), x+1, y, width, height);
             //r.putPixel(x,y+1,(int)(( G6/2 * ((R1/G1) + (R3/G3) )) ));
-            SetPixel(r, (int)(( G6/2 * ((R1/G1) + (R3/G3) )) ), x, y+1, width, height);
+            SetPixel(r, (unsigned short)(( G6/2 * ((R1/G1) + (R3/G3) )) ), x, y+1, width, height);
             //r.putPixel(x+1,y+1, (int)((G9/4 *  ((R1/G1) + (R3/G3) + (R2/G2) + (R4/G4)) ) ));
-            SetPixel(r, (int)((G9/4 *  ((R1/G1) + (R3/G3) + (R2/G2) + (R4/G4)) ) ), x+1, y+1, width, height);
+            SetPixel(r, (unsigned short)((G9/4 *  ((R1/G1) + (R3/G3) + (R2/G2) + (R4/G4)) ) ), x+1, y+1, width, height);
          }
       }
 

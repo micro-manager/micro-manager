@@ -26,10 +26,11 @@
 #ifndef _QICAMERA_H_
 #define _QICAMERA_H_
 
-#include "../../MMDevice/DeviceBase.h"
-#include "../../MMDevice/ImgBuffer.h"
-#include "../../MMDevice/ModuleInterface.h"
-#include "../../MMDevice/DeviceThreads.h"
+#include "DeviceBase.h"
+#include "ImgBuffer.h"
+#include "Debayer.h"
+#include "ModuleInterface.h"
+#include "DeviceThreads.h"
 #include "DeviceEvents.h"
 #include <string>
 #include <map>
@@ -78,6 +79,9 @@
 #define g_Keyword_TriggerDelay              "TriggerDelay"
 #define g_Keyword_TriggerDelay_Min          "TriggerDelayMin"
 #define g_Keyword_TriggerDelay_Max          "TriggerDelayMax"
+#define g_Keyword_Color_Mode                "ColorMode"
+#define g_Value_ON                            "ON"
+#define g_Value_OFF                           "OFF"
 
 //////////////////////////////////////////////////////////////////////////////
 // Other constants
@@ -144,6 +148,8 @@ public:
     int StopSequenceAcquisition();
     int RestartSequenceAcquisition();
     bool IsCapturing() { return m_sthd->IsRunning(); };
+    unsigned GetNumberOfComponents() const;
+    int GetComponentName(unsigned comp, char* name);
 
     // action interface
     // ----------------
@@ -161,7 +167,7 @@ public:
     int OnEasyEMGain(MM::PropertyBase* pProp, MM::ActionType eAct, long index);
     int OnTriggerType(MM::PropertyBase* pProp, MM::ActionType eAct);
     int OnTriggerDelay(MM::PropertyBase* pProp, MM::ActionType eAct);
-
+    int OnColorMode(MM::PropertyBase* pProp, MM::ActionType eAct);
     int LogError(std::string message, int err, char* file=NULL, int line=0) const;
 
 private:
@@ -236,12 +242,15 @@ private:
     int                 m_nDriverBuild;     // Current qcam driver build
     QISequenceThread*   m_sthd;             // Pointer to the sequencing thread
     bool                m_softwareTrigger;  // Is the camera in software triggering mode
+    bool                m_rgbColor;         // is the camera in the color (debayer) mode
     double              m_dExposure;        // Current exposure setting
     double              m_interval;         // Current sequence capture interval
     unsigned int        m_imageWidth;       // Current capture width
     unsigned int        m_imageHeight;      // Current capture height
     unsigned int        m_bitDepth;         // Current image depth in bits (8bit, 10bit, 12bit, etc..)
     unsigned int        m_maxBitDepth;      // Maximum possible bit depth for camera
+    ImgBuffer           m_colorBuffer;      // buffer for color images (if available)
+    Debayer             m_debayer;          // debayer processor to convert from b&w to color
 
     // Frame Buffer for continuous acquisition
     static const int    m_nFrameBuffs = QICAMERA_QUEUE_BUFFERS; // Total frame buffers in the circular queue

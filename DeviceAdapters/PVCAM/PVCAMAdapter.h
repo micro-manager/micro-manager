@@ -27,10 +27,11 @@
 #ifndef _PVCAM_H_
 #define _PVCAM_H_
 
-#include "../../MMDevice/DeviceBase.h"
-#include "../../MMDevice/ImgBuffer.h"
-#include "../../MMDevice/DeviceUtils.h"
-#include "../../MMDevice/DeviceThreads.h"
+#include "DeviceBase.h"
+#include "ImgBuffer.h"
+#include "Debayer.h"
+#include "DeviceUtils.h"
+#include "DeviceThreads.h"
 
 #ifdef WIN32
 #include "../../../3rdpartypublic/Photometrics/PVCAM/SDK/Headers/master.h"
@@ -210,16 +211,18 @@ public:
    // MMCamera API
    int SnapImage();
    const unsigned char* GetImageBuffer();
+   const unsigned int* GetImageBufferAsRGB32();
    unsigned GetImageWidth() const         { return img_.Width(); }
    unsigned GetImageHeight() const        { return img_.Height(); }
-   unsigned GetImageBytesPerPixel() const { return img_.Depth(); } 
-   long GetImageBufferSize() const        { return img_.Width() * img_.Height() * img_.Depth(); }
+   unsigned GetImageBytesPerPixel() const { return rgbaColor_ ? colorImg_.Depth() : img_.Depth(); } 
+   long GetImageBufferSize() const;
    unsigned GetBitDepth() const;
    int GetBinning() const;
    int SetBinning(int binSize);
    double GetExposure() const;
    void SetExposure(double dExp);
    int IsExposureSequenceable(bool& isSequenceable) const { isSequenceable = false; return DEVICE_OK; }
+   unsigned GetNumberOfComponents() const {return rgbaColor_ ? 4 : 1;}
 
 #ifndef linux
    // micromanager calls the "live" acquisition a "sequence"
@@ -252,6 +255,7 @@ public:
    int OnTriggerTimeOut(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnOutputTriggerFirstMissing(MM::PropertyBase* pProp, MM::ActionType eAct); 
    int OnCircBufferFrameCount(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnColorMode(MM::PropertyBase* pProp, MM::ActionType eAct);
 
    bool IsCapturing();
 
@@ -289,6 +293,8 @@ private:
    static int      refCount_;             // This class reference counter
    static bool     PVCAM_initialized_;    // Global PVCAM initialization status
    ImgBuffer       img_;                  // Single image buffer
+   ImgBuffer       colorImg_;             // color image buffer (debayer)
+   Debayer         debayer_;
 
    MM::MMTime      startTime_;            // Acquisition start time
 
@@ -328,6 +334,9 @@ private:
    PvParam<uns16>* prmActualGain_;
    PvEnumParam*    prmTriggerMode_;
    PvEnumParam*    prmReadoutPort_;
+
+   // color mode
+   bool rgbaColor_;
 
    // List of post processing features
    std::vector<PProc> PostProc_;

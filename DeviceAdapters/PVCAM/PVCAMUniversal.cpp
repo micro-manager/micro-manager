@@ -43,7 +43,7 @@
 #pragma warning(disable : 4996) // disable warning for deperecated CRT functions on Windows 
 #endif
 
-#include "../../MMDevice/ModuleInterface.h"
+#include "ModuleInterface.h"
 #include "PVCAMAdapter.h"
 #include "PVCAMParam.h"
 
@@ -119,6 +119,9 @@ const char* g_Keyword_PreampOffLimit  = "PreampOffLimit";
 const char* g_Keyword_Yes             = "Yes";
 const char* g_Keyword_No              = "No";
 const char* g_Keyword_FrameCapable    = "FTCapable";
+const char* g_Keyword_RGB32           = "Color";
+const char* g_ON                      = "ON";
+const char* g_OFF                     = "OFF";
 
 // Universal parameters
 // These parameters, their ranges or allowed values are read out from the camera automatically.
@@ -169,7 +172,8 @@ prevFrame_(0),
 circBufferFrameCount_(CIRC_BUF_FRAME_CNT_DEF), // Sizes larger than 3 caused image tearing in ICX-674. Reason unknown.
 sequenceModeReady_(false),
 triggerTimeout_(2),
-outputTriggerFirstMissing_(0)
+outputTriggerFirstMissing_(0),
+rgbaColor_(false)
 {
    InitializeDefaultErrorMessages();
 
@@ -313,6 +317,13 @@ int Universal::Initialize()
    /// These are read upon opening the camera and then updated on various events. These usually
    /// needs a handler that is called by MM when the GUI asks for the property value.
    LogMessage( "Initializing Dynamic Camera Properties" );
+
+   /// COLOR MODE
+   // the camera can interpret pixels as color data with the Bayer pattern
+   pAct = new CPropertyAction (this, &Universal::OnColorMode);
+   CreateProperty(g_Keyword_RGB32, g_OFF, MM::String, false, pAct);
+   AddAllowedValue(g_Keyword_RGB32, g_ON);
+   AddAllowedValue(g_Keyword_RGB32, g_OFF);
 
    /// TRIGGER MODE (EXPOSURE MODE)
    prmTriggerMode_ = new PvEnumParam( g_Keyword_TriggerMode, PARAM_EXPOSURE_MODE, this );
@@ -1495,11 +1506,38 @@ const unsigned char* Universal::GetImageBuffer()
    }
 
    // wait for data or error
-   void* pixBuffer = const_cast<unsigned char*> (img_.GetPixels());
+   void* pixBuffer(0);
+
+   if (rgbaColor_)
+   {
+      // debayer the image and convert to color
+      debayer_.Process(colorImg_, img_, (unsigned)camCurrentSpeed_.bitDepth);
+      pixBuffer = colorImg_.GetPixelsRW();
+   }
+   else
+      // use unchanged grayscale image
+      pixBuffer = img_.GetPixelsRW();
 
    snappingSingleFrame_=false;
 
    return (unsigned char*) pixBuffer;
+}
+
+const unsigned int* Universal::GetImageBufferAsRGB32()
+{  
+   START_METHOD("Universal::GetImageBufferAsRGB32");
+
+   if(!snappingSingleFrame_)
+   {
+      LogMMMessage(__LINE__, "Warning: GetImageBufferAsRGB32 called before SnapImage()");
+      return 0;
+   }
+
+   debayer_.Process(colorImg_, img_, (unsigned)camCurrentSpeed_.bitDepth);
+   void* pixBuffer = colorImg_.GetPixelsRW();
+   snappingSingleFrame_=false;
+
+   return (unsigned int*) pixBuffer;
 }
 
 
@@ -1521,11 +1559,21 @@ void Universal::SetExposure(double exp)
 }
 
 /**
-* Returns the raw image buffer.
+* Returns the number of bits per pixel.
+* IN COLOR MODE THIS MEHOD RETURNS MODIFIED VALUE
+* 
 */
 unsigned Universal::GetBitDepth() const
 {
-    return (unsigned) camCurrentSpeed_.bitDepth;
+   return rgbaColor_ ? 8 : (unsigned)camCurrentSpeed_.bitDepth;
+}
+
+long Universal::GetImageBufferSize() const
+{
+   if (rgbaColor_)
+      return colorImg_.Width() * colorImg_.Height() * colorImg_.Depth();
+   else
+      return img_.Width() * img_.Height() * img_.Depth(); 
 }
 
 
@@ -1549,6 +1597,7 @@ int Universal::SetROI(unsigned x, unsigned y, unsigned xSize, unsigned ySize)
    //  before this function exits, also we don't want to configure a sequence
    //  when the initialized_ flag isn't set, because that simply isn't needed.
    img_ = ImgBuffer( roi_.newXSize, roi_.newYSize, 2 );
+   colorImg_.Resize(roi_.newXSize, roi_.newYSize, 4);
 
    return DEVICE_OK;
 }
@@ -1726,6 +1775,7 @@ int Universal::ResizeImageBufferContinuous()
    try
    {
       img_.Resize(roi_.newXSize, roi_.newYSize);
+      colorImg_.Resize(roi_.newXSize, roi_.newYSize, 4);
 
       uns32 frameSize;
       int16 trigModeValue = (int16)prmTriggerMode_->Current();
@@ -1776,6 +1826,7 @@ int Universal::ResizeImageBufferSingle()
    try
    {
       img_.Resize(roi_.newXSize, roi_.newYSize);
+      colorImg_.Resize(roi_.newXSize, roi_.newYSize, 4);
 
       uns32 frameSize;
 
@@ -2058,7 +2109,8 @@ int Universal::PushImage()
 
    if (imgPtr != prevFrame_)
    {
-      memcpy((void*) img_.GetPixels(), imgPtr, GetImageBufferSize());
+      long bufferSize = img_.Width() * img_.Height() * img_.Depth();
+      memcpy((void*) img_.GetPixels(), imgPtr, bufferSize);
       nRet = PushImage2( img_.GetPixels() );
       prevFrame_ = (unsigned short *) imgPtr;
    }
@@ -2101,9 +2153,17 @@ int Universal::PushImage2(const unsigned char* pixBuffer)
    double actualInterval = elapsed.getMsec() / imageCounter_;
    SetProperty(MM::g_Keyword_ActualInterval_ms, CDeviceUtils::ConvertToString(actualInterval)); 
 
+   // if we are in debayer color mode substitute color image for the original one
+   const unsigned char* finalImageBuf(pixBuffer);
+   if (rgbaColor_)
+   {
+      debayer_.Process(colorImg_, img_, (unsigned)camCurrentSpeed_.bitDepth);
+      finalImageBuf = colorImg_.GetPixels();
+   }
+
    // This method inserts a new image into the circular buffer (residing in MMCore)
    nRet = GetCoreCallback()->InsertMultiChannel(this,
-      pixBuffer,
+      finalImageBuf,
       1,
       GetImageWidth(),
       GetImageHeight(),
@@ -2115,7 +2175,7 @@ int Universal::PushImage2(const unsigned char* pixBuffer)
       // do not stop on overflow - just reset the buffer
       GetCoreCallback()->ClearImageBuffer(this);
       nRet = GetCoreCallback()->InsertMultiChannel(this,
-         pixBuffer,
+         finalImageBuf,
          1,
          GetImageWidth(),
          GetImageHeight(),
@@ -2388,6 +2448,24 @@ int Universal::OnReadNoiseProperties(MM::PropertyBase* pProp, MM::ActionType eAc
    else if (eAct == MM::BeforeGet)
    {
       pProp->Set((double)prmReadNoise_->Current()/100.0);
+   }
+   return DEVICE_OK;
+}
+
+// Handle color mode property (Debayer ON or OFF)
+int Universal::OnColorMode(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   START_ONPROPERTY("Universal::OnColorMode", eAct);
+   if (eAct == MM::AfterSet)
+   {
+      string val;
+      pProp->Get(val);
+      val.compare(g_ON) == 0 ? rgbaColor_ = true : rgbaColor_ = false;
+      ResizeImageBufferSingle();
+   }
+   else if (eAct == MM::BeforeGet)
+   {
+      pProp->Set(rgbaColor_ ? g_ON : g_OFF);
    }
    return DEVICE_OK;
 }

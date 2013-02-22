@@ -29,7 +29,7 @@
 #pragma warning(disable : 4996) // disable warning for deperecated CRT functions on Windows 
 #endif
 
-#include "../../MMDevice/ModuleInterface.h"
+#include "ModuleInterface.h"
 #include "PVCAMAdapter.h"
 
 #ifdef WIN32
