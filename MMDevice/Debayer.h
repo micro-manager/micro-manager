@@ -39,7 +39,8 @@ public:
    ~Debayer();
 
    int Process(ImgBuffer& out, const ImgBuffer& in, int bitDepth);
-   int Process(ImgBuffer& out, const unsigned short* in, int width, int height, int bitDepth);
+   template <typename T>
+   int Process(ImgBuffer& out, const T* in, int width, int height, int bitDepth);
 
    const std::vector<std::string> GetOrders() const {return orders;}
    const std::vector<std::string> GetAlgorithms() const {return algorithms;}
@@ -48,11 +49,15 @@ public:
    void SetAlgorithmIndex(int idx) {algoIndex = idx;}
 
 private:
-   void ReplicateDecode(const unsigned short* input, int* out, int width, int height, int bitDepth, int rowOrder);
-   void SmoothDecode(const unsigned short* input, int* output, int width, int height, int bitDepth, int rowOrder);
-   int Convert(const unsigned short* input, int* output, int width, int height, int bitDepth, int rowOrder, int algorithm);
+   template<typename T>
+   void ReplicateDecode(const T* input, int* out, int width, int height, int bitDepth, int rowOrder);
+   template <typename T>
+   void SmoothDecode(const T* input, int* output, int width, int height, int bitDepth, int rowOrder);
+   template<typename T>
+   int Convert(const T* input, int* output, int width, int height, int bitDepth, int rowOrder, int algorithm);
    unsigned short GetPixel(const unsigned short* v, int x, int y, int width, int height);
    void SetPixel(std::vector<unsigned short>& v, unsigned short val, int x, int y, int width, int height);
+   unsigned short GetPixel(const unsigned char* v, int x, int y, int width, int height);
 
    std::vector<unsigned short> r; // red scratch buffer
    std::vector<unsigned short> g; // green scratch buffer

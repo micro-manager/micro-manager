@@ -45,8 +45,9 @@ Debayer::Debayer()
    algorithms.push_back("Smooth-Hue");
    algorithms.push_back("Adaptive-Smooth-Hue");
 
-   orderIndex = 0;
-   algoIndex = 0;
+   // default settings
+   orderIndex = 0; // RGRG ordering
+   algoIndex = 0;  // replication - faster
 }
 
 Debayer::~Debayer()
@@ -55,30 +56,43 @@ Debayer::~Debayer()
 
 int Debayer::Process(ImgBuffer& out, const ImgBuffer& input, int bitDepth)
 {
-   // TODO: create better error message
-   if (input.Depth() != 2)
-      return DEVICE_UNSUPPORTED_DATA_FORMAT;
+   assert(sizeof(int) == 4);
+
+   int byteDepth = input.Depth();
+   if (bitDepth > byteDepth * 8)
+   {
+      assert(false);
+      return DEVICE_INVALID_INPUT_PARAM;
+   }
 
    out.Resize(input.Width(), input.Height(), 4);
-   assert(sizeof(int) == 4);
-   const unsigned short* inBuf = reinterpret_cast<const unsigned short*>(input.GetPixels());
-   int* outBuf = reinterpret_cast<int*>(out.GetPixelsRW());
+   if (input.Depth() == 1)
+   {
+      const unsigned char* inBuf = input.GetPixels();
+      return Process(out, inBuf, input.Width(), input.Height(), bitDepth);
+   }
+   else if (input.Depth() == 2)
+   {
+      const unsigned short* inBuf = reinterpret_cast<const unsigned short*>(input.GetPixels());
+      int* outBuf = reinterpret_cast<int*>(out.GetPixelsRW());
+      return Process(out, inBuf, input.Width(), input.Height(), bitDepth);
+   }
+   else
+      return DEVICE_UNSUPPORTED_DATA_FORMAT;
 
-   return Convert(inBuf, outBuf, input.Width(), input.Height(), bitDepth, orderIndex, algoIndex);
 }
 
-int Debayer::Process(ImgBuffer& out, const unsigned short* in, int width, int height, int bitDepth)
+template <typename T>
+int Debayer::Process(ImgBuffer& out, const T* in, int width, int height, int bitDepth)
 {
-   out.Resize(width, height, 4);
    assert(sizeof(int) == 4);
-   const unsigned short* inBuf = reinterpret_cast<const unsigned short*>(in);
+   out.Resize(width, height, 4);
    int* outBuf = reinterpret_cast<int*>(out.GetPixelsRW());
-
-   return Convert(inBuf, outBuf, width, height, bitDepth, orderIndex, algoIndex);
+   return Convert(in, outBuf, width, height, bitDepth, orderIndex, algoIndex);
 }
 
-
-int Debayer::Convert(const unsigned short* input, int* output, int width, int height, int bitDepth, int rowOrder, int algorithm)
+template<typename T>
+int Debayer::Convert(const T* input, int* output, int width, int height, int bitDepth, int rowOrder, int algorithm)
 {				
 	if (algorithm == 0)
       ReplicateDecode(input, output, width, height, bitDepth, rowOrder);
@@ -109,9 +123,17 @@ void Debayer::SetPixel(std::vector<unsigned short>& v, unsigned short val, int x
       v[y*width + x] = val;
 }
 
+unsigned short Debayer::GetPixel(const unsigned char* v, int x, int y, int width, int height)
+{
+   if (x >= width || x < 0 || y >= height || y < 0)
+      return 0;
+   else
+      return v[y*width + x];
+}
 
 // Replication algorithm
-void Debayer::ReplicateDecode(const unsigned short* input, int* output, int width, int height, int bitDepth, int rowOrder)
+template <typename T>
+void Debayer::ReplicateDecode(const T* input, int* output, int width, int height, int bitDepth, int rowOrder)
 {
    unsigned numPixels(width*height);
    if (r.size() != numPixels)
@@ -259,7 +281,8 @@ void Debayer::ReplicateDecode(const unsigned short* input, int* output, int widt
 }
 
 // Smooth Hue algorithm
-void Debayer::SmoothDecode(const unsigned short* input, int* output, int width, int height, int bitDepth, int rowOrder)
+template <typename T>
+void Debayer::SmoothDecode(const T* input, int* output, int width, int height, int bitDepth, int rowOrder)
 {
    double G1 = 0;
    double G2 = 0;
