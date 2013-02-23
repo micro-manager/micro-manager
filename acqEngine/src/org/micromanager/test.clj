@@ -1,6 +1,6 @@
 (ns org.micromanager.test
-  (:import (java.util List)
-           (java.util.concurrent Executors)
+  (:import (java.util ArrayList List)
+           (java.util.concurrent Executors LinkedBlockingQueue ConcurrentLinkedQueue)
            (mmcorej TaggedImage)
            (org.json JSONObject)
            (org.micromanager MMStudioMainFrame)
@@ -90,12 +90,12 @@
 (def pop-lock (Object.))
 
 (defn pop-next []
-  (locking pop-lock
-           (when (or (core isSequenceRunning)
-                     (pos? (core getRemainingImageCount)))
-             (while (zero? (core getRemainingImageCount))
-               (Thread/sleep 10))
-             (core popNextImage))))
+  (when (or true 
+          ;(core isSequenceRunning)
+            (pos? (core getRemainingImageCount)))
+    (while (zero? (core getRemainingImageCount))
+      (Thread/sleep 1))
+    (core popNextImage)))
 
 (defn pop-n [n]
   (repeatedly n pop-next))
@@ -104,36 +104,73 @@
   (pmap (fn [_] (pop-next)) (range n)))
 
 (defn test-speed [n]
-  (do (core startSequenceAcquisition n 0 true)
-      (time (dotimes [i n] (pop-next))))
+  (println
+    (do (core startSequenceAcquisition n 0 true) ;(Thread/sleep 1000)
+        (count (remove nil? (time (doall (repeatedly n pop-next)))))))
   (println (core isBufferOverflowed)))
 
-(defn fill-circular-buffer [n]
-  (core startSequenceAcquisition n 0 true)
-  (while (core isSequenceRunning) (Thread/sleep 10)))
+(defn fill-circular-buffer
+  ([n wait?]
+    (core startSequenceAcquisition n 0 true)
+    (when wait?
+      (while (core isSequenceRunning) (Thread/sleep 2))))
+  ([n] (fill-circular-buffer n true)))
 
-(defn single-thread-pop-test [n]
-  (fill-circular-buffer n)
-  (time (dotimes [i n]
-          (core popNextImage))))
+ 
+(def pop-lock (Object.))
 
-  
-(defn multithread-pop [nthreads n]
-  (fill-circular-buffer n)
-  (let [pop-service (Executors/newFixedThreadPool nthreads)
-        pop-fn (cast Runnable #(core popNextImage))]
+
+
+(defn pop-next-image [image-queue]
+  (when-let [image
+             (locking pop-lock
+                      (while (and (zero? (core getRemainingImageCount))
+                                  (not (core isBufferOverflowed)))
+                        (Thread/sleep 0))
+                      (when (pos? (core getRemainingImageCount))
+                        (core popNextImage)))]
+    (when (and image image-queue)
+      (.add image-queue image))))
+
+(defn single-thread-pop-test [n wait? image-queue]
+  (def temp-queue image-queue)
+  (System/gc)
+  (fill-circular-buffer n wait?)
+  (time (do (dotimes [i n]
+              (pop-next-image image-queue))
+            (while (or (core isSequenceRunning)
+                       (pos? (core getRemainingImageCount)))
+              (Thread/sleep 1))))
+  (when (core isBufferOverflowed) (println "Buffer overflowed")))
+
+(defn multithread-pop [nthreads n wait? image-queue]
+  (let [pop (fn [] (pop-next-image image-queue))]
+    (fill-circular-buffer n wait?)
     (time
-      (do
+    (let [pop-service (Executors/newFixedThreadPool nthreads)]
+      (dorun
         (dotimes [i n]
-          (.submit pop-service pop-fn))
-        (while (pos? (core getRemainingImageCount))
-          (Thread/sleep 1))))))
+          (.submit pop-service ^Runnable pop))
+        (while (or (core isSequenceRunning)
+                   (and (pos? (core getRemainingImageCount))
+                        (pos? (count (.getQueue pop-service)))))
+          (Thread/sleep 1)))))
+        (when (core isBufferOverflowed) (println "Buffer overflowed"))
+    (Thread/sleep 10)
+    image-queue))
 
 (defn repeat-with-params [f & more]
   (doseq [[n args] (partition 2 more)]
     (println n args)
     (doall
       (repeatedly n #(apply f args)))))
+
+(defn memory []
+  (let [runtime (Runtime/getRuntime)
+        mb (* 1024 1024.)]
+    {:total (/ (.totalMemory runtime) mb)
+     :free (/ (.freeMemory runtime) mb)
+     :max (/ (.maxMemory runtime) mb)}))
     
     
 
