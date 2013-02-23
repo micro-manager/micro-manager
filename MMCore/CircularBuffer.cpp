@@ -151,32 +151,43 @@ bool CircularBuffer::InsertImage(const unsigned char* pixArray, unsigned int wid
 */
 bool CircularBuffer::InsertMultiChannel(const unsigned char* pixArray, unsigned numChannels, unsigned width, unsigned height, unsigned byteDepth, const Metadata* pMd) throw (CMMError)
 {
-   MMThreadGuard guard(g_bufferLock);
-
-   unsigned long singleChannelSize = (unsigned long)width * height * byteDepth;
    static unsigned long previousTicks = 0;
+   bool notOverflowed;
+   ImgBuffer* pImg;
+   unsigned long singleChannelSize = (unsigned long)width * height * byteDepth;
 
-   if (previousTicks > 0)
-      estimatedIntervalMs_ = GetClockTicksMs() - previousTicks;
-   else
-      estimatedIntervalMs_ = 0;
-
-   // check image dimensions
-   if (width != width_ || height_ != height || byteDepth != byteDepth)
-      throw CMMError("Incompatible image dimensions in the circular buffer", MMERR_CircularBufferIncompatibleImage);
-
-
-   if ((long)frameArray_.size() - (insertIndex_ - saveIndex_) > 0)
    {
-      for (unsigned i=0; i<numChannels; i++)
+      MMThreadGuard guard(g_bufferLock);
+
+      if (previousTicks > 0)
+         estimatedIntervalMs_ = GetClockTicksMs() - previousTicks;
+      else
+         estimatedIntervalMs_ = 0;
+
+      // check image dimensions
+      if (width != width_ || height_ != height || byteDepth != byteDepth)
+         throw CMMError("Incompatible image dimensions in the circular buffer", MMERR_CircularBufferIncompatibleImage);
+
+
+      notOverflowed = (long)frameArray_.size() - (insertIndex_ - saveIndex_) > 0;
+      if (!notOverflowed) {
+         // buffer overflow
+         overflow_ = true;
+         return false;
+      }
+   
+   }
+
+   for (unsigned i=0; i<numChannels; i++)
+   {
+      Metadata md;
       {
+         MMThreadGuard guard(g_bufferLock);
          // check if the requested (channel, slice) combination exists
          // we assume that all buffers are pre-allocated
-         ImgBuffer* pImg = frameArray_[insertIndex_ % frameArray_.size()].FindImage(i, 0);
+         pImg = frameArray_[insertIndex_ % frameArray_.size()].FindImage(i, 0);
          if (!pImg)
             return false;
-
-         Metadata md;
 
          if (pMd)
          {
@@ -194,30 +205,34 @@ bool CircularBuffer::InsertMultiChannel(const unsigned char* pixArray, unsigned 
          // insert image number. 
          md.put(MM::g_Keyword_Metadata_ImageNumber, CDeviceUtils::ConvertToString(imageNumbers_[cameraName]));
          ++imageNumbers_[cameraName];
-
-         if (!md.HasTag(MM::g_Keyword_Elapsed_Time_ms))
-         {
-            // if time tag was not supplied by the camera insert current timestamp
-            MM::MMTime timestamp = GetMMTimeNow();
-            md.PutImageTag(MM::g_Keyword_Elapsed_Time_ms, CDeviceUtils::ConvertToString(timestamp.getMsec()));
-         }
-
-         md.PutImageTag("Width",width);
-         md.PutImageTag("Height",height);
-         if (byteDepth == 1)
-            md.PutImageTag("PixelType","GRAY8");
-         else if (byteDepth == 2)
-            md.PutImageTag("PixelType","GRAY16");
-         else if (byteDepth == 4)
-            md.PutImageTag("PixelType","RGB32");
-         else if (byteDepth == 8)
-            md.PutImageTag("PixelType","RGB64");
-         else
-            md.PutImageTag("PixelType","Unknown");
-
-         pImg->SetMetadata(md);
-         pImg->SetPixels(pixArray + i*singleChannelSize);
       }
+
+      if (!md.HasTag(MM::g_Keyword_Elapsed_Time_ms))
+      {
+         // if time tag was not supplied by the camera insert current timestamp
+         MM::MMTime timestamp = GetMMTimeNow();
+         md.PutImageTag(MM::g_Keyword_Elapsed_Time_ms, CDeviceUtils::ConvertToString(timestamp.getMsec()));
+      }
+
+      md.PutImageTag("Width",width);
+      md.PutImageTag("Height",height);
+      if (byteDepth == 1)
+         md.PutImageTag("PixelType","GRAY8");
+      else if (byteDepth == 2)
+         md.PutImageTag("PixelType","GRAY16");
+      else if (byteDepth == 4)
+         md.PutImageTag("PixelType","RGB32");
+      else if (byteDepth == 8)
+         md.PutImageTag("PixelType","RGB64");
+      else                          
+         md.PutImageTag("PixelType","Unknown"); 
+
+      pImg->SetMetadata(md);
+      pImg->SetPixels(pixArray + i*singleChannelSize);
+   }
+
+   {
+      MMThreadGuard guard(g_bufferLock);
 
       imageCounter_++;
       insertIndex_++;
@@ -227,15 +242,12 @@ bool CircularBuffer::InsertMultiChannel(const unsigned char* pixArray, unsigned 
          insertIndex_ -= adjustThreshold;
          saveIndex_ -= adjustThreshold;
       }
-
-      previousTicks = GetClockTicksMs();
-
-      return true;
    }
 
-   // buffer overflow
-   overflow_ = true;
-   return false;
+   previousTicks = GetClockTicksMs();
+
+   return true;
+
 }
 
 
