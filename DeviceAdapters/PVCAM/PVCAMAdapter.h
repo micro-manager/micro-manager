@@ -27,11 +27,11 @@
 #ifndef _PVCAM_H_
 #define _PVCAM_H_
 
-#include "DeviceBase.h"
-#include "ImgBuffer.h"
-#include "Debayer.h"
-#include "DeviceUtils.h"
-#include "DeviceThreads.h"
+#include "../../MMDevice/DeviceBase.h"
+#include "../../MMDevice/ImgBuffer.h"
+#include "../../MMDevice/Debayer.h"
+#include "../../MMDevice/DeviceUtils.h"
+#include "../../MMDevice/DeviceThreads.h"
 
 #ifdef WIN32
 #include "../../../3rdpartypublic/Photometrics/PVCAM/SDK/Headers/master.h"

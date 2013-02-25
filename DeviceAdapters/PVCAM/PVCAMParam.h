@@ -1,7 +1,7 @@
 #ifndef _PVCAM_PARAM_H_
 #define _PVCAM_PARAM_H_
 
-#include "DeviceBase.h"
+#include "../../MMDevice/DeviceBase.h"
 #include "PVCAMAdapter.h"
 
 #define MAX_ENUM_STR_LEN 100
