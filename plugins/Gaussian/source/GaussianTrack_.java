@@ -29,13 +29,13 @@ public class GaussianTrack_ implements PlugIn, MMPlugin {
     public void run(String arg) {
       if (!MainForm.WINDOWOPEN) {
          theForm_ = new MainForm();
-         MainForm.WINDOWOPEN = true;
       }
       theForm_.setVisible(true);
       if (gui_ != null) {
          theForm_.setBackground(gui_.getBackgroundColor());
          gui_.addMMBackgroundListener(theForm_);
       }
+      theForm_.formWindowOpened();
       theForm_.toFront();
    }
 

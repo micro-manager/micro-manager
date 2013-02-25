@@ -125,7 +125,7 @@ public class MainForm extends javax.swing.JFrame implements ij.ImageListener{
           }
 
           private void updateDisplay() {
-             if (showOverlay_.isSelected()) {
+             if (WINDOWOPEN && showOverlay_.isSelected()) {
                 showNoiseTolerance();
              }
           }
@@ -662,10 +662,16 @@ public class MainForm extends javax.swing.JFrame implements ij.ImageListener{
        prefs_.putBoolean(ENDTRACKBOOL, endTrackCheckBox_.isSelected() );
        prefs_.putInt(ENDTRACKINT, (Integer) endTrackSpinner_.getValue() );
        prefs_.putInt(FITMODE, fitMethodComboBox1.getSelectedIndex());
-              
+           
+       WINDOWOPEN = false;
+       
        this.setVisible(false);
     }//GEN-LAST:event_formWindowClosing
 
+    public void formWindowOpened() {
+       WINDOWOPEN = true;
+    }
+    
    @Override
     public void dispose() {
        formWindowClosing(null);
@@ -1047,6 +1053,9 @@ public class MainForm extends javax.swing.JFrame implements ij.ImageListener{
    }
 
    public void imageUpdated(ImagePlus ip) {
+      if (!WINDOWOPEN) {
+         return;
+      }
       if (ip != ip_) {
          pixelSizeTextField_.setBackground(Color.white);
          emGainTextField_.setBackground(Color.white);      
