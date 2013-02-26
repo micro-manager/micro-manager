@@ -46,6 +46,7 @@ import mmcorej.Configuration;
 import mmcorej.TaggedImage;
 import org.micromanager.acquisition.VirtualAcquisitionDisplay;
 import org.micromanager.api.AcquisitionEngine;
+import org.micromanager.api.ImageCache;
 import org.micromanager.api.ScriptInterface;
 import org.micromanager.utils.ImageUtils;
 import org.micromanager.utils.JavaUtils;
@@ -459,43 +460,45 @@ public class ProjectorController {
    public void displaySpot(double x, double y, double intervalUs) {
       if (x>=0 && x<dev.getWidth() && y>=0 && y<dev.getHeight()) {
          dev.displaySpot(x, y, intervalUs);
-      }
-   }
+      } 
+  }
    
-   public String prepareChannel() {
-                           String originalConfig = null;
-                    String channelGroup = mmc.getChannelGroup();
-                    AcquisitionEngine eng = gui.getAcquisitionEngine();
-                    try {
-                        if (targetingChannel_.length() > 0) {
-                            originalConfig = mmc.getCurrentConfig(channelGroup);
-                            if (!originalConfig.contentEquals(targetingChannel_)) {
-                                gui.getAcquisitionEngine().setPause(true);
-                                mmc.setConfig(channelGroup, targetingChannel_);
-                            }
-                        }
-                    } catch (Exception ex) {
-                        ReportingUtils.logError(ex);
+    public Configuration prepareChannel() {
+        Configuration originalConfig = null;
+        String channelGroup = mmc.getChannelGroup();
+        AcquisitionEngine eng = gui.getAcquisitionEngine();
+        try {
+            if (targetingChannel_.length() > 0) {
+                originalConfig = mmc.getConfigGroupState(channelGroup);
+                if (!originalConfig.isConfigurationIncluded(mmc.getConfigData(channelGroup,targetingChannel_))) {
+                    if (eng.isAcquisitionRunning()) {
+                        eng.setPause(true);
                     }
-                    return originalConfig;
- 
-   }
-   
-   public void returnChannel(String originalConfig) {
-                           String channelGroup = mmc.getChannelGroup();
-       if (originalConfig != null) {
-                        try {
-                            mmc.setConfig(channelGroup, originalConfig);
-                            final AcquisitionEngine eng = gui.getAcquisitionEngine();
-                            if (eng.isAcquisitionRunning() && eng.isPaused()) {
-                                eng.setPause(false);
-                            }
-                        } catch (Exception ex) {
-                            ReportingUtils.logError(ex);
-                        }
-                    }
-   }
-   
+                    mmc.setConfig(channelGroup, targetingChannel_);
+                }
+            }
+        } catch (Exception ex) {
+            ReportingUtils.logError(ex);
+        }
+        return originalConfig;
+    }
+
+    // Should be called with the value returned by prepareChannel.
+    public void returnChannel(Configuration originalConfig) {
+        String channelGroup = mmc.getChannelGroup();
+        if (originalConfig != null) {
+            try {
+                mmc.setSystemState(originalConfig);
+                final AcquisitionEngine eng = gui.getAcquisitionEngine();
+                if (eng.isAcquisitionRunning() && eng.isPaused()) {
+                    eng.setPause(false);
+                }
+            } catch (Exception ex) {
+                ReportingUtils.logError(ex);
+            }
+        }
+    }
+
    public boolean isMirrored(ImagePlus imgp) {
        try {
        String mirrorString = VirtualAcquisitionDisplay.getDisplay(imgp)
@@ -520,7 +523,7 @@ public class ProjectorController {
 
             public void mouseClicked(MouseEvent e) {
                 if (e.isControlDown()) {
-                    String originalConfig = prepareChannel();
+                    Configuration originalConfig = prepareChannel();
                     Point p = e.getPoint();
                     ImageCanvas canvas = (ImageCanvas) e.getSource();
                     Point pOffscreen = new Point(canvas.offScreenX(p.x), canvas.offScreenY(p.y));
@@ -556,9 +559,7 @@ public class ProjectorController {
    public void attachToMDA(int frameOn, boolean repeat, int repeatInterval) {
       Runnable runPolygons = new Runnable() {
          public void run() {
-            String originalConfig = prepareChannel();
             runPolygons();
-            returnChannel(originalConfig);
          }
          
          public String toString() {
@@ -588,11 +589,13 @@ public class ProjectorController {
    public double getPointAndShootInterval() {
        return this.pointAndShootInterval;
    }
-   
-   void runPolygons() {
-      dev.runPolygons();
-      recordPolygons();
-   }
+
+    void runPolygons() {
+        Configuration originalConfig = prepareChannel();
+        dev.runPolygons();
+        recordPolygons();
+        returnChannel(originalConfig);
+    }
 
    void addOnStateListener(OnStateListener listener) {
       dev.addOnStateListener(listener);
@@ -614,17 +617,20 @@ public class ProjectorController {
     }
 
     private void recordPolygons() {
-        String location = gui.getAcquisitionEngine().getImageCache().getDiskLocation();
-        if (location != null) {
-            try {
-                File f = new File(location, "ProjectorROIs.zip");
-                if (!f.exists()) {
-                    saveROIs(f);
+        ImageCache cache = gui.getAcquisitionEngine().getImageCache();
+        if (cache != null) {
+            String location = cache.getDiskLocation();
+            if (location != null) {
+                try {
+                    File f = new File(location, "ProjectorROIs.zip");
+                    if (!f.exists()) {
+                        saveROIs(f);
+                    }
+                } catch (Exception ex) {
+                    ReportingUtils.logError(ex);
                 }
-            } catch (Exception ex) {
-                ReportingUtils.logError(ex);
-            }
 
+            }
         }
     }
     
