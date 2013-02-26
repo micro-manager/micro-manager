@@ -721,4 +721,9 @@ public class ProjectorControlForm extends javax.swing.JFrame implements OnStateL
         }
         channelComboBox.setSelectedItem(initialChannel);
     }
+
+    @Override
+    public void calibrationDone() {
+        calibrateButton.setText("Calibrate");
+    }
 }

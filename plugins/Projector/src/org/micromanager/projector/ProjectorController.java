@@ -74,6 +74,7 @@ public class ProjectorController {
    private String targetingChannel_;
    AtomicBoolean stopRequested_ = new AtomicBoolean(false);
    AtomicBoolean isRunning_ = new AtomicBoolean(false);
+   private Set<OnStateListener> listeners_;
    
        
    public ProjectorController(ScriptInterface app) {
@@ -117,37 +118,42 @@ public class ProjectorController {
    public void calibrate() {
       final boolean liveModeRunning = gui.isLiveModeOn();
       gui.enableLiveMode(false);
-      Thread th = new Thread("Projector calibration thread") {
-         public void run() {
-            isRunning_.set(true);
-            Roi originalROI = IJ.getImage().getRoi();
-            gui.snapSingleImage();
-            
-            AffineTransform firstApproxAffine = getFirstApproxTransform();
-            
-            HashMap<Polygon, AffineTransform> mapping = (HashMap<Polygon, AffineTransform>) getMapping(firstApproxAffine);
-            //LocalWeightedMean lwm = multipleAffineTransforms(mapping_);
-            //AffineTransform affineTransform = MathFunctions.generateAffineTransformFromPointPairs(mapping_);
-            dev.turnOff();
-            try {
-               Thread.sleep(500);
-            } catch (InterruptedException ex) {
-               ReportingUtils.logError(ex);
-            }
-            if (!stopRequested_.get()) {
-            saveMapping((HashMap<Polygon, AffineTransform>) mapping);
-            }
-            //saveAffineTransform(affineTransform);
-            gui.enableLiveMode(liveModeRunning);
-            JOptionPane.showMessageDialog(IJ.getImage().getWindow(), "Calibration " 
-                    + (!stopRequested_.get() ? "finished." : "canceled."));
-            IJ.getImage().setRoi(originalROI);
-            
-            isRunning_.set(false);
-            stopRequested_.set(false);
-         }
-      };
-      th.start();
+      if (!isRunning_.get()) {
+          this.stopRequested_.set(false);
+          Thread th = new Thread("Projector calibration thread") {
+              public void run() {
+                  isRunning_.set(true);
+                  Roi originalROI = IJ.getImage().getRoi();
+                  gui.snapSingleImage();
+
+                  AffineTransform firstApproxAffine = getFirstApproxTransform();
+
+                  HashMap<Polygon, AffineTransform> mapping = (HashMap<Polygon, AffineTransform>) getMapping(firstApproxAffine);
+                  //LocalWeightedMean lwm = multipleAffineTransforms(mapping_);
+                  //AffineTransform affineTransform = MathFunctions.generateAffineTransformFromPointPairs(mapping_);
+                  dev.turnOff();
+                  try {
+                      Thread.sleep(500);
+                  } catch (InterruptedException ex) {
+                      ReportingUtils.logError(ex);
+                  }
+                  if (!stopRequested_.get()) {
+                      saveMapping((HashMap<Polygon, AffineTransform>) mapping);
+                  }
+                  //saveAffineTransform(affineTransform);
+                  gui.enableLiveMode(liveModeRunning);
+                  JOptionPane.showMessageDialog(IJ.getImage().getWindow(), "Calibration "
+                          + (!stopRequested_.get() ? "finished." : "canceled."));
+                  IJ.getImage().setRoi(originalROI);
+                  isRunning_.set(false);
+                  stopRequested_.set(false);
+                  for (OnStateListener listener : listeners_) {
+                      listener.calibrationDone();
+                  }
+              }
+          };
+          th.start();
+      }
    }
 
    private HashMap<Polygon, AffineTransform> loadMapping() {
@@ -599,6 +605,7 @@ public class ProjectorController {
 
    void addOnStateListener(OnStateListener listener) {
       dev.addOnStateListener(listener);
+      listeners_.add(listener);
    }
 
    void moveToCenter() {
