@@ -624,34 +624,62 @@ public class ProjectorController {
     }
 
     private void recordPolygons() {
-        ImageCache cache = gui.getAcquisitionEngine().getImageCache();
-        if (cache != null) {
-            String location = cache.getDiskLocation();
-            if (location != null) {
-                try {
-                    File f = new File(location, "ProjectorROIs.zip");
-                    if (!f.exists()) {
-                        saveROIs(f);
+        if (gui.getAcquisitionEngine().isAcquisitionRunning()) {
+            ImageCache cache = gui.getAcquisitionEngine().getImageCache();
+            if (cache != null) {
+                String location = cache.getDiskLocation();
+                if (location != null) {
+                    try {
+                        File f = new File(location, "ProjectorROIs.zip");
+                        if (!f.exists()) {
+                            saveROIs(f);
+                        }
+                    } catch (Exception ex) {
+                        ReportingUtils.logError(ex);
                     }
-                } catch (Exception ex) {
-                    ReportingUtils.logError(ex);
-                }
 
+                }
             }
         }
     }
     
+    private String getROILabel(ImagePlus imp, Roi roi, int n) {
+        Rectangle r = roi.getBounds();
+        int xc = r.x + r.width/2;
+        int yc = r.y + r.height/2;
+        if (n>=0)
+            {xc = yc; yc=n;}
+        if (xc<0) xc = 0;
+        if (yc<0) yc = 0;
+        int digits = 4;
+        String xs = "" + xc;
+        if (xs.length()>digits) digits = xs.length();
+        String ys = "" + yc;
+        if (ys.length()>digits) digits = ys.length();
+        if (digits==4 && imp!=null && imp.getStackSize()>=10000) digits = 5;
+        xs = "000000" + xc;
+        ys = "000000" + yc;
+        String label = ys.substring(ys.length()-digits) + "-" + xs.substring(xs.length()-digits);
+        if (imp!=null && imp.getStackSize()>1) {
+            int slice = roi.getPosition();
+            if (slice==0)
+                slice = imp.getCurrentSlice();
+            String zs = "000000" + slice;
+            label = zs.substring(zs.length()-digits) + "-" + label;
+            roi.setPosition(slice);
+        }
+        return label;
+    }
+    
     private void saveROIs(File path) {
         try {
+            ImagePlus imgp = IJ.getImage();
             ZipOutputStream zos = new ZipOutputStream(new FileOutputStream(path));
             DataOutputStream out = new DataOutputStream(new BufferedOutputStream(zos));
             RoiEncoder re = new RoiEncoder(out);
             int count = 0;
             for (Roi roi : individualRois_) {
-                String label = roi.getName();
-                if (label == null) {
-                    label = String.valueOf(count);
-                }
+                String label = getROILabel(imgp, roi, 0);
                 if (!label.endsWith(".roi")) {
                     label += ".roi";
                 }
