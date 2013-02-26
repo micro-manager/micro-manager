@@ -12,4 +12,6 @@ package org.micromanager.projector;
 public interface OnStateListener {
    public void turnedOn();
    public void turnedOff();
+
+    public void calibrationDone();
 }

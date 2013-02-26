@@ -74,7 +74,7 @@ public class ProjectorController {
    private String targetingChannel_;
    AtomicBoolean stopRequested_ = new AtomicBoolean(false);
    AtomicBoolean isRunning_ = new AtomicBoolean(false);
-   private Set<OnStateListener> listeners_;
+   private Set<OnStateListener> listeners_ = new HashSet<OnStateListener>();
    
        
    public ProjectorController(ScriptInterface app) {
