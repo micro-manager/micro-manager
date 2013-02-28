@@ -78,6 +78,7 @@ private:
    std::string attenuatorText_;
 
    int WriteBytes(unsigned char* buf, int numBytes);
+   int ConfigDirectionRegisterPortC();
 
    double AttenuatorTransmissionFromIndex(long n);
    int StepAttenuatorPosition(bool positive);

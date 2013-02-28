@@ -132,6 +132,7 @@ int MicroPoint::WriteBytes(unsigned char* buf, int numBytes)
 
 int MicroPoint::Initialize()
 {
+   ConfigDirectionRegisterPortC();
    CreateAttenuatorProperty();
    CreateRepetitionsProperty();
    initialized_ = true;
@@ -148,6 +149,31 @@ bool MicroPoint::Busy()
    return false;
 }
 
+int MicroPoint::ConfigDirectionRegisterPortC()
+{
+   int ret;
+   unsigned char bufA[] = {'!','A',0};
+   ret = WriteBytes(bufA, 3);
+   if (ret != DEVICE_OK) {
+      return ret;
+   }
+
+   unsigned char bufB[] = {'!','B',0};
+   ret = WriteBytes(bufB, 3);
+   if (ret != DEVICE_OK) {
+      return ret;
+   }
+
+   unsigned char bufC[] = {'!','C',16+8+4};
+   ret = WriteBytes(bufC, 3);
+   if (ret != DEVICE_OK) {
+      return ret;
+   }
+   
+   return DEVICE_OK;
+}
+
+
 ////////////////////////////////
 // Attenuator private functions
 ////////////////////////////////
@@ -162,8 +188,7 @@ double MicroPoint::AttenuatorTransmissionFromIndex(long n)
 int MicroPoint::StepAttenuatorPosition(bool positive)
 {
    unsigned char buf[] = {'C', (positive ? 0xc0 : 0x80), 'C', 0x00};
-   WriteBytes(buf, 4);
-   return DEVICE_OK;
+   return WriteBytes(buf, 4);
 }
 
 int MicroPoint::MoveAttenuator(long steps)
@@ -171,7 +196,7 @@ int MicroPoint::MoveAttenuator(long steps)
    if (steps != 0)
    {
       unsigned char buf[] = {'A', 0, 'B', 0};
-      WriteToComPort(port_.c_str(), buf, 4);
+      WriteBytes(buf, 4);
    
       for (long i=0; i<labs(steps); ++i)
       {
@@ -188,7 +213,7 @@ bool MicroPoint::IsAttenuatorHome()
    unsigned char response[1];
    unsigned long read;
    ReadFromComPort(port_.c_str(), response, 1, read);
-   return (response[0] == 0x14);    // When true, step succeeded. 
+   return (0 != (response[0] & 0x10));    // When true we are at home.
 }
 
 long MicroPoint::FindAttenuatorPosition()
