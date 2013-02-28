@@ -119,8 +119,6 @@
  
 (def pop-lock (Object.))
 
-
-
 (defn pop-next-image [image-queue]
   (when-let [image
              (locking pop-lock
@@ -167,10 +165,17 @@
 
 (defn memory []
   (let [runtime (Runtime/getRuntime)
-        mb (* 1024 1024.)]
-    {:total (/ (.totalMemory runtime) mb)
-     :free (/ (.freeMemory runtime) mb)
-     :max (/ (.maxMemory runtime) mb)}))
-    
+        ->mb #(/ % 1024 1024.)]
+    {:total (->mb (.totalMemory runtime))
+     :free (->mb (.freeMemory runtime))
+     :max (->mb (.maxMemory runtime))}))
+
+(defn pre-expand-heap
+  "Generates a queue of empty image arrays, as a way to pre-expand
+   the JVM's heap."
+  [image-size n]
+  (let [q (LinkedBlockingQueue.)]
+    (dotimes [_ n]
+      (.add q (byte-array image-size)))))
     
 
