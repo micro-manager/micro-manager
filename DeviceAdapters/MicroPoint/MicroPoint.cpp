@@ -132,7 +132,7 @@ int MicroPoint::WriteBytes(unsigned char* buf, int numBytes)
 
 int MicroPoint::Initialize()
 {
-   ConfigDirectionRegisterPortC();
+   ConfigurePortDirectionRegisters();
    CreateAttenuatorProperty();
    CreateRepetitionsProperty();
    initialized_ = true;
@@ -149,7 +149,7 @@ bool MicroPoint::Busy()
    return false;
 }
 
-int MicroPoint::ConfigDirectionRegisterPortC()
+int MicroPoint::ConfigurePortDirectionRegisters()
 {
    int ret;
    unsigned char bufA[] = {'!','A',0};
