@@ -214,9 +214,9 @@ int TsiCam::Initialize()
    bool bRet;
 
    // Unit of measurement for exposures - set to milliseconds
-   //uint32_t exp_unit = (uint32_t) TSI_EXP_UNIT_MILLISECONDS;
-   //bRet = camHandle_->SetParameter(TSI_PARAM_EXPOSURE_UNIT, (void*) &exp_unit);
-   //assert(bRet);
+   uint32_t exp_unit = (uint32_t) TSI_EXP_UNIT_MILLISECONDS;
+   bRet = camHandle_->SetParameter(TSI_PARAM_EXPOSURE_UNIT, (void*) &exp_unit);
+   assert(bRet);
 
    // readout rate
    // try setting different rates to find out what is available
@@ -475,7 +475,7 @@ double TsiCam::GetExposure() const
 {
    uint32_t exp(0);
    bool bret = camHandle_->GetParameter(TSI_PARAM_ACTUAL_EXPOSURE_TIME, sizeof(uint32_t), (void*)&exp);
-   return (double)exp / 1000.0;
+   return (double)exp;
 }
 
 void TsiCam::SetExposure(double dExpMs)
