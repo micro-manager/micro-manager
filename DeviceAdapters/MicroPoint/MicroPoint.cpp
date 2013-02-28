@@ -221,10 +221,14 @@ long MicroPoint::FindAttenuatorPosition()
    long startingIndex = 0;
 
    // Go backwards until we hit the 0 position.
-   while(!IsAttenuatorHome())
+   while(!IsAttenuatorHome() && (startingIndex<100))
    {
       StepAttenuatorPosition(false);
       ++startingIndex;
+   }
+   if (!IsAttenuatorHome())
+   {
+      return -1;
    }
 
    // Make sure we are ready to step out of home.
@@ -256,6 +260,10 @@ int MicroPoint::CreateRepetitionsProperty()
 int MicroPoint::CreateAttenuatorProperty()
 {
    attenuatorPosition_ = FindAttenuatorPosition();
+   if (attenuatorPosition_ < 0)
+   {
+      return DEVICE_UNKNOWN_POSITION;
+   }
 
    CPropertyAction* pAct = new CPropertyAction (this, &MicroPoint::OnAttenuator);
    CreateProperty("AttenuatorTransmittance", "0.01", MM::String, false, pAct);
