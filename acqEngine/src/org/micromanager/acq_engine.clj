@@ -662,7 +662,7 @@
                (set-stage-position z-drive z)))
           (for [runnable (event :runnables)]
             #(.run runnable))
-          #(device-best-effort (core getCameraDevice)
+          #(do
             (wait-for-pending-devices)
             (expose event)
             (collect event out-queue)
