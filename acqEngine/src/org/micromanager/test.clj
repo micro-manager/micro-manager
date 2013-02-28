@@ -128,7 +128,7 @@
                       (when (pos? (core getRemainingImageCount))
                         (core popNextImage)))]
     (when (and image image-queue)
-      (.add image-queue image))))
+      (.put image-queue image))))
 
 (defn single-thread-pop-test [n wait? image-queue]
   (def temp-queue image-queue)
@@ -140,7 +140,7 @@
                        (pos? (core getRemainingImageCount)))
               (Thread/sleep 1))))
   (when (core isBufferOverflowed)
-    (println "Buffer overflowed at " (count image-queue))))
+    (println "Buffer overflowed at" (count image-queue) "images")))
 
 (defn multithread-pop [nthreads n wait? image-queue]
   (let [pop (fn [] (pop-next-image image-queue))]
@@ -179,4 +179,37 @@
     (dotimes [_ n]
       (.add q (byte-array image-size)))))
     
+(defn compute-sleep [start-time-ms ms-per-event n]
+  (Math/max 0
+            (- (+ (* n ms-per-event) start-time-ms)
+               (System/currentTimeMillis))))
+
+(defmacro doseq-throttle
+  "Like doseq, but throttles the rate to ms-per-event."
+  [ms-per-event seq-exprs & body]
+  `(let [start# (System/currentTimeMillis)
+         count# (atom 0)
+         wait-ms# (long ~ms-per-event)]
+     (doseq ~seq-exprs
+       (Thread/sleep (compute-sleep start# wait-ms# @count#))
+       (swap! count# inc)
+       ~@body)))
+
+(defn simulate-queue-test
+  "Simulates a somewhat realistic image queue, where, after an initial delay,
+   images are removed at the exposure rate."
+  [n]
+  (let [queue (LinkedBlockingQueue.)
+        wait-ms (core getExposure)]
+    (future (single-thread-pop-test n false queue))
+    (Thread/sleep 1000)
+    (println "Images taken out | Images in queue")
+    (doseq-throttle wait-ms [i (range n)]
+      (.take queue)
+      (when (zero? (mod i 100))
+        (println i "|" (count queue))))))
+
+
+      
+  
 
