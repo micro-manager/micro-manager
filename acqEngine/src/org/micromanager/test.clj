@@ -139,7 +139,8 @@
             (while (or (core isSequenceRunning)
                        (pos? (core getRemainingImageCount)))
               (Thread/sleep 1))))
-  (when (core isBufferOverflowed) (println "Buffer overflowed")))
+  (when (core isBufferOverflowed)
+    (println "Buffer overflowed at " (count image-queue))))
 
 (defn multithread-pop [nthreads n wait? image-queue]
   (let [pop (fn [] (pop-next-image image-queue))]
