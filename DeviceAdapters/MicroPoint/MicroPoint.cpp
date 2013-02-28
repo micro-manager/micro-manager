@@ -133,7 +133,11 @@ int MicroPoint::WriteBytes(unsigned char* buf, int numBytes)
 int MicroPoint::Initialize()
 {
    ConfigurePortDirectionRegisters();
-   CreateAttenuatorProperty();
+   int ret = CreateAttenuatorProperty();
+   if (ret != DEVICE_OK)
+   {
+      return ret;
+   }
    CreateRepetitionsProperty();
    initialized_ = true;
    return DEVICE_OK;
