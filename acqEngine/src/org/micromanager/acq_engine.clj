@@ -79,6 +79,9 @@
 
 (def pixel-type-depths {"GRAY8" 1 "GRAY16" 2 "RGB32" 4 "RGB64" 8})
 
+(defn throw-exception [msg]
+  (throw (Exception. msg)))
+
 ;; time
 
 (defn jvm-time-ms []
@@ -185,7 +188,7 @@
         (when false
           (do (log "reload and try a third time")
           (successful? (reload-device ~device) (attempt#))))) ; third attempt after reloading
-      (throw (Exception. (str "Device failure: " ~device)))
+      (throw-exception (str "Device failure: " ~device))
       (swap! state assoc :stop true)
       nil)))
 
@@ -315,17 +318,6 @@
 (defn first-trigger-missing? []
   (= "1" (get-property-value (core getCameraDevice) "OutputTriggerFirstMissing")))
 
-(defn keep-collecting-from-circular-buffer?
-  "Returns true if there is no reason to stop popping images
-   from the circular buffer."
-  []
-  (when (. mmc isBufferOverflowed)
-    (swap! state assoc :circular-buffer-overflow true))
-  (and (not (@state :stop))
-       (or (pos? (. mmc getRemainingImageCount))
-           (and (. mmc isSequenceRunning)
-                (not (@state :circular-buffer-overflow))))))
-
 (defn init-burst [length trigger-sequence relative-z]
   (core setAutoShutter (@state :init-auto-shutter))
   (load-property-sequences (:properties trigger-sequence))
@@ -339,26 +331,22 @@
 
 (defn pop-tagged-image []
   (try (core popNextTaggedImage)
-       (catch Exception e nil))) ;(println e))))
+       (catch Exception e nil)))
 
 (defn pop-tagged-image-timeout
   [timeout-ms]
   (let [start-time (System/currentTimeMillis)]
     (loop []
-      (when (keep-collecting-from-circular-buffer?)
-        (if-let [image (pop-tagged-image)]
-          image
-          (if (< timeout-ms (- (System/currentTimeMillis) start-time))
-            (do (println "Timed out waiting for image to arrive from camera.")
-                (throw (Exception. "Timed out waiting for image to arrive from camera.")))
-            (do (Thread/sleep 1)
-                (recur))))))))
+      (if-let [image (pop-tagged-image)]
+        image
+        (if (< timeout-ms (- (System/currentTimeMillis) start-time))
+          (throw-exception "Timed out waiting for image\nto arrive from camera.")
+          (do (Thread/sleep 1)
+              (recur)))))))
 
 (defn pop-burst-image
   [timeout-ms]
   (let [tagged-image (pop-tagged-image-timeout timeout-ms)]
-    ;(println "pop")
-        ;(println tagged-image)
     {:pix (.pix tagged-image)
      :tags (json-to-data (.tags tagged-image))}))
 
@@ -381,8 +369,8 @@
    burst-events))
 
 (defn burst-cleanup []
- (when (@state :circular-buffer-overflow)
-   (ReportingUtils/showError "Circular buffer overflowed."))
+ (when (core isBufferOverflowed)
+   (throw-exception "Circular buffer overflowed."))
  (while (and (not (@state :stop)) (. mmc isSequenceRunning))
    (Thread/sleep 5)))
 
@@ -412,31 +400,17 @@
         time-stamp (burst-time (:tags image) @state)]
     (annotate-image image event @state time-stamp)))
 
-(defmacro doseq-parallel [seq-exprs & body]
-  `(let [pool# (-> (Runtime/getRuntime) .availableProcessors Executors/newFixedThreadPool)]
-     (println (.getCorePoolSize pool#))
-     (doseq ~seq-exprs
-       (let [body-fn# (cast Runnable (fn []
-                                       ;(println (str (Thread/currentThread)))
-                                       ~@body))]
-         (.submit pool# body-fn#)))
-     (.shutdown pool#)
-     (.awaitTermination pool# 10 TimeUnit/DAYS)))
-
 (defn produce-burst-images
   "Pops images from circular buffer and sends them to output queue."
   [burst-events camera-channel-names timeout-ms out-queue]
   (let [total (* (count burst-events)
                  (count camera-channel-names))
-        camera-index-tag (str (. mmc getCameraDevice) "-CameraChannelIndex")
-        images (map (fn [_] (pop-burst-image timeout-ms)) (range total))]
-    (time
-    (doseq [image images]
+        camera-index-tag (str (. mmc getCameraDevice) "-CameraChannelIndex")]
+    (doseq [_ (range total)]
       (.put out-queue
-            (-> image
-                ;(time)
+            (-> (pop-burst-image timeout-ms)
                 (tag-burst-image burst-events camera-channel-names camera-index-tag)
-                make-TaggedImage)))))
+                make-TaggedImage))))
   (burst-cleanup))
 
 (defn collect-burst-images [event out-queue]
@@ -570,44 +544,43 @@
 
 ;; startup and shutdown
 
-(defn prepare-state [this]
+(defn prepare-state [state]
   (let [default-z-drive (core getFocusDevice)
         default-xy-stage (core getXYStageDevice)
         z (get-z-stage-position default-z-drive)
         xy (get-xy-stage-position default-xy-stage)
         exposure (core getExposure)]
-    (swap! (.state this) assoc
-             :pause false
-             :stop false
-             :finished false
-             :last-wake-time (jvm-time-ms)
-             :last-stage-positions (into {} [[default-z-drive z]
-                                             [default-xy-stage xy]])
-             :reference-z z
-             :start-time (jvm-time-ms)
-             :init-auto-shutter (core getAutoShutter)
-             :init-exposure exposure
-             :init-shutter-state (core getShutterOpen)
-             :exposure {(core getCameraDevice) exposure}
-             :default-z-drive default-z-drive
-             :default-xy-stage default-xy-stage
-             :init-z-position z
-             :init-system-state (get-system-config-cached)
-             :init-continuous-focus (core isContinuousFocusEnabled)
-             :init-width (core getImageWidth)
-             :init-height (core getImageHeight)
-             :binning (core getProperty (core getCameraDevice) "Binning")
-             :bit-depth (core getImageBitDepth)
-             :pixel-size-um (core getPixelSizeUm)
-             :source (core getCameraDevice)
-             :pixel-type (get-pixel-type)
-      )))
+    (swap! state assoc
+           :pause false
+           :stop false
+           :finished false
+           :last-wake-time (jvm-time-ms)
+           :last-stage-positions (into {} [[default-z-drive z]
+                                           [default-xy-stage xy]])
+           :reference-z z
+           :start-time (jvm-time-ms)
+           :init-auto-shutter (core getAutoShutter)
+           :init-exposure exposure
+           :init-shutter-state (core getShutterOpen)
+           :exposure {(core getCameraDevice) exposure}
+           :default-z-drive default-z-drive
+           :default-xy-stage default-xy-stage
+           :init-z-position z
+           :init-system-state (get-system-config-cached)
+           :init-continuous-focus (core isContinuousFocusEnabled)
+           :init-width (core getImageWidth)
+           :init-height (core getImageHeight)
+           :binning (core getProperty (core getCameraDevice) "Binning")
+           :bit-depth (core getImageBitDepth)
+           :pixel-size-um (core getPixelSizeUm)
+           :source (core getCameraDevice)
+           :pixel-type (get-pixel-type)
+           )))
 
 (defn cleanup []
   (try
     (attempt-all
       (log "cleanup")
-      ; (do-when #(.update %) (:display @state))
       (state-assoc! :finished true :display nil)
       (when (core isSequenceRunning)
         (core stopSequenceAcquisition))
@@ -621,8 +594,8 @@
                  (not (core isContinuousFocusEnabled)))
         (enable-continuous-focus true))
       (. gui enableRoiButtons true))
-    (catch Throwable t (do (.printStackTrace t)
-                           (ReportingUtils/showError t "Acquisition cleanup failed.")))))
+    (catch Throwable t 
+           (ReportingUtils/showError t "Acquisition cleanup failed."))))
 
 ;; running events
 
@@ -674,26 +647,23 @@
     (await-resume)))
 
 (defn run-acquisition [this settings out-queue cleanup?]
-  (try
-    (def acq-settings settings)
-    (log "Starting MD Acquisition: " settings)
-    (. gui enableLiveMode false)
-    (. gui enableRoiButtons false)
-    (prepare-state this)
-    (binding [state (.state this)]
+  (binding [state (.state this)]
+    (try
+      (def acq-settings settings)
+      (log "Starting MD Acquisition: " settings)
+      (. gui enableLiveMode false)
+      (. gui enableRoiButtons false)
+      (prepare-state state)
       (def last-state state) ; for debugging
       (let [acq-seq (generate-acq-sequence settings @attached-runnables)]
         (def acq-sequence acq-seq)
-        (execute (mapcat #(make-event-fns % out-queue) acq-seq))
+        (execute (mapcat #(make-event-fns % out-queue) acq-seq)))
+      (catch Throwable t
+             (ReportingUtils/showError t "Acquisition failed."))
+      (finally
         (when cleanup?
           (cleanup))
-        (.put out-queue TaggedImageQueue/POISON)
-        ))
-    (catch Throwable t (do (ReportingUtils/showError t "Acquisition failed.")
-                           (.printStackTrace t)
-                           (when cleanup?
-                             (cleanup))
-                           (.put out-queue TaggedImageQueue/POISON)))))
+        (.put out-queue TaggedImageQueue/POISON)))))
 
 ;; generic metadata
 
