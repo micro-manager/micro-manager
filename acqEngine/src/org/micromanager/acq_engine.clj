@@ -341,7 +341,9 @@
         image
         (if (< timeout-ms (- (System/currentTimeMillis) start-time))
           (throw-exception "Timed out waiting for image\nto arrive from camera.")
-          (do (Thread/sleep 1)
+          (do (when (core isBufferOverflowed)
+                (throw-exception "Circular buffer overflowed."))
+              (Thread/sleep 1)
               (recur)))))))
 
 (defn pop-burst-image
