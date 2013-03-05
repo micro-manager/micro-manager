@@ -4,7 +4,8 @@
            (mmcorej TaggedImage)
            (org.json JSONArray JSONObject)
            (org.micromanager MMStudioMainFrame)
-           (org.micromanager.api DataProcessor))
+           (org.micromanager.api DataProcessor)
+           (org.micromanager.acquisition TaggedImageStorageMultipageTiff))
   (:require [org.micromanager.mm :as mm])
   (:use [org.micromanager.mm :only (edt load-mm core gui mmc)]))
 
@@ -211,26 +212,44 @@
       (when (zero? (mod i 100))
         (println i "|" (core getRemainingImageCount) "|" (count queue))))))
 
-
 (defn image-test-summary [filename num-frames]
-  (JSONObject. {"SlicesFirst" true
-                "TimeFirst" true
-                "NumSlices" 1
-                "NumPositions" 1
-                "NumChannels" 1
-                "NumFrames" num-frames
-                "Positions" 1
-                "PixelType" (mm/get-pixel-type)
-                "Width" (core getImageWidth)
-                "Height" (core getImageHeight)
-                "Prefix" filename
-                "ChColors" (JSONArray. [1])
-                "ChNames" (JSONArray. ["ch"])
-                "ChMins" (JSONArray. [0])
-                "ChMaxes" (JSONArray. [100])}))
+  (mm/to-json
+    {"SlicesFirst" true
+     "TimeFirst" true
+     "NumSlices" 1
+     "NumPositions" 1
+     "NumChannels" 1
+     "NumFrames" num-frames
+     "Positions" 1
+     "PixelType" (mm/get-pixel-type)
+     "Width" (core getImageWidth)
+     "Height" (core getImageHeight)
+     "Prefix" filename
+     "ChColors" [1]
+     "ChNames" ["ch"]
+     "ChMins" [0]
+     "ChMaxes" [100]}))
    
-(defn fast-image-saving-test []
-  )
-  
+(defn save-images-fast [image n]
+  (let [tags (.tags image)
+        summary (image-test-summary "test1" 1)
+        storage (TaggedImageStorageMultipageTiff.
+                  "fast" true summary false true)]
+    (time
+      (dotimes [i n]
+        (.put tags "Frame" i)
+        (.put tags "Slice" 0)
+        (.put tags "ChannelIndex" 0)
+        (.put tags "PositionIndex" 0)
+        (.put tags "PixelType" "GRAY16")
+        (.putImage storage image)))
+    (doto storage .finished .close)))
+ 
+ (defn fast-image-saving-test [n]
+   (fill-circular-buffer 1 true)
+   (let [image (core popNextTaggedImage)]
+     (println "Start saving procedure...")
+       (save-images-fast image n)))
+ 
   
 
