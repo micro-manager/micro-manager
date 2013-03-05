@@ -2,9 +2,10 @@
   (:import (java.util ArrayList List)
            (java.util.concurrent Executors LinkedBlockingQueue ConcurrentLinkedQueue)
            (mmcorej TaggedImage)
-           (org.json JSONObject)
+           (org.json JSONArray JSONObject)
            (org.micromanager MMStudioMainFrame)
            (org.micromanager.api DataProcessor))
+  (:require [org.micromanager.mm :as mm])
   (:use [org.micromanager.mm :only (edt load-mm core gui mmc)]))
 
 (load-mm (MMStudioMainFrame/getInstance))
@@ -140,7 +141,7 @@
                        (pos? (core getRemainingImageCount)))
               (Thread/sleep 1))))
   (when (core isBufferOverflowed)
-    (println "Buffer overflowed at" (count image-queue) "images")))
+    (println "Buffer overflowed")))
 
 (defn multithread-pop [nthreads n wait? image-queue]
   (let [pop (fn [] (pop-next-image image-queue))]
@@ -199,17 +200,37 @@
   "Simulates a somewhat realistic image queue, where, after an initial delay,
    images are removed at the exposure rate."
   [n]
+  (core stopSequenceAcquisition)
   (let [queue (LinkedBlockingQueue.)
-        wait-ms (core getExposure)]
+        wait-ms 0];(core getExposure)]
     (future (single-thread-pop-test n false queue))
     (Thread/sleep 1000)
     (println "Images taken out | Images in queue")
-    (doseq-throttle wait-ms [i (range n)]
+    (doseq [i (range n) :when (not (core isBufferOverflowed))]
       (.take queue)
       (when (zero? (mod i 100))
-        (println i "|" (count queue))))))
+        (println i "|" (core getRemainingImageCount) "|" (count queue))))))
 
 
-      
+(defn image-test-summary [filename num-frames]
+  (JSONObject. {"SlicesFirst" true
+                "TimeFirst" true
+                "NumSlices" 1
+                "NumPositions" 1
+                "NumChannels" 1
+                "NumFrames" num-frames
+                "Positions" 1
+                "PixelType" (mm/get-pixel-type)
+                "Width" (core getImageWidth)
+                "Height" (core getImageHeight)
+                "Prefix" filename
+                "ChColors" (JSONArray. [1])
+                "ChNames" (JSONArray. ["ch"])
+                "ChMins" (JSONArray. [0])
+                "ChMaxes" (JSONArray. [100])}))
+   
+(defn fast-image-saving-test []
+  )
+  
   
 

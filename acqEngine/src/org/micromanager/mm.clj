@@ -318,6 +318,15 @@
           (json-to-data (.get json i))))
     json))
 
+(defn to-json [x]
+  (cond
+    (map? x) (JSONObject. (into {} (for [[k v] x]
+                                     [(name k) (to-json v)])))
+    (vector? x) (JSONArray. (map to-json x))
+    (list? x) (JSONArray. (map to-json x))
+    (keyword? x) (name x)
+    :else x))
+
 (def ^{:doc "the ISO8601 data standard format modified to make it
              slightly more human-readable."}
        iso8601modified (SimpleDateFormat. "yyyy-MM-dd HH:mm:ss Z"))

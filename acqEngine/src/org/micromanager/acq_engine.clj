@@ -27,7 +27,8 @@
            get-property-value edt attempt-all]]
         [org.micromanager.sequence-generator :only [generate-acq-sequence
                                                     make-property-sequences]])
-  (:require [clojure.set])
+  (:require [clojure.set]
+            [org.micromanager.mm :as mm])
   (:import [org.micromanager AcqControlDlg]
            [org.micromanager.api AcquisitionEngine TaggedImageAnalyzer]
            [org.micromanager.acquisition AcquisitionWrapperEngine LiveAcq TaggedImageQueue
@@ -738,13 +739,13 @@
         super-channels (all-super-channels simple-channels 
                                            (get-camera-channel-names))
         ch-names (vec (map :name super-channels))]
-     (JSONObject. {
+     (mm/to-json {
       "BitDepth" (core getImageBitDepth)
       "Channels" (max 1 (count super-channels))
-      "ChNames" (JSONArray. ch-names)
-      "ChColors" (JSONArray. (channel-colors simple-channels super-channels ch-names))
-      "ChContrastMax" (JSONArray. (repeat (count super-channels) 65536))
-      "ChContrastMin" (JSONArray. (repeat (count super-channels) 0))
+      "ChNames" ch-names
+      "ChColors" (channel-colors simple-channels super-channels ch-names)
+      "ChContrastMax" (repeat (count super-channels) 65536)
+      "ChContrastMin" (repeat (count super-channels) 0)
       "Comment" (:comment settings)
       "ComputerName" (.. InetAddress getLocalHost getHostName)
       "Depth" (core getBytesPerPixel)
@@ -754,7 +755,7 @@
       "GridRow" 0
       "Height" (core getImageHeight)
       "Interval_ms" (:interval-ms settings)
-      "CustomIntervals_ms" (JSONArray. (or (:custom-intervals-ms settings) []))
+      "CustomIntervals_ms" (or (:custom-intervals-ms settings) [])
       "IJType" (get-IJ-type depth)
       "KeepShutterOpenChannels" (:keep-shutter-open-channels settings)
       "KeepShutterOpenSlices" (:keep-shutter-open-slices settings)
@@ -765,7 +766,7 @@
       "PixelType" (get-pixel-type)
       "Positions" (max 1 (count (:positions settings)))
       "Prefix" (if (:save settings) (:prefix settings) "")
-      "ROI" (JSONArray. (get-camera-roi))
+      "ROI" (get-camera-roi)
       "Slices" (max 1 (count (:slices settings)))
       "SlicesFirst" (:slices-first settings)
       "Source" "Micro-Manager"
