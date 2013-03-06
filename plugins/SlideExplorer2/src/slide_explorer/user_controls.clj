@@ -295,7 +295,7 @@
 (defn handle-double-click [panel response-fn]
   (handle-click panel
                 (fn [e] (and (= MouseEvent/BUTTON1 (.getButton e))
-                             (not (menu-accelerator-down? e))
+                             (not (or (.isAltDown e) (menu-accelerator-down? e)))
                              (= 2 (.getClickCount e))))
                 response-fn))
 
