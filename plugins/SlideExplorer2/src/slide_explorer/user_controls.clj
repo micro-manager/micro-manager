@@ -226,32 +226,38 @@
   (bind-window-keys window ["COMMA"] #(swap! dive-atom update-in [:z] dec))
   (bind-window-keys window ["PERIOD"] #(swap! dive-atom update-in [:z] inc)))
 
-(def scale-delta 0.04)
+(def zoom-steps 25)
 
 (defn run-zoom! 
   "Smoothly zoom :in or :out by one factor of 2, asynchronously."
-  [zoom-atom direction]
+  [zoom-atom direction {mx :x my :y}]
   (future
     (let [in? (= direction :in)
-          {:keys [zoom scale]} @zoom-atom
-          factor (if in? 2 1/2)]
-      (when (and (= 1 scale)
-                 (if in?
+          {:keys [zoom scale x y]} @zoom-atom
+          factor (if in? 2 1/2)
+          scale-delta (/ 1. zoom-steps)
+          dx (/ mx zoom 1)
+          dy (/ my zoom 1)
+          zoom? (if in?
                    (< zoom (- MAX-ZOOM 0.001))
-                   (> zoom (+ MIN-ZOOM 0.001))))
-        (doseq [scale (map #(Math/pow factor %)
-                           (range scale-delta 1 scale-delta))]
-          (swap! zoom-atom assoc :scale scale)
+                   (> zoom (+ MIN-ZOOM 0.001)))]
+      (when (= 1 scale)
+        (doseq [f (map #(/ % zoom-steps) (range 1 zoom-steps))]
+          (swap! zoom-atom assoc
+                 :scale (if zoom? (Math/pow factor f) 1)
+                 :x (+ x (* f dx))
+                 :y (+ y (* f dy)))
           (Thread/sleep 10))
-        (swap! zoom-atom assoc
-               :scale 1
-               :zoom (* (@zoom-atom :zoom) factor))))))
+        (let [old-zoom (@zoom-atom :zoom)]
+          (swap! zoom-atom assoc
+                 :scale 1
+                 :zoom (if zoom? (* old-zoom factor) old-zoom)))))))
 
 (defn handle-zoom [window zoom-atom]
   (bind-window-keys window ["ADD" "CLOSE_BRACKET" "EQUALS"]
-    (fn [] (run-zoom! zoom-atom :in)))
+    (fn [] (run-zoom! zoom-atom :in {:x 0 :y 0})))
   (bind-window-keys window ["SUBTRACT" "OPEN_BRACKET" "MINUS"]
-    (fn [] (run-zoom! zoom-atom :out))))
+    (fn [] (run-zoom! zoom-atom :out {:x 0 :y 0}))))
   
 (defn watch-keys [window key-atom]
   (let [key-adapter (proxy [KeyAdapter] []
@@ -292,6 +298,20 @@
                              (not (menu-accelerator-down? e))
                              (= 2 (.getClickCount e))))
                 response-fn))
+
+(defn handle-alt-click [button panel response-fn]
+  (handle-click panel
+                (fn [e] (and (.isAltDown e)
+                             (= (button {:left MouseEvent/BUTTON1
+                                         :right MouseEvent/BUTTON3})
+                                (.getButton e))))
+                response-fn))
+
+(defn handle-mouse-zoom [panel zoom-atom]
+  (handle-alt-click :left panel
+    (fn [_ _] (run-zoom! zoom-atom :in (:mouse @zoom-atom))))
+  (handle-alt-click :right panel
+    (fn [_ _] (run-zoom! zoom-atom :out (:mouse @zoom-atom)))))
 
 (defn handle-control-click [panel response-fn]
   (handle-click panel
@@ -369,7 +389,7 @@
 (defn make-view-controllable [widgets screen-state-atom]
   (let [panel (:left-panel widgets)]
     ((juxt handle-drags handle-arrow-pan handle-wheel
-           handle-resize handle-pointing)
+           handle-resize handle-pointing handle-mouse-zoom)
            panel screen-state-atom)
     ((juxt handle-reset handle-zoom handle-dive) ; watch-keys)
            (.getTopLevelAncestor panel) screen-state-atom)

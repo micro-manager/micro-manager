@@ -15,7 +15,10 @@
 (def cheat-sheet-text
 "Slide Explorer controls:
 
+  Mouse drag: Pan
   +/-: Zoom in/out
+  Alt + Left click: Zoom in
+  Alt + Right click: Zoom out
   </>: Slice up/down
   F: Enter or exit full screen mode
   Esc: Exit full screen mode
@@ -42,7 +45,7 @@ For live data sets:
       (.add (controls/button "Load..." #(main/load-data-set)))
       (.add (controls/button "New..." #(main/go)))
       (.add (cheat-sheet)))
-    (controls/show-window-center frame 400 420 gui-window)
+    (controls/show-window-center frame 400 450 gui-window)
     frame))
 
 (defn show-frame [gui-window]
