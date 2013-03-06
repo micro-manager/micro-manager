@@ -73,7 +73,7 @@
             (recur))))
 
 (defn handle-positions [panel screen-state-atom affine-stage-to-pixel]
-  (user-controls/handle-shift-click
+  (user-controls/handle-control-click
     panel
     (fn [x y] (toggle-position screen-state-atom x y affine-stage-to-pixel)))
   (follow-positions! screen-state-atom affine-stage-to-pixel))

@@ -2,7 +2,7 @@
   (:import (java.awt.event ComponentAdapter KeyEvent KeyAdapter
                            MouseAdapter MouseEvent WindowAdapter
                            ActionListener)
-           (java.awt Window)
+           (java.awt Toolkit Window)
            (javax.swing AbstractAction JComponent KeyStroke SwingUtilities
                         JButton)
            (java.util UUID)
@@ -282,17 +282,21 @@
                                      (when (event-predicate e)
                                        (response-fn (.getX e) (.getY e)))))))
 
+(defn menu-accelerator-down? [mouse-event]
+  (pos? (bit-and (.. Toolkit getDefaultToolkit getMenuShortcutKeyMask)
+                 (.getModifiers mouse-event))))
+
 (defn handle-double-click [panel response-fn]
   (handle-click panel
                 (fn [e] (and (= MouseEvent/BUTTON1 (.getButton e))
-                             (not (.isShiftDown e))
+                             (not (menu-accelerator-down? e))
                              (= 2 (.getClickCount e))))
                 response-fn))
 
-(defn handle-shift-click [panel response-fn]
+(defn handle-control-click [panel response-fn]
   (handle-click panel
                 (fn [e] (and (= MouseEvent/BUTTON1 (.getButton e))
-                             (.isShiftDown e)))
+                             (menu-accelerator-down? e)))
                 response-fn))
                                      
 (defn handle-pointing [component screen-state-atom]

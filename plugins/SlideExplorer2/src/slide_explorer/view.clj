@@ -136,7 +136,7 @@
                      :w (* zoom w) :h (* zoom h)
                      :alpha 1
                      :stroke {:color color
-                              :width (max 4.0 (* 16 zoom))}}])))
+                              :width 2-}}])))
 
 (defn paint-stage-position [^Graphics2D g screen-state]
   (let [[x y] (:xy-stage-position screen-state)

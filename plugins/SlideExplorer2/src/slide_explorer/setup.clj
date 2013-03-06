@@ -22,8 +22,11 @@
   1: Hide or show 1x view
 
 For live data sets: 
-  Shift + Click: Add/remove positions
+  Ctrl/Cmd + Click: Add/remove positions
   Double-click: Navigate to location
+ 
+  Yellow box: Current stage position
+  Red boxes: Positions in position list
 ")
     
 
