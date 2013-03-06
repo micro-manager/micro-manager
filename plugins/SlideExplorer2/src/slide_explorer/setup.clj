@@ -42,7 +42,7 @@ For live data sets:
       (.add (controls/button "Load..." #(main/load-data-set)))
       (.add (controls/button "New..." #(main/go)))
       (.add (cheat-sheet)))
-    (controls/show-window-center frame 400 320 gui-window)
+    (controls/show-window-center frame 400 420 gui-window)
     frame))
 
 (defn show-frame [gui-window]

@@ -231,8 +231,8 @@
                                                   @screen-state-atom
                                                   acquired-images
                                                   affine))
-                      (explore memory-tiles-atom screen-state-atom
-                               acquired-images affine))))
+                      (trampoline explore memory-tiles-atom screen-state-atom
+                                          acquired-images affine))))
 
 (defn navigate [screen-state-atom affine-transform _ _]
   (when (#{:navigate :explore} (:mode @screen-state-atom))
@@ -315,7 +315,9 @@ Would you like to run automatic pixel calibration?"
     (mm/load-mm (MMStudioMainFrame/getInstance))
     (if (and new? (not (origin-here-stage-to-pixel-transform)))
       (pixels-not-calibrated)
-      (let [settings (if-not new? (load-settings dir) {:tile-dimensions [512 512]})
+      (let [settings (if-not new?
+                       (load-settings dir)
+                       {:tile-dimensions [512 512]})
             acquired-images (atom #{})
             memory-tiles (tile-cache/create-tile-cache 200 dir (not new?))
             [screen-state panel] (view/show memory-tiles settings)]
@@ -349,16 +351,19 @@ Would you like to run automatic pixel calibration?"
                                               affine-stage-to-pixel)]
                   (swap! screen-state assoc :xy-stage-position
                          (affine/point-to-vector pixel)))))
-            (swap! screen-state merge
-                   {:acq-settings acq-settings
-                    :pixel-size-um (pixel-size-um affine-stage-to-pixel)
-                    :z-origin z-origin
-                    :slice-size-um 1.0
-                    :dir dir
-                    :mode :explore
-                    :channels (initial-lut-maps first-seq)
-                    :tile-dimensions [(mm/core getImageWidth)
-                                      (mm/core getImageHeight)]})
+            (let [width (mm/core getImageWidth)
+                  height (mm/core getImageHeight)]
+              (swap! screen-state merge
+                     {:acq-settings acq-settings
+                      :pixel-size-um (pixel-size-um affine-stage-to-pixel)
+                      :z-origin z-origin
+                      :slice-size-um 1.0
+                      :dir dir
+                      :mode :explore
+                      :channels (initial-lut-maps first-seq)
+                      :tile-dimensions [width height]
+                      :x (long (/ width 2))
+                      :y (long (/ height 2))}))
             (add-watch screen-state "explore" (fn [_ _ old new] (when-not (= old new)
                                                                   (explore-fn))))
             (explore-fn))
