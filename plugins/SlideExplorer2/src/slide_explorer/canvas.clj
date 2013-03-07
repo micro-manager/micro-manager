@@ -22,6 +22,8 @@
 ; gradients
 ; affine transforms
 
+(def ^:dynamic *canvas-error*)
+
 (defn read-image [file]
   (javax.imageio.ImageIO/read (clojure.java.io/file file)))
 
@@ -266,8 +268,9 @@
     (.drawImage g2d image (- (/ w 2)) (- (/ h 2)) w h nil)))
   
   (defmethod draw-primitive String
-    [g2d text {:keys [x y font fill stroke] :as params}]
-    (let [{:keys [name bold italic underline strikethrough size]} font
+    [g2d text {:keys [x y font fill stroke]:as params}]
+    (let [{:keys [name bold italic underline strikethrough size]
+           :or {name Font/SANS_SERIF size 18}} font
           style (bit-or (if bold Font/BOLD 0) (if italic Font/ITALIC 0))
           font1 (Font. name style size)
           attributes (.getAttributes font1)]
@@ -305,16 +308,27 @@
         (draw-primitive g2d (make-obj type params+) params+)))))
 
 (defn canvas [reference]
-  (let [panel (proxy [JPanel] []
+  (let [meta-atom (atom nil)
+        panel (proxy [JPanel clojure.lang.IReference] []
                 (paintComponent [^Graphics graphics]
-                                (proxy-super paintComponent graphics)
-                                (try
-                                (draw graphics @reference)
-                                  (catch Throwable e nil))))]
+                  (proxy-super paintComponent graphics)
+                  (try
+                    (draw graphics @reference)
+                    (catch Throwable e (println (.printStackTrace e)))))
+                (alterMeta [alter args]
+                  (apply swap! meta-atom alter args))
+                (resetMeta [m]
+                  (reset! meta-atom m))
+                (meta []
+                  @meta-atom))]
     (add-watch reference panel (fn [_ _ _ _]
                                  (.repaint panel)))
+    (alter-meta! panel assoc ::data-source reference)
     (.setBackground panel Color/BLACK)
     panel))
+
+;; interaction
+
 
 ;; test
 
@@ -354,9 +368,9 @@
   (let [text-area (JTextArea.)
         scroll-pane (JScrollPane. text-area)]
     (handle-data-changed text-area
-                         #(try (reset! data-atom
-                                 (read-string (.getText text-area)))
-                                    (catch Exception e )))
+      #(try (reset! data-atom
+              (read-string (.getText text-area)))
+                 (catch Exception e nil)))
     (.setText text-area (with-out-str (clojure.pprint/pprint @data-atom)))
     (doto (JFrame.)
       (.. getContentPane (add scroll-pane))
@@ -372,6 +386,7 @@
 ; font
 ; text
 ; alpha
+
 
 
 (count
@@ -429,29 +444,20 @@
 ;              :cap :butt
 ;              :join :bevel
 ;              :miter-limit 10.0}}]
-   [:compound {:x 180 :y 300 :scale 1.0 :alpha 0.9 :rotate 0} 
-    [:round-rect
-     {:y 2 :w 150 :h 30
-      :arc-radius 10
-      :fill {:color 0x4060D0}
-      :scale 1.0
-      :alpha 1.0
-      :stroke {:width 2 :color :white}
-      :rotate 0}]
     [:text
      {:text "Navigate"
       :color :white
-      :alpha 0.7
-      :rotate 0
-      :scale-x 1.0
-      :fill true
-      :stroke {:width 10 :cap :butt}
-      :font {:name "Arial"
-             :bold true
-             :italic false
-             :underline false
-             :strikethrough false
-             :size 20}}]]
+}]
+   [:compound {:x 180 :y 300 :scale 1.0 :alpha 0.9 :rotate 0} 
+;    [:round-rect
+;     {:y 2 :w 150 :h 30
+;      :arc-radius 10
+;      :fill {:color 0x4060D0}
+;      :scale 1.0
+;      :alpha 1.0
+;      :stroke {:width 2 :color :white}
+;      :rotate 0}]
+    ]
    [:compound
     {:x 150 :y 150 :rotate 0 :scale 0.8 }
     [:ellipse
@@ -481,5 +487,7 @@
 ;     :stroke {:width 10}
 ;     :alpha 0.7}]
    ]))
+
+
 
 

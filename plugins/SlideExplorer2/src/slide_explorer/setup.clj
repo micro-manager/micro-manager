@@ -34,8 +34,7 @@ For live data sets:
     
 
 (defn cheat-sheet []
-  (doto
-  (JTextArea. cheat-sheet-text)
+  (doto (JTextArea. cheat-sheet-text)
     (.setEditable false)))
 
 (defn construct-frame [gui-window]
@@ -45,7 +44,9 @@ For live data sets:
       (.add (controls/button "Load..." #(main/load-data-set)))
       (.add (controls/button "New..." #(main/go)))
       (.add (cheat-sheet)))
-    (controls/show-window-center frame 400 450 gui-window)
+    (doto frame
+      (.setResizable false)
+      (controls/show-window-center 400 450 gui-window))
     frame))
 
 (defn show-frame [gui-window]
