@@ -10,8 +10,10 @@
            (javax.swing JFrame)
            (java.awt Color)
            (java.io File)
+           (javax.imageio ImageIO)
            (org.micromanager.utils ImageUtils))
-  (:require [slide-explorer.canvas :as canvas]))
+  (:require [slide-explorer.canvas :as canvas]
+            [clojure.java.io :as io]))
 
 (defmacro timer [expr]
   `(let [ret# (time ~expr)]
@@ -219,7 +221,7 @@
         (doto (composite-image processors)
           (.setLuts (into-array luts)))))))
 
-;; reading/writing ImageProcessors on disk
+;; reading/writing ImageProcessors/Images on disk
 
 (defn write-processor
   "Writes an image processor to disk, in TIFF format, at path."
@@ -236,6 +238,19 @@
     (when (.exists (File. full-path))
       (when-let [imgp (io! (IJ/openImage full-path))]
         (.getProcessor imgp)))))       
+
+(defn read-image
+  "Reads an image file to an AWT image."
+  [file]
+  (let [file (io/file file)]
+    (ImageIO/read file)))
+
+(defn write-image
+  "Writes an AWT Image object to a file."
+  [file image]
+  (let [file (io/file file)
+        suffix (last (.split (.getAbsolutePath file) "\\."))]
+    (ImageIO/write image suffix file)))
 
 ;; Intensity projection
 
@@ -298,6 +313,7 @@
   (let [x (long (/ (.getWidth proc) 2))
         y (long (/ (.getHeight proc) 2))]
     (pixel proc x y)))    
+
 
 ;; testing
     

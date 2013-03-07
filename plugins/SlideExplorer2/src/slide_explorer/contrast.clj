@@ -1,6 +1,12 @@
 (ns slide-explorer.contrast
   (require [slide-explorer.canvas :as canvas]
+           [slide-explorer.image :as image]
            [slide-explorer.reactive :as reactive]))
+
+(def color-wheel
+  (memoize
+    (fn []
+      (image/read-image "hue-saturation-wheel.png"))))
 
 (defn bar-graph-vertices [data width height]
   (let [peak (apply max data)
@@ -23,10 +29,12 @@
         xmin (* width (/ min n))
         xmax (* width (/ max n))]
     [:graphics {}
-     [:compound {:x 100 :y (+ 10 height) :scale-y -1}
       [:rect {:fill {:color :dark-gray}
-              :l -150 :t -100
+              :stroke {:width 0}
+              :l 0 :t 0
               :width (+ 200 width) :height (+ 200 height)}]
+      [:image {:data (color-wheel) :t 100 :l 100 :scale 0.5}]
+      [:compound {:x 100 :y (+ 10 height) :scale-y -1}
       [:polygon
        {:id :graph
         :vertices (bar-graph-vertices data width height)

@@ -5,6 +5,7 @@
            (java.awt.font TextAttribute)
            (java.awt.geom Arc2D Arc2D$Double Area Ellipse2D$Double
                           Line2D$Double Path2D$Double
+                          Point2D$Double
                           Rectangle2D$Double
                           RoundRectangle2D$Double)
            (javax.swing JFrame JPanel JScrollPane JTextArea)
@@ -206,6 +207,10 @@
 (defmethod make-obj :line
   [_ {:keys [w h]}]
   (Line2D$Double. (- (/ w 2)) (- (/ h 2)) (/ w 2) (/ h 2)))
+
+(defmethod make-obj :point
+  [_ _]
+  (Line2D$Double. 0 0))
 
 (defmethod make-obj :polygon
   [_ {:keys [vertices]}]
