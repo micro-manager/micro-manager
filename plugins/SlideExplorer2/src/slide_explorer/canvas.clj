@@ -1,5 +1,6 @@
 (ns slide-explorer.canvas
-  (:import (java.awt AlphaComposite BasicStroke Color Font Graphics Graphics2D Image
+  (:import (java.awt AlphaComposite BasicStroke Color Font Graphics 
+                     Graphics2D GradientPaint Image
                      Polygon RenderingHints Shape)
            (java.awt.font TextAttribute)
            (java.awt.geom Arc2D Arc2D$Double Area Ellipse2D$Double
@@ -78,6 +79,12 @@
 
 (defn set-color [g2d color]
   (.setColor g2d (color-object color)))
+
+(defn set-gradient [g2d {:keys [x1 y1 color1
+                                x2 y2 color2]}]
+  (.setPaint g2d (GradientPaint. x1 y1 (color-object color1)
+                             x2 y2 (color-object color2))))
+  
 
 (def degrees-to-radians (/ Math/PI 180))
 
@@ -241,6 +248,10 @@
       (doto g2d
         (set-color fill-color)
         (.fill shape))))
+    (when-let [gradient (:gradient fill)]
+      (doto g2d
+        (set-gradient gradient)
+        (.fill shape)))
   (when (stroke? stroke)
     (doto g2d
       (set-color (or (:color stroke) color :black))
