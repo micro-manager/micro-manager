@@ -654,7 +654,7 @@ void ScopeLEDFluorescenceIlluminator::ClearOpticalState()
     m_CachedLEDGroup = 0;
     m_NumChannels = 0;
 
-    memset(led_group_channels_initialized, false, MAX_FMI_LED_GROUPS);
+    memset(led_group_channels_initialized, false, NUM_FMI_LED_GROUPS);
     memset(channel_wavelengths_initialized, false, 4);
 }
 
@@ -759,17 +759,18 @@ int ScopeLEDFluorescenceIlluminator::Initialize()
         }
 
         pAct = new CPropertyAction (this, &ScopeLEDFluorescenceIlluminator::OnLEDGroup);
-        nRet = CreateProperty("LEDGroup", "1", MM::Integer, false, pAct);
+        nRet = CreateProperty("LEDGroup", "0", MM::Integer, false, pAct);
         if (nRet != DEVICE_OK) return nRet;
         if (m_NumChannels == 2)
         {
+            AddAllowedValue("LEDGroup", "0"); // State Not Set
             AddAllowedValue("LEDGroup", "1"); // WL1
             AddAllowedValue("LEDGroup", "2"); // WL2
             AddAllowedValue("LEDGroup", "5"); // WL1+WL2
         }
         else
         {
-            SetPropertyLimits("LEDGroup", 1, MAX_FMI_LED_GROUPS);
+            SetPropertyLimits("LEDGroup", MIN_FMI_LED_GROUP, MAX_FMI_LED_GROUP);
         }
     }
 
@@ -865,6 +866,11 @@ int ScopeLEDFluorescenceIlluminator::SetOpen(bool open)
 int ScopeLEDFluorescenceIlluminator::GetOpen(bool& open)
 {
     return GetShutter(open);
+}
+
+bool ScopeLEDFluorescenceIlluminator::CheckGroupValid(long group)
+{
+    return (group >= MIN_FMI_LED_GROUP) && (group <= MAX_FMI_LED_GROUP);
 }
 
 int ScopeLEDFluorescenceIlluminator::GetNumChannels(long& count)
@@ -1066,7 +1072,7 @@ int ScopeLEDFluorescenceIlluminator::GetLEDGroupChannels(int group, long& channe
 {
    int result = DEVICE_OK;
     
-    if (!led_group_channels_initialized[group-1])
+    if (!led_group_channels_initialized[group])
     {
         unsigned char cmdbuf[6];
         memset(cmdbuf, 0, sizeof(cmdbuf));
@@ -1087,15 +1093,15 @@ int ScopeLEDFluorescenceIlluminator::GetLEDGroupChannels(int group, long& channe
 
         if ((DEVICE_OK == result) && (cbRxBuffer >= 5))
         {
-            led_group_channels[group-1] = RxBuffer[4];
-            led_group_channels_initialized[group-1] = true;
+            led_group_channels[group] = RxBuffer[4];
+            led_group_channels_initialized[group] = true;
         }
         else
         {
-            led_group_channels[group-1] = 0;
+            led_group_channels[group] = 0;
         }
     }
-    channels = led_group_channels[group-1];
+    channels = led_group_channels[group];
     
     return result;
 }
@@ -1223,7 +1229,7 @@ int ScopeLEDFluorescenceIlluminator::OnChannel4Wavelength(MM::PropertyBase* pPro
 int ScopeLEDFluorescenceIlluminator::UpdateActiveChannelString()
 {
     int result = DEVICE_OK;
-    bool ok = m_CachedLEDGroup > 0;
+    bool ok = CheckGroupValid(m_CachedLEDGroup);
 
     if (!ok)
     {
@@ -1234,7 +1240,7 @@ int ScopeLEDFluorescenceIlluminator::UpdateActiveChannelString()
     ok = DEVICE_OK == result;
     if (ok)
     {
-        ok = m_CachedLEDGroup > 0;
+        ok = CheckGroupValid(m_CachedLEDGroup);
         if (ok)
         {
             if (m_ActiveChannels.led_group != m_CachedLEDGroup)
@@ -1298,7 +1304,7 @@ int ScopeLEDFluorescenceIlluminator::OnActiveChannelString(MM::PropertyBase* pPr
 int ScopeLEDFluorescenceIlluminator::UpdateActiveWavelengthString()
 {
     int result = DEVICE_OK;
-    bool ok = m_CachedLEDGroup > 0;
+    bool ok = CheckGroupValid(m_CachedLEDGroup);
 
     if (!ok)
     {
@@ -1309,7 +1315,7 @@ int ScopeLEDFluorescenceIlluminator::UpdateActiveWavelengthString()
     ok = DEVICE_OK == result;
     if (ok)
     {
-        ok = m_CachedLEDGroup > 0;
+        ok = CheckGroupValid(m_CachedLEDGroup);
         if (ok)
         {
             if (m_ActiveWavelengths.led_group != m_CachedLEDGroup)
@@ -1380,6 +1386,7 @@ int ScopeLEDFluorescenceIlluminator::GetOptimalPositionString(std::string& str)
 {
     static const char* OptimalPositions_4WL[] =
     {
+        "",
         "X1,Y1",
         "X3,Y1",
         "X3,Y3",
@@ -1393,6 +1400,7 @@ int ScopeLEDFluorescenceIlluminator::GetOptimalPositionString(std::string& str)
 
     static const char* OptimalPositions_2WL[] =
     {
+        "",
         "X1",
         "X3",
         "",
@@ -1401,7 +1409,7 @@ int ScopeLEDFluorescenceIlluminator::GetOptimalPositionString(std::string& str)
     };
     
     int result = DEVICE_OK;
-    bool ok = m_CachedLEDGroup > 0;
+    bool ok = CheckGroupValid(m_CachedLEDGroup);
 
     if (!ok)
     {
@@ -1414,7 +1422,7 @@ int ScopeLEDFluorescenceIlluminator::GetOptimalPositionString(std::string& str)
     ok = DEVICE_OK == result;
     if (ok)
     {
-        ok = m_CachedLEDGroup > 0;
+        ok = CheckGroupValid(m_CachedLEDGroup);
         if (ok)
         {
             switch (m_NumChannels)
@@ -1425,13 +1433,13 @@ int ScopeLEDFluorescenceIlluminator::GetOptimalPositionString(std::string& str)
             case 2:
                 if (m_CachedLEDGroup <= 5)
                 {
-                    str = OptimalPositions_2WL[m_CachedLEDGroup-1];
+                    str = OptimalPositions_2WL[m_CachedLEDGroup];
                 }
                 break;
             case 4:
                 if (m_CachedLEDGroup <= 9)
                 {
-                    str = OptimalPositions_4WL[m_CachedLEDGroup-1];
+                    str = OptimalPositions_4WL[m_CachedLEDGroup];
                 }
                 break;
             default:

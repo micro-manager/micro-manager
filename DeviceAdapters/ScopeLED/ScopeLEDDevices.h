@@ -99,11 +99,13 @@ private:
     int PlayPresetMode(int mode, double brightness);
 };
 
-#define MAX_FMI_LED_GROUPS 9
+#define MIN_FMI_LED_GROUP 0
+#define MAX_FMI_LED_GROUP 9
+#define NUM_FMI_LED_GROUPS (MAX_FMI_LED_GROUP+1)
 class ScopeLEDFluorescenceIlluminator : public ScopeLEDBasicIlluminator<ScopeLEDFluorescenceIlluminator>
 {
-    bool led_group_channels_initialized[MAX_FMI_LED_GROUPS];
-    long led_group_channels[MAX_FMI_LED_GROUPS];
+    bool led_group_channels_initialized[NUM_FMI_LED_GROUPS];
+    long led_group_channels[NUM_FMI_LED_GROUPS];
     
     bool channel_wavelengths_initialized[4];
     long channel_wavelengths[4];
@@ -151,6 +153,7 @@ public:
     static const char* DeviceName;
     static const char* DeviceDescription;
 
+    static bool CheckGroupValid(long group);
     long m_CachedLEDGroup;
     long m_NumChannels;
 
