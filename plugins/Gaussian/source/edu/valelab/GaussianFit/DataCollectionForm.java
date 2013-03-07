@@ -1624,6 +1624,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
                int width = rowData_.get(row).width_;
                int height = rowData_.get(row).height_;
                double factor = rowData_.get(row).pixelSizeNm_;
+               boolean useS = useSeconds(rowData_.get(row));
                ij.ImageStack  stack = new ij.ImageStack(width, height); 
                
                ImagePlus sp = new ImagePlus("Errors in pairs");
@@ -1731,6 +1732,9 @@ public class DataCollectionForm extends javax.swing.JFrame {
                      double timePoint = frame;
                      if (rowData_.get(row).timePoints_ != null) {
                         timePoint = rowData_.get(row).timePoints_.get(frame);
+                        if (useS) {
+                           timePoint /= 1000;
+                        }
                      }
                      xData.add(timePoint, avgX);
                      yData.add(timePoint, avgY);
@@ -1781,11 +1785,14 @@ public class DataCollectionForm extends javax.swing.JFrame {
               
                
 
-               String yAxis = "Time (frameNr)";
+               String xAxis = "Time (frameNr)";
                if (rowData_.get(row).timePoints_ != null) {
-                  yAxis = "Time (s)";
+                  xAxis = "Time (ms)";
+                  if (useS) {
+                     xAxis = "Time (s)";
+                  }
                }
-               GaussianUtils.plotData2("Error in " + rowData_.get(row).name_, xData, yData, yAxis, "Error(nm)", 0, 400);
+               GaussianUtils.plotData2("Error in " + rowData_.get(row).name_, xData, yData, xAxis, "Error(nm)", 0, 400);
 
                ij.IJ.showStatus("");
 
@@ -3803,7 +3810,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
                     rowData.zStackStepSizeNm_, rowData.shape_,
                     rowData.halfSize_, rowData.nrChannels_, rowData.nrFrames_,
                     rowData.nrSlices_, 1, rowData.maxNrSpots_, correctedData,
-                    null, 
+                    rowData.timePoints_, 
                     false, Coordinates.NM, false, 0.0, 0.0);
          }
       };
@@ -3955,7 +3962,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
    private boolean useSeconds(MyRowData row) {
       boolean useS = false;
       if (row.timePoints_ != null) {
-         if (row.timePoints_.get(row.spotList_.size() - 1)
+         if (row.timePoints_.get(row.timePoints_.size() - 1)
                  - row.timePoints_.get(0) > 10000) {
             useS = true;
          }

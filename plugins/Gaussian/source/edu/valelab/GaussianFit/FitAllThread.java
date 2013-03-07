@@ -149,12 +149,20 @@ public class FitAllThread extends GaussianInfo implements Runnable  {
             }  
          }
       }
+      
+      
+      ArrayList<Double> timePoints = new ArrayList<Double>();
+      // ugly code to deal with 1-based frame numbers and their relation to timePoints
+      timePoints.add(0.0);
+      for (int i=1; i <= nrFrames; i++) {
+         timePoints.add((i - 1) * timeIntervalMs_);
+      }
 
       dcForm.addSpotData(siPlus.getWindow().getTitle(), siPlus.getTitle(), "",
               siPlus.getWidth(), siPlus.getHeight(), (float) pixelSize_, 
               (float) zStackStepSize_, shape_, halfSize_,
               nrChannels, nrFrames, nrSlices, nrPositions, resultList_.size(), 
-              resultList_, null, false, DataCollectionForm.Coordinates.NM, 
+              resultList_, timePoints, false, DataCollectionForm.Coordinates.NM, 
               DataCollectionForm.zc_.hasFitFunctions(), 
               zMin, zMax);
       
