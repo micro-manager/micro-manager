@@ -739,13 +739,13 @@
         super-channels (all-super-channels simple-channels 
                                            (get-camera-channel-names))
         ch-names (vec (map :name super-channels))]
-     (mm/to-json {
+     (JSONObject. {
       "BitDepth" (core getImageBitDepth)
       "Channels" (max 1 (count super-channels))
-      "ChNames" ch-names
-      "ChColors" (channel-colors simple-channels super-channels ch-names)
-      "ChContrastMax" (repeat (count super-channels) 65536)
-      "ChContrastMin" (repeat (count super-channels) 0)
+      "ChNames" (JSONArray. ch-names)
+      "ChColors" (JSONArray. (channel-colors simple-channels super-channels ch-names))
+      "ChContrastMax" (JSONArray. (repeat (count super-channels) 65536))
+      "ChContrastMin" (JSONArray. (repeat (count super-channels) 0))
       "Comment" (:comment settings)
       "ComputerName" (.. InetAddress getLocalHost getHostName)
       "Depth" (core getBytesPerPixel)
@@ -755,7 +755,7 @@
       "GridRow" 0
       "Height" (core getImageHeight)
       "Interval_ms" (:interval-ms settings)
-      "CustomIntervals_ms" (or (:custom-intervals-ms settings) [])
+      "CustomIntervals_ms" (JSONArray. (or (:custom-intervals-ms settings) []))
       "IJType" (get-IJ-type depth)
       "KeepShutterOpenChannels" (:keep-shutter-open-channels settings)
       "KeepShutterOpenSlices" (:keep-shutter-open-slices settings)
@@ -766,7 +766,7 @@
       "PixelType" (get-pixel-type)
       "Positions" (max 1 (count (:positions settings)))
       "Prefix" (if (:save settings) (:prefix settings) "")
-      "ROI" (get-camera-roi)
+      "ROI" (JSONArray. (get-camera-roi))
       "Slices" (max 1 (count (:slices settings)))
       "SlicesFirst" (:slices-first settings)
       "Source" "Micro-Manager"
