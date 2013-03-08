@@ -49,6 +49,7 @@ import java.nio.channels.FileChannel;
 import java.text.ParseException;
 import java.util.*;
 import java.util.List;
+import java.util.concurrent.Semaphore;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.prefs.Preferences;
@@ -1527,68 +1528,80 @@ public class DataCollectionForm extends javax.swing.JFrame {
     * @param evt 
     */
    private void c2StandardButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_c2StandardButtonActionPerformed
-      int row = jTable1_.getSelectedRow();
-      if (row < 0)
-         JOptionPane.showMessageDialog(getInstance(), "Please select a dataset as color reference");
-      else {
-         // Get points from both channels in first frame as ArrayLists        
-         ArrayList<Point2D.Double> xyPointsCh1 = new ArrayList<Point2D.Double>();
-         ArrayList<Point2D.Double> xyPointsCh2 = new ArrayList<Point2D.Double>();
-         Iterator it = rowData_.get(row).spotList_.iterator();
-         while (it.hasNext()) {
-            GaussianSpotData gs = (GaussianSpotData) it.next();
-            if (gs.getFrame() == 1) {
-               Point2D.Double point = new Point2D.Double(gs.getXCenter(), gs.getYCenter());
-               if (gs.getChannel() == 1)
-                  xyPointsCh1.add(point);
-               else if (gs.getChannel() == 2)
-                  xyPointsCh2.add(point);
-            }
-         }
+      int rows[] = jTable1_.getSelectedRows();
+      if (rows.length < 1) {
+         JOptionPane.showMessageDialog(getInstance(), "Please select one or more datasets as color reference");
+      } else {
          
-         if (xyPointsCh2.isEmpty()) {
-            JOptionPane.showMessageDialog(getInstance(), "No points found in second channel.  Is this a dual channel dataset?");
-            return;
-         }
-         
-         
-         // Find matching points in the two ArrayLists
-         Iterator it2 = xyPointsCh1.iterator();
          CoordinateMapper.PointMap points = new CoordinateMapper.PointMap();
-         //HashMap<Point2D.Double, Point2D.Double> points = new HashMap<Point2D.Double, Point2D.Double>();
-         NearestPoint2D np;
-         try {
-            np = new NearestPoint2D(xyPointsCh2, 
-               NumberUtils.displayStringToDouble(pairsMaxDistanceField_.getText()));
-         } catch (ParseException ex) {
-            ReportingUtils.showError("Problem parsing Pairs max distance number");
-            return;
-         }
-         
-         while (it2.hasNext()) {
-            Point2D.Double pCh1 = (Point2D.Double) it2.next();
-            Point2D.Double pCh2 = np.findKDWSE(pCh1);
-            if (pCh2 != null) {
-               points.put(pCh1, pCh2);
+         for (int row : rows) {
+            
+            // Get points from both channels in first frame as ArrayLists        
+            ArrayList<Point2D.Double> xyPointsCh1 = new ArrayList<Point2D.Double>();
+            ArrayList<Point2D.Double> xyPointsCh2 = new ArrayList<Point2D.Double>();
+            Iterator it = rowData_.get(row).spotList_.iterator();
+            while (it.hasNext()) {
+               GaussianSpotData gs = (GaussianSpotData) it.next();
+               if (gs.getFrame() == 1) {
+                  Point2D.Double point = new Point2D.Double(gs.getXCenter(), gs.getYCenter());
+                  if (gs.getChannel() == 1) {
+                     xyPointsCh1.add(point);
+                  } else if (gs.getChannel() == 2) {
+                     xyPointsCh2.add(point);
+                  }
+               }
+            }
+
+            if (xyPointsCh2.isEmpty()) {
+               JOptionPane.showMessageDialog(getInstance(), "No points found in second channel.  Is this a dual channel dataset?");
+               return;
+            }
+
+
+            // Find matching points in the two ArrayLists
+            Iterator it2 = xyPointsCh1.iterator();
+            //HashMap<Point2D.Double, Point2D.Double> points = new HashMap<Point2D.Double, Point2D.Double>();
+            NearestPoint2D np;
+            try {
+               np = new NearestPoint2D(xyPointsCh2,
+                       NumberUtils.displayStringToDouble(pairsMaxDistanceField_.getText()));
+            } catch (ParseException ex) {
+               ReportingUtils.showError("Problem parsing Pairs max distance number");
+               return;
+            }
+
+            while (it2.hasNext()) {
+               Point2D.Double pCh1 = (Point2D.Double) it2.next();
+               Point2D.Double pCh2 = np.findKDWSE(pCh1);
+               if (pCh2 != null) {
+                  points.put(pCh1, pCh2);
+               }
+            }
+            if (points.size() < 4) {
+               ReportingUtils.showError("Fewer than 4 matching points found.  Not enough to set as 2C reference");
+               return;
             }
          }
-         if (points.size() < 4) {
-            ReportingUtils.showError("Fewer than 4 matching points found.  Not enough to set as 2C reference");
-            return;
-         }
+         
+         
+         // we have pairs from all images, construct the coordinate mapper
          try {
             c2t_ = new CoordinateMapper(points, 2, 1);
-            //lwm_ = new LocalWeightedMean(2, points);
-            referenceName_.setText("ID: " + rowData_.get(row).ID_);
+            String name = "ID: " + rowData_.get(rows[0]).ID_;
+            if (rows.length > 1) {
+               for (int i = 1; i < rows.length; i++) {
+                  name += "," + rowData_.get(rows[i]).ID_;
+               }
+            }
+            referenceName_.setText(name);
          } catch (Exception ex) {
             JOptionPane.showMessageDialog(getInstance(), "Error setting color reference.  Did you have enough input points?");
             return;
          }
-         
+
       }
    }//GEN-LAST:event_c2StandardButtonActionPerformed
 
-   
    /**
     * Cycles through the spots of the selected data set and finds the most nearby 
     * spot in channel 2.  It will list this as a pair if the two spots are within
@@ -1608,7 +1621,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
 
          return;
       }
-      
+
       if (row > -1) {
 
          Runnable doWorkRunnable = new Runnable() {
@@ -1625,23 +1638,23 @@ public class DataCollectionForm extends javax.swing.JFrame {
                int height = rowData_.get(row).height_;
                double factor = rowData_.get(row).pixelSizeNm_;
                boolean useS = useSeconds(rowData_.get(row));
-               ij.ImageStack  stack = new ij.ImageStack(width, height); 
-               
+               ij.ImageStack stack = new ij.ImageStack(width, height);
+
                ImagePlus sp = new ImagePlus("Errors in pairs");
-               
+
                XYSeries xData = new XYSeries("XError");
                XYSeries yData = new XYSeries("YError");
-    
-                            
+
+
                ij.IJ.showStatus("Creating Pairs...");
-               
- 
+
+
                for (int frame = 1; frame <= rowData_.get(row).nrFrames_; frame++) {
                   ij.IJ.showProgress(frame, rowData_.get(row).nrFrames_);
                   ImageProcessor ip = new ShortProcessor(width, height);
                   short pixels[] = new short[width * height];
                   ip.setPixels(pixels);
-                  
+
                   // Get points from both channels in each frame as ArrayLists        
                   ArrayList<GaussianSpotData> gsCh1 = new ArrayList<GaussianSpotData>();
                   ArrayList<Point2D.Double> xyPointsCh2 = new ArrayList<Point2D.Double>();
@@ -1657,12 +1670,12 @@ public class DataCollectionForm extends javax.swing.JFrame {
                         }
                      }
                   }
-                  
+
                   if (xyPointsCh2.isEmpty()) {
                      ReportingUtils.logError("Pairs function in Localization plugin: no points found in second channel in frame " + frame);
                      continue;
                   }
-                  
+
                   // Find matching points in the two ArrayLists
                   Iterator it2 = gsCh1.iterator();
                   try {
@@ -2226,9 +2239,15 @@ public class DataCollectionForm extends javax.swing.JFrame {
    
    
    private void c2CorrectButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_c2CorrectButtonActionPerformed
-      int row = jTable1_.getSelectedRow();
-      if (row > -1) {     
-         correct2C(rowData_.get(row));
+      int[] rows = jTable1_.getSelectedRows();
+      if (rows.length > 0) {     
+         try {
+            for (int row : rows) {
+               correct2C(rowData_.get(row));
+            }
+         } catch (InterruptedException ex) {
+            ReportingUtils.showError(ex);
+         }
       } else
          JOptionPane.showMessageDialog(getInstance(), "Please select a dataset to color correct");
    }//GEN-LAST:event_c2CorrectButtonActionPerformed
@@ -3743,12 +3762,15 @@ public class DataCollectionForm extends javax.swing.JFrame {
    }
    
    
+   // Used to avoid multiple instances of correct2C at the same time
+   private final Semaphore semaphore_ = new Semaphore(1, true);
+   
    /**
     * Use the 2Channel calibration to create a new, corrected data set
     * 
     * @param rowData 
     */
-   private void correct2C(final MyRowData rowData)
+   private void correct2C(final MyRowData rowData) throws InterruptedException
    {
       if (rowData.spotList_.size() <= 1) {
          JOptionPane.showMessageDialog(getInstance(), "Please select a dataset to Color correct");
@@ -3759,6 +3781,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
          return;
       }
       
+      semaphore_.acquire();
       int method = CoordinateMapper.LWM;
       if (method2CBox_.getSelectedItem().equals("Affine"))
          method = CoordinateMapper.AFFINE;
@@ -3812,6 +3835,8 @@ public class DataCollectionForm extends javax.swing.JFrame {
                     rowData.nrSlices_, 1, rowData.maxNrSpots_, correctedData,
                     rowData.timePoints_, 
                     false, Coordinates.NM, false, 0.0, 0.0);
+            
+            semaphore_.release();
          }
       };
 
