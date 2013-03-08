@@ -270,34 +270,35 @@
         h (or (:h params) (.getHeight image))
         params+ (complete-coordinates (assoc params :w w :h h))
         {:keys [l t]} params+]
-    (.drawImage g2d image (- (/ w 2)) (- (/ h 2)) w h nil)))
-  
-  (defmethod draw-primitive String
-    [g2d text {:keys [x y font fill stroke]:as params}]
-    (let [{:keys [name bold italic underline strikethrough size]
-           :or {name Font/SANS_SERIF size 18}} font
-          style (bit-or (if bold Font/BOLD 0) (if italic Font/ITALIC 0))
-          font1 (Font. name style size)
-          attributes (.getAttributes font1)]
-      (doto attributes
-        (.put TextAttribute/STRIKETHROUGH
-              (if strikethrough TextAttribute/STRIKETHROUGH_ON false))
-        (.put TextAttribute/UNDERLINE
-              (if underline TextAttribute/UNDERLINE_ON -1)))
-      (.setFont g2d (Font. attributes))
-      (let [context (.getFontRenderContext g2d)
-            string-bounds (.. g2d
-                              getFontMetrics
-                              (getStringBounds text g2d))
-            delta-x (.x string-bounds)
-            delta-y (.y string-bounds)
-            height (.height string-bounds)
-            width (.width string-bounds)
-            params+ (complete-coordinates (merge params {:w width :h height}))]
-       ; (println "a" delta-x width (select-keys params+ [:t :l :r :b :x :y]))
-        (.drawString g2d text
-                     (int (- (params+ :l) delta-x))
-                     (int (- (params+ :t) delta-y))))))
+    (with-g2d-state [g2d params+]
+      (.drawImage g2d image (- (/ w 2)) (- (/ h 2)) w h nil))))
+
+(defmethod draw-primitive String
+  [g2d text {:keys [x y font fill stroke]:as params}]
+  (let [{:keys [name bold italic underline strikethrough size]
+         :or {name Font/SANS_SERIF size 18}} font
+        style (bit-or (if bold Font/BOLD 0) (if italic Font/ITALIC 0))
+        font1 (Font. name style size)
+        attributes (.getAttributes font1)]
+    (doto attributes
+      (.put TextAttribute/STRIKETHROUGH
+            (if strikethrough TextAttribute/STRIKETHROUGH_ON false))
+      (.put TextAttribute/UNDERLINE
+            (if underline TextAttribute/UNDERLINE_ON -1)))
+    (.setFont g2d (Font. attributes))
+    (let [context (.getFontRenderContext g2d)
+          string-bounds (.. g2d
+                            getFontMetrics
+                            (getStringBounds text g2d))
+          delta-x (.x string-bounds)
+          delta-y (.y string-bounds)
+          height (.height string-bounds)
+          width (.width string-bounds)
+          params+ (complete-coordinates (merge params {:w width :h height}))]
+     ; (println "a" delta-x width (select-keys params+ [:t :l :r :b :x :y]))
+      (.drawString g2d text
+                   (int (- (params+ :l) delta-x))
+                   (int (- (params+ :t) delta-y))))))
   
 ;  (enable-anti-aliasing g2d)
 ;  (doseq [[type params & inner-items] items]
@@ -308,7 +309,9 @@
   (let [params+ (complete-coordinates params)]
     (with-g2d-state [g2d params+]
       (if (#{:compound :graphics} type)
-        (doseq [inner-item inner-items]
+        (doseq [inner-item (if (seq? (first inner-items))
+                             (first inner-items)
+                             inner-items)]
           (draw g2d inner-item))
         (draw-primitive g2d (make-obj type params+) params+)))))
 

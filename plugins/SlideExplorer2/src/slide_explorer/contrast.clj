@@ -3,10 +3,11 @@
            [slide-explorer.image :as image]
            [slide-explorer.reactive :as reactive]))
 
-(def color-wheel
-  (memoize
-    (fn []
-      (image/read-image "hue-saturation-wheel.png"))))
+
+;(def color-wheel
+;  (memoize
+;    (fn []
+;      (image/read-image "hue-saturation-wheel.png"))))
 
 (defn bar-graph-vertices [data width height]
   (let [peak (apply max data)
@@ -24,17 +25,25 @@
                    :y y}])))
       [{:x width :y 0}])))
 
+(defn color-picker [side]
+  (let [colors [:red :green :blue :cyan :magenta :yellow :white]
+        n (count colors)]
+    [:compound {:x 0 :y 0 :w 50 :h (* side (inc n))}
+     (for [i (range n)]
+       [:rect {:t (* i side) :l 0 :h side :w side
+               :stroke {:width 0}
+               :fill {:color (colors i)}}])]))
+      
 (defn contrast-graph [data width height {:keys [color min max]}]
   (let [n (count data)
         xmin (* width (/ min n))
         xmax (* width (/ max n))]
     [:graphics {}
-      [:rect {:fill {:color :dark-gray}
-              :stroke {:width 0}
-              :l 0 :t 0
-              :width (+ 200 width) :height (+ 200 height)}]
-      [:image {:data (color-wheel) :t 100 :l 100 :scale 0.5}]
-      [:compound {:x 100 :y (+ 10 height) :scale-y -1}
+     [:rect {:fill {:color :dark-gray}
+             :stroke {:width 0}
+             :l 0 :t 0
+             :width (+ 200 width) :height (+ 200 height)}]
+     [:compound {:x 100 :y (+ 10 height) :scale-y -1}
       [:polygon
        {:id :graph
         :vertices (bar-graph-vertices data width height)
@@ -60,7 +69,13 @@
               :fill {:color color}}]]
      [:text {:text "Cy3" :l 50 :t 12 :color :white}]
      [:rect {:l 10 :t 10 :w 30 :h 30 :fill {:color color}
-             :stroke {:width 2 :color :white}}]]))
+             :stroke {:width 1 :color :white}}]
+     [:compound
+      {:x 10 :y 41}
+      [:rect {:l 4 :t 4 :w 30 :h 210 :color :black :stroke {:width 0}
+              :fill {:color 0x303030}}]
+      (color-picker 30)
+      [:rect {:l 0 :t 0 :w 30 :h 210 :color :black :stroke {:width 1}}]]]))
 
 (defonce test-graphics (atom nil))
 
@@ -87,6 +102,7 @@
     (handle-settings)))
 
 (defn random-test [n]
-  (dotimes [_ n]
-    (Thread/sleep 10)
-    (reset! data-atom (test-data))))
+  (future
+    (dotimes [_ n]
+      (Thread/sleep 10)
+      (reset! data-atom (test-data)))))
