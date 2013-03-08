@@ -57,19 +57,24 @@
 
 ;; full screen
 
-(defn- screen-devices []
+(defn screen-devices []
   (seq (.. java.awt.GraphicsEnvironment
       getLocalGraphicsEnvironment
       getScreenDevices)))
 
-(defn- screen-bounds [screen]
+(defn default-screen-device []
+  (.. java.awt.GraphicsEnvironment
+      getLocalGraphicsEnvironment
+      getDefaultScreenDevice))
+
+(defn screen-bounds [screen]
   (.. screen getDefaultConfiguration getBounds))
 
 (defn- overlap-area [rect1 rect2]
   (let [intersection (.intersection rect1 rect2)]
     (* (.height intersection) (.width intersection))))
 
-(defn- window-screen [window]
+(defn window-screen [window]
   (when window
     (let [window-bounds (.getBounds window)
           screens (screen-devices)]
@@ -87,7 +92,8 @@
     (.dispose window)
     (.setUndecorated window true)
     (let [screen (window-screen window)]
-      (if (JavaUtils/isMac)
+      (if (and (JavaUtils/isMac)
+               (= screen (default-screen-device)))
         (.setFullScreenWindow screen window)
         (.setBounds window (screen-bounds screen))))
     (.repaint window)
@@ -100,8 +106,9 @@
   (when (and window (@old-bounds window))
     (.dispose window)
     (.setUndecorated window false)
-    (when (JavaUtils/isMac)
-      (.setFullScreenWindow (window-screen window) nil))
+    (let [screen (window-screen window)]
+      (when (= window (.getFullScreenWindow screen))
+        (.setFullScreenWindow screen nil)))
     (when-let [bounds (@old-bounds window)]
       (.setBounds window bounds)
       (swap! old-bounds dissoc window))
