@@ -1,3 +1,25 @@
+///////////////////////////////////////////////////////////////////////////////
+// FILE:          DragDropUtil.java
+// PROJECT:       Micro-Manager
+// SUBSYSTEM:     mmstudio/utils
+//-----------------------------------------------------------------------------
+//
+// AUTHOR:        Nico Stuurman, nico.stuurman@ucsf.edu, March 9, 2013
+//
+// COPYRIGHT:     University of California, San Francisco, 2013
+//
+// LICENSE:       This file is distributed under the BSD license.
+//                License text is included with the source distribution.
+//
+//                This file is distributed in the hope that it will be useful,
+//                but WITHOUT ANY WARRANTY; without even the implied warranty
+//                of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+//
+//                IN NO EVENT SHALL THE COPYRIGHT OWNER OR
+//                CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+//                INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
+
+
 package org.micromanager.utils;
 
 import java.awt.datatransfer.DataFlavor;
@@ -20,8 +42,6 @@ import org.micromanager.MMStudioMainFrame;
  * tries to open them.
  * 
  * @author nico
- * BSD license
- * Copyright University of California, 2013
  * 
  */
 public class DragDropUtil implements DropTargetListener {
