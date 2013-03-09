@@ -151,6 +151,7 @@ import org.micromanager.acquisition.TaggedImageStorageMultipageTiff;
 import org.micromanager.acquisition.VirtualAcquisitionDisplay;
 import org.micromanager.api.DeviceControlGUI;
 import org.micromanager.api.IAcquisitionEngine2010;
+import org.micromanager.utils.DragDropUtil;
 import org.micromanager.utils.FileDialogs;
 import org.micromanager.utils.FileDialogs.FileType;
 import org.micromanager.utils.HotKeysDialog;
@@ -167,8 +168,7 @@ import org.micromanager.utils.SnapLiveContrastSettings;
  */
 public class MMStudioMainFrame extends JFrame implements 
         ScriptInterface, 
-        DeviceControlGUI,
-        DropTargetListener {
+        DeviceControlGUI {
 
    private static final String MICRO_MANAGER_TITLE = "Micro-Manager";
    private static final String VERSION = "1.4.x dev";
@@ -701,57 +701,7 @@ public class MMStudioMainFrame extends JFrame implements
         }.start();
     }
 
-   public void dragEnter(DropTargetDragEvent dtde) {
-      //throw new UnsupportedOperationException("Not supported yet.");
-   }
-
-   public void dragOver(DropTargetDragEvent dtde) {
-      //throw new UnsupportedOperationException("Not supported yet.");
-   }
-
-   public void dropActionChanged(DropTargetDragEvent dtde) {
-      //throw new UnsupportedOperationException("Not supported yet.");
-   }
-
-   public void dragExit(DropTargetEvent dte) {
-      //throw new UnsupportedOperationException("Not supported yet.");
-   }
-
-   public void drop(DropTargetDropEvent dtde) {
-      try {
-         Transferable tr = dtde.getTransferable();
-         DataFlavor[] flavors = tr.getTransferDataFlavors();
-         for (int i = 0; i < flavors.length; i++) {
-            System.out.println("Possible flavor: " + flavors[i].getMimeType());
-            // Check for file lists specifically
-            if (flavors[i].isFlavorJavaFileListType()) {
-               // Great!  Accept copy drops...
-               dtde.acceptDrop(DnDConstants.ACTION_COPY_OR_MOVE);
-               
-               // And open the file
-               java.util.List list = (java.util.List) tr.getTransferData(flavors[i]);
-               for (int j = 0; j < list.size(); j++) {
-                  File f = (File) list.get(j);
-                  String dir = f.getPath();
-                  if (f.isFile()) {
-                     dir = f.getParent();
-                  }
-                  try {
-                     openAcquisitionData(dir, true);
-                  } catch (MMScriptException ex) {
-                     ReportingUtils.showError("Failed to open data from " + dir + 
-                             ". Is this a Micro-Manager dataset?");
-                  }
-               }
-
-               // If we made it this far, everything worked.
-               dtde.dropComplete(true);
-               return;
-            }
-         }
-      } catch (UnsupportedFlavorException ex) {}
-      catch (IOException ex) {}
-   }
+  
 
    public interface DisplayImageRoutine {
       public void show(TaggedImage image);
@@ -2189,8 +2139,7 @@ public class MMStudioMainFrame extends JFrame implements
       MMKeyDispatcher mmKD = new MMKeyDispatcher(gui_);
       KeyboardFocusManager.getCurrentKeyboardFocusManager().addKeyEventDispatcher(mmKD);
 
-      dt_ = new DropTarget(this, this);
-      
+      dt_ = new DropTarget(this, new DragDropUtil());
       
       overrideImageJMenu();
    }
