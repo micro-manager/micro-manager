@@ -34,6 +34,9 @@ import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.Insets;
 import java.awt.Rectangle;
+import java.awt.dnd.DropTargetDragEvent;
+import java.awt.dnd.DropTargetDropEvent;
+import java.awt.dnd.DropTargetEvent;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.FocusAdapter;
@@ -47,6 +50,8 @@ import java.io.IOException;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import java.util.prefs.Preferences;
 
 import javax.swing.JButton;
@@ -115,6 +120,12 @@ import java.awt.Frame;
 import java.awt.KeyboardFocusManager;
 import java.awt.Menu;
 import java.awt.MenuItem;
+import java.awt.datatransfer.DataFlavor;
+import java.awt.datatransfer.Transferable;
+import java.awt.datatransfer.UnsupportedFlavorException;
+import java.awt.dnd.DnDConstants;
+import java.awt.dnd.DropTarget;
+import java.awt.dnd.DropTargetListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.Collections;
@@ -154,7 +165,10 @@ import org.micromanager.utils.SnapLiveContrastSettings;
 /*
  * Main panel and application class for the MMStudio.
  */
-public class MMStudioMainFrame extends JFrame implements ScriptInterface, DeviceControlGUI {
+public class MMStudioMainFrame extends JFrame implements 
+        ScriptInterface, 
+        DeviceControlGUI,
+        DropTargetListener {
 
    private static final String MICRO_MANAGER_TITLE = "Micro-Manager";
    private static final String VERSION = "1.4.x dev";
@@ -285,6 +299,8 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface, Device
 
    private JButton setRoiButton_;
    private  JButton clearRoiButton_;
+   
+   private DropTarget dt_;
 
    public ImageWindow getImageWin() {
       return getSnapLiveWin();
@@ -684,6 +700,58 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface, Device
             }
         }.start();
     }
+
+   public void dragEnter(DropTargetDragEvent dtde) {
+      //throw new UnsupportedOperationException("Not supported yet.");
+   }
+
+   public void dragOver(DropTargetDragEvent dtde) {
+      //throw new UnsupportedOperationException("Not supported yet.");
+   }
+
+   public void dropActionChanged(DropTargetDragEvent dtde) {
+      //throw new UnsupportedOperationException("Not supported yet.");
+   }
+
+   public void dragExit(DropTargetEvent dte) {
+      //throw new UnsupportedOperationException("Not supported yet.");
+   }
+
+   public void drop(DropTargetDropEvent dtde) {
+      try {
+         Transferable tr = dtde.getTransferable();
+         DataFlavor[] flavors = tr.getTransferDataFlavors();
+         for (int i = 0; i < flavors.length; i++) {
+            System.out.println("Possible flavor: " + flavors[i].getMimeType());
+            // Check for file lists specifically
+            if (flavors[i].isFlavorJavaFileListType()) {
+               // Great!  Accept copy drops...
+               dtde.acceptDrop(DnDConstants.ACTION_COPY_OR_MOVE);
+               
+               // And open the file
+               java.util.List list = (java.util.List) tr.getTransferData(flavors[i]);
+               for (int j = 0; j < list.size(); j++) {
+                  File f = (File) list.get(j);
+                  String dir = f.getPath();
+                  if (f.isFile()) {
+                     dir = f.getParent();
+                  }
+                  try {
+                     openAcquisitionData(dir, true);
+                  } catch (MMScriptException ex) {
+                     ReportingUtils.showError("Failed to open data from " + dir + 
+                             ". Is this a Micro-Manager dataset?");
+                  }
+               }
+
+               // If we made it this far, everything worked.
+               dtde.dropComplete(true);
+               return;
+            }
+         }
+      } catch (UnsupportedFlavorException ex) {}
+      catch (IOException ex) {}
+   }
 
    public interface DisplayImageRoutine {
       public void show(TaggedImage image);
@@ -2121,6 +2189,9 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface, Device
       MMKeyDispatcher mmKD = new MMKeyDispatcher(gui_);
       KeyboardFocusManager.getCurrentKeyboardFocusManager().addKeyEventDispatcher(mmKD);
 
+      dt_ = new DropTarget(this, this);
+      
+      
       overrideImageJMenu();
    }
    
@@ -2570,6 +2641,10 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface, Device
       return name;
    }
 
+   /**
+    * Opens an existing data set. Shows the acquisition in a window.
+    * @return The acquisition object.
+    */
    public String openAcquisitionData(String dir, boolean inRam) throws MMScriptException {
       return openAcquisitionData(dir, inRam, true);
    }
@@ -3913,6 +3988,11 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface, Device
       return runAcquisition(name, root);
    }
 
+   /**
+    * Loads acquisition settings from file
+    * @param path file containing previously saved acquisition settings
+    * @throws MMScriptException 
+    */
    @Override
    public void loadAcquisition(String path) throws MMScriptException {
       testForAbortRequests();

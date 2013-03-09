@@ -1043,20 +1043,20 @@ public interface ScriptInterface {
    public boolean updateImage();
 
 
-   /*
+   /**
     * Open an existing data set. Shows the acquisition in a window.
     * @return The acquisition object.
     */
    public String openAcquisitionData(String location, boolean inRAM) throws MMScriptException;
 
 
-   /*
+   /**
     * Open an existing data set.
     * @return The name of the acquisition object.
     */
    public String openAcquisitionData(String location, boolean inRAM, boolean show) throws MMScriptException;
 
-   /* 
+   /**
     * Enabled or disable the ROI buttons on the main window.
     */
    public void enableRoiButtons(final boolean enabled);
