@@ -739,7 +739,7 @@ bool TsiCam::ParamSupported (TSI_PARAM_ID ParamID)
 int AcqSequenceThread::svc (void)
 {
    unsigned count(0);
-   camInstance->camHandle_->SetParameter(TSI_PARAM_FRAME_COUNT, numFrames <= 0 ? -1 : numFrames);
+   camInstance->camHandle_->SetParameter(TSI_PARAM_FRAME_COUNT, numFrames <= 0 ? 0 : numFrames);
 
    InterlockedExchange(&camInstance->acquiring, 1);
    camInstance->camHandle_->Start();
