@@ -1582,8 +1582,8 @@ public class DataCollectionForm extends javax.swing.JFrame {
                return;
             }
          }
-         
-         
+
+
          // we have pairs from all images, construct the coordinate mapper
          try {
             c2t_ = new CoordinateMapper(points, 2, 1);
@@ -1693,9 +1693,9 @@ public class DataCollectionForm extends javax.swing.JFrame {
                         if (pCh2 != null) {
                            rt.incrementCounter();
                            rt.addValue(Terms.POSITION, gs.getPosition());
-                           rt.addValue(Terms.FRAME, gs.getFrame()); 
+                           rt.addValue(Terms.FRAME, gs.getFrame());
                            rt.addValue(Terms.SLICE, gs.getSlice());
-                           rt.addValue(Terms.CHANNEL, gs.getSlice());                        
+                           rt.addValue(Terms.CHANNEL, gs.getSlice());
                            rt.addValue(Terms.XPIX, gs.getX());
                            rt.addValue(Terms.YPIX, gs.getY());
                            rt.addValue("X1", pCh1.getX());
@@ -1705,7 +1705,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
                            double d2 = NearestPoint2D.distance2(pCh1, pCh2);
                            double d = Math.sqrt(d2);
                            rt.addValue("Distance", d);
-                           rt.addValue("Orientation (sine)", 
+                           rt.addValue("Orientation (sine)",
                                    NearestPoint2D.orientation(pCh1, pCh2));
                            distances.add(d);
 
@@ -1760,11 +1760,11 @@ public class DataCollectionForm extends javax.swing.JFrame {
                }
 
                if (rt.getCounter() == 0) {
-                  MessageDialog md = new MessageDialog(DataCollectionForm.getInstance(), 
+                  MessageDialog md = new MessageDialog(DataCollectionForm.getInstance(),
                           "No Pairs found", "No Pairs found");
                   return;
                }
-               
+
                // show summary in resultstable
                rt2.show("Summary of Pairs found in " + rowData_.get(row).name_);
 
@@ -1794,9 +1794,9 @@ public class DataCollectionForm extends javax.swing.JFrame {
                   tp.addMouseListener(myk);
                   frame.toFront();
                }
-      
-              
-               
+
+
+
 
                String xAxis = "Time (frameNr)";
                if (rowData_.get(row).timePoints_ != null) {
@@ -1827,7 +1827,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
 
       }
    }//GEN-LAST:event_pairsButtonActionPerformed
-   
+
    /**
     * Helper function for function listParticels
     * Finds a spot within MAXMatchDistance in the frame following the frame
@@ -1838,8 +1838,8 @@ public class DataCollectionForm extends javax.swing.JFrame {
     * @param spotPairs - List with spotPairs
     * @return spotPair found or null if none
     */
-   private GsSpotPair findNextSpotPair(GsSpotPair input, 
-           ArrayList<ArrayList<GsSpotPair>> spotPairsByFrame, 
+   private GsSpotPair findNextSpotPair(GsSpotPair input,
+           ArrayList<ArrayList<GsSpotPair>> spotPairsByFrame,
            NearestPointGsSpotPair npsp, int frame) {
       final double maxDistance;
       try {
@@ -1849,9 +1849,9 @@ public class DataCollectionForm extends javax.swing.JFrame {
          return null;
       }
       final double maxDistance2 = maxDistance * maxDistance;
-      
+
       Iterator<GsSpotPair> it = (spotPairsByFrame.get(frame - 1)).iterator();
-      
+
       while (it.hasNext()) {
          GsSpotPair nextSpot = it.next();
          if (nextSpot.getGSD().getFrame() == frame) {
@@ -1864,13 +1864,12 @@ public class DataCollectionForm extends javax.swing.JFrame {
          if (nextSpot.getGSD().getFrame() > frame) {
             return null;
          }
-      }  
-      
+      }
+
       return null;
    }
-   
-   
-    /**
+
+   /**
     * Cycles through the spots of the selected data set and finds the most nearby 
     * spot in channel 2.  It will list this as a pair if the two spots are within
     * MAXMATCHDISTANCE nm of each other.  
@@ -1889,41 +1888,53 @@ public class DataCollectionForm extends javax.swing.JFrame {
     * 
     * @param evt 
     */
-   public void listParticles(java.awt.event.ActionEvent evt) { 
-          
-      final int row = jTable1_.getSelectedRow();
-      if (row < 0) {
+   public void listParticles(java.awt.event.ActionEvent evt) {
+
+      final int[] rows = jTable1_.getSelectedRows();
+      if (rows.length < 1) {
          JOptionPane.showMessageDialog(getInstance(), "Please select a dataset for the List Particles function");
 
          return;
       }
-      
-      if (row > -1) {
 
-         Runnable doWorkRunnable = new Runnable() {
+      // if (row > -1) {
 
-            @Override
-            public void run() {
+      Runnable doWorkRunnable = new Runnable() {
 
-               //int width = rowData_.get(row).width_;
-               //int height = rowData_.get(row).height_;
-               //double factor = rowData_.get(row).pixelSizeNm_;
-               
-               //XYSeries xData = new XYSeries("XError");
-               //XYSeries yData = new XYSeries("YError");
-               //ArrayList<GsSpotPair> spotPairs = new ArrayList<GsSpotPair>();
-               ArrayList<ArrayList<GsSpotPair>> spotPairsByFrame = 
-                       new ArrayList<ArrayList<GsSpotPair>>(); 
-               
+         @Override
+         public void run() {
+
+
+            // Show Particle List as linked Results Table
+            ResultsTable rt = new ResultsTable();
+            rt.reset();
+            rt.setPrecision(2);
+
+            // Show Particle Summary as Linked Results Table
+            ResultsTable rt2 = new ResultsTable();
+            rt2.reset();
+            rt2.setPrecision(1);
+
+            final double maxDistance;
+            try {
+               maxDistance = NumberUtils.displayStringToDouble(pairsMaxDistanceField_.getText());
+            } catch (ParseException ex) {
+               ReportingUtils.logError("Error parsing pairs max distance field");
+               return;
+            }
+
+            for (int row : rows) {
+               ArrayList<ArrayList<GsSpotPair>> spotPairsByFrame =
+                       new ArrayList<ArrayList<GsSpotPair>>();
+
                ij.IJ.showStatus("Creating Pairs...");
-               
- 
+
                // First go through all frames to find all pairs
                int nrSpotPairsInFrame1 = 0;
                for (int frame = 1; frame <= rowData_.get(row).nrFrames_; frame++) {
                   ij.IJ.showProgress(frame, rowData_.get(row).nrFrames_);
                   spotPairsByFrame.add(new ArrayList<GsSpotPair>());
-                  
+
                   // Get points from both channels in each frame as ArrayLists        
                   ArrayList<GaussianSpotData> gsCh1 = new ArrayList<GaussianSpotData>();
                   ArrayList<Point2D.Double> xyPointsCh2 = new ArrayList<Point2D.Double>();
@@ -1939,12 +1950,12 @@ public class DataCollectionForm extends javax.swing.JFrame {
                         }
                      }
                   }
-                  
+
                   if (xyPointsCh2.isEmpty()) {
                      ReportingUtils.logError("Pairs function in Localization plugin: no points found in second channel in frame " + frame);
                      continue;
                   }
-                  
+
                   // Find matching points in the two ArrayLists
                   Iterator it2 = gsCh1.iterator();
                   try {
@@ -1967,27 +1978,19 @@ public class DataCollectionForm extends javax.swing.JFrame {
                      return;
                   }
                }
-               
-               
+
+
                // We have all pairs, assemble in tracks
                ij.IJ.showStatus("Assembling tracks...");
-               
-               final double maxDistance;
-               try {
-                  maxDistance = NumberUtils.displayStringToDouble(pairsMaxDistanceField_.getText());
-               } catch (ParseException ex) {
-                  ReportingUtils.logError("Error parsing pairs max distance field");
-                  return;
-               }
-               
+
                // prepare NearestPoint objects to speed up finding closest pair 
                ArrayList<NearestPointGsSpotPair> npsp = new ArrayList<NearestPointGsSpotPair>();
                for (int frame = 1; frame <= rowData_.get(row).nrFrames_; frame++) {
                   npsp.add(new NearestPointGsSpotPair(spotPairsByFrame.get(frame - 1), maxDistance));
                }
-               
+
                ArrayList<ArrayList<GsSpotPair>> tracks = new ArrayList<ArrayList<GsSpotPair>>();
-               
+
                Iterator<GsSpotPair> iSpotPairs = spotPairsByFrame.get(0).iterator();
                int i = 0;
                while (iSpotPairs.hasNext()) {
@@ -1999,7 +2002,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
                      track.add(spotPair);
                      int frame = 2;
                      while (frame <= rowData_.get(row).nrFrames_) {
-                        
+
                         GsSpotPair newSpotPair = npsp.get(frame - 1).findKDWSE(
                                 new Point2D.Double(spotPair.getfp().getX(), spotPair.getfp().getY()));
                         if (newSpotPair != null) {
@@ -2011,21 +2014,13 @@ public class DataCollectionForm extends javax.swing.JFrame {
                      tracks.add(track);
                   }
                }
-               
-                 
-               // Show Particle List as linked Results Table
-               ResultsTable rt = new ResultsTable();
-               rt.reset();
-               rt.setPrecision(2);
-               
+
                if (tracks.isEmpty()) {
-                  MessageDialog md = new MessageDialog(DataCollectionForm.getInstance(), 
+                  MessageDialog md = new MessageDialog(DataCollectionForm.getInstance(),
                           "No Pairs found", "No Pairs found");
-                  return;
-               }
-                  
-               
-               
+                  continue;
+               } 
+
                Iterator<ArrayList<GsSpotPair>> itTracks = tracks.iterator();
                int spotId = 0;
                while (itTracks.hasNext()) {
@@ -2035,15 +2030,15 @@ public class DataCollectionForm extends javax.swing.JFrame {
                      GsSpotPair spot = itTrack.next();
                      rt.incrementCounter();
                      rt.addValue("Spot ID", spotId);
-                     rt.addValue(Terms.FRAME, spot.getGSD().getFrame()); 
+                     rt.addValue(Terms.FRAME, spot.getGSD().getFrame());
                      rt.addValue(Terms.SLICE, spot.getGSD().getSlice());
-                     rt.addValue(Terms.CHANNEL, spot.getGSD().getSlice());  
+                     rt.addValue(Terms.CHANNEL, spot.getGSD().getSlice());
                      rt.addValue(Terms.XPIX, spot.getGSD().getX());
                      rt.addValue(Terms.YPIX, spot.getGSD().getY());
                      rt.addValue("Distance", Math.sqrt(
-                         NearestPoint2D.distance2(spot.getfp(), spot.getsp())));
-                     rt.addValue("Orientation (sine)", 
-                         NearestPoint2D.orientation(spot.getfp(), spot.getsp()));
+                             NearestPoint2D.distance2(spot.getfp(), spot.getsp())));
+                     rt.addValue("Orientation (sine)",
+                             NearestPoint2D.orientation(spot.getfp(), spot.getsp()));
                   }
                   spotId++;
                }
@@ -2071,17 +2066,13 @@ public class DataCollectionForm extends javax.swing.JFrame {
                   tp.addMouseListener(myk);
                   frame.toFront();
                }
-               
-               // Show Particle Summary as Linked Results Table
-               ResultsTable rt2 = new ResultsTable();
-               rt2.reset();
-               rt2.setPrecision(1); 
+
                siPlus = ij.WindowManager.getImage(rowData_.get(row).title_);
                if (siPlus != null && siPlus.getOverlay() != null) {
                   siPlus.getOverlay().clear();
                }
                Arrow.setDefaultWidth(0.5);
-               
+
                itTracks = tracks.iterator();
                spotId = 0;
                while (itTracks.hasNext()) {
@@ -2093,13 +2084,14 @@ public class DataCollectionForm extends javax.swing.JFrame {
                   for (GsSpotPair pair : track) {
                      distances.add(Math.sqrt(
                              NearestPoint2D.distance2(pair.getfp(), pair.getsp())));
-                     orientations.add(NearestPoint2D.orientation(pair.getfp(), 
+                     orientations.add(NearestPoint2D.orientation(pair.getfp(),
                              pair.getsp()));
                      xDiff.add(pair.getfp().getX() - pair.getsp().getX());
                      yDiff.add(pair.getfp().getY() - pair.getsp().getY());
                   }
                   GsSpotPair pair = track.get(0);
                   rt2.incrementCounter();
+                  rt2.addValue("Row ID", rowData_.get(row).ID_);
                   rt2.addValue("Spot ID", spotId);
                   rt2.addValue(Terms.FRAME, pair.getGSD().getFrame());
                   rt2.addValue(Terms.SLICE, pair.getGSD().getSlice());
@@ -2107,36 +2099,36 @@ public class DataCollectionForm extends javax.swing.JFrame {
                   rt2.addValue(Terms.XPIX, pair.getGSD().getX());
                   rt2.addValue(Terms.YPIX, pair.getGSD().getY());
                   rt2.addValue("n", track.size());
-                  
+
                   double avg = avgList(distances);
                   rt2.addValue("Distance-Avg", avg);
                   rt2.addValue("Distance-StdDev", stdDevList(distances, avg));
                   double oAvg = avgList(orientations);
                   rt2.addValue("Orientation-Avg", oAvg);
-                  rt2.addValue("Orientation-StdDev", 
+                  rt2.addValue("Orientation-StdDev",
                           stdDevList(orientations, oAvg));
-                  
+
                   double xDiffAvg = avgList(xDiff);
                   double yDiffAvg = avgList(yDiff);
                   double xDiffAvgStdDev = stdDevList(xDiff, xDiffAvg);
                   double yDiffAvgStdDev = stdDevList(yDiff, yDiffAvg);
-                  rt2.addValue("Dist.Vect.Avg", Math.sqrt( 
+                  rt2.addValue("Dist.Vect.Avg", Math.sqrt(
                           (xDiffAvg * xDiffAvg) + (yDiffAvg * yDiffAvg)));
                   rt2.addValue("Dist.Vect.StdDev", Math.sqrt(
-                          (xDiffAvgStdDev * xDiffAvgStdDev) + 
-                          (yDiffAvgStdDev * yDiffAvgStdDev) ));
-                  
-                  
+                          (xDiffAvgStdDev * xDiffAvgStdDev)
+                          + (yDiffAvgStdDev * yDiffAvgStdDev)));
+
+
                   /* draw arrows in overlay */
                   double mag = 100.0;  // factor that sets magnification of the arrow
                   double factor = mag * 1 / rowData_.get(row).pixelSizeNm_;  // factor relating mad and pixelSize
                   int xStart = track.get(0).getGSD().getX();
                   int yStart = track.get(0).getGSD().getY();
-                  
-                  
-                  Arrow arrow = new Arrow(xStart, yStart, 
-                          xStart + (factor * xDiffAvg), 
-                          yStart + (factor * yDiffAvg) );
+
+
+                  Arrow arrow = new Arrow(xStart, yStart,
+                          xStart + (factor * xDiffAvg),
+                          yStart + (factor * yDiffAvg));
                   arrow.setHeadSize(3);
                   arrow.setOutline(false);
                   if (siPlus != null && siPlus.getOverlay() == null) {
@@ -2150,7 +2142,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
                if (siPlus != null) {
                   siPlus.setHideOverlay(false);
                }
-               
+
                rtName = rowData_.get(row).name_ + " Particle Summary";
                rt2.show(rtName);
                siPlus = ij.WindowManager.getImage(rowData_.get(row).title_);
@@ -2172,19 +2164,16 @@ public class DataCollectionForm extends javax.swing.JFrame {
                   tp.addMouseListener(myk);
                   frame.toFront();
                }
-               
-               
 
                ij.IJ.showStatus("");
 
-
             }
-         };
+         }
+      };
 
-         (new Thread(doWorkRunnable)).start();
+      (new Thread(doWorkRunnable)).start();
 
-      }
-   }                                           
+   }                                         
 
    
    
