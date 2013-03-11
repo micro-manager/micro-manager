@@ -394,7 +394,7 @@ public class OptionsDlg extends MMDialog {
             opts_.mpTiffMetadataFile_ = metadataFileWithMultipageTiffCheckBox.isSelected();
          }
       });
-      metadataFileWithMultipageTiffCheckBox.setText("Create metadata txt file with multi-image file saving");
+      metadataFileWithMultipageTiffCheckBox.setText("Create metadata txt file with image stack file saving");
       getContentPane().add(metadataFileWithMultipageTiffCheckBox);
       springLayout.putConstraint(SpringLayout.WEST, metadataFileWithMultipageTiffCheckBox, 20, SpringLayout.WEST, getContentPane());
       springLayout.putConstraint(SpringLayout.NORTH, metadataFileWithMultipageTiffCheckBox, 10, SpringLayout.SOUTH, prefZoomLabel);
@@ -406,7 +406,7 @@ public class OptionsDlg extends MMDialog {
             opts_.mpTiffSeperateFilesForPositions_ = seperateFilesForPositionsMPTiffCheckBox.isSelected();
          }
       });
-      seperateFilesForPositionsMPTiffCheckBox.setText("Save XY Positions in seperate Multi-Image Files");
+      seperateFilesForPositionsMPTiffCheckBox.setText("Save XY Positions in seperate image stack files");
       getContentPane().add(seperateFilesForPositionsMPTiffCheckBox);
       springLayout.putConstraint(SpringLayout.WEST, seperateFilesForPositionsMPTiffCheckBox, 20, SpringLayout.WEST, getContentPane());
       springLayout.putConstraint(SpringLayout.NORTH, seperateFilesForPositionsMPTiffCheckBox, 5, SpringLayout.SOUTH, metadataFileWithMultipageTiffCheckBox);

@@ -1392,7 +1392,7 @@ public class AcqControlDlg extends JFrame implements PropertyChangeListener, Acq
       savePanel_.add(saveTypeLabel_);
 
       
-      singleButton_ = new JRadioButton("Single-image files");
+      singleButton_ = new JRadioButton("Separate image files");
       singleButton_.setFont(new Font("Arial", Font.PLAIN, 10));
       singleButton_.setBounds(110,80,150,22);
       savePanel_.add(singleButton_);
@@ -1402,7 +1402,7 @@ public class AcqControlDlg extends JFrame implements PropertyChangeListener, Acq
             ImageUtils.setImageStorageClass(TaggedImageStorageDiskDefault.class);
          }});
 
-      multiButton_ = new JRadioButton("Multi-image files");
+      multiButton_ = new JRadioButton("Image stack file");
       multiButton_.setFont(new Font("Arial", Font.PLAIN, 10));      
       multiButton_.setBounds(260,80,200,22);
       savePanel_.add(multiButton_);

@@ -1546,8 +1546,8 @@ public final class VirtualAcquisitionDisplay implements AcquisitionDisplay,
       }
       final JPopupMenu menu = new JPopupMenu();
       saveTypePopup_ = menu;
-      JMenuItem single = new JMenuItem("Save as single-image files");
-      JMenuItem multi = new JMenuItem("Save as multi-image files");
+      JMenuItem single = new JMenuItem("Save as separate image files");
+      JMenuItem multi = new JMenuItem("Save as image stack file");
       JMenuItem cancel = new JMenuItem("Cancel");
       menu.add(single);
       menu.add(multi);
