@@ -10,6 +10,14 @@
 
 (def MS-PER-HOUR (* 60 60 1000))
 
+(defn svn-conflicts []
+  (let [mm-path (.getAbsolutePath micromanager)]
+    (->> (file-seq micromanager)
+         (map #(.getAbsolutePath %))
+         (filter #(.endsWith ".mine" %))
+         (map #(.replace % ".mine" ""))
+         (map #(.replace % mm-path "")))))
+  
 (def today-token
   (let [format (SimpleDateFormat. "yyyyMMdd")
         one-hour-ago (doto (Calendar/getInstance)
@@ -174,6 +182,7 @@
 
 (defn report-build-errors [bits mode test]
   (let [f (result-file bits mode)
+        svn-confs (svn-conflicts)
         result-txt (slurp f)
         vs-errors (visual-studio-errors bits)
         outdated-dlls (map #(.getName %) (old-dlls (bin-dir bits) 24))
@@ -183,6 +192,7 @@
         installer-ok (exe-on-server? bits today-token)
         missing-vcproj-files (missing-vcproj)]
     (when-not (and (not test)
+                   (empty? svn-confs)
                    (empty? vs-errors)
                    (empty? outdated-dlls)
                    (empty? javac-errs)
@@ -194,6 +204,7 @@
           ({:inc "INCREMENTAL" :full "FULL"} mode)
           " BUILD ERROR REPORT\n"
         "For the full build output, see " (.getAbsolutePath f)
+        (report-segment "Subversion conflicts" svn-confs)
         (report-segment "Visual Studio reported errors" vs-errors)
         (report-segment "Outdated device adapter DLLs" outdated-dlls)
         (report-segment "Errors reported by java compiler" javac-errs)
