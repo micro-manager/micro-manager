@@ -151,6 +151,8 @@ bool CircularBuffer::InsertImage(const unsigned char* pixArray, unsigned int wid
 */
 bool CircularBuffer::InsertMultiChannel(const unsigned char* pixArray, unsigned numChannels, unsigned width, unsigned height, unsigned byteDepth, const Metadata* pMd) throw (CMMError)
 {
+   MMThreadGuard guard(g_insertLock);
+
    static unsigned long previousTicks = 0;
    bool notOverflowed;
    ImgBuffer* pImg;

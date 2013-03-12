@@ -39,6 +39,7 @@
 // ~~~~~~~~~~~~~~~~~~~~
 
 static MMThreadLock g_bufferLock;
+static MMThreadLock g_insertLock;
 
 class CircularBuffer
 {
