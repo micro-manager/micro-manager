@@ -3566,6 +3566,7 @@ public class MMStudioMainFrame extends JFrame implements
          if (core_ != null) {
             core_.logMessage("MMStudioMainFrame::closeSequence called while running_ is false");
          }
+         this.dispose();
          return;
       }
       
@@ -3608,6 +3609,8 @@ public class MMStudioMainFrame extends JFrame implements
                ij.quit();
             }
          }
+      } else {
+         this.dispose();
       }
      
 
