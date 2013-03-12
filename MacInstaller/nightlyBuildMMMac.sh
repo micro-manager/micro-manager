@@ -89,7 +89,7 @@ if [ "$FULL" != "full" ]; then
    VERSION=$VERSION-`date "+%Y%m%d"`
 fi
 echo $VERSION
-sed -i -e "s/\"1.4.*\"/\"$VERSION\"/"  mmstudio/src/org/micromanager/MMStudioMainFrame.java || exit
+sed -i -e "s/\"1.4.*\"/\"$VERSION\"/"  mmstudio/src/org/micromanager/MMVersion.java || exit
 
 
 ./mmUnixBuild.sh || exit

@@ -49,7 +49,7 @@ cd $REPOSITORY
 # set version variable and change version in java source code to include build date stamp
 VERSION=`cat version.txt`
 echo $VERSION
-sed -i -e "s/\"1.4.*\"/\"$VERSION\"/"  mmstudio/src/org/micromanager/MMStudioMainFrame.java || exit
+sed -i -e "s/\"1.4.*\"/\"$VERSION\"/"  mmstudio/src/org/micromanager/MMVersion.java || exit
 
 # build PPC
 MACOSX_DEPLOYMENT_TARGET=10.4

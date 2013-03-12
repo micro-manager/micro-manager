@@ -13,6 +13,7 @@ MMJ_.jar:  \
 	$(srcdir)/src/org/micromanager/MMIntroDlg.java \
 	$(srcdir)/src/org/micromanager/MMOptions.java \
 	$(srcdir)/src/org/micromanager/MMStudioMainFrame.java \
+	$(srcdir)/src/org/micromanager/MMVersion.java \
 	$(srcdir)/src/org/micromanager/OptionsDlg.java \
 	$(srcdir)/src/org/micromanager/PositionListDlg.java \
 	$(srcdir)/src/org/micromanager/PresetEditor.java \

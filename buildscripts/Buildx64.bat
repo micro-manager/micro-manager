@@ -69,21 +69,23 @@ echo start /wait vcexpress .\MMCoreJ_wrap\MMCoreJ_wrap.sln %buildswitch% "Releas
 start /wait vcexpress .\MMCoreJ_wrap\MMCoreJ_wrap.sln %buildswitch% "Release|x64"
 
 
-echo Update the version number in MMStudioMainFrame
+echo Update the version number in MMVersion.java
 set mmversion=""
 set YYYYMMDD=""
 set TARGETNAME=""
 call buildscripts\setmmversionvariable
 call buildscripts\setyyyymmddvariable
 pushd .\mmstudio\src\org\micromanager
+del MMVersion.java
+svn update --non-interactive
 rem for nightly builds we put the version + the date-stamp
 rem arg2 is either RELEASE OR NIGHTLY
 if "%2%" == "RELEASE" goto releaseversion
-sed -i "s/\"1\.4.*/\"%mmversion%  %YYYYMMDD%\";/"  MMStudioMainFrame.java
+sed -i "s/\"1\.4.*/\"%mmversion%  %YYYYMMDD%\";/"  MMVersion.java
 set TARGETNAME=MMSetup64BIT_%mmversion%_%YYYYMMDD%.exe
 goto continuebuild
 :releaseversion
-sed -i "s/\"1\.4.*/\"%mmversion%\";/"  MMStudioMainFrame.java
+sed -i "s/\"1\.4.*/\"%mmversion%\";/"  MMVersion.java
 set TARGETNAME=MMSetup64BIT_%mmversion%.exe
 :continuebuild
 popd
@@ -136,5 +138,10 @@ ECHO "Done installing"
 IF NOT "%3%" == "UPLOAD" GOTO FINISH
 pscp -i c:\projects\MM.ppk -batch /projects/micromanager/Install_x64/Output/%TARGETNAME% arthur@valelab.ucsf.edu:../MM/public_html/nightlyBuilds/1.4/Windows/%TARGETNAME%
 :FINISH
+
+pushd .\mmstudio\src\org\micromanager
+del MMVersion.java
+svn update --non-interactive
+popd
 
 echo %date% - %time%
