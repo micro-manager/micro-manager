@@ -245,8 +245,6 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "BaumerOptronic", "..\Device
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "LeicaDMSTC", "..\DeviceAdapters\LeicaDMSTC\LeicaDMSTC.vcproj", "{A41C689F-E343-4BDA-8132-FE2ADB166249}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "AxioCamMR", "..\SecretDeviceAdapters\AxioCamMR\AxioCamMR.vcproj", "{91CCB72B-852D-47D8-82FA-0E19A300A125}"
-EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "LumencorCIA", "..\DeviceAdapters\LumencorCIA\LumencorCIA.vcproj", "{2C362B1C-80C9-4867-AD96-2482535190D1}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "CSUW1", "..\DeviceAdapters\CSUW1\CSUW1.vcproj", "{7C767DFF-87E6-4FE0-9557-2FF656ED1E57}"
@@ -270,6 +268,8 @@ EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Toptica_iChrome_MLE", "..\SecretDeviceAdapters\Toptica_iChrome_MLE\Toptica_iChrome_MLE.vcproj", "{86BB3621-D40C-4731-8838-842A925E0615}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Toptica_iChrome_MLE_TCP", "..\SecretDeviceAdapters\Toptica_iChrome_MLE\Toptica_iChrome_MLE_TCP.vcproj", "{2A68B908-9C46-4D8D-A5AA-662787137BB0}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "AxioCam", "..\SecretDeviceAdapters\AxioCam\AxioCam.vcproj", "{91CCB72B-852D-47D8-82FA-0E19A300A125}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -1194,14 +1194,6 @@ Global
 		{A41C689F-E343-4BDA-8132-FE2ADB166249}.Release|Win32.Build.0 = Release|Win32
 		{A41C689F-E343-4BDA-8132-FE2ADB166249}.Release|x64.ActiveCfg = Release|x64
 		{A41C689F-E343-4BDA-8132-FE2ADB166249}.Release|x64.Build.0 = Release|x64
-		{91CCB72B-852D-47D8-82FA-0E19A300A125}.Debug|Win32.ActiveCfg = Debug|Win32
-		{91CCB72B-852D-47D8-82FA-0E19A300A125}.Debug|Win32.Build.0 = Debug|Win32
-		{91CCB72B-852D-47D8-82FA-0E19A300A125}.Debug|x64.ActiveCfg = Debug|x64
-		{91CCB72B-852D-47D8-82FA-0E19A300A125}.Debug|x64.Build.0 = Debug|x64
-		{91CCB72B-852D-47D8-82FA-0E19A300A125}.Release|Win32.ActiveCfg = Release|Win32
-		{91CCB72B-852D-47D8-82FA-0E19A300A125}.Release|Win32.Build.0 = Release|Win32
-		{91CCB72B-852D-47D8-82FA-0E19A300A125}.Release|x64.ActiveCfg = Release|x64
-		{91CCB72B-852D-47D8-82FA-0E19A300A125}.Release|x64.Build.0 = Release|x64
 		{2C362B1C-80C9-4867-AD96-2482535190D1}.Debug|Win32.ActiveCfg = Debug|Win32
 		{2C362B1C-80C9-4867-AD96-2482535190D1}.Debug|Win32.Build.0 = Debug|Win32
 		{2C362B1C-80C9-4867-AD96-2482535190D1}.Debug|x64.ActiveCfg = Debug|x64
@@ -1293,6 +1285,14 @@ Global
 		{2A68B908-9C46-4D8D-A5AA-662787137BB0}.Release|Win32.Build.0 = Release|Win32
 		{2A68B908-9C46-4D8D-A5AA-662787137BB0}.Release|x64.ActiveCfg = Release|x64
 		{2A68B908-9C46-4D8D-A5AA-662787137BB0}.Release|x64.Build.0 = Release|x64
+		{91CCB72B-852D-47D8-82FA-0E19A300A125}.Debug|Win32.ActiveCfg = Debug|Win32
+		{91CCB72B-852D-47D8-82FA-0E19A300A125}.Debug|Win32.Build.0 = Debug|Win32
+		{91CCB72B-852D-47D8-82FA-0E19A300A125}.Debug|x64.ActiveCfg = Debug|x64
+		{91CCB72B-852D-47D8-82FA-0E19A300A125}.Debug|x64.Build.0 = Debug|x64
+		{91CCB72B-852D-47D8-82FA-0E19A300A125}.Release|Win32.ActiveCfg = Release|Win32
+		{91CCB72B-852D-47D8-82FA-0E19A300A125}.Release|Win32.Build.0 = Release|Win32
+		{91CCB72B-852D-47D8-82FA-0E19A300A125}.Release|x64.ActiveCfg = Release|x64
+		{91CCB72B-852D-47D8-82FA-0E19A300A125}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
