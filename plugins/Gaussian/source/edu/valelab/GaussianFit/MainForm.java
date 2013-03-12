@@ -27,6 +27,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 import org.micromanager.api.MMWindow;
 import org.micromanager.utils.NumberUtils;
+import org.micromanager.utils.ReportingUtils;
 
 
 
@@ -639,21 +640,22 @@ public class MainForm extends javax.swing.JFrame implements ij.ImageListener{
     }//GEN-LAST:event_fitAllButton_ActionPerformed
 
     private void formWindowClosing(java.awt.event.WindowEvent evt) {//GEN-FIRST:event_formWindowClosing
+       try {
        prefs_.put(NOISETOLERANCE, noiseToleranceTextField_.getText());
-       prefs_.putDouble(PCF, Double.parseDouble(photonConversionTextField.getText()));
-       prefs_.putDouble(GAIN, Double.parseDouble(emGainTextField_.getText()));
-       prefs_.putDouble(PIXELSIZE, Double.parseDouble(pixelSizeTextField_.getText()));      
-       prefs_.putDouble(TIMEINTERVALMS, Double.parseDouble(timeIntervalTextField_.getText()));
-       prefs_.putDouble(ZSTEPSIZE, Double.parseDouble(zStepTextField_.getText()));
-       prefs_.putDouble(BACKGROUNDLEVEL, Double.parseDouble(baseLevelTextField.getText()));
+       prefs_.putDouble(PCF, NumberUtils.displayStringToDouble(photonConversionTextField.getText()));
+       prefs_.putDouble(GAIN, NumberUtils.displayStringToDouble(emGainTextField_.getText()));
+       prefs_.putDouble(PIXELSIZE, NumberUtils.displayStringToDouble(pixelSizeTextField_.getText()));      
+       prefs_.putDouble(TIMEINTERVALMS, NumberUtils.displayStringToDouble(timeIntervalTextField_.getText()));
+       prefs_.putDouble(ZSTEPSIZE, NumberUtils.displayStringToDouble(zStepTextField_.getText()));
+       prefs_.putDouble(BACKGROUNDLEVEL, NumberUtils.displayStringToDouble(baseLevelTextField.getText()));
        prefs_.putBoolean(USEFILTER, filterDataCheckBoxWidth.isSelected());
-       prefs_.putDouble(SIGMAMIN, Double.parseDouble(minSigmaTextField.getText()));
-       prefs_.putDouble(SIGMAMAX, Double.parseDouble(maxSigmaTextField.getText()));
+       prefs_.putDouble(SIGMAMIN, NumberUtils.displayStringToDouble(minSigmaTextField.getText()));
+       prefs_.putDouble(SIGMAMAX, NumberUtils.displayStringToDouble(maxSigmaTextField.getText()));
        prefs_.putBoolean(USENRPHOTONSFILTER, filterDataCheckBoxNrPhotons.isSelected());
-       prefs_.putDouble(NRPHOTONSMIN, Double.parseDouble(minNrPhotonsTextField.getText()));
-       prefs_.putDouble(NRPHOTONSMAX, Double.parseDouble(maxNrPhotonsTextField.getText()));
-       prefs_.putInt(MAXITERATIONS, Integer.parseInt(maxIterationsTextField.getText()));
-       prefs_.putInt(BOXSIZE, Integer.parseInt(boxSizeTextField.getText()));
+       prefs_.putDouble(NRPHOTONSMIN, NumberUtils.displayStringToDouble(minNrPhotonsTextField.getText()));
+       prefs_.putDouble(NRPHOTONSMAX, NumberUtils.displayStringToDouble(maxNrPhotonsTextField.getText()));
+       prefs_.putInt(MAXITERATIONS, NumberUtils.displayStringToInt(maxIterationsTextField.getText()));
+       prefs_.putInt(BOXSIZE, NumberUtils.displayStringToInt(boxSizeTextField.getText()));
        prefs_.putInt(PREFILTER, preFilterComboBox_.getSelectedIndex());
        prefs_.putInt(FRAMEXPOS, getX());
        prefs_.putInt(FRAMEYPOS, getY());
@@ -662,7 +664,10 @@ public class MainForm extends javax.swing.JFrame implements ij.ImageListener{
        prefs_.putBoolean(ENDTRACKBOOL, endTrackCheckBox_.isSelected() );
        prefs_.putInt(ENDTRACKINT, (Integer) endTrackSpinner_.getValue() );
        prefs_.putInt(FITMODE, fitMethodComboBox1.getSelectedIndex());
-           
+       } catch (Exception ex) {
+          ReportingUtils.logError(ex, "Error while closing Localization Microscopy plugin");
+       }
+       
        WINDOWOPEN = false;
        
        this.setVisible(false);
