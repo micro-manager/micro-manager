@@ -112,9 +112,6 @@ Source: micro-manager\plugins\*; DestDir: {app}\plugins; Flags: ignoreversion re
 Source: ..\Install_AllPlatforms\micro-manager\mmplugins\*; DestDir: {app}\mmplugins; Flags: ignoreversion recursesubdirs createallsubdirs
 Source: ..\Install_AllPlatforms\micro-manager\mmautofocus\*; DestDir: {app}\mmautofocus; Flags: ignoreversion recursesubdirs createallsubdirs
 
-; build version file
-Source: micro-manager\buildversion.txt; DestDir: {app}; Flags: ignoreversion
-
 ; NOTE: Don't use "Flags: ignoreversion" on any shared system files
 
 [DIRS]

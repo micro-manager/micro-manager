@@ -82,15 +82,15 @@ cp -r $TARGET $X86_64
 
 # build PPC
 cd $RPPC
-# set version variable and write to buildversion.txt
+# set version variable and change version in java source code to include build date stamp
 VERSION=`cat version.txt`
 # nightly build
 if [ "$FULL" != "full" ]; then
    VERSION=$VERSION-`date "+%Y%m%d"`
 fi
 echo $VERSION
-echo Micro-Manager $VERSION > buildversion.txt || exit
-cp buildversion.txt $TARGET/
+sed -i -e "s/\"1.4.*\"/\"$VERSION\"/"  mmstudio/src/org/micromanager/MMStudioMainFrame.java || exit
+
 
 ./mmUnixBuild.sh || exit
 MACOSX_DEPLOYMENT_TARGET=10.4
