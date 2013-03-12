@@ -23,6 +23,7 @@ popd
 
 svn cleanup --non-interactive
 
+
 :UPDATEMMTREE
 echo update micromanager tree from the repository
 svn update --accept postpone --non-interactive
@@ -77,6 +78,7 @@ echo Update the version number in MMStudioMainFrame
 set mmversion=""
 set YYYYMMDD=""
 set TARGETNAME=""
+set BUILDVERSION=""
 call buildscripts\setmmversionvariable
 call buildscripts\setyyyymmddvariable
 pushd .\mmstudio\src\org\micromanager
@@ -84,13 +86,14 @@ rem for nightly builds we put the version + the date-stamp
 rem arg2 is either RELEASE OR NIGHTLY
 if "%2%" == "RELEASE" goto releaseversion
 set TARGETNAME=MMSetup32BIT_%mmversion%_%YYYYMMDD%.exe
-sed -i "s/\"1\.4.*/\"%mmversion%  %YYYYMMDD%\";/"  MMStudioMainFrame.java
+set BUILDVERSION=Micro-Manager %mmversion% %YYYYMMDD%
 goto continuebuild
 :releaseversion
-sed -i "s/\"1\.4.*/\"%mmversion%\";/"  MMStudioMainFrame.java
 set TARGETNAME=MMSetup32BIT_%mmversion%.exe
+set BUILDVERSION=Micro-Manager %mmversion%
 :continuebuild
 popd
+echo %BUILDVERSION% > buildversion.txt
 
 rem remove any installer package with exactly the same name as the current output
 echo trying to delete \Projects\micromanager\Install_Win32\Output\MMSetup_.exe 
