@@ -475,7 +475,7 @@ double TsiCam::GetExposure() const
 {
    uint32_t exp(0);
    bool bret = camHandle_->GetParameter(TSI_PARAM_ACTUAL_EXPOSURE_TIME, sizeof(uint32_t), (void*)&exp);
-   return (double)exp;
+   return (double)exp / 1000.0; // exposure is expressed always in ms
 }
 
 void TsiCam::SetExposure(double dExpMs)
