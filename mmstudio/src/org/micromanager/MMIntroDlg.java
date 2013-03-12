@@ -129,7 +129,7 @@ public class MMIntroDlg extends JDialog {
 
       final JLabel version10betaLabel = new JLabel();
       version10betaLabel.setFont(new Font("Arial", Font.PLAIN, 10));
-      version10betaLabel.setText("MMStudio Version " + ver);
+      version10betaLabel.setText(ver);
       version10betaLabel.setBounds(5, 216, 193, 13);
       getContentPane().add(version10betaLabel);
 

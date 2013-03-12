@@ -43,10 +43,13 @@ import java.awt.event.WindowEvent;
 import java.awt.geom.Point2D;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import java.util.prefs.Preferences;
 
 import javax.swing.JButton;
@@ -118,6 +121,9 @@ import java.awt.MenuItem;
 import java.awt.dnd.DropTarget;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.io.BufferedReader;
+import java.io.FileReader;
+import java.io.Reader;
 import java.util.Collections;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -160,8 +166,7 @@ public class MMStudioMainFrame extends JFrame implements
         ScriptInterface, 
         DeviceControlGUI {
 
-   private static final String MICRO_MANAGER_TITLE = "Micro-Manager";
-   private static final String VERSION = "1.4.x dev";
+   private static String VERSION = readVersion();
    private static final long serialVersionUID = 3556500289598574541L;
    private static final String MAIN_FRAME_X = "x";
    private static final String MAIN_FRAME_Y = "y";
@@ -511,7 +516,7 @@ public class MMStudioMainFrame extends JFrame implements
 
             public void actionPerformed(ActionEvent e) {
                 MMAboutDlg dlg = new MMAboutDlg();
-                String versionInfo = "MM Studio version: " + VERSION;
+                String versionInfo = VERSION;
                 versionInfo += "\n" + core_.getVersionInfo();
                 versionInfo += "\n" + core_.getAPIVersionInfo();
                 versionInfo += "\nUser: " + core_.getUserId();
@@ -624,7 +629,7 @@ public class MMStudioMainFrame extends JFrame implements
 
    public void logStartupProperties() {
       core_.enableDebugLog(options_.debugLogEnabled_);
-      core_.logMessage("MM Studio version: " + getVersion());
+      core_.logMessage(VERSION);
       core_.logMessage(core_.getVersionInfo());
       core_.logMessage(core_.getAPIVersionInfo());
       core_.logMessage("Operating System: " + System.getProperty("os.name") + " " + System.getProperty("os.version"));
@@ -957,7 +962,7 @@ public class MMStudioMainFrame extends JFrame implements
       
       setBounds(x, y, width, height);
       setExitStrategy(options_.closeOnExit_);
-      setTitle(MICRO_MANAGER_TITLE + " " + VERSION);
+      setTitle(VERSION);
       setBackground(guiColors_.background.get((options_.displayBackground_)));
       SpringLayout topLayout = new SpringLayout();
       
@@ -2306,7 +2311,7 @@ public class MMStudioMainFrame extends JFrame implements
    }
 
    private void updateTitle() {
-      this.setTitle(MICRO_MANAGER_TITLE + " " + VERSION + " - " + sysConfigFile_);
+      this.setTitle(VERSION + " - " + sysConfigFile_);
    }
 
    public void updateLineProfile() {
@@ -2908,8 +2913,8 @@ public class MMStudioMainFrame extends JFrame implements
     */
    public boolean versionLessThan(String version) throws MMScriptException {
       try {
-         String[] v = VERSION.split(" ", 2);
-         String[] m = v[0].split("\\.", 3);
+         String[] v = VERSION.split(" ", 3);
+         String[] m = v[1].split("\\.", 3);
          String[] v2 = version.split(" ", 2);
          String[] m2 = v2[0].split("\\.", 3);
          for (int i=0; i < 3; i++) {
@@ -3300,8 +3305,22 @@ public class MMStudioMainFrame extends JFrame implements
       }
    }
 
+   private static String readVersion() {
+             File f = new File("./buildversion.txt");
+      if (f.exists()) {
+            try {
+                BufferedReader reader = new BufferedReader(new FileReader(f));
+                return reader.readLine();
+            } catch (Exception ex) {
+                ReportingUtils.logError(ex);
+                return "Micro-Manager dev";
+            }
+      }
+      return "Micro-Manager dev";
+   }
+   
    public String getVersion() {
-      return VERSION;
+       return VERSION; 
    }
 
    private void addPluginToMenu(final PluginItem plugin, Class<?> cl) {
