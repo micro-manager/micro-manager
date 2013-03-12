@@ -154,7 +154,7 @@ int ScopeLEDMSBMicroscopeIlluminator::Initialize()
 
     char serial[MM::MaxStrLength];
     memset(serial, '\0', sizeof(serial));
-    GetProperty("SerialNumber", serial);
+    GetProperty("InitSerialNumber", serial);
     bool no_serial = 0 == strlen(serial);
 
     if (no_serial)
@@ -168,10 +168,7 @@ int ScopeLEDMSBMicroscopeIlluminator::Initialize()
     
     if (NULL == m_hDevice) return DEVICE_NOT_CONNECTED;
 
-    if (no_serial)
-    {
-        QuerySerialNumber();
-    }
+    InitSerialNumber();
     ClearOpticalState();
 
     // set property list
@@ -179,6 +176,10 @@ int ScopeLEDMSBMicroscopeIlluminator::Initialize()
 
     CPropertyAction* pAct = new CPropertyAction (this, &ScopeLEDMSBMicroscopeIlluminator::OnVersion);
     int nRet = CreateProperty("Version", "0", MM::Integer, true, pAct);
+    if (nRet != DEVICE_OK) return nRet;
+
+    pAct = new CPropertyAction (this, &ScopeLEDMSBMicroscopeIlluminator::OnSerialNumber);
+    nRet = CreateProperty("SerialNumber", "", MM::String, true, pAct);
     if (nRet != DEVICE_OK) return nRet;
 
     pAct = new CPropertyAction (this, &ScopeLEDMSBMicroscopeIlluminator::OnChannel1Brightness);
@@ -339,7 +340,7 @@ int ScopeLEDMSMMicroscopeIlluminator::Initialize()
 
     char serial[MM::MaxStrLength];
     memset(serial, '\0', sizeof(serial));
-    GetProperty("SerialNumber", serial);
+    GetProperty("InitSerialNumber", serial);
     bool no_serial = 0 == strlen(serial);
 
     if (no_serial)
@@ -353,11 +354,7 @@ int ScopeLEDMSMMicroscopeIlluminator::Initialize()
 
     if (NULL == m_hDevice) return DEVICE_NOT_CONNECTED;
 
-    if (no_serial)
-    {
-        QuerySerialNumber();
-    }
-
+    InitSerialNumber();
     ClearOpticalState();
 
     // set property list
@@ -365,6 +362,10 @@ int ScopeLEDMSMMicroscopeIlluminator::Initialize()
 
     CPropertyAction* pAct = new CPropertyAction (this, &ScopeLEDMSMMicroscopeIlluminator::OnVersion);
     int nRet = CreateProperty("Version", "0", MM::Integer, true, pAct);
+    if (nRet != DEVICE_OK) return nRet;
+
+    pAct = new CPropertyAction (this, &ScopeLEDMSMMicroscopeIlluminator::OnSerialNumber);
+    nRet = CreateProperty("SerialNumber", "", MM::String, true, pAct);
     if (nRet != DEVICE_OK) return nRet;
 
     pAct = new CPropertyAction (this, &ScopeLEDMSMMicroscopeIlluminator::OnChannel1Brightness);
@@ -704,7 +705,7 @@ int ScopeLEDFluorescenceIlluminator::Initialize()
 
     char serial[MM::MaxStrLength];
     memset(serial, '\0', sizeof(serial));
-    GetProperty("SerialNumber", serial);
+    GetProperty("InitSerialNumber", serial);
     bool no_serial = 0 == strlen(serial);
 
     if (no_serial)
@@ -718,10 +719,7 @@ int ScopeLEDFluorescenceIlluminator::Initialize()
 
     if (NULL == m_hDevice) return DEVICE_NOT_CONNECTED;
 
-    if (no_serial)
-    {
-        QuerySerialNumber();
-    }
+    InitSerialNumber();
     ClearOpticalState();    
 
     int nRet = GetNumChannels(m_NumChannels);
@@ -731,6 +729,10 @@ int ScopeLEDFluorescenceIlluminator::Initialize()
     // -----------------
     CPropertyAction* pAct = new CPropertyAction (this, &ScopeLEDFluorescenceIlluminator::OnVersion);
     nRet = CreateProperty("Version", "0", MM::Integer, true, pAct);
+    if (nRet != DEVICE_OK) return nRet;
+
+    pAct = new CPropertyAction (this, &ScopeLEDFluorescenceIlluminator::OnSerialNumber);
+    nRet = CreateProperty("SerialNumber", "", MM::String, true, pAct);
     if (nRet != DEVICE_OK) return nRet;
 
     pAct = new CPropertyAction (this, &ScopeLEDFluorescenceIlluminator::OnChannel1Brightness);

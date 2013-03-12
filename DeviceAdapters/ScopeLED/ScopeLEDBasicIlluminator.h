@@ -45,6 +45,8 @@ protected:
     long m_vid,m_pid;
     HANDLE m_evAbortRx;
 
+    std::string m_SerialNumber;
+
     static unsigned long DefaultTimeoutRx()
     {
         return 2000;
@@ -131,7 +133,7 @@ protected:
         return Transact(pCommand, cbCommand, RxBuffer, &cbRxBuffer);
     }
 
-    void QuerySerialNumber()
+    void InitSerialNumber()
     {
         char* pBuffer = NULL;
         unsigned long cbBuffer = 0;
@@ -143,15 +145,16 @@ protected:
             int result = g_USBCommAdapter.GetSerialNumber(m_hDevice, pBuffer, &cbBuffer);
             if (FALSE != result)
             {
-                SetProperty("SerialNumber", pBuffer);
+                //SetProperty("SerialNumber", pBuffer);
+                m_SerialNumber = pBuffer;
 #ifdef SCOPELED_DEBUGLOG
-                m_LogFile << "ScopeLEDBasicIlluminator QuerySerialNumber: " << pBuffer << std::endl;
+                m_LogFile << "ScopeLEDBasicIlluminator InitSerialNumber: " << m_SerialNumber << std::endl;
 #endif
             }
 #ifdef SCOPELED_DEBUGLOG
             else
             {
-                m_LogFile << "ScopeLEDBasicIlluminator QuerySerialNumber Failed B, " << result << std::endl;
+                m_LogFile << "ScopeLEDBasicIlluminator InitSerialNumber Failed B, " << result << std::endl;
             }
 #endif
             delete [] pBuffer;
@@ -159,7 +162,7 @@ protected:
 #ifdef SCOPELED_DEBUGLOG
         else
         {
-            m_LogFile << "ScopeLEDBasicIlluminator QuerySerialNumber Failed A, " << cbBuffer << std::endl;
+            m_LogFile << "ScopeLEDBasicIlluminator InitSerialNumber Failed A, " << cbBuffer << std::endl;
         }
 #endif
     }
@@ -310,13 +313,13 @@ public:
         m_vid(0x24C2), m_pid(0), m_version(0),
         m_evAbortRx(CreateEvent(NULL, TRUE, FALSE, NULL))
 #ifdef SCOPELED_DEBUGLOG
-        ,m_LogFile("c:\\mmlog.txt")
+        ,m_LogFile("c:\\mmlog.txt"/* std::ios_base::out | std::ios_base::app*/)
 #endif
     {
 #ifdef SCOPELED_DEBUGLOG
         m_LogFile << "ScopeLEDBasicIlluminator ctor" << std::endl;
 #endif
-        CreateProperty("SerialNumber", "", MM::String, false, NULL, true);
+        CreateProperty("InitSerialNumber", "", MM::String, false, NULL, true);
     }
     ~ScopeLEDBasicIlluminator()
     {
@@ -331,7 +334,7 @@ public:
         g_USBCommAdapter.Close(m_hDevice);
         m_hDevice = NULL;
         m_version = 0;
-        SetProperty("SerialNumber", "");
+        m_SerialNumber.clear();
 #ifdef SCOPELED_DEBUGLOG
         m_LogFile << "ScopeLEDBasicIlluminator Shutdown" << std::endl;
 #endif
@@ -378,7 +381,15 @@ public:
         }
         return DEVICE_OK;
     }
-
+    int OnSerialNumber(MM::PropertyBase* pProp, MM::ActionType eAct)
+    {
+        if (eAct == MM::BeforeGet)
+        {
+            pProp->Set(m_SerialNumber.c_str());
+            return DEVICE_OK;
+        }
+        return DEVICE_CAN_NOT_SET_PROPERTY;
+    }    
     int OnState(MM::PropertyBase* pProp, MM::ActionType eAct)
     {
         int result = DEVICE_OK;
