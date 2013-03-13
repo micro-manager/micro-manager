@@ -72,6 +72,8 @@ Source: micro-manager\FxLib.dll; DestDir: {app}; Flags: ignoreversion
 Source: micro-manager\SysInfo.dll; DestDir: {app}; Flags: ignoreversion
 Source: micro-manager\opencv_highgui231.dll; DestDir: {app}; Flags: ignoreversion
 Source: micro-manager\opencv_core231.dll; DestDir: {app}; Flags: ignoreversion
+Source: micro-manager\mcam.dll; DestDir: {app}; Flags: ignoreversion
+Source: micro-manager\hrfw.dll; DestDir: {app}; Flags: ignoreversion
 Source: micro-manager\mcammr.dll; DestDir: {app}; Flags: ignoreversion
 Source: micro-manager\mrfw.dll; DestDir: {app}; Flags: ignoreversion
 Source: micro-manager\XCLIBWNT.dll; DestDir: {app}; Flags: ignoreversion
