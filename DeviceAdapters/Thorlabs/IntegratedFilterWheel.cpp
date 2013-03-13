@@ -27,6 +27,7 @@
    #define snprintf _snprintf 
 #endif
 
+#include "IntegratedFilterWheel.h"
 #include "Thorlabs.h"
 #include <cstdio>
 #include <string>

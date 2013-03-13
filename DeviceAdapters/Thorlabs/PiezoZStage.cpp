@@ -27,6 +27,7 @@
    #define snprintf _snprintf 
 #endif
 
+#include "PiezoZStage.h"
 #include "Thorlabs.h"
 #include <cstdio>
 #include <string>
@@ -34,7 +35,6 @@
 #include <sstream>
 
 extern const char* g_PiezoZStageDeviceName;
-const char* g_PositionProp = "Position";
 
 ///////////
 // commands
