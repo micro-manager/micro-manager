@@ -201,7 +201,7 @@
                 e2 :wait-time-ms (if (vector? interval)
                                    (nth interval (:frame-index e2))
                                    interval)))))
-        
+
 (defn event-triggerable
   "Returns true if an event can be added to a burst."
   [burst event]
@@ -216,7 +216,7 @@
           (let [z-drive (. mmc getFocusDevice)]
             (and
               (. mmc isStageSequenceable z-drive)
-              (< n (core getStageSequenceMaxLength z-drive))
+              (< n (. mmc getStageSequenceMaxLength z-drive))
               (<= (Math/abs (- (e1 :slice) (e2 :slice))) MAX-Z-TRIGGER-DIST)
               (<= (e1 :slice-index) (e2 :slice-index))))))))
   
