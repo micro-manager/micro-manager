@@ -5,6 +5,7 @@
            (org.json JSONArray JSONObject)
            (org.micromanager MMStudioMainFrame)
            (org.micromanager.api DataProcessor)
+           (java.nio ByteBuffer ByteOrder)
            (org.micromanager.acquisition TaggedImageStorageMultipageTiff))
   (:require [org.micromanager.mm :as mm])
   (:use [org.micromanager.mm :only (edt load-mm core gui mmc)]))
@@ -234,15 +235,17 @@
   (let [tags (.tags image)
         summary (image-test-summary "test1" 1)
         storage (TaggedImageStorageMultipageTiff.
-                  "fast" true summary false true)]
+                  "G:/acquisitions/" true summary false true)]
+    (doto tags
+      (.put "Slice" 0)
+      (.put "ChannelIndex" 0)
+      (.put "PositionIndex" 0)
+      (.put "PixelType" "GRAY16"))
     (time
       (dotimes [i n]
         (.put tags "Frame" i)
-        (.put tags "Slice" 0)
-        (.put tags "ChannelIndex" 0)
-        (.put tags "PositionIndex" 0)
-        (.put tags "PixelType" "GRAY16")
-        (.putImage storage image)))
+        (.putImage storage image)
+        ))
     (doto storage .finished .close)))
  
  (defn fast-image-saving-test [n]
@@ -250,6 +253,18 @@
    (let [image (core popNextTaggedImage)]
      (println "Start saving procedure...")
        (save-images-fast image n)))
+
+(defn image-to-byte-buffer [pix]
+  (let [buffer (.. ByteBuffer
+                         (allocate (* (count pix) 2))
+                         (order ByteOrder/BIG_ENDIAN))]
+    (.. buffer asShortBuffer (put pix))))
+
+(defn byte-buffer-test [n]
+  (let [img (core getImage)]
+    (time
+      (dorun
+        (repeatedly n #(image-to-byte-buffer img))))))
  
   
 
