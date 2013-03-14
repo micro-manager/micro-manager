@@ -6,13 +6,17 @@ package org.micromanager.navigation;
 import ij.gui.ImageCanvas;
 import ij.gui.ImageWindow;
 import ij.gui.Toolbar;
+import java.awt.Component;
 
 import java.awt.Event;
+import java.awt.MouseInfo;
+import java.awt.Point;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
 
 import javax.swing.JOptionPane;
+import javax.swing.SwingUtilities;
 
 import mmcorej.CMMCore;
 import mmcorej.MMCoreJ;
@@ -34,11 +38,29 @@ public class CenterAndDragListener implements MouseListener, MouseMotionListener
 	   private boolean transposeXY_;
 	   private boolean correction_;
 	   private int lastX_, lastY_;
+      private int previousTool_ = Toolbar.HAND;
 
 	   public CenterAndDragListener(CMMCore core, MMStudioMainFrame gui) {
 	      core_ = core;
          gui_ = gui;
 	   }
+      
+      private void setToolToHand() {
+         Toolbar toolbar = Toolbar.getInstance();
+	      if (toolbar != null) {
+            previousTool_ = Toolbar.getToolId();
+	         toolbar.setTool(Toolbar.HAND);
+         }
+      }
+      
+      private void restoreTool() {
+         Toolbar toolbar = Toolbar.getInstance();
+	      if (toolbar != null) {
+            if (Toolbar.getToolId() == Toolbar.HAND) {
+               toolbar.setTool(previousTool_);
+            }
+         }
+      }
 
 	   public void start () {
 	      if (isRunning_)
@@ -56,6 +78,7 @@ public class CenterAndDragListener implements MouseListener, MouseMotionListener
 	         canvas_.removeMouseMotionListener(this);
 	      }
 	      isRunning_ = false;
+         restoreTool();
 	   }
 
 	   public boolean isRunning() {
@@ -73,13 +96,11 @@ public class CenterAndDragListener implements MouseListener, MouseMotionListener
 	      canvas_ = win.getCanvas();
 	      canvas_.addMouseListener(this);
 	      canvas_.addMouseMotionListener(this);
-	      if (Toolbar.getInstance() != null)
-	    	  //TO DO: Set appropriate tool
-	         Toolbar.getInstance().setTool(Toolbar.HAND);
-
+         
 	      getOrientation();
 	   }
 
+     
       /*
        * Ensures that the stage moves in the expected direction
        */
@@ -246,9 +267,16 @@ public class CenterAndDragListener implements MouseListener, MouseMotionListener
 
 	   } 
 
-	   public void mouseReleased(MouseEvent e) {}
-	   public void mouseExited(MouseEvent e) {}
-	   public void mouseEntered(MouseEvent e) {}
-	   public void mouseMoved(MouseEvent e) {}
-
+   
+      public void mouseExited(MouseEvent e) {
+         restoreTool();
+      }
+	   
+      public void mouseEntered(MouseEvent e) {
+         setToolToHand();
+      }
+	   
+      public void mouseMoved(MouseEvent e) {}
+      public void mouseReleased(MouseEvent e) {}
+            
 }
