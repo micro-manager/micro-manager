@@ -320,7 +320,7 @@ public class PositionListDlg extends MMDialog implements MouseListener, ChangeLi
       setPrefsNode(prefs_);
 
       Rectangle r = getBounds();
-      loadPosition(r.x, r.y, r.width, r.height);
+      GUIUtils.recallPosition(this);
 
       setBackground(gui_.getBackgroundColor());
       gui_.addMMBackgroundListener(this);
@@ -548,7 +548,6 @@ public class PositionListDlg extends MMDialog implements MouseListener, ChangeLi
       closeButton.setFont(new Font("Arial", Font.PLAIN, 10));
       closeButton.addActionListener(new ActionListener() {
          public void actionPerformed(ActionEvent arg0) {
-            savePosition();
             dispose();
          }
       });

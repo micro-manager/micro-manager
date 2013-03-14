@@ -29,9 +29,12 @@ import java.awt.AWTEvent;
 
 import java.awt.Component;
 import java.awt.Dimension;
+import java.awt.GraphicsDevice;
 import java.awt.GraphicsEnvironment;
 import java.awt.Point;
+import java.awt.Rectangle;
 import java.awt.Toolkit;
+import java.awt.Window;
 import java.awt.event.AWTEventListener;
 import java.awt.event.ActionListener;
 
@@ -124,10 +127,48 @@ public class GUIUtils {
         });
     }
 
-   public static void recallPosition(final JFrame win) {
+        /**
+     * Verifies if the given point is visible on the screen.
+     * From http://www.java2s.com/Code/Java/Swing-JFC/Verifiesifthegivenpointisvisibleonthescreen.htm
+     * @param   location     The given location on the screen.
+     * @return           True if the location is on the screen, false otherwise.
+     */
+    public static boolean isLocationInScreenBounds(Point location) 
+    {
+      
+      // Check if the location is in the bounds of one of the graphics devices.
+    GraphicsEnvironment graphicsEnvironment = GraphicsEnvironment.getLocalGraphicsEnvironment();
+    GraphicsDevice[] graphicsDevices = graphicsEnvironment.getScreenDevices();
+    Rectangle graphicsConfigurationBounds = new Rectangle();
+    
+    // Iterate over the graphics devices.
+    for (int j = 0; j < graphicsDevices.length; j++) {
+      
+      // Get the bounds of the device.
+      GraphicsDevice graphicsDevice = graphicsDevices[j];
+      graphicsConfigurationBounds.setRect(graphicsDevice.getDefaultConfiguration().getBounds());
+      
+        // Is the location in this bounds?
+      graphicsConfigurationBounds.setRect(graphicsConfigurationBounds.x, graphicsConfigurationBounds.y,
+          graphicsConfigurationBounds.width, graphicsConfigurationBounds.height);
+      if (graphicsConfigurationBounds.contains(location.x, location.y)) {
+        
+        // The location is in this screengraphics.
+        return true;
+        
+      }
+      
+    }
+    
+    // We could not find a device that contains the given point.
+    return false;
+    
+    }
+    
+   public static void recallPosition(final Window win) {
       Preferences prefs = Preferences.userNodeForPackage(win.getClass());
       Point dialogPosition = (Point) JavaUtils.getObjectFromPrefs(prefs, DIALOG_POSITION, null);
-      if (dialogPosition == null) {
+      if (dialogPosition == null || !isLocationInScreenBounds(dialogPosition)) {
          Dimension screenDims = JavaUtils.getScreenDimensions();
          dialogPosition = new Point((screenDims.width - win.getWidth()) / 2, (screenDims.height - win.getHeight()) / 2);
       }
@@ -141,7 +182,7 @@ public class GUIUtils {
       });
    }
 
-   private static void storePosition(JFrame win) {
+   private static void storePosition(final Window win) {
       Preferences prefs = Preferences.userNodeForPackage(win.getClass());
       JavaUtils.putObjectInPrefs(prefs, DIALOG_POSITION, win.getLocation());
    }
