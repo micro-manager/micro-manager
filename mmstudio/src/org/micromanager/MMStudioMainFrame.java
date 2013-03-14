@@ -3009,7 +3009,9 @@ public class MMStudioMainFrame extends JFrame implements
          xyzKeyListener_.start(getImageWin());
          if (centerAndDragListener_ == null)
             centerAndDragListener_ = new CenterAndDragListener(core_, this);
-         centerAndDragListener_.start();
+         if (this.centerAndDragMenuItem_.isSelected()) {
+            centerAndDragListener_.start();
+         }
          
       } else {
          if (zWheelListener_ != null) 
