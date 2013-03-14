@@ -29,7 +29,10 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.Iterator;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -65,7 +68,9 @@ public class PositionList {
    public final static String AF_VALUE_FULL = "full";
    public final static String AF_VALUE_INCREMENTAL = "incremental";
    public final static String AF_VALUE_NONE = "none";
-      
+
+   private HashSet<ChangeListener> listeners_ = new HashSet<ChangeListener>();
+   
    public PositionList() {
       positions_ = new ArrayList<MultiStagePosition>();
    }
@@ -78,6 +83,20 @@ public class PositionList {
          pl.addPosition(MultiStagePosition.newInstance(it.next()));
       return pl;
       
+   }
+   
+   public void addChangeListener(ChangeListener listener) {
+       listeners_.add(listener);
+   }
+   
+   public void removeChangeListener(ChangeListener listener) {
+       listeners_.remove(listener);
+   }
+   
+   public void notifyChangeListeners() {
+       for (ChangeListener listener:listeners_) {
+           listener.stateChanged(new ChangeEvent(this));
+       }
    }
 
    /**
@@ -124,6 +143,7 @@ public class PositionList {
     */
    public void addPosition(MultiStagePosition pos) {
       positions_.add(pos);
+      notifyChangeListeners();
    }
    
    /**
@@ -132,6 +152,7 @@ public class PositionList {
     */
    public void addPosition(int in0, MultiStagePosition pos) {
 	  positions_.add(in0, pos);
+          notifyChangeListeners();
    }
    
    /**
@@ -139,8 +160,10 @@ public class PositionList {
     * @param pos - multi-stage position
     */
    public void replacePosition(int index, MultiStagePosition pos) {
-      if (index >= 0 && index < positions_.size())
+      if (index >= 0 && index < positions_.size()) {
          positions_.set(index, pos);
+         notifyChangeListeners();
+      }
    }
    
    /**
@@ -155,6 +178,7 @@ public class PositionList {
     */
    public void clearAllPositions() {
       positions_.clear();
+      notifyChangeListeners();
    }
    
    /**
@@ -164,6 +188,7 @@ public class PositionList {
    public void removePosition(int idx) {
       if (idx >= 0 && idx < positions_.size())
          positions_.remove(idx);
+         notifyChangeListeners();
    }
    
    /**
@@ -175,6 +200,7 @@ public class PositionList {
       for (int i=0; i<posArray.length; i++) {
          positions_.add(posArray[i]);
       }
+      notifyChangeListeners();
    }
 
    /**
@@ -200,6 +226,7 @@ public class PositionList {
          return;
       
       positions_.get(idx).setLabel(label);
+      notifyChangeListeners();
    }
    
    /**
@@ -304,6 +331,7 @@ public class PositionList {
       } catch (JSONException e) {
          throw new MMSerializationException("Invalid or corrupted serialization data.");
       }
+      notifyChangeListeners();
    }
    
    /**
@@ -372,7 +400,7 @@ public class PositionList {
       } catch (Exception e) {
          throw new MMException(e.getMessage());
       }
-      
+      notifyChangeListeners();
    }   
 }
 

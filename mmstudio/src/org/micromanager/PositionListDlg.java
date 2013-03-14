@@ -64,13 +64,16 @@ import org.micromanager.utils.GUIColors;
 import org.micromanager.utils.MMDialog;
 
 import com.swtdesigner.SwingResourceManager;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 import org.micromanager.api.ScriptInterface;
 import org.micromanager.utils.FileDialogs;
 import org.micromanager.utils.FileDialogs.FileType;
+import org.micromanager.utils.GUIUtils;
 import org.micromanager.utils.ReportingUtils;
 
 
-public class PositionListDlg extends MMDialog implements MouseListener {
+public class PositionListDlg extends MMDialog implements MouseListener, ChangeListener {
    private static final long serialVersionUID = 1L;
    private String posListDir_;
    private File curFile_;
@@ -93,6 +96,7 @@ public class PositionListDlg extends MMDialog implements MouseListener {
 
    private MultiStagePosition curMsp_;
    public JButton markButtonRef;
+
 
    private class PosTableModel extends AbstractTableModel {
       private static final long serialVersionUID = 1L;
@@ -604,7 +608,23 @@ public class PositionListDlg extends MMDialog implements MouseListener {
       springLayout.putConstraint(SpringLayout.EAST, loadButton, 0, SpringLayout.EAST, markButton);
       springLayout.putConstraint(SpringLayout.WEST, loadButton, 0, SpringLayout.WEST, markButton);
 
+      getPositionList().addChangeListener(this);
    }
+   
+   
+    @Override
+    public void stateChanged(ChangeEvent e) {
+        try {
+            GUIUtils.invokeLater(new Runnable() {
+                public void run() {
+                    posTable_.revalidate();
+                    axisTable_.revalidate();
+                }
+            });
+        } catch (Exception ex) {
+            ReportingUtils.logError(ex);
+        }
+    }
 
    protected void updateMarkButtonText() {
       PosTableModel tm = (PosTableModel) posTable_.getModel();
@@ -874,6 +894,9 @@ public void addPosition(MultiStagePosition msp, String label) {
       ptm.fireTableCellUpdated(0, 1);
       if (selectedRow > 0)
          posTable_.setRowSelectionInterval(selectedRow, selectedRow);
+      
+      posTable_.revalidate();
+      axisTable_.revalidate();
    }
 
    public boolean useDrive(String drive) {

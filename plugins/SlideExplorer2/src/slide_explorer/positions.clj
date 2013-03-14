@@ -1,5 +1,6 @@
 (ns slide-explorer.positions
-  (:import (java.awt.geom Point2D$Double))
+  (:import (java.awt.geom Point2D$Double)
+           (javax.swing.event ChangeListener))
   (:require [slide-explorer.user-controls :as user-controls]
             [slide-explorer.affine :as affine]
             [org.micromanager.mm :as mm]))
@@ -55,9 +56,9 @@
   (let [pos (user-controls/absolute-mouse-position @screen-state-atom)
         [w h] (:tile-dimensions @screen-state-atom)]
     (locking position-lock
-    (if-let [old-pos (position-clicked (:positions @screen-state-atom) pos w h)]
-      (remove-position-from-list screen-state-atom old-pos affine-stage-to-pixel)
-      (add-position-to-list screen-state-atom pos affine-stage-to-pixel)))))
+      (if-let [old-pos (position-clicked (:positions @screen-state-atom) pos w h)]
+        (remove-position-from-list screen-state-atom old-pos affine-stage-to-pixel)
+        (add-position-to-list screen-state-atom pos affine-stage-to-pixel)))))
 
 (defn update-positions-atom! [screen-state-atom affine-stage-to-pixel]
   (locking position-lock
@@ -67,12 +68,14 @@
       (swap! screen-state-atom assoc :positions external-value)))))
 
 (defn follow-positions! [screen-state-atom affine-stage-to-pixel]
-  (future (loop []
-            (update-positions-atom! screen-state-atom affine-stage-to-pixel)
-            (Thread/sleep 1000)
-            (recur))))
+  (.addChangeListener (.. mm/gui getPositionList)
+    (proxy [ChangeListener] []
+      (stateChanged [_]
+                    (update-positions-atom! screen-state-atom
+                                            affine-stage-to-pixel)))))
 
 (defn handle-positions [panel screen-state-atom affine-stage-to-pixel]
+  (update-positions-atom! screen-state-atom affine-stage-to-pixel)
   (user-controls/handle-control-click
     panel
     (fn [x y] (toggle-position screen-state-atom x y affine-stage-to-pixel)))
