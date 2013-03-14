@@ -24,6 +24,7 @@ package org.micromanager.graph;
 import com.swtdesigner.SwingResourceManager;
 import ij.ImagePlus;
 import ij.process.ImageProcessor;
+import ij.process.ImageStatistics;
 import ij.process.LUT;
 import java.awt.BorderLayout;
 import java.awt.Color;
@@ -453,6 +454,7 @@ public class SingleChannelHistogram extends JPanel implements Histograms, Cursor
          return;
       }
       int[] rawHistogram = img_.getProcessor().getHistogram();
+     
       int imgWidth = img_.getWidth();
       int imgHeight = img_.getHeight();
       if (display_.getHistogramControlsState().ignoreOutliers) {
@@ -466,9 +468,6 @@ public class SingleChannelHistogram extends JPanel implements Histograms, Cursor
       }
       GraphData histogramData = new GraphData();
 
-      pixelMin_ = -1;
-      pixelMax_ = 0;
-      mean_ = 0;
 
       int numBins = (int) Math.min(rawHistogram.length / binSize_, HIST_BINS);
       int[] histogram = new int[HIST_BINS];
@@ -479,20 +478,12 @@ public class SingleChannelHistogram extends JPanel implements Histograms, Cursor
             int rawHistIndex = (int) (i * binSize_ + j);
             int rawHistVal = rawHistogram[rawHistIndex];
             histogram[i] += rawHistVal;
-            if (rawHistVal > 0) {
-               pixelMax_ = rawHistIndex;
-               if (pixelMin_ == -1) {
-                  pixelMin_ = rawHistIndex;
-               }
-               mean_ += rawHistIndex * rawHistVal;
-            }
          }
          total += histogram[i];
          if (display_.getHistogramControlsState().logHist) {
             histogram[i] = histogram[i] > 0 ? (int) (1000 * Math.log(histogram[i])) : 0;
          }
       }
-      mean_ /= imgWidth * imgHeight;
 
       // work around what is apparently a bug in ImageJ
       if (total == 0) {
@@ -502,37 +493,14 @@ public class SingleChannelHistogram extends JPanel implements Histograms, Cursor
             histogram[numBins - 1] = imgWidth * imgHeight;
          }
       }
-
-      //need to recalc mean if hist display mode isnt auto
-      if (histRangeComboBox_.getSelectedIndex() != -1) {
-         mean_ = 0;
-         for (int i = 0; i < rawHistogram.length; i++) {
-            mean_ += i * rawHistogram[i];
-         }
-         mean_ /= imgWidth * imgHeight;
-      }
       if (drawHist) {
 
-         stdDev_ = 0;
-         if (histRangeComboBox_.getSelectedIndex() != -1) {
-            pixelMin_ = rawHistogram.length - 1;
-         }
-         for (int i = rawHistogram.length - 1; i >= 0; i--) {
-            if (histRangeComboBox_.getSelectedIndex() != -1) {
-               if (rawHistogram[i] > 0 && i < pixelMin_) {
-                  pixelMin_ = i;
-               }
-               if (rawHistogram[i] > 0 && i > pixelMax_) {
-                  pixelMax_ = i;
-               }
-            }
-
-            for (int j = 0; j < rawHistogram[i]; j++) {
-               stdDev_ += (i - mean_) * (i - mean_);
-            }
-
-         }
-         stdDev_ = Math.sqrt(stdDev_ / (imgWidth * imgHeight));
+         ImageStatistics stats = img_.getStatistics(ImageStatistics.MEAN | ImageStatistics.MIN_MAX | ImageStatistics.STD_DEV);
+         pixelMax_ = (int) stats.max;
+         pixelMin_ = (int) stats.min;
+         mean_ = stats.mean;
+         stdDev_ = stats.stdDev;
+         
          //Draw histogram and stats
          histogramData.setData(histogram);
          histogramPanel_.setData(histogramData);
