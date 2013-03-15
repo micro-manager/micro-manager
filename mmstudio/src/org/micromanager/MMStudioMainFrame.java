@@ -1356,9 +1356,11 @@ public class MMStudioMainFrame extends JFrame implements
          }
       });
 
-      centerAndDragMenuItem_.setText("Mouse Moves Stage");
+      centerAndDragMenuItem_.setText("Mouse Moves Stage (use Hand Tool)");
       centerAndDragMenuItem_.setSelected(mainPrefs_.getBoolean(MOUSE_MOVES_STAGE, false));
-      centerAndDragMenuItem_.setToolTipText("When enabled, double clicking in live window moves stage");
+      centerAndDragMenuItem_.setToolTipText("When enabled, double clicking or dragging in the snap/live\n"
+                                          + "window moves the XY-stage. Requires the hand tool.");
+      
 
       toolsMenu.add(centerAndDragMenuItem_);
 
