@@ -25,6 +25,11 @@
   1: Hide or show 1x view
 
 For live data sets: 
+  
+  Channels and z-stack settings are
+  borrowed from the multi-dimensional acquisition
+  window.
+ 
   Ctrl/Cmd + Click: Add/remove positions
   Double-click: Navigate to location
  
