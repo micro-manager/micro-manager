@@ -13,7 +13,7 @@
     (.setLayout (FlowLayout. FlowLayout/CENTER))))
 
 (def cheat-sheet-text
-"Slide Explorer controls:
+" Slide Explorer controls:
 
   Mouse drag: Pan
   +/-: Zoom in/out
@@ -24,11 +24,11 @@
   Esc: Exit full screen mode
   1: Hide or show 1x view
 
-For live data sets: 
+ For new data sets: 
   
   Channels and z-stack settings are
-  borrowed from the multi-dimensional acquisition
-  window.
+  borrowed from the multi-dimensional
+  acquisition window.
  
   Ctrl/Cmd + Click: Add/remove positions
   Double-click: Navigate to location
@@ -51,7 +51,7 @@ For live data sets:
       (.add (cheat-sheet)))
     (doto frame
       (.setResizable false)
-      (controls/show-window-center 400 450 gui-window))
+      (controls/show-window-center 400 500 gui-window))
     frame))
 
 (defn show-frame [gui-window]
