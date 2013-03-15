@@ -99,7 +99,8 @@
 
 (defn test-frame []
   (let [panel (canvas/canvas-frame test-graphics)]
-    (handle-settings)))
+    (handle-settings)
+    (reset! data-atom (test-data))))
 
 (defn random-test [n]
   (future

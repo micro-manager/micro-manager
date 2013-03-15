@@ -82,13 +82,6 @@
              merge
              (image/intensity-range tile-proc)))
 
-(defn copy-settings [pointing-screen-atom showing-screen-atom]
-  (swap! showing-screen-atom merge
-         (select-keys @pointing-screen-atom
-                      [:channels :tile-dimensions
-                       :pixel-size-um :xy-stage-position
-                       :positions :z])))
-
 ;; OVERLAY
 
 (def overlay-memo (memo/memo-lru image/overlay 100))
@@ -152,7 +145,10 @@
 
 (def bar-widget-memo (memo/memo-lru scale-bar/bar-widget 500))
 
-(defn paint-screen [graphics screen-state overlay-tiles-atom]
+(defn paint-screen
+  "Paints a slide explorer screen, with tiles, scale bar, and when appropriate,
+   current stage position and positions from XY-list."
+  [graphics screen-state overlay-tiles-atom]
   (let [original-transform (.getTransform graphics)
         zoom (:zoom screen-state)
         scale (screen-state :scale 1.0)
@@ -171,12 +167,7 @@
       paint/enable-anti-aliasing
       (canvas/draw (when-let [pixel-size (:pixel-size-um screen-state)]
                      (bar-widget-memo (:height screen-state)
-                                      (/ pixel-size zoom scale))))
-      ;(show-mouse-pos screen-state)
-      ;(.setColor Color/WHITE)
-      ;(.drawString (str (select-keys screen-state [:mouse :x :y :z :zoom])) 10 20)
-      ;(.drawString (str (user-controls/absolute-mouse-position screen-state)) 10 40)
-      )))
+                                      (/ pixel-size zoom scale)))))))
 
 ;; Loading visible tiles
 
@@ -211,13 +202,6 @@
   
 ;; MAIN WINDOW AND PANEL
 
-(defn control-panel []
-  (doto
-    (proxy [JPanel] []
-      (paintComponent [^Graphics graphics]
-        (proxy-super paintComponent graphics)))
-    (.setBackground Color/BLACK)))  
-
 (defn main-panel [screen-state overlay-tiles-atom]
   (doto
     (proxy [JPanel] []
@@ -226,7 +210,9 @@
         (paint-screen graphics @screen-state overlay-tiles-atom)))
     (.setBackground Color/BLACK)))
     
-(defn main-frame []
+(defn main-frame
+  "Creates an empty JFrame."
+  []
   (doto (JFrame. "Slide Explorer II")
     (.setBounds 10 10 500 500)
     .show))
@@ -238,7 +224,9 @@
               :channels (sorted-map)
               :positions #{}))
 
-(defn view-panel [memory-tile-atom settings]
+(defn view-panel
+  "Creates a view panel that obeys the settings in screen-state."
+  [memory-tile-atom settings]
   (let [screen-state (atom (merge default-settings
                                   settings))
         overlay-tiles (tile-cache/create-tile-cache 100)
@@ -249,69 +237,9 @@
     (paint/repaint-on-change panel [overlay-tiles screen-state]); [memory-tile-atom])
     [panel screen-state]))
 
-(defn set-position! [screen-state-atom x y]
-  (swap! screen-state-atom assoc :x x :y y))
-
-(defn show-position! [showing-screen-atom x y]
-  (let [[w h] (:tile-dimensions @showing-screen-atom)]
-    (when (and x y w h)
-      (set-position! showing-screen-atom (+ x (/ w 2)) (+ y (/ h 2))))))
-
-(defn show-where-pointing! [pointing-screen-atom showing-screen-atom] 
-  (let [{:keys [x y]} (user-controls/absolute-mouse-position
-                        @pointing-screen-atom)]
-    (show-position! showing-screen-atom x y)))
-
-(defn show-stage-position! [main-screen-atom showing-screen-atom]
-  (let [main-screen @main-screen-atom
-        [x y] (:xy-stage-position main-screen)]
-    (show-position! showing-screen-atom x y)))
-
-(defn handle-change-and-show
-  [show-fn! value-to-check-fn
-   main-screen-atom showing-screen-atom]
-  (reactive/handle-update
-    main-screen-atom
-    (fn [old new]
-      (when (not= (value-to-check-fn old)
-                  (value-to-check-fn new))
-        (show-fn!
-          main-screen-atom showing-screen-atom)))))
-
-(def handle-point-and-show 
-  (partial handle-change-and-show
-           show-where-pointing!
-           user-controls/absolute-mouse-position))
-
-(def handle-stage-move-and-show
-  (partial handle-change-and-show
-           show-stage-position!
-           :xy-stage-position))
-
-(def handle-display-change-and-show
-  (partial handle-change-and-show
-           copy-settings
-           #(select-keys % [:positions :channels :xy-stage-position :z])))
-
-(defn within? [x [a b]]
-  (<= a x b))
-  
-(defn clip [x [a b]]
-  (-> x (max a) (min b)))
-
-(defn constrain [screen-state-atom axis]
-  (let [pos (get @screen-state-atom axis)
-        range (get-in @screen-state-atom [:range axis])]
-    (when (and pos range (not (within? pos range)))
-      (swap! screen-state-atom update-in [axis] clip range))))
-
-(defn enforce-constraints [screen-state-atom]
-  (reactive/add-watch-simple
-    screen-state-atom
-    (fn [_ _] (dorun (map #(constrain screen-state-atom %)
-                          [:x :y :z])))))
-
-(defn create-split-pane [parent left-panel right-panel]
+(defn create-split-pane
+  "Creates a JSplitPane in a parent component with left and right child components."
+  [parent left-panel right-panel]
   (.add parent
         (doto (JSplitPane. JSplitPane/HORIZONTAL_SPLIT true
                            left-panel right-panel)
@@ -319,7 +247,9 @@
           (.setResizeWeight 0.5)
           (.setDividerLocation 0.7))))
 
-(defn show [memory-tile-atom settings]
+(defn show
+  "Show the two-view Slide Explorer window."
+  [memory-tile-atom settings]
   (let [frame (main-frame)
         [panel screen-state] (view-panel memory-tile-atom settings)
         [panel2 screen-state2] (view-panel memory-tile-atom settings)
@@ -327,13 +257,9 @@
         widgets {:frame frame :left-panel panel :right-panel panel2
                  :split-pane split-pane :content-pane (.getContentPane frame)}]     
     (user-controls/setup-fullscreen frame)
-    (enforce-constraints screen-state)
     (user-controls/make-view-controllable widgets screen-state)
     (user-controls/handle-resize panel2 screen-state2)
-    (handle-point-and-show screen-state screen-state2)
-    ;(handle-stage-move-and-show screen-state screen-state2) ; make this optional?
-    (handle-display-change-and-show screen-state screen-state2)
-    (copy-settings screen-state screen-state2)
+    (user-controls/handle-1x-view screen-state screen-state2)
     (.show frame)
     (def w widgets)
     (def ss screen-state)

@@ -6,7 +6,8 @@
            (javax.swing AbstractAction JComponent KeyStroke SwingUtilities
                         JButton)
            (java.util UUID)
-           (org.micromanager.utils JavaUtils)))
+           (org.micromanager.utils JavaUtils))
+  (:require [slide-explorer.reactive :as reactive]))
 
 (def MIN-ZOOM 1/256)
 
@@ -345,6 +346,68 @@
                #(swap! screen-state-atom
                        assoc :x 0 :y 0 :z 0 :zoom 1)))
 
+;; Primary and secondary screens
+
+(defn copy-settings [pointing-screen-atom showing-screen-atom]
+  (swap! showing-screen-atom merge
+         (select-keys @pointing-screen-atom
+                      [:channels :tile-dimensions
+                       :pixel-size-um :xy-stage-position
+                       :positions :z])))
+
+(defn set-position! [screen-state-atom x y]
+  (swap! screen-state-atom assoc :x x :y y))
+
+(defn show-position! [showing-screen-atom x y]
+  (let [[w h] (:tile-dimensions @showing-screen-atom)]
+    (when (and x y w h)
+      (set-position! showing-screen-atom (+ x (/ w 2)) (+ y (/ h 2))))))
+
+(defn show-where-pointing! [pointing-screen-atom showing-screen-atom] 
+  (let [{:keys [x y]} (absolute-mouse-position
+                        @pointing-screen-atom)]
+    (show-position! showing-screen-atom x y)))
+
+(defn show-stage-position! [main-screen-atom showing-screen-atom]
+  (let [main-screen @main-screen-atom
+        [x y] (:xy-stage-position main-screen)]
+    (show-position! showing-screen-atom x y)))
+
+(defn handle-change-and-show
+  [show-fn! value-to-check-fn
+   main-screen-atom showing-screen-atom]
+  (reactive/handle-update
+    main-screen-atom
+    (fn [old new]
+      (when (not= (value-to-check-fn old)
+                  (value-to-check-fn new))
+        (show-fn!
+          main-screen-atom showing-screen-atom)))))
+
+(def handle-point-and-show 
+  (partial handle-change-and-show
+           show-where-pointing!
+           absolute-mouse-position))
+
+(def handle-stage-move-and-show
+  (partial handle-change-and-show
+           show-stage-position!
+           :xy-stage-position))
+
+(def handle-display-change-and-show
+  (partial handle-change-and-show
+           copy-settings
+           #(select-keys % [:positions :channels :xy-stage-position :z])))
+
+(defn handle-1x-view
+  "Take the region around the mouse pointer in the first screen,
+   and show it in the second screen at 1x zoom."
+  [screen-state-atom1 screen-state-atom2]
+  (handle-point-and-show screen-state-atom1 screen-state-atom2)
+  (handle-display-change-and-show screen-state-atom1 screen-state-atom2)
+  ;(handle-stage-move-and-show screen-state screen-state2) ; deactivate; make this optional?
+  (copy-settings screen-state-atom1 screen-state-atom2))
+
 ;; toggling split pane
 
 (defn redraw-frame [frame]
@@ -391,7 +454,27 @@
 (defn handle-toggle-split [widgets]
   (bind-window-keys (:frame widgets) ["1"] #(toggle-1x-view widgets)))
 
-;; main function enabling controls
+;; constraints
+
+(defn within? [x [a b]]
+  (<= a x b))
+  
+(defn clip [x [a b]]
+  (-> x (max a) (min b)))
+
+(defn constrain [screen-state-atom axis]
+  (let [pos (get @screen-state-atom axis)
+        range (get-in @screen-state-atom [:range axis])]
+    (when (and pos range (not (within? pos range)))
+      (swap! screen-state-atom update-in [axis] clip range))))
+
+(defn enforce-constraints [screen-state-atom]
+  (reactive/add-watch-simple
+    screen-state-atom
+    (fn [_ _] (dorun (map #(constrain screen-state-atom %)
+                          [:x :y :z])))))
+
+;; main function enabling controls of the primary screen
 
 (defn make-view-controllable [widgets screen-state-atom]
   (let [panel (:left-panel widgets)]
@@ -400,6 +483,7 @@
            panel screen-state-atom)
     ((juxt handle-reset handle-zoom handle-dive) ; watch-keys)
            (.getTopLevelAncestor panel) screen-state-atom)
-    (handle-toggle-split widgets)))
+    (handle-toggle-split widgets)
+    (enforce-constraints screen-state-atom)))
     
  
