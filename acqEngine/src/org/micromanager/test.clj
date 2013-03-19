@@ -1,13 +1,17 @@
 (ns org.micromanager.test
   (:import (java.util ArrayList List)
-           (java.util.concurrent Executors LinkedBlockingQueue ConcurrentLinkedQueue)
+           (java.util.concurrent Executors LinkedBlockingQueue
+                                 ConcurrentLinkedQueue TimeUnit)
            (mmcorej TaggedImage)
            (org.json JSONArray JSONObject)
            (org.micromanager MMStudioMainFrame)
            (org.micromanager.api DataProcessor)
            (java.nio ByteBuffer ByteOrder)
+           (java.io RandomAccessFile)
+           (org.micromanager.utils ShortWriter)
            (org.micromanager.acquisition TaggedImageStorageMultipageTiff))
-  (:require [org.micromanager.mm :as mm])
+  (:require [org.micromanager.mm :as mm]
+            [clojure.java.io :as io])
   (:use [org.micromanager.mm :only (edt load-mm core gui mmc)]))
 
 (load-mm (MMStudioMainFrame/getInstance))
@@ -235,7 +239,7 @@
   (let [tags (.tags image)
         summary (image-test-summary "test1" 1)
         storage (TaggedImageStorageMultipageTiff.
-                  "G:/acquisitions/" true summary false true)]
+                  "D:/acquisitions/" true summary false true)]
     (doto tags
       (.put "Slice" 0)
       (.put "ChannelIndex" 0)
@@ -254,17 +258,71 @@
      (println "Start saving procedure...")
        (save-images-fast image n)))
 
-(defn image-to-byte-buffer [pix]
-  (let [buffer (.. ByteBuffer
-                         (allocate (* (count pix) 2))
-                         (order ByteOrder/BIG_ENDIAN))]
-    (.. buffer asShortBuffer (put pix))))
+;; tests of: 
+;; 1. converting shorts to bytes
+;; 2. writing them to disk
+
+(defn image-size []
+  (* (core getBytesPerPixel)
+                    (core getImageWidth)
+                    (core getImageHeight)))
+
+(defn byte-buffer [size]
+  (.. ByteBuffer (allocate size)
+      (order ByteOrder/BIG_ENDIAN)))
+
+(defn image-to-byte-buffer [pix buffer]
+  (.. buffer asShortBuffer (put pix))
+  buffer)
 
 (defn byte-buffer-test [n]
-  (let [img (core getImage)]
+  (let [img (core getImage)
+        buf (byte-buffer (count img))]
+      (doall
+        (repeatedly n #(image-to-byte-buffer
+                         img (byte-buffer (* (count img) 2)))))))
+
+(defn shorts-test [n]
+  (let [img (core getImage)
+        img-size (image-size)
+        filename (str "E:/acquisition/test" (rand-int 100000) ".dat")
+        writer (ShortWriter. (io/file filename))]
+    (println filename)
+    (dorun
+      (repeatedly n
+                  #(.write writer img)))
+    (.close writer)))
+
+
+(defn write-test [n]
+  (let [buffers (into-array (byte-buffer-test n))
+        filename (str "E:/acquisition/test" (rand-int 100000) ".dat")
+        file (RandomAccessFile. filename "rw")
+        channel (.getChannel file)]
+    (println (type buffers))
     (time
-      (dorun
-        (repeatedly n #(image-to-byte-buffer img))))))
- 
-  
+      (.write channel buffers)
+      )
+    (.close file)
+    filename))
+
+
+(defn run-in-parallel [n f]
+  (doall (apply pcalls (repeat n f))))
+
+(defmacro time-ms [& body]
+  `(let [start# (System/currentTimeMillis)]
+     ~@body
+     (- (System/currentTimeMillis) start#)))
+
+(defn time-per-run [nthreads f]
+  (/ (time-ms (dorun (run-in-parallel nthreads f)))
+     (double nthreads)))
+
+(defn parallel-titration [reps f]
+  (doseq [i (range 1 17)]
+    (dotimes [_ reps]
+      (println i "\t" (time-per-run i f)))))
+    
+
 
