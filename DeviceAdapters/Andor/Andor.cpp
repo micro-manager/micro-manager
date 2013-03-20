@@ -92,6 +92,12 @@ const char* g_ShutterTTL = "Shutter TTL Value";
 const char* g_ShutterTTLHighToOpen = "High to Open";
 const char* g_ShutterTTLLowToOpen = "Low to Open";
 
+const char* g_SnapImageDelay = "Advanced | Snap Image Additional Delay (ms)";
+const char* g_SnapImageMode = "Advanced | Snap Image Timing Mode";
+const char* g_SnapImageModeDelayForExposure = "Delay for Exposure";
+const char* g_SnapImageModeWaitForReadout = "Wait for Readout";
+const char* g_SnapImageDelayInvalid = "Invalid Snap Image Delay (Cannot be negative)";
+
 const char* g_FanMode_Full = "Full";
 const char* g_FanMode_Low = "Low";
 const char* g_FanMode_Off = "Off";
@@ -247,7 +253,9 @@ countConvertWavelength_(0.0),
 optAcquireModeStr_(""),
 optAcquireDescriptionStr_(""),
 spuriousNoiseFilter_(""),
-spuriousNoiseFilterDescriptionStr_("")
+spuriousNoiseFilterDescriptionStr_(""),
+iSnapImageDelay_(0),
+bSnapImageWaitForReadout_(false)
 { 
    InitializeDefaultErrorMessages();
 
@@ -263,6 +271,8 @@ spuriousNoiseFilterDescriptionStr_("")
    SetErrorText(ERR_INVALID_SHUTTER_OPENTIME, g_ShutterModeOpeningTimeInvalid);
    SetErrorText(ERR_INVALID_SHUTTER_CLOSETIME, g_ShutterModeClosingTimeInvalid);
    SetErrorText(ERR_INVALID_SHUTTER_MODE, g_ShutterModeInvalid);
+
+   SetErrorText(ERR_INVALID_SNAPIMAGEDELAY, g_SnapImageDelayInvalid);
 
    seqThread_ = new AcqSequenceThread(this);
 
@@ -777,6 +787,9 @@ int AndorCamera::GetListOfAvailableCameras()
       if(ret != DRV_SUCCESS)
          return ret;
 
+      ret = createSnapTriggerMode();
+      if(ret != DEVICE_OK)
+         return ret;
 
       // readout mode
       int numSpeeds;
@@ -1457,6 +1470,16 @@ int AndorCamera::GetListOfAvailableCameras()
 
          if(!IsAcquiring())
          {
+            if(INTERNAL == iCurrentTriggerMode_)
+            {
+               AbortAcquisition();
+               int status = DRV_ACQUIRING;
+               int error = DRV_SUCCESS;
+               while (error == DRV_SUCCESS && status == DRV_ACQUIRING) {
+                  error = GetStatus(&status); 
+               }
+            }
+
             SetIsolatedCropMode(0, currentCropHeight_, currentCropWidth_, 1, 1);
             SetImage(binSize_, binSize_, roi_.x+1, roi_.x+roi_.xSize, roi_.y+1, roi_.y+roi_.ySize);
             ret = UpdateTimings(); 
@@ -1483,12 +1506,14 @@ int AndorCamera::GetListOfAvailableCameras()
    /**
    * Acquires a single frame.
    * Micro-Manager expects that this function blocks the calling thread until the exposure phase is over.
-   * This wait is implemented by sleeping ActualInterval_ms_ - ReadoutTime_ + 0.99 ms.
-   * Note that this is likely not long enough when using internal triggering.
+   * This wait is implemented either by sleeping ActualInterval_ms_ - ReadoutTime_ + 0.99 ms.
+   * or waiting until the readout event notification, this is set by the SnapImageMode property.
    */
    int AndorCamera::SnapImage()
    {
       { // scope for driver guard
+         int ret;
+         
          DriverGuard dg(this);
 
          if (sequenceRunning_)   // If we are in the middle of a SequenceAcquisition
@@ -1496,24 +1521,31 @@ int AndorCamera::GetListOfAvailableCameras()
 
          if(iCurrentTriggerMode_ == SOFTWARE) 
          {
-            /* int ret = */ //PrepareSnap();
-            SendSoftwareTrigger();
+            ret = SendSoftwareTrigger();
+            if (DRV_SUCCESS != ret)
+               return ret;
          }
          else if (iCurrentTriggerMode_ == INTERNAL) 
-         {        
-            AbortAcquisition();
-            int status = DRV_ACQUIRING;
-            int error = DRV_SUCCESS;
-            while (error == DRV_SUCCESS && status == DRV_ACQUIRING) {
-              error = GetStatus(&status); 
-            }
-            SetIsolatedCropMode(0, currentCropHeight_, currentCropWidth_, 1, 1);
-            SetImage(binSize_, binSize_, roi_.x+1, roi_.x+roi_.xSize, roi_.y+1, roi_.y+roi_.ySize);
-            StartAcquisition();
+         {
+            ret = StartAcquisition();
+            if (DRV_SUCCESS != ret)
+               return ret;
          }
-      }
 
-      CDeviceUtils::SleepMs((long) (ActualInterval_ms_ - ReadoutTime_ + 0.99)); 
+         if(bSnapImageWaitForReadout_)
+         {
+            ret = WaitForAcquisitionByHandleTimeOut(myCameraID_, imageTimeOut_ms_);
+            if (DRV_SUCCESS != ret)
+               return ret;
+         }
+         else
+         {
+			CDeviceUtils::SleepMs((long) (ActualInterval_ms_ - ReadoutTime_ + 0.99)); 			
+         }
+
+      }//release camera
+      
+      CDeviceUtils::SleepMs(iSnapImageDelay_);
 
       return DEVICE_OK;
    }
@@ -1523,12 +1555,12 @@ int AndorCamera::GetListOfAvailableCameras()
    {
       DriverGuard dg(this);
 
-      if (IsAcquiring() )
+      if (IsAcquiring() && !bSnapImageWaitForReadout_)
       {
          int ret = WaitForAcquisitionByHandleTimeOut(myCameraID_, imageTimeOut_ms_);
          if (ret != DRV_SUCCESS)
             return 0;
-      }
+      } 
 
       pImgBuffer_ = GetAcquiredImage();
       assert(img_.Depth() == 2);
@@ -1618,6 +1650,11 @@ int AndorCamera::GetListOfAvailableCameras()
       else //actual period
       {
          ActualInterval_ms_ = fKinetic*1000.f;
+      }
+
+      if(AUTO == iShutterMode_) //add shutter transfer times
+      {
+         ActualInterval_ms_ = ActualInterval_ms_+iShutterOpeningTime_ + iShutterClosingTime_;
       }
 
       ActualInterval_ms_str_ = CDeviceUtils::ConvertToString((double)ActualInterval_ms_) ;
@@ -2750,6 +2787,50 @@ int AndorCamera::GetListOfAvailableCameras()
       return DEVICE_OK;
    }
 
+
+    int AndorCamera::OnSnapImageDelay(MM::PropertyBase* pProp, MM::ActionType eAct)
+    {
+      if (eAct == MM::AfterSet)
+      {
+         long time;
+         pProp->Get(time);
+
+         if(time<0)
+         {
+            iSnapImageDelay_= 0;
+            pProp->Set((long)iSnapImageDelay_);
+            return ERR_INVALID_SNAPIMAGEDELAY;
+         }
+         iSnapImageDelay_ = time;
+      }
+      else if (eAct == MM::BeforeGet)
+      {
+
+      }
+      return DEVICE_OK;
+    }
+
+    int AndorCamera::OnSnapImageMode(MM::PropertyBase* pProp, MM::ActionType eAct)
+    {
+      if (eAct == MM::AfterSet)
+      {
+         string mode;
+         pProp->Get(mode);
+         if (mode.compare(g_SnapImageModeDelayForExposure) == 0)
+            bSnapImageWaitForReadout_ = false;
+         else if (mode.compare(g_SnapImageModeWaitForReadout) == 0)
+            bSnapImageWaitForReadout_ = true;
+         else
+            return DEVICE_INVALID_PROPERTY_VALUE;
+      }
+      else if (eAct == MM::BeforeGet)
+      {
+
+      }
+      return DEVICE_OK;
+    }
+
+
    int AndorCamera::OnShutterClosingTime(MM::PropertyBase* pProp, MM::ActionType eAct)
    {
       if (eAct == MM::AfterSet)
@@ -3265,7 +3346,7 @@ int AndorCamera::GetListOfAvailableCameras()
             StopSequenceAcquisition(true);
          }
 
-		  DriverGuard dg(this); //moved driver guard to here to allow AcqSequenceThread to terminate properly
+         DriverGuard dg(this); //moved driver guard to here to allow AcqSequenceThread to terminate properly
 
          if (sequenceRunning_) {
             return ERR_BUSY_ACQUIRING;
@@ -4290,11 +4371,10 @@ int AndorCamera::GetListOfAvailableCameras()
    std::string AndorCamera::getCameraType() {
       std::string retVal("");
       AndorCapabilities caps;
-      {
-         DriverGuard dg(this);
-         caps.ulSize = sizeof(AndorCapabilities);
-         GetCapabilities(&caps);
-      }
+
+      caps.ulSize = sizeof(AndorCapabilities);
+      GetCapabilities(&caps);
+      
 
       unsigned long camType = caps.ulCameraType;
       switch(camType) {
@@ -4847,6 +4927,35 @@ unsigned int AndorCamera::createIsolatedCropModeProperty(AndorCapabilities * cap
          //initialise and apply settings
          ret = ApplyShutterSettings();
       }
+
+      return ret;
+   }
+
+   unsigned int AndorCamera::createSnapTriggerMode()
+   {
+      int ret = DEVICE_OK;
+      if(!HasProperty(g_SnapImageDelay))
+      {
+         CPropertyAction *pAct = new CPropertyAction (this, &AndorCamera::OnSnapImageDelay);
+         ret = CreateProperty(g_SnapImageDelay, CDeviceUtils::ConvertToString(iSnapImageDelay_), MM::Integer, false, pAct);
+         if (ret != DEVICE_OK)
+            return ret;
+      }
+
+      if(!HasProperty(g_SnapImageMode))
+      {
+         vector<string> modes;
+         modes.push_back(g_SnapImageModeDelayForExposure);
+         modes.push_back(g_SnapImageModeWaitForReadout);
+      
+         CPropertyAction *pAct = new CPropertyAction (this, &AndorCamera::OnSnapImageMode);
+         ret = CreateProperty(g_SnapImageMode, g_SnapImageModeDelayForExposure, MM::String, false, pAct);
+         if (ret != DEVICE_OK)
+            return ret;
+            
+         ret = SetAllowedValues(g_SnapImageMode, modes);
+      }
+      
       return ret;
    }
 

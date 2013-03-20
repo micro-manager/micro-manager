@@ -64,6 +64,7 @@
 #define ERR_INVALID_SHUTTER_OPENTIME 113
 #define ERR_INVALID_SHUTTER_CLOSETIME 114
 #define ERR_INVALID_SHUTTER_MODE 115
+#define ERR_INVALID_SNAPIMAGEDELAY 116
 
 class AcqSequenceThread;
  
@@ -144,6 +145,8 @@ public:
    int OnFrameTransfer(MM::PropertyBase* pProp, MM::ActionType eAct); 
    int OnVSpeed(MM::PropertyBase* pProp, MM::ActionType eAct);  
    int OnShutterOpeningTime(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnSnapImageDelay(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnSnapImageMode(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnShutterClosingTime(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnShutterTTL(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnOutputAmplifier(MM::PropertyBase* pProp, MM::ActionType eAct); 
@@ -305,6 +308,8 @@ private:
    int iShutterMode_;
    int iShutterOpeningTime_;
    int iShutterClosingTime_;
+   int iSnapImageDelay_;
+   bool bSnapImageWaitForReadout_;
    int iShutterTTL_;
 
    at_32 myCameraID_;
@@ -349,6 +354,7 @@ private:
    std::string getCameraType();
    unsigned int createGainProperty(AndorCapabilities * caps);
    unsigned int createTriggerProperty(AndorCapabilities * caps);
+   unsigned int createSnapTriggerMode();
    unsigned int createShutterProperty(AndorCapabilities * caps);
    unsigned int AddTriggerProperty(int mode);
    unsigned int createIsolatedCropModeProperty(AndorCapabilities * caps);
