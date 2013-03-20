@@ -141,11 +141,11 @@
   (def temp-queue image-queue)
   (System/gc)
   (fill-circular-buffer n wait?)
-  (time (do (dotimes [i n]
+  (do (dotimes [i n]
               (pop-next-image image-queue))
             (while (or (core isSequenceRunning)
                        (pos? (core getRemainingImageCount)))
-              (Thread/sleep 1))))
+              (Thread/sleep 1)))
   (when (core isBufferOverflowed)
     (println "Buffer overflowed")))
 
@@ -276,11 +276,24 @@
   buffer)
 
 (defn byte-buffer-test [n]
-  (let [img (core getImage)
-        buf (byte-buffer (count img))]
-      (doall
-        (repeatedly n #(image-to-byte-buffer
+  (let [img (core getImage)]
+    (apply pcalls
+        (repeat n #(image-to-byte-buffer
                          img (byte-buffer (* (count img) 2)))))))
+
+(defn byte-buffer-queue [nthreads nimages]
+  (let [image-queue (LinkedBlockingQueue. 20)]
+    (future (single-thread-pop-test nimages false image-queue))
+    (let [queue (LinkedBlockingQueue. 20)
+          service (Executors/newFixedThreadPool nthreads)]
+      (future (dotimes [_ nimages]
+        (let [submission  #(let [img (.take image-queue)]
+                             (.put queue
+                                 (image-to-byte-buffer
+                                   img
+                                   (byte-buffer (* (count img) 2)))))]
+          (.submit service ^Runnable submission))))
+      queue)))
 
 (defn shorts-test [n]
   (let [img (core getImage)
@@ -293,19 +306,18 @@
                   #(.write writer img)))
     (.close writer)))
 
-
-(defn write-test [n]
-  (let [buffers (into-array (byte-buffer-test n))
-        filename (str "E:/acquisition/test" (rand-int 100000) ".dat")
-        file (RandomAccessFile. filename "rw")
-        channel (.getChannel file)]
-    (println (type buffers))
-    (time
-      (.write channel buffers)
-      )
-    (.close file)
-    filename))
-
+(defn acquire-and-save-test [n]
+    (let [buffer-queue (time (byte-buffer-queue 4 n))
+          filename (str "E:/acquisition/test" (rand-int 100000) ".dat")
+          file (RandomAccessFile. filename "rw")
+          channel (.getChannel file)]
+      ;(time (let [buffers (repeatedly n #(.take buffer-queue))]
+      ;  (doseq [buffer buffers]
+      ;    (.write channel buffer))))
+      (dotimes [_ n]
+        (.write channel (.take buffer-queue)))
+      (.close file)
+      filename))
 
 (defn run-in-parallel [n f]
   (doall (apply pcalls (repeat n f))))
