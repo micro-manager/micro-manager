@@ -454,11 +454,16 @@
 (defn handle-toggle-split [widgets]
   (bind-window-keys (:frame widgets) ["1"] #(toggle-1x-view widgets)))
 
-(defn handle-window-closed [frame screen-state-atom]
+(defn handle-window-closed [frame
+                            screen-state-atom
+                            screen-state-atom2
+                            memory-tile-atom]
   (.addWindowListener frame
     (proxy [WindowAdapter] []
       (windowClosed [e]
-        (swap! screen-state-atom assoc :mode :closed)))))
+        (swap! screen-state-atom assoc :mode :closed)
+        (reactive/remove-watches screen-state-atom)
+        (reactive/remove-watches screen-state-atom2)))))
 
 ;; constraints
 
@@ -492,7 +497,6 @@
   ((juxt handle-reset handle-zoom handle-dive) ; watch-keys)
          frame screen-state-atom)
   (handle-toggle-split widgets)
-  (handle-window-closed frame screen-state-atom)
   (enforce-constraints screen-state-atom))
     
  

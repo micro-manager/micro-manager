@@ -22,7 +22,8 @@
             [slide-explorer.persist :as persist]
             [slide-explorer.disk :as disk]
             [slide-explorer.positions :as positions]
-            [slide-explorer.store :as store]))
+            [slide-explorer.store :as store]
+            [slide-explorer.reactive :as reactive]))
 
 
 (def MIN-ZOOM 1/256)
@@ -300,15 +301,16 @@ Would you like to run automatic pixel calibration?"
  
 (defn explore-when-needed [screen-state-atom explore-fn]
   (mm/core waitForSystem)
-  (add-watch screen-state-atom "explore"
-             (fn [_ _ old new]
+  (reactive/add-watch-simple
+    screen-state-atom 
+             (fn [old new]
                (when-not (= old new)
                  (explore-fn))))
   (explore-fn))
   
-(defn new-acquisition-session [screen-state-atom memory-tiles]
+(defn new-acquisition-session [screen-state-atom memory-tiles-atom]
   (let [acquired-images (atom #{})
-        dir (tile-cache/tile-dir memory-tiles)
+        dir (tile-cache/tile-dir memory-tiles-atom)
         acq-settings (create-acquisition-settings)
         affine-stage-to-pixel (origin-here-stage-to-pixel-transform)
         z-origin (if-let [z-drive (focus-device)]
@@ -318,7 +320,7 @@ Would you like to run automatic pixel calibration?"
                                 (Point. 0 0) affine-stage-to-pixel)
                               z-origin
                               acq-settings)
-        explore-fn #(explore memory-tiles screen-state-atom acquired-images)]
+        explore-fn #(explore memory-tiles-atom screen-state-atom acquired-images)]
     (let [width (mm/core getImageWidth)
           height (mm/core getImageHeight)]
       (swap! screen-state-atom merge
@@ -351,10 +353,10 @@ Would you like to run automatic pixel calibration?"
 ; view-state
 ;
 ; Whenever an image is acquired, it is processed, mipmapped and each
-; resulting tiles are added to memory-tiles. Tiles
+; resulting tiles are added to memory-tiles-atom. Tiles
 ; added are automatically asynchronously saved to disk, and the indices
 ; are added to disk-tiles.
-; memory-tiles and overlay-tiles are limited to 100 images each,
+; memory-tiles and overlay-tiles are limited to 200 images each,
 ; using an LRU eviction policy.
 ; When view-state viewing area is adjusted, tiles needed for the
 ; new viewing area are loaded back into memory-tiles. If we are
@@ -374,14 +376,13 @@ Would you like to run automatic pixel calibration?"
     (let [settings (if-not new?
                      (load-settings dir)
                      {:tile-dimensions [512 512]})
-          memory-tiles (tile-cache/create-tile-cache 200 dir (not new?))
-          screen-state-atom (view/show memory-tiles settings)]
+          memory-tiles-atom (tile-cache/create-tile-cache 200 dir (not new?))
+          screen-state-atom (view/show memory-tiles-atom settings)]
       (if new?
-        (new-acquisition-session screen-state-atom memory-tiles)
+        (new-acquisition-session screen-state-atom memory-tiles-atom)
         (future (let [indices (disk/available-keys dir)]
                   (provide-constraints screen-state-atom indices))))
       (save-settings dir @screen-state-atom)
-      (def mt memory-tiles)
       (def ss screen-state-atom)))
   ([]
     (go (io/file (str "tmp" (rand-int 10000000))) true)))
@@ -391,33 +392,3 @@ Would you like to run automatic pixel calibration?"
   (when-let [dir (persist/open-dir-dialog)]
     (go (io/file dir) false)))
 
-;; tests
-
-(defn get-tile [{:keys [nx ny nz nt nc]}]
-  (ImageUtils/makeProcessor (grab-tagged-image)))
-
-(def test-channels
-  {"DAPI" {:lut (image/lut-object Color/BLUE  0 255 1.0)}
-   "GFP"  {:lut (image/lut-object Color/GREEN 0 255 1.0)}
-   "Cy5"  {:lut (image/lut-object Color/RED   0 255 1.0)}})
-
-(defn test-tile [nx ny nz nc]
-  (store/add-to-memory-tiles mt {:nx nx
-                              :ny ny
-                              :nz nz
-                              :nt 0
-                              :nc nc}
-                             (get-tile nil)
-                             MIN-ZOOM))
-
-(defn test-tiles
-  ([n] (test-tiles n n 0 0))
-  ([nx ny nz]
-    (mm/core setExposure 100)
-    (.start (Thread.
-              #(doseq [i (range (- nx) (inc nx))
-                       j (range (- ny) (inc ny))
-                       k (range (- nz) (inc nz))
-                       chan (keys (@ss :channels))]
-                 ;(Thread/sleep 1000)
-                 (test-tile i j k chan))))))

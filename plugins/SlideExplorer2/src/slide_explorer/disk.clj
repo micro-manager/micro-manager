@@ -17,7 +17,8 @@
 (defn read-tile
   "Read a tile image from disk for the given key."
   [dir key]
-  (image/read-processor (key-map-to-file dir key)))
+  (when key
+    (image/read-processor (key-map-to-file dir key))))
 
 (defn write-tile
   "Save a tile image to disk for the given key."

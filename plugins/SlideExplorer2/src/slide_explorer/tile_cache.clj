@@ -17,6 +17,9 @@
   (doseq [callback (::tile-listeners (meta memory-tile-atom))]
     (callback)))
 
+(defn remove-tile-listeners! [memory-tile-atom]
+  (alter-meta! memory-tile-atom dissoc ::tile-listeners))
+
 (defn tile-dir
   "Returns the associated directory for a tile cache."
   [memory-tile-atom]
@@ -42,7 +45,8 @@
   ([memory-tile-atom key hit?]
   (when-let [val (get @memory-tile-atom key)]
     (when hit?
-      (swap! memory-tile-atom cache/hit key))
+      (swap! memory-tile-atom #(try (cache/hit % key)
+                                    (catch Exception _))))
     val))
   ([memory-tile-atom key]
     (get-tile memory-tile-atom key false)))
