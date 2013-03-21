@@ -262,18 +262,36 @@
 ;; 1. converting shorts to bytes
 ;; 2. writing them to disk
 
+(def native-order (ByteOrder/nativeOrder))
+
 (defn image-size []
   (* (core getBytesPerPixel)
                     (core getImageWidth)
                     (core getImageHeight)))
 
 (defn byte-buffer [size]
-  (.. ByteBuffer (allocate size)
-      (order ByteOrder/BIG_ENDIAN)))
+  (.. ByteBuffer (allocateDirect size)
+      (order native-order)))
+
+(defn allocation-test [n size]
+  (let [q (LinkedBlockingQueue.)]
+    (dotimes [i n]
+      (when (zero? (mod i 100))
+        (println i))
+      (.add q (byte-buffer size)))))
 
 (defn image-to-byte-buffer [pix buffer]
   (.. buffer asShortBuffer (put pix))
   buffer)
+
+(defn image-test [m n]
+  (let [pix (core getImage)
+        size (* 2 (count pix))]
+    (time
+      (dotimes [_ m]
+        (dotimes [_ n]
+          (let [buf (byte-buffer size)]
+            (image-to-byte-buffer pix buf)))))))
 
 (defn byte-buffer-test [n]
   (let [img (core getImage)]
@@ -282,9 +300,9 @@
                          img (byte-buffer (* (count img) 2)))))))
 
 (defn byte-buffer-queue [nthreads nimages]
-  (let [image-queue (LinkedBlockingQueue. 20)]
+  (let [image-queue (LinkedBlockingQueue. 1)]
     (future (single-thread-pop-test nimages false image-queue))
-    (let [queue (LinkedBlockingQueue. 20)
+    (let [queue (LinkedBlockingQueue. 1)
           service (Executors/newFixedThreadPool nthreads)]
       (future (dotimes [_ nimages]
         (let [submission  #(let [img (.take image-queue)]
@@ -293,6 +311,19 @@
                                    img
                                    (byte-buffer (* (count img) 2)))))]
           (.submit service ^Runnable submission))))
+      queue)))
+
+(defn simple-byte-buffer-queue [nimages]
+  (let [image-queue (LinkedBlockingQueue. 1)]
+    (future (single-thread-pop-test nimages false image-queue))
+    (let [queue (LinkedBlockingQueue. 1)]
+      (future (dotimes [_ nimages]
+                (let [img (.take image-queue)
+                      n (count img)]
+                  (.put queue
+                        (image-to-byte-buffer
+                          img
+                          (byte-buffer (* n 2)))))))
       queue)))
 
 (defn shorts-test [n]
@@ -304,18 +335,38 @@
     (dorun
       (repeatedly n
                   #(.write writer img)))
-    (.close writer)))
+    ;(.close writer)
+    ))
+
+
+(defn writing-speed-test [n]
+  (let [
+        filename (str "E:/acquisition/test" (rand-int 100000) ".dat")
+        file (RandomAccessFile. filename "rw")
+        channel (.getChannel file)buf (byte-buffer (image-size))]
+    (dotimes [i n]
+      (.write channel (byte-buffer (image-size)))
+      (when (zero? (mod i 100))
+          (future (.force channel true))))
+    (.force channel false)
+    (.close file)))
 
 (defn acquire-and-save-test [n]
-    (let [buffer-queue (time (byte-buffer-queue 4 n))
+    (let [buffer-queue (time (simple-byte-buffer-queue n))
           filename (str "E:/acquisition/test" (rand-int 100000) ".dat")
           file (RandomAccessFile. filename "rw")
-          channel (.getChannel file)]
-      ;(time (let [buffers (repeatedly n #(.take buffer-queue))]
-      ;  (doseq [buffer buffers]
-      ;    (.write channel buffer))))
-      (dotimes [_ n]
-        (.write channel (.take buffer-queue)))
+          channel (.getChannel file)
+          t0 (System/currentTimeMillis)]
+      (println filename)
+      (dotimes [i n]
+        (when (zero? (mod i 100))
+          (println i (- (System/currentTimeMillis) t0)))
+        (.write channel 
+                (.take buffer-queue)
+               )
+        (when (zero? (mod i 100))
+          (future (.force channel true)))
+      )
       (.close file)
       filename))
 
@@ -335,6 +386,6 @@
   (doseq [i (range 1 17)]
     (dotimes [_ reps]
       (println i "\t" (time-per-run i f)))))
-    
+
 
 

@@ -63,13 +63,23 @@ public class ShortWriter {
             } catch (Exception e) {
             System.out.println("failed.");
             }
-        }
-        * */
-        unmap(byteBuffer_);
-        channel_.truncate(2 * writePosition_);
-               stream_.close();
+      
+         }
+         * */
+        channel_.force(false);
+        boolean succeeded = false;
+        do {
+            try {
+                unmap(byteBuffer_);
+                channel_.truncate(2 * writePosition_);
+                succeeded = true;
+            } catch (Exception e) {
+            }
+        } while (!succeeded);
+        stream_.close();
         //truncate();
     }
+    
     
     private void unmap(ByteBuffer buffer) {
           if (buffer instanceof sun.nio.ch.DirectBuffer) {
