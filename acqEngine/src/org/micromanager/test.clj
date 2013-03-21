@@ -335,7 +335,7 @@
     (dorun
       (repeatedly n
                   #(.write writer img)))
-    ;(.close writer)
+    (.close writer)
     ))
 
 
