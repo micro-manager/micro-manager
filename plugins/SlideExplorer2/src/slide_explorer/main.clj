@@ -235,7 +235,7 @@
                       (trampoline explore memory-tiles-atom screen-state-atom
                                           acquired-images affine))))
 
-(defn navigate [screen-state-atom affine-transform _ _]
+(defn navigate [screen-state-atom _ _]
   (when (#{:navigate :explore} (:mode @screen-state-atom))
     (swap! screen-state-atom assoc :mode :navigate)
     (let [{:keys [x y]} (user-controls/absolute-mouse-position @screen-state-atom)
@@ -243,7 +243,7 @@
       (locking anti-blur
                (set-xy-position (affine/inverse-transform
                                   (Point2D$Double. x y)
-                                  affine-transform))))))
+                                  (:affine-stage-to-pixel @screen-state-atom)))))))
   
 (defn create-acquisition-settings
   []
@@ -284,30 +284,28 @@ Would you like to run automatic pixel calibration?"
   (let [nav-range (tiles/nav-range available-keys (@screen-state-atom :tile-dimensions))]
     (swap! screen-state-atom assoc :range nav-range) ))
   
-(defn watch-xy-stages [screen-state affine-stage-to-pixel]
+(defn watch-xy-stages [screen-state-atom]
   (reactive/handle-update
     current-xy-positions 
     (fn [_ new-pos-map]
       (let [[x y] (new-pos-map (mm/core getXYStageDevice))
             pixel (affine/transform (Point2D$Double. x y)
-                                    affine-stage-to-pixel)]
-        (swap! screen-state assoc :xy-stage-position
+                                    (@screen-state-atom :affine-stage-to-pixel))]
+        (swap! screen-state-atom assoc :xy-stage-position
                (affine/point-to-vector pixel))))))
 
-(defn double-click-to-navigate [panel screen-state affine-stage-to-pixel]
-  (user-controls/handle-double-click
-      panel
-      (partial navigate screen-state affine-stage-to-pixel)))
+(defn double-click-to-navigate [panel screen-state-atom]
+  (user-controls/handle-double-click panel (partial navigate screen-state-atom)))
 
-(defn explore-when-needed [screen-state explore-fn]
+(defn explore-when-needed [screen-state-atom explore-fn]
   (mm/core waitForSystem)
-  (add-watch screen-state "explore"
-               (fn [_ _ old new]
-                 (when-not (= old new)
-                   (explore-fn))))
+  (add-watch screen-state-atom "explore"
+             (fn [_ _ old new]
+               (when-not (= old new)
+                 (explore-fn))))
   (explore-fn))
   
-(defn new-acquisition-session [screen-state panel memory-tiles]
+(defn new-acquisition-session [screen-state-atom panel memory-tiles]
   (let [acquired-images (atom #{})
         dir (tile-cache/tile-dir memory-tiles)
         acq-settings (create-acquisition-settings)
@@ -319,12 +317,13 @@ Would you like to run automatic pixel calibration?"
                                 (Point. 0 0) affine-stage-to-pixel)
                               z-origin
                               acq-settings)
-        explore-fn #(explore memory-tiles screen-state acquired-images
+        explore-fn #(explore memory-tiles screen-state-atom acquired-images
                              affine-stage-to-pixel)]
     (let [width (mm/core getImageWidth)
           height (mm/core getImageHeight)]
-      (swap! screen-state merge
+      (swap! screen-state-atom merge
              {:acq-settings acq-settings
+              :affine-stage-to-pixel affine-stage-to-pixel
               :pixel-size-um (pixel-size-um affine-stage-to-pixel)
               :z-origin z-origin
               :slice-size-um 1.0
@@ -334,11 +333,11 @@ Would you like to run automatic pixel calibration?"
               :tile-dimensions [width height]
               :x (long (/ width 2))
               :y (long (/ height 2))}))
-    (double-click-to-navigate panel screen-state affine-stage-to-pixel)
-    (positions/handle-positions panel screen-state affine-stage-to-pixel)
-    (user-controls/handle-mode-keys panel screen-state)
-    (watch-xy-stages screen-state affine-stage-to-pixel)
-    (explore-when-needed screen-state explore-fn)
+    (double-click-to-navigate panel screen-state-atom)
+    (watch-xy-stages screen-state-atom)
+    (positions/handle-positions panel screen-state-atom)
+    (user-controls/handle-mode-keys panel screen-state-atom)
+    (explore-when-needed screen-state-atom explore-fn)
     (def ai acquired-images)
     (def pnl panel)
     (def affine affine-stage-to-pixel)))
@@ -387,12 +386,6 @@ Would you like to run automatic pixel calibration?"
       (def ss screen-state)))
   ([]
     (go (io/file (str "tmp" (rand-int 10000000))) true)))
-  
-
-(defn navigate-to-pixel [[pixel-x pixel-y] affine-stage-to-pixel]
-  (set-xy-position (affine/inverse-transform
-                     (Point2D$Double. pixel-x pixel-y)
-                     affine-stage-to-pixel)))                
   
 (defn load-data-set
   []
