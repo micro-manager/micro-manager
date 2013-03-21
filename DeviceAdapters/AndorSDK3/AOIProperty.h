@@ -2,7 +2,6 @@
 #define _AOIPROPERTY_H_
 
 #include <map>
-#include "andorvartypes.h"
 #include "MMDeviceConstants.h"
 #include "Property.h"
 
@@ -39,8 +38,8 @@ public:
    void ResetToFullImage();
 
 private:
-   typedef std::map<andor64, int> TMapAOIIndexType;
-   typedef std::map<andor64, andor64> TMapAOIWidthHeightType;
+   typedef std::map<long long, int> TMapAOIIndexType;
+   typedef std::map<long long, long long> TMapAOIWidthHeightType;
    andor::IInteger* aoi_height_;
    andor::IInteger* aoi_width_;
    andor::IInteger* aoi_top_;
@@ -56,8 +55,8 @@ private:
    TMapAOIIndexType aoiWidthIndexMap_;
    TMapAOIWidthHeightType aoiWidthHeightMap_;
    bool fullAoiControl_;
-   andor64 leftOffset_;
-   andor64 topOffset_;
+   long long leftOffset_;
+   long long topOffset_;
 };
 
 #endif // _AOIPROPERTY_H_

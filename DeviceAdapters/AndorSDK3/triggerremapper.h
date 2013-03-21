@@ -13,7 +13,8 @@ public:
    TTriggerRemapper(SnapShotControl* snapShotController, IEnum* _enum)
    :m_snapShotController(snapShotController),TAndorEnumFilter(_enum)
    {
-      internal_index = findInternal();
+      internal_index = findIndexFor(L"Internal");
+      extStart_index = findIndexFor(L"External Start");
    }
   
    int GetIndex()
@@ -22,20 +23,28 @@ public:
       {
          return internal_index;
       }
-      else {
+      else if ( m_snapShotController->isSoftware() && m_snapShotController->isExternal() )
+      {
+         return extStart_index;
+      }
+      else 
+      {
          return m_enum->GetIndex();    
       }
    }
   
-   private:
+private:
    SnapShotControl* m_snapShotController;
    int internal_index;
+   int extStart_index;
 
-   int findInternal()
+private:
+   int findIndexFor(AT_WC * _pTriggerMode)
    {
       for (int i=0; i<m_enum->Count(); i++)
       {
-         if (m_enum->GetStringByIndex(i).compare(L"Internal") == 0) {
+         if (m_enum->GetStringByIndex(i).compare(_pTriggerMode) == 0) 
+         {
             return i;
          }
       }

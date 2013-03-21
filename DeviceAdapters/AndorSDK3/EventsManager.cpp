@@ -1,35 +1,38 @@
 #define _CRT_SECURE_NO_DEPRECATE
 #include "EventsManager.h"
-#include <list>
+#include "EventsManagerHelper.h"
 #include <algorithm>
 
 using namespace andor;
 using namespace std;
 
 
-static const AT_WC * const EV_BUFFOVERFLOW = L"BufferOverflowEvent";
+static const AT_WC * const g_Buffer_Overflow_Event = L"BufferOverflowEvent";
+static const AT_WC * const g_Exposure_End_Event = L"ExposureEndEvent";
+
 
 //Constructor/Destructor
 CEventsManager::CEventsManager(IDevice* cameraDevice)
-:  camDevice_(cameraDevice),
-   bufferOverflowEvent_(NULL),
-   bufferOverFlowEventRegistered_(false),
-   bufferOverFlowEventFired_(false)
+:  camDevice_(cameraDevice)
 {
 }
 
 CEventsManager::~CEventsManager(void)
 {
-   if (bufferOverFlowEventRegistered_)
+   CleanupHelper cleanup(this);
+   for_each(v_events.begin(), v_events.end(), cleanup);
+   
+   TEvIter iter = v_events.begin();
+   for (; iter != v_events.end(); ++iter)
    {
-      EventsEnable(EV_BUFFOVERFLOW, false);
-      bufferOverflowEvent_->Detach(this);
+      camDevice_->Release((*iter)->GetActualEvent());
+      delete *iter;
    }
-   camDevice_->Release(bufferOverflowEvent_);
+   v_events.clear();
 }
 
 //Private
-void CEventsManager::EventsEnable(const AT_WC *const _event, bool _enable)
+void CEventsManager::eventsEnable(const AT_WC *const _event, bool _enable)
 {
    IEnum * evSelect = camDevice_->GetEnum(L"EventSelector");
    bool b = evSelect->IsImplemented();
@@ -46,20 +49,40 @@ void CEventsManager::EventsEnable(const AT_WC *const _event, bool _enable)
    camDevice_->Release(evSelect);
 }
 
-//Public
-void CEventsManager::Update(ISubject* /*Subject*/)
+CEventsManager::TSDK3EVENTS CEventsManager::getEventTypeFromSubject(ISubject * Subject)
 {
-   static bool b_enabled = false;
-
-   if (!b_enabled)
+   TSDK3EVENTS RetEv = EV_BUFFER_OVERFLOW_EVENT;
+   
+   IInteger * subjectType = dynamic_cast<IInteger *>(Subject);
+   if (subjectType)
    {
-      b_enabled = true;
-      bufferOverFlowEventFired_ = false;
-      bufferOverFlowEventRegistered_ = true;
+      TEvIter iter = v_events.begin();
+      for (int i=0; iter != v_events.end(); ++iter, ++i)
+      {
+         if (subjectType == (*iter)->GetActualEvent() )
+         {
+            RetEv = static_cast<TSDK3EVENTS>(i);
+            break;
+         }
+      }
+   }
+   return RetEv;
+}
+
+//Public
+void CEventsManager::Update(ISubject* Subject)
+{
+   TSDK3EVENTS ev = getEventTypeFromSubject(Subject);
+
+   if (!v_events[ev]->GetRegistered())
+   {
+      v_events[ev]->SetRegistered();
+      eventsEnable(v_events[ev]->GetFeatureName(), true);
    }
    else
    {
-      bufferOverFlowEventFired_ = true;
+      v_events[ev]->SetFired();
+      v_events[ev]->Set();
    }
 }
 
@@ -67,25 +90,25 @@ bool CEventsManager::Initialise(char * _errorMsg)
 {
    bool b_retCode = false;
 
-   bufferOverflowEvent_ = camDevice_->GetInteger(EV_BUFFOVERFLOW);
-
+   v_events.push_back(new TEventContainer(g_Buffer_Overflow_Event, camDevice_->GetInteger(g_Buffer_Overflow_Event)));
+   v_events.push_back(new TEventContainer(g_Exposure_End_Event, camDevice_->GetInteger(g_Exposure_End_Event)));
+   
    try
    {
-      bool b = bufferOverflowEvent_->IsImplemented();
-      if (b)
+      if (false == v_events[EV_BUFFER_OVERFLOW_EVENT]->GetActualEvent()->IsImplemented())
       {
-         bufferOverflowEvent_->Attach(this);
-         EventsEnable(EV_BUFFOVERFLOW, true);
-         b_retCode = true;
+         strcpy(_errorMsg, "[CEventsManager::Initialise] Events are Not Implemented");
       }
       else
       {
-         strcpy(_errorMsg, "[CEventsManager::Initialise] Buffer Overflow Event is Not Implemented");
+         SetupHelper setupEvent(this);
+         for_each(v_events.begin(), v_events.end(), setupEvent);
+         b_retCode = true;
       }
    }
    catch (exception & e)
    {
-      string s("[CEventsManager::Initialise] BufferOverflowEvent Caught Exception with message: ");
+      string s("[CEventsManager::Initialise] Caught Exception with message: ");
       s += e.what();
       strcpy(_errorMsg, s.c_str() );
       b_retCode = false;
@@ -96,47 +119,22 @@ bool CEventsManager::Initialise(char * _errorMsg)
 
 void CEventsManager::ResetEvent(CEventsManager::TSDK3EVENTS _event)
 {
-   switch(_event)
-   {
-   case EV_BUFFER_OVERFLOW_EVENT:
-      bufferOverFlowEventFired_ = false;
-      break;
-   default:
-      break;
-
-   }
+   v_events[_event]->ResetFired();
+   v_events[_event]->Reset();
 }
 
 bool CEventsManager::IsEventRegistered(CEventsManager::TSDK3EVENTS _event)
 {
-   bool b_retCode = false;
-
-   switch(_event)
-   {
-   case EV_BUFFER_OVERFLOW_EVENT:
-      b_retCode = bufferOverFlowEventRegistered_;
-      break;
-   default:
-      b_retCode = false;
-      break;
-
-   }
-   return b_retCode;
+   return v_events[_event]->GetRegistered();
 }
 
 bool CEventsManager::HasEventFired(CEventsManager::TSDK3EVENTS _event)
 {
-   bool b_retCode = false;
-
-   switch(_event)
-   {
-   case EV_BUFFER_OVERFLOW_EVENT:
-      b_retCode = bufferOverFlowEventFired_;
-      break;
-   default:
-      b_retCode = false;
-      break;
-
-   }
-   return b_retCode;
+   return v_events[_event]->GetFired();
 }
+
+bool CEventsManager::WaitForEvent(CEventsManager::TSDK3EVENTS _event, int _timeout_ms)
+{
+   return v_events[_event]->Wait(_timeout_ms);
+}
+

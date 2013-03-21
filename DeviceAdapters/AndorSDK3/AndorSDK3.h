@@ -35,8 +35,6 @@
 #include "../../MMDevice/DeviceBase.h"
 #include "../../MMDevice/ImgBuffer.h"
 #include "../../MMDevice/DeviceThreads.h"
-#include <string>
-#include <map>
 #include "atcore++.h"
 
 
@@ -126,6 +124,10 @@ private:
    void UnpackDataWithPadding(unsigned char* _pucSrcBuffer);
    bool InitialiseDeviceCircularBuffer(const unsigned numBuffers);
    bool CleanUpDeviceCircularBuffer();
+   int  SetupCameraForSeqAcquisition(int numImages);
+   int  CameraStart();
+   int  checkForBufferOverflow();
+   bool waitForData(unsigned char *& return_buffer, int & buffer_size);
 
    static const double nominalPixelSizeUm_;
    static const int CID_FPGA_TICKS = 1;
@@ -134,25 +136,20 @@ private:
    bool busy_;
    bool stopOnOverFlow_;
    bool initialized_;
-   double readoutUs_;
-   MM::MMTime readoutStartTime_;
    unsigned roiX_;
    unsigned roiY_;
    AT_64 sequenceStartTime_;
    AT_64 fpgaTSclockFrequency_;
    AT_64 timeStamp_;
-   bool softwareTriggerMode_;
    double d_frameRate_;
    int number_of_devices_;
    bool keep_trying_;
    bool in_external_;
-   double timeout_;
    unsigned int currentSeqExposure_;
 
    unsigned char** image_buffers_;
    unsigned int numImgBuffersAllocated_;
 
-   bool b_eventsSupported_;
    bool b_cameraPresent_;
 
    int GetNumberOfDevicesPresent() { return number_of_devices_; };

@@ -372,10 +372,6 @@
 				>
 			</File>
 			<File
-				RelativePath=".\andortime.cpp"
-				>
-			</File>
-			<File
 				RelativePath=".\AOIProperty.cpp"
 				>
 			</File>
@@ -442,10 +438,6 @@
 				>
 			</File>
 			<File
-				RelativePath=".\atcore++ErrorHandling.h"
-				>
-			</File>
-			<File
 				RelativePath=".\BooleanProperty.h"
 				>
 			</File>
@@ -503,10 +495,6 @@
 			</File>
 			<File
 				RelativePath=".\triggerremapper.h"
-				>
-			</File>
-			<File
-				RelativePath=".\WriteCompactTiffRGB.h"
 				>
 			</File>
 		</Filter>

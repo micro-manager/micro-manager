@@ -3,24 +3,24 @@
 
 namespace andor {
 class IDevice;
-class IInteger;
 class IEnum;
 class ICommand;
 class IBufferControl;
 }
+class CEventsManager;
 
 class SnapShotControl
 {
 public:
-   SnapShotControl(andor::IDevice* cameraDevice);
+   SnapShotControl(andor::IDevice* cameraDevice, CEventsManager* _evMngr);
    ~SnapShotControl();
 
    void setupTriggerModeSilently();
    void resetTriggerMode();
    void poiseForSnapShot();
    void leavePoisedMode();
-   void takeSnapShot(unsigned char*& image_buffers);
-   void prepareCamera();
+   bool takeSnapShot();
+   void getData(unsigned char*& image_buffers);
 
    bool isPoised(){return is_poised_;};
    bool isInternal() {return set_internal_;}
@@ -29,15 +29,23 @@ public:
    bool isMono12Packed() {return mono12PackedMode_; };
 
 private:
+   int  getReadoutTime();
+   int  getTransferTime();
+   int  retrieveCurrentExposureTime();
+   bool isGlobalShutter();
+
+private:
+   static const unsigned int EXT_TRIG_TIMEOUT_MILLISECONDS = 10000;
+   static const int INVALID_EXP_TIME = -1;
+
    andor::IDevice* cameraDevice;
-   andor::IInteger* imageSizeBytes;
    andor::IEnum* triggerMode;
-   andor::IEnum* cycleMode;
    andor::ICommand* startAcquisitionCommand;
    andor::ICommand* stopAcquisitionCommand;
    andor::IBufferControl* bufferControl;
    andor::ICommand* sendSoftwareTrigger;
-   andor::IEnum* pixelEncoding;
+
+   CEventsManager* eventsManager_;
 
    unsigned char* image_buffer_;
 

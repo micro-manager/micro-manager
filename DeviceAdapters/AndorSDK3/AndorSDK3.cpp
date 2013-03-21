@@ -27,11 +27,9 @@
 #include "AndorSDK3.h"
 #include "../../MMDevice/ModuleInterface.h"
 #include "../../MMCore/Error.h"
-//#include "WriteCompactTiffRGB.h"
 #include <map>
 #include <string>
 #include <sstream>
-#include <iostream>
 #include <algorithm>
 #include "SnapShotControl.h"
 #include "EnumProperty.h"
@@ -42,7 +40,6 @@
 
 #include "datapacking.h"
 #include "triggerremapper.h"
-#include "andorwindowstime.h"
 #include "lineparser.h"
 #include "AndorSDK3Strings.h"
 #include "EventsManager.h"
@@ -71,7 +68,7 @@ static const unsigned int CID_FIELD_SIZE = 4;
 static const unsigned int NUMBER_MDA_BUFFERS = 10;
 static const unsigned int NUMBER_LIVE_BUFFERS = 2;
 
-static const unsigned int WAITBUFFER_TIMEOUT_MILLISECONDS = 100;
+static const unsigned int WAITBUFFER_TIMEOUT_MILLISECONDS = 500;
 
 // TODO: linux entry code
 
@@ -177,7 +174,6 @@ CAndorSDK3Camera::CAndorSDK3Camera()
   d_frameRate_(0),
   currentSeqExposure_(0),
   keep_trying_(false),
-  b_eventsSupported_(false),
   roiX_(0),
   roiY_(0)
 {
@@ -188,7 +184,6 @@ CAndorSDK3Camera::CAndorSDK3Camera()
    SetErrorText(DEVICE_OUT_OF_MEMORY, " Allocation Failure - out of memory");
    SetErrorText(DEVICE_SNAP_IMAGE_FAILED, " Snap Image Failure");
    
-   readoutStartTime_ = GetCurrentMMTime();
 #ifdef TESTRESOURCELOCKING
    pDemoResourceLock_ = new MMThreadLock();
 #endif
@@ -232,8 +227,6 @@ CAndorSDK3Camera::CAndorSDK3Camera()
       sendSoftwareTrigger = cameraDevice->GetCommand(L"SoftwareTrigger");
       frameCount = cameraDevice->GetInteger(L"FrameCount");
       frameRate = cameraDevice->GetFloat(L"FrameRate");
-
-      snapShotController_ = new SnapShotControl(cameraDevice);
    }
 }
 
@@ -258,7 +251,6 @@ CAndorSDK3Camera::~CAndorSDK3Camera()
    cameraDevice->Release(sendSoftwareTrigger);
    cameraDevice->Release(frameCount);
    cameraDevice->Release(frameRate);
-   delete snapShotController_;
    deviceManager->CloseDevice(cameraDevice);
    deviceManager->CloseDevice(systemDevice);
    delete deviceManager;
@@ -358,6 +350,12 @@ int CAndorSDK3Camera::Initialize()
       b_zyla = true;
    }
    
+
+   //Create event manager and snapshot controller here
+
+   eventsManager_ = new CEventsManager(cameraDevice);
+   snapShotController_ = new SnapShotControl(cameraDevice, eventsManager_);
+
    // Properties
    binning_property = new TEnumProperty(MM::g_Keyword_Binning, cameraDevice->GetEnum(L"AOIBinning"),
                                         this, thd_, snapShotController_, false, false);
@@ -490,7 +488,6 @@ int CAndorSDK3Camera::Initialize()
       cameraDevice->Release(tsClkFrequency);
    }
 
-   eventsManager_ = new CEventsManager(cameraDevice);
    char errorStr[MM::MaxStrLength];
    if (false == eventsManager_->Initialise(errorStr) )
    {
@@ -532,8 +529,10 @@ int CAndorSDK3Camera::Shutdown()
       delete triggerMode_valueMapper;
       delete exposureTime_property;
 
+      delete snapShotController_;
       // clean up objects used by the property browser
       cameraDevice->Release(triggerMode_Enum);
+      delete triggerMode_remapper;
       delete eventsManager_;
    }
 
@@ -637,25 +636,9 @@ void CAndorSDK3Camera::UnpackDataWithPadding(unsigned char * _pucSrcBuffer)
 */
 int CAndorSDK3Camera::SnapImage()
 {
-   unsigned char * return_buffer = NULL;
+   int ret = (snapShotController_->takeSnapShot() ? DEVICE_OK : DEVICE_SNAP_IMAGE_FAILED);
 
-   snapShotController_->takeSnapShot(return_buffer);
-
-   //temp until TODO completed below:
-   if (return_buffer)
-   {
-      timeStamp_ = GetTimeStamp(return_buffer);
-      UnpackDataWithPadding(return_buffer);
-   }
-   else
-   {
-      return DEVICE_SNAP_IMAGE_FAILED;
-   }
-
-   // TODO Currently Snap waits until readout completes to unpack - need to revisit
-   //readoutStartTime_ = GetCurrentMMTime();
-
-   return DEVICE_OK;
+   return ret;
 }
 
 
@@ -671,12 +654,17 @@ int CAndorSDK3Camera::SnapImage()
 */
 const unsigned char * CAndorSDK3Camera::GetImageBuffer()
 {
+   unsigned char * return_buffer = NULL;
+
+   snapShotController_->getData(return_buffer);
+   
+   if (return_buffer)
+   {
+      timeStamp_ = GetTimeStamp(return_buffer);
+      UnpackDataWithPadding(return_buffer);
+   }
+
    MMThreadGuard g(imgPixelsLock_);
-   // TODO Currently Snap waits until readout completes to unpack - need to revisit
-   //MM::MMTime readoutTime(readoutUs_);
-   //while (readoutTime > (GetCurrentMMTime() - readoutStartTime_))
-   //{
-   //}
 
    return img_.GetPixels();
 }
@@ -930,6 +918,68 @@ bool CAndorSDK3Camera::CleanUpDeviceCircularBuffer()
    return true;
 }
 
+int CAndorSDK3Camera::SetupCameraForSeqAcquisition(int numImages)
+{
+   int retCode = DEVICE_OK;
+   bool b_memOkRet = false;
+   if (LONG_MAX != numImages)
+   {
+      cycleMode->Set(L"Fixed");
+      frameCount->Set(numImages);
+      b_memOkRet = InitialiseDeviceCircularBuffer(NUMBER_MDA_BUFFERS);
+   }
+   else
+   {
+      // When using the Micro-Manager GUI, this code is executed when entering live mode
+      cycleMode->Set(L"Continuous");
+      snapShotController_->setupTriggerModeSilently();
+      b_memOkRet = InitialiseDeviceCircularBuffer(NUMBER_LIVE_BUFFERS);
+   }
+
+   if (b_memOkRet)
+   {
+      ResizeImageBuffer();
+   }
+   else
+   {
+      bufferControl->Flush();
+      CleanUpDeviceCircularBuffer();
+      retCode = DEVICE_OUT_OF_MEMORY;
+   }
+   return retCode;
+}
+
+
+int CAndorSDK3Camera::CameraStart()
+{
+   int retCode = DEVICE_OK;
+   try
+   {
+      startAcquisitionCommand->Do();
+      if (snapShotController_->isSoftware())
+      {
+         sendSoftwareTrigger->Do();
+      }
+   }
+   catch (NoMemoryException & e)
+   {
+      string s("[StartSequenceAcquisition] NoMemoryException: ");
+      s += e.what();
+      LogMessage(s);
+      bufferControl->Flush();
+      CleanUpDeviceCircularBuffer();
+      retCode = DEVICE_OUT_OF_MEMORY;
+   }
+   catch (exception & e)
+   {
+      string s("[StartSequenceAcquisition] Caught Exception with message: ");
+      s += e.what();
+      LogMessage(s);
+      retCode = DEVICE_ERR;
+   }
+   return retCode;
+}
+
 /**
 * Simple implementation of Sequence Acquisition
 * A sequence acquisition should run on its own thread and transport new images
@@ -940,10 +990,8 @@ int CAndorSDK3Camera::StartSequenceAcquisition(long numImages, double interval_m
    int retCode = DEVICE_OK;
    
    // The camera's default state is in software trigger mode, poised to make an
-   // acquisition. Stop acquisition so that properties can be set for the
-   // sequence acquisition. Also release any buffers that were queued to
-   // to take snapshot.
-   // This may be called twice, if e.g. out of memory first time returned 
+   // acquisition. We now Abort and re-setup. Also release any buffers that were queued.
+   // This may be called twice, if e.g. out of memory first time is returned 
    // - a second attmept may be made. Need to ensure no memory issues or exceptions
 
    if (snapShotController_->isPoised() )
@@ -960,34 +1008,9 @@ int CAndorSDK3Camera::StartSequenceAcquisition(long numImages, double interval_m
       retCode = GetCoreCallback()->PrepareForAcq(this);
    }
 
-   bool b_memOkRet = false;
    if (DEVICE_OK == retCode)
    {
-
-      if (LONG_MAX != numImages)
-      {
-         cycleMode->Set(L"Fixed");
-         frameCount->Set(numImages);
-         b_memOkRet = InitialiseDeviceCircularBuffer(NUMBER_MDA_BUFFERS);
-      }
-      else
-      {
-         // When using the Micro-Manager GUI, this code is executed when entering live mode
-         cycleMode->Set(L"Continuous");
-         snapShotController_->setupTriggerModeSilently();
-         b_memOkRet = InitialiseDeviceCircularBuffer(NUMBER_LIVE_BUFFERS);
-      }
-
-      if (b_memOkRet)
-      {
-         ResizeImageBuffer();
-      }
-      else
-      {
-         bufferControl->Flush();
-         CleanUpDeviceCircularBuffer();
-         retCode = DEVICE_OUT_OF_MEMORY;
-      }
+      retCode = SetupCameraForSeqAcquisition(numImages);
    }
       //// Set the frame rate to that held by the frame rate holder. Check the limits
       //double held_fr = 0.0;
@@ -1009,36 +1032,13 @@ int CAndorSDK3Camera::StartSequenceAcquisition(long numImages, double interval_m
 
    if (DEVICE_OK == retCode)
    {
-      double d_exp = GetExposure();
-      currentSeqExposure_ = static_cast<unsigned int>(d_exp);
-      try
-      {
-         startAcquisitionCommand->Do();
-         if (snapShotController_->isSoftware())
-         {
-            sendSoftwareTrigger->Do();
-         }
-      }
-      catch (NoMemoryException & e)
-      {
-         string s("[StartSequenceAcquisition] NoMemoryException: ");
-         s += e.what();
-         LogMessage(s);
-         bufferControl->Flush();
-         CleanUpDeviceCircularBuffer();
-         retCode = DEVICE_OUT_OF_MEMORY;
-      }
-      catch (exception & e)
-      {
-         string s("[StartSequenceAcquisition] Caught Exception with message: ");
-         s += e.what();
-         LogMessage(s);
-         retCode = DEVICE_ERR;
-      }
+      retCode = CameraStart();
    }
 
    if (DEVICE_OK == retCode)
    {
+      double d_exp = GetExposure();
+      currentSeqExposure_ = static_cast<unsigned int>(d_exp);
       keep_trying_ = true;
       thd_->Start(numImages, interval_ms);
       stopOnOverflow_ = stopOnOverflow;
@@ -1141,6 +1141,43 @@ int CAndorSDK3Camera::InsertImage()
    return ret;
 }
 
+
+int CAndorSDK3Camera::checkForBufferOverflow()
+{
+   int ret = DEVICE_ERR;
+   if (eventsManager_->IsEventRegistered(CEventsManager::EV_BUFFER_OVERFLOW_EVENT) )
+   {
+      if (eventsManager_->HasEventFired(CEventsManager::EV_BUFFER_OVERFLOW_EVENT) )
+      {
+         LogMessage("[ThreadRun] HW Buffer Overflow event, acquisition was aborted, on-head RAM empty");
+         eventsManager_->ResetEvent(CEventsManager::EV_BUFFER_OVERFLOW_EVENT);
+         ret = AT_ERR_HARDWARE_OVERFLOW;
+      }
+   }
+   return ret;
+}
+
+bool CAndorSDK3Camera::waitForData(unsigned char *& return_buffer, int & buffer_size)
+{
+   bool got_image = false;
+   bool endExpEventFired = false;
+   bool softwareTrigger = snapShotController_->isSoftware();
+   if (softwareTrigger && eventsManager_->IsEventRegistered(CEventsManager::EV_EXPOSURE_END_EVENT) )
+   {
+      endExpEventFired = eventsManager_->WaitForEvent(CEventsManager::EV_EXPOSURE_END_EVENT, INFINITE);
+      
+      if (endExpEventFired)
+      {
+         sendSoftwareTrigger->Do();
+      }
+   }
+
+   int timeout_ms = currentSeqExposure_ + WAITBUFFER_TIMEOUT_MILLISECONDS;
+   got_image = bufferControl->Wait(return_buffer, buffer_size, timeout_ms);
+   return got_image;
+}
+
+
 /*
  * Do actual capturing
  * Called from inside the thread  
@@ -1156,7 +1193,7 @@ int CAndorSDK3Camera::ThreadRun(void)
    {
       try
       {
-         got_image = bufferControl->Wait(return_buffer, buffer_size, WAITBUFFER_TIMEOUT_MILLISECONDS);
+         got_image = waitForData(return_buffer, buffer_size);
       }
       catch (exception & e)
       {
@@ -1169,32 +1206,15 @@ int CAndorSDK3Camera::ThreadRun(void)
          LogMessage("[ThreadRun] Unrecognised Exception caught!");
       }
 
-      if (!got_image && WAITBUFFER_TIMEOUT_MILLISECONDS >= currentSeqExposure_)
+      if (!got_image)
       {
          LogMessage("[ThreadRun] WaitBuffer returned false, no data!");
-         if (eventsManager_->IsEventRegistered(CEventsManager::EV_BUFFER_OVERFLOW_EVENT) )
+         ret = checkForBufferOverflow();
+         if (AT_ERR_HARDWARE_OVERFLOW == ret)
          {
-            if (eventsManager_->HasEventFired(CEventsManager::EV_BUFFER_OVERFLOW_EVENT) )
-            {
-               LogMessage("[ThreadRun] HW Buffer Overflow event, acquisition was aborted, on-head RAM empty");
-               eventsManager_->ResetEvent(CEventsManager::EV_BUFFER_OVERFLOW_EVENT);
-               ret = AT_ERR_HARDWARE_OVERFLOW;
-            }
-            else
-            {
-               //Must wait untill Micro-Manager clears MMCore CB to generate timeout/force error
-               // then will stop sequence and set keep_trying_ to false, break out cleanly.
-               do {
-                  Sleep(1000);
-               } while (keep_trying_);
-            }
+            break;
          }
       }
-   }
-
-   if (snapShotController_->isSoftware())
-   {
-      sendSoftwareTrigger->Do();
    }
 
    if (got_image)
@@ -1333,6 +1353,7 @@ int MySequenceThread::svc(void) throw()
       else if (AT_ERR_HARDWARE_OVERFLOW == ret)
       {
          camera_->LogMessage("[MySequenceThread::svc] Internal Hardware Buffer Overflow; Thread exiting...");
+         //camera_->GetCoreCallback()->PostError(ret, "Internal Hardware Buffer Overflow occured");
       }
       else if (DEVICE_OK != ret)
       {

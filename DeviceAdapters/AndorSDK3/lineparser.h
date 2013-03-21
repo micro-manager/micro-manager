@@ -3,7 +3,7 @@
 #ifndef lineparserH
 #define lineparserH
 
-#include "andorvartypes.h"
+typedef unsigned int andoru32;
 
 class TLineParser
 {
