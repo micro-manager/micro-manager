@@ -2,6 +2,7 @@
   (:import (java.awt.geom Point2D$Double)
            (javax.swing.event ChangeListener))
   (:require [slide-explorer.user-controls :as user-controls]
+            [slide-explorer.view :as view]
             [slide-explorer.affine :as affine]
             [org.micromanager.mm :as mm]))
 
@@ -72,9 +73,9 @@
     (proxy [ChangeListener] []
       (stateChanged [_] (update-positions-atom! screen-state-atom)))))
 
-(defn handle-positions [panel screen-state-atom]
+(defn handle-positions [screen-state-atom]
   (update-positions-atom! screen-state-atom)
   (user-controls/handle-control-click
-    panel
+    (view/panel screen-state-atom)
     (fn [x y] (toggle-position screen-state-atom x y)))
   (follow-positions! screen-state-atom))

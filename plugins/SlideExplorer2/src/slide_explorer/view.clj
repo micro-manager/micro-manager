@@ -202,18 +202,18 @@
   
 ;; MAIN WINDOW AND PANEL
 
-(defn main-panel [screen-state overlay-tiles-atom]
+(defn create-panel [screen-state-atom overlay-tiles-atom]
   (doto
     (proxy [JPanel] []
       (paintComponent [^Graphics graphics]
         (proxy-super paintComponent graphics)
-        (paint-screen graphics @screen-state overlay-tiles-atom)))
+        (paint-screen graphics @screen-state-atom overlay-tiles-atom)))
     (.setBackground Color/BLACK)))
     
 (defn main-frame
   "Creates an empty JFrame."
-  []
-  (doto (JFrame. "Slide Explorer II")
+  [filename]
+  (doto (JFrame. (str "Slide Explorer II: " filename))
     (.setBounds 10 10 500 500)
     .show))
     
@@ -224,18 +224,22 @@
               :channels (sorted-map)
               :positions #{}))
 
-(defn view-panel
+(defn view
   "Creates a view panel that obeys the settings in screen-state."
   [memory-tile-atom settings]
-  (let [screen-state (atom (merge default-settings
+  (let [screen-state-atom (atom (merge default-settings
                                   settings))
         overlay-tiles (tile-cache/create-tile-cache 100)
-        panel (main-panel screen-state overlay-tiles)]
-    (load-visible-only screen-state
+        panel (create-panel screen-state-atom overlay-tiles)]
+    (load-visible-only screen-state-atom
                        memory-tile-atom
                        overlay-tiles)
-    (paint/repaint-on-change panel [overlay-tiles screen-state]); [memory-tile-atom])
-    [panel screen-state]))
+    (paint/repaint-on-change panel [overlay-tiles screen-state-atom]); [memory-tile-atom])
+    (alter-meta! screen-state-atom assoc ::panel panel)
+    screen-state-atom))
+
+(defn panel [screen-state-atom]
+  (::panel (meta screen-state-atom)))
 
 (defn create-split-pane
   "Creates a JSplitPane in a parent component with left and right child components."
@@ -250,19 +254,24 @@
 (defn show
   "Show the two-view Slide Explorer window."
   [memory-tile-atom settings]
-  (let [frame (main-frame)
-        [panel screen-state] (view-panel memory-tile-atom settings)
-        [panel2 screen-state2] (view-panel memory-tile-atom settings)
-        split-pane (create-split-pane (.getContentPane frame) panel panel2)
-        widgets {:frame frame :left-panel panel :right-panel panel2
-                 :split-pane split-pane :content-pane (.getContentPane frame)}]     
+  (let [frame (main-frame (.getAbsolutePath (tile-cache/tile-dir memory-tile-atom)))
+        screen-state-atom (view memory-tile-atom settings)
+        screen-state-atom2 (view memory-tile-atom settings)
+        panel1 (panel screen-state-atom)
+        panel2 (panel screen-state-atom2)
+        split-pane (create-split-pane (.getContentPane frame) panel1 panel2)
+        widgets {:frame frame
+                 :left-panel panel1
+                 :right-panel panel2
+                 :split-pane split-pane
+                 :content-pane (.getContentPane frame)}]     
     (user-controls/setup-fullscreen frame)
-    (user-controls/make-view-controllable widgets screen-state)
-    (user-controls/handle-resize panel2 screen-state2)
-    (user-controls/handle-1x-view screen-state screen-state2)
+    (user-controls/make-view-controllable widgets screen-state-atom)
+    (user-controls/handle-resize panel2 screen-state-atom2)
+    (user-controls/handle-1x-view screen-state-atom screen-state-atom2)
     (.show frame)
     (def w widgets)
-    (def ss screen-state)
-    (def ss2 screen-state2)
+    (def ss screen-state-atom)
+    (def ss2 screen-state-atom2)
     (def mt memory-tile-atom)
-    [screen-state panel]))
+    screen-state-atom))

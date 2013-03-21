@@ -185,7 +185,6 @@
          (remove acquired-this-slice)
          first)))
 
-
 ;; tile acquisition management
 
 (def image-processing-executor (Executors/newFixedThreadPool 1))
@@ -294,9 +293,11 @@ Would you like to run automatic pixel calibration?"
         (swap! screen-state-atom assoc :xy-stage-position
                (affine/point-to-vector pixel))))))
 
-(defn double-click-to-navigate [panel screen-state-atom]
-  (user-controls/handle-double-click panel (partial navigate screen-state-atom)))
-
+(defn double-click-to-navigate [screen-state-atom]
+  (user-controls/handle-double-click
+    (view/panel screen-state-atom)
+    (partial navigate screen-state-atom)))
+ 
 (defn explore-when-needed [screen-state-atom explore-fn]
   (mm/core waitForSystem)
   (add-watch screen-state-atom "explore"
@@ -305,7 +306,7 @@ Would you like to run automatic pixel calibration?"
                  (explore-fn))))
   (explore-fn))
   
-(defn new-acquisition-session [screen-state-atom panel memory-tiles]
+(defn new-acquisition-session [screen-state-atom memory-tiles]
   (let [acquired-images (atom #{})
         dir (tile-cache/tile-dir memory-tiles)
         acq-settings (create-acquisition-settings)
@@ -333,13 +334,12 @@ Would you like to run automatic pixel calibration?"
               :tile-dimensions [width height]
               :x (long (/ width 2))
               :y (long (/ height 2))}))
-    (double-click-to-navigate panel screen-state-atom)
+    (double-click-to-navigate screen-state-atom)
     (watch-xy-stages screen-state-atom)
-    (positions/handle-positions panel screen-state-atom)
-    (user-controls/handle-mode-keys panel screen-state-atom)
+    (positions/handle-positions screen-state-atom)
+    (user-controls/handle-mode-keys (view/panel screen-state-atom) screen-state-atom)
     (explore-when-needed screen-state-atom explore-fn)
     (def ai acquired-images)
-    (def pnl panel)
     (def affine affine-stage-to-pixel)))
   
 
@@ -376,14 +376,14 @@ Would you like to run automatic pixel calibration?"
                      (load-settings dir)
                      {:tile-dimensions [512 512]})
           memory-tiles (tile-cache/create-tile-cache 200 dir (not new?))
-          [screen-state panel] (view/show memory-tiles settings)]
+          screen-state-atom (view/show memory-tiles settings)]
       (if new?
-        (new-acquisition-session screen-state panel memory-tiles)
+        (new-acquisition-session screen-state-atom memory-tiles)
         (future (let [indices (disk/available-keys dir)]
-                  (provide-constraints screen-state indices))))
-      (save-settings dir @screen-state)
+                  (provide-constraints screen-state-atom indices))))
+      (save-settings dir @screen-state-atom)
       (def mt memory-tiles)
-      (def ss screen-state)))
+      (def ss screen-state-atom)))
   ([]
     (go (io/file (str "tmp" (rand-int 10000000))) true)))
   
