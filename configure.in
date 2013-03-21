@@ -306,20 +306,19 @@ AC_C_INLINE
 AC_HEADER_STDC
 AC_CHECK_FUNCS([memset])
 
-# Check for Device Adapters with proprietary code
-AC_MSG_CHECKING(for proprietary DeviceAdapters)
-AM_CONDITIONAL(BUILD_SECRETDEVICEADAPTERS, test -f "SecretDeviceAdapters/configure.in")
-if test -z "${BUILD_SECRETDEVICEADAPTERS}" ; then
-   AC_CONFIG_SUBDIRS([SecretDeviceAdapters])
-fi
-
-
 # Install Device Adapter API library and headers
 install_mmdevapi=false
 AC_ARG_ENABLE(inst-devapi,
     [  --enable-inst-devapi    Install the Device Adapter API library and headers ],
     [ install_mmdevapi=true ])
 AM_CONDITIONAL([INSTALL_MMDEVAPI], [test x$install_mmdevapi = xtrue])
+
+# Check for Device Adapters with proprietary code
+AC_MSG_CHECKING(for proprietary DeviceAdapters)
+AM_CONDITIONAL(BUILD_SECRETDEVICEADAPTERS, test -f "SecretDeviceAdapters/configure.in")
+if test -z "${BUILD_SECRETDEVICEADAPTERS}" ; then
+   AC_CONFIG_SUBDIRS([SecretDeviceAdapters])
+fi
 
 AC_CONFIG_SUBDIRS(DeviceAdapters DeviceKit)
 AC_OUTPUT(Makefile MMCore/Makefile MMCoreJ_wrap/Makefile mmstudio/Makefile acqEngine/Makefile plugins/Makefile scripts/Makefile autofocus/Makefile MMDevice/Makefile  MMCorePy_wrap/Makefile)

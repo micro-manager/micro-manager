@@ -27,7 +27,7 @@
 #ifndef _PVCAM_H_
 #define _PVCAM_H_
 
-#include "../../MMDevice/DeviceBase.h"
+#include "DeviceBase.h"
 #include "../../MMDevice/ImgBuffer.h"
 #include "../../MMDevice/Debayer.h"
 #include "../../MMDevice/DeviceUtils.h"

@@ -135,6 +135,17 @@ ClojureEditor.jar:  \
 	## Work around bug in 'jar': jar cf MM_.jar -C bin/ bin/* does not work
 	cd build && jar cf ../ClojureEditor.jar * 
 
+
+HCS.jar:  \
+	$(srcdir)/HCS/src/com/strandgenomics/imaging/hcs/*.java
+	test -d build || mkdir build
+	rm -rf build/*
+	$(JAVAC) -source 1.5 -target 1.5 -sourcepath $(srcdir):. -classpath $(srcdir)/HCS.jar:$(CLASSEXT)/*:../bin/MMCoreJ.jar:../mmstudio/MMJ_.jar:. $(srcdir)/HCS/src/com/strandgenomics/imaging/hcs/*.java -d build
+	## Work around bug in 'jar': jar cf MM_.jar -C bin/ bin/* does not work
+	cd build && jar cf ../HCS.jar * 
+
+
+
 all: PixelCalibrator.jar RecallPlugin.jar StageControl.jar MultiCamera.jar CRISP.jar Big.jar NewImageFlipper.jar SlideExplorer.jar DataBrowser.jar ClojureEditor.jar SplitView.jar Gaussian.jar IntelligentAcquisition.jar BFCorrector.jar
 
 
