@@ -17,10 +17,14 @@
   (doseq [callback (::tile-listeners (meta memory-tile-atom))]
     (callback)))
 
-(defn tile-dir [memory-tile-atom]
+(defn tile-dir
+  "Returns the associated directory for a tile cache."
+  [memory-tile-atom]
   (::directory (meta memory-tile-atom)))
 
-(defn tile-dir! [memory-tile-atom dir]
+(defn tile-dir!
+  "Sets the associated directory for a tile cache."
+  [memory-tile-atom dir]
   (alter-meta! memory-tile-atom assoc ::directory dir))
 
 (defn add-tile

@@ -454,6 +454,12 @@
 (defn handle-toggle-split [widgets]
   (bind-window-keys (:frame widgets) ["1"] #(toggle-1x-view widgets)))
 
+(defn handle-window-closed [frame screen-state-atom]
+  (.addWindowListener frame
+    (proxy [WindowAdapter] []
+      (windowClosed [e]
+        (swap! screen-state-atom assoc :mode :closed)))))
+
 ;; constraints
 
 (defn within? [x [a b]]
@@ -474,16 +480,19 @@
     (fn [_ _] (dorun (map #(constrain screen-state-atom %)
                           [:x :y :z])))))
 
+
 ;; main function enabling controls of the primary screen
 
-(defn make-view-controllable [widgets screen-state-atom]
-  (let [panel (:left-panel widgets)]
-    ((juxt handle-drags handle-arrow-pan handle-wheel
-           handle-resize handle-pointing handle-mouse-zoom)
-           panel screen-state-atom)
-    ((juxt handle-reset handle-zoom handle-dive) ; watch-keys)
-           (.getTopLevelAncestor panel) screen-state-atom)
-    (handle-toggle-split widgets)
-    (enforce-constraints screen-state-atom)))
+(defn make-view-controllable
+  [{:keys [left-panel frame] :as widgets}
+   screen-state-atom]
+  ((juxt handle-drags handle-arrow-pan handle-wheel
+         handle-resize handle-pointing handle-mouse-zoom)
+         left-panel screen-state-atom)
+  ((juxt handle-reset handle-zoom handle-dive) ; watch-keys)
+         frame screen-state-atom)
+  (handle-toggle-split widgets)
+  (handle-window-closed frame screen-state-atom)
+  (enforce-constraints screen-state-atom))
     
  

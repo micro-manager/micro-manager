@@ -95,20 +95,7 @@
     (overlay-memo procs lut-maps)))
 
 ;; PAINTING
-
-(comment
-(defn draw-test-tile [g x y]
-  (doto g
-    (.setColor Color/YELLOW)
-    (.drawRect (+ 2 x) ( + y 2) 508 508)))
-;
-(defn show-mouse-pos [graphics screen-state]
-  (let [{:keys [x y]} (:mouse screen-state)]
-    (when (and x y)
-      (doto graphics
-        (.setColor Color/BLUE)
-        (.drawRect (- x 25) (- y 25) 50 50))))))
-  
+ 
 (defn paint-tiles [^Graphics2D g overlay-tiles-atom screen-state]
   (doseq [tile-index (visible-tile-indices screen-state :overlay)] 
     (when-let [image (tile-cache/get-tile
@@ -215,6 +202,7 @@
   [filename]
   (doto (JFrame. (str "Slide Explorer II: " filename))
     (.setBounds 10 10 500 500)
+    (.setDefaultCloseOperation JFrame/DISPOSE_ON_CLOSE)
     .show))
     
 (def default-settings
