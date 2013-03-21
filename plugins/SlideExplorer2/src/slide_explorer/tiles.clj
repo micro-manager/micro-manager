@@ -92,10 +92,11 @@
   (let [tags [:nx :ny :nz]]
     (zipmap tags (map #(index-range acquired-images %) tags))))
 
-(defn nav-range [{:keys [nx ny nz]} [tile-width tile-height]]
-  {:z nz
-   :x (when nx [(* tile-width (first nx)) (* tile-width (inc (second nx)))])
-   :y (when ny [(* tile-height (first ny)) (* tile-height (inc (second ny)))])})
+(defn nav-range [acquired-images [tile-width tile-height]]
+  (let [{:keys [nx ny nz]} (tile-range acquired-images)]
+    {:z nz
+     :x (when nx [(* tile-width (first nx)) (* tile-width (inc (second nx)))])
+     :y (when ny [(* tile-height (first ny)) (* tile-height (inc (second ny)))])}))
 
 
 

@@ -36,7 +36,7 @@
 (defn insert-image!
   "Inserts one ImageProcessor into another."
   [proc-host proc-guest x-host y-host]
-  (when proc-guest
+  (when (and proc-guest proc-host)
     (doto proc-host
       (.insert proc-guest x-host y-host))))
 
