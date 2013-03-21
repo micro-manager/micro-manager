@@ -189,10 +189,11 @@
 
 (def image-processing-executor (Executors/newFixedThreadPool 1))
  
-(defn add-tiles-at [memory-tiles {:keys [nx ny nz] :as tile-index}
-                    affine-stage-to-pixel
+(defn add-tiles-at [memory-tiles
+                    {:keys [nx ny nz] :as tile-index}
                     {:keys [z-origin slice-size-um
-                            tile-dimensions acq-settings] :as screen-state}
+                            tile-dimensions acq-settings
+                            affine-stage-to-pixel] :as screen-state}
                     acquired-images]
   (swap! acquired-images conj (select-keys tile-index [:nx :ny :nz :nt]))
   (let [[tile-width tile-height] tile-dimensions]
@@ -213,26 +214,25 @@
 (defn acquire-next-tile
   [memory-tiles-atom
    screen-state
-   acquired-images affine]
+   acquired-images]
   (when-let [next-tile (next-tile screen-state
                                   acquired-images)]
-    (add-tiles-at memory-tiles-atom next-tile affine 
-                  screen-state
-                  acquired-images)
+    (add-tiles-at memory-tiles-atom next-tile 
+                  screen-state acquired-images)
     next-tile))
 
 (def explore-executor (Executors/newFixedThreadPool 1))
 
-(defn explore [memory-tiles-atom screen-state-atom acquired-images
-               affine]
+(defn explore [memory-tiles-atom screen-state-atom acquired-images]
   (reactive/submit explore-executor
                    #(when (and (= :explore (:mode @screen-state-atom))
                                (acquire-next-tile memory-tiles-atom
                                                   @screen-state-atom
-                                                  acquired-images
-                                                  affine))
-                      (trampoline explore memory-tiles-atom screen-state-atom
-                                          acquired-images affine))))
+                                                  acquired-images))
+                      (trampoline explore
+                                  memory-tiles-atom
+                                  screen-state-atom
+                                  acquired-images))))
 
 (defn navigate [screen-state-atom _ _]
   (when (#{:navigate :explore} (:mode @screen-state-atom))
@@ -318,8 +318,7 @@ Would you like to run automatic pixel calibration?"
                                 (Point. 0 0) affine-stage-to-pixel)
                               z-origin
                               acq-settings)
-        explore-fn #(explore memory-tiles screen-state-atom acquired-images
-                             affine-stage-to-pixel)]
+        explore-fn #(explore memory-tiles screen-state-atom acquired-images)]
     (let [width (mm/core getImageWidth)
           height (mm/core getImageHeight)]
       (swap! screen-state-atom merge
