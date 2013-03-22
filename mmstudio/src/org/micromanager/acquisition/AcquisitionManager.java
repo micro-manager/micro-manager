@@ -8,6 +8,8 @@ import java.awt.event.WindowEvent;
 import java.util.Enumeration;
 import java.util.Hashtable;
 import java.util.Set;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import java.util.prefs.Preferences;
 import mmcorej.TaggedImage;
 import org.json.JSONArray;
@@ -212,6 +214,13 @@ public class AcquisitionManager {
       }
 
       int f = 1 + acq.getLastAcquiredFrame();
+      try {
+         //update summary metadata
+         acq.getSummaryMetadata().put("Frames", f+1);
+      } catch (JSONException ex) {
+         ReportingUtils.logError("Couldn't update number of frames in album summary metadata");
+      }
+      
       //This makes sure that the second multicamera image has the correct frame index
       if (numChannels > 1) {
          try {    // assumes that multi channel additions add channel 0 first
@@ -231,6 +240,7 @@ public class AcquisitionManager {
          ReportingUtils.showError(ex);
       }
       acq.insertImage(image);
+      
 
       //Apply appropriate contrast            
       if (numChannels == 1) { //monochrome
