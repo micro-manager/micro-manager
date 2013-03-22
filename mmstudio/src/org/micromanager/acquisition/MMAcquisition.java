@@ -385,7 +385,7 @@ public class MMAcquisition {
          JSONObject summaryMetadata = new JSONObject(summary_, keys);
          CMMCore core = MMStudioMainFrame.getInstance().getCore();
 
-         summaryMetadata.put("BitDepth", core.getImageBitDepth());
+         summaryMetadata.put("BitDepth", bitDepth_);
          summaryMetadata.put("Channels", numChannels_);
          setDefaultChannelTags(summaryMetadata);
          summaryMetadata.put("Comment", comment_);
