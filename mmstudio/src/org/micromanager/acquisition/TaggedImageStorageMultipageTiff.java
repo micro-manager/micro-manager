@@ -521,13 +521,13 @@ public final class TaggedImageStorageMultipageTiff implements TaggedImageStorage
          try {
             String prefix = summaryMetadata_.getString("Prefix");
             if (prefix.length() == 0) {
-               baseFilename = "MMImages";
+               baseFilename = "MMStack";
             } else {
-               baseFilename = prefix + "_MMImages";
+               baseFilename = prefix + "_MMStack";
             }
          } catch (JSONException ex) {
             ReportingUtils.logError("Can't find Prefix in summary metadata");
-            baseFilename = "MMImages";
+            baseFilename = "MMStack";
          }
 
          if (numPositions_ > 1 && splitByXYPosition_) {
