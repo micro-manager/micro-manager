@@ -340,8 +340,9 @@ Would you like to run automatic pixel calibration?"
     (positions/handle-positions screen-state-atom)
     (user-controls/handle-mode-keys (view/panel screen-state-atom) screen-state-atom)
     (explore-when-needed screen-state-atom explore-fn)
-    (def ai acquired-images)
-    (def affine affine-stage-to-pixel)))
+    ;(def ai acquired-images)
+    ;(def affine affine-stage-to-pixel)
+    ))
   
 
 ; Overall scheme

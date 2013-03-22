@@ -222,7 +222,7 @@
     (load-visible-only screen-state-atom
                        memory-tile-atom
                        overlay-tiles)
-    (paint/repaint-on-change panel [overlay-tiles screen-state-atom]); [memory-tile-atom])
+    (paint/repaint-on-change panel [overlay-tiles screen-state-atom])
     (alter-meta! screen-state-atom assoc ::panel panel)
     screen-state-atom))
 
@@ -259,8 +259,8 @@
     (user-controls/handle-1x-view screen-state-atom screen-state-atom2)
     (user-controls/handle-window-closed frame screen-state-atom screen-state-atom2 memory-tile-atom)
     (.show frame)
-    (def w widgets)
-    (def ss screen-state-atom)
-    (def ss2 screen-state-atom2)
+    ;(def w widgets)
+    ;(def ss screen-state-atom)
+    ;(def ss2 screen-state-atom2)
     ;(def mt memory-tile-atom)
     screen-state-atom))
