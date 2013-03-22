@@ -23,6 +23,7 @@
             [slide-explorer.disk :as disk]
             [slide-explorer.positions :as positions]
             [slide-explorer.store :as store]
+            [slide-explorer.utils :as utils]
             [slide-explorer.reactive :as reactive]))
 
 
@@ -340,9 +341,9 @@ Would you like to run automatic pixel calibration?"
     (positions/handle-positions screen-state-atom)
     (user-controls/handle-mode-keys (view/panel screen-state-atom) screen-state-atom)
     (explore-when-needed screen-state-atom explore-fn)
-    ;(def ai acquired-images)
-    ;(def affine affine-stage-to-pixel)
-    ))
+    (when @utils/test
+      (def ai acquired-images)
+      (def affine affine-stage-to-pixel))))
   
 
 ; Overall scheme

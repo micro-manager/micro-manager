@@ -13,6 +13,7 @@
             [slide-explorer.image :as image]
             [slide-explorer.user-controls :as user-controls]
             [slide-explorer.paint :as paint]
+            [slide-explorer.utils :as utils]
             [clojure.core.memoize :as memo]))
 
 ; Order of operations:
@@ -259,8 +260,9 @@
     (user-controls/handle-1x-view screen-state-atom screen-state-atom2)
     (user-controls/handle-window-closed frame screen-state-atom screen-state-atom2 memory-tile-atom)
     (.show frame)
-    ;(def w widgets)
-    ;(def ss screen-state-atom)
-    ;(def ss2 screen-state-atom2)
-    ;(def mt memory-tile-atom)
+    (when @utils/test
+      (def w widgets)
+      (def ss screen-state-atom)
+      (def ss2 screen-state-atom2)
+      (def mt memory-tile-atom))
     screen-state-atom))

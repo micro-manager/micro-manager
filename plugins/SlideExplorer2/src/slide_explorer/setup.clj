@@ -1,6 +1,7 @@
 (ns slide-explorer.setup
   (:require [slide-explorer.user-controls :as controls]
-            [slide-explorer.main :as main])
+            [slide-explorer.main :as main]
+            [slide-explorer.utils :as utils])
   (:import (javax.swing JFrame JButton JTextArea)
            (java.awt FlowLayout)
            (java.awt.event ActionListener)))
@@ -60,4 +61,5 @@
   (doto @single-frame .show))
                      
 (defn test-frame []
+  (reset! utils/test true)
   (construct-frame nil))
