@@ -32,6 +32,7 @@ import ij.process.ImageProcessor;
 import ij.process.ShortProcessor;
 
 import java.awt.Color;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.prefs.Preferences;
 
@@ -340,7 +341,7 @@ public class Autofocus extends AutofocusBase implements org.micromanager.api.Aut
             windo[7] = (double)impro.getPixel(ow+i,oh+j+1);
             windo[8] = (double)impro.getPixel(ow+i+1,oh+j+1);
 
-            medPix[i][j] = findMed(windo);
+            medPix[i][j] = median(windo);
          } 
       }
 
@@ -385,7 +386,7 @@ public class Autofocus extends AutofocusBase implements org.micromanager.api.Aut
             windo[7] = (double)impro.getPixel(ow+i,oh+j+1);
             windo[8] = (double)impro.getPixel(ow+i+1,oh+j+1);
 
-            medPix[i][j] = findMed(windo);
+            medPix[i][j] = median(windo);
          } 
 	 }*/        
 
@@ -441,19 +442,11 @@ public class Autofocus extends AutofocusBase implements org.micromanager.api.Aut
       return implus;
    }
 
-   private double findMed(double[] arr){ 
-      double tmp;
-      for(int i=0; i<8; i++){
-         for(int j=0; j<8-i; j++){
-            if (arr[j+1]<arr[j]){
-               tmp = arr[j];
-               arr[j]=arr[j+1];
-               arr[j+1]=tmp;
-            }
-         }
-      }
-      return arr[5];
-
+   private double median(double[] arr){ 
+      double [] newArray = Arrays.copyOf(arr, arr.length);
+      Arrays.sort(newArray);
+      int middle = newArray.length/2;
+      return (newArray.length%2 == 1) ? newArray[middle] : (newArray[middle-1] + newArray[middle]) / 2.0;
    }
 
    public double fullFocus() {
