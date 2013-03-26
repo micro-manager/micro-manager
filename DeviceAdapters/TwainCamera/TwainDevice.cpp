@@ -46,6 +46,9 @@
 //#define mmdebugmessage(x) LogMessage((x), true)
 #define UNREFERENCEDPARAMETER(p__) (p__)
 
+#define TWAIN_TIMEOUT 10.000
+#define PEEK_TIMEOUT  0.100
+
 extern HINSTANCE g_hinstDLL;
 // define some 'container' types for the twain calls
 typedef struct {
@@ -105,34 +108,104 @@ int GetPaletteSize(BITMAPINFOHEADER& bmInfo)
 
 // the worker thread
 
+class TwImpl;
+
 class WorkerThread : public MMDeviceThreadBase
 {
-   public:
-      WorkerThread() : 
-      busy_(false), stop_(false) {}
-      ~WorkerThread() {}
-      int svc (void);
+public:
+	WorkerThread(TwImpl *parent) : busy_(false), stop_(false), stopped_(true), dummyWindowHandle_(0), parent_(parent),
+		m_hTwainDLL(NULL), m_pDSMProc(NULL), m_libName("TWAINDSM.dll"), m_driverValid(false)
+	{
+		pBusyLock_ = new MMThreadLock();
+		pStopLock_ = new MMThreadLock();
+	}
+	~WorkerThread() {
+		delete pBusyLock_;
+		delete pStopLock_;
+	}
+	void Init(void);
+	bool Close(void) {
+		bool ret = (FreeLibrary(m_hTwainDLL) != 0);
+		m_hTwainDLL = NULL;
+		return ret;
+	}
+	int svc (void);
+	bool TwainCall(pTW_IDENTITY pOrigin,pTW_IDENTITY pDest,
+	               TW_UINT32 DG,TW_UINT16 DAT,TW_UINT16 MSG,
+	               TW_MEMREF pData, TW_UINT16 *preturn = NULL);
+	HWND GetWindowHandle() { return dummyWindowHandle_; }
 
-      void Stop() {stop_ = true;}
-      void Start() 
+	void Stop() {
+		// indicate that it's time to close shop
 		{
-			stop_ = false;
-			activate();
+			MMThreadGuard g(*pStopLock_);
+			stop_ = true;
+			stopped_ = false;
 		}
-   private:
-      bool busy_;
-      bool stop_;
+		// wait for the thread to stop
+		while(IsRunning())
+			CDeviceUtils::SleepMs(1);
+		// all done
+		{
+			MMThreadGuard g(*pStopLock_);
+			stop_ = false;
+			stopped_ = true;
+		}
+	}
+	void Start() { activate(); }
+	bool IsRunning() {
+		MMThreadGuard g(*pStopLock_);
+		return !stopped_;
+	}
+	bool KeepRunning() {
+		MMThreadGuard g(*pStopLock_);
+		return !stop_;
+	}
+
+private:
+	bool ThreadedTwainCall(pTW_IDENTITY pOrigin,pTW_IDENTITY pDest,
+	               TW_UINT32 DG,TW_UINT16 DAT,TW_UINT16 MSG,
+	               TW_MEMREF pData, TW_UINT16 *preturn = NULL);
+	void CreateDummyWindow(void);
+	bool IsBusy() {
+		MMThreadGuard g(*pBusyLock_);
+		return busy_;
+	}
+	void SetBusy(bool busy) {
+		MMThreadGuard g(*pBusyLock_);
+		busy_ = busy;
+	}
+
+	TwImpl *parent_;
+
+	HINSTANCE m_hTwainDLL;
+	DSMENTRYPROC m_pDSMProc;
+	std::string m_libName;
+	bool m_driverValid;
+
+	HWND dummyWindowHandle_;
+
+	MMThreadLock* pBusyLock_;
+	bool busy_;
+
+	MMThreadLock* pStopLock_;
+	bool stopped_;
+	bool stop_;
+
+	struct {
+		pTW_IDENTITY pOrigin;
+		pTW_IDENTITY pDest;
+		TW_UINT32 DG;
+		TW_UINT16 DAT;
+		TW_UINT16 MSG;
+		TW_MEMREF pData;
+		TW_UINT16 *preturn;
+		bool *pretval;
+	} nextOperation_;
 };
 
 
-int WorkerThread::svc(void)
-{
-   return 0;
-}
-
-// improvement: move this to a class variable.
-WorkerThread* pWorkThread_g = NULL;
-
+// the TWAIN implementation
 
 class TwImpl
 {
@@ -140,46 +213,70 @@ public:
 	// the only ctor for the implementation class -
 	// construct the twain device, open the data source manager, count = -1 signifies an arbitrary number of images
 	// enumerate the available sources and select the default source and so forth
-	TwImpl(TwainCamera* pcam__/*, std::map<long long, std::pair<uint16_t,uint16_t> > roiImageSizes__*/): pcamera_(pcam__), m_hTwainDLL(NULL), m_pDSMProc(NULL), m_libName("TWAINDSM.dll"), count_(1), pbuf_(NULL), width_(0), height_(0), 
-		bytesppixel_(0), sizeofbuf_(0),sourceisopen_(false), dummyWindowHandle_(0), callbackValid_(false), exposureSettable_(false), exposureGettable_(false)/*, roiImageSizes_r(roiImageSizes__)*/
+	TwImpl(TwainCamera* pcam__/*, std::map<long long, std::pair<uint16_t,uint16_t> > roiImageSizes__*/): pcamera_(pcam__), count_(1), pbuf_(NULL), width_(0), height_(0), 
+		bytesppixel_(0), sizeofbuf_(0),sourceisopen_(false), callbackValid_(false), exposureSettable_(false), exposureGettable_(false)/*, roiImageSizes_r(roiImageSizes__)*/
 	{
 		// nasty old 'C' structs.
 		memset(&setROI_, 0, sizeof(setROI_));
 		memset(&initialFrame_, 0, sizeof(setROI_));
 		
-      if( NULL == pstateLock_s)
-         throw TwainBad("invalid lock object");
+		pWorkThread_ = new WorkerThread(this);
+		pWorkThread_->Start();
+		while(!pWorkThread_->IsRunning())
+			CDeviceUtils::SleepMs(1);
+		pstateLock_s = new MMThreadLock();
+		if(NULL == pstateLock_s)
+			throw TwainBad("invalid lock object");
 
-		MMThreadGuard g(*pstateLock_s);
-		twainState_s = PreSession;
+		SetState(PreSession);
 
 	};
 
+	void SetState(TwainStates newState)
+	{
+		MMThreadGuard g(*pstateLock_s);
+		twainState_s = newState;
+	}
+
+	TwainStates GetState(void) const
+	{
+		TwainStates state;
+
+		// actually obtain the current state
+		{
+			MMThreadGuard g(*pstateLock_s);
+			state = twainState_s;
+		}
+		return state;
+	}
+
+	double WaitForState(TwainStates desiredState, bool &success)
+	{
+		PerformanceTimer delay;
+
+		while(delay.elapsed() < TWAIN_TIMEOUT)
+		{
+			if(GetState() >= desiredState)
+			{
+				success = true;
+				return delay.elapsed();
+			}
+			::Sleep(10);
+		}
+		success = false;
+		return delay.elapsed();
+	}
 
 	void StartTwain(void)
 	{
 		MMThreadGuard g(*pstateLock_s);
 		bool reSelect = false;
 
-		while( twainState_s <= ManagerOpened)
-
+		while(twainState_s <= ManagerOpened)
 		{
-			if ( twainState_s <= PreSession)
+			if (twainState_s <= PreSession)
 			{
-				// start the Twain library
-				m_hTwainDLL  = LoadLibraryA(m_libName.c_str());
-				if(NULL == m_hTwainDLL) throw TwainBad("failed to load Twain library");
-		
-				// get the function
-				m_pDSMProc = (DSMENTRYPROC)GetProcAddress(m_hTwainDLL,(LPCSTR)1);
-				if (NULL == m_pDSMProc)
-				{
-					FreeLibrary(m_hTwainDLL);
-					m_hTwainDLL = NULL;
-					twainState_s = PreSession;
-					throw TwainBad("Twain library is incorrect");
-				}
-				m_driverValid = true;
+				pWorkThread_->Init();
 				// setup application's information for Twain
 				// Expects all the fields in appId_ to be set except for the id field.
 				appId_.Id = 0; // Initialize to 0 (Source Manager will assign real value)
@@ -203,11 +300,10 @@ public:
 				DbgBox(mezzz.str(), " twain debug", MB_OK&MB_SYSTEMMODAL);	
 
 			}
-			if( ManagerLoaded == twainState_s)
+			if(ManagerLoaded == twainState_s)
 			{
-
-				// open the datasource manager
-				if(!TwainCall(&appId_,NULL,DG_CONTROL,DAT_PARENT,MSG_OPENDSM,(TW_MEMREF)NULL)) throw TwainBad("failed to open data source manager");
+				// open the datasource manager (Note: some TWAIN 1.x devices require a parent window here)
+				if(!pWorkThread_->TwainCall(&appId_,NULL,DG_CONTROL,DAT_PARENT,MSG_OPENDSM,(TW_MEMREF)pWorkThread_->GetWindowHandle())) throw TwainBad("failed to open data source manager");
 
 				// check for DSM2 support
 
@@ -215,17 +311,12 @@ public:
 				DSMEntryPoints_.Size = sizeof(TW_ENTRYPOINT);
 
 				// get the entry points
-				TwainCall(&appId_,NULL,DG_CONTROL,DAT_ENTRYPOINT,MSG_GET,&DSMEntryPoints_); //throw TwainBad("get DSM entry points failed - need DSM 2 support");
+				pWorkThread_->TwainCall(&appId_,NULL,DG_CONTROL,DAT_ENTRYPOINT,MSG_GET,&DSMEntryPoints_); //throw TwainBad("get DSM entry points failed - need DSM 2 support");
 
 				std::ostringstream messs;
 				messs <<  "twimpl static callback function address is " << (void *)TwainCallback << std::endl;
 				OutputDebugString(messs.str().c_str());
 
-				//source dll should be able to accept 0 for the window handle, but several of them crash in that case
-				if( NULL != dummyWindowHandle_)
-					DestroyWindow(dummyWindowHandle_);
-				dummyWindowHandle_ = CreateDummyWindow();
-			
 				twainState_s = ManagerOpened; // TWAIN manager is running and ready to select and open a source 
 				ostringstream mezzz;
 				mezzz << __FILE__ << " " << __LINE__ << " TwImpl::StartTwain entered state " << twainState_s;
@@ -233,16 +324,16 @@ public:
 
 			}
 
-			if( ManagerOpened == twainState_s)
+			if(ManagerOpened == twainState_s)
 			{
-
+				TW_UINT16 ret;
 				// enumerate available image sources
 				TW_IDENTITY so;
 				// get the first source
 				availablesources_.clear();
-				if(!TwainCall(&appId_,NULL,DG_CONTROL,DAT_IDENTITY,MSG_GETFIRST,&so)) throw TwainBad("no Twain sources are available");
+				if(!pWorkThread_->TwainCall(&appId_,NULL,DG_CONTROL,DAT_IDENTITY,MSG_GETFIRST,&so)) throw TwainBad("no Twain sources are available");
 				availablesources_.insert(std::pair<std::string,TW_IDENTITY>(so.ProductName, so));
-				while(TwainCall(&appId_,NULL,DG_CONTROL,DAT_IDENTITY,MSG_GETNEXT,&so))
+				while(pWorkThread_->TwainCall(&appId_,NULL,DG_CONTROL,DAT_IDENTITY,MSG_GETNEXT,&so, &ret) && ret != TWRC_ENDOFLIST)
 				{
 					availablesources_.insert(std::pair<std::string,TW_IDENTITY>(so.ProductName, so));
 				}
@@ -265,14 +356,14 @@ public:
 					// get the default source and write its parameters onto source_,
 					// but client can still select a different source later
 					memset(&source_, 0, sizeof(source_));
-					if(!TwainCall(&appId_,NULL,DG_CONTROL,DAT_IDENTITY,MSG_GETDEFAULT,&source_)) throw TwainBad("failed to get default data source");
+					if(!pWorkThread_->TwainCall(&appId_,NULL,DG_CONTROL,DAT_IDENTITY,MSG_GETDEFAULT,&source_)) throw TwainBad("failed to get default data source");
 					ostringstream mezzz;
 					mezzz << __FILE__ << " " << __LINE__ << " TwImpl::StartTwain re-selected the default source ";
 					DbgBox(mezzz.str(), " twain debug", MB_OK&MB_SYSTEMMODAL);	
 				}
 
 				// this will pop up a dialogue from inside Twain "TWAINDSM.dll" and allow you select the source
-				//if( !TwainCall(&appId_,NULL,DG_CONTROL,DAT_IDENTITY,MSG_USERSELECT,&source_)) throw TwainBad("user selection of source failed");
+				//if(!pWorkThread_->TwainCall(&appId_,NULL,DG_CONTROL,DAT_IDENTITY,MSG_USERSELECT,&source_)) throw TwainBad("user selection of source failed");
 				
 				//std::string LeicaDS("Leica DFC280...DFC490");
 				//if(proName == LeicaDS)
@@ -296,30 +387,22 @@ public:
 		TW_IMAGEINFO info;
 		PerformanceTimer timer0;
 		std::ostringstream  messs;
-		PerformanceTimer delay;
+		bool foundState = false;
+		double timeout = WaitForState(TransferReady, foundState/*&*/);
 
-		while( delay.elapsed() < 0.050)
+		if (!foundState)
 		{
-			{
-				MMThreadGuard g(*pstateLock_s);
-				if( twainState_s < TransferReady) break;
-			}
-			::Sleep(10);
-		}
-		
-		{
-			MMThreadGuard g(*pstateLock_s);
-			if( twainState_s < TransferReady)
+			if(GetState() < TransferReady)
 			{
 
 				messs.str("");
-				messs << "Image transfer failed: " << twainState_s << " source never signaled 'Transfer Ready' (waited " << delay.elapsed()*1000. <<" sec)"  << std::endl;
+				messs << "[Get] Image transfer failed: " << GetState() << " source never signaled 'Transfer Ready' (waited " << timeout*1000. <<" ms)"  << std::endl;
 				throw TwainBad( messs.str().c_str());
 			}
 		}
 		// retrieve the current image info
 		PerformanceTimer timer1;	
-		retval = TwainCall(&appId_, &source_, DG_IMAGE, DAT_IMAGEINFO, MSG_GET,(TW_MEMREF)&info);
+		retval = pWorkThread_->TwainCall(&appId_, &source_, DG_IMAGE, DAT_IMAGEINFO, MSG_GET,(TW_MEMREF)&info);
 		if(!retval) throw TwainBad("failed to get image info");
 		
 		messs.str("");
@@ -350,7 +433,7 @@ public:
 
 		// retrieve the current frame layout
 		TW_IMAGELAYOUT layout;
-		retval = TwainCall(&appId_, &source_, DG_IMAGE, DAT_IMAGELAYOUT, MSG_GET,(TW_MEMREF)&layout);
+		retval = pWorkThread_->TwainCall(&appId_, &source_, DG_IMAGE, DAT_IMAGELAYOUT, MSG_GET,(TW_MEMREF)&layout);
 		if(!retval) throw TwainBad("failed to get image info");
 
 		OutputDebugFrame(" acquired image size: ", layout.Frame);
@@ -377,10 +460,10 @@ public:
 			// retrieve the current image data per se
 			timer1.Reset();
 
-			retval = TwainCall(&appId_, &source_, DG_IMAGE, DAT_IMAGENATIVEXFER, MSG_GET, &hBitmap);
+			retval = pWorkThread_->TwainCall(&appId_, &source_, DG_IMAGE, DAT_IMAGENATIVEXFER, MSG_GET, &hBitmap);
 			if(!retval)
 			{
-				twainState_s = SourceEnabled;
+				SetState(SourceEnabled);
 				throw TwainBad("failed image transfer");
 			}
 
@@ -472,7 +555,7 @@ public:
 
 			TW_PENDINGXFERS pendxfers;
 			memset( &pendxfers, 0, sizeof(pendxfers) );
-			bool ret = TwainCall(&appId_, &source_, DG_CONTROL, DAT_PENDINGXFERS, MSG_ENDXFER, (TW_MEMREF)&pendxfers);
+			bool ret = pWorkThread_->TwainCall(&appId_, &source_, DG_CONTROL, DAT_PENDINGXFERS, MSG_ENDXFER, (TW_MEMREF)&pendxfers);
 			if(!ret) break;
 		   if(0 == pendxfers.Count)
 			{
@@ -494,13 +577,13 @@ public:
 		{
 			TW_PENDINGXFERS pendxfers;
 			memset( &pendxfers, 0, sizeof(pendxfers) );
-			bool ret = TwainCall(&appId_, &source_, DG_CONTROL, DAT_PENDINGXFERS, MSG_ENDXFER, (TW_MEMREF)&pendxfers);
+			bool ret = pWorkThread_->TwainCall(&appId_, &source_, DG_CONTROL, DAT_PENDINGXFERS, MSG_ENDXFER, (TW_MEMREF)&pendxfers);
 
 			// We need to get rid of any pending transfers
 			if(ret &&(0 != pendxfers.Count))
 			{
 				memset( &pendxfers, 0, sizeof(pendxfers) );
-				TwainCall(&appId_, &source_, DG_CONTROL, DAT_PENDINGXFERS, MSG_RESET, (TW_MEMREF)&pendxfers);
+				pWorkThread_->TwainCall(&appId_, &source_, DG_CONTROL, DAT_PENDINGXFERS, MSG_RESET, (TW_MEMREF)&pendxfers);
 			}
 		}
 		messs.str("");
@@ -513,7 +596,7 @@ public:
 		messs << " total time inside pTwimpl->GetImage " << timer0.elapsed() << std::endl;
 		OutputDebugString(messs.str().c_str());
 		
-		twainState_s = SourceEnabled;
+		SetState(SourceEnabled);
 
 		return pbuf_;
 	};
@@ -533,25 +616,16 @@ public:
 		}
 
 		std::ostringstream  messs;
-	
-		PerformanceTimer delay;
-
-		while( delay.elapsed() < 0.050)
-		{
-			{
-				MMThreadGuard g(*pstateLock_s);
-				if( twainState_s < TransferReady) break;
-			}
-			::Sleep(10);
-		}
+		bool foundState = false;
+		double timeout = WaitForState(TransferReady, foundState/*&*/);
 		
+		if (!foundState)
 		{
-			MMThreadGuard g(*pstateLock_s);
-			if( twainState_s < TransferReady)
+			if(GetState() < TransferReady)
 			{
 
 				messs.str("");
-				messs << "Image transfer failed: " << twainState_s << " source never signaled 'Transfer Ready' (waited " << delay.elapsed()*1000. <<" ms)"  << std::endl;
+				messs << "[Size] Image transfer failed: " << GetState() << " source never signaled 'Transfer Ready' (waited " << timeout*1000. <<" ms)"  << std::endl;
 				throw TwainBad( messs.str().c_str());
 			}
 		}
@@ -559,7 +633,7 @@ public:
 		bool transfersPending = true;
 		while(transfersPending)
 		{
-			retval = TwainCall(&appId_, &source_, DG_IMAGE, DAT_IMAGENATIVEXFER, MSG_GET, &hBitmap);
+			retval = pWorkThread_->TwainCall(&appId_, &source_, DG_IMAGE, DAT_IMAGENATIVEXFER, MSG_GET, &hBitmap);
 			if(!retval) throw TwainBad("failed image transfer");
 			bool directimagesave = false;
 			if(directimagesave)
@@ -605,7 +679,7 @@ public:
 
 			TW_PENDINGXFERS pendxfers;
 			memset( &pendxfers, 0, sizeof(pendxfers) );
-			bool ret = TwainCall(&appId_, &source_, DG_CONTROL, DAT_PENDINGXFERS, MSG_ENDXFER, (TW_MEMREF)&pendxfers);
+			bool ret = pWorkThread_->TwainCall(&appId_, &source_, DG_CONTROL, DAT_PENDINGXFERS, MSG_ENDXFER, (TW_MEMREF)&pendxfers);
 			if(!ret) break;
 		   if(0 == pendxfers.Count)
 			{
@@ -624,13 +698,13 @@ public:
 		{
 			TW_PENDINGXFERS pendxfers;
 			memset( &pendxfers, 0, sizeof(pendxfers) );
-			bool ret  = TwainCall(&appId_, &source_, DG_CONTROL, DAT_PENDINGXFERS, MSG_ENDXFER, (TW_MEMREF)&pendxfers);
+			bool ret  = pWorkThread_->TwainCall(&appId_, &source_, DG_CONTROL, DAT_PENDINGXFERS, MSG_ENDXFER, (TW_MEMREF)&pendxfers);
 
 			// We need to get rid of any pending transfers
 			if(ret &&(0 != pendxfers.Count))
 			{
 				memset( &pendxfers, 0, sizeof(pendxfers) );
-				TwainCall(&appId_, &source_, DG_CONTROL, DAT_PENDINGXFERS, MSG_RESET, (TW_MEMREF)&pendxfers);
+				pWorkThread_->TwainCall(&appId_, &source_, DG_CONTROL, DAT_PENDINGXFERS, MSG_RESET, (TW_MEMREF)&pendxfers);
 			}
 		}
 		
@@ -683,7 +757,7 @@ public:
 	  pVal->Item     = value;
 
 	  // capability structure is set, make the call to the source now
-	  twrc = TwainCall( &appId_, &source_, DG_CONTROL, DAT_CAPABILITY, MSG_SET, (TW_MEMREF)&(cap));
+	  twrc = pWorkThread_->TwainCall( &appId_, &source_, DG_CONTROL, DAT_CAPABILITY, MSG_SET, (TW_MEMREF)&(cap));
 
 	  TwainUnlockMemory(cap.hContainer);
 	  TwainFree(cap.hContainer);
@@ -711,7 +785,7 @@ public:
 	  pVal->Item     = _value;
 
 	  // capability structure is set, make the call to the source now
-	  ret = TwainCall(&appId_, &source_, DG_CONTROL, DAT_CAPABILITY, MSG_SET, (TW_MEMREF)&(cap));
+	  ret = pWorkThread_->TwainCall(&appId_, &source_, DG_CONTROL, DAT_CAPABILITY, MSG_SET, (TW_MEMREF)&(cap));
 
 
 	  TwainUnlockMemory(cap.hContainer);
@@ -770,7 +844,7 @@ public:
 
 	bool SetCapability(TW_CAPABILITY& cap)
 	{
-		return TwainCall(&appId_, &source_, DG_CONTROL, DAT_CAPABILITY, MSG_SET,(TW_MEMREF)&cap);
+		return pWorkThread_->TwainCall(&appId_, &source_, DG_CONTROL, DAT_CAPABILITY, MSG_SET,(TW_MEMREF)&cap);
 	};
 
 	// get a single value capability
@@ -801,7 +875,7 @@ public:
 		twCap.Cap = cap;
 		twCap.ConType = TWON_ONEVALUE;
 		twCap.hContainer = NULL;
-		return TwainCall(&appId_,&source_,DG_CONTROL,DAT_CAPABILITY,MSG_RESET,(TW_MEMREF)&twCap);
+		return pWorkThread_->TwainCall(&appId_,&source_,DG_CONTROL,DAT_CAPABILITY,MSG_RESET,(TW_MEMREF)&twCap);
 	};
 
 	bool GetCapability(TW_CAPABILITY& twCap,TW_UINT16 cap, TW_UINT16 conType)
@@ -809,7 +883,7 @@ public:
 		twCap.Cap = cap;
 		twCap.ConType = conType;  // wrong - twain might return an enumeration container type
 		twCap.hContainer = NULL;
-		return TwainCall(&appId_,&source_,DG_CONTROL,DAT_CAPABILITY,MSG_GET,(TW_MEMREF)&twCap);
+		return pWorkThread_->TwainCall(&appId_,&source_,DG_CONTROL,DAT_CAPABILITY,MSG_GET,(TW_MEMREF)&twCap);
 	}; 
 
 
@@ -1061,7 +1135,7 @@ public:
 
 	bool GetCapability_TWAIN(TW_CAPABILITY& _cap, void* pvalue, unsigned int valueSize, TW_UINT16 command = MSG_GET )
 	{
-		if(twainState_s < SourceOpened) throw TwainBad("You need to open a data source first.");
+		if(GetState() < SourceOpened) throw TwainBad("You need to open a data source first.");
 		memset(pvalue,0,valueSize);
 		// Check if this capability structure has memory already alloc'd.
 		// If it does, free that memory before the call else we'll have a memory
@@ -1075,7 +1149,7 @@ public:
 		_cap.ConType = TWON_DONTCARE16;  // allow library to set whatever container type ??
 
 		// capability structure is set, make the call to the source now
-		bool ret = TwainCall(&appId_, &source_, DG_CONTROL, DAT_CAPABILITY, command, (TW_MEMREF)&_cap);
+		bool ret = pWorkThread_->TwainCall(&appId_, &source_, DG_CONTROL, DAT_CAPABILITY, command, (TW_MEMREF)&_cap);
 
 		// there is some trouble with FIX32 values,
 		// for example the Leica DFC 420C reports "0.090" exposure time when it's GUI reports 8.8 ms
@@ -1161,7 +1235,7 @@ public:
 		//TW_ONEVALUE container;
 
 		twCap.hContainer = NULL;
-		ret = TwainCall(&appId_,&source_,DG_CONTROL,DAT_CAPABILITY,MSG_GETCURRENT,(TW_MEMREF)&twCap);
+		ret = pWorkThread_->TwainCall(&appId_,&source_,DG_CONTROL,DAT_CAPABILITY,MSG_GETCURRENT,(TW_MEMREF)&twCap);
    
 		if(ret)
 		{
@@ -1193,7 +1267,7 @@ public:
 	//  pcontainer->Item     = value;
 
 	//  // capability structure is set, make the call to the source now
-	//  ret = TwainCall(&appId_, &source_, DG_CONTROL, DAT_CAPABILITY, MSG_SET, (TW_MEMREF)&(cap));
+	//  ret = pWorkThread_->TwainCall(&appId_, &source_, DG_CONTROL, DAT_CAPABILITY, MSG_SET, (TW_MEMREF)&(cap));
 
 	//  return ret;
 	//};
@@ -1224,7 +1298,7 @@ public:
 		pVal->Item     = value;
 
 		// capability structure is set, make the call to the source now
-		ret = TwainCall(&appId_, &source_, DG_CONTROL, DAT_CAPABILITY, MSG_SET, (TW_MEMREF)&(cap));
+		ret = pWorkThread_->TwainCall(&appId_, &source_, DG_CONTROL, DAT_CAPABILITY, MSG_SET, (TW_MEMREF)&(cap));
 		//DSMEntryPoints_.DSM_MemUnlock(cap.hContainer);
 		//DSMEntryPoints_.DSM_MemFree(cap.hContainer);
 
@@ -1261,66 +1335,12 @@ public:
 
 		// Unlock memory handle.
 		GlobalUnlock(pCap.hContainer);
-		TwainCall(&appId_, &source_, DG_CONTROL, DAT_CAPABILITY, MSG_SET,(TW_MEMREF)&pCap);
+		pWorkThread_->TwainCall(&appId_, &source_, DG_CONTROL, DAT_CAPABILITY, MSG_SET,(TW_MEMREF)&pCap);
 
 	};
 
 
-
-
-	bool TwainCall(pTW_IDENTITY pOrigin,pTW_IDENTITY pDest,
-					   TW_UINT32 DG,TW_UINT16 DAT,TW_UINT16 MSG,
-					   TW_MEMREF pData, TW_UINT16 *preturn = NULL)
-	{
-		bool retval = false;
-		if(m_driverValid)
-		{
-			USHORT tw_status;
-			tw_status = (*m_pDSMProc)(pOrigin,pDest,DG,DAT,MSG,pData);
-			retval =  (TWRC_SUCCESS == tw_status ) || ( TWRC_XFERDONE == tw_status);
-			if(NULL != preturn)
-				*preturn = tw_status;
-			
-         /*
-			std::ostringstream x;
-			static std::string previousEvent;
-			
-			//x << "T.C. 0x" << std::hex << MSG;
-			x << std::dec << " DG" << DG << " from " << pOrigin->ProductName << " to " ;
-			if(NULL!=pDest)
-			{
-				x << pDest->ProductName;
-			}
-			else
-			{
-				x<< "NULL";
-			}
-			x <<" status " << tw_status ; 
-         */
-
-			if (!retval) // query status on error
-			{
-				(*m_pDSMProc)(pOrigin,pDest,DG_CONTROL,DAT_STATUS,MSG_GET,&m_Status);
-            /*
-				x << " condition code " <<   m_Status.ConditionCode << std::endl;
-
-				if ( previousEvent != x.str())
-				{
-					previousEvent = x.str();
-					OutputDebugString( previousEvent.c_str());
-				}
-            */
-				// so, on further investigation, the Twain driver is telling us that the request DID work....
-				if (0 == m_Status.ConditionCode) 
-					retval = true;
-
-			}
-		}
-		return retval;
-	};
-
-
-	void EnableCamera(bool enable)
+	void EnableCamera(bool enable, bool showui = false)
 	{
 		static bool warned(false);
 		bool ret;
@@ -1346,29 +1366,27 @@ public:
 
 		// BEFORE enabling, setup capabilities
 		if(enable)
+		{
+
+			double requestedExposure = pcamera_->GetExposure();
+			if(GetState() != SourceOpened) throw TwainBad("invalid sequence, request to enable camera before camera source is opened");
+			std::ostringstream messs;
+			messs.str("");
+			// Source is Open, Twain State is 4, setup the necessary capabilities
+			
+			// does source support exposure time setting?
+			TW_INT32 capabilitySupport =0;
+			memset(&_cap, 0, sizeof(TW_CAPABILITY));
+			_cap.Cap = ICAP_EXPOSURETIME;
+			ret = GetCapability_TWAIN( _cap, &capabilitySupport, sizeof(capabilitySupport), MSG_QUERYSUPPORT );
+			if (ret)
 			{
+				exposureGettable_ = !!( TWQC_GET & capabilitySupport);
+				exposureSettable_ = !!(	TWQC_SET & capabilitySupport);
+			}
 
-				double requestedExposure = pcamera_->GetExposure();
-				if( SourceOpened != twainState_s) throw TwainBad("invalid sequence, request to enable camera before camera source is opened");
-				std::ostringstream messs;
- 				messs.str("");
-				// Source is Open, Twain State is 4, setup the necessary capabilities
-				
-				// does source support exposure time setting?
-				TW_INT32 capabilitySupport =0;
-				memset(&_cap, 0, sizeof(TW_CAPABILITY));
-				_cap.Cap = ICAP_EXPOSURETIME;
-				ret = GetCapability_TWAIN( _cap, &capabilitySupport, sizeof(capabilitySupport), MSG_QUERYSUPPORT );
-				if (ret)
-				{
-					exposureGettable_ = !!( TWQC_GET & capabilitySupport);
-					exposureSettable_ = !!(	TWQC_SET & capabilitySupport);
-				}
-
-
-
-				if( exposureGettable_ && exposureSettable_)
-				{
+			if (exposureGettable_ && exposureSettable_)
+			{
 				// set auto exposure as desired ( for now always turn on 'autobright' only if there is no valid exposure time requested )
 				const bool autoBright( requestedExposure < 0.);
 				TW_UINT32 tmpAutoBright;
@@ -1398,7 +1416,8 @@ public:
 				// requestedExposure is in milliseconds
 				// Twain specification says that exposure is in seconds
 				double tmpExposure = requestedExposure / 1000. ; // time in seconds so 8 ms will look like 0.008
-				tmpExposure *= 10.; // SPECIFIC TO LEICA????? NUMBER LIKE 8ms appears as 0.080 ?????
+				// TODO/NOTE: The line below is specific to LEICA
+				//tmpExposure *= 10.; // SPECIFIC TO LEICA????? NUMBER LIKE 8ms appears as 0.080 ?????
 
 
 				TW_FIX32 exposure = TwainSpecUtilities::FloatToFIX32((float)tmpExposure);
@@ -1414,55 +1433,47 @@ public:
 				TW_CAPABILITY _cap;		
 				memset(&_cap, 0, sizeof(TW_CAPABILITY));
 				_cap.Cap = ICAP_EXPOSURETIME;
-				GetCapability_TWAIN(_cap, &exposure, sizeof(TW_FIX32));
-
+				ret = GetCapability_TWAIN(_cap, &exposure, sizeof(TW_FIX32));
 				tmpExposure = TwainSpecUtilities::FIX32ToFloat(exposure);
-				// SPECIFIC TO LEICA??  - NUMBER LIKE 0.080 means 8 ms.
-				tmpExposure /= 10.; 
-				messs.str("");
-				messs << "  Exposure set to " <<  tmpExposure;
-				OutputDebugString(messs.str().c_str());
-				pcamera_->SetExposure(tmpExposure*1000.);
-
+				if (ret && tmpExposure != 0.0f)
+				{
+					// SPECIFIC TO LEICA??  - NUMBER LIKE 0.080 means 8 ms.
+					// TODO/NOTE: The line below is specific to LEICA
+					//tmpExposure /= 10.; 
+					messs.str("");
+					messs << "  Exposure set to " <<  tmpExposure;
+					OutputDebugString(messs.str().c_str());
+					pcamera_->SetExposure(tmpExposure*1000.);
 				}
+			}
 
-
-
-
-
-
-
-				memset(&setROI_,0, sizeof(setROI_));
-				// retrieve current layout
-				TW_IMAGELAYOUT layout;
-				bool retval = TwainCall(&appId_, &source_, DG_IMAGE, DAT_IMAGELAYOUT, MSG_GET,(TW_MEMREF)&layout);
-				if(!retval) throw TwainBad("failed to get current image layout");
-				setROI_ = layout.Frame;
-
-
-			
-
+			memset(&setROI_,0, sizeof(setROI_));
+			// retrieve current layout
+			TW_IMAGELAYOUT layout;
+			bool retval = pWorkThread_->TwainCall(&appId_, &source_, DG_IMAGE, DAT_IMAGELAYOUT, MSG_GET,(TW_MEMREF)&layout);
+			if(!retval) throw TwainBad("failed to get current image layout");
+			setROI_ = layout.Frame;
 		}
 
 
 
 		TW_USERINTERFACE twUI;
 		
-		twUI.ShowUI = false;
-		twUI.ModalUI = false;
-		twUI.hParent = (TW_HANDLE)dummyWindowHandle_;
+		twUI.ShowUI = showui;
+		twUI.ModalUI = showui;
+		twUI.hParent = (TW_HANDLE)pWorkThread_->GetWindowHandle();
 		//enable data source
 		{
 			MMThreadGuard g(*pstateLock_s);
 			twainState_s = SourceOpened;
-			if(!TwainCall(&appId_,&source_,DG_CONTROL,DAT_USERINTERFACE,(enable?MSG_ENABLEDS:MSG_DISABLEDS),(TW_MEMREF)&twUI)) throw TwainBad((enable?"failed to enable data source":"failed to disable data source"));
+			if(!pWorkThread_->TwainCall(&appId_,&source_,DG_CONTROL,DAT_USERINTERFACE,(enable?MSG_ENABLEDS:MSG_DISABLEDS),(TW_MEMREF)&twUI)) throw TwainBad((enable?"failed to enable data source":"failed to disable data source"));
 		}
 
 		CDeviceUtils::SleepMs(1);
 		if(enable)
 		{
 			MMThreadGuard g(*pstateLock_s);
-			if ( twainState_s < SourceEnabled) twainState_s = SourceEnabled;
+			if (twainState_s < SourceEnabled) twainState_s = SourceEnabled;
 		}
 
 	};
@@ -1483,14 +1494,14 @@ public:
 	TW_FRAME GetROIRectangle() const
 	{
 		// todo this should check that source has reached state 4 !!!!!!!
-		if ( twainState_s < ManagerOpened ) throw TwainBad("camera has not yet been opened");
+		if (GetState() < ManagerOpened) throw TwainBad("camera has not yet been opened");
 		OutputDebugFrame("GetROIRectangle returns ", setROI_);
 		return setROI_;
 	};
 
 	TW_FRAME GetWholeCaptureFrame() const
 	{
-		if ( twainState_s < ManagerOpened ) throw TwainBad("camera has not yet been opened");
+		if (GetState() < ManagerOpened) throw TwainBad("camera has not yet been opened");
 		OutputDebugFrame("GetWholeCaptureFrame returns ", initialFrame_);
 		return initialFrame_;
 	}
@@ -1500,18 +1511,18 @@ public:
 
 		std::ostringstream messs;
 
-		if( ManagerOpened  == twainState_s)
+		if(GetState() == ManagerOpened)
 		{
 			SelectAndOpenSource ( CurrentSource());
 		}
 		::Sleep(10);
 
-		if ( SourceOpened!= twainState_s) throw TwainBad("camera not ready to set ROI");
+		if (GetState() != SourceOpened) throw TwainBad("camera not ready to set ROI");
 
 		memset(&setROI_,0, sizeof(setROI_));
 		// retrieve current layout
 		TW_IMAGELAYOUT layout;
-		bool retval = TwainCall(&appId_, &source_, DG_IMAGE, DAT_IMAGELAYOUT, MSG_GET,(TW_MEMREF)&layout);
+		bool retval = pWorkThread_->TwainCall(&appId_, &source_, DG_IMAGE, DAT_IMAGELAYOUT, MSG_GET,(TW_MEMREF)&layout);
 		if(!retval) throw TwainBad("failed to get current image layout");
 
 		OutputDebugFrame("in SetROIRectangle current layout: ",layout.Frame);
@@ -1525,7 +1536,7 @@ public:
 			layout.Frame = requestedFrame;
 			OutputDebugFrame("in SetROIRectangle , request frame is: ", requestedFrame);
 
-			retval = TwainCall(&appId_, &source_, DG_IMAGE, DAT_IMAGELAYOUT, MSG_SET,(TW_MEMREF)&layout);
+			retval = pWorkThread_->TwainCall(&appId_, &source_, DG_IMAGE, DAT_IMAGELAYOUT, MSG_SET,(TW_MEMREF)&layout);
 			OutputDebugString(retval?"new layout set\n":"new layout NOT SET\n");
 
 			retval = set_CapabilityOneValue(ICAP_FRAMES, layout.Frame);
@@ -1539,7 +1550,7 @@ public:
 
 
 		// current layout:
-		retval = TwainCall(&appId_, &source_, DG_IMAGE, DAT_IMAGELAYOUT, MSG_GET,(TW_MEMREF)&layout);
+		retval = pWorkThread_->TwainCall(&appId_, &source_, DG_IMAGE, DAT_IMAGELAYOUT, MSG_GET,(TW_MEMREF)&layout);
 
 		OutputDebugFrame(" current layout: ", layout.Frame);
 		messs.str("");
@@ -1583,7 +1594,7 @@ public:
 				if (sourceisopen_ && (selectedsource != CurrentSource()) )
 				{
 					MMThreadGuard g(*pstateLock_s);
-					if(!TwainCall(&appId_,NULL,DG_CONTROL,DAT_IDENTITY,MSG_CLOSEDS,(TW_MEMREF)&source_)) throw TwainBad("failed to close data source");
+					if(!pWorkThread_->TwainCall(&appId_,NULL,DG_CONTROL,DAT_IDENTITY,MSG_CLOSEDS,(TW_MEMREF)&source_)) throw TwainBad("failed to close data source");
 					twainState_s = ManagerOpened;
 					sourceisopen_ = false;
 					source_ = ii->second;
@@ -1595,7 +1606,7 @@ public:
 					// some particular image size...
 					{
 						MMThreadGuard g(*pstateLock_s);
-						if(!TwainCall(&appId_,NULL,DG_CONTROL,DAT_IDENTITY,MSG_OPENDS,(TW_MEMREF)&source_)) throw TwainBad("failed to open data source");
+						if(!pWorkThread_->TwainCall(&appId_,NULL,DG_CONTROL,DAT_IDENTITY,MSG_OPENDS,(TW_MEMREF)&source_)) throw TwainBad("failed to open data source");
 						twainState_s = SourceOpened;
 					}
 
@@ -1607,7 +1618,7 @@ public:
 					TW_CALLBACK callback = {0};
 					callback.CallBackProc = (TW_MEMREF)TwainCallback;
 					callback.RefCon       = 0; 
-					callbackValid_ = TwainCall(&appId_, &source_, DG_CONTROL, DAT_CALLBACK, MSG_REGISTER_CALLBACK, (TW_MEMREF)&callback);
+					callbackValid_ = pWorkThread_->TwainCall(&appId_, &source_, DG_CONTROL, DAT_CALLBACK, MSG_REGISTER_CALLBACK, (TW_MEMREF)&callback);
 
    				//// set the transfer count capability (of the application)
 					if(!SetCapability(CAP_XFERCOUNT, (TW_UINT16)count_, true) ) OutputDebugString( "failed to set image count capability");
@@ -1654,20 +1665,20 @@ public:
 
 		//				TW_IMAGELAYOUT layout0;
 		//				memset(&layout0,0, sizeof(layout0));
-		//				succ = TwainCall(&appId_, &source_, DG_IMAGE, DAT_IMAGELAYOUT, MSG_RESET,(TW_MEMREF)&layout0);
+		//				succ = pWorkThread_->TwainCall(&appId_, &source_, DG_IMAGE, DAT_IMAGELAYOUT, MSG_RESET,(TW_MEMREF)&layout0);
 
 						succ = ResetCapability(ICAP_FRAMES);
 
 						TW_IMAGELAYOUT layout0;
 						memset(&layout0,0, sizeof(layout0));
-						succ = TwainCall(&appId_, &source_, DG_IMAGE, DAT_IMAGELAYOUT, MSG_GET,(TW_MEMREF)&layout0);
+						succ = pWorkThread_->TwainCall(&appId_, &source_, DG_IMAGE, DAT_IMAGELAYOUT, MSG_GET,(TW_MEMREF)&layout0);
 						if(!succ)
 						{
 							pcamera_->LogMessage("source is not Twain-compliant: not able to retrieve layout");
 						}
 						else
 						{
-							succ = TwainCall(&appId_, &source_, DG_IMAGE, DAT_IMAGELAYOUT, MSG_SET,(TW_MEMREF)&layout0);
+							succ = pWorkThread_->TwainCall(&appId_, &source_, DG_IMAGE, DAT_IMAGELAYOUT, MSG_SET,(TW_MEMREF)&layout0);
 							if(succ)
 							{
 								TW_FRAME f;
@@ -1681,7 +1692,7 @@ public:
 							}
 						}
 						
-				//		succ = TwainCall(&appId_, &source_, DG_IMAGE, DAT_IMAGELAYOUT, MSG_SET,(TW_MEMREF)&layout0);
+				//		succ = pWorkThread_->TwainCall(&appId_, &source_, DG_IMAGE, DAT_IMAGELAYOUT, MSG_SET,(TW_MEMREF)&layout0);
 				//		OutputDebugString(succ?"reset layout was set again ":"layout NOT set after layout reset");
 
 						succ = set_CapabilityOneValue(ICAP_FRAMES, layout0.Frame);
@@ -1772,26 +1783,6 @@ public:
 	};
 
 
-	HWND CreateDummyWindow(void)
-	{
-		std::ostringstream messs;
-		messs<< source_.ProductName << " " << source_.Id << std::endl;
-
-		HWND hwnd;
-		hwnd = CreateWindow("STATIC",                // class
-						"Acquire Proxy",              // title
-						WS_POPUPWINDOW,               // style
-						CW_USEDEFAULT, CW_USEDEFAULT, // x, y
-						CW_USEDEFAULT, CW_USEDEFAULT, // width, height
-						HWND_DESKTOP,                 // parent window
-						NULL,                         // hmenu
-						g_hinstDLL,                     // hinst
-						NULL);                        // lpvparam
-		return hwnd;
-
-	};
-
-
 	// adapted from twain.org's twainapp.cpp
 	//////////////////////////////////////////////////////////////////////////////
 	/**
@@ -1825,14 +1816,14 @@ public:
 		switch (_MSG)
 		{
 			case MSG_XFERREADY:
+			{
+				MMThreadGuard g(*pstateLock_s);
+
 				messs << " callback gets 'MSG_XFERREADY'  " <<  _MSG << " current twain state was " << twainState_s << std::endl;
 				OutputDebugString(messs.str().c_str());
-				{
-					MMThreadGuard g(*pstateLock_s);
-					if(( SourceEnabled == twainState_s) || ( SourceOpened ==twainState_s)) // source transits from 4 to 5 automagically (but no callback occurs...)
-						twainState_s = TransferReady;
-				}
-				break;
+				if((SourceEnabled == twainState_s) || (SourceOpened == twainState_s)) // source transits from 4 to 5 automagically (but no callback occurs...)
+					twainState_s = TransferReady;
+			}	break;
 			case MSG_CLOSEDSREQ:
 				// sort of a duplicate use of the twainState_s variable, we just 
 				{
@@ -1863,7 +1854,7 @@ public:
 		memset(&setROI_,0, sizeof(setROI_));
 		// retrieve current layout
 
-		bool retval = TwainCall(&appId_, &source_, DG_IMAGE, DAT_IMAGELAYOUT, MSG_GET,(TW_MEMREF)&layout);
+		bool retval = pWorkThread_->TwainCall(&appId_, &source_, DG_IMAGE, DAT_IMAGELAYOUT, MSG_GET,(TW_MEMREF)&layout);
 		if(!retval) throw TwainBad("failed to get current image layout");
 		setROI_ = layout.Frame;
 
@@ -1890,225 +1881,29 @@ public:
 
    void LaunchVendorSettings(void)
 	{
-		bool ret;
-		
-		TW_USERINTERFACE twUI;
 		closeDSRequest_s = false;
 
 		StartTwain();
+		SelectAndOpenSource(CurrentSource());
+		EnableCamera(true, true);
 
-#if 0
-		MMThreadGuard g(*pstateLock_s);
-
-
-
-		if ( PreSession < twainState_s ) throw TwainBad("wrong state for LaunchVendorSettings");
-
-		m_hTwainDLL  = LoadLibraryA(m_libName.c_str());
-		if(NULL == m_hTwainDLL) throw TwainBad("failed to load Twain library");
-		twainState_s = ManagerLoaded;
-		// get the function
-		m_pDSMProc = (DSMENTRYPROC)GetProcAddress(m_hTwainDLL,(LPCSTR)1);
-		if (NULL == m_pDSMProc)
+		// Wait for the UI in the worker thread to close (to prevent the user from attempting to take data with the UI open)
+		while(!closeDSRequest_s)
 		{
-			FreeLibrary(m_hTwainDLL);
-			m_hTwainDLL = NULL;
-			twainState_s = PreSession;
-			throw TwainBad("Twain library is incorrect");
-		}
-		// setup application's information for Twain
-		// Expects all the fields in appId_ to be set except for the id field.
-		appId_.Id = 0; // Initialize to 0 (Source Manager will assign real value)
-		appId_.Version.MajorNum = 1; //Your app's version number
-		appId_.Version.MinorNum = 5;
-		appId_.Version.Language = TWLG_USA;
-		appId_.Version.Country = TWCY_USA;
-		strcpy (appId_.Version.Info, "1.5");
-		appId_.ProtocolMajor = TWON_PROTOCOLMAJOR;
-		appId_.ProtocolMinor = TWON_PROTOCOLMINOR;
-		// DF_APP2 lets us use the memory callbacks, etc.
-		appId_.SupportedGroups = DF_APP2 | DG_IMAGE | DG_CONTROL;
-		strcpy (appId_.Manufacturer, "UCSF");
-		strcpy (appId_.ProductFamily, "Generic");
-		strcpy (appId_.ProductName, "microManager");
-
-
-		// open the datasource manager
-		if(!TwainCall(&appId_,NULL,DG_CONTROL,DAT_PARENT,MSG_OPENDSM,(TW_MEMREF)NULL)) throw TwainBad("failed to open data source manager");
-		// check for DSM2 support
-
-		memset(&DSMEntryPoints_, 0, sizeof(DSMEntryPoints_));
-		DSMEntryPoints_.Size = sizeof(TW_ENTRYPOINT);
-
-		// get the entry points
-		TwainCall(&appId_,NULL,DG_CONTROL,DAT_ENTRYPOINT,MSG_GET,&DSMEntryPoints_); //throw TwainBad("get DSM entry points failed - need DSM 2 support");
-
-		std::ostringstream messs;
-		messs <<  "twimpl static callback function address is " << (void *)TwainCallback << std::endl;
-		OutputDebugString(messs.str().c_str());
-		if( NULL != dummyWindowHandle_)
-			DestroyWindow(dummyWindowHandle_);
-		dummyWindowHandle_ = CreateDummyWindow();
-
-		twainState_s = ManagerOpened; // TWAIN is ready to select and open a source 
-
-
-
-		// enumerate available image sources
-		TW_IDENTITY so;
-		// get the first source
-		availablesources_.clear();
-		if(!TwainCall(&appId_,NULL,DG_CONTROL,DAT_IDENTITY,MSG_GETFIRST,&so)) throw TwainBad("no Twain sources are available");
-		availablesources_.insert(std::pair<std::string,TW_IDENTITY>(so.ProductName, so));
-		while(TwainCall(&appId_,NULL,DG_CONTROL,DAT_IDENTITY,MSG_GETNEXT,&so))
-		{
-			availablesources_.insert(std::pair<std::string,TW_IDENTITY>(so.ProductName, so));
-		}
-
-		// get the default source and write its parameters onto source_,
-		// but client can still select a different source later
-		memset(&source_, 0, sizeof(source_));
-		if(!TwainCall(&appId_,NULL,DG_CONTROL,DAT_IDENTITY,MSG_GETDEFAULT,&source_)) throw TwainBad("failed to get default data source");
-
-
-#endif
-
-
-		
-		// this could pop up a dialogue from inside Twain "TWAINDSM.dll" and allow you select the source
-		//if( !TwainCall(&appId_,NULL,DG_CONTROL,DAT_IDENTITY,MSG_USERSELECT,&source_)) throw TwainBad("user selection of source failed");
-
-		// open data source
-		// N.B. at least in case of Leica firewire camera, this call can succeed even if the camera is unplugged - and even go on to return 
-		// some particular image size...
-		{
-			sourceisopen_ = false;
-			MMThreadGuard g(*pstateLock_s);
-			if(!TwainCall(&appId_,NULL,DG_CONTROL,DAT_IDENTITY,MSG_OPENDS,(TW_MEMREF)&source_)) throw TwainBad("failed to open data source");
-			twainState_s = SourceOpened;
-			sourceisopen_ = true;
-			source_s = source_;
-		}
-
-		// callback is registered immediately after opening the data source....
-		TW_CALLBACK callback = {0};
-		callback.CallBackProc = (TW_MEMREF)TwainCallback;
-		callback.RefCon       = 0; 
-		callbackValid_ = TwainCall(&appId_, &source_, DG_CONTROL, DAT_CALLBACK, MSG_REGISTER_CALLBACK, (TW_MEMREF)&callback);
-
-		//// set the transfer count capability (of the application)
-		//if(!SetCapability(CAP_XFERCOUNT, (TW_UINT16)count_, true) ) throw TwainBad("failed to set image count capability");
-		
-
-		
-		twUI.ShowUI = true;
-		twUI.ModalUI = true;
-		twUI.hParent = (TW_HANDLE)dummyWindowHandle_;
-		//enable data source
-		{
-			MMThreadGuard g(*pstateLock_s);
-			if(!TwainCall(&appId_,&source_,DG_CONTROL,DAT_USERINTERFACE, MSG_ENABLEDS,(TW_MEMREF)&twUI)) throw TwainBad("failed to enable data source");
-			twainState_s = SourceEnabled;
-
-		}
-		
-		// Begin the event-handling loop. Data transfer takes place in this loop.
-
-		MSG msg;
-		TW_EVENT event;
-//		TW_PENDINGXFERS pxfers;
-		while (GetMessage ((LPMSG) &msg, 0, 0, 0))
-		{
-
-			// Each window message must be forwarded to the default data source.
-
-			event.pEvent = (TW_MEMREF) &msg;
-			event.TWMessage = MSG_NULL;
-
-			uint16_t returncode;
-
-			ret = TwainCall(&appId_, &source_,  DG_CONTROL, DAT_EVENT,MSG_PROCESSEVENT,(TW_MEMREF) &event, &returncode);
-
-
-			// if TwainCallback sees message MSG_CLOSEDSREQ, it will change the state back to SourceOpened
-			// this is our signal to explicitly close the vendor GUI and return from here.
-
+			if(TransferReady == twainState_s)
 			{
-				MMThreadGuard g(*pstateLock_s);
-				if (closeDSRequest_s) //( twainState_s < SourceEnabled )
-				{
-					closeDSRequest_s = false;
-					//todo better error reporting here. but remember, at this point there is no GUI at all.
-					bool ret;
-					ret = TwainCall(&appId_,&source_,DG_CONTROL,DAT_USERINTERFACE,MSG_DISABLEDS,(TW_MEMREF)&twUI) ;
-					twainState_s = SourceOpened;
-					ret = TwainCall(&appId_,NULL,DG_CONTROL,DAT_IDENTITY,MSG_CLOSEDS,(TW_MEMREF)&source_);
-					sourceisopen_ = false;
-					twainState_s = ManagerOpened;
-					ret = TwainCall(&appId_,NULL,DG_CONTROL,DAT_PARENT,MSG_CLOSEDSM,(TW_MEMREF)NULL);
-					twainState_s = ManagerLoaded;
-					int retval = FreeLibrary(m_hTwainDLL);
-					if(1 != retval)
-					{
-						pcamera_->LogMessage("error freeing twain library");
-					}
-					m_hTwainDLL = NULL;
-					twainState_s = PreSession;
-					break;
-
-				}
-				if( TransferReady == twainState_s)
-				{
-					int imageHeight, imageWidth;
-					char bytesPerPixel;
-					// this will set state back to 'SourceEnabled'
-					GetImage(imageHeight, imageWidth, bytesPerPixel);
-				}
-
+				int imageHeight, imageWidth;
+				char bytesPerPixel;
+				// this will set state back to 'SourceEnabled'
+				GetImage(imageHeight, imageWidth, bytesPerPixel);
 			}
-
-
-			// If the message does not correspond to a data source event, we must
-			// dispatch it to the appropriate Windows window.
-
-			if (returncode == TWRC_NOTDSEVENT)
-			{             
-				 TranslateMessage ((LPMSG) &msg);
-				 DispatchMessage ((LPMSG) &msg);
-				 continue;
-			}
-#if 0
-			// log each unique DS message 
-			unsigned short lpwords[2];
-			static HWND        old_hwnd;
-			static UINT        old_message;
-			static WPARAM      old_wParam;
-			static LPARAM      old_lParam;
-			if ( (275 != msg.message) )//  && (512 != msg.message)  && (15!=msg.message))
-			{
-				if ((old_hwnd != msg.hwnd )|| (old_message != msg.message) || ( old_wParam != msg.wParam ) || ( old_lParam != msg.lParam ))
-				{
-					// a unique message came in
-					std::ostringstream tmp;
-					memcpy((void*)lpwords,&(msg.lParam),sizeof(msg.lParam));
-		
-					tmp << msg.hwnd << " mess: " << msg.message << " wPrm: " << msg.wParam << " lPrm: [" << lpwords[0] <<"," << lpwords[1]  << "] t: " << msg.time << std::endl;
-
-					OutputDebugString(tmp.str().c_str());
-					old_hwnd = msg.hwnd; old_message = msg.message; old_wParam = msg.wParam; old_lParam = msg.lParam;
-				}
-			}
-#endif
-			// If Callbacks are not registered, the message will come here
-			// else TwainCallBack will process the request to shut down the Vendor GUI.
-			// If the default data source is requesting that the data source's
-			// dialog box be closed (user pressed Cancel), we must break out of the
-			// message loop.
-
-			if (event.TWMessage == MSG_CLOSEDSREQ)   break;
-
 		}
-
+		// Close out the session, it will restart for data collection in a moment
+		if (closeDSRequest_s) //( twainState_s < SourceEnabled )
+		{
+			closeDSRequest_s = false;
+			StopTwain();
+		}
 	}
 
    void StopTwain(void)
@@ -2120,7 +1915,7 @@ public:
 		// change this to use CurrentMMTime;
 		PerformanceTimer t0;
 
-		while( PreSession < twainState_s )
+		while(PreSession < GetState())
 		{
 			//MM::MMTime elapsed = (GetCurrentMMTime() - t0);
 			MMThreadGuard g(*pstateLock_s);
@@ -2131,7 +1926,7 @@ public:
 				break;
 			}
 
-			switch( twainState_s)
+			switch(twainState_s)
 			{
 				case Transferring:
 					break; // just wait for transfer to complete
@@ -2143,7 +1938,7 @@ public:
 						{
 							HANDLE hBitmap;
 
-							ret = TwainCall(&appId_, &source_, DG_IMAGE, DAT_IMAGENATIVEXFER, MSG_GET, &hBitmap);
+							ret = pWorkThread_->TwainCall(&appId_, &source_, DG_IMAGE, DAT_IMAGENATIVEXFER, MSG_GET, &hBitmap);
 							if(!ret) break;
 							UCHAR *lpVoid = (UCHAR *)GlobalLock(hBitmap);
 							GlobalUnlock(lpVoid);
@@ -2153,7 +1948,7 @@ public:
 							TW_PENDINGXFERS pendxfers;
 							memset( &pendxfers, 0, sizeof(pendxfers) );
 
-							ret = TwainCall(&appId_, &source_, DG_CONTROL, DAT_PENDINGXFERS, MSG_ENDXFER, (TW_MEMREF)&pendxfers);
+							ret = pWorkThread_->TwainCall(&appId_, &source_, DG_CONTROL, DAT_PENDINGXFERS, MSG_ENDXFER, (TW_MEMREF)&pendxfers);
 							if(!ret) break;
 						   if(0 == pendxfers.Count)
 							{
@@ -2166,13 +1961,13 @@ public:
 						{
 							TW_PENDINGXFERS pendxfers;
 							memset( &pendxfers, 0, sizeof(pendxfers) );
-							bool ret = TwainCall(&appId_, &source_, DG_CONTROL, DAT_PENDINGXFERS, MSG_ENDXFER, (TW_MEMREF)&pendxfers);
+							bool ret = pWorkThread_->TwainCall(&appId_, &source_, DG_CONTROL, DAT_PENDINGXFERS, MSG_ENDXFER, (TW_MEMREF)&pendxfers);
 
 							// We need to get rid of any pending transfers
 							if(ret &&(0 != pendxfers.Count))
 							{
 								memset( &pendxfers, 0, sizeof(pendxfers) );
-								TwainCall(&appId_, &source_, DG_CONTROL, DAT_PENDINGXFERS, MSG_RESET, (TW_MEMREF)&pendxfers);
+								pWorkThread_->TwainCall(&appId_, &source_, DG_CONTROL, DAT_PENDINGXFERS, MSG_RESET, (TW_MEMREF)&pendxfers);
 							}
 						}
 					}
@@ -2182,27 +1977,26 @@ public:
 					twUI.ShowUI = false;
 					twUI.ModalUI = false;
 					twUI.hParent = (TW_HANDLE)0;
-					ret = TwainCall(&appId_,&source_,DG_CONTROL,DAT_USERINTERFACE,MSG_DISABLEDS,(TW_MEMREF)&twUI) ;
+					ret = pWorkThread_->TwainCall(&appId_,&source_,DG_CONTROL,DAT_USERINTERFACE,MSG_DISABLEDS,(TW_MEMREF)&twUI) ;
 					twainState_s = SourceOpened;
 					break;
 				case SourceOpened:
-					ret = TwainCall(&appId_,NULL,DG_CONTROL,DAT_IDENTITY,MSG_CLOSEDS,(TW_MEMREF)&source_);
+					ret = pWorkThread_->TwainCall(&appId_,NULL,DG_CONTROL,DAT_IDENTITY,MSG_CLOSEDS,(TW_MEMREF)&source_);
 					sourceisopen_ = false;
 					memset(&DSMEntryPoints_,0, sizeof(DSMEntryPoints_));
 
 					twainState_s = ManagerOpened;
 					break;
 				case ManagerOpened:
-					ret = TwainCall(&appId_,NULL,DG_CONTROL,DAT_PARENT,MSG_CLOSEDSM,(TW_MEMREF)NULL);
+					ret = pWorkThread_->TwainCall(&appId_,NULL,DG_CONTROL,DAT_PARENT,MSG_CLOSEDSM,(TW_MEMREF)NULL);
 					twainState_s = ManagerLoaded;
 					break;
 				case ManagerLoaded:
-					int retval = FreeLibrary(m_hTwainDLL);
+					int retval = pWorkThread_->Close();
 					if(1 != retval)
 					{
 						pcamera_->LogMessage("error freeing twain library");
 					}
-					m_hTwainDLL = NULL;
 					twainState_s = PreSession;
 					break;
 			}
@@ -2224,26 +2018,21 @@ public:
 
 		}
 
-      m_driverValid = false;
-		m_pDSMProc = NULL;
-		FreeLibrary(m_hTwainDLL);
-		m_hTwainDLL = NULL;
+		pWorkThread_->Stop();
+		pWorkThread_->Close();
+		delete pWorkThread_;
 		free(pbuf_);
    
    };
 	std::string currentlySelectedSourceName_;
 	// endof of TwImpl publics
-private:	
+private:
+	WorkerThread *pWorkThread_;
 	TwainCamera* pcamera_;
-	HINSTANCE m_hTwainDLL;
-	DSMENTRYPROC m_pDSMProc;
-	std::string m_libName;
-	bool m_driverValid;
 
 	TW_IDENTITY appId_; // Twain's ID for this program
 	TW_IDENTITY source_; // the camera
 	//static TW_IDENTITY source_s;
-	TW_STATUS m_Status;
 	TW_INT16  m_returnCode;
 	HWND m_hMessageWnd;
 	int count_; // # images to acquire
@@ -2257,7 +2046,6 @@ private:
 	bool callbackValid_;
 
 	TW_ENTRYPOINT DSMEntryPoints_;
-	HWND dummyWindowHandle_;
 	//TW_FRAME IIIFFF;
 	TW_FRAME setROI_;  // the latest selected ROI
 	TW_FRAME initialFrame_; // the default capture size returned by the camera - will be the full sensor array at startup time
@@ -2274,7 +2062,6 @@ private:
 TwainDevice::TwainDevice(TwainCamera *pcamera):pTwImpl_(NULL),pcamera_(pcamera)
 {
    pstateLock_s = new MMThreadLock();
-   pWorkThread_g = new WorkerThread();
 	pTwImpl_ = new TwImpl(pcamera_/*, roiImageSizes_*/);
 	pcamera_->LogMessage(" created TwainDevice wrapper");
 }
@@ -2282,8 +2069,6 @@ TwainDevice::TwainDevice(TwainCamera *pcamera):pTwImpl_(NULL),pcamera_(pcamera)
 TwainDevice::~TwainDevice(void)
 {
 	delete pTwImpl_;
-   pWorkThread_g->Stop();
-   delete pWorkThread_g;
 	delete pstateLock_s;
 }
 
@@ -2465,7 +2250,6 @@ void TwainDevice::LaunchVendorSettings()
 		pTwImpl_->StopTwain();
 		pTwImpl_->LaunchVendorSettings();
 		pTwImpl_->StartTwain();
-
 	}
 }
 
@@ -2486,4 +2270,172 @@ void TwainDevice::CurrentlySelectedSource(const std::string sourceName)
 std::string TwainDevice::CurrentlySelectedSource(void)
 {
 		return pTwImpl_->currentlySelectedSourceName_;
+}
+
+// worker thread routines
+
+void WorkerThread::Init(void)
+{
+	// start the Twain library
+	m_hTwainDLL = LoadLibraryA(m_libName.c_str());
+	if(NULL == m_hTwainDLL) throw TwainBad("failed to load Twain library");
+
+	// get the function
+	m_pDSMProc = (DSMENTRYPROC)GetProcAddress(m_hTwainDLL,(LPCSTR)1);
+	if (NULL == m_pDSMProc)
+	{
+		FreeLibrary(m_hTwainDLL);
+		m_hTwainDLL = NULL;
+		twainState_s = PreSession;
+		throw TwainBad("Twain library is incorrect");
+	}
+	m_driverValid = true;
+}
+
+
+void WorkerThread::CreateDummyWindow(void)
+{
+	HWND hwnd;
+
+	hwnd = CreateWindow("STATIC",                     // class
+	                    "Acquire Proxy",              // title
+	                    WS_POPUPWINDOW,               // style
+	                    CW_USEDEFAULT, CW_USEDEFAULT, // x, y
+	                    CW_USEDEFAULT, CW_USEDEFAULT, // width, height
+	                    HWND_DESKTOP,                 // parent window
+	                    NULL,                         // hmenu
+	                    g_hinstDLL,                   // hinst
+	                    NULL);                        // lpvparam
+	dummyWindowHandle_ = hwnd;
+}
+
+
+bool WorkerThread::TwainCall(pTW_IDENTITY pOrigin,pTW_IDENTITY pDest,
+                             TW_UINT32 DG,TW_UINT16 DAT,TW_UINT16 MSG,
+                             TW_MEMREF pData, TW_UINT16 *preturn)
+{
+	bool retval = false;
+	while(IsBusy())
+		CDeviceUtils::SleepMs(1);
+	SetBusy(true);
+	memset(&nextOperation_, 0x0, sizeof(nextOperation_));
+	nextOperation_.pOrigin = pOrigin;
+	nextOperation_.pDest = pDest;
+	nextOperation_.DG = DG;
+	nextOperation_.DAT = DAT;
+	nextOperation_.MSG = MSG;
+	nextOperation_.pData = pData;
+	nextOperation_.preturn = preturn;
+	nextOperation_.pretval = &retval;
+	while(IsBusy())
+		CDeviceUtils::SleepMs(1);
+	return retval;
+}
+
+
+bool WorkerThread::ThreadedTwainCall(pTW_IDENTITY pOrigin,pTW_IDENTITY pDest,
+                                     TW_UINT32 DG,TW_UINT16 DAT,TW_UINT16 MSG,
+                                     TW_MEMREF pData, TW_UINT16 *preturn)
+{
+	bool retval = false;
+	TW_STATUS status;
+
+	if(m_driverValid)
+	{
+		USHORT tw_status;
+		tw_status = (*m_pDSMProc)(pOrigin,pDest,DG,DAT,MSG,pData);
+		retval =  (TWRC_SUCCESS == tw_status ) || ( TWRC_XFERDONE == tw_status);
+		if(NULL != preturn)
+			*preturn = tw_status;
+
+     /*
+		std::ostringstream x;
+		static std::string previousEvent;
+
+		//x << "T.C. 0x" << std::hex << MSG;
+		x << std::dec << " DG" << DG << " from " << pOrigin->ProductName << " to " ;
+		if(NULL!=pDest)
+		{
+			x << pDest->ProductName;
+		}
+		else
+		{
+			x<< "NULL";
+		}
+		x <<" status " << tw_status ; 
+     */
+
+		if (!retval) // query status on error
+		{
+			(*m_pDSMProc)(pOrigin,pDest,DG_CONTROL,DAT_STATUS,MSG_GET,&status);
+        /*
+			x << " condition code " <<   m_Status.ConditionCode << std::endl;
+
+			if ( previousEvent != x.str())
+			{
+				previousEvent = x.str();
+				OutputDebugString( previousEvent.c_str());
+			}
+        */
+			// so, on further investigation, the Twain driver is telling us that the request DID work....
+			if (0 == status.ConditionCode) 
+				retval = true;
+
+		}
+	}
+	return retval;
+}
+
+
+int WorkerThread::svc(void)
+{
+	CreateDummyWindow();
+	// indicate that we're running
+	{
+		MMThreadGuard g(*pStopLock_);
+		stop_ = false;
+		stopped_ = false;
+	}
+	while(KeepRunning())
+	{
+		PerformanceTimer delay;
+		MSG msg;
+
+		// Note 1: Some sources are poorly written and require message processing to function.
+		// Note 2: Don't just process until no messages, as this might cause a lockup.
+		while(PeekMessage(&msg, 0, 0, 0, PM_REMOVE) && delay.elapsed() < PEEK_TIMEOUT)
+		{
+			TranslateMessage(&msg);
+			DispatchMessage(&msg);
+		}
+		// If there's a GUI request to close the interface then take care of it
+		if(closeDSRequest_s)
+		{
+			//MessageBox(0, "Close DS GUI.", "test", 0);
+			closeDSRequest_s = false;
+			//parent_->EnableCamera(false);
+			parent_->StopTwain();
+			// restart the session so that more data can be collected
+			parent_->StartTwain();
+		}
+		// If there's a pending TWAIN call then go ahead and process it
+		if(IsBusy())
+		{
+			bool retval;
+
+			retval = ThreadedTwainCall(nextOperation_.pOrigin, nextOperation_.pDest, nextOperation_.DG,
+			                           nextOperation_.DAT, nextOperation_.MSG, nextOperation_.pData,
+			                           nextOperation_.preturn);
+			*nextOperation_.pretval = retval;
+			SetBusy(false);
+		}
+		CDeviceUtils::SleepMs(1);
+	}
+	// indicate that we're stopped
+	{
+		MMThreadGuard g(*pStopLock_);
+		stop_ = false;
+		stopped_ = true;
+	}
+	return DEVICE_OK;
 }
