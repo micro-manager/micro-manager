@@ -44,8 +44,9 @@ public:
    virtual double GetStepSizeXUm();
    virtual double GetStepSizeYUm();
    virtual int SetRelativePositionUm(double dx, double dy);
+   virtual int SetPositionUm(double x, double y);
    virtual int IsXYStageSequenceable(bool& isSequenceable) const; 
-   
+   virtual int GetPositionUm(double& x, double& y);
 
    // Action interface
    int OnPositionXmm(MM::PropertyBase* pProp, MM::ActionType eAct);
@@ -55,6 +56,7 @@ public:
    int OnReturnToOrigin(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnPositionXYmm(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnVelocity(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnEncoded(MM::PropertyBase* pProp, MM::ActionType eAct);
 
 private:
    /// Private methods
@@ -62,14 +64,12 @@ private:
    // Initialization
    int CreateMicroDriveXYProperties();
 
-   // Set positions
+   // Set/Get positions
    int SetPositionMm(double x, double y);
    int GetPositionMm(double& x, double& y);
    int SetRelativePositionMm(double x, double y);
    int SetPositionXSteps(long x);
    int SetPositionYSteps(long y);
-   int SetPositionUm(double x, double y);
-   int GetPositionUm(double& x, double& y);
 
    // Calibration & origin methods
    int Calibrate();
@@ -95,6 +95,10 @@ private:
    double minVelocity_;
    double velocity_;
    int rounding_;
+
+   bool encoded_;
+   double lastX_;
+   double lastY_;
 };
 
 

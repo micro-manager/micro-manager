@@ -13,7 +13,10 @@ using namespace std;
 MicroDriveXYStage::MicroDriveXYStage(): 
    busy_(false),
    initialized_(false),
-   rounding_(0)
+   rounding_(0),
+   encoded_(true),
+   lastX_(0),
+   lastY_(0)
 {
    InitializeDefaultErrorMessages();
 
@@ -27,6 +30,12 @@ MicroDriveXYStage::MicroDriveXYStage():
 	SetErrorText(MCL_INVALID_AXIS, "MCL Error: Invalid axis");
 	SetErrorText(MCL_INVALID_HANDLE, "MCL Error: Handle not valid");
 	SetErrorText(MCL_INVALID_DRIVER, "MCL Error: Invalid Driver");
+
+   int err;
+
+ 	// Encoders present?
+	CPropertyAction* pAct = new CPropertyAction(this, &MicroDriveXYStage::OnEncoded);
+	err = CreateProperty(g_Keyword_Encoded, "Yes", MM::String, false, pAct);
 }
 
 MicroDriveXYStage::~MicroDriveXYStage()
@@ -208,7 +217,7 @@ int MicroDriveXYStage::SetPositionMm(double x, double y)
 
 	///Calculate the absolute position.
 	double xCurrent, yCurrent;
-	err = MCL_MicroDriveReadEncoders(&xCurrent, &yCurrent, MCLhandle_);
+	err = GetPositionMm(xCurrent, yCurrent);
 	if (err != MCL_SUCCESS)
 		return err;
 
@@ -227,6 +236,7 @@ int MicroDriveXYStage::SetPositionMm(double x, double y)
 		err = MCL_MicroDriveMoveProfile(YAXIS, velocity_, y, rounding_, MCLhandle_);
 		if (err != MCL_SUCCESS)
 			return err;
+      lastY_ += y;
 
 	}
 	else if (noYMovement || YMoveBlocked(y))
@@ -234,13 +244,15 @@ int MicroDriveXYStage::SetPositionMm(double x, double y)
 		err = MCL_MicroDriveMoveProfile(XAXIS, velocity_, x, rounding_, MCLhandle_);
 		if (err != MCL_SUCCESS)
 			return err;
+      lastX_ += x;
 	}
 	else 
 	{
 		err = MCL_MicroDriveMoveProfileXY(velocity_, x, rounding_, velocity_, y, rounding_, MCLhandle_);
 		if (err != MCL_SUCCESS)
 			return err;
-
+      lastX_ += x;
+      lastY_ += y;
 	}
 
 	PauseDevice();
@@ -276,21 +288,25 @@ int MicroDriveXYStage::SetRelativePositionMm(double x, double y){
 	else if (noXMovement || XMoveBlocked(x))
 	{ 
 		err = MCL_MicroDriveMoveProfile(YAXIS, velocity_, y, rounding_, MCLhandle_);
-		if (err != MCL_SUCCESS)
+      if (err != MCL_SUCCESS)
 			return err;
-
+		lastY_ += y;
 	}
 	else if (noYMovement || YMoveBlocked(y))
 	{
 		err = MCL_MicroDriveMoveProfile(XAXIS, velocity_, x, rounding_, MCLhandle_);
-		if (err != MCL_SUCCESS)
+      if (err != MCL_SUCCESS)
 			return err;
-	}
+		lastX_ += x;
+   }
 	else 
 	{
 		err = MCL_MicroDriveMoveProfileXY(velocity_, x, rounding_, velocity_, y, rounding_, MCLhandle_);
-		if (err != MCL_SUCCESS)
+		
+      if (err != MCL_SUCCESS)
 			return err;
+      lastX_ += x;
+      lastY_ += y;
 	}
 
 	PauseDevice();
@@ -299,9 +315,14 @@ int MicroDriveXYStage::SetRelativePositionMm(double x, double y){
 
 int MicroDriveXYStage::GetPositionMm(double& x, double& y)
 {
-	int err = MCL_MicroDriveReadEncoders(&x, &y, MCLhandle_);
-	if (err != MCL_SUCCESS)
-		return err;
+   if (encoded_) {
+	   int err = MCL_MicroDriveReadEncoders(&x, &y, MCLhandle_);
+	   if (err != MCL_SUCCESS)
+		   return err;
+   } else {
+      x = lastX_;
+      y = lastY_;
+   }
 
 	return DEVICE_OK;
 }
@@ -357,6 +378,8 @@ int MicroDriveXYStage::SetOrigin()
 	int err = MCL_MicroDriveResetEncoders(NULL, MCLhandle_);
 	if (err != MCL_SUCCESS)
 		return err;
+   lastX_ = 0;
+   lastY_ = 0;
 
 	return DEVICE_OK;
 }
@@ -394,7 +417,7 @@ int MicroDriveXYStage::Calibrate()
 	double xPosLimit;
 	double yPosLimit;
 
-	err = MCL_MicroDriveReadEncoders(&xPosOrig, &yPosOrig, MCLhandle_);
+	err = GetPositionMm(xPosOrig, yPosOrig);
 	if (err != MCL_SUCCESS)
 		return err;
 
@@ -402,7 +425,7 @@ int MicroDriveXYStage::Calibrate()
 	if (err != DEVICE_OK)
 		return err;
 
-	err = MCL_MicroDriveReadEncoders(&xPosLimit, &yPosLimit, MCLhandle_);
+	err = GetPositionMm(xPosLimit, yPosLimit);
 	if (err != MCL_SUCCESS)
 		return err;
 
@@ -496,7 +519,7 @@ int MicroDriveXYStage::ReturnToOrigin()
 		return err;
 
 	///Finish the motion if one axis hit its limit first.
-	err = MCL_MicroDriveReadEncoders(&xPos, &yPos, MCLhandle_);
+	err = GetPositionMm(xPos, yPos);
 	if (err != MCL_SUCCESS)
 		return err;
 
@@ -531,7 +554,7 @@ int MicroDriveXYStage::OnPositionXmm(MM::PropertyBase* pProp, MM::ActionType eAc
 		pProp->Get(pos);
 
 		double x, y;
-		err = MCL_MicroDriveReadEncoders(&x, &y, MCLhandle_);
+		err = GetPositionMm(x, y);
 		if(err != MCL_SUCCESS)
 			return err;
 		err = SetPositionMm(pos, y);
@@ -559,7 +582,7 @@ int MicroDriveXYStage::OnPositionYmm(MM::PropertyBase* pProp, MM::ActionType eAc
 		pProp->Get(pos);
 
 		double x, y;
-		err = MCL_MicroDriveReadEncoders(&x, &y, MCLhandle_);		
+		err = GetPositionMm(x, y);		
 		if(err != MCL_SUCCESS)
 			return err;
 		err = SetPositionMm(x, pos);
@@ -700,8 +723,25 @@ int MicroDriveXYStage::OnVelocity(MM::PropertyBase* pProp, MM::ActionType eAct){
 	return DEVICE_OK;
 }
 
+int MicroDriveXYStage::OnEncoded(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+	if (eAct == MM::BeforeGet)
+	{
+      pProp->Set(encoded_ ? g_Listword_Yes : g_Listword_No);
+	}
+	else if (eAct == MM::AfterSet)
+	{
+   	string message;
+      pProp->Get(message);
+		encoded_ = (message.compare(g_Listword_Yes) == 0);
+	}
+
+	return DEVICE_OK;
+}
+
 int MicroDriveXYStage::IsXYStageSequenceable(bool& isSequenceable) const
 {
 	isSequenceable = false;
 	return DEVICE_OK;
 }
+

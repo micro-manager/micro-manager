@@ -24,6 +24,7 @@ static const char* g_Keyword_Calibrate = "Calibrate";
 static const char* g_Keyword_ReturnToOrigin = "Return to origin";
 static const char* g_Keyword_PositionTypeAbsRel = "Position type (absolute/relative)";
 static const char* g_Keyword_SetPosXYmm = "Set position XY axis (mm) (X= Y=)";
+static const char* g_Keyword_Encoded = "EncodersPresent";
 
 static const char* g_Listword_No = "No";
 static const char* g_Listword_Yes = "Yes";
