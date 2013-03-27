@@ -35,7 +35,7 @@ MicroDriveXYStage::MicroDriveXYStage():
 
  	// Encoders present?
 	CPropertyAction* pAct = new CPropertyAction(this, &MicroDriveXYStage::OnEncoded);
-	err = CreateProperty(g_Keyword_Encoded, "Yes", MM::String, false, pAct);
+	err = CreateProperty(g_Keyword_Encoded, "Yes", MM::String, false, pAct, true);
 }
 
 MicroDriveXYStage::~MicroDriveXYStage()
