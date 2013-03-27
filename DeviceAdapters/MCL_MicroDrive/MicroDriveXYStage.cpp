@@ -59,6 +59,9 @@ int MicroDriveXYStage::Initialize()
 	   return MCL_INVALID_HANDLE;
 
    err = MCL_MicroDriveInformation(&encoderResolution_, &stepSize_mm_, &maxVelocity_, &minVelocity_, MCLhandle_);
+   std::stringstream ss;
+   ss << "Detected Encoder Resolution: " << encoderResolution_;
+   this->LogMessage(ss.str());
 
    if (err != MCL_SUCCESS)
 	   return err;
