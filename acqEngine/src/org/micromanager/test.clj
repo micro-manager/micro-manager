@@ -323,7 +323,9 @@
                   (.put queue
                         (image-to-byte-buffer
                           img
-                          (byte-buffer (* n 2)))))))
+                          (byte-buffer (* n 2)))
+                        )
+                  )))
       queue)))
 
 (defn shorts-test [n]
@@ -350,25 +352,34 @@
           (future (.force channel true))))
     (.force channel false)
     (.close file)))
+  
 
 (defn acquire-and-save-test [n]
-    (let [buffer-queue (time (simple-byte-buffer-queue n))
-          filename (str "E:/acquisition/test" (rand-int 100000) ".dat")
-          file (RandomAccessFile. filename "rw")
-          channel (.getChannel file)
-          t0 (System/currentTimeMillis)]
-      (println filename)
-      (dotimes [i n]
-        (when (zero? (mod i 100))
-          (println i (- (System/currentTimeMillis) t0)))
-        (.write channel 
-                (.take buffer-queue)
-               )
-        (when (zero? (mod i 100))
-          (future (.force channel true)))
-      )
-      (.close file)
-      filename))
+  (let [buffer-queue (time (simple-byte-buffer-queue n))
+        filename (str "E:/acquisition/test" (rand-int 100000) ".dat")
+        file (RandomAccessFile. filename "rw")
+        channel (.getChannel file)
+        t0 (System/currentTimeMillis)]
+    (println filename)
+    (dotimes [i n]
+      (when (zero? (mod i 100))
+        (println i (- (System/currentTimeMillis) t0)))
+      (let [buffer (.take buffer-queue)]
+        (.write channel buffer)
+        ))
+    (.close file)
+    filename))
+
+(defn acquire-and-store-in-ram [n]
+  (let [buffer-queue (time (simple-byte-buffer-queue n))
+       storage-queue (LinkedBlockingQueue.)
+       t0 (System/currentTimeMillis)]
+   (dotimes [i n]
+     (when (zero? (mod i 100))
+       (println i (- (System/currentTimeMillis) t0)))
+     (let [buffer (.take buffer-queue)]
+       (.put storage-queue buffer)))
+   (count storage-queue)))
 
 (defn run-in-parallel [n f]
   (doall (apply pcalls (repeat n f))))
@@ -386,6 +397,12 @@
   (doseq [i (range 1 17)]
     (dotimes [_ reps]
       (println i "\t" (time-per-run i f)))))
+
+
+
+
+
+
 
 
 
