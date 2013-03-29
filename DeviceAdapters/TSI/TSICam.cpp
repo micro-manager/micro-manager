@@ -442,6 +442,10 @@ int TsiCam::SnapImage()
    if (img.Width() != tsiImg->m_Width || img.Height() != tsiImg->m_Height || img.Depth() != tsiImg->m_BytesPerPixel)
       img.Resize(tsiImg->m_Width, tsiImg->m_Height, tsiImg->m_BytesPerPixel);
 
+   ostringstream os;
+   os << "TSI: Snapped image " << tsiImg->m_Width << "X" << tsiImg->m_Height;
+   LogMessage(os.str().c_str());
+
    img.SetPixels(tsiImg->m_PixelData.vptr);
    camHandle_->FreeImage(tsiImg);
    camHandle_->Stop();
