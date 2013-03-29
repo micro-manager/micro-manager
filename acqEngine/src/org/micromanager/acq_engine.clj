@@ -319,13 +319,41 @@
 (defn first-trigger-missing? []
   (= "1" (get-property-value (core getCameraDevice) "OutputTriggerFirstMissing")))
 
+(defn extra-triggers []
+  (if-let [trigger-str (get-property-value (core getCameraDevice) "ExtraTriggers")]
+    (Long/parseLong trigger-str)
+    0))
+
+(defn offset-cycle [offset coll]
+  (when coll
+    (let [n (count coll)
+          to-drop (mod (+ n offset) n)]
+      (->> (cycle coll)
+           (drop to-drop)
+           (take n)))))
+
+(defn offset-if-extra-trigger [coll]
+  (offset-cycle (- (extra-triggers)) coll))
+
+(defn compensate-for-extra-trigger [slices]
+  (when slices
+    (concat (repeat (extra-triggers) (first slices)) slices)))
+
+(defn apply-to-map-vals [f m]
+  (into {}
+        (for [[k v] m]
+          [k (f v)])))
+
 (defn init-burst [length trigger-sequence relative-z]
   (core setAutoShutter (@state :init-auto-shutter))
-  (load-property-sequences (:properties trigger-sequence))
-  (let [absolute-slices (load-slice-sequence (:slices trigger-sequence) relative-z)]
+  (load-property-sequences
+    (apply-to-map-vals offset-if-extra-trigger (:properties trigger-sequence)))
+  (let [absolute-slices (load-slice-sequence
+                          (compensate-for-extra-trigger (:slices trigger-sequence))
+                           relative-z)]
     (start-property-sequences (:properties trigger-sequence))
     (when absolute-slices
-      (start-slice-sequence (:slice trigger-sequence)))
+      (start-slice-sequence (:slices trigger-sequence)))
     (core startSequenceAcquisition (if (first-trigger-missing?) (inc length) length) 0 true)
     (swap! state assoc-in [:last-stage-positions (core getFocusDevice)]
            (last absolute-slices))))
@@ -341,7 +369,8 @@
       (if-let [image (pop-tagged-image)]
         image
         (if (< timeout-ms (- (System/currentTimeMillis) start-time))
-          (throw-exception "Timed out waiting for image\nto arrive from camera.")
+          (throw-exception (str (- (System/currentTimeMillis) start-time)
+                                " Timed out waiting for image\nto arrive from camera."))
           (do (when (core isBufferOverflowed)
                 (throw-exception "Circular buffer overflowed."))
               (Thread/sleep 1)
@@ -383,7 +412,7 @@
     m))
 
 (defn show [x]
-  (do (println x)
+  (do (prn x)
       x))
 
 (defn tag-burst-image [image burst-events camera-channel-names camera-index-tag]
