@@ -196,6 +196,7 @@ public:
    int OnPort(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnAxis(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnSequence(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnIgnoreInitialTriggerPulses(MM::PropertyBase* pProp, MM::ActionType eAct);
 
    // Sequence functions
    int IsStageSequenceable(bool& isSequenceable) const {isSequenceable = sequenceable_; return DEVICE_OK;}
@@ -211,6 +212,7 @@ private:
    int GetControllerInfo();
    int ExecuteCommand(const std::string& cmd, std::string& response);
    int Autofocus(long param);
+
    //int GetResolution(double& res);
 
    std::vector<double> sequence_;
@@ -221,6 +223,7 @@ private:
    bool hasRingBuffer_;
    long nrEvents_;
    long curSteps_;
+   long ignoreInitialTriggerPulses_;
 };
 
 
