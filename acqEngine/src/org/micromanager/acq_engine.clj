@@ -394,6 +394,7 @@
                    (Long/parseLong cam-chan-str)
                    0)
         image-number (Long/parseLong (get-in image [:tags "ImageNumber"]))
+        image-number (if (first-trigger-missing?) (dec image-number) image-number)
         burst-event (nth burst-events image-number)
         camera-channel-name (nth camera-channel-names cam-chan)
         event (-> burst-event
