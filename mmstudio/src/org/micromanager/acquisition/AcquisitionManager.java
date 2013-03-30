@@ -8,8 +8,6 @@ import java.awt.event.WindowEvent;
 import java.util.Enumeration;
 import java.util.Hashtable;
 import java.util.Set;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import java.util.prefs.Preferences;
 import mmcorej.TaggedImage;
 import org.json.JSONArray;
