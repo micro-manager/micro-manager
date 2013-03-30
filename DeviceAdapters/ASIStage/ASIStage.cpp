@@ -1511,8 +1511,7 @@ ZStage::ZStage() :
    answerTimeoutMs_(1000),
    sequenceable_(false),
    hasRingBuffer_(false),
-   nrEvents_(50),
-   ignoreInitialTriggerPulses_(0)
+   nrEvents_(50)
 {
    InitializeDefaultErrorMessages();
 
@@ -1581,14 +1580,7 @@ int ZStage::Initialize()
       CreateProperty(spn, "No", MM::String, false, pAct);
       AddAllowedValue(spn, "No");
       AddAllowedValue(spn, "Yes");
-
-      pAct = new CPropertyAction (this, &ZStage::OnIgnoreInitialTriggerPulses);
-      CreateProperty("Ignore Initial Trigger Pulses", "0", MM::Integer, false, pAct);
-      SetPropertyLimits("Ignore Initial Trigger Pulses", 0, 5);
    }
-
-   
-
       
    initialized_ = true;
    return DEVICE_OK;
@@ -1820,14 +1812,11 @@ bool ZStage::HasRingBuffer()
 
 int ZStage::StartStageSequence()
 {
-   int length = (int) sequence_.size();
-   int initialPosition = (length - ignoreInitialTriggerPulses_) % length;
-   int axisCode = (axis_ == "F") ? 8 : 4;
-
-   stringstream commandstream;
-   commandstream << "RM Y=" << axisCode << " Z=" << initialPosition;
    string answer;
-   int ret = QueryCommand(commandstream.str().c_str(), answer); // ensure that ringbuffer pointer points to first entry and that we only trigger the Z axis
+   std::string command = "RM Y=4 Z=0";
+   if (axis_ == "F")
+      command = "RM Y=8 Z=0";
+   int ret = QueryCommand(command.c_str(), answer); // ensure that ringbuffer pointer points to first entry and that we only trigger the Z axis
    if (ret != DEVICE_OK)
       return ret;
 
@@ -1990,20 +1979,6 @@ int ZStage::OnSequence(MM::PropertyBase* pProp, MM::ActionType eAct)
       sequenceable_ = false;
       if (prop == "Yes")
          sequenceable_ = true;
-   }
-
-   return DEVICE_OK;
-}
-
-int ZStage::OnIgnoreInitialTriggerPulses(MM::PropertyBase* pProp, MM::ActionType eAct)
-{
-   if (eAct == MM::BeforeGet)
-   {
-      pProp->Set(ignoreInitialTriggerPulses_);
-   }
-   else if (eAct == MM::AfterSet)
-   {
-      pProp->Get(ignoreInitialTriggerPulses_);
    }
 
    return DEVICE_OK;
