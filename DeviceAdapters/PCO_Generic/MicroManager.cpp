@@ -782,6 +782,7 @@ int CPCOCam::Initialize()
   }
   int imode, isubmode;
 
+  m_pCamera->ReloadSize();
   imode = m_nMode;
   isubmode = m_nSubMode;
   // CCD type (read-only)
@@ -1274,7 +1275,7 @@ int CPCOCam::GetROI(unsigned& uX, unsigned& uY, unsigned& uXSize, unsigned& uYSi
 
   if (nErr != 0)
      return nErr;
-  if(m_pCamera->iCamClass == 2)
+  if(m_pCamera->iCamClass == 1)
   {
     uX = m_nRoiXMin * 32;
     uY = m_nRoiYMin * 32;
@@ -1310,10 +1311,18 @@ int CPCOCam::ClearROI()
   }
   else
   {
-    m_nRoiXMin = 1;
-    m_nRoiYMin = 1;
-    m_nRoiXMax = roiXMaxFull_ / m_nHBin;
-    m_nRoiYMax = roiYMaxFull_ / m_nVBin;
+    if(m_pCamera->iCamClass == 2)// PixelFly
+    {
+      m_nRoiXMax = roiXMaxFull_ / (m_nHBin + 1);
+      m_nRoiYMax = roiYMaxFull_ / (m_nVBin + 1);
+    }
+    else
+    {
+      m_nRoiXMin = 1;
+      m_nRoiYMin = 1;
+      m_nRoiXMax = roiXMaxFull_ / m_nHBin;
+      m_nRoiYMax = roiYMaxFull_ / m_nVBin;
+    }
   }
   nErr = SetupCamera();
 
@@ -1361,6 +1370,7 @@ int CPCOCam::ResizeImageBuffer()
   }
   else
   {
+    m_pCamera->ReloadSize();
     nErr = m_pCamera->getccdsize(&as, &nWidth, &nHeight);
     nWidth = m_pCamera->GetXRes();
     nHeight = m_pCamera->GetYRes();
@@ -1368,7 +1378,6 @@ int CPCOCam::ResizeImageBuffer()
     {
       return nErr;
     }
-    m_pCamera->ReloadSize();
   }
 
   if(!(pixelDepth_ == 1 || pixelDepth_ == 2 || pixelDepth_ == 4))
