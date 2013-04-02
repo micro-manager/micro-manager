@@ -90,4 +90,8 @@ pushd plugins\IntelligentAcquisition
 call build.bat
 popd
 
+pushd plugins\HCS
+call ant -buildfile build.xml %cleantarget% compile build 
+popd
+
 POPD

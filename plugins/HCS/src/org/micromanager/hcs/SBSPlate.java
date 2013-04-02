@@ -4,20 +4,20 @@
 //SUBSYSTEM:      high content screening
 //-----------------------------------------------------------------------------
 
-//AUTHOR:         Nenad Amodaj, nenad@amodaj.com, June 3, 2008
+//AUTHOR:         Nenad Amodaj, nenad@amodaj.com, 2008, 2013
 
-//COPYRIGHT:      100X Imaging Inc, www.100ximaging.com, 2008
+//COPYRIGHT:      UCSF, 100X Imaging Inc
 
-//LICENSE:        This file is distributed under the GPL license.
-//License text is included with the source distribution.
+//LICENSE:        This file is distributed under the LGPL license.
+//                License text is included with the source distribution.
 
-//This file is distributed in the hope that it will be useful,
-//but WITHOUT ANY WARRANTY; without even the implied warranty
-//of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+//                This file is distributed in the hope that it will be useful,
+//                but WITHOUT ANY WARRANTY; without even the implied warranty
+//                of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 
-//IN NO EVENT SHALL THE COPYRIGHT OWNER OR
-//CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
-//INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
+//                IN NO EVENT SHALL THE COPYRIGHT OWNER OR
+//                CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+//                INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 
 package org.micromanager.hcs;
 
@@ -142,14 +142,13 @@ public class SBSPlate {
       StringBuffer contents = new StringBuffer();
       try {
          // read metadata from file            
-         BufferedReader input = null;
-         input = new BufferedReader(new FileReader(path));
+         BufferedReader input = new BufferedReader(new FileReader(path));
          String line = null;
          while (( line = input.readLine()) != null){
             contents.append(line);
             contents.append(System.getProperty("line.separator"));
          }
-
+         input.close();
          restore(contents.toString());
       } catch (IOException e) {
          throw new HCSException(e);

@@ -1,42 +1,38 @@
-<!-- Ant makefile for the HCT plugin  -->
+<!-- Ant makefile for the HCS plugin  -->
 <!-- This file assumes Micro-Manager project tree structure -->
 
 <project name="hcs" default="buildHCS">
 
 	<!-- Specify the system path to the ImageJ root directory -->
-	<property name="InstallRoot" value="C:/projects/micromanager1.4.10/Install_AllPlatforms/micro-manager"/>
+	<property name="InstallRoot" value="../../Install_AllPlatforms/micro-manager"/>
 
 	<!-- Do not modify from this point on -->
-	<property name="MMCoreJ" value="../../micromanager1.4.10/bin_x64/MMCoreJ.jar"/>
-	<property name="MMJ" value="../../micromanager1.4.10/mmstudio/MMJ_.jar"/>
+	<property name="MMCoreJ" value="../../bin_win32/MMCoreJ.jar"/>
+	<property name="MMJ" value="../../mmstudio/MMJ_.jar"/>
 	<property name="MMPluginDir-inst" value="${InstallRoot}/mmplugins"/>
-	<property name="Runtime" value="../../micromanager1.4.10/bin_x64"/>
-   <property name="PluginName" value="hcs100x"/>
-	<property name="installImage" value="../../micromanager2/install_win32/micro-manager"/>
+   <property name="PluginName" value="hcs"/>
 
 	<path id="project.class.path">
 		<pathelement location="${MMCoreJ}" />
 	    <pathelement location="${MMJ}"/>
 	</path>
 
-	<target name="compileHCS" description="Compile HCT plugins.">
+	<target name="compile" description="Compile HCS plugins.">
 		<mkdir dir="build" />
-		<javac srcdir="." destdir="./build" optimize="on" source="1.5" debug="on">
+		<javac srcdir="." destdir="./build" optimize="on" source="1.5" target="1.5" debug="on">
 			<classpath refid="project.class.path" />
 		</javac>
 	</target>
 
-	<target name="buildHCS" description="Build hcs100x.jar">
+	<target name="build" description="Build hcs.jar">
 
 		<jar jarfile="${PluginName}.jar" basedir="build" />
 		
 		<mkdir dir="${MMPluginDir-inst}" />
-		<mkdir dir="${Runtime}" />
-		<copy file="${PluginName}.jar" todir="${Runtime}" />
 		<copy file="${PluginName}.jar" todir="${MMPluginDir-inst}/" />
 	</target>
 	
-	<target name="cleanHCS" description="Delete the hcs100x build files.">
+	<target name="clean" description="Delete the hcs build files.">
 		<delete dir="build" />
 		<delete file="${PluginName}.jar" />
 	</target>
