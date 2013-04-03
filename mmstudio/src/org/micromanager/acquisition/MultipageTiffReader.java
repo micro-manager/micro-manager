@@ -517,8 +517,10 @@ public class MultipageTiffReader {
       }
       long filePosition = firstIFD;
       indexMap_ = new HashMap<String, Long>();
-      final ProgressBar progressBar = new ProgressBar("Fixing dataset", 0, (int) (fileChannel_.size() / 2L));
-      progressBar.setRange(0, (int) (fileChannel_.size() / 2L));
+      long progBarMax = (fileChannel_.size() / 2L);
+      final ProgressBar progressBar = new ProgressBar("Fixing dataset", 0, 
+              progBarMax >= Integer.MAX_VALUE ? Integer.MAX_VALUE : (int) progBarMax);
+      progressBar.setRange(0, progBarMax >= Integer.MAX_VALUE ? Integer.MAX_VALUE : (int) progBarMax);
       progressBar.setProgress(0);
       progressBar.setVisible(true);
       long nextIFDOffsetLocation = 0;
