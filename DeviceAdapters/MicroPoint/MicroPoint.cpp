@@ -320,12 +320,9 @@ int MicroPoint::SetPosition(double x, double y)
    y_ = y;
    unsigned char xpos = (unsigned char) x;
    unsigned char ypos = (unsigned char) y;
-   unsigned char buf[] = { '!', 'A', xpos,
-                           '!', 'B', ypos,
-                           'A', 0x00,
-                           'B', 0x00      };
+   unsigned char buf[] = { 'A', xpos, 'B', ypos };
 
-   WriteBytes(buf, 10);
+   WriteBytes(buf, sizeof(buf));
    return DEVICE_OK;
 }
 
@@ -348,7 +345,7 @@ double MicroPoint::GetYRange()
 
 int MicroPoint::AddPolygonVertex(int polygonIndex, double x, double y)
 {
-   if (polygons_.size() <  (1 + polygonIndex))
+   if (polygons_.size() <  (unsigned) (1 + polygonIndex))
    {
       polygons_.resize(polygonIndex + 1);
    }
@@ -379,7 +376,7 @@ int MicroPoint::RunPolygons()
 {
    for (int j=0; j<polygonRepetitions_; ++j)
    {
-      for (int i=0; i<polygons_.size(); ++i)
+      for (int i=0; i< (int) polygons_.size(); ++i)
       {
          double x = polygons_[i][0].first;
          double y = polygons_[i][0].second;
