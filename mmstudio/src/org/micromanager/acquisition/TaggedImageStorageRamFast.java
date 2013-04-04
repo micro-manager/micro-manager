@@ -5,6 +5,7 @@
 
 package org.micromanager.acquisition;
 
+import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.ShortBuffer;
@@ -42,15 +43,34 @@ public class TaggedImageStorageRamFast implements TaggedImageStorage {
    private JSONObject displaySettings_;
    private int lastFrame_ = -1;
    private Executor putExecutor_;
+   
    private class DirectTaggedImage {
        ByteBuffer pixelBuffer;
-       JSONObject tags;
+       ByteBuffer tags;
+   }
+   
+   private ByteBuffer bufferFromString(String string) {
+       final byte[] bytes;
+       try {
+           bytes = string.getBytes("UTF-8");
+       } catch (UnsupportedEncodingException ex) {
+           ReportingUtils.logError(ex);
+           return null;
+       }
+       return ByteBuffer.allocateDirect(bytes.length).put(bytes);
+   }
+   
+   private String stringFromBuffer(ByteBuffer byteBuffer) {
+       try {
+           return new String(byteBuffer.array(), "UTF-8");
+       } catch (UnsupportedEncodingException ex) {
+           return null;
+       }
    }
    
    private DirectTaggedImage taggedImageToDirectTaggedImage(TaggedImage taggedImage) throws JSONException, MMScriptException{
       DirectTaggedImage direct = new DirectTaggedImage();
-      direct.tags = taggedImage.tags;
-      String type = MDUtils.getPixelType(taggedImage.tags);
+      direct.tags = bufferFromString(taggedImage.tags.toString());
       Object pix = taggedImage.pix;
       if (pix instanceof short[]) {
         direct.pixelBuffer = ByteBuffer.allocateDirect(2*((short []) pix).length);
@@ -99,7 +119,11 @@ public class TaggedImageStorageRamFast implements TaggedImageStorage {
             ShortBuffer shortBuffer = directImage.pixelBuffer.asShortBuffer();
             short[] shorts = new short[shortBuffer.capacity()];
             shortBuffer.get(shorts);
-            return new TaggedImage(shorts, directImage.tags);
+            try {
+                return new TaggedImage(shorts, new JSONObject(stringFromBuffer(directImage.tags)));
+            } catch (JSONException ex) {
+                return null;
+            }
         }
         return null;
     }
