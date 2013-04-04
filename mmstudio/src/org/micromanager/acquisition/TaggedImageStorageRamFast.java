@@ -62,7 +62,10 @@ public class TaggedImageStorageRamFast implements TaggedImageStorage {
    
    private String stringFromBuffer(ByteBuffer byteBuffer) {
        try {
-           return new String(byteBuffer.array(), "UTF-8");
+           byte[] bytes = new byte[byteBuffer.capacity()];
+           byteBuffer.rewind();
+           byteBuffer.get(bytes);
+           return new String(bytes, "UTF-8");
        } catch (UnsupportedEncodingException ex) {
            return null;
        }
