@@ -6,8 +6,10 @@
 package org.micromanager.acquisition;
 
 import java.io.UnsupportedEncodingException;
+import java.nio.Buffer;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
+import java.nio.IntBuffer;
 import java.nio.ShortBuffer;
 import java.util.HashMap;
 import java.util.Set;
@@ -45,24 +47,68 @@ public class TaggedImageStorageRamFast implements TaggedImageStorage {
    private Executor putExecutor_;
    
    private class DirectTaggedImage {
-       ByteBuffer pixelBuffer;
-       ByteBuffer tags;
+       Buffer pixelBuffer;
+       ByteBuffer tagsBuffer;
    }
 
-   private ByteBuffer bytesIntoBuffer(byte[] bytes) {
+   private ByteBuffer bufferFromBytes(byte[] bytes) {
       return ByteBuffer.allocateDirect(bytes.length).put(bytes);
    }
-
-   private byte[] bytesFromBuffer(ByteBuffer byteBuffer) {
-      byte[] bytes = new byte[byteBuffer.capacity()];
-      byteBuffer.rewind();
-      byteBuffer.get(bytes);
+   
+   private ShortBuffer bufferFromShorts(short[] shorts) {
+      return ByteBuffer.allocateDirect(2*shorts.length).order(nativeOrder).asShortBuffer().put(shorts);
+   }
+   
+   private IntBuffer bufferFromInts(int[] ints) {
+      return ByteBuffer.allocateDirect(4*ints.length).order(nativeOrder).asIntBuffer().put(ints);
+   }
+      
+   private byte[] bytesFromBuffer(ByteBuffer buffer) {
+      byte[] bytes = new byte[buffer.capacity()];
+      buffer.rewind();
+      buffer.get(bytes);
       return bytes;
    }
+   
+   private short[] shortsFromBuffer(ShortBuffer buffer) {
+      short[] shorts = new short[buffer.capacity()];
+      buffer.rewind();
+      buffer.get(shorts);
+      return shorts;
+   }
 
+   private int[] intsFromBuffer(IntBuffer buffer) {
+      int[] ints = new int[buffer.capacity()];
+      buffer.rewind();
+      buffer.get(ints);
+      return ints;
+   }
+
+   private Object arrayFromBuffer(Buffer buffer) {
+      if (buffer instanceof ByteBuffer) {
+         return bytesFromBuffer((ByteBuffer) buffer);
+      } else if (buffer instanceof ShortBuffer) {
+         return shortsFromBuffer((ShortBuffer) buffer);
+      } else if (buffer instanceof IntBuffer) {
+         return intsFromBuffer((IntBuffer) buffer);
+      }
+      return null;
+   }
+   
+   private Buffer bufferFromArray(Object primitiveArray) {
+      if (primitiveArray instanceof byte[]) {
+         return bufferFromBytes((byte []) primitiveArray);
+      } else if (primitiveArray instanceof short[]) {
+         return bufferFromShorts((short []) primitiveArray);
+      } else if (primitiveArray instanceof int[]) {
+         return bufferFromInts((int []) primitiveArray);
+      }
+      return null;
+   }
+   
    private ByteBuffer bufferFromString(String string) {
       try {
-         return bytesIntoBuffer(string.getBytes("UTF-8"));
+         return bufferFromBytes(string.getBytes("UTF-8"));
       } catch (UnsupportedEncodingException ex) {
          ReportingUtils.logError(ex);
          return null;
@@ -78,19 +124,32 @@ public class TaggedImageStorageRamFast implements TaggedImageStorage {
       }
    }
    
+   private ByteBuffer bufferFromJSON(JSONObject json) {
+      return bufferFromString(json.toString());
+   }
+   
+   private JSONObject JSONFromBuffer(ByteBuffer byteBuffer) throws JSONException {
+      return new JSONObject(stringFromBuffer(byteBuffer));
+   }
+   
    private DirectTaggedImage taggedImageToDirectTaggedImage(TaggedImage taggedImage) throws JSONException, MMScriptException{
       DirectTaggedImage direct = new DirectTaggedImage();
-      direct.tags = bufferFromString(taggedImage.tags.toString());
-      Object pix = taggedImage.pix;
-      if (pix instanceof short[]) {
-        direct.pixelBuffer = ByteBuffer.allocateDirect(2*((short []) pix).length);
-        direct.pixelBuffer.order(nativeOrder);
-        direct.pixelBuffer.asShortBuffer().put((short [])pix);
-      } else if (pix instanceof byte[]) {
-        direct.pixelBuffer = ByteBuffer.allocateDirect(((byte []) pix).length);
-        direct.pixelBuffer.put((byte []) pix);
-      } 
+      direct.tagsBuffer = bufferFromJSON(taggedImage.tags);
+      direct.pixelBuffer = bufferFromArray(taggedImage.pix);
       return direct;
+   }
+   
+   private TaggedImage directTaggedImageToTaggedImage(DirectTaggedImage directImage) {
+        if (directImage != null) {
+            try {
+                return new TaggedImage(arrayFromBuffer(directImage.pixelBuffer),
+                                       JSONFromBuffer(directImage.tagsBuffer));
+            } catch (JSONException ex) {
+                return null;
+            }
+        } else {
+           return null;
+        }
    }
    
    public TaggedImageStorageRamFast(JSONObject summaryMetadata) {
@@ -123,19 +182,7 @@ public class TaggedImageStorageRamFast implements TaggedImageStorage {
         if (imageMap_ == null) {
             return null;
         }
-
-        DirectTaggedImage directImage = imageMap_.get(MDUtils.generateLabel(channel, slice, frame, position));
-        if (directImage != null) {
-            ShortBuffer shortBuffer = directImage.pixelBuffer.asShortBuffer();
-            short[] shorts = new short[shortBuffer.capacity()];
-            shortBuffer.get(shorts);
-            try {
-                return new TaggedImage(shorts, new JSONObject(stringFromBuffer(directImage.tags)));
-            } catch (JSONException ex) {
-                return null;
-            }
-        }
-        return null;
+        return directTaggedImageToTaggedImage(imageMap_.get(MDUtils.generateLabel(channel, slice, frame, position)));
     }
 
    public JSONObject getImageTags(int channelIndex, int sliceIndex, int frameIndex, int positionIndex) {
