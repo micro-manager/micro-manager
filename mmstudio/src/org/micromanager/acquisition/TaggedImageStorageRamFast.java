@@ -48,27 +48,34 @@ public class TaggedImageStorageRamFast implements TaggedImageStorage {
        ByteBuffer pixelBuffer;
        ByteBuffer tags;
    }
-   
-   private ByteBuffer bufferFromString(String string) {
-       final byte[] bytes;
-       try {
-           bytes = string.getBytes("UTF-8");
-       } catch (UnsupportedEncodingException ex) {
-           ReportingUtils.logError(ex);
-           return null;
-       }
-       return ByteBuffer.allocateDirect(bytes.length).put(bytes);
+
+   private ByteBuffer bytesIntoBuffer(byte[] bytes) {
+      return ByteBuffer.allocateDirect(bytes.length).put(bytes);
    }
-   
+
+   private byte[] bytesFromBuffer(ByteBuffer byteBuffer) {
+      byte[] bytes = new byte[byteBuffer.capacity()];
+      byteBuffer.rewind();
+      byteBuffer.get(bytes);
+      return bytes;
+   }
+
+   private ByteBuffer bufferFromString(String string) {
+      try {
+         return bytesIntoBuffer(string.getBytes("UTF-8"));
+      } catch (UnsupportedEncodingException ex) {
+         ReportingUtils.logError(ex);
+         return null;
+      }
+   }
+
    private String stringFromBuffer(ByteBuffer byteBuffer) {
-       try {
-           byte[] bytes = new byte[byteBuffer.capacity()];
-           byteBuffer.rewind();
-           byteBuffer.get(bytes);
-           return new String(bytes, "UTF-8");
-       } catch (UnsupportedEncodingException ex) {
-           return null;
-       }
+      try {
+         return new String(bytesFromBuffer(byteBuffer), "UTF-8");
+      } catch (UnsupportedEncodingException ex) {
+         ReportingUtils.logError(ex);
+         return null;
+      }
    }
    
    private DirectTaggedImage taggedImageToDirectTaggedImage(TaggedImage taggedImage) throws JSONException, MMScriptException{
