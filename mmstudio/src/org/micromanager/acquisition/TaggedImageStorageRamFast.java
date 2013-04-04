@@ -50,6 +50,14 @@ public class TaggedImageStorageRamFast implements TaggedImageStorage {
        Buffer pixelBuffer;
        ByteBuffer tagsBuffer;
    }
+   
+   public TaggedImageStorageRamFast(JSONObject summaryMetadata) {
+      imageMap_ = new TreeMap<String,DirectTaggedImage>(new ImageLabelComparator());
+      setSummaryMetadata(summaryMetadata);
+      displaySettings_ = new JSONObject();
+      putExecutor_ = Executors.newFixedThreadPool(1);
+      
+   }
 
    private ByteBuffer bufferFromBytes(byte[] bytes) {
       return ByteBuffer.allocateDirect(bytes.length).put(bytes);
@@ -145,21 +153,14 @@ public class TaggedImageStorageRamFast implements TaggedImageStorage {
                 return new TaggedImage(arrayFromBuffer(directImage.pixelBuffer),
                                        JSONFromBuffer(directImage.tagsBuffer));
             } catch (JSONException ex) {
-                return null;
+               ReportingUtils.logError(ex);
+               return null;
             }
         } else {
            return null;
         }
    }
    
-   public TaggedImageStorageRamFast(JSONObject summaryMetadata) {
-      imageMap_ = new TreeMap<String,DirectTaggedImage>(new ImageLabelComparator());
-      setSummaryMetadata(summaryMetadata);
-      displaySettings_ = new JSONObject();
-      putExecutor_ = Executors.newFixedThreadPool(1);
-      
-   }
-
     public void putImage(final TaggedImage taggedImage) throws MMException {
         putExecutor_.execute(new Runnable() {
             public void run() {
