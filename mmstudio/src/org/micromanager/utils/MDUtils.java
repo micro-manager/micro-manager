@@ -248,6 +248,15 @@ public class MDUtils {
          break;
       }
    }
+      
+   public static int getBytesPerPixel(JSONObject map) throws JSONException, MMScriptException {
+       if (isGRAY8(map)) return 1;
+       if (isGRAY16(map)) return 2;
+       if (isGRAY32(map)) return 4;
+       if (isRGB32(map)) return 4;
+       if (isRGB64(map)) return 8;
+       return 0;
+   }
 
 
    public static int getSingleChannelType(JSONObject map) throws JSONException, MMScriptException {
