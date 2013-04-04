@@ -32,7 +32,7 @@ import org.micromanager.utils.ReportingUtils;
  *
  * This class stores a collection of TaggedImages, all in ram.
  */
-public class TaggedImageStorageRam implements TaggedImageStorage {
+public class TaggedImageStorageRamFast implements TaggedImageStorage {
    final ByteOrder nativeOrder = ByteOrder.nativeOrder();
    public static String menuName_ = null;
    private boolean finished_ = false;
@@ -63,7 +63,7 @@ public class TaggedImageStorageRam implements TaggedImageStorage {
       return direct;
    }
    
-   public TaggedImageStorageRam(JSONObject summaryMetadata) {
+   public TaggedImageStorageRamFast(JSONObject summaryMetadata) {
       imageMap_ = new TreeMap<String,DirectTaggedImage>(new ImageLabelComparator());
       setSummaryMetadata(summaryMetadata);
       displaySettings_ = new JSONObject();
