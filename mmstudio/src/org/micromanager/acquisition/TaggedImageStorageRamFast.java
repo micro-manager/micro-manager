@@ -11,14 +11,10 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.IntBuffer;
 import java.nio.ShortBuffer;
-import java.util.HashMap;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import mmcorej.TaggedImage;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -40,11 +36,10 @@ public class TaggedImageStorageRamFast implements TaggedImageStorage {
    public static String menuName_ = null;
    private boolean finished_ = false;
 
-   protected TreeMap<String, DirectTaggedImage> imageMap_;
+   private TreeMap<String, DirectTaggedImage> imageMap_;
    private JSONObject summaryMetadata_;
    private JSONObject displaySettings_;
    private int lastFrame_ = -1;
-   private Executor putExecutor_;
    
    private class DirectTaggedImage {
        Buffer pixelBuffer;
@@ -52,11 +47,9 @@ public class TaggedImageStorageRamFast implements TaggedImageStorage {
    }
    
    public TaggedImageStorageRamFast(JSONObject summaryMetadata) {
-      imageMap_ = new TreeMap<String,DirectTaggedImage>(new ImageLabelComparator());
+      imageMap_ = new TreeMap<>(new ImageLabelComparator());
       setSummaryMetadata(summaryMetadata);
       displaySettings_ = new JSONObject();
-      putExecutor_ = Executors.newFixedThreadPool(1);
-      
    }
 
    private ByteBuffer bufferFromBytes(byte[] bytes) {
@@ -161,23 +154,15 @@ public class TaggedImageStorageRamFast implements TaggedImageStorage {
         }
    }
    
-    public void putImage(final TaggedImage taggedImage) throws MMException {
-        putExecutor_.execute(new Runnable() {
-            public void run() {
-                String label = MDUtils.getLabel(taggedImage.tags);
-                try {
-                    imageMap_.put(label, taggedImageToDirectTaggedImage(taggedImage));
-                } catch (Exception ex) {
-                    ReportingUtils.logError(ex);;
-                }
-                try {
-                    lastFrame_ = Math.max(lastFrame_, MDUtils.getFrameIndex(taggedImage.tags));
-                } catch (Exception ex) {
-                    ReportingUtils.logError(ex);
-                }
-            }
-        });
-    }
+   public void putImage(final TaggedImage taggedImage) throws MMException {
+      String label = MDUtils.getLabel(taggedImage.tags);
+      try {
+         imageMap_.put(label, taggedImageToDirectTaggedImage(taggedImage));
+         lastFrame_ = Math.max(lastFrame_, MDUtils.getFrameIndex(taggedImage.tags));
+      } catch (Exception ex) {
+         ReportingUtils.logError(ex);
+      }
+   }
 
     public TaggedImage getImage(int channel, int slice, int frame, int position) {
         if (imageMap_ == null) {
