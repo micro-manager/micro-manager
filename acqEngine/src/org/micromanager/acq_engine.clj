@@ -105,8 +105,8 @@
   (vec (map #(core getCameraChannelName %)
        (range (core getNumberOfCameraChannels)))))
 
-(defn super-channel-name [simple-channel-name camera-channel-name]
-  (if (>= 1 (core getNumberOfCameraChannels))
+(defn super-channel-name [simple-channel-name camera-channel-name num-camera-channels]
+  (if (>= 1 num-camera-channels)
     simple-channel-name
     (if (or (empty? simple-channel-name)
             (= "Default" simple-channel-name))
@@ -117,7 +117,7 @@
 
 (defn generate-metadata [event state]
   (merge
-    (map-config (core getSystemStateCache))
+    (state :system-state)
     (:metadata event)
     (let [[x y] (let [xy-stage (state :default-xy-stage)]
                   (when-not (empty? xy-stage)
@@ -382,16 +382,20 @@
     {:pix (.pix tagged-image)
      :tags (json-to-data (.tags tagged-image))}))
 
-(defn make-multicamera-channel [raw-channel-index camera-channel]
-  (+ camera-channel (* (core getNumberOfCameraChannels) (or raw-channel-index 0))))
+(defn make-multicamera-channel [raw-channel-index camera-channel num-camera-channels]
+  (+ camera-channel (* num-camera-channels (or raw-channel-index 0))))
 
 (defn make-multicamera-events [event]
   (let [num-camera-channels (core getNumberOfCameraChannels)
         camera-channel-names (get-camera-channel-names)]
     (for [camera-channel (range num-camera-channels)]
       (-> event
-          (update-in [:channel-index] make-multicamera-channel camera-channel)
-          (update-in [:channel :name] super-channel-name (camera-channel-names camera-channel))
+          (update-in [:channel-index] make-multicamera-channel
+                     camera-channel num-camera-channels)
+          (update-in [:channel :name]
+                     super-channel-name
+                     (camera-channel-names camera-channel)
+                     num-camera-channels)
           (assoc :camera-channel-index camera-channel)
           (assoc :camera (camera-channel-names camera-channel))))))
 
@@ -426,11 +430,17 @@
         image-number (if (first-trigger-missing?) (dec image-number) image-number)
         burst-event (nth burst-events image-number)
         camera-channel-name (nth camera-channel-names cam-chan)
+        num-camera-channels (count camera-channel-names)
         event (-> burst-event
-                  (update-in [:channel-index] make-multicamera-channel cam-chan)
-                  (update-in [:channel :name] super-channel-name camera-channel-name)
+                  (update-in [:channel-index]
+                             make-multicamera-channel
+                             cam-chan num-camera-channels)
+                  (update-in [:channel :name]
+                             super-channel-name
+                             camera-channel-name num-camera-channels)
                   (assoc :camera-channel-index cam-chan))
         time-stamp (burst-time (:tags image) @state)]
+    ;image))
     (annotate-image image event @state time-stamp)))
 
 (defn produce-burst-images
@@ -443,7 +453,8 @@
       (.put out-queue
             (-> (pop-burst-image timeout-ms)
                 (tag-burst-image burst-events camera-channel-names camera-index-tag)
-                make-TaggedImage))))
+                make-TaggedImage
+                ))))
   (burst-cleanup))
 
 (defn collect-burst-images [event out-queue]
@@ -451,7 +462,7 @@
     (when (first-trigger-missing?)
       (pop-burst-image pop-timeout-ms)) ; drop first image if first trigger doesn't happen
     (swap! state assoc :burst-time-offset nil)
-    (let [burst-events (assign-z-offsets (event :burst-data))
+    (let [burst-events (vec (assign-z-offsets (event :burst-data)))
           camera-channel-names (get-camera-channel-names)]
       (produce-burst-images burst-events camera-channel-names pop-timeout-ms out-queue))))
 
@@ -518,6 +529,7 @@
          (if (core getAutoShutter)
            [true (:close-shutter event)]
            [false false])]
+    (swap! state assoc :system-state (map-config (core getSystemStateCache)))
     (condp = (:task event)
       :snap (apply snap-image shutter-states)
       :burst (init-burst (count (:burst-data event))
@@ -679,8 +691,7 @@
     (event-fn)
     (await-resume)))
 
-(defn run-acquisition [this settings out-queue cleanup?]
-  (binding [state (.state this)]
+(defn run-acquisition [_ settings out-queue cleanup?]
     (try
       (def acq-settings settings)
       (log "Starting MD Acquisition: " settings)
@@ -692,11 +703,12 @@
         (def acq-sequence acq-seq)
         (execute (mapcat #(make-event-fns % out-queue) acq-seq)))
       (catch Throwable t
+             (def acq-error t)
              (ReportingUtils/showError t "Acquisition failed."))
       (finally
         (when cleanup?
           (cleanup))
-        (.put out-queue TaggedImageQueue/POISON)))))
+        (.put out-queue TaggedImageQueue/POISON))))
 
 ;; generic metadata
 
@@ -745,10 +757,11 @@
       (get {1 1 , 4 3} n))))
 
 (defn super-channels [simple-channel camera-channel-names]
-  (if (< 1 (count camera-channel-names))
-    (map #(update-in simple-channel [:name] super-channel-name %)
-         camera-channel-names)
-    simple-channel))
+  (let [n (count camera-channel-names)]
+    (if (< 1 n)
+      (map #(update-in simple-channel [:name] super-channel-name % n)
+           camera-channel-names)
+      simple-channel)))
 
 (defn all-super-channels [simple-channels camera-channel-names]
   (flatten (map #(super-channels % camera-channel-names) simple-channels)))
@@ -857,7 +870,8 @@
   (def last-acq this)
     (reset! (.state this) {:stop false :pause false :finished false})
     (let [out-queue (LinkedBlockingQueue. 10)
-          acq-thread (Thread. #(run-acquisition this settings out-queue cleanup?)
+          acq-thread (Thread. #(binding [state (.state this)]
+                                 (run-acquisition settings out-queue cleanup?))
                               "AcquisitionSequence2010 Thread (Clojure)")]
       (reset! (.state this)
               {:stop false
@@ -955,3 +969,16 @@
 (defn stop []
   (when-let [acq-thread (:acq-thread (.state last-acq))]
     (.stop acq-thread)))
+
+(defn drain-queue [blocking-queue]
+  (future (loop [i 0]
+            (let [obj (.take blocking-queue)]
+              (when (zero? (mod i 100))
+                (println i (core getRemainingImageCount)))
+              (when (not= obj blocking-queue)
+                (recur (inc i)))))))
+
+(defn null-queue []
+  (doto (LinkedBlockingQueue.)
+    drain-queue))
+
