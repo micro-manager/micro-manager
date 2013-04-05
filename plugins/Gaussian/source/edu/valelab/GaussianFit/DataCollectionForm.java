@@ -2545,12 +2545,10 @@ public class DataCollectionForm extends javax.swing.JFrame {
          List<TrackAnalysisData> avgTrackData = new ArrayList<TrackAnalysisData>();
          
          // for each frame in the collection, calculate the average
-         Iterator it = allData.entrySet().iterator();
-         while (it.hasNext()) {
-            Map.Entry pairs = (Map.Entry) it.next();
+         for (int i = 1; i <= allData.size(); i++) {
+            List<GaussianSpotData> frameList = allData.get(i);
             TrackAnalysisData tad = new TrackAnalysisData();
-            tad.frame = (Integer) pairs.getKey();
-            List<GaussianSpotData> frameList = (List<GaussianSpotData>) pairs.getValue();
+            tad.frame = i;
             tad.n = frameList.size();
             GaussianSpotData avgFrame = new GaussianSpotData(frameList.get(0));
             
