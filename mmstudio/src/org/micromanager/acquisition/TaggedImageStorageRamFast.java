@@ -47,7 +47,7 @@ public class TaggedImageStorageRamFast implements TaggedImageStorage {
    }
    
    public TaggedImageStorageRamFast(JSONObject summaryMetadata) {
-      imageMap_ = new TreeMap<>(new ImageLabelComparator());
+      imageMap_ = new TreeMap<String, DirectTaggedImage>(new ImageLabelComparator());
       setSummaryMetadata(summaryMetadata);
       displaySettings_ = new JSONObject();
    }
