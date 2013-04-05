@@ -11,6 +11,8 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.IntBuffer;
 import java.nio.ShortBuffer;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.concurrent.Executor;
@@ -32,24 +34,41 @@ import org.micromanager.utils.ReportingUtils;
  * This class stores a collection of TaggedImages, all in ram.
  */
 public class TaggedImageStorageRamFast implements TaggedImageStorage {
-   final ByteOrder nativeOrder = ByteOrder.nativeOrder();
-   public static String menuName_ = null;
-   private boolean finished_ = false;
 
-   private TreeMap<String, DirectTaggedImage> imageMap_;
-   private JSONObject summaryMetadata_;
-   private JSONObject displaySettings_;
-   private int lastFrame_ = -1;
    
    private class DirectTaggedImage {
        Buffer pixelBuffer;
        ByteBuffer tagsBuffer;
    }
    
+   private class LRUCache<T,U> extends LinkedHashMap<T,U> {
+      final long max_size_;
+      
+      LRUCache(long max_size) {
+         max_size_ = max_size;
+      }
+      
+      @Override
+      protected boolean removeEldestEntry(Map.Entry eldest) {
+         return super.size() > max_size_;
+      }
+   }
+   
+   final ByteOrder nativeOrder = ByteOrder.nativeOrder();
+   public static String menuName_ = null;
+   private boolean finished_ = false;
+
+   private TreeMap<String, DirectTaggedImage> imageMap_;
+   private LRUCache<String, TaggedImage> lruCache_;
+   private JSONObject summaryMetadata_;
+   private JSONObject displaySettings_;
+   private int lastFrame_ = -1;
+   
    public TaggedImageStorageRamFast(JSONObject summaryMetadata) {
       imageMap_ = new TreeMap<String, DirectTaggedImage>(new ImageLabelComparator());
       setSummaryMetadata(summaryMetadata);
       displaySettings_ = new JSONObject();
+      lruCache_ = new LRUCache<String, TaggedImage>(200);
    }
 
    private ByteBuffer bufferFromBytes(byte[] bytes) {
@@ -157,6 +176,7 @@ public class TaggedImageStorageRamFast implements TaggedImageStorage {
    public void putImage(final TaggedImage taggedImage) throws MMException {
       String label = MDUtils.getLabel(taggedImage.tags);
       try {
+         lruCache_.put(label, taggedImage);
          imageMap_.put(label, taggedImageToDirectTaggedImage(taggedImage));
          lastFrame_ = Math.max(lastFrame_, MDUtils.getFrameIndex(taggedImage.tags));
       } catch (Exception ex) {
@@ -168,7 +188,13 @@ public class TaggedImageStorageRamFast implements TaggedImageStorage {
         if (imageMap_ == null) {
             return null;
         }
-        return directTaggedImageToTaggedImage(imageMap_.get(MDUtils.generateLabel(channel, slice, frame, position)));
+        String label = MDUtils.generateLabel(channel, slice, frame, position);
+        TaggedImage cachedImage = lruCache_.get(label);
+        if (cachedImage != null) {
+           return cachedImage;
+        } else { // cache miss
+           return directTaggedImageToTaggedImage(imageMap_.get(label));
+        }
     }
 
    public JSONObject getImageTags(int channelIndex, int sliceIndex, int frameIndex, int positionIndex) {
@@ -215,7 +241,8 @@ public class TaggedImageStorageRamFast implements TaggedImageStorage {
    }
 
    public void close() {
-      imageMap_ = null;
+      imageMap_.clear();
+      lruCache_.clear();
       summaryMetadata_ = null;
       displaySettings_ = null;
       // do nothing for now.
