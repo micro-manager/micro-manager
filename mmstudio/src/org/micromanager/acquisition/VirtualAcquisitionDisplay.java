@@ -780,7 +780,7 @@ public final class VirtualAcquisitionDisplay implements AcquisitionDisplay,
     * Method required by ImageCacheListener
     */
    @Override
-   public void imageReceived(final TaggedImage taggedImage) {    
+   public synchronized void imageReceived(final TaggedImage taggedImage) {    
       updateDisplay(taggedImage, false);
    }
 

@@ -41,7 +41,7 @@ public class MMImageCache implements ImageCache {
    private JSONObject firstTags_;
    private int lastFrame_ = -1;
    private JSONObject lastTags_;
-   private final ExecutorService fileExecutor_;
+   private final ExecutorService listenerExecutor_;
 
    public void addImageCacheListener(ImageCacheListener l) {
       synchronized (imageStorageListeners_) {
@@ -64,7 +64,7 @@ public class MMImageCache implements ImageCache {
    public MMImageCache(TaggedImageStorage imageStorage) {
       imageStorage_ = imageStorage;
       changingKeys_ = new HashSet<String>();
-      fileExecutor_ = Executors.newFixedThreadPool(1);
+      listenerExecutor_ = Executors.newFixedThreadPool(1);
 
    }
 
@@ -166,11 +166,13 @@ public class MMImageCache implements ImageCache {
       
    }
 
-   public void putImage(TaggedImage taggedImg) {
+   public void putImage(final TaggedImage taggedImg) {
       try {
+         
          checkForChangingTags(taggedImg);
          imageStorage_.putImage(taggedImg);
-         synchronized (this) {
+         
+           synchronized (this) {
             lastFrame_ = Math.max(lastFrame_, MDUtils.getFrameIndex(taggedImg.tags));
             lastTags_ = taggedImg.tags;
          }
@@ -188,8 +190,13 @@ public class MMImageCache implements ImageCache {
          }
 
          synchronized (imageStorageListeners_) {
-            for (ImageCacheListener l : imageStorageListeners_) {
-               l.imageReceived(taggedImg);
+            for (final ImageCacheListener l : imageStorageListeners_) {
+               listenerExecutor_.submit(
+                       new Runnable() {
+                          public void run() {
+                             l.imageReceived(taggedImg);
+                          }
+                       });
             }
          }
       } catch (Exception ex) {
