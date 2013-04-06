@@ -691,7 +691,7 @@
     (event-fn)
     (await-resume)))
 
-(defn run-acquisition [_ settings out-queue cleanup?]
+(defn run-acquisition [settings out-queue cleanup?]
     (try
       (def acq-settings settings)
       (log "Starting MD Acquisition: " settings)
