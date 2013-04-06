@@ -68,7 +68,7 @@ public class TaggedImageStorageRamFast implements TaggedImageStorage {
       imageMap_ = new TreeMap<String, DirectTaggedImage>(new ImageLabelComparator());
       setSummaryMetadata(summaryMetadata);
       displaySettings_ = new JSONObject();
-      lruCache_ = new LRUCache<String, TaggedImage>(200);
+      lruCache_ = new LRUCache<String, TaggedImage>(10);
    }
 
    private ByteBuffer bufferFromBytes(byte[] bytes) {
@@ -170,7 +170,7 @@ public class TaggedImageStorageRamFast implements TaggedImageStorage {
             }
         } else {
            return null;
-        }
+        } 
    }
    
    public void putImage(final TaggedImage taggedImage) throws MMException {
@@ -178,7 +178,7 @@ public class TaggedImageStorageRamFast implements TaggedImageStorage {
       try {
          lruCache_.put(label, taggedImage);
          imageMap_.put(label, taggedImageToDirectTaggedImage(taggedImage));
-         lastFrame_ = Math.max(lastFrame_, MDUtils.getFrameIndex(taggedImage.tags));
+        lastFrame_ = Math.max(lastFrame_, MDUtils.getFrameIndex(taggedImage.tags));
       } catch (Exception ex) {
          ReportingUtils.logError(ex);
       }
