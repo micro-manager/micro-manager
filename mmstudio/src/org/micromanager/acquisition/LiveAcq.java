@@ -45,7 +45,7 @@ public class LiveAcq  {
                ReportingUtils.logError(ex2);
             }
             long t2 = System.currentTimeMillis();
-            ReportingUtils.logMessage(imageCount + " images saved in " + (t2 - t1) + " ms.");
+            ReportingUtils.logMessage(imageCount + " images stored in " + (t2 - t1) + " ms.");
             imageCache_.finished();
          }
       };
