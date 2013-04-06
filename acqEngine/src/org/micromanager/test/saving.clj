@@ -40,7 +40,8 @@
                        (not (core isBufferOverflowed)))
              (Thread/sleep 1))
            (if (pos? (core getRemainingImageCount))
-             (core popNextImage)
+             (when-let [img (core popNextTaggedImage)]
+               (.pix img))
              (when (core isBufferOverflowed)
                (throw (Exception. "Circular buffer overflowed."))))))
 
@@ -102,8 +103,8 @@
   (let [buffer-queue (time (byte-buffer-queue num-images))
         storage-queue (proxy [LinkedBlockingQueue] []
                         (toString [] (str "(" (count this) " items)")))]
-    (dotimes-timed [i num-images] 100
-      (let [buffer (.take buffer-queue)]
-        (.put storage-queue buffer)))
+      (dotimes-timed [i num-images] 100
+        (let [buffer (.take buffer-queue)]
+          (.put storage-queue buffer)))
     storage-queue))
 
