@@ -704,7 +704,7 @@
         (execute (mapcat #(make-event-fns % out-queue) acq-seq)))
       (catch Throwable t
              (def acq-error t)
-             (ReportingUtils/showError t "Acquisition failed."))
+             (future (ReportingUtils/showError t "Acquisition failed.")))
       (finally
         (when cleanup?
           (cleanup))
