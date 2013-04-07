@@ -653,7 +653,7 @@ public class MultipageTiffWriter {
 
    private byte[] getBytesFromString(String s) {
       try {
-         return s.getBytes("US-ASCII");
+         return s.getBytes("UTF-8");
       } catch (UnsupportedEncodingException ex) {
          ReportingUtils.logError("Error encoding String to bytes");
          return null;
