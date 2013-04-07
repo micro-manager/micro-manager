@@ -139,13 +139,18 @@ public class DataCollectionForm extends javax.swing.JFrame {
    }
    /**
     * Method to allow scripts to tune the jitter corrector
-    * @param jm 
+    * Sets the maximum number of frames that will be used to produce one 
+    * "time-point" in the de-jitter process.  Defaults to 500, set higher if you 
+    * have few data-points, lower if you have many spots per frame.
+    * @param jm - max number of frames that will be used per de-jitter cycle
     */
    public void setJitterMaxFrames(int jm) {
          jitterMaxFrames_ = jm;
    }
    /**
     * Method to allow scripts to tune the jitter corrector
+    * Sets the maximum number of spots that will be used to produce one 
+    * "timepoint" in the de-jitter process.  Defaults to 40000.  
     * @param jm 
     */
    public void setJitterMaxSpots(int jm) {
