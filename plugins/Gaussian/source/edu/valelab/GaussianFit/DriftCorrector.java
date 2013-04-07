@@ -150,16 +150,18 @@ public class DriftCorrector {
 
          while (spotNr < maxNrSpots && tmpFrameNr < maxNrFrames && frameNr < nrImages) {
             List<GaussianSpotData> frameSpots = rowData.frameIndexSpotList_.get(frameNr);
-            for (GaussianSpotData spot : frameSpots) {
-               int x = (int) (factor * spot.getXCenter());
-               int y = (int) (factor * spot.getYCenter());
-               int index = (y * width) + x;
-               if (index < size && index > 0) {
-                  if (pixelsTest[index] != -1) {
-                     pixelsTest[index] += 1;
+            if (frameSpots != null) {
+               for (GaussianSpotData spot : frameSpots) {
+                  int x = (int) (factor * spot.getXCenter());
+                  int y = (int) (factor * spot.getYCenter());
+                  int index = (y * width) + x;
+                  if (index < size && index > 0) {
+                     if (pixelsTest[index] != -1) {
+                        pixelsTest[index] += 1;
+                     }
                   }
+                  spotNr++;
                }
-               spotNr++;
             }
             tmpFrameNr++;
             frameNr++;
@@ -168,7 +170,6 @@ public class DriftCorrector {
          jd.getJitter(ipTest, com);
          double x = (fp.x - com.x) / factor;
          double y = (fp.y - com.y) / factor;
-         double timePoint = frameNr;
          if (rowData.timePoints_ != null) {
             rowData.timePoints_.get(frameNr);
          }
@@ -186,7 +187,6 @@ public class DriftCorrector {
          sm.setData(0, 0, 0, 0, 0.0, 0, 0, 0, 0);
          stageMovementData.add(sm);
 
-
          //stagePos = movingAverage(stagePos, 5);
 
          for (int i = 0; i < stagePos.size(); i++) {
@@ -201,31 +201,17 @@ public class DriftCorrector {
          // Add stage movement data to overview window
          // First try to copy the time points
          ArrayList<Double> timePoints = null;
-         /*
-         if (rowData.timePoints_ != null) {
-         timePoints = new ArrayList<Double>();
-         int tp = framesToCombine;
-         while (tp < rowData.timePoints_.size()) {
-         timePoints.add(rowData.timePoints_.get(tp));
-         tp += framesToCombine;
-         }
-         }
-         
-          */
 
-         MyRowData newRow = DataCollectionForm.getInstance().new MyRowData(rowData.name_ + "-Jitter", rowData.title_,
-                 "", rowData.width_,
+         MyRowData newRow = DataCollectionForm.getInstance().new MyRowData(
+                 rowData.name_ + "-Jitter", rowData.title_, "", rowData.width_,
                  rowData.height_, rowData.pixelSizeNm_, rowData.zStackStepSizeNm_, 
-                 rowData.shape_,
-                 rowData.halfSize_, rowData.nrChannels_, stageMovementData.size(),
-                 1, 1, stageMovementData.size(), stageMovementData,
-                 timePoints, true, Coordinates.NM, false, 0.0, 0.0);
+                 rowData.shape_, rowData.halfSize_, rowData.nrChannels_, 
+                 stageMovementData.size(), 1, 1, stageMovementData.size(), 
+                 stageMovementData, timePoints, true, Coordinates.NM, 
+                 false, 0, 0);
          DataCollectionForm.getInstance().rowData_.add(newRow);
 
          DataCollectionForm.getInstance().myTableModel_.fireTableRowsInserted(DataCollectionForm.getInstance().rowData_.size() - 1, DataCollectionForm.getInstance().rowData_.size());
-
-
-
 
          ij.IJ.showStatus("Assembling jitter corrected dataset...");
          ij.IJ.showProgress(1);
@@ -275,12 +261,13 @@ public class DriftCorrector {
          }
 
          // Add transformed data to data overview window
-         DataCollectionForm.getInstance().addSpotData(rowData.name_ + "-Jitter-Correct", rowData.title_, "", rowData.width_,
+         DataCollectionForm.getInstance().addSpotData(
+                 rowData.name_ + "-Jitter-Correct", rowData.title_, "", rowData.width_,
                  rowData.height_, rowData.pixelSizeNm_, rowData.zStackStepSizeNm_, 
                  rowData.shape_, rowData.halfSize_, rowData.nrChannels_, 
-                 rowData.nrFrames_,
-                 rowData.nrSlices_, 1, rowData.maxNrSpots_, correctedData,
-                 null, false, Coordinates.NM, false, 0.0, 0.0);
+                 rowData.nrFrames_, rowData.nrSlices_, 1, rowData.maxNrSpots_, 
+                 correctedData, null, false, Coordinates.NM, rowData.hasZ_, 
+                 rowData.minZ_, rowData.maxZ_);
          ij.IJ.showStatus("Finished jitter correction");
       } catch (OutOfMemoryError oom) {
          System.gc();
