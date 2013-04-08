@@ -1,0 +1,157 @@
+// TSI CAMERA TEST SCRIPTS
+// Nenad Amodaj, 2013
+// Copyright Thorlabs, Inc
+
+// TEST PARAMETERS
+// -------------------------------------------------------------------------
+testName = "ROI_AND_BIN";
+double exposure = 10.0; // exposure in ms
+double liveDuration = 3000; // duration of live interval in ms
+
+// DESCRIPTION:
+// All available bining factors will be exercised along the hardware ROI
+// both in live and single snap modes
+// ROI is automatically selected to be one quarter of the frame size
+//---------------------------------------------------------------------------
+
+ij.process.ByteProcessor;
+import ij.process.ImageProcessor;
+import ij.process.ShortProcessor;
+import ij.ImagePlus;
+import ij.process.ImageStatistics;
+import ij.measure.Measurements;
+import java.lang.Math;
+import mmcorej.*;
+import java.util.Calendar;
+import java.text.DecimalFormat;
+
+// Compute image mean value
+int getImageMean(Object img, int w, int h) {
+   ImageProcessor ip;
+
+   if (img instanceof byte[]) {
+      ip = new ByteProcessor (w, h);
+      ip.setPixels((byte[])img);
+   } else if (img instanceof short[]) {
+      ip = new ShortProcessor(w, h);
+      ip.setPixels((short[])img);
+ 	}
+ 	else
+       return false;
+
+	ImagePlus imp = new ImagePlus("tmp", ip);
+	ImageStatistics stats = imp.getStatistics();
+   return (int)(stats.mean + 0.5);
+}
+
+String binProp = "Binning";
+String displayText = (testName + " TEST RESULTS:\n");
+
+// get info from the camera
+String camera = mmc.getCameraDevice();
+StrVector binFactors = mmc.getAllowedPropertyValues(camera, binProp);
+displayText += "Camera: " +  mmc.getProperty(camera, "CameraName") + "\n";
+Calendar cal = Calendar.getInstance();
+displayText += "Date: " + cal.getTime() + "\n\n";
+
+// clear state of the camera and the gui
+// set initial values
+gui.clearMessageWindow();
+if (mmc.isSequenceRunning())
+   mmc.stopSequenceAcquisition();
+mmc.clearROI();
+mmc.setProperty(camera, binProp, 1);
+
+void runTest() {
+
+	mmc.setExposure(exposure);
+   mmc.setProperty(camera, binProp, 1);
+   mmc.clearROI();
+
+   // obtain frame data
+   mmc.snapImage();
+   Object img = mmc.getImage();
+   int fullWidth = mmc.getImageWidth();
+   int fullHeight = mmc.getImageHeight();
+   int fullDepth = mmc.getBytesPerPixel();
+   String lineText;
+
+   for (int i=0; i<binFactors.size(); i++)
+   {
+	   // set binning and do a single snap
+	   mmc.setProperty(camera, binProp, binFactors.get(i));
+      Thread.sleep(500);
+	   mmc.snapImage();
+      Object img = mmc.getImage();
+      gui.displayImage(img);
+      int eW = fullWidth / Integer.parseInt(binFactors.get(i));
+      int eH = fullHeight / Integer.parseInt(binFactors.get(i));
+	   int w = mmc.getImageWidth();
+      int h = mmc.getImageHeight();
+      boolean failed = !(eW == w && eH == h);
+      lineText = "Snapped image with " + binFactors.get(i) + " binning factor, expected: " + 
+                 eW + " X " + eH + ", obtained: " + w + " X " + h + ", " + (failed ? "ERR" : "OK");
+      gui.message(lineText);
+      displayText += (lineText + "\n");
+      lineText = "Intensity: " + getImageMean(img, w, h);
+      gui.message(lineText);
+      displayText += (lineText + "\n");
+
+      // run live video with binning only
+      gui.enableLiveMode(true);
+      gui.message("Running live video for " + liveDuration / 1000.0 + " seconds...");
+ 	   startMs = System.currentTimeMillis();
+      while (System.currentTimeMillis() - startMs < liveDuration)
+   	   Thread.sleep(200);
+      gui.enableLiveMode(false);
+
+      // set ROI
+      Rectangle roi = new Rectangle(w/4, h/4, w/2, h/2);
+      gui.setROI(roi);
+      mmc.snapImage();
+      img = mmc.getImage();
+      gui.displayImage(img);
+      
+      int roiW = mmc.getImageWidth();
+      int roiH = mmc.getImageHeight();
+      boolean failedRoi = !(roiW == roi.width && roiH == roi.height);
+	   lineText = "Snapped image with both ROI and Binning, expected: " + 
+                  roi.width + " X " + roi.height + ", obtained: " + roiW + " X " + roiH + ", " + (failedRoi ? "ERR" : "OK");
+      gui.message(lineText);
+      displayText += (lineText + "\n");
+
+      lineText = "Intensity: " + getImageMean(img, roiW, roiH);
+      gui.message(lineText);
+      displayText += (lineText + "\n");
+
+      // restore
+      mmc.clearROI();
+   }
+}
+
+// try different readout rates
+readoutRateProp = "ReadoutRate";
+if (mmc.hasProperty(camera, readoutRateProp)) {
+   String initReadout = mmc.getProperty(camera, readoutRateProp);
+	StrVector readoutRates = mmc.getAllowedPropertyValues(camera, readoutRateProp);
+   gui.message("Camera has " + readoutRates.size() + " readout rates\n");
+   for (int j=0; j<readoutRates.size(); j++) {
+      displayText += "\n";
+      displayText += (readoutRateProp + "=" + readoutRates.get(j) + "\n");
+      mmc.setProperty(camera, readoutRateProp, readoutRates.get(j));
+      runTest();
+   }  
+   mmc.setProperty(camera, readoutRateProp, initReadout);
+} else {
+   runTest();
+}
+
+// restore default camera mode
+if (mmc.isSequenceRunning())
+   mmc.stopSequenceAcquisition();
+mmc.clearROI();
+mmc.setProperty(camera, binProp, 1);
+gui.snapSingleImage();
+
+gui.message("Finished " + testName);
+gui.message(displayText);

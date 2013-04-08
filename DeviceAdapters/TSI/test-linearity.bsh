@@ -1,0 +1,113 @@
+// TSI CAMERA TEST SCRIPTS
+// Nenad Amodaj, 2013
+// Copyright Thorlabs, Inc
+
+// TEST PARAMETERS
+// -------------------------------------------------------------------------
+testName = "LINEARITY";
+numPoints = 30; // number of measurements
+expIncr = 4.0; // exposure step
+expBase = 10.0; // baseline exposure
+linThreshold = 0.05; // linearity threshold
+
+// DESCRIPTION:
+// A series of measurements is performed with different exposures,
+// starting expIncr and ending with expIncr*numPoints.
+// Mean intensity value value is computed for each image and compared to
+// baseline measurement performed at expBase exposure.
+// A ratio between expected intensity and measured intensity at each
+// point is computed. Ideally linear camera will have ratio = 1.0 at each
+// point.
+//---------------------------------------------------------------------------
+
+ij.process.ByteProcessor;
+import ij.process.ImageProcessor;
+import ij.process.ShortProcessor;
+import ij.ImagePlus;
+import ij.process.ImageStatistics;
+import ij.measure.Measurements;
+import java.lang.Math;
+import java.util.Calendar;
+import java.text.DecimalFormat;
+
+// Compute image mean value
+int getImageMean(Object img, int w, int h) {
+   ImageProcessor ip;
+   if (img instanceof byte[]) {
+      ip = new ByteProcessor (w, h);
+      ip.setPixels((byte[])img);
+   } else if (img instanceof short[]) {
+      ip = new ShortProcessor(w, h);
+      ip.setPixels((short[])img);
+ 	}
+ 	else
+       return false;
+	ImagePlus imp = new ImagePlus("tmp", ip);
+	ImageStatistics stats = imp.getStatistics();
+   return (int)(stats.mean + 0.5);
+}
+
+String camera = mmc.getCameraDevice();
+gui.clearMessageWindow();
+String displayText;
+
+// establish baseline
+mmc.setExposure(expBase);
+
+String displayText = new String();
+displayText += (testName + " TEST RESULTS:\n");
+displayText += "Camera: " +  mmc.getProperty(camera, "CameraName") + "\n";
+Calendar cal = Calendar.getInstance();
+displayText += "Date: " + cal.getTime() + "\n";
+
+
+void runTest() {
+   txtLine = "Exp[ms]\tT[ms]\tI[counts]\tPI[counts]\tI/PI";
+   gui.message(txtLine);
+   displayText += (txtLine + "\n");
+
+   startMs = System.currentTimeMillis();
+   mmc.snapImage();
+   Object img = mmc.getImage();
+   int width = mmc.getImageWidth();
+   int height = mmc.getImageHeight();
+   int baseMean = getImageMean(img, width, height);
+
+	// run measurements for different exposures
+	for (int i=0; i<numPoints; i++)
+	{
+		expMs = (i+1)* expIncr;
+		startMs = System.currentTimeMillis(); 
+		mmc.setExposure(expMs);
+		mmc.snapImage();
+		deltaMs = System.currentTimeMillis() - startMs;
+   	img = mmc.getImage();
+   	gui.displayImage(img);
+   	mean = getImageMean(img, width, height);
+		deltaMs -= expMs;
+
+   	predictedMean = (int)((expMs / expBase) * baseMean + 0.5);
+   	ratio = (double)mean / predictedMean;
+
+   	txtLine = expMs + "\t" + deltaMs + "\t" + mean + "\t" + predictedMean + "\t" + (new DecimalFormat("#.##").format(ratio));
+   	if (Math.abs(ratio - 1.0) > linThreshold)
+      	txtLine += "\t*";
+		gui.message(txtLine);
+		displayText += (txtLine + "\n");
+	}
+}
+
+// try different readout rates
+if (mmc.hasProperty(camera, readoutRateProp)) {
+	StrVector readoutRates = mmc.getAllowedPropertyValues(camera, readoutRateProp);
+   gui.message("Camera has " + readoutRates.size() + " readout rates\n");
+   for (int j=0; j<readoutRates.size(); j++) {
+      displayText += (readoutRateProp + "=" + readoutRates.get(j) + "\n");
+      mmc.setProperty(camera, readoutRateProp, readoutRates.get(j));
+      runTest();
+   }  
+} else {
+   runTest();
+}
+
+gui.message(displayText);

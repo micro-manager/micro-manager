@@ -1,0 +1,129 @@
+// TSI CAMERA TEST SCRIPTS
+// Nenad Amodaj, 2013
+// Copyright Thorlabs, Inc
+
+// TEST PARAMETERS
+// -------------------------------------------------------------------------
+testName = "INTERACTIVE";
+
+double factor = 3.0; // exposure increase factor for testing live video
+double[] exposuresMs = {5.0, 10.0, 15.0};
+double[] durationsMs = {1000.0, 2000.0, 5000.0};
+// both vectors above must be the same size
+
+// DESCRIPTION:
+// Simulation of interactive operation with series of interchanging live-video
+// and single snap commands at different exposures
+//---------------------------------------------------------------------------
+
+ij.process.ByteProcessor;
+import ij.process.ImageProcessor;
+import ij.process.ShortProcessor;
+import ij.ImagePlus;
+import ij.process.ImageStatistics;
+import ij.measure.Measurements;
+import java.lang.Math;
+import java.util.Calendar;
+import java.text.DecimalFormat;
+import mmcorej.*;
+
+double[] intSingle = new double[exposuresMs.length];
+double[] intPreLive = new double[exposuresMs.length];
+double[] intLive = new double[exposuresMs.length];
+
+// Compute image mean value
+int getImageMean(Object img, int w, int h) {
+   ImageProcessor ip;
+
+   if (img instanceof byte[]) {
+      ip = new ByteProcessor (w, h);
+      ip.setPixels((byte[])img);
+   } else if (img instanceof short[]) {
+      ip = new ShortProcessor(w, h);
+      ip.setPixels((short[])img);
+ 	}
+ 	else
+       return false;
+
+	ImagePlus imp = new ImagePlus("tmp", ip);
+	ImageStatistics stats = imp.getStatistics();
+   return (int)(stats.mean + 0.5);
+}
+
+// clear state of the camera
+if (mmc.isSequenceRunning())
+   mmc.stopSequenceAcquisition();
+
+String camera = mmc.getCameraDevice();
+gui.clearMessageWindow();
+String displayText = (testName + " TEST RESULTS:\n");
+
+void runTest() {
+   for (int i=0; i<exposuresMs.length; i++) {
+      int width = mmc.getImageWidth();
+      int height = mmc.getImageHeight();
+
+      // run preliminary live video at 'factor' times the exposure
+      expLive = exposuresMs[i] * factor;
+	   mmc.setExposure(expLive);
+      gui.message("Running first live video for " + 1 + " seconds, with exposure " + expLive +  " ms...");
+      gui.enableLiveMode(true);
+ 	   Thread.sleep(1000);
+      Object img = mmc.getLastImage();
+      intPreLive[i] = getImageMean(img, width, height);
+      gui.enableLiveMode(false);
+
+	   // set exposure and do single snap
+	   mmc.setExposure(exposuresMs[i]);
+	   mmc.snapImage();
+      Object img = mmc.getImage();
+      gui.message("Snapped image at " + exposuresMs[i] + "ms");
+      intSingle[i] = getImageMean(img, width, height);
+
+      // run second live video
+	   mmc.setExposure(exposuresMs[i]);
+      gui.message("Running second live video for " + durationsMs[i] / 1000.0 + " seconds, with exposure " + expLive +  " ms...");
+      gui.enableLiveMode(true);
+ 	   startMs = System.currentTimeMillis();
+      while (System.currentTimeMillis() - startMs < durationsMs[i])
+   	   Thread.sleep(200);
+	   img = mmc.getLastImage();
+      intLive[i] = getImageMean(img, width, height);
+      gui.enableLiveMode(false);
+   
+	   gui.message("Exposure=" + exposuresMs[i] + ": IntLivePre=" + intPreLive[i] + ", IntSingle=" + intSingle[i] + ", IntLive=" + intLive[i]);
+   }
+
+   for (int i=0; i < intSingle.length; i++) {
+	  displayText += "Exposure=" + exposuresMs[i] + ": IntLivePre=" + fmt.format(intPreLive[i]/factor) + ", IntSingle=" + intSingle[i] + ", IntLive=" + intLive[i] + "\n";
+   }
+}
+
+readoutRateProp = "ReadoutRate";
+
+// print output results
+displayText += "Camera: " +  mmc.getProperty(camera, "CameraName") + "\n";
+Calendar cal = Calendar.getInstance();
+displayText += "Date: " + cal.getTime() + "\n";
+DecimalFormat fmt = new DecimalFormat("#.##");
+
+// try different readout rates
+if (mmc.hasProperty(camera, readoutRateProp)) {
+   String initReadout = mmc.getProperty(camera, readoutRateProp);
+	StrVector readoutRates = mmc.getAllowedPropertyValues(camera, readoutRateProp);
+   gui.message("Camera has " + readoutRates.size() + " readout rates\n");
+   for (int j=0; j<readoutRates.size(); j++) {
+      displayText += (readoutRateProp + "=" + readoutRates.get(j) + "\n");
+      mmc.setProperty(camera, readoutRateProp, readoutRates.get(j));
+      runTest();
+   }  
+   mmc.setProperty(camera, readoutRateProp, initReadout);
+} else {
+   runTest();
+}
+
+if (mmc.isSequenceRunning())
+   mmc.stopSequenceAcquisition();
+
+gui.message("Finished " + testName);
+gui.message(displayText);
