@@ -130,6 +130,7 @@ public:
    int OnExposure(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnTriggerMode(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnFpsMode(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnNoiseFilterMode(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnFps(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnPixelRate(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnBinning(MM::PropertyBase* pProp, MM::ActionType eAct);
@@ -202,6 +203,7 @@ private:
    double m_dExposure; 
    double m_dFps; 
    int    m_iFpsMode;
+   int    m_iNoiseFilterMode;
    int    m_iPixelRate;
    bool m_bBusy;
    bool m_bInitialized;

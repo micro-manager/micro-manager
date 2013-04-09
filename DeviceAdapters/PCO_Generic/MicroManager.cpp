@@ -148,6 +148,7 @@ CPCOCam::CPCOCam() :
   m_bStartStopMode = TRUE;
   m_iSkipImages = 0;
   m_iFpsMode = 0;
+  m_iNoiseFilterMode = 0;
   m_dFps = 10.0;
   m_iPixelRate = 0;
   m_iTimestamp = 0;
@@ -324,6 +325,41 @@ int CPCOCam::OnFpsMode(MM::PropertyBase* pProp, MM::ActionType eAct)
       nErr = SetupCamera();
     }
 	    
+    if (nErr != 0)
+      return nErr;
+  }
+  return DEVICE_OK;
+}
+
+int CPCOCam::OnNoiseFilterMode(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+  if (eAct == MM::BeforeGet)
+  {
+    if(m_iNoiseFilterMode == 0)
+      pProp->Set("Off");
+    else
+      pProp->Set("On");
+  }
+  else if (eAct == MM::AfterSet)
+  {
+    int nErr = 0;
+    string tmp;
+    long noiseModeTmp;
+    int ihelp;
+    pProp->Get(tmp);
+    ((MM::Property *) pProp)->GetData(tmp.c_str(), noiseModeTmp);
+    ihelp = (noiseModeTmp == 1);
+
+    if(ihelp != m_iNoiseFilterMode)
+    {
+      m_iNoiseFilterMode = ihelp;
+      if(m_iNoiseFilterMode == 0)
+        m_nMode &= 0xFFFFFF7F;
+      else
+        m_nMode |= 0x80;
+      nErr = SetupCamera();
+    }
+
     if (nErr != 0)
       return nErr;
   }
@@ -986,6 +1022,20 @@ int CPCOCam::Initialize()
     nRet = AddAllowedValue("Fps Mode","On",1);
     if (nRet != DEVICE_OK)
       return nRet;
+
+    if((m_nCCDType &0x01) == 0)
+    {
+      pAct = new CPropertyAction (this, &CPCOCam::OnNoiseFilterMode);
+      nRet = CreateProperty("Noisefilter", "Off", MM::String, false, pAct);
+      if (nRet != DEVICE_OK)
+        return nRet;
+      nRet = AddAllowedValue("Noisefilter","Off",0);
+      if (nRet != DEVICE_OK)
+        return nRet;
+      nRet = AddAllowedValue("Noisefilter","On",1);
+      if (nRet != DEVICE_OK)
+        return nRet;
+    }
 
     pAct = new CPropertyAction (this, &CPCOCam::OnPixelRate);
     nRet = CreateProperty("PixelRate", "95MHz", MM::String, false, pAct);
