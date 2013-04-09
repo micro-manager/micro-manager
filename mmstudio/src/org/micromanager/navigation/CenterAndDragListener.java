@@ -7,6 +7,7 @@ import ij.gui.ImageCanvas;
 import ij.gui.ImageWindow;
 import ij.gui.Toolbar;
 import java.awt.Event;
+import java.awt.Window;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
@@ -32,9 +33,9 @@ public class CenterAndDragListener implements MouseListener, MouseMotionListener
 	   private boolean correction_;
 	   private int lastX_, lastY_;
 
-	   public CenterAndDragListener(CMMCore core, MMStudioMainFrame gui) {
-	      core_ = core;
+	   public CenterAndDragListener(MMStudioMainFrame gui) {
          gui_ = gui;
+         core_ = gui.getMMCore();
 	   }
 
 	   public void start () {
@@ -44,7 +45,10 @@ public class CenterAndDragListener implements MouseListener, MouseMotionListener
 	      isRunning_ = true;
 
 	      // Get a handle to the Live window
-         attach (gui_.getImageWin());
+         ImageWindow win = gui_.getImageWin();
+         if (win != null) {
+            attach(win);
+         }
 	   }
 
 	   public void stop() {

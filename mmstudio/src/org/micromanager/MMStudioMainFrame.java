@@ -19,6 +19,7 @@
 //
 package org.micromanager;
 
+import org.micromanager.AcqControlDlg;
 import ij.IJ;
 import ij.ImageJ;
 import ij.ImagePlus;
@@ -341,6 +342,7 @@ public class MMStudioMainFrame extends JFrame implements
             initializeSimpleAcquisition(SIMPLE_ACQ, width, height, depth, bitDepth, numCamChannels);
             getAcquisition(SIMPLE_ACQ).promptToSave(false);
             getAcquisition(SIMPLE_ACQ).toFront();
+            this.updateCenterAndDragListener();
          }
       } catch (Exception ex) {
          ReportingUtils.showError(ex);
@@ -382,6 +384,7 @@ public class MMStudioMainFrame extends JFrame implements
             initializeSimpleAcquisition(SIMPLE_ACQ, width, height, depth, bitDepth, numCamChannels);
             getAcquisition(SIMPLE_ACQ).promptToSave(false);
             getAcquisition(SIMPLE_ACQ).toFront();
+            this.updateCenterAndDragListener();
          }
       } catch (Exception ex) {
          ReportingUtils.showError(ex);
@@ -1339,19 +1342,12 @@ public class MMStudioMainFrame extends JFrame implements
       
       centerAndDragMenuItem_ = new JCheckBoxMenuItem();
 
+      
+      
       centerAndDragMenuItem_.addActionListener(new ActionListener() {
 
          public void actionPerformed(ActionEvent e) {
-            if (centerAndDragListener_ == null) {
-               centerAndDragListener_ = new CenterAndDragListener(core_, gui_);
-            }
-            if (!centerAndDragListener_.isRunning()) {
-               centerAndDragListener_.start();
-               centerAndDragMenuItem_.setSelected(true);
-            } else {
-               centerAndDragListener_.stop();
-               centerAndDragMenuItem_.setSelected(false);
-            }
+           updateCenterAndDragListener();
             mainPrefs_.putBoolean(MOUSE_MOVES_STAGE, centerAndDragMenuItem_.isSelected());
          }
       });
@@ -1844,6 +1840,9 @@ public class MMStudioMainFrame extends JFrame implements
                }
             }
             
+            
+             centerAndDragListener_ = new CenterAndDragListener(gui_);
+             
             // switch error reporting back on
             ReportingUtils.showErrorOn(true);
          }
@@ -2798,7 +2797,14 @@ public class MMStudioMainFrame extends JFrame implements
       }
    }
 
-
+   private void updateCenterAndDragListener() {
+      if (centerAndDragMenuItem_.isSelected()) {
+         centerAndDragListener_.start();
+      } else {
+         centerAndDragListener_.stop();
+      }
+   }
+   
    private void setShutterButton(boolean state) {
       if (state) {
 //         toggleButtonShutter_.setSelected(true);
