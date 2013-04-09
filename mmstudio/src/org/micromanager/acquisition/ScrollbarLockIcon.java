@@ -45,6 +45,9 @@ public class ScrollbarLockIcon extends Canvas   {
    }
 
    public void paint(Graphics g) {
+      if (g == null) {
+         return;
+      }
       g.setColor(Color.white);
       g.fillRect(0, 0, WIDTH, HEIGHT);
       Graphics2D g2d = (Graphics2D) g;
