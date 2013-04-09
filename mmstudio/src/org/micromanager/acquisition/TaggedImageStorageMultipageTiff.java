@@ -334,7 +334,6 @@ public final class TaggedImageStorageMultipageTiff implements TaggedImageStorage
     */
    @Override
    public void close() {
-      finished();
       shutdownHook_.run();
       Runtime.getRuntime().removeShutdownHook(shutdownHook_);
       for (MultipageTiffReader r : new HashSet<MultipageTiffReader>(tiffReadersByLabel_.values())) {
