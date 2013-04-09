@@ -161,23 +161,32 @@ public class MathForm extends javax.swing.JFrame {
    }//GEN-LAST:event_cancelButton_ActionPerformed
 
    private void okButton_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_okButton_ActionPerformed
-      int id1 = (Integer) dataSet1ComboBox_.getSelectedItem();
-      int id2 = (Integer) dataSet2ComboBox_.getSelectedItem();
-      DataCollectionForm df = DataCollectionForm.getInstance();
-      DataCollectionForm.MyRowData rd1 = null;
-      DataCollectionForm.MyRowData rd2 = null;
-      
-      for (int i = 0; i < df.rowData_.size(); i++) {
-         if (id1 == df.rowData_.get(i).ID_) {
-            rd1 = df.rowData_.get(i);
+      final int id1 = (Integer) dataSet1ComboBox_.getSelectedItem();
+      final int id2 = (Integer) dataSet2ComboBox_.getSelectedItem();
+
+
+      Runnable doWorkRunnable = new Runnable() {
+
+         @Override
+         public void run() {
+            DataCollectionForm df = DataCollectionForm.getInstance();
+            DataCollectionForm.MyRowData rd1 = null;
+            DataCollectionForm.MyRowData rd2 = null;
+
+            for (int i = 0; i < df.rowData_.size(); i++) {
+               if (id1 == df.rowData_.get(i).ID_) {
+                  rd1 = df.rowData_.get(i);
+               }
+               if (id2 == df.rowData_.get(i).ID_) {
+                  rd2 = df.rowData_.get(i);
+               }
+            }
+            df.doMathOnRows(rd1, rd2, 0);
          }
-         if (id2 == df.rowData_.get(i).ID_) {
-            rd2 = df.rowData_.get(i);
-         }
-      }
+      };
       
-      df.doMathOnRows(rd1, rd2, 0);
-      
+      (new Thread(doWorkRunnable)).start();
+                  
    }//GEN-LAST:event_okButton_ActionPerformed
 
    private void formWindowClosing(java.awt.event.WindowEvent evt) {//GEN-FIRST:event_formWindowClosing

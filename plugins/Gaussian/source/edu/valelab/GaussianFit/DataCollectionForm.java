@@ -2606,6 +2606,8 @@ public class DataCollectionForm extends javax.swing.JFrame {
       List<GaussianSpotData> transformedResultList =
               Collections.synchronizedList(new ArrayList<GaussianSpotData>());
 
+      ij.IJ.showStatus("Doing math on spot data...");
+      
       try {
          
          for (int i = 0; i < source.spotList_.size(); i++) {
@@ -2615,11 +2617,21 @@ public class DataCollectionForm extends javax.swing.JFrame {
             GaussianSpotData spotOperand = null;
             while (!found && j < operand.spotList_.size()) {
                spotOperand = operand.spotList_.get(j);
-               if (spotSource.getChannel() == spotOperand.getChannel() &&
-                       spotSource.getFrame() == spotOperand.getFrame() &&
-                       spotSource.getPosition() == spotOperand.getPosition() &&
-                       spotSource.getSlice() == spotOperand.getSlice() ) {
-                  found = true;
+               if (source.isTrack_) {
+                  if (spotSource.getChannel() == spotOperand.getChannel()
+                          && spotSource.getFrame() == spotOperand.getFrame()
+                          && spotSource.getPosition() == spotOperand.getPosition()
+                          && spotSource.getSlice() == spotOperand.getSlice()) {
+                     found = true;
+                  }
+               } else { // not a track, b.t.w., I am not sure if slices and frames 
+                        // are always swapped in non-track data sets
+                  if (spotSource.getChannel() == spotOperand.getChannel()
+                          && spotSource.getSlice() == spotOperand.getFrame()
+                          && spotSource.getPosition() == spotOperand.getPosition()
+                          && spotSource.getFrame() == spotOperand.getSlice()) {
+                     found = true;
+                  }
                }
                j++;
             }
@@ -2635,16 +2647,20 @@ public class DataCollectionForm extends javax.swing.JFrame {
                newSpot.setYCenter(y);
                transformedResultList.add(newSpot);
             }
+            ij.IJ.showProgress(i, source.spotList_.size());
          }
+         
+         ij.IJ.showStatus("Finished doing math...");
 
          MyRowData rowData = source;
-         // TODO: feed in better data
+         
          addSpotData(rowData.name_ + " Subtracted", rowData.title_, "", rowData.width_,
                  rowData.height_, rowData.pixelSizeNm_, rowData.zStackStepSizeNm_, 
                  rowData.shape_, rowData.halfSize_, rowData.nrChannels_, 
                  rowData.nrFrames_, rowData.nrSlices_, 1, rowData.maxNrSpots_, 
                  transformedResultList,
-                 rowData.timePoints_, true, Coordinates.NM, false, 0.0, 0.0);
+                 rowData.timePoints_, rowData.isTrack_, Coordinates.NM, 
+                 rowData.hasZ_, rowData.minZ_, rowData.maxZ_);
          
       } catch (IndexOutOfBoundsException iobe) {
          JOptionPane.showMessageDialog(getInstance(), "Data sets differ in Size");
