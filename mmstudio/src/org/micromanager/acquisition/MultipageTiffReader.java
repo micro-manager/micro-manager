@@ -70,6 +70,7 @@ public class MultipageTiffReader {
    private int byteDepth_ = 0;;
    private boolean rgb_;
    private boolean writingFinished_;
+   public static boolean fixIndexMapWithoutPrompt_ = false;
    
    private HashMap<String,Long> indexMap_;
    
@@ -111,7 +112,7 @@ public class MultipageTiffReader {
       } catch (Exception e) {
          ReportingUtils.showError("Can't read index map in file: " + file_.getName());
          try {
-            fixIndexMap(firstIFD);
+            fixIndexMap(firstIFD, file.getName());
          } catch (JSONException ex) {
             ReportingUtils.showError("Fixing of dataset unsuccessful for file: " + file_.getName());
          }
@@ -508,17 +509,19 @@ public class MultipageTiffReader {
      //This code is intended for use in the scenario in which a datset terminates before properly closing,
    //thereby preventing the multipage tiff writer from putting in the index map, comments, channels, and OME
    //XML in the ImageDescription tag location 
-   private void fixIndexMap(long firstIFD) throws IOException, JSONException {  
-      int choice = JOptionPane.showConfirmDialog(null, "This file cannot be opened bcause it appears to have \n"
-              + "been improperly saved.  Would you like Micro-Manger to attempt to fix it?"
-              , "Micro-Manager", JOptionPane.YES_NO_OPTION);
-      if (choice == JOptionPane.NO_OPTION) {
-         return;
+   private void fixIndexMap(long firstIFD, String fileName) throws IOException, JSONException {  
+      if (!fixIndexMapWithoutPrompt_) {
+         int choice = JOptionPane.showConfirmDialog(null, "This file cannot be opened bcause it appears to have \n"
+                 + "been improperly saved.  Would you like Micro-Manger to attempt to fix it?", "Micro-Manager", JOptionPane.YES_NO_OPTION);
+         if (choice == JOptionPane.NO_OPTION) {
+            return;
+         }
       }
+      fixIndexMapWithoutPrompt_ = true;
       long filePosition = firstIFD;
       indexMap_ = new HashMap<String, Long>();
       long progBarMax = (fileChannel_.size() / 2L);
-      final ProgressBar progressBar = new ProgressBar("Fixing dataset", 0, 
+      final ProgressBar progressBar = new ProgressBar("Fixing " + fileName, 0, 
               progBarMax >= Integer.MAX_VALUE ? Integer.MAX_VALUE : (int) progBarMax);
       progressBar.setRange(0, progBarMax >= Integer.MAX_VALUE ? Integer.MAX_VALUE : (int) progBarMax);
       progressBar.setProgress(0);
@@ -528,6 +531,9 @@ public class MultipageTiffReader {
       while (filePosition > 0) {
          try {
             data = readIFD(filePosition);
+            if (data.nextIFD == 0) {
+               break;
+            }
             TaggedImage ti = readTaggedImage(data);
             if (ti.tags == null) {  //Blank placeholder image, dont add to index map
                filePosition = data.nextIFD;
@@ -536,16 +542,18 @@ public class MultipageTiffReader {
             }
             String label = null;
             label = MDUtils.getLabel(ti.tags);
-            if (label == null) {
+            if (label == null ) {
                break;
             }          
             indexMap_.put(label, filePosition);
+            
             final int progress = (int) (filePosition/2L);
             SwingUtilities.invokeLater(new Runnable() {
                public void run() {
                   progressBar.setProgress(progress);
                }
             });
+            
             filePosition = data.nextIFD;
             nextIFDOffsetLocation = data.nextIFDOffsetLocation;
          } catch (Exception e) {
@@ -566,9 +574,6 @@ public class MultipageTiffReader {
       raFile_.close();
       //reopen
       createFileChannel();
-      
-      ReportingUtils.showMessage("File succcessfully repaired! Resave data set when all files \n "
-              + "fixed to reagain full funtionality");
    }
    
    private int writeIndexMap(long filePosition) throws IOException {

@@ -51,7 +51,7 @@ import org.micromanager.utils.ReportingUtils;
 public class MultipageTiffWriter {
    
 //   private static final long BYTES_PER_MEG = 1048576;
-//   private static final long MAX_FILE_SIZE = 5*BYTES_PER_MEG;
+//   private static final long MAX_FILE_SIZE = 15*BYTES_PER_MEG;
    private static final long BYTES_PER_GIG = 1073741824;
    private static final long MAX_FILE_SIZE = 4 * BYTES_PER_GIG;
    public static final int DISPLAY_SETTINGS_BYTES_PER_CHANNEL = 256;
@@ -204,11 +204,21 @@ public class MultipageTiffWriter {
       fileChannel_.write(buffers);
       filePosition_ += buffer.position() + mdLength;
    }
-
-   public void close(String omeXML) throws IOException {
+   
+   /**
+    * Called when there is no more data to be written. Write the index map, so if closing fails later 
+    * on at least it will be there and have basic functionality in MM
+    */
+   public void finish() throws IOException {
       writeNullOffsetAfterLastImage();
       writeIndexMap();
+   }
 
+   /**
+    * called when entire set of files (i.e. acquisition) is finished. Reopens file and writes
+    * OME metadata, then closes it
+    */
+   public void close(String omeXML) throws IOException {
       String summaryComment = "";
       try 
       {

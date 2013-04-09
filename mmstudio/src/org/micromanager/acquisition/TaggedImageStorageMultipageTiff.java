@@ -54,6 +54,7 @@ public final class TaggedImageStorageMultipageTiff implements TaggedImageStorage
    private String omeXML_ = null;
    private OMEMetadata omeMetadata_;
    private int lastFrame_ = 0;
+   private boolean fixIndexMap_ = false;
   
    //used for estimating total length of ome xml
    private int totalNumImagePlanes_ = 0;
@@ -130,6 +131,14 @@ public final class TaggedImageStorageMultipageTiff implements TaggedImageStorage
    boolean timeFirst() {
       return ((ImageLabelComparator) tiffReadersByLabel_.comparator()).getTimeFirst();
    }
+   
+   public boolean getFixIndexMap() {
+      return fixIndexMap_;
+   }
+   
+   public void setFixIndexMap() {
+      fixIndexMap_ = true;
+   }
 
    private void openExistingDataSet() throws IOException {
       //Need to throw error if file not found
@@ -138,7 +147,8 @@ public final class TaggedImageStorageMultipageTiff implements TaggedImageStorage
       File dir = new File(directory_);
       for (File f : dir.listFiles()) {
          if (f.getName().endsWith(".tif") || f.getName().endsWith(".TIF")) {
-            reader = new MultipageTiffReader(f);
+            //this is where fixing dataset code occurs
+            reader = new MultipageTiffReader(f);         
             Set<String> labels = reader.getIndexKeys();
             for (String label : labels) {
                tiffReadersByLabel_.put(label, reader);
@@ -147,6 +157,8 @@ public final class TaggedImageStorageMultipageTiff implements TaggedImageStorage
             }
          }
       }
+      //reset this static variable to false so the prompt is delivered if a new data set is opened
+      reader.fixIndexMapWithoutPrompt_ = false;
 
       try {
          setSummaryMetadata(reader.getSummaryMetadata());
@@ -322,6 +334,7 @@ public final class TaggedImageStorageMultipageTiff implements TaggedImageStorage
     */
    @Override
    public void close() {
+      finished();
       shutdownHook_.run();
       Runtime.getRuntime().removeShutdownHook(shutdownHook_);
       for (MultipageTiffReader r : new HashSet<MultipageTiffReader>(tiffReadersByLabel_.values())) {
@@ -418,6 +431,7 @@ public final class TaggedImageStorageMultipageTiff implements TaggedImageStorage
          if (omeXML_ == null) {
             omeXML_ = omeMetadata_.toString();
          }
+         tiffWriters_.getLast().finish();
          for (MultipageTiffWriter w : tiffWriters_) {
             w.close(omeXML_);
          }
@@ -431,6 +445,9 @@ public final class TaggedImageStorageMultipageTiff implements TaggedImageStorage
       public void writeImage(TaggedImage img) throws IOException {
          //check if current writer is out of space, if so, make a new one
          if (!tiffWriters_.getLast().hasSpaceToWrite(img, omeTiff_ ? estimateOMEMDSize(): 0  )) {
+            //write index map here but still need to call close() at end of acq
+            tiffWriters_.getLast().finish();          
+            
             currentTiffFilename_ = baseFilename_ + "_" + tiffWriters_.size() + (omeTiff_ ? ".ome.tif" : ".tif");
             ifdCount_ = 0;
             tiffWriters_.add(new MultipageTiffWriter(directory_ ,currentTiffFilename_, summaryMetadata_, mpTiff_));
