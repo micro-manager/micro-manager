@@ -89,10 +89,9 @@ public final class VirtualAcquisitionDisplay implements AcquisitionDisplay,
    private int lastFrameShown_ = 0;
    private int lastSliceShown_ = 0;
    private int lastPositionShown_ = 0;
-   private int preferredSlice_ = -1;
-   private int preferredPosition_ = -1;
-   private int preferredChannel_ = -1;
-   private Timer preferredPositionTimer_;
+   private int lockedSlice_ = -1;
+   private int lockedPosition_ = -1;
+   private int lockedChannel_ = -1;
    private int numComponents_;
    private ImagePlus hyperImage_;
    private ScrollbarWithLabel pSelector_;
@@ -110,7 +109,8 @@ public final class VirtualAcquisitionDisplay implements AcquisitionDisplay,
    private java.util.Timer tAnimationTimer_ = new java.util.Timer();
    private boolean zAnimated_ = false, tAnimated_ = false;
    private int animatedSliceIndex_ = -1;
-   private Component zIcon_, pIcon_, tIcon_, cIcon_;
+   private Component zAnimationIcon_, pIcon_, tAnimationIcon_, cIcon_;
+   private Component zLockIcon_, cLockIcon_, pLockIcon_;
    private HashMap<Integer, Integer> zStackMins_;
    private HashMap<Integer, Integer> zStackMaxes_;
    private Histograms histograms_;
@@ -575,24 +575,6 @@ public final class VirtualAcquisitionDisplay implements AcquisitionDisplay,
       if (!simple_) {
          tSelector_ = getSelector("t");
          zSelector_ = getSelector("z");
-         if (zSelector_ != null) {
-            zSelector_.addAdjustmentListener(new AdjustmentListener() {
-
-               @Override
-               public void adjustmentValueChanged(AdjustmentEvent e) {
-                  preferredSlice_ = zSelector_.getValue();
-               }
-            });
-         }
-         if (cSelector_ != null) {
-            cSelector_.addAdjustmentListener(new AdjustmentListener() {
-
-               @Override
-               public void adjustmentValueChanged(AdjustmentEvent e) {
-                  preferredChannel_ = cSelector_.getValue();
-               }
-            });
-         }
 
          if (imageCache_.lastAcquiredFrame() > 0) {
             setNumFrames(1 + imageCache_.lastAcquiredFrame());
@@ -623,19 +605,31 @@ public final class VirtualAcquisitionDisplay implements AcquisitionDisplay,
       mdPanel_.getContrastPanel().setDisplayMode(displayMode);
    }
 
+   ///////////////////////////////////////////////////////////////////////////////////////////////
+   /////////////////Scrollbars and animation controls section/////////////////////////////////////
+   //////////////////////////////////////////////////////////////////////////////////////////////
    private void forcePainting() {
       Runnable forcePaint = new Runnable() {
 
          @Override
          public void run() {
-            if (zIcon_ != null) {
-               zIcon_.paint(zIcon_.getGraphics());
+            if (zAnimationIcon_ != null) {
+               zAnimationIcon_.paint(zAnimationIcon_.getGraphics());
             }
-            if (tIcon_ != null) {
-               tIcon_.paint(tIcon_.getGraphics());
+            if (tAnimationIcon_ != null) {
+               tAnimationIcon_.paint(tAnimationIcon_.getGraphics());
             }
             if (cIcon_ != null) {
                cIcon_.paint(cIcon_.getGraphics());
+            }
+            if (cLockIcon_ != null) {
+               cLockIcon_.paint(cLockIcon_.getGraphics());
+            }
+            if (zLockIcon_ != null) {
+               zLockIcon_.paint(zLockIcon_.getGraphics());
+            }
+            if (pLockIcon_ != null) {
+               pLockIcon_.paint(pLockIcon_.getGraphics());
             }
             if (controls_ != null) {
                controls_.paint(controls_.getGraphics());
@@ -643,7 +637,6 @@ public final class VirtualAcquisitionDisplay implements AcquisitionDisplay,
             if (pIcon_ != null && pIcon_.isValid()) {
                pIcon_.paint(pIcon_.getGraphics());
             }
-
          }
       };
 
@@ -658,9 +651,13 @@ public final class VirtualAcquisitionDisplay implements AcquisitionDisplay,
       if (!animate) {
          zAnimationTimer_.cancel();
          zAnimated_ = false;
-         refreshAnimationIcons();
+         refreshScrollbarIcons();
          return;
       } else {
+         if (lockedSlice_ != -1) {
+            //turn off locked z if animating
+            lockedSlice_ = -1;
+         }
          zAnimationTimer_ = new java.util.Timer();
          animateFrames(false);
          final int slicesPerStep;
@@ -684,7 +681,7 @@ public final class VirtualAcquisitionDisplay implements AcquisitionDisplay,
          };
          zAnimationTimer_.schedule(task, 0, interval);
          zAnimated_ = true;
-         refreshAnimationIcons();
+         refreshScrollbarIcons();
       }
    }
 
@@ -692,7 +689,7 @@ public final class VirtualAcquisitionDisplay implements AcquisitionDisplay,
       if (!animate) {
          tAnimationTimer_.cancel();
          tAnimated_ = false;
-         refreshAnimationIcons();
+         refreshScrollbarIcons();
          return;
       } else {
          tAnimationTimer_ = new java.util.Timer();
@@ -709,65 +706,283 @@ public final class VirtualAcquisitionDisplay implements AcquisitionDisplay,
             @Override
             public void run() {
                int frame = hyperImage_.getFrame();
+               int channel = lockedChannel_ == -1 ? hyperImage_.getChannel() : lockedChannel_;
+               int slice = lockedSlice_ == -1 ? hyperImage_.getSlice() : lockedSlice_;
                if (frame >= tSelector_.getMaximum() - 1) {
-                  hyperImage_.setPosition(hyperImage_.getChannel(), hyperImage_.getSlice(), 1);
+                  hyperImage_.setPosition(channel,slice, 1);
                } else {
-                  hyperImage_.setPosition(hyperImage_.getChannel(), hyperImage_.getSlice(), frame + framesPerStep);
+                  hyperImage_.setPosition(channel,slice, frame + framesPerStep);
                }
             }
          };
          tAnimationTimer_.schedule(task, 0, interval);
          tAnimated_ = true;
-         refreshAnimationIcons();
+         refreshScrollbarIcons();
       }
    }
 
-   private void refreshAnimationIcons() {
-      if (zIcon_ != null) {
-         zIcon_.repaint();
+   private void refreshScrollbarIcons() {
+      if (zAnimationIcon_ != null) {
+         zAnimationIcon_.repaint();
       }
-      if (tIcon_ != null) {
-         tIcon_.repaint();
+      if (tAnimationIcon_ != null) {
+         tAnimationIcon_.repaint();
+      }
+      if (zLockIcon_ != null) {
+         zLockIcon_.repaint();
+      }
+      if (cLockIcon_ != null) {
+         cLockIcon_.repaint();
+      }
+      if (pLockIcon_ != null) {
+         pLockIcon_.repaint();
       }
    }
 
    private void configureAnimationControls() {
-      if (zIcon_ != null) {
-         zIcon_.addMouseListener(new MouseListener() {
-            @Override
+      if (zAnimationIcon_ != null) {
+         zAnimationIcon_.addMouseListener(new MouseListener() {
             public void mousePressed(MouseEvent e) {
                animateSlices(!zAnimated_);
             }
-            @Override
             public void mouseClicked(MouseEvent e) {}
-            @Override
             public void mouseReleased(MouseEvent e) {}
-            @Override
             public void mouseEntered(MouseEvent e) {}
-            @Override
             public void mouseExited(MouseEvent e) {}
          });
       }
-      if (tIcon_ != null) {
-         tIcon_.addMouseListener(new MouseListener() {
+      if (tAnimationIcon_ != null) {
+         tAnimationIcon_.addMouseListener(new MouseListener() {
 
             @Override
             public void mousePressed(MouseEvent e) {
                animateFrames(!tAnimated_);
             }
-
-            @Override
             public void mouseClicked(MouseEvent e) {}
-            @Override
             public void mouseReleased(MouseEvent e) {}
-            @Override
             public void mouseEntered(MouseEvent e) {}
-            @Override
             public void mouseExited(MouseEvent e) {}
          });
       }
    }
+   
+      private void setNumPositions(int n) {
+      if (simple_) {
+         return;
+      }
+      pSelector_.setMinimum(0);
+      pSelector_.setMaximum(n);
+      ImageWindow win = hyperImage_.getWindow();
+      if (n > 1 && pSelector_.getParent() == null) {
+         win.add(pSelector_, win.getComponentCount() - 1);
+      } else if (n <= 1 && pSelector_.getParent() != null) {
+         win.remove(pSelector_);
+      }
+      win.pack();
+   }
 
+   private void setNumFrames(int n) {
+      if (simple_) {
+         return;
+      }
+      if (tSelector_ != null) {
+         //ImageWindow win = hyperImage_.getWindow();
+         ((IMMImagePlus) hyperImage_).setNFramesUnverified(n);
+         tSelector_.setMaximum(n + 1);
+         // JavaUtils.setRestrictedFieldValue(win, StackWindow.class, "nFrames", n);
+      }
+   }
+
+   private void setNumSlices(int n) {
+      if (simple_) {
+         return;
+      }
+      if (zSelector_ != null) {
+         ((IMMImagePlus) hyperImage_).setNSlicesUnverified(n);
+         zSelector_.setMaximum(n + 1);
+      }
+   }
+
+   private void setNumChannels(int n) {
+      if (cSelector_ != null) {
+         ((IMMImagePlus) hyperImage_).setNChannelsUnverified(n);
+         cSelector_.setMaximum(1 + n);
+      }
+   }
+ 
+   /**
+    * If animation was running prior to showImage, restarts it with sliders at
+    * appropriate positions
+    */
+   private void restartAnimationAfterShowing(int frame, int slice, boolean framesAnimated, boolean slicesAnimated) {
+      if (framesAnimated) {
+         hyperImage_.setPosition(hyperImage_.getChannel(), hyperImage_.getSlice(), frame+1);
+         animateFrames(true);
+      } else if (slicesAnimated) {
+         hyperImage_.setPosition(hyperImage_.getChannel(), slice+1, hyperImage_.getFrame());
+         animateSlices(true);
+      }
+   }
+
+   private void resetScrollBarsToLockedPositions() {
+      hyperImage_.setPosition(lockedChannel_ == -1 ? hyperImage_.getChannel() : lockedChannel_,
+              lockedSlice_ == -1 ? hyperImage_.getSlice() : lockedSlice_,
+              hyperImage_.getFrame());
+      if (pSelector_ != null && lockedPosition_ > -1) {
+         setPosition(lockedPosition_);
+      }
+   }
+
+    private ScrollbarWithLabel getSelector(String label) {
+      // label should be "t", "z", or "c"
+      ScrollbarWithLabel selector = null;
+      ImageWindow win = hyperImage_.getWindow();
+      int slices = ((IMMImagePlus) hyperImage_).getNSlicesUnverified();
+      int frames = ((IMMImagePlus) hyperImage_).getNFramesUnverified();
+      int channels = ((IMMImagePlus) hyperImage_).getNChannelsUnverified();
+      if (win instanceof StackWindow) {
+         try {
+            //ImageJ bug workaround
+            if (frames > 1 && slices == 1 && channels == 1 && label.equals("t")) {
+               selector = (ScrollbarWithLabel) JavaUtils.getRestrictedFieldValue((StackWindow) win, StackWindow.class, "zSelector");
+            } else {
+               selector = (ScrollbarWithLabel) JavaUtils.getRestrictedFieldValue((StackWindow) win, StackWindow.class, label + "Selector");
+            }
+         } catch (NoSuchFieldException ex) {
+            selector = null;
+            ReportingUtils.logError(ex);
+         }
+      }
+      //replace default icon with custom one
+      if (selector != null) {
+         try {
+            Component icon = (Component) JavaUtils.getRestrictedFieldValue(
+                    selector, ScrollbarWithLabel.class, "icon");
+            selector.remove(icon);
+         } catch (NoSuchFieldException ex) {
+            ReportingUtils.logError(ex);
+         }
+         ScrollbarAnimateIcon newIcon = new ScrollbarAnimateIcon(label.charAt(0), this);
+         if (label.equals("z")) {
+            zAnimationIcon_ = newIcon;
+         } else if (label.equals("t")) {
+            tAnimationIcon_ = newIcon;
+         } else if (label.equals("c")) {
+            cIcon_ = newIcon;
+         }
+
+         selector.add(newIcon, BorderLayout.WEST);
+         if (!label.equalsIgnoreCase("t")) {
+            addSelectorLockIcon(selector, label);
+         }
+         
+         selector.invalidate();
+         selector.validate();
+      }
+      return selector;
+   }
+   
+   private void addSelectorLockIcon(ScrollbarWithLabel selector, final String label) {
+      final ScrollbarLockIcon icon = new ScrollbarLockIcon(this, label);
+      selector.add(icon, BorderLayout.EAST);
+      if (label.equals("p")) {
+         pLockIcon_ = icon;
+      } else if (label.equals("z")) {
+         zLockIcon_ = icon;
+      } else if (label.equals("c")) {
+         cLockIcon_ = icon;
+      }
+      icon.addMouseListener(new MouseListener() {
+
+         public void mouseClicked(MouseEvent e) {
+            if (label.equals("p")) {
+               if (lockedPosition_ == -1) {
+                  lockedPosition_ = pSelector_.getValue();
+               } else {
+                  lockedPosition_ = -1;
+               }
+            } else if (label.equals("z")) {
+               if (lockedSlice_ == -1) {
+                  if (isZAnimated()) {
+                     animateSlices(false);
+                  }
+                  lockedSlice_ = zSelector_.getValue();
+               } else {
+                  lockedSlice_ = -1;
+               }
+            } else if (label.equals("c")) {
+               if (lockedChannel_ == -1) {
+                  lockedChannel_ = cSelector_.getValue();
+               } else {
+                  lockedChannel_ = -1;
+               }
+            }
+            resetScrollBarsToLockedPositions();
+            refreshScrollbarIcons();
+         }
+         public void mousePressed(MouseEvent e) {}
+         public void mouseReleased(MouseEvent e) { }
+         public void mouseEntered(MouseEvent e) {}
+         public void mouseExited(MouseEvent e) {}  
+      }); 
+   }
+   
+   boolean isScrollbarLocked(String label) {
+      if (label.equals("z")) {
+         return lockedSlice_ > -1;
+      } else if (label.equals("c")) {
+         return lockedChannel_ > -1;
+      } else {
+         return lockedPosition_ > -1;
+      }
+   }
+
+   private ScrollbarWithLabel createPositionScrollbar() {
+      final ScrollbarWithLabel pSelector = new ScrollbarWithLabel(null, 1, 1, 1, 2, 'p') {
+
+         @Override
+         public void setValue(int v) {
+            if (this.getValue() != v) {
+               super.setValue(v);
+               updatePosition(v);
+            }
+         }
+      };
+
+      // prevents scroll bar from blinking on Windows:
+      pSelector.setFocusable(false);
+      pSelector.setUnitIncrement(1);
+      pSelector.setBlockIncrement(1);
+      pSelector.addAdjustmentListener(new AdjustmentListener() {
+
+         @Override
+         public void adjustmentValueChanged(AdjustmentEvent e) {
+            updatePosition(pSelector.getValue());
+         }
+      });
+
+      if (pSelector != null) {
+         try {
+            Component icon = (Component) JavaUtils.getRestrictedFieldValue(
+                    pSelector, ScrollbarWithLabel.class, "icon");
+            pSelector.remove(icon);
+         } catch (NoSuchFieldException ex) {
+            ReportingUtils.logError(ex);
+         }
+
+         pIcon_ = new ScrollbarAnimateIcon('p', this);
+         pSelector.add(pIcon_, BorderLayout.WEST);
+         addSelectorLockIcon(pSelector, "p");
+         pSelector.invalidate();
+         pSelector.validate();
+      }
+
+      return pSelector;
+   }
+   ////////////////////////////////////////////////////////////////////////////////
+   ////////End of animation controls and scrollbars section///////////////////////
+   ////////////////////////////////////////////////////////////////////////////////
+   
    /**
     * Allows bypassing the prompt to Save
     * @param promptToSave boolean flag
@@ -982,50 +1197,6 @@ public final class VirtualAcquisitionDisplay implements AcquisitionDisplay,
          }
       } catch (JSONException ex) {
          // no pixelsize defined.  Nothing to do
-      }
-   }
-
-   private void setNumPositions(int n) {
-      if (simple_) {
-         return;
-      }
-      pSelector_.setMinimum(0);
-      pSelector_.setMaximum(n);
-      ImageWindow win = hyperImage_.getWindow();
-      if (n > 1 && pSelector_.getParent() == null) {
-         win.add(pSelector_, win.getComponentCount() - 1);
-      } else if (n <= 1 && pSelector_.getParent() != null) {
-         win.remove(pSelector_);
-      }
-      win.pack();
-   }
-
-   private void setNumFrames(int n) {
-      if (simple_) {
-         return;
-      }
-      if (tSelector_ != null) {
-         //ImageWindow win = hyperImage_.getWindow();
-         ((IMMImagePlus) hyperImage_).setNFramesUnverified(n);
-         tSelector_.setMaximum(n + 1);
-         // JavaUtils.setRestrictedFieldValue(win, StackWindow.class, "nFrames", n);
-      }
-   }
-
-   private void setNumSlices(int n) {
-      if (simple_) {
-         return;
-      }
-      if (zSelector_ != null) {
-         ((IMMImagePlus) hyperImage_).setNSlicesUnverified(n);
-         zSelector_.setMaximum(n + 1);
-      }
-   }
-
-   private void setNumChannels(int n) {
-      if (cSelector_ != null) {
-         ((IMMImagePlus) hyperImage_).setNChannelsUnverified(n);
-         cSelector_.setMaximum(1 + n);
       }
    }
 
@@ -1267,30 +1438,14 @@ public final class VirtualAcquisitionDisplay implements AcquisitionDisplay,
       
       updateAndDraw(useGUIUpdater);
       restartAnimationAfterShowing(animatedFrameIndex, animatedSliceIndex_, framesAnimated, slicesAnimated);
-
-      if (eng_ != null) {
-         setPreferredScrollbarPositions();
-      }
-
+      resetScrollBarsToLockedPositions();
+      
       if (cSelector_ != null) {
          if (histograms_.getNumberOfChannels() < (1 + superChannel)) {
                   if (histograms_ != null) {
                histograms_.setupChannelControls(imageCache_);
             }
       }
-      }
-   }
-   
-   /**
-    * If animation was running prior to showImage, restarts it with sliders at appropriate positions 
-    */
-   private void restartAnimationAfterShowing(int frame, int slice, boolean framesAnimated, boolean slicesAnimated) {
-      if (framesAnimated) {
-         hyperImage_.setPosition(hyperImage_.getChannel(), hyperImage_.getSlice(), frame+1);
-         animateFrames(true);
-      } else if (slicesAnimated) {
-         hyperImage_.setPosition(hyperImage_.getChannel(), slice+1, hyperImage_.getFrame());
-         animateSlices(true);
       }
    }
 
@@ -1409,35 +1564,6 @@ public final class VirtualAcquisitionDisplay implements AcquisitionDisplay,
 
       mins.put(channel, pixMin);
       maxes.put(channel, pixMax);
-   }
-
-   private void setPreferredScrollbarPositions() {
-      if (preferredPositionTimer_ == null) {
-         preferredPositionTimer_ = new Timer(250, new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-               int c = preferredChannel_ == -1 ? hyperImage_.getChannel() : preferredChannel_;
-               int s = preferredSlice_ == -1 ? hyperImage_.getSlice() : preferredSlice_;
-               
-               hyperImage_.setPosition(c, zAnimated_ ? hyperImage_.getSlice() : s ,hyperImage_.getFrame());
-               if (pSelector_ != null && preferredPosition_ > -1) {
-                  if (eng_.getAcqOrderMode() != AcqOrderMode.POS_TIME_CHANNEL_SLICE
-                          && eng_.getAcqOrderMode() != AcqOrderMode.POS_TIME_SLICE_CHANNEL) {
-                     setPosition(preferredPosition_);
-                  }
-               }
-               preferredPositionTimer_.stop();
-            }
-         });
-      }
-
-      if (preferredPositionTimer_.isRunning()) {
-         preferredPositionTimer_.restart();
-      } else {
-         preferredPositionTimer_.start();
-      }
-
-
    }
 
    private void updatePosition(int p) {
@@ -1758,10 +1884,6 @@ public final class VirtualAcquisitionDisplay implements AcquisitionDisplay,
       imageChangedUpdate();
    }
    
-   private int getWinLength(ImageWindow win) {
-       return (int) Math.sqrt(win.getSize().width * win.getSize().height);
-   }   
-   
    public void storeWindowSizeAfterZoom(ImageWindow win) {
       if (simple_) {
          snapWinMag_ = win.getCanvas().getMagnification();
@@ -1802,95 +1924,6 @@ public final class VirtualAcquisitionDisplay implements AcquisitionDisplay,
       }
       
       win.setLocation(newLocation);
-   }
-
-   private ScrollbarWithLabel getSelector(String label) {
-      // label should be "t", "z", or "c"
-      ScrollbarWithLabel selector = null;
-      ImageWindow win = hyperImage_.getWindow();
-      int slices = ((IMMImagePlus) hyperImage_).getNSlicesUnverified();
-      int frames = ((IMMImagePlus) hyperImage_).getNFramesUnverified();
-      int channels = ((IMMImagePlus) hyperImage_).getNChannelsUnverified();
-      if (win instanceof StackWindow) {
-         try {
-            //ImageJ bug workaround
-            if (frames > 1 && slices == 1 && channels == 1 && label.equals("t")) {
-               selector = (ScrollbarWithLabel) JavaUtils.getRestrictedFieldValue((StackWindow) win, StackWindow.class, "zSelector");
-            } else {
-               selector = (ScrollbarWithLabel) JavaUtils.getRestrictedFieldValue((StackWindow) win, StackWindow.class, label + "Selector");
-            }
-         } catch (NoSuchFieldException ex) {
-            selector = null;
-            ReportingUtils.logError(ex);
-         }
-      }
-      //replace default icon with custom one
-      if (selector != null) {
-         try {
-            Component icon = (Component) JavaUtils.getRestrictedFieldValue(
-                    selector, ScrollbarWithLabel.class, "icon");
-            selector.remove(icon);
-         } catch (NoSuchFieldException ex) {
-            ReportingUtils.logError(ex);
-         }
-         ScrollbarIcon newIcon = new ScrollbarIcon(label.charAt(0), this);
-         if (label.equals("z")) {
-            zIcon_ = newIcon;
-         } else if (label.equals("t")) {
-            tIcon_ = newIcon;
-         } else if (label.equals("c")) {
-            cIcon_ = newIcon;
-         }
-
-         selector.add(newIcon, BorderLayout.WEST);
-         selector.invalidate();
-         selector.validate();
-      }
-      return selector;
-   }
-
-   private ScrollbarWithLabel createPositionScrollbar() {
-      final ScrollbarWithLabel pSelector = new ScrollbarWithLabel(null, 1, 1, 1, 2, 'p') {
-
-         @Override
-         public void setValue(int v) {
-            if (this.getValue() != v) {
-               super.setValue(v);
-               updatePosition(v);
-            }
-         }
-      };
-
-      // prevents scroll bar from blinking on Windows:
-      pSelector.setFocusable(false);
-      pSelector.setUnitIncrement(1);
-      pSelector.setBlockIncrement(1);
-      pSelector.addAdjustmentListener(new AdjustmentListener() {
-
-         @Override
-         public void adjustmentValueChanged(AdjustmentEvent e) {
-            updatePosition(pSelector.getValue());
-            preferredPosition_ = pSelector_.getValue();
-
-         }
-      });
-
-      if (pSelector != null) {
-         try {
-            Component icon = (Component) JavaUtils.getRestrictedFieldValue(
-                    pSelector, ScrollbarWithLabel.class, "icon");
-            pSelector.remove(icon);
-         } catch (NoSuchFieldException ex) {
-            ReportingUtils.logError(ex);
-         }
-
-         pIcon_ = new ScrollbarIcon('p', this);
-         pSelector.add(pIcon_, BorderLayout.WEST);
-         pSelector.invalidate();
-         pSelector.validate();
-      }
-
-      return pSelector;
    }
 
    public JSONObject getCurrentMetadata() {

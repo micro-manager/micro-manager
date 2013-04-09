@@ -21,13 +21,13 @@ import java.awt.geom.GeneralPath;
  *
  * @author Henry
  */
-public class ScrollbarIcon extends Canvas implements MouseListener {
+public class ScrollbarAnimateIcon extends Canvas implements MouseListener {
 		private static final int WIDTH = 24, HEIGHT=14;
 		private BasicStroke stroke = new BasicStroke(2f);
 		private char type;
-      private VirtualAcquisitionDisplay virtAcq_;
+                private VirtualAcquisitionDisplay virtAcq_;
 
-		public ScrollbarIcon(char type, VirtualAcquisitionDisplay vad) {
+		public ScrollbarAnimateIcon(char type, VirtualAcquisitionDisplay vad) {
 			virtAcq_ = vad;
          addMouseListener(this);
 			setSize(WIDTH, HEIGHT);
