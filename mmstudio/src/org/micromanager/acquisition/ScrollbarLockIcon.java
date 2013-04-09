@@ -12,12 +12,14 @@ import java.awt.RenderingHints;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.geom.GeneralPath;
+import javax.swing.JComponent;
+import org.micromanager.utils.TooltipTextMaker;
 
 /**
  *
  * @author Henry
  */
-public class ScrollbarLockIcon extends Canvas   {
+public class ScrollbarLockIcon extends JComponent   {
 
    private static final int WIDTH = 17, HEIGHT = 14;
    private VirtualAcquisitionDisplay virtAcq_;
@@ -27,6 +29,8 @@ public class ScrollbarLockIcon extends Canvas   {
       virtAcq_ = vad;
       label_ = label;
       setSize(WIDTH, HEIGHT);
+      this.setToolTipText(TooltipTextMaker.addHTMLBreaksForTooltip(
+              "Lock the scrollbar to its current postion while acquisition is running"));
    }
 
    /**
