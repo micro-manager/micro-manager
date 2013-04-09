@@ -42,6 +42,7 @@ public class MMOptions {
    private static final String MPTIFF_METADATA_FILE = "MakeMetadataFileWithMultipageTiff";
    private static final String MPTIFF_SEPERATE_FILES_FOR_POSITIONS = "SplitXYPostionsInFilesMPTiff";
    private static final String SYNCEXPOSUREMAINANDMDA = "SyncExposureBetweenMainAndMDAWindows";
+   private static final String FAST_STORAGE = "FastStorage";
    
    public boolean debugLogEnabled_ = false;
    public boolean doNotAskForConfigFile_ = false;
@@ -55,6 +56,7 @@ public class MMOptions {
    public boolean mpTiffSeperateFilesForPositions_ = true;
    public boolean syncExposureMainAndMDA_ = false;
    public boolean hideMDADisplay_ = false;
+   boolean fastStorage_ = false;
    
    public void saveSettings() {
       Preferences root = Preferences.userNodeForPackage( this.getClass());
@@ -71,6 +73,7 @@ public class MMOptions {
       prefs.putBoolean(MPTIFF_METADATA_FILE, mpTiffMetadataFile_);
       prefs.putBoolean(MPTIFF_SEPERATE_FILES_FOR_POSITIONS, mpTiffSeperateFilesForPositions_);
       prefs.putBoolean (SYNCEXPOSUREMAINANDMDA, syncExposureMainAndMDA_);
+      prefs.putBoolean(FAST_STORAGE, fastStorage_);
    }
    
    public void loadSettings() {
@@ -89,5 +92,6 @@ public class MMOptions {
       mpTiffMetadataFile_ = prefs.getBoolean(MPTIFF_METADATA_FILE, mpTiffMetadataFile_);
       mpTiffSeperateFilesForPositions_ = prefs.getBoolean(MPTIFF_SEPERATE_FILES_FOR_POSITIONS, mpTiffSeperateFilesForPositions_);
       syncExposureMainAndMDA_ = prefs.getBoolean(SYNCEXPOSUREMAINANDMDA, syncExposureMainAndMDA_);
+      fastStorage_ = prefs.getBoolean(FAST_STORAGE, fastStorage_);
    }
 }

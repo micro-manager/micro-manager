@@ -419,15 +419,16 @@
   (do (prn x)
       x))
 
-(defn tag-burst-image [image burst-events camera-channel-names camera-index-tag]
+(defn tag-burst-image [image burst-events camera-channel-names camera-index-tag
+                       image-number-offset]
   (swap! state assoc-if-nil :burst-time-offset
          (- (elapsed-time @state)
             (core-time-from-tags (image :tags))))
   (let [cam-chan (if-let [cam-chan-str (get-in image [:tags camera-index-tag])]
                    (Long/parseLong cam-chan-str)
                    0)
-        image-number (Long/parseLong (get-in image [:tags "ImageNumber"]))
-        image-number (if (first-trigger-missing?) (dec image-number) image-number)
+        image-number (+ image-number-offset
+                        (Long/parseLong (get-in image [:tags "ImageNumber"])))
         burst-event (nth burst-events image-number)
         camera-channel-name (nth camera-channel-names cam-chan)
         num-camera-channels (count camera-channel-names)
@@ -439,7 +440,8 @@
                              super-channel-name
                              camera-channel-name num-camera-channels)
                   (assoc :camera-channel-index cam-chan))
-        time-stamp (burst-time (:tags image) @state)]
+        time-stamp (burst-time (:tags image) @state)
+        ]
     ;image))
     (annotate-image image event @state time-stamp)))
 
@@ -448,11 +450,13 @@
   [burst-events camera-channel-names timeout-ms out-queue]
   (let [total (* (count burst-events)
                  (count camera-channel-names))
-        camera-index-tag (str (. mmc getCameraDevice) "-CameraChannelIndex")]
+        camera-index-tag (str (. mmc getCameraDevice) "-CameraChannelIndex")
+        image-number-offset (if (first-trigger-missing?) -1 0)]
     (doseq [_ (range total)]
       (.put out-queue
             (-> (pop-burst-image timeout-ms)
-                (tag-burst-image burst-events camera-channel-names camera-index-tag)
+                (tag-burst-image burst-events camera-channel-names camera-index-tag
+                                 image-number-offset)
                 make-TaggedImage
                 ))))
   (burst-cleanup))
