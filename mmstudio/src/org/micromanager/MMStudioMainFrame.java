@@ -111,6 +111,7 @@ import com.swtdesigner.SwingResourceManager;
 import ij.Menus;
 import ij.gui.ImageCanvas;
 import ij.gui.ImageWindow;
+import ij.gui.Toolbar;
 import java.awt.Cursor;
 import java.awt.Frame;
 import java.awt.KeyboardFocusManager;
@@ -1347,7 +1348,8 @@ public class MMStudioMainFrame extends JFrame implements
       centerAndDragMenuItem_.addActionListener(new ActionListener() {
 
          public void actionPerformed(ActionEvent e) {
-           updateCenterAndDragListener();
+            updateCenterAndDragListener();
+            IJ.setTool(Toolbar.HAND);
             mainPrefs_.putBoolean(MOUSE_MOVES_STAGE, centerAndDragMenuItem_.isSelected());
          }
       });
