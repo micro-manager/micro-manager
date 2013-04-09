@@ -110,7 +110,6 @@ public class MultipageTiffReader {
       try {
          readIndexMap();
       } catch (Exception e) {
-         ReportingUtils.showError("Can't read index map in file: " + file_.getName());
          try {
             fixIndexMap(firstIFD, file.getName());
          } catch (JSONException ex) {
@@ -511,6 +510,7 @@ public class MultipageTiffReader {
    //XML in the ImageDescription tag location 
    private void fixIndexMap(long firstIFD, String fileName) throws IOException, JSONException {  
       if (!fixIndexMapWithoutPrompt_) {
+         ReportingUtils.showError("Can't read index map in file: " + file_.getName());
          int choice = JOptionPane.showConfirmDialog(null, "This file cannot be opened bcause it appears to have \n"
                  + "been improperly saved.  Would you like Micro-Manger to attempt to fix it?", "Micro-Manager", JOptionPane.YES_NO_OPTION);
          if (choice == JOptionPane.NO_OPTION) {
