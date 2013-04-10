@@ -85,7 +85,7 @@ public class MultipageTiffWriter {
    
    public static final int SUMMARY_MD_HEADER = 2355492;
    
-   public static final ByteOrder BYTE_ORDER = ByteOrder.nativeOrder();
+   public static ByteOrder BYTE_ORDER;
    
    
    final private boolean omeTiff_;
@@ -117,6 +117,7 @@ public class MultipageTiffWriter {
    public MultipageTiffWriter(String directory, String filename, 
            JSONObject summaryMD, TaggedImageStorageMultipageTiff mpTiffStorage,
            boolean fastStorageMode) {
+      BYTE_ORDER = fastStorageMode ? ByteOrder.nativeOrder() : ByteOrder.BIG_ENDIAN;
       fastStorageMode_ = fastStorageMode;
       masterMPTiffStorage_ = mpTiffStorage;
       omeTiff_ = mpTiffStorage.omeTiff_;        
