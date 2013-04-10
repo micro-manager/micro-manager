@@ -71,7 +71,7 @@ public class MMOptions {
       prefs.put(STARTUP_SCRIPT_FILE, startupScript_);
       prefs.putDouble(PREF_WINDOW_MAG, windowMag_);
       prefs.putBoolean(MPTIFF_METADATA_FILE, mpTiffMetadataFile_);
-      prefs.putBoolean(MPTIFF_SEPATATE_FILES_FOR_POSITIONS, mpTiffSeparateFilesForPositions_);
+      prefs.putBoolean(MPTIFF_SEPARATE_FILES_FOR_POSITIONS, mpTiffSeparateFilesForPositions_);
       prefs.putBoolean (SYNCEXPOSUREMAINANDMDA, syncExposureMainAndMDA_);
       prefs.putBoolean(FAST_STORAGE, fastStorage_);
    }
