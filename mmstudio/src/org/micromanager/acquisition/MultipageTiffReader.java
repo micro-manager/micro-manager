@@ -242,7 +242,7 @@ public class MultipageTiffReader {
             return null;
          }
 
-         ByteBuffer mdBuffer = ByteBuffer.allocate(length);
+         ByteBuffer mdBuffer = ByteBuffer.allocate(length).order(byteOrder_);
          fileChannel_.read(mdBuffer, 40);
          JSONObject summaryMD = new JSONObject(getString(mdBuffer));
 
@@ -385,8 +385,8 @@ public class MultipageTiffReader {
    }
    
    private TaggedImage readTaggedImage(IFDData data) throws IOException {
-      ByteBuffer pixelBuffer = ByteBuffer.allocate( (int) data.bytesPerImage);
-      ByteBuffer mdBuffer = ByteBuffer.allocate((int) data.mdLength);
+      ByteBuffer pixelBuffer = ByteBuffer.allocate( (int) data.bytesPerImage).order(byteOrder_);
+      ByteBuffer mdBuffer = ByteBuffer.allocate((int) data.mdLength).order(byteOrder_);
       fileChannel_.read(pixelBuffer, data.pixelOffset);
       fileChannel_.read(mdBuffer, data.mdOffset);
       JSONObject md = null;
@@ -564,8 +564,7 @@ public class MultipageTiffReader {
      
       filePosition += writeIndexMap(filePosition);
       
-      ByteBuffer buffer = ByteBuffer.allocate(4);
-      buffer.order(byteOrder_);
+      ByteBuffer buffer = ByteBuffer.allocate(4).order(byteOrder_);
       buffer.putInt(0, 0);
       fileChannel_.write(buffer, nextIFDOffsetLocation); 
       raFile_.setLength(filePosition + 8);
