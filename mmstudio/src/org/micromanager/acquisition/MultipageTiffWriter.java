@@ -85,7 +85,7 @@ public class MultipageTiffWriter {
    
    public static final int SUMMARY_MD_HEADER = 2355492;
    
-   public static final ByteOrder BYTE_ORDER = ByteOrder.BIG_ENDIAN;
+   public static final ByteOrder BYTE_ORDER = ByteOrder.nativeOrder();
    
    
    final private boolean omeTiff_;
@@ -174,7 +174,9 @@ public class MultipageTiffWriter {
    }
    
    private ByteBuffer wrapInByteBuffer(byte [] bytes) {
-      return allocateByteBuffer(bytes.length).put(bytes);
+      return fastStorageMode_ ?
+              ByteBuffer.allocateDirect(bytes.length).put(bytes)
+              : ByteBuffer.wrap(bytes);
    }
    
    public MultipageTiffReader getReader() {
