@@ -400,17 +400,17 @@ public class OptionsDlg extends MMDialog {
       springLayout.putConstraint(SpringLayout.NORTH, metadataFileWithMultipageTiffCheckBox, 10, SpringLayout.SOUTH, prefZoomLabel);
       metadataFileWithMultipageTiffCheckBox.setSelected(opts_.mpTiffMetadataFile_);
       
-      final JCheckBox seperateFilesForPositionsMPTiffCheckBox = new JCheckBox();
-      seperateFilesForPositionsMPTiffCheckBox.addActionListener(new ActionListener() {
+      final JCheckBox separateFilesForPositionsMPTiffCheckBox = new JCheckBox();
+      separateFilesForPositionsMPTiffCheckBox.addActionListener(new ActionListener() {
          public void actionPerformed(ActionEvent arg0) {
-            opts_.mpTiffSeperateFilesForPositions_ = seperateFilesForPositionsMPTiffCheckBox.isSelected();
+            opts_.mpTiffSeparateFilesForPositions_ = separateFilesForPositionsMPTiffCheckBox.isSelected();
          }
       });
-      seperateFilesForPositionsMPTiffCheckBox.setText("Save XY Positions in seperate image stack files");
-      getContentPane().add(seperateFilesForPositionsMPTiffCheckBox);
-      springLayout.putConstraint(SpringLayout.WEST, seperateFilesForPositionsMPTiffCheckBox, 20, SpringLayout.WEST, getContentPane());
-      springLayout.putConstraint(SpringLayout.NORTH, seperateFilesForPositionsMPTiffCheckBox, 5, SpringLayout.SOUTH, metadataFileWithMultipageTiffCheckBox);
-      seperateFilesForPositionsMPTiffCheckBox.setSelected(opts_.mpTiffSeperateFilesForPositions_);
+      separateFilesForPositionsMPTiffCheckBox.setText("Save XY Positions in separate image stack files");
+      getContentPane().add(separateFilesForPositionsMPTiffCheckBox);
+      springLayout.putConstraint(SpringLayout.WEST, separateFilesForPositionsMPTiffCheckBox, 20, SpringLayout.WEST, getContentPane());
+      springLayout.putConstraint(SpringLayout.NORTH, separateFilesForPositionsMPTiffCheckBox, 5, SpringLayout.SOUTH, metadataFileWithMultipageTiffCheckBox);
+      separateFilesForPositionsMPTiffCheckBox.setSelected(opts_.mpTiffSeparateFilesForPositions_);
   
       final JCheckBox syncExposureMainAndMDA = new JCheckBox();
       syncExposureMainAndMDA.addActionListener(new ActionListener() {
@@ -421,7 +421,7 @@ public class OptionsDlg extends MMDialog {
       syncExposureMainAndMDA.setText("Sync exposure between Main and MDA windows");
       getContentPane().add(syncExposureMainAndMDA);
       springLayout.putConstraint(SpringLayout.WEST, syncExposureMainAndMDA, 20, SpringLayout.WEST, getContentPane());
-      springLayout.putConstraint(SpringLayout.NORTH, syncExposureMainAndMDA, 5, SpringLayout.SOUTH, seperateFilesForPositionsMPTiffCheckBox);
+      springLayout.putConstraint(SpringLayout.NORTH, syncExposureMainAndMDA, 5, SpringLayout.SOUTH, separateFilesForPositionsMPTiffCheckBox);
       syncExposureMainAndMDA.setSelected(opts_.syncExposureMainAndMDA_);
   
       

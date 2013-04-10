@@ -40,7 +40,7 @@ public class MMOptions {
    private static final String ENABLE_DEVICE_DISCOVERY = "enableDeviceDiscovery";
    private static final String PREF_WINDOW_MAG = "windowMag";
    private static final String MPTIFF_METADATA_FILE = "MakeMetadataFileWithMultipageTiff";
-   private static final String MPTIFF_SEPERATE_FILES_FOR_POSITIONS = "SplitXYPostionsInFilesMPTiff";
+   private static final String MPTIFF_SEPARATE_FILES_FOR_POSITIONS = "SplitXYPostionsInFilesMPTiff";
    private static final String SYNCEXPOSUREMAINANDMDA = "SyncExposureBetweenMainAndMDAWindows";
    private static final String FAST_STORAGE = "FastStorage";
    
@@ -53,7 +53,7 @@ public class MMOptions {
    boolean autoreloadDevices_ = false;
    public double windowMag_ = 1.0;
    public boolean mpTiffMetadataFile_ = false;
-   public boolean mpTiffSeperateFilesForPositions_ = true;
+   public boolean mpTiffSeparateFilesForPositions_ = true;
    public boolean syncExposureMainAndMDA_ = false;
    public boolean hideMDADisplay_ = false;
    boolean fastStorage_ = false;
@@ -71,7 +71,7 @@ public class MMOptions {
       prefs.put(STARTUP_SCRIPT_FILE, startupScript_);
       prefs.putDouble(PREF_WINDOW_MAG, windowMag_);
       prefs.putBoolean(MPTIFF_METADATA_FILE, mpTiffMetadataFile_);
-      prefs.putBoolean(MPTIFF_SEPERATE_FILES_FOR_POSITIONS, mpTiffSeperateFilesForPositions_);
+      prefs.putBoolean(MPTIFF_SEPATATE_FILES_FOR_POSITIONS, mpTiffSeparateFilesForPositions_);
       prefs.putBoolean (SYNCEXPOSUREMAINANDMDA, syncExposureMainAndMDA_);
       prefs.putBoolean(FAST_STORAGE, fastStorage_);
    }
@@ -90,7 +90,7 @@ public class MMOptions {
       windowMag_ = prefs.getDouble(PREF_WINDOW_MAG, windowMag_);
       // enableDeviceDiscovery_ = prefs.getBoolean(ENABLE_DEVICE_DISCOVERY, enableDeviceDiscovery_);
       mpTiffMetadataFile_ = prefs.getBoolean(MPTIFF_METADATA_FILE, mpTiffMetadataFile_);
-      mpTiffSeperateFilesForPositions_ = prefs.getBoolean(MPTIFF_SEPERATE_FILES_FOR_POSITIONS, mpTiffSeperateFilesForPositions_);
+      mpTiffSeparateFilesForPositions_ = prefs.getBoolean(MPTIFF_SEPARATE_FILES_FOR_POSITIONS, mpTiffSeparateFilesForPositions_);
       syncExposureMainAndMDA_ = prefs.getBoolean(SYNCEXPOSUREMAINANDMDA, syncExposureMainAndMDA_);
       fastStorage_ = prefs.getBoolean(FAST_STORAGE, fastStorage_);
    }

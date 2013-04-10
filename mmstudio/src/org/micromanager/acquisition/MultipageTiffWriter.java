@@ -112,9 +112,12 @@ public class MultipageTiffWriter {
    private MultipageTiffReader reader_;
    private long blankPixelsOffset_ = -1;
    private String summaryMDString_;
+   private boolean fastStorageMode_;
 
    public MultipageTiffWriter(String directory, String filename, 
-           JSONObject summaryMD, TaggedImageStorageMultipageTiff mpTiffStorage) {
+           JSONObject summaryMD, TaggedImageStorageMultipageTiff mpTiffStorage,
+           boolean fastStorageMode) {
+      fastStorageMode_ = fastStorageMode;
       masterMPTiffStorage_ = mpTiffStorage;
       omeTiff_ = mpTiffStorage.omeTiff_;        
       reader_ = new MultipageTiffReader(summaryMD);

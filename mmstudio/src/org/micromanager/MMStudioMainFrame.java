@@ -2299,8 +2299,8 @@ public class MMStudioMainFrame extends JFrame implements
       return options_.mpTiffMetadataFile_;
    }
 
-   public boolean getSeperateFilesForPositionsMPTiff() {
-      return options_.mpTiffSeperateFilesForPositions_;
+   public boolean getSeparateFilesForPositionsMPTiff() {
+      return options_.mpTiffSeparateFilesForPositions_;
    }
    
    public boolean getHideMDADisplayOption() {

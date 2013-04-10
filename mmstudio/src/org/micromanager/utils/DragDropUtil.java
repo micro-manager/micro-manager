@@ -84,7 +84,7 @@ public class DragDropUtil implements DropTargetListener {
                      dirtmp = f.getParent();
                   }
                   final String dir = dirtmp;
-                  // to not block the UI of the OS, open in a seperate thread
+                  // to not block the UI of the OS, open in a separate thread
                   SwingUtilities.invokeLater(new Runnable() {
 
                      @Override
