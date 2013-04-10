@@ -24,13 +24,36 @@ public class ScrollbarLockIcon extends JComponent   {
    private static final int WIDTH = 17, HEIGHT = 14;
    private VirtualAcquisitionDisplay virtAcq_;
    private String label_;
-
+   private Color foreground_ = Color.black, background_ = Color.white;
+   
    public ScrollbarLockIcon(VirtualAcquisitionDisplay vad, String label) {
       virtAcq_ = vad;
       label_ = label;
       setSize(WIDTH, HEIGHT);
       this.setToolTipText(TooltipTextMaker.addHTMLBreaksForTooltip(
-              "Lock the scrollbar to its current postion while acquisition is running"));
+              "Lock the scrollbar to its current postion"));
+      this.addMouseListener(new MouseListener() {
+         public void mouseClicked(MouseEvent e) {
+         }
+
+         public void mousePressed(MouseEvent e) {
+         }
+
+         public void mouseReleased(MouseEvent e) {
+         }
+
+         public void mouseEntered(MouseEvent e) {
+            foreground_ = Color.blue;
+            repaint();
+         }
+
+         public void mouseExited(MouseEvent e) {
+            foreground_ = Color.black;
+            repaint();
+         }
+         
+      });
+      
    }
 
    /**
@@ -64,7 +87,7 @@ public class ScrollbarLockIcon extends JComponent   {
    }
    
    private void drawUnlocked(Graphics2D g) {
-      g.setColor(Color.black);
+      g.setColor(foreground_);
       //body
       g.fillRect(1, 7, 10, 6);
 
@@ -73,12 +96,12 @@ public class ScrollbarLockIcon extends JComponent   {
       g.fillRect(14, 4, 2, 3);
 
       g.fillArc(8, 1, 8, 8, 0, 180);
-      g.setColor(Color.white);
+      g.setColor(background_);
       g.fillArc(10, 3, 4, 4, 0, 180);
    }
 
    private void drawLocked(Graphics2D g) {
-         g.setColor(Color.black);   
+         g.setColor(foreground_);   
          //body
          g.fillRect(1, 7, 10, 6);
          
@@ -87,7 +110,7 @@ public class ScrollbarLockIcon extends JComponent   {
          g.fillRect(8, 4, 2, 3);
          
          g.fillArc(2, 1, 8, 8, 0, 180);
-         g.setColor(Color.white);
+         g.setColor(background_);
          g.fillArc(4, 3, 4, 4, 0, 180);
    }
 }
