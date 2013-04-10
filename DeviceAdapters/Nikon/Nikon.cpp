@@ -622,8 +622,15 @@ int IntensiLightShutter::Initialize()
 
    // If GetVersion fails we are not talking to the IntensiLight
    int ret = GetVersion();
-   if (ret != DEVICE_OK)                                                     
+   if (ret >= 10300) 
+   {
+      // error coming from the IntesiLight, try once more.
+      ret = GetVersion();
+   }
+   if (ret != DEVICE_OK)
+   {
       return ret;                                                            
+   }
 
    ret = CreateProperty("Version", version_.c_str(), MM::String,true,pAct); 
 
