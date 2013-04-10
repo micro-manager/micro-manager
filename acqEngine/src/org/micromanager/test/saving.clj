@@ -108,3 +108,10 @@
           (.put storage-queue buffer)))
     storage-queue))
 
+(defn monitor-circular-buffer []
+  (while (not (core isSequenceRunning))
+    (Thread/sleep 100))
+  (while (core isSequenceRunning)
+    (println (core getRemainingImageCount))
+    (Thread/sleep 250)))
+
