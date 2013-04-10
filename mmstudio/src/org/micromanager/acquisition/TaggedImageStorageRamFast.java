@@ -21,6 +21,7 @@ import mmcorej.TaggedImage;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.micromanager.api.TaggedImageStorage;
+import org.micromanager.utils.DirectBuffers;
 import org.micromanager.utils.ImageLabelComparator;
 import org.micromanager.utils.MDUtils;
 import org.micromanager.utils.MMException;
@@ -54,7 +55,6 @@ public class TaggedImageStorageRamFast implements TaggedImageStorage {
       }
    }
    
-   final ByteOrder nativeOrder = ByteOrder.nativeOrder();
    public static String menuName_ = null;
    private boolean finished_ = false;
 
@@ -71,98 +71,25 @@ public class TaggedImageStorageRamFast implements TaggedImageStorage {
       lruCache_ = new LRUCache<String, TaggedImage>(10);
    }
 
-   private ByteBuffer bufferFromBytes(byte[] bytes) {
-      return ByteBuffer.allocateDirect(bytes.length).put(bytes);
-   }
-   
-   private ShortBuffer bufferFromShorts(short[] shorts) {
-      return ByteBuffer.allocateDirect(2*shorts.length).order(nativeOrder).asShortBuffer().put(shorts);
-   }
-   
-   private IntBuffer bufferFromInts(int[] ints) {
-      return ByteBuffer.allocateDirect(4*ints.length).order(nativeOrder).asIntBuffer().put(ints);
-   }
-      
-   private byte[] bytesFromBuffer(ByteBuffer buffer) {
-      byte[] bytes = new byte[buffer.capacity()];
-      buffer.rewind();
-      buffer.get(bytes);
-      return bytes;
-   }
-   
-   private short[] shortsFromBuffer(ShortBuffer buffer) {
-      short[] shorts = new short[buffer.capacity()];
-      buffer.rewind();
-      buffer.get(shorts);
-      return shorts;
-   }
-
-   private int[] intsFromBuffer(IntBuffer buffer) {
-      int[] ints = new int[buffer.capacity()];
-      buffer.rewind();
-      buffer.get(ints);
-      return ints;
-   }
-
-   private Object arrayFromBuffer(Buffer buffer) {
-      if (buffer instanceof ByteBuffer) {
-         return bytesFromBuffer((ByteBuffer) buffer);
-      } else if (buffer instanceof ShortBuffer) {
-         return shortsFromBuffer((ShortBuffer) buffer);
-      } else if (buffer instanceof IntBuffer) {
-         return intsFromBuffer((IntBuffer) buffer);
-      }
-      return null;
-   }
-   
-   private Buffer bufferFromArray(Object primitiveArray) {
-      if (primitiveArray instanceof byte[]) {
-         return bufferFromBytes((byte []) primitiveArray);
-      } else if (primitiveArray instanceof short[]) {
-         return bufferFromShorts((short []) primitiveArray);
-      } else if (primitiveArray instanceof int[]) {
-         return bufferFromInts((int []) primitiveArray);
-      }
-      return null;
-   }
-   
-   private ByteBuffer bufferFromString(String string) {
-      try {
-         return bufferFromBytes(string.getBytes("UTF-8"));
-      } catch (UnsupportedEncodingException ex) {
-         ReportingUtils.logError(ex);
-         return null;
-      }
-   }
-
-   private String stringFromBuffer(ByteBuffer byteBuffer) {
-      try {
-         return new String(bytesFromBuffer(byteBuffer), "UTF-8");
-      } catch (UnsupportedEncodingException ex) {
-         ReportingUtils.logError(ex);
-         return null;
-      }
-   }
-   
    private ByteBuffer bufferFromJSON(JSONObject json) {
-      return bufferFromString(json.toString());
+      return DirectBuffers.bufferFromString(json.toString());
    }
    
    private JSONObject JSONFromBuffer(ByteBuffer byteBuffer) throws JSONException {
-      return new JSONObject(stringFromBuffer(byteBuffer));
+      return new JSONObject(DirectBuffers.stringFromBuffer(byteBuffer));
    }
    
    private DirectTaggedImage taggedImageToDirectTaggedImage(TaggedImage taggedImage) throws JSONException, MMScriptException{
       DirectTaggedImage direct = new DirectTaggedImage();
       direct.tagsBuffer = bufferFromJSON(taggedImage.tags);
-      direct.pixelBuffer = bufferFromArray(taggedImage.pix);
+      direct.pixelBuffer = DirectBuffers.bufferFromArray(taggedImage.pix);
       return direct;
    }
    
    private TaggedImage directTaggedImageToTaggedImage(DirectTaggedImage directImage) {
         if (directImage != null) {
             try {
-                return new TaggedImage(arrayFromBuffer(directImage.pixelBuffer),
+                return new TaggedImage(DirectBuffers.arrayFromBuffer(directImage.pixelBuffer),
                                        JSONFromBuffer(directImage.tagsBuffer));
             } catch (JSONException ex) {
                ReportingUtils.logError(ex);
