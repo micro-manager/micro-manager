@@ -258,7 +258,7 @@
     (user-controls/make-view-controllable widgets screen-state-atom)
     (user-controls/handle-resize panel2 screen-state-atom2)
     (user-controls/handle-1x-view screen-state-atom screen-state-atom2)
-    (user-controls/handle-window-closed frame screen-state-atom screen-state-atom2 memory-tile-atom)
+    (user-controls/handle-window-closing frame screen-state-atom screen-state-atom2 memory-tile-atom)
     (.show frame)
     (when @utils/test
       (def w widgets)
