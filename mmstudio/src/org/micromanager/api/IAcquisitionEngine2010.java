@@ -97,11 +97,6 @@ public interface IAcquisitionEngine2010 {
    public long nextWakeTime();
 
    /*
-    * Acquires a single image to an album.
-    */
-   public void acquireSingle();
-
-   /*
     * Attach a Runnable object to the acquisition, such that an extra
     * hardware event can be carried out at a specified point in a
     * multi-dimensional sequence. If -1 (negative one) is used for
