@@ -75,6 +75,7 @@ public final class VirtualAcquisitionDisplay implements AcquisitionDisplay,
       }
    }
    private final static int SLOW_UPDATE_TIME = 1500;
+   private static final int ANIMATION_AND_LOCK_RESTART_DELAY = 800;
    final static Color[] rgb = {Color.red, Color.green, Color.blue};
    final static String[] rgbNames = {"Red", "Blue", "Green"};
    final ImageCache imageCache_;
@@ -849,7 +850,7 @@ public final class VirtualAcquisitionDisplay implements AcquisitionDisplay,
       
       //If no new images have arrived for 500 ms, reset to locked positions
       if (resetToLockedTimer_ == null) {
-         resetToLockedTimer_ = new Timer(800, new ActionListener() {
+         resetToLockedTimer_ = new Timer(ANIMATION_AND_LOCK_RESTART_DELAY, new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
                moveScrollBarsToLockedPositions();
