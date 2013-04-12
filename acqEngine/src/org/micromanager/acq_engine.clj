@@ -452,7 +452,7 @@
                  (count camera-channel-names))
         camera-index-tag (str (. mmc getCameraDevice) "-CameraChannelIndex")
         image-number-offset (if (first-trigger-missing?) -1 0)]
-    (doseq [_ (range total) :when (@state :stop)]
+    (doseq [_ (range total) :while (not (@state :stop))]
       (.put out-queue
             (-> (pop-burst-image timeout-ms)
                 (tag-burst-image burst-events camera-channel-names camera-index-tag
