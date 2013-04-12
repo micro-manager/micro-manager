@@ -825,12 +825,14 @@ public final class VirtualAcquisitionDisplay implements AcquisitionDisplay,
          hyperImage_.setPosition(hyperImage_.getChannel(), slice+1, hyperImage_.getFrame());
          animateSlices(true);
       }
+      animatedSliceIndex_ = -1;
+      animatedFrameIndex_ = -1;
    }
 
    private void moveScrollBarsToLockedPositions() {
-      int c = lockedChannel_ == -1 ? hyperImage_.getChannel() : lockedChannel_ + 1;
-               int s = lockedSlice_ == -1 ? hyperImage_.getSlice() : lockedSlice_ + 1;
-               int f = lockedFrame_ == -1 ? hyperImage_.getFrame() : lockedFrame_ + 1;
+      int c = lockedChannel_ == -1 ? hyperImage_.getChannel() : lockedChannel_;
+               int s = lockedSlice_ == -1 ? hyperImage_.getSlice() : lockedSlice_;
+               int f = lockedFrame_ == -1 ? hyperImage_.getFrame() : lockedFrame_;
                hyperImage_.setPosition(c, zAnimated_ ? hyperImage_.getSlice() : s, 
                        tAnimated_ ? hyperImage_.getFrame() : f);
                if (pSelector_ != null && lockedPosition_ > -1) {
