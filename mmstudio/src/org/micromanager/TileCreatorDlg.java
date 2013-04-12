@@ -239,7 +239,7 @@ public class TileCreatorDlg extends MMDialog {
              overlapUnit_ = OverlapUnitEnum.values()[cb.getSelectedIndex()];
          }
       });
-      overlapUnitsCombo_.setBounds(130, 186, 60, 20);
+      overlapUnitsCombo_.setBounds(125, 186, 80, 20);
       getContentPane().add(overlapUnitsCombo_);
 
       final JLabel pixelSizeLabel = new JLabel();
