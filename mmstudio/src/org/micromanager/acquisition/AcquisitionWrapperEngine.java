@@ -110,8 +110,17 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
       if (saveFiles_) {
          File root = new File(rootName_);
          if (!root.canWrite()) {
-            ReportingUtils.showError("Unable to save data to selected location: check that location exists");
-            return null;
+            int result = JOptionPane.showConfirmDialog(null, "The specified root directory\n" + root.getAbsolutePath() +"\ndoes not exist. Create it?", "Directory not found.", JOptionPane.YES_NO_OPTION);
+            if (result == JOptionPane.YES_OPTION) {
+               root.mkdirs();
+               if (!root.canWrite()) {
+                  ReportingUtils.showError("Unable to save data to selected location: check that location exists.\nAcquisition canceled.");
+                  return null;
+               }
+            } else {
+               ReportingUtils.showMessage("Acquisition canceled.");
+               return null;
+            }
          } else if (!this.enoughDiskSpace()) {
             ReportingUtils.showError("Not enough space on disk to save the requested image set; acquisition canceled.");
             return null;
