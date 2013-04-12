@@ -824,52 +824,6 @@
       "z-step_um" (get-z-step-um (:slices settings))
      })))
 
-;; acquire button
-
-(def current-album-tags (atom nil))
-
-(def albums (atom {}))
-
-(def current-album-name (atom nil))
-
-(defn compatible-to-current-album? [image-tags]
-  (select-values-match?
-    @current-album-tags
-    image-tags
-    ["Width" "Height" "PixelType"]))
-
-(defn initialize-display-ranges [window]
-  (do (.setChannelDisplayRange window 0 0 256)
-      (.setChannelDisplayRange window 1 0 256)
-      (.setChannelDisplayRange window 2 0 256)))
-
-(defn create-basic-event []
-  {:position-index 0, :position nil,
-   :frame-index 0, :slice 0.0, :channel-index 0, :slice-index 0, :frame 0
-   :channel {:name (core getCurrentConfig (core getChannelGroup))},
-   :exposure (core getExposure), :relative-z true,
-   :wait-time-ms 0})
-
-(defn create-basic-state []
-  {:init-width (core getImageWidth)
-   :init-height (core getImageHeight)
-   :summary-metadata (make-summary-metadata nil)
-   :pixel-type (get-pixel-type)
-   :bit-depth (core getImageBitDepth)
-   :binning (core getProperty (core getCameraDevice) "Binning")})
-
-(defn acquire-tagged-images []
-  (core snapImage)
-  (let [events (make-multicamera-events (create-basic-event))]
-    (for [event events]
-      (annotate-image (collect-snap-image event nil) event
-                      (create-basic-state) nil))))
-
-(defn add-to-album []
-  (doseq [img (acquire-tagged-images)]
-    (def x img)
-    (.addToAlbum gui (make-TaggedImage img))))
-
 (defn run [this settings cleanup?]
   (def last-acq this)
     (reset! (.state this) {:stop false :pause false :finished false})
@@ -888,7 +842,7 @@
         (.start acq-thread)
         out-queue)))
 
-;; java interop -- implements org.micromanager.api.Pipeline
+;; java interop -- implements org.micromanager.api.IAcquisitionEngine2010
 
 (defn -init [script-gui]
   [[] (do (load-mm script-gui)
@@ -905,7 +859,7 @@
   (:summary-metadata @(.state this)))
 
 (defn -acquireSingle [this]
-  (add-to-album))
+  (ReportingUtils/logError "Call to deprecated acquireSingle"))
 
 (defn -pause [this]
   (log "pause requested!")
@@ -963,12 +917,6 @@
     (.setCore mmc (.getAutofocusManager gui))
     (.setParentGUI gui)
     (.setPositionList (.getPositionList gui))))))
-
-;(defn test-dialog [eng]
-;  (.show (AcqControlDlg. eng (Preferences/userNodeForPackage (.getClass gui)) gui)))
-
-;(defn run-test []
-;  (test-dialog (create-acq-eng)))
 
 (defn stop []
   (when-let [acq-thread (:acq-thread (.state last-acq))]
