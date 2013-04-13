@@ -40,7 +40,11 @@ public class UIMonitor {
                Object source = mouseEvent.getSource();
                if (source instanceof AbstractButton) {
                   AbstractButton button = (AbstractButton) source;
-                  message += "\n\"" + button.getText() + "\" ";
+                  String text = button.getText();
+                  if (text.isEmpty()) {
+                     text = button.getName();
+                  }
+                  message += "\n\"" + text + "\" ";
                   boolean selectable = (source instanceof JToggleButton)
                              || (source instanceof JMenuItem);
                   if (selectable) { 

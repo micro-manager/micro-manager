@@ -197,8 +197,8 @@ public class MMStudioMainFrame extends JFrame implements
    private boolean runsAsPlugin_;
    private JCheckBoxMenuItem centerAndDragMenuItem_;
    private JButton buttonSnap_;
-   private JButton buttonAutofocus_;
-   private JButton buttonAutofocusTools_;
+   private JButton autofocusNowButton_;
+   private JButton autofocusConfigureButton_;
    private JToggleButton toggleButtonShutter_;
    private GUIColors guiColors_;
    private GraphFrame profileWin_;
@@ -1867,6 +1867,7 @@ public class MMStudioMainFrame extends JFrame implements
       });
 
       setRoiButton_ = new JButton();
+      setRoiButton_.setName("setRoiButton");
       setRoiButton_.setIcon(SwingResourceManager.getIcon(
             MMStudioMainFrame.class,
             "/org/micromanager/icons/shape_handles.png"));
@@ -1890,6 +1891,7 @@ public class MMStudioMainFrame extends JFrame implements
             SpringLayout.NORTH, topPanel);
 
       clearRoiButton_ = new JButton();
+      clearRoiButton_.setName("clearRoiButton");
       clearRoiButton_.setIcon(SwingResourceManager.getIcon(
             MMStudioMainFrame.class,
             "/org/micromanager/icons/arrow_out.png"));
@@ -1951,6 +1953,7 @@ public class MMStudioMainFrame extends JFrame implements
       });
       zoomInButton.setIcon(SwingResourceManager.getIcon(MMStudioMainFrame.class,
             "/org/micromanager/icons/zoom_in.png"));
+      zoomInButton.setName("zoomInButton");
       zoomInButton.setToolTipText("Zoom in");
       zoomInButton.setFont(new Font("Arial", Font.PLAIN, 10));
       topPanel.add(zoomInButton);
@@ -1964,6 +1967,7 @@ public class MMStudioMainFrame extends JFrame implements
             SpringLayout.WEST, topPanel);
 
       final JButton zoomOutButton = new JButton();
+      zoomOutButton.setName("zoomOutButton");
       zoomOutButton.addActionListener(new ActionListener() {
 
             @Override
@@ -2001,13 +2005,14 @@ public class MMStudioMainFrame extends JFrame implements
       topLayout.putConstraint(SpringLayout.WEST, profileLabel_, 154,
             SpringLayout.WEST, topPanel);
 
-      final JButton buttonProf = new JButton();
-      buttonProf.setIcon(SwingResourceManager.getIcon(
+      final JButton lineProfileButton = new JButton();
+      lineProfileButton.setName("lineProfileButton");
+      lineProfileButton.setIcon(SwingResourceManager.getIcon(
             MMStudioMainFrame.class,
             "/org/micromanager/icons/chart_curve.png"));
-      buttonProf.setFont(new Font("Arial", Font.PLAIN, 10));
-      buttonProf.setToolTipText("Open line profile window (requires line selection)");
-      buttonProf.addActionListener(new ActionListener() {
+      lineProfileButton.setFont(new Font("Arial", Font.PLAIN, 10));
+      lineProfileButton.setToolTipText("Open line profile window (requires line selection)");
+      lineProfileButton.addActionListener(new ActionListener() {
 
          @Override
          public void actionPerformed(ActionEvent e) {
@@ -2015,14 +2020,14 @@ public class MMStudioMainFrame extends JFrame implements
          }
       });
       // buttonProf.setText("Profile");
-      topPanel.add(buttonProf);
-      topLayout.putConstraint(SpringLayout.SOUTH, buttonProf, 174,
+      topPanel.add(lineProfileButton);
+      topLayout.putConstraint(SpringLayout.SOUTH, lineProfileButton, 174,
             SpringLayout.NORTH, topPanel);
-      topLayout.putConstraint(SpringLayout.NORTH, buttonProf, 154,
+      topLayout.putConstraint(SpringLayout.NORTH, lineProfileButton, 154,
             SpringLayout.NORTH, topPanel);
-      topLayout.putConstraint(SpringLayout.EAST, buttonProf, 183,
+      topLayout.putConstraint(SpringLayout.EAST, lineProfileButton, 183,
             SpringLayout.WEST, topPanel);
-      topLayout.putConstraint(SpringLayout.WEST, buttonProf, 153,
+      topLayout.putConstraint(SpringLayout.WEST, lineProfileButton, 153,
             SpringLayout.WEST, topPanel);
 
       // Autofocus
@@ -2041,13 +2046,14 @@ public class MMStudioMainFrame extends JFrame implements
       topLayout.putConstraint(SpringLayout.WEST, autofocusLabel_, 194,
             SpringLayout.WEST, topPanel);
 
-      buttonAutofocus_ = new JButton();
-      buttonAutofocus_.setIcon(SwingResourceManager.getIcon(
+      autofocusNowButton_ = new JButton();
+      autofocusNowButton_.setName("autofocusNowButton");
+      autofocusNowButton_.setIcon(SwingResourceManager.getIcon(
             MMStudioMainFrame.class,
             "/org/micromanager/icons/find.png"));
-      buttonAutofocus_.setFont(new Font("Arial", Font.PLAIN, 10));
-      buttonAutofocus_.setToolTipText("Autofocus now");
-      buttonAutofocus_.addActionListener(new ActionListener() {
+      autofocusNowButton_.setFont(new Font("Arial", Font.PLAIN, 10));
+      autofocusNowButton_.setToolTipText("Autofocus now");
+      autofocusNowButton_.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent e) {
             if (afMgr_.getDevice() != null) {
@@ -2071,37 +2077,38 @@ public class MMStudioMainFrame extends JFrame implements
             }
          }
       });
-      topPanel.add(buttonAutofocus_);
-      topLayout.putConstraint(SpringLayout.SOUTH, buttonAutofocus_, 174,
+      topPanel.add(autofocusNowButton_);
+      topLayout.putConstraint(SpringLayout.SOUTH, autofocusNowButton_, 174,
             SpringLayout.NORTH, topPanel);
-      topLayout.putConstraint(SpringLayout.NORTH, buttonAutofocus_, 154,
+      topLayout.putConstraint(SpringLayout.NORTH, autofocusNowButton_, 154,
             SpringLayout.NORTH, topPanel);
-      topLayout.putConstraint(SpringLayout.EAST, buttonAutofocus_, 223,
+      topLayout.putConstraint(SpringLayout.EAST, autofocusNowButton_, 223,
             SpringLayout.WEST, topPanel);
-      topLayout.putConstraint(SpringLayout.WEST, buttonAutofocus_, 193,
+      topLayout.putConstraint(SpringLayout.WEST, autofocusNowButton_, 193,
             SpringLayout.WEST, topPanel);
 
-      buttonAutofocusTools_ = new JButton();
-      buttonAutofocusTools_.setIcon(SwingResourceManager.getIcon(
+      autofocusConfigureButton_ = new JButton();
+      autofocusConfigureButton_.setName("autofocusConfigureButton_");
+      autofocusConfigureButton_.setIcon(SwingResourceManager.getIcon(
             MMStudioMainFrame.class,
             "/org/micromanager/icons/wrench_orange.png"));
-      buttonAutofocusTools_.setFont(new Font("Arial", Font.PLAIN, 10));
-      buttonAutofocusTools_.setToolTipText("Set autofocus options");
-      buttonAutofocusTools_.addActionListener(new ActionListener() {
+      autofocusConfigureButton_.setFont(new Font("Arial", Font.PLAIN, 10));
+      autofocusConfigureButton_.setToolTipText("Set autofocus options");
+      autofocusConfigureButton_.addActionListener(new ActionListener() {
 
          @Override
          public void actionPerformed(ActionEvent e) {
             showAutofocusDialog();
          }
       });
-      topPanel.add(buttonAutofocusTools_);
-      topLayout.putConstraint(SpringLayout.SOUTH, buttonAutofocusTools_, 174,
+      topPanel.add(autofocusConfigureButton_);
+      topLayout.putConstraint(SpringLayout.SOUTH, autofocusConfigureButton_, 174,
             SpringLayout.NORTH, topPanel);
-      topLayout.putConstraint(SpringLayout.NORTH, buttonAutofocusTools_, 154,
+      topLayout.putConstraint(SpringLayout.NORTH, autofocusConfigureButton_, 154,
             SpringLayout.NORTH, topPanel);
-      topLayout.putConstraint(SpringLayout.EAST, buttonAutofocusTools_, 256,
+      topLayout.putConstraint(SpringLayout.EAST, autofocusConfigureButton_, 256,
             SpringLayout.WEST, topPanel);
-      topLayout.putConstraint(SpringLayout.WEST, buttonAutofocusTools_, 226,
+      topLayout.putConstraint(SpringLayout.WEST, autofocusConfigureButton_, 226,
             SpringLayout.WEST, topPanel);
       
   
@@ -3293,8 +3300,8 @@ public class MMStudioMainFrame extends JFrame implements
          }
 
          // Autofocus
-         buttonAutofocusTools_.setEnabled(afMgr_.getDevice() != null);
-         buttonAutofocus_.setEnabled(afMgr_.getDevice() != null);
+         autofocusConfigureButton_.setEnabled(afMgr_.getDevice() != null);
+         autofocusNowButton_.setEnabled(afMgr_.getDevice() != null);
 
          // Rebuild stage list in XY PositinList
          if (posListDlg_ != null) {
