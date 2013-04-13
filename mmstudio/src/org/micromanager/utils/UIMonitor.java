@@ -50,7 +50,7 @@ public class UIMonitor {
                   }
                }
                if (!message.isEmpty()) {
-                  message += "in " + ((Frame) SwingUtilities.getAncestorOfClass(Frame.class, (JComponent) source)).getClass().getSimpleName() + ".";
+                  message += "in " + ((Window) SwingUtilities.getAncestorOfClass(Window.class, (JComponent) source)).getClass().getSimpleName() + ".";
                   ReportingUtils.logMessage(message);
                }            
             }
