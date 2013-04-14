@@ -382,6 +382,19 @@
     {:pix (.pix tagged-image)
      :tags (json-to-data (.tags tagged-image))}))
 
+(defn pop-burst-images
+  [n timeout-ms]
+  (let [queue (proxy [LinkedBlockingQueue] []
+                (take [] (let [item (proxy-super take)]
+                           (if (instance? Throwable item)
+                             (throw item)
+                             item))))]
+    (future
+      (dotimes [i n]
+        (try (.put queue (pop-burst-image timeout-ms))
+             (catch Throwable t (.put queue t)))))
+      queue))
+
 (defn make-multicamera-channel [raw-channel-index camera-channel num-camera-channels]
   (+ camera-channel (* num-camera-channels (or raw-channel-index 0))))
 
@@ -451,10 +464,11 @@
   (let [total (* (count burst-events)
                  (count camera-channel-names))
         camera-index-tag (str (. mmc getCameraDevice) "-CameraChannelIndex")
-        image-number-offset (if (first-trigger-missing?) -1 0)]
+        image-number-offset (if (first-trigger-missing?) -1 0)
+        image-queue (pop-burst-images total timeout-ms)]
     (doseq [_ (range total) :while (not (@state :stop))]
       (.put out-queue
-            (-> (pop-burst-image timeout-ms)
+            (-> (.take image-queue)
                 (tag-burst-image burst-events camera-channel-names camera-index-tag
                                  image-number-offset)
                 make-TaggedImage
