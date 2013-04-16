@@ -1118,9 +1118,11 @@ public final class VirtualAcquisitionDisplay implements AcquisitionDisplay,
    }
 
    private void forceImagePaint() {
-      ImageCanvas canvas = hyperImage_.getCanvas();
-      if (canvas != null) {
-         canvas.repaint();
+      if (hyperImage_ != null) {
+         ImageCanvas canvas = hyperImage_.getCanvas();
+         if (canvas != null) {
+            canvas.repaint();
+         }
       }
    }
 
