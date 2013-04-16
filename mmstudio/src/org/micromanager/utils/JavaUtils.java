@@ -174,6 +174,10 @@ public class JavaUtils {
       return invokeRestrictedMethod(obj, theClass, methodName, params, paramTypes);
    }
 
+   /*
+    * Invoked a method of a private or protected field.
+    * Pass a null first argument for static methods.
+    */
    public static Object invokeRestrictedMethod(Object obj, Class theClass, String methodName, Object[] params, Class[] paramTypes) throws NoSuchMethodException, IllegalAccessException, IllegalArgumentException, InvocationTargetException {
       Method method = theClass.getDeclaredMethod(methodName, paramTypes);
       Object result;
@@ -189,6 +193,10 @@ public class JavaUtils {
       return result;
    }
 
+   /*
+    * Returns a value of a private or protected field. Method of last resort!
+    * Pass a null first argument for static fields.
+    */
    public static Object getRestrictedFieldValue(Object obj, Class theClass, String fieldName) throws NoSuchFieldException {
       Field field = theClass.getDeclaredField(fieldName);
       field.setAccessible(true);
@@ -200,6 +208,11 @@ public class JavaUtils {
       }
    }
 
+   /*
+    * Allows private or protected field values to be changed. Method of
+    * last resort!
+    * Pass a null first argument for static fields.
+    */
    public static void setRestrictedFieldValue(Object obj, Class theClass, String fieldName, Object value) throws NoSuchFieldException {
       Field field = theClass.getDeclaredField(fieldName);
       field.setAccessible(true);
