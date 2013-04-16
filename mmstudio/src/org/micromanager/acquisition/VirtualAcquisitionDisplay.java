@@ -1118,7 +1118,10 @@ public final class VirtualAcquisitionDisplay implements AcquisitionDisplay,
    }
 
    private void forceImagePaint() {
-      hyperImage_.getWindow().getCanvas().repaint();
+      ImageCanvas canvas = hyperImage_.getCanvas();
+      if (canvas != null) {
+         canvas.repaint();
+      }
    }
 
    public int rgbToGrayChannel(int channelIndex) {
