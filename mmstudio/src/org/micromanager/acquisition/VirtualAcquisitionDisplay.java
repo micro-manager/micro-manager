@@ -335,7 +335,7 @@ public final class VirtualAcquisitionDisplay implements AcquisitionDisplay,
       
       private void superDraw() {
         if (super.win != null ) {
-            super.getCanvas().paint(super.getCanvas().getGraphics());
+            super.getCanvas().repaint();
          }
       }
 
@@ -423,7 +423,7 @@ public final class VirtualAcquisitionDisplay implements AcquisitionDisplay,
 
       private void superDraw() {
          if (super.win != null ) {
-            super.getCanvas().paint(super.getCanvas().getGraphics());
+            super.getCanvas().repaint();
          } 
       }
       
@@ -614,31 +614,31 @@ public final class VirtualAcquisitionDisplay implements AcquisitionDisplay,
          @Override
          public void run() {
             if (zAnimationIcon_ != null) {
-               zAnimationIcon_.paint(zAnimationIcon_.getGraphics());
+               zAnimationIcon_.repaint();
             }
             if (tAnimationIcon_ != null) {
-               tAnimationIcon_.paint(tAnimationIcon_.getGraphics());
+               tAnimationIcon_.repaint();
             }
             if (tLockIcon_ != null) {
-               tLockIcon_.paint(tLockIcon_.getGraphics());
+               tLockIcon_.repaint();
             }
             if (cIcon_ != null) {
-               cIcon_.paint(cIcon_.getGraphics());
+               cIcon_.repaint();
             }
             if (cLockIcon_ != null) {
-               cLockIcon_.paint(cLockIcon_.getGraphics());
+               cLockIcon_.repaint();
             }
             if (zLockIcon_ != null) {
-               zLockIcon_.paint(zLockIcon_.getGraphics());
+               zLockIcon_.repaint();
             }
             if (pLockIcon_ != null) {
-               pLockIcon_.paint(pLockIcon_.getGraphics());
+               pLockIcon_.repaint();
             }
             if (controls_ != null) {
-               controls_.paint(controls_.getGraphics());
+               controls_.repaint();
             }
             if (pIcon_ != null && pIcon_.isValid()) {
-               pIcon_.paint(pIcon_.getGraphics());
+               pIcon_.repaint();
             }
          }
       };
@@ -1118,7 +1118,7 @@ public final class VirtualAcquisitionDisplay implements AcquisitionDisplay,
    }
 
    private void forceImagePaint() {
-      hyperImage_.getWindow().getCanvas().paint(hyperImage_.getWindow().getCanvas().getGraphics());
+      hyperImage_.getWindow().getCanvas().repaint();
    }
 
    public int rgbToGrayChannel(int channelIndex) {
