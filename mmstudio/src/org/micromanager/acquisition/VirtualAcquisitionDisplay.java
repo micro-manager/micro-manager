@@ -4,9 +4,10 @@
 //SUBSYSTEM:     mmstudio
 //-----------------------------------------------------------------------------
 //
-// AUTHOR:       Henry Pinkard, henry.pinkard@gmail.com, & Arthur Edelstein, 2010
+// AUTHOR:       Henry Pinkard, henry.pinkard@gmail.com
+//               Arthur Edelstein, arthuredelstein@gmail.com
 //
-// COPYRIGHT:    University of California, San Francisco, 2012
+// COPYRIGHT:    University of California, San Francisco, 2013
 //
 // LICENSE:      This file is distributed under the BSD license.
 //               License text is included with the source distribution.
@@ -46,6 +47,8 @@ import java.util.TimerTask;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import java.util.prefs.Preferences;
 import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
@@ -1389,119 +1392,133 @@ public final class VirtualAcquisitionDisplay implements AcquisitionDisplay,
    public void showImage(TaggedImage taggedImg, boolean waitForDisplay) throws InterruptedException, InvocationTargetException {
       showImage(taggedImg.tags, waitForDisplay);
    }
+   
+   public GUIUpdater showImageUpdater = new GUIUpdater();
 
    public void showImage(final JSONObject tags, boolean waitForDisplay) throws InterruptedException, InvocationTargetException {
-      updateWindowTitleAndStatus();
+      Runnable run = new Runnable() {
+         public void run() {
 
-      if (tags == null) {
-         return;
-      }
+            updateWindowTitleAndStatus();
 
-      if (hyperImage_ == null) {
-         GUIUtils.invokeAndWait(new Runnable() {
-            @Override
-            public void run() {
+            if (tags == null) {
+               return;
+            }
+
+            if (hyperImage_ == null) {
                try {
-                  startup(tags);
-               } catch (Exception e) {
-                  ReportingUtils.logError(e);
+                  GUIUtils.invokeAndWait(new Runnable() {
+                     @Override
+                     public void run() {
+                        try {
+                           startup(tags);
+                        } catch (Exception e) {
+                           ReportingUtils.logError(e);
+                        }
+                     }
+                  });
+               } catch (InterruptedException ex) {
+                  ReportingUtils.logError(ex);
+               } catch (InvocationTargetException ex) {
+                  ReportingUtils.logError(ex);
                }
             }
-         });
-      }
 
-      int channel = 0, frame = 0, slice = 0, position = 0, superChannel = 0;
-      try {
-         frame = MDUtils.getFrameIndex(tags);
-         slice = MDUtils.getSliceIndex(tags);
-         channel = MDUtils.getChannelIndex(tags);
-         position = MDUtils.getPositionIndex(tags);
-         superChannel = this.rgbToGrayChannel(MDUtils.getChannelIndex(tags));
-      } catch (Exception ex) {
-         ReportingUtils.logError(ex);
-      }
-            
-      //This block allows animation to be reset to where it was before images were added
-      if (isTAnimated()) {
-         animatedFrameIndex_ = hyperImage_.getFrame();
-         animateFrames(false);
-      }
-      if (isZAnimated()) {
-         animatedSliceIndex_ = hyperImage_.getSlice();
-         animateSlices(false);
-      }
-     
-       //make sure pixels get properly set
-       if (hyperImage_ != null && frame == 0) {
-           IMMImagePlus img = (IMMImagePlus) hyperImage_;
-           if (img.getNChannelsUnverified() == 1) {
-               if (img.getNSlicesUnverified() == 1) {
-                   hyperImage_.getProcessor().setPixels(virtualStack_.getPixels(1));
+            int channel = 0, frame = 0, slice = 0, position = 0, superChannel = 0;
+            try {
+               frame = MDUtils.getFrameIndex(tags);
+               slice = MDUtils.getSliceIndex(tags);
+               channel = MDUtils.getChannelIndex(tags);
+               position = MDUtils.getPositionIndex(tags);
+               superChannel = VirtualAcquisitionDisplay.this.rgbToGrayChannel(MDUtils.getChannelIndex(tags));
+            } catch (Exception ex) {
+               ReportingUtils.logError(ex);
+            }
+
+            //This block allows animation to be reset to where it was before images were added
+            if (isTAnimated()) {
+               animatedFrameIndex_ = hyperImage_.getFrame();
+               animateFrames(false);
+            }
+            if (isZAnimated()) {
+               animatedSliceIndex_ = hyperImage_.getSlice();
+               animateSlices(false);
+            }
+
+            //make sure pixels get properly set
+            if (hyperImage_ != null && frame == 0) {
+               IMMImagePlus img = (IMMImagePlus) hyperImage_;
+               if (img.getNChannelsUnverified() == 1) {
+                  if (img.getNSlicesUnverified() == 1) {
+                     hyperImage_.getProcessor().setPixels(virtualStack_.getPixels(1));
+                  }
+               } else if (hyperImage_ instanceof MMCompositeImage) {
+                  //reset rebuilds each of the channel ImageProcessors with the correct pixels
+                  //from AcquisitionVirtualStack
+                  MMCompositeImage ci = ((MMCompositeImage) hyperImage_);
+                  ci.reset();
+                  //This line is neccessary for image processor to have correct pixels in grayscale mode
+                  ci.getProcessor().setPixels(virtualStack_.getPixels(ci.getCurrentSlice()));
                }
-           } else if (hyperImage_ instanceof MMCompositeImage) {
-               //reset rebuilds each of the channel ImageProcessors with the correct pixels
-               //from AcquisitionVirtualStack
+            } else if (hyperImage_ instanceof MMCompositeImage) {
                MMCompositeImage ci = ((MMCompositeImage) hyperImage_);
                ci.reset();
-               //This line is neccessary for image processor to have correct pixels in grayscale mode
-               ci.getProcessor().setPixels(virtualStack_.getPixels(ci.getCurrentSlice()));
-           }
-       } else if (hyperImage_ instanceof MMCompositeImage) {
-           MMCompositeImage ci = ((MMCompositeImage) hyperImage_);
-           ci.reset();
-       }
-        
-             
-
-      if (cSelector_ != null) {
-         if (cSelector_.getMaximum() <= (1 + superChannel)) {
-            this.setNumChannels(1 + superChannel);
-            ((CompositeImage) hyperImage_).reset();
-            //JavaUtils.invokeRestrictedMethod(hyperImage_, CompositeImage.class,
-            //       "setupLuts", 1 + superChannel, Integer.TYPE);
-         }
-      }
-
-      initializeContrast(channel, slice);
-
-      if (!simple_) {
-         if (tSelector_ != null) {
-            if (tSelector_.getMaximum() <= (1 + frame)) {
-               this.setNumFrames(1 + frame);
             }
-         }
-         if (position + 1 > getNumPositions()) {
-            setNumPositions(position + 1);
-         }
-         setPosition(position);
-         hyperImage_.setPosition(1 + superChannel, 1 + slice, 1 + frame);
-      }
 
-      boolean useGUIUpdater = frame != 0 || simple_;
-      if (simple_) {
-         simpleWinImagesReceived_++;
-         //Make sure update and draw gets called without GUI updater to initilze new snap win correctly
-         int numChannels;
-         try {
-            numChannels = MDUtils.getNumChannels(getSummaryMetadata());
-         } catch (Exception e) {
-            numChannels = 7;
-         }
-         if ( simpleWinImagesReceived_ <= numChannels) {
-            useGUIUpdater = false;
-         }
-      }
-      
-      updateAndDraw(useGUIUpdater);     
-      resumeLocksAndAnimationAfterImageArrival();
-      
-      if (cSelector_ != null) {
-         if (histograms_.getNumberOfChannels() < (1 + superChannel)) {
+
+
+            if (cSelector_ != null) {
+               if (cSelector_.getMaximum() <= (1 + superChannel)) {
+                  VirtualAcquisitionDisplay.this.setNumChannels(1 + superChannel);
+                  ((CompositeImage) hyperImage_).reset();
+                  //JavaUtils.invokeRestrictedMethod(hyperImage_, CompositeImage.class,
+                  //       "setupLuts", 1 + superChannel, Integer.TYPE);
+               }
+            }
+
+            initializeContrast(channel, slice);
+
+            if (!simple_) {
+               if (tSelector_ != null) {
+                  if (tSelector_.getMaximum() <= (1 + frame)) {
+                     VirtualAcquisitionDisplay.this.setNumFrames(1 + frame);
+                  }
+               }
+               if (position + 1 > getNumPositions()) {
+                  setNumPositions(position + 1);
+               }
+               setPosition(position);
+               hyperImage_.setPosition(1 + superChannel, 1 + slice, 1 + frame);
+            }
+
+            boolean useGUIUpdater = frame != 0 || simple_;
+            if (simple_) {
+               simpleWinImagesReceived_++;
+               //Make sure update and draw gets called without GUI updater to initilze new snap win correctly
+               int numChannels;
+               try {
+                  numChannels = MDUtils.getNumChannels(getSummaryMetadata());
+               } catch (Exception e) {
+                  numChannels = 7;
+               }
+               if (simpleWinImagesReceived_ <= numChannels) {
+                  useGUIUpdater = false;
+               }
+            }
+
+            updateAndDraw(useGUIUpdater);
+            resumeLocksAndAnimationAfterImageArrival();
+
+            if (cSelector_ != null) {
+               if (histograms_.getNumberOfChannels() < (1 + superChannel)) {
                   if (histograms_ != null) {
-               histograms_.setupChannelControls(imageCache_);
+                     histograms_.setupChannelControls(imageCache_);
+                  }
+               }
             }
-      }
-      }
+         }
+      };
+      showImageUpdater.post(run);
    }
 
    /*
