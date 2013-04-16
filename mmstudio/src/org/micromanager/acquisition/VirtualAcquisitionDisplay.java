@@ -278,18 +278,15 @@ public final class VirtualAcquisitionDisplay implements AcquisitionDisplay,
       private void superUpdateImage() {
          //Need to set this field to null, or else an infintie loop can be entered when 
          //The imageJ contrast adjuster is open
-         ContrastAdjuster ca = (ContrastAdjuster) WindowManager.getFrame("B&C");
-         if (ca != null) {
-            try {
-               JavaUtils.setRestrictedFieldValue(ca, ContrastAdjuster.class, "instance", null);
-            } catch (NoSuchFieldException ex) {
-               ReportingUtils.logError("ImageJ ContrastAdjuster doesn't have field named instance");
-            }
+         try {
+            JavaUtils.setRestrictedFieldValue(null, ContrastAdjuster.class, "instance", null);
+         } catch (NoSuchFieldException ex) {
+            ReportingUtils.logError("ImageJ ContrastAdjuster doesn't have field named instance");
          }
-         
+
          super.updateImage();
       }
-     
+
 
 
       private Runnable updateAndDrawRunnable() {
