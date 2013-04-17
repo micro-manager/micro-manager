@@ -3,7 +3,7 @@
  */
 package edu.valelab.GaussianFit;
 
-import edu.valelab.GaussianFit.DataCollectionForm.MyRowData;
+import edu.valelab.GaussianFit.utils.RowData;
 import ij.ImageStack;
 import ij.process.ColorProcessor;
 import ij.process.FloatProcessor;
@@ -35,7 +35,7 @@ public class ImageRenderer {
     * @param magnification  - factor x original size
     * @param rect - roi in the magnified image that should be rendered
     */
-   public static ImageProcessor renderData(final MyRowData rowData,
+   public static ImageProcessor renderData(final RowData rowData,
            final int method, final double magnification, Rectangle rect, final SpotDataFilter sf) {
 
       ImageProcessor ip = null;
@@ -277,7 +277,7 @@ public class ImageRenderer {
     * @param magnification  - factor x original size
     * @param rect - roi in the magnified image that should be rendered
     */
-   public static ImageStack renderData3D(final MyRowData rowData,
+   public static ImageStack renderData3D(final RowData rowData,
            final int method, final double magnification, Rectangle rect, final SpotDataFilter sf) {
    
       

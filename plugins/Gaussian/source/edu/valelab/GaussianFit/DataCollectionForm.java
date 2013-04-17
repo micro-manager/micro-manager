@@ -22,6 +22,8 @@ import edu.ucsf.tsf.TaggedSpotsProtos.IntensityUnits;
 import edu.ucsf.tsf.TaggedSpotsProtos.LocationUnits;
 import edu.ucsf.tsf.TaggedSpotsProtos.Spot;
 import edu.ucsf.tsf.TaggedSpotsProtos.SpotList;
+import edu.valelab.GaussianFit.utils.ListUtils;
+import edu.valelab.GaussianFit.utils.RowData;
 import ij.ImagePlus;
 import ij.ImageStack;
 import ij.WindowManager;
@@ -120,7 +122,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
    private static CoordinateMapper c2t_;
    private static String loadTSFDir_ = "";
 
-   private static int rowDataID_ = 1;
+   // private static int rowDataID_ = 1;
    
    private int jitterMethod_ = 1;
    private int jitterMaxSpots_ = 40000; 
@@ -163,129 +165,11 @@ public class DataCollectionForm extends javax.swing.JFrame {
    
    // public since it is used in MathForm.  
    // TODO: make this private
-   public ArrayList<MyRowData> rowData_;
+   public ArrayList<RowData> rowData_;
    
    public enum Coordinates {NM, PIXELS};
    public enum PlotMode {X, Y, INT};
    
-   /**
-    * Data structure for spotlists
-    */
-   public class MyRowData {
-     
-      
-      public final List<GaussianSpotData> spotList_;
-      public Map<Integer, List<GaussianSpotData>> frameIndexSpotList_;
-      public final ArrayList<Double> timePoints_;
-      public String name_;
-      public final String title_;
-      public final String colCorrRef_;
-      public final int width_;
-      public final int height_;
-      public final float pixelSizeNm_;
-      public final float zStackStepSizeNm_;
-      public final int shape_;
-      public final int halfSize_;
-      public final int nrChannels_;
-      public final int nrFrames_;
-      public final int nrSlices_;
-      public final int nrPositions_;
-      public final int maxNrSpots_;
-      public final boolean isTrack_;
-      public final double stdX_;
-      public final double stdY_;
-      public final int ID_;
-      public final Coordinates coordinate_;
-      public final boolean hasZ_;
-      public final double minZ_;
-      public final double maxZ_;
-      public final double totalNrPhotons_;
-      
-
-
-      public MyRowData(String name,
-              String title,
-              String colCorrRef,
-              int width,
-              int height,
-              float pixelSizeUm, 
-              float zStackStepSizeNm,
-              int shape,
-              int halfSize, 
-              int nrChannels,
-              int nrFrames,
-              int nrSlices,
-              int nrPositions,
-              int maxNrSpots, 
-              List<GaussianSpotData> spotList,
-              ArrayList<Double> timePoints,
-              boolean isTrack, 
-              Coordinates coordinate, 
-              boolean hasZ, 
-              double minZ, 
-              double maxZ) {
-         name_ = name;
-         title_ = title;
-         colCorrRef_ = colCorrRef;
-         width_ = width;
-         height_ = height;
-         pixelSizeNm_ = pixelSizeUm;
-         zStackStepSizeNm_ = zStackStepSizeNm;
-         spotList_ = spotList;
-         shape_ = shape;
-         halfSize_ = halfSize;
-         nrChannels_ = nrChannels;
-         nrFrames_ = nrFrames;
-         nrSlices_ = nrSlices;
-         nrPositions_ = nrPositions;
-         maxNrSpots_ = maxNrSpots;
-         timePoints_ = timePoints;
-         isTrack_ = isTrack;
-         double stdX = 0.0;
-         double stdY = 0.0;
-         double nrPhotons = 0.0;
-         if (isTrack_) {
-            ArrayList<Point2D.Double> xyList = spotListToPointList(spotList_);
-            Point2D.Double avgPoint = avgXYList(xyList);
-            Point2D.Double stdPoint = stdDevXYList(xyList, avgPoint);
-            stdX = stdPoint.x;
-            stdY = stdPoint.y;
-            for (GaussianSpotData spot : spotList_) {
-               nrPhotons += spot.getIntensity();
-            }
-         }
-         stdX_ = stdX;
-         stdY_ = stdY;
-         totalNrPhotons_ = nrPhotons;
-         coordinate_ = coordinate;
-         hasZ_ = hasZ;
-         minZ_ = minZ;
-         maxZ_ = maxZ;
-         ID_ = rowDataID_;
-         rowDataID_++;
-      }
-      
-      /**
-       * Populates the list frameIndexSpotList which gives access to spots by frame
-       */
-      public void index() {
-         boolean useFrames = nrFrames_ > nrSlices_;
-         int nr = nrSlices_;
-         if (useFrames)
-            nr = nrFrames_;
-         frameIndexSpotList_ = new HashMap<Integer, List<GaussianSpotData>>(nr);
-         for (GaussianSpotData spot : spotList_) {
-            int index = spot.getSlice();
-            if (useFrames)
-               index = spot.getFrame();
-            if (frameIndexSpotList_.get(index) == null)
-               frameIndexSpotList_.put(index, new ArrayList<GaussianSpotData>());
-            frameIndexSpotList_.get(index).add(spot);              
-         }    
-      }
-      
-   }
-
 
    /**
     * Implement this class as a singleton
@@ -303,7 +187,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
     */
    private DataCollectionForm() {
 
-      rowData_ = new ArrayList<MyRowData>();
+      rowData_ = new ArrayList<RowData>();
 
       myTableModel_ = new AbstractTableModel() {
              @Override
@@ -476,11 +360,15 @@ public class DataCollectionForm extends javax.swing.JFrame {
            boolean hasZ, 
            double minZ, 
            double maxZ) {
-      MyRowData newRow = new MyRowData(name, title, colCorrRef, width, height, 
+      RowData newRow = new RowData(name, title, colCorrRef, width, height, 
               pixelSizeUm, zStackStepSizeNm, 
               shape, halfSize, nrChannels, nrFrames, nrSlices, nrPositions, 
               maxNrSpots, spotList, timePoints, isTrack, coordinate, 
               hasZ, minZ, maxZ);
+      addSpotData (newRow);
+   }
+   
+   public void addSpotData(RowData newRow) {
       rowData_.add(newRow);
       myTableModel_.fireTableRowsInserted(rowData_.size()-1, rowData_.size());
       SwingUtilities.invokeLater(new Runnable() {
@@ -493,7 +381,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
    /**
     * Return a dataset with requested ID.
     */
-   public MyRowData getDataSet(int ID) {
+   public RowData getDataSet(int ID) {
       int i=0;
       while (i < rowData_.size()) {
          if (rowData_.get(i).ID_ == ID)
@@ -2106,18 +1994,18 @@ public class DataCollectionForm extends javax.swing.JFrame {
                   rt2.addValue(Terms.YPIX, pair.getGSD().getY());
                   rt2.addValue("n", track.size());
 
-                  double avg = avgList(distances);
+                  double avg = ListUtils.avgList(distances);
                   rt2.addValue("Distance-Avg", avg);
-                  rt2.addValue("Distance-StdDev", stdDevList(distances, avg));
-                  double oAvg = avgList(orientations);
+                  rt2.addValue("Distance-StdDev", ListUtils.stdDevList(distances, avg));
+                  double oAvg = ListUtils.avgList(orientations);
                   rt2.addValue("Orientation-Avg", oAvg);
                   rt2.addValue("Orientation-StdDev",
-                          stdDevList(orientations, oAvg));
+                          ListUtils.stdDevList(orientations, oAvg));
 
-                  double xDiffAvg = avgList(xDiff);
-                  double yDiffAvg = avgList(yDiff);
-                  double xDiffAvgStdDev = stdDevList(xDiff, xDiffAvg);
-                  double yDiffAvgStdDev = stdDevList(yDiff, yDiffAvg);
+                  double xDiffAvg = ListUtils.avgList(xDiff);
+                  double yDiffAvg = ListUtils.avgList(yDiff);
+                  double xDiffAvgStdDev = ListUtils.stdDevList(xDiff, xDiffAvg);
+                  double yDiffAvgStdDev = ListUtils.stdDevList(yDiff, yDiffAvg);
                   rt2.addValue("Dist.Vect.Avg", Math.sqrt(
                           (xDiffAvg * xDiffAvg) + (yDiffAvg * yDiffAvg)));
                   rt2.addValue("Dist.Vect.StdDev", Math.sqrt(
@@ -2308,7 +2196,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
       if (row > -1) {
           
          
-         MyRowData rowData = rowData_.get(row);
+         RowData rowData = rowData_.get(row);
          String data = "Name: " + rowData.name_ + "\n" +
                  "Title: " + rowData.title_ + "\n" + 
                  "BoxSize: " + 2*rowData.halfSize_ + "\n" +
@@ -2330,9 +2218,9 @@ public class DataCollectionForm extends javax.swing.JFrame {
          }
                     
          if (rowData.isTrack_) {
-            ArrayList<Point2D.Double> xyList = spotListToPointList(rowData.spotList_);
-            Point2D.Double avg = DataCollectionForm.avgXYList(xyList);
-            Point2D.Double stdDev = DataCollectionForm.stdDevXYList(xyList, avg);
+            ArrayList<Point2D.Double> xyList = ListUtils.spotListToPointList(rowData.spotList_);
+            Point2D.Double avg = ListUtils.avgXYList(xyList);
+            Point2D.Double stdDev = ListUtils.stdDevXYList(xyList, avg);
             
             data += "\n" + 
                     "Average X: " + avg.x + "\n" +
@@ -2376,7 +2264,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
                              Double.parseDouble(intensityMax_.getText()));
                   }
 
-                  MyRowData rowData = rowData_.get(row);
+                  RowData rowData = rowData_.get(row);
                   String fsep = System.getProperty("file.separator");
                   String ttmp = rowData.name_;
                   if (rowData.name_.contains(fsep)) {
@@ -2421,74 +2309,13 @@ public class DataCollectionForm extends javax.swing.JFrame {
       if (rows.length < 1) {
          JOptionPane.showMessageDialog(getInstance(), "Please select one or more datasets to plot");
       } else {
-         MyRowData[] myRows = new MyRowData[rows.length];
+         RowData[] myRows = new RowData[rows.length];
          // TODO: check that these are tracks 
          for (int i = 0; i < rows.length; i++)
             myRows[i] = rowData_.get(rows[i]);
          plotData(myRows, plotComboBox_.getSelectedIndex());
       }
    }//GEN-LAST:event_plotButton_ActionPerformed
-
-   public static ArrayList<Point2D.Double> spotListToPointList(List<GaussianSpotData> spotList){
-      ArrayList<Point2D.Double> xyPoints = new ArrayList<Point2D.Double>();
-      Iterator it = spotList.iterator();
-      while (it.hasNext()) {
-         GaussianSpotData gs = (GaussianSpotData) it.next();
-         Point2D.Double point = new Point2D.Double(gs.getXCenter(), gs.getYCenter());
-         xyPoints.add(point);
-      }
-      return xyPoints;
-   }
-   
-   public static Point2D.Double avgXYList(ArrayList<Point2D.Double> xyPoints) {
-      Point2D.Double myAvg = new Point2D.Double(0.0, 0.0);
-      for (Point2D.Double point : xyPoints) {
-         myAvg.x += point.x;
-         myAvg.y += point.y;
-      }
-      
-      myAvg.x = myAvg.x / xyPoints.size();
-      myAvg.y = myAvg.y / xyPoints.size();
-      
-      return myAvg;
-   }
-   
-   public static Point2D.Double stdDevXYList(ArrayList<Point2D.Double> xyPoints, 
-           Point2D.Double avg) {
-      Point2D.Double myStdDev = new Point2D.Double(0.0, 0.0);
-      for (Point2D.Double point : xyPoints) {
-         myStdDev.x += (point.x - avg.x) * (point.x - avg.x);
-         myStdDev.y += (point.y - avg.y) * (point.y - avg.y);
-      }
-      
-      myStdDev.x = Math.sqrt(myStdDev.x / (xyPoints.size() - 1) ) ;
-      myStdDev.y = Math.sqrt(myStdDev.y / (xyPoints.size() - 1) ) ;
-      
-      return myStdDev;
-   }
-   
-   public static double avgList(ArrayList<Double> vals) {
-      double result = 0;
-      for (Double val : vals) {
-         result += val;
-      }
-      
-      return result / vals.size();
-   }
-   
-   
-   public static double stdDevList(ArrayList<Double> vals, double avg) {
-      double result = 0;
-      for (Double val: vals) {
-         result += (val - avg) * (val - avg);
-      }
-      if (vals.size() < 2)
-         return 0.0;
-      
-      result = result / (vals.size() - 1);
-      
-      return Math.sqrt(result);
-   }
 
    
    public class TrackAnalysisData {
@@ -2514,13 +2341,13 @@ public class DataCollectionForm extends javax.swing.JFrame {
          JOptionPane.showMessageDialog(getInstance(), 
                  "Please select one or more datasets to average");
       } else {
-         MyRowData[] myRows = new MyRowData[rows.length];
+         RowData[] myRows = new RowData[rows.length];
          ArrayList<Point2D.Double> listAvgs = new ArrayList<Point2D.Double>();
          
          for (int i = 0; i < rows.length; i++) {
             myRows[i] = rowData_.get(rows[i]);
-            ArrayList<Point2D.Double> xyPoints = spotListToPointList(myRows[i].spotList_);
-            Point2D.Double listAvg = avgXYList(xyPoints);
+            ArrayList<Point2D.Double> xyPoints = ListUtils.spotListToPointList(myRows[i].spotList_);
+            Point2D.Double listAvg = ListUtils.avgXYList(xyPoints);
             listAvgs.add(listAvg);
          }
 
@@ -2558,9 +2385,9 @@ public class DataCollectionForm extends javax.swing.JFrame {
             tad.n = frameList.size();
             GaussianSpotData avgFrame = new GaussianSpotData(frameList.get(0));
             
-            ArrayList<Point2D.Double> xyPoints = spotListToPointList(frameList);
-            Point2D.Double listAvg = avgXYList(xyPoints);
-            Point2D.Double stdDev = stdDevXYList(xyPoints, listAvg);
+            ArrayList<Point2D.Double> xyPoints = ListUtils.spotListToPointList(frameList);
+            Point2D.Double listAvg = ListUtils.avgXYList(xyPoints);
+            Point2D.Double stdDev = ListUtils.stdDevXYList(xyPoints, listAvg);
             tad.xAvg = listAvg.x;
             tad.yAvg = listAvg.y;
             tad.xStdDev = stdDev.x;
@@ -2575,13 +2402,13 @@ public class DataCollectionForm extends javax.swing.JFrame {
          
 
          // Add transformed data to data overview window
-         MyRowData rowData = myRows[0];
+         RowData rowData = myRows[0];
          addSpotData(rowData.name_ + " Average", rowData.title_, "", rowData.width_,
                  rowData.height_, rowData.pixelSizeNm_, rowData.zStackStepSizeNm_, rowData.shape_,
                  rowData.halfSize_, rowData.nrChannels_, rowData.nrFrames_,
                  rowData.nrSlices_, 1, rowData.maxNrSpots_, transformedResultList,
                  rowData.timePoints_, true, Coordinates.NM, false, 0.0, 0.0);
-
+/*
          // show resultsTable
          ResultsTable rt = new ResultsTable();
          for (int i = 0; i < avgTrackData.size(); i++) {
@@ -2595,13 +2422,13 @@ public class DataCollectionForm extends javax.swing.JFrame {
             rt.addValue("YStdev", trackData.yStdDev);
          }
          rt.show("Averaged Tracks");
-
+*/
 
       }
 
    }//GEN-LAST:event_averageTrackButton_ActionPerformed
 
-   public void doMathOnRows(MyRowData source, MyRowData operand, int action) {
+   public void doMathOnRows(RowData source, RowData operand, int action) {
       // create a copy of the dataset and copy in the corrected data
       List<GaussianSpotData> transformedResultList =
               Collections.synchronizedList(new ArrayList<GaussianSpotData>());
@@ -2652,7 +2479,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
          
          ij.IJ.showStatus("Finished doing math...");
 
-         MyRowData rowData = source;
+         RowData rowData = source;
          
          addSpotData(rowData.name_ + " Subtracted", rowData.title_, "", rowData.width_,
                  rowData.height_, rowData.pixelSizeNm_, rowData.zStackStepSizeNm_, 
@@ -2694,7 +2521,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
    private void linkButton_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_linkButton_ActionPerformed
       final int row = jTable1_.getSelectedRow();
 
-      final MyRowData rowData = rowData_.get(row);
+      final RowData rowData = rowData_.get(row);
       if (rowData.frameIndexSpotList_ == null) {
          rowData.index();
       }
@@ -2781,15 +2608,14 @@ public class DataCollectionForm extends javax.swing.JFrame {
                  "Please select one or more datasets to straighten");
       } else {
          for (int row : rows) {
-            MyRowData r = rowData_.get(row);
+            RowData r = rowData_.get(row);
             if (evt.getModifiers() > 0) {
                if (r.title_.equals(ij.IJ.getImage().getTitle()) ) {
                   ImagePlus ip = ij.IJ.getImage();
                   Roi roi = ip.getRoi();
                   if (roi.isLine()) {
                      Polygon pol = roi.getPolygon();
-                     
-                     
+                    
                   }
                   
                }
@@ -2812,11 +2638,11 @@ public class DataCollectionForm extends javax.swing.JFrame {
    }//GEN-LAST:event_centerTrackButton_ActionPerformed
 
    private void powerSpectrumCheckBox_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_powerSpectrumCheckBox_ActionPerformed
-      // TODO add your handling code here:
+
    }//GEN-LAST:event_powerSpectrumCheckBox_ActionPerformed
 
    private void logLogCheckBox_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_logLogCheckBox_ActionPerformed
-      // TODO add your handling code here:
+
    }//GEN-LAST:event_logLogCheckBox_ActionPerformed
 
    private void zCalibrateButton_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_zCalibrateButton_ActionPerformed
@@ -2842,10 +2668,55 @@ public class DataCollectionForm extends javax.swing.JFrame {
       prefs_.put(METHOD2C, (String) method2CBox_.getSelectedItem());
    }//GEN-LAST:event_method2CBox_ActionPerformed
 
+   private String range_ = "";
+   
    private void SubRangeActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_SubRangeActionPerformed
-      String range = (String) JOptionPane.showInputDialog(this, "Provide desired subrange\n" +
-              "e.g. \"7-50\"", "SubRange", JOptionPane.PLAIN_MESSAGE, null, null, "");
-      ReportingUtils.showMessage("Range chosed: " + range);
+      
+      final int[] rows = jTable1_.getSelectedRows();
+      
+      if (rows == null || rows.length < 1) {
+         JOptionPane.showMessageDialog(getInstance(), 
+                 "Please select one or more datasets for sub ranging");
+         return;
+      }
+      
+      range_ = (String) JOptionPane.showInputDialog(this, "Provide desired subrange\n" +
+              "e.g. \"7-50\"", "SubRange", JOptionPane.PLAIN_MESSAGE, null, null, range_);
+      ArrayList<Integer> desiredFrameNumbers = new ArrayList<Integer>(
+              rowData_.get(rows[0]).maxNrSpots_);
+      String[] parts = range_.split(",");
+      try {
+      for (String part : parts) {
+         String[] tokens = part.split("-");
+         for (int i = Integer.parseInt(tokens[0].trim()); 
+                 i <= Integer.parseInt(tokens[1].trim()); i++) {
+            desiredFrameNumbers.add(i);
+         }
+      }
+      } catch (NumberFormatException ex) {
+         ReportingUtils.showError(ex, "Could not parse input");
+      }
+      
+      final ArrayList<Integer> desiredFrameNumbersCopy = desiredFrameNumbers;          
+      
+      Runnable doWorkRunnable = new Runnable() {
+
+         @Override
+         public void run() {
+
+            if (rows.length > 0) {
+               for (int row : rows) {
+                  RowData newRow =
+                          edu.valelab.GaussianFit.utils.SubRange.subRange(
+                          rowData_.get(row), desiredFrameNumbersCopy);
+                  addSpotData(newRow);
+               }
+
+            }
+         }
+      };
+      doWorkRunnable.run();
+
    }//GEN-LAST:event_SubRangeActionPerformed
 
    /**
@@ -3001,7 +2872,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
     *
     * @rowData
     */
-   private void showResults(MyRowData rowData) {
+   private void showResults(RowData rowData) {
       // Copy data to results table
 
       ResultsTable rt = new ResultsTable();
@@ -3074,7 +2945,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
     *
     * @rowData - row with spot data to be saved
     */
-   private void saveData(final MyRowData rowData) {
+   private void saveData(final RowData rowData) {
       FileDialog fd = new FileDialog(this, "Save Spot Data", FileDialog.SAVE);
       fd.setFile(rowData.name_ + ".tsf");
       fd.setVisible(true);
@@ -3220,7 +3091,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
     *
     * @rowData - row with spot data to be saved
     */
-   private void saveDataAsText(final MyRowData rowData) {
+   private void saveDataAsText(final RowData rowData) {
       FileDialog fd = new FileDialog(this, "Save Spot Data", FileDialog.SAVE);
       fd.setFile(rowData.name_ + ".txt");
       FilenameFilter fnf = new FilenameFilter() {
@@ -3351,7 +3222,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
     *
     * @rowData
     */
-   private void straightenTrack(MyRowData rowData) {
+   private void straightenTrack(RowData rowData) {
       
       if (rowData.spotList_.size() <= 1) {
          return;
@@ -3394,14 +3265,14 @@ public class DataCollectionForm extends javax.swing.JFrame {
     *
     * @rowData
     */
-   private void centerTrack(MyRowData rowData) {
+   private void centerTrack(RowData rowData) {
       
       if (rowData.spotList_.size() <= 1) {
          return;
       }
       
-      ArrayList<Point2D.Double> xyPoints = spotListToPointList(rowData.spotList_);
-      Point2D.Double avgPoint = avgXYList(xyPoints);
+      ArrayList<Point2D.Double> xyPoints = ListUtils.spotListToPointList(rowData.spotList_);
+      Point2D.Double avgPoint = ListUtils.avgXYList(xyPoints);
           
       /*ArrayList<Point2D.Double> xyPoints = new ArrayList<Point2D.Double>();
       Iterator it = rowData.spotList_.iterator();
@@ -3455,7 +3326,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
     * 
     * @param rowData 
     */
-   private void unJitter(final MyRowData rowData) {
+   private void unJitter(final RowData rowData) {
 
       // TODO: instead of a fixed number of frames, go for a certain number of spots
       // Number of frames could be limited as well
@@ -3698,7 +3569,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
                   }
                }
                
-               MyRowData newRow = new MyRowData(rowData.name_ + "-Jitter", 
+               RowData newRow = new RowData(rowData.name_ + "-Jitter", 
                        rowData.title_, "", rowData.width_,rowData.height_, 
                        rowData.pixelSizeNm_, rowData.zStackStepSizeNm_, 
                        rowData.shape_, rowData.halfSize_, rowData.nrChannels_, 
@@ -3786,7 +3657,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
     * 
     * @param rowData 
     */
-   private void correct2C(final MyRowData rowData) throws InterruptedException
+   private void correct2C(final RowData rowData) throws InterruptedException
    {
       if (rowData.spotList_.size() <= 1) {
          JOptionPane.showMessageDialog(getInstance(), "Please select a dataset to Color correct");
@@ -3867,7 +3738,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
     * @rowData
     * @plotMode - Index of plotMode in array {"t-X", "t-Y", "X-Y", "t-Int"};
     */
-   private void plotData(MyRowData[] rowDatas, int plotMode) {
+   private void plotData(RowData[] rowDatas, int plotMode) {
       String title = plotModes_[plotMode];
       boolean logLog = logLogCheckBox_.isSelected();
       boolean doPSD = powerSpectrumCheckBox_.isSelected();
@@ -4000,7 +3871,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
 
    }
    
-   private boolean useSeconds(MyRowData row) {
+   private boolean useSeconds(RowData row) {
       boolean useS = false;
       if (row.timePoints_ != null) {
          if (row.timePoints_.get(row.timePoints_.size() - 1)
@@ -4026,7 +3897,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
       
       zc_.clearDataPoints();
       
-      MyRowData rd = rowData_.get(rowNr);
+      RowData rd = rowData_.get(rowNr);
       if (rd.shape_ < 2) {
          JOptionPane.showMessageDialog(getInstance(), "Use Fit Parameters Dimension 2 or 3 for Z-calibration");
          return FAILEDDONOTINFORM;

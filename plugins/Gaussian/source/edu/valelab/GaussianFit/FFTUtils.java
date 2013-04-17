@@ -3,7 +3,7 @@
  */
 package edu.valelab.GaussianFit;
 
-import edu.valelab.GaussianFit.DataCollectionForm.MyRowData;
+import edu.valelab.GaussianFit.utils.RowData;
 import org.apache.commons.math.complex.Complex;
 import org.apache.commons.math.transform.FastFourierTransformer;
 import org.jfree.data.xy.XYSeries;
@@ -50,7 +50,7 @@ public class FFTUtils {
     * @param rowDatas
     * @param datas 
     */
-   public static void calculatePSDs(MyRowData[] rowDatas, 
+   public static void calculatePSDs(RowData[] rowDatas, 
            XYSeries[] datas,
            DataCollectionForm.PlotMode plotMode) {
       for (int index = 0; index < rowDatas.length; index++) {

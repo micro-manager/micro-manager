@@ -5,7 +5,7 @@
 package edu.valelab.GaussianFit;
 
 import edu.valelab.GaussianFit.DataCollectionForm.Coordinates;
-import edu.valelab.GaussianFit.DataCollectionForm.MyRowData;
+import edu.valelab.GaussianFit.utils.RowData;
 import ij.process.ByteProcessor;
 import ij.process.ImageProcessor;
 import java.awt.Point;
@@ -33,7 +33,7 @@ public class DriftCorrector {
       }
    }
 
-   public void unJitter(final MyRowData rowData, int maxFrames, int maxSpots) {
+   public void unJitter(final RowData rowData, int maxFrames, int maxSpots) {
 
       // TODO: instead of a fixed number of frames, go for a certain number of spots
       // Number of frames could be limited as well
@@ -202,7 +202,7 @@ public class DriftCorrector {
          // First try to copy the time points
          ArrayList<Double> timePoints = null;
 
-         MyRowData newRow = DataCollectionForm.getInstance().new MyRowData(
+         RowData newRow = new RowData(
                  rowData.name_ + "-Jitter", rowData.title_, "", rowData.width_,
                  rowData.height_, rowData.pixelSizeNm_, rowData.zStackStepSizeNm_, 
                  rowData.shape_, rowData.halfSize_, rowData.nrChannels_, 

@@ -10,6 +10,7 @@
  */
 package edu.valelab.GaussianFit;
 
+import edu.valelab.GaussianFit.utils.RowData;
 import java.util.prefs.Preferences;
 
 /**
@@ -170,8 +171,8 @@ public class MathForm extends javax.swing.JFrame {
          @Override
          public void run() {
             DataCollectionForm df = DataCollectionForm.getInstance();
-            DataCollectionForm.MyRowData rd1 = null;
-            DataCollectionForm.MyRowData rd2 = null;
+            RowData rd1 = null;
+            RowData rd2 = null;
 
             for (int i = 0; i < df.rowData_.size(); i++) {
                if (id1 == df.rowData_.get(i).ID_) {
