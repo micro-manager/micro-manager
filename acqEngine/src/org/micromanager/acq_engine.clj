@@ -384,7 +384,7 @@
 
 (defn pop-burst-images
   [n timeout-ms]
-  (let [queue (proxy [LinkedBlockingQueue] []
+  (let [queue (proxy [LinkedBlockingQueue] [10]
                 (take [] (let [item (proxy-super take)]
                            (if (instance? Throwable item)
                              (throw item)
