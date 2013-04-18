@@ -36,7 +36,7 @@ import java.nio.CharBuffer;
 import java.nio.channels.FileChannel;
 import java.util.HashMap;
 import java.util.LinkedList;
-import java.util.concurrent.Executors;
+import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import mmcorej.TaggedImage;
@@ -155,7 +155,9 @@ public class MultipageTiffWriter {
          }
          fileChannel_ = raFile_.getChannel();
          if (writingExecutor_ == null) {
-            writingExecutor_ = fastStorageMode_ ? (ThreadPoolExecutor) Executors.newFixedThreadPool(1) : null;      
+            writingExecutor_ = fastStorageMode_
+                    ? new ThreadPoolExecutor(1, 1, 0, TimeUnit.NANOSECONDS, new LinkedBlockingQueue(10))
+                    : null;
          }
          indexMap_ = new HashMap<String, Long>();
          reader_.setFileChannel(fileChannel_);
