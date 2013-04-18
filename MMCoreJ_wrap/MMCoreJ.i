@@ -368,30 +368,34 @@
    }
 
    private String getMultiCameraChannel(JSONObject tags, int cameraChannelIndex) {
-      try {
-      String camera = tags.getString("Core-Camera");
-      String physCamKey = camera + "-Physical Camera " + (1 + cameraChannelIndex);
-      if (tags.has(physCamKey)) {
-         try {
-            return tags.getString(physCamKey);
-         } catch (Exception e2) {
-            return null;
-         }
-      } else {
-         return null;
-      }
-     } catch (Exception e) {
-       return null;
-     }
+	  try {
+	  String camera = tags.getString("Core-Camera");
+	  String physCamKey = camera + "-Physical Camera " + (1 + cameraChannelIndex);
+	  if (tags.has(physCamKey)) {
+		 try {
+			return tags.getString(physCamKey);
+		 } catch (Exception e2) {
+			return null;
+		 }
+	  } else {
+		 return null;
+	  }
+	 } catch (Exception e) {
+	   return null;
+	 }
 
    }
 
    private TaggedImage createTaggedImage(Object pixels, Metadata md, int cameraChannelIndex) throws java.lang.Exception {
       TaggedImage image = createTaggedImage(pixels, md);
-      image.tags.put("CameraChannelIndex", cameraChannelIndex);
-      String physicalCamera = getMultiCameraChannel(image.tags, cameraChannelIndex);
-      if (physicalCamera != null) {
-         image.tags.put("Camera", physicalCamera);
+      if (!image.tags.has("CameraChannelIndex")) {
+         image.tags.put("CameraChannelIndex", cameraChannelIndex);
+      }
+      if (!image.tags.has("Camera")) {
+         String physicalCamera = getMultiCameraChannel(image.tags, cameraChannelIndex);
+         if (physicalCamera != null) {
+            image.tags.put("Camera", physicalCamera);
+         }
       }
       return image;
    }
