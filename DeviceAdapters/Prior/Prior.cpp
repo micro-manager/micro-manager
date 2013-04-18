@@ -139,12 +139,12 @@ MODULE_API MM::Device* CreateDevice(const char* deviceName)
    }
    else if (strcmp(deviceName, g_TTL2Name) == 0)
    {
-      TTLShutter* s = new TTLShutter(g_TTL2Name, 0);
+      TTLShutter* s = new TTLShutter(g_TTL2Name, 2);
       return s;
    }
    else if (strcmp(deviceName, g_TTL3Name) == 0)
    {
-      TTLShutter* s = new TTLShutter(g_TTL3Name, 0);
+      TTLShutter* s = new TTLShutter(g_TTL3Name, 3);
       return s;
    }
 
