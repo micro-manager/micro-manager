@@ -2602,7 +2602,10 @@ int DC4100::ValidateDevice(void)
 	getLastError(&nRet);
 	if (nRet != DEVICE_OK) return nRet;
 
-   if((devName.find("DC4100")) == std::string::npos && (devName.find("LEDD4")) == std::string::npos)
+   if( (devName.find("DC4100")) == std::string::npos && 
+         (devName.find("DC4104")) == std::string::npos &&
+         (devName.find("LEDD4"))  == std::string::npos
+         )
        nRet = ERR_INVALID_DEVICE;
 
 	return nRet;
