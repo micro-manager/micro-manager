@@ -8,7 +8,7 @@ if BUILD_QCAM
    QCAM = QCam
 endif
 if BUILD_SPOT
-   SPOT = Spot
+#   SPOT = Spot
 endif
 if BUILD_DC1394
    DC1394 = dc1394
