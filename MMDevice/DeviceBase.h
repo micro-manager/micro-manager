@@ -1587,13 +1587,14 @@ protected:
    };
    //////////////////////////////////////////////////////////////////////////
 
+   class BaseSequenceThread;
+
 private:
 
    bool busy_;
    bool stopWhenCBOverflows_;
    Metadata metadata_;
 
-   class BaseSequenceThread;
    BaseSequenceThread * thd_;
    friend class BaseSequenceThread;
 };
