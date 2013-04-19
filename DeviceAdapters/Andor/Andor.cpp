@@ -4315,9 +4315,9 @@ int AndorCamera::GetListOfAvailableCameras()
          MM::MMTime timestamp = this->GetCurrentMMTime();
          Metadata md;
          // Copy the metadata inserted by other processes:
-         std::vector<std::string> keys = metadata_.GetKeys();
+         std::vector<std::string> keys = GetTagKeys();
          for (unsigned int i= 0; i < keys.size(); i++) {
-            md.put(keys[i], metadata_.GetSingleTag(keys[i].c_str()).GetValue().c_str());
+            md.put(keys[i], GetTagValue(keys[i].c_str()).c_str());
          }
 
          md.put("Camera", label);

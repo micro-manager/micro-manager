@@ -486,8 +486,7 @@ void Universal::SuspendSequence()
    if(IsCapturing())
    {
       restart_ = true;
-      thd_->Stop();
-      thd_->wait();
+      CCameraBase::StopSequenceAcquisition();
 
       if (!pl_exp_stop_cont(hPVCAM_, CCS_HALT)) 
             LogCamError(__LINE__, "");
@@ -507,9 +506,9 @@ int Universal::ResumeSequence()
       if (!pl_exp_start_cont(hPVCAM_, circBuffer_, bufferSize_)) 
          return LogCamError(__LINE__);
 
-      long imageCount = thd_->GetImageCounter();
-      double intervalMs = thd_->GetIntervalMs();
-      thd_->Start(numImages_ - imageCount, intervalMs);
+      long imageCount = GetImageCounter();
+      double intervalMs = GetIntervalMs();
+      StartSequenceAcquisition(numImages_ - imageCount, intervalMs, isStopOnOverflow());
       restart_ = false;
    }
 
@@ -2026,7 +2025,7 @@ int Universal::StartSequenceAcquisition(long numImages, double interval_ms, bool
    // initially start with the exposure time as the actual interval estimate
    SetProperty(MM::g_Keyword_ActualInterval_ms, CDeviceUtils::ConvertToString(exposure_)); 
 
-   thd_->Start(numImages, interval_ms);
+   CCameraBase::StartSequenceAcquisition(numImages, interval_ms, stopOnOverflow);
 
    char label[MM::MaxStrLength];
    GetLabel(label);

@@ -165,6 +165,7 @@ private:
   bool m_bROI;
   vector<string>m_vDevices;
   int m_iCurDeviceIdx;
+  bool stopOnOverflow;
 
 private:
   int ResizeImageBuffer();

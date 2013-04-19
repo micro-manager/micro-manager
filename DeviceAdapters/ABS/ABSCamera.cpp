@@ -209,6 +209,8 @@ fractionOfPixelsToDropOrSaturate_(0.002)
 ,imageCounter_(0)
 ,framerate_(0.0)
 ,exposureLongTime_( g_Exposure_LongTime_Off )
+,thread_(0)
+,stopOnOverflow_(false)
 {
   memset(testProperty_,0,sizeof(testProperty_));
 
@@ -217,8 +219,7 @@ fractionOfPixelsToDropOrSaturate_(0.002)
   readoutStartTime_ = GetCurrentMMTime();
 
   // release thread object of base class => to allocate my own one
-  SAFE_DELETE( thd_ );
-  thd_ = dynamic_cast<CCameraBase<CABSCamera>::BaseSequenceThread*>( new CABSCameraSequenceThread(this) );
+  thread_ = new CABSCameraSequenceThread(this);
 
   // clear camera device id string
   cameraDeviceID_.clear();
@@ -1184,9 +1185,9 @@ int CABSCamera::StopSequenceAcquisition()
 {
   TIMEDEBUG
 
-  if (!thd_->IsStopped())
+  if (!thread_->IsStopped())
   {
-    thd_->Stop();
+    thread_->Stop();
 
     // abort current image transfer only for long exposure times
     if ( exposureLongTime_ == g_Exposure_LongTime_On )
@@ -1196,7 +1197,7 @@ int CABSCamera::StopSequenceAcquisition()
       assert(rc == retOK);
     }
 
-    thd_->wait();
+    thread_->wait();
 
     // restore readout mode
     setLiveReadoutMode( false );
@@ -1233,7 +1234,7 @@ int CABSCamera::StartSequenceAcquisition(long numImages, double interval_ms, boo
 
   stopOnOverflow_ = stopOnOverflow;
 
-  dynamic_cast<CABSCameraSequenceThread *>(thd_)->Start( numImages, interval_ms );
+  dynamic_cast<CABSCameraSequenceThread *>(thread_)->Start( numImages, interval_ms );
 
 
   return DEVICE_OK;
@@ -1333,49 +1334,49 @@ CABSCameraSequenceThread::~CABSCameraSequenceThread(){};
 
 int CABSCameraSequenceThread::svc(void) throw()
 {
+  CABSCamera* absCam = dynamic_cast<CABSCamera*>(GetCamera());
   int ret=DEVICE_ERR;
   try
   {
-    CABSCamera* camera = dynamic_cast<CABSCamera*>(camera_);
 
     // only for live mode
-    if ( ( LONG_MAX == numImages_ ) && ( false == camera->stopOnOverflow_ ) )
+    if ( ( LONG_MAX == GetNumberOfImages() ) && ( false == absCam->stopOnOverflow_ ) )
     {
-      // only if long time expsoure is enabled
-      if ( camera->exposureLongTime_ == g_Exposure_LongTime_On )
+      // only if long time exposure is enabled
+      if ( absCam->exposureLongTime_ == g_Exposure_LongTime_On )
       {
-        camera->LogMessage("SeqAcquisition Start => insert last valid or blank image (GUI blocking workaround)\n", true);
-        MMThreadGuard g( camera->img_ ); // lock the image
+        absCam->LogMessage("SeqAcquisition Start => insert last valid or blank image (GUI blocking workaround)\n", true);
+        MMThreadGuard g( absCam->img_ ); // lock the image
 
-        CAbsImgBuffer::EBufferType eType = camera->img_.bufferType();
-        if ( 0 == camera->img_.GetPixels() )
-          camera->img_.setBufferType( CAbsImgBuffer::eInternBuffer );
+        CAbsImgBuffer::EBufferType eType = absCam->img_.bufferType();
+        if ( 0 == absCam->img_.GetPixels() )
+          absCam->img_.setBufferType( CAbsImgBuffer::eInternBuffer );
 
-        camera->InsertImage();
+        absCam->InsertImage();
 
         // restore buffer mode
-        camera->img_.setBufferType( eType );
+        absCam->img_.setBufferType( eType );
       }
     }
 
     do
     {
-      ret = camera->ThreadRun();
+      ret = absCam->ThreadRun();
 
-    } while (DEVICE_OK == ret && !IsStopped() && imageCounter_++ < numImages_-1);
+    } while (DEVICE_OK == ret && !IsStopped() && absCam->imageCounter_++ < GetNumberOfImages() - 1);
 
     if (IsStopped())
-      dynamic_cast<CABSCamera*>(camera_)->LogMessage("SeqAcquisition interrupted by the user\n");
+      absCam->LogMessage("SeqAcquisition interrupted by the user\n");
 
-  }catch( CMMError& e){
-    dynamic_cast<CABSCamera*>(camera_)->LogMessage(e.getMsg(), false);
+  } catch( CMMError& e){
+    absCam->LogMessage(e.getMsg(), false);
     ret = e.getCode();
   }catch(...){
-    dynamic_cast<CABSCamera*>(camera_)->LogMessage(g_Msg_EXCEPTION_IN_THREAD, false);
+    absCam->LogMessage(g_Msg_EXCEPTION_IN_THREAD, false);
   }
-  stop_=true;
-  actualDuration_ = dynamic_cast<CABSCamera*>(camera_)->GetCurrentMMTime() - startTime_;
-  dynamic_cast<CABSCamera*>(camera_)->OnThreadExiting();
+  Stop();
+  UpdateActualDuration();
+  absCam->OnThreadExiting();
   return ret;
 }
 

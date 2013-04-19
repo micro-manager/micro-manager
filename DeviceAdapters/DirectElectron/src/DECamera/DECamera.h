@@ -124,7 +124,8 @@ private:
    int sensorSizeY_;
    double exposureTime_;   
    bool exposureEnabled_;
-   FloatPair pixelSize_;   
+   FloatPair pixelSize_;
+   bool stopOnOverflow_;
 
    string lastLabel_;
    map<MM::PropertyBase*, string> reverseLookup_;

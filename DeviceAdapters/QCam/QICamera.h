@@ -251,6 +251,7 @@ private:
     unsigned int        m_maxBitDepth;      // Maximum possible bit depth for camera
     ImgBuffer           m_colorBuffer;      // buffer for color images (if available)
     Debayer             m_debayer;          // debayer processor to convert from b&w to color
+    bool                m_stopOnOverflow;
 
     // Frame Buffer for continuous acquisition
     static const int    m_nFrameBuffs = QICAMERA_QUEUE_BUFFERS; // Total frame buffers in the circular queue

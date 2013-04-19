@@ -181,6 +181,7 @@ private:
 	mexFocus focus_;
 	mexSaturationCtrl saturation_;
 	mexTriggerOut trigger_;
+   bool cameraBusy_;
 
 	int ResizeImageBuffer();
 	int SetupAcquisition(int live = 0);

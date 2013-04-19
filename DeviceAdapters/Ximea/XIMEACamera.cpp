@@ -226,7 +226,8 @@ XIMEACamera::XIMEACamera() :
 	roiY_(0),
 	readoutStartTime_(0),
 	sequenceStartTime_(0),
-	imageCounter_(0)
+	imageCounter_(0),
+   stopOnOverflow_(false)
 {
 	// call the base class method to set-up default error codes/messages
 	InitializeDefaultErrorMessages();

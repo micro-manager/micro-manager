@@ -182,7 +182,8 @@ m_SnapFinished (false),
 m_pRed (NULL),
 m_pGreen (NULL),
 m_pBlue (NULL),
-m_TriggerIn(0)
+m_TriggerIn(0),
+cameraBusy_(false)
 {
 	ATLTRACE ("%s\n",__FUNCTION__);
 
@@ -247,7 +248,7 @@ bool CProgRes::Busy()
 	ATLTRACE ("%s\n",__FUNCTION__);
    //Camera should be in busy state during exposure
    //IsCapturing() is used for determining if sequence thread is run
-   return busy_;
+   return cameraBusy_;
 }
 
 /**
@@ -749,7 +750,7 @@ int CProgRes::SnapImage()
 	m_AcqParams.runas = runas_snap;
 
 	m_SnapFinished = false;
-	busy_ = true;
+	cameraBusy_ = true;
 
 	if (m_TriggerIn != 0)
 	{
@@ -759,7 +760,7 @@ int CProgRes::SnapImage()
 		status = DialogBox((HINSTANCE)GetModuleHandle(), MAKEINTRESOURCE(IDD_TRIGGER_IN_WAIT), NULL, TriggerWaitProc);
 		if (status)
 		{
-			busy_ = false;
+			cameraBusy_ = false;
 			return ERR_ACQ_TRIGGER_ABORTED;
 		}
 	}
@@ -768,13 +769,13 @@ int CProgRes::SnapImage()
 		status = mexGrab (m_GUID, &m_AcqParams, NULL);
 		if (status != NOERR)
 		{
-			busy_ = false;
+			cameraBusy_ = false;
 			return ERR_ACQ_PARAMS_ERR;
 		}
 
 		while (!m_SnapFinished)	Sleep (0);
 	}
-	busy_ = false;
+	cameraBusy_ = false;
 
 	return DEVICE_OK;
 }
@@ -1905,7 +1906,6 @@ int CProgRes::StartSequenceAcquisition(long numImages, double interval_ms, bool 
 	if (IsCapturing())
 		return ERR_BUSY_ACQUIRING;
 
-	stopOnOverflow_ = stopOnOverflow;
 	int ret = GetCoreCallback()->PrepareForAcq(this);
 	if (ret != DEVICE_OK)
 		return ret;
@@ -1926,18 +1926,18 @@ int CProgRes::StartSequenceAcquisition(long numImages, double interval_ms, bool 
 		return ERR_ACQ_PARAMS_ERR;
 	}
 	m_AcqParams.runas = runas_cclive;
-	busy_ = true;
+	cameraBusy_ = true;
 	ret = mexGrab (m_GUID, &m_AcqParams, NULL);
 	if (ret != NOERR)
 	{
-		busy_ = false;
+		cameraBusy_ = false;
 		return ERR_ACQ_PARAMS_ERR;
 	}
 
-	busy_ = false;
+	cameraBusy_ = false;
 
 	acquiring_ = true;
-	thd_->Start(numImages, actualIntervalMs);
+	StartSequenceAcquisition(numImages, interval_ms, stopOnOverflow);
 
 	return DEVICE_OK;
 }
@@ -1948,11 +1948,7 @@ int CProgRes::StartSequenceAcquisition(long numImages, double interval_ms, bool 
 int CProgRes::StopSequenceAcquisition()
 {   
 	ATLTRACE ("%s\n",__FUNCTION__);
-      if (!thd_->IsStopped()) {
-         thd_->Stop();
-         thd_->wait();
-      }
-
+   CCameraBase::StopSequenceAcquisition();
 	mexAbortAcquisition (m_GUID);
 	acquiring_ = false;
    printf("Stopped camera streaming.\n");
@@ -1963,7 +1959,7 @@ int CProgRes::PushImage()
 {
 	EnterCriticalSection (&m_CSec);
 	int ret = GetCoreCallback()->InsertImage(this, m_Image);
-	if (!stopOnOverflow_ && ret == DEVICE_BUFFER_OVERFLOW)
+	if (!isStopOnOverflow() && ret == DEVICE_BUFFER_OVERFLOW)
 	{
 		// do not stop on overflow - just reset the buffer
 		GetCoreCallback()->ClearImageBuffer(this);

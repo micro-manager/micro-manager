@@ -139,6 +139,7 @@ private:
    bool initialized_;
    double readoutUs_;
    MM::MMTime readoutStartTime_;
+   bool stopOnOverflow_;
 
    BOImplementationThread* pWorkerThread_; // implementation thread
 

@@ -199,6 +199,7 @@ private:
 	long imageCounter_;
     MM::MMTime startTime_;
  	unsigned long sequenceLength_;
+   bool stopOnOverflow_;
 
 	int SetupProperties();
 	smart_com<DShowLib::IFrameFilter> pROIFilter;

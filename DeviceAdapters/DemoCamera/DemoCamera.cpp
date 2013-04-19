@@ -248,7 +248,8 @@ CDemoCamera::CDemoCamera() :
 	dropPixels_(false),
    fastImage_(false),
    saturatePixels_(false),
-	fractionOfPixelsToDropOrSaturate_(0.002)
+	fractionOfPixelsToDropOrSaturate_(0.002),
+   stopOnOverflow_(false)
 {
    memset(testProperty_,0,sizeof(testProperty_));
 

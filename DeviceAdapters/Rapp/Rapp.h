@@ -97,6 +97,7 @@ private:
    long rasterFrequency_;
    double spotSize_;
    double pulseTime_us_;
+   bool stopOnOverflow_;
 
    // Helper functions
    int SafeStoreSequence(tStringList sequenceList);

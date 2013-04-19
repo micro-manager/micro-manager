@@ -154,6 +154,7 @@ private:
    int nComponents_;
    friend class MySequenceThread;
    MySequenceThread * thd_;
+   bool stopOnOverflow_;
 
 	HCAM	m_hG;			// handle to frame grabber
    double Exposure_;

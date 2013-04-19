@@ -186,7 +186,8 @@ COpenCVgrabber::COpenCVgrabber() :
    nComponents_(4),
    xFlip_(false),
    yFlip_(false),
-   triggerDevice_("")
+   triggerDevice_(""),
+   stopOnOverFlow_(false)
 {
    // call the base class method to set-up default error codes/messages
    InitializeDefaultErrorMessages();
@@ -787,9 +788,9 @@ int COpenCVgrabber::StartSequenceAcquisition(long numImages, double interval_ms,
    if (ret != DEVICE_OK)
       return ret;
    sequenceStartTime_ = GetCurrentMMTime();
+   stopOnOverFlow_ = stopOnOverflow;
    imageCounter_ = 0;
    thd_->Start(numImages,interval_ms);
-   stopOnOverflow_ = stopOnOverflow;
    return DEVICE_OK;
 }
 
@@ -826,7 +827,7 @@ int COpenCVgrabber::InsertImage()
    unsigned int b = GetImageBytesPerPixel();
 
    int ret = GetCoreCallback()->InsertImage(this, pI, w, h, b, md.Serialize().c_str());
-   if (!stopOnOverflow_ && ret == DEVICE_BUFFER_OVERFLOW)
+   if (!stopOnOverFlow_ && ret == DEVICE_BUFFER_OVERFLOW)
    {
       // do not stop on overflow - just reset the buffer
       GetCoreCallback()->ClearImageBuffer(this);

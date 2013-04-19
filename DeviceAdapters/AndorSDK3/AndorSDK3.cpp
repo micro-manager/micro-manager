@@ -175,7 +175,8 @@ CAndorSDK3Camera::CAndorSDK3Camera()
   currentSeqExposure_(0),
   keep_trying_(false),
   roiX_(0),
-  roiY_(0)
+  roiY_(0),
+  stopOnOverflow_(false)
 {
    // call the base class method to set-up default error codes/messages
    InitializeDefaultErrorMessages();

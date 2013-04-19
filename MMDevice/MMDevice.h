@@ -504,18 +504,22 @@ namespace MM {
        * Return true when Sequence acquisition is activce, false otherwise
        */
       virtual bool IsCapturing() = 0;
-      /**
-       * Adds a metadata tag that should be added to the metadata during image sequence acquisition
-       */
-      virtual void AddTag(const char* key, std::string deviceLabel, const char* value) = 0;
-      /**
-       * Remove the tag with the given key from the metadata that will be added during sequence acquisition
-       */
-      virtual void RemoveTag(const char* key) = 0;
+
       /**
        * Get the tags stored in this device.
        */
       virtual void GetTags(char* serializedMetadata) = 0;
+
+      /**
+       * Adds new tag or modifies the value of an existing one 
+       */
+      virtual void AddTag(const char* key, std::string deviceLabel, const char* value) = 0;
+
+      /**
+       * Removes an existing tag 
+       */
+      virtual void RemoveTag(const char* key) = 0;
+
       /*
        * Returns whether a camera's exposure time can be sequenced.
        * If returning true, then a Camera adapter class should also inherit

@@ -146,6 +146,7 @@ private:
    bool keep_trying_;
    bool in_external_;
    unsigned int currentSeqExposure_;
+   bool stopOnOverflow_;
 
    unsigned char** image_buffers_;
    unsigned int numImgBuffersAllocated_;

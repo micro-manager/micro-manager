@@ -44,7 +44,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="../../MMDevice"
+				AdditionalIncludeDirectories="../../MMDevice;..\..\..\3rdpartypublic\Motic"
 				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_USRDLL;MODULE_EXPORTS"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"

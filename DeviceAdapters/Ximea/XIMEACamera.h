@@ -139,6 +139,7 @@ private:
 	int ResizeImageBuffer();
 	friend class MySequenceThread;
 	MySequenceThread * thd_;
+   bool stopOnOverflow_;
 };
 
 //////////////////////////////////////////////////////////////////////////////

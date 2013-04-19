@@ -319,6 +319,10 @@ private:
   int           nComponents_;
 
   string        exposureLongTime_;
+
+  bool          stopOnOverflow_;
+
+  CABSCameraSequenceThread* thread_;
 };
 
 // image aquisition thread class

@@ -231,6 +231,8 @@ private:
    double ccdT_;
 	std::string triggerDevice_;
 
+   bool stopOnOverflow_;
+
 	bool dropPixels_;
    bool fastImage_;
 	bool saturatePixels_;

@@ -220,9 +220,9 @@ currentExpMS_(12.34), //ms
    sequenceStartTime_(0),
 
    interval_ms_ (0),
-   seqThread_(0)
+   seqThread_(0),
 
-
+   stopOnOverflow_(false)
 {
    // call the base class method to set-up default error codes/messages
    InitializeDefaultErrorMessages();
@@ -1872,9 +1872,9 @@ int CTIScamera::PushImage()
 
 
    // Copy the metadata inserted by other processes:
-   std::vector<std::string> keys = metadata_.GetKeys();
+   std::vector<std::string> keys = GetTagKeys();
    for (unsigned int i= 0; i < keys.size(); i++) {
-      md.put(keys[i], metadata_.GetSingleTag(keys[i].c_str()).GetValue().c_str());
+      md.put(keys[i], GetTagValue(keys[i].c_str()).c_str());
    }
 
    char buf[MM::MaxStrLength];

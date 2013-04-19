@@ -105,7 +105,8 @@ CMoticCamera::CMoticCamera() :
    m_bROI(false),
    m_iCurDeviceIdx(-1),
    m_lMinExposure(0),
-   m_lMaxExposure(0)
+   m_lMaxExposure(0),
+   stopOnOverflow(false)
 {
 #ifdef _LOG_OUT_
   OutputDebugString("New Motic Camera");
@@ -797,7 +798,7 @@ int CMoticCamera::InsertImage()
    int ret = GetCoreCallback()->InsertImage(this, img, GetImageWidth(), 
      GetImageHeight(), GetImageBytesPerPixel());
 
-   if (!stopOnOverflow_ && ret == DEVICE_BUFFER_OVERFLOW)
+   if (!stopOnOverflow && ret == DEVICE_BUFFER_OVERFLOW)
    {
      // do not stop on overflow - just reset the buffer
      GetCoreCallback()->ClearImageBuffer(this);
@@ -820,7 +821,7 @@ bool CMoticCamera::IsCapturing()
 #ifdef _LOG_OUT_
   OutputDebugString("IsCapturing");
 #endif
-   return !thd_->IsStopped();
+  return CCameraBase::IsCapturing();
 }
 
 

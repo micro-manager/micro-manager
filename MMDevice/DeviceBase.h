@@ -1214,7 +1214,7 @@ public:
    using CDeviceBase<MM::Camera, U>::SetProperty;
    using CDeviceBase<MM::Camera, U>::LogMessage;
 
-   CCameraBase() : busy_(false), thd_(0), stopOnOverflow_(false)
+   CCameraBase() : busy_(false), thd_(0), stopWhenCBOverflows_(false)
    {
       // create and intialize common transpose properties
       std::vector<std::string> allowedValues;
@@ -1319,17 +1319,6 @@ public:
       return 0;
    }
 
-   virtual void AddTag(const char* key, std::string deviceLabel, const char* value)
-   {
-      metadata_.PutTag(key, deviceLabel, value);
-   }
-
-
-   virtual void RemoveTag(const char* key)
-   {
-      metadata_.RemoveTag(key);
-   }
-
    /*
     * Fills serializedMetadata with the device's metadata tags.
     */
@@ -1354,7 +1343,7 @@ public:
       if (ret != DEVICE_OK)
          return ret;
       thd_->Start(numImages,interval_ms);
-      stopOnOverflow_ = stopOnOverflow;
+      stopWhenCBOverflows_ = stopOnOverflow;
       return DEVICE_OK;
    }
 
@@ -1388,28 +1377,36 @@ public:
       return DEVICE_UNSUPPORTED_COMMAND;
    }
 
-   virtual int InsertImage()
+   virtual bool IsCapturing(){return !thd_->IsStopped();}
+   
+   virtual void AddTag(const char* key, std::string deviceLabel, const char* value)
    {
-      char label[MM::MaxStrLength];
-      this->GetLabel(label);
-      Metadata md;
-      md.put("Camera", label);
-      int ret = GetCoreCallback()->InsertImage(this, GetImageBuffer(), GetImageWidth(),
-                                                     GetImageHeight(), GetImageBytesPerPixel(),
-                                                     md.Serialize().c_str());
-      if (!stopOnOverflow_ && ret == DEVICE_BUFFER_OVERFLOW)
-      {
-         // do not stop on overflow - just reset the buffer
-         GetCoreCallback()->ClearImageBuffer(this);
-         return GetCoreCallback()->InsertImage(this, GetImageBuffer(), GetImageWidth(),
-                                                     GetImageHeight(), GetImageBytesPerPixel(),
-                                                     md.Serialize().c_str());
-      } else
-         return ret;
+      metadata_.PutTag(key, deviceLabel, value);
    }
 
-   //Do actual capturing
-   //Called from inside the thread cicle 
+
+   virtual void RemoveTag(const char* key)
+   {
+      metadata_.RemoveTag(key);
+   }
+
+protected:
+   /////////////////////////////////////////////
+   // utility methods for use by derived classes
+   // //////////////////////////////////////////
+
+   virtual std::vector<std::string> GetTagKeys()
+   {
+      return metadata_.GetKeys();
+   }
+
+   virtual std::string GetTagValue(const char* key)
+   {
+      return metadata_.GetSingleTag(key).GetValue();
+   }
+
+   // Do actual capturing
+   // Called from inside the thread
    virtual int ThreadRun (void)
    {
       int ret=DEVICE_ERR;
@@ -1425,25 +1422,30 @@ public:
       }
       return ret;
    };
-   virtual bool IsCapturing(){return !thd_->IsStopped();}
-   
-   class CaptureRestartHelper
-   {
-      bool restart_;
-      CCameraBase* pCam_;
-   public:
-      CaptureRestartHelper(CCameraBase* pCam)
-         :pCam_(pCam)
-      {
-         restart_=pCam_->IsCapturing();
-      }
-      operator bool()
-      {
-         return restart_;
-      }
-   };
 
-protected:
+   virtual int InsertImage()
+   {
+      char label[MM::MaxStrLength];
+      this->GetLabel(label);
+      Metadata md;
+      md.put("Camera", label);
+      int ret = GetCoreCallback()->InsertImage(this, GetImageBuffer(), GetImageWidth(),
+         GetImageHeight(), GetImageBytesPerPixel(),
+         md.Serialize().c_str());
+      if (!stopWhenCBOverflows_ && ret == DEVICE_BUFFER_OVERFLOW)
+      {
+         // do not stop on overflow - just reset the buffer
+         GetCoreCallback()->ClearImageBuffer(this);
+         return GetCoreCallback()->InsertImage(this, GetImageBuffer(), GetImageWidth(),
+            GetImageHeight(), GetImageBytesPerPixel(),
+            md.Serialize().c_str());
+      } else
+         return ret;
+   }
+
+   virtual double GetIntervalMs() {return thd_->GetIntervalMs();}
+   virtual long GetImageCounter() {return thd_->GetImageCounter();}
+
    // called from the thread function before exit 
    virtual void OnThreadExiting() throw()
    {
@@ -1457,14 +1459,31 @@ protected:
          LogMessage(g_Msg_EXCEPTION_IN_ON_THREAD_EXITING, false);
       }
    }
-protected:
-   bool busy_;
-   bool stopOnOverflow_;
-   Metadata metadata_;
 
-   class BaseSequenceThread;
-   BaseSequenceThread * thd_;
-   friend class BaseSequenceThread;
+   virtual bool isStopOnOverflow() {return stopWhenCBOverflows_;}
+
+   ////////////////////////////////////////////////////////////////////////////
+   // Helper Class
+   class CaptureRestartHelper
+   {
+      bool restart_;
+      CCameraBase* pCam_;
+
+   public:
+      CaptureRestartHelper(CCameraBase* pCam)
+         :pCam_(pCam)
+      {
+         restart_=pCam_->IsCapturing();
+      }
+      operator bool()
+      {
+         return restart_;
+      }
+   };
+   ////////////////////////////////////////////////////////////////////////////
+
+   // Nested class for live streaming
+   ////////////////////////////////////////////////////////////////////////////
    class BaseSequenceThread : public MMDeviceThreadBase
    {
       friend class CCameraBase;
@@ -1521,11 +1540,16 @@ protected:
       }
       double GetIntervalMs(){return intervalMs_;}
       void SetLength(long images) {numImages_ = images;}
-		long GetLength() const {return numImages_;}
+      long GetLength() const {return numImages_;}
 
       long GetImageCounter(){return imageCounter_;}
       MM::MMTime GetStartTime(){return startTime_;}
       MM::MMTime GetActualDuration(){return actualDuration_;}
+
+      CCameraBase* GetCamera() {return camera_;}
+      int GetNumberOfImages() {return numImages_;}
+
+      void UpdateActualDuration() {actualDuration_ = camera_->GetCurrentMMTime() - startTime_;}
 
    private:
       int svc(void) throw()
@@ -1540,15 +1564,15 @@ protected:
             if (IsStopped())
                camera_->LogMessage("SeqAcquisition interrupted by the user\n");
 
-			}catch(...){
+         }catch(...){
             camera_->LogMessage(g_Msg_EXCEPTION_IN_THREAD, false);
          }
          stop_=true;
-         actualDuration_ = camera_->GetCurrentMMTime() - startTime_;
+         UpdateActualDuration();
          camera_->OnThreadExiting();
          return ret;
       }
-   protected:
+   private:
       CCameraBase* camera_;
       bool stop_;
       bool suspend_;
@@ -1561,7 +1585,19 @@ protected:
       MMThreadLock stopLock_;
       MMThreadLock suspendLock_;
    };
+   //////////////////////////////////////////////////////////////////////////
+
+private:
+
+   bool busy_;
+   bool stopWhenCBOverflows_;
+   Metadata metadata_;
+
+   class BaseSequenceThread;
+   BaseSequenceThread * thd_;
+   friend class BaseSequenceThread;
 };
+
 
 /**
 * Base class for creating single axis stage adapters.

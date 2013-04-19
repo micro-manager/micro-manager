@@ -150,7 +150,8 @@ ThorlabsUSBCam::ThorlabsUSBCam() :
    triggerDevice_(""),
 	dropPixels_(false),
 	saturatePixels_(false),
-	fractionOfPixelsToDropOrSaturate_(0.002)
+	fractionOfPixelsToDropOrSaturate_(0.002),
+   stopOnOverflow_(false)
 {
 
    // call the base class method to set-up default error codes/messages

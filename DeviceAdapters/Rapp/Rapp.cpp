@@ -89,7 +89,8 @@ MM::DeviceDetectionStatus RappScannerDetect(MM::Device& /*device*/, MM::Core& /*
 //
 RappScanner::RappScanner() :
    initialized_(false), port_(""), calibrationMode_(0), polygonAccuracy_(10), polygonMinRectSize_(10),
-   ttlTriggered_("Rising Edge"), rasterFrequency_(500), spotSize_(10), laser2_(false), pulseTime_us_(500000)
+   ttlTriggered_("Rising Edge"), rasterFrequency_(500), spotSize_(10), laser2_(false), pulseTime_us_(500000),
+   stopOnOverflow_(false)
 {
    InitializeDefaultErrorMessages();
 

@@ -1638,7 +1638,8 @@ CBaumerOptronic::CBaumerOptronic() :
    CCameraBase<CBaumerOptronic> (),
    initialized_(false),
    readoutUs_(0.0),
-   pWorkerThread_(NULL)
+   pWorkerThread_(NULL),
+   stopOnOverflow_(false)
 {
    // call the base class method to set-up default error codes/messages
    InitializeDefaultErrorMessages();

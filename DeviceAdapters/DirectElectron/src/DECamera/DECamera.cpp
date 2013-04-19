@@ -145,7 +145,8 @@ CDECamera::CDECamera() :
 	readoutUs_(0.0),
 	bitDepth_(16),
 	sensorSizeX_(0),
-	sensorSizeY_(0)
+	sensorSizeY_(0),
+   stopOnOverflow_(false)
 {
 	// call the base class method to set-up default error codes/messages
 	InitializeDefaultErrorMessages();
@@ -395,8 +396,7 @@ int CDECamera::StartSequenceAcquisition(long numImages, double interval_ms, bool
 	}	
 
 	 // Start thread.
-	thd_->Start(numImages,interval_ms);
-	stopOnOverflow_ = stopOnOverflow;
+   CCameraBase::StartSequenceAcquisition(numImages, interval_ms, stopOnOverflow);
 	return DEVICE_OK;
 }
 
