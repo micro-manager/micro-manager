@@ -1706,7 +1706,7 @@ int SpotCamera::StartSequenceAcquisition(long numImages, double interval_ms, boo
 	numImages_ = numImages;
 
 	
-   thd_->Start(numImages, interval_ms);
+   CCameraBase::StartSequenceAcquisition(numImages, interval_ms, stopOnOverflow);
 
 
    return DEVICE_OK;
