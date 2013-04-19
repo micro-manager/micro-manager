@@ -603,7 +603,7 @@ public class ProjectorControlForm extends javax.swing.JFrame implements OnStateL
 
    public void updatePointAndShoot() {
       controller_.setPointAndShootInterval(1000 * Double.parseDouble(this.pointAndShootIntervalSpinner.getValue().toString()));
-      controller_.activatePointAndShootMode(pointAndShootOnButton.isSelected());
+      controller_.enablePointAndShootMode(pointAndShootOnButton.isSelected());
    }
 
    public void dispose() {

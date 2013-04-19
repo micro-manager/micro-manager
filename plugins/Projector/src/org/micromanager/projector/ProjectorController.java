@@ -15,9 +15,12 @@ import ij.io.RoiEncoder;
 import ij.plugin.filter.GaussianBlur;
 import ij.plugin.frame.RoiManager;
 import ij.process.ImageProcessor;
+import java.awt.AWTEvent;
 import java.awt.Point;
 import java.awt.Polygon;
 import java.awt.Rectangle;
+import java.awt.Toolkit;
+import java.awt.event.AWTEventListener;
 import java.awt.event.ActionEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
@@ -75,6 +78,7 @@ public class ProjectorController {
    AtomicBoolean stopRequested_ = new AtomicBoolean(false);
    AtomicBoolean isRunning_ = new AtomicBoolean(false);
    private Set<OnStateListener> listeners_ = new HashSet<OnStateListener>();
+   private final AtomicBoolean pointAndShooteModeOn_ = new AtomicBoolean(false);
    
        
    public ProjectorController(ScriptInterface app) {
@@ -93,6 +97,13 @@ public class ProjectorController {
 
       loadMapping();
       pointAndShootMouseListener = setupPointAndShootMouseListener();
+      
+      Toolkit.getDefaultToolkit().addAWTEventListener(new AWTEventListener() {
+         @Override
+         public void eventDispatched(AWTEvent e) {
+            ProjectorController.this.enablePointAndShootMode(ProjectorController.this.pointAndShooteModeOn_.get());
+         }
+      }, AWTEvent.WINDOW_EVENT_MASK);
    }
 
    public boolean isSLM() {
@@ -311,7 +322,9 @@ public class ProjectorController {
       Point2D.Double resultPoint[][] = new Point2D.Double[1+n][1+n];
       for (int i = 0; i <= n; ++i) {
         for (int j = 0; j <= n; ++j) {
-           dmdPoint[i][j] = new Point2D.Double((int) left + i*width/n,(int) top + j*height/n);
+           int xoffset = (int) ((i+0.5)*width/(n+1.0));
+           int yoffset = (int) ((j+0.5)*height/(n+1.0));
+           dmdPoint[i][j] = new Point2D.Double(left + xoffset, top + yoffset);
                 Point spot = measureSpot(toIntPoint(dmdPoint[i][j]));
            if (spot != null) {
                 resultPoint[i][j] = toDoublePoint(spot);           
@@ -543,21 +556,29 @@ public class ProjectorController {
         };
     }
  
-   public void activatePointAndShootMode(boolean on) {
-      ImageCanvas canvas = null;
+   public void enablePointAndShootMode(boolean on) {
+      pointAndShooteModeOn_.set(on);
       ImageWindow window = WindowManager.getCurrentWindow();
       if (window != null) {
-         canvas = window.getCanvas();
-         for (MouseListener listener : canvas.getMouseListeners()) {
-            if (listener == pointAndShootMouseListener) {
-               canvas.removeMouseListener(listener);
+         ImageCanvas canvas = window.getCanvas();
+         if (on) {
+            if (canvas != null) {
+               boolean found = false;
+               for (MouseListener listener : canvas.getMouseListeners()) {
+                  if (listener == pointAndShootMouseListener) {
+                     found = true;
+                  }
+               }
+               if (!found) {
+                  canvas.addMouseListener(pointAndShootMouseListener);
+               }
             }
-         }
-      }
-
-      if (on) {
-         if (canvas != null) {
-            canvas.addMouseListener(pointAndShootMouseListener);
+         } else {
+            for (MouseListener listener : canvas.getMouseListeners()) {
+               if (listener == pointAndShootMouseListener) {
+                  canvas.removeMouseListener(listener);
+               }
+            }
          }
       }
    }
