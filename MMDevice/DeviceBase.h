@@ -1445,6 +1445,7 @@ protected:
 
    virtual double GetIntervalMs() {return thd_->GetIntervalMs();}
    virtual long GetImageCounter() {return thd_->GetImageCounter();}
+   virtual long GetNumberOfImages() {return thd_->GetNumberOfImages();}
 
    // called from the thread function before exit 
    virtual void OnThreadExiting() throw()
@@ -1540,7 +1541,7 @@ protected:
       }
       double GetIntervalMs(){return intervalMs_;}
       void SetLength(long images) {numImages_ = images;}
-      long GetLength() const {return numImages_;}
+      //long GetLength() const {return numImages_;}
 
       long GetImageCounter(){return imageCounter_;}
       MM::MMTime GetStartTime(){return startTime_;}
