@@ -6,6 +6,7 @@ package org.micromanager.utils;
 
 import java.awt.AWTEvent;
 import java.awt.Button;
+import java.awt.Component;
 import java.awt.Frame;
 import java.awt.Toolkit;
 import java.awt.Window;
@@ -13,10 +14,13 @@ import java.awt.event.AWTEventListener;
 import java.awt.event.MouseEvent;
 import javax.swing.AbstractButton;
 import javax.swing.JButton;
+import javax.swing.JCheckBox;
+import javax.swing.JCheckBoxMenuItem;
 import javax.swing.JComponent;
 import javax.swing.JMenuItem;
 import javax.swing.JToggleButton;
 import javax.swing.SwingUtilities;
+import javax.swing.text.JTextComponent;
 
 /**
  *
@@ -25,6 +29,31 @@ import javax.swing.SwingUtilities;
 public class UIMonitor {
 
    private static AWTEventListener clickListener_ = null;
+
+   private static String getComponentIdentifier(Component component) {
+      if (component instanceof AbstractButton) {
+         return ((AbstractButton) component).getText();
+      } else if (component instanceof Button) {
+         return ((Button) component).getLabel();
+      } else {
+         return "";
+      }
+   }
+
+   private static String getActionText(Component component) {
+      if (component instanceof JToggleButton) {
+         return "toggled " + (((JToggleButton) component).isSelected() ? "on" : "off");
+      } else if (component instanceof JCheckBoxMenuItem){
+         return "toggled " + (((JCheckBoxMenuItem) component).isSelected() ? "on" : "off");
+      } else {
+         return "clicked";
+      }
+   }
+
+   public static void disableUIMonitor() {
+      Toolkit.getDefaultToolkit().removeAWTEventListener(clickListener_);
+      clickListener_ = null;
+   }
 
    public static void enableUIMonitor() {
       if (clickListener_ != null) {
@@ -38,33 +67,25 @@ public class UIMonitor {
             String message = "";
             if (event.getID() == MouseEvent.MOUSE_CLICKED) {
                Object source = mouseEvent.getSource();
-               if (source instanceof AbstractButton) {
-                  AbstractButton button = (AbstractButton) source;
-                  String text = button.getText();
-                  if (text.isEmpty()) {
-                     text = button.getName();
+               if (source instanceof Component) {
+                     Component component = (Component) source;
+                     String text = component.getName();
+                     if (text == null || text.isEmpty()) {
+                        text = getComponentIdentifier(component);
+                     }
+                     if (!text.isEmpty()) {
+                        text = "\"" + text + "\" ";
+                     }
+                     message += "\n" + source.getClass().getSimpleName() + " " + text + getActionText(component) + " ";
                   }
-                  message += "\n\"" + text + "\" ";
-                  boolean selectable = (source instanceof JToggleButton)
-                             || (source instanceof JMenuItem);
-                  if (selectable) { 
-                    message += "toggled " + (button.isSelected() ? "on " : "off ");
-                  } else {
-                    message += "clicked ";
+                  if (!message.isEmpty()) {
+                     message += "in " + ((Window) SwingUtilities.getAncestorOfClass(Window.class, (Component) source)).getClass().getSimpleName() + ".";
+                     ReportingUtils.logMessage(message);
                   }
                }
-               if (!message.isEmpty()) {
-                  message += "in " + ((Window) SwingUtilities.getAncestorOfClass(Window.class, (JComponent) source)).getClass().getSimpleName() + ".";
-                  ReportingUtils.logMessage(message);
-               }            
-            }
+
          }
       };
       toolkit.addAWTEventListener(clickListener_, AWTEvent.MOUSE_EVENT_MASK);
-   }
-
-   public static void disableUIMonitor() {
-      Toolkit.getDefaultToolkit().removeAWTEventListener(clickListener_);
-      clickListener_ = null;
    }
 }
