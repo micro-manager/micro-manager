@@ -1462,6 +1462,7 @@ protected:
    }
 
    virtual bool isStopOnOverflow() {return stopWhenCBOverflows_;}
+   virtual void setStopOnOverflow(bool stop) {stopWhenCBOverflows_ = stop;}
 
    ////////////////////////////////////////////////////////////////////////////
    // Helper Class

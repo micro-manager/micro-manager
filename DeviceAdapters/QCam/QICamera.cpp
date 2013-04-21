@@ -331,7 +331,6 @@ QICamera::QICamera()
 ,m_frameDoneBuff(-1)
 ,m_softwareTrigger(false)
 ,m_rgbColor(false)
-,m_stopOnOverflow(false)
 {
    START_METHOD("QICamera::QICamera");
    try{
@@ -3662,7 +3661,7 @@ int QICamera::StartSequenceAcquisition(long numImages, double interval_ms, bool 
 
    // start the acquisition thread
    m_sthd->SetLength(numImages);
-   m_stopOnOverflow = stopOnOverflow;
+   setStopOnOverflow(stopOnOverflow);
    m_sthd->Start();
 
    return DEVICE_OK;
@@ -3673,7 +3672,7 @@ int QICamera::StartSequenceAcquisition(long numImages, double interval_ms, bool 
 */
 int QICamera::RestartSequenceAcquisition()
 {
-   return StartSequenceAcquisition(m_sthd->GetRemaining(), m_interval, m_stopOnOverflow);
+   return StartSequenceAcquisition(m_sthd->GetRemaining(), m_interval, isStopOnOverflow());
 }
 
 
@@ -3823,7 +3822,7 @@ int QICamera::InsertImage(int iFrameBuff)
       ret = GetCoreCallback()->InsertImage(this, (unsigned char*) m_colorBuffer.GetPixelsRW(), 
          m_colorBuffer.Width(), m_colorBuffer.Height(), m_colorBuffer.Depth());
 
-      if (!m_stopOnOverflow && ret == DEVICE_BUFFER_OVERFLOW) {
+      if (!isStopOnOverflow() && ret == DEVICE_BUFFER_OVERFLOW) {
          // do not stop on overflow - just reset the buffer
          GetCoreCallback()->ClearImageBuffer(this);
          ret = GetCoreCallback()->InsertImage(this, (unsigned char*) m_colorBuffer.GetPixelsRW(), 
@@ -3835,7 +3834,7 @@ int QICamera::InsertImage(int iFrameBuff)
       ret = GetCoreCallback()->InsertImage(this, (unsigned char*) pFrame->pBuffer, 
          pFrame->width, pFrame->height, bytes);
 
-      if (!m_stopOnOverflow && ret == DEVICE_BUFFER_OVERFLOW) {
+      if (!isStopOnOverflow() && ret == DEVICE_BUFFER_OVERFLOW) {
          // do not stop on overflow - just reset the buffer
          GetCoreCallback()->ClearImageBuffer(this);
          ret = GetCoreCallback()->InsertImage(this, (unsigned char*) pFrame->pBuffer, 
