@@ -136,7 +136,6 @@ int ThorlabsDCStage::Initialize()
 {
    int ret(DEVICE_OK);
     register int i;
-	char iToChar[25];
 	hola_=APTInit();  //Initialize variuos data structures, initialise USB bus and other start funcions
 	printf("initialize: %i\n",hola_);
 	
@@ -315,7 +314,7 @@ int ThorlabsDCStage::SetVelParam(double vel)
 	i=0;
 
 	newVel[i]=(float)vel;
-	MOT_SetVelParams(plSerialNum[i], 0.0 , pfAccn[i], vel);
+	MOT_SetVelParams(plSerialNum[i], 0.0f, pfAccn[i], static_cast<float>(vel));
 
    return DEVICE_OK;
 }
