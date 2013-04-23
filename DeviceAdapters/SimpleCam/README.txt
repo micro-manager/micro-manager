@@ -15,9 +15,6 @@ libgphoto2:
 On Mac, libgphoto2 is available from macports.
 
 freeimage:
-Patch FreeImage 3.15.0 with libfreeimage_raw_halfsize.patch to add support for raw images without color interpolation. Later versions of FreeImage already have the patch applied.
-patch -p0 < patches/libfreeimage_raw_halfsize.patch
-
 You need to add support for both FreeImage and FreeImagePlus.
 
 On Windows, link with both FreeImage.lib and FreeImagePlus.lib, and copy FreeImage.dll and FreeImagePlus.dll to the micro-manager directory.
