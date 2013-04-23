@@ -149,7 +149,7 @@ BOOL APIENTRY DllMain( HANDLE /*hModule*/,
 #ifdef _SIMPLECAM_GPHOTO_
 
 // define gphoto callback for logging
-static void gphoto2_logger(GPLogLevel level, const char *domain, const char *format, va_list args, void *data);
+static void gphoto2_logger(GPLogLevel level, const char *domain, const char *str, void *data);
 static int gphoto2_log_id = 0;
 
 #endif
@@ -1400,7 +1400,7 @@ bool CCameraFrontend::InLiveMode()
     * See whether we're in live view mode by checking acquisition is running (IsCapturing() == true) and 
     * StartSequenceAcquisition parameters are numImages == LONG_MAX, interval_ms == 0.0, stopOnOverflow == false.
     */
-   bool inLiveMode = IsCapturing() && (GetNumberOfImages() == LONG_MAX) && (GetIntervalMs() == 0.0) && (isStopOnOverflow() == false);
+   bool inLiveMode = IsCapturing() && (GetNumberOfImages() == -1) && (GetIntervalMs() == 0.0) && (isStopOnOverflow() == false);
 
    return inLiveMode;
 }
@@ -1416,7 +1416,7 @@ bool CCameraFrontend::UseCameraLiveView()
 {
    /* Use live view if the camera supports live view and micro-manager is in "Live View" mode. */
    bool useCameraLiveView =  cameraSupportsLiveView_ && InLiveMode();
-//   useCameraLiveView = true;
+//   useCameraLiveView = true; // XXX Force Live View for testing
    return useCameraLiveView;
 }
 
@@ -1759,7 +1759,7 @@ void FreeImageErrorHandler(FREE_IMAGE_FORMAT fif, const char *message)
  * Gphoto2 logging callback
  * log gphoto 2 debug and error messages to micro-manager CoreLog
  */
-static void gphoto2_logger(GPLogLevel level, const char *domain, const char *format, va_list args, void *data) 
+static void gphoto2_logger(GPLogLevel level, const char *domain, const char *str, void *data) 
 {
    ostringstream msg;
    msg.str("");
@@ -1770,14 +1770,7 @@ static void gphoto2_logger(GPLogLevel level, const char *domain, const char *for
    if (domain)
       msg << domain << ": ";
 
-   char *ret;
-   int len = vasprintf(&ret, format, args);
-   assert(len >= 0);
-   if (ret)
-   {
-      msg << ret;
-      free(ret);
-   }
+   msg << str;
 
    if (thisCam)
    {
