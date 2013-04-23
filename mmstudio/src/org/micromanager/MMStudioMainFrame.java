@@ -19,7 +19,6 @@
 //
 package org.micromanager;
 
-import org.micromanager.AcqControlDlg;
 import ij.IJ;
 import ij.ImageJ;
 import ij.ImagePlus;
@@ -353,14 +352,14 @@ public class MMStudioMainFrame extends JFrame implements
 
 
  public void checkSimpleAcquisition(TaggedImage image) {
-    try {
-       JSONObject tags = image.tags;
-      int width = MDUtils.getWidth(tags);
-      int height = MDUtils.getHeight(tags);
-      int depth = MDUtils.getDepth(tags);
-      int bitDepth = MDUtils.getBitDepth(tags);
-      int numCamChannels = (int) core_.getNumberOfCameraChannels();
-   
+      try {
+         JSONObject tags = image.tags;
+         int width = MDUtils.getWidth(tags);
+         int height = MDUtils.getHeight(tags);
+         int depth = MDUtils.getDepth(tags);
+         int bitDepth = MDUtils.getBitDepth(tags);
+         int numCamChannels = (int) core_.getNumberOfCameraChannels();
+
          if (acquisitionExists(SIMPLE_ACQ)) {
             if ((getAcquisitionImageWidth(SIMPLE_ACQ) != width)
                     || (getAcquisitionImageHeight(SIMPLE_ACQ) != height)
@@ -2820,10 +2819,8 @@ public class MMStudioMainFrame extends JFrame implements
    
    private void setShutterButton(boolean state) {
       if (state) {
-//         toggleButtonShutter_.setSelected(true);
          toggleButtonShutter_.setText("Close");
       } else {
-//         toggleButtonShutter_.setSelected(false);
          toggleButtonShutter_.setText("Open");
       }
    }
