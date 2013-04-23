@@ -47,8 +47,6 @@ import java.util.TimerTask;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import java.util.prefs.Preferences;
 import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
@@ -1259,6 +1257,7 @@ public final class VirtualAcquisitionDisplay implements AcquisitionDisplay,
             if (summary.has(zStepUm))
                cal.pixelDepth = summary.getDouble(zStepUm);
             hyperImage.setCalibration(cal);
+            hyperImage.repaintWindow();
          }
       } catch (JSONException ex) {
          // no pixelsize defined.  Nothing to do
@@ -2225,7 +2224,7 @@ public final class VirtualAcquisitionDisplay implements AcquisitionDisplay,
    }
 
    /*
-    * called just before image is drawn.  Notifies metadata panel to update
+    * Called just before image is drawn.  Notifies metadata panel to update
     * metadata or comments if this display is the active window.  Notifies histograms
     * that image is change to create appropriate LUTs and to draw themselves if this
     * is the active window
