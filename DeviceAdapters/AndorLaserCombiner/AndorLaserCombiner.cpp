@@ -539,7 +539,7 @@ int AndorLaserCombiner::OnPowerSetpoint(MM::PropertyBase* pProp, MM::ActionType 
    {
       pProp->Get(powerSetpoint);
 		LogMessage("to equipment: PowerSetpoint" + boost::lexical_cast<std::string, long>(Wavelength(il)) + "  = " + boost::lexical_cast<std::string,double>(powerSetpoint), true);
-		PowerSetpoint( il, (double)powerSetpoint);
+		PowerSetpoint( il, static_cast<float>(powerSetpoint));
 		if( openRequest_)
 			SetOpen();
 

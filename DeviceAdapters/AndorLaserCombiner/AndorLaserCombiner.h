@@ -75,7 +75,7 @@ public:
    int StartStageSequence()  {return DEVICE_OK;}
    int StopStageSequence()  {return DEVICE_OK;}
    int ClearStageSequence() {return DEVICE_OK;}
-   int AddToStageSequence(double position) {return DEVICE_OK;}
+   int AddToStageSequence(double /* position */) {return DEVICE_OK;}
    int SendStageSequence()  {return DEVICE_OK;}
 
 
