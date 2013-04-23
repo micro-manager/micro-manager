@@ -271,6 +271,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Toptica_iChrome_MLE_TCP", "
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "AxioCam", "..\SecretDeviceAdapters\AxioCam\AxioCam.vcproj", "{91CCB72B-852D-47D8-82FA-0E19A300A125}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "SigmaKoki", "..\SecretDeviceAdapters\SigmaKoki\SigmaKoki.vcproj", "{AC1AF894-E294-4A99-B8D1-1D7F5073B758}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
@@ -1293,6 +1295,14 @@ Global
 		{91CCB72B-852D-47D8-82FA-0E19A300A125}.Release|Win32.Build.0 = Debug|Win32
 		{91CCB72B-852D-47D8-82FA-0E19A300A125}.Release|x64.ActiveCfg = Debug|x64
 		{91CCB72B-852D-47D8-82FA-0E19A300A125}.Release|x64.Build.0 = Debug|x64
+		{AC1AF894-E294-4A99-B8D1-1D7F5073B758}.Debug|Win32.ActiveCfg = Debug|Win32
+		{AC1AF894-E294-4A99-B8D1-1D7F5073B758}.Debug|Win32.Build.0 = Debug|Win32
+		{AC1AF894-E294-4A99-B8D1-1D7F5073B758}.Debug|x64.ActiveCfg = Debug|x64
+		{AC1AF894-E294-4A99-B8D1-1D7F5073B758}.Debug|x64.Build.0 = Debug|x64
+		{AC1AF894-E294-4A99-B8D1-1D7F5073B758}.Release|Win32.ActiveCfg = Release|Win32
+		{AC1AF894-E294-4A99-B8D1-1D7F5073B758}.Release|Win32.Build.0 = Release|Win32
+		{AC1AF894-E294-4A99-B8D1-1D7F5073B758}.Release|x64.ActiveCfg = Release|x64
+		{AC1AF894-E294-4A99-B8D1-1D7F5073B758}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
