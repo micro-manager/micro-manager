@@ -314,4 +314,4 @@
         (clojure.set/difference (set (map #(.toLowerCase %) (devices-using-serial-port)))
                                 (set (map #(.toLowerCase %) (unix-built-devices)))
                                 #{"pi_gcs" "pi_gcs_2" "xcite120pc_exacte" "skeleton" "crystal"
-                                  "imic2000" "polychrome5000" "yokogawa"})))
+                                  "imic2000" "polychrome5000" "yokogawa" "ni100x" "twophoton"})))
