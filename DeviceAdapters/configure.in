@@ -360,7 +360,6 @@ AC_CONFIG_FILES(
 	[LeicaDMSTC/Makefile:LeicaDMSTC/Makefile.in:MMDEVAPI.rules]
 	[Ludl/Makefile:Ludl/Makefile.in:MMDEVAPI.rules]
 	[LudlLow/Makefile:LudlLow/Makefile.in:MMDEVAPI.rules]
-	[LumencorCIA/Makefile:LumencorCIA/Makefile.in:MMDEVAPI.rules]
 	[LumencorSpectra/Makefile:LumencorSpectra/Makefile.in:MMDEVAPI.rules]
 	[MaestroServo/Makefile:MaestroServo/Makefile.in:MMDEVAPI.rules]
 	[Marzhauser/Makefile:Marzhauser/Makefile.in:MMDEVAPI.rules]
