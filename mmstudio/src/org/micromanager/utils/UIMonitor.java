@@ -7,20 +7,14 @@ package org.micromanager.utils;
 import java.awt.AWTEvent;
 import java.awt.Button;
 import java.awt.Component;
-import java.awt.Frame;
 import java.awt.Toolkit;
 import java.awt.Window;
 import java.awt.event.AWTEventListener;
 import java.awt.event.MouseEvent;
 import javax.swing.AbstractButton;
-import javax.swing.JButton;
-import javax.swing.JCheckBox;
 import javax.swing.JCheckBoxMenuItem;
-import javax.swing.JComponent;
-import javax.swing.JMenuItem;
 import javax.swing.JToggleButton;
 import javax.swing.SwingUtilities;
-import javax.swing.text.JTextComponent;
 
 /**
  *
@@ -59,7 +53,6 @@ public class UIMonitor {
       if (clickListener_ != null) {
          return;
       }
-      Toolkit toolkit = Toolkit.getDefaultToolkit();
       clickListener_ = new AWTEventListener() {
          @Override
          public void eventDispatched(AWTEvent event) {
@@ -86,6 +79,6 @@ public class UIMonitor {
 
          }
       };
-      toolkit.addAWTEventListener(clickListener_, AWTEvent.MOUSE_EVENT_MASK);
+      Toolkit.getDefaultToolkit().addAWTEventListener(clickListener_, AWTEvent.MOUSE_EVENT_MASK);
    }
 }
