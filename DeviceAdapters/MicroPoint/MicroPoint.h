@@ -88,7 +88,7 @@ private:
    bool IsAttenuatorHome();
    long FindAttenuatorPosition();
    
-   std::vector<std::vector<std::pair<double,double>>> polygons_;
+   std::vector<std::vector<std::pair<double,double> > > polygons_;
    long polygonRepetitions_;
 };
 
