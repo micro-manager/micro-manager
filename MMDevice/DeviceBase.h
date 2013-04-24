@@ -1549,7 +1549,7 @@ protected:
       MM::MMTime GetActualDuration(){return actualDuration_;}
 
       CCameraBase* GetCamera() {return camera_;}
-      int GetNumberOfImages() {return numImages_;}
+      long GetNumberOfImages() {return numImages_;}
 
       void UpdateActualDuration() {actualDuration_ = camera_->GetCurrentMMTime() - startTime_;}
 
