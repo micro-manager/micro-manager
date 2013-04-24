@@ -5,6 +5,8 @@ typedef int AT_H;
 typedef int AT_BOOL;
 #if defined(__BORLANDC__) && (__BORLANDC__<=0x540)
   typedef  __int64 AT_64;
+#elif defined(_MSC_VER) && (_MSC_VER<=1310)
+  typedef  __int64 AT_64;  
 #else
   typedef  long long AT_64;
 #endif
@@ -66,6 +68,7 @@ typedef wchar_t AT_WC;
 #define AT_ERR_NULL_WAIT_PTR 35
 #define AT_ERR_NULL_PTRSIZE 36
 #define AT_ERR_NOMEMORY 37
+#define AT_ERR_DEVICEINUSE 38
 
 #define AT_ERR_HARDWARE_OVERFLOW 100
 

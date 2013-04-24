@@ -43,6 +43,7 @@
 #include "lineparser.h"
 #include "AndorSDK3Strings.h"
 #include "EventsManager.h"
+#include "CallBackManager.h"
 
 
 using namespace std;
@@ -161,7 +162,6 @@ CAndorSDK3Camera::CAndorSDK3Camera()
   stopAcquisitionCommand(NULL),
   sendSoftwareTrigger(NULL),
   frameCount(NULL),
-  frameRate(NULL),
   initialized_(false),
   b_cameraPresent_(false),
   number_of_devices_(0),
@@ -171,7 +171,6 @@ CAndorSDK3Camera::CAndorSDK3Camera()
   pDemoResourceLock_(0),
   image_buffers_(NULL),
   numImgBuffersAllocated_(0),
-  d_frameRate_(0),
   currentSeqExposure_(0),
   keep_trying_(false),
   roiX_(0),
@@ -227,7 +226,6 @@ CAndorSDK3Camera::CAndorSDK3Camera()
       cycleMode = cameraDevice->GetEnum(L"CycleMode");
       sendSoftwareTrigger = cameraDevice->GetCommand(L"SoftwareTrigger");
       frameCount = cameraDevice->GetInteger(L"FrameCount");
-      frameRate = cameraDevice->GetFloat(L"FrameRate");
    }
 }
 
@@ -251,7 +249,6 @@ CAndorSDK3Camera::~CAndorSDK3Camera()
    cameraDevice->Release(cycleMode);
    cameraDevice->Release(sendSoftwareTrigger);
    cameraDevice->Release(frameCount);
-   cameraDevice->Release(frameRate);
    deviceManager->CloseDevice(cameraDevice);
    deviceManager->CloseDevice(systemDevice);
    delete deviceManager;
@@ -351,37 +348,43 @@ int CAndorSDK3Camera::Initialize()
       b_zyla = true;
    }
    
+   InitialiseSDK3Defaults();
 
    //Create event manager and snapshot controller here
 
    eventsManager_ = new CEventsManager(cameraDevice);
    snapShotController_ = new SnapShotControl(cameraDevice, eventsManager_);
+   callbackManager_ = new CCallBackManager(this, thd_, snapShotController_);
 
    // Properties
-   binning_property = new TEnumProperty(MM::g_Keyword_Binning, cameraDevice->GetEnum(L"AOIBinning"),
-                                        this, thd_, snapShotController_, false, false);
-   AddAllowedValue(MM::g_Keyword_Binning, g_CameraDefaultBinning);
-   SetProperty(MM::g_Keyword_Binning, g_CameraDefaultBinning);
+   electronicShutteringMode_property = new TEnumProperty(TAndorSDK3Strings::ELECTRONIC_SHUTTERING_MODE,
+                                                         cameraDevice->GetEnum(L"ElectronicShutteringMode"), this, 
+                                                         thd_, snapShotController_, false, false);
 
    preAmpGain_property = new TEnumProperty(TAndorSDK3Strings::GAIN_TEXT, 
                                            cameraDevice->GetEnum(L"SimplePreAmpGainControl"),
                                            this, thd_, snapShotController_, false, true);
 
-   electronicShutteringMode_property = new TEnumProperty(TAndorSDK3Strings::ELECTRONIC_SHUTTERING_MODE,
-                                                         cameraDevice->GetEnum(L"ElectronicShutteringMode"), this, 
-                                                         thd_, snapShotController_, false, false);
+   pixelEncoding_property = new TEnumProperty(TAndorSDK3Strings::PIXEL_ENCODING,
+                                              cameraDevice->GetEnum(L"PixelEncoding"), this, thd_, 
+                                              snapShotController_, true, false);
 
-   temperatureControl_proptery = new TEnumProperty(TAndorSDK3Strings::TEMPERATURE_CONTROL,
-                                                   cameraDevice->GetEnum(L"TemperatureControl"), this, thd_, 
-                                                   snapShotController_, b_zyla ? true : false, false);
+   binning_property = new TEnumProperty(MM::g_Keyword_Binning, cameraDevice->GetEnum(L"AOIBinning"),
+                                        this, thd_, snapShotController_, false, false);
+   
+   AddAllowedValue(MM::g_Keyword_Binning, g_CameraDefaultBinning);
+   SetProperty(MM::g_Keyword_Binning, g_CameraDefaultBinning);
+
+   aoi_property_ = new TAOIProperty(TAndorSDK3Strings::ACQUISITION_AOI, this, cameraDevice, thd_,
+                                    snapShotController_, false);
 
    pixelReadoutRate_property = new TEnumProperty(TAndorSDK3Strings::PIXEL_READOUT_RATE,
                                                  cameraDevice->GetEnum(L"PixelReadoutRateMapper"),
                                                  this, thd_, snapShotController_, false, false);
 
-   pixelEncoding_property = new TEnumProperty(TAndorSDK3Strings::PIXEL_ENCODING,
-                                              cameraDevice->GetEnum(L"PixelEncoding"), this, thd_, 
-                                              snapShotController_, true, false);
+   temperatureControl_property = new TEnumProperty(TAndorSDK3Strings::TEMPERATURE_CONTROL,
+                                                   cameraDevice->GetEnum(L"TemperatureControl"), this, thd_, 
+                                                   snapShotController_, b_zyla, false);
 
    accumulationLength_property = new TIntegerProperty(TAndorSDK3Strings::ACCUMULATE_COUNT,
                                                       cameraDevice->GetInteger(L"AccumulateCount"), this, thd_, 
@@ -401,9 +404,6 @@ int CAndorSDK3Camera::Initialize()
    sensorCooling_property = new TBooleanProperty(TAndorSDK3Strings::SENSOR_COOLING, 
                                                  cameraDevice->GetBool(L"SensorCooling"), this, thd_, snapShotController_, false);
 
-   overlap_property = new TBooleanProperty(TAndorSDK3Strings::OVERLAP, cameraDevice->GetBool(L"Overlap"),
-                                           this, thd_, snapShotController_, false);
-
    triggerMode_Enum = cameraDevice->GetEnum(L"TriggerMode");
    triggerMode_remapper = new TTriggerRemapper(snapShotController_, triggerMode_Enum);
    std::map<std::wstring, std::wstring> triggerMode_map;
@@ -417,77 +417,25 @@ int CAndorSDK3Camera::Initialize()
 
    readTemperature_property = new TFloatProperty(TAndorSDK3Strings::SENSOR_TEMPERATURE, 
                                                  cameraDevice->GetFloat(L"SensorTemperature"), 
-                                                 this, thd_, snapShotController_, true, false);
+                                                 callbackManager_, true, false);
 
-   //frameRate_property = new TFloatProperty(TAndorSDK3Strings::FRAME_RATE, 
-   //                                        new TAndorFloatHolder(snapShotController_, frameRate),
-   //                                        this, thd_, snapShotController_, false, true);
+   overlap_property = new TBooleanProperty(TAndorSDK3Strings::OVERLAP, cameraDevice->GetBool(L"Overlap"),
+                                           this, thd_, snapShotController_, false);
 
    exposureTime_property = new TFloatProperty(MM::g_Keyword_Exposure,
-                                             new TAndorFloatValueMapper(cameraDevice->GetFloat(L"ExposureTime"), 1000),
-                                             this, thd_, snapShotController_, false, false);
-
-   aoi_property_ = new TAOIProperty(TAndorSDK3Strings::ACQUISITION_AOI, this, cameraDevice, thd_,
-                                    snapShotController_, false);
-
-   InitialiseSDK3Defaults();
-
-   // synchronize all properties
-   // --------------------------
-   nRet = UpdateStatus();
-   if (nRet != DEVICE_OK)
-      return nRet;
+                                       new TAndorFloatValueMapper(cameraDevice->GetFloat(L"ExposureTime"), 1000),
+                                       callbackManager_, false, false);
+   
+   frameRateLimits_property = new TFloatStringProperty(TAndorSDK3Strings::FRAME_RATE_LIMITS, 
+                                                 cameraDevice->GetFloat(L"FrameRate"), callbackManager_, true, true);
+   
+   frameRate_property = new TFloatProperty(TAndorSDK3Strings::FRAME_RATE, 
+                                             new TAndorFloatCache(cameraDevice->GetFloat(L"FrameRate")),  
+                                             callbackManager_, false, true);
 
    initialized_ = true;
-
-   ClearROI();
-
-   //MetaData / TimeStamp enable
-   IBool * metadataEnable = NULL;
-   IBool * mdTimeStampEnable = NULL;
-   try
-   {
-      metadataEnable = cameraDevice->GetBool(L"MetadataEnable");
-      metadataEnable->Set(true);
-      cameraDevice->Release(metadataEnable);
-   }
-   catch (exception & e)
-   {
-      string s("[Initialize] metadataEnable Caught Exception with message: ");
-      s += e.what();
-      LogMessage(s);
-      cameraDevice->Release(metadataEnable);
-   }
-
-   try
-   {
-      mdTimeStampEnable = cameraDevice->GetBool(L"MetadataTimestamp");
-      mdTimeStampEnable->Set(true);
-      cameraDevice->Release(mdTimeStampEnable);
-   }
-   catch (exception & e)
-   {
-      string s("[Initialize] metadataEnable TS Caught Exception with message: ");
-      s += e.what();
-      LogMessage(s);
-      cameraDevice->Release(mdTimeStampEnable);
-   }
-
-   //TimestampClockFrequency
-   IInteger* tsClkFrequency = NULL;
-   try
-   {
-      tsClkFrequency = cameraDevice->GetInteger(L"TimestampClockFrequency");
-      fpgaTSclockFrequency_ = tsClkFrequency->Get();
-      cameraDevice->Release(tsClkFrequency);
-   }
-   catch (exception & e)
-   {
-      string s("[Initialize] TS Clk Frequency Caught Exception with message: ");
-      s += e.what();
-      LogMessage(s);
-      cameraDevice->Release(tsClkFrequency);
-   }
+   //If this is commented out, Snap will fail untill reset to full image
+   ClearROI(); //TODO Remove when refactor AOI properties for R3
 
    char errorStr[MM::MaxStrLength];
    if (false == eventsManager_->Initialise(errorStr) )
@@ -515,7 +463,7 @@ int CAndorSDK3Camera::Shutdown()
       delete binning_property;
       delete preAmpGain_property;
       delete electronicShutteringMode_property;
-      delete temperatureControl_proptery;
+      delete temperatureControl_property;
       delete pixelReadoutRate_property;
       delete pixelEncoding_property;
       delete accumulationLength_property;
@@ -523,17 +471,19 @@ int CAndorSDK3Camera::Shutdown()
       delete temperatureStatus_property;
       delete sensorCooling_property;
       delete overlap_property;
-      //delete frameRate_property;
+      delete frameRate_property;
+      delete frameRateLimits_property;
       delete fanSpeed_property;
       delete spuriousNoiseFilter_property;
       delete aoi_property_;
-      delete triggerMode_valueMapper;
+      delete triggerMode_property;
       delete exposureTime_property;
 
+      delete callbackManager_;
       delete snapShotController_;
       // clean up objects used by the property browser
-      cameraDevice->Release(triggerMode_Enum);
       delete triggerMode_remapper;
+      cameraDevice->Release(triggerMode_Enum);
       delete eventsManager_;
    }
 
@@ -544,30 +494,64 @@ int CAndorSDK3Camera::Shutdown()
 void CAndorSDK3Camera::InitialiseSDK3Defaults()
 {
    IEnum * e_feature = NULL;
+   IInteger * i_feature = NULL;
+   IFloat * f_feature = NULL;
+   IBool * b_feature = NULL;
    try
    {
-      IFloat * f_feature = cameraDevice->GetFloat(L"ExposureTime");
-      f_feature->Set(0.0150f);
-      cameraDevice->Release(f_feature);
-      f_feature = NULL;
-      
-      e_feature = cameraDevice->GetEnum(L"TriggerMode");
-      e_feature->Set(L"Internal");
-      cameraDevice->Release(e_feature);
-      e_feature = NULL;
-
-      e_feature = cameraDevice->GetEnum(L"PixelReadoutRate");
-      e_feature->Set(L"280 MHz");
-      cameraDevice->Release(e_feature);
-      e_feature = NULL;
-
       e_feature = cameraDevice->GetEnum(L"ElectronicShutteringMode");
       e_feature->Set(L"Rolling");
       cameraDevice->Release(e_feature);
       e_feature = NULL;
-
       e_feature = cameraDevice->GetEnum(L"SimplePreAmpGainControl");
       e_feature->Set(L"11-bit (low noise)");
+      cameraDevice->Release(e_feature);
+      e_feature = NULL;
+      //Image Size
+      i_feature = cameraDevice->GetInteger(L"AOIWidth");
+      i_feature->Set(i_feature->Max());
+      cameraDevice->Release(i_feature);
+      i_feature = NULL;
+      i_feature = cameraDevice->GetInteger(L"AOILeft");
+      i_feature->Set(i_feature->Min());
+      cameraDevice->Release(i_feature);
+      i_feature = NULL;
+      i_feature = cameraDevice->GetInteger(L"AOIHeight");
+      i_feature->Set(i_feature->Max());
+      cameraDevice->Release(i_feature);
+      i_feature = NULL;
+      i_feature = cameraDevice->GetInteger(L"AOITop");
+      i_feature->Set(i_feature->Min());
+      cameraDevice->Release(i_feature);
+      i_feature = NULL;
+      //more enums - readout rate and trigger mode
+      e_feature = cameraDevice->GetEnum(L"PixelReadoutRate");
+      e_feature->Set(L"280 MHz");
+      cameraDevice->Release(e_feature);
+      e_feature = NULL;
+      e_feature = cameraDevice->GetEnum(L"TriggerMode");
+      e_feature->Set(L"Internal");
+      cameraDevice->Release(e_feature);
+      e_feature = NULL;
+      //Exposure
+      f_feature = cameraDevice->GetFloat(L"ExposureTime");
+      f_feature->Set(0.0340f);
+      cameraDevice->Release(f_feature);
+      f_feature = NULL;
+      //MetaData / TimeStamp enable
+      b_feature = cameraDevice->GetBool(L"MetadataEnable");
+      b_feature->Set(true);
+      cameraDevice->Release(b_feature);
+      b_feature = NULL;
+      b_feature = cameraDevice->GetBool(L"MetadataTimestamp");
+      b_feature->Set(true);
+      cameraDevice->Release(b_feature);
+      b_feature = NULL;
+      //TimestampClockFrequency
+      i_feature = cameraDevice->GetInteger(L"TimestampClockFrequency");
+      fpgaTSclockFrequency_ = i_feature->Get();
+      cameraDevice->Release(i_feature);
+      i_feature = NULL;
    }
    catch (exception & e)
    {
@@ -575,9 +559,10 @@ void CAndorSDK3Camera::InitialiseSDK3Defaults()
       s += e.what();
       LogMessage(s);
    }
-
+   cameraDevice->Release(b_feature);
+   cameraDevice->Release(f_feature);
+   cameraDevice->Release(i_feature);
    cameraDevice->Release(e_feature);
-   e_feature = NULL;
 }
 
 void CAndorSDK3Camera::UnpackDataWithPadding(unsigned char * _pucSrcBuffer)
@@ -1013,23 +998,6 @@ int CAndorSDK3Camera::StartSequenceAcquisition(long numImages, double interval_m
    {
       retCode = SetupCameraForSeqAcquisition(numImages);
    }
-      //// Set the frame rate to that held by the frame rate holder. Check the limits
-      //double held_fr = 0.0;
-      //if (frameRate->IsWritable())
-      //{
-      //   held_fr = frameRate_floatHolder->Get();
-      //   if (held_fr > frameRate->Max())
-      //   {
-      //      held_fr = frameRate->Max();
-      //      frameRate_floatHolder->Set(held_fr);
-      //   }
-      //   else if (held_fr < frameRate->Min())
-      //   {
-      //      held_fr = frameRate->Min();
-      //      frameRate_floatHolder->Set(held_fr);
-      //   }
-      //   frameRate->Set(held_fr);
-      //}
 
    if (DEVICE_OK == retCode)
    {
@@ -1279,8 +1247,7 @@ MySequenceThread::MySequenceThread(CAndorSDK3Camera * pCam)
   suspend_(false),
   camera_(pCam),
   startTime_(0),
-  actualDuration_(0),
-  lastFrameTime_(0) 
+  actualDuration_(0)
 {
 }
 
@@ -1304,7 +1271,6 @@ void MySequenceThread::Start(long numImages, double intervalMs)
    activate();
    actualDuration_ = 0;
    startTime_ = camera_->GetCurrentMMTime();
-   lastFrameTime_ = 0;
 }
 
 bool MySequenceThread::IsStopped()

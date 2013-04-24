@@ -45,7 +45,6 @@ namespace andor {
    class IEnum;
    class IBool;
    class IInteger;
-   class IFloat;
    class IBufferControl;
    class ICommand;
 };
@@ -53,14 +52,14 @@ namespace andor {
 class TEnumProperty;
 class TIntegerProperty;
 class TFloatProperty;
+class TFloatStringProperty;
 class TBooleanProperty;
 class TAOIProperty;
 class SnapShotControl;
-class TAndorFloatValueMapper;
-class TAndorFloatHolder;
 class TAndorEnumValueMapper;
 class TTriggerRemapper;
 class CEventsManager;
+class ICallBackManager;
 
 
 //////////////////////////////////////////////////////////////////////////////
@@ -113,11 +112,6 @@ public:
    int SetBinning(int bS);
    int IsExposureSequenceable(bool& isSequenceable) const {isSequenceable = false; return DEVICE_OK;}
 
-   // action interface
-   int OnTriggerMode(MM::PropertyBase* pProp, MM::ActionType eAct);
-   int OnExposureTime(MM::PropertyBase* pProp, MM::ActionType eAct);
-   MM::MMTime CurrentTime(void) { return GetCurrentMMTime(); };
-
 private:
    void PerformReleaseVersionCheck();
    void InitialiseSDK3Defaults();
@@ -134,14 +128,12 @@ private:
 
    ImgBuffer img_;
    bool busy_;
-   bool stopOnOverFlow_;
    bool initialized_;
    unsigned roiX_;
    unsigned roiY_;
    AT_64 sequenceStartTime_;
    AT_64 fpgaTSclockFrequency_;
    AT_64 timeStamp_;
-   double d_frameRate_;
    int number_of_devices_;
    bool keep_trying_;
    bool in_external_;
@@ -170,7 +162,7 @@ private:
    TAOIProperty* aoi_property_;
    TEnumProperty* preAmpGain_property;
    TEnumProperty* electronicShutteringMode_property;
-   TEnumProperty* temperatureControl_proptery;
+   TEnumProperty* temperatureControl_property;
    TEnumProperty* pixelReadoutRate_property;
    TEnumProperty* pixelEncoding_property;
    TIntegerProperty* accumulationLength_property;
@@ -183,6 +175,7 @@ private:
    TBooleanProperty* spuriousNoiseFilter_property;
    TFloatProperty* exposureTime_property;
    TFloatProperty* frameRate_property;
+   TFloatStringProperty* frameRateLimits_property;
 
    // atcore++ objects
    andor::IDeviceManager* deviceManager;
@@ -194,48 +187,48 @@ private:
    andor::ICommand* stopAcquisitionCommand;
    andor::ICommand* sendSoftwareTrigger;
    andor::IInteger* frameCount;
-   andor::IFloat* frameRate;
 
    // Objects used by the properties
    andor::IEnum* triggerMode_Enum;
-   TAndorEnumValueMapper* triggerMode_valueMapper;
    TTriggerRemapper* triggerMode_remapper;
+   TAndorEnumValueMapper* triggerMode_valueMapper;
 
    CEventsManager* eventsManager_;
+   ICallBackManager * callbackManager_;
 };
 
 class MySequenceThread : public MMDeviceThreadBase
 {
    friend class CAndorSDK3Camera;
    enum { default_numImages=1, default_intervalMS = 100 };
-   public:
-      MySequenceThread(CAndorSDK3Camera* pCam);
-      ~MySequenceThread();
-      void Stop();
-      void Start(long numImages, double intervalMs);
-      bool IsStopped();
-      void Suspend();
-      bool IsSuspended();
-      void Resume();
-      double GetIntervalMs(){return intervalMs_;}                               
-      void SetLength(long images) {numImages_ = images;}                        
-      long GetLength() const {return numImages_;}
-      long GetImageCounter(){return imageCounter_;}                             
-      MM::MMTime GetStartTime(){return startTime_;}                             
-      MM::MMTime GetActualDuration(){return actualDuration_;}
-   private:                                                                     
-      int svc(void) throw();
-      CAndorSDK3Camera* camera_;                                                     
-      bool stop_;                                                               
-      bool suspend_;                                                            
-      long numImages_;                                                          
-      long imageCounter_;                                                       
-      double intervalMs_;                                                       
-      MM::MMTime startTime_;                                                    
-      MM::MMTime actualDuration_;                                               
-      MM::MMTime lastFrameTime_;                                                
-      MMThreadLock stopLock_;                                                   
-      MMThreadLock suspendLock_;                                                
+public:
+   MySequenceThread(CAndorSDK3Camera* pCam);
+   ~MySequenceThread();
+   void Stop();
+   void Start(long numImages, double intervalMs);
+   bool IsStopped();
+   void Suspend();
+   bool IsSuspended();
+   void Resume();
+   double GetIntervalMs(){return intervalMs_;}                               
+   void SetLength(long images) {numImages_ = images;}                        
+   long GetLength() const {return numImages_;}
+   long GetImageCounter(){return imageCounter_;}                             
+   MM::MMTime GetStartTime(){return startTime_;}                             
+   MM::MMTime GetActualDuration(){return actualDuration_;}
+
+private:                                                                     
+   int svc(void) throw();
+   CAndorSDK3Camera* camera_;                                                     
+   bool stop_;                                                               
+   bool suspend_;                                                            
+   long numImages_;                                                          
+   long imageCounter_;                                                       
+   double intervalMs_;                                                       
+   MM::MMTime startTime_;                                                    
+   MM::MMTime actualDuration_;                                               
+   MMThreadLock stopLock_;                                                   
+   MMThreadLock suspendLock_;                                                
 };
 
 

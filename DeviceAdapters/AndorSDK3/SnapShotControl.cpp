@@ -165,6 +165,7 @@ int SnapShotControl::getTransferTime()
 
 void SnapShotControl::poiseForSnapShot()
 {
+   is_poised_ = true;
    IEnum* cycleMode = cameraDevice->GetEnum(L"CycleMode");
    cycleMode->Set(L"Continuous");
    cameraDevice->Release(cycleMode);
@@ -181,7 +182,6 @@ void SnapShotControl::poiseForSnapShot()
       bufferControl->Queue(image_buffer_, static_cast<int>(ImageSize));
    }
    startAcquisitionCommand->Do();
-   is_poised_ = true;
    mono12PackedMode_ = false;
    IEnum* pixelEncoding = cameraDevice->GetEnum(L"PixelEncoding");
    if (pixelEncoding->GetStringByIndex(pixelEncoding->GetIndex()).compare(L"Mono12Packed") == 0)
@@ -246,9 +246,9 @@ void SnapShotControl::getData(unsigned char *& return_buffer)
 
 void SnapShotControl::leavePoisedMode()
 {
+   is_poised_ = false;
    stopAcquisitionCommand->Do();
    bufferControl->Flush();
-   is_poised_ = false;
 
    delete [] image_buffer_;
    image_buffer_ = NULL;

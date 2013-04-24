@@ -4,35 +4,57 @@
 #include "atcore++.h"
 #include "MMDeviceConstants.h"
 #include "Property.h"
-#include "SnapShotControl.h"
 
-class MySequenceThread;
-class CAndorSDK3Camera;
+class ICallBackManager;
 
 class TFloatProperty : public andor::IObserver
 {
 public:
    TFloatProperty(const std::string & MM_name,
                   andor::IFloat* float_feature,
-                  CAndorSDK3Camera* camera,
-                  MySequenceThread* thd,
-                  SnapShotControl* snapShotController,
-                  bool readOnly, bool limited);
+                  ICallBackManager* callback,
+                  bool readOnly, bool needsCallBack);
    ~TFloatProperty();
 
+protected:
    void Update(andor::ISubject* Subject);
    int OnFloat(MM::PropertyBase* pProp, MM::ActionType eAct);
    typedef MM::Action<TFloatProperty> CPropertyAction;
 
 private:
-   andor::IDevice* device_hndl_;
+   void setFeatureWithinLimits(double new_value);
+
+private:
    andor::IFloat* float_feature_;
-   CAndorSDK3Camera* camera_;
+   ICallBackManager* callback_;
    std::string MM_name_;
-   MySequenceThread * thd_;
-   SnapShotControl* snapShotController_;
-   bool limited_;
+   bool callbackRegistered_;
+   static const int DEC_PLACES_ERROR = 4;
 };
+
+class TFloatStringProperty : public andor::IObserver
+{
+public:
+   TFloatStringProperty(const std::string & MM_name,
+                  andor::IFloat* float_feature,
+                  ICallBackManager* callback,
+                  bool readOnly, bool needsCallBack);
+   ~TFloatStringProperty();
+
+   void Update(andor::ISubject* Subject);
+   int OnFStrChangeRefresh(MM::PropertyBase* pPropBase, MM::ActionType eAct);
+protected:
+   typedef MM::Action<TFloatStringProperty> CPropertyAction;
+
+private:
+   andor::IFloat* float_feature_;
+   ICallBackManager* callback_;
+   std::string MM_name_;
+   std::string displayStrValue_;
+   bool callbackRegistered_;
+};
+
+
 
 class TAndorFloatFilter : public andor::IFloat
 {
@@ -72,34 +94,42 @@ protected:
    double m_factor;
 };
 
-class TAndorFloatHolder : public TAndorFloatFilter
+class TAndorFloatCache : public TAndorFloatFilter
 {
 public:
-   TAndorFloatHolder(SnapShotControl* snapShotController, andor::IFloat* _float)
-      :m_snapShotController(snapShotController), TAndorFloatFilter(_float)
+   TAndorFloatCache(andor::IFloat* _float)
+      : TAndorFloatFilter(_float),
+        cached_float(0.00)
    {
-      holding_float = m_float->Get();
+      cached_float = m_float->Get();
    }
 
-   double Get()
+   double Get(bool sscPoised)
    {
-      if (m_snapShotController->isInternal()) {
-         return holding_float;
+      if (sscPoised) 
+      {
+         return cached_float;
       }
-      else {
+      else 
+      {
          return m_float->Get();
       }
    }
 
    void Set(double Value)
    {
-      holding_float = Value;
+      cached_float = Value;
       m_float->Set(Value);
    }
 
+   void SetCache(double Value)
+   {
+      cached_float = Value;
+   }
+
 private:
-   SnapShotControl* m_snapShotController;
-   double holding_float;
+   double cached_float;
 };
+
 
 #endif // _FLOATPROPERTY_H_

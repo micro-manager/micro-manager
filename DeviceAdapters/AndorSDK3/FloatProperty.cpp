@@ -1,39 +1,38 @@
 #include "FloatProperty.h"
-#include "AndorSDK3.h"
+#include "CallBackManager.h"
+#include <cmath>
+#include <iomanip>
 
 using namespace andor;
 using namespace std;
 
-TFloatProperty::TFloatProperty(const string & MM_name, IFloat * float_feature, CAndorSDK3Camera * camera,
-                               MySequenceThread * thd, SnapShotControl * snapShotController, bool readOnly,
-                               bool limited)
+TFloatProperty::TFloatProperty(const string & MM_name, IFloat * float_feature, ICallBackManager* callback,
+                                bool readOnly, bool needsCallBack)
 : MM_name_(MM_name),
   float_feature_(float_feature),
-  camera_(camera),
-  thd_(thd),
-  snapShotController_(snapShotController),
-  limited_(limited)
+  callback_(callback),
+  callbackRegistered_(needsCallBack)
 {
    CPropertyAction * pAct = new CPropertyAction (this, &TFloatProperty::OnFloat);
-   camera_->CreateProperty(MM_name.c_str(), "", MM::Float, readOnly, pAct);
+   callback->CPCCreateProperty(MM_name.c_str(), "", MM::Float, readOnly, pAct);
 
    try 
    {
-      if (limited)
+      if (needsCallBack)
       {
          float_feature_->Attach(this);
       }
    }
    catch (exception & e)
    {
-      // Callback not implemented for this feature
-      camera_->LogMessage(e.what());
+      // SDK3 Callback not implemented for this feature
+      callback->CPCLog(e.what());
    }
 }
 
 TFloatProperty::~TFloatProperty()
 {
-   if (limited_)
+   if (callbackRegistered_)
    {
       try 
       {
@@ -41,25 +40,51 @@ TFloatProperty::~TFloatProperty()
       }
       catch (exception & e)
       {
-         // Callback not implemented for this feature
-         camera_->LogMessage(e.what());
+         // SDK3 Callback not implemented for this feature
+         callback_->CPCLog(e.what());
       }
    }
    //Clean up memory, created as passed in
-   camera_->GetCameraDevice()->Release(float_feature_);
+   callback_->GetCameraDevice()->Release(float_feature_);
 }
 
-void TFloatProperty::Update(ISubject * /*Subject*/)
+void TFloatProperty::Update(ISubject * Subject)
 {
-   // This property has been changed in SDK3. The new value will be set by a
-   // call to TFloatProperty::OnFloat, in here reset the limits
-   if (limited_)
+   //if NOT Poised,... (Snapshot sets this first, then changes trigger silently
+   // so once updates get applied, and repoise, snapshot sets true, so no erroneous updates get applied
+   if ( !callback_->IsSSCPoised() )
    {
-      camera_->SetPropertyLimits(MM_name_.c_str(), float_feature_->Min(), float_feature_->Max());
+      IFloat * featureSubject = dynamic_cast<IFloat *>(Subject);
+      TAndorFloatCache * cache = dynamic_cast<TAndorFloatCache *>(float_feature_);
+      if (cache && featureSubject)
+      {
+         cache->SetCache(featureSubject->Get());
+      }
    }
 }
 
-inline bool almostEqual(double val1, double val2, double precisionFactor)
+void TFloatProperty::setFeatureWithinLimits(double new_value)
+{
+   try
+   {
+      if (new_value < float_feature_->Min())
+      {
+         new_value = float_feature_->Min();
+      }
+      else if (new_value > float_feature_->Max())
+      {
+         new_value = float_feature_->Max();
+      }
+      float_feature_->Set(new_value);
+   }
+   catch (exception & e)
+   {
+      callback_->CPCLog(e.what());
+   }
+}
+
+
+inline bool almostEqual(double val1, double val2, int precisionFactor)
 {
    const double base = 10.0;
    double precisionError = 1.0 / pow(base, precisionFactor);
@@ -71,57 +96,121 @@ int TFloatProperty::OnFloat(MM::PropertyBase * pProp, MM::ActionType eAct)
 {
    if (eAct == MM::BeforeGet)
    {
-      pProp->Set(float_feature_->Get());
+      TAndorFloatCache * cache = dynamic_cast<TAndorFloatCache *>(float_feature_);
+      if (cache)
+      {
+         pProp->Set(cache->Get(callback_->IsSSCPoised()));
+      }
+      else
+      {
+         pProp->Set(float_feature_->Get());
+      }
+
    }
    else if (eAct == MM::AfterSet)
    {
-      double new_value;
+      double new_value = 0.0, current_value = float_feature_->Get();
       pProp->Get(new_value);
-      if (!almostEqual(new_value, float_feature_->Get(), 6))
+      TAndorFloatCache * cache = dynamic_cast<TAndorFloatCache *>(float_feature_);
+      if (cache)
       {
-         if (snapShotController_->isPoised())
+         current_value = cache->Get(callback_->IsSSCPoised());
+      }
+      if (!almostEqual(new_value, current_value, DEC_PLACES_ERROR))
+      {
+         //Need check first, as camera running,min exp is e.g. 10ms (Long)
+         if (callback_->IsSSCPoised())
          {
-            if (!thd_->IsStopped())
-            {
-               camera_->StopSequenceAcquisition();
-            }
-
-            bool was_poised = false;
-            if (snapShotController_->isPoised())
-            {
-               snapShotController_->leavePoisedMode();
-               was_poised = true;
-            }
-
-            if (new_value < float_feature_->Min())
-            {
-               new_value = float_feature_->Min();
-            }
-            else if (new_value > float_feature_->Max())
-            {
-               new_value = float_feature_->Max();
-            }
-            float_feature_->Set(new_value);
-
-            if (was_poised)
-            {
-               snapShotController_->poiseForSnapShot();
-            }
+            callback_->SSCLeavePoised();
+            setFeatureWithinLimits(new_value);
+            callback_->SSCEnterPoised();
          }
-         else if (float_feature_->IsWritable())
+         else if (float_feature_->IsWritable()) //FastExpSw
          {
-            if (new_value < float_feature_->Min())
-            {
-               new_value = float_feature_->Min();
-            }
-            else if (new_value > float_feature_->Max())
-            {
-               new_value = float_feature_->Max();
-            }
-            float_feature_->Set(new_value);
+            setFeatureWithinLimits(new_value);
+         }
+         else
+         {
+            callback_->CPCLog("[TFloatProperty::OnFloat] after set, !poised !writable");
          }
       }
    }
 
+   return DEVICE_OK;
+}
+
+
+
+TFloatStringProperty::TFloatStringProperty(const string & MM_name, IFloat * float_feature, 
+                                           ICallBackManager * callback, bool readOnly, bool needsCallBack)
+: MM_name_(MM_name),
+  float_feature_(float_feature),
+  callback_(callback),
+  callbackRegistered_(needsCallBack)
+{
+   displayStrValue_ = "";
+   CPropertyAction * pAct = new CPropertyAction (this, &TFloatStringProperty::OnFStrChangeRefresh);
+   callback->CPCCreateProperty(MM_name.c_str(), displayStrValue_.c_str(), MM::String, readOnly, pAct);
+
+   try 
+   {
+      if (needsCallBack)
+      {
+         float_feature_->Attach(this);
+      }
+   }
+   catch (exception & e)
+   {
+      // Callback not implemented for this feature
+      callback->CPCLog(e.what());
+   }
+}
+
+TFloatStringProperty::~TFloatStringProperty()
+{
+   if (callbackRegistered_)
+   {
+      try 
+      {
+         float_feature_->Detach(this);
+      }
+      catch (exception & e)
+      {
+         // Callback not implemented for this feature
+         callback_->CPCLog(e.what());
+      }
+   }
+   //Clean up memory, created as passed in
+   callback_->GetCameraDevice()->Release(float_feature_);
+}
+
+void TFloatStringProperty::Update(ISubject * /*Subject*/)
+{
+   if (callbackRegistered_)
+   {
+      if ( !callback_->IsSSCPoised() )
+      {
+         stringstream ss;
+         ss.setf(ios::fixed, ios::floatfield);
+         ss << "Min: " << setprecision(5) << float_feature_->Min() << "  Max: " << float_feature_->Max();
+         displayStrValue_ = ss.str();
+      }
+   }
+}
+
+int TFloatStringProperty::OnFStrChangeRefresh(MM::PropertyBase * pPropBase, MM::ActionType eAct)
+{
+   if (MM::BeforeGet == eAct)
+   {
+      MM::Property * pProperty = dynamic_cast<MM::Property *>(pPropBase);
+      pProperty->SetReadOnly(false);
+      pProperty->Set(displayStrValue_.c_str() );
+      pProperty->SetReadOnly(true);
+
+   }
+   else if (MM::AfterSet == eAct)
+   {
+      // Code execution should never get in here.
+   }
    return DEVICE_OK;
 }

@@ -380,6 +380,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\CallBackManager.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\..\MMDevice\DeviceUtils.cpp"
 				>
 			</File>
@@ -439,6 +443,10 @@
 			</File>
 			<File
 				RelativePath=".\BooleanProperty.h"
+				>
+			</File>
+			<File
+				RelativePath=".\CallBackManager.h"
 				>
 			</File>
 			<File
