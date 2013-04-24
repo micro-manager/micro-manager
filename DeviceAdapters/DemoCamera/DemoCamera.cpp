@@ -755,14 +755,13 @@ double CDemoCamera::GetSequenceExposure()
 {
    if (exposureSequence_.size() == 0) 
       return this->GetExposure();
-   if (sequenceIndex_ > exposureSequence_.size() - 1)
-      sequenceIndex_ = 0;
+
    double exposure = exposureSequence_[sequenceIndex_];
+
    sequenceIndex_++;
    if (sequenceIndex_ >= exposureSequence_.size())
-   {
       sequenceIndex_ = 0;
-   }
+
    return exposure;
 }
 
@@ -2572,13 +2571,13 @@ int CDemoObjectiveTurret::OnTrigger(MM::PropertyBase* pProp, MM::ActionType eAct
       std::string tr;
       pProp->Get(tr);
       if (tr == "+") {
-         if (sequenceIndex_ < (int) sequence_.size()) {
+         if (sequenceIndex_ < sequence_.size()) {
             std::string state = sequence_[sequenceIndex_];
             int ret = SetProperty("State", state.c_str());
             if (ret != DEVICE_OK)
                return ERR_IN_SEQUENCE;
             sequenceIndex_++;
-            if (sequenceIndex_ >= (int) sequence_.size()) {
+            if (sequenceIndex_ >= sequence_.size()) {
                sequenceIndex_ = 0;
             }
          } else
@@ -3194,13 +3193,13 @@ int DemoDA::OnTrigger(MM::PropertyBase* pProp, MM::ActionType eAct)
       std::string tr;
       pProp->Get(tr);
       if (tr == "+") {
-         if (sequenceIndex_ < (int) sentSequence_.size()) {
-           double voltage = sentSequence_[sequenceIndex_];
+         if (sequenceIndex_ < sentSequence_.size()) {
+            double voltage = sentSequence_[sequenceIndex_];
             int ret = SetSignal(voltage);
             if (ret != DEVICE_OK)
                return ERR_IN_SEQUENCE;
             sequenceIndex_++;
-            if (sequenceIndex_ >= (int) sentSequence_.size()) {
+            if (sequenceIndex_ >= sentSequence_.size()) {
                sequenceIndex_ = 0;
             }
          } else

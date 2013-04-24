@@ -221,7 +221,7 @@ private:
    bool isSequenceable_;
    long sequenceMaxLength_;
    bool sequenceRunning_;
-   long sequenceIndex_;
+   unsigned long sequenceIndex_;
    double GetSequenceExposure();
    std::vector<double> exposureSequence_;
    long imageCounter_;
@@ -372,8 +372,8 @@ private:
    bool busy_;
    bool initialized_;
    bool sequenceRunning_;
-   int sequenceMaxSize_;
-   int sequenceIndex_;
+   unsigned long sequenceMaxSize_;
+   unsigned long sequenceIndex_;
    std::vector<std::string> sequence_;
    long position_;
 };
@@ -824,7 +824,7 @@ private:
    bool open_;
    std::vector<double> nascentSequence_;
    std::vector<double> sentSequence_;
-   long sequenceIndex_;
+   unsigned long sequenceIndex_;
    bool sequenceRunning_;
 
    void SetSequenceStateOn() { sequenceRunning_ = true; }
