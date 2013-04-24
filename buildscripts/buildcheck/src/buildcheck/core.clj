@@ -52,8 +52,13 @@
                log-text)
     true false))
 
-(defn visual-studio-errors [bits]
-  (filter contains-errors? (map vs-log-text (vs-log-files bits))))
+(defn contains-warnings? [log-text]
+  (if (re-find #"\: warning" log-text)
+    true false))
+
+(defn visual-studio-errors-and-warnings [bits]
+  (let [texts (map vs-log-text (vs-log-files bits))]
+    (filter #(or (contains-warnings? %) (contains-errors? %)) texts)))
 
 (defn javac-errors [result-text]
   (map first
@@ -184,7 +189,7 @@
   (let [f (result-file bits mode)
         svn-confs (svn-conflicts)
         result-txt (slurp f)
-        vs-errors (visual-studio-errors bits)
+        vs-errors (visual-studio-errors-and-warnings bits)
         outdated-dlls (map #(.getName %) (old-dlls (bin-dir bits) 24))
         javac-errs (javac-errors result-txt)
         outdated-jars (map #(.getName %)
@@ -205,7 +210,7 @@
           " BUILD ERROR REPORT\n"
         "For the full build output, see " (.getAbsolutePath f)
         (report-segment "Subversion conflicts" svn-confs)
-        (report-segment "Visual Studio reported errors" vs-errors)
+        (report-segment "Visual Studio reported errors and warnings" vs-errors)
         (report-segment "Outdated device adapter DLLs" outdated-dlls)
         (report-segment "Errors reported by java compiler" javac-errs)
         (report-segment "Outdated jar files" outdated-jars)
