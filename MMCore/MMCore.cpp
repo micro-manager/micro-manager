@@ -1636,7 +1636,7 @@ long CMMCore::getExposureSequenceMaxLength(const char* cameraLabel) throw (CMMEr
 void CMMCore::loadExposureSequence(const char* cameraLabel, std::vector<double> exposureTime_ms) throw (CMMError)
 {
    MM::Camera* pCamera = getSpecificDevice<MM::Camera>(cameraLabel);
-   long maxLength = getExposureSequenceMaxLength(cameraLabel);
+   unsigned long maxLength = getExposureSequenceMaxLength(cameraLabel);
    if (exposureTime_ms.size() > maxLength) {
       throw CMMError(cameraLabel, getDeviceErrorText(DEVICE_SEQUENCE_TOO_LARGE, pCamera).c_str(), MMERR_DEVICE_GENERIC);
    }
