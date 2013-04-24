@@ -542,7 +542,7 @@ long AnalogIO::GetListIndex()
    long listIdx(0);
    int ret = GetProperty(g_PropertyListIdx, listIdx);
    assert(ret == DEVICE_OK);
-   assert(listIdx < lists_.size());
+   assert(listIdx < static_cast<long>(lists_.size()));
    return listIdx;
 }
 
