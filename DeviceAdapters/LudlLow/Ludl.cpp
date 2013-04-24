@@ -1078,11 +1078,11 @@ int Shutter::GetShutterPosition(bool& state)
       return DEVICE_SERIAL_INVALID_RESPONSE;
 
    if (shutterNumber_ == 1)
-      state = reply & 4;
+      state = (reply & 4) != 0;
    else if (shutterNumber_ == 2)
-      state = reply & 8;
+      state = (reply & 8) != 0;
    else if (shutterNumber_ == 3)
-      state = reply & 16;
+      state = (reply & 16) != 0;
 
    return DEVICE_OK;
 }
