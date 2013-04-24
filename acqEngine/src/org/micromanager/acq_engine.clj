@@ -64,9 +64,6 @@
 
 (def ^:dynamic state (atom {:stop false}))
 
-(defn state-assoc! [& args]
-  (apply swap! state assoc args))
-
 (def attached-runnables (atom (vec nil)))
 
 (def pending-devices (atom #{}))
@@ -516,7 +513,7 @@
 
 (defn interruptible-sleep [time-ms]
   (let [sleepy (CountDownLatch. 1)]
-    (state-assoc! :sleepy sleepy :next-wake-time (+ (jvm-time-ms) time-ms))
+    (swap! state assoc :sleepy sleepy :next-wake-time (+ (jvm-time-ms) time-ms))
     (.await sleepy time-ms TimeUnit/MILLISECONDS)))
 
 (defn acq-sleep [interval-ms]
@@ -538,7 +535,7 @@
       (.enableLiveMode gui false))
     (let [now (jvm-time-ms)
           wake-time (if (> now (+ target-time 10)) now target-time)]
-      (state-assoc! :last-wake-time wake-time))))
+      (swap! state assoc :last-wake-time wake-time))))
 
 ;; higher level
 
@@ -603,7 +600,7 @@
     (when-not (empty? z-drive)
       (when (z-stage-needs-adjustment z-drive)
         (let [z (get-z-stage-position z-drive)]
-          (state-assoc! :reference-z z))))))
+          (swap! state assoc :reference-z z))))))
 
 ;; startup and shutdown
 
@@ -644,7 +641,7 @@
   (try
     (attempt-all
       (log "cleanup")
-      (state-assoc! :finished true :display nil)
+      (swap! state assoc :finished true :display nil)
       (when (core isSequenceRunning)
         (core stopSequenceAcquisition))
       (stop-trigger)
