@@ -396,7 +396,6 @@ AC_CONFIG_FILES(
 	[SerialManager/Makefile:SerialManager/Makefile.in:MMDEVAPI.rules]
 	[SimpleAutofocus/Makefile:SimpleAutofocus/Makefile.in:MMDEVAPI.rules]
 	[Thorlabs/Makefile:Thorlabs/Makefile.in:MMDEVAPI.rules]
-	[ThorlabsDCStage/Makefile:ThorlabsDCStage/Makefile.in:MMDEVAPI.rules]
 	[ThorlabsDCxxxx/Makefile:ThorlabsDCxxxx/Makefile.in:MMDEVAPI.rules]
 	[ThorlabsFilterWheel/Makefile:ThorlabsFilterWheel/Makefile.in:MMDEVAPI.rules]
 	[ThorlabsSC10/Makefile:ThorlabsSC10/Makefile.in:MMDEVAPI.rules]
