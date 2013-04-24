@@ -1400,7 +1400,7 @@ bool CCameraFrontend::InLiveMode()
     * See whether we're in live view mode by checking acquisition is running (IsCapturing() == true) and 
     * StartSequenceAcquisition parameters are numImages == LONG_MAX, interval_ms == 0.0, stopOnOverflow == false.
     */
-   bool inLiveMode = IsCapturing() && (GetNumberOfImages() == -1) && (GetIntervalMs() == 0.0) && (isStopOnOverflow() == false);
+   bool inLiveMode = IsCapturing() && (GetNumberOfImages() == LONG_MAX) && (GetIntervalMs() == 0.0) && (isStopOnOverflow() == false);
 
    return inLiveMode;
 }
