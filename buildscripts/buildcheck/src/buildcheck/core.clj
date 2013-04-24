@@ -162,19 +162,36 @@
                                   (do-not-build)
                                   helper-vcprojs))))
 
+(defn all-devices []
+  (let [dll-names (get-dll-names 32)]
+        (clojure.set/difference
+          (clojure.set/union (set non-windows-device-adapters)
+                             (missing-vcproj)
+                             (set dll-names))
+          (do-not-build))))
+
+(def device-list-page "http://valelab.ucsf.edu/~MM/MMwiki/index.php/Device%20Support")
+
 (defn device-pages []
-  (let [index-txt (slurp "http://valelab.ucsf.edu/~MM/MMwiki/index.php/Device%20Support")]
+  (let [index-txt (slurp device-list-page)]
     (map second (re-seq #"a href=\"/~MM/MMwiki/index.php/(.*?)\"" index-txt))))
 
+(defn device-links []
+  (let [index-txt (slurp device-list-page)]
+    (remove empty? (map #(.trim %) (map second (re-seq #"\>(.*?)\<" index-txt))))))
+
+(def dont-link #{"NI100X" "NNLC" "Neos" "PriorLegacy" "SimpleCam"})
+
+(defn missing-device-links []
+  (sort (clojure.set/difference
+          (all-devices)
+          (set (device-links))
+          dont-link)))
+
 (defn missing-device-pages []
-  (let [dll-names (get-dll-names 32)
-        device-page-names (device-pages)]
-    (sort (clojure.set/difference
-            (clojure.set/union (set non-windows-device-adapters)
-                               (missing-vcproj)
-                               (set dll-names))
-            (set device-page-names)
-            (do-not-build)))))
+  (sort (clojure.set/difference
+            (all-devices)
+            (set (device-pages)))))
 
 (defn str-lines [sequence]
   (apply str (interpose "\n" sequence)))
@@ -203,6 +220,7 @@
                    (empty? javac-errs)
                    (empty? outdated-jars)
                    (empty? missing-vcproj-files)
+                   (empty? missing-device-links)
                    installer-ok)
       (str
         "\n\nMICROMANAGER " bits "-bit "
@@ -217,6 +235,8 @@
         (when (= 32 bits)
           (report-segment "Missing .vcproj files" missing-vcproj-files))
         (report-segment "Uncompiled device adapters" (missing-device-adapters bits))
+        (when (= 32 bits)
+          (report-segment "Missing device links" (missing-device-links)))
         (when (= 32 bits)
           (report-segment "Missing device pages" (missing-device-pages)))
         "\n\nIs installer download available on website?\n"
