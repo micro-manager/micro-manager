@@ -1,6 +1,8 @@
 #include "MoticCamera.h"
 #include "ModuleInterface.h"
 #include "MoticImageDevicesProxy.h"
+#include <algorithm>
+#include <iterator>
 
 #define _LOG_OUT_
 const char* g_CameraName = "MoticCam";
@@ -909,9 +911,9 @@ int CMoticCamera::OnGain(MM::PropertyBase* pProp, MM::ActionType eAct)
 #endif
    if (eAct == MM::AfterSet)
    {
-     double dGain;
+      double dGain;
       pProp->Get(dGain);
-      m_dGain = dGain;
+      m_dGain = static_cast<float>(dGain);
       MIDP_SetGain(m_dGain);
    }
    else if (eAct == MM::BeforeGet)
@@ -973,16 +975,12 @@ int CMoticCamera::OnDevice( MM::PropertyBase* pProp, MM::ActionType eAct )
   {
     string strName;
     pProp->Get(strName);
-    int idx = -1;
-    for(int i = 0; i < m_vDevices.size(); i++)
-    {
-      if(m_vDevices[i] == strName)
-      {
-        idx = i;
-        break;
-      }
-    }
-    if(idx >= 0 && idx != m_iCurDeviceIdx)
+
+    vector<string>::const_iterator begin = m_vDevices.begin();
+    vector<string>::const_iterator end = m_vDevices.end();
+    vector<string>::const_iterator it = find(begin, end, strName);
+    vector<string>::difference_type idx = distance(begin, it);
+    if (it != end && idx != m_iCurDeviceIdx)
     {
       StopSequenceAcquisition();
       if(MIDP_SelectCamera(idx) != 0)
