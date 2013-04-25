@@ -30,11 +30,11 @@
             1 (mm/core setPosition stage (first pos))
             2 (mm/core setPosition stage (first pos) (second pos)))))))
             
-(defn set-camera-settings!
-  "Sets the specified camera settings. The input argument should be something like
-   {\"Camera\" {:exposure 10}}."
-  [camera-settings]
-  (doseq-parallel [[camera {:keys [exposure]}] camera-settings]
+(defn set-camera-exposures!
+  "Sets the specified camera exposure settings. The input argument should be something like
+   {\"Camera\" 10}."
+  [camera-exposures]
+  (doseq-parallel [[camera exposure] camera-exposures]
     (mm/core setExposure camera exposure)))
 
 (defn set-hardware-state!
@@ -46,12 +46,12 @@
    :stage-positions
    {\"Z\" 3.0
     \"XY\" [10 20]}
-   :camera-settings
-   {\"Camera\" {:exposure 10}}}"
-  [{:keys [properties stage-positions camera-settings] :as state}]
+   :camera-exposures
+   {\"Camera\" exposure}}"
+  [{:keys [properties stage-positions camera-exposures] :as state}]
   (future (set-properties! properties))
   (future (set-stage-positions! stage-positions))
-  (future (set-camera-settings! camera-settings))
+  (future (set-camera-exposures! camera-exposures))
   nil)
 
 (defn new-values
@@ -81,8 +81,8 @@
    :stage-positions
    {"Z" 3.0
     "XY" [10 20]}
-   :camera-settings
-   {"Camera" {:exposure 10}}})
+   :camera-exposures
+   {"Camera" 10}})
 
 (def test-state-2
   {:properties
@@ -92,5 +92,5 @@
    :stage-positions
    {"Z" 5.0
     "XY" [30 10]}
-   :camera-settings
-   {"Camera" {:exposure 20}}})
+   :camera-exposures
+   {"Camera" 20}})
