@@ -105,8 +105,7 @@ public final class VirtualAcquisitionDisplay implements AcquisitionDisplay,
    private MetadataPanel mdPanel_;
    private boolean newDisplay_ = true; //used for autostretching on window opening
    private double framesPerSec_ = 7;
-   private java.util.Timer zAnimationTimer_ = new java.util.Timer();
-   private java.util.Timer tAnimationTimer_ = new java.util.Timer();
+   private java.util.Timer animationTimer_ = new java.util.Timer();
    private boolean zAnimated_ = false, tAnimated_ = false;
    private int animatedSliceIndex_ = -1, animatedFrameIndex_ = -1;
    private Component zAnimationIcon_, pIcon_, tAnimationIcon_, cIcon_;
@@ -648,15 +647,15 @@ public final class VirtualAcquisitionDisplay implements AcquisitionDisplay,
       }
    }
 
-   private void animateSlices(final boolean animate) {
+   private synchronized void animateSlices(final boolean animate) {
       if (!animate) {
-         zAnimationTimer_.cancel();
+         animationTimer_.cancel();
          zAnimated_ = false;
          refreshScrollbarIcons();
          moveScrollBarsToLockedPositions();
          return;
       } else {
-         zAnimationTimer_ = new java.util.Timer();
+         animationTimer_ = new java.util.Timer();
          animateFrames(false);
          final int slicesPerStep;
          long interval = (long) (1000.0 / framesPerSec_);
@@ -677,21 +676,21 @@ public final class VirtualAcquisitionDisplay implements AcquisitionDisplay,
                }
             }
          };
-         zAnimationTimer_.schedule(task, 0, interval);
+         animationTimer_.schedule(task, 0, interval);
          zAnimated_ = true;
          refreshScrollbarIcons();
       }
    }
 
-   private void animateFrames(final boolean animate) {
+   private synchronized void animateFrames(final boolean animate) {
       if (!animate) {
-         tAnimationTimer_.cancel();
+         animationTimer_.cancel();
          tAnimated_ = false;
          refreshScrollbarIcons();
          moveScrollBarsToLockedPositions();
          return;
       } else {
-         tAnimationTimer_ = new java.util.Timer();
+         animationTimer_ = new java.util.Timer();
          animateSlices(false);
          final int framesPerStep;
          long interval = (long) (1000.0 / framesPerSec_);
@@ -714,7 +713,7 @@ public final class VirtualAcquisitionDisplay implements AcquisitionDisplay,
                }
             }
          };
-         tAnimationTimer_.schedule(task, 0, interval);
+         animationTimer_.schedule(task, 0, interval);
          tAnimated_ = true;
          refreshScrollbarIcons();
       }
@@ -915,6 +914,9 @@ public final class VirtualAcquisitionDisplay implements AcquisitionDisplay,
                }
                if (lockedChannel_ != -1) {
                   lockedChannel_ = cSelector_.getValue();
+               }
+               if (lockedFrame_ != -1) {
+                  lockedFrame_ = tSelector_.getValue();
                }
             }  
          });
@@ -2384,8 +2386,8 @@ public final class VirtualAcquisitionDisplay implements AcquisitionDisplay,
 
          //Call this because for some reason WindowManager doesnt always fire
          mdPanel_.displayChanged(null);
-         zAnimationTimer_.cancel();
-         tAnimationTimer_.cancel();
+         animationTimer_.cancel();
+         animationTimer_.cancel();
 
          super.windowClosing(e);
          MMStudioMainFrame.getInstance().removeMMBackgroundListener(this);
