@@ -3680,9 +3680,9 @@ void CMMCore::setExposure(double dExp) throw (CMMError)
 {
    if (camera_)
    {
+      char cameraName[MM::MaxStrLength];
       {
-         MMThreadGuard guard(pluginManager_.getModuleLock(pCamera));
-         char cameraName[MM::MaxStrLength];
+         MMThreadGuard guard(pluginManager_.getModuleLock(camera_));
          camera_->GetLabel(cameraName);
       }
       setExposure(cameraName, dExp);
