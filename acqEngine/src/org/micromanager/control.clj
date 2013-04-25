@@ -28,7 +28,7 @@
         (when (vector? pos)
           (condp = (count pos)
             1 (mm/core setPosition stage (first pos))
-            2 (mm/core setPosition stage (first pos) (second pos)))))))
+            2 (mm/core setXYPosition stage (first pos) (second pos)))))))
             
 (defn set-camera-exposures!
   "Sets the specified camera exposure settings. The input argument should be something like
@@ -65,7 +65,8 @@
   [old-state new-state]
   (set-hardware-state! (new-values old-state new-state)))
 
-(def hardware-state-atom 
+(def hardware-state-atom
+  "Current hardware state. Changing values will cause hardware commands to be sent."
   (let [update-function (fn [_ _ old-state new-state]
                           (update-hardware-state! old-state new-state))]
     (doto (atom {})
