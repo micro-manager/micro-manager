@@ -50,6 +50,10 @@ CLASSEXT=$REPOSITORY/../3rdpartypublic/classext
 test -d $BUILDDIR && rm -rf $TARGET*
 mkdir $BUILDDIR
 
+BUILDLOG=$REPOSITORY/MacInstaller/buildlog.txt
+test -f $BUILDLOG && rm $BUILDLOG
+LOGUPLOADPLACE=valelab.ucsf.edu:/home/MM/
+
 cd $RDPARTYPUBLIC
 svn update
 cd $REPOSITORY
@@ -89,38 +93,39 @@ if [ "$FULL" != "full" ]; then
    VERSION=$VERSION-`date "+%Y%m%d"`
 fi
 echo $VERSION
+echo $VERSION >> $BUILDLOG
 sed -i -e "s/\"1.4.*\"/\"$VERSION\"/"  mmstudio/src/org/micromanager/MMVersion.java || exit
 
 
 ./mmUnixBuild.sh || exit
 MACOSX_DEPLOYMENT_TARGET=10.4
-./configure --with-imagej=$PPC --enable-python --enable-arch=ppc --with-boost=/usr/local/ppc --prefix=/usr/local/ppc CXX="g++-4.0" CXXFLAGS="-g -O2 -mmacosx-version-min=10.4 -isysroot /Developer/SDKs/MacOSX10.4u.sdk -arch ppc"  --disable-dependency-tracking PKG_CONFIG_LIBDIR="/usr/local/ppc/lib/pkgconfig/" || exit
+./configure --with-imagej=$PPC --enable-python --enable-arch=ppc --with-boost=/usr/local/ppc --prefix=/usr/local/ppc CXX="g++-4.0" CXXFLAGS="-g -O2 -mmacosx-version-min=10.4 -isysroot /Developer/SDKs/MacOSX10.4u.sdk -arch ppc"  --disable-dependency-tracking PKG_CONFIG_LIBDIR="/usr/local/ppc/lib/pkgconfig/" >> $BUILDLOG || exit
 if [ "$NOCLEAN" != "noclean" ]; then
    make clean || exit
 fi
-make || exit
+make 2>> $BUILDLOG || exit
 make install || exit
 
 # build i386
 cd $RI386
 ./mmUnixBuild.sh || exit
 MACOSX_DEPLOYMENT_TARGET=10.4
-./configure --with-imagej=$I386 --enable-python --enable-arch=i386 --with-boost=/usr/local/i386 --with-opencv=/usr/local/i386 --prefix=/usr/local/i386 CXX="g++-4.0" CXXFLAGS="-g -O2 -mmacosx-version-min=10.4 -isysroot /Developer/SDKs/MacOSX10.4u.sdk -arch i386"  --disable-dependency-tracking PKG_CONFIG_LIBDIR="/usr/local/i386/lib/pkgconfig/" || exit
+./configure --with-imagej=$I386 --enable-python --enable-arch=i386 --with-boost=/usr/local/i386 --with-opencv=/usr/local/i386 --prefix=/usr/local/i386 CXX="g++-4.0" CXXFLAGS="-g -O2 -mmacosx-version-min=10.4 -isysroot /Developer/SDKs/MacOSX10.4u.sdk -arch i386"  --disable-dependency-tracking PKG_CONFIG_LIBDIR="/usr/local/i386/lib/pkgconfig/" >> $BUILDLOG || exit
 if [ "$NOCLEAN" != "noclean" ]; then
    make clean || exit
 fi
-make || exit
+make 2>> $BUILDLOG || exit
 make install || exit
 
 # build x86_64
 cd $RX86_64
 ./mmUnixBuild.sh || exit
 export MACOSX_DEPLOYMENT_TARGET=10.5
-./configure --with-imagej=$X86_64 --enable-arch=x86_64 --with-boost=/usr/local/x86_64 --with-opencv=/usr/local/x86_64 --prefix=/usr/local/x86_64 CXX="g++-4.2" CXXFLAGS="-g -O2 -mmacosx-version-min=10.5 -isysroot /Developer/SDKs/MacOSX10.5.sdk -arch x86_64" --disable-dependency-tracking PKG_CONFIG_LIBDIR="/usr/local/x86_64/lib/pkgconfig/" || exit
+./configure --with-imagej=$X86_64 --enable-arch=x86_64 --with-boost=/usr/local/x86_64 --with-opencv=/usr/local/x86_64 --prefix=/usr/local/x86_64 CXX="g++-4.2" CXXFLAGS="-g -O2 -mmacosx-version-min=10.5 -isysroot /Developer/SDKs/MacOSX10.5.sdk -arch x86_64" --disable-dependency-tracking PKG_CONFIG_LIBDIR="/usr/local/x86_64/lib/pkgconfig/" >> $BUILDLOG || exit
 if [ "$NOCLEAN" != "noclean" ]; then
    make clean || exit
 fi
-make || exit
+make 2>> $BUILDLOG || exit
 make install || exit
 
 # Use lipo to make Universal Binaries
@@ -189,6 +194,9 @@ fi
 
 # upload to mightly build server:
 scp Micro-Manager$VERSION.dmg $UPLOADPLACE
+
+# upload the Mac build log
+scp $BUILDLOG $BUILDLOGUPLOADPLACE/MacBuildLog.txt
 
 # build and upload documentation
 cd $RI386
