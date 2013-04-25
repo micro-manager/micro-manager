@@ -520,7 +520,7 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
          int index = (int) (Math.ceil(Math.log(histMax)/Math.log(2)) - 3);
          histRangeComboBox_.setSelectedIndex(index);
       }     
-      mcHistograms_.setDisplayMode(cache.getDisplayMode());
+//      mcHistograms_.setDisplayMode(cache.getDisplayMode());
    }
 
    private HistogramPanel addHistogramPanel() {
