@@ -562,7 +562,6 @@ public final class VirtualAcquisitionDisplay implements AcquisitionDisplay,
 
 
       histogramControlsState_ =  mdPanel_.getContrastPanel().createDefaultControlsState();
-      makeHistograms();
       createWindow();
       //Make sure contrast panel sets up correctly here
       windowToFront();
@@ -1913,6 +1912,7 @@ public final class VirtualAcquisitionDisplay implements AcquisitionDisplay,
    }
 
    private void createWindow() {
+      makeHistograms();
       final DisplayWindow win = new DisplayWindow(hyperImage_);
       win.getCanvas().addMouseListener(new MouseListener() {
 

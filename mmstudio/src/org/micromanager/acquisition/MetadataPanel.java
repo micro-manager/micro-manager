@@ -85,7 +85,7 @@ public class MetadataPanel extends JPanel
    private final MetadataTableModel summaryMetadataModel_;
    private final String[] columnNames_ = {"Property", "Value"};
    private boolean showUnchangingKeys_;
-   private ImageWindow lastWindow_;
+   private ImageWindow currentWindow_;
    private VirtualAcquisitionDisplay currentDisplay_;
 
    /** Creates new form MetadataPanel */
@@ -452,14 +452,14 @@ public class MetadataPanel extends JPanel
    }
 
    public ImageWindow getCurrentWindow() {
-      return lastWindow_;
+      return currentWindow_;
    }
    
    public synchronized void displayChanged(ImageWindow win) {
-      if (win == lastWindow_) {
+      if (win == currentWindow_) {
          return;
       }
-      lastWindow_ = win;
+      currentWindow_ = win;
       if (win == null || !(win instanceof VirtualAcquisitionDisplay.DisplayWindow)) {
          currentDisplay_ = null;
          contrastPanel_.displayChanged(null);
