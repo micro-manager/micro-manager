@@ -3673,20 +3673,41 @@ string CMMCore::getCameraChannelName(unsigned int channelNr)
 }
 
 /**
- * Sets the current exposure setting of the camera in milliseconds.
+ * Sets the exposure setting of the current camera in milliseconds.
  * @param dExp   the exposure in milliseconds
  */
 void CMMCore::setExposure(double dExp) throw (CMMError)
 {
    if (camera_)
    {
-      MMThreadGuard guard(pluginManager_.getModuleLock(camera_));
-      camera_->SetExposure(dExp);
-      if (camera_->HasProperty(MM::g_Keyword_Exposure))
       {
+         MMThreadGuard guard(pluginManager_.getModuleLock(pCamera));
          char cameraName[MM::MaxStrLength];
          camera_->GetLabel(cameraName);
-         stateCache_.addSetting(PropertySetting(cameraName, MM::g_Keyword_Exposure, CDeviceUtils::ConvertToString(dExp)));
+      }
+      setExposure(cameraName, dExp);
+   }
+   else
+   {
+      throw CMMError(getCoreErrorText(MMERR_CameraNotAvailable).c_str(), MMERR_CameraNotAvailable);
+   }
+}
+
+/**
+ * Sets the exposure setting of the specified camera in milliseconds.
+ * @param label  the camera device label
+ * @param dExp   the exposure in milliseconds
+ */
+void CMMCore::setExposure(const char* label, double dExp) throw (CMMError)
+{
+   MM::Camera* pCamera = getSpecificDevice<MM::Camera>(label);
+   if (pCamera)
+   {
+      MMThreadGuard guard(pluginManager_.getModuleLock(pCamera));
+      pCamera->SetExposure(dExp);
+      if (camera_->HasProperty(MM::g_Keyword_Exposure))
+      {
+         stateCache_.addSetting(PropertySetting(label, MM::g_Keyword_Exposure, CDeviceUtils::ConvertToString(dExp)));
       }
    }
    else

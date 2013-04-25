@@ -276,6 +276,7 @@ public:
    void getROI(int& x, int& y, int& xSize, int& ySize) throw (CMMError); 
    void clearROI() throw (CMMError);
    void setExposure(double exp) throw (CMMError);
+   void setExposure(const char* label, double dExp) throw (CMMError);
    double getExposure() throw (CMMError);
    void* getImage() throw (CMMError);
    void* getImage(unsigned numChannel) throw (CMMError);
