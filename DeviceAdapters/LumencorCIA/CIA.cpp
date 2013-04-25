@@ -28,8 +28,8 @@
 
 #define DEBUG
 
-//#include <commdlg.h>   // for GetSaveFileName
-//#include <shlobj.h>    // for SHGetFolderPath
+#include <commdlg.h>   // for GetSaveFileName
+#include <shlobj.h>    // for SHGetFolderPath
 
 #include "CIA.h"
 #include <string>
