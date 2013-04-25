@@ -655,8 +655,8 @@ public final class VirtualAcquisitionDisplay implements AcquisitionDisplay,
          moveScrollBarsToLockedPositions();
          return;
       } else {
-         animationTimer_ = new java.util.Timer();
          animateFrames(false);
+         animationTimer_ = new java.util.Timer();
          final int slicesPerStep;
          long interval = (long) (1000.0 / framesPerSec_);
          if (interval < 33) {
@@ -690,8 +690,8 @@ public final class VirtualAcquisitionDisplay implements AcquisitionDisplay,
          moveScrollBarsToLockedPositions();
          return;
       } else {
-         animationTimer_ = new java.util.Timer();
          animateSlices(false);
+         animationTimer_ = new java.util.Timer();
          final int framesPerStep;
          long interval = (long) (1000.0 / framesPerSec_);
          if (interval < 33) {
