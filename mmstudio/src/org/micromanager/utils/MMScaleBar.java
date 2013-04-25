@@ -104,10 +104,26 @@ public class MMScaleBar {
    public void setFont (Font font) {
       font_ = font;
    }
+   
+   public static void removeScaleBarFromOverlay(Overlay ol) {
+      int textIndex = -1, barIndex = -1;
+      for (int i = 0; i < ol.size(); i++) {
+         if (ol.get(i) instanceof MMText ) {
+            textIndex = i;
+         } else if (ol.get(i) instanceof MMBar) {
+            barIndex = i;
+         }
+      }
+      if (textIndex != -1 && barIndex != -1) {
+         //Bar was added 2nd so should be later in list
+         ol.remove(barIndex);
+         ol.remove(textIndex);
+      }
+   }
 
    public void addToOverlay(Overlay ol) {
       font_ = font_.deriveFont((int) (0.015 * ip_.getWidth()));
-      TextRoi text = new TextRoi(10, 10, value_ + units_, font_);
+      TextRoi text = new MMText(10, 10, value_ + units_, font_);
       int textWidth = ip_.getProcessor().getStringWidth(value_ + units_);
       // TODO: text positioning depends on textHeight, but I don't know how to get this...
       if (pos_ == Position.TOPLEFT) {
@@ -126,7 +142,7 @@ public class MMScaleBar {
 
       ol.add(text);
 
-      Roi bar = new Roi(OFFSET, OFFSET + barHeight_, barWidth_, barHeight_);
+      Roi bar = new MMBar(OFFSET, OFFSET + barHeight_, barWidth_, barHeight_);
       if (pos_ == Position.TOPRIGHT) {
          bar.setLocation(ip_.getWidth() - OFFSET - barWidth_, OFFSET + barHeight_);
       } else if (pos_ == Position.BOTTOMLEFT) {
@@ -134,9 +150,20 @@ public class MMScaleBar {
       } else if (pos_ == Position.BOTTOMRIGHT) {
          bar.setLocation(ip_.getWidth() - OFFSET - barWidth_, ip_.getHeight() - OFFSET - barHeight_);
       }
-
-
       ol.add(bar);
+   }
+   
+   //Make these their own class so they can be found and removed from overlay
+   private class MMBar extends Roi {
+      public MMBar(int a, int b, int c, int d) {
+         super(a,b,c,d);
+      }
+   }
+   
+   private class MMText extends TextRoi {
+      public MMText(int a, int b, String text, Font font) {
+         super(a,b,text,font);
+      }
    }
 
 }

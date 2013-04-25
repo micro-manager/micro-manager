@@ -410,11 +410,19 @@ public class ContrastPanel extends JPanel {
          return;
       }
       ImagePlus ip = currentDisplay_.getHyperImage();
+      if (ip == null) {
+         return;
+      }
       if (show) {
          MMScaleBar sizeBar = new MMScaleBar(ip);
-
          if (sizeBar != null) {
-            Overlay ol = new Overlay();
+            Overlay ol = ip.getOverlay();
+            if (ol != null) {
+            //see if there is an old scale bar and remove it if so
+               removeScaleBarFromOverlay(ol);
+            } else {
+               ol = new Overlay();
+            }
             //ol.setFillColor(Color.white); // this causes the text to get a white background!
             ol.setStrokeColor(overlayColor_);
             String selected = (String) sizeBarComboBox_.getSelectedItem();
@@ -434,9 +442,20 @@ public class ContrastPanel extends JPanel {
             ol.setStrokeColor(overlayColor_);
             ip.setOverlay(ol);
          }
+      } else {
+         //remove scale bar (don't just hide) so other elements of overlay will persist
+         Overlay ol = ip.getOverlay();
+         if (ol != null) {
+            removeScaleBarFromOverlay(ol);
+         }
+         //so that it redraws to remove it
+         ip.setOverlay(ol);
       }
-      ip.setHideOverlay(!show);
       saveCheckBoxStates();
+   }
+   
+   private void removeScaleBarFromOverlay(Overlay ol) {
+      MMScaleBar.removeScaleBarFromOverlay(ol);
    }
 
    private void overlayColorComboBox_ActionPerformed() {

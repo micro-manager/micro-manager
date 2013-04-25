@@ -2232,7 +2232,8 @@ public final class VirtualAcquisitionDisplay implements AcquisitionDisplay,
     * is the active window
     */
    private void imageChangedUpdate() {
-      if (updatePixelSize_.get()) {
+      boolean updatePixelSize = updatePixelSize_.get();
+      if (updatePixelSize) {
          try {
             JSONObject summary = getSummaryMetadata();
             if (summary != null) {
@@ -2243,7 +2244,7 @@ public final class VirtualAcquisitionDisplay implements AcquisitionDisplay,
             }
             
          } catch (JSONException ex) {
-            ReportingUtils.logError("Error in imageCHangedUpdate in VirtualAcquisitionDisplay.java");
+            ReportingUtils.logError("Error in imageChangedUpdate in VirtualAcquisitionDisplay.java");
          }
          updatePixelSize_.set(false);
       }
@@ -2252,10 +2253,11 @@ public final class VirtualAcquisitionDisplay implements AcquisitionDisplay,
       }      
       if (isActiveDisplay()) {         
          mdPanel_.imageChangedUpdate(this);
-         mdPanel_.redrawSizeBar();
+         if (updatePixelSize) {
+            mdPanel_.redrawSizeBar();
+         }
       }      
       imageChangedWindowUpdate(); //used to update status line
-
    }
    
    public boolean isActiveDisplay() {
