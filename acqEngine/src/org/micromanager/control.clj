@@ -35,7 +35,7 @@
    {\"Camera\" {:exposure 10}}."
   [camera-settings]
   (doseq-parallel [[camera {:keys [exposure]}] camera-settings]
-    (mm/core setExposure camera exposure))) ;; TODO: update MMCore to implement this function
+    (mm/core setExposure camera exposure)))
 
 (defn set-hardware-state!
   "Sets the state of the hardware. Example state:
