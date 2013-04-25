@@ -48,6 +48,7 @@ import org.micromanager.utils.GUIColors;
 import org.micromanager.utils.MMDialog;
 import org.micromanager.utils.NumberUtils;
 import org.micromanager.utils.ReportingUtils;
+import org.micromanager.utils.UIMonitor;
 
 /**
  * Options dialog for MMStudio.
@@ -113,6 +114,7 @@ public class OptionsDlg extends MMDialog {
          public void actionPerformed(final ActionEvent e) {
             opts_.debugLogEnabled_ = debugLogEnabledCheckBox.isSelected();
             core_.enableDebugLog(opts_.debugLogEnabled_);
+            UIMonitor.enable(opts_.debugLogEnabled_);
          }
       });
       debugLogEnabledCheckBox.setText("Debug log enabled");

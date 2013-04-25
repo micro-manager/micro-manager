@@ -151,6 +151,7 @@ import org.micromanager.utils.MDUtils;
 import org.micromanager.utils.MMKeyDispatcher;
 import org.micromanager.utils.ReportingUtils;
 import org.micromanager.utils.SnapLiveContrastSettings;
+import org.micromanager.utils.UIMonitor;
 
 
 
@@ -867,6 +868,8 @@ public class MMStudioMainFrame extends JFrame implements
          ReportingUtils.logError(ex);
       }
 
+      UIMonitor.enable(options_.debugLogEnabled_);
+      
       guiColors_ = new GUIColors();
 
       plugins_ = new ArrayList<PluginItem>();
@@ -1065,6 +1068,7 @@ public class MMStudioMainFrame extends JFrame implements
       // Live button
       // -----------
       toggleButtonLive_ = new JToggleButton();
+      toggleButtonLive_.setName("Live");
       toggleButtonLive_.setMargin(new Insets(2, 2, 2, 2));
       toggleButtonLive_.setIconTextGap(1);
       toggleButtonLive_.setIcon(SwingResourceManager.getIcon(
@@ -1162,6 +1166,7 @@ public class MMStudioMainFrame extends JFrame implements
 
       // Active shutter Combo Box
       shutterComboBox_ = new JComboBox();
+      shutterComboBox_.setName("Shutter");
       shutterComboBox_.addActionListener(new ActionListener() {
 
          public void actionPerformed(ActionEvent arg0) {
@@ -1504,6 +1509,7 @@ public class MMStudioMainFrame extends JFrame implements
 
 
       comboBinning_ = new JComboBox();
+      comboBinning_.setName("Binning");
       comboBinning_.setFont(new Font("Arial", Font.PLAIN, 10));
       comboBinning_.setMaximumRowCount(4);
       comboBinning_.addActionListener(new ActionListener() {

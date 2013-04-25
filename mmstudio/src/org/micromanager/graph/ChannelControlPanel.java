@@ -130,6 +130,7 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
       setPreferredSize(new java.awt.Dimension(250, height_));
 
       fullButton_.setFont(fullButton_.getFont().deriveFont((float) 9));
+      fullButton_.setName("Full channel histogram width");
       fullButton_.setText("Full");
       fullButton_.setToolTipText("Stretch the display gamma curve over the full pixel range");
       fullButton_.setMargin(new java.awt.Insets(2, 4, 2, 4));
@@ -142,6 +143,7 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
       });
 
       autoButton_.setFont(autoButton_.getFont().deriveFont((float) 9));
+      autoButton_.setName("Auto channel histogram width");
       autoButton_.setText("Auto");
       autoButton_.setToolTipText("Align the display gamma curve with minimum and maximum measured intensity values");
       autoButton_.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
