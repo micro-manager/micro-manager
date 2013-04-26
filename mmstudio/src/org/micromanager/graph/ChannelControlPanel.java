@@ -538,9 +538,7 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
             g.drawString(histMaxLabel_, this.getSize().width - 8 * histMaxLabel_.length(), this.getSize().height);
          }
       };
-      hp.setMargins(10, 12);
-      hp.setTextVisible(false);
-      hp.setGridVisible(false);
+      hp.setMargins(12, 12);
       hp.setTraceStyle(true, color_);         
       hp.setToolTipText("Click and drag curve to adjust gamma");
       histogramPanelHolder_.add(hp, BorderLayout.CENTER);
@@ -808,6 +806,9 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
    public void onRightCursor(double pos) {
       display_.disableAutoStretchCheckBox();
       contrastMax_ = (int) (Math.min(NUM_BINS - 1, pos) * binSize_);
+      if (contrastMax_ < 1) {
+         contrastMax_ = 1;
+      }
       if (contrastMin_ > contrastMax_) {
          contrastMin_ = contrastMax_;
       }

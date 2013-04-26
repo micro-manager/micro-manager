@@ -64,8 +64,6 @@ public class HistogramPanel extends JPanel implements FocusListener, KeyListener
    
    private float xMargin_   = 50;
    private float yMargin_   = 50;
-   boolean textVisible_ = true;
-   boolean gridVisible_ = true;
    
    float cursorLoPos_;
    float cursorHiPos_;
@@ -362,11 +360,15 @@ public class HistogramPanel extends JPanel implements FocusListener, KeyListener
       //apply the values
       if (contrastMaxEditable_) {
          for (CursorListener cursorListener : cursorListeners_) {
-            cursorListener.contrastMaxInput(Integer.parseInt(newContrast_));
+            if (!newContrast_.equals("")) {
+               cursorListener.contrastMaxInput(Integer.parseInt(newContrast_));
+            }
          }
       } else if (contrastMinEditable_) {
          for (CursorListener cursorListener : cursorListeners_) {
-            cursorListener.contrastMinInput(Integer.parseInt(newContrast_));
+            if (!newContrast_.equals("")) {
+               cursorListener.contrastMinInput(Integer.parseInt(newContrast_));
+            }
          }
       }
       contrastMaxEditable_ = false;
@@ -527,12 +529,6 @@ public class HistogramPanel extends JPanel implements FocusListener, KeyListener
       gamma_ = gamma;
    }
    
-   public void setTextVisible(boolean state) {
-      textVisible_ = state;
-   }
-   public void setGridVisible(boolean state) {
-      gridVisible_ = state;
-   }
    public GraphData.Bounds getGraphBounds() {
       return bounds_;
    }

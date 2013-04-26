@@ -113,10 +113,8 @@ public class SingleChannelHistogram extends JPanel implements Histograms, Cursor
             g.drawString(label, this.getSize().width - 7 * label.length(), this.getSize().height);
          }
       };
-      histogramPanel_.setMargins(8, 10);
+      histogramPanel_.setMargins(12, 10);
       histogramPanel_.setTraceStyle(true, Color.white);
-      histogramPanel_.setTextVisible(false);
-      histogramPanel_.setGridVisible(false);
       histogramPanel_.addCursorListener(this);
       this.add(histogramPanel_, BorderLayout.CENTER);
 
@@ -570,6 +568,9 @@ public class SingleChannelHistogram extends JPanel implements Histograms, Cursor
       display_.disableAutoStretchCheckBox();
 
       contrastMax_ = (int) (Math.min(255, pos) * binSize_);
+      if (contrastMax_ < 1) {
+         contrastMax_ = 1;
+      }
       if (contrastMin_ > contrastMax_) {
          contrastMin_ = contrastMax_;
       }
