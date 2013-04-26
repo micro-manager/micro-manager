@@ -349,6 +349,7 @@ public class SingleChannelHistogram extends JPanel implements Histograms, Cursor
    }
 
    private void updateHistogram() {
+      histogramPanel_.setCursorText(contrastMin_+"", contrastMax_+"");
       histogramPanel_.setCursors(contrastMin_ / binSize_, (contrastMax_+1) / binSize_, gamma_);
       histogramPanel_.repaint();
    }
@@ -524,6 +525,31 @@ public class SingleChannelHistogram extends JPanel implements Histograms, Cursor
       contrastMax_ = max;
       contrastMin_ = min;
       gamma_ = gamma;
+   }
+   
+   public void contrastMinInput(int min) {     
+      display_.disableAutoStretchCheckBox();
+      
+      contrastMin_ = min;
+      if (contrastMin_ >= maxIntensity_) {
+         contrastMin_ = maxIntensity_ - 1;
+      }
+      if (contrastMax_ < contrastMin_) {
+         contrastMax_ = contrastMin_ + 1;
+      }
+      applyLUTToImage();
+      display_.drawWithoutUpdate();
+   }
+   
+   public void contrastMaxInput(int max) {     
+      display_.disableAutoStretchCheckBox();
+
+      contrastMax_ = max;
+      if (contrastMin_ > contrastMax_) {
+         contrastMin_ = contrastMax_;
+      }
+      applyLUTToImage();
+      display_.drawWithoutUpdate();
    }
 
    public void onLeftCursor(double pos) {

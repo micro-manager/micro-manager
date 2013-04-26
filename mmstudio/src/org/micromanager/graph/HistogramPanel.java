@@ -24,37 +24,68 @@
 package org.micromanager.graph;
 
 
-import java.awt.BasicStroke;
-import java.awt.Color;
-import java.awt.Graphics2D;
-import java.awt.Rectangle;
-import java.awt.Stroke;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
-import java.awt.event.MouseMotionAdapter;
+import java.awt.*;
+import java.awt.event.*;
 import java.awt.geom.GeneralPath;
 import java.awt.geom.Line2D;
 import java.awt.geom.Point2D;
 import java.awt.geom.Point2D.Float;
+import java.text.DecimalFormat;
 import java.util.ArrayList;
+import javax.swing.JPanel;
+import javax.swing.JTextField;
+import javax.swing.UIManager;
+import org.micromanager.utils.ReportingUtils;
 
 /**
  * Histogram view. 
  */
-public class HistogramPanel extends GraphPanel {
+public class HistogramPanel extends JPanel implements FocusListener, KeyListener {
+   
+   private static final int LUT_HANDLE_SIZE = 10;
+   
    private static final long serialVersionUID = -1789623844214721902L;
    // default histogram bins
    private int xMin_ = 0;
    private int xMax_ = 255;
-   private int currentHandle;
+   private int currentHandle_;
+   //click location: 1 is low cursor text, 2 is high cursor text
+   private int clickLocation_ = 0;
    private ArrayList<CursorListener> cursorListeners_;
    private Float ptDevBottom_;
    private Float ptDevTop_;
    private Float ptDevTopUnclippedX_;
+   private boolean contrastMinEditable_ = false, contrastMaxEditable_ = false;
+   private String newContrast_ = "";
+   private String cursorTextLow_ = "",cursorTextHigh_ = "";   
+   
+   private GraphData data_;
+   protected GraphData.Bounds bounds_;
+   
+   private float xMargin_   = 50;
+   private float yMargin_   = 50;
+   boolean textVisible_ = true;
+   boolean gridVisible_ = true;
+   
+   float cursorLoPos_;
+   float cursorHiPos_;
+   double gamma_;
+   
+   private boolean fillTrace_ = false;
+   private Color traceColor_ = Color.black;
+   
 
    
    public HistogramPanel() {
       super();
+      addFocusListener(this);
+      addKeyListener(this);
+      data_ = new GraphData();
+      setAutoBounds();
+      cursorLoPos_ = (float) bounds_.xMin;
+      cursorHiPos_ = (float) bounds_.xMax;
+      gamma_ = 1.0;
+      this.setFocusable(true);
       cursorListeners_ = new ArrayList<CursorListener>();
       setupMouseListeners();
    }
@@ -91,7 +122,6 @@ public class HistogramPanel extends GraphPanel {
       refresh();
    }
 
-   @Override
    /*
     * Draws a dashed vertical line at minimum and maximum pixel value
     * position.  Not sure if this is useful
@@ -136,7 +166,6 @@ public class HistogramPanel extends GraphPanel {
    }
 
 
-   @Override
    /*
     * Draws a line showing the mapping between pixel values and display
     * intensity on the screen. 
@@ -187,23 +216,68 @@ public class HistogramPanel extends GraphPanel {
               (int) ptDevTop_.x, (int) ptDevTop_.y);
    }
 
-   static void drawLUTHandles(Graphics2D g, int xmin, int ymin, int xmax, int ymax) {
-      drawTriangle(g, xmin, ymin, false, Color.black);
-      drawTriangle(g, xmax, ymax, true, Color.white);
+   private void drawLUTHandles(Graphics2D g, int xmin, int ymin, int xmax, int ymax) {
+      drawTopHandle(g, xmax, ymax);
+      drawBottomHandle(g, xmin, ymin);
    }
 
+   private void drawTopHandle(Graphics2D g, int x, int y) {
+      drawTriangle(g, x, y, true);
 
-   static void drawTriangle(Graphics2D g, int x, int y, boolean flip, Color color) {
-      int s = 7;
-      if (flip) {
+      g.setFont(new java.awt.Font("Lucida Grande", 0, 11));
+      String text = cursorTextHigh_;
+      if (contrastMaxEditable_ && newContrast_.length() != 0) {
+          text = newContrast_;
+      }
+      
+      int width = 6 * text.length() + 3;
+      if (contrastMaxEditable_) {
+         g.setColor(Color.BLACK);
+         g.fillRect(x - width, y - LUT_HANDLE_SIZE, width, LUT_HANDLE_SIZE);
+         g.setColor(UIManager.getColor("Panel.background"));
+         g.drawString(text, x - 6 * text.length(), y - 1);
+      } else {
+         g.setColor(UIManager.getColor("Panel.background"));
+         g.fillRect(x - width, y - LUT_HANDLE_SIZE, width, LUT_HANDLE_SIZE);
+         g.setColor(Color.black);
+         g.drawString(text, x - 6 * text.length(), y - 1);
+      }
+   }
+
+   private void drawBottomHandle(Graphics2D g, int x, int y) {
+      drawTriangle(g, x, y, false);
+      g.setFont(new java.awt.Font("Lucida Grande", 0, 11));
+      String text = cursorTextLow_;
+      if (contrastMinEditable_ && newContrast_.length() != 0) {
+         text = newContrast_;
+      }
+      int width = 6 * text.length() + 3;
+      if (contrastMinEditable_) {
+         g.setColor(Color.BLACK);
+         g.fillRect(x, y, width, LUT_HANDLE_SIZE + 1);
+         g.setColor(UIManager.getColor("Panel.background"));
+         g.drawString(newContrast_.length() != 0 ? newContrast_ : text, x + 3, y + 10);
+      } else {
+         g.setColor(UIManager.getColor("Panel.background"));
+         g.fillRect(x, y, width, LUT_HANDLE_SIZE + 1);
+         g.setColor(Color.black);
+         g.drawString(text, x + 3, y + 10);
+      }
+   }
+
+   static void drawTriangle(Graphics2D g, int x, int y, boolean top) {
+      int s = LUT_HANDLE_SIZE;
+      if (top) {
          s = -s;
       }
-      int[] xs = {x, x - s, x + s};
+      int[] xs = {x, x - s, x};
       int[] ys = {y, y + s, y + s};
       Stroke oldStroke = g.getStroke();
+      //draw outline
       g.setStroke(new BasicStroke(1));
-      g.setColor(color);
+      g.setColor(top ? Color.white : Color.black);
       g.fillPolygon(xs, ys, 3);
+      //fill center
       g.setColor(Color.black);
       g.drawPolygon(xs, ys, 3);
       g.setStroke(oldStroke);
@@ -217,7 +291,38 @@ public class HistogramPanel extends GraphPanel {
       repaint();
    }
 
+   @Override
+   public void focusGained(FocusEvent e) {}
+
+   @Override
+   public void focusLost(FocusEvent e) {
+      applyContrastValues();
+   }
+
+   @Override
+   public void keyTyped(KeyEvent e) {
+      try {
+      int i = Integer.parseInt("" + e.getKeyChar());
+      if (contrastMaxEditable_ || contrastMinEditable_) {
+         newContrast_ += i;
+         repaint();
+      }
+      } catch (Exception ex) {} // not a digit
+   }
+
+   @Override
+   public void keyPressed(KeyEvent e) {
+   if (e.getKeyCode() == KeyEvent.VK_ENTER) {
+         applyContrastValues();
+      }
+   }
+
+   @Override
+   public void keyReleased(KeyEvent e) {}
+
    public interface CursorListener {
+      public void contrastMinInput(int min);
+      public void contrastMaxInput(int max);
       public void onLeftCursor(double pos);
       public void onRightCursor(double pos);
       public void onGammaCurve(double gamma);
@@ -252,48 +357,81 @@ public class HistogramPanel extends GraphPanel {
          cursorListener.onGammaCurve(gamma);
       }
    }
+   
+   private void applyContrastValues() {
+      //apply the values
+      if (contrastMaxEditable_) {
+         for (CursorListener cursorListener : cursorListeners_) {
+            cursorListener.contrastMaxInput(Integer.parseInt(newContrast_));
+         }
+      } else if (contrastMinEditable_) {
+         for (CursorListener cursorListener : cursorListeners_) {
+            cursorListener.contrastMinInput(Integer.parseInt(newContrast_));
+         }
+      }
+      contrastMaxEditable_ = false;
+      contrastMinEditable_ = false;
+      newContrast_ = "";
+      
+      repaint();
+   }
 
    private void setupMouseListeners() {
+      final JPanel panelRef = this;
       addMouseListener(new MouseAdapter() {
          @Override
          public void mousePressed(MouseEvent e) {
-            currentHandle = getClickBand(e.getX(), e.getY());
+            panelRef.requestFocus();
             int x = e.getX();
             int y = e.getY();
-            if (currentHandle != 0) {
+            getClickBand(x,y);
+            if (currentHandle_ != 0) {
                Point2D.Float pt = getPositionPoint(x,y);
-               if (currentHandle == 1)
+               if (currentHandle_ == 1)
                   notifyCursorLeft(pt.x);
-               if (currentHandle == 2)
+               if (currentHandle_ == 2)
                   notifyCursorRight(pt.x);
-               if (currentHandle == 3) {
+               if (currentHandle_ == 3) {
                   double gamma = getGammaFromMousePosition(x,y);
                   if (Math.abs((gamma_ - gamma)/gamma_) < 0.2) {
                      notifyGammaMouse(getGammaFromMousePosition(x, y));
-                     currentHandle = 4;
+                     currentHandle_ = 4;
                   }
                }
             }
          }
-
-
          @Override
          public void mouseReleased(MouseEvent e) {
-            currentHandle = 0;
+            currentHandle_ = 0;
+         }
+         
+         public void mouseClicked(MouseEvent e) {
+            if (e.getClickCount() >= 2 && clickLocation_ == 1) {
+               applyContrastValues();
+               contrastMinEditable_ = true;
+               contrastMaxEditable_ = false;
+            } else if (e.getClickCount() >= 2 && clickLocation_ == 2) {
+               applyContrastValues();
+               contrastMaxEditable_ = true;
+               contrastMinEditable_ = false;
+            } else if (clickLocation_ == 0) {
+               applyContrastValues();
+            }
+            repaint();
          }
       });
 
       addMouseMotionListener(new MouseMotionAdapter() {
          @Override
          public void mouseDragged(MouseEvent e) {
-            if (currentHandle == 0)
+            if (currentHandle_ == 0)
                return;
             Point2D.Float pt = getPositionPoint(e.getX(),e.getY());
-            if (currentHandle == 1)
+            if (currentHandle_ == 1)
                notifyCursorLeft(pt.x);
-            if (currentHandle == 2)
+            if (currentHandle_ == 2)
                notifyCursorRight(pt.x);
-            if (currentHandle == 4)
+            if (currentHandle_ == 4)
                notifyGammaMouse(getGammaFromMousePosition(e.getX(), e.getY()));
          }
       });
@@ -320,7 +458,7 @@ public class HistogramPanel extends GraphPanel {
    }
 
 
-   int getClickBand(int x, int y) {
+   private void getClickBand(int x, int y) {
       Rectangle box = getBox();
       //int xmin = box.x;
       //int xmax = box.x + box.width;
@@ -329,32 +467,223 @@ public class HistogramPanel extends GraphPanel {
       float xUnit = (float) (box.width / bounds_.getRangeX());
       float deviceCursorLoX = getDevicePoint(new Point2D.Float(cursorLoPos_, 0), box, xUnit, (float) 1.0).x;
       float deviceCursorHiX = getDevicePoint(new Point2D.Float(cursorHiPos_, 0), box, xUnit, (float) 1.0).x;
+      clickLocation_ = 0;
       if (y < ymin + 10 && y >= ymin) {
-         return 1; // Low cursor margin
+         if ((x > deviceCursorLoX)) {
+            clickLocation_ = 1;
+            currentHandle_ = 0; //low cursor text field
+            return;
+         }
+         currentHandle_ = 1; // Low cursor margin
       } else if (y <= ymax && y > ymax - 10) {
-         return 2; // High cursor margin
+         if ((x < deviceCursorHiX)) {
+            clickLocation_ = 2;
+            currentHandle_ = 0; //hi cursor text field
+            return;
+         }
+         currentHandle_ = 2; // High cursor margin
       }  else if ((x > deviceCursorLoX - 5) && (x < deviceCursorLoX + 5)) {
-         return 1; // Low cursor vertical line
+         currentHandle_ = 1; // Low cursor vertical line
       }  else if ((x > deviceCursorHiX - 5) && (x < deviceCursorHiX + 5)) {
-         return 2; // High cursor vertical line
+         currentHandle_ = 2; // High cursor vertical line
       } else if (y > ymax && y < ymin) {
-         return 3; // Gamma curve margin
+         currentHandle_ = 3; // Gamma curve margin
       } else {
-         return 0;
+         currentHandle_ = 0;
       }
    }
 
-   /**
-    * Makes histogram background black
-    * 
-    */
-   @Override
-   protected void drawGraph(Graphics2D g, Rectangle box) {
-      Color oldColor = g.getColor();
-      g.setColor(Color.black);
-      g.fillRect(box.x, box.y, box.width, box.height);
-      g.setColor(oldColor);  
-      super.drawGraph(g, box);
+   public void setData(GraphData d) {
+      data_ = d;
    }
 
+   public void setGamma(double gamma) {
+      gamma_ = gamma;
+   }
+
+   public void setTraceStyle(boolean fillTrace, Color color) {
+      fillTrace_ = fillTrace;
+      traceColor_ = color;
+   }
+ 
+   public final void setAutoBounds(){
+      bounds_ = data_.getBounds();
+      AdjustCursors();
+   }
+   
+   public void setMargins(float x, float y) {
+      xMargin_ = x;
+      yMargin_ = y;
+   }
+   
+   public void setCursorText(String low, String high) {
+      cursorTextLow_ = low;
+      cursorTextHigh_ = high;
+   }
+   
+   public void setCursors(double low, double high, double gamma) {
+      cursorLoPos_ = (float)low;
+      cursorHiPos_ = (float)high;
+      gamma_ = gamma;
+   }
+   
+   public void setTextVisible(boolean state) {
+      textVisible_ = state;
+   }
+   public void setGridVisible(boolean state) {
+      gridVisible_ = state;
+   }
+   public GraphData.Bounds getGraphBounds() {
+      return bounds_;
+   }
+   
+   public void setBounds(double xMin, double xMax, double yMin, double yMax){
+      bounds_.xMin = xMin;
+      bounds_.xMax = xMax;
+      bounds_.yMin = yMin;
+      bounds_.yMax = yMax;
+      AdjustCursors();
+   }
+   
+   public void setBounds(GraphData.Bounds b){
+      bounds_ = b;
+      AdjustCursors();
+   }
+   
+   private void AdjustCursors() {
+      cursorLoPos_ = Math.max(cursorLoPos_, (float) bounds_.xMin);
+//      cursorHiPos_ = Math.min(cursorHiPos_, (float) bounds_.xMax);
+      //took this line out so contrast line can have an endpoint beyond
+      //length of  histogram
+   }
+   
+   /**
+    * Draw graph traces.
+    * @param g
+    * @param box
+    */
+   protected void drawGraph(Graphics2D g, Rectangle box) {
+      if (data_.getSize() < 2)
+         return;
+
+      //Make black background
+      Color oldC = g.getColor();
+      g.setColor(Color.black);
+      g.fillRect(box.x, box.y, box.width, box.height);
+      g.setColor(oldC);
+
+
+      Color oldColor = g.getColor();
+      g.setColor(traceColor_);
+      
+      // set scaling
+      float xUnit = 1.0f;
+      float yUnit = 1.0f;
+      
+      // correct if Y range is zero
+      if (bounds_.getRangeY() == 0.0) {
+         if (bounds_.yMax > 0.0)
+            bounds_.yMin = 0.0;
+         else if (bounds_.yMax < 0.0) {
+            bounds_.yMax = 0.0;
+         }
+      }
+
+      // bounds can have strange values (i.e. 1e-42).  Avoid artefacts:
+      if (bounds_.getRangeX() <= 0.0 || bounds_.getRangeY() <= 1.e-10) {
+         return; // invalid range data
+      }
+            
+      xUnit = (float) (box.width / bounds_.getRangeX());
+      yUnit = (float) (box.height / bounds_.getRangeY());
+      
+      GeneralPath trace = new GeneralPath(GeneralPath.WIND_EVEN_ODD, data_.getSize() + 1);
+      // we need to start and end at y=0 to avoid strange display issues
+      Point2D.Float pt0 = getDevicePoint(new Point2D.Float(0.0f, 0.0f), box, xUnit, yUnit);
+      trace.moveTo(pt0.x, pt0.y);
+      Point2D.Float pt1 = getDevicePoint(new Point2D.Float(1.0f, 0.0f), box, xUnit, yUnit);
+      float halfWidth = (pt1.x - pt0.x)/2;
+      for (int i=0; i<data_.getSize(); i++){
+         Point2D.Float pt = getDevicePoint(data_.getPoint(i), box, xUnit, yUnit);
+         trace.lineTo(pt.x - halfWidth, pt.y);
+         trace.lineTo(pt.x + halfWidth, pt.y);
+      }
+      pt0 = getDevicePoint(new Point2D.Float((float)data_.getPoint(data_.getSize()-1).getX(), 0.0f), box, xUnit, yUnit);
+      trace.lineTo(pt0.x, pt0.y);
+
+      if (fillTrace_)
+         g.fill(trace);
+      else
+         g.draw(trace);
+
+      g.setColor(oldColor);
+   }
+
+   public Point2D.Float getDevicePointUnclippedXMax(Point2D.Float pt, Rectangle box, float xUnit, float yUnit){
+      Point2D.Float ptDev = new Point2D.Float((float)(pt.x - bounds_.xMin)*xUnit + box.x, box.height - (float)(pt.y - bounds_.yMin)*yUnit + box.y);
+      // clip the drawing region
+      ptDev.x = Math.max(ptDev.x, (float)box.x);
+      ptDev.y = Math.max(Math.min(ptDev.y, (float)box.y + box.height), (float)box.y);
+      return ptDev;
+   }
+   
+   public Point2D.Float getDevicePoint(Point2D.Float pt, Rectangle box, float xUnit, float yUnit){
+      Point2D.Float ptDev = new Point2D.Float((float)(pt.x - bounds_.xMin)*xUnit + box.x, box.height - (float)(pt.y - bounds_.yMin)*yUnit + box.y);
+      // clip the drawing region
+      ptDev.x = Math.max(Math.min(ptDev.x, (float)box.x + box.width), (float)box.x);
+      ptDev.y = Math.max(Math.min(ptDev.y, (float)box.y + box.height), (float)box.y);
+      return ptDev;
+   }
+
+   public Point2D.Float getPositionPoint(int x, int y) {
+      Rectangle box = getBox();
+      Point2D.Float posPt = new Point2D.Float(
+              (float) (((x - box.x) / (float) box.width) * (bounds_.xMax - bounds_.xMin)),
+              (float) ((((box.y + box.height) - y) / (float) box.height) * (bounds_.yMax - bounds_.yMin)));
+      return posPt;
+   }
+   
+  
+
+   public Rectangle getBox() {
+      Rectangle box = getBounds();
+      box.x = (int)xMargin_;
+      box.y = (int)yMargin_;
+      box.height -= 2*yMargin_;
+      box.width -= 2*xMargin_;
+      return box;
+   }
+
+   @Override
+   public void paintComponent(Graphics g) {
+      g.setColor(Color.red);
+      super.paintComponent(g); // JPanel draws background
+      Graphics2D  g2d = (Graphics2D) g;
+
+       g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+
+
+      // get drawing rectangle
+      Rectangle box = getBox();
+       
+      // save current settings
+      Color oldColor = g2d.getColor();      
+      Paint oldPaint = g2d.getPaint();
+      Stroke oldStroke = g2d.getStroke();
+
+      g2d.setPaint(Color.black);
+      g2d.setStroke(new BasicStroke((float)2));
+      
+      drawGraph(g2d, box);
+      drawCursor(g2d, box, cursorLoPos_);
+      drawCursor(g2d, box, cursorHiPos_);
+      drawMapping(g2d, box, cursorLoPos_, cursorHiPos_, gamma_);
+    
+           
+      // restore settings
+      g2d.setPaint(oldPaint);
+      g2d.setStroke(oldStroke);
+      g2d.setColor(oldColor);
+   }
 }
+

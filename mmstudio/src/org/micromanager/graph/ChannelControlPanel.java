@@ -377,6 +377,7 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
    }
 
    private void updateHistogram() {
+      hp_.setCursorText(contrastMin_ +"", contrastMax_ + "");
       hp_.setCursors(contrastMin_ / binSize_, (contrastMax_+1) / binSize_, gamma_);
       hp_.repaint();
    }
@@ -534,10 +535,10 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
             //For drawing max label
             g.setColor(Color.black);
             g.setFont(new Font("Lucida Grande", 0, 10));
-            g.drawString(histMaxLabel_, this.getSize().width - 7 * histMaxLabel_.length(), this.getSize().height);
+            g.drawString(histMaxLabel_, this.getSize().width - 8 * histMaxLabel_.length(), this.getSize().height);
          }
       };
-      hp.setMargins(8, 12);
+      hp.setMargins(10, 12);
       hp.setTextVisible(false);
       hp.setGridVisible(false);
       hp.setTraceStyle(true, color_);         
@@ -756,6 +757,36 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
           hp_.setVisible(false);        
       }
       return;
+   }
+   
+   public void contrastMaxInput(int max) {
+      display_.disableAutoStretchCheckBox();
+      contrastMax_ = max;
+      if (contrastMin_ > contrastMax_) {
+         contrastMin_ = contrastMax_;
+      }
+      if (display_.getHistogramControlsState().syncChannels) {
+         mcHistograms_.applyContrastToAllChannels(contrastMin_, contrastMax_, gamma_);
+      } else {
+         mcHistograms_.applyLUTToImage();
+         display_.drawWithoutUpdate();
+      }
+   }
+   
+   public void contrastMinInput(int min) {    
+      display_.disableAutoStretchCheckBox();
+      contrastMin_ = min;
+      if (contrastMin_ >= maxIntensity_)
+          contrastMin_ = maxIntensity_ - 1;
+      if (contrastMax_ < contrastMin_) {
+         contrastMax_ = contrastMin_ + 1;
+      }
+      if (display_.getHistogramControlsState().syncChannels) {
+         mcHistograms_.applyContrastToAllChannels(contrastMin_, contrastMax_, gamma_);
+      } else {
+         mcHistograms_.applyLUTToImage();
+         display_.drawWithoutUpdate();
+      }
    }
 
    public void onLeftCursor(double pos) {
