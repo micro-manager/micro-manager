@@ -15,7 +15,7 @@
 
 (ns org.micromanager.mm
   (:import [org.micromanager.navigation MultiStagePosition]
-           [mmcorej Configuration DoubleVector Metadata StrVector]
+           [mmcorej Configuration DeviceType DoubleVector Metadata StrVector]
            [org.json JSONArray JSONObject]
            [java.text SimpleDateFormat]
            [org.micromanager.navigation MultiStagePosition StagePosition]
@@ -196,7 +196,8 @@
    :focus           (core getFocusDevice)
    :xy-stage        (core getXYStageDevice)
    :autofocus       (core getAutoFocusDevice)
-   :image-processor (core getImageProcessorDevice)})
+   :image-processor (core getImageProcessorDevice)
+   :galvo           (core getGalvoDevice)})
    
 (defn config-struct
   "Creates a map of properties from a given Micro-Manager Configuration
@@ -428,3 +429,45 @@
     (doseq [item doubles]
       (.add v item))
     v))
+
+(defn all-properties []
+  (for [dev (.getLoadedDevices mmc) prop (.getDevicePropertyNames mmc dev)]
+    [dev prop]))
+
+(defn property-sequence-max-lengths []
+  (into {}
+        (for [[dev prop :as property] (all-properties)]
+          [property
+           (if (.isPropertySequenceable mmc dev prop)
+             (.getPropertySequenceMaxLength mmc dev prop)
+             0)])))
+
+(defn all-cameras []
+  (seq (.getLoadedDevicesOfType mmc DeviceType/CameraDevice)))
+
+(defn exposure-sequence-max-lengths []
+  (into {}
+        (for [camera (all-cameras)]
+          [camera
+           (if (.isExposureSequenceable mmc camera)
+             (.getExposureSequenceMaxLength mmc camera)
+             0)])))
+
+(defn all-z-stages []
+  (seq (.getLoadedDevicesOfType mmc DeviceType/StageDevice)))
+
+(defn stage-sequence-max-lengths []
+  (into {}
+        (for [stage (all-z-stages)]
+          [stage
+           (if (.isStageSequenceable mmc stage)
+             (.getStageSequenceMaxLength mmc stage)
+             0)])))
+
+(defn sequence-max-lengths []
+  {:camera-exposures (exposure-sequence-max-lengths)
+   :stages (slice-sequence-max-lengths)
+   :properties (property-sequence-max-lengths)})
+
+
+  
