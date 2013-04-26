@@ -49,9 +49,9 @@
    :camera-exposures
    {\"Camera\" exposure}}"
   [{:keys [properties stage-positions camera-exposures] :as state}]
-  (future (set-properties! properties))
-  (future (set-stage-positions! stage-positions))
-  (future (set-camera-exposures! camera-exposures))
+  (set-properties! properties)
+  (set-stage-positions! stage-positions)
+  (set-camera-exposures! camera-exposures)
   nil)
 
 (defn new-values
@@ -71,6 +71,23 @@
                           (update-hardware-state! old-state new-state))]
     (doto (atom {})
       (add-watch update-function update-function))))
+
+(defn sleep-until [target-time-ms]
+  "Sleep until a designated time on the system clock."
+  (let [interval (- target-time-ms (System/currentTimeMillis))]
+    (when (pos? interval)
+      (Thread/sleep interval))))
+
+(defn collect-snap [tags out-queue]
+  (mm/core snapImage)
+  (future (dotimes [i (mm/core getNumberOfCameraChannels)]
+            (.put queue (mm/core getTaggedImage i)))
+          queue))
+
+(defn acquire-event [{:keys [state acquire-time expose-fn]} out-queue]
+  (swap! hardware-state-atom merge state)
+  (sleep-until acquire-time) 
+  (expose-fn out-queue))                 
 
 ;; testing
 
