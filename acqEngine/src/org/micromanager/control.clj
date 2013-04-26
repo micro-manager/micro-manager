@@ -18,6 +18,13 @@
   (doseq-parallel [[[d p] v] properties]
     (mm/core setProperty d p v)))
 
+(defn set-property-sequences!
+  "Loads the given property sequences."
+  [property-sequences]
+  (doseq-parallel [[[dev prop] prop-seq] property-sequences]
+    (when prop-seq
+      (mm/core loadPropertySequence dev prop (mm/str-vector prop-seq)))))
+
 (defn set-stage-positions!
   "Sets the position of all stages specified. The input argument should be a
    map that looks something like: {\"Z\" 3.0 \"XY\" [10 20]}."
@@ -30,6 +37,13 @@
             1 (mm/core setPosition stage (first pos))
             2 (mm/core setXYPosition stage (first pos) (second pos)))))))
             
+(defn set-stage-position-sequences!
+  "Sets the stage sequence."
+  [stage-position-sequences]
+  (doseq-parallel [[stage position-sequence] stage-position-sequences]
+    (when stage-position-sequences
+      (mm/core loadStageSequence stage (mm/str-vector position-sequence)))))
+
 (defn set-camera-exposures!
   "Sets the specified camera exposure settings. The input argument should be something like
    {\"Camera\" 10}."
@@ -37,18 +51,35 @@
   (doseq-parallel [[camera exposure] camera-exposures]
     (mm/core setExposure camera exposure)))
 
+(defn set-camera-exposure-sequences!
+  "Sets the camera exposure sequence."
+  [camera-exposure-sequences]
+  (doseq-parallel [[camera exposure-sequence] camera-exposure-sequences]
+    (mm/core loadExposureSequence camera (mm/double-vector exposure-sequence))))
+
 (defn set-hardware-state!
   "Sets the state of the hardware. Example state:
    {:properties
    {[\"Dichroic\" \"Label\"] \"Q505LP\"
     [\"Emission\" \"Label\"] \"Chroma-HQ535\"
     [\"Excitation\" \"Label\"] \"Chroma-HQ480\"}
+   :property-sequences
+   {[\"Objective\" \"State\"] [\"10X\" \"20X\"]}
    :stage-positions
    {\"Z\" 3.0
     \"XY\" [10 20]}
+   :stage-position-sequences
+   {\"Z\" [3.0 6.0 9.0]}
    :camera-exposures
-   {\"Camera\" exposure}}"
-  [{:keys [properties stage-positions camera-exposures] :as state}]
+   {\"Camera\" exposure}
+   :camera-exposure-sequences
+   {\"Camera\" [10 30 40]}}"
+  [{:keys [properties stage-positions camera-exposures
+           property-sequences stage-position-sequences
+           camera-exposure-sequences] :as state}]
+  (set-stage-position-sequences! stage-position-sequences)
+  (set-property-sequences! property-sequences)
+  (set-camera-exposure-sequences! camera-exposure-sequences)
   (set-properties! properties)
   (set-stage-positions! stage-positions)
   (set-camera-exposures! camera-exposures)
@@ -81,8 +112,8 @@
 (defn collect-snap [tags out-queue]
   (mm/core snapImage)
   (future (dotimes [i (mm/core getNumberOfCameraChannels)]
-            (.put queue (mm/core getTaggedImage i)))
-          queue))
+            (.put out-queue (mm/core getTaggedImage i)))
+          out-queue))
 
 (defn acquire-event [{:keys [state acquire-time expose-fn]} out-queue]
   (swap! hardware-state-atom merge state)

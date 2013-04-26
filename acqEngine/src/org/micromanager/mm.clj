@@ -466,7 +466,7 @@
 
 (defn sequence-max-lengths []
   {:camera-exposures (exposure-sequence-max-lengths)
-   :stages (slice-sequence-max-lengths)
+   :stages (stage-sequence-max-lengths)
    :properties (property-sequence-max-lengths)})
 
 
