@@ -9,24 +9,24 @@
                         (count items))))
 
 (defn next-indices
-  "Give a vector of indices, and a list of ranges,
+  "Given a vector of indices, and a vector list of sizes,
    produces the next vector of indices, where the first index
    loops the fastest. For example,
    (next-indices [3 2 4] [4 3 7]) => [0 0 5]) .
    Returns nil when indices is the last in the sequence."
-  [indices ranges]
+  [indices sizes]
   (let [n (count indices)
-        ranges (vec ranges)]
+        sizes (vec sizes)]
     (loop [dimension 0 new-indices (vec indices)]
       (when (< dimension n)
         (let [new-index (inc (new-indices dimension))]
-          (if (< new-index (ranges dimension))
+          (if (< new-index (sizes dimension))
             (assoc new-indices dimension new-index)
             (recur (inc dimension)
                    (assoc new-indices dimension 0))))))))
         
 (defn indices-in-order
-  "Give a set of plane-indices and a dimension order, produces a
+  "Given a set of plane-indices and a dimension order, produces a
    vector of indices (integers. For example,
    (indices-in-order {:position 10 :slice 4 :channel 3 :frame 20}
                      [:channel :slice :frame :position])
