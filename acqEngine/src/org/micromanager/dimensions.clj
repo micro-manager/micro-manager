@@ -34,47 +34,71 @@
   [plane-indices order]
   (vec (map #(% plane-indices) order)))
 
-(defn next-plane-indices [current-plane-indices dimension-sizes order]
+(defn next-plane-indices
+  "Give the indices of the current plane, a list of dimension sizes,
+   and an order that these dimensions are looped, returns the next
+   set of indices."
+  [current-plane-indices dimension-sizes order]
   (when-let [next-indices  (next-indices (indices-in-order current-plane-indices order)
                                          (indices-in-order dimension-sizes order))]
     (zipmap order next-indices)))
 
-(defn plane-indices [{:keys [position channel slice frame] :as plane}
-                     {:keys [positions channels slices] :as dimension-ranges}]
+(defn plane-indices
+  "Converts a plane specified by dimension values
+   to a plane specified as integer indices."
+  [{:keys [position channel slice frame] :as plane}
+   {:keys [positions channels slices] :as dimension-ranges}]
   {:frame frame
    :position (.indexOf positions position)
    :channel (.indexOf channels channel)
    :slice (.indexOf slices slice)})
 
-(defn plane-values [{:keys [position channel slice frame] :as plane-indices}
-                    {:keys [positions channels slices] :as dimension-values}]
+(defn plane-values
+  "Converts a plane specified by integer indices
+   to one specified by dimension values."
+  [{:keys [position channel slice frame] :as plane-indices}
+   {:keys [positions channels slices] :as dimension-values}]
   {:frame frame
    :position (positions position)
    :channel (channels channel)
    :slice (slices slice)})
     
-(defn dimension-sizes [{:keys [positions channels slices num-frames]}]
+(defn dimension-sizes
+  "Computes dimension sizes given a map specifying dimension-values."
+  [{:keys [positions channels slices num-frames] :as dimension-values}]
   {:frame num-frames
    :position (count positions)
    :slice (count slices)
    :channel (count channels)})
   
-(defn next-plane [{:keys [position channel slice frame] :as current-plane}
-                  {:keys [positions channels slices frames] :as dimension-values}
-                  order]
+(defn next-plane
+  "Computes the next plan in a multi-dimension acquisition,
+   given the current-plane, the allow dimension-values, and
+   the order of dimension looping."
+  [{:keys [position channel slice frame] :as current-plane}
+   {:keys [positions channels slices frames] :as dimension-values}
+   order]
     (let [dimension-sizes (dimension-sizes dimension-values)
           current-plane-indices (plane-indices current-plane dimension-values)
           next-plane-indices (next-plane-indices current-plane-indices dimension-sizes order)]
       (when next-plane-indices
         (plane-values next-plane-indices dimension-values))))
   
-(defn middle-item [items]
+(defn middle-item
+  "Returns the middle item in items. If there is an even
+   number of items, returns the first item after the middle
+   interval."
+  [items]
   (let [n (count items)]
     (nth items (long (/ n 2)))))
 
-(defn plane-forbidden? [{:keys [position channel slice frame] :as plane}
-                        {:keys [slices] :as dimension-values}
-                      channel-settings]
+(defn plane-forbidden?
+  "Check if a given plane should be skipped, according
+   to rules in channel-settings and the allowed
+   dimension values."
+  [{:keys [position channel slice frame] :as plane}
+   {:keys [slices] :as dimension-values}
+   channel-settings]
   (let [{:keys [use-channel skip-frames use-z-stack] :as channel-setting}
         (channel-settings channel)]
     (and channel-setting
@@ -82,29 +106,43 @@
              (and (pos? skip-frames) (pos? (mod frame (inc skip-frames))))
              (and (not use-z-stack) (not= slice (middle-item slices)))))))             
 
-(defn next-allowed-plane [current-plane dimension-values order channel-settings]
+(defn next-allowed-plane
+  "Computes the next plan in a multi-dimension acquisition,
+   given the current-plane, the allow dimension-values, and
+   the order of dimension looping. The rules specified in
+   channel-settings means that certain planes are skipped."
+  [current-plane dimension-values order channel-settings]
   (loop [plane current-plane]
     (when-let [next-plane (next-plane plane dimension-values order)]
       (if (plane-forbidden? next-plane dimension-values channel-settings)
         (recur next-plane)
         next-plane))))
 
-;; testing ;;;;;;;;;
-
-
-(defn run-through-planes-simple [first-plane dimension-values order]
-  (take-while identity (iterate #(next-plane % dimension-values order) first-plane)))
-
-(defn run-through-planes [first-plane dimension-values order channel-settings]
-  (take-while identity (iterate #(next-allowed-plane
-                                   % dimension-values order channel-settings)
-                                first-plane)))
-
-(defn compute-first-plane [{:keys [positions channels slices] :as dimension-ranges}]
+(defn first-plane
+  "Computes the first plane in a multi-dimensional acquisition
+   series, give a set of dimension ranges."
+  [{:keys [positions channels slices] :as dimension-ranges}]
   {:frame 0
    :position (first positions)
    :slice (first slices)
    :channel (first channels)})
+
+;; testing ;;;;;;;;;
+
+
+(defn run-through-planes-simple
+  "Generate a sequences of all planes in a multi-dimensional acquisition."
+  [dimension-values order]
+  (take-while identity (iterate #(next-plane % dimension-values order)
+                                (first-plane dimension-values))))
+
+(defn run-through-planes
+  "Generate a sequences of all planes in a multi-dimensional acquisition.
+   Skips planes not allowed by channel-settings."
+  [dimension-values order channel-settings]
+  (take-while identity (iterate #(next-allowed-plane
+                                   % dimension-values order channel-settings)
+                                (first-plane dimension-values))))
 
 (def test-dimension-values
   {:num-frames 10
@@ -114,7 +152,7 @@
    })
 
 (def test-plane
-  (compute-first-plane test-dimension-values))
+  (first-plane test-dimension-values))
   
 (def test-order
   [:slice :channel :position :frame])
@@ -155,7 +193,7 @@
     :z-offset 0.0}})
 
 (defn test-run []
-  (run-through-planes test-plane test-dimension-values test-order test-channel-settings))
+  (run-through-planes test-dimension-values test-order test-channel-settings))
 
   
 (def test-acq-settings
