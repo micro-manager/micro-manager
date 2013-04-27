@@ -24,7 +24,6 @@
 			OutputDirectory="$(PlatformName)\$(ConfigurationName)"
 			IntermediateDirectory="$(PlatformName)\$(ConfigurationName)"
 			ConfigurationType="2"
-			UseOfMFC="0"
 			CharacterSet="2"
 			>
 			<Tool
@@ -45,7 +44,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="&quot;$(SolutionDir)\Include&quot;;../../MMDevice"
+				AdditionalIncludeDirectories="&quot;$(SolutionDir)\Include&quot;;..\..\MMDevice;..\..\..\3rdparty\Ximea\Include"
 				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_USRDLL;MODULE_EXPORTS"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
@@ -66,9 +65,9 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="m3api.lib"
-				OutputFile="$(OutDir)\mmgr_dal_XIMEA.dll"
+				OutputFile="$(OutDir)\mmgr_dal_$(ProjectName).dll"
 				LinkIncremental="2"
-				AdditionalLibraryDirectories="&quot;$(SolutionDir)\Lib&quot;"
+				AdditionalLibraryDirectories="..\..\..\3rdparty\Ximea\Lib;&quot;$(SolutionDir)\Lib&quot;"
 				GenerateDebugInformation="true"
 				SubSystem="2"
 				TargetMachine="1"
@@ -101,7 +100,7 @@
 			OutputDirectory="$(PlatformName)\$(ConfigurationName)"
 			IntermediateDirectory="$(PlatformName)\$(ConfigurationName)"
 			ConfigurationType="2"
-			CharacterSet="1"
+			CharacterSet="2"
 			>
 			<Tool
 				Name="VCPreBuildEventTool"
@@ -122,7 +121,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="../../MMDevice"
+				AdditionalIncludeDirectories="&quot;$(SolutionDir)\Include&quot;;..\..\MMDevice;..\..\..\3rdparty\Ximea\Include"
 				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_USRDLL;MODULE_EXPORTS"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
@@ -142,8 +141,10 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
+				AdditionalDependencies="m3apiX64.lib"
 				OutputFile="$(OutDir)\mmgr_dal_$(ProjectName).dll"
 				LinkIncremental="2"
+				AdditionalLibraryDirectories="..\..\..\3rdparty\Ximea\Lib;&quot;$(SolutionDir)\Lib&quot;"
 				GenerateDebugInformation="true"
 				SubSystem="2"
 				TargetMachine="17"
@@ -255,7 +256,7 @@
 			OutputDirectory="$(PlatformName)\$(ConfigurationName)"
 			IntermediateDirectory="$(PlatformName)\$(ConfigurationName)"
 			ConfigurationType="2"
-			CharacterSet="1"
+			CharacterSet="2"
 			WholeProgramOptimization="1"
 			>
 			<Tool

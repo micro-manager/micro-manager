@@ -21,8 +21,8 @@
 	<Configurations>
 		<Configuration
 			Name="Debug|Win32"
-			OutputDirectory="$(SolutionDir)$(ConfigurationName)"
-			IntermediateDirectory="$(ConfigurationName)"
+			OutputDirectory="$(SolutionDir)$(PlatformName)\$(ConfigurationName)"
+			IntermediateDirectory="$(PlatformName)\$(ConfigurationName)"
 			ConfigurationType="2"
 			CharacterSet="1"
 			>
@@ -92,13 +92,13 @@
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
-				CommandLine="copy &quot;$(TargetPath)&quot; ..\..\bin_$(PlatformName)&#x0D;&#x0A;copy &quot;$(TargetPath)&quot; &quot;C:\Program Files\Micro-Manager-1.4&quot;&#x0D;&#x0A;"
+				CommandLine="copy &quot;$(TargetPath)&quot; ..\..\bin_$(PlatformName)"
 			/>
 		</Configuration>
 		<Configuration
 			Name="Release|Win32"
-			OutputDirectory="$(SolutionDir)$(ConfigurationName)"
-			IntermediateDirectory="$(ConfigurationName)"
+			OutputDirectory="$(SolutionDir)$(PlatformName)\$(ConfigurationName)"
+			IntermediateDirectory="$(PlatformName)\$(ConfigurationName)"
 			ConfigurationType="2"
 			CharacterSet="1"
 			WholeProgramOptimization="1"
@@ -122,6 +122,7 @@
 				Name="VCCLCompilerTool"
 				Optimization="2"
 				EnableIntrinsicFunctions="true"
+				FavorSizeOrSpeed="1"
 				AdditionalIncludeDirectories="..\..\MMDevice;..\..\..\3rdparty\bitflow\SDK_5.20\include"
 				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;MODULE_EXPORTS"
 				RuntimeLibrary="0"
@@ -171,7 +172,7 @@
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
-				CommandLine="copy &quot;$(TargetPath)&quot; ..\..\bin_$(PlatformName)&#x0D;&#x0A;copy &quot;$(TargetPath)&quot; &quot;C:\Program Files\Micro-Manager-1.4&quot;"
+				CommandLine="copy &quot;$(TargetPath)&quot; ..\..\bin_$(PlatformName)"
 			/>
 		</Configuration>
 		<Configuration
@@ -200,7 +201,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="..\..\MMDevice;..\..\..\3rdparty\bitflow\SDK_5.20\include"
+				AdditionalIncludeDirectories="..\..\MMDevice;..\..\..\3rdparty\bitflow\SDK_5.30\include"
 				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_USRDLL;MODULE_EXPORTS"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
@@ -223,7 +224,7 @@
 				AdditionalDependencies="Cid.lib BFEr.lib BFD.lib"
 				OutputFile="$(OutDir)\mmgr_dal_$(ProjectName).dll"
 				LinkIncremental="2"
-				AdditionalLibraryDirectories="..\..\..\3rdparty\bitflow\SDK_5.20\lib"
+				AdditionalLibraryDirectories="..\..\..\3rdparty\bitflow\SDK_5.30\lib"
 				GenerateDebugInformation="true"
 				SubSystem="2"
 				TargetMachine="17"
@@ -280,7 +281,7 @@
 				Optimization="2"
 				EnableIntrinsicFunctions="true"
 				FavorSizeOrSpeed="1"
-				AdditionalIncludeDirectories="..\..\MMDevice;..\..\..\3rdparty\bitflow\SDK_5.20\include"
+				AdditionalIncludeDirectories="..\..\MMDevice;..\..\..\3rdparty\bitflow\SDK_5.30\include"
 				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;MODULE_EXPORTS"
 				RuntimeLibrary="0"
 				EnableFunctionLevelLinking="true"
@@ -302,12 +303,11 @@
 				AdditionalDependencies="Cid.lib BFEr.lib BFD.lib"
 				OutputFile="$(OutDir)\mmgr_dal_$(ProjectName).dll"
 				LinkIncremental="1"
-				AdditionalLibraryDirectories="..\..\..\3rdparty\bitflow\SDK_5.20\lib"
+				AdditionalLibraryDirectories="..\..\..\3rdparty\bitflow\SDK_5.30\lib"
 				GenerateDebugInformation="true"
 				SubSystem="2"
 				OptimizeReferences="2"
 				EnableCOMDATFolding="2"
-				OptimizeForWindows98="1"
 				TargetMachine="17"
 			/>
 			<Tool

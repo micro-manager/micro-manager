@@ -78,7 +78,6 @@
 				SubSystem="2"
 				RandomizedBaseAddress="1"
 				DataExecutionPrevention="0"
-				ImportLibrary="$(OutDir)/Rapp.lib"
 				TargetMachine="1"
 			/>
 			<Tool
@@ -131,7 +130,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="&quot;C:\projects\3rdparty\Rapp\UGA 40 Control SDK 64\UGA40Example\&quot;;&quot;..\..\..\3rdparty\Rapp\UGA 40 Control SDK 64\inc&quot;"
+				AdditionalIncludeDirectories="&quot;..\..\..\3rdparty\Rapp\UGA 40 Control SDK 64\UGA40Example\&quot;;&quot;..\..\..\3rdparty\Rapp\UGA 40 Control SDK 64\inc&quot;"
 				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_USRDLL;MODULE_EXPORTS"
 				MinimalRebuild="true"
 				ExceptionHandling="2"
@@ -164,7 +163,6 @@
 				SubSystem="2"
 				RandomizedBaseAddress="1"
 				DataExecutionPrevention="0"
-				ImportLibrary="$(OutDir)/ASIStage.lib"
 				TargetMachine="17"
 			/>
 			<Tool
@@ -248,7 +246,6 @@
 				EnableCOMDATFolding="2"
 				RandomizedBaseAddress="1"
 				DataExecutionPrevention="0"
-				ImportLibrary=""
 				TargetMachine="1"
 			/>
 			<Tool
@@ -333,7 +330,6 @@
 				EnableCOMDATFolding="2"
 				RandomizedBaseAddress="1"
 				DataExecutionPrevention="0"
-				ImportLibrary=""
 				TargetMachine="17"
 			/>
 			<Tool

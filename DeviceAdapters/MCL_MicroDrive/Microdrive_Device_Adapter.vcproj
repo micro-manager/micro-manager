@@ -64,7 +64,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="MicroDrive.lib"
-				OutputFile="$(OutDir)\mmgr_dal_MCL_MicroDrive.dll"
+				OutputFile="$(OutDir)/mmgr_dal_$(ProjectName).dll"
 				AdditionalLibraryDirectories=""
 				GenerateDebugInformation="true"
 				RandomizedBaseAddress="1"
@@ -103,7 +103,6 @@
 			>
 			<Tool
 				Name="VCPreBuildEventTool"
-				ExcludedFromBuild="true"
 			/>
 			<Tool
 				Name="VCCustomBuildTool"
@@ -142,7 +141,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="MicroDrive64.lib"
-				OutputFile="$(OutDir)\mmgr_dal_MCL_MicroDrive.dll"
+				OutputFile="$(OutDir)/mmgr_dal_$(ProjectName).dll"
 				AdditionalLibraryDirectories=""
 				GenerateDebugInformation="true"
 				RandomizedBaseAddress="1"
@@ -178,7 +177,6 @@
 			IntermediateDirectory="$(PlatformName)\$(ConfigurationName)"
 			ConfigurationType="2"
 			CharacterSet="2"
-			WholeProgramOptimization="1"
 			>
 			<Tool
 				Name="VCPreBuildEventTool"
@@ -197,13 +195,12 @@
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
-				WholeProgramOptimization="false"
 				AdditionalIncludeDirectories=""
 				PreprocessorDefinitions="MODULE_EXPORTS;WIN32"
 				RuntimeLibrary="0"
 				WarningLevel="4"
 				Detect64BitPortabilityProblems="false"
-				DebugInformationFormat="0"
+				DebugInformationFormat="3"
 			/>
 			<Tool
 				Name="VCManagedResourceCompilerTool"
@@ -255,11 +252,9 @@
 			IntermediateDirectory="$(PlatformName)\$(ConfigurationName)"
 			ConfigurationType="2"
 			CharacterSet="2"
-			WholeProgramOptimization="1"
 			>
 			<Tool
 				Name="VCPreBuildEventTool"
-				ExcludedFromBuild="true"
 			/>
 			<Tool
 				Name="VCCustomBuildTool"
@@ -276,13 +271,12 @@
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
-				WholeProgramOptimization="false"
 				AdditionalIncludeDirectories=""
 				PreprocessorDefinitions="MODULE_EXPORTS;WIN32"
 				RuntimeLibrary="0"
 				WarningLevel="4"
 				Detect64BitPortabilityProblems="false"
-				DebugInformationFormat="0"
+				DebugInformationFormat="3"
 			/>
 			<Tool
 				Name="VCManagedResourceCompilerTool"

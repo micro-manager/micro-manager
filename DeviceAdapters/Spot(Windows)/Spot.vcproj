@@ -53,7 +53,7 @@
 				RuntimeLibrary="1"
 				RuntimeTypeInfo="true"
 				UsePrecompiledHeader="0"
-				WarningLevel="3"
+				WarningLevel="4"
 				Detect64BitPortabilityProblems="false"
 				DebugInformationFormat="4"
 				DisableSpecificWarnings="4290"
@@ -69,7 +69,6 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies=" "
 				OutputFile="$(OutDir)/mmgr_dal_$(ProjectName).dll"
 				LinkIncremental="2"
 				AdditionalLibraryDirectories="..\..\..\3rdpartypublic\boost\stage_$(PlatformName)\lib"
@@ -139,7 +138,7 @@
 				RuntimeLibrary="1"
 				RuntimeTypeInfo="true"
 				UsePrecompiledHeader="0"
-				WarningLevel="3"
+				WarningLevel="4"
 				Detect64BitPortabilityProblems="false"
 				DebugInformationFormat="3"
 				DisableSpecificWarnings="4290"
@@ -155,7 +154,6 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies=" "
 				OutputFile="$(OutDir)/mmgr_dal_$(ProjectName).dll"
 				LinkIncremental="2"
 				AdditionalLibraryDirectories="..\..\..\3rdpartypublic\boost\stage_$(PlatformName)\lib"
@@ -215,10 +213,9 @@
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
-				AdditionalOptions="/wd4127"
 				AdditionalIncludeDirectories=""
 				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;MODULE_EXPORTS"
-				ExceptionHandling="1"
+				ExceptionHandling="2"
 				RuntimeLibrary="0"
 				RuntimeTypeInfo="true"
 				UsePrecompiledHeader="0"
@@ -299,10 +296,9 @@
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
-				AdditionalOptions="/wd4127"
 				AdditionalIncludeDirectories=""
 				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;MODULE_EXPORTS"
-				ExceptionHandling="1"
+				ExceptionHandling="2"
 				RuntimeLibrary="0"
 				RuntimeTypeInfo="true"
 				UsePrecompiledHeader="0"

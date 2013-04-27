@@ -45,7 +45,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="../../../3rdpartypublic/boost;../../../3rdpartypublic;..\..\..\3rdparty\JAI\SDK\library\CPP\include"
+				AdditionalIncludeDirectories="../../../3rdpartypublic/boost;..\..\..\3rdparty\JAI\SDK\library\CPP\include"
 				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_USRDLL;MODULE_EXPORTS;TESTRESOURCELOCKING"
 				MinimalRebuild="true"
 				ExceptionHandling="2"
@@ -131,7 +131,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="../../../3rdpartypublic/boost;../../../3rdparty;..\..\..\3rdparty\JAI\SDK\library\CPP\include"
+				AdditionalIncludeDirectories="../../../3rdpartypublic/boost;..\..\..\3rdparty\JAI\SDK\library\CPP\include"
 				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_USRDLL;MODULE_EXPORTS;TESTRESOURCELOCKING"
 				MinimalRebuild="true"
 				ExceptionHandling="2"
@@ -215,7 +215,7 @@
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
-				AdditionalIncludeDirectories="../../../3rdpartypublic/boost;../../../3rdpartypublic;..\..\..\3rdparty\JAI\SDK\library\CPP\include"
+				AdditionalIncludeDirectories="../../../3rdpartypublic/boost;..\..\..\3rdparty\JAI\SDK\library\CPP\include"
 				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;MODULE_EXPORTS;TESTRESOURCELOCKING"
 				ExceptionHandling="2"
 				RuntimeLibrary="0"
@@ -299,7 +299,7 @@
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
-				AdditionalIncludeDirectories="../../../3rdpartypublic/boost;../../../3rdparty;..\..\..\3rdparty\JAI\SDK\library\CPP\include"
+				AdditionalIncludeDirectories="../../../3rdpartypublic/boost;..\..\..\3rdparty\JAI\SDK\library\CPP\include"
 				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;MODULE_EXPORTS;TESTRESOURCELOCKING"
 				ExceptionHandling="2"
 				RuntimeLibrary="0"

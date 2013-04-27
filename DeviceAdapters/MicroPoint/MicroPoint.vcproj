@@ -71,13 +71,11 @@
 				Name="VCLinkerTool"
 				OutputFile="$(OutDir)/mmgr_dal_$(ProjectName).dll"
 				LinkIncremental="2"
-				AdditionalLibraryDirectories="&quot;..\..\..\3rdparty\Rapp\UGA 40 SDK and Software-Jan2012\SDK\lib&quot;"
 				GenerateDebugInformation="true"
 				ProgramDatabaseFile="$(OutDir)/$(ProjectName).pdb"
 				SubSystem="2"
 				RandomizedBaseAddress="1"
 				DataExecutionPrevention="0"
-				ImportLibrary="$(OutDir)/Rapp.lib"
 				TargetMachine="1"
 			/>
 			<Tool
@@ -156,13 +154,11 @@
 				Name="VCLinkerTool"
 				OutputFile="$(OutDir)/mmgr_dal_$(ProjectName).dll"
 				LinkIncremental="2"
-				AdditionalLibraryDirectories="&quot;..\..\..\3rdparty\Rapp\UGA 40 Control SDK 64\lib&quot;"
 				GenerateDebugInformation="true"
 				ProgramDatabaseFile="$(OutDir)/$(ProjectName).pdb"
 				SubSystem="2"
 				RandomizedBaseAddress="1"
 				DataExecutionPrevention="0"
-				ImportLibrary="$(OutDir)/ASIStage.lib"
 				TargetMachine="17"
 			/>
 			<Tool
@@ -237,7 +233,6 @@
 				Name="VCLinkerTool"
 				OutputFile="$(OutDir)/mmgr_dal_$(ProjectName).dll"
 				LinkIncremental="1"
-				AdditionalLibraryDirectories="&quot;..\..\..\3rdparty\Rapp\UGA 40 SDK and Software-Jan2012\SDK\lib&quot;"
 				GenerateDebugInformation="true"
 				ProgramDatabaseFile="$(OutDir)/$(ProjectName).pdb"
 				SubSystem="2"
@@ -245,7 +240,6 @@
 				EnableCOMDATFolding="2"
 				RandomizedBaseAddress="1"
 				DataExecutionPrevention="0"
-				ImportLibrary=""
 				TargetMachine="1"
 			/>
 			<Tool
@@ -321,7 +315,6 @@
 				Name="VCLinkerTool"
 				OutputFile="$(OutDir)/mmgr_dal_$(ProjectName).dll"
 				LinkIncremental="1"
-				AdditionalLibraryDirectories="&quot;..\..\..\3rdparty\Rapp\UGA 40 Control SDK 64\lib&quot;"
 				GenerateDebugInformation="true"
 				ProgramDatabaseFile="$(OutDir)/$(ProjectName).pdb"
 				SubSystem="2"
@@ -329,7 +322,6 @@
 				EnableCOMDATFolding="2"
 				RandomizedBaseAddress="1"
 				DataExecutionPrevention="0"
-				ImportLibrary=""
 				TargetMachine="17"
 			/>
 			<Tool

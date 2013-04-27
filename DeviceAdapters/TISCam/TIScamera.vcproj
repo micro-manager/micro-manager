@@ -103,7 +103,6 @@
 			<Tool
 				Name="VCPostBuildEventTool"
 				CommandLine="copy &quot;$(TargetPath)&quot; ..\..\bin_$(PlatformName)"
-				ExcludedFromBuild="false"
 			/>
 		</Configuration>
 		<Configuration
@@ -191,7 +190,6 @@
 			<Tool
 				Name="VCPostBuildEventTool"
 				CommandLine="copy &quot;$(TargetPath)&quot; ..\..\bin_$(PlatformName)"
-				ExcludedFromBuild="false"
 			/>
 		</Configuration>
 		<Configuration

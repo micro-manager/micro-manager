@@ -156,7 +156,7 @@
 				EnableCOMDATFolding="2"
 				RandomizedBaseAddress="1"
 				DataExecutionPrevention="0"
-				ImportLibrary="$(OutDir)/DemoCamera.lib"
+				ImportLibrary="$(OutDir)/$(ProjectName).lib"
 				TargetMachine="1"
 			/>
 			<Tool

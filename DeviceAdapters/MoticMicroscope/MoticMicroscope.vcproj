@@ -52,7 +52,7 @@
 				MinimalRebuild="true"
 				ExceptionHandling="2"
 				BasicRuntimeChecks="3"
-				RuntimeLibrary="3"
+				RuntimeLibrary="1"
 				RuntimeTypeInfo="true"
 				WarningLevel="4"
 				Detect64BitPortabilityProblems="false"
@@ -75,9 +75,11 @@
 				LinkIncremental="2"
 				AdditionalLibraryDirectories="../../../3rdpartypublic/Motic/x86"
 				GenerateDebugInformation="true"
+				ProgramDatabaseFile="$(OutDir)/$(ProjectName).pdb"
 				SubSystem="2"
 				RandomizedBaseAddress="1"
 				DataExecutionPrevention="0"
+				ImportLibrary="$(OutDir)/$(TargetName).lib"
 				TargetMachine="1"
 			/>
 			<Tool
@@ -244,11 +246,13 @@
 				LinkIncremental="1"
 				AdditionalLibraryDirectories="../../../3rdpartypublic/Motic/x86"
 				GenerateDebugInformation="true"
+				ProgramDatabaseFile="$(OutDir)/$(ProjectName).pdb"
 				SubSystem="2"
 				OptimizeReferences="2"
 				EnableCOMDATFolding="2"
 				RandomizedBaseAddress="1"
 				DataExecutionPrevention="0"
+				ImportLibrary="$(OutDir)/$(TargetName).lib"
 				TargetMachine="1"
 			/>
 			<Tool
@@ -300,6 +304,7 @@
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
+				Optimization="2"
 				EnableIntrinsicFunctions="true"
 				FavorSizeOrSpeed="1"
 				AdditionalIncludeDirectories="../../MMDevice;../../../3rdpartypublic/Motic"

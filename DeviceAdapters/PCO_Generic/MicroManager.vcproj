@@ -21,8 +21,8 @@
 	<Configurations>
 		<Configuration
 			Name="Debug|Win32"
-			OutputDirectory="$(SolutionDir)$(ConfigurationName)"
-			IntermediateDirectory="$(ConfigurationName)"
+			OutputDirectory="$(SolutionDir)$(PlatformName)\$(ConfigurationName)"
+			IntermediateDirectory="$(PlatformName)\$(ConfigurationName)"
 			ConfigurationType="2"
 			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC71.vsprops"
 			UseOfMFC="1"
@@ -33,7 +33,6 @@
 			/>
 			<Tool
 				Name="VCCustomBuildTool"
-				CommandLine=""
 			/>
 			<Tool
 				Name="VCXMLDataGeneratorTool"
@@ -72,7 +71,6 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="version.lib nafxcwd.lib Kamlibd.lib"
-				ShowProgress="0"
 				OutputFile="$(OutDir)/mmgr_dal_$(ProjectName).dll"
 				LinkIncremental="2"
 				AdditionalLibraryDirectories="&quot;..\..\..\3rdparty\Microsoft\VisualC++\atlmfc\lib&quot;;..\..\..\3rdparty\PCO\Windows\pco_generic"
@@ -121,7 +119,6 @@
 			/>
 			<Tool
 				Name="VCCustomBuildTool"
-				CommandLine=""
 			/>
 			<Tool
 				Name="VCXMLDataGeneratorTool"
@@ -161,7 +158,6 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="version.lib nafxcwd.lib Kamlibd64.lib"
-				ShowProgress="0"
 				OutputFile="$(OutDir)/mmgr_dal_$(ProjectName).dll"
 				LinkIncremental="2"
 				AdditionalLibraryDirectories="&quot;..\..\..\3rdparty\Microsoft\VisualC++\atlmfc\lib\x64&quot;;..\..\..\3rdparty\PCO\Windows\pco_generic"
@@ -198,8 +194,8 @@
 		</Configuration>
 		<Configuration
 			Name="Release|Win32"
-			OutputDirectory="$(SolutionDir)$(ConfigurationName)"
-			IntermediateDirectory="$(ConfigurationName)"
+			OutputDirectory="$(SolutionDir)$(PlatformName)\$(ConfigurationName)"
+			IntermediateDirectory="$(PlatformName)\$(ConfigurationName)"
 			ConfigurationType="2"
 			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC71.vsprops"
 			UseOfMFC="1"
@@ -244,7 +240,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="version.lib  nafxcw.lib ..\..\..\3rdparty\Pco\windows\pco_generic\Kamlib.lib"
+				AdditionalDependencies="version.lib nafxcw.lib Kamlib.lib"
 				OutputFile="$(OutDir)/mmgr_dal_$(ProjectName).dll"
 				LinkIncremental="1"
 				AdditionalLibraryDirectories="&quot;..\..\..\3rdparty\Microsoft\VisualC++\atlmfc\lib&quot;;..\..\..\3rdparty\PCO\Windows\pco_generic"
@@ -329,7 +325,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="version.lib  nafxcw.lib ..\..\..\3rdparty\Pco\windows\pco_generic\Kamlib64.lib"
+				AdditionalDependencies="version.lib nafxcw.lib Kamlib64.lib"
 				OutputFile="$(OutDir)/mmgr_dal_$(ProjectName).dll"
 				LinkIncremental="1"
 				AdditionalLibraryDirectories="&quot;..\..\..\3rdparty\Microsoft\VisualC++\atlmfc\lib\x64&quot;;..\..\..\3rdparty\PCO\Windows\pco_generic"

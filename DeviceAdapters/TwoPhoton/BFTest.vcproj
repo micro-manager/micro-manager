@@ -21,8 +21,8 @@
 	<Configurations>
 		<Configuration
 			Name="Debug|Win32"
-			OutputDirectory="$(SolutionDir)$(ConfigurationName)"
-			IntermediateDirectory="$(ConfigurationName)"
+			OutputDirectory="$(SolutionDir)$(PlatformName)\$(ConfigurationName)"
+			IntermediateDirectory="$(PlatformName)\$(ConfigurationName)"
 			ConfigurationType="1"
 			CharacterSet="1"
 			>
@@ -44,7 +44,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="&quot;..\..\..\3rdparty-100x\bitflow\SDK_5.20\include&quot;;..\..\..\..\micromanager1.3\MMDevice"
+				AdditionalIncludeDirectories="..\..\MMDevice;..\..\..\3rdparty\bitflow\SDK_5.20\include"
 				PreprocessorDefinitions="WIN32;_DEBUG;_CONSOLE"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
@@ -95,8 +95,8 @@
 		</Configuration>
 		<Configuration
 			Name="Release|Win32"
-			OutputDirectory="$(SolutionDir)$(ConfigurationName)"
-			IntermediateDirectory="$(ConfigurationName)"
+			OutputDirectory="$(SolutionDir)$(PlatformName)\$(ConfigurationName)"
+			IntermediateDirectory="$(PlatformName)\$(ConfigurationName)"
 			ConfigurationType="1"
 			CharacterSet="1"
 			WholeProgramOptimization="1"
@@ -193,7 +193,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="&quot;..\..\..\3rdparty-100x\bitflow\SDK_5.30\include&quot;;..\..\..\..\micromanager1.4\MMDevice"
+				AdditionalIncludeDirectories="..\..\MMDevice;..\..\..\3rdparty\bitflow\SDK_5.30\include"
 				PreprocessorDefinitions="WIN32;_DEBUG;_CONSOLE"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
@@ -215,7 +215,7 @@
 				Name="VCLinkerTool"
 				AdditionalDependencies="Cid.lib BFEr.lib BFD.lib"
 				LinkIncremental="2"
-				AdditionalLibraryDirectories="&quot;..\..\..\3rdparty-100x\bitflow\SDK_5.30\lib&quot;"
+				AdditionalLibraryDirectories="..\..\..\3rdparty-100x\bitflow\SDK_5.30\lib"
 				GenerateDebugInformation="true"
 				SubSystem="1"
 				TargetMachine="17"

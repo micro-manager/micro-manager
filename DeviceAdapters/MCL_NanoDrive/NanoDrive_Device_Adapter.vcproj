@@ -64,7 +64,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="Madlib.lib"
-				OutputFile="$(OutDir)\mmgr_dal_MCL_NanoDrive.dll"
+				OutputFile="$(OutDir)/mmgr_dal_$(ProjectName).dll"
 				AdditionalLibraryDirectories=""
 				GenerateDebugInformation="true"
 				RandomizedBaseAddress="1"
@@ -103,7 +103,6 @@
 			>
 			<Tool
 				Name="VCPreBuildEventTool"
-				ExcludedFromBuild="true"
 			/>
 			<Tool
 				Name="VCCustomBuildTool"
@@ -142,7 +141,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="Madlib64.lib"
-				OutputFile="$(OutDir)\mmgr_dal_MCL_NanoDrive.dll"
+				OutputFile="$(OutDir)/mmgr_dal_$(ProjectName).dll"
 				AdditionalLibraryDirectories=""
 				GenerateDebugInformation="true"
 				RandomizedBaseAddress="1"
@@ -178,7 +177,6 @@
 			IntermediateDirectory="$(PlatformName)\$(ConfigurationName)"
 			ConfigurationType="2"
 			CharacterSet="2"
-			WholeProgramOptimization="0"
 			>
 			<Tool
 				Name="VCPreBuildEventTool"
@@ -197,7 +195,6 @@
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
-				WholeProgramOptimization="false"
 				AdditionalIncludeDirectories=""
 				PreprocessorDefinitions="MODULE_EXPORTS;WIN32"
 				RuntimeLibrary="0"
@@ -255,11 +252,9 @@
 			IntermediateDirectory="$(PlatformName)\$(ConfigurationName)"
 			ConfigurationType="2"
 			CharacterSet="2"
-			WholeProgramOptimization="0"
 			>
 			<Tool
 				Name="VCPreBuildEventTool"
-				ExcludedFromBuild="true"
 			/>
 			<Tool
 				Name="VCCustomBuildTool"
@@ -276,7 +271,6 @@
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
-				WholeProgramOptimization="false"
 				AdditionalIncludeDirectories=""
 				PreprocessorDefinitions="MODULE_EXPORTS;WIN32"
 				RuntimeLibrary="0"

@@ -70,7 +70,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="Pvcam32.lib"
-				OutputFile="$(OutDir)/mmgr_dal_PVCAM.dll"
+				OutputFile="$(OutDir)/mmgr_dal_$(ProjectName).dll"
 				LinkIncremental="2"
 				AdditionalLibraryDirectories="&quot;../../../3rdpartypublic/Photometrics/PVCAM/SDK/Libs/$(PlatformName)&quot;"
 				GenerateDebugInformation="true"
@@ -102,7 +102,6 @@
 			<Tool
 				Name="VCPostBuildEventTool"
 				CommandLine="copy &quot;$(TargetPath)&quot; ..\..\bin_$(PlatformName)"
-				ExcludedFromBuild="false"
 			/>
 		</Configuration>
 		<Configuration
@@ -156,8 +155,8 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="pvcam64.lib"
-				OutputFile="$(OutDir)/mmgr_dal_PVCAM.dll"
+				AdditionalDependencies="Pvcam64.lib"
+				OutputFile="$(OutDir)/mmgr_dal_$(ProjectName).dll"
 				LinkIncremental="2"
 				AdditionalLibraryDirectories="&quot;../../../3rdpartypublic/Photometrics/PVCAM/SDK/Libs/$(PlatformName)&quot;"
 				GenerateDebugInformation="true"
@@ -323,7 +322,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="pvcam64.lib"
-				OutputFile="$(OutDir)/mmgr_dal_PVCAM.dll"
+				OutputFile="$(OutDir)/mmgr_dal_$(ProjectName).dll"
 				LinkIncremental="1"
 				AdditionalLibraryDirectories="&quot;../../../3rdpartypublic/Photometrics/PVCAM/SDK/Libs/$(PlatformName)&quot;"
 				GenerateDebugInformation="true"

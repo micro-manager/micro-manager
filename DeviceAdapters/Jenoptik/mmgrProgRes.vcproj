@@ -215,7 +215,7 @@
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
-				AdditionalIncludeDirectories="..\..\..\3rdparty\Jenoptik\sdk;..\..\..\3rdparty\Jenoptik;&quot;..\..\..\3rdparty\Microsoft\VisualC++\atlmfc\include&quot;"
+				AdditionalIncludeDirectories="..\..\..\3rdparty\Jenoptik\sdk;..\..\..\3rdparty\Jenoptik;&quot;..\..\..\3rdparty\Microsoft\VisualC++\atlmfc\include&quot;;..\..\..\3rdpartypublic\boost"
 				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;MODULE_EXPORTS;USBCAMERAS"
 				ExceptionHandling="2"
 				RuntimeLibrary="0"

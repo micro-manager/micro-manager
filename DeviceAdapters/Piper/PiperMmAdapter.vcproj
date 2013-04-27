@@ -47,7 +47,7 @@
 				Name="VCCLCompilerTool"
 				Optimization="0"
 				AdditionalIncludeDirectories="../../../3rdParty/PiperApi;../../MMDevice;&quot;..\..\..\3rdparty\Microsoft\VisualC++\atlmfc\include&quot;"
-				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_AFXEXT;_USE_MATH_DEFINES;MODULE_EXPORTS"
+				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_AFXEXT;MODULE_EXPORTS"
 				MinimalRebuild="true"
 				ExceptionHandling="2"
 				BasicRuntimeChecks="3"
@@ -62,7 +62,6 @@
 			/>
 			<Tool
 				Name="VCResourceCompilerTool"
-				AdditionalIncludeDirectories="\projects\3rdparty\Microsoft\VisualC++\atlmfc\include"
 			/>
 			<Tool
 				Name="VCPreLinkEventTool"
@@ -117,7 +116,6 @@
 			>
 			<Tool
 				Name="VCPreBuildEventTool"
-				ExcludedFromBuild="true"
 			/>
 			<Tool
 				Name="VCCustomBuildTool"
@@ -136,7 +134,7 @@
 				Name="VCCLCompilerTool"
 				Optimization="0"
 				AdditionalIncludeDirectories="../../../3rdParty/PiperApi;../../MMDevice;&quot;..\..\..\3rdparty\Microsoft\VisualC++\atlmfc\include&quot;"
-				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_AFXEXT;_USE_MATH_DEFINES;MODULE_EXPORTS"
+				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_AFXEXT;MODULE_EXPORTS"
 				MinimalRebuild="true"
 				ExceptionHandling="2"
 				BasicRuntimeChecks="3"
@@ -151,7 +149,6 @@
 			/>
 			<Tool
 				Name="VCResourceCompilerTool"
-				AdditionalIncludeDirectories="\projects\3rdparty\Microsoft\VisualC++\atlmfc\include"
 			/>
 			<Tool
 				Name="VCPreLinkEventTool"
@@ -226,8 +223,6 @@
 				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_AFXEXT;MODULE_EXPORTS"
 				ExceptionHandling="2"
 				RuntimeLibrary="2"
-				EnableEnhancedInstructionSet="2"
-				FloatingPointModel="2"
 				RuntimeTypeInfo="true"
 				UsePrecompiledHeader="2"
 				WarningLevel="4"
@@ -280,7 +275,6 @@
 			<Tool
 				Name="VCPostBuildEventTool"
 				CommandLine="copy &quot;$(TargetPath)&quot; ..\..\bin_$(PlatformName)"
-				ExcludedFromBuild="false"
 			/>
 		</Configuration>
 		<Configuration
@@ -294,7 +288,6 @@
 			>
 			<Tool
 				Name="VCPreBuildEventTool"
-				ExcludedFromBuild="true"
 			/>
 			<Tool
 				Name="VCCustomBuildTool"
@@ -316,7 +309,6 @@
 				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_AFXEXT;MODULE_EXPORTS"
 				ExceptionHandling="2"
 				RuntimeLibrary="2"
-				FloatingPointModel="2"
 				RuntimeTypeInfo="true"
 				UsePrecompiledHeader="2"
 				WarningLevel="4"
@@ -369,7 +361,6 @@
 			<Tool
 				Name="VCPostBuildEventTool"
 				CommandLine="copy &quot;$(TargetPath)&quot; ..\..\bin_$(PlatformName)"
-				ExcludedFromBuild="false"
 			/>
 		</Configuration>
 	</Configurations>
