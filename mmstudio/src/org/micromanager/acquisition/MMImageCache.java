@@ -350,6 +350,9 @@ public class MMImageCache implements ImageCache {
    }
 
    /////////////////////Channels section/////////////////////////
+   /*
+    * this function gets called whenever contrast settings are changed 
+    */
    public void storeChannelDisplaySettings(int channelIndex, int min, int max, 
            double gamma, int histMax, int displayMode) {
       try {
@@ -358,7 +361,7 @@ public class MMImageCache implements ImageCache {
          settings.put("Min", min);
          settings.put("Gamma", gamma);
          settings.put("HistogramMax", histMax);
-         settings.put("DisplayMode", displayMode);
+         settings.put("DisplayMode", displayMode);         
       } catch (Exception ex) {
          ReportingUtils.logError(ex);
       }
@@ -488,7 +491,7 @@ public class MMImageCache implements ImageCache {
       }
    }
 
-   public int getNumChannels() {
+   public int getNumDisplayChannels() {
       JSONArray array;
       try {
          array = getDisplayAndComments().getJSONArray("Channels");

@@ -512,8 +512,8 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
 
 
    private void loadDisplaySettings(ImageCache cache) {
-      contrastMax_ = cache.getChannelMax(channelIndex_);
-      if (contrastMax_ < 0) {
+      contrastMax_ =  cache.getChannelMax(channelIndex_);
+      if (contrastMax_ < 0 || contrastMax_ > maxIntensity_) {
          contrastMax_ = maxIntensity_;
       }
       contrastMin_ = cache.getChannelMin(channelIndex_);
@@ -573,14 +573,9 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
       return gamma_;
    }
 
-   public void setContrast(int min, int max) {
-      contrastMin_ = min;
-      contrastMax_ = max;
-   }
-
    public void setContrast(int min, int max, double gamma) {
       contrastMin_ = min;
-      contrastMax_ = max;
+      contrastMax_ = Math.min(maxIntensity_, max);
       gamma_ = gamma;
    }
 
@@ -629,7 +624,7 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
    
    private void storeDisplaySettings() {
       int histMax = histRangeComboBox_.getSelectedIndex() == 0 ? -1 : histMax_;
-      cache_.storeChannelDisplaySettings(channelIndex_, contrastMin_, contrastMax_,
+      display_.storeChannelHistogramSettings(channelIndex_, contrastMin_, contrastMax_,
               gamma_, histMax,((MMCompositeImage) img_).getMode());
    }
    
@@ -760,6 +755,12 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
    public void contrastMaxInput(int max) {
       display_.disableAutoStretchCheckBox();
       contrastMax_ = max;
+      if (contrastMax_ > maxIntensity_ ) {
+         contrastMax_ = maxIntensity_;
+      }
+      if (contrastMax_ < 0) {
+         contrastMax_ = 0;
+      }
       if (contrastMin_ > contrastMax_) {
          contrastMin_ = contrastMax_;
       }
@@ -776,6 +777,9 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
       contrastMin_ = min;
       if (contrastMin_ >= maxIntensity_)
           contrastMin_ = maxIntensity_ - 1;
+      if(contrastMin_ < 0 ) {
+         contrastMin_ = 0;
+      }
       if (contrastMax_ < contrastMin_) {
          contrastMax_ = contrastMin_ + 1;
       }

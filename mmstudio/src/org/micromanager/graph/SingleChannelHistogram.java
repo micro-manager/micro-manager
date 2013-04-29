@@ -267,7 +267,7 @@ public class SingleChannelHistogram extends JPanel implements Histograms, Cursor
       
    private void loadDisplaySettings() {
       contrastMax_ = cache_.getChannelMax(0);
-      if (contrastMax_ < 0) {
+      if (contrastMax_ < 0 || contrastMax_ > maxIntensity_) {
          contrastMax_ = maxIntensity_;
       }
       contrastMin_ = cache_.getChannelMin(0);
@@ -335,7 +335,7 @@ public class SingleChannelHistogram extends JPanel implements Histograms, Cursor
 
    public void saveDisplaySettings() {
       int histMax = histRangeComboBox_.getSelectedIndex() == 0 ? histMax = -1 : histMax_;
-      cache_.storeChannelDisplaySettings(0, (int) contrastMin_, (int) contrastMax_, gamma_, histMax, 1);
+      display_.storeChannelHistogramSettings(0, (int) contrastMin_, (int) contrastMax_, gamma_, histMax, 1);
    }
 
    public void setChannelHistogramDisplayMax(int channelIndex, int histMax) {
@@ -520,7 +520,7 @@ public class SingleChannelHistogram extends JPanel implements Histograms, Cursor
       if (channelIndex != 0) {
          return;
       }
-      contrastMax_ = max;
+      contrastMax_ = Math.min(maxIntensity_,max);
       contrastMin_ = min;
       gamma_ = gamma;
    }
@@ -532,6 +532,9 @@ public class SingleChannelHistogram extends JPanel implements Histograms, Cursor
       if (contrastMin_ >= maxIntensity_) {
          contrastMin_ = maxIntensity_ - 1;
       }
+      if (contrastMin_ < 0) {
+         contrastMin_ = 0;
+      }
       if (contrastMax_ < contrastMin_) {
          contrastMax_ = contrastMin_ + 1;
       }
@@ -541,8 +544,13 @@ public class SingleChannelHistogram extends JPanel implements Histograms, Cursor
    
    public void contrastMaxInput(int max) {     
       display_.disableAutoStretchCheckBox();
-
       contrastMax_ = max;
+      if (contrastMax_ > maxIntensity_) {
+         contrastMax_ = maxIntensity_;
+      }
+      if (contrastMax_ < 0) {
+         contrastMax_ = 0;
+      }
       if (contrastMin_ > contrastMax_) {
          contrastMin_ = contrastMax_;
       }

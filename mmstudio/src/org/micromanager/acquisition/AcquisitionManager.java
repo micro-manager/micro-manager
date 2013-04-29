@@ -270,7 +270,7 @@ public class AcquisitionManager {
       if (displaySettings == null) 
          return;
       ImageCache ic = acq.getImageCache();
-      for (int i = 0; i < ic.getNumChannels(); i++) {
+      for (int i = 0; i < ic.getNumDisplayChannels(); i++) {
          try {
             JSONObject channelSetting = (JSONObject) ((JSONArray) displaySettings.get("Channels")).get(i);
             int color = channelSetting.getInt("Color");

@@ -142,6 +142,7 @@ import org.micromanager.acquisition.TaggedImageStorageMultipageTiff;
 import org.micromanager.acquisition.VirtualAcquisitionDisplay;
 import org.micromanager.api.DeviceControlGUI;
 import org.micromanager.api.IAcquisitionEngine2010;
+import org.micromanager.graph.HistogramSettings;
 import org.micromanager.utils.DragDropUtil;
 import org.micromanager.utils.FileDialogs;
 import org.micromanager.utils.FileDialogs.FileType;
@@ -150,7 +151,6 @@ import org.micromanager.utils.ImageUtils;
 import org.micromanager.utils.MDUtils;
 import org.micromanager.utils.MMKeyDispatcher;
 import org.micromanager.utils.ReportingUtils;
-import org.micromanager.utils.SnapLiveContrastSettings;
 import org.micromanager.utils.UIMonitor;
 
 
@@ -179,6 +179,7 @@ public class MMStudioMainFrame extends JFrame implements
    private static final String AUTOFOCUS_DEVICE = "autofocus_device";
    private static final String MOUSE_MOVES_STAGE = "mouse_moves_stage";
    private static final String EXPOSURE_SETTINGS_NODE = "MainExposureSettings";
+   private static final String CONTRAST_SETTINGS_NODE = "MainContrastSettings";
    private static final int TOOLTIP_DISPLAY_DURATION_MILLISECONDS = 15000;
    private static final int TOOLTIP_DISPLAY_INITIAL_DELAY_MILLISECONDS = 2000;
 
@@ -235,6 +236,7 @@ public class MMStudioMainFrame extends JFrame implements
    private Preferences systemPrefs_;
    private Preferences colorPrefs_;
    private Preferences exposurePrefs_;
+   private Preferences contrastPrefs_;
 
    // MMcore
    private CMMCore core_;
@@ -254,7 +256,6 @@ public class MMStudioMainFrame extends JFrame implements
    private XYZKeyListener xyzKeyListener_;
    private AcquisitionManager acqMgr_;
    private static VirtualAcquisitionDisplay simpleDisplay_;
-   private SnapLiveContrastSettings simpleContrastSettings_;
    private Color[] multiCameraColors_ = {Color.RED, Color.GREEN, Color.BLUE, Color.YELLOW, Color.CYAN};
    private int snapCount_ = -1;
    private boolean liveModeSuspended_;
@@ -393,20 +394,6 @@ public class MMStudioMainFrame extends JFrame implements
 
    }
 
- 
-   public void saveSimpleContrastSettings(ContrastSettings c, int channel, String pixelType) {
-      simpleContrastSettings_.saveSettings(c, channel, pixelType);
-   }
-   
-   public ContrastSettings loadSimpleContrastSettigns(String pixelType, int channel) {
-      try {
-         return simpleContrastSettings_.loadSettings(pixelType, channel);
-      } catch (MMException ex) {
-         ReportingUtils.logError(ex);
-         return null;
-      }
-   }
-   
    public void saveChannelColor(String chName, int rgb)
    {
       if (colorPrefs_ != null) {
@@ -883,8 +870,6 @@ public class MMStudioMainFrame extends JFrame implements
 
       acqMgr_ = new AcquisitionManager();
       
-      simpleContrastSettings_ = new SnapLiveContrastSettings();
-
       sysConfigFile_ = System.getProperty("user.dir") + "/"
             + DEFAULT_CONFIG_FILE_NAME;
 
@@ -909,6 +894,8 @@ public class MMStudioMainFrame extends JFrame implements
               AcqControlDlg.COLOR_SETTINGS_NODE);
       exposurePrefs_ = mainPrefs_.node(mainPrefs_.absolutePath() + "/" + 
               EXPOSURE_SETTINGS_NODE);
+      contrastPrefs_ = mainPrefs_.node(mainPrefs_.absolutePath() + "/" +
+              CONTRAST_SETTINGS_NODE);
       
       // check system preferences
       try {
@@ -2213,6 +2200,37 @@ public class MMStudioMainFrame extends JFrame implements
    @Override
    public void makeActive() {
       toFront();
+   }
+   
+   /**
+    * used to store contrast settings to be later used for initialization of contrast of new windows.
+    *  Shouldn't be called by loaded data sets, only
+    * ones that have been acquired
+    */
+   public void saveChannelHistogramSettings(String channelGroup, String channel, boolean mda, 
+           HistogramSettings settings) {
+      String type = mda ? "MDA_" : "SnapLive_";
+      if (options_.syncExposureMainAndMDA_) {
+         type = "";  //only one group of contrast settings
+      }
+      contrastPrefs_.putInt("ContrastMin_" + channelGroup + "_" + type + channel, settings.min_);
+      contrastPrefs_.putInt("ContrastMax_" + channelGroup + "_" + type + channel, settings.max_);
+      contrastPrefs_.putDouble("ContrastGamma_" + channelGroup + "_" + type + channel, settings.gamma_);
+      contrastPrefs_.putInt("ContrastHistMax_" + channelGroup + "_" + type + channel, settings.histMax_);
+      contrastPrefs_.putInt("ContrastHistDisplayMode_" + channelGroup + "_" + type + channel, settings.displayMode_);
+   }
+
+   public HistogramSettings loadStoredChannelHisotgramSettings(String channelGroup, String channel, boolean mda) {
+      String type = mda ? "MDA_" : "SnapLive_";
+      if (options_.syncExposureMainAndMDA_) {
+         type = "";  //only one group of contrast settings
+      }
+      return new HistogramSettings(
+      contrastPrefs_.getInt("ContrastMin_" + channelGroup + "_" + type + channel,0),
+      contrastPrefs_.getInt("ContrastMax_" + channelGroup + "_" + type + channel, 65536),
+      contrastPrefs_.getDouble("ContrastGamma_" + channelGroup + "_" + type + channel, 1.0),
+      contrastPrefs_.getInt("ContrastHistMax_" + channelGroup + "_" + type + channel, -1),
+      contrastPrefs_.getInt("ContrastHistDisplayMode_" + channelGroup + "_" + type + channel, 1) );
    }
 
    private void setExposure() {

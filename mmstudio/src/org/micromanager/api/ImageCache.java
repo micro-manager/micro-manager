@@ -169,7 +169,7 @@ public interface ImageCache extends TaggedImageStorage {
     * Returns the number of channels in the ImageCache. More channels
     * may appear if more images are received with new channel indices.
     */
-   public int getNumChannels();
+   public int getNumDisplayChannels();
 
    /*
     * Returns the pixel type for images in this image cache.

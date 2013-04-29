@@ -93,7 +93,7 @@ public class ContrastPanel extends JPanel {
 
    private void showCurrentHistograms() {
       histDisplayScrollPane_.setViewportView(currentHistograms_ != null ? (JPanel) currentHistograms_ : new JPanel());
-      if (currentDisplay_ != null && currentDisplay_.getImageCache().getNumChannels() > 1) {
+      if (currentDisplay_ != null && currentDisplay_.getImageCache().getNumDisplayChannels() > 1) {
          histDisplayScrollPane_.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);
       } else {
          histDisplayScrollPane_.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_NEVER);
@@ -131,7 +131,7 @@ public class ContrastPanel extends JPanel {
          rejectOutliersCheckBox_.setEnabled(false);
          rejectPercentSpinner_.setEnabled(false);
          syncChannelsCheckBox_.setEnabled(false);
-      } else if (currentDisplay_.getImageCache().getNumChannels() == 1) {
+      } else if (currentDisplay_.getImageCache().getNumDisplayChannels() == 1) {
          displayModeLabel_.setEnabled(false);
          displayModeCombo_.setEnabled(false);
          sizeBarCheckBox_.setEnabled(true);
@@ -515,7 +515,7 @@ public class ContrastPanel extends JPanel {
       CompositeImage ci = (CompositeImage) currentDisplay_.getHyperImage();
       
 
-      if (state == 2 && currentDisplay_.getImageCache().getNumChannels() > 7) {
+      if (state == 2 && currentDisplay_.getImageCache().getNumDisplayChannels() > 7) {
          JOptionPane.showMessageDialog(this, "Images with more than 7 channels cannot be displayed in Composite mode");
          displayModeCombo_.setSelectedIndex(ci.getMode()-2);
          return;

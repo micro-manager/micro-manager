@@ -47,6 +47,8 @@ import java.util.TimerTask;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import java.util.prefs.Preferences;
 import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
@@ -60,6 +62,7 @@ import org.json.JSONObject;
 import org.micromanager.MMStudioMainFrame;
 import org.micromanager.api.*;
 import org.micromanager.graph.HistogramControlsState;
+import org.micromanager.graph.HistogramSettings;
 import org.micromanager.graph.MultiChannelHistograms;
 import org.micromanager.graph.SingleChannelHistogram;
 import org.micromanager.utils.*;
@@ -103,7 +106,9 @@ public final class VirtualAcquisitionDisplay implements AcquisitionDisplay,
    private boolean simple_ = false;
    private boolean mda_ = false; //flag if display corresponds to MD acquisition
    private MetadataPanel mdPanel_;
-   private boolean newDisplay_ = true; //used for autostretching on window opening
+   private boolean contrastInitialized_ = false; //used for autostretching on window opening
+   private boolean firstImage_ = true;
+   private String channelGroup_ = "none";
    private double framesPerSec_ = 7;
    private java.util.Timer animationTimer_ = new java.util.Timer();
    private boolean zAnimated_ = false, tAnimated_ = false;
@@ -579,10 +584,6 @@ public final class VirtualAcquisitionDisplay implements AcquisitionDisplay,
          }
          configureAnimationControls();
          setNumPositions(numPositions);
-      }
-      
-      // Load contrast settigns if opening datset
-      if (imageCache_.isFinished()) {
       }
 
       updateAndDraw(false);
@@ -1481,8 +1482,6 @@ public final class VirtualAcquisitionDisplay implements AcquisitionDisplay,
                }
             }
 
-            initializeContrast(channel, slice);
-
             if (!simple_) {
                if (tSelector_ != null) {
                   if (tSelector_.getMaximum() <= (1 + frame)) {
@@ -1513,7 +1512,17 @@ public final class VirtualAcquisitionDisplay implements AcquisitionDisplay,
 
             updateAndDraw(useGUIUpdater);
             resumeLocksAndAnimationAfterImageArrival();
-
+                      
+            //get channelgroup name for use in loading contrast setttings
+            if (firstImage_) {
+               try {
+                  channelGroup_ = tags.getString("Core-ChannelGroup");
+               } catch (JSONException ex) {
+                  ReportingUtils.logError("Couldn't find Core-ChannelGroup in image metadata");
+               }
+               firstImage_ = false;
+            }
+            
             if (cSelector_ != null) {
                if (histograms_.getNumberOfChannels() < (1 + superChannel)) {
                   if (histograms_ != null) {
@@ -1521,126 +1530,48 @@ public final class VirtualAcquisitionDisplay implements AcquisitionDisplay,
                   }
                }
             }
+            if (frame == 0) {
+               initializeContrast();
+            }
          }
       };
       showImageUpdater.post(run);
    }
 
-   /*
-    * Live/snap should load window contrast settings
-    * MDA should autoscale on first image
-    * Not called when opening a dataset because stored settings are loaded automatically
-    */
-   private void initializeContrast(final int channel, final int slice) {
-      Runnable autoscaleOrLoadContrast = new Runnable() {
-
-         @Override
-         public void run() {
-            if (!newDisplay_) {
-               return;
-            }
-            if (simple_) { //Snap/live
-               if (hyperImage_ instanceof MMCompositeImage
-                       && ((MMCompositeImage) hyperImage_).getNChannelsUnverified() - 1 != channel) {
-                  return;
-               }
-               loadSimpleWinContrastWithoutDraw();
-            } else if (mda_) { //Multi D acquisition
-               IMMImagePlus immImg = ((IMMImagePlus) hyperImage_);
-               if (immImg.getNSlicesUnverified() > 1) {  //Z stacks
-                  autoscaleOverStackWithoutDraw(hyperImage_, channel, slice, zStackMins_, zStackMaxes_);
-                  if (channel != immImg.getNChannelsUnverified() - 1 || slice != immImg.getNSlicesUnverified() - 1) {
-                     return;  //don't set new display to false until all channels autoscaled
-                  }
-               } else {  //No z stacks
-                  if (channel +1 != getNumChannels())
-                     return;
-                  autoscaleWithoutDraw();                 
-               }
-            } else //Acquire button
-            if (hyperImage_ instanceof MMCompositeImage) {
-               if (((MMCompositeImage) hyperImage_).getNChannelsUnverified() - 1 != channel) {
-                  return;
-               }
-               autoscaleWithoutDraw();
-            } else {
-               autoscaleWithoutDraw(); // else do nothing because contrast automatically loaded from cache
-            }
-            newDisplay_ = false;
-         }
-      };
-      if (!SwingUtilities.isEventDispatchThread()) {
-         SwingUtilities.invokeLater(autoscaleOrLoadContrast);
-      } else {
-         autoscaleOrLoadContrast.run();
+   private void initializeContrast() {
+      if (contrastInitialized_ ) {
+         return;
       }
-   }
-   
-   private void loadSimpleWinContrastWithoutDraw() {
-      int n = getImageCache().getNumChannels();
-      ContrastSettings c;
-      for (int i = 0; i < n; i++) {
-         c = MMStudioMainFrame.getInstance().loadSimpleContrastSettigns(getImageCache().getPixelType(), i);
-         histograms_.setChannelContrast(i, c.min, c.max, c.gamma);
+      int numChannels = imageCache_.getNumDisplayChannels();
+      
+      for (int channel = 0; channel < numChannels; channel++) {
+         String channelName = imageCache_.getChannelName(channel);
+         HistogramSettings settings = MMStudioMainFrame.getInstance().loadStoredChannelHisotgramSettings(
+                 channelGroup_, channelName, mda_);
+         histograms_.setChannelContrast(channel, settings.min_, settings.max_, settings.gamma_);
+         histograms_.setChannelHistogramDisplayMax(channel, settings.histMax_);
+         if (imageCache_.getNumDisplayChannels() > 1) {
+            setDisplayMode(settings.displayMode_);
+         }
       }
       histograms_.applyLUTToImage();
-      
+      contrastInitialized_ = true;
    }
 
-   private void autoscaleWithoutDraw() {
-      if (histograms_ != null) {
-         histograms_.calcAndDisplayHistAndStats(true);
-         histograms_.autostretch();
-         histograms_.applyLUTToImage();
-      }
-   }
-   
-   private void autoscaleOverStackWithoutDraw(ImagePlus img, int channel, int slice,
-           HashMap<Integer, Integer> mins, HashMap<Integer, Integer> maxes) {
-      int nChannels = ((VirtualAcquisitionDisplay.IMMImagePlus) img).getNChannelsUnverified();
-      int bytes = img.getBytesPerPixel();
-      int pixMin, pixMax;
-      if (mins.containsKey(channel)) {
-         pixMin = mins.get(channel);
-         pixMax = maxes.get(channel);
-      } else {
-         pixMax = 0;
-         pixMin = (int) (Math.pow(2, 8 * bytes) - 1);
-      }
-      int flatIndex = 1 + channel + slice * nChannels;
-      if (bytes == 2) {
-         short[] pixels = (short[]) img.getStack().getPixels(flatIndex);
-         for (short value : pixels) {
-            //unsign short
-            int val = value & 0xffff;
-            if (val < pixMin) {
-               pixMin = val;
-            }
-            if (val > pixMax) {
-               pixMax = val;
-            }
-         }
-      } else if (bytes == 1) {
-         byte[] pixels = (byte[]) img.getStack().getPixels(flatIndex);
-         for (byte value : pixels) {
-            //unsign byte
-            int val = value & 0xff;
-            if (val < pixMin) {
-               pixMin = val;
-            }
-            if (val > pixMax) {
-               pixMax = val;
-            }
-         }
-      }
-
-      //autoscale the channel
-      histograms_.setChannelContrast(channel, pixMin, pixMax, 1.0);     
-      histograms_.applyLUTToImage();
-      
-
-      mins.put(channel, pixMin);
-      maxes.put(channel, pixMax);
+   public void storeChannelHistogramSettings(int channelIndex, int min, int max, 
+           double gamma, int histMax, int displayMode) {
+     if (!contrastInitialized_ ) {
+        return; //don't erroneously initialize contrast
+     }
+      //store for this dataset
+      imageCache_.storeChannelDisplaySettings(channelIndex, min, max, gamma, histMax, displayMode);
+      //store global preference for channel contrast settings
+      if (mda_ || simple_) {
+         //only store for datasets that were just acquired or snap/live (i.e. no loaded datasets)
+         MMStudioMainFrame.getInstance().saveChannelHistogramSettings(channelGroup_, 
+                 imageCache_.getChannelName(channelIndex), mda_,
+                 new HistogramSettings(min,max, gamma, histMax, displayMode));    
+      }   
    }
 
    private void updatePosition(int p) {
@@ -2297,26 +2228,10 @@ public final class VirtualAcquisitionDisplay implements AcquisitionDisplay,
        }
    }
    
-   /*
-    * used to store contrast settings for snap live window
-    */
-   private void saveSimpleWinSettings() {
-      ImageCache cache = getImageCache();
-      String pixelType = cache.getPixelType();
-      int numCh = cache.getNumChannels();
-      for (int i = 0; i < numCh; i++) {
-         int min = cache.getChannelMin(i);
-         int max = cache.getChannelMax(i);
-         double gamma = cache.getChannelGamma(i);
-         MMStudioMainFrame.getInstance().saveSimpleContrastSettings(new ContrastSettings(min, max, gamma), i, pixelType);
-      }
-   }
-   
    public ContrastSettings getChannelContrastSettings(int channel) {
       return histograms_.getChannelContrastSettings(channel);
    }
            
-
    public class DisplayWindow extends StackWindow {
 
       private boolean windowClosingDone_ = false;
@@ -2368,7 +2283,6 @@ public final class VirtualAcquisitionDisplay implements AcquisitionDisplay,
             Point loc = hyperImage_.getWindow().getLocation();
             prefs_.putInt(SIMPLE_WIN_X, loc.x);
             prefs_.putInt(SIMPLE_WIN_Y, loc.y);
-            saveSimpleWinSettings();
          }
 
          if (imageCache_ != null) {

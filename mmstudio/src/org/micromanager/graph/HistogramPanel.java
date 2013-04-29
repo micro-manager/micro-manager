@@ -43,6 +43,7 @@ import org.micromanager.utils.ReportingUtils;
 public class HistogramPanel extends JPanel implements FocusListener, KeyListener {
    
    private static final int LUT_HANDLE_SIZE = 10;
+   private static final Color HIGHLIGHT_COLOR = Color.blue;
    
    private static final long serialVersionUID = -1789623844214721902L;
    // default histogram bins
@@ -230,7 +231,7 @@ public class HistogramPanel extends JPanel implements FocusListener, KeyListener
       
       int width = 6 * text.length() + 3;
       if (contrastMaxEditable_) {
-         g.setColor(Color.BLACK);
+         g.setColor(HIGHLIGHT_COLOR);
          g.fillRect(x - width, y - LUT_HANDLE_SIZE, width, LUT_HANDLE_SIZE);
          g.setColor(UIManager.getColor("Panel.background"));
          g.drawString(text, x - 6 * text.length(), y - 1);
@@ -251,7 +252,7 @@ public class HistogramPanel extends JPanel implements FocusListener, KeyListener
       }
       int width = 6 * text.length() + 3;
       if (contrastMinEditable_) {
-         g.setColor(Color.BLACK);
+         g.setColor(HIGHLIGHT_COLOR);
          g.fillRect(x, y, width, LUT_HANDLE_SIZE + 1);
          g.setColor(UIManager.getColor("Panel.background"));
          g.drawString(newContrast_.length() != 0 ? newContrast_ : text, x + 3, y + 10);
@@ -310,9 +311,22 @@ public class HistogramPanel extends JPanel implements FocusListener, KeyListener
 
    @Override
    public void keyPressed(KeyEvent e) {
-   if (e.getKeyCode() == KeyEvent.VK_ENTER) {
+      if (e.getKeyCode() == KeyEvent.VK_ENTER) {
          applyContrastValues();
+      } else if (e.getKeyCode() == KeyEvent.VK_LEFT) {
+         if (contrastMaxEditable_ && newContrast_.length() == 0) {
+            setContrastMax(Integer.parseInt(cursorTextHigh_) - 1);
+         } else if (contrastMinEditable_ && newContrast_.length() == 0) {
+             setContrastMin(Integer.parseInt(cursorTextLow_) - 1);
+         }
+      } else if (e.getKeyCode() == KeyEvent.VK_RIGHT) {
+         if (contrastMaxEditable_ && newContrast_.length() == 0) {
+            setContrastMax(Integer.parseInt(cursorTextHigh_) + 1);
+         } else if (contrastMinEditable_ && newContrast_.length() == 0) {
+            setContrastMin(Integer.parseInt(cursorTextLow_) + 1);
+         }
       }
+      repaint();
    }
 
    @Override
@@ -355,20 +369,26 @@ public class HistogramPanel extends JPanel implements FocusListener, KeyListener
          cursorListener.onGammaCurve(gamma);
       }
    }
+
+   private void setContrastMax(int max) {
+      for (CursorListener cursorListener : cursorListeners_) {
+         cursorListener.contrastMaxInput(max);
+      }
+   }
+
+   private void setContrastMin(int min) {
+      for (CursorListener cursorListener : cursorListeners_) {
+         cursorListener.contrastMinInput(min);
+      }
+   }
    
    private void applyContrastValues() {
       //apply the values
-      if (contrastMaxEditable_) {
-         for (CursorListener cursorListener : cursorListeners_) {
-            if (!newContrast_.equals("")) {
-               cursorListener.contrastMaxInput(Integer.parseInt(newContrast_));
-            }
-         }
-      } else if (contrastMinEditable_) {
-         for (CursorListener cursorListener : cursorListeners_) {
-            if (!newContrast_.equals("")) {
-               cursorListener.contrastMinInput(Integer.parseInt(newContrast_));
-            }
+      if (!newContrast_.equals("")) {
+         if (contrastMaxEditable_) {
+            setContrastMax(Integer.parseInt(newContrast_));
+         } else if (contrastMinEditable_) {
+            setContrastMin(Integer.parseInt(newContrast_));
          }
       }
       contrastMaxEditable_ = false;

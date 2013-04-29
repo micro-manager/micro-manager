@@ -465,6 +465,11 @@ public class MMAcquisition {
          try {
             channelColors_.put(0, Color.white.getRGB());
             channelNames_.put(0,"Default");
+            try {
+               CMMCore core = MMStudioMainFrame.getInstance().getCore();
+               String name = core.getCurrentConfigFromCache(core.getChannelGroup());
+               channelNames_.put(0, name);
+            } catch (Exception e) {}
             channelMins.put(0);
             channelMaxes.put( Math.pow(2, md.getInt("BitDepth"))-1 );
          } catch (JSONException ex) {
