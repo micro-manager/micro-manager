@@ -3107,6 +3107,8 @@ int AndorCamera::GetListOfAvailableCameras()
 
    int AndorCamera::OnOptAcquireMode(MM::PropertyBase* pProp, MM::ActionType eAct)
    {
+      if (eAct == MM::AfterSet)
+      {
          bool acquiring = sequenceRunning_;
          if (acquiring)
             StopSequenceAcquisition(true);
@@ -3117,8 +3119,6 @@ int AndorCamera::GetListOfAvailableCameras()
          //added to use RTA
          SetToIdle();
 
-      if (eAct == MM::AfterSet)
-      {
          string optAcquireModeStr;
          pProp->Get(optAcquireModeStr);
          
@@ -3715,7 +3715,8 @@ int AndorCamera::GetListOfAvailableCameras()
          if (numPreAmpGain > 0 ) 
          {
             //Repopulate List
-            char PreAmpGainBuf[30];
+            const int PreAmpGainBufLength = 30;
+            char PreAmpGainBuf[PreAmpGainBufLength];
             PreAmpGains_.clear();
             numAvailGains = 0;
         
@@ -3729,7 +3730,7 @@ int AndorCamera::GetListOfAvailableCameras()
                if(1 == gainAvailable)
                {
                   numAvailGains++;
-                  GetPreAmpGainString(i,PreAmpGainBuf);
+                  GetPreAmpGainString(i,PreAmpGainBuf,PreAmpGainBufLength);
                   PreAmpGains_.push_back(PreAmpGainBuf);
                }
             }
@@ -3758,7 +3759,7 @@ int AndorCamera::GetListOfAvailableCameras()
                return ret;
 
             //also check to see that the value of the PAG is still the original value
-            GetPreAmpGainString(PreAmpGainIdx_,PreAmpGainBuf);
+            GetPreAmpGainString(PreAmpGainIdx_,PreAmpGainBuf,PreAmpGainBufLength);
             if(0!=PreAmpGain_.compare( PreAmpGainBuf)) 
                gainAvailable = 0;
 
@@ -3771,7 +3772,7 @@ int AndorCamera::GetListOfAvailableCameras()
                   {
                      PreAmpGainIdx_ = i;
 
-                     GetPreAmpGainString(i,PreAmpGainBuf);
+                     GetPreAmpGainString(i,PreAmpGainBuf,PreAmpGainBufLength);
                      PreAmpGain_ = PreAmpGainBuf;
 
                      SetProperty("Pre-Amp-Gain",PreAmpGain_.c_str());
@@ -3804,7 +3805,7 @@ int AndorCamera::GetListOfAvailableCameras()
       return DRV_SUCCESS;
    }
 
-   int AndorCamera::GetPreAmpGainString(int PreAmpGainIdx, char * PreAmpGainString )
+   int AndorCamera::GetPreAmpGainString(int PreAmpGainIdx, char * PreAmpGainString, int PreAmpGainStringLength )
    {
       bool useText = ui_swVersion >= 292;
       int ret;
@@ -3812,7 +3813,7 @@ int AndorCamera::GetListOfAvailableCameras()
 
       if(useText) 
       {
-         ret = GetPreAmpGainText(PreAmpGainIdx, PreAmpGainString, sizeof(PreAmpGainString));
+         ret = GetPreAmpGainText(PreAmpGainIdx, PreAmpGainString, PreAmpGainStringLength);
          if(DRV_NOT_SUPPORTED == ret)
             useText = false;
       }

@@ -281,7 +281,7 @@ private:
    void UpdateHSSpeeds();
    int UpdateExposureFromCamera();
    int UpdatePreampGains();
-   int GetPreAmpGainString(int PreAmpgainIdx, char * PreAmpGainString);
+   int GetPreAmpGainString(int PreAmpgainIdx, char * PreAmpGainString,int PreAmpGainStringLength );
 
    int HSSpeedIdx_;
    int PreAmpGainIdx_;
