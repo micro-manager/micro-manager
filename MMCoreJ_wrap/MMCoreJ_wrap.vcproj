@@ -46,7 +46,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="../../../3rdpartypublic/boost;../../3rdpartypublic/boost/boost;../../3rdpartypublic/boost;&quot;$(JAVA_HOME)\include\win32&quot;;&quot;$(JAVA_HOME)\include&quot;"
+				AdditionalIncludeDirectories="../../3rdpartypublic/boost;&quot;$(JAVA_HOME)\include\win32&quot;;&quot;$(JAVA_HOME)\include&quot;"
 				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_USRDLL;MMCOREJ_WRAP_EXPORTS"
 				MinimalRebuild="true"
 				ExceptionHandling="2"
@@ -71,11 +71,9 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="mmcored.lib Iphlpapi.lib"
-				ShowProgress="0"
 				OutputFile="$(OutDir)/MMCoreJ_wrap.dll"
 				LinkIncremental="2"
 				AdditionalLibraryDirectories="&quot;..\..\3rdpartypublic\boost\stage_$(PlatformName)\lib&quot;;&quot;..\lib_$(PlatformName)&quot;"
-				IgnoreAllDefaultLibraries="false"
 				GenerateDebugInformation="true"
 				ProgramDatabaseFile="$(OutDir)/MMCoreJ_wrap.pdb"
 				SubSystem="2"
@@ -160,11 +158,9 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="mmcored.lib Iphlpapi.lib"
-				ShowProgress="0"
 				OutputFile="$(OutDir)/MMCoreJ_wrap.dll"
 				LinkIncremental="2"
 				AdditionalLibraryDirectories="&quot;..\..\3rdpartypublic\boost\stage_$(PlatformName)\lib&quot;;&quot;..\lib_$(PlatformName)&quot;"
-				IgnoreAllDefaultLibraries="false"
 				GenerateDebugInformation="true"
 				ProgramDatabaseFile="$(OutDir)/MMCoreJ_wrap.pdb"
 				SubSystem="2"
@@ -222,7 +218,7 @@
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
-				AdditionalIncludeDirectories="../../../3rdpartypublic/boost;../../3rdpartypublic/boost;&quot;$(JAVA_HOME)\include\win32&quot;;&quot;$(JAVA_HOME)\include&quot;"
+				AdditionalIncludeDirectories="../../3rdpartypublic/boost;&quot;$(JAVA_HOME)\include\win32&quot;;&quot;$(JAVA_HOME)\include&quot;"
 				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;MMCOREJ_WRAP_EXPORTS"
 				ExceptionHandling="2"
 				RuntimeLibrary="2"
