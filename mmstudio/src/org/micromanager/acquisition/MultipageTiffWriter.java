@@ -156,7 +156,7 @@ public class MultipageTiffWriter {
          fileChannel_ = raFile_.getChannel();
          if (writingExecutor_ == null) {
             writingExecutor_ = fastStorageMode_
-                    ? new ThreadPoolExecutor(1, 1, 0, TimeUnit.NANOSECONDS, new LinkedBlockingQueue(10))
+                    ? new ThreadPoolExecutor(1, 1, 0, TimeUnit.NANOSECONDS, new LinkedBlockingQueue())
                     : null;
          }
          indexMap_ = new HashMap<String, Long>();
@@ -337,10 +337,19 @@ public class MultipageTiffWriter {
         
    public void writeImage(TaggedImage img) throws IOException {
       imageCount_++;
-      if (imageCount_ % 100 == 0 && writingExecutor_ != null) {
+      if (writingExecutor_ != null) {
          int queueSize = writingExecutor_.getQueue().size();
-         if (queueSize > 20) {
-            ReportingUtils.logMessage("Warning: Image saving is " + queueSize + " images behind.");
+         int attemptCount = 0;
+         while (queueSize > 20) {
+            if (attemptCount == 0) {
+               ReportingUtils.logMessage("Warning: writing queue behind by " + queueSize + " images.");
+            }
+            ++attemptCount;
+            try {
+               Thread.sleep(5);
+            } catch (InterruptedException ex) {
+               ReportingUtils.logError(ex);
+            }
          }
       }
       long offset = filePosition_;
