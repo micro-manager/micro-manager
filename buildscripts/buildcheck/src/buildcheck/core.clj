@@ -180,7 +180,7 @@
   (let [index-txt (slurp device-list-page)]
     (remove empty? (map #(.trim %) (map second (re-seq #"\>(.*?)\<" index-txt))))))
 
-(def dont-link #{"NI100X" "NNLC" "Neos" "PriorLegacy" "SimpleCam"})
+(def dont-link #{"HamamatsuMac NI100X" "NNLC" "Neos" "PriorLegacy" "SimpleCam"})
 
 (defn missing-device-links []
   (sort (clojure.set/difference
