@@ -6,11 +6,20 @@ import sys
 import xml.etree.ElementTree as ET
 
 
-# Terminology for var names:
+"""
+Scan a VS2008 .vcproj file and print setting inconsistencies between different
+configurations and platforms. Some expected setting differences are skipped.
+
+Invoke as:
+python3 check_vcproj.py project.vcproj
+"""
+
+
+# Terminology for var names used below:
 # e_* - XML element
 # le_* - list(XML element)
-# config - usu. Debug or Release
-# platform - usu. Win32 or x64
+# config - usually Debug or Release
+# platform - usually Win32 or x64
 # conplat - "Debug|Win32", etc.
 # configdict - dict(setting -> value)
 # setting - name of Configuration attribute or $(Tool name):$(Tool attributes)
@@ -24,10 +33,10 @@ def read_vcproj(filename):
 
 def read_proj(e_proj):
     """
-    Return dict(config_name: config_settings).
+    Return dict(conplat -> configdict).
     
-    config_settings is a dict containing the (flattened) settings for the
-    configuration.
+    configdict is a dict containing the (flattened) settings for the
+    configuration-platform.
     """
     le_configs = e_proj.findall('Configurations')
     assert len(le_configs) == 1
@@ -91,7 +100,7 @@ def check_conplat_consistency(configdicts):
 
 
 def check_setting_consistency(setting, configdicts, configs, platforms):
-    conplat_values = dict() # conplat -> setting_value
+    conplat_values = dict()  # conplat -> setting_value
     for conplat in (conplat_str(config, platform)
                     for config, platform
                     in itertools.product(configs, platforms)):
@@ -128,7 +137,6 @@ def check_setting_consistency(setting, configdicts, configs, platforms):
                        "VCLinkerTool:EnableCOMDATFolding",
                        "VCLinkerTool:ProgramDatabaseFile",
 
-                       # Inconsistent across device adapters:
                        "VCLinkerTool:GenerateDebugInformation",
                        "VCLinkerTool:LinkTimeCodeGeneration",
                        "VCCLCompilerTool:EnableFunctionLevelLinking",
@@ -141,6 +149,7 @@ def check_setting_consistency(setting, configdicts, configs, platforms):
             return
 
         if setting == "VCCLCompilerTool:PreprocessorDefinitions":
+            # Skip if the only difference is _DEBUG vs. NDEBUG.
             if len(set(conplat_values[conplat_str(config,
                                                   platforms[0])].
                        replace(";_DEBUG;", ";NDEBUG;")
