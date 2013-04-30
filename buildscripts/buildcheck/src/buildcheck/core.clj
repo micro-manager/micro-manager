@@ -99,7 +99,7 @@
            (let [txt (slurp blacklist)]
              (map #(first (.split % ":")) (.split txt "\n")))))))
 
-(def non-windows-device-adapters #{"dc1394" "SimpleCam" "Video4Linux"})
+(def non-windows-device-adapters #{"dc1394" "SimpleCam" "Video4Linux" "Spot"})
 
 (defn device-adapter-dirs []
   (filter #(and (.isDirectory %)
@@ -180,7 +180,7 @@
   (let [index-txt (slurp device-list-page)]
     (remove empty? (map #(.trim %) (map second (re-seq #"\>(.*?)\<" index-txt))))))
 
-(def dont-link #{"HamamatsuMac NI100X" "NNLC" "Neos" "PriorLegacy" "SimpleCam"})
+(def dont-link #{"HamamatsuMac" "NI100X" "NNLC" "Neos" "PriorLegacy" "SimpleCam" "Spot"})
 
 (defn missing-device-links []
   (sort (clojure.set/difference
