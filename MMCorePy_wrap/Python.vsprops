@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="Windows-1252"?>
+<VisualStudioPropertySheet
+	ProjectType="Visual C++"
+	Version="8.00"
+	Name="Python"
+	>
+	<Tool
+		Name="VCCLCompilerTool"
+		AdditionalIncludeDirectories="&quot;$(PythonInstallRoot)\Python$(PythonTwoDigitVersion)-$(PlatformName)\include&quot;;&quot;$(PythonInstallRoot)\Python$(PythonTwoDigitVersion)-$(PlatformName)\Lib\site-packages\numpy\core\include\numpy&quot;"
+	/>
+	<Tool
+		Name="VCLinkerTool"
+		AdditionalLibraryDirectories="&quot;$(PythonInstallRoot)\Python$(PythonTwoDigitVersion)-$(PlatformName)\libs&quot;;&quot;$(PythonInstallRoot)\Python$(PythonTwoDigitVersion)-$(PlatformName)\DLLs&quot;"
+	/>
+	<UserMacro
+		Name="PythonInstallRoot"
+		Value="C:"
+	/>
+	<UserMacro
+		Name="PythonTwoDigitVersion"
+		Value="27"
+	/>
+</VisualStudioPropertySheet>
