@@ -62,20 +62,20 @@
 (defn set-hardware-state!
   "Sets the state of the hardware. Example state:
    {:properties
-   {[\"Dichroic\" \"Label\"] \"Q505LP\"
-    [\"Emission\" \"Label\"] \"Chroma-HQ535\"
-    [\"Excitation\" \"Label\"] \"Chroma-HQ480\"}
-   :property-sequences
-   {[\"Objective\" \"State\"] [\"10X\" \"20X\"]}
-   :stage-positions
-   {\"Z\" 3.0
-    \"XY\" [10 20]}
-   :stage-position-sequences
-   {\"Z\" [3.0 6.0 9.0]}
-   :camera-exposures
-   {\"Camera\" exposure}
-   :camera-exposure-sequences
-   {\"Camera\" [10 30 40]}}"
+    {[\"Dichroic\" \"Label\"] \"Q505LP\"
+     [\"Emission\" \"Label\"] \"Chroma-HQ535\"
+     [\"Excitation\" \"Label\"] \"Chroma-HQ480\"}
+    :property-sequences
+    {[\"Objective\" \"State\"] [\"10X\" \"20X\"]}
+    :stage-positions
+    {\"Z\" 3.0
+     \"XY\" [10 20]}
+    :stage-position-sequences
+    {\"Z\" [3.0 6.0 9.0]}
+    :camera-exposures
+    {\"Camera\" exposure}
+    :camera-exposure-sequences
+    {\"Camera\" [10 30 40]}}"
   [{:keys [properties stage-positions camera-exposures
            property-sequences stage-position-sequences
            camera-exposure-sequences] :as state}]

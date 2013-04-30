@@ -15,7 +15,7 @@
 
 (ns org.micromanager.mm
   (:import [org.micromanager.navigation MultiStagePosition]
-           [mmcorej Configuration DeviceType DoubleVector Metadata StrVector]
+           [mmcorej Configuration DoubleVector Metadata StrVector]
            [org.json JSONArray JSONObject]
            [java.text SimpleDateFormat]
            [org.micromanager.navigation MultiStagePosition StagePosition]
@@ -443,7 +443,7 @@
              0)])))
 
 (defn all-cameras []
-  (seq (.getLoadedDevicesOfType mmc DeviceType/CameraDevice)))
+  (seq (.getLoadedDevicesOfType mmc (eval 'mmcorej.DeviceType/CameraDevice))))
 
 (defn exposure-sequence-max-lengths []
   (into {}
@@ -454,7 +454,7 @@
              0)])))
 
 (defn all-z-stages []
-  (seq (.getLoadedDevicesOfType mmc DeviceType/StageDevice)))
+  (seq (.getLoadedDevicesOfType mmc (eval 'mmcorej.DeviceType/StageDevice))))
 
 (defn stage-sequence-max-lengths []
   (into {}
