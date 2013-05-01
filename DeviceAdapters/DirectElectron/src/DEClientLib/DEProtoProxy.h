@@ -4,7 +4,7 @@
 #include <vector>
 
 #include "DENetwork.h"
-#include "DEServer.pb.h"
+#include "DEServer.h"
 #include "DEConstants.h"
 #include "PacketParser.h"
 #include "PacketCreator.h"

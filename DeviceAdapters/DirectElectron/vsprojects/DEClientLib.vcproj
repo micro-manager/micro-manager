@@ -45,14 +45,13 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="..\src\DEMessaging;$(THIRDPARTYLIBS)\google\protocolbuffers\src\;$(THIRDPARTYLIBS)\boost\;%(AdditionalIncludeDirectories)"
-				PreprocessorDefinitions="WIN32;_DEBUG;_CONSOLE"
+				AdditionalIncludeDirectories="..\src\DEMessaging;$(THIRDPARTYLIBS)\google\protocolbuffers\src\;$(THIRDPARTYLIBS)\boost\"
+				PreprocessorDefinitions="WIN32;_DEBUG;_WIN32_WINNT=0x0501"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="3"
 				UsePrecompiledHeader="0"
 				WarningLevel="4"
-				Detect64BitPortabilityProblems="true"
 				DebugInformationFormat="4"
 			/>
 			<Tool
@@ -112,14 +111,13 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="..\src\DEMessaging;$(THIRDPARTYLIBS)\google\protocolbuffers\src\;$(THIRDPARTYLIBS)\boost\;%(AdditionalIncludeDirectories)"
-				PreprocessorDefinitions="WIN32;_DEBUG;_CONSOLE"
+				AdditionalIncludeDirectories="..\src\DEMessaging;$(THIRDPARTYLIBS)\google\protocolbuffers\src\;$(THIRDPARTYLIBS)\boost\"
+				PreprocessorDefinitions="WIN32;_DEBUG;_WIN32_WINNT=0x0501"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="3"
 				UsePrecompiledHeader="0"
 				WarningLevel="4"
-				Detect64BitPortabilityProblems="true"
 				DebugInformationFormat="3"
 			/>
 			<Tool
@@ -177,12 +175,11 @@
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
-				AdditionalIncludeDirectories="..\src\DEMessaging;$(THIRDPARTYLIBS)\google\protocolbuffers\src\;$(THIRDPARTYLIBS)\boost\;%(AdditionalIncludeDirectories)"
-				PreprocessorDefinitions="WIN32;NDEBUG;_CONSOLE"
+				AdditionalIncludeDirectories="..\src\DEMessaging;$(THIRDPARTYLIBS)\google\protocolbuffers\src\;$(THIRDPARTYLIBS)\boost\"
+				PreprocessorDefinitions="WIN32;NDEBUG;_WIN32_WINNT=0x0501"
 				RuntimeLibrary="2"
 				UsePrecompiledHeader="0"
 				WarningLevel="4"
-				Detect64BitPortabilityProblems="true"
 				DebugInformationFormat="3"
 			/>
 			<Tool
@@ -241,12 +238,11 @@
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
-				AdditionalIncludeDirectories="..\src\DEMessaging;$(THIRDPARTYLIBS)\google\protocolbuffers\src\;$(THIRDPARTYLIBS)\boost\;%(AdditionalIncludeDirectories)"
-				PreprocessorDefinitions="WIN32;NDEBUG;_CONSOLE"
+				AdditionalIncludeDirectories="..\src\DEMessaging;$(THIRDPARTYLIBS)\google\protocolbuffers\src\;$(THIRDPARTYLIBS)\boost\"
+				PreprocessorDefinitions="WIN32;NDEBUG;_WIN32_WINNT=0x0501"
 				RuntimeLibrary="2"
 				UsePrecompiledHeader="0"
 				WarningLevel="4"
-				Detect64BitPortabilityProblems="true"
 				DebugInformationFormat="3"
 			/>
 			<Tool

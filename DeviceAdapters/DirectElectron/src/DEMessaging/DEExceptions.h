@@ -1,7 +1,7 @@
 #pragma once;
 
 #include <string>
-#include "DEServer.pb.h"
+#include "DEServer.h"
 #include <boost/exception/all.hpp>
 
 typedef boost::error_info<struct tag_description, std::string> errorMessage; //(1)

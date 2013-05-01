@@ -3,7 +3,7 @@
 #include <vector>
 #include <string>
 #include "DEConstants.h"
-#include "DEServer.pb.h"
+#include "DEServer.h"
 
 using namespace std;
 using namespace DEMessaging;

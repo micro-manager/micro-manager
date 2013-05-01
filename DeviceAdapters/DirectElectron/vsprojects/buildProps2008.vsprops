@@ -5,11 +5,6 @@
 	Name="buildProps2008"
 	>
 	<UserMacro
-		Name="MM"
-		Value="..\..\..\..\micromanager"
-		PerformEnvironmentSet="true"
-	/>
-	<UserMacro
 		Name="THIRDPARTYLIBS"
 		Value="..\..\..\..\3rdpartypublic"
 		PerformEnvironmentSet="true"

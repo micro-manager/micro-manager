@@ -4,7 +4,7 @@
 #include <vector>
 
 #include <boost/tuple/tuple.hpp>
-#include "DEServer.pb.h"
+#include "DEServer.h"
 
 using namespace DEMessaging;
 using namespace std;

@@ -1,5 +1,5 @@
 #pragma once;
-#include "DEServer.pb.h"
+#include "DEServer.h"
 
 typedef unsigned char byte;
 using namespace DEMessaging;

@@ -6,7 +6,7 @@
 #include <string>
 #include <boost/variant.hpp>
 #include <boost/tuple/tuple.hpp>
-#include "DEServer.pb.h"
+#include "DEServer.h"
 
 namespace DEMessaging {
 

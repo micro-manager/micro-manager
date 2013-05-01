@@ -5,7 +5,7 @@
 #include <boost/tuple/tuple.hpp>
 #include <boost/tuple/tuple.hpp>
 #include "DEConstants.h"
-#include "DEServer.pb.h"
+#include "DEServer.h"
 
 using namespace std;
 using namespace DEMessaging;
