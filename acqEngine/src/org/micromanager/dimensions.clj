@@ -114,7 +114,8 @@
   [current-plane dimension-values order channel-settings]
   (loop [plane current-plane]
     (when-let [next-plane (next-plane plane dimension-values order)]
-      (if (plane-forbidden? next-plane dimension-values channel-settings)
+      (if (and channel-settings
+               (plane-forbidden? next-plane dimension-values channel-settings))
         (recur next-plane)
         next-plane))))
 

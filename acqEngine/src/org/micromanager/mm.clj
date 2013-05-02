@@ -15,7 +15,7 @@
 
 (ns org.micromanager.mm
   (:import [org.micromanager.navigation MultiStagePosition]
-           [mmcorej Configuration DoubleVector Metadata StrVector]
+           [mmcorej Configuration DoubleVector Metadata StrVector] ;; load mmcorej.DeviceType at runtime only
            [org.json JSONArray JSONObject]
            [java.text SimpleDateFormat]
            [org.micromanager.navigation MultiStagePosition StagePosition]
@@ -414,6 +414,12 @@
   (when-let [msp (get-msp idx)]
     (when-let [stage-pos (. msp (get z-stage))]
       (set! (. stage-pos x) z))))  
+
+(defn positions-map []
+  (let [position (map MultiStagePosition-to-map (get-positions))]
+    (zipmap
+      (map :label position)
+      (map :axes position))))
 
 (defn str-vector
   "Convert a sequence of strings into a Micro-Manager StrVector."
