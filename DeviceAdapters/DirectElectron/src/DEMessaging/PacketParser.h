@@ -33,7 +33,7 @@ namespace DEMessaging
 			{
 				// Check return types.
 				bool formatIsCorrect = true;
-				if (singleCommand.parameter_size() != this->_params.size())
+				if (singleCommand.parameter_size() != static_cast<int>(this->_params.size()))
 					formatIsCorrect = false;
 
 				if (formatIsCorrect)

@@ -108,9 +108,9 @@ bool DEProtoProxy::get_Image(void* image, unsigned int length)
 		!dataHeader.has_data_header()) 
 		BOOST_THROW_EXCEPTION(ProtocolException() << errorMessage("Did not receive expected data header for image."));
 	
-	this->imgBuffer.resizeIfNeeded(dataHeader.data_header().bytesize());
+	this->imgBuffer.resizeIfNeeded(static_cast<std::size_t>(dataHeader.data_header().bytesize()));
 
-	if (!this->server->receive(this->imgBuffer.getBufferPtr(), dataHeader.data_header().bytesize(), this->imageTimeout))
+	if (!this->server->receive(this->imgBuffer.getBufferPtr(), static_cast<std::size_t>(dataHeader.data_header().bytesize()), this->imageTimeout))
 	{
 		BOOST_THROW_EXCEPTION(CommunicationException() << errorMessage("Unable to receive image from server."));
 	}
