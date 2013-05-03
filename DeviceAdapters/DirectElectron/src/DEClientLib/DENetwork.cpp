@@ -74,7 +74,7 @@ bool DENetwork::close()
 }
 
 
-void DENetwork::setResult(optional<boost::system::error_code>* a, const boost::system::error_code& b, std::size_t bytes_transferred)
+void DENetwork::setResult(optional<boost::system::error_code>* a, const boost::system::error_code& b, std::size_t /*bytes_transferred*/)
 {
 	if (b != boost::asio::error::operation_aborted)
 		*a = b;
@@ -109,10 +109,13 @@ bool DENetwork::send(void* data, long size, std::size_t timeout)
 		// Time out
 		if (timeout_result)
 		{	 
-			// On Windows xp systems, cancel causes a operation not supported exception
+			// On Windows xp systems, cancel causes an operation_not_supported exception
 			// to be thrown.
 			boost::system::error_code ec;
+#pragma warning(push)
+#pragma warning(disable: 4996)
 	 		this->write->cancel(ec);
+#pragma warning(pop)
 			break;
 		}
 	}
@@ -156,10 +159,13 @@ bool DENetwork::receive(void* data, long size, std::size_t timeout)
 		// Time out
 		if (timeout_result)
 		{	
-			// On Windows xp systems, cancel causes a operation not supported exception
+			// On Windows xp systems, cancel causes an operation_not_supported exception
 			// to be thrown.
 			boost::system::error_code ec;
+#pragma warning(push)
+#pragma warning(disable: 4996)
 	 		this->read->cancel(ec);
+#pragma warning(pop)
 			break;
 		}
 	}

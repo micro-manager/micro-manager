@@ -77,7 +77,7 @@ void PacketCreator::setAnyParameter(AnyParameter* param, Param& val)
 			param->set_p_bool(boost::get<bool>(val.get<0>()));
 			break;
 		case AnyParameter::P_FLOAT:
-			param->set_p_float(boost::get<double>(val.get<0>()));
+			param->set_p_float(static_cast<float>(boost::get<double>(val.get<0>())));
 			break;
 		case AnyParameter::P_STRING:
 			param->set_p_string(boost::get<string>(val.get<0>()));

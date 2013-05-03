@@ -264,7 +264,7 @@ int CDECamera::Initialize()
 			this->proxy_->get_Property(g_Property_DE_PixelSizeX, pixelSize_.x);
 			this->proxy_->get_Property(g_Property_DE_PixelSizeY, pixelSize_.y);			
 		}
-		catch (const CommandException& e){
+		catch (const CommandException&){
 			// Ignore optional parameters.			
 		}		
 
@@ -274,7 +274,7 @@ int CDECamera::Initialize()
 			this->proxy_->get_Property(g_Property_DE_ExposureTime, exposureTime_); 
 			exposureTime_ = exposureTime_*1000; // convert to millisec
 		}
-		catch (const CommandException& e){
+		catch (const CommandException&){
 			// Ignore optional parameters.			
 		}
 		this->proxy_->set_ImageTimeout((size_t)(exposureTime_/1000*1.5 + DE_minimal_communication_timeout));
@@ -717,7 +717,7 @@ double CDECamera::GetExposure() const
 	try {
 		retval = this->proxy_->get_Property(g_Property_DE_ExposureTime, doubleTemp);
 	}
-	catch (const std::exception& e){
+	catch (const std::exception&){
 	}
 	if(retval){
 		return doubleTemp*1000; //get latest value from the server (cannot update local copy as the method is const)
@@ -870,13 +870,11 @@ int CDECamera::OnProperty(MM::PropertyBase* pProp, MM::ActionType eAct)
 				break;
 			case MM::Float:
 				pProp->Get(dblTemp);
-				flTemp = dblTemp;
-				this->proxy_->set_Property(name, flTemp);
+				this->proxy_->set_Property(name, static_cast<float>(dblTemp));
 				break;
 			case MM::Integer:
 				pProp->Get(longTemp);
-				intTemp = (int)longTemp;
-				this->proxy_->set_Property(name, intTemp);
+				this->proxy_->set_Property(name, static_cast<int>(longTemp));
 				break;
 			default:
 				return DEVICE_INVALID_PROPERTY_TYPE;
