@@ -84,10 +84,9 @@ Source: micro-manager\LaserCombinerSDK64.dll; DestDir: {app}; Flags: ignoreversi
 Source: micro-manager\mmgr_dal_*.dll; DestDir: {app}; Flags: ignoreversion
 
 ; python wrapper
-; NOTE: not available for 64-bit version
-;Source: micro-manager\_MMCorePy.pyd; DestDir: {app}; Flags: ignoreversion skipifsourcedoesntexist
-;Source: micro-manager\MMCorePy.py; DestDir: {app}; Flags: ignoreversion skipifsourcedoesntexist
-;Source: micro-manager\MMCoreWrapDemo.py; DestDir: {app}; Flags: ignoreversion skipifsourcedoesntexist
+Source: micro-manager\_MMCorePy.pyd; DestDir: {app}; Flags: ignoreversion skipifsourcedoesntexist
+Source: micro-manager\MMCorePy.py; DestDir: {app}; Flags: ignoreversion skipifsourcedoesntexist
+Source: micro-manager\MMCoreWrapDemo.py; DestDir: {app}; Flags: ignoreversion skipifsourcedoesntexist
 
 ; drivers
 ;Source: ..\drivers\*; DestDir: {app}\drivers; Flags: ignoreversion recursesubdirs
