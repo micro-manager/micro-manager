@@ -16,7 +16,7 @@ namespace DEMessaging
 	{
 		public:
 			PacketCreator();
-			PacketCreator(bool persistent);
+			explicit PacketCreator(bool persistent);
 			~PacketCreator();
 			void add(AnyP value, string label);
 			void add(AnyP value);

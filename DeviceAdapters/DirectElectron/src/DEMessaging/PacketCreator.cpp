@@ -7,7 +7,7 @@ PacketCreator::PacketCreator()
 
 PacketCreator::PacketCreator(bool persistent)
 {
-	this->_persistent = true;
+	this->_persistent = persistent;
 }
 
 PacketCreator::~PacketCreator()
