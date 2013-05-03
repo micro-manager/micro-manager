@@ -24,8 +24,8 @@ class DEProtoProxy
 		bool close();
 
 		// Config Functions
-		void set_ParamTimeout(size_t seconds);
-		void set_ImageTimeout(size_t seconds);
+		void set_ParamTimeout(unsigned long seconds);
+		void set_ImageTimeout(unsigned long seconds);
 
 		// Set Functions
 		bool set_Property(string prop, AnyP val);
@@ -63,6 +63,6 @@ class DEProtoProxy
 		bool sendCommand(DEPacket& message);
 		bool sendCommand(DEPacket& message, DEPacket& reponse);
 
-		size_t imageTimeout; 
-		size_t paramTimeout;
+		unsigned long imageTimeout;
+		unsigned long paramTimeout;
 };

@@ -65,7 +65,7 @@ const char* g_Property_DE_BinningY = "Binning Y";
 const char* g_DECamera_InconsistentStateMessage = "Operation failed. Please try again.";
 
 // Minimal communication timeout
-const int DE_minimal_communication_timeout = 30; //60 seconds of minimal timeout to account for network overhead and server response
+const unsigned long DE_minimal_communication_timeout = 30; // seconds of minimal timeout to account for network overhead and server response
 
 // Custom error for custom messages
 #define DEVICE_CUSTOM_ERROR 36
@@ -277,7 +277,7 @@ int CDECamera::Initialize()
 		catch (const CommandException&){
 			// Ignore optional parameters.			
 		}
-		this->proxy_->set_ImageTimeout((size_t)(exposureTime_/1000*1.5 + DE_minimal_communication_timeout));
+		this->proxy_->set_ImageTimeout((unsigned long)(exposureTime_/1000*1.5 + DE_minimal_communication_timeout));
 
 		// synchronize all properties
 		// --------------------------
@@ -742,7 +742,7 @@ void CDECamera::SetExposure(double exp)
 			//verify setting from the server
 			if(this->proxy_->get_Property(g_Property_DE_ExposureTime, doubleTemp)){
 				this->exposureTime_ = doubleTemp*1000; //update local variable
-				this->proxy_->set_ImageTimeout((size_t)(doubleTemp*1.5 + DE_minimal_communication_timeout));
+				this->proxy_->set_ImageTimeout((unsigned long)(doubleTemp*1.5 + DE_minimal_communication_timeout));
 			}
 		}
 	}

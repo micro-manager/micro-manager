@@ -2,7 +2,7 @@
 #include <stdio.h>
 #include <string.h>
 
-VariableBuffer::VariableBuffer(unsigned long initialSize) :
+VariableBuffer::VariableBuffer(std::size_t initialSize) :
 	_buffer(NULL), _capacity(0), _offset(0)
 {
 	this->_buffer = new byte[initialSize];
@@ -20,13 +20,13 @@ byte* VariableBuffer::getBufferPtr() const
 	return this->_buffer;
 }
 
-void VariableBuffer::resizeIfNeeded(unsigned long newSize)
+void VariableBuffer::resizeIfNeeded(std::size_t newSize)
 {
 	
 	if (this->_buffer != NULL  && this->_capacity < newSize)
 	{
 		byte* oldBuffer = this->_buffer;
-		unsigned long oldSize = this->_capacity;
+		std::size_t oldSize = this->_capacity;
 
 		this->_buffer = new byte[newSize];
 		memcpy(this->_buffer, oldBuffer, oldSize);
@@ -37,7 +37,7 @@ void VariableBuffer::resizeIfNeeded(unsigned long newSize)
 	}
 }
 
-void VariableBuffer::copy(void* from, unsigned long fromSize, unsigned long offset)
+void VariableBuffer::copy(void* from, std::size_t fromSize, std::size_t offset)
 {
 	this->resizeIfNeeded(fromSize + offset);
 	memcpy(this->_buffer + offset, from, fromSize);
@@ -50,11 +50,11 @@ void VariableBuffer::resetOffset()
 
 void VariableBuffer::add(unsigned int val)
 {
-	this->copy(&val, sizeof(unsigned long), this->_offset);
-	this->_offset += sizeof(unsigned long);
+	this->copy(&val, sizeof(val), this->_offset);
+	this->_offset += sizeof(val);
 }
 
-void VariableBuffer::add(void* from, unsigned long fromSize)
+void VariableBuffer::add(void* from, std::size_t fromSize)
 {
 	this->copy(from, fromSize, this->_offset);
 	this->_offset += fromSize;
@@ -68,6 +68,6 @@ void VariableBuffer::add(DEPacket& pkt)
 	this->_offset += pkt.ByteSize();
 }
 
-unsigned long VariableBuffer::getCapacity() const  { return this->_capacity; }
+std::size_t VariableBuffer::getCapacity() const  { return this->_capacity; }
 
-unsigned long VariableBuffer::getSize() const { return this->_offset; }
+std::size_t VariableBuffer::getSize() const { return this->_offset; }

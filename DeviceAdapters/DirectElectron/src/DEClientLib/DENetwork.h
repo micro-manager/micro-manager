@@ -61,10 +61,10 @@ public:
 	////////////////////////////////////////////////////////////////////////////////////////////////////
 
 	bool close();
-	bool send(void* data, long size, size_t timeout);
-	bool receive(void* data, long size, size_t timeout);
+	bool send(void* data, std::size_t size, unsigned long timeout);
+	bool receive(void* data, std::size_t size, unsigned long timeout);
 	
-	long run(long (*command)(), size_t timeout);	
+	long run(long (*command)(), unsigned long timeout);
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////
 	/// <summary>	Should a function fail, use this method to retrieve the error message from the 

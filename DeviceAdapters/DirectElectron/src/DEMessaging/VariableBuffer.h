@@ -9,21 +9,21 @@ namespace DEMessaging
 	class VariableBuffer
 	{
 	public:
-		VariableBuffer(unsigned long initialSize = 0);
+		VariableBuffer(std::size_t initialSize = 0);
 		virtual ~VariableBuffer();
 		byte * getBufferPtr() const;
-		void resizeIfNeeded(unsigned long newSize);
-		void copy(void* from, unsigned long fromSize, unsigned long offset = 0);
+		void resizeIfNeeded(std::size_t newSize);
+		void copy(void* from, std::size_t fromSize, std::size_t offset = 0);
 		void resetOffset();
 		void add(unsigned int val);
-		void add(void* from, unsigned long fromSize);
+		void add(void* from, std::size_t fromSize);
 		void add(DEPacket& pkt);
-		unsigned long getCapacity() const;
-		unsigned long getSize() const;
+		std::size_t getCapacity() const;
+		std::size_t getSize() const;
 
 	private:
 		byte* _buffer;
-		unsigned long _capacity;
-		unsigned long _offset;
+		std::size_t _capacity;
+		std::size_t _offset;
 	};
 }

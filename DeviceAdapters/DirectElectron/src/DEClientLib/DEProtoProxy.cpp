@@ -32,13 +32,13 @@ bool DEProtoProxy::close()
 	return this->server->close();
 }
 
-void DEProtoProxy::set_ParamTimeout(size_t seconds) 
+void DEProtoProxy::set_ParamTimeout(unsigned long seconds)
 { 
 	boost::lock_guard<boost::mutex>(*this->server->getTransactionMutex());
 	this->paramTimeout = seconds; 
 }
 
-void DEProtoProxy::set_ImageTimeout(size_t seconds) 
+void DEProtoProxy::set_ImageTimeout(unsigned long seconds)
 { 
 	boost::lock_guard<boost::mutex>(*this->server->getTransactionMutex());
 	// Always wait a minimum paramTimeout (or 5 secs) when setting the 

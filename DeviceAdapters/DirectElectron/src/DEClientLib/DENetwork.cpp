@@ -80,7 +80,7 @@ void DENetwork::setResult(optional<boost::system::error_code>* a, const boost::s
 		*a = b;
 }
 
-bool DENetwork::send(void* data, long size, std::size_t timeout)
+bool DENetwork::send(void* data, std::size_t size, unsigned long timeout)
 {
 	using namespace boost; 
 
@@ -130,7 +130,7 @@ bool DENetwork::send(void* data, long size, std::size_t timeout)
 	return	(this->error == boost::system::errc::success);
 }
 
-bool DENetwork::receive(void* data, long size, std::size_t timeout)
+bool DENetwork::receive(void* data, std::size_t size, unsigned long timeout)
 {
 	using namespace boost; 
 
@@ -191,7 +191,7 @@ bool DENetwork::createSocket(const char* ip, port no, tcp::socket* socket_)
 }
 
 
-long DENetwork::run(long (*command)(), size_t timeout)
+long DENetwork::run(long (*command)(), unsigned long /*timeout*/)
 {
 	return command();
 }
