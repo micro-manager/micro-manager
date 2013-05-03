@@ -1,5 +1,5 @@
 (ns slide-explorer.setup
-  (:require [slide-explorer.user-controls :as controls]
+  (:require [slide-explorer.widgets :as widgets]
             [slide-explorer.main :as main]
             [slide-explorer.utils :as utils])
   (:import (javax.swing JFrame JButton JTextArea)
@@ -47,12 +47,12 @@
   (let [frame (create-frame)]
     (doto
       (.getContentPane frame)
-      (.add (controls/button "Load..." #(main/load-data-set)))
-      (.add (controls/button "New..." #(main/go)))
+      (.add (widgets/button "Load..." #(main/load-data-set)))
+      (.add (widgets/button "New..." #(main/go)))
       (.add (cheat-sheet)))
     (doto frame
       (.setResizable false)
-      (controls/show-window-center 400 500 gui-window))
+      (widgets/show-window-center 400 500 gui-window))
     frame))
 
 (defn show-frame [gui-window]

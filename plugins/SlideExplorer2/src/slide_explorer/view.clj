@@ -14,6 +14,7 @@
             [slide-explorer.user-controls :as user-controls]
             [slide-explorer.paint :as paint]
             [slide-explorer.utils :as utils]
+            [slide-explorer.widgets :as widgets]
             [clojure.core.memoize :as memo]))
 
 ; Order of operations:
@@ -254,7 +255,7 @@
                  :right-panel panel2
                  :split-pane split-pane
                  :content-pane (.getContentPane frame)}]     
-    (user-controls/setup-fullscreen frame)
+    (widgets/setup-fullscreen frame)
     (user-controls/make-view-controllable widgets screen-state-atom)
     (user-controls/handle-resize panel2 screen-state-atom2)
     (user-controls/handle-1x-view screen-state-atom screen-state-atom2)
