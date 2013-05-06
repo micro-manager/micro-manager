@@ -571,7 +571,7 @@ int LCShutter::OnState(MM::PropertyBase *pProp, MM::ActionType eAct)
          os >> seq;
          load[i] = (unsigned char) seq;
       }
-      int ret = LaserBoardSetSequenceState(sequence.size(), load);
+      int ret = LaserBoardSetSequenceState(static_cast<unsigned int>(sequence.size()), load);
       delete(load);
       return ret;
    }
