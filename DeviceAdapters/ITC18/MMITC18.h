@@ -111,7 +111,6 @@ private:
     int StartDAC_[MAX_DACHANNELS];
     int StartTTL_;
     int StopTTL_;
-    int TTLposition_;
     bool busy_;
     int MaxChannels_;
     int MaxDAChannels_;
@@ -252,8 +251,8 @@ private:
     double maxV_;
     double volts_;
     double gatedVolts_;
-    int DACPort_;
-    int maxChannel_;
+    unsigned DACPort_;
+    unsigned maxChannel_;
     bool busy_;
     bool gateOpen_;
 };
@@ -307,8 +306,8 @@ private:
      double maxV_;
      double volts_;
      double gatedVolts_;
-     int ADCPort_;
-     int maxChannel_;
+     unsigned ADCPort_;
+     unsigned maxChannel_;
      bool busy_;
      bool gateOpen_;
 };
