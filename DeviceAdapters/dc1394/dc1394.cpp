@@ -708,7 +708,7 @@ int Cdc1394::OnColorFeature(MM::PropertyBase* pProp, MM::ActionType eAct, uint32
 			logMsg_.str("");
 			logMsg_ << "Getting whitebalance " << ".  It is now " << value << " err: " << err_;
 			LogMessage (logMsg_.str().c_str(), true);
-			tmp = (long) valueColor == COLOR_UB ? ub : vr;
+			tmp = (long) (valueColor == COLOR_UB ? ub : vr);
 		} else {
 			// White Shading
 			err_= dc1394_feature_whiteshading_get_value(camera_, &red, &green, &blue);
