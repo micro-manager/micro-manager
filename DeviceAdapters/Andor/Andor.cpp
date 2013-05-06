@@ -949,14 +949,13 @@ int AndorCamera::GetListOfAvailableCameras()
          }
       }
 
+      std::string strTips("");
 
       // camera temperature
       // temperature range
-      std::string strTips("");
-      int minTemp, maxTemp;
 
       if(mb_canSetTemp) {
-
+         int minTemp, maxTemp;
          ret = GetTemperatureRange(&minTemp, &maxTemp);
          if (ret != DRV_SUCCESS)
             return ret;
@@ -1014,7 +1013,7 @@ int AndorCamera::GetListOfAvailableCameras()
       // Temperature Set Point
       if(mb_canSetTemp) {
 
-         if(minTemp < -70) {
+         if(minTemp_ < -70) {
             strTempSetPoint = "-70";
          }
          else {
