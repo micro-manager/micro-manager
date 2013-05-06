@@ -3807,7 +3807,7 @@ int AndorCamera::GetListOfAvailableCameras()
    int AndorCamera::GetPreAmpGainString(int PreAmpGainIdx, char * PreAmpGainString, int PreAmpGainStringLength )
    {
       bool useText = ui_swVersion >= 292;
-      int ret;
+      int ret = DRV_NOT_SUPPORTED;
       
 
       if(useText) 
@@ -4841,8 +4841,8 @@ unsigned int AndorCamera::createIsolatedCropModeProperty(AndorCapabilities * cap
       shutterValues.push_back(g_ShutterMode_Closed);
       shutterValues.push_back(g_ShutterMode_Auto);
 
-      bool externalCapability = caps->ulFeatures & AC_FEATURES_SHUTTEREX;
-      bool internalCapability = caps->ulFeatures & AC_FEATURES_SHUTTER;
+      bool externalCapability = (caps->ulFeatures & AC_FEATURES_SHUTTEREX) != 0;
+      bool internalCapability = (caps->ulFeatures & AC_FEATURES_SHUTTER) != 0;
 
       if(externalCapability)
       {
