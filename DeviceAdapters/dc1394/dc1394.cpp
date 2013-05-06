@@ -723,6 +723,7 @@ int Cdc1394::OnColorFeature(MM::PropertyBase* pProp, MM::ActionType eAct, uint32
 					tmp = (long) blue;
 					break;
 				default:
+               tmp = 0L; // Not reached.
 					break;
 			}
 		}
@@ -859,9 +860,7 @@ int Cdc1394::Initialize()
 
    // TODO once we can set the interlacing up externally
    // check if appropriate property is set
-   if(0) {
-	   
-   } else if(!strncmp("Guppy F025",camera_->model,10) ||
+   if(!strncmp("Guppy F025",camera_->model,10) ||
 			 !strncmp("Guppy F029",camera_->model,10) || 
 			 !strncmp("Guppy F038",camera_->model,10) ||
 			 !strncmp("Guppy F044",camera_->model,10) ) {
@@ -1657,7 +1656,7 @@ int Cdc1394::GetBinning () const
    */
 }
 
-int Cdc1394::SetBinning (int binSize) 
+int Cdc1394::SetBinning (int /*binSize*/) 
 {
    // Not supported yet
    return ERR_NOT_IMPLEMENTED;
@@ -1869,7 +1868,7 @@ int Cdc1394::ShutdownImageBuffer()
    return DEVICE_OK;
 }
 
-bool Cdc1394::IsFeatureSupported(int featureId)
+bool Cdc1394::IsFeatureSupported(int /*featureId*/)
 {
    return DEVICE_OK;
 }
@@ -2021,7 +2020,7 @@ int Cdc1394::SetUpFrameRates()
    {
       CPropertyAction *pAct = new CPropertyAction (this, &Cdc1394::OnFrameRate);
       int nRet = CreateProperty(g_Keyword_FrameRates, frameRateMap_[framerates_.framerates[0]].c_str(), MM::String, false, pAct);
-      assert(nRet == DEVICE_OK);
+      assert(nRet == DEVICE_OK); nRet; // Silence unused var warning.
       frameRatePropDefined_ = true;
    }
    
