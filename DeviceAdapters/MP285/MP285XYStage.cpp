@@ -729,7 +729,7 @@ int XYStage::OnSpeed(MM::PropertyBase* /*pProp*/, MM::ActionType /*eAct*/)
     return DEVICE_OK;
 }
 
-int XYStage::OnGetPositionX(MM::PropertyBase* pProp, MM::ActionType eAct)
+int XYStage::OnGetPositionX(MM::PropertyBase* pProp, MM::ActionType /*eAct*/)
 {
     std::ostringstream osMessage;
     int ret = DEVICE_OK;
@@ -777,7 +777,7 @@ int XYStage::OnGetPositionX(MM::PropertyBase* pProp, MM::ActionType eAct)
     return DEVICE_OK;
 }
 
-int XYStage::OnGetPositionY(MM::PropertyBase* pProp, MM::ActionType eAct)
+int XYStage::OnGetPositionY(MM::PropertyBase* pProp, MM::ActionType /*eAct*/)
 {
     std::ostringstream osMessage;
     int ret = DEVICE_OK;

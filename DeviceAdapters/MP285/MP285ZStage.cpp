@@ -690,7 +690,7 @@ int ZStage::OnSpeed(MM::PropertyBase* /*pProp*/, MM::ActionType /*eAct*/)
     return DEVICE_OK;
 }
 
-int ZStage::OnGetPositionZ(MM::PropertyBase* pProp, MM::ActionType eAct)
+int ZStage::OnGetPositionZ(MM::PropertyBase* pProp, MM::ActionType /*eAct*/)
 {
     std::ostringstream osMessage;
     int ret = DEVICE_OK;
