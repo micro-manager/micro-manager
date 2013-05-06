@@ -1225,7 +1225,7 @@ int CApogeeCamera::GetAltaAdGain( long & gain )
     }
     else
     {
-        gain = ApgCam->GainSixteenBit;
+        gain = static_cast<long>(ApgCam->GainSixteenBit);
     }
 
      return DEVICE_OK;
