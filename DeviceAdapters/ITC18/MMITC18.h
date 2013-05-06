@@ -237,7 +237,7 @@ public:
     int StopDASequence() {return DEVICE_OK;}
     int LoadDASequence(std::vector<double> voltages) const {return DEVICE_OK;} 
     int ClearDASequence() {return DEVICE_OK;}
-    int AddToDASequence(double voltage) {return DEVICE_OK;}
+    int AddToDASequence(double /*voltage*/) {return DEVICE_OK;}
     int SendDASequence() {return DEVICE_OK;}
 
     
@@ -276,7 +276,7 @@ public:
      // DA API
      int SetGateOpen(bool open);
      int GetGateOpen(bool& open) {open = gateOpen_; return DEVICE_OK;};
-     int SetSignal(double volts) {return DEVICE_UNSUPPORTED_COMMAND;};
+     int SetSignal(double /*volts*/) {return DEVICE_UNSUPPORTED_COMMAND;};
      int GetSignal(double& volts);
      int GetLimits(double& minVolts, double& maxVolts) {minVolts = minV_; maxVolts = maxV_; return DEVICE_OK;};
      
@@ -292,9 +292,9 @@ public:
      int GetDASequenceMaxLength(long& nrEvents) const  {nrEvents = 0; return DEVICE_OK;}
      int StartDASequence() const {return DEVICE_OK;} 
      int StopDASequence() const {return DEVICE_OK;}
-     int LoadDASequence(std::vector<double> voltages) const {return DEVICE_OK;}
+     int LoadDASequence(std::vector<double> /*voltages*/) const {return DEVICE_OK;}
      int ClearDASequence() {return DEVICE_OK;}
-     int AddToDASequence(double voltage) {return DEVICE_OK;}
+     int AddToDASequence(double /*voltage*/) {return DEVICE_OK;}
      int SendDASequence() const {return DEVICE_OK;}
 
      

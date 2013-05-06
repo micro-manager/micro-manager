@@ -255,7 +255,7 @@ int CITC18Hub::Initialize()
         free (itc);
         exit(DEVICE_ERR);
     }
-    busy_ = (bool)busy;
+    busy_ = (busy != 0);
 
     if (ITC18_Initialize(itc,deviceNumber)) 
     {
@@ -524,7 +524,7 @@ int CITC18Protocol::RunProtocolFile()
     
     // must be loaded after sequence is loaded
     //fprintf(stderr," CITC18Hub::RunProtocolFile() SetInterval()\n");
-    g_seqThread->SetInterval(SLOW_SAMP_INTERVAL_US);
+    g_seqThread->SetInterval(static_cast<float>(SLOW_SAMP_INTERVAL_US));
     
     
     // mode 1 = one shot, using the runonce mode
@@ -1221,7 +1221,7 @@ int CITC18Shutter::ITC18RunOnce(short value)
     g_seqThread->SetDataOut(ONESHOTDATASIZE * ONESHOTSEQUENCESIZE,g_OneShotDataOut);
     g_seqThread->SetDataIn(ONESHOTDATASIZE * ONESHOTSEQUENCESIZE,g_OneShotDataIn);
     // must be loaded after sequence is loaded
-    g_seqThread->SetInterval(FAST_SAMP_INTERVAL_US);
+    g_seqThread->SetInterval(static_cast<float>(FAST_SAMP_INTERVAL_US));
     // mode 1 = one shot
     g_seqThread->Start(1);
 
@@ -1461,7 +1461,7 @@ int CITC18DAC::ITC18RunOnce(double value)
         g_seqThread->SetDataOut(ONESHOTDATASIZE * ONESHOTSEQUENCESIZE,g_OneShotDataOut);
         g_seqThread->SetDataIn(ONESHOTDATASIZE * ONESHOTSEQUENCESIZE,g_OneShotDataIn);
         // must be loaded after sequence is loaded
-        g_seqThread->SetInterval(FAST_SAMP_INTERVAL_US);
+        g_seqThread->SetInterval(static_cast<float>(FAST_SAMP_INTERVAL_US));
         // mode 1 = one shot
         g_seqThread->Start(1);
     }  else fprintf(stderr, "CITC18ADC::ITC18RunOnce svc already running\n");
@@ -1645,7 +1645,7 @@ double CITC18ADC::GetRangeFactor()
 }
 
 
-int CITC18ADC::SetGateOpen(bool open)
+int CITC18ADC::SetGateOpen(bool /*open*/)
 {
 
     return DEVICE_OK;
@@ -1671,7 +1671,7 @@ int CITC18ADC::ITC18RunOnce(double &value)
         g_seqThread->SetDataOut(ONESHOTDATASIZE * ONESHOTSEQUENCESIZE,g_OneShotDataOut);
         g_seqThread->SetDataIn(ONESHOTDATASIZE * ONESHOTSEQUENCESIZE,g_OneShotDataIn);
         // must be loaded after sequence is loaded
-        g_seqThread->SetInterval(FAST_SAMP_INTERVAL_US);
+        g_seqThread->SetInterval(static_cast<float>(FAST_SAMP_INTERVAL_US));
         // mode 1 = one shot
         g_seqThread->Start(1);
     }
