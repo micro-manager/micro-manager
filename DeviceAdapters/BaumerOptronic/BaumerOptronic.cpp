@@ -54,17 +54,17 @@ Since this function is a global, using this adapter with multiple cameras is not
 #include <sstream>
 
 
-#ifdef WIN32
 #pragma warning(push)
 #pragma warning(disable: 4245)  // bunch of nonsense in the B.O. library.
-#pragma warning(disable : 4996)
+#pragma warning(disable: 4996)
 #include "FxApi.h"
-#include "BoImageFormat.h"
 #include "FxError.h"
 #pragma warning(pop)
-#pragma warning(disable : 4996) // disable warning for deperecated CRT functions on Windows 
-#else
-#endif
+
+// Disable warning for unused BOMSG(), defined in BoMsg.h (via FxApi.h).
+// This warning is generated at the end of compilation, so cannot be disabled within push/pop.
+#pragma warning(disable: 4505)
+
 
 #include "BaumerOptronic.h"
 
