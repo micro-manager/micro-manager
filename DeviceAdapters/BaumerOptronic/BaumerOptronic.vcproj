@@ -236,7 +236,6 @@
 			<Tool
 				Name="VCLinkerTool"
 				OutputFile="$(OutDir)/mmgr_dal_$(ProjectName).dll"
-				LinkIncremental="2"
 				AdditionalLibraryDirectories="..\..\..\3rdpartypublic\boost\stage_$(PlatformName)\lib;..\..\..\3rdparty\Leica\camera\SDK1.7\BSTDFxLib\x86\Lib;..\..\..\3rdparty\Leica\camera\SDK1.7\Lib\x86"
 				GenerateDebugInformation="true"
 				SubSystem="2"
@@ -319,7 +318,6 @@
 			<Tool
 				Name="VCLinkerTool"
 				OutputFile="$(OutDir)/mmgr_dal_$(ProjectName).dll"
-				LinkIncremental="2"
 				AdditionalLibraryDirectories="..\..\..\3rdpartypublic\boost\stage_$(PlatformName)\lib;..\..\..\3rdparty\Leica\camera\SDK1.7\BSTDFxLib\x64\Lib;..\..\..\3rdparty\Leica\camera\SDK1.7\Lib\x64"
 				GenerateDebugInformation="true"
 				SubSystem="2"
