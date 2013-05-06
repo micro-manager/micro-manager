@@ -1618,7 +1618,7 @@ int CIA::OnRedValue(MM::PropertyBase* pProp, MM::ActionType eAct)
    {		
 			LogMessage("In OnRedValue ActiveColor Before ");
 			pProp->Get(ColorLevel);
-			CIAColorLevels[CL_Red] = (unsigned char) (ColorLevel == 100) ? 0 : (ColorLevel == 0) ? 0xff : ((100 - ColorLevel) * 2.55);
+			CIAColorLevels[CL_Red] = (unsigned char) ((ColorLevel == 100) ? 0 : (ColorLevel == 0) ? 0xff : ((100 - ColorLevel) * 2.55));
 			//OutputDebugString("In OnRedValue");
 			SendColorLevelCmd(RED,ColorLevel);
    }
@@ -1635,7 +1635,7 @@ int CIA::OnGreenValue(MM::PropertyBase* pProp, MM::ActionType eAct)
    {
 		//LogMessage("In OnGreenValue ");
 		pProp->Get(ColorLevel);
-		CIAColorLevels[CL_Green] = (unsigned char) (ColorLevel == 100) ? 0 : (ColorLevel == 0) ? 0xff : ((100 - ColorLevel) * 2.55);
+		CIAColorLevels[CL_Green] = (unsigned char) ((ColorLevel == 100) ? 0 : (ColorLevel == 0) ? 0xff : ((100 - ColorLevel) * 2.55));
 		//OutputDebugString("In OnGreenValue");
 		SendColorLevelCmd(GREEN,ColorLevel);
    }
@@ -1651,7 +1651,7 @@ int CIA::OnCyanValue(MM::PropertyBase* pProp, MM::ActionType eAct)
    {
 		//LogMessage("In OnCYANValue ");
 		pProp->Get(ColorLevel);
-		CIAColorLevels[CL_Cyan] = (unsigned char) (ColorLevel == 100) ? 0 : (ColorLevel == 0) ? 0xff : ((100 - ColorLevel) * 2.55);
+		CIAColorLevels[CL_Cyan] = (unsigned char) ((ColorLevel == 100) ? 0 : (ColorLevel == 0) ? 0xff : ((100 - ColorLevel) * 2.55));
 		//OutputDebugString("In OnGreenValue");
 		SendColorLevelCmd(CYAN,ColorLevel);
    }
@@ -1667,7 +1667,7 @@ int CIA::OnVioletValue(MM::PropertyBase* pProp, MM::ActionType eAct)
    {
 		//LogMessage("In OnVioletValue ");
 		pProp->Get(ColorLevel);
-		CIAColorLevels[CL_Violet] = (unsigned char) (ColorLevel == 100) ? 0 : (ColorLevel == 0) ? 0xff : ((100 - ColorLevel) * 2.55);
+		CIAColorLevels[CL_Violet] = (unsigned char) ((ColorLevel == 100) ? 0 : (ColorLevel == 0) ? 0xff : ((100 - ColorLevel) * 2.55));
 		//OutputDebugString("In OnVioletValue");
         SendColorLevelCmd(VIOLET,ColorLevel);
 
@@ -1685,7 +1685,7 @@ int CIA::OnTealValue(MM::PropertyBase* pProp, MM::ActionType eAct)
    {
 		//LogMessage("In OnTealValue ");
 		pProp->Get(ColorLevel);
-		CIAColorLevels[CL_Teal] = (unsigned char) (ColorLevel == 100) ? 0 : (ColorLevel == 0) ? 0xff : ((100 - ColorLevel) * 2.55);
+		CIAColorLevels[CL_Teal] = (unsigned char) ((ColorLevel == 100) ? 0 : (ColorLevel == 0) ? 0xff : ((100 - ColorLevel) * 2.55));
 		//OutputDebugString("In OnTealValue");
 		SendColorLevelCmd(TEAL,ColorLevel);
    }
@@ -1701,7 +1701,7 @@ int CIA::OnBlueValue(MM::PropertyBase* pProp, MM::ActionType eAct)
    {
 		//LogMessage("In OnBlueValue ");
 		pProp->Get(ColorLevel);
-		CIAColorLevels[CL_Blue] = (unsigned char) (ColorLevel == 100) ? 0 : (ColorLevel == 0) ? 0xff : ((100 - ColorLevel) * 2.55);
+		CIAColorLevels[CL_Blue] = (unsigned char) ((ColorLevel == 100) ? 0 : (ColorLevel == 0) ? 0xff : ((100 - ColorLevel) * 2.55));
 		//OutputDebugString("In OnBlueValue");
 		SendColorLevelCmd(BLUE,ColorLevel);
    }
