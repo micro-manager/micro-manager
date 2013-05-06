@@ -943,7 +943,7 @@ int CITC18Protocol::OnRunProtocolFile (MM::PropertyBase* pProp, MM::ActionType p
         std::string command;
         pProp->Get(command);
 
-        if (g_protocol_file.c_str() == "undefined") return DEVICE_OK;
+        if (g_protocol_file == "undefined") return DEVICE_OK;
         if (command == g_Run) RunProtocolFile();
         pProp->Set(g_Stop);
     }
