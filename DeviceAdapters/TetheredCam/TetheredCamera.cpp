@@ -981,7 +981,7 @@ bool CTetheredCamera::GetBoolProperty(const char* const propName)
    bool boolVal;
 
    int ret = this->GetProperty(propName, val);
-   assert(ret == DEVICE_OK);
+   assert(ret == DEVICE_OK); ret; // Prevent unused var warning.
    boolVal = strcmp(val, "1") == 0 ? true : false;
    return boolVal;
 }
