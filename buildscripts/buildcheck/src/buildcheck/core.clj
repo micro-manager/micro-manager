@@ -99,7 +99,7 @@
            (let [txt (slurp blacklist)]
              (map #(first (.split % ":")) (.split txt "\n")))))))
 
-(def non-windows-device-adapters #{"dc1394" "SimpleCam" "Video4Linux" "Spot"})
+(def non-windows-device-adapters #{"dc1394" "HamamatsuMac" "SimpleCam" "Video4Linux" "Spot"})
 
 (defn device-adapter-dirs []
   (filter #(and (.isDirectory %)
