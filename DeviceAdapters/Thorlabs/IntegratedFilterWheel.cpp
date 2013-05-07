@@ -551,7 +551,7 @@ int IntegratedFilterWheel::GoToPosition(long pos)
    unsigned int stepsReported = *((unsigned int*)(answer + 8));
    long posReported = (long) ((double)stepsReported / posSize + 0.5);
 
-   if (pos != stepsReported)
+   if (pos != (int)stepsReported)
    {
       ostringstream err;
       err << "GoToPosition() failed: steps requested = " << steps << ", steps reported = " << stepsReported;
