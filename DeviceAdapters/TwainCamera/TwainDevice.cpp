@@ -1187,7 +1187,7 @@ public:
 					  {
 						 std::string sVal;
 						 getcurrent(&_cap, sVal);
-						 int len1 = min( valueSize, strlen(sVal.c_str()));
+						 size_t len1 = min( valueSize, strlen(sVal.c_str()));
 						 strncpy((char*)pvalue, sVal.c_str(), len1);
 						 break;
 					  }
