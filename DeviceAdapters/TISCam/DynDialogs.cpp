@@ -140,7 +140,7 @@ int InputBox(HWND hwnd, LPCTSTR prompt, LPCTSTR title, LPTSTR buffer, INT buflen
     ret = DialogBoxIndirectParamA(NULL, (LPDLGTEMPLATE)hgbl, hwnd, 
                                  (DLGPROC)InputBoxDlgProc, (int)data); 
     GlobalFree(hgbl); 
-    return (ret > 0) ? ret : 0; 
+    return static_cast<int>((ret > 0) ? ret : 0); 
 } 
 //--------------------------------------------------------------------------- 
 
