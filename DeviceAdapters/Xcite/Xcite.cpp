@@ -223,7 +223,7 @@ int Xcite120PC::GetOpen(bool& open)
   return DEVICE_OK;
 }
 
-int Xcite120PC::Fire(double deltaT)
+int Xcite120PC::Fire(double /*deltaT*/)
 {
   // not yet supported
 
