@@ -57,10 +57,9 @@ void	sLogReset(void);
 //
 //----------------------------------------------------------------------------
 
+#ifdef	LOG_ENABLED
 void sLogMessage(char msg[])
 { 
-#ifdef	LOG_ENABLED
-
 #ifdef	WIN32
 HFILE file;
 OFSTRUCT of;
@@ -85,10 +84,11 @@ if (fp != NULL)
     }
 #endif
 
-#endif
-
 return;
 }
+#else
+void sLogMessage(char[]) {}
+#endif
 
 
 //----------------------------------------------------------------------------
