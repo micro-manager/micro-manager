@@ -171,8 +171,7 @@ int PIGCSControllerComDevice::Initialize()
       {
          std::vector<int> outputChannels(nrOutputChannels);
          std::vector<int> values(nrOutputChannels, 1);
-         size_t i = 0;
-         for (; i<size_t(nrOutputChannels); i++)
+         for (int i = 0; i < nrOutputChannels; i++)
          {
             outputChannels[i] = i+1;
          }
