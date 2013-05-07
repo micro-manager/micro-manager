@@ -214,7 +214,7 @@ int XYStage::SetPositionSteps(long x, long y)
 }
  
 
-int XYStage::SetRelativePositionSteps(long x, long y)
+int XYStage::SetRelativePositionSteps(long /*x*/, long /*y*/)
 // LIN 01-01-2012 H128 DOES NOT HAVE GR COMMAND, INSTEAD JUST RETURN DEVICE_UNSUPPORTED_COMMAND
 {
    return DEVICE_UNSUPPORTED_COMMAND;
