@@ -415,8 +415,7 @@ int Universal::OnReadoutPort(MM::PropertyBase* pProp, MM::ActionType eAct)
       long port;
       if (!GetLongParam_PvCam_safe(hPVCAM_, PARAM_READOUT_PORT, &port))
          return LogCamError(__LINE__);
-      long enumv;
-      std::string portName;// = GetPortNameAndEnum(port, enumv);
+      std::string portName;
       for( std::map<std::string, int>::iterator iter = portMap_.begin(); iter != portMap_.end(); ++iter)
       {
          if (port  == iter->second)
@@ -591,7 +590,7 @@ int Universal::OnCoolingFan(MM::PropertyBase* pProp, MM::ActionType eAct) {
 	  if( par == "On" ) {
 		  //fprintf( stderr, "selected fan to On; par = %s", par );
 		  fanState = COOLING_FAN_CTRL_ON;
-	  } else if( par == "Off" ) {
+	  } else {
 		  //fprintf( stderr, "selected fan to Off; par = %s", par );
 		  fanState = COOLING_FAN_CTRL_OFF;
 	  }
@@ -713,7 +712,6 @@ void Universal::GetName(char* name) const
 
 int Universal::Initialize()
 {
-   rs_bool bAvail;
    // setup the camera
    // ----------------
 
@@ -2286,7 +2284,7 @@ void Universal::LogMMMessage(int lineNr, std::string message, bool debug) const 
 /**************************** Post Processing Functions ******************************/
 #ifdef WIN32
 
-int Universal::OnActGainProperties(MM::PropertyBase* pProp, MM::ActionType eAct)
+int Universal::OnActGainProperties(MM::PropertyBase* /*pProp*/, MM::ActionType /*eAct*/)
 {
 	//SuspendSequence();
 
