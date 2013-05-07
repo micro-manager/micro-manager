@@ -1,5 +1,5 @@
 rem Parameters are:
-rem doBuild.bat Win32|x64 FULL|INCREMENTAL RELEASE|NORELEASE UPLOAD|NOUPLOAD
+rem doBuild.bat Win32|x64 FULL|INCREMENTAL RELEASE|NIGHTLY UPLOAD|NOUPLOAD
 
 echo %date% - %time%
 
@@ -22,20 +22,20 @@ cd /d %~dp0\..
 echo working directory is
 cd
 
-IF NOT "%DO_FULL_BUILD%"=="FULL" GOTO UPDATEMMTREE
+if "%DO_FULL_BUILD%"=="FULL" (
+    pushd ..\3rdparty
+    svn cleanup --non-interactive
+    svn update --accept postpone --force --ignore-externals --non-interactive
+    popd
 
-pushd ..\3rdparty
-svn cleanup --non-interactive
-svn update --accept postpone --force --ignore-externals --non-interactive
-popd
-pushd ..\3rdpartypublic
-echo update 3rdpartypublic tree from the repository
-svn cleanup --non-interactive
-rem - been having trouble updating from boost.org, but don't need to do that anyhow for now.
-svn update --accept postpone --force --ignore-externals --non-interactive
-popd
+    pushd ..\3rdpartypublic
+    echo update 3rdpartypublic tree from the repository
+    svn cleanup --non-interactive
+    rem - been having trouble updating from boost.org, but don't need to do that anyhow for now.
+    svn update --accept postpone --force --ignore-externals --non-interactive
+    popd
+)
 
-:UPDATEMMTREE
 echo update micromanager tree from the repository
 svn cleanup --non-interactive
 svn update --accept postpone --non-interactive
@@ -48,12 +48,13 @@ echo Building native C++ libraries....
 
 echo setup include path for Visual Studio....
 set include=
-if "%PROCESSOR_ARCHITECTURE%" == "AMD64" goto _x64
-pushd "\Program Files\Microsoft Visual Studio 9.0\VC\"
-goto setvcvars
-:_x64
-pushd "\Program Files (x86)\Microsoft Visual Studio 9.0\VC\
-:setvcvars
+
+if "%PROCESSOR_ARCHITECTURE%"=="AMD64" (
+    set VC_PATH=\Program Files (x86)\Microsoft Visual Studio 9.0\VC\
+) else (
+    set VC_PATH=\Program Files\Microsoft Visual Studio 9.0\VC\
+)
+pushd "%VC_PATH%"
 call vcvarsall.bat
 popd
 
@@ -78,12 +79,9 @@ copy .\bin_%PLATFORM%\MMCorePy.py .\Install_%PLATFORM%\micro-manager
 copy .\bin_%PLATFORM%\_MMCorePy.pyd .\Install_%PLATFORM%\micro-manager
 copy .\MMCorePy_wrap\MMCoreWrapDemo.py .\Install_%PLATFORM%\micro-manager
 
-
 echo building Java wrapper with command:
 echo start /wait vcexpress .\MMCoreJ_wrap\MMCoreJ_wrap.sln %buildswitch% "Release|%PLATFORM%"
 start /wait vcexpress .\MMCoreJ_wrap\MMCoreJ_wrap.sln %buildswitch% "Release|%PLATFORM%"
-
-
 
 echo Update the version number in MMVersion.java
 set mmversion=""
@@ -95,15 +93,13 @@ pushd .\mmstudio\src\org\micromanager
 del MMVersion.java
 svn update --non-interactive
 rem for nightly builds we put the version + the date-stamp
-rem arg2 is either RELEASE OR NIGHTLY
-if "%DO_RELEASE_BUILD%" == "RELEASE" goto releaseversion
-set TARGETNAME=MMSetup%ARCH%BIT_%mmversion%_%YYYYMMDD%.exe
-sed -i "s/\"1\.4.*/\"%mmversion%  %YYYYMMDD%\";/"  MMVersion.java
-goto continuebuild
-:releaseversion
-sed -i "s/\"1\.4.*/\"%mmversion%\";/"  MMVersion.java
-set TARGETNAME=MMSetup%ARCH%BIT_%mmversion%.exe
-:continuebuild
+if "%DO_RELEASE_BUILD%"=="RELEASE" (
+    set TARGETNAME=MMSetup%ARCH%BIT_%mmversion%.exe
+    sed -i "s/\"1\.4.*/\"%mmversion%\";/"  MMVersion.java
+) else (
+    set TARGETNAME=MMSetup%ARCH%BIT_%mmversion%_%YYYYMMDD%.exe
+    sed -i "s/\"1\.4.*/\"%mmversion%  %YYYYMMDD%\";/"  MMVersion.java
+)
 popd
 
 rem remove any installer package with exactly the same name as the current output
@@ -139,17 +135,20 @@ rename MMSetup_.exe  %TARGETNAME%
 popd
 
 REM -- try to install on build machine
+set DO_INSTALL=YES
 if "%PLATFORM%"=="x64" (
     if not "%PROCESSOR_ARCHITECTURE%"=="AMD64" (
-        goto CANTINSTALLHERE
+        set DO_INSTALL=NO
     )
 )
-\Projects\micromanager\Install_%PLATFORM%\Output\%TARGETNAME%  /silent
-ECHO "Done installing"
-:CANTINSTALLHERE
-IF NOT "%DO_UPLOAD%" == "UPLOAD" GOTO FINISH
-pscp -i c:\projects\MM.ppk -batch /projects/micromanager/Install_%PLATFORM%/Output/%TARGETNAME% arthur@valelab.ucsf.edu:../MM/public_html/nightlyBuilds/1.4/Windows/%TARGETNAME%
-:FINISH
+if "%DO_INSTALL%"=="YES" (
+    \Projects\micromanager\Install_%PLATFORM%\Output\%TARGETNAME%  /silent
+    ECHO "Done installing"
+)
+
+if "%DO_UPLOAD%"=="UPLOAD" (
+    pscp -i c:\projects\MM.ppk -batch /projects/micromanager/Install_%PLATFORM%/Output/%TARGETNAME% arthur@valelab.ucsf.edu:../MM/public_html/nightlyBuilds/1.4/Windows/%TARGETNAME%
+)
 
 pushd .\mmstudio\src\org\micromanager
 del MMVersion.java
