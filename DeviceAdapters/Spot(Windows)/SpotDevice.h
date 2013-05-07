@@ -29,10 +29,17 @@
 #include <sstream>
 
 #ifdef _WINDOWS
+
+#pragma warning(push)
+#pragma warning(disable:4201)
 #include "../../../3rdparty/Spot/WINDOWS/SpotCam/SpotCam.h"
+#pragma warning(pop)
+
 #define SpotAPI(X) (*p##X)
-#else
+
+#else // _WINDOWS
 #define SpotAPI(X) (X)
+
 #ifdef __APPLE__
 typedef struct
 {
@@ -46,8 +53,8 @@ typedef SPOT_RECT Rect;
 
 #define TARGET_OS_MAC 1
 #include <SpotCam/SpotCam.h>
-#endif
-#endif
+#endif // __APPLE__
+#endif // _WINDOWS
 
 #include "CodeUtility.h"
 namespace ExposureComputationImageTypeNS

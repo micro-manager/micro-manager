@@ -175,7 +175,7 @@ void SpotDevice::InitializeCamera()
 
 	// first call to SpotInit after abnormal shutdown always fails, so always do a retry
 
-	while( 1)
+	for (;;)
 	{
 		succ = ProcessSpotCode(SpotAPI(SpotInit)(), message);
 		++retry;
@@ -410,7 +410,6 @@ Specifies the number of image data buffers bytes per image row.  (MacOS only)
 void SpotDevice::SetupImageSequence( const int nimages , const int interval )
 {
 	//MMThreadGuard libGuard(libraryLock_s);
-	BOOL bDoAutoExposure = AutoExposure();
 	std::string message;
 	std::ostringstream timingInfo;
 
@@ -510,14 +509,11 @@ void SpotDevice::SetupImageSequence( const int nimages , const int interval )
 		nImageBitDepth_ = 48;
 		break;
 	default:
-		do
 		{
 			std::ostringstream messs;
 			messs << "unsupported ADC bit depth: " << bitDepthOfADC_;		
 			throw SpotBad(messs.str());
-		
-		}while(false);
-	
+		}
 	}
 
 #ifdef __APPLE__
@@ -1034,7 +1030,7 @@ char* SpotDevice::GetNextSequentialImage(unsigned int& imheight, unsigned int& i
 	}
 #else
 
-	do{ // just a scope to delete this lock
+	{ // just a scope to delete this lock
 		MMThreadGuard guard(imageReadyFlagLock_s);
 		nloops = 0;
       // rough estimate of milliseconds to wait for the image
@@ -1092,14 +1088,11 @@ char* SpotDevice::GetNextSequentialImage(unsigned int& imheight, unsigned int& i
 		nImageBitDepth_ = 48;
 		break;
 	default:
-		do
 		{
 			std::ostringstream messs;
 			messs << "unsupported ADC bit depth: " << bitDepthOfADC_;		
 			throw SpotBad(messs.str());
-		
-		}while(false);
-	
+		};
 	}
 
 	char colorOrder[4]; memset(colorOrder,0, 4*sizeof(colorOrder[0]));
@@ -1168,7 +1161,7 @@ char* SpotDevice::GetNextSequentialImage(unsigned int& imheight, unsigned int& i
 	imageReady_s = false;
 
 
-	}while(false);
+	}
 #endif
 
 	suc = ProcessSpotCode(spotcode, message);
