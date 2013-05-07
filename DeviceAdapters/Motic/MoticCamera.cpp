@@ -983,7 +983,7 @@ int CMoticCamera::OnDevice( MM::PropertyBase* pProp, MM::ActionType eAct )
     if (it != end && idx != m_iCurDeviceIdx)
     {
       StopSequenceAcquisition();
-      if(MIDP_SelectCamera(idx) != 0)
+      if(MIDP_SelectCamera(static_cast<long>(idx)) != 0)
         return DEVICE_ERR;
       m_iCurDeviceIdx = MIDP_GetCurCameraIndex();
       InitDevice();
