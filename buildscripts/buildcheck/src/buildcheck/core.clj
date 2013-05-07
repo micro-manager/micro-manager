@@ -58,7 +58,7 @@
 
 (defn visual-studio-errors-and-warnings [bits]
   (let [texts (map vs-log-text (vs-log-files bits))]
-    (filter #(or (comment (contains-warnings? %)) (contains-errors? %)) texts)))
+    (filter #(or (contains-warnings? %) (contains-errors? %)) texts)))
 
 (defn javac-errors [result-text]
   (map first
