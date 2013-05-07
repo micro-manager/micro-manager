@@ -54,7 +54,7 @@
 				WarningLevel="4"
 				Detect64BitPortabilityProblems="false"
 				DebugInformationFormat="3"
-				DisableSpecificWarnings="4290"
+				DisableSpecificWarnings="4290;4127"
 			/>
 			<Tool
 				Name="VCManagedResourceCompilerTool"
@@ -136,7 +136,7 @@
 				WarningLevel="4"
 				Detect64BitPortabilityProblems="false"
 				DebugInformationFormat="3"
-				DisableSpecificWarnings="4290"
+				DisableSpecificWarnings="4290;4127"
 			/>
 			<Tool
 				Name="VCManagedResourceCompilerTool"
@@ -215,7 +215,7 @@
 				WarningLevel="4"
 				Detect64BitPortabilityProblems="false"
 				DebugInformationFormat="3"
-				DisableSpecificWarnings="4290"
+				DisableSpecificWarnings="4290;4127"
 			/>
 			<Tool
 				Name="VCManagedResourceCompilerTool"
@@ -297,7 +297,7 @@
 				WarningLevel="4"
 				Detect64BitPortabilityProblems="false"
 				DebugInformationFormat="3"
-				DisableSpecificWarnings="4290"
+				DisableSpecificWarnings="4290;4127"
 			/>
 			<Tool
 				Name="VCManagedResourceCompilerTool"
