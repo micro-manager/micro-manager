@@ -1284,7 +1284,6 @@ int XLedDev::OnLedIntensity(MM::PropertyBase* pProp, MM::ActionType eAct)
 int XLedDev::OnPulseMode(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
     std::ostringstream osMessage;
-    int nDebugLog = XLed::Instance()->GetDebugLogFlag();
     unsigned char sCmdGet[8] = { 0x70, 0x6D, 0x3F, XLed::XL_TxTerm, 0x00, 0x00, 0x00, 0x00 };
     unsigned char sCmdSet[8] = { 0x70, 0x6D, 0x3D, 0x30, XLed::XL_TxTerm, 0x00, 0x00, 0x00 };
     unsigned char* sResp = XLed::Instance()->GetParameter(XLed::XL_SigPulseMode);
@@ -1834,7 +1833,7 @@ int XLedDev::XLedSerialIO(unsigned char* sCmd, unsigned char* sResp)
 int XLedDev::WriteCommand(const unsigned char* sCommand)
 {
     int ret = DEVICE_OK;
-    int nCmdLength = strlen((const char*)sCommand);
+    std::size_t nCmdLength = strlen((const char*)sCommand);
     ostringstream osMessage;
 
     if (XLed::Instance()->GetDebugLogFlag() > 1)
@@ -1842,7 +1841,7 @@ int XLedDev::WriteCommand(const unsigned char* sCommand)
         osMessage.str("");
         char sHex[3];
         osMessage << "<XLedDev::WriteCommand> (cmd ";
-        for (int n=0; n < nCmdLength; n++)
+        for (unsigned n=0; n < nCmdLength; n++)
         {
             XLed::Instance()->Byte2Hex(sCommand[n], sHex);
             osMessage << "[" << n << "]=<" << sHex << ">";
@@ -1854,7 +1853,7 @@ int XLedDev::WriteCommand(const unsigned char* sCommand)
 
     // write command out
     ret = DEVICE_OK;
-    for (int nByte = 0; nByte < nCmdLength && ret == DEVICE_OK; nByte++)
+    for (unsigned nByte = 0; nByte < nCmdLength && ret == DEVICE_OK; nByte++)
     {
         ret = WriteToComPort(XLed::Instance()->GetSerialPort().c_str(), (const unsigned char*)&sCommand[nByte], 1);
         // CDeviceUtils::SleepMs(1);
