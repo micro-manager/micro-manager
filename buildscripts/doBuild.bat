@@ -10,7 +10,9 @@ if "%1"=="x64" (
     set PLATFORM=Win32
     set ARCH=32
 )
-shift
+set DO_FULL_BUILD=%2
+set DO_RELEASE_BUILD=%3
+set DO_UPLOAD=%4
 
 echo stop any instances that might already be running.
 pskill javaw.exe
@@ -20,7 +22,7 @@ cd /d %~dp0\..
 echo working directory is
 cd
 
-IF NOT "%1"=="FULL" GOTO UPDATEMMTREE
+IF NOT "%DO_FULL_BUILD%"=="FULL" GOTO UPDATEMMTREE
 
 pushd ..\3rdparty
 svn cleanup --non-interactive
@@ -63,7 +65,7 @@ set include
 echo continue working in:
 cd
 set buildswitch=/build
-IF "%1%"=="FULL" SET buildswitch=/rebuild
+IF "%DO_FULL_BUILD%"=="FULL" SET buildswitch=/rebuild
 
 echo building core with command:
 echo start /wait vcexpress .\MMCore\MMCore.vcproj %buildswitch% "Release|%PLATFORM%"
@@ -94,7 +96,7 @@ del MMVersion.java
 svn update --non-interactive
 rem for nightly builds we put the version + the date-stamp
 rem arg2 is either RELEASE OR NIGHTLY
-if "%2%" == "RELEASE" goto releaseversion
+if "%DO_RELEASE_BUILD%" == "RELEASE" goto releaseversion
 set TARGETNAME=MMSetup%ARCH%BIT_%mmversion%_%YYYYMMDD%.exe
 sed -i "s/\"1\.4.*/\"%mmversion%  %YYYYMMDD%\";/"  MMVersion.java
 goto continuebuild
@@ -113,7 +115,7 @@ del \Projects\micromanager\Install_%PLATFORM%\Output\%TARGETNAME%
 ECHO incremental build of Java components...
 
 set cleantarget=
-IF "%1%"=="FULL" SET cleantarget=clean
+IF "%DO_FULL_BUILD%"=="FULL" SET cleantarget=clean
 
 PUSHD \projects\micromanager\mmStudio\src
 echo building mmStudio with command:
@@ -125,7 +127,7 @@ rem haven't got to the bottom of this yet, but Pixel Calibrator and Slide Explor
 copy \projects\micromanager\bin_%PLATFORM%\plugins\Micro-Manager\MMJ_.jar \projects\micromanager\bin_%PLATFORM%\
 
 pushd buildscripts
-call buildJars %1
+call buildJars %DO_FULL_BUILD%
 popd
 
 pushd mmStudio\src
@@ -145,7 +147,7 @@ if "%PLATFORM%"=="x64" (
 \Projects\micromanager\Install_%PLATFORM%\Output\%TARGETNAME%  /silent
 ECHO "Done installing"
 :CANTINSTALLHERE
-IF NOT "%3%" == "UPLOAD" GOTO FINISH
+IF NOT "%DO_UPLOAD%" == "UPLOAD" GOTO FINISH
 pscp -i c:\projects\MM.ppk -batch /projects/micromanager/Install_%PLATFORM%/Output/%TARGETNAME% arthur@valelab.ucsf.edu:../MM/public_html/nightlyBuilds/1.4/Windows/%TARGETNAME%
 :FINISH
 
