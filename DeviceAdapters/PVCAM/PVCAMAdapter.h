@@ -34,8 +34,10 @@
 #include "../../MMDevice/DeviceThreads.h"
 
 #ifdef WIN32
+#pragma warning(push)
 #include "../../../3rdpartypublic/Photometrics/PVCAM/SDK/Headers/master.h"
 #include "../../../3rdpartypublic/Photometrics/PVCAM/SDK/Headers/pvcam.h"
+#pragma warning(pop)
 #endif
 
 #ifdef __APPLE__

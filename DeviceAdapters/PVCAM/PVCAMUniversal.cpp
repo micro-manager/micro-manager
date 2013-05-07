@@ -40,7 +40,6 @@
 #ifdef WIN32
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
-#pragma warning(disable : 4996) // disable warning for deperecated CRT functions on Windows 
 #endif
 
 #include "../../MMDevice/ModuleInterface.h"
@@ -48,8 +47,10 @@
 #include "PVCAMParam.h"
 
 #ifdef WIN32
+#pragma warning(push)
 #include "../../../3rdpartypublic/Photometrics/PVCAM/SDK/Headers/master.h"
 #include "../../../3rdpartypublic/Photometrics/PVCAM/SDK/Headers/pvcam.h"
+#pragma warning(pop)
 #endif
 
 #ifdef __APPLE__
