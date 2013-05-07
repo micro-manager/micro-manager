@@ -100,11 +100,11 @@ private:
 	struct addrinfo host_addr_, *host_addr_ptr_;	// host address
 	struct sockaddr_in sock_addr_;				// used for constructing host address
 	socklen_t addr_size_;		// set to sizeof sock_addr_
-	int sockfd_;					// file descriptor of socket
-	int newfd_;					// socket file descriptor returned by accept(sockfd_,...)
+	SOCKET sockfd_;					// file descriptor of socket
+	SOCKET newfd_;					// socket file descriptor returned by accept(sockfd_,...)
 	int getaddrinfo_out_;		// return value of getaddrinfo()
-	int bytes_recvd_;			// number of bytes received during last call to recv()
-	int bytes_to_send_;			// should be strlen(data) on call to send_all; send_all replaces value by number of bytes sent
+	size_t bytes_recvd_;			// number of bytes received during last call to recv()
+	size_t bytes_to_send_;			// should be strlen(data) on call to send_all; send_all replaces value by number of bytes sent
 	struct timeval tv_;			// time value struct specifying timeout for select()
 	fd_set readfds_, writefds_;	// socket file descriptor sets containing sockfds to check for read and write in select()
 	

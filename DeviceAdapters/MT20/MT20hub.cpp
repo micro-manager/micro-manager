@@ -103,7 +103,7 @@ std::string MT20hub::initialize()
 		log(std::string("socket() executed successfully in MT20hub::initialize()."));
 
 		// Bind socket
-		if(bind(sockfd_, host_addr_ptr_->ai_addr, host_addr_ptr_->ai_addrlen) == -1)
+		if(bind(sockfd_, host_addr_ptr_->ai_addr, static_cast<int>(host_addr_ptr_->ai_addrlen)) == -1)
 		{
 			snprintf(ret_msg, 4095, "Error: failed to establish connection to MT20: bind() returns error %i during MT20hub::initialize(): %s", errno, strerror(errno));
 			log(std::string(ret_msg));
@@ -1629,7 +1629,7 @@ std::string MT20hub::flush_read_buffer()
 	char ret_msg [4096];
 	std::string terminator("</SCMsg>\n");
 
-	int terminator_index = read_buffer_.find(terminator);
+   std::size_t terminator_index = read_buffer_.find(terminator);
 	if(terminator_index == std::string::npos)
 	{
 		log(std::string("flush_read_buffer: no messages found\n"));
@@ -1796,8 +1796,10 @@ std::string MT20hub::handle_write()
 		return ret.append(std::string(ret_msg));
 	}
 	write_queue_.pop();
-	bytes_to_send_ = strlen(data);
-	if( (ret = send_all(data, &bytes_to_send_) ).size() > 0)
+	int bytes_to_send = static_cast<int>(strlen(data));
+   ret = send_all(data, &bytes_to_send);
+   bytes_to_send_ = bytes_to_send;
+	if(ret.size() > 0)
 	{
 		snprintf(ret_msg, 4095, "Error: MT20hub::sent_all() returns error in MT20hub::handle_write()\n");
 		log(ret.append(std::string(ret_msg)));
@@ -1826,7 +1828,7 @@ std::string MT20hub::handle_select()
 		FD_SET(newfd_, &writefds_);
 	}
 
-	int select_out = select(newfd_ + 1, &readfds_, &writefds_, NULL, &tv_);
+	SOCKET select_out = select(static_cast<int>(newfd_ + 1), &readfds_, &writefds_, NULL, &tv_);
 	if(select_out == -1)
 	{
 		snprintf(ret_msg, 4095, "Error: select() returns error %i during MT20hub::handle_select(): %s\n", errno, strerror(errno));
@@ -1877,8 +1879,8 @@ std::string MT20hub::handle_select()
 const char * MT20hub::getIndent( unsigned int numIndents )
 {
 	static const char * pINDENT="                                      + ";
-	static const unsigned int LENGTH=strlen( pINDENT );
-	unsigned int n=numIndents*NUM_INDENTS_PER_SPACE;
+	static const size_t LENGTH = strlen( pINDENT );
+	size_t n = numIndents*NUM_INDENTS_PER_SPACE;
 	if ( n > LENGTH ) n = LENGTH;
 
 	return &pINDENT[ LENGTH-n ];
@@ -1888,8 +1890,8 @@ const char * MT20hub::getIndent( unsigned int numIndents )
 const char * MT20hub::getIndentAlt( unsigned int numIndents )
 {
 	static const char * pINDENT="                                        ";
-	static const unsigned int LENGTH=strlen( pINDENT );
-	unsigned int n=numIndents*NUM_INDENTS_PER_SPACE;
+	static const size_t LENGTH = strlen( pINDENT );
+	size_t n = numIndents*NUM_INDENTS_PER_SPACE;
 	if ( n > LENGTH ) n = LENGTH;
 
 	return &pINDENT[ LENGTH-n ];
