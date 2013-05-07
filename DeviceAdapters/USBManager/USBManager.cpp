@@ -548,7 +548,7 @@ int MDUSBDevice::Read(unsigned char* buf, unsigned long bufLen, unsigned long& c
          statusContinue = false;
       else if (charsReceived > 0)
       {
-         if (charsReceived > bufLen - charsRead) {
+         if (charsReceived > (int)(bufLen - charsRead)) {
             memcpy((unsigned char*) buf + charsRead, internalBuf, bufLen - charsRead);
             overflowBufferLength_ = charsReceived - bufLen + charsRead;
             // we have extra chars, save in persistent buffer
