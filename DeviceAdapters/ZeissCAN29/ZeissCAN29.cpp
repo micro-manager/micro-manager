@@ -2216,7 +2216,7 @@ int DefiniteFocus::GetOffset(double& offset)
       os << (int) (it -offsets_.begin());
       AddAllowedValue("Offset",os.str().c_str());
    }
-   int i = it - offsets_.begin();
+   vector<DFOffset>::iterator::difference_type i = distance(offsets_.begin(), it);
    offset = (double) i;
 
    return DEVICE_OK;
