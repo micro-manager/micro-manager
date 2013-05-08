@@ -75,7 +75,6 @@
 				SubSystem="2"
 				RandomizedBaseAddress="1"
 				DataExecutionPrevention="0"
-				ImportLibrary="$(OutDir)/PrincetonInstruments.lib"
 				TargetMachine="1"
 			/>
 			<Tool
@@ -158,7 +157,6 @@
 				EnableCOMDATFolding="2"
 				RandomizedBaseAddress="1"
 				DataExecutionPrevention="0"
-				ImportLibrary="$(OutDir)/PrincetonInstruments.lib"
 				TargetMachine="1"
 			/>
 			<Tool

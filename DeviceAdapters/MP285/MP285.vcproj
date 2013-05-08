@@ -78,7 +78,6 @@
 				EntryPointSymbol=""
 				RandomizedBaseAddress="1"
 				DataExecutionPrevention="0"
-				ImportLibrary="$(OutDir)/MP285.lib"
 				TargetMachine="1"
 			/>
 			<Tool
@@ -164,7 +163,6 @@
 				EntryPointSymbol=""
 				RandomizedBaseAddress="1"
 				DataExecutionPrevention="0"
-				ImportLibrary="$(OutDir)/MP285.lib"
 				TargetMachine="17"
 			/>
 			<Tool
@@ -248,7 +246,6 @@
 				EntryPointSymbol=""
 				RandomizedBaseAddress="1"
 				DataExecutionPrevention="0"
-				ImportLibrary="$(OutDir)/MP285.lib"
 				TargetMachine="1"
 			/>
 			<Tool
@@ -333,7 +330,6 @@
 				EntryPointSymbol=""
 				RandomizedBaseAddress="1"
 				DataExecutionPrevention="0"
-				ImportLibrary="$(OutDir)/MP285.lib"
 				TargetMachine="17"
 			/>
 			<Tool

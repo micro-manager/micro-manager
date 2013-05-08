@@ -77,7 +77,6 @@
 				SubSystem="2"
 				RandomizedBaseAddress="1"
 				DataExecutionPrevention="0"
-				ImportLibrary="$(OutDir)/BaumerOptronic.lib"
 				TargetMachine="1"
 			/>
 			<Tool
@@ -162,7 +161,6 @@
 				SubSystem="2"
 				RandomizedBaseAddress="1"
 				DataExecutionPrevention="0"
-				ImportLibrary="$(OutDir)/BaumerOptronic.lib"
 				TargetMachine="17"
 			/>
 			<Tool
@@ -243,7 +241,6 @@
 				EnableCOMDATFolding="2"
 				RandomizedBaseAddress="1"
 				DataExecutionPrevention="0"
-				ImportLibrary="$(OutDir)/BaumerOptronic.lib"
 				TargetMachine="1"
 			/>
 			<Tool
@@ -325,7 +322,6 @@
 				EnableCOMDATFolding="2"
 				RandomizedBaseAddress="1"
 				DataExecutionPrevention="0"
-				ImportLibrary="$(OutDir)/BaumerOptronic.lib"
 				TargetMachine="17"
 			/>
 			<Tool

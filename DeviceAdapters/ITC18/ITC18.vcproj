@@ -75,7 +75,6 @@
 				SubSystem="2"
 				RandomizedBaseAddress="1"
 				DataExecutionPrevention="0"
-				ImportLibrary="$(OutDir)/ITC18.lib"
 				TargetMachine="1"
 			/>
 			<Tool
@@ -162,7 +161,6 @@
 				EnableCOMDATFolding="2"
 				RandomizedBaseAddress="1"
 				DataExecutionPrevention="0"
-				ImportLibrary="$(OutDir)/ITC18.lib"
 				TargetMachine="1"
 			/>
 			<Tool
