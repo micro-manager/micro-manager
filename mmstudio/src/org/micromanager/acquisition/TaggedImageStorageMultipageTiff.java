@@ -182,7 +182,20 @@ public final class TaggedImageStorageMultipageTiff implements TaggedImageStorage
       if (!tiffReadersByLabel_.containsKey(label)) {
          return null;
       }
-      return tiffReadersByLabel_.get(label).readImage(label);   
+      
+      //DEbugging code for a strange exception found in core log
+      try {
+         img = tiffReadersByLabel_.get(label).readImage(label);
+      } catch (NullPointerException e) {
+         ReportingUtils.logError("Couldn't find image that TiffReader is supposed to contain");
+         if (tiffReadersByLabel_ == null) {
+            ReportingUtils.logError("Tiffreadersbylabel is null");
+         }
+         if (tiffReadersByLabel_.get(label) == null) {
+            ReportingUtils.logError("Specific reader is null " + label);
+         }
+      }
+      return img;   
    }
 
    @Override
