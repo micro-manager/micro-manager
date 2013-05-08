@@ -3,7 +3,7 @@
 	ProjectType="Visual C++"
 	Version="9.00"
 	Name="MMCorePy_wrap"
-	ProjectGUID="{EFA68887-8A97-49D7-BAB4-768E15A4E597}"
+	ProjectGUID="{3BBF25B0-B80B-11E2-9E96-0800200C9A66}"
 	RootNamespace="MMCorePy_wrap"
 	Keyword="Win32Proj"
 	TargetFrameworkVersion="131072"
