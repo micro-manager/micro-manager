@@ -142,17 +142,25 @@ public class PositionList {
     * @param pos - multi-stage position
     */
    public void addPosition(MultiStagePosition pos) {
+      String label = pos.getLabel();
+      if (!isLabelUnique(label)) {
+         pos.setLabel(generateLabel(label));
+      }
       positions_.add(pos);
       notifyChangeListeners();
    }
-   
+
    /**
     * Insert a position into the list.
     * @param pos - multi-stage position
     */
    public void addPosition(int in0, MultiStagePosition pos) {
-	  positions_.add(in0, pos);
-          notifyChangeListeners();
+      String label = pos.getLabel();
+      if (!isLabelUnique(label)) {
+         pos.setLabel(generateLabel(label));
+      }
+      positions_.add(in0, pos);
+      notifyChangeListeners();
    }
    
    /**
@@ -335,21 +343,27 @@ public class PositionList {
    }
    
    /**
-    * Helper method to generate the unique label when inserting a new position.
+    * Helper method to generate unique label when inserting a new position.
     * Not recommended for use - planned to become obsolete.
     * @return Unique label
     */
    public String generateLabel() {
-      String label = new String("Pos" + positions_.size());
+      return generateLabel("Pos");
+   }
+   
+   public String generateLabel(String proposal) {
+      String label = proposal + positions_.size();
       
       // verify the uniqueness
       int i = 1;
       while (!isLabelUnique(label)) {
-         label = new String("Pos" + (positions_.size() + i++));
+         label = proposal + (positions_.size() + i++);
       }
       
       return label;
    }
+           
+   
    
    /**
     * Verify that the new label is unique
