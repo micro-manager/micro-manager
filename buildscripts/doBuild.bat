@@ -49,9 +49,8 @@ echo Building native C++ libraries....
 echo setup include path for Visual Studio....
 set include=
 
-if "%PROCESSOR_ARCHITECTURE%"=="AMD64" (
-    set VC_PATH=\Program Files (x86)\Microsoft Visual Studio 9.0\VC\
-) else (
+set VC_PATH=\Program Files (x86)\Microsoft Visual Studio 9.0\VC\
+if not "%PROCESSOR_ARCHITECTURE%"=="AMD64" (
     set VC_PATH=\Program Files\Microsoft Visual Studio 9.0\VC\
 )
 pushd "%VC_PATH%"
