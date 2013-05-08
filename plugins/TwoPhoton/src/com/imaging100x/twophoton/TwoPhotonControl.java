@@ -27,12 +27,7 @@
 
 package com.imaging100x.twophoton;
 
-import java.awt.Color;
-import java.awt.Component;
-import java.awt.Container;
-import java.awt.Font;
-import java.awt.Label;
-import java.awt.Rectangle;
+import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ContainerEvent;
@@ -44,21 +39,12 @@ import java.awt.event.MouseEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.io.File;
+import java.util.ArrayList;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.prefs.Preferences;
 
-import javax.swing.JButton;
-import javax.swing.JCheckBox;
-import javax.swing.JComboBox;
-import javax.swing.JFileChooser;
-import javax.swing.JLabel;
-import javax.swing.JOptionPane;
-import javax.swing.JScrollPane;
-import javax.swing.JSeparator;
-import javax.swing.JTable;
-import javax.swing.ListSelectionModel;
-import javax.swing.ScrollPaneConstants;
+import javax.swing.*;
 import javax.swing.border.LineBorder;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
@@ -92,8 +78,11 @@ public class TwoPhotonControl extends MMFrame implements MMPlugin, KeyListener, 
    // preference keys and other string constants
    static private final String PANEL_X = "panel_x";
    static private final String PANEL_Y = "panel_y";
+   static private final String INVERT_X = "Invert_x";
+   static private final String INVERT_Y = "Invert_y";
+   static private final String SWAP_X_AND_Y = "SwapXandY";
    static private final String AUTO_REFRESH = "auto_refresh";
-   static private final String VERSION_INFO = "2.00";
+   static private final String VERSION_INFO = "2.1";
    static private final String COPYRIGHT_NOTICE = "Copyright by 100X, 2011";
    static private final String DESCRIPTION = "Two Photon control module";
    static private final String INFO = "Not available";
@@ -114,6 +103,8 @@ public class TwoPhotonControl extends MMFrame implements MMPlugin, KeyListener, 
    private JLabel laser2Placeholder_;
    private SliderPanel laserSlider2_;
    private SliderPanel laserSlider1_;
+   private JSpinner gridOverlapYSpinner_, gridOverlapXSpinner_;
+   private JSpinner gridSizeXSpinner_, gridSizeYSpinner_;
 
    private SliderPanel pifocSlider_;
    private JButton btnMark_1;
@@ -138,7 +129,10 @@ private JComboBox listCombo_;
 
 private DepthSetting depthSettingCache[];
 
-
+private AcquisitionStitcher stitcher_ = new AcquisitionStitcher();
+private JButton stitchButton_;
+private JCheckBox invertXCheckBox_, invertYCheckBox_, swapXandYCheckBox_;
+private JSpinner xStitchOverlapSpinner_, yStitchOverlapSpinner_;
 
    private class StatusTimerTask extends TimerTask {
 
@@ -254,7 +248,7 @@ private DepthSetting depthSettingCache[];
       setResizable(false);
 
       setTitle("Two Photon Control v " + VERSION_INFO);
-      setSize(626, 538);
+      setSize(626, 650);
       loadPosition(100, 100);
 
       final JButton exitButton = new JButton();
@@ -275,28 +269,45 @@ private DepthSetting depthSettingCache[];
       {
          JLabel lblExcitation = new JLabel("Excitation (EOM Voltage)");
          lblExcitation.setFont(new Font("Tahoma", Font.BOLD, 11));
-         lblExcitation.setBounds(10, 48, 251, 14);
+         lblExcitation.setBounds(10, 11, 251, 14);
          getContentPane().add(lblExcitation);
       }
       {
          JLabel lblLaser = new JLabel("Laser-1");
-         lblLaser.setBounds(10, 73, 46, 14);
+         lblLaser.setBounds(10, 36, 46, 14);
          getContentPane().add(lblLaser);
       }
       {
          JSeparator separator = new JSeparator();
-         separator.setBounds(10, 153, 389, 2);
+         separator.setBounds(10, 82, 606, 2);
+         getContentPane().add(separator);
+      }
+      {
+         JLabel lblMakeGrid = new JLabel("Create multi-position grid");
+         lblMakeGrid.setFont(new Font("Tahoma", Font.BOLD, 11));
+         lblMakeGrid.setBounds(10, 88, 251, 14);
+         getContentPane().add(lblMakeGrid);
+      }
+      {
+         JLabel autoStitch = new JLabel("Stitch current time point");
+         autoStitch.setFont(new Font("Tahoma", Font.BOLD, 11));
+         autoStitch.setBounds(220, 88, 300, 14);
+         getContentPane().add(autoStitch);
+      }
+      {
+         JSeparator separator = new JSeparator();
+         separator.setBounds(10, 216, 606, 2);
          getContentPane().add(separator);
       }
       {
          JLabel lblPmtGain = new JLabel("PMT gain [V]");
          lblPmtGain.setFont(new Font("Tahoma", Font.BOLD, 11));
-         lblPmtGain.setBounds(10, 166, 121, 14);
+         lblPmtGain.setBounds(10, 266, 121, 14);
          getContentPane().add(lblPmtGain);
       }
       {
          Label label = new Label("Z [um]");
-         label.setBounds(10, 362, 54, 23);
+         label.setBounds(10, 462, 54, 23);
          getContentPane().add(label);
       }
       {
@@ -313,23 +324,23 @@ private DepthSetting depthSettingCache[];
       }
       {
          pifocPlaceholder_ = new JLabel("");
-         pifocPlaceholder_.setBounds(66, 366, 333, 18);
+         pifocPlaceholder_.setBounds(66, 466, 333, 18);
          getContentPane().add(pifocPlaceholder_);
       }
 
       {
          laser1Placeholder_ = new JLabel("");
-         laser1Placeholder_.setBounds(66, 69, 333, 18);
+         laser1Placeholder_.setBounds(66, 32, 420, 18);
          getContentPane().add(laser1Placeholder_);
       }
       {
          laser2Placeholder_ = new JLabel("");
-         laser2Placeholder_.setBounds(66, 90, 333, 18);
+         laser2Placeholder_.setBounds(66, 53, 420, 18);
          getContentPane().add(laser2Placeholder_);
       }
       {
          JLabel lblLaser_1 = new JLabel("Laser-2");
-         lblLaser_1.setBounds(10, 92, 46, 14);
+         lblLaser_1.setBounds(10, 55, 46, 14);
          getContentPane().add(lblLaser_1);
       }
 
@@ -385,13 +396,13 @@ private DepthSetting depthSettingCache[];
                updateLasers();
             }
          });
-         btnRefresh.setBounds(521, 450, 89, 23);
+         btnRefresh.setBounds(521, 550, 89, 23);
          getContentPane().add(btnRefresh);
       }
       {
          JLabel lblCopyrightxImaging = new JLabel(
                "Copyright 100X Imaging Inc, 2010");
-         lblCopyrightxImaging.setBounds(438, 482, 172, 14);
+         lblCopyrightxImaging.setBounds(438, 582, 172, 14);
          getContentPane().add(lblCopyrightxImaging);
       }
       {
@@ -418,7 +429,7 @@ private DepthSetting depthSettingCache[];
                onDepthMark();
             }
          });
-         btnMark_1.setBounds(424, 184, 89, 23);
+         btnMark_1.setBounds(424, 284, 89, 23);
          getContentPane().add(btnMark_1);
       }
       {
@@ -428,7 +439,7 @@ private DepthSetting depthSettingCache[];
                onDepthRemove();
             }
          });
-         btnRemove.setBounds(424, 210, 89, 23);
+         btnRemove.setBounds(424, 310, 89, 23);
          getContentPane().add(btnRemove);
       }
       {
@@ -438,13 +449,13 @@ private DepthSetting depthSettingCache[];
                onDepthRemoveAll();
             }
          });
-         btnMark.setBounds(424, 234, 89, 23);
+         btnMark.setBounds(424, 334, 89, 23);
          getContentPane().add(btnMark);
       }
       {
          JLabel lblDepthControl = new JLabel("Depth (Z) control");
          lblDepthControl.setFont(new Font("Tahoma", Font.BOLD, 11));
-         lblDepthControl.setBounds(424, 145, 166, 14);
+         lblDepthControl.setBounds(424, 245, 166, 14);
          getContentPane().add(lblDepthControl);
       }
       {
@@ -459,7 +470,7 @@ private DepthSetting depthSettingCache[];
                autoRefresh_ = sel;
             }
          });
-         chckbxAutoRefresh_.setBounds(420, 450, 101, 23);
+         chckbxAutoRefresh_.setBounds(420, 550, 101, 23);
          getContentPane().add(chckbxAutoRefresh_);
       }
       laserSlider2_.addEditActionListener(new ActionListener() {
@@ -478,14 +489,14 @@ private DepthSetting depthSettingCache[];
       {
          JScrollPane scrollPane = new JScrollPane();
          scrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
-         scrollPane.setBounds(420, 267, 190, 171);
+         scrollPane.setBounds(420, 367, 190, 171);
          getContentPane().add(scrollPane);
          scrollPane.setViewportView(depthTable_);
       }
       {
          JScrollPane sp = new JScrollPane();
          sp.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
-         sp.setBounds(10, 191, 389, 154);
+         sp.setBounds(10, 291, 389, 154);
          sp.setViewportView(pmtTable_);
          getContentPane().add(sp);
       }
@@ -497,7 +508,7 @@ private DepthSetting depthSettingCache[];
                onSaveDepthList();
             }
          });
-         btnNewList.setBounds(522, 210, 89, 23);
+         btnNewList.setBounds(522, 310, 89, 23);
          getContentPane().add(btnNewList);
       }
       {
@@ -507,13 +518,13 @@ private DepthSetting depthSettingCache[];
                onSaveDepthListAs();
             }
          });
-         btnSaveAs.setBounds(522, 235, 89, 23);
+         btnSaveAs.setBounds(522, 335, 89, 23);
          getContentPane().add(btnSaveAs);
       }
       {
          labelListName_ = new JLabel("");
          labelListName_.setBorder(new LineBorder(new Color(0, 0, 0)));
-         labelListName_.setBounds(424, 165, 186, 14);
+         labelListName_.setBounds(424, 265, 186, 14);
          getContentPane().add(labelListName_);
       }
       {
@@ -523,7 +534,7 @@ private DepthSetting depthSettingCache[];
                onLoadDepthList();
             }
          });
-         btnLoad.setBounds(522, 184, 89, 23);
+         btnLoad.setBounds(522, 284, 89, 23);
          getContentPane().add(btnLoad);
       }
       {
@@ -533,7 +544,7 @@ private DepthSetting depthSettingCache[];
                onLockZ();
             }
          });
-         chckbxLockZ_.setBounds(66, 391, 134, 23);
+         chckbxLockZ_.setBounds(66, 491, 134, 23);
          chckbxLockZ_.setSelected(lockZ_);
          getContentPane().add(chckbxLockZ_);
       }
@@ -545,35 +556,119 @@ private DepthSetting depthSettingCache[];
               }
            };
          pixelSizeCombo_.addActionListener(pixelSizeListener_);
-         pixelSizeCombo_.setBounds(66, 453, 184, 20);
+         pixelSizeCombo_.setBounds(66, 553, 184, 20);
          getContentPane().add(pixelSizeCombo_);
       }
       {
          JLabel lblPixelSize = new JLabel("Pixel size");
-         lblPixelSize.setBounds(10, 456, 59, 14);
+         lblPixelSize.setBounds(10, 556, 59, 14);
          getContentPane().add(lblPixelSize);
       }
 
-      {
-         JButton btnGeneratex = new JButton("Generate 3X3 grid");
-         btnGeneratex.addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent e) {
-               onGenerateGrid(3);
-            }
-         });
-         btnGeneratex.setBounds(424, 70, 186, 23);
-         getContentPane().add(btnGeneratex);
+      //Create grid controls
+      {      
+         gridSizeXSpinner_ = new JSpinner();
+         gridSizeXSpinner_.setModel(new SpinnerNumberModel(3,1,1000,1));
+         gridSizeXSpinner_.setBounds(10, 110, 40, 22);
+         getContentPane().add(gridSizeXSpinner_);
+         JLabel x = new JLabel("by");
+         x.setBounds(60, 110, 25, 22);
+         getContentPane().add(x);
+         gridSizeYSpinner_ = new JSpinner();
+         gridSizeYSpinner_.setModel(new SpinnerNumberModel(3,1,1000,1));
+         gridSizeYSpinner_.setBounds(80, 110, 40, 22);
+         getContentPane().add(gridSizeYSpinner_);
+         JLabel grid = new JLabel("grid");
+         grid.setBounds(130, 110, 25, 22);
+         getContentPane().add(grid);
       }
       {
-         JButton btnGeneratexGrid = new JButton("Generate 5X5 grid");
-         btnGeneratexGrid.addActionListener(new ActionListener() {
+         JLabel overlapLabel = new JLabel("pixel overlap X");
+         overlapLabel.setBounds(10, 140, 80, 20);
+         getContentPane().add(overlapLabel);
+         gridOverlapXSpinner_ = new JSpinner();
+         gridOverlapXSpinner_.setModel(new SpinnerNumberModel(0, -1000, 1000, 1));
+         gridOverlapXSpinner_.setBounds(85, 140, 50, 22);
+         getContentPane().add(gridOverlapXSpinner_);
+      }
+      {
+         JLabel overlapLabel = new JLabel("Y");
+         overlapLabel.setBounds(140, 140, 20, 20);
+         getContentPane().add(overlapLabel);
+         gridOverlapYSpinner_ = new JSpinner();
+         gridOverlapYSpinner_.setModel(new SpinnerNumberModel(0, -1000, 1000, 1));
+         gridOverlapYSpinner_.setBounds(150, 140, 50, 22);
+         getContentPane().add(gridOverlapYSpinner_);
+
+      }
+      {
+         JButton generateGridButton = new JButton("Generate grid");
+         generateGridButton.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
-               onGenerateGrid(5);
+               onGenerateGrid();
             }
          });
-         btnGeneratexGrid.setBounds(424, 99, 186, 23);
-         getContentPane().add(btnGeneratexGrid);
+         generateGridButton.setBounds(10, 170, 150, 23);
+         getContentPane().add(generateGridButton);
       }
+      {         
+         invertXCheckBox_ = new JCheckBox("Flip in X");
+         invertXCheckBox_.setBounds(220, 110, 80, 22);
+         getContentPane().add(invertXCheckBox_);
+         invertXCheckBox_.setSelected(prefs_.getBoolean(INVERT_X, false));
+      }
+      {
+         invertYCheckBox_ = new JCheckBox("Flip in Y");
+         invertYCheckBox_.setBounds(300, 110, 80, 22);
+         getContentPane().add(invertYCheckBox_);
+         invertYCheckBox_.setSelected(prefs_.getBoolean(INVERT_Y, false));
+      }
+      {
+         swapXandYCheckBox_ = new JCheckBox("Transpose tiling");
+         swapXandYCheckBox_.setBounds(380, 110, 120, 22);
+         getContentPane().add(swapXandYCheckBox_);
+         swapXandYCheckBox_.setSelected(prefs_.getBoolean(SWAP_X_AND_Y, false));
+      }
+      {
+         JLabel xOverlap = new JLabel("X Overlap");
+         xOverlap.setBounds(220, 140, 60, 22);
+         getContentPane().add(xOverlap);
+         xStitchOverlapSpinner_ = new JSpinner();
+         xStitchOverlapSpinner_.setModel(new SpinnerNumberModel(0,0,1000,1));
+         xStitchOverlapSpinner_.setBounds(280, 140, 40, 22);
+         getContentPane().add(xStitchOverlapSpinner_);
+      }
+      {
+         JLabel yOverlap = new JLabel("Y Overlap");
+         yOverlap.setBounds(330, 140, 60, 22);
+         getContentPane().add(yOverlap);
+         yStitchOverlapSpinner_ = new JSpinner();
+         yStitchOverlapSpinner_.setModel(new SpinnerNumberModel(0,0,1000,1));
+         yStitchOverlapSpinner_.setBounds(390, 140, 40, 22);
+         getContentPane().add(yStitchOverlapSpinner_);
+      }
+      {
+         stitchButton_ = new JButton("Stitch");
+         stitchButton_.setFont(new Font("Tahoma", Font.BOLD, 11));
+         stitchButton_.setBounds(220, 170, 100, 23);
+         getContentPane().add(stitchButton_);
+         stitchButton_.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+               stitcher_.setStitchParameters(invertXCheckBox_.isSelected(), invertYCheckBox_.isSelected(),
+                       swapXandYCheckBox_.isSelected(), (Integer) xStitchOverlapSpinner_.getValue(),
+                       (Integer) yStitchOverlapSpinner_.getValue());
+               new Thread(new Runnable() {
+
+                  @Override
+                  public void run() {
+                     stitcher_.createStitchedFromCurrentFrame();
+                  }
+               }).start();
+            }
+         });
+      }
+
       {
         	listCombo_ = new JComboBox();
         	listCombo_.addItem("Depth List 0");
@@ -584,7 +679,7 @@ private DepthSetting depthSettingCache[];
         			onDepthListIndex();
         		}
         	});
-        	listCombo_.setBounds(217, 395, 182, 20);
+        	listCombo_.setBounds(217, 495, 182, 20);
         	getContentPane().add(listCombo_);
         }
       
@@ -740,7 +835,7 @@ private DepthSetting depthSettingCache[];
       applyDepthListToDevices();
    }
 
-   protected void onGenerateGrid(int size) {
+   protected void onGenerateGrid() {
       double pixSize = core_.getPixelSizeUm();
       if (pixSize == 0.0)
          pixSize = 1.0;
@@ -783,12 +878,18 @@ private DepthSetting depthSettingCache[];
          return;
       }
 
-      PositionList pl = new PositionList();
+      ArrayList<MultiStagePosition> positions = new ArrayList<MultiStagePosition>();
 
-      for (int i=-size/2; i<=size/2; i++) {
-         double yPos = y[0] + i*height*pixSize;
-         for (int j=-size/2; j<=size/2; j++) {
-            double xPos = x[0] + j*width*pixSize;
+      int pixelOverlapX = (Integer) gridOverlapXSpinner_.getValue();
+      int pixelOverlapY = (Integer) gridOverlapYSpinner_.getValue();
+      int xSize = (Integer) gridSizeXSpinner_.getValue();
+      int ySize = (Integer) gridSizeYSpinner_.getValue();
+      
+      
+      for (int gridX = 0; gridX < xSize; gridX++) {
+         double xPos = x[0] + (gridX - (xSize - 1) / 2.0) * (width - pixelOverlapX) * pixSize;
+         for (int gridY = 0; gridY < ySize; gridY++) {
+            double yPos = y[0] + (gridY - (ySize - 1) / 2.0) * (height - pixelOverlapY) * pixSize;
             MultiStagePosition mpl = new MultiStagePosition();
             StagePosition sp = new StagePosition();
             sp.numAxes = 2;
@@ -801,17 +902,22 @@ private DepthSetting depthSettingCache[];
                sp.y = yPos;
             }
             mpl.add(sp);
-            int row = swapXY ? size/2 + j : size/2 + i;
-            int col = swapXY ? size/2 + i : size/2 + j;
+            int row = swapXY ? gridY : gridX;
+            int col = swapXY ? gridX : gridY;
             String lab = new String("Grid_" + row + "_" + col);
             mpl.setLabel(lab);
             mpl.setGridCoordinates(row, col);
-            pl.addPosition(mpl);
+            positions.add(mpl);
          }
       }
-      
+   
       try {
-         app_.setPositionList(pl);
+         PositionList list = app_.getPositionList();
+         list.clearAllPositions();
+         for (MultiStagePosition p : positions) {
+            list.addPosition(p);
+         }
+         list.notifyChangeListeners();
       } catch (MMScriptException e) {
          handleError(e.getMessage());
       }
@@ -946,6 +1052,9 @@ private DepthSetting depthSettingCache[];
       prefs_.putInt(PANEL_X, r.x);
       prefs_.putInt(PANEL_Y, r.y);
       prefs_.putBoolean(AUTO_REFRESH, autoRefresh_);
+      prefs_.putBoolean(INVERT_X, invertXCheckBox_.isSelected());
+      prefs_.putBoolean(INVERT_Y, invertYCheckBox_.isSelected());
+      prefs_.putBoolean(SWAP_X_AND_Y, swapXandYCheckBox_.isSelected());
       savePosition();
    }
 
