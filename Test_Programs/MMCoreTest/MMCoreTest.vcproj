@@ -3,7 +3,7 @@
 	ProjectType="Visual C++"
 	Version="9.00"
 	Name="MMCoreTest"
-	ProjectGUID="{2CA3F8DF-8D73-47D4-AF43-4AE5064F9B12}"
+	ProjectGUID="{F510BF50-B80C-11E2-9E96-0800200C9A66}"
 	RootNamespace="MMCoreTest"
 	Keyword="Win32Proj"
 	TargetFrameworkVersion="196613"

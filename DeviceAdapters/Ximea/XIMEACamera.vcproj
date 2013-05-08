@@ -3,7 +3,7 @@
 	ProjectType="Visual C++"
 	Version="9.00"
 	Name="XIMEACamera"
-	ProjectGUID="{AFC831A1-1946-43A5-BCA9-1B4618703C20}"
+	ProjectGUID="{7AF13550-B80D-11E2-9E96-0800200C9A66}"
 	RootNamespace="MMCamera"
 	Keyword="Win32Proj"
 	TargetFrameworkVersion="196613"
