@@ -303,11 +303,11 @@ protected:
    bool initStatus_;
    bool limits_;
    bool sequenceable_;
+   long sequenceMaxSize_;
+   std::vector<std::string> sequenceEvents_;
    double lowerLimit_;
    double upperLimit_;
-   long sequenceMaxSize_;
    std::map<std::string, long> values_; // allowed values
-   std::vector<std::string> sequenceEvents_;
 };
 
 /**

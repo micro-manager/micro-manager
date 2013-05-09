@@ -738,7 +738,7 @@ public:
       parentID_ = parentId;
 
       // truncate if necessary
-      if (parentID_.size() >= MM::MaxStrLength)
+      if (parentID_.size() >= (unsigned) MM::MaxStrLength)
          parentID_ = parentID_.substr(MM::MaxStrLength-1);
 
       if (this->HasProperty(MM::g_Keyword_HubID))
