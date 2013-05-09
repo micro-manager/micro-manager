@@ -52,7 +52,7 @@ mkdir $BUILDDIR
 
 BUILDLOG=$REPOSITORY/MacInstaller/buildlog.txt
 test -f $BUILDLOG && rm $BUILDLOG
-LOGUPLOADPLACE=valelab.ucsf.edu:/home/MM/
+BUILDLOGUPLOADPLACE=valelab.ucsf.edu:/home/MM
 
 cd $RDPARTYPUBLIC
 svn update
