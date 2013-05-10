@@ -83,9 +83,9 @@ protected:
    bool oldstage_;
    MM::Core *core_;
    bool initialized_;
-   std::string port_;
    ASIDeviceBase *device_;
    std::string oldstagePrefix_;
+   std::string port_;
 };
 
 class XYStage : public CXYStageBase<XYStage>, public ASIBase
@@ -155,11 +155,11 @@ private:
    // This variable convert the floating point number provided by ASI (expressing 10ths of microns) into a long
    double ASISerialUnit_;
    bool motorOn_;
-   long nrMoveRepetitions_;
    int joyStickSpeedFast_;
    int joyStickSpeedSlow_;
    bool joyStickMirror_;
    bool joyStickSwapXY_;
+   long nrMoveRepetitions_;
    double answerTimeoutMs_;
    bool stopSignal_;
 };
@@ -261,10 +261,10 @@ private:
    int GetPositionUm(double& pos);
 
    bool justCalibrated_;
+   std::string axis_;
    double stepSizeUm_;
    std::string focusState_;
    long waitAfterLock_;
-   std::string axis_;
 };
 
 
@@ -320,12 +320,12 @@ private:
    static const int SIZE_OF_FC_ARRAY = 24;
    std::string focusCurveData_[SIZE_OF_FC_ARRAY];
    bool justCalibrated_;
-   long ledIntensity_;
+   std::string axis_;
    double stepSizeUm_;
+   long ledIntensity_;
    double na_;
    std::string focusState_;
    long waitAfterLock_;
-   std::string axis_;
    int answerTimeoutMs_;
 };
 
