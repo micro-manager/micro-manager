@@ -69,11 +69,11 @@ MODULE_API void DeleteDevice(MM::Device* pDevice)
 
 Neos::Neos() :
    initialized_(false),
-   port_("Undefined"),
    open_(false),
-   changedTime_(0.0),
    amplitudeMax_(1024),
    amplitude_(200),
+   port_("Undefined"),
+   changedTime_(0.0),
    channel_(4)
 {
    InitializeDefaultErrorMessages();
