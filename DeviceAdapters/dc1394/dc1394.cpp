@@ -2020,8 +2020,10 @@ int Cdc1394::SetUpFrameRates()
    {
       CPropertyAction *pAct = new CPropertyAction (this, &Cdc1394::OnFrameRate);
       int nRet = CreateProperty(g_Keyword_FrameRates, frameRateMap_[framerates_.framerates[0]].c_str(), MM::String, false, pAct);
-      assert(nRet == DEVICE_OK); nRet; // Silence unused var warning.
+      if (nRet != DEVICE_OK)
+         return nRet;
       frameRatePropDefined_ = true;
+
    }
    
    // set allowed values, this will delete a pre-existing list of allowed values
