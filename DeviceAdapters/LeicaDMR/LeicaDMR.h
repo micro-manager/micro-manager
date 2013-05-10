@@ -102,8 +102,8 @@ public:
 
 private:
    bool initialized_;
-   bool open_;
    std::string name_;  
+   bool open_;
    MM::MMTime changedTime_;
 };
 
@@ -130,9 +130,9 @@ public:
 
 private:
    bool initialized_;
-   int intensity_;
-   bool open_;
    std::string name_;  
+   bool open_;
+   int intensity_;
    MM::MMTime changedTime_;
 };
 
@@ -202,9 +202,9 @@ public:
 
 private:                                                                     
    double stepSize_um_;
+   bool initialized_;
    std::string name_;  
    bool busy_;
-   bool initialized_;
    double lowerLimit_;
    double upperLimit_;
    long upperThreshold_;
