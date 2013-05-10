@@ -378,7 +378,7 @@ CArduinoSwitch::CArduinoSwitch() :
    SetErrorText(ERR_COMMUNICATION, "Error in communication with Arduino board");
    SetErrorText(ERR_NO_PORT_SET, "Hub Device not found.  The Arduino Hub device is needed to create this device");
 
-   for (int i=0; i < NUMPATTERNS; i++)
+   for (unsigned int i=0; i < NUMPATTERNS; i++)
       pattern_[i] = 0;
 
    // Description

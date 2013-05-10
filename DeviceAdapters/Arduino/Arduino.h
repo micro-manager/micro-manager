@@ -145,7 +145,7 @@ public:
    int OnSequence(MM::PropertyBase* pProp, MM::ActionType eAct);
 
 private:
-   static const int NUMPATTERNS = 12;
+   static const unsigned int NUMPATTERNS = 12;
 
    int OpenPort(const char* pszName, long lnValue);
    int WriteToPort(long lnValue);
@@ -251,13 +251,16 @@ class ArduinoInputMonitorThread : public MMDeviceThreadBase
 
       void Start();
       void Stop() {stop_ = true;}
-      ArduinoInputMonitorThread & operator=( const ArduinoInputMonitorThread & ) {}
+      ArduinoInputMonitorThread & operator=( const ArduinoInputMonitorThread & ) 
+      {
+         return *this;
+      }
 
 
    private:
       MM_THREAD_HANDLE thread_;
-      CArduinoInput& aInput_;
       long state_;
+      CArduinoInput& aInput_;
       bool debug_;
       bool stop_;
 };
