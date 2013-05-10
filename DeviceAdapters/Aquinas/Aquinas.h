@@ -48,11 +48,11 @@ private:
    int SetValveState();
 
    std::string port_;
-   bool busy_;
    bool initialized_;
+   bool busy_;
    double pressureSetPoint_;
-   std::string id_;
    unsigned char valveState_;
+   std::string id_;
 };
 
 #endif
