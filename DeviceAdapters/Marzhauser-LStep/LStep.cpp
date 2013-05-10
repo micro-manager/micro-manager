@@ -240,7 +240,8 @@ void XYStage::GetName(char* Name) const
 int XYStage::Initialize()
 {
    int ret = CheckDeviceStatus();
-   if (ret != DEVICE_OK) ret;
+   if (ret != DEVICE_OK) 
+      return ret;
 
    int NumberOfAxes = (Configuration_ >> 4) &0x0f;
    if (NumberOfAxes < 2) return DEVICE_NOT_CONNECTED; 
@@ -1091,10 +1092,10 @@ ZStage::ZStage() :
    LStepBase(this),
    range_measured_(false),
    answerTimeoutMs_(2000),
+   stepSizeUm_(0.1),
    speedZ_(20.0), //[mm/s]
    accelZ_(0.2), //[m/s²]
    originZ_(0),
-   stepSizeUm_(0.1),
    pitchZ_(1)
 
 
@@ -1135,7 +1136,8 @@ void ZStage::GetName(char* Name) const
 int ZStage::Initialize()
 {
    int ret = CheckDeviceStatus();
-   if (ret != DEVICE_OK) ret;
+   if (ret != DEVICE_OK) 
+      return ret;
 
    int NumberOfAxes = (Configuration_ >> 4) &0x0f;
    if (NumberOfAxes < 3) return DEVICE_NOT_CONNECTED; // Controller hardware without Z axis
