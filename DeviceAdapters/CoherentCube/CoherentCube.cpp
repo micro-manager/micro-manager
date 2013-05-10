@@ -84,8 +84,6 @@ MODULE_API void DeleteDevice(MM::Device* pDevice)
 
 CoherentCube::CoherentCube(const char* name) :
    initialized_(false), 
-   //powerSetpoint_(0),
-	//powerReadback_(0),
    state_(0),
    name_(name), 
    busy_(false),

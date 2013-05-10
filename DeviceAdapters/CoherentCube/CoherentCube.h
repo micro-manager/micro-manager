@@ -156,15 +156,12 @@ public:
 
 
 private:
-
-  // double powerSetpoint_;
-//	double powerReadback_;
-   long state_;
-   int error_;
-
    bool initialized_;
+   long state_;
    std::string name_;
-   std::string port_;
+   bool busy_;
+   int error_;
+   MM::MMTime changedTime_;
 
 	// todo move these to DevImpl for better data hiding
 	const std::string queryToken_;
@@ -176,9 +173,10 @@ private:
 	const std::string TECServoToken_;
 	const std::string headSerialNoToken_;
 	const std::string headUsageHoursToken_;
-	const std::string externalPowerControlToken_;
 	const std::string wavelengthToken_;
+	const std::string externalPowerControlToken_;
 
+   std::string port_;
 
    unsigned char buf_[1000];
    string buf_string_;
@@ -186,11 +184,7 @@ private:
    unsigned long buf_bytes_;
    long armState_;
 
-   bool busy_;
    double answerTimeoutMs_;
-
-
-   MM::MMTime changedTime_;
 
 
    void SetPowerSetpoint(double powerSetpoint__, double& achievedSetpoint__);
