@@ -257,12 +257,13 @@ private:
 
 	double stepSize_um_;
 	double posZ_um_;
-	long curSteps_;
-	double lowerLimit_;
-	double upperLimit_;
-	ConixControllerType m_ControllerType;
 	bool busy_;
 	bool initialized_;
+	double lowerLimit_;
+	double upperLimit_;
+
+	long curSteps_;
+	ConixControllerType m_ControllerType;
 };
 
 #endif //_CONIX_H_
