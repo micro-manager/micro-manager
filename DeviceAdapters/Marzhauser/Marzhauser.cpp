@@ -262,7 +262,8 @@ MM::DeviceDetectionStatus XYStage::DetectDevice(void)
 int XYStage::Initialize()
 {
    int ret = CheckDeviceStatus();
-   if (ret != DEVICE_OK) ret;
+   if (ret != DEVICE_OK) 
+      return ret;
 
    int NumberOfAxes = (Configuration_ >> 4) &0x0f;
    if (NumberOfAxes < 2) return DEVICE_NOT_CONNECTED; 
@@ -1203,10 +1204,10 @@ ZStage::ZStage() :
    TangoBase(this),
    range_measured_(false),
    answerTimeoutMs_(2000),
+   stepSizeUm_(0.1),
    speedZ_(20.0), //[mm/s]
    accelZ_(0.2), //[m/s²]
    originZ_(0),
-   stepSizeUm_(0.1),
    sequenceable_(false),
    nrEvents_(1024)
 
@@ -1255,7 +1256,8 @@ MM::DeviceDetectionStatus ZStage::DetectDevice(void)
 int ZStage::Initialize()
 {
    int ret = CheckDeviceStatus();
-   if (ret != DEVICE_OK) ret;
+   if (ret != DEVICE_OK) 
+      return ret;
 
    int NumberOfAxes = (Configuration_ >> 4) &0x0f;
    if (NumberOfAxes < 3) return DEVICE_NOT_CONNECTED; 
@@ -2084,7 +2086,8 @@ MM::DeviceDetectionStatus AStage::DetectDevice(void)
 int AStage::Initialize()
 {
    int ret = CheckDeviceStatus();
-   if (ret != DEVICE_OK) ret;
+   if (ret != DEVICE_OK) 
+      return ret;
 
    int NumberOfAxes = (Configuration_ >> 4) &0x0f;
    if (NumberOfAxes < 4) return DEVICE_NOT_CONNECTED; 
@@ -2684,7 +2687,8 @@ MM::DeviceDetectionStatus Shutter::DetectDevice(void)
 int Shutter::Initialize()
 {
    int ret = CheckDeviceStatus();
-   if (ret != DEVICE_OK) ret;
+   if (ret != DEVICE_OK) 
+      return ret;
 
    // set property list
    // -----------------
@@ -2949,7 +2953,8 @@ MM::DeviceDetectionStatus LED100::DetectDevice(void)
 int LED100::Initialize()
 {
    int ret = CheckDeviceStatus();
-   if (ret != DEVICE_OK) ret;
+   if (ret != DEVICE_OK) 
+      return ret;
    CPropertyAction* pAct;
 
    // Name
@@ -3174,8 +3179,8 @@ int LED100::OnFire(MM::PropertyBase* pProp, MM::ActionType eAct)
 DAC::DAC () :
    CSignalIOBase<DAC>(),
    TangoBase(this),
-   name_ (g_DACName),
    DACPort_(0),
+   name_ (g_DACName),
    open_(false),
    answerTimeoutMs_(2000)
 {
@@ -3267,7 +3272,8 @@ MM::DeviceDetectionStatus DAC::DetectDevice(void)
 int DAC::Initialize()
 {
    int ret = CheckDeviceStatus();
-   if (ret != DEVICE_OK) ret;
+   if (ret != DEVICE_OK) 
+      return ret;
 
    // Name
    ret = CreateProperty(MM::g_Keyword_Name, name_.c_str(), MM::String, true);
@@ -3535,7 +3541,8 @@ MM::DeviceDetectionStatus ADC::DetectDevice(void)
 int ADC::Initialize()
 {
    int ret = CheckDeviceStatus();
-   if (ret != DEVICE_OK) ret;
+   if (ret != DEVICE_OK) 
+      return ret;
 
    // Name
    ret = CreateProperty(MM::g_Keyword_Name, name_.c_str(), MM::String, true);

@@ -245,10 +245,10 @@ public:
 private:
    bool range_measured_;
    double answerTimeoutMs_;
-   double stepSizeUm_;
    double speed_;
    double accel_;
    double origin_;
+   double stepSizeUm_;
 };
 
 
@@ -305,14 +305,14 @@ public:
    int OnFire      (MM::PropertyBase* pProp, MM::ActionType eAct);
 
 private:
-   double intensity_;
-   double fireT_;
-   int usec_;
    int GetIntensity(double& intensity);
    int SetIntensity(double  intensity);
-   const int id_;
    std::string name_;  
+   const int id_;
+   double intensity_;
    double answerTimeoutMs_;
+   int usec_;
+   double fireT_;
    LED100& operator=(LED100&) {assert(false); return *this;} 
 };
 
@@ -346,10 +346,10 @@ public:
 
 private:
    int  DACPort_;
-   bool open_;
-   double volts_;
    std::string name_;  
+   bool open_;
    double answerTimeoutMs_;
+   double volts_;
 };
 
 
@@ -381,9 +381,9 @@ public:
    int OnADCPort (MM::PropertyBase* pProp, MM::ActionType eAct);
 
 private:
-   int ADCPort_;
-   double volts_;
    std::string name_;  
+   double volts_;
+   int ADCPort_;
    double answerTimeoutMs_;
 };
 
