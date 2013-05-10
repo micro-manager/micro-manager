@@ -31,7 +31,9 @@
 #include "ErrorCodes.h"
 #include "Error.h"
 
+#ifdef WIN32
 #pragma warning( disable : 4290 ) // exception declaration warning
+#endif
 
 ///////////////////////////////////////////////////////////////////////////////
 //

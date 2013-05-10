@@ -192,10 +192,14 @@ void CPluginManager::UnloadPluginLibrary(const char* moduleName)
          }
       } while(freed);
    #else
+      dlclose(moduleMap_[moduleName]);
+      // Nico: the code below does not make much sense, the intent is also unclear
+      /*
       int ret;
       do {
          int ret = dlclose(moduleMap_[moduleName]);
       } while (ret == 0);
+      */
    #endif
 }
 

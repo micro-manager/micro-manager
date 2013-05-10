@@ -60,9 +60,9 @@ class LoggerThread : public MMDeviceThreadBase
       void Start() {stop_ = false; activate();}
 
    private:
+      FastLogger* log_;
       bool busy_;
       bool stop_;
-      FastLogger* log_;
 };
 
 
