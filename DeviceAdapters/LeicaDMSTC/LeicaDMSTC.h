@@ -139,10 +139,10 @@ public:
    //int OnStop(MM::PropertyBase* pProp, MM::ActionType eAct);
 
 private:                                                                     
-   double stepSize_um_;
-   std::string name_;  
    bool busy_;
    bool initialized_;
+   double stepSize_um_;
+   std::string name_;  
    long lowerLimitX_;
    long lowerLimitY_;
    long upperLimitX_;

@@ -192,9 +192,7 @@ XYStage::XYStage () :
 	busy_ (false),
 	initialized_ (false),
 	stepSize_um_(10),	
-
-name_ (g_LeicaDMSTCXYDrive)
-
+   name_ (g_LeicaDMSTCXYDrive)
 {
    InitializeDefaultErrorMessages();
    SetErrorText(ERR_DEVICE_NOT_FOUND, "No XY-Drive found in this microscope");
