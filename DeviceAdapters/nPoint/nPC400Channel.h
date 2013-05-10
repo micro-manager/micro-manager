@@ -130,14 +130,14 @@ private:
     //std::string m_sPort;              // serial port
     bool        m_yInitialized;         // channel initialization flag
     bool        m_yChannelAvailable;    // channel available flag
+    double      m_dAnswerTimeoutMs;     // timeout value of channel waiting for response message
     int         m_nChannel;             // channel number
     //int       m_nPosition;            // channel position (get)
     double      m_dRadius;              // channel radious
+    int         m_nRangeUnit;           // channel Range Unit
     int         m_nRange;               // channel range
     int         m_nMinPosSteps;         // minimum position steps
     int         m_nMaxPosSteps;         // maximum position steps
-    double      m_dAnswerTimeoutMs;     // timeout value of channel waiting for response message
     double      m_dStepSizeUm;          // channel converting unit betweek step and um
-    int         m_nRangeUnit;           // channel Range Unit
 };
 

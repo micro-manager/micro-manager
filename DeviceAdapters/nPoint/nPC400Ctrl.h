@@ -80,6 +80,6 @@ class nPC400Ctrl : public CGenericBase<nPC400Ctrl>
 
       std::string   m_sCommand;             // Command exchange with MMCore
       std::string   m_sPort;                // serial port id
-      bool          m_yInitialized;         // controller initialized flag
       double        m_dAnswerTimeoutMs;     // maximum waiting time for receiving reolied message
+      bool          m_yInitialized;         // controller initialized flag
 };
