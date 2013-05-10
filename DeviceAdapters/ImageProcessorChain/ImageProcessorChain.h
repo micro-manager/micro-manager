@@ -58,12 +58,14 @@ public:
    int OnProcessor(MM::PropertyBase* pProp, MM::ActionType eAct, long indexx);
 
 private:
-   bool busy_;
    const int nSlots_;
+   bool busy_;
    std::map< int, std::string> processorNames_;
    std::map< int, MM::ImageProcessor*> processors_;
 
-   ImageProcessorChain& operator=( const ImageProcessorChain& ){ };
+   ImageProcessorChain& operator=( const ImageProcessorChain& ){ 
+      return *this;
+   };
 
    
 };
