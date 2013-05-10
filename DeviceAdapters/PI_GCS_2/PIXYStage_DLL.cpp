@@ -61,13 +61,11 @@ PIXYStage::PIXYStage() :
    axisYHomingMode_("REF"),
    controllerName_(""),
    controllerNameYAxis_(""),
+   ctrl_(NULL),
    stepSize_um_(0.01),
-   initialized_(false),
    originX_(0.0),
    originY_(0.0),
-   ctrl_(NULL)
-   //answerTimeoutMs_(1000),
-   //axisLimitUm_(500.0)
+   initialized_(false)
 {
    InitializeDefaultErrorMessages();
 

@@ -76,15 +76,15 @@ public:
 
 
 private:
-   std::string axisName_;
    double stepSizeUm_;
    bool initialized_;
    double axisLimitUm_;
+   std::string axisName_;
    std::string stageType_;
+   PIController* ctrl_;
+   std::string controllerName_;
    // homing not (yet) implemented in micro-manager
    //std::string homingMode_;
-   std::string controllerName_;
-   PIController* ctrl_;
 };
 
 

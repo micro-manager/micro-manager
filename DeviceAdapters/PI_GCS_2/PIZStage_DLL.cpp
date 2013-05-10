@@ -47,12 +47,11 @@ const char* g_PI_ZStageControllerName = "Controller Name";
 PIZStage::PIZStage() :
    stepSizeUm_(0.1),
    initialized_(false),
-    controllerName_(""),
-    axisLimitUm_(500.0),
+   axisLimitUm_(500.0),
    axisName_("A"),
    stageType_("DEFAULT_STAGE"),
-   ctrl_(NULL)
-   //homingMode_("REF")
+   ctrl_(NULL),
+   controllerName_("")
 {
    InitializeDefaultErrorMessages();
 

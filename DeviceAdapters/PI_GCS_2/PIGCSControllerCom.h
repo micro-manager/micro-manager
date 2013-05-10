@@ -71,8 +71,8 @@ private:
 	int OnJoystick4(MM::PropertyBase* pProp, MM::ActionType eAct);
 
    std::string port_;
-   int lastError_;
    bool initialized_;
+   int lastError_;
    bool bShowProperty_UmToDefaultUnit_;
    PIGCSControllerCom* ctrl_;
 };

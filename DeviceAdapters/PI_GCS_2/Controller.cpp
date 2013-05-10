@@ -38,9 +38,9 @@ const char* g_msg_CNTR_AXIS_UNDER_JOYSTICK_CONTROL = "Selected axis is controlle
 std::map<std::string, PIController*> PIController::allControllersByLabel_;
 
 PIController::PIController(const std::string& label):
+umToDefaultUnit_(0.001),
 gcs2_(true),
 label_(label),
-umToDefaultUnit_(0.001),
 onlyIDSTAGEvalid_(false)
 {
 	allControllersByLabel_[label_] = this;
