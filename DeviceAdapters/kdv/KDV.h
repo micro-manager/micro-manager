@@ -168,10 +168,11 @@ public:
    int OnStagePositioningTimeOutS(MM::PropertyBase* pProp, MM::ActionType eAct);
 
 private:
-   bool initialized_;
 
    /* serial port */
    std::string port_;
+
+   bool initialized_;
    double portTimeoutMs_;
 
    /* stepper drive */
