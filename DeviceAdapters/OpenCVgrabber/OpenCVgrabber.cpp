@@ -1026,7 +1026,15 @@ int COpenCVgrabber::OnFlipX(MM::PropertyBase* pProp, MM::ActionType eAct)
          
 			pProp->Set((long)xFlip_);
          ret=DEVICE_OK;
-      }break;
+      } break;
+   case MM::NoAction:
+      break;
+   case MM::IsSequenceable:
+   case MM::AfterLoadSequence:
+   case MM::StartSequence:
+   case MM::StopSequence:
+      return DEVICE_PROPERTY_NOT_SEQUENCEABLE;
+      break;
    }
    return ret; 
 }
@@ -1051,6 +1059,14 @@ int COpenCVgrabber::OnFlipY(MM::PropertyBase* pProp, MM::ActionType eAct)
 			pProp->Set((long)yFlip_);
          ret=DEVICE_OK;
       }break;
+   case MM::NoAction:
+      break;
+   case MM::IsSequenceable:
+   case MM::AfterLoadSequence:
+   case MM::StartSequence:
+   case MM::StopSequence:
+      return DEVICE_PROPERTY_NOT_SEQUENCEABLE;
+      break;
    }
    return ret; 
 }
@@ -1080,6 +1096,14 @@ int COpenCVgrabber::OnGain(MM::PropertyBase* pProp, MM::ActionType eAct)
 		 ret=DEVICE_OK;
 			pProp->Set((double)gain);
       }break;
+   case MM::NoAction:
+      break;
+   case MM::IsSequenceable:
+   case MM::AfterLoadSequence:
+   case MM::StartSequence:
+   case MM::StopSequence:
+      return DEVICE_PROPERTY_NOT_SEQUENCEABLE;
+      break;
    }
    return ret; 
 }
@@ -1147,6 +1171,14 @@ int COpenCVgrabber::OnBinning(MM::PropertyBase* pProp, MM::ActionType eAct)
          ret=DEVICE_OK;
 			pProp->Set(binSize_);
       }break;
+   case MM::NoAction:
+      break;
+   case MM::IsSequenceable:
+   case MM::AfterLoadSequence:
+   case MM::StartSequence:
+   case MM::StopSequence:
+      return DEVICE_PROPERTY_NOT_SEQUENCEABLE;
+      break;
    }
    return ret; 
 }
@@ -1198,6 +1230,14 @@ int COpenCVgrabber::OnPixelType(MM::PropertyBase* pProp, MM::ActionType eAct)
          ret=DEVICE_OK;
 		 
       }break;
+   case MM::NoAction:
+      break;
+   case MM::IsSequenceable:
+   case MM::AfterLoadSequence:
+   case MM::StartSequence:
+   case MM::StopSequence:
+      return DEVICE_PROPERTY_NOT_SEQUENCEABLE;
+      break;
    }
    return ret; 
 }
@@ -1284,6 +1324,14 @@ int COpenCVgrabber::OnBitDepth(MM::PropertyBase* pProp, MM::ActionType eAct)
          pProp->Set((long)bitDepth_);
          ret=DEVICE_OK;
       }break;
+   case MM::NoAction:
+      break;
+   case MM::IsSequenceable:
+   case MM::AfterLoadSequence:
+   case MM::StartSequence:
+   case MM::StopSequence:
+      return DEVICE_PROPERTY_NOT_SEQUENCEABLE;
+      break;
    }
    return ret; 
 }
@@ -1332,6 +1380,14 @@ int COpenCVgrabber::OnResolution(MM::PropertyBase* pProp, MM::ActionType eAct)
 		  
          ret=DEVICE_OK;
       } break;
+   case MM::NoAction:
+      break;
+   case MM::IsSequenceable:
+   case MM::AfterLoadSequence:
+   case MM::StartSequence:
+   case MM::StopSequence:
+      return DEVICE_PROPERTY_NOT_SEQUENCEABLE;
+      break;
    }
    return ret; 
 }

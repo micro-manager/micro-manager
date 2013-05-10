@@ -133,7 +133,6 @@ private:
 
    ImgBuffer img_;
    bool busy_;
-   bool stopOnOverFlow_;
    bool initialized_;
    double readoutUs_;
    MM::MMTime readoutStartTime_;
@@ -146,13 +145,13 @@ private:
 	long binSize_;
 	long cameraCCDXSize_;
 	long cameraCCDYSize_;
-	std::string triggerDevice_;
-
+   int nComponents_;
    bool xFlip_;
    bool yFlip_;
+	std::string triggerDevice_;
+   bool stopOnOverFlow_;
 
    MMThreadLock imgPixelsLock_;
-   int nComponents_;
    
 
    friend class MySequenceThread;
@@ -178,17 +177,20 @@ class MySequenceThread : public MMDeviceThreadBase
       long GetImageCounter(){return imageCounter_;}                             
       MM::MMTime GetStartTime(){return startTime_;}                             
       MM::MMTime GetActualDuration(){return actualDuration_;}
+
    private:                                                                     
       int svc(void) throw();
-      COpenCVgrabber* camera_;                                                     
-      bool stop_;                                                               
-      bool suspend_;                                                            
+
+      double intervalMs_;                                                       
       long numImages_;                                                          
       long imageCounter_;                                                       
-      double intervalMs_;                                                       
+      bool stop_;                                                               
+      bool suspend_;                                                            
+      COpenCVgrabber* camera_;   
       MM::MMTime startTime_;                                                    
       MM::MMTime actualDuration_;                                               
       MM::MMTime lastFrameTime_;                                                
+
       MMThreadLock stopLock_;                                                   
       MMThreadLock suspendLock_;                                                
 }; 
