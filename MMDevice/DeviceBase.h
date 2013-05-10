@@ -1214,7 +1214,7 @@ public:
    using CDeviceBase<MM::Camera, U>::SetProperty;
    using CDeviceBase<MM::Camera, U>::LogMessage;
 
-   CCameraBase() : busy_(false), thd_(0), stopWhenCBOverflows_(false)
+   CCameraBase() : busy_(false), stopWhenCBOverflows_(false), thd_(0)
    {
       // create and intialize common transpose properties
       std::vector<std::string> allowedValues;
@@ -1575,12 +1575,12 @@ protected:
          return ret;
       }
    private:
-      CCameraBase* camera_;
-      bool stop_;
-      bool suspend_;
+      double intervalMs_;
       long numImages_;
       long imageCounter_;
-      double intervalMs_;
+      bool stop_;
+      bool suspend_;
+      CCameraBase* camera_;
       MM::MMTime startTime_;
       MM::MMTime actualDuration_;
       MM::MMTime lastFrameTime_;

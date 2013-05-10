@@ -242,14 +242,14 @@ CDemoCamera::CDemoCamera() :
 	cameraCCDXSize_(512),
 	cameraCCDYSize_(512),
    ccdT_ (0.0),
-   nComponents_(1),
-   pDemoResourceLock_(0),
    triggerDevice_(""),
+   stopOnOverflow_(false),
 	dropPixels_(false),
    fastImage_(false),
    saturatePixels_(false),
 	fractionOfPixelsToDropOrSaturate_(0.002),
-   stopOnOverflow_(false)
+   pDemoResourceLock_(0),
+   nComponents_(1)
 {
    memset(testProperty_,0,sizeof(testProperty_));
 
@@ -1168,6 +1168,8 @@ int CDemoCamera::OnBinning(MM::PropertyBase* pProp, MM::ActionType eAct)
          ret=DEVICE_OK;
 			pProp->Set(binSize_);
       }break;
+   default:
+      break;
    }
    return ret; 
 }
@@ -1251,7 +1253,9 @@ int CDemoCamera::OnPixelType(MM::PropertyBase* pProp, MM::ActionType eAct)
 			else
 				pProp->Set(g_PixelType_8bit);
          ret=DEVICE_OK;
-      }break;
+      } break;
+   default:
+      break;
    }
    return ret; 
 }
@@ -1365,7 +1369,9 @@ int CDemoCamera::OnBitDepth(MM::PropertyBase* pProp, MM::ActionType eAct)
       {
          pProp->Set((long)bitDepth_);
          ret=DEVICE_OK;
-      }break;
+      } break;
+   default:
+      break;
    }
    return ret; 
 }
@@ -1777,7 +1783,7 @@ void CDemoCamera::GenerateSyntheticImage(ImgBuffer& img, double exp)
       float* pBuf = (float*) const_cast<unsigned char*>(img.GetPixels());
       float saturatedValue = 255.;
       memset(pBuf, 0, img.Height()*img.Width()*4);
-      static unsigned int j2;
+      // static unsigned int j2;
       for (j=0; j<img.Height(); j++)
       {
          for (k=0; k<img.Width(); k++)

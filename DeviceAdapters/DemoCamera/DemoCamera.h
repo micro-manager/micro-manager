@@ -82,9 +82,9 @@ public:
 private:
    void GetPeripheralInventory();
 
-   bool busy_;
-   bool initialized_;
    std::vector<std::string> peripherals_;
+   bool initialized_;
+   bool busy_;
    double errorRate_;
    long divideOneByMe_;
 };
@@ -241,8 +241,8 @@ private:
 	double testProperty_[10];
    MMThreadLock* pDemoResourceLock_;
    MMThreadLock imgPixelsLock_;
-   int nComponents_;
    friend class MySequenceThread;
+   int nComponents_;
    MySequenceThread * thd_;
 };
 
@@ -267,12 +267,12 @@ class MySequenceThread : public MMDeviceThreadBase
       MM::MMTime GetActualDuration(){return actualDuration_;}
    private:                                                                     
       int svc(void) throw();
-      CDemoCamera* camera_;                                                     
-      bool stop_;                                                               
-      bool suspend_;                                                            
+      double intervalMs_;                                                       
       long numImages_;                                                          
       long imageCounter_;                                                       
-      double intervalMs_;                                                       
+      bool stop_;                                                               
+      bool suspend_;                                                            
+      CDemoCamera* camera_;                                                     
       MM::MMTime startTime_;                                                    
       MM::MMTime actualDuration_;                                               
       MM::MMTime lastFrameTime_;                                                
@@ -822,10 +822,10 @@ private:
    double volt_;
    double gatedVolts_;
    bool open_;
-   std::vector<double> nascentSequence_;
-   std::vector<double> sentSequence_;
-   unsigned long sequenceIndex_;
    bool sequenceRunning_;
+   unsigned long sequenceIndex_;
+   std::vector<double> sentSequence_;
+   std::vector<double> nascentSequence_;
 
    void SetSequenceStateOn() { sequenceRunning_ = true; }
    void SetSequenceStateOff() { sequenceRunning_ = false; sequenceIndex_ = 0; }
