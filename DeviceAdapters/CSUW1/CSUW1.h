@@ -185,12 +185,13 @@ public:
    int OnRun(MM::PropertyBase* pProp, MM::ActionType eAct);
 
 private:
-   bool initialized_;
    bool running_;
-   std::string name_;
+   long current_;
+
    long pos_;
    unsigned numPos_;
-   long current_;
+   bool initialized_;
+   std::string name_;
 };
 
 class BrightField : public CStateDeviceBase<BrightField>
