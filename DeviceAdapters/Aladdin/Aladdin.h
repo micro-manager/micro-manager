@@ -66,12 +66,15 @@ public:
 
 private:
 
-   double volume_;
    double diameter_;
-   int error_;
 
    bool initialized_;
+   double volume_;
    std::string name_;
+   bool busy_;
+   int error_;
+   MM::MMTime changedTime_;
+
    std::string port_;
    unsigned char buf_[1000];
    string buf_string_;
@@ -79,9 +82,7 @@ private:
    unsigned long buf_bytes_;
    long armState_;
 
-   bool busy_;
    double answerTimeoutMs_;
-   MM::MMTime changedTime_;
 
    void SetVolume(double volume);
    void GetVolume(double& volume);
