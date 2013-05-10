@@ -74,8 +74,8 @@ class Hub : public CGenericBase<Hub>
 
       // Command exchange with MMCore
       std::string command_;
-      bool initialized_;
       double answerTimeoutMs_;
+      bool initialized_;
 };
 
 
